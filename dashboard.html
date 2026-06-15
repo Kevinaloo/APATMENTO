@@ -1055,6 +1055,17 @@ html,body{height:100%;font-family:'Inter',sans-serif;overflow:hidden;background:
     <div class="g-topbar">
       <div class="g-topbar-title" id="g-topbar-title">Good morning, James ☀️</div>
       <div class="g-topbar-right">
+        <button onclick="openSOS()" style="
+          display:flex;align-items:center;gap:5px;
+          padding:6px 12px;border-radius:100px;
+          background:linear-gradient(135deg,#DC2626,#B91C1C);
+          color:white;border:none;cursor:pointer;
+          font-family:'Space Grotesk',sans-serif;
+          font-size:11px;font-weight:800;letter-spacing:.04em;
+          box-shadow:0 2px 10px rgba(220,38,38,.35);
+          -webkit-tap-highlight-color:transparent;
+          animation:sosPulse 2.5s ease-in-out infinite;
+        ">🆘 SOS</button>
         <div class="g-notif-btn">🔔<div class="notif-dot"></div></div>
         <div class="sb-avatar" id="g-top-avatar" style="width:36px;height:36px;border-radius:10px;font-size:13px;">J</div>
       </div>
@@ -1347,7 +1358,18 @@ html,body{height:100%;font-family:'Inter',sans-serif;overflow:hidden;background:
   <div class="p-main">
     <div class="p-topbar">
       <div class="p-topbar-title" id="p-topbar-title">Partner Dashboard</div>
-      <div style="display:flex;gap:12px;align-items:center;">
+      <div style="display:flex;gap:10px;align-items:center;">
+        <button onclick="openSOS()" style="
+          display:flex;align-items:center;gap:5px;
+          padding:6px 12px;border-radius:100px;
+          background:linear-gradient(135deg,#DC2626,#B91C1C);
+          color:white;border:none;cursor:pointer;
+          font-family:'Space Grotesk',sans-serif;
+          font-size:11px;font-weight:800;letter-spacing:.04em;
+          box-shadow:0 2px 10px rgba(220,38,38,.35);
+          -webkit-tap-highlight-color:transparent;
+          animation:sosPulse 2.5s ease-in-out infinite;
+        ">🆘 SOS</button>
         <div class="p-notif-btn">🔔<div class="p-notif-dot"></div></div>
         <div class="p-sb-avatar" id="p-top-avatar" style="width:36px;height:36px;border-radius:10px;">J</div>
       </div>
@@ -1968,6 +1990,549 @@ async function signOut() {
 
 /* ══ START ══ */
 initSession();
+</script>
+
+<!-- ══ EMERGENCY SOS SYSTEM ══ -->
+<script>
+/* ══════════════════════════════════════════════════════
+   APATMENTO EMERGENCY SYSTEM
+   Inject this script into dashboard.html
+   - SOS button on both Guest and Partner dashboards
+   - Real-time GPS location (high accuracy)
+   - Reverse geocoding via OpenStreetMap (free, no key needed)
+   - Nearest services via Google Maps search links
+   - All verified Kenya emergency numbers
+══════════════════════════════════════════════════════ */
+
+(function() {
+
+/* ── VERIFIED KENYA EMERGENCY NUMBERS ── */
+const EMERGENCY_SERVICES = [
+  {
+    id: 'police',
+    name: 'Police',
+    icon: '👮',
+    color: '#1A56DB',
+    bg: 'rgba(26,86,219,0.08)',
+    border: 'rgba(26,86,219,0.2)',
+    numbers: [
+      { label: 'National Emergency', number: '999' },
+      { label: 'National Emergency', number: '112' },
+      { label: 'Nairobi Control Room', number: '0721233999' },
+      { label: 'Nairobi HQ', number: '0202724154' },
+    ],
+    mapQuery: 'police+station',
+  },
+  {
+    id: 'ambulance',
+    name: 'Ambulance',
+    icon: '🚑',
+    color: '#DC2626',
+    bg: 'rgba(220,38,38,0.08)',
+    border: 'rgba(220,38,38,0.2)',
+    numbers: [
+      { label: 'National Emergency', number: '999' },
+      { label: 'Kenya Red Cross', number: '1199' },
+      { label: 'Nairobi Hospital', number: '0702200200' },
+      { label: 'St John Ambulance', number: '0721225285' },
+      { label: 'AAR Emergency', number: '0202717374' },
+      { label: 'AMREF Flying Doctors', number: '0722314239' },
+      { label: 'Aga Khan Emergency', number: '0711092222' },
+    ],
+    mapQuery: 'hospital+emergency',
+  },
+  {
+    id: 'fire',
+    name: 'Fire Brigade',
+    icon: '🚒',
+    color: '#D97706',
+    bg: 'rgba(217,119,6,0.08)',
+    border: 'rgba(217,119,6,0.2)',
+    numbers: [
+      { label: 'National Emergency', number: '999' },
+      { label: 'Nairobi Fire Brigade', number: '0202344599' },
+      { label: 'Nairobi Fire Brigade', number: '0202222181' },
+      { label: 'Nairobi City Council', number: '0722306085' },
+    ],
+    mapQuery: 'fire+station',
+  },
+  {
+    id: 'hospital',
+    name: 'Hospital',
+    icon: '🏥',
+    color: '#059652',
+    bg: 'rgba(5,150,82,0.08)',
+    border: 'rgba(5,150,82,0.2)',
+    numbers: [
+      { label: 'Kenyatta National Hospital', number: '0202726300' },
+      { label: 'Nairobi Hospital Emergency', number: '0703082000' },
+      { label: 'Aga Khan Hospital', number: '0203662000' },
+      { label: 'Mbagathi County Hospital', number: '0722851565' },
+      { label: 'Mama Lucy Kibaki Hospital', number: '0798536537' },
+    ],
+    mapQuery: 'hospital',
+  },
+];
+
+/* ── INJECT CSS ── */
+const style = document.createElement('style');
+style.textContent = `
+/* SOS BUTTON */
+.sos-fab {
+  position: fixed;
+  bottom: 80px; /* above mobile browser nav bar */
+  right: 16px;
+  z-index: 800;
+  height: 44px;
+  padding: 0 16px;
+  border-radius: 100px; /* pill shape */
+  background: linear-gradient(135deg, #DC2626, #B91C1C);
+  color: white;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-shadow: 0 4px 20px rgba(220,38,38,0.45);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  animation: sosPulse 2.5s ease-in-out infinite;
+  transition: transform .2s, box-shadow .2s;
+  -webkit-tap-highlight-color: transparent;
+  white-space: nowrap;
+}
+.sos-fab:hover { transform: scale(1.08); box-shadow: 0 8px 28px rgba(220,38,38,0.55); }
+.sos-fab:active { transform: scale(.95); }
+.sos-fab-icon { font-size: 18px; line-height: 1; }
+@keyframes sosPulse {
+  0%,100% { box-shadow: 0 4px 20px rgba(220,38,38,.45); }
+  50%      { box-shadow: 0 4px 32px rgba(220,38,38,.75), 0 0 0 8px rgba(220,38,38,.12); }
+}
+
+/* MODAL OVERLAY */
+.sos-overlay {
+  position: fixed; inset: 0; z-index: 900;
+  background: rgba(15,17,23,.7);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex; align-items: flex-end; justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity .3s ease;
+}
+.sos-overlay.open { opacity: 1; pointer-events: all; }
+@media(min-width:600px) {
+  .sos-overlay { align-items: center; }
+}
+
+/* MODAL SHEET */
+.sos-sheet {
+  width: 100%; max-width: 480px;
+  max-height: 92vh;
+  background: #fff;
+  border-radius: 24px 24px 0 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  transform: translateY(100%);
+  transition: transform .4s cubic-bezier(.22,1,.36,1);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+@media(min-width:600px) {
+  .sos-sheet { border-radius: 24px; max-height: 88vh; }
+}
+.sos-overlay.open .sos-sheet { transform: translateY(0); }
+
+/* SHEET HEADER */
+.sos-header {
+  background: linear-gradient(135deg, #DC2626, #B91C1C);
+  padding: 20px 20px 16px;
+  position: sticky; top: 0; z-index: 2;
+  border-radius: 24px 24px 0 0;
+}
+@media(min-width:600px) { .sos-header { border-radius: 24px 24px 0 0; } }
+.sos-header-top {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px;
+}
+.sos-header-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 20px; font-weight: 800; color: white;
+  display: flex; align-items: center; gap: 8px;
+}
+.sos-close {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: rgba(255,255,255,.2); border: none; cursor: pointer;
+  color: white; font-size: 16px;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .2s; flex-shrink: 0;
+}
+.sos-close:hover { background: rgba(255,255,255,.3); }
+
+/* LOCATION BAR */
+.sos-location-bar {
+  background: rgba(0,0,0,.25);
+  border-radius: 10px; padding: 10px 14px;
+  display: flex; align-items: center; gap: 8px;
+}
+.sos-loc-ico { font-size: 16px; flex-shrink: 0; }
+.sos-loc-txt { font-size: 12px; color: rgba(255,255,255,.9); line-height: 1.4; flex: 1; }
+.sos-loc-acc { font-size: 10px; color: rgba(255,255,255,.55); margin-top: 2px; }
+.sos-loc-loading { animation: locPulse 1.2s ease-in-out infinite; }
+@keyframes locPulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+/* SHEET BODY */
+.sos-body { padding: 16px 16px 24px; display: flex; flex-direction: column; gap: 12px; }
+
+/* SERVICE CARD */
+.sos-service {
+  border-radius: 14px; border: 1.5px solid #e5e7eb;
+  overflow: hidden;
+}
+.sos-service-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px; cursor: pointer;
+  transition: background .2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.sos-service-header:hover { background: #f9fafb; }
+.sos-service-left { display: flex; align-items: center; gap: 10px; }
+.sos-service-ico {
+  width: 36px; height: 36px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; flex-shrink: 0;
+}
+.sos-service-name {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 14px; font-weight: 700; color: #0F1117;
+}
+.sos-service-count { font-size: 11px; color: #9499AD; margin-top: 1px; }
+.sos-chevron { color: #9499AD; font-size: 12px; transition: transform .25s; }
+.sos-service.expanded .sos-chevron { transform: rotate(180deg); }
+
+/* MAP BUTTON */
+.sos-map-btn {
+  padding: 7px 14px; border-radius: 8px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 11px; font-weight: 700;
+  border: none; cursor: pointer;
+  display: flex; align-items: center; gap: 5px;
+  transition: filter .2s; flex-shrink: 0;
+  color: white;
+}
+.sos-map-btn:hover { filter: brightness(1.1); }
+
+/* NUMBERS LIST */
+.sos-numbers { display: none; padding: 0 14px 14px; flex-direction: column; gap: 6px; }
+.sos-service.expanded .sos-numbers { display: flex; }
+
+.sos-num-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 12px; border-radius: 10px;
+  background: #F7F6F2; border: 1px solid #eee;
+  gap: 8px;
+}
+.sos-num-label { font-size: 12px; color: #5A5E70; flex: 1; min-width: 0; }
+.sos-call-btn {
+  padding: 7px 16px; border-radius: 8px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 12px; font-weight: 700;
+  border: none; cursor: pointer;
+  display: flex; align-items: center; gap: 5px;
+  white-space: nowrap; color: white;
+  transition: filter .2s, transform .2s;
+  flex-shrink: 0;
+}
+.sos-call-btn:hover { filter: brightness(1.08); transform: translateY(-1px); }
+.sos-call-btn:active { transform: scale(.97); }
+
+/* SHARE LOCATION */
+.sos-share-row {
+  background: #F7F6F2; border-radius: 12px;
+  padding: 14px; border: 1px solid #eee;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.sos-share-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 13px; font-weight: 700; color: #0F1117;
+}
+.sos-share-loc { font-size: 12px; color: #5A5E70; line-height: 1.5; }
+.sos-share-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.sos-share-btn {
+  padding: 8px 14px; border-radius: 8px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 12px; font-weight: 600;
+  border: 1px solid #e5e7eb; background: white;
+  color: #0F1117; cursor: pointer;
+  display: flex; align-items: center; gap: 5px;
+  transition: background .2s, border-color .2s;
+}
+.sos-share-btn:hover { background: #F7F6F2; border-color: #ccc; }
+
+/* DISCLAIMER */
+.sos-disclaimer {
+  font-size: 11px; color: #9499AD; text-align: center;
+  line-height: 1.6; padding: 0 8px;
+}
+`;
+document.head.appendChild(style);
+
+/* ── STATE ── */
+let userLat = null;
+let userLng = null;
+let userAddress = 'Locating you…';
+let userAccuracy = null;
+let locationWatcher = null;
+
+/* ── BUILD DOM ── */
+// SOS button
+const fab = document.createElement('button');
+fab.className = 'sos-fab';
+fab.innerHTML = '<span class="sos-fab-icon">🆘</span><span>SOS Emergency</span>';
+fab.setAttribute('aria-label', 'Emergency SOS');
+fab.onclick = openSOS;
+document.body.appendChild(fab);
+
+// Modal overlay
+const overlay = document.createElement('div');
+overlay.className = 'sos-overlay';
+overlay.innerHTML = `
+  <div class="sos-sheet" id="sos-sheet">
+    <div class="sos-header">
+      <div class="sos-header-top">
+        <div class="sos-header-title">🆘 Emergency Services</div>
+        <button class="sos-close" onclick="window.__sosClose()" aria-label="Close">✕</button>
+      </div>
+      <div class="sos-location-bar">
+        <span class="sos-loc-ico">📍</span>
+        <div>
+          <div class="sos-loc-txt sos-loc-loading" id="sos-loc-txt">Getting your exact location…</div>
+          <div class="sos-loc-acc" id="sos-loc-acc"></div>
+        </div>
+      </div>
+    </div>
+    <div class="sos-body" id="sos-body">
+      ${buildServiceCards()}
+      <div class="sos-share-row">
+        <div class="sos-share-title">📤 Share your location</div>
+        <div class="sos-share-loc" id="sos-share-loc">Locating…</div>
+        <div class="sos-share-btns">
+          <button class="sos-share-btn" onclick="window.__sosShareWhatsApp()">💬 WhatsApp</button>
+          <button class="sos-share-btn" onclick="window.__sosCopyLocation()">📋 Copy link</button>
+          <button class="sos-share-btn" onclick="window.__sosShareNative()">📤 Share</button>
+        </div>
+      </div>
+      <div class="sos-disclaimer">
+        Apatmento emergency services are provided for safety reference only.
+        Always call emergency services directly in a life-threatening situation.
+        Kenya national emergency: <strong>999</strong> or <strong>112</strong>
+      </div>
+    </div>
+  </div>`;
+overlay.addEventListener('click', function(e) {
+  if (e.target === overlay) closeSOSModal();
+});
+document.body.appendChild(overlay);
+
+function buildServiceCards() {
+  return EMERGENCY_SERVICES.map(svc => `
+    <div class="sos-service" id="sos-svc-${svc.id}">
+      <div class="sos-service-header" onclick="window.__sosToggle('${svc.id}')">
+        <div class="sos-service-left">
+          <div class="sos-service-ico" style="background:${svc.bg};border:1px solid ${svc.border};">
+            ${svc.icon}
+          </div>
+          <div>
+            <div class="sos-service-name">${svc.name}</div>
+            <div class="sos-service-count">${svc.numbers.length} contact${svc.numbers.length>1?'s':''} · tap to expand</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <button class="sos-map-btn" style="background:${svc.color};"
+            onclick="event.stopPropagation();window.__sosOpenMap('${svc.mapQuery}')">
+            🗺️ Near me
+          </button>
+          <span class="sos-chevron">▼</span>
+        </div>
+      </div>
+      <div class="sos-numbers" id="sos-nums-${svc.id}">
+        ${svc.numbers.map(n => `
+          <div class="sos-num-row">
+            <span class="sos-num-label">${n.label}</span>
+            <a href="tel:${n.number}" class="sos-call-btn" style="background:${svc.color};"
+               onclick="window.__sosLogCall('${svc.name}','${n.number}')">
+              📞 ${n.number}
+            </a>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+/* ── OPEN / CLOSE ── */
+function openSOS() {
+  overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  startLocation();
+}
+window.openSOS = openSOS; // expose globally for nav buttons
+function closeSOSModal() {
+  overlay.classList.remove('open');
+  document.body.style.overflow = '';
+}
+window.__sosClose = closeSOSModal;
+
+/* ── TOGGLE SERVICE CARD ── */
+window.__sosToggle = function(id) {
+  const card = document.getElementById('sos-svc-' + id);
+  card.classList.toggle('expanded');
+};
+
+/* ── LOCATION — HIGH ACCURACY ── */
+function startLocation() {
+  if (!navigator.geolocation) {
+    document.getElementById('sos-loc-txt').textContent = 'Location not supported on this device';
+    document.getElementById('sos-loc-txt').classList.remove('sos-loc-loading');
+    return;
+  }
+
+  const opts = {
+    enableHighAccuracy: true, // GPS chip, not just WiFi/cell
+    timeout: 15000,
+    maximumAge: 0 // always fresh
+  };
+
+  // Watch position for live updates
+  if (locationWatcher) navigator.geolocation.clearWatch(locationWatcher);
+
+  locationWatcher = navigator.geolocation.watchPosition(
+    onLocationSuccess,
+    onLocationError,
+    opts
+  );
+}
+
+async function onLocationSuccess(pos) {
+  userLat = pos.coords.latitude;
+  userLng = pos.coords.longitude;
+  userAccuracy = Math.round(pos.coords.accuracy);
+
+  // Show coords immediately
+  const locTxt = document.getElementById('sos-loc-txt');
+  const locAcc = document.getElementById('sos-loc-acc');
+  const shareLoc = document.getElementById('sos-share-loc');
+
+  locTxt.classList.remove('sos-loc-loading');
+  locTxt.textContent = `${userLat.toFixed(6)}, ${userLng.toFixed(6)}`;
+  locAcc.textContent = `Accuracy: ±${userAccuracy}m${userAccuracy < 20 ? ' · GPS lock ✓' : userAccuracy < 100 ? ' · Good' : ' · Improving…'}`;
+
+  // Reverse geocode via OpenStreetMap Nominatim (free, no key needed)
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?lat=${userLat}&lon=${userLng}&format=json&addressdetails=1`,
+      { headers: { 'Accept-Language': 'en' } }
+    );
+    const data = await res.json();
+    if (data && data.display_name) {
+      userAddress = data.display_name;
+      // Show human-readable address
+      const short = [
+        data.address?.road,
+        data.address?.suburb || data.address?.neighbourhood,
+        data.address?.city || data.address?.town || data.address?.village,
+        data.address?.county,
+      ].filter(Boolean).join(', ');
+
+      locTxt.textContent = short || data.display_name;
+      if (shareLoc) shareLoc.textContent = short || data.display_name;
+    }
+  } catch(e) {
+    // Geocoding failed — coords are still accurate
+    if (shareLoc) shareLoc.textContent = `${userLat.toFixed(6)}, ${userLng.toFixed(6)}`;
+  }
+}
+
+function onLocationError(err) {
+  const locTxt = document.getElementById('sos-loc-txt');
+  locTxt.classList.remove('sos-loc-loading');
+  if (err.code === 1) {
+    locTxt.textContent = 'Location permission denied — please enable in your browser settings';
+  } else if (err.code === 2) {
+    locTxt.textContent = 'Location unavailable — please try outdoors or enable GPS';
+  } else {
+    locTxt.textContent = 'Location timed out — trying again…';
+    setTimeout(startLocation, 2000);
+  }
+}
+
+/* ── MAP LINK ── */
+window.__sosOpenMap = function(query) {
+  if (userLat && userLng) {
+    // Search near user's location
+    const url = `https://www.google.com/maps/search/${query}/@${userLat},${userLng},15z`;
+    window.open(url, '_blank');
+  } else {
+    window.open(`https://www.google.com/maps/search/${query}+near+Nairobi+Kenya`, '_blank');
+  }
+};
+
+/* ── SHARE LOCATION ── */
+window.__sosShareWhatsApp = function() {
+  const locStr = userLat
+    ? `https://maps.google.com/?q=${userLat},${userLng}`
+    : 'Location not available';
+  const msg = encodeURIComponent(
+    `🆘 EMERGENCY — I need help!\n\nMy location: ${userAddress}\n${locStr}\n\nPlease call me or send help.`
+  );
+  window.open(`https://wa.me/?text=${msg}`, '_blank');
+};
+
+window.__sosCopyLocation = function() {
+  const locStr = userLat
+    ? `My location: ${userAddress}\nhttps://maps.google.com/?q=${userLat},${userLng}`
+    : 'Location not yet available';
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(locStr).then(() => {
+      showSOSToast('Location copied to clipboard');
+    });
+  }
+};
+
+window.__sosShareNative = function() {
+  if (!navigator.share) { window.__sosCopyLocation(); return; }
+  const locStr = userLat
+    ? `https://maps.google.com/?q=${userLat},${userLng}`
+    : window.location.href;
+  navigator.share({
+    title: '🆘 My Emergency Location',
+    text: `I need help. My location: ${userAddress}`,
+    url: locStr,
+  });
+};
+
+window.__sosLogCall = function(service, number) {
+  console.log(`SOS: Calling ${service} — ${number}`);
+};
+
+/* ── TOAST ── */
+function showSOSToast(msg) {
+  let t = document.getElementById('sos-toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'sos-toast';
+    t.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#0F1117;color:#fff;padding:10px 20px;border-radius:10px;font-size:13px;font-weight:500;z-index:9999;pointer-events:none;opacity:0;transition:opacity .3s;white-space:nowrap;';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  setTimeout(() => { t.style.opacity = '0'; }, 2500);
+}
+
+})(); // end IIFE
+
 </script>
 </body>
 </html>
