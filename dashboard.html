@@ -2078,36 +2078,7 @@ const EMERGENCY_SERVICES = [
 const style = document.createElement('style');
 style.textContent = `
 /* SOS BUTTON */
-.sos-fab {
-  position: fixed;
-  bottom: 80px; /* above mobile browser nav bar */
-  right: 16px;
-  z-index: 800;
-  height: 44px;
-  padding: 0 16px;
-  border-radius: 100px; /* pill shape */
-  background: linear-gradient(135deg, #DC2626, #B91C1C);
-  color: white;
-  border: none;
-  cursor: pointer;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  box-shadow: 0 4px 20px rgba(220,38,38,0.45);
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: .04em;
-  animation: sosPulse 2.5s ease-in-out infinite;
-  transition: transform .2s, box-shadow .2s;
-  -webkit-tap-highlight-color: transparent;
-  white-space: nowrap;
-}
-.sos-fab:hover { transform: scale(1.08); box-shadow: 0 8px 28px rgba(220,38,38,0.55); }
-.sos-fab:active { transform: scale(.95); }
-.sos-fab-icon { font-size: 18px; line-height: 1; }
+/* floating SOS FAB removed */
 @keyframes sosPulse {
   0%,100% { box-shadow: 0 4px 20px rgba(220,38,38,.45); }
   50%      { box-shadow: 0 4px 32px rgba(220,38,38,.75), 0 0 0 8px rgba(220,38,38,.12); }
@@ -2287,13 +2258,7 @@ let userAccuracy = null;
 let locationWatcher = null;
 
 /* ── BUILD DOM ── */
-// SOS button
-const fab = document.createElement('button');
-fab.className = 'sos-fab';
-fab.innerHTML = '<span class="sos-fab-icon">🆘</span><span>SOS Emergency</span>';
-fab.setAttribute('aria-label', 'Emergency SOS');
-fab.onclick = openSOS;
-document.body.appendChild(fab);
+// floating FAB removed — SOS accessible from top nav only
 
 // Modal overlay
 const overlay = document.createElement('div');
