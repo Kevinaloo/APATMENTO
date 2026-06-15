@@ -1,0 +1,1327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>APATMENTO — Add Your Listing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400&family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --partner-void:#040E08;
+  --partner-deep:#061810;
+  --partner-mid:#0A2818;
+  --partner-card:#0F3020;
+  --partner-text:#F0F9F4;
+  --partner-muted:rgba(240,249,244,0.5);
+  --partner-faint:rgba(240,249,244,0.08);
+  --partner-border:rgba(200,151,10,0.18);
+  --partner-border-focus:rgba(200,151,10,0.55);
+  --gold:#C8970A;
+  --gold2:#E8A800;
+  --goldbright:#FCC444;
+  --emerald:#0D9467;
+  --emerald2:#059652;
+  --em-bg:rgba(13,148,103,0.1);
+  --em-bd:rgba(13,148,103,0.25);
+  --red:#F87171;
+  --red-bg:rgba(248,113,113,0.1);
+  --red-bd:rgba(248,113,113,0.25);
+  --white:#FFFFFF;
+  --shadow:0 24px 80px rgba(0,0,0,0.4);
+}
+html,body{min-height:100%;font-family:'Inter',sans-serif;background:var(--partner-void);color:var(--partner-text);overflow-x:hidden;}
+
+/* ── BACKGROUND ── */
+.bg{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;}
+.bg-grid{
+  position:absolute;inset:0;
+  background-image:linear-gradient(rgba(255,255,255,.015) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.015) 1px,transparent 1px);
+  background-size:64px 64px;
+}
+.bg-orb{position:absolute;border-radius:50%;filter:blur(100px);}
+.bo1{width:700px;height:700px;background:radial-gradient(circle,rgba(13,148,103,.07),transparent);top:-200px;right:-100px;animation:drift 10s ease-in-out infinite;}
+.bo2{width:500px;height:500px;background:radial-gradient(circle,rgba(200,151,10,.06),transparent);bottom:-100px;left:-80px;animation:drift 13s ease-in-out infinite reverse;}
+@keyframes drift{0%,100%{transform:translate(0,0);}50%{transform:translate(24px,16px);}}
+
+/* ── LAYOUT ── */
+.shell{position:relative;z-index:1;display:flex;flex-direction:column;min-height:100vh;}
+
+/* ── TOP NAV ── */
+.top-nav{
+  height:60px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 32px;
+  border-bottom:1px solid var(--partner-border);
+  background:rgba(4,14,8,.85);
+  backdrop-filter:blur(16px);
+  position:sticky;top:0;z-index:100;
+  flex-shrink:0;
+}
+.nav-logo{
+  font-family:'Playfair Display',serif;font-size:15px;font-weight:700;
+  letter-spacing:.22em;text-transform:uppercase;
+  background:linear-gradient(90deg,var(--goldbright),var(--gold2));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.nav-back{
+  display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500;
+  color:var(--partner-muted);text-decoration:none;
+  padding:7px 14px;border-radius:8px;
+  border:1px solid var(--partner-border);
+  transition:all .2s;cursor:pointer;
+}
+.nav-back:hover{color:var(--partner-text);border-color:rgba(200,151,10,.4);}
+.nav-partner-badge{
+  padding:5px 12px;border-radius:100px;
+  background:rgba(200,151,10,.1);border:1px solid var(--partner-border);
+  font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--goldbright);
+}
+
+/* ── MAIN CONTENT ── */
+.main{
+  flex:1;display:flex;gap:0;
+  max-width:1200px;width:100%;margin:0 auto;padding:48px 32px;
+}
+@media(max-width:900px){.main{flex-direction:column;padding:28px 16px;}}
+
+/* ── LEFT: STEP SIDEBAR ── */
+.steps-sidebar{
+  width:240px;flex-shrink:0;margin-right:52px;
+}
+@media(max-width:900px){.steps-sidebar{width:100%;margin-right:0;margin-bottom:32px;}}
+
+.steps-sidebar-title{
+  font-size:11px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--partner-muted);margin-bottom:20px;
+}
+.step-nav{display:flex;flex-direction:column;gap:0;position:relative;}
+/* connector line */
+.step-nav::before{
+  content:'';position:absolute;
+  left:15px;top:32px;bottom:32px;width:1px;
+  background:linear-gradient(180deg,var(--partner-border),var(--partner-border));
+}
+.snav-item{
+  display:flex;align-items:flex-start;gap:14px;
+  padding:10px 0;cursor:pointer;position:relative;z-index:1;
+}
+.snav-num{
+  width:32px;height:32px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:700;
+  border:1.5px solid var(--partner-border);
+  background:var(--partner-deep);
+  color:var(--partner-muted);
+  transition:all .3s;
+}
+.snav-item.done .snav-num{
+  background:var(--em-bg);border-color:var(--em-bd);color:var(--emerald);
+}
+.snav-item.active .snav-num{
+  background:linear-gradient(135deg,var(--goldbright),var(--gold2));
+  border-color:transparent;color:#0A1A0A;
+  box-shadow:0 4px 16px rgba(200,151,10,.3);
+}
+.snav-label{
+  display:flex;flex-direction:column;justify-content:center;padding-top:6px;
+}
+.snav-title{
+  font-size:13px;font-weight:600;color:var(--partner-muted);
+  transition:color .3s;
+}
+.snav-item.active .snav-title,.snav-item.done .snav-title{color:var(--partner-text);}
+.snav-sub{font-size:11px;color:rgba(240,249,244,.3);margin-top:2px;}
+
+/* progress bar */
+.progress-wrap{margin-top:28px;}
+.progress-label{
+  display:flex;justify-content:space-between;
+  font-size:11px;color:var(--partner-muted);margin-bottom:8px;
+}
+.progress-track{height:4px;border-radius:2px;background:var(--partner-faint);overflow:hidden;}
+.progress-fill{
+  height:100%;border-radius:2px;
+  background:linear-gradient(90deg,var(--goldbright),var(--gold2));
+  transition:width .5s cubic-bezier(.22,1,.36,1);
+  box-shadow:0 0 12px rgba(200,151,10,.4);
+}
+
+/* ── RIGHT: FORM AREA ── */
+.form-area{flex:1;min-width:0;}
+
+/* step card */
+.step-card{
+  background:rgba(10,40,24,.6);
+  border:1px solid var(--partner-border);
+  border-radius:24px;
+  padding:40px 44px;
+  backdrop-filter:blur(8px);
+  display:none;
+}
+.step-card.active{display:block;animation:stepIn .5s cubic-bezier(.22,1,.36,1) both;}
+@keyframes stepIn{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+@media(max-width:600px){.step-card{padding:24px 20px;border-radius:16px;}}
+
+.step-eyebrow{
+  font-size:10px;font-weight:600;letter-spacing:.28em;text-transform:uppercase;
+  color:var(--gold);margin-bottom:10px;
+}
+.step-title{
+  font-family:'Playfair Display',serif;
+  font-size:clamp(22px,3vw,30px);font-weight:700;
+  color:var(--partner-text);margin-bottom:6px;line-height:1.2;
+}
+.step-desc{font-size:14px;color:var(--partner-muted);margin-bottom:32px;line-height:1.65;}
+
+/* ── FIELD ── */
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:20px;}
+.field-label{
+  font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
+  color:rgba(240,249,244,.55);
+}
+.field-input,.field-select,.field-textarea{
+  width:100%;padding:13px 16px;
+  background:rgba(255,255,255,.04);
+  border:1.5px solid var(--partner-border);
+  border-radius:12px;
+  font-family:'Inter',sans-serif;font-size:14px;
+  color:var(--partner-text);outline:none;
+  transition:border-color .2s,box-shadow .2s,background .2s;
+  -webkit-appearance:none;
+}
+.field-input::placeholder,.field-textarea::placeholder{color:rgba(240,249,244,.25);}
+.field-input:focus,.field-select:focus,.field-textarea:focus{
+  border-color:var(--partner-border-focus);
+  background:rgba(255,255,255,.06);
+  box-shadow:0 0 0 3px rgba(200,151,10,.08);
+}
+.field-input.err,.field-select.err{border-color:var(--red);}
+.field-select{
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 10 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='rgba(240,249,244,0.3)' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 14px center;background-size:10px;
+  padding-right:36px;cursor:pointer;
+}
+.field-select option{background:#0A2818;color:var(--partner-text);}
+.field-textarea{resize:vertical;min-height:120px;line-height:1.65;}
+.field-hint{font-size:11px;color:rgba(240,249,244,.3);margin-top:2px;}
+.field-err-msg{font-size:11px;color:var(--red);display:none;}
+.field-err-msg.show{display:block;}
+
+/* two-col row */
+.row-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+@media(max-width:560px){.row-2,.row-3{grid-template-columns:1fr;}}
+
+/* ── PROPERTY TYPE TILES ── */
+.type-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:24px;}
+@media(max-width:560px){.type-grid{grid-template-columns:repeat(2,1fr);}}
+.type-tile{
+  padding:18px 14px;border-radius:14px;
+  border:1.5px solid var(--partner-border);
+  background:rgba(255,255,255,.03);
+  cursor:pointer;text-align:center;
+  transition:all .22s cubic-bezier(.22,1,.36,1);
+  position:relative;
+}
+.type-tile:hover{border-color:rgba(200,151,10,.4);background:rgba(200,151,10,.04);}
+.type-tile.sel{
+  border-color:var(--goldbright);
+  background:rgba(200,151,10,.08);
+  box-shadow:0 0 0 3px rgba(200,151,10,.12);
+}
+.type-tile .ti{font-size:28px;display:block;margin-bottom:8px;}
+.type-tile .tl{font-size:12px;font-weight:600;color:var(--partner-text);}
+.type-tile .tc{font-size:10px;color:var(--partner-muted);margin-top:3px;}
+.type-tile .check{
+  position:absolute;top:8px;right:8px;width:18px;height:18px;
+  border-radius:50%;background:var(--goldbright);
+  display:none;align-items:center;justify-content:center;
+  font-size:10px;color:#0A1A0A;font-weight:700;
+}
+.type-tile.sel .check{display:flex;}
+
+/* ── AMENITY TOGGLES ── */
+.amenity-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px;}
+@media(max-width:560px){.amenity-grid{grid-template-columns:repeat(2,1fr);}}
+.amen-toggle{
+  display:flex;align-items:center;gap:8px;
+  padding:10px 12px;border-radius:10px;
+  border:1.5px solid var(--partner-border);
+  background:rgba(255,255,255,.03);
+  cursor:pointer;font-size:12px;font-weight:500;
+  color:var(--partner-muted);
+  transition:all .2s;user-select:none;
+}
+.amen-toggle:hover{border-color:rgba(200,151,10,.35);color:var(--partner-text);}
+.amen-toggle.sel{
+  border-color:var(--em-bd);background:var(--em-bg);color:var(--partner-text);
+}
+.amen-toggle .at-ico{font-size:16px;flex-shrink:0;}
+.amen-toggle .at-chk{
+  margin-left:auto;width:16px;height:16px;border-radius:4px;
+  border:1.5px solid var(--partner-border);background:transparent;
+  display:flex;align-items:center;justify-content:center;font-size:9px;
+  transition:all .2s;flex-shrink:0;
+}
+.amen-toggle.sel .at-chk{background:var(--emerald);border-color:var(--emerald);color:white;}
+
+/* ── PHOTO UPLOAD ── */
+.photo-upload-area{
+  border:2px dashed var(--partner-border);
+  border-radius:16px;padding:36px 24px;
+  text-align:center;cursor:pointer;
+  transition:border-color .25s,background .25s;
+  margin-bottom:16px;position:relative;
+}
+.photo-upload-area:hover{border-color:rgba(200,151,10,.45);background:rgba(200,151,10,.03);}
+.photo-upload-area.drag-over{border-color:var(--goldbright);background:rgba(200,151,10,.06);}
+.pua-ico{font-size:40px;margin-bottom:12px;opacity:.6;}
+.pua-title{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:600;color:var(--partner-text);margin-bottom:6px;}
+.pua-sub{font-size:12px;color:var(--partner-muted);line-height:1.5;}
+.pua-sub span{color:var(--goldbright);font-weight:600;cursor:pointer;}
+.pua-sub span:hover{text-decoration:underline;}
+.photo-input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+
+/* photo preview grid */
+.photo-preview-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:8px;}
+@media(max-width:560px){.photo-preview-grid{grid-template-columns:repeat(2,1fr);}}
+.photo-thumb{
+  aspect-ratio:1;border-radius:10px;
+  background:var(--partner-card);border:1px solid var(--partner-border);
+  position:relative;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;
+}
+.photo-thumb img{width:100%;height:100%;object-fit:cover;}
+.photo-thumb .ph-rm{
+  position:absolute;top:5px;right:5px;
+  width:22px;height:22px;border-radius:50%;
+  background:rgba(0,0,0,.7);border:1px solid rgba(255,255,255,.2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;cursor:pointer;color:white;
+  transition:background .2s;
+}
+.photo-thumb .ph-rm:hover{background:rgba(220,38,38,.8);}
+.photo-thumb .ph-main-badge{
+  position:absolute;bottom:5px;left:5px;
+  padding:2px 7px;border-radius:100px;
+  background:var(--goldbright);color:#0A1A0A;
+  font-size:9px;font-weight:700;letter-spacing:.06em;
+}
+.photo-note{font-size:11px;color:var(--partner-muted);text-align:center;}
+
+/* ── PRICING ── */
+.pricing-section{margin-bottom:24px;}
+.price-note{
+  display:flex;align-items:flex-start;gap:12px;
+  padding:14px 18px;border-radius:12px;
+  background:var(--em-bg);border:1px solid var(--em-bd);
+  margin-bottom:20px;
+}
+.pn-ico{font-size:20px;flex-shrink:0;}
+.pn-txt{font-size:12px;color:var(--partner-text);line-height:1.6;}
+.pn-txt strong{color:var(--emerald);display:block;margin-bottom:2px;}
+.currency-field{position:relative;}
+.currency-prefix{
+  position:absolute;left:14px;top:50%;transform:translateY(-50%);
+  font-size:13px;font-weight:600;color:var(--partner-muted);pointer-events:none;
+}
+.currency-field .field-input{padding-left:52px;}
+
+/* ── RULES / TOGGLE ── */
+.toggle-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 0;border-bottom:1px solid var(--partner-faint);
+}
+.toggle-row:last-child{border-bottom:none;}
+.tr-label{font-size:13px;font-weight:500;color:var(--partner-text);}
+.tr-sub{font-size:11px;color:var(--partner-muted);margin-top:2px;}
+.toggle-switch{
+  width:44px;height:24px;border-radius:12px;
+  background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.1);
+  position:relative;cursor:pointer;flex-shrink:0;
+  transition:background .25s;
+}
+.toggle-switch.on{background:var(--emerald);border-color:var(--emerald);}
+.toggle-knob{
+  position:absolute;top:2px;left:2px;
+  width:18px;height:18px;border-radius:50%;background:white;
+  transition:transform .25s cubic-bezier(.22,1,.36,1);
+  box-shadow:0 1px 4px rgba(0,0,0,.3);
+}
+.toggle-switch.on .toggle-knob{transform:translateX(20px);}
+
+/* ── REVIEW PANEL (final step) ── */
+.review-section{margin-bottom:20px;}
+.rv-label{
+  font-size:10px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--gold);margin-bottom:10px;
+}
+.rv-block{
+  background:rgba(255,255,255,.03);border:1px solid var(--partner-border);
+  border-radius:12px;padding:18px 20px;margin-bottom:10px;
+}
+.rv-row{
+  display:flex;justify-content:space-between;align-items:flex-start;
+  padding:6px 0;border-bottom:1px solid var(--partner-faint);font-size:13px;
+}
+.rv-row:last-child{border-bottom:none;}
+.rv-key{color:var(--partner-muted);flex-shrink:0;margin-right:12px;}
+.rv-val{color:var(--partner-text);font-weight:500;text-align:right;}
+.publish-banner{
+  background:linear-gradient(135deg,rgba(200,151,10,.12),rgba(200,151,10,.05));
+  border:1px solid var(--partner-border);border-radius:16px;
+  padding:24px 28px;text-align:center;margin-top:24px;
+}
+.pb-ico{font-size:36px;margin-bottom:10px;}
+.pb-title{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--partner-text);margin-bottom:6px;}
+.pb-sub{font-size:13px;color:var(--partner-muted);line-height:1.6;}
+
+/* ── NAV BUTTONS ── */
+.step-nav-btns{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-top:36px;gap:12px;
+}
+.btn-back{
+  padding:12px 24px;border-radius:12px;
+  background:transparent;border:1.5px solid var(--partner-border);
+  font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:600;
+  color:var(--partner-muted);cursor:pointer;
+  transition:all .2s;
+}
+.btn-back:hover{border-color:rgba(200,151,10,.4);color:var(--partner-text);}
+.btn-next{
+  padding:12px 32px;border-radius:12px;
+  background:linear-gradient(135deg,var(--goldbright),var(--gold2));
+  color:#0A1A0A;font-family:'Space Grotesk',sans-serif;
+  font-size:14px;font-weight:700;letter-spacing:.04em;
+  border:none;cursor:pointer;
+  box-shadow:0 6px 24px rgba(200,151,10,.25);
+  transition:filter .2s,transform .2s,box-shadow .2s;
+  display:flex;align-items:center;gap:8px;
+}
+.btn-next:hover{filter:brightness(1.07);transform:translateY(-1px);box-shadow:0 10px 32px rgba(200,151,10,.35);}
+.btn-next:disabled{opacity:.5;pointer-events:none;}
+.btn-publish{
+  padding:14px 40px;border-radius:12px;
+  background:linear-gradient(135deg,var(--emerald),var(--emerald2));
+  color:white;font-family:'Space Grotesk',sans-serif;
+  font-size:15px;font-weight:700;letter-spacing:.04em;
+  border:none;cursor:pointer;
+  box-shadow:0 8px 28px rgba(13,148,103,.3);
+  transition:filter .2s,transform .2s;
+  display:flex;align-items:center;gap:10px;
+}
+.btn-publish:hover{filter:brightness(1.08);transform:translateY(-2px);}
+
+/* spinner inside btn */
+.btn-spinner{
+  width:15px;height:15px;border-radius:50%;
+  border:2px solid rgba(10,26,10,.3);border-top-color:#0A1A0A;
+  animation:spin .7s linear infinite;display:none;
+}
+.btn-publish .btn-spinner{border-color:rgba(255,255,255,.3);border-top-color:white;}
+.loading .btn-spinner{display:block;}
+.loading .btn-label{display:none;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* ── SUCCESS SCREEN ── */
+.success-screen{
+  display:none;text-align:center;padding:60px 40px;
+}
+.success-screen.show{display:block;animation:stepIn .6s cubic-bezier(.22,1,.36,1) both;}
+.ss-ico{font-size:64px;margin-bottom:20px;animation:bounce .7s cubic-bezier(.22,1,.36,1);}
+@keyframes bounce{0%{transform:scale(0)}60%{transform:scale(1.2)}100%{transform:scale(1)}}
+.ss-title{font-family:'Playfair Display',serif;font-size:32px;font-weight:700;color:var(--partner-text);margin-bottom:12px;}
+.ss-sub{font-size:15px;color:var(--partner-muted);line-height:1.75;max-width:440px;margin:0 auto 32px;}
+.ss-stat-row{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-bottom:36px;}
+.ss-stat{
+  padding:14px 20px;border-radius:12px;
+  background:rgba(255,255,255,.04);border:1px solid var(--partner-border);
+  text-align:center;min-width:110px;
+}
+.ss-stat-val{font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;color:var(--goldbright);}
+.ss-stat-lbl{font-size:11px;color:var(--partner-muted);margin-top:3px;}
+.ss-btn{
+  padding:14px 36px;border-radius:12px;
+  background:linear-gradient(135deg,var(--goldbright),var(--gold2));
+  color:#0A1A0A;font-family:'Space Grotesk',sans-serif;
+  font-size:14px;font-weight:700;border:none;cursor:pointer;
+  transition:filter .2s;text-decoration:none;display:inline-flex;align-items:center;gap:8px;
+}
+.ss-btn:hover{filter:brightness(1.07);}
+
+/* alert */
+.form-alert{
+  padding:12px 16px;border-radius:10px;font-size:13px;
+  display:none;margin-bottom:16px;
+}
+.form-alert.show{display:block;}
+.fa-error{background:var(--red-bg);border:1px solid var(--red-bd);color:var(--red);}
+
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition-duration:.01ms!important;}
+}
+</style>
+</head>
+<body>
+
+<div class="bg">
+  <div class="bg-grid"></div>
+  <div class="bg-orb bo1"></div>
+  <div class="bg-orb bo2"></div>
+</div>
+
+<div class="shell">
+
+<!-- ── TOP NAV ── -->
+<nav class="top-nav">
+  <a href="dashboard.html?role=partner" class="nav-back">← Dashboard</a>
+  <div class="nav-logo">Apatmento</div>
+  <div class="nav-partner-badge">Partner</div>
+</nav>
+
+<!-- ── MAIN ── -->
+<div class="main">
+
+  <!-- STEP SIDEBAR -->
+  <aside class="steps-sidebar">
+    <div class="steps-sidebar-title">Your listing</div>
+    <div class="step-nav" id="step-nav">
+      <div class="snav-item active" data-step="1">
+        <div class="snav-num">1</div>
+        <div class="snav-label">
+          <div class="snav-title">Property Type</div>
+          <div class="snav-sub">What kind of space?</div>
+        </div>
+      </div>
+      <div class="snav-item" data-step="2">
+        <div class="snav-num">2</div>
+        <div class="snav-label">
+          <div class="snav-title">Location</div>
+          <div class="snav-sub">Where is it?</div>
+        </div>
+      </div>
+      <div class="snav-item" data-step="3">
+        <div class="snav-num">3</div>
+        <div class="snav-label">
+          <div class="snav-title">Details & Amenities</div>
+          <div class="snav-sub">What's included?</div>
+        </div>
+      </div>
+      <div class="snav-item" data-step="4">
+        <div class="snav-num">4</div>
+        <div class="snav-label">
+          <div class="snav-title">Photos</div>
+          <div class="snav-sub">Show it off</div>
+        </div>
+      </div>
+      <div class="snav-item" data-step="5">
+        <div class="snav-num">5</div>
+        <div class="snav-label">
+          <div class="snav-title">Pricing</div>
+          <div class="snav-sub">Set your rate</div>
+        </div>
+      </div>
+      <div class="snav-item" data-step="6">
+        <div class="snav-num">6</div>
+        <div class="snav-label">
+          <div class="snav-title">Rules & Policies</div>
+          <div class="snav-sub">Your house rules</div>
+        </div>
+      </div>
+      <div class="snav-item" data-step="7">
+        <div class="snav-num">7</div>
+        <div class="snav-label">
+          <div class="snav-title">Review & Publish</div>
+          <div class="snav-sub">Go live</div>
+        </div>
+      </div>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-label">
+        <span id="prog-label">Step 1 of 7</span>
+        <span id="prog-pct">14%</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="prog-fill" style="width:14%"></div></div>
+    </div>
+  </aside>
+
+  <!-- FORM AREA -->
+  <div class="form-area">
+    <div class="form-alert fa-error" id="form-alert"></div>
+
+    <!-- ══ STEP 1: PROPERTY TYPE ══ -->
+    <div class="step-card active" id="step-1">
+      <div class="step-eyebrow">Step 1 of 7</div>
+      <div class="step-title">What kind of place are you listing?</div>
+      <div class="step-desc">Choose the type that best describes your space. This helps guests find exactly what they're looking for.</div>
+      <div class="type-grid" id="type-grid">
+        <div class="type-tile" data-type="Apartment" onclick="selectType(this)">
+          <span class="ti">🏢</span><div class="tl">Apartment</div><div class="tc">Flat or unit</div>
+          <div class="check">✓</div>
+        </div>
+        <div class="type-tile" data-type="House" onclick="selectType(this)">
+          <span class="ti">🏠</span><div class="tl">House</div><div class="tc">Full home</div>
+          <div class="check">✓</div>
+        </div>
+        <div class="type-tile" data-type="Studio" onclick="selectType(this)">
+          <span class="ti">🛋️</span><div class="tl">Studio</div><div class="tc">Open-plan space</div>
+          <div class="check">✓</div>
+        </div>
+        <div class="type-tile" data-type="Penthouse" onclick="selectType(this)">
+          <span class="ti">🌆</span><div class="tl">Penthouse</div><div class="tc">Top-floor luxury</div>
+          <div class="check">✓</div>
+        </div>
+        <div class="type-tile" data-type="Villa" onclick="selectType(this)">
+          <span class="ti">🛖</span><div class="tl">Villa</div><div class="tc">Private villa</div>
+          <div class="check">✓</div>
+        </div>
+        <div class="type-tile" data-type="Cottage" onclick="selectType(this)">
+          <span class="ti">🏡</span><div class="tl">Cottage</div><div class="tc">Rural retreat</div>
+          <div class="check">✓</div>
+        </div>
+        <div class="type-tile" data-type="Serviced" onclick="selectType(this)">
+          <span class="ti">🏨</span><div class="tl">Serviced Apt</div><div class="tc">Hotel-style</div>
+          <div class="check">✓</div>
+        </div>
+        <div class="type-tile" data-type="Guesthouse" onclick="selectType(this)">
+          <span class="ti">🛏️</span><div class="tl">Guesthouse</div><div class="tc">Private room</div>
+          <div class="check">✓</div>
+        </div>
+        <div class="type-tile" data-type="Lodge" onclick="selectType(this)">
+          <span class="ti">🌿</span><div class="tl">Lodge</div><div class="tc">Safari / nature</div>
+          <div class="check">✓</div>
+        </div>
+      </div>
+      <div class="step-nav-btns">
+        <div></div>
+        <button class="btn-next" onclick="nextStep()">Continue <span>→</span></button>
+      </div>
+    </div>
+
+    <!-- ══ STEP 2: LOCATION ══ -->
+    <div class="step-card" id="step-2">
+      <div class="step-eyebrow">Step 2 of 7</div>
+      <div class="step-title">Where is your property?</div>
+      <div class="step-desc">Your exact address is only shared with guests after they book. The public listing shows your neighbourhood.</div>
+      <div class="field">
+        <label class="field-label">Property name / title *</label>
+        <input class="field-input" id="f-title" type="text" placeholder="e.g. Skyline Loft – Westlands" maxlength="80"/>
+        <div class="field-hint">This is the headline guests see. Make it descriptive and appealing.</div>
+      </div>
+      <div class="row-2">
+        <div class="field">
+          <label class="field-label">Country *</label>
+          <select class="field-select" id="f-country">
+            <option value="">Select country</option>
+            <option value="Kenya" selected>Kenya</option>
+            <option value="Uganda">Uganda</option>
+            <option value="Tanzania">Tanzania</option>
+            <option value="Rwanda">Rwanda</option>
+            <option value="Ethiopia">Ethiopia</option>
+            <option value="South Africa">South Africa</option>
+            <option value="Nigeria">Nigeria</option>
+            <option value="Ghana">Ghana</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="field-label">City *</label>
+          <input class="field-input" id="f-city" type="text" placeholder="e.g. Nairobi"/>
+        </div>
+      </div>
+      <div class="field">
+        <label class="field-label">Neighbourhood / Area *</label>
+        <input class="field-input" id="f-area" type="text" placeholder="e.g. Westlands, Karen, Kilimani"/>
+      </div>
+      <div class="field">
+        <label class="field-label">Street address (private)</label>
+        <input class="field-input" id="f-street" type="text" placeholder="Exact address — only shared after booking"/>
+        <div class="field-hint">Only shown to confirmed guests. Never displayed publicly.</div>
+      </div>
+      <div class="step-nav-btns">
+        <button class="btn-back" onclick="prevStep()">← Back</button>
+        <button class="btn-next" onclick="nextStep()">Continue →</button>
+      </div>
+    </div>
+
+    <!-- ══ STEP 3: DETAILS & AMENITIES ══ -->
+    <div class="step-card" id="step-3">
+      <div class="step-eyebrow">Step 3 of 7</div>
+      <div class="step-title">Tell guests about your space</div>
+      <div class="step-desc">The more detail you give, the more bookings you attract. Be honest and specific.</div>
+
+      <div class="row-3">
+        <div class="field">
+          <label class="field-label">Bedrooms</label>
+          <select class="field-select" id="f-beds">
+            <option value="0">Studio</option>
+            <option value="1" selected>1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5+">5+</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="field-label">Bathrooms</label>
+          <select class="field-select" id="f-baths">
+            <option value="1" selected>1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4+">4+</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="field-label">Max guests</label>
+          <select class="field-select" id="f-guests">
+            <option value="1">1</option>
+            <option value="2" selected>2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="8">8</option>
+            <option value="10+">10+</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row-2">
+        <div class="field">
+          <label class="field-label">Floor number</label>
+          <input class="field-input" id="f-floor" type="number" placeholder="0 = ground floor" min="0"/>
+        </div>
+        <div class="field">
+          <label class="field-label">Size (m²)</label>
+          <input class="field-input" id="f-sqm" type="number" placeholder="e.g. 65" min="10"/>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Description *</label>
+        <textarea class="field-textarea" id="f-desc" placeholder="Describe your space — the vibe, what's special about it, nearby attractions, what guests love most about staying here…" maxlength="1200"></textarea>
+        <div class="field-hint"><span id="desc-count">0</span> / 1200 characters</div>
+      </div>
+
+      <div class="field" style="margin-bottom:8px;">
+        <div class="field-label" style="margin-bottom:12px;">Amenities — what do you offer?</div>
+        <div class="amenity-grid" id="amenity-grid">
+          <div class="amen-toggle" data-a="WiFi" onclick="toggleAmen(this)"><span class="at-ico">📶</span>WiFi<div class="at-chk"></div></div>
+          <div class="amen-toggle" data-a="Air Con" onclick="toggleAmen(this)"><span class="at-ico">❄️</span>Air Con<div class="at-chk"></div></div>
+          <div class="amen-toggle" data-a="Full Kitchen" onclick="toggleAmen(this)"><span class="at-ico">🍳</span>Full Kitchen<div class="at-chk"></div></div>
+          <div class="amen-toggle" data-a="Kitchenette" onclick="toggleAmen(this)"><span class="at-ico">☕</span>Kitchenette<div class="at-chk"></div></div>
+          <div class="amen-toggle" data-a="Parking" onclick="toggleAmen(this)"><span class="at-ico">🅿️</span>Parking<div class="at-chk"></div></div>
+          <div class="amen-toggle" data-a="Smart TV" onclick="toggleAmen(this)"><span class="at-ico">📺</span>Smart TV<div class="at-chk"></div></div>
+          <div class="amen-toggle" data-a="Washer" onclick="toggleAmen(this)"><span class="at-ico">🧺</span>Washer<div class="at-chk"></div></div>
+          <div class="amen-toggle" data-a="Gym" onclick="toggleAmen(this)"><span class="at-ico">🏋️</span>Gym Access<div class="at-chk"></div></div>
+          <div class="amen-toggle" data-a="Pool" onclick="toggleAmen(this)"><span class="at-ico">🏊</span>Pool<div class="at-chk"></div></div>
+          <div class="amen-toggle" data-a="Garden" onclick="toggleAmen(this)"><span class="at-ico">🌳</span>Garden<div class="at-chk"></div></div>
+          <div class="amen-toggle" data-a="Security" onclick="toggleAmen(this)"><span class="at-ico">🔐</span>24/7 Security<div class="at-chk"></div></div>
+          <div class="amen-toggle" data-a="Pet-friendly" onclick="toggleAmen(this)"><span class="at-ico">🐾</span>Pet-friendly<div class="at-chk"></div></div>
+          <div class="amen-toggle" data-a="Beach Access" onclick="toggleAmen(this)"><span class="at-ico">🌊</span>Beach Access<div class="at-chk"></div></div>
+          <div class="amen-toggle" data-a="City View" onclick="toggleAmen(this)"><span class="at-ico">🌆</span>City View<div class="at-chk"></div></div>
+          <div class="amen-toggle" data-a="Safe" onclick="toggleAmen(this)"><span class="at-ico">🗄️</span>In-room Safe<div class="at-chk"></div></div>
+          <div class="amen-toggle" data-a="Elevator" onclick="toggleAmen(this)"><span class="at-ico">🛗</span>Elevator<div class="at-chk"></div></div>
+          <div class="amen-toggle" data-a="Wheelchair" onclick="toggleAmen(this)"><span class="at-ico">♿</span>Accessible<div class="at-chk"></div></div>
+          <div class="amen-toggle" data-a="Coffee" onclick="toggleAmen(this)"><span class="at-ico">☕</span>Coffee Machine<div class="at-chk"></div></div>
+        </div>
+      </div>
+      <div class="step-nav-btns">
+        <button class="btn-back" onclick="prevStep()">← Back</button>
+        <button class="btn-next" onclick="nextStep()">Continue →</button>
+      </div>
+    </div>
+
+    <!-- ══ STEP 4: PHOTOS ══ -->
+    <div class="step-card" id="step-4">
+      <div class="step-eyebrow">Step 4 of 7</div>
+      <div class="step-title">Add photos of your space</div>
+      <div class="step-desc">Great photos are the #1 driver of bookings. Upload at least 4. The first photo becomes your cover image.</div>
+
+      <div class="photo-upload-area" id="upload-zone"
+        ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropFiles(event)">
+        <input type="file" class="photo-input" id="photo-input" multiple accept="image/*" onchange="handleFiles(this.files)"/>
+        <div class="pua-ico">📸</div>
+        <div class="pua-title">Drag photos here</div>
+        <div class="pua-sub">or <span onclick="document.getElementById('photo-input').click()">browse your device</span><br/>
+        JPG, PNG or WebP · Max 10MB each · Up to 20 photos</div>
+      </div>
+
+      <div class="photo-preview-grid" id="photo-preview"></div>
+      <div class="photo-note" id="photo-note" style="display:none;">
+        ✦ Drag to reorder · First photo is your cover image
+      </div>
+
+      <div class="step-nav-btns" style="margin-top:28px;">
+        <button class="btn-back" onclick="prevStep()">← Back</button>
+        <button class="btn-next" onclick="nextStep()">Continue →</button>
+      </div>
+    </div>
+
+    <!-- ══ STEP 5: PRICING ══ -->
+    <div class="step-card" id="step-5">
+      <div class="step-eyebrow">Step 5 of 7</div>
+      <div class="step-title">Set your pricing</div>
+      <div class="step-desc">You keep 100% of what you charge. Apatmento takes zero commission — ever.</div>
+
+      <div class="price-note">
+        <div class="pn-ico">🏆</div>
+        <div class="pn-txt">
+          <strong>0% Commission — you earn every shilling</strong>
+          Whatever price you set is what guests pay, and what you receive. No platform cut. No hidden fees. No surprises.
+        </div>
+      </div>
+
+      <div class="row-2">
+        <div class="field">
+          <label class="field-label">Currency</label>
+          <select class="field-select" id="f-currency">
+            <option value="KES" selected>KES — Kenyan Shilling</option>
+            <option value="USD">USD — US Dollar</option>
+            <option value="EUR">EUR — Euro</option>
+            <option value="GBP">GBP — British Pound</option>
+            <option value="UGX">UGX — Ugandan Shilling</option>
+            <option value="TZS">TZS — Tanzanian Shilling</option>
+            <option value="ZAR">ZAR — South African Rand</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="field-label">Nightly rate *</label>
+          <div class="currency-field">
+            <span class="currency-prefix" id="currency-prefix">KES</span>
+            <input class="field-input" id="f-price-night" type="number" placeholder="4,200" min="100"/>
+          </div>
+        </div>
+      </div>
+
+      <div class="row-2">
+        <div class="field">
+          <label class="field-label">Weekly rate <span style="font-size:10px;color:var(--partner-muted);font-weight:400;">(optional)</span></label>
+          <div class="currency-field">
+            <span class="currency-prefix" id="currency-prefix-w">KES</span>
+            <input class="field-input" id="f-price-week" type="number" placeholder="Leave blank for auto"/>
+          </div>
+          <div class="field-hint">Tip: offer 10–15% discount to attract longer stays.</div>
+        </div>
+        <div class="field">
+          <label class="field-label">Monthly rate <span style="font-size:10px;color:var(--partner-muted);font-weight:400;">(optional)</span></label>
+          <div class="currency-field">
+            <span class="currency-prefix" id="currency-prefix-m">KES</span>
+            <input class="field-input" id="f-price-month" type="number" placeholder="Leave blank for auto"/>
+          </div>
+          <div class="field-hint">Tip: 20–30% monthly discount fills your calendar.</div>
+        </div>
+      </div>
+
+      <div class="row-2">
+        <div class="field">
+          <label class="field-label">Security deposit <span style="font-size:10px;color:var(--partner-muted);font-weight:400;">(optional)</span></label>
+          <div class="currency-field">
+            <span class="currency-prefix">KES</span>
+            <input class="field-input" id="f-deposit" type="number" placeholder="e.g. 5,000"/>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field-label">Minimum stay (nights)</label>
+          <select class="field-select" id="f-min-nights">
+            <option value="1" selected>1 night</option>
+            <option value="2">2 nights</option>
+            <option value="3">3 nights</option>
+            <option value="7">7 nights (weekly)</option>
+            <option value="30">30 nights (monthly)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="step-nav-btns">
+        <button class="btn-back" onclick="prevStep()">← Back</button>
+        <button class="btn-next" onclick="nextStep()">Continue →</button>
+      </div>
+    </div>
+
+    <!-- ══ STEP 6: RULES ══ -->
+    <div class="step-card" id="step-6">
+      <div class="step-eyebrow">Step 6 of 7</div>
+      <div class="step-title">House rules & policies</div>
+      <div class="step-desc">Set clear expectations so guests know what to expect before they book.</div>
+
+      <div class="row-2">
+        <div class="field">
+          <label class="field-label">Check-in from</label>
+          <input class="field-input" id="f-checkin" type="time" value="14:00"/>
+        </div>
+        <div class="field">
+          <label class="field-label">Check-out by</label>
+          <input class="field-input" id="f-checkout" type="time" value="11:00"/>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label" style="margin-bottom:14px;">Guest rules</label>
+        <div class="toggle-row">
+          <div>
+            <div class="tr-label">Smoking allowed</div>
+            <div class="tr-sub">Permit guests to smoke on the property</div>
+          </div>
+          <div class="toggle-switch" id="tog-smoking" onclick="toggleSwitch(this)"><div class="toggle-knob"></div></div>
+        </div>
+        <div class="toggle-row">
+          <div>
+            <div class="tr-label">Pets allowed</div>
+            <div class="tr-sub">Welcome guests travelling with pets</div>
+          </div>
+          <div class="toggle-switch" id="tog-pets" onclick="toggleSwitch(this)"><div class="toggle-knob"></div></div>
+        </div>
+        <div class="toggle-row">
+          <div>
+            <div class="tr-label">Events & parties allowed</div>
+            <div class="tr-sub">Allow guests to host gatherings</div>
+          </div>
+          <div class="toggle-switch" id="tog-events" onclick="toggleSwitch(this)"><div class="toggle-knob"></div></div>
+        </div>
+        <div class="toggle-row">
+          <div>
+            <div class="tr-label">Children welcome</div>
+            <div class="tr-sub">Suitable for families with young children</div>
+          </div>
+          <div class="toggle-switch on" id="tog-children" onclick="toggleSwitch(this)"><div class="toggle-knob"></div></div>
+        </div>
+        <div class="toggle-row">
+          <div>
+            <div class="tr-label">Instant booking</div>
+            <div class="tr-sub">Guests can book immediately without approval</div>
+          </div>
+          <div class="toggle-switch on" id="tog-instant" onclick="toggleSwitch(this)"><div class="toggle-knob"></div></div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Cancellation policy</label>
+        <select class="field-select" id="f-cancel">
+          <option value="flexible">Flexible — full refund up to 24hrs before check-in</option>
+          <option value="moderate" selected>Moderate — full refund up to 5 days before check-in</option>
+          <option value="strict">Strict — 50% refund up to 7 days before check-in</option>
+          <option value="non-refundable">Non-refundable — no refunds after booking</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Additional house rules <span style="font-size:10px;color:var(--partner-muted);font-weight:400;">(optional)</span></label>
+        <textarea class="field-textarea" id="f-rules" placeholder="e.g. Quiet hours after 10pm · Please remove shoes at the door · No cooking fish indoors…" style="min-height:90px;" maxlength="500"></textarea>
+      </div>
+
+      <div class="step-nav-btns">
+        <button class="btn-back" onclick="prevStep()">← Back</button>
+        <button class="btn-next" onclick="nextStep()">Review listing →</button>
+      </div>
+    </div>
+
+    <!-- ══ STEP 7: REVIEW & PUBLISH ══ -->
+    <div class="step-card" id="step-7">
+      <div class="step-eyebrow">Step 7 of 7</div>
+      <div class="step-title">Review your listing</div>
+      <div class="step-desc">Check everything looks right. You can edit any detail from your Partner dashboard after publishing.</div>
+
+      <div class="review-section">
+        <div class="rv-label">Property</div>
+        <div class="rv-block">
+          <div class="rv-row"><div class="rv-key">Type</div><div class="rv-val" id="rv-type">—</div></div>
+          <div class="rv-row"><div class="rv-key">Title</div><div class="rv-val" id="rv-title">—</div></div>
+          <div class="rv-row"><div class="rv-key">Location</div><div class="rv-val" id="rv-location">—</div></div>
+          <div class="rv-row"><div class="rv-key">Beds / Baths</div><div class="rv-val" id="rv-beds">—</div></div>
+          <div class="rv-row"><div class="rv-key">Max guests</div><div class="rv-val" id="rv-guests">—</div></div>
+          <div class="rv-row"><div class="rv-key">Size</div><div class="rv-val" id="rv-sqm">—</div></div>
+        </div>
+      </div>
+
+      <div class="review-section">
+        <div class="rv-label">Pricing</div>
+        <div class="rv-block">
+          <div class="rv-row"><div class="rv-key">Nightly rate</div><div class="rv-val" id="rv-price">—</div></div>
+          <div class="rv-row"><div class="rv-key">Min stay</div><div class="rv-val" id="rv-minstay">—</div></div>
+          <div class="rv-row"><div class="rv-key">Commission</div><div class="rv-val" style="color:var(--emerald);">0% — you keep it all</div></div>
+          <div class="rv-row"><div class="rv-key">Cancellation</div><div class="rv-val" id="rv-cancel">—</div></div>
+        </div>
+      </div>
+
+      <div class="review-section">
+        <div class="rv-label">Amenities</div>
+        <div class="rv-block">
+          <div class="rv-row" style="border:none;padding:4px 0;"><div class="rv-val" id="rv-amenities" style="text-align:left;">—</div></div>
+        </div>
+      </div>
+
+      <div class="review-section">
+        <div class="rv-label">Photos</div>
+        <div class="rv-block">
+          <div class="rv-row" style="border:none;padding:4px 0;"><div class="rv-val" id="rv-photos" style="text-align:left;">—</div></div>
+        </div>
+      </div>
+
+      <div class="publish-banner">
+        <div class="pb-ico">🚀</div>
+        <div class="pb-title">Ready to go live?</div>
+        <div class="pb-sub">Your listing will be visible to guests on Apatmento immediately. You earn 100% of every booking — no commission, no platform fees.</div>
+      </div>
+
+      <div class="step-nav-btns">
+        <button class="btn-back" onclick="prevStep()">← Back</button>
+        <button class="btn-publish" id="publish-btn" onclick="publishListing()">
+          <div class="btn-spinner"></div>
+          <span class="btn-label">🚀 Publish Listing</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ══ SUCCESS ══ -->
+    <div class="success-screen" id="success-screen">
+      <div class="ss-ico">🎉</div>
+      <div class="ss-title">Your listing is live!</div>
+      <div class="ss-sub" id="ss-sub">
+        Your property is now visible to guests across Apatmento.
+        Every booking goes directly to you — 0% commission, always.
+      </div>
+      <div class="ss-stat-row">
+        <div class="ss-stat"><div class="ss-stat-val">Live</div><div class="ss-stat-lbl">Status</div></div>
+        <div class="ss-stat"><div class="ss-stat-val">0%</div><div class="ss-stat-lbl">Commission</div></div>
+        <div class="ss-stat"><div class="ss-stat-val" id="ss-price-val">—</div><div class="ss-stat-lbl">Per night</div></div>
+      </div>
+      <a href="dashboard.html?role=partner" class="ss-btn">Go to Dashboard →</a>
+    </div>
+
+  </div><!-- end form-area -->
+</div><!-- end main -->
+</div><!-- end shell -->
+
+<script>
+/* ══════════════════════════════════════════════════════
+   SUPABASE — paste same values as auth.html
+══════════════════════════════════════════════════════ */
+const SUPABASE_URL      = 'YOUR_SUPABASE_URL';
+const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+/* Session guard */
+let CURRENT_USER = null;
+(async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { window.location.href = 'auth.html'; return; }
+  CURRENT_USER = session.user;
+})();
+
+/* ══ STATE ══ */
+let currentStep = 1;
+const TOTAL     = 7;
+const formData  = {
+  type:'', title:'', country:'Kenya', city:'', area:'', street:'',
+  beds:'1', baths:'1', guests:'2', floor:'', sqm:'', desc:'',
+  amenities:[],
+  photos:[], photoFiles:[],
+  currency:'KES', priceNight:'', priceWeek:'', priceMonth:'',
+  deposit:'', minNights:'1',
+  checkin:'14:00', checkout:'11:00',
+  smoking:false, pets:false, events:false, children:true, instant:true,
+  cancelPolicy:'moderate', rules:'',
+};
+
+/* ══ STEP NAVIGATION ══ */
+function goToStep(n) {
+  document.getElementById('step-' + currentStep)?.classList.remove('active');
+  document.querySelectorAll('.snav-item').forEach((el, i) => {
+    el.classList.remove('active');
+    if (i + 1 < n)  el.classList.add('done');
+    if (i + 1 === n) el.classList.add('active');
+    if (i + 1 > n)  el.classList.remove('done');
+  });
+  currentStep = n;
+  document.getElementById('step-' + currentStep)?.classList.add('active');
+  updateProgress();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function nextStep() {
+  if (!validateStep(currentStep)) return;
+  collectStep(currentStep);
+  if (currentStep === 6) buildReview();
+  if (currentStep < TOTAL) goToStep(currentStep + 1);
+}
+
+function prevStep() {
+  if (currentStep > 1) goToStep(currentStep - 1);
+}
+
+function updateProgress() {
+  const pct = Math.round((currentStep / TOTAL) * 100);
+  document.getElementById('prog-fill').style.width  = pct + '%';
+  document.getElementById('prog-pct').textContent   = pct + '%';
+  document.getElementById('prog-label').textContent = `Step ${currentStep} of ${TOTAL}`;
+}
+
+/* ══ VALIDATION ══ */
+function showAlert(msg) {
+  const el = document.getElementById('form-alert');
+  el.textContent = msg; el.classList.add('show');
+  el.scrollIntoView({ behavior:'smooth', block:'nearest' });
+  setTimeout(() => el.classList.remove('show'), 5000);
+}
+
+function validateStep(n) {
+  if (n === 1 && !formData.type)                    { showAlert('Please select a property type to continue.'); return false; }
+  if (n === 2 && !document.getElementById('f-title').value.trim()) { showAlert('Please add a title for your listing.'); return false; }
+  if (n === 2 && !document.getElementById('f-city').value.trim())  { showAlert('Please enter the city.'); return false; }
+  if (n === 2 && !document.getElementById('f-area').value.trim())  { showAlert('Please enter the neighbourhood or area.'); return false; }
+  if (n === 3 && !document.getElementById('f-desc').value.trim())  { showAlert('Please write a description for your listing.'); return false; }
+  if (n === 5 && !document.getElementById('f-price-night').value)  { showAlert('Please set a nightly rate.'); return false; }
+  return true;
+}
+
+/* ══ COLLECT STEP DATA ══ */
+function collectStep(n) {
+  if (n === 2) {
+    formData.title   = document.getElementById('f-title').value.trim();
+    formData.country = document.getElementById('f-country').value;
+    formData.city    = document.getElementById('f-city').value.trim();
+    formData.area    = document.getElementById('f-area').value.trim();
+    formData.street  = document.getElementById('f-street').value.trim();
+  }
+  if (n === 3) {
+    formData.beds    = document.getElementById('f-beds').value;
+    formData.baths   = document.getElementById('f-baths').value;
+    formData.guests  = document.getElementById('f-guests').value;
+    formData.floor   = document.getElementById('f-floor').value;
+    formData.sqm     = document.getElementById('f-sqm').value;
+    formData.desc    = document.getElementById('f-desc').value.trim();
+  }
+  if (n === 5) {
+    formData.currency   = document.getElementById('f-currency').value;
+    formData.priceNight = document.getElementById('f-price-night').value;
+    formData.priceWeek  = document.getElementById('f-price-week').value;
+    formData.priceMonth = document.getElementById('f-price-month').value;
+    formData.deposit    = document.getElementById('f-deposit').value;
+    formData.minNights  = document.getElementById('f-min-nights').value;
+  }
+  if (n === 6) {
+    formData.checkin      = document.getElementById('f-checkin').value;
+    formData.checkout     = document.getElementById('f-checkout').value;
+    formData.smoking      = document.getElementById('tog-smoking').classList.contains('on');
+    formData.pets         = document.getElementById('tog-pets').classList.contains('on');
+    formData.events       = document.getElementById('tog-events').classList.contains('on');
+    formData.children     = document.getElementById('tog-children').classList.contains('on');
+    formData.instant      = document.getElementById('tog-instant').classList.contains('on');
+    formData.cancelPolicy = document.getElementById('f-cancel').value;
+    formData.rules        = document.getElementById('f-rules').value.trim();
+  }
+}
+
+/* ══ PROPERTY TYPE ══ */
+function selectType(el) {
+  document.querySelectorAll('.type-tile').forEach(t => t.classList.remove('sel'));
+  el.classList.add('sel');
+  formData.type = el.dataset.type;
+}
+
+/* ══ AMENITIES ══ */
+function toggleAmen(el) {
+  el.classList.toggle('sel');
+  const a = el.dataset.a;
+  if (el.classList.contains('sel')) {
+    el.querySelector('.at-chk').textContent = '✓';
+    if (!formData.amenities.includes(a)) formData.amenities.push(a);
+  } else {
+    el.querySelector('.at-chk').textContent = '';
+    formData.amenities = formData.amenities.filter(x => x !== a);
+  }
+}
+
+/* description counter */
+document.getElementById('f-desc')?.addEventListener('input', function() {
+  document.getElementById('desc-count').textContent = this.value.length;
+});
+
+/* ══ PHOTOS ══ */
+function handleFiles(files) {
+  const allowed = Array.from(files).filter(f => f.type.startsWith('image/') && f.size <= 10 * 1024 * 1024);
+  if (files.length > allowed.length) showAlert('Some files were skipped — images only, max 10MB each.');
+  allowed.forEach(addPhoto);
+}
+function addPhoto(file) {
+  if (formData.photoFiles.length >= 20) { showAlert('Maximum 20 photos allowed.'); return; }
+  formData.photoFiles.push(file);
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    formData.photos.push(e.target.result);
+    renderPhotoGrid();
+  };
+  reader.readAsDataURL(file);
+}
+function removePhoto(idx) {
+  formData.photos.splice(idx, 1);
+  formData.photoFiles.splice(idx, 1);
+  renderPhotoGrid();
+}
+function renderPhotoGrid() {
+  const grid = document.getElementById('photo-preview');
+  const note = document.getElementById('photo-note');
+  grid.innerHTML = '';
+  formData.photos.forEach((src, i) => {
+    const div = document.createElement('div');
+    div.className = 'photo-thumb';
+    div.innerHTML = `<img src="${src}" alt="Photo ${i+1}"/>
+      ${i === 0 ? '<div class="ph-main-badge">Cover</div>' : ''}
+      <div class="ph-rm" onclick="removePhoto(${i})">✕</div>`;
+    grid.appendChild(div);
+  });
+  note.style.display = formData.photos.length ? 'block' : 'none';
+}
+function dragOver(e)  { e.preventDefault(); document.getElementById('upload-zone').classList.add('drag-over'); }
+function dragLeave(e) { document.getElementById('upload-zone').classList.remove('drag-over'); }
+function dropFiles(e) {
+  e.preventDefault();
+  document.getElementById('upload-zone').classList.remove('drag-over');
+  handleFiles(e.dataTransfer.files);
+}
+
+/* ══ CURRENCY PREFIX ══ */
+document.getElementById('f-currency')?.addEventListener('change', function() {
+  ['currency-prefix','currency-prefix-w','currency-prefix-m'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = this.value;
+  });
+});
+
+/* ══ TOGGLES ══ */
+function toggleSwitch(el) {
+  el.classList.toggle('on');
+}
+
+/* ══ REVIEW ══ */
+function buildReview() {
+  collectStep(6);
+  const beds = formData.beds === '0' ? 'Studio' : formData.beds + ' bedroom(s)';
+  document.getElementById('rv-type').textContent     = formData.type || '—';
+  document.getElementById('rv-title').textContent    = formData.title || '—';
+  document.getElementById('rv-location').textContent = [formData.area, formData.city, formData.country].filter(Boolean).join(', ') || '—';
+  document.getElementById('rv-beds').textContent     = `${beds} · ${formData.baths} bath(s)`;
+  document.getElementById('rv-guests').textContent   = `Up to ${formData.guests} guest(s)`;
+  document.getElementById('rv-sqm').textContent      = formData.sqm ? formData.sqm + ' m²' : 'Not specified';
+  document.getElementById('rv-price').textContent    = formData.priceNight ? `${formData.currency} ${Number(formData.priceNight).toLocaleString()} / night` : '—';
+  document.getElementById('rv-minstay').textContent  = formData.minNights + ' night(s)';
+  const cancelMap = { flexible:'Flexible',moderate:'Moderate',strict:'Strict','non-refundable':'Non-refundable' };
+  document.getElementById('rv-cancel').textContent   = cancelMap[formData.cancelPolicy] || formData.cancelPolicy;
+  document.getElementById('rv-amenities').textContent = formData.amenities.length ? formData.amenities.join(' · ') : 'None selected';
+  document.getElementById('rv-photos').textContent   = formData.photos.length ? `${formData.photos.length} photo(s) uploaded` : 'No photos uploaded';
+}
+
+/* ══ PUBLISH ══ */
+async function publishListing() {
+  collectStep(6);
+  const btn = document.getElementById('publish-btn');
+  btn.classList.add('loading');
+
+  try {
+    /* 1. Upload photos to Supabase Storage
+       Bucket: "listings" — create in Supabase Storage with public access
+    */
+    const photoUrls = [];
+    for (let i = 0; i < formData.photoFiles.length; i++) {
+      const file = formData.photoFiles[i];
+      const ext  = file.name.split('.').pop();
+      const path = `${CURRENT_USER?.id || 'anon'}/${Date.now()}-${i}.${ext}`;
+      const { data: upData, error: upErr } = await sb.storage
+        .from('listings')
+        .upload(path, file, { cacheControl:'3600', upsert:false });
+      if (upErr) throw upErr;
+      const { data: { publicUrl } } = sb.storage.from('listings').getPublicUrl(path);
+      photoUrls.push(publicUrl);
+    }
+
+    /* 2. Insert listing record
+       Run this SQL in Supabase SQL Editor to create the table:
+
+       create table if not exists public.listings (
+         id              uuid default gen_random_uuid() primary key,
+         partner_id      uuid references auth.users on delete cascade,
+         type            text, title text, country text, city text,
+         area            text, street text,
+         beds            text, baths text, max_guests text,
+         floor           text, sqm text, description text,
+         amenities       text[],
+         photos          text[],
+         currency        text, price_night numeric, price_week numeric, price_month numeric,
+         deposit         numeric, min_nights int,
+         checkin_time    text, checkout_time text,
+         smoking         boolean, pets boolean, events boolean,
+         children        boolean, instant_book boolean,
+         cancel_policy   text, house_rules text,
+         status          text default 'active',
+         created_at      timestamptz default now()
+       );
+       alter table public.listings enable row level security;
+       create policy "Partners manage own listings"
+         on public.listings for all using (auth.uid() = partner_id);
+       create policy "Public can read active listings"
+         on public.listings for select using (status = 'active');
+    */
+    const { error: insertErr } = await sb.from('listings').insert({
+      partner_id:    CURRENT_USER?.id,
+      type:          formData.type,
+      title:         formData.title,
+      country:       formData.country,
+      city:          formData.city,
+      area:          formData.area,
+      street:        formData.street,
+      beds:          formData.beds,
+      baths:         formData.baths,
+      max_guests:    formData.guests,
+      floor:         formData.floor || null,
+      sqm:           formData.sqm   || null,
+      description:   formData.desc,
+      amenities:     formData.amenities,
+      photos:        photoUrls,
+      currency:      formData.currency,
+      price_night:   parseFloat(formData.priceNight) || null,
+      price_week:    parseFloat(formData.priceWeek)  || null,
+      price_month:   parseFloat(formData.priceMonth) || null,
+      deposit:       parseFloat(formData.deposit)    || null,
+      min_nights:    parseInt(formData.minNights)    || 1,
+      checkin_time:  formData.checkin,
+      checkout_time: formData.checkout,
+      smoking:       formData.smoking,
+      pets:          formData.pets,
+      events:        formData.events,
+      children:      formData.children,
+      instant_book:  formData.instant,
+      cancel_policy: formData.cancelPolicy,
+      house_rules:   formData.rules || null,
+      status:        'active',
+    });
+
+    if (insertErr) throw insertErr;
+
+    /* 3. Show success */
+    btn.classList.remove('loading');
+    document.getElementById('step-7').classList.remove('active');
+    document.querySelectorAll('.snav-item').forEach(el => el.classList.add('done'));
+    const ss = document.getElementById('success-screen');
+    ss.classList.add('show');
+    document.getElementById('ss-sub').textContent =
+      `"${formData.title}" is now live on Apatmento. Every booking goes directly to you — 0% commission, always.`;
+    document.getElementById('ss-price-val').textContent =
+      `${formData.currency} ${Number(formData.priceNight).toLocaleString()}`;
+
+  } catch (err) {
+    btn.classList.remove('loading');
+    showAlert('Something went wrong: ' + (err.message || 'Please try again.'));
+    console.error(err);
+  }
+}
+</script>
+</body>
+</html>
