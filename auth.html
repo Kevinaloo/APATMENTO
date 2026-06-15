@@ -122,10 +122,15 @@ html,body{
 .right-panel{
   flex:1;
   display:flex;flex-direction:column;
-  align-items:center;justify-content:center;
-  padding:48px 32px;
+  align-items:center;justify-content:flex-start;
+  padding:48px 32px 64px;
   background:var(--offwhite);
   overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  min-height:100vh;
+}
+@media(min-height:700px){
+  .right-panel{justify-content:center;}
 }
 
 .auth-card{
@@ -635,28 +640,34 @@ html,body{
       - Redirect URLs: https://your-netlify-site.netlify.app/dashboard.html
 ══════════════════════════════════════════════════════════════ */
 
-const SUPABASE_URL      = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
+const SUPABASE_URL      = 'YOUR_SUPABASE_URL';
+const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+
 /* ══════════════════════════════════════════════════════════════
    INIT
 ══════════════════════════════════════════════════════════════ */
 const { createClient } = supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let initialCheckDone = false;
 
 /* Check if already logged in — redirect straight to dashboard */
 (async () => {
   const { data: { session } } = await sb.auth.getSession();
+  initialCheckDone = true;
   if (session) redirectToDashboard(session.user, false);
 })();
 
-/* Handle OAuth redirect (Google callback lands here) */
+/* Handle OAuth redirect ONLY — not initial session restore */
+let initialCheckDone = false;
 sb.auth.onAuthStateChange(async (event, session) => {
+  // INITIAL_SESSION fires on page load — we already handle that above, ignore it here
+  if (!initialCheckDone) return;
   if (event === 'SIGNED_IN' && session) {
     await ensureProfile(session.user);
     redirectToDashboard(session.user, true);
   }
   if (event === 'PASSWORD_RECOVERY') {
-    // Could redirect to a reset-password page here
+    showReset();
   }
 });
 
@@ -793,8 +804,14 @@ async function handleSignup(e) {
   setLoading('signup-btn', false);
 
   if (error) {
-    if (error.message.includes('already registered')) showError('An account with this email already exists. Try signing in instead.');
-    else showError(error.message);
+    const msg = error.message || '';
+    if (msg.toLowerCase().includes('already') || msg.toLowerCase().includes('registered') || msg.toLowerCase().includes('exists')) {
+      showError('An account with this email already exists. Try signing in instead.');
+    } else if (msg.toLowerCase().includes('weak') || msg.toLowerCase().includes('password')) {
+      showError('Password is too weak. Please use at least 8 characters with a mix of letters and numbers.');
+    } else {
+      showError(msg || 'Something went wrong. Please try again.');
+    }
     return;
   }
 
@@ -854,24 +871,28 @@ async function handleReset(e) {
 ══════════════════════════════════════════════════════════════ */
 function switchTab(tab) {
   clearAlerts();
-  showLogin(); // reset to login view first
+  // hide special screens, restore tabs
+  document.getElementById('reset-screen').classList.remove('show');
+  document.getElementById('verify-screen').classList.remove('show');
+  document.getElementById('redirect-screen').classList.remove('show');
+  document.getElementById('auth-tabs').style.display = 'flex';
+  // toggle tab active states
   document.getElementById('tab-login').classList.toggle('active',  tab === 'login');
   document.getElementById('tab-signup').classList.toggle('active', tab === 'signup');
+  // show/hide form sections
   document.getElementById('login-section').style.display  = tab === 'login'  ? 'block' : 'none';
   document.getElementById('signup-section').style.display = tab === 'signup' ? 'block' : 'none';
 }
 
 function showReset() {
-  document.getElementById('login-section').style.display = 'none';
-  document.getElementById('auth-tabs').style.display     = 'none';
+  clearAlerts();
+  document.getElementById('login-section').style.display  = 'none';
+  document.getElementById('signup-section').style.display = 'none';
+  document.getElementById('auth-tabs').style.display      = 'none';
   document.getElementById('reset-screen').classList.add('show');
 }
 
 function showLogin() {
-  document.getElementById('reset-screen').classList.remove('show');
-  document.getElementById('verify-screen').classList.remove('show');
-  document.getElementById('redirect-screen').classList.remove('show');
-  document.getElementById('auth-tabs').style.display = 'flex';
   switchTab('login');
 }
 
