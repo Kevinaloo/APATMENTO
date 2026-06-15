@@ -75,7 +75,7 @@ html,body{height:100%;font-family:'Inter',sans-serif;overflow:hidden;background:
 }
 
 /* animated background particles */
-.greet-bg{position:absolute;inset:0;overflow:hidden;pointer-events:none;}
+.greet-bg{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0;}
 .gb-orb{position:absolute;border-radius:50%;filter:blur(90px);}
 .gb-orb-1{width:600px;height:600px;background:radial-gradient(circle,rgba(13,148,103,.08),transparent);top:-150px;left:-100px;animation:orbDrift 9s ease-in-out infinite;}
 .gb-orb-2{width:500px;height:500px;background:radial-gradient(circle,rgba(200,151,10,.07),transparent);bottom:-100px;right:-80px;animation:orbDrift 11s ease-in-out infinite reverse;}
@@ -86,7 +86,7 @@ html,body{height:100%;font-family:'Inter',sans-serif;overflow:hidden;background:
   position:absolute;inset:0;
   background-image:linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),
     linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px);
-  background-size:72px 72px;pointer-events:none;
+  background-size:72px 72px;pointer-events:none;z-index:0;
 }
 
 /* logo top */
@@ -216,7 +216,7 @@ html,body{height:100%;font-family:'Inter',sans-serif;overflow:hidden;background:
 /* CARD PAIR */
 .role-cards{
   display:flex;gap:28px;align-items:stretch;
-  position:relative;z-index:2;
+  position:relative;z-index:60;
   flex-wrap:wrap;justify-content:center;
   padding:0 24px;
 }
@@ -227,19 +227,20 @@ html,body{height:100%;font-family:'Inter',sans-serif;overflow:hidden;background:
   border-radius:24px;padding:40px 36px 36px;
   cursor:pointer;position:relative;overflow:hidden;
   opacity:0;transform:translateY(40px) scale(.97);
-  transition:
-    opacity .6s cubic-bezier(.22,1,.36,1),
+  transition:opacity .6s cubic-bezier(.22,1,.36,1),
     transform .6s cubic-bezier(.22,1,.36,1),
     box-shadow .3s ease;
   border:1px solid transparent;
   user-select:none;
   -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+  z-index:60; /* above everything */
 }
 .role-card.on{opacity:1;transform:translateY(0) scale(1);}
 @media(hover:hover){
   .role-card:hover{transform:translateY(-6px) scale(1.02);}
 }
-.role-card:active{transform:scale(.98);}
+.role-card:active{transform:scale(.98);opacity:.85;}
 
 /* card shine sweep on hover */
 .role-card::before{
@@ -363,29 +364,7 @@ html,body{height:100%;font-family:'Inter',sans-serif;overflow:hidden;background:
 .role-card:hover .card-cta-arrow{transform:translateX(4px);}
 
 /* EXPAND OVERLAY — fills screen when card is chosen */
-.expand-overlay{
-  position:fixed;
-  /* position from centre of screen, not top-left */
-  left:50%;top:50%;
-  width:10px;height:10px;
-  margin-left:-5px;margin-top:-5px;
-  z-index:200;
-  pointer-events:none;
-  border-radius:50%;
-  transform:scale(0);
-  opacity:0;
-  transition:transform .8s cubic-bezier(.22,1,.36,1),
-             opacity .3s ease,
-             border-radius .7s ease;
-}
-.expand-overlay.go{
-  transform:scale(300);
-  opacity:1;
-  border-radius:0;
-  pointer-events:none; /* never block clicks — dashboard appears on top */
-}
-.exp-guest{background:var(--white);}
-.exp-partner{background:var(--partner-bg);}
+/* overlays removed */
 
 /* ══════════════════════════════════════════════
    GUEST DASHBOARD
@@ -986,7 +965,7 @@ html,body{height:100%;font-family:'Inter',sans-serif;overflow:hidden;background:
         <div class="cf">Explore tours & events</div>
         <div class="cf">Zero taxes, zero commissions</div>
       </div>
-      <button class="card-cta">
+      <button class="card-cta" onclick="event.stopPropagation();chooseRole('guest')" style="position:relative;z-index:99;">
         Enter as Guest <span class="card-cta-arrow">→</span>
       </button>
     </div>
@@ -1010,16 +989,13 @@ html,body{height:100%;font-family:'Inter',sans-serif;overflow:hidden;background:
         <div class="cf">Read & respond to reviews</div>
         <div class="cf">0% commission. Always.</div>
       </div>
-      <button class="card-cta">
+      <button class="card-cta" onclick="event.stopPropagation();chooseRole('partner')" style="position:relative;z-index:99;">
         Enter as Partner <span class="card-cta-arrow">→</span>
       </button>
     </div>
 
   </div>
 
-  <!-- expand overlays (one per role, centred on their card) -->
-  <div class="expand-overlay exp-guest"   id="exp-guest"></div>
-  <div class="expand-overlay exp-partner" id="exp-partner"></div>
 </div>
 
 
@@ -1573,20 +1549,13 @@ function buildGreeting() {
 let selectedRole = null;
 
 function chooseRole(role) {
-  if (selectedRole) return; // prevent double-tap
+  if (selectedRole) return;
   selectedRole = role;
-  saveRole(role); // persist to Supabase
+  saveRole(role);
   populateDashboard(role);
 
-  // Simple fade out role screen, fade in dashboard
-  const roleScreen = document.getElementById('screen-role');
-  roleScreen.style.transition = 'opacity .4s ease';
-  roleScreen.style.opacity = '0';
-  roleScreen.style.pointerEvents = 'none';
-
-  setTimeout(() => {
-    showScreen(role, 0);
-  }, 380);
+  // Immediately switch — no animation that could fail
+  showScreen(role, 0);
 }
 
 function populateDashboard(role) {
@@ -1638,21 +1607,10 @@ function animateDashboard(role) {
 function switchRole() {
   selectedRole = null;
   if (CURRENT_USER) saveRole(null);
-
-  // reset role cards
   document.getElementById('card-guest').classList.remove('on');
   document.getElementById('card-partner').classList.remove('on');
   document.getElementById('role-header').classList.remove('on');
-
-  // reset fade-items
   document.querySelectorAll('.fade-item').forEach(el => el.classList.remove('on'));
-
-  // restore role screen opacity
-  const roleScreen = document.getElementById('screen-role');
-  roleScreen.style.opacity = '';
-  roleScreen.style.pointerEvents = '';
-  roleScreen.style.transition = '';
-
   showScreen('role');
 }
 
