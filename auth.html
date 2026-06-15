@@ -622,266 +622,48 @@ html,body{
 
 <script>
 /* ══════════════════════════════════════════════════════════════
-   ▼▼▼  SUPABASE CONFIGURATION  ▼▼▼
+   SUPABASE CONFIGURATION
 
-   HOW TO GET THESE VALUES:
-   1. Go to supabase.com → your project → Settings → API
-   2. Copy "Project URL"  → paste as SUPABASE_URL
-   3. Copy "anon / public" key → paste as SUPABASE_ANON_KEY
+   TWO WAYS TO SET YOUR KEYS:
 
-   HOW TO ENABLE GOOGLE SIGN-IN:
-   1. Supabase dashboard → Authentication → Providers → Google → Enable
-   2. Create OAuth credentials at console.cloud.google.com:
-      - New project → APIs & Services → Credentials → OAuth 2.0 Client ID
-      - Authorised redirect URI: https://YOUR_PROJECT.supabase.co/auth/v1/callback
-   3. Paste the Client ID and Secret into Supabase Google provider settings
-   4. Add your site URL to Supabase → Authentication → URL Configuration
-      - Site URL: https://your-netlify-site.netlify.app
-      - Redirect URLs: https://your-netlify-site.netlify.app/dashboard.html
+   OPTION A — Netlify Environment Variables (RECOMMENDED, more secure):
+   1. Netlify dashboard → your site → Site configuration → Environment variables
+   2. Add variable:  SUPABASE_URL   = https://xxxx.supabase.co
+   3. Add variable:  SUPABASE_ANON_KEY = eyJ...
+   4. Then in your HTML files use window._env_ values (set via netlify.toml)
+      OR just paste them directly below — the anon key is safe to expose in HTML.
+
+   OPTION B — Paste directly (fine for anon key, it's public-safe):
+   Just fill in the two strings below.
 ══════════════════════════════════════════════════════════════ */
+const SUPABASE_URL      = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
 
-const SUPABASE_URL      = 'YOUR_SUPABASE_URL';
-const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
-
-/* ══════════════════════════════════════════════════════════════
-   INIT
-══════════════════════════════════════════════════════════════ */
+/* ── INIT ── */
 const { createClient } = supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-let initialCheckDone = false;
 
-/* Check if already logged in — redirect straight to dashboard */
-(async () => {
-  const { data: { session } } = await sb.auth.getSession();
-  initialCheckDone = true;
-  if (session) redirectToDashboard(session.user, false);
-})();
+/* ── TAB STATE — managed purely in JS, no recursion ── */
+let currentTab = 'login'; // track which tab is active
 
-/* Handle OAuth redirect ONLY — not initial session restore */
-let initialCheckDone = false;
-sb.auth.onAuthStateChange(async (event, session) => {
-  // INITIAL_SESSION fires on page load — we already handle that above, ignore it here
-  if (!initialCheckDone) return;
-  if (event === 'SIGNED_IN' && session) {
-    await ensureProfile(session.user);
-    redirectToDashboard(session.user, true);
-  }
-  if (event === 'PASSWORD_RECOVERY') {
-    showReset();
-  }
-});
-
-/* ══════════════════════════════════════════════════════════════
-   PROFILE TABLE
-   Run this SQL once in Supabase → SQL Editor to create the table:
-
-   create table if not exists public.profiles (
-     id          uuid references auth.users on delete cascade primary key,
-     first_name  text,
-     last_name   text,
-     email       text,
-     last_role   text default 'guest',
-     created_at  timestamptz default now()
-   );
-   alter table public.profiles enable row level security;
-   create policy "Users can manage own profile"
-     on public.profiles for all using (auth.uid() = id);
-══════════════════════════════════════════════════════════════ */
-async function ensureProfile(user) {
-  const { data: existing } = await sb.from('profiles').select('id').eq('id', user.id).single();
-  if (!existing) {
-    const meta = user.user_metadata || {};
-    await sb.from('profiles').insert({
-      id:         user.id,
-      email:      user.email,
-      first_name: meta.first_name || meta.given_name  || meta.name?.split(' ')[0] || '',
-      last_name:  meta.last_name  || meta.family_name || meta.name?.split(' ').slice(1).join(' ') || '',
-      last_role:  'guest',
-    });
-  }
-}
-
-async function getProfile(userId) {
-  const { data } = await sb.from('profiles').select('*').eq('id', userId).single();
-  return data;
-}
-
-/* ══════════════════════════════════════════════════════════════
-   REDIRECT LOGIC
-   - If user has a saved last_role, go straight to that dashboard
-   - Otherwise go to role selection
-   - dashboard.html reads URL param ?role=guest/partner to skip selection
-══════════════════════════════════════════════════════════════ */
-async function redirectToDashboard(user, showAnimation) {
-  if (showAnimation) {
-    showRedirectScreen(user);
-  }
-  const profile = await getProfile(user.id);
-  const role    = profile?.last_role || null;
-  const dest    = role
-    ? `dashboard.html?role=${role}&uid=${user.id}`
-    : `dashboard.html?uid=${user.id}`;
-
-  setTimeout(() => { window.location.href = dest; }, showAnimation ? 2600 : 0);
-}
-
-function showRedirectScreen(user) {
-  hideAll();
-  document.getElementById('auth-tabs').style.display = 'none';
-  const screen = document.getElementById('redirect-screen');
-  screen.classList.add('show');
-  const meta  = user.user_metadata || {};
-  const first = meta.first_name || meta.given_name || meta.name?.split(' ')[0] || 'there';
-  document.getElementById('redirect-sub').textContent =
-    `Welcome, ${first}! Taking you to your dashboard…`;
-}
-
-/* ══════════════════════════════════════════════════════════════
-   GOOGLE SIGN-IN
-══════════════════════════════════════════════════════════════ */
-async function signInWithGoogle() {
-  clearAlerts();
-  const { error } = await sb.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      redirectTo: window.location.origin + '/dashboard.html',
-    }
-  });
-  if (error) showError(error.message);
-}
-
-/* ══════════════════════════════════════════════════════════════
-   EMAIL / PASSWORD LOGIN
-══════════════════════════════════════════════════════════════ */
-async function handleLogin(e) {
-  e.preventDefault();
-  clearAlerts();
-  const email    = document.getElementById('login-email').value.trim();
-  const password = document.getElementById('login-password').value;
-  if (!validateEmail(email)) { showFieldErr('login-email-err','Enter a valid email address.'); return; }
-  if (!password) { showFieldErr('login-pw-err','Please enter your password.'); return; }
-
-  setLoading('login-btn', true);
-  const { data, error } = await sb.auth.signInWithPassword({ email, password });
-  setLoading('login-btn', false);
-
-  if (error) {
-    if (error.message.includes('Invalid login')) showError('Incorrect email or password. Please try again.');
-    else if (error.message.includes('Email not confirmed')) showError('Please verify your email first — check your inbox.');
-    else showError(error.message);
-    return;
-  }
-  await ensureProfile(data.user);
-  redirectToDashboard(data.user, true);
-}
-
-/* ══════════════════════════════════════════════════════════════
-   EMAIL SIGN UP
-══════════════════════════════════════════════════════════════ */
-async function handleSignup(e) {
-  e.preventDefault();
-  clearAlerts();
-  const first    = document.getElementById('signup-first').value.trim();
-  const last     = document.getElementById('signup-last').value.trim();
-  const email    = document.getElementById('signup-email').value.trim();
-  const password = document.getElementById('signup-password').value;
-  const terms    = document.getElementById('terms-check').checked;
-
-  if (!first)  { showFieldErr('signup-first-err','Please enter your first name.'); return; }
-  if (!validateEmail(email)) { showFieldErr('signup-email-err','Enter a valid email address.'); return; }
-  if (password.length < 8)   { showFieldErr('signup-pw-err','Password must be at least 8 characters.'); return; }
-  if (!terms) { showError('Please accept the Terms of Service to continue.'); return; }
-
-  setLoading('signup-btn', true);
-  const { data, error } = await sb.auth.signUp({
-    email,
-    password,
-    options: {
-      data: { first_name: first, last_name: last },
-      emailRedirectTo: window.location.origin + '/dashboard.html',
-    }
-  });
-  setLoading('signup-btn', false);
-
-  if (error) {
-    const msg = error.message || '';
-    if (msg.toLowerCase().includes('already') || msg.toLowerCase().includes('registered') || msg.toLowerCase().includes('exists')) {
-      showError('An account with this email already exists. Try signing in instead.');
-    } else if (msg.toLowerCase().includes('weak') || msg.toLowerCase().includes('password')) {
-      showError('Password is too weak. Please use at least 8 characters with a mix of letters and numbers.');
-    } else {
-      showError(msg || 'Something went wrong. Please try again.');
-    }
-    return;
-  }
-
-  // Supabase returns a session immediately if email confirmation is off,
-  // or returns user with no session if confirmation is required.
-  if (data.session) {
-    await ensureProfile(data.user);
-    redirectToDashboard(data.user, true);
-  } else {
-    // Email confirmation required
-    document.getElementById('verify-email-display').textContent = email;
-    hideAll();
-    document.getElementById('verify-screen').classList.add('show');
-    document.getElementById('auth-tabs').style.display = 'none';
-  }
-}
-
-/* resend verification */
-async function resendVerification() {
-  const email = document.getElementById('verify-email-display').textContent;
-  const btn   = document.getElementById('resend-btn');
-  btn.textContent = 'Sending…';
-  btn.disabled    = true;
-  await sb.auth.resend({ type: 'signup', email });
-  btn.textContent = 'Sent! Check your inbox.';
-  setTimeout(() => { btn.textContent = 'Resend email'; btn.disabled = false; }, 6000);
-}
-
-/* ══════════════════════════════════════════════════════════════
-   FORGOT PASSWORD
-══════════════════════════════════════════════════════════════ */
-async function handleReset(e) {
-  e.preventDefault();
-  clearAlerts();
-  const email = document.getElementById('reset-email').value.trim();
-  if (!validateEmail(email)) {
-    document.getElementById('reset-alert-error').textContent = 'Enter a valid email address.';
-    document.getElementById('reset-alert-error').classList.add('show');
-    return;
-  }
-  setLoading('reset-btn', true);
-  const { error } = await sb.auth.resetPasswordForEmail(email, {
-    redirectTo: window.location.origin + '/auth.html',
-  });
-  setLoading('reset-btn', false);
-  if (error) {
-    document.getElementById('reset-alert-error').textContent = error.message;
-    document.getElementById('reset-alert-error').classList.add('show');
-  } else {
-    document.getElementById('reset-alert-success').textContent = 'Reset link sent! Check your inbox.';
-    document.getElementById('reset-alert-success').classList.add('show');
-  }
-}
-
-/* ══════════════════════════════════════════════════════════════
-   UI HELPERS
-══════════════════════════════════════════════════════════════ */
 function switchTab(tab) {
+  if (tab === currentTab) return; // already on this tab, do nothing
+  currentTab = tab;
   clearAlerts();
-  // hide special screens, restore tabs
+
+  // Update tab button styles
+  document.getElementById('tab-login').classList.toggle('active',  tab === 'login');
+  document.getElementById('tab-signup').classList.toggle('active', tab === 'signup');
+
+  // Show/hide form sections
+  document.getElementById('login-section').style.display  = tab === 'login'  ? 'block' : 'none';
+  document.getElementById('signup-section').style.display = tab === 'signup' ? 'block' : 'none';
+
+  // Make sure special screens are hidden
   document.getElementById('reset-screen').classList.remove('show');
   document.getElementById('verify-screen').classList.remove('show');
   document.getElementById('redirect-screen').classList.remove('show');
   document.getElementById('auth-tabs').style.display = 'flex';
-  // toggle tab active states
-  document.getElementById('tab-login').classList.toggle('active',  tab === 'login');
-  document.getElementById('tab-signup').classList.toggle('active', tab === 'signup');
-  // show/hide form sections
-  document.getElementById('login-section').style.display  = tab === 'login'  ? 'block' : 'none';
-  document.getElementById('signup-section').style.display = tab === 'signup' ? 'block' : 'none';
 }
 
 function showReset() {
@@ -893,45 +675,243 @@ function showReset() {
 }
 
 function showLogin() {
-  switchTab('login');
+  currentTab = 'login';
+  document.getElementById('tab-login').classList.add('active');
+  document.getElementById('tab-signup').classList.remove('active');
+  document.getElementById('login-section').style.display  = 'block';
+  document.getElementById('signup-section').style.display = 'none';
+  document.getElementById('reset-screen').classList.remove('show');
+  document.getElementById('verify-screen').classList.remove('show');
+  document.getElementById('redirect-screen').classList.remove('show');
+  document.getElementById('auth-tabs').style.display = 'flex';
+  clearAlerts();
 }
 
+/* ── SESSION CHECK — runs once on page load ── */
+let sessionChecked = false;
+
+(async () => {
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    sessionChecked = true;
+    if (session) {
+      // Already logged in — go straight to dashboard
+      redirectToDashboard(session.user, false);
+    }
+  } catch (err) {
+    sessionChecked = true;
+    console.warn('Session check failed:', err.message);
+  }
+})();
+
+/* ── OAUTH CALLBACK LISTENER ── */
+sb.auth.onAuthStateChange(async (event, session) => {
+  if (!sessionChecked) return; // ignore the initial INITIAL_SESSION event
+  if (event === 'SIGNED_IN' && session) {
+    await ensureProfile(session.user);
+    redirectToDashboard(session.user, true);
+  }
+  if (event === 'PASSWORD_RECOVERY') {
+    showReset();
+  }
+});
+
+/* ══ PROFILE ══ */
+async function ensureProfile(user) {
+  try {
+    const { data: existing } = await sb.from('profiles').select('id').eq('id', user.id).single();
+    if (!existing) {
+      const meta = user.user_metadata || {};
+      await sb.from('profiles').insert({
+        id:         user.id,
+        email:      user.email,
+        first_name: meta.first_name || meta.given_name  || meta.name?.split(' ')[0] || '',
+        last_name:  meta.last_name  || meta.family_name || meta.name?.split(' ').slice(1).join(' ') || '',
+        last_role:  'guest',
+      });
+    }
+  } catch(e) { console.warn('ensureProfile:', e.message); }
+}
+
+async function getProfile(userId) {
+  const { data } = await sb.from('profiles').select('*').eq('id', userId).single();
+  return data;
+}
+
+/* ══ REDIRECT ══ */
+async function redirectToDashboard(user, showAnimation) {
+  if (showAnimation) showRedirectScreen(user);
+  try {
+    const profile = await getProfile(user.id);
+    const role    = profile?.last_role || null;
+    const dest    = role
+      ? `dashboard.html?role=${role}&uid=${user.id}`
+      : `dashboard.html?uid=${user.id}`;
+    setTimeout(() => { window.location.href = dest; }, showAnimation ? 2600 : 0);
+  } catch(e) {
+    setTimeout(() => { window.location.href = 'dashboard.html'; }, showAnimation ? 2600 : 0);
+  }
+}
+
+function showRedirectScreen(user) {
+  document.getElementById('login-section').style.display  = 'none';
+  document.getElementById('signup-section').style.display = 'none';
+  document.getElementById('auth-tabs').style.display      = 'none';
+  document.getElementById('redirect-screen').classList.add('show');
+  const meta  = user.user_metadata || {};
+  const first = meta.first_name || meta.given_name || meta.name?.split(' ')[0] || 'there';
+  document.getElementById('redirect-sub').textContent = `Welcome, ${first}! Taking you to your dashboard…`;
+}
+
+/* ══ GOOGLE SIGN IN ══ */
+async function signInWithGoogle() {
+  clearAlerts();
+  const { error } = await sb.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.origin + '/dashboard.html' }
+  });
+  if (error) showError(error.message);
+}
+
+/* ══ EMAIL LOGIN ══ */
+async function handleLogin(e) {
+  e.preventDefault();
+  clearAlerts();
+  const email    = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  if (!validateEmail(email)) { showFieldErr('login-email-err','Enter a valid email address.'); return; }
+  if (!password)             { showFieldErr('login-pw-err','Please enter your password.'); return; }
+
+  setLoading('login-btn', true);
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  setLoading('login-btn', false);
+
+  if (error) {
+    const msg = error.message || '';
+    if (msg.toLowerCase().includes('invalid'))   showError('Incorrect email or password. Please try again.');
+    else if (msg.toLowerCase().includes('confirmed')) showError('Please verify your email first — check your inbox.');
+    else showError(msg);
+    return;
+  }
+  await ensureProfile(data.user);
+  redirectToDashboard(data.user, true);
+}
+
+/* ══ EMAIL SIGN UP ══ */
+async function handleSignup(e) {
+  e.preventDefault();
+  clearAlerts();
+  const first    = document.getElementById('signup-first').value.trim();
+  const last     = document.getElementById('signup-last').value.trim();
+  const email    = document.getElementById('signup-email').value.trim();
+  const password = document.getElementById('signup-password').value;
+  const terms    = document.getElementById('terms-check').checked;
+
+  if (!first)                  { showFieldErr('signup-first-err','Please enter your first name.'); return; }
+  if (!validateEmail(email))   { showFieldErr('signup-email-err','Enter a valid email address.'); return; }
+  if (password.length < 8)     { showFieldErr('signup-pw-err','Password must be at least 8 characters.'); return; }
+  if (!terms)                  { showError('Please accept the Terms of Service to continue.'); return; }
+
+  setLoading('signup-btn', true);
+  const { data, error } = await sb.auth.signUp({
+    email, password,
+    options: {
+      data: { first_name: first, last_name: last },
+      emailRedirectTo: window.location.origin + '/dashboard.html',
+    }
+  });
+  setLoading('signup-btn', false);
+
+  if (error) {
+    const msg = error.message || '';
+    if (msg.toLowerCase().includes('already') || msg.toLowerCase().includes('registered')) {
+      showError('An account with this email already exists. Try signing in instead.');
+    } else if (msg.toLowerCase().includes('password')) {
+      showError('Password is too weak. Use at least 8 characters with letters and numbers.');
+    } else {
+      showError(msg || 'Something went wrong. Please try again.');
+    }
+    return;
+  }
+
+  if (data.session) {
+    // Email confirmation disabled — logged in immediately
+    await ensureProfile(data.user);
+    redirectToDashboard(data.user, true);
+  } else {
+    // Email confirmation required — show verify screen
+    document.getElementById('verify-email-display').textContent = email;
+    document.getElementById('login-section').style.display  = 'none';
+    document.getElementById('signup-section').style.display = 'none';
+    document.getElementById('auth-tabs').style.display      = 'none';
+    document.getElementById('verify-screen').classList.add('show');
+  }
+}
+
+/* ══ RESEND VERIFICATION ══ */
+async function resendVerification() {
+  const email = document.getElementById('verify-email-display').textContent;
+  const btn   = document.getElementById('resend-btn');
+  btn.textContent = 'Sending…';
+  btn.disabled    = true;
+  await sb.auth.resend({ type: 'signup', email });
+  btn.textContent = 'Sent! Check your inbox.';
+  setTimeout(() => { btn.textContent = 'Resend email'; btn.disabled = false; }, 6000);
+}
+
+/* ══ PASSWORD RESET ══ */
+async function handleReset(e) {
+  e.preventDefault();
+  const errEl = document.getElementById('reset-alert-error');
+  const sucEl = document.getElementById('reset-alert-success');
+  errEl.classList.remove('show'); sucEl.classList.remove('show');
+  const email = document.getElementById('reset-email').value.trim();
+  if (!validateEmail(email)) {
+    errEl.textContent = 'Enter a valid email address.';
+    errEl.classList.add('show');
+    return;
+  }
+  setLoading('reset-btn', true);
+  const { error } = await sb.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + '/auth.html',
+  });
+  setLoading('reset-btn', false);
+  if (error) {
+    errEl.textContent = error.message;
+    errEl.classList.add('show');
+  } else {
+    sucEl.textContent = 'Reset link sent! Check your inbox.';
+    sucEl.classList.add('show');
+  }
+}
+
+/* ══ UI HELPERS ══ */
 function hideAll() {
-  ['login-section','signup-section'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.style.display = 'none';
-  });
-  ['reset-screen','verify-screen','redirect-screen'].forEach(id => {
-    document.getElementById(id)?.classList.remove('show');
-  });
+  document.getElementById('login-section').style.display  = 'none';
+  document.getElementById('signup-section').style.display = 'none';
+  ['reset-screen','verify-screen','redirect-screen'].forEach(id =>
+    document.getElementById(id)?.classList.remove('show')
+  );
 }
 
 function setLoading(btnId, loading) {
-  const btn = document.getElementById(btnId);
-  if (!btn) return;
-  btn.classList.toggle('loading', loading);
+  document.getElementById(btnId)?.classList.toggle('loading', loading);
 }
 
 function showError(msg) {
   const el = document.getElementById('alert-error');
+  if (!el) return;
   el.textContent = msg;
   el.classList.add('show');
-}
-
-function showSuccess(msg) {
-  const el = document.getElementById('alert-success');
-  el.textContent = msg;
-  el.classList.add('show');
+  el.scrollIntoView({ behavior:'smooth', block:'nearest' });
 }
 
 function clearAlerts() {
   document.querySelectorAll('.alert').forEach(el => {
-    el.classList.remove('show');
-    el.textContent = '';
+    el.classList.remove('show'); el.textContent = '';
   });
   document.querySelectorAll('.field-err').forEach(el => {
-    el.classList.remove('show');
-    el.textContent = '';
+    el.classList.remove('show'); el.textContent = '';
   });
   document.querySelectorAll('.field-input').forEach(el => el.classList.remove('error'));
 }
@@ -949,32 +929,26 @@ function validateEmail(email) {
 
 function togglePw(inputId, btn) {
   const input = document.getElementById(inputId);
-  if (input.type === 'password') {
-    input.type = 'text';
-    btn.textContent = '🙈';
-  } else {
-    input.type = 'password';
-    btn.textContent = '👁';
-  }
+  if (!input) return;
+  input.type      = input.type === 'password' ? 'text' : 'password';
+  btn.textContent = input.type === 'password' ? '👁' : '🙈';
 }
 
 function checkStrength(pw) {
-  const bars  = [document.getElementById('ps1'),document.getElementById('ps2'),document.getElementById('ps3'),document.getElementById('ps4')];
+  const bars  = ['ps1','ps2','ps3','ps4'].map(id => document.getElementById(id));
   const label = document.getElementById('pw-strength-label');
-  bars.forEach(b => b.className = 'pws-bar');
-
-  if (!pw) { label.textContent = ''; return; }
-
+  if (!bars[0]) return;
+  bars.forEach(b => { if(b) b.className = 'pws-bar'; });
+  if (!pw) { if(label) label.textContent = ''; return; }
   let score = 0;
   if (pw.length >= 8)  score++;
   if (pw.length >= 12) score++;
   if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++;
   if (/\d/.test(pw) || /[^A-Za-z0-9]/.test(pw)) score++;
-
   const levels = ['','weak','fair','good','strong'];
   const names  = ['','Weak','Fair','Good','Strong'];
-  for (let i = 0; i < score; i++) bars[i].classList.add(levels[score]);
-  label.textContent = score > 0 ? `Password strength: ${names[score]}` : '';
+  for (let i = 0; i < score; i++) { if(bars[i]) bars[i].classList.add(levels[score]); }
+  if (label) label.textContent = score > 0 ? `Password strength: ${names[score]}` : '';
 }
 </script>
 </body>
