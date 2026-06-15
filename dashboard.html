@@ -44,6 +44,7 @@
   --partner-text:#F0F9F4;
 }
 html,body{height:100%;font-family:'Inter',sans-serif;overflow:hidden;background:var(--void);}
+#screen-role{overflow-y:auto!important;-webkit-overflow-scrolling:touch;}
 
 /* ══════════════════════════════════════════════
    SCREENS — layered, one visible at a time
@@ -171,10 +172,14 @@ html,body{height:100%;font-family:'Inter',sans-serif;overflow:hidden;background:
 ══════════════════════════════════════════════ */
 #screen-role{
   background:var(--void);
-  overflow:hidden;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  padding:100px 0 60px;
+  align-items:center;
+  justify-content:flex-start;
 }
-#screen-role .greet-bg{position:absolute;}
-#screen-role .greet-grid{position:absolute;}
+#screen-role .greet-bg{position:fixed;}
+#screen-role .greet-grid{position:fixed;}
 
 .role-logo{
   position:absolute;top:32px;left:50%;transform:translateX(-50%);
@@ -227,9 +232,12 @@ html,body{height:100%;font-family:'Inter',sans-serif;overflow:hidden;background:
     box-shadow .3s ease;
   border:1px solid transparent;
   user-select:none;
+  -webkit-tap-highlight-color:transparent;
 }
 .role-card.on{opacity:1;transform:translateY(0) scale(1);}
-.role-card:hover{transform:translateY(-6px) scale(1.02);}
+@media(hover:hover){
+  .role-card:hover{transform:translateY(-6px) scale(1.02);}
+}
 .role-card:active{transform:scale(.98);}
 
 /* card shine sweep on hover */
@@ -363,7 +371,7 @@ html,body{height:100%;font-family:'Inter',sans-serif;overflow:hidden;background:
               border-radius .7s ease;
 }
 .expand-overlay.go{
-  transform:scale(4);opacity:1;border-radius:0;pointer-events:all;
+  transform:scale(10);opacity:1;border-radius:0;pointer-events:all;
 }
 .exp-guest{background:var(--white);}
 .exp-partner{background:var(--partner-bg);}
@@ -861,8 +869,15 @@ html,body{height:100%;font-family:'Inter',sans-serif;overflow:hidden;background:
    MOBILE
 ══════════════════════════════════════════════ */
 @media(max-width:768px){
-  .role-card{width:min(300px,85vw);}
-  .role-cards{gap:16px;}
+  /* role selection — full width cards, proper scroll */
+  #screen-role{padding:80px 0 80px;justify-content:flex-start;}
+  .role-logo{position:fixed;}
+  .role-header{margin-bottom:32px;padding:0 20px;}
+  .role-title{font-size:clamp(22px,5vw,36px);}
+  .role-cards{flex-direction:column;align-items:center;gap:16px;padding:0 16px;width:100%;}
+  .role-card{width:100%;max-width:420px;padding:28px 24px 24px;}
+  .card-title{font-size:24px;}
+  /* dashboards */
   .g-sidebar,.p-sidebar{display:none;}
   .g-stats,.p-stats{grid-template-columns:repeat(2,1fr);}
   .g-services{grid-template-columns:repeat(4,1fr);}
@@ -870,6 +885,9 @@ html,body{height:100%;font-family:'Inter',sans-serif;overflow:hidden;background:
   .g-welcome,.p-welcome{flex-direction:column;gap:16px;align-items:flex-start;}
 }
 @media(max-width:480px){
+  .role-card{padding:24px 18px 20px;}
+  .card-icons{margin-bottom:16px;}
+  .card-features{gap:6px;margin-bottom:20px;}
   .g-stats,.p-stats{grid-template-columns:1fr 1fr;}
   .g-services{grid-template-columns:repeat(4,1fr);gap:8px;}
   .g-svc{padding:14px 8px;}
@@ -1185,7 +1203,7 @@ html,body{height:100%;font-family:'Inter',sans-serif;overflow:hidden;background:
       <div class="g-scroll-section fade-item">
         <div class="g-sec-header">
           <div class="g-sec-title">Book a Stay</div>
-          <a class="g-sec-link" href="apartments.html">View all <span>→</span></a>
+          <a class="g-sec-link">View all <span>→</span></a>
         </div>
         <div class="apt-scroll">
 
@@ -1388,7 +1406,7 @@ html,body{height:100%;font-family:'Inter',sans-serif;overflow:hidden;background:
       <!-- listings -->
       <div class="p-section-title fade-item">
         My Listings
-        <button class="p-add-btn">+ Add Listing</button>
+        <button class="p-add-btn" onclick="window.location.href='add-listing.html'">+ Add Listing</button>
       </div>
       <div class="p-listings">
         <div class="p-listing fade-item">
@@ -1853,8 +1871,8 @@ function activateService(svc) {
    SUPABASE CONFIG — paste your values here
    Same values as in auth.html
 ══════════════════════════════════════════════════════ */
-const SUPABASE_URL      = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
+const SUPABASE_URL      = 'YOUR_SUPABASE_URL';
+const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
 
 const { createClient } = supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
