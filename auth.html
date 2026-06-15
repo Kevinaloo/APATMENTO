@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>APATMENTO — Sign In</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400;1,700&family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+
+<!-- Supabase SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --void:#060810;
+  --deep:#0C1020;
+  --white:#FFFFFF;
+  --offwhite:#F7F6F2;
+  --stone:#EDEAE4;
+  --ink:#0F1117;
+  --ink2:#2A2D38;
+  --ink3:#5A5E70;
+  --ink4:#9499AD;
+  --border:rgba(15,17,23,0.09);
+  --border-focus:rgba(13,148,103,0.5);
+  --shadow-sm:0 2px 16px rgba(15,17,23,0.07);
+  --shadow-md:0 8px 40px rgba(15,17,23,0.12);
+  --shadow-lg:0 24px 80px rgba(15,17,23,0.18);
+  --gold:#C8970A;
+  --gold2:#E8A800;
+  --goldbright:#FCC444;
+  --emerald:#0D9467;
+  --emerald2:#059652;
+  --em-bg:rgba(13,148,103,0.07);
+  --em-bd:rgba(13,148,103,0.2);
+  --red:#DC2626;
+  --red-bg:rgba(220,38,38,0.07);
+  --red-bd:rgba(220,38,38,0.2);
+}
+html,body{
+  min-height:100%;font-family:'Inter',sans-serif;
+  background:var(--void);color:var(--ink);
+  overflow-x:hidden;
+}
+
+/* ── BACKGROUND ── */
+.bg-scene{
+  position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;
+}
+.bg-grid{
+  position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px);
+  background-size:72px 72px;
+}
+.bg-orb{position:absolute;border-radius:50%;filter:blur(90px);}
+.bo1{width:600px;height:600px;background:radial-gradient(circle,rgba(13,148,103,.09),transparent);top:-150px;left:-100px;animation:orbDrift 9s ease-in-out infinite;}
+.bo2{width:500px;height:500px;background:radial-gradient(circle,rgba(200,151,10,.07),transparent);bottom:-80px;right:-80px;animation:orbDrift 11s ease-in-out infinite reverse;}
+.bo3{width:350px;height:350px;background:radial-gradient(circle,rgba(79,172,254,.05),transparent);top:40%;left:55%;animation:orbDrift 8s ease-in-out infinite 2s;}
+@keyframes orbDrift{0%,100%{transform:translate(0,0);}50%{transform:translate(28px,18px);}}
+
+/* ── PAGE SHELL ── */
+.page{
+  position:relative;z-index:1;
+  min-height:100vh;
+  display:flex;
+  align-items:stretch;
+}
+
+/* ── LEFT PANEL (branding) ── */
+.left-panel{
+  width:420px;flex-shrink:0;
+  display:flex;flex-direction:column;
+  justify-content:space-between;
+  padding:48px 52px;
+  border-right:1px solid rgba(255,255,255,.06);
+  position:relative;overflow:hidden;
+}
+@media(max-width:900px){.left-panel{display:none;}}
+
+.lp-logo{
+  font-family:'Playfair Display',serif;
+  font-size:18px;font-weight:700;letter-spacing:.24em;text-transform:uppercase;
+  background:linear-gradient(90deg,var(--goldbright),var(--gold2));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.lp-hero{flex:1;display:flex;flex-direction:column;justify-content:center;padding:40px 0;}
+.lp-eyebrow{
+  font-size:10px;font-weight:500;letter-spacing:.28em;text-transform:uppercase;
+  color:rgba(255,255,255,.3);margin-bottom:20px;
+}
+.lp-heading{
+  font-family:'Playfair Display',serif;
+  font-size:clamp(32px,3.5vw,46px);font-weight:500;
+  color:var(--white);line-height:1.15;letter-spacing:-.01em;
+  margin-bottom:24px;
+}
+.lp-heading em{
+  font-style:italic;
+  background:linear-gradient(90deg,var(--goldbright),#FFDB70);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.lp-body{font-size:14px;color:rgba(255,255,255,.45);line-height:1.75;font-weight:300;margin-bottom:36px;}
+.lp-pills{display:flex;flex-direction:column;gap:10px;}
+.lp-pill{
+  display:flex;align-items:center;gap:10px;
+  font-size:13px;font-weight:500;color:rgba(255,255,255,.7);
+}
+.lp-pill-ico{
+  width:28px;height:28px;border-radius:8px;
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);
+  display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;
+}
+.lp-pill strong{color:var(--white);}
+
+.lp-footer{font-size:11px;color:rgba(255,255,255,.2);letter-spacing:.06em;}
+
+/* ── RIGHT PANEL (form) ── */
+.right-panel{
+  flex:1;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:48px 32px;
+  background:var(--offwhite);
+  overflow-y:auto;
+}
+
+.auth-card{
+  width:100%;max-width:420px;
+}
+
+/* mobile logo */
+.mobile-logo{
+  display:none;
+  font-family:'Playfair Display',serif;
+  font-size:16px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;
+  background:linear-gradient(90deg,var(--gold),var(--gold2));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  margin-bottom:32px;text-align:center;
+}
+@media(max-width:900px){.mobile-logo{display:block;}}
+
+/* tab switcher */
+.auth-tabs{
+  display:flex;
+  background:var(--stone);
+  border-radius:14px;padding:4px;
+  margin-bottom:28px;
+}
+.auth-tab{
+  flex:1;padding:10px;border-radius:11px;
+  font-family:'Space Grotesk',sans-serif;
+  font-size:13px;font-weight:600;letter-spacing:.04em;
+  text-align:center;cursor:pointer;
+  color:var(--ink4);
+  transition:all .25s cubic-bezier(.22,1,.36,1);
+  user-select:none;
+}
+.auth-tab.active{
+  background:var(--white);color:var(--ink);
+  box-shadow:var(--shadow-sm);
+}
+
+/* headings */
+.auth-heading{margin-bottom:24px;}
+.auth-title{
+  font-family:'Playfair Display',serif;
+  font-size:26px;font-weight:700;color:var(--ink);
+  margin-bottom:6px;line-height:1.2;
+}
+.auth-sub{font-size:13px;color:var(--ink4);line-height:1.6;}
+
+/* google button */
+.google-btn{
+  width:100%;padding:13px 20px;border-radius:12px;
+  border:1.5px solid var(--border);background:var(--white);
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:600;
+  color:var(--ink);cursor:pointer;
+  transition:border-color .2s,box-shadow .2s,transform .2s;
+  box-shadow:var(--shadow-sm);
+  margin-bottom:20px;
+}
+.google-btn:hover{
+  border-color:rgba(15,17,23,.2);
+  box-shadow:var(--shadow-md);
+  transform:translateY(-1px);
+}
+.google-btn:active{transform:scale(.99);}
+.g-icon{width:20px;height:20px;flex-shrink:0;}
+
+/* divider */
+.or-row{
+  display:flex;align-items:center;gap:12px;
+  margin-bottom:20px;
+}
+.or-line{flex:1;height:1px;background:var(--border);}
+.or-txt{font-size:11px;color:var(--ink4);letter-spacing:.1em;white-space:nowrap;}
+
+/* form */
+.auth-form{display:flex;flex-direction:column;gap:14px;}
+
+/* name row */
+.name-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+/* field */
+.field{display:flex;flex-direction:column;gap:5px;}
+.field-label{
+  font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink3);
+}
+.field-wrap{position:relative;}
+.field-input{
+  width:100%;padding:12px 16px;border-radius:12px;
+  border:1.5px solid var(--border);background:var(--white);
+  font-family:'Inter',sans-serif;font-size:14px;color:var(--ink);
+  outline:none;
+  transition:border-color .2s,box-shadow .2s;
+  -webkit-appearance:none;
+}
+.field-input::placeholder{color:var(--ink4);}
+.field-input:focus{
+  border-color:var(--emerald);
+  box-shadow:0 0 0 3px rgba(13,148,103,.1);
+}
+.field-input.error{
+  border-color:var(--red);
+  box-shadow:0 0 0 3px var(--red-bg);
+}
+
+/* password toggle */
+.pw-toggle{
+  position:absolute;right:14px;top:50%;transform:translateY(-50%);
+  background:none;border:none;cursor:pointer;
+  font-size:16px;color:var(--ink4);
+  transition:color .2s;padding:0;
+  display:flex;align-items:center;
+}
+.pw-toggle:hover{color:var(--ink);}
+.field-input.has-toggle{padding-right:44px;}
+
+/* password strength */
+.pw-strength{
+  display:flex;gap:4px;margin-top:6px;
+  height:3px;
+}
+.pws-bar{flex:1;border-radius:2px;background:var(--stone);transition:background .3s;}
+.pws-bar.weak{background:#DC2626;}
+.pws-bar.fair{background:var(--gold);}
+.pws-bar.good{background:var(--emerald);}
+.pws-bar.strong{background:var(--emerald);}
+.pw-strength-label{font-size:10px;color:var(--ink4);margin-top:3px;}
+
+/* field error message */
+.field-err{font-size:11px;color:var(--red);margin-top:3px;display:none;}
+.field-err.show{display:block;}
+
+/* terms */
+.terms-row{
+  display:flex;align-items:flex-start;gap:10px;
+  font-size:12px;color:var(--ink3);line-height:1.5;
+}
+.terms-row input[type=checkbox]{
+  width:16px;height:16px;border-radius:4px;
+  accent-color:var(--emerald);flex-shrink:0;margin-top:1px;cursor:pointer;
+}
+.terms-row a{color:var(--emerald);text-decoration:none;font-weight:500;}
+.terms-row a:hover{text-decoration:underline;}
+
+/* submit button */
+.submit-btn{
+  width:100%;padding:14px;border-radius:12px;
+  background:linear-gradient(135deg,var(--emerald),var(--emerald2));
+  color:var(--white);font-family:'Space Grotesk',sans-serif;
+  font-size:14px;font-weight:700;letter-spacing:.04em;
+  border:none;cursor:pointer;
+  box-shadow:0 6px 24px rgba(13,148,103,.28);
+  transition:filter .2s,transform .2s,box-shadow .2s;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  position:relative;overflow:hidden;
+}
+.submit-btn:hover{filter:brightness(1.07);transform:translateY(-1px);box-shadow:0 10px 32px rgba(13,148,103,.35);}
+.submit-btn:active{transform:scale(.99);}
+.submit-btn.loading{pointer-events:none;filter:brightness(.85);}
+.submit-btn .btn-spinner{
+  display:none;
+  width:16px;height:16px;border-radius:50%;
+  border:2px solid rgba(255,255,255,.3);
+  border-top-color:white;
+  animation:spin .7s linear infinite;
+}
+.submit-btn.loading .btn-spinner{display:block;}
+.submit-btn.loading .btn-text{opacity:0;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* alert boxes */
+.alert{
+  padding:12px 16px;border-radius:12px;
+  font-size:13px;line-height:1.55;
+  margin-bottom:16px;
+  display:none;
+}
+.alert.show{display:block;}
+.alert-error{background:var(--red-bg);border:1px solid var(--red-bd);color:var(--red);}
+.alert-success{background:var(--em-bg);border:1px solid var(--em-bd);color:var(--emerald);}
+
+/* forgot password */
+.forgot-row{
+  display:flex;justify-content:flex-end;margin-top:-4px;
+}
+.forgot-link{
+  font-size:12px;font-weight:500;color:var(--emerald);
+  cursor:pointer;text-decoration:none;
+  transition:opacity .2s;
+}
+.forgot-link:hover{opacity:.7;}
+
+/* switch mode link */
+.switch-row{
+  text-align:center;margin-top:20px;
+  font-size:13px;color:var(--ink4);
+}
+.switch-row a{
+  color:var(--emerald);font-weight:600;cursor:pointer;
+  text-decoration:none;
+}
+.switch-row a:hover{text-decoration:underline;}
+
+/* ── EMAIL VERIFICATION SCREEN ── */
+.verify-screen{
+  text-align:center;
+  display:none;
+}
+.verify-screen.show{display:block;}
+.verify-ico{font-size:56px;margin-bottom:20px;}
+.verify-title{font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:var(--ink);margin-bottom:10px;}
+.verify-body{font-size:14px;color:var(--ink4);line-height:1.7;margin-bottom:24px;}
+.verify-email-badge{
+  display:inline-block;padding:8px 18px;border-radius:100px;
+  background:var(--em-bg);border:1px solid var(--em-bd);
+  font-size:13px;font-weight:600;color:var(--emerald);margin-bottom:24px;
+}
+.resend-btn{
+  background:none;border:none;cursor:pointer;
+  font-size:13px;font-weight:600;color:var(--emerald);
+  text-decoration:underline;padding:0;
+  transition:opacity .2s;
+}
+.resend-btn:hover{opacity:.7;}
+
+/* ── RESET PASSWORD SCREEN ── */
+.reset-screen{display:none;}
+.reset-screen.show{display:flex;flex-direction:column;gap:14px;}
+.back-to-login{
+  display:flex;align-items:center;gap:6px;
+  font-size:12px;font-weight:500;color:var(--ink4);
+  cursor:pointer;margin-bottom:4px;
+  width:fit-content;
+  transition:color .2s;
+}
+.back-to-login:hover{color:var(--ink);}
+
+/* ── SUCCESS / REDIRECT ── */
+.redirect-screen{
+  text-align:center;display:none;
+}
+.redirect-screen.show{display:block;}
+.redirect-ico{font-size:52px;margin-bottom:18px;animation:bounce .7s cubic-bezier(.22,1,.36,1);}
+@keyframes bounce{0%{transform:scale(0)}60%{transform:scale(1.15)}100%{transform:scale(1)}}
+.redirect-title{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--ink);margin-bottom:8px;}
+.redirect-sub{font-size:13px;color:var(--ink4);margin-bottom:20px;}
+.redirect-bar-wrap{height:3px;background:var(--stone);border-radius:2px;overflow:hidden;width:100%;max-width:200px;margin:0 auto;}
+.redirect-bar{height:100%;background:linear-gradient(90deg,var(--emerald),var(--emerald2));border-radius:2px;width:0%;animation:redirectFill 2.5s linear forwards;}
+@keyframes redirectFill{to{width:100%;}}
+
+/* ── FADE IN ── */
+.auth-card > *{
+  animation:cardFade .5s cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes cardFade{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+
+@media(max-width:480px){
+  .right-panel{padding:32px 20px;}
+  .name-row{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<div class="bg-scene">
+  <div class="bg-grid"></div>
+  <div class="bg-orb bo1"></div>
+  <div class="bg-orb bo2"></div>
+  <div class="bg-orb bo3"></div>
+</div>
+
+<div class="page">
+
+  <!-- ══ LEFT BRAND PANEL ══ -->
+  <div class="left-panel">
+    <div class="lp-logo">Apatmento</div>
+    <div class="lp-hero">
+      <div class="lp-eyebrow">One account. Everything.</div>
+      <h1 class="lp-heading">
+        Your world,<br/>
+        <em>commission-free.</em>
+      </h1>
+      <p class="lp-body">
+        Apartments, flights, rides, food, car hire, shopping, tours and events — all under one roof. No taxes added. No commissions taken. Just the real price.
+      </p>
+      <div class="lp-pills">
+        <div class="lp-pill"><div class="lp-pill-ico">🏢</div><span><strong>Short stays</strong> at real prices</span></div>
+        <div class="lp-pill"><div class="lp-pill-ico">✈️</div><span><strong>Flights</strong> with no booking surcharge</span></div>
+        <div class="lp-pill"><div class="lp-pill-ico">🤝</div><span><strong>Partners</strong> keep 100% of earnings</span></div>
+        <div class="lp-pill"><div class="lp-pill-ico">🔒</div><span><strong>Secure</strong> and always encrypted</span></div>
+      </div>
+    </div>
+    <div class="lp-footer">© 2025 Apatmento Ltd. · No commissions. No exceptions.</div>
+  </div>
+
+  <!-- ══ RIGHT FORM PANEL ══ -->
+  <div class="right-panel">
+    <div class="auth-card">
+
+      <div class="mobile-logo">Apatmento</div>
+
+      <!-- TAB SWITCHER -->
+      <div class="auth-tabs" id="auth-tabs">
+        <div class="auth-tab active" id="tab-login" onclick="switchTab('login')">Log In</div>
+        <div class="auth-tab" id="tab-signup" onclick="switchTab('signup')">Create Account</div>
+      </div>
+
+      <!-- GLOBAL ALERT -->
+      <div class="alert alert-error" id="alert-error"></div>
+      <div class="alert alert-success" id="alert-success"></div>
+
+      <!-- ══ LOGIN FORM ══ -->
+      <div id="login-section">
+        <div class="auth-heading">
+          <div class="auth-title">Welcome back</div>
+          <div class="auth-sub">Sign in to your Apatmento account.</div>
+        </div>
+
+        <!-- Google -->
+        <button class="google-btn" onclick="signInWithGoogle()">
+          <svg class="g-icon" viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+          </svg>
+          Continue with Google
+        </button>
+
+        <div class="or-row"><div class="or-line"></div><div class="or-txt">or sign in with email</div><div class="or-line"></div></div>
+
+        <form class="auth-form" id="login-form" onsubmit="handleLogin(event)">
+          <div class="field">
+            <label class="field-label">Email address</label>
+            <div class="field-wrap">
+              <input class="field-input" type="email" id="login-email" placeholder="you@example.com" autocomplete="email" required/>
+            </div>
+            <div class="field-err" id="login-email-err"></div>
+          </div>
+
+          <div class="field">
+            <label class="field-label">Password</label>
+            <div class="field-wrap">
+              <input class="field-input has-toggle" type="password" id="login-password" placeholder="Your password" autocomplete="current-password" required/>
+              <button type="button" class="pw-toggle" onclick="togglePw('login-password',this)">👁</button>
+            </div>
+            <div class="field-err" id="login-pw-err"></div>
+          </div>
+
+          <div class="forgot-row">
+            <span class="forgot-link" onclick="showReset()">Forgot password?</span>
+          </div>
+
+          <button type="submit" class="submit-btn" id="login-btn">
+            <span class="btn-spinner"></span>
+            <span class="btn-text">Sign In →</span>
+          </button>
+        </form>
+
+        <div class="switch-row">
+          Don't have an account? <a onclick="switchTab('signup')">Create one free</a>
+        </div>
+      </div>
+
+      <!-- ══ SIGN UP FORM ══ -->
+      <div id="signup-section" style="display:none;">
+        <div class="auth-heading">
+          <div class="auth-title">Create your account</div>
+          <div class="auth-sub">Free to join. Zero fees on everything you book.</div>
+        </div>
+
+        <!-- Google -->
+        <button class="google-btn" onclick="signInWithGoogle()">
+          <svg class="g-icon" viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+          </svg>
+          Continue with Google
+        </button>
+
+        <div class="or-row"><div class="or-line"></div><div class="or-txt">or sign up with email</div><div class="or-line"></div></div>
+
+        <form class="auth-form" id="signup-form" onsubmit="handleSignup(event)">
+          <div class="name-row">
+            <div class="field">
+              <label class="field-label">First name</label>
+              <input class="field-input" type="text" id="signup-first" placeholder="James" autocomplete="given-name" required/>
+              <div class="field-err" id="signup-first-err"></div>
+            </div>
+            <div class="field">
+              <label class="field-label">Last name</label>
+              <input class="field-input" type="text" id="signup-last" placeholder="Kamau" autocomplete="family-name" required/>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field-label">Email address</label>
+            <input class="field-input" type="email" id="signup-email" placeholder="you@example.com" autocomplete="email" required/>
+            <div class="field-err" id="signup-email-err"></div>
+          </div>
+
+          <div class="field">
+            <label class="field-label">Password</label>
+            <div class="field-wrap">
+              <input class="field-input has-toggle" type="password" id="signup-password"
+                placeholder="At least 8 characters"
+                autocomplete="new-password"
+                oninput="checkStrength(this.value)"
+                required/>
+              <button type="button" class="pw-toggle" onclick="togglePw('signup-password',this)">👁</button>
+            </div>
+            <div class="pw-strength" id="pw-strength">
+              <div class="pws-bar" id="ps1"></div>
+              <div class="pws-bar" id="ps2"></div>
+              <div class="pws-bar" id="ps3"></div>
+              <div class="pws-bar" id="ps4"></div>
+            </div>
+            <div class="pw-strength-label" id="pw-strength-label"></div>
+            <div class="field-err" id="signup-pw-err"></div>
+          </div>
+
+          <div class="terms-row">
+            <input type="checkbox" id="terms-check" required/>
+            <label for="terms-check">
+              I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>. I understand Apatmento charges zero commissions on all bookings.
+            </label>
+          </div>
+
+          <button type="submit" class="submit-btn" id="signup-btn">
+            <span class="btn-spinner"></span>
+            <span class="btn-text">Create Account →</span>
+          </button>
+        </form>
+
+        <div class="switch-row">
+          Already have an account? <a onclick="switchTab('login')">Sign in</a>
+        </div>
+      </div>
+
+      <!-- ══ EMAIL VERIFICATION ══ -->
+      <div class="verify-screen" id="verify-screen">
+        <div class="verify-ico">📬</div>
+        <div class="verify-title">Check your inbox</div>
+        <div class="verify-body">
+          We've sent a confirmation link to:
+        </div>
+        <div class="verify-email-badge" id="verify-email-display">—</div>
+        <div class="verify-body">
+          Click the link in the email to activate your account and get started. Check your spam folder if it doesn't arrive within a minute.
+        </div>
+        <button class="resend-btn" onclick="resendVerification()" id="resend-btn">Resend email</button>
+      </div>
+
+      <!-- ══ RESET PASSWORD ══ -->
+      <div class="reset-screen" id="reset-screen">
+        <div class="back-to-login" onclick="showLogin()">← Back to sign in</div>
+        <div class="auth-heading">
+          <div class="auth-title">Reset your password</div>
+          <div class="auth-sub">Enter your email and we'll send a reset link.</div>
+        </div>
+        <div class="alert alert-error" id="reset-alert-error"></div>
+        <div class="alert alert-success" id="reset-alert-success"></div>
+        <form class="auth-form" onsubmit="handleReset(event)">
+          <div class="field">
+            <label class="field-label">Email address</label>
+            <input class="field-input" type="email" id="reset-email" placeholder="you@example.com" required/>
+          </div>
+          <button type="submit" class="submit-btn" id="reset-btn">
+            <span class="btn-spinner"></span>
+            <span class="btn-text">Send Reset Link →</span>
+          </button>
+        </form>
+      </div>
+
+      <!-- ══ SUCCESS / REDIRECT ══ -->
+      <div class="redirect-screen" id="redirect-screen">
+        <div class="redirect-ico">✅</div>
+        <div class="redirect-title">You're in!</div>
+        <div class="redirect-sub" id="redirect-sub">Taking you to your dashboard…</div>
+        <div class="redirect-bar-wrap"><div class="redirect-bar"></div></div>
+      </div>
+
+    </div>
+  </div><!-- end right-panel -->
+
+</div><!-- end page -->
+
+<script>
+/* ══════════════════════════════════════════════════════════════
+   ▼▼▼  SUPABASE CONFIGURATION  ▼▼▼
+
+   HOW TO GET THESE VALUES:
+   1. Go to supabase.com → your project → Settings → API
+   2. Copy "Project URL"  → paste as SUPABASE_URL
+   3. Copy "anon / public" key → paste as SUPABASE_ANON_KEY
+
+   HOW TO ENABLE GOOGLE SIGN-IN:
+   1. Supabase dashboard → Authentication → Providers → Google → Enable
+   2. Create OAuth credentials at console.cloud.google.com:
+      - New project → APIs & Services → Credentials → OAuth 2.0 Client ID
+      - Authorised redirect URI: https://YOUR_PROJECT.supabase.co/auth/v1/callback
+   3. Paste the Client ID and Secret into Supabase Google provider settings
+   4. Add your site URL to Supabase → Authentication → URL Configuration
+      - Site URL: https://your-netlify-site.netlify.app
+      - Redirect URLs: https://your-netlify-site.netlify.app/dashboard.html
+══════════════════════════════════════════════════════════════ */
+
+const SUPABASE_URL      = 'YOUR_SUPABASE_URL';
+const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+
+/* ══════════════════════════════════════════════════════════════
+   INIT
+══════════════════════════════════════════════════════════════ */
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+/* Check if already logged in — redirect straight to dashboard */
+(async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) redirectToDashboard(session.user, false);
+})();
+
+/* Handle OAuth redirect (Google callback lands here) */
+sb.auth.onAuthStateChange(async (event, session) => {
+  if (event === 'SIGNED_IN' && session) {
+    await ensureProfile(session.user);
+    redirectToDashboard(session.user, true);
+  }
+  if (event === 'PASSWORD_RECOVERY') {
+    // Could redirect to a reset-password page here
+  }
+});
+
+/* ══════════════════════════════════════════════════════════════
+   PROFILE TABLE
+   Run this SQL once in Supabase → SQL Editor to create the table:
+
+   create table if not exists public.profiles (
+     id          uuid references auth.users on delete cascade primary key,
+     first_name  text,
+     last_name   text,
+     email       text,
+     last_role   text default 'guest',
+     created_at  timestamptz default now()
+   );
+   alter table public.profiles enable row level security;
+   create policy "Users can manage own profile"
+     on public.profiles for all using (auth.uid() = id);
+══════════════════════════════════════════════════════════════ */
+async function ensureProfile(user) {
+  const { data: existing } = await sb.from('profiles').select('id').eq('id', user.id).single();
+  if (!existing) {
+    const meta = user.user_metadata || {};
+    await sb.from('profiles').insert({
+      id:         user.id,
+      email:      user.email,
+      first_name: meta.first_name || meta.given_name  || meta.name?.split(' ')[0] || '',
+      last_name:  meta.last_name  || meta.family_name || meta.name?.split(' ').slice(1).join(' ') || '',
+      last_role:  'guest',
+    });
+  }
+}
+
+async function getProfile(userId) {
+  const { data } = await sb.from('profiles').select('*').eq('id', userId).single();
+  return data;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   REDIRECT LOGIC
+   - If user has a saved last_role, go straight to that dashboard
+   - Otherwise go to role selection
+   - dashboard.html reads URL param ?role=guest/partner to skip selection
+══════════════════════════════════════════════════════════════ */
+async function redirectToDashboard(user, showAnimation) {
+  if (showAnimation) {
+    showRedirectScreen(user);
+  }
+  const profile = await getProfile(user.id);
+  const role    = profile?.last_role || null;
+  const dest    = role
+    ? `dashboard.html?role=${role}&uid=${user.id}`
+    : `dashboard.html?uid=${user.id}`;
+
+  setTimeout(() => { window.location.href = dest; }, showAnimation ? 2600 : 0);
+}
+
+function showRedirectScreen(user) {
+  hideAll();
+  document.getElementById('auth-tabs').style.display = 'none';
+  const screen = document.getElementById('redirect-screen');
+  screen.classList.add('show');
+  const meta  = user.user_metadata || {};
+  const first = meta.first_name || meta.given_name || meta.name?.split(' ')[0] || 'there';
+  document.getElementById('redirect-sub').textContent =
+    `Welcome, ${first}! Taking you to your dashboard…`;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   GOOGLE SIGN-IN
+══════════════════════════════════════════════════════════════ */
+async function signInWithGoogle() {
+  clearAlerts();
+  const { error } = await sb.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: window.location.origin + '/dashboard.html',
+    }
+  });
+  if (error) showError(error.message);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   EMAIL / PASSWORD LOGIN
+══════════════════════════════════════════════════════════════ */
+async function handleLogin(e) {
+  e.preventDefault();
+  clearAlerts();
+  const email    = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  if (!validateEmail(email)) { showFieldErr('login-email-err','Enter a valid email address.'); return; }
+  if (!password) { showFieldErr('login-pw-err','Please enter your password.'); return; }
+
+  setLoading('login-btn', true);
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  setLoading('login-btn', false);
+
+  if (error) {
+    if (error.message.includes('Invalid login')) showError('Incorrect email or password. Please try again.');
+    else if (error.message.includes('Email not confirmed')) showError('Please verify your email first — check your inbox.');
+    else showError(error.message);
+    return;
+  }
+  await ensureProfile(data.user);
+  redirectToDashboard(data.user, true);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   EMAIL SIGN UP
+══════════════════════════════════════════════════════════════ */
+async function handleSignup(e) {
+  e.preventDefault();
+  clearAlerts();
+  const first    = document.getElementById('signup-first').value.trim();
+  const last     = document.getElementById('signup-last').value.trim();
+  const email    = document.getElementById('signup-email').value.trim();
+  const password = document.getElementById('signup-password').value;
+  const terms    = document.getElementById('terms-check').checked;
+
+  if (!first)  { showFieldErr('signup-first-err','Please enter your first name.'); return; }
+  if (!validateEmail(email)) { showFieldErr('signup-email-err','Enter a valid email address.'); return; }
+  if (password.length < 8)   { showFieldErr('signup-pw-err','Password must be at least 8 characters.'); return; }
+  if (!terms) { showError('Please accept the Terms of Service to continue.'); return; }
+
+  setLoading('signup-btn', true);
+  const { data, error } = await sb.auth.signUp({
+    email,
+    password,
+    options: {
+      data: { first_name: first, last_name: last },
+      emailRedirectTo: window.location.origin + '/dashboard.html',
+    }
+  });
+  setLoading('signup-btn', false);
+
+  if (error) {
+    if (error.message.includes('already registered')) showError('An account with this email already exists. Try signing in instead.');
+    else showError(error.message);
+    return;
+  }
+
+  // Supabase returns a session immediately if email confirmation is off,
+  // or returns user with no session if confirmation is required.
+  if (data.session) {
+    await ensureProfile(data.user);
+    redirectToDashboard(data.user, true);
+  } else {
+    // Email confirmation required
+    document.getElementById('verify-email-display').textContent = email;
+    hideAll();
+    document.getElementById('verify-screen').classList.add('show');
+    document.getElementById('auth-tabs').style.display = 'none';
+  }
+}
+
+/* resend verification */
+async function resendVerification() {
+  const email = document.getElementById('verify-email-display').textContent;
+  const btn   = document.getElementById('resend-btn');
+  btn.textContent = 'Sending…';
+  btn.disabled    = true;
+  await sb.auth.resend({ type: 'signup', email });
+  btn.textContent = 'Sent! Check your inbox.';
+  setTimeout(() => { btn.textContent = 'Resend email'; btn.disabled = false; }, 6000);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   FORGOT PASSWORD
+══════════════════════════════════════════════════════════════ */
+async function handleReset(e) {
+  e.preventDefault();
+  clearAlerts();
+  const email = document.getElementById('reset-email').value.trim();
+  if (!validateEmail(email)) {
+    document.getElementById('reset-alert-error').textContent = 'Enter a valid email address.';
+    document.getElementById('reset-alert-error').classList.add('show');
+    return;
+  }
+  setLoading('reset-btn', true);
+  const { error } = await sb.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + '/auth.html',
+  });
+  setLoading('reset-btn', false);
+  if (error) {
+    document.getElementById('reset-alert-error').textContent = error.message;
+    document.getElementById('reset-alert-error').classList.add('show');
+  } else {
+    document.getElementById('reset-alert-success').textContent = 'Reset link sent! Check your inbox.';
+    document.getElementById('reset-alert-success').classList.add('show');
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   UI HELPERS
+══════════════════════════════════════════════════════════════ */
+function switchTab(tab) {
+  clearAlerts();
+  showLogin(); // reset to login view first
+  document.getElementById('tab-login').classList.toggle('active',  tab === 'login');
+  document.getElementById('tab-signup').classList.toggle('active', tab === 'signup');
+  document.getElementById('login-section').style.display  = tab === 'login'  ? 'block' : 'none';
+  document.getElementById('signup-section').style.display = tab === 'signup' ? 'block' : 'none';
+}
+
+function showReset() {
+  document.getElementById('login-section').style.display = 'none';
+  document.getElementById('auth-tabs').style.display     = 'none';
+  document.getElementById('reset-screen').classList.add('show');
+}
+
+function showLogin() {
+  document.getElementById('reset-screen').classList.remove('show');
+  document.getElementById('verify-screen').classList.remove('show');
+  document.getElementById('redirect-screen').classList.remove('show');
+  document.getElementById('auth-tabs').style.display = 'flex';
+  switchTab('login');
+}
+
+function hideAll() {
+  ['login-section','signup-section'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+  ['reset-screen','verify-screen','redirect-screen'].forEach(id => {
+    document.getElementById(id)?.classList.remove('show');
+  });
+}
+
+function setLoading(btnId, loading) {
+  const btn = document.getElementById(btnId);
+  if (!btn) return;
+  btn.classList.toggle('loading', loading);
+}
+
+function showError(msg) {
+  const el = document.getElementById('alert-error');
+  el.textContent = msg;
+  el.classList.add('show');
+}
+
+function showSuccess(msg) {
+  const el = document.getElementById('alert-success');
+  el.textContent = msg;
+  el.classList.add('show');
+}
+
+function clearAlerts() {
+  document.querySelectorAll('.alert').forEach(el => {
+    el.classList.remove('show');
+    el.textContent = '';
+  });
+  document.querySelectorAll('.field-err').forEach(el => {
+    el.classList.remove('show');
+    el.textContent = '';
+  });
+  document.querySelectorAll('.field-input').forEach(el => el.classList.remove('error'));
+}
+
+function showFieldErr(id, msg) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.add('show');
+}
+
+function validateEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function togglePw(inputId, btn) {
+  const input = document.getElementById(inputId);
+  if (input.type === 'password') {
+    input.type = 'text';
+    btn.textContent = '🙈';
+  } else {
+    input.type = 'password';
+    btn.textContent = '👁';
+  }
+}
+
+function checkStrength(pw) {
+  const bars  = [document.getElementById('ps1'),document.getElementById('ps2'),document.getElementById('ps3'),document.getElementById('ps4')];
+  const label = document.getElementById('pw-strength-label');
+  bars.forEach(b => b.className = 'pws-bar');
+
+  if (!pw) { label.textContent = ''; return; }
+
+  let score = 0;
+  if (pw.length >= 8)  score++;
+  if (pw.length >= 12) score++;
+  if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++;
+  if (/\d/.test(pw) || /[^A-Za-z0-9]/.test(pw)) score++;
+
+  const levels = ['','weak','fair','good','strong'];
+  const names  = ['','Weak','Fair','Good','Strong'];
+  for (let i = 0; i < score; i++) bars[i].classList.add(levels[score]);
+  label.textContent = score > 0 ? `Password strength: ${names[score]}` : '';
+}
+</script>
+</body>
+</html>
