@@ -192,9 +192,9 @@ html,body{height:100%;font-family:'Inter',sans-serif;overflow:hidden;background:
 
 .role-header{
   text-align:center;margin-bottom:52px;
-  position:relative;z-index:2;
-  opacity:0;transform:translateY(20px);
-  transition:opacity .6s ease,transform .6s ease;
+  position:relative;z-index:60;
+  opacity:1; /* always visible */
+  transition:opacity .4s ease,transform .4s ease;
 }
 .role-header.on{opacity:1;transform:translateY(0);}
 .role-eyebrow{
@@ -226,21 +226,20 @@ html,body{height:100%;font-family:'Inter',sans-serif;overflow:hidden;background:
   width:300px;flex-shrink:0;
   border-radius:24px;padding:40px 36px 36px;
   cursor:pointer;position:relative;overflow:hidden;
-  opacity:0;transform:translateY(40px) scale(.97);
-  transition:opacity .6s cubic-bezier(.22,1,.36,1),
-    transform .6s cubic-bezier(.22,1,.36,1),
-    box-shadow .3s ease;
+  opacity:1; /* always visible and always clickable */
+  transform:translateY(0) scale(1);
+  transition:box-shadow .3s ease, transform .2s ease;
   border:1px solid transparent;
   user-select:none;
   -webkit-tap-highlight-color:transparent;
   touch-action:manipulation;
-  z-index:60; /* above everything */
+  z-index:60;
 }
 .role-card.on{opacity:1;transform:translateY(0) scale(1);}
 @media(hover:hover){
-  .role-card:hover{transform:translateY(-6px) scale(1.02);}
+  .role-card:hover{transform:translateY(-4px) scale(1.01);}
 }
-.role-card:active{transform:scale(.98);opacity:.85;}
+.role-card:active{transform:scale(.97);}
 
 /* card shine sweep on hover */
 .role-card::before{
@@ -1457,6 +1456,8 @@ const screens = {
 };
 
 function showScreen(name, delay=0) {
+  // When returning to role screen, reset selectedRole so both cards are tappable
+  if (name === 'role') selectedRole = null;
   setTimeout(() => {
     Object.entries(screens).forEach(([k, el]) => {
       if (k === name) {
@@ -1471,7 +1472,8 @@ function showScreen(name, delay=0) {
     if (name === 'guest' || name === 'partner') {
       setTimeout(() => {
         animateDashboard(name);
-        if (name === 'guest') {
+        if (name === 'guest' && !guestDashboardReady) {
+          guestDashboardReady = true;
           initSlideshow();
           initAdRotation();
           initServiceBar();
@@ -1481,9 +1483,10 @@ function showScreen(name, delay=0) {
     if (name === 'role') {
       setTimeout(() => {
         document.getElementById('role-header').classList.add('on');
+        // Cards are always visible — just ensure on class is set
         document.getElementById('card-guest').classList.add('on');
-        setTimeout(() => document.getElementById('card-partner').classList.add('on'), 120);
-      }, 200);
+        document.getElementById('card-partner').classList.add('on');
+      }, 100);
     }
   }, delay);
 }
@@ -1547,14 +1550,14 @@ function buildGreeting() {
    ROLE SELECTION
 ══════════════════════════════════════════════════════ */
 let selectedRole = null;
+let guestDashboardReady = false; // prevent double-init of slideshow/ads
 
 function chooseRole(role) {
-  if (selectedRole) return;
+  // If already transitioning to same role, ignore
+  if (selectedRole === role) return;
   selectedRole = role;
   saveRole(role);
   populateDashboard(role);
-
-  // Immediately switch — no animation that could fail
   showScreen(role, 0);
 }
 
@@ -1605,12 +1608,18 @@ function animateDashboard(role) {
    SWITCH ROLE — back to role selection
 ══════════════════════════════════════════════════════ */
 function switchRole() {
-  selectedRole = null;
+  selectedRole = null; // fully reset so BOTH cards work again
   if (CURRENT_USER) saveRole(null);
   document.getElementById('card-guest').classList.remove('on');
   document.getElementById('card-partner').classList.remove('on');
   document.getElementById('role-header').classList.remove('on');
   document.querySelectorAll('.fade-item').forEach(el => el.classList.remove('on'));
+  // Reset sidebar link animations so they replay on next entry
+  document.querySelectorAll('.sb-link, .p-sb-link').forEach(el => {
+    el.style.opacity = '';
+    el.style.transform = '';
+    el.style.transition = '';
+  });
   showScreen('role');
 }
 
