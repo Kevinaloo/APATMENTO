@@ -1,0 +1,1212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>APATMENTO — Browse Stays</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400;1,700&family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --white:#FFFFFF;
+  --offwhite:#F7F6F2;
+  --stone:#EDEAE4;
+  --ink:#0F1117;
+  --ink2:#2A2D38;
+  --ink3:#5A5E70;
+  --ink4:#9499AD;
+  --border:rgba(15,17,23,0.08);
+  --border-mid:rgba(15,17,23,0.13);
+  --shadow-xs:0 1px 6px rgba(15,17,23,0.05);
+  --shadow-sm:0 2px 16px rgba(15,17,23,0.07);
+  --shadow-md:0 8px 40px rgba(15,17,23,0.11);
+  --shadow-lg:0 20px 64px rgba(15,17,23,0.15);
+  --gold:#C8970A;
+  --gold2:#E8A800;
+  --goldbright:#FCC444;
+  --emerald:#0D9467;
+  --emerald2:#059652;
+  --em-bg:rgba(13,148,103,0.07);
+  --em-bd:rgba(13,148,103,0.2);
+}
+html,body{height:100%;font-family:'Inter',sans-serif;background:var(--offwhite);color:var(--ink);overflow:hidden;}
+
+/* ══════════════════════════════════════
+   TOP NAV
+══════════════════════════════════════ */
+.top-nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  height:60px;
+  background:var(--white);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 28px;
+  gap:16px;
+}
+.nav-logo{
+  font-family:'Playfair Display',serif;
+  font-size:16px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;
+  background:linear-gradient(90deg,var(--gold),var(--gold2));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  white-space:nowrap;flex-shrink:0;text-decoration:none;
+}
+.nav-back{
+  display:flex;align-items:center;gap:6px;
+  font-size:12px;font-weight:500;color:var(--ink3);
+  cursor:pointer;text-decoration:none;
+  padding:6px 12px;border-radius:8px;
+  border:1px solid var(--border);
+  transition:background .2s,color .2s;flex-shrink:0;
+}
+.nav-back:hover{background:var(--offwhite);color:var(--ink);}
+.nav-right{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.nav-avatar{
+  width:32px;height:32px;border-radius:8px;
+  background:linear-gradient(135deg,var(--emerald),var(--emerald2));
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:700;color:white;
+  cursor:pointer;
+}
+.nav-notif{
+  width:32px;height:32px;border-radius:8px;
+  border:1px solid var(--border);background:var(--white);
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;cursor:pointer;position:relative;
+  transition:background .2s;
+}
+.nav-notif:hover{background:var(--offwhite);}
+.ndot{position:absolute;top:5px;right:5px;width:6px;height:6px;border-radius:50%;background:var(--emerald);border:1.5px solid white;}
+
+/* ══════════════════════════════════════
+   SEARCH HERO
+══════════════════════════════════════ */
+.search-hero{
+  position:fixed;top:60px;left:0;right:0;z-index:90;
+  background:var(--white);
+  border-bottom:1px solid var(--border);
+  padding:16px 28px 14px;
+}
+
+/* search bar */
+.search-bar{
+  display:flex;align-items:center;gap:0;
+  background:var(--white);
+  border:1.5px solid var(--border-mid);
+  border-radius:16px;
+  overflow:hidden;
+  box-shadow:var(--shadow-sm);
+  margin-bottom:14px;
+  transition:border-color .2s,box-shadow .2s;
+}
+.search-bar:focus-within{
+  border-color:var(--emerald);
+  box-shadow:0 0 0 3px rgba(13,148,103,.08),var(--shadow-sm);
+}
+.sb-field{
+  display:flex;flex-direction:column;
+  padding:10px 18px;
+  flex:1;cursor:pointer;
+  position:relative;
+}
+.sb-field:not(:last-child)::after{
+  content:'';
+  position:absolute;right:0;top:20%;bottom:20%;
+  width:1px;background:var(--border);
+}
+.sb-field:hover{background:var(--offwhite);}
+.sb-label{font-size:9px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--ink4);margin-bottom:3px;}
+.sb-val{font-size:13px;font-weight:500;color:var(--ink);}
+.sb-val.placeholder{color:var(--ink4);font-weight:400;}
+.sb-search-btn{
+  padding:0 24px;
+  background:linear-gradient(135deg,var(--emerald),var(--emerald2));
+  color:white;border:none;cursor:pointer;
+  font-family:'Space Grotesk',sans-serif;
+  font-size:13px;font-weight:700;letter-spacing:.04em;
+  display:flex;align-items:center;gap:8px;
+  transition:filter .2s;
+  height:100%;min-height:52px;
+  white-space:nowrap;
+}
+.sb-search-btn:hover{filter:brightness(1.08);}
+
+/* filter strip */
+.filter-strip{
+  display:flex;gap:8px;align-items:center;
+  overflow-x:auto;scrollbar-width:none;
+}
+.filter-strip::-webkit-scrollbar{display:none;}
+.fchip{
+  display:flex;align-items:center;gap:6px;
+  padding:6px 14px;border-radius:100px;
+  border:1px solid var(--border);background:var(--white);
+  font-size:12px;font-weight:500;color:var(--ink3);
+  cursor:pointer;white-space:nowrap;flex-shrink:0;
+  transition:all .2s;
+}
+.fchip:hover{border-color:var(--border-mid);color:var(--ink);background:var(--offwhite);}
+.fchip.active{
+  border-color:var(--emerald);background:var(--em-bg);
+  color:var(--emerald);font-weight:600;
+}
+.fchip .fi{font-size:14px;}
+.filter-sep{width:1px;height:20px;background:var(--border);flex-shrink:0;}
+.sort-select{
+  padding:6px 12px;border-radius:100px;
+  border:1px solid var(--border);background:var(--white);
+  font-family:'Inter',sans-serif;font-size:12px;font-weight:500;color:var(--ink3);
+  cursor:pointer;outline:none;appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 10 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%239499AD' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 10px center;
+  background-size:10px;padding-right:26px;
+  flex-shrink:0;
+}
+
+/* ══════════════════════════════════════
+   MAIN LAYOUT  (results + map)
+══════════════════════════════════════ */
+.main-layout{
+  position:fixed;
+  top:60px; /* nav */
+  left:0;right:0;bottom:0;
+  display:flex;
+}
+/* push content below search hero — calculated via JS */
+#results-panel{
+  flex:1;
+  overflow-y:auto;
+  padding:0 0 32px 0;
+  scrollbar-width:thin;
+  scrollbar-color:var(--stone) transparent;
+}
+#results-panel::-webkit-scrollbar{width:4px;}
+#results-panel::-webkit-scrollbar-track{background:transparent;}
+#results-panel::-webkit-scrollbar-thumb{background:var(--stone);border-radius:2px;}
+
+/* MAP PANEL */
+#map-panel{
+  width:420px;flex-shrink:0;
+  background:var(--stone);
+  border-left:1px solid var(--border);
+  position:relative;overflow:hidden;
+  display:flex;flex-direction:column;
+}
+@media(max-width:1100px){#map-panel{width:340px;}}
+@media(max-width:900px){#map-panel{display:none;}}
+
+.map-placeholder{
+  flex:1;position:relative;
+  background:linear-gradient(135deg,#e8ede6 0%,#d4dfd0 100%);
+  display:flex;align-items:center;justify-content:center;
+  overflow:hidden;
+}
+/* fake map grid */
+.map-grid-lines{
+  position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(120,150,110,.15) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(120,150,110,.15) 1px,transparent 1px);
+  background-size:40px 40px;
+}
+/* fake roads */
+.map-road{position:absolute;background:rgba(255,255,255,.7);border-radius:2px;}
+.mr-h1{height:4px;left:0;right:0;top:35%;}
+.mr-h2{height:3px;left:0;right:0;top:60%;}
+.mr-h3{height:2px;left:0;right:0;top:20%;}
+.mr-v1{width:4px;top:0;bottom:0;left:30%;}
+.mr-v2{width:3px;top:0;bottom:0;left:65%;}
+.mr-v3{width:2px;top:0;bottom:0;left:80%;}
+/* map pins */
+.map-pin{
+  position:absolute;
+  display:flex;flex-direction:column;align-items:center;
+  cursor:pointer;
+  transform:translate(-50%,-100%);
+  transition:transform .2s;
+  z-index:2;
+}
+.map-pin:hover{transform:translate(-50%,-100%) scale(1.15);}
+.map-pin.active .mp-bubble{background:var(--emerald);color:white;box-shadow:0 4px 16px rgba(13,148,103,.4);}
+.mp-bubble{
+  padding:5px 10px;border-radius:100px;
+  background:var(--white);
+  font-family:'Space Grotesk',sans-serif;
+  font-size:11px;font-weight:700;color:var(--ink);
+  box-shadow:0 2px 10px rgba(0,0,0,.15);
+  white-space:nowrap;
+  border:1.5px solid rgba(0,0,0,.06);
+}
+.mp-tail{
+  width:0;height:0;
+  border-left:5px solid transparent;
+  border-right:5px solid transparent;
+  border-top:7px solid var(--white);
+  margin-top:-1px;
+}
+.map-pin.active .mp-tail{border-top-color:var(--emerald);}
+
+.map-overlay-btn{
+  position:absolute;bottom:16px;left:50%;transform:translateX(-50%);
+  padding:10px 20px;border-radius:100px;
+  background:var(--ink);color:white;
+  font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:600;
+  border:none;cursor:pointer;
+  box-shadow:var(--shadow-md);
+  display:flex;align-items:center;gap:8px;
+  transition:background .2s;
+}
+.map-overlay-btn:hover{background:var(--ink2);}
+
+/* results topbar */
+.results-topbar{
+  padding:16px 24px 12px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.results-count{font-size:13px;color:var(--ink3);}
+.results-count strong{color:var(--ink);font-weight:600;}
+
+/* ══════════════════════════════════════
+   LISTING CARDS GRID
+══════════════════════════════════════ */
+.listings-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:16px;
+  padding:0 24px;
+}
+@media(max-width:700px){.listings-grid{grid-template-columns:1fr;}}
+
+.listing-card{
+  background:var(--white);
+  border-radius:18px;
+  overflow:hidden;
+  border:1px solid var(--border);
+  cursor:pointer;
+  transition:transform .25s cubic-bezier(.22,1,.36,1),
+             box-shadow .25s;
+  position:relative;
+}
+.listing-card:hover{
+  transform:translateY(-5px);
+  box-shadow:var(--shadow-lg);
+}
+.listing-card.highlighted{
+  border-color:var(--emerald);
+  box-shadow:0 0 0 2px rgba(13,148,103,.2),var(--shadow-md);
+}
+
+/* photo area */
+.lc-photo{
+  position:relative;height:190px;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;
+}
+.lc-photo .ph-ico{font-size:64px;z-index:1;position:relative;}
+/* gradient overlays per listing */
+.lp-0{background:linear-gradient(135deg,#0a1a30,#1a4060);}
+.lp-1{background:linear-gradient(135deg,#0a2010,#1a5028);}
+.lp-2{background:linear-gradient(135deg,#200a10,#501020);}
+.lp-3{background:linear-gradient(135deg,#1a1000,#3a2800);}
+.lp-4{background:linear-gradient(135deg,#0a1030,#1a2060);}
+.lp-5{background:linear-gradient(135deg,#1a0a20,#3a1050);}
+.lp-6{background:linear-gradient(135deg,#061a10,#0d4030);}
+.lp-7{background:linear-gradient(135deg,#1a0808,#402010);}
+.lp-8{background:linear-gradient(135deg,#080818,#1a1a40);}
+.lp-9{background:linear-gradient(135deg,#0a1808,#1a3018);}
+
+/* subtle inner glow */
+.lc-photo::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(180deg,transparent 40%,rgba(0,0,0,.35) 100%);
+}
+
+/* badges on photo */
+.lc-badge-row{
+  position:absolute;top:12px;left:12px;right:12px;
+  display:flex;justify-content:space-between;align-items:flex-start;
+  z-index:2;
+}
+.lc-badge{
+  padding:4px 10px;border-radius:100px;
+  font-size:10px;font-weight:700;letter-spacing:.06em;
+  backdrop-filter:blur(6px);
+}
+.badge-fee{background:rgba(13,148,103,.85);color:white;}
+.badge-type{background:rgba(0,0,0,.45);color:rgba(255,255,255,.9);border:1px solid rgba(255,255,255,.15);}
+.badge-hot{background:rgba(212,69,122,.85);color:white;}
+
+/* wishlist heart */
+.lc-heart{
+  position:absolute;top:12px;right:12px;z-index:2;
+  width:30px;height:30px;border-radius:50%;
+  background:rgba(255,255,255,.18);
+  border:1px solid rgba(255,255,255,.25);
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;cursor:pointer;
+  backdrop-filter:blur(4px);
+  transition:background .2s,transform .2s;
+}
+.lc-heart:hover{background:rgba(255,255,255,.35);transform:scale(1.1);}
+.lc-heart.saved{background:rgba(255,60,80,.2);border-color:rgba(255,60,80,.4);}
+
+/* card body */
+.lc-body{padding:16px 18px 18px;}
+.lc-location{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink4);margin-bottom:4px;}
+.lc-name{
+  font-family:'Playfair Display',serif;
+  font-size:16px;font-weight:600;color:var(--ink);
+  margin-bottom:8px;line-height:1.3;
+}
+.lc-meta{
+  display:flex;gap:12px;margin-bottom:10px;
+  font-size:11px;color:var(--ink4);flex-wrap:wrap;
+}
+.lc-meta span{display:flex;align-items:center;gap:3px;}
+
+/* rating */
+.lc-rating{
+  display:flex;align-items:center;gap:5px;
+  margin-bottom:12px;
+}
+.stars{display:flex;gap:1px;}
+.star{font-size:11px;color:var(--gold);}
+.star.half{opacity:.5;}
+.star.empty{opacity:.2;}
+.rating-val{font-size:12px;font-weight:600;color:var(--ink2);}
+.rating-count{font-size:11px;color:var(--ink4);}
+
+/* price row */
+.lc-price-row{
+  display:flex;align-items:flex-end;justify-content:space-between;
+}
+.lc-price{
+  display:flex;flex-direction:column;
+}
+.price-val{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:19px;font-weight:700;color:var(--ink);
+  display:flex;align-items:baseline;gap:3px;
+}
+.price-val small{font-size:11px;font-weight:400;color:var(--ink4);}
+.price-note{font-size:10px;color:var(--emerald);font-weight:600;margin-top:1px;}
+.lc-book-btn{
+  padding:9px 18px;border-radius:10px;
+  background:linear-gradient(135deg,var(--emerald),var(--emerald2));
+  color:white;font-family:'Space Grotesk',sans-serif;
+  font-size:12px;font-weight:700;border:none;cursor:pointer;
+  transition:filter .2s,transform .2s;
+  white-space:nowrap;
+}
+.lc-book-btn:hover{filter:brightness(1.08);transform:translateY(-1px);}
+
+/* ══════════════════════════════════════
+   DETAIL DRAWER
+══════════════════════════════════════ */
+.drawer-overlay{
+  position:fixed;inset:0;z-index:200;
+  background:rgba(15,17,23,0);
+  pointer-events:none;
+  transition:background .35s ease;
+}
+.drawer-overlay.open{
+  background:rgba(15,17,23,.4);
+  pointer-events:all;
+}
+.drawer{
+  position:fixed;top:0;right:-100%;bottom:0;
+  width:min(560px,100vw);z-index:201;
+  background:var(--white);
+  box-shadow:-24px 0 64px rgba(15,17,23,.15);
+  overflow-y:auto;
+  transition:right .45s cubic-bezier(.22,1,.36,1);
+}
+.drawer.open{right:0;}
+
+/* drawer photo */
+.drawer-photo{
+  position:relative;height:260px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:80px;overflow:hidden;
+}
+.drawer-photo::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(180deg,transparent 50%,rgba(0,0,0,.5) 100%);
+}
+.drawer-close{
+  position:absolute;top:16px;right:16px;z-index:2;
+  width:36px;height:36px;border-radius:50%;
+  background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.25);
+  backdrop-filter:blur(4px);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:16px;color:white;
+  transition:background .2s;
+}
+.drawer-close:hover{background:rgba(255,255,255,.35);}
+.drawer-photo-badges{
+  position:absolute;bottom:16px;left:20px;z-index:2;
+  display:flex;gap:8px;
+}
+
+/* drawer content */
+.drawer-body{padding:24px 28px 40px;}
+.drawer-location{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink4);margin-bottom:6px;}
+.drawer-name{
+  font-family:'Playfair Display',serif;
+  font-size:24px;font-weight:700;color:var(--ink);
+  line-height:1.2;margin-bottom:10px;
+}
+.drawer-rating{display:flex;align-items:center;gap:8px;margin-bottom:18px;}
+.dr-host{
+  display:flex;align-items:center;gap:10px;
+  padding:14px 16px;border-radius:12px;
+  background:var(--offwhite);border:1px solid var(--border);
+  margin-bottom:20px;
+}
+.dr-host-ava{
+  width:36px;height:36px;border-radius:50%;
+  background:linear-gradient(135deg,var(--gold),var(--gold2));
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:700;color:#060810;
+  flex-shrink:0;
+}
+.dr-host-name{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:2px;}
+.dr-host-tag{font-size:11px;color:var(--ink4);}
+.dr-host-badge{
+  margin-left:auto;padding:4px 10px;border-radius:100px;
+  background:var(--em-bg);border:1px solid var(--em-bd);
+  font-size:10px;font-weight:600;color:var(--emerald);
+}
+
+/* description */
+.drawer-desc{font-size:14px;line-height:1.8;color:var(--ink3);margin-bottom:22px;}
+
+/* amenities */
+.drawer-amenities-title{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:13px;font-weight:700;color:var(--ink);
+  letter-spacing:.04em;margin-bottom:12px;text-transform:uppercase;
+}
+.amenities-grid{
+  display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:24px;
+}
+.amen{
+  display:flex;align-items:center;gap:9px;
+  padding:10px 12px;border-radius:10px;
+  background:var(--offwhite);border:1px solid var(--border);
+  font-size:12px;color:var(--ink2);font-weight:500;
+}
+.amen-ico{font-size:16px;flex-shrink:0;}
+
+/* price + book CTA */
+.drawer-cta-box{
+  border-top:1px solid var(--border);
+  padding-top:20px;
+  display:flex;align-items:flex-end;justify-content:space-between;
+  gap:16px;flex-wrap:wrap;
+}
+.drawer-price-block .dpr-val{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:26px;font-weight:700;color:var(--ink);
+}
+.drawer-price-block .dpr-per{
+  font-size:13px;font-weight:400;color:var(--ink4);
+}
+.drawer-price-block .dpr-note{
+  font-size:11px;color:var(--emerald);font-weight:600;margin-top:3px;
+}
+.drawer-book-cta{
+  padding:14px 28px;border-radius:12px;
+  background:linear-gradient(135deg,var(--emerald),var(--emerald2));
+  color:white;font-family:'Space Grotesk',sans-serif;
+  font-size:14px;font-weight:700;border:none;cursor:pointer;
+  transition:filter .2s,transform .2s;box-shadow:0 6px 24px rgba(13,148,103,.3);
+}
+.drawer-book-cta:hover{filter:brightness(1.08);transform:translateY(-2px);}
+
+/* ══════════════════════════════════════
+   PRICE RANGE FILTER MODAL
+══════════════════════════════════════ */
+.filter-modal{
+  position:fixed;inset:0;z-index:300;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(15,17,23,.4);
+  opacity:0;pointer-events:none;
+  transition:opacity .3s ease;
+}
+.filter-modal.open{opacity:1;pointer-events:all;}
+.fm-box{
+  background:var(--white);border-radius:24px;padding:32px;
+  width:min(440px,92vw);
+  box-shadow:var(--shadow-lg);
+  transform:translateY(20px);
+  transition:transform .35s cubic-bezier(.22,1,.36,1);
+}
+.filter-modal.open .fm-box{transform:translateY(0);}
+.fm-title{
+  font-family:'Playfair Display',serif;
+  font-size:22px;font-weight:600;color:var(--ink);
+  margin-bottom:24px;
+}
+.fm-section{margin-bottom:24px;}
+.fm-sec-label{font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--ink4);margin-bottom:14px;}
+.fm-option-row{display:flex;gap:8px;flex-wrap:wrap;}
+.fm-opt{
+  padding:8px 16px;border-radius:100px;
+  border:1.5px solid var(--border);background:var(--white);
+  font-size:12px;font-weight:500;color:var(--ink3);
+  cursor:pointer;transition:all .2s;
+}
+.fm-opt:hover{border-color:var(--border-mid);color:var(--ink);}
+.fm-opt.sel{border-color:var(--emerald);background:var(--em-bg);color:var(--emerald);font-weight:600;}
+
+/* range slider */
+.fm-range{display:flex;flex-direction:column;gap:10px;}
+.fm-range-vals{display:flex;justify-content:space-between;font-size:13px;font-weight:600;color:var(--ink);}
+input[type=range]{
+  width:100%;height:4px;border-radius:2px;outline:none;cursor:pointer;
+  accent-color:var(--emerald);
+}
+.fm-btn-row{display:flex;gap:10px;justify-content:flex-end;margin-top:8px;}
+.fm-clear{
+  padding:10px 20px;border-radius:10px;
+  background:transparent;border:1px solid var(--border);
+  font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:600;color:var(--ink3);
+  cursor:pointer;transition:background .2s;
+}
+.fm-clear:hover{background:var(--offwhite);}
+.fm-apply{
+  padding:10px 24px;border-radius:10px;
+  background:linear-gradient(135deg,var(--emerald),var(--emerald2));
+  color:white;font-family:'Space Grotesk',sans-serif;
+  font-size:13px;font-weight:700;border:none;cursor:pointer;
+  transition:filter .2s;
+}
+.fm-apply:hover{filter:brightness(1.08);}
+
+/* ══════════════════════════════════════
+   UTILITY
+══════════════════════════════════════ */
+.fade-in{animation:fadeInUp .55s cubic-bezier(.22,1,.36,1) both;}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+
+@media(max-width:768px){
+  .search-hero{padding:12px 16px 10px;}
+  .sb-field:nth-child(3){display:none;}
+  .sb-search-btn{padding:0 16px;}
+  .listings-grid{padding:0 16px;}
+  .results-topbar{padding:14px 16px 10px;}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition-duration:.01ms!important;}
+}
+</style>
+</head>
+<body>
+
+<!-- ══ TOP NAV ══ -->
+<nav class="top-nav">
+  <a href="dashboard.html" class="nav-back">← Dashboard</a>
+  <a href="dashboard.html" class="nav-logo">Apatmento</a>
+  <div class="nav-right">
+    <div class="nav-notif">🔔<div class="ndot"></div></div>
+    <div class="nav-avatar" id="nav-avatar">J</div>
+  </div>
+</nav>
+
+<!-- ══ SEARCH HERO ══ -->
+<div class="search-hero" id="search-hero">
+
+  <!-- search bar -->
+  <div class="search-bar">
+    <div class="sb-field" onclick="openField('location')">
+      <div class="sb-label">Where</div>
+      <div class="sb-val" id="field-location">Nairobi, Kenya</div>
+    </div>
+    <div class="sb-field" onclick="openField('checkin')">
+      <div class="sb-label">Check in</div>
+      <div class="sb-val placeholder" id="field-checkin">Add dates</div>
+    </div>
+    <div class="sb-field" onclick="openField('checkout')">
+      <div class="sb-label">Check out</div>
+      <div class="sb-val placeholder" id="field-checkout">Add dates</div>
+    </div>
+    <div class="sb-field" onclick="openField('guests')">
+      <div class="sb-label">Guests</div>
+      <div class="sb-val placeholder" id="field-guests">Add guests</div>
+    </div>
+    <button class="sb-search-btn" onclick="runSearch()">
+      <span>🔍</span> Search
+    </button>
+  </div>
+
+  <!-- filter chips -->
+  <div class="filter-strip">
+    <div class="fchip active" onclick="toggleFilter(this,'all')"><span class="fi">✦</span> All Stays</div>
+    <div class="fchip" onclick="openFilterModal()"><span class="fi">💰</span> Price</div>
+    <div class="fchip" onclick="toggleFilter(this,'rooms')"><span class="fi">🛏</span> Bedrooms</div>
+    <div class="fchip" onclick="toggleFilter(this,'instant')"><span class="fi">⚡</span> Instant Book</div>
+    <div class="fchip" onclick="toggleFilter(this,'wifi')"><span class="fi">📶</span> WiFi</div>
+    <div class="fchip" onclick="toggleFilter(this,'pool')"><span class="fi">🏊</span> Pool</div>
+    <div class="fchip" onclick="toggleFilter(this,'parking')"><span class="fi">🚘</span> Parking</div>
+    <div class="fchip" onclick="toggleFilter(this,'ac')"><span class="fi">❄️</span> A/C</div>
+    <div class="fchip" onclick="toggleFilter(this,'kitchen')"><span class="fi">🍳</span> Kitchen</div>
+    <div class="fchip" onclick="toggleFilter(this,'pets')"><span class="fi">🐾</span> Pet-friendly</div>
+    <div class="filter-sep"></div>
+    <select class="sort-select" id="sort-select" onchange="sortListings()">
+      <option value="recommended">Recommended</option>
+      <option value="price-asc">Price: Low to High</option>
+      <option value="price-desc">Price: High to Low</option>
+      <option value="rating">Top Rated</option>
+      <option value="newest">Newest</option>
+    </select>
+  </div>
+</div>
+
+<!-- ══ MAIN LAYOUT ══ -->
+<div class="main-layout" id="main-layout">
+
+  <!-- RESULTS PANEL -->
+  <div id="results-panel">
+    <div class="results-topbar">
+      <div class="results-count"><strong id="count-label">24 stays</strong> in Nairobi &amp; surrounds</div>
+    </div>
+    <div class="listings-grid" id="listings-grid">
+      <!-- Cards injected by JS -->
+    </div>
+  </div>
+
+  <!-- MAP PANEL -->
+  <div id="map-panel">
+    <div class="map-placeholder" id="map-placeholder">
+      <div class="map-grid-lines"></div>
+      <!-- roads -->
+      <div class="map-road mr-h1"></div>
+      <div class="map-road mr-h2"></div>
+      <div class="map-road mr-h3"></div>
+      <div class="map-road mr-v1"></div>
+      <div class="map-road mr-v2"></div>
+      <div class="map-road mr-v3"></div>
+      <!-- pins injected by JS -->
+      <div id="map-pins"></div>
+      <button class="map-overlay-btn">🗺️ Open in Maps</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══ DETAIL DRAWER ══ -->
+<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <!-- content injected by JS -->
+</div>
+
+<!-- ══ FILTER MODAL ══ -->
+<div class="filter-modal" id="filter-modal" onclick="closeFilterOnOverlay(event)">
+  <div class="fm-box">
+    <div class="fm-title">Filter Stays</div>
+    <div class="fm-section">
+      <div class="fm-sec-label">Price range per night</div>
+      <div class="fm-range">
+        <div class="fm-range-vals">
+          <span id="price-min-label">KES 1,000</span>
+          <span id="price-max-label">KES 15,000</span>
+        </div>
+        <input type="range" min="1000" max="15000" step="500" value="1000" id="price-min" oninput="updatePriceLabel()"/>
+        <input type="range" min="1000" max="15000" step="500" value="15000" id="price-max" oninput="updatePriceLabel()"/>
+      </div>
+    </div>
+    <div class="fm-section">
+      <div class="fm-sec-label">Property type</div>
+      <div class="fm-option-row">
+        <div class="fm-opt sel" onclick="toggleOpt(this)">🏢 Apartment</div>
+        <div class="fm-opt" onclick="toggleOpt(this)">🏠 House</div>
+        <div class="fm-opt" onclick="toggleOpt(this)">🏡 Cottage</div>
+        <div class="fm-opt" onclick="toggleOpt(this)">🌆 Penthouse</div>
+        <div class="fm-opt" onclick="toggleOpt(this)">🏨 Serviced</div>
+        <div class="fm-opt" onclick="toggleOpt(this)">🛖 Villa</div>
+      </div>
+    </div>
+    <div class="fm-section">
+      <div class="fm-sec-label">Bedrooms</div>
+      <div class="fm-option-row">
+        <div class="fm-opt sel" onclick="toggleOpt(this)">Any</div>
+        <div class="fm-opt" onclick="toggleOpt(this)">Studio</div>
+        <div class="fm-opt" onclick="toggleOpt(this)">1 Bed</div>
+        <div class="fm-opt" onclick="toggleOpt(this)">2 Beds</div>
+        <div class="fm-opt" onclick="toggleOpt(this)">3+ Beds</div>
+      </div>
+    </div>
+    <div class="fm-btn-row">
+      <button class="fm-clear" onclick="closeFilterModal()">Cancel</button>
+      <button class="fm-apply" onclick="applyFilters()">Show Results</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════
+   LISTINGS DATA — replace with Supabase fetch when live
+══════════════════════════════════════════════════════ */
+const LISTINGS = [
+  {
+    id:1,
+    name:'The Skyline Residence',
+    location:'Westlands, Nairobi',
+    city:'Nairobi',
+    type:'Apartment',
+    beds:2,baths:1,sqm:65,floor:12,maxGuests:4,
+    price:4200,
+    rating:4.9,reviews:84,
+    icon:'🏙️',grad:'lp-0',
+    hot:true,
+    amenities:['📶 WiFi','❄️ Air Con','🍳 Full Kitchen','🅿️ Parking','📺 Smart TV','🧺 Washer','☕ Coffee','🏋️ Gym'],
+    desc:'A sleek, modern residence on the 12th floor of Westlands\'s most sought-after tower. Floor-to-ceiling windows frame a panoramic view of the Nairobi skyline. Fully furnished with premium appliances, high-speed WiFi and hotel-quality linen.',
+    host:'Sarah M.',hostInit:'S',
+    mapX:'62%',mapY:'38%',
+  },
+  {
+    id:2,
+    name:'Garden Cottage Retreat',
+    location:'Karen, Nairobi',
+    city:'Nairobi',
+    type:'Cottage',
+    beds:1,baths:1,sqm:42,floor:0,maxGuests:2,
+    price:3500,
+    rating:4.8,reviews:52,
+    icon:'🌿',grad:'lp-1',
+    hot:false,
+    amenities:['📶 WiFi','🍳 Kitchenette','🐾 Pet-friendly','🌳 Garden','📺 TV','🔐 Safe'],
+    desc:'Tucked inside a lush Karen garden, this private cottage offers absolute peace. A secluded retreat 20 minutes from the CBD — perfect for couples or solo travellers wanting quiet luxury.',
+    host:'James K.',hostInit:'J',
+    mapX:'28%',mapY:'72%',
+  },
+  {
+    id:3,
+    name:'Penthouse Suite 32',
+    location:'Kilimani, Nairobi',
+    city:'Nairobi',
+    type:'Penthouse',
+    beds:3,baths:2,sqm:120,floor:14,maxGuests:6,
+    price:8800,
+    rating:4.95,reviews:31,
+    icon:'🏰',grad:'lp-2',
+    hot:true,
+    amenities:['📶 WiFi','❄️ Air Con','🍳 Full Kitchen','🏊 Pool Access','🅿️ Parking','📺 Smart TV','🧺 Washer','🏋️ Gym','☕ Coffee','🌆 City View'],
+    desc:'The pinnacle of Kilimani luxury. A 3-bedroom penthouse with a wraparound terrace, private jacuzzi and views that stretch to the Ngong Hills. Thoughtfully designed for executive stays and extended family visits.',
+    host:'Amara N.',hostInit:'A',
+    mapX:'48%',mapY:'52%',
+  },
+  {
+    id:4,
+    name:'Executive Studio Loft',
+    location:'CBD, Nairobi',
+    city:'Nairobi',
+    type:'Studio',
+    beds:0,baths:1,sqm:35,floor:6,maxGuests:2,
+    price:2800,
+    rating:4.7,reviews:118,
+    icon:'☕',grad:'lp-3',
+    hot:false,
+    amenities:['📶 WiFi','❄️ Air Con','🍳 Kitchenette','📺 Smart TV','☕ Coffee'],
+    desc:'A compact, design-forward studio in the heart of the CBD. Ideal for business travellers — steps from major offices, great restaurants and the KICC. Everything you need, nothing you don\'t.',
+    host:'David O.',hostInit:'D',
+    mapX:'54%',mapY:'44%',
+  },
+  {
+    id:5,
+    name:'Beachside Villa Unit',
+    location:'Nyali, Mombasa',
+    city:'Mombasa',
+    type:'Villa',
+    beds:2,baths:2,sqm:88,floor:0,maxGuests:4,
+    price:6200,
+    rating:4.85,reviews:67,
+    icon:'🌊',grad:'lp-4',
+    hot:false,
+    amenities:['📶 WiFi','🏊 Pool','🌊 Beach Access','❄️ Air Con','🍳 Full Kitchen','🅿️ Parking','🐾 Pet-friendly'],
+    desc:'Wake up 50 metres from the Indian Ocean. A serene villa unit in Nyali with private garden access, a shared pool and direct beach entry. Coral stone architecture, cool sea breezes, no booking fees.',
+    host:'Fatima A.',hostInit:'F',
+    mapX:'72%',mapY:'28%',
+  },
+  {
+    id:6,
+    name:'Safari Lodge Studio',
+    location:'Naivasha, Lakefront',
+    city:'Naivasha',
+    type:'Studio',
+    beds:1,baths:1,sqm:48,floor:0,maxGuests:2,
+    price:5100,
+    rating:4.9,reviews:43,
+    icon:'🦓',grad:'lp-5',
+    hot:true,
+    amenities:['📶 WiFi','🌿 Nature Views','☕ Coffee','🍳 Kitchenette','🔐 Safe','🌅 Sunrise View'],
+    desc:'A beautiful lakefront studio inside a working safari lodge. Flamingos at dawn, hippos at dusk. Private deck overlooking Lake Naivasha. An extraordinary escape just 90 minutes from Nairobi.',
+    host:'Peter M.',hostInit:'P',
+    mapX:'22%',mapY:'55%',
+  },
+  {
+    id:7,
+    name:'Runda Gated Estate Apt',
+    location:'Runda, Nairobi',
+    city:'Nairobi',
+    type:'Apartment',
+    beds:2,baths:2,sqm:90,floor:2,maxGuests:4,
+    price:7500,
+    rating:4.8,reviews:29,
+    icon:'🌺',grad:'lp-6',
+    hot:false,
+    amenities:['📶 WiFi','🔐 24/7 Security','🅿️ Parking','🏊 Pool','🍳 Full Kitchen','❄️ Air Con','🧺 Washer'],
+    desc:'Nestled in Nairobi\'s most prestigious gated community. A spacious 2-bedroom apartment with garden views, 24/7 security and access to the estate\'s pool and tennis courts. Perfect for diplomatic and executive stays.',
+    host:'Grace W.',hostInit:'G',
+    mapX:'35%',mapY:'26%',
+  },
+  {
+    id:8,
+    name:'Diani Oceanfront Studio',
+    location:'Diani Beach, Kwale',
+    city:'Diani',
+    type:'Studio',
+    beds:1,baths:1,sqm:40,floor:1,maxGuests:2,
+    price:4800,
+    rating:4.75,reviews:56,
+    icon:'🐠',grad:'lp-7',
+    hot:false,
+    amenities:['📶 WiFi','🌊 Beach Access','❄️ Air Con','🍳 Kitchenette','📺 TV','☕ Coffee','🐾 Pet-friendly'],
+    desc:'Your toes in the whitest sand in East Africa. A minimalist ocean studio directly on the Diani coastline, a UNESCO-recognised beach. Coral reef snorkelling, kite-surfing and dhow rides within walking distance.',
+    host:'Hassan A.',hostInit:'H',
+    mapX:'80%',mapY:'65%',
+  },
+  {
+    id:9,
+    name:'Upper Hill Business Apt',
+    location:'Upper Hill, Nairobi',
+    city:'Nairobi',
+    type:'Apartment',
+    beds:1,baths:1,sqm:55,floor:8,maxGuests:2,
+    price:3900,
+    rating:4.7,reviews:91,
+    icon:'🏦',grad:'lp-8',
+    hot:false,
+    amenities:['📶 WiFi','❄️ Air Con','🍳 Kitchenette','📺 Smart TV','🅿️ Parking','☕ Coffee','🏋️ Gym'],
+    desc:'Optimised for productivity. A polished one-bedroom in Upper Hill — Nairobi\'s financial district — with high-speed fibre, a standing desk and blackout curtains. Everything the business traveller actually needs.',
+    host:'Alice K.',hostInit:'A',
+    mapX:'50%',mapY:'60%',
+  },
+  {
+    id:10,
+    name:'Langata Forest View House',
+    location:'Langata, Nairobi',
+    city:'Nairobi',
+    type:'House',
+    beds:3,baths:2,sqm:110,floor:0,maxGuests:6,
+    price:9200,
+    rating:4.85,reviews:38,
+    icon:'🌲',grad:'lp-9',
+    hot:true,
+    amenities:['📶 WiFi','🅿️ Parking','🌳 Garden','🐾 Pet-friendly','🍳 Full Kitchen','🔐 Security','🧺 Washer','📺 Smart TV','☕ Coffee'],
+    desc:'A gorgeous 3-bedroom family home on the edge of Nairobi National Park. Sit on the veranda and watch giraffes from a distance. Spacious, private and entirely family-friendly. Just 15 minutes from Wilson Airport.',
+    host:'Carol N.',hostInit:'C',
+    mapX:'18%',mapY:'78%',
+  },
+];
+
+/* ══════════════════════════════════════════════════════
+   LAYOUT POSITIONING — push content below search hero
+══════════════════════════════════════════════════════ */
+function positionLayout() {
+  const hero   = document.getElementById('search-hero');
+  const layout = document.getElementById('main-layout');
+  const h = hero.getBoundingClientRect().height;
+  layout.style.top = (60 + h) + 'px';
+}
+window.addEventListener('resize', positionLayout);
+
+/* ══════════════════════════════════════════════════════
+   RENDER CARDS
+══════════════════════════════════════════════════════ */
+function renderStars(rating) {
+  let html = '<div class="stars">';
+  for (let i = 1; i <= 5; i++) {
+    if (rating >= i)       html += '<span class="star">★</span>';
+    else if (rating >= i - 0.5) html += '<span class="star half">★</span>';
+    else                        html += '<span class="star empty">★</span>';
+  }
+  return html + '</div>';
+}
+
+function renderCards(list) {
+  const grid = document.getElementById('listings-grid');
+  grid.innerHTML = '';
+  document.getElementById('count-label').textContent = list.length + ' stays';
+
+  list.forEach((apt, idx) => {
+    const card = document.createElement('div');
+    card.className = 'listing-card fade-in';
+    card.style.animationDelay = (idx * 55) + 'ms';
+    card.dataset.id = apt.id;
+
+    const bedsLabel = apt.beds === 0 ? 'Studio' : apt.beds + ' Bed' + (apt.beds > 1 ? 's' : '');
+
+    card.innerHTML = `
+      <div class="lc-photo ${apt.grad}">
+        <span class="ph-ico">${apt.icon}</span>
+        <div class="lc-badge-row">
+          <div style="display:flex;gap:6px;">
+            <div class="lc-badge badge-type">${apt.type}</div>
+            ${apt.hot ? '<div class="lc-badge badge-hot">🔥 Popular</div>' : ''}
+          </div>
+          <div class="lc-badge badge-fee">0% Fee</div>
+        </div>
+        <div class="lc-heart" onclick="toggleHeart(event,this)">🤍</div>
+      </div>
+      <div class="lc-body">
+        <div class="lc-location">${apt.location}</div>
+        <div class="lc-name">${apt.name}</div>
+        <div class="lc-meta">
+          <span>🛏 ${bedsLabel}</span>
+          <span>🛁 ${apt.baths} Bath</span>
+          <span>👥 Up to ${apt.maxGuests}</span>
+          <span>📐 ${apt.sqm}m²</span>
+        </div>
+        <div class="lc-rating">
+          ${renderStars(apt.rating)}
+          <span class="rating-val">${apt.rating}</span>
+          <span class="rating-count">(${apt.reviews} reviews)</span>
+        </div>
+        <div class="lc-price-row">
+          <div class="lc-price">
+            <div class="price-val">KES ${apt.price.toLocaleString()}<small>/night</small></div>
+            <div class="price-note">✓ No fees added at checkout</div>
+          </div>
+          <button class="lc-book-btn" onclick="openDrawer(event,${apt.id})">View &amp; Book</button>
+        </div>
+      </div>`;
+
+    card.addEventListener('click', (e) => {
+      if (e.target.classList.contains('lc-book-btn') || e.target.classList.contains('lc-heart')) return;
+      openDrawer(e, apt.id);
+    });
+    grid.appendChild(card);
+  });
+
+  renderMapPins(list);
+}
+
+/* ══════════════════════════════════════════════════════
+   MAP PINS
+══════════════════════════════════════════════════════ */
+function renderMapPins(list) {
+  const container = document.getElementById('map-pins');
+  container.innerHTML = '';
+  list.slice(0, 7).forEach(apt => {
+    const pin = document.createElement('div');
+    pin.className = 'map-pin';
+    pin.style.left  = apt.mapX;
+    pin.style.top   = apt.mapY;
+    pin.dataset.id  = apt.id;
+    pin.innerHTML = `<div class="mp-bubble">KES ${(apt.price/1000).toFixed(1)}k</div><div class="mp-tail"></div>`;
+    pin.addEventListener('click', () => {
+      document.querySelectorAll('.map-pin').forEach(p => p.classList.remove('active'));
+      pin.classList.add('active');
+      document.querySelector(`.listing-card[data-id="${apt.id}"]`)?.classList.add('highlighted');
+      setTimeout(() => document.querySelector(`.listing-card[data-id="${apt.id}"]`)?.classList.remove('highlighted'), 2000);
+      openDrawer(null, apt.id);
+    });
+    container.appendChild(pin);
+  });
+}
+
+/* ══════════════════════════════════════════════════════
+   DETAIL DRAWER
+══════════════════════════════════════════════════════ */
+let currentApt = null;
+
+function openDrawer(e, id) {
+  if (e) e.stopPropagation();
+  const apt = LISTINGS.find(a => a.id === id);
+  if (!apt) return;
+  currentApt = apt;
+
+  const bedsLabel = apt.beds === 0 ? 'Studio' : apt.beds + ' Bedroom' + (apt.beds > 1 ? 's' : '');
+
+  const drawer = document.getElementById('drawer');
+  drawer.innerHTML = `
+    <div class="drawer-photo ${apt.grad}">
+      <span style="font-size:80px;position:relative;z-index:1;">${apt.icon}</span>
+      <div class="drawer-close" onclick="closeDrawer()">✕</div>
+      <div class="drawer-photo-badges">
+        <div class="lc-badge badge-type">${apt.type}</div>
+        <div class="lc-badge badge-fee">0% Fee</div>
+        ${apt.hot ? '<div class="lc-badge badge-hot">🔥 Popular</div>' : ''}
+      </div>
+    </div>
+    <div class="drawer-body">
+      <div class="drawer-location">📍 ${apt.location}</div>
+      <div class="drawer-name">${apt.name}</div>
+      <div class="drawer-rating">
+        ${renderStars(apt.rating)}
+        <span class="rating-val">${apt.rating}</span>
+        <span class="rating-count">(${apt.reviews} reviews)</span>
+      </div>
+      <div class="dr-host">
+        <div class="dr-host-ava">${apt.hostInit}</div>
+        <div>
+          <div class="dr-host-name">Hosted by ${apt.host}</div>
+          <div class="dr-host-tag">Partner host · Verified</div>
+        </div>
+        <div class="dr-host-badge">Earns 100%</div>
+      </div>
+      <div class="lc-meta" style="margin-bottom:16px;">
+        <span>🛏 ${bedsLabel}</span>
+        <span>🛁 ${apt.baths} Bath</span>
+        <span>👥 Up to ${apt.maxGuests} guests</span>
+        <span>📐 ${apt.sqm}m²</span>
+        ${apt.floor > 0 ? `<span>🏢 Floor ${apt.floor}</span>` : ''}
+      </div>
+      <div class="drawer-desc">${apt.desc}</div>
+      <div class="drawer-amenities-title">What's included</div>
+      <div class="amenities-grid">
+        ${apt.amenities.map(a => `<div class="amen"><span class="amen-ico">${a.split(' ')[0]}</span>${a.split(' ').slice(1).join(' ')}</div>`).join('')}
+      </div>
+      <div class="drawer-cta-box">
+        <div class="drawer-price-block">
+          <div><span class="dpr-val">KES ${apt.price.toLocaleString()}</span><span class="dpr-per"> / night</span></div>
+          <div class="dpr-note">✓ What you see is what you pay. Zero added fees.</div>
+        </div>
+        <button class="drawer-book-cta" onclick="bookNow(${apt.id})">Book This Stay →</button>
+      </div>
+    </div>`;
+
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('drawer-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  // highlight matching map pin
+  document.querySelectorAll('.map-pin').forEach(p => {
+    p.classList.toggle('active', p.dataset.id == id);
+  });
+}
+
+function closeDrawer() {
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('drawer-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+  document.querySelectorAll('.map-pin').forEach(p => p.classList.remove('active'));
+}
+
+function bookNow(id) {
+  const apt = LISTINGS.find(a => a.id === id);
+  alert(`Booking flow for "${apt.name}" will open here.\n\nIn the full app this navigates to the booking confirmation page with Supabase writing the reservation.`);
+}
+
+/* ══════════════════════════════════════════════════════
+   FILTERS & SORT
+══════════════════════════════════════════════════════ */
+let activeFilters = new Set(['all']);
+
+function toggleFilter(el, key) {
+  if (key === 'all') {
+    activeFilters.clear();
+    activeFilters.add('all');
+    document.querySelectorAll('.fchip').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+  } else {
+    const allChip = document.querySelector('.fchip[onclick*="\'all\'"]');
+    allChip?.classList.remove('active');
+    activeFilters.delete('all');
+    el.classList.toggle('active');
+    if (el.classList.contains('active')) activeFilters.add(key);
+    else activeFilters.delete(key);
+    if (!activeFilters.size) { activeFilters.add('all'); allChip?.classList.add('active'); }
+  }
+  applyFilters();
+}
+
+function applyFilters() {
+  let list = [...LISTINGS];
+  // price filter
+  const minP = parseInt(document.getElementById('price-min')?.value || 0);
+  const maxP = parseInt(document.getElementById('price-max')?.value || 99999);
+  list = list.filter(a => a.price >= minP && a.price <= maxP);
+  // other filters
+  if (activeFilters.has('wifi'))     list = list.filter(a => a.amenities.some(x => x.includes('WiFi')));
+  if (activeFilters.has('pool'))     list = list.filter(a => a.amenities.some(x => x.includes('Pool')));
+  if (activeFilters.has('parking'))  list = list.filter(a => a.amenities.some(x => x.includes('Parking')));
+  if (activeFilters.has('ac'))       list = list.filter(a => a.amenities.some(x => x.includes('Air Con')));
+  if (activeFilters.has('kitchen'))  list = list.filter(a => a.amenities.some(x => x.includes('Kitchen')));
+  if (activeFilters.has('pets'))     list = list.filter(a => a.amenities.some(x => x.includes('Pet')));
+  if (activeFilters.has('instant'))  list = list.filter(a => a.rating >= 4.8);
+  if (activeFilters.has('rooms'))    list = list.filter(a => a.beds >= 2);
+  sortAndRender(list);
+  closeFilterModal();
+}
+
+function sortListings() {
+  applyFilters();
+}
+
+function sortAndRender(list) {
+  const sort = document.getElementById('sort-select').value;
+  if (sort === 'price-asc')  list.sort((a,b) => a.price - b.price);
+  if (sort === 'price-desc') list.sort((a,b) => b.price - a.price);
+  if (sort === 'rating')     list.sort((a,b) => b.rating - a.rating);
+  if (sort === 'newest')     list.sort((a,b) => b.id - a.id);
+  renderCards(list);
+}
+
+/* filter modal */
+function openFilterModal() {
+  document.getElementById('filter-modal').classList.add('open');
+}
+function closeFilterModal() {
+  document.getElementById('filter-modal').classList.remove('open');
+}
+function closeFilterOnOverlay(e) {
+  if (e.target === document.getElementById('filter-modal')) closeFilterModal();
+}
+function toggleOpt(el) {
+  el.classList.toggle('sel');
+}
+function updatePriceLabel() {
+  const min = parseInt(document.getElementById('price-min').value);
+  const max = parseInt(document.getElementById('price-max').value);
+  document.getElementById('price-min-label').textContent = 'KES ' + min.toLocaleString();
+  document.getElementById('price-max-label').textContent = 'KES ' + max.toLocaleString();
+}
+
+/* ══════════════════════════════════════════════════════
+   HEART / WISHLIST
+══════════════════════════════════════════════════════ */
+function toggleHeart(e, el) {
+  e.stopPropagation();
+  el.classList.toggle('saved');
+  el.textContent = el.classList.contains('saved') ? '❤️' : '🤍';
+}
+
+/* ══════════════════════════════════════════════════════
+   SEARCH FIELD INTERACTION (cosmetic — full with Supabase)
+══════════════════════════════════════════════════════ */
+function openField(field) {
+  const el = document.getElementById('field-' + field);
+  el.classList.remove('placeholder');
+  if (field === 'checkin')  { el.textContent = 'Jun 18'; }
+  if (field === 'checkout') { el.textContent = 'Jun 21'; }
+  if (field === 'guests')   { el.textContent = '2 guests'; }
+}
+
+function runSearch() {
+  // In full app: query Supabase with the selected filters
+  renderCards(LISTINGS);
+}
+
+/* ══════════════════════════════════════════════════════
+   INIT
+══════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+  positionLayout();
+  renderCards(LISTINGS);
+});
+</script>
+</body>
+</html>
