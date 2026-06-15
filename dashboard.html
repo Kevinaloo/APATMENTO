@@ -55,14 +55,15 @@ html,body{height:100%;font-family:'Inter',sans-serif;overflow:hidden;background:
   align-items:center;justify-content:center;
   opacity:0;visibility:hidden;
   transition:opacity .7s cubic-bezier(.22,1,.36,1),
-              visibility .7s;
-  z-index:10;
+             visibility .7s;
+  z-index:50; /* above overlays */
 }
 .screen.active{opacity:1;visibility:visible;}
 .screen.exit{
   opacity:0;transform:scale(1.04);
   transition:opacity .5s ease,transform .5s ease,visibility .5s;
   visibility:hidden;
+  pointer-events:none;
 }
 
 /* ══════════════════════════════════════════════
@@ -363,15 +364,25 @@ html,body{height:100%;font-family:'Inter',sans-serif;overflow:hidden;background:
 
 /* EXPAND OVERLAY — fills screen when card is chosen */
 .expand-overlay{
-  position:fixed;inset:0;z-index:200;
-  pointer-events:none;border-radius:50%;
-  transform:scale(0);opacity:0;
-  transition:transform .7s cubic-bezier(.22,1,.36,1),
-              opacity .3s ease,
-              border-radius .7s ease;
+  position:fixed;
+  /* position from centre of screen, not top-left */
+  left:50%;top:50%;
+  width:10px;height:10px;
+  margin-left:-5px;margin-top:-5px;
+  z-index:200;
+  pointer-events:none;
+  border-radius:50%;
+  transform:scale(0);
+  opacity:0;
+  transition:transform .8s cubic-bezier(.22,1,.36,1),
+             opacity .3s ease,
+             border-radius .7s ease;
 }
 .expand-overlay.go{
-  transform:scale(10);opacity:1;border-radius:0;pointer-events:all;
+  transform:scale(300);
+  opacity:1;
+  border-radius:0;
+  pointer-events:none; /* never block clicks — dashboard appears on top */
 }
 .exp-guest{background:var(--white);}
 .exp-partner{background:var(--partner-bg);}
@@ -1565,32 +1576,17 @@ function chooseRole(role) {
   if (selectedRole) return; // prevent double-tap
   selectedRole = role;
   saveRole(role); // persist to Supabase
-
-  // Position and trigger the expand overlay from the card's centre
-  const card = document.getElementById('card-' + role);
-  const overlay = document.getElementById('exp-' + role);
-  const rect = card.getBoundingClientRect();
-  const cx = rect.left + rect.width / 2;
-  const cy = rect.top + rect.height / 2;
-
-  overlay.style.left   = cx + 'px';
-  overlay.style.top    = cy + 'px';
-  overlay.style.width  = '10px';
-  overlay.style.height = '10px';
-  overlay.style.marginLeft = '-5px';
-  overlay.style.marginTop  = '-5px';
-
-  requestAnimationFrame(() => {
-    overlay.classList.add('go');
-  });
-
-  // populate name fields
   populateDashboard(role);
 
-  // after expand covers screen, show dashboard
+  // Simple fade out role screen, fade in dashboard
+  const roleScreen = document.getElementById('screen-role');
+  roleScreen.style.transition = 'opacity .4s ease';
+  roleScreen.style.opacity = '0';
+  roleScreen.style.pointerEvents = 'none';
+
   setTimeout(() => {
     showScreen(role, 0);
-  }, 650);
+  }, 380);
 }
 
 function populateDashboard(role) {
@@ -1643,17 +1639,19 @@ function switchRole() {
   selectedRole = null;
   if (CURRENT_USER) saveRole(null);
 
-  // reset overlays
-  document.getElementById('exp-guest').classList.remove('go');
-  document.getElementById('exp-partner').classList.remove('go');
-
   // reset role cards
   document.getElementById('card-guest').classList.remove('on');
   document.getElementById('card-partner').classList.remove('on');
   document.getElementById('role-header').classList.remove('on');
 
-  // reset all fade-items
+  // reset fade-items
   document.querySelectorAll('.fade-item').forEach(el => el.classList.remove('on'));
+
+  // restore role screen opacity
+  const roleScreen = document.getElementById('screen-role');
+  roleScreen.style.opacity = '';
+  roleScreen.style.pointerEvents = '';
+  roleScreen.style.transition = '';
 
   showScreen('role');
 }
