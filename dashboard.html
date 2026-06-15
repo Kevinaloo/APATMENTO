@@ -374,6 +374,10 @@ html,body{height:100%;font-family:'Inter',sans-serif;overflow:hidden;background:
   align-items:stretch;
   justify-content:flex-start;
   overflow:hidden;
+  /* Fix: ensure the screen actually takes full viewport */
+  width:100vw;
+  height:100vh;
+  top:0;left:0;
 }
 
 /* SIDEBAR */
@@ -660,6 +664,9 @@ html,body{height:100%;font-family:'Inter',sans-serif;overflow:hidden;background:
   align-items:stretch;
   justify-content:flex-start;
   overflow:hidden;
+  width:100vw;
+  height:100vh;
+  top:0;left:0;
 }
 
 /* PARTNER SIDEBAR */
@@ -1552,13 +1559,52 @@ function buildGreeting() {
 let selectedRole = null;
 let guestDashboardReady = false; // prevent double-init of slideshow/ads
 
+function showToast(msg) {
+  let t = document.getElementById('debug-toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'debug-toast';
+    t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#000;color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;z-index:9999;pointer-events:none;';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.display = 'block';
+  setTimeout(() => { t.style.display = 'none'; }, 3000);
+}
+
 function chooseRole(role) {
-  // If already transitioning to same role, ignore
-  if (selectedRole === role) return;
+  showToast('Tapped: ' + role);
+  // Prevent double-tap same role only
+  if (selectedRole === role) { showToast('Blocked - same role'); return; }
   selectedRole = role;
-  saveRole(role);
-  populateDashboard(role);
-  showScreen(role, 0);
+
+  try { saveRole(role); } catch(e) {}
+
+  try { populateDashboard(role); } catch(e) { console.warn('populateDashboard error:', e); }
+
+  // Direct DOM manipulation — don't rely on showScreen for critical path
+  Object.values(screens).forEach(s => {
+    if (s) { s.classList.remove('active'); s.classList.remove('exit'); }
+  });
+
+  const target = screens[role];
+  if (target) {
+    target.classList.add('active');
+  } else {
+    console.error('Screen not found:', role);
+    return;
+  }
+
+  // Trigger dashboard init
+  setTimeout(() => {
+    try { animateDashboard(role); } catch(e) {}
+    if (role === 'guest' && !guestDashboardReady) {
+      guestDashboardReady = true;
+      try { initSlideshow(); } catch(e) {}
+      try { initAdRotation(); } catch(e) {}
+      try { initServiceBar(); } catch(e) {}
+    }
+  }, 100);
 }
 
 function populateDashboard(role) {
