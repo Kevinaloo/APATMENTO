@@ -325,6 +325,7 @@ html,body{min-height:100%;font-family:'Inter',sans-serif;background:var(--offwhi
   *,*::before,*::after{animation:none!important;transition-duration:.01ms!important;}
 }
 </style>
+<script src="payment.js"></script>
 </head>
 <body>
 
@@ -801,26 +802,42 @@ async function confirmTicketPurchase(eventId) {
          on public.event_tickets for all using (auth.uid() = guest_id);
     */
     const confirmationCode = 'APT-' + Math.random().toString(36).substring(2,8).toUpperCase();
+    // Prefix "EVENT-" tells the callback function which table to update
+    const paymentReference = `EVENT-${e.id}-${Date.now()}`;
 
     const { error } = await sb.from('event_tickets').insert({
-      guest_id:        CURRENT_USER?.id || null,
-      event_id:         e.id,
-      event_name:       e.name,
-      organizer_name:   e.organizer,
-      tier_name:        tier.name,
-      quantity:          ticketQty,
-      contact_phone:    phone,
-      ticket_total:     ticketTotal,
-      service_fee:      totalFee,
-      grand_total:      grandTotal,
-      confirmation_code: confirmationCode,
-      status:           'pending_payment',
+      guest_id:          CURRENT_USER?.id || null,
+      event_id:           e.id,
+      event_name:         e.name,
+      organizer_name:     e.organizer,
+      tier_name:          tier.name,
+      quantity:            ticketQty,
+      contact_phone:      phone,
+      ticket_total:       ticketTotal,
+      service_fee:        totalFee,
+      grand_total:        grandTotal,
+      confirmation_code:  confirmationCode,
+      payment_reference:  paymentReference,
+      status:             'pending_payment',
     });
 
     if (error) throw error;
 
-    showToast(`🎉 Ticket request sent! Confirmation: ${confirmationCode}. M-Pesa prompt incoming.`);
-    setTimeout(closeDrawer, 2200);
+    closeDrawer();
+
+    ApatmentoPay.start({
+      amount:      grandTotal,
+      phone:       phone,
+      reference:   paymentReference,
+      table:       'event_tickets',
+      description: `${e.name} — ${tier.name} × ${ticketQty}`,
+      onSuccess: () => {
+        showToast(`🎉 Payment confirmed! Your ticket code: ${confirmationCode}`);
+      },
+      onFailure: () => {
+        showToast('Payment was not completed. You can try again from My Tickets.');
+      },
+    });
 
   } catch (err) {
     console.error(err);
