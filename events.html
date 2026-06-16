@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>APATMENTO — Events</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400&family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --white:#FFFFFF;--offwhite:#F7F6F2;--stone:#EDEAE4;
+  --ink:#0F1117;--ink2:#2A2D38;--ink3:#5A5E70;--ink4:#9499AD;
+  --border:rgba(15,17,23,0.08);--border-md:rgba(15,17,23,0.14);
+  --shadow-sm:0 2px 12px rgba(15,17,23,0.06);
+  --shadow-md:0 8px 32px rgba(15,17,23,0.10);
+  --shadow-lg:0 20px 60px rgba(15,17,23,0.14);
+  --gold:#C8970A;--gold2:#E8A800;--goldbright:#FCC444;
+  --emerald:#0D9467;--emerald2:#059652;
+  --em-bg:rgba(13,148,103,0.07);--em-bd:rgba(13,148,103,0.18);
+  --violet:#7C3AED;--violet-bg:rgba(124,58,237,0.08);--violet-bd:rgba(124,58,237,0.2);
+  --rose:#D4457A;
+}
+html,body{min-height:100%;font-family:'Inter',sans-serif;background:var(--offwhite);color:var(--ink);}
+
+.top-nav{
+  position:sticky;top:0;z-index:100;height:60px;
+  background:var(--white);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;padding:0 24px;
+}
+.nav-logo{
+  font-family:'Playfair Display',serif;font-size:16px;font-weight:700;
+  letter-spacing:.22em;text-transform:uppercase;
+  background:linear-gradient(90deg,var(--gold),var(--gold2));
+  -webkit-background-clip:text;background-clip:text;color:transparent;text-decoration:none;
+}
+.nav-back{
+  display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500;
+  color:var(--ink3);text-decoration:none;padding:7px 14px;border-radius:8px;
+  border:1px solid var(--border);transition:all .2s;
+}
+.nav-back:hover{background:var(--offwhite);color:var(--ink);}
+.nav-avatar{
+  width:32px;height:32px;border-radius:8px;
+  background:linear-gradient(135deg,var(--emerald),var(--emerald2));
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:700;color:white;
+}
+
+/* ── HERO ── */
+.hero-banner{
+  background:linear-gradient(135deg,#0d0618 0%,#241040 45%,#150a28 100%);
+  padding:40px 24px 32px;position:relative;overflow:hidden;
+}
+.hero-banner::before{
+  content:'';position:absolute;right:-50px;top:-50px;width:300px;height:300px;border-radius:50%;
+  background:radial-gradient(circle,rgba(124,58,237,.14),transparent);pointer-events:none;
+}
+.hero-banner::after{
+  content:'';position:absolute;left:-30px;bottom:-70px;width:220px;height:220px;border-radius:50%;
+  background:radial-gradient(circle,rgba(212,69,122,.1),transparent);pointer-events:none;
+}
+.hero-inner{max-width:760px;margin:0 auto;position:relative;z-index:1;}
+.hero-eyebrow{font-size:10px;font-weight:600;letter-spacing:.26em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:8px;}
+.hero-title{font-family:'Playfair Display',serif;font-size:clamp(24px,4.2vw,36px);font-weight:700;color:white;margin-bottom:6px;line-height:1.2;}
+.hero-sub{font-size:13px;color:rgba(255,255,255,.5);margin-bottom:22px;max-width:520px;}
+
+.hero-search{
+  display:flex;gap:0;background:var(--white);border-radius:14px;overflow:hidden;
+  box-shadow:0 12px 40px rgba(0,0,0,.3);border:2px solid transparent;transition:border-color .2s;
+}
+.hero-search:focus-within{border-color:var(--violet);}
+.hero-search input{
+  flex:1;padding:14px 18px;border:none;outline:none;
+  font-family:'Inter',sans-serif;font-size:14px;color:var(--ink);background:transparent;
+}
+.hero-search input::placeholder{color:var(--ink4);}
+.hero-search-btn{
+  padding:0 22px;background:linear-gradient(135deg,var(--violet),#5b21b6);
+  color:white;border:none;cursor:pointer;
+  font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:800;
+  display:flex;align-items:center;gap:6px;transition:filter .2s;white-space:nowrap;
+}
+.hero-search-btn:hover{filter:brightness(1.07);}
+
+.hero-trust{margin-top:16px;display:flex;align-items:center;gap:18px;flex-wrap:wrap;}
+.ht-item{display:flex;align-items:center;gap:6px;font-size:12px;color:rgba(255,255,255,.55);}
+.ht-item strong{color:var(--goldbright);}
+
+/* ── DATE FILTER STRIP ── */
+.date-strip{
+  background:var(--white);border-bottom:1px solid var(--border);
+  padding:0 20px;display:flex;gap:0;overflow-x:auto;scrollbar-width:none;
+}
+.date-strip::-webkit-scrollbar{display:none;}
+.date-tab{
+  padding:14px 18px;font-size:13px;font-weight:500;color:var(--ink3);
+  cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;
+  transition:color .2s,border-color .2s;display:flex;align-items:center;gap:6px;
+}
+.date-tab:hover{color:var(--ink);}
+.date-tab.active{color:var(--violet);border-bottom-color:var(--violet);font-weight:600;}
+
+/* ── CATEGORY CHIPS ── */
+.cat-chips{
+  display:flex;gap:8px;padding:14px 20px;overflow-x:auto;scrollbar-width:none;
+  background:var(--white);border-bottom:1px solid var(--border);
+}
+.cat-chips::-webkit-scrollbar{display:none;}
+.cat-chip{
+  padding:6px 14px;border-radius:100px;font-size:12px;font-weight:500;
+  border:1px solid var(--border);background:var(--white);color:var(--ink3);
+  cursor:pointer;white-space:nowrap;transition:all .2s;flex-shrink:0;
+}
+.cat-chip:hover{border-color:var(--border-md);color:var(--ink);}
+.cat-chip.active{border-color:var(--violet);background:var(--violet-bg);color:var(--violet);font-weight:600;}
+
+/* ── MAIN ── */
+.main{max-width:1100px;margin:0 auto;padding:24px 20px 60px;display:flex;flex-direction:column;gap:28px;}
+.sec-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.sec-title{font-family:'Playfair Display',serif;font-size:20px;font-weight:600;color:var(--ink);}
+.sec-sub{font-size:12px;color:var(--ink4);margin-top:2px;}
+
+/* ── EVENT CARDS ── */
+.event-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px;}
+.event-card{
+  background:var(--white);border-radius:18px;border:1px solid var(--border);
+  overflow:hidden;cursor:pointer;transition:transform .22s,box-shadow .22s;position:relative;
+}
+.event-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg);}
+.event-thumb{height:160px;display:flex;align-items:center;justify-content:center;font-size:54px;position:relative;}
+.et-0{background:linear-gradient(135deg,#1a0a30,#3a1460);}
+.et-1{background:linear-gradient(135deg,#2a0a1a,#5a1438);}
+.et-2{background:linear-gradient(135deg,#0a1a30,#143a60);}
+.et-3{background:linear-gradient(135deg,#1a2a0a,#3a5818);}
+.et-4{background:linear-gradient(135deg,#2a1a00,#5a3800);}
+.et-5{background:linear-gradient(135deg,#1a0a0a,#3a1414);}
+.et-6{background:linear-gradient(135deg,#0a1a1a,#143838);}
+
+.event-thumb::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,transparent 50%,rgba(0,0,0,.4) 100%);}
+.event-date-badge{
+  position:absolute;top:10px;left:10px;z-index:2;
+  background:var(--white);border-radius:10px;padding:6px 10px;text-align:center;
+  box-shadow:var(--shadow-sm);min-width:48px;
+}
+.edb-day{font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:800;color:var(--ink);line-height:1;}
+.edb-month{font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--violet);}
+.event-badges-right{position:absolute;top:10px;right:10px;z-index:2;display:flex;flex-direction:column;gap:5px;align-items:flex-end;}
+.event-badge{padding:3px 10px;border-radius:100px;font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:white;}
+.badge-soldout{background:rgba(220,38,38,.9);}
+.badge-selling{background:rgba(13,148,103,.9);}
+.badge-free{background:rgba(252,196,68,.92);color:#1a1206;}
+
+.event-body{padding:16px 18px;}
+.event-cat{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--violet);margin-bottom:5px;font-weight:600;}
+.event-name{font-family:'Playfair Display',serif;font-size:17px;font-weight:700;color:var(--ink);margin-bottom:8px;line-height:1.3;}
+.event-meta-row{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--ink4);margin-bottom:12px;}
+.event-meta-row span{display:flex;align-items:center;gap:6px;}
+.event-organizer{
+  display:flex;align-items:center;gap:7px;margin-bottom:12px;
+  padding:8px 10px;border-radius:8px;background:var(--offwhite);
+}
+.eo-ava{
+  width:22px;height:22px;border-radius:50%;flex-shrink:0;
+  background:linear-gradient(135deg,var(--violet),#5b21b6);
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:700;color:white;
+}
+.eo-name{font-size:11px;font-weight:600;color:var(--ink2);}
+.eo-verified{font-size:9px;color:var(--emerald);}
+.event-price-row{display:flex;align-items:center;justify-content:space-between;}
+.event-price{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;color:var(--ink);}
+.event-price span{font-size:11px;font-weight:400;color:var(--ink4);}
+.event-book-btn{
+  padding:9px 18px;border-radius:10px;
+  background:linear-gradient(135deg,var(--violet),#5b21b6);
+  color:white;font-family:'Space Grotesk',sans-serif;
+  font-size:12px;font-weight:700;border:none;cursor:pointer;
+  transition:filter .2s,transform .2s;
+}
+.event-book-btn:hover{filter:brightness(1.08);transform:translateY(-1px);}
+.event-book-btn:disabled{opacity:.5;cursor:not-allowed;}
+
+/* ── ORGANIZER CTA BAND ── */
+.partner-cta{
+  background:linear-gradient(135deg,#150a28,#241040);
+  border-radius:20px;padding:32px;
+  display:flex;align-items:center;justify-content:space-between;
+  gap:24px;flex-wrap:wrap;position:relative;overflow:hidden;
+}
+.partner-cta::before{
+  content:'';position:absolute;right:-40px;top:-40px;width:200px;height:200px;border-radius:50%;
+  background:radial-gradient(circle,rgba(252,196,68,.1),transparent);pointer-events:none;
+}
+.pcta-text h3{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:white;margin-bottom:8px;}
+.pcta-text p{font-size:13px;color:rgba(240,240,249,.55);max-width:420px;line-height:1.6;}
+.pcta-fee-note{
+  display:inline-flex;align-items:center;gap:6px;margin-top:10px;
+  padding:6px 14px;border-radius:100px;
+  background:rgba(252,196,68,.12);border:1px solid rgba(252,196,68,.25);
+  font-size:11px;font-weight:600;color:var(--goldbright);
+}
+.pcta-btn{
+  padding:14px 28px;border-radius:12px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--goldbright),var(--gold2));
+  color:#1a1206;font-family:'Space Grotesk',sans-serif;
+  font-size:14px;font-weight:800;border:none;cursor:pointer;
+  transition:filter .2s,transform .2s;
+  box-shadow:0 8px 24px rgba(252,196,68,.25);
+}
+.pcta-btn:hover{filter:brightness(1.07);transform:translateY(-2px);}
+
+/* ── DETAIL DRAWER ── */
+.drawer-overlay{position:fixed;inset:0;z-index:200;background:rgba(15,17,23,0);pointer-events:none;transition:background .35s ease;}
+.drawer-overlay.open{background:rgba(15,17,23,.5);pointer-events:all;}
+.drawer{
+  position:fixed;top:0;right:-100%;bottom:0;width:min(560px,100vw);z-index:201;
+  background:var(--white);box-shadow:-24px 0 64px rgba(15,17,23,.2);
+  overflow-y:auto;transition:right .45s cubic-bezier(.22,1,.36,1);
+}
+.drawer.open{right:0;}
+.drawer-photo{position:relative;height:240px;display:flex;align-items:center;justify-content:center;font-size:76px;overflow:hidden;}
+.drawer-photo::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,transparent 50%,rgba(0,0,0,.5) 100%);}
+.drawer-close{
+  position:absolute;top:16px;right:16px;z-index:2;width:36px;height:36px;border-radius:50%;
+  background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.25);backdrop-filter:blur(4px);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;color:white;
+  transition:background .2s;
+}
+.drawer-close:hover{background:rgba(255,255,255,.35);}
+.drawer-body{padding:24px 28px 40px;}
+.drawer-cat{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--violet);margin-bottom:6px;font-weight:700;}
+.drawer-name{font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:var(--ink);line-height:1.2;margin-bottom:14px;}
+.drawer-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;}
+.dig-item{padding:12px 14px;border-radius:10px;background:var(--offwhite);border:1px solid var(--border);}
+.dig-label{font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink4);margin-bottom:4px;}
+.dig-val{font-size:13px;font-weight:600;color:var(--ink);}
+.drawer-organizer{
+  display:flex;align-items:center;gap:9px;margin-bottom:18px;
+  padding:12px 14px;border-radius:10px;background:var(--offwhite);border:1px solid var(--border);
+}
+.do-ava{
+  width:32px;height:32px;border-radius:50%;flex-shrink:0;
+  background:linear-gradient(135deg,var(--violet),#5b21b6);
+  display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:white;
+}
+.drawer-desc{font-size:14px;line-height:1.8;color:var(--ink3);margin-bottom:20px;}
+
+/* ticket selector */
+.ticket-selector{background:var(--offwhite);border-radius:14px;padding:18px;margin-bottom:20px;}
+.ts-title{font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:700;color:var(--ink);margin-bottom:14px;}
+.ts-tier{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 14px;border-radius:10px;background:var(--white);border:1.5px solid var(--border);
+  margin-bottom:10px;cursor:pointer;transition:border-color .2s;
+}
+.ts-tier.selected{border-color:var(--violet);background:var(--violet-bg);}
+.ts-tier-info strong{font-size:13px;color:var(--ink);display:block;}
+.ts-tier-info span{font-size:11px;color:var(--ink4);}
+.ts-tier-price{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;color:var(--ink);}
+.ts-qty-row{display:flex;align-items:center;justify-content:space-between;margin-top:14px;}
+.ts-qty-label{font-size:12px;font-weight:600;color:var(--ink2);}
+.ts-qty-controls{display:flex;align-items:center;gap:10px;}
+.ts-qty-btn{
+  width:30px;height:30px;border-radius:8px;border:1.5px solid var(--border);
+  background:var(--white);font-size:16px;color:var(--ink);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;transition:background .2s;
+}
+.ts-qty-btn:hover{background:var(--offwhite);}
+.ts-qty-val{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;color:var(--ink);min-width:24px;text-align:center;}
+
+.bf-field{display:flex;flex-direction:column;gap:5px;margin-bottom:14px;}
+.bf-label{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink4);}
+.bf-input{
+  padding:11px 14px;border-radius:10px;border:1.5px solid var(--border);
+  background:var(--white);font-family:'Inter',sans-serif;font-size:13px;color:var(--ink);
+  outline:none;transition:border-color .2s;
+}
+.bf-input:focus{border-color:var(--violet);}
+
+.price-breakdown{background:var(--white);border-radius:10px;padding:14px 16px;margin-top:6px;border:1px solid var(--border);}
+.pb-row{display:flex;justify-content:space-between;font-size:12px;color:var(--ink3);padding:5px 0;}
+.pb-row.total{border-top:1px solid var(--border);margin-top:6px;padding-top:10px;font-size:14px;font-weight:700;color:var(--ink);}
+.pb-note{font-size:10px;color:var(--ink4);margin-top:6px;}
+
+.drawer-cta-box{border-top:1px solid var(--border);padding-top:20px;}
+.drawer-book-cta{
+  width:100%;padding:15px;border-radius:12px;
+  background:linear-gradient(135deg,var(--violet),#5b21b6);
+  color:white;font-family:'Space Grotesk',sans-serif;
+  font-size:14px;font-weight:700;border:none;cursor:pointer;
+  transition:filter .2s,transform .2s;box-shadow:0 6px 24px rgba(124,58,237,.3);
+}
+.drawer-book-cta:hover{filter:brightness(1.08);transform:translateY(-2px);}
+.drawer-book-cta:disabled{opacity:.5;cursor:not-allowed;}
+
+/* ── HOW IT WORKS ── */
+.how-band{background:var(--white);border-radius:16px;border:1px solid var(--border);padding:20px;}
+.how-title{font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink4);margin-bottom:14px;}
+.how-row{display:flex;gap:0;overflow-x:auto;scrollbar-width:none;}
+.how-row::-webkit-scrollbar{display:none;}
+.how-step{display:flex;flex-direction:column;align-items:center;text-align:center;min-width:130px;padding:0 14px;position:relative;}
+.how-step:not(:last-child)::after{content:'→';position:absolute;right:-6px;top:18px;color:var(--ink4);font-size:14px;}
+.how-ico{width:40px;height:40px;border-radius:12px;background:var(--offwhite);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:8px;}
+.how-lbl{font-size:11px;font-weight:600;color:var(--ink);margin-bottom:3px;}
+.how-sub{font-size:10px;color:var(--ink4);line-height:1.4;}
+
+.toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  background:var(--ink);color:white;padding:12px 20px;border-radius:12px;
+  font-size:13px;font-weight:500;box-shadow:var(--shadow-lg);z-index:999;
+  opacity:0;pointer-events:none;transition:opacity .3s;white-space:nowrap;max-width:90vw;text-align:center;
+}
+.toast.show{opacity:1;}
+
+@media(max-width:600px){
+  .event-grid{grid-template-columns:1fr 1fr;}
+  .main{padding:16px 14px 48px;}
+  .partner-cta{flex-direction:column;text-align:center;}
+  .drawer-info-grid{grid-template-columns:1fr;}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition-duration:.01ms!important;}
+}
+</style>
+</head>
+<body>
+
+<nav class="top-nav">
+  <a href="dashboard.html?role=guest" class="nav-back">← Dashboard</a>
+  <a href="dashboard.html?role=guest" class="nav-logo">Apatmento</a>
+  <div class="nav-avatar" id="nav-avatar">G</div>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<div class="hero-banner">
+  <div class="hero-inner">
+    <div class="hero-eyebrow">Kenya · Events &amp; Tickets</div>
+    <div class="hero-title">What's happening near you</div>
+    <div class="hero-sub">Concerts, comedy, conferences and festivals across Kenya — book tickets directly, securely.</div>
+    <div class="hero-search">
+      <input type="text" id="search-input" placeholder="Search events, artists or venues…"
+        oninput="onSearchInput()" onkeydown="onSearchKey(event)"/>
+      <button class="hero-search-btn" onclick="doSearch()">🔍 Search</button>
+    </div>
+    <div class="hero-trust">
+      <div class="ht-item">✓ <strong>Verified</strong> organizers</div>
+      <div class="ht-item">✓ <strong>Instant</strong> digital tickets</div>
+      <div class="ht-item">✓ <strong>Secure</strong> M-Pesa &amp; card payment</div>
+    </div>
+  </div>
+</div>
+
+<div class="date-strip" id="date-strip">
+  <div class="date-tab active" onclick="setDateFilter('all',this)">📅 All Dates</div>
+  <div class="date-tab" onclick="setDateFilter('today',this)">Today</div>
+  <div class="date-tab" onclick="setDateFilter('weekend',this)">This Weekend</div>
+  <div class="date-tab" onclick="setDateFilter('week',this)">This Week</div>
+  <div class="date-tab" onclick="setDateFilter('month',this)">This Month</div>
+</div>
+
+<div class="cat-chips" id="cat-chips">
+  <div class="cat-chip active" onclick="setCategory('all',this)">🎉 All</div>
+  <div class="cat-chip" onclick="setCategory('music',this)">🎵 Music &amp; Concerts</div>
+  <div class="cat-chip" onclick="setCategory('comedy',this)">😂 Comedy</div>
+  <div class="cat-chip" onclick="setCategory('festival',this)">🎪 Festivals</div>
+  <div class="cat-chip" onclick="setCategory('conference',this)">💼 Conferences</div>
+  <div class="cat-chip" onclick="setCategory('sports',this)">⚽ Sports</div>
+  <div class="cat-chip" onclick="setCategory('nightlife',this)">🌃 Nightlife</div>
+  <div class="cat-chip" onclick="setCategory('arts',this)">🎨 Arts &amp; Theatre</div>
+</div>
+
+<div class="main" id="main-content">
+
+  <div id="events-section">
+    <div class="sec-header">
+      <div>
+        <div class="sec-title">Upcoming events</div>
+        <div class="sec-sub">Book your tickets securely through Apatmento</div>
+      </div>
+    </div>
+    <div class="event-grid" id="event-grid"></div>
+  </div>
+
+  <!-- BECOME AN ORGANIZER CTA -->
+  <div class="partner-cta">
+    <div class="pcta-text">
+      <h3>Organizing an event?</h3>
+      <p>List your concert, comedy show, conference or festival on Apatmento. Guests buy tickets securely — you get paid out fast, keeping nearly all of every ticket sold.</p>
+      <div class="pcta-fee-note">💰 Just a small fixed fee per ticket — never a percentage</div>
+    </div>
+    <button class="pcta-btn" onclick="window.location.href='add-listing.html?type=event'">List Your Event →</button>
+  </div>
+
+  <div class="how-band">
+    <div class="how-title">How Apatmento Events works</div>
+    <div class="how-row">
+      <div class="how-step">
+        <div class="how-ico">🔍</div>
+        <div class="how-lbl">Discover</div>
+        <div class="how-sub">Browse verified events happening across Kenya</div>
+      </div>
+      <div class="how-step">
+        <div class="how-ico">🎫</div>
+        <div class="how-lbl">Buy ticket</div>
+        <div class="how-sub">Choose your ticket tier and pay securely through Apatmento</div>
+      </div>
+      <div class="how-step">
+        <div class="how-ico">📱</div>
+        <div class="how-lbl">Get your ticket</div>
+        <div class="how-sub">Receive a digital ticket with a unique confirmation code</div>
+      </div>
+      <div class="how-step">
+        <div class="how-ico">🎉</div>
+        <div class="how-lbl">Show up</div>
+        <div class="how-sub">Present your ticket at the door. That's it.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer"></div>
+
+<script>
+/* ══ SUPABASE ══ */
+const SUPABASE_URL      = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let CURRENT_USER = null;
+(async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) CURRENT_USER = session.user;
+})();
+
+/* ══ EVENTS DATA ══ (replace with Supabase fetch once organizers list real events) */
+const EVENTS = [
+  {
+    id:1, name:'Nairobi Jazz Festival 2026', venue:'Ngong Racecourse', city:'Nairobi',
+    cat:'music', date:'2026-07-12', day:'12', month:'JUL', time:'4:00 PM',
+    icon:'🎷', grad:'et-0', status:'selling', soldOutPercent:62,
+    organizer:'Blankets &amp; Wine Kenya', orgInit:'B', verified:true,
+    desc:'East Africa\\'s premier jazz festival returns to Ngong Racecourse with a stellar lineup of local and international jazz acts. Food trucks, art installations, and an unforgettable evening under the stars.',
+    tiers:[
+      {name:'Early Bird', price:1500, desc:'Limited availability'},
+      {name:'Regular', price:2500, desc:'General entry'},
+      {name:'VIP', price:6000, desc:'Front stage + lounge access'},
+    ],
+  },
+  {
+    id:2, name:'Nairobi Comedy Night ft. Eric Omondi', venue:'Carnivore Grounds', city:'Nairobi',
+    cat:'comedy', date:'2026-06-21', day:'21', month:'JUN', time:'7:00 PM',
+    icon:'😂', grad:'et-1', status:'selling', soldOutPercent:38,
+    organizer:'Laughter Inc.', orgInit:'L', verified:true,
+    desc:'An evening of non-stop laughs with Kenya\\'s top comedians. Doors open at 6pm with a cash bar and street food vendors on site.',
+    tiers:[
+      {name:'Standard', price:1000, desc:'General seating'},
+      {name:'VIP Table', price:3500, desc:'Reserved table for 4'},
+    ],
+  },
+  {
+    id:3, name:'Nairobi Tech Summit 2026', venue:'KICC', city:'Nairobi',
+    cat:'conference', date:'2026-08-05', day:'05', month:'AUG', time:'9:00 AM',
+    icon:'💻', grad:'et-2', status:'selling', soldOutPercent:21,
+    organizer:'Tech Kenya Network', orgInit:'T', verified:true,
+    desc:'East Africa\\'s leading tech conference bringing together founders, investors and developers. Keynotes, workshops, and unmatched networking opportunities.',
+    tiers:[
+      {name:'Student', price:1500, desc:'Valid student ID required'},
+      {name:'Professional', price:5000, desc:'Full conference access'},
+      {name:'Investor Pass', price:12000, desc:'Includes investor mixer'},
+    ],
+  },
+  {
+    id:4, name:'Wine &amp; Cheese Festival', venue:'Two Rivers Mall', city:'Nairobi',
+    cat:'festival', date:'2026-06-28', day:'28', month:'JUN', time:'2:00 PM',
+    icon:'🍷', grad:'et-3', status:'selling', soldOutPercent:55,
+    organizer:'Epicurean Events', orgInit:'E', verified:true,
+    desc:'Sample wines and artisan cheeses from across the region in this elegant afternoon festival. Live acoustic music and gourmet food pairings included.',
+    tiers:[
+      {name:'Entry Ticket', price:2000, desc:'Includes 3 tasting tokens'},
+      {name:'Premium', price:4500, desc:'Unlimited tastings + gift bag'},
+    ],
+  },
+  {
+    id:5, name:'Gor Mahia vs AFC Leopards', venue:'Nyayo Stadium', city:'Nairobi',
+    cat:'sports', date:'2026-06-29', day:'29', month:'JUN', time:'3:00 PM',
+    icon:'⚽', grad:'et-4', status:'selling', soldOutPercent:71,
+    organizer:'Kenya Premier League', orgInit:'K', verified:true,
+    desc:'The biggest derby in Kenyan football. Gor Mahia takes on AFC Leopards in what promises to be an electric atmosphere at Nyayo Stadium.',
+    tiers:[
+      {name:'Terrace', price:500, desc:'Standing terrace'},
+      {name:'Grandstand', price:1200, desc:'Seated grandstand'},
+    ],
+  },
+  {
+    id:6, name:'Sundowner Sessions — House Music', venue:'Alchemist Bar', city:'Nairobi',
+    cat:'nightlife', date:'2026-06-20', day:'20', month:'JUN', time:'5:00 PM',
+    icon:'🎧', grad:'et-5', status:'selling', soldOutPercent:44,
+    organizer:'Alchemist Events', orgInit:'A', verified:true,
+    desc:'Nairobi\\'s favourite sundowner returns with top local DJs spinning deep house and afrobeat as the sun sets over the city.',
+    tiers:[
+      {name:'General Entry', price:800, desc:'Walk-in entry'},
+    ],
+  },
+  {
+    id:7, name:'Nairobi National Theatre — Sarafina!', venue:'Kenya National Theatre', city:'Nairobi',
+    cat:'arts', date:'2026-07-03', day:'03', month:'JUL', time:'6:30 PM',
+    icon:'🎭', grad:'et-6', status:'selling', soldOutPercent:30,
+    organizer:'Kenya National Theatre', orgInit:'K', verified:true,
+    desc:'A powerful musical theatre production celebrating Kenyan culture and history. An unforgettable night of live performance, music and dance.',
+    tiers:[
+      {name:'Balcony', price:1200, desc:'Upper balcony seating'},
+      {name:'Stalls', price:2200, desc:'Ground floor seating'},
+    ],
+  },
+  {
+    id:8, name:'Diani Beach Music Festival', venue:'Diani Beach', city:'Diani',
+    cat:'festival', date:'2026-07-19', day:'19', month:'JUL', time:'12:00 PM',
+    icon:'🏖️', grad:'et-0', status:'selling', soldOutPercent:8,
+    organizer:'Coastal Vibes Productions', orgInit:'C', verified:true,
+    desc:'A full day beach festival featuring top Kenyan and East African artists, beachside food stalls, and an afterparty into the night.',
+    tiers:[
+      {name:'Day Pass', price:2500, desc:'Single day entry'},
+      {name:'Weekend Pass', price:4000, desc:'Both festival days'},
+    ],
+  },
+];
+
+let currentCategory = 'all';
+let currentDateFilter = 'all';
+let currentSearch   = '';
+let currentEvent    = null;
+let selectedTierIdx = 0;
+let ticketQty        = 1;
+
+/* ══ FEE CALCULATION — tiered for events ══ */
+function calculateFee(price) {
+  return price < 1000 ? 50 : 150;
+}
+
+/* ══ RENDER EVENTS ══ */
+function renderEvents() {
+  const grid = document.getElementById('event-grid');
+  let list = currentCategory === 'all' ? EVENTS : EVENTS.filter(e => e.cat === currentCategory);
+
+  if (currentSearch) {
+    const q = currentSearch.toLowerCase();
+    list = list.filter(e =>
+      e.name.toLowerCase().includes(q) ||
+      e.venue.toLowerCase().includes(q) ||
+      e.organizer.toLowerCase().includes(q)
+    );
+  }
+
+  if (currentDateFilter !== 'all') {
+    const now = new Date();
+    list = list.filter(e => {
+      const ed = new Date(e.date);
+      const diffDays = (ed - now) / (1000*60*60*24);
+      if (currentDateFilter === 'today')   return diffDays >= 0 && diffDays < 1;
+      if (currentDateFilter === 'weekend') return diffDays >= 0 && diffDays < 7 && [0,6].includes(ed.getDay());
+      if (currentDateFilter === 'week')    return diffDays >= 0 && diffDays < 7;
+      if (currentDateFilter === 'month')   return diffDays >= 0 && diffDays < 31;
+      return true;
+    });
+  }
+
+  if (!list.length) {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:48px 24px;background:var(--white);border-radius:16px;border:1px solid var(--border);">
+      <div style="font-size:44px;margin-bottom:12px;">🔍</div>
+      <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:600;color:var(--ink);margin-bottom:6px;">No events found</div>
+      <div style="font-size:13px;color:var(--ink4);">Try a different filter or check back soon for new listings.</div>
+    </div>`;
+    return;
+  }
+
+  grid.innerHTML = list.map(e => {
+    const minPrice = Math.min(...e.tiers.map(t => t.price));
+    const isSoldOut = e.soldOutPercent >= 95;
+    return `
+    <div class="event-card" onclick="openDrawer(${e.id})">
+      <div class="event-thumb ${e.grad}">
+        <span>${e.icon}</span>
+        <div class="event-date-badge">
+          <div class="edb-day">${e.day}</div>
+          <div class="edb-month">${e.month}</div>
+        </div>
+        <div class="event-badges-right">
+          ${isSoldOut ? '<div class="event-badge badge-soldout">Sold Out</div>' : e.soldOutPercent > 70 ? '<div class="event-badge badge-selling">🔥 Selling Fast</div>' : ''}
+        </div>
+      </div>
+      <div class="event-body">
+        <div class="event-cat">${e.cat}</div>
+        <div class="event-name">${e.name}</div>
+        <div class="event-meta-row">
+          <span>📍 ${e.venue}, ${e.city}</span>
+          <span>🕐 ${e.time}</span>
+        </div>
+        <div class="event-organizer">
+          <div class="eo-ava">${e.orgInit}</div>
+          <div>
+            <div class="eo-name">${e.organizer}</div>
+            ${e.verified ? '<div class="eo-verified">✓ Verified Organizer</div>' : ''}
+          </div>
+        </div>
+        <div class="event-price-row">
+          <div class="event-price">KES ${minPrice.toLocaleString()}<span> from</span></div>
+          <button class="event-book-btn" ${isSoldOut?'disabled':''} onclick="event.stopPropagation();openDrawer(${e.id})">
+            ${isSoldOut ? 'Sold Out' : 'Get Tickets'}
+          </button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ══ FILTERS ══ */
+function setCategory(cat, el) {
+  currentCategory = cat;
+  document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderEvents();
+}
+function setDateFilter(filter, el) {
+  currentDateFilter = filter;
+  document.querySelectorAll('.date-tab').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderEvents();
+}
+
+/* ══ SEARCH ══ */
+let searchTimeout = null;
+function onSearchInput() {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(doSearch, 350);
+}
+function onSearchKey(e) { if (e.key === 'Enter') doSearch(); }
+function doSearch() {
+  currentSearch = document.getElementById('search-input').value.trim();
+  renderEvents();
+}
+
+/* ══ DETAIL DRAWER ══ */
+function openDrawer(id) {
+  const e = EVENTS.find(x => x.id === id);
+  if (!e) return;
+  currentEvent = e;
+  selectedTierIdx = 0;
+  ticketQty = 1;
+
+  const eventDate = new Date(e.date);
+  const dateStr = eventDate.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+
+  const drawer = document.getElementById('drawer');
+  drawer.innerHTML = `
+    <div class="drawer-photo ${e.grad}">
+      <span style="font-size:76px;position:relative;z-index:1;">${e.icon}</span>
+      <div class="drawer-close" onclick="closeDrawer()">✕</div>
+    </div>
+    <div class="drawer-body">
+      <div class="drawer-cat">${e.cat}</div>
+      <div class="drawer-name">${e.name}</div>
+
+      <div class="drawer-info-grid">
+        <div class="dig-item"><div class="dig-label">Date</div><div class="dig-val">${dateStr}</div></div>
+        <div class="dig-item"><div class="dig-label">Time</div><div class="dig-val">${e.time}</div></div>
+        <div class="dig-item"><div class="dig-label">Venue</div><div class="dig-val">${e.venue}</div></div>
+        <div class="dig-item"><div class="dig-label">City</div><div class="dig-val">${e.city}</div></div>
+      </div>
+
+      <div class="drawer-organizer">
+        <div class="do-ava">${e.orgInit}</div>
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--ink);">${e.organizer}</div>
+          <div style="font-size:11px;color:var(--emerald);">✓ Verified Organizer</div>
+        </div>
+      </div>
+
+      <div class="drawer-desc">${e.desc}</div>
+
+      <div class="ticket-selector">
+        <div class="ts-title">🎫 Select your ticket</div>
+        <div id="tier-list">
+          ${e.tiers.map((t,i) => `
+            <div class="ts-tier ${i===0?'selected':''}" id="tier-${i}" onclick="selectTier(${i})">
+              <div class="ts-tier-info">
+                <strong>${t.name}</strong>
+                <span>${t.desc}</span>
+              </div>
+              <div class="ts-tier-price">KES ${t.price.toLocaleString()}</div>
+            </div>
+          `).join('')}
+        </div>
+        <div class="ts-qty-row">
+          <div class="ts-qty-label">Number of tickets</div>
+          <div class="ts-qty-controls">
+            <button class="ts-qty-btn" onclick="changeQty(-1)">−</button>
+            <div class="ts-qty-val" id="qty-val">1</div>
+            <button class="ts-qty-btn" onclick="changeQty(1)">+</button>
+          </div>
+        </div>
+
+        <div class="bf-field" style="margin-top:16px;">
+          <div class="bf-label">Contact phone (for ticket delivery)</div>
+          <input class="bf-input" type="tel" id="booking-phone" placeholder="07XX XXX XXX"/>
+        </div>
+
+        <div class="price-breakdown" id="price-breakdown"></div>
+      </div>
+
+      <div class="drawer-cta-box">
+        <button class="drawer-book-cta" onclick="confirmTicketPurchase(${e.id})">
+          💳 Buy Tickets
+        </button>
+      </div>
+    </div>`;
+
+  updatePriceBreakdown();
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('drawer-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeDrawer() {
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('drawer-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function selectTier(idx) {
+  selectedTierIdx = idx;
+  document.querySelectorAll('.ts-tier').forEach((el,i) => el.classList.toggle('selected', i===idx));
+  updatePriceBreakdown();
+}
+
+function changeQty(delta) {
+  ticketQty = Math.max(1, Math.min(10, ticketQty + delta));
+  document.getElementById('qty-val').textContent = ticketQty;
+  updatePriceBreakdown();
+}
+
+/* ══ PRICE BREAKDOWN ══ */
+function updatePriceBreakdown() {
+  if (!currentEvent) return;
+  const tier = currentEvent.tiers[selectedTierIdx];
+  const ticketTotal = tier.price * ticketQty;
+  const feePerTicket = calculateFee(tier.price);
+  const totalFee = feePerTicket * ticketQty;
+  const grandTotal = ticketTotal + totalFee;
+
+  const el = document.getElementById('price-breakdown');
+  if (!el) return;
+  el.innerHTML = `
+    <div class="pb-row"><span>${tier.name} × ${ticketQty}</span><span>KES ${ticketTotal.toLocaleString()}</span></div>
+    <div class="pb-row"><span>Apatmento service fee (KES ${feePerTicket} × ${ticketQty})</span><span>KES ${totalFee.toLocaleString()}</span></div>
+    <div class="pb-row total"><span>Total to pay</span><span>KES ${grandTotal.toLocaleString()}</span></div>
+    <div class="pb-note">100% of the ticket price (KES ${ticketTotal.toLocaleString()}) goes directly to ${currentEvent.organizer}. Apatmento's fee is fixed per ticket, never a percentage.</div>
+  `;
+}
+
+/* ══ CONFIRM PURCHASE ══ */
+async function confirmTicketPurchase(eventId) {
+  const phone = document.getElementById('booking-phone').value.trim();
+  if (!phone) { showToast('Please enter your phone number'); return; }
+
+  const e = currentEvent;
+  const tier = e.tiers[selectedTierIdx];
+  const ticketTotal = tier.price * ticketQty;
+  const feePerTicket = calculateFee(tier.price);
+  const totalFee = feePerTicket * ticketQty;
+  const grandTotal = ticketTotal + totalFee;
+
+  showToast('Processing your ticket purchase…');
+
+  try {
+    /* Run this SQL once to create the table:
+
+       create table if not exists public.event_tickets (
+         id              uuid default gen_random_uuid() primary key,
+         guest_id        uuid references auth.users,
+         event_id        int,
+         event_name      text,
+         organizer_name  text,
+         tier_name       text,
+         quantity        int,
+         contact_phone   text,
+         ticket_total    numeric,
+         service_fee     numeric,
+         grand_total     numeric,
+         confirmation_code text,
+         status          text default 'pending_payment',
+         created_at      timestamptz default now()
+       );
+       alter table public.event_tickets enable row level security;
+       create policy "Guests manage own tickets"
+         on public.event_tickets for all using (auth.uid() = guest_id);
+    */
+    const confirmationCode = 'APT-' + Math.random().toString(36).substring(2,8).toUpperCase();
+
+    const { error } = await sb.from('event_tickets').insert({
+      guest_id:        CURRENT_USER?.id || null,
+      event_id:         e.id,
+      event_name:       e.name,
+      organizer_name:   e.organizer,
+      tier_name:        tier.name,
+      quantity:          ticketQty,
+      contact_phone:    phone,
+      ticket_total:     ticketTotal,
+      service_fee:      totalFee,
+      grand_total:      grandTotal,
+      confirmation_code: confirmationCode,
+      status:           'pending_payment',
+    });
+
+    if (error) throw error;
+
+    showToast(`🎉 Ticket request sent! Confirmation: ${confirmationCode}. M-Pesa prompt incoming.`);
+    setTimeout(closeDrawer, 2200);
+
+  } catch (err) {
+    console.error(err);
+    showToast('Something went wrong. Please try again.');
+  }
+}
+
+/* ══ TOAST ══ */
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+/* ══ INIT ══ */
+renderEvents();
+</script>
+</body>
+</html>
