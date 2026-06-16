@@ -311,7 +311,7 @@ html,body{min-height:100%;font-family:'Inter',sans-serif;background:var(--offwhi
   position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
   background:var(--ink);color:white;padding:12px 20px;border-radius:12px;
   font-size:13px;font-weight:500;box-shadow:var(--shadow-lg);z-index:999;
-  opacity:0;pointer-events:none;transition:opacity .3s;white-space:nowrap;max-width:90vw;text-align:center;
+  opacity:0;pointer-events:none;transition:opacity .3s;white-space:normal;max-width:90vw;text-align:center;line-height:1.5;
 }
 .toast.show{opacity:1;}
 
@@ -841,7 +841,7 @@ async function confirmTicketPurchase(eventId) {
 
   } catch (err) {
     console.error(err);
-    showToast('Something went wrong. Please try again.');
+    showToast('Error: ' + (err.message || err.error_description || JSON.stringify(err)));
   }
 }
 
@@ -849,7 +849,7 @@ async function confirmTicketPurchase(eventId) {
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3500);
+  setTimeout(() => t.classList.remove('show'), 8000);
 }
 
 /* ══ INIT ══ */
