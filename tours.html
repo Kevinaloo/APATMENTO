@@ -287,6 +287,7 @@ html,body{min-height:100%;font-family:'Inter',sans-serif;background:var(--offwhi
   *,*::before,*::after{animation:none!important;transition-duration:.01ms!important;}
 }
 </style>
+<script src="payment.js"></script>
 </head>
 <body>
 
@@ -700,24 +701,43 @@ async function confirmBooking(tourId) {
        create policy "Guests manage own bookings"
          on public.tour_bookings for all using (auth.uid() = guest_id);
     */
+    // Unique payment reference — prefix "TOUR-" lets the callback function
+    // know which Supabase table to update once PayHero confirms payment.
+    const paymentReference = `TOUR-${t.id}-${Date.now()}`;
+
     const { error } = await sb.from('tour_bookings').insert({
-      guest_id:      CURRENT_USER?.id || null,
-      tour_id:       t.id,
-      tour_name:     t.name,
-      operator_name: t.operator,
-      tour_date:     date,
-      num_people:    pax,
-      contact_phone: phone,
-      tour_total:    tourTotal,
-      service_fee:   serviceFee,
-      grand_total:   grandTotal,
-      status:        'pending_payment',
+      guest_id:          CURRENT_USER?.id || null,
+      tour_id:           t.id,
+      tour_name:         t.name,
+      operator_name:     t.operator,
+      tour_date:         date,
+      num_people:        pax,
+      contact_phone:     phone,
+      tour_total:        tourTotal,
+      service_fee:       serviceFee,
+      grand_total:       grandTotal,
+      payment_reference: paymentReference,
+      status:            'pending_payment',
     });
 
     if (error) throw error;
 
-    showToast('🎉 Booking request sent! You will receive an M-Pesa prompt shortly.');
-    setTimeout(closeDrawer, 1800);
+    closeDrawer();
+
+    // Trigger the real M-Pesa STK push popup
+    ApatmentoPay.start({
+      amount:      grandTotal,
+      phone:       phone,
+      reference:   paymentReference,
+      table:       'tour_bookings',
+      description: `${t.name} — ${pax} ${pax===1?'person':'people'}`,
+      onSuccess: () => {
+        showToast('🎉 Payment confirmed! Your tour is booked.');
+      },
+      onFailure: () => {
+        showToast('Payment was not completed. You can try again from My Bookings.');
+      },
+    });
 
   } catch (err) {
     console.error(err);
