@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>APATMENTO — Tours &amp; Safaris</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400&family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --white:#FFFFFF;--offwhite:#F7F6F2;--stone:#EDEAE4;
+  --ink:#0F1117;--ink2:#2A2D38;--ink3:#5A5E70;--ink4:#9499AD;
+  --border:rgba(15,17,23,0.08);--border-md:rgba(15,17,23,0.14);
+  --shadow-sm:0 2px 12px rgba(15,17,23,0.06);
+  --shadow-md:0 8px 32px rgba(15,17,23,0.10);
+  --shadow-lg:0 20px 60px rgba(15,17,23,0.14);
+  --gold:#C8970A;--gold2:#E8A800;
+  --emerald:#0D9467;--emerald2:#059652;
+  --em-bg:rgba(13,148,103,0.07);--em-bd:rgba(13,148,103,0.18);
+  --terracotta:#C2693C;--terracotta-bg:rgba(194,105,60,0.08);--terracotta-bd:rgba(194,105,60,0.2);
+}
+html,body{min-height:100%;font-family:'Inter',sans-serif;background:var(--offwhite);color:var(--ink);}
+
+.top-nav{
+  position:sticky;top:0;z-index:100;height:60px;
+  background:var(--white);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;padding:0 24px;
+}
+.nav-logo{
+  font-family:'Playfair Display',serif;font-size:16px;font-weight:700;
+  letter-spacing:.22em;text-transform:uppercase;
+  background:linear-gradient(90deg,var(--gold),var(--gold2));
+  -webkit-background-clip:text;background-clip:text;color:transparent;text-decoration:none;
+}
+.nav-back{
+  display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500;
+  color:var(--ink3);text-decoration:none;padding:7px 14px;border-radius:8px;
+  border:1px solid var(--border);transition:all .2s;
+}
+.nav-back:hover{background:var(--offwhite);color:var(--ink);}
+.nav-avatar{
+  width:32px;height:32px;border-radius:8px;
+  background:linear-gradient(135deg,var(--emerald),var(--emerald2));
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:700;color:white;
+}
+
+/* ── HERO ── */
+.hero-banner{
+  background:linear-gradient(135deg,#1a1206 0%,#3d2810 45%,#21160a 100%);
+  padding:40px 24px 32px;position:relative;overflow:hidden;
+}
+.hero-banner::before{
+  content:'';position:absolute;right:-50px;top:-50px;width:300px;height:300px;border-radius:50%;
+  background:radial-gradient(circle,rgba(194,105,60,.12),transparent);pointer-events:none;
+}
+.hero-banner::after{
+  content:'';position:absolute;left:-30px;bottom:-70px;width:220px;height:220px;border-radius:50%;
+  background:radial-gradient(circle,rgba(13,148,103,.08),transparent);pointer-events:none;
+}
+.hero-inner{max-width:760px;margin:0 auto;position:relative;z-index:1;}
+.hero-eyebrow{font-size:10px;font-weight:600;letter-spacing:.26em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:8px;}
+.hero-title{font-family:'Playfair Display',serif;font-size:clamp(24px,4.2vw,36px);font-weight:700;color:white;margin-bottom:6px;line-height:1.2;}
+.hero-sub{font-size:13px;color:rgba(255,255,255,.5);margin-bottom:22px;max-width:520px;}
+
+.hero-search{
+  display:flex;gap:0;background:var(--white);border-radius:14px;overflow:hidden;
+  box-shadow:0 12px 40px rgba(0,0,0,.3);border:2px solid transparent;transition:border-color .2s;
+}
+.hero-search:focus-within{border-color:var(--terracotta);}
+.hero-search input{
+  flex:1;padding:14px 18px;border:none;outline:none;
+  font-family:'Inter',sans-serif;font-size:14px;color:var(--ink);background:transparent;
+}
+.hero-search input::placeholder{color:var(--ink4);}
+.hero-search-btn{
+  padding:0 22px;background:linear-gradient(135deg,var(--terracotta),#9c4f2a);
+  color:white;border:none;cursor:pointer;
+  font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:800;
+  display:flex;align-items:center;gap:6px;transition:filter .2s;white-space:nowrap;
+}
+.hero-search-btn:hover{filter:brightness(1.07);}
+
+.hero-trust{margin-top:16px;display:flex;align-items:center;gap:18px;flex-wrap:wrap;}
+.ht-item{display:flex;align-items:center;gap:6px;font-size:12px;color:rgba(255,255,255,.55);}
+.ht-item strong{color:var(--gold2);}
+
+/* ── CATEGORY TABS ── */
+.cat-tabs{
+  background:var(--white);border-bottom:1px solid var(--border);
+  padding:0 20px;display:flex;gap:0;overflow-x:auto;scrollbar-width:none;
+}
+.cat-tabs::-webkit-scrollbar{display:none;}
+.cat-tab{
+  padding:14px 18px;font-size:13px;font-weight:500;color:var(--ink3);
+  cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;
+  transition:color .2s,border-color .2s;display:flex;align-items:center;gap:6px;
+}
+.cat-tab:hover{color:var(--ink);}
+.cat-tab.active{color:var(--terracotta);border-bottom-color:var(--terracotta);font-weight:600;}
+
+/* ── MAIN ── */
+.main{max-width:1100px;margin:0 auto;padding:24px 20px 60px;display:flex;flex-direction:column;gap:28px;}
+.sec-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.sec-title{font-family:'Playfair Display',serif;font-size:20px;font-weight:600;color:var(--ink);}
+.sec-sub{font-size:12px;color:var(--ink4);margin-top:2px;}
+
+/* ── TOUR CARDS ── */
+.tour-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px;}
+.tour-card{
+  background:var(--white);border-radius:18px;border:1px solid var(--border);
+  overflow:hidden;cursor:pointer;transition:transform .22s,box-shadow .22s;position:relative;
+}
+.tour-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg);}
+.tour-thumb{height:170px;display:flex;align-items:center;justify-content:center;font-size:56px;position:relative;}
+.tt-0{background:linear-gradient(135deg,#3a2410,#7a4a18);}
+.tt-1{background:linear-gradient(135deg,#0a2a1a,#155538);}
+.tt-2{background:linear-gradient(135deg,#1a2a3a,#2d4a68);}
+.tt-3{background:linear-gradient(135deg,#3a1a10,#7a3018);}
+.tt-4{background:linear-gradient(135deg,#2a1a3a,#4a2d68);}
+.tt-5{background:linear-gradient(135deg,#0a1a2a,#15384a);}
+.tt-6{background:linear-gradient(135deg,#3a2a0a,#7a5818);}
+
+.tour-thumb::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,transparent 50%,rgba(0,0,0,.35) 100%);}
+.tour-badges{position:absolute;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;z-index:2;}
+.tour-badge{padding:3px 10px;border-radius:100px;font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;}
+.badge-popular{background:rgba(212,69,122,.9);color:white;}
+.badge-new{background:rgba(13,148,103,.9);color:white;}
+.badge-fee{background:rgba(255,255,255,.92);color:var(--ink);}
+.tour-duration-pill{
+  position:absolute;bottom:10px;left:10px;z-index:2;
+  display:flex;align-items:center;gap:4px;
+  padding:4px 10px;border-radius:100px;
+  background:rgba(0,0,0,.5);color:white;font-size:11px;font-weight:600;
+}
+.tour-body{padding:16px 18px;}
+.tour-loc{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink4);margin-bottom:5px;}
+.tour-name{font-family:'Playfair Display',serif;font-size:17px;font-weight:700;color:var(--ink);margin-bottom:8px;line-height:1.3;}
+.tour-meta-row{display:flex;gap:10px;font-size:11px;color:var(--ink4);margin-bottom:10px;flex-wrap:wrap;}
+.tour-rating{display:flex;align-items:center;gap:5px;margin-bottom:12px;}
+.stars{display:flex;gap:1px;}
+.star{font-size:11px;color:var(--gold);}
+.star.empty{opacity:.2;}
+.rating-val{font-size:12px;font-weight:600;color:var(--ink2);}
+.rating-count{font-size:11px;color:var(--ink4);}
+.tour-operator{
+  display:flex;align-items:center;gap:7px;margin-bottom:12px;
+  padding:8px 10px;border-radius:8px;background:var(--offwhite);
+}
+.to-ava{
+  width:22px;height:22px;border-radius:50%;flex-shrink:0;
+  background:linear-gradient(135deg,var(--terracotta),#9c4f2a);
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:700;color:white;
+}
+.to-name{font-size:11px;font-weight:600;color:var(--ink2);}
+.to-verified{font-size:9px;color:var(--emerald);}
+.tour-price-row{display:flex;align-items:center;justify-content:space-between;}
+.tour-price{font-family:'Space Grotesk',sans-serif;font-size:19px;font-weight:700;color:var(--ink);}
+.tour-price span{font-size:11px;font-weight:400;color:var(--ink4);}
+.tour-book-btn{
+  padding:9px 18px;border-radius:10px;
+  background:linear-gradient(135deg,var(--terracotta),#9c4f2a);
+  color:white;font-family:'Space Grotesk',sans-serif;
+  font-size:12px;font-weight:700;border:none;cursor:pointer;
+  transition:filter .2s,transform .2s;
+}
+.tour-book-btn:hover{filter:brightness(1.08);transform:translateY(-1px);}
+
+/* ── PARTNER CTA BAND ── */
+.partner-cta{
+  background:linear-gradient(135deg,#0a2818,#0f3a22);
+  border-radius:20px;padding:32px;
+  display:flex;align-items:center;justify-content:space-between;
+  gap:24px;flex-wrap:wrap;position:relative;overflow:hidden;
+}
+.partner-cta::before{
+  content:'';position:absolute;right:-40px;top:-40px;width:200px;height:200px;border-radius:50%;
+  background:radial-gradient(circle,rgba(252,196,68,.1),transparent);pointer-events:none;
+}
+.pcta-text h3{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:white;margin-bottom:8px;}
+.pcta-text p{font-size:13px;color:rgba(240,249,244,.55);max-width:420px;line-height:1.6;}
+.pcta-fee-note{
+  display:inline-flex;align-items:center;gap:6px;margin-top:10px;
+  padding:6px 14px;border-radius:100px;
+  background:rgba(252,196,68,.12);border:1px solid rgba(252,196,68,.25);
+  font-size:11px;font-weight:600;color:#FCC444;
+}
+.pcta-btn{
+  padding:14px 28px;border-radius:12px;flex-shrink:0;
+  background:linear-gradient(135deg,#FCC444,#E8A800);
+  color:#0a1a0a;font-family:'Space Grotesk',sans-serif;
+  font-size:14px;font-weight:800;border:none;cursor:pointer;
+  transition:filter .2s,transform .2s;
+  box-shadow:0 8px 24px rgba(252,196,68,.25);
+}
+.pcta-btn:hover{filter:brightness(1.07);transform:translateY(-2px);}
+
+/* ── DETAIL DRAWER ── */
+.drawer-overlay{position:fixed;inset:0;z-index:200;background:rgba(15,17,23,0);pointer-events:none;transition:background .35s ease;}
+.drawer-overlay.open{background:rgba(15,17,23,.5);pointer-events:all;}
+.drawer{
+  position:fixed;top:0;right:-100%;bottom:0;width:min(560px,100vw);z-index:201;
+  background:var(--white);box-shadow:-24px 0 64px rgba(15,17,23,.2);
+  overflow-y:auto;transition:right .45s cubic-bezier(.22,1,.36,1);
+}
+.drawer.open{right:0;}
+.drawer-photo{position:relative;height:240px;display:flex;align-items:center;justify-content:center;font-size:76px;overflow:hidden;}
+.drawer-photo::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,transparent 50%,rgba(0,0,0,.5) 100%);}
+.drawer-close{
+  position:absolute;top:16px;right:16px;z-index:2;width:36px;height:36px;border-radius:50%;
+  background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.25);backdrop-filter:blur(4px);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;color:white;
+  transition:background .2s;
+}
+.drawer-close:hover{background:rgba(255,255,255,.35);}
+.drawer-body{padding:24px 28px 40px;}
+.drawer-loc{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink4);margin-bottom:6px;}
+.drawer-name{font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:var(--ink);line-height:1.2;margin-bottom:10px;}
+.drawer-desc{font-size:14px;line-height:1.8;color:var(--ink3);margin-bottom:20px;}
+.drawer-incl-title{font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:700;color:var(--ink);letter-spacing:.04em;margin-bottom:12px;text-transform:uppercase;}
+.incl-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:24px;}
+.incl-item{display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:10px;background:var(--offwhite);border:1px solid var(--border);font-size:12px;color:var(--ink2);font-weight:500;}
+
+/* booking form inside drawer */
+.book-form{background:var(--offwhite);border-radius:14px;padding:18px;margin-bottom:20px;}
+.bf-title{font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:700;color:var(--ink);margin-bottom:14px;}
+.bf-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.bf-field{display:flex;flex-direction:column;gap:5px;}
+.bf-label{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink4);}
+.bf-input,.bf-select{
+  padding:10px 12px;border-radius:8px;border:1.5px solid var(--border);
+  background:var(--white);font-family:'Inter',sans-serif;font-size:13px;color:var(--ink);
+  outline:none;transition:border-color .2s;-webkit-appearance:none;
+}
+.bf-select{
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 10 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%239499AD' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 10px center;background-size:9px;padding-right:28px;cursor:pointer;
+}
+.bf-input:focus,.bf-select:focus{border-color:var(--terracotta);}
+
+/* price breakdown */
+.price-breakdown{background:var(--white);border-radius:10px;padding:14px 16px;margin-top:14px;border:1px solid var(--border);}
+.pb-row{display:flex;justify-content:space-between;font-size:12px;color:var(--ink3);padding:5px 0;}
+.pb-row.total{border-top:1px solid var(--border);margin-top:6px;padding-top:10px;font-size:14px;font-weight:700;color:var(--ink);}
+.pb-note{font-size:10px;color:var(--ink4);margin-top:6px;}
+
+.drawer-cta-box{border-top:1px solid var(--border);padding-top:20px;}
+.drawer-book-cta{
+  width:100%;padding:15px;border-radius:12px;
+  background:linear-gradient(135deg,var(--terracotta),#9c4f2a);
+  color:white;font-family:'Space Grotesk',sans-serif;
+  font-size:14px;font-weight:700;border:none;cursor:pointer;
+  transition:filter .2s,transform .2s;box-shadow:0 6px 24px rgba(194,105,60,.3);
+}
+.drawer-book-cta:hover{filter:brightness(1.08);transform:translateY(-2px);}
+
+/* ── HOW IT WORKS ── */
+.how-band{background:var(--white);border-radius:16px;border:1px solid var(--border);padding:20px;}
+.how-title{font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink4);margin-bottom:14px;}
+.how-row{display:flex;gap:0;overflow-x:auto;scrollbar-width:none;}
+.how-row::-webkit-scrollbar{display:none;}
+.how-step{display:flex;flex-direction:column;align-items:center;text-align:center;min-width:130px;padding:0 14px;position:relative;}
+.how-step:not(:last-child)::after{content:'→';position:absolute;right:-6px;top:18px;color:var(--ink4);font-size:14px;}
+.how-ico{width:40px;height:40px;border-radius:12px;background:var(--offwhite);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:8px;}
+.how-lbl{font-size:11px;font-weight:600;color:var(--ink);margin-bottom:3px;}
+.how-sub{font-size:10px;color:var(--ink4);line-height:1.4;}
+
+.toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  background:var(--ink);color:white;padding:12px 20px;border-radius:12px;
+  font-size:13px;font-weight:500;box-shadow:var(--shadow-lg);z-index:999;
+  opacity:0;pointer-events:none;transition:opacity .3s;white-space:nowrap;max-width:90vw;text-align:center;
+}
+.toast.show{opacity:1;}
+
+@media(max-width:600px){
+  .tour-grid{grid-template-columns:1fr 1fr;}
+  .main{padding:16px 14px 48px;}
+  .partner-cta{flex-direction:column;text-align:center;}
+  .bf-row{grid-template-columns:1fr;}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition-duration:.01ms!important;}
+}
+</style>
+</head>
+<body>
+
+<nav class="top-nav">
+  <a href="dashboard.html?role=guest" class="nav-back">← Dashboard</a>
+  <a href="dashboard.html?role=guest" class="nav-logo">Apatmento</a>
+  <div class="nav-avatar" id="nav-avatar">G</div>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<div class="hero-banner">
+  <div class="hero-inner">
+    <div class="hero-eyebrow">Kenya · Tours &amp; Safaris</div>
+    <div class="hero-title">Explore Kenya, your way</div>
+    <div class="hero-sub">Book direct with verified local tour operators — safaris, day trips and cultural experiences across Kenya.</div>
+    <div class="hero-search">
+      <input type="text" id="search-input" placeholder="Search tours, destinations or operators…"
+        oninput="onSearchInput()" onkeydown="onSearchKey(event)"/>
+      <button class="hero-search-btn" onclick="doSearch()">🔍 Search</button>
+    </div>
+    <div class="hero-trust">
+      <div class="ht-item">✓ <strong>Verified</strong> local operators</div>
+      <div class="ht-item">✓ <strong>Book direct</strong> — no middleman markup</div>
+      <div class="ht-item">✓ <strong>Secure</strong> payment via Apatmento</div>
+    </div>
+  </div>
+</div>
+
+<div class="cat-tabs" id="cat-tabs">
+  <div class="cat-tab active" onclick="setCategory('all',this)">🗺️ All Tours</div>
+  <div class="cat-tab" onclick="setCategory('safari',this)">🦓 Safari</div>
+  <div class="cat-tab" onclick="setCategory('beach',this)">🏖️ Beach &amp; Coast</div>
+  <div class="cat-tab" onclick="setCategory('city',this)">🏙️ City Tours</div>
+  <div class="cat-tab" onclick="setCategory('cultural',this)">🎭 Cultural</div>
+  <div class="cat-tab" onclick="setCategory('hiking',this)">⛰️ Hiking &amp; Nature</div>
+  <div class="cat-tab" onclick="setCategory('adventure',this)">🪂 Adventure</div>
+</div>
+
+<div class="main" id="main-content">
+
+  <div id="tours-section">
+    <div class="sec-header">
+      <div>
+        <div class="sec-title">Tours &amp; experiences</div>
+        <div class="sec-sub">Book directly with verified Kenyan tour operators</div>
+      </div>
+    </div>
+    <div class="tour-grid" id="tour-grid"></div>
+  </div>
+
+  <!-- BECOME A PARTNER CTA -->
+  <div class="partner-cta">
+    <div class="pcta-text">
+      <h3>Run tours in Kenya?</h3>
+      <p>List your safari, day trip or experience on Apatmento. Guests book and pay securely — you get paid out fast, keeping nearly all of every booking.</p>
+      <div class="pcta-fee-note">💰 Just a small fixed fee per confirmed booking — never a percentage</div>
+    </div>
+    <button class="pcta-btn" onclick="window.location.href='add-listing.html?type=tour'">List Your Tour →</button>
+  </div>
+
+  <div class="how-band">
+    <div class="how-title">How Apatmento Tours works</div>
+    <div class="how-row">
+      <div class="how-step">
+        <div class="how-ico">🔍</div>
+        <div class="how-lbl">Discover</div>
+        <div class="how-sub">Browse verified tours from local operators across Kenya</div>
+      </div>
+      <div class="how-step">
+        <div class="how-ico">📅</div>
+        <div class="how-lbl">Book &amp; pay</div>
+        <div class="how-sub">Reserve your spot and pay securely through Apatmento</div>
+      </div>
+      <div class="how-step">
+        <div class="how-ico">✅</div>
+        <div class="how-lbl">Confirmed</div>
+        <div class="how-sub">Operator confirms — we forward your payment to them instantly</div>
+      </div>
+      <div class="how-step">
+        <div class="how-ico">🌍</div>
+        <div class="how-lbl">Enjoy</div>
+        <div class="how-sub">Show up and experience Kenya with a trusted local guide</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- DETAIL DRAWER -->
+<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer"></div>
+
+<script>
+/* ══ SUPABASE — paste same values as auth.html ══ */
+const SUPABASE_URL      = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let CURRENT_USER = null;
+(async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) CURRENT_USER = session.user;
+})();
+
+/* ══ TOURS DATA ══ (replace with Supabase fetch once operators list real tours) */
+const TOURS = [
+  {
+    id:1, name:'Maasai Mara Safari — 3 Days', loc:'Maasai Mara, Narok',
+    cat:'safari', duration:'3 Days / 2 Nights', groupSize:'Up to 6',
+    price:24500, rating:4.9, reviews:112, icon:'🦓', grad:'tt-0',
+    popular:true, isNew:false,
+    operator:'Mara Wild Adventures', opInit:'M', verified:true,
+    desc:'An unforgettable 3-day safari through the world-famous Maasai Mara. Witness lions, elephants, and if timed right, the Great Migration. Includes game drives, all meals, and tented camp accommodation.',
+    includes:['🚙 4x4 Safari Vehicle','🏕️ Tented Camp Stay','🍽️ All Meals Included','👨‍🦱 Expert Guide','🎫 Park Entry Fees','📷 Photo Stops'],
+  },
+  {
+    id:2, name:'Diani Beach Snorkelling Day Trip', loc:'Diani Beach, Kwale',
+    cat:'beach', duration:'Full Day', groupSize:'Up to 10',
+    price:4200, rating:4.7, reviews:68, icon:'🤿', grad:'tt-5',
+    popular:false, isNew:true,
+    operator:'Coastal Blue Tours', opInit:'C', verified:true,
+    desc:'Explore the vibrant coral reefs of Diani on this full-day snorkelling adventure. Equipment provided, lunch on a sandbank, and a chance to spot dolphins on the way back.',
+    includes:['🤿 Snorkel Gear','🚤 Boat Transport','🍽️ Lunch Included','👨‍🦱 Local Guide','🐬 Dolphin Spotting'],
+  },
+  {
+    id:3, name:'Nairobi City &amp; Giraffe Centre Tour', loc:'Nairobi',
+    cat:'city', duration:'Half Day', groupSize:'Up to 8',
+    price:3500, rating:4.6, reviews:94, icon:'🦒', grad:'tt-2',
+    popular:true, isNew:false,
+    operator:'Nairobi Discovery Tours', opInit:'N', verified:true,
+    desc:'A half-day city tour covering the Giraffe Centre, Karen Blixen Museum and the David Sheldrick Wildlife Trust. Perfect for first-time visitors with limited time.',
+    includes:['🚐 Transport','🎫 Entry Fees','👨‍🦱 Tour Guide','📷 Photo Stops','💧 Bottled Water'],
+  },
+  {
+    id:4, name:'Amboseli Elephant Safari — 2 Days', loc:'Amboseli, Kajiado',
+    cat:'safari', duration:'2 Days / 1 Night', groupSize:'Up to 6',
+    price:18000, rating:4.8, reviews:75, icon:'🐘', grad:'tt-3',
+    popular:false, isNew:false,
+    operator:'Mara Wild Adventures', opInit:'M', verified:true,
+    desc:'See Africa\\'s largest elephant herds against the backdrop of Mount Kilimanjaro. Two days of game drives with overnight stay at a lodge inside the park.',
+    includes:['🚙 4x4 Safari Vehicle','🏨 Lodge Accommodation','🍽️ All Meals','👨‍🦱 Expert Guide','🎫 Park Fees','🏔️ Kilimanjaro Views'],
+  },
+  {
+    id:5, name:'Maasai Cultural Village Experience', loc:'Maasai Mara, Narok',
+    cat:'cultural', duration:'Half Day', groupSize:'Up to 12',
+    price:2800, rating:4.5, reviews:51, icon:'🎭', grad:'tt-4',
+    popular:false, isNew:true,
+    operator:'Maa Heritage Tours', opInit:'H', verified:true,
+    desc:'Immerse yourself in authentic Maasai culture — traditional dances, beadwork demonstrations, and a guided village tour led by a Maasai elder.',
+    includes:['👨‍🦱 Maasai Guide','🎭 Cultural Performance','🛍️ Craft Market Visit','📷 Photo Opportunities'],
+  },
+  {
+    id:6, name:'Mount Longonot Hiking Day Trip', loc:'Naivasha',
+    cat:'hiking', duration:'Full Day', groupSize:'Up to 15',
+    price:3200, rating:4.7, reviews:88, icon:'⛰️', grad:'tt-1',
+    popular:true, isNew:false,
+    operator:'Rift Valley Trekkers', opInit:'R', verified:true,
+    desc:'Hike to the crater rim of Mount Longonot, an extinct volcano with breathtaking views over the Great Rift Valley and Lake Naivasha.',
+    includes:['🚐 Transport from Nairobi','👨‍🦱 Hiking Guide','🎫 Park Entry','🍽️ Packed Lunch','💧 Water Included'],
+  },
+  {
+    id:7, name:'Lake Naivasha Boat Safari', loc:'Naivasha',
+    cat:'safari', duration:'Half Day', groupSize:'Up to 10',
+    price:3800, rating:4.6, reviews:63, icon:'🚤', grad:'tt-5',
+    popular:false, isNew:false,
+    operator:'Rift Valley Trekkers', opInit:'R', verified:true,
+    desc:'Cruise Lake Naivasha spotting hippos, fish eagles, and over 400 bird species. Includes a stop at Crescent Island for a walking safari among giraffes and zebras.',
+    includes:['🚤 Boat Cruise','🦛 Hippo Spotting','🚶 Crescent Island Walk','👨‍🦱 Guide Included'],
+  },
+  {
+    id:8, name:'White Water Rafting — Tana River', loc:'Sagana',
+    cat:'adventure', duration:'Full Day', groupSize:'Up to 8',
+    price:6500, rating:4.8, reviews:42, icon:'🛶', grad:'tt-6',
+    popular:false, isNew:true,
+    operator:'Adrenaline Kenya', opInit:'A', verified:true,
+    desc:'Tackle grade 3-4 rapids on the Tana River with certified safety guides. Includes all safety gear, a riverside lunch, and transport from Nairobi.',
+    includes:['🛶 Rafting Equipment','🦺 Safety Gear','👨‍🦱 Certified Guides','🍽️ Riverside Lunch','🚐 Transport'],
+  },
+];
+
+let currentCategory = 'all';
+let currentSearch   = '';
+let currentTour     = null;
+
+/* ══ FEE CALCULATION — tiered ══ */
+function calculateFee(price) {
+  return price < 5000 ? 200 : 500;
+}
+
+/* ══ RENDER TOURS ══ */
+function renderTours(cat='all', searchQ='') {
+  const grid = document.getElementById('tour-grid');
+  let list = cat === 'all' ? TOURS : TOURS.filter(t => t.cat === cat);
+  if (searchQ) {
+    const q = searchQ.toLowerCase();
+    list = list.filter(t =>
+      t.name.toLowerCase().includes(q) ||
+      t.loc.toLowerCase().includes(q) ||
+      t.operator.toLowerCase().includes(q) ||
+      t.cat.toLowerCase().includes(q)
+    );
+  }
+  if (!list.length) {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:48px 24px;background:var(--white);border-radius:16px;border:1px solid var(--border);">
+      <div style="font-size:44px;margin-bottom:12px;">🔍</div>
+      <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:600;color:var(--ink);margin-bottom:6px;">No tours found</div>
+      <div style="font-size:13px;color:var(--ink4);">Try a different search term or browse all categories.</div>
+    </div>`;
+    return;
+  }
+  grid.innerHTML = list.map(t => `
+    <div class="tour-card" onclick="openDrawer(${t.id})">
+      <div class="tour-thumb ${t.grad}">
+        <span>${t.icon}</span>
+        <div class="tour-badges">
+          <div>${t.popular ? '<span class="tour-badge badge-popular">🔥 Popular</span>' : t.isNew ? '<span class="tour-badge badge-new">✨ New</span>' : ''}</div>
+          <div class="tour-badge badge-fee">${t.duration}</div>
+        </div>
+        <div class="tour-duration-pill">👥 ${t.groupSize}</div>
+      </div>
+      <div class="tour-body">
+        <div class="tour-loc">📍 ${t.loc}</div>
+        <div class="tour-name">${t.name}</div>
+        <div class="tour-rating">
+          ${renderStars(t.rating)}
+          <span class="rating-val">${t.rating}</span>
+          <span class="rating-count">(${t.reviews})</span>
+        </div>
+        <div class="tour-operator">
+          <div class="to-ava">${t.opInit}</div>
+          <div>
+            <div class="to-name">${t.operator}</div>
+            ${t.verified ? '<div class="to-verified">✓ Verified Operator</div>' : ''}
+          </div>
+        </div>
+        <div class="tour-price-row">
+          <div class="tour-price">KES ${t.price.toLocaleString()}<span> /person</span></div>
+          <button class="tour-book-btn" onclick="event.stopPropagation();openDrawer(${t.id})">View &amp; Book</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderStars(rating) {
+  let html = '<div class="stars">';
+  for (let i = 1; i <= 5; i++) {
+    html += rating >= i ? '<span class="star">★</span>' : rating >= i-0.5 ? '<span class="star" style="opacity:.5">★</span>' : '<span class="star empty">★</span>';
+  }
+  return html + '</div>';
+}
+
+/* ══ CATEGORY ══ */
+function setCategory(cat, el) {
+  currentCategory = cat;
+  document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('search-input').value = '';
+  currentSearch = '';
+  renderTours(cat);
+}
+
+/* ══ SEARCH ══ */
+let searchTimeout = null;
+function onSearchInput() {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(doSearch, 350);
+}
+function onSearchKey(e) { if (e.key === 'Enter') doSearch(); }
+function doSearch() {
+  currentSearch = document.getElementById('search-input').value.trim();
+  renderTours(currentCategory, currentSearch);
+}
+
+/* ══ DETAIL DRAWER + BOOKING ══ */
+function openDrawer(id) {
+  const t = TOURS.find(x => x.id === id);
+  if (!t) return;
+  currentTour = t;
+
+  const drawer = document.getElementById('drawer');
+  drawer.innerHTML = `
+    <div class="drawer-photo ${t.grad}">
+      <span style="font-size:76px;position:relative;z-index:1;">${t.icon}</span>
+      <div class="drawer-close" onclick="closeDrawer()">✕</div>
+    </div>
+    <div class="drawer-body">
+      <div class="drawer-loc">📍 ${t.loc}</div>
+      <div class="drawer-name">${t.name}</div>
+      <div class="tour-rating" style="margin-bottom:16px;">
+        ${renderStars(t.rating)}
+        <span class="rating-val">${t.rating}</span>
+        <span class="rating-count">(${t.reviews} reviews)</span>
+      </div>
+      <div class="tour-operator" style="margin-bottom:18px;">
+        <div class="to-ava">${t.opInit}</div>
+        <div>
+          <div class="to-name">${t.operator}</div>
+          <div class="to-verified">✓ Verified Operator</div>
+        </div>
+      </div>
+      <div class="drawer-desc">${t.desc}</div>
+      <div class="drawer-incl-title">What's included</div>
+      <div class="incl-grid">
+        ${t.includes.map(i => `<div class="incl-item"><span>${i.split(' ')[0]}</span>${i.split(' ').slice(1).join(' ')}</div>`).join('')}
+      </div>
+
+      <!-- BOOKING FORM -->
+      <div class="book-form">
+        <div class="bf-title">📅 Book this tour</div>
+        <div class="bf-row">
+          <div class="bf-field">
+            <div class="bf-label">Tour date</div>
+            <input class="bf-input" type="date" id="booking-date" min="${new Date().toISOString().split('T')[0]}"/>
+          </div>
+          <div class="bf-field">
+            <div class="bf-label">Number of people</div>
+            <select class="bf-select" id="booking-pax" onchange="updatePriceBreakdown()">
+              <option value="1">1 person</option>
+              <option value="2" selected>2 people</option>
+              <option value="3">3 people</option>
+              <option value="4">4 people</option>
+              <option value="5">5 people</option>
+              <option value="6">6 people</option>
+            </select>
+          </div>
+        </div>
+        <div class="bf-field">
+          <div class="bf-label">Contact phone (M-Pesa)</div>
+          <input class="bf-input" type="tel" id="booking-phone" placeholder="07XX XXX XXX"/>
+        </div>
+
+        <div class="price-breakdown" id="price-breakdown"></div>
+      </div>
+
+      <div class="drawer-cta-box">
+        <button class="drawer-book-cta" onclick="confirmBooking(${t.id})">
+          💳 Pay &amp; Confirm Booking
+        </button>
+      </div>
+    </div>`;
+
+  updatePriceBreakdown();
+
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('drawer-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeDrawer() {
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('drawer-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+/* ══ PRICE BREAKDOWN — shows tour cost + Apatmento service fee ══ */
+function updatePriceBreakdown() {
+  if (!currentTour) return;
+  const pax = parseInt(document.getElementById('booking-pax')?.value || 1);
+  const tourTotal = currentTour.price * pax;
+  const serviceFee = calculateFee(currentTour.price); // fee is per booking, not per person
+  const grandTotal = tourTotal + serviceFee;
+
+  const el = document.getElementById('price-breakdown');
+  if (!el) return;
+  el.innerHTML = `
+    <div class="pb-row"><span>${currentTour.name} × ${pax}</span><span>KES ${tourTotal.toLocaleString()}</span></div>
+    <div class="pb-row"><span>Apatmento service fee</span><span>KES ${serviceFee.toLocaleString()}</span></div>
+    <div class="pb-row total"><span>Total to pay</span><span>KES ${grandTotal.toLocaleString()}</span></div>
+    <div class="pb-note">100% of the tour price (KES ${tourTotal.toLocaleString()}) goes directly to ${currentTour.operator}. Apatmento's fixed fee is never a percentage.</div>
+  `;
+}
+
+/* ══ CONFIRM BOOKING ══ */
+async function confirmBooking(tourId) {
+  const date  = document.getElementById('booking-date').value;
+  const pax   = parseInt(document.getElementById('booking-pax').value);
+  const phone = document.getElementById('booking-phone').value.trim();
+
+  if (!date)  { showToast('Please select a tour date'); return; }
+  if (!phone) { showToast('Please enter your M-Pesa phone number'); return; }
+
+  const t = TOURS.find(x => x.id === tourId);
+  const tourTotal  = t.price * pax;
+  const serviceFee = calculateFee(t.price);
+  const grandTotal = tourTotal + serviceFee;
+
+  showToast('Processing your booking…');
+
+  try {
+    /* Write booking to Supabase
+       Run this SQL once to create the table:
+
+       create table if not exists public.tour_bookings (
+         id              uuid default gen_random_uuid() primary key,
+         guest_id        uuid references auth.users,
+         tour_id         int,
+         tour_name       text,
+         operator_name   text,
+         tour_date       date,
+         num_people      int,
+         contact_phone   text,
+         tour_total      numeric,
+         service_fee     numeric,
+         grand_total     numeric,
+         status          text default 'pending_payment',
+         created_at      timestamptz default now()
+       );
+       alter table public.tour_bookings enable row level security;
+       create policy "Guests manage own bookings"
+         on public.tour_bookings for all using (auth.uid() = guest_id);
+    */
+    const { error } = await sb.from('tour_bookings').insert({
+      guest_id:      CURRENT_USER?.id || null,
+      tour_id:       t.id,
+      tour_name:     t.name,
+      operator_name: t.operator,
+      tour_date:     date,
+      num_people:    pax,
+      contact_phone: phone,
+      tour_total:    tourTotal,
+      service_fee:   serviceFee,
+      grand_total:   grandTotal,
+      status:        'pending_payment',
+    });
+
+    if (error) throw error;
+
+    showToast('🎉 Booking request sent! You will receive an M-Pesa prompt shortly.');
+    setTimeout(closeDrawer, 1800);
+
+  } catch (err) {
+    console.error(err);
+    showToast('Something went wrong. Please try again.');
+  }
+}
+
+/* ══ TOAST ══ */
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+/* ══ INIT ══ */
+renderTours('all');
+</script>
+</body>
+</html>
