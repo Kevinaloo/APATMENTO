@@ -226,16 +226,31 @@ html,body{min-height:100%;font-family:'Inter',sans-serif;background:var(--offwhi
 `;
   document.head.appendChild(style);
 
-  const overlay = document.createElement('div');
-  overlay.className = 'apt-pay-overlay';
-  overlay.id = 'apt-pay-overlay';
-  document.body.appendChild(overlay);
+  let overlay = null;
+
+  function ensureOverlay() {
+    if (overlay) return overlay;
+    overlay = document.createElement('div');
+    overlay.className = 'apt-pay-overlay';
+    overlay.id = 'apt-pay-overlay';
+    document.body.appendChild(overlay);
+    return overlay;
+  }
+
+  // Create immediately if body already exists (script at end of body),
+  // otherwise wait for DOMContentLoaded (script in head).
+  if (document.body) {
+    ensureOverlay();
+  } else {
+    document.addEventListener('DOMContentLoaded', ensureOverlay);
+  }
 
   let pollInterval = null;
   let pollAttempts = 0;
   const MAX_POLL_ATTEMPTS = 40; // ~2 minutes at 3s intervals
 
   function render(state, opts) {
+    ensureOverlay();
     let html = '';
     if (state === 'sending') {
       html = `
@@ -300,6 +315,7 @@ html,body{min-height:100%;font-family:'Inter',sans-serif;background:var(--offwhi
   let lastOpts = null;
 
   async function start(opts) {
+    ensureOverlay();
     lastOpts = opts;
     pollAttempts = 0;
     overlay.classList.add('open');
@@ -368,12 +384,12 @@ html,body{min-height:100%;font-family:'Inter',sans-serif;background:var(--offwhi
 
   function cancel() {
     if (pollInterval) clearInterval(pollInterval);
-    overlay.classList.remove('open');
+    if (overlay) overlay.classList.remove('open');
   }
 
   function close() {
     if (pollInterval) clearInterval(pollInterval);
-    overlay.classList.remove('open');
+    if (overlay) overlay.classList.remove('open');
   }
 
   function retry() {
