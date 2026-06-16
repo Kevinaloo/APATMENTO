@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>APATMENTO — Food Delivery</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400&family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --white:#FFFFFF;
+  --offwhite:#F7F6F2;
+  --stone:#EDEAE4;
+  --ink:#0F1117;
+  --ink2:#2A2D38;
+  --ink3:#5A5E70;
+  --ink4:#9499AD;
+  --border:rgba(15,17,23,0.08);
+  --border-md:rgba(15,17,23,0.14);
+  --shadow-sm:0 2px 12px rgba(15,17,23,0.06);
+  --shadow-md:0 8px 32px rgba(15,17,23,0.10);
+  --shadow-lg:0 20px 60px rgba(15,17,23,0.14);
+  --gold:#C8970A;
+  --gold2:#E8A800;
+  --emerald:#0D9467;
+  --emerald2:#059652;
+  --em-bg:rgba(13,148,103,0.07);
+  --em-bd:rgba(13,148,103,0.18);
+  --rose:#D4457A;
+  /* Glovo */
+  --glovo:#FFC244;
+  --glovo-dark:#E5A800;
+  --glovo-bg:rgba(255,194,68,0.10);
+  --glovo-bd:rgba(255,194,68,0.30);
+  /* Jumia Food */
+  --jumia:#F68B1E;
+  --jumia-dark:#D4730A;
+  --jumia-bg:rgba(246,139,30,0.10);
+  --jumia-bd:rgba(246,139,30,0.28);
+  /* Uber Eats orange-green */
+  --ubereats:#06C167;
+  --ubereats-dark:#04A157;
+  --ubereats-bg:rgba(6,193,103,0.10);
+  --ubereats-bd:rgba(6,193,103,0.26);
+}
+html,body{min-height:100%;font-family:'Inter',sans-serif;background:var(--offwhite);color:var(--ink);}
+
+/* ── NAV ── */
+.top-nav{
+  position:sticky;top:0;z-index:100;height:60px;
+  background:var(--white);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;padding:0 24px;
+}
+.nav-logo{
+  font-family:'Playfair Display',serif;font-size:16px;font-weight:700;
+  letter-spacing:.22em;text-transform:uppercase;
+  background:linear-gradient(90deg,var(--gold),var(--gold2));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  text-decoration:none;
+}
+.nav-back{
+  display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500;
+  color:var(--ink3);text-decoration:none;padding:7px 14px;border-radius:8px;
+  border:1px solid var(--border);transition:all .2s;
+}
+.nav-back:hover{background:var(--offwhite);color:var(--ink);}
+.nav-avatar{
+  width:32px;height:32px;border-radius:8px;
+  background:linear-gradient(135deg,var(--emerald),var(--emerald2));
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:700;color:white;
+}
+
+/* ── HERO ── */
+.hero-banner{
+  background:linear-gradient(135deg,#1a0a0a 0%,#3d1414 50%,#1f0d0d 100%);
+  padding:36px 24px 32px;position:relative;overflow:hidden;
+}
+.hero-banner::before{
+  content:'';position:absolute;right:-40px;top:-40px;
+  width:280px;height:280px;border-radius:50%;
+  background:radial-gradient(circle,rgba(255,194,68,.08),transparent);pointer-events:none;
+}
+.hero-banner::after{
+  content:'';position:absolute;left:-20px;bottom:-60px;
+  width:200px;height:200px;border-radius:50%;
+  background:radial-gradient(circle,rgba(6,193,103,.07),transparent);pointer-events:none;
+}
+.hero-eyebrow{font-size:10px;font-weight:600;letter-spacing:.26em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:8px;}
+.hero-title{font-family:'Playfair Display',serif;font-size:clamp(22px,4vw,32px);font-weight:700;color:white;margin-bottom:4px;line-height:1.2;}
+.hero-sub{font-size:13px;color:rgba(255,255,255,.45);margin-bottom:20px;}
+
+.hero-search{
+  display:flex;gap:0;background:var(--white);border-radius:14px;overflow:hidden;
+  box-shadow:0 8px 32px rgba(0,0,0,.25);border:2px solid transparent;transition:border-color .2s;
+}
+.hero-search:focus-within{border-color:var(--rose);}
+.hero-search input{
+  flex:1;padding:14px 18px;border:none;outline:none;
+  font-family:'Inter',sans-serif;font-size:14px;color:var(--ink);background:transparent;
+}
+.hero-search input::placeholder{color:var(--ink4);}
+.hero-search-btn{
+  padding:0 22px;background:linear-gradient(135deg,var(--rose),#b8305f);
+  color:white;border:none;cursor:pointer;
+  font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:800;
+  display:flex;align-items:center;gap:6px;transition:filter .2s;white-space:nowrap;
+}
+.hero-search-btn:hover{filter:brightness(1.07);}
+
+.hero-partners{margin-top:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.hero-partner-txt{font-size:11px;color:rgba(255,255,255,.35);}
+.partner-pill{padding:4px 12px;border-radius:100px;font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:700;}
+.glovo-pill{background:var(--glovo-bg);color:var(--glovo);border:1px solid var(--glovo-bd);}
+.jumia-pill{background:var(--jumia-bg);color:var(--jumia);border:1px solid var(--jumia-bd);}
+.uber-pill{background:var(--ubereats-bg);color:var(--ubereats);border:1px solid var(--ubereats-bd);}
+
+/* ── CUISINE TABS ── */
+.cat-tabs{
+  background:var(--white);border-bottom:1px solid var(--border);
+  padding:0 20px;display:flex;gap:0;overflow-x:auto;scrollbar-width:none;
+}
+.cat-tabs::-webkit-scrollbar{display:none;}
+.cat-tab{
+  padding:14px 18px;font-size:13px;font-weight:500;color:var(--ink3);
+  cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;
+  transition:color .2s,border-color .2s;display:flex;align-items:center;gap:6px;
+}
+.cat-tab:hover{color:var(--ink);}
+.cat-tab.active{color:var(--rose);border-bottom-color:var(--rose);font-weight:600;}
+
+/* ── MAIN ── */
+.main{max-width:1100px;margin:0 auto;padding:24px 20px 60px;display:flex;flex-direction:column;gap:28px;}
+
+.sec-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.sec-title{font-family:'Playfair Display',serif;font-size:20px;font-weight:600;color:var(--ink);}
+.sec-sub{font-size:12px;color:var(--ink4);margin-top:2px;}
+
+/* ── RESTAURANT GRID ── */
+.resto-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;}
+.resto-card{
+  background:var(--white);border-radius:18px;border:1px solid var(--border);
+  overflow:hidden;cursor:pointer;transition:transform .22s,box-shadow .22s;position:relative;
+}
+.resto-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-md);}
+.resto-thumb{
+  height:130px;display:flex;align-items:center;justify-content:center;
+  font-size:52px;position:relative;
+}
+.rt-0{background:linear-gradient(135deg,#3a0a0a,#7a1414);}
+.rt-1{background:linear-gradient(135deg,#1a2a00,#3a5500);}
+.rt-2{background:linear-gradient(135deg,#3a1a00,#7a3a00);}
+.rt-3{background:linear-gradient(135deg,#1a0a30,#3a1460);}
+.rt-4{background:linear-gradient(135deg,#001a2a,#00405a);}
+.rt-5{background:linear-gradient(135deg,#2a0010,#5a0028);}
+.rt-6{background:linear-gradient(135deg,#0a2a10,#1a5028);}
+.rt-7{background:linear-gradient(135deg,#2a1500,#5a3000);}
+
+.resto-badge{
+  position:absolute;top:10px;left:10px;
+  padding:3px 9px;border-radius:100px;font-size:9px;font-weight:700;
+  letter-spacing:.06em;text-transform:uppercase;color:white;
+}
+.badge-promo{background:rgba(212,69,122,.9);}
+.badge-new{background:rgba(13,148,103,.9);}
+.resto-rating-pill{
+  position:absolute;bottom:10px;left:10px;
+  display:flex;align-items:center;gap:3px;
+  padding:3px 9px;border-radius:100px;
+  background:rgba(0,0,0,.55);color:white;
+  font-size:11px;font-weight:700;
+}
+.resto-body{padding:14px 16px;}
+.resto-name{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;color:var(--ink);margin-bottom:3px;}
+.resto-cuisine{font-size:11px;color:var(--ink4);margin-bottom:10px;}
+.resto-meta{display:flex;align-items:center;justify-content:space-between;}
+.resto-eta{font-size:11px;color:var(--ink3);display:flex;align-items:center;gap:4px;}
+.resto-fee{font-size:11px;color:var(--emerald);font-weight:600;}
+.resto-partners{display:flex;gap:4px;margin-top:8px;}
+.sp-ico{width:18px;height:18px;border-radius:4px;font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center;}
+.sp-glovo{background:var(--glovo);color:#0a1628;}
+.sp-jumia{background:var(--jumia);color:white;}
+.sp-uber{background:var(--ubereats);color:white;}
+
+/* ── PARTNER COMPARISON ── */
+.partner-section{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+@media(max-width:800px){.partner-section{grid-template-columns:1fr;}}
+.partner-card{
+  border-radius:18px;padding:22px;overflow:hidden;cursor:pointer;position:relative;
+  transition:transform .22s,box-shadow .22s;border:2px solid transparent;
+}
+.partner-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg);}
+.pc-glovo{background:linear-gradient(135deg,#1a1200 0%,#2d2000 100%);border-color:var(--glovo-bd);}
+.pc-jumia{background:linear-gradient(135deg,#1a0800 0%,#2d1400 100%);border-color:var(--jumia-bd);}
+.pc-uber{background:linear-gradient(135deg,#001a10 0%,#003020 100%);border-color:var(--ubereats-bd);}
+.pc-deco{position:absolute;right:-16px;top:-16px;font-size:70px;opacity:.08;pointer-events:none;}
+.pc-logo{font-family:'Space Grotesk',sans-serif;font-size:19px;font-weight:900;letter-spacing:-.01em;margin-bottom:8px;}
+.glovo-logo-txt{color:var(--glovo);}
+.jumia-logo-txt{color:var(--jumia);}
+.uber-logo-txt{color:var(--ubereats);}
+.pc-desc{font-size:12px;color:rgba(255,255,255,.5);line-height:1.6;margin-bottom:14px;}
+.pc-btn{
+  width:100%;padding:10px;border-radius:10px;border:none;cursor:pointer;
+  font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:800;letter-spacing:.04em;
+  transition:filter .2s,transform .2s;display:flex;align-items:center;justify-content:center;gap:6px;
+}
+.pc-btn:hover{filter:brightness(1.08);transform:translateY(-1px);}
+.btn-glovo{background:linear-gradient(135deg,var(--glovo),var(--glovo-dark));color:#0a1628;}
+.btn-jumia{background:linear-gradient(135deg,var(--jumia),var(--jumia-dark));color:white;}
+.btn-uber{background:linear-gradient(135deg,var(--ubereats),var(--ubereats-dark));color:white;}
+
+/* ── MENU ITEM CARDS ── */
+.menu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px;}
+.menu-card{
+  background:var(--white);border-radius:14px;border:1px solid var(--border);
+  overflow:hidden;cursor:pointer;transition:transform .2s,box-shadow .2s;
+}
+.menu-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-md);}
+.menu-thumb{height:110px;display:flex;align-items:center;justify-content:center;font-size:42px;position:relative;}
+.mt-0{background:linear-gradient(135deg,#3a0a0a,#7a1414);}
+.mt-1{background:linear-gradient(135deg,#1a2a00,#3a5500);}
+.mt-2{background:linear-gradient(135deg,#3a1a00,#7a3a00);}
+.mt-3{background:linear-gradient(135deg,#1a0a30,#3a1460);}
+.mt-4{background:linear-gradient(135deg,#001a2a,#00405a);}
+.mt-5{background:linear-gradient(135deg,#2a0010,#5a0028);}
+.menu-body{padding:10px 12px;}
+.menu-name{font-size:12px;font-weight:600;color:var(--ink);margin-bottom:3px;line-height:1.3;}
+.menu-resto{font-size:10px;color:var(--ink4);margin-bottom:6px;}
+.menu-price-row{display:flex;align-items:center;justify-content:space-between;}
+.menu-price{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;color:var(--ink);}
+.menu-btn{
+  padding:4px 10px;border-radius:6px;border:none;cursor:pointer;
+  font-family:'Space Grotesk',sans-serif;font-size:10px;font-weight:700;
+  background:linear-gradient(135deg,var(--rose),#b8305f);color:white;transition:filter .2s;
+}
+.menu-btn:hover{filter:brightness(1.08);}
+
+/* ── RESULTS BAR ── */
+.results-bar{display:flex;align-items:center;justify-content:space-between;padding:12px 0;}
+.results-count{font-size:13px;color:var(--ink3);}
+.results-count strong{color:var(--ink);}
+
+/* ── HOW IT WORKS ── */
+.how-band{background:var(--white);border-radius:16px;border:1px solid var(--border);padding:20px;}
+.how-title{font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink4);margin-bottom:14px;}
+.how-row{display:flex;gap:0;overflow-x:auto;scrollbar-width:none;}
+.how-row::-webkit-scrollbar{display:none;}
+.how-step{display:flex;flex-direction:column;align-items:center;text-align:center;min-width:130px;padding:0 14px;position:relative;}
+.how-step:not(:last-child)::after{content:'→';position:absolute;right:-6px;top:18px;color:var(--ink4);font-size:14px;}
+.how-ico{width:40px;height:40px;border-radius:12px;background:var(--offwhite);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:8px;}
+.how-lbl{font-size:11px;font-weight:600;color:var(--ink);margin-bottom:3px;}
+.how-sub{font-size:10px;color:var(--ink4);line-height:1.4;}
+
+/* ── EMPTY / SKELETON ── */
+.empty-search{background:var(--white);border-radius:16px;border:1px solid var(--border);padding:40px 24px;text-align:center;}
+.es-ico{font-size:44px;margin-bottom:12px;}
+.es-title{font-family:'Playfair Display',serif;font-size:18px;font-weight:600;color:var(--ink);margin-bottom:6px;}
+.es-sub{font-size:13px;color:var(--ink4);line-height:1.6;}
+.skeleton{background:linear-gradient(90deg,var(--stone) 25%,var(--offwhite) 50%,var(--stone) 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:8px;}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* ── TOAST ── */
+.toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  background:var(--ink);color:white;padding:12px 20px;border-radius:12px;
+  font-size:13px;font-weight:500;box-shadow:var(--shadow-lg);z-index:999;
+  opacity:0;pointer-events:none;transition:opacity .3s;white-space:nowrap;
+}
+.toast.show{opacity:1;}
+
+@media(max-width:600px){
+  .resto-grid{grid-template-columns:repeat(2,1fr);}
+  .menu-grid{grid-template-columns:repeat(2,1fr);}
+  .how-step{min-width:110px;}
+  .main{padding:16px 14px 48px;}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition-duration:.01ms!important;}
+}
+</style>
+</head>
+<body>
+
+<nav class="top-nav">
+  <a href="dashboard.html?role=guest" class="nav-back">← Dashboard</a>
+  <a href="dashboard.html?role=guest" class="nav-logo">Apatmento</a>
+  <div class="nav-avatar" id="nav-avatar">G</div>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<div class="hero-banner">
+  <div style="max-width:700px;margin:0 auto;">
+    <div class="hero-eyebrow">Nairobi · Food Delivery</div>
+    <div class="hero-title">Hungry? We'll find your meal</div>
+    <div class="hero-sub">Search restaurants and dishes across Nairobi — delivered via Glovo, Jumia Food or Uber Eats</div>
+    <div class="hero-search">
+      <input type="text" id="search-input" placeholder="Search restaurants, cuisines or dishes…"
+        oninput="onSearchInput()" onkeydown="onSearchKey(event)"/>
+      <button class="hero-search-btn" onclick="doSearch()">🔍 Search</button>
+    </div>
+    <div class="hero-partners">
+      <span class="hero-partner-txt">Delivered via</span>
+      <span class="partner-pill glovo-pill">Glovo</span>
+      <span class="partner-pill jumia-pill">Jumia Food</span>
+      <span class="partner-pill uber-pill">Uber Eats</span>
+    </div>
+  </div>
+</div>
+
+<div class="cat-tabs" id="cat-tabs">
+  <div class="cat-tab active" onclick="setCategory('all',this)">🍽️ All</div>
+  <div class="cat-tab" onclick="setCategory('local',this)">🍛 Local Kenyan</div>
+  <div class="cat-tab" onclick="setCategory('fastfood',this)">🍔 Fast Food</div>
+  <div class="cat-tab" onclick="setCategory('pizza',this)">🍕 Pizza</div>
+  <div class="cat-tab" onclick="setCategory('chinese',this)">🥡 Chinese</div>
+  <div class="cat-tab" onclick="setCategory('indian',this)">🍛 Indian</div>
+  <div class="cat-tab" onclick="setCategory('healthy',this)">🥗 Healthy</div>
+  <div class="cat-tab" onclick="setCategory('desserts',this)">🍰 Desserts &amp; Cakes</div>
+  <div class="cat-tab" onclick="setCategory('drinks',this)">☕ Coffee &amp; Drinks</div>
+</div>
+
+<div class="main" id="main-content">
+
+  <div id="resto-section">
+    <div class="sec-header">
+      <div>
+        <div class="sec-title">Popular restaurants near you</div>
+        <div class="sec-sub">Top rated in Nairobi right now</div>
+      </div>
+    </div>
+    <div class="resto-grid" id="resto-grid"></div>
+  </div>
+
+  <div id="partner-section">
+    <div class="sec-header">
+      <div>
+        <div class="sec-title">Choose your delivery partner</div>
+        <div class="sec-sub">All three deliver food across Nairobi</div>
+      </div>
+    </div>
+    <div class="partner-section">
+      <div class="partner-card pc-glovo">
+        <div class="pc-deco">🟡</div>
+        <div class="pc-logo glovo-logo-txt">Glovo</div>
+        <div class="pc-desc">Wide restaurant selection with fast delivery across Nairobi.</div>
+        <button class="pc-btn btn-glovo" onclick="openGlovo('')">🍽️ Order on Glovo</button>
+      </div>
+      <div class="partner-card pc-jumia">
+        <div class="pc-deco">🟠</div>
+        <div class="pc-logo jumia-logo-txt">Jumia Food</div>
+        <div class="pc-desc">Great deals and combos from popular local restaurants.</div>
+        <button class="pc-btn btn-jumia" onclick="openJumiaFood('')">🍔 Order on Jumia Food</button>
+      </div>
+      <div class="partner-card pc-uber">
+        <div class="pc-deco">🟢</div>
+        <div class="pc-logo uber-logo-txt">Uber Eats</div>
+        <div class="pc-desc">Reliable delivery with live tracking and top-rated restaurants.</div>
+        <button class="pc-btn btn-uber" onclick="openUberEats('')">🚗 Order on Uber Eats</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="menu-section">
+    <div class="sec-header">
+      <div>
+        <div class="sec-title">Popular dishes right now</div>
+        <div class="sec-sub">Trending across Nairobi restaurants</div>
+      </div>
+    </div>
+    <div class="menu-grid" id="menu-grid"></div>
+  </div>
+
+  <div id="search-results-section" style="display:none;">
+    <div class="results-bar">
+      <div class="results-count" id="results-count"></div>
+    </div>
+    <div class="menu-grid" id="search-grid"></div>
+  </div>
+
+  <div class="how-band">
+    <div class="how-title">How Apatmento Food works</div>
+    <div class="how-row">
+      <div class="how-step">
+        <div class="how-ico">🔍</div>
+        <div class="how-lbl">Search</div>
+        <div class="how-sub">Browse restaurants or dishes on Apatmento</div>
+      </div>
+      <div class="how-step">
+        <div class="how-ico">🎯</div>
+        <div class="how-lbl">Choose</div>
+        <div class="how-sub">Pick your meal and preferred delivery partner</div>
+      </div>
+      <div class="how-step">
+        <div class="how-ico">📲</div>
+        <div class="how-lbl">Redirected</div>
+        <div class="how-sub">Opens Glovo, Jumia Food or Uber Eats with your search ready</div>
+      </div>
+      <div class="how-step">
+        <div class="how-ico">🍽️</div>
+        <div class="how-lbl">Delivered</div>
+        <div class="how-sub">Track your order in their app. Hot food, fast.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ══ RESTAURANTS DATA ══ */
+const RESTAURANTS = [
+  {name:'Mama Oliech',          cuisine:'Local Kenyan · Fish',    rating:4.7, eta:'25-40', grad:'rt-0', icon:'🐟', cat:'local',    via:['glovo','jumia'],     promo:false, isNew:false},
+  {name:'KFC Kenya',            cuisine:'Fast Food · Chicken',    rating:4.4, eta:'20-35', grad:'rt-1', icon:'🍗', cat:'fastfood', via:['glovo','jumia','uber'], promo:true,  isNew:false},
+  {name:'Pizza Inn',            cuisine:'Pizza · Italian',        rating:4.5, eta:'25-40', grad:'rt-2', icon:'🍕', cat:'pizza',    via:['glovo','uber'],      promo:false, isNew:false},
+  {name:'Big Square',           cuisine:'Burgers · Fast Food',    rating:4.6, eta:'20-30', grad:'rt-3', icon:'🍔', cat:'fastfood', via:['glovo','jumia'],     promo:false, isNew:true},
+  {name:'Mama Rocks Burgers',   cuisine:'Gourmet Burgers',        rating:4.8, eta:'25-35', grad:'rt-4', icon:'🍔', cat:'fastfood', via:['glovo','uber'],      promo:false, isNew:false},
+  {name:'About Thyme',          cuisine:'Healthy · Salads',       rating:4.7, eta:'20-30', grad:'rt-5', icon:'🥗', cat:'healthy',  via:['glovo','jumia'],     promo:false, isNew:false},
+  {name:'Que Pasa',             cuisine:'Mexican · Tacos',        rating:4.5, eta:'25-40', grad:'rt-6', icon:'🌮', cat:'fastfood', via:['uber'],              promo:true,  isNew:false},
+  {name:'Galito\'s',            cuisine:'Flame-grilled Chicken',  rating:4.6, eta:'25-35', grad:'rt-7', icon:'🍗', cat:'fastfood', via:['glovo','jumia','uber'], promo:false, isNew:false},
+  {name:'Akasaka',              cuisine:'Japanese · Sushi',       rating:4.7, eta:'30-45', grad:'rt-0', icon:'🍣', cat:'chinese',  via:['uber'],              promo:false, isNew:false},
+  {name:'Tamarind Dhow',        cuisine:'Seafood · Fine Dining',  rating:4.9, eta:'35-50', grad:'rt-4', icon:'🦞', cat:'local',    via:['glovo'],             promo:false, isNew:false},
+  {name:'Java House',           cuisine:'Coffee · Breakfast',     rating:4.5, eta:'15-25', grad:'rt-5', icon:'☕', cat:'drinks',   via:['glovo','jumia','uber'], promo:false, isNew:false},
+  {name:'Artcaffe',             cuisine:'Coffee · Pastries',      rating:4.6, eta:'15-25', grad:'rt-2', icon:'🧁', cat:'desserts', via:['glovo','uber'],      promo:false, isNew:false},
+  {name:'Mr Chips',             cuisine:'Fish & Chips · Local',   rating:4.3, eta:'20-30', grad:'rt-3', icon:'🍟', cat:'local',    via:['jumia'],             promo:false, isNew:false},
+  {name:'Open House',           cuisine:'Indian · Curries',       rating:4.6, eta:'30-45', grad:'rt-6', icon:'🍛', cat:'indian',   via:['glovo','uber'],      promo:false, isNew:false},
+  {name:'Haandi Restaurant',    cuisine:'Indian · North Indian',  rating:4.8, eta:'30-45', grad:'rt-1', icon:'🍛', cat:'indian',   via:['glovo','jumia'],     promo:false, isNew:false},
+  {name:'Cake Affair',          cuisine:'Cakes · Desserts',       rating:4.7, eta:'25-35', grad:'rt-7', icon:'🎂', cat:'desserts', via:['glovo'],             promo:true,  isNew:false},
+];
+
+/* ══ MENU ITEMS DATA ══ */
+const MENU_ITEMS = [
+  {name:'Whole Fried Fish & Ugali', resto:'Mama Oliech',  price:850,  icon:'🐟', grad:'mt-0', cat:'local',    via:'glovo'},
+  {name:'Zinger Burger Meal',       resto:'KFC Kenya',    price:650,  icon:'🍗', grad:'mt-1', cat:'fastfood', via:'both'},
+  {name:'Pepperoni Pizza Large',    resto:'Pizza Inn',    price:1200, icon:'🍕', grad:'mt-2', cat:'pizza',    via:'uber'},
+  {name:'Double Cheese Burger',     resto:'Big Square',   price:550,  icon:'🍔', grad:'mt-3', cat:'fastfood', via:'glovo'},
+  {name:'Caesar Salad Bowl',        resto:'About Thyme',  price:680,  icon:'🥗', grad:'mt-4', cat:'healthy',  via:'glovo'},
+  {name:'Beef Tacos (3pc)',         resto:'Que Pasa',     price:750,  icon:'🌮', grad:'mt-5', cat:'fastfood', via:'uber'},
+  {name:'Flame-grilled 1/4 Chicken',resto:'Galito\'s',    price:590,  icon:'🍗', grad:'mt-0', cat:'fastfood', via:'both'},
+  {name:'Salmon Sushi Roll',        resto:'Akasaka',      price:1450, icon:'🍣', grad:'mt-1', cat:'chinese',  via:'uber'},
+  {name:'Butter Chicken & Naan',    resto:'Haandi',       price:980,  icon:'🍛', grad:'mt-2', cat:'indian',   via:'glovo'},
+  {name:'Cappuccino & Croissant',   resto:'Java House',   price:480,  icon:'☕', grad:'mt-3', cat:'drinks',   via:'both'},
+  {name:'Chocolate Fudge Cake',     resto:'Cake Affair',  price:650,  icon:'🍰', grad:'mt-4', cat:'desserts', via:'glovo'},
+  {name:'Chicken Tikka Wrap',       resto:'Open House',   price:520,  icon:'🌯', grad:'mt-5', cat:'indian',   via:'uber'},
+];
+
+let currentCategory = 'all';
+let currentSearch   = '';
+let searchTimeout   = null;
+
+/* ══ RENDER RESTAURANTS ══ */
+function renderRestos(cat='all') {
+  const grid = document.getElementById('resto-grid');
+  const list = cat === 'all' ? RESTAURANTS : RESTAURANTS.filter(r => r.cat === cat);
+  if (!list.length) {
+    grid.innerHTML = `<div class="empty-search" style="grid-column:1/-1;"><div class="es-ico">🍽️</div><div class="es-title">No restaurants in this category yet</div><div class="es-sub">Try Glovo, Jumia Food or Uber Eats for the full range.</div></div>`;
+    return;
+  }
+  grid.innerHTML = list.map(r => `
+    <div class="resto-card" onclick="openRestaurant('${encodeURIComponent(r.name)}','${r.via.join(',')}')">
+      <div class="resto-thumb ${r.grad}">
+        <span>${r.icon}</span>
+        ${r.promo ? '<div class="resto-badge badge-promo">🔥 Promo</div>' : r.isNew ? '<div class="resto-badge badge-new">✨ New</div>' : ''}
+        <div class="resto-rating-pill">⭐ ${r.rating}</div>
+      </div>
+      <div class="resto-body">
+        <div class="resto-name">${r.name}</div>
+        <div class="resto-cuisine">${r.cuisine}</div>
+        <div class="resto-meta">
+          <div class="resto-eta">🕐 ${r.eta} min</div>
+          <div class="resto-fee">Delivery available</div>
+        </div>
+        <div class="resto-partners">
+          ${r.via.includes('glovo') ? '<div class="sp-ico sp-glovo">G</div>' : ''}
+          ${r.via.includes('jumia') ? '<div class="sp-ico sp-jumia">J</div>' : ''}
+          ${r.via.includes('uber')  ? '<div class="sp-ico sp-uber">U</div>'  : ''}
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+/* ══ RENDER MENU ITEMS ══ */
+function renderMenu(cat='all') {
+  const grid = document.getElementById('menu-grid');
+  const list = cat === 'all' ? MENU_ITEMS : MENU_ITEMS.filter(m => m.cat === cat);
+  if (!list.length) { grid.innerHTML=''; return; }
+  grid.innerHTML = list.map(m => `
+    <div class="menu-card">
+      <div class="menu-thumb ${m.grad}"><span>${m.icon}</span></div>
+      <div class="menu-body">
+        <div class="menu-name">${m.name}</div>
+        <div class="menu-resto">${m.resto}</div>
+        <div class="menu-price-row">
+          <div class="menu-price">KES ${m.price}</div>
+          <button class="menu-btn" onclick="orderItem('${encodeURIComponent(m.name)}','${m.via}')">Order</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+/* ══ CATEGORY TABS ══ */
+function setCategory(cat, el) {
+  currentCategory = cat;
+  document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+
+  document.getElementById('search-results-section').style.display = 'none';
+  document.getElementById('resto-section').style.display = 'block';
+  document.getElementById('menu-section').style.display = 'block';
+  document.getElementById('partner-section').style.display = 'block';
+  document.getElementById('search-input').value = '';
+  currentSearch = '';
+
+  renderRestos(cat);
+  renderMenu(cat);
+}
+
+/* ══ SEARCH ══ */
+function onSearchInput() {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(doSearch, 400);
+}
+function onSearchKey(e) { if (e.key === 'Enter') doSearch(); }
+
+function doSearch() {
+  const q = document.getElementById('search-input').value.trim();
+  currentSearch = q;
+  if (!q) {
+    document.getElementById('search-results-section').style.display = 'none';
+    document.getElementById('resto-section').style.display = 'block';
+    document.getElementById('menu-section').style.display = 'block';
+    document.getElementById('partner-section').style.display = 'block';
+    return;
+  }
+  document.getElementById('resto-section').style.display = 'none';
+  document.getElementById('menu-section').style.display = 'none';
+  document.getElementById('partner-section').style.display = 'none';
+  document.getElementById('search-results-section').style.display = 'block';
+  document.getElementById('search-grid').innerHTML = buildSkelGrid(6);
+  setTimeout(() => renderSearchResults(q), 600);
+}
+
+function renderSearchResults(q) {
+  const ql = q.toLowerCase();
+  let restoMatches = RESTAURANTS.filter(r => r.name.toLowerCase().includes(ql) || r.cuisine.toLowerCase().includes(ql));
+  let menuMatches  = MENU_ITEMS.filter(m => m.name.toLowerCase().includes(ql) || m.resto.toLowerCase().includes(ql));
+
+  const total = restoMatches.length + menuMatches.length;
+  document.getElementById('results-count').innerHTML = `<strong>${total} result${total!==1?'s':''}</strong> for "${q}"`;
+
+  const grid = document.getElementById('search-grid');
+
+  if (!total) {
+    grid.innerHTML = `
+      <div class="empty-search" style="grid-column:1/-1;">
+        <div class="es-ico">🔍</div>
+        <div class="es-title">No local results for "${q}"</div>
+        <div class="es-sub">Search directly on our delivery partners for the full menu range.</div>
+        <div style="display:flex;gap:10px;justify-content:center;margin-top:16px;flex-wrap:wrap;">
+          <button onclick="openGlovo('${encodeURIComponent(q)}')" style="padding:10px 18px;border-radius:10px;background:linear-gradient(135deg,#FFC244,#E5A800);color:#0a1628;font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:800;border:none;cursor:pointer;">Search Glovo</button>
+          <button onclick="openJumiaFood('${encodeURIComponent(q)}')" style="padding:10px 18px;border-radius:10px;background:linear-gradient(135deg,#F68B1E,#D4730A);color:white;font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:800;border:none;cursor:pointer;">Search Jumia Food</button>
+          <button onclick="openUberEats('${encodeURIComponent(q)}')" style="padding:10px 18px;border-radius:10px;background:linear-gradient(135deg,#06C167,#04A157);color:white;font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:800;border:none;cursor:pointer;">Search Uber Eats</button>
+        </div>
+      </div>`;
+    return;
+  }
+
+  let html = '';
+  restoMatches.forEach(r => {
+    html += `
+    <div class="menu-card" onclick="openRestaurant('${encodeURIComponent(r.name)}','${r.via.join(',')}')">
+      <div class="menu-thumb ${r.grad.replace('rt-','mt-')}"><span>${r.icon}</span></div>
+      <div class="menu-body">
+        <div class="menu-name">${r.name}</div>
+        <div class="menu-resto">${r.cuisine}</div>
+        <div class="menu-price-row">
+          <div style="font-size:11px;color:var(--ink4);">⭐ ${r.rating} · ${r.eta} min</div>
+        </div>
+      </div>
+    </div>`;
+  });
+  menuMatches.forEach(m => {
+    html += `
+    <div class="menu-card">
+      <div class="menu-thumb ${m.grad}"><span>${m.icon}</span></div>
+      <div class="menu-body">
+        <div class="menu-name">${m.name}</div>
+        <div class="menu-resto">${m.resto}</div>
+        <div class="menu-price-row">
+          <div class="menu-price">KES ${m.price}</div>
+          <button class="menu-btn" onclick="orderItem('${encodeURIComponent(m.name)}','${m.via}')">Order</button>
+        </div>
+      </div>
+    </div>`;
+  });
+
+  html += `
+    <div style="grid-column:1/-1;margin-top:8px;">
+      <div style="font-size:12px;color:var(--ink4);margin-bottom:10px;text-align:center;">Also search the full menu on our partners:</div>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+        <button onclick="openGlovo('${encodeURIComponent(q)}')" style="padding:10px 18px;border-radius:10px;background:linear-gradient(135deg,#FFC244,#E5A800);color:#0a1628;font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:800;border:none;cursor:pointer;">🟡 Glovo</button>
+        <button onclick="openJumiaFood('${encodeURIComponent(q)}')" style="padding:10px 18px;border-radius:10px;background:linear-gradient(135deg,#F68B1E,#D4730A);color:white;font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:800;border:none;cursor:pointer;">🟠 Jumia Food</button>
+        <button onclick="openUberEats('${encodeURIComponent(q)}')" style="padding:10px 18px;border-radius:10px;background:linear-gradient(135deg,#06C167,#04A157);color:white;font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:800;border:none;cursor:pointer;">🟢 Uber Eats</button>
+      </div>
+    </div>`;
+
+  grid.innerHTML = html;
+}
+
+/* ══ OPEN RESTAURANT ══ */
+function openRestaurant(nameEncoded, viaList) {
+  const name = decodeURIComponent(nameEncoded);
+  const partners = viaList.split(',');
+  showToast(`Opening ${partners[0] === 'glovo' ? 'Glovo' : partners[0] === 'jumia' ? 'Jumia Food' : 'Uber Eats'} for "${name}"…`);
+  if (partners.includes('glovo'))      openGlovo(encodeURIComponent(name));
+  else if (partners.includes('jumia')) openJumiaFood(encodeURIComponent(name));
+  else                                  openUberEats(encodeURIComponent(name));
+}
+
+/* ══ ORDER ITEM ══ */
+function orderItem(nameEncoded, via) {
+  const name = decodeURIComponent(nameEncoded);
+  if (via === 'glovo' || via === 'both') {
+    showToast(`Opening Glovo for "${name}"…`);
+    openGlovo(encodeURIComponent(name));
+  } else {
+    showToast(`Opening Uber Eats for "${name}"…`);
+    openUberEats(encodeURIComponent(name));
+  }
+}
+
+/* ══ DEEP LINKS ══ */
+function openGlovo(searchQuery) {
+  const q = searchQuery || '';
+  const isAndroid = /android/i.test(navigator.userAgent);
+  const isIOS     = /iphone|ipad/i.test(navigator.userAgent);
+  if (isAndroid || isIOS) {
+    window.location.href = `glovoapp://search?query=${q}`;
+    setTimeout(() => {
+      window.open(isAndroid
+        ? 'https://play.google.com/store/apps/details?id=com.glovo'
+        : 'https://apps.apple.com/ke/app/glovo-food-delivery/id951812684', '_blank');
+    }, 2000);
+  } else {
+    window.open(q ? `https://glovoapp.com/ke/en/nairobi/search/?query=${q}` : 'https://glovoapp.com/ke/en/nairobi/', '_blank');
+  }
+}
+
+function openJumiaFood(searchQuery) {
+  const q = searchQuery || '';
+  const isAndroid = /android/i.test(navigator.userAgent);
+  const isIOS     = /iphone|ipad/i.test(navigator.userAgent);
+  if (isAndroid || isIOS) {
+    window.location.href = `jumiafood://search?keyword=${q}`;
+    setTimeout(() => {
+      window.open(isAndroid
+        ? 'https://play.google.com/store/apps/details?id=com.jumia.food'
+        : 'https://apps.apple.com/ke/app/jumia-food/id1440285569', '_blank');
+    }, 2000);
+  } else {
+    window.open(q ? `https://food.jumia.co.ke/restaurants?q=${q}` : 'https://food.jumia.co.ke/', '_blank');
+  }
+}
+
+function openUberEats(searchQuery) {
+  const q = searchQuery || '';
+  const isAndroid = /android/i.test(navigator.userAgent);
+  const isIOS     = /iphone|ipad/i.test(navigator.userAgent);
+  if (isAndroid || isIOS) {
+    window.location.href = `ubereats://search?query=${q}`;
+    setTimeout(() => {
+      window.open(isAndroid
+        ? 'https://play.google.com/store/apps/details?id=com.ubercab.eats'
+        : 'https://apps.apple.com/ke/app/uber-eats-food-delivery/id1058959277', '_blank');
+    }, 2000);
+  } else {
+    window.open(q ? `https://www.ubereats.com/ke/search?q=${q}` : 'https://www.ubereats.com/ke', '_blank');
+  }
+}
+
+/* ══ SKELETON ══ */
+function buildSkelGrid(n) {
+  return Array(n).fill(0).map(() => `
+    <div class="menu-card">
+      <div class="skeleton" style="height:110px;border-radius:0;"></div>
+      <div style="padding:10px 12px;display:flex;flex-direction:column;gap:7px;">
+        <div class="skeleton" style="height:13px;width:80%;"></div>
+        <div class="skeleton" style="height:11px;width:50%;"></div>
+        <div class="skeleton" style="height:16px;width:60%;"></div>
+      </div>
+    </div>`).join('');
+}
+
+/* ══ TOAST ══ */
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+/* ══ INIT ══ */
+renderRestos('all');
+renderMenu('all');
+</script>
+</body>
+</html>
