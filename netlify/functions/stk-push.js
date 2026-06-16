@@ -72,16 +72,19 @@ exports.handler = async function (event) {
     const callbackUrl = `${siteUrl}/.netlify/functions/stk-callback`;
 
     // ── BUILD PAYLOAD ──
+    // NOTE: PayHero's official docs show channel_id as a STRING, not a number.
     const payload = {
       amount: Math.round(amount), // KES, whole number
       phone_number: normalizedPhone,
-      channel_id: parseInt(channelId, 10),
+      channel_id: String(channelId).trim(),
       provider: 'm-pesa',
       external_reference: reference, // our own booking reference, e.g. "TOUR-1-abc123"
       callback_url: callbackUrl,
     };
 
     // ── CALL PAYHERO API ──
+    console.log('PayHero request payload:', JSON.stringify(payload));
+
     const response = await fetch('https://backend.payhero.co.ke/api/v2/payments/initiate-stk-push', {
       method: 'POST',
       headers: {
@@ -91,12 +94,33 @@ exports.handler = async function (event) {
       body: JSON.stringify(payload),
     });
 
-    const data = await response.json();
+    const rawText = await response.text();
+    console.log('PayHero raw response status:', response.status);
+    console.log('PayHero raw response body:', rawText);
+
+    let data;
+    try {
+      data = JSON.parse(rawText);
+    } catch (parseErr) {
+      // PayHero returned non-JSON (e.g. an HTML error page) — surface the raw text
+      return {
+        statusCode: response.status || 500,
+        body: JSON.stringify({
+          error: 'PayHero returned a non-JSON response',
+          status: response.status,
+          raw: rawText.substring(0, 500),
+        }),
+      };
+    }
 
     if (!response.ok) {
       return {
         statusCode: response.status,
-        body: JSON.stringify({ error: 'PayHero request failed', details: data }),
+        body: JSON.stringify({
+          error: data?.message || data?.error || data?.errors || 'PayHero request failed',
+          details: data,
+          status: response.status,
+        }),
       };
     }
 
