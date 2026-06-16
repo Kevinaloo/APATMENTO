@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>APATMENTO — Flights</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400&family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --white:#FFFFFF;--offwhite:#F7F6F2;--stone:#EDEAE4;
+  --ink:#0F1117;--ink2:#2A2D38;--ink3:#5A5E70;--ink4:#9499AD;
+  --border:rgba(15,17,23,0.08);--border-md:rgba(15,17,23,0.14);
+  --shadow-sm:0 2px 12px rgba(15,17,23,0.06);
+  --shadow-md:0 8px 32px rgba(15,17,23,0.10);
+  --shadow-lg:0 20px 60px rgba(15,17,23,0.14);
+  --gold:#C8970A;--gold2:#E8A800;
+  --emerald:#0D9467;--emerald2:#059652;
+  --em-bg:rgba(13,148,103,0.07);--em-bd:rgba(13,148,103,0.18);
+  --electric:#1A7FD4;
+  /* Kenya Airways red */
+  --kq:#E2231A;--kq-dark:#B91C14;--kq-bg:rgba(226,35,26,0.08);--kq-bd:rgba(226,35,26,0.22);
+  /* Skyscanner blue */
+  --sky:#0770E3;--sky-dark:#0558B5;--sky-bg:rgba(7,112,227,0.08);--sky-bd:rgba(7,112,227,0.22);
+  /* Kayak orange */
+  --kayak:#FF690F;--kayak-dark:#E5560A;--kayak-bg:rgba(255,105,15,0.08);--kayak-bd:rgba(255,105,15,0.24);
+}
+html,body{min-height:100%;font-family:'Inter',sans-serif;background:var(--offwhite);color:var(--ink);}
+
+.top-nav{
+  position:sticky;top:0;z-index:100;height:60px;
+  background:var(--white);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;padding:0 24px;
+}
+.nav-logo{
+  font-family:'Playfair Display',serif;font-size:16px;font-weight:700;
+  letter-spacing:.22em;text-transform:uppercase;
+  background:linear-gradient(90deg,var(--gold),var(--gold2));
+  -webkit-background-clip:text;background-clip:text;color:transparent;text-decoration:none;
+}
+.nav-back{
+  display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500;
+  color:var(--ink3);text-decoration:none;padding:7px 14px;border-radius:8px;
+  border:1px solid var(--border);transition:all .2s;
+}
+.nav-back:hover{background:var(--offwhite);color:var(--ink);}
+.nav-avatar{
+  width:32px;height:32px;border-radius:8px;
+  background:linear-gradient(135deg,var(--emerald),var(--emerald2));
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:700;color:white;
+}
+
+/* ── HERO / SEARCH ── */
+.hero-banner{
+  background:linear-gradient(135deg,#020817 0%,#0a1e3d 45%,#041230 100%);
+  padding:40px 24px 36px;position:relative;overflow:hidden;
+}
+.hero-banner::before{
+  content:'';position:absolute;right:-60px;top:-60px;width:320px;height:320px;border-radius:50%;
+  background:radial-gradient(circle,rgba(7,112,227,.10),transparent);pointer-events:none;
+}
+.hero-banner::after{
+  content:'';position:absolute;left:-30px;bottom:-80px;width:240px;height:240px;border-radius:50%;
+  background:radial-gradient(circle,rgba(226,35,26,.08),transparent);pointer-events:none;
+}
+.hero-inner{max-width:760px;margin:0 auto;position:relative;z-index:1;}
+.hero-eyebrow{font-size:10px;font-weight:600;letter-spacing:.26em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:8px;}
+.hero-title{font-family:'Playfair Display',serif;font-size:clamp(24px,4.2vw,34px);font-weight:700;color:white;margin-bottom:4px;line-height:1.2;}
+.hero-sub{font-size:13px;color:rgba(255,255,255,.45);margin-bottom:22px;}
+
+/* trip type toggle */
+.trip-toggle{display:flex;gap:6px;margin-bottom:16px;}
+.trip-btn{
+  padding:8px 18px;border-radius:100px;
+  border:1.5px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);
+  font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:600;color:rgba(255,255,255,.6);
+  cursor:pointer;transition:all .2s;
+}
+.trip-btn.active{background:rgba(255,255,255,.95);color:var(--ink);border-color:transparent;}
+
+/* search card */
+.search-card{
+  background:var(--white);border-radius:16px;padding:18px;
+  box-shadow:0 16px 48px rgba(0,0,0,.3);
+}
+.route-row{
+  display:flex;align-items:center;gap:0;margin-bottom:12px;
+  border:1.5px solid var(--border);border-radius:12px;overflow:hidden;
+  position:relative;
+}
+.route-field{
+  flex:1;padding:12px 16px;cursor:text;position:relative;
+  border-right:1px solid var(--border);
+}
+.route-field:last-child{border-right:none;}
+.route-field:focus-within{background:var(--offwhite);}
+.rf-label{font-size:9px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--ink4);margin-bottom:3px;}
+.rf-val{display:flex;align-items:center;gap:6px;}
+.rf-code{font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:700;color:var(--ink);}
+.rf-city{font-size:11px;color:var(--ink4);}
+.route-field input{
+  border:none;outline:none;background:transparent;width:100%;
+  font-family:'Inter',sans-serif;font-size:14px;color:var(--ink);
+}
+.route-field input::placeholder{color:var(--ink4);}
+.route-swap{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  z-index:5;width:30px;height:30px;border-radius:50%;
+  background:var(--white);border:1.5px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:13px;box-shadow:var(--shadow-sm);
+  transition:transform .3s,background .2s;
+}
+.route-swap:hover{background:var(--offwhite);transform:translate(-50%,-50%) rotate(180deg);}
+
+/* suggestions for airport */
+.airport-suggestions{
+  position:absolute;left:0;right:0;top:100%;z-index:50;
+  background:var(--white);border:1.5px solid var(--electric);border-top:none;
+  border-radius:0 0 12px 12px;box-shadow:var(--shadow-md);
+  max-height:220px;overflow-y:auto;display:none;
+}
+.airport-suggestions.show{display:block;}
+.as-item{
+  padding:10px 14px;display:flex;align-items:center;gap:10px;
+  cursor:pointer;border-bottom:1px solid var(--border);transition:background .15s;
+}
+.as-item:last-child{border-bottom:none;}
+.as-item:hover{background:var(--em-bg);}
+.as-code{
+  font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:700;
+  width:34px;height:26px;border-radius:6px;background:var(--offwhite);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--ink2);
+}
+.as-info strong{display:block;font-size:12px;color:var(--ink);}
+.as-info span{font-size:11px;color:var(--ink4);}
+
+.date-pax-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;}
+@media(max-width:560px){.date-pax-row{grid-template-columns:1fr 1fr;}}
+.field{display:flex;flex-direction:column;gap:5px;}
+.field-label{font-size:9px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--ink4);}
+.field-input,.field-select{
+  padding:11px 12px;border-radius:10px;border:1.5px solid var(--border);
+  background:var(--offwhite);font-family:'Inter',sans-serif;font-size:13px;color:var(--ink);
+  outline:none;transition:border-color .2s,background .2s;-webkit-appearance:none;
+}
+.field-select{
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 10 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%239499AD' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 10px center;background-size:9px;
+  padding-right:26px;cursor:pointer;
+}
+.field-input:focus,.field-select:focus{border-color:var(--electric);background:var(--white);}
+
+.search-flight-btn{
+  width:100%;padding:14px;border-radius:12px;
+  background:linear-gradient(135deg,var(--electric),#0e63b8);
+  color:white;font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;
+  letter-spacing:.04em;border:none;cursor:pointer;
+  box-shadow:0 6px 20px rgba(26,127,212,.3);
+  transition:filter .2s,transform .2s;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.search-flight-btn:hover{filter:brightness(1.07);transform:translateY(-1px);}
+
+.hero-partners{margin-top:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.hero-partner-txt{font-size:11px;color:rgba(255,255,255,.35);}
+.partner-pill{padding:4px 12px;border-radius:100px;font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:700;}
+.kq-pill{background:var(--kq-bg);color:#ff8a82;border:1px solid var(--kq-bd);}
+.sky-pill{background:var(--sky-bg);color:#7ab8ff;border:1px solid var(--sky-bd);}
+.kayak-pill{background:var(--kayak-bg);color:#ffaa70;border:1px solid var(--kayak-bd);}
+
+/* ── MAIN ── */
+.main{max-width:1100px;margin:0 auto;padding:28px 20px 60px;display:flex;flex-direction:column;gap:28px;}
+.sec-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.sec-title{font-family:'Playfair Display',serif;font-size:20px;font-weight:600;color:var(--ink);}
+.sec-sub{font-size:12px;color:var(--ink4);margin-top:2px;}
+
+/* ── POPULAR ROUTES ── */
+.routes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;}
+.route-card{
+  background:var(--white);border-radius:16px;border:1px solid var(--border);
+  padding:18px 20px;cursor:pointer;transition:transform .2s,box-shadow .2s;
+}
+.route-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-md);}
+.rc-cities{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.rc-from,.rc-to{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;color:var(--ink);}
+.rc-arrow{color:var(--ink4);font-size:14px;}
+.rc-airline{font-size:11px;color:var(--ink4);margin-bottom:10px;}
+.rc-price-row{display:flex;align-items:center;justify-content:space-between;}
+.rc-price{font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:700;color:var(--emerald);}
+.rc-price span{font-size:10px;font-weight:400;color:var(--ink4);}
+.rc-badge{
+  padding:3px 9px;border-radius:100px;font-size:9px;font-weight:700;
+  letter-spacing:.06em;text-transform:uppercase;
+  background:var(--kq-bg);color:var(--kq);border:1px solid var(--kq-bd);
+}
+
+/* ── PARTNER CARDS ── */
+.partner-section{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+@media(max-width:800px){.partner-section{grid-template-columns:1fr;}}
+.partner-card{
+  border-radius:18px;padding:22px;overflow:hidden;cursor:pointer;position:relative;
+  transition:transform .22s,box-shadow .22s;border:2px solid transparent;
+}
+.partner-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg);}
+.pc-kq{background:linear-gradient(135deg,#1a0505 0%,#2d0a0a 100%);border-color:var(--kq-bd);}
+.pc-sky{background:linear-gradient(135deg,#020a1a 0%,#04122d 100%);border-color:var(--sky-bd);}
+.pc-kayak{background:linear-gradient(135deg,#1a0a00 0%,#2d1400 100%);border-color:var(--kayak-bd);}
+.pc-deco{position:absolute;right:-16px;top:-16px;font-size:70px;opacity:.08;pointer-events:none;}
+.pc-logo{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:900;letter-spacing:-.01em;margin-bottom:8px;}
+.kq-logo-txt{color:#ff5048;}
+.sky-logo-txt{color:#4a9fff;}
+.kayak-logo-txt{color:#ff8a3d;}
+.pc-desc{font-size:12px;color:rgba(255,255,255,.5);line-height:1.6;margin-bottom:14px;}
+.pc-btn{
+  width:100%;padding:10px;border-radius:10px;border:none;cursor:pointer;
+  font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:800;letter-spacing:.04em;
+  transition:filter .2s,transform .2s;display:flex;align-items:center;justify-content:center;gap:6px;
+}
+.pc-btn:hover{filter:brightness(1.08);transform:translateY(-1px);}
+.btn-kq{background:linear-gradient(135deg,var(--kq),var(--kq-dark));color:white;}
+.btn-sky{background:linear-gradient(135deg,var(--sky),var(--sky-dark));color:white;}
+.btn-kayak{background:linear-gradient(135deg,var(--kayak),var(--kayak-dark));color:white;}
+
+/* ── RESULTS ── */
+.results-section{display:none;}
+.results-bar{display:flex;align-items:center;justify-content:space-between;padding:12px 0;flex-wrap:wrap;gap:10px;}
+.results-count{font-size:13px;color:var(--ink3);}
+.results-count strong{color:var(--ink);}
+.flight-result-card{
+  background:var(--white);border-radius:16px;border:1px solid var(--border);
+  padding:18px 20px;margin-bottom:12px;
+  transition:box-shadow .2s,border-color .2s;
+}
+.flight-result-card:hover{box-shadow:var(--shadow-md);border-color:var(--border-md);}
+.fr-top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+.fr-airline{display:flex;align-items:center;gap:10px;}
+.fr-airline-ico{
+  width:40px;height:40px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;
+}
+.fr-airline-name{font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:700;color:var(--ink);}
+.fr-airline-type{font-size:11px;color:var(--ink4);}
+.fr-route{display:flex;align-items:center;gap:14px;flex:1;justify-content:center;}
+.fr-time{text-align:center;}
+.fr-time-val{font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:700;color:var(--ink);}
+.fr-time-code{font-size:11px;color:var(--ink4);}
+.fr-duration{display:flex;flex-direction:column;align-items:center;gap:2px;}
+.fr-duration-line{width:60px;height:1px;background:var(--border-md);position:relative;}
+.fr-duration-line::after{content:'✈';position:absolute;right:0;top:-7px;font-size:11px;color:var(--ink4);}
+.fr-duration-txt{font-size:10px;color:var(--ink4);}
+.fr-stops{font-size:10px;color:var(--emerald);font-weight:600;}
+.fr-price-block{text-align:right;}
+.fr-price{font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;color:var(--ink);}
+.fr-price-note{font-size:11px;color:var(--ink4);}
+.fr-book-row{
+  display:flex;gap:8px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);
+}
+.fr-btn{
+  flex:1;padding:10px;border-radius:10px;border:none;cursor:pointer;
+  font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  transition:filter .2s,transform .2s;color:white;
+}
+.fr-btn:hover{filter:brightness(1.07);transform:translateY(-1px);}
+
+/* ── HOW IT WORKS ── */
+.how-band{background:var(--white);border-radius:16px;border:1px solid var(--border);padding:20px;}
+.how-title{font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink4);margin-bottom:14px;}
+.how-row{display:flex;gap:0;overflow-x:auto;scrollbar-width:none;}
+.how-row::-webkit-scrollbar{display:none;}
+.how-step{display:flex;flex-direction:column;align-items:center;text-align:center;min-width:130px;padding:0 14px;position:relative;}
+.how-step:not(:last-child)::after{content:'→';position:absolute;right:-6px;top:18px;color:var(--ink4);font-size:14px;}
+.how-ico{width:40px;height:40px;border-radius:12px;background:var(--offwhite);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:8px;}
+.how-lbl{font-size:11px;font-weight:600;color:var(--ink);margin-bottom:3px;}
+.how-sub{font-size:10px;color:var(--ink4);line-height:1.4;}
+
+.empty-search{background:var(--white);border-radius:16px;border:1px solid var(--border);padding:40px 24px;text-align:center;}
+.es-ico{font-size:44px;margin-bottom:12px;}
+.es-title{font-family:'Playfair Display',serif;font-size:18px;font-weight:600;color:var(--ink);margin-bottom:6px;}
+.es-sub{font-size:13px;color:var(--ink4);line-height:1.6;}
+.skeleton{background:linear-gradient(90deg,var(--stone) 25%,var(--offwhite) 50%,var(--stone) 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:8px;}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+.toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  background:var(--ink);color:white;padding:12px 20px;border-radius:12px;
+  font-size:13px;font-weight:500;box-shadow:var(--shadow-lg);z-index:999;
+  opacity:0;pointer-events:none;transition:opacity .3s;white-space:nowrap;
+}
+.toast.show{opacity:1;}
+
+@media(max-width:600px){
+  .fr-route{flex-direction:column;gap:8px;}
+  .fr-duration-line{width:40px;}
+  .main{padding:16px 14px 48px;}
+  .routes-grid{grid-template-columns:1fr 1fr;}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition-duration:.01ms!important;}
+}
+</style>
+</head>
+<body>
+
+<nav class="top-nav">
+  <a href="dashboard.html?role=guest" class="nav-back">← Dashboard</a>
+  <a href="dashboard.html?role=guest" class="nav-logo">Apatmento</a>
+  <div class="nav-avatar" id="nav-avatar">G</div>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<div class="hero-banner">
+  <div class="hero-inner">
+    <div class="hero-eyebrow">Flights · Worldwide</div>
+    <div class="hero-title">Where to next?</div>
+    <div class="hero-sub">Search and compare flights via Kenya Airways, Skyscanner and Kayak</div>
+
+    <div class="trip-toggle">
+      <div class="trip-btn active" id="trip-return" onclick="setTripType('return')">↔ Round Trip</div>
+      <div class="trip-btn" id="trip-oneway" onclick="setTripType('oneway')">→ One Way</div>
+    </div>
+
+    <div class="search-card">
+      <div class="route-row">
+        <div class="route-field">
+          <div class="rf-label">From</div>
+          <input type="text" id="from-input" placeholder="City or airport" autocomplete="off"
+            oninput="onAirportInput('from',this.value)" onfocus="showAirportSugg('from')" onblur="hideAirportSugg('from',250)"/>
+          <div class="airport-suggestions" id="from-suggestions"></div>
+        </div>
+        <div class="route-swap" onclick="swapAirports()" title="Swap">⇄</div>
+        <div class="route-field">
+          <div class="rf-label">To</div>
+          <input type="text" id="to-input" placeholder="City or airport" autocomplete="off"
+            oninput="onAirportInput('to',this.value)" onfocus="showAirportSugg('to')" onblur="hideAirportSugg('to',250)"/>
+          <div class="airport-suggestions" id="to-suggestions"></div>
+        </div>
+      </div>
+
+      <div class="date-pax-row">
+        <div class="field">
+          <div class="field-label">Depart</div>
+          <input class="field-input" type="date" id="depart-date"/>
+        </div>
+        <div class="field" id="return-date-field">
+          <div class="field-label">Return</div>
+          <input class="field-input" type="date" id="return-date"/>
+        </div>
+        <div class="field">
+          <div class="field-label">Passengers</div>
+          <select class="field-select" id="passengers">
+            <option value="1">1 Adult</option>
+            <option value="2">2 Adults</option>
+            <option value="3">3 Adults</option>
+            <option value="4">4 Adults</option>
+          </select>
+        </div>
+      </div>
+
+      <button class="search-flight-btn" onclick="searchFlights()">🔍 Search Flights</button>
+    </div>
+
+    <div class="hero-partners">
+      <span class="hero-partner-txt">Compare via</span>
+      <span class="partner-pill kq-pill">Kenya Airways</span>
+      <span class="partner-pill sky-pill">Skyscanner</span>
+      <span class="partner-pill kayak-pill">Kayak</span>
+    </div>
+  </div>
+</div>
+
+<div class="main" id="main-content">
+
+  <!-- RESULTS (hidden until search) -->
+  <div class="results-section" id="results-section">
+    <div class="results-bar">
+      <div class="results-count" id="results-count"></div>
+    </div>
+    <div id="results-list"></div>
+  </div>
+
+  <!-- POPULAR ROUTES (default) -->
+  <div id="popular-section">
+    <div class="sec-header">
+      <div>
+        <div class="sec-title">Popular routes from Nairobi</div>
+        <div class="sec-sub">Trending destinations this month</div>
+      </div>
+    </div>
+    <div class="routes-grid" id="routes-grid"></div>
+  </div>
+
+  <!-- PARTNERS (default) -->
+  <div id="partner-section">
+    <div class="sec-header">
+      <div>
+        <div class="sec-title">Compare prices across partners</div>
+        <div class="sec-sub">We search Kenya Airways, Skyscanner and Kayak for the best fares</div>
+      </div>
+    </div>
+    <div class="partner-section">
+      <div class="partner-card pc-kq">
+        <div class="pc-deco">🔴</div>
+        <div class="pc-logo kq-logo-txt">Kenya Airways</div>
+        <div class="pc-desc">Kenya's national carrier. Direct flights to 40+ destinations across Africa, Europe, Asia and the Middle East.</div>
+        <button class="pc-btn btn-kq" onclick="openKQ()">✈️ Book on Kenya Airways</button>
+      </div>
+      <div class="partner-card pc-sky">
+        <div class="pc-deco">🔵</div>
+        <div class="pc-logo sky-logo-txt">Skyscanner</div>
+        <div class="pc-desc">Compare prices from 1,200+ airlines and travel agents to find the lowest fares worldwide.</div>
+        <button class="pc-btn btn-sky" onclick="openSkyscanner()">🌍 Search on Skyscanner</button>
+      </div>
+      <div class="partner-card pc-kayak">
+        <div class="pc-deco">🟠</div>
+        <div class="pc-logo kayak-logo-txt">Kayak</div>
+        <div class="pc-desc">Powerful flight search engine processing billions of queries to find you the best deals.</div>
+        <button class="pc-btn btn-kayak" onclick="openKayak()">🔎 Search on Kayak</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HOW IT WORKS -->
+  <div class="how-band">
+    <div class="how-title">How Apatmento Flights works</div>
+    <div class="how-row">
+      <div class="how-step">
+        <div class="how-ico">🔍</div>
+        <div class="how-lbl">Search</div>
+        <div class="how-sub">Enter your route, dates and passenger count</div>
+      </div>
+      <div class="how-step">
+        <div class="how-ico">⚖️</div>
+        <div class="how-lbl">Compare</div>
+        <div class="how-sub">See estimated fares from Kenya Airways, Skyscanner &amp; Kayak</div>
+      </div>
+      <div class="how-step">
+        <div class="how-ico">📲</div>
+        <div class="how-lbl">Redirected</div>
+        <div class="how-sub">Opens your chosen partner with the search pre-filled</div>
+      </div>
+      <div class="how-step">
+        <div class="how-ico">🎫</div>
+        <div class="how-lbl">Book &amp; fly</div>
+        <div class="how-sub">Complete your booking directly with the airline or agent</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ══ AIRPORTS DATA ══ */
+const AIRPORTS = [
+  {code:'NBO', city:'Nairobi',       country:'Kenya',         name:'Jomo Kenyatta Intl'},
+  {code:'MBA', city:'Mombasa',       country:'Kenya',         name:'Moi International'},
+  {code:'KIS', city:'Kisumu',        country:'Kenya',         name:'Kisumu Airport'},
+  {code:'EDL', city:'Eldoret',       country:'Kenya',         name:'Eldoret International'},
+  {code:'JFK', city:'New York',      country:'USA',           name:'John F Kennedy Intl'},
+  {code:'LHR', city:'London',        country:'UK',            name:'Heathrow'},
+  {code:'DXB', city:'Dubai',         country:'UAE',           name:'Dubai International'},
+  {code:'AMS', city:'Amsterdam',     country:'Netherlands',   name:'Schiphol'},
+  {code:'CDG', city:'Paris',         country:'France',        name:'Charles de Gaulle'},
+  {code:'JNB', city:'Johannesburg',  country:'South Africa',  name:'OR Tambo Intl'},
+  {code:'LOS', city:'Lagos',         country:'Nigeria',       name:'Murtala Muhammed Intl'},
+  {code:'ADD', city:'Addis Ababa',   country:'Ethiopia',      name:'Bole International'},
+  {code:'EBB', city:'Entebbe',       country:'Uganda',        name:'Entebbe International'},
+  {code:'DAR', city:'Dar es Salaam', country:'Tanzania',      name:'Julius Nyerere Intl'},
+  {code:'KGL', city:'Kigali',        country:'Rwanda',        name:'Kigali International'},
+  {code:'BOM', city:'Mumbai',        country:'India',         name:'Chhatrapati Shivaji'},
+  {code:'GUA', city:'Guangzhou',     country:'China',         name:'Baiyun International'},
+  {code:'BKK', city:'Bangkok',       country:'Thailand',      name:'Suvarnabhumi'},
+  {code:'IST', city:'Istanbul',      country:'Turkey',        name:'Istanbul Airport'},
+  {code:'DOH', city:'Doha',          country:'Qatar',         name:'Hamad International'},
+];
+
+/* ══ POPULAR ROUTES ══ */
+const POPULAR_ROUTES = [
+  {from:'NBO', to:'DXB', airline:'Kenya Airways · Direct', price:24000, badge:'KQ Direct'},
+  {from:'NBO', to:'LHR', airline:'Kenya Airways · Direct', price:68000, badge:'KQ Direct'},
+  {from:'NBO', to:'JNB', airline:'Kenya Airways · Direct', price:32000, badge:'KQ Direct'},
+  {from:'NBO', to:'MBA', airline:'Kenya Airways · Domestic',price:7500,  badge:'KQ Direct'},
+  {from:'NBO', to:'ADD', airline:'Ethiopian · 1 Stop',     price:28000, badge:null},
+  {from:'NBO', to:'AMS', airline:'KLM · Direct',           price:72000, badge:null},
+  {from:'NBO', to:'LOS', airline:'Kenya Airways · Direct', price:45000, badge:'KQ Direct'},
+  {from:'NBO', to:'BOM', airline:'Kenya Airways · Direct', price:38000, badge:'KQ Direct'},
+];
+
+let tripType = 'return';
+let fromAirport = null;
+let toAirport   = null;
+
+/* ══ TRIP TYPE ══ */
+function setTripType(type) {
+  tripType = type;
+  document.getElementById('trip-return').classList.toggle('active', type === 'return');
+  document.getElementById('trip-oneway').classList.toggle('active', type === 'oneway');
+  document.getElementById('return-date-field').style.display = type === 'return' ? 'flex' : 'none';
+}
+
+/* ══ AIRPORT AUTOCOMPLETE ══ */
+function onAirportInput(field, val) {
+  if (field === 'from') fromAirport = null;
+  if (field === 'to')   toAirport   = null;
+  renderAirportSugg(field, val);
+}
+function renderAirportSugg(field, query) {
+  const container = document.getElementById(field + '-suggestions');
+  if (!query || query.length < 1) { container.classList.remove('show'); return; }
+  const matches = AIRPORTS.filter(a =>
+    a.city.toLowerCase().includes(query.toLowerCase()) ||
+    a.code.toLowerCase().includes(query.toLowerCase()) ||
+    a.country.toLowerCase().includes(query.toLowerCase())
+  ).slice(0,7);
+  if (!matches.length) { container.classList.remove('show'); return; }
+  container.innerHTML = matches.map(a => `
+    <div class="as-item" onclick="selectAirport('${field}','${a.code}','${a.city}','${a.country}')">
+      <div class="as-code">${a.code}</div>
+      <div class="as-info"><strong>${a.city}, ${a.country}</strong><span>${a.name}</span></div>
+    </div>
+  `).join('');
+  container.classList.add('show');
+}
+function selectAirport(field, code, city, country) {
+  document.getElementById(field + '-input').value = `${city} (${code})`;
+  document.getElementById(field + '-suggestions').classList.remove('show');
+  if (field === 'from') fromAirport = { code, city, country };
+  if (field === 'to')   toAirport   = { code, city, country };
+}
+function showAirportSugg(field) {
+  const val = document.getElementById(field + '-input').value;
+  if (val) renderAirportSugg(field, val);
+}
+function hideAirportSugg(field, delay) {
+  setTimeout(() => document.getElementById(field + '-suggestions')?.classList.remove('show'), delay);
+}
+function swapAirports() {
+  const f = document.getElementById('from-input').value;
+  const t = document.getElementById('to-input').value;
+  document.getElementById('from-input').value = t;
+  document.getElementById('to-input').value   = f;
+  const tmp = fromAirport; fromAirport = toAirport; toAirport = tmp;
+}
+
+/* ══ POPULAR ROUTES RENDER ══ */
+function renderPopularRoutes() {
+  const grid = document.getElementById('routes-grid');
+  grid.innerHTML = POPULAR_ROUTES.map(r => {
+    const fromCity = AIRPORTS.find(a=>a.code===r.from)?.city || r.from;
+    const toCity   = AIRPORTS.find(a=>a.code===r.to)?.city   || r.to;
+    return `
+    <div class="route-card" onclick="quickSearch('${r.from}','${r.to}','${fromCity}','${toCity}')">
+      <div class="rc-cities">
+        <span class="rc-from">${r.from}</span>
+        <span class="rc-arrow">→</span>
+        <span class="rc-to">${r.to}</span>
+      </div>
+      <div class="rc-airline">${r.airline}</div>
+      <div class="rc-price-row">
+        <div class="rc-price">KES ${r.price.toLocaleString()}<span> from</span></div>
+        ${r.badge ? `<div class="rc-badge">${r.badge}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function quickSearch(fromCode, toCode, fromCity, toCity) {
+  fromAirport = { code: fromCode, city: fromCity };
+  toAirport   = { code: toCode,   city: toCity };
+  document.getElementById('from-input').value = `${fromCity} (${fromCode})`;
+  document.getElementById('to-input').value   = `${toCity} (${toCode})`;
+  searchFlights();
+}
+
+/* ══ SEARCH FLIGHTS ══ */
+function searchFlights() {
+  if (!fromAirport) {
+    const v = document.getElementById('from-input').value.trim();
+    if (!v) { showToast('Please select your departure city'); return; }
+    fromAirport = { code: 'XXX', city: v };
+  }
+  if (!toAirport) {
+    const v = document.getElementById('to-input').value.trim();
+    if (!v) { showToast('Please select your destination'); return; }
+    toAirport = { code: 'XXX', city: v };
+  }
+
+  const departDate = document.getElementById('depart-date').value;
+  if (!departDate) { showToast('Please select a departure date'); return; }
+  if (tripType === 'return' && !document.getElementById('return-date').value) {
+    showToast('Please select a return date or switch to one-way');
+    return;
+  }
+
+  // Show results section
+  document.getElementById('popular-section').style.display = 'none';
+  document.getElementById('partner-section').style.display = 'none';
+  document.getElementById('results-section').style.display = 'block';
+  document.getElementById('results-list').innerHTML = buildSkeletons();
+
+  setTimeout(() => renderResults(), 900);
+}
+
+function buildSkeletons() {
+  return [1,2,3].map(() => `
+    <div class="flight-result-card">
+      <div class="fr-top">
+        <div class="skeleton" style="width:120px;height:40px;"></div>
+        <div class="skeleton" style="width:200px;height:30px;"></div>
+        <div class="skeleton" style="width:90px;height:30px;"></div>
+      </div>
+    </div>`).join('');
+}
+
+function renderResults() {
+  const fc = fromAirport.code, tc = toAirport.code;
+  const fcity = fromAirport.city, tcity = toAirport.city;
+  const passengers = document.getElementById('passengers').value;
+
+  document.getElementById('results-count').innerHTML =
+    `<strong>${fcity} → ${tcity}</strong> · ${passengers} passenger(s) · ${tripType === 'return' ? 'Round trip' : 'One way'}`;
+
+  // Estimate base price by route type
+  const isDomestic = ['NBO','MBA','KIS','EDL'].includes(fc) && ['NBO','MBA','KIS','EDL'].includes(tc);
+  const isRegional  = ['ADD','EBB','DAR','KGL','JNB'].includes(tc) || ['ADD','EBB','DAR','KGL','JNB'].includes(fc);
+  const basePrice = isDomestic ? 6000 : isRegional ? 22000 : 45000;
+
+  const results = [
+    {
+      partner: 'kq', name: 'Kenya Airways', type: 'Direct flight',
+      icon: '🔴', bg: 'var(--kq-bg)', border: 'var(--kq-bd)',
+      depart: '08:15', arrive: '11:40', duration: '3h 25m', stops: 'Direct',
+      price: basePrice + Math.round(Math.random()*3000),
+    },
+    {
+      partner: 'sky', name: 'Skyscanner', type: 'Compare 1,200+ airlines',
+      icon: '🔵', bg: 'var(--sky-bg)', border: 'var(--sky-bd)',
+      depart: 'Multiple', arrive: 'options', duration: 'Varies', stops: 'Direct & connecting',
+      price: basePrice - Math.round(Math.random()*4000),
+    },
+    {
+      partner: 'kayak', name: 'Kayak', type: 'Search & compare deals',
+      icon: '🟠', bg: 'var(--kayak-bg)', border: 'var(--kayak-bd)',
+      depart: 'Multiple', arrive: 'options', duration: 'Varies', stops: 'Direct & connecting',
+      price: basePrice - Math.round(Math.random()*2000),
+    },
+  ];
+
+  document.getElementById('results-list').innerHTML = results.map(r => `
+    <div class="flight-result-card">
+      <div class="fr-top">
+        <div class="fr-airline">
+          <div class="fr-airline-ico" style="background:${r.bg};border:1px solid ${r.border};">${r.icon}</div>
+          <div>
+            <div class="fr-airline-name">${r.name}</div>
+            <div class="fr-airline-type">${r.type}</div>
+          </div>
+        </div>
+        <div class="fr-route">
+          <div class="fr-time">
+            <div class="fr-time-val">${r.depart}</div>
+            <div class="fr-time-code">${fc}</div>
+          </div>
+          <div class="fr-duration">
+            <div class="fr-duration-line"></div>
+            <div class="fr-duration-txt">${r.duration}</div>
+            <div class="fr-stops">${r.stops}</div>
+          </div>
+          <div class="fr-time">
+            <div class="fr-time-val">${r.arrive}</div>
+            <div class="fr-time-code">${tc}</div>
+          </div>
+        </div>
+        <div class="fr-price-block">
+          <div class="fr-price">KES ${r.price.toLocaleString()}</div>
+          <div class="fr-price-note">per passenger, est.</div>
+        </div>
+      </div>
+      <div class="fr-book-row">
+        <button class="fr-btn" style="background:linear-gradient(135deg,${r.partner==='kq'?'var(--kq),var(--kq-dark)':r.partner==='sky'?'var(--sky),var(--sky-dark)':'var(--kayak),var(--kayak-dark)'});"
+          onclick="bookFlight('${r.partner}')">
+          View on ${r.name} →
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+/* ══ BOOK / DEEP LINKS ══ */
+function bookFlight(partner) {
+  showToast(`Opening ${partner === 'kq' ? 'Kenya Airways' : partner === 'sky' ? 'Skyscanner' : 'Kayak'}…`);
+  if (partner === 'kq')    openKQ();
+  if (partner === 'sky')   openSkyscanner();
+  if (partner === 'kayak') openKayak();
+}
+
+function getSearchParams() {
+  const fc = fromAirport?.code || 'NBO';
+  const tc = toAirport?.code   || '';
+  const departDate = document.getElementById('depart-date').value || '';
+  const returnDate  = document.getElementById('return-date').value || '';
+  const pax = document.getElementById('passengers').value || '1';
+  return { fc, tc, departDate, returnDate, pax };
+}
+
+function openKQ() {
+  // Kenya Airways official booking site
+  const { fc, tc, departDate, returnDate } = getSearchParams();
+  let url = 'https://www.kenya-airways.com/en/book-a-flight/';
+  if (fc && tc) {
+    url = `https://www.kenya-airways.com/en/book-a-flight/?origin=${fc}&destination=${tc}&departureDate=${departDate}${returnDate ? '&returnDate='+returnDate : ''}`;
+  }
+  window.open(url, '_blank');
+}
+
+function openSkyscanner() {
+  const { fc, tc, departDate, returnDate } = getSearchParams();
+  // Skyscanner URL format: /transport/flights/{from}/{to}/{yymmdd}/{yymmdd}/
+  const fmtDate = (d) => d ? d.replace(/-/g,'').slice(2) : '';
+  let url = 'https://www.skyscanner.com/';
+  if (fc && tc && departDate) {
+    const dd = fmtDate(departDate);
+    const rd = fmtDate(returnDate);
+    url = `https://www.skyscanner.com/transport/flights/${fc.toLowerCase()}/${tc.toLowerCase()}/${dd}/${rd}/`;
+  } else if (fc && tc) {
+    url = `https://www.skyscanner.com/transport/flights/${fc.toLowerCase()}/${tc.toLowerCase()}/`;
+  }
+  window.open(url, '_blank');
+}
+
+function openKayak() {
+  const { fc, tc, departDate, returnDate, pax } = getSearchParams();
+  // Kayak URL format: /flights/{from}-{to}/{date}/{date}?adults={n}
+  let url = 'https://www.kayak.com/flights';
+  if (fc && tc && departDate) {
+    url = `https://www.kayak.com/flights/${fc}-${tc}/${departDate}${returnDate ? '/'+returnDate : ''}?adults=${pax}`;
+  } else if (fc && tc) {
+    url = `https://www.kayak.com/flights/${fc}-${tc}`;
+  }
+  window.open(url, '_blank');
+}
+
+/* ══ TOAST ══ */
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+/* ══ DEFAULT DATES ══ */
+(function setDefaultDates() {
+  const today = new Date();
+  const departDefault = new Date(today); departDefault.setDate(today.getDate() + 14);
+  const returnDefault  = new Date(today); returnDefault.setDate(today.getDate() + 21);
+  document.getElementById('depart-date').value = departDefault.toISOString().split('T')[0];
+  document.getElementById('return-date').value = returnDefault.toISOString().split('T')[0];
+  document.getElementById('depart-date').min   = today.toISOString().split('T')[0];
+  document.getElementById('return-date').min   = today.toISOString().split('T')[0];
+})();
+
+/* ══ INIT ══ */
+document.getElementById('from-input').value = 'Nairobi (NBO)';
+fromAirport = { code: 'NBO', city: 'Nairobi', country: 'Kenya' };
+renderPopularRoutes();
+</script>
+</body>
+</html>
