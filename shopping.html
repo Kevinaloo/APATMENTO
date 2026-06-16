@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>APATMENTO — Shopping</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400&family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --white:#FFFFFF;
+  --offwhite:#F7F6F2;
+  --stone:#EDEAE4;
+  --ink:#0F1117;
+  --ink2:#2A2D38;
+  --ink3:#5A5E70;
+  --ink4:#9499AD;
+  --border:rgba(15,17,23,0.08);
+  --border-md:rgba(15,17,23,0.14);
+  --shadow-sm:0 2px 12px rgba(15,17,23,0.06);
+  --shadow-md:0 8px 32px rgba(15,17,23,0.10);
+  --shadow-lg:0 20px 60px rgba(15,17,23,0.14);
+  --gold:#C8970A;
+  --gold2:#E8A800;
+  --emerald:#0D9467;
+  --emerald2:#059652;
+  --em-bg:rgba(13,148,103,0.07);
+  --em-bd:rgba(13,148,103,0.18);
+  /* Glovo */
+  --glovo:#FFC244;
+  --glovo-dark:#E5A800;
+  --glovo-bg:rgba(255,194,68,0.10);
+  --glovo-bd:rgba(255,194,68,0.30);
+  /* Jumia */
+  --jumia:#F68B1E;
+  --jumia-dark:#D4730A;
+  --jumia-bg:rgba(246,139,30,0.10);
+  --jumia-bd:rgba(246,139,30,0.28);
+}
+html,body{min-height:100%;font-family:'Inter',sans-serif;background:var(--offwhite);color:var(--ink);}
+
+/* ── NAV ── */
+.top-nav{
+  position:sticky;top:0;z-index:100;height:60px;
+  background:var(--white);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;padding:0 24px;
+}
+.nav-logo{
+  font-family:'Playfair Display',serif;font-size:16px;font-weight:700;
+  letter-spacing:.22em;text-transform:uppercase;
+  background:linear-gradient(90deg,var(--gold),var(--gold2));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  text-decoration:none;
+}
+.nav-back{
+  display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500;
+  color:var(--ink3);text-decoration:none;padding:7px 14px;border-radius:8px;
+  border:1px solid var(--border);transition:all .2s;
+}
+.nav-back:hover{background:var(--offwhite);color:var(--ink);}
+.nav-avatar{
+  width:32px;height:32px;border-radius:8px;
+  background:linear-gradient(135deg,var(--emerald),var(--emerald2));
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:700;color:white;
+}
+
+/* ── HERO SEARCH BANNER ── */
+.hero-banner{
+  background:linear-gradient(135deg,#0a1628 0%,#1a2840 50%,#0d1e35 100%);
+  padding:36px 24px 32px;
+  position:relative;overflow:hidden;
+}
+.hero-banner::before{
+  content:'';position:absolute;right:-40px;top:-40px;
+  width:280px;height:280px;border-radius:50%;
+  background:radial-gradient(circle,rgba(255,194,68,.08),transparent);
+  pointer-events:none;
+}
+.hero-banner::after{
+  content:'';position:absolute;left:-20px;bottom:-60px;
+  width:200px;height:200px;border-radius:50%;
+  background:radial-gradient(circle,rgba(246,139,30,.07),transparent);
+  pointer-events:none;
+}
+.hero-eyebrow{
+  font-size:10px;font-weight:600;letter-spacing:.26em;text-transform:uppercase;
+  color:rgba(255,255,255,.4);margin-bottom:8px;
+}
+.hero-title{
+  font-family:'Playfair Display',serif;
+  font-size:clamp(22px,4vw,32px);font-weight:700;
+  color:white;margin-bottom:4px;line-height:1.2;
+}
+.hero-sub{font-size:13px;color:rgba(255,255,255,.45);margin-bottom:20px;}
+
+/* search bar */
+.hero-search{
+  display:flex;gap:0;
+  background:var(--white);border-radius:14px;overflow:hidden;
+  box-shadow:0 8px 32px rgba(0,0,0,.2);
+  border:2px solid transparent;
+  transition:border-color .2s;
+}
+.hero-search:focus-within{border-color:var(--glovo);}
+.hero-search input{
+  flex:1;padding:14px 18px;border:none;outline:none;
+  font-family:'Inter',sans-serif;font-size:14px;color:var(--ink);
+  background:transparent;
+}
+.hero-search input::placeholder{color:var(--ink4);}
+.hero-search-btn{
+  padding:0 22px;background:linear-gradient(135deg,var(--glovo),var(--glovo-dark));
+  color:#0a1628;border:none;cursor:pointer;
+  font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:800;
+  display:flex;align-items:center;gap:6px;
+  transition:filter .2s;white-space:nowrap;
+}
+.hero-search-btn:hover{filter:brightness(1.07);}
+
+/* partner pills in hero */
+.hero-partners{
+  margin-top:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+}
+.hero-partner-txt{font-size:11px;color:rgba(255,255,255,.35);}
+.partner-pill{
+  padding:4px 12px;border-radius:100px;
+  font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:700;
+}
+.glovo-pill{background:var(--glovo-bg);color:var(--glovo);border:1px solid var(--glovo-bd);}
+.jumia-pill{background:var(--jumia-bg);color:var(--jumia);border:1px solid var(--jumia-bd);}
+
+/* ── CATEGORY TABS ── */
+.cat-tabs{
+  background:var(--white);border-bottom:1px solid var(--border);
+  padding:0 20px;
+  display:flex;gap:0;overflow-x:auto;scrollbar-width:none;
+}
+.cat-tabs::-webkit-scrollbar{display:none;}
+.cat-tab{
+  padding:14px 18px;font-size:13px;font-weight:500;color:var(--ink3);
+  cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;
+  transition:color .2s,border-color .2s;display:flex;align-items:center;gap:6px;
+}
+.cat-tab:hover{color:var(--ink);}
+.cat-tab.active{color:var(--emerald);border-bottom-color:var(--emerald);font-weight:600;}
+
+/* ── MAIN LAYOUT ── */
+.main{max-width:1100px;margin:0 auto;padding:24px 20px 60px;display:flex;flex-direction:column;gap:28px;}
+
+/* ── SECTION HEADER ── */
+.sec-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.sec-title{font-family:'Playfair Display',serif;font-size:20px;font-weight:600;color:var(--ink);}
+.sec-sub{font-size:12px;color:var(--ink4);margin-top:2px;}
+.sec-link{font-size:12px;font-weight:600;color:var(--emerald);cursor:pointer;text-decoration:none;}
+
+/* ── SUPERMARKET CARDS ── */
+.store-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;}
+.store-card{
+  background:var(--white);border-radius:16px;border:1px solid var(--border);
+  overflow:hidden;cursor:pointer;
+  transition:transform .22s,box-shadow .22s;
+  position:relative;
+}
+.store-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-md);}
+.store-thumb{
+  height:110px;display:flex;align-items:center;justify-content:center;
+  font-size:48px;position:relative;
+}
+.sc-t0{background:linear-gradient(135deg,#00204e,#003f8f);}
+.sc-t1{background:linear-gradient(135deg,#1a3a00,#2d6600);}
+.sc-t2{background:linear-gradient(135deg,#3a0000,#7a1414);}
+.sc-t3{background:linear-gradient(135deg,#002b4a,#005a8a);}
+.sc-t4{background:linear-gradient(135deg,#1a0040,#3d0090);}
+.sc-t5{background:linear-gradient(135deg,#3a2000,#7a4a00);}
+.store-badge{
+  position:absolute;top:8px;right:8px;
+  padding:3px 8px;border-radius:100px;
+  font-size:9px;font-weight:700;letter-spacing:.06em;
+  text-transform:uppercase;color:white;
+}
+.badge-open{background:rgba(13,148,103,.85);}
+.badge-closed{background:rgba(90,94,112,.7);}
+.store-body{padding:12px 14px;}
+.store-name{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;color:var(--ink);margin-bottom:3px;}
+.store-loc{font-size:11px;color:var(--ink4);margin-bottom:8px;}
+.store-meta{display:flex;align-items:center;justify-content:space-between;}
+.store-eta{font-size:11px;color:var(--ink3);display:flex;align-items:center;gap:4px;}
+.store-partners{display:flex;gap:4px;}
+.sp-ico{
+  width:18px;height:18px;border-radius:4px;
+  font-size:9px;font-weight:800;
+  display:flex;align-items:center;justify-content:center;
+}
+.sp-glovo{background:var(--glovo);color:#0a1628;}
+.sp-jumia{background:var(--jumia);color:white;}
+
+/* ── PARTNER SECTION ── */
+.partner-section{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+@media(max-width:600px){.partner-section{grid-template-columns:1fr;}}
+
+.partner-card{
+  border-radius:18px;padding:24px;overflow:hidden;
+  cursor:pointer;position:relative;
+  transition:transform .22s,box-shadow .22s;
+  border:2px solid transparent;
+}
+.partner-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg);}
+.pc-glovo{
+  background:linear-gradient(135deg,#1a1200 0%,#2d2000 100%);
+  border-color:var(--glovo-bd);
+}
+.pc-jumia{
+  background:linear-gradient(135deg,#1a0800 0%,#2d1400 100%);
+  border-color:var(--jumia-bd);
+}
+.pc-deco{
+  position:absolute;right:-20px;top:-20px;
+  font-size:90px;opacity:.08;pointer-events:none;
+}
+.pc-logo{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:22px;font-weight:900;letter-spacing:-.01em;
+  margin-bottom:8px;
+}
+.glovo-logo-txt{color:var(--glovo);}
+.jumia-logo-txt{color:var(--jumia);}
+.pc-desc{font-size:13px;color:rgba(255,255,255,.5);line-height:1.6;margin-bottom:16px;}
+.pc-features{display:flex;flex-direction:column;gap:6px;margin-bottom:20px;}
+.pc-feat{font-size:12px;color:rgba(255,255,255,.65);display:flex;align-items:center;gap:6px;}
+.pc-feat::before{content:'✓';color:var(--emerald);font-weight:700;font-size:11px;}
+.pc-btn{
+  width:100%;padding:11px;border-radius:10px;border:none;cursor:pointer;
+  font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:800;
+  letter-spacing:.04em;transition:filter .2s,transform .2s;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+}
+.pc-btn:hover{filter:brightness(1.08);transform:translateY(-1px);}
+.btn-glovo{background:linear-gradient(135deg,var(--glovo),var(--glovo-dark));color:#0a1628;}
+.btn-jumia{background:linear-gradient(135deg,var(--jumia),var(--jumia-dark));color:white;}
+
+/* ── PRODUCT SEARCH RESULTS ── */
+.products-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;
+}
+.product-card{
+  background:var(--white);border-radius:14px;border:1px solid var(--border);
+  overflow:hidden;cursor:pointer;
+  transition:transform .2s,box-shadow .2s;
+}
+.product-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-md);}
+.prod-thumb{
+  height:120px;display:flex;align-items:center;justify-content:center;
+  font-size:44px;position:relative;
+}
+.pt-0{background:linear-gradient(135deg,#0a1628,#1a2840);}
+.pt-1{background:linear-gradient(135deg,#0a2010,#1a4020);}
+.pt-2{background:linear-gradient(135deg,#200a00,#401800);}
+.pt-3{background:linear-gradient(135deg,#1a0a30,#2d1460);}
+.pt-4{background:linear-gradient(135deg,#0a1020,#1a2040);}
+.pt-5{background:linear-gradient(135deg,#200a10,#401828);}
+.prod-available{
+  position:absolute;bottom:8px;right:8px;
+  display:flex;gap:3px;
+}
+.prod-body{padding:10px 12px;}
+.prod-name{font-size:12px;font-weight:600;color:var(--ink);margin-bottom:3px;line-height:1.3;}
+.prod-store{font-size:10px;color:var(--ink4);margin-bottom:6px;}
+.prod-price-row{display:flex;align-items:center;justify-content:space-between;}
+.prod-price{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;color:var(--ink);}
+.prod-btn{
+  padding:4px 10px;border-radius:6px;border:none;cursor:pointer;
+  font-family:'Space Grotesk',sans-serif;font-size:10px;font-weight:700;
+  background:linear-gradient(135deg,var(--glovo),var(--glovo-dark));color:#0a1628;
+  transition:filter .2s;
+}
+.prod-btn:hover{filter:brightness(1.08);}
+
+/* ── SEARCH RESULTS HEADER ── */
+.results-bar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 0;
+}
+.results-count{font-size:13px;color:var(--ink3);}
+.results-count strong{color:var(--ink);}
+.results-sort{
+  padding:6px 12px;border-radius:8px;border:1px solid var(--border);
+  background:var(--white);font-family:'Inter',sans-serif;font-size:12px;
+  color:var(--ink3);outline:none;cursor:pointer;
+}
+
+/* ── HOW IT WORKS ── */
+.how-band{
+  background:var(--white);border-radius:16px;border:1px solid var(--border);
+  padding:20px 20px 20px;
+}
+.how-title{
+  font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--ink4);margin-bottom:14px;
+}
+.how-row{display:flex;gap:0;overflow-x:auto;scrollbar-width:none;}
+.how-row::-webkit-scrollbar{display:none;}
+.how-step{
+  display:flex;flex-direction:column;align-items:center;
+  text-align:center;min-width:130px;padding:0 14px;
+  position:relative;
+}
+.how-step:not(:last-child)::after{
+  content:'→';position:absolute;right:-6px;top:18px;
+  color:var(--ink4);font-size:14px;
+}
+.how-ico{
+  width:40px;height:40px;border-radius:12px;
+  background:var(--offwhite);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;margin-bottom:8px;
+}
+.how-lbl{font-size:11px;font-weight:600;color:var(--ink);margin-bottom:3px;}
+.how-sub{font-size:10px;color:var(--ink4);line-height:1.4;}
+
+/* ── EMPTY / LOADING ── */
+.empty-search{
+  background:var(--white);border-radius:16px;border:1px solid var(--border);
+  padding:40px 24px;text-align:center;
+}
+.es-ico{font-size:44px;margin-bottom:12px;}
+.es-title{font-family:'Playfair Display',serif;font-size:18px;font-weight:600;color:var(--ink);margin-bottom:6px;}
+.es-sub{font-size:13px;color:var(--ink4);line-height:1.6;}
+
+.skeleton{
+  background:linear-gradient(90deg,var(--stone) 25%,var(--offwhite) 50%,var(--stone) 75%);
+  background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:8px;
+}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* ── TOAST ── */
+.toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  background:var(--ink);color:white;padding:12px 20px;border-radius:12px;
+  font-size:13px;font-weight:500;box-shadow:var(--shadow-lg);
+  z-index:999;opacity:0;pointer-events:none;transition:opacity .3s;white-space:nowrap;
+}
+.toast.show{opacity:1;}
+
+@media(max-width:600px){
+  .store-grid{grid-template-columns:repeat(2,1fr);}
+  .products-grid{grid-template-columns:repeat(2,1fr);}
+  .how-step{min-width:110px;}
+  .main{padding:16px 14px 48px;}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition-duration:.01ms!important;}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="top-nav">
+  <a href="dashboard.html?role=guest" class="nav-back">← Dashboard</a>
+  <a href="dashboard.html?role=guest" class="nav-logo">Apatmento</a>
+  <div class="nav-avatar" id="nav-avatar">G</div>
+</nav>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- HERO SEARCH -->
+<div class="hero-banner">
+  <div style="max-width:700px;margin:0 auto;">
+    <div class="hero-eyebrow">Nairobi · Shopping & Groceries</div>
+    <div class="hero-title">Shop supermarkets &amp; more</div>
+    <div class="hero-sub">Search products across Carrefour, Naivas, QuickMart and more — delivered via Glovo or Jumia</div>
+    <div class="hero-search">
+      <input type="text" id="search-input" placeholder="Search products, brands or stores…"
+        oninput="onSearchInput()" onkeydown="onSearchKey(event)"/>
+      <button class="hero-search-btn" onclick="doSearch()">🔍 Search</button>
+    </div>
+    <div class="hero-partners">
+      <span class="hero-partner-txt">Delivered via</span>
+      <span class="partner-pill glovo-pill">Glovo</span>
+      <span class="partner-pill jumia-pill">Jumia</span>
+    </div>
+  </div>
+</div>
+
+<!-- CATEGORY TABS -->
+<div class="cat-tabs" id="cat-tabs">
+  <div class="cat-tab active" onclick="setCategory('all',this)">🛍️ All</div>
+  <div class="cat-tab" onclick="setCategory('supermarket',this)">🛒 Supermarkets</div>
+  <div class="cat-tab" onclick="setCategory('fresh',this)">🥦 Fresh &amp; Produce</div>
+  <div class="cat-tab" onclick="setCategory('household',this)">🏠 Household</div>
+  <div class="cat-tab" onclick="setCategory('drinks',this)">🥤 Drinks</div>
+  <div class="cat-tab" onclick="setCategory('beauty',this)">💄 Beauty</div>
+  <div class="cat-tab" onclick="setCategory('baby',this)">🍼 Baby</div>
+  <div class="cat-tab" onclick="setCategory('electronics',this)">📱 Electronics</div>
+  <div class="cat-tab" onclick="setCategory('fashion',this)">👗 Fashion</div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="main" id="main-content">
+
+  <!-- STORES SECTION (default view) -->
+  <div id="stores-section">
+    <div class="sec-header">
+      <div>
+        <div class="sec-title">Supermarkets near you</div>
+        <div class="sec-sub">Order groceries delivered to your door</div>
+      </div>
+    </div>
+    <div class="store-grid">
+
+      <div class="store-card" onclick="openStore('carrefour')">
+        <div class="store-thumb sc-t0">
+          🏪
+          <div class="store-badge badge-open">Open</div>
+        </div>
+        <div class="store-body">
+          <div class="store-name">Carrefour</div>
+          <div class="store-loc">Multiple locations · Nairobi</div>
+          <div class="store-meta">
+            <div class="store-eta">🕐 25–45 min</div>
+            <div class="store-partners">
+              <div class="sp-ico sp-glovo">G</div>
+              <div class="sp-ico sp-jumia">J</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="store-card" onclick="openStore('naivas')">
+        <div class="store-thumb sc-t1">
+          🛒
+          <div class="store-badge badge-open">Open</div>
+        </div>
+        <div class="store-body">
+          <div class="store-name">Naivas Supermarket</div>
+          <div class="store-loc">Westlands, Karen, CBD &amp; more</div>
+          <div class="store-meta">
+            <div class="store-eta">🕐 20–35 min</div>
+            <div class="store-partners">
+              <div class="sp-ico sp-glovo">G</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="store-card" onclick="openStore('quickmart')">
+        <div class="store-thumb sc-t2">
+          🏬
+          <div class="store-badge badge-open">Open</div>
+        </div>
+        <div class="store-body">
+          <div class="store-name">QuickMart</div>
+          <div class="store-loc">Kilimani, Hurlingham &amp; more</div>
+          <div class="store-meta">
+            <div class="store-eta">🕐 15–30 min</div>
+            <div class="store-partners">
+              <div class="sp-ico sp-glovo">G</div>
+              <div class="sp-ico sp-jumia">J</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="store-card" onclick="openStore('cleanshelf')">
+        <div class="store-thumb sc-t3">
+          🧺
+          <div class="store-badge badge-open">Open</div>
+        </div>
+        <div class="store-body">
+          <div class="store-name">Cleanshelf Supermarket</div>
+          <div class="store-loc">Westlands &amp; surrounds</div>
+          <div class="store-meta">
+            <div class="store-eta">🕐 20–40 min</div>
+            <div class="store-partners">
+              <div class="sp-ico sp-glovo">G</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="store-card" onclick="openStore('chandarana')">
+        <div class="store-thumb sc-t4">
+          🛍️
+          <div class="store-badge badge-open">Open</div>
+        </div>
+        <div class="store-body">
+          <div class="store-name">Chandarana Foodplus</div>
+          <div class="store-loc">Lavington, Gigiri, Parklands</div>
+          <div class="store-meta">
+            <div class="store-eta">🕐 20–35 min</div>
+            <div class="store-partners">
+              <div class="sp-ico sp-jumia">J</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="store-card" onclick="openStore('masoko')">
+        <div class="store-thumb sc-t5">
+          📦
+          <div class="store-badge badge-open">Open</div>
+        </div>
+        <div class="store-body">
+          <div class="store-name">Jumia Market</div>
+          <div class="store-loc">Electronics, fashion &amp; more</div>
+          <div class="store-meta">
+            <div class="store-eta">🕐 Same day</div>
+            <div class="store-partners">
+              <div class="sp-ico sp-jumia">J</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- PARTNER SECTION -->
+  <div id="partner-section">
+    <div class="sec-header">
+      <div>
+        <div class="sec-title">Choose your delivery partner</div>
+        <div class="sec-sub">Both deliver across Nairobi — pick what works for you</div>
+      </div>
+    </div>
+    <div class="partner-section">
+
+      <!-- GLOVO -->
+      <div class="partner-card pc-glovo">
+        <div class="pc-deco">🟡</div>
+        <div class="pc-logo glovo-logo-txt">Glovo</div>
+        <div class="pc-desc">Fast delivery from supermarkets, pharmacies, restaurants and stores across Nairobi.</div>
+        <div class="pc-features">
+          <div class="pc-feat">Carrefour, Naivas &amp; QuickMart</div>
+          <div class="pc-feat">30–60 min delivery</div>
+          <div class="pc-feat">Fresh produce available</div>
+          <div class="pc-feat">Live order tracking</div>
+        </div>
+        <button class="pc-btn btn-glovo" onclick="openGlovo('')">
+          🛒 Shop on Glovo
+        </button>
+      </div>
+
+      <!-- JUMIA -->
+      <div class="partner-card pc-jumia">
+        <div class="pc-deco">🟠</div>
+        <div class="pc-logo jumia-logo-txt">Jumia</div>
+        <div class="pc-desc">Kenya's largest online marketplace. Groceries, electronics, fashion and more delivered nationwide.</div>
+        <div class="pc-features">
+          <div class="pc-feat">Millions of products</div>
+          <div class="pc-feat">Same-day &amp; next-day delivery</div>
+          <div class="pc-feat">Electronics &amp; fashion</div>
+          <div class="pc-feat">Pay on delivery available</div>
+        </div>
+        <button class="pc-btn btn-jumia" onclick="openJumia('')">
+          🛍️ Shop on Jumia
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- POPULAR PRODUCTS (default) -->
+  <div id="products-section">
+    <div class="sec-header">
+      <div>
+        <div class="sec-title">Popular right now</div>
+        <div class="sec-sub">Top picks from Nairobi supermarkets</div>
+      </div>
+    </div>
+    <div class="products-grid" id="products-grid">
+      <!-- Injected by JS -->
+    </div>
+  </div>
+
+  <!-- SEARCH RESULTS (hidden by default) -->
+  <div id="search-results-section" style="display:none;">
+    <div class="results-bar">
+      <div class="results-count" id="results-count"></div>
+      <select class="results-sort" onchange="sortResults(this.value)">
+        <option value="relevance">Relevance</option>
+        <option value="price-asc">Price: Low to High</option>
+        <option value="price-desc">Price: High to Low</option>
+      </select>
+    </div>
+    <div class="products-grid" id="search-grid"></div>
+  </div>
+
+  <!-- HOW IT WORKS -->
+  <div class="how-band">
+    <div class="how-title">How Apatmento Shopping works</div>
+    <div class="how-row">
+      <div class="how-step">
+        <div class="how-ico">🔍</div>
+        <div class="how-lbl">Search</div>
+        <div class="how-sub">Browse products or stores on Apatmento</div>
+      </div>
+      <div class="how-step">
+        <div class="how-ico">🎯</div>
+        <div class="how-lbl">Choose</div>
+        <div class="how-sub">Pick your item and preferred delivery partner</div>
+      </div>
+      <div class="how-step">
+        <div class="how-ico">📲</div>
+        <div class="how-lbl">Redirected</div>
+        <div class="how-sub">Opens Glovo or Jumia with your search ready</div>
+      </div>
+      <div class="how-step">
+        <div class="how-ico">🚚</div>
+        <div class="how-lbl">Delivered</div>
+        <div class="how-sub">Track your order in their app. Delivered to your door.</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end main -->
+
+<script>
+/* ══ POPULAR PRODUCTS DATA ══ */
+const POPULAR_PRODUCTS = [
+  {name:'Brookside Milk 500ml',     store:'Carrefour',  price:75,   icon:'🥛', grad:'pt-0', cat:'fresh',      via:'glovo'},
+  {name:'Weetabix 430g',            store:'Naivas',     price:320,  icon:'🌾', grad:'pt-1', cat:'household',  via:'glovo'},
+  {name:'Maggi Tomato Sauce 400g',  store:'QuickMart',  price:130,  icon:'🍅', grad:'pt-2', cat:'fresh',      via:'glovo'},
+  {name:'Nescafé Classic 200g',     store:'Carrefour',  price:650,  icon:'☕', grad:'pt-3', cat:'drinks',     via:'both'},
+  {name:'Ariel Detergent 2kg',      store:'Carrefour',  price:890,  icon:'🧺', grad:'pt-4', cat:'household',  via:'both'},
+  {name:'Fanta Orange 1L',          store:'Naivas',     price:90,   icon:'🥤', grad:'pt-5', cat:'drinks',     via:'glovo'},
+  {name:'Dettol Soap 3-Pack',       store:'QuickMart',  price:240,  icon:'🧼', grad:'pt-0', cat:'household',  via:'both'},
+  {name:'Pampers Size 4 (46pcs)',   store:'Carrefour',  price:1850, icon:'🍼', grad:'pt-1', cat:'baby',       via:'both'},
+  {name:'Royco Mchuzi Mix 200g',    store:'Naivas',     price:110,  icon:'🍲', grad:'pt-2', cat:'fresh',      via:'glovo'},
+  {name:'Eveready AA Batteries 4pk',store:'Chandarana', price:180,  icon:'🔋', grad:'pt-3', cat:'household',  via:'jumia'},
+  {name:'Colgate Total 75ml',       store:'QuickMart',  price:220,  icon:'🦷', grad:'pt-4', cat:'beauty',     via:'both'},
+  {name:'Jogoo Maize Flour 2kg',    store:'Naivas',     price:185,  icon:'🌽', grad:'pt-5', cat:'fresh',      via:'glovo'},
+];
+
+let currentCategory = 'all';
+let currentSearch   = '';
+let searchTimeout   = null;
+
+/* ══ RENDER POPULAR PRODUCTS ══ */
+function renderPopular(cat='all') {
+  const grid = document.getElementById('products-grid');
+  const list = cat === 'all' ? POPULAR_PRODUCTS : POPULAR_PRODUCTS.filter(p => p.cat === cat);
+  if (!list.length) {
+    grid.innerHTML = `<div class="empty-search" style="grid-column:1/-1;"><div class="es-ico">📦</div><div class="es-title">No items in this category yet</div><div class="es-sub">Browse via Glovo or Jumia below for the full range.</div></div>`;
+    return;
+  }
+  grid.innerHTML = list.map((p,i) => `
+    <div class="product-card">
+      <div class="prod-thumb ${p.grad}">
+        <span>${p.icon}</span>
+        <div class="prod-available">
+          ${p.via==='glovo'||p.via==='both' ? '<div class="sp-ico sp-glovo" style="width:16px;height:16px;font-size:8px;">G</div>' : ''}
+          ${p.via==='jumia'||p.via==='both' ? '<div class="sp-ico sp-jumia" style="width:16px;height:16px;font-size:8px;">J</div>' : ''}
+        </div>
+      </div>
+      <div class="prod-body">
+        <div class="prod-name">${p.name}</div>
+        <div class="prod-store">${p.store}</div>
+        <div class="prod-price-row">
+          <div class="prod-price">KES ${p.price}</div>
+          <button class="prod-btn" onclick="buyProduct('${encodeURIComponent(p.name)}','${p.store}','${p.via}')">Buy</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+/* ══ CATEGORY TABS ══ */
+function setCategory(cat, el) {
+  currentCategory = cat;
+  document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+
+  // Hide search results, show normal sections
+  document.getElementById('search-results-section').style.display = 'none';
+  document.getElementById('products-section').style.display = 'block';
+  document.getElementById('stores-section').style.display = cat === 'all' || cat === 'supermarket' ? 'block' : 'none';
+  document.getElementById('partner-section').style.display = 'block';
+  document.getElementById('search-input').value = '';
+  currentSearch = '';
+
+  renderPopular(cat);
+}
+
+/* ══ SEARCH ══ */
+function onSearchInput() {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(doSearch, 400);
+}
+function onSearchKey(e) {
+  if (e.key === 'Enter') doSearch();
+}
+
+function doSearch() {
+  const q = document.getElementById('search-input').value.trim();
+  currentSearch = q;
+  if (!q) {
+    document.getElementById('search-results-section').style.display = 'none';
+    document.getElementById('products-section').style.display = 'block';
+    document.getElementById('stores-section').style.display = 'block';
+    document.getElementById('partner-section').style.display = 'block';
+    return;
+  }
+
+  // Show loading
+  document.getElementById('stores-section').style.display = 'none';
+  document.getElementById('partner-section').style.display = 'none';
+  document.getElementById('products-section').style.display = 'none';
+  document.getElementById('search-results-section').style.display = 'block';
+  document.getElementById('search-grid').innerHTML = buildSkelGrid(6);
+
+  setTimeout(() => renderSearchResults(q), 600);
+}
+
+function renderSearchResults(q) {
+  const ql = q.toLowerCase();
+  // Filter existing products
+  let matches = POPULAR_PRODUCTS.filter(p =>
+    p.name.toLowerCase().includes(ql) ||
+    p.store.toLowerCase().includes(ql) ||
+    p.cat.toLowerCase().includes(ql)
+  );
+
+  const count = matches.length;
+  document.getElementById('results-count').innerHTML =
+    `<strong>${count} result${count!==1?'s':''}</strong> for "${q}"`;
+
+  const grid = document.getElementById('search-grid');
+
+  if (!count) {
+    grid.innerHTML = `
+      <div class="empty-search" style="grid-column:1/-1;">
+        <div class="es-ico">🔍</div>
+        <div class="es-title">No local results for "${q}"</div>
+        <div class="es-sub">Search directly on Glovo or Jumia for the full product range.</div>
+        <div style="display:flex;gap:10px;justify-content:center;margin-top:16px;flex-wrap:wrap;">
+          <button onclick="openGlovo('${encodeURIComponent(q)}')" style="padding:10px 20px;border-radius:10px;background:linear-gradient(135deg,#FFC244,#E5A800);color:#0a1628;font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:800;border:none;cursor:pointer;">Search on Glovo</button>
+          <button onclick="openJumia('${encodeURIComponent(q)}')" style="padding:10px 20px;border-radius:10px;background:linear-gradient(135deg,#F68B1E,#D4730A);color:white;font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:800;border:none;cursor:pointer;">Search on Jumia</button>
+        </div>
+      </div>`;
+    return;
+  }
+
+  grid.innerHTML = matches.map(p => `
+    <div class="product-card">
+      <div class="prod-thumb ${p.grad}"><span>${p.icon}</span></div>
+      <div class="prod-body">
+        <div class="prod-name">${p.name}</div>
+        <div class="prod-store">${p.store}</div>
+        <div class="prod-price-row">
+          <div class="prod-price">KES ${p.price}</div>
+          <button class="prod-btn" onclick="buyProduct('${encodeURIComponent(p.name)}','${p.store}','${p.via}')">Buy</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  // Also add buttons to search on both platforms
+  grid.innerHTML += `
+    <div style="grid-column:1/-1;margin-top:8px;">
+      <div style="font-size:12px;color:var(--ink4);margin-bottom:10px;text-align:center;">Also search the full range on our partners:</div>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+        <button onclick="openGlovo('${encodeURIComponent(q)}')" style="padding:10px 22px;border-radius:10px;background:linear-gradient(135deg,#FFC244,#E5A800);color:#0a1628;font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:800;border:none;cursor:pointer;">🟡 More on Glovo</button>
+        <button onclick="openJumia('${encodeURIComponent(q)}')" style="padding:10px 22px;border-radius:10px;background:linear-gradient(135deg,#F68B1E,#D4730A);color:white;font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:800;border:none;cursor:pointer;">🟠 More on Jumia</button>
+      </div>
+    </div>`;
+}
+
+function sortResults(val) {
+  let list = POPULAR_PRODUCTS.filter(p => {
+    const ql = currentSearch.toLowerCase();
+    return p.name.toLowerCase().includes(ql) || p.store.toLowerCase().includes(ql);
+  });
+  if (val === 'price-asc')  list.sort((a,b) => a.price - b.price);
+  if (val === 'price-desc') list.sort((a,b) => b.price - a.price);
+  const grid = document.getElementById('search-grid');
+  grid.innerHTML = list.map(p => `
+    <div class="product-card">
+      <div class="prod-thumb ${p.grad}"><span>${p.icon}</span></div>
+      <div class="prod-body">
+        <div class="prod-name">${p.name}</div>
+        <div class="prod-store">${p.store}</div>
+        <div class="prod-price-row">
+          <div class="prod-price">KES ${p.price}</div>
+          <button class="prod-btn" onclick="buyProduct('${encodeURIComponent(p.name)}','${p.store}','${p.via}')">Buy</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+/* ══ OPEN STORE ══ */
+function openStore(store) {
+  const storeMap = {
+    carrefour:  { glovo:'carrefour', jumia:'carrefour' },
+    naivas:     { glovo:'naivas supermarket', jumia:'' },
+    quickmart:  { glovo:'quickmart', jumia:'quickmart' },
+    cleanshelf: { glovo:'cleanshelf', jumia:'' },
+    chandarana: { glovo:'', jumia:'chandarana' },
+    masoko:     { glovo:'', jumia:'' },
+  };
+  const s = storeMap[store] || {};
+
+  if (s.glovo) openGlovo(encodeURIComponent(s.glovo));
+  else if (s.jumia) openJumia(encodeURIComponent(s.jumia));
+  else openJumia('');
+}
+
+/* ══ BUY PRODUCT ══ */
+function buyProduct(nameEncoded, store, via) {
+  const name = decodeURIComponent(nameEncoded);
+  if (via === 'glovo' || via === 'both') {
+    showToast(`Opening Glovo for "${name}"…`);
+    openGlovo(encodeURIComponent(name));
+  } else {
+    showToast(`Opening Jumia for "${name}"…`);
+    openJumia(encodeURIComponent(name));
+  }
+}
+
+/* ══ DEEP LINKS ══ */
+function openGlovo(searchQuery) {
+  const q = searchQuery || '';
+  const isAndroid = /android/i.test(navigator.userAgent);
+  const isIOS     = /iphone|ipad/i.test(navigator.userAgent);
+
+  if (isAndroid || isIOS) {
+    // Try app deep link
+    const appUrl = `glovoapp://search?query=${q}`;
+    window.location.href = appUrl;
+    // Fallback to Play/App Store after 2s if app not installed
+    setTimeout(() => {
+      const fallback = isAndroid
+        ? 'https://play.google.com/store/apps/details?id=com.glovo'
+        : 'https://apps.apple.com/ke/app/glovo-food-delivery/id951812684';
+      window.open(fallback, '_blank');
+    }, 2000);
+  } else {
+    // Desktop — open Glovo web
+    const url = q
+      ? `https://glovoapp.com/ke/en/nairobi/search/?query=${q}`
+      : 'https://glovoapp.com/ke/en/nairobi/';
+    window.open(url, '_blank');
+  }
+}
+
+function openJumia(searchQuery) {
+  const q = searchQuery || '';
+  const isAndroid = /android/i.test(navigator.userAgent);
+  const isIOS     = /iphone|ipad/i.test(navigator.userAgent);
+
+  if (isAndroid || isIOS) {
+    const appUrl = `jumia://search?keyword=${q}`;
+    window.location.href = appUrl;
+    setTimeout(() => {
+      const fallback = isAndroid
+        ? 'https://play.google.com/store/apps/details?id=com.jumia.android'
+        : 'https://apps.apple.com/ke/app/jumia-online-shopping/id925015002';
+      window.open(fallback, '_blank');
+    }, 2000);
+  } else {
+    const url = q
+      ? `https://www.jumia.co.ke/catalog/?q=${q}`
+      : 'https://www.jumia.co.ke/';
+    window.open(url, '_blank');
+  }
+}
+
+/* ══ SKELETON ══ */
+function buildSkelGrid(n) {
+  return Array(n).fill(0).map(() => `
+    <div class="product-card">
+      <div class="skeleton" style="height:120px;border-radius:0;"></div>
+      <div style="padding:10px 12px;display:flex;flex-direction:column;gap:7px;">
+        <div class="skeleton" style="height:13px;width:80%;"></div>
+        <div class="skeleton" style="height:11px;width:50%;"></div>
+        <div class="skeleton" style="height:16px;width:60%;"></div>
+      </div>
+    </div>`).join('');
+}
+
+/* ══ TOAST ══ */
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+/* ══ INIT ══ */
+renderPopular('all');
+</script>
+</body>
+</html>
