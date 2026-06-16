@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>APATMENTO — Confirm Your Booking</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400&family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="payment.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --white:#FFFFFF;--offwhite:#F7F6F2;--stone:#EDEAE4;
+  --ink:#0F1117;--ink2:#2A2D38;--ink3:#5A5E70;--ink4:#9499AD;
+  --border:rgba(15,17,23,0.08);--border-md:rgba(15,17,23,0.14);
+  --shadow-sm:0 2px 12px rgba(15,17,23,0.06);
+  --shadow-md:0 8px 32px rgba(15,17,23,0.10);
+  --shadow-lg:0 20px 60px rgba(15,17,23,0.14);
+  --gold:#C8970A;--gold2:#E8A800;
+  --emerald:#0D9467;--emerald2:#059652;
+  --em-bg:rgba(13,148,103,0.07);--em-bd:rgba(13,148,103,0.18);
+}
+html,body{min-height:100%;font-family:'Inter',sans-serif;background:var(--offwhite);color:var(--ink);}
+
+.top-nav{
+  position:sticky;top:0;z-index:100;height:60px;
+  background:var(--white);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;padding:0 24px;
+}
+.nav-logo{
+  font-family:'Playfair Display',serif;font-size:16px;font-weight:700;
+  letter-spacing:.22em;text-transform:uppercase;
+  background:linear-gradient(90deg,var(--gold),var(--gold2));
+  -webkit-background-clip:text;background-clip:text;color:transparent;text-decoration:none;
+}
+.nav-back{
+  display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500;
+  color:var(--ink3);text-decoration:none;padding:7px 14px;border-radius:8px;
+  border:1px solid var(--border);transition:all .2s;cursor:pointer;background:none;
+}
+.nav-back:hover{background:var(--offwhite);color:var(--ink);}
+.nav-avatar{
+  width:32px;height:32px;border-radius:8px;
+  background:linear-gradient(135deg,var(--emerald),var(--emerald2));
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:700;color:white;
+}
+
+.page{max-width:980px;margin:0 auto;padding:32px 20px 60px;}
+.page-title{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--ink);margin-bottom:6px;}
+.page-sub{font-size:13px;color:var(--ink4);margin-bottom:28px;}
+
+.layout{display:grid;grid-template-columns:1fr 380px;gap:24px;align-items:start;}
+@media(max-width:850px){.layout{grid-template-columns:1fr;}}
+
+/* ── LEFT: FORM ── */
+.form-card{background:var(--white);border-radius:18px;border:1px solid var(--border);padding:28px;margin-bottom:20px;}
+.form-card-title{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;color:var(--ink);margin-bottom:18px;letter-spacing:.02em;}
+
+.row-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;}
+@media(max-width:500px){.row-2{grid-template-columns:1fr;}}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:16px;}
+.field-label{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);}
+.field-input,.field-select{
+  padding:12px 14px;border-radius:10px;border:1.5px solid var(--border);
+  background:var(--offwhite);font-family:'Inter',sans-serif;font-size:14px;color:var(--ink);
+  outline:none;transition:border-color .2s,background .2s;-webkit-appearance:none;
+}
+.field-select{
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 10 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%239499AD' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 12px center;background-size:10px;padding-right:30px;cursor:pointer;
+}
+.field-input:focus,.field-select:focus{border-color:var(--emerald);background:var(--white);}
+.field-hint{font-size:11px;color:var(--ink4);}
+
+/* guest counter */
+.guest-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);}
+.guest-row:last-child{border-bottom:none;}
+.gr-label{font-size:13px;font-weight:600;color:var(--ink);}
+.gr-sub{font-size:11px;color:var(--ink4);}
+.gr-controls{display:flex;align-items:center;gap:12px;}
+.gr-btn{
+  width:30px;height:30px;border-radius:8px;border:1.5px solid var(--border);
+  background:var(--white);font-size:16px;color:var(--ink);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;transition:background .2s;
+}
+.gr-btn:hover{background:var(--offwhite);}
+.gr-val{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;min-width:20px;text-align:center;}
+
+/* ── RIGHT: SUMMARY ── */
+.summary-card{
+  background:var(--white);border-radius:18px;border:1px solid var(--border);
+  padding:24px;position:sticky;top:84px;
+}
+.sum-apt{display:flex;gap:12px;margin-bottom:18px;padding-bottom:18px;border-bottom:1px solid var(--border);}
+.sum-apt-thumb{
+  width:64px;height:64px;border-radius:12px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:28px;
+  background:linear-gradient(135deg,#0a1a30,#1a4060);
+}
+.sum-apt-name{font-family:'Playfair Display',serif;font-size:15px;font-weight:700;color:var(--ink);line-height:1.3;margin-bottom:3px;}
+.sum-apt-loc{font-size:11px;color:var(--ink4);}
+
+.sum-row{display:flex;justify-content:space-between;font-size:13px;color:var(--ink3);padding:6px 0;}
+.sum-row.total{border-top:1px solid var(--border);margin-top:8px;padding-top:14px;font-size:16px;font-weight:700;color:var(--ink);}
+.sum-note{
+  font-size:11px;color:var(--emerald);background:var(--em-bg);border:1px solid var(--em-bd);
+  border-radius:10px;padding:10px 12px;margin-top:14px;line-height:1.6;
+}
+.pay-btn{
+  width:100%;padding:15px;border-radius:12px;margin-top:18px;
+  background:linear-gradient(135deg,var(--emerald),var(--emerald2));
+  color:white;font-family:'Space Grotesk',sans-serif;
+  font-size:14px;font-weight:700;border:none;cursor:pointer;
+  box-shadow:0 6px 24px rgba(13,148,103,.3);
+  transition:filter .2s,transform .2s;
+}
+.pay-btn:hover{filter:brightness(1.08);transform:translateY(-1px);}
+.pay-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+
+.toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  background:var(--ink);color:white;padding:12px 20px;border-radius:12px;
+  font-size:13px;font-weight:500;box-shadow:var(--shadow-lg);z-index:999;
+  opacity:0;pointer-events:none;transition:opacity .3s;white-space:nowrap;max-width:90vw;text-align:center;
+}
+.toast.show{opacity:1;}
+</style>
+</head>
+<body>
+
+<nav class="top-nav">
+  <button class="nav-back" onclick="history.back()">← Back</button>
+  <a href="dashboard.html?role=guest" class="nav-logo">Apatmento</a>
+  <div class="nav-avatar" id="nav-avatar">G</div>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<div class="page">
+  <div class="page-title">Confirm your booking</div>
+  <div class="page-sub">Review your stay details and complete payment to confirm.</div>
+
+  <div class="layout">
+
+    <!-- LEFT: FORM -->
+    <div>
+      <div class="form-card">
+        <div class="form-card-title">📅 Your stay</div>
+        <div class="row-2">
+          <div class="field">
+            <div class="field-label">Check-in</div>
+            <input class="field-input" type="date" id="checkin-date"/>
+          </div>
+          <div class="field">
+            <div class="field-label">Check-out</div>
+            <input class="field-input" type="date" id="checkout-date"/>
+          </div>
+        </div>
+        <div class="guest-row">
+          <div><div class="gr-label">Guests</div><div class="gr-sub">Up to property max</div></div>
+          <div class="gr-controls">
+            <button class="gr-btn" onclick="changeGuests(-1)">−</button>
+            <div class="gr-val" id="guest-count">2</div>
+            <button class="gr-btn" onclick="changeGuests(1)">+</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <div class="form-card-title">👤 Your details</div>
+        <div class="row-2">
+          <div class="field" style="margin-bottom:0;">
+            <div class="field-label">Full name</div>
+            <input class="field-input" type="text" id="guest-name" placeholder="Your full name"/>
+          </div>
+          <div class="field" style="margin-bottom:0;">
+            <div class="field-label">M-Pesa phone number</div>
+            <input class="field-input" type="tel" id="guest-phone" placeholder="07XX XXX XXX"/>
+          </div>
+        </div>
+        <div class="field-hint" style="margin-top:8px;">We'll send your M-Pesa payment prompt to this number.</div>
+      </div>
+    </div>
+
+    <!-- RIGHT: SUMMARY -->
+    <div class="summary-card">
+      <div class="sum-apt">
+        <div class="sum-apt-thumb" id="sum-apt-thumb">🏢</div>
+        <div>
+          <div class="sum-apt-name" id="sum-apt-name">Loading…</div>
+          <div class="sum-apt-loc" id="sum-apt-loc"></div>
+        </div>
+      </div>
+      <div class="sum-row"><span id="sum-nights-label">— nights × KES —</span><span id="sum-subtotal">KES 0</span></div>
+      <div class="sum-row"><span>Apatmento service fee</span><span id="sum-fee">KES 0</span></div>
+      <div class="sum-row total"><span>Total to pay</span><span id="sum-total">KES 0</span></div>
+      <div class="sum-note" id="sum-note">100% of the stay price goes directly to the host. Our fee is fixed — never a percentage.</div>
+      <button class="pay-btn" id="pay-btn" onclick="startPayment()">💳 Pay &amp; Confirm Booking</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* ══ SUPABASE ══ */
+const SUPABASE_URL      = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let CURRENT_USER = null;
+(async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) CURRENT_USER = session.user;
+})();
+
+/* ══ READ APARTMENT FROM URL PARAMS ══
+   apartments.html should link here like:
+   booking-confirm.html?id=1&name=...&price=4200&location=...&icon=🏙️
+*/
+const params = new URLSearchParams(window.location.search);
+const apt = {
+  id:       params.get('id')       || '0',
+  name:     params.get('name')     || 'Selected Apartment',
+  location: params.get('location') || 'Nairobi, Kenya',
+  price:    parseFloat(params.get('price')) || 4200,
+  icon:     params.get('icon')     || '🏢',
+  maxGuests: parseInt(params.get('maxGuests')) || 6,
+};
+
+document.getElementById('sum-apt-name').textContent = apt.name;
+document.getElementById('sum-apt-loc').textContent  = apt.location;
+document.getElementById('sum-apt-thumb').textContent = apt.icon;
+
+let guestCount = 2;
+function changeGuests(delta) {
+  guestCount = Math.max(1, Math.min(apt.maxGuests, guestCount + delta));
+  document.getElementById('guest-count').textContent = guestCount;
+}
+
+/* ══ FEE CALCULATION — tiered for apartments ══ */
+function calculateFee(totalPrice) {
+  return totalPrice < 5000 ? 300 : 800;
+}
+
+/* ══ DEFAULT DATES ══ */
+const today = new Date();
+const checkinDefault  = new Date(today); checkinDefault.setDate(today.getDate() + 3);
+const checkoutDefault = new Date(today); checkoutDefault.setDate(today.getDate() + 5);
+document.getElementById('checkin-date').value  = checkinDefault.toISOString().split('T')[0];
+document.getElementById('checkout-date').value = checkoutDefault.toISOString().split('T')[0];
+document.getElementById('checkin-date').min    = today.toISOString().split('T')[0];
+document.getElementById('checkout-date').min   = checkinDefault.toISOString().split('T')[0];
+
+function getNights() {
+  const ci = new Date(document.getElementById('checkin-date').value);
+  const co = new Date(document.getElementById('checkout-date').value);
+  const diff = Math.round((co - ci) / (1000*60*60*24));
+  return diff > 0 ? diff : 1;
+}
+
+function updateSummary() {
+  const nights = getNights();
+  const subtotal = nights * apt.price;
+  const fee = calculateFee(subtotal);
+  const total = subtotal + fee;
+
+  document.getElementById('sum-nights-label').textContent = `${nights} night${nights>1?'s':''} × KES ${apt.price.toLocaleString()}`;
+  document.getElementById('sum-subtotal').textContent = `KES ${subtotal.toLocaleString()}`;
+  document.getElementById('sum-fee').textContent = `KES ${fee.toLocaleString()}`;
+  document.getElementById('sum-total').textContent = `KES ${total.toLocaleString()}`;
+  document.getElementById('sum-note').textContent =
+    `100% of the stay price (KES ${subtotal.toLocaleString()}) goes directly to the host. Our fee is fixed — never a percentage.`;
+}
+
+document.getElementById('checkin-date').addEventListener('change', () => {
+  const ci = document.getElementById('checkin-date').value;
+  document.getElementById('checkout-date').min = ci;
+  updateSummary();
+});
+document.getElementById('checkout-date').addEventListener('change', updateSummary);
+
+updateSummary();
+
+/* ══ START PAYMENT ══ */
+async function startPayment() {
+  const name  = document.getElementById('guest-name').value.trim();
+  const phone = document.getElementById('guest-phone').value.trim();
+  const checkin  = document.getElementById('checkin-date').value;
+  const checkout = document.getElementById('checkout-date').value;
+
+  if (!name)  { showToast('Please enter your full name'); return; }
+  if (!phone) { showToast('Please enter your M-Pesa phone number'); return; }
+
+  const nights = getNights();
+  const subtotal = nights * apt.price;
+  const fee = calculateFee(subtotal);
+  const total = subtotal + fee;
+
+  const payBtn = document.getElementById('pay-btn');
+  payBtn.disabled = true;
+
+  try {
+    const paymentReference = `APT-${apt.id}-${Date.now()}`;
+
+    /* Run this SQL once to create the table:
+
+       create table if not exists public.apartment_bookings (
+         id                 uuid default gen_random_uuid() primary key,
+         guest_id           uuid references auth.users,
+         apartment_id       text,
+         apartment_name     text,
+         location           text,
+         checkin_date       date,
+         checkout_date      date,
+         nights             int,
+         num_guests         int,
+         guest_name         text,
+         contact_phone      text,
+         stay_total         numeric,
+         service_fee        numeric,
+         grand_total        numeric,
+         payment_reference  text,
+         status             text default 'pending_payment',
+         created_at         timestamptz default now()
+       );
+       alter table public.apartment_bookings enable row level security;
+       create policy "Guests manage own apartment bookings"
+         on public.apartment_bookings for all using (auth.uid() = guest_id);
+    */
+    const { error } = await sb.from('apartment_bookings').insert({
+      guest_id:          CURRENT_USER?.id || null,
+      apartment_id:      apt.id,
+      apartment_name:    apt.name,
+      location:          apt.location,
+      checkin_date:      checkin,
+      checkout_date:     checkout,
+      nights:            nights,
+      num_guests:        guestCount,
+      guest_name:        name,
+      contact_phone:     phone,
+      stay_total:        subtotal,
+      service_fee:       fee,
+      grand_total:       total,
+      payment_reference: paymentReference,
+      status:            'pending_payment',
+    });
+
+    if (error) throw error;
+
+    ApatmentoPay.start({
+      amount:      total,
+      phone:       phone,
+      reference:   paymentReference,
+      table:       'apartment_bookings',
+      description: `${apt.name} — ${nights} night${nights>1?'s':''}`,
+      onSuccess: () => {
+        showToast('🎉 Payment confirmed! Your stay is booked.');
+        payBtn.disabled = false;
+        setTimeout(() => { window.location.href = 'dashboard.html?role=guest'; }, 2500);
+      },
+      onFailure: () => {
+        showToast('Payment was not completed. You can try again.');
+        payBtn.disabled = false;
+      },
+    });
+
+  } catch (err) {
+    console.error(err);
+    showToast('Something went wrong. Please try again.');
+    payBtn.disabled = false;
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+</script>
+</body>
+</html>
