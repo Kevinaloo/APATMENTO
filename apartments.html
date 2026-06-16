@@ -1097,7 +1097,16 @@ function closeDrawer() {
 
 function bookNow(id) {
   const apt = LISTINGS.find(a => a.id === id);
-  alert(`Booking flow for "${apt.name}" will open here.\n\nIn the full app this navigates to the booking confirmation page with Supabase writing the reservation.`);
+  if (!apt) return;
+  const params = new URLSearchParams({
+    id: apt.id,
+    name: apt.name,
+    location: apt.location,
+    price: apt.price,
+    icon: apt.icon,
+    maxGuests: apt.maxGuests,
+  });
+  window.location.href = `booking-confirm.html?${params.toString()}`;
 }
 
 /* ══════════════════════════════════════════════════════
