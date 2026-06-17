@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="robots" content="noindex, nofollow"/>
+<title>Apatmento — Photo Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --white:#FFFFFF;--offwhite:#F7F6F2;--ink:#0F1117;--ink3:#5A5E70;--ink4:#9499AD;
+  --border:rgba(15,17,23,0.08);--emerald:#0D9467;--emerald2:#059652;
+  --gold:#C8970A;--gold2:#E8A800;--shadow-md:0 8px 32px rgba(15,17,23,0.10);
+}
+body{font-family:'Inter',sans-serif;background:var(--offwhite);color:var(--ink);min-height:100vh;}
+
+.lock-screen{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,#0F1117,#2A2D38);
+}
+.lock-card{
+  background:var(--white);border-radius:18px;padding:36px;width:340px;text-align:center;
+  box-shadow:0 30px 80px rgba(0,0,0,.4);
+}
+.lock-icon{font-size:36px;margin-bottom:14px;}
+.lock-title{font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:700;margin-bottom:6px;}
+.lock-sub{font-size:12px;color:var(--ink4);margin-bottom:20px;}
+.lock-input{
+  width:100%;padding:12px 14px;border-radius:10px;border:1.5px solid var(--border);
+  font-size:14px;margin-bottom:12px;outline:none;text-align:center;letter-spacing:.1em;
+}
+.lock-input:focus{border-color:var(--emerald);}
+.lock-btn{
+  width:100%;padding:12px;border-radius:10px;border:none;cursor:pointer;
+  background:linear-gradient(135deg,var(--emerald),var(--emerald2));color:white;
+  font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:13px;
+}
+.lock-error{font-size:11px;color:#DC2626;margin-top:8px;min-height:14px;}
+
+.admin-wrap{display:none;max-width:1100px;margin:0 auto;padding:32px 20px 60px;}
+.admin-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:12px;}
+.admin-title{font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;}
+.admin-sub{font-size:12px;color:var(--ink4);margin-top:4px;}
+.admin-badge{
+  font-size:11px;font-weight:700;color:var(--emerald);background:rgba(13,148,103,.08);
+  border:1px solid rgba(13,148,103,.2);padding:5px 12px;border-radius:100px;
+}
+
+.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px;}
+.photo-card{
+  background:var(--white);border-radius:16px;border:1px solid var(--border);
+  overflow:hidden;box-shadow:var(--shadow-md);
+}
+.photo-preview{
+  height:160px;background:var(--offwhite);display:flex;align-items:center;justify-content:center;
+  position:relative;overflow:hidden;
+}
+.photo-preview img{width:100%;height:100%;object-fit:cover;}
+.photo-empty{font-size:12px;color:var(--ink4);text-align:center;padding:20px;}
+.photo-body{padding:14px 16px;}
+.photo-label{font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:700;margin-bottom:3px;}
+.photo-slot{font-size:11px;color:var(--ink4);margin-bottom:12px;}
+.photo-actions{display:flex;gap:8px;}
+.btn-upload{
+  flex:1;padding:9px;border-radius:8px;border:1.5px solid var(--border);
+  background:var(--offwhite);font-size:12px;font-weight:600;color:var(--ink);
+  cursor:pointer;text-align:center;transition:background .2s;
+}
+.btn-upload:hover{background:var(--border);}
+.btn-delete{
+  padding:9px 12px;border-radius:8px;border:1.5px solid rgba(220,38,38,.2);
+  background:rgba(220,38,38,.05);color:#DC2626;font-size:12px;font-weight:600;
+  cursor:pointer;transition:background .2s;
+}
+.btn-delete:hover{background:rgba(220,38,38,.1);}
+input[type="file"]{display:none;}
+
+.status-bar{
+  position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+  background:var(--ink);color:white;padding:11px 20px;border-radius:10px;
+  font-size:12px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:99;
+}
+.status-bar.show{opacity:1;}
+
+.uploading-overlay{
+  position:absolute;inset:0;background:rgba(255,255,255,.85);
+  display:none;align-items:center;justify-content:center;font-size:12px;color:var(--ink3);
+}
+.uploading-overlay.show{display:flex;}
+</style>
+</head>
+<body>
+
+<!-- LOCK SCREEN -->
+<div class="lock-screen" id="lock-screen">
+  <div class="lock-card">
+    <div class="lock-icon">🔒</div>
+    <div class="lock-title">Apatmento Admin</div>
+    <div class="lock-sub">Photo management — authorized access only</div>
+    <input type="password" class="lock-input" id="admin-pass" placeholder="Enter access code" onkeydown="if(event.key==='Enter')checkPass()"/>
+    <button class="lock-btn" onclick="checkPass()">Unlock</button>
+    <div class="lock-error" id="lock-error"></div>
+  </div>
+</div>
+
+<!-- ADMIN PANEL -->
+<div class="admin-wrap" id="admin-wrap">
+  <div class="admin-header">
+    <div>
+      <div class="admin-title">📸 Dashboard Photo Manager</div>
+      <div class="admin-sub">Upload, replace, or remove photos shown on the guest dashboard. Changes appear instantly — no redeploy needed.</div>
+    </div>
+    <div class="admin-badge">● Connected to Supabase</div>
+  </div>
+
+  <div class="card-grid" id="card-grid"></div>
+</div>
+
+<div class="status-bar" id="status-bar"></div>
+
+<script>
+/* ══ SIMPLE ACCESS GATE ══
+   This is NOT real authentication — it's a basic deterrent so the page
+   isn't trivially discoverable. Real protection comes from this page
+   never being linked anywhere in the public site, and ideally you should
+   also restrict it further later (e.g. Supabase auth + your own user id check).
+   Change this code to whatever you like. */
+const ACCESS_CODE = "apatmento2026";
+
+function checkPass() {
+  const val = document.getElementById('admin-pass').value;
+  if (val === ACCESS_CODE) {
+    document.getElementById('lock-screen').style.display = 'none';
+    document.getElementById('admin-wrap').style.display = 'block';
+    initAdmin();
+  } else {
+    document.getElementById('lock-error').textContent = 'Incorrect code. Try again.';
+  }
+}
+
+/* ══ SUPABASE ══ */
+const SUPABASE_URL      = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const BUCKET = 'dashboard-photos';
+
+/* ══ PHOTO SLOTS — these map to specific cards on dashboard.html ══
+   The 'key' is the storage filename used; dashboard.html will look up
+   the public URL for each key the same way. */
+const SLOTS = [
+  { key: 'apt-1.jpg', label: 'The Skyline Residence', sub: 'Apartment card 1 — Westlands' },
+  { key: 'apt-2.jpg', label: 'Garden Court Apartments', sub: 'Apartment card 2' },
+  { key: 'apt-3.jpg', label: 'Apartment card 3', sub: 'Dashboard featured listing' },
+  { key: 'apt-4.jpg', label: 'Apartment card 4', sub: 'Dashboard featured listing' },
+  { key: 'apt-5.jpg', label: 'Apartment card 5', sub: 'Dashboard featured listing' },
+  { key: 'apt-6.jpg', label: 'Apartment card 6', sub: 'Dashboard featured listing' },
+];
+
+async function initAdmin() {
+  // Ensure the bucket exists (will silently fail if it already does, that's fine)
+  try {
+    await sb.storage.createBucket(BUCKET, { public: true });
+  } catch (e) { /* bucket likely already exists */ }
+
+  renderGrid();
+}
+
+function renderGrid() {
+  const grid = document.getElementById('card-grid');
+  grid.innerHTML = SLOTS.map((slot, i) => `
+    <div class="photo-card">
+      <div class="photo-preview" id="preview-${i}" style="position:relative;">
+        <div class="photo-empty">No photo yet</div>
+        <div class="uploading-overlay" id="overlay-${i}">Uploading…</div>
+      </div>
+      <div class="photo-body">
+        <div class="photo-label">${slot.label}</div>
+        <div class="photo-slot">${slot.sub}</div>
+        <div class="photo-actions">
+          <label class="btn-upload" for="file-${i}">📤 Upload / Replace</label>
+          <input type="file" id="file-${i}" accept="image/*" onchange="uploadPhoto(${i}, this)"/>
+          <button class="btn-delete" onclick="deletePhoto(${i})">🗑️</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  // Load existing photos if present
+  SLOTS.forEach((slot, i) => loadPreview(i));
+}
+
+async function loadPreview(i) {
+  const slot = SLOTS[i];
+  const { data } = sb.storage.from(BUCKET).getPublicUrl(slot.key);
+  const url = data?.publicUrl;
+  if (!url) return;
+
+  // Check if it actually exists (publicUrl always returns a URL even if file doesn't exist)
+  try {
+    const res = await fetch(url, { method: 'HEAD' });
+    if (res.ok) {
+      document.getElementById(`preview-${i}`).innerHTML =
+        `<img src="${url}?t=${Date.now()}" alt="${slot.label}"/>` +
+        `<div class="uploading-overlay" id="overlay-${i}">Uploading…</div>`;
+    }
+  } catch (e) { /* no photo yet, keep empty state */ }
+}
+
+async function uploadPhoto(i, input) {
+  const file = input.files[0];
+  if (!file) return;
+  const slot = SLOTS[i];
+
+  document.getElementById(`overlay-${i}`).classList.add('show');
+  document.getElementById(`overlay-${i}`).textContent = 'Uploading…';
+
+  try {
+    const { error } = await sb.storage.from(BUCKET).upload(slot.key, file, {
+      upsert: true,
+      contentType: file.type,
+    });
+    if (error) throw error;
+
+    showStatus(`✅ ${slot.label} photo updated`);
+    await loadPreview(i);
+  } catch (err) {
+    console.error(err);
+    showStatus(`❌ Upload failed: ${err.message}`);
+  } finally {
+    const overlay = document.getElementById(`overlay-${i}`);
+    if (overlay) overlay.classList.remove('show');
+  }
+}
+
+async function deletePhoto(i) {
+  const slot = SLOTS[i];
+  if (!confirm(`Remove the photo for "${slot.label}"? The card will show a placeholder until you upload a new one.`)) return;
+
+  try {
+    const { error } = await sb.storage.from(BUCKET).remove([slot.key]);
+    if (error) throw error;
+    showStatus(`🗑️ ${slot.label} photo removed`);
+    document.getElementById(`preview-${i}`).innerHTML =
+      `<div class="photo-empty">No photo yet</div><div class="uploading-overlay" id="overlay-${i}">Uploading…</div>`;
+  } catch (err) {
+    console.error(err);
+    showStatus(`❌ Delete failed: ${err.message}`);
+  }
+}
+
+function showStatus(msg) {
+  const bar = document.getElementById('status-bar');
+  bar.textContent = msg;
+  bar.classList.add('show');
+  setTimeout(() => bar.classList.remove('show'), 3000);
+}
+</script>
+</body>
+</html>
