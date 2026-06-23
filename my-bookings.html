@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>APATMENTO — My Bookings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#F7F6F2;--white:#FFFFFF;--ink:#0F1117;--ink3:#5A5E70;--ink4:#9499AD;
+  --border:rgba(15,17,23,0.08);--border-md:rgba(15,17,23,0.14);
+  --shadow-sm:0 2px 12px rgba(15,17,23,.06);--shadow-md:0 8px 32px rgba(15,17,23,.10);
+  --gold:#C8970A;--gold2:#E8A800;
+  --emerald:#0D9467;--emerald2:#059652;
+  --em-bg:rgba(13,148,103,.07);--em-bd:rgba(13,148,103,.18);
+  --violet:#7C3AED;
+}
+html,body{min-height:100%;font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);}
+.top-nav{position:sticky;top:0;z-index:100;height:60px;background:var(--white);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;}
+.nav-logo{font-family:'Playfair Display',serif;font-size:15px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;background:linear-gradient(90deg,var(--gold),var(--gold2));-webkit-background-clip:text;background-clip:text;color:transparent;text-decoration:none;}
+.nav-back{font-size:12px;color:var(--ink3);text-decoration:none;padding:7px 14px;border-radius:8px;border:1px solid var(--border);}
+.nav-back:hover{background:var(--bg);}
+.page{max-width:780px;margin:0 auto;padding:28px 20px 60px;}
+.page-title{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;margin-bottom:6px;}
+.page-sub{font-size:13px;color:var(--ink4);margin-bottom:24px;}
+
+/* Tabs */
+.tabs{display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap;}
+.tab{padding:8px 16px;border-radius:100px;font-size:12px;font-weight:600;border:1.5px solid var(--border);background:var(--white);color:var(--ink3);cursor:pointer;transition:all .2s;}
+.tab.active{background:var(--ink);color:white;border-color:var(--ink);}
+
+/* Booking cards */
+.booking-card{background:var(--white);border-radius:18px;border:1px solid var(--border);margin-bottom:16px;overflow:hidden;transition:box-shadow .2s;}
+.booking-card:hover{box-shadow:var(--shadow-md);}
+.bc-header{padding:18px 20px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.bc-type-ico{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.bc-info{flex:1;min-width:0;}
+.bc-name{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;color:var(--ink);margin-bottom:3px;}
+.bc-meta{font-size:12px;color:var(--ink4);}
+.bc-amount{text-align:right;flex-shrink:0;}
+.bc-amount-val{font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:700;color:var(--ink);}
+.bc-amount-lbl{font-size:11px;color:var(--ink4);}
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:100px;font-size:10px;font-weight:700;letter-spacing:.04em;}
+.badge-pending{background:rgba(252,196,68,.1);color:#B45309;border:1px solid rgba(252,196,68,.3);}
+.badge-checkin{background:rgba(124,58,237,.1);color:var(--violet);border:1px solid rgba(124,58,237,.2);}
+.badge-confirmed{background:var(--em-bg);color:var(--emerald);border:1px solid var(--em-bd);}
+.badge-failed{background:rgba(239,68,68,.08);color:#DC2626;border:1px solid rgba(239,68,68,.15);}
+
+.bc-body{padding:16px 20px;}
+
+/* Check-in codes section */
+.checkin-section{background:linear-gradient(135deg,rgba(15,23,42,.97),rgba(26,40,72,.97));border-radius:14px;padding:20px;margin-bottom:14px;}
+.ci-title{font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:700;color:white;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.ci-codes{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+@media(max-width:480px){.ci-codes{grid-template-columns:1fr;}}
+.ci-code-box{border-radius:10px;padding:14px;text-align:center;}
+.ci-code-box.guest{background:rgba(13,148,103,.15);border:1px solid rgba(13,148,103,.3);}
+.ci-code-box.host{background:rgba(252,196,68,.1);border:1px solid rgba(252,196,68,.25);}
+.ci-code-label{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px;}
+.ci-code-box.guest .ci-code-label{color:#6EE7B7;}
+.ci-code-box.host .ci-code-label{color:#FCC444;}
+.ci-code-val{font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:900;color:white;letter-spacing:.1em;}
+.ci-code-hint{font-size:10px;color:rgba(255,255,255,.35);margin-top:5px;}
+
+.ci-verify-row{display:flex;gap:8px;}
+.ci-verify-row input{
+  flex:1;padding:11px 14px;border-radius:10px;
+  border:1.5px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);
+  color:white;font-family:'Space Grotesk',sans-serif;font-size:14px;
+  font-weight:700;letter-spacing:.08em;text-transform:uppercase;outline:none;
+  transition:border-color .2s;
+}
+.ci-verify-row input:focus{border-color:var(--emerald);}
+.ci-verify-row input::placeholder{color:rgba(255,255,255,.2);font-size:12px;font-weight:400;letter-spacing:0;}
+.ci-verify-btn{
+  padding:11px 18px;border-radius:10px;border:none;cursor:pointer;
+  background:linear-gradient(135deg,var(--emerald),var(--emerald2));
+  color:white;font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:700;
+  transition:filter .2s;white-space:nowrap;
+}
+.ci-verify-btn:hover{filter:brightness(1.08);}
+
+.ci-status{
+  display:none;padding:10px 14px;border-radius:8px;margin-top:10px;
+  font-size:12px;font-weight:500;line-height:1.5;
+}
+.ci-status.success{background:rgba(13,148,103,.15);color:#6EE7B7;display:block;}
+.ci-status.error{background:rgba(239,68,68,.12);color:#FCA5A5;display:block;}
+.ci-status.waiting{background:rgba(252,196,68,.1);color:#FCC444;display:block;}
+
+.ci-verified-banner{background:rgba(13,148,103,.12);border:1px solid rgba(13,148,103,.25);border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:10px;font-size:13px;color:#6EE7B7;font-weight:500;}
+
+/* Details */
+.bc-details{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-bottom:14px;}
+.bc-detail{background:var(--bg);border-radius:8px;padding:10px 12px;}
+.bc-detail-lbl{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink4);margin-bottom:3px;}
+.bc-detail-val{font-size:13px;font-weight:600;color:var(--ink);}
+
+/* Empty */
+.empty{text-align:center;padding:56px 24px;background:var(--white);border-radius:18px;border:1px solid var(--border);}
+.empty-ico{font-size:44px;margin-bottom:14px;opacity:.35;}
+.empty-title{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--ink);margin-bottom:6px;}
+.empty-sub{font-size:13px;color:var(--ink4);line-height:1.6;}
+
+.skeleton{background:linear-gradient(90deg,#EDEAE4 25%,#F7F6F2 50%,#EDEAE4 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:8px;}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:white;padding:12px 20px;border-radius:12px;font-size:13px;font-weight:500;box-shadow:0 20px 60px rgba(15,17,23,.14);z-index:999;opacity:0;pointer-events:none;transition:opacity .3s;white-space:nowrap;max-width:90vw;text-align:center;}
+.toast.show{opacity:1;}
+</style>
+</head>
+<body>
+<nav class="top-nav">
+  <a href="dashboard.html?role=guest&back=1" class="nav-back">← Dashboard</a>
+  <a href="dashboard.html?role=guest&back=1" class="nav-logo">Apatmento</a>
+  <div style="width:60px;"></div>
+</nav>
+<div class="toast" id="toast"></div>
+
+<div class="page">
+  <div class="page-title">My Bookings</div>
+  <div class="page-sub">All your reservations, tickets and tour bookings in one place</div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="setTab('all',this)">All</div>
+    <div class="tab" onclick="setTab('pending_checkin',this)">⏳ Awaiting Check-in</div>
+    <div class="tab" onclick="setTab('checked_in',this)">✅ Confirmed</div>
+    <div class="tab" onclick="setTab('past',this)">📋 Past</div>
+  </div>
+
+  <div id="bookings-container">
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      ${[1,2,3].map(()=>`<div class="booking-card"><div class="bc-header"><div class="skeleton" style="width:44px;height:44px;border-radius:12px;flex-shrink:0;"></div><div style="flex:1;display:flex;flex-direction:column;gap:8px;"><div class="skeleton" style="height:16px;width:60%;"></div><div class="skeleton" style="height:12px;width:40%;"></div></div></div></div>`).join('')}
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL      = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let CURRENT_USER = null;
+let allBookings  = [];
+let currentTab   = 'all';
+
+(async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { window.location.href = 'auth.html'; return; }
+  CURRENT_USER = session.user;
+  await loadAllBookings();
+})();
+
+async function loadAllBookings() {
+  const uid = CURRENT_USER.id;
+  const [aptRes, tourRes, evRes] = await Promise.all([
+    sb.from('apartment_bookings').select('*').eq('guest_id', uid).order('created_at',{ascending:false}),
+    sb.from('tour_bookings').select('*').eq('guest_id', uid).order('created_at',{ascending:false}),
+    sb.from('event_tickets').select('*').eq('guest_id', uid).order('created_at',{ascending:false}),
+  ]);
+
+  const apts  = (aptRes.data||[]).map(b=>({...b,_type:'apartment',_name:b.apartment_name,_detail:`${b.checkin_date} → ${b.checkout_date} · ${b.nights} night${b.nights!==1?'s':''}`,_icon:'🏠',_iconBg:'linear-gradient(135deg,#0a1628,#1a3a5a)'}));
+  const tours = (tourRes.data||[]).map(b=>({...b,_type:'tour',_name:b.tour_name,_detail:`${b.tour_date} · ${b.num_people} person${b.num_people!==1?'s':''}`,_icon:'🗺️',_iconBg:'linear-gradient(135deg,#1a1206,#3d2810)'}));
+  const evs   = (evRes.data||[]).map(b=>({...b,_type:'event',_name:b.event_name,_detail:`${b.tier_name} · ${b.quantity} ticket${b.quantity!==1?'s':''}`,_icon:'🎟️',_iconBg:'linear-gradient(135deg,#0d0618,#241040)'}));
+
+  allBookings = [...apts,...tours,...evs].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+  renderBookings();
+}
+
+function setTab(tab, el) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  renderBookings();
+}
+
+function renderBookings() {
+  const now = new Date();
+  let list = allBookings;
+  if (currentTab === 'pending_checkin') list = allBookings.filter(b=>b.status==='paid_pending_checkin');
+  else if (currentTab === 'checked_in')  list = allBookings.filter(b=>b.status==='checked_in');
+  else if (currentTab === 'past') list = allBookings.filter(b=>{
+    if (!['checked_in','paid_pending_checkin'].includes(b.status)) return false;
+    const endDate = b.checkout_date || b.tour_date;
+    return endDate && new Date(endDate) < now;
+  });
+
+  const container = document.getElementById('bookings-container');
+  if (!list.length) {
+    container.innerHTML = `<div class="empty">
+      <div class="empty-ico">${currentTab==='pending_checkin'?'⏳':currentTab==='checked_in'?'✅':'📋'}</div>
+      <div class="empty-title">${currentTab==='all'?'No bookings yet':'No bookings here'}</div>
+      <div class="empty-sub">${currentTab==='all'?'When you book apartments, tours or events they\'ll all appear here.':'Check a different tab to find your bookings.'}</div>
+    </div>`;
+    return;
+  }
+  container.innerHTML = list.map(b => buildBookingCard(b)).join('');
+}
+
+function buildBookingCard(b) {
+  const statusBadge = {
+    pending_payment:      '<span class="badge badge-pending">⏳ Payment Pending</span>',
+    paid_pending_checkin: '<span class="badge badge-checkin">🔑 Check-In Pending</span>',
+    checked_in:           '<span class="badge badge-confirmed">✅ Confirmed</span>',
+    failed:               '<span class="badge badge-failed">❌ Failed</span>',
+  }[b.status] || `<span class="badge badge-pending">${b.status}</span>`;
+
+  const date = new Date(b.created_at).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+  const table = b._type === 'apartment' ? 'apartment_bookings' : b._type === 'tour' ? 'tour_bookings' : 'event_tickets';
+
+  // Check-in section — only for paid_pending_checkin
+  let checkinHtml = '';
+  if (b.status === 'paid_pending_checkin' && b.guest_code) {
+    const guestVerified = b.guest_verified;
+    checkinHtml = `
+      <div class="checkin-section">
+        <div class="ci-title">🔑 Check-In Codes</div>
+        <div class="ci-codes">
+          <div class="ci-code-box guest">
+            <div class="ci-code-label">Your Code — Show to Host</div>
+            <div class="ci-code-val">${b.guest_code}</div>
+            <div class="ci-code-hint">Give this to your host at arrival</div>
+          </div>
+          <div class="ci-code-box host">
+            <div class="ci-code-label">Enter Host's Code</div>
+            <div class="ci-code-val" style="font-size:14px;color:rgba(255,255,255,.3);">${guestVerified ? '✓ Verified' : 'HOST-XXXXXX'}</div>
+            <div class="ci-code-hint">${guestVerified ? 'You verified the host code' : 'Ask host for their HOST- code'}</div>
+          </div>
+        </div>
+        ${guestVerified
+          ? `<div class="ci-verified-banner">✅ You've verified the host code. Waiting for host to verify yours.</div>`
+          : `<div>
+              <div style="font-size:11px;color:rgba(255,255,255,.4);margin-bottom:8px;">Enter the HOST-XXXXXX code your host gives you at check-in:</div>
+              <div class="ci-verify-row">
+                <input type="text" id="host-code-input-${b.id}" placeholder="HOST-XXXXXX" maxlength="11"/>
+                <button class="ci-verify-btn" onclick="verifyHostCode('${table}','${b.payment_reference}','${b.id}')">Verify →</button>
+              </div>
+              <div class="ci-status" id="ci-status-${b.id}"></div>
+            </div>`
+        }
+      </div>`;
+  } else if (b.status === 'checked_in') {
+    checkinHtml = `<div class="ci-verified-banner" style="margin-bottom:14px;">🎉 Check-in confirmed! Your booking is active. Host has been paid.</div>`;
+  }
+
+  return `
+    <div class="booking-card">
+      <div class="bc-header">
+        <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0;">
+          <div class="bc-type-ico" style="background:${b._iconBg};">${b._icon}</div>
+          <div class="bc-info">
+            <div class="bc-name">${b._name}</div>
+            <div class="bc-meta">${b._detail} · ${date}</div>
+            <div style="margin-top:6px;">${statusBadge}</div>
+          </div>
+        </div>
+        <div class="bc-amount">
+          <div class="bc-amount-val">KES ${Number(b.grand_total||0).toLocaleString()}</div>
+          <div class="bc-amount-lbl">Total paid</div>
+        </div>
+      </div>
+      <div class="bc-body">
+        ${checkinHtml}
+        <div class="bc-details">
+          ${b.checkin_date ? `<div class="bc-detail"><div class="bc-detail-lbl">Check-in</div><div class="bc-detail-val">${b.checkin_date}</div></div>` : ''}
+          ${b.checkout_date ? `<div class="bc-detail"><div class="bc-detail-lbl">Check-out</div><div class="bc-detail-val">${b.checkout_date}</div></div>` : ''}
+          ${b.num_guests ? `<div class="bc-detail"><div class="bc-detail-lbl">Guests</div><div class="bc-detail-val">${b.num_guests}</div></div>` : ''}
+          ${b.num_people ? `<div class="bc-detail"><div class="bc-detail-lbl">People</div><div class="bc-detail-val">${b.num_people}</div></div>` : ''}
+          ${b.quantity ? `<div class="bc-detail"><div class="bc-detail-lbl">Tickets</div><div class="bc-detail-val">${b.quantity}</div></div>` : ''}
+          <div class="bc-detail"><div class="bc-detail-lbl">Service fee</div><div class="bc-detail-val">KES ${Number(b.service_fee||0).toLocaleString()}</div></div>
+          ${b.payment_reference ? `<div class="bc-detail"><div class="bc-detail-lbl">Reference</div><div class="bc-detail-val" style="font-size:11px;">${b.payment_reference}</div></div>` : ''}
+        </div>
+      </div>
+    </div>`;
+}
+
+async function verifyHostCode(table, reference, bookingId) {
+  const input = document.getElementById(`host-code-input-${bookingId}`);
+  const statusEl = document.getElementById(`ci-status-${bookingId}`);
+  const code = input?.value?.trim().toUpperCase();
+
+  if (!code || !code.startsWith('HOST')) {
+    if (statusEl) { statusEl.className='ci-status error'; statusEl.textContent='Please enter a valid HOST-XXXXXX code from your host.'; }
+    return;
+  }
+
+  if (statusEl) { statusEl.className='ci-status waiting'; statusEl.textContent='Verifying code…'; }
+
+  try {
+    const res = await fetch('/api/verify-checkin', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ table, reference, role:'guest', code }),
+    });
+    const data = await res.json();
+
+    if (!res.ok || !data.success) {
+      if (statusEl) { statusEl.className='ci-status error'; statusEl.textContent=data.error||'Verification failed. Try again.'; }
+      return;
+    }
+
+    if (data.status === 'checked_in') {
+      showToast('🎉 Check-in fully confirmed! Enjoy your stay.');
+      await loadAllBookings();
+    } else {
+      if (statusEl) { statusEl.className='ci-status success'; statusEl.textContent='✓ Host code verified! Waiting for your host to enter your code on their end.'; }
+      await loadAllBookings();
+    }
+  } catch(err) {
+    if (statusEl) { statusEl.className='ci-status error'; statusEl.textContent='Network error. Please try again.'; }
+  }
+}
+
+function showToast(msg) {
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),4000);
+}
+</script>
+</body>
+</html>
