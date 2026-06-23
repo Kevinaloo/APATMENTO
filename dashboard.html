@@ -1202,7 +1202,7 @@ html,body{height:100%;font-family:'Inter',sans-serif;overflow:hidden;background:
 <!-- ══════════════════════════════════════
      SCREEN 1: GREETING
 ══════════════════════════════════════ -->
-<div class="screen active" id="screen-greet">
+<div class="screen" id="screen-greet">
   <div class="greet-bg">
     <div class="gb-orb gb-orb-1"></div>
     <div class="gb-orb gb-orb-2"></div>
@@ -1656,7 +1656,7 @@ const screens = {
 function showScreen(name, delay=0) {
   // When returning to role screen, reset selectedRole so both cards are tappable
   if (name === 'role') selectedRole = null;
-  setTimeout(() => {
+  const apply = () => {
     Object.entries(screens).forEach(([k, el]) => {
       if (k === name) {
         el.classList.remove('exit');
@@ -1681,12 +1681,13 @@ function showScreen(name, delay=0) {
     if (name === 'role') {
       setTimeout(() => {
         document.getElementById('role-header').classList.add('on');
-        // Cards are always visible — just ensure on class is set
         document.getElementById('card-guest').classList.add('on');
         document.getElementById('card-partner').classList.add('on');
       }, 100);
     }
-  }, delay);
+  };
+  // Run immediately if no delay — avoids blank screen flash on direct navigation
+  if (delay === 0) { apply(); } else { setTimeout(apply, delay); }
 }
 
 /* ══════════════════════════════════════════════════════
@@ -2247,13 +2248,14 @@ async function initSession() {
     // Coming back from a subpage — skip greeting, go straight to the right dashboard
     const targetRole = roleParam || rememberedRole || 'guest';
     CURRENT_ROLE = targetRole;
-    screens.greet.style.display = 'none';
-    populateDashboard(targetRole);
+    // Show screen first, THEN populate — avoids blank screen race condition
     showScreen(targetRole, 0);
+    populateDashboard(targetRole);
     if (targetRole === 'partner') setTimeout(initPartnerFlow, 150);
   } else if (rememberedRole) {
     // Returning user with a saved role — short greeting, then go straight in
     CURRENT_ROLE = rememberedRole;
+    showScreen('greet', 0);
     buildGreeting(isNewUser);
     setTimeout(() => {
       screens.greet.classList.add('exit');
@@ -2263,6 +2265,7 @@ async function initSession() {
     }, 2800);  // shorter — 2.8s not 4.6s for returning users
   } else {
     // No role saved — show greeting then role selection
+    showScreen('greet', 0);
     buildGreeting(isNewUser);
     // greeting proceeds to role selection via its own timer
   }
