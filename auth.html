@@ -9,7 +9,48 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400;1,700&family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 
 <!-- Supabase SDK -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+/* ══ CHECK IF USER CONFIRMED EMAIL AND PROCEED ══ */
+async function checkConfirmationAndProceed() {
+  const btn = document.getElementById('confirmed-btn');
+  const alertEl = document.getElementById('verify-alert');
+  if (alertEl) { alertEl.classList.remove('show'); alertEl.textContent = ''; }
+  if (btn) btn.classList.add('loading');
+
+  try {
+    // Try to get current session — Supabase auto-refreshes after email confirm
+    const { data: { session }, error } = await sb.auth.getSession();
+
+    if (session) {
+      // Confirmed and session exists — proceed
+      await ensureProfile(session.user);
+      redirectToDashboard(session.user, true);
+      return;
+    }
+
+    // No session yet — try refreshing
+    const { data: refreshData } = await sb.auth.refreshSession();
+    if (refreshData?.session) {
+      await ensureProfile(refreshData.session.user);
+      redirectToDashboard(refreshData.session.user, true);
+      return;
+    }
+
+    // Still no session — email not confirmed yet
+    if (btn) btn.classList.remove('loading');
+    if (alertEl) {
+      alertEl.textContent = 'Email not confirmed yet. Please click the link in your inbox first, then try again.';
+      alertEl.classList.add('show');
+    }
+  } catch(e) {
+    if (btn) btn.classList.remove('loading');
+    if (alertEl) {
+      alertEl.textContent = 'Something went wrong. Please try again.';
+      alertEl.classList.add('show');
+    }
+  }
+}
+</script>
 
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -557,7 +598,7 @@ html,body{
           <div class="terms-row">
             <input type="checkbox" id="terms-check" required/>
             <label for="terms-check">
-              I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>. I understand Apatmento charges zero commissions on all bookings.
+              I agree to the <a href="terms.html" target="_blank">Terms of Service</a> and <a href="privacy.html" target="_blank">Privacy Policy</a>. I understand Apatmento charges zero commissions on all bookings.
             </label>
           </div>
 
@@ -581,9 +622,16 @@ html,body{
         </div>
         <div class="verify-email-badge" id="verify-email-display">—</div>
         <div class="verify-body">
-          Click the link in the email to activate your account and get started. Check your spam folder if it doesn't arrive within a minute.
+          Click the link in the email to activate your account. Once confirmed, come back here and tap the button below.
         </div>
-        <button class="resend-btn" onclick="resendVerification()" id="resend-btn">Resend email</button>
+        <div style="margin-top:24px;display:flex;flex-direction:column;gap:12px;align-items:center;width:100%;">
+          <button class="submit-btn" onclick="checkConfirmationAndProceed()" id="confirmed-btn" style="max-width:340px;">
+            <span class="btn-spinner"></span>
+            <span class="btn-text">✓ I've confirmed — Continue</span>
+          </button>
+          <button class="resend-btn" onclick="resendVerification()" id="resend-btn">Resend email</button>
+        </div>
+        <div class="alert alert-error" id="verify-alert" style="margin-top:16px;max-width:340px;"></div>
       </div>
 
       <!-- ══ RESET PASSWORD ══ -->
@@ -949,6 +997,47 @@ function checkStrength(pw) {
   const names  = ['','Weak','Fair','Good','Strong'];
   for (let i = 0; i < score; i++) { if(bars[i]) bars[i].classList.add(levels[score]); }
   if (label) label.textContent = score > 0 ? `Password strength: ${names[score]}` : '';
+}
+
+/* ══ CHECK IF USER CONFIRMED EMAIL AND PROCEED ══ */
+async function checkConfirmationAndProceed() {
+  const btn = document.getElementById('confirmed-btn');
+  const alertEl = document.getElementById('verify-alert');
+  if (alertEl) { alertEl.classList.remove('show'); alertEl.textContent = ''; }
+  if (btn) btn.classList.add('loading');
+
+  try {
+    // Try to get current session — Supabase auto-refreshes after email confirm
+    const { data: { session }, error } = await sb.auth.getSession();
+
+    if (session) {
+      // Confirmed and session exists — proceed
+      await ensureProfile(session.user);
+      redirectToDashboard(session.user, true);
+      return;
+    }
+
+    // No session yet — try refreshing
+    const { data: refreshData } = await sb.auth.refreshSession();
+    if (refreshData?.session) {
+      await ensureProfile(refreshData.session.user);
+      redirectToDashboard(refreshData.session.user, true);
+      return;
+    }
+
+    // Still no session — email not confirmed yet
+    if (btn) btn.classList.remove('loading');
+    if (alertEl) {
+      alertEl.textContent = 'Email not confirmed yet. Please click the link in your inbox first, then try again.';
+      alertEl.classList.add('show');
+    }
+  } catch(e) {
+    if (btn) btn.classList.remove('loading');
+    if (alertEl) {
+      alertEl.textContent = 'Something went wrong. Please try again.';
+      alertEl.classList.add('show');
+    }
+  }
 }
 </script>
 </body>
