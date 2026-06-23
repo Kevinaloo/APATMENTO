@@ -322,7 +322,7 @@ html,body{min-height:100%;font-family:'Inter',sans-serif;background:var(--offwhi
     render('sending', opts);
 
     try {
-      const res = await fetch('/.netlify/functions/stk-push', {
+      const res = await fetch('/api/stk-push', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -362,10 +362,10 @@ html,body{min-height:100%;font-family:'Inter',sans-serif;background:var(--offwhi
       }
 
       try {
-        const res = await fetch(`/.netlify/functions/check-payment-status?table=${opts.table}&reference=${encodeURIComponent(opts.reference)}`);
+        const res = await fetch(`/api/check-payment-status?table=${opts.table}&reference=${encodeURIComponent(opts.reference)}`);
         const data = await res.json();
 
-        if (data.status === 'paid') {
+        if (data.status === 'paid' || data.status === 'paid_pending_checkin') {
           clearInterval(pollInterval);
           render('success', opts);
           if (opts.onSuccess) opts.onSuccess(data);
@@ -406,7 +406,7 @@ html,body{min-height:100%;font-family:'Inter',sans-serif;background:var(--offwhi
 
 <nav class="top-nav">
   <button class="nav-back" onclick="history.back()">← Back</button>
-  <a href="dashboard.html?role=guest" class="nav-logo">Apatmento</a>
+  <a href="dashboard.html?role=guest&back=1" class="nav-logo">Apatmento</a>
   <div class="nav-avatar" id="nav-avatar">G</div>
 </nav>
 
@@ -558,6 +558,14 @@ document.getElementById('checkout-date').addEventListener('change', updateSummar
 updateSummary();
 
 /* ══ START PAYMENT ══ */
+
+function generateCode(prefix) {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no I,O,0,1 to avoid confusion
+  let code = '';
+  for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
+  return prefix + '-' + code;
+}
+
 async function startPayment() {
   const name  = document.getElementById('guest-name').value.trim();
   const phone = document.getElementById('guest-phone').value.trim();
@@ -603,6 +611,9 @@ async function startPayment() {
        create policy "Guests manage own apartment bookings"
          on public.apartment_bookings for all using (auth.uid() = guest_id);
     */
+    const guestCode = generateCode('GUEST');
+    const hostCode  = generateCode('HOST');
+
     const { error } = await sb.from('apartment_bookings').insert({
       guest_id:          CURRENT_USER?.id || null,
       apartment_id:      apt.id,
@@ -618,8 +629,15 @@ async function startPayment() {
       service_fee:       fee,
       grand_total:       total,
       payment_reference: paymentReference,
+      guest_code:        guestCode,
+      host_code:         hostCode,
       status:            'pending_payment',
     });
+
+    // Store codes in session storage to show after payment
+    sessionStorage.setItem('pending_guest_code', guestCode);
+    sessionStorage.setItem('pending_host_code', hostCode);
+    sessionStorage.setItem('pending_apt_name', apt.name);
 
     if (error) throw error;
 
@@ -630,9 +648,8 @@ async function startPayment() {
       table:       'apartment_bookings',
       description: `${apt.name} — ${nights} night${nights>1?'s':''}`,
       onSuccess: () => {
-        showToast('🎉 Payment confirmed! Your stay is booked.');
         payBtn.disabled = false;
-        setTimeout(() => { window.location.href = 'dashboard.html?role=guest'; }, 2500);
+        showCheckinCodes();
       },
       onFailure: () => {
         showToast('Payment was not completed. You can try again.');
@@ -645,6 +662,50 @@ async function startPayment() {
     showToast('Error: ' + (err.message || err.error_description || JSON.stringify(err)));
     payBtn.disabled = false;
   }
+}
+
+
+function showCheckinCodes() {
+  const guestCode = sessionStorage.getItem('pending_guest_code') || '—';
+  const hostCode  = sessionStorage.getItem('pending_host_code')  || '—';
+  const aptName   = sessionStorage.getItem('pending_apt_name')   || 'your stay';
+
+  // Build a beautiful confirmation modal
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(15,17,23,.96);display:flex;align-items:center;justify-content:center;padding:20px;';
+  modal.innerHTML = `
+    <div style="background:#161e28;border:1px solid rgba(255,255,255,.1);border-radius:22px;padding:36px 28px;max-width:420px;width:100%;text-align:center;">
+      <div style="font-size:48px;margin-bottom:16px;">🎉</div>
+      <div style="font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:800;color:white;margin-bottom:6px;">Booking Confirmed!</div>
+      <div style="font-size:13px;color:rgba(255,255,255,.4);margin-bottom:28px;line-height:1.6;">${aptName}<br/>Save both codes before closing this screen.</div>
+
+      <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:24px;">
+        <div style="background:rgba(13,148,103,.1);border:1px solid rgba(13,148,103,.25);border-radius:14px;padding:18px;">
+          <div style="font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#0D9467;margin-bottom:8px;">Your Check-In Code (show to host)</div>
+          <div style="font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:900;color:white;letter-spacing:.12em;">${guestCode}</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.3);margin-top:6px;">Give this code to your host at check-in</div>
+        </div>
+        <div style="background:rgba(252,196,68,.08);border:1px solid rgba(252,196,68,.2);border-radius:14px;padding:18px;">
+          <div style="font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#FCC444;margin-bottom:8px;">Host's Code (enter to confirm you're in)</div>
+          <div style="font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:900;color:white;letter-spacing:.12em;">Enter in My Bookings</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.3);margin-top:6px;">Your host will give you their HOST-XXXXXX code</div>
+        </div>
+      </div>
+
+      <div style="background:rgba(255,255,255,.04);border-radius:10px;padding:12px;margin-bottom:20px;font-size:12px;color:rgba(255,255,255,.4);line-height:1.6;">
+        🔒 <strong style="color:rgba(255,255,255,.7);">How it works:</strong> At check-in, you give the host your code AND the host gives you their code. Once both codes are entered, your booking is confirmed and the host is paid.
+      </div>
+
+      <button onclick="this.closest('div[style*=fixed]').remove();window.location.href='my-bookings.html?back=1';"
+        style="width:100%;padding:14px;border-radius:12px;background:linear-gradient(135deg,#0D9467,#059652);color:white;font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;border:none;cursor:pointer;">
+        View in My Bookings →
+      </button>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  sessionStorage.removeItem('pending_guest_code');
+  sessionStorage.removeItem('pending_host_code');
+  sessionStorage.removeItem('pending_apt_name');
 }
 
 function showToast(msg) {
