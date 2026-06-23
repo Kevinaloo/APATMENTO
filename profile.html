@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>APATMENTO — My Profile</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#F7F6F2;--white:#FFFFFF;--ink:#0F1117;--ink3:#5A5E70;--ink4:#9499AD;
+  --border:rgba(15,17,23,0.08);--border-md:rgba(15,17,23,0.14);
+  --shadow-md:0 8px 32px rgba(15,17,23,.10);
+  --gold:#C8970A;--gold2:#E8A800;
+  --emerald:#0D9467;--emerald2:#059652;
+  --em-bg:rgba(13,148,103,.07);--em-bd:rgba(13,148,103,.18);
+}
+html,body{min-height:100%;font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);}
+.top-nav{position:sticky;top:0;z-index:100;height:60px;background:var(--white);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;}
+.nav-logo{font-family:'Playfair Display',serif;font-size:15px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;background:linear-gradient(90deg,var(--gold),var(--gold2));-webkit-background-clip:text;background-clip:text;color:transparent;text-decoration:none;}
+.nav-back{font-size:12px;color:var(--ink3);text-decoration:none;padding:7px 14px;border-radius:8px;border:1px solid var(--border);}
+.nav-back:hover{background:var(--bg);}
+.page{max-width:640px;margin:0 auto;padding:32px 20px 60px;}
+
+.profile-hero{background:linear-gradient(135deg,#0a1628,#1a3a5a);border-radius:20px;padding:32px 24px;margin-bottom:24px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;}
+.profile-avatar{width:72px;height:72px;border-radius:18px;background:linear-gradient(135deg,var(--emerald),var(--emerald2));display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:700;color:white;flex-shrink:0;}
+.profile-name{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:white;margin-bottom:4px;}
+.profile-email{font-size:13px;color:rgba(255,255,255,.45);}
+.profile-member{font-size:11px;font-weight:600;color:var(--gold2);margin-top:8px;background:rgba(232,168,0,.1);border:1px solid rgba(232,168,0,.2);padding:4px 12px;border-radius:100px;display:inline-flex;}
+
+.card{background:var(--white);border-radius:18px;border:1px solid var(--border);padding:24px;margin-bottom:18px;}
+.card-title{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;color:var(--ink);margin-bottom:18px;letter-spacing:.02em;}
+.row-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+@media(max-width:480px){.row-2{grid-template-columns:1fr;}}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
+.field:last-child{margin-bottom:0;}
+.field-label{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);}
+.field-input{padding:12px 14px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg);font-family:'Inter',sans-serif;font-size:14px;color:var(--ink);outline:none;transition:border-color .2s;}
+.field-input:focus{border-color:var(--emerald);background:var(--white);}
+.field-input:disabled{opacity:.5;cursor:not-allowed;}
+.field-hint{font-size:11px;color:var(--ink4);}
+.btn{padding:12px 22px;border-radius:10px;border:none;cursor:pointer;font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:700;transition:filter .2s,transform .2s;}
+.btn:hover{filter:brightness(1.08);transform:translateY(-1px);}
+.btn-primary{background:linear-gradient(135deg,var(--emerald),var(--emerald2));color:white;}
+.btn-ghost{background:var(--bg);color:var(--ink3);border:1px solid var(--border);}
+.btn-danger{background:rgba(239,68,68,.08);color:#DC2626;border:1px solid rgba(239,68,68,.15);}
+.divider{height:1px;background:var(--border);margin:16px 0;}
+.pref-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);}
+.pref-row:last-child{border-bottom:none;padding-bottom:0;}
+.pref-info strong{font-size:13px;font-weight:600;color:var(--ink);display:block;margin-bottom:2px;}
+.pref-info span{font-size:11px;color:var(--ink4);}
+.toggle{width:44px;height:24px;border-radius:12px;border:none;cursor:pointer;position:relative;transition:background .3s;flex-shrink:0;}
+.toggle.on{background:var(--emerald);}
+.toggle.off{background:#D1D5DB;}
+.toggle::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:white;transition:transform .3s;box-shadow:0 1px 4px rgba(0,0,0,.2);}
+.toggle.on::after{transform:translateX(20px);}
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:0;}
+.stat-box{background:var(--bg);border-radius:12px;padding:14px;text-align:center;}
+.stat-box-val{font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;color:var(--ink);}
+.stat-box-lbl{font-size:11px;color:var(--ink4);margin-top:3px;}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:white;padding:12px 20px;border-radius:12px;font-size:13px;font-weight:500;box-shadow:0 20px 60px rgba(15,17,23,.14);z-index:999;opacity:0;pointer-events:none;transition:opacity .3s;white-space:nowrap;}
+.toast.show{opacity:1;}
+</style>
+</head>
+<body>
+<nav class="top-nav">
+  <a href="dashboard.html?role=guest&back=1" class="nav-back">← Dashboard</a>
+  <a href="dashboard.html?role=guest&back=1" class="nav-logo">Apatmento</a>
+  <div style="width:60px;"></div>
+</nav>
+<div class="toast" id="toast"></div>
+
+<div class="page">
+
+  <!-- HERO -->
+  <div class="profile-hero">
+    <div class="profile-avatar" id="prof-avatar">?</div>
+    <div>
+      <div class="profile-name" id="prof-name">Loading…</div>
+      <div class="profile-email" id="prof-email"></div>
+      <div class="profile-member" id="prof-member">✦ Apatmento Member</div>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="card">
+    <div class="card-title">Your Activity</div>
+    <div class="stat-row">
+      <div class="stat-box"><div class="stat-box-val" id="stat-bookings">—</div><div class="stat-box-lbl">Bookings</div></div>
+      <div class="stat-box"><div class="stat-box-val" id="stat-spent">—</div><div class="stat-box-lbl">Total Spent</div></div>
+      <div class="stat-box"><div class="stat-box-val" id="stat-countries">1</div><div class="stat-box-lbl">Countries</div></div>
+    </div>
+  </div>
+
+  <!-- PERSONAL INFO -->
+  <div class="card">
+    <div class="card-title">Personal Information</div>
+    <div class="row-2">
+      <div class="field">
+        <div class="field-label">First Name</div>
+        <input class="field-input" id="first-name" type="text" placeholder="Your first name"/>
+      </div>
+      <div class="field">
+        <div class="field-label">Last Name</div>
+        <input class="field-input" id="last-name" type="text" placeholder="Your last name"/>
+      </div>
+    </div>
+    <div class="field">
+      <div class="field-label">Email Address</div>
+      <input class="field-input" id="email" type="email" disabled/>
+      <div class="field-hint">Email cannot be changed. Contact support to update.</div>
+    </div>
+    <div class="field">
+      <div class="field-label">Phone Number</div>
+      <input class="field-input" id="phone" type="tel" placeholder="07XX XXX XXX"/>
+    </div>
+    <button class="btn btn-primary" onclick="saveProfile()">Save Changes</button>
+  </div>
+
+  <!-- CHANGE PASSWORD -->
+  <div class="card">
+    <div class="card-title">Change Password</div>
+    <div class="field">
+      <div class="field-label">New Password</div>
+      <input class="field-input" id="new-pwd" type="password" placeholder="Minimum 8 characters"/>
+    </div>
+    <div class="field">
+      <div class="field-label">Confirm Password</div>
+      <input class="field-input" id="confirm-pwd" type="password" placeholder="Repeat new password"/>
+    </div>
+    <button class="btn btn-ghost" onclick="changePassword()">Update Password</button>
+  </div>
+
+  <!-- NOTIFICATIONS -->
+  <div class="card">
+    <div class="card-title">Notifications</div>
+    <div class="pref-row">
+      <div class="pref-info"><strong>Booking confirmations</strong><span>Get notified when a booking is confirmed</span></div>
+      <button class="toggle on" id="notif-bookings" onclick="togglePref(this)"></button>
+    </div>
+    <div class="pref-row">
+      <div class="pref-info"><strong>Check-in reminders</strong><span>Reminder the day before your check-in</span></div>
+      <button class="toggle on" id="notif-checkin" onclick="togglePref(this)"></button>
+    </div>
+    <div class="pref-row">
+      <div class="pref-info"><strong>Promotions & offers</strong><span>Special deals and new services</span></div>
+      <button class="toggle off" id="notif-promos" onclick="togglePref(this)"></button>
+    </div>
+  </div>
+
+  <!-- QUICK LINKS -->
+  <div class="card">
+    <div class="card-title">Account</div>
+    <div class="pref-row" style="cursor:pointer;" onclick="window.location.href='my-bookings.html?back=1'">
+      <div class="pref-info"><strong>My Bookings</strong><span>View all your reservations and tickets</span></div>
+      <span style="color:var(--ink4);font-size:18px;">›</span>
+    </div>
+    <div class="pref-row" style="cursor:pointer;" onclick="window.location.href='terms.html'">
+      <div class="pref-info"><strong>Terms of Service</strong><span>Our terms and conditions</span></div>
+      <span style="color:var(--ink4);font-size:18px;">›</span>
+    </div>
+    <div class="pref-row" style="cursor:pointer;" onclick="window.location.href='privacy.html'">
+      <div class="pref-info"><strong>Privacy Policy</strong><span>How we handle your data</span></div>
+      <span style="color:var(--ink4);font-size:18px;">›</span>
+    </div>
+    <div class="pref-row" style="cursor:pointer;" onclick="signOut()">
+      <div class="pref-info" style="color:#DC2626;"><strong style="color:#DC2626;">Sign Out</strong><span>Log out of your account</span></div>
+      <span style="color:#DC2626;font-size:18px;">›</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const SUPABASE_URL      = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let CURRENT_USER = null;
+
+(async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { window.location.href = 'auth.html'; return; }
+  CURRENT_USER = session.user;
+  await loadProfile();
+})();
+
+async function loadProfile() {
+  const meta = CURRENT_USER.user_metadata || {};
+  const { data: profile } = await sb.from('profiles').select('*').eq('id', CURRENT_USER.id).single();
+
+  const firstName = profile?.first_name || meta.first_name || meta.name?.split(' ')[0] || '';
+  const lastName  = profile?.last_name  || meta.last_name  || meta.name?.split(' ').slice(1).join(' ') || '';
+  const fullName  = [firstName, lastName].filter(Boolean).join(' ') || 'Guest';
+  const initial   = fullName[0].toUpperCase();
+
+  document.getElementById('prof-avatar').textContent = initial;
+  document.getElementById('prof-name').textContent   = fullName;
+  document.getElementById('prof-email').textContent  = CURRENT_USER.email || '';
+  document.getElementById('first-name').value = firstName;
+  document.getElementById('last-name').value  = lastName;
+  document.getElementById('email').value      = CURRENT_USER.email || '';
+  document.getElementById('phone').value      = profile?.phone || meta.phone || '';
+
+  const joinDate = new Date(CURRENT_USER.created_at);
+  document.getElementById('prof-member').textContent =
+    `✦ Member since ${joinDate.toLocaleDateString('en-GB',{month:'long',year:'numeric'})}`;
+
+  // Load booking stats
+  const [aptRes, tourRes, evRes] = await Promise.all([
+    sb.from('apartment_bookings').select('grand_total').eq('guest_id', CURRENT_USER.id).in('status',['paid_pending_checkin','checked_in']),
+    sb.from('tour_bookings').select('grand_total').eq('guest_id', CURRENT_USER.id).in('status',['paid_pending_checkin','checked_in']),
+    sb.from('event_tickets').select('grand_total').eq('guest_id', CURRENT_USER.id).in('status',['paid_pending_checkin','checked_in']),
+  ]);
+  const all = [...(aptRes.data||[]),...(tourRes.data||[]),...(evRes.data||[])];
+  const total = all.reduce((s,b) => s + Number(b.grand_total||0), 0);
+  document.getElementById('stat-bookings').textContent = all.length;
+  document.getElementById('stat-spent').textContent = total >= 1000
+    ? 'KES ' + (total/1000).toFixed(1) + 'k'
+    : 'KES ' + total.toLocaleString();
+}
+
+async function saveProfile() {
+  const firstName = document.getElementById('first-name').value.trim();
+  const lastName  = document.getElementById('last-name').value.trim();
+  const phone     = document.getElementById('phone').value.trim();
+
+  const [authRes, profRes] = await Promise.all([
+    sb.auth.updateUser({ data: { first_name: firstName, last_name: lastName } }),
+    sb.from('profiles').upsert({ id: CURRENT_USER.id, first_name: firstName, last_name: lastName, phone, updated_at: new Date().toISOString() }),
+  ]);
+
+  if (authRes.error || profRes.error) {
+    showToast('Error: ' + (authRes.error?.message || profRes.error?.message)); return;
+  }
+  showToast('✅ Profile updated');
+  document.getElementById('prof-name').textContent = [firstName, lastName].filter(Boolean).join(' ') || 'Guest';
+  document.getElementById('prof-avatar').textContent = (firstName||'G')[0].toUpperCase();
+}
+
+async function changePassword() {
+  const pwd  = document.getElementById('new-pwd').value;
+  const cpwd = document.getElementById('confirm-pwd').value;
+  if (!pwd) { showToast('Please enter a new password'); return; }
+  if (pwd !== cpwd) { showToast('Passwords do not match'); return; }
+  if (pwd.length < 8) { showToast('Password must be at least 8 characters'); return; }
+  const { error } = await sb.auth.updateUser({ password: pwd });
+  if (error) { showToast('Error: ' + error.message); return; }
+  showToast('✅ Password updated');
+  document.getElementById('new-pwd').value = '';
+  document.getElementById('confirm-pwd').value = '';
+}
+
+function togglePref(btn) {
+  btn.classList.toggle('on');
+  btn.classList.toggle('off');
+  showToast('Preference saved');
+}
+
+async function signOut() {
+  await sb.auth.signOut();
+  window.location.href = 'auth.html';
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+</script>
+</body>
+</html>
