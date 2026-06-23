@@ -109,7 +109,7 @@ export default async function handler(req, res) {
 
         try {
           const payoutRes = await fetch(
-            'https://backend.payhero.co.ke/api/v2/payments/initiate-stk-push',
+            'https://backend.payhero.co.ke/api/v2/payments',
             {
               method:  'POST',
               headers: { Authorization: `Basic ${authToken}`, 'Content-Type': 'application/json' },
