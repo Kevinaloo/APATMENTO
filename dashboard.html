@@ -892,6 +892,309 @@ html,body{height:100%;font-family:'Inter',sans-serif;overflow:hidden;background:
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{animation:none!important;transition-duration:.01ms!important;}
 }
+
+/* ══ SERVICE TRANSITION OVERLAY ══ */
+#svc-transition{
+  position:fixed;inset:0;z-index:9999;
+  display:flex;align-items:center;justify-content:center;
+  pointer-events:none;opacity:0;
+  transition:opacity .25s ease;
+  overflow:hidden;
+}
+#svc-transition.active{pointer-events:all;opacity:1;}
+
+.svc-bg{
+  position:absolute;inset:0;
+  opacity:0;transition:opacity .3s;
+}
+#svc-transition.active .svc-bg{opacity:1;}
+
+.svc-anim-wrap{
+  position:relative;z-index:2;text-align:center;
+  transform:scale(.8);opacity:0;
+  transition:transform .4s cubic-bezier(.22,1,.36,1),opacity .3s;
+}
+#svc-transition.active .svc-anim-wrap{transform:scale(1);opacity:1;}
+
+.svc-anim-emoji{
+  font-size:72px;line-height:1;margin-bottom:16px;display:block;
+  filter:drop-shadow(0 8px 32px rgba(0,0,0,.3));
+}
+.svc-anim-label{
+  font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;
+  color:white;letter-spacing:.04em;opacity:.9;
+}
+
+/* ── Per-service moving element ── */
+.svc-mover{
+  position:absolute;font-size:56px;
+  animation:none;pointer-events:none;
+  filter:drop-shadow(0 4px 16px rgba(0,0,0,.4));
+  z-index:3;
+}
+
+/* plane flies left to right */
+.svc-mover.plane{
+  top:38%;left:-120px;
+  animation:flyPlane .9s .25s cubic-bezier(.4,0,.2,1) forwards;
+}
+@keyframes flyPlane{
+  0%{left:-120px;top:42%;transform:rotate(-5deg);}
+  40%{top:35%;}
+  100%{left:110%;top:38%;transform:rotate(3deg);}
+}
+
+/* car drives left to right */
+.svc-mover.car{
+  bottom:30%;left:-120px;
+  animation:driveCar .8s .25s cubic-bezier(.4,0,.2,1) forwards;
+}
+@keyframes driveCar{
+  0%{left:-120px;}
+  100%{left:110%;}
+}
+
+/* scooter (rides) */
+.svc-mover.scooter{
+  bottom:28%;left:-120px;
+  animation:driveScooter .7s .2s cubic-bezier(.4,0,.2,1) forwards;
+}
+@keyframes driveScooter{
+  0%{left:-120px;transform:scaleX(1);}
+  100%{left:110%;transform:scaleX(1);}
+}
+
+/* bag bounces in from top */
+.svc-mover.bag{
+  top:-120px;left:calc(50% - 36px);
+  animation:dropBag .6s .25s cubic-bezier(.34,1.56,.64,1) forwards;
+}
+@keyframes dropBag{
+  0%{top:-120px;transform:rotate(-15deg);}
+  70%{top:calc(40% - 30px);transform:rotate(5deg);}
+  100%{top:40%;transform:rotate(0deg);}
+}
+
+/* food bowl slides up */
+.svc-mover.food{
+  bottom:-120px;left:calc(50% - 36px);
+  animation:riseFood .6s .25s cubic-bezier(.22,1,.36,1) forwards;
+}
+@keyframes riseFood{
+  0%{bottom:-120px;}
+  100%{bottom:35%;}
+}
+
+/* map unfolds from center */
+.svc-mover.map{
+  top:50%;left:50%;transform:translate(-50%,-50%) scale(0) rotate(-20deg);
+  animation:unfoldMap .7s .2s cubic-bezier(.34,1.56,.64,1) forwards;
+}
+@keyframes unfoldMap{
+  0%{transform:translate(-50%,-50%) scale(0) rotate(-20deg);}
+  100%{transform:translate(-50%,-50%) scale(1) rotate(0deg);}
+}
+
+/* ticket spins in */
+.svc-mover.ticket{
+  top:50%;left:50%;transform:translate(-50%,-50%) scale(0) rotate(180deg);
+  animation:spinTicket .6s .2s cubic-bezier(.34,1.56,.64,1) forwards;
+}
+@keyframes spinTicket{
+  0%{transform:translate(-50%,-50%) scale(0) rotate(180deg);}
+  100%{transform:translate(-50%,-50%) scale(1) rotate(0deg);}
+}
+
+/* house rises from bottom */
+.svc-mover.house{
+  bottom:-120px;left:calc(50% - 36px);
+  animation:riseHouse .6s .2s cubic-bezier(.22,1,.36,1) forwards;
+}
+@keyframes riseHouse{
+  0%{bottom:-120px;transform:scale(.5);}
+  100%{bottom:30%;transform:scale(1);}
+}
+
+
+/* ══ PARTNER FLOW ══ */
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* ── ONBOARDING ── */
+.p-onboard{
+  min-height:100vh;
+  background:linear-gradient(135deg,#0d1117 0%,#111820 100%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:32px 20px;position:relative;overflow:hidden;
+}
+.p-onboard::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 60% 40% at 50% 0%,rgba(13,148,103,.08),transparent);
+  pointer-events:none;
+}
+.p-onboard-logo{
+  font-family:'Playfair Display',serif;font-size:14px;font-weight:700;
+  letter-spacing:.22em;text-transform:uppercase;
+  background:linear-gradient(90deg,#C8970A,#E8A800);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  margin-bottom:40px;
+}
+.p-onboard-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:6px 16px;border-radius:100px;
+  background:rgba(13,148,103,.1);border:1px solid rgba(13,148,103,.25);
+  font-size:11px;font-weight:700;color:#0D9467;letter-spacing:.08em;
+  margin-bottom:20px;
+}
+.p-onboard h1{
+  font-family:'Playfair Display',serif;font-size:clamp(26px,5vw,38px);font-weight:700;
+  color:white;text-align:center;line-height:1.2;margin-bottom:12px;
+}
+.p-onboard-sub{
+  font-size:15px;color:rgba(255,255,255,.45);text-align:center;
+  max-width:480px;line-height:1.6;margin-bottom:12px;
+}
+.p-onboard-free{
+  font-size:13px;color:#FCC444;font-weight:600;margin-bottom:36px;
+}
+.p-svc-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:14px;
+  max-width:560px;width:100%;margin-bottom:32px;
+}
+@media(max-width:500px){.p-svc-grid{grid-template-columns:repeat(2,1fr);}}
+.p-svc-card{
+  background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.08);
+  border-radius:16px;padding:22px 14px;text-align:center;cursor:pointer;
+  transition:background .2s,border-color .2s,transform .2s;
+  position:relative;
+}
+.p-svc-card:hover{
+  background:rgba(13,148,103,.08);border-color:rgba(13,148,103,.3);
+  transform:translateY(-3px);
+}
+.p-svc-card.selected{
+  background:rgba(13,148,103,.12);border-color:#0D9467;
+  box-shadow:0 0 0 3px rgba(13,148,103,.15);
+}
+.p-svc-icon{font-size:32px;margin-bottom:10px;display:block;}
+.p-svc-name{
+  font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:700;
+  color:rgba(255,255,255,.85);margin-bottom:3px;
+}
+.p-svc-desc{font-size:10px;color:rgba(255,255,255,.35);}
+.p-svc-selected-tick{
+  position:absolute;top:8px;right:8px;width:18px;height:18px;
+  border-radius:50%;background:#0D9467;
+  display:none;align-items:center;justify-content:center;font-size:10px;color:white;
+}
+.p-svc-card.selected .p-svc-selected-tick{display:flex;}
+.p-onboard-cta{
+  padding:15px 48px;border-radius:14px;border:none;cursor:pointer;
+  background:linear-gradient(135deg,#0D9467,#059652);color:white;
+  font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;
+  box-shadow:0 8px 32px rgba(13,148,103,.3);
+  transition:filter .2s,transform .2s;opacity:.5;pointer-events:none;
+}
+.p-onboard-cta.enabled{opacity:1;pointer-events:all;}
+.p-onboard-cta.enabled:hover{filter:brightness(1.08);transform:translateY(-2px);}
+.p-onboard-switch{
+  margin-top:20px;font-size:12px;color:rgba(255,255,255,.25);
+  cursor:pointer;transition:color .2s;background:none;border:none;
+}
+.p-onboard-switch:hover{color:rgba(255,255,255,.5);}
+
+/* ── MULTI-SERVICE PICKER ── */
+.p-picker{
+  min-height:100vh;
+  background:linear-gradient(135deg,#0d1117,#111820);
+  padding:0;display:flex;flex-direction:column;
+}
+.p-picker-topbar{
+  height:60px;border-bottom:1px solid rgba(255,255,255,.06);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 24px;flex-shrink:0;
+}
+.p-picker-logo{
+  font-family:'Playfair Display',serif;font-size:14px;font-weight:700;
+  letter-spacing:.2em;text-transform:uppercase;
+  background:linear-gradient(90deg,#C8970A,#E8A800);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.p-picker-actions{display:flex;align-items:center;gap:10px;}
+.p-picker-body{flex:1;padding:32px 24px 60px;max-width:900px;margin:0 auto;width:100%;}
+.p-picker-greeting{
+  font-family:'Playfair Display',serif;font-size:clamp(22px,4vw,30px);
+  font-weight:700;color:white;margin-bottom:6px;
+}
+.p-picker-sub{font-size:13px;color:rgba(255,255,255,.4);margin-bottom:32px;}
+.p-svc-list{display:flex;flex-direction:column;gap:14px;}
+.p-svc-row{
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);
+  border-radius:16px;padding:20px 22px;
+  display:flex;align-items:center;gap:18px;
+  cursor:pointer;transition:background .2s,border-color .2s,transform .18s;
+}
+.p-svc-row:hover{
+  background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.12);
+  transform:translateX(4px);
+}
+.p-svc-row-ico{
+  width:52px;height:52px;border-radius:14px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:24px;
+}
+.p-svc-row-info{flex:1;}
+.p-svc-row-name{
+  font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;
+  color:white;margin-bottom:3px;
+}
+.p-svc-row-meta{font-size:12px;color:rgba(255,255,255,.38);}
+.p-svc-row-stats{text-align:right;flex-shrink:0;}
+.p-svc-row-revenue{
+  font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:700;
+  color:#FCC444;margin-bottom:2px;
+}
+.p-svc-row-bookings{font-size:11px;color:rgba(255,255,255,.3);}
+.p-svc-row-arrow{font-size:18px;color:rgba(255,255,255,.2);margin-left:8px;flex-shrink:0;}
+.p-add-svc-btn{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  border:1.5px dashed rgba(255,255,255,.12);border-radius:16px;
+  padding:18px;color:rgba(255,255,255,.35);font-size:13px;font-weight:500;
+  cursor:pointer;transition:all .2s;background:none;width:100%;
+  font-family:'Inter',sans-serif;margin-top:8px;
+}
+.p-add-svc-btn:hover{border-color:rgba(13,148,103,.4);color:#0D9467;}
+
+/* ── SINGLE SERVICE DASHBOARD ── */
+.p-dash{display:flex;min-height:100vh;}
+.p-dash-sidebar{
+  width:220px;flex-shrink:0;background:rgba(17,24,32,.95);
+  border-right:1px solid rgba(255,255,255,.06);
+  display:flex;flex-direction:column;
+  position:fixed;top:0;left:0;bottom:0;overflow-y:auto;z-index:10;
+}
+.p-dash-main{margin-left:220px;flex:1;}
+.p-dash-topbar{
+  position:sticky;top:0;z-index:5;height:56px;
+  background:rgba(13,17,23,.92);backdrop-filter:blur(8px);
+  border-bottom:1px solid rgba(255,255,255,.06);
+  display:flex;align-items:center;justify-content:space-between;padding:0 24px;
+}
+.p-dash-topbar-title{
+  font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;color:white;
+}
+.p-dash-content{padding:24px;max-width:1100px;}
+.p-dash-stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:24px;}
+.p-dash-stat{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:18px 20px;}
+.p-dash-stat-val{font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:700;color:white;margin-bottom:4px;}
+.p-dash-stat-lbl{font-size:12px;color:rgba(255,255,255,.35);}
+.p-dash-stat-sub{font-size:11px;color:#0D9467;font-weight:500;margin-top:6px;}
+@media(max-width:768px){
+  .p-dash-sidebar{transform:translateX(-100%);transition:transform .3s;}
+  .p-dash-sidebar.open{transform:none;}
+  .p-dash-main{margin-left:0;}
+  .p-picker-body{padding:20px 16px 40px;}
+  .p-svc-grid{gap:10px;}
+}
+
 </style>
 </head>
 <body>
@@ -1025,10 +1328,10 @@ html,body{height:100%;font-family:'Inter',sans-serif;overflow:hidden;background:
     <div class="sb-section">
       <div class="sb-section-label">Discover</div>
       <a class="sb-link active"><span class="sb-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span> Home</a>
-      <a class="sb-link" href="apartments.html"><span class="sb-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></svg></span> Apartments</a>
+      <a class="sb-link" href="javascript:void(0)" onclick="navigateToService('stays')"><span class="sb-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></svg></span> Apartments</a>
       <a class="sb-link" href="flights.html"><span class="sb-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></svg></span> Flights</a>
       <a class="sb-link" href="rides.html"><span class="sb-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg></span> Rides</a>
-      <a class="sb-link"><span class="sb-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg></span> Car Hire</a>
+      <a class="sb-link" href="carhire.html"><span class="sb-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg></span> Car Hire</a>
     </div>
     <div class="sb-section">
       <div class="sb-section-label">Lifestyle</div>
@@ -1039,7 +1342,8 @@ html,body{height:100%;font-family:'Inter',sans-serif;overflow:hidden;background:
     </div>
     <div class="sb-section">
       <div class="sb-section-label">Account</div>
-      <a class="sb-link"><span class="sb-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg></span> My Bookings</a>
+      <a class="sb-link" href="profile.html?back=1"><span class="sb-icon">👤</span> Profile</a>
+      <a class="sb-link" href="my-bookings.html?back=1"><span class="sb-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg></span> My Bookings</a>
       <a class="sb-link"><span class="sb-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg></span> Wallet</a>
       <a class="sb-link"><span class="sb-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="M12.2 2h-.4a2 2 0 0 0-2 2v.2a2 2 0 0 1-1 1.7l-.3.2a2 2 0 0 1-2 0l-.2-.1a2 2 0 0 0-2.7.7l-.2.4a2 2 0 0 0 .7 2.7l.2.1a2 2 0 0 1 1 1.7v.4a2 2 0 0 1-1 1.7l-.2.1a2 2 0 0 0-.7 2.7l.2.4a2 2 0 0 0 2.7.7l.3-.2a2 2 0 0 1 2 0l.3.2a2 2 0 0 1 1 1.7v.2a2 2 0 0 0 2 2h.4a2 2 0 0 0 2-2v-.2a2 2 0 0 1 1-1.7l.3-.2a2 2 0 0 1 2 0l.2.1a2 2 0 0 0 2.7-.7l.2-.4a2 2 0 0 0-.7-2.7l-.2-.1a2 2 0 0 1-1-1.7v-.4a2 2 0 0 1 1-1.7l.2-.1a2 2 0 0 0 .7-2.7l-.2-.4a2 2 0 0 0-2.7-.7l-.3.2a2 2 0 0 1-2 0l-.3-.2a2 2 0 0 1-1-1.7v-.2a2 2 0 0 0-2-2Z"/><circle cx="12" cy="12" r="3"/></svg></span> Settings</a>
     </div>
@@ -1053,7 +1357,7 @@ html,body{height:100%;font-family:'Inter',sans-serif;overflow:hidden;background:
   <!-- MAIN -->
   <div class="g-main">
     <div class="g-topbar">
-      <div class="g-topbar-title" id="g-topbar-title">Good morning, James <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg></div>
+      <div class="g-topbar-title" id="g-topbar-title">Good morning ☀️</div>
       <div class="g-topbar-right">
         <button onclick="openSOS()" style="
           display:flex;align-items:center;gap:5px;
@@ -1075,35 +1379,35 @@ html,body{height:100%;font-family:'Inter',sans-serif;overflow:hidden;background:
 
       <!-- ── SERVICE BUTTON BAR ── -->
       <div class="g-svc-bar" id="g-svc-bar">
-        <div class="gsb act" data-svc="stays">
+        <div class="gsb act" data-svc="stays" onclick="navigateToService('stays')" style="cursor:pointer;">
           <span class="gsb-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></svg></span>
           <span class="gsb-lbl">Stays</span>
         </div>
-        <div class="gsb" data-svc="flights" onclick="window.location.href='flights.html'">
+        <div class="gsb" data-svc="flights" onclick="navigateToService('flights')" style="cursor:pointer;">
           <span class="gsb-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></svg></span>
           <span class="gsb-lbl">Flights</span>
         </div>
-        <div class="gsb" data-svc="rides" onclick="window.location.href='rides.html'">
+        <div class="gsb" data-svc="rides" onclick="navigateToService('rides')" style="cursor:pointer;">
           <span class="gsb-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg></span>
           <span class="gsb-lbl">Rides</span>
         </div>
-        <div class="gsb" data-svc="carhire">
+        <div class="gsb" data-svc="carhire" onclick="window.location.href='carhire.html'">
           <span class="gsb-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg></span>
           <span class="gsb-lbl">Car Hire</span>
         </div>
-        <div class="gsb" data-svc="food" onclick="window.location.href='food.html'">
+        <div class="gsb" data-svc="food" onclick="navigateToService('food')" style="cursor:pointer;">
           <span class="gsb-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg></span>
           <span class="gsb-lbl">Food</span>
         </div>
-        <div class="gsb" data-svc="shopping" onclick="window.location.href='shopping.html'">
+        <div class="gsb" data-svc="shopping" onclick="navigateToService('shopping')" style="cursor:pointer;">
           <span class="gsb-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span>
           <span class="gsb-lbl">Shopping</span>
         </div>
-        <div class="gsb" data-svc="tours" onclick="window.location.href='tours.html'">
+        <div class="gsb" data-svc="tours" onclick="navigateToService('tours')" style="cursor:pointer;">
           <span class="gsb-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z"/><path d="M15 5.764v15"/><path d="M9 3.236v15"/></svg></span>
           <span class="gsb-lbl">Tours</span>
         </div>
-        <div class="gsb" data-svc="events" onclick="window.location.href='events.html'">
+        <div class="gsb" data-svc="events" onclick="navigateToService('events')" style="cursor:pointer;">
           <span class="gsb-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="M2 9a3 3 0 1 0 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 1 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg></span>
           <span class="gsb-lbl">Events</span>
         </div>
@@ -1112,7 +1416,7 @@ html,body{height:100%;font-family:'Inter',sans-serif;overflow:hidden;background:
       <!-- ── HERO SLIDESHOW ── -->
       <div class="g-hero-wrap" id="g-hero-wrap">
 
-        <div class="hero-slide hs-0 visible" data-svc="stays">
+        <div class="hero-slide hs-0 visible" data-svc="stays" onclick="navigateToService('stays')" style="cursor:pointer;">
           <div class="hs-deco"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></svg></div>
           <div class="hs-content">
             <div class="hs-tag"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/></svg> Featured Stays</div>
@@ -1128,7 +1432,7 @@ html,body{height:100%;font-family:'Inter',sans-serif;overflow:hidden;background:
             <div class="hs-tag"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/></svg> Tours & Safaris</div>
             <div class="hs-title">Maasai Mara.<br/>From KES 8,500.</div>
             <div class="hs-sub">Day trips, guided safaris and cultural experiences. Book direct with local operators.</div>
-            <button class="hs-cta" onclick="window.location.href='tours.html'">Explore Tours →</button>
+            <button class="hs-cta" onclick="navigateToService('tours')">Explore Tours →</button>
           </div>
         </div>
 
@@ -1138,7 +1442,7 @@ html,body{height:100%;font-family:'Inter',sans-serif;overflow:hidden;background:
             <div class="hs-tag"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/></svg> Events This Week</div>
             <div class="hs-title">Face-value tickets.<br/>No booking levy.</div>
             <div class="hs-sub">Concerts, sports, festivals and private events — priced as they should be.</div>
-            <button class="hs-cta" onclick="window.location.href='events.html'">Browse Events →</button>
+            <button class="hs-cta" onclick="navigateToService('events')">Browse Events →</button>
           </div>
         </div>
 
@@ -1315,152 +1619,17 @@ html,body{height:100%;font-family:'Inter',sans-serif;overflow:hidden;background:
      SCREEN 4: PARTNER DASHBOARD
 ══════════════════════════════════════ -->
 <div class="screen" id="screen-partner">
-
-  <!-- SIDEBAR -->
-  <aside class="p-sidebar">
-    <div class="p-sb-logo">Apatmento</div>
-
-    <div class="p-sb-user">
-      <div class="p-sb-avatar" id="p-avatar">J</div>
-      <div>
-        <div class="p-sb-name" id="p-sb-name">James</div>
-        <div class="p-sb-role-tag">Partner</div>
-      </div>
-    </div>
-
-    <div class="p-sb-section">
-      <div class="p-sb-label">Overview</div>
-      <a class="p-sb-link active"><span class="sb-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg></span> Dashboard</a>
-      <a class="p-sb-link"><span class="sb-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span> My Listings</a>
-      <a class="p-sb-link"><span class="sb-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg></span> Bookings</a>
-      <a class="p-sb-link"><span class="sb-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/><path d="M16 18h.01"/></svg></span> Calendar</a>
-    </div>
-    <div class="p-sb-section">
-      <div class="p-sb-label">Business</div>
-      <a class="p-sb-link"><span class="sb-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg></span> Earnings</a>
-      <a class="p-sb-link"><span class="sb-icon">⭐</span> Reviews</a>
-      <a class="p-sb-link"><span class="sb-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></span> Analytics</a>
-      <a class="p-sb-link"><span class="sb-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg></span> Payouts</a>
-    </div>
-    <div class="p-sb-section">
-      <div class="p-sb-label">Account</div>
-      <a class="p-sb-link"><span class="sb-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="M12.2 2h-.4a2 2 0 0 0-2 2v.2a2 2 0 0 1-1 1.7l-.3.2a2 2 0 0 1-2 0l-.2-.1a2 2 0 0 0-2.7.7l-.2.4a2 2 0 0 0 .7 2.7l.2.1a2 2 0 0 1 1 1.7v.4a2 2 0 0 1-1 1.7l-.2.1a2 2 0 0 0-.7 2.7l.2.4a2 2 0 0 0 2.7.7l.3-.2a2 2 0 0 1 2 0l.3.2a2 2 0 0 1 1 1.7v.2a2 2 0 0 0 2 2h.4a2 2 0 0 0 2-2v-.2a2 2 0 0 1 1-1.7l.3-.2a2 2 0 0 1 2 0l.2.1a2 2 0 0 0 2.7-.7l.2-.4a2 2 0 0 0-.7-2.7l-.2-.1a2 2 0 0 1-1-1.7v-.4a2 2 0 0 1 1-1.7l.2-.1a2 2 0 0 0 .7-2.7l-.2-.4a2 2 0 0 0-2.7-.7l-.3.2a2 2 0 0 1-2 0l-.3-.2a2 2 0 0 1-1-1.7v-.2a2 2 0 0 0-2-2Z"/><circle cx="12" cy="12" r="3"/></svg></span> Settings</a>
-      <a class="p-sb-link"><span class="sb-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><line x1="4.93" x2="9.17" y1="4.93" y2="9.17"/><line x1="14.83" x2="19.07" y1="14.83" y2="19.07"/><line x1="14.83" x2="19.07" y1="9.17" y2="4.93"/><line x1="14.83" x2="18.36" y1="9.17" y2="5.64"/><line x1="4.93" x2="9.17" y1="19.07" y2="14.83"/></svg></span> Support</a>
-    </div>
-
-    <button class="p-switch-btn" onclick="switchRole()">
-      ⇄ Switch to Guest
-    </button>
-    <button class="p-switch-btn" style="margin-top:8px;border-color:rgba(220,38,38,.2);color:rgba(220,38,38,.4);" onclick="signOut()">⎋ Sign Out</button>
-  </aside>
-
-  <!-- MAIN -->
-  <div class="p-main">
-    <div class="p-topbar">
-      <div class="p-topbar-title" id="p-topbar-title">Partner Dashboard</div>
-      <div style="display:flex;gap:10px;align-items:center;">
-        <button onclick="openSOS()" style="
-          display:flex;align-items:center;gap:5px;
-          padding:6px 12px;border-radius:100px;
-          background:linear-gradient(135deg,#DC2626,#B91C1C);
-          color:white;border:none;cursor:pointer;
-          font-family:'Space Grotesk',sans-serif;
-          font-size:11px;font-weight:800;letter-spacing:.04em;
-          box-shadow:0 2px 10px rgba(220,38,38,.35);
-          -webkit-tap-highlight-color:transparent;
-          animation:sosPulse 2.5s ease-in-out infinite;
-        ">🆘 SOS</button>
-        <div class="p-notif-btn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/><path d="M3.3 16.6c-.6.7-.1 1.8.8 1.8h15.8c.9 0 1.4-1.1.8-1.8C19.5 15 18 13.2 18 8A6 6 0 0 0 6 8c0 5.2-1.5 7-2.7 8.6"/></svg><div class="p-notif-dot"></div></div>
-        <div class="p-sb-avatar" id="p-top-avatar" style="width:36px;height:36px;border-radius:10px;">J</div>
-      </div>
-    </div>
-
-    <div class="p-content">
-
-      <!-- welcome -->
-      <div class="p-welcome fade-item">
-        <div class="p-welcome-text">
-          <h2 id="p-welcome-name">Your earnings, your way.</h2>
-          <p>3 active listings · 2 pending booking requests</p>
-        </div>
-        <div class="p-badge">
-          <div class="p-badge-val">KES 0</div>
-          <div class="p-badge-lbl">Commission paid</div>
-        </div>
-      </div>
-
-      <!-- stats -->
-      <div class="p-stats">
-        <div class="p-stat fade-item">
-          <div class="p-stat-val">KES 142,000</div>
-          <div class="p-stat-lbl">Total Earned</div>
-          <div class="p-stat-sub">↑ 18% this month</div>
-        </div>
-        <div class="p-stat fade-item">
-          <div class="p-stat-val">24</div>
-          <div class="p-stat-lbl">Total Bookings</div>
-          <div class="p-stat-sub">↑ 3 pending</div>
-        </div>
-        <div class="p-stat fade-item">
-          <div class="p-stat-val">4.9 ⭐</div>
-          <div class="p-stat-lbl">Avg. Rating</div>
-          <div class="p-stat-sub">47 reviews</div>
-        </div>
-      </div>
-
-      <!-- zero commission banner -->
-      <div class="p-zero-banner fade-item">
-        <div class="p-zero-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg></div>
-        <div class="p-zero-txt">
-          <strong>You keep 100% of every payment</strong>
-          <p>Apatmento charges zero commission on all bookings. KES 142,000 earned = KES 142,000 in your pocket.</p>
-        </div>
-        <div class="p-zero-pill">0% Fee</div>
-      </div>
-
-      <!-- listings -->
-      <div class="p-section-title fade-item">
-        My Listings
-        <button class="p-add-btn" onclick="window.location.href='add-listing.html'">+ Add Listing</button>
-      </div>
-      <div class="p-listings">
-        <div class="p-listing fade-item">
-          <div class="pl-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></svg></div>
-          <div class="pl-info">
-            <div class="pl-name">Skyline Loft — Nairobi CBD</div>
-            <div class="pl-meta">2 bed · Studio · Active · 12 bookings</div>
-          </div>
-          <div class="pl-earn">
-            <div class="pl-earn-val">KES 4,200<span style="font-size:11px;font-weight:400;color:rgba(200,151,10,.5)">/night</span></div>
-            <div class="pl-earn-lbl">KES 67,200 total</div>
-          </div>
-        </div>
-        <div class="p-listing fade-item">
-          <div class="pl-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
-          <div class="pl-info">
-            <div class="pl-name">Garden Cottage — Karen</div>
-            <div class="pl-meta">1 bed · Cottage · Active · 8 bookings</div>
-          </div>
-          <div class="pl-earn">
-            <div class="pl-earn-val">KES 3,500<span style="font-size:11px;font-weight:400;color:rgba(200,151,10,.5)">/night</span></div>
-            <div class="pl-earn-lbl">KES 47,600 total</div>
-          </div>
-        </div>
-        <div class="p-listing fade-item">
-          <div class="pl-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/></svg></div>
-          <div class="pl-info">
-            <div class="pl-name">Penthouse Suite — Westlands</div>
-            <div class="pl-meta">3 bed · Penthouse · Active · 4 bookings</div>
-          </div>
-          <div class="pl-earn">
-            <div class="pl-earn-val">KES 8,800<span style="font-size:11px;font-weight:400;color:rgba(200,151,10,.5)">/night</span></div>
-            <div class="pl-earn-lbl">KES 27,200 total</div>
-          </div>
-        </div>
-      </div>
-
+  <!-- Partner screen is rendered dynamically by initPartnerFlow() -->
+  <!-- States: onboarding | multi-picker | single-service-dashboard -->
+  <div id="p-state-loading" style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0d1117,#111820);">
+    <div style="text-align:center;">
+      <div style="font-size:32px;margin-bottom:14px;animation:spin 1s linear infinite;">⟳</div>
+      <div style="font-family:'Space Grotesk',sans-serif;font-size:14px;color:rgba(255,255,255,.3);">Loading your services…</div>
     </div>
   </div>
+  <div id="p-state-onboarding" style="display:none;"></div>
+  <div id="p-state-picker" style="display:none;"></div>
+  <div id="p-state-dashboard" style="display:none;"></div>
 </div>
 
 
@@ -1525,21 +1694,22 @@ function showScreen(name, delay=0) {
 ══════════════════════════════════════════════════════ */
 function getTimeGreeting() {
   const h = new Date().getHours();
-  if (h < 12) return { label: 'Good morning', emoji: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>' };
-  if (h < 17) return { label: 'Good afternoon', emoji: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="M12 2v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="M20 12h2"/><path d="m19.07 4.93-1.41 1.41"/><path d="M15.947 12.65a4 4 0 0 0-5.925-4.128"/><path d="M13 22H7a5 5 0 1 1 4.9-6H13a3 3 0 0 1 0 6Z"/></svg>' };
-  return { label: 'Good evening', emoji: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>' };
+  if (h < 12) return { label: 'Good morning', emoji: '☀️' };
+  if (h < 17) return { label: 'Good afternoon', emoji: '🌤️' };
+  return { label: 'Good evening', emoji: '🌙' };
 }
 
-function buildGreeting() {
+function buildGreeting(isNewUser = false) {
   const { label, emoji } = getTimeGreeting();
   document.getElementById('greet-time-label').textContent = label;
 
   const hello = document.getElementById('greet-hello');
   const name  = USER.firstName;
 
-  // "Welcome back," — static part
+  // Greeting text — "Welcome!" for new users, "Welcome back," for returning
+  const greetText = isNewUser ? 'Welcome, ' : 'Welcome back, ';
   const staticPart = document.createElement('span');
-  staticPart.textContent = 'Welcome back, ';
+  staticPart.textContent = greetText;
   staticPart.style.cssText = 'opacity:0;animation:fadeUp .5s .6s ease both;display:inline;';
 
   // name — each letter animated separately
@@ -1565,10 +1735,12 @@ function buildGreeting() {
   hello.appendChild(emojiSpan);
 
   // sub text personalised
-  document.getElementById('greet-sub').textContent =
-    `Great to have you back${name ? ', ' + name : ''}. Your world is waiting.`;
+  document.getElementById('greet-sub').textContent = isNewUser
+    ? `Great to have you here${name ? ', ' + name : ''}. Let's get you set up.`
+    : `Great to have you back${name ? ', ' + name : ''}. Your world is waiting.`;
 
-  // after ring fills (2s animation + 2s delay = 4s), go to role screen
+  // after greeting animation, go to role screen
+  // New users get full animation (4.6s); returning users see shorter version (handled in initSession)
   setTimeout(() => {
     screens.greet.classList.add('exit');
     showScreen('role', 400);
@@ -1595,6 +1767,7 @@ function showToast(msg) {
 }
 
 function chooseRole(role) {
+  if (role === 'partner') { setTimeout(initPartnerFlow, 100); }
   showToast('Tapped: ' + role);
   // Prevent double-tap same role only
   if (selectedRole === role) { showToast('Blocked - same role'); return; }
@@ -1638,7 +1811,7 @@ function populateDashboard(role) {
     document.getElementById('g-avatar').textContent     = initial;
     document.getElementById('g-top-avatar').textContent = initial;
     document.getElementById('g-sb-name').textContent    = name;
-    document.getElementById('g-topbar-title').textContent = `${label}, ${name} ${emoji}`;
+    document.getElementById('g-topbar-title').textContent = `${label}, ${name}`;
     document.getElementById('g-welcome-name').textContent = `Ready to explore, ${name}?`;
   } else {
     document.getElementById('p-avatar').textContent     = initial;
@@ -1852,7 +2025,7 @@ function renderAd(i) {
   const pill  = document.getElementById('ad-pill');
   if (!bg) return;
   bg.className    = 'ad-bg ' + ad.bg;
-  deco.textContent  = ad.deco;
+  deco.innerHTML    = ad.deco;
   label.textContent = ad.label;
   title.textContent = ad.title;
   sub.textContent   = ad.sub;
@@ -1909,6 +2082,83 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const { createClient } = supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+/* ══ PARTNER DASHBOARD — LIVE STATS FROM SUPABASE ══ */
+async function loadPartnerStats() {
+  if (!CURRENT_USER) return;
+
+  // Load listings
+  const { data: listings } = await sb.from('listings')
+    .select('id,title,name,price_per_night,is_active')
+    .eq('partner_id', CURRENT_USER.id)
+    .order('created_at', { ascending: false });
+
+  const activeListings = (listings || []).filter(l => l.is_active);
+
+  // Load paid bookings from all tables
+  const [aptRes, tourRes, eventRes] = await Promise.all([
+    sb.from('apartment_bookings').select('grand_total,service_fee,status').eq('status','paid'),
+    sb.from('tour_bookings').select('grand_total,service_fee,status').eq('status','paid'),
+    sb.from('event_tickets').select('grand_total,service_fee,status').eq('status','paid'),
+  ]);
+  const allPaid = [
+    ...(aptRes.data||[]),
+    ...(tourRes.data||[]),
+    ...(eventRes.data||[]),
+  ];
+  const totalEarned = allPaid.reduce((s,b) => s + Number(b.grand_total||0) - Number(b.service_fee||0), 0);
+
+  // Load reviews
+  const { data: reviews } = await sb.from('reviews').select('rating');
+  const avgRating = reviews?.length
+    ? (reviews.reduce((s,r) => s + Number(r.rating||0), 0) / reviews.length).toFixed(1)
+    : null;
+
+  // Update stat boxes
+  const statEarned = document.getElementById('p-stat-earned');
+  if (statEarned) {
+    statEarned.textContent = 'KES ' + totalEarned.toLocaleString();
+    document.getElementById('p-stat-earned-sub').textContent = allPaid.length + ' confirmed bookings';
+  }
+  const statBookings = document.getElementById('p-stat-bookings');
+  if (statBookings) {
+    statBookings.textContent = allPaid.length;
+    document.getElementById('p-stat-bookings-sub').textContent = activeListings.length + ' active listings';
+  }
+  const statRating = document.getElementById('p-stat-rating');
+  if (statRating) {
+    statRating.textContent = avgRating ? avgRating + ' ⭐' : 'No reviews';
+    document.getElementById('p-stat-rating-sub').textContent = (reviews?.length || 0) + ' reviews';
+  }
+  const welcomeSub = document.getElementById('p-welcome-sub');
+  if (welcomeSub) {
+    welcomeSub.textContent = activeListings.length + ' active listing' + (activeListings.length !== 1 ? 's' : '') + ' · ' + allPaid.length + ' paid booking' + (allPaid.length !== 1 ? 's' : '');
+  }
+
+  // Render listings preview
+  const container = document.getElementById('p-listings-container');
+  if (container) {
+    if (!listings || !listings.length) {
+      container.innerHTML = '<div class="p-listing fade-item" style="justify-content:center;"><div style="text-align:center;"><div style="color:rgba(240,249,244,.4);font-size:13px;margin-bottom:10px;">No listings yet</div><button onclick="window.location.href=\'add-listing.html\'" style="padding:8px 16px;border-radius:8px;background:linear-gradient(135deg,#0D9467,#059652);color:white;border:none;cursor:pointer;font-size:12px;font-weight:700;">+ Add Your First Listing</button></div></div>';
+    } else {
+      container.innerHTML = listings.slice(0,3).map(l => `
+        <div class="p-listing fade-item" onclick="window.location.href='partner-listings.html'" style="cursor:pointer;">
+          <div class="pl-ico">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          </div>
+          <div class="pl-info">
+            <div class="pl-name">${l.title || l.name || 'Listing'}</div>
+            <div class="pl-meta">${l.is_active ? 'Active' : 'Inactive'}</div>
+          </div>
+          <div class="pl-earn">
+            <div class="pl-earn-val">KES ${Number(l.price_per_night||0).toLocaleString()}<span style="font-size:11px;font-weight:400;color:rgba(200,151,10,.5)">/night</span></div>
+          </div>
+        </div>
+      `).join('');
+    }
+  }
+}
+
 
 /* ══════════════════════════════════════════════════════
    REAL APARTMENT PHOTOS — loaded from Supabase Storage
@@ -1980,29 +2230,41 @@ async function initSession() {
   const params    = new URLSearchParams(window.location.search);
   const roleParam = params.get('role');
 
-  if (roleParam && (roleParam === 'guest' || roleParam === 'partner')) {
-    // Skip role selection — go straight to that dashboard
-    CURRENT_ROLE = roleParam;
-    buildGreeting();
-    // After greeting, jump straight to the dashboard
+  // ── SMART NAVIGATION ──
+  // Detect if returning from a subpage (back button / explicit ?role= param)
+  // In that case: SKIP the greeting animation entirely — go straight to dashboard.
+  // Only show greeting on fresh login (no role param, no "back" context).
+  const isReturning = roleParam === 'guest' || roleParam === 'partner'
+                   || params.get('back') === '1';
+  const rememberedRole = profile?.last_role;
+
+  // Detect new user: account created within the last 5 minutes
+  const createdAt  = new Date(CURRENT_USER.created_at);
+  const ageMinutes = (Date.now() - createdAt.getTime()) / 60000;
+  const isNewUser  = ageMinutes < 5;
+
+  if (isReturning) {
+    // Coming back from a subpage — skip greeting, go straight to the right dashboard
+    const targetRole = roleParam || rememberedRole || 'guest';
+    CURRENT_ROLE = targetRole;
+    screens.greet.style.display = 'none';
+    populateDashboard(targetRole);
+    showScreen(targetRole, 0);
+    if (targetRole === 'partner') setTimeout(initPartnerFlow, 150);
+  } else if (rememberedRole) {
+    // Returning user with a saved role — short greeting, then go straight in
+    CURRENT_ROLE = rememberedRole;
+    buildGreeting(isNewUser);
     setTimeout(() => {
       screens.greet.classList.add('exit');
-      populateDashboard(roleParam);
-      showScreen(roleParam, 400);
-    }, 3800);
-  } else if (profile?.last_role) {
-    // Has a remembered role — same flow as above
-    CURRENT_ROLE = profile.last_role;
-    buildGreeting();
-    setTimeout(() => {
-      screens.greet.classList.add('exit');
-      populateDashboard(CURRENT_ROLE);
-      showScreen(CURRENT_ROLE, 400);
-    }, 3800);
+      populateDashboard(rememberedRole);
+      showScreen(rememberedRole, 400);
+      if (rememberedRole === 'partner') setTimeout(initPartnerFlow, 500);
+    }, 2800);  // shorter — 2.8s not 4.6s for returning users
   } else {
-    // No remembered role — show role selection after greeting
-    buildGreeting();
-    // greeting auto-proceeds to role selection via its own timer
+    // No role saved — show greeting then role selection
+    buildGreeting(isNewUser);
+    // greeting proceeds to role selection via its own timer
   }
 }
 
@@ -2425,7 +2687,7 @@ async function onLocationSuccess(pos) {
 
   locTxt.classList.remove('sos-loc-loading');
   locTxt.textContent = `${userLat.toFixed(6)}, ${userLng.toFixed(6)}`;
-  locAcc.textContent = `Accuracy: ±${userAccuracy}m${userAccuracy < 20 ? ' · GPS lock <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="M20 6 9 17l-5-5"/></svg>' : userAccuracy < 100 ? ' · Good' : ' · Improving…'}`;
+  locAcc.textContent = `Accuracy: ±${userAccuracy}m${userAccuracy < 20 ? ' · GPS lock ✓' : userAccuracy < 100 ? ' · Good' : ' · Improving…'}`;
 
   // Reverse geocode via OpenStreetMap Nominatim (free, no key needed)
   try {
@@ -2531,6 +2793,457 @@ function showSOSToast(msg) {
 
 })(); // end IIFE
 
+
+/* ══ SERVICE TRANSITION ENGINE ══ */
+const SVC_CONFIG = {
+  flights:    { emoji:'✈️',  label:'Flights',       bg:'linear-gradient(135deg,#020817,#0a1e3d)',  moverClass:'plane',  moverEmoji:'✈️',  dest:'flights.html' },
+  rides:      { emoji:'🛵',  label:'Rides',          bg:'linear-gradient(135deg,#1a0a00,#3d2000)',  moverClass:'scooter',moverEmoji:'🛵',  dest:'rides.html' },
+  food:       { emoji:'🍽️', label:'Food Delivery',  bg:'linear-gradient(135deg,#1a0a0a,#3d1414)',  moverClass:'food',   moverEmoji:'🍔',  dest:'food.html' },
+  shopping:   { emoji:'🛍️', label:'Shopping',       bg:'linear-gradient(135deg,#1a1200,#3d2d00)',  moverClass:'bag',    moverEmoji:'🛍️', dest:'shopping.html' },
+  tours:      { emoji:'🗺️', label:'Tours & Safaris',bg:'linear-gradient(135deg,#1a1206,#3d2810)',  moverClass:'map',    moverEmoji:'🗺️', dest:'tours.html' },
+  events:     { emoji:'🎟️', label:'Events',         bg:'linear-gradient(135deg,#0d0618,#241040)',  moverClass:'ticket', moverEmoji:'🎟️', dest:'events.html' },
+  stays:      { emoji:'🏠',  label:'Apartments',     bg:'linear-gradient(135deg,#0a1628,#1a3a5a)',  moverClass:'house',  moverEmoji:'🏠',  dest:'apartments.html' },
+  carhire:    { emoji:'🚗',  label:'Car Hire',       bg:'linear-gradient(135deg,#0a1a0a,#1a3a1a)',  moverClass:'car',    moverEmoji:'🚗',  dest:'rides.html' },
+};
+
+function navigateToService(svcKey) {
+  const cfg = SVC_CONFIG[svcKey];
+  if (!cfg) { window.location.href = (SVC_CONFIG[svcKey]?.dest || '#'); return; }
+
+  const overlay = document.getElementById('svc-transition');
+  const bg      = document.getElementById('svc-bg');
+  const mover   = document.getElementById('svc-mover');
+  const emoji   = document.getElementById('svc-anim-emoji');
+  const label   = document.getElementById('svc-anim-label');
+
+  // Set content
+  bg.style.background = cfg.bg;
+  mover.textContent   = cfg.moverEmoji;
+  mover.className     = 'svc-mover ' + cfg.moverClass;
+  emoji.textContent   = cfg.emoji;
+  label.textContent   = cfg.label;
+
+  // Trigger animation
+  overlay.classList.add('active');
+
+  // Navigate after animation peak (~700ms)
+  setTimeout(() => {
+    window.location.href = cfg.dest + '?back=1';
+  }, 650);
+}
+
+
+
+/* ══════════════════════════════════════════════════════════
+   PARTNER FLOW ENGINE
+   States: onboarding → picker (multi) OR dashboard (single)
+══════════════════════════════════════════════════════════ */
+
+const PARTNER_SERVICES = {
+  apartment: {
+    name:'Apartments',
+    icon:'🏠',
+    desc:'Short-stay rentals',
+    color:'linear-gradient(135deg,#0a1628,#1a3a5a)',
+    dashPage:'partner-listings.html',
+    table:'listings',
+    bookingTable:'apartment_bookings',
+  },
+  tour: {
+    name:'Tours & Safaris',
+    icon:'🗺️',
+    desc:'Day trips & experiences',
+    color:'linear-gradient(135deg,#1a1206,#3d2810)',
+    dashPage:'partner-listings.html?type=tour',
+    table:'listings',
+    bookingTable:'tour_bookings',
+  },
+  event: {
+    name:'Events & Tickets',
+    icon:'🎟️',
+    desc:'Concerts, shows & festivals',
+    color:'linear-gradient(135deg,#0d0618,#241040)',
+    dashPage:'partner-listings.html?type=event',
+    table:'listings',
+    bookingTable:'event_tickets',
+  },
+};
+
+let partnerServices = [];   // services this user has set up
+let selectedServiceType = null;
+
+async function initPartnerFlow() {
+  // Show loading state
+  document.getElementById('p-state-loading').style.display = 'flex';
+  document.getElementById('p-state-onboarding').style.display = 'none';
+  document.getElementById('p-state-picker').style.display = 'none';
+  document.getElementById('p-state-dashboard').style.display = 'none';
+
+  if (!CURRENT_USER) return;
+
+  // Detect what services this partner has listed
+  const { data: listings } = await sb
+    .from('listings')
+    .select('id,title,name,property_type,listing_type,price_per_night,is_active,created_at')
+    .eq('partner_id', CURRENT_USER.id);
+
+  partnerServices = listings || [];
+
+  // Hide loading
+  document.getElementById('p-state-loading').style.display = 'none';
+
+  const name = USER.firstName || 'Partner';
+
+  if (!partnerServices.length) {
+    // ── STATE: ONBOARDING ──
+    renderOnboarding(name);
+  } else if (partnerServices.length === 1) {
+    // ── STATE: SINGLE SERVICE — skip picker, go straight to dashboard ──
+    renderSingleDashboard(partnerServices[0], name);
+  } else {
+    // ── STATE: MULTI-SERVICE PICKER ──
+    renderServicePicker(partnerServices, name);
+  }
+}
+
+/* ──────────────────────────────────────────────────────
+   ONBOARDING — no services yet
+────────────────────────────────────────────────────── */
+function renderOnboarding(name) {
+  const container = document.getElementById('p-state-onboarding');
+  container.style.display = 'block';
+
+  container.innerHTML = `
+    <div class="p-onboard">
+      <div class="p-onboard-logo">Apatmento</div>
+      <div class="p-onboard-badge">✓ Free to list · No commissions</div>
+      <h1>What would you like<br/>to offer on Apatmento?</h1>
+      <p class="p-onboard-sub">Choose a service to set up. It's completely free to list. Apatmento only charges a small fixed fee per confirmed booking — never a percentage of your earnings.</p>
+      <div class="p-onboard-free">💰 You keep almost everything. Always.</div>
+
+      <div class="p-svc-grid" id="onboard-svc-grid">
+        ${Object.entries(PARTNER_SERVICES).map(([key, svc]) => `
+          <div class="p-svc-card" id="svc-card-${key}" onclick="selectServiceType('${key}')">
+            <div class="p-svc-selected-tick">✓</div>
+            <span class="p-svc-icon">${svc.icon}</span>
+            <div class="p-svc-name">${svc.name}</div>
+            <div class="p-svc-desc">${svc.desc}</div>
+          </div>
+        `).join('')}
+      </div>
+
+      <button class="p-onboard-cta" id="onboard-cta" onclick="startSetup()">
+        Set Up My Service →
+      </button>
+      <button class="p-onboard-switch" onclick="switchRole()">⇄ Switch to Guest instead</button>
+    </div>
+  `;
+}
+
+function selectServiceType(key) {
+  selectedServiceType = key;
+  document.querySelectorAll('.p-svc-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('svc-card-' + key)?.classList.add('selected');
+  document.getElementById('onboard-cta')?.classList.add('enabled');
+}
+
+function startSetup() {
+  if (!selectedServiceType) return;
+  const svc = PARTNER_SERVICES[selectedServiceType];
+  window.location.href = 'add-listing.html?type=' + selectedServiceType + '&back=1';
+}
+
+/* ──────────────────────────────────────────────────────
+   MULTI-SERVICE PICKER
+────────────────────────────────────────────────────── */
+async function renderServicePicker(listings, name) {
+  const container = document.getElementById('p-state-picker');
+  container.style.display = 'block';
+
+  // Load revenue per listing type
+  const [aptRes, tourRes, eventRes] = await Promise.all([
+    sb.from('apartment_bookings').select('grand_total,service_fee').eq('status','paid'),
+    sb.from('tour_bookings').select('grand_total,service_fee').eq('status','paid'),
+    sb.from('event_tickets').select('grand_total,service_fee').eq('status','paid'),
+  ]);
+  const aptRevenue   = (aptRes.data||[]).reduce((s,b)=>s+Number(b.grand_total||0)-Number(b.service_fee||0),0);
+  const tourRevenue  = (tourRes.data||[]).reduce((s,b)=>s+Number(b.grand_total||0)-Number(b.service_fee||0),0);
+  const eventRevenue = (eventRes.data||[]).reduce((s,b)=>s+Number(b.grand_total||0)-Number(b.service_fee||0),0);
+
+  // Group listings by type
+  const groups = {
+    apartment: listings.filter(l => !l.listing_type || l.listing_type === 'apartment'),
+    tour:      listings.filter(l => l.listing_type === 'tour'),
+    event:     listings.filter(l => l.listing_type === 'event'),
+  };
+  const revenue = { apartment: aptRevenue, tour: tourRevenue, event: eventRevenue };
+  const bookings = { apartment: aptRes.data?.length||0, tour: tourRes.data?.length||0, event: eventRes.data?.length||0 };
+
+  const activeTypes = Object.entries(groups).filter(([,arr]) => arr.length > 0);
+
+  container.innerHTML = `
+    <div class="p-picker">
+      <div class="p-picker-topbar">
+        <div class="p-picker-logo">Apatmento</div>
+        <div class="p-picker-actions">
+          <button class="p-onboard-cta enabled" style="padding:9px 18px;font-size:12px;" onclick="showAddServiceSheet()">+ Add Service</button>
+          <button style="background:none;border:none;color:rgba(255,255,255,.3);font-size:12px;cursor:pointer;" onclick="switchRole()">⇄ Guest</button>
+          <button style="background:none;border:none;color:rgba(255,255,255,.2);font-size:12px;cursor:pointer;" onclick="signOut()">Sign Out</button>
+        </div>
+      </div>
+      <div class="p-picker-body">
+        <div class="p-picker-greeting">Good ${getTimeGreeting().label.replace('Good ','')}, ${name}.</div>
+        <div class="p-picker-sub">You have ${activeTypes.length} active service${activeTypes.length !== 1 ? 's' : ''}. Select one to manage.</div>
+
+        <div class="p-svc-list">
+          ${activeTypes.map(([type, arr]) => {
+            const svc = PARTNER_SERVICES[type];
+            const rev = revenue[type];
+            const bkgs = bookings[type];
+            const activeCount = arr.filter(l => l.is_active).length;
+            return `
+            <div class="p-svc-row" onclick="goToServiceDashboard('${type}')">
+              <div class="p-svc-row-ico" style="background:${svc.color};">${svc.icon}</div>
+              <div class="p-svc-row-info">
+                <div class="p-svc-row-name">${svc.name}</div>
+                <div class="p-svc-row-meta">${arr.length} listing${arr.length!==1?'s':''} · ${activeCount} active</div>
+              </div>
+              <div class="p-svc-row-stats">
+                <div class="p-svc-row-revenue">KES ${rev.toLocaleString()}</div>
+                <div class="p-svc-row-bookings">${bkgs} booking${bkgs!==1?'s':''}</div>
+              </div>
+              <div class="p-svc-row-arrow">›</div>
+            </div>`;
+          }).join('')}
+
+          <button class="p-add-svc-btn" onclick="showAddServiceSheet()">
+            + Add another service
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add service bottom sheet -->
+    <div id="add-svc-sheet" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.6);" onclick="hideAddServiceSheet()">
+      <div style="position:absolute;bottom:0;left:0;right:0;background:#161e28;border-radius:20px 20px 0 0;padding:28px 24px 40px;" onclick="event.stopPropagation()">
+        <div style="width:36px;height:4px;border-radius:2px;background:rgba(255,255,255,.15);margin:0 auto 24px;"></div>
+        <div style="font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:700;color:white;margin-bottom:6px;">Add a new service</div>
+        <div style="font-size:13px;color:rgba(255,255,255,.35);margin-bottom:20px;">Free to set up. Small fixed fee per booking only.</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          ${Object.entries(PARTNER_SERVICES).map(([key, svc]) => `
+            <button onclick="window.location.href='add-listing.html?type=${key}&back=1'"
+              style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;cursor:pointer;text-align:left;transition:background .2s;">
+              <span style="font-size:24px;">${svc.icon}</span>
+              <div>
+                <div style="font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:700;color:white;">${svc.name}</div>
+                <div style="font-size:11px;color:rgba(255,255,255,.35);">${svc.desc}</div>
+              </div>
+              <span style="margin-left:auto;color:rgba(255,255,255,.2);font-size:16px;">›</span>
+            </button>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function showAddServiceSheet() {
+  document.getElementById('add-svc-sheet').style.display = 'block';
+}
+function hideAddServiceSheet() {
+  document.getElementById('add-svc-sheet').style.display = 'none';
+}
+
+function goToServiceDashboard(type) {
+  const svc = PARTNER_SERVICES[type];
+  window.location.href = svc.dashPage + (svc.dashPage.includes('?') ? '&back=1' : '?back=1');
+}
+
+/* ──────────────────────────────────────────────────────
+   SINGLE-SERVICE DASHBOARD
+   (shows when user has exactly 1 listing type)
+────────────────────────────────────────────────────── */
+async function renderSingleDashboard(listing, name) {
+  const container = document.getElementById('p-state-dashboard');
+  container.style.display = 'block';
+
+  const listingType = listing.listing_type || 'apartment';
+  const svc = PARTNER_SERVICES[listingType] || PARTNER_SERVICES.apartment;
+
+  // Load stats
+  const [earnRes, bookRes, reviewRes, listingsRes] = await Promise.all([
+    sb.from(svc.bookingTable).select('grand_total,service_fee').eq('status','paid'),
+    sb.from(svc.bookingTable).select('id').eq('status','paid'),
+    sb.from('reviews').select('rating'),
+    sb.from('listings').select('id,title,name,is_active,price_per_night').eq('partner_id', CURRENT_USER.id),
+  ]);
+
+  const allListings = listingsRes.data || [];
+  const paid = earnRes.data || [];
+  const totalEarned = paid.reduce((s,b) => s + Number(b.grand_total||0) - Number(b.service_fee||0), 0);
+  const avgRating = reviewRes.data?.length
+    ? (reviewRes.data.reduce((s,r)=>s+Number(r.rating||0),0)/reviewRes.data.length).toFixed(1)
+    : null;
+
+  container.innerHTML = `
+    <div class="p-dash">
+      <aside class="p-dash-sidebar" id="p-dash-sidebar">
+        <div style="padding:18px 16px;border-bottom:1px solid rgba(255,255,255,.06);">
+          <div style="font-family:'Playfair Display',serif;font-size:12px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;background:linear-gradient(90deg,#C8970A,#E8A800);-webkit-background-clip:text;background-clip:text;color:transparent;">Apatmento</div>
+        </div>
+        <div style="padding:14px 12px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:10px;">
+          <div style="width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,#0D9467,#059652);display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:700;color:white;flex-shrink:0;">${(USER.firstName||'P')[0].toUpperCase()}</div>
+          <div>
+            <div style="font-size:13px;font-weight:600;color:white;">${USER.firstName || 'Partner'}</div>
+            <div style="font-size:10px;color:#0D9467;font-weight:600;text-transform:uppercase;letter-spacing:.06em;">${svc.icon} ${svc.name}</div>
+          </div>
+        </div>
+        <div style="padding:12px;flex:1;">
+          <div style="font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.2);padding:0 6px;margin-bottom:6px;">Manage</div>
+          ${[
+            {label:'Overview', icon:'📊', href:'#', onclick:''},
+            {label:'My Listings', icon:'🏠', href:'partner-listings.html?back=1', onclick:''},
+            {label:'Bookings', icon:'📋', href:'partner-bookings.html?back=1', onclick:''},
+            {label:'Calendar', icon:'📅', href:'partner-calendar.html?back=1', onclick:''},
+            {label:'Earnings', icon:'💰', href:'partner-earnings.html?back=1', onclick:''},
+            {label:'Analytics', icon:'📈', href:'partner-analytics.html?back=1', onclick:''},
+            {label:'Reviews', icon:'⭐', href:'partner-reviews.html?back=1', onclick:''},
+            {label:'Settings', icon:'⚙️', href:'partner-settings.html?back=1', onclick:''},
+          ].map(item => `
+            <a href="${item.href}" style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;font-size:13px;font-weight:500;color:rgba(255,255,255,.55);text-decoration:none;margin-bottom:2px;transition:background .15s,color .15s;"
+               onmouseover="this.style.background='rgba(255,255,255,.04)';this.style.color='white';"
+               onmouseout="this.style.background='';this.style.color='rgba(255,255,255,.55)';">
+              <span style="font-size:15px;">${item.icon}</span>${item.label}
+            </a>
+          `).join('')}
+        </div>
+        <div style="padding:12px;border-top:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;gap:6px;">
+          <button onclick="showAddServiceSheet()" style="padding:8px 12px;border-radius:8px;border:1px solid rgba(13,148,103,.25);background:rgba(13,148,103,.06);color:#0D9467;font-size:12px;font-weight:600;cursor:pointer;text-align:left;">+ Add Another Service</button>
+          <button onclick="switchRole()" style="padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.08);background:none;color:rgba(255,255,255,.3);font-size:12px;cursor:pointer;text-align:left;">⇄ Switch to Guest</button>
+          <button onclick="signOut()" style="padding:8px 12px;border-radius:8px;border:none;background:none;color:rgba(239,68,68,.4);font-size:12px;cursor:pointer;text-align:left;">⎋ Sign Out</button>
+        </div>
+      </aside>
+
+      <div class="p-dash-main">
+        <div class="p-dash-topbar">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <button onclick="document.getElementById('p-dash-sidebar').classList.toggle('open')"
+              style="display:none;background:none;border:none;color:white;font-size:18px;cursor:pointer;" id="p-menu-btn">☰</button>
+            <div class="p-dash-topbar-title">${svc.icon} ${svc.name} Dashboard</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <button onclick="openSOS()" style="padding:6px 12px;border-radius:100px;background:linear-gradient(135deg,#DC2626,#B91C1C);color:white;border:none;cursor:pointer;font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:800;animation:sosPulse 2.5s ease-in-out infinite;">🆘 SOS</button>
+            <div style="font-size:12px;color:rgba(255,255,255,.3);">${USER.firstName||''}</div>
+          </div>
+        </div>
+        <div class="p-dash-content">
+
+          <!-- Zero commission banner -->
+          <div style="background:linear-gradient(135deg,rgba(13,148,103,.1),rgba(5,150,82,.05));border:1px solid rgba(13,148,103,.2);border-radius:14px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:24px;flex-wrap:wrap;">
+            <div style="font-size:13px;color:rgba(240,249,244,.6);">🏆 <strong style="color:white;">You keep 100% of every booking.</strong> Apatmento charges zero commission — just a small fixed fee.</div>
+            <div style="font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:800;color:#FCC444;background:rgba(252,196,68,.1);padding:6px 14px;border-radius:100px;border:1px solid rgba(252,196,68,.2);white-space:nowrap;">0% Commission</div>
+          </div>
+
+          <!-- Stats -->
+          <div class="p-dash-stat-grid">
+            <div class="p-dash-stat">
+              <div class="p-dash-stat-val">KES ${totalEarned.toLocaleString()}</div>
+              <div class="p-dash-stat-lbl">Total Earned</div>
+              <div class="p-dash-stat-sub">${paid.length} confirmed bookings</div>
+            </div>
+            <div class="p-dash-stat">
+              <div class="p-dash-stat-val">${allListings.length}</div>
+              <div class="p-dash-stat-lbl">Total Listings</div>
+              <div class="p-dash-stat-sub">${allListings.filter(l=>l.is_active).length} active</div>
+            </div>
+            <div class="p-dash-stat">
+              <div class="p-dash-stat-val">${avgRating ? avgRating + ' ⭐' : '—'}</div>
+              <div class="p-dash-stat-lbl">Avg. Rating</div>
+              <div class="p-dash-stat-sub">${reviewRes.data?.length||0} reviews</div>
+            </div>
+          </div>
+
+          <!-- Quick actions -->
+          <div style="font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:700;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px;">Quick Actions</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:28px;">
+            ${[
+              {label:'Add Listing', icon:'➕', href:'add-listing.html?type='+listingType+'&back=1', color:'rgba(13,148,103,.1)', border:'rgba(13,148,103,.2)', textColor:'#0D9467'},
+              {label:'View Bookings', icon:'📋', href:'partner-bookings.html?back=1', color:'rgba(252,196,68,.07)', border:'rgba(252,196,68,.15)', textColor:'#FCC444'},
+              {label:'Earnings', icon:'💰', href:'partner-earnings.html?back=1', color:'rgba(255,255,255,.04)', border:'rgba(255,255,255,.08)', textColor:'rgba(255,255,255,.7)'},
+              {label:'Calendar', icon:'📅', href:'partner-calendar.html?back=1', color:'rgba(255,255,255,.04)', border:'rgba(255,255,255,.08)', textColor:'rgba(255,255,255,.7)'},
+            ].map(a=>`
+              <a href="${a.href}" style="display:flex;align-items:center;gap:10px;padding:14px;border-radius:12px;background:${a.color};border:1px solid ${a.border};text-decoration:none;transition:filter .2s,transform .2s;font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:600;color:${a.textColor};"
+                onmouseover="this.style.filter='brightness(1.3)';this.style.transform='translateY(-2px)';"
+                onmouseout="this.style.filter='';this.style.transform='';">
+                <span style="font-size:20px;">${a.icon}</span>${a.label}
+              </a>
+            `).join('')}
+          </div>
+
+          <!-- Listings preview -->
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+            <div style="font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:700;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.08em;">Your Listings</div>
+            <a href="partner-listings.html?back=1" style="font-size:12px;color:#0D9467;text-decoration:none;font-weight:600;">View all →</a>
+          </div>
+          ${allListings.slice(0,3).map(l=>`
+            <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px;cursor:pointer;"
+              onclick="window.location.href='partner-listings.html?back=1'">
+              <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0;">
+                <div style="width:40px;height:40px;border-radius:10px;background:${svc.color};display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">${svc.icon}</div>
+                <div style="min-width:0;">
+                  <div style="font-size:14px;font-weight:600;color:white;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${l.title||l.name||'Listing'}</div>
+                  <div style="font-size:11px;color:rgba(255,255,255,.3);">KES ${Number(l.price_per_night||0).toLocaleString()}/night</div>
+                </div>
+              </div>
+              <span style="font-size:9px;font-weight:700;padding:3px 9px;border-radius:100px;${l.is_active?'background:rgba(13,148,103,.1);color:#0D9467;border:1px solid rgba(13,148,103,.2);':'background:rgba(255,255,255,.04);color:rgba(255,255,255,.3);border:1px solid rgba(255,255,255,.08);'}">${l.is_active?'Active':'Inactive'}</span>
+            </div>
+          `).join('') || `<div style="text-align:center;padding:32px;color:rgba(255,255,255,.2);font-size:13px;">No listings yet — <a href="add-listing.html?type=${listingType}&back=1" style="color:#0D9467;text-decoration:none;font-weight:600;">add your first</a></div>`}
+        </div>
+      </div>
+    </div>
+
+    <!-- Add service sheet (reused from picker) -->
+    <div id="add-svc-sheet" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.6);" onclick="hideAddServiceSheet()">
+      <div style="position:absolute;bottom:0;left:0;right:0;background:#161e28;border-radius:20px 20px 0 0;padding:28px 24px 40px;" onclick="event.stopPropagation()">
+        <div style="width:36px;height:4px;border-radius:2px;background:rgba(255,255,255,.15);margin:0 auto 24px;"></div>
+        <div style="font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:700;color:white;margin-bottom:6px;">Add a new service</div>
+        <div style="font-size:13px;color:rgba(255,255,255,.35);margin-bottom:20px;">Free to set up. Small fixed fee per booking only.</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          ${Object.entries(PARTNER_SERVICES).map(([key, svc]) => `
+            <button onclick="window.location.href='add-listing.html?type=${key}&back=1'"
+              style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;cursor:pointer;text-align:left;">
+              <span style="font-size:24px;">${svc.icon}</span>
+              <div>
+                <div style="font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:700;color:white;">${svc.name}</div>
+                <div style="font-size:11px;color:rgba(255,255,255,.35);">${svc.desc}</div>
+              </div>
+              <span style="margin-left:auto;color:rgba(255,255,255,.2);font-size:16px;">›</span>
+            </button>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Mobile menu button
+  if (window.innerWidth < 768) {
+    document.getElementById('p-menu-btn').style.display = 'block';
+  }
+}
+
+/* Wire the "mobile show add-service sheet" trigger from single dashboard */
+
 </script>
+
+<!-- SERVICE TRANSITION OVERLAY -->
+<div id="svc-transition">
+  <div class="svc-bg" id="svc-bg"></div>
+  <div class="svc-mover" id="svc-mover"></div>
+  <div class="svc-anim-wrap">
+    <span class="svc-anim-emoji" id="svc-anim-emoji"></span>
+    <div class="svc-anim-label" id="svc-anim-label"></div>
+  </div>
+</div>
+
 </body>
 </html>
