@@ -2094,7 +2094,7 @@ async function loadPartnerStats() {
     .eq('partner_id', CURRENT_USER.id)
     .order('created_at', { ascending: false });
 
-  const activeListings = (listings || []).filter(l => l.is_active);
+  const activeListings = (listings || []).filter(l => l.is_active || l.status === 'active');
 
   // Load paid bookings from all tables
   const [aptRes, tourRes, eventRes] = await Promise.all([
@@ -2882,29 +2882,44 @@ async function initPartnerFlow() {
   document.getElementById('p-state-picker').style.display = 'none';
   document.getElementById('p-state-dashboard').style.display = 'none';
 
-  if (!CURRENT_USER) return;
+  if (!CURRENT_USER) {
+    renderOnboarding(USER.firstName || 'Partner');
+    return;
+  }
 
-  // Detect what services this partner has listed
-  const { data: listings } = await sb
-    .from('listings')
-    .select('id,title,name,property_type,listing_type,price_per_night,is_active,created_at')
-    .eq('partner_id', CURRENT_USER.id);
+  try {
+    // Select only columns guaranteed to exist in the schema
+    const { data: listings, error } = await sb
+      .from('listings')
+      .select('id,title,name,status,listing_type,price_night,created_at')
+      .eq('partner_id', CURRENT_USER.id);
 
-  partnerServices = listings || [];
+    if (error) {
+      console.warn('Listings query error:', error.message);
+    }
 
-  // Hide loading
+    // Normalise: map old column names to what the rest of the code expects
+    partnerServices = (listings || []).map(l => ({
+      ...l,
+      is_active:      l.status === 'active' || l.status !== 'inactive',
+      price_per_night: l.price_night || l.price_per_night || 0,
+    }));
+
+  } catch (err) {
+    console.warn('initPartnerFlow error:', err.message);
+    partnerServices = [];
+  }
+
+  // Always hide loading and show something — never get stuck
   document.getElementById('p-state-loading').style.display = 'none';
 
   const name = USER.firstName || 'Partner';
 
   if (!partnerServices.length) {
-    // ── STATE: ONBOARDING ──
     renderOnboarding(name);
   } else if (partnerServices.length === 1) {
-    // ── STATE: SINGLE SERVICE — skip picker, go straight to dashboard ──
     renderSingleDashboard(partnerServices[0], name);
   } else {
-    // ── STATE: MULTI-SERVICE PICKER ──
     renderServicePicker(partnerServices, name);
   }
 }
