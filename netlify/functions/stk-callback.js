@@ -1,87 +1,70 @@
 /* ══════════════════════════════════════════════════════════════
-   APATMENTO — PayHero STK Push Callback Receiver
-   Netlify Function (serverless backend)
-
-   PayHero calls THIS endpoint automatically once the customer
-   completes (or cancels/fails) the M-Pesa STK push on their phone.
-
-   This function:
-   1. Receives the payment result from PayHero
-   2. Updates the matching booking row in Supabase to 'paid' or 'failed'
-
-   Required environment variables (same as stk-push.js):
-     SUPABASE_URL
-     SUPABASE_SERVICE_KEY   (service_role key — has write access, bypasses RLS)
+   APATMENTO — PayHero Callback Receiver
+   Vercel Serverless Function (api/stk-callback.js)
+   Called at: /api/stk-callback
+   PayHero POSTs here when guest completes/fails M-Pesa payment
 ══════════════════════════════════════════════════════════════ */
 
-exports.handler = async function (event) {
-  if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: 'Method not allowed' };
-  }
+export default async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const payload = JSON.parse(event.body);
+    const payload = req.body;
     console.log('PayHero callback received:', JSON.stringify(payload));
 
-    // PayHero's callback payload typically includes a status field and
-    // the external_reference we originally sent (our booking reference).
-    // Exact field names should be verified against your PayHero dashboard
-    // logs on the first real transaction — adjust below if needed.
     const status            = payload.status || payload.response?.ResultCode;
     const externalReference = payload.external_reference || payload.response?.external_reference;
-    const isSuccess = status === 'SUCCESS' || status === 0 || status === '0';
+    const isSuccess         = status === 'SUCCESS' || status === 0 || status === '0';
 
     if (!externalReference) {
-      console.warn('No external_reference in callback payload');
-      return { statusCode: 200, body: JSON.stringify({ received: true }) };
+      console.warn('No external_reference in callback');
+      return res.status(200).json({ received: true });
     }
 
-    // ── DETERMINE WHICH TABLE TO UPDATE BASED ON REFERENCE PREFIX ──
-    // We prefix references like "TOUR-..." / "EVENT-..." / "APT-..." when
-    // initiating the STK push, so we know which table to update here.
     let table = null;
-    if (externalReference.startsWith('TOUR-'))  table = 'tour_bookings';
-    if (externalReference.startsWith('EVENT-')) table = 'event_tickets';
-    if (externalReference.startsWith('APT-'))   table = 'apartment_bookings';
+    if (externalReference.startsWith('TOUR-'))   table = 'tour_bookings';
+    if (externalReference.startsWith('EVENT-'))  table = 'event_tickets';
+    if (externalReference.startsWith('APT-'))    table = 'apartment_bookings';
+    // Payout callbacks — don't update booking status
+    if (externalReference.startsWith('PAYOUT-')) return res.status(200).json({ received: true });
 
     if (!table) {
       console.warn('Unrecognised reference prefix:', externalReference);
-      return { statusCode: 200, body: JSON.stringify({ received: true }) };
+      return res.status(200).json({ received: true });
     }
 
-    // ── UPDATE SUPABASE via REST API (service role key bypasses RLS) ──
     const supabaseUrl = process.env.SUPABASE_URL;
     const serviceKey  = process.env.SUPABASE_SERVICE_KEY;
+    const newStatus   = isSuccess ? 'paid_pending_checkin' : 'failed';
 
-    const newStatus = isSuccess ? 'paid' : 'failed';
+    const updateRes = await fetch(
+      `${supabaseUrl}/rest/v1/${table}?payment_reference=eq.${externalReference}`,
+      {
+        method:  'PATCH',
+        headers: {
+          apikey:         serviceKey,
+          Authorization:  `Bearer ${serviceKey}`,
+          'Content-Type': 'application/json',
+          Prefer:         'return=minimal',
+        },
+        body: JSON.stringify({ status: newStatus }),
+      }
+    );
 
-    const updateUrl = `${supabaseUrl}/rest/v1/${table}?payment_reference=eq.${externalReference}`;
-
-    const res = await fetch(updateUrl, {
-      method: 'PATCH',
-      headers: {
-        apikey: serviceKey,
-        Authorization: `Bearer ${serviceKey}`,
-        'Content-Type': 'application/json',
-        Prefer: 'return=minimal',
-      },
-      body: JSON.stringify({ status: newStatus }),
-    });
-
-    if (!res.ok) {
-      const errText = await res.text();
+    if (!updateRes.ok) {
+      const errText = await updateRes.text();
       console.error('Supabase update failed:', errText);
     }
 
-    // Always return 200 to PayHero so they don't keep retrying
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ received: true, updated: res.ok, status: newStatus }),
-    };
+    return res.status(200).json({ received: true, updated: updateRes.ok, status: newStatus });
 
   } catch (err) {
-    console.error('Callback handler error:', err);
-    // Still return 200 — we don't want PayHero retrying indefinitely on our bug
-    return { statusCode: 200, body: JSON.stringify({ received: true, error: err.message }) };
+    console.error('Callback error:', err);
+    return res.status(200).json({ received: true, error: err.message });
   }
-};
+}
