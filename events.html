@@ -520,7 +520,7 @@ html,body{min-height:100%;font-family:'Inter',sans-serif;background:var(--offwhi
     render('sending', opts);
 
     try {
-      const res = await fetch('/.netlify/functions/stk-push', {
+      const res = await fetch('/api/stk-push', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -560,10 +560,10 @@ html,body{min-height:100%;font-family:'Inter',sans-serif;background:var(--offwhi
       }
 
       try {
-        const res = await fetch(`/.netlify/functions/check-payment-status?table=${opts.table}&reference=${encodeURIComponent(opts.reference)}`);
+        const res = await fetch(`/api/check-payment-status?table=${opts.table}&reference=${encodeURIComponent(opts.reference)}`);
         const data = await res.json();
 
-        if (data.status === 'paid') {
+        if (data.status === 'paid' || data.status === 'paid_pending_checkin') {
           clearInterval(pollInterval);
           render('success', opts);
           if (opts.onSuccess) opts.onSuccess(data);
@@ -603,8 +603,8 @@ html,body{min-height:100%;font-family:'Inter',sans-serif;background:var(--offwhi
 <body>
 
 <nav class="top-nav">
-  <a href="dashboard.html?role=guest" class="nav-back">← Dashboard</a>
-  <a href="dashboard.html?role=guest" class="nav-logo">Apatmento</a>
+  <a href="dashboard.html?role=guest&back=1" class="nav-back">← Dashboard</a>
+  <a href="dashboard.html?role=guest&back=1" class="nav-logo">Apatmento</a>
   <div class="nav-avatar" id="nav-avatar">G</div>
 </nav>
 
@@ -719,7 +719,7 @@ const EVENTS = [
     cat:'music', date:'2026-07-12', day:'12', month:'JUL', time:'4:00 PM',
     icon:'🎷', grad:'et-0', status:'selling', soldOutPercent:62,
     organizer:'Blankets &amp; Wine Kenya', orgInit:'B', verified:true,
-    desc:'East Africa\\'s premier jazz festival returns to Ngong Racecourse with a stellar lineup of local and international jazz acts. Food trucks, art installations, and an unforgettable evening under the stars.',
+    desc:'East Africa\'s premier jazz festival returns to Ngong Racecourse with a stellar lineup of local and international jazz acts. Food trucks, art installations, and an unforgettable evening under the stars.',
     tiers:[
       {name:'Early Bird', price:1500, desc:'Limited availability'},
       {name:'Regular', price:2500, desc:'General entry'},
@@ -731,7 +731,7 @@ const EVENTS = [
     cat:'comedy', date:'2026-06-21', day:'21', month:'JUN', time:'7:00 PM',
     icon:'😂', grad:'et-1', status:'selling', soldOutPercent:38,
     organizer:'Laughter Inc.', orgInit:'L', verified:true,
-    desc:'An evening of non-stop laughs with Kenya\\'s top comedians. Doors open at 6pm with a cash bar and street food vendors on site.',
+    desc:'An evening of non-stop laughs with Kenya\'s top comedians. Doors open at 6pm with a cash bar and street food vendors on site.',
     tiers:[
       {name:'Standard', price:1000, desc:'General seating'},
       {name:'VIP Table', price:3500, desc:'Reserved table for 4'},
@@ -742,7 +742,7 @@ const EVENTS = [
     cat:'conference', date:'2026-08-05', day:'05', month:'AUG', time:'9:00 AM',
     icon:'💻', grad:'et-2', status:'selling', soldOutPercent:21,
     organizer:'Tech Kenya Network', orgInit:'T', verified:true,
-    desc:'East Africa\\'s leading tech conference bringing together founders, investors and developers. Keynotes, workshops, and unmatched networking opportunities.',
+    desc:'East Africa\'s leading tech conference bringing together founders, investors and developers. Keynotes, workshops, and unmatched networking opportunities.',
     tiers:[
       {name:'Student', price:1500, desc:'Valid student ID required'},
       {name:'Professional', price:5000, desc:'Full conference access'},
@@ -776,7 +776,7 @@ const EVENTS = [
     cat:'nightlife', date:'2026-06-20', day:'20', month:'JUN', time:'5:00 PM',
     icon:'🎧', grad:'et-5', status:'selling', soldOutPercent:44,
     organizer:'Alchemist Events', orgInit:'A', verified:true,
-    desc:'Nairobi\\'s favourite sundowner returns with top local DJs spinning deep house and afrobeat as the sun sets over the city.',
+    desc:'Nairobi\'s favourite sundowner returns with top local DJs spinning deep house and afrobeat as the sun sets over the city.',
     tiers:[
       {name:'General Entry', price:800, desc:'Walk-in entry'},
     ],
