@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>APATMENTO Partner — Bookings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0d1117;--sidebar:#111820;--card:#161e28;--card2:#1c2636;
+  --border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.10);
+  --text:#e8edf5;--text2:#8b93a6;--text3:#4a5568;
+  --gold:#C8970A;--gold2:#E8A800;--goldbright:#FCC444;
+  --emerald:#0D9467;--emerald2:#059652;
+  --em-bg:rgba(13,148,103,0.10);--em-bd:rgba(13,148,103,0.25);
+  --shadow:0 4px 24px rgba(0,0,0,0.3);
+}
+html,body{min-height:100%;font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);}
+.layout{display:flex;min-height:100vh;}
+
+/* ── SIDEBAR ── */
+.sidebar{
+  width:240px;flex-shrink:0;background:var(--sidebar);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;padding:0;
+  position:fixed;top:0;left:0;bottom:0;overflow-y:auto;z-index:50;
+}
+.sb-logo{
+  padding:22px 20px 18px;
+  font-family:'Playfair Display',serif;font-size:14px;font-weight:700;
+  letter-spacing:.22em;text-transform:uppercase;
+  background:linear-gradient(90deg,var(--gold),var(--gold2));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  border-bottom:1px solid var(--border);
+}
+.sb-user{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.sb-avatar{
+  width:34px;height:34px;border-radius:10px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--emerald),var(--emerald2));
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:700;color:white;
+}
+.sb-name{font-size:13px;font-weight:600;color:var(--text);}
+.sb-role{font-size:10px;font-weight:600;color:var(--emerald);letter-spacing:.06em;text-transform:uppercase;}
+.sb-section{padding:14px 12px 4px;}
+.sb-section-label{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text3);padding:0 8px;margin-bottom:4px;}
+.sb-link{
+  display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;
+  font-size:13px;font-weight:500;color:var(--text2);text-decoration:none;cursor:pointer;
+  transition:background .15s,color .15s;margin-bottom:1px;
+}
+.sb-link:hover{background:rgba(255,255,255,.04);color:var(--text);}
+.sb-link.active{background:var(--em-bg);color:var(--emerald);border:1px solid var(--em-bd);font-weight:600;}
+.sb-link svg{flex-shrink:0;opacity:.7;}
+.sb-link.active svg{opacity:1;}
+.sb-bottom{margin-top:auto;padding:12px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:6px;}
+.sb-btn{
+  padding:8px 12px;border-radius:8px;border:1px solid var(--border2);background:transparent;
+  font-family:'Inter',sans-serif;font-size:12px;font-weight:500;color:var(--text2);
+  cursor:pointer;text-align:left;transition:background .15s;
+}
+.sb-btn:hover{background:rgba(255,255,255,.04);}
+
+/* ── MAIN ── */
+.main{margin-left:240px;flex:1;min-height:100vh;}
+.topbar{
+  position:sticky;top:0;z-index:40;height:56px;
+  background:rgba(13,17,23,.92);backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;padding:0 28px;
+}
+.topbar-title{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;color:var(--text);}
+.topbar-right{display:flex;align-items:center;gap:12px;}
+.page-content{padding:28px;max-width:1200px;}
+
+/* ── CARDS ── */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin-bottom:24px;}
+.stat-card{
+  background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px 20px;
+}
+.stat-val{font-family:'Space Grotesk',sans-serif;font-size:26px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.stat-lbl{font-size:12px;color:var(--text2);}
+.stat-sub{font-size:11px;color:var(--emerald);font-weight:500;margin-top:6px;}
+.stat-sub.neg{color:#f87171;}
+
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.section-title{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;color:var(--text);letter-spacing:.03em;}
+.section-sub{font-size:12px;color:var(--text2);margin-top:2px;}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:14px;}
+.card:hover{border-color:var(--border2);}
+
+/* ── BUTTONS ── */
+.btn{
+  padding:9px 18px;border-radius:9px;border:none;cursor:pointer;
+  font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:700;
+  transition:filter .2s,transform .2s;
+}
+.btn:hover{filter:brightness(1.08);transform:translateY(-1px);}
+.btn-primary{background:linear-gradient(135deg,var(--emerald),var(--emerald2));color:white;}
+.btn-gold{background:linear-gradient(135deg,var(--goldbright),var(--gold2));color:#0a1a0a;}
+.btn-ghost{background:rgba(255,255,255,.06);color:var(--text2);border:1px solid var(--border2);}
+.btn-danger{background:rgba(239,68,68,.1);color:#f87171;border:1px solid rgba(239,68,68,.2);}
+.btn-sm{padding:6px 12px;font-size:11px;border-radius:7px;}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:100px;font-size:10px;font-weight:700;letter-spacing:.04em;}
+.badge-green{background:var(--em-bg);color:var(--emerald);border:1px solid var(--em-bd);}
+.badge-gold{background:rgba(252,196,68,.1);color:var(--goldbright);border:1px solid rgba(252,196,68,.2);}
+.badge-red{background:rgba(239,68,68,.1);color:#f87171;border:1px solid rgba(239,68,68,.2);}
+.badge-grey{background:rgba(255,255,255,.06);color:var(--text2);border:1px solid var(--border2);}
+
+/* ── TABLES ── */
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+th{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);padding:10px 14px;text-align:left;border-bottom:1px solid var(--border);}
+td{padding:13px 14px;font-size:13px;color:var(--text);border-bottom:1px solid var(--border);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(255,255,255,.02);}
+
+/* ── EMPTY STATE ── */
+.empty{text-align:center;padding:56px 24px;}
+.empty-ico{font-size:40px;margin-bottom:14px;opacity:.4;}
+.empty-title{font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:700;color:var(--text2);margin-bottom:6px;}
+.empty-sub{font-size:13px;color:var(--text3);}
+
+/* ── FORM ── */
+.form-group{margin-bottom:16px;}
+.form-label{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text2);margin-bottom:6px;display:block;}
+.form-input,.form-select,.form-textarea{
+  width:100%;padding:11px 14px;border-radius:9px;border:1px solid var(--border2);
+  background:rgba(255,255,255,.04);color:var(--text);font-family:'Inter',sans-serif;font-size:13px;
+  outline:none;transition:border-color .2s;-webkit-appearance:none;
+}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--emerald);}
+.form-textarea{resize:vertical;min-height:80px;}
+
+/* ── TOAST ── */
+.toast{
+  position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+  background:var(--card2);color:var(--text);padding:11px 20px;border-radius:10px;
+  font-size:13px;box-shadow:var(--shadow);border:1px solid var(--border2);
+  z-index:999;opacity:0;pointer-events:none;transition:opacity .3s;white-space:nowrap;
+}
+.toast.show{opacity:1;}
+
+/* MOBILE */
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%);transition:transform .3s;}
+  .sidebar.open{transform:translateX(0);}
+  .main{margin-left:0;}
+  .page-content{padding:16px;}
+  .stat-grid{grid-template-columns:1fr 1fr;}
+}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<aside class="sidebar" id="sidebar">
+  <div class="sb-logo">Apatmento</div>
+  <div class="sb-user">
+    <div class="sb-avatar" id="sb-avatar">P</div>
+    <div>
+      <div class="sb-name" id="sb-name">Partner</div>
+      <div class="sb-role">Host Account</div>
+    </div>
+  </div>
+
+  <div class="sb-section">
+    <div class="sb-section-label">Overview</div>
+    <a class="sb-link " href="dashboard.html?role=partner&back=1">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
+      Dashboard
+    </a>
+    <a class="sb-link " href="partner-listings.html">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      My Listings
+    </a>
+    <a class="sb-link active" href="partner-bookings.html">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg>
+      Bookings
+    </a>
+    <a class="sb-link " href="partner-calendar.html">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/><path d="M16 18h.01"/></svg>
+      Calendar
+    </a>
+  </div>
+
+  <div class="sb-section">
+    <div class="sb-section-label">Business</div>
+    <a class="sb-link " href="partner-earnings.html">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+      Earnings & Payouts
+    </a>
+    <a class="sb-link " href="partner-analytics.html">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+      Analytics
+    </a>
+    <a class="sb-link " href="partner-reviews.html">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      Reviews
+    </a>
+  </div>
+
+  <div class="sb-section">
+    <div class="sb-section-label">Account</div>
+    <a class="sb-link " href="partner-settings.html">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.2 2h-.4a2 2 0 0 0-2 2v.2a2 2 0 0 1-1 1.7l-.3.2a2 2 0 0 1-2 0l-.2-.1a2 2 0 0 0-2.7.7l-.2.4a2 2 0 0 0 .7 2.7l.2.1a2 2 0 0 1 1 1.7v.4a2 2 0 0 1-1 1.7l-.2.1a2 2 0 0 0-.7 2.7l.2.4a2 2 0 0 0 2.7.7l.3-.2a2 2 0 0 1 2 0l.3.2a2 2 0 0 1 1 1.7v.2a2 2 0 0 0 2 2h.4a2 2 0 0 0 2-2v-.2a2 2 0 0 1 1-1.7l.3-.2a2 2 0 0 1 2 0l.2.1a2 2 0 0 0 2.7-.7l.2-.4a2 2 0 0 0-.7-2.7l-.2-.1a2 2 0 0 1-1-1.7v-.4a2 2 0 0 1 1-1.7l.2-.1a2 2 0 0 0 .7-2.7l-.2-.4a2 2 0 0 0-2.7-.7l-.3.2a2 2 0 0 1-2 0l-.3-.2a2 2 0 0 1-1-1.7v-.2a2 2 0 0 0-2-2Z"/><circle cx="12" cy="12" r="3"/></svg>
+      Settings
+    </a>
+  </div>
+
+  <div class="sb-bottom">
+    <button class="sb-btn" onclick="window.location.href='dashboard.html?role=guest&back=1'">⇄ Switch to Guest</button>
+    <button class="sb-btn" onclick="signOut()" style="color:#f87171;">⎋ Sign Out</button>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <button onclick="document.getElementById('sidebar').classList.toggle('open')" style="display:none;background:none;border:none;color:var(--text);cursor:pointer;font-size:18px;" id="menu-toggle">☰</button>
+      <div class="topbar-title">Bookings</div>
+    </div>
+    <div class="topbar-right">
+      <div id="topbar-name" style="font-size:12px;color:var(--text2);"></div>
+      <div class="sb-avatar" id="top-avatar" style="width:32px;height:32px;border-radius:8px;font-size:12px;">P</div>
+    </div>
+  </div>
+  <div class="page-content">
+
+<div class="section-header">
+  <div>
+    <div class="section-title">Bookings</div>
+    <div class="section-sub">All incoming reservations across your apartments, tours and events</div>
+  </div>
+</div>
+
+<!-- Status tabs -->
+<div style="display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap;">
+  <button class="btn btn-gold btn-sm" id="tab-all" onclick="setTab('all')">All</button>
+  <button class="btn btn-ghost btn-sm" id="tab-pending" onclick="setTab('pending')">⏳ Pending</button>
+  <button class="btn btn-ghost btn-sm" id="tab-paid" onclick="setTab('paid')">✅ Confirmed</button>
+  <button class="btn btn-ghost btn-sm" id="tab-failed" onclick="setTab('failed')">❌ Failed</button>
+</div>
+
+<div class="card" style="padding:0;overflow:hidden;">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Guest</th>
+          <th>Booking</th>
+          <th>Type</th>
+          <th>Dates / Details</th>
+          <th>Amount</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="bookings-tbody">
+        <tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text2);">Loading bookings…</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+let allBookings = [];
+let currentTab = 'all';
+
+async function onPageReady() {
+  await loadAllBookings();
+}
+
+async function loadAllBookings() {
+  // Load from all 3 booking tables
+  const [aptRes, tourRes, eventRes] = await Promise.all([
+    sb.from('apartment_bookings').select('*').order('created_at', { ascending: false }),
+    sb.from('tour_bookings').select('*').order('created_at', { ascending: false }),
+    sb.from('event_tickets').select('*').order('created_at', { ascending: false }),
+  ]);
+
+  const apts   = (aptRes.data   || []).map(b => ({ ...b, type: 'Apartment', displayName: b.apartment_name,  detail: `${b.checkin_date} → ${b.checkout_date} · ${b.nights} nights`, guestName: b.guest_name }));
+  const tours  = (tourRes.data  || []).map(b => ({ ...b, type: 'Tour',      displayName: b.tour_name,       detail: `${b.tour_date} · ${b.num_people} people`, guestName: b.contact_phone }));
+  const events = (eventRes.data || []).map(b => ({ ...b, type: 'Event',     displayName: b.event_name,      detail: `${b.tier_name} · ${b.quantity} ticket(s)`, guestName: b.contact_phone }));
+
+  allBookings = [...apts, ...tours, ...events].sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+  renderBookings();
+}
+
+function setTab(tab) {
+  currentTab = tab;
+  ['all','pending','paid','failed'].forEach(t => {
+    const btn = document.getElementById('tab-' + t);
+    btn.className = t === tab ? 'btn btn-gold btn-sm' : 'btn btn-ghost btn-sm';
+  });
+  renderBookings();
+}
+
+function renderBookings() {
+  const tbody = document.getElementById('bookings-tbody');
+  let filtered = currentTab === 'all' ? allBookings
+    : allBookings.filter(b => {
+        if (currentTab === 'pending') return b.status === 'pending_payment';
+        if (currentTab === 'paid')    return b.status === 'paid';
+        if (currentTab === 'failed')  return b.status === 'failed';
+        return true;
+      });
+
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty">
+      <div class="empty-ico">📋</div>
+      <div class="empty-title">No ${currentTab === 'all' ? '' : currentTab + ' '}bookings yet</div>
+      <div class="empty-sub">Bookings will appear here once guests start reserving your listings</div>
+    </div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(b => {
+    const statusBadge = b.status === 'paid' ? '<span class="badge badge-green">Paid</span>'
+      : b.status === 'failed' ? '<span class="badge badge-red">Failed</span>'
+      : '<span class="badge badge-gold">Pending</span>';
+    const typeBadge = b.type === 'Apartment' ? '<span class="badge badge-green">🏠 Apt</span>'
+      : b.type === 'Tour' ? '<span class="badge" style="background:rgba(194,105,60,.1);color:#c2693c;border:1px solid rgba(194,105,60,.2);">🗺️ Tour</span>'
+      : '<span class="badge" style="background:rgba(124,58,237,.1);color:#a78bfa;border:1px solid rgba(124,58,237,.2);">🎟️ Event</span>';
+    const date = new Date(b.created_at).toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'});
+    return `<tr>
+      <td>
+        <div style="font-weight:600;">${b.guestName || '—'}</div>
+        <div style="font-size:11px;color:var(--text2);">${b.contact_phone || ''}</div>
+      </td>
+      <td>
+        <div style="font-weight:500;">${b.displayName || '—'}</div>
+        <div style="font-size:11px;color:var(--text2);">${date}</div>
+      </td>
+      <td>${typeBadge}</td>
+      <td style="font-size:12px;color:var(--text2);">${b.detail || '—'}</td>
+      <td>
+        <div style="font-family:'Space Grotesk',sans-serif;font-weight:700;color:var(--goldbright);">KES ${Number(b.grand_total || 0).toLocaleString()}</div>
+        <div style="font-size:11px;color:var(--text2);">Fee: KES ${Number(b.service_fee || 0).toLocaleString()}</div>
+      </td>
+      <td>${statusBadge}</td>
+      <td>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-ghost btn-sm" onclick="viewBookingDetail(${JSON.stringify(b).replace(/"/g, '&quot;')})">View</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function viewBookingDetail(b) {
+  const table = b.type === 'Apartment' ? 'apartment_bookings'
+    : b.type === 'Tour' ? 'tour_bookings' : 'event_tickets';
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;z-index:999;background:rgba(13,17,23,.85);display:flex;align-items:center;justify-content:center;padding:20px;';
+
+  const isPendingCheckin = b.status === 'paid_pending_checkin';
+  const isCheckedIn = b.status === 'checked_in';
+
+  modal.innerHTML = `
+    <div style="background:#161e28;border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:28px;max-width:440px;width:100%;max-height:90vh;overflow-y:auto;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:20px;">
+        <div style="font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:700;color:white;">${b.displayName}</div>
+        <button onclick="this.closest('div[style*=fixed]').remove()" style="background:none;border:none;color:rgba(255,255,255,.4);font-size:20px;cursor:pointer;">✕</button>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;">
+        <div style="background:rgba(255,255,255,.04);border-radius:10px;padding:12px;">
+          <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.3);margin-bottom:4px;">Guest</div>
+          <div style="font-size:13px;color:white;font-weight:600;">${b.guestName||'—'}</div>
+        </div>
+        <div style="background:rgba(255,255,255,.04);border-radius:10px;padding:12px;">
+          <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.3);margin-bottom:4px;">Total Paid</div>
+          <div style="font-family:'Space Grotesk',sans-serif;font-size:15px;color:#FCC444;font-weight:700;">KES ${Number(b.grand_total||0).toLocaleString()}</div>
+        </div>
+        <div style="background:rgba(255,255,255,.04);border-radius:10px;padding:12px;">
+          <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.3);margin-bottom:4px;">Your Earnings</div>
+          <div style="font-family:'Space Grotesk',sans-serif;font-size:15px;color:#0D9467;font-weight:700;">KES ${(Number(b.grand_total||0)-Number(b.service_fee||0)).toLocaleString()}</div>
+        </div>
+        <div style="background:rgba(255,255,255,.04);border-radius:10px;padding:12px;">
+          <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.3);margin-bottom:4px;">Status</div>
+          <div style="font-size:12px;font-weight:700;color:${isCheckedIn?'#6EE7B7':isPendingCheckin?'#FCC444':'rgba(255,255,255,.5)'};">${isCheckedIn?'✅ Confirmed':isPendingCheckin?'⏳ Awaiting Check-in':b.status}</div>
+        </div>
+      </div>
+
+      ${isPendingCheckin ? `
+        <div style="background:linear-gradient(135deg,rgba(13,148,103,.1),rgba(7,86,60,.1));border:1px solid rgba(13,148,103,.2);border-radius:14px;padding:18px;margin-bottom:16px;">
+          <div style="font-size:11px;font-weight:700;color:#0D9467;letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px;">🔑 Check-In Verification</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+            <div style="background:rgba(13,148,103,.12);border:1px solid rgba(13,148,103,.2);border-radius:8px;padding:12px;text-align:center;">
+              <div style="font-size:9px;font-weight:700;color:#6EE7B7;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px;">Your Code</div>
+              <div style="font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:900;color:white;letter-spacing:.1em;">${b.host_code||'—'}</div>
+              <div style="font-size:10px;color:rgba(255,255,255,.3);margin-top:4px;">Give this to your guest</div>
+            </div>
+            <div style="background:rgba(252,196,68,.08);border:1px solid rgba(252,196,68,.2);border-radius:8px;padding:12px;text-align:center;">
+              <div style="font-size:9px;font-weight:700;color:#FCC444;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px;">Guest Code Status</div>
+              <div style="font-size:13px;font-weight:700;color:${b.host_verified?'#6EE7B7':'rgba(255,255,255,.35)'};">${b.host_verified?'✓ Verified':'Not verified yet'}</div>
+            </div>
+          </div>
+          ${!b.host_verified ? `
+            <div style="font-size:11px;color:rgba(255,255,255,.35);margin-bottom:8px;">Enter the GUEST-XXXXXX code your guest shows you:</div>
+            <div style="display:flex;gap:8px;">
+              <input id="guest-code-input-${b.id}" type="text" placeholder="GUEST-XXXXXX" maxlength="11"
+                style="flex:1;padding:11px 14px;border-radius:10px;border:1.5px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:white;font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;outline:none;"
+                onfocus="this.style.borderColor='#0D9467'" onblur="this.style.borderColor='rgba(255,255,255,.12)'"/>
+              <button onclick="verifyGuestCode('${table}','${b.payment_reference}','${b.id}')"
+                style="padding:11px 16px;border-radius:10px;background:linear-gradient(135deg,#0D9467,#059652);color:white;border:none;cursor:pointer;font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:700;">
+                Verify
+              </button>
+            </div>
+          ` : `<div style="background:rgba(13,148,103,.12);border-radius:8px;padding:10px 14px;font-size:12px;color:#6EE7B7;font-weight:500;">✅ Guest code verified. Waiting for guest to verify your host code.</div>`}
+        </div>
+      ` : isCheckedIn ? `
+        <div style="background:rgba(13,148,103,.1);border:1px solid rgba(13,148,103,.2);border-radius:12px;padding:14px 16px;margin-bottom:16px;font-size:13px;color:#6EE7B7;font-weight:500;">
+          🎉 Check-in confirmed. Payout of KES ${(Number(b.grand_total||0)-Number(b.service_fee||0)).toLocaleString()} has been sent to your M-Pesa.
+        </div>
+      ` : ''}
+
+      <div style="font-size:11px;color:rgba(255,255,255,.2);margin-top:8px;">Ref: ${b.payment_reference||'—'}</div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if(e.target===modal) modal.remove(); });
+}
+</script>
+
+  </div>
+</div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const SB_URL = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
+const { createClient } = supabase;
+const sb = createClient(SB_URL, SB_KEY);
+let CURRENT_USER = null;
+
+async function initPartnerPage() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { window.location.href = 'auth.html'; return; }
+  CURRENT_USER = session.user;
+  const meta = session.user.user_metadata || {};
+  const name = meta.first_name || meta.full_name?.split(' ')[0] || 'Partner';
+  const initial = name[0].toUpperCase();
+  document.getElementById('sb-avatar').textContent = initial;
+  document.getElementById('top-avatar').textContent = initial;
+  document.getElementById('sb-name').textContent = name;
+  document.getElementById('topbar-name').textContent = name;
+  if (typeof onPageReady === 'function') onPageReady();
+}
+initPartnerPage();
+
+function showToast(msg, dur=3000) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), dur);
+}
+async function signOut() {
+  await sb.auth.signOut();
+  window.location.href = 'auth.html';
+}
+// Mobile sidebar
+if (window.innerWidth < 768) {
+  document.getElementById('menu-toggle').style.display = 'block';
+}
+
+
+async function verifyGuestCode(table, reference, bookingId) {
+  const input = document.getElementById('guest-code-input-' + bookingId);
+  const statusEl = document.getElementById('host-verify-status-' + bookingId);
+  const code = input?.value?.trim().toUpperCase();
+
+  if (!code || !code.startsWith('GUEST')) {
+    showToast('Please enter a valid GUEST-XXXXXX code from your guest.');
+    return;
+  }
+
+  showToast('Verifying code…');
+  try {
+    const res = await fetch('/api/verify-checkin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ table, reference, role: 'host', code }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      showToast('❌ ' + (data.error || 'Verification failed'));
+      return;
+    }
+    if (data.status === 'checked_in') {
+      showToast('🎉 Check-in confirmed! Payout has been released to you.');
+      await loadAllBookings();
+    } else {
+      showToast('✅ Guest code verified. Waiting for guest to verify your code.');
+      await loadAllBookings();
+    }
+  } catch(err) {
+    showToast('Network error. Please try again.');
+  }
+}
+
+</script>
+</body>
+</html>
