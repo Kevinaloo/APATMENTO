@@ -3,439 +3,325 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>APATMENTO Partner — My Listings</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<title>Apatmento — My Listings</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..700&display=swap" rel="stylesheet"/>
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&f[]=geist@400,500,600&display=swap" rel="stylesheet"/>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
-  --bg:#0d1117;--sidebar:#111820;--card:#161e28;--card2:#1c2636;
-  --border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.10);
-  --text:#e8edf5;--text2:#8b93a6;--text3:#4a5568;
-  --gold:#C8970A;--gold2:#E8A800;--goldbright:#FCC444;
-  --emerald:#0D9467;--emerald2:#059652;
-  --em-bg:rgba(13,148,103,0.10);--em-bd:rgba(13,148,103,0.25);
-  --shadow:0 4px 24px rgba(0,0,0,0.3);
+  --glass:#FCFCFD;--glass-2:#F4F5FB;--glass-3:#EBEDF7;
+  --ink:#0A0A14;--ink-soft:#4A4C66;--ink-faint:#8E90AD;
+  --lilac:#B8A4F4;--lilac-deep:#8B6FE8;--mint:#5EEAD4;--mint-deep:#2DD4BF;
+  --peach:#FFB59E;--electric:#4361FF;--violet:#7B2FF7;--ember:#FF6B2C;
+  --line:rgba(10,10,20,0.07);--line-2:rgba(10,10,20,0.13);
+  --theme:var(--lilac-deep);--theme-grad:linear-gradient(135deg,#B8A4F4,#7B2FF7);
+  --font-display:'Fraunces',serif;--font-body:'General Sans',system-ui,sans-serif;
+  --font-data:'Geist',monospace;
+  --shadow-sm:0 2px 8px rgba(10,10,20,0.06);
+  --shadow-md:0 8px 32px rgba(123,47,247,0.08);
+  --shadow-lift:0 20px 60px rgba(123,47,247,0.14);
+  --radius:18px;--err:#FF4D6D;--ok:#2DD4BF;
 }
-html,body{min-height:100%;font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);}
-.layout{display:flex;min-height:100vh;}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms !important;transition-duration:.01ms !important;}}
+html,body{height:100%;font-family:var(--font-body);background:var(--glass-2);color:var(--ink);-webkit-font-smoothing:antialiased;}
+body{display:flex;flex-direction:column;overflow-x:hidden;}
 
-/* ── SIDEBAR ── */
-.sidebar{
-  width:240px;flex-shrink:0;background:var(--sidebar);
-  border-right:1px solid var(--border);
-  display:flex;flex-direction:column;padding:0;
-  position:fixed;top:0;left:0;bottom:0;overflow-y:auto;z-index:50;
-}
-.sb-logo{
-  padding:22px 20px 18px;
-  font-family:'Playfair Display',serif;font-size:14px;font-weight:700;
-  letter-spacing:.22em;text-transform:uppercase;
-  background:linear-gradient(90deg,var(--gold),var(--gold2));
-  -webkit-background-clip:text;background-clip:text;color:transparent;
-  border-bottom:1px solid var(--border);
-}
-.sb-user{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
-.sb-avatar{
-  width:34px;height:34px;border-radius:10px;flex-shrink:0;
-  background:linear-gradient(135deg,var(--emerald),var(--emerald2));
-  display:flex;align-items:center;justify-content:center;
-  font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:700;color:white;
-}
-.sb-name{font-size:13px;font-weight:600;color:var(--text);}
-.sb-role{font-size:10px;font-weight:600;color:var(--emerald);letter-spacing:.06em;text-transform:uppercase;}
-.sb-section{padding:14px 12px 4px;}
-.sb-section-label{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text3);padding:0 8px;margin-bottom:4px;}
-.sb-link{
-  display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;
-  font-size:13px;font-weight:500;color:var(--text2);text-decoration:none;cursor:pointer;
-  transition:background .15s,color .15s;margin-bottom:1px;
-}
-.sb-link:hover{background:rgba(255,255,255,.04);color:var(--text);}
-.sb-link.active{background:var(--em-bg);color:var(--emerald);border:1px solid var(--em-bd);font-weight:600;}
-.sb-link svg{flex-shrink:0;opacity:.7;}
-.sb-link.active svg{opacity:1;}
-.sb-bottom{margin-top:auto;padding:12px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:6px;}
-.sb-btn{
-  padding:8px 12px;border-radius:8px;border:1px solid var(--border2);background:transparent;
-  font-family:'Inter',sans-serif;font-size:12px;font-weight:500;color:var(--text2);
-  cursor:pointer;text-align:left;transition:background .15s;
-}
-.sb-btn:hover{background:rgba(255,255,255,.04);}
+/* aurora */
+.aurora{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;}
+.ab{position:absolute;border-radius:50%;filter:blur(90px);opacity:.28;mix-blend-mode:multiply;animation:drift 28s ease-in-out infinite;}
+.ab-1{width:500px;height:500px;background:radial-gradient(circle,var(--lilac),transparent 70%);top:-10%;left:-6%;}
+.ab-2{width:400px;height:400px;background:radial-gradient(circle,var(--mint),transparent 72%);bottom:-8%;right:-6%;animation-delay:-12s;opacity:.2;}
+@keyframes drift{0%,100%{transform:translate(0,0);}50%{transform:translate(30px,-20px);}}
 
-/* ── MAIN ── */
-.main{margin-left:240px;flex:1;min-height:100vh;}
-.topbar{
-  position:sticky;top:0;z-index:40;height:56px;
-  background:rgba(13,17,23,.92);backdrop-filter:blur(8px);
-  border-bottom:1px solid var(--border);
-  display:flex;align-items:center;justify-content:space-between;padding:0 28px;
-}
-.topbar-title{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;color:var(--text);}
-.topbar-right{display:flex;align-items:center;gap:12px;}
-.page-content{padding:28px;max-width:1200px;}
+/* topbar */
+.topbar{position:sticky;top:0;z-index:200;height:60px;background:rgba(252,252,253,.82);backdrop-filter:blur(20px) saturate(180%);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 20px;flex-shrink:0;}
+.tb-left{display:flex;align-items:center;gap:12px;}
+.tb-logo{height:30px;}
+.tb-brand{font-family:var(--font-display);font-weight:500;font-size:17px;}
+.tb-brand em{font-style:italic;background:var(--theme-grad);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.tb-right{display:flex;align-items:center;gap:10px;}
+.tb-avatar{width:36px;height:36px;border-radius:11px;background:var(--theme-grad);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:600;font-size:14px;color:#fff;cursor:pointer;box-shadow:0 4px 12px rgba(123,47,247,.25);}
+.tb-icon{width:36px;height:36px;border-radius:11px;border:1px solid var(--line);background:rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;color:var(--ink-soft);cursor:pointer;transition:all .2s;text-decoration:none;}
+.tb-icon:hover{border-color:var(--theme);color:var(--theme);}
+.tb-chip{font-size:11px;font-weight:600;color:var(--mint-deep);padding:6px 12px;border-radius:100px;background:rgba(45,212,191,.08);border:1px solid rgba(45,212,191,.18);}
 
-/* ── CARDS ── */
-.stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin-bottom:24px;}
-.stat-card{
-  background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px 20px;
-}
-.stat-val{font-family:'Space Grotesk',sans-serif;font-size:26px;font-weight:700;color:var(--text);margin-bottom:4px;}
-.stat-lbl{font-size:12px;color:var(--text2);}
-.stat-sub{font-size:11px;color:var(--emerald);font-weight:500;margin-top:6px;}
-.stat-sub.neg{color:#f87171;}
+/* layout */
+.shell{display:flex;flex:1;position:relative;z-index:2;}
+.sidebar{width:220px;flex-shrink:0;padding:16px 12px;background:rgba(252,252,253,.72);backdrop-filter:blur(16px);border-right:1px solid var(--line);display:flex;flex-direction:column;gap:3px;position:sticky;top:60px;height:calc(100vh - 60px);overflow-y:auto;}
+@media(max-width:800px){.sidebar{display:none;}}
+.sb-section{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);padding:12px 10px 6px;}
+.sb-link{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;font-size:13px;font-weight:500;color:var(--ink-soft);text-decoration:none;cursor:pointer;transition:all .22s;}
+.sb-link:hover{background:rgba(139,111,232,.08);color:var(--ink);}
+.sb-link.active{background:rgba(139,111,232,.12);color:var(--lilac-deep);font-weight:600;}
+.sb-link svg{width:16px;height:16px;flex-shrink:0;}
+.sb-foot{margin-top:auto;padding-top:12px;border-top:1px solid var(--line);}
+.main{flex:1;padding:24px;overflow-x:hidden;min-width:0;}
 
-.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
-.section-title{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;color:var(--text);letter-spacing:.03em;}
-.section-sub{font-size:12px;color:var(--text2);margin-top:2px;}
+/* page header */
+.page-hd{margin-bottom:24px;}
+.page-eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--theme);margin-bottom:10px;padding:5px 12px;border-radius:100px;background:rgba(139,111,232,.08);border:1px solid rgba(139,111,232,.16);}
+.page-title{font-family:var(--font-display);font-weight:400;font-size:clamp(22px,3vw,30px);letter-spacing:-.02em;margin-bottom:5px;}
+.page-title em{font-style:italic;font-weight:500;background:var(--theme-grad);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.page-sub{font-size:13px;color:var(--ink-soft);}
 
-.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:14px;}
-.card:hover{border-color:var(--border2);}
+/* stat cards */
+.stat-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px;margin-bottom:24px;}
+.stat-card{background:rgba(255,255,255,.7);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:var(--radius);padding:18px;}
+.stat-label{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:8px;}
+.stat-val{font-family:var(--font-display);font-weight:600;font-size:26px;color:var(--ink);margin-bottom:4px;}
+.stat-meta{font-size:12px;color:var(--ink-soft);}
+.stat-meta.up{color:var(--ok);}
+.stat-meta.down{color:var(--err);}
 
-/* ── BUTTONS ── */
-.btn{
-  padding:9px 18px;border-radius:9px;border:none;cursor:pointer;
-  font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:700;
-  transition:filter .2s,transform .2s;
-}
-.btn:hover{filter:brightness(1.08);transform:translateY(-1px);}
-.btn-primary{background:linear-gradient(135deg,var(--emerald),var(--emerald2));color:white;}
-.btn-gold{background:linear-gradient(135deg,var(--goldbright),var(--gold2));color:#0a1a0a;}
-.btn-ghost{background:rgba(255,255,255,.06);color:var(--text2);border:1px solid var(--border2);}
-.btn-danger{background:rgba(239,68,68,.1);color:#f87171;border:1px solid rgba(239,68,68,.2);}
-.btn-sm{padding:6px 12px;font-size:11px;border-radius:7px;}
+/* glass card */
+.card{background:rgba(255,255,255,.68);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:var(--radius);padding:20px;margin-bottom:16px;}
+.card-title{font-family:var(--font-display);font-weight:500;font-size:16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;}
+.card-title svg{width:18px;height:18px;color:var(--theme);}
 
-/* ── BADGES ── */
-.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:100px;font-size:10px;font-weight:700;letter-spacing:.04em;}
-.badge-green{background:var(--em-bg);color:var(--emerald);border:1px solid var(--em-bd);}
-.badge-gold{background:rgba(252,196,68,.1);color:var(--goldbright);border:1px solid rgba(252,196,68,.2);}
-.badge-red{background:rgba(239,68,68,.1);color:#f87171;border:1px solid rgba(239,68,68,.2);}
-.badge-grey{background:rgba(255,255,255,.06);color:var(--text2);border:1px solid var(--border2);}
-
-/* ── TABLES ── */
-.table-wrap{overflow-x:auto;}
-table{width:100%;border-collapse:collapse;}
-th{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);padding:10px 14px;text-align:left;border-bottom:1px solid var(--border);}
-td{padding:13px 14px;font-size:13px;color:var(--text);border-bottom:1px solid var(--border);vertical-align:middle;}
+/* table */
+.tbl-wrap{overflow-x:auto;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.6);}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{padding:12px 16px;text-align:left;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);border-bottom:1px solid var(--line);background:rgba(244,245,251,.6);}
+td{padding:13px 16px;border-bottom:1px solid var(--line);color:var(--ink-soft);}
 tr:last-child td{border-bottom:none;}
-tr:hover td{background:rgba(255,255,255,.02);}
+tr:hover td{background:rgba(139,111,232,.03);}
+td strong{color:var(--ink);font-weight:600;}
 
-/* ── EMPTY STATE ── */
-.empty{text-align:center;padding:56px 24px;}
-.empty-ico{font-size:40px;margin-bottom:14px;opacity:.4;}
-.empty-title{font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:700;color:var(--text2);margin-bottom:6px;}
-.empty-sub{font-size:13px;color:var(--text3);}
+/* badges */
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:4px 10px;border-radius:100px;}
+.badge-green{background:rgba(45,212,191,.1);color:var(--ok);}
+.badge-amber{background:rgba(255,181,158,.15);color:var(--ember);}
+.badge-red{background:rgba(255,77,109,.1);color:var(--err);}
+.badge-grey{background:var(--glass-3);color:var(--ink-faint);}
+.badge-purple{background:rgba(139,111,232,.1);color:var(--lilac-deep);}
 
-/* ── FORM ── */
-.form-group{margin-bottom:16px;}
-.form-label{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text2);margin-bottom:6px;display:block;}
-.form-input,.form-select,.form-textarea{
-  width:100%;padding:11px 14px;border-radius:9px;border:1px solid var(--border2);
-  background:rgba(255,255,255,.04);color:var(--text);font-family:'Inter',sans-serif;font-size:13px;
-  outline:none;transition:border-color .2s;-webkit-appearance:none;
+/* btn */
+.btn{display:inline-flex;align-items:center;gap:7px;padding:10px 18px;border-radius:11px;border:none;font-family:var(--font-body);font-weight:600;font-size:13px;cursor:pointer;transition:all .22s;}
+.btn-primary{background:var(--theme-grad);color:#fff;box-shadow:0 6px 20px rgba(123,47,247,.22);}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 10px 28px rgba(123,47,247,.32);}
+.btn-ghost{background:rgba(255,255,255,.6);color:var(--ink-soft);border:1px solid var(--line);}
+.btn-ghost:hover{border-color:var(--theme);color:var(--theme);}
+.btn-sm{padding:7px 13px;font-size:12px;}
+
+/* toggle */
+.toggle{width:42px;height:24px;border-radius:12px;border:none;cursor:pointer;position:relative;transition:background .3s;flex-shrink:0;}
+.toggle.on{background:var(--theme);}
+.toggle.off{background:#D1D5DB;}
+.toggle::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .3s;}
+.toggle.on::after{transform:translateX(18px);}
+
+/* form fields */
+.field{margin-bottom:16px;}
+.field-label{display:block;font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:6px;}
+.field-input,.field-select,.field-textarea{width:100%;padding:11px 14px;border:1.5px solid var(--line-2);border-radius:11px;background:var(--glass);font-family:var(--font-body);font-size:13px;color:var(--ink);outline:none;transition:all .2s;}
+.field-input:focus,.field-select:focus,.field-textarea:focus{border-color:var(--theme);box-shadow:0 0 0 3px rgba(139,111,232,.1);}
+.field-textarea{resize:vertical;min-height:90px;line-height:1.6;}
+.row-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+@media(max-width:480px){.row-2{grid-template-columns:1fr;}}
+
+/* empty state */
+.empty{text-align:center;padding:50px 20px;}
+.empty svg{width:48px;height:48px;color:var(--ink-faint);opacity:.35;margin:0 auto 16px;display:block;}
+.empty-title{font-family:var(--font-display);font-size:18px;margin-bottom:6px;}
+.empty-sub{font-size:13px;color:var(--ink-soft);margin-bottom:20px;}
+
+/* toast */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(16px);z-index:9999;padding:12px 20px;border-radius:100px;background:var(--ink);color:#fff;font-size:13px;font-weight:500;box-shadow:var(--shadow-lift);opacity:0;transition:all .35s;pointer-events:none;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* mobile bottom nav */
+.mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;background:rgba(252,252,253,.9);backdrop-filter:blur(16px);border-top:1px solid var(--line);padding:8px 0 env(safe-area-inset-bottom,8px);}
+@media(max-width:800px){.mobile-nav{display:flex;}.main{padding-bottom:80px;}}
+.mn-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;font-weight:500;color:var(--ink-faint);text-decoration:none;padding:6px 0;cursor:pointer;}
+.mn-item.active{color:var(--lilac-deep);}
+.mn-item svg{width:20px;height:20px;}
+
+/* ── PARTNER HUB THEME OVERRIDE ── */
+:root {
+  --theme: var(--mint-deep);
+  --theme-2: var(--electric);
+  --theme-grad: linear-gradient(135deg, #2DD4BF, #4361FF);
+  --theme-soft: rgba(45,212,191,0.1);
+  --theme-border: rgba(45,212,191,0.2);
 }
-.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--emerald);}
-.form-textarea{resize:vertical;min-height:80px;}
-
-/* ── TOAST ── */
-.toast{
-  position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
-  background:var(--card2);color:var(--text);padding:11px 20px;border-radius:10px;
-  font-size:13px;box-shadow:var(--shadow);border:1px solid var(--border2);
-  z-index:999;opacity:0;pointer-events:none;transition:opacity .3s;white-space:nowrap;
+/* Active nav link uses mint */
+.sb-link.active { background: rgba(45,212,191,0.1); color: var(--mint-deep); }
+.sb-link:hover { background: rgba(45,212,191,0.07); color: var(--ink); }
+/* Topbar chip */
+.tb-chip { color: var(--electric); background: rgba(67,97,255,0.08); border-color: rgba(67,97,255,0.18); }
+/* Page eyebrow */
+.page-eyebrow { color: var(--mint-deep); background: rgba(45,212,191,0.08); border-color: rgba(45,212,191,0.2); }
+/* page-title em gradient */
+.page-title em {
+  background: linear-gradient(120deg, var(--mint-deep), var(--electric));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
 }
-.toast.show{opacity:1;}
+/* Buttons */
+.btn-primary { background: linear-gradient(135deg, #2DD4BF, #4361FF); }
+/* Avatar */
+.tb-avatar { background: linear-gradient(135deg, #2DD4BF, #4361FF); box-shadow: 0 4px 12px rgba(45,212,191,0.3); }
+/* stat-meta up */
+.stat-meta.up { color: var(--electric); }
+/* aurora blobs — mint leads */
+.ab-1 { background: radial-gradient(circle, var(--mint), transparent 70%); }
+.ab-2 { background: radial-gradient(circle, var(--electric), transparent 72%); }
 
-/* MOBILE */
-@media(max-width:768px){
-  .sidebar{transform:translateX(-100%);transition:transform .3s;}
-  .sidebar.open{transform:translateX(0);}
-  .main{margin-left:0;}
-  .page-content{padding:16px;}
-  .stat-grid{grid-template-columns:1fr 1fr;}
-}
 </style>
-</head>
-<body>
-<div class="layout">
-
-<aside class="sidebar" id="sidebar">
-  <div class="sb-logo">Apatmento</div>
-  <div class="sb-user">
-    <div class="sb-avatar" id="sb-avatar">P</div>
-    <div>
-      <div class="sb-name" id="sb-name">Partner</div>
-      <div class="sb-role">Host Account</div>
-    </div>
+</head><body>
+<div class="aurora"><div class="ab ab-1"></div><div class="ab ab-2"></div></div>
+<div class="topbar">
+  <div class="tb-left">
+    <a href="dashboard.html?role=partner&back=1" class="tb-icon" title="Dashboard">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    </a>
+    <img src="logo-mark.png" class="tb-logo" alt="" onerror="this.style.display='none'"/>
+    <span class="tb-brand"><em>Apat</em>mento</span>
   </div>
-
-  <div class="sb-section">
-    <div class="sb-section-label">Overview</div>
-    <a class="sb-link " href="dashboard.html?role=partner&back=1">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
-      Dashboard
-    </a>
+  <div class="tb-right">
+    <span class="tb-chip">0% commission</span>
+    <div class="tb-avatar" id="tb-avatar">P</div>
+  </div>
+</div>
+<div class="shell">
+  <nav class="sidebar">
+    <div class="sb-section">Partner Hub</div>
     <a class="sb-link active" href="partner-listings.html">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-      My Listings
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2zM17 21v-8H7v8M7 3v5h8"/></svg>
+      Listings
     </a>
-    <a class="sb-link " href="partner-bookings.html">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg>
+    <a class="sb-link" href="partner-bookings.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg>
       Bookings
     </a>
-    <a class="sb-link " href="partner-calendar.html">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/><path d="M16 18h.01"/></svg>
+    <a class="sb-link" href="partner-earnings.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      Earnings
+    </a>
+    <a class="sb-link" href="partner-calendar.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg>
       Calendar
     </a>
-  </div>
-
-  <div class="sb-section">
-    <div class="sb-section-label">Business</div>
-    <a class="sb-link " href="partner-earnings.html">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
-      Earnings & Payouts
-    </a>
-    <a class="sb-link " href="partner-analytics.html">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+    <a class="sb-link" href="partner-analytics.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18M18 9l-5 5-4-4-4 4"/></svg>
       Analytics
     </a>
-    <a class="sb-link " href="partner-reviews.html">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+    <a class="sb-link" href="partner-reviews.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
       Reviews
     </a>
-  </div>
-
-  <div class="sb-section">
-    <div class="sb-section-label">Account</div>
-    <a class="sb-link " href="partner-settings.html">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.2 2h-.4a2 2 0 0 0-2 2v.2a2 2 0 0 1-1 1.7l-.3.2a2 2 0 0 1-2 0l-.2-.1a2 2 0 0 0-2.7.7l-.2.4a2 2 0 0 0 .7 2.7l.2.1a2 2 0 0 1 1 1.7v.4a2 2 0 0 1-1 1.7l-.2.1a2 2 0 0 0-.7 2.7l.2.4a2 2 0 0 0 2.7.7l.3-.2a2 2 0 0 1 2 0l.3.2a2 2 0 0 1 1 1.7v.2a2 2 0 0 0 2 2h.4a2 2 0 0 0 2-2v-.2a2 2 0 0 1 1-1.7l.3-.2a2 2 0 0 1 2 0l.2.1a2 2 0 0 0 2.7-.7l.2-.4a2 2 0 0 0-.7-2.7l-.2-.1a2 2 0 0 1-1-1.7v-.4a2 2 0 0 1 1-1.7l.2-.1a2 2 0 0 0 .7-2.7l-.2-.4a2 2 0 0 0-2.7-.7l-.3.2a2 2 0 0 1-2 0l-.3-.2a2 2 0 0 1-1-1.7v-.2a2 2 0 0 0-2-2Z"/><circle cx="12" cy="12" r="3"/></svg>
+    <a class="sb-link" href="partner-settings.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg>
       Settings
     </a>
-  </div>
 
-  <div class="sb-bottom">
-    <button class="sb-btn" onclick="window.location.href='dashboard.html?role=guest&back=1'">⇄ Switch to Guest</button>
-    <button class="sb-btn" onclick="signOut()" style="color:#f87171;">⎋ Sign Out</button>
-  </div>
-</aside>
+    <div class="sb-foot">
+      <a class="sb-link" href="dashboard.html?role=guest&back=1">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4M4 7h16M16 21l4-4-4-4M20 17H4"/></svg>
+        Switch to Guest
+      </a>
+      <a class="sb-link" onclick="signOut()" style="color:var(--err);cursor:pointer;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+        Sign out
+      </a>
+    </div>
+  </nav>
+  <main class="main">
 
-<div class="main">
-  <div class="topbar">
-    <div style="display:flex;align-items:center;gap:12px;">
-      <button onclick="document.getElementById('sidebar').classList.toggle('open')" style="display:none;background:none;border:none;color:var(--text);cursor:pointer;font-size:18px;" id="menu-toggle">☰</button>
-      <div class="topbar-title">My Listings</div>
+<div class="page-hd">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+    <div><span class="page-eyebrow">✦ Partner Hub</span>
+      <h1 class="page-title">My <em>listings</em></h1>
+      <p class="page-sub">Manage your properties. All earnings go directly to you.</p>
     </div>
-    <div class="topbar-right">
-      <div id="topbar-name" style="font-size:12px;color:var(--text2);"></div>
-      <div class="sb-avatar" id="top-avatar" style="width:32px;height:32px;border-radius:8px;font-size:12px;">P</div>
-    </div>
-  </div>
-  <div class="page-content">
-
-<div class="section-header">
-  <div>
-    <div class="section-title">My Listings</div>
-    <div class="section-sub">Manage your properties, set prices and availability</div>
-  </div>
-  <button class="btn btn-primary" onclick="window.location.href='add-listing.html'">+ Add Listing</button>
-</div>
-
-<!-- Filter chips -->
-<div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;">
-  <button class="btn btn-ghost btn-sm active-filter" onclick="filterListings('all',this)">All</button>
-  <button class="btn btn-ghost btn-sm" onclick="filterListings('active',this)">Active</button>
-  <button class="btn btn-ghost btn-sm" onclick="filterListings('inactive',this)">Inactive</button>
-</div>
-
-<div id="listings-container">
-  <div class="empty"><div class="empty-ico">🏠</div><div class="empty-title">Loading your listings…</div></div>
-</div>
-
-<!-- Edit Modal -->
-<div id="edit-modal" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.6);align-items:center;justify-content:center;padding:20px;">
-  <div style="background:var(--card2);border:1px solid var(--border2);border-radius:16px;padding:28px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-      <div class="section-title">Edit Listing</div>
-      <button onclick="closeEditModal()" style="background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer;">✕</button>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Listing Name</label>
-      <input class="form-input" id="edit-name" type="text"/>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-      <div class="form-group">
-        <label class="form-label">Price per night (KES)</label>
-        <input class="form-input" id="edit-price" type="number"/>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Max Guests</label>
-        <input class="form-input" id="edit-guests" type="number" min="1" max="20"/>
-      </div>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Description</label>
-      <textarea class="form-textarea" id="edit-desc"></textarea>
-    </div>
-    <div style="display:flex;gap:10px;margin-top:8px;">
-      <button class="btn btn-ghost" onclick="closeEditModal()">Cancel</button>
-      <button class="btn btn-primary" style="flex:1;" onclick="saveEditListing()">Save Changes</button>
-    </div>
+    <a href="add-listing.html?type=apartment&back=1" class="btn btn-primary">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>Add listing</a>
   </div>
 </div>
-
-<script>
-let allListings = [];
-let editingId = null;
-let activeFilter = 'all';
-
-async function onPageReady() {
-  await loadListings();
-}
-
-async function loadListings() {
-  const { data, error } = await sb.from('listings')
-    .select('*')
-    .eq('partner_id', CURRENT_USER.id)
-    .order('created_at', { ascending: false });
-
-  if (error) { showToast('Error loading listings: ' + error.message); return; }
-  allListings = data || [];
-  renderListings();
-}
-
-function renderListings() {
-  const container = document.getElementById('listings-container');
-  let filtered = activeFilter === 'all' ? allListings
-    : allListings.filter(l => activeFilter === 'active' ? l.is_active : !l.is_active);
-
-  if (!filtered.length) {
-    container.innerHTML = `<div class="empty">
-      <div class="empty-ico">🏠</div>
-      <div class="empty-title">${activeFilter === 'all' ? 'No listings yet' : 'No ' + activeFilter + ' listings'}</div>
-      <div class="empty-sub">${activeFilter === 'all' ? 'Add your first property to start earning' : 'Toggle status on your listings below'}</div>
-      ${activeFilter === 'all' ? '<button class="btn btn-primary" style="margin-top:16px;" onclick="window.location.href=\'add-listing.html\'">+ Add Your First Listing</button>' : ''}
-    </div>`;
-    return;
-  }
-
-  container.innerHTML = filtered.map(l => `
-    <div class="card" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
-      <div style="width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,#0a1628,#1a4060);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:24px;">🏠</div>
-      <div style="flex:1;min-width:160px;">
-        <div style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:15px;color:var(--text);margin-bottom:4px;">${l.title || l.name || 'Unnamed Listing'}</div>
-        <div style="font-size:12px;color:var(--text2);margin-bottom:8px;">${l.location || '—'} · ${l.bedrooms || 0} bed · ${l.property_type || 'Apartment'}</div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-          <span class="badge ${l.is_active ? 'badge-green' : 'badge-grey'}">${l.is_active ? 'Active' : 'Inactive'}</span>
-          <span style="font-size:12px;color:var(--text2);">KES ${Number(l.price_per_night || 0).toLocaleString()}/night</span>
-        </div>
-      </div>
-      <div style="text-align:right;flex-shrink:0;">
-        <div style="font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;color:var(--goldbright);margin-bottom:4px;">KES ${Number(l.price_per_night || 0).toLocaleString()}</div>
-        <div style="font-size:11px;color:var(--text2);margin-bottom:10px;">per night</div>
-        <div style="display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap;">
-          <button class="btn btn-ghost btn-sm" onclick="openEditModal('${l.id}')">Edit</button>
-          <button class="btn btn-sm ${l.is_active ? 'btn-danger' : 'btn-primary'}" onclick="toggleActive('${l.id}',${l.is_active})">${l.is_active ? 'Deactivate' : 'Activate'}</button>
-          <button class="btn btn-danger btn-sm" onclick="deleteListing('${l.id}')">Delete</button>
-        </div>
-      </div>
-    </div>
-  `).join('');
-}
-
-function filterListings(filter, el) {
-  activeFilter = filter;
-  document.querySelectorAll('.active-filter').forEach(b => b.classList.remove('active-filter'));
-  el.classList.add('active-filter');
-  renderListings();
-}
-
-function openEditModal(id) {
-  const l = allListings.find(x => x.id === id);
-  if (!l) return;
-  editingId = id;
-  document.getElementById('edit-name').value = l.title || l.name || '';
-  document.getElementById('edit-price').value = l.price_per_night || '';
-  document.getElementById('edit-guests').value = l.max_guests || '';
-  document.getElementById('edit-desc').value = l.description || '';
-  document.getElementById('edit-modal').style.display = 'flex';
-}
-
-function closeEditModal() {
-  document.getElementById('edit-modal').style.display = 'none';
-  editingId = null;
-}
-
-async function saveEditListing() {
-  if (!editingId) return;
-  const updates = {
-    title: document.getElementById('edit-name').value,
-    price_per_night: parseFloat(document.getElementById('edit-price').value),
-    max_guests: parseInt(document.getElementById('edit-guests').value),
-    description: document.getElementById('edit-desc').value,
-  };
-  const { error } = await sb.from('listings').update(updates).eq('id', editingId);
-  if (error) { showToast('Error: ' + error.message); return; }
-  showToast('✅ Listing updated');
-  closeEditModal();
-  await loadListings();
-}
-
-async function toggleActive(id, current) {
-  const { error } = await sb.from('listings').update({ is_active: !current }).eq('id', id);
-  if (error) { showToast('Error: ' + error.message); return; }
-  showToast(current ? '⏸ Listing deactivated' : '✅ Listing activated');
-  await loadListings();
-}
-
-async function deleteListing(id) {
-  if (!confirm('Delete this listing? This cannot be undone.')) return;
-  const { error } = await sb.from('listings').delete().eq('id', id);
-  if (error) { showToast('Error: ' + error.message); return; }
-  showToast('🗑️ Listing deleted');
-  await loadListings();
-}
-</script>
-
+<div class="stat-row">
+  <div class="stat-card"><div class="stat-label">Total listings</div><div class="stat-val" id="stat-total">—</div></div>
+  <div class="stat-card"><div class="stat-label">Active now</div><div class="stat-val" id="stat-active">—</div><div class="stat-meta up">Visible to guests</div></div>
+  <div class="stat-card"><div class="stat-label">Total bookings</div><div class="stat-val" id="stat-bookings">—</div></div>
+</div>
+<div class="card">
+  <div class="card-title">Your properties
+    <select class="field-select" style="width:auto;padding:6px 28px 6px 10px;font-size:12px;" id="filter-status" onchange="renderListings(window._allListings||[])">
+      <option value="">All</option><option value="active">Active</option><option value="inactive">Paused</option>
+    </select>
   </div>
+  <div id="listings-container"><div class="empty">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2zM17 21v-8H7v8M7 3v5h8"/></svg>
+    <div class="empty-title">No listings yet</div><div class="empty-sub">Add your first property to start earning.</div>
+    <a href="add-listing.html?type=apartment&back=1" class="btn btn-primary">Add first listing</a>
+  </div></div>
 </div>
+  </main>
 </div>
+<nav class="mobile-nav">
+  <a class="mn-item active" href="partner-listings.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2zM17 21v-8H7v8M7 3v5h8"/></svg>Listings</a>
+  <a class="mn-item" href="partner-bookings.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg>Bookings</a>
+  <a class="mn-item" href="partner-earnings.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Earnings</a>
+  <a class="mn-item" href="partner-calendar.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg>Calendar</a>
+  <a class="mn-item" href="partner-analytics.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18M18 9l-5 5-4-4-4 4"/></svg>Analytics</a>
+</nav>
 <div class="toast" id="toast"></div>
+
 <script>
-const SB_URL = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
-const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
-const { createClient } = supabase;
-const sb = createClient(SB_URL, SB_KEY);
-let CURRENT_USER = null;
 
-async function initPartnerPage() {
-  const { data: { session } } = await sb.auth.getSession();
-  if (!session) { window.location.href = 'auth.html'; return; }
-  CURRENT_USER = session.user;
-  const meta = session.user.user_metadata || {};
-  const name = meta.first_name || meta.full_name?.split(' ')[0] || 'Partner';
-  const initial = name[0].toUpperCase();
-  document.getElementById('sb-avatar').textContent = initial;
-  document.getElementById('top-avatar').textContent = initial;
-  document.getElementById('sb-name').textContent = name;
-  document.getElementById('topbar-name').textContent = name;
-  if (typeof onPageReady === 'function') onPageReady();
-}
-initPartnerPage();
+const SUPA_URL = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
+let sb=null,PARTNER=null;
+try{const{createClient}=supabase;sb=createClient(SUPA_URL,SUPA_KEY);}catch(e){console.warn('Supabase unavailable');}
+(async()=>{
+  if(!sb)return;
+  try{
+    const{data:{session}}=await sb.auth.getSession();
+    if(!session){window.location.href='auth.html';return;}
+    PARTNER=session.user;
+    const init=document.getElementById('tb-avatar');
+    if(init){
+      const{data:p}=await sb.from('profiles').select('first_name,last_name').eq('id',PARTNER.id).single();
+      const name=(p?.first_name||'P');
+      init.textContent=name[0].toUpperCase();
+    }
+  }catch(e){console.warn('Session error',e);}
+})();
+function showToast(msg,dur=3000){const t=document.getElementById('toast');if(!t)return;t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),dur);}
+async function signOut(){if(sb)await sb.auth.signOut();window.location.href='auth.html';}
 
-function showToast(msg, dur=3000) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), dur);
+async function loadListings(){
+  if(!sb||!PARTNER){setTimeout(loadListings,400);return;}
+  const{data:listings}=await sb.from('listings').select('*').eq('partner_id',PARTNER.id).order('created_at',{ascending:false});
+  const all=listings||[];
+  document.getElementById('stat-total').textContent=all.length;
+  document.getElementById('stat-active').textContent=all.filter(l=>l.status!=='inactive').length;
+  if(all.length){
+    const{count}=await sb.from('apartment_bookings').select('id',{count:'exact',head:true}).in('listing_id',all.map(l=>l.id));
+    document.getElementById('stat-bookings').textContent=count||0;
+  }else document.getElementById('stat-bookings').textContent=0;
+  window._allListings=all;renderListings(all);
 }
-async function signOut() {
-  await sb.auth.signOut();
-  window.location.href = 'auth.html';
+function renderListings(list){
+  const f=document.getElementById('filter-status')?.value;
+  const fl=f?list.filter(l=>(f==='active'?l.status!=='inactive':l.status==='inactive')):list;
+  const c=document.getElementById('listings-container');
+  if(!fl.length){c.innerHTML='<div class="empty"><div class="empty-title">No listings match</div></div>';return;}
+  c.innerHTML='<div class="tbl-wrap"><table><thead><tr><th>Property</th><th>Location</th><th>Price/night</th><th>Status</th><th>Actions</th></tr></thead><tbody>'+
+  fl.map(l=>`<tr><td><strong>${l.title||l.name||'Untitled'}</strong><br/><span style="font-size:11px;color:var(--ink-faint)">${l.type||'Apartment'}</span></td>
+  <td>${l.location||l.city||'—'}</td>
+  <td><strong>KES ${Number(l.price_night||0).toLocaleString()}</strong></td>
+  <td><span class="badge ${l.status==='inactive'?'badge-grey':'badge-green'}">${l.status==='inactive'?'Inactive':'Active'}</span></td>
+  <td><div style="display:flex;gap:6px;">
+    <button class="btn btn-ghost btn-sm" onclick="toggleStatus('${l.id}','${l.status}')">${l.status==='inactive'?'Activate':'Pause'}</button>
+    <button class="btn btn-ghost btn-sm" style="color:var(--theme);" onclick="window.location.href='add-listing.html?edit=${l.id}&back=1'">Edit</button>
+  </div></td></tr>`).join('')+'</tbody></table></div>';
 }
-// Mobile sidebar
-if (window.innerWidth < 768) {
-  document.getElementById('menu-toggle').style.display = 'block';
+async function toggleStatus(id,cur){
+  if(!sb)return;
+  await sb.from('listings').update({status:cur==='inactive'?'active':'inactive'}).eq('id',id);
+  showToast(cur==='inactive'?'✅ Activated':'Listing paused');loadListings();
 }
-</script>
-</body>
-</html>
+loadListings();
+</script></body></html>
