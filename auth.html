@@ -3,687 +3,369 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>APATMENTO — Sign In</title>
+<title>Apatmento — Sign in</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400;1,700&family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
-
-<!-- Supabase SDK -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
-/* ══ CHECK IF USER CONFIRMED EMAIL AND PROCEED ══ */
-async function checkConfirmationAndProceed() {
-  const btn = document.getElementById('confirmed-btn');
-  const alertEl = document.getElementById('verify-alert');
-  if (alertEl) { alertEl.classList.remove('show'); alertEl.textContent = ''; }
-  if (btn) btn.classList.add('loading');
-
-  try {
-    // Try to get current session — Supabase auto-refreshes after email confirm
-    const { data: { session }, error } = await sb.auth.getSession();
-
-    if (session) {
-      // Confirmed and session exists — proceed
-      await ensureProfile(session.user);
-      redirectToDashboard(session.user, true);
-      return;
-    }
-
-    // No session yet — try refreshing
-    const { data: refreshData } = await sb.auth.refreshSession();
-    if (refreshData?.session) {
-      await ensureProfile(refreshData.session.user);
-      redirectToDashboard(refreshData.session.user, true);
-      return;
-    }
-
-    // Still no session — email not confirmed yet
-    if (btn) btn.classList.remove('loading');
-    if (alertEl) {
-      alertEl.textContent = 'Email not confirmed yet. Please click the link in your inbox first, then try again.';
-      alertEl.classList.add('show');
-    }
-  } catch(e) {
-    if (btn) btn.classList.remove('loading');
-    if (alertEl) {
-      alertEl.textContent = 'Something went wrong. Please try again.';
-      alertEl.classList.add('show');
-    }
-  }
-}
-</script>
-
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..700&display=swap" rel="stylesheet"/>
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet"/>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
-  --void:#060810;
-  --deep:#0C1020;
-  --white:#FFFFFF;
-  --offwhite:#F7F6F2;
-  --stone:#EDEAE4;
-  --ink:#0F1117;
-  --ink2:#2A2D38;
-  --ink3:#5A5E70;
-  --ink4:#9499AD;
-  --border:rgba(15,17,23,0.09);
-  --border-focus:rgba(13,148,103,0.5);
-  --shadow-sm:0 2px 16px rgba(15,17,23,0.07);
-  --shadow-md:0 8px 40px rgba(15,17,23,0.12);
-  --shadow-lg:0 24px 80px rgba(15,17,23,0.18);
-  --gold:#C8970A;
-  --gold2:#E8A800;
-  --goldbright:#FCC444;
-  --emerald:#0D9467;
-  --emerald2:#059652;
-  --em-bg:rgba(13,148,103,0.07);
-  --em-bd:rgba(13,148,103,0.2);
-  --red:#DC2626;
-  --red-bg:rgba(220,38,38,0.07);
-  --red-bd:rgba(220,38,38,0.2);
+  --glass:#FCFCFD;--glass-2:#F4F5FB;--ink:#0A0A14;--ink-2:#1A1B2E;--ink-soft:#4A4C66;--ink-faint:#8E90AD;
+  --lilac:#B8A4F4;--lilac-deep:#8B6FE8;--mint:#5EEAD4;--mint-deep:#2DD4BF;--peach:#FFB59E;
+  --electric:#4361FF;--violet:#7B2FF7;--ember:#FF6B2C;
+  --line:rgba(10,10,20,0.08);--line-2:rgba(10,10,20,0.14);
+  --font-display:'Fraunces',serif;--font-body:'General Sans',system-ui,sans-serif;
+  --shadow-lift:0 24px 80px rgba(123,47,247,0.16),0 8px 24px rgba(10,10,20,0.06);
+  --ok:#2DD4BF;--err:#FF4D6D;
 }
-html,body{
-  min-height:100%;font-family:'Inter',sans-serif;
-  background:var(--void);color:var(--ink);
-  overflow-x:hidden;
-}
+@media (prefers-reduced-motion: reduce){*{animation-duration:.01ms !important;transition-duration:.01ms !important;}}
+html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:var(--ink);-webkit-font-smoothing:antialiased;overflow:hidden;}
 
-/* ── BACKGROUND ── */
-.bg-scene{
-  position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;
-}
-.bg-grid{
-  position:absolute;inset:0;
-  background-image:
-    linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px);
-  background-size:72px 72px;
-}
-.bg-orb{position:absolute;border-radius:50%;filter:blur(90px);}
-.bo1{width:600px;height:600px;background:radial-gradient(circle,rgba(13,148,103,.09),transparent);top:-150px;left:-100px;animation:orbDrift 9s ease-in-out infinite;}
-.bo2{width:500px;height:500px;background:radial-gradient(circle,rgba(200,151,10,.07),transparent);bottom:-80px;right:-80px;animation:orbDrift 11s ease-in-out infinite reverse;}
-.bo3{width:350px;height:350px;background:radial-gradient(circle,rgba(79,172,254,.05),transparent);top:40%;left:55%;animation:orbDrift 8s ease-in-out infinite 2s;}
-@keyframes orbDrift{0%,100%{transform:translate(0,0);}50%{transform:translate(28px,18px);}}
+/* ══════════ SPLIT LAYOUT ══════════ */
+.auth-wrap{display:grid;grid-template-columns:1.1fr 1fr;height:100vh;width:100vw;}
+@media(max-width:880px){.auth-wrap{grid-template-columns:1fr;}.brand-canvas{display:none;}}
 
-/* ── PAGE SHELL ── */
-.page{
-  position:relative;z-index:1;
-  min-height:100vh;
-  display:flex;
-  align-items:stretch;
-}
+/* ══════════ LEFT: CINEMATIC BRAND CANVAS ══════════ */
+.brand-canvas{position:relative;overflow:hidden;background:#05060F;display:flex;flex-direction:column;justify-content:space-between;padding:56px;}
+/* aurora field */
+.bc-aurora{position:absolute;inset:0;z-index:0;}
+.bc-blob{position:absolute;border-radius:50%;filter:blur(90px);opacity:.55;animation:bcdrift 22s ease-in-out infinite;}
+.bcb-1{width:520px;height:520px;background:radial-gradient(circle,var(--violet),transparent 68%);top:-10%;left:-8%;}
+.bcb-2{width:460px;height:460px;background:radial-gradient(circle,var(--electric),transparent 70%);top:30%;right:-12%;animation-delay:-7s;}
+.bcb-3{width:420px;height:420px;background:radial-gradient(circle,var(--ember),transparent 72%);bottom:-12%;left:20%;animation-delay:-13s;opacity:.4;}
+.bcb-4{width:360px;height:360px;background:radial-gradient(circle,var(--mint),transparent 72%);bottom:10%;right:10%;animation-delay:-3s;opacity:.35;}
+@keyframes bcdrift{0%,100%{transform:translate(0,0) scale(1);}33%{transform:translate(50px,-36px) scale(1.12);}66%{transform:translate(-36px,46px) scale(.92);}}
 
-/* ── LEFT PANEL (branding) ── */
-.left-panel{
-  width:420px;flex-shrink:0;
-  display:flex;flex-direction:column;
-  justify-content:space-between;
-  padding:48px 52px;
-  border-right:1px solid rgba(255,255,255,.06);
-  position:relative;overflow:hidden;
-}
-@media(max-width:900px){.left-panel{display:none;}}
+/* floating service glyphs that drift up like embers */
+.ember-field{position:absolute;inset:0;z-index:1;pointer-events:none;}
+.ember{position:absolute;opacity:0;color:rgba(255,255,255,.18);animation:emberRise linear infinite;}
+.ember svg{width:100%;height:100%;}
+@keyframes emberRise{0%{transform:translateY(40px) scale(.8) rotate(0);opacity:0;}10%{opacity:.5;}90%{opacity:.3;}100%{transform:translateY(-120vh) scale(1.1) rotate(40deg);opacity:0;}}
 
-.lp-logo{
-  font-family:'Playfair Display',serif;
-  font-size:18px;font-weight:700;letter-spacing:.24em;text-transform:uppercase;
-  background:linear-gradient(90deg,var(--goldbright),var(--gold2));
-  -webkit-background-clip:text;background-clip:text;color:transparent;
-}
-.lp-hero{flex:1;display:flex;flex-direction:column;justify-content:center;padding:40px 0;}
-.lp-eyebrow{
-  font-size:10px;font-weight:500;letter-spacing:.28em;text-transform:uppercase;
-  color:rgba(255,255,255,.3);margin-bottom:20px;
-}
-.lp-heading{
-  font-family:'Playfair Display',serif;
-  font-size:clamp(32px,3.5vw,46px);font-weight:500;
-  color:var(--white);line-height:1.15;letter-spacing:-.01em;
-  margin-bottom:24px;
-}
-.lp-heading em{
-  font-style:italic;
-  background:linear-gradient(90deg,var(--goldbright),#FFDB70);
-  -webkit-background-clip:text;background-clip:text;color:transparent;
-}
-.lp-body{font-size:14px;color:rgba(255,255,255,.45);line-height:1.75;font-weight:300;margin-bottom:36px;}
-.lp-pills{display:flex;flex-direction:column;gap:10px;}
-.lp-pill{
-  display:flex;align-items:center;gap:10px;
-  font-size:13px;font-weight:500;color:rgba(255,255,255,.7);
-}
-.lp-pill-ico{
-  width:28px;height:28px;border-radius:8px;
-  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);
-  display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;
-}
-.lp-pill strong{color:var(--white);}
+/* starfield shimmer */
+.bc-stars{position:absolute;inset:0;z-index:1;}
+.star{position:absolute;width:2px;height:2px;border-radius:50%;background:#fff;opacity:.5;animation:twinkle ease-in-out infinite;}
+@keyframes twinkle{0%,100%{opacity:.15;transform:scale(1);}50%{opacity:.7;transform:scale(1.4);}}
 
-.lp-footer{font-size:11px;color:rgba(255,255,255,.2);letter-spacing:.06em;}
+.bc-top{position:relative;z-index:3;display:flex;align-items:center;gap:13px;}
+.bc-logo{height:42px;width:auto;filter:drop-shadow(0 4px 16px rgba(123,47,247,.4));}
+.bc-brand{font-family:var(--font-display);font-weight:500;font-size:22px;color:#fff;letter-spacing:-.01em;}
+.bc-brand em{font-style:italic;background:linear-gradient(120deg,var(--lilac),var(--mint));-webkit-background-clip:text;background-clip:text;color:transparent;}
 
-/* ── RIGHT PANEL (form) ── */
-.right-panel{
-  flex:1;
-  display:flex;flex-direction:column;
-  align-items:center;justify-content:flex-start;
-  padding:48px 32px 64px;
-  background:var(--offwhite);
-  overflow-y:auto;
-  -webkit-overflow-scrolling:touch;
-  min-height:100vh;
-}
-@media(min-height:700px){
-  .right-panel{justify-content:center;}
-}
+.bc-mid{position:relative;z-index:3;max-width:460px;}
+.bc-eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--mint);margin-bottom:22px;padding:7px 15px;border-radius:100px;background:rgba(94,234,212,.08);border:1px solid rgba(94,234,212,.2);}
+.bc-headline{font-family:var(--font-display);font-optical-sizing:auto;font-weight:300;font-size:clamp(38px,4.6vw,60px);line-height:1.04;letter-spacing:-.025em;color:#fff;margin-bottom:24px;}
+.bc-headline .rotator{display:block;font-style:italic;font-weight:500;background:linear-gradient(120deg,var(--lilac),var(--mint),var(--peach));-webkit-background-clip:text;background-clip:text;color:transparent;min-height:1.1em;}
+.bc-sub{font-size:15px;line-height:1.7;color:rgba(255,255,255,.55);max-width:400px;}
 
-.auth-card{
-  width:100%;max-width:420px;
-}
+/* trust chips */
+.bc-bottom{position:relative;z-index:3;display:flex;flex-wrap:wrap;gap:10px;}
+.bc-chip{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:500;color:rgba(255,255,255,.75);padding:9px 15px;border-radius:100px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(8px);}
+.bc-chip svg{width:14px;height:14px;color:var(--mint);}
 
-/* mobile logo */
-.mobile-logo{
-  display:none;
-  font-family:'Playfair Display',serif;
-  font-size:16px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;
-  background:linear-gradient(90deg,var(--gold),var(--gold2));
-  -webkit-background-clip:text;background-clip:text;color:transparent;
-  margin-bottom:32px;text-align:center;
-}
-@media(max-width:900px){.mobile-logo{display:block;}}
+/* ══════════ RIGHT: GLASS AUTH PANEL ══════════ */
+.auth-panel{position:relative;background:var(--glass);display:flex;align-items:center;justify-content:center;padding:40px;overflow-y:auto;}
+.auth-panel-aurora{position:absolute;inset:0;z-index:0;overflow:hidden;opacity:.5;}
+.apa-blob{position:absolute;border-radius:50%;filter:blur(80px);}
+.apa-1{width:340px;height:340px;background:radial-gradient(circle,var(--lilac),transparent 70%);top:-10%;right:-10%;opacity:.4;}
+.apa-2{width:300px;height:300px;background:radial-gradient(circle,var(--mint),transparent 72%);bottom:-8%;left:-8%;opacity:.3;}
 
-/* tab switcher */
-.auth-tabs{
-  display:flex;
-  background:var(--stone);
-  border-radius:14px;padding:4px;
-  margin-bottom:28px;
-}
-.auth-tab{
-  flex:1;padding:10px;border-radius:11px;
-  font-family:'Space Grotesk',sans-serif;
-  font-size:13px;font-weight:600;letter-spacing:.04em;
-  text-align:center;cursor:pointer;
-  color:var(--ink4);
-  transition:all .25s cubic-bezier(.22,1,.36,1);
-  user-select:none;
-}
-.auth-tab.active{
-  background:var(--white);color:var(--ink);
-  box-shadow:var(--shadow-sm);
-}
+.auth-card{position:relative;z-index:2;width:100%;max-width:420px;}
+.mobile-logo{display:none;text-align:center;margin-bottom:28px;}
+@media(max-width:880px){.mobile-logo{display:block;}}
+.mobile-logo img{height:48px;}
 
-/* headings */
-.auth-heading{margin-bottom:24px;}
-.auth-title{
-  font-family:'Playfair Display',serif;
-  font-size:26px;font-weight:700;color:var(--ink);
-  margin-bottom:6px;line-height:1.2;
-}
-.auth-sub{font-size:13px;color:var(--ink4);line-height:1.6;}
+.ac-head{margin-bottom:28px;}
+.ac-title{font-family:var(--font-display);font-weight:400;font-size:30px;letter-spacing:-.01em;color:var(--ink);margin-bottom:6px;}
+.ac-title em{font-style:italic;font-weight:500;background:linear-gradient(120deg,var(--violet),var(--electric));-webkit-background-clip:text;background-clip:text;color:transparent;}
+.ac-sub{font-size:14px;color:var(--ink-soft);}
 
-/* google button */
-.google-btn{
-  width:100%;padding:13px 20px;border-radius:12px;
-  border:1.5px solid var(--border);background:var(--white);
-  display:flex;align-items:center;justify-content:center;gap:10px;
-  font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:600;
-  color:var(--ink);cursor:pointer;
-  transition:border-color .2s,box-shadow .2s,transform .2s;
-  box-shadow:var(--shadow-sm);
-  margin-bottom:20px;
-}
-.google-btn:hover{
-  border-color:rgba(15,17,23,.2);
-  box-shadow:var(--shadow-md);
-  transform:translateY(-1px);
-}
-.google-btn:active{transform:scale(.99);}
-.g-icon{width:20px;height:20px;flex-shrink:0;}
+/* tabs */
+.auth-tabs{display:flex;gap:6px;padding:5px;background:var(--glass-2);border-radius:14px;margin-bottom:24px;}
+.auth-tab{flex:1;padding:11px;border:none;background:transparent;border-radius:10px;font-family:var(--font-body);font-weight:600;font-size:14px;color:var(--ink-faint);cursor:pointer;transition:all .3s cubic-bezier(.22,1,.36,1);}
+.auth-tab.active{background:var(--glass);color:var(--ink);box-shadow:0 2px 10px rgba(10,10,20,.06);}
 
-/* divider */
-.or-row{
-  display:flex;align-items:center;gap:12px;
-  margin-bottom:20px;
-}
-.or-line{flex:1;height:1px;background:var(--border);}
-.or-txt{font-size:11px;color:var(--ink4);letter-spacing:.1em;white-space:nowrap;}
+/* google */
+.google-btn{width:100%;padding:13px;border:1.5px solid var(--line-2);border-radius:14px;background:var(--glass);font-family:var(--font-body);font-weight:600;font-size:14px;color:var(--ink);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:all .25s;margin-bottom:20px;}
+.google-btn:hover{border-color:var(--lilac);transform:translateY(-1px);box-shadow:0 6px 20px rgba(123,47,247,.08);}
+.google-btn svg{width:18px;height:18px;}
 
-/* form */
-.auth-form{display:flex;flex-direction:column;gap:14px;}
+.divider{display:flex;align-items:center;gap:14px;margin-bottom:20px;color:var(--ink-faint);font-size:12px;}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--line);}
 
-/* name row */
-.name-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-
-/* field */
-.field{display:flex;flex-direction:column;gap:5px;}
-.field-label{
-  font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
-  color:var(--ink3);
-}
-.field-wrap{position:relative;}
-.field-input{
-  width:100%;padding:12px 16px;border-radius:12px;
-  border:1.5px solid var(--border);background:var(--white);
-  font-family:'Inter',sans-serif;font-size:14px;color:var(--ink);
-  outline:none;
-  transition:border-color .2s,box-shadow .2s;
-  -webkit-appearance:none;
-}
-.field-input::placeholder{color:var(--ink4);}
-.field-input:focus{
-  border-color:var(--emerald);
-  box-shadow:0 0 0 3px rgba(13,148,103,.1);
-}
-.field-input.error{
-  border-color:var(--red);
-  box-shadow:0 0 0 3px var(--red-bg);
-}
-
-/* password toggle */
-.pw-toggle{
-  position:absolute;right:14px;top:50%;transform:translateY(-50%);
-  background:none;border:none;cursor:pointer;
-  font-size:16px;color:var(--ink4);
-  transition:color .2s;padding:0;
-  display:flex;align-items:center;
-}
-.pw-toggle:hover{color:var(--ink);}
-.field-input.has-toggle{padding-right:44px;}
+.field{margin-bottom:16px;}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.field-label{display:block;font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:7px;letter-spacing:.01em;}
+.field-input-wrap{position:relative;}
+.field-input{width:100%;padding:13px 15px;border:1.5px solid var(--line-2);border-radius:13px;background:var(--glass);font-family:var(--font-body);font-size:14px;color:var(--ink);outline:none;transition:all .25s;}
+.field-input:focus{border-color:var(--lilac-deep);box-shadow:0 0 0 4px rgba(139,111,232,.1);}
+.field-input.error{border-color:var(--err);}
+.field-input::placeholder{color:var(--ink-faint);}
+.pw-toggle{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:15px;opacity:.6;padding:4px;}
+.field-err{font-size:12px;color:var(--err);margin-top:6px;display:none;}
+.field-err.show{display:block;animation:shake .4s;}
+@keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-4px);}75%{transform:translateX(4px);}}
 
 /* password strength */
-.pw-strength{
-  display:flex;gap:4px;margin-top:6px;
-  height:3px;
-}
-.pws-bar{flex:1;border-radius:2px;background:var(--stone);transition:background .3s;}
-.pws-bar.weak{background:#DC2626;}
-.pws-bar.fair{background:var(--gold);}
-.pws-bar.good{background:var(--emerald);}
-.pws-bar.strong{background:var(--emerald);}
-.pw-strength-label{font-size:10px;color:var(--ink4);margin-top:3px;}
+.pw-strength{display:flex;gap:5px;margin-top:9px;}
+.pws-bar{flex:1;height:3px;border-radius:2px;background:var(--line-2);transition:background .3s;}
+.pws-bar.weak{background:var(--err);}
+.pws-bar.fair{background:var(--ember);}
+.pws-bar.good{background:var(--lilac-deep);}
+.pws-bar.strong{background:var(--mint-deep);}
+.pw-strength-label{font-size:11px;color:var(--ink-faint);margin-top:6px;}
 
-/* field error message */
-.field-err{font-size:11px;color:var(--red);margin-top:3px;display:none;}
-.field-err.show{display:block;}
+.row-between{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.checkbox-row{display:flex;align-items:flex-start;gap:9px;font-size:13px;color:var(--ink-soft);margin-bottom:20px;line-height:1.5;}
+.checkbox-row input{margin-top:2px;accent-color:var(--lilac-deep);width:16px;height:16px;cursor:pointer;}
+.checkbox-row a{color:var(--lilac-deep);text-decoration:none;font-weight:600;}
+.link-btn{background:none;border:none;color:var(--lilac-deep);font-family:var(--font-body);font-size:13px;font-weight:600;cursor:pointer;padding:0;}
 
-/* terms */
-.terms-row{
-  display:flex;align-items:flex-start;gap:10px;
-  font-size:12px;color:var(--ink3);line-height:1.5;
-}
-.terms-row input[type=checkbox]{
-  width:16px;height:16px;border-radius:4px;
-  accent-color:var(--emerald);flex-shrink:0;margin-top:1px;cursor:pointer;
-}
-.terms-row a{color:var(--emerald);text-decoration:none;font-weight:500;}
-.terms-row a:hover{text-decoration:underline;}
-
-/* submit button */
-.submit-btn{
-  width:100%;padding:14px;border-radius:12px;
-  background:linear-gradient(135deg,var(--emerald),var(--emerald2));
-  color:var(--white);font-family:'Space Grotesk',sans-serif;
-  font-size:14px;font-weight:700;letter-spacing:.04em;
-  border:none;cursor:pointer;
-  box-shadow:0 6px 24px rgba(13,148,103,.28);
-  transition:filter .2s,transform .2s,box-shadow .2s;
-  display:flex;align-items:center;justify-content:center;gap:8px;
-  position:relative;overflow:hidden;
-}
-.submit-btn:hover{filter:brightness(1.07);transform:translateY(-1px);box-shadow:0 10px 32px rgba(13,148,103,.35);}
-.submit-btn:active{transform:scale(.99);}
-.submit-btn.loading{pointer-events:none;filter:brightness(.85);}
-.submit-btn .btn-spinner{
-  display:none;
-  width:16px;height:16px;border-radius:50%;
-  border:2px solid rgba(255,255,255,.3);
-  border-top-color:white;
-  animation:spin .7s linear infinite;
-}
-.submit-btn.loading .btn-spinner{display:block;}
-.submit-btn.loading .btn-text{opacity:0;}
+.submit-btn{width:100%;padding:15px;border:none;border-radius:14px;background:linear-gradient(135deg,var(--violet),var(--electric));color:#fff;font-family:var(--font-body);font-weight:600;font-size:15px;cursor:pointer;position:relative;overflow:hidden;transition:all .3s cubic-bezier(.22,1,.36,1);box-shadow:0 10px 30px rgba(123,47,247,.3);}
+.submit-btn:hover{transform:translateY(-2px);box-shadow:0 14px 40px rgba(123,47,247,.42);}
+.submit-btn::after{content:'';position:absolute;top:50%;left:50%;width:20px;height:20px;margin:-10px 0 0 -10px;border:2.5px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;opacity:0;animation:spin .8s linear infinite;}
+.submit-btn.loading{color:transparent;pointer-events:none;}
+.submit-btn.loading::after{opacity:1;}
 @keyframes spin{to{transform:rotate(360deg);}}
 
-/* alert boxes */
-.alert{
-  padding:12px 16px;border-radius:12px;
-  font-size:13px;line-height:1.55;
-  margin-bottom:16px;
-  display:none;
-}
-.alert.show{display:block;}
-.alert-error{background:var(--red-bg);border:1px solid var(--red-bd);color:var(--red);}
-.alert-success{background:var(--em-bg);border:1px solid var(--em-bd);color:var(--emerald);}
+.alert{padding:12px 15px;border-radius:12px;font-size:13px;margin-bottom:18px;display:none;line-height:1.5;}
+.alert.show{display:block;animation:fadeUp .4s;}
+.alert-error{background:rgba(255,77,109,.08);color:#D62246;border:1px solid rgba(255,77,109,.2);}
+.alert-success{background:rgba(45,212,191,.08);color:#0E9384;border:1px solid rgba(45,212,191,.2);}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
 
-/* forgot password */
-.forgot-row{
-  display:flex;justify-content:flex-end;margin-top:-4px;
-}
-.forgot-link{
-  font-size:12px;font-weight:500;color:var(--emerald);
-  cursor:pointer;text-decoration:none;
-  transition:opacity .2s;
-}
-.forgot-link:hover{opacity:.7;}
+.ac-foot{text-align:center;margin-top:22px;font-size:13px;color:var(--ink-soft);}
 
-/* switch mode link */
-.switch-row{
-  text-align:center;margin-top:20px;
-  font-size:13px;color:var(--ink4);
-}
-.switch-row a{
-  color:var(--emerald);font-weight:600;cursor:pointer;
-  text-decoration:none;
-}
-.switch-row a:hover{text-decoration:underline;}
+/* special screens */
+.special-screen{display:none;text-align:center;animation:fadeUp .5s;}
+.special-screen.show{display:block;}
+.ss-icon{width:72px;height:72px;margin:0 auto 22px;border-radius:22px;display:flex;align-items:center;justify-content:center;}
+.ss-icon.mail{background:linear-gradient(135deg,var(--lilac),var(--violet));}
+.ss-icon.success{background:linear-gradient(135deg,var(--mint),var(--mint-deep));}
+.ss-icon svg{width:34px;height:34px;color:#fff;}
+.ss-title{font-family:var(--font-display);font-size:24px;font-weight:500;margin-bottom:10px;}
+.ss-sub{font-size:14px;color:var(--ink-soft);line-height:1.6;margin-bottom:24px;}
+.ss-email{font-weight:600;color:var(--ink);}
 
-/* ── EMAIL VERIFICATION SCREEN ── */
-.verify-screen{
-  text-align:center;
-  display:none;
-}
-.verify-screen.show{display:block;}
-.verify-ico{font-size:56px;margin-bottom:20px;}
-.verify-title{font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:var(--ink);margin-bottom:10px;}
-.verify-body{font-size:14px;color:var(--ink4);line-height:1.7;margin-bottom:24px;}
-.verify-email-badge{
-  display:inline-block;padding:8px 18px;border-radius:100px;
-  background:var(--em-bg);border:1px solid var(--em-bd);
-  font-size:13px;font-weight:600;color:var(--emerald);margin-bottom:24px;
-}
-.resend-btn{
-  background:none;border:none;cursor:pointer;
-  font-size:13px;font-weight:600;color:var(--emerald);
-  text-decoration:underline;padding:0;
-  transition:opacity .2s;
-}
-.resend-btn:hover{opacity:.7;}
-
-/* ── RESET PASSWORD SCREEN ── */
-.reset-screen{display:none;}
-.reset-screen.show{display:flex;flex-direction:column;gap:14px;}
-.back-to-login{
-  display:flex;align-items:center;gap:6px;
-  font-size:12px;font-weight:500;color:var(--ink4);
-  cursor:pointer;margin-bottom:4px;
-  width:fit-content;
-  transition:color .2s;
-}
-.back-to-login:hover{color:var(--ink);}
-
-/* ── SUCCESS / REDIRECT ── */
-.redirect-screen{
-  text-align:center;display:none;
-}
-.redirect-screen.show{display:block;}
-.redirect-ico{font-size:52px;margin-bottom:18px;animation:bounce .7s cubic-bezier(.22,1,.36,1);}
-@keyframes bounce{0%{transform:scale(0)}60%{transform:scale(1.15)}100%{transform:scale(1)}}
-.redirect-title{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--ink);margin-bottom:8px;}
-.redirect-sub{font-size:13px;color:var(--ink4);margin-bottom:20px;}
-.redirect-bar-wrap{height:3px;background:var(--stone);border-radius:2px;overflow:hidden;width:100%;max-width:200px;margin:0 auto;}
-.redirect-bar{height:100%;background:linear-gradient(90deg,var(--emerald),var(--emerald2));border-radius:2px;width:0%;animation:redirectFill 2.5s linear forwards;}
-@keyframes redirectFill{to{width:100%;}}
-
-/* ── FADE IN ── */
-.auth-card > *{
-  animation:cardFade .5s cubic-bezier(.22,1,.36,1) both;
-}
-@keyframes cardFade{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
-
-@media(max-width:480px){
-  .right-panel{padding:32px 20px;}
-  .name-row{grid-template-columns:1fr;}
-}
+/* redirect screen — cinematic */
+#redirect-screen{position:fixed;inset:0;z-index:100;background:var(--ink);display:none;align-items:center;justify-content:center;flex-direction:column;}
+#redirect-screen.show{display:flex;}
+.redirect-aurora{position:absolute;inset:0;overflow:hidden;}
+.redirect-aurora .ra{position:absolute;border-radius:50%;filter:blur(80px);opacity:.5;animation:bcdrift 16s ease-in-out infinite;}
+.ra-1{width:380px;height:380px;background:radial-gradient(circle,var(--violet),transparent 70%);top:18%;left:24%;}
+.ra-2{width:320px;height:320px;background:radial-gradient(circle,var(--mint),transparent 72%);bottom:20%;right:22%;animation-delay:-8s;}
+.redirect-inner{position:relative;z-index:2;text-align:center;}
+.redirect-logo{width:96px;height:96px;margin:0 auto 26px;position:relative;animation:logoFloat 3s ease-in-out infinite;}
+.redirect-logo img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 8px 30px rgba(123,47,247,.5));}
+.redirect-ring{position:absolute;inset:-12px;border-radius:50%;border:2px solid transparent;border-top-color:var(--lilac);border-right-color:var(--mint);animation:spin 1.3s linear infinite;}
+@keyframes logoFloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}}
+.redirect-title{font-family:var(--font-display);font-style:italic;font-weight:500;font-size:28px;color:#fff;margin-bottom:8px;}
+.redirect-sub{font-size:14px;color:rgba(255,255,255,.5);}
 </style>
 </head>
 <body>
 
-<div class="bg-scene">
-  <div class="bg-grid"></div>
-  <div class="bg-orb bo1"></div>
-  <div class="bg-orb bo2"></div>
-  <div class="bg-orb bo3"></div>
-</div>
+<div class="auth-wrap">
 
-<div class="page">
-
-  <!-- ══ LEFT BRAND PANEL ══ -->
-  <div class="left-panel">
-    <div class="lp-logo">Apatmento</div>
-    <div class="lp-hero">
-      <div class="lp-eyebrow">One account. Everything.</div>
-      <h1 class="lp-heading">
-        Your world,<br/>
-        <em>commission-free.</em>
-      </h1>
-      <p class="lp-body">
-        Apartments, flights, rides, food, car hire, shopping, tours and events — all under one roof. No taxes added. No commissions taken. Just the real price.
-      </p>
-      <div class="lp-pills">
-        <div class="lp-pill"><div class="lp-pill-ico">🏢</div><span><strong>Short stays</strong> at real prices</span></div>
-        <div class="lp-pill"><div class="lp-pill-ico">✈️</div><span><strong>Flights</strong> with no booking surcharge</span></div>
-        <div class="lp-pill"><div class="lp-pill-ico">🤝</div><span><strong>Partners</strong> keep 100% of earnings</span></div>
-        <div class="lp-pill"><div class="lp-pill-ico">🔒</div><span><strong>Secure</strong> and always encrypted</span></div>
-      </div>
+  <!-- ════ LEFT: CINEMATIC BRAND CANVAS ════ -->
+  <div class="brand-canvas">
+    <div class="bc-aurora">
+      <div class="bc-blob bcb-1"></div><div class="bc-blob bcb-2"></div>
+      <div class="bc-blob bcb-3"></div><div class="bc-blob bcb-4"></div>
     </div>
-    <div class="lp-footer">© 2025 Apatmento Ltd. · No commissions. No exceptions.</div>
+    <div class="bc-stars" id="bc-stars"></div>
+    <div class="ember-field" id="ember-field"></div>
+
+    <div class="bc-top">
+      <img src="logo-mark.png" class="bc-logo" alt="Apatmento" onerror="this.style.display='none'"/>
+      <span class="bc-brand"><em>Apat</em>mento</span>
+    </div>
+
+    <div class="bc-mid">
+      <span class="bc-eyebrow">✦ Your world · One app</span>
+      <h1 class="bc-headline">
+        Everything for<br/>your next
+        <span class="rotator" id="rotator">adventure.</span>
+      </h1>
+      <p class="bc-sub">Stays, flights, tours, rides, food and more — beautifully unified. Hosts keep 100%, you pay only face value. No commissions, ever.</p>
+    </div>
+
+    <div class="bc-bottom">
+      <span class="bc-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Zero commission</span>
+      <span class="bc-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg> Secure M-Pesa</span>
+      <span class="bc-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Verified hosts</span>
+    </div>
   </div>
 
-  <!-- ══ RIGHT FORM PANEL ══ -->
-  <div class="right-panel">
+  <!-- ════ RIGHT: GLASS AUTH PANEL ════ -->
+  <div class="auth-panel">
+    <div class="auth-panel-aurora"><div class="apa-blob apa-1"></div><div class="apa-blob apa-2"></div></div>
+
     <div class="auth-card">
+      <div class="mobile-logo"><img src="logo-mark.png" alt="Apatmento" onerror="this.style.display='none'"/></div>
 
-      <div class="mobile-logo">Apatmento</div>
-
-      <!-- TAB SWITCHER -->
-      <div class="auth-tabs" id="auth-tabs">
-        <div class="auth-tab active" id="tab-login" onclick="switchTab('login')">Log In</div>
-        <div class="auth-tab" id="tab-signup" onclick="switchTab('signup')">Create Account</div>
-      </div>
-
-      <!-- GLOBAL ALERT -->
-      <div class="alert alert-error" id="alert-error"></div>
-      <div class="alert alert-success" id="alert-success"></div>
-
-      <!-- ══ LOGIN FORM ══ -->
-      <div id="login-section">
-        <div class="auth-heading">
-          <div class="auth-title">Welcome back</div>
-          <div class="auth-sub">Sign in to your Apatmento account.</div>
+      <!-- MAIN AUTH -->
+      <div id="main-auth">
+        <div class="ac-head">
+          <h2 class="ac-title">Welcome to <em>Apatmento</em></h2>
+          <p class="ac-sub">Sign in or create your account to begin.</p>
         </div>
 
-        <!-- Google -->
+        <div class="auth-tabs" id="auth-tabs">
+          <button class="auth-tab active" id="tab-login"  onclick="switchTab('login')">Sign in</button>
+          <button class="auth-tab" id="tab-signup" onclick="switchTab('signup')">Create account</button>
+        </div>
+
+        <div class="alert alert-error" id="alert-error"></div>
+
         <button class="google-btn" onclick="signInWithGoogle()">
-          <svg class="g-icon" viewBox="0 0 24 24">
-            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
-            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-          </svg>
+          <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
           Continue with Google
         </button>
 
-        <div class="or-row"><div class="or-line"></div><div class="or-txt">or sign in with email</div><div class="or-line"></div></div>
+        <div class="divider">or with email</div>
 
-        <form class="auth-form" id="login-form" onsubmit="handleLogin(event)">
+        <!-- LOGIN -->
+        <div id="login-section">
           <div class="field">
             <label class="field-label">Email address</label>
-            <div class="field-wrap">
-              <input class="field-input" type="email" id="login-email" placeholder="you@example.com" autocomplete="email" required/>
-            </div>
+            <input class="field-input" id="login-email" type="email" placeholder="you@example.com" autocomplete="email"/>
             <div class="field-err" id="login-email-err"></div>
           </div>
-
           <div class="field">
             <label class="field-label">Password</label>
-            <div class="field-wrap">
-              <input class="field-input has-toggle" type="password" id="login-password" placeholder="Your password" autocomplete="current-password" required/>
-              <button type="button" class="pw-toggle" onclick="togglePw('login-password',this)">👁</button>
+            <div class="field-input-wrap">
+              <input class="field-input" id="login-password" type="password" placeholder="Enter your password" autocomplete="current-password"/>
+              <button class="pw-toggle" onclick="togglePw('login-password',this)" type="button">👁</button>
             </div>
             <div class="field-err" id="login-pw-err"></div>
           </div>
-
-          <div class="forgot-row">
-            <span class="forgot-link" onclick="showReset()">Forgot password?</span>
+          <div class="row-between">
+            <span></span>
+            <button class="link-btn" onclick="showReset()">Forgot password?</button>
           </div>
-
-          <button type="submit" class="submit-btn" id="login-btn">
-            <span class="btn-spinner"></span>
-            <span class="btn-text">Sign In →</span>
-          </button>
-        </form>
-
-        <div class="switch-row">
-          Don't have an account? <a onclick="switchTab('signup')">Create one free</a>
-        </div>
-      </div>
-
-      <!-- ══ SIGN UP FORM ══ -->
-      <div id="signup-section" style="display:none;">
-        <div class="auth-heading">
-          <div class="auth-title">Create your account</div>
-          <div class="auth-sub">Free to join. Zero fees on everything you book.</div>
+          <button class="submit-btn" id="login-btn" onclick="handleLogin(event)">Sign in</button>
         </div>
 
-        <!-- Google -->
-        <button class="google-btn" onclick="signInWithGoogle()">
-          <svg class="g-icon" viewBox="0 0 24 24">
-            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
-            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-          </svg>
-          Continue with Google
-        </button>
-
-        <div class="or-row"><div class="or-line"></div><div class="or-txt">or sign up with email</div><div class="or-line"></div></div>
-
-        <form class="auth-form" id="signup-form" onsubmit="handleSignup(event)">
-          <div class="name-row">
+        <!-- SIGNUP -->
+        <div id="signup-section" style="display:none;">
+          <div class="field-row">
             <div class="field">
               <label class="field-label">First name</label>
-              <input class="field-input" type="text" id="signup-first" placeholder="James" autocomplete="given-name" required/>
+              <input class="field-input" id="signup-first" type="text" placeholder="Amara"/>
               <div class="field-err" id="signup-first-err"></div>
             </div>
             <div class="field">
               <label class="field-label">Last name</label>
-              <input class="field-input" type="text" id="signup-last" placeholder="Kamau" autocomplete="family-name" required/>
+              <input class="field-input" id="signup-last" type="text" placeholder="Otieno"/>
             </div>
           </div>
-
           <div class="field">
             <label class="field-label">Email address</label>
-            <input class="field-input" type="email" id="signup-email" placeholder="you@example.com" autocomplete="email" required/>
+            <input class="field-input" id="signup-email" type="email" placeholder="you@example.com"/>
             <div class="field-err" id="signup-email-err"></div>
           </div>
-
           <div class="field">
             <label class="field-label">Password</label>
-            <div class="field-wrap">
-              <input class="field-input has-toggle" type="password" id="signup-password"
-                placeholder="At least 8 characters"
-                autocomplete="new-password"
-                oninput="checkStrength(this.value)"
-                required/>
-              <button type="button" class="pw-toggle" onclick="togglePw('signup-password',this)">👁</button>
+            <div class="field-input-wrap">
+              <input class="field-input" id="signup-password" type="password" placeholder="At least 8 characters" oninput="checkStrength(this.value)"/>
+              <button class="pw-toggle" onclick="togglePw('signup-password',this)" type="button">👁</button>
             </div>
-            <div class="pw-strength" id="pw-strength">
-              <div class="pws-bar" id="ps1"></div>
-              <div class="pws-bar" id="ps2"></div>
-              <div class="pws-bar" id="ps3"></div>
-              <div class="pws-bar" id="ps4"></div>
-            </div>
+            <div class="pw-strength"><div class="pws-bar" id="ps1"></div><div class="pws-bar" id="ps2"></div><div class="pws-bar" id="ps3"></div><div class="pws-bar" id="ps4"></div></div>
             <div class="pw-strength-label" id="pw-strength-label"></div>
             <div class="field-err" id="signup-pw-err"></div>
           </div>
-
-          <div class="terms-row">
-            <input type="checkbox" id="terms-check" required/>
-            <label for="terms-check">
-              I agree to the <a href="terms.html" target="_blank">Terms of Service</a> and <a href="privacy.html" target="_blank">Privacy Policy</a>. I understand Apatmento charges zero commissions on all bookings.
-            </label>
-          </div>
-
-          <button type="submit" class="submit-btn" id="signup-btn">
-            <span class="btn-spinner"></span>
-            <span class="btn-text">Create Account →</span>
-          </button>
-        </form>
-
-        <div class="switch-row">
-          Already have an account? <a onclick="switchTab('login')">Sign in</a>
+          <label class="checkbox-row">
+            <input type="checkbox" id="terms-check"/>
+            <span>I agree to the <a href="terms.html" target="_blank">Terms of Service</a> and <a href="privacy.html" target="_blank">Privacy Policy</a>.</span>
+          </label>
+          <button class="submit-btn" id="signup-btn" onclick="handleSignup(event)">Create account</button>
         </div>
       </div>
 
-      <!-- ══ EMAIL VERIFICATION ══ -->
-      <div class="verify-screen" id="verify-screen">
-        <div class="verify-ico">📬</div>
-        <div class="verify-title">Check your inbox</div>
-        <div class="verify-body">
-          We've sent a confirmation link to:
-        </div>
-        <div class="verify-email-badge" id="verify-email-display">—</div>
-        <div class="verify-body">
-          Click the link in the email to activate your account. Once confirmed, come back here and tap the button below.
-        </div>
-        <div style="margin-top:24px;display:flex;flex-direction:column;gap:12px;align-items:center;width:100%;">
-          <button class="submit-btn" onclick="checkConfirmationAndProceed()" id="confirmed-btn" style="max-width:340px;">
-            <span class="btn-spinner"></span>
-            <span class="btn-text">✓ I've confirmed — Continue</span>
-          </button>
-          <button class="resend-btn" onclick="resendVerification()" id="resend-btn">Resend email</button>
-        </div>
-        <div class="alert alert-error" id="verify-alert" style="margin-top:16px;max-width:340px;"></div>
-      </div>
-
-      <!-- ══ RESET PASSWORD ══ -->
-      <div class="reset-screen" id="reset-screen">
-        <div class="back-to-login" onclick="showLogin()">← Back to sign in</div>
-        <div class="auth-heading">
-          <div class="auth-title">Reset your password</div>
-          <div class="auth-sub">Enter your email and we'll send a reset link.</div>
-        </div>
+      <!-- RESET SCREEN -->
+      <div class="special-screen" id="reset-screen">
+        <div class="ss-icon mail"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></div>
+        <h2 class="ss-title">Reset your password</h2>
+        <p class="ss-sub">Enter your email and we'll send you a secure reset link.</p>
         <div class="alert alert-error" id="reset-alert-error"></div>
         <div class="alert alert-success" id="reset-alert-success"></div>
-        <form class="auth-form" onsubmit="handleReset(event)">
-          <div class="field">
-            <label class="field-label">Email address</label>
-            <input class="field-input" type="email" id="reset-email" placeholder="you@example.com" required/>
-          </div>
-          <button type="submit" class="submit-btn" id="reset-btn">
-            <span class="btn-spinner"></span>
-            <span class="btn-text">Send Reset Link →</span>
-          </button>
-        </form>
+        <div class="field" style="text-align:left;">
+          <input class="field-input" id="reset-email" type="email" placeholder="you@example.com"/>
+        </div>
+        <button class="submit-btn" id="reset-btn" onclick="handleReset(event)" style="margin-bottom:14px;">Send reset link</button>
+        <button class="link-btn" onclick="showLogin()">← Back to sign in</button>
       </div>
 
-      <!-- ══ SUCCESS / REDIRECT ══ -->
-      <div class="redirect-screen" id="redirect-screen">
-        <div class="redirect-ico">✅</div>
-        <div class="redirect-title">You're in!</div>
-        <div class="redirect-sub" id="redirect-sub">Taking you to your dashboard…</div>
-        <div class="redirect-bar-wrap"><div class="redirect-bar"></div></div>
+      <!-- VERIFY SCREEN -->
+      <div class="special-screen" id="verify-screen">
+        <div class="ss-icon mail"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></div>
+        <h2 class="ss-title">Check your inbox</h2>
+        <p class="ss-sub">We sent a confirmation link to <span class="ss-email" id="verify-email-display"></span>. Click it to activate your account.</p>
+        <div class="alert alert-error" id="verify-alert"></div>
+        <button class="submit-btn" id="confirmed-btn" onclick="checkConfirmationAndProceed()" style="margin-bottom:14px;">I've confirmed — continue</button>
+        <button class="link-btn" id="resend-btn" onclick="resendVerification()">Resend email</button>
       </div>
 
     </div>
-  </div><!-- end right-panel -->
+  </div>
+</div>
 
-</div><!-- end page -->
+<!-- CINEMATIC REDIRECT -->
+<div id="redirect-screen">
+  <div class="redirect-aurora"><div class="ra ra-1"></div><div class="ra ra-2"></div></div>
+  <div class="redirect-inner">
+    <div class="redirect-logo"><div class="redirect-ring"></div><img src="logo-mark.png" alt="" onerror="this.style.display='none'"/></div>
+    <div class="redirect-title">Welcome back</div>
+    <div class="redirect-sub" id="redirect-sub">Taking you to your dashboard…</div>
+  </div>
+</div>
 
 <script>
-/* ══════════════════════════════════════════════════════════════
-   SUPABASE CONFIGURATION
+/* ════════ GENERATE STARS + EMBERS ════════ */
+(function(){
+  const stars = document.getElementById('bc-stars');
+  if(stars) for(let i=0;i<40;i++){
+    const s=document.createElement('div');s.className='star';
+    s.style.left=Math.random()*100+'%';s.style.top=Math.random()*100+'%';
+    s.style.animationDuration=(2+Math.random()*3)+'s';s.style.animationDelay=Math.random()*3+'s';
+    stars.appendChild(s);
+  }
+  const glyphs=[
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M3 10.5 12 4l9 6.5M5 9.5V20h14V9.5"/></svg>',
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="m10.5 13.5-6.5-2.5 1-1 3.5 1.5 4-4 2 .5-2 4 3.5 1.5-1 1z"/></svg>',
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="m15 5.5-6-2-6 2.5v13l6-2.5 6 2 6-2.5v-13z"/></svg>',
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M5 13h14l-1.5-5a2 2 0 0 0-2-1.5h-7a2 2 0 0 0-2 1.5z"/></svg>',
+  ];
+  const field=document.getElementById('ember-field');
+  if(field) for(let i=0;i<7;i++){
+    const e=document.createElement('div');e.className='ember';
+    const size=22+Math.random()*22;
+    e.style.width=size+'px';e.style.height=size+'px';
+    e.style.left=Math.random()*100+'%';
+    e.style.animationDuration=(14+Math.random()*12)+'s';
+    e.style.animationDelay=Math.random()*14+'s';
+    e.innerHTML=glyphs[i%glyphs.length];
+    field.appendChild(e);
+  }
+})();
 
-   TWO WAYS TO SET YOUR KEYS:
+/* ════════ HEADLINE ROTATOR ════════ */
+(function(){
+  const words=['adventure.','getaway.','safari.','city break.','escape.','journey.'];
+  let i=0;const el=document.getElementById('rotator');
+  if(!el) return;
+  setInterval(()=>{
+    el.style.transition='opacity .4s, transform .4s';
+    el.style.opacity='0';el.style.transform='translateY(8px)';
+    setTimeout(()=>{i=(i+1)%words.length;el.textContent=words[i];el.style.opacity='1';el.style.transform='none';},400);
+  },2600);
+})();
+</script>
 
-   OPTION A — Netlify Environment Variables (RECOMMENDED, more secure):
-   1. Netlify dashboard → your site → Site configuration → Environment variables
-   2. Add variable:  SUPABASE_URL   = https://xxxx.supabase.co
-   3. Add variable:  SUPABASE_ANON_KEY = eyJ...
-   4. Then in your HTML files use window._env_ values (set via netlify.toml)
-      OR just paste them directly below — the anon key is safe to expose in HTML.
-
-   OPTION B — Paste directly (fine for anon key, it's public-safe):
-   Just fill in the two strings below.
-══════════════════════════════════════════════════════════════ */
+<script>
 const SUPABASE_URL      = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
 
