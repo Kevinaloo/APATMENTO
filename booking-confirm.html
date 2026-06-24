@@ -3,149 +3,209 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>APATMENTO — Confirm Your Booking</title>
+<title>Apatmento — Confirm booking</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400&family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..700&display=swap" rel="stylesheet"/>
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&f[]=geist@400,500,600&display=swap" rel="stylesheet"/>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
-  --white:#FFFFFF;--offwhite:#F7F6F2;--stone:#EDEAE4;
-  --ink:#0F1117;--ink2:#2A2D38;--ink3:#5A5E70;--ink4:#9499AD;
-  --border:rgba(15,17,23,0.08);--border-md:rgba(15,17,23,0.14);
-  --shadow-sm:0 2px 12px rgba(15,17,23,0.06);
-  --shadow-md:0 8px 32px rgba(15,17,23,0.10);
-  --shadow-lg:0 20px 60px rgba(15,17,23,0.14);
-  --gold:#C8970A;--gold2:#E8A800;
-  --emerald:#0D9467;--emerald2:#059652;
-  --em-bg:rgba(13,148,103,0.07);--em-bd:rgba(13,148,103,0.18);
+  --glass:#FCFCFD;--glass-2:#F4F5FB;--glass-3:#EBEDF7;--ink:#0A0A14;--ink-2:#1A1B2E;--ink-soft:#4A4C66;--ink-faint:#8E90AD;
+  --lilac:#B8A4F4;--lilac-deep:#8B6FE8;--mint:#5EEAD4;--mint-deep:#2DD4BF;--peach:#FFB59E;
+  --electric:#4361FF;--violet:#7B2FF7;--ember:#FF6B2C;
+  --line:rgba(10,10,20,0.07);--line-2:rgba(10,10,20,0.13);
+  --theme:var(--lilac-deep);--theme-grad:linear-gradient(135deg,#B8A4F4,#7B2FF7);
+  --font-display:'Fraunces',serif;--font-body:'General Sans',system-ui,sans-serif;--font-data:'Geist',monospace;
+  --shadow-glass:0 8px 40px rgba(123,47,247,0.07),0 2px 12px rgba(10,10,20,0.04);
+  --shadow-lift:0 24px 70px rgba(123,47,247,0.16),0 8px 24px rgba(10,10,20,0.06);
+  --radius:22px;--ok:#2DD4BF;--err:#FF4D6D;
 }
-html,body{min-height:100%;font-family:'Inter',sans-serif;background:var(--offwhite);color:var(--ink);}
+@media (prefers-reduced-motion: reduce){*{animation-duration:.01ms !important;transition-duration:.01ms !important;}}
+html,body{min-height:100%;font-family:var(--font-body);background:var(--glass);color:var(--ink);-webkit-font-smoothing:antialiased;}
+body{overflow-x:hidden;}
+.aurora{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;}
+.ab{position:absolute;border-radius:50%;filter:blur(85px);opacity:.4;mix-blend-mode:multiply;animation:drift 26s ease-in-out infinite;}
+.ab-1{width:540px;height:540px;background:radial-gradient(circle,var(--lilac),transparent 70%);top:-14%;left:-8%;}
+.ab-2{width:440px;height:440px;background:radial-gradient(circle,var(--mint),transparent 72%);bottom:-10%;right:-8%;animation-delay:-10s;opacity:.28;}
+@keyframes drift{0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(40px,-30px) scale(1.08);}}
 
-.top-nav{
-  position:sticky;top:0;z-index:100;height:60px;
-  background:var(--white);border-bottom:1px solid var(--border);
-  display:flex;align-items:center;justify-content:space-between;padding:0 24px;
-}
-.nav-logo{
-  font-family:'Playfair Display',serif;font-size:16px;font-weight:700;
-  letter-spacing:.22em;text-transform:uppercase;
-  background:linear-gradient(90deg,var(--gold),var(--gold2));
-  -webkit-background-clip:text;background-clip:text;color:transparent;text-decoration:none;
-}
-.nav-back{
-  display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500;
-  color:var(--ink3);text-decoration:none;padding:7px 14px;border-radius:8px;
-  border:1px solid var(--border);transition:all .2s;cursor:pointer;background:none;
-}
-.nav-back:hover{background:var(--offwhite);color:var(--ink);}
-.nav-avatar{
-  width:32px;height:32px;border-radius:8px;
-  background:linear-gradient(135deg,var(--emerald),var(--emerald2));
-  display:flex;align-items:center;justify-content:center;
-  font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:700;color:white;
-}
+.topbar{position:sticky;top:0;z-index:100;height:68px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;background:rgba(252,252,253,.72);backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);border-bottom:1px solid var(--line);}
+.tb-left{display:flex;align-items:center;gap:13px;}
+.tb-back{width:40px;height:40px;border-radius:13px;border:1px solid var(--line);background:rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink-soft);transition:all .25s;}
+.tb-back:hover{border-color:var(--theme);color:var(--theme);transform:translateX(-2px);}
+.tb-logo{height:34px;}
+.tb-brand{font-family:var(--font-display);font-weight:500;font-size:19px;}
+.tb-brand em{font-style:italic;color:var(--theme);}
 
-.page{max-width:980px;margin:0 auto;padding:32px 20px 60px;}
-.page-title{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--ink);margin-bottom:6px;}
-.page-sub{font-size:13px;color:var(--ink4);margin-bottom:28px;}
+.page{position:relative;z-index:2;max-width:1080px;margin:0 auto;padding:36px 28px 70px;}
+.page-eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--theme);margin-bottom:12px;padding:6px 14px;border-radius:100px;background:rgba(139,111,232,.1);border:1px solid rgba(139,111,232,.2);}
+.page-title{font-family:var(--font-display);font-weight:400;font-size:clamp(28px,4vw,40px);letter-spacing:-.02em;margin-bottom:8px;}
+.page-title em{font-style:italic;font-weight:500;background:var(--theme-grad);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.page-sub{font-size:15px;color:var(--ink-soft);margin-bottom:32px;}
 
-.layout{display:grid;grid-template-columns:1fr 380px;gap:24px;align-items:start;}
-@media(max-width:850px){.layout{grid-template-columns:1fr;}}
+.layout{display:grid;grid-template-columns:1fr 380px;gap:26px;align-items:start;}
+@media(max-width:860px){.layout{grid-template-columns:1fr;}}
 
-/* ── LEFT: FORM ── */
-.form-card{background:var(--white);border-radius:18px;border:1px solid var(--border);padding:28px;margin-bottom:20px;}
-.form-card-title{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;color:var(--ink);margin-bottom:18px;letter-spacing:.02em;}
+.form-card{background:rgba(255,255,255,.66);backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:var(--radius);padding:26px;margin-bottom:20px;box-shadow:var(--shadow-glass);}
+.form-card-title{font-family:var(--font-display);font-weight:500;font-size:18px;margin-bottom:20px;display:flex;align-items:center;gap:10px;}
+.form-card-title svg{width:20px;height:20px;color:var(--theme);}
+.row-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+@media(max-width:480px){.row-2{grid-template-columns:1fr;}}
+.field{margin-bottom:16px;}
+.field:last-child{margin-bottom:0;}
+.field-label{display:block;font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:7px;}
+.field-input{width:100%;padding:13px 15px;border:1.5px solid var(--line-2);border-radius:13px;background:var(--glass);font-family:var(--font-body);font-size:14px;color:var(--ink);outline:none;transition:all .25s;}
+.field-input:focus{border-color:var(--theme);box-shadow:0 0 0 4px rgba(139,111,232,.1);}
+.field-hint{font-size:12px;color:var(--ink-faint);margin-top:6px;}
 
-.row-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;}
-@media(max-width:500px){.row-2{grid-template-columns:1fr;}}
-.field{display:flex;flex-direction:column;gap:6px;margin-bottom:16px;}
-.field-label{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);}
-.field-input,.field-select{
-  padding:12px 14px;border-radius:10px;border:1.5px solid var(--border);
-  background:var(--offwhite);font-family:'Inter',sans-serif;font-size:14px;color:var(--ink);
-  outline:none;transition:border-color .2s,background .2s;-webkit-appearance:none;
-}
-.field-select{
-  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 10 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%239499AD' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-  background-repeat:no-repeat;background-position:right 12px center;background-size:10px;padding-right:30px;cursor:pointer;
-}
-.field-input:focus,.field-select:focus{border-color:var(--emerald);background:var(--white);}
-.field-hint{font-size:11px;color:var(--ink4);}
+.guest-stepper{display:flex;align-items:center;justify-content:space-between;padding:6px;border:1.5px solid var(--line-2);border-radius:13px;background:var(--glass);}
+.gs-btn{width:40px;height:40px;border-radius:10px;border:none;background:var(--glass-2);color:var(--theme);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+.gs-btn:hover{background:var(--theme);color:#fff;}
+.gs-count{font-family:var(--font-display);font-weight:600;font-size:20px;}
 
-/* guest counter */
-.guest-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);}
-.guest-row:last-child{border-bottom:none;}
-.gr-label{font-size:13px;font-weight:600;color:var(--ink);}
-.gr-sub{font-size:11px;color:var(--ink4);}
-.gr-controls{display:flex;align-items:center;gap:12px;}
-.gr-btn{
-  width:30px;height:30px;border-radius:8px;border:1.5px solid var(--border);
-  background:var(--white);font-size:16px;color:var(--ink);cursor:pointer;
-  display:flex;align-items:center;justify-content:center;transition:background .2s;
-}
-.gr-btn:hover{background:var(--offwhite);}
-.gr-val{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;min-width:20px;text-align:center;}
+/* SUMMARY */
+.summary{position:sticky;top:90px;background:rgba(255,255,255,.72);backdrop-filter:blur(14px);border:1px solid var(--line);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow-glass);}
+.sum-apt{display:flex;gap:14px;align-items:center;padding-bottom:20px;margin-bottom:20px;border-bottom:1px solid var(--line);}
+.sum-apt-thumb{width:60px;height:60px;border-radius:16px;background:var(--theme-grad);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;}
+.sum-apt-name{font-family:var(--font-display);font-weight:500;font-size:17px;line-height:1.2;margin-bottom:4px;}
+.sum-apt-loc{font-size:12px;color:var(--ink-faint);display:flex;align-items:center;gap:4px;}
+.sum-apt-loc svg{width:12px;height:12px;}
+.sum-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-size:14px;color:var(--ink-soft);}
+.sum-row .v{color:var(--ink);font-weight:500;}
+.sum-divider{height:1px;background:var(--line);margin:16px 0;}
+.sum-total-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;}
+.sum-total-label{font-size:15px;font-weight:600;}
+.sum-total-val{font-family:var(--font-display);font-weight:600;font-size:26px;color:var(--ink);}
+.sum-note{font-size:12px;line-height:1.6;color:var(--mint-deep);background:rgba(45,212,191,.08);border:1px solid rgba(45,212,191,.16);border-radius:12px;padding:12px;margin:16px 0;}
+.pay-btn{width:100%;padding:16px;border-radius:14px;background:var(--theme-grad);color:#fff;border:none;font-family:var(--font-body);font-weight:600;font-size:15px;cursor:pointer;transition:all .3s;box-shadow:0 10px 30px rgba(123,47,247,.3);display:flex;align-items:center;justify-content:center;gap:9px;}
+.pay-btn:hover{transform:translateY(-2px);box-shadow:0 14px 40px rgba(123,47,247,.42);}
+.pay-btn:disabled{opacity:.6;cursor:not-allowed;transform:none;}
+.pay-secure{text-align:center;font-size:12px;color:var(--ink-faint);margin-top:14px;display:flex;align-items:center;justify-content:center;gap:6px;}
+.pay-secure svg{width:13px;height:13px;color:var(--mint-deep);}
 
-/* ── RIGHT: SUMMARY ── */
-.summary-card{
-  background:var(--white);border-radius:18px;border:1px solid var(--border);
-  padding:24px;position:sticky;top:84px;
-}
-.sum-apt{display:flex;gap:12px;margin-bottom:18px;padding-bottom:18px;border-bottom:1px solid var(--border);}
-.sum-apt-thumb{
-  width:64px;height:64px;border-radius:12px;flex-shrink:0;
-  display:flex;align-items:center;justify-content:center;font-size:28px;
-  background:linear-gradient(135deg,#0a1a30,#1a4060);
-}
-.sum-apt-name{font-family:'Playfair Display',serif;font-size:15px;font-weight:700;color:var(--ink);line-height:1.3;margin-bottom:3px;}
-.sum-apt-loc{font-size:11px;color:var(--ink4);}
+/* ── PAYMENT POPUP (glass reskin) ── */
+.apt-pay-overlay{position:fixed;inset:0;z-index:9999;background:rgba(10,10,20,.55);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;padding:20px;}
+.apt-pay-overlay.open{display:flex;animation:fadeIn .3s;}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+.apt-pay-card{background:var(--glass);border-radius:26px;padding:40px 32px;max-width:400px;width:100%;text-align:center;box-shadow:var(--shadow-lift);animation:popIn .4s cubic-bezier(.34,1.56,.64,1);}
+@keyframes popIn{from{opacity:0;transform:scale(.92) translateY(10px);}to{opacity:1;transform:none;}}
+.apt-pay-icon{width:72px;height:72px;margin:0 auto 18px;border-radius:22px;display:flex;align-items:center;justify-content:center;background:var(--theme-grad);color:#fff;}
+.apt-pay-icon svg{width:36px;height:36px;}
+.apt-pay-icon.success{background:linear-gradient(135deg,var(--mint),var(--mint-deep));}
+.apt-pay-icon.failed,.apt-pay-icon.error{background:linear-gradient(135deg,#FF8FA3,#FF4D6D);}
+.apt-pay-title{font-family:var(--font-display);font-weight:500;font-size:22px;margin-bottom:8px;}
+.apt-pay-sub{font-size:14px;color:var(--ink-soft);line-height:1.6;margin-bottom:18px;}
+.apt-pay-amount{font-family:var(--font-display);font-weight:600;font-size:32px;color:var(--ink);margin-bottom:4px;}
+.apt-pay-phone{font-family:var(--font-data);font-size:14px;color:var(--ink-faint);margin-bottom:20px;}
+.apt-pay-spinner-row{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:18px;}
+.apt-pay-spinner{width:22px;height:22px;border:2.5px solid var(--line-2);border-top-color:var(--theme);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.apt-pay-status-text{font-size:13px;color:var(--ink-soft);font-weight:500;}
+.apt-pay-countdown{font-size:12px;color:var(--ink-faint);margin-bottom:18px;}
+.apt-pay-btn-row{display:flex;gap:10px;}
+.apt-pay-cancel{flex:1;padding:13px;border-radius:12px;border:1px solid var(--line-2);background:transparent;color:var(--ink-soft);font-family:var(--font-body);font-weight:600;font-size:14px;cursor:pointer;transition:all .2s;}
+.apt-pay-cancel:hover{background:var(--glass-2);}
+.apt-pay-retry{flex:2;padding:13px;border-radius:12px;border:none;background:var(--theme-grad);color:#fff;font-family:var(--font-body);font-weight:600;font-size:14px;cursor:pointer;}
 
-.sum-row{display:flex;justify-content:space-between;font-size:13px;color:var(--ink3);padding:6px 0;}
-.sum-row.total{border-top:1px solid var(--border);margin-top:8px;padding-top:14px;font-size:16px;font-weight:700;color:var(--ink);}
-.sum-note{
-  font-size:11px;color:var(--emerald);background:var(--em-bg);border:1px solid var(--em-bd);
-  border-radius:10px;padding:10px 12px;margin-top:14px;line-height:1.6;
-}
-.pay-btn{
-  width:100%;padding:15px;border-radius:12px;margin-top:18px;
-  background:linear-gradient(135deg,var(--emerald),var(--emerald2));
-  color:white;font-family:'Space Grotesk',sans-serif;
-  font-size:14px;font-weight:700;border:none;cursor:pointer;
-  box-shadow:0 6px 24px rgba(13,148,103,.3);
-  transition:filter .2s,transform .2s;
-}
-.pay-btn:hover{filter:brightness(1.08);transform:translateY(-1px);}
-.pay-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
-
-.toast{
-  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
-  background:var(--ink);color:white;padding:12px 20px;border-radius:12px;
-  font-size:13px;font-weight:500;box-shadow:var(--shadow-lg);z-index:999;
-  opacity:0;pointer-events:none;transition:opacity .3s;white-space:normal;max-width:90vw;text-align:center;line-height:1.5;
-}
-.toast.show{opacity:1;}
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);z-index:9999;padding:14px 24px;border-radius:100px;background:var(--ink);color:#fff;font-size:13px;font-weight:500;box-shadow:var(--shadow-lift);opacity:0;pointer-events:none;transition:all .4s cubic-bezier(.22,1,.36,1);max-width:90vw;text-align:center;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 </style>
+</head>
+<body>
+<div class="aurora"><div class="ab ab-1"></div><div class="ab ab-2"></div></div>
+
+<div class="topbar">
+  <div class="tb-left">
+    <button class="tb-back" onclick="history.back()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    </button>
+    <img src="logo-mark.png" class="tb-logo" alt="" onerror="this.style.display='none'"/>
+    <span class="tb-brand"><em>Apat</em>mento</span>
+  </div>
+  <div class="nav-avatar" id="nav-avatar"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="page">
+  <span class="page-eyebrow">✦ Almost there</span>
+  <h1 class="page-title">Confirm your <em>booking</em></h1>
+  <p class="page-sub">Review your stay and pay securely with M-Pesa. Your money is protected until check-in.</p>
+
+  <div class="layout">
+    <!-- LEFT: FORM -->
+    <div>
+      <div class="form-card">
+        <div class="form-card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18M8 2v4M16 2v4"/></svg>
+          Your stay
+        </div>
+        <div class="row-2">
+          <div class="field">
+            <label class="field-label">Check in</label>
+            <input class="field-input" type="date" id="checkin-date"/>
+          </div>
+          <div class="field">
+            <label class="field-label">Check out</label>
+            <input class="field-input" type="date" id="checkout-date"/>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field-label">Guests</label>
+          <div class="guest-stepper">
+            <button class="gs-btn" onclick="changeGuests(-1)">−</button>
+            <span class="gs-count" id="guest-count">2</span>
+            <button class="gs-btn" onclick="changeGuests(1)">+</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <div class="form-card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>
+          Your details
+        </div>
+        <div class="field">
+          <label class="field-label">Full name</label>
+          <input class="field-input" type="text" id="guest-name" placeholder="As it appears on M-Pesa"/>
+        </div>
+        <div class="field">
+          <label class="field-label">M-Pesa phone number</label>
+          <input class="field-input" type="tel" id="guest-phone" placeholder="07XX XXX XXX"/>
+          <div class="field-hint">You'll receive an STK push to this number to complete payment.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: SUMMARY -->
+    <div class="summary">
+      <div class="sum-apt">
+        <div class="sum-apt-thumb" id="sum-apt-thumb">🏢</div>
+        <div>
+          <div class="sum-apt-name" id="sum-apt-name">Apartment</div>
+          <div class="sum-apt-loc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg><span id="sum-apt-loc">Nairobi</span></div>
+        </div>
+      </div>
+      <div class="sum-row"><span id="sum-nights-label">2 nights</span><span class="v" id="sum-subtotal">KES 0</span></div>
+      <div class="sum-row"><span>Apatmento fee <span style="font-size:11px;color:var(--ink-faint);">(fixed)</span></span><span class="v" id="sum-fee">KES 0</span></div>
+      <div class="sum-divider"></div>
+      <div class="sum-total-row"><span class="sum-total-label">Total</span><span class="sum-total-val" id="sum-total">KES 0</span></div>
+      <div class="sum-note" id="sum-note">100% of the stay price goes directly to the host. Our fee is fixed — never a percentage.</div>
+      <button class="pay-btn" id="pay-btn" onclick="startPayment()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><path d="M2 10h20"/></svg>
+        Pay with M-Pesa
+      </button>
+      <div class="pay-secure">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Secured · Money protected until check-in
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
-/* ===== INLINED payment.js — no external file dependency ===== */
-/* ══════════════════════════════════════════════════════════════
-   APATMENTO — Shared PayHero STK Push Payment Popup
-   Include this script in any page that needs to collect payment
-   (tours.html, events.html, apartment booking, etc.)
-
-   USAGE:
-   ApatmentoPay.start({
-     amount: 24500,
-     phone: '0712345678',
-     reference: 'TOUR-1-abc123',     // must be unique per transaction
-     table: 'tour_bookings',          // which Supabase table to poll
-     description: 'Maasai Mara Safari — 2 people',
-     onSuccess: () => { ... },
-     onFailure: () => { ... },
-   });
-══════════════════════════════════════════════════════════════ */
-
 (function () {
 
   const style = document.createElement('style');
@@ -254,7 +314,7 @@ html,body{min-height:100%;font-family:'Inter',sans-serif;background:var(--offwhi
     let html = '';
     if (state === 'sending') {
       html = `
-        <div class="apt-pay-icon">📲</div>
+        <div class="apt-pay-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2"/><path d="M12 18h.01"/></svg></div>
         <div class="apt-pay-title">Check your phone</div>
         <div class="apt-pay-sub">We're sending an M-Pesa prompt to your number now…</div>
         <div class="apt-pay-amount">KES ${opts.amount.toLocaleString()}</div>
@@ -267,7 +327,7 @@ html,body{min-height:100%;font-family:'Inter',sans-serif;background:var(--offwhi
       `;
     } else if (state === 'waiting') {
       html = `
-        <div class="apt-pay-icon">📲</div>
+        <div class="apt-pay-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2"/><path d="M12 18h.01"/></svg></div>
         <div class="apt-pay-title">Enter your M-Pesa PIN</div>
         <div class="apt-pay-sub">A payment prompt has been sent to <strong>${opts.phone}</strong>. Enter your PIN on your phone to complete payment.</div>
         <div class="apt-pay-amount">KES ${opts.amount.toLocaleString()}</div>
@@ -280,7 +340,7 @@ html,body{min-height:100%;font-family:'Inter',sans-serif;background:var(--offwhi
       `;
     } else if (state === 'success') {
       html = `
-        <div class="apt-pay-icon success">✅</div>
+        <div class="apt-pay-icon success"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
         <div class="apt-pay-title">Payment confirmed!</div>
         <div class="apt-pay-sub">${opts.description || 'Your booking is confirmed.'}</div>
         <div class="apt-pay-amount">KES ${opts.amount.toLocaleString()}</div>
@@ -290,7 +350,7 @@ html,body{min-height:100%;font-family:'Inter',sans-serif;background:var(--offwhi
       `;
     } else if (state === 'failed') {
       html = `
-        <div class="apt-pay-icon failed">❌</div>
+        <div class="apt-pay-icon failed"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></div>
         <div class="apt-pay-title">Payment didn't go through</div>
         <div class="apt-pay-sub">${opts.errorMsg || 'The payment was cancelled or timed out. You can try again.'}</div>
         <div class="apt-pay-btn-row">
@@ -300,7 +360,7 @@ html,body{min-height:100%;font-family:'Inter',sans-serif;background:var(--offwhi
       `;
     } else if (state === 'error') {
       html = `
-        <div class="apt-pay-icon failed">⚠️</div>
+        <div class="apt-pay-icon failed"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 19h20z"/><path d="M12 9v4M12 17h.01"/></svg></div>
         <div class="apt-pay-title">Something went wrong</div>
         <div class="apt-pay-sub">${opts.errorMsg || 'Could not start the payment. Please check your connection and try again.'}</div>
         <div class="apt-pay-btn-row">
@@ -401,92 +461,16 @@ html,body{min-height:100%;font-family:'Inter',sans-serif;background:var(--offwhi
 })();
 
 </script>
-</head>
-<body>
-
-<nav class="top-nav">
-  <button class="nav-back" onclick="history.back()">← Back</button>
-  <a href="dashboard.html?role=guest&back=1" class="nav-logo">Apatmento</a>
-  <div class="nav-avatar" id="nav-avatar">G</div>
-</nav>
-
-<div class="toast" id="toast"></div>
-
-<div class="page">
-  <div class="page-title">Confirm your booking</div>
-  <div class="page-sub">Review your stay details and complete payment to confirm.</div>
-
-  <div class="layout">
-
-    <!-- LEFT: FORM -->
-    <div>
-      <div class="form-card">
-        <div class="form-card-title">📅 Your stay</div>
-        <div class="row-2">
-          <div class="field">
-            <div class="field-label">Check-in</div>
-            <input class="field-input" type="date" id="checkin-date"/>
-          </div>
-          <div class="field">
-            <div class="field-label">Check-out</div>
-            <input class="field-input" type="date" id="checkout-date"/>
-          </div>
-        </div>
-        <div class="guest-row">
-          <div><div class="gr-label">Guests</div><div class="gr-sub">Up to property max</div></div>
-          <div class="gr-controls">
-            <button class="gr-btn" onclick="changeGuests(-1)">−</button>
-            <div class="gr-val" id="guest-count">2</div>
-            <button class="gr-btn" onclick="changeGuests(1)">+</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="form-card">
-        <div class="form-card-title">👤 Your details</div>
-        <div class="row-2">
-          <div class="field" style="margin-bottom:0;">
-            <div class="field-label">Full name</div>
-            <input class="field-input" type="text" id="guest-name" placeholder="Your full name"/>
-          </div>
-          <div class="field" style="margin-bottom:0;">
-            <div class="field-label">M-Pesa phone number</div>
-            <input class="field-input" type="tel" id="guest-phone" placeholder="07XX XXX XXX"/>
-          </div>
-        </div>
-        <div class="field-hint" style="margin-top:8px;">We'll send your M-Pesa payment prompt to this number.</div>
-      </div>
-    </div>
-
-    <!-- RIGHT: SUMMARY -->
-    <div class="summary-card">
-      <div class="sum-apt">
-        <div class="sum-apt-thumb" id="sum-apt-thumb">🏢</div>
-        <div>
-          <div class="sum-apt-name" id="sum-apt-name">Loading…</div>
-          <div class="sum-apt-loc" id="sum-apt-loc"></div>
-        </div>
-      </div>
-      <div class="sum-row"><span id="sum-nights-label">— nights × KES —</span><span id="sum-subtotal">KES 0</span></div>
-      <div class="sum-row"><span>Apatmento service fee</span><span id="sum-fee">KES 0</span></div>
-      <div class="sum-row total"><span>Total to pay</span><span id="sum-total">KES 0</span></div>
-      <div class="sum-note" id="sum-note">100% of the stay price goes directly to the host. Our fee is fixed — never a percentage.</div>
-      <button class="pay-btn" id="pay-btn" onclick="startPayment()">💳 Pay &amp; Confirm Booking</button>
-    </div>
-
-  </div>
-</div>
-
 <script>
 /* ══ SUPABASE ══ */
 const SUPABASE_URL      = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
-const { createClient } = supabase;
-const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let sb = null;
+try { const { createClient } = supabase; sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY); } catch(e){ console.warn('Supabase unavailable'); }
 let CURRENT_USER = null;
 (async () => {
-  const { data: { session } } = await sb.auth.getSession();
-  if (session) CURRENT_USER = session.user;
+  if (!sb) return;
+  try { const { data: { session } } = await sb.auth.getSession(); if (session) CURRENT_USER = session.user; } catch(e){}
 })();
 
 /* ══ READ APARTMENT FROM URL PARAMS ══
@@ -672,32 +656,34 @@ function showCheckinCodes() {
 
   // Build a beautiful confirmation modal
   const modal = document.createElement('div');
-  modal.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(15,17,23,.96);display:flex;align-items:center;justify-content:center;padding:20px;';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(10,10,20,.55);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:20px;';
   modal.innerHTML = `
-    <div style="background:#161e28;border:1px solid rgba(255,255,255,.1);border-radius:22px;padding:36px 28px;max-width:420px;width:100%;text-align:center;">
-      <div style="font-size:48px;margin-bottom:16px;">🎉</div>
-      <div style="font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:800;color:white;margin-bottom:6px;">Booking Confirmed!</div>
-      <div style="font-size:13px;color:rgba(255,255,255,.4);margin-bottom:28px;line-height:1.6;">${aptName}<br/>Save both codes before closing this screen.</div>
+    <div style="background:var(--glass);border:1px solid var(--line);border-radius:26px;padding:38px 30px;max-width:430px;width:100%;text-align:center;box-shadow:var(--shadow-lift);animation:popIn .4s cubic-bezier(.34,1.56,.64,1);">
+      <div style="width:72px;height:72px;margin:0 auto 18px;border-radius:22px;background:linear-gradient(135deg,var(--mint),var(--mint-deep));display:flex;align-items:center;justify-content:center;color:#fff;">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+      </div>
+      <div style="font-family:var(--font-display);font-weight:500;font-size:24px;color:var(--ink);margin-bottom:6px;">Booking confirmed</div>
+      <div style="font-size:13px;color:var(--ink-soft);margin-bottom:26px;line-height:1.6;">${aptName}<br/>Save both codes before closing this screen.</div>
 
-      <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:24px;">
-        <div style="background:rgba(13,148,103,.1);border:1px solid rgba(13,148,103,.25);border-radius:14px;padding:18px;">
-          <div style="font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#0D9467;margin-bottom:8px;">Your Check-In Code (show to host)</div>
-          <div style="font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:900;color:white;letter-spacing:.12em;">${guestCode}</div>
-          <div style="font-size:11px;color:rgba(255,255,255,.3);margin-top:6px;">Give this code to your host at check-in</div>
+      <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:22px;">
+        <div style="background:rgba(45,212,191,.08);border:1px solid rgba(45,212,191,.22);border-radius:16px;padding:18px;">
+          <div style="font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--mint-deep);margin-bottom:8px;">Your check-in code · show to host</div>
+          <div style="font-family:var(--font-data);font-size:28px;font-weight:600;color:var(--ink);letter-spacing:.12em;">${guestCode}</div>
+          <div style="font-size:11px;color:var(--ink-faint);margin-top:6px;">Give this code to your host at check-in</div>
         </div>
-        <div style="background:rgba(252,196,68,.08);border:1px solid rgba(252,196,68,.2);border-radius:14px;padding:18px;">
-          <div style="font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#FCC444;margin-bottom:8px;">Host's Code (enter to confirm you're in)</div>
-          <div style="font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:900;color:white;letter-spacing:.12em;">Enter in My Bookings</div>
-          <div style="font-size:11px;color:rgba(255,255,255,.3);margin-top:6px;">Your host will give you their HOST-XXXXXX code</div>
+        <div style="background:rgba(139,111,232,.08);border:1px solid rgba(139,111,232,.2);border-radius:16px;padding:18px;">
+          <div style="font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--lilac-deep);margin-bottom:8px;">Host's code · enter to confirm arrival</div>
+          <div style="font-family:var(--font-display);font-style:italic;font-size:18px;color:var(--ink);">Enter it in My Bookings</div>
+          <div style="font-size:11px;color:var(--ink-faint);margin-top:6px;">Your host gives you their HOST-XXXXXX code</div>
         </div>
       </div>
 
-      <div style="background:rgba(255,255,255,.04);border-radius:10px;padding:12px;margin-bottom:20px;font-size:12px;color:rgba(255,255,255,.4);line-height:1.6;">
-        🔒 <strong style="color:rgba(255,255,255,.7);">How it works:</strong> At check-in, you give the host your code AND the host gives you their code. Once both codes are entered, your booking is confirmed and the host is paid.
+      <div style="background:var(--glass-2);border-radius:12px;padding:14px;margin-bottom:20px;font-size:12px;color:var(--ink-soft);line-height:1.6;text-align:left;">
+        <strong style="color:var(--ink);">How it works:</strong> At check-in you give the host your code, and the host gives you theirs. Once both are entered, your booking is confirmed and the host is paid.
       </div>
 
       <button onclick="this.closest('div[style*=fixed]').remove();window.location.href='my-bookings.html?back=1';"
-        style="width:100%;padding:14px;border-radius:12px;background:linear-gradient(135deg,#0D9467,#059652);color:white;font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;border:none;cursor:pointer;">
+        style="width:100%;padding:15px;border-radius:14px;background:var(--theme-grad);color:#fff;font-family:var(--font-body);font-size:14px;font-weight:600;border:none;cursor:pointer;box-shadow:0 10px 30px rgba(123,47,247,.3);">
         View in My Bookings →
       </button>
     </div>
