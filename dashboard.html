@@ -1804,22 +1804,27 @@ function chooseRole(role) {
 }
 
 function populateDashboard(role) {
-  const name = USER.firstName;
+  const name = USER.firstName || 'User';
   const initial = name.charAt(0).toUpperCase();
-  const { label, emoji } = getTimeGreeting();
+  const { label } = getTimeGreeting();
+
+  // Helper — safely set textContent, skip if element doesn't exist
+  const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
 
   if (role === 'guest') {
-    document.getElementById('g-avatar').textContent     = initial;
-    document.getElementById('g-top-avatar').textContent = initial;
-    document.getElementById('g-sb-name').textContent    = name;
-    document.getElementById('g-topbar-title').textContent = `${label}, ${name}`;
-    document.getElementById('g-welcome-name').textContent = `Ready to explore, ${name}?`;
+    setText('g-avatar',       initial);
+    setText('g-top-avatar',   initial);
+    setText('g-sb-name',      name);
+    setText('g-topbar-title', `${label}, ${name}`);
+    setText('g-welcome-name', `Ready to explore, ${name}?`);
   } else {
-    document.getElementById('p-avatar').textContent     = initial;
-    document.getElementById('p-top-avatar').textContent = initial;
-    document.getElementById('p-sb-name').textContent    = name;
-    document.getElementById('p-topbar-title').textContent = `Partner Dashboard — ${name}`;
-    document.getElementById('p-welcome-name').textContent = `Your earnings, your way.`;
+    // Partner screen is fully dynamic — initPartnerFlow() renders it.
+    // These static IDs no longer exist; skip silently.
+    setText('p-avatar',       initial);
+    setText('p-top-avatar',   initial);
+    setText('p-sb-name',      name);
+    setText('p-topbar-title', `Partner Dashboard — ${name}`);
+    setText('p-welcome-name', `Your earnings, your way.`);
   }
 }
 
