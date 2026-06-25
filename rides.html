@@ -3,1027 +3,285 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>APATMENTO — Book a Ride</title>
+<title>Apatmento — Rides</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400&family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..700&display=swap" rel="stylesheet"/>
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&f[]=geist@400,500,600&display=swap" rel="stylesheet"/>
 <style>
+
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
-  --void:#060810;
-  --white:#FFFFFF;
-  --offwhite:#F7F6F2;
-  --stone:#EDEAE4;
-  --ink:#0F1117;
-  --ink2:#2A2D38;
-  --ink3:#5A5E70;
-  --ink4:#9499AD;
-  --border:rgba(15,17,23,0.09);
-  --border-md:rgba(15,17,23,0.15);
-  --shadow-sm:0 2px 12px rgba(15,17,23,0.06);
-  --shadow-md:0 8px 32px rgba(15,17,23,0.10);
-  --shadow-lg:0 20px 60px rgba(15,17,23,0.14);
-  --gold:#C8970A;
-  --gold2:#E8A800;
-  --goldbright:#FCC444;
-  --emerald:#0D9467;
-  --emerald2:#059652;
-  --em-bg:rgba(13,148,103,0.07);
-  --em-bd:rgba(13,148,103,0.18);
-  /* Bolt green */
-  --bolt:#34D186;
-  --bolt-dark:#1A9957;
-  --bolt-bg:rgba(52,209,134,0.08);
-  --bolt-bd:rgba(52,209,134,0.22);
-  /* Little red */
-  --little:#E8281E;
-  --little-bg:rgba(232,40,30,0.08);
-  --little-bd:rgba(232,40,30,0.22);
+  --glass:#FCFCFD;--glass-2:#F4F5FB;--glass-3:#EBEDF7;
+  --ink:#0A0A14;--ink-soft:#4A4C66;--ink-faint:#8E90AD;
+  --lilac:#B8A4F4;--lilac-deep:#8B6FE8;--mint:#5EEAD4;--mint-deep:#2DD4BF;
+  --peach:#FFB59E;--electric:#4361FF;--violet:#7B2FF7;--ember:#FF6B2C;
+  --line:rgba(10,10,20,0.07);--line-2:rgba(10,10,20,0.13);
+  --font-display:'Fraunces',serif;--font-body:'General Sans',system-ui,sans-serif;
+  --font-data:'Geist',monospace;
+  --shadow-glass:0 8px 32px rgba(0,0,0,0.06);
+  --shadow-lift:0 24px 64px rgba(0,0,0,0.12);
+  --radius:20px;
 }
-html,body{min-height:100%;font-family:'Inter',sans-serif;background:var(--offwhite);color:var(--ink);overflow-x:hidden;}
+html,body{min-height:100%;font-family:var(--font-body);background:var(--glass);color:var(--ink);-webkit-font-smoothing:antialiased;overflow-x:hidden;}
 
-/* ── NAV ── */
-.top-nav{
-  position:sticky;top:0;z-index:100;
-  height:60px;background:var(--white);border-bottom:1px solid var(--border);
-  display:flex;align-items:center;justify-content:space-between;padding:0 24px;
-}
-.nav-logo{
-  font-family:'Playfair Display',serif;font-size:16px;font-weight:700;
-  letter-spacing:.22em;text-transform:uppercase;
-  background:linear-gradient(90deg,var(--gold),var(--gold2));
-  -webkit-background-clip:text;background-clip:text;color:transparent;
-  text-decoration:none;
-}
-.nav-back{
-  display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500;
-  color:var(--ink3);text-decoration:none;padding:7px 14px;border-radius:8px;
-  border:1px solid var(--border);transition:all .2s;
-}
-.nav-back:hover{background:var(--offwhite);color:var(--ink);}
-.nav-avatar{
-  width:32px;height:32px;border-radius:8px;
-  background:linear-gradient(135deg,var(--emerald),var(--emerald2));
-  display:flex;align-items:center;justify-content:center;
-  font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:700;color:white;
-}
+/* aurora */
+.aurora{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;}
+.ab{position:absolute;border-radius:50%;filter:blur(90px);opacity:.38;mix-blend-mode:multiply;animation:drift 26s ease-in-out infinite;}
+.ab-1{width:560px;height:560px;top:-12%;left:-8%;background:radial-gradient(circle,var(--t1),transparent 68%);}
+.ab-2{width:460px;height:460px;bottom:-10%;right:-6%;animation-delay:-10s;opacity:.26;background:radial-gradient(circle,var(--t2),transparent 70%);}
+.ab-3{width:380px;height:380px;top:40%;left:40%;animation-delay:-18s;opacity:.2;background:radial-gradient(circle,var(--t3),transparent 72%);}
+@keyframes drift{0%,100%{transform:translate(0,0) scale(1);}33%{transform:translate(50px,-36px) scale(1.1);}66%{transform:translate(-36px,46px) scale(.94);}}
 
-/* ── PAGE LAYOUT ── */
-.page{max-width:1100px;margin:0 auto;padding:32px 24px 60px;display:grid;grid-template-columns:420px 1fr;gap:28px;align-items:start;}
-@media(max-width:900px){.page{grid-template-columns:1fr;padding:20px 16px 48px;}}
+/* ── ENTRY TRANSITION ── */
+#tx{position:fixed;inset:0;z-index:9999;background:#05060F;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+#tx.done{animation:txOut .9s cubic-bezier(.7,0,.2,1) forwards;}
+@keyframes txOut{to{opacity:0;transform:scale(1.1);visibility:hidden;pointer-events:none;}}
+.tx-aurora{position:absolute;inset:0;}
+.tx-ab{position:absolute;border-radius:50%;filter:blur(80px);opacity:0;animation:txBloom 1.1s cubic-bezier(.4,0,.2,1) forwards;}
+.tx-ab-1{width:420px;height:420px;top:30%;left:28%;background:radial-gradient(circle,var(--t1),transparent 68%);}
+.tx-ab-2{width:360px;height:360px;bottom:26%;right:24%;animation-delay:.12s;background:radial-gradient(circle,var(--t2),transparent 70%);}
+@keyframes txBloom{to{opacity:.55;}}
+.tx-craft{position:relative;z-index:2;text-align:center;}
+.tx-ico{margin:0 auto 18px;opacity:0;animation:txRise 1s .15s cubic-bezier(.34,1.56,.64,1) forwards;filter:drop-shadow(0 8px 30px var(--t1));}
+@keyframes txRise{0%{opacity:0;transform:var(--rise-from);}100%{opacity:1;transform:none;}}
+.tx-label{font-family:var(--font-display);font-style:italic;font-weight:500;font-size:38px;color:#fff;opacity:0;animation:fadeUp .7s .5s forwards;background:linear-gradient(120deg,var(--t1-light),#fff);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.tx-sub{font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:rgba(255,255,255,.45);margin-top:8px;opacity:0;animation:fadeUp .6s .65s forwards;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
 
-/* ── LEFT: BOOKING FORM PANEL ── */
-.form-panel{
-  background:var(--white);border-radius:20px;
-  border:1px solid var(--border);overflow:hidden;
-  position:sticky;top:80px;
-}
-.form-header{
-  padding:24px 24px 0;
-  border-bottom:1px solid var(--border);
-  padding-bottom:20px;
-  background:linear-gradient(135deg,var(--void) 0%,#1a1a2e 100%);
-}
-.form-header-eyebrow{
-  font-size:10px;font-weight:600;letter-spacing:.24em;text-transform:uppercase;
-  color:rgba(255,255,255,.4);margin-bottom:8px;
-}
-.form-header-title{
-  font-family:'Playfair Display',serif;
-  font-size:22px;font-weight:700;color:white;
-  margin-bottom:4px;
-}
-.form-header-sub{font-size:12px;color:rgba(255,255,255,.45);}
+/* ── TOPBAR ── */
+.topbar{position:sticky;top:0;z-index:100;height:66px;display:flex;align-items:center;justify-content:space-between;padding:0 26px;background:rgba(252,252,253,.74);backdrop-filter:blur(22px) saturate(180%);border-bottom:1px solid var(--line);}
+.tb-left{display:flex;align-items:center;gap:12px;}
+.tb-back{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink-soft);transition:all .25s;text-decoration:none;}
+.tb-back:hover{border-color:var(--t1);color:var(--t1);}
+.tb-logo{height:32px;}
+.tb-brand{font-family:var(--font-display);font-weight:500;font-size:18px;}
+.tb-brand em{font-style:italic;background:var(--theme-grad);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.tb-right{display:flex;align-items:center;gap:10px;}
+.tb-chip{font-size:11px;font-weight:600;padding:6px 13px;border-radius:100px;color:var(--t1);background:rgba(var(--t1-rgb),.08);border:1px solid rgba(var(--t1-rgb),.2);}
 
-/* city badge */
-.city-badge{
-  margin-top:14px;
-  display:inline-flex;align-items:center;gap:6px;
-  padding:5px 12px;border-radius:100px;
-  background:rgba(52,209,134,.12);border:1px solid rgba(52,209,134,.25);
-  font-size:11px;font-weight:600;color:var(--bolt);
-}
-.city-dot{width:6px;height:6px;border-radius:50%;background:var(--bolt);animation:pulse 2s infinite;}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+/* ── HERO STRIP ── */
+.hero{position:relative;z-index:2;padding:36px 26px 0;max-width:1180px;margin:0 auto;}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--t1);margin-bottom:12px;padding:6px 14px;border-radius:100px;background:rgba(var(--t1-rgb),.09);border:1px solid rgba(var(--t1-rgb),.2);}
+.hero-title{font-family:var(--font-display);font-weight:400;font-size:clamp(28px,4.4vw,46px);letter-spacing:-.02em;line-height:1.06;margin-bottom:10px;}
+.hero-title em{font-style:italic;font-weight:500;background:var(--theme-grad);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.hero-sub{font-size:15px;color:var(--ink-soft);margin-bottom:28px;max-width:500px;line-height:1.6;}
 
-.form-body{padding:20px 20px 24px;}
+/* search / filter bar */
+.search-bar{display:flex;align-items:stretch;gap:0;background:rgba(255,255,255,.68);backdrop-filter:blur(14px);border:1px solid var(--line-2);border-radius:16px;padding:5px;box-shadow:var(--shadow-glass);max-width:720px;margin-bottom:18px;}
+.sb-field{flex:1;padding:10px 16px;cursor:pointer;border-radius:12px;transition:background .2s;min-width:0;}
+.sb-field:hover{background:var(--glass-2);}
+.sb-label{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:2px;}
+.sb-val{font-size:13px;font-weight:500;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sb-val.ph{color:var(--ink-faint);font-weight:400;}
+.sb-sep{width:1px;background:var(--line);margin:8px 0;}
+.sb-btn{width:48px;border-radius:12px;background:var(--theme-grad);border:none;display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;margin-left:4px;flex-shrink:0;transition:filter .2s;}
+.sb-btn:hover{filter:brightness(1.1);}
 
-/* location fields */
-.loc-stack{
-  position:relative;
-  display:flex;flex-direction:column;gap:0;
-  margin-bottom:16px;
-}
-/* vertical connector line between pickup and dropoff */
-.loc-stack::before{
-  content:'';position:absolute;
-  left:17px;top:52px;
-  width:2px;height:28px;
-  background:linear-gradient(180deg,var(--emerald),var(--gold));
-  border-radius:1px;
-  z-index:1;
-}
-.loc-field{
-  display:flex;align-items:center;gap:12px;
-  padding:14px 16px;
-  border:1.5px solid var(--border);
-  background:var(--offwhite);
-  cursor:text;
-  position:relative;
-  transition:border-color .2s,background .2s;
-}
-.loc-field:first-child{border-radius:14px 14px 0 0;border-bottom-color:transparent;}
-.loc-field:last-child{border-radius:0 0 14px 14px;}
-.loc-field:focus-within{border-color:var(--emerald);background:var(--white);z-index:2;}
-.loc-dot{
-  width:12px;height:12px;border-radius:50%;flex-shrink:0;
-}
-.dot-pickup{background:var(--emerald);box-shadow:0 0 0 3px rgba(13,148,103,.2);}
-.dot-dropoff{background:var(--gold);box-shadow:0 0 0 3px rgba(200,151,10,.2);}
-.loc-field input{
-  flex:1;border:none;background:transparent;outline:none;
-  font-family:'Inter',sans-serif;font-size:14px;color:var(--ink);
-}
-.loc-field input::placeholder{color:var(--ink4);}
-.loc-swap{
-  position:absolute;right:14px;top:50%;transform:translateY(-50%);
-  z-index:3;
-  width:28px;height:28px;border-radius:50%;
-  background:var(--white);border:1px solid var(--border);
-  display:flex;align-items:center;justify-content:center;
-  cursor:pointer;font-size:14px;
-  box-shadow:var(--shadow-sm);
-  transition:background .2s,transform .3s;
-}
-.loc-swap:hover{background:var(--offwhite);transform:translateY(-50%) rotate(180deg);}
+/* filter chips */
+.filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
+.fchip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:var(--ink-soft);padding:8px 14px;border-radius:100px;background:rgba(255,255,255,.6);border:1px solid var(--line);cursor:pointer;transition:all .22s;white-space:nowrap;}
+.fchip:hover{border-color:var(--t1);}
+.fchip.active{background:var(--theme-grad);color:#fff;border-color:transparent;}
 
-/* quick location chips */
-.quick-locs{
-  display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px;
-}
-.ql-chip{
-  padding:5px 12px;border-radius:100px;
-  font-size:11px;font-weight:500;color:var(--ink3);
-  border:1px solid var(--border);background:var(--white);
-  cursor:pointer;transition:all .2s;white-space:nowrap;
-}
-.ql-chip:hover{border-color:var(--emerald);color:var(--emerald);background:var(--em-bg);}
+/* content area */
+.content{position:relative;z-index:2;max-width:1180px;margin:0 auto;padding:16px 26px 70px;}
+.content-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;}
+.result-count{font-size:14px;color:var(--ink-soft);}
+.result-count strong{color:var(--ink);}
 
-/* row fields */
-.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
-.field{display:flex;flex-direction:column;gap:5px;}
-.field-label{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--ink4);}
-.field-select,.field-input{
-  padding:11px 14px;border-radius:10px;
-  border:1.5px solid var(--border);background:var(--offwhite);
-  font-family:'Inter',sans-serif;font-size:13px;color:var(--ink);
-  outline:none;transition:border-color .2s,background .2s;
-  -webkit-appearance:none;
-}
-.field-select{
-  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 10 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%239499AD' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-  background-repeat:no-repeat;background-position:right 12px center;
-  background-size:10px;padding-right:30px;cursor:pointer;
-  background-color:var(--offwhite);
-}
-.field-select:focus,.field-input:focus{border-color:var(--emerald);background:var(--white);}
+/* CARD GRID */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;}
+.card{border-radius:var(--radius);overflow:hidden;background:rgba(255,255,255,.64);backdrop-filter:blur(10px);border:1px solid var(--line);cursor:pointer;transition:all .4s cubic-bezier(.22,1,.36,1);opacity:0;transform:translateY(20px);}
+.card.in{opacity:1;transform:none;}
+.card:hover{transform:translateY(-7px);box-shadow:var(--shadow-lift);border-color:transparent;}
+.card-img{height:190px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;}
+.card-img img{width:100%;height:100%;object-fit:cover;transition:transform .6s cubic-bezier(.22,1,.36,1);}
+.card:hover .card-img img{transform:scale(1.06);}
+.card-img-ico{width:52px;height:52px;color:rgba(255,255,255,.9);}
+.card-badge{position:absolute;top:12px;left:12px;padding:5px 11px;border-radius:100px;font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;background:rgba(252,252,253,.9);backdrop-filter:blur(8px);color:var(--t1);}
+.card-fav{position:absolute;top:12px;right:12px;width:34px;height:34px;border-radius:50%;background:rgba(252,252,253,.85);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;font-size:14px;transition:transform .2s;}
+.card-fav:hover{transform:scale(1.12);}
+.card-body{padding:16px 18px 18px;}
+.card-meta-top{font-size:11px;color:var(--ink-faint);margin-bottom:5px;display:flex;align-items:center;gap:4px;}
+.card-meta-top svg{width:11px;height:11px;}
+.card-name{font-family:var(--font-display);font-weight:500;font-size:17px;color:var(--ink);margin-bottom:10px;line-height:1.25;}
+.card-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:13px;}
+.card-tag{font-size:11px;color:var(--ink-soft);padding:4px 9px;border-radius:100px;background:var(--glass-2);border:1px solid var(--line);}
+.card-foot{display:flex;align-items:flex-end;justify-content:space-between;}
+.card-price .val{font-family:var(--font-display);font-weight:500;font-size:20px;color:var(--ink);}
+.card-price .per{font-size:12px;color:var(--ink-faint);}
+.card-go{width:36px;height:36px;border-radius:50%;background:var(--glass-2);display:flex;align-items:center;justify-content:center;color:var(--t1);transition:all .3s;}
+.card:hover .card-go{background:var(--theme-grad);color:#fff;transform:rotate(-45deg);}
 
-/* schedule toggle */
-.schedule-toggle{
-  display:flex;gap:6px;margin-bottom:16px;
-}
-.sched-btn{
-  flex:1;padding:9px;border-radius:10px;
-  border:1.5px solid var(--border);background:var(--white);
-  font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:600;
-  color:var(--ink3);cursor:pointer;transition:all .2s;text-align:center;
-}
-.sched-btn.active{border-color:var(--emerald);background:var(--em-bg);color:var(--emerald);}
+/* DRAWER */
+.drawer-overlay{position:fixed;inset:0;z-index:200;background:rgba(10,10,20,.45);backdrop-filter:blur(4px);opacity:0;visibility:hidden;transition:all .38s;}
+.drawer-overlay.open{opacity:1;visibility:visible;}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:460px;max-width:94vw;z-index:201;background:var(--glass);box-shadow:-16px 0 50px rgba(10,10,20,.12);transform:translateX(105%);transition:transform .5s cubic-bezier(.22,1,.36,1);overflow-y:auto;}
+.drawer.open{transform:none;}
+.dr-img{height:240px;position:relative;display:flex;align-items:center;justify-content:center;}
+.dr-img-ico{width:60px;height:60px;color:rgba(255,255,255,.9);}
+.dr-close{position:absolute;top:16px;left:16px;width:38px;height:38px;border-radius:50%;background:rgba(252,252,253,.88);backdrop-filter:blur(8px);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink);z-index:2;}
+.dr-body{padding:24px 26px 36px;}
+.dr-tag{font-size:12px;color:var(--ink-faint);margin-bottom:6px;display:flex;align-items:center;gap:5px;}
+.dr-title{font-family:var(--font-display);font-weight:500;font-size:24px;margin-bottom:14px;line-height:1.2;}
+.dr-tags{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:16px;}
+.dr-desc{font-size:14px;color:var(--ink-soft);line-height:1.7;margin-bottom:20px;}
+.dr-includes{margin-bottom:22px;}
+.dr-includes-title{font-family:var(--font-display);font-weight:500;font-size:15px;margin-bottom:10px;}
+.dr-includes-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.dr-include{font-size:13px;color:var(--ink-soft);display:flex;align-items:center;gap:7px;}
+.dr-cta-box{position:sticky;bottom:0;background:var(--glass);border-top:1px solid var(--line);padding:16px 0 0;}
+.dr-price .val{font-family:var(--font-display);font-weight:600;font-size:26px;color:var(--ink);}
+.dr-price .per{font-size:14px;color:var(--ink-faint);}
+.dr-price .note{font-size:12px;color:var(--t1);font-weight:500;margin-top:3px;}
+.dr-cta{width:100%;padding:15px;border-radius:14px;background:var(--theme-grad);color:#fff;font-family:var(--font-body);font-weight:600;font-size:15px;border:none;cursor:pointer;transition:all .28s;margin-top:12px;box-shadow:0 10px 28px rgba(0,0,0,.15);}
+.dr-cta:hover{transform:translateY(-2px);box-shadow:0 14px 36px rgba(0,0,0,.2);}
 
-/* search btn */
-.search-btn{
-  width:100%;padding:14px;border-radius:12px;
-  background:linear-gradient(135deg,var(--emerald),var(--emerald2));
-  color:white;font-family:'Space Grotesk',sans-serif;
-  font-size:14px;font-weight:700;letter-spacing:.04em;
-  border:none;cursor:pointer;
-  box-shadow:0 6px 20px rgba(13,148,103,.25);
-  transition:filter .2s,transform .2s;
-  display:flex;align-items:center;justify-content:center;gap:8px;
-}
-.search-btn:hover{filter:brightness(1.07);transform:translateY(-1px);}
+/* empty */
+.empty{text-align:center;padding:60px 20px;grid-column:1/-1;}
+.empty svg{width:52px;height:52px;color:var(--ink-faint);opacity:.3;margin:0 auto 16px;display:block;}
+.empty-title{font-family:var(--font-display);font-size:20px;margin-bottom:8px;}
+.empty-sub{font-size:13px;color:var(--ink-soft);}
 
-/* partner logos note */
-.partner-note{
-  margin-top:14px;
-  display:flex;align-items:center;justify-content:center;gap:10px;
-  font-size:11px;color:var(--ink4);
-}
-.partner-logo{
-  padding:4px 10px;border-radius:6px;
-  font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:700;
-}
-.bolt-logo{background:var(--bolt-bg);color:var(--bolt);border:1px solid var(--bolt-bd);}
-.little-logo{background:var(--little-bg);color:var(--little);border:1px solid var(--little-bd);}
+/* toast */
+.toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(16px);z-index:9999;padding:12px 20px;border-radius:100px;background:var(--ink);color:#fff;font-size:13px;font-weight:500;box-shadow:var(--shadow-lift);opacity:0;transition:all .35s;pointer-events:none;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
-/* ── RIGHT: VEHICLE OPTIONS ── */
-.results-panel{display:flex;flex-direction:column;gap:16px;}
+@media(max-width:600px){.grid{grid-template-columns:1fr;}.hero,.content{padding-left:16px;padding-right:16px;}.drawer{width:100%;}}
 
-.results-header{
-  display:flex;align-items:center;justify-content:space-between;
-  margin-bottom:4px;
-}
-.rh-title{
-  font-family:'Playfair Display',serif;
-  font-size:22px;font-weight:600;color:var(--ink);
-}
-.rh-sub{font-size:13px;color:var(--ink4);margin-top:3px;}
-.eta-badge{
-  display:flex;align-items:center;gap:6px;
-  padding:6px 14px;border-radius:100px;
-  background:var(--em-bg);border:1px solid var(--em-bd);
-  font-size:12px;font-weight:600;color:var(--emerald);
-}
 
-/* ── VEHICLE CARD ── */
-.vehicle-card{
-  background:var(--white);border-radius:18px;
-  border:2px solid var(--border);
-  padding:20px 22px;
-  cursor:pointer;
-  transition:border-color .2s,box-shadow .2s,transform .2s;
-  position:relative;
-  overflow:hidden;
-}
-.vehicle-card:hover{
-  border-color:var(--border-md);
-  box-shadow:var(--shadow-md);
-  transform:translateY(-2px);
-}
-.vehicle-card.selected{
-  border-color:var(--emerald);
-  box-shadow:0 0 0 3px rgba(13,148,103,.1),var(--shadow-md);
-}
-
-/* recommended ribbon */
-.vc-ribbon{
-  position:absolute;top:14px;right:-1px;
-  padding:3px 12px 3px 10px;
-  background:linear-gradient(90deg,var(--emerald),var(--emerald2));
-  color:white;font-size:10px;font-weight:700;letter-spacing:.06em;
-  border-radius:4px 0 0 4px;
-  text-transform:uppercase;
-}
-
-.vc-main{display:flex;align-items:center;gap:18px;}
-
-/* vehicle icon area */
-.vc-icon{
-  width:72px;height:72px;border-radius:16px;
-  background:var(--offwhite);border:1px solid var(--border);
-  display:flex;align-items:center;justify-content:center;
-  font-size:36px;flex-shrink:0;
-  position:relative;
-}
-.vc-icon-badge{
-  position:absolute;bottom:-4px;right:-4px;
-  width:20px;height:20px;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  font-size:10px;border:2px solid white;
-}
-.badge-bolt{background:var(--bolt);}
-.badge-little{background:var(--little);}
-.badge-both{background:linear-gradient(135deg,var(--bolt),var(--little));}
-
-.vc-info{flex:1;min-width:0;}
-.vc-name{
-  font-family:'Space Grotesk',sans-serif;
-  font-size:16px;font-weight:700;color:var(--ink);
-  margin-bottom:3px;
-}
-.vc-desc{font-size:12px;color:var(--ink3);margin-bottom:8px;line-height:1.5;}
-.vc-tags{display:flex;gap:6px;flex-wrap:wrap;}
-.vc-tag{
-  padding:3px 9px;border-radius:100px;
-  font-size:10px;font-weight:600;
-  background:var(--offwhite);border:1px solid var(--border);
-  color:var(--ink3);
-}
-
-.vc-right{text-align:right;flex-shrink:0;}
-.vc-price{
-  font-family:'Space Grotesk',sans-serif;
-  font-size:22px;font-weight:700;color:var(--ink);
-  margin-bottom:3px;
-}
-.vc-price-note{font-size:11px;color:var(--ink4);margin-bottom:10px;}
-.vc-eta{font-size:11px;color:var(--emerald);font-weight:600;}
-
-/* book buttons */
-.vc-actions{
-  display:flex;gap:8px;margin-top:16px;
-  padding-top:16px;
-  border-top:1px solid var(--border);
-}
-.vc-btn{
-  flex:1;padding:10px 14px;border-radius:10px;
-  font-family:'Space Grotesk',sans-serif;
-  font-size:12px;font-weight:700;letter-spacing:.04em;
-  border:none;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;gap:6px;
-  transition:filter .2s,transform .2s;
-}
-.vc-btn:hover{filter:brightness(1.07);transform:translateY(-1px);}
-.btn-bolt{
-  background:linear-gradient(135deg,#1DB954,var(--bolt));
-  color:white;
-}
-.btn-little{
-  background:linear-gradient(135deg,var(--little),#c41e14);
-  color:white;
-}
-.btn-share{
-  background:var(--offwhite);color:var(--ink3);border:1px solid var(--border);
-  flex:0;padding:10px 14px;
-}
-
-/* ── EMPTY STATE ── */
-.empty-state{
-  background:var(--white);border-radius:18px;border:1px solid var(--border);
-  padding:48px 32px;text-align:center;
-}
-.es-ico{font-size:52px;margin-bottom:16px;}
-.es-title{font-family:'Playfair Display',serif;font-size:20px;font-weight:600;color:var(--ink);margin-bottom:8px;}
-.es-sub{font-size:14px;color:var(--ink4);line-height:1.7;}
-
-/* ── HOW IT WORKS ── */
-.how-section{
-  background:var(--white);border-radius:18px;border:1px solid var(--border);
-  padding:24px;margin-top:4px;
-}
-.how-title{font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:700;color:var(--ink);letter-spacing:.06em;text-transform:uppercase;margin-bottom:16px;}
-.how-steps{display:flex;flex-direction:column;gap:12px;}
-.how-step{display:flex;align-items:flex-start;gap:12px;}
-.how-num{
-  width:24px;height:24px;border-radius:50%;flex-shrink:0;
-  background:linear-gradient(135deg,var(--emerald),var(--emerald2));
-  display:flex;align-items:center;justify-content:center;
-  font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:700;color:white;
-  margin-top:1px;
-}
-.how-txt strong{display:block;font-size:13px;font-weight:600;color:var(--ink);margin-bottom:2px;}
-.how-txt p{font-size:12px;color:var(--ink4);line-height:1.5;}
-
-/* ── PARTNER DISCLAIMER ── */
-.disclaimer{
-  background:var(--offwhite);border-radius:14px;
-  border:1px solid var(--border);
-  padding:16px 18px;margin-top:4px;
-  display:flex;align-items:flex-start;gap:12px;
-}
-.disc-ico{font-size:18px;flex-shrink:0;margin-top:1px;}
-.disc-txt{font-size:12px;color:var(--ink3);line-height:1.6;}
-.disc-txt strong{color:var(--ink);}
-
-/* ── ROUTE SUMMARY BAR ── */
-.route-bar{
-  background:var(--white);border-radius:14px;border:1px solid var(--border);
-  padding:14px 18px;
-  display:flex;align-items:center;gap:12px;
-  margin-bottom:4px;
-  display:none;
-}
-.route-bar.show{display:flex;}
-.rb-from,.rb-to{
-  font-size:13px;font-weight:600;color:var(--ink);
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;
-}
-.rb-arrow{color:var(--ink4);font-size:16px;flex-shrink:0;}
-.rb-dist{margin-left:auto;font-size:12px;color:var(--ink4);white-space:nowrap;}
-
-/* ── LOADING SKELETON ── */
-.skeleton{
-  background:linear-gradient(90deg,var(--stone) 25%,var(--offwhite) 50%,var(--stone) 75%);
-  background-size:200% 100%;
-  animation:shimmer 1.4s infinite;
-  border-radius:8px;
-}
-@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
-
-/* ── TOAST ── */
-.toast{
-  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
-  background:var(--ink);color:white;
-  padding:12px 20px;border-radius:12px;
-  font-size:13px;font-weight:500;
-  box-shadow:var(--shadow-lg);
-  z-index:999;
-  opacity:0;pointer-events:none;
-  transition:opacity .3s ease;
-  white-space:nowrap;
-}
-.toast.show{opacity:1;}
-
-/* ── RESPONSIVE ── */
-@media(max-width:600px){
-  .vc-main{flex-wrap:wrap;}
-  .vc-right{text-align:left;width:100%;}
-  .vc-actions{flex-wrap:wrap;}
-  .rb-from,.rb-to{max-width:110px;}
-  .field-row{grid-template-columns:1fr;}
-}
-@media(prefers-reduced-motion:reduce){
-  *,*::before,*::after{animation:none!important;transition-duration:.01ms!important;}
+:root{
+  --t1:#FF6B2C;--t2:#FFB59E;--t3:#8B6FE8;
+  --t1-rgb:255,107,44;
+  --theme-grad:linear-gradient(135deg,#FF6B2C,#FFB59E);
+  --t1-light:#fdba74;
+  --rise-from:translateX(-200px) scale(.7);
 }
 </style>
 </head>
 <body>
+<div class="aurora">
+  <div class="ab ab-1"></div><div class="ab ab-2"></div><div class="ab ab-3"></div>
+</div>
 
-<!-- NAV -->
-<nav class="top-nav">
-  <a href="dashboard.html?role=guest&back=1" class="nav-back">← Dashboard</a>
-  <a href="dashboard.html?role=guest&back=1" class="nav-logo">Apatmento</a>
-  <div class="nav-avatar" id="nav-avatar">G</div>
-</nav>
-
-<!-- TOAST -->
-<div class="toast" id="toast"></div>
-
-<div class="page">
-
-  <!-- ══ LEFT: BOOKING FORM ══ -->
-  <div class="form-panel">
-    <div class="form-header">
-      <div class="form-header-eyebrow">Nairobi · Rides</div>
-      <div class="form-header-title">Where are you going?</div>
-      <div class="form-header-sub">We'll find you the best option via Bolt or Little</div>
-      <div class="city-badge">
-        <span class="city-dot"></span>
-        Nairobi — Live
-      </div>
-      <div style="height:18px;"></div>
-    </div>
-
-    <div class="form-body">
-
-      <!-- Schedule toggle -->
-      <div class="schedule-toggle">
-        <div class="sched-btn active" id="sched-now" onclick="setSchedule('now')">🚗 Ride Now</div>
-        <div class="sched-btn" id="sched-later" onclick="setSchedule('later')">📅 Schedule</div>
-      </div>
-
-      <!-- Schedule time (hidden by default) -->
-      <div id="schedule-time-row" style="display:none;margin-bottom:16px;">
-        <div class="field">
-          <div class="field-label">Pick-up time</div>
-          <input class="field-input" type="datetime-local" id="schedule-time"/>
-        </div>
-      </div>
-
-      <!-- Location fields -->
-      <div class="loc-stack">
-        <div class="loc-field">
-          <div class="loc-dot dot-pickup"></div>
-          <input type="text" id="pickup-input" placeholder="Pick-up location" autocomplete="off"
-            oninput="onLocInput(this,'pickup')" onfocus="showSuggestions('pickup')" onblur="hideSuggestions('pickup',300)"/>
-        </div>
-        <div class="loc-swap" onclick="swapLocations()" title="Swap">⇅</div>
-        <div class="loc-field">
-          <div class="loc-dot dot-dropoff"></div>
-          <input type="text" id="dropoff-input" placeholder="Drop-off destination" autocomplete="off"
-            oninput="onLocInput(this,'dropoff')" onfocus="showSuggestions('dropoff')" onblur="hideSuggestions('dropoff',300)"/>
-        </div>
-        <!-- Suggestion dropdowns -->
-        <div id="pickup-suggestions" class="suggestions" style="display:none;"></div>
-        <div id="dropoff-suggestions" class="suggestions" style="display:none;"></div>
-      </div>
-
-      <!-- Quick location chips -->
-      <div class="quick-locs" id="quick-locs">
-        <div class="ql-chip" onclick="setPickup('JKIA Airport')">✈️ JKIA Airport</div>
-        <div class="ql-chip" onclick="setPickup('Westlands')">📍 Westlands</div>
-        <div class="ql-chip" onclick="setPickup('Karen')">📍 Karen</div>
-        <div class="ql-chip" onclick="setDropoff('CBD Nairobi')">📍 CBD</div>
-        <div class="ql-chip" onclick="setDropoff('Kilimani')">📍 Kilimani</div>
-        <div class="ql-chip" onclick="setDropoff('Gigiri')">📍 Gigiri</div>
-      </div>
-
-      <!-- Vehicle type -->
-      <div class="field-row">
-        <div class="field">
-          <div class="field-label">Vehicle type</div>
-          <select class="field-select" id="vehicle-filter" onchange="filterVehicles()">
-            <option value="all">All types</option>
-            <option value="boda">Boda Boda</option>
-            <option value="tuk">Tuk-Tuk</option>
-            <option value="standard">Standard</option>
-            <option value="premium">Premium</option>
-          </select>
-        </div>
-        <div class="field">
-          <div class="field-label">Passengers</div>
-          <select class="field-select" id="passengers">
-            <option value="1">1 passenger</option>
-            <option value="2">2 passengers</option>
-            <option value="3">3 passengers</option>
-            <option value="4">4 passengers</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- Search -->
-      <button class="search-btn" onclick="searchRides()">
-        🔍 Find Rides
-      </button>
-
-      <div class="partner-note">
-        Powered by
-        <span class="partner-logo bolt-logo">Bolt</span>
-        &amp;
-        <span class="partner-logo little-logo">Little</span>
-      </div>
-    </div>
+<!-- ENTRY TRANSITION -->
+<div id="tx">
+  <div class="tx-aurora">
+    <div class="tx-ab tx-ab-1"></div><div class="tx-ab tx-ab-2"></div>
   </div>
-
-  <!-- ══ RIGHT: RESULTS ══ -->
-  <div class="results-panel" id="results-panel">
-
-    <!-- Route summary bar (hidden until search) -->
-    <div class="route-bar" id="route-bar">
-      <span class="rb-from" id="rb-from">—</span>
-      <span class="rb-arrow">→</span>
-      <span class="rb-to" id="rb-to">—</span>
-      <span class="rb-dist" id="rb-dist"></span>
-    </div>
-
-    <!-- Empty state (default) -->
-    <div class="empty-state" id="empty-state">
-      <div class="es-ico">🚗</div>
-      <div class="es-title">Enter your route above</div>
-      <div class="es-sub">Add your pick-up and drop-off locations to see available rides with live price estimates from Bolt and Little.</div>
-    </div>
-
-    <!-- Vehicle cards (hidden until search) -->
-    <div id="vehicle-cards" style="display:none;"></div>
-
-    <!-- How it works -->
-    <div class="how-section">
-      <div class="how-title">How Apatmento Rides works</div>
-      <div class="how-steps">
-        <div class="how-step">
-          <div class="how-num">1</div>
-          <div class="how-txt">
-            <strong>Enter your route</strong>
-            <p>Type your pickup and drop-off anywhere in Nairobi. Select your vehicle type and number of passengers.</p>
-          </div>
-        </div>
-        <div class="how-step">
-          <div class="how-num">2</div>
-          <div class="how-txt">
-            <strong>Compare options</strong>
-            <p>See live price estimates for Boda Boda, Tuk-Tuk, Standard and Premium rides from our partners.</p>
-          </div>
-        </div>
-        <div class="how-step">
-          <div class="how-num">3</div>
-          <div class="how-txt">
-            <strong>Book via Bolt or Little</strong>
-            <p>Tap your preferred option. We open Bolt or Little with your route pre-filled — your driver arrives in minutes.</p>
-          </div>
-        </div>
-        <div class="how-step">
-          <div class="how-num">4</div>
-          <div class="how-txt">
-            <strong>Zero Apatmento fees</strong>
-            <p>We earn a small referral from the partner app. You pay only what the app charges — nothing extra from us.</p>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Disclaimer -->
-    <div class="disclaimer">
-      <div class="disc-ico">ℹ️</div>
-      <div class="disc-txt">
-        <strong>Pricing note:</strong> Estimates shown are approximate based on typical Nairobi rates. Final prices are confirmed in the Bolt or Little app and may vary with traffic and surge pricing. Apatmento does not charge any additional fee on rides.
-      </div>
-    </div>
-
+  <div class="tx-craft">
+    <div class="tx-ico" style="width:88px;height:88px;--rise-from:translateX(-200px) scale(.7);">
+  <svg width="88" height="88" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M5 13h14l-1.5-5a2 2 0 0 0-2-1.5h-7a2 2 0 0 0-2 1.5z"/>
+    <path d="M4 13h16v4a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1v-1H7v1a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z"/>
+    <circle cx="7.5" cy="13" r=".5" fill="white"/>
+    <circle cx="16.5" cy="13" r=".5" fill="white"/>
+  </svg>
+</div>
+    <div class="tx-label">Move with ease</div>
+    <div class="tx-sub">Apatmento · Rides</div>
   </div>
 </div>
 
-<style>
-/* Suggestions dropdown */
-.suggestions{
-  position:absolute;left:0;right:0;top:100%;z-index:50;
-  background:var(--white);border:1.5px solid var(--emerald);
-  border-top:none;border-radius:0 0 12px 12px;
-  box-shadow:var(--shadow-md);
-  max-height:200px;overflow-y:auto;
-}
-.sug-item{
-  padding:11px 16px;display:flex;align-items:center;gap:10px;
-  font-size:13px;color:var(--ink);cursor:pointer;
-  border-bottom:1px solid var(--border);
-  transition:background .15s;
-}
-.sug-item:last-child{border-bottom:none;}
-.sug-item:hover{background:var(--em-bg);color:var(--emerald);}
-.sug-ico{font-size:15px;flex-shrink:0;}
-.loc-stack{position:relative;}
-</style>
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="tb-left">
+    <a href="dashboard.html?role=guest&back=1" class="tb-back">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    </a>
+    <img src="logo-mark.png" class="tb-logo" alt="" onerror="this.style.display='none'"/>
+    <span class="tb-brand"><em>Apat</em>mento</span>
+  </div>
+  <div class="tb-right">
+    <span class="tb-chip">✦ Zero added fees</span>
+  </div>
+</div>
+
+<div class="hero">
+  <span class="hero-eyebrow">✦ Rides</span>
+  <h1 class="hero-title">Your city,<br/><em>your pace.</em></h1>
+  <p class="hero-sub">Reliable rides across Nairobi. Book a regular taxi, share a ride or arrange an airport transfer — no surge pricing surprises.</p>
+  <div class="search-bar">
+    <div class="sb-field"><div class="sb-label">Pick-up</div><div class="sb-val" id="f-pickup">Current location</div></div>
+    <div class="sb-sep"></div>
+    <div class="sb-field"><div class="sb-label">Drop-off</div><div class="sb-val ph" id="f-dropoff">Where to?</div></div>
+    <div class="sb-sep"></div>
+    <div class="sb-field"><div class="sb-label">When</div><div class="sb-val" id="f-when">Now</div></div>
+    <button class="sb-btn" onclick="findRides()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></button>
+  </div>
+  <div class="filter-row">
+    <div class="fchip active" onclick="setRideFilter('all',this)">All rides</div>
+    <div class="fchip" onclick="setRideFilter('economy',this)">Economy</div>
+    <div class="fchip" onclick="setRideFilter('comfort',this)">Comfort</div>
+    <div class="fchip" onclick="setRideFilter('premium',this)">Premium</div>
+    <div class="fchip" onclick="setRideFilter('airport',this)">✈️ Airport</div>
+    <div class="fchip" onclick="setRideFilter('share',this)">Share a ride</div>
+  </div>
+</div>
+<div class="content">
+  <div class="content-head">
+    <div class="result-count"><strong id="result-num">0</strong> ride options</div>
+  </div>
+  <div class="grid" id="grid" style="grid-template-columns:1fr;"></div>
+</div>
+
+<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer"></div>
+<div class="toast" id="toast"></div>
 
 <script>
-/* ══════════════════════════════════════════════════════
-   NAIROBI LOCATIONS — common pickup/dropoff points
-══════════════════════════════════════════════════════ */
-const NAIROBI_PLACES = [
-  {name:'JKIA Airport',          icon:'✈️', area:'Embakasi'},
-  {name:'Wilson Airport',        icon:'✈️', area:'Langata'},
-  {name:'CBD Nairobi',           icon:'🏙️', area:'Central'},
-  {name:'Westlands',             icon:'📍', area:'Westlands'},
-  {name:'Karen',                 icon:'🌳', area:'Karen'},
-  {name:'Kilimani',              icon:'📍', area:'Kilimani'},
-  {name:'Gigiri',                icon:'📍', area:'Gigiri'},
-  {name:'Upper Hill',            icon:'🏢', area:'Upper Hill'},
-  {name:'Lavington',             icon:'📍', area:'Lavington'},
-  {name:'South B',               icon:'📍', area:'South B'},
-  {name:'South C',               icon:'📍', area:'South C'},
-  {name:'Hurlingham',            icon:'📍', area:'Hurlingham'},
-  {name:'Parklands',             icon:'📍', area:'Parklands'},
-  {name:'Muthaiga',              icon:'📍', area:'Muthaiga'},
-  {name:'Runda',                 icon:'📍', area:'Runda'},
-  {name:'Langata',               icon:'📍', area:'Langata'},
-  {name:'Ruaka',                 icon:'📍', area:'Ruaka'},
-  {name:'Thika Road Mall',       icon:'🛍️', area:'Thika Rd'},
-  {name:'Sarit Centre',          icon:'🛍️', area:'Westlands'},
-  {name:'The Hub Karen',         icon:'🛍️', area:'Karen'},
-  {name:'Yaya Centre',           icon:'🛍️', area:'Hurlingham'},
-  {name:'Garden City Mall',      icon:'🛍️', area:'Thika Rd'},
-  {name:'Two Rivers Mall',       icon:'🛍️', area:'Ruaka'},
-  {name:'Kenyatta National Hospital', icon:'🏥', area:'Upper Hill'},
-  {name:'Aga Khan Hospital',     icon:'🏥', area:'Parklands'},
-  {name:'Nairobi Hospital',      icon:'🏥', area:'Upper Hill'},
-  {name:'University of Nairobi', icon:'🎓', area:'CBD'},
-  {name:'Strathmore University', icon:'🎓', area:'Madaraka'},
-  {name:'USIU Africa',           icon:'🎓', area:'Kasarani'},
+
+const SUPABASE_URL='https://gfwgbgdvxtocwhilrtdw.supabase.co';
+const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
+let sb=null;
+try{const{createClient}=supabase;sb=createClient(SUPABASE_URL,SUPABASE_ANON_KEY);}catch(e){}
+function showToast(m,d=3200){const t=document.getElementById('toast');if(!t)return;t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),d);}
+window.addEventListener('load',()=>setTimeout(()=>document.getElementById('tx')?.classList.add('done'),1600));
+
+
+const RIDES=[
+  {id:1,name:'Economy',desc:'Affordable everyday rides',icon:'🚗',eta:'3 min',type:'economy',price:350,priceTo:'CBD',seats:4,tags:['AC','Quick pickup'],features:['Saloon or hatchback','Up to 4 passengers','Air conditioned']},
+  {id:2,name:'Comfort',desc:'Spacious, newer vehicles',icon:'🚙',eta:'5 min',type:'comfort',price:550,priceTo:'CBD',seats:4,tags:['Premium car','Rated drivers'],features:['SUV or premium saloon','Up to 4 passengers','Bottled water provided']},
+  {id:3,name:'Premium',desc:'Executive vehicles, top-rated drivers',icon:'🏎️',eta:'8 min',type:'premium',price:950,priceTo:'CBD',seats:4,tags:['Executive','Top-rated'],features:['Mercedes, BMW or equivalent','Suited driver','Meet & greet available']},
+  {id:4,name:'JKIA Airport Transfer',desc:'Fixed price, no surprises',icon:'✈️',eta:'On demand',type:'airport',price:2200,priceTo:'JKIA',seats:4,tags:['Fixed price','Flight tracking'],features:['Fixed rate to/from JKIA','Flight monitoring','Driver waits for you']},
+  {id:5,name:'Shared Ride',desc:'Split cost with nearby riders',icon:'👥',eta:'6 min',type:'share',price:180,priceTo:'CBD',seats:2,tags:['Eco-friendly','Save more'],features:['Share with 1-2 others','Eco-friendly','Up to 60% cheaper']},
+  {id:6,name:'Group Van',desc:'For groups up to 8',icon:'🚐',eta:'10 min',type:'comfort',price:1200,priceTo:'CBD',seats:8,tags:['Group','Events'],features:['Minivan or large SUV','Up to 8 passengers','Great for events & teams']},
 ];
-
-/* ══ VEHICLE DEFINITIONS ══ */
-const VEHICLES = [
-  {
-    id:'boda',
-    name:'Boda Boda',
-    icon:'🏍️',
-    desc:'Fast motorbike ride through traffic. Best for solo trips and beating rush hour.',
-    tags:['1 passenger','Fastest','Beat traffic'],
-    pricePerKm:25,
-    basePrice:80,
-    etaMin:2,etaMax:5,
-    recommended:false,
-    partners:['bolt','little'],
-    badgeClass:'badge-both',
-  },
-  {
-    id:'tuk',
-    name:'Tuk-Tuk',
-    icon:'🛺',
-    desc:'Affordable three-wheeler for short distances. Great for last-mile trips.',
-    tags:['1-2 passengers','Affordable','Short trips'],
-    pricePerKm:35,
-    basePrice:100,
-    etaMin:3,etaMax:8,
-    recommended:false,
-    partners:['little'],
-    badgeClass:'badge-little',
-  },
-  {
-    id:'standard',
-    name:'Standard',
-    icon:'🚗',
-    desc:'Comfortable sedan for everyday rides. Available across Nairobi 24/7.',
-    tags:['1-4 passengers','Comfortable','24/7'],
-    pricePerKm:55,
-    basePrice:200,
-    etaMin:3,etaMax:8,
-    recommended:true,
-    partners:['bolt','little'],
-    badgeClass:'badge-both',
-  },
-  {
-    id:'premium',
-    name:'Premium',
-    icon:'🚙',
-    desc:'Executive SUV or luxury sedan. Perfect for business travel and airport transfers.',
-    tags:['1-4 passengers','Executive','Airport runs'],
-    pricePerKm:90,
-    basePrice:350,
-    etaMin:5,etaMax:12,
-    recommended:false,
-    partners:['bolt'],
-    badgeClass:'badge-bolt',
-  },
-];
-
-/* ══ STATE ══ */
-let pickupVal  = '';
-let dropoffVal = '';
-let scheduleMode = 'now';
-let estimatedKm  = 0;
-let searchDone   = false;
-
-/* ══ SCHEDULE ══ */
-function setSchedule(mode) {
-  scheduleMode = mode;
-  document.getElementById('sched-now').classList.toggle('active',   mode === 'now');
-  document.getElementById('sched-later').classList.toggle('active', mode === 'later');
-  document.getElementById('schedule-time-row').style.display = mode === 'later' ? 'block' : 'none';
+let _rideFilter='all';
+function setRideFilter(k,el){_rideFilter=k;document.querySelectorAll('.fchip').forEach(c=>c.classList.remove('active'));el.classList.add('active');renderRides();}
+function findRides(){
+  const drop=document.getElementById('f-dropoff');
+  const v=prompt('Where are you going?');if(v){drop.textContent=v;drop.classList.remove('ph');}
+  renderRides();
 }
-
-/* ══ LOCATION INPUTS ══ */
-function setPickup(name) {
-  document.getElementById('pickup-input').value = name;
-  pickupVal = name;
-}
-function setDropoff(name) {
-  document.getElementById('dropoff-input').value = name;
-  dropoffVal = name;
-}
-function swapLocations() {
-  const p = document.getElementById('pickup-input').value;
-  const d = document.getElementById('dropoff-input').value;
-  document.getElementById('pickup-input').value  = d;
-  document.getElementById('dropoff-input').value = p;
-  pickupVal  = d;
-  dropoffVal = p;
-}
-
-function onLocInput(el, type) {
-  const val = el.value.trim();
-  if (type === 'pickup')  pickupVal  = val;
-  if (type === 'dropoff') dropoffVal = val;
-  renderSuggestions(type, val);
-}
-
-function renderSuggestions(type, query) {
-  const container = document.getElementById(type + '-suggestions');
-  if (!query || query.length < 2) { container.style.display='none'; return; }
-  const matches = NAIROBI_PLACES.filter(p =>
-    p.name.toLowerCase().includes(query.toLowerCase()) ||
-    p.area.toLowerCase().includes(query.toLowerCase())
-  ).slice(0,6);
-  if (!matches.length) { container.style.display='none'; return; }
-  container.innerHTML = matches.map(p => `
-    <div class="sug-item" onclick="selectSuggestion('${type}','${p.name}')">
-      <span class="sug-ico">${p.icon}</span>
-      <div>
-        <div style="font-weight:600;">${p.name}</div>
-        <div style="font-size:11px;color:var(--ink4);">${p.area}, Nairobi</div>
-      </div>
+function renderRides(){
+  let list=_rideFilter==='all'?[...RIDES]:RIDES.filter(r=>r.type===_rideFilter);
+  document.getElementById('result-num').textContent=list.length;
+  const g=document.getElementById('grid');
+  g.innerHTML=list.map((r,i)=>`
+  <div style="background:rgba(255,255,255,.68);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:var(--radius);padding:20px 22px;display:flex;align-items:center;gap:18px;cursor:pointer;transition:all .35s cubic-bezier(.22,1,.36,1);opacity:0;transform:translateY(14px;" class="ride-card" onclick="bookRide(${r.id})">
+    <div style="width:56px;height:56px;border-radius:16px;background:var(--theme-grad);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">${r.icon}</div>
+    <div style="flex:1;">
+      <div style="font-family:var(--font-display);font-weight:500;font-size:17px;margin-bottom:3px;">${r.name}</div>
+      <div style="font-size:13px;color:var(--ink-soft);margin-bottom:8px;">${r.desc}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">${r.tags.map(t=>`<span class="card-tag">${t}</span>`).join('')}<span class="card-tag">ETA: ${r.eta}</span></div>
     </div>
-  `).join('');
-  container.style.display = 'block';
-}
-
-function selectSuggestion(type, name) {
-  document.getElementById(type + '-input').value = name;
-  document.getElementById(type + '-suggestions').style.display = 'none';
-  if (type === 'pickup')  pickupVal  = name;
-  if (type === 'dropoff') dropoffVal = name;
-}
-
-function showSuggestions(type) {
-  const val = document.getElementById(type + '-input').value;
-  if (val.length >= 2) renderSuggestions(type, val);
-}
-function hideSuggestions(type, delay) {
-  setTimeout(() => {
-    const el = document.getElementById(type + '-suggestions');
-    if (el) el.style.display = 'none';
-  }, delay);
-}
-
-/* ══ FILTER ══ */
-function filterVehicles() {
-  if (!searchDone) return;
-  renderVehicleCards();
-}
-
-/* ══ ESTIMATE DISTANCE ── crude approximation for Nairobi ══ */
-function estimateDistance(from, to) {
-  // Airport routes are typically longer
-  if ((from+to).toLowerCase().includes('airport')) return 18 + Math.random()*8;
-  // Outer suburbs
-  if ((from+to).toLowerCase().match(/karen|runda|ruaka|thika/)) return 14 + Math.random()*6;
-  // Medium
-  if ((from+to).toLowerCase().match(/westlands|kilimani|gigiri|parklands/)) return 6 + Math.random()*5;
-  // Short inner city
-  return 3 + Math.random()*4;
-}
-
-/* ══ SEARCH ══ */
-function searchRides() {
-  pickupVal  = document.getElementById('pickup-input').value.trim();
-  dropoffVal = document.getElementById('dropoff-input').value.trim();
-
-  if (!pickupVal)  { showToast('Please enter your pick-up location'); return; }
-  if (!dropoffVal) { showToast('Please enter your destination'); return; }
-  if (pickupVal.toLowerCase() === dropoffVal.toLowerCase()) {
-    showToast('Pick-up and destination cannot be the same');
-    return;
-  }
-
-  // Show loading
-  document.getElementById('empty-state').style.display      = 'none';
-  document.getElementById('vehicle-cards').style.display    = 'block';
-  document.getElementById('vehicle-cards').innerHTML = buildSkeletons();
-
-  estimatedKm = estimateDistance(pickupVal, dropoffVal);
-
-  // Update route bar
-  document.getElementById('rb-from').textContent = pickupVal;
-  document.getElementById('rb-to').textContent   = dropoffVal;
-  document.getElementById('rb-dist').textContent = `~${estimatedKm.toFixed(1)} km`;
-  document.getElementById('route-bar').classList.add('show');
-
-  // Simulate API delay
-  setTimeout(() => {
-    searchDone = true;
-    renderVehicleCards();
-  }, 900);
-}
-
-function buildSkeletons() {
-  return [1,2,3,4].map(() => `
-    <div class="vehicle-card" style="margin-bottom:12px;">
-      <div class="vc-main">
-        <div class="skeleton" style="width:72px;height:72px;border-radius:16px;"></div>
-        <div style="flex:1;display:flex;flex-direction:column;gap:8px;">
-          <div class="skeleton" style="height:16px;width:60%;"></div>
-          <div class="skeleton" style="height:12px;width:80%;"></div>
-          <div class="skeleton" style="height:12px;width:40%;"></div>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
-          <div class="skeleton" style="height:22px;width:80px;"></div>
-          <div class="skeleton" style="height:12px;width:60px;"></div>
-        </div>
-      </div>
+    <div style="text-align:right;flex-shrink:0;">
+      <div style="font-family:var(--font-display);font-weight:600;font-size:22px;color:var(--ink);">KES ${r.price.toLocaleString()}</div>
+      <div style="font-size:11px;color:var(--ink-faint);">est. to ${r.priceTo}</div>
+      <button style="margin-top:8px;padding:8px 16px;border-radius:10px;background:var(--theme-grad);color:#fff;font-size:12px;font-weight:600;border:none;cursor:pointer;">Book →</button>
     </div>
-  `).join('');
+  </div>`).join('');
+  requestAnimationFrame(()=>document.querySelectorAll('.ride-card').forEach((c,i)=>{setTimeout(()=>{c.style.opacity='1';c.style.transform='none';},i*50);}));
 }
-
-function renderVehicleCards() {
-  const filterVal = document.getElementById('vehicle-filter').value;
-  const pax       = parseInt(document.getElementById('passengers').value);
-
-  let filtered = VEHICLES.filter(v => {
-    if (filterVal !== 'all' && v.id !== filterVal) return false;
-    // boda and tuk can't handle 3+ passengers
-    if ((v.id === 'boda') && pax > 1) return false;
-    if ((v.id === 'tuk')  && pax > 2) return false;
-    return true;
-  });
-
-  if (!filtered.length) {
-    document.getElementById('vehicle-cards').innerHTML = `
-      <div class="empty-state">
-        <div class="es-ico">🔍</div>
-        <div class="es-title">No vehicles match</div>
-        <div class="es-sub">Try adjusting your passenger count or vehicle type filter.</div>
-      </div>`;
-    return;
-  }
-
-  document.getElementById('vehicle-cards').innerHTML = filtered.map(v => {
-    const price = Math.round((v.basePrice + estimatedKm * v.pricePerKm) / 50) * 50;
-    const eta   = v.etaMin + Math.floor(Math.random() * (v.etaMax - v.etaMin));
-    const hasBolt   = v.partners.includes('bolt');
-    const hasLittle = v.partners.includes('little');
-
-    const boltUrl   = buildBoltUrl(pickupVal, dropoffVal);
-    const littleUrl = buildLittleUrl(pickupVal, dropoffVal);
-
-    return `
-    <div class="vehicle-card${v.recommended?' selected':''}" style="margin-bottom:12px;">
-      ${v.recommended ? '<div class="vc-ribbon">Recommended</div>' : ''}
-      <div class="vc-main">
-        <div class="vc-icon">
-          ${v.icon}
-          <div class="vc-icon-badge ${v.badgeClass}" title="${v.partners.join(' & ')}">
-            ${v.partners.length > 1 ? '★' : (hasBolt ? 'B' : 'L')}
-          </div>
-        </div>
-        <div class="vc-info">
-          <div class="vc-name">${v.name}</div>
-          <div class="vc-desc">${v.desc}</div>
-          <div class="vc-tags">${v.tags.map(t=>`<span class="vc-tag">${t}</span>`).join('')}</div>
-        </div>
-        <div class="vc-right">
-          <div class="vc-price">KES ${price.toLocaleString()}</div>
-          <div class="vc-price-note">Est. for ~${estimatedKm.toFixed(1)}km</div>
-          <div class="vc-eta">🕐 ${eta}–${eta+3} min away</div>
-        </div>
-      </div>
-      <div class="vc-actions">
-        ${hasBolt   ? `<button class="vc-btn btn-bolt"   onclick="bookVia('bolt','${v.name}','${boltUrl}')">⚡ Book on Bolt</button>`   : ''}
-        ${hasLittle ? `<button class="vc-btn btn-little" onclick="bookVia('little','${v.name}','${littleUrl}')">🔴 Book on Little</button>` : ''}
-        <button class="vc-btn btn-share" onclick="shareRoute()" title="Share route">📤</button>
-      </div>
-    </div>`;
-  }).join('');
+function bookRide(id){
+  const r=RIDES.find(x=>x.id===id);if(!r)return;
+  showToast(`Booking ${r.name}… Rides coming soon. Contact us to arrange.`,4000);
 }
+renderRides();
 
-/* ══ DEEP LINK BUILDERS ══ */
-function buildBoltUrl(pickup, dropoff) {
-  // Bolt deep link: opens the Bolt app (or web) with route pre-filled
-  // Bolt supports deep links via their app scheme
-  const isAndroid = /android/i.test(navigator.userAgent);
-  const isIOS     = /iphone|ipad/i.test(navigator.userAgent);
-
-  // Encode locations
-  const pu = encodeURIComponent(pickup + ', Nairobi');
-  const dr = encodeURIComponent(dropoff + ', Nairobi');
-
-  // Try app deep link first, fallback to web
-  if (isAndroid || isIOS) {
-    return `bolt://request?pickup=${pu}&dropoff=${dr}`;
-  }
-  // Web fallback — Bolt web booking
-  return `https://bolt.eu/en-ke/ride/?pickup_address=${pu}&dropoff_address=${dr}`;
-}
-
-function buildLittleUrl(pickup, dropoff) {
-  const pu = encodeURIComponent(pickup + ', Nairobi, Kenya');
-  const dr = encodeURIComponent(dropoff + ', Nairobi, Kenya');
-  const isAndroid = /android/i.test(navigator.userAgent);
-  const isIOS     = /iphone|ipad/i.test(navigator.userAgent);
-
-  if (isAndroid) {
-    // Little Android deep link
-    return `little://ride?pickup=${pu}&dropoff=${dr}`;
-  }
-  if (isIOS) {
-    return `little://ride?pickup=${pu}&dropoff=${dr}`;
-  }
-  // Web fallback
-  return `https://little.africa/?from=${pu}&to=${dr}`;
-}
-
-function bookVia(partner, vehicleName, url) {
-  showToast(`Opening ${partner === 'bolt' ? 'Bolt' : 'Little'} for ${vehicleName}…`);
-
-  // Try to open the app — if it fails (app not installed), open web fallback
-  const appOpened = window.open(url, '_blank');
-
-  // If app deep link fails after 2s (app not installed), go to store
-  if (url.startsWith('bolt://') || url.startsWith('little://')) {
-    setTimeout(() => {
-      const isAndroid = /android/i.test(navigator.userAgent);
-      const isIOS     = /iphone|ipad/i.test(navigator.userAgent);
-      if (partner === 'bolt') {
-        const fallback = isAndroid
-          ? 'https://play.google.com/store/apps/details?id=ee.mtakso.client'
-          : isIOS
-          ? 'https://apps.apple.com/app/bolt-formerly-taxify/id675033630'
-          : buildBoltUrl(pickupVal, dropoffVal).replace('bolt://','https://bolt.eu/en-ke/');
-        window.open(fallback, '_blank');
-      } else {
-        const fallback = isAndroid
-          ? 'https://play.google.com/store/apps/details?id=com.craftsilicon.littlecab'
-          : isIOS
-          ? 'https://apps.apple.com/ke/app/little/id1087098875'
-          : 'https://little.africa';
-        window.open(fallback, '_blank');
-      }
-    }, 2000);
-  }
-}
-
-/* ══ SHARE ROUTE ══ */
-function shareRoute() {
-  const text = `Book a ride from ${pickupVal} to ${dropoffVal} in Nairobi — via Apatmento`;
-  if (navigator.share) {
-    navigator.share({ title:'Apatmento Ride', text, url:window.location.href });
-  } else {
-    navigator.clipboard.writeText(text).then(() => showToast('Route copied to clipboard'));
-  }
-}
-
-/* ══ TOAST ══ */
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3000);
-}
-
-/* ══ ENTER KEY SEARCH ══ */
-document.getElementById('dropoff-input').addEventListener('keydown', e => {
-  if (e.key === 'Enter') searchRides();
-});
-document.getElementById('pickup-input').addEventListener('keydown', e => {
-  if (e.key === 'Enter') document.getElementById('dropoff-input').focus();
-});
 </script>
 </body>
 </html>
