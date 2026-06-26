@@ -3,7 +3,63 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Apatmento — Shopping</title>
+  <!-- ══ SEO ══ -->
+  <meta name="description" content="Order food delivery from the best restaurants in Nairobi. Nyama Mama, Artcaffe, Hashmi BBQ, Mama Rocks and more. Restaurants keep 100%. Fixed delivery fee only."/>
+  <meta name="keywords" content="food delivery Nairobi, order food Nairobi, Nairobi restaurants delivery, Nyama Mama delivery, Artcaffe delivery, best food Nairobi, Nairobi food app"/>
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1"/>
+  <link rel="canonical" href="https://apatmento.vercel.app/food.html"/>
+  <link rel="alternate" hreflang="en-ke" href="https://apatmento.vercel.app/food.html"/>
+  <link rel="alternate" hreflang="en" href="https://apatmento.vercel.app/food.html"/>
+  <meta name="author" content="Apatmento"/>
+  <meta name="geo.region" content="KE"/>
+  <meta name="geo.placename" content="Nairobi, Kenya"/>
+  <meta name="theme-color" content="#7B2FF7"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="Apatmento"/>
+  <link rel="manifest" href="/manifest.json"/>
+
+  <!-- Open Graph -->
+  <meta property="og:site_name" content="Apatmento"/>
+  <meta property="og:title" content="Food Delivery in Nairobi — Best Restaurants | Apatmento"/>
+  <meta property="og:description" content="Order food delivery from the best restaurants in Nairobi. Nyama Mama, Artcaffe, Hashmi BBQ, Mama Rocks and more. Restaurants keep 100%. Fixed delivery fee only."/>
+  <meta property="og:url" content="https://apatmento.vercel.app/food.html"/>
+  <meta property="og:type" content="website"/>
+  <meta property="og:image" content="https://apatmento.vercel.app/og-food.jpg"/>
+  <meta property="og:image:width" content="1200"/>
+  <meta property="og:image:height" content="630"/>
+  <meta property="og:image:alt" content="Food Delivery in Nairobi — Best Restaurants | Apatmento"/>
+  <meta property="og:locale" content="en_KE"/>
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="Food Delivery in Nairobi — Best Restaurants | Apatmento"/>
+  <meta name="twitter:description" content="Order food delivery from the best restaurants in Nairobi. Nyama Mama, Artcaffe, Hashmi BBQ, Mama Rocks and more. Restaurants keep 100%. Fixed delivery fee only."/>
+  <meta name="twitter:image" content="https://apatmento.vercel.app/og-food.jpg"/>
+  <meta name="twitter:image:alt" content="Food Delivery in Nairobi — Best Restaurants | Apatmento"/>
+
+  <!-- DNS prefetch for performance (also helps SEO via speed) -->
+  <link rel="dns-prefetch" href="//fonts.googleapis.com"/>
+  <link rel="dns-prefetch" href="//fonts.gstatic.com"/>
+  <link rel="dns-prefetch" href="//cdn.jsdelivr.net"/>
+  <link rel="dns-prefetch" href="//api.unsplash.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "name": "Food Delivery Restaurants in Nairobi",
+    "url": "https://apatmento.vercel.app/food.html",
+    "itemListElement": [
+      { "@type": "Restaurant", "name": "Nyama Mama", "servesCuisine": "Kenyan", "address": { "@type": "PostalAddress", "addressLocality": "Westlands", "addressRegion": "Nairobi", "addressCountry": "KE" }, "priceRange": "KES 150 delivery" },
+      { "@type": "Restaurant", "name": "Artcaffe", "servesCuisine": "International", "address": { "@type": "PostalAddress", "addressLocality": "Nairobi", "addressCountry": "KE" }, "priceRange": "KES 200 delivery" },
+      { "@type": "Restaurant", "name": "Hashmi BBQ", "servesCuisine": "Indian, Halal", "address": { "@type": "PostalAddress", "addressLocality": "Parklands", "addressRegion": "Nairobi", "addressCountry": "KE" }, "priceRange": "KES 150 delivery" }
+    ]
+  }
+  </script>
+<title>Food Delivery in Nairobi — Best Restaurants | Apatmento</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
@@ -153,11 +209,11 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--glass);c
 
 
 :root{
-  --t1:#8B6FE8;--t2:#4361FF;--t3:#2DD4BF;
-  --t1-rgb:139,111,232;
-  --theme-grad:linear-gradient(135deg,#8B6FE8,#4361FF);
-  --t1-light:#c4b5fd;
-  --rise-from:translateY(-60px) rotate(20deg) scale(.5);
+  --t1:#FF6B2C;--t2:#FFB59E;--t3:#7B2FF7;
+  --t1-rgb:255,107,44;
+  --theme-grad:linear-gradient(135deg,#FF6B2C,#FFB59E);
+  --t1-light:#fb923c;
+  --rise-from:translateY(80px) scale(.5);
 }
 </style>
 </head>
@@ -172,14 +228,21 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--glass);c
     <div class="tx-ab tx-ab-1"></div><div class="tx-ab tx-ab-2"></div>
   </div>
   <div class="tx-craft">
-    <div class="tx-ico" style="width:88px;height:88px;--rise-from:translateY(-60px) rotate(20deg) scale(.5);">
+    <div class="tx-ico" style="width:88px;height:88px;--rise-from:translateY(80px) scale(.5);">
   <svg width="88" height="88" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M6 7h12l1 13H5z"/>
-    <path d="M9 7a3 3 0 0 1 6 0"/>
+    <path d="M4 16h16a8 8 0 0 0-16 0z"/>
+    <path d="M2 19h20"/>
+    <path d="M12 8V5M10 5h4"/>
   </svg>
+  <div style="position:absolute;top:2px;left:50%;transform:translateX(-50%);display:flex;gap:6px;">
+    <div style="width:3px;height:12px;background:rgba(255,255,255,.5);border-radius:2px;animation:steam 1.2s .3s ease-in-out infinite;transform-origin:bottom;"></div>
+    <div style="width:3px;height:16px;background:rgba(255,255,255,.6);border-radius:2px;animation:steam 1.2s .5s ease-in-out infinite;transform-origin:bottom;"></div>
+    <div style="width:3px;height:12px;background:rgba(255,255,255,.5);border-radius:2px;animation:steam 1.2s .4s ease-in-out infinite;transform-origin:bottom;"></div>
+  </div>
 </div>
-    <div class="tx-label">Everything you need</div>
-    <div class="tx-sub">Apatmento · Shopping</div>
+<style>@keyframes steam{0%,100%{transform:scaleY(1) translateY(0);opacity:.5;}50%{transform:scaleY(1.6) translateY(-8px);opacity:1;}}</style>
+    <div class="tx-label">Delivered hot</div>
+    <div class="tx-sub">Apatmento · Food Delivery</div>
   </div>
 </div>
 
@@ -198,32 +261,34 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--glass);c
 </div>
 
 <div class="hero">
-  <span class="hero-eyebrow">✦ Shopping</span>
-  <h1 class="hero-title">One cart.<br/><em>Everything you need.</em></h1>
-  <p class="hero-sub">Fashion, electronics, home goods and more from verified Kenyan sellers. Sellers keep 100% — you pay face value.</p>
+  <span class="hero-eyebrow">✦ Food Delivery</span>
+  <h1 class="hero-title">Your favourites,<br/><em>delivered hot.</em></h1>
+  <p class="hero-sub">Order from the best restaurants in Nairobi. Restaurants keep 100% of the food price — we charge only a small fixed delivery fee.</p>
   <div class="search-bar">
-    <div class="sb-field" style="flex:2;"><div class="sb-label">Search products</div><input style="border:none;background:transparent;font-family:var(--font-body);font-size:14px;color:var(--ink);outline:none;width:100%;" id="f-search" placeholder="What are you looking for?" onkeydown="if(event.key==='Enter')filterShop()"/></div>
+    <div class="sb-field"><div class="sb-label">Deliver to</div><div class="sb-val" id="f-addr">Westlands, Nairobi</div></div>
     <div class="sb-sep"></div>
-    <div class="sb-field"><div class="sb-label">Category</div><div class="sb-val ph" id="f-shopcat">All categories</div></div>
-    <button class="sb-btn" onclick="filterShop()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></button>
+    <div class="sb-field"><div class="sb-label">Cuisine</div><div class="sb-val ph" id="f-cuisine">Any cuisine</div></div>
+    <div class="sb-sep"></div>
+    <div class="sb-field"><div class="sb-label">Deliver by</div><div class="sb-val" id="f-time">ASAP</div></div>
+    <button class="sb-btn" onclick="filterFood()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></button>
   </div>
   <div class="filter-row">
-    <div class="fchip active" onclick="setShopFilter('all',this)">All</div>
-    <div class="fchip" onclick="setShopFilter('fashion',this)">👗 Fashion</div>
-    <div class="fchip" onclick="setShopFilter('electronics',this)">📱 Electronics</div>
-    <div class="fchip" onclick="setShopFilter('home',this)">🏠 Home</div>
-    <div class="fchip" onclick="setShopFilter('beauty',this)">💄 Beauty</div>
-    <div class="fchip" onclick="setShopFilter('art',this)">🎨 Art & Crafts</div>
+    <div class="fchip active" onclick="setFoodFilter('all',this)">All</div>
+    <div class="fchip" onclick="setFoodFilter('kenyan',this)">🇰🇪 Kenyan</div>
+    <div class="fchip" onclick="setFoodFilter('indian',this)">🍛 Indian</div>
+    <div class="fchip" onclick="setFoodFilter('pizza',this)">🍕 Pizza</div>
+    <div class="fchip" onclick="setFoodFilter('chinese',this)">🥢 Chinese</div>
+    <div class="fchip" onclick="setFoodFilter('burgers',this)">🍔 Burgers</div>
+    <div class="fchip" onclick="setFoodFilter('healthy',this)">🥗 Healthy</div>
   </div>
 </div>
 <div class="content">
   <div class="content-head">
-    <div class="result-count"><strong id="result-num">0</strong> products</div>
-    <select style="padding:8px 28px 8px 12px;border-radius:11px;border:1px solid var(--line-2);background:rgba(255,255,255,.7);font-family:var(--font-body);font-size:13px;outline:none;cursor:pointer;" id="sort-shop" onchange="filterShop()">
+    <div class="result-count"><strong id="result-num">0</strong> restaurants open</div>
+    <select style="padding:8px 28px 8px 12px;border-radius:11px;border:1px solid var(--line-2);background:rgba(255,255,255,.7);font-family:var(--font-body);font-size:13px;outline:none;cursor:pointer;" id="sort-food" onchange="filterFood()">
       <option value="recommended">Recommended</option>
-      <option value="price-asc">Price: Low to High</option>
-      <option value="price-desc">Price: High to Low</option>
-      <option value="new">Newest</option>
+      <option value="delivery">Fastest delivery</option>
+      <option value="price">Lowest delivery fee</option>
     </select>
   </div>
   <div class="grid" id="grid"></div>
@@ -243,70 +308,65 @@ function showToast(m,d=3200){const t=document.getElementById('toast');if(!t)retu
 window.addEventListener('load',()=>setTimeout(()=>document.getElementById('tx')?.classList.add('done'),1600));
 
 
-const PRODUCTS=[
-  {id:1,name:'Kikoy Beach Wrap',cat:'fashion',seller:'Kikoy Co. Mombasa',price:2800,tags:['Handmade','Beach','Unisex'],desc:'Authentic handwoven Kikoy from the Kenyan coast — versatile as a sarong, beach towel, throw or scarf. Each one unique.',hot:true},
-  {id:2,name:'Maasai Beaded Necklace',cat:'art',seller:'Maasai Women Collective',price:1500,tags:['Handmade','Authentic','Ethical'],desc:'Hand-beaded by Maasai women artisans in Kajiado. Every bead placed by hand — no two are identical. Profits go directly to the makers.',hot:true},
-  {id:3,name:'Infinix Hot 40 Pro',cat:'electronics',seller:'Tech Hub Nairobi',price:26500,tags:['6.78" display','5000mAh','48MP camera'],desc:'The latest Infinix flagship with a 48MP triple camera, 5000mAh battery and 33W fast charging. Ships with 1-year warranty.',hot:false},
-  {id:4,name:'Kitenge Print Dress',cat:'fashion',seller:'Nairobi Fashion House',price:3500,tags:['Made in Kenya','Bold print','Free size'],desc:'Vibrant West African kitenge print in a modern A-line cut. Made in Nairobi by local tailors. Machine washable.',hot:true},
-  {id:5,name:'Kenyan Single-Origin Coffee',cat:'home',seller:'Dormans Direct',price:1200,tags:['AA Grade','Kiambu','Freshly roasted'],desc:'250g of freshly roasted Kenyan AA grade coffee from Kiambu County. Notes of blackcurrant, citrus and caramel. Whole bean or ground.',hot:false},
-  {id:6,name:'Sisal Woven Basket',cat:'home',seller:'Kitui Craft Cooperative',price:1800,tags:['Handwoven','Eco','Storage'],desc:'Traditional Kenyan sisal basket hand-woven by rural artisans. Perfect for storage, décor or gifting.',hot:false},
-  {id:7,name:'Natural Shea Butter Body Cream',cat:'beauty',seller:'Afya Naturals',price:850,tags:['100% natural','No parabens','Nairobi made'],desc:'Raw unrefined shea butter blended with Kenyan baobab and marula oils. No artificial fragrance. Deeply moisturising.',hot:true},
-  {id:8,name:'Nairobi City Skyline Print',cat:'art',seller:'Nairobi Art Gallery',price:3200,tags:['Giclee print','Limited edition','Framed'],desc:'A stunning limited-edition giclee print of the Nairobi skyline at golden hour. A5 to A1 sizes available. Framing optional.',hot:false},
+const RESTAURANTS=[
+  {id:1,name:'Nyama Mama',cuisine:'kenyan',area:'Westlands',delivery:'25 min',fee:150,minOrder:500,tags:['Kenyan comfort','Nyama choma','Vegetarian options'],desc:'Nairobi\'s home of elevated Kenyan comfort food. Nyama choma, ugali, sukuma wiki and classics made with the finest local ingredients.',hot:true},
+  {id:2,name:'Artcaffe',cuisine:'pizza',area:'Multiple locations',delivery:'30 min',fee:200,minOrder:800,tags:['Coffee','All-day brunch','Sandwiches'],desc:'Nairobi\'s beloved café chain — great coffee, fresh pastries, wood-fired pizza and all-day dining.',hot:true},
+  {id:3,name:'Hashmi BBQ',cuisine:'indian',area:'Parklands',delivery:'35 min',fee:150,minOrder:600,tags:['Authentic','Halal','Tandoor'],desc:'Since 1975 — Nairobi\'s institution for authentic Punjabi BBQ. Seekh kebab, chicken tikka and buttery naan from a real tandoor.',hot:false},
+  {id:4,name:'Burger Hut',cuisine:'burgers',area:'CBD & branches',delivery:'20 min',fee:100,minOrder:400,tags:['Loaded burgers','Milkshakes','Fast'],desc:'Nairobi\'s original smash burger joint. Double patties, fresh produce and 12 signature sauces. Fries are cut fresh daily.',hot:true},
+  {id:5,name:'Dragon Palace',cuisine:'chinese',area:'Upper Hill',delivery:'40 min',fee:200,minOrder:700,tags:['Dim sum','Cantonese','Family portions'],desc:'Authentic Hong Kong-style Cantonese cooking. Dim sum, roast duck, seafood and clay pot rice made with imported ingredients.',hot:false},
+  {id:6,name:'Mama Rocks',cuisine:'burgers',area:'Langata',delivery:'35 min',fee:150,minOrder:500,tags:['Gourmet','Craft burgers','Trendy'],desc:'Nairobi\'s cult gourmet burger spot. Creative monthly specials, house-made sauces and the best sweet potato fries in the city.',hot:true},
+  {id:7,name:'The Green Plate',cuisine:'healthy',area:'Kilimani',delivery:'25 min',fee:200,minOrder:600,tags:['Vegan','Gluten-free','Salads'],desc:'Nairobi\'s leading healthy food kitchen. All-natural ingredients, zero processed foods and dishes that actually taste incredible.',hot:false},
+  {id:8,name:'Swahili Plate',cuisine:'kenyan',area:'Karen',delivery:'45 min',fee:200,minOrder:700,tags:['Coast cuisine','Biryani','Swahili'],desc:'Authentic Swahili coast cuisine in Nairobi. Biriyani, pilau, coconut fish and mandazi like grandmother used to make.',hot:false},
 ];
-let _shopFilter='all';
-function setShopFilter(k,el){_shopFilter=k;document.querySelectorAll('.fchip').forEach(c=>c.classList.remove('active'));el.classList.add('active');filterShop();}
-function filterShop(){
-  const q=(document.getElementById('f-search')?.value||'').toLowerCase();
-  let list=_shopFilter==='all'?[...PRODUCTS]:PRODUCTS.filter(p=>p.cat===_shopFilter);
-  if(q)list=list.filter(p=>p.name.toLowerCase().includes(q)||p.desc.toLowerCase().includes(q));
-  const s=document.getElementById('sort-shop')?.value||'recommended';
-  if(s==='price-asc')list.sort((a,b)=>a.price-b.price);
-  if(s==='price-desc')list.sort((a,b)=>b.price-a.price);
-  if(s==='recommended')list.sort((a,b)=>(b.hot?1:0)-(a.hot?1:0));
+let _foodFilter='all';
+function setFoodFilter(k,el){_foodFilter=k;document.querySelectorAll('.fchip').forEach(c=>c.classList.remove('active'));el.classList.add('active');filterFood();}
+function filterFood(){
+  let list=_foodFilter==='all'?[...RESTAURANTS]:RESTAURANTS.filter(r=>r.cuisine===_foodFilter);
   document.getElementById('result-num').textContent=list.length;
   const g=document.getElementById('grid');
-  if(!list.length){g.innerHTML='<div class="empty"><div class="empty-title">No products match</div><div class="empty-sub">Try a different search or filter.</div></div>';return;}
-  g.innerHTML=list.map((p,i)=>`
-  <div class="card" style="transition-delay:${i*45}ms" onclick="openProduct(${p.id})">
-    <div class="card-img" style="background:linear-gradient(135deg,#8B6FE8,#4361FF);">
-      ${p.hot?'<div class="card-badge">⭐ Popular</div>':''}
-      <svg class="card-img-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7h12l1 13H5z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>
+  if(!list.length){g.innerHTML='<div class="empty"><div class="empty-title">No restaurants match</div></div>';return;}
+  g.innerHTML=list.map((r,i)=>`
+  <div class="card" style="transition-delay:${i*45}ms" onclick="openRestaurant(${r.id})">
+    <div class="card-img" style="background:linear-gradient(135deg,#FF6B2C,#FFB59E);">
+      ${r.hot?'<div class="card-badge">🔥 Popular</div>':''}
+      <svg class="card-img-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16h16a8 8 0 0 0-16 0z"/><path d="M2 19h20"/><path d="M12 8V5M10 5h4"/></svg>
     </div>
     <div class="card-body">
-      <div class="card-meta-top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>${p.seller}</div>
-      <div class="card-name">${p.name}</div>
-      <div class="card-tags">${p.tags.map(t=>`<span class="card-tag">${t}</span>`).join('')}</div>
+      <div class="card-meta-top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>${r.area} · ${r.delivery}</div>
+      <div class="card-name">${r.name}</div>
+      <div class="card-tags">${r.tags.map(t=>`<span class="card-tag">${t}</span>`).join('')}</div>
       <div class="card-foot">
-        <div class="card-price"><span class="val">KES ${p.price.toLocaleString()}</span></div>
+        <div class="card-price"><span class="val">KES ${r.fee} delivery</span><span class="per"> · min KES ${r.minOrder}</span></div>
         <div class="card-go"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M7 7h10v10"/></svg></div>
       </div>
     </div>
   </div>`).join('');
   requestAnimationFrame(()=>{document.querySelectorAll('.card').forEach((c,i)=>setTimeout(()=>c.classList.add('in'),i*45));});
 }
-function openProduct(id){
-  const p=PRODUCTS.find(x=>x.id===id);if(!p)return;
+function openRestaurant(id){
+  const r=RESTAURANTS.find(x=>x.id===id);if(!r)return;
   document.getElementById('drawer').innerHTML=`
   <div class="dr-img" style="background:var(--theme-grad);">
     <button class="dr-close" onclick="closeDrawer()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
-    <svg class="dr-img-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7h12l1 13H5z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>
+    <svg class="dr-img-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16h16a8 8 0 0 0-16 0z"/><path d="M2 19h20"/><path d="M12 8V5M10 5h4"/></svg>
   </div>
   <div class="dr-body">
-    <div class="dr-tag">By ${p.seller}</div>
-    <div class="dr-title">${p.name}</div>
-    <div class="dr-tags">${p.tags.map(t=>`<span class="card-tag">${t}</span>`).join('')}</div>
-    <p class="dr-desc">${p.desc}</p>
+    <div class="dr-tag">${r.area} · ${r.delivery} · Min KES ${r.minOrder}</div>
+    <div class="dr-title">${r.name}</div>
+    <div class="dr-tags">${r.tags.map(t=>`<span class="card-tag">${t}</span>`).join('')}</div>
+    <p class="dr-desc">${r.desc}</p>
     <div class="dr-cta-box">
-      <div class="dr-price"><span class="val">KES ${p.price.toLocaleString()}</span><div class="note">✓ Seller keeps 100%. You pay face value.</div></div>
-      <button class="dr-cta" onclick="showToast('Shopping checkout coming soon — DM us to order this now!',4000)">Add to cart →</button>
+      <div class="dr-price"><span class="val">KES ${r.fee}</span><span class="per"> delivery fee</span><div class="note">✓ Restaurant keeps 100% of your food order. We charge only this fixed delivery fee.</div></div>
+      <button class="dr-cta" onclick="showToast('Food ordering coming soon — we are onboarding restaurants now!',4000)">Order from ${r.name} →</button>
     </div>
   </div>`;
   document.getElementById('drawer').classList.add('open');
   document.getElementById('drawer-overlay').classList.add('open');
 }
 function closeDrawer(){document.getElementById('drawer').classList.remove('open');document.getElementById('drawer-overlay').classList.remove('open');}
-filterShop();
+filterFood();
 
 </script>
+<script src="/pwa.js" defer></script>
 </body>
 </html>
