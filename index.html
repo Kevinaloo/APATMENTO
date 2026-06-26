@@ -3,7 +3,96 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Apatmento — Your World. One App.</title>
+  <!-- ══ SEO ══ -->
+  <meta name="description" content="Kenya's first zero-commission super-app. Book short-stay apartments, flights, safaris, rides, food delivery and events. Hosts keep 100%. You pay face value. No hidden fees."/>
+  <meta name="keywords" content="Kenya travel app, short stay apartments Nairobi, book stays Kenya, zero commission rentals, Nairobi apartments, Kenya safaris, Mombasa accommodation, flights Kenya, food delivery Nairobi"/>
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1"/>
+  <link rel="canonical" href="https://apatmento.vercel.app/index.html"/>
+  <link rel="alternate" hreflang="en-ke" href="https://apatmento.vercel.app/index.html"/>
+  <link rel="alternate" hreflang="en" href="https://apatmento.vercel.app/index.html"/>
+  <meta name="author" content="Apatmento"/>
+  <meta name="geo.region" content="KE"/>
+  <meta name="geo.placename" content="Nairobi, Kenya"/>
+  <meta name="theme-color" content="#7B2FF7"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="Apatmento"/>
+  <link rel="manifest" href="/manifest.json"/>
+
+  <!-- Open Graph -->
+  <meta property="og:site_name" content="Apatmento"/>
+  <meta property="og:title" content="Apatmento — Stays, Flights, Tours & More in Kenya | Zero Commission"/>
+  <meta property="og:description" content="Kenya's first zero-commission super-app. Book short-stay apartments, flights, safaris, rides, food delivery and events. Hosts keep 100%. You pay face value. No hidden fees."/>
+  <meta property="og:url" content="https://apatmento.vercel.app/index.html"/>
+  <meta property="og:type" content="website"/>
+  <meta property="og:image" content="https://apatmento.vercel.app/og-home.jpg"/>
+  <meta property="og:image:width" content="1200"/>
+  <meta property="og:image:height" content="630"/>
+  <meta property="og:image:alt" content="Apatmento — Stays, Flights, Tours & More in Kenya | Zero Commission"/>
+  <meta property="og:locale" content="en_KE"/>
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="Apatmento — Stays, Flights, Tours & More in Kenya | Zero Commission"/>
+  <meta name="twitter:description" content="Kenya's first zero-commission super-app. Book short-stay apartments, flights, safaris, rides, food delivery and events. Hosts keep 100%. You pay face value. No hidden fees."/>
+  <meta name="twitter:image" content="https://apatmento.vercel.app/og-home.jpg"/>
+  <meta name="twitter:image:alt" content="Apatmento — Stays, Flights, Tours & More in Kenya | Zero Commission"/>
+
+  <!-- DNS prefetch for performance (also helps SEO via speed) -->
+  <link rel="dns-prefetch" href="//fonts.googleapis.com"/>
+  <link rel="dns-prefetch" href="//fonts.gstatic.com"/>
+  <link rel="dns-prefetch" href="//cdn.jsdelivr.net"/>
+  <link rel="dns-prefetch" href="//api.unsplash.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://apatmento.vercel.app/#organization",
+        "name": "Apatmento",
+        "url": "https://apatmento.vercel.app",
+        "logo": { "@type": "ImageObject", "url": "https://apatmento.vercel.app/logo-mark.png", "width": 512, "height": 512 },
+        "description": "Kenya's zero-commission travel super-app — stays, flights, tours, rides, food and shopping in one platform.",
+        "foundingDate": "2026",
+        "areaServed": { "@type": "Country", "name": "Kenya" },
+        "contactPoint": { "@type": "ContactPoint", "contactType": "customer service", "availableLanguage": "English" },
+        "sameAs": []
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://apatmento.vercel.app/#website",
+        "url": "https://apatmento.vercel.app",
+        "name": "Apatmento",
+        "description": "Kenya's first zero-commission travel super-app",
+        "publisher": { "@id": "https://apatmento.vercel.app/#organization" },
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": { "@type": "EntryPoint", "urlTemplate": "https://apatmento.vercel.app/apartments.html?q={search_term_string}" },
+          "query-input": "required name=search_term_string"
+        }
+      },
+      {
+        "@type": "SiteNavigationElement",
+        "name": ["Stays", "Flights", "Tours", "Events", "Rides", "Food", "Shopping", "Car Hire"],
+        "url": [
+          "https://apatmento.vercel.app/apartments.html",
+          "https://apatmento.vercel.app/flights.html",
+          "https://apatmento.vercel.app/tours.html",
+          "https://apatmento.vercel.app/events.html",
+          "https://apatmento.vercel.app/rides.html",
+          "https://apatmento.vercel.app/food.html",
+          "https://apatmento.vercel.app/shopping.html",
+          "https://apatmento.vercel.app/carhire.html"
+        ]
+      }
+    ]
+  }
+  </script>
+<title>Apatmento — Stays, Flights, Tours & More in Kenya | Zero Commission</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..700&display=swap" rel="stylesheet"/>
@@ -575,5 +664,6 @@ document.querySelectorAll('.svc-tile').forEach((t,i)=>{t.style.transitionDelay=(
 
 
 
+<script src="/pwa.js" defer></script>
 </body>
 </html>
