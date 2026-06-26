@@ -3,7 +3,59 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Apatmento — List your space</title>
+  <!-- ══ SEO ══ -->
+  <meta name="description" content="List your apartment, villa or cottage on Apatmento and keep 100% of every booking. No commission, no percentage cuts — just a small fixed fee paid by guests."/>
+  <meta name="keywords" content="list property Kenya, become host Nairobi, rent apartment Kenya, earn from property Kenya, Airbnb alternative Kenya host"/>
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1"/>
+  <link rel="canonical" href="https://apatmento.vercel.app/add-listing.html"/>
+  <link rel="alternate" hreflang="en-ke" href="https://apatmento.vercel.app/add-listing.html"/>
+  <link rel="alternate" hreflang="en" href="https://apatmento.vercel.app/add-listing.html"/>
+  <meta name="author" content="Apatmento"/>
+  <meta name="geo.region" content="KE"/>
+  <meta name="geo.placename" content="Nairobi, Kenya"/>
+  <meta name="theme-color" content="#7B2FF7"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="Apatmento"/>
+  <link rel="manifest" href="/manifest.json"/>
+
+  <!-- Open Graph -->
+  <meta property="og:site_name" content="Apatmento"/>
+  <meta property="og:title" content="List Your Property — Earn with Zero Commission | Apatmento"/>
+  <meta property="og:description" content="List your apartment, villa or cottage on Apatmento and keep 100% of every booking. No commission, no percentage cuts — just a small fixed fee paid by guests."/>
+  <meta property="og:url" content="https://apatmento.vercel.app/add-listing.html"/>
+  <meta property="og:type" content="website"/>
+  <meta property="og:image" content="https://apatmento.vercel.app/og-home.jpg"/>
+  <meta property="og:image:width" content="1200"/>
+  <meta property="og:image:height" content="630"/>
+  <meta property="og:image:alt" content="List Your Property — Earn with Zero Commission | Apatmento"/>
+  <meta property="og:locale" content="en_KE"/>
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="List Your Property — Earn with Zero Commission | Apatmento"/>
+  <meta name="twitter:description" content="List your apartment, villa or cottage on Apatmento and keep 100% of every booking. No commission, no percentage cuts — just a small fixed fee paid by guests."/>
+  <meta name="twitter:image" content="https://apatmento.vercel.app/og-home.jpg"/>
+  <meta name="twitter:image:alt" content="List Your Property — Earn with Zero Commission | Apatmento"/>
+
+  <!-- DNS prefetch for performance (also helps SEO via speed) -->
+  <link rel="dns-prefetch" href="//fonts.googleapis.com"/>
+  <link rel="dns-prefetch" href="//fonts.gstatic.com"/>
+  <link rel="dns-prefetch" href="//cdn.jsdelivr.net"/>
+  <link rel="dns-prefetch" href="//api.unsplash.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": "List Your Property on Apatmento",
+    "description": "Earn from your property with zero commission. Hosts keep 100% of every booking on Apatmento.",
+    "url": "https://apatmento.vercel.app/add-listing.html"
+  }
+  </script>
+<title>List Your Property — Earn with Zero Commission | Apatmento</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
@@ -160,6 +212,37 @@ body{overflow-x:hidden;}
 .ss-btns{display:flex;flex-direction:column;gap:10px;}
 .ss-btn-primary{padding:15px;border-radius:14px;background:var(--theme-grad);color:#fff;font-family:var(--font-body);font-weight:600;font-size:15px;border:none;cursor:pointer;text-decoration:none;box-shadow:0 10px 30px rgba(123,47,247,.3);}
 .ss-btn-ghost{padding:15px;border-radius:14px;background:transparent;border:1.5px solid var(--line-2);color:var(--ink-soft);font-family:var(--font-body);font-weight:600;font-size:15px;cursor:pointer;text-decoration:none;}
+
+/* ── PARTNER HUB THEME OVERRIDE ── */
+:root {
+  --theme: var(--mint-deep);
+  --theme-2: var(--electric);
+  --theme-grad: linear-gradient(135deg, #2DD4BF, #4361FF);
+  --theme-soft: rgba(45,212,191,0.1);
+  --theme-border: rgba(45,212,191,0.2);
+}
+/* Active nav link uses mint */
+.sb-link.active { background: rgba(45,212,191,0.1); color: var(--mint-deep); }
+.sb-link:hover { background: rgba(45,212,191,0.07); color: var(--ink); }
+/* Topbar chip */
+.tb-chip { color: var(--electric); background: rgba(67,97,255,0.08); border-color: rgba(67,97,255,0.18); }
+/* Page eyebrow */
+.page-eyebrow { color: var(--mint-deep); background: rgba(45,212,191,0.08); border-color: rgba(45,212,191,0.2); }
+/* page-title em gradient */
+.page-title em {
+  background: linear-gradient(120deg, var(--mint-deep), var(--electric));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+/* Buttons */
+.btn-primary { background: linear-gradient(135deg, #2DD4BF, #4361FF); }
+/* Avatar */
+.tb-avatar { background: linear-gradient(135deg, #2DD4BF, #4361FF); box-shadow: 0 4px 12px rgba(45,212,191,0.3); }
+/* stat-meta up */
+.stat-meta.up { color: var(--electric); }
+/* aurora blobs — mint leads */
+.ab-1 { background: radial-gradient(circle, var(--mint), transparent 70%); }
+.ab-2 { background: radial-gradient(circle, var(--electric), transparent 72%); }
+
 </style>
 </head><body>
 <div class="aurora"><div class="ab ab-1"></div><div class="ab ab-2"></div></div>
@@ -712,4 +795,5 @@ async function publishListing() {
     showAlert('Something went wrong: ' + (err.message || 'Please try again.'));
     console.error(err);
   }
-}</script></body></html>
+}</script><script src="/pwa.js" defer></script>
+</body></html>
