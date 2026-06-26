@@ -3,7 +3,67 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Apatmento — Stays</title>
+  <!-- ══ SEO ══ -->
+  <meta name="description" content="Browse 20+ hand-picked short-stay apartments across Nairobi, Mombasa, Diani and beyond. No booking fees added. Hosts keep 100%. Book securely with M-Pesa."/>
+  <meta name="keywords" content="short stay apartments Nairobi, Airbnb Kenya alternative, furnished apartments Kenya, holiday apartments Nairobi, Westlands apartments, Karen apartments, Kilimani apartments, Mombasa apartments"/>
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1"/>
+  <link rel="canonical" href="https://apatmento.vercel.app/apartments.html"/>
+  <link rel="alternate" hreflang="en-ke" href="https://apatmento.vercel.app/apartments.html"/>
+  <link rel="alternate" hreflang="en" href="https://apatmento.vercel.app/apartments.html"/>
+  <meta name="author" content="Apatmento"/>
+  <meta name="geo.region" content="KE"/>
+  <meta name="geo.placename" content="Nairobi, Kenya"/>
+  <meta name="theme-color" content="#7B2FF7"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="Apatmento"/>
+  <link rel="manifest" href="/manifest.json"/>
+
+  <!-- Open Graph -->
+  <meta property="og:site_name" content="Apatmento"/>
+  <meta property="og:title" content="Short Stay Apartments in Kenya | No Commission — Apatmento"/>
+  <meta property="og:description" content="Browse 20+ hand-picked short-stay apartments across Nairobi, Mombasa, Diani and beyond. No booking fees added. Hosts keep 100%. Book securely with M-Pesa."/>
+  <meta property="og:url" content="https://apatmento.vercel.app/apartments.html"/>
+  <meta property="og:type" content="website"/>
+  <meta property="og:image" content="https://apatmento.vercel.app/og-stays.jpg"/>
+  <meta property="og:image:width" content="1200"/>
+  <meta property="og:image:height" content="630"/>
+  <meta property="og:image:alt" content="Short Stay Apartments in Kenya | No Commission — Apatmento"/>
+  <meta property="og:locale" content="en_KE"/>
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="Short Stay Apartments in Kenya | No Commission — Apatmento"/>
+  <meta name="twitter:description" content="Browse 20+ hand-picked short-stay apartments across Nairobi, Mombasa, Diani and beyond. No booking fees added. Hosts keep 100%. Book securely with M-Pesa."/>
+  <meta name="twitter:image" content="https://apatmento.vercel.app/og-stays.jpg"/>
+  <meta name="twitter:image:alt" content="Short Stay Apartments in Kenya | No Commission — Apatmento"/>
+
+  <!-- DNS prefetch for performance (also helps SEO via speed) -->
+  <link rel="dns-prefetch" href="//fonts.googleapis.com"/>
+  <link rel="dns-prefetch" href="//fonts.gstatic.com"/>
+  <link rel="dns-prefetch" href="//cdn.jsdelivr.net"/>
+  <link rel="dns-prefetch" href="//api.unsplash.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "name": "Short Stay Apartments in Kenya",
+    "description": "Hand-picked short-stay apartments across Kenya with zero commission booking",
+    "url": "https://apatmento.vercel.app/apartments.html",
+    "numberOfItems": 20,
+    "itemListElement": [
+      { "@type": "Accommodation", "name": "The Westlands Skybox", "address": { "@type": "PostalAddress", "addressLocality": "Westlands", "addressRegion": "Nairobi", "addressCountry": "KE" }, "numberOfRooms": 2, "priceRange": "KES 5800/night" },
+      { "@type": "Accommodation", "name": "Kilimani Penthouse Loft", "address": { "@type": "PostalAddress", "addressLocality": "Kilimani", "addressRegion": "Nairobi", "addressCountry": "KE" }, "numberOfRooms": 2, "priceRange": "KES 12500/night" },
+      { "@type": "Accommodation", "name": "Karen Country Cottage", "address": { "@type": "PostalAddress", "addressLocality": "Karen", "addressRegion": "Nairobi", "addressCountry": "KE" }, "numberOfRooms": 2, "priceRange": "KES 6500/night" },
+      { "@type": "Accommodation", "name": "Naivasha Lakeside Cabin", "address": { "@type": "PostalAddress", "addressLocality": "Naivasha", "addressRegion": "Rift Valley", "addressCountry": "KE" }, "numberOfRooms": 2, "priceRange": "KES 5200/night" },
+      { "@type": "Accommodation", "name": "Nyali Beachfront Apartment", "address": { "@type": "PostalAddress", "addressLocality": "Nyali", "addressRegion": "Mombasa", "addressCountry": "KE" }, "numberOfRooms": 2, "priceRange": "KES 7800/night" }
+    ]
+  }
+  </script>
+<title>Short Stay Apartments in Kenya | No Commission — Apatmento</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
@@ -904,5 +964,6 @@ function openField(field) {
 loadListings();
 
 </script>
+<script src="/pwa.js" defer></script>
 </body>
 </html>
