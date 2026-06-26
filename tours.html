@@ -3,7 +3,64 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Apatmento — Tours & Safaris</title>
+  <!-- ══ SEO ══ -->
+  <meta name="description" content="Book Kenyan safaris, guided tours and day trips. Maasai Mara game drives, Mt Kenya treks, Diani beach, Nakuru flamingos. Guides keep 100% of every booking."/>
+  <meta name="keywords" content="Kenya safari tours, Maasai Mara safari, Kenya tours, guided tours Nairobi, day trips from Nairobi, Mt Kenya trek, Diani beach tour, Nakuru bird watching"/>
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1"/>
+  <link rel="canonical" href="https://apatmento.vercel.app/tours.html"/>
+  <link rel="alternate" hreflang="en-ke" href="https://apatmento.vercel.app/tours.html"/>
+  <link rel="alternate" hreflang="en" href="https://apatmento.vercel.app/tours.html"/>
+  <meta name="author" content="Apatmento"/>
+  <meta name="geo.region" content="KE"/>
+  <meta name="geo.placename" content="Nairobi, Kenya"/>
+  <meta name="theme-color" content="#7B2FF7"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="Apatmento"/>
+  <link rel="manifest" href="/manifest.json"/>
+
+  <!-- Open Graph -->
+  <meta property="og:site_name" content="Apatmento"/>
+  <meta property="og:title" content="Kenya Safaris & Tours — Maasai Mara, Diani, Naivasha | Apatmento"/>
+  <meta property="og:description" content="Book Kenyan safaris, guided tours and day trips. Maasai Mara game drives, Mt Kenya treks, Diani beach, Nakuru flamingos. Guides keep 100% of every booking."/>
+  <meta property="og:url" content="https://apatmento.vercel.app/tours.html"/>
+  <meta property="og:type" content="website"/>
+  <meta property="og:image" content="https://apatmento.vercel.app/og-tours.jpg"/>
+  <meta property="og:image:width" content="1200"/>
+  <meta property="og:image:height" content="630"/>
+  <meta property="og:image:alt" content="Kenya Safaris & Tours — Maasai Mara, Diani, Naivasha | Apatmento"/>
+  <meta property="og:locale" content="en_KE"/>
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="Kenya Safaris & Tours — Maasai Mara, Diani, Naivasha | Apatmento"/>
+  <meta name="twitter:description" content="Book Kenyan safaris, guided tours and day trips. Maasai Mara game drives, Mt Kenya treks, Diani beach, Nakuru flamingos. Guides keep 100% of every booking."/>
+  <meta name="twitter:image" content="https://apatmento.vercel.app/og-tours.jpg"/>
+  <meta name="twitter:image:alt" content="Kenya Safaris & Tours — Maasai Mara, Diani, Naivasha | Apatmento"/>
+
+  <!-- DNS prefetch for performance (also helps SEO via speed) -->
+  <link rel="dns-prefetch" href="//fonts.googleapis.com"/>
+  <link rel="dns-prefetch" href="//fonts.gstatic.com"/>
+  <link rel="dns-prefetch" href="//cdn.jsdelivr.net"/>
+  <link rel="dns-prefetch" href="//api.unsplash.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "name": "Kenya Safaris and Tours",
+    "description": "Guided safaris, day trips and cultural experiences across Kenya",
+    "url": "https://apatmento.vercel.app/tours.html",
+    "itemListElement": [
+      { "@type": "TouristTrip", "name": "Maasai Mara Safari", "description": "3-day Big Five safari in the Maasai Mara", "offers": { "@type": "Offer", "price": "28000", "priceCurrency": "KES" }, "touristType": "Wildlife & Safari" },
+      { "@type": "TouristTrip", "name": "Mt Kenya Trek", "description": "4-day summit attempt of Point Lenana", "offers": { "@type": "Offer", "price": "18500", "priceCurrency": "KES" }, "touristType": "Adventure" },
+      { "@type": "TouristTrip", "name": "Diani Beach & Snorkelling", "description": "2-day Diani beach holiday with marine park snorkelling", "offers": { "@type": "Offer", "price": "12000", "priceCurrency": "KES" }, "touristType": "Beach" }
+    ]
+  }
+  </script>
+<title>Kenya Safaris & Tours — Maasai Mara, Diani, Naivasha | Apatmento</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
@@ -314,5 +371,6 @@ function closeDrawer(){document.getElementById('drawer').classList.remove('open'
 renderTours(TOURS);
 
 </script>
+<script src="/pwa.js" defer></script>
 </body>
 </html>
