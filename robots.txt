@@ -1,0 +1,34 @@
+# Apatmento robots.txt
+User-agent: *
+Allow: /
+
+# Public pages
+Allow: /index.html
+Allow: /apartments.html
+Allow: /flights.html
+Allow: /tours.html
+Allow: /events.html
+Allow: /rides.html
+Allow: /food.html
+Allow: /shopping.html
+Allow: /carhire.html
+Allow: /add-listing.html
+
+# Private — keep out of index
+Disallow: /auth.html
+Disallow: /dashboard.html
+Disallow: /my-bookings.html
+Disallow: /booking-confirm.html
+Disallow: /partner-listings.html
+Disallow: /partner-bookings.html
+Disallow: /partner-earnings.html
+Disallow: /partner-calendar.html
+Disallow: /partner-analytics.html
+Disallow: /partner-reviews.html
+Disallow: /partner-settings.html
+Disallow: /profile.html
+Disallow: /admin-photos.html
+Disallow: /api/
+
+# Sitemap
+Sitemap: https://apatmento.vercel.app/sitemap.xml
