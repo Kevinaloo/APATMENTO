@@ -234,23 +234,20 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--glass);c
   --rise-from:translateX(-120px) translateY(20px) rotate(-12deg) scale(.7);
 }
 
-/* ════ MOBILE PERFORMANCE PATCH ════
-   Removes GPU-killing backdrop-filter on small screens.
-   Cards use solid semi-transparent bg instead. Much smoother. */
+/* ══ MOBILE PERF: no backdrop-filter (GPU killer on mobile) ══ */
 @media(max-width:700px){
-  .card,.drawer,.topbar,.search-bar,.fchip,.card-fav,.card-badge,
-  .dr-close,.dr-cta-box,.toast,.tb-back,.sb-btn,
-  .sc-sticky,.sc-interstitial,.sc-window{
-    backdrop-filter:none!important;
-    -webkit-backdrop-filter:none!important;
+  .card,.topbar,.search-bar,.drawer,.fchip,.card-badge,.card-fav,
+  .tb-back,.sb-btn,.dr-close,.dr-cta-box,.toast{
+    backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
   }
-  .card{background:rgba(255,255,255,.95)!important;}
-  .topbar{background:rgba(252,252,253,.97)!important;}
+  .card{background:rgba(255,255,255,.96)!important;}
+  .topbar{background:rgba(252,252,253,.98)!important;}
+  .search-bar{background:rgba(255,255,255,.96)!important;}
   .drawer{background:#FCFCFD!important;}
-  /* Reduce aurora blur - expensive */
-  .ab{filter:blur(40px)!important;}
-  /* Disable card entrance animations on mobile - causes jank */
-  .card{opacity:1!important;transform:none!important;transition:box-shadow .2s,transform .2s!important;}
+  /* Reduce aurora opacity - expensive blur */
+  .ab{filter:blur(40px)!important;opacity:.15!important;}
+  /* Skip stagger animations - causes jank on mobile */
+  .card{opacity:1!important;transform:none!important;animation:none!important;}
   .card.in{opacity:1!important;transform:none!important;}
 }
 </style>
@@ -347,10 +344,16 @@ const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 let sb=null;
 try{const{createClient}=supabase;sb=createClient(SUPABASE_URL,SUPABASE_ANON_KEY);}catch(e){}
 function showToast(m,d=3200){const t=document.getElementById('toast');if(!t)return;t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),d);}
-function dismissTx(){const el=document.getElementById('tx');if(!el)return;el.style.pointerEvents='none';el.classList.add('done');setTimeout(()=>{el.style.display='none';},1000);}
+function dismissTx(){
+  const el=document.getElementById('tx');
+  if(!el)return;
+  el.style.pointerEvents='none';
+  el.classList.add('done');
+  setTimeout(()=>{el.style.display='none';},950);
+}
 document.getElementById('tx')?.addEventListener('animationend',dismissTx,{once:true});
 window.addEventListener('load',()=>setTimeout(dismissTx,1800));
-setTimeout(dismissTx,4000);
+setTimeout(dismissTx,3500);
 
 
 const FLIGHTS = [
