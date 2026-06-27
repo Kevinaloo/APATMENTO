@@ -395,218 +395,102 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
 </script>
 
 <script>
+/* ═══════════════════════════════════════════════════
+   APATMENTO AUTH — Clean rewrite
+   One rule: ALL redirects go through onAuthStateChange.
+   No manual window.location calls after auth calls.
+═══════════════════════════════════════════════════ */
+
 const SUPABASE_URL      = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
-
-/* ── INIT ── */
 const { createClient } = supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-/* ── TAB STATE — managed purely in JS, no recursion ── */
-let currentTab = 'login'; // track which tab is active
+let _redirected = false; // prevent double navigation
 
-function switchTab(tab) {
-  if (tab === currentTab) return; // already on this tab, do nothing
-  currentTab = tab;
-  clearAlerts();
-
-  // Update tab button styles
-  document.getElementById('tab-login').classList.toggle('active',  tab === 'login');
-  document.getElementById('tab-signup').classList.toggle('active', tab === 'signup');
-
-  // Show/hide form sections
-  document.getElementById('login-section').style.display  = tab === 'login'  ? 'block' : 'none';
-  document.getElementById('signup-section').style.display = tab === 'signup' ? 'block' : 'none';
-
-  // Make sure special screens are hidden
-  document.getElementById('reset-screen').classList.remove('show');
-  document.getElementById('verify-screen').classList.remove('show');
-  document.getElementById('redirect-screen').classList.remove('show');
-  document.getElementById('auth-tabs').style.display = 'flex';
-}
-
-function showReset() {
-  clearAlerts();
-  document.getElementById('login-section').style.display  = 'none';
-  document.getElementById('signup-section').style.display = 'none';
-  document.getElementById('auth-tabs').style.display      = 'none';
-  document.getElementById('reset-screen').classList.add('show');
-}
-
-function showLogin() {
-  currentTab = 'login';
-  document.getElementById('tab-login').classList.add('active');
-  document.getElementById('tab-signup').classList.remove('active');
-  document.getElementById('login-section').style.display  = 'block';
-  document.getElementById('signup-section').style.display = 'none';
-  document.getElementById('reset-screen').classList.remove('show');
-  document.getElementById('verify-screen').classList.remove('show');
-  document.getElementById('redirect-screen').classList.remove('show');
-  document.getElementById('auth-tabs').style.display = 'flex';
-  clearAlerts();
-}
-
-/* ── SESSION CHECK — runs once on page load ── */
-let sessionChecked = false;
-
+/* ══ STEP 1: On page load — check existing session ══ */
 (async () => {
   try {
     const { data: { session } } = await sb.auth.getSession();
-    sessionChecked = true;
     if (session) {
-      const params = new URLSearchParams(location.search);
-      const autoRedirect = params.get('auto') === '1';
-      const forceShow = params.get('logout') === '1' || params.get('switch') === '1';
-      
-      if (autoRedirect && !forceShow) {
-        // Only auto-redirect when explicitly requested
-        redirectToDashboard(session.user, false);
-      } else {
-        // Show "continue as" banner — let user decide
-        showContinueBanner(session.user);
-      }
+      // Already signed in — show "continue as" banner, don't auto-redirect
+      showContinueBanner(session.user);
     }
-  } catch (err) {
-    sessionChecked = true;
-    console.warn('Session check failed:', err.message);
-  }
+  } catch(e) {}
 })();
 
-/* ── CONTINUE AS BANNER ── */
-function showContinueBanner(user) {
-  const meta  = user.user_metadata || {};
-  const first = meta.first_name || meta.given_name || meta.name?.split(' ')[0] || user.email?.split('@')[0] || 'you';
-  const email = user.email || '';
-  
-  // Insert banner above the auth card
-  const card = document.querySelector('.auth-card') || document.querySelector('.auth-panel-inner');
-  if (!card) return;
-  
-  const banner = document.createElement('div');
-  banner.style.cssText = 'background:rgba(45,212,191,.08);border:1.5px solid rgba(45,212,191,.25);border-radius:16px;padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:12px;';
-  banner.innerHTML = `
-    <div>
-      <div style="font-weight:600;font-size:14px;color:#0A0A14;">Signed in as ${first}</div>
-      <div style="font-size:12px;color:#8E90AD;margin-top:2px;">${email}</div>
-    </div>
-    <div style="display:flex;gap:8px;flex-shrink:0;">
-      <button onclick="redirectToDashboard(null,false)" style="padding:8px 14px;border-radius:100px;border:none;background:linear-gradient(135deg,var(--violet,#7B2FF7),var(--electric,#4361FF));color:#fff;font-size:12px;font-weight:600;cursor:pointer;">Continue →</button>
-      <button onclick="doSignOut()" style="padding:8px 14px;border-radius:100px;border:1px solid rgba(10,10,20,.1);background:transparent;font-size:12px;font-weight:600;cursor:pointer;color:#8E90AD;">Sign out</button>
-    </div>`;
-  card.insertBefore(banner, card.firstChild);
-}
-
-async function doSignOut() {
-  await sb.auth.signOut();
-  window.location.reload();
-}
-
-/* ── OAUTH CALLBACK LISTENER ── */
-let redirecting = false;
+/* ══ STEP 2: Auth state listener — THE ONLY PLACE we redirect ══
+   This fires reliably after every sign-in, including Google OAuth.
+   We never call window.location from anywhere else.
+══════════════════════════════════════════════════════════════════ */
 sb.auth.onAuthStateChange(async (event, session) => {
-  if (!sessionChecked) return; // ignore the initial INITIAL_SESSION event
-  if (redirecting) return;     // prevent double redirect
-  if (event === 'SIGNED_IN' && session) {
-    redirecting = true;
+  if (event === 'SIGNED_IN' && session && !_redirected) {
+    _redirected = true;
     await ensureProfile(session.user);
-    redirectToDashboard(session.user, true);
+    const dest = await getDestination(session.user);
+    showRedirectAnimation(session.user);
+    setTimeout(() => { window.location.href = dest; }, 1800);
   }
   if (event === 'PASSWORD_RECOVERY') {
-    showReset();
+    showView('reset');
+  }
+  if (event === 'SIGNED_OUT') {
+    _redirected = false;
+    hideContinueBanner();
   }
 });
 
-/* ══ PROFILE ══ */
+/* ══ Get where to send the user after login ══ */
+async function getDestination(user) {
+  try {
+    const { data: profile } = await sb.from('profiles')
+      .select('last_role').eq('id', user.id).maybeSingle();
+    const role = profile?.last_role || 'guest';
+    return `dashboard.html?role=${role}&uid=${user.id}`;
+  } catch(e) {
+    return `dashboard.html?uid=${user.id}`;
+  }
+}
+
+/* ══ Create/update profile on first login ══ */
 async function ensureProfile(user) {
   try {
-    const { data: existing } = await sb.from('profiles').select('id').eq('id', user.id).single();
-    if (!existing) {
-      const meta = user.user_metadata || {};
-      await sb.from('profiles').insert({
-        id:         user.id,
-        email:      user.email,
-        first_name: meta.first_name || meta.given_name  || meta.name?.split(' ')[0] || '',
-        last_name:  meta.last_name  || meta.family_name || meta.name?.split(' ').slice(1).join(' ') || '',
-        last_role:  'guest',
-      });
-    }
-  } catch(e) { console.warn('ensureProfile:', e.message); }
+    const meta = user.user_metadata || {};
+    const first = meta.first_name || meta.given_name || meta.name?.split(' ')[0] || '';
+    const last  = meta.last_name  || meta.family_name || meta.name?.split(' ').slice(1).join(' ') || '';
+    await sb.from('profiles').upsert({
+      id: user.id, email: user.email,
+      first_name: first, last_name: last,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'id', ignoreDuplicates: false });
+  } catch(e) {}
 }
 
-async function getProfile(userId) {
-  const { data } = await sb.from('profiles').select('*').eq('id', userId).single();
-  return data;
-}
-
-/* ══ REDIRECT ══ */
-async function redirectToDashboard(user, showAnimation) {
-  // If no user passed, get from current session
-  if (!user) {
-    try {
-      const { data: { session } } = await sb.auth.getSession();
-      user = session?.user;
-    } catch(e) {}
-  }
-  if (!user) { window.location.href = 'dashboard.html'; return; }
-  if (showAnimation) showRedirectScreen(user);
-  try {
-    const profile = await getProfile(user.id);
-    const role    = profile?.last_role || null;
-    const dest    = role
-      ? `dashboard.html?role=${role}&uid=${user.id}`
-      : `dashboard.html?uid=${user.id}`;
-    setTimeout(() => { window.location.href = dest; }, showAnimation ? 2600 : 0);
-  } catch(e) {
-    setTimeout(() => { window.location.href = 'dashboard.html'; }, showAnimation ? 2600 : 0);
-  }
-}
-
-function showRedirectScreen(user) {
-  document.getElementById('login-section').style.display  = 'none';
-  document.getElementById('signup-section').style.display = 'none';
-  document.getElementById('auth-tabs').style.display      = 'none';
-  document.getElementById('redirect-screen').classList.add('show');
-  const meta  = user.user_metadata || {};
-  const first = meta.first_name || meta.given_name || meta.name?.split(' ')[0] || 'there';
-  document.getElementById('redirect-sub').textContent = `Welcome, ${first}! Taking you to your dashboard…`;
-}
-
-/* ══ GOOGLE SIGN IN ══ */
-async function signInWithGoogle() {
-  clearAlerts();
-  const { error } = await sb.auth.signInWithOAuth({
-    provider: 'google',
-    options: { redirectTo: window.location.origin + '/dashboard.html' }
-  });
-  if (error) showError(error.message);
-}
-
-/* ══ EMAIL LOGIN ══ */
+/* ══ SIGN IN ══ */
 async function handleLogin(e) {
   e.preventDefault();
   clearAlerts();
   const email    = document.getElementById('login-email').value.trim();
   const password = document.getElementById('login-password').value;
-  if (!validateEmail(email)) { showFieldErr('login-email-err','Enter a valid email address.'); return; }
-  if (!password)             { showFieldErr('login-pw-err','Please enter your password.'); return; }
-
+  if (!validateEmail(email)) { showFieldErr('login-email-err', 'Enter a valid email.'); return; }
+  if (!password)             { showFieldErr('login-pw-err', 'Enter your password.'); return; }
   setLoading('login-btn', true);
-  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  const { error } = await sb.auth.signInWithPassword({ email, password });
   setLoading('login-btn', false);
-
   if (error) {
-    const msg = error.message || '';
-    if (msg.toLowerCase().includes('invalid'))   showError('Incorrect email or password. Please try again.');
-    else if (msg.toLowerCase().includes('confirmed')) showError('Please verify your email first — check your inbox.');
-    else showError(msg);
+    const m = error.message?.toLowerCase() || '';
+    if (m.includes('invalid') || m.includes('credentials'))
+      showError('Incorrect email or password.');
+    else if (m.includes('confirm') || m.includes('verified'))
+      showError('Please verify your email first — check your inbox.');
+    else showError(error.message);
     return;
   }
-  redirecting = true;
-  await ensureProfile(data.user);
-  redirectToDashboard(data.user, true);
+  // ✅ Success — onAuthStateChange handles the redirect
+  setLoading('login-btn', false);
 }
 
-/* ══ EMAIL SIGN UP ══ */
+/* ══ SIGN UP ══ */
 async function handleSignup(e) {
   e.preventDefault();
   clearAlerts();
@@ -614,13 +498,11 @@ async function handleSignup(e) {
   const last     = document.getElementById('signup-last').value.trim();
   const email    = document.getElementById('signup-email').value.trim();
   const password = document.getElementById('signup-password').value;
-  const terms    = document.getElementById('terms-check').checked;
-
-  if (!first)                  { showFieldErr('signup-first-err','Please enter your first name.'); return; }
-  if (!validateEmail(email))   { showFieldErr('signup-email-err','Enter a valid email address.'); return; }
-  if (password.length < 8)     { showFieldErr('signup-pw-err','Password must be at least 8 characters.'); return; }
-  if (!terms)                  { showError('Please accept the Terms of Service to continue.'); return; }
-
+  const terms    = document.getElementById('terms-check')?.checked;
+  if (!first)               { showFieldErr('signup-first-err', 'Enter your first name.'); return; }
+  if (!validateEmail(email)){ showFieldErr('signup-email-err', 'Enter a valid email.'); return; }
+  if (password.length < 8)  { showFieldErr('signup-pw-err', 'Minimum 8 characters.'); return; }
+  if (!terms)               { showError('Please accept the Terms of Service.'); return; }
   setLoading('signup-btn', true);
   const { data, error } = await sb.auth.signUp({
     email, password,
@@ -630,179 +512,201 @@ async function handleSignup(e) {
     }
   });
   setLoading('signup-btn', false);
-
   if (error) {
-    const msg = error.message || '';
-    if (msg.toLowerCase().includes('already') || msg.toLowerCase().includes('registered')) {
-      showError('An account with this email already exists. Try signing in instead.');
-    } else if (msg.toLowerCase().includes('password')) {
-      showError('Password is too weak. Use at least 8 characters with letters and numbers.');
-    } else {
-      showError(msg || 'Something went wrong. Please try again.');
-    }
+    const m = error.message?.toLowerCase() || '';
+    if (m.includes('already') || m.includes('registered'))
+      showError('An account with this email already exists. Try signing in.');
+    else showError(error.message);
     return;
   }
-
   if (data.session) {
-    // Email confirmation disabled — logged in immediately
-    await ensureProfile(data.user);
-    redirectToDashboard(data.user, true);
+    // Email confirmation off — onAuthStateChange will fire and redirect
   } else {
-    // Email confirmation required — show verify screen
-    document.getElementById('verify-email-display').textContent = email;
-    document.getElementById('login-section').style.display  = 'none';
-    document.getElementById('signup-section').style.display = 'none';
-    document.getElementById('auth-tabs').style.display      = 'none';
-    document.getElementById('verify-screen').classList.add('show');
+    // Email confirmation required
+    showVerifyScreen(email);
   }
 }
 
-/* ══ RESEND VERIFICATION ══ */
-async function resendVerification() {
-  const email = document.getElementById('verify-email-display').textContent;
-  const btn   = document.getElementById('resend-btn');
-  btn.textContent = 'Sending…';
-  btn.disabled    = true;
-  await sb.auth.resend({ type: 'signup', email });
-  btn.textContent = 'Sent! Check your inbox.';
-  setTimeout(() => { btn.textContent = 'Resend email'; btn.disabled = false; }, 6000);
+/* ══ GOOGLE ══ */
+async function signInWithGoogle() {
+  clearAlerts();
+  const { error } = await sb.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.origin + '/dashboard.html' }
+  });
+  if (error) showError(error.message);
 }
 
 /* ══ PASSWORD RESET ══ */
 async function handleReset(e) {
   e.preventDefault();
+  clearAlerts();
+  const email = document.getElementById('reset-email').value.trim();
   const errEl = document.getElementById('reset-alert-error');
   const sucEl = document.getElementById('reset-alert-success');
-  errEl.classList.remove('show'); sucEl.classList.remove('show');
-  const email = document.getElementById('reset-email').value.trim();
   if (!validateEmail(email)) {
-    errEl.textContent = 'Enter a valid email address.';
-    errEl.classList.add('show');
-    return;
+    errEl.textContent = 'Enter a valid email.'; errEl.classList.add('show'); return;
   }
   setLoading('reset-btn', true);
   const { error } = await sb.auth.resetPasswordForEmail(email, {
     redirectTo: window.location.origin + '/auth.html',
   });
   setLoading('reset-btn', false);
-  if (error) {
-    errEl.textContent = error.message;
-    errEl.classList.add('show');
-  } else {
-    sucEl.textContent = 'Reset link sent! Check your inbox.';
-    sucEl.classList.add('show');
+  if (error) { errEl.textContent = error.message; errEl.classList.add('show'); }
+  else { sucEl.textContent = 'Reset link sent! Check your inbox.'; sucEl.classList.add('show'); }
+}
+
+/* ══ RESEND VERIFICATION ══ */
+async function resendVerification() {
+  const email = document.getElementById('verify-email-display').textContent;
+  const btn = document.getElementById('resend-btn');
+  btn.textContent = 'Sending…'; btn.disabled = true;
+  await sb.auth.resend({ type: 'signup', email });
+  btn.textContent = 'Sent! Check your inbox.';
+  setTimeout(() => { btn.textContent = 'Resend email'; btn.disabled = false; }, 6000);
+}
+
+/* ══ SIGN OUT (for "continue as" banner) ══ */
+async function doSignOut() {
+  await sb.auth.signOut();
+  hideContinueBanner();
+  showView('login');
+}
+
+/* ══ CONTINUE AS BANNER ══ */
+function showContinueBanner(user) {
+  const meta  = user.user_metadata || {};
+  const first = meta.first_name || meta.given_name || meta.name?.split(' ')[0] || 'you';
+  const email = user.email || '';
+  let banner = document.getElementById('continue-banner');
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'continue-banner';
+    banner.style.cssText = 'background:rgba(45,212,191,.08);border:1.5px solid rgba(45,212,191,.3);border-radius:14px;padding:14px 16px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:10px;';
+    const card = document.querySelector('.auth-card') || document.querySelector('.auth-panel-inner');
+    if (card) card.insertBefore(banner, card.firstChild);
+  }
+  banner.innerHTML = `
+    <div>
+      <div style="font-weight:600;font-size:13px;color:#0A0A14;">Already signed in as ${first}</div>
+      <div style="font-size:12px;color:#8E90AD;margin-top:1px;">${email}</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-shrink:0;">
+      <button onclick="continueToApp()" style="padding:8px 14px;border-radius:100px;border:none;background:linear-gradient(135deg,#7B2FF7,#4361FF);color:#fff;font-size:12px;font-weight:600;cursor:pointer;">Continue</button>
+      <button onclick="doSignOut()" style="padding:8px 12px;border-radius:100px;border:1px solid rgba(10,10,20,.1);background:transparent;font-size:12px;font-weight:600;cursor:pointer;color:#8E90AD;">Sign out</button>
+    </div>`;
+}
+
+function hideContinueBanner() {
+  document.getElementById('continue-banner')?.remove();
+}
+
+async function continueToApp() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) {
+    const dest = await getDestination(session.user);
+    window.location.href = dest;
   }
 }
 
-/* ══ UI HELPERS ══ */
-function hideAll() {
+/* ══ VERIFY SCREEN ══ */
+function showVerifyScreen(email) {
+  document.getElementById('verify-email-display').textContent = email;
   document.getElementById('login-section').style.display  = 'none';
   document.getElementById('signup-section').style.display = 'none';
-  ['reset-screen','verify-screen','redirect-screen'].forEach(id =>
-    document.getElementById(id)?.classList.remove('show')
-  );
+  const at = document.getElementById('auth-tabs');
+  if (at) at.style.display = 'none';
+  document.getElementById('verify-screen')?.classList.add('show');
 }
 
-function setLoading(btnId, loading) {
-  document.getElementById(btnId)?.classList.toggle('loading', loading);
+/* ══ REDIRECT ANIMATION ══ */
+function showRedirectAnimation(user) {
+  const meta  = user.user_metadata || {};
+  const first = meta.first_name || meta.given_name || meta.name?.split(' ')[0] || 'there';
+  const rs = document.getElementById('redirect-screen');
+  const rsub = document.getElementById('redirect-sub');
+  if (!rs) return;
+  document.getElementById('login-section').style.display  = 'none';
+  document.getElementById('signup-section').style.display = 'none';
+  const at = document.getElementById('auth-tabs');
+  if (at) at.style.display = 'none';
+  hideContinueBanner();
+  rs.classList.add('show');
+  if (rsub) rsub.textContent = `Welcome, ${first}! Taking you to your dashboard…`;
 }
 
-function showError(msg) {
-  const el = document.getElementById('alert-error');
-  if (!el) return;
-  el.textContent = msg;
-  el.classList.add('show');
-  el.scrollIntoView({ behavior:'smooth', block:'nearest' });
+/* ══ VIEW SWITCHING ══ */
+function showView(view) {
+  const views = { login: 'login-section', signup: 'signup-section', reset: 'reset-section' };
+  Object.entries(views).forEach(([k, id]) => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = (k === view) ? 'block' : 'none';
+  });
+  const tab1 = document.getElementById('tab-login');
+  const tab2 = document.getElementById('tab-signup');
+  if (tab1) tab1.classList.toggle('active', view === 'login');
+  if (tab2) tab2.classList.toggle('active', view === 'signup');
+  const tabs = document.getElementById('auth-tabs');
+  if (tabs) tabs.style.display = (view === 'reset') ? 'none' : 'flex';
+}
+
+function switchTab(tab) { showView(tab); clearAlerts(); }
+function showReset() { showView('reset'); clearAlerts(); }
+function showLogin() { showView('login'); clearAlerts(); }
+function showSignup(){ showView('signup'); clearAlerts(); }
+
+/* ══ HELPERS ══ */
+function validateEmail(e) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
+
+function setLoading(id, on) {
+  const b = document.getElementById(id);
+  if (b) b.classList.toggle('loading', on);
 }
 
 function clearAlerts() {
-  document.querySelectorAll('.alert').forEach(el => {
-    el.classList.remove('show'); el.textContent = '';
-  });
-  document.querySelectorAll('.field-err').forEach(el => {
-    el.classList.remove('show'); el.textContent = '';
-  });
-  document.querySelectorAll('.field-input').forEach(el => el.classList.remove('error'));
+  document.querySelectorAll('.alert-err,.alert-success,.field-err').forEach(el => el.classList.remove('show'));
+}
+
+function showError(msg) {
+  const el = document.querySelector('.login-section:not([style*="none"]) .alert-err') ||
+             document.querySelector('.alert-err');
+  if (el) { el.textContent = msg; el.classList.add('show'); }
 }
 
 function showFieldErr(id, msg) {
   const el = document.getElementById(id);
-  if (!el) return;
-  el.textContent = msg;
-  el.classList.add('show');
+  if (el) { el.textContent = msg; el.classList.add('show'); }
 }
 
-function validateEmail(email) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+function togglePw(id, btn) {
+  const inp = document.getElementById(id);
+  if (!inp) return;
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+  btn.textContent = inp.type === 'password' ? '👁' : '🙈';
 }
 
-function togglePw(inputId, btn) {
-  const input = document.getElementById(inputId);
-  if (!input) return;
-  input.type      = input.type === 'password' ? 'text' : 'password';
-  btn.textContent = input.type === 'password' ? '👁' : '🙈';
-}
+/* ══ URL MODE PARAM ══ */
+(function() {
+  const mode = new URLSearchParams(location.search).get('mode');
+  if (mode === 'signup') showView('signup');
+})();
 
-function checkStrength(pw) {
-  const bars  = ['ps1','ps2','ps3','ps4'].map(id => document.getElementById(id));
-  const label = document.getElementById('pw-strength-label');
-  if (!bars[0]) return;
-  bars.forEach(b => { if(b) b.className = 'pws-bar'; });
-  if (!pw) { if(label) label.textContent = ''; return; }
-  let score = 0;
-  if (pw.length >= 8)  score++;
-  if (pw.length >= 12) score++;
-  if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++;
-  if (/\d/.test(pw) || /[^A-Za-z0-9]/.test(pw)) score++;
-  const levels = ['','weak','fair','good','strong'];
-  const names  = ['','Weak','Fair','Good','Strong'];
-  for (let i = 0; i < score; i++) { if(bars[i]) bars[i].classList.add(levels[score]); }
-  if (label) label.textContent = score > 0 ? `Password strength: ${names[score]}` : '';
-}
-
-/* ══ CHECK IF USER CONFIRMED EMAIL AND PROCEED ══ */
+/* ══ CONFIRMATION PAGE (email link callback) ══ */
 async function checkConfirmationAndProceed() {
-  const btn = document.getElementById('confirmed-btn');
-  const alertEl = document.getElementById('verify-alert');
-  if (alertEl) { alertEl.classList.remove('show'); alertEl.textContent = ''; }
-  if (btn) btn.classList.add('loading');
-
   try {
-    // Try to get current session — Supabase auto-refreshes after email confirm
-    const { data: { session }, error } = await sb.auth.getSession();
-
+    const { data: { session } } = await sb.auth.getSession();
     if (session) {
-      // Confirmed and session exists — proceed
-      await ensureProfile(session.user);
-      redirectToDashboard(session.user, true);
-      return;
+      const dest = await getDestination(session.user);
+      window.location.href = dest;
+    } else {
+      showError('Email not confirmed yet — please click the link in your email.');
     }
-
-    // No session yet — try refreshing
-    const { data: refreshData } = await sb.auth.refreshSession();
-    if (refreshData?.session) {
-      await ensureProfile(refreshData.session.user);
-      redirectToDashboard(refreshData.session.user, true);
-      return;
-    }
-
-    // Still no session — email not confirmed yet
-    if (btn) btn.classList.remove('loading');
-    if (alertEl) {
-      alertEl.textContent = 'Email not confirmed yet. Please click the link in your inbox first, then try again.';
-      alertEl.classList.add('show');
-    }
-  } catch(e) {
-    if (btn) btn.classList.remove('loading');
-    if (alertEl) {
-      alertEl.textContent = 'Something went wrong. Please try again.';
-      alertEl.classList.add('show');
-    }
-  }
+  } catch(e) { showError('Something went wrong. Please try again.'); }
 }
 </script>
 </body>
 </html>
+
 
 
 
