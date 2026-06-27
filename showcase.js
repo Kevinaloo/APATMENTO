@@ -385,25 +385,9 @@ function renderVideo(slot, c){
         </button>
       </div>
       ${pool.length > 1 ? `
-      <div class="scv-ctrl">
-        <button class="scv-btn sc-sound" title="Sound">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
-        </button>
-        <button class="scv-btn sc-prev-ad" title="Previous ad">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-        </button>
-        <button class="scv-btn sc-next-ad" title="Next ad">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
-        </button>
-      </div>
-      <div class="scv-playlist-dots" style="position:absolute;top:16px;right:18px;display:flex;gap:5px;z-index:3;">
-        ${pool.map((_,i)=>`<div class="scv-pdot ${i===0?'scv-pdot-active':''}" data-i="${i}" style="width:${i===0?'22px':'6px'};height:6px;border-radius:3px;background:${i===0?'#fff':'rgba(255,255,255,.35)'};transition:all .4s;cursor:pointer;"></div>`).join('')}
-      </div>` : `
-      <div class="scv-ctrl">
-        <button class="scv-btn sc-sound" title="Sound">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
-        </button>
-      </div>`}
+      <div style="position:absolute;top:14px;right:16px;display:flex;gap:4px;z-index:3;">
+        ${pool.map((_,i)=>`<div class="scv-pdot ${i===0?'scv-pdot-active':''}" data-i="${i}" style="width:${i===0?'20px':'5px'};height:5px;border-radius:3px;background:${i===0?'rgba(255,255,255,.9)':'rgba(255,255,255,.3)'};transition:all .4s;"></div>`).join('')}
+      </div>` : ``}
       <div class="scv-bar"><div class="scv-bar-fill" id="scv-bar"></div></div>
     </div>`;
 
@@ -411,8 +395,7 @@ function renderVideo(slot, c){
   const vid  = slot.querySelector('#scv-vid');
   const bar  = slot.querySelector('#scv-bar');
   const snd  = slot.querySelector('.sc-sound');
-  const prev = slot.querySelector('.sc-prev-ad');
-  const next = slot.querySelector('.sc-next-ad');
+  /* prev/next removed — unskippable */
   let muted  = true;
 
   /* ── update all UI elements for current campaign ── */
@@ -497,24 +480,8 @@ function renderVideo(slot, c){
   }
   vid.addEventListener('play', () => clearTimeout(gradTimer));
 
-  /* ── sound toggle ── */
-  snd?.addEventListener('click', e => {
-    e.stopPropagation();
-    muted = !muted;
-    vid.muted = muted;
-    snd.innerHTML = muted
-      ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>'
-      : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a9 9 0 0 1 0 14"/></svg>';
-  });
-
-  /* ── prev/next buttons ── */
-  prev?.addEventListener('click', e => { e.stopPropagation(); goPrev(); });
-  next?.addEventListener('click', e => { e.stopPropagation(); goNext(); });
-
-  /* ── playlist dot clicks ── */
-  slot.querySelectorAll('.scv-pdot').forEach(d => {
-    d.addEventListener('click', e => { e.stopPropagation(); cur=+d.dataset.i; updateUI(); });
-  });
+  /* ── no user controls: always muted, auto-advance only ── */
+  vid.muted = true;
 
   /* ── main click → CTA ── */
   el.addEventListener('click', e => {
@@ -715,9 +682,7 @@ function renderWindow(slot, c){
         <div class="sc-window-h">${camp().headline}</div>
         <div class="sc-window-foot">
           <button class="sc-window-cta" id="scwcta-${c.id}">${camp().cta}</button>
-          <div class="sc-window-ctrl">
-            <div class="sc-window-btn sc-wnd-snd"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg></div>
-          </div>
+
         </div>
       </div>
       <div class="sc-window-bar"><div class="sc-window-bar-fill" id="scwbar-${c.id}"></div></div>
@@ -726,7 +691,7 @@ function renderWindow(slot, c){
   const el   = slot.querySelector('.sc-window');
   const vid  = slot.querySelector('video');
   const cta  = slot.querySelector('.sc-window-cta');
-  const snd  = slot.querySelector('.sc-wnd-snd');
+  /* sound removed — always muted */
   const bar  = slot.querySelector('.sc-window-bar-fill');
   let muted  = true;
 
@@ -742,11 +707,7 @@ function renderWindow(slot, c){
 
   vid.addEventListener('ended',()=>{ cur=(cur+1)%pool.length; updateWindow(); });
   vid.addEventListener('timeupdate',()=>{ if(vid.duration&&bar) bar.style.width=(vid.currentTime/vid.duration*100)+'%'; });
-  snd?.addEventListener('click',e=>{ e.stopPropagation(); muted=!muted; vid.muted=muted;
-    snd.innerHTML=muted
-      ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>'
-      : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg>';
-  });
+    /* window video: always muted */
   el.addEventListener('click',e=>{
     if(e.target.closest('.sc-window-btn')||e.target.closest('.sc-window-cta'))return;
     trackClick(camp().id,'window',camp().advertiser);
@@ -893,5 +854,6 @@ else init();
 
 window.ApatmentoShowcase={reload:init};
 })();
+
 
 
