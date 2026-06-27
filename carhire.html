@@ -296,6 +296,7 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--glass);c
     <div class="fchip" onclick="setCarFilter('van',this)">Van / Group</div>
   </div>
 </div>
+<div style="max-width:1180px;margin:0 auto;padding:0 26px 0;"><div data-showcase="ticker"></div></div>
 <div class="content">
   <div class="content-head">
     <div class="result-count"><strong id="result-num">0</strong> vehicles available</div>
@@ -304,6 +305,7 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--glass);c
       <option value="price-desc">Price: High to Low</option>
     </select>
   </div>
+  <div data-showcase="video" style="margin-bottom:20px;"></div>
   <div class="grid" id="grid"></div>
 </div>
 
@@ -393,5 +395,6 @@ window.addEventListener("DOMContentLoaded", renderCars);
 
 </script>
 <script src="/pwa.js" defer></script>
+<script src="/showcase.js" defer></script>
 </body>
 </html>
