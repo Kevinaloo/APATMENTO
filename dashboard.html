@@ -3,7 +3,50 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Apatmento — Your World. One App.</title>
+  <!-- ══ SEO ══ -->
+  <meta name="description" content="Your Apatmento dashboard."/>
+  
+  <meta name="robots" content="noindex, nofollow"/>
+  <link rel="canonical" href="https://apatmento.vercel.app/dashboard.html"/>
+  <link rel="alternate" hreflang="en-ke" href="https://apatmento.vercel.app/dashboard.html"/>
+  <link rel="alternate" hreflang="en" href="https://apatmento.vercel.app/dashboard.html"/>
+  <meta name="author" content="Apatmento"/>
+  <meta name="geo.region" content="KE"/>
+  <meta name="geo.placename" content="Nairobi, Kenya"/>
+  <meta name="theme-color" content="#7B2FF7"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="Apatmento"/>
+  <link rel="manifest" href="/manifest.json"/>
+
+  <!-- Open Graph -->
+  <meta property="og:site_name" content="Apatmento"/>
+  <meta property="og:title" content="Dashboard — Apatmento"/>
+  <meta property="og:description" content="Your Apatmento dashboard."/>
+  <meta property="og:url" content="https://apatmento.vercel.app/dashboard.html"/>
+  <meta property="og:type" content="website"/>
+  <meta property="og:image" content="https://apatmento.vercel.app/og-home.jpg"/>
+  <meta property="og:image:width" content="1200"/>
+  <meta property="og:image:height" content="630"/>
+  <meta property="og:image:alt" content="Dashboard — Apatmento"/>
+  <meta property="og:locale" content="en_KE"/>
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="Dashboard — Apatmento"/>
+  <meta name="twitter:description" content="Your Apatmento dashboard."/>
+  <meta name="twitter:image" content="https://apatmento.vercel.app/og-home.jpg"/>
+  <meta name="twitter:image:alt" content="Dashboard — Apatmento"/>
+
+  <!-- DNS prefetch for performance (also helps SEO via speed) -->
+  <link rel="dns-prefetch" href="//fonts.googleapis.com"/>
+  <link rel="dns-prefetch" href="//fonts.gstatic.com"/>
+  <link rel="dns-prefetch" href="//cdn.jsdelivr.net"/>
+  <link rel="dns-prefetch" href="//api.unsplash.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  
+<title>Dashboard — Apatmento</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
@@ -770,6 +813,33 @@ function addSheetHTML(){return `
   </div>`;}
 function showAddSheet(){ document.getElementById('add-scrim').classList.add('open'); document.getElementById('add-sheet').style.display='block'; }
 function hideAddSheet(){ document.getElementById('add-scrim').classList.remove('open'); document.getElementById('add-sheet').style.display='none'; }
+</script>
+
+<script src="/pwa.js" defer></script>
+
+<!-- Silent admin detection — invisible to regular users -->
+<script>
+(async function detectAdmin(){
+  const ADMIN_EMAILS = ['apatmento@gmail.com']; // add more here
+  try {
+    let sb2 = null;
+    try{const{createClient}=supabase;sb2=createClient('https://gfwgbgdvxtocwhilrtdw.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw');}catch(e){}
+    if(!sb2)return;
+    const{data:{session}}=await sb2.auth.getSession();
+    if(!session)return;
+    // Check via Supabase (most secure)
+    const{data:adminRow}=await sb2.from('admin_users').select('email').eq('email',session.user.email).single();
+    if(!adminRow)return;
+    // User is admin — silently add admin link
+    const link = document.createElement('a');
+    link.href = '/admin.html';
+    link.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);padding:8px 18px;border-radius:100px;background:rgba(123,47,247,.12);border:1px solid rgba(123,47,247,.25);color:#B8A4F4;font-size:12px;font-weight:600;text-decoration:none;z-index:9999;backdrop-filter:blur(8px);transition:all .25s;';
+    link.textContent = '⚙ Admin';
+    link.addEventListener('mouseenter',()=>link.style.background='rgba(123,47,247,.22)');
+    link.addEventListener('mouseleave',()=>link.style.background='rgba(123,47,247,.12)');
+    document.body.appendChild(link);
+  } catch(e){}
+})();
 </script>
 
 </body>
