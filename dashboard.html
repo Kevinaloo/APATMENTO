@@ -643,7 +643,14 @@ async function init(){
     const params    = new URLSearchParams(location.search);
     const roleParam = params.get('role');
 
-    const { data:{ session } } = await sb.auth.getSession();
+    // Try getSession — if null, wait 800ms and retry once (Supabase sometimes needs
+    // a moment to restore session from localStorage after a redirect)
+    let { data:{ session } } = await sb.auth.getSession();
+    if(!session){
+      await new Promise(r => setTimeout(r, 800));
+      const retry = await sb.auth.getSession();
+      session = retry.data?.session || null;
+    }
     const isGuest = !session;
 
     if(isGuest){
@@ -711,11 +718,22 @@ async function init(){
     setTimeout(loadDashboardHero, 500);
 
   } catch(err) {
-    // Any unexpected error — still dismiss the loader
     console.warn('[Dashboard] init error:', err);
     clearTimeout(loaderFail);
     const l = document.getElementById('loader');
     if(l) l.classList.add('done');
+    // Try one more time to get session before falling back to guest
+    try {
+      const { data:{ session:s2 } } = await sb.auth.getSession();
+      if(s2){
+        CURRENT_USER = s2.user;
+        setTimeout(checkAdminAccess, 500);
+        document.getElementById('dash-guest-nav').style.display = 'none';
+        document.getElementById('dash-user-nav').style.display  = 'flex';
+        showScreen('guest'); loadStays(); loadHeroVideo();
+        return;
+      }
+    } catch(e2){}
     showScreen('guest');
     loadStays();
   }
@@ -1176,4 +1194,5 @@ function checkAdminAccess(){
   console.log('[Admin] pill shown for', email);
 }
 </script>
+
 
