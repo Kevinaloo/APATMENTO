@@ -5,6 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Apatmento — Confirm booking</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(function(){
+  var sb2=null;
+  try{var C=supabase.createClient('https://gfwgbgdvxtocwhilrtdw.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw');sb2=C;}catch(e){}
+  if(!sb2)return;
+  sb2.auth.getSession().then(function(res){
+    if(!res.data.session){
+      sessionStorage.setItem('auth_next', location.href);
+      window.location.href='auth.html?next='+encodeURIComponent(location.pathname);
+    }
+  });
+})();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..700&display=swap" rel="stylesheet"/>
@@ -700,5 +713,6 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove('show'), 8000);
 }
 </script>
+<script src="/pwa.js" defer></script>
 </body>
 </html>
