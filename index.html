@@ -281,31 +281,24 @@ body.intro-lock{overflow:hidden;height:100vh;}
 @keyframes spin{to{transform:rotate(360deg);}}
 
 /* ─── ACT 2: services parade ─── */
-.act2{animation:act2in .5s 2.8s forwards, act2out .7s 6.8s forwards;}
+.act2{animation:act2in .5s 2.6s forwards, act2out .7s 5.8s forwards;}
 @keyframes act2in{from{opacity:0;}to{opacity:1;}}
 @keyframes act2out{to{opacity:0;transform:scale(1.1);filter:blur(6px);}}
-.parade{position:relative;width:100%;max-width:900px;height:320px;}
-.svc-fly{position:absolute;top:50%;left:50%;display:flex;flex-direction:column;align-items:center;gap:12px;opacity:0;}
-.svc-fly-ico{width:72px;height:72px;border-radius:22px;display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 12px 40px rgba(0,0,0,.4);}
-.svc-fly-ico svg{width:38px;height:38px;}
-.svc-fly-name{font-family:var(--font-display);font-style:italic;font-weight:500;font-size:19px;color:#fff;white-space:nowrap;text-shadow:0 2px 12px rgba(0,0,0,.5);}
-/* each glyph orbits in from a direction, pauses center-ish, exits */
-.svc-fly.f0{animation:fly0 1.2s 2.90s cubic-bezier(.22,1,.36,1) forwards;}
-.svc-fly.f1{animation:fly1 1.2s 3.18s cubic-bezier(.22,1,.36,1) forwards;}
-.svc-fly.f2{animation:fly2 1.2s 3.46s cubic-bezier(.22,1,.36,1) forwards;}
-.svc-fly.f3{animation:fly3 1.2s 3.74s cubic-bezier(.22,1,.36,1) forwards;}
-.svc-fly.f4{animation:fly4 1.2s 4.02s cubic-bezier(.22,1,.36,1) forwards;}
-.svc-fly.f5{animation:fly5 1.2s 4.30s cubic-bezier(.22,1,.36,1) forwards;}
-.svc-fly.f6{animation:fly6 1.2s 4.58s cubic-bezier(.22,1,.36,1) forwards;}
-.svc-fly.f7{animation:fly7 1.2s 4.86s cubic-bezier(.22,1,.36,1) forwards;}
-@keyframes fly0{0%{transform:translate(-600px,-180px) scale(.4) rotate(-30deg);opacity:0;}55%{opacity:1;}100%{transform:translate(-320px,-90px) scale(1) rotate(0);opacity:1;}}
-@keyframes fly1{0%{transform:translate(600px,-160px) scale(.4) rotate(30deg);opacity:0;}55%{opacity:1;}100%{transform:translate(-110px,-90px) scale(1) rotate(0);opacity:1;}}
-@keyframes fly2{0%{transform:translate(-600px,160px) scale(.4) rotate(20deg);opacity:0;}55%{opacity:1;}100%{transform:translate(110px,-90px) scale(1) rotate(0);opacity:1;}}
-@keyframes fly3{0%{transform:translate(600px,180px) scale(.4) rotate(-20deg);opacity:0;}55%{opacity:1;}100%{transform:translate(320px,-90px) scale(1) rotate(0);opacity:1;}}
-@keyframes fly4{0%{transform:translate(-600px,-40px) scale(.4) rotate(-15deg);opacity:0;}55%{opacity:1;}100%{transform:translate(-320px,70px) scale(1) rotate(0);opacity:1;}}
-@keyframes fly5{0%{transform:translate(600px,-40px) scale(.4) rotate(15deg);opacity:0;}55%{opacity:1;}100%{transform:translate(-110px,70px) scale(1) rotate(0);opacity:1;}}
-@keyframes fly6{0%{transform:translate(-600px,40px) scale(.4) rotate(25deg);opacity:0;}55%{opacity:1;}100%{transform:translate(110px,70px) scale(1) rotate(0);opacity:1;}}
-@keyframes fly7{0%{transform:translate(600px,60px) scale(.4) rotate(-25deg);opacity:0;}55%{opacity:1;}100%{transform:translate(320px,70px) scale(1) rotate(0);opacity:1;}}
+.parade{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;width:100%;max-width:520px;padding:0 20px;}
+.svc-fly{display:flex;flex-direction:column;align-items:center;gap:10px;opacity:0;}
+.svc-fly-ico{width:64px;height:64px;border-radius:20px;display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 10px 32px rgba(0,0,0,.4);}
+.svc-fly-ico svg{width:32px;height:32px;}
+.svc-fly-name{font-family:var(--font-display);font-style:italic;font-weight:500;font-size:15px;color:#fff;text-shadow:0 2px 10px rgba(0,0,0,.5);}
+/* Simple fade-up stagger — works on all screen sizes */
+.svc-fly.f0{animation:flyIn .55s 2.90s cubic-bezier(.22,1,.36,1) forwards;}
+.svc-fly.f1{animation:flyIn .55s 3.08s cubic-bezier(.22,1,.36,1) forwards;}
+.svc-fly.f2{animation:flyIn .55s 3.26s cubic-bezier(.22,1,.36,1) forwards;}
+.svc-fly.f3{animation:flyIn .55s 3.44s cubic-bezier(.22,1,.36,1) forwards;}
+.svc-fly.f4{animation:flyIn .55s 3.62s cubic-bezier(.22,1,.36,1) forwards;}
+.svc-fly.f5{animation:flyIn .55s 3.80s cubic-bezier(.22,1,.36,1) forwards;}
+.svc-fly.f6{animation:flyIn .55s 3.98s cubic-bezier(.22,1,.36,1) forwards;}
+.svc-fly.f7{animation:flyIn .55s 4.16s cubic-bezier(.22,1,.36,1) forwards;}
+@keyframes flyIn{0%{opacity:0;transform:translateY(24px) scale(.85);}100%{opacity:1;transform:none;}}
 
 /* light trails */
 .parade-streak{position:absolute;top:50%;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(184,164,244,.4),transparent);opacity:0;animation:streak 3.4s 3.0s ease-in-out;}
@@ -794,3 +787,4 @@ document.querySelectorAll('.svc-tile').forEach((t,i)=>{t.style.transitionDelay=(
 
 </body>
 </html>
+
