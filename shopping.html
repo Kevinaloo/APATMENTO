@@ -216,23 +216,20 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--glass);c
   --rise-from:translateY(-60px) rotate(20deg) scale(.5);
 }
 
-/* ════ MOBILE PERFORMANCE PATCH ════
-   Removes GPU-killing backdrop-filter on small screens.
-   Cards use solid semi-transparent bg instead. Much smoother. */
+/* ══ MOBILE PERF: no backdrop-filter (GPU killer on mobile) ══ */
 @media(max-width:700px){
-  .card,.drawer,.topbar,.search-bar,.fchip,.card-fav,.card-badge,
-  .dr-close,.dr-cta-box,.toast,.tb-back,.sb-btn,
-  .sc-sticky,.sc-interstitial,.sc-window{
-    backdrop-filter:none!important;
-    -webkit-backdrop-filter:none!important;
+  .card,.topbar,.search-bar,.drawer,.fchip,.card-badge,.card-fav,
+  .tb-back,.sb-btn,.dr-close,.dr-cta-box,.toast{
+    backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
   }
-  .card{background:rgba(255,255,255,.95)!important;}
-  .topbar{background:rgba(252,252,253,.97)!important;}
+  .card{background:rgba(255,255,255,.96)!important;}
+  .topbar{background:rgba(252,252,253,.98)!important;}
+  .search-bar{background:rgba(255,255,255,.96)!important;}
   .drawer{background:#FCFCFD!important;}
-  /* Reduce aurora blur - expensive */
-  .ab{filter:blur(40px)!important;}
-  /* Disable card entrance animations on mobile - causes jank */
-  .card{opacity:1!important;transform:none!important;transition:box-shadow .2s,transform .2s!important;}
+  /* Reduce aurora opacity - expensive blur */
+  .ab{filter:blur(40px)!important;opacity:.15!important;}
+  /* Skip stagger animations - causes jank on mobile */
+  .card{opacity:1!important;transform:none!important;animation:none!important;}
   .card.in{opacity:1!important;transform:none!important;}
 }
 </style>
