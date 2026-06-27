@@ -167,6 +167,23 @@ body{overflow-x:hidden;}
   .tb-avatar{width:34px!important;height:34px!important;font-size:13px!important;}
 }
 
+
+/* ══ MOBILE PERFORMANCE + LAYOUT FIXES ══ */
+@media(max-width:640px){
+  /* Remove GPU-heavy backdrop-filter on mobile */
+  .svc,.prop-card,.topbar,.screen{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;}
+  .topbar{background:rgba(252,252,253,.97)!important;}
+  .svc{background:rgba(255,255,255,.9)!important;}
+  /* Service rail: 4 per row, 2 rows = all 8 visible */
+  .service-rail{grid-template-columns:repeat(4,1fr)!important;gap:8px!important;}
+  .svc{aspect-ratio:auto!important;min-height:76px;padding:12px 4px 10px!important;border-radius:14px!important;}
+  .svc-ico{width:24px!important;height:24px!important;}
+  .svc-name{font-size:10px!important;white-space:normal!important;line-height:1.2!important;}
+  /* Reduce aurora blur */
+  .aurora .ab{filter:blur(40px)!important;opacity:.2!important;}
+  /* Disable scroll animations on mobile */
+  .prop-card{opacity:1!important;transform:none!important;}
+}
 </style>
 
 <style>
@@ -1055,27 +1072,29 @@ function hideAddSheet(){ document.getElementById('add-scrim').classList.remove('
   try {
     const SUPA_URL = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
     const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
-    // Wait for auth to settle + sb to be ready
-    await new Promise(r => setTimeout(r, 2500));
+    // Wait for auth + sb to be ready (init() runs first)
+    await new Promise(r => setTimeout(r, 3000));
     if(typeof sb === 'undefined') return;
-    // Retry session up to 3 times
-    let session = null;
-    for(let i=0;i<3;i++){
-      const { data } = await sb.auth.getSession();
-      if(data?.session){ session = data.session; break; }
-      await new Promise(r=>setTimeout(r,800));
-    }
-    if(!session) return;
-    // Query with cache-bust to avoid stale SW cache
+    const { data } = await sb.auth.getSession();
+    const session = data?.session;
+    if(!session?.user?.email) return;
+    const email = session.user.email.toLowerCase().trim();
+    // Hardcoded check first (instant, no network) 
+    const ADMIN_EMAILS = ['apatmento@gmail.com','worlddossy@gmail.com'];
+    if(!ADMIN_EMAILS.includes(email)) return;
+    // Verify against DB using anon key (RLS policy allows user to read their own row)
     const r = await fetch(
-      SUPA_URL + '/rest/v1/admin_users?email=eq.' + encodeURIComponent(session.user.email) + '&select=email,role&limit=1&_cb=' + Date.now(),
+      SUPA_URL + '/rest/v1/admin_users?select=email,role&limit=10',
       { headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + session.access_token }, cache: 'no-store' }
     );
-    if(!r.ok) return;
-    const rows = await r.json();
-    if(!rows?.length) return;
-    // ✅ Admin confirmed via DB
-    console.log('[Admin] confirmed for', session.user.email);
+    if(!r.ok){ console.log('[Admin] DB check failed, using email fallback'); }
+    else {
+      const rows = await r.json();
+      const match = rows?.find(row => row.email?.toLowerCase() === email);
+      if(!match) return;
+    }
+    // ✅ Admin confirmed
+    console.log('[Admin] confirmed for', email);
     const link = document.createElement('a');
     link.href = '/admin.html';
     link.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:9px 20px;border-radius:100px;background:rgba(123,47,247,.12);border:1px solid rgba(123,47,247,.3);color:#B8A4F4;font-size:12px;font-weight:700;text-decoration:none;z-index:9999;backdrop-filter:blur(10px);letter-spacing:.04em;display:flex;align-items:center;gap:6px;';
@@ -1085,5 +1104,6 @@ function hideAddSheet(){ document.getElementById('add-scrim').classList.remove('
     document.body.appendChild(link);
   } catch(e){ console.log('[Admin] detection error:', e.message); }
 })();
+
 
 
