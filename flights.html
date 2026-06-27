@@ -250,6 +250,19 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--glass);c
   .card{opacity:1!important;transform:none!important;animation:none!important;}
   .card.in{opacity:1!important;transform:none!important;}
 }
+
+@media(max-width:700px){
+  .card,.topbar,.search-bar,.drawer,.fchip{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;}
+  .card{background:rgba(255,255,255,.96)!important;opacity:1!important;transform:none!important;}
+  .topbar{background:rgba(252,252,253,.98)!important;}
+  .content{padding-left:12px!important;padding-right:12px!important;}
+  .hero{padding-left:14px!important;padding-right:14px!important;}
+  /* Flight card specific - prevent overflow */
+  .card-body{overflow:hidden;}
+  .card-price .val{font-size:16px!important;}
+  .card-foot{flex-wrap:wrap!important;gap:6px!important;}
+  .ab{filter:blur(40px)!important;opacity:.15!important;}
+}
 </style>
 </head>
 <body>
@@ -456,4 +469,5 @@ renderFlights(FLIGHTS);
 <script src="/showcase.js" defer></script>
 </body>
 </html>
+
 
