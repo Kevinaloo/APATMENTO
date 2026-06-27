@@ -367,7 +367,8 @@ body{overflow-x:hidden;}
           <svg class="svc-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13h14l-1.5-5a2 2 0 0 0-2-1.5h-7a2 2 0 0 0-2 1.5z"/><path d="M4 13h16v4H4z"/><circle cx="7.5" cy="17.5" r="1.5"/><circle cx="16.5" cy="17.5" r="1.5"/></svg>
           <span class="svc-name">Car Hire</span>
         </div>
-      </div>
+            </div><!-- /dash-user-nav -->
+    </div><!-- /tb-right -->
 
       <!-- FEATURED VIDEO HERO — live ad from Supabase -->
       <div class="hero-stage" id="hero-stage">
@@ -513,8 +514,8 @@ async function init(){
   const roleParam = params.get('role');
 
   const { data:{ session } } = await sb.auth.getSession();
-  if(!session){ window.location.href='auth.html'; return; }
-  CURRENT_USER = session.user;
+  const isGuest = !session;
+  if(!isGuest) CURRENT_USER = session.user;
 
   const meta = session.user.user_metadata || {};
   let firstName = meta.first_name || meta.name?.split(' ')[0] || meta.full_name?.split(' ')[0];
@@ -526,20 +527,44 @@ async function init(){
     var rememberedRole = profile?.last_role;
   }catch(e){}
 
-  USER.firstName = firstName || 'friend';
-  const initial = USER.firstName[0].toUpperCase();
+  USER.firstName = firstName || '';
+  const initial = USER.firstName ? USER.firstName[0].toUpperCase() : '?';
   document.getElementById('g-avatar').textContent = initial;
-  document.getElementById('g-name').textContent = USER.firstName;
-  document.getElementById('g-title').firstChild.textContent = getGreeting()+', ';
+  if(USER.firstName){
+    document.getElementById('g-name').textContent = USER.firstName;
+    document.getElementById('g-title').firstChild.textContent = getGreeting()+', ';
+  } else {
+    // Guest — no name in greeting
+    document.getElementById('g-name').textContent = '';
+    document.getElementById('g-title').firstChild.textContent = getGreeting();
+    // Show sign in / sign up in nav
+    document.getElementById('dash-guest-nav').style.display='flex';
+    document.getElementById('dash-user-nav').style.display='none';
+  }
 
   // dismiss loader
   setTimeout(()=>document.getElementById('loader').classList.add('done'), 1400);
 
-  const targetRole = roleParam || rememberedRole || 'guest';
+  const targetRole = isGuest ? 'guest' : (roleParam || rememberedRole || 'guest');
   CURRENT_ROLE = targetRole;
+
+  if(isGuest){
+    // Guest mode — full access to browse, no auth required
+    USER.firstName = '';
+    document.getElementById('g-name').textContent = '';
+    document.getElementById('g-title').firstChild.textContent = getGreeting();
+    document.getElementById('g-avatar').textContent = '?';
+    document.getElementById('dash-guest-nav').style.display='flex';
+    document.getElementById('dash-user-nav').style.display='none';
+    setTimeout(()=>document.getElementById('loader').classList.add('done'), 1000);
+  }
+
   showScreen(targetRole);
   if(targetRole==='guest'){ loadStays(); loadHeroVideo(); }
-  if(targetRole==='partner'){ setTimeout(initPartnerFlow, 200); }
+  if(targetRole==='partner'){
+    if(isGuest){ window.location.href='auth.html'; return; } // partner needs auth
+    setTimeout(initPartnerFlow, 200);
+  }
 }
 
 function showScreen(role){
@@ -555,6 +580,10 @@ async function saveRole(role){
 
 function switchRole(){
   closeDrawer();
+  if(CURRENT_ROLE==='guest' && !CURRENT_USER){
+    // Guest trying to access partner — send to auth
+    window.location.href='auth.html?next=partner'; return;
+  }
   const next = CURRENT_ROLE==='guest' ? 'partner' : 'guest';
   CURRENT_ROLE = next;
   saveRole(next);
@@ -693,7 +722,15 @@ function renderOnboarding(){
   c.innerHTML = `
     <div class="topbar">
       <div class="tb-left"><img src="logo-mark.png" class="tb-logo" onerror="this.style.display='none'"/><span class="tb-brand"><em>Apat</em>mento</span></div>
-      <div class="tb-right"><button class="tb-icon-btn" onclick="switchRole()" title="Switch to guest"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4M4 7h16M16 21l4-4-4-4M20 17H4"/></svg></button></div>
+      <div class="tb-right">
+      <!-- Guest nav (not signed in) -->
+      <div id="dash-guest-nav" style="display:none;align-items:center;gap:8px;">
+        <a href="auth.html" style="font-size:13px;font-weight:600;color:var(--ink-soft);text-decoration:none;padding:8px 14px;border-radius:100px;border:1px solid var(--line);background:rgba(255,255,255,.6);transition:all .22s;" onmouseover="this.style.borderColor='var(--violet)'" onmouseout="this.style.borderColor='var(--line)'">Sign in</a>
+        <a href="auth.html?mode=signup" style="font-size:13px;font-weight:600;color:#fff;text-decoration:none;padding:8px 16px;border-radius:100px;background:linear-gradient(135deg,var(--violet),var(--electric));box-shadow:0 4px 14px rgba(123,47,247,.3);">Sign up</a>
+      </div>
+      <!-- User nav (signed in) -->
+      <div id="dash-user-nav" style="display:flex;align-items:center;gap:8px;">
+        <button class="tb-icon-btn" onclick="switchRole()" title="Switch to guest"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4M4 7h16M16 21l4-4-4-4M20 17H4"/></svg></button></div>
     </div>
     <div class="content" style="max-width:840px;text-align:center;padding-top:48px;">
       <span class="greeting-eyebrow" style="margin:0 auto 18px;">✦ Free to list · 0% commission</span>
