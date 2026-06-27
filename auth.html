@@ -454,14 +454,52 @@ let sessionChecked = false;
     const { data: { session } } = await sb.auth.getSession();
     sessionChecked = true;
     if (session) {
-      // Already logged in — go straight to dashboard
-      redirectToDashboard(session.user, false);
+      const params = new URLSearchParams(location.search);
+      const autoRedirect = params.get('auto') === '1';
+      const forceShow = params.get('logout') === '1' || params.get('switch') === '1';
+      
+      if (autoRedirect && !forceShow) {
+        // Only auto-redirect when explicitly requested
+        redirectToDashboard(session.user, false);
+      } else {
+        // Show "continue as" banner — let user decide
+        showContinueBanner(session.user);
+      }
     }
   } catch (err) {
     sessionChecked = true;
     console.warn('Session check failed:', err.message);
   }
 })();
+
+/* ── CONTINUE AS BANNER ── */
+function showContinueBanner(user) {
+  const meta  = user.user_metadata || {};
+  const first = meta.first_name || meta.given_name || meta.name?.split(' ')[0] || user.email?.split('@')[0] || 'you';
+  const email = user.email || '';
+  
+  // Insert banner above the auth card
+  const card = document.querySelector('.auth-card') || document.querySelector('.auth-panel-inner');
+  if (!card) return;
+  
+  const banner = document.createElement('div');
+  banner.style.cssText = 'background:rgba(45,212,191,.08);border:1.5px solid rgba(45,212,191,.25);border-radius:16px;padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:12px;';
+  banner.innerHTML = `
+    <div>
+      <div style="font-weight:600;font-size:14px;color:#0A0A14;">Signed in as ${first}</div>
+      <div style="font-size:12px;color:#8E90AD;margin-top:2px;">${email}</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-shrink:0;">
+      <button onclick="redirectToDashboard(null,false)" style="padding:8px 14px;border-radius:100px;border:none;background:linear-gradient(135deg,var(--violet,#7B2FF7),var(--electric,#4361FF));color:#fff;font-size:12px;font-weight:600;cursor:pointer;">Continue →</button>
+      <button onclick="doSignOut()" style="padding:8px 14px;border-radius:100px;border:1px solid rgba(10,10,20,.1);background:transparent;font-size:12px;font-weight:600;cursor:pointer;color:#8E90AD;">Sign out</button>
+    </div>`;
+  card.insertBefore(banner, card.firstChild);
+}
+
+async function doSignOut() {
+  await sb.auth.signOut();
+  window.location.reload();
+}
 
 /* ── OAUTH CALLBACK LISTENER ── */
 sb.auth.onAuthStateChange(async (event, session) => {
@@ -499,6 +537,14 @@ async function getProfile(userId) {
 
 /* ══ REDIRECT ══ */
 async function redirectToDashboard(user, showAnimation) {
+  // If no user passed, get from current session
+  if (!user) {
+    try {
+      const { data: { session } } = await sb.auth.getSession();
+      user = session?.user;
+    } catch(e) {}
+  }
+  if (!user) { window.location.href = 'dashboard.html'; return; }
   if (showAnimation) showRedirectScreen(user);
   try {
     const profile = await getProfile(user.id);
@@ -753,5 +799,6 @@ async function checkConfirmationAndProceed() {
 </script>
 </body>
 </html>
+
 
 
