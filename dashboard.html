@@ -369,22 +369,19 @@ body{overflow-x:hidden;}
         </div>
       </div>
 
-      <!-- FEATURED VIDEO HERO -->
+      <!-- FEATURED VIDEO HERO — live ad from Supabase -->
       <div class="hero-stage" id="hero-stage">
-        <video class="hero-video" id="hero-video" autoplay muted loop playsinline poster=""></video>
-        <button class="video-upload-btn" onclick="openVideoUpload()">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 8-6 4 6 4V8z"/><rect width="14" height="12" x="2" y="6" rx="2"/></svg>
-          Set background
-        </button>
-        <div class="hero-body">
-          <span class="hero-eyebrow">✦ Featured this week</span>
-          <h2 class="hero-title">Face-value tickets.<br/><em>No booking levy.</em></h2>
-          <p class="hero-sub">Concerts, safaris, festivals and stays — priced exactly as they should be. Hosts keep 100%.</p>
-          <button class="hero-cta" onclick="navigateToService('events')">
-            Explore events
+        <video class="hero-video" id="hero-video" autoplay muted loop playsinline></video>
+        <div class="hero-body" id="hero-body">
+          <span class="hero-eyebrow" id="hero-eyebrow">✦ Apatmento for Life</span>
+          <h2 class="hero-title" id="hero-title">Travel in <em>style.</em><br/>Live without limits.</h2>
+          <p class="hero-sub" id="hero-sub">Kenya's zero-commission travel super-app. Stays, flights, safaris, events, rides, food and shopping — all in one place.</p>
+          <button class="hero-cta" id="hero-cta" onclick="window.location.href='apartments.html'">
+            Explore Apatmento
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
           </button>
         </div>
+        <div id="hero-ad-tag" style="position:absolute;top:18px;left:20px;z-index:3;display:none;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:rgba(255,255,255,.9);background:rgba(0,0,0,.28);backdrop-filter:blur(12px);padding:5px 12px;border-radius:100px;border:1px solid rgba(255,255,255,.18);">Sponsored</div>
       </div>
 
       <!-- BOOK A STAY -->
@@ -840,7 +837,74 @@ function hideAddSheet(){ document.getElementById('add-scrim').classList.remove('
     document.body.appendChild(link);
   } catch(e){}
 })();
+
+/* ── Load live video ad into dashboard hero ── */
+async function loadDashboardHero() {
+  const SUPA_URL = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
+  const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
+  try {
+    const r = await fetch(
+      `${SUPA_URL}/rest/v1/ad_campaigns?active=eq.true&format=eq.video&order=priority.desc&limit=1`,
+      {headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}}
+    );
+    const ads = await r.json();
+    const ad = ads?.[0];
+    if (!ad) return; // keep default Apatmento branding
+
+    // Update video
+    const vid = document.getElementById('hero-video');
+    if (ad.media_url && vid) {
+      vid.src = ad.media_url;
+      vid.poster = ad.poster_url || '';
+      vid.play().catch(()=>{});
+    }
+
+    // Update hero background gradient
+    const stage = document.getElementById('hero-stage');
+    if (stage && ad.theme_gradient && !ad.media_url) {
+      stage.style.background = ad.theme_gradient;
+    }
+
+    // Update copy
+    const eyebrow = document.getElementById('hero-eyebrow');
+    const title   = document.getElementById('hero-title');
+    const sub     = document.getElementById('hero-sub');
+    const cta     = document.getElementById('hero-cta');
+    const tag     = document.getElementById('hero-ad-tag');
+
+    if (eyebrow) eyebrow.textContent = '✦ ' + (ad.advertiser || 'Featured');
+    if (title)   title.innerHTML = ad.headline?.replace('\n','<br/>') || title.innerHTML;
+    if (sub)     sub.textContent = ad.sub || sub.textContent;
+    if (cta) {
+      const btnText = cta.querySelector('svg');
+      cta.innerHTML = (ad.cta_text || 'Learn more');
+      if (btnText) cta.appendChild(btnText);
+      cta.onclick = () => { if(ad.cta_url && ad.cta_url !== '#') window.location.href = ad.cta_url; };
+    }
+    if (tag) tag.style.display = 'block';
+
+    // Track impression
+    fetch(`${SUPA_URL}/rest/v1/rpc/increment_ad_impression`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY},
+      body:JSON.stringify({p_campaign_id:ad.campaign_id})
+    }).catch(()=>{});
+
+  } catch(e) { console.log('[Hero] Using default branding'); }
+}
+
+// Also make the hero clickable for click tracking
+document.addEventListener('DOMContentLoaded', () => {
+  loadDashboardHero();
+  const stage = document.getElementById('hero-stage');
+  stage?.addEventListener('click', async (e) => {
+    if(e.target.closest('button')) return;
+    // click tracking handled by cta button
+  });
+});
+
 </script>
 
+<script src="/showcase.js" defer></script>
 </body>
 </html>
