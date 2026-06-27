@@ -46,10 +46,16 @@ let CAMPS = {video:[], carousel:[], native:[], split:[], ticker:[], sticky:[]};
 
 async function loadFromDB(){
   try {
-    const r = await fetch(
-      `${SUPA_URL}/rest/v1/ad_campaigns?active=eq.true&order=priority.desc&limit=50`,
-      {headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}}
-    );
+    // 4s timeout — never block the page if Supabase is slow
+    const controller = new AbortController();
+    const timer = setTimeout(()=>controller.abort(), 4000);
+    let r;
+    try {
+      r = await fetch(
+        `${SUPA_URL}/rest/v1/ad_campaigns?active=eq.true&order=priority.desc&limit=50`,
+        {headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}, signal:controller.signal}
+      );
+    } finally { clearTimeout(timer); }
     if(!r.ok) return false;
     const all = await r.json();
     if(!all?.length) return false;
