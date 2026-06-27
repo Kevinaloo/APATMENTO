@@ -177,7 +177,7 @@ const CSS = `
 .sc-label::before{content:'';width:5px;height:5px;border-radius:50%;background:#8E90AD;opacity:.5;}
 
 /* ─ animate in ─ */
-.sc-el{opacity:0;transform:translateY(20px);transition:opacity .6s cubic-bezier(.22,1,.36,1),transform .6s cubic-bezier(.22,1,.36,1),box-shadow .4s;}
+.sc-el{opacity:1;transform:none;transition:box-shadow .4s;}
 .sc-el.in{opacity:1;transform:none;} .scv.in{opacity:1;transform:none;}
 
 /* ══ VIDEO HERO (cinematic 21:9) ══ */
@@ -185,15 +185,14 @@ const CSS = `
 .scv:hover{box-shadow:0 32px 80px rgba(123,47,247,.25);}
 .scv-bg{position:absolute;inset:0;}
 .scv-bg video{width:100%;height:100%;object-fit:cover;}
-.scv-grad{position:absolute;inset:0;opacity:1;transition:opacity .5s;}
-.scv:hover .scv-grad{opacity:.85;}
-.scv-orb1,.scv-orb2{position:absolute;border-radius:50%;filter:blur(60px);opacity:0;}
+.scv-grad{display:none;}
+.scv-orb1,.scv-orb2{display:none;}
 .scv-orb2{animation-delay:-4.5s;opacity:.3;}
 @keyframes scOrb{0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(45px,-28px) scale(1.18);}}
-.scv-shimmer{position:absolute;inset:0;background:linear-gradient(110deg,transparent 28%,rgba(255,255,255,.08) 48%,transparent 68%);background-size:200% 100%;animation:scShim 6s ease-in-out infinite;}
+.scv-shimmer{display:none;}
 @keyframes scShim{0%{background-position:200% 0;}100%{background-position:-100% 0;}}
 .scv-tag{position:absolute;top:18px;left:20px;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:rgba(255,255,255,.95);background:rgba(0,0,0,.28);backdrop-filter:blur(12px);padding:5px 12px;border-radius:100px;border:1px solid rgba(255,255,255,.18);z-index:3;}
-.scv-content{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:clamp(18px,3vw,44px);z-index:2;background:linear-gradient(to top,rgba(0,0,0,.55) 0%,rgba(0,0,0,.1) 50%,transparent 80%);}
+.scv-content{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:clamp(18px,3vw,44px);z-index:2;background:none;}
 .scv-adv{font-size:12px;font-weight:600;color:rgba(255,255,255,.75);margin-bottom:10px;display:flex;align-items:center;gap:8px;}
 .scv-adv svg{width:15px;height:15px;}
 .scv-h{font-family:'Fraunces',serif;font-weight:400;font-size:clamp(22px,3.5vw,42px);color:#fff;line-height:1.05;margin-bottom:8px;max-width:68%;text-shadow:0 2px 24px rgba(0,0,0,.3);}
@@ -238,7 +237,7 @@ const CSS = `
 .scn-img{height:186px;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;}
 .scn-img img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;}
 .scn-img svg{width:50px;height:50px;color:rgba(255,255,255,.88);position:relative;z-index:1;}
-.scn-shine{position:absolute;inset:0;background:linear-gradient(110deg,transparent 32%,rgba(255,255,255,.13) 50%,transparent 68%);background-size:200% 100%;animation:scShim 7s ease-in-out infinite;}
+.scn-shine{display:none;}
 .scn-tag{position:absolute;top:12px;left:12px;padding:5px 12px;border-radius:100px;font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;background:rgba(252,252,253,.94);backdrop-filter:blur(8px);color:#4A4C66;z-index:2;}
 .scn-body{padding:16px 18px 18px;}
 .scn-who{font-size:11px;color:#8E90AD;margin-bottom:4px;}
@@ -253,7 +252,7 @@ const CSS = `
 .scs{border-radius:26px;overflow:hidden;display:grid;grid-template-columns:1fr 1fr;min-height:260px;box-shadow:0 20px 60px rgba(10,10,20,.12);cursor:pointer;transition:box-shadow .4s;}
 .scs:hover{box-shadow:0 32px 80px rgba(123,47,247,.22);}
 .scs-left{padding:clamp(28px,4vw,52px);display:flex;flex-direction:column;justify-content:center;position:relative;overflow:hidden;}
-.scs-left::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 120% 50%,rgba(255,255,255,.12) 0%,transparent 60%);}
+.scs-left::before{display:none;}
 .scs-tag{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.8);background:rgba(255,255,255,.15);backdrop-filter:blur(8px);padding:5px 12px;border-radius:100px;border:1px solid rgba(255,255,255,.2);margin-bottom:16px;align-self:flex-start;}
 .scs-tag::before{content:'';width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.9);}
 .scs-h{font-family:'Fraunces',serif;font-weight:400;font-size:clamp(22px,3vw,36px);color:#fff;line-height:1.1;margin-bottom:12px;white-space:pre-line;}
@@ -326,7 +325,7 @@ const CSS = `
 .sc-window.in{opacity:1;transform:none;}
 .sc-window:hover{box-shadow:0 28px 72px rgba(123,47,247,.2);}
 .sc-window video{width:100%;height:100%;object-fit:cover;}
-.sc-window-grad{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.7) 0%,transparent 50%);}
+.sc-window-grad{display:none;}
 .sc-window-tag{position:absolute;top:12px;left:14px;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:rgba(255,255,255,.9);background:rgba(0,0,0,.3);backdrop-filter:blur(10px);padding:4px 10px;border-radius:100px;border:1px solid rgba(255,255,255,.15);z-index:2;}
 .sc-window-content{position:absolute;bottom:0;left:0;right:0;padding:16px 18px;z-index:2;}
 .sc-window-adv{font-size:11px;font-weight:600;color:rgba(255,255,255,.7);margin-bottom:4px;}
@@ -500,16 +499,11 @@ function renderVideo(slot, c){
     if(url && url !== '#') window.location.href = url;
   });
 
-  /* ── Intersection observer — play/pause ── */
-  observe(el, () => {
-    el.classList.add('in');
-    if(camp().media){ vid.play().catch(()=>{}); }
-    else startGradTimer();
-    trackImpression(camp().id,'video',camp().advertiser);
-  }, () => {
-    vid.pause();
-    clearTimeout(gradTimer);
-  });
+  // Autoplay always — no pause on scroll out
+  el.classList.add('in');
+  if(camp().media){ vid.play().catch(()=>{}); }
+  else startGradTimer();
+  trackImpression(camp().id,'video',camp().advertiser);
 
   // Initial load
   updateUI();
@@ -525,7 +519,7 @@ function renderCarousel(slot, cs){
       ${cs.map((c,i)=>`
       <div class="sc-slide ${i===0?'active':''}" style="background:${c.grad}" data-id="${c.id}" data-adv="${c.advertiser}">
         ${c.media ? `<img src="${c.media}" alt="${c.advertiser}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;"/>
-        <div style="position:absolute;inset:0;background:linear-gradient(to right,rgba(0,0,0,.55) 0%,rgba(0,0,0,.1) 60%,transparent 100%);z-index:1;"></div>` : ''}
+        <div style="position:absolute;inset:0;background:none;z-index:1;"></div>` : ''}
         <div class="sc-slide-ico" style="position:relative;z-index:2;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${c.icon}</svg></div>
         <div class="sc-slide-body" style="position:relative;z-index:2;">
           <div class="sc-slide-who">${c.advertiser} · Sponsored</div>
@@ -563,8 +557,7 @@ function renderCarousel(slot, cs){
   dots.forEach(d=>d.addEventListener('click',()=>go(+d.dataset.i)));
   wrap.querySelector('.scc-prev').addEventListener('click',()=>go(cur-1));
   wrap.querySelector('.scc-next').addEventListener('click',()=>go(cur+1));
-  wrap.addEventListener('mouseenter',()=>paused=true);
-  wrap.addEventListener('mouseleave',()=>{paused=false;last=performance.now();});
+  // No mouseenter pause — carousel auto-advances always
   let sx=0;
   wrap.addEventListener('touchstart',e=>sx=e.touches[0].clientX,{passive:true});
   wrap.addEventListener('touchend',e=>{const d=e.changedTouches[0].clientX-sx;if(Math.abs(d)>50)go(cur+(d<0?1:-1));},{passive:true});
@@ -582,7 +575,7 @@ function renderNative(slot, c){
     <div class="scn sc-el">
       <div class="scn-img" style="background:${c.media?'#111':c.grad}">
         ${c.media?`<img src="${c.media}" alt="${c.advertiser}" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;"/>
-        <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.4) 0%,transparent 60%);z-index:1;"></div>`:''}
+        <div style="position:absolute;inset:0;background:none;z-index:1;"></div>`:''}
         <div class="scn-shine" style="z-index:2;${c.media?'opacity:.03;':''}"></div>
         <div class="scn-tag" style="position:relative;z-index:3;">${c.tag}</div>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" style="position:relative;z-index:3;${c.media?'display:none;':''}">${c.icon}</svg>
@@ -740,7 +733,6 @@ function renderWindow(slot, c){
     el.classList.add('in');
     trackImpression(camp().id,'window',camp().advertiser);
     vid.play().catch(()=>{});
-  },()=>vid.pause());
 
   updateWindow();
 }
@@ -876,6 +868,7 @@ else init();
 
 window.ApatmentoShowcase={reload:init};
 })();
+
 
 
 
