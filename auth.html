@@ -502,9 +502,12 @@ async function doSignOut() {
 }
 
 /* ── OAUTH CALLBACK LISTENER ── */
+let redirecting = false;
 sb.auth.onAuthStateChange(async (event, session) => {
   if (!sessionChecked) return; // ignore the initial INITIAL_SESSION event
+  if (redirecting) return;     // prevent double redirect
   if (event === 'SIGNED_IN' && session) {
+    redirecting = true;
     await ensureProfile(session.user);
     redirectToDashboard(session.user, true);
   }
@@ -598,6 +601,7 @@ async function handleLogin(e) {
     else showError(msg);
     return;
   }
+  redirecting = true;
   await ensureProfile(data.user);
   redirectToDashboard(data.user, true);
 }
@@ -799,6 +803,7 @@ async function checkConfirmationAndProceed() {
 </script>
 </body>
 </html>
+
 
 
 
