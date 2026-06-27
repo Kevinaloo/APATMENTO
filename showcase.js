@@ -96,7 +96,7 @@ function mapCamp(c){
 const DEMO = {
   video:[
     {id:'d_v1',advertiser:'Apatmento Stays',tag:'Featured',headline:'Find your perfect space in Kenya',sub:'Hand-picked apartments from KES 3,200/night · Hosts keep 100%',cta:'Browse stays',url:'apartments.html',media:'',poster:'',grad:'linear-gradient(135deg,#B8A4F4,#7B2FF7)',accent:'#B8A4F4',price:'',icon:'<path d="M3 10.5 12 4l9 6.5M5 9.5V20h14V9.5M9 20v-5a3 3 0 0 1 6 0v5"/>'},
-    {id:'d_v2',advertiser:'Apatmento Tours',tag:'Featured',headline:"Days you'll never forget",sub:'Maasai Mara · Mt Kenya · Diani Beach · Guides keep 100%',cta:'Explore tours',url:'tours.html',media:'',poster:'',grad:'linear-gradient(135deg,#2DD4BF,#4361FF)',accent:'#5EEAD4',price:'',icon:'<path d="m15 5.5-6-2-6 2.5v13l6-2.5 6 2 6-2.5v-13zM9 3.5v13M15 7.5v13"/>'},
+    {id:'d_v2',advertiser:'Apatmento Tours',tag:'Featured',headline:"Days you\'ll never forget",sub:'Maasai Mara · Mt Kenya · Diani Beach · Guides keep 100%',cta:'Explore tours',url:'tours.html',media:'',poster:'',grad:'linear-gradient(135deg,#2DD4BF,#4361FF)',accent:'#5EEAD4',price:'',icon:'<path d="m15 5.5-6-2-6 2.5v13l6-2.5 6 2 6-2.5v-13zM9 3.5v13M15 7.5v13"/>'},
   ],
   carousel:[
     {id:'d_c1',advertiser:'M-Pesa',tag:'Sponsored',headline:'Pay the smart way',sub:'Instant M-Pesa payments on every Apatmento booking',cta:'Learn more',url:'#',media:'',poster:'',grad:'linear-gradient(135deg,#2DD4BF,#5EEAD4)',accent:'#5EEAD4',price:'',icon:'<rect width="20" height="14" x="2" y="5" rx="2"/><path d="M2 10h20"/>'},
@@ -117,6 +117,50 @@ const DEMO = {
   ],
 };
 
+
+/* ════════════════════════════════════════════════════════════════
+   BRANDED FALLBACK — shown when a slot has no matching campaign
+   "APATMENTO FOR LIFE · TRAVEL IN STYLE"
+════════════════════════════════════════════════════════════════ */
+const BRAND_FALLBACK = {
+  video: {
+    id:'brand_video', advertiser:'Apatmento', tag:'✦ Apatmento',
+    headline:'Travel in style.\nLive without limits.',
+    sub:'Kenya\'s first zero-commission travel super-app. Stays, flights, tours, events, rides, food and more — all in one place.',
+    cta:'Explore Apatmento', url:'index.html',
+    media:'', poster:'',
+    grad:'linear-gradient(135deg,#0A0A14 0%,#1A0A3E 40%,#0E1A4E 100%)',
+    accent:'#B8A4F4',
+    price:'', icon:'<path d="M3 10.5 12 4l9 6.5M5 9.5V20h14V9.5M9 20v-5a3 3 0 0 1 6 0v5"/>',
+  },
+  carousel: [
+    {id:'brand_c1', advertiser:'Apatmento Stays', tag:'✦ Featured', headline:'Find your perfect space', sub:'Apartments from KES 3,200 · Hosts keep 100%', cta:'Browse stays', url:'apartments.html', media:'', poster:'', grad:'linear-gradient(135deg,#B8A4F4,#7B2FF7)', accent:'#B8A4F4', price:'', icon:'<path d="M3 10.5 12 4l9 6.5M5 9.5V20h14V9.5"/>'},
+    {id:'brand_c2', advertiser:'Apatmento Tours', tag:'✦ Featured', headline:"Days you\'ll never forget", sub:'Safaris, treks & experiences across Kenya', cta:'See tours', url:'tours.html', media:'', poster:'', grad:'linear-gradient(135deg,#2DD4BF,#4361FF)', accent:'#5EEAD4', price:'', icon:'<path d="m15 5.5-6-2-6 2.5v13l6-2.5 6 2 6-2.5v-13z"/>'},
+    {id:'brand_c3', advertiser:'Apatmento Events', tag:'✦ Featured', headline:'Face-value tickets. Nothing added.', sub:'Concerts, festivals, sports — you pay exactly what the organiser charges', cta:'Get tickets', url:'events.html', media:'', poster:'', grad:'linear-gradient(135deg,#7B2FF7,#B8A4F4)', accent:'#B8A4F4', price:'', icon:'<path d="M3 9a2 2 0 0 0 0 6v2a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-2a2 2 0 0 0 0-6V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1z"/>'},
+  ],
+  native: {
+    id:'brand_n1', advertiser:'Apatmento', tag:'✦ Apatmento',
+    headline:'Apatmento — Travel in style', sub:'Zero commission · Hosts keep 100%', cta:'Explore', url:'index.html',
+    media:'', poster:'', grad:'linear-gradient(135deg,#B8A4F4,#7B2FF7)', accent:'#B8A4F4', price:'From KES 3,200/night',
+    icon:'<path d="M3 10.5 12 4l9 6.5M5 9.5V20h14V9.5"/>',
+  },
+  split: {
+    id:'brand_s1', advertiser:'Apatmento', tag:'Apatmento for Life',
+    headline:'Travel in style.\nLive without limits.',
+    sub:'Kenya\'s only zero-commission travel super-app. Stays, flights, safaris, events, rides, food and shopping — all in one place. Hosts keep 100% of every booking.',
+    cta:'Discover Apatmento', url:'index.html',
+    media:'', poster:'', grad:'linear-gradient(135deg,#0A0A14,#1A0A3E,#0E1A4E)', accent:'#B8A4F4', price:'',
+    icon:'<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
+  },
+  ticker: {
+    id:'brand_t1', advertiser:'Apatmento', tag:'Live',
+    headline:'✦ Apatmento for Life — Travel in Style · Stays from KES 3,200/night · Zero Commission · Hosts keep 100% · Book flights, safaris, events & more · Kenya\'s premium travel super-app · Apatmento for Life — Travel in Style ·',
+    sub:'', cta:'', url:'index.html', media:'', poster:'',
+    grad:'linear-gradient(135deg,#0A0A14,#1A1A35)', accent:'#B8A4F4', price:'',
+    icon:'',
+  },
+};
+
 /* ════════════════════════════════════════════════════════════════
    CSS — premium, cinematic
 ════════════════════════════════════════════════════════════════ */
@@ -127,31 +171,31 @@ const CSS = `
 .sc-label::before{content:'';width:5px;height:5px;border-radius:50%;background:#8E90AD;opacity:.5;}
 
 /* ─ animate in ─ */
-.sc-el{opacity:0;transform:translateY(28px) scale(.98);transition:opacity .75s cubic-bezier(.22,1,.36,1),transform .75s cubic-bezier(.22,1,.36,1),box-shadow .4s;}
-.sc-el.in{opacity:1;transform:none;}
+.sc-el{opacity:0;transform:translateY(20px);transition:opacity .6s cubic-bezier(.22,1,.36,1),transform .6s cubic-bezier(.22,1,.36,1),box-shadow .4s;}
+.sc-el.in{opacity:1;transform:none;} .scv.in{opacity:1;transform:none;}
 
 /* ══ VIDEO HERO (cinematic 21:9) ══ */
 .scv{position:relative;border-radius:26px;overflow:hidden;cursor:pointer;aspect-ratio:21/9;box-shadow:0 20px 60px rgba(10,10,20,.15);}
 .scv:hover{box-shadow:0 32px 80px rgba(123,47,247,.25);}
 .scv-bg{position:absolute;inset:0;}
 .scv-bg video{width:100%;height:100%;object-fit:cover;}
-.scv-grad{position:absolute;inset:0;transition:opacity .5s;}
-.scv:hover .scv-grad{opacity:.82;}
-.scv-orb1,.scv-orb2{position:absolute;border-radius:50%;filter:blur(60px);opacity:.45;animation:scOrb 9s ease-in-out infinite;}
+.scv-grad{position:absolute;inset:0;opacity:0;transition:opacity .5s;}
+.scv:hover .scv-grad{opacity:0;}
+.scv-orb1,.scv-orb2{position:absolute;border-radius:50%;filter:blur(60px);opacity:0;}
 .scv-orb2{animation-delay:-4.5s;opacity:.3;}
 @keyframes scOrb{0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(45px,-28px) scale(1.18);}}
 .scv-shimmer{position:absolute;inset:0;background:linear-gradient(110deg,transparent 28%,rgba(255,255,255,.08) 48%,transparent 68%);background-size:200% 100%;animation:scShim 6s ease-in-out infinite;}
 @keyframes scShim{0%{background-position:200% 0;}100%{background-position:-100% 0;}}
 .scv-tag{position:absolute;top:18px;left:20px;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:rgba(255,255,255,.95);background:rgba(0,0,0,.28);backdrop-filter:blur(12px);padding:5px 12px;border-radius:100px;border:1px solid rgba(255,255,255,.18);z-index:3;}
-.scv-content{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:clamp(18px,3vw,44px);z-index:2;background:linear-gradient(to top,rgba(0,0,0,.62) 0%,rgba(0,0,0,.15) 45%,transparent 70%);}
+.scv-content{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:clamp(18px,3vw,44px);z-index:2;background:linear-gradient(to top,rgba(0,0,0,.75) 0%,rgba(0,0,0,.2) 50%,transparent 75%);}
 .scv-adv{font-size:12px;font-weight:600;color:rgba(255,255,255,.75);margin-bottom:10px;display:flex;align-items:center;gap:8px;}
 .scv-adv svg{width:15px;height:15px;}
 .scv-h{font-family:'Fraunces',serif;font-weight:400;font-size:clamp(22px,3.5vw,42px);color:#fff;line-height:1.05;margin-bottom:8px;max-width:68%;text-shadow:0 2px 24px rgba(0,0,0,.3);}
 .scv-sub{font-size:13px;color:rgba(255,255,255,.82);margin-bottom:20px;max-width:58%;}
-.scv-cta{display:inline-flex;align-items:center;gap:9px;padding:13px 24px;border-radius:100px;background:#fff;color:#0A0A14;font-size:14px;font-weight:700;border:none;cursor:pointer;transition:all .35s;align-self:flex-start;box-shadow:0 6px 24px rgba(0,0,0,.25);transform:translateY(7px);opacity:.9;}
-.scv:hover .scv-cta{transform:none;opacity:1;box-shadow:0 10px 32px rgba(0,0,0,.35);}
+.scv-cta{display:inline-flex;align-items:center;gap:9px;padding:13px 24px;border-radius:100px;background:#fff;color:#0A0A14;font-size:14px;font-weight:700;border:none;cursor:pointer;transition:all .35s;align-self:flex-start;box-shadow:0 6px 24px rgba(0,0,0,.25);}
+.scv:hover .scv-cta{box-shadow:0 10px 32px rgba(0,0,0,.35);transform:translateY(-2px);}
 .scv-cta svg{width:15px;height:15px;transition:transform .3s;}
-.scv:hover .scv-cta svg{transform:translateX(4px);}
+.scv-cta:hover svg{transform:translateX(4px);}
 .scv-ctrl{position:absolute;bottom:18px;right:18px;display:flex;gap:8px;z-index:3;}
 .scv-btn{width:38px;height:38px;border-radius:50%;background:rgba(0,0,0,.32);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;transition:background .2s;}
 .scv-btn:hover{background:rgba(0,0,0,.55);}
@@ -475,13 +519,20 @@ function renderSticky(c){
 
 /* ── Intersection observer ── */
 function observe(el,onIn,onOut){
-  new IntersectionObserver(e=>e.forEach(x=>{if(x.isIntersecting)onIn?.();else onOut?.();}),{threshold:.3}).observe(el);
+  new IntersectionObserver(e=>e.forEach(x=>{if(x.isIntersecting)onIn?.();else onOut?.();}),{threshold:.1,rootMargin:"0px 0px -50px 0px"}).observe(el);
 }
 
 /* ── round-robin picker ── */
 let _idx={};
 function pick(fmt,pool){
-  if(!pool?.length)return null;
+  if(!pool?.length){
+    // Return branded fallback instead of null
+    if(fmt==='video')    return BRAND_FALLBACK.video;
+    if(fmt==='native')   return BRAND_FALLBACK.native;
+    if(fmt==='split')    return BRAND_FALLBACK.split;
+    if(fmt==='ticker')   return BRAND_FALLBACK.ticker;
+    return null;
+  }
   _idx[fmt]=((_idx[fmt]||0)+1)%pool.length;
   return pool[_idx[fmt]];
 }
@@ -498,7 +549,7 @@ async function init(){
     slot.style.position='relative';
     const fmt=slot.getAttribute('data-showcase');
     if(fmt==='video')    renderVideo(slot, pick('video', pools.video));
-    if(fmt==='carousel') renderCarousel(slot, pools.carousel);
+    if(fmt==='carousel') renderCarousel(slot, pools.carousel?.length ? pools.carousel : BRAND_FALLBACK.carousel);
     if(fmt==='native')   renderNative(slot, pick('native', pools.native));
     if(fmt==='split')    renderSplit(slot, pick('split', pools.split));
     if(fmt==='ticker')   renderTicker(slot, pick('ticker', pools.ticker));
