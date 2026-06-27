@@ -48,7 +48,27 @@
   
 <title>Dashboard — Apatmento</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<script>
+/* ── Guaranteed loader failsafe — runs before anything else ── */
+window.addEventListener('load', function() {
+  // If loader hasn't been dismissed after 4s, force it
+  setTimeout(function() {
+    var l = document.getElementById('loader');
+    if(l && !l.classList.contains('done')) {
+      l.classList.add('done');
+      // Also ensure guest screen is showing
+      var screens = document.querySelectorAll('.screen');
+      var anyActive = false;
+      screens.forEach(function(s){ if(s.classList.contains('active')) anyActive=true; });
+      if(!anyActive){
+        var guest = document.getElementById('screen-guest');
+        if(guest) guest.classList.add('active');
+      }
+    }
+  }, 4000);
+});
+</script>
+<link rel="preconnect"> href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..700&display=swap" rel="stylesheet"/>
 <link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&f[]=geist@400,500,600&display=swap" rel="stylesheet"/>
@@ -510,60 +530,90 @@ function getGreeting(){
 
 /* ── SESSION INIT ── */
 async function init(){
-  const params = new URLSearchParams(location.search);
-  const roleParam = params.get('role');
+  // ── FAILSAFE: always dismiss loader after 3s no matter what ──
+  const loaderFail = setTimeout(()=>{
+    const l = document.getElementById('loader');
+    if(l) l.classList.add('done');
+  }, 2500);
 
-  const { data:{ session } } = await sb.auth.getSession();
-  const isGuest = !session;
-  if(!isGuest) CURRENT_USER = session.user;
+  try {
+    const params    = new URLSearchParams(location.search);
+    const roleParam = params.get('role');
 
-  const meta = session.user.user_metadata || {};
-  let firstName = meta.first_name || meta.name?.split(' ')[0] || meta.full_name?.split(' ')[0];
+    const { data:{ session } } = await sb.auth.getSession();
+    const isGuest = !session;
 
-  // pull from profiles
-  try{
-    const { data:profile } = await sb.from('profiles').select('first_name,last_name,last_role').eq('id', session.user.id).single();
-    if(profile?.first_name) firstName = profile.first_name;
-    var rememberedRole = profile?.last_role;
-  }catch(e){}
+    if(isGuest){
+      // ── GUEST MODE ──────────────────────────────────────────
+      document.getElementById('g-name').textContent  = '';
+      document.getElementById('g-title').firstChild.textContent = getGreeting();
+      document.getElementById('g-avatar').textContent = '✦';
+      document.getElementById('dash-guest-nav').style.display = 'flex';
+      document.getElementById('dash-user-nav').style.display  = 'none';
 
-  USER.firstName = firstName || '';
-  const initial = USER.firstName ? USER.firstName[0].toUpperCase() : '?';
-  document.getElementById('g-avatar').textContent = initial;
-  if(USER.firstName){
-    document.getElementById('g-name').textContent = USER.firstName;
-    document.getElementById('g-title').firstChild.textContent = getGreeting()+', ';
-  } else {
-    // Guest — no name in greeting
-    document.getElementById('g-name').textContent = '';
-    document.getElementById('g-title').firstChild.textContent = getGreeting();
-    // Show sign in / sign up in nav
-    document.getElementById('dash-guest-nav').style.display='flex';
-    document.getElementById('dash-user-nav').style.display='none';
-  }
+      clearTimeout(loaderFail);
+      setTimeout(()=>document.getElementById('loader').classList.add('done'), 900);
 
-  // dismiss loader
-  setTimeout(()=>document.getElementById('loader').classList.add('done'), 1400);
+      CURRENT_ROLE = 'guest';
+      showScreen('guest');
+      loadStays();
+      loadHeroVideo();
+      loadDashboardHero();
+      return;
+    }
 
-  const targetRole = isGuest ? 'guest' : (roleParam || rememberedRole || 'guest');
-  CURRENT_ROLE = targetRole;
+    // ── SIGNED IN ────────────────────────────────────────────
+    CURRENT_USER = session.user;
+    const meta = session.user.user_metadata || {};
+    let firstName = meta.first_name || meta.name?.split(' ')[0] || meta.full_name?.split(' ')[0] || '';
+    let rememberedRole = 'guest';
 
-  if(isGuest){
-    // Guest mode — full access to browse, no auth required
-    USER.firstName = '';
-    document.getElementById('g-name').textContent = '';
-    document.getElementById('g-title').firstChild.textContent = getGreeting();
-    document.getElementById('g-avatar').textContent = '?';
-    document.getElementById('dash-guest-nav').style.display='flex';
-    document.getElementById('dash-user-nav').style.display='none';
-    setTimeout(()=>document.getElementById('loader').classList.add('done'), 1000);
-  }
+    try {
+      const { data:profile } = await sb.from('profiles')
+        .select('first_name,last_name,last_role')
+        .eq('id', session.user.id).single();
+      if(profile?.first_name) firstName = profile.first_name;
+      if(profile?.last_role)  rememberedRole = profile.last_role;
+    } catch(e){}
 
-  showScreen(targetRole);
-  if(targetRole==='guest'){ loadStays(); loadHeroVideo(); }
-  if(targetRole==='partner'){
-    if(isGuest){ window.location.href='auth.html'; return; } // partner needs auth
-    setTimeout(initPartnerFlow, 200);
+    USER.firstName = firstName;
+    const initial  = firstName ? firstName[0].toUpperCase() : '?';
+
+    // Update greeting
+    document.getElementById('g-avatar').textContent = initial;
+    if(firstName){
+      document.getElementById('g-name').textContent = firstName;
+      document.getElementById('g-title').firstChild.textContent = getGreeting() + ', ';
+    } else {
+      document.getElementById('g-name').textContent = '';
+      document.getElementById('g-title').firstChild.textContent = getGreeting();
+    }
+
+    // Update nav — show user, hide guest buttons
+    document.getElementById('dash-guest-nav').style.display = 'none';
+    document.getElementById('dash-user-nav').style.display  = 'flex';
+
+    clearTimeout(loaderFail);
+    setTimeout(()=>document.getElementById('loader').classList.add('done'), 1200);
+
+    const targetRole = roleParam || rememberedRole || 'guest';
+    CURRENT_ROLE = targetRole;
+    showScreen(targetRole);
+
+    if(targetRole === 'guest'){ loadStays(); loadHeroVideo(); }
+    if(targetRole === 'partner'){
+      setTimeout(initPartnerFlow, 200);
+    }
+    loadDashboardHero();
+
+  } catch(err) {
+    // Any unexpected error — still dismiss the loader
+    console.warn('[Dashboard] init error:', err);
+    clearTimeout(loaderFail);
+    const l = document.getElementById('loader');
+    if(l) l.classList.add('done');
+    showScreen('guest');
+    loadStays();
   }
 }
 
@@ -877,138 +927,93 @@ function hideAddSheet(){ document.getElementById('add-scrim').classList.remove('
 
 /* ── Load live video ad into dashboard hero ── */
 async function loadDashboardHero() {
-  const SUPA_URL = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
-  const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
-  
-  // Default branding (shows when no paid campaign)
-  const DEFAULTS = [
-    { campaign_id:'brand_dash_1', advertiser:'Apatmento', tag:'Apatmento for Life', headline:'Travel in <em>style.</em><br/>Live without limits.', sub:"Kenya's zero-commission travel super-app. Stays, flights, safaris, events, rides, food and shopping — all in one place.", cta_text:'Explore Apatmento', cta_url:'apartments.html', media_url:'', theme_gradient:'linear-gradient(135deg,#0A0A14,#1A0A3E)' },
-  ];
-
-  let pool = DEFAULTS;
-
+  // Uses existing `sb` client — no duplicate init
   try {
-    // Load ALL active video campaigns (not just 1)
+    const SUPA_URL = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
+    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
+
+    const DEFAULTS = [
+      { campaign_id:'brand_dash_1', advertiser:'Apatmento', tag:'Apatmento for Life',
+        headline:'Travel in <em>style.</em><br/>Live without limits.',
+        sub:"Kenya's zero-commission travel super-app. Stays, flights, safaris, events, rides, food and shopping.",
+        cta_text:'Explore Apatmento', cta_url:'apartments.html', media_url:'',
+        theme_gradient:'linear-gradient(135deg,#0A0A14,#1A0A3E)' },
+    ];
+
+    let pool = DEFAULTS;
+
+    // Load via REST (no new Supabase client needed)
     const r = await fetch(
-      `${SUPA_URL}/rest/v1/ad_campaigns?active=eq.true&format=eq.video&order=priority.desc`,
+      SUPA_URL+'/rest/v1/ad_campaigns?active=eq.true&format=eq.video&order=priority.desc',
       {headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}}
     );
-    const ads = await r.json();
-    if(ads?.length) pool = ads;
-  } catch(e) { console.log('[Hero] Using default branding'); }
-
-  const vid   = document.getElementById('hero-video');
-  const stage = document.getElementById('hero-stage');
-  if(!vid || !stage) return;
-
-  let cur = 0;
-
-  // Build playlist dots if multiple campaigns
-  if(pool.length > 1) {
-    const dots = document.createElement('div');
-    dots.id = 'hero-dots';
-    dots.style.cssText = 'position:absolute;bottom:20px;right:24px;display:flex;gap:6px;z-index:4;';
-    dots.innerHTML = pool.map((_,i) => `<div data-i="${i}" style="width:${i===0?'22px':'6px'};height:6px;border-radius:3px;background:${i===0?'#fff':'rgba(255,255,255,.3)'};transition:all .4s;cursor:pointer;"></div>`).join('');
-    stage.appendChild(dots);
-    dots.querySelectorAll('[data-i]').forEach(d => d.addEventListener('click', e => { e.stopPropagation(); cur=+d.dataset.i; loadCamp(); }));
-  }
-
-  function updateDots() {
-    document.querySelectorAll('#hero-dots [data-i]').forEach((d,i) => {
-      const active = i === cur;
-      d.style.width = active ? '22px' : '6px';
-      d.style.background = active ? '#fff' : 'rgba(255,255,255,.3)';
-    });
-  }
-
-  function loadCamp() {
-    const ad = pool[cur];
-    
-    // Fade transition
-    stage.style.opacity = '0.75';
-    setTimeout(() => stage.style.opacity = '1', 350);
-    stage.style.transition = 'opacity .35s';
-
-    // Video
-    if(ad.media_url) {
-      vid.src = ad.media_url;
-      vid.poster = ad.poster_url || '';
-      vid.load();
-      vid.play().catch(()=>{});
-    } else {
-      vid.src = '';
-      // Update gradient background
-      stage.style.background = ad.theme_gradient || 'linear-gradient(135deg,#0A0A14,#1A0A3E)';
+    if(r.ok){
+      const ads = await r.json();
+      if(ads?.length) pool = ads;
     }
 
-    // Update copy
-    const eyebrow = document.getElementById('hero-eyebrow');
-    const title   = document.getElementById('hero-title');
-    const sub     = document.getElementById('hero-sub');
-    const cta     = document.getElementById('hero-cta');
-    const tag     = document.getElementById('hero-ad-tag');
+    const vid   = document.getElementById('hero-video');
+    const stage = document.getElementById('hero-stage');
+    if(!vid || !stage) return;
 
-    if(eyebrow) eyebrow.textContent = '✦ ' + (ad.advertiser || 'Apatmento');
-    if(title)   title.innerHTML = ad.headline || 'Travel in <em>style.</em>';
-    if(sub)     sub.textContent = ad.sub || '';
-    if(tag)     tag.style.display = ad.campaign_id?.startsWith('brand') ? 'none' : 'block';
-    if(cta) {
-      const svg = cta.querySelector('svg');
-      cta.textContent = ad.cta_text || 'Explore';
-      if(svg) cta.appendChild(svg);
-      cta.onclick = () => { if(ad.cta_url && ad.cta_url !== '#') window.location.href = ad.cta_url; };
+    let cur = 0;
+
+    // Build playlist dots if multiple campaigns
+    if(pool.length > 1){
+      const dots = document.createElement('div');
+      dots.id = 'hero-dots';
+      dots.style.cssText = 'position:absolute;bottom:20px;right:24px;display:flex;gap:6px;z-index:4;';
+      dots.innerHTML = pool.map((_,i)=>`<div data-i="${i}" style="width:${i===0?'22px':'6px'};height:6px;border-radius:3px;background:${i===0?'#fff':'rgba(255,255,255,.3)'};transition:all .4s;cursor:pointer;"></div>`).join('');
+      stage.appendChild(dots);
+      dots.querySelectorAll('[data-i]').forEach(d=>d.addEventListener('click',e=>{e.stopPropagation();cur=+d.dataset.i;loadCamp();}));
     }
 
-    updateDots();
-
-    // Track
-    if(!ad.campaign_id?.startsWith('brand')) {
-      fetch(`${SUPA_URL}/rest/v1/rpc/increment_ad_impression`,{
-        method:'POST',
-        headers:{'Content-Type':'application/json','apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY},
-        body:JSON.stringify({p_campaign_id:ad.campaign_id})
-      }).catch(()=>{});
+    function updateDots(){
+      document.querySelectorAll('#hero-dots [data-i]').forEach((d,i)=>{
+        const active = i===cur;
+        d.style.width = active?'22px':'6px';
+        d.style.background = active?'#fff':'rgba(255,255,255,.3)';
+      });
     }
-  }
 
-  // When video ends → next campaign
-  vid.addEventListener('ended', () => {
-    cur = (cur + 1) % pool.length;
+    function loadCamp(){
+      const ad = pool[cur];
+      stage.style.transition='opacity .35s';
+      stage.style.opacity='0.75';
+      setTimeout(()=>stage.style.opacity='1',350);
+
+      if(ad.media_url){ vid.src=ad.media_url; vid.poster=ad.poster_url||''; vid.load(); vid.play().catch(()=>{}); }
+      else { vid.src=''; stage.style.background=ad.theme_gradient||'linear-gradient(135deg,#0A0A14,#1A0A3E)'; }
+
+      const eyebrow = document.getElementById('hero-eyebrow');
+      const title   = document.getElementById('hero-title');
+      const sub     = document.getElementById('hero-sub');
+      const cta     = document.getElementById('hero-cta');
+      const tag     = document.getElementById('hero-ad-tag');
+      if(eyebrow) eyebrow.textContent='✦ '+(ad.advertiser||'Apatmento');
+      if(title)   title.innerHTML=ad.headline||'Travel in <em>style.</em>';
+      if(sub)     sub.textContent=ad.sub||'';
+      if(tag)     tag.style.display=ad.campaign_id?.startsWith('brand')?'none':'block';
+      if(cta){
+        const svg=cta.querySelector('svg');
+        cta.textContent=ad.cta_text||'Explore';
+        if(svg)cta.appendChild(svg);
+        cta.onclick=()=>{if(ad.cta_url&&ad.cta_url!=='#')window.location.href=ad.cta_url;};
+      }
+      updateDots();
+      if(!ad.campaign_id?.startsWith('brand')){
+        fetch(SUPA_URL+'/rest/v1/rpc/increment_ad_impression',{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY},body:JSON.stringify({p_campaign_id:ad.campaign_id})}).catch(()=>{});
+      }
+    }
+
+    vid.addEventListener('ended',()=>{ cur=(cur+1)%pool.length; loadCamp(); });
+    let gradTimer;
+    vid.addEventListener('play',()=>clearTimeout(gradTimer));
+    function checkGrad(){ clearTimeout(gradTimer); if(!pool[cur].media_url){ gradTimer=setTimeout(()=>{ cur=(cur+1)%pool.length; loadCamp(); checkGrad(); },8000); } }
     loadCamp();
-  });
+    checkGrad();
 
-  // For gradient-only slots (no video) → auto-advance after 8s
-  let gradTimer;
-  vid.addEventListener('play', () => clearTimeout(gradTimer));
-  
-  function checkGradTimer() {
-    clearTimeout(gradTimer);
-    if(!pool[cur].media_url) {
-      gradTimer = setTimeout(() => {
-        cur = (cur + 1) % pool.length;
-        loadCamp();
-        checkGradTimer();
-      }, 8000);
-    }
-  }
-
-  // Start
-  loadCamp();
-  checkGradTimer();
+  } catch(e){ console.log('[Hero] Using default branding'); }
 }
 
-// Also make the hero clickable for click tracking
-document.addEventListener('DOMContentLoaded', () => {
-  loadDashboardHero();
-  const stage = document.getElementById('hero-stage');
-  stage?.addEventListener('click', async (e) => {
-    if(e.target.closest('button')) return;
-    // click tracking handled by cta button
-  });
-});
-
-</script>
-
-<script src="/showcase.js" defer></script>
-</body>
-</html>
+>
