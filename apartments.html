@@ -227,6 +227,26 @@ body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webk
 .empty-sub{font-size:14px;color:var(--ink-soft);}
 
 @media(max-width:600px){.search-bar{flex-wrap:wrap;}.drawer{width:100%;}.hero,.content{padding-left:18px;padding-right:18px;}}
+
+/* ════ MOBILE PERFORMANCE PATCH ════
+   Removes GPU-killing backdrop-filter on small screens.
+   Cards use solid semi-transparent bg instead. Much smoother. */
+@media(max-width:700px){
+  .card,.drawer,.topbar,.search-bar,.fchip,.card-fav,.card-badge,
+  .dr-close,.dr-cta-box,.toast,.tb-back,.sb-btn,
+  .sc-sticky,.sc-interstitial,.sc-window{
+    backdrop-filter:none!important;
+    -webkit-backdrop-filter:none!important;
+  }
+  .card{background:rgba(255,255,255,.95)!important;}
+  .topbar{background:rgba(252,252,253,.97)!important;}
+  .drawer{background:#FCFCFD!important;}
+  /* Reduce aurora blur - expensive */
+  .ab{filter:blur(40px)!important;}
+  /* Disable card entrance animations on mobile - causes jank */
+  .card{opacity:1!important;transform:none!important;transition:box-shadow .2s,transform .2s!important;}
+  .card.in{opacity:1!important;transform:none!important;}
+}
 </style>
 </head><body>
 
@@ -971,3 +991,4 @@ loadListings();
 <script src="/showcase.js" defer></script>
 </body>
 </html>
+
