@@ -96,9 +96,10 @@ body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webk
 @keyframes drift{0%,100%{transform:translate(0,0) scale(1);}33%{transform:translate(50px,-36px) scale(1.1);}66%{transform:translate(-36px,46px) scale(.94);}}
 
 /* ── SERVICE ENTRY TRANSITION (house rises) ── */
-#enter-tx{position:fixed;inset:0;z-index:9999;background:var(--ink);display:flex;align-items:center;justify-content:center;overflow:hidden;}
-#enter-tx.done{animation:txLift .8s cubic-bezier(.7,0,.2,1) forwards;}
-@keyframes txLift{to{opacity:0;transform:scale(1.1);visibility:hidden;}}
+#enter-tx{position:fixed;inset:0;z-index:9999;background:var(--ink);display:flex;align-items:center;justify-content:center;overflow:hidden;
+  animation:txLift .8s cubic-bezier(.7,0,.2,1) 2.2s forwards;}
+#enter-tx.done{animation:txLift .4s cubic-bezier(.7,0,.2,1) 0s forwards!important;}
+@keyframes txLift{to{opacity:0;transform:scale(1.1);}}
 .tx-aurora{position:absolute;inset:0;}
 .tx-blob{position:absolute;border-radius:50%;filter:blur(80px);opacity:0;animation:txIgnite 1s forwards;}
 .txb-1{width:420px;height:420px;background:radial-gradient(circle,var(--lilac),transparent 68%);top:30%;left:30%;}
@@ -247,6 +248,13 @@ body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webk
   .card{opacity:1!important;transform:none!important;transition:box-shadow .2s,transform .2s!important;}
   .card.in{opacity:1!important;transform:none!important;}
 }
+
+@media(max-width:700px){
+  .card,.topbar,.search-bar,.drawer,.fchip{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;}
+  .card{background:rgba(255,255,255,.96)!important;opacity:1!important;transform:none!important;animation:none!important;}
+  .topbar{background:rgba(252,252,253,.98)!important;}
+  .ab{filter:blur(40px)!important;opacity:.15!important;}
+}
 </style>
 </head><body>
 
@@ -334,7 +342,7 @@ body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webk
     </div>
   </div>
   <div id="native-banner"
-  <div data-showcase="carousel" style="margin-bottom:20px;"></div> style="display:none;align-items:center;gap:7px;font-size:12px;font-weight:600;color:var(--mint-deep);padding:8px 14px;border-radius:100px;background:rgba(45,212,191,.08);border:1px solid rgba(45,212,191,.2);margin-bottom:16px;"></div>
+  <div data-showcase="carousel" style="margin-bottom:20px;"></div>
   
   <div class="grid" id="grid"></div>
 </div>
@@ -986,9 +994,22 @@ function openField(field) {
 /* ── GO ── */
 loadListings();
 
+/* ── Entry transition dismiss ── */
+function dismissEnterTx(){
+  const el=document.getElementById('enter-tx');
+  if(!el)return;
+  el.style.pointerEvents='none';
+  el.classList.add('done');
+  setTimeout(()=>{el.style.display='none';},900);
+}
+document.getElementById('enter-tx')?.addEventListener('animationend',dismissEnterTx,{once:true});
+window.addEventListener('load',()=>setTimeout(dismissEnterTx,1800));
+setTimeout(dismissEnterTx,3500);
+
 </script>
 <script src="/pwa.js" defer></script>
 <script src="/showcase.js" defer></script>
 </body>
 </html>
+
 
