@@ -255,6 +255,13 @@ body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webk
   .topbar{background:rgba(252,252,253,.98)!important;}
   .ab{filter:blur(40px)!important;opacity:.15!important;}
 }
+
+/* ══ APARTMENTS MOBILE: instant card visibility ══ */
+@media(max-width:700px){
+  .card{opacity:1!important;transform:none!important;animation:none!important;}
+  .card.in{opacity:1!important;transform:none!important;}
+  .card-img{background:#E8E6F0;}
+}
 </style>
 </head><body>
 
@@ -711,6 +718,7 @@ async function getPhoto(query, id) {
   try {
     const res = await fetch(
       `https://api.unsplash.com/photos/random?query=${encodeURIComponent(query)}&orientation=landscape&client_id=${UNSPLASH_KEY}`
+      , { signal: AbortSignal.timeout(4000) }
     );
     if (!res.ok) return null;
     const data = await res.json();
@@ -1011,5 +1019,6 @@ setTimeout(dismissEnterTx,3500);
 <script src="/showcase.js" defer></script>
 </body>
 </html>
+
 
 
