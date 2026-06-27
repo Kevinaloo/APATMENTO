@@ -336,6 +336,73 @@ body.intro-lock{overflow:hidden;height:100vh;}
 
 .reveal{opacity:0;transform:translateY(30px);transition:all .8s cubic-bezier(.22,1,.36,1);}
 .reveal.in{opacity:1;transform:none;}
+
+/* ══ HERO PORTAL BUTTON ══ */
+.hero-portal-btn{
+  position:relative;display:inline-flex;align-items:center;justify-content:center;
+  text-decoration:none;cursor:pointer;
+  margin-bottom:20px;
+}
+.hpb-ring{
+  position:absolute;border-radius:50%;border:1.5px solid;
+  animation:hpbPulse 2.8s cubic-bezier(.4,0,.6,1) infinite;
+  pointer-events:none;
+}
+.hpb-ring-1{width:140px;height:140px;border-color:rgba(184,164,244,.5);animation-delay:0s;}
+.hpb-ring-2{width:180px;height:180px;border-color:rgba(123,47,247,.3);animation-delay:.5s;}
+.hpb-ring-3{width:225px;height:225px;border-color:rgba(67,97,255,.2);animation-delay:1s;}
+@keyframes hpbPulse{
+  0%{transform:scale(.85);opacity:0;}
+  40%{opacity:1;}
+  100%{transform:scale(1.15);opacity:0;}
+}
+.hpb-glow{
+  position:absolute;width:90px;height:90px;border-radius:50%;
+  background:radial-gradient(circle,rgba(184,164,244,.6),rgba(123,47,247,.3),transparent 70%);
+  filter:blur(12px);animation:hpbGlow 3s ease-in-out infinite;
+}
+@keyframes hpbGlow{0%,100%{transform:scale(1);opacity:.7;}50%{transform:scale(1.2);opacity:1;}}
+.hpb-inner{
+  position:relative;z-index:2;
+  display:inline-flex;align-items:center;gap:12px;
+  padding:18px 36px;border-radius:100px;
+  background:linear-gradient(135deg,#7B2FF7,#4361FF,#2DD4BF);
+  background-size:200% 200%;
+  animation:hpbGrad 4s ease infinite;
+  color:#fff;font-family:'Fraunces',serif;font-weight:500;font-size:18px;
+  box-shadow:0 0 0 0 rgba(123,47,247,.5);
+  transition:all .4s cubic-bezier(.22,1,.36,1);
+  border:none;
+}
+@keyframes hpbGrad{0%{background-position:0% 50%;}50%{background-position:100% 50%;}100%{background-position:0% 50%;}}
+.hero-portal-btn:hover .hpb-inner{
+  transform:scale(1.06);
+  box-shadow:0 20px 60px rgba(123,47,247,.5),0 0 0 8px rgba(123,47,247,.15);
+  letter-spacing:.01em;
+}
+.hpb-icon{width:22px;height:22px;flex-shrink:0;animation:hpbSpin 8s linear infinite;}
+@keyframes hpbSpin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
+.hpb-text{letter-spacing:.01em;}
+.hpb-arrow{width:20px;height:20px;flex-shrink:0;transition:transform .4s cubic-bezier(.22,1,.36,1);}
+.hero-portal-btn:hover .hpb-arrow{transform:translateX(5px);}
+
+/* auth pair buttons */
+.hero-cta-pair{display:flex;gap:10px;flex-wrap:wrap;}
+.hero-cta-ghost-hi{
+  background:rgba(184,164,244,.12) !important;
+  border-color:rgba(184,164,244,.4) !important;
+  color:#B8A4F4 !important;
+}
+.hero-cta-ghost-hi:hover{background:rgba(184,164,244,.22) !important;}
+
+/* Hide auth links if signed in */
+.is-signed-in .hero-cta-pair{display:none;}
+.is-signed-in .nav-guest{display:none!important;}
+
+/* ── AUTH-AWARE NAV USER ── */
+.nav-user-name{font-size:13px;font-weight:600;color:var(--ink);white-space:nowrap;}
+.nav.on-dark .nav-user-name{color:rgba(255,255,255,.9);}
+
 </style>
 
 </head>
@@ -425,8 +492,14 @@ body.intro-lock{overflow:hidden;height:100vh;}
     <a href="#promise">Our promise</a>
   </div>
   <div class="nav-right">
-    <a href="auth.html" class="nav-signin">Sign in</a>
-    <a href="auth.html" class="nav-cta">Get started</a>
+    <div id="nav-guest" style="display:flex;align-items:center;gap:10px;">
+      <a href="auth.html" class="nav-signin" id="nav-signin-btn">Sign in</a>
+      <a href="auth.html?mode=signup" class="nav-cta" id="nav-signup-btn">Sign up</a>
+    </div>
+    <div id="nav-user" style="display:none;align-items:center;gap:12px;">
+      <span id="nav-welcome" style="font-size:14px;font-weight:500;color:var(--ink-soft);"></span>
+      <div id="nav-avatar" style="width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--violet),var(--electric));display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:600;font-size:15px;color:#fff;cursor:pointer;" onclick="window.location.href='dashboard.html'">?</div>
+    </div>
   </div>
 </nav>
 
@@ -443,12 +516,22 @@ body.intro-lock{overflow:hidden;height:100vh;}
     </h1>
     <p class="hero-sub">Stays, flights, tours, rides, food and more — beautifully unified for Kenya. Hosts keep 100%. You pay only face value. No commissions, ever.</p>
     <div class="hero-ctas">
-      <a href="auth.html" class="hero-cta-primary">Start exploring
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      <a href="dashboard.html" class="hero-portal-btn" id="hero-portal-btn">
+        <span class="hpb-ring hpb-ring-1"></span>
+        <span class="hpb-ring hpb-ring-2"></span>
+        <span class="hpb-ring hpb-ring-3"></span>
+        <span class="hpb-glow"></span>
+        <span class="hpb-inner">
+          <svg class="hpb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          <span class="hpb-text">Take me to the site</span>
+          <svg class="hpb-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </span>
       </a>
-      <a href="#services" class="hero-cta-ghost">See all services</a>
-    </div>
-  </div>
+      <div class="hero-cta-pair">
+        <a href="auth.html" class="hero-cta-ghost" id="hero-signin-link">Sign in</a>
+        <a href="auth.html?mode=signup" class="hero-cta-ghost hero-cta-ghost-hi" id="hero-signup-link">Create account</a>
+      </div>
+    </div></div>
   <div class="hero-marquee">
     <div class="marquee-track" id="marquee"></div>
   </div>
@@ -670,5 +753,44 @@ document.querySelectorAll('.svc-tile').forEach((t,i)=>{t.style.transitionDelay=(
 
 <script src="/pwa.js" defer></script>
 <script src="/showcase.js" defer></script>
+
+<script>
+/* ── Auth-aware landing page ── */
+(async function(){
+  let sb2=null;
+  try{const{createClient}=supabase;sb2=createClient('https://gfwgbgdvxtocwhilrtdw.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw');}catch(e){}
+  if(!sb2) return;
+  try{
+    const{data:{session}}=await sb2.auth.getSession();
+    if(!session) return;
+    const user=session.user;
+    let name='there';
+    try{
+      const{data:p}=await sb2.from('profiles').select('first_name').eq('id',user.id).single();
+      name=p?.first_name||user.user_metadata?.first_name||user.email?.split('@')[0]||'there';
+    }catch(e){ name=user.user_metadata?.first_name||user.email?.split('@')[0]||'there'; }
+    name=name.charAt(0).toUpperCase()+name.slice(1);
+
+    /* Show user nav, hide guest nav */
+    document.getElementById('nav-guest').style.display='none';
+    document.getElementById('nav-user').style.display='flex';
+    document.getElementById('nav-welcome').textContent='Welcome, '+name;
+    document.getElementById('nav-avatar').textContent=name[0];
+
+    /* Update hero button to go straight to dashboard */
+    const btn=document.getElementById('hero-portal-btn');
+    if(btn){ btn.href='dashboard.html'; }
+
+    /* Hide sign in/up links, show just the portal button */
+    document.body.classList.add('is-signed-in');
+
+    /* Change CTA pair to "Go to dashboard" */
+    const pair=document.querySelector('.hero-cta-pair');
+    if(pair) pair.innerHTML=`<a href="dashboard.html" class="hero-cta-ghost" style="color:var(--mint);border-color:rgba(45,212,191,.3);">Go to dashboard →</a>`;
+
+  }catch(e){}
+})();
+</script>
+
 </body>
 </html>
