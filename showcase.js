@@ -298,6 +298,42 @@ const CSS = `
 
 /* ── misc ── */
 @media(max-width:600px){.sc-sticky{right:10px;bottom:80px;width:calc(100vw - 20px);}}
+
+/* ══ SCROLL INTERSTITIAL (appears between listings) ══ */
+.sc-interstitial{
+  border-radius:22px;overflow:hidden;margin:28px 0;
+  box-shadow:0 12px 44px rgba(10,10,20,.1);
+  opacity:0;transform:translateY(24px);
+  transition:opacity .7s cubic-bezier(.22,1,.36,1),transform .7s cubic-bezier(.22,1,.36,1);
+}
+.sc-interstitial.in{opacity:1;transform:none;}
+
+/* ══ WINDOW VIDEO (floating cinematic player) ══ */
+.sc-window{
+  position:relative;border-radius:20px;overflow:hidden;
+  aspect-ratio:16/9;background:#000;
+  box-shadow:0 20px 60px rgba(10,10,20,.18);
+  cursor:pointer;
+  opacity:0;transform:translateY(20px);
+  transition:opacity .65s cubic-bezier(.22,1,.36,1),transform .65s cubic-bezier(.22,1,.36,1),box-shadow .4s;
+}
+.sc-window.in{opacity:1;transform:none;}
+.sc-window:hover{box-shadow:0 28px 72px rgba(123,47,247,.2);}
+.sc-window video{width:100%;height:100%;object-fit:cover;}
+.sc-window-grad{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.7) 0%,transparent 50%);}
+.sc-window-tag{position:absolute;top:12px;left:14px;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:rgba(255,255,255,.9);background:rgba(0,0,0,.3);backdrop-filter:blur(10px);padding:4px 10px;border-radius:100px;border:1px solid rgba(255,255,255,.15);z-index:2;}
+.sc-window-content{position:absolute;bottom:0;left:0;right:0;padding:16px 18px;z-index:2;}
+.sc-window-adv{font-size:11px;font-weight:600;color:rgba(255,255,255,.7);margin-bottom:4px;}
+.sc-window-h{font-family:'Fraunces',serif;font-weight:500;font-size:clamp(15px,2.2vw,20px);color:#fff;margin-bottom:8px;line-height:1.15;}
+.sc-window-foot{display:flex;align-items:center;justify-content:space-between;}
+.sc-window-cta{padding:8px 16px;border-radius:100px;background:#fff;color:#0A0A14;font-size:12px;font-weight:700;border:none;cursor:pointer;transition:transform .2s;}
+.sc-window-cta:hover{transform:scale(1.05);}
+.sc-window-ctrl{display:flex;gap:6px;}
+.sc-window-btn{width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,.35);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;}
+.sc-window-btn svg{width:14px;height:14px;}
+.sc-window-bar{position:absolute;bottom:0;left:0;right:0;height:3px;background:rgba(255,255,255,.2);}
+.sc-window-bar-fill{height:100%;background:rgba(255,255,255,.8);width:0%;transition:width .1s linear;}
+
 `;
 
 function injectCSS(){
@@ -654,6 +690,112 @@ function renderSticky(c){
   el.querySelector('.sc-sticky-cta').addEventListener('click',()=>trackClick(c.id,'sticky',c.advertiser));
 }
 
+
+/* ── WINDOW VIDEO (compact cinematic player, 16:9) ── */
+function renderWindow(slot, c){
+  if(!c) return;
+  const pool = slot._videoPool || [c];
+  let cur = 0;
+  const camp = () => pool[cur % pool.length];
+
+  slot.innerHTML = `
+    <div class="sc-label">Sponsored content</div>
+    <div class="sc-window sc-el" id="scw-${c.id}">
+      <video id="scwv-${c.id}" muted loop playsinline preload="metadata" style="width:100%;height:100%;object-fit:cover;"></video>
+      <div class="sc-window-grad" style="background:${camp().grad}"></div>
+      <div class="sc-window-tag">${camp().tag}</div>
+      <div class="sc-window-content">
+        <div class="sc-window-adv">${camp().advertiser}</div>
+        <div class="sc-window-h">${camp().headline}</div>
+        <div class="sc-window-foot">
+          <button class="sc-window-cta" id="scwcta-${c.id}">${camp().cta}</button>
+          <div class="sc-window-ctrl">
+            <div class="sc-window-btn sc-wnd-snd"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg></div>
+          </div>
+        </div>
+      </div>
+      <div class="sc-window-bar"><div class="sc-window-bar-fill" id="scwbar-${c.id}"></div></div>
+    </div>`;
+
+  const el   = slot.querySelector('.sc-window');
+  const vid  = slot.querySelector('video');
+  const cta  = slot.querySelector('.sc-window-cta');
+  const snd  = slot.querySelector('.sc-wnd-snd');
+  const bar  = slot.querySelector('.sc-window-bar-fill');
+  let muted  = true;
+
+  function updateWindow(){
+    const cp = camp();
+    if(cp.media){ vid.src=cp.media; vid.poster=cp.poster||''; vid.load(); vid.play().catch(()=>{}); }
+    else { vid.src=''; el.querySelector('.sc-window-grad').style.background=cp.grad; }
+    el.querySelector('.sc-window-h').textContent=cp.headline;
+    el.querySelector('.sc-window-adv').textContent=cp.advertiser;
+    cta.textContent=cp.cta;
+    cta.onclick=e=>{e.stopPropagation();trackClick(cp.id,'window',cp.advertiser);if(cp.url&&cp.url!=='#')window.location.href=cp.url;};
+  }
+
+  vid.addEventListener('ended',()=>{ cur=(cur+1)%pool.length; updateWindow(); });
+  vid.addEventListener('timeupdate',()=>{ if(vid.duration&&bar) bar.style.width=(vid.currentTime/vid.duration*100)+'%'; });
+  snd?.addEventListener('click',e=>{ e.stopPropagation(); muted=!muted; vid.muted=muted;
+    snd.innerHTML=muted
+      ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>'
+      : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg>';
+  });
+  el.addEventListener('click',e=>{
+    if(e.target.closest('.sc-window-btn')||e.target.closest('.sc-window-cta'))return;
+    trackClick(camp().id,'window',camp().advertiser);
+    if(camp().url&&camp().url!=='#')window.location.href=camp().url;
+  });
+
+  observe(el,()=>{
+    el.classList.add('in');
+    trackImpression(camp().id,'window',camp().advertiser);
+    vid.play().catch(()=>{});
+  },()=>vid.pause());
+
+  updateWindow();
+}
+
+/* ── SCROLL INTERSTITIAL (injected between listings) ── */
+function injectScrollInterstitials(gridSelector, interval){
+  // interval = every N items, inject an ad
+  if(!gridSelector) return;
+  const grid = document.querySelector(gridSelector);
+  if(!grid) return;
+
+  const pools = CAMPS.video?.length ? CAMPS.video : (CAMPS.carousel?.length ? null : DEMO.video);
+  let adIdx = 0;
+
+  // Use MutationObserver — inject after items load
+  const doInject = () => {
+    const items = [...grid.children].filter(c=>!c.dataset.adInjected);
+    items.forEach((item, i) => {
+      if((i + 1) % interval === 0) {
+        const adPool = CAMPS.video?.length ? CAMPS.video : DEMO.video;
+        const adCamp = adPool[adIdx % adPool.length];
+        adIdx++;
+
+        const wrapper = document.createElement('div');
+        wrapper.dataset.adInjected = '1';
+        wrapper.setAttribute('data-showcase-inline', '1');
+        // For grids, span full width
+        wrapper.style.cssText = 'grid-column:1/-1;margin:8px 0;';
+
+        const slot = document.createElement('div');
+        slot._videoPool = adPool;
+        wrapper.appendChild(slot);
+        grid.insertBefore(wrapper, items[i].nextSibling);
+        renderCarousel(slot, CAMPS.carousel?.length ? CAMPS.carousel : DEMO.carousel);
+      }
+    });
+  };
+
+  // Initial inject + watch for new items
+  setTimeout(doInject, 800);
+  const obs = new MutationObserver(doInject);
+  obs.observe(grid, { childList: true });
+}
+
 /* ── Intersection observer ── */
 function observe(el,onIn,onOut){
   new IntersectionObserver(e=>e.forEach(x=>{if(x.isIntersecting)onIn?.();else onOut?.();}),{threshold:.1,rootMargin:"0px 0px -50px 0px"}).observe(el);
@@ -685,6 +827,11 @@ async function init(){
   document.querySelectorAll('[data-showcase]').forEach(slot=>{
     slot.style.position='relative';
     const fmt=slot.getAttribute('data-showcase');
+    if(fmt==='window'){
+      const wpool = pools.video?.length ? pools.video : [BRAND_FALLBACK.video];
+      slot._videoPool = wpool;
+      renderWindow(slot, wpool[0]);
+    }
     if(fmt==='video'){
       const vpool = pools.video?.length ? pools.video : [BRAND_FALLBACK.video];
       slot._videoPool = vpool;
@@ -695,6 +842,18 @@ async function init(){
     if(fmt==='split')    renderSplit(slot, pick('split', pools.split));
     if(fmt==='ticker')   renderTicker(slot, pick('ticker', pools.ticker));
   });
+
+  /* Scroll interstitials — inject between listing cards */
+  const interstitialPages = {
+    'apartments': '#grid',
+    'tours':      '#grid',
+    'events':     '#grid',
+    'food':       '#grid',
+    'shopping':   '#grid',
+  };
+  if(interstitialPages[PAGE]){
+    injectScrollInterstitials(interstitialPages[PAGE], 8);
+  }
 
   /* Sticky on content pages */
   const stickyOn=['','index','apartments','my-bookings','dashboard','tours','events'];
