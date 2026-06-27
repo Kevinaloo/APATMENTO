@@ -634,110 +634,78 @@ function getGreeting(){
 
 /* ── SESSION INIT ── */
 async function init(){
-  // ── FAILSAFE: always dismiss loader after 3s no matter what ──
-  const loaderFail = setTimeout(()=>{
-    const l = document.getElementById('loader');
-    if(l) l.classList.add('done');
-  }, 2500);
+  /* ══ Use onAuthStateChange INITIAL_SESSION event
+     This fires synchronously from localStorage — no race conditions.
+     ══════════════════════════════════════════════════════════ */
+  const loaderFail = setTimeout(()=>{ document.getElementById('loader')?.classList.add('done'); }, 4000);
 
-  try {
-    const params    = new URLSearchParams(location.search);
-    const roleParam = params.get('role');
+  sb.auth.onAuthStateChange(async (event, session) => {
+    if (event !== 'INITIAL_SESSION') return; // only care about the first sync check
 
-    // Get session — retry once if null (handles post-redirect timing)
-    let { data:{ session } } = await sb.auth.getSession();
-    if(!session){
-      await new Promise(r => setTimeout(r, 1000));
-      const { data: r2 } = await sb.auth.getSession();
-      session = r2?.session || null;
-    }
-    const isGuest = !session;
+    clearTimeout(loaderFail);
 
-    if(isGuest){
-      // ── GUEST MODE ──────────────────────────────────────────
-      document.getElementById('g-name').textContent = '';
-      document.getElementById('g-greeting').textContent = getGreeting();
-      document.getElementById('g-avatar').textContent = '?';
+    if (!session) {
+      // ── GUEST ──
       document.getElementById('dash-guest-nav').style.display = 'flex';
       document.getElementById('dash-user-nav').style.display  = 'none';
-
-      clearTimeout(loaderFail);
-      setTimeout(()=>document.getElementById('loader').classList.add('done'), 900);
-
+      document.getElementById('g-greeting').textContent = getGreeting();
+      document.getElementById('g-name').textContent = '';
+      document.getElementById('g-avatar').textContent = '?';
+      setTimeout(()=>document.getElementById('loader')?.classList.add('done'), 800);
       CURRENT_ROLE = 'guest';
       showScreen('guest');
       loadStays();
       loadHeroVideo();
-      setTimeout(loadDashboardHero, 500);  // slight delay so DOM is ready
+      setTimeout(loadDashboardHero, 400);
       return;
     }
 
-    // ── SIGNED IN ────────────────────────────────────────────
+    // ── SIGNED IN ──
     CURRENT_USER = session.user;
-    setTimeout(checkAdminAccess, 800); // Admin check after user is set
-    const meta = session.user.user_metadata || {};
-    let firstName = meta.first_name || meta.name?.split(' ')[0] || meta.full_name?.split(' ')[0] || '';
-    let rememberedRole = 'guest';
 
+    // Show admin link if admin email
+    const ADMINS = ['apatmento@gmail.com','worlddossy@gmail.com'];
+    if (ADMINS.includes(session.user.email?.toLowerCase())) {
+      const adminLink = document.getElementById('admin-link');
+      if (adminLink) adminLink.style.display = 'flex';
+    }
+
+    // Get profile
+    const meta = session.user.user_metadata || {};
+    let firstName = meta.first_name || meta.given_name || meta.name?.split(' ')[0] || '';
+    let savedRole = 'guest';
     try {
-      const { data:profile } = await sb.from('profiles')
-        .select('first_name,last_name,last_role')
-        .eq('id', session.user.id).single();
-      if(profile?.first_name) firstName = profile.first_name;
-      if(profile?.last_role)  rememberedRole = profile.last_role;
+      const { data:p } = await sb.from('profiles').select('first_name,last_role').eq('id',session.user.id).maybeSingle();
+      if (p?.first_name) firstName = p.first_name;
+      if (p?.last_role)  savedRole  = p.last_role;
     } catch(e){}
 
-    USER.firstName = firstName;
-    const initial  = firstName ? firstName[0].toUpperCase() : '?';
+    USER.firstName = firstName || 'there';
 
-    // Update greeting
-    document.getElementById('g-avatar').textContent = initial;
-    if(firstName){
-      document.getElementById('g-name').innerHTML = ', <em style="font-style:italic;font-weight:500;background:linear-gradient(120deg,var(--violet),var(--electric),var(--mint-deep));-webkit-background-clip:text;background-clip:text;color:transparent;">' + firstName + '</em>';
-      document.getElementById('g-greeting').textContent = getGreeting();
-      if(document.getElementById('nav-user-name')) document.getElementById('nav-user-name').textContent = 'Welcome, ' + firstName;
-    } else {
-      document.getElementById('g-name').textContent = '';
-      document.getElementById('g-greeting').textContent = getGreeting();
-    }
-    // Update nav — show user avatar, hide guest buttons
+    // Update nav
     document.getElementById('dash-guest-nav').style.display = 'none';
     document.getElementById('dash-user-nav').style.display  = 'flex';
-
-    clearTimeout(loaderFail);
-    setTimeout(()=>document.getElementById('loader').classList.add('done'), 1200);
-
-    const targetRole = roleParam || rememberedRole || 'guest';
-    CURRENT_ROLE = targetRole;
-    showScreen(targetRole);
-
-    if(targetRole === 'guest'){ loadStays(); loadHeroVideo(); }
-    if(targetRole === 'partner'){
-      setTimeout(initPartnerFlow, 200);
+    document.getElementById('g-greeting').textContent = getGreeting();
+    document.getElementById('g-avatar').textContent   = (firstName||'?')[0].toUpperCase();
+    if (document.getElementById('nav-user-name'))
+      document.getElementById('nav-user-name').textContent = 'Welcome, '+firstName;
+    if (firstName) {
+      document.getElementById('g-name').innerHTML = ', <em style="font-style:italic;font-weight:500;background:linear-gradient(120deg,var(--violet),var(--electric),var(--mint-deep));-webkit-background-clip:text;background-clip:text;color:transparent;">'+firstName+'</em>';
     }
-    setTimeout(loadDashboardHero, 500);
 
-  } catch(err) {
-    console.warn('[Dashboard] init error:', err);
-    clearTimeout(loaderFail);
-    const l = document.getElementById('loader');
-    if(l) l.classList.add('done');
-    // Try one more time to get session before falling back to guest
-    try {
-      const { data:{ session:s2 } } = await sb.auth.getSession();
-      if(s2){
-        CURRENT_USER = s2.user;
-        setTimeout(checkAdminAccess, 500);
-        document.getElementById('dash-guest-nav').style.display = 'none';
-        document.getElementById('dash-user-nav').style.display  = 'flex';
-        showScreen('guest'); loadStays(); loadHeroVideo();
-        return;
-      }
-    } catch(e2){}
-    showScreen('guest');
-    loadStays();
-  }
+    setTimeout(()=>document.getElementById('loader')?.classList.add('done'), 1000);
+
+    const params = new URLSearchParams(location.search);
+    const role   = params.get('role') || savedRole || 'guest';
+    CURRENT_ROLE = role;
+    showScreen(role);
+
+    if (role === 'guest') { loadStays(); loadHeroVideo(); }
+    if (role === 'partner') setTimeout(initPartnerFlow, 200);
+    setTimeout(loadDashboardHero, 400);
+  });
 }
+
 
 function showScreen(role){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
@@ -1187,6 +1155,7 @@ function checkAdminAccess(){
 }
 }
 </script>
+
 
 
 
