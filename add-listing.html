@@ -284,44 +284,126 @@ body{overflow-x:hidden;}
     <span class="step-eyebrow">✦ Step 1 · Property type</span>
     <h1 class="step-title">What are you <em>listing</em>?</h1>
     <p class="step-sub">Choose the type that best describes your space. You keep 100% of every booking.</p>
-    <div class="type-grid">
-        <div class="type-tile" data-type="Apartment" onclick="selectType(this)">
-          <div class="type-tile-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h.01M9 13h.01M9 17h.01M15 9h.01M15 13h.01M15 17h.01"/></svg></div>
-          <div class="type-tile-name">Apartment</div>
-        </div>
-        <div class="type-tile" data-type="House" onclick="selectType(this)">
-          <div class="type-tile-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5M5 9.5V20h14V9.5M9 20v-5a3 3 0 0 1 6 0v5"/></svg></div>
-          <div class="type-tile-name">House</div>
-        </div>
-        <div class="type-tile" data-type="Studio" onclick="selectType(this)">
-          <div class="type-tile-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18M9 21V9"/></svg></div>
-          <div class="type-tile-name">Studio</div>
-        </div>
-        <div class="type-tile" data-type="Penthouse" onclick="selectType(this)">
-          <div class="type-tile-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M6 21V9l6-4 6 4v12M10 21v-4h4v4"/></svg></div>
-          <div class="type-tile-name">Penthouse</div>
-        </div>
-        <div class="type-tile" data-type="Villa" onclick="selectType(this)">
-          <div class="type-tile-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20h20M4 20V8l8-5 8 5v12M9 20v-6h6v6"/></svg></div>
-          <div class="type-tile-name">Villa</div>
-        </div>
-        <div class="type-tile" data-type="Cottage" onclick="selectType(this)">
-          <div class="type-tile-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12 12 5l9 7M5 11V20h14V11M10 20v-5h4v5"/></svg></div>
-          <div class="type-tile-name">Cottage</div>
-        </div>
-        <div class="type-tile" data-type="Serviced" onclick="selectType(this)">
-          <div class="type-tile-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 7h10M7 11h10M7 15h6"/></svg></div>
-          <div class="type-tile-name">Serviced</div>
-        </div>
-        <div class="type-tile" data-type="Guesthouse" onclick="selectType(this)">
-          <div class="type-tile-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V9l8-6 8 6v12M9 21v-6h6v6M2 9h20"/></svg></div>
-          <div class="type-tile-name">Guesthouse</div>
-        </div>
-        <div class="type-tile" data-type="Lodge" onclick="selectType(this)">
-          <div class="type-tile-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21l3-12 4-5 4 5 3 12M9 21v-5h6v5"/></svg></div>
-          <div class="type-tile-name">Lodge</div>
-        </div>
-    </div>
+    <div class="type-grid" id="type-grid-container">
+  <!-- Populated by JS based on ?type= param -->
+</div>
+<script>
+(function(){
+  const configs = {
+    apartment:{ 
+      eyebrow:'✦ Step 1 · Property type',
+      heading:'What are you <em>listing</em>?',
+      sub:'Choose the type that best describes your space. You keep 100% of every booking.',
+      types:[
+        {name:'Apartment', ico:'<path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h.01M9 13h.01M9 17h.01M15 9h.01M15 13h.01M15 17h.01"/>'},
+        {name:'House', ico:'<path d="M3 9.5 12 3l9 6.5V21H3z"/><path d="M9 21V12h6v9"/>'},
+        {name:'Studio', ico:'<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>'},
+        {name:'Penthouse', ico:'<path d="M3 21h18M5 21V5h14v16"/><path d="M9 13h6M9 9h6M9 17h6"/>'},
+        {name:'Villa', ico:'<path d="M2 20h20M4 20V8l8-6 8 6v12"/><path d="M10 20v-6h4v6"/>'},
+        {name:'Cottage', ico:'<path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/><path d="M9 20v-5a3 3 0 0 1 6 0v5"/>'},
+        {name:'Serviced', ico:'<path d="M3 21h18M4 21V9h16v12"/><path d="M9 21v-4h6v4"/><path d="M3 9l9-7 9 7"/>'},
+        {name:'Guesthouse', ico:'<path d="M3 21h18M5 21V7l7-4 7 4v14"/><circle cx="12" cy="11" r="2"/>'},
+        {name:'Lodge', ico:'<path d="M4 20V10l8-7 8 7v10H4z"/><path d="M10 20v-5h4v5"/>'},
+        {name:'Hostel', ico:'<path d="M3 21h18M3 7h18M5 21V7M19 21V7"/><path d="M9 21v-5h6v5"/>'},
+      ]
+    },
+    tour:{
+      eyebrow:'✦ Step 1 · Experience type',
+      heading:'What kind of <em>experience</em>?',
+      sub:'Choose the tour type you are offering. You keep 100% of every booking.',
+      types:[
+        {name:'Safari', ico:'<path d="M2 12h20M12 2v20"/><circle cx="12" cy="12" r="3"/>'},
+        {name:'Day Trip', ico:'<circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/>'},
+        {name:'City Tour', ico:'<path d="M3 21h18M5 21V9l7-6 7 6v12M9 21v-6h6v6"/>'},
+        {name:'Cultural', ico:'<path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>'},
+        {name:'Adventure', ico:'<path d="m3 17 2-8 4 3 3-8 3 8 4-3 2 8H3z"/>'},
+        {name:'Hiking', ico:'<path d="M3 20h18M7 20V8l5-5 5 5v12"/><path d="M9 20v-4h6v4"/>'},
+        {name:'Water Sports', ico:'<path d="M2 12c1-2 3-3 5-3s4 2 5 2 4-2 5-2"/><path d="M2 17c1-2 3-3 5-3s4 2 5 2 4-2 5-2"/>'},
+        {name:'Photography', ico:'<rect x="2" y="6" width="20" height="14" rx="2"/><circle cx="12" cy="13" r="4"/><path d="M8 6l2-3h4l2 3"/>'},
+        {name:'Night Safari', ico:'<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/>'},
+        {name:'Custom Tour', ico:'<path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/>'},
+      ]
+    },
+    event:{
+      eyebrow:'✦ Step 1 · Event type',
+      heading:'What type of <em>event</em>?',
+      sub:'Choose the event category. You keep 100% of every booking.',
+      types:[
+        {name:'Concert', ico:'<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>'},
+        {name:'Festival', ico:'<path d="M3 17v-3a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v3"/><path d="M5 13V7a7 7 0 0 1 14 0v6"/>'},
+        {name:'Sports', ico:'<circle cx="12" cy="12" r="9"/><path d="M12 3c-1 3-1 9 0 18M3 12c3-1 9-1 18 0"/>'},
+        {name:'Comedy', ico:'<circle cx="12" cy="12" r="9"/><path d="M8 13s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"/>'},
+        {name:'Conference', ico:'<rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>'},
+        {name:'Wedding', ico:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>'},
+        {name:'Exhibition', ico:'<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>'},
+        {name:'Theatre', ico:'<path d="M2 10s3-3 3-8h14c0 5 3 8 3 8"/><path d="M6 17s1.5 5 6 5 6-5 6-5H6z"/>'},
+        {name:'Networking', ico:'<circle cx="12" cy="5" r="3"/><circle cx="5" cy="19" r="3"/><circle cx="19" cy="19" r="3"/><path d="M12 8v2M5.7 17.4 10 14M18.3 17.4 14 14"/>'},
+        {name:'Party', ico:'<path d="M5.8 11.3 2 22l10.2-3.8"/><path d="m14 13 6.2 6.2a2 2 0 0 0 2.8-2.8L16.8 10"/><path d="m3 3 4 4M10 2l-.5 5"/><path d="M22 3l-4 4M14 2l.5 5"/>'},
+      ]
+    },
+    food:{
+      eyebrow:'✦ Step 1 · Venue type',
+      heading:'What type of <em>venue</em>?',
+      sub:'Choose your food & dining category. You keep 100% of every booking.',
+      types:[
+        {name:'Restaurant', ico:'<path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2M7 2v20M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/>'},
+        {name:'Café', ico:'<path d="M17 8h1a4 4 0 0 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4z"/><path d="M6 2v2M10 2v2M14 2v2"/>'},
+        {name:'Bar & Grill', ico:'<path d="M8 22h8M12 11v11M12 11a5 5 0 0 0 5-5c0-2-2-4-2-4H9s-2 2-2 4a5 5 0 0 0 5 5z"/>'},
+        {name:'Fast Food', ico:'<path d="M3 11l19-9-9 19-2-8-8-2z"/>'},
+        {name:'Catering', ico:'<path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/>'},
+        {name:'Food Truck', ico:'<path d="M5 13h14l-1.5-5a2 2 0 0 0-2-1.5h-7a2 2 0 0 0-2 1.5z"/><path d="M4 13h16v4H4z"/><circle cx="7.5" cy="17.5" r="1.5"/><circle cx="16.5" cy="17.5" r="1.5"/>'},
+        {name:'Bakery', ico:'<path d="M2 8h20M2 16h20M12 2v20M2 12h20"/>'},
+        {name:'Rooftop', ico:'<path d="M3 9.5 12 3l9 6.5"/><path d="M5 9.5V20h14V9.5"/>'},
+        {name:'Buffet', ico:'<path d="M3 11l19-9-9 19-2-8-8-2z"/>'},
+        {name:'Fine Dining', ico:'<circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/>'},
+      ]
+    },
+    carhire:{
+      eyebrow:'✦ Step 1 · Vehicle type',
+      heading:'What type of <em>vehicle</em>?',
+      sub:'Choose the vehicle category. You keep 100% of every booking.',
+      types:[
+        {name:'Self-Drive', ico:'<rect x="2" y="8" width="20" height="10" rx="2"/><path d="M6 8V6a4 4 0 0 1 12 0v2"/><circle cx="8" cy="16" r="1"/><circle cx="16" cy="16" r="1"/>'},
+        {name:'Chauffeur', ico:'<path d="M5 13h14l-1.5-5a2 2 0 0 0-2-1.5h-7a2 2 0 0 0-2 1.5z"/><path d="M4 13h16v4H4z"/><circle cx="7.5" cy="17.5" r="1.5"/><circle cx="16.5" cy="17.5" r="1.5"/>'},
+        {name:'4x4 Safari', ico:'<path d="M4 15h16M4 9h16M8 9V5l4-2 4 2v4M8 15v4M16 15v4"/>'},
+        {name:'Minibus', ico:'<rect x="1" y="7" width="22" height="12" rx="2"/><path d="M1 11h22M7 19v2M17 19v2M5 7V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v2"/>'},
+        {name:'Luxury Sedan', ico:'<path d="M5 13h14l-2-6H7z"/><path d="M3 13h18v4H3z"/><circle cx="7" cy="17" r="1.5"/><circle cx="17" cy="17" r="1.5"/>'},
+        {name:'Airport Transfer', ico:'<path d="M17.8 19.2 16 11l3.5-3.5C21 6 21 4 19 2c-2-2-4-2-5.5-.5L10 5 1.8 6.2l5 5-3 3L7 17l8-4 2.8 6.2z"/>'},
+        {name:'Bus Hire', ico:'<path d="M8 6v12M16 6v12M3 6h18v12H3z"/><path d="M3 10h18M3 14h18"/>'},
+        {name:'Motorcycle', ico:'<circle cx="5" cy="17" r="3"/><circle cx="19" cy="17" r="3"/><path d="M14 17H8M10 5h4l3 7H7l1.5-4H10V5z"/>'},
+        {name:'Tuk Tuk', ico:'<circle cx="5" cy="17" r="2"/><circle cx="16" cy="17" r="2"/><path d="M3 17V9l5-4h7l4 5v7"/>'},
+        {name:'Van / MPV', ico:'<rect x="1" y="8" width="22" height="10" rx="1"/><path d="M1 12h22M5 8V6a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v2"/>'},
+      ]
+    },
+  };
+  
+  const svcType = window._serviceType || 'apartment';
+  const cfg = configs[svcType] || configs.apartment;
+  
+  // Update eyebrow + heading + sub
+  const eyebrow = document.querySelector('#step-1 .step-eyebrow');
+  const heading = document.querySelector('#step-1 .step-title');
+  const sub = document.querySelector('#step-1 .step-sub');
+  if(eyebrow) eyebrow.textContent = cfg.eyebrow.replace('✦ ','');
+  if(heading) heading.innerHTML = cfg.heading;
+  if(sub) sub.textContent = cfg.sub;
+  
+  // Render type tiles
+  const grid = document.getElementById('type-grid-container');
+  if(!grid) return;
+  grid.innerHTML = cfg.types.map(({name,ico}) => `
+    <div class="type-tile" data-type="${name}" onclick="selectType(this)">
+      <div class="type-tile-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${ico}</svg></div>
+      <div class="type-tile-name">${name}</div>
+    </div>`).join('');
+  
+  // Pre-select if preset
+  if(window._presetType){
+    const tile = grid.querySelector('[data-type="'+window._presetType+'"]');
+    if(tile) selectType(tile);
+  }
+})();
+</script>
     <div class="step-nav-btns">
       <button class="btn-next" onclick="nextStep()">Continue <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
     </div>
@@ -810,3 +892,4 @@ async function publishListing() {
   }
 }</script><script src="/pwa.js" defer></script>
 </body></html>
+
