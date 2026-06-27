@@ -859,15 +859,25 @@ async function init(){
   });
 
   /* Scroll interstitials — inject between listing cards */
+  // Scroll interstitials: only on pages with proper listing grids
+  // Rides, food, shopping excluded — they don't have grids, ads appear at top
   const interstitialPages = {
     'apartments': '#grid',
     'tours':      '#grid',
     'events':     '#grid',
-    'food':       '#grid',
-    'shopping':   '#grid',
   };
   if(interstitialPages[PAGE]){
-    injectScrollInterstitials(interstitialPages[PAGE], 8);
+    // Wait for grid to have actual content before injecting
+    const gridSel = interstitialPages[PAGE];
+    const waitForContent = () => {
+      const g = document.querySelector(gridSel);
+      if(g && g.children.length >= 6){
+        injectScrollInterstitials(gridSel, 8);
+      } else {
+        setTimeout(waitForContent, 600);
+      }
+    };
+    setTimeout(waitForContent, 1000);
   }
 
   /* Sticky on content pages */
@@ -883,4 +893,5 @@ else init();
 
 window.ApatmentoShowcase={reload:init};
 })();
+
 
