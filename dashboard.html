@@ -67,6 +67,15 @@ window.addEventListener('load', function() {
     }
   }, 4000);
 });
+// Hard failsafe — if EVERYTHING hangs, force dismiss at 6s
+setTimeout(function(){
+  var l = document.getElementById('loader');
+  if(l && !l.classList.contains('done')){
+    l.classList.add('done');
+    var guest = document.getElementById('screen-guest');
+    if(guest && !document.querySelector('.screen.active')) guest.classList.add('active');
+  }
+}, 6000);
 </script>
 <link rel="preconnect"> href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
@@ -1046,16 +1055,23 @@ function hideAddSheet(){ document.getElementById('add-scrim').classList.remove('
   try {
     const SUPA_URL = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
     const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
-    // Wait for auth to settle
-    await new Promise(r => setTimeout(r, 2000));
+    // Wait for auth to settle + sb to be ready
+    await new Promise(r => setTimeout(r, 2500));
     if(typeof sb === 'undefined') return;
-    const { data:{ session } } = await sb.auth.getSession();
+    // Retry session up to 3 times
+    let session = null;
+    for(let i=0;i<3;i++){
+      const { data } = await sb.auth.getSession();
+      if(data?.session){ session = data.session; break; }
+      await new Promise(r=>setTimeout(r,800));
+    }
     if(!session) return;
-    // Use the user's own access_token to query admin_users
+    // Query with cache-bust to avoid stale SW cache
     const r = await fetch(
-      SUPA_URL + '/rest/v1/admin_users?email=eq.' + encodeURIComponent(session.user.email) + '&select=email,role&limit=1',
-      { headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + session.access_token } }
+      SUPA_URL + '/rest/v1/admin_users?email=eq.' + encodeURIComponent(session.user.email) + '&select=email,role&limit=1&_cb=' + Date.now(),
+      { headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + session.access_token }, cache: 'no-store' }
     );
+    if(!r.ok) return;
     const rows = await r.json();
     if(!rows?.length) return;
     // ✅ Admin confirmed — show the pill
