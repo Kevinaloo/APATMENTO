@@ -301,6 +301,7 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--glass);c
   </div>
 </div>
 
+<div style="max-width:1180px;margin:0 auto;padding:0 26px 0;"><div data-showcase="ticker"></div></div>
 <div class="content">
   <div class="content-head">
     <div class="result-count"><strong id="result-num">0</strong> routes available</div>
@@ -310,9 +311,11 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--glass);c
       <option value="departure">Earliest departure</option>
     </select>
   </div>
+  <div data-showcase="carousel" style="margin-bottom:20px;"></div>
   <div class="grid" id="grid" style="grid-template-columns:1fr;"></div>
 </div>
 
+<div style="max-width:1180px;margin:0 auto;padding:20px 26px 0;"><div data-showcase="video"></div></div>
 <div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
 <div class="drawer" id="drawer"></div>
 <div class="toast" id="toast"></div>
@@ -424,5 +427,6 @@ renderFlights(FLIGHTS);
 
 </script>
 <script src="/pwa.js" defer></script>
+<script src="/showcase.js" defer></script>
 </body>
 </html>
