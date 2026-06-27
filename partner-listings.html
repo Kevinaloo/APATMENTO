@@ -249,7 +249,7 @@ td strong{color:var(--ink);font-weight:600;}
       <h1 class="page-title">My <em>listings</em></h1>
       <p class="page-sub">Manage your properties. All earnings go directly to you.</p>
     </div>
-    <a href="add-listing.html?type=apartment&back=1" class="btn btn-primary">
+    <a href="#" onclick="event.preventDefault();showAddServicePicker()" class="btn btn-primary">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>Add listing</a>
   </div>
 </div>
@@ -267,7 +267,7 @@ td strong{color:var(--ink);font-weight:600;}
   <div id="listings-container"><div class="empty">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2zM17 21v-8H7v8M7 3v5h8"/></svg>
     <div class="empty-title">No listings yet</div><div class="empty-sub">Add your first property to start earning.</div>
-    <a href="add-listing.html?type=apartment&back=1" class="btn btn-primary">Add first listing</a>
+    <a href="#" onclick="event.preventDefault();showAddServicePicker()" class="btn btn-primary">Add first listing</a>
   </div></div>
 </div>
   </main>
@@ -338,4 +338,79 @@ async function toggleStatus(id,cur){
 }
 loadListings();
 </script><script src="/pwa.js" defer></script>
+
+<!-- Service Picker Modal -->
+<div id="svc-picker-overlay" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(10,10,20,.5);backdrop-filter:blur(4px);align-items:flex-end;justify-content:center;" onclick="if(event.target===this)closePicker()">
+  <div style="background:var(--glass);border-radius:24px 24px 0 0;padding:28px 24px 40px;width:100%;max-width:540px;box-shadow:0 -12px 48px rgba(0,0,0,.15);animation:slideUp .35s cubic-bezier(.22,1,.36,1);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <div style="font-family:var(--font-display);font-weight:500;font-size:20px;">What are you listing?</div>
+      <button onclick="closePicker()" style="width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--glass-2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--ink-soft);">×</button>
+    </div>
+    <p style="font-size:14px;color:var(--ink-soft);margin-bottom:20px;">Choose your service type to get started.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <button onclick="goList('stays')" style="padding:16px;border-radius:16px;border:1.5px solid var(--line);background:rgba(255,255,255,.7);cursor:pointer;text-align:left;transition:all .2s;">
+        <div style="font-size:22px;margin-bottom:8px;">🏠</div>
+        <div style="font-weight:600;font-size:14px;color:var(--ink);">Stays</div>
+        <div style="font-size:12px;color:var(--ink-faint);">Apartments, villas, houses</div>
+      </button>
+      <button onclick="goList('tours')" style="padding:16px;border-radius:16px;border:1.5px solid var(--line);background:rgba(255,255,255,.7);cursor:pointer;text-align:left;transition:all .2s;">
+        <div style="font-size:22px;margin-bottom:8px;">🗺️</div>
+        <div style="font-weight:600;font-size:14px;color:var(--ink);">Tours & Safaris</div>
+        <div style="font-size:12px;color:var(--ink-faint);">Guided experiences</div>
+      </button>
+      <button onclick="goList('events')" style="padding:16px;border-radius:16px;border:1.5px solid var(--line);background:rgba(255,255,255,.7);cursor:pointer;text-align:left;transition:all .2s;">
+        <div style="font-size:22px;margin-bottom:8px;">🎟️</div>
+        <div style="font-weight:600;font-size:14px;color:var(--ink);">Events</div>
+        <div style="font-size:12px;color:var(--ink-faint);">Concerts, festivals, sports</div>
+      </button>
+      <button onclick="goList('food')" style="padding:16px;border-radius:16px;border:1.5px solid var(--line);background:rgba(255,255,255,.7);cursor:pointer;text-align:left;transition:all .2s;">
+        <div style="font-size:22px;margin-bottom:8px;">🍽️</div>
+        <div style="font-weight:600;font-size:14px;color:var(--ink);">Food & Dining</div>
+        <div style="font-size:12px;color:var(--ink-faint);">Restaurants, catering</div>
+      </button>
+      <button onclick="goList('carhire')" style="padding:16px;border-radius:16px;border:1.5px solid var(--line);background:rgba(255,255,255,.7);cursor:pointer;text-align:left;transition:all .2s;">
+        <div style="font-size:22px;margin-bottom:8px;">🚗</div>
+        <div style="font-weight:600;font-size:14px;color:var(--ink);">Car Hire</div>
+        <div style="font-size:12px;color:var(--ink-faint);">Self-drive & chauffeur</div>
+      </button>
+      <div style="padding:16px;border-radius:16px;border:1.5px dashed var(--line);background:var(--glass-2);display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;">
+        <div style="font-size:12px;color:var(--ink-faint);line-height:1.5;">✈️ Flights · 🛍️ Shopping · 🚖 Rides<br/><span style="font-size:11px;">Managed by Apatmento</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+<style>
+@keyframes slideUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
+/* Mobile sidebar fix */
+@media(max-width:800px){
+  .layout{flex-direction:column;}
+  .sidebar{display:none;}
+  .topbar{padding:0 14px;}
+  .main{padding:16px 14px 90px;}
+  h2{font-size:20px;}
+  table{font-size:12px;}
+  th,td{padding:8px 6px;}
+}
+</style>
+<script>
+function showAddServicePicker(){
+  const el=document.getElementById('svc-picker-overlay');
+  el.style.display='flex';
+}
+function closePicker(){
+  document.getElementById('svc-picker-overlay').style.display='none';
+}
+function goList(svc){
+  closePicker();
+  const routes={
+    stays:'add-listing.html?type=apartment&back=1',
+    tours:'add-listing.html?type=tour&back=1',
+    events:'add-listing.html?type=event&back=1',
+    food:'add-listing.html?type=food&back=1',
+    carhire:'add-listing.html?type=carhire&back=1',
+  };
+  window.location.href=routes[svc]||'add-listing.html?back=1';
+}
+</script>
 </body></html>
+
