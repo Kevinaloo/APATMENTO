@@ -92,10 +92,9 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--glass);c
 
 /* ── ENTRY TRANSITION ── */
 #tx{position:fixed;inset:0;z-index:9999;background:#05060F;display:flex;align-items:center;justify-content:center;overflow:hidden;
-  /* Self-dismiss after 2.5s — pure CSS, zero JS dependency */
   animation:txOut .9s cubic-bezier(.7,0,.2,1) 2.5s forwards;}
-#tx.done{animation:txOut .4s cubic-bezier(.7,0,.2,1) forwards;}
-@keyframes txOut{to{opacity:0;transform:scale(1.1);visibility:hidden;pointer-events:none;}}
+#tx.done{animation:txOut .4s cubic-bezier(.7,0,.2,1) 0s forwards !important;}
+@keyframes txOut{to{opacity:0;transform:scale(1.1);}}
 .tx-aurora{position:absolute;inset:0;}
 .tx-ab{position:absolute;border-radius:50%;filter:blur(80px);opacity:0;animation:txBloom 1.1s cubic-bezier(.4,0,.2,1) forwards;}
 .tx-ab-1{width:420px;height:420px;top:30%;left:28%;background:radial-gradient(circle,var(--t1),transparent 68%);}
@@ -299,10 +298,20 @@ const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 let sb=null;
 try{const{createClient}=supabase;sb=createClient(SUPABASE_URL,SUPABASE_ANON_KEY);}catch(e){}
 function showToast(m,d=3200){const t=document.getElementById('toast');if(!t)return;t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),d);}
-// CSS auto-dismisses #tx after 2.5s. JS provides extra insurance.
-function dismissTx(){const el=document.getElementById('tx');if(el&&!el.classList.contains('done'))el.classList.add('done');}
-window.addEventListener('load',()=>setTimeout(dismissTx,1600));
-setTimeout(dismissTx,3500);
+// Dismiss entry transition — CSS fades, JS sets display:none so it can't block touches
+function dismissTx(){
+  const el=document.getElementById('tx');
+  if(!el)return;
+  el.style.pointerEvents='none';
+  el.classList.add('done');
+  setTimeout(()=>{el.style.display='none';},1000);
+}
+// Primary: animationend (fires when CSS animation completes)
+document.getElementById('tx')?.addEventListener('animationend',dismissTx,{once:true});
+// Backup 1: window load
+window.addEventListener('load',()=>setTimeout(dismissTx,1800));
+// Backup 2: hard timeout — fires no matter what
+setTimeout(dismissTx,4000);
 
 
 const RIDES=[
@@ -351,3 +360,4 @@ renderRides();
 <script src="/showcase.js" defer></script>
 </body>
 </html>
+
