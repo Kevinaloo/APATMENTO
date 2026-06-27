@@ -386,6 +386,35 @@ td strong{color:var(--ink);}
       <div class="field"><label class="field-label">Price display (native cards)</label><input class="field-input" id="m-price" placeholder="From KES 5,000"/></div>
       <div class="field"><label class="field-label">Priority (higher = shows first)</label><input class="field-input" id="m-priority" type="number" value="5"/></div>
     </div>
+    
+    <div class="field"><label class="field-label">Show on pages (hold Ctrl/Cmd to select multiple)</label>
+      <select class="field-select" id="m-pages" multiple style="height:160px;">
+        <option value="all" selected>✦ All pages</option>
+        <option value="index">Home page</option>
+        <option value="apartments">Stays / Apartments</option>
+        <option value="flights">Flights</option>
+        <option value="tours">Tours & Safaris</option>
+        <option value="events">Events & Tickets</option>
+        <option value="food">Food Delivery</option>
+        <option value="shopping">Shopping</option>
+        <option value="carhire">Car Hire</option>
+        <option value="rides">Rides</option>
+        <option value="my-bookings">My Bookings</option>
+        <option value="dashboard">Dashboard</option>
+      </select>
+      <div style="font-size:11px;color:var(--ink-faint);margin-top:5px;">Select "All pages" to show everywhere, or pick specific pages.</div>
+    </div>
+    <div class="field"><label class="field-label">Ad format type</label>
+      <select class="field-select" id="m-format-hint">
+        <option value="">— Which slot does this ad go in? —</option>
+        <option value="video">Video hero (cinematic full-width)</option>
+        <option value="carousel">Carousel banner (rotating slides)</option>
+        <option value="native">Native card (blends with listings)</option>
+        <option value="split">Split banner (left text + right stats)</option>
+        <option value="ticker">Live ticker (scrolling bar)</option>
+        <option value="sticky">Sticky corner (appears after 16s)</option>
+      </select>
+    </div>
     <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px;">
       <button class="btn btn-ghost" onclick="closeCampaignModal()">Cancel</button>
       <button class="btn btn-primary" onclick="saveCampaign()">Save campaign</button>
@@ -525,6 +554,9 @@ function openCampaignModal(c=null){
   document.getElementById('m-theme').value=c?.theme_gradient||'linear-gradient(135deg,#2DD4BF,#4361FF)';
   document.getElementById('m-price').value=c?.price_display||'';
   document.getElementById('m-priority').value=c?.priority||5;
+  const psel=document.getElementById('m-pages');
+  const targets=c?.page_targets||['all'];
+  [...psel.options].forEach(o=>o.selected=targets.includes(o.value));
   document.getElementById('campaign-modal').classList.add('open');
 }
 function editCampaign(c){openCampaignModal(c);}
@@ -545,6 +577,7 @@ async function saveCampaign(){
     theme_gradient:document.getElementById('m-theme').value||'linear-gradient(135deg,#2DD4BF,#4361FF)',
     price_display:document.getElementById('m-price').value,
     priority:parseInt(document.getElementById('m-priority').value)||5,
+    page_targets:[...document.getElementById('m-pages').selectedOptions].map(o=>o.value),
     active:true,
   };
   const{error}=await sb.from('ad_campaigns').upsert(payload,{onConflict:'campaign_id'});
