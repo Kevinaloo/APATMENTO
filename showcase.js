@@ -185,15 +185,15 @@ const CSS = `
 .scv:hover{box-shadow:0 32px 80px rgba(123,47,247,.25);}
 .scv-bg{position:absolute;inset:0;}
 .scv-bg video{width:100%;height:100%;object-fit:cover;}
-.scv-grad{position:absolute;inset:0;opacity:0;transition:opacity .5s;}
-.scv:hover .scv-grad{opacity:0;}
+.scv-grad{position:absolute;inset:0;opacity:1;transition:opacity .5s;}
+.scv:hover .scv-grad{opacity:.85;}
 .scv-orb1,.scv-orb2{position:absolute;border-radius:50%;filter:blur(60px);opacity:0;}
 .scv-orb2{animation-delay:-4.5s;opacity:.3;}
 @keyframes scOrb{0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(45px,-28px) scale(1.18);}}
 .scv-shimmer{position:absolute;inset:0;background:linear-gradient(110deg,transparent 28%,rgba(255,255,255,.08) 48%,transparent 68%);background-size:200% 100%;animation:scShim 6s ease-in-out infinite;}
 @keyframes scShim{0%{background-position:200% 0;}100%{background-position:-100% 0;}}
 .scv-tag{position:absolute;top:18px;left:20px;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:rgba(255,255,255,.95);background:rgba(0,0,0,.28);backdrop-filter:blur(12px);padding:5px 12px;border-radius:100px;border:1px solid rgba(255,255,255,.18);z-index:3;}
-.scv-content{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:clamp(18px,3vw,44px);z-index:2;background:linear-gradient(to top,rgba(0,0,0,.75) 0%,rgba(0,0,0,.2) 50%,transparent 75%);}
+.scv-content{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:clamp(18px,3vw,44px);z-index:2;background:linear-gradient(to top,rgba(0,0,0,.55) 0%,rgba(0,0,0,.1) 50%,transparent 80%);}
 .scv-adv{font-size:12px;font-weight:600;color:rgba(255,255,255,.75);margin-bottom:10px;display:flex;align-items:center;gap:8px;}
 .scv-adv svg{width:15px;height:15px;}
 .scv-h{font-family:'Fraunces',serif;font-weight:400;font-size:clamp(22px,3.5vw,42px);color:#fff;line-height:1.05;margin-bottom:8px;max-width:68%;text-shadow:0 2px 24px rgba(0,0,0,.3);}
@@ -408,14 +408,23 @@ function renderVideo(slot, c){
 
     // video source
     if(cp.media){
-      vid.src = cp.media;
-      vid.poster = cp.poster || '';
-      vid.muted = muted;
-      vid.load();
-      vid.play().catch(()=>{});
+      const isVid = /\.(mp4|webm|ogg|mov)$/i.test(cp.media) || cp.media.includes('youtube') || cp.media.includes('youtu.be');
+      if(isVid){
+        vid.src = cp.media; vid.poster = cp.poster||''; vid.muted = true; vid.load(); vid.play().catch(()=>{});
+        el.querySelector('.scv-photo-img')?.remove();
+      } else {
+        // Photo ad — show as img element, gradient overlay stays light
+        vid.src = ''; vid.poster = '';
+        let pi = el.querySelector('.scv-photo-img');
+        if(!pi){ pi=document.createElement('img'); pi.className='scv-photo-img'; pi.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;'; el.querySelector('.scv-bg').appendChild(pi); }
+        pi.src = cp.media;
+        // Lighten the gradient overlay for photos
+        const grad = el.querySelector('.scv-grad');
+        if(grad) grad.style.opacity = '0';
+      }
     } else {
-      vid.src = '';
-      vid.poster = '';
+      vid.src = ''; vid.poster = '';
+      el.querySelector('.scv-photo-img')?.remove();
     }
 
     // gradient background (shows when no video)
@@ -515,13 +524,15 @@ function renderCarousel(slot, cs){
     <div class="scc sc-el">
       ${cs.map((c,i)=>`
       <div class="sc-slide ${i===0?'active':''}" style="background:${c.grad}" data-id="${c.id}" data-adv="${c.advertiser}">
-        <div class="sc-slide-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${c.icon}</svg></div>
-        <div class="sc-slide-body">
+        ${c.media ? `<img src="${c.media}" alt="${c.advertiser}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;"/>
+        <div style="position:absolute;inset:0;background:linear-gradient(to right,rgba(0,0,0,.55) 0%,rgba(0,0,0,.1) 60%,transparent 100%);z-index:1;"></div>` : ''}
+        <div class="sc-slide-ico" style="position:relative;z-index:2;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${c.icon}</svg></div>
+        <div class="sc-slide-body" style="position:relative;z-index:2;">
           <div class="sc-slide-who">${c.advertiser} · Sponsored</div>
           <div class="sc-slide-h">${c.headline}</div>
           <div class="sc-slide-sub">${c.sub}</div>
         </div>
-        <button class="sc-slide-cta" data-url="${c.url}">${c.cta}</button>
+        <button class="sc-slide-cta" data-url="${c.url}" style="position:relative;z-index:2;">${c.cta}</button>
       </div>`).join('')}
       <button class="scc-nav scc-prev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
       <button class="scc-nav scc-next"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></button>
@@ -569,11 +580,12 @@ function renderNative(slot, c){
   if(!c)return;
   slot.innerHTML=`
     <div class="scn sc-el">
-      <div class="scn-img" style="background:${c.grad}">
-        ${c.media?`<img src="${c.media}" alt="${c.advertiser}" loading="lazy"/>`:''}
-        <div class="scn-shine"></div>
-        <div class="scn-tag">${c.tag}</div>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">${c.icon}</svg>
+      <div class="scn-img" style="background:${c.media?'#111':c.grad}">
+        ${c.media?`<img src="${c.media}" alt="${c.advertiser}" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;"/>
+        <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.4) 0%,transparent 60%);z-index:1;"></div>`:''}
+        <div class="scn-shine" style="z-index:2;${c.media?'opacity:.03;':''}"></div>
+        <div class="scn-tag" style="position:relative;z-index:3;">${c.tag}</div>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" style="position:relative;z-index:3;${c.media?'display:none;':''}">${c.icon}</svg>
       </div>
       <div class="scn-body">
         <div class="scn-who">${c.advertiser}</div>
@@ -697,8 +709,18 @@ function renderWindow(slot, c){
 
   function updateWindow(){
     const cp = camp();
-    if(cp.media){ vid.src=cp.media; vid.poster=cp.poster||''; vid.load(); vid.play().catch(()=>{}); }
-    else { vid.src=''; el.querySelector('.sc-window-grad').style.background=cp.grad; }
+    if(cp.media){
+      const isVid = /\.(mp4|webm|ogg|mov)$/i.test(cp.media);
+      if(isVid){
+        vid.src=cp.media; vid.poster=cp.poster||''; vid.load(); vid.play().catch(()=>{});
+        el.querySelector('.sc-window-photo')?.remove();
+      } else {
+        vid.src=''; vid.poster=cp.media;
+        let ph=el.querySelector('.sc-window-photo');
+        if(!ph){ ph=document.createElement('img'); ph.className='sc-window-photo'; ph.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;'; el.querySelector('video').after(ph); }
+        ph.src=cp.media;
+      }
+    } else { vid.src=''; el.querySelector('.sc-window-grad').style.background=cp.grad; el.querySelector('.sc-window-photo')?.remove(); }
     el.querySelector('.sc-window-h').textContent=cp.headline;
     el.querySelector('.sc-window-adv').textContent=cp.advertiser;
     cta.textContent=cp.cta;
@@ -854,6 +876,7 @@ else init();
 
 window.ApatmentoShowcase={reload:init};
 })();
+
 
 
 
