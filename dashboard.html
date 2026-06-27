@@ -204,6 +204,13 @@ body{overflow-x:hidden;}
   .greeting-title{font-size:26px!important;}
   .screen{overflow-x:hidden!important;}
 }
+
+/* ══ PARTNER ONBOARDING GRID RESPONSIVE ══ */
+.ob-service-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:580px;margin:0 auto 32px;}
+@media(max-width:560px){.ob-service-grid{grid-template-columns:repeat(2,1fr)!important;max-width:360px!important;}}
+.svc-onboard{position:relative;border-radius:20px;border:1.5px solid var(--line);background:rgba(255,255,255,.8);padding:22px 14px;cursor:pointer;transition:all .3s cubic-bezier(.22,1,.36,1);text-align:center;}
+.svc-onboard:hover{border-color:var(--mint-deep);transform:translateY(-2px);}
+
 </style>
 
 <style>
@@ -429,7 +436,7 @@ body{overflow-x:hidden;}
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 2 2 19h20z"/><path d="M12 9v4M12 17h.01"/></svg>
             SOS
           </button>
-          <button class="tb-icon-btn" onclick="showToast('No new notifications')" aria-label="Notifications">
+          <button class="tb-icon-btn" onclick="openNotifications()" aria-label="Notifications">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/><path d="M3.3 16.6c-.6.7-.1 1.8.8 1.8h15.8c.9 0 1.4-1.1.8-1.8C19.5 15 18 13.2 18 8A6 6 0 0 0 6 8c0 5.2-1.5 7-2.7 8.6"/></svg>
           </button>
           <div class="tb-avatar" id="g-avatar" onclick="window.location.href='profile.html?back=1'">?</div>
@@ -660,6 +667,7 @@ async function init(){
 
     // ── SIGNED IN ────────────────────────────────────────────
     CURRENT_USER = session.user;
+    setTimeout(checkAdminAccess, 800); // Admin check after user is set
     const meta = session.user.user_metadata || {};
     let firstName = meta.first_name || meta.name?.split(' ')[0] || meta.full_name?.split(' ')[0] || '';
     let rememberedRole = 'guest';
@@ -824,7 +832,62 @@ function openDrawer(){ document.getElementById('drawer').classList.add('open'); 
 function closeDrawer(){ document.getElementById('drawer').classList.remove('open'); document.getElementById('drawer-scrim').classList.remove('open'); }
 
 /* ── SOS ── */
-function openSOS(){ showToast('Emergency services: call 999 or 112'); }
+function openSOS(){
+  // Show real SOS modal
+  let m = document.getElementById('sos-modal');
+  if(!m){
+    m = document.createElement('div');
+    m.id = 'sos-modal';
+    m.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.6);display:flex;align-items:flex-end;justify-content:center;';
+    m.innerHTML = `<div style="background:#fff;border-radius:28px 28px 0 0;padding:28px 24px 48px;width:100%;max-width:480px;animation:slideUp .3s cubic-bezier(.22,1,.36,1)">
+      <div style="width:40px;height:4px;background:#E5E7EB;border-radius:2px;margin:0 auto 20px"></div>
+      <div style="font-size:32px;text-align:center;margin-bottom:8px;">🆘</div>
+      <h2 style="font-family:'Fraunces',serif;font-size:22px;text-align:center;margin-bottom:6px;color:#0A0A14">Emergency Help</h2>
+      <p style="font-size:13px;color:#8E90AD;text-align:center;margin-bottom:24px;line-height:1.6">Apatmento is not an emergency service. Contact local authorities immediately.</p>
+      <a href="tel:999" style="display:flex;align-items:center;justify-content:center;gap:10px;padding:16px;background:#E11D48;color:#fff;border-radius:14px;font-weight:700;font-size:16px;text-decoration:none;margin-bottom:10px;">📞 Call 999 — Police / Fire / Ambulance</a>
+      <a href="tel:112" style="display:flex;align-items:center;justify-content:center;gap:10px;padding:16px;background:#FF6B2C;color:#fff;border-radius:14px;font-weight:700;font-size:16px;text-decoration:none;margin-bottom:10px;">📞 Call 112 — Emergency (all networks)</a>
+      <a href="tel:0800720940" style="display:flex;align-items:center;justify-content:center;gap:10px;padding:16px;background:rgba(10,10,20,.06);color:#0A0A14;border-radius:14px;font-weight:600;font-size:14px;text-decoration:none;margin-bottom:20px;">🏥 0800 720 940 — Nairobi Hospital</a>
+      <button onclick="document.getElementById('sos-modal').remove()" style="width:100%;padding:14px;border-radius:14px;border:1.5px solid rgba(10,10,20,.1);background:transparent;font-weight:600;font-size:14px;cursor:pointer;">Close</button>
+    </div>`;
+    m.addEventListener('click', e => { if(e.target===m) m.remove(); });
+    document.body.appendChild(m);
+  }
+}
+
+/* ── NOTIFICATIONS ── */
+async function openNotifications(){
+  let panel = document.getElementById('notif-panel');
+  if(panel){ panel.remove(); return; }
+  panel = document.createElement('div');
+  panel.id = 'notif-panel';
+  panel.style.cssText = 'position:fixed;top:66px;right:12px;z-index:500;width:320px;max-width:calc(100vw - 24px);background:#fff;border-radius:20px;box-shadow:0 12px 48px rgba(0,0,0,.15);border:1px solid rgba(10,10,20,.06);overflow:hidden;animation:fadeIn .2s ease;';
+  
+  let notifHTML = '';
+  if(CURRENT_USER){
+    try {
+      const {data:bookings} = await sb.from('apartment_bookings').select('id,created_at,status,listing_title').eq('guest_id',CURRENT_USER.id).order('created_at',{ascending:false}).limit(5);
+      if(bookings?.length){
+        notifHTML = bookings.map(b=>`
+          <div style="padding:14px 16px;border-bottom:1px solid rgba(10,10,20,.05);">
+            <div style="font-weight:600;font-size:13px;color:#0A0A14;margin-bottom:2px;">Booking ${b.status==='paid_pending_checkin'?'confirmed ✅':b.status==='checked_in'?'checked in 🏠':'updated'}</div>
+            <div style="font-size:12px;color:#8E90AD;">${b.listing_title||'Your booking'} · ${new Date(b.created_at).toLocaleDateString('en-KE')}</div>
+          </div>`).join('');
+      }
+    } catch(e){}
+  }
+  if(!notifHTML) notifHTML = '<div style="padding:32px 16px;text-align:center;color:#8E90AD;font-size:14px;">No notifications yet</div>';
+  
+  panel.innerHTML = `
+    <div style="padding:14px 16px 10px;border-bottom:1px solid rgba(10,10,20,.06);display:flex;align-items:center;justify-content:space-between;">
+      <span style="font-weight:700;font-size:15px;color:#0A0A14;">Notifications</span>
+      <button onclick="document.getElementById('notif-panel')?.remove()" style="border:none;background:none;font-size:20px;cursor:pointer;color:#8E90AD;line-height:1;">×</button>
+    </div>
+    ${notifHTML}`;
+  
+  document.body.appendChild(panel);
+  setTimeout(()=>document.addEventListener('click', function h(e){if(!panel.contains(e.target)){panel.remove();document.removeEventListener('click',h);}},{once:false}), 100);
+}
+
 
 /* ── TOAST ── */
 function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3200); }
@@ -977,7 +1040,7 @@ function renderOnboarding(){
       <h1 class="greeting-title" style="margin-bottom:14px;">What will you <em>offer</em>?</h1>
       <p class="greeting-sub" style="margin:0 auto 8px;">Choose a service to set up. Listing is completely free — Apatmento charges only a small fixed fee per confirmed booking, never a percentage.</p>
       <p style="font-size:13px;color:var(--ember);font-weight:600;margin-bottom:38px;">You keep almost everything. Always.</p>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;max-width:680px;margin:0 auto 32px;">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:580px;margin:0 auto 32px;">
         ${Object.entries(PARTNER_SERVICES).map(([k,s])=>`
           <div class="svc-onboard" id="ob-${k}" onclick="selectService('${k}')" style="position:relative;border-radius:20px;border:1.5px solid var(--line);background:rgba(255,255,255,.6);backdrop-filter:blur(12px);padding:28px 16px;cursor:pointer;transition:all .35s cubic-bezier(.22,1,.36,1);">
             <div class="ob-tick" style="position:absolute;top:12px;right:12px;width:22px;height:22px;border-radius:50%;background:var(--mint-deep);display:none;align-items:center;justify-content:center;color:#fff;font-size:12px;">✓</div>
@@ -1071,7 +1134,7 @@ async function renderSingleDashboard(listing){
 
 function statCard(val,label,sub){return `<div class="prop-card" style="padding:22px;cursor:default;"><div style="font-family:var(--font-data);font-weight:600;font-size:28px;margin-bottom:4px;">${val}</div><div style="font-size:13px;color:var(--ink-soft);">${label}</div><div style="font-size:11px;color:var(--mint-deep);margin-top:6px;font-weight:600;">${sub}</div></div>`;}
 function actionBtn(label,href,path){return `<a href="${href}" style="display:flex;align-items:center;gap:11px;padding:16px;border-radius:16px;background:rgba(255,255,255,.6);border:1px solid var(--line);text-decoration:none;color:var(--ink);font-weight:600;font-size:14px;transition:all .3s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='var(--shadow-glass)'" onmouseout="this.style.transform='';this.style.boxShadow=''"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--lilac-deep)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="${path}"/></svg>${label}</a>`;}
-function goToService(type){ window.location.href = 'partner-listings.html?back=1'; }
+function goToService(type){ window.location.href = 'partner-listings.html?type='+type+'&back=1'; }
 
 function addSheetHTML(){return `
   <div class="drawer-scrim" id="add-scrim" onclick="hideAddSheet()"></div>
@@ -1094,36 +1157,23 @@ function hideAddSheet(){ document.getElementById('add-scrim').classList.remove('
 
 </script>
 
-<!-- Silent admin detection — invisible to regular users -->
+<!-- Admin detection: runs after init() sets CURRENT_USER -->
 <script>
-(async function detectAdmin(){
-  try {
-    const SUPA_URL = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
-    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
-    // Wait for auth + sb to be ready (init() runs first)
-    await new Promise(r => setTimeout(r, 1500));
-    if(typeof sb === 'undefined') return;
-    const { data } = await sb.auth.getSession();
-    const session = data?.session;
-    if(!session?.user?.email) return;
-    const email = session.user.email.toLowerCase().trim();
-    // Hardcoded check first (instant, no network) 
-    const ADMIN_EMAILS = ['apatmento@gmail.com','worlddossy@gmail.com'];
-    if(!ADMIN_EMAILS.includes(email)) return;
-    // Email list is the source of truth — no DB call needed
-    // ✅ Admin confirmed
-    console.log('[Admin] confirmed for', email);
-    const link = document.createElement('a');
-    link.href = '/admin.html';
-    link.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:9px 20px;border-radius:100px;background:rgba(123,47,247,.12);border:1px solid rgba(123,47,247,.3);color:#B8A4F4;font-size:12px;font-weight:700;text-decoration:none;z-index:9999;backdrop-filter:blur(10px);letter-spacing:.04em;display:flex;align-items:center;gap:6px;';
-    link.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg> Admin';
-    link.addEventListener('mouseenter', () => link.style.background = 'rgba(123,47,247,.22)');
-    link.addEventListener('mouseleave', () => link.style.background = 'rgba(123,47,247,.12)');
-    document.body.appendChild(link);
-  } catch(e){ console.log('[Admin] detection error:', e.message); }
-})();
-
-
-
-
+function checkAdminAccess(){
+  const ADMIN_EMAILS = ['apatmento@gmail.com','worlddossy@gmail.com'];
+  if(!CURRENT_USER?.email) return;
+  const email = CURRENT_USER.email.toLowerCase().trim();
+  if(!ADMIN_EMAILS.includes(email)) return;
+  // Show admin pill
+  const existing = document.getElementById('admin-pill');
+  if(existing) return;
+  const pill = document.createElement('a');
+  pill.id = 'admin-pill';
+  pill.href = '/admin.html';
+  pill.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:10px 22px;border-radius:100px;background:rgba(123,47,247,.15);border:1.5px solid rgba(123,47,247,.4);color:#7B2FF7;font-size:12px;font-weight:700;text-decoration:none;z-index:9999;display:flex;align-items:center;gap:7px;box-shadow:0 4px 20px rgba(123,47,247,.2);white-space:nowrap;';
+  pill.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg> ⚙ Admin Panel';
+  document.body.appendChild(pill);
+  console.log('[Admin] pill shown for', email);
+}
+</script>
 
