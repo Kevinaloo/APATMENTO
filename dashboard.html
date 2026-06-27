@@ -128,6 +128,36 @@ body{overflow-x:hidden;}
 .gloss-overlay{position:fixed;inset:0;z-index:1;pointer-events:none;
   background:linear-gradient(135deg,rgba(255,255,255,0.6) 0%,transparent 40%,transparent 60%,rgba(255,255,255,0.3) 100%);
   mix-blend-mode:overlay;}
+
+/* ════ MOBILE OVERHAUL ════ */
+@media(max-width:768px){
+  .main-pad{padding:16px;}
+  .greeting-title{font-size:28px!important;}
+  .greeting-sub{font-size:14px;}
+  .hero-stage{height:240px!important;border-radius:16px!important;}
+  .hero-title{font-size:22px!important;}
+  .hero-sub{font-size:13px!important;}
+  .hero-cta{padding:11px 20px!important;font-size:13px!important;}
+  .hero-body{padding:20px!important;}
+  .section-title{font-size:18px!important;}
+  .prop-grid{grid-template-columns:1fr!important;gap:14px!important;}
+  .prop-card{border-radius:16px!important;}
+  .prop-img{height:180px!important;}
+}
+@media(max-width:480px){
+  .main-pad{padding:12px 14px;}
+  .greeting-title{font-size:24px!important;}
+  .hero-stage{height:200px!important;}
+  .hero-title{font-size:18px!important;}
+  .hero-eyebrow{font-size:10px!important;}
+}
+/* Topbar mobile */
+@media(max-width:600px){
+  .topbar{padding:0 14px;}
+  #dash-guest-nav a{font-size:12px!important;padding:7px 12px!important;}
+  .tb-avatar{width:34px!important;height:34px!important;font-size:13px!important;}
+}
+
 </style>
 
 <style>
@@ -186,7 +216,13 @@ body{overflow-x:hidden;}
 
 /* ══════════ SERVICE RAIL ══════════ */
 .rail-label{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:16px;}
-.service-rail{display:grid;grid-template-columns:repeat(8,1fr);gap:12px;margin-bottom:40px;}
+.service-rail{display:grid;grid-template-columns:repeat(8,1fr);gap:12px;margin-bottom:32px;}
+.svc{background:rgba(255,255,255,.7);backdrop-filter:blur(10px);border:1px solid rgba(10,10,20,.06);border-radius:18px;padding:18px 8px 14px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;transition:all .28s cubic-bezier(.22,1,.36,1);min-width:0;}
+.svc:hover{background:#fff;transform:translateY(-4px);box-shadow:0 12px 32px rgba(10,10,20,.1);}
+.svc-ico{width:28px;height:28px;flex-shrink:0;}
+.svc-name{font-size:12px;font-weight:600;color:var(--ink-soft,#4A4C66);text-align:center;white-space:nowrap;}
+@media(max-width:900px){.service-rail{grid-template-columns:repeat(4,1fr);gap:10px;}}
+@media(max-width:480px){.service-rail{grid-template-columns:repeat(4,1fr);gap:8px;}.svc{border-radius:14px;padding:14px 6px 10px;}.svc-ico{width:24px;height:24px;}.svc-name{font-size:11px;}}
 .svc{position:relative;aspect-ratio:1;border-radius:20px;border:1px solid var(--line);background:rgba(255,255,255,.55);backdrop-filter:blur(12px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;cursor:pointer;overflow:hidden;transition:all .35s cubic-bezier(.22,1,.36,1);}
 .svc::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .35s;background:var(--svc-grad);}
 .svc:hover{transform:translateY(-6px);box-shadow:var(--shadow-lift);border-color:transparent;}
@@ -204,7 +240,7 @@ body{overflow-x:hidden;}
 .svc[data-svc="carhire"]{--svc-color:var(--mint-deep);--svc-grad:linear-gradient(135deg,var(--mint-deep),var(--mint));}
 
 /* ══════════ FEATURED VIDEO HERO (with upload slot) ══════════ */
-.hero-stage{position:relative;border-radius:var(--radius);overflow:hidden;margin-bottom:40px;min-height:340px;max-height:480px;background:linear-gradient(135deg,#0A0A14,#1A0A3E 40%,#2B0F6F);box-shadow:var(--shadow-lift);}
+.hero-stage{position:relative;border-radius:20px;overflow:hidden;margin-bottom:32px;height:300px;background:linear-gradient(135deg,#0A0A14,#1A0A3E 40%,#2B0F6F);box-shadow:0 16px 48px rgba(10,10,20,.18);}
 .hero-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;}
 .hero-stage::after{content:'';position:absolute;inset:0;z-index:1;background:linear-gradient(90deg,rgba(10,10,20,.82) 0%,rgba(10,10,20,.4) 50%,transparent 100%);}
 .hero-body{position:relative;z-index:2;padding:48px;max-width:560px;height:100%;display:flex;flex-direction:column;justify-content:center;min-height:340px;}
@@ -396,6 +432,7 @@ body{overflow-x:hidden;}
           <svg class="svc-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13h14l-1.5-5a2 2 0 0 0-2-1.5h-7a2 2 0 0 0-2 1.5z"/><path d="M4 13h16v4H4z"/><circle cx="7.5" cy="17.5" r="1.5"/><circle cx="16.5" cy="17.5" r="1.5"/></svg>
           <span class="svc-name">Car Hire</span>
         </div>
+      </div><!-- /service-rail -->
 
       <!-- FEATURED VIDEO HERO — live ad from Supabase -->
       <div class="hero-stage" id="hero-stage">
@@ -1006,23 +1043,28 @@ function hideAddSheet(){ document.getElementById('add-scrim').classList.remove('
 <!-- Silent admin detection — invisible to regular users -->
 <script>
 (async function detectAdmin(){
-  const ADMIN_EMAILS = ['apatmento@gmail.com']; // add more here
   try {
-    let sb2 = null;
-    try{const{createClient}=supabase;sb2=createClient('https://gfwgbgdvxtocwhilrtdw.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw');}catch(e){}
-    if(!sb2)return;
-    const{data:{session}}=await sb2.auth.getSession();
-    if(!session)return;
-    // Check via Supabase (most secure)
-    const{data:adminRow}=await sb2.from('admin_users').select('email').eq('email',session.user.email).single();
-    if(!adminRow)return;
-    // User is admin — silently add admin link
+    const SUPA_URL = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
+    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
+    // Wait for auth to settle
+    await new Promise(r => setTimeout(r, 2000));
+    if(typeof sb === 'undefined') return;
+    const { data:{ session } } = await sb.auth.getSession();
+    if(!session) return;
+    // Use the user's own access_token to query admin_users
+    const r = await fetch(
+      SUPA_URL + '/rest/v1/admin_users?email=eq.' + encodeURIComponent(session.user.email) + '&select=email,role&limit=1',
+      { headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + session.access_token } }
+    );
+    const rows = await r.json();
+    if(!rows?.length) return;
+    // ✅ Admin confirmed — show the pill
     const link = document.createElement('a');
     link.href = '/admin.html';
-    link.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);padding:8px 18px;border-radius:100px;background:rgba(123,47,247,.12);border:1px solid rgba(123,47,247,.25);color:#B8A4F4;font-size:12px;font-weight:600;text-decoration:none;z-index:9999;backdrop-filter:blur(8px);transition:all .25s;';
-    link.textContent = '⚙ Admin';
-    link.addEventListener('mouseenter',()=>link.style.background='rgba(123,47,247,.22)');
-    link.addEventListener('mouseleave',()=>link.style.background='rgba(123,47,247,.12)');
+    link.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:9px 20px;border-radius:100px;background:rgba(123,47,247,.12);border:1px solid rgba(123,47,247,.3);color:#B8A4F4;font-size:12px;font-weight:700;text-decoration:none;z-index:9999;backdrop-filter:blur(10px);letter-spacing:.04em;display:flex;align-items:center;gap:6px;';
+    link.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg> Admin';
+    link.addEventListener('mouseenter', () => link.style.background = 'rgba(123,47,247,.22)');
+    link.addEventListener('mouseleave', () => link.style.background = 'rgba(123,47,247,.12)');
     document.body.appendChild(link);
-  } catch(e){}
+  } catch(e){ console.log('[Admin] detection error:', e.message); }
 })();
