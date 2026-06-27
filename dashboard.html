@@ -191,6 +191,19 @@ body{overflow-x:hidden;}
   .topbar{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;background:rgba(252,252,253,.98)!important;}
   .aurora .ab{filter:blur(40px)!important;opacity:.15!important;}
 }
+
+/* ══ TOPBAR MOBILE OVERFLOW FIX ══ */
+@media(max-width:500px){
+  .topbar{padding:0 12px!important;}
+  .tb-welcome{display:none!important;} /* Hide "Welcome, Kevin" text on small screens */
+  .sos-btn{padding:6px 10px!important;font-size:11px!important;}
+  .tb-icon-btn{width:34px!important;height:34px!important;}
+  .tb-avatar{width:32px!important;height:32px!important;font-size:12px!important;}
+  .tb-brand em{font-size:15px!important;}
+  .content{padding:20px 14px 60px!important;}
+  .greeting-title{font-size:26px!important;}
+  .screen{overflow-x:hidden!important;}
+}
 </style>
 
 <style>
@@ -514,7 +527,13 @@ body{overflow-x:hidden;}
   </div>
   <a class="drawer-link" href="profile.html?back=1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg> Profile</a>
   <a class="drawer-link" href="my-bookings.html?back=1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg> My Bookings</a>
-  <a class="drawer-link" onclick="closeDrawer();navigateToService('stays')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/><path d="M9 20v-5a3 3 0 0 1 6 0v5"/></svg> Apartments</a>
+  <a class="drawer-link" onclick="closeDrawer();navigateToService('stays')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/><path d="M9 20v-5a3 3 0 0 1 6 0v5"/></svg> Stays</a>
+  <a class="drawer-link" onclick="closeDrawer();navigateToService('flights')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21 4 19 2c-2-2-4-2-5.5-.5L10 5 1.8 6.2l5 5-3 3L7 17l8-4 2.8 6.2z"/></svg> Flights</a>
+  <a class="drawer-link" onclick="closeDrawer();navigateToService('tours')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m15 5.5-6-2-6 2.5v13l6-2.5 6 2 6-2.5v-13z"/><path d="M9 3.5v13M15 7.5v13"/></svg> Tours</a>
+  <a class="drawer-link" onclick="closeDrawer();navigateToService('events')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9a2 2 0 0 0 0 6v2a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-2a2 2 0 0 0 0-6V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1z"/></svg> Events</a>
+  <a class="drawer-link" onclick="closeDrawer();navigateToService('rides')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13h14l-1.5-5a2 2 0 0 0-2-1.5h-7a2 2 0 0 0-2 1.5z"/><path d="M4 13h16v4H4z"/><circle cx="7.5" cy="17.5" r="1.5"/><circle cx="16.5" cy="17.5" r="1.5"/></svg> Rides</a>
+  <a class="drawer-link" onclick="closeDrawer();navigateToService('food')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2M7 2v20M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/></svg> Food</a>
+  <a class="drawer-link" onclick="closeDrawer();navigateToService('shopping')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/></svg> Shopping</a>
   <a class="drawer-link" onclick="closeDrawer();navigateToService('carhire')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13h14l-1.5-5a2 2 0 0 0-2-1.5h-7a2 2 0 0 0-2 1.5z"/><path d="M4 13h16v4H4z"/><circle cx="7.5" cy="17.5" r="1.5"/><circle cx="16.5" cy="17.5" r="1.5"/></svg> Car Hire</a>
   <div class="drawer-foot">
     <a class="drawer-link" onclick="switchRole()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4M4 7h16M16 21l4-4-4-4M20 17H4"/></svg> Switch to Partner</a>
@@ -958,7 +977,7 @@ function renderOnboarding(){
       <h1 class="greeting-title" style="margin-bottom:14px;">What will you <em>offer</em>?</h1>
       <p class="greeting-sub" style="margin:0 auto 8px;">Choose a service to set up. Listing is completely free — Apatmento charges only a small fixed fee per confirmed booking, never a percentage.</p>
       <p style="font-size:13px;color:var(--ember);font-weight:600;margin-bottom:38px;">You keep almost everything. Always.</p>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:680px;margin:0 auto 32px; id='ob-grid'">
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;max-width:680px;margin:0 auto 32px;">
         ${Object.entries(PARTNER_SERVICES).map(([k,s])=>`
           <div class="svc-onboard" id="ob-${k}" onclick="selectService('${k}')" style="position:relative;border-radius:20px;border:1.5px solid var(--line);background:rgba(255,255,255,.6);backdrop-filter:blur(12px);padding:28px 16px;cursor:pointer;transition:all .35s cubic-bezier(.22,1,.36,1);">
             <div class="ob-tick" style="position:absolute;top:12px;right:12px;width:22px;height:22px;border-radius:50%;background:var(--mint-deep);display:none;align-items:center;justify-content:center;color:#fff;font-size:12px;">✓</div>
@@ -1103,6 +1122,7 @@ function hideAddSheet(){ document.getElementById('add-scrim').classList.remove('
     document.body.appendChild(link);
   } catch(e){ console.log('[Admin] detection error:', e.message); }
 })();
+
 
 
 
