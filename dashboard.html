@@ -431,6 +431,7 @@ body{overflow-x:hidden;}
         </div>
         <!-- User nav — shown when logged in -->
         <div id="dash-user-nav" style="display:none;align-items:center;gap:10px;">
+          <a id="admin-link" href="/admin.html" style="display:none;padding:7px 13px;border-radius:100px;background:rgba(123,47,247,.1);border:1px solid rgba(123,47,247,.3);color:#7B2FF7;font-size:11px;font-weight:700;text-decoration:none;letter-spacing:.04em;">⚙ Admin</a>
           <span id="nav-user-name" style="font-size:13px;font-weight:500;color:var(--ink-soft);"></span>
           <button class="sos-btn" onclick="openSOS()">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 2 2 19h20z"/><path d="M12 9v4M12 17h.01"/></svg>
@@ -643,13 +644,12 @@ async function init(){
     const params    = new URLSearchParams(location.search);
     const roleParam = params.get('role');
 
-    // Try getSession — if null, wait 800ms and retry once (Supabase sometimes needs
-    // a moment to restore session from localStorage after a redirect)
+    // Get session — retry once if null (handles post-redirect timing)
     let { data:{ session } } = await sb.auth.getSession();
     if(!session){
-      await new Promise(r => setTimeout(r, 800));
-      const retry = await sb.auth.getSession();
-      session = retry.data?.session || null;
+      await new Promise(r => setTimeout(r, 1000));
+      const { data: r2 } = await sb.auth.getSession();
+      session = r2?.session || null;
     }
     const isGuest = !session;
 
@@ -1175,24 +1175,18 @@ function hideAddSheet(){ document.getElementById('add-scrim').classList.remove('
 
 </script>
 
-<!-- Admin detection: runs after init() sets CURRENT_USER -->
+<!-- Admin detection: simple, in-HTML link revealed by email check -->
 <script>
 function checkAdminAccess(){
-  const ADMIN_EMAILS = ['apatmento@gmail.com','worlddossy@gmail.com'];
-  if(!CURRENT_USER?.email) return;
-  const email = CURRENT_USER.email.toLowerCase().trim();
-  if(!ADMIN_EMAILS.includes(email)) return;
-  // Show admin pill
-  const existing = document.getElementById('admin-pill');
-  if(existing) return;
-  const pill = document.createElement('a');
-  pill.id = 'admin-pill';
-  pill.href = '/admin.html';
-  pill.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:10px 22px;border-radius:100px;background:rgba(123,47,247,.15);border:1.5px solid rgba(123,47,247,.4);color:#7B2FF7;font-size:12px;font-weight:700;text-decoration:none;z-index:9999;display:flex;align-items:center;gap:7px;box-shadow:0 4px 20px rgba(123,47,247,.2);white-space:nowrap;';
-  pill.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg> ⚙ Admin Panel';
-  document.body.appendChild(pill);
-  console.log('[Admin] pill shown for', email);
+  const ADMINS = ['apatmento@gmail.com','worlddossy@gmail.com'];
+  const email  = CURRENT_USER?.email?.toLowerCase().trim();
+  if(!email || !ADMINS.includes(email)) return;
+  // Just show the already-rendered link — no DOM injection, no race condition
+  const link = document.getElementById('admin-link');
+  if(link){ link.style.display = 'flex'; console.log('[Admin] link shown for', email); }
+}
 }
 </script>
+
 
 
