@@ -184,6 +184,13 @@ body{overflow-x:hidden;}
   /* Disable scroll animations on mobile */
   .prop-card{opacity:1!important;transform:none!important;}
 }
+
+/* ══ MOBILE PERF ══ */
+@media(max-width:640px){
+  .svc,.prop-card{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;background:rgba(255,255,255,.95)!important;}
+  .topbar{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;background:rgba(252,252,253,.98)!important;}
+  .aurora .ab{filter:blur(40px)!important;opacity:.15!important;}
+}
 </style>
 
 <style>
@@ -902,9 +909,11 @@ async function loadDashboardHero() {
 <script>
 /* ════ PARTNER FLOW — Iridescent Glass ════ */
 const PARTNER_SERVICES = {
-  apartment: { name:'Apartments', sub:'Short-stay rentals', ico:'<svg class="svc-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/><path d="M9 20v-5a3 3 0 0 1 6 0v5"/></svg>', grad:'linear-gradient(135deg,#B8A4F4,#7B2FF7)' },
-  tour:      { name:'Tours & Safaris', sub:'Day trips & experiences', ico:'<svg class="svc-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m15 5.5-6-2-6 2.5v13l6-2.5 6 2 6-2.5v-13z"/><path d="M9 3.5v13M15 7.5v13"/></svg>', grad:'linear-gradient(135deg,#5EEAD4,#4361FF)' },
+  apartment: { name:'Apartments',    sub:'Short-stay rentals',       ico:'<svg class="svc-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/><path d="M9 20v-5a3 3 0 0 1 6 0v5"/></svg>', grad:'linear-gradient(135deg,#B8A4F4,#7B2FF7)' },
+  tour:      { name:'Tours & Safaris', sub:'Day trips & experiences',  ico:'<svg class="svc-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m15 5.5-6-2-6 2.5v13l6-2.5 6 2 6-2.5v-13z"/><path d="M9 3.5v13M15 7.5v13"/></svg>', grad:'linear-gradient(135deg,#5EEAD4,#4361FF)' },
   event:     { name:'Events & Tickets', sub:'Concerts, shows & festivals', ico:'<svg class="svc-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9a2 2 0 0 0 0 6v2a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-2a2 2 0 0 0 0-6V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1z"/><path d="M14 6v12" stroke-dasharray="2 2.5"/></svg>', grad:'linear-gradient(135deg,#7B2FF7,#B8A4F4)' },
+  food:      { name:'Food & Dining',  sub:'Restaurants & catering',   ico:'<svg class="svc-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16h16a8 8 0 0 0-16 0z"/><path d="M2 19h20"/><path d="M12 8V5"/><path d="M10 5h4"/></svg>', grad:'linear-gradient(135deg,#FF6B2C,#FFB59E)' },
+  carhire:   { name:'Car Hire',       sub:'Self-drive & chauffeur',   ico:'<svg class="svc-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13h14l-1.5-5a2 2 0 0 0-2-1.5h-7a2 2 0 0 0-2 1.5z"/><path d="M4 13h16v4H4z"/><circle cx="7.5" cy="17.5" r="1.5"/><circle cx="16.5" cy="17.5" r="1.5"/></svg>', grad:'linear-gradient(135deg,#2DD4BF,#5EEAD4)' },
 };
 let partnerServices = [];
 let selectedServiceType = null;
@@ -949,7 +958,7 @@ function renderOnboarding(){
       <h1 class="greeting-title" style="margin-bottom:14px;">What will you <em>offer</em>?</h1>
       <p class="greeting-sub" style="margin:0 auto 8px;">Choose a service to set up. Listing is completely free — Apatmento charges only a small fixed fee per confirmed booking, never a percentage.</p>
       <p style="font-size:13px;color:var(--ember);font-weight:600;margin-bottom:38px;">You keep almost everything. Always.</p>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:620px;margin:0 auto 32px;">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:680px;margin:0 auto 32px; id='ob-grid'">
         ${Object.entries(PARTNER_SERVICES).map(([k,s])=>`
           <div class="svc-onboard" id="ob-${k}" onclick="selectService('${k}')" style="position:relative;border-radius:20px;border:1.5px solid var(--line);background:rgba(255,255,255,.6);backdrop-filter:blur(12px);padding:28px 16px;cursor:pointer;transition:all .35s cubic-bezier(.22,1,.36,1);">
             <div class="ob-tick" style="position:absolute;top:12px;right:12px;width:22px;height:22px;border-radius:50%;background:var(--mint-deep);display:none;align-items:center;justify-content:center;color:#fff;font-size:12px;">✓</div>
@@ -1073,7 +1082,7 @@ function hideAddSheet(){ document.getElementById('add-scrim').classList.remove('
     const SUPA_URL = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
     const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
     // Wait for auth + sb to be ready (init() runs first)
-    await new Promise(r => setTimeout(r, 3000));
+    await new Promise(r => setTimeout(r, 1500));
     if(typeof sb === 'undefined') return;
     const { data } = await sb.auth.getSession();
     const session = data?.session;
@@ -1082,17 +1091,7 @@ function hideAddSheet(){ document.getElementById('add-scrim').classList.remove('
     // Hardcoded check first (instant, no network) 
     const ADMIN_EMAILS = ['apatmento@gmail.com','worlddossy@gmail.com'];
     if(!ADMIN_EMAILS.includes(email)) return;
-    // Verify against DB using anon key (RLS policy allows user to read their own row)
-    const r = await fetch(
-      SUPA_URL + '/rest/v1/admin_users?select=email,role&limit=10',
-      { headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + session.access_token }, cache: 'no-store' }
-    );
-    if(!r.ok){ console.log('[Admin] DB check failed, using email fallback'); }
-    else {
-      const rows = await r.json();
-      const match = rows?.find(row => row.email?.toLowerCase() === email);
-      if(!match) return;
-    }
+    // Email list is the source of truth — no DB call needed
     // ✅ Admin confirmed
     console.log('[Admin] confirmed for', email);
     const link = document.createElement('a');
@@ -1104,6 +1103,7 @@ function hideAddSheet(){ document.getElementById('add-scrim').classList.remove('
     document.body.appendChild(link);
   } catch(e){ console.log('[Admin] detection error:', e.message); }
 })();
+
 
 
 
