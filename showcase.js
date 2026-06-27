@@ -796,10 +796,19 @@ function injectScrollInterstitials(gridSelector, interval){
     });
   };
 
-  // Initial inject + watch for new items
-  setTimeout(doInject, 800);
-  const obs = new MutationObserver(doInject);
-  obs.observe(grid, { childList: true });
+  // Disconnect observer BEFORE injecting to prevent infinite loop
+  let scInjected = false;
+  const safeInject = () => {
+    if(scInjected) return;
+    const items = [...grid.children].filter(c=>!c.dataset.adInjected);
+    if(items.length < interval) return; // wait for enough items
+    scInjected = true;
+    obs.disconnect(); // Stop watching BEFORE we touch the DOM
+    doInject();
+  };
+  const obs = new MutationObserver(safeInject);
+  obs.observe(grid, { childList: true, subtree: false });
+  setTimeout(safeInject, 1200); // Initial check after items load
 }
 
 /* ── Intersection observer ── */
@@ -874,3 +883,4 @@ else init();
 
 window.ApatmentoShowcase={reload:init};
 })();
+
