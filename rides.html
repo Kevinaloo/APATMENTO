@@ -297,7 +297,11 @@ const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 let sb=null;
 try{const{createClient}=supabase;sb=createClient(SUPABASE_URL,SUPABASE_ANON_KEY);}catch(e){}
 function showToast(m,d=3200){const t=document.getElementById('toast');if(!t)return;t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),d);}
-window.addEventListener('load',()=>setTimeout(()=>document.getElementById('tx')?.classList.add('done'),1600));
+// Triple failsafe for entry transition
+function dismissTx(){const el=document.getElementById('tx');if(el&&!el.classList.contains('done'))el.classList.add('done');}
+document.addEventListener('DOMContentLoaded',()=>setTimeout(dismissTx,2200));
+window.addEventListener('load',()=>setTimeout(dismissTx,1600));
+setTimeout(dismissTx,4000);
 
 
 const RIDES=[
@@ -320,7 +324,7 @@ function renderRides(){
   document.getElementById('result-num').textContent=list.length;
   const g=document.getElementById('grid');
   g.innerHTML=list.map((r,i)=>`
-  <div style="background:rgba(255,255,255,.68);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:var(--radius);padding:20px 22px;display:flex;align-items:center;gap:18px;cursor:pointer;transition:all .35s cubic-bezier(.22,1,.36,1);opacity:0;transform:translateY(14px;" class="ride-card" onclick="bookRide(${r.id})">
+  <div style="background:rgba(255,255,255,.68);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:var(--radius);padding:20px 22px;display:flex;align-items:center;gap:18px;cursor:pointer;transition:all .35s cubic-bezier(.22,1,.36,1);opacity:0;transform:translateY(14px);" class="ride-card" onclick="bookRide(${r.id})">
     <div style="width:56px;height:56px;border-radius:16px;background:var(--theme-grad);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">${r.icon}</div>
     <div style="flex:1;">
       <div style="font-family:var(--font-display);font-weight:500;font-size:17px;margin-bottom:3px;">${r.name}</div>
