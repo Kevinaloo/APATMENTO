@@ -7,7 +7,7 @@
    - Push notification handler
 ════════════════════════════════════════════════════════════════ */
 
-const VERSION = 'apatmento-v1';
+const VERSION = 'apatmento-v2';
 const STATIC_CACHE = `${VERSION}-static`;
 const DYNAMIC_CACHE = `${VERSION}-dynamic`;
 const IMAGE_CACHE   = `${VERSION}-images`;
@@ -65,6 +65,8 @@ self.addEventListener('fetch', e => {
   if (url.hostname.includes('supabase.co')) return;
   if (url.hostname.includes('api.unsplash.com')) return;
   if (url.pathname.startsWith('/api/')) return;
+  // Always fetch showcase.js and pwa.js fresh — stale versions cause stuck loading screens
+  if (url.pathname === '/showcase.js' || url.pathname === '/pwa.js') return;
 
   // Images → cache-first (aggressive)
   if (request.destination === 'image' || url.pathname.match(/\.(png|jpg|jpeg|webp|svg|gif|ico)$/i)) {
