@@ -310,56 +310,193 @@ function injectCSS(){
    RENDERERS
 ════════════════════════════════════════════════════════════════ */
 
-/* ── VIDEO HERO ── */
+/* ── VIDEO HERO — cycles ALL video campaigns in sequence ── */
 function renderVideo(slot, c){
-  if(!c)return;
-  const hasVid = !!c.media;
+  // c is the first campaign — but we pass the full pool for cycling
+  if(!c) return;
+  const pool = slot._videoPool || [c];  // full list set before calling
+  if(!pool.length) return;
+
+  let cur = 0;
+  const camp = () => pool[cur % pool.length];
+
+  const hasVid = () => !!camp().media;
+
   slot.innerHTML = `
     <div class="sc-label">Sponsored content</div>
-    <div class="scv sc-el" id="scv-${c.id}">
-      <div class="scv-bg">
-        ${hasVid?`<video muted loop playsinline preload="metadata" poster="${c.poster}"><source src="${c.media}" type="video/mp4"/></video>`:''}
-      </div>
-      <div class="scv-grad" style="background:${c.grad}"></div>
-      <div class="scv-orb1" style="width:240px;height:240px;background:${c.accent};top:-15%;left:5%;"></div>
-      <div class="scv-orb2" style="width:190px;height:190px;background:${c.grad.match(/#[0-9A-Fa-f]{6}/g)?.[1]||'#4361FF'};bottom:-8%;right:10%;"></div>
+    <div class="scv sc-el" id="scv-main">
+      <div class="scv-bg"><video id="scv-vid" muted playsinline preload="auto" style="width:100%;height:100%;object-fit:cover;"></video></div>
+      <div class="scv-grad" style="background:${camp().grad}"></div>
+      <div class="scv-orb1" style="width:240px;height:240px;background:${camp().accent};top:-15%;left:5%;"></div>
+      <div class="scv-orb2" style="width:190px;height:190px;bottom:-8%;right:10%;opacity:0;"></div>
       <div class="scv-shimmer"></div>
-      <div class="scv-tag">${c.tag}</div>
+      <div class="scv-tag" id="scv-tag">${camp().tag}</div>
       <div class="scv-content">
-        <div class="scv-adv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${c.icon}</svg>${c.advertiser}</div>
-        <div class="scv-h">${c.headline}</div>
-        <div class="scv-sub">${c.sub}</div>
-        <button class="scv-cta">${c.cta}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+        <div class="scv-adv" id="scv-adv">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg>
+          <span id="scv-adv-name">${camp().advertiser}</span>
+        </div>
+        <div class="scv-h" id="scv-h">${camp().headline}</div>
+        <div class="scv-sub" id="scv-sub">${camp().sub}</div>
+        <button class="scv-cta" id="scv-cta">${camp().cta}
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
       </div>
-      ${hasVid?`<div class="scv-ctrl"><button class="scv-btn sc-sound" title="Sound"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg></button></div><div class="scv-bar"><div class="scv-bar-fill"></div></div>`:''}
+      ${pool.length > 1 ? `
+      <div class="scv-ctrl">
+        <button class="scv-btn sc-sound" title="Sound">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+        </button>
+        <button class="scv-btn sc-prev-ad" title="Previous ad">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <button class="scv-btn sc-next-ad" title="Next ad">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+      </div>
+      <div class="scv-playlist-dots" style="position:absolute;top:16px;right:18px;display:flex;gap:5px;z-index:3;">
+        ${pool.map((_,i)=>`<div class="scv-pdot ${i===0?'scv-pdot-active':''}" data-i="${i}" style="width:${i===0?'22px':'6px'};height:6px;border-radius:3px;background:${i===0?'#fff':'rgba(255,255,255,.35)'};transition:all .4s;cursor:pointer;"></div>`).join('')}
+      </div>` : `
+      <div class="scv-ctrl">
+        <button class="scv-btn sc-sound" title="Sound">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+        </button>
+      </div>`}
+      <div class="scv-bar"><div class="scv-bar-fill" id="scv-bar"></div></div>
     </div>`;
 
-  const el = slot.querySelector('.scv');
-  const vid = el.querySelector('video');
-  const snd = el.querySelector('.sc-sound');
-  const bar = el.querySelector('.scv-bar-fill');
-  let muted=true;
+  const el   = slot.querySelector('.scv');
+  const vid  = slot.querySelector('#scv-vid');
+  const bar  = slot.querySelector('#scv-bar');
+  const snd  = slot.querySelector('.sc-sound');
+  const prev = slot.querySelector('.sc-prev-ad');
+  const next = slot.querySelector('.sc-next-ad');
+  let muted  = true;
 
-  el.addEventListener('click', e=>{
-    if(e.target.closest('.sc-sound')) return;
-    trackClick(c.id,'video',c.advertiser);
-    if(c.url&&c.url!=='#') window.location.href=c.url;
-  });
-  snd?.addEventListener('click', e=>{
-    e.stopPropagation(); muted=!muted;
-    if(vid) vid.muted=muted;
-    snd.innerHTML=muted
-      ?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>'
-      :'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a9 9 0 0 1 0 14"/></svg>';
-  });
-  if(vid&&bar) vid.addEventListener('timeupdate',()=>{ if(vid.duration) bar.style.width=(vid.currentTime/vid.duration*100)+'%'; });
+  /* ── update all UI elements for current campaign ── */
+  function updateUI(){
+    const cp = camp();
+    // fade transition
+    el.style.opacity = '0.7';
+    el.style.transition = 'opacity .4s';
+    setTimeout(()=>{ el.style.opacity='1'; }, 400);
 
-  observe(el,()=>{
+    // video source
+    if(cp.media){
+      vid.src = cp.media;
+      vid.poster = cp.poster || '';
+      vid.muted = muted;
+      vid.load();
+      vid.play().catch(()=>{});
+    } else {
+      vid.src = '';
+      vid.poster = '';
+    }
+
+    // gradient background (shows when no video)
+    const grad = el.querySelector('.scv-grad');
+    if(grad) grad.style.background = cp.grad;
+
+    // copy
+    const h = slot.querySelector('#scv-h');
+    const s = slot.querySelector('#scv-sub');
+    const cta = slot.querySelector('#scv-cta');
+    const tag = slot.querySelector('#scv-tag');
+    const adv = slot.querySelector('#scv-adv-name');
+    if(h)   h.textContent   = cp.headline;
+    if(s)   s.textContent   = cp.sub;
+    if(tag) tag.textContent = cp.tag;
+    if(adv) adv.textContent = cp.advertiser;
+    if(cta){
+      const svg = cta.querySelector('svg');
+      cta.textContent = cp.cta;
+      if(svg) cta.appendChild(svg);
+      cta.onclick = e => { trackClick(cp.id,'video',cp.advertiser); if(cp.url&&cp.url!=='#') window.location.href=cp.url; };
+    }
+
+    // playlist dots
+    slot.querySelectorAll('.scv-pdot').forEach((d,i)=>{
+      const active = i === (cur % pool.length);
+      d.style.width  = active ? '22px' : '6px';
+      d.style.background = active ? '#fff' : 'rgba(255,255,255,.35)';
+      d.classList.toggle('scv-pdot-active', active);
+    });
+
+    // progress bar reset
+    if(bar) bar.style.width = '0%';
+    trackImpression(cp.id,'video',cp.advertiser);
+  }
+
+  /* ── advance to next campaign ── */
+  function goNext(){
+    cur = (cur + 1) % pool.length;
+    updateUI();
+  }
+  function goPrev(){
+    cur = (cur - 1 + pool.length) % pool.length;
+    updateUI();
+  }
+
+  /* ── video ended → next campaign ── */
+  vid.addEventListener('ended', goNext);
+
+  /* ── progress bar ── */
+  vid.addEventListener('timeupdate', () => {
+    if(vid.duration && bar) bar.style.width = (vid.currentTime / vid.duration * 100) + '%';
+  });
+
+  /* ── for gradient-only (no video): auto-advance every 8s ── */
+  let gradTimer;
+  function startGradTimer(){
+    clearTimeout(gradTimer);
+    if(!camp().media){
+      gradTimer = setTimeout(goNext, 8000);
+    }
+  }
+  vid.addEventListener('play', () => clearTimeout(gradTimer));
+
+  /* ── sound toggle ── */
+  snd?.addEventListener('click', e => {
+    e.stopPropagation();
+    muted = !muted;
+    vid.muted = muted;
+    snd.innerHTML = muted
+      ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>'
+      : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a9 9 0 0 1 0 14"/></svg>';
+  });
+
+  /* ── prev/next buttons ── */
+  prev?.addEventListener('click', e => { e.stopPropagation(); goPrev(); });
+  next?.addEventListener('click', e => { e.stopPropagation(); goNext(); });
+
+  /* ── playlist dot clicks ── */
+  slot.querySelectorAll('.scv-pdot').forEach(d => {
+    d.addEventListener('click', e => { e.stopPropagation(); cur=+d.dataset.i; updateUI(); });
+  });
+
+  /* ── main click → CTA ── */
+  el.addEventListener('click', e => {
+    if(e.target.closest('.scv-btn')||e.target.closest('.scv-pdot')) return;
+    trackClick(camp().id,'video',camp().advertiser);
+    const url = camp().url;
+    if(url && url !== '#') window.location.href = url;
+  });
+
+  /* ── Intersection observer — play/pause ── */
+  observe(el, () => {
     el.classList.add('in');
-    trackImpression(c.id,'video',c.advertiser);
-    vid?.play().catch(()=>{});
-  },()=>vid?.pause());
+    if(camp().media){ vid.play().catch(()=>{}); }
+    else startGradTimer();
+    trackImpression(camp().id,'video',camp().advertiser);
+  }, () => {
+    vid.pause();
+    clearTimeout(gradTimer);
+  });
+
+  // Initial load
+  updateUI();
 }
+
 
 /* ── CAROUSEL ── */
 function renderCarousel(slot, cs){
@@ -548,7 +685,11 @@ async function init(){
   document.querySelectorAll('[data-showcase]').forEach(slot=>{
     slot.style.position='relative';
     const fmt=slot.getAttribute('data-showcase');
-    if(fmt==='video')    renderVideo(slot, pick('video', pools.video));
+    if(fmt==='video'){
+      const vpool = pools.video?.length ? pools.video : [BRAND_FALLBACK.video];
+      slot._videoPool = vpool;
+      renderVideo(slot, vpool[0]);
+    }
     if(fmt==='carousel') renderCarousel(slot, pools.carousel?.length ? pools.carousel : BRAND_FALLBACK.carousel);
     if(fmt==='native')   renderNative(slot, pick('native', pools.native));
     if(fmt==='split')    renderSplit(slot, pick('split', pools.split));
