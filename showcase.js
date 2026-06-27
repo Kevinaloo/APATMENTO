@@ -177,7 +177,7 @@ const CSS = `
 .sc-label::before{content:'';width:5px;height:5px;border-radius:50%;background:#8E90AD;opacity:.5;}
 
 /* ─ animate in ─ */
-.sc-el{opacity:1;transform:none;transition:box-shadow .4s;}
+.sc-el{opacity:0;transform:translateY(20px);transition:opacity .6s cubic-bezier(.22,1,.36,1),transform .6s cubic-bezier(.22,1,.36,1),box-shadow .4s;}
 .sc-el.in{opacity:1;transform:none;} .scv.in{opacity:1;transform:none;}
 
 /* ══ VIDEO HERO (cinematic 21:9) ══ */
@@ -733,6 +733,7 @@ function renderWindow(slot, c){
     el.classList.add('in');
     trackImpression(camp().id,'window',camp().advertiser);
     vid.play().catch(()=>{});
+  }); // no pause on scroll-out — plays always
 
   updateWindow();
 }
@@ -868,6 +869,7 @@ else init();
 
 window.ApatmentoShowcase={reload:init};
 })();
+
 
 
 
