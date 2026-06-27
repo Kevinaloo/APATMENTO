@@ -204,7 +204,7 @@ body{overflow-x:hidden;}
 .svc[data-svc="carhire"]{--svc-color:var(--mint-deep);--svc-grad:linear-gradient(135deg,var(--mint-deep),var(--mint));}
 
 /* ══════════ FEATURED VIDEO HERO (with upload slot) ══════════ */
-.hero-stage{position:relative;border-radius:var(--radius);overflow:hidden;margin-bottom:40px;min-height:340px;background:linear-gradient(135deg,var(--ink-2),var(--violet));box-shadow:var(--shadow-lift);}
+.hero-stage{position:relative;border-radius:var(--radius);overflow:hidden;margin-bottom:40px;min-height:340px;max-height:480px;background:linear-gradient(135deg,#0A0A14,#1A0A3E 40%,#2B0F6F);box-shadow:var(--shadow-lift);}
 .hero-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;}
 .hero-stage::after{content:'';position:absolute;inset:0;z-index:1;background:linear-gradient(90deg,rgba(10,10,20,.82) 0%,rgba(10,10,20,.4) 50%,transparent 100%);}
 .hero-body{position:relative;z-index:2;padding:48px;max-width:560px;height:100%;display:flex;flex-direction:column;justify-content:center;min-height:340px;}
@@ -334,22 +334,31 @@ body{overflow-x:hidden;}
         <img src="logo-mark.png" class="tb-logo" alt="" onerror="this.style.display='none'"/>
         <span class="tb-brand"><em>Apat</em>mento</span>
       </div>
-      <div class="tb-right">
-        <button class="sos-btn" onclick="openSOS()">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 2 2 19h20z"/><path d="M12 9v4M12 17h.01"/></svg>
-          SOS
-        </button>
-        <button class="tb-icon-btn" onclick="showToast('No new notifications')" aria-label="Notifications">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/><path d="M3.3 16.6c-.6.7-.1 1.8.8 1.8h15.8c.9 0 1.4-1.1.8-1.8C19.5 15 18 13.2 18 8A6 6 0 0 0 6 8c0 5.2-1.5 7-2.7 8.6"/></svg>
-        </button>
-        <div class="tb-avatar" id="g-avatar" onclick="window.location.href='profile.html?back=1'">G</div>
+      <div class="tb-right" id="tb-right-guest">
+        <!-- Guest nav — Sign In + Sign Up (hidden when logged in) -->
+        <div id="dash-guest-nav" style="display:flex;align-items:center;gap:8px;">
+          <a href="auth.html" style="font-size:13px;font-weight:600;color:var(--ink-soft);text-decoration:none;padding:8px 16px;border-radius:100px;border:1px solid var(--line);background:rgba(255,255,255,.7);transition:all .22s;">Sign in</a>
+          <a href="auth.html?mode=signup" style="font-size:13px;font-weight:600;color:#fff;text-decoration:none;padding:9px 18px;border-radius:100px;background:linear-gradient(135deg,var(--violet),var(--electric));box-shadow:0 4px 14px rgba(123,47,247,.3);">Sign up</a>
+        </div>
+        <!-- User nav — shown when logged in -->
+        <div id="dash-user-nav" style="display:none;align-items:center;gap:10px;">
+          <span id="nav-user-name" style="font-size:13px;font-weight:500;color:var(--ink-soft);"></span>
+          <button class="sos-btn" onclick="openSOS()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 2 2 19h20z"/><path d="M12 9v4M12 17h.01"/></svg>
+            SOS
+          </button>
+          <button class="tb-icon-btn" onclick="showToast('No new notifications')" aria-label="Notifications">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/><path d="M3.3 16.6c-.6.7-.1 1.8.8 1.8h15.8c.9 0 1.4-1.1.8-1.8C19.5 15 18 13.2 18 8A6 6 0 0 0 6 8c0 5.2-1.5 7-2.7 8.6"/></svg>
+          </button>
+          <div class="tb-avatar" id="g-avatar" onclick="window.location.href='profile.html?back=1'">?</div>
+        </div>
       </div>
     </div>
 
     <div class="content">
       <div class="greeting">
         <span class="greeting-eyebrow" id="g-eyebrow">✦ Your world, one tap away</span>
-        <h1 class="greeting-title" id="g-title">Where to, <em id="g-name">friend</em>?</h1>
+        <h1 class="greeting-title" id="g-title"><span id="g-greeting">Good afternoon</span><em id="g-name"></em></h1>
         <p class="greeting-sub">Stays, flights, tours, rides and more — every part of your trip, beautifully in one place.</p>
       </div>
 
@@ -387,8 +396,6 @@ body{overflow-x:hidden;}
           <svg class="svc-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13h14l-1.5-5a2 2 0 0 0-2-1.5h-7a2 2 0 0 0-2 1.5z"/><path d="M4 13h16v4H4z"/><circle cx="7.5" cy="17.5" r="1.5"/><circle cx="16.5" cy="17.5" r="1.5"/></svg>
           <span class="svc-name">Car Hire</span>
         </div>
-            </div><!-- /dash-user-nav -->
-    </div><!-- /tb-right -->
 
       <!-- FEATURED VIDEO HERO — live ad from Supabase -->
       <div class="hero-stage" id="hero-stage">
@@ -545,9 +552,9 @@ async function init(){
 
     if(isGuest){
       // ── GUEST MODE ──────────────────────────────────────────
-      document.getElementById('g-name').textContent  = '';
-      document.getElementById('g-title').firstChild.textContent = getGreeting();
-      document.getElementById('g-avatar').textContent = '✦';
+      document.getElementById('g-name').textContent = '';
+      document.getElementById('g-greeting').textContent = getGreeting();
+      document.getElementById('g-avatar').textContent = '?';
       document.getElementById('dash-guest-nav').style.display = 'flex';
       document.getElementById('dash-user-nav').style.display  = 'none';
 
@@ -558,7 +565,7 @@ async function init(){
       showScreen('guest');
       loadStays();
       loadHeroVideo();
-      loadDashboardHero();
+      setTimeout(loadDashboardHero, 500);  // slight delay so DOM is ready
       return;
     }
 
@@ -582,14 +589,14 @@ async function init(){
     // Update greeting
     document.getElementById('g-avatar').textContent = initial;
     if(firstName){
-      document.getElementById('g-name').textContent = firstName;
-      document.getElementById('g-title').firstChild.textContent = getGreeting() + ', ';
+      document.getElementById('g-name').innerHTML = ', <em style="font-style:italic;font-weight:500;background:linear-gradient(120deg,var(--violet),var(--electric),var(--mint-deep));-webkit-background-clip:text;background-clip:text;color:transparent;">' + firstName + '</em>';
+      document.getElementById('g-greeting').textContent = getGreeting();
+      if(document.getElementById('nav-user-name')) document.getElementById('nav-user-name').textContent = 'Welcome, ' + firstName;
     } else {
       document.getElementById('g-name').textContent = '';
-      document.getElementById('g-title').firstChild.textContent = getGreeting();
+      document.getElementById('g-greeting').textContent = getGreeting();
     }
-
-    // Update nav — show user, hide guest buttons
+    // Update nav — show user avatar, hide guest buttons
     document.getElementById('dash-guest-nav').style.display = 'none';
     document.getElementById('dash-user-nav').style.display  = 'flex';
 
@@ -604,7 +611,7 @@ async function init(){
     if(targetRole === 'partner'){
       setTimeout(initPartnerFlow, 200);
     }
-    loadDashboardHero();
+    setTimeout(loadDashboardHero, 500);
 
   } catch(err) {
     // Any unexpected error — still dismiss the loader
@@ -734,6 +741,98 @@ function openSOS(){ showToast('Emergency services: call 999 or 112'); }
 function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3200); }
 
 init();
+
+
+async function loadDashboardHero() {
+  // Uses existing `sb` client — no duplicate init
+  try {
+    const SUPA_URL = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
+    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
+
+    const DEFAULTS = [
+      { campaign_id:'brand_dash_1', advertiser:'Apatmento', tag:'Apatmento for Life',
+        headline:'Travel in <em>style.</em><br/>Live without limits.',
+        sub:"Kenya's zero-commission travel super-app. Stays, flights, safaris, events, rides, food and shopping.",
+        cta_text:'Explore Apatmento', cta_url:'apartments.html', media_url:'',
+        theme_gradient:'linear-gradient(135deg,#0A0A14,#1A0A3E)' },
+    ];
+
+    let pool = DEFAULTS;
+
+    // Load via REST (no new Supabase client needed)
+    const r = await fetch(
+      SUPA_URL+'/rest/v1/ad_campaigns?active=eq.true&format=eq.video&order=priority.desc',
+      {headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}}
+    );
+    if(r.ok){
+      const ads = await r.json();
+      if(ads?.length) pool = ads;
+    }
+
+    const vid   = document.getElementById('hero-video');
+    const stage = document.getElementById('hero-stage');
+    if(!vid || !stage) return;
+
+    let cur = 0;
+
+    // Build playlist dots if multiple campaigns
+    if(pool.length > 1){
+      const dots = document.createElement('div');
+      dots.id = 'hero-dots';
+      dots.style.cssText = 'position:absolute;bottom:20px;right:24px;display:flex;gap:6px;z-index:4;';
+      dots.innerHTML = pool.map((_,i)=>`<div data-i="${i}" style="width:${i===0?'22px':'6px'};height:6px;border-radius:3px;background:${i===0?'#fff':'rgba(255,255,255,.3)'};transition:all .4s;cursor:pointer;"></div>`).join('');
+      stage.appendChild(dots);
+      dots.querySelectorAll('[data-i]').forEach(d=>d.addEventListener('click',e=>{e.stopPropagation();cur=+d.dataset.i;loadCamp();}));
+    }
+
+    function updateDots(){
+      document.querySelectorAll('#hero-dots [data-i]').forEach((d,i)=>{
+        const active = i===cur;
+        d.style.width = active?'22px':'6px';
+        d.style.background = active?'#fff':'rgba(255,255,255,.3)';
+      });
+    }
+
+    function loadCamp(){
+      const ad = pool[cur];
+      stage.style.transition='opacity .35s';
+      stage.style.opacity='0.75';
+      setTimeout(()=>stage.style.opacity='1',350);
+
+      if(ad.media_url){ vid.src=ad.media_url; vid.poster=ad.poster_url||''; vid.load(); vid.play().catch(()=>{}); }
+      else { vid.src=''; stage.style.background=ad.theme_gradient||'linear-gradient(135deg,#0A0A14,#1A0A3E)'; }
+
+      const eyebrow = document.getElementById('hero-eyebrow');
+      const title   = document.getElementById('hero-title');
+      const sub     = document.getElementById('hero-sub');
+      const cta     = document.getElementById('hero-cta');
+      const tag     = document.getElementById('hero-ad-tag');
+      if(eyebrow) eyebrow.textContent='✦ '+(ad.advertiser||'Apatmento');
+      if(title)   title.innerHTML=ad.headline||'Travel in <em>style.</em>';
+      if(sub)     sub.textContent=ad.sub||'';
+      if(tag)     tag.style.display=ad.campaign_id?.startsWith('brand')?'none':'block';
+      if(cta){
+        const svg=cta.querySelector('svg');
+        cta.textContent=ad.cta_text||'Explore';
+        if(svg)cta.appendChild(svg);
+        cta.onclick=()=>{if(ad.cta_url&&ad.cta_url!=='#')window.location.href=ad.cta_url;};
+      }
+      updateDots();
+      if(!ad.campaign_id?.startsWith('brand')){
+        fetch(SUPA_URL+'/rest/v1/rpc/increment_ad_impression',{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY},body:JSON.stringify({p_campaign_id:ad.campaign_id})}).catch(()=>{});
+      }
+    }
+
+    vid.addEventListener('ended',()=>{ cur=(cur+1)%pool.length; loadCamp(); });
+    let gradTimer;
+    vid.addEventListener('play',()=>clearTimeout(gradTimer));
+    function checkGrad(){ clearTimeout(gradTimer); if(!pool[cur].media_url){ gradTimer=setTimeout(()=>{ cur=(cur+1)%pool.length; loadCamp(); checkGrad(); },8000); } }
+    loadCamp();
+    checkGrad();
+
+  } catch(e){ console.log('[Hero] Using default branding'); }
+}
+
 </script>
 
 
@@ -900,6 +999,9 @@ function hideAddSheet(){ document.getElementById('add-scrim').classList.remove('
 </script>
 
 <script src="/pwa.js" defer></script>
+<script src="/showcase.js" defer></script>
+
+</script>
 
 <!-- Silent admin detection — invisible to regular users -->
 <script>
@@ -924,96 +1026,3 @@ function hideAddSheet(){ document.getElementById('add-scrim').classList.remove('
     document.body.appendChild(link);
   } catch(e){}
 })();
-
-/* ── Load live video ad into dashboard hero ── */
-async function loadDashboardHero() {
-  // Uses existing `sb` client — no duplicate init
-  try {
-    const SUPA_URL = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
-    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
-
-    const DEFAULTS = [
-      { campaign_id:'brand_dash_1', advertiser:'Apatmento', tag:'Apatmento for Life',
-        headline:'Travel in <em>style.</em><br/>Live without limits.',
-        sub:"Kenya's zero-commission travel super-app. Stays, flights, safaris, events, rides, food and shopping.",
-        cta_text:'Explore Apatmento', cta_url:'apartments.html', media_url:'',
-        theme_gradient:'linear-gradient(135deg,#0A0A14,#1A0A3E)' },
-    ];
-
-    let pool = DEFAULTS;
-
-    // Load via REST (no new Supabase client needed)
-    const r = await fetch(
-      SUPA_URL+'/rest/v1/ad_campaigns?active=eq.true&format=eq.video&order=priority.desc',
-      {headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}}
-    );
-    if(r.ok){
-      const ads = await r.json();
-      if(ads?.length) pool = ads;
-    }
-
-    const vid   = document.getElementById('hero-video');
-    const stage = document.getElementById('hero-stage');
-    if(!vid || !stage) return;
-
-    let cur = 0;
-
-    // Build playlist dots if multiple campaigns
-    if(pool.length > 1){
-      const dots = document.createElement('div');
-      dots.id = 'hero-dots';
-      dots.style.cssText = 'position:absolute;bottom:20px;right:24px;display:flex;gap:6px;z-index:4;';
-      dots.innerHTML = pool.map((_,i)=>`<div data-i="${i}" style="width:${i===0?'22px':'6px'};height:6px;border-radius:3px;background:${i===0?'#fff':'rgba(255,255,255,.3)'};transition:all .4s;cursor:pointer;"></div>`).join('');
-      stage.appendChild(dots);
-      dots.querySelectorAll('[data-i]').forEach(d=>d.addEventListener('click',e=>{e.stopPropagation();cur=+d.dataset.i;loadCamp();}));
-    }
-
-    function updateDots(){
-      document.querySelectorAll('#hero-dots [data-i]').forEach((d,i)=>{
-        const active = i===cur;
-        d.style.width = active?'22px':'6px';
-        d.style.background = active?'#fff':'rgba(255,255,255,.3)';
-      });
-    }
-
-    function loadCamp(){
-      const ad = pool[cur];
-      stage.style.transition='opacity .35s';
-      stage.style.opacity='0.75';
-      setTimeout(()=>stage.style.opacity='1',350);
-
-      if(ad.media_url){ vid.src=ad.media_url; vid.poster=ad.poster_url||''; vid.load(); vid.play().catch(()=>{}); }
-      else { vid.src=''; stage.style.background=ad.theme_gradient||'linear-gradient(135deg,#0A0A14,#1A0A3E)'; }
-
-      const eyebrow = document.getElementById('hero-eyebrow');
-      const title   = document.getElementById('hero-title');
-      const sub     = document.getElementById('hero-sub');
-      const cta     = document.getElementById('hero-cta');
-      const tag     = document.getElementById('hero-ad-tag');
-      if(eyebrow) eyebrow.textContent='✦ '+(ad.advertiser||'Apatmento');
-      if(title)   title.innerHTML=ad.headline||'Travel in <em>style.</em>';
-      if(sub)     sub.textContent=ad.sub||'';
-      if(tag)     tag.style.display=ad.campaign_id?.startsWith('brand')?'none':'block';
-      if(cta){
-        const svg=cta.querySelector('svg');
-        cta.textContent=ad.cta_text||'Explore';
-        if(svg)cta.appendChild(svg);
-        cta.onclick=()=>{if(ad.cta_url&&ad.cta_url!=='#')window.location.href=ad.cta_url;};
-      }
-      updateDots();
-      if(!ad.campaign_id?.startsWith('brand')){
-        fetch(SUPA_URL+'/rest/v1/rpc/increment_ad_impression',{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY},body:JSON.stringify({p_campaign_id:ad.campaign_id})}).catch(()=>{});
-      }
-    }
-
-    vid.addEventListener('ended',()=>{ cur=(cur+1)%pool.length; loadCamp(); });
-    let gradTimer;
-    vid.addEventListener('play',()=>clearTimeout(gradTimer));
-    function checkGrad(){ clearTimeout(gradTimer); if(!pool[cur].media_url){ gradTimer=setTimeout(()=>{ cur=(cur+1)%pool.length; loadCamp(); checkGrad(); },8000); } }
-    loadCamp();
-    checkGrad();
-
-  } catch(e){ console.log('[Hero] Using default branding'); }
-}
-
->
