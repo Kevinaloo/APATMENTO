@@ -262,10 +262,10 @@ const CSS = `
 .scs-cta svg{width:15px;height:15px;transition:transform .3s;}
 .scs:hover .scs-cta svg{transform:translateX(4px);}
 .scs-right{position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;}
-.scs-right-bg{position:absolute;inset:0;opacity:.18;}
+.scs-right-bg{display:none;}
 .scs-right-bg::before,.scs-right-bg::after{content:'';position:absolute;border-radius:50%;}
-.scs-right-bg::before{width:300px;height:300px;background:rgba(255,255,255,.25);top:-20%;right:-15%;filter:blur(30px);}
-.scs-right-bg::after{width:200px;height:200px;background:rgba(255,255,255,.15);bottom:-10%;left:10%;filter:blur(25px);}
+
+
 .scs-stat-grid{position:relative;z-index:2;display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:32px;}
 .scs-stat{background:rgba(255,255,255,.12);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.2);border-radius:16px;padding:18px;text-align:center;}
 .scs-stat-val{font-family:'Fraunces',serif;font-weight:600;font-size:26px;color:#fff;margin-bottom:4px;}
@@ -519,7 +519,7 @@ function renderCarousel(slot, cs){
       ${cs.map((c,i)=>`
       <div class="sc-slide ${i===0?'active':''}" style="background:${c.grad}" data-id="${c.id}" data-adv="${c.advertiser}">
         ${c.media ? `<img src="${c.media}" alt="${c.advertiser}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;"/>
-        <div style="position:absolute;inset:0;background:none;z-index:1;"></div>` : ''}
+        <div style="position:absolute;inset:0;display:none;"></div>` : ''}
         <div class="sc-slide-ico" style="position:relative;z-index:2;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${c.icon}</svg></div>
         <div class="sc-slide-body" style="position:relative;z-index:2;">
           <div class="sc-slide-who">${c.advertiser} · Sponsored</div>
@@ -575,7 +575,7 @@ function renderNative(slot, c){
     <div class="scn sc-el">
       <div class="scn-img" style="background:${c.media?'#111':c.grad}">
         ${c.media?`<img src="${c.media}" alt="${c.advertiser}" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;"/>
-        <div style="position:absolute;inset:0;background:none;z-index:1;"></div>`:''}
+        <div style="position:absolute;inset:0;display:none;"></div>`:''}
         <div class="scn-shine" style="z-index:2;${c.media?'opacity:.03;':''}"></div>
         <div class="scn-tag" style="position:relative;z-index:3;">${c.tag}</div>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" style="position:relative;z-index:3;${c.media?'display:none;':''}">${c.icon}</svg>
@@ -869,6 +869,7 @@ else init();
 
 window.ApatmentoShowcase={reload:init};
 })();
+
 
 
 
