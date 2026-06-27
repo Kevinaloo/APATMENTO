@@ -176,6 +176,22 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
   .auth-wrap{height:auto;min-height:100vh;}
   .auth-panel{min-height:100vh;justify-content:flex-start;padding-top:40px;}
 }
+
+/* ══ AUTH MOBILE FIXES ══ */
+@media(max-width:640px){
+  .auth-wrap{grid-template-columns:1fr!important;}
+  .brand-canvas{display:none!important;}
+  .auth-panel{padding:0!important;background:var(--glass)!important;}
+  .auth-panel-inner{padding:32px 20px 48px!important;}
+  .mobile-logo{display:block!important;margin-bottom:24px!important;}
+  .auth-card{max-width:100%!important;}
+  .field-input{font-size:16px!important;padding:14px 15px!important;} /* prevents iOS zoom */
+  .auth-tabs{width:100%!important;}
+  .auth-tab{flex:1!important;text-align:center!important;font-size:14px!important;}
+  .google-btn{font-size:14px!important;padding:14px!important;}
+  .submit-btn{padding:15px!important;font-size:15px!important;border-radius:14px!important;}
+  .divider-text{font-size:12px!important;}
+}
 </style>
 </head>
 <body>
@@ -737,4 +753,5 @@ async function checkConfirmationAndProceed() {
 </script>
 </body>
 </html>
+
 
