@@ -276,10 +276,12 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--glass);c
     <div class="fchip" onclick="setRideFilter('share',this)">Share a ride</div>
   </div>
 </div>
+<div style="max-width:1180px;margin:0 auto;padding:0 26px 0;"><div data-showcase="ticker"></div></div>
 <div class="content">
   <div class="content-head">
     <div class="result-count"><strong id="result-num">0</strong> ride options</div>
   </div>
+  <div data-showcase="carousel" style="margin-bottom:20px;"></div>
   <div class="grid" id="grid" style="grid-template-columns:1fr;"></div>
 </div>
 
@@ -340,5 +342,6 @@ renderRides();
 
 </script>
 <script src="/pwa.js" defer></script>
+<script src="/showcase.js" defer></script>
 </body>
 </html>
