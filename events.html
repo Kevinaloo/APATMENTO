@@ -309,7 +309,11 @@ const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 let sb=null;
 try{const{createClient}=supabase;sb=createClient(SUPABASE_URL,SUPABASE_ANON_KEY);}catch(e){}
 function showToast(m,d=3200){const t=document.getElementById('toast');if(!t)return;t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),d);}
-window.addEventListener('load',()=>setTimeout(()=>document.getElementById('tx')?.classList.add('done'),1600));
+// Triple failsafe for entry transition
+function dismissTx(){const el=document.getElementById('tx');if(el&&!el.classList.contains('done'))el.classList.add('done');}
+document.addEventListener('DOMContentLoaded',()=>setTimeout(dismissTx,2200));
+window.addEventListener('load',()=>setTimeout(dismissTx,1600));
+setTimeout(dismissTx,4000);
 
 
 const EVENTS=[
