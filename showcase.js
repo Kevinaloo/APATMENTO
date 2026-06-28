@@ -217,7 +217,7 @@ const CSS = `
 .sc-slide-ico{width:58px;height:58px;border-radius:17px;background:rgba(255,255,255,.18);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0;margin-right:22px;}
 .sc-slide-ico svg{width:28px;height:28px;}
 .sc-slide-body{flex:1;min-width:0;}
-.sc-slide-who{font-size:11px;font-weight:600;color:rgba(255,255,255,.7);margin-bottom:3px;letter-spacing:.04em;}
+.sc-slide-who{font-size:11px;font-weight:700;color:rgba(255,255,255,.9);margin-bottom:3px;letter-spacing:.04em;text-shadow:0 1px 3px rgba(0,0,0,.3);}
 .sc-slide-h{font-family:'Fraunces',serif;font-weight:400;font-size:clamp(16px,2.4vw,23px);color:#fff;line-height:1.1;margin-bottom:3px;}
 .sc-slide-sub{font-size:12px;color:rgba(255,255,255,.8);}
 .sc-slide-cta{flex-shrink:0;margin-left:20px;padding:12px 22px;border-radius:100px;background:#fff;color:#0A0A14;font-size:13px;font-weight:700;border:none;cursor:pointer;transition:all .25s;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.18);}
@@ -520,15 +520,18 @@ function renderCarousel(slot, cs){
       ${cs.map((c,i)=>`
       <div class="sc-slide ${i===0?'active':''}"
         style="background:${c.grad}"
-        data-id="${c.id}" data-adv="${c.advertiser}" data-media="${c.media||''}">
-        <div class="sc-slide-img"></div>
-        <div class="sc-slide-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${c.icon}</svg></div>
-        <div class="sc-slide-body">
+        data-id="${c.id}" data-adv="${c.advertiser}">
+        ${c.media?`<img src="${c.media}" loading="eager" decoding="async"
+          style="position:absolute;top:0;left:0;right:0;bottom:0;width:100%;height:100%;object-fit:cover;display:block;border:none;z-index:0;"
+          onerror="this.remove()">
+        <div style="position:absolute;top:0;left:0;right:0;bottom:0;z-index:1;background:linear-gradient(to right,rgba(0,0,0,.55) 0%,rgba(0,0,0,.15) 55%,transparent 100%);pointer-events:none;"></div>`:''}
+        <div class="sc-slide-ico" style="position:relative;z-index:2;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${c.icon}</svg></div>
+        <div class="sc-slide-body" style="position:relative;z-index:2;">
           <div class="sc-slide-who">${c.advertiser} · Sponsored</div>
           <div class="sc-slide-h">${c.headline}</div>
           <div class="sc-slide-sub">${c.sub}</div>
         </div>
-        <button class="sc-slide-cta" data-url="${c.url}">${c.cta}</button>
+        <button class="sc-slide-cta" data-url="${c.url}" style="position:relative;z-index:2;">${c.cta}</button>
       </div>`).join('')}
       <button class="scc-nav scc-prev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
       <button class="scc-nav scc-next"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></button>
@@ -565,27 +568,6 @@ function renderCarousel(slot, cs){
   let sx=0;
   wrap.addEventListener('touchstart',e=>sx=e.touches[0].clientX,{passive:true});
   wrap.addEventListener('touchend',e=>{const d=e.changedTouches[0].clientX-sx;if(Math.abs(d)>50)go(cur+(d<0?1:-1));},{passive:true});
-
-  // Preload slide images via Image() — works in ALL browsers including Brave mobile
-  // CSS background-image can be blocked by privacy shields; Image() is never blocked
-  wrap.querySelectorAll('.sc-slide[data-media]').forEach(slide=>{
-    const url = slide.dataset.media;
-    if(!url) return;
-    const img = new Image();
-    img.onload = ()=>{
-      const imgEl = slide.querySelector('.sc-slide-img');
-      if(imgEl){
-        imgEl.style.cssText = `position:absolute;inset:0;background:url('${url}') center/cover no-repeat;z-index:0;`;
-        // Text scrim for readability
-        imgEl.innerHTML = '<div style="position:absolute;inset:0;background:linear-gradient(to right,rgba(0,0,0,.52) 0%,rgba(0,0,0,.18) 55%,transparent 100%);"></div>';
-        // Hide the icon when photo loads (photo speaks for itself)
-        const ico = slide.querySelector('.sc-slide-ico');
-        if(ico) ico.style.opacity='0';
-      }
-    };
-    img.onerror = ()=>{}; // silently keep gradient on failure
-    img.src = url;
-  });
 
   observe(wrap,()=>{
     wrap.classList.add('in');last=performance.now();
@@ -895,6 +877,7 @@ else init();
 
 window.ApatmentoShowcase={reload:init};
 })();
+
 
 
 
