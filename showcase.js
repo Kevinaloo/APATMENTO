@@ -549,6 +549,8 @@ function renderCarousel(slot, cs){
     trackImpression(cs[cur].id,'carousel',cs[cur].advertiser);
   }
   function tick(ts){
+    // Stop RAF if page hidden or element not in DOM — prevents mobile freeze
+    if(document.hidden || !wrap.isConnected){ raf=null; return; }
     if(!paused){elapsed+=ts-last;prog.style.width=Math.min(elapsed/DUR*100,100)+'%';if(elapsed>=DUR)go(cur+1);}
     last=ts;raf=requestAnimationFrame(tick);
   }
@@ -563,9 +565,10 @@ function renderCarousel(slot, cs){
   wrap.addEventListener('touchend',e=>{const d=e.changedTouches[0].clientX-sx;if(Math.abs(d)>50)go(cur+(d<0?1:-1));},{passive:true});
 
   observe(wrap,()=>{
-    wrap.classList.add('in');last=performance.now();raf=requestAnimationFrame(tick);
+    wrap.classList.add('in');last=performance.now();
+    if(!raf) raf=requestAnimationFrame(tick);
     trackImpression(cs[0].id,'carousel',cs[0].advertiser);
-  },()=>cancelAnimationFrame(raf));
+  },()=>{cancelAnimationFrame(raf);raf=null;});
 }
 
 /* ── NATIVE CARD ── */
@@ -869,6 +872,7 @@ else init();
 
 window.ApatmentoShowcase={reload:init};
 })();
+
 
 
 
