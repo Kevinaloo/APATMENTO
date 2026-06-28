@@ -60,15 +60,6 @@
   </script>
 <title>Book Flights in Kenya — Domestic & East Africa | Apatmento</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script nowprocket data-noptimize="1" data-cfasync="false" data-wpfc-render="false" seraph-accel-crit="1" data-no-defer="1">
-(function () {
-  var script = document.createElement("script");
-  script.async = 1;
-  script.type = "module";
-  script.src = "https://tpwidg.com/wl_web/main.js?wl_id=19211";
-  document.head.appendChild(script);
-})();
-</script>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..700&display=swap" rel="stylesheet"/>
@@ -131,6 +122,11 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--glass);c
 .hero-title{font-family:var(--font-display);font-weight:400;font-size:clamp(28px,4.4vw,46px);letter-spacing:-.02em;line-height:1.06;margin-bottom:10px;}
 .hero-title em{font-style:italic;font-weight:500;background:var(--theme-grad);-webkit-background-clip:text;background-clip:text;color:transparent;}
 .hero-sub{font-size:15px;color:var(--ink-soft);margin-bottom:28px;max-width:500px;line-height:1.6;}
+
+/* live exchange-rate banner */
+.kes-rate-banner{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:var(--ink-soft);padding:7px 14px;border-radius:100px;background:rgba(255,255,255,.6);border:1px solid var(--line);margin-bottom:14px;}
+.kes-rate-banner strong{color:var(--violet);font-weight:600;}
+.kes-rate-banner.stale{color:var(--ink-faint);}
 
 /* search / filter bar */
 .search-bar{display:flex;align-items:stretch;gap:0;background:rgba(255,255,255,.68);backdrop-filter:blur(14px);border:1px solid var(--line-2);border-radius:16px;padding:5px;box-shadow:var(--shadow-glass);max-width:720px;margin-bottom:18px;}
@@ -337,13 +333,15 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--glass);c
   <span class="hero-eyebrow">✦ Book flights</span>
   <h1 class="hero-title">Fly further, <em>spend less.</em></h1>
   <p class="hero-sub">Compare routes across Kenya and East Africa. Face-value fares — no booking levy added by us.</p>
-  <div id="tpwl-search" style="margin-bottom:18px;"></div>
+  <div class="kes-rate-banner" id="kes-rate-banner">
+    <span id="kes-rate-text">Loading live exchange rate…</span>
+  </div>
+  <div id="kiwi-search-widget" style="margin-bottom:18px;">
+    <script async src="https://tpwidg.com/content?currency=usd&trs=544145&shmarker=744334.Flights_page&locale=en&default_origin=NBO&stops=any&show_hotels=false&powered_by=false&border_radius=12&plain=true&color_button=%237B2FF7&color_button_text=%23ffffff&promo_id=3414&campaign_id=111" charset="utf-8"></script>
+  </div>
 </div>
 
 <div style="max-width:1180px;margin:0 auto;padding:0 26px 0;"><div data-showcase="ticker"></div></div>
-<div class="content">
-  <div id="tpwl-tickets"></div>
-</div>
 
 <div style="max-width:1180px;margin:0 auto;padding:20px 26px 0;"><div data-showcase="video"></div></div>
 <div class="toast" id="toast"></div>
@@ -355,6 +353,44 @@ const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 let sb=null;
 try{const{createClient}=supabase;sb=createClient(SUPABASE_URL,SUPABASE_ANON_KEY);}catch(e){}
 function showToast(m,d=3200){const t=document.getElementById('toast');if(!t)return;t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),d);}
+
+/* ── Live USD → KES rate banner ──
+   Independent of the Kiwi/Aviasales widget — fetches its own rate from a
+   public, no-key exchange-rate API and shows it as a reference next to the
+   widget (which only quotes in USD). Cached for 6 hours to limit requests.
+   If the fetch fails for any reason, falls back to a fixed approximate
+   rate so the banner never breaks or shows an error to visitors. */
+(function(){
+  const FALLBACK_RATE = 129.5; // approx USD→KES, update occasionally
+  const CACHE_KEY = 'apatmento_usd_kes_rate';
+  const CACHE_MS = 6 * 60 * 60 * 1000; // 6 hours
+  const el = document.getElementById('kes-rate-text');
+  const banner = document.getElementById('kes-rate-banner');
+  if(!el) return;
+
+  function render(rate, isLive){
+    el.innerHTML = `💱 1 USD ≈ <strong>KES ${Math.round(rate).toLocaleString()}</strong> ${isLive?'· live rate':'· approx. rate'}`;
+    if(!isLive) banner?.classList.add('stale');
+  }
+
+  let cached = null;
+  try{ cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null'); }catch(e){}
+  if(cached && cached.rate && (Date.now() - cached.time) < CACHE_MS){
+    render(cached.rate, true);
+    return;
+  }
+
+  fetch('https://open.er-api.com/v6/latest/USD')
+    .then(r => r.ok ? r.json() : Promise.reject())
+    .then(data => {
+      const rate = data?.rates?.KES;
+      if(!rate) throw new Error('no rate');
+      render(rate, true);
+      try{ localStorage.setItem(CACHE_KEY, JSON.stringify({rate, time: Date.now()})); }catch(e){}
+    })
+    .catch(() => render(FALLBACK_RATE, false));
+})();
+
 function dismissTx(){
   const el=document.getElementById('tx');
   if(!el)return;
