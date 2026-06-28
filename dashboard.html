@@ -244,6 +244,17 @@ body{overflow-x:hidden;}
   .svc-hero-icon svg{width:20px;height:20px;}
 }
 @media(max-width:380px){.svc-featured-row{grid-template-columns:1fr;}}
+
+/* ══ TOPBAR NAV MOBILE COMPRESSION ══ */
+@media(max-width:540px){
+  #dash-user-nav{gap:6px!important;}
+  .admin-text{display:none!important;}
+  #admin-link{padding:6px 8px!important;}
+  .sos-btn{padding:6px 10px!important;font-size:11px!important;}
+  .tb-icon-btn{width:32px!important;height:32px!important;}
+  .tb-avatar{width:32px!important;height:32px!important;font-size:12px!important;border-radius:10px!important;}
+  #nav-user-name{display:none!important;}
+}
 </style>
 
 <style>
@@ -464,7 +475,7 @@ body{overflow-x:hidden;}
         </div>
         <!-- User nav — shown when logged in -->
         <div id="dash-user-nav" style="display:none;align-items:center;gap:10px;">
-          <a id="admin-link" href="/admin.html" style="display:none;padding:7px 13px;border-radius:100px;background:rgba(123,47,247,.1);border:1px solid rgba(123,47,247,.3);color:#7B2FF7;font-size:11px;font-weight:700;text-decoration:none;letter-spacing:.04em;">⚙ Admin</a>
+          <a id="admin-link" href="/admin.html" style="display:none;padding:7px 10px;border-radius:100px;background:rgba(123,47,247,.1);border:1px solid rgba(123,47,247,.3);color:#7B2FF7;font-size:11px;font-weight:700;text-decoration:none;letter-spacing:.04em;align-items:center;gap:5px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg><span class="admin-text">Admin</span></a>
           <span id="nav-user-name" style="font-size:13px;font-weight:500;color:var(--ink-soft);"></span>
           <button class="sos-btn" onclick="openSOS()">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 2 2 19h20z"/><path d="M12 9v4M12 17h.01"/></svg>
@@ -1196,6 +1207,7 @@ function checkAdminAccess(){
 }
 }
 </script>
+
 
 
 
