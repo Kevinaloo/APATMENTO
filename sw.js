@@ -7,7 +7,7 @@
    - Push notification handler
 ════════════════════════════════════════════════════════════════ */
 
-const VERSION = 'apatmento-v2';
+const VERSION = 'apatmento-v3';
 const STATIC_CACHE = `${VERSION}-static`;
 const DYNAMIC_CACHE = `${VERSION}-dynamic`;
 const IMAGE_CACHE   = `${VERSION}-images`;
@@ -188,3 +188,4 @@ async function retryFailedBookings() {
   // Will be called when network is restored
   console.log('[SW] Background sync: retrying failed bookings');
 }
+
