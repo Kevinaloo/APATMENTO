@@ -218,6 +218,12 @@ body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webk
   .card{background:#fff!important;}
   .ab{filter:blur(50px)!important;opacity:.15!important;}
 }
+
+@media(max-width:700px){
+  .card,.topbar,.search-bar,.drawer,.fchip{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;}
+  .card{background:#fff!important;}
+  .ab{animation:none!important;filter:blur(40px)!important;opacity:.12!important;}
+}
 </style>
 </head>
 <body>
@@ -313,7 +319,6 @@ body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webk
       <option value="newest">Newest first</option>
     </select>
   </div>
-  <div data-showcase="carousel" style="margin-bottom:20px;"></div>
   <div class="grid" id="grid"></div>
 </div>
 
@@ -546,7 +551,12 @@ function renderCards(){
   const grid = document.getElementById('grid');
   grid.innerHTML = data.map(card).join('');
   // Load photos
-  data.forEach((l,i)=>setTimeout(()=>getPhoto(l.query,l.id).then(url=>{if(url)injectPhoto(l.id,url);}),i*200));
+  // Sequential photo loading — one at a time, no network pile-up
+  (async()=>{
+    for(const l of data){
+      try{const url=await getPhoto(l.query,l.id);if(url)injectPhoto(l.id,url);}catch(e){}
+    }
+  })();
 }
 
 function card(l){
@@ -743,7 +753,8 @@ function applySearch(){ renderCards(); showToast('Showing all available rooms');
 function showToast(m,d=3500){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),d);}
 
 /* ── Init ── */
-renderCards();
+// Defer so page paints before JS processes
+requestAnimationFrame(()=>setTimeout(renderCards,50));
 </script>
 
 <script src="/pwa.js" defer></script>
