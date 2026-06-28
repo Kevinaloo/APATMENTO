@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="description" content="Find a flatmate or list your spare room across Kenya. No commission, no middleman — Apatmento Roommates."/>
+<meta name="theme-color" content="#2DD4BF"/>
+<link rel="manifest" href="/manifest.json"/>
+<title>Roommates in Kenya | Find a Flatmate — Apatmento</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..700&display=swap" rel="stylesheet"/>
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --glass:#FCFCFD;--glass-2:#F4F5FB;--ink:#0A0A14;--ink-soft:#4A4C66;--ink-faint:#8E90AD;
+  --t1:#2DD4BF;--t2:#5EEAD4;--t3:#0D9488;--t1-rgb:45,212,191;
+  --lilac:#B8A4F4;--violet:#7B2FF7;--electric:#4361FF;--ember:#FF6B2C;
+  --line:rgba(10,10,20,0.07);--line-2:rgba(10,10,20,0.13);
+  --theme:var(--t1);--theme-grad:linear-gradient(135deg,#2DD4BF,#0D9488);
+  --font-display:'Fraunces',serif;--font-body:'General Sans',system-ui,sans-serif;
+  --shadow-glass:0 8px 40px rgba(45,212,191,0.08),0 2px 12px rgba(10,10,20,0.04);
+  --shadow-lift:0 24px 70px rgba(45,212,191,0.18),0 8px 24px rgba(10,10,20,0.06);
+  --radius:22px;
+}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important;}}
+html{scroll-behavior:smooth;}
+body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webkit-font-smoothing:antialiased;overflow-x:hidden;}
+
+/* ── Aurora ── */
+.aurora{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;}
+.ab{position:absolute;border-radius:50%;filter:blur(85px);opacity:.38;mix-blend-mode:multiply;animation:drift 28s ease-in-out infinite;}
+.ab-1{width:600px;height:600px;background:radial-gradient(circle,var(--t1),transparent 70%);top:-14%;left:-8%;}
+.ab-2{width:460px;height:460px;background:radial-gradient(circle,var(--t3),transparent 72%);top:20%;right:-10%;animation-delay:-9s;opacity:.22;}
+.ab-3{width:420px;height:420px;background:radial-gradient(circle,var(--lilac),transparent 72%);bottom:-10%;left:35%;animation-delay:-18s;opacity:.2;}
+@keyframes drift{0%,100%{transform:translate(0,0) scale(1);}33%{transform:translate(46px,-32px) scale(1.08);}66%{transform:translate(-32px,42px) scale(.94);}}
+
+/* ── Entry transition ── */
+#tx{position:fixed;inset:0;z-index:9999;background:var(--ink);display:flex;align-items:center;justify-content:center;overflow:hidden;animation:txOut .8s cubic-bezier(.7,0,.2,1) 2s forwards;}
+#tx.done{animation:txOut .4s cubic-bezier(.7,0,.2,1) 0s forwards!important;}
+@keyframes txOut{to{opacity:0;transform:scale(1.06);}}
+.tx-ab{position:absolute;border-radius:50%;filter:blur(70px);opacity:0;animation:txBloom 1s cubic-bezier(.4,0,.2,1) forwards;}
+.tx-ab-1{width:380px;height:380px;top:25%;left:22%;background:radial-gradient(circle,var(--t1),transparent 68%);}
+.tx-ab-2{width:300px;height:300px;bottom:22%;right:20%;animation-delay:.14s;background:radial-gradient(circle,var(--t2),transparent 70%);}
+@keyframes txBloom{0%{opacity:0;transform:scale(.7);}60%{opacity:.55;}100%{opacity:.38;transform:scale(1.1);}}
+.tx-ico{margin:0 auto 16px;opacity:0;animation:txRise .9s .18s cubic-bezier(.34,1.56,.64,1) forwards;filter:drop-shadow(0 8px 28px var(--t1));}
+@keyframes txRise{0%{opacity:0;transform:translateY(24px) scale(.8);}100%{opacity:1;transform:none;}}
+.tx-label{font-family:var(--font-display);font-style:italic;font-size:34px;color:#fff;opacity:0;animation:fadeUp .7s .5s forwards;background:linear-gradient(120deg,var(--t1),var(--t2),#fff);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.tx-sub{font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-top:6px;opacity:0;animation:fadeUp .6s .65s forwards;}
+@keyframes fadeUp{0%{opacity:0;transform:translateY(10px);}100%{opacity:1;transform:none;}}
+
+/* ── Topbar ── */
+.topbar{position:sticky;top:0;z-index:100;height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 26px;background:rgba(252,252,253,.78);backdrop-filter:blur(20px);border-bottom:1px solid var(--line);}
+.tb-left{display:flex;align-items:center;gap:12px;}
+.tb-back{width:40px;height:40px;border-radius:13px;border:1px solid var(--line);background:rgba(255,255,255,.7);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink-soft);transition:all .25s;text-decoration:none;}
+.tb-back:hover{border-color:var(--t1);color:var(--t1);}
+.tb-logo{height:28px;width:auto;}
+.tb-brand{font-family:var(--font-display);font-weight:500;font-size:17px;color:var(--ink);letter-spacing:-.01em;}
+.tb-brand em{font-style:italic;background:linear-gradient(120deg,var(--t1),var(--t3));-webkit-background-clip:text;background-clip:text;color:transparent;}
+.tb-right{display:flex;align-items:center;gap:8px;}
+.tb-post-btn{padding:9px 18px;border-radius:100px;background:var(--theme-grad);color:#fff;border:none;font-family:var(--font-body);font-weight:600;font-size:13px;cursor:pointer;transition:all .25s;white-space:nowrap;box-shadow:0 4px 14px rgba(45,212,191,.3);}
+.tb-post-btn:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(45,212,191,.4);}
+
+/* ── Hero ── */
+.hero{position:relative;z-index:2;padding:44px 26px 0;max-width:1180px;margin:0 auto;}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--t1);margin-bottom:14px;padding:6px 14px;border-radius:100px;background:rgba(45,212,191,.09);border:1px solid rgba(45,212,191,.2);}
+.hero-eyebrow::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--t1);}
+.hero-title{font-family:var(--font-display);font-weight:300;font-size:clamp(32px,4.5vw,54px);line-height:1.05;letter-spacing:-.025em;color:var(--ink);margin-bottom:12px;}
+.hero-title em{font-style:italic;font-weight:500;background:linear-gradient(120deg,var(--t1),var(--t3));-webkit-background-clip:text;background-clip:text;color:transparent;}
+.hero-sub{font-size:15px;color:var(--ink-soft);max-width:520px;line-height:1.65;margin-bottom:28px;}
+
+/* ── Search bar ── */
+.search-bar{display:flex;align-items:stretch;gap:0;background:rgba(255,255,255,.75);border:1px solid var(--line-2);border-radius:18px;padding:5px;box-shadow:var(--shadow-glass);max-width:760px;margin-bottom:16px;}
+.sb-field{flex:1;padding:10px 16px;cursor:pointer;border-radius:13px;transition:background .2s;min-width:0;}
+.sb-field:hover{background:rgba(45,212,191,.04);}
+.sb-label{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:2px;}
+.sb-val{font-size:13px;font-weight:500;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sb-val.placeholder{color:var(--ink-faint);}
+.sb-div{width:1px;background:var(--line);margin:8px 0;flex-shrink:0;}
+.sb-btn{width:52px;border-radius:13px;background:var(--theme-grad);border:none;display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;margin-left:4px;flex-shrink:0;transition:filter .2s;box-shadow:0 4px 12px rgba(45,212,191,.3);}
+.sb-btn:hover{filter:brightness(1.08);}
+
+/* ── Filters ── */
+.filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+.fchip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:var(--ink-soft);padding:8px 15px;border-radius:100px;background:rgba(255,255,255,.7);border:1px solid var(--line);cursor:pointer;transition:all .22s;white-space:nowrap;user-select:none;}
+.fchip:hover{border-color:var(--t1);color:var(--t1);}
+.fchip.active{background:rgba(45,212,191,.1);border-color:var(--t1);color:var(--t1);font-weight:600;}
+
+/* ── Content ── */
+.content{position:relative;z-index:2;max-width:1180px;margin:0 auto;padding:20px 26px 80px;}
+.content-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:10px;}
+.result-count{font-size:14px;color:var(--ink-soft);}
+.result-count strong{color:var(--ink);font-weight:700;}
+.sort-select{padding:9px 14px;border-radius:12px;border:1px solid var(--line-2);background:rgba(255,255,255,.8);font-family:var(--font-body);font-size:13px;color:var(--ink);cursor:pointer;outline:none;}
+
+/* ── Card grid ── */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;}
+.card{border-radius:var(--radius);overflow:hidden;background:#fff;border:1px solid var(--line);cursor:pointer;transition:all .38s cubic-bezier(.22,1,.36,1);box-shadow:var(--shadow-glass);}
+.card:hover{transform:translateY(-6px);box-shadow:var(--shadow-lift);border-color:rgba(45,212,191,.3);}
+.card-img{position:relative;height:200px;background:linear-gradient(135deg,rgba(45,212,191,.15),rgba(13,148,136,.12));overflow:hidden;}
+.card-img img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s cubic-bezier(.22,1,.36,1);}
+.card:hover .card-img img{transform:scale(1.04);}
+.card-img-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:rgba(45,212,191,.4);}
+.card-img-placeholder svg{width:48px;height:48px;}
+.card-badge{position:absolute;top:12px;left:12px;padding:4px 11px;border-radius:100px;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;backdrop-filter:blur(10px);}
+.badge-new{background:rgba(45,212,191,.18);color:var(--t3);border:1px solid rgba(45,212,191,.3);}
+.badge-verified{background:rgba(67,97,255,.12);color:#4361FF;border:1px solid rgba(67,97,255,.25);}
+.badge-urgent{background:rgba(255,107,44,.12);color:var(--ember);border:1px solid rgba(255,107,44,.25);}
+.card-save{position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:50%;background:rgba(252,252,253,.88);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;transition:transform .2s;}
+.card-save:hover{transform:scale(1.18);}
+.card-body{padding:16px 18px 18px;}
+.card-poster{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.poster-avatar{width:30px;height:30px;border-radius:50%;background:var(--theme-grad);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;overflow:hidden;}
+.poster-avatar img{width:100%;height:100%;object-fit:cover;}
+.poster-info{min-width:0;}
+.poster-name{font-size:12px;font-weight:600;color:var(--ink);line-height:1;}
+.poster-type{font-size:11px;color:var(--ink-faint);margin-top:1px;}
+.poster-verified{display:inline-flex;align-items:center;gap:3px;font-size:10px;color:#4361FF;margin-left:4px;}
+.card-title{font-family:var(--font-display);font-weight:500;font-size:16px;color:var(--ink);line-height:1.25;margin-bottom:4px;}
+.card-location{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--ink-faint);margin-bottom:10px;}
+.card-location svg{width:12px;height:12px;flex-shrink:0;color:var(--t1);}
+
+/* ── Chips row on card ── */
+.card-chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px;}
+.chip{padding:3px 9px;border-radius:100px;font-size:10px;font-weight:500;background:rgba(10,10,20,.04);color:var(--ink-soft);border:1px solid var(--line);}
+.chip.mint{background:rgba(45,212,191,.08);color:var(--t3);border-color:rgba(45,212,191,.2);}
+
+/* ── Card key details ── */
+.card-details{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:14px;}
+.detail-item{display:flex;flex-direction:column;align-items:center;padding:7px 4px;border-radius:10px;background:rgba(10,10,20,.025);border:1px solid var(--line);}
+.detail-ico{font-size:14px;margin-bottom:2px;}
+.detail-val{font-size:10px;font-weight:700;color:var(--ink);line-height:1;}
+.detail-lbl{font-size:9px;color:var(--ink-faint);line-height:1;margin-top:1px;}
+
+/* ── Card footer ── */
+.card-foot{display:flex;align-items:center;justify-content:space-between;}
+.card-price{display:flex;flex-direction:column;}
+.price-val{font-family:var(--font-display);font-weight:500;font-size:19px;color:var(--ink);line-height:1;}
+.price-period{font-size:10px;color:var(--ink-faint);}
+.card-cta{padding:9px 18px;border-radius:100px;background:var(--theme-grad);color:#fff;border:none;font-family:var(--font-body);font-weight:600;font-size:12px;cursor:pointer;transition:all .25s;box-shadow:0 4px 12px rgba(45,212,191,.25);}
+.card-cta:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(45,212,191,.35);}
+
+/* ── Drawer ── */
+.drawer-overlay{position:fixed;inset:0;z-index:199;background:rgba(10,10,20,.4);backdrop-filter:blur(4px);opacity:0;visibility:hidden;transition:all .3s;}
+.drawer-overlay.open{opacity:1;visibility:visible;}
+.drawer{position:fixed;inset:0;left:auto;z-index:200;width:min(480px,100vw);background:#FCFCFD;overflow-y:auto;transform:translateX(100%);transition:transform .4s cubic-bezier(.22,1,.36,1);}
+.drawer.open{transform:none;}
+.dr-head{padding:24px 24px 0;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;}
+.dr-close{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:rgba(255,255,255,.7);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:18px;color:var(--ink-soft);}
+.dr-img{width:100%;height:220px;background:linear-gradient(135deg,rgba(45,212,191,.12),rgba(13,148,136,.1));overflow:hidden;}
+.dr-img img{width:100%;height:100%;object-fit:cover;}
+.dr-body{padding:20px 24px 32px;}
+.dr-title{font-family:var(--font-display);font-weight:500;font-size:22px;line-height:1.15;margin-bottom:6px;}
+.dr-location{display:flex;align-items:center;gap:5px;font-size:13px;color:var(--ink-faint);margin-bottom:16px;}
+.dr-price-row{display:flex;align-items:baseline;gap:6px;margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--line);}
+.dr-price{font-family:var(--font-display);font-weight:500;font-size:28px;color:var(--ink);}
+.dr-period{font-size:13px;color:var(--ink-faint);}
+.dr-section{margin-bottom:20px;}
+.dr-section-title{font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--t1);margin-bottom:10px;}
+.dr-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.dr-stat{padding:12px 14px;border-radius:14px;background:rgba(45,212,191,.05);border:1px solid rgba(45,212,191,.12);}
+.dr-stat-label{font-size:10px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;}
+.dr-stat-val{font-size:14px;font-weight:600;color:var(--ink);}
+.dr-chips{display:flex;flex-wrap:wrap;gap:6px;}
+.dr-chip{padding:5px 12px;border-radius:100px;font-size:11px;font-weight:500;background:rgba(10,10,20,.04);color:var(--ink-soft);border:1px solid var(--line);}
+.dr-chip.ok{background:rgba(45,212,191,.08);color:var(--t3);border-color:rgba(45,212,191,.2);}
+.dr-chip.no{background:rgba(255,107,44,.06);color:var(--ember);border-color:rgba(255,107,44,.15);}
+.dr-desc{font-size:14px;line-height:1.7;color:var(--ink-soft);}
+.dr-poster-row{display:flex;align-items:center;gap:12px;padding:16px;border-radius:16px;background:rgba(45,212,191,.05);border:1px solid rgba(45,212,191,.15);}
+.dr-poster-av{width:46px;height:46px;border-radius:50%;background:var(--theme-grad);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;flex-shrink:0;}
+.dr-poster-name{font-weight:600;font-size:15px;}
+.dr-poster-since{font-size:12px;color:var(--ink-faint);}
+.dr-cta-box{position:sticky;bottom:0;background:#FCFCFD;border-top:1px solid var(--line);padding:16px 24px 24px;display:flex;gap:10px;}
+.dr-cta-main{flex:1;padding:14px;border-radius:14px;background:var(--theme-grad);color:#fff;border:none;font-family:var(--font-body);font-weight:600;font-size:14px;cursor:pointer;transition:all .25s;box-shadow:0 6px 20px rgba(45,212,191,.3);}
+.dr-cta-main:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(45,212,191,.4);}
+.dr-cta-sec{padding:14px 16px;border-radius:14px;border:1.5px solid var(--line-2);background:transparent;font-family:var(--font-body);font-weight:600;font-size:14px;cursor:pointer;color:var(--ink-soft);transition:all .25s;}
+.dr-cta-sec:hover{border-color:var(--t1);color:var(--t1);}
+
+/* ── Post listing modal ── */
+.modal-overlay{position:fixed;inset:0;z-index:300;background:rgba(10,10,20,.5);backdrop-filter:blur(6px);display:none;align-items:flex-end;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:#FCFCFD;border-radius:28px 28px 0 0;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;animation:slideUp .35s cubic-bezier(.22,1,.36,1);}
+@keyframes slideUp{from{transform:translateY(100%);}to{transform:none;}}
+.modal-head{padding:20px 24px 0;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:16px;}
+.modal-title{font-family:var(--font-display);font-size:20px;font-weight:500;}
+.modal-close{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:rgba(255,255,255,.7);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--ink-soft);}
+.modal-body{padding:20px 24px 32px;display:flex;flex-direction:column;gap:16px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.form-group{display:flex;flex-direction:column;gap:5px;}
+.form-group.full{grid-column:1/-1;}
+.form-label{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);}
+.form-input,.form-select,.form-textarea{width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid var(--line-2);background:rgba(255,255,255,.8);font-family:var(--font-body);font-size:14px;color:var(--ink);outline:none;transition:border-color .2s;}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--t1);}
+.form-textarea{min-height:80px;resize:vertical;line-height:1.5;}
+.form-section-head{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--t1);padding:4px 0;border-bottom:1px solid rgba(45,212,191,.15);grid-column:1/-1;}
+.toggle-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;grid-column:1/-1;}
+.toggle-chip{padding:9px 12px;border-radius:12px;border:1.5px solid var(--line-2);background:rgba(255,255,255,.7);cursor:pointer;font-size:12px;font-weight:500;color:var(--ink-soft);text-align:center;transition:all .2s;user-select:none;}
+.toggle-chip.active{background:rgba(45,212,191,.1);border-color:var(--t1);color:var(--t3);font-weight:600;}
+.modal-foot{padding:16px 24px 32px;border-top:1px solid var(--line);}
+.submit-btn{width:100%;padding:15px;border-radius:14px;background:var(--theme-grad);color:#fff;border:none;font-family:var(--font-body);font-weight:600;font-size:15px;cursor:pointer;box-shadow:0 6px 20px rgba(45,212,191,.3);transition:all .25s;}
+.submit-btn:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(45,212,191,.4);}
+
+.toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:12px 22px;border-radius:100px;font-size:13px;font-weight:500;opacity:0;transition:all .3s;z-index:9999;pointer-events:none;white-space:nowrap;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+@media(max-width:700px){
+  .topbar{padding:0 14px;}
+  .hero{padding:28px 14px 0;}
+  .content{padding:16px 14px 80px;}
+  .grid{grid-template-columns:1fr;}
+  .drawer{width:100vw;}
+  .form-row{grid-template-columns:1fr;}
+}
+@media(max-width:600px){
+  .card,.topbar,.search-bar,.drawer,.fchip{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;}
+  .card{background:#fff!important;}
+  .ab{filter:blur(50px)!important;opacity:.15!important;}
+}
+</style>
+</head>
+<body>
+
+<!-- Aurora -->
+<div class="aurora">
+  <div class="ab ab-1"></div>
+  <div class="ab ab-2"></div>
+  <div class="ab ab-3"></div>
+</div>
+
+<!-- Entry transition -->
+<div id="tx">
+  <div class="tx-ab tx-ab-1"></div>
+  <div class="tx-ab tx-ab-2"></div>
+  <div class="tx-ico">
+    <svg width="54" height="54" viewBox="0 0 24 24" fill="none" stroke="#2DD4BF" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+      <circle cx="9" cy="7" r="4"/>
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+      <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+    </svg>
+  </div>
+  <div class="tx-label">Find your flatmate.</div>
+  <div class="tx-sub">Apatmento · Roommates</div>
+</div>
+
+<!-- Topbar -->
+<header class="topbar">
+  <div class="tb-left">
+    <a href="dashboard.html?back=1" class="tb-back">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    </a>
+    <img src="logo-mark.png" class="tb-logo" alt="" onerror="this.style.display='none'"/>
+    <span class="tb-brand"><em>Apat</em>mento</span>
+  </div>
+  <div class="tb-right">
+    <button class="tb-post-btn" onclick="openPostModal()">+ List your space</button>
+  </div>
+</header>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-eyebrow">✦ Kenya's first roommate platform</div>
+  <h1 class="hero-title">Find your <em>perfect</em><br/>flatmate in Kenya.</h1>
+  <p class="hero-sub">Browse verified rooms and shared spaces across Nairobi, Mombasa and beyond. Meet like-minded people. Share the cost. Zero commission — always.</p>
+
+  <div class="search-bar">
+    <div class="sb-field" onclick="cycleCity()">
+      <div class="sb-label">Location</div>
+      <div class="sb-val" id="field-city">Nairobi</div>
+    </div>
+    <div class="sb-div"></div>
+    <div class="sb-field" onclick="cycleBudget()">
+      <div class="sb-label">Max budget</div>
+      <div class="sb-val placeholder" id="field-budget">Any amount</div>
+    </div>
+    <div class="sb-div"></div>
+    <div class="sb-field" onclick="cycleMove()">
+      <div class="sb-label">Move-in</div>
+      <div class="sb-val placeholder" id="field-move">Any time</div>
+    </div>
+    <button class="sb-btn" onclick="applySearch()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    </button>
+  </div>
+
+  <div class="filter-row" id="filter-row">
+    <div class="fchip active" onclick="setFilter('all',this)">All rooms</div>
+    <div class="fchip" onclick="setFilter('private',this)">🚪 Private room</div>
+    <div class="fchip" onclick="setFilter('shared',this)">🛏️ Shared room</div>
+    <div class="fchip" onclick="setFilter('ensuite',this)">🚿 En-suite</div>
+    <div class="fchip" onclick="setFilter('entire',this)">🏠 Entire unit</div>
+    <div class="fchip" onclick="setFilter('furnished',this)">🛋️ Furnished</div>
+    <div class="fchip" onclick="setFilter('bills',this)">💡 Bills incl.</div>
+    <div class="fchip" onclick="setFilter('female',this)">♀ Female only</div>
+    <div class="fchip" onclick="setFilter('pet',this)">🐾 Pet friendly</div>
+    <div class="fchip" onclick="setFilter('student',this)">🎓 Student-friendly</div>
+    <div class="fchip" onclick="setFilter('wifi',this)">📶 WiFi incl.</div>
+    <div class="fchip" onclick="setFilter('parking',this)">🚗 Parking</div>
+  </div>
+</section>
+
+<!-- Content -->
+<div class="content">
+  <div data-showcase="ticker"></div>
+  <div class="content-head">
+    <div class="result-count"><strong id="result-num">0</strong> rooms available</div>
+    <select class="sort-select" id="sort-sel" onchange="renderCards()">
+      <option value="recommended">✦ Recommended</option>
+      <option value="price-asc">Price: Low to High</option>
+      <option value="price-desc">Price: High to Low</option>
+      <option value="newest">Newest first</option>
+    </select>
+  </div>
+  <div data-showcase="carousel" style="margin-bottom:20px;"></div>
+  <div class="grid" id="grid"></div>
+</div>
+
+<!-- Drawer -->
+<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer"></div>
+
+<!-- Post Modal -->
+<div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this)closePostModal()">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">List your space</div>
+      <button class="modal-close" onclick="closePostModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group full">
+          <div class="form-section-head">📍 Basic details</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Title / headline</label>
+          <input class="form-input" id="f-title" placeholder="e.g. Bright room in Kilimani flat"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Room type</label>
+          <select class="form-select" id="f-type">
+            <option value="">Select type</option>
+            <option>Private room</option>
+            <option>Shared room</option>
+            <option>En-suite room</option>
+            <option>Master bedroom</option>
+            <option>Studio (full unit)</option>
+            <option>1-bed apartment</option>
+            <option>Entire flat share</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Neighbourhood</label>
+          <input class="form-input" id="f-area" placeholder="e.g. Kilimani, Nairobi"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Monthly rent (KES)</label>
+          <input class="form-input" id="f-price" type="number" placeholder="e.g. 22000"/>
+        </div>
+
+        <div class="form-group full">
+          <div class="form-section-head">🏠 Room details</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Floor level</label>
+          <select class="form-select" id="f-floor">
+            <option value="">Any</option>
+            <option>Ground floor</option><option>1st floor</option><option>2nd floor</option>
+            <option>3rd floor</option><option>4th+ floor</option><option>Penthouse</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Natural light</label>
+          <select class="form-select" id="f-light">
+            <option value="">Unspecified</option>
+            <option>Excellent — full sun</option><option>Good — bright most of day</option>
+            <option>Moderate</option><option>Limited</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Available from</label>
+          <input class="form-input" id="f-avail" type="date"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Minimum stay</label>
+          <select class="form-select" id="f-min-stay">
+            <option>1 month</option><option>3 months</option><option>6 months</option><option>1 year</option><option>Flexible</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Security deposit (KES)</label>
+          <input class="form-input" id="f-deposit" type="number" placeholder="e.g. 22000"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Current flatmates</label>
+          <select class="form-select" id="f-mates">
+            <option>None — first tenant</option><option>1 flatmate</option><option>2 flatmates</option>
+            <option>3 flatmates</option><option>4+ flatmates</option>
+          </select>
+        </div>
+
+        <div class="form-group full">
+          <div class="form-section-head">✅ What's included</div>
+        </div>
+        <div class="toggle-grid" id="inclusions-grid">
+          <!-- Populated by JS -->
+        </div>
+
+        <div class="form-group full">
+          <div class="form-section-head">🤝 Flatmate preferences</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Gender preference</label>
+          <select class="form-select" id="f-gender">
+            <option>Any gender</option><option>Female only</option><option>Male only</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Preferred occupation</label>
+          <select class="form-select" id="f-occ">
+            <option>Any</option><option>Working professional</option><option>Student</option>
+            <option>Professional or student</option><option>Entrepreneur</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Age range preferred</label>
+          <select class="form-select" id="f-age">
+            <option>Any age</option><option>18–25</option><option>25–35</option>
+            <option>35–45</option><option>45+</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Lifestyle vibe</label>
+          <select class="form-select" id="f-vibe">
+            <option>Any</option><option>Early bird — up by 6am</option>
+            <option>Night owl — active late</option><option>Quiet & homebody</option>
+            <option>Social & outgoing</option><option>Work-from-home professional</option>
+          </select>
+        </div>
+        <div class="toggle-grid" id="house-rules-grid">
+          <!-- Populated by JS -->
+        </div>
+
+        <div class="form-group full">
+          <div class="form-section-head">📝 Description</div>
+        </div>
+        <div class="form-group full">
+          <textarea class="form-textarea" id="f-desc" placeholder="Describe the space, the vibe, your existing flatmates and what you're looking for in a new one. Be honest and specific — it helps find the right match." rows="4"></textarea>
+        </div>
+
+        <div class="form-group full">
+          <label class="form-label">Photo URL (optional)</label>
+          <input class="form-input" id="f-photo" placeholder="https://... (room photo link)"/>
+        </div>
+        <div class="form-group full">
+          <label class="form-label">Contact (WhatsApp or email)</label>
+          <input class="form-input" id="f-contact" placeholder="0712 345 678 or you@email.com"/>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="submit-btn" onclick="submitListing()">Post my listing — free</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
+const UNSPLASH_KEY = '22kJp7ULqjFKD6jCK3AXzG2dH8k8mKlq0CUZ19a-s_M';
+
+/* ── Entry transition dismiss ── */
+function dismissTx(){
+  const el=document.getElementById('tx');
+  if(!el)return;
+  el.style.pointerEvents='none';
+  el.classList.add('done');
+  setTimeout(()=>{el.style.display='none';},900);
+}
+document.getElementById('tx')?.addEventListener('animationend',dismissTx,{once:true});
+window.addEventListener('load',()=>setTimeout(dismissTx,2200));
+setTimeout(dismissTx,4000);
+
+/* ── Rich sample listings ── */
+const LISTINGS = [
+  {id:1,title:"Bright en-suite in Kilimani flat",area:"Kilimani, Nairobi",price:28000,type:"En-suite room",furnished:true,bills:true,gender:"Any",flatmates:2,occ:"Working professional",vibe:"Quiet & homebody",floor:"4th floor",light:"Excellent",avail:"Now",min_stay:"3 months",deposit:28000,pets:false,smoking:false,wifi:true,parking:false,study_quiet:true,overnight_guests:true,cleaning_sched:"Weekly rota",laundry:"In-unit",security:"Gated + watchman",landlord_onsite:false,existing_mates:"2 professionals, 1 male 1 female",desc:"Spacious 4th-floor en-suite in a quiet Kilimani apartment. Shared kitchen and living area. Great natural light, very secure building. Looking for a working professional — quiet evenings preferred.",poster:"Wanjiku M.",poster_since:"2024",badge:"verified",query:"nairobi apartment interior bright"},
+  {id:2,title:"Private room in Westlands house share",area:"Westlands, Nairobi",price:18000,type:"Private room",furnished:true,bills:false,gender:"Female only",flatmates:3,occ:"Any",vibe:"Social & outgoing",floor:"1st floor",light:"Good",avail:"1 Aug 2026",min_stay:"1 month",deposit:18000,pets:true,smoking:false,wifi:true,parking:true,study_quiet:false,overnight_guests:true,cleaning_sched:"Shared responsibility",laundry:"Shared machine",security:"Electric fence + CCTV",landlord_onsite:false,existing_mates:"3 women, ages 24–29",desc:"Lovely house share in the heart of Westlands. Bills split separately. Very social house — we cook together on Sundays! Pet-friendly, parking for one car. Female tenants only.",poster:"Amina K.",poster_since:"2025",badge:"new",query:"nairobi westlands room interior"},
+  {id:3,title:"Master bedroom in Lavington apartment",area:"Lavington, Nairobi",price:35000,type:"Master bedroom",furnished:true,bills:true,gender:"Any",flatmates:1,occ:"Working professional",vibe:"Work-from-home professional",floor:"2nd floor",light:"Excellent",avail:"15 Jul 2026",min_stay:"6 months",deposit:35000,pets:false,smoking:false,wifi:true,parking:true,study_quiet:true,overnight_guests:false,cleaning_sched:"Professional cleaning weekly",laundry:"In-unit",security:"Gated + concierge",landlord_onsite:false,existing_mates:"1 male software engineer",desc:"Premium master bedroom with en-suite in a modern Lavington apartment. Fibre internet, fully furnished with quality furniture. Work-from-home setup included. Very quiet, professional environment only.",poster:"David O.",poster_since:"2024",badge:"verified",query:"luxury apartment bedroom nairobi interior"},
+  {id:4,title:"Affordable room near UoN campus",area:"Parklands, Nairobi",price:8500,type:"Shared room",furnished:true,bills:true,gender:"Male only",flatmates:3,occ:"Student",vibe:"Early bird — up by 6am",floor:"Ground floor",light:"Moderate",avail:"Now",min_stay:"1 month",deposit:8500,pets:false,smoking:false,wifi:true,parking:false,study_quiet:true,overnight_guests:false,cleaning_sched:"Daily — shared",laundry:"Nearby laundry",security:"Watchman",landlord_onsite:true,existing_mates:"3 male students",desc:"Budget room share ideal for university students. All bills included, fast WiFi for studying. Very strict study-quiet hours 9pm–6am. Landlord lives on the ground floor — very secure.",poster:"James N.",poster_since:"2025",badge:"new",query:"student room nairobi affordable"},
+  {id:5,title:"Sunny studio in Kileleshwa",area:"Kileleshwa, Nairobi",price:45000,type:"Studio (full unit)",furnished:true,bills:false,gender:"Any",flatmates:0,occ:"Any",vibe:"Any",floor:"3rd floor",light:"Excellent — full sun",avail:"Now",min_stay:"3 months",deposit:45000,pets:true,smoking:false,wifi:false,parking:true,study_quiet:false,overnight_guests:true,cleaning_sched:"N/A — private unit",laundry:"In-unit",security:"Gated + CCTV + watchman",landlord_onsite:false,existing_mates:"N/A — solo unit",desc:"Rare find: a fully furnished sunny studio in Kileleshwa. This is technically for one person but the poster is open to couples. Full kitchen, large windows, private balcony. Bills paid separately.",poster:"Grace A.",poster_since:"2023",badge:"verified",query:"studio apartment nairobi sunny"},
+  {id:6,title:"Room in creative house, Ngong Road",area:"Ngong Road, Nairobi",price:15000,type:"Private room",furnished:false,bills:false,gender:"Any",flatmates:2,occ:"Entrepreneur",vibe:"Social & outgoing",floor:"1st floor",light:"Good",avail:"1 Sep 2026",min_stay:"3 months",deposit:15000,pets:false,smoking:false,wifi:true,parking:true,study_quiet:false,overnight_guests:true,cleaning_sched:"Weekly rota",laundry:"Shared machine",security:"Gated",landlord_onsite:false,existing_mates:"1 creative director, 1 startup founder",desc:"Join a house of creative professionals on Ngong Road. Unfurnished room — bring your own bed and wardrobe. Great shared spaces. We host occasional house dinners. Entrepreneurs and creatives preferred.",poster:"Kendi L.",poster_since:"2025",badge:"new",query:"creative workspace home nairobi"},
+  {id:7,title:"Beachfront room in Nyali, Mombasa",area:"Nyali, Mombasa",price:22000,type:"Private room",furnished:true,bills:true,gender:"Any",flatmates:2,occ:"Any",vibe:"Social & outgoing",floor:"Ground floor",light:"Excellent — full sun",avail:"Now",min_stay:"1 month",deposit:22000,pets:false,smoking:false,wifi:true,parking:false,study_quiet:false,overnight_guests:true,cleaning_sched:"Housekeeper 3x week",laundry:"In-unit",security:"Gated + ocean-view security",landlord_onsite:false,existing_mates:"2 hospitality professionals",desc:"Live by the beach in Nyali. Private room in a stunning flat with direct ocean views from the balcony. A housekeeper comes three times a week. Perfect for remote workers escaping Nairobi.",poster:"Aisha M.",poster_since:"2024",badge:"verified",query:"mombasa beach apartment interior"},
+  {id:8,title:"Room in Karen gated estate",area:"Karen, Nairobi",price:32000,type:"Private room",furnished:true,bills:false,gender:"Any",flatmates:1,occ:"Working professional",vibe:"Quiet & homebody",floor:"Ground floor",light:"Good",avail:"Now",min_stay:"6 months",deposit:64000,pets:true,smoking:false,wifi:true,parking:true,study_quiet:true,overnight_guests:true,cleaning_sched:"Gardener + housekeeper weekly",laundry:"In-unit",security:"Estate security 24/7",landlord_onsite:false,existing_mates:"1 senior manager, female",desc:"Ground floor room in a beautiful Karen estate home. Shared with one professional. Large garden, very quiet neighbourhood, ideal for someone who values privacy and peace. Pet-friendly — we have a dog!",poster:"Peter K.",poster_since:"2023",badge:"verified",query:"karen nairobi house garden estate"},
+];
+
+let activeFilter = 'all';
+let activeSort = 'recommended';
+let photoCache = {};
+
+/* ── Photo loading ── */
+async function getPhoto(query, id){
+  const k = id+'_'+query;
+  if(photoCache[k]) return photoCache[k];
+  try {
+    const r = await fetch(`https://api.unsplash.com/photos/random?query=${encodeURIComponent(query)}&orientation=landscape&client_id=${UNSPLASH_KEY}`, {signal:AbortSignal.timeout(4000)});
+    if(!r.ok) return null;
+    const d = await r.json();
+    const url = d?.urls?.regular||null;
+    if(url) photoCache[k]=url;
+    return url;
+  } catch(e){ return null; }
+}
+function injectPhoto(id, url){
+  const el = document.querySelector(`[data-card-id="${id}"] .card-img img`);
+  if(el){ el.src=url; el.style.opacity='0'; setTimeout(()=>{el.style.transition='opacity .5s';el.style.opacity='1';},50); }
+}
+
+/* ── Filter & sort ── */
+function setFilter(f, el){
+  activeFilter = f;
+  document.querySelectorAll('.fchip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  renderCards();
+}
+function renderCards(){
+  activeSort = document.getElementById('sort-sel').value;
+  let data = [...LISTINGS];
+  if(activeFilter==='private') data = data.filter(l=>l.type==='Private room'||l.type==='Master bedroom');
+  else if(activeFilter==='shared') data = data.filter(l=>l.type==='Shared room');
+  else if(activeFilter==='ensuite') data = data.filter(l=>l.type==='En-suite room');
+  else if(activeFilter==='entire') data = data.filter(l=>l.type.includes('Studio')||l.type.includes('unit')||l.type.includes('1-bed'));
+  else if(activeFilter==='furnished') data = data.filter(l=>l.furnished);
+  else if(activeFilter==='bills') data = data.filter(l=>l.bills);
+  else if(activeFilter==='female') data = data.filter(l=>l.gender==='Female only');
+  else if(activeFilter==='pet') data = data.filter(l=>l.pets);
+  else if(activeFilter==='student') data = data.filter(l=>l.occ==='Student'||l.bills);
+  else if(activeFilter==='wifi') data = data.filter(l=>l.wifi);
+  else if(activeFilter==='parking') data = data.filter(l=>l.parking);
+  if(activeSort==='price-asc') data.sort((a,b)=>a.price-b.price);
+  else if(activeSort==='price-desc') data.sort((a,b)=>b.price-a.price);
+  else if(activeSort==='newest') data.sort((a,b)=>b.id-a.id);
+  document.getElementById('result-num').textContent = data.length;
+  const grid = document.getElementById('grid');
+  grid.innerHTML = data.map(card).join('');
+  // Load photos
+  data.forEach((l,i)=>setTimeout(()=>getPhoto(l.query,l.id).then(url=>{if(url)injectPhoto(l.id,url);}),i*200));
+}
+
+function card(l){
+  const badgeCls = l.badge==='verified'?'badge-verified':l.badge==='urgent'?'badge-urgent':'badge-new';
+  const badgeTxt = l.badge==='verified'?'✓ Verified':l.badge==='urgent'?'🔥 Urgent':'New';
+  return `<div class="card" data-card-id="${l.id}" onclick="openDrawer(${l.id})">
+    <div class="card-img">
+      <img src="" alt="${l.title}" loading="lazy" style="opacity:0;width:100%;height:100%;object-fit:cover;"/>
+      <div class="card-badge ${badgeCls}">${badgeTxt}</div>
+      <button class="card-save" onclick="event.stopPropagation();this.textContent=this.textContent==='♡'?'♥':'♡'">♡</button>
+    </div>
+    <div class="card-body">
+      <div class="card-poster">
+        <div class="poster-avatar">${l.poster[0]}</div>
+        <div class="poster-info">
+          <div class="poster-name">${l.poster} ${l.badge==='verified'?'<span class="poster-verified"><svg width="10" height="10" viewBox="0 0 24 24" fill="#4361FF" stroke="none"><path d="m9 12 2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/></svg></span>':''}</div>
+          <div class="poster-type">Listed since ${l.poster_since}</div>
+        </div>
+      </div>
+      <div class="card-title">${l.title}</div>
+      <div class="card-location"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>${l.area}</div>
+      <div class="card-chips">
+        <span class="chip">${l.type}</span>
+        ${l.furnished?'<span class="chip mint">Furnished</span>':''}
+        ${l.bills?'<span class="chip mint">Bills incl.</span>':''}
+        ${l.wifi?'<span class="chip">📶 WiFi</span>':''}
+        ${l.gender!=='Any'?`<span class="chip">${l.gender}</span>`:''}
+      </div>
+      <div class="card-details">
+        <div class="detail-item"><div class="detail-ico">🚪</div><div class="detail-val">${l.type.split(' ')[0]}</div><div class="detail-lbl">room type</div></div>
+        <div class="detail-item"><div class="detail-ico">👥</div><div class="detail-val">${l.flatmates===0?'Solo':`+${l.flatmates}`}</div><div class="detail-lbl">flatmate${l.flatmates!==1?'s':''}</div></div>
+        <div class="detail-item"><div class="detail-ico">📅</div><div class="detail-val">${l.avail==='Now'?'Now':l.avail.split(' ').slice(0,2).join(' ')}</div><div class="detail-lbl">move-in</div></div>
+      </div>
+      <div class="card-foot">
+        <div class="card-price">
+          <div class="price-val">KES ${l.price.toLocaleString()}</div>
+          <div class="price-period">per month</div>
+        </div>
+        <button class="card-cta">View room →</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ── Drawer ── */
+function openDrawer(id){
+  const l = LISTINGS.find(x=>x.id===id);
+  if(!l) return;
+  const d = document.getElementById('drawer');
+  d.innerHTML = `
+    <div class="dr-head">
+      <div>
+        <div style="font-family:var(--font-display);font-size:13px;color:var(--t1);font-weight:500;margin-bottom:4px;">${l.type} · ${l.area}</div>
+        <div class="dr-title">${l.title}</div>
+      </div>
+      <button class="dr-close" onclick="closeDrawer()">×</button>
+    </div>
+    <div class="dr-img"><img src="" id="dr-img-${l.id}" alt="${l.title}" style="opacity:0;transition:opacity .5s;"/></div>
+    <div class="dr-body">
+      <div class="dr-location"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>${l.area}</div>
+      <div class="dr-price-row">
+        <div class="dr-price">KES ${l.price.toLocaleString()}</div>
+        <div class="dr-period">/ month · Deposit KES ${l.deposit.toLocaleString()}</div>
+      </div>
+
+      <div class="dr-section">
+        <div class="dr-section-title">Room details</div>
+        <div class="dr-grid-2">
+          <div class="dr-stat"><div class="dr-stat-label">Room type</div><div class="dr-stat-val">${l.type}</div></div>
+          <div class="dr-stat"><div class="dr-stat-label">Floor</div><div class="dr-stat-val">${l.floor}</div></div>
+          <div class="dr-stat"><div class="dr-stat-label">Natural light</div><div class="dr-stat-val">${l.light}</div></div>
+          <div class="dr-stat"><div class="dr-stat-label">Available</div><div class="dr-stat-val">${l.avail}</div></div>
+          <div class="dr-stat"><div class="dr-stat-label">Min. stay</div><div class="dr-stat-val">${l.min_stay}</div></div>
+          <div class="dr-stat"><div class="dr-stat-label">Current flatmates</div><div class="dr-stat-val">${l.flatmates===0?'You'd be first':`${l.flatmates} flatmate${l.flatmates!==1?'s':''}`}</div></div>
+        </div>
+      </div>
+
+      <div class="dr-section">
+        <div class="dr-section-title">Existing flatmates</div>
+        <p class="dr-desc" style="font-size:13px;">${l.existing_mates}</p>
+      </div>
+
+      <div class="dr-section">
+        <div class="dr-section-title">What's included</div>
+        <div class="dr-chips">
+          ${l.furnished?'<span class="dr-chip ok">✓ Furnished</span>':' <span class="dr-chip no">✗ Unfurnished</span>'}
+          ${l.bills?'<span class="dr-chip ok">✓ Bills included</span>':' <span class="dr-chip no">✗ Bills extra</span>'}
+          ${l.wifi?'<span class="dr-chip ok">✓ WiFi</span>':' <span class="dr-chip">No WiFi listed</span>'}
+          ${l.parking?'<span class="dr-chip ok">✓ Parking</span>':' <span class="dr-chip no">✗ No parking</span>'}
+          ${l.pets?'<span class="dr-chip ok">✓ Pets allowed</span>':' <span class="dr-chip no">✗ No pets</span>'}
+          <span class="dr-chip ${l.smoking?'ok':'no'}">${l.smoking?'✓ Smoking ok':'✗ No smoking'}</span>
+          ${l.study_quiet?'<span class="dr-chip ok">✓ Study-quiet hours</span>':'<span class="dr-chip">No quiet hours specified</span>'}
+          ${l.overnight_guests?'<span class="dr-chip ok">✓ Overnight guests ok</span>':' <span class="dr-chip no">✗ No overnight guests</span>'}
+        </div>
+      </div>
+
+      <div class="dr-section">
+        <div class="dr-section-title">House & lifestyle</div>
+        <div class="dr-grid-2">
+          <div class="dr-stat"><div class="dr-stat-label">Cleaning</div><div class="dr-stat-val">${l.cleaning_sched}</div></div>
+          <div class="dr-stat"><div class="dr-stat-label">Laundry</div><div class="dr-stat-val">${l.laundry}</div></div>
+          <div class="dr-stat"><div class="dr-stat-label">Security</div><div class="dr-stat-val">${l.security}</div></div>
+          <div class="dr-stat"><div class="dr-stat-label">Landlord on-site</div><div class="dr-stat-val">${l.landlord_onsite?'Yes':'No'}</div></div>
+          <div class="dr-stat"><div class="dr-stat-label">Ideal flatmate</div><div class="dr-stat-val">${l.occ}</div></div>
+          <div class="dr-stat"><div class="dr-stat-label">Gender pref.</div><div class="dr-stat-val">${l.gender}</div></div>
+        </div>
+      </div>
+
+      <div class="dr-section">
+        <div class="dr-section-title">About this listing</div>
+        <p class="dr-desc">${l.desc}</p>
+      </div>
+
+      <div class="dr-section">
+        <div class="dr-section-title">About the poster</div>
+        <div class="dr-poster-row">
+          <div class="dr-poster-av">${l.poster[0]}</div>
+          <div>
+            <div class="dr-poster-name">${l.poster}</div>
+            <div class="dr-poster-since">Apatmento member since ${l.poster_since}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="dr-cta-box">
+      <button class="dr-cta-main" onclick="showToast('Message request sent! They\'ll contact you shortly.')">Request to view</button>
+      <button class="dr-cta-sec" onclick="showToast('Added to your saved rooms.')">Save</button>
+    </div>`;
+
+  // Load drawer photo
+  getPhoto(l.query, l.id).then(url=>{
+    if(url){
+      const img=document.getElementById('dr-img-'+l.id);
+      if(img){img.src=url;setTimeout(()=>img.style.opacity='1',50);}
+    }
+  });
+
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('drawer-overlay').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeDrawer(){
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('drawer-overlay').classList.remove('open');
+  document.body.style.overflow='';
+}
+
+/* ── Post modal ── */
+const INCLUSIONS = ['WiFi included','Water included','Electricity included','Gas included','Furnished','Washing machine','Dishwasher','Parking','Storage room','Balcony / terrace','Garden access','Swimming pool','Gym access','Housekeeper'];
+const RULES = ['No smoking indoors','No parties','No overnight guests','Pets allowed','LGBTQ+ friendly','Vegan / plant-based household','Halal kitchen','Quiet after 10pm','Work-from-home friendly','Early risers only','References required','Background check required'];
+let selectedInclusions = [], selectedRules = [];
+
+function buildToggles(){
+  document.getElementById('inclusions-grid').innerHTML = INCLUSIONS.map(t=>`<div class="toggle-chip" onclick="toggleChip(this,'inc','${t}')">${t}</div>`).join('');
+  document.getElementById('house-rules-grid').innerHTML = RULES.map(t=>`<div class="toggle-chip" onclick="toggleChip(this,'rule','${t}')">${t}</div>`).join('');
+}
+function toggleChip(el, type, val){
+  el.classList.toggle('active');
+  const arr = type==='inc'?selectedInclusions:selectedRules;
+  const idx = arr.indexOf(val);
+  if(idx>=0) arr.splice(idx,1); else arr.push(val);
+}
+function openPostModal(){
+  document.getElementById('modal-overlay').classList.add('open');
+  document.body.style.overflow='hidden';
+  buildToggles();
+}
+function closePostModal(){
+  document.getElementById('modal-overlay').classList.remove('open');
+  document.body.style.overflow='';
+}
+function submitListing(){
+  const title = document.getElementById('f-title').value.trim();
+  const price = document.getElementById('f-price').value;
+  const contact = document.getElementById('f-contact').value.trim();
+  if(!title){showToast('Please add a title for your listing');return;}
+  if(!price){showToast('Please enter a monthly rent amount');return;}
+  if(!contact){showToast('Please add a contact number or email');return;}
+  showToast('Your listing has been submitted! We'll review and publish within 24 hours. 🏠');
+  closePostModal();
+}
+
+/* ── Search bar ── */
+const cities=['Nairobi','Mombasa','Westlands','Kilimani','Karen','Nyali','Diani','Kisumu','Nakuru'];
+const budgets=['Any amount','Under KES 10,000','KES 10–20k','KES 20–35k','KES 35–50k','KES 50k+'];
+const moves=['Any time','Now','This month','Next month','In 3 months','Flexible'];
+let cityI=0,budgetI=0,moveI=0;
+function cycleCity(){cityI=(cityI+1)%cities.length;const el=document.getElementById('field-city');el.textContent=cities[cityI];el.className='sb-val';}
+function cycleBudget(){budgetI=(budgetI+1)%budgets.length;const el=document.getElementById('field-budget');el.textContent=budgets[budgetI];el.className=budgetI===0?'sb-val placeholder':'sb-val';}
+function cycleMove(){moveI=(moveI+1)%moves.length;const el=document.getElementById('field-move');el.textContent=moves[moveI];el.className=moveI===0?'sb-val placeholder':'sb-val';}
+function applySearch(){ renderCards(); showToast('Showing all available rooms');}
+
+/* ── Toast ── */
+function showToast(m,d=3500){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),d);}
+
+/* ── Init ── */
+renderCards();
+</script>
+
+<script src="/pwa.js" defer></script>
+<script src="/showcase.js" defer></script>
+</body>
+</html>
