@@ -517,10 +517,11 @@ function renderCarousel(slot, cs){
     <div class="sc-label">Sponsored content</div>
     <div class="scc sc-el">
       ${cs.map((c,i)=>`
-      <div class="sc-slide ${i===0?'active':''}" style="background:${c.grad}" data-id="${c.id}" data-adv="${c.advertiser}">
-        ${c.media ? `<img src="${c.media}" alt="${c.advertiser}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;"/>
-        <div style="position:absolute;inset:0;display:none;"></div>` : ''}
-        <div class="sc-slide-ico" style="position:relative;z-index:2;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${c.icon}</svg></div>
+      <div class="sc-slide ${i===0?'active':''}"
+        style="background:${c.media?'#000':c.grad};${c.media?`background-image:url('${c.media}');background-size:cover;background-position:center;`:''}"
+        data-id="${c.id}" data-adv="${c.advertiser}">
+        ${c.media ? '<div style="position:absolute;inset:0;background:linear-gradient(to right,rgba(0,0,0,.5) 0%,rgba(0,0,0,.15) 55%,transparent 100%);"></div>' : ''}
+        <div class="sc-slide-ico" style="position:relative;z-index:2;${c.media?'background:rgba(0,0,0,.25);border-color:rgba(255,255,255,.25);':''}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${c.icon}</svg></div>
         <div class="sc-slide-body" style="position:relative;z-index:2;">
           <div class="sc-slide-who">${c.advertiser} · Sponsored</div>
           <div class="sc-slide-h">${c.headline}</div>
@@ -872,6 +873,7 @@ else init();
 
 window.ApatmentoShowcase={reload:init};
 })();
+
 
 
 
