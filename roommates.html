@@ -261,7 +261,7 @@ body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webk
     <span class="tb-brand"><em>Apat</em>mento</span>
   </div>
   <div class="tb-right">
-    <button class="tb-post-btn" onclick="openPostModal()">+ List your space</button>
+    <button class="tb-post-btn" onclick="goListSpace()">+ List your space</button>
   </div>
 </header>
 
@@ -326,149 +326,6 @@ body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webk
 <div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
 <div class="drawer" id="drawer"></div>
 
-<!-- Post Modal -->
-<div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this)closePostModal()">
-  <div class="modal">
-    <div class="modal-head">
-      <div class="modal-title">List your space</div>
-      <button class="modal-close" onclick="closePostModal()">×</button>
-    </div>
-    <div class="modal-body">
-      <div class="form-row">
-        <div class="form-group full">
-          <div class="form-section-head">📍 Basic details</div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Title / headline</label>
-          <input class="form-input" id="f-title" placeholder="e.g. Bright room in Kilimani flat"/>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Room type</label>
-          <select class="form-select" id="f-type">
-            <option value="">Select type</option>
-            <option>Private room</option>
-            <option>Shared room</option>
-            <option>En-suite room</option>
-            <option>Master bedroom</option>
-            <option>Studio (full unit)</option>
-            <option>1-bed apartment</option>
-            <option>Entire flat share</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Neighbourhood</label>
-          <input class="form-input" id="f-area" placeholder="e.g. Kilimani, Nairobi"/>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Monthly rent (KES)</label>
-          <input class="form-input" id="f-price" type="number" placeholder="e.g. 22000"/>
-        </div>
-
-        <div class="form-group full">
-          <div class="form-section-head">🏠 Room details</div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Floor level</label>
-          <select class="form-select" id="f-floor">
-            <option value="">Any</option>
-            <option>Ground floor</option><option>1st floor</option><option>2nd floor</option>
-            <option>3rd floor</option><option>4th+ floor</option><option>Penthouse</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Natural light</label>
-          <select class="form-select" id="f-light">
-            <option value="">Unspecified</option>
-            <option>Excellent — full sun</option><option>Good — bright most of day</option>
-            <option>Moderate</option><option>Limited</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Available from</label>
-          <input class="form-input" id="f-avail" type="date"/>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Minimum stay</label>
-          <select class="form-select" id="f-min-stay">
-            <option>1 month</option><option>3 months</option><option>6 months</option><option>1 year</option><option>Flexible</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Security deposit (KES)</label>
-          <input class="form-input" id="f-deposit" type="number" placeholder="e.g. 22000"/>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Current flatmates</label>
-          <select class="form-select" id="f-mates">
-            <option>None — first tenant</option><option>1 flatmate</option><option>2 flatmates</option>
-            <option>3 flatmates</option><option>4+ flatmates</option>
-          </select>
-        </div>
-
-        <div class="form-group full">
-          <div class="form-section-head">✅ What's included</div>
-        </div>
-        <div class="toggle-grid" id="inclusions-grid">
-          <!-- Populated by JS -->
-        </div>
-
-        <div class="form-group full">
-          <div class="form-section-head">🤝 Flatmate preferences</div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Gender preference</label>
-          <select class="form-select" id="f-gender">
-            <option>Any gender</option><option>Female only</option><option>Male only</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Preferred occupation</label>
-          <select class="form-select" id="f-occ">
-            <option>Any</option><option>Working professional</option><option>Student</option>
-            <option>Professional or student</option><option>Entrepreneur</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Age range preferred</label>
-          <select class="form-select" id="f-age">
-            <option>Any age</option><option>18–25</option><option>25–35</option>
-            <option>35–45</option><option>45+</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Lifestyle vibe</label>
-          <select class="form-select" id="f-vibe">
-            <option>Any</option><option>Early bird — up by 6am</option>
-            <option>Night owl — active late</option><option>Quiet & homebody</option>
-            <option>Social & outgoing</option><option>Work-from-home professional</option>
-          </select>
-        </div>
-        <div class="toggle-grid" id="house-rules-grid">
-          <!-- Populated by JS -->
-        </div>
-
-        <div class="form-group full">
-          <div class="form-section-head">📝 Description</div>
-        </div>
-        <div class="form-group full">
-          <textarea class="form-textarea" id="f-desc" placeholder="Describe the space, the vibe, your existing flatmates and what you're looking for in a new one. Be honest and specific — it helps find the right match." rows="4"></textarea>
-        </div>
-
-        <div class="form-group full">
-          <label class="form-label">Photo URL (optional)</label>
-          <input class="form-input" id="f-photo" placeholder="https://... (room photo link)"/>
-        </div>
-        <div class="form-group full">
-          <label class="form-label">Contact (WhatsApp or email)</label>
-          <input class="form-input" id="f-contact" placeholder="0712 345 678 or you@email.com"/>
-        </div>
-      </div>
-    </div>
-    <div class="modal-foot">
-      <button class="submit-btn" onclick="submitListing()">Post my listing — free</button>
-    </div>
-  </div>
-</div>
 
 <div class="toast" id="toast"></div>
 
@@ -705,39 +562,6 @@ function closeDrawer(){
 }
 
 /* ── Post modal ── */
-const INCLUSIONS = ['WiFi included','Water included','Electricity included','Gas included','Furnished','Washing machine','Dishwasher','Parking','Storage room','Balcony / terrace','Garden access','Swimming pool','Gym access','Housekeeper'];
-const RULES = ['No smoking indoors','No parties','No overnight guests','Pets allowed','LGBTQ+ friendly','Vegan / plant-based household','Halal kitchen','Quiet after 10pm','Work-from-home friendly','Early risers only','References required','Background check required'];
-let selectedInclusions = [], selectedRules = [];
-
-function buildToggles(){
-  document.getElementById('inclusions-grid').innerHTML = INCLUSIONS.map(t=>`<div class="toggle-chip" onclick="toggleChip(this,'inc','${t}')">${t}</div>`).join('');
-  document.getElementById('house-rules-grid').innerHTML = RULES.map(t=>`<div class="toggle-chip" onclick="toggleChip(this,'rule','${t}')">${t}</div>`).join('');
-}
-function toggleChip(el, type, val){
-  el.classList.toggle('active');
-  const arr = type==='inc'?selectedInclusions:selectedRules;
-  const idx = arr.indexOf(val);
-  if(idx>=0) arr.splice(idx,1); else arr.push(val);
-}
-function openPostModal(){
-  document.getElementById('modal-overlay').classList.add('open');
-  document.body.style.overflow='hidden';
-  buildToggles();
-}
-function closePostModal(){
-  document.getElementById('modal-overlay').classList.remove('open');
-  document.body.style.overflow='';
-}
-function submitListing(){
-  const title = document.getElementById('f-title').value.trim();
-  const price = document.getElementById('f-price').value;
-  const contact = document.getElementById('f-contact').value.trim();
-  if(!title){showToast('Please add a title for your listing');return;}
-  if(!price){showToast('Please enter a monthly rent amount');return;}
-  if(!contact){showToast('Please add a contact number or email');return;}
-  showToast('Your listing has been submitted! We'll review and publish within 24 hours. 🏠');
-  closePostModal();
-}
 
 /* ── Search bar ── */
 const cities=['Nairobi','Mombasa','Westlands','Kilimani','Karen','Nyali','Diani','Kisumu','Nakuru'];
@@ -753,6 +577,26 @@ function applySearch(){ renderCards(); showToast('Showing all available rooms');
 function showToast(m,d=3500){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),d);}
 
 /* ── Init ── */
+/* ── List your space — auth-aware navigation ── */
+async function goListSpace(){
+  try {
+    const sb2 = supabase.createClient(
+      'https://gfwgbgdvxtocwhilrtdw.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw'
+    );
+    const { data:{ session } } = await sb2.auth.getSession();
+    if(session){
+      window.location.href = 'add-listing.html?type=roommate&back=1';
+    } else {
+      // Not signed in — go to auth with redirect back
+      window.location.href = 'auth.html?mode=signup&next=roommate';
+    }
+  } catch(e){
+    window.location.href = 'auth.html?mode=signup';
+  }
+}
+
+/* ── Init ── */
 // Defer so page paints before JS processes
 requestAnimationFrame(()=>setTimeout(renderCards,50));
 </script>
@@ -761,3 +605,4 @@ requestAnimationFrame(()=>setTimeout(renderCards,50));
 <script src="/showcase.js" defer></script>
 </body>
 </html>
+
