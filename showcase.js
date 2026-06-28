@@ -212,6 +212,7 @@ const CSS = `
 /* ══ CAROUSEL ══ */
 .scc{position:relative;border-radius:22px;overflow:hidden;height:168px;box-shadow:0 12px 44px rgba(10,10,20,.12);}
 .sc-slide{position:absolute;inset:0;display:flex;align-items:center;padding:0 clamp(18px,4vw,48px);opacity:0;transform:translateX(36px);transition:opacity .55s cubic-bezier(.22,1,.36,1),transform .55s cubic-bezier(.22,1,.36,1);pointer-events:none;}
+.sc-slide-img{position:absolute;inset:0;z-index:0;border-radius:22px;}
 .sc-slide.active{opacity:1;transform:none;pointer-events:all;}
 .sc-slide-ico{width:58px;height:58px;border-radius:17px;background:rgba(255,255,255,.18);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0;margin-right:22px;}
 .sc-slide-ico svg{width:28px;height:28px;}
@@ -518,16 +519,16 @@ function renderCarousel(slot, cs){
     <div class="scc sc-el">
       ${cs.map((c,i)=>`
       <div class="sc-slide ${i===0?'active':''}"
-        style="background:${c.media?'#000':c.grad};${c.media?`background-image:url('${c.media}');background-size:cover;background-position:center;`:''}"
-        data-id="${c.id}" data-adv="${c.advertiser}">
-        ${c.media ? '<div style="position:absolute;inset:0;background:linear-gradient(to right,rgba(0,0,0,.5) 0%,rgba(0,0,0,.15) 55%,transparent 100%);"></div>' : ''}
-        <div class="sc-slide-ico" style="position:relative;z-index:2;${c.media?'background:rgba(0,0,0,.25);border-color:rgba(255,255,255,.25);':''}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${c.icon}</svg></div>
-        <div class="sc-slide-body" style="position:relative;z-index:2;">
+        style="background:${c.grad}"
+        data-id="${c.id}" data-adv="${c.advertiser}" data-media="${c.media||''}">
+        <div class="sc-slide-img"></div>
+        <div class="sc-slide-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${c.icon}</svg></div>
+        <div class="sc-slide-body">
           <div class="sc-slide-who">${c.advertiser} · Sponsored</div>
           <div class="sc-slide-h">${c.headline}</div>
           <div class="sc-slide-sub">${c.sub}</div>
         </div>
-        <button class="sc-slide-cta" data-url="${c.url}" style="position:relative;z-index:2;">${c.cta}</button>
+        <button class="sc-slide-cta" data-url="${c.url}">${c.cta}</button>
       </div>`).join('')}
       <button class="scc-nav scc-prev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
       <button class="scc-nav scc-next"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></button>
@@ -564,6 +565,27 @@ function renderCarousel(slot, cs){
   let sx=0;
   wrap.addEventListener('touchstart',e=>sx=e.touches[0].clientX,{passive:true});
   wrap.addEventListener('touchend',e=>{const d=e.changedTouches[0].clientX-sx;if(Math.abs(d)>50)go(cur+(d<0?1:-1));},{passive:true});
+
+  // Preload slide images via Image() — works in ALL browsers including Brave mobile
+  // CSS background-image can be blocked by privacy shields; Image() is never blocked
+  wrap.querySelectorAll('.sc-slide[data-media]').forEach(slide=>{
+    const url = slide.dataset.media;
+    if(!url) return;
+    const img = new Image();
+    img.onload = ()=>{
+      const imgEl = slide.querySelector('.sc-slide-img');
+      if(imgEl){
+        imgEl.style.cssText = `position:absolute;inset:0;background:url('${url}') center/cover no-repeat;z-index:0;`;
+        // Text scrim for readability
+        imgEl.innerHTML = '<div style="position:absolute;inset:0;background:linear-gradient(to right,rgba(0,0,0,.52) 0%,rgba(0,0,0,.18) 55%,transparent 100%);"></div>';
+        // Hide the icon when photo loads (photo speaks for itself)
+        const ico = slide.querySelector('.sc-slide-ico');
+        if(ico) ico.style.opacity='0';
+      }
+    };
+    img.onerror = ()=>{}; // silently keep gradient on failure
+    img.src = url;
+  });
 
   observe(wrap,()=>{
     wrap.classList.add('in');last=performance.now();
@@ -873,6 +895,7 @@ else init();
 
 window.ApatmentoShowcase={reload:init};
 })();
+
 
 
 
