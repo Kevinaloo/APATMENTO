@@ -4,6 +4,29 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <meta name="description" content="Find a flatmate or list your spare room across Kenya. No commission — Apatmento Roommates."/>
+<meta name="keywords" content="roommates Kenya, flatmates Nairobi, room to rent Nairobi, shared apartment Nairobi, room for rent Westlands, flatmate wanted Nairobi, house share Kenya, roommate finder Kenya, room share Kilimani, flatmate Mombasa"/>
+<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large"/>
+<link rel="canonical" href="https://apatmento.vercel.app/roommates.html"/>
+<meta property="og:title" content="Find a Flatmate in Kenya | Apatmento Roommates"/>
+<meta property="og:description" content="Kenya's first roommate platform. Browse verified rooms and shared spaces in Nairobi, Mombasa and beyond. Zero commission, always."/>
+<meta property="og:url" content="https://apatmento.vercel.app/roommates.html"/>
+<meta property="og:type" content="website"/>
+<meta property="og:image" content="https://apatmento.vercel.app/og-roommates.jpg"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:title" content="Find a Flatmate in Kenya | Apatmento Roommates"/>
+<meta name="twitter:description" content="Browse verified rooms in Nairobi & Mombasa. Zero commission flatmate platform."/>
+<meta name="geo.region" content="KE"/>
+<meta name="geo.placename" content="Nairobi, Kenya"/>
+<script type="application/ld+json">
+{
+  "@context":"https://schema.org",
+  "@type":"WebPage",
+  "name":"Roommates in Kenya — Apatmento",
+  "description":"Kenya's first flatmate and room-share platform. Find verified rooms across Nairobi, Mombasa and beyond.",
+  "url":"https://apatmento.vercel.app/roommates.html",
+  "publisher":{"@type":"Organization","name":"Apatmento","url":"https://apatmento.vercel.app"}
+}
+</script>
 <meta name="theme-color" content="#2DD4BF"/>
 <link rel="manifest" href="/manifest.json"/>
 <title>Roommates Kenya | Find a Flatmate — Apatmento</title>
@@ -174,6 +197,11 @@ body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webk
   .sb-field{min-width:44%;}
   .sb-go{width:100%;height:42px;border-radius:11px;margin-top:4px;margin-left:0;}
 }
+
+.sb-select,.sb-input{width:100%;border:none;background:transparent;font-family:var(--font-body);font-size:13px;font-weight:500;color:var(--ink);outline:none;cursor:pointer;appearance:none;-webkit-appearance:none;}
+.sb-select option{color:var(--ink);}
+.sb-input{cursor:text;}
+.sb-input::placeholder{color:var(--ink-faint);}
 </style>
 </head>
 <body>
@@ -210,21 +238,42 @@ body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webk
   <p class="hero-sub">Browse verified rooms and shared spaces in Nairobi, Mombasa and beyond. Zero commission — always.</p>
 
   <div class="search-bar">
-    <div class="sb-field" onclick="cycleCity()">
+    <div class="sb-field">
       <div class="sb-label">Location</div>
-      <div class="sb-val" id="f-city">Nairobi</div>
+      <select id="f-city" class="sb-select" onchange="applySearch()">
+        <option value="">All Kenya</option>
+        <option value="nairobi" selected>Nairobi</option>
+        <option value="westlands">Westlands</option>
+        <option value="kilimani">Kilimani</option>
+        <option value="lavington">Lavington</option>
+        <option value="karen">Karen</option>
+        <option value="parklands">Parklands</option>
+        <option value="ngong">Ngong Road</option>
+        <option value="kileleshwa">Kileleshwa</option>
+        <option value="mombasa">Mombasa</option>
+        <option value="nyali">Nyali</option>
+        <option value="diani">Diani</option>
+        <option value="kisumu">Kisumu</option>
+        <option value="nakuru">Nakuru</option>
+      </select>
     </div>
     <div class="sb-sep"></div>
-    <div class="sb-field" onclick="cycleBudget()">
-      <div class="sb-label">Budget</div>
-      <div class="sb-val ph" id="f-budget">Any amount</div>
+    <div class="sb-field">
+      <div class="sb-label">Max budget (KES/mo)</div>
+      <input id="f-budget" class="sb-input" type="number" placeholder="e.g. 25000" min="0" step="1000" onchange="applySearch()"/>
     </div>
     <div class="sb-sep"></div>
-    <div class="sb-field" onclick="cycleType()">
+    <div class="sb-field">
       <div class="sb-label">Room type</div>
-      <div class="sb-val ph" id="f-type">Any type</div>
+      <select id="f-type" class="sb-select" onchange="applySearch()">
+        <option value="">Any type</option>
+        <option value="private">Private room</option>
+        <option value="ensuite">En-suite</option>
+        <option value="shared">Shared room</option>
+        <option value="studio">Studio / full unit</option>
+      </select>
     </div>
-    <button class="sb-go" onclick="showToast('Showing all available rooms')">
+    <button class="sb-go" onclick="applySearch()">
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
     </button>
   </div>
@@ -296,15 +345,27 @@ function ico(c){return `<svg width="44" height="44" viewBox="0 0 24 24" fill="no
 
 function render(){
   const sort = document.getElementById('sort').value;
+  const cityVal   = (document.getElementById('f-city')?.value||'').toLowerCase();
+  const budgetVal  = parseInt(document.getElementById('f-budget')?.value)||0;
+  const typeVal    = (document.getElementById('f-type')?.value||'').toLowerCase();
+
   let d = DATA.filter(l=>{
-    if(activeF==='private') return l.type==='Private'||l.type==='En-suite';
-    if(activeF==='ensuite') return l.type==='En-suite';
-    if(activeF==='furnished') return l.furnished;
-    if(activeF==='bills') return l.bills;
-    if(activeF==='female') return l.gender==='Female only';
-    if(activeF==='student') return l.occ==='Student';
-    if(activeF==='pet') return l.pets;
-    if(activeF==='parking') return l.parking;
+    // Search bar filters
+    if(cityVal && !l.area.toLowerCase().includes(cityVal)) return false;
+    if(budgetVal > 0 && l.price > budgetVal) return false;
+    if(typeVal==='private' && !(l.type==='Private'||l.type==='En-suite')) return false;
+    if(typeVal==='ensuite' && l.type!=='En-suite') return false;
+    if(typeVal==='shared'  && l.type!=='Shared') return false;
+    if(typeVal==='studio'  && l.type!=='Studio') return false;
+    // Chip filters
+    if(activeF==='private')  return l.type==='Private'||l.type==='En-suite';
+    if(activeF==='ensuite')  return l.type==='En-suite';
+    if(activeF==='furnished')return l.furnished;
+    if(activeF==='bills')    return l.bills;
+    if(activeF==='female')   return l.gender==='Female only';
+    if(activeF==='student')  return l.occ==='Student';
+    if(activeF==='pet')      return l.pets;
+    if(activeF==='parking')  return l.parking;
     return true;
   });
   if(sort==='asc') d.sort((a,b)=>a.price-b.price);
@@ -457,6 +518,7 @@ function showToast(m,d=3200){const t=document.getElementById('toast');t.textCont
 render();
 </script>
 
+<script src="/analytics.js" defer></script>
 <script src="/pwa.js" defer></script>
 <script src="/showcase.js" defer></script>
 </body>
