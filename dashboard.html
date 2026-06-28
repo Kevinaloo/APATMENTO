@@ -211,6 +211,39 @@ body{overflow-x:hidden;}
 .svc-onboard{position:relative;border-radius:20px;border:1.5px solid var(--line);background:rgba(255,255,255,.8);padding:22px 14px;cursor:pointer;transition:all .3s cubic-bezier(.22,1,.36,1);text-align:center;}
 .svc-onboard:hover{border-color:var(--mint-deep);transform:translateY(-2px);}
 
+
+/* ── Featured hero cards (Stays + Roommates) ── */
+.svc-featured-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:6px;}
+.svc-hero{position:relative;border-radius:20px;overflow:hidden;cursor:pointer;transition:all .38s cubic-bezier(.22,1,.36,1);border:1.5px solid var(--line);background:rgba(255,255,255,.6);backdrop-filter:blur(14px);padding:18px 16px 14px;display:flex;flex-direction:column;justify-content:space-between;min-height:128px;}
+.svc-hero:hover{transform:translateY(-5px);border-color:transparent;}
+.svc-hero-glow{position:absolute;inset:0;opacity:0;transition:opacity .4s;pointer-events:none;border-radius:20px;}
+.svc-hero:hover .svc-hero-glow{opacity:.13;}
+.svc-hero-stays .svc-hero-glow{background:linear-gradient(135deg,#B8A4F4,#7B2FF7);}
+.svc-hero-stays:hover{box-shadow:0 20px 50px rgba(123,47,247,.18);}
+.svc-hero-stays .svc-hero-icon{color:#7B2FF7;}
+.svc-hero-stays .svc-hero-name{background:linear-gradient(120deg,#7B2FF7,#4361FF);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.svc-hero-stays .svc-hero-badge{background:rgba(123,47,247,.08);color:#7B2FF7;border-color:rgba(123,47,247,.18);}
+.svc-hero-rooms .svc-hero-glow{background:linear-gradient(135deg,#2DD4BF,#0D9488);}
+.svc-hero-rooms:hover{box-shadow:0 20px 50px rgba(45,212,191,.18);}
+.svc-hero-rooms .svc-hero-icon{color:#0D9488;}
+.svc-hero-rooms .svc-hero-name{background:linear-gradient(120deg,#2DD4BF,#0D9488);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.svc-hero-rooms .svc-hero-badge,.svc-hero-badge-new{background:rgba(45,212,191,.1);color:#0D9488;border-color:rgba(45,212,191,.2);}
+.svc-hero-inner{display:flex;flex-direction:column;gap:7px;flex:1;}
+.svc-hero-icon{width:44px;height:44px;border-radius:13px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.9);transition:transform .4s cubic-bezier(.34,1.56,.64,1);}
+.svc-hero:hover .svc-hero-icon{transform:scale(1.1) translateY(-2px);}
+.svc-hero-name{font-family:var(--font-display);font-weight:500;font-size:18px;line-height:1;letter-spacing:-.01em;}
+.svc-hero-sub{font-size:11px;color:var(--ink-faint);line-height:1.4;}
+.svc-hero-badge{display:inline-flex;align-items:center;font-size:9px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;padding:3px 8px;border-radius:100px;border:1px solid;margin-top:2px;width:fit-content;}
+.svc-hero-arrow{color:var(--ink-faint);display:flex;justify-content:flex-end;opacity:.35;transition:all .35s;}
+.svc-hero:hover .svc-hero-arrow{opacity:1;transform:translateX(3px);}
+@media(max-width:640px){
+  .svc-hero{min-height:106px;padding:14px 12px 12px;border-radius:16px;}
+  .svc-hero-name{font-size:15px;}
+  .svc-hero-sub{font-size:10px;}
+  .svc-hero-icon{width:36px;height:36px;border-radius:10px;}
+  .svc-hero-icon svg{width:20px;height:20px;}
+}
+@media(max-width:380px){.svc-featured-row{grid-template-columns:1fr;}}
 </style>
 
 <style>
@@ -453,39 +486,45 @@ body{overflow-x:hidden;}
       </div>
 
       <div class="rail-label">Explore services</div>
+
+      <!-- ── FEATURED DUO: STAYS + ROOMMATES ── -->
+      <div class="svc-featured-row">
+        <div class="svc-hero svc-hero-stays" onclick="navigateToService('stays')">
+          <div class="svc-hero-glow"></div>
+          <div class="svc-hero-inner">
+            <div class="svc-hero-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/><path d="M9 20v-5a3 3 0 0 1 6 0v5"/></svg></div>
+            <div class="svc-hero-text">
+              <div class="svc-hero-name">Stays</div>
+              <div class="svc-hero-sub">Apartments &amp; villas across Kenya</div>
+            </div>
+            <span class="svc-hero-badge">✦ Flagship</span>
+          </div>
+          <div class="svc-hero-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+        </div>
+        <div class="svc-hero svc-hero-rooms" onclick="navigateToService('roommates')">
+          <div class="svc-hero-glow"></div>
+          <div class="svc-hero-inner">
+            <div class="svc-hero-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+            <div class="svc-hero-text">
+              <div class="svc-hero-name">Roommates</div>
+              <div class="svc-hero-sub">Find a flatmate or post your room</div>
+            </div>
+            <span class="svc-hero-badge svc-hero-badge-new">✦ New</span>
+          </div>
+          <div class="svc-hero-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+        </div>
+      </div>
+
+      <!-- ── MORE SERVICES ── -->
+      <div class="rail-label" style="margin-top:20px;font-size:9px;">More services</div>
       <div class="service-rail">
-        <div class="svc" data-svc="stays" onclick="navigateToService('stays')">
-          <svg class="svc-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/><path d="M9 20v-5a3 3 0 0 1 6 0v5"/></svg>
-          <span class="svc-name">Stays</span>
-        </div>
-        <div class="svc" data-svc="flights" onclick="navigateToService('flights')">
-          <svg class="svc-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10.5 13.5 4 11l-1.5 1 3.5 3 1 5 1.5-1 .5-4 5 3 .8-.4a1.5 1.5 0 0 0 .7-2L17 11l3.5-3.5a2 2 0 0 0-2.8-2.8L14 8l-4-1.8a1.5 1.5 0 0 0-1.8.4L7.5 7.5z"/></svg>
-          <span class="svc-name">Flights</span>
-        </div>
-        <div class="svc" data-svc="tours" onclick="navigateToService('tours')">
-          <svg class="svc-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m15 5.5-6-2-6 2.5v13l6-2.5 6 2 6-2.5v-13z"/><path d="M9 3.5v13M15 7.5v13"/></svg>
-          <span class="svc-name">Tours</span>
-        </div>
-        <div class="svc" data-svc="events" onclick="navigateToService('events')">
-          <svg class="svc-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9a2 2 0 0 0 0 6v2a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-2a2 2 0 0 0 0-6V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1z"/><path d="M14 6v12" stroke-dasharray="2 2.5"/></svg>
-          <span class="svc-name">Events</span>
-        </div>
-        <div class="svc" data-svc="rides" onclick="navigateToService('rides')">
-          <svg class="svc-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13h14l-1.5-5a2 2 0 0 0-2-1.5h-7a2 2 0 0 0-2 1.5z"/><path d="M4 13h16v4a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1v-1H7v1a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z"/><circle cx="7.5" cy="13" r="0"/></svg>
-          <span class="svc-name">Rides</span>
-        </div>
-        <div class="svc" data-svc="food" onclick="navigateToService('food')">
-          <svg class="svc-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16h16a8 8 0 0 0-16 0z"/><path d="M2 19h20"/><path d="M12 8V5"/><path d="M10 5h4"/></svg>
-          <span class="svc-name">Food</span>
-        </div>
-        <div class="svc" data-svc="shopping" onclick="navigateToService('shopping')">
-          <svg class="svc-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7h12l1 13H5z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>
-          <span class="svc-name">Shopping</span>
-        </div>
-        <div class="svc" data-svc="carhire" onclick="navigateToService('carhire')">
-          <svg class="svc-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13h14l-1.5-5a2 2 0 0 0-2-1.5h-7a2 2 0 0 0-2 1.5z"/><path d="M4 13h16v4H4z"/><circle cx="7.5" cy="17.5" r="1.5"/><circle cx="16.5" cy="17.5" r="1.5"/></svg>
-          <span class="svc-name">Car Hire</span>
-        </div>
+        <div class="svc" data-svc="flights" onclick="navigateToService('flights')"><svg class="svc-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10.5 13.5 4 11l-1.5 1 3.5 3 1 5 1.5-1 .5-4 5 3 .8-.4a1.5 1.5 0 0 0 .7-2L17 11l3.5-3.5a2 2 0 0 0-2.8-2.8L14 8l-4-1.8a1.5 1.5 0 0 0-1.8.4L7.5 7.5z"/></svg><span class="svc-name">Flights</span></div>
+        <div class="svc" data-svc="tours" onclick="navigateToService('tours')"><svg class="svc-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m15 5.5-6-2-6 2.5v13l6-2.5 6 2 6-2.5v-13z"/><path d="M9 3.5v13M15 7.5v13"/></svg><span class="svc-name">Tours</span></div>
+        <div class="svc" data-svc="events" onclick="navigateToService('events')"><svg class="svc-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9a2 2 0 0 0 0 6v2a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-2a2 2 0 0 0 0-6V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1z"/><path d="M14 6v12" stroke-dasharray="2 2.5"/></svg><span class="svc-name">Events</span></div>
+        <div class="svc" data-svc="rides" onclick="navigateToService('rides')"><svg class="svc-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13h14l-1.5-5a2 2 0 0 0-2-1.5h-7a2 2 0 0 0-2 1.5z"/><path d="M4 13h16v4H4z"/><circle cx="7.5" cy="17.5" r="1.5"/><circle cx="16.5" cy="17.5" r="1.5"/></svg><span class="svc-name">Rides</span></div>
+        <div class="svc" data-svc="food" onclick="navigateToService('food')"><svg class="svc-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16h16a8 8 0 0 0-16 0z"/><path d="M2 19h20"/><path d="M12 8V5"/><path d="M10 5h4"/></svg><span class="svc-name">Food</span></div>
+        <div class="svc" data-svc="shopping" onclick="navigateToService('shopping')"><svg class="svc-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg><span class="svc-name">Shopping</span></div>
+        <div class="svc" data-svc="carhire" onclick="navigateToService('carhire')"><svg class="svc-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13h14l-1.5-5a2 2 0 0 0-2-1.5h-7a2 2 0 0 0-2 1.5z"/><path d="M4 13h16v4H4z"/><circle cx="7.5" cy="17.5" r="1.5"/><circle cx="16.5" cy="17.5" r="1.5"/></svg><span class="svc-name">Car Hire</span></div>
       </div><!-- /service-rail -->
 
       <!-- FEATURED VIDEO HERO — live ad from Supabase -->
@@ -536,6 +575,7 @@ body{overflow-x:hidden;}
   <a class="drawer-link" href="profile.html?back=1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg> Profile</a>
   <a class="drawer-link" href="my-bookings.html?back=1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg> My Bookings</a>
   <a class="drawer-link" onclick="closeDrawer();navigateToService('stays')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/><path d="M9 20v-5a3 3 0 0 1 6 0v5"/></svg> Stays</a>
+  <a class="drawer-link" style="color:#0D9488" onclick="closeDrawer();navigateToService('roommates')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Roommates <span style="font-size:9px;background:rgba(45,212,191,.15);color:#0D9488;padding:2px 6px;border-radius:100px;margin-left:4px;">New</span></a>
   <a class="drawer-link" onclick="closeDrawer();navigateToService('flights')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21 4 19 2c-2-2-4-2-5.5-.5L10 5 1.8 6.2l5 5-3 3L7 17l8-4 2.8 6.2z"/></svg> Flights</a>
   <a class="drawer-link" onclick="closeDrawer();navigateToService('tours')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m15 5.5-6-2-6 2.5v13l6-2.5 6 2 6-2.5v-13z"/><path d="M9 3.5v13M15 7.5v13"/></svg> Tours</a>
   <a class="drawer-link" onclick="closeDrawer();navigateToService('events')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9a2 2 0 0 0 0 6v2a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-2a2 2 0 0 0 0-6V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1z"/></svg> Events</a>
@@ -590,6 +630,7 @@ const USER = { firstName: 'friend', lastName: '' };
 
 /* ── SERVICE CONFIG: theme + cinematic transition ── */
 const SVC = {
+  roommates:{ name:'Roommates', sub:'Find your flatmate',       dest:'roommates.html',   color:'#0D9488', bg:'linear-gradient(135deg,#2DD4BF,#0D9488)', craft:'people', motion:'rise' },
   stays:    { name:'Stays',    sub:'Find your space',        dest:'apartments.html',  color:'#8B6FE8', bg:'linear-gradient(135deg,#B8A4F4,#7B2FF7)', craft:'house',  motion:'rise' },
   flights:  { name:'Flights',  sub:'Take to the sky',        dest:'flights.html',     color:'#4361FF', bg:'linear-gradient(135deg,#4361FF,#B8A4F4)', craft:'plane',  motion:'plane' },
   tours:    { name:'Tours',    sub:'Discover the wild',      dest:'tours.html',       color:'#2DD4BF', bg:'linear-gradient(135deg,#5EEAD4,#4361FF)', craft:'map',    motion:'spin' },
@@ -1155,6 +1196,7 @@ function checkAdminAccess(){
 }
 }
 </script>
+
 
 
 
