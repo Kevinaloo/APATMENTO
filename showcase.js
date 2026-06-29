@@ -521,7 +521,7 @@ function renderCarousel(slot, cs){
       <div class="sc-slide ${i===0?'active':''}"
         style="background:${c.grad}"
         data-id="${c.id}" data-adv="${c.advertiser}">
-        ${c.media?`<img src="${c.media}" loading="lazy" decoding="async" crossorigin="anonymous"
+        ${c.media?`<img src="${c.media}" loading="lazy" decoding="async"
           style="position:absolute;top:0;left:0;right:0;bottom:0;width:100%;height:100%;object-fit:cover;display:block;border:none;z-index:0;">`:''}
         ${c.media?`<div style="position:absolute;top:0;left:0;right:0;bottom:0;z-index:1;background:linear-gradient(to right,rgba(0,0,0,.55) 0%,rgba(0,0,0,.15) 55%,transparent 100%);pointer-events:none;"></div>`:''}
         <div class="sc-slide-ico" style="position:relative;z-index:2;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"[...]
