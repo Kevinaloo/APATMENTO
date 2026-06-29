@@ -1,13 +1,13 @@
 /* ════════════════════════════════════════════════════════════════
-   APATMENTO SHOWCASE v3 — Premium Ad Engine
-   Loads LIVE from Supabase. Falls back to demos only if DB empty.
-   Page-targeted. GA4 tracked. Impression + click counters in DB.
+    APATMENTO SHOWCASE v3 — Premium Ad Engine
+    Loads LIVE from Supabase. Falls back to demos only if DB empty.
+    Page-targeted. GA4 tracked. Impression + click counters in DB.
 ════════════════════════════════════════════════════════════════ */
 (function(){
 'use strict';
 
 const SUPA_URL = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
-const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAw[...]
 
 /* Current page slug */
 const PAGE = location.pathname.split('/').pop().replace('.html','') || 'index';
@@ -39,8 +39,8 @@ function trackClick(id, format, advertiser){
 }
 
 /* ════════════════════════════════════════════════════════════════
-   LOAD CAMPAIGNS FROM SUPABASE
-   Filters by page_targets (all | specific page name)
+    LOAD CAMPAIGNS FROM SUPABASE
+    Filters by page_targets (all | specific page name)
 ════════════════════════════════════════════════════════════════ */
 let CAMPS = {video:[], carousel:[], native:[], split:[], ticker:[], sticky:[]};
 
@@ -97,36 +97,36 @@ function mapCamp(c){
 }
 
 /* ════════════════════════════════════════════════════════════════
-   DEMO CAMPAIGNS (shown only if DB returns nothing)
+    DEMO CAMPAIGNS (shown only if DB returns nothing)
 ════════════════════════════════════════════════════════════════ */
 const DEMO = {
   video:[
-    {id:'d_v1',advertiser:'Apatmento Stays',tag:'Featured',headline:'Find your perfect space in Kenya',sub:'Hand-picked apartments from KES 3,200/night · Hosts keep 100%',cta:'Browse stays',url:'apartments.html',media:'',poster:'',grad:'linear-gradient(135deg,#B8A4F4,#7B2FF7)',accent:'#B8A4F4',price:'',icon:'<path d="M3 10.5 12 4l9 6.5M5 9.5V20h14V9.5M9 20v-5a3 3 0 0 1 6 0v5"/>'},
-    {id:'d_v2',advertiser:'Apatmento Tours',tag:'Featured',headline:"Days you\'ll never forget",sub:'Maasai Mara · Mt Kenya · Diani Beach · Guides keep 100%',cta:'Explore tours',url:'tours.html',media:'',poster:'',grad:'linear-gradient(135deg,#2DD4BF,#4361FF)',accent:'#5EEAD4',price:'',icon:'<path d="m15 5.5-6-2-6 2.5v13l6-2.5 6 2 6-2.5v-13zM9 3.5v13M15 7.5v13"/>'},
+    {id:'d_v1',advertiser:'Apatmento Stays',tag:'Featured',headline:'Find your perfect space in Kenya',sub:'Hand-picked apartments from KES 3,200/night · Hosts keep 100%',cta:'Browse stays',url:[...]
+    {id:'d_v2',advertiser:'Apatmento Tours',tag:'Featured',headline:"Days you\'ll never forget",sub:'Maasai Mara · Mt Kenya · Diani Beach · Guides keep 100%',cta:'Explore tours',url:'tours.htm[...]
   ],
   carousel:[
-    {id:'d_c1',advertiser:'M-Pesa',tag:'Sponsored',headline:'Pay the smart way',sub:'Instant M-Pesa payments on every Apatmento booking',cta:'Learn more',url:'#',media:'',poster:'',grad:'linear-gradient(135deg,#2DD4BF,#5EEAD4)',accent:'#5EEAD4',price:'',icon:'<rect width="20" height="14" x="2" y="5" rx="2"/><path d="M2 10h20"/>'},
-    {id:'d_c2',advertiser:'Jambojet',tag:'Sponsored',headline:'Fly Kenya for less',sub:'Domestic flights from KES 2,800 — no added fees',cta:'Book flights',url:'flights.html',media:'',poster:'',grad:'linear-gradient(135deg,#4361FF,#B8A4F4)',accent:'#4361FF',price:'',icon:'<path d="M17.8 19.2 16 11l3.5-3.5C21 6 21 4 21 4s-2 0-3.5 1.5L14 9 5.8 6.2l-1.9 1.9 7.1 3.4L9.6 14H6l-1 1 3 1 1 3 1-1v-3.6l3.5-1.4 3.4 7.1z"/>'},
-    {id:'d_c3',advertiser:'Safaricom',tag:'Sponsored',headline:'Stay connected everywhere',sub:'Kenya\'s best network — fibre-verified Apatmento properties',cta:'See stays',url:'apartments.html',media:'',poster:'',grad:'linear-gradient(135deg,#7B2FF7,#B8A4F4)',accent:'#B8A4F4',price:'',icon:'<path d="M5 13a10 10 0 0 1 14 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/>'},
+    {id:'d_c1',advertiser:'M-Pesa',tag:'Sponsored',headline:'Pay the smart way',sub:'Instant M-Pesa payments on every Apatmento booking',cta:'Learn more',url:'#',media:'',poster:'',grad:'linear-g[...]
+    {id:'d_c2',advertiser:'Jambojet',tag:'Sponsored',headline:'Fly Kenya for less',sub:'Domestic flights from KES 2,800 — no added fees',cta:'Book flights',url:'flights.html',media:'',poster:''[...]
+    {id:'d_c3',advertiser:'Safaricom',tag:'Sponsored',headline:'Stay connected everywhere',sub:'Kenya\'s best network — fibre-verified Apatmento properties',cta:'See stays',url:'apartments.html[...]
   ],
   native:[
-    {id:'d_n1',advertiser:'Sankara Nairobi',tag:'Promoted',headline:'Sankara Nairobi — Westlands',sub:'5-star · Rooftop pool · Sky bar',cta:'View hotel',url:'#',media:'',poster:'',grad:'linear-gradient(135deg,#B8A4F4,#7B2FF7)',accent:'#B8A4F4',price:'From KES 18,000',icon:'<path d="M3 21h18M5 21V7l7-4 7 4v14"/>'},
+    {id:'d_n1',advertiser:'Sankara Nairobi',tag:'Promoted',headline:'Sankara Nairobi — Westlands',sub:'5-star · Rooftop pool · Sky bar',cta:'View hotel',url:'#',media:'',poster:'',grad:'linea[...]
   ],
   split:[
-    {id:'d_s1',advertiser:'Apatmento',tag:'Partner with us',headline:'List your property.\nKeep everything.',sub:'Zero commission. Zero percentage cuts. Guests pay face value plus a small fixed fee — you keep 100% of your rate. Always.',cta:'Start listing free',url:'add-listing.html',media:'',poster:'',grad:'linear-gradient(135deg,#2DD4BF,#4361FF)',accent:'#5EEAD4',price:'',icon:'<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>'},
+    {id:'d_s1',advertiser:'Apatmento',tag:'Partner with us',headline:'List your property.\nKeep everything.',sub:'Zero commission. Zero percentage cuts. Guests pay face value plus a small fixed f[...]
   ],
   ticker:[
-    {id:'d_t1',advertiser:'Apatmento',tag:'Live',headline:'🔥 20 stays available in Nairobi tonight · Diani White Sands — 3 rooms left · Maasai Mara Safari — booking now · Karen Ridgeline Villa — new listing · Westlands Skybox — instant book · Kilimani Penthouse — KES 12,500/night',sub:'',cta:'',url:'apartments.html',media:'',poster:'',grad:'linear-gradient(135deg,#0A0A14,#1A1A35)',accent:'#B8A4F4',price:'',icon:''},
+    {id:'d_t1',advertiser:'Apatmento',tag:'Live',headline:'🔥 20 stays available in Nairobi tonight · Diani White Sands — 3 rooms left · Maasai Mara Safari — booking now · Karen Ridgelin[...]
   ],
   sticky:[
-    {id:'d_st1',advertiser:'Apatmento',tag:'Earn',headline:'Your property could be earning',sub:'Zero commission · Keep 100%',cta:'List for free →',url:'add-listing.html',media:'',poster:'',grad:'linear-gradient(135deg,#2DD4BF,#4361FF)',accent:'#5EEAD4',price:'',icon:'<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>'},
+    {id:'d_st1',advertiser:'Apatmento',tag:'Earn',headline:'Your property could be earning',sub:'Zero commission · Keep 100%',cta:'List for free →',url:'add-listing.html',media:'',poster:'',gr[...]
   ],
 };
 
 
 /* ════════════════════════════════════════════════════════════════
-   BRANDED FALLBACK — shown when a slot has no matching campaign
-   "APATMENTO FOR LIFE · TRAVEL IN STYLE"
+    BRANDED FALLBACK — shown when a slot has no matching campaign
+    "APATMENTO FOR LIFE · TRAVEL IN STYLE"
 ════════════════════════════════════════════════════════════════ */
 const BRAND_FALLBACK = {
   video: {
@@ -140,9 +140,9 @@ const BRAND_FALLBACK = {
     price:'', icon:'<path d="M3 10.5 12 4l9 6.5M5 9.5V20h14V9.5M9 20v-5a3 3 0 0 1 6 0v5"/>',
   },
   carousel: [
-    {id:'brand_c1', advertiser:'Apatmento Stays', tag:'✦ Featured', headline:'Find your perfect space', sub:'Apartments from KES 3,200 · Hosts keep 100%', cta:'Browse stays', url:'apartments.html', media:'', poster:'', grad:'linear-gradient(135deg,#B8A4F4,#7B2FF7)', accent:'#B8A4F4', price:'', icon:'<path d="M3 10.5 12 4l9 6.5M5 9.5V20h14V9.5"/>'},
-    {id:'brand_c2', advertiser:'Apatmento Tours', tag:'✦ Featured', headline:"Days you\'ll never forget", sub:'Safaris, treks & experiences across Kenya', cta:'See tours', url:'tours.html', media:'', poster:'', grad:'linear-gradient(135deg,#2DD4BF,#4361FF)', accent:'#5EEAD4', price:'', icon:'<path d="m15 5.5-6-2-6 2.5v13l6-2.5 6 2 6-2.5v-13z"/>'},
-    {id:'brand_c3', advertiser:'Apatmento Events', tag:'✦ Featured', headline:'Face-value tickets. Nothing added.', sub:'Concerts, festivals, sports — you pay exactly what the organiser charges', cta:'Get tickets', url:'events.html', media:'', poster:'', grad:'linear-gradient(135deg,#7B2FF7,#B8A4F4)', accent:'#B8A4F4', price:'', icon:'<path d="M3 9a2 2 0 0 0 0 6v2a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-2a2 2 0 0 0 0-6V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1z"/>'},
+    {id:'brand_c1', advertiser:'Apatmento Stays', tag:'✦ Featured', headline:'Find your perfect space', sub:'Apartments from KES 3,200 · Hosts keep 100%', cta:'Browse stays', url:'apartments.h[...]
+    {id:'brand_c2', advertiser:'Apatmento Tours', tag:'✦ Featured', headline:"Days you\'ll never forget", sub:'Safaris, treks & experiences across Kenya', cta:'See tours', url:'tours.html', med[...]
+    {id:'brand_c3', advertiser:'Apatmento Events', tag:'✦ Featured', headline:'Face-value tickets. Nothing added.', sub:'Concerts, festivals, sports — you pay exactly what the organiser charg[...]
   ],
   native: {
     id:'brand_n1', advertiser:'Apatmento', tag:'✦ Apatmento',
@@ -160,7 +160,7 @@ const BRAND_FALLBACK = {
   },
   ticker: {
     id:'brand_t1', advertiser:'Apatmento', tag:'Live',
-    headline:'✦ Apatmento for Life — Travel in Style · Stays from KES 3,200/night · Zero Commission · Hosts keep 100% · Book flights, safaris, events & more · Kenya\'s premium travel super-app · Apatmento for Life — Travel in Style ·',
+    headline:'✦ Apatmento for Life — Travel in Style · Stays from KES 3,200/night · Zero Commission · Hosts keep 100% · Book flights, safaris, events & more · Kenya\'s premium travel sup[...]
     sub:'', cta:'', url:'index.html', media:'', poster:'',
     grad:'linear-gradient(135deg,#0A0A14,#1A1A35)', accent:'#B8A4F4', price:'',
     icon:'',
@@ -168,7 +168,7 @@ const BRAND_FALLBACK = {
 };
 
 /* ════════════════════════════════════════════════════════════════
-   CSS — premium, cinematic
+    CSS — premium, cinematic
 ════════════════════════════════════════════════════════════════ */
 const CSS = `
 /* ─ base ─ */
@@ -191,18 +191,18 @@ const CSS = `
 @keyframes scOrb{0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(45px,-28px) scale(1.18);}}
 .scv-shimmer{display:none;}
 @keyframes scShim{0%{background-position:200% 0;}100%{background-position:-100% 0;}}
-.scv-tag{position:absolute;top:18px;left:20px;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:rgba(255,255,255,.95);background:rgba(0,0,0,.28);backdrop-filter:blur(12px);padding:5px 12px;border-radius:100px;border:1px solid rgba(255,255,255,.18);z-index:3;}
+.scv-tag{position:absolute;top:18px;left:20px;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:rgba(255,255,255,.95);background:rgba(0,0,0,.28);backdrop-filter:b[...]
 .scv-content{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:clamp(18px,3vw,44px);z-index:2;background:none;}
 .scv-adv{font-size:12px;font-weight:600;color:rgba(255,255,255,.75);margin-bottom:10px;display:flex;align-items:center;gap:8px;}
 .scv-adv svg{width:15px;height:15px;}
 .scv-h{font-family:'Fraunces',serif;font-weight:400;font-size:clamp(22px,3.5vw,42px);color:#fff;line-height:1.05;margin-bottom:8px;max-width:68%;text-shadow:0 2px 24px rgba(0,0,0,.3);}
 .scv-sub{font-size:13px;color:rgba(255,255,255,.82);margin-bottom:20px;max-width:58%;}
-.scv-cta{display:inline-flex;align-items:center;gap:9px;padding:13px 24px;border-radius:100px;background:#fff;color:#0A0A14;font-size:14px;font-weight:700;border:none;cursor:pointer;transition:all .35s;align-self:flex-start;box-shadow:0 6px 24px rgba(0,0,0,.25);}
+.scv-cta{display:inline-flex;align-items:center;gap:9px;padding:13px 24px;border-radius:100px;background:#fff;color:#0A0A14;font-size:14px;font-weight:700;border:none;cursor:pointer;transition:al[...]
 .scv:hover .scv-cta{box-shadow:0 10px 32px rgba(0,0,0,.35);transform:translateY(-2px);}
 .scv-cta svg{width:15px;height:15px;transition:transform .3s;}
 .scv-cta:hover svg{transform:translateX(4px);}
 .scv-ctrl{position:absolute;bottom:18px;right:18px;display:flex;gap:8px;z-index:3;}
-.scv-btn{width:38px;height:38px;border-radius:50%;background:rgba(0,0,0,.32);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;transition:background .2s;}
+.scv-btn{width:38px;height:38px;border-radius:50%;background:rgba(0,0,0,.32);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:cente[...]
 .scv-btn:hover{background:rgba(0,0,0,.55);}
 .scv-btn svg{width:15px;height:15px;}
 .scv-bar{position:absolute;bottom:0;left:0;right:0;height:3px;background:rgba(255,255,255,.18);z-index:3;}
@@ -211,18 +211,18 @@ const CSS = `
 
 /* ══ CAROUSEL ══ */
 .scc{position:relative;border-radius:22px;overflow:hidden;height:168px;box-shadow:0 12px 44px rgba(10,10,20,.12);}
-.sc-slide{position:absolute;inset:0;display:flex;align-items:center;padding:0 clamp(18px,4vw,48px);opacity:0;transform:translateX(36px);transition:opacity .55s cubic-bezier(.22,1,.36,1),transform .55s cubic-bezier(.22,1,.36,1);pointer-events:none;}
+.sc-slide{position:absolute;inset:0;display:flex;align-items:center;padding:0 clamp(18px,4vw,48px);opacity:0;transform:translateX(36px);transition:opacity .55s cubic-bezier(.22,1,.36,1),transform[...]
 .sc-slide-img{position:absolute;inset:0;z-index:0;border-radius:22px;}
 .sc-slide.active{opacity:1;transform:none;pointer-events:all;}
-.sc-slide-ico{width:58px;height:58px;border-radius:17px;background:rgba(255,255,255,.18);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0;margin-right:22px;}
+.sc-slide-ico{width:58px;height:58px;border-radius:17px;background:rgba(255,255,255,.18);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-c[...]
 .sc-slide-ico svg{width:28px;height:28px;}
 .sc-slide-body{flex:1;min-width:0;}
 .sc-slide-who{font-size:11px;font-weight:700;color:rgba(255,255,255,.9);margin-bottom:3px;letter-spacing:.04em;text-shadow:0 1px 3px rgba(0,0,0,.3);}
 .sc-slide-h{font-family:'Fraunces',serif;font-weight:400;font-size:clamp(16px,2.4vw,23px);color:#fff;line-height:1.1;margin-bottom:3px;}
 .sc-slide-sub{font-size:12px;color:rgba(255,255,255,.8);}
-.sc-slide-cta{flex-shrink:0;margin-left:20px;padding:12px 22px;border-radius:100px;background:#fff;color:#0A0A14;font-size:13px;font-weight:700;border:none;cursor:pointer;transition:all .25s;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.18);}
+.sc-slide-cta{flex-shrink:0;margin-left:20px;padding:12px 22px;border-radius:100px;background:#fff;color:#0A0A14;font-size:13px;font-weight:700;border:none;cursor:pointer;transition:all .25s;whit[...]
 .sc-slide-cta:hover{transform:scale(1.05);}
-.scc-nav{position:absolute;top:50%;transform:translateY(-50%);width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.16);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;z-index:3;transition:background .2s;}
+.scc-nav{position:absolute;top:50%;transform:translateY(-50%);width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.16);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255[...]
 .scc-nav:hover{background:rgba(255,255,255,.3);}
 .scc-nav svg{width:15px;height:15px;}
 .scc-prev{left:12px;}.scc-next{right:12px;}
@@ -230,16 +230,16 @@ const CSS = `
 .scc-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.35);cursor:pointer;transition:all .35s;}
 .scc-dot.active{width:22px;border-radius:3px;background:#fff;}
 .scc-prog{position:absolute;bottom:0;left:0;height:3px;background:rgba(255,255,255,.85);width:0%;z-index:3;transition:width .08s linear;}
-@media(max-width:600px){.scc{height:auto;min-height:170px;}.sc-slide{flex-direction:column;align-items:flex-start;padding:20px;gap:10px;}.sc-slide-ico{margin-right:0;}.sc-slide-cta{margin-left:0;width:100%;text-align:center;}.scc-nav{display:none;}}
+@media(max-width:600px){.scc{height:auto;min-height:170px;}.sc-slide{flex-direction:column;align-items:flex-start;padding:20px;gap:10px;}.sc-slide-ico{margin-right:0;}.sc-slide-cta{margin-left:0;[...]
 
 /* ══ NATIVE CARD ══ */
-.scn{border-radius:22px;overflow:hidden;background:rgba(255,255,255,.7);backdrop-filter:blur(12px);border:1px solid rgba(10,10,20,.07);cursor:pointer;transition:all .4s cubic-bezier(.22,1,.36,1);}
+.scn{border-radius:22px;overflow:hidden;background:rgba(255,255,255,.7);backdrop-filter:blur(12px);border:1px solid rgba(10,10,20,.07);cursor:pointer;transition:all .4s cubic-bezier(.22,1,.36,1);[...]
 .scn:hover{transform:translateY(-8px);box-shadow:0 28px 70px rgba(123,47,247,.18);border-color:transparent;}
 .scn-img{height:186px;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;}
 .scn-img img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;}
 .scn-img svg{width:50px;height:50px;color:rgba(255,255,255,.88);position:relative;z-index:1;}
 .scn-shine{display:none;}
-.scn-tag{position:absolute;top:12px;left:12px;padding:5px 12px;border-radius:100px;font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;background:rgba(252,252,253,.94);backdrop-filter:blur(8px);color:#4A4C66;z-index:2;}
+.scn-tag{position:absolute;top:12px;left:12px;padding:5px 12px;border-radius:100px;font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;background:rgba(252,252,253,.94);ba[...]
 .scn-body{padding:16px 18px 18px;}
 .scn-who{font-size:11px;color:#8E90AD;margin-bottom:4px;}
 .scn-h{font-family:'Fraunces',serif;font-weight:500;font-size:17px;color:#0A0A14;margin-bottom:5px;line-height:1.2;}
@@ -254,11 +254,11 @@ const CSS = `
 .scs:hover{box-shadow:0 32px 80px rgba(123,47,247,.22);}
 .scs-left{padding:clamp(28px,4vw,52px);display:flex;flex-direction:column;justify-content:center;position:relative;overflow:hidden;}
 .scs-left::before{display:none;}
-.scs-tag{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.8);background:rgba(255,255,255,.15);backdrop-filter:blur(8px);padding:5px 12px;border-radius:100px;border:1px solid rgba(255,255,255,.2);margin-bottom:16px;align-self:flex-start;}
+.scs-tag{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.8);background:rgba(255,255,255,.15);bac[...]
 .scs-tag::before{content:'';width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.9);}
 .scs-h{font-family:'Fraunces',serif;font-weight:400;font-size:clamp(22px,3vw,36px);color:#fff;line-height:1.1;margin-bottom:12px;white-space:pre-line;}
 .scs-sub{font-size:13px;color:rgba(255,255,255,.8);line-height:1.65;margin-bottom:24px;max-width:340px;}
-.scs-cta{display:inline-flex;align-items:center;gap:9px;padding:13px 24px;border-radius:100px;background:#fff;color:#0A0A14;font-size:14px;font-weight:700;border:none;cursor:pointer;align-self:flex-start;transition:all .3s;box-shadow:0 6px 20px rgba(0,0,0,.2);}
+.scs-cta{display:inline-flex;align-items:center;gap:9px;padding:13px 24px;border-radius:100px;background:#fff;color:#0A0A14;font-size:14px;font-weight:700;border:none;cursor:pointer;align-self:fl[...]
 .scs-cta:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(0,0,0,.3);}
 .scs-cta svg{width:15px;height:15px;transition:transform .3s;}
 .scs:hover .scs-cta svg{transform:translateX(4px);}
@@ -276,7 +276,7 @@ const CSS = `
 
 /* ══ LIVE TICKER (scrolling marquee) ══ */
 .sct{border-radius:14px;overflow:hidden;background:#0A0A14;border:1px solid rgba(255,255,255,.08);display:flex;align-items:center;height:48px;}
-.sct-badge{flex-shrink:0;padding:0 16px;height:100%;display:flex;align-items:center;gap:7px;background:linear-gradient(135deg,#2DD4BF,#4361FF);font-size:11px;font-weight:700;color:#fff;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;}
+.sct-badge{flex-shrink:0;padding:0 16px;height:100%;display:flex;align-items:center;gap:7px;background:linear-gradient(135deg,#2DD4BF,#4361FF);font-size:11px;font-weight:700;color:#fff;letter-spa[...]
 .sct-badge-dot{width:7px;height:7px;border-radius:50%;background:#fff;opacity:.9;animation:scBlink 1.4s ease-in-out infinite;}
 @keyframes scBlink{0%,100%{opacity:.9;}50%{opacity:.2;}}
 .sct-track{flex:1;overflow:hidden;position:relative;}
@@ -288,18 +288,18 @@ const CSS = `
 .sct-item .sct-sep{color:rgba(255,255,255,.2);}
 
 /* ══ STICKY ══ */
-.sc-sticky{position:fixed;bottom:24px;right:24px;z-index:9990;width:300px;max-width:calc(100vw - 32px);border-radius:22px;overflow:hidden;box-shadow:0 28px 70px rgba(10,10,20,.25);transform:translateY(160%);transition:transform .65s cubic-bezier(.34,1.56,.64,1);}
+.sc-sticky{position:fixed;bottom:24px;right:24px;z-index:9990;width:300px;max-width:calc(100vw - 32px);border-radius:22px;overflow:hidden;box-shadow:0 28px 70px rgba(10,10,20,.25);transform:trans[...]
 .sc-sticky.show{transform:none;}
 .sc-sticky-inner{padding:18px;display:flex;align-items:flex-start;gap:12px;position:relative;}
-.sc-sticky-ico{width:44px;height:44px;border-radius:13px;background:rgba(255,255,255,.2);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0;border:1px solid rgba(255,255,255,.2);}
+.sc-sticky-ico{width:44px;height:44px;border-radius:13px;background:rgba(255,255,255,.2);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0;[...]
 .sc-sticky-ico svg{width:20px;height:20px;}
 .sc-sticky-body{flex:1;min-width:0;}
 .sc-sticky-who{font-size:10px;font-weight:700;color:rgba(255,255,255,.6);margin-bottom:2px;letter-spacing:.05em;text-transform:uppercase;}
 .sc-sticky-h{font-family:'Fraunces',serif;font-weight:500;font-size:14px;color:#fff;line-height:1.2;margin-bottom:3px;}
 .sc-sticky-sub{font-size:12px;color:rgba(255,255,255,.78);}
-.sc-sticky-cta{display:block;margin-top:10px;padding:9px 16px;border-radius:100px;background:#fff;color:#0A0A14;font-size:12px;font-weight:700;text-decoration:none;text-align:center;transition:transform .2s;}
+.sc-sticky-cta{display:block;margin-top:10px;padding:9px 16px;border-radius:100px;background:#fff;color:#0A0A14;font-size:12px;font-weight:700;text-decoration:none;text-align:center;transition:tr[...]
 .sc-sticky-cta:hover{transform:scale(1.04);}
-.sc-sticky-x{position:absolute;top:8px;right:8px;width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.18);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;}
+.sc-sticky-x{position:absolute;top:8px;right:8px;width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.18);border:none;display:flex;align-items:center;justify-content:center;curso[...]
 .sc-sticky-x svg{width:10px;height:10px;}
 
 /* ── misc ── */
@@ -327,7 +327,7 @@ const CSS = `
 .sc-window:hover{box-shadow:0 28px 72px rgba(123,47,247,.2);}
 .sc-window video{width:100%;height:100%;object-fit:cover;}
 .sc-window-grad{display:none;}
-.sc-window-tag{position:absolute;top:12px;left:14px;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:rgba(255,255,255,.9);background:rgba(0,0,0,.3);backdrop-filter:blur(10px);padding:4px 10px;border-radius:100px;border:1px solid rgba(255,255,255,.15);z-index:2;}
+.sc-window-tag{position:absolute;top:12px;left:14px;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:rgba(255,255,255,.9);background:rgba(0,0,0,.3);backdrop-filt[...]
 .sc-window-content{position:absolute;bottom:0;left:0;right:0;padding:16px 18px;z-index:2;}
 .sc-window-adv{font-size:11px;font-weight:600;color:rgba(255,255,255,.7);margin-bottom:4px;}
 .sc-window-h{font-family:'Fraunces',serif;font-weight:500;font-size:clamp(15px,2.2vw,20px);color:#fff;margin-bottom:8px;line-height:1.15;}
@@ -335,7 +335,7 @@ const CSS = `
 .sc-window-cta{padding:8px 16px;border-radius:100px;background:#fff;color:#0A0A14;font-size:12px;font-weight:700;border:none;cursor:pointer;transition:transform .2s;}
 .sc-window-cta:hover{transform:scale(1.05);}
 .sc-window-ctrl{display:flex;gap:6px;}
-.sc-window-btn{width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,.35);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;}
+.sc-window-btn{width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,.35);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:[...]
 .sc-window-btn svg{width:14px;height:14px;}
 .sc-window-bar{position:absolute;bottom:0;left:0;right:0;height:3px;background:rgba(255,255,255,.2);}
 .sc-window-bar-fill{height:100%;background:rgba(255,255,255,.8);width:0%;transition:width .1s linear;}
@@ -349,7 +349,7 @@ function injectCSS(){
 }
 
 /* ════════════════════════════════════════════════════════════════
-   RENDERERS
+    RENDERERS
 ════════════════════════════════════════════════════════════════ */
 
 /* ── VIDEO HERO — cycles ALL video campaigns in sequence ── */
@@ -386,7 +386,7 @@ function renderVideo(slot, c){
       </div>
       ${pool.length > 1 ? `
       <div style="position:absolute;top:14px;right:16px;display:flex;gap:4px;z-index:3;">
-        ${pool.map((_,i)=>`<div class="scv-pdot ${i===0?'scv-pdot-active':''}" data-i="${i}" style="width:${i===0?'20px':'5px'};height:5px;border-radius:3px;background:${i===0?'rgba(255,255,255,.9)':'rgba(255,255,255,.3)'};transition:all .4s;"></div>`).join('')}
+        ${pool.map((_,i)=>`<div class="scv-pdot ${i===0?'scv-pdot-active':''}" data-i="${i}" style="width:${i===0?'20px':'5px'};height:5px;border-radius:3px;background:${i===0?'rgba(255,255,255,.[...]
       </div>` : ``}
       <div class="scv-bar"><div class="scv-bar-fill" id="scv-bar"></div></div>
     </div>`;
@@ -416,7 +416,7 @@ function renderVideo(slot, c){
         // Photo ad — show as img element, gradient overlay stays light
         vid.src = ''; vid.poster = '';
         let pi = el.querySelector('.scv-photo-img');
-        if(!pi){ pi=document.createElement('img'); pi.className='scv-photo-img'; pi.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;'; el.querySelector('.scv-bg').appendChild(pi); }
+        if(!pi){ pi=document.createElement('img'); pi.className='scv-photo-img'; pi.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;'; el.querySelector([...]
         pi.src = cp.media;
         // Lighten the gradient overlay for photos
         const grad = el.querySelector('.scv-grad');
@@ -511,7 +511,7 @@ function renderVideo(slot, c){
 }
 
 
-/* ── CAROUSEL ── */
+/* ── CAROUSEL — FIXED: Better mobile image loading ── */
 function renderCarousel(slot, cs){
   if(!cs?.length)return;
   slot.innerHTML=`
@@ -521,11 +521,10 @@ function renderCarousel(slot, cs){
       <div class="sc-slide ${i===0?'active':''}"
         style="background:${c.grad}"
         data-id="${c.id}" data-adv="${c.advertiser}">
-        ${c.media?`<img src="${c.media}" loading="eager" decoding="async"
-          style="position:absolute;top:0;left:0;right:0;bottom:0;width:100%;height:100%;object-fit:cover;display:block;border:none;z-index:0;"
-          onerror="this.remove()">
-        <div style="position:absolute;top:0;left:0;right:0;bottom:0;z-index:1;background:linear-gradient(to right,rgba(0,0,0,.55) 0%,rgba(0,0,0,.15) 55%,transparent 100%);pointer-events:none;"></div>`:''}
-        <div class="sc-slide-ico" style="position:relative;z-index:2;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${c.icon}</svg></div>
+        ${c.media?`<img src="${c.media}" loading="lazy" decoding="async" crossorigin="anonymous"
+          style="position:absolute;top:0;left:0;right:0;bottom:0;width:100%;height:100%;object-fit:cover;display:block;border:none;z-index:0;">`:''}
+        ${c.media?`<div style="position:absolute;top:0;left:0;right:0;bottom:0;z-index:1;background:linear-gradient(to right,rgba(0,0,0,.55) 0%,rgba(0,0,0,.15) 55%,transparent 100%);pointer-events:none;"></div>`:''}
+        <div class="sc-slide-ico" style="position:relative;z-index:2;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"[...]
         <div class="sc-slide-body" style="position:relative;z-index:2;">
           <div class="sc-slide-who">${c.advertiser} · Sponsored</div>
           <div class="sc-slide-h">${c.headline}</div>
@@ -533,8 +532,8 @@ function renderCarousel(slot, cs){
         </div>
         <button class="sc-slide-cta" data-url="${c.url}" style="position:relative;z-index:2;">${c.cta}</button>
       </div>`).join('')}
-      <button class="scc-nav scc-prev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
-      <button class="scc-nav scc-next"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></button>
+      <button class="scc-nav scc-prev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></sv[...]
+      <button class="scc-nav scc-next"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>[...]
       <div class="scc-dots">${cs.map((_,i)=>`<div class="scc-dot ${i===0?'active':''}" data-i="${i}"></div>`).join('')}</div>
       <div class="scc-prog"></div>
     </div>`;
@@ -560,7 +559,7 @@ function renderCarousel(slot, cs){
     last=ts;raf=requestAnimationFrame(tick);
   }
 
-  wrap.querySelectorAll('.sc-slide-cta').forEach((b,i)=>b.addEventListener('click',e=>{e.stopPropagation();trackClick(cs[i].id,'carousel',cs[i].advertiser);const u=b.dataset.url;if(u&&u!=='#')window.location.href=u;}));
+  wrap.querySelectorAll('.sc-slide-cta').forEach((b,i)=>b.addEventListener('click',e=>{e.stopPropagation();trackClick(cs[i].id,'carousel',cs[i].advertiser);const u=b.dataset.url;if(u&&u!=='#')win[...]
   dots.forEach(d=>d.addEventListener('click',()=>go(+d.dataset.i)));
   wrap.querySelector('.scc-prev').addEventListener('click',()=>go(cur-1));
   wrap.querySelector('.scc-next').addEventListener('click',()=>go(cur+1));
@@ -586,7 +585,7 @@ function renderNative(slot, c){
         <div style="position:absolute;inset:0;display:none;"></div>`:''}
         <div class="scn-shine" style="z-index:2;${c.media?'opacity:.03;':''}"></div>
         <div class="scn-tag" style="position:relative;z-index:3;">${c.tag}</div>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" style="position:relative;z-index:3;${c.media?'display:none;':''}">${c.icon}</svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" style="position:relative;z-index:3;${c.media?'display:none;':'[...]
       </div>
       <div class="scn-body">
         <div class="scn-who">${c.advertiser}</div>
@@ -668,7 +667,7 @@ function renderSticky(c){
       <div class="sc-sticky-sub">${c.sub}</div>
       <a class="sc-sticky-cta" href="${c.url}">${c.cta}</a>
     </div>
-    <button class="sc-sticky-x"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    <button class="sc-sticky-x"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>[...]
   </div>`;
   document.body.appendChild(el);
   setTimeout(()=>{el.classList.add('show');trackImpression(c.id,'sticky',c.advertiser);},16000);
@@ -718,7 +717,7 @@ function renderWindow(slot, c){
       } else {
         vid.src=''; vid.poster=cp.media;
         let ph=el.querySelector('.sc-window-photo');
-        if(!ph){ ph=document.createElement('img'); ph.className='sc-window-photo'; ph.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;'; el.querySelector('video').after(ph); }
+        if(!ph){ ph=document.createElement('img'); ph.className='sc-window-photo'; ph.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;'; el.querySelecto[...]
         ph.src=cp.media;
       }
     } else { vid.src=''; el.querySelector('.sc-window-grad').style.background=cp.grad; el.querySelector('.sc-window-photo')?.remove(); }
@@ -816,7 +815,7 @@ function pick(fmt,pool){
 }
 
 /* ════════════════════════════════════════════════════════════════
-   INIT — scan slots, load DB, render
+    INIT — scan slots, load DB, render
 ════════════════════════════════════════════════════════════════ */
 async function init(){
   injectCSS();
@@ -877,15 +876,3 @@ else init();
 
 window.ApatmentoShowcase={reload:init};
 })();
-
-
-
-
-
-
-
-
-
-
-
-
