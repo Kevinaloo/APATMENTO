@@ -120,7 +120,7 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--glass);c
 .tb-left{display:flex;align-items:center;gap:12px;}
 .tb-back{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink-soft);transition:all .25s;text-decoration:none;}
 .tb-back:hover{border-color:var(--t1);color:var(--t1);}
-.tb-logo{height:32px;}
+.tb-logo{height:48px;width:auto;}
 .tb-brand{font-family:var(--font-display);font-weight:500;font-size:18px;}
 .tb-brand em{font-style:italic;background:var(--theme-grad);-webkit-background-clip:text;background-clip:text;color:transparent;}
 .tb-right{display:flex;align-items:center;gap:10px;}
@@ -299,6 +299,7 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--glass);c
   </div>
 </div>
 <div style="max-width:1180px;margin:0 auto;padding:0 26px 0;"><div data-showcase="ticker"></div></div>
+<div style="max-width:1180px;margin:16px auto 0;padding:0 26px;"><div data-showcase="video" style="margin-bottom:24px;"></div></div>
 <div class="content">
   <div class="content-head">
     <div class="result-count"><strong id="result-num">0</strong> products</div>
@@ -406,6 +407,7 @@ function closeDrawer(){document.getElementById('drawer').classList.remove('open'
 filterShop();
 
 </script>
+<div data-showcase="window"></div>
 <script src="/analytics.js" defer></script>
 <script src="/pwa.js" defer></script>
 <script src="/showcase.js" defer></script>
