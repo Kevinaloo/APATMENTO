@@ -834,20 +834,25 @@ async function init(){
   document.querySelectorAll('[data-showcase]').forEach(slot=>{
     slot.style.position='relative';
     const fmt=slot.getAttribute('data-showcase');
+
+    // For each format: use DB campaigns if available, fall back to DEMO
+    // This ensures all slots always render even when DB only has video/carousel campaigns
+    const get = (key) => (pools[key]?.length ? pools[key] : DEMO[key]) || [];
+
     if(fmt==='window'){
-      const wpool = pools.video?.length ? pools.video : [BRAND_FALLBACK.video];
+      const wpool = get('video').length ? get('video') : [BRAND_FALLBACK.video];
       slot._videoPool = wpool;
       renderWindow(slot, wpool[0]);
     }
     if(fmt==='video'){
-      const vpool = pools.video?.length ? pools.video : [BRAND_FALLBACK.video];
+      const vpool = get('video').length ? get('video') : [BRAND_FALLBACK.video];
       slot._videoPool = vpool;
       renderVideo(slot, vpool[0]);
     }
-    if(fmt==='carousel') renderCarousel(slot, pools.carousel?.length ? pools.carousel : BRAND_FALLBACK.carousel);
-    if(fmt==='native')   renderNative(slot, pick('native', pools.native));
-    if(fmt==='split')    renderSplit(slot, pick('split', pools.split));
-    if(fmt==='ticker')   renderTicker(slot, pick('ticker', pools.ticker));
+    if(fmt==='carousel') renderCarousel(slot, get('carousel').length ? get('carousel') : BRAND_FALLBACK.carousel);
+    if(fmt==='native')   renderNative(slot, pick('native', get('native')));
+    if(fmt==='split')    renderSplit(slot, pick('split', get('split')));
+    if(fmt==='ticker')   renderTicker(slot, pick('ticker', get('ticker')));
   });
 
   /* Scroll interstitials — inject between listing cards */
