@@ -361,7 +361,7 @@ function buildPopup(myCode, myStats, isGuest) {
   </div>` : `
   <div style="padding:0 32px 28px;display:flex;gap:10px;">
     <button onclick="window.AptReferral.closePopup()" style="flex:1;padding:13px;border-radius:13px;border:1.5px solid rgba(255,255,255,.1);background:transparent;color:rgba(255,255,255,.6);font-family:'General Sans',sans-serif;font-weight:600;font-size:13px;cursor:pointer;">Close</button>
-    <button onclick="location.href='dashboard.html#rewards'" style="flex:2;padding:13px;border-radius:13px;background:linear-gradient(135deg,#7B2FF7,#4361FF);color:#fff;border:none;font-family:'General Sans',sans-serif;font-weight:700;font-size:13px;cursor:pointer;box-shadow:0 4px 16px rgba(123,47,247,.3);">View my rewards dashboard →</button>
+    <button onclick="location.href='rewards.html'" style="flex:2;padding:13px;border-radius:13px;background:linear-gradient(135deg,#7B2FF7,#4361FF);color:#fff;border:none;font-family:'General Sans',sans-serif;font-weight:700;font-size:13px;cursor:pointer;box-shadow:0 4px 16px rgba(123,47,247,.3);">View my rewards dashboard →</button>
   </div>`}
 </div>`;
 
