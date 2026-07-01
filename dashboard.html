@@ -290,7 +290,7 @@ body{overflow-x:hidden;}
 .topbar{position:sticky;top:0;z-index:100;height:72px;display:flex;align-items:center;justify-content:space-between;padding:0 32px;
   background:rgba(252,252,253,.72);backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);border-bottom:1px solid var(--line);}
 .tb-left{display:flex;align-items:center;gap:14px;}
-.tb-logo{height:38px;width:auto;display:block;}
+.tb-logo{height:48px;width:auto;display:block;}
 .tb-brand{font-family:var(--font-display);font-weight:500;font-size:21px;letter-spacing:-.01em;color:var(--ink);}
 .tb-brand em{font-style:italic;background:linear-gradient(120deg,var(--violet),var(--electric));-webkit-background-clip:text;background-clip:text;color:transparent;}
 .tb-right{display:flex;align-items:center;gap:14px;}
@@ -1190,6 +1190,7 @@ function showAddSheet(){ document.getElementById('add-scrim').classList.add('ope
 function hideAddSheet(){ document.getElementById('add-scrim').classList.remove('open'); document.getElementById('add-sheet').style.display='none'; }
 </script>
 
+<div data-showcase="window"></div>
 <script src="/analytics.js" defer></script>
 <script src="/pwa.js" defer></script>
 <script src="/showcase.js" defer></script>
