@@ -202,14 +202,11 @@ async function getMyStats(userId) {
    POPUP — shown for guests & first-time signups
 ═══════════════════════════════════════════════════════════════════ */
 function shouldShowPopup() {
+  // Never on these pages
   const page = location.pathname.split('/').pop().replace('.html','') || 'index';
-  if (page === 'auth') return false;
-  // Guest: show once per session
-  if (!localStorage.getItem('apt_uid')) {
-    return !sessionStorage.getItem('apt_ref_popup_shown');
-  }
-  // Logged in: show once ever on first login
-  return localStorage.getItem('apt_show_ref_popup') === '1';
+  if (['auth','booking-confirm','add-listing'].includes(page)) return false;
+  // Only if not already shown this session
+  return !sessionStorage.getItem('apt_ref_popup_shown');
 }
 
 function buildPopup(myCode, myStats, isGuest) {
@@ -306,7 +303,7 @@ function buildPopup(myCode, myStats, isGuest) {
 
   <div class="ref-header">
     <div class="ref-badge"><span class="ref-badge-dot"></span>Apatmento Referral Programme</div>
-    <h2 class="ref-headline">Refer &amp; earn up to<br/><strong>20% for a year.</strong></h2>
+    <h2 class="ref-headline">Refer &amp; earn up to<br/><strong>20% for life.</strong></h2>
     <p class="ref-sub">Bring a guest or a host to Apatmento — earn up to 20% of our fee on every booking they make for a full 365 days. Simple. Unlimited.</p>
   </div>
 
@@ -465,6 +462,7 @@ function openPopup() {
   document.body.style.overflow = 'hidden';
   sessionStorage.setItem('apt_ref_popup_shown', '1');
   localStorage.removeItem('apt_show_ref_popup');
+  localStorage.removeItem('apt_popup_after'); // clear countdown so it doesn't repeat
 }
 
 function closePopup() {
