@@ -305,9 +305,9 @@ function buildPopup(myCode, myStats, isGuest) {
   <button class="ref-close" onclick="window.AptReferral.closePopup()">×</button>
 
   <div class="ref-header">
-    <div class="ref-badge"><span class="ref-badge-dot"></span>Apatmento Rewards</div>
-    <h2 class="ref-headline">Your network is your<br/><strong>income stream.</strong></h2>
-    <p class="ref-sub">Refer friends, earn commissions for a full year. Spend and earn points that pay for your next stay. This is a referral programme that actually pays.</p>
+    <div class="ref-badge"><span class="ref-badge-dot"></span>Apatmento Referral Programme</div>
+    <h2 class="ref-headline">Refer &amp; earn up to<br/><strong>20% for a year.</strong></h2>
+    <p class="ref-sub">Bring a guest or a host to Apatmento — earn up to 20% of our fee on every booking they make for a full 365 days. Simple. Unlimited.</p>
   </div>
 
   ${!isGuest && myStats ? `
@@ -319,20 +319,20 @@ function buildPopup(myCode, myStats, isGuest) {
 
   <div class="ref-divider"></div>
 
-  <div class="ref-cards">
+  <div class="ref-cards" style="grid-template-columns:1fr 1fr;">
     <div class="ref-card ref-card-a">
-      <span class="ref-card-badge">Referrals</span>
-      <div class="ref-card-icon">🤝</div>
+      <span class="ref-card-badge">Guest referral</span>
+      <div class="ref-card-icon">🧳</div>
       <div class="ref-card-title">Refer a traveller</div>
       <div class="ref-card-stat">20%</div>
-      <div class="ref-card-desc">of our fee on every booking they make — for a full 365 days. One referral can earn you thousands.</div>
+      <div class="ref-card-desc">commission on every booking they make for a full 365 days.</div>
     </div>
     <div class="ref-card ref-card-b">
-      <span class="ref-card-badge">Points</span>
-      <div class="ref-card-icon">⭐</div>
-      <div class="ref-card-title">Earn as you book</div>
-      <div class="ref-card-stat">10pts</div>
-      <div class="ref-card-desc">per KES 1,000 spent. Each point = KES 1 off your next booking. Stack them up fast.</div>
+      <span class="ref-card-badge">Host referral</span>
+      <div class="ref-card-icon">🏠</div>
+      <div class="ref-card-title">Refer a host</div>
+      <div class="ref-card-stat">10%</div>
+      <div class="ref-card-desc">commission on every completed service they list for 365 days.</div>
     </div>
   </div>
 
@@ -452,7 +452,8 @@ async function init() {
   // Show popup logic
   if (shouldShowPopup()) {
     // Slight delay so page renders first
-    setTimeout(() => openPopup(), isGuest ? 8000 : 1500);
+    // Only auto-show popup on dashboard, after 10 seconds
+    if(page === 'dashboard' || page === 'index' || page === '') setTimeout(() => openPopup(), 10000);
   }
 }
 
