@@ -177,7 +177,7 @@ const CSS = `
 .sc-label::before{content:'';width:5px;height:5px;border-radius:50%;background:#8E90AD;opacity:.5;}
 
 /* ─ animate in ─ */
-.sc-el{opacity:0;transform:translateY(20px);transition:opacity .6s cubic-bezier(.22,1,.36,1),transform .6s cubic-bezier(.22,1,.36,1),box-shadow .4s;}
+.sc-el{opacity:1;transform:none;transition:box-shadow .4s;}
 .sc-el.in{opacity:1;transform:none;} .scv.in{opacity:1;transform:none;}
 
 /* ══ VIDEO HERO (cinematic 21:9) ══ */
@@ -796,7 +796,16 @@ function injectScrollInterstitials(gridSelector, interval){
 
 /* ── Intersection observer ── */
 function observe(el,onIn,onOut){
-  new IntersectionObserver(e=>e.forEach(x=>{if(x.isIntersecting)onIn?.();else onOut?.();}),{threshold:.1,rootMargin:"0px 0px -50px 0px"}).observe(el);
+  // Always call onIn immediately so ads are ALWAYS visible
+  // IntersectionObserver additionally used for RAF/analytics but NOT for visibility
+  el.classList.add('in');
+  onIn?.();
+  // Still observe for outgoing (pause video on scroll)
+  if(onOut){
+    new IntersectionObserver(e=>e.forEach(x=>{
+      if(!x.isIntersecting) onOut?.();
+    }),{threshold:.1}).observe(el);
+  }
 }
 
 /* ── round-robin picker ── */
@@ -862,6 +871,15 @@ async function init(){
     };
     setTimeout(waitForContent, 1000);
   }
+
+  /* Force all ad elements visible — belt AND suspenders */
+  setTimeout(()=>{
+    document.querySelectorAll('.sc-el,.sc-interstitial,.sc-window,.scv,.scc,.scn,.scs,.sct').forEach(el=>{
+      el.classList.add('in');
+      el.style.opacity='1';
+      el.style.transform='none';
+    });
+  }, 300);
 
   /* Sticky on content pages */
   const stickyOn=['','index','apartments','my-bookings','dashboard','tours','events'];
