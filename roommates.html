@@ -210,9 +210,12 @@ body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webk
 .sb-select option{color:var(--ink);}
 .sb-input{cursor:text;}
 .sb-input::placeholder{color:var(--ink-faint);}
+
+html.via-dash #tx{display:none!important;animation:none!important;}
 </style>
 </head>
 <body>
+<script>if(new URLSearchParams(location.search).get('back')==='1')document.documentElement.classList.add('via-dash');</script>
 
 <div class="aurora"><div class="ab ab-1"></div><div class="ab ab-2"></div><div class="ab ab-3"></div></div>
 
