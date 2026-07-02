@@ -264,21 +264,40 @@ body{overflow-x:hidden;}
 }
 
 /* ══ PARTNER SWITCH CARD (Good morning section) ══ */
-.partner-switch-card{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-radius:18px;background:linear-gradient(135deg,rgba(67,97,255,.1),rgba(123,47,247,.08));border:1.5px solid rgba(67,97,255,.2);cursor:pointer;margin-bottom:20px;transition:all .3s cubic-bezier(.22,1,.36,1);position:relative;overflow:hidden;}
-.partner-switch-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(67,97,255,.12),rgba(123,47,247,.1));opacity:0;transition:opacity .3s;}
-.partner-switch-card:hover::before{opacity:1;}
-.partner-switch-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(67,97,255,.15);border-color:rgba(67,97,255,.35);}
-.psc-left{display:flex;align-items:center;gap:12px;position:relative;z-index:1;}
-.psc-icon{width:40px;height:40px;border-radius:13px;background:linear-gradient(135deg,#4361FF,#7B2FF7);display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0;box-shadow:0 4px 12px rgba(67,97,255,.3);}
-.psc-title{font-weight:700;font-size:14px;color:var(--ink);line-height:1;margin-bottom:3px;}
-.psc-sub{font-size:11px;color:var(--ink-faint);}
-.psc-arrow{color:#4361FF;opacity:.6;transition:all .3s;position:relative;z-index:1;}
-.partner-switch-card:hover .psc-arrow{opacity:1;transform:translateX(3px);}
-@media(max-width:700px){
-  .partner-switch-card{padding:12px 14px;border-radius:14px;}
-  .psc-icon{width:36px;height:36px;border-radius:11px;}
-  .psc-title{font-size:13px;}
+.partner-switch-card{
+  display:flex !important; /* override inline display:none set by JS when logged in */
+  align-items:center;justify-content:space-between;
+  padding:16px 20px;border-radius:20px;
+  background:linear-gradient(135deg,rgba(67,97,255,.08),rgba(123,47,247,.06));
+  border:1.5px solid rgba(67,97,255,.18);
+  cursor:pointer;margin-bottom:22px;
+  transition:all .3s cubic-bezier(.22,1,.36,1);
+  position:relative;overflow:hidden;
+  width:100%;box-sizing:border-box;
 }
+.partner-switch-card[style*="display:none"]{display:none !important;}
+.partner-switch-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(67,97,255,.1),rgba(123,47,247,.08));opacity:0;transition:opacity .3s;pointer-events:none;}
+.partner-switch-card:hover::before{opacity:1;}
+.partner-switch-card:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(67,97,255,.15);border-color:rgba(67,97,255,.35);}
+.psc-left{display:flex;align-items:center;gap:14px;position:relative;z-index:1;}
+.psc-icon{width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,#4361FF,#7B2FF7);display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0;box-shadow:0 4px 14px rgba(67,97,255,.3);}
+.psc-label{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#4361FF;margin-bottom:3px;}
+.psc-title{font-weight:700;font-size:15px;color:var(--ink);line-height:1;margin-bottom:2px;}
+.psc-sub{font-size:12px;color:var(--ink-faint);}
+.psc-arrow{color:#4361FF;opacity:.5;transition:all .3s;position:relative;z-index:1;flex-shrink:0;}
+.partner-switch-card:hover .psc-arrow{opacity:1;transform:translateX(4px);}
+@media(max-width:600px){
+  .partner-switch-card{padding:12px 14px;border-radius:16px;}
+  .psc-icon{width:38px;height:38px;border-radius:11px;}
+  .psc-sub{display:none;}
+}
+.psc-hidden{display:none !important;}
+.partner-switch-card:not(.psc-hidden){display:flex !important;}
+
+/* ══ PARTNER ONBOARDING GRID ══ */
+.ob-ico{width:26px;height:26px;}
+.svc-onboard:hover{border-color:var(--mint-deep) !important;transform:translateY(-3px) !important;box-shadow:0 8px 24px rgba(10,10,20,.08) !important;}
+
 </style>
 
 <style>
@@ -525,18 +544,19 @@ body{overflow-x:hidden;}
       </div>
 
       <!-- ── PARTNER SWITCH CARD ── -->
-      <div class="partner-switch-card" id="partner-switch-card" onclick="switchRole()" style="display:none;">
+      <div class="partner-switch-card psc-hidden" id="partner-switch-card" onclick="switchRole()">
         <div class="psc-left">
           <div class="psc-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4M4 7h16M16 21l4-4-4-4M20 17H4"/></svg>
           </div>
           <div>
+            <div class="psc-label">Partner mode</div>
             <div class="psc-title">Switch to Partner</div>
             <div class="psc-sub">Manage listings, bookings &amp; earnings</div>
           </div>
         </div>
         <div class="psc-arrow">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         </div>
       </div>
 
@@ -782,7 +802,7 @@ async function init(){
     document.getElementById('dash-guest-nav').style.display = 'none';
     document.getElementById('dash-user-nav').style.display  = 'flex';
     const psc = document.getElementById('partner-switch-card');
-    if(psc) psc.style.display = 'flex';
+    if(psc) psc.classList.remove('psc-hidden');
     document.getElementById('g-greeting').textContent = getGreeting();
     document.getElementById('g-avatar').textContent   = (firstName||'?')[0].toUpperCase();
     if (document.getElementById('nav-user-name'))
@@ -1075,11 +1095,11 @@ async function loadDashboardHero() {
 <script>
 /* ════ PARTNER FLOW — Iridescent Glass ════ */
 const PARTNER_SERVICES = {
-  apartment: { name:'Apartments',    sub:'Short-stay rentals',       ico:'<svg class="svc-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/><path d="M9 20v-5a3 3 0 0 1 6 0v5"/></svg>', grad:'linear-gradient(135deg,#B8A4F4,#7B2FF7)' },
-  tour:      { name:'Tours & Safaris', sub:'Day trips & experiences',  ico:'<svg class="svc-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m15 5.5-6-2-6 2.5v13l6-2.5 6 2 6-2.5v-13z"/><path d="M9 3.5v13M15 7.5v13"/></svg>', grad:'linear-gradient(135deg,#5EEAD4,#4361FF)' },
-  event:     { name:'Events & Tickets', sub:'Concerts, shows & festivals', ico:'<svg class="svc-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9a2 2 0 0 0 0 6v2a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-2a2 2 0 0 0 0-6V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1z"/><path d="M14 6v12" stroke-dasharray="2 2.5"/></svg>', grad:'linear-gradient(135deg,#7B2FF7,#B8A4F4)' },
-  food:      { name:'Food & Dining',  sub:'Restaurants & catering',   ico:'<svg class="svc-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16h16a8 8 0 0 0-16 0z"/><path d="M2 19h20"/><path d="M12 8V5"/><path d="M10 5h4"/></svg>', grad:'linear-gradient(135deg,#FF6B2C,#FFB59E)' },
-  carhire:   { name:'Car Hire',       sub:'Self-drive & chauffeur',   ico:'<svg class="svc-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13h14l-1.5-5a2 2 0 0 0-2-1.5h-7a2 2 0 0 0-2 1.5z"/><path d="M4 13h16v4H4z"/><circle cx="7.5" cy="17.5" r="1.5"/><circle cx="16.5" cy="17.5" r="1.5"/></svg>', grad:'linear-gradient(135deg,#2DD4BF,#5EEAD4)' },
+  apartment: { name:'Stays',          sub:'Short-stay apartments & villas', dest:'add-listing.html?type=apartment', manage:'partner-listings.html?type=apartment', ico:'<svg class="ob-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/><path d="M9 20v-5a3 3 0 0 1 6 0v5"/></svg>', grad:'linear-gradient(135deg,#B8A4F4,#7B2FF7)' },
+  tour:      { name:'Tours & Safaris', sub:'Day trips & safari experiences', dest:'add-listing.html?type=tour',      manage:'partner-listings.html?type=tour',      ico:'<svg class="ob-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m15 5.5-6-2-6 2.5v13l6-2.5 6 2 6-2.5v-13z"/><path d="M9 3.5v13M15 7.5v13"/></svg>', grad:'linear-gradient(135deg,#5EEAD4,#4361FF)' },
+  event:     { name:'Events',          sub:'Concerts, shows & festivals',    dest:'add-listing.html?type=event',     manage:'partner-listings.html?type=event',     ico:'<svg class="ob-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9a2 2 0 0 0 0 6v2a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-2a2 2 0 0 0 0-6V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1z"/><path d="M14 6v12" stroke-dasharray="2 2.5"/></svg>', grad:'linear-gradient(135deg,#7B2FF7,#B8A4F4)' },
+  carhire:   { name:'Car Hire',        sub:'Self-drive & chauffeur hire',    dest:'add-listing.html?type=carhire',   manage:'partner-listings.html?type=carhire',   ico:'<svg class="ob-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13h14l-1.5-5a2 2 0 0 0-2-1.5h-7a2 2 0 0 0-2 1.5z"/><path d="M4 13h16v4H4z"/><circle cx="7.5" cy="17.5" r="1.5"/><circle cx="16.5" cy="17.5" r="1.5"/></svg>', grad:'linear-gradient(135deg,#2DD4BF,#5EEAD4)' },
+  roommate:  { name:'Roommates',       sub:'List a room or shared space',    dest:'add-listing.html?type=roommate',  manage:'partner-listings.html?type=roommate',  ico:'<svg class="ob-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>', grad:'linear-gradient(135deg,#2DD4BF,#0D9488)' },
 };
 let partnerServices = [];
 let selectedServiceType = null;
@@ -1107,33 +1127,21 @@ function renderOnboarding(){
   const c = document.getElementById('p-state-onboarding');
   c.style.display='block';
   c.innerHTML = `
-    <div class="topbar">
-      <div class="tb-left"><img src="logo-mark.png" class="tb-logo" onerror="this.style.display='none'"/><span class="tb-brand"><em>Apat</em>mento</span></div>
-      <div class="tb-right">
-      <!-- Guest nav (not signed in) -->
-      <div id="dash-guest-nav" style="display:none;align-items:center;gap:8px;">
-        <a href="auth.html" style="font-size:13px;font-weight:600;color:var(--ink-soft);text-decoration:none;padding:8px 14px;border-radius:100px;border:1px solid var(--line);background:rgba(255,255,255,.6);transition:all .22s;" onmouseover="this.style.borderColor='var(--violet)'" onmouseout="this.style.borderColor='var(--line)'">Sign in</a>
-        <a href="auth.html?mode=signup" style="font-size:13px;font-weight:600;color:#fff;text-decoration:none;padding:8px 16px;border-radius:100px;background:linear-gradient(135deg,var(--violet),var(--electric));box-shadow:0 4px 14px rgba(123,47,247,.3);">Sign up</a>
-      </div>
-      <!-- User nav (signed in) -->
-      <div id="dash-user-nav" style="display:flex;align-items:center;gap:8px;">
-        <button class="tb-icon-btn" onclick="switchRole()" title="Switch to guest"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4M4 7h16M16 21l4-4-4-4M20 17H4"/></svg></button></div>
-    </div>
-    <div class="content" style="max-width:840px;text-align:center;padding-top:48px;">
-      <span class="greeting-eyebrow" style="margin:0 auto 18px;">✦ Free to list · 0% commission</span>
-      <h1 class="greeting-title" style="margin-bottom:14px;">What will you <em>offer</em>?</h1>
-      <p class="greeting-sub" style="margin:0 auto 8px;">Choose a service to set up. Listing is completely free — Apatmento charges only a small fixed fee per confirmed booking, never a percentage.</p>
-      <p style="font-size:13px;color:var(--ember);font-weight:600;margin-bottom:38px;">You keep almost everything. Always.</p>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:580px;margin:0 auto 32px;">
+    <div class="content" style="max-width:900px;text-align:center;padding-top:32px;padding-bottom:60px;">
+      <span class="greeting-eyebrow" style="margin:0 auto 16px;">✦ Free to list · 0% commission</span>
+      <h1 class="greeting-title" style="margin-bottom:12px;">What will you <em>offer</em>?</h1>
+      <p class="greeting-sub" style="margin:0 auto 6px;max-width:520px;">Listing is completely free. Apatmento charges only a small fixed fee per confirmed booking — never a percentage.</p>
+      <p style="font-size:13px;color:var(--ember);font-weight:600;margin-bottom:36px;">You keep almost everything. Always.</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;max-width:900px;margin:0 auto 32px;">
         ${Object.entries(PARTNER_SERVICES).map(([k,s])=>`
-          <div class="svc-onboard" id="ob-${k}" onclick="selectService('${k}')" style="position:relative;border-radius:20px;border:1.5px solid var(--line);background:rgba(255,255,255,.6);backdrop-filter:blur(12px);padding:28px 16px;cursor:pointer;transition:all .35s cubic-bezier(.22,1,.36,1);">
-            <div class="ob-tick" style="position:absolute;top:12px;right:12px;width:22px;height:22px;border-radius:50%;background:var(--mint-deep);display:none;align-items:center;justify-content:center;color:#fff;font-size:12px;">✓</div>
-            <div style="width:46px;height:46px;margin:0 auto 14px;border-radius:14px;background:${s.grad};display:flex;align-items:center;justify-content:center;color:#fff;">${s.ico.replace('width="30" height="30"','width="26" height="26"').replace('class="svc-ico"','')}</div>
-            <div style="font-family:var(--font-display);font-weight:500;font-size:15px;margin-bottom:3px;">${s.name}</div>
-            <div style="font-size:11px;color:var(--ink-faint);">${s.sub}</div>
+          <div class="svc-onboard" id="ob-${k}" onclick="selectService('${k}')" style="position:relative;border-radius:18px;border:1.5px solid var(--line);background:rgba(255,255,255,.7);backdrop-filter:blur(8px);padding:24px 14px 20px;cursor:pointer;transition:all .3s cubic-bezier(.22,1,.36,1);text-align:center;">
+            <div class="ob-tick" style="position:absolute;top:10px;right:10px;width:20px;height:20px;border-radius:50%;background:var(--mint-deep);display:none;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;">✓</div>
+            <div style="width:48px;height:48px;margin:0 auto 12px;border-radius:14px;background:${s.grad};display:flex;align-items:center;justify-content:center;color:#fff;">${s.ico}</div>
+            <div style="font-family:var(--font-display);font-weight:600;font-size:14px;margin-bottom:4px;color:var(--ink);">${s.name}</div>
+            <div style="font-size:11px;color:var(--ink-faint);line-height:1.4;">${s.sub}</div>
           </div>`).join('')}
       </div>
-      <button id="ob-cta" onclick="startSetup()" style="padding:15px 44px;border-radius:100px;border:none;background:linear-gradient(135deg,var(--violet),var(--electric));color:#fff;font-family:var(--font-body);font-weight:600;font-size:15px;cursor:pointer;opacity:.4;pointer-events:none;transition:all .3s;box-shadow:0 10px 30px rgba(123,47,247,.3);">Set up my service →</button>
+      <button id="ob-cta" onclick="startSetup()" style="padding:14px 48px;border-radius:100px;border:none;background:linear-gradient(135deg,var(--violet),var(--electric));color:#fff;font-family:var(--font-body);font-weight:700;font-size:15px;cursor:pointer;opacity:.35;pointer-events:none;transition:all .3s;box-shadow:0 10px 30px rgba(123,47,247,.3);">Continue to setup →</button>
     </div>`;
 }
 
@@ -1148,7 +1156,12 @@ function selectService(k){
   const cta = document.getElementById('ob-cta');
   cta.style.opacity='1'; cta.style.pointerEvents='all';
 }
-function startSetup(){ if(!selectedServiceType) return; window.location.href='add-listing.html?type='+selectedServiceType+'&back=1'; }
+function startSetup(){
+  if(!selectedServiceType) return;
+  const svc = PARTNER_SERVICES[selectedServiceType];
+  const url = svc ? svc.dest : 'add-listing.html?type='+selectedServiceType;
+  window.location.href = url + '&back=1';
+}
 
 async function renderServicePicker(listings){
   const c = document.getElementById('p-state-picker');
@@ -1218,7 +1231,11 @@ async function renderSingleDashboard(listing){
 
 function statCard(val,label,sub){return `<div class="prop-card" style="padding:22px;cursor:default;"><div style="font-family:var(--font-data);font-weight:600;font-size:28px;margin-bottom:4px;">${val}</div><div style="font-size:13px;color:var(--ink-soft);">${label}</div><div style="font-size:11px;color:var(--mint-deep);margin-top:6px;font-weight:600;">${sub}</div></div>`;}
 function actionBtn(label,href,path){return `<a href="${href}" style="display:flex;align-items:center;gap:11px;padding:16px;border-radius:16px;background:rgba(255,255,255,.6);border:1px solid var(--line);text-decoration:none;color:var(--ink);font-weight:600;font-size:14px;transition:all .3s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='var(--shadow-glass)'" onmouseout="this.style.transform='';this.style.boxShadow=''"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--lilac-deep)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="${path}"/></svg>${label}</a>`;}
-function goToService(type){ window.location.href = 'partner-listings.html?type='+type+'&back=1'; }
+function goToService(type){
+  const svc = PARTNER_SERVICES[type];
+  const url = svc ? svc.manage : 'partner-listings.html?type='+type;
+  window.location.href = url + '&back=1';
+}
 
 function addSheetHTML(){return `
   <div class="drawer-scrim" id="add-scrim" onclick="hideAddSheet()"></div>
