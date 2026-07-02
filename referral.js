@@ -384,10 +384,10 @@ function buildFloatingTrigger() {
   el.id = 'apt-ref-trigger';
   el.innerHTML = `
 <style>
-#apt-ref-trigger{position:fixed;left:0;top:72px;z-index:500;cursor:pointer;}
-.ref-tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:14px 10px;background:linear-gradient(180deg,#7B2FF7,#4361FF);border-radius:0 12px 12px 0;box-shadow:4px 0 20px rgba(123,47,247,.4);transition:all .3s cubic-bezier(.22,1,.36,1);writing-mode:vertical-rl;position:relative;overflow:hidden;}
+#apt-ref-trigger{position:fixed;right:0;top:72px;z-index:500;cursor:pointer;}
+.ref-tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:14px 10px;background:linear-gradient(180deg,#7B2FF7,#4361FF);border-radius:12px 0 0 12px;box-shadow:-4px 0 20px rgba(123,47,247,.4);transition:all .3s cubic-bezier(.22,1,.36,1);writing-mode:vertical-rl;position:relative;overflow:hidden;}
 .ref-tab::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.1),transparent);pointer-events:none;}
-.ref-tab:hover{padding-left:16px;box-shadow:8px 0 28px rgba(123,47,247,.5);}
+.ref-tab:hover{padding-right:16px;box-shadow:-8px 0 28px rgba(123,47,247,.5);}
 .ref-tab-coin{font-size:20px;animation:refCoinSpin 3s ease-in-out infinite;}
 @keyframes refCoinSpin{0%,100%{transform:rotateY(0);}50%{transform:rotateY(180deg);}}
 .ref-tab-text{font-family:'General Sans',sans-serif;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#fff;white-space:nowrap;}
@@ -395,8 +395,8 @@ function buildFloatingTrigger() {
 .ref-tab-pulse{position:absolute;top:8px;right:8px;width:7px;height:7px;border-radius:50%;background:#FCD34D;box-shadow:0 0 0 0 rgba(252,211,77,.4);animation:refDotPulse 2s ease-in-out infinite;}
 @keyframes refDotPulse{0%{box-shadow:0 0 0 0 rgba(252,211,77,.5);}70%{box-shadow:0 0 0 6px rgba(252,211,77,0);}100%{box-shadow:0 0 0 0 rgba(252,211,77,0);}}
 @media(max-width:700px){
-  #apt-ref-trigger{top:68px;left:0;}
-  .ref-tab{border-radius:0 10px 10px 0;writing-mode:horizontal-tb;flex-direction:row;padding:9px 10px 9px 12px;}
+  #apt-ref-trigger{top:68px;right:0;}
+  .ref-tab{border-radius:10px 0 0 10px;writing-mode:horizontal-tb;flex-direction:row;padding:9px 12px 9px 10px;}
   .ref-tab-coin{animation:none;font-size:16px;}
   .ref-tab-text{font-size:9px;}
   .ref-tab-earn{display:none;}
