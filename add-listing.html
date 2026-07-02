@@ -375,6 +375,21 @@ body{overflow-x:hidden;}
         {name:'Van / MPV', ico:'<rect x="1" y="8" width="22" height="10" rx="1"/><path d="M1 12h22M5 8V6a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v2"/>'},
       ]
     },
+    roommate:{
+      eyebrow:'✦ Step 1 · Room type',
+      heading:'What kind of <em>room</em> are you listing?',
+      sub:'Choose the room type. You keep 100% of what guests pay.',
+      types:[
+        {name:'Private room',   ico:'<path d="M3 7h18v13H3z"/><path d="M8 7V4h8v3"/>'},
+        {name:'Shared room',    ico:'<path d="M3 7h18v13H3z"/><path d="M12 7V4"/><path d="M3 13h18"/>'},
+        {name:'En-suite',       ico:'<path d="M3 7h18v13H3z"/><path d="M8 7V4h8v3"/><circle cx="12" cy="15" r="2"/>'},
+        {name:'Master bedroom', ico:'<path d="M2 9h20v11H2z"/><path d="M7 9V5h10v4"/>'},
+        {name:'Studio',         ico:'<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>'},
+        {name:'Bedsitter',      ico:'<rect x="3" y="5" width="18" height="14" rx="1"/><path d="M3 10h18"/>'},
+        {name:'1-bed unit',     ico:'<path d="M3 21h18M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/>'},
+        {name:'Entire flat',    ico:'<path d="M3 9.5 12 3l9 6.5V21H3z"/><path d="M9 21V12h6v9"/>'}
+      ]
+    }
   };
   
   const svcType = window._serviceType || 'apartment';
