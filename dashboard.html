@@ -255,6 +255,13 @@ body{overflow-x:hidden;}
   .tb-avatar{width:32px!important;height:32px!important;font-size:12px!important;border-radius:10px!important;}
   #nav-user-name{display:none!important;}
 }
+
+/* ══ PARTNER SWITCH BTN ══ */
+#partner-switch-btn:hover{background:rgba(67,97,255,.15);border-color:rgba(67,97,255,.5);transform:translateY(-1px);}
+@media(max-width:540px){
+  .partner-btn-text{display:none!important;}
+  #partner-switch-btn{padding:6px 9px!important;}
+}
 </style>
 
 <style>
@@ -477,6 +484,10 @@ body{overflow-x:hidden;}
         <div id="dash-user-nav" style="display:none;align-items:center;gap:10px;">
           <a id="admin-link" href="/admin.html" style="display:none;padding:7px 10px;border-radius:100px;background:rgba(123,47,247,.1);border:1px solid rgba(123,47,247,.3);color:#7B2FF7;font-size:11px;font-weight:700;text-decoration:none;letter-spacing:.04em;align-items:center;gap:5px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg><span class="admin-text">Admin</span></a>
           <span id="nav-user-name" style="font-size:13px;font-weight:500;color:var(--ink-soft);"></span>
+          <button id="partner-switch-btn" onclick="switchRole()" style="display:flex;align-items:center;gap:5px;padding:7px 12px;border-radius:100px;border:1.5px solid rgba(67,97,255,.3);background:rgba(67,97,255,.08);color:#4361FF;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .25s;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span class="partner-btn-text">Partner</span>
+          </button>
           <button class="sos-btn" onclick="openSOS()">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 2 2 19h20z"/><path d="M12 9v4M12 17h.01"/></svg>
             SOS
