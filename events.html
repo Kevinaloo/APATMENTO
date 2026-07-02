@@ -424,6 +424,49 @@ function openEvent(id){
 function closeDrawer(){document.getElementById('drawer').classList.remove('open');document.getElementById('drawer-overlay').classList.remove('open');}
 renderEvents(EVENTS);
 
+
+/* ── LIVE EVENTS from ingestion pipeline (scraped_events) ── */
+(async function loadLiveEvents(){
+  try {
+    const r = await fetch('https://gfwgbgdvxtocwhilrtdw.supabase.co/rest/v1/scraped_events'
+      + '?active=eq.true&start_date=gte.' + new Date().toISOString()
+      + '&order=start_date.asc&limit=40', {
+      headers: {
+        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw'
+      }
+    });
+    if(!r.ok) return;
+    const rows = await r.json();
+    if(!rows.length) return;
+
+    const mapped = rows.map((e,i)=>({
+      id: 'live_'+i,
+      name: e.title,
+      venue: e.venue || 'Venue TBA',
+      city: e.city || 'Kenya',
+      date: e.start_date ? new Date(e.start_date).toLocaleDateString('en-KE',{weekday:'short',month:'short',day:'numeric'}) : 'Soon',
+      type: e.category && e.category!=='general' ? e.category : 'music',
+      price: e.price_from ? Math.round(e.price_from) : 0,
+      hot: i < 2,
+      live: true,
+      ticketUrl: e.event_url,
+      tags: ['Live listing'],
+      desc: e.description || ('Happening at ' + (e.venue||'a venue near you') + '. Tap through for full details and tickets.'),
+      includes: ['See ticket site for details'],
+      img: e.image_url || null
+    }));
+
+    // Prepend live events, dedupe by name against demo data
+    const names = new Set(EVENTS.map(e=>e.name.toLowerCase()));
+    const fresh = mapped.filter(e=>!names.has(e.name.toLowerCase()));
+    if(fresh.length){
+      EVENTS.unshift(...fresh);
+      if(typeof applyFilters==='function') applyFilters();
+      else renderEvents(EVENTS);
+    }
+  } catch(err) { /* silent — demo events remain */ }
+})();
+
 </script>
 <div data-showcase="window"></div>
 <script src="/analytics.js" defer></script>
