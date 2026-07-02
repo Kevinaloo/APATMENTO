@@ -262,6 +262,23 @@ body{overflow-x:hidden;}
   .partner-btn-text{display:none!important;}
   #partner-switch-btn{padding:6px 9px!important;}
 }
+
+/* ══ PARTNER SWITCH CARD (Good morning section) ══ */
+.partner-switch-card{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-radius:18px;background:linear-gradient(135deg,rgba(67,97,255,.1),rgba(123,47,247,.08));border:1.5px solid rgba(67,97,255,.2);cursor:pointer;margin-bottom:20px;transition:all .3s cubic-bezier(.22,1,.36,1);position:relative;overflow:hidden;}
+.partner-switch-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(67,97,255,.12),rgba(123,47,247,.1));opacity:0;transition:opacity .3s;}
+.partner-switch-card:hover::before{opacity:1;}
+.partner-switch-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(67,97,255,.15);border-color:rgba(67,97,255,.35);}
+.psc-left{display:flex;align-items:center;gap:12px;position:relative;z-index:1;}
+.psc-icon{width:40px;height:40px;border-radius:13px;background:linear-gradient(135deg,#4361FF,#7B2FF7);display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0;box-shadow:0 4px 12px rgba(67,97,255,.3);}
+.psc-title{font-weight:700;font-size:14px;color:var(--ink);line-height:1;margin-bottom:3px;}
+.psc-sub{font-size:11px;color:var(--ink-faint);}
+.psc-arrow{color:#4361FF;opacity:.6;transition:all .3s;position:relative;z-index:1;}
+.partner-switch-card:hover .psc-arrow{opacity:1;transform:translateX(3px);}
+@media(max-width:700px){
+  .partner-switch-card{padding:12px 14px;border-radius:14px;}
+  .psc-icon{width:36px;height:36px;border-radius:11px;}
+  .psc-title{font-size:13px;}
+}
 </style>
 
 <style>
@@ -507,6 +524,22 @@ body{overflow-x:hidden;}
         <p class="greeting-sub">Stays, flights, tours, rides and more — every part of your trip, beautifully in one place.</p>
       </div>
 
+      <!-- ── PARTNER SWITCH CARD ── -->
+      <div class="partner-switch-card" id="partner-switch-card" onclick="switchRole()" style="display:none;">
+        <div class="psc-left">
+          <div class="psc-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <div>
+            <div class="psc-title">Switch to Partner</div>
+            <div class="psc-sub">Manage listings, bookings &amp; earnings</div>
+          </div>
+        </div>
+        <div class="psc-arrow">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </div>
+      </div>
+
       <div class="rail-label">Explore services</div>
 
       <!-- ── FEATURED DUO: STAYS + ROOMMATES ── -->
@@ -748,6 +781,8 @@ async function init(){
     // Update nav
     document.getElementById('dash-guest-nav').style.display = 'none';
     document.getElementById('dash-user-nav').style.display  = 'flex';
+    const psc = document.getElementById('partner-switch-card');
+    if(psc) psc.style.display = 'flex';
     document.getElementById('g-greeting').textContent = getGreeting();
     document.getElementById('g-avatar').textContent   = (firstName||'?')[0].toUpperCase();
     if (document.getElementById('nav-user-name'))
