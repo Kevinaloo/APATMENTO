@@ -270,8 +270,11 @@ body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webk
   .card.in{opacity:1!important;transform:none!important;}
   .card-img{background:#E8E6F0;}
 }
+
+html.via-dash #enter-tx{display:none!important;animation:none!important;}
 </style>
 </head><body>
+<script>if(new URLSearchParams(location.search).get('back')==='1')document.documentElement.classList.add('via-dash');</script>
 
 <!-- AURORA -->
 <div class="aurora"><div class="ab ab-1"></div><div class="ab ab-2"></div><div class="ab ab-3"></div></div>
