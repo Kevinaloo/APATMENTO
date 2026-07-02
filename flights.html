@@ -276,6 +276,8 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--glass);c
   .card-foot{flex-wrap:wrap!important;gap:6px!important;}
   .ab{filter:blur(40px)!important;opacity:.15!important;}
 }
+
+html.via-dash #tx{display:none!important;animation:none!important;}
 </style>
 
 <!-- Travelpayouts Drive — Flight monetization -->
@@ -289,6 +291,7 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--glass);c
 </script>
 </head>
 <body>
+<script>if(new URLSearchParams(location.search).get('back')==='1')document.documentElement.classList.add('via-dash');</script>
 <div class="aurora">
   <div class="ab ab-1"></div><div class="ab ab-2"></div><div class="ab ab-3"></div>
 </div>
