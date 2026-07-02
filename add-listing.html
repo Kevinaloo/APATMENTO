@@ -593,7 +593,7 @@ let currentStep = 1;
 // Pre-select type from URL (partner onboarding passes ?type=apartment)
 (function(){
   const t = new URLSearchParams(location.search).get('type');
-  if (t) { const map={apartment:'Apartment',tour:'Apartment',event:'Apartment'}; window._presetType = map[t]||'Apartment'; }
+  if (t) { const map={apartment:'Apartment',tour:'Safari',event:'Concert',carhire:'Self-Drive',roommate:'Private room'}; window._presetType = map[t]||null; }
 })();
 const TOTAL     = 7;
 const formData  = {
