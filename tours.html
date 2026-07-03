@@ -419,7 +419,48 @@ renderTours(TOURS);
 
 </script>
 <div data-showcase="window"></div>
-<script src="/analytics.js" defer></script>
+<script src="/analytics.js" defer>
+
+/* ── LIVE TOURS from ingestion pipeline (GetYourGuide + Viator) ── */
+(async function loadLiveTours(){
+  try {
+    const r = await fetch('https://gfwgbgdvxtocwhilrtdw.supabase.co/rest/v1/scraped_tours'
+      + '?active=eq.true&order=rating.desc.nullslast,review_count.desc&limit=60', {
+      headers: { 'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw' }
+    });
+    if(!r.ok) return;
+    const rows = await r.json();
+    if(!rows.length) return;
+
+    const mapped = rows.map((t, i) => ({
+      id: 'live_'+i,
+      name: t.title,
+      location: t.location || 'Nairobi, Kenya',
+      duration: t.duration || 'Varies',
+      price: t.price_from ? Math.round(t.price_from) : 0,
+      currency: t.currency || 'USD',
+      rating: t.rating || 4.5,
+      reviews: t.review_count || 0,
+      category: t.category || 'safari',
+      tags: t.tags || [],
+      img: t.image_url || null,
+      desc: t.description || t.title,
+      bookUrl: t.tour_url,
+      source: t.source,
+      live: true,
+    }));
+
+    // Replace demo data entirely with live tours
+    if(typeof TOURS !== 'undefined'){
+      TOURS.length = 0;
+      TOURS.push(...mapped);
+    }
+    window.__liveTours = mapped;
+    if(typeof renderTours === 'function') renderTours(mapped);
+    else if(typeof applyFilters === 'function') applyFilters();
+  } catch(e) { console.warn('Live tours failed:', e.message); }
+})();
+</script>
 <script src="/pwa.js" defer></script>
 <script src="/referral.js" defer></script>
 <script src="/showcase.js" defer></script>
