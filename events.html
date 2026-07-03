@@ -372,11 +372,13 @@ function renderEvents(list){
   if(!list.length){g.innerHTML='<div class="empty"><div class="empty-title">'+(window.__evLoaded?'No events match — try another filter':'Loading live events…')+'</div></div>';return;}
   const typeColor={music:'#7B2FF7',festival:'#FF6B2C',sports:'#4361FF',comedy:'#FFB59E',art:'#2DD4BF'};
   g.innerHTML=list.map((e,i)=>`
-  <div class="card" style="transition-delay:${i*45}ms" onclick="openEvent(${e.id})">
+  <div class="card" style="transition-delay:${i*45}ms" onclick="openEvent('${e.id}')">
     <div class="card-img" style="background:linear-gradient(135deg,${typeColor[e.type]||'#7B2FF7'},#B8A4F4);">
-      ${e.hot?'<div class="card-badge">🔥 Hot</div>':''}
-      <button class="card-fav" onclick="event.stopPropagation();this.textContent=this.textContent==='🤍'?'💜':'🤍'">🤍</button>
-      <svg class="card-img-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9a2 2 0 0 0 0 6v2a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-2a2 2 0 0 0 0-6V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1z"/><path d="M14 6v12" stroke-dasharray="2 2.5"/></svg>
+      ${e.img?`<img src="${e.img}" alt="" loading="lazy" decoding="async" onerror="this.remove()" style="position:absolute;top:0;left:0;right:0;bottom:0;width:100%;height:100%;object-fit:cover;display:block;border:none;z-index:0;">
+      <div style="position:absolute;top:0;left:0;right:0;bottom:0;z-index:1;background:linear-gradient(to top,rgba(10,10,20,.42) 0%,transparent 55%);pointer-events:none;"></div>`:''}
+      ${e.hot?'<div class="card-badge" style="z-index:2;">🔥 Hot</div>':''}
+      <button class="card-fav" style="z-index:2;" onclick="event.stopPropagation();this.textContent=this.textContent==='🤍'?'💜':'🤍'">🤍</button>
+      ${e.img?'':'<svg class="card-img-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9a2 2 0 0 0 0 6v2a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-2a2 2 0 0 0 0-6V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1z"/><path d="M14 6v12" stroke-dasharray="2 2.5"/></svg>'}
     </div>
     <div class="card-body">
       <div class="card-meta-top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>${e.date} · ${e.venue}</div>
@@ -391,11 +393,13 @@ function renderEvents(list){
   requestAnimationFrame(()=>{document.querySelectorAll('.card').forEach((c,i)=>setTimeout(()=>c.classList.add('in'),i*45));});
 }
 function openEvent(id){
-  const e=EVENTS.find(x=>x.id===id);if(!e)return;
+  const e=EVENTS.find(x=>String(x.id)===String(id));if(!e)return;
   document.getElementById('drawer').innerHTML=`
-  <div class="dr-img" style="background:var(--theme-grad);">
-    <button class="dr-close" onclick="closeDrawer()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
-    <svg class="dr-img-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9a2 2 0 0 0 0 6v2a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-2a2 2 0 0 0 0-6V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1z"/><path d="M14 6v12" stroke-dasharray="2 2.5"/></svg>
+  <div class="dr-img" style="background:var(--theme-grad);position:relative;overflow:hidden;">
+    ${e.img?`<img src="${e.img}" alt="" decoding="async" onerror="this.remove()" style="position:absolute;top:0;left:0;right:0;bottom:0;width:100%;height:100%;object-fit:cover;display:block;border:none;z-index:0;">
+    <div style="position:absolute;top:0;left:0;right:0;bottom:0;z-index:1;background:linear-gradient(to top,rgba(10,10,20,.5) 0%,transparent 60%);pointer-events:none;"></div>`:''}
+    <button class="dr-close" style="z-index:3;" onclick="closeDrawer()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    ${e.img?'':'<svg class="dr-img-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9a2 2 0 0 0 0 6v2a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-2a2 2 0 0 0 0-6V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1z"/><path d="M14 6v12" stroke-dasharray="2 2.5"/></svg>'}
   </div>
   <div class="dr-body">
     <div class="dr-tag"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>${e.date} · ${e.venue} · ${e.city}</div>
