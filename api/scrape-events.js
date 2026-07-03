@@ -1,9 +1,8 @@
 /* ═══════════════════════════════════════════════════════════════
-   APATMENTO EVENT INGESTION — Vercel serverless function
-   Fetches registered source sites, extracts schema.org Event
-   JSON-LD, normalizes, and upserts into Supabase.
-   Runs via daily cron (vercel.json) or manually: /api/scrape-events
-   Zero dependencies — native fetch + regex JSON-LD extraction.
+   APATMENTO EVENT INGESTION — Vercel serverless function (ESM)
+   Fetches registered sources IN PARALLEL, extracts schema.org
+   Event JSON-LD, normalizes, upserts into Supabase.
+   Cron: daily 3am UTC (vercel.json). Manual: GET /api/scrape-events
 ═══════════════════════════════════════════════════════════════ */
 
 const SUPA_URL = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
@@ -15,7 +14,7 @@ const HEADERS = {
   'Content-Type': 'application/json',
 };
 
-const UA = 'Mozilla/5.0 (compatible; ApatmentoBot/1.0; +https://www.apatmento.space)';
+const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36 ApatmentoBot/1.0 (+https://www.apatmento.space)';
 
 /* ── Supabase helpers ── */
 async function db(method, path, body) {
@@ -24,7 +23,7 @@ async function db(method, path, body) {
   if (method === 'PATCH') opts.headers['Prefer'] = 'return=minimal';
   if (body) opts.body = JSON.stringify(body);
   const r = await fetch(`${SUPA_URL}/rest/v1/${path}`, opts);
-  if (!r.ok) throw new Error(`DB ${method} ${path}: ${r.status} ${await r.text().catch(()=> '')}`.slice(0, 200));
+  if (!r.ok) throw new Error(`DB ${method} ${path}: ${r.status} ${await r.text().catch(() => '')}`.slice(0, 200));
   if (method === 'GET') return r.json();
   return null;
 }
@@ -36,15 +35,14 @@ function extractJsonLd(html) {
   let m;
   while ((m = re.exec(html)) !== null) {
     try {
-      // Some sites have trailing commas / HTML comments inside — be forgiving
       const clean = m[1].replace(/<!--[\s\S]*?-->/g, '').trim();
       blocks.push(JSON.parse(clean));
-    } catch (e) { /* skip malformed blocks */ }
+    } catch (e) { /* skip malformed */ }
   }
   return blocks;
 }
 
-/* ── Recursively collect Event objects (handles @graph, arrays, nesting) ── */
+/* ── Recursively collect Event objects ── */
 const EVENT_TYPES = new Set([
   'Event','MusicEvent','TheaterEvent','Festival','ComedyEvent','SportsEvent',
   'DanceEvent','ExhibitionEvent','FoodEvent','ScreeningEvent','SocialEvent',
@@ -58,14 +56,13 @@ function collectEvents(node, out) {
   const types = Array.isArray(t) ? t : (t ? [t] : []);
   if (types.some(x => EVENT_TYPES.has(x))) out.push(node);
   if (node['@graph']) collectEvents(node['@graph'], out);
-  // Some sites nest events under itemListElement
   if (node.itemListElement) {
     const items = Array.isArray(node.itemListElement) ? node.itemListElement : [node.itemListElement];
     items.forEach(i => collectEvents(i.item || i, out));
   }
 }
 
-/* ── Normalize one schema.org Event to our row shape ── */
+/* ── Normalize schema.org Event → row ── */
 function firstStr(v) {
   if (!v) return null;
   if (typeof v === 'string') return v;
@@ -79,7 +76,6 @@ function normalize(ev, sourceUrl) {
   const startDate = ev.startDate || null;
   if (!title || !startDate) return null;
 
-  // Location: can be Place object, array, or string
   let venue = null, city = null;
   const loc = Array.isArray(ev.location) ? ev.location[0] : ev.location;
   if (loc) {
@@ -91,7 +87,6 @@ function normalize(ev, sourceUrl) {
     }
   }
 
-  // Offers: object or array — take lowest price found
   let price = null, currency = 'KES';
   const offers = Array.isArray(ev.offers) ? ev.offers : (ev.offers ? [ev.offers] : []);
   for (const o of offers) {
@@ -105,8 +100,7 @@ function normalize(ev, sourceUrl) {
 
   const image = firstStr(ev.image);
   const url = firstStr(ev.url) || sourceUrl;
-  const desc = typeof ev.description === 'string' ? ev.description.slice(0, 500) : null;
-
+  const desc = typeof ev.description === 'string' ? ev.description.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 500) : null;
   const dedupe = (title.toLowerCase().trim() + '|' + String(startDate).slice(0, 10)).slice(0, 300);
 
   return {
@@ -127,13 +121,13 @@ function normalize(ev, sourceUrl) {
   };
 }
 
-/* ── Scrape one source ── */
+/* ── Scrape one source (12s cap) ── */
 async function scrapeSource(src) {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 15000);
+  const timer = setTimeout(() => controller.abort(), 12000);
   try {
     const r = await fetch(src.url, {
-      headers: { 'User-Agent': UA, 'Accept': 'text/html' },
+      headers: { 'User-Agent': UA, 'Accept': 'text/html,application/xhtml+xml' },
       signal: controller.signal,
       redirect: 'follow',
     });
@@ -146,46 +140,47 @@ async function scrapeSource(src) {
     blocks.forEach(b => collectEvents(b, found));
     const rows = found.map(e => normalize(e, src.url)).filter(Boolean);
 
-    // Dedupe within this batch (same dedupe_key twice breaks upsert)
     const seen = new Set();
-    const unique = rows.filter(r2 => seen.has(r2.dedupe_key) ? false : (seen.add(r2.dedupe_key), true));
+    const unique = rows.filter(x => seen.has(x.dedupe_key) ? false : (seen.add(x.dedupe_key), true));
     return { status: unique.length ? 'ok' : 'no_events', events: unique };
   } catch (e) {
     clearTimeout(timer);
-    return { status: ('error:' + e.message).slice(0, 100), events: [] };
+    return { status: ('error:' + (e.name === 'AbortError' ? 'timeout' : e.message)).slice(0, 100), events: [] };
   }
 }
 
-/* ── Handler ── */
-module.exports = async (req, res) => {
+/* ── Handler (ESM — repo package.json is type:module) ── */
+export default async function handler(req, res) {
   try {
     const sources = await db('GET', 'scrape_sources?active=eq.true&service=eq.events&select=id,url,label');
     if (!sources.length) {
-      return res.status(200).json({ ok: true, message: 'No active sources registered. Add rows to scrape_sources.' });
+      return res.status(200).json({ ok: true, message: 'No active sources registered.' });
     }
 
+    // ALL sources in parallel — total wall time ≈ slowest single site, not the sum
+    const results = await Promise.allSettled(sources.map(s => scrapeSource(s)));
+
     const summary = [];
-    for (const src of sources) {
-      const { status, events } = await scrapeSource(src);
-      if (events.length) {
-        // Upsert in chunks of 50
-        for (let i = 0; i < events.length; i += 50) {
-          await db('POST', 'scraped_events?on_conflict=dedupe_key', events.slice(i, i + 50));
+    for (let i = 0; i < sources.length; i++) {
+      const src = sources[i];
+      const r = results[i].status === 'fulfilled' ? results[i].value : { status: 'error:internal', events: [] };
+      if (r.events.length) {
+        for (let j = 0; j < r.events.length; j += 50) {
+          await db('POST', 'scraped_events?on_conflict=dedupe_key', r.events.slice(j, j + 50));
         }
       }
       await db('PATCH', `scrape_sources?id=eq.${src.id}`, {
         last_run: new Date().toISOString(),
-        last_status: status,
-        events_found: events.length,
+        last_status: r.status,
+        events_found: r.events.length,
       });
-      summary.push({ source: src.label || src.url, status, found: events.length });
+      summary.push({ source: src.label || src.url, status: r.status, found: r.events.length });
     }
 
-    // Auto-expire events that have passed (keep DB clean)
     await db('PATCH', `scraped_events?end_date=lt.${new Date(Date.now() - 86400000).toISOString()}&active=eq.true`, { active: false }).catch(() => {});
 
     res.status(200).json({ ok: true, ran: new Date().toISOString(), summary });
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });
   }
-};
+}
