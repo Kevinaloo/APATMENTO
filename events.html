@@ -355,16 +355,7 @@ window.addEventListener('load',()=>setTimeout(dismissTx,1800));
 setTimeout(dismissTx,4000);
 
 
-const EVENTS=[
-  {id:1,name:"Sauti Sol Live in Nairobi",venue:"Uhuru Gardens",city:"Nairobi",date:"Sat Jul 12",type:"music",price:2500,hot:true,tags:["Afropop","Live band","Outdoor"],desc:"One of Africa greatest bands returns to Nairobi for a landmark outdoor concert. Expect hits from across their 15-year career, surprise guests and an unforgettable production.",includes:["General admission","Live band performance","Full PA/lights production"]},
-  {id:2,name:"Koroga Festival",venue:"Ngong Racecourse",city:"Nairobi",date:"Sun Jul 20",type:"festival",price:1500,hot:true,tags:["Multi-artist","Family","Outdoor"],desc:"Kenya beloved monthly festival bringing together the best of East African music, food and culture. A whole-day celebration of creativity.",includes:["Full festival access","All performances","Food market access"]},
-  {id:3,name:"AFC Leopards vs Gor Mahia",venue:"Kasarani Stadium",city:"Nairobi",date:"Sun Aug 3",type:"sports",price:500,hot:true,tags:["Derby","KPL","Football"],desc:"The ultimate East African football derby. 60,000 passionate fans, tribal rivalries and unforgettable atmosphere.",includes:["Match ticket","Stadium access","Full 90 minutes"]},
-  {id:4,name:"Churchill Show Live",venue:"Carnivore Grounds",city:"Nairobi",date:"Fri Aug 8",type:"comedy",price:1800,hot:false,tags:["Stand-up","Live TV","Multi-comic"],desc:"Kenya top comedians perform back-to-back with special international guests. An evening of pure laughter.",includes:["Seated ticket","Live performance","Drinks package available"]},
-  {id:5,name:"Blankets & Wine",venue:"Ngong Racecourse",city:"Nairobi",date:"Sun Aug 17",type:"music",price:2000,hot:true,tags:["Picnic vibes","Afro-soul","Family"],desc:"Nairobi most iconic picnic music festival. Bring your blanket, grab your wine and settle in for an afternoon of East Africa finest independent artists.",includes:["Entry","All performances","Picnic grounds access"]},
-  {id:6,name:"Art in the Park",venue:"Central Park Nairobi",city:"Nairobi",date:"Sat Aug 23",type:"art",price:500,hot:false,tags:["Visual art","Sculpture","Photography"],desc:"The largest outdoor visual arts fair in East Africa. Over 80 artists selling original works, paintings, sculpture, photography and digital art.",includes:["Entry","All exhibitions","Artist meet and greet"]},
-  {id:7,name:"Mombasa Carnival",venue:"Mombasa Old Town",city:"Mombasa",date:"Fri Nov 7",type:"festival",price:0,hot:true,tags:["Free entry","Cultural","Coastal"],desc:"Kenya biggest free street festival. Floats, traditional costumes, Swahili cuisine, music and dancing through Mombasa historic streets.",includes:["Free entry","Street parade","Cultural performances"]},
-  {id:8,name:"Jazz at the Conservatory",venue:"Kenya National Theatre",city:"Nairobi",date:"Sat Sep 13",type:"music",price:3500,hot:false,tags:["Jazz","Intimate","Premium"],desc:"An intimate evening of East African jazz. Local masters alongside international musicians in one of Nairobi most beautiful venues.",includes:["Reserved seating","Two-hour performance","Programme guide"]},
-];
+const EVENTS=[]; // live events load from Supabase (scraped_events)
 let _evFilter='all';
 function setEvFilter(k,el){_evFilter=k;document.querySelectorAll('.fchip').forEach(c=>c.classList.remove('active'));el.classList.add('active');sortEvents();}
 function filterEvents(){sortEvents();}
@@ -378,7 +369,7 @@ function sortEvents(){
 function renderEvents(list){
   document.getElementById('result-num').textContent=list.length;
   const g=document.getElementById('grid');
-  if(!list.length){g.innerHTML='<div class="empty"><div class="empty-title">No events found</div></div>';return;}
+  if(!list.length){g.innerHTML='<div class="empty"><div class="empty-title">'+(window.__evLoaded?'No events match — try another filter':'Loading live events…')+'</div></div>';return;}
   const typeColor={music:'#7B2FF7',festival:'#FF6B2C',sports:'#4361FF',comedy:'#FFB59E',art:'#2DD4BF'};
   g.innerHTML=list.map((e,i)=>`
   <div class="card" style="transition-delay:${i*45}ms" onclick="openEvent(${e.id})">
@@ -392,7 +383,7 @@ function renderEvents(list){
       <div class="card-name">${e.name}</div>
       <div class="card-tags">${e.tags.map(x=>`<span class="card-tag">${x}</span>`).join('')}</div>
       <div class="card-foot">
-        <div class="card-price"><span class="val">${e.price===0?'Free':'KES '+e.price.toLocaleString()}</span>${e.price?'<span class="per"> / ticket</span>':''}</div>
+        <div class="card-price"><span class="val">${e.price===0?(e.ticketUrl?'Tickets ↗':'Free'):'KES '+e.price.toLocaleString()}</span>${e.price?'<span class="per"> / ticket</span>':''}</div>
         <div class="card-go"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M7 7h10v10"/></svg></div>
       </div>
     </div>
@@ -414,8 +405,8 @@ function openEvent(id){
     <div class="dr-includes"><div class="dr-includes-title">Ticket includes</div>
     <div class="dr-includes-grid">${e.includes.map(x=>`<div class="dr-include"><span style="color:var(--t1)">✓</span> ${x}</div>`).join('')}</div></div>
     <div class="dr-cta-box">
-      <div class="dr-price"><span class="val">${e.price===0?'Free':'KES '+e.price.toLocaleString()}</span>${e.price?'<span class="per"> / ticket</span>':''}<div class="note">✓ Face value. Zero booking fees added.</div></div>
-      <button class="dr-cta" onclick="${e.price===0?`showToast('Free event — just show up!')`:`window.location.href='booking-confirm.html?id=${e.id}&name=${encodeURIComponent(e.name)}&location=${encodeURIComponent(e.venue)}&price=${e.price}&back=1'`}">${e.price===0?'It\'s free — save event →':'Get tickets →'}</button>
+      <div class="dr-price"><span class="val">${e.price===0?(e.ticketUrl?'See site':'Free'):'KES '+e.price.toLocaleString()}</span>${e.price?'<span class="per"> / ticket</span>':''}<div class="note">${e.ticketUrl?'↗ Tickets sold on the organiser\'s official site':'✓ Face value. Zero booking fees added.'}</div></div>
+      <button class="dr-cta" onclick="${e.ticketUrl?`window.open('${e.ticketUrl}','_blank')`:(e.price===0?`showToast('Free event — just show up!')`:`window.location.href='booking-confirm.html?id=${e.id}&name=${encodeURIComponent(e.name)}&location=${encodeURIComponent(e.venue)}&price=${e.price}&back=1'`)}">${e.ticketUrl?'Get tickets ↗':(e.price===0?'It\'s free — save event →':'Get tickets →')}</button>
     </div>
   </div>`;
   document.getElementById('drawer').classList.add('open');
@@ -437,7 +428,8 @@ renderEvents(EVENTS);
     });
     if(!r.ok) return;
     const rows = await r.json();
-    if(!rows.length) return;
+    window.__evLoaded = true;
+    if(!rows.length){ renderEvents(EVENTS); return; }
 
     const mapped = rows.map((e,i)=>({
       id: 'live_'+i,
@@ -445,12 +437,17 @@ renderEvents(EVENTS);
       venue: e.venue || 'Venue TBA',
       city: e.city || 'Kenya',
       date: e.start_date ? new Date(e.start_date).toLocaleDateString('en-KE',{weekday:'short',month:'short',day:'numeric'}) : 'Soon',
-      type: e.category && e.category!=='general' ? e.category : 'music',
+      type: (function(t){t=(t||'').toLowerCase();
+        if(/festival|fest\b/.test(t))return 'festival';
+        if(/comedy|stand.?up/.test(t))return 'comedy';
+        if(/run|marathon|match|league|golf|rugby|sport|fitness|trail/.test(t))return 'sports';
+        if(/expo|art|exhibition|summit|conference|tech|business|workshop|walk|mixer/.test(t))return 'art';
+        return 'music';})(e.title),
       price: e.price_from ? Math.round(e.price_from) : 0,
       hot: i < 2,
       live: true,
       ticketUrl: e.event_url,
-      tags: ['Live listing'],
+      tags: [e.venue?e.venue.slice(0,28):'Nairobi', new Date(e.start_date).getFullYear()+''],
       desc: e.description || ('Happening at ' + (e.venue||'a venue near you') + '. Tap through for full details and tickets.'),
       includes: ['See ticket site for details'],
       img: e.image_url || null
@@ -459,11 +456,9 @@ renderEvents(EVENTS);
     // Prepend live events, dedupe by name against demo data
     const names = new Set(EVENTS.map(e=>e.name.toLowerCase()));
     const fresh = mapped.filter(e=>!names.has(e.name.toLowerCase()));
-    if(fresh.length){
-      EVENTS.unshift(...fresh);
-      if(typeof applyFilters==='function') applyFilters();
-      else renderEvents(EVENTS);
-    }
+    EVENTS.unshift(...fresh);
+    if(typeof applyFilters==='function') applyFilters();
+    else renderEvents(EVENTS);
   } catch(err) { /* silent — demo events remain */ }
 })();
 
