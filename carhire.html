@@ -373,6 +373,16 @@ const CARS = [
   {id:7,name:"Mitsubishi Pajero",type:"suv",sub:"SUV · Offroad",seats:7,fuel:"Diesel",trans:"Automatic",selfPrice:12000,chauffeurPrice:17000,badge:"Offroad",tags:["4WD","Rugged","Upcountry"]},
   {id:8,name:"Peugeot Partner Cargo",type:"van",sub:"Van · Cargo",seats:3,fuel:"Diesel",trans:"Manual",selfPrice:6000,chauffeurPrice:9500,badge:"Cargo",tags:["Large cargo","Deliveries","Commercial"]},
 ];
+
+/* ── Car type fallback images (Unsplash CDN) ── */
+const CAR_IMGS_MAP = {
+  economy: 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=700&q=85&fit=crop',
+  safari:  'https://images.unsplash.com/photo-1532573314124-33f5e01c5456?w=700&q=85&fit=crop',
+  suv:     'https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=700&q=85&fit=crop',
+  luxury:  'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=700&q=85&fit=crop',
+  van:     'https://images.unsplash.com/photo-1543465077-db45d34b88a5?w=700&q=85&fit=crop',
+};
+
 const CAR_ICONS = {
   economy:`<svg width="80" height="50" viewBox="0 0 24 16" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11h18l-2-6a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2z"/><path d="M2 11h20v3a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1v-1H5v1a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1z"/><circle cx="6.5" cy="11" r="1.2" fill="rgba(255,255,255,.85)"/><circle cx="17.5" cy="11" r="1.2" fill="rgba(255,255,255,.85)"/></svg>`,
   suv:`<svg width="88" height="55" viewBox="0 0 24 16" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"><path d="M2 10h20v4H2z"/><path d="M4 10L5.5 4a2 2 0 0 1 2-1.5h9a2 2 0 0 1 2 1.5L20 10"/><circle cx="6.5" cy="14" r="1.5" fill="rgba(255,255,255,.85)" stroke="none"/><circle cx="17.5" cy="14" r="1.5" fill="rgba(255,255,255,.85)" stroke="none"/></svg>`,
@@ -395,11 +405,12 @@ function renderCars(){
   if(!list.length){g.innerHTML="<div class='empty'><div class='empty-title'>No vehicles match</div></div>";return;}
   g.innerHTML=list.map((c,i)=>{
     const price=_withDriver?c.chauffeurPrice:c.selfPrice;
-    return `<div class="card" style="transition-delay:${i*45}ms" onclick="openCar(${c.id})">
+    return `<div class="card" style="transition-delay:${i*45}ms" onclick="openCar('${c.id}')">
       <div class="card-img" style="background:${BG[c.type]||BG.economy};">
-        <div class="card-badge">${c.badge}</div>
+        ${(c.img||CAR_IMGS_MAP[c.type]||CAR_IMGS_MAP.economy)?`<img src="${c.img||CAR_IMGS_MAP[c.type]||CAR_IMGS_MAP.economy}" alt="" loading="lazy" decoding="async" onerror="this.remove()" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;"><div style="position:absolute;inset:0;z-index:1;background:linear-gradient(to top,rgba(10,10,20,.55) 0%,transparent 50%);pointer-events:none;"></div>`:''}
+        <div class="card-badge" style="z-index:2;">${c.badge}</div>
         ${_withDriver?"<div style='position:absolute;top:12px;right:12px;padding:4px 10px;border-radius:100px;background:rgba(252,252,253,.9);font-size:10px;font-weight:700;color:var(--mint-deep);'>With Driver</div>":""}
-        ${CAR_ICONS[c.type]||CAR_ICONS.economy}
+        ${(c.img||CAR_IMGS_MAP[c.type])?'':(CAR_ICONS[c.type]||CAR_ICONS.economy)}
       </div>
       <div class="card-body">
         <div class="card-meta-top">${c.sub}</div>
@@ -415,7 +426,7 @@ function renderCars(){
   requestAnimationFrame(()=>{document.querySelectorAll(".card").forEach((c,i)=>setTimeout(()=>c.classList.add("in"),i*45));});
 }
 function openCar(id){
-  const c=CARS.find(x=>x.id===id);if(!c)return;
+  const c=CARS.find(x=>String(x.id)===String(id));if(!c)return;
   const price=_withDriver?c.chauffeurPrice:c.selfPrice;
   document.getElementById("drawer").innerHTML=`<div class="dr-img" style="background:${BG[c.type]||BG.economy};"><button class="dr-close" onclick="closeDrawer()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>${CAR_ICONS[c.type]||CAR_ICONS.economy}</div><div class="dr-body"><div class="dr-tag">${c.sub}${_withDriver?" · With Chauffeur":" · Self Drive"}</div><div class="dr-title">${c.name}</div><div class="dr-tags"><span class="card-tag">👥 ${c.seats} seats</span><span class="card-tag">⛽ ${c.fuel}</span><span class="card-tag">⚙️ ${c.trans}</span>${c.tags.map(t=>`<span class="card-tag">${t}</span>`).join("")}</div><div class="dr-includes"><div class="dr-includes-title">Included</div><div class="dr-includes-grid"><div class="dr-include"><span style="color:var(--t1)">✓</span> Comprehensive insurance</div><div class="dr-include"><span style="color:var(--t1)">✓</span> 24/7 roadside support</div><div class="dr-include"><span style="color:var(--t1)">✓</span> Unlimited mileage</div><div class="dr-include"><span style="color:var(--t1)">✓</span> Sanitised vehicle</div></div></div><div style="background:rgba(45,212,191,.06);border:1px solid rgba(45,212,191,.18);border-radius:12px;padding:14px;margin-bottom:20px;font-size:13px;color:var(--ink-soft);line-height:1.6;"><strong style="color:var(--mint-deep);">Self drive KES ${c.selfPrice.toLocaleString()}/day</strong> · <strong>With chauffeur KES ${c.chauffeurPrice.toLocaleString()}/day</strong><br/>Hire company keeps 100% — we charge only a small fixed booking fee.</div><div class="dr-cta-box"><div class="dr-price"><span class="val">KES ${price.toLocaleString()}</span><span class="per">/day</span><div class="note">✓ Fixed price. No hidden charges.</div></div><button class="dr-cta" onclick="showToast('Car hire booking coming soon — contact carhire@apatmento.com',5000)">Book this vehicle →</button></div></div>`;
   document.getElementById("drawer").classList.add("open");
