@@ -535,6 +535,88 @@ render();
 <script src="/pwa.js" defer></script>
 <div data-showcase="window"></div>
 <script src="/referral.js" defer></script>
-<script src="/showcase.js" defer></script>
+<script src="/showcase.js" defer>
+/* ── Roommate: tenant ID verification gate before chatting ── */
+function roommateChatRequest(r) {
+  if (!CURRENT_USER) {
+    window.location.href = 'auth.html?next=' + encodeURIComponent(location.href);
+    return;
+  }
+
+  // Check tenant verification status
+  if (!window.sb) return;
+  window.sb.from('profiles')
+    .select('id_verification_status')
+    .eq('id', CURRENT_USER.id)
+    .maybeSingle()
+    .then(({ data }) => {
+      const status = data?.id_verification_status;
+      if (status === 'approved') {
+        // Verified — open chat
+        ApatmentoChat.open({
+          listingId: r._dbId || r.id,
+          listingType: 'roommate',
+          listingTitle: r.title || r.name || 'Room listing',
+          hostId: r.host_id || r.partner_id,
+        });
+      } else if (status === 'pending') {
+        showToast('Your ID verification is under review (usually < 24 hours). You can message once approved.');
+      } else {
+        // Show tenant verification modal
+        openTenantVerify(r);
+      }
+    })
+    .catch(() => {
+      // On error, still allow (graceful degradation)
+      if (typeof ApatmentoChat !== 'undefined') {
+        ApatmentoChat.open({
+          listingId: r._dbId || r.id,
+          listingType: 'roommate',
+          listingTitle: r.title || r.name || 'Room',
+          hostId: r.host_id,
+        });
+      }
+    });
+}
+
+/* ── Tenant ID verify modal (simpler version of host flow) ── */
+function openTenantVerify(pendingRoom) {
+  let modal = document.getElementById('tenant-verify-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'tenant-verify-modal';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:8500;display:flex;align-items:flex-end;justify-content:center;background:rgba(10,10,20,.7);backdrop-filter:blur(16px);';
+    modal.innerHTML = `
+      <div style="width:100%;max-width:460px;background:#fff;border-radius:28px 28px 0 0;padding:0 0 40px;max-height:80vh;overflow-y:auto;">
+        <div style="width:40px;height:4px;border-radius:2px;background:rgba(10,10,20,.12);margin:12px auto 0;"></div>
+        <div style="padding:24px 28px 0;">
+          <div style="display:inline-flex;align-items:center;gap:7px;padding:6px 14px;border-radius:100px;background:rgba(67,97,255,.1);border:1.5px solid rgba(67,97,255,.2);font-size:11px;font-weight:700;color:#4361FF;margin-bottom:14px;">
+            🔒 Tenant Verification Required
+          </div>
+          <h2 style="font-size:24px;font-weight:700;margin-bottom:8px;font-family:var(--font-display);">Verify to <em>enquire</em></h2>
+          <p style="font-size:14px;color:#636480;line-height:1.55;margin-bottom:20px;">
+            Roommate hosts require prospective tenants to verify their identity before exchanging messages. This is a one-time process.
+          </p>
+          <div style="display:flex;flex-direction:column;gap:10px;padding:16px;background:rgba(10,10,20,.03);border-radius:16px;margin-bottom:20px;">
+            <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:#636480;">🔒 Your ID is stored securely and never shared publicly</div>
+            <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:#636480;">⏱️ Verification usually takes under 24 hours</div>
+            <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:#636480;">✅ One-time process — applies to all roommate enquiries</div>
+          </div>
+          <button onclick="window.location.href='add-listing.html?type=roommate&verify_tenant=1&back=1'" style="width:100%;padding:15px;border-radius:100px;background:linear-gradient(135deg,#4361FF,#7B2FF7);color:#fff;border:none;font-family:var(--font-body);font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 20px rgba(67,97,255,.3);">
+            Verify my identity →
+          </button>
+          <button onclick="document.getElementById('tenant-verify-modal').remove()" style="width:100%;padding:13px;border-radius:100px;background:transparent;border:1.5px solid rgba(10,10,20,.12);font-family:var(--font-body);font-size:14px;font-weight:600;color:#636480;cursor:pointer;margin-top:10px;">
+            Maybe later
+          </button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  } else {
+    modal.style.display = 'flex';
+  }
+}
+
+</script>
 </body>
 </html>
