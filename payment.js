@@ -175,7 +175,7 @@
     render('sending', opts);
 
     try {
-      const res = await fetch('/.netlify/functions/stk-push', {
+      const res = await fetch('/api/stk-push', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
