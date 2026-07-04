@@ -45,35 +45,23 @@
   ],
   "crons": [
     {
-      "path": "/api/scrape-events",
-      "schedule": "0 3 * * *"
+      "path": "/api/scrape?service=shopping",
+      "schedule": "0 1 * * *"
     },
     {
-      "path": "/api/scrape-tours",
-      "schedule": "0 4 * * *"
-    },
-    {
-      "path": "/api/scrape-food",
+      "path": "/api/scrape?service=food",
       "schedule": "0 2 * * *"
     },
     {
-      "path": "/api/scrape-shopping",
-      "schedule": "0 1 * * *"
+      "path": "/api/scrape?service=events",
+      "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/scrape?service=tours",
+      "schedule": "0 4 * * *"
     }
   ],
   "functions": {
-    "api/scrape-events.js": {
-      "maxDuration": 60
-    },
-    "api/scrape-tours.js": {
-      "maxDuration": 60
-    },
-    "api/scrape-food.js": {
-      "maxDuration": 45
-    },
-    "api/scrape-shopping.js": {
-      "maxDuration": 60
-    },
     "api/ai-chat.js": {
       "maxDuration": 30
     },
@@ -88,6 +76,12 @@
     },
     "api/calendar-sync.js": {
       "maxDuration": 30
+    },
+    "api/scrape.js": {
+      "maxDuration": 60
+    },
+    "api/utilities.js": {
+      "maxDuration": 15
     }
   },
   "env": {
