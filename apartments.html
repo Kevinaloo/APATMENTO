@@ -371,8 +371,8 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
 <div class="drawer" id="drawer"></div>
 
 <script>
-const SAMPLE_LISTINGS = []; // Real listings only — loaded from Supabase
-// SAMPLE_LISTINGS = [] (removed — real listings only)
+const // Real listings only — loaded from Supabase (demo array removed)
+
 /* ════════════════════════════════════════════════════════════════
    APATMENTO STAYS — unified data layer
    Priority: native (Supabase partner listings) > sample listings
@@ -509,7 +509,7 @@ async function loadNativeListings() {
 }
 
 /* ── Main init ── */
-async async function loadListings() {
+async function loadListings() {
   updateBanner('loading');
   // Load native listings (partner Supabase) in parallel with loading live listings
   const nativePromise = loadNativeListings();
