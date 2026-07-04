@@ -437,7 +437,41 @@ window.addEventListener("DOMContentLoaded", renderCars);
 <script src="/analytics.js" defer></script>
 <script src="/pwa.js" defer></script>
 <script src="/referral.js" defer></script>
-<script src="/showcase.js" defer></script>
+<script src="/showcase.js" defer>
+/* ── LIVE CAR HIRE from Supabase ── */
+(async function loadLiveCars(){
+  try {
+    const r = await fetch('https://gfwgbgdvxtocwhilrtdw.supabase.co/rest/v1/scraped_carhire?active=eq.true&order=vehicle_type.asc,price_self.asc&limit=40', {
+      headers: { 'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw' }
+    });
+    if(!r.ok) return;
+    const rows = await r.json();
+    if(!rows.length) return;
+    const mapped = rows.map((e,i) => ({
+      id: 'live_' + i,
+      name: e.name,
+      type: e.vehicle_type || 'economy',
+      sub: e.sub_type || (e.vehicle_type || 'Economy'),
+      seats: e.seats || 5,
+      fuel: e.fuel_type || 'Petrol',
+      trans: e.transmission || 'Manual',
+      selfPrice: e.price_self || e.price_per_day || 0,
+      chauffeurPrice: e.price_chauffeur || 0,
+      badge: e.badge || '',
+      tags: e.features || [],
+      company: e.company || '',
+      phone: e.phone || null,
+      img: e.image_url || null,
+      live: true,
+    }));
+    CARS.length = 0;
+    CARS.push(...mapped);
+    if(typeof renderCars === 'function') renderCars();
+    else if(typeof applyFilters === 'function') applyFilters();
+  } catch(err) { console.warn('Live cars failed:', err.message); }
+})();
+
+</script>
 </body>
 </html>
 
