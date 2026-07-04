@@ -51,6 +51,10 @@
     {
       "path": "/api/scrape-tours",
       "schedule": "0 4 * * *"
+    },
+    {
+      "path": "/api/scrape-food",
+      "schedule": "0 2 * * *"
     }
   ],
   "functions": {
@@ -59,6 +63,12 @@
     },
     "api/scrape-tours.js": {
       "maxDuration": 60
+    },
+    "api/scrape-food.js": {
+      "maxDuration": 45
     }
+  },
+  "env": {
+    "PAYHERO_CHANNEL_ID": "9424"
   }
 }
