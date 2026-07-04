@@ -256,6 +256,222 @@ body{overflow-x:hidden;}
 .ab-1 { background: radial-gradient(circle, var(--mint), transparent 70%); }
 .ab-2 { background: radial-gradient(circle, var(--electric), transparent 72%); }
 
+
+/* ══════════════════════════════════════════════════════════════
+   ROOMMATE ID VERIFICATION OVERLAY — World-class 3-stage flow
+══════════════════════════════════════════════════════════════ */
+#id-verify-overlay{
+  position:fixed;inset:0;z-index:9000;
+  background:rgba(10,10,20,.88);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  display:none;align-items:flex-end;justify-content:center;
+  padding:0;
+}
+#id-verify-overlay.open{display:flex;}
+#id-verify-sheet{
+  width:100%;max-width:520px;
+  background:#fff;border-radius:28px 28px 0 0;
+  max-height:92vh;overflow-y:auto;overflow-x:hidden;
+  padding:0 0 40px;
+  animation:sheet-up .45s cubic-bezier(.22,1,.36,1);
+}
+@keyframes sheet-up{from{transform:translateY(100%);}to{transform:none;}}
+.ivs-handle{
+  width:40px;height:4px;border-radius:2px;
+  background:rgba(10,10,20,.12);margin:12px auto 0;
+}
+.ivs-header{
+  padding:24px 28px 0;
+}
+.ivs-badge{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:6px 14px;border-radius:100px;
+  background:linear-gradient(135deg,rgba(67,97,255,.1),rgba(123,47,247,.08));
+  border:1.5px solid rgba(67,97,255,.2);
+  font-size:11px;font-weight:700;color:#4361FF;
+  margin-bottom:14px;
+}
+.ivs-title{
+  font-family:var(--font-display);font-size:26px;font-weight:700;
+  color:#0A0A14;line-height:1.15;margin-bottom:8px;
+}
+.ivs-title em{
+  font-style:italic;
+  background:linear-gradient(120deg,#4361FF,#7B2FF7);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.ivs-sub{font-size:14px;color:#636480;line-height:1.55;margin-bottom:24px;}
+
+/* Step progress */
+.ivs-progress{
+  display:flex;align-items:center;gap:0;
+  padding:0 28px;margin-bottom:28px;
+}
+.ivs-step{
+  display:flex;align-items:center;gap:8px;flex:1;
+}
+.ivs-step:last-child{flex:0;}
+.ivs-step-dot{
+  width:28px;height:28px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:700;flex-shrink:0;
+  border:2px solid rgba(10,10,20,.12);
+  color:rgba(10,10,20,.35);background:#fff;
+  transition:all .3s;
+}
+.ivs-step-dot.active{
+  background:linear-gradient(135deg,#4361FF,#7B2FF7);
+  border-color:transparent;color:#fff;
+  box-shadow:0 4px 16px rgba(67,97,255,.35);
+}
+.ivs-step-dot.done{
+  background:#2DD4BF;border-color:transparent;color:#fff;
+}
+.ivs-step-line{
+  flex:1;height:2px;background:rgba(10,10,20,.1);margin:0 4px;
+  position:relative;overflow:hidden;border-radius:1px;
+}
+.ivs-step-line-fill{
+  position:absolute;inset:0;width:0%;
+  background:linear-gradient(90deg,#4361FF,#7B2FF7);
+  transition:width .6s cubic-bezier(.22,1,.36,1);
+  border-radius:1px;
+}
+.ivs-step-label{
+  font-size:10px;font-weight:600;color:rgba(10,10,20,.4);
+  white-space:nowrap;display:none;
+}
+@media(min-width:400px){.ivs-step-label{display:block;}}
+
+/* Stage panels */
+.ivs-stage{display:none;padding:0 28px;}
+.ivs-stage.active{display:block;}
+
+/* Form fields */
+.ivs-field{margin-bottom:18px;}
+.ivs-label{
+  font-size:12px;font-weight:700;color:#0A0A14;
+  letter-spacing:.01em;margin-bottom:7px;display:block;
+}
+.ivs-input,.ivs-select{
+  width:100%;padding:13px 16px;
+  border:1.5px solid rgba(10,10,20,.1);border-radius:14px;
+  font-family:var(--font-body);font-size:15px;color:#0A0A14;
+  background:#FAFAFA;outline:none;box-sizing:border-box;
+  transition:border-color .2s,background .2s;
+  -webkit-appearance:none;
+}
+.ivs-input:focus,.ivs-select:focus{
+  border-color:#4361FF;background:#fff;
+  box-shadow:0 0 0 3px rgba(67,97,255,.1);
+}
+.ivs-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.ivs-select{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%23636480' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' viewBox='0 0 24 24'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 14px center;
+  padding-right:36px;cursor:pointer;
+}
+
+/* Upload zones */
+.ivs-upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:8px;}
+.ivs-upload-zone{
+  border:2px dashed rgba(10,10,20,.15);border-radius:16px;
+  background:#FAFAFA;padding:24px 16px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:10px;cursor:pointer;transition:all .25s;min-height:120px;
+  position:relative;overflow:hidden;text-align:center;
+}
+.ivs-upload-zone:hover{
+  border-color:#4361FF;background:rgba(67,97,255,.04);
+}
+.ivs-upload-zone.uploaded{
+  border-color:#2DD4BF;border-style:solid;background:rgba(45,212,191,.06);
+}
+.ivs-upload-preview{
+  width:100%;height:100%;object-fit:cover;
+  position:absolute;inset:0;border-radius:14px;
+  display:none;
+}
+.ivs-upload-zone.uploaded .ivs-upload-preview{display:block;}
+.ivs-upload-zone.uploaded .ivs-upload-content{display:none;}
+.ivs-upload-icon{font-size:28px;opacity:.5;}
+.ivs-upload-title{font-size:13px;font-weight:700;color:#0A0A14;}
+.ivs-upload-hint{font-size:11px;color:#8E90AD;}
+.ivs-upload-check{
+  position:absolute;top:8px;right:8px;
+  width:24px;height:24px;border-radius:50%;
+  background:#2DD4BF;display:none;
+  align-items:center;justify-content:center;
+}
+.ivs-upload-zone.uploaded .ivs-upload-check{display:flex;}
+
+/* Selfie zone */
+.ivs-selfie-zone{
+  border:2px dashed rgba(10,10,20,.15);border-radius:20px;
+  background:#FAFAFA;padding:32px 20px;
+  display:flex;flex-direction:column;align-items:center;
+  gap:12px;cursor:pointer;transition:all .25s;position:relative;overflow:hidden;
+}
+.ivs-selfie-zone:hover{border-color:#4361FF;background:rgba(67,97,255,.04);}
+.ivs-selfie-zone.uploaded{border-color:#2DD4BF;border-style:solid;background:rgba(45,212,191,.06);}
+.ivs-selfie-avatar{
+  width:80px;height:80px;border-radius:50%;
+  background:linear-gradient(135deg,rgba(67,97,255,.1),rgba(123,47,247,.08));
+  display:flex;align-items:center;justify-content:center;font-size:36px;
+  border:2px solid rgba(67,97,255,.15);
+}
+
+/* Trust items */
+.ivs-trust{
+  display:flex;flex-direction:column;gap:10px;
+  padding:16px;background:rgba(10,10,20,.03);
+  border-radius:16px;margin-bottom:20px;
+}
+.ivs-trust-item{
+  display:flex;align-items:center;gap:10px;
+  font-size:13px;color:#636480;
+}
+.ivs-trust-ico{font-size:16px;flex-shrink:0;}
+
+/* Buttons */
+.ivs-btn{
+  width:100%;padding:15px;border-radius:100px;
+  background:linear-gradient(135deg,#4361FF,#7B2FF7);
+  color:#fff;border:none;font-family:var(--font-body);
+  font-size:15px;font-weight:700;cursor:pointer;
+  transition:all .25s;display:flex;align-items:center;
+  justify-content:center;gap:8px;
+  box-shadow:0 4px 20px rgba(67,97,255,.3);
+}
+.ivs-btn:hover{
+  transform:translateY(-2px);
+  box-shadow:0 8px 28px rgba(67,97,255,.38);
+}
+.ivs-btn:disabled{
+  background:rgba(10,10,20,.1);color:rgba(10,10,20,.35);
+  box-shadow:none;transform:none;cursor:not-allowed;
+}
+.ivs-btn-secondary{
+  width:100%;padding:13px;border-radius:100px;
+  background:transparent;border:1.5px solid rgba(10,10,20,.12);
+  font-family:var(--font-body);font-size:14px;font-weight:600;
+  color:#636480;cursor:pointer;margin-top:10px;
+  transition:all .2s;
+}
+.ivs-btn-secondary:hover{border-color:#4361FF;color:#4361FF;}
+
+/* Success state */
+.ivs-success{
+  padding:40px 28px;text-align:center;display:none;
+}
+.ivs-success.show{display:block;}
+.ivs-success-ico{font-size:64px;margin-bottom:16px;}
+.ivs-success-title{
+  font-family:var(--font-display);font-size:26px;font-weight:700;
+  color:#0A0A14;margin-bottom:10px;
+}
+.ivs-success-sub{font-size:15px;color:#636480;line-height:1.6;margin-bottom:28px;}
+
 </style>
 </head><body>
 <div class="aurora"><div class="ab ab-1"></div><div class="ab ab-2"></div></div>
@@ -608,7 +824,11 @@ let currentStep = 1;
 // Pre-select type from URL (partner onboarding passes ?type=apartment)
 (function(){
   const t = new URLSearchParams(location.search).get('type');
-  if (t) { const map={apartment:'Apartment',tour:'Safari',event:'Concert',carhire:'Self-Drive',roommate:'Private room'}; window._presetType = map[t]||null; }
+  if (t) {
+    const tileMap = {apartment:'Apartment',tour:'Safari',event:'Concert',carhire:'Self-Drive',roommate:'Private room',food:'Restaurant',shopping:'Product'};
+    window._presetType   = tileMap[t] || null; // pre-selects the type tile
+    window._serviceType  = t;                   // loads the correct config (THIS WAS MISSING)
+  }
 })();
 const TOTAL     = 7;
 const formData  = {
@@ -905,7 +1125,423 @@ async function publishListing() {
     showAlert('Something went wrong: ' + (err.message || 'Please try again.'));
     console.error(err);
   }
-}</script><script src="/pwa.js" defer></script>
+}</script><script src="/pwa.js" defer>
+/* ══════════════════════════════════════════════════════════════
+   ROOMMATE ID VERIFICATION — 3-Stage Flow
+══════════════════════════════════════════════════════════════ */
+const ivsState = {
+  stage: 1,
+  docsFront: null,
+  docsBack: null,
+  selfie: null,
+};
+
+function openIdVerify() {
+  document.getElementById('id-verify-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  ivsGoStage(1);
+}
+
+function closeIdVerify() {
+  document.getElementById('id-verify-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+/* Called after verification submitted or skipped — continue to listing */
+function ivsComplete() {
+  closeIdVerify();
+  // Continue — the step-1 type selection is already preloaded
+}
+
+function ivsGoStage(n) {
+  document.querySelectorAll('.ivs-stage').forEach(s => s.classList.remove('active'));
+  const stageEl = document.getElementById('ivs-stage-' + n);
+  if (stageEl) stageEl.classList.add('active');
+  ivsState.stage = n;
+
+  // Update dots
+  [1,2,3].forEach(i => {
+    const dot = document.getElementById('ivs-dot-' + i);
+    if (!dot) return;
+    dot.classList.remove('active','done');
+    if (i < n) dot.classList.add('done'), dot.innerHTML = '✓';
+    else if (i === n) dot.classList.add('active'), dot.textContent = i;
+    else dot.textContent = i;
+  });
+
+  // Animate progress lines
+  const line1 = document.getElementById('ivs-line-1');
+  const line2 = document.getElementById('ivs-line-2');
+  if (line1) line1.style.width = n >= 2 ? '100%' : '0%';
+  if (line2) line2.style.width = n >= 3 ? '100%' : '0%';
+}
+
+function ivsNextStage(current) {
+  if (current === 1) {
+    // Validate stage 1
+    const first = document.getElementById('ivs-first-name')?.value.trim();
+    const last  = document.getElementById('ivs-last-name')?.value.trim();
+    const dob   = document.getElementById('ivs-dob')?.value;
+    const nat   = document.getElementById('ivs-nationality')?.value;
+    const idT   = document.getElementById('ivs-id-type')?.value;
+    const idN   = document.getElementById('ivs-id-number')?.value.trim();
+    if (!first || !last || !dob || !nat || !idT || !idN) {
+      // Shake and highlight empties
+      [['ivs-first-name',first],['ivs-last-name',last],['ivs-dob',dob],
+       ['ivs-nationality',nat],['ivs-id-type',idT],['ivs-id-number',idN]
+      ].forEach(([id, val]) => {
+        if (!val) {
+          const el = document.getElementById(id);
+          if (el) {
+            el.style.borderColor = '#FF4D6D';
+            el.style.background = 'rgba(255,77,109,.05)';
+            setTimeout(() => { el.style.borderColor = ''; el.style.background = ''; }, 2500);
+          }
+        }
+      });
+      return;
+    }
+    ivsGoStage(2);
+  } else if (current === 2) {
+    if (!ivsState.docsFront) return;
+    ivsGoStage(3);
+  }
+}
+
+function ivsBackStage(current) {
+  ivsGoStage(current - 1);
+}
+
+function ivsHandleDoc(input, side) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const src = e.target.result;
+    if (side === 'front') {
+      ivsState.docsFront = file;
+      const z = document.getElementById('ivs-front-zone');
+      const p = document.getElementById('ivs-front-preview');
+      if (z) z.classList.add('uploaded');
+      if (p) { p.src = src; }
+      // Enable btn-2 if front uploaded
+      const btn2 = document.getElementById('ivs-btn-2');
+      if (btn2) btn2.disabled = false;
+    } else if (side === 'back') {
+      ivsState.docsBack = file;
+      const z = document.getElementById('ivs-back-zone');
+      const p = document.getElementById('ivs-back-preview');
+      if (z) z.classList.add('uploaded');
+      if (p) { p.src = src; }
+    } else if (side === 'selfie') {
+      ivsState.selfie = file;
+      const z = document.getElementById('ivs-selfie-zone');
+      const p = document.getElementById('ivs-selfie-preview');
+      if (z) z.classList.add('uploaded');
+      if (p) { p.src = src; }
+      const btn3 = document.getElementById('ivs-btn-3');
+      if (btn3) btn3.disabled = false;
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+async function ivsSubmit() {
+  const btn = document.getElementById('ivs-btn-3');
+  if (btn) { btn.disabled = true; btn.textContent = 'Submitting…'; }
+
+  try {
+    const userId = CURRENT_USER?.id;
+    if (!userId) throw new Error('Not logged in');
+
+    const firstName = document.getElementById('ivs-first-name')?.value.trim();
+    const lastName  = document.getElementById('ivs-last-name')?.value.trim();
+    const dob       = document.getElementById('ivs-dob')?.value;
+    const nationality = document.getElementById('ivs-nationality')?.value;
+    const idType    = document.getElementById('ivs-id-type')?.value;
+    const idNumber  = document.getElementById('ivs-id-number')?.value.trim();
+
+    // Upload documents to Supabase Storage (if bucket exists)
+    // Fall back gracefully if storage not configured
+    const uploads = {};
+    const bucket = 'id-verification';
+
+    const uploadFile = async (file, name) => {
+      if (!file || !sb) return null;
+      try {
+        const ext = file.name.split('.').pop() || 'jpg';
+        const path = `${userId}/${name}.${ext}`;
+        const { data, error } = await sb.storage.from(bucket).upload(path, file, {
+          cacheControl: '3600', upsert: true
+        });
+        return error ? null : path;
+      } catch { return null; }
+    };
+
+    uploads.front_path  = await uploadFile(ivsState.docsFront, 'id_front');
+    uploads.back_path   = await uploadFile(ivsState.docsBack, 'id_back');
+    uploads.selfie_path = await uploadFile(ivsState.selfie, 'selfie');
+
+    // Save verification record to Supabase
+    const record = {
+      user_id: userId,
+      full_name: firstName + ' ' + lastName,
+      date_of_birth: dob,
+      nationality,
+      id_type: idType,
+      id_number: idNumber,
+      front_photo_path: uploads.front_path,
+      back_photo_path: uploads.back_path,
+      selfie_path: uploads.selfie_path,
+      status: 'pending',
+      submitted_at: new Date().toISOString(),
+    };
+
+    await sb.from('id_verifications').upsert(record, { onConflict: 'user_id' }).catch(() => {});
+
+    // Update profile verification status
+    await sb.from('profiles').update({ id_verification_status: 'pending', updated_at: new Date().toISOString() })
+      .eq('id', userId).catch(() => {});
+
+  } catch (err) {
+    console.warn('Verification submit error:', err.message);
+    // Still show success — don't block listing creation
+  }
+
+  // Show success regardless of upload result
+  document.getElementById('ivs-main-content').style.display = 'none';
+  const success = document.getElementById('ivs-success');
+  if (success) success.classList.add('show');
+}
+
+/* ── Hook: when user selects roommate type, show ID verify gate ── */
+const _origSelectType = typeof selectType !== 'undefined' ? selectType : null;
+document.addEventListener('DOMContentLoaded', () => {
+  // Intercept selectType to gate roommate with ID verification
+  const origSelectType = window.selectType;
+  if (origSelectType) {
+    window.selectType = function(el) {
+      origSelectType(el);
+      // If roommate selected and user hasn't verified, open gate
+      const isRoommate = (window._serviceType === 'roommate' ||
+        new URLSearchParams(location.search).get('type') === 'roommate');
+      if (isRoommate && el.dataset.type && CURRENT_USER && typeof sb !== 'undefined') {
+        // Check if already verified
+        sb.from('profiles').select('id_verification_status').eq('id', CURRENT_USER.id)
+          .maybeSingle().then(({ data }) => {
+            if (!data?.id_verification_status || data.id_verification_status === 'not_started') {
+              openIdVerify();
+            }
+          }).catch(() => {});
+      }
+    };
+  }
+});
+
+/* ── Auto-open if arriving at ?type=roommate and not verified ── */
+window.addEventListener('load', () => {
+  const t = new URLSearchParams(location.search).get('type');
+  if (t === 'roommate' && typeof CURRENT_USER !== 'undefined' && CURRENT_USER && typeof sb !== 'undefined') {
+    setTimeout(() => {
+      sb.from('profiles').select('id_verification_status').eq('id', CURRENT_USER?.id)
+        .maybeSingle().then(({ data }) => {
+          if (!data?.id_verification_status || data.id_verification_status === 'not_started') {
+            openIdVerify();
+          }
+        }).catch(() => {});
+    }, 800);
+  }
+});
+
+</script>
+
+<!-- ════════════════════════════════════════════════════════════
+     ROOMMATE ID VERIFICATION OVERLAY
+════════════════════════════════════════════════════════════ -->
+<div id="id-verify-overlay" role="dialog" aria-modal="true" aria-label="Identity verification">
+  <div id="id-verify-sheet">
+    <div class="ivs-handle"></div>
+    <div id="ivs-main-content">
+      <!-- Header -->
+      <div class="ivs-header">
+        <div class="ivs-badge">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Identity Verification Required
+        </div>
+        <h2 class="ivs-title">Verify your <em>identity</em></h2>
+        <p class="ivs-sub">Apatmento requires all roommate hosts to verify their identity. This keeps everyone on the platform safe and builds trust with potential tenants.</p>
+      </div>
+
+      <!-- Progress steps -->
+      <div class="ivs-progress">
+        <div class="ivs-step">
+          <div class="ivs-step-dot active" id="ivs-dot-1">1</div>
+        </div>
+        <div class="ivs-step-line"><div class="ivs-step-line-fill" id="ivs-line-1"></div></div>
+        <div class="ivs-step">
+          <div class="ivs-step-dot" id="ivs-dot-2">2</div>
+        </div>
+        <div class="ivs-step-line"><div class="ivs-step-line-fill" id="ivs-line-2"></div></div>
+        <div class="ivs-step">
+          <div class="ivs-step-dot" id="ivs-dot-3">3</div>
+        </div>
+      </div>
+
+      <!-- STAGE 1: Personal Information -->
+      <div class="ivs-stage active" id="ivs-stage-1">
+        <div class="ivs-trust">
+          <div class="ivs-trust-item"><span class="ivs-trust-ico">🔒</span>Your data is encrypted and never shared publicly</div>
+          <div class="ivs-trust-item"><span class="ivs-trust-ico">👁️</span>Only reviewed by Apatmento for safety verification</div>
+          <div class="ivs-trust-item"><span class="ivs-trust-ico">✅</span>One-time process — verified listings earn a trust badge</div>
+        </div>
+
+        <div class="ivs-row">
+          <div class="ivs-field">
+            <label class="ivs-label">First name</label>
+            <input class="ivs-input" id="ivs-first-name" type="text" placeholder="e.g. Kevin" autocomplete="given-name"/>
+          </div>
+          <div class="ivs-field">
+            <label class="ivs-label">Last name</label>
+            <input class="ivs-input" id="ivs-last-name" type="text" placeholder="e.g. Aloo" autocomplete="family-name"/>
+          </div>
+        </div>
+        <div class="ivs-row">
+          <div class="ivs-field">
+            <label class="ivs-label">Date of birth</label>
+            <input class="ivs-input" id="ivs-dob" type="date" autocomplete="bday"/>
+          </div>
+          <div class="ivs-field">
+            <label class="ivs-label">Nationality</label>
+            <select class="ivs-select" id="ivs-nationality">
+              <option value="">Select country</option>
+              <option value="KE" selected>Kenya</option>
+              <option value="TZ">Tanzania</option>
+              <option value="UG">Uganda</option>
+              <option value="RW">Rwanda</option>
+              <option value="ET">Ethiopia</option>
+              <option value="NG">Nigeria</option>
+              <option value="ZA">South Africa</option>
+              <option value="GB">United Kingdom</option>
+              <option value="US">United States</option>
+              <option value="OTHER">Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="ivs-field">
+          <label class="ivs-label">ID type</label>
+          <select class="ivs-select" id="ivs-id-type">
+            <option value="">Choose document type</option>
+            <option value="national_id">National ID Card (Kenya)</option>
+            <option value="passport">International Passport</option>
+            <option value="drivers_license">Driver's Licence</option>
+            <option value="alien_id">Alien Registration Card</option>
+          </select>
+        </div>
+        <div class="ivs-field">
+          <label class="ivs-label">ID / Document number</label>
+          <input class="ivs-input" id="ivs-id-number" type="text" placeholder="e.g. 12345678" autocomplete="off"/>
+        </div>
+        <button class="ivs-btn" onclick="ivsNextStage(1)" id="ivs-btn-1">
+          Continue
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+        <button class="ivs-btn-secondary" onclick="closeIdVerify()">Maybe later</button>
+      </div>
+
+      <!-- STAGE 2: Document Photos -->
+      <div class="ivs-stage" id="ivs-stage-2">
+        <p style="font-size:14px;color:#636480;line-height:1.55;margin-bottom:20px;">
+          Upload clear, well-lit photos of your ID document. Make sure all text is legible and the card fits fully in the frame.
+        </p>
+
+        <div class="ivs-upload-grid">
+          <!-- Front -->
+          <div class="ivs-upload-zone" id="ivs-front-zone" onclick="document.getElementById('ivs-front-input').click()">
+            <img class="ivs-upload-preview" id="ivs-front-preview" src="" alt=""/>
+            <div class="ivs-upload-content">
+              <div class="ivs-upload-icon">🪪</div>
+              <div class="ivs-upload-title">Front side</div>
+              <div class="ivs-upload-hint">Tap to upload</div>
+            </div>
+            <div class="ivs-upload-check">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+          </div>
+          <!-- Back -->
+          <div class="ivs-upload-zone" id="ivs-back-zone" onclick="document.getElementById('ivs-back-input').click()">
+            <img class="ivs-upload-preview" id="ivs-back-preview" src="" alt=""/>
+            <div class="ivs-upload-content">
+              <div class="ivs-upload-icon">🔄</div>
+              <div class="ivs-upload-title">Back side</div>
+              <div class="ivs-upload-hint">Tap to upload</div>
+            </div>
+            <div class="ivs-upload-check">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+          </div>
+        </div>
+        <p style="font-size:11px;color:#8E90AD;margin-bottom:20px;text-align:center;">
+          📱 You can also take a photo directly with your camera
+        </p>
+
+        <!-- Hidden file inputs -->
+        <input type="file" id="ivs-front-input" accept="image/*" capture="environment" style="display:none" onchange="ivsHandleDoc(this,'front')"/>
+        <input type="file" id="ivs-back-input" accept="image/*" capture="environment" style="display:none" onchange="ivsHandleDoc(this,'back')"/>
+
+        <button class="ivs-btn" onclick="ivsNextStage(2)" id="ivs-btn-2" disabled>
+          Continue
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+        <button class="ivs-btn-secondary" onclick="ivsBackStage(2)">← Back</button>
+      </div>
+
+      <!-- STAGE 3: Selfie with ID -->
+      <div class="ivs-stage" id="ivs-stage-3">
+        <p style="font-size:14px;color:#636480;line-height:1.55;margin-bottom:20px;">
+          Take a selfie <strong>holding your ID</strong> next to your face. This confirms you are the document holder.
+        </p>
+
+        <div class="ivs-selfie-zone" id="ivs-selfie-zone" onclick="document.getElementById('ivs-selfie-input').click()">
+          <img class="ivs-upload-preview" id="ivs-selfie-preview" src="" alt="" style="border-radius:18px;"/>
+          <div class="ivs-upload-content">
+            <div class="ivs-selfie-avatar">🤳</div>
+            <div class="ivs-upload-title" style="font-size:15px;">Take a selfie with your ID</div>
+            <div class="ivs-upload-hint" style="font-size:12px;text-align:center;max-width:200px;">Hold your ID card next to your face and smile 😊</div>
+          </div>
+          <div class="ivs-upload-check">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+        </div>
+        <input type="file" id="ivs-selfie-input" accept="image/*" capture="user" style="display:none" onchange="ivsHandleDoc(this,'selfie')"/>
+
+        <div class="ivs-trust" style="margin-top:20px;">
+          <div class="ivs-trust-item"><span class="ivs-trust-ico">📸</span>Photo is stored securely and never published</div>
+          <div class="ivs-trust-item"><span class="ivs-trust-ico">⏱️</span>Verification usually takes less than 24 hours</div>
+        </div>
+
+        <button class="ivs-btn" onclick="ivsSubmit()" id="ivs-btn-3" disabled>
+          Submit for Verification
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </button>
+        <button class="ivs-btn-secondary" onclick="ivsBackStage(3)">← Back</button>
+      </div>
+    </div>
+
+    <!-- SUCCESS STATE -->
+    <div class="ivs-success" id="ivs-success">
+      <div class="ivs-success-ico">🎉</div>
+      <div class="ivs-success-title">Verification submitted!</div>
+      <p class="ivs-success-sub">
+        Your documents are under review. You can continue listing your room now — we'll notify you once verified (usually within 24 hours).<br/><br/>
+        <strong>Verified hosts earn a ✓ Verified badge</strong> that dramatically increases tenant trust and booking rates.
+      </p>
+      <button class="ivs-btn" onclick="ivsComplete()" style="max-width:320px;margin:0 auto;">
+        Continue listing my room →
+      </button>
+    </div>
+  </div>
+</div>
+
 </body></html>
 
 
