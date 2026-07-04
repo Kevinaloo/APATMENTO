@@ -488,13 +488,8 @@ async function goDashboard(user) {
       last_name:  m.last_name||m.family_name||m.name?.split(' ').slice(1).join(' ')||'',
     },{ onConflict:'id' });
   } catch(e){}
-  // Get role
-  let role = 'guest';
-  try {
-    const { data:p } = await sb.from('profiles').select('last_role').eq('id',user.id).maybeSingle();
-    if (p?.last_role) role = p.last_role;
-  } catch(e){}
-  window.location.href = 'dashboard.html?role='+role+'&uid='+user.id;
+  // Always land as guest — user can explicitly switch to partner
+  window.location.href = 'dashboard.html?uid='+user.id;
 }
 
 /* ══ GOOGLE ══ */
