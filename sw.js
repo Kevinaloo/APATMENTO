@@ -7,7 +7,7 @@
    - Push notification handler
 ════════════════════════════════════════════════════════════════ */
 
-const VERSION = 'apatmento-v6';
+const VERSION = 'apatmento-v7';
 const STATIC_CACHE = `${VERSION}-static`;
 const DYNAMIC_CACHE = `${VERSION}-dynamic`;
 const IMAGE_CACHE   = `${VERSION}-images`;
