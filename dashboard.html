@@ -685,7 +685,7 @@ body{overflow-x:hidden;}
       </button>
       <div class="tb-right" id="tb-right-guest">
         <!-- Guest nav — Sign In + Sign Up (hidden when logged in) -->
-        <div id="dash-guest-nav" style="display:flex;align-items:center;gap:8px;">
+        <div id="dash-guest-nav" style="display:none;align-items:center;gap:8px;">
           <a href="auth.html" style="font-size:13px;font-weight:600;color:var(--ink-soft);text-decoration:none;padding:8px 16px;border-radius:100px;border:1px solid var(--line);background:rgba(255,255,255,.7);transition:all .22s;">Sign in</a>
           <a href="auth.html?mode=signup" style="font-size:13px;font-weight:600;color:#fff;text-decoration:none;padding:9px 18px;border-radius:100px;background:linear-gradient(135deg,var(--violet),var(--electric));box-shadow:0 4px 14px rgba(123,47,247,.3);">Sign up</a>
         </div>
@@ -1000,7 +1000,9 @@ async function init(){
   const loaderFail = setTimeout(()=>{ document.getElementById('loader')?.classList.add('done'); }, 4000);
 
   sb.auth.onAuthStateChange(async (event, session) => {
-    if (event !== 'INITIAL_SESSION') return; // only care about the first sync check
+    // Handle both INITIAL_SESSION (page load) and SIGNED_IN (after OAuth/signup redirect)
+    if (event !== 'INITIAL_SESSION' && event !== 'SIGNED_IN') return;
+    if (event === 'SIGNED_IN' && document.getElementById('dash-user-nav')?.style.display === 'flex') return; // already handled
 
     clearTimeout(loaderFail);
 
@@ -1017,8 +1019,8 @@ async function init(){
       loadStays();
       loadHeroVideo();
       setTimeout(loadDashboardHero, 400);
-    setTimeout(() => updateModeUI(CURRENT_ROLE), 50);
-    if(typeof ApatmentoChat!=="undefined") setTimeout(ApatmentoChat.initFAB, 800);
+      setTimeout(() => updateModeUI(CURRENT_ROLE), 50);
+      if(typeof ApatmentoChat!=="undefined") setTimeout(ApatmentoChat.initFAB, 800);
       return;
     }
 
@@ -1051,7 +1053,8 @@ async function init(){
     if(psc) psc.classList.remove('psc-hidden');
     const pill = document.getElementById('mode-pill');
     if(pill) pill.classList.add('visible');
-    updateModeUI(role);
+    CURRENT_ROLE = params.get('role') || 'guest';
+    updateModeUI(CURRENT_ROLE);
     document.getElementById('g-greeting').textContent = getGreeting();
     document.getElementById('g-avatar').textContent   = (firstName||'?')[0].toUpperCase();
     if (document.getElementById('nav-user-name'))
