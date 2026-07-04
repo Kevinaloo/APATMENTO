@@ -215,7 +215,7 @@
       }
 
       try {
-        const res = await fetch(`/.netlify/functions/check-payment-status?table=${opts.table}&reference=${encodeURIComponent(opts.reference)}`);
+        const res = await fetch(`/api/check-payment-status?table=${opts.table}&reference=${encodeURIComponent(opts.reference)}`);
         const data = await res.json();
 
         if (data.status === 'paid') {
