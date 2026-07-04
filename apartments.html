@@ -371,309 +371,8 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
 <div class="drawer" id="drawer"></div>
 
 <script>
-const SAMPLE_LISTINGS = [
-  {
-    id:"s1",name:"The Westlands Skybox",location:"Westlands, Nairobi",
-    city:"Nairobi",neighbourhood:"Westlands",
-    type:"Apartment",beds:2,baths:1,
-    sqm:72,floor:14,maxGuests:4,
-    price:5800,rating:4.9,reviews:91,
-    bookings:48,daysListed:180,
-    hot:true,
-    amenities:["WiFi", "Air Con", "Full Kitchen", "Parking", "Smart TV", "Washer", "Coffee", "Gym"],
-    desc:"Floor-to-ceiling windows on the 14th floor frame a panoramic Nairobi skyline. Fully furnished with premium appliances, hotel-quality linen and fibre broadband. Steps from Sarit Centre.",
-    host:"Sarah M.",hostInit:"S",
-    query:"modern apartment living room nairobi",
-    grad:"linear-gradient(135deg,#B8A4F4,#7B2FF7)",
-    source:"sample"
-  },
-  {
-    id:"s2",name:"Westlands Executive Suite",location:"Westlands, Nairobi",
-    city:"Nairobi",neighbourhood:"Westlands",
-    type:"Studio",beds:0,baths:1,
-    sqm:45,floor:8,maxGuests:2,
-    price:3800,rating:4.7,reviews:64,
-    bookings:38,daysListed:220,
-    hot:false,
-    amenities:["WiFi", "Air Con", "Kitchenette", "Smart TV", "Washer"],
-    desc:"A sleek studio on the 8th floor in the heart of Westlands. Perfect for solo travellers and couples. Walking distance to every major restaurant, bar and mall in Nairobi.",
-    host:"James K.",hostInit:"J",
-    query:"modern studio apartment interior design",
-    grad:"linear-gradient(135deg,#B8A4F4,#7B2FF7)",
-    source:"sample"
-  },
-  {
-    id:"s3",name:"Kilimani Garden Apartment",location:"Kilimani, Nairobi",
-    city:"Nairobi",neighbourhood:"Kilimani",
-    type:"Apartment",beds:3,baths:2,
-    sqm:95,floor:4,maxGuests:6,
-    price:7200,rating:4.8,reviews:55,
-    bookings:29,daysListed:300,
-    hot:true,
-    amenities:["WiFi", "Air Con", "Full Kitchen", "Pool", "Parking", "Smart TV", "Washer", "Garden"],
-    desc:"A spacious three-bedroom apartment with a private balcony overlooking a tropical garden. The building has a rooftop pool, fully equipped gym and 24-hour security.",
-    host:"Amina O.",hostInit:"A",
-    query:"luxury apartment balcony tropical garden",
-    grad:"linear-gradient(135deg,#8B6FE8,#4361FF)",
-    source:"sample"
-  },
-  {
-    id:"s4",name:"Kilimani Penthouse Loft",location:"Kilimani, Nairobi",
-    city:"Nairobi",neighbourhood:"Kilimani",
-    type:"Penthouse",beds:2,baths:2,
-    sqm:110,floor:18,maxGuests:4,
-    price:12500,rating:4.95,reviews:38,
-    bookings:21,daysListed:150,
-    hot:true,
-    amenities:["WiFi", "Air Con", "Full Kitchen", "Pool", "Parking", "Smart TV", "Gym", "Coffee"],
-    desc:"The top floor of Kilimani's most prestigious tower. Two bedrooms, a wrap-around terrace and unobstructed views of the Ngong Hills. Private access and concierge available.",
-    host:"David N.",hostInit:"D",
-    query:"penthouse apartment rooftop terrace city view",
-    grad:"linear-gradient(135deg,#8B6FE8,#4361FF)",
-    source:"sample"
-  },
-  {
-    id:"s5",name:"Karen Country Cottage",location:"Karen, Nairobi",
-    city:"Nairobi",neighbourhood:"Karen",
-    type:"Cottage",beds:2,baths:1,
-    sqm:80,floor:0,maxGuests:4,
-    price:6500,rating:4.85,reviews:72,
-    bookings:44,daysListed:400,
-    hot:true,
-    amenities:["WiFi", "Full Kitchen", "Parking", "Garden", "Fireplace", "Washer"],
-    desc:"A beautifully restored colonial cottage on a half-acre private garden in Karen. Wake up to birdsong and bougainvillea. Minutes from Karen Blixen Museum and the Giraffe Centre.",
-    host:"Lucy W.",hostInit:"L",
-    query:"cottage garden nairobi interior cozy",
-    grad:"linear-gradient(135deg,#5EEAD4,#2DD4BF)",
-    source:"sample"
-  },
-  {
-    id:"s6",name:"Karen Ridgeline Villa",location:"Karen, Nairobi",
-    city:"Nairobi",neighbourhood:"Karen",
-    type:"Villa",beds:4,baths:3,
-    sqm:250,floor:0,maxGuests:8,
-    price:22000,rating:4.9,reviews:29,
-    bookings:15,daysListed:200,
-    hot:false,
-    amenities:["WiFi", "Full Kitchen", "Pool", "Parking", "Garden", "Smart TV", "Washer", "Gym", "Security"],
-    desc:"A stunning four-bedroom villa set on two acres of manicured gardens in Karen. Private pool, outdoor dining terrace and views of the Ngong Hills. Ideal for families or groups.",
-    host:"Peter M.",hostInit:"P",
-    query:"villa pool garden luxury interior",
-    grad:"linear-gradient(135deg,#5EEAD4,#2DD4BF)",
-    source:"sample"
-  },
-  {
-    id:"s7",name:"Upper Hill Business Apt",location:"Upper Hill, Nairobi",
-    city:"Nairobi",neighbourhood:"Upper Hill",
-    type:"Apartment",beds:1,baths:1,
-    sqm:55,floor:10,maxGuests:2,
-    price:4200,rating:4.7,reviews:83,
-    bookings:62,daysListed:500,
-    hot:false,
-    amenities:["WiFi", "Air Con", "Kitchenette", "Smart TV", "Parking", "Gym"],
-    desc:"Purpose-built for business travellers in the heart of Upper Hill. Walking distance to NHIF, Kenyatta National Hospital and all embassies. High-speed fibre and dedicated work desk.",
-    host:"Grace A.",hostInit:"G",
-    query:"business apartment desk workspace modern",
-    grad:"linear-gradient(135deg,#B8A4F4,#7B2FF7)",
-    source:"sample"
-  },
-  {
-    id:"s8",name:"Parklands Family Flat",location:"Parklands, Nairobi",
-    city:"Nairobi",neighbourhood:"Parklands",
-    type:"Apartment",beds:3,baths:2,
-    sqm:100,floor:3,maxGuests:6,
-    price:6800,rating:4.75,reviews:46,
-    bookings:27,daysListed:280,
-    hot:false,
-    amenities:["WiFi", "Air Con", "Full Kitchen", "Parking", "Smart TV", "Washer", "Pool"],
-    desc:"A bright and spacious family apartment in leafy Parklands. Three large bedrooms, a fully equipped kitchen and a communal rooftop pool. Ten minutes to Westgate Mall.",
-    host:"Fatima H.",hostInit:"F",
-    query:"family apartment bright living room interior",
-    grad:"linear-gradient(135deg,#B8A4F4,#7B2FF7)",
-    source:"sample"
-  },
-  {
-    id:"s9",name:"Lavington Townhouse",location:"Lavington, Nairobi",
-    city:"Nairobi",neighbourhood:"Lavington",
-    type:"Villa",beds:3,baths:2,
-    sqm:140,floor:0,maxGuests:6,
-    price:9500,rating:4.88,reviews:34,
-    bookings:18,daysListed:160,
-    hot:true,
-    amenities:["WiFi", "Air Con", "Full Kitchen", "Parking", "Garden", "Washer", "Smart TV", "Security"],
-    desc:"A private townhouse in one of Nairobi's most peaceful residential areas. Enclosed garden, outdoor dining area, fully equipped kitchen. A 10-minute drive from Yaya Centre and Hurlingham.",
-    host:"Michael T.",hostInit:"M",
-    query:"townhouse interior modern living room nairobi",
-    grad:"linear-gradient(135deg,#B8A4F4,#7B2FF7)",
-    source:"sample"
-  },
-  {
-    id:"s10",name:"Hurlingham Studio Plus",location:"Hurlingham, Nairobi",
-    city:"Nairobi",neighbourhood:"Hurlingham",
-    type:"Studio",beds:1,baths:1,
-    sqm:50,floor:5,maxGuests:2,
-    price:3200,rating:4.6,reviews:57,
-    bookings:41,daysListed:350,
-    hot:false,
-    amenities:["WiFi", "Air Con", "Kitchenette", "Smart TV"],
-    desc:"A well-appointed one-bed studio in Hurlingham. Clean, modern and affordable. Perfect for the solo traveller who needs a quiet base to explore Nairobi.",
-    host:"Naomi J.",hostInit:"N",
-    query:"studio apartment modern minimal interior",
-    grad:"linear-gradient(135deg,#B8A4F4,#7B2FF7)",
-    source:"sample"
-  },
-  {
-    id:"s11",name:"Gigiri Diplomat Flat",location:"Gigiri, Nairobi",
-    city:"Nairobi",neighbourhood:"Gigiri",
-    type:"Apartment",beds:2,baths:2,
-    sqm:90,floor:2,maxGuests:4,
-    price:8500,rating:4.92,reviews:41,
-    bookings:22,daysListed:190,
-    hot:true,
-    amenities:["WiFi", "Air Con", "Full Kitchen", "Parking", "Security", "Smart TV", "Washer", "Garden"],
-    desc:"Preferred by UN staff and diplomats, this secure two-bedroom flat is walking distance to the UN Complex and Village Market. Gated compound with 24-hour security and garden.",
-    host:"Rajan P.",hostInit:"R",
-    query:"diplomat apartment secure gated compound",
-    grad:"linear-gradient(135deg,#B8A4F4,#7B2FF7)",
-    source:"sample"
-  },
-  {
-    id:"s12",name:"Runda Retreat Home",location:"Runda, Nairobi",
-    city:"Nairobi",neighbourhood:"Runda",
-    type:"Villa",beds:4,baths:3,
-    sqm:200,floor:0,maxGuests:8,
-    price:18000,rating:4.87,reviews:22,
-    bookings:11,daysListed:130,
-    hot:false,
-    amenities:["WiFi", "Full Kitchen", "Pool", "Parking", "Garden", "Smart TV", "Washer", "Gym", "Security"],
-    desc:"An elegant four-bedroom home in the prestigious Runda estate. Private heated pool, lush gardens and a dedicated housekeeper. Complete seclusion yet 20 minutes from JKIA.",
-    host:"Carol O.",hostInit:"C",
-    query:"luxury villa pool interior tropical",
-    grad:"linear-gradient(135deg,#B8A4F4,#7B2FF7)",
-    source:"sample"
-  },
-  {
-    id:"s13",name:"Naivasha Lakeside Cabin",location:"Naivasha, Rift Valley",
-    city:"Naivasha",neighbourhood:"Lake Naivasha",
-    type:"Cottage",beds:2,baths:1,
-    sqm:60,floor:0,maxGuests:4,
-    price:5200,rating:4.93,reviews:68,
-    bookings:52,daysListed:380,
-    hot:true,
-    amenities:["WiFi", "Full Kitchen", "Parking", "Garden", "Fireplace", "Washer"],
-    desc:"Wake up to flamingos on Lake Naivasha from your private veranda. A lovingly restored two-bedroom cabin surrounded by acacia trees, two hours from Nairobi. Boat trips available.",
-    host:"Tom B.",hostInit:"T",
-    query:"cabin lake view naivasha interior cozy",
-    grad:"linear-gradient(135deg,#2DD4BF,#5EEAD4)",
-    source:"sample"
-  },
-  {
-    id:"s14",name:"Nyali Beachfront Apt",location:"Nyali, Mombasa",
-    city:"Mombasa",neighbourhood:"Nyali",
-    type:"Apartment",beds:2,baths:2,
-    sqm:85,floor:3,maxGuests:4,
-    price:7800,rating:4.88,reviews:77,
-    bookings:58,daysListed:420,
-    hot:true,
-    amenities:["WiFi", "Air Con", "Full Kitchen", "Pool", "Parking", "Smart TV", "Beach Access"],
-    desc:"Steps from the white sand of Nyali Beach. This bright two-bedroom apartment has a sea-view balcony, communal infinity pool and direct beach access. Air-conditioned throughout.",
-    host:"Zara H.",hostInit:"Z",
-    query:"beach apartment sea view pool tropical",
-    grad:"linear-gradient(135deg,#FFB59E,#FF6B2C)",
-    source:"sample"
-  },
-  {
-    id:"s15",name:"Old Town Swahili Loft",location:"Mombasa Old Town, Mombasa",
-    city:"Mombasa",neighbourhood:"Old Town",
-    type:"Apartment",beds:1,baths:1,
-    sqm:65,floor:2,maxGuests:2,
-    price:4800,rating:4.79,reviews:43,
-    bookings:31,daysListed:260,
-    hot:false,
-    amenities:["WiFi", "Air Con", "Kitchenette", "Smart TV"],
-    desc:"A beautifully restored 19th-century Swahili merchant's house in Mombasa Old Town. Carved doors, ornate balconies and whitewashed walls. UNESCO World Heritage surroundings.",
-    host:"Ali B.",hostInit:"A",
-    query:"swahili architecture interior heritage apartment",
-    grad:"linear-gradient(135deg,#FFB59E,#FF6B2C)",
-    source:"sample"
-  },
-  {
-    id:"s16",name:"Diani Palm Villa",location:"Diani Beach, Kwale",
-    city:"Diani",neighbourhood:"Diani Beach",
-    type:"Villa",beds:3,baths:2,
-    sqm:150,floor:0,maxGuests:6,
-    price:14500,rating:4.95,reviews:31,
-    bookings:24,daysListed:180,
-    hot:true,
-    amenities:["WiFi", "Air Con", "Full Kitchen", "Pool", "Parking", "Garden", "Beach Access", "Smart TV"],
-    desc:"The ultimate Indian Ocean escape. Three-bed villa with private pool, coconut garden and direct access to Diani's powder-white beach. A dedicated housekeeper is included.",
-    host:"Sophie K.",hostInit:"S",
-    query:"beach villa pool coconut garden interior",
-    grad:"linear-gradient(135deg,#FF6B2C,#FFB59E)",
-    source:"sample"
-  },
-  {
-    id:"s17",name:"Nakuru Eco Lodge Suite",location:"Nakuru, Rift Valley",
-    city:"Nakuru",neighbourhood:"Lake Nakuru",
-    type:"Villa",beds:1,baths:1,
-    sqm:55,floor:0,maxGuests:2,
-    price:6200,rating:4.82,reviews:37,
-    bookings:26,daysListed:220,
-    hot:false,
-    amenities:["WiFi", "Full Kitchen", "Parking", "Garden", "Fireplace"],
-    desc:"A solar-powered eco-suite inside a private conservancy bordering Lake Nakuru National Park. Flamingos visible from the veranda. Guided bird walks included.",
-    host:"Ben O.",hostInit:"B",
-    query:"eco lodge interior natural wood safari",
-    grad:"linear-gradient(135deg,#B8A4F4,#7B2FF7)",
-    source:"sample"
-  },
-  {
-    id:"s18",name:"Kisumu Lake Victoria Apt",location:"Milimani, Kisumu",
-    city:"Kisumu",neighbourhood:"Milimani",
-    type:"Apartment",beds:2,baths:1,
-    sqm:70,floor:4,maxGuests:4,
-    price:3500,rating:4.71,reviews:29,
-    bookings:19,daysListed:280,
-    hot:false,
-    amenities:["WiFi", "Air Con", "Full Kitchen", "Parking", "Smart TV", "Lake View"],
-    desc:"A comfortable apartment with commanding views over Lake Victoria from the 4th floor. Walking distance to Kisumu city centre, Megacity Mall and the lake shore.",
-    host:"Kevin A.",hostInit:"K",
-    query:"lake view apartment interior modern",
-    grad:"linear-gradient(135deg,#B8A4F4,#7B2FF7)",
-    source:"sample"
-  },
-  {
-    id:"s19",name:"Nanyuki Mt Kenya Cabin",location:"Nanyuki, Laikipia",
-    city:"Nanyuki",neighbourhood:"Mt Kenya foothills",
-    type:"Cottage",beds:2,baths:1,
-    sqm:65,floor:0,maxGuests:4,
-    price:5500,rating:4.9,reviews:44,
-    bookings:32,daysListed:320,
-    hot:true,
-    amenities:["WiFi", "Full Kitchen", "Fireplace", "Parking", "Garden", "Washer"],
-    desc:"A warm, hand-built cabin in the foothills of Mount Kenya. Wake up to alpine air, elephant sightings and clear views of the peaks. Fireplace, private garden and stargazing terrace.",
-    host:"Wanjiku M.",hostInit:"W",
-    query:"mountain cabin cozy fireplace interior",
-    grad:"linear-gradient(135deg,#B8A4F4,#7B2FF7)",
-    source:"sample"
-  },
-  {
-    id:"s20",name:"The Westlands Penthouse",location:"Westlands, Nairobi",
-    city:"Nairobi",neighbourhood:"Westlands",
-    type:"Penthouse",beds:3,baths:2,
-    sqm:160,floor:20,maxGuests:6,
-    price:16000,rating:4.97,reviews:19,
-    bookings:10,daysListed:90,
-    hot:true,
-    amenities:["WiFi", "Air Con", "Full Kitchen", "Pool", "Parking", "Smart TV", "Gym", "Coffee", "Washer", "Elevator"],
-    desc:"The crown of Westlands. Three bedrooms, a private rooftop terrace with a plunge pool and 360-degree views of Nairobi. Concierge service, airport transfer included on request.",
-    host:"Victor M.",hostInit:"V",
-    query:"penthouse luxury interior modern high rise",
-    grad:"linear-gradient(135deg,#B8A4F4,#7B2FF7)",
-    source:"sample"
-  }
-];
-
+const SAMPLE_LISTINGS = []; // Real listings only — loaded from Supabase
+let SAMPLE_LISTINGS = LISTINGS; // alias for existing code
 /* ════════════════════════════════════════════════════════════════
    APATMENTO STAYS — unified data layer
    Priority: native (Supabase partner listings) > sample listings
@@ -812,18 +511,16 @@ async function loadListings() {
   // Load native listings (partner Supabase) in parallel with rendering samples
   const nativePromise = loadNativeListings();
 
-  // Show samples immediately so page never looks empty
-  currentListings = [...SAMPLE_LISTINGS];
+  // Load native listings — show empty state while fetching
+  currentListings = [];
   applyAndRender();
 
   // Merge native on top when ready
   const native = await nativePromise;
   nativeCount = native.length;
   if (native.length > 0) {
-    // Native listings go FIRST, then samples (deduplicated by title)
-    const sampleTitles = new Set(native.map(n => n.name.toLowerCase()));
-    const filteredSamples = SAMPLE_LISTINGS.filter(s => !sampleTitles.has(s.name.toLowerCase()));
-    currentListings = [...native, ...filteredSamples];
+    // Show only real listings
+    currentListings = [...native];
     applyAndRender();
   }
   updateBanner('ready');
@@ -849,7 +546,16 @@ function renderCards(list) {
   const grid = document.getElementById('grid');
 
   if (!list.length) {
-    grid.innerHTML = `<div class="empty" style="grid-column:1/-1;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5M5 9.5V20h14V9.5"/></svg><div class="empty-title">No stays match</div><div class="empty-sub">Try removing a filter.</div></div>`;
+    grid.innerHTML = `<div class="empty">
+      <div style="font-size:48px;margin-bottom:16px;">🏠</div>
+      <div class="empty-title">No listings yet in this area</div>
+      <p class="empty-sub" style="font-size:14px;color:var(--ink-faint);margin:10px 0 20px;max-width:280px;text-align:center;line-height:1.6;">
+        Be the first to list your space here.<br/>Partners keep 100% of every booking.
+      </p>
+      <a href="add-listing.html?type=apartment&back=1" style="display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border-radius:100px;background:linear-gradient(135deg,var(--violet),var(--electric));color:#fff;font-weight:700;font-size:13px;text-decoration:none;">
+        + List your space
+      </a>
+    </div><div class="empty-sub">Try removing a filter.</div></div>`;
     return;
   }
 
