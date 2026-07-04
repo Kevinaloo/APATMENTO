@@ -449,6 +449,7 @@ function nav(section,el){
   if(section==='bookings')   loadBookings();
   if(section==='settings')   loadSettings();
   if(section==='admins')     loadAdmins();
+    if(section==='scraper')    loadScraper();
   if(section==='dashboard')  loadDashboard();
 }
 
@@ -759,6 +760,149 @@ async function removeAdmin(id,email){
     if(adminRow){ADMIN=session.user;ADMIN._role=adminRow.role;ADMIN._name=adminRow.name;showApp();}
   }
 })();
+
+/* ═══ SCRAPER MANAGEMENT ═══ */
+async function loadScraper(){
+  const [evRes, tourRes, srcRes] = await Promise.all([
+    sb.from('scraped_events').select('id', {count:'exact', head:true}).eq('active',true),
+    sb.from('scraped_tours').select('id', {count:'exact', head:true}).eq('active',true),
+    sb.from('scrape_sources').select('*').order('service').order('label'),
+  ]);
+
+  document.getElementById('sc-total-events').textContent = evRes.count ?? '—';
+  document.getElementById('sc-total-tours').textContent  = tourRes.count ?? '—';
+
+  const srcs = srcRes.data || [];
+  const activeSrcs = srcs.filter(s => s.active).length;
+  document.getElementById('sc-sources-ok').textContent = activeSrcs;
+
+  // Last run
+  const lastRun = srcs.filter(s=>s.last_run).map(s=>s.last_run).sort().reverse()[0];
+  document.getElementById('sc-last-run').textContent = lastRun
+    ? new Date(lastRun).toLocaleString('en-KE',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})
+    : 'Never';
+
+  // Render sources tables
+  renderScraperSources(srcs.filter(s=>s.service==='events'), 'sc-events-sources');
+  renderScraperSources(srcs.filter(s=>s.service==='tours'),  'sc-tours-sources');
+
+  // Recent events
+  const {data:events} = await sb.from('scraped_events')
+    .select('title,venue,start_date,price_from,currency,source_url,image_url')
+    .eq('active',true).order('scraped_at',{ascending:false}).limit(10);
+
+  const re = document.getElementById('sc-recent-events');
+  if (!events?.length) { re.innerHTML='<div class="empty"><div class="empty-title">No events yet</div></div>'; return; }
+  re.innerHTML = '<table><thead><tr><th>Title</th><th>Venue</th><th>Date</th><th>Price</th><th>Source</th></tr></thead><tbody>' +
+    events.map(e=>`<tr>
+      <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${e.image_url?`<img src="${e.image_url}" style="width:32px;height:32px;object-fit:cover;border-radius:6px;margin-right:8px;vertical-align:middle;" onerror="this.remove()"/>`:''}${e.title||'—'}</td>
+      <td style="color:var(--ink-faint);font-size:12px;">${e.venue||'—'}</td>
+      <td style="font-size:12px;">${e.start_date?new Date(e.start_date).toLocaleDateString('en-KE',{day:'numeric',month:'short',year:'numeric'}):'—'}</td>
+      <td>${e.price_from!=null?(e.price_from===0?'<span style="color:var(--mint);">Free</span>':e.currency+' '+Number(e.price_from).toLocaleString()):'—'}</td>
+      <td style="font-size:11px;color:var(--ink-faint);">${(e.source_url||'').replace(/^https?:\/\/(www\.)?/,'').split('/')[0]}</td>
+    </tr>`).join('') + '</tbody></table>';
+}
+
+function renderScraperSources(srcs, elId) {
+  const el = document.getElementById(elId);
+  if (!srcs.length) { el.innerHTML='<div class="empty"><div class="empty-title">No sources configured</div></div>'; return; }
+  el.innerHTML = '<table><thead><tr><th>Source</th><th>URL</th><th>Status</th><th>Last Run</th><th>Found</th><th>Active</th></tr></thead><tbody>' +
+    srcs.map(s => {
+      const statusColor = s.last_status==='ok' ? 'var(--ok)' : s.last_status?.startsWith('error') ? 'var(--err)' : 'var(--ink-faint)';
+      const lastRun = s.last_run ? new Date(s.last_run).toLocaleString('en-KE',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : 'Never';
+      return `<tr>
+        <td><strong>${s.label||'—'}</strong></td>
+        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:var(--ink-faint);">${s.url||'—'}</td>
+        <td><span style="font-size:11px;font-weight:600;color:${statusColor};">${s.last_status||'pending'}</span></td>
+        <td style="font-size:12px;color:var(--ink-faint);">${lastRun}</td>
+        <td style="font-weight:600;">${s.events_found??0}</td>
+        <td>
+          <button onclick="toggleSource('${s.id}',${s.active})" style="padding:4px 10px;border-radius:8px;border:1px solid ${s.active?'var(--ok)':'var(--line)'};background:${s.active?'rgba(45,212,191,.1)':'var(--glass)'};color:${s.active?'var(--ok)':'var(--ink-faint)'};font-size:11px;font-weight:600;cursor:pointer;">
+            ${s.active ? '● On' : '○ Off'}
+          </button>
+        </td>
+      </tr>`;
+    }).join('') + '</tbody></table>';
+}
+
+async function toggleSource(id, currentlyActive) {
+  await sb.from('scrape_sources').update({active: !currentlyActive}).eq('id', id);
+  loadScraper();
+}
+
+async function runScraper(type) {
+  const btnId = 'btn-run-' + type;
+  const btn = document.getElementById(btnId);
+  const status = document.getElementById('sc-run-status');
+  btn.disabled = true;
+  btn.textContent = '⏳ Running…';
+  status.textContent = 'Scraping ' + type + ', please wait up to 60 seconds…';
+
+  try {
+    const r = await fetch('/api/scrape-' + type, { method: 'GET' });
+    const d = await r.json();
+    if (d.ok) {
+      const total = d.summary?.find(s=>s.total_upserted)?.total_upserted ?? 0;
+      status.textContent = `✅ Done! ${total} ${type} upserted in ${(d.ms/1000).toFixed(1)}s`;
+    } else {
+      status.textContent = '❌ Error: ' + (d.error || 'Unknown');
+    }
+  } catch(e) {
+    status.textContent = '❌ Network error: ' + e.message;
+  }
+  
+  btn.disabled = false;
+  btn.textContent = '▶ Scrape ' + (type.charAt(0).toUpperCase()+type.slice(1)) + ' now';
+  loadScraper(); // refresh stats
+}
+
 </script>
+
+    <!-- ═══════════════════════ SCRAPER SECTION ═══════════════════════ -->
+    <div class="page-section" id="sec-scraper">
+      <div class="page-hd">
+        <div class="page-title">Data <em>Scraper</em></div>
+        <div class="page-sub">Manage event and tour ingestion sources. Monitor health and trigger manual runs.</div>
+      </div>
+
+      <!-- Stats row -->
+      <div class="stat-row" id="scraper-stats">
+        <div class="stat"><div class="stat-val" id="sc-total-events">—</div><div class="stat-lbl">Live Events</div></div>
+        <div class="stat"><div class="stat-val" id="sc-total-tours">—</div><div class="stat-lbl">Live Tours</div></div>
+        <div class="stat"><div class="stat-val" id="sc-sources-ok">—</div><div class="stat-lbl">Sources Active</div></div>
+        <div class="stat"><div class="stat-val" id="sc-last-run">—</div><div class="stat-lbl">Last Scrape</div></div>
+      </div>
+
+      <!-- Run buttons -->
+      <div class="card" style="margin-bottom:16px;">
+        <div class="card-title">Manual Run</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button onclick="runScraper('events')" id="btn-run-events" style="padding:10px 20px;border-radius:10px;background:linear-gradient(135deg,var(--violet),var(--electric));color:#fff;border:none;font-family:var(--font-body);font-weight:600;font-size:13px;cursor:pointer;transition:opacity .2s;">
+            ▶ Scrape Events now
+          </button>
+          <button onclick="runScraper('tours')" id="btn-run-tours" style="padding:10px 20px;border-radius:10px;background:linear-gradient(135deg,var(--mint),#0D9488);color:#fff;border:none;font-family:var(--font-body);font-weight:600;font-size:13px;cursor:pointer;transition:opacity .2s;">
+            ▶ Scrape Tours now
+          </button>
+          <span id="sc-run-status" style="font-size:12px;color:var(--ink-faint);align-self:center;"></span>
+        </div>
+      </div>
+
+      <!-- Sources table -->
+      <div class="card">
+        <div class="card-title">Event Sources</div>
+        <div class="tbl-wrap" id="sc-events-sources"><div class="empty"><div class="empty-title">Loading…</div></div></div>
+      </div>
+
+      <div class="card" style="margin-top:16px;">
+        <div class="card-title">Tour Sources</div>
+        <div class="tbl-wrap" id="sc-tours-sources"><div class="empty"><div class="empty-title">Loading…</div></div></div>
+      </div>
+
+      <!-- Recent events sample -->
+      <div class="card" style="margin-top:16px;">
+        <div class="card-title">Recently Scraped Events <span style="font-size:11px;font-weight:400;color:var(--ink-faint);">— latest 10</span></div>
+        <div class="tbl-wrap" id="sc-recent-events"><div class="empty"><div class="empty-title">Loading…</div></div></div>
+      </div>
+    </div>
 </body>
 </html>
