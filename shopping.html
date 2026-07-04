@@ -413,7 +413,37 @@ filterShop();
 <script src="/analytics.js" defer></script>
 <script src="/pwa.js" defer></script>
 <script src="/referral.js" defer></script>
-<script src="/showcase.js" defer></script>
+<script src="/showcase.js" defer>
+/* ── LIVE SHOPPING from Supabase ── */
+(async function loadLiveShopping(){
+  try {
+    const r = await fetch('https://gfwgbgdvxtocwhilrtdw.supabase.co/rest/v1/scraped_shopping?active=eq.true&in_stock=eq.true&order=hot.desc,name.asc&limit=60', {
+      headers: { 'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw' }
+    });
+    if(!r.ok) return;
+    const rows = await r.json();
+    if(!rows.length) return;
+    const mapped = rows.map((e,i) => ({
+      id: 'live_' + i,
+      name: e.name,
+      cat: e.category || 'crafts',
+      seller: e.seller || e.market || 'Nairobi',
+      price: e.price || 0,
+      tags: e.tags || [],
+      desc: e.description || e.name,
+      hot: e.hot || false,
+      img: e.image_url || null,
+      market: e.market || null,
+      live: true,
+    }));
+    PRODUCTS.length = 0;
+    PRODUCTS.push(...mapped);
+    if(typeof applyFilters === 'function') applyFilters();
+    else if(typeof renderGrid === 'function') renderGrid(PRODUCTS);
+  } catch(err) { console.warn('Live shopping failed:', err.message); }
+})();
+
+</script>
 </body>
 </html>
 
