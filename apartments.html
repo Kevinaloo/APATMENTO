@@ -386,6 +386,9 @@ const UNSPLASH_KEY = 'YoImDCLHHDFQbvp_VJaFkC0oPMDuDiDp7zB0q8JQHXE'; // demo key 
 let sb = null;
 try { const { createClient } = supabase; sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY); } catch(e) {}
 
+// Init chat FAB when user is logged in
+document.addEventListener("DOMContentLoaded",()=>{if(typeof ApatmentoChat!=="undefined")setTimeout(ApatmentoChat.initFAB,1000);});
+
 let currentListings = [];
 let activeFilters = new Set(['all']);
 let photoCache = {};       // query -> url cache so we don't re-fetch same photos
@@ -735,6 +738,7 @@ setTimeout(dismissEnterTx,3500);
 </script>
 <div data-showcase="window"></div>
 <script src="/analytics.js" defer></script>
+<script src="/chat.js" defer></script>
 <script src="/pwa.js" defer></script>
 <script src="/referral.js" defer></script>
 <script src="/showcase.js" defer></script>
