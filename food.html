@@ -397,7 +397,7 @@ function openRestaurant(id){
   </div>
   <div class="dr-body">
     <div class="dr-tag">${r.area} · ${r.delivery} · Min KES ${r.minOrder}</div>
-    <div class="dr-title">${r.name}</div>
+    <div class="dr-title">${r.name}${r.rating?`<span style="font-size:14px;font-weight:500;color:#F59E0B;margin-left:8px;">⭐ ${r.rating}</span>`:''}</div>
     <div class="dr-tags">${r.tags.map(t=>`<span class="card-tag">${t}</span>`).join('')}</div>
     <p class="dr-desc">${r.desc}</p>
     <div class="dr-cta-box">
@@ -416,7 +416,43 @@ filterFood();
 <script src="/analytics.js" defer></script>
 <script src="/pwa.js" defer></script>
 <script src="/referral.js" defer></script>
-<script src="/showcase.js" defer></script>
+<script src="/showcase.js" defer>
+/* ── LIVE RESTAURANTS from Supabase ── */
+(async function loadLiveRestaurants(){
+  try {
+    const r = await fetch('https://gfwgbgdvxtocwhilrtdw.supabase.co/rest/v1/scraped_restaurants?active=eq.true&order=rating.desc.nullslast,hot.desc&limit=60', {
+      headers: { 'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw' }
+    });
+    if(!r.ok) return;
+    const rows = await r.json();
+    if(!rows.length) return;
+    const mapped = rows.map((e,i) => ({
+      id: 'live_' + i,
+      name: e.name,
+      cuisine: e.cuisine || 'kenyan',
+      area: e.area || 'Nairobi',
+      delivery: e.delivery_mins ? e.delivery_mins + ' min' : 'Dine-in only',
+      fee: e.delivery_fee || 0,
+      minOrder: e.min_order || 0,
+      tags: e.tags || [],
+      desc: e.description || e.name,
+      hot: e.hot || false,
+      phone: e.phone || null,
+      website: e.website || null,
+      priceRange: e.price_range || '',
+      rating: e.rating || null,
+      reviews: e.review_count || 0,
+      img: e.image_url || null,
+      live: true,
+    }));
+    RESTAURANTS.length = 0;
+    RESTAURANTS.push(...mapped);
+    if(typeof applyFilters === 'function') applyFilters();
+    else if(typeof renderGrid === 'function') renderGrid(RESTAURANTS);
+  } catch(err) { console.warn('Live restaurants failed:', err.message); }
+})();
+
+</script>
 </body>
 </html>
 
