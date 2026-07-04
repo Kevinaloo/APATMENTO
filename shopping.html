@@ -354,6 +354,19 @@ const PRODUCTS=[
   {id:7,name:'Natural Shea Butter Body Cream',cat:'beauty',seller:'Afya Naturals',price:850,tags:['100% natural','No parabens','Nairobi made'],desc:'Raw unrefined shea butter blended with Kenyan baobab and marula oils. No artificial fragrance. Deeply moisturising.',hot:true},
   {id:8,name:'Nairobi City Skyline Print',cat:'art',seller:'Nairobi Art Gallery',price:3200,tags:['Giclee print','Limited edition','Framed'],desc:'A stunning limited-edition giclee print of the Nairobi skyline at golden hour. A5 to A1 sizes available. Framing optional.',hot:false},
 ];
+
+/* ── Category fallback images (Unsplash CDN) ── */
+const CAT_IMGS = {
+  fashion:     'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=700&q=85&fit=crop',
+  art:         'https://images.unsplash.com/photo-1573868396123-ef72951f47d3?w=700&q=85&fit=crop',
+  electronics: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=700&q=85&fit=crop',
+  food:        'https://images.unsplash.com/photo-1510776108706-d196f68b4b98?w=700&q=85&fit=crop',
+  home:        'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=700&q=85&fit=crop',
+  crafts:      'https://images.unsplash.com/photo-1578681994506-b8f463449011?w=700&q=85&fit=crop',
+  experience:  'https://images.unsplash.com/photo-1519125323398-675f0ddb6308?w=700&q=85&fit=crop',
+  gifts:       'https://images.unsplash.com/photo-1513201099705-a9746e1e201f?w=700&q=85&fit=crop',
+};
+
 let _shopFilter='all';
 function setShopFilter(k,el){_shopFilter=k;document.querySelectorAll('.fchip').forEach(c=>c.classList.remove('active'));el.classList.add('active');filterShop();}
 function filterShop(){
@@ -368,10 +381,11 @@ function filterShop(){
   const g=document.getElementById('grid');
   if(!list.length){g.innerHTML='<div class="empty"><div class="empty-title">No products match</div><div class="empty-sub">Try a different search or filter.</div></div>';return;}
   g.innerHTML=list.map((p,i)=>`
-  <div class="card" style="transition-delay:${i*45}ms" onclick="openProduct(${p.id})">
+  <div class="card" style="transition-delay:${i*45}ms" onclick="openProduct('${p.id}')">
     <div class="card-img" style="background:linear-gradient(135deg,#8B6FE8,#4361FF);">
-      ${p.hot?'<div class="card-badge">⭐ Popular</div>':''}
-      <svg class="card-img-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7h12l1 13H5z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>
+      ${(p.img||CAT_IMGS[p.cat]||CAT_IMGS.crafts)?`<img src="${p.img||CAT_IMGS[p.cat]||CAT_IMGS.crafts}" alt="" loading="lazy" decoding="async" onerror="this.remove()" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;"><div style="position:absolute;inset:0;z-index:1;background:linear-gradient(to top,rgba(10,10,20,.3) 0%,transparent 50%);pointer-events:none;"></div>`:''}
+      ${p.hot?'<div class="card-badge" style="z-index:2;">⭐ Popular</div>':''}
+      ${(p.img||CAT_IMGS[p.cat])?'':'<svg class="card-img-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7h12l1 13H5z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>
     </div>
     <div class="card-body">
       <div class="card-meta-top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>${p.seller}</div>
@@ -386,10 +400,11 @@ function filterShop(){
   requestAnimationFrame(()=>{document.querySelectorAll('.card').forEach((c,i)=>setTimeout(()=>c.classList.add('in'),i*45));});
 }
 function openProduct(id){
-  const p=PRODUCTS.find(x=>x.id===id);if(!p)return;
+  const p=PRODUCTS.find(x=>String(x.id)===String(id));if(!p)return;
   document.getElementById('drawer').innerHTML=`
-  <div class="dr-img" style="background:var(--theme-grad);">
-    <button class="dr-close" onclick="closeDrawer()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+  <div class="dr-img" style="background:var(--theme-grad);position:relative;overflow:hidden;">
+    ${(p.img||CAT_IMGS[p.cat])?`<img src="${p.img||CAT_IMGS[p.cat]}" alt="" decoding="async" onerror="this.remove()" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;"><div style="position:absolute;inset:0;z-index:1;background:linear-gradient(to top,rgba(10,10,20,.4) 0%,transparent 60%);pointer-events:none;"></div>`:''}
+    <button class="dr-close" style="z-index:3;" onclick="closeDrawer()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <svg class="dr-img-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7h12l1 13H5z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>
   </div>
   <div class="dr-body">
