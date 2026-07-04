@@ -2,9 +2,10 @@
 User-agent: *
 Allow: /
 
-# Public pages
+# Public service pages — high crawl priority
 Allow: /index.html
 Allow: /apartments.html
+Allow: /roommates.html
 Allow: /flights.html
 Allow: /tours.html
 Allow: /events.html
@@ -12,23 +13,30 @@ Allow: /rides.html
 Allow: /food.html
 Allow: /shopping.html
 Allow: /carhire.html
-Allow: /add-listing.html
+Allow: /auth.html
+Allow: /terms.html
+Allow: /privacy.html
 
 # Private — keep out of index
-Disallow: /auth.html
 Disallow: /dashboard.html
-Disallow: /my-bookings.html
 Disallow: /booking-confirm.html
-Disallow: /partner-listings.html
-Disallow: /partner-bookings.html
-Disallow: /partner-earnings.html
-Disallow: /partner-calendar.html
-Disallow: /partner-analytics.html
-Disallow: /partner-reviews.html
-Disallow: /partner-settings.html
+Disallow: /my-bookings.html
+Disallow: /admin.html
 Disallow: /profile.html
-Disallow: /admin-photos.html
-Disallow: /api/
+Disallow: /partner-listings.html
+Disallow: /add-listing.html
+Disallow: /rewards.html
+
+# Assets
+Allow: /*.css$
+Allow: /*.js$
+Allow: /*.png$
+Allow: /*.jpg$
+Allow: /*.webp$
+Allow: /*.svg$
 
 # Sitemap
 Sitemap: https://www.apatmento.space/sitemap.xml
+
+# Crawl-delay for polite bots
+Crawl-delay: 2
