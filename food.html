@@ -390,8 +390,10 @@ function filterFood(){
   g.innerHTML=list.map((r,i)=>`
   <div class="card" style="transition-delay:${i*45}ms" onclick="openRestaurant('${r.id}')">
     <div class="card-img" style="background:linear-gradient(135deg,#FF6B2C,#FFB59E);">
-      ${(r.img||CUISINE_IMGS[r.cuisine]||CUISINE_IMGS.kenyan)?`<img src="${r.img||CUISINE_IMGS[r.cuisine]||CUISINE_IMGS.kenyan}" alt="" loading="lazy" decoding="async" onerror="this.remove()" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;"><div style="position:absolute;inset:0;z-index:1;background:linear-gradient(to top,rgba(10,10,20,.4) 0%,transparent 55%);pointer-events:none;"></div>`:''}
-      ${r.hot?'<div class="card-badge" style="z-index:2;">🔥 Popular</div>':''}
+
+
+      <img src="${r.img||CUISINE_IMGS[r.cuisine]||CUISINE_IMGS.kenyan}" alt="" loading="lazy" decoding="async" onerror="this.style.display='none'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;display:block;">
+      <div style="position:absolute;inset:0;z-index:1;background:linear-gradient(to top,rgba(10,10,20,.42) 0%,transparent 55%);pointer-events:none;"></div>      ${r.hot?'<div class="card-badge" style="z-index:2;">🔥 Popular</div>':''}
       ${(r.img||CUISINE_IMGS[r.cuisine])?'':'<svg class="card-img-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16h16a8 8 0 0 0-16 0z"/><path d="M2 19h20"/><path d="M12 8V5M10 5h4"/></svg>
     </div>
     <div class="card-body">
