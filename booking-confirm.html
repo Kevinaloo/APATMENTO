@@ -192,6 +192,8 @@ body{overflow-x:hidden;}
       </div>
     </div>
 
+    
+    <div id="apa-location-map-wrap" style="margin:0 0 16px;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(10,10,20,.12);position:relative;"><div id="apa-location-map" style="width:100%;height:200px;background:#F1F2F8;display:flex;align-items:center;justify-content:center;"><div style="text-align:center;color:#8E90AD"><div style="font-size:28px">📍</div><div style="font-size:12px;margin-top:6px;font-weight:600">Loading area map…</div></div></div><div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.92);backdrop-filter:blur(8px);border-radius:100px;padding:4px 12px;font-size:11px;font-weight:700;color:#636480;white-space:nowrap;box-shadow:0 2px 10px rgba(0,0,0,.1)">🔒 Exact address provided after booking</div></div>
     <!-- RIGHT: SUMMARY -->
     <div class="summary">
       <div class="sum-apt">
@@ -644,9 +646,21 @@ async function startPayment() {
       reference:   paymentReference,
       table:       'apartment_bookings',
       description: `${apt.name} — ${nights} night${nights>1?'s':''}`,
-      onSuccess: () => {
+      onSuccess: async () => {
         payBtn.disabled = false;
         showCheckinCodes();
+        try {
+          await fetch('/api/send-receipt', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({
+              booking:{ reference:paymentReference, checkin, checkout, nights, subtotal, fee, total,
+                guestCode:sessionStorage.getItem('pending_guest_code')||'',
+                hostCode:sessionStorage.getItem('pending_host_code')||'' },
+              listing:{ name:apt.name, location:apt.location, pricePerNight:apt.price, type:'Stay' },
+              user:{ email:CURRENT_USER?.email||'', phone:phone||'', name:name||'' },
+              sendWhatsApp:true }),
+          });
+        } catch(e){ console.warn('Receipt:',e.message); }
       },
       onFailure: () => {
         showToast('Payment was not completed. You can try again.');
@@ -714,6 +728,34 @@ function showToast(msg) {
 }
 </script>
 <script src="/payment.js" defer></script>
-<script src="/pwa.js" defer></script>
+<script src="/pwa.js" defer>
+(function(){
+  const area=(apt.location||'Nairobi').split(',')[0].trim();
+  const mapEl=document.getElementById('apa-location-map');
+  if(!mapEl)return;
+  fetch('https://nominatim.openstreetmap.org/search?q='+encodeURIComponent(area+' Nairobi Kenya')+'&format=json&limit=1',
+    {headers:{'User-Agent':'Apatmento/1.0'}})
+  .then(r=>r.json()).then(res=>{
+    if(!res[0])return;
+    const lat=parseFloat(res[0].lat)+(Math.random()-.5)*.006;
+    const lon=parseFloat(res[0].lon)+(Math.random()-.5)*.006;
+    const lcss=document.createElement('link');
+    lcss.rel='stylesheet';lcss.href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+    document.head.appendChild(lcss);
+    const ljs=document.createElement('script');
+    ljs.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+    ljs.onload=()=>{
+      mapEl.innerHTML='';
+      const map=L.map('apa-location-map',{center:[lat,lon],zoom:13,zoomControl:false,scrollWheelZoom:false,dragging:false});
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{subdomains:'abcd',maxZoom:19}).addTo(map);
+      setTimeout(()=>map.flyTo([lat,lon],15,{animate:true,duration:2.2}),500);
+      L.circle([lat,lon],{color:'#4361FF',fillColor:'#4361FF',fillOpacity:.12,weight:2,radius:320}).addTo(map);
+      const ico=L.divIcon({html:'<div style="background:linear-gradient(135deg,#4361FF,#7B2FF7);width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 4px 14px rgba(67,97,255,.5);border:3px solid #fff">🏠</div>',iconSize:[34,34],iconAnchor:[17,17],className:''});
+      L.marker([lat,lon],{icon:ico}).addTo(map);
+    };
+    document.body.appendChild(ljs);
+  }).catch(()=>{});
+})();
+</script>
 </body>
 </html>
