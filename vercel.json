@@ -55,6 +55,10 @@
     {
       "path": "/api/scrape-food",
       "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/scrape-shopping",
+      "schedule": "0 1 * * *"
     }
   ],
   "functions": {
@@ -66,6 +70,9 @@
     },
     "api/scrape-food.js": {
       "maxDuration": 45
+    },
+    "api/scrape-shopping.js": {
+      "maxDuration": 60
     }
   },
   "env": {
