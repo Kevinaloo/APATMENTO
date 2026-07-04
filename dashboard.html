@@ -596,6 +596,47 @@ body{overflow-x:hidden;}
 .gsr-spinner{width:24px;height:24px;border:3px solid var(--line);border-top-color:var(--violet);border-radius:50%;animation:spin .7s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
 
+
+/* ══ FLOATING MODE PILL — guest/partner toggle ══ */
+.mode-pill{
+  display:none;                    /* shown only when logged in */
+  align-items:center;gap:6px;
+  padding:6px 13px 6px 9px;
+  border-radius:100px;
+  background:rgba(255,255,255,.82);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border:1.5px solid rgba(67,97,255,.22);
+  cursor:pointer;
+  font-family:var(--font-body);font-size:12px;font-weight:700;
+  color:var(--ink);white-space:nowrap;
+  box-shadow:0 2px 16px rgba(67,97,255,.13);
+  transition:all .3s cubic-bezier(.22,1,.36,1);
+  position:absolute;top:0;right:0;z-index:10;
+  user-select:none;
+}
+.mode-pill.visible{display:flex;}
+.mode-pill:hover{
+  transform:translateY(-2px);
+  box-shadow:0 5px 20px rgba(67,97,255,.22);
+  background:#fff;
+}
+.mode-pill:active{transform:translateY(0);}
+.mode-pill-ico{font-size:15px;line-height:1;}
+.mode-pill-dot{
+  width:7px;height:7px;border-radius:50%;
+  background:var(--ok);margin-left:1px;flex-shrink:0;
+  animation:pill-pulse 2.8s ease-in-out infinite;
+}
+.mode-pill.partner-active{
+  background:linear-gradient(135deg,rgba(67,97,255,.12),rgba(123,47,247,.09));
+  border-color:rgba(67,97,255,.35);color:#4361FF;
+}
+.mode-pill.partner-active .mode-pill-dot{background:#4361FF;}
+@keyframes pill-pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.55;transform:scale(.78);}}
+
+/* greeting wrapper needs relative positioning for pill anchor */
+.greeting{position:relative;}
+
 </style>
 
 </head>
@@ -670,6 +711,12 @@ body{overflow-x:hidden;}
 
     <div class="content">
       <div class="greeting">
+        <!-- Mode toggle pill — floats top-right, non-intrusive -->
+        <button class="mode-pill" id="mode-pill" onclick="switchRole()" aria-label="Switch mode">
+          <span class="mode-pill-ico" id="mode-pill-ico">🏠</span>
+          <span id="mode-pill-label">Guest</span>
+          <span class="mode-pill-dot"></span>
+        </button>
         <span class="greeting-eyebrow" id="g-eyebrow">✦ Your world, one tap away</span>
         <h1 class="greeting-title" id="g-title"><span id="g-greeting">Good afternoon</span><em id="g-name"></em></h1>
         <p class="greeting-sub">Stays, flights, tours, rides and more — every part of your trip, beautifully in one place.</p>
@@ -682,9 +729,9 @@ body{overflow-x:hidden;}
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4M4 7h16M16 21l4-4-4-4M20 17H4"/></svg>
           </div>
           <div>
-            <div class="psc-label">Partner mode</div>
-            <div class="psc-title">Switch to Partner</div>
-            <div class="psc-sub">Manage listings, bookings &amp; earnings</div>
+            <div class="psc-label" id="psc-label-text">Partner mode</div>
+            <div class="psc-title" id="psc-title-text">Switch to Partner</div>
+            <div class="psc-sub" id="psc-sub-text">Manage listings, bookings &amp; earnings</div>
           </div>
         </div>
         <div class="psc-arrow">
@@ -970,6 +1017,7 @@ async function init(){
       loadStays();
       loadHeroVideo();
       setTimeout(loadDashboardHero, 400);
+    setTimeout(() => updateModeUI(CURRENT_ROLE), 50);
       return;
     }
 
@@ -1000,6 +1048,9 @@ async function init(){
     document.getElementById('dash-user-nav').style.display  = 'flex';
     const psc = document.getElementById('partner-switch-card');
     if(psc) psc.classList.remove('psc-hidden');
+    const pill = document.getElementById('mode-pill');
+    if(pill) pill.classList.add('visible');
+    updateModeUI(role);
     document.getElementById('g-greeting').textContent = getGreeting();
     document.getElementById('g-avatar').textContent   = (firstName||'?')[0].toUpperCase();
     if (document.getElementById('nav-user-name'))
@@ -1011,7 +1062,7 @@ async function init(){
     setTimeout(()=>document.getElementById('loader')?.classList.add('done'), 1000);
 
     const params = new URLSearchParams(location.search);
-    const role   = params.get('role') || savedRole || 'guest';
+    const role   = params.get('role') || 'guest'; // never auto-load partner; user must switch explicitly
     CURRENT_ROLE = role;
     showScreen(role);
 
@@ -1036,15 +1087,38 @@ async function saveRole(role){
 function switchRole(){
   closeDrawer();
   if(CURRENT_ROLE==='guest' && !CURRENT_USER){
-    // Guest trying to access partner — send to auth
     window.location.href='auth.html?next=partner'; return;
   }
   const next = CURRENT_ROLE==='guest' ? 'partner' : 'guest';
   CURRENT_ROLE = next;
   saveRole(next);
   showScreen(next);
+  updateModeUI(next);
   if(next==='partner') setTimeout(initPartnerFlow,200);
   else { loadStays(); loadHeroVideo(); }
+}
+
+/* ── Sync all mode-switching UI to the active role ── */
+function updateModeUI(role){
+  const isPartner = role === 'partner';
+
+  // Mode pill (greeting section)
+  const pill = document.getElementById('mode-pill');
+  if(pill){
+    const ico   = document.getElementById('mode-pill-ico');
+    const label = document.getElementById('mode-pill-label');
+    if(ico)   ico.textContent   = isPartner ? '🏠' : '🤝';
+    if(label) label.textContent = isPartner ? 'Guest' : 'Partner';
+    pill.classList.toggle('partner-active', isPartner);
+  }
+
+  // Partner-switch-card (guest screen)
+  const title = document.getElementById('psc-title-text');
+  const sub   = document.getElementById('psc-sub-text');
+  const lbl   = document.getElementById('psc-label-text');
+  if(title) title.textContent = isPartner ? 'Switch to Guest' : 'Switch to Partner';
+  if(sub)   sub.textContent   = isPartner ? 'Browse listings as a guest' : 'Manage listings, bookings & earnings';
+  if(lbl)   lbl.textContent   = isPartner ? 'Guest mode' : 'Partner mode';
 }
 
 async function signOut(){ await sb.auth.signOut(); window.location.href='auth.html'; }
@@ -1369,7 +1443,7 @@ async function renderServicePicker(listings){
   c.innerHTML = `
     <div class="topbar">
       <div class="tb-left"><img src="logo-mark.png" class="tb-logo" onerror="this.style.display='none'"/><span class="tb-brand"><em>Apat</em>mento</span></div>
-      <div class="tb-right"><button class="hero-cta" style="padding:9px 18px;font-size:13px;box-shadow:none;" onclick="showAddSheet()">+ Add service</button><button class="tb-icon-btn" onclick="switchRole()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4M4 7h16"/></svg></button></div>
+      <div class="tb-right"><button class="hero-cta" style="padding:9px 18px;font-size:13px;box-shadow:none;" onclick="showAddSheet()">+ Add service</button><button onclick="switchRole()" style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:100px;border:1.5px solid rgba(255,255,255,.35);background:rgba(255,255,255,.15);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:#fff;font-family:var(--font-body);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .2s;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 5-7 7 7 7"/></svg>Browse</button></div>
     </div>
     <div class="content" style="max-width:760px;">
       <div class="greeting"><h1 class="greeting-title">Your <em>services</em></h1><p class="greeting-sub">${active.length} active service${active.length!==1?'s':''}. Select one to manage.</p></div>
