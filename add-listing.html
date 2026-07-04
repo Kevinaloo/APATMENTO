@@ -608,6 +608,13 @@ body{overflow-x:hidden;}
     }
   };
   
+  // Read type directly from URL — avoids cross-script timing issues
+  const _urlType = new URLSearchParams(location.search).get('type');
+  if (_urlType) {
+    window._serviceType = _urlType;
+    const _tileMap = {apartment:'Apartment',tour:'Safari',event:'Concert',carhire:'Self-Drive',roommate:'Private room',food:'Restaurant',shopping:'Product'};
+    window._presetType = _tileMap[_urlType] || null;
+  }
   const svcType = window._serviceType || 'apartment';
   const cfg = configs[svcType] || configs.apartment;
   
@@ -1024,7 +1031,7 @@ function buildReview() {
 }
 
 /* ══ PUBLISH ══ */
-async function publishListing() {
+async async function publishListing() {
   collectStep(6);
   const btn = document.getElementById('publish-btn');
   btn.classList.add('loading');
@@ -1083,6 +1090,13 @@ async function publishListing() {
       street:        formData.street,
       beds:          formData.beds,
       baths:         formData.baths,
+      bedrooms:      parseInt(formData.beds)||1,
+      bathrooms:     parseInt(formData.baths)||1,
+      location:      [formData.area, formData.city, formData.country].filter(Boolean).join(', '),
+      property_type: formData.type,
+      listing_type:  formData.type,
+      is_active:     true,
+      internal_score: 50,
       max_guests:    formData.guests,
       floor:         formData.floor || null,
       sqm:           formData.sqm   || null,
