@@ -477,7 +477,7 @@ async function loadNativeListings() {
   if (!sb) return [];
   try {
     const { data } = await sb.from('listings')
-      .select('id,title,location,city,price_night,bedrooms,bathrooms,max_guests,amenities,description,avg_rating,review_count,booking_count,days_listed,internal_score,status,photos')
+      .select('id,title,location,city,price_night,beds,baths,max_guests,amenities,description,avg_rating,review_count,booking_count,days_listed,internal_score,status,photos,type,property_type,area')
       .eq('status', 'active')
       .order('internal_score', { ascending: false })
       .limit(50);
@@ -488,9 +488,9 @@ async function loadNativeListings() {
       name: l.title || 'Untitled',
       location: l.location || 'Nairobi',
       city: l.city || 'Nairobi',
-      neighbourhood: l.location || '',
-      type: l.property_type || 'Apartment',
-      beds: l.bedrooms || 1, baths: l.bathrooms || 1,
+      neighbourhood: l.area || l.location || '',
+      type: l.property_type || l.type || 'Apartment',
+      beds: parseInt(l.beds)||1, baths: parseInt(l.baths)||1,
       sqm: l.sqm || 60, floor: 0,
       maxGuests: l.max_guests || 2,
       price: l.price_night || 0,
@@ -509,9 +509,9 @@ async function loadNativeListings() {
 }
 
 /* ── Main init ── */
-async function loadListings() {
+async async function loadListings() {
   updateBanner('loading');
-  // Load native listings (partner Supabase) in parallel with rendering samples
+  // Load native listings (partner Supabase) in parallel with loading live listings
   const nativePromise = loadNativeListings();
 
   // Load native listings — show empty state while fetching
