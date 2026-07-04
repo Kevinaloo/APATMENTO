@@ -1018,6 +1018,7 @@ async function init(){
       loadHeroVideo();
       setTimeout(loadDashboardHero, 400);
     setTimeout(() => updateModeUI(CURRENT_ROLE), 50);
+    if(typeof ApatmentoChat!=="undefined") setTimeout(ApatmentoChat.initFAB, 800);
       return;
     }
 
@@ -1526,6 +1527,7 @@ function hideAddSheet(){ document.getElementById('add-scrim').classList.remove('
 
 <div data-showcase="window"></div>
 <script src="/analytics.js" defer></script>
+<script src="/chat.js" defer></script>
 <script src="/pwa.js" defer></script>
 <script src="/referral.js" defer></script>
 <script src="/showcase.js" defer></script>
