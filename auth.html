@@ -492,6 +492,14 @@ async function handleSignup(e) {
       ? 'Account already exists. Try signing in.' : error.message);
     return;
   }
+  // Fire-and-forget branded welcome email
+  try {
+    fetch('/api/utilities?action=welcome-email', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ email, name: first + ' ' + last })
+    }).catch(()=>{});
+  } catch(e){}
+
   if (data.session) {
     await goDashboard(data.user);
   } else {
