@@ -17,6 +17,49 @@ const MODELS = [
   'llama-3.3-70b-versatile',    // 100K TPD — fallback 2 (smartest but limited)
 ];
 
+
+// ── Live temporal + holiday context (Nairobi timezone) ──
+function getLiveContext() {
+  const now = new Date();
+  // Nairobi is UTC+3, no DST
+  const nairobi = new Date(now.getTime() + 3 * 3600 * 1000);
+  const y = nairobi.getUTCFullYear(), m = nairobi.getUTCMonth() + 1, d = nairobi.getUTCDate();
+  const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const dayName = dayNames[nairobi.getUTCDay()];
+  const hour = nairobi.getUTCHours();
+  const timeOfDay = hour < 5 ? 'late night' : hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : hour < 21 ? 'evening' : 'night';
+  const isWeekend = nairobi.getUTCDay() === 0 || nairobi.getUTCDay() === 6;
+
+  // Kenya + global holidays (month-day keyed)
+  const holidays = {
+    '1-1':  'New Year\'s Day 🎊',
+    '2-14': 'Valentine\'s Day 💝',
+    '5-1':  'Labour Day (Kenya) 🛠',
+    '6-1':  'Madaraka Day (Kenya) 🇰🇪',
+    '10-10':'Utamaduni/Moi Day (Kenya) 🇰🇪',
+    '10-20':'Mashujaa Day (Kenya) 🦸',
+    '10-31':'Halloween 🎃',
+    '12-12':'Jamhuri Day (Kenya) 🇰🇪',
+    '12-24':'Christmas Eve 🎄',
+    '12-25':'Christmas Day 🎄',
+    '12-26':'Boxing Day 🎁',
+    '12-31':'New Year\'s Eve 🎆',
+  };
+  const todayHoliday = holidays[`${m}-${d}`] || null;
+
+  // Season context for Kenya
+  const season = (m >= 6 && m <= 8) ? 'cool dry season (great safari weather!)'
+    : (m >= 12 || m <= 2) ? 'hot dry season (peak beach season — Diani, Mombasa!)'
+    : (m >= 3 && m <= 5) ? 'long rains season'
+    : 'short rains season';
+
+  return {
+    dateString: `${dayName}, ${monthNames[m-1]} ${d}, ${y}`,
+    timeOfDay, hour, isWeekend, todayHoliday, season,
+  };
+}
+
 const SYSTEM_PROMPT = `You are APA — Apatmento's AI concierge. You are the sharpest, 
 wittiest booking assistant in Africa. You work exclusively for Apatmento 
 (www.apatmento.space) — Kenya's zero-commission travel super-app.
@@ -138,7 +181,14 @@ export default async function handler(req, res) {
   if (userContext.budget)      contextNote += `Budget preference: ${userContext.budget}. `;
   if (userContext.page)        contextNote += `Currently on: ${userContext.page} page. `;
 
-  const systemWithContext = SYSTEM_PROMPT + 
+  const live = getLiveContext();
+  let liveNote = `\n\nLIVE CONTEXT (use naturally — you always know the current time):\n`;
+  liveNote += `- Right now in Nairobi: ${live.dateString}, ${live.timeOfDay} (hour ${live.hour})\n`;
+  liveNote += `- ${live.isWeekend ? 'It is the WEEKEND — people are looking to go out, travel, book experiences' : 'It is a weekday'}\n`;
+  liveNote += `- Season: ${live.season}\n`;
+  if (live.todayHoliday) liveNote += `- TODAY IS ${live.todayHoliday} — reference it, suggest themed bookings, celebrate with the user!\n`;
+
+  const systemWithContext = SYSTEM_PROMPT + liveNote +
     (contextNote ? `\n\nCURRENT USER CONTEXT:\n${contextNote}` : '');
 
   try {
