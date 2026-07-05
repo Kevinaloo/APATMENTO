@@ -142,15 +142,25 @@ export default async function handler(req, res) {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          from: `Apatmento Bookings <${FROM_EMAIL}>`,
+          from: 'Apatmento Bookings <onboarding@resend.dev>',
           to: [user.email],
           subject: `✅ Booking Confirmed — ${listing.name} | Ref: ${booking.reference}`,
           html,
         }),
       });
+      if (!emailRes.ok) {
+        const errBody = await emailRes.json().catch(() => ({}));
+        console.error('Resend failed:', emailRes.status, JSON.stringify(errBody));
+        // If domain not verified, log the issue
+        if (errBody.name === 'validation_error' || errBody.statusCode === 422) {
+          console.error('RESEND: Domain apatmento.space not verified. Visit resend.com/domains to verify.');
+        }
+        results.email_error = errBody.message || emailRes.status;
+      }
       results.email = emailRes.ok;
     } catch (e) {
       console.error('Email send failed:', e.message);
+      results.email_error = e.message;
     }
   }
 
@@ -183,4 +193,5 @@ export default async function handler(req, res) {
   }
 
   return res.status(200).json({ ok: true, results });
+  // Note: to send from bookings@apatmento.space, verify domain at resend.com/domains
 }
