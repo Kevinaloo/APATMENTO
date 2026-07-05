@@ -8,6 +8,7 @@
 export const config = { maxDuration: 30 };
 
 const GROQ_KEY = process.env.GROQ_API_KEY;
+// Note: Set GROQ_API_KEY in Vercel Dashboard → Project Settings → Environment Variables
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const MODEL    = 'llama-3.3-70b-versatile'; // best Groq model for personality + reasoning
 
@@ -100,6 +101,13 @@ export default async function handler(req, res) {
   const { messages = [], userContext = {}, source = 'web' } = body;
 
   if (!messages.length) return res.status(400).json({ error: 'No messages' });
+  // Fail fast with clear message if key not configured
+  if (!GROQ_KEY) {
+    return res.status(200).json({ 
+      reply: "Almost ready! Just need Kevin to add GROQ_API_KEY in Vercel env vars. Takes 30 seconds at vercel.com/dashboard. I'll be fully operational after that! ✦",
+      retryable: false,
+    });
+  }
 
   // Sanitise all user messages
   const cleanMessages = messages.map(m => ({
@@ -165,9 +173,13 @@ export default async function handler(req, res) {
 
   } catch (err) {
     console.error('Groq error:', err.message);
+    const isKeyMissing = !GROQ_KEY;
     return res.status(500).json({ 
-      error: 'AI temporarily unavailable',
-      reply: "I'm having a moment — like Nairobi WiFi at 6pm. Try again in a sec? 😅" 
+      error: isKeyMissing ? 'API key not configured' : err.message,
+      reply: isKeyMissing 
+        ? "I need my API key configured in Vercel to work properly. Kevin, please add GROQ_API_KEY in Vercel Dashboard → Project Settings → Environment Variables! 🔑"
+        : "I glitched for a sec — like Nairobi WiFi at 6pm. Send that again? 📡",
+      retryable: true,
     });
   }
 }
