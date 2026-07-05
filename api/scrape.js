@@ -435,8 +435,8 @@ async function runEvents(res) {
    JSON-LD TouristAttraction/Product, and Next.js __NEXT_DATA__
 ═══════════════════════════════════════════════════════════════ */
 
-const SUPA_URL = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
-const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
+// SUPA_URL defined above
+// SUPA_KEY defined above
 
 const H = {
   'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY, 'Content-Type': 'application/json'
@@ -735,8 +735,8 @@ async function runTours(res) {
    Uses GET request with URL-encoded query — fixes 406 error
    Runs daily 2am UTC via Vercel Cron.
    ========================================================= */
-const SUPA_URL = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
-const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
+// SUPA_URL defined above
+// SUPA_KEY defined above
 
 async function db(method, path, body) {
   const opts = { method, headers: { apikey: SUPA_KEY, Authorization: 'Bearer ' + SUPA_KEY, 'Content-Type': 'application/json' } };
@@ -823,8 +823,8 @@ async function runFood(res) {
    names, prices, discounts, ratings, images in the HTML source.
    Cron: daily 1am UTC  ·  Manual: GET /api/scrape-shopping
 ════════════════════════════════════════════════════════════════ */
-const SUPA_URL = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
-const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
+// SUPA_URL defined above
+// SUPA_KEY defined above
 
 const HEADERS = {
   'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY, 'Content-Type': 'application/json'
