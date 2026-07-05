@@ -158,8 +158,11 @@ export default async function handler(req, res) {
       if (response.ok) { data = await response.json(); break; }
       const err = await response.json().catch(() => ({}));
       lastErr = err.error?.message || `Groq ${response.status}`;
-      // Rate limit — try next model
-      if (response.status === 429) continue;
+      // Rate limit (429) or service unavailable (503) — try next model
+      if (response.status === 429 || response.status === 503 || response.status === 529) {
+        await new Promise(r => setTimeout(r, 300)); // brief pause before next model
+        continue;
+      }
       // Other error — throw immediately
       throw new Error(lastErr);
     }
