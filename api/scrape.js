@@ -442,15 +442,7 @@ const H = {
   'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY, 'Content-Type': 'application/json'
 };
 
-async function db(method, path, body) {
-  const opts = { method, headers: { ...H } };
-  if (method === 'POST') opts.headers['Prefer'] = 'resolution=merge-duplicates,return=minimal';
-  if (method === 'PATCH') opts.headers['Prefer'] = 'return=minimal';
-  if (body) opts.body = JSON.stringify(body);
-  const r = await fetch(`${SUPA_URL}/rest/v1/${path}`, opts);
-  if (!r.ok) throw new Error(`DB ${r.status}`);
-  return method === 'GET' ? r.json() : null;
-}
+// db() defined above
 
 async function fetchHtml(url) {
   const ctrl = new AbortController();
@@ -738,14 +730,7 @@ async function runTours(res) {
 // SUPA_URL defined above
 // SUPA_KEY defined above
 
-async function db(method, path, body) {
-  const opts = { method, headers: { apikey: SUPA_KEY, Authorization: 'Bearer ' + SUPA_KEY, 'Content-Type': 'application/json' } };
-  if (method === 'POST') opts.headers.Prefer = 'resolution=merge-duplicates,return=minimal';
-  if (body) opts.body = JSON.stringify(body);
-  const r = await fetch(`${SUPA_URL}/rest/v1/${path}`, opts);
-  if (!r.ok) throw new Error(`DB ${r.status}`);
-  return method === 'GET' ? r.json() : null;
-}
+// db() defined above
 
 function mapCuisine(tags) {
   const c = (tags.cuisine || '').toLowerCase();
@@ -841,14 +826,7 @@ const BROWSER = {
   'Sec-Fetch-Site': 'none',
 };
 
-async function db(method, path, body) {
-  const opts = { method, headers: { ...HEADERS } };
-  if (method === 'POST') opts.headers.Prefer = 'resolution=merge-duplicates,return=minimal';
-  if (body) opts.body = JSON.stringify(body);
-  const r = await fetch(`${SUPA_URL}/rest/v1/${path}`, opts);
-  if (!r.ok) throw new Error(`DB ${r.status}: ${await r.text().catch(() => '')}`);
-  return method === 'GET' ? r.json() : null;
-}
+// db() defined above
 
 async function fetchPage(url, ms = 18000) {
   const ctrl = new AbortController();
