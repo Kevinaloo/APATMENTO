@@ -688,6 +688,7 @@ const ApaAI = (() => {
     if (!msg) return;
     if (input && !text) { input.value = ''; input.style.height = ''; }
     _messages.push({ role: 'user', content: msg });
+    const lastMsg = msg;
     renderMsg('user', msg);
     showTyping(true);
     const btn = document.getElementById('apa-send');
@@ -702,6 +703,15 @@ const ApaAI = (() => {
       });
       const data = await r.json();
       const reply = data.reply || "Had a moment there. Try again? 😅";
+      // Add retry button if retryable
+      if (data.retryable && lastMsg) {
+        setTimeout(() => {
+          const retryDiv = document.createElement('div');
+          retryDiv.style.cssText = 'text-align:center;padding:4px 0 8px;';
+          retryDiv.innerHTML = '<button onclick="ApaAI.send(\''+lastMsg.replace(/\'/g,"\'")+'\')" style="font-size:11px;padding:5px 14px;border-radius:100px;border:1.5px solid rgba(67,97,255,.3);background:rgba(67,97,255,.06);color:#4361FF;font-weight:700;cursor:pointer;">↺ Try again</button>';
+          document.getElementById('apa-msgs')?.appendChild(retryDiv);
+        }, 100);
+      }
       showTyping(false);
       _messages.push({ role: 'assistant', content: reply });
       renderMsg('assistant', reply);
