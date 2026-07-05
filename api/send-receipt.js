@@ -142,7 +142,7 @@ export default async function handler(req, res) {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          from: 'Apatmento Bookings <onboarding@resend.dev>',
+          from: `Apatmento Bookings <${FROM_EMAIL}>`,
           to: [user.email],
           subject: `✅ Booking Confirmed — ${listing.name} | Ref: ${booking.reference}`,
           html,
