@@ -10,7 +10,12 @@ export const config = { maxDuration: 30 };
 const GROQ_KEY = process.env.GROQ_API_KEY;
 // Note: Set GROQ_API_KEY in Vercel Dashboard → Project Settings → Environment Variables
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const MODEL    = 'llama-3.3-70b-versatile'; // best Groq model for personality + reasoning
+// Model waterfall: start fast, fall back if rate limited
+const MODELS = [
+  'llama-3.1-8b-instant',       // 1M TPD free — primary (fast, great personality)
+  'gemma2-9b-it',               // 1M TPD — fallback 1
+  'llama-3.3-70b-versatile',    // 100K TPD — fallback 2 (smartest but limited)
+];
 
 const SYSTEM_PROMPT = `You are APA — Apatmento's AI concierge. You are the sharpest, 
 wittiest booking assistant in Africa. You work exclusively for Apatmento 
@@ -137,31 +142,29 @@ export default async function handler(req, res) {
     (contextNote ? `\n\nCURRENT USER CONTEXT:\n${contextNote}` : '');
 
   try {
-    const response = await fetch(GROQ_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${GROQ_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: [
-          { role: 'system', content: systemWithContext },
-          ...cleanMessages.slice(-12) // keep last 12 messages for context
-        ],
-        temperature: 0.82,
-        max_tokens: 400,
-        top_p: 0.9,
-        stream: false,
-      }),
-    });
-
-    if (!response.ok) {
+    // Try each model in sequence until one succeeds
+    let data = null;
+    let lastErr = null;
+    for (const model of MODELS) {
+      const response = await fetch(GROQ_URL, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${GROQ_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model,
+          messages: [{ role: 'system', content: systemWithContext }, ...cleanMessages.slice(-12)],
+          temperature: 0.82, max_tokens: 400, top_p: 0.9, stream: false,
+        }),
+      });
+      if (response.ok) { data = await response.json(); break; }
       const err = await response.json().catch(() => ({}));
-      throw new Error(err.error?.message || `Groq ${response.status}`);
+      lastErr = err.error?.message || `Groq ${response.status}`;
+      // Rate limit — try next model
+      if (response.status === 429) continue;
+      // Other error — throw immediately
+      throw new Error(lastErr);
     }
+    if (!data) throw new Error(lastErr || 'All models rate limited');
 
-    const data = await response.json();
     const reply = data.choices?.[0]?.message?.content?.trim();
 
     if (!reply) throw new Error('Empty response from Groq');
