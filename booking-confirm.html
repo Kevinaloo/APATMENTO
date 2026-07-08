@@ -153,6 +153,7 @@ body{overflow-x:hidden;}
       });
     }
   </script>
+<link rel="stylesheet" href="/brand.css"/>
 </head>
 <body>
 <div class="aurora"><div class="ab ab-1"></div><div class="ab ab-2"></div></div>
@@ -285,14 +286,14 @@ body{overflow-x:hidden;}
 .apt-pay-icon.success { background: linear-gradient(135deg,#0D9467,#059652); animation: none; }
 .apt-pay-icon.failed  { background: linear-gradient(135deg,#DC2626,#B91C1C); animation: none; }
 .apt-pay-title {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family:var(--font-data);
   font-size: 18px; font-weight: 800; color: #0F1117; margin-bottom: 8px;
 }
 .apt-pay-sub {
   font-size: 13px; color: #5A5E70; line-height: 1.6; margin-bottom: 20px;
 }
 .apt-pay-amount {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family:var(--font-data);
   font-size: 26px; font-weight: 800; color: #0F1117;
   margin-bottom: 4px;
 }
@@ -313,7 +314,7 @@ body{overflow-x:hidden;}
 .apt-pay-countdown { font-size: 11px; color: #9499AD; margin-bottom: 16px; }
 .apt-pay-cancel {
   background: none; border: 1px solid #e5e7eb; border-radius: 10px;
-  padding: 10px 24px; font-family: 'Space Grotesk', sans-serif;
+  padding: 10px 24px; font-family:var(--font-data);
   font-size: 13px; font-weight: 600; color: #5A5E70; cursor: pointer;
   transition: background .2s;
 }
@@ -321,7 +322,7 @@ body{overflow-x:hidden;}
 .apt-pay-retry {
   background: linear-gradient(135deg,#0D9467,#059652); color: white;
   border: none; border-radius: 10px; padding: 10px 24px;
-  font-family: 'Space Grotesk', sans-serif; font-size: 13px; font-weight: 700;
+  font-family:var(--font-data); font-size: 13px; font-weight: 700;
   cursor: pointer; transition: filter .2s;
 }
 .apt-pay-retry:hover { filter: brightness(1.08); }
@@ -785,5 +786,6 @@ function showToast(msg) {
   }).catch(()=>{});
 })();
 </script>
+<script src="/brand.js" defer></script>
 </body>
 </html>

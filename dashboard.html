@@ -17,7 +17,7 @@
   <meta name="author" content="Apatmento"/>
   <meta name="geo.region" content="KE"/>
   <meta name="geo.placename" content="Nairobi, Kenya"/>
-  <meta name="theme-color" content="#7B2FF7"/>
+  <meta name="theme-color" content="#6D28FF"/>
   <meta name="mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
@@ -667,6 +667,7 @@ body{overflow-x:hidden;}
       });
     }
   </script>
+<link rel="stylesheet" href="/brand.css"/>
 </head>
 <body>
 
@@ -682,14 +683,20 @@ body{overflow-x:hidden;}
 <!-- LOADING SCREEN -->
 <div id="loader">
   <div class="loader-aurora"><div class="lb lb-1"></div><div class="lb lb-2"></div><div class="lb lb-3"></div></div>
-  <div class="loader-inner">
-    <div class="loader-logo">
-      <div class="loader-ring"></div>
-      <img src="logo-mark.png" alt="Apatmento" onerror="this.style.display='none'"/>
-    </div>
-    <div class="loader-word">Welcome to <em>Apatmento</em></div>
-    <div class="loader-tag">Your World · One App</div>
-    <div class="loader-bar"></div>
+  <div class="apa-meridian">
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+      <linearGradient id="apaLegGrad" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#6D28FF"/><stop offset="1" stop-color="#4F6DFF"/></linearGradient>
+      <linearGradient id="apaEqGrad" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#6D28FF"/><stop offset="0.45" stop-color="#4EE0C8"/><stop offset="1" stop-color="#F5B12E"/></linearGradient>
+    </defs></svg>
+    <svg class="apa-mark" viewBox="0 0 64 64" aria-hidden="true">
+      <path class="leg" d="M15 52 32 13"/>
+      <path class="leg leg-r" d="M32 13 49 52"/>
+      <path class="horizon" d="M6 40 Q32 31 58 40"/>
+      <circle class="orbit-dot" r="3"/>
+    </svg>
+    <div class="apa-load-word">Welcome to <em>Apatmento</em></div>
+    <div class="apa-load-tag">0&deg; &middot; Where journeys begin</div>
+    <div class="apa-load-line"><i></i><b></b></div>
   </div>
 </div>
 
@@ -1749,14 +1756,6 @@ function renderSearchResults(results, q) {
 }
 
 </script>
-
-
-
-
-
-
-
-
-
-
-
+<script src="/brand.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,350 @@
+/* ═══════════════════════════════════════════════════════════════════
+   APATMENTO · EQUATOR LIGHT — Global Design System v1
+   One motif: the Meridian. A horizon at 0° with an orbiting point.
+   It draws in the loader, rides through the icons, underlines the
+   headlines, and orbits the APA core. Loaded LAST on every page.
+   ─────────────────────────────────────────────────────────────────── */
+
+/* ── 1 · TOKENS (refined in place — same names, richer values) ───── */
+:root{
+  /* Surfaces */
+  --glass:#FCFCFE;
+  --glass-2:#F5F5FC;
+  --glass-3:#ECEDF8;
+  --ink:#08080F;
+  --ink-2:#13142A;
+  --ink-soft:#474A66;
+  --ink-faint:#8B8EAC;
+
+  /* Equator palette */
+  --violet:#6D28FF;          /* jacaranda */
+  --violet-deep:#5417E0;
+  --iris:#8B5CF6;
+  --lilac:#C3AEFA;
+  --lilac-deep:#7C5CF0;
+  --electric:#4F6DFF;
+  --mint:#4EE0C8;            /* reef */
+  --mint-deep:#14B8A6;
+  --gold:#F5B12E;            /* savanna — the earn colour */
+  --gold-deep:#D98E0B;
+  --peach:#FFB08F;
+  --ember:#FF6A3C;           /* sunset */
+
+  --line:rgba(8,8,15,.07);
+  --line-2:rgba(8,8,15,.13);
+  --line-light:rgba(255,255,255,.12);
+
+  /* The signature sweep — hero moments only */
+  --grad-equator:linear-gradient(115deg,var(--violet) 0%,var(--electric) 32%,var(--mint) 62%,var(--gold) 100%);
+  --grad-dusk:linear-gradient(135deg,var(--violet),var(--ember));
+  --grad-reef:linear-gradient(135deg,var(--electric),var(--mint));
+
+  /* Type */
+  --font-display:'Fraunces',Georgia,serif;
+  --font-body:'General Sans','Geist',system-ui,-apple-system,sans-serif;
+  --font-data:'Geist','General Sans',ui-monospace,monospace;
+  --font-d:var(--font-display);
+  --font-b:var(--font-body);
+
+  /* Motion */
+  --ease-out:cubic-bezier(.22,1,.36,1);
+  --ease-spring:cubic-bezier(.34,1.4,.44,1);
+  --ease-glide:cubic-bezier(.4,0,.2,1);
+  --dur-1:.22s; --dur-2:.42s; --dur-3:.72s;
+
+  /* Depth */
+  --shadow-glass:0 10px 44px rgba(109,40,255,.07),0 2px 12px rgba(8,8,15,.05);
+  --shadow-lift:0 26px 80px rgba(109,40,255,.14),0 10px 28px rgba(8,8,15,.08);
+  --shadow-gold:0 10px 36px rgba(245,177,46,.28);
+  --radius:22px;
+  --radius-lg:28px;
+}
+
+/* ── 2 · TYPOGRAPHY DISCIPLINE ───────────────────────────────────── */
+html{ -webkit-text-size-adjust:100%; }
+body{ font-family:var(--font-body); font-feature-settings:'ss01' on; }
+
+h1,h2,h3,.font-display{
+  font-family:var(--font-display);
+  font-optical-sizing:auto;
+  font-variation-settings:'SOFT' 42,'WONK' 0;
+  letter-spacing:-.015em;
+}
+/* Accent italics get the WONK cut — the hand-drawn Apatmento charm */
+h1 em,h2 em,h3 em,.stmt-key,.loader-word em,.tb-brand em,.hero-title em,em.wonk{
+  font-family:var(--font-display);
+  font-style:italic;
+  font-variation-settings:'SOFT' 70,'WONK' 1;
+}
+/* Numbers, prices, times — engineered digits */
+.price,.stat,[data-num],.svc-price,.amount,time{
+  font-family:var(--font-data);
+  font-variant-numeric:tabular-nums;
+  letter-spacing:-.01em;
+}
+
+::selection{ background:rgba(109,40,255,.22); color:inherit; }
+
+:focus-visible{
+  outline:2px solid var(--gold);
+  outline-offset:3px;
+  border-radius:6px;
+}
+
+/* ── 3 · FILM GRAIN — the physical layer ─────────────────────────── */
+body::after{
+  content:'';
+  position:fixed; inset:-50%;
+  width:200%; height:200%;
+  pointer-events:none;
+  z-index:2147483000;
+  opacity:.032;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation:apa-grain 7s steps(6) infinite;
+  mix-blend-mode:overlay;
+}
+@keyframes apa-grain{
+  0%,100%{transform:translate(0,0)} 20%{transform:translate(-2%,1%)}
+  40%{transform:translate(1%,-2%)} 60%{transform:translate(-1%,2%)} 80%{transform:translate(2%,1%)}
+}
+
+/* ── 4 · SCROLLBAR ───────────────────────────────────────────────── */
+::-webkit-scrollbar{ width:9px; height:9px; }
+::-webkit-scrollbar-track{ background:transparent; }
+::-webkit-scrollbar-thumb{
+  background:linear-gradient(var(--iris),var(--mint-deep));
+  border-radius:8px; border:2px solid transparent; background-clip:padding-box;
+}
+::-webkit-scrollbar-thumb:hover{ background:linear-gradient(var(--violet),var(--mint)); background-clip:padding-box; border:2px solid transparent; }
+
+/* ── 5 · THE MERIDIAN LOADER ─────────────────────────────────────── */
+.apa-meridian{
+  position:relative; z-index:2;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  text-align:center;
+}
+.apa-mark{ width:150px; height:150px; display:block; }
+.apa-mark .leg{
+  stroke:url(#apaLegGrad); stroke-width:3.4; fill:none;
+  stroke-linecap:round;
+  stroke-dasharray:60; stroke-dashoffset:60;
+  animation:apa-draw .8s var(--ease-out) forwards;
+}
+.apa-mark .leg-r{ animation-delay:.12s; }
+.apa-mark .horizon{
+  stroke:url(#apaEqGrad); stroke-width:2.6; fill:none; stroke-linecap:round;
+  stroke-dasharray:80; stroke-dashoffset:80;
+  animation:apa-draw 1s .45s var(--ease-out) forwards;
+  filter:drop-shadow(0 0 10px rgba(78,224,200,.5));
+}
+.apa-mark .orbit-dot{
+  fill:var(--gold);
+  filter:drop-shadow(0 0 8px rgba(245,177,46,.9));
+  offset-path:path('M6 40 Q32 31 58 40');
+  offset-distance:0%;
+  animation:apa-ride 1.5s .55s var(--ease-glide) forwards;
+}
+@supports not (offset-path:path('M0 0')){
+  .apa-mark .orbit-dot{ transform:translate(32px,34px); animation:apa-pulse 1.4s .6s ease-in-out infinite; }
+}
+@keyframes apa-draw{ to{ stroke-dashoffset:0; } }
+@keyframes apa-ride{ 0%{offset-distance:0%;opacity:0} 12%{opacity:1} 100%{offset-distance:100%;opacity:1} }
+@keyframes apa-pulse{ 0%,100%{opacity:.5;r:2.6} 50%{opacity:1;r:3.4} }
+
+.apa-load-word{
+  margin-top:26px;
+  font-family:var(--font-display); font-weight:340; font-size:clamp(26px,4vw,34px);
+  letter-spacing:.02em; color:#FCFCFE;
+  opacity:0; animation:apa-rise .7s .5s var(--ease-out) forwards;
+}
+.apa-load-word em{ font-style:italic; font-weight:500;
+  background:var(--grad-equator); -webkit-background-clip:text; background-clip:text; color:transparent; }
+.apa-load-tag{
+  margin-top:10px; font-family:var(--font-body); font-size:10.5px; font-weight:600;
+  letter-spacing:.42em; text-transform:uppercase; color:rgba(255,255,255,.4);
+  opacity:0; animation:apa-rise .7s .75s var(--ease-out) forwards;
+}
+.apa-load-line{
+  width:210px; height:1.5px; margin:26px auto 0; position:relative;
+  background:rgba(255,255,255,.09); border-radius:2px; overflow:visible;
+}
+.apa-load-line i{
+  position:absolute; left:0; top:0; bottom:0; width:0%;
+  background:var(--grad-equator); border-radius:2px;
+  animation:apa-fill 1.7s .5s var(--ease-glide) forwards;
+  box-shadow:0 0 14px rgba(109,40,255,.55);
+}
+.apa-load-line b{
+  position:absolute; top:50%; left:0; width:7px; height:7px; margin:-3.5px 0 0 -3.5px;
+  border-radius:50%; background:var(--gold);
+  box-shadow:0 0 10px rgba(245,177,46,.9);
+  animation:apa-fill-dot 1.7s .5s var(--ease-glide) forwards;
+}
+@keyframes apa-fill{ to{ width:100%; } }
+@keyframes apa-fill-dot{ to{ left:100%; } }
+@keyframes apa-rise{ from{opacity:0; transform:translateY(14px)} to{opacity:1; transform:none} }
+
+/* ── 6 · ROUTE VEIL — every navigation opens like a horizon ─────── */
+#apa-veil{ position:fixed; inset:0; z-index:2147482000; pointer-events:none; }
+#apa-veil .vp{
+  position:absolute; left:0; right:0; height:50.5%;
+  background:var(--ink);
+  transform:scaleY(0);
+  transition:transform .3s var(--ease-glide);
+}
+#apa-veil .vp-t{ top:0; transform-origin:top; }
+#apa-veil .vp-b{ bottom:0; transform-origin:bottom; }
+#apa-veil .vl{
+  position:absolute; left:0; right:0; top:50%; height:2px; margin-top:-1px;
+  background:var(--grad-equator);
+  transform:scaleX(0); opacity:0;
+  transition:transform .28s var(--ease-out),opacity .2s;
+  box-shadow:0 0 18px rgba(109,40,255,.6);
+}
+#apa-veil.close{ pointer-events:all; }
+#apa-veil.close .vp{ transform:scaleY(1); }
+#apa-veil.close .vl{ transform:scaleX(1); opacity:1; transition-delay:.16s; }
+
+/* ── 7 · SCROLL REVEAL ───────────────────────────────────────────── */
+.reveal{ opacity:0; transform:translateY(16px); }
+.reveal.in{
+  opacity:1; transform:none;
+  transition:opacity .7s var(--ease-out),transform .7s var(--ease-out);
+}
+
+/* ── 8 · INTERACTIVE FEEL — press + sheen ────────────────────────── */
+.apa-press{ transition:transform var(--dur-1) var(--ease-spring), box-shadow var(--dur-1) var(--ease-out); }
+.apa-press:active{ transform:scale(.965); }
+.apa-sheen{ position:relative; overflow:hidden; isolation:isolate; }
+.apa-sheen::after{
+  content:''; position:absolute; top:0; bottom:0; left:-70%; width:46%;
+  background:linear-gradient(105deg,transparent,rgba(255,255,255,.34),transparent);
+  transform:skewX(-18deg); transition:left .55s var(--ease-glide);
+  pointer-events:none;
+}
+.apa-sheen:hover::after{ left:130%; }
+
+/* ── 9 · SAFARI GLYPHS — duotone icon system ─────────────────────── */
+.svc-ico,.svc-hero-icon svg,.svc-fly-ico svg,[data-apa-icon] svg{
+  stroke-linecap:round; stroke-linejoin:round;
+}
+.apa-glyph .d{ stroke:var(--duo,currentColor); opacity:.95; }
+.apa-glyph .df{ fill:var(--duo,currentColor); stroke:none; }
+.apa-glyph .wash{ fill:currentColor; opacity:.10; stroke:none; }
+
+/* Per-service colourways — primary tone + duo accent */
+[data-svc="stays"],   .svc-hero-stays .svc-hero-icon { color:var(--violet);     --duo:var(--gold); }
+[data-svc="roommates"],.svc-hero-rooms .svc-hero-icon{ color:var(--mint-deep);  --duo:var(--violet); }
+[data-svc="flights"]  { color:var(--electric);  --duo:var(--mint); }
+[data-svc="tours"]    { color:var(--mint-deep); --duo:var(--gold); }
+[data-svc="events"]   { color:var(--iris);      --duo:var(--gold); }
+[data-svc="rides"]    { color:var(--ember);     --duo:var(--violet); }
+[data-svc="food"]     { color:var(--gold-deep); --duo:var(--ember); }
+[data-svc="shopping"] { color:var(--violet);    --duo:var(--mint-deep); }
+[data-svc="carhire"]  { color:var(--mint-deep); --duo:var(--electric); }
+
+/* ── 10 · SERVICE TILES & HERO CARDS (dashboard + intro parade) ─── */
+.svc{
+  border-radius:var(--radius) !important;
+  border:1px solid var(--line) !important;
+  background:
+    linear-gradient(var(--glass),var(--glass)) padding-box,
+    linear-gradient(140deg,rgba(109,40,255,.16),rgba(78,224,200,.12),rgba(245,177,46,.14)) border-box !important;
+  transition:transform var(--dur-2) var(--ease-spring),box-shadow var(--dur-2) var(--ease-out) !important;
+}
+.svc:hover{
+  transform:translateY(-5px);
+  box-shadow:var(--shadow-lift);
+}
+.svc:hover .svc-ico{ transform:translateY(-2px) rotate(-4deg) scale(1.08); }
+.svc .svc-ico{ transition:transform var(--dur-2) var(--ease-spring); }
+
+.svc-hero{
+  border-radius:var(--radius-lg) !important;
+  transition:transform var(--dur-2) var(--ease-spring),box-shadow var(--dur-2) var(--ease-out) !important;
+}
+.svc-hero:hover{ transform:translateY(-6px) scale(1.008); box-shadow:var(--shadow-lift); }
+.svc-hero:hover .svc-hero-arrow{ transform:translateX(5px); }
+.svc-hero .svc-hero-arrow{ transition:transform var(--dur-2) var(--ease-out); }
+.svc-hero-badge{
+  background:linear-gradient(120deg,rgba(245,177,46,.16),rgba(255,106,60,.12)) !important;
+  border:1px solid rgba(245,177,46,.35) !important;
+  color:var(--gold-deep) !important;
+}
+
+.svc-fly-ico{ border-radius:22px !important; box-shadow:0 14px 34px rgba(8,8,15,.35), inset 0 1px 0 rgba(255,255,255,.25); }
+.svc-fly-ico svg{ color:#fff; --duo:rgba(255,255,255,.85); }
+
+/* ── 11 · AURORA REFINEMENT (both themes) ────────────────────────── */
+.aurora-blob,.ia-blob,.lb{ filter:blur(90px) !important; }
+.ab-gold{
+  position:absolute; width:460px; height:460px; border-radius:50%;
+  background:radial-gradient(circle,rgba(245,177,46,.55),transparent 70%);
+  filter:blur(95px); opacity:.34; mix-blend-mode:multiply;
+  bottom:-10%; left:32%;
+  animation:apa-drift-g 34s ease-in-out infinite;
+}
+@keyframes apa-drift-g{ 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(-60px,-46px) scale(1.12)} }
+
+/* ── 12 · TOPBAR & NAV POLISH ────────────────────────────────────── */
+.topbar{ box-shadow:0 1px 0 var(--line),0 12px 40px -24px rgba(109,40,255,.25); }
+.tb-icon-btn:hover{ border-color:var(--iris) !important; color:var(--violet) !important; }
+.nav-cta,.hero-cta,.hero-portal-btn{
+  background:linear-gradient(120deg,var(--violet),var(--electric)) !important;
+  box-shadow:0 10px 30px rgba(109,40,255,.35),inset 0 1px 0 rgba(255,255,255,.25) !important;
+}
+.section-link:hover{ color:var(--violet); }
+.section-link:hover svg{ transform:translateX(4px); }
+.section-link svg{ transition:transform var(--dur-1) var(--ease-out); }
+
+/* ── 13 · THE MERIDIAN UNDERLINE (headline signature) ────────────── */
+.apa-underline{ position:relative; display:inline-block; }
+.apa-underline::after{
+  content:''; position:absolute; left:2%; right:2%; bottom:-.14em; height:.06em;
+  min-height:2px; max-height:4px;
+  background:var(--grad-equator); border-radius:4px;
+  transform:scaleX(0); transform-origin:left;
+  transition:transform .8s var(--ease-out);
+}
+.apa-underline.in::after,.in .apa-underline::after{ transform:scaleX(1); }
+
+/* ── 14 · APA ORB — the living core ─────────────────────────────── */
+#apa-btn{
+  background:conic-gradient(from 210deg,var(--electric),var(--violet),var(--ember),var(--gold),var(--mint),var(--electric)) !important;
+  box-shadow:0 8px 34px rgba(109,40,255,.5),0 0 0 1px rgba(255,255,255,.14) inset !important;
+}
+#apa-btn::before{ background:radial-gradient(120% 120% at 30% 25%,#1B1140,#0A0720 70%) !important; inset:2.5px !important; }
+#apa-btn::after{
+  content:''; position:absolute; width:7px; height:7px; border-radius:50%;
+  background:var(--gold);
+  box-shadow:0 0 10px rgba(245,177,46,.95);
+  top:50%; left:50%; margin:-3.5px;
+  transform:rotate(0deg) translateX(31px);
+  animation:apa-orbit 3.6s linear infinite;
+  z-index:2; pointer-events:none;
+}
+@keyframes apa-orbit{ to{ transform:rotate(360deg) translateX(31px);} }
+
+/* ── 15 · CARDS / GRIDS quiet lift ───────────────────────────────── */
+.prop-grid>*,.card,.listing-card{ transition:transform var(--dur-2) var(--ease-spring),box-shadow var(--dur-2) var(--ease-out); }
+.prop-grid>*:hover,.card:hover,.listing-card:hover{ transform:translateY(-4px); box-shadow:var(--shadow-lift); }
+
+/* ── 16 · REDUCED MOTION — respect, fully ────────────────────────── */
+@media (prefers-reduced-motion:reduce){
+  body::after{ animation:none; }
+  #apa-btn::after{ animation:none; display:none; }
+  .apa-mark .leg,.apa-mark .horizon{ stroke-dashoffset:0; animation:none; }
+  .apa-mark .orbit-dot{ animation:none; offset-distance:100%; }
+  .apa-load-word,.apa-load-tag{ opacity:1; animation:none; }
+  .apa-load-line i{ width:100%; animation:none; } .apa-load-line b{ left:100%; animation:none; }
+  .reveal{ opacity:1; transform:none; }
+  #apa-veil .vp,#apa-veil .vl{ transition:none; }
+  *{ animation-duration:.01ms !important; transition-duration:.01ms !important; }
+}
+
+/* ── 17 · MOBILE TIGHTEN ─────────────────────────────────────────── */
+@media (max-width:520px){
+  .apa-mark{ width:118px; height:118px; }
+  .apa-load-line{ width:172px; }
+  :root{ --radius:19px; --radius-lg:24px; }
+}

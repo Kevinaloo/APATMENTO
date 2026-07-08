@@ -12,6 +12,22 @@
 (function() {
 'use strict';
 
+/* ── EQUATOR LIGHT bootstrap — ensures the brand system on every page ── */
+try {
+  if (!document.querySelector('link[href="/brand.css"]')) {
+    var __brandCss = document.createElement('link');
+    __brandCss.rel = 'stylesheet';
+    __brandCss.href = '/brand.css';
+    (document.head || document.documentElement).appendChild(__brandCss);
+  }
+  if (!window.__APA_BRAND__ && !document.querySelector('script[src="/brand.js"]')) {
+    var __brandJs = document.createElement('script');
+    __brandJs.src = '/brand.js';
+    __brandJs.defer = true;
+    (document.head || document.documentElement).appendChild(__brandJs);
+  }
+} catch (e) {}
+
 /* ── CSS injected once ── */
 const PWA_CSS = `
 .pwa-install-banner{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(120px);z-index:99998;width:calc(100% - 40px);max-width:420px;background:#FCFCFD;border:1px solid rgba(10,10,20,0.1);border-radius:22px;padding:18px 20px;box-shadow:0 24px 64px rgba(123,47,247,0.18),0 8px 24px rgba(10,10,20,0.08);display:flex;align-items:center;gap:14px;transition:transform .5s cubic-bezier(.34,1.56,.64,1),opacity .4s;opacity:0;pointer-events:none;}

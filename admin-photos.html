@@ -6,7 +6,7 @@
 <meta name="robots" content="noindex, nofollow"/>
 <title>Apatmento — Photo Admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..700&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -15,7 +15,7 @@
   --border:rgba(15,17,23,0.08);--emerald:#0D9467;--emerald2:#059652;
   --gold:#C8970A;--gold2:#E8A800;--shadow-md:0 8px 32px rgba(15,17,23,0.10);
 }
-body{font-family:'Inter',sans-serif;background:var(--offwhite);color:var(--ink);min-height:100vh;}
+body{font-family:var(--font-body);background:var(--offwhite);color:var(--ink);min-height:100vh;}
 
 .lock-screen{
   min-height:100vh;display:flex;align-items:center;justify-content:center;
@@ -26,7 +26,7 @@ body{font-family:'Inter',sans-serif;background:var(--offwhite);color:var(--ink);
   box-shadow:0 30px 80px rgba(0,0,0,.4);
 }
 .lock-icon{font-size:36px;margin-bottom:14px;}
-.lock-title{font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:700;margin-bottom:6px;}
+.lock-title{font-family:var(--font-data);font-size:17px;font-weight:700;margin-bottom:6px;}
 .lock-sub{font-size:12px;color:var(--ink4);margin-bottom:20px;}
 .lock-input{
   width:100%;padding:12px 14px;border-radius:10px;border:1.5px solid var(--border);
@@ -36,13 +36,13 @@ body{font-family:'Inter',sans-serif;background:var(--offwhite);color:var(--ink);
 .lock-btn{
   width:100%;padding:12px;border-radius:10px;border:none;cursor:pointer;
   background:linear-gradient(135deg,var(--emerald),var(--emerald2));color:white;
-  font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:13px;
+  font-family:var(--font-data);font-weight:700;font-size:13px;
 }
 .lock-error{font-size:11px;color:#DC2626;margin-top:8px;min-height:14px;}
 
 .admin-wrap{display:none;max-width:1100px;margin:0 auto;padding:32px 20px 60px;}
 .admin-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:12px;}
-.admin-title{font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;}
+.admin-title{font-family:var(--font-data);font-size:22px;font-weight:700;}
 .admin-sub{font-size:12px;color:var(--ink4);margin-top:4px;}
 .admin-badge{
   font-size:11px;font-weight:700;color:var(--emerald);background:rgba(13,148,103,.08);
@@ -61,7 +61,7 @@ body{font-family:'Inter',sans-serif;background:var(--offwhite);color:var(--ink);
 .photo-preview img{width:100%;height:100%;object-fit:cover;}
 .photo-empty{font-size:12px;color:var(--ink4);text-align:center;padding:20px;}
 .photo-body{padding:14px 16px;}
-.photo-label{font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:700;margin-bottom:3px;}
+.photo-label{font-family:var(--font-data);font-size:13px;font-weight:700;margin-bottom:3px;}
 .photo-slot{font-size:11px;color:var(--ink4);margin-bottom:12px;}
 .photo-actions{display:flex;gap:8px;}
 .btn-upload{
@@ -91,6 +91,8 @@ input[type="file"]{display:none;}
 }
 .uploading-overlay.show{display:flex;}
 </style>
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&f[]=geist@400,500,600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/brand.css"/>
 </head>
 <body>
 
@@ -260,5 +262,6 @@ function showStatus(msg) {
   setTimeout(() => bar.classList.remove('show'), 3000);
 }
 </script>
+<script src="/brand.js" defer></script>
 </body>
 </html>
