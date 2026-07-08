@@ -94,18 +94,20 @@ h1 em,h2 em,h3 em,.stmt-key,.loader-word em,.tb-brand em,.hero-title em,em.wonk{
 /* ── 3 · FILM GRAIN — the physical layer ─────────────────────────── */
 body::after{
   content:'';
-  position:fixed; inset:-50%;
-  width:200%; height:200%;
+  position:fixed; inset:-10%;
+  width:120%; height:120%;
   pointer-events:none;
   z-index:2147483000;
   opacity:.032;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  animation:apa-grain 7s steps(6) infinite;
+  animation:apa-grain 8s steps(5) infinite;
   mix-blend-mode:overlay;
+  will-change:transform;
+  transform:translateZ(0);
 }
 @keyframes apa-grain{
-  0%,100%{transform:translate(0,0)} 20%{transform:translate(-2%,1%)}
-  40%{transform:translate(1%,-2%)} 60%{transform:translate(-1%,2%)} 80%{transform:translate(2%,1%)}
+  0%,100%{transform:translate(0,0)} 25%{transform:translate(-2%,1%)}
+  50%{transform:translate(1%,-2%)} 75%{transform:translate(-1%,2%)}
 }
 
 /* ── 4 · SCROLLBAR ───────────────────────────────────────────────── */
@@ -276,13 +278,14 @@ body::after{
 .svc-fly-ico svg{ color:#fff; --duo:rgba(255,255,255,.85); }
 
 /* ── 11 · AURORA REFINEMENT (both themes) ────────────────────────── */
-.aurora-blob,.ia-blob,.lb{ filter:blur(90px) !important; }
+.aurora-blob,.ia-blob,.lb{ filter:blur(72px) !important; will-change:transform; transform:translateZ(0); }
 .ab-gold{
   position:absolute; width:460px; height:460px; border-radius:50%;
   background:radial-gradient(circle,rgba(245,177,46,.55),transparent 70%);
-  filter:blur(95px); opacity:.34; mix-blend-mode:multiply;
+  filter:blur(80px); opacity:.30; mix-blend-mode:multiply;
   bottom:-10%; left:32%;
-  animation:apa-drift-g 34s ease-in-out infinite;
+  will-change:transform; transform:translateZ(0);
+  animation:apa-drift-g 40s ease-in-out infinite;
 }
 @keyframes apa-drift-g{ 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(-60px,-46px) scale(1.12)} }
 

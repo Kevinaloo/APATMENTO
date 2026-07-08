@@ -311,7 +311,7 @@ function choreograph(){
 
 /* ═══ 5 · FEEL — press, sheen, aurora gold ═══════════════════════════ */
 function feel(){
-  qsa('button,[role="button"],a[href],.svc,.svc-hero,[onclick]').slice(0,320).forEach(function(el){
+  qsa('button,[role="button"],.svc,.svc-hero,.btn,.card-cta').slice(0,160).forEach(function(el){
     el.classList.add('apa-press');
   });
   qsa('.nav-cta,.hero-cta,.hero-portal-btn,.btn-primary').forEach(function(el){
@@ -333,11 +333,14 @@ function boot(){
   });
   safe(ensureDefs);
   safe(upgradeLoaders);
-  safe(injectIcons);
   safe(bindVeil);
-  safe(choreograph);
-  safe(feel);
   document.documentElement.classList.add('brand-ready');
+  var defer = window.requestAnimationFrame || function(fn){ setTimeout(fn, 16); };
+  defer(function(){
+    safe(injectIcons);
+    safe(choreograph);
+    safe(feel);
+  });
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
 else boot();
