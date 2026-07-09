@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="robots" content="noindex, nofollow"/>
+<title>Agent & Influencer Programme · Apatmento Console</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/apa-session.js"></script>
+<script src="/apa-admin-guard.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#070710;--bg-2:#0C0C18;--panel:#101020;--panel-2:#15152A;--panel-3:#1C1C34;
+  --line:rgba(255,255,255,.07);--line-2:rgba(255,255,255,.13);
+  --ink:#F2F3FA;--ink-2:#B9BCD4;--ink-3:#7A7E9C;--ink-4:#4C5070;
+  --violet:#7C3AFF;--iris:#9B6BFF;--electric:#4F6DFF;
+  --mint:#2DE0C0;--gold:#F5B12E;--ember:#FF5E3A;--rose:#FF4D6D;
+  --ok:#2DE0C0;--warn:#F5B12E;--bad:#FF4D6D;
+  --f-d:'Fraunces',Georgia,serif;--f-b:system-ui,-apple-system,sans-serif;
+  --r:14px;--r-lg:20px;--ease:cubic-bezier(.22,1,.36,1);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{min-height:100%;}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-b);font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased;}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(900px 600px at 12% -8%,rgba(124,58,255,.12),transparent 60%),
+             radial-gradient(700px 500px at 94% 6%,rgba(45,224,192,.06),transparent 58%);}
+h1,h2,h3{font-family:var(--f-d);letter-spacing:-.02em;font-weight:600;}
+h1 em{font-style:italic;background:linear-gradient(100deg,var(--iris),var(--mint));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+::-webkit-scrollbar{width:9px;height:9px;}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:99px;}
+::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.18);}
+
+.wrap{position:relative;z-index:1;max-width:1160px;margin:0 auto;padding:28px 22px 80px;}
+
+/* ── top ── */
+.top{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:6px;flex-wrap:wrap;}
+.back{display:inline-flex;align-items:center;gap:7px;color:var(--ink-3);text-decoration:none;font-size:13px;transition:color .15s;}
+.back:hover{color:var(--ink);}
+h1{font-size:28px;margin:14px 0 5px;}
+.lede{color:var(--ink-3);font-size:13.5px;margin-bottom:26px;line-height:1.65;max-width:620px;}
+
+/* ── defaults strip ── */
+.defaults{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-bottom:26px;}
+.dcard{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:20px;}
+.dc-top{display:flex;align-items:center;gap:8px;margin-bottom:14px;}
+.dc-e{font-size:18px;}
+.dc-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--ink-3);}
+.dc-row{display:flex;align-items:center;gap:9px;}
+.dc-input{flex:1;background:var(--bg-2);border:1px solid var(--line-2);border-radius:10px;padding:11px 13px;color:var(--ink);font-size:17px;font-weight:700;font-family:var(--f-b);font-variant-numeric:tabular-nums;}
+.dc-input:focus{outline:none;border-color:var(--violet);}
+.dc-pct{font-size:17px;font-weight:700;color:var(--ink-3);}
+
+/* ── stats overview ── */
+.overview{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:26px;}
+.ov-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:18px;}
+.ov-ico{font-size:18px;margin-bottom:8px;}
+.ov-val{font-family:var(--f-d);font-size:26px;font-weight:600;letter-spacing:-.6px;}
+.ov-lab{font-size:11.5px;color:var(--ink-3);margin-top:5px;}
+
+/* ── buttons ── */
+.btn{padding:10px 16px;border:1px solid var(--line-2);border-radius:10px;background:var(--panel-2);color:var(--ink-2);font-family:var(--f-b);font-size:12.5px;font-weight:600;cursor:pointer;transition:all .16s;white-space:nowrap;}
+.btn:hover{border-color:var(--violet);color:var(--ink);}
+.btn:disabled{opacity:.45;cursor:not-allowed;}
+.btn-ok{background:linear-gradient(135deg,var(--mint),#1EB89C);color:#041410;border:none;}
+.btn-ok:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(45,224,192,.25);}
+.btn-bad{border-color:rgba(255,77,109,.3);color:var(--rose);background:transparent;}
+.btn-bad:hover{background:rgba(255,77,109,.08);border-color:var(--rose);}
+.btn-pri{background:linear-gradient(135deg,var(--violet),var(--electric));color:#fff;border:none;}
+.btn-pri:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(124,58,255,.3);}
+
+/* ── tabs ── */
+.tabs{display:flex;gap:3px;border-bottom:1px solid var(--line);margin-bottom:22px;overflow-x:auto;}
+.tab{padding:11px 18px;border:none;background:transparent;color:var(--ink-3);font-family:var(--f-b);font-size:13.5px;font-weight:600;cursor:pointer;border-bottom:2.5px solid transparent;transition:all .15s;white-space:nowrap;}
+.tab:hover{color:var(--ink-2);}
+.tab.on{color:var(--ink);border-bottom-color:var(--violet);}
+.tab .n{margin-left:7px;background:rgba(255,255,255,.08);color:var(--ink-3);font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px;}
+.tab.on .n{background:var(--violet);color:#fff;}
+
+/* ── application card ── */
+.app{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);padding:22px;margin-bottom:12px;border-left:3px solid transparent;transition:border-color .18s;}
+.app:hover{border-color:var(--line-2);}
+.app.pending{border-left-color:var(--gold);}
+.app.approved{border-left-color:var(--mint);opacity:.72;}
+.app.declined{border-left-color:var(--ink-4);opacity:.58;}
+
+.a-top{display:flex;align-items:flex-start;gap:14px;margin-bottom:16px;}
+.a-av{width:46px;height:46px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:20px;flex:none;}
+.a-av.agent{background:rgba(79,109,255,.15);}
+.a-av.influencer{background:rgba(255,94,58,.15);}
+.a-meta{flex:1;min-width:0;}
+.a-name{font-size:16px;font-weight:700;letter-spacing:-.2px;}
+.a-email{font-size:12.5px;color:var(--ink-3);margin-top:3px;word-break:break-all;}
+.pill{display:inline-flex;align-items:center;padding:4px 11px;border-radius:99px;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;flex:none;}
+.pill.pending{background:rgba(245,177,46,.13);color:var(--gold);}
+.pill.approved{background:rgba(45,224,192,.13);color:var(--mint);}
+.pill.declined{background:rgba(255,255,255,.07);color:var(--ink-3);}
+
+.a-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px;margin-bottom:16px;}
+.field-kv{background:var(--bg-2);border-radius:10px;padding:11px 13px;}
+.fk{font-size:9.5px;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-4);font-weight:700;}
+.fv{font-size:13px;color:var(--ink-2);margin-top:4px;word-break:break-word;line-height:1.45;}
+
+.a-act{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding-top:16px;border-top:1px solid var(--line);}
+.rate-wrap{display:flex;align-items:center;gap:7px;}
+.rate-input{width:80px;background:var(--bg-2);border:1px solid var(--line-2);border-radius:9px;padding:9px 11px;color:var(--ink);font-family:var(--f-b);font-size:14px;font-weight:700;font-variant-numeric:tabular-nums;}
+.rate-input:focus{outline:none;border-color:var(--violet);}
+.rate-unit{font-size:12px;color:var(--ink-3);}
+.spacer{flex:1;}
+
+.a-stamp{font-size:11.5px;color:var(--ink-4);padding-top:14px;border-top:1px solid var(--line);margin-top:3px;line-height:1.6;}
+.a-stamp b{color:var(--ink-3);}
+
+/* ── members table ── */
+.members-table{width:100%;border-collapse:collapse;font-size:13px;}
+.members-table th{text-align:left;padding:10px 13px;font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-4);border-bottom:1px solid var(--line);font-weight:700;}
+.members-table td{padding:13px;border-bottom:1px solid var(--line);color:var(--ink-2);vertical-align:middle;}
+.members-table tr:last-child td{border-bottom:none;}
+.members-table tr:hover td{background:rgba(255,255,255,.02);}
+.m-name{font-weight:600;color:var(--ink);}
+.m-email{font-size:12px;color:var(--ink-3);}
+.rate-badge{display:inline-block;padding:3px 9px;border-radius:99px;font-size:11px;font-weight:700;background:rgba(45,224,192,.1);color:var(--mint);}
+.code-mono{font-family:'Courier New',monospace;font-size:12.5px;color:var(--iris);font-weight:700;letter-spacing:1px;}
+
+.tbl-wrap{overflow-x:auto;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);}
+
+.empty{text-align:center;padding:64px 20px;color:var(--ink-4);}
+.empty-e{font-size:40px;margin-bottom:14px;opacity:.55;}
+.empty p{font-size:13.5px;max-width:340px;margin:0 auto;line-height:1.7;}
+
+/* ── toast ── */
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--panel-2);border:1px solid var(--line-2);border-radius:13px;padding:13px 22px;font-size:13.5px;font-weight:600;z-index:60;transition:transform .38s var(--ease);box-shadow:0 20px 50px rgba(0,0,0,.6);}
+.toast.show{transform:translateX(-50%) translateY(0);}
+.toast.ok{border-color:rgba(45,224,192,.4);color:var(--mint);}
+.toast.bad{border-color:rgba(255,77,109,.4);color:var(--rose);}
+
+.spin{width:30px;height:30px;border:3px solid var(--line-2);border-top-color:var(--violet);border-radius:50%;animation:sp .75s linear infinite;margin:0 auto 14px;}
+@keyframes sp{to{transform:rotate(360deg);}}
+#loader{text-align:center;padding:70px;color:var(--ink-4);}
+
+@media(max-width:700px){
+  .defaults{grid-template-columns:1fr;}
+  .overview{grid-template-columns:1fr 1fr;}
+  .a-act{flex-direction:column;align-items:stretch;}
+  .spacer{display:none;}
+  .btn{width:100%;}
+  .rate-wrap{justify-content:space-between;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <a class="back" href="admin.html">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m15 18-6-6 6-6"/></svg>
+      Console
+    </a>
+    <button class="btn" onclick="load()">↺ Refresh</button>
+  </div>
+
+  <h1>Agent &amp; Influencer <em>programme</em></h1>
+  <p class="lede">People who want to earn commission by growing Apatmento. Approving an application instantly creates their account and emails them their rate and referral code. Declining sends a considered rejection — no one is left wondering.</p>
+
+  <!-- Commission defaults -->
+  <div class="defaults">
+    <div class="dcard">
+      <div class="dc-top"><span class="dc-e">🤝</span><span class="dc-label">Agent default commission</span></div>
+      <div class="dc-row">
+        <input class="dc-input" id="d-agent" type="number" min="0" max="100" step="0.5" placeholder="7"/>
+        <span class="dc-pct">%</span>
+        <button class="btn btn-pri" onclick="saveDefault('agent')">Save</button>
+      </div>
+    </div>
+    <div class="dcard">
+      <div class="dc-top"><span class="dc-e">🎬</span><span class="dc-label">Influencer default commission</span></div>
+      <div class="dc-row">
+        <input class="dc-input" id="d-influencer" type="number" min="0" max="100" step="0.5" placeholder="12"/>
+        <span class="dc-pct">%</span>
+        <button class="btn btn-pri" onclick="saveDefault('influencer')">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Programme overview stats -->
+  <div class="overview" id="overview" style="display:none;">
+    <div class="ov-card"><div class="ov-ico">⏳</div><div class="ov-val" id="ov-pending">0</div><div class="ov-lab">Pending review</div></div>
+    <div class="ov-card"><div class="ov-ico">✅</div><div class="ov-val" id="ov-active">0</div><div class="ov-lab">Active members</div></div>
+    <div class="ov-card"><div class="ov-ico">🤝</div><div class="ov-val" id="ov-agents">0</div><div class="ov-lab">Agents</div></div>
+    <div class="ov-card"><div class="ov-ico">🎬</div><div class="ov-val" id="ov-infl">0</div><div class="ov-lab">Influencers</div></div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab on" onclick="view('pending',this)">Pending <span class="n" id="n-pending">0</span></button>
+    <button class="tab"    onclick="view('approved',this)">Approved <span class="n" id="n-approved">0</span></button>
+    <button class="tab"    onclick="view('declined',this)">Declined <span class="n" id="n-declined">0</span></button>
+    <button class="tab"    onclick="view('members',this)">Members <span class="n" id="n-members">0</span></button>
+  </div>
+
+  <div id="loader"><div class="spin"></div>Loading…</div>
+  <div id="list"></div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPA_URL  = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
+const SUPA_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
+const sb = supabase.createClient(SUPA_URL, SUPA_ANON);
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const ksh = (n) => 'KSh ' + Number(n||0).toLocaleString('en-KE',{maximumFractionDigits:0});
+const when = (d) => d ? new Date(d).toLocaleString('en-KE',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
+const CM = {call:'📞 Call',sms:'✉️ SMS',whatsapp:'💬 WhatsApp',email:'📧 Email'};
+
+let APPS = [], MEMBERS = [], VIEW = 'pending';
+
+/* ── Token from current session ── */
+async function tok() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { location.replace('auth.html'); throw new Error('no session'); }
+  return session.access_token;
+}
+
+/* ── API call ── */
+async function api(qs, opts = {}) {
+  const r = await fetch(`/api/programme?${qs}`, {
+    ...opts,
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${await tok()}`,
+      ...(opts.headers || {}),
+    },
+  });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || 'Request failed');
+  return j;
+}
+
+function toast(msg, kind = 'ok') {
+  const t = $('toast');
+  t.textContent = msg;
+  t.className = `toast ${kind} show`;
+  setTimeout(() => t.classList.remove('show'), 3600);
+}
+
+/* ── Load all data ── */
+async function load() {
+  $('loader').style.display = 'block';
+  $('list').innerHTML = '';
+  try {
+    const [{ applications }, { defaults }, membersRes] = await Promise.all([
+      api('action=queue'),
+      api('action=defaults'),
+      sb.from('programme_members').select('*').order('approved_at',{ascending:false}),
+    ]);
+
+    APPS    = applications || [];
+    MEMBERS = membersRes.data || [];
+
+    // Default rates
+    (defaults || []).forEach(d => {
+      const el = $('d-' + d.role);
+      if (el) el.value = d.rate_pct;
+    });
+
+    // Counters
+    const counts = { pending:0, approved:0, declined:0 };
+    APPS.forEach(a => counts[a.status] = (counts[a.status]||0) + 1);
+    ['pending','approved','declined'].forEach(s => $('n-'+s).textContent = counts[s]);
+    $('n-members').textContent = MEMBERS.length;
+
+    // Overview stats
+    $('ov-pending').textContent = counts.pending;
+    $('ov-active').textContent  = MEMBERS.filter(m=>m.is_active).length;
+    $('ov-agents').textContent  = MEMBERS.filter(m=>m.role==='agent').length;
+    $('ov-infl').textContent    = MEMBERS.filter(m=>m.role==='influencer').length;
+    $('overview').style.display = 'grid';
+
+    render();
+  } catch(e) {
+    $('list').innerHTML = `<div class="empty"><div class="empty-e">⚠️</div><p>${esc(e.message)}</p></div>`;
+  }
+  $('loader').style.display = 'none';
+}
+
+function view(v, el) {
+  VIEW = v;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
+  el.classList.add('on');
+  render();
+}
+
+function render() {
+  if (VIEW === 'members') { renderMembers(); return; }
+  const rows = VIEW === 'all' ? APPS : APPS.filter(a => a.status === VIEW);
+  if (!rows.length) {
+    $('list').innerHTML = `<div class="empty">
+      <div class="empty-e">${VIEW==='pending'?'✨':'📭'}</div>
+      <p>${VIEW==='pending'?'The review queue is empty.':'No '+VIEW+' applications yet.'}</p>
+    </div>`;
+    return;
+  }
+  $('list').innerHTML = rows.map(appCard).join('');
+}
+
+function appCard(a) {
+  const inf  = a.role === 'influencer';
+  const rate = a.granted_rate_pct ?? a.default_rate_pct ?? (inf ? 12 : 7);
+  const pend = a.status === 'pending';
+
+  const fields = [
+    ['Contact', CM[a.contact_method] || a.contact_method],
+    ['Reach at', a.contact_value],
+  ];
+  if (inf) {
+    fields.unshift(['Nickname', a.nickname || '—']);
+    fields.push(['Social', `${esc(a.social_handle||'—')}${a.social_platform?' · '+esc(a.social_platform):''}`]);
+    if (a.audience_size) fields.push(['Audience', Number(a.audience_size).toLocaleString()]);
+  }
+
+  return `<div class="app ${a.status}">
+    <div class="a-top">
+      <div class="a-av ${a.role}">${inf?'🎬':'🤝'}</div>
+      <div class="a-meta">
+        <div class="a-name">${esc(a.full_name)}</div>
+        <div class="a-email">${esc(a.email)}</div>
+      </div>
+      <span class="pill ${a.status}">${a.status}</span>
+    </div>
+
+    <div class="a-fields">
+      ${fields.map(([k,v])=>`<div class="field-kv"><div class="fk">${esc(k)}</div><div class="fv">${v}</div></div>`).join('')}
+    </div>
+
+    ${pend ? `<div class="a-act">
+      <div class="rate-wrap">
+        <input class="rate-input" id="r-${a.id}" type="number" min="0" max="100" step="0.5" value="${rate}"/>
+        <span class="rate-unit">% commission</span>
+      </div>
+      <div class="spacer"></div>
+      <button class="btn btn-bad" onclick="decline('${a.id}','${esc(a.full_name)}')">Decline</button>
+      <button class="btn btn-ok"  onclick="approve('${a.id}')">Approve &amp; notify →</button>
+    </div>` : `
+    <div class="a-stamp">
+      <b>${a.status === 'approved' ? 'Approved' : 'Declined'}</b> ${when(a.reviewed_at)}
+      ${a.status==='approved' && a.granted_rate_pct!=null ? ` · granted <b>${a.granted_rate_pct}%</b>` : ''}
+      ${a.decline_reason ? `<br><b>Reason:</b> ${esc(a.decline_reason)}` : ''}
+    </div>`}
+
+    <div class="a-stamp" style="margin-top:${pend?'3':'0'}px;">Applied ${when(a.created_at)}</div>
+  </div>`;
+}
+
+function renderMembers() {
+  if (!MEMBERS.length) {
+    $('list').innerHTML = `<div class="empty"><div class="empty-e">🌱</div><p>No approved members yet — approve an application to get started.</p></div>`;
+    return;
+  }
+  $('list').innerHTML = `<div class="tbl-wrap"><table class="members-table">
+    <thead><tr>
+      <th>Member</th><th>Role</th><th>Rate</th><th>Code</th>
+      <th style="text-align:right;">Earned</th><th style="text-align:right;">Pending</th>
+      <th style="text-align:right;">Bookings</th><th>Status</th>
+    </tr></thead>
+    <tbody>
+      ${MEMBERS.map(m => `<tr>
+        <td><div class="m-name">${esc(m.nickname||m.full_name)}</div><div class="m-email">${esc(m.email)}</div></td>
+        <td>${m.role==='influencer'?'🎬 Influencer':'🤝 Agent'}</td>
+        <td><span class="rate-badge">${m.commission_pct}%</span></td>
+        <td><span class="code-mono">${esc(m.referral_code)}</span></td>
+        <td style="text-align:right;font-variant-numeric:tabular-nums;">${ksh(m.total_earned)}</td>
+        <td style="text-align:right;font-variant-numeric:tabular-nums;color:var(--mint);">${ksh(m.pending_payout)}</td>
+        <td style="text-align:right;">${(m.conversions||0).toLocaleString()}</td>
+        <td><span style="font-size:12px;padding:3px 9px;border-radius:99px;font-weight:700;
+          background:${m.is_active?'rgba(45,224,192,.1)':'rgba(255,255,255,.06)'};
+          color:${m.is_active?'var(--mint)':'var(--ink-3)'};">${m.is_active?'Active':'Paused'}</span></td>
+      </tr>`).join('')}
+    </tbody>
+  </table></div>`;
+}
+
+/* ── Actions ── */
+async function approve(id) {
+  const rate = parseFloat($('r-'+id)?.value);
+  if (!(rate >= 0 && rate <= 100)) return toast('Set a valid rate first (0–100).', 'bad');
+  if (!confirm(`Approve at ${rate}% commission?\n\nThis creates their account immediately and emails them their rate and referral code.`)) return;
+  try {
+    const j = await api('action=approve', { method:'POST', body: JSON.stringify({ application_id: id, rate_pct: rate }) });
+    toast(`✓ Approved · code ${j.referral_code} · ${j.rate_pct}%`);
+    load();
+  } catch(e) { toast(e.message, 'bad'); }
+}
+
+async function decline(id, name) {
+  const reason = prompt(`Decline ${name}?\n\nOptional: add a brief reason. This goes into their email, written gently. Leave blank to decline without specifics.`);
+  if (reason === null) return; // cancelled
+  try {
+    await api('action=decline', { method:'POST', body: JSON.stringify({ application_id: id, reason: reason.trim()||null }) });
+    toast('Declined — they have been emailed.');
+    load();
+  } catch(e) { toast(e.message, 'bad'); }
+}
+
+async function saveDefault(role) {
+  const rate = parseFloat($('d-'+role)?.value);
+  if (!(rate >= 0 && rate <= 100)) return toast('Rate must be between 0 and 100.', 'bad');
+  try {
+    await api('action=defaults', { method:'POST', body: JSON.stringify({ role, rate_pct: rate }) });
+    toast(`✓ ${role} default → ${rate}%`);
+  } catch(e) { toast(e.message, 'bad'); }
+}
+
+load();
+</script>
+</body>
+</html>

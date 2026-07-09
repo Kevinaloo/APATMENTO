@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<meta name="robots" content="noindex, nofollow"/>
+<title>Agent & Influencer Portal · Apatmento</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/apa-session.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300..900&display=swap" rel="stylesheet"/>
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --glass:#FCFCFD;--glass-2:#F4F5FB;--ink:#0A0A14;--ink-2:#1A1B2E;--ink-soft:#4A4C66;--ink-faint:#8E90AD;
+  --lilac:#B8A4F4;--violet:#7B2FF7;--electric:#4361FF;
+  --mint:#5EEAD4;--mint-deep:#2DD4BF;--ember:#FF6B2C;--peach:#FFB59E;
+  --line:rgba(10,10,20,0.07);--line-2:rgba(10,10,20,0.13);
+  --font-d:'Fraunces',serif;--font-b:'General Sans',system-ui,sans-serif;
+  --ok:#2DD4BF;--err:#FF4D6D;
+  --ease:cubic-bezier(.22,1,.36,1);
+}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important;}}
+html,body{min-height:100%;font-family:var(--font-b);background:#F2F3FA;color:var(--ink);-webkit-font-smoothing:antialiased;}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(900px 700px at 110% -10%,rgba(123,47,247,.06),transparent 55%),
+             radial-gradient(700px 500px at -10% 100%,rgba(67,97,255,.05),transparent 55%);}
+
+/* ── Gate ── */
+#gate{position:fixed;inset:0;background:#F2F3FA;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;z-index:999;}
+.spin{width:36px;height:36px;border:3px solid rgba(123,47,247,.2);border-top-color:var(--violet);border-radius:50%;animation:spin .75s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+#gate p{font-size:13px;color:var(--ink-faint);}
+
+/* ── Layout ── */
+.wrap{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:28px 20px 72px;}
+
+/* ── Top bar ── */
+.topbar{display:flex;align-items:center;gap:14px;margin-bottom:28px;flex-wrap:wrap;}
+.tb-av{width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,var(--violet),var(--electric));display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;font-weight:800;flex:none;box-shadow:0 8px 24px rgba(123,47,247,.28);}
+.tb-id{flex:1;min-width:0;}
+.tb-name{font-family:var(--font-d);font-size:22px;font-weight:600;letter-spacing:-.4px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tb-role{display:inline-flex;align-items:center;gap:5px;margin-top:5px;padding:3px 11px;border-radius:20px;font-size:10.5px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;}
+.tb-role.agent{background:rgba(67,97,255,.1);color:var(--electric);}
+.tb-role.influencer{background:rgba(255,107,44,.1);color:var(--ember);}
+.tb-actions{display:flex;gap:9px;flex:none;}
+.btn-ghost{padding:9px 16px;border:1.5px solid var(--line-2);border-radius:12px;background:var(--glass);color:var(--ink-soft);font-family:var(--font-b);font-weight:600;font-size:13px;cursor:pointer;transition:all .22s;}
+.btn-ghost:hover{border-color:var(--lilac);color:var(--ink);}
+.btn-danger:hover{border-color:var(--err);color:var(--err);}
+
+/* ── Privacy notice ── */
+.priv-bar{display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:14px;background:linear-gradient(135deg,rgba(123,47,247,.05),rgba(67,97,255,.04));border:1px solid rgba(123,47,247,.12);font-size:12.5px;color:var(--ink-soft);line-height:1.55;margin-bottom:22px;}
+.priv-bar svg{flex:none;color:var(--violet);}
+
+/* ── Earnings hero ── */
+.hero{background:linear-gradient(140deg,#080B1A 0%,#12103A 50%,#0D1628 100%);border-radius:26px;padding:34px 36px;color:#fff;margin-bottom:18px;position:relative;overflow:hidden;}
+.hero-orbs{position:absolute;inset:0;pointer-events:none;}
+.orb{position:absolute;border-radius:50%;filter:blur(70px);opacity:.5;}
+.orb-1{width:400px;height:400px;background:radial-gradient(circle,rgba(123,47,247,.6),transparent 65%);top:-160px;right:-80px;}
+.orb-2{width:320px;height:320px;background:radial-gradient(circle,rgba(67,97,255,.4),transparent 65%);bottom:-120px;left:-60px;}
+.orb-3{width:260px;height:260px;background:radial-gradient(circle,rgba(45,212,191,.3),transparent 65%);bottom:10px;right:130px;}
+.hero-grid{position:relative;z-index:1;display:grid;grid-template-columns:1fr auto;gap:24px;align-items:center;}
+.h-lab{font-size:11px;text-transform:uppercase;letter-spacing:1.6px;color:rgba(255,255,255,.5);font-weight:700;margin-bottom:8px;}
+.h-amt{font-family:var(--font-d);font-size:52px;font-weight:600;letter-spacing:-2px;line-height:1;margin-bottom:6px;}
+.h-since{font-size:13px;color:rgba(255,255,255,.55);}
+.rate-pill{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:20px;padding:24px 28px;text-align:center;backdrop-filter:blur(12px);}
+.rate-n{font-family:var(--font-d);font-size:44px;font-weight:600;color:var(--mint);letter-spacing:-1.5px;line-height:1;}
+.rate-lab{font-size:11.5px;color:rgba(255,255,255,.5);margin-top:7px;line-height:1.5;}
+
+/* ── Payout split ── */
+.pay-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;}
+.pay-card{background:var(--glass);border:1px solid var(--line);border-radius:18px;padding:20px 22px;transition:transform .22s,box-shadow .22s;}
+.pay-card:hover{transform:translateY(-2px);box-shadow:0 10px 32px rgba(10,10,20,.05);}
+.pay-card.pending{border-color:rgba(45,212,191,.25);background:linear-gradient(135deg,rgba(45,212,191,.04),var(--glass));}
+.pc-lab{font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--ink-faint);font-weight:700;}
+.pc-val{font-family:var(--font-d);font-size:32px;font-weight:600;letter-spacing:-1px;margin-top:8px;line-height:1;}
+.pay-card.pending .pc-val{color:#0E9384;}
+
+/* ── Stats ── */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px;}
+.stat{background:var(--glass);border:1px solid var(--line);border-radius:18px;padding:20px;transition:transform .22s,box-shadow .22s;}
+.stat:hover{transform:translateY(-2px);box-shadow:0 10px 32px rgba(10,10,20,.05);}
+.st-ico{font-size:20px;margin-bottom:10px;}
+.st-val{font-family:var(--font-d);font-size:30px;font-weight:600;letter-spacing:-.8px;line-height:1;}
+.st-lab{font-size:12px;color:var(--ink-faint);margin-top:6px;}
+.st-cvr{font-size:11px;color:var(--ink-faint);margin-top:8px;padding-top:8px;border-top:1px solid var(--line);}
+
+/* ── Referral card ── */
+.ref-card{background:var(--glass);border:1px solid var(--line);border-radius:20px;padding:26px;margin-bottom:18px;}
+.card-h{font-family:var(--font-d);font-size:18px;font-weight:600;margin-bottom:5px;}
+.card-sub{font-size:13px;color:var(--ink-faint);margin-bottom:20px;line-height:1.6;}
+.ref-code-row{display:flex;align-items:center;gap:12px;background:var(--glass-2);border-radius:14px;padding:15px 18px;margin-bottom:11px;}
+.ref-code-val{flex:1;font-family:ui-monospace,'Cascadia Code','Courier New',monospace;font-size:22px;font-weight:800;color:var(--violet);letter-spacing:3px;}
+.copy-btn{padding:10px 17px;border:none;border-radius:11px;background:linear-gradient(135deg,var(--violet),var(--electric));color:#fff;font-family:var(--font-b);font-weight:700;font-size:12.5px;cursor:pointer;flex:none;transition:all .2s;white-space:nowrap;}
+.copy-btn:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(123,47,247,.35);}
+.copy-btn.done{background:linear-gradient(135deg,var(--mint-deep),#0EA5E9);}
+.ref-link-row{display:flex;align-items:center;gap:12px;background:var(--glass-2);border-radius:14px;padding:13px 18px;}
+.ref-link-val{flex:1;font-size:12.5px;color:var(--ink-soft);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+/* ── Activity feed ── */
+.activity{background:var(--glass);border:1px solid var(--line);border-radius:20px;padding:26px;}
+.event-row{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--line);}
+.event-row:last-child{border-bottom:none;}
+.ev-ico{width:40px;height:40px;border-radius:12px;background:var(--glass-2);display:flex;align-items:center;justify-content:center;font-size:16px;flex:none;}
+.ev-ico.booking{background:linear-gradient(135deg,rgba(45,212,191,.15),rgba(67,97,255,.1));}
+.ev-ico.payout{background:rgba(245,179,46,.12);}
+.ev-mid{flex:1;min-width:0;}
+.ev-t{font-size:14px;font-weight:600;}
+.ev-d{font-size:12px;color:var(--ink-faint);margin-top:3px;}
+.ev-amt{font-size:14px;font-weight:700;color:#0E9384;flex:none;}
+.ev-amt.out{color:var(--ink-faint);}
+
+.empty-feed{text-align:center;padding:48px 16px;}
+.ef-ico{font-size:42px;margin-bottom:16px;opacity:.55;}
+.ef-t{font-family:var(--font-d);font-size:19px;font-weight:600;margin-bottom:8px;}
+.ef-s{font-size:13.5px;color:var(--ink-faint);max-width:300px;margin:0 auto;line-height:1.7;}
+
+/* ── Tip bar ── */
+.tip-bar{background:linear-gradient(135deg,rgba(123,47,247,.06),rgba(67,97,255,.04));border:1px solid rgba(123,47,247,.12);border-radius:16px;padding:18px 20px;margin-bottom:18px;display:flex;gap:14px;align-items:flex-start;}
+.tip-ico{font-size:20px;flex:none;margin-top:1px;}
+.tip-body{flex:1;}
+.tip-t{font-size:13.5px;font-weight:700;color:var(--ink);margin-bottom:5px;}
+.tip-s{font-size:12.5px;color:var(--ink-soft);line-height:1.65;}
+.tip-s a{color:var(--violet);text-decoration:none;font-weight:600;}
+.tip-s a:hover{text-decoration:underline;}
+
+@media(max-width:840px){
+  .stats{grid-template-columns:repeat(2,1fr);}
+  .hero-grid{grid-template-columns:1fr;}
+  .rate-pill{display:none;}
+  .h-amt{font-size:42px;}
+}
+@media(max-width:520px){
+  .pay-row{grid-template-columns:1fr;}
+  .wrap{padding:18px 14px 56px;}
+  .hero{padding:24px;}
+  .stats{grid-template-columns:1fr 1fr;}
+  .ref-code-val{font-size:17px;letter-spacing:1.5px;}
+}
+</style>
+</head>
+<body>
+
+<div id="gate"><div class="spin"></div><p>Verifying your account…</p></div>
+
+<div class="wrap" id="app" style="display:none;">
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <div class="tb-av" id="av">?</div>
+    <div class="tb-id">
+      <div class="tb-name" id="tb-name">—</div>
+      <span class="tb-role" id="tb-role">—</span>
+    </div>
+    <div class="tb-actions">
+      <a href="index.html" class="btn-ghost" style="text-decoration:none;">← Apatmento</a>
+      <button class="btn-ghost btn-danger" onclick="signOut()">Sign out</button>
+    </div>
+  </div>
+
+  <!-- Privacy bar -->
+  <div class="priv-bar">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    Your commission rate and earnings are yours alone — private to you and to us. They are never visible publicly or to other programme members.
+  </div>
+
+  <!-- Tip bar (shown only when zero activity) -->
+  <div class="tip-bar" id="tip-bar" style="display:none;">
+    <div class="tip-ico">💡</div>
+    <div class="tip-body">
+      <div class="tip-t">Your first steps</div>
+      <div class="tip-s">Share your referral link anywhere — social posts, WhatsApp, bios. Every visitor who taps it is tracked to you. When they book, you earn. Your activity will appear here the moment something happens. <a href="#ref-section">Copy your link below →</a></div>
+    </div>
+  </div>
+
+  <!-- Earnings hero -->
+  <div class="hero">
+    <div class="hero-orbs"><div class="orb orb-1"></div><div class="orb orb-2"></div><div class="orb orb-3"></div></div>
+    <div class="hero-grid">
+      <div>
+        <div class="h-lab">Total earned</div>
+        <div class="h-amt" id="h-earned">KSh 0</div>
+        <div class="h-since" id="h-since">—</div>
+      </div>
+      <div class="rate-pill">
+        <div class="rate-n" id="h-rate">—</div>
+        <div class="rate-lab">your commission<br>on every booking</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Payouts -->
+  <div class="pay-row">
+    <div class="pay-card pending">
+      <div class="pc-lab">Awaiting payout</div>
+      <div class="pc-val" id="p-pending">KSh 0</div>
+    </div>
+    <div class="pay-card">
+      <div class="pc-lab">Paid out to date</div>
+      <div class="pc-val" id="p-paid">KSh 0</div>
+    </div>
+  </div>
+
+  <!-- Performance stats -->
+  <div class="stats">
+    <div class="stat">
+      <div class="st-ico">👁</div>
+      <div class="st-val" id="s-clicks">0</div>
+      <div class="st-lab">Link clicks</div>
+      <div class="st-cvr" id="s-cvr1">—</div>
+    </div>
+    <div class="stat">
+      <div class="st-ico">✍️</div>
+      <div class="st-val" id="s-signups">0</div>
+      <div class="st-lab">Signups</div>
+      <div class="st-cvr" id="s-cvr2">—</div>
+    </div>
+    <div class="stat">
+      <div class="st-ico">🎯</div>
+      <div class="st-val" id="s-conv">0</div>
+      <div class="st-lab">Bookings</div>
+      <div class="st-cvr" id="s-cvr3">—</div>
+    </div>
+    <div class="stat">
+      <div class="st-ico">💰</div>
+      <div class="st-val" id="s-gmv">KSh 0</div>
+      <div class="st-lab">Value you've driven</div>
+      <div class="st-cvr">Gross booking value</div>
+    </div>
+  </div>
+
+  <!-- Referral -->
+  <div class="ref-card" id="ref-section">
+    <div class="card-h">Your referral code</div>
+    <div class="card-sub">Share the link below — anyone who arrives through it is attributed to you permanently, across devices and sessions.</div>
+
+    <div class="ref-code-row">
+      <div class="ref-code-val" id="ref-code">—</div>
+      <button class="copy-btn" id="cp-code" onclick="copy('ref-code','cp-code')">Copy code</button>
+    </div>
+    <div class="ref-link-row">
+      <div class="ref-link-val" id="ref-link">—</div>
+      <button class="copy-btn" id="cp-link" onclick="copy('ref-link','cp-link')">Copy link</button>
+    </div>
+  </div>
+
+  <!-- Activity -->
+  <div class="activity">
+    <div class="card-h">Activity</div>
+    <div class="card-sub" id="act-sub">Your last 30 tracked events.</div>
+    <div id="feed"></div>
+  </div>
+
+</div>
+
+<script>
+const SUPA_URL  = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
+const SUPA_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
+const sb = supabase.createClient(SUPA_URL, SUPA_ANON);
+
+const $    = (id) => document.getElementById(id);
+const ksh  = (n)  => 'KSh\u00A0' + Number(n || 0).toLocaleString('en-KE', { maximumFractionDigits: 0 });
+const pct  = (a, b) => b ? ((a / b) * 100).toFixed(1) + '% of clicks' : '—';
+const esc  = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ── Boot: auth gate ── */
+(async () => {
+  const { data: { session } } = await sb.auth.getSession()
+    .catch(() => ({ data: { session: null } }));
+
+  if (!session) return go();
+
+  /* RLS: returns only this member's row. Traveller accounts get null. */
+  const { data: m } = await sb.from('programme_members')
+    .select('*').eq('id', session.user.id).maybeSingle();
+
+  if (!m || !m.is_active) {
+    await sb.auth.signOut();
+    return go();
+  }
+
+  paint(m);
+  await loadFeed(m.id, m.clicks === 0 && m.conversions === 0);
+  $('gate').style.display = 'none';
+  $('app').style.display  = 'block';
+})();
+
+function go() { location.replace('auth.html?panel=programme'); }
+
+/* ── Paint the page ── */
+function paint(m) {
+  const displayName = m.nickname || m.full_name;
+  const first       = (m.full_name || '').split(' ')[0] || 'there';
+
+  $('av').textContent     = displayName[0].toUpperCase();
+  $('tb-name').textContent = `Karibu, ${first}`;
+
+  const rb = $('tb-role');
+  rb.textContent = m.role === 'influencer' ? '🎬 Influencer' : '🤝 Agent';
+  rb.className   = 'tb-role ' + m.role;
+
+  $('h-earned').textContent = ksh(m.total_earned);
+  $('h-rate').textContent   = `${Number(m.commission_pct).toFixed(Number(m.commission_pct) % 1 ? 1 : 0)}%`;
+  $('h-since').textContent  = 'Member since ' + new Date(m.approved_at)
+    .toLocaleDateString('en-KE', { month: 'long', year: 'numeric' });
+
+  $('p-pending').textContent = ksh(m.pending_payout);
+  $('p-paid').textContent    = ksh(m.total_paid_out);
+
+  const clicks = m.clicks || 0;
+  $('s-clicks').textContent  = clicks.toLocaleString();
+  $('s-signups').textContent = (m.signups || 0).toLocaleString();
+  $('s-conv').textContent    = (m.conversions || 0).toLocaleString();
+  $('s-gmv').textContent     = ksh(m.gmv);
+
+  $('s-cvr1').textContent = clicks ? 'Total reach' : 'Share your link to start';
+  $('s-cvr2').textContent = pct(m.signups, clicks);
+  $('s-cvr3').textContent = pct(m.conversions, m.signups || clicks);
+
+  $('ref-code').textContent = m.referral_code;
+  $('ref-link').textContent = `${location.origin}/?ref=${m.referral_code}`;
+}
+
+/* ── Activity feed ── */
+async function loadFeed(memberId, isEmpty) {
+  if (isEmpty) {
+    $('tip-bar').style.display = 'flex';
+    $('act-sub').textContent   = 'Nothing yet — your first clicks will show here live.';
+  }
+
+  const { data: events } = await sb.from('programme_events')
+    .select('event_type, reference, gross_amount, commission, created_at')
+    .eq('member_id', memberId)
+    .order('created_at', { ascending: false })
+    .limit(30);
+
+  const feed = $('feed');
+
+  if (!events?.length) {
+    feed.innerHTML = `<div class="empty-feed">
+      <div class="ef-ico">🌱</div>
+      <div class="ef-t">Nothing yet</div>
+      <div class="ef-s">Share your referral link and your first tracked events will appear here — usually within minutes.</div>
+    </div>`;
+    return;
+  }
+
+  const META = {
+    click:   { ico: '👁',   label: 'Link click',          cls: '' },
+    signup:  { ico: '✍️',  label: 'New signup via you',   cls: '' },
+    booking: { ico: '🎯',   label: 'Booking confirmed',    cls: 'booking' },
+    payout:  { ico: '🏦',   label: 'Payout sent to you',  cls: 'payout' },
+  };
+
+  feed.innerHTML = events.map(ev => {
+    const { ico, label, cls } = META[ev.event_type] || { ico: '•', label: ev.event_type, cls: '' };
+    const when = new Date(ev.created_at).toLocaleString('en-KE', {
+      day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
+    });
+
+    let amt = '', amtCls = '';
+    if (ev.event_type === 'booking' && ev.commission > 0) {
+      amt = '+' + ksh(ev.commission); amtCls = '';
+    }
+    if (ev.event_type === 'payout') {
+      amt = '−' + ksh(ev.gross_amount); amtCls = 'out';
+    }
+
+    return `<div class="event-row">
+      <div class="ev-ico ${cls}">${ico}</div>
+      <div class="ev-mid">
+        <div class="ev-t">${label}</div>
+        <div class="ev-d">${esc(when)}${ev.reference ? ' · ' + esc(ev.reference) : ''}</div>
+      </div>
+      ${amt ? `<div class="ev-amt ${amtCls}">${amt}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+/* ── Copy helper ── */
+function copy(srcId, btnId) {
+  const btn = $(btnId);
+  const val = $(srcId).textContent.trim();
+  navigator.clipboard.writeText(val).then(() => {
+    const was = btn.textContent;
+    btn.textContent = '✓ Copied';
+    btn.classList.add('done');
+    setTimeout(() => { btn.textContent = was; btn.classList.remove('done'); }, 2000);
+  }).catch(() => {
+    // fallback for older Safari
+    const ta = document.createElement('textarea');
+    ta.value = val;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    btn.textContent = '✓ Copied';
+    btn.classList.add('done');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('done'); }, 2000);
+  });
+}
+
+async function signOut() {
+  await sb.auth.signOut();
+  location.href = 'index.html';
+}
+</script>
+</body>
+</html>

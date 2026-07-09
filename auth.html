@@ -138,25 +138,25 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
 .submit-btn.loading::after{opacity:1;}
 @keyframes spin{to{transform:rotate(360deg);}}
 
-/* ══════════ PARTNER PROGRAMME ══════════
+/* ══════════ AGENT & INFLUENCER PROGRAMME ══════════
    Visually quarantined from traveller auth. A traveller reads the
    divider, understands it isn't for them, and scrolls on. */
-.partner-sep{display:flex;align-items:center;gap:14px;margin:30px 0 18px;color:var(--ink-faint);font-size:11px;letter-spacing:1.4px;text-transform:uppercase;font-weight:600;}
-.partner-sep::before,.partner-sep::after{content:'';flex:1;height:1px;background:var(--line);}
+.prog-sep{display:flex;align-items:center;gap:14px;margin:30px 0 18px;color:var(--ink-faint);font-size:11px;letter-spacing:1.4px;text-transform:uppercase;font-weight:600;}
+.prog-sep::before,.prog-sep::after{content:'';flex:1;height:1px;background:var(--line);}
 
-.partner-door{width:100%;border:1.5px dashed var(--line-2);border-radius:16px;background:linear-gradient(135deg,rgba(123,47,247,.03),rgba(67,97,255,.03));padding:16px 18px;cursor:pointer;display:flex;align-items:center;gap:14px;text-align:left;transition:all .3s cubic-bezier(.22,1,.36,1);font-family:var(--font-body);}
-.partner-door:hover{border-color:var(--lilac);border-style:solid;transform:translateY(-1px);box-shadow:0 8px 26px rgba(123,47,247,.1);}
-.pd-ico{width:38px;height:38px;flex:none;border-radius:11px;background:linear-gradient(135deg,var(--violet),var(--electric));display:flex;align-items:center;justify-content:center;font-size:18px;}
-.pd-txt{flex:1;min-width:0;}
-.pd-title{font-size:13.5px;font-weight:700;color:var(--ink);}
-.pd-sub{font-size:11.5px;color:var(--ink-faint);margin-top:2px;line-height:1.45;}
-.pd-chev{flex:none;color:var(--ink-faint);transition:transform .35s cubic-bezier(.22,1,.36,1);}
-.partner-door[aria-expanded="true"] .pd-chev{transform:rotate(180deg);}
-.partner-door[aria-expanded="true"]{border-style:solid;border-color:var(--lilac);}
+.prog-door{width:100%;border:1.5px dashed var(--line-2);border-radius:16px;background:linear-gradient(135deg,rgba(123,47,247,.03),rgba(67,97,255,.03));padding:16px 18px;cursor:pointer;display:flex;align-items:center;gap:14px;text-align:left;transition:all .3s cubic-bezier(.22,1,.36,1);font-family:var(--font-body);}
+.prog-door:hover{border-color:var(--lilac);border-style:solid;transform:translateY(-1px);box-shadow:0 8px 26px rgba(123,47,247,.1);}
+.prog-ico{width:38px;height:38px;flex:none;border-radius:11px;background:linear-gradient(135deg,var(--violet),var(--electric));display:flex;align-items:center;justify-content:center;font-size:18px;}
+.prog-txt{flex:1;min-width:0;}
+.prog-title{font-size:13.5px;font-weight:700;color:var(--ink);}
+.prog-sub{font-size:11.5px;color:var(--ink-faint);margin-top:2px;line-height:1.45;}
+.prog-chev{flex:none;color:var(--ink-faint);transition:transform .35s cubic-bezier(.22,1,.36,1);}
+.prog-door[aria-expanded="true"] .prog-chev{transform:rotate(180deg);}
+.prog-door[aria-expanded="true"]{border-style:solid;border-color:var(--lilac);}
 
-.partner-body{max-height:0;overflow:hidden;transition:max-height .5s cubic-bezier(.22,1,.36,1);}
-.partner-body.open{max-height:1900px;}
-.partner-inner{padding:22px 2px 4px;}
+.prog-body{max-height:0;overflow:hidden;transition:max-height .5s cubic-bezier(.22,1,.36,1);}
+.prog-body.open{max-height:1900px;}
+.prog-inner{padding:22px 2px 4px;}
 
 /* role picker */
 .role-pick{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;}
@@ -404,23 +404,23 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
         </div>
 
         <!-- ══════════════════════════════════════════════════════════
-             PARTNER PROGRAMME · Agents & Influencers
+             AGENT & INFLUENCER PROGRAMME
              Deliberately below the fold of normal auth, visually distinct,
              collapsed by default. A traveller will not stumble into this.
              ══════════════════════════════════════════════════════════ -->
-        <div class="partner-sep">Work with us</div>
+        <div class="prog-sep">Work with us</div>
 
-        <button class="partner-door" id="partner-door" aria-expanded="false" onclick="togglePartner()">
-          <div class="pd-ico">💼</div>
-          <div class="pd-txt">
-            <div class="pd-title">Agent &amp; Influencer portal</div>
-            <div class="pd-sub">Earn commission promoting Apatmento. Sign in, or apply to join.</div>
+        <button class="prog-door" id="prog-door" aria-expanded="false" onclick="toggleProg()">
+          <div class="prog-ico">💼</div>
+          <div class="prog-txt">
+            <div class="prog-title">Agent &amp; Influencer portal</div>
+            <div class="prog-sub">Earn commission promoting Apatmento. Sign in, or apply to join.</div>
           </div>
-          <svg class="pd-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          <svg class="prog-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
         </button>
 
-        <div class="partner-body" id="partner-body">
-          <div class="partner-inner">
+        <div class="prog-body" id="prog-body">
+          <div class="prog-inner">
 
             <div class="alert alert-error"   id="p-err"></div>
             <div class="alert alert-success" id="p-ok"></div>
@@ -441,7 +441,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
                 <label class="field-label">Password</label>
                 <input class="field-input" id="p-login-pw" type="password" placeholder="Your password" autocomplete="current-password"/>
               </div>
-              <button class="submit-btn" id="p-login-btn" onclick="partnerLogin(event)">Sign in to portal</button>
+              <button class="submit-btn" id="p-login-btn" onclick="progLogin(event)">Sign in to portal</button>
               <p class="p-note">Approved partners only. Applied recently? <strong>Watch your inbox</strong> — we review within 48 hours.</p>
             </div>
 
@@ -521,7 +521,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
                 <input class="field-input" id="p-pw" type="password" placeholder="At least 8 characters"/>
               </div>
 
-              <button class="submit-btn" id="p-apply-btn" onclick="partnerApply(event)">Submit application</button>
+              <button class="submit-btn" id="p-apply-btn" onclick="progApply(event)">Submit application</button>
               <p class="p-note">A human reviews every application. You'll hear back within <strong>48 hours</strong> — approved or not. Your earnings are always private to you.</p>
             </div>
 
@@ -792,7 +792,7 @@ function switchTab(t) {
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   PARTNER PROGRAMME  ·  Agents & Influencers
+   AGENT & INFLUENCER PROGRAMME
    Separate surface, separate state. Nothing here can be reached by
    a traveller who isn't looking for it.
    ══════════════════════════════════════════════════════════════════ */
@@ -806,9 +806,9 @@ const CONTACT_LABEL = {
   email:    ['Contact email',   'you@example.com'],
 };
 
-function togglePartner() {
-  const door = document.getElementById('partner-door');
-  const body = document.getElementById('partner-body');
+function toggleProg() {
+  const door = document.getElementById('prog-door');
+  const body = document.getElementById('prog-body');
   const open = door.getAttribute('aria-expanded') === 'true';
   door.setAttribute('aria-expanded', String(!open));
   body.classList.toggle('open', !open);
@@ -861,9 +861,9 @@ function pBusy(id, on) {
 }
 
 /* ── APPLY ─────────────────────────────────────────────────────────
-   Posts to /api/partners?action=apply. The password is hashed
+   Posts to /api/programme?action=apply. The password is hashed
    server-side; no auth account exists until an admin approves.       */
-async function partnerApply(e) {
+async function progApply(e) {
   e.preventDefault(); pClear();
 
   const payload = {
@@ -895,7 +895,7 @@ async function partnerApply(e) {
 
   pBusy('p-apply-btn', true);
   try {
-    const r = await fetch('/api/partners?action=apply', {
+    const r = await fetch('/api/programme?action=apply', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify(payload),
     });
@@ -915,7 +915,7 @@ async function partnerApply(e) {
    Sign in, then confirm they hold a partners row. A traveller's
    credentials authenticate fine but must never open this portal —
    so on failure we sign straight back out.                           */
-async function partnerLogin(e) {
+async function progLogin(e) {
   e.preventDefault(); pClear();
 
   const email = document.getElementById('p-login-email').value.trim();
@@ -934,7 +934,7 @@ async function partnerLogin(e) {
 
   /* RLS lets a partner read exactly one row: their own. */
   const { data: partner } = await sb
-    .from('partners')
+    .from('programme_members')
     .select('id, role, is_active')
     .eq('id', data.user.id)
     .maybeSingle();
@@ -942,21 +942,21 @@ async function partnerLogin(e) {
   if (!partner) {
     await sb.auth.signOut();
     pBusy('p-login-btn', false);
-    return pErr("That's a traveller account, not a partner one. Use the sign-in above — or apply to join.");
+    return pErr("That's a traveller account, not an agent/influencer one. Use the main sign-in above, or apply to join.");
   }
   if (!partner.is_active) {
     await sb.auth.signOut();
     pBusy('p-login-btn', false);
-    return pErr('This partner account is paused. Reach out to us.');
+    return pErr('This account is currently paused. Please reach out to us.');
   }
 
-  location.href = 'partner-dashboard.html';
+  location.href = 'agent-dashboard.html';
 }
 
-/* deep link: /auth.html?panel=partner  — the approval email lands here */
+/* deep link: /auth.html?panel=programme  — the approval email lands here */
 (function () {
-  if (new URLSearchParams(location.search).get('panel') === 'partner') {
-    document.addEventListener('DOMContentLoaded', () => setTimeout(togglePartner, 300));
+  if (new URLSearchParams(location.search).get('panel') === 'programme') {
+    document.addEventListener('DOMContentLoaded', () => setTimeout(toggleProg, 300));
   }
 })();
 function showReset() { showSpecial('reset-screen'); }
