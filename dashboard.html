@@ -211,7 +211,7 @@ body{overflow-x:hidden;}
 
 /* ── Featured hero cards (Stays + Roommates) ── */
 .svc-featured-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:6px;}
-.svc-hero{position:relative;border-radius:20px;overflow:hidden;cursor:pointer;transition:transform .2s ease,box-shadow .2s ease;border:1.5px solid var(--line);background:rgba(255,255,255,.6);padding:18px 16px 14px;display:flex;flex-direction:column;justify-content:space-between;min-height:128px;}
+.svc-hero{position:relative;border-radius:20px;overflow:hidden;cursor:pointer;transition:transform .2s ease,box-shadow .2s ease;border:1.5px solid var(--line);background:#fff;padding:18px 16px 16px;display:flex;flex-direction:column;justify-content:space-between;min-height:116px;}
 .svc-hero:hover{transform:translateY(-5px);border-color:transparent;}
 .svc-hero-glow{position:absolute;inset:0;opacity:0;transition:opacity .4s;pointer-events:none;border-radius:20px;}
 .svc-hero:hover .svc-hero-glow{opacity:.13;}
@@ -219,25 +219,27 @@ body{overflow-x:hidden;}
 .svc-hero-stays:hover{box-shadow:0 20px 50px rgba(123,47,247,.18);}
 .svc-hero-stays .svc-hero-icon{color:#7B2FF7;}
 .svc-hero-stays .svc-hero-name{background:linear-gradient(120deg,#7B2FF7,#4361FF);-webkit-background-clip:text;background-clip:text;color:transparent;}
-.svc-hero-stays .svc-hero-badge{background:rgba(109,40,255,.1);color:#6D28FF;}
+.svc-hero-stays .svc-hero-badge{background:rgba(109,40,255,.12);color:#6D28FF;}
 .svc-hero-rooms .svc-hero-glow{background:linear-gradient(135deg,#2DD4BF,#0D9488);}
 .svc-hero-rooms:hover{box-shadow:0 20px 50px rgba(45,212,191,.18);}
 .svc-hero-rooms .svc-hero-icon{color:#0D9488;}
 .svc-hero-rooms .svc-hero-name{background:linear-gradient(120deg,#2DD4BF,#0D9488);-webkit-background-clip:text;background-clip:text;color:transparent;}
-.svc-hero-rooms .svc-hero-badge,.svc-hero-badge-new{background:rgba(13,148,136,.1);color:#0D9488;}
-.svc-hero-inner{display:flex;flex-direction:column;gap:7px;flex:1;}
-.svc-hero-icon{width:64px;height:64px;border-radius:14px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;transition:transform .3s ease;}
+.svc-hero-rooms .svc-hero-badge,.svc-hero-badge-new{background:rgba(13,148,136,.12);color:#0D9488;}
+.svc-hero-inner{display:flex;flex-direction:row;align-items:center;gap:16px;flex:1;}
+.svc-hero-icon{width:80px;height:80px;flex-shrink:0;border-radius:14px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;transition:transform .3s ease;}
 .svc-hero:hover .svc-hero-icon{transform:scale(1.1) translateY(-2px);}
 .svc-hero-name{font-family:var(--font-display);font-weight:500;font-size:18px;line-height:1;letter-spacing:-.01em;}
-.svc-hero-sub{font-size:11px;color:var(--ink-faint);line-height:1.4;}
-.svc-hero-badge{display:inline-flex;align-items:center;font-size:10px;font-weight:600;letter-spacing:.04em;padding:4px 10px;border-radius:6px;margin-top:4px;width:fit-content;text-transform:none;border:none;}
+.svc-hero-sub{font-size:12px;color:var(--ink-soft);line-height:1.45;font-weight:500;}
+.svc-hero-badge{display:inline-flex;align-items:center;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:4px;margin-top:2px;width:fit-content;border:none;}
+.svc-hero-text{display:flex;flex-direction:column;gap:5px;flex:1;min-width:0;}
 .svc-hero-arrow{color:var(--ink-faint);display:flex;justify-content:flex-end;opacity:.35;transition:all .35s;}
 .svc-hero:hover .svc-hero-arrow{opacity:1;transform:translateX(3px);}
+.svc-hero-arrow{margin-top:10px;}
 @media(max-width:640px){
   .svc-hero{min-height:106px;padding:14px 12px 12px;border-radius:16px;}
   .svc-hero-name{font-size:15px;}
   .svc-hero-sub{font-size:10px;}
-  .svc-hero-icon{width:52px;height:52px;border-radius:12px;}
+  .svc-hero-icon{width:64px!important;height:64px!important;border-radius:12px!important;}
   .svc-hero-icon svg{width:20px;height:20px;}
 }
 @media(max-width:380px){.svc-featured-row{grid-template-columns:1fr;}}
@@ -353,20 +355,20 @@ body{overflow-x:hidden;}
 /* ══════════ SERVICE RAIL ══════════ */
 .rail-label{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:16px;}
 .service-rail{display:grid;grid-template-columns:repeat(8,1fr);gap:12px;margin-bottom:32px;}
-.service-rail .svc{aspect-ratio:1;width:100%;}
-.svc{background:transparent;border:none;border-radius:16px;padding:0;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .2s ease,opacity .2s ease;min-width:0;overflow:hidden;}
-.svc:hover{transform:scale(1.06);opacity:.9;}
-.svc-ico{width:100%;height:100%;object-fit:cover;border-radius:16px;display:block;}
-.svc-name{font-size:13px;font-weight:600;color:var(--ink-soft,#4A4C66);text-align:center;white-space:nowrap;}
+.service-rail .svc{width:100%;}
+.svc{background:#fff;border:1px solid rgba(10,10,20,.07);border-radius:16px;padding:0 0 10px 0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;cursor:pointer;transition:transform .2s ease,box-shadow .2s ease;min-width:0;overflow:hidden;}
+.svc:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(10,10,20,.12);}
+.svc-ico{width:100%;height:72px;object-fit:contain;display:block;padding:10px 8px 4px;}
+.svc-name{font-size:11px;font-weight:600;color:var(--ink-soft,#4A4C66);text-align:center;white-space:nowrap;line-height:1;display:block;}
 @media(max-width:900px){.service-rail{grid-template-columns:repeat(4,1fr);gap:10px;}}
-@media(max-width:600px){.service-rail{grid-template-columns:repeat(4,1fr);gap:8px;}.svc{border-radius:16px;padding:14px 6px 12px;aspect-ratio:auto;aspect-ratio:1!important;backdrop-filter:none;-webkit-backdrop-filter:none;}.svc-ico{width:64px;height:64px;}.svc-name{font-size:11px;white-space:normal;line-height:1.2;}}
-.svc{position:relative;aspect-ratio:1;border-radius:16px;border:none;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;transition:transform .2s ease,opacity .2s ease;}
+@media(max-width:600px){.service-rail{grid-template-columns:repeat(4,1fr);gap:8px;}.svc{border-radius:12px!important;padding:0 0 8px 0!important;aspect-ratio:auto!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;}.svc-ico{width:100%!important;height:56px!important;object-fit:contain!important;padding:8px 6px 2px!important;}.svc-name{font-size:11px;white-space:normal;line-height:1.2;}}
+.svc{position:relative;border-radius:16px;background:#fff;border:1px solid rgba(10,10,20,.07);display:flex;flex-direction:column;align-items:center;justify-content:flex-start;cursor:pointer;overflow:hidden;transition:transform .2s ease,box-shadow .2s ease;}
 
 
 
 .svc:hover .svc-ico{transform:scale(1.12) translateY(-2px);}
-.svc-ico{width:100%;height:100%;object-fit:cover;border-radius:16px;display:block;}
-.svc-name{font-size:11px;font-weight:600;color:var(--ink-soft);position:relative;z-index:1;letter-spacing:.01em;}
+
+
 .svc[data-svc="stays"]{--svc-color:var(--lilac-deep);--svc-grad:linear-gradient(135deg,var(--lilac),var(--violet));}
 .svc[data-svc="flights"]{--svc-color:var(--electric);--svc-grad:linear-gradient(135deg,var(--electric),var(--lilac));}
 .svc[data-svc="tours"]{--svc-color:var(--mint-deep);--svc-grad:linear-gradient(135deg,var(--mint),var(--electric));}
@@ -778,7 +780,7 @@ body{overflow-x:hidden;}
             <div class="svc-hero-text">
               <div class="svc-hero-sub">Apartments &amp; villas across Kenya</div>
             </div>
-            <span class="svc-hero-badge">Zero commission</span>
+            <span class="svc-hero-badge">Flagship</span>
           </div>
           <div class="svc-hero-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
         </div>
@@ -789,7 +791,7 @@ body{overflow-x:hidden;}
             <div class="svc-hero-text">
               <div class="svc-hero-sub">Find a flatmate or post your room</div>
             </div>
-            <span class="svc-hero-badge svc-hero-badge-new">Just launched</span>
+            <span class="svc-hero-badge svc-hero-badge-new">New</span>
           </div>
           <div class="svc-hero-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
         </div>
@@ -798,13 +800,13 @@ body{overflow-x:hidden;}
       <!-- ── MORE SERVICES ── -->
       
       <div class="service-rail">
-        <div class="svc" data-svc="flights" onclick="navigateToService('flights')"><img class="svc-ico" src="icon-flights.png" alt="Flights" style="width:100%;height:100%;object-fit:cover;"/></div>
-        <div class="svc" data-svc="tours" onclick="navigateToService('tours')"><img class="svc-ico" src="icon-tours.png" alt="Tours" style="width:100%;height:100%;object-fit:cover;"/></div>
-        <div class="svc" data-svc="events" onclick="navigateToService('events')"><img class="svc-ico" src="icon-events.png" alt="Events" style="width:100%;height:100%;object-fit:cover;"/></div>
-        <div class="svc" data-svc="rides" onclick="navigateToService('rides')"><img class="svc-ico" src="icon-rides.png" alt="Rides" style="width:100%;height:100%;object-fit:cover;"/></div>
-        <div class="svc" data-svc="food" onclick="navigateToService('food')"><img class="svc-ico" src="icon-food.png" alt="Food" style="width:100%;height:100%;object-fit:cover;"/></div>
-        <div class="svc" data-svc="shopping" onclick="navigateToService('shopping')"><img class="svc-ico" src="icon-shopping.png" alt="Shopping" style="width:100%;height:100%;object-fit:cover;"/></div>
-        <div class="svc" data-svc="carhire" onclick="navigateToService('carhire')"><img class="svc-ico" src="icon-carhire.png" alt="Car Hire" style="width:100%;height:100%;object-fit:cover;"/></div>
+        <div class="svc" data-svc="flights" onclick="navigateToService('flights')"><img class="svc-ico" src="icon-flights.png" alt="Flights" style="width:100%;height:100%;object-fit:cover;"/><span class="svc-name">Flights</span></div>
+        <div class="svc" data-svc="tours" onclick="navigateToService('tours')"><img class="svc-ico" src="icon-tours.png" alt="Tours" style="width:100%;height:100%;object-fit:cover;"/><span class="svc-name">Tours</span></div>
+        <div class="svc" data-svc="events" onclick="navigateToService('events')"><img class="svc-ico" src="icon-events.png" alt="Events" style="width:100%;height:100%;object-fit:cover;"/><span class="svc-name">Events</span></div>
+        <div class="svc" data-svc="rides" onclick="navigateToService('rides')"><img class="svc-ico" src="icon-rides.png" alt="Rides" style="width:100%;height:100%;object-fit:cover;"/><span class="svc-name">Rides</span></div>
+        <div class="svc" data-svc="food" onclick="navigateToService('food')"><img class="svc-ico" src="icon-food.png" alt="Food" style="width:100%;height:100%;object-fit:cover;"/><span class="svc-name">Food</span></div>
+        <div class="svc" data-svc="shopping" onclick="navigateToService('shopping')"><img class="svc-ico" src="icon-shopping.png" alt="Shopping" style="width:100%;height:100%;object-fit:cover;"/><span class="svc-name">Shopping</span></div>
+        <div class="svc" data-svc="carhire" onclick="navigateToService('carhire')"><img class="svc-ico" src="icon-carhire.png" alt="Car Hire" style="width:100%;height:100%;object-fit:cover;"/><span class="svc-name">Car Hire</span></div>
       </div><!-- /service-rail -->
 
       <!-- FEATURED VIDEO HERO — live ad from Supabase -->
