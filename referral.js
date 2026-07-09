@@ -205,6 +205,8 @@ function shouldShowPopup() {
   // Never on these pages
   const page = location.pathname.split('/').pop().replace('.html','') || 'index';
   if (['auth','booking-confirm','add-listing'].includes(page)) return false;
+  // Never show if user is already signed in (they know about referrals)
+  if (_userId) return false;
   // Only if not already shown this session
   return !sessionStorage.getItem('apt_ref_popup_shown');
 }
@@ -443,16 +445,17 @@ async function init() {
   // Don't show on auth page or booking funnel
   if (['auth','booking-confirm','add-listing'].includes(page)) return;
 
-  // Floating trigger ONLY on dashboard (Good morning page)
-  if (page === 'dashboard' && !document.getElementById('apt-ref-trigger')) {
+  // Floating trigger ONLY on dashboard (Good morning page) — only for guests
+  if (page === 'dashboard' && !document.getElementById('apt-ref-trigger') && isGuest) {
     document.body.appendChild(buildFloatingTrigger());
   }
 
-  // Show popup logic
-  if (shouldShowPopup()) {
-    // Slight delay so page renders first
-    // Only auto-show popup on dashboard, after 10 seconds
-    if(page === 'dashboard' || page === 'index' || page === '') setTimeout(() => openPopup(), 10000);
+  // Show popup ONLY for guests who haven't seen it this session
+  // Signed-in users already know about referrals — never interrupt them
+  if (isGuest && shouldShowPopup()) {
+    // Only auto-show on homepage or dashboard, with a delay
+    if(page === 'index' || page === '') setTimeout(() => openPopup(), 10000);
+    else if(page === 'dashboard') setTimeout(() => openPopup(), 12000);
   }
 }
 
@@ -515,3 +518,4 @@ if (document.readyState === 'loading') {
 }
 
 })();
+

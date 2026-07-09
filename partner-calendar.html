@@ -3,24 +3,12 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Apatmento — Calendar</title>
+<title>Apatmento Partner — Calendar</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<!-- Session core: one Supabase client per tab. Multiple clients on the
-     same storage key race each other and silently drop the session. -->
 <script src="/apa-session.js"></script>
 <script src="/apa-admin-guard.js"></script>
 <script>
-(function(){
-  var sb2=null;
-  try{var C=supabase.createClient('https://gfwgbgdvxtocwhilrtdw.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw');sb2=C;}catch(e){}
-  if(!sb2)return;
-  sb2.auth.getSession().then(function(res){
-    if(!res.data.session){
-      sessionStorage.setItem('auth_next', location.href);
-      window.location.href='auth.html?next='+encodeURIComponent(location.pathname);
-    }
-  });
-})();
+(function(){var sb2=null;try{var C=supabase.createClient('https://gfwgbgdvxtocwhilrtdw.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw');sb2=C;}catch(e){}if(!sb2)return;sb2.auth.getSession().then(function(res){if(!res.data.session){sessionStorage.setItem('auth_next',location.href);window.location.href='auth.html?next='+encodeURIComponent(location.pathname);}}); })();
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
@@ -30,371 +18,428 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
   --glass:#FCFCFD;--glass-2:#F4F5FB;--glass-3:#EBEDF7;
-  --ink:#0A0A14;--ink-soft:#4A4C66;--ink-faint:#8E90AD;
-  --lilac:#B8A4F4;--lilac-deep:#8B6FE8;--mint:#5EEAD4;--mint-deep:#2DD4BF;
-  --peach:#FFB59E;--electric:#4361FF;--violet:#7B2FF7;--ember:#FF6B2C;
-  --line:rgba(10,10,20,0.07);--line-2:rgba(10,10,20,0.13);
-  --theme:var(--lilac-deep);--theme-grad:linear-gradient(135deg,#B8A4F4,#7B2FF7);
-  --font-display:'Fraunces',serif;--font-body:'General Sans',system-ui,sans-serif;
+  --ink:#0A0A14;--ink-2:#12132A;--ink-soft:#4A4C66;--ink-faint:#8E90AD;
+  --mint:#5EEAD4;--mint-deep:#2DD4BF;--mint-dark:#0D9488;
+  --electric:#4361FF;--violet:#7B2FF7;--gold:#F5B12E;
+  --ember:#FF6B2C;--err:#FF4D6D;--ok:#2DD4BF;
+  --lilac:#B8A4F4;--lilac-deep:#8B6FE8;
+  --line:rgba(10,10,20,.07);--line-2:rgba(10,10,20,.13);
+  /* Partner theme: mint-teal → electric */
+  --theme:var(--mint-deep);--theme-2:var(--electric);
+  --theme-grad:linear-gradient(135deg,#2DD4BF,#4361FF);
+  --theme-soft:rgba(45,212,191,.08);
+  --theme-border:rgba(45,212,191,.2);
+  --font-d:'Fraunces',serif;--font-b:'General Sans',system-ui,sans-serif;
   --font-data:'Geist',monospace;
-  --shadow-sm:0 2px 8px rgba(10,10,20,0.06);
-  --shadow-md:0 8px 32px rgba(123,47,247,0.08);
-  --shadow-lift:0 20px 60px rgba(123,47,247,0.14);
-  --radius:18px;--err:#FF4D6D;--ok:#2DD4BF;
+  --shadow-sm:0 2px 8px rgba(10,10,20,.05);
+  --shadow-md:0 8px 32px rgba(45,212,191,.08),0 2px 12px rgba(10,10,20,.05);
+  --shadow-lift:0 20px 60px rgba(67,97,255,.14);
+  --radius:18px;--radius-lg:24px;
 }
 @media(prefers-reduced-motion:reduce){*{animation-duration:.01ms !important;transition-duration:.01ms !important;}}
-html,body{height:100%;font-family:var(--font-body);background:var(--glass-2);color:var(--ink);-webkit-font-smoothing:antialiased;}
+html,body{height:100%;font-family:var(--font-b);background:var(--glass-2);color:var(--ink);-webkit-font-smoothing:antialiased;}
 body{display:flex;flex-direction:column;overflow-x:hidden;}
 
-/* aurora */
+/* ── AURORA ── */
 .aurora{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;}
-.ab{position:absolute;border-radius:50%;filter:blur(90px);opacity:.28;mix-blend-mode:multiply;animation:drift 28s ease-in-out infinite;}
-.ab-1{width:500px;height:500px;background:radial-gradient(circle,var(--lilac),transparent 70%);top:-10%;left:-6%;}
-.ab-2{width:400px;height:400px;background:radial-gradient(circle,var(--mint),transparent 72%);bottom:-8%;right:-6%;animation-delay:-12s;opacity:.2;}
-@keyframes drift{0%,100%{transform:translate(0,0);}50%{transform:translate(30px,-20px);}}
+.ab{position:absolute;border-radius:50%;filter:blur(90px);opacity:.22;mix-blend-mode:multiply;animation:drift 30s ease-in-out infinite;}
+.ab-1{width:600px;height:600px;background:radial-gradient(circle,var(--mint),transparent 70%);top:-15%;left:-10%;}
+.ab-2{width:480px;height:480px;background:radial-gradient(circle,var(--electric),transparent 72%);bottom:-12%;right:-8%;animation-delay:-14s;opacity:.16;}
+.ab-3{width:360px;height:360px;background:radial-gradient(circle,var(--gold),transparent 70%);top:40%;left:50%;animation-delay:-7s;opacity:.12;}
+@keyframes drift{0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(28px,-18px) scale(1.05);}}
 
-/* topbar */
-.topbar{position:sticky;top:0;z-index:200;height:60px;background:rgba(252,252,253,.82);backdrop-filter:blur(20px) saturate(180%);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 20px;flex-shrink:0;}
+/* ── TOPBAR ── */
+.topbar{position:sticky;top:0;z-index:200;height:64px;background:rgba(252,252,253,.88);backdrop-filter:blur(24px) saturate(180%);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0;}
 .tb-left{display:flex;align-items:center;gap:12px;}
-.tb-logo{height:30px;}
-.tb-brand{font-family:var(--font-display);font-weight:500;font-size:17px;}
+.tb-back{width:36px;height:36px;border-radius:10px;border:1.5px solid var(--line-2);background:rgba(255,255,255,.7);display:flex;align-items:center;justify-content:center;color:var(--ink-soft);cursor:pointer;transition:all .2s;text-decoration:none;flex-shrink:0;}
+.tb-back:hover{border-color:var(--theme);color:var(--theme);}
+.tb-divider{width:1px;height:24px;background:var(--line-2);}
+.tb-brand{font-family:var(--font-d);font-weight:500;font-size:18px;letter-spacing:-.01em;}
 .tb-brand em{font-style:italic;background:var(--theme-grad);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.tb-hub-label{font-size:12px;font-weight:600;color:var(--ink-faint);letter-spacing:.04em;}
 .tb-right{display:flex;align-items:center;gap:10px;}
-.tb-avatar{width:36px;height:36px;border-radius:11px;background:var(--theme-grad);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:600;font-size:14px;color:#fff;cursor:pointer;box-shadow:0 4px 12px rgba(123,47,247,.25);}
-.tb-icon{width:36px;height:36px;border-radius:11px;border:1px solid var(--line);background:rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;color:var(--ink-soft);cursor:pointer;transition:all .2s;text-decoration:none;}
-.tb-icon:hover{border-color:var(--theme);color:var(--theme);}
-.tb-chip{font-size:11px;font-weight:600;color:var(--mint-deep);padding:6px 12px;border-radius:100px;background:rgba(45,212,191,.08);border:1px solid rgba(45,212,191,.18);}
+.tb-chip{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:6px 13px;border-radius:100px;background:linear-gradient(135deg,rgba(45,212,191,.12),rgba(67,97,255,.08));border:1px solid var(--theme-border);color:var(--mint-dark);}
+.tb-add-btn{display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:11px;border:none;font-family:var(--font-b);font-weight:700;font-size:12px;cursor:pointer;background:var(--theme-grad);color:#fff;box-shadow:0 4px 14px rgba(67,97,255,.25);transition:all .22s;letter-spacing:.02em;text-decoration:none;}
+.tb-add-btn:hover{transform:translateY(-1px);box-shadow:0 8px 22px rgba(67,97,255,.38);}
+.tb-avatar{width:36px;height:36px;border-radius:11px;background:var(--theme-grad);display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-weight:600;font-size:14px;color:#fff;cursor:pointer;box-shadow:0 3px 10px rgba(45,212,191,.3);flex-shrink:0;}
+@media(max-width:600px){.tb-hub-label{display:none;}.tb-chip{display:none;}}
 
-/* layout */
+/* ── SHELL ── */
 .shell{display:flex;flex:1;position:relative;z-index:2;}
-.sidebar{width:220px;flex-shrink:0;padding:16px 12px;background:rgba(252,252,253,.72);backdrop-filter:blur(16px);border-right:1px solid var(--line);display:flex;flex-direction:column;gap:3px;position:sticky;top:60px;height:calc(100vh - 60px);overflow-y:auto;}
-@media(max-width:800px){.sidebar{display:none;}}
-.sb-section{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);padding:12px 10px 6px;}
-.sb-link{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;font-size:13px;font-weight:500;color:var(--ink-soft);text-decoration:none;cursor:pointer;transition:all .22s;}
-.sb-link:hover{background:rgba(139,111,232,.08);color:var(--ink);}
-.sb-link.active{background:rgba(139,111,232,.12);color:var(--lilac-deep);font-weight:600;}
-.sb-link svg{width:16px;height:16px;flex-shrink:0;}
-.sb-foot{margin-top:auto;padding-top:12px;border-top:1px solid var(--line);}
-.main{flex:1;padding:24px;overflow-x:hidden;min-width:0;}
 
-/* page header */
-.page-hd{margin-bottom:24px;}
-.page-eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--theme);margin-bottom:10px;padding:5px 12px;border-radius:100px;background:rgba(139,111,232,.08);border:1px solid rgba(139,111,232,.16);}
-.page-title{font-family:var(--font-display);font-weight:400;font-size:clamp(22px,3vw,30px);letter-spacing:-.02em;margin-bottom:5px;}
-.page-title em{font-style:italic;font-weight:500;background:var(--theme-grad);-webkit-background-clip:text;background-clip:text;color:transparent;}
-.page-sub{font-size:13px;color:var(--ink-soft);}
+/* ── SIDEBAR ── */
+.sidebar{width:240px;flex-shrink:0;padding:20px 14px;background:rgba(252,252,253,.78);backdrop-filter:blur(20px);border-right:1px solid var(--line);display:flex;flex-direction:column;gap:2px;position:sticky;top:64px;height:calc(100vh - 64px);overflow-y:auto;}
+@media(max-width:860px){.sidebar{display:none;}}
+.sb-section{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);padding:14px 10px 6px;}
+.sb-link{display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:13px;font-size:13px;font-weight:500;color:var(--ink-soft);text-decoration:none;cursor:pointer;transition:all .2s;position:relative;}
+.sb-link svg{width:17px;height:17px;flex-shrink:0;opacity:.7;transition:opacity .2s;}
+.sb-link:hover{background:rgba(45,212,191,.07);color:var(--ink);}.sb-link:hover svg{opacity:1;}
+.sb-link.active{background:linear-gradient(135deg,rgba(45,212,191,.12),rgba(67,97,255,.08));color:var(--mint-dark);font-weight:700;}
+.sb-link.active svg{opacity:1;}
+.sb-link.active::before{content:'';position:absolute;left:0;top:25%;bottom:25%;width:3px;border-radius:2px;background:var(--theme-grad);}
+.sb-foot{margin-top:auto;padding-top:14px;border-top:1px solid var(--line);}
+.sb-link.danger{color:var(--err);}
 
-/* stat cards */
-.stat-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px;margin-bottom:24px;}
-.stat-card{background:rgba(255,255,255,.7);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:var(--radius);padding:18px;}
-.stat-label{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:8px;}
-.stat-val{font-family:var(--font-display);font-weight:600;font-size:26px;color:var(--ink);margin-bottom:4px;}
+/* ── REFER PROMO BANNER (sidebar) ── */
+.sb-refer-promo{margin:16px 0 8px;border-radius:16px;padding:16px 14px;background:linear-gradient(145deg,rgba(245,177,46,.1),rgba(255,107,44,.07));border:1.5px solid rgba(245,177,46,.22);overflow:hidden;position:relative;}
+.sb-refer-promo::before{content:'';position:absolute;top:-20px;right:-20px;width:80px;height:80px;border-radius:50%;background:radial-gradient(circle,rgba(245,177,46,.2),transparent 70%);pointer-events:none;}
+.sbp-eyebrow{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:7px;}
+.sbp-title{font-family:var(--font-d);font-size:14px;font-weight:500;line-height:1.3;color:var(--ink);margin-bottom:6px;}
+.sbp-title strong{font-weight:700;color:var(--ember);}
+.sbp-desc{font-size:11px;line-height:1.5;color:var(--ink-soft);margin-bottom:12px;}
+.sbp-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:9px;border-radius:10px;border:none;font-family:var(--font-b);font-weight:700;font-size:12px;cursor:pointer;background:linear-gradient(135deg,#F5B12E,#FF6B2C);color:#fff;box-shadow:0 4px 12px rgba(245,177,46,.28);transition:all .22s;text-decoration:none;}
+.sbp-btn:hover{transform:translateY(-1px);box-shadow:0 7px 18px rgba(245,177,46,.4);}
+.sbp-link-text{font-size:10px;color:var(--ink-faint);text-align:center;margin-top:8px;cursor:pointer;}
+.sbp-link-text a{color:var(--electric);text-decoration:none;}
+
+/* ── MAIN ── */
+.main{flex:1;padding:28px;overflow-x:hidden;min-width:0;max-width:1100px;}
+@media(max-width:600px){.main{padding:16px;}}
+
+/* ── PAGE HEADER ── */
+.page-hd{margin-bottom:28px;}
+.page-eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--mint-dark);margin-bottom:12px;padding:5px 13px;border-radius:100px;background:rgba(45,212,191,.09);border:1px solid rgba(45,212,191,.2);}
+.page-title{font-family:var(--font-d);font-weight:400;font-size:clamp(24px,3.2vw,32px);letter-spacing:-.025em;color:var(--ink-2);margin-bottom:6px;line-height:1.1;}
+.page-title em{font-style:italic;font-weight:500;background:linear-gradient(120deg,var(--mint-deep),var(--electric));-webkit-background-clip:text;background-clip:text;color:transparent;}
+.page-sub{font-size:13px;color:var(--ink-soft);line-height:1.6;}
+
+/* ── STAT CARDS ── */
+.stat-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:24px;}
+.stat-card{background:rgba(255,255,255,.78);backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:var(--radius);padding:20px 18px;position:relative;overflow:hidden;transition:transform .22s,box-shadow .22s;}
+.stat-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);}
+.stat-card::after{content:'';position:absolute;top:0;right:0;width:60px;height:60px;border-radius:0 var(--radius) 0 60px;background:var(--theme-soft);opacity:.5;}
+.stat-label{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:10px;}
+.stat-val{font-family:var(--font-d);font-weight:600;font-size:28px;color:var(--ink-2);margin-bottom:5px;line-height:1;}
 .stat-meta{font-size:12px;color:var(--ink-soft);}
-.stat-meta.up{color:var(--ok);}
-.stat-meta.down{color:var(--err);}
+.stat-meta.up{color:#059669;font-weight:600;}
+.stat-meta.up::before{content:'↑ ';}
+.stat-meta.down{color:var(--err);font-weight:600;}
+.stat-meta.down::before{content:'↓ ';}
+.stat-icon{position:absolute;top:16px;right:16px;font-size:24px;opacity:.35;}
 
-/* glass card */
-.card{background:rgba(255,255,255,.68);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:var(--radius);padding:20px;margin-bottom:16px;}
-.card-title{font-family:var(--font-display);font-weight:500;font-size:16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;}
-.card-title svg{width:18px;height:18px;color:var(--theme);}
+/* ── GLASS CARD ── */
+.card{background:rgba(255,255,255,.74);backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:var(--radius);padding:22px;margin-bottom:18px;}
+.card-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;gap:12px;}
+.card-title{font-family:var(--font-d);font-weight:500;font-size:16px;color:var(--ink-2);}
+.card-sub{font-size:12px;color:var(--ink-faint);margin-top:2px;}
 
-/* table */
-.tbl-wrap{overflow-x:auto;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.6);}
+/* ── TABLE ── */
+.tbl-wrap{overflow-x:auto;border-radius:14px;border:1px solid var(--line);}
 table{width:100%;border-collapse:collapse;font-size:13px;}
-th{padding:12px 16px;text-align:left;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);border-bottom:1px solid var(--line);background:rgba(244,245,251,.6);}
-td{padding:13px 16px;border-bottom:1px solid var(--line);color:var(--ink-soft);}
+th{padding:12px 16px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-faint);border-bottom:1px solid var(--line);background:rgba(244,245,251,.7);white-space:nowrap;}
+td{padding:14px 16px;border-bottom:1px solid var(--line);color:var(--ink-soft);vertical-align:middle;}
 tr:last-child td{border-bottom:none;}
-tr:hover td{background:rgba(139,111,232,.03);}
+tr:hover td{background:rgba(45,212,191,.025);}
 td strong{color:var(--ink);font-weight:600;}
 
-/* badges */
-.badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:4px 10px;border-radius:100px;}
-.badge-green{background:rgba(45,212,191,.1);color:var(--ok);}
-.badge-amber{background:rgba(255,181,158,.15);color:var(--ember);}
-.badge-red{background:rgba(255,77,109,.1);color:var(--err);}
-.badge-grey{background:var(--glass-3);color:var(--ink-faint);}
-.badge-purple{background:rgba(139,111,232,.1);color:var(--lilac-deep);}
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:4px 11px;border-radius:100px;white-space:nowrap;}
+.badge::before{content:'';width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.badge-green{background:rgba(5,150,105,.08);color:#059669;border:1px solid rgba(5,150,105,.2);}.badge-green::before{background:#059669;}
+.badge-amber{background:rgba(245,177,46,.1);color:#D97706;border:1px solid rgba(245,177,46,.25);}.badge-amber::before{background:#D97706;}
+.badge-red{background:rgba(255,77,109,.08);color:var(--err);border:1px solid rgba(255,77,109,.2);}.badge-red::before{background:var(--err);}
+.badge-blue{background:rgba(67,97,255,.08);color:var(--electric);border:1px solid rgba(67,97,255,.2);}.badge-blue::before{background:var(--electric);}
+.badge-grey{background:var(--glass-3);color:var(--ink-faint);border:1px solid var(--line-2);}.badge-grey::before{background:var(--ink-faint);}
 
-/* btn */
-.btn{display:inline-flex;align-items:center;gap:7px;padding:10px 18px;border-radius:11px;border:none;font-family:var(--font-body);font-weight:600;font-size:13px;cursor:pointer;transition:all .22s;}
-.btn-primary{background:var(--theme-grad);color:#fff;box-shadow:0 6px 20px rgba(123,47,247,.22);}
-.btn-primary:hover{transform:translateY(-1px);box-shadow:0 10px 28px rgba(123,47,247,.32);}
-.btn-ghost{background:rgba(255,255,255,.6);color:var(--ink-soft);border:1px solid var(--line);}
-.btn-ghost:hover{border-color:var(--theme);color:var(--theme);}
-.btn-sm{padding:7px 13px;font-size:12px;}
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:8px;padding:11px 20px;border-radius:12px;border:none;font-family:var(--font-b);font-weight:700;font-size:13px;cursor:pointer;transition:all .22s;letter-spacing:.01em;}
+.btn-primary{background:var(--theme-grad);color:#fff;box-shadow:0 6px 20px rgba(45,212,191,.2);}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(45,212,191,.35);}
+.btn-ghost{background:rgba(255,255,255,.7);color:var(--ink-soft);border:1.5px solid var(--line-2);}
+.btn-ghost:hover{border-color:var(--theme);color:var(--mint-dark);}
+.btn-danger{background:rgba(255,77,109,.08);color:var(--err);border:1.5px solid rgba(255,77,109,.2);}
+.btn-danger:hover{background:rgba(255,77,109,.14);}
+.btn-sm{padding:7px 14px;font-size:12px;border-radius:9px;}
+.btn-icon{padding:9px;border-radius:10px;}.btn-icon svg{width:16px;height:16px;}
 
-/* toggle */
-.toggle{width:42px;height:24px;border-radius:12px;border:none;cursor:pointer;position:relative;transition:background .3s;flex-shrink:0;}
-.toggle.on{background:var(--theme);}
-.toggle.off{background:#D1D5DB;}
-.toggle::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .3s;}
-.toggle.on::after{transform:translateX(18px);}
+/* ── FORM FIELDS ── */
+.field{margin-bottom:18px;}
+.field-label{display:block;font-size:12px;font-weight:700;color:var(--ink-soft);margin-bottom:7px;letter-spacing:.02em;}
+.field-hint{font-size:11px;color:var(--ink-faint);margin-top:5px;line-height:1.5;}
+.field-input,.field-select,.field-textarea{width:100%;padding:12px 15px;border:1.5px solid rgba(10,10,20,.1);border-radius:12px;background:rgba(255,255,255,.85);font-family:var(--font-b);font-size:13px;color:var(--ink);outline:none;transition:all .2s;}
+.field-input:focus,.field-select:focus,.field-textarea:focus{border-color:var(--theme);box-shadow:0 0 0 3px rgba(45,212,191,.12);}
+.field-textarea{resize:vertical;min-height:100px;line-height:1.7;}
+.row-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+@media(max-width:500px){.row-2,.row-3{grid-template-columns:1fr;}}
 
-/* form fields */
-.field{margin-bottom:16px;}
-.field-label{display:block;font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:6px;}
-.field-input,.field-select,.field-textarea{width:100%;padding:11px 14px;border:1.5px solid var(--line-2);border-radius:11px;background:var(--glass);font-family:var(--font-body);font-size:13px;color:var(--ink);outline:none;transition:all .2s;}
-.field-input:focus,.field-select:focus,.field-textarea:focus{border-color:var(--theme);box-shadow:0 0 0 3px rgba(139,111,232,.1);}
-.field-textarea{resize:vertical;min-height:90px;line-height:1.6;}
-.row-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-@media(max-width:480px){.row-2{grid-template-columns:1fr;}}
+/* ── CHART BARS ── */
+.chart-bars{display:flex;flex-direction:column;gap:10px;}
+.chart-row{display:flex;align-items:center;gap:14px;font-size:12px;}
+.chart-lbl{width:100px;color:var(--ink-soft);text-align:right;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.chart-track{flex:1;height:30px;background:var(--glass-3);border-radius:8px;overflow:hidden;position:relative;}
+.chart-fill{height:100%;border-radius:8px;background:var(--theme-grad);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;min-width:40px;transition:width 1s cubic-bezier(.22,1,.36,1);}
+.chart-val{width:60px;text-align:right;color:var(--ink);font-weight:700;font-family:var(--font-data);flex-shrink:0;}
 
-/* empty state */
-.empty{text-align:center;padding:50px 20px;}
-.empty svg{width:48px;height:48px;color:var(--ink-faint);opacity:.35;margin:0 auto 16px;display:block;}
-.empty-title{font-family:var(--font-display);font-size:18px;margin-bottom:6px;}
-.empty-sub{font-size:13px;color:var(--ink-soft);margin-bottom:20px;}
+/* ── MINI KPI BLOCKS ── */
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px;}
+.kpi{background:rgba(255,255,255,.6);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;align-items:center;gap:14px;}
+.kpi-icon{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.kpi-icon-teal{background:rgba(45,212,191,.12);}
+.kpi-icon-blue{background:rgba(67,97,255,.1);}
+.kpi-icon-gold{background:rgba(245,177,46,.12);}
+.kpi-icon-ember{background:rgba(255,107,44,.1);}
+.kpi-val{font-family:var(--font-d);font-size:20px;font-weight:600;color:var(--ink-2);line-height:1;}
+.kpi-lbl{font-size:11px;color:var(--ink-faint);margin-top:3px;}
 
-/* toast */
-.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(16px);z-index:9999;padding:12px 20px;border-radius:100px;background:var(--ink);color:#fff;font-size:13px;font-weight:500;box-shadow:var(--shadow-lift);opacity:0;transition:all .35s;pointer-events:none;}
+/* ── EMPTY STATE ── */
+.empty{text-align:center;padding:56px 24px;}
+.empty-icon{font-size:48px;margin-bottom:16px;}
+.empty-title{font-family:var(--font-d);font-size:20px;margin-bottom:8px;color:var(--ink-2);}
+.empty-sub{font-size:13px;color:var(--ink-soft);margin-bottom:22px;line-height:1.6;max-width:340px;margin-left:auto;margin-right:auto;}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(16px);z-index:9999;padding:12px 22px;border-radius:100px;background:var(--ink-2);color:#fff;font-size:13px;font-weight:600;box-shadow:0 8px 28px rgba(10,10,20,.25);opacity:0;transition:all .35s;pointer-events:none;white-space:nowrap;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
-/* mobile bottom nav */
-.mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;background:rgba(252,252,253,.9);backdrop-filter:blur(16px);border-top:1px solid var(--line);padding:8px 0 env(safe-area-inset-bottom,8px);}
-@media(max-width:800px){.mobile-nav{display:flex;}.main{padding-bottom:80px;}}
-.mn-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;font-weight:500;color:var(--ink-faint);text-decoration:none;padding:6px 0;cursor:pointer;}
-.mn-item.active{color:var(--lilac-deep);}
-.mn-item svg{width:20px;height:20px;}
+/* ── MOBILE NAV ── */
+.mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;background:rgba(252,252,253,.92);backdrop-filter:blur(20px);border-top:1px solid var(--line);padding:6px 0 env(safe-area-inset-bottom,6px);}
+@media(max-width:860px){.mobile-nav{display:flex;}.main{padding-bottom:82px;}}
+.mn-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:9px;font-weight:600;letter-spacing:.03em;color:var(--ink-faint);text-decoration:none;padding:7px 4px;cursor:pointer;transition:color .2s;}
+.mn-item:hover,.mn-item.active{color:var(--mint-dark);}
+.mn-item svg{width:21px;height:21px;}
 
-/* ── PARTNER HUB THEME OVERRIDE ── */
-:root {
-  --theme: var(--mint-deep);
-  --theme-2: var(--electric);
-  --theme-grad: linear-gradient(135deg, #2DD4BF, #4361FF);
-  --theme-soft: rgba(45,212,191,0.1);
-  --theme-border: rgba(45,212,191,0.2);
-}
-/* Active nav link uses mint */
-.sb-link.active { background: rgba(45,212,191,0.1); color: var(--mint-deep); }
-.sb-link:hover { background: rgba(45,212,191,0.07); color: var(--ink); }
-/* Topbar chip */
-.tb-chip { color: var(--electric); background: rgba(67,97,255,0.08); border-color: rgba(67,97,255,0.18); }
-/* Page eyebrow */
-.page-eyebrow { color: var(--mint-deep); background: rgba(45,212,191,0.08); border-color: rgba(45,212,191,0.2); }
-/* page-title em gradient */
-.page-title em {
-  background: linear-gradient(120deg, var(--mint-deep), var(--electric));
-  -webkit-background-clip: text; background-clip: text; color: transparent;
-}
-/* Buttons */
-.btn-primary { background: linear-gradient(135deg, #2DD4BF, #4361FF); }
-/* Avatar */
-.tb-avatar { background: linear-gradient(135deg, #2DD4BF, #4361FF); box-shadow: 0 4px 12px rgba(45,212,191,0.3); }
-/* stat-meta up */
-.stat-meta.up { color: var(--electric); }
-/* aurora blobs — mint leads */
-.ab-1 { background: radial-gradient(circle, var(--mint), transparent 70%); }
-.ab-2 { background: radial-gradient(circle, var(--electric), transparent 72%); }
-
+/* ── INVITE BANNER (inline, non-popup) ── */
+.invite-banner{border-radius:20px;padding:22px 24px;background:linear-gradient(135deg,rgba(245,177,46,.08) 0%,rgba(255,107,44,.06) 50%,rgba(123,47,247,.05) 100%);border:1.5px solid rgba(245,177,46,.2);margin-bottom:18px;display:flex;align-items:center;gap:18px;position:relative;overflow:hidden;}
+.invite-banner::before{content:'🏆';position:absolute;right:18px;top:50%;transform:translateY(-50%);font-size:52px;opacity:.12;pointer-events:none;}
+.invite-banner-icon{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#F5B12E,#FF6B2C);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;box-shadow:0 4px 14px rgba(245,177,46,.28);}
+.invite-banner-body{flex:1;min-width:0;}
+.invite-banner-pre{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:5px;}
+.invite-banner-title{font-family:var(--font-d);font-size:15px;font-weight:500;color:var(--ink);margin-bottom:4px;line-height:1.3;}
+.invite-banner-title strong{color:var(--ember);}
+.invite-banner-sub{font-size:12px;color:var(--ink-soft);line-height:1.5;}
+.invite-banner-btn{flex-shrink:0;display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:12px;border:none;font-family:var(--font-b);font-weight:700;font-size:12px;cursor:pointer;background:linear-gradient(135deg,#F5B12E,#FF6B2C);color:#fff;box-shadow:0 4px 14px rgba(245,177,46,.3);transition:all .22s;white-space:nowrap;}
+.invite-banner-btn:hover{transform:translateY(-1px);box-shadow:0 7px 20px rgba(245,177,46,.42);}
+@media(max-width:600px){.invite-banner{flex-direction:column;align-items:flex-start;}.invite-banner-btn{width:100%;justify-content:center;}}
 </style>
 <link rel="stylesheet" href="/brand.css"/>
 </head><body>
-<div class="aurora"><div class="ab ab-1"></div><div class="ab ab-2"></div></div>
+<div class="aurora"><div class="ab ab-1"></div><div class="ab ab-2"></div><div class="ab ab-3"></div></div>
+
 <div class="topbar">
   <div class="tb-left">
-    <a href="dashboard.html?role=partner&back=1" class="tb-icon" title="Dashboard">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    <a href="dashboard.html?role=partner&back=1" class="tb-back" title="Back to dashboard" aria-label="Dashboard">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
     </a>
-    <img src="logo-mark.png" class="tb-logo" alt="" onerror="this.style.display='none'"/>
+    <div class="tb-divider"></div>
     <span class="tb-brand"><em>Apat</em>mento</span>
+    <span class="tb-hub-label">· Partner Hub</span>
   </div>
   <div class="tb-right">
     <span class="tb-chip">0% commission</span>
+    <a href="add-listing.html" class="tb-add-btn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Add listing
+    </a>
     <div class="tb-avatar" id="tb-avatar">P</div>
   </div>
 </div>
 <div class="shell">
-  <nav class="sidebar">
-    <div class="sb-section">Partner Hub</div>
-    <a class="sb-link" href="partner-listings.html">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2zM17 21v-8H7v8M7 3v5h8"/></svg>
-      Listings
-    </a>
-    <a class="sb-link" href="partner-bookings.html">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg>
-      Bookings
-    </a>
-    <a class="sb-link" href="partner-earnings.html">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-      Earnings
-    </a>
-    <a class="sb-link active" href="partner-calendar.html">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg>
-      Calendar
-    </a>
-    <a class="sb-link" href="partner-analytics.html">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18M18 9l-5 5-4-4-4 4"/></svg>
-      Analytics
-    </a>
-    <a class="sb-link" href="partner-reviews.html">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-      Reviews
-    </a>
-    <a class="sb-link" href="partner-settings.html">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg>
-      Settings
-    </a>
+<nav class="sidebar">
+  <div class="sb-section">Partner Hub</div>
+  <a class="sb-link" href="partner-listings.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    My Listings
+  </a>
+  <a class="sb-link" href="partner-bookings.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg>
+    Bookings
+  </a>
+  <a class="sb-link" href="partner-earnings.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+    Earnings
+  </a>
+  <a class="sb-link active" href="partner-calendar.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+    Calendar
+  </a>
+  <a class="sb-link" href="partner-analytics.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 9l-5 5-4-4-4 4"/></svg>
+    Analytics
+  </a>
+  <a class="sb-link" href="partner-reviews.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+    Reviews
+  </a>
+  <a class="sb-link" href="partner-settings.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    Settings
+  </a>
 
-    <div class="sb-foot">
-      <a class="sb-link" href="dashboard.html?role=guest&back=1">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4M4 7h16M16 21l4-4-4-4M20 17H4"/></svg>
-        Switch to Guest
-      </a>
-      <a class="sb-link" onclick="signOut()" style="color:var(--err);cursor:pointer;">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
-        Sign out
-      </a>
-    </div>
-  </nav>
-  <main class="main">
+  <!-- Strategic Refer & Earn promo — non-popup, always visible -->
+  <div class="sb-refer-promo">
+    <div class="sbp-eyebrow">💰 Earn more</div>
+    <div class="sbp-title">Invite a host.<br/><strong>Earn 10% for life.</strong></div>
+    <div class="sbp-desc">Every booking your referred host completes earns you a 10% commission — forever. No cap, no expiry.</div>
+    <a href="rewards.html" class="sbp-btn">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+      Get my referral link
+    </a>
+    <div class="sbp-link-text">Also earn 20% for guest referrals · <a href="rewards.html">Learn more</a></div>
+  </div>
 
-<style>
-.cal-wrap{background:rgba(255,255,255,.68);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:var(--radius);padding:20px;margin-bottom:16px;}
-.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
-.cal-title{font-family:var(--font-display);font-weight:500;font-size:18px;}
-.cal-nav{display:flex;align-items:center;gap:8px;}
-.cal-nav-btn{width:34px;height:34px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink-soft);transition:all .2s;}
-.cal-nav-btn:hover{border-color:var(--theme);color:var(--theme);}
-.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
-.cal-day-name{text-align:center;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);padding:6px 0;}
-.cal-day{aspect-ratio:1;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;color:var(--ink-soft);cursor:pointer;transition:all .2s;position:relative;}
-.cal-day:hover{background:rgba(139,111,232,.1);}
-.cal-day.today{background:rgba(139,111,232,.12);color:var(--lilac-deep);font-weight:700;}
-.cal-day.booked{background:rgba(45,212,191,.1);color:var(--mint-deep);}
-.cal-day.blocked{background:rgba(255,77,109,.08);color:var(--err);text-decoration:line-through;}
-.cal-day.other-month{opacity:.3;}
-.cal-day.selected{background:var(--theme-grad);color:#fff !important;}
-.cal-legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:14px;font-size:12px;}
-.cl-item{display:flex;align-items:center;gap:6px;color:var(--ink-soft);}
-.cl-dot{width:10px;height:10px;border-radius:3px;}
-</style>
+  <div class="sb-foot">
+    <a class="sb-link" href="dashboard.html?role=guest&back=1">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4M4 7h16M16 21l4-4-4-4M20 17H4"/></svg>
+      Switch to Guest
+    </a>
+    <a class="sb-link danger" onclick="signOut()" style="cursor:pointer;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+      Sign out
+    </a>
+  </div>
+</nav>
+
+<main class="main">
 <div class="page-hd">
   <span class="page-eyebrow">✦ Partner Hub</span>
-  <h1 class="page-title"><em>Calendar</em> & availability</h1>
-  <p class="page-sub">Block dates, view bookings. Click days to toggle blocked status.</p>
+  <h1 class="page-title">Availability <em>calendar</em></h1>
+  <p class="page-sub">See your booking schedule and manage blocked dates.</p>
 </div>
-<div style="display:flex;gap:14px;margin-bottom:16px;flex-wrap:wrap;">
-  <select class="field-select" style="width:auto;min-width:200px;" id="listing-select" onchange="loadCalendar()">
-    <option value="">Select a listing…</option>
-  </select>
-  <button class="btn btn-primary" onclick="saveBlocked()">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2zM17 21v-8H7v8M7 3v5h8"/></svg>Save changes
-  </button>
-</div>
-<div class="cal-wrap">
-  <div class="cal-head">
-    <span class="cal-title" id="cal-month-label">—</span>
-    <div class="cal-nav">
-      <button class="cal-nav-btn" onclick="changeMonth(-1)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
-      <button class="cal-nav-btn" onclick="changeMonth(1)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></button>
+<div class="card">
+  <div class="card-hd">
+    <div>
+      <div class="card-title">Monthly view</div>
+      <div class="card-sub" id="cal-month-label"></div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button class="btn btn-ghost btn-sm btn-icon" onclick="changeMonth(-1)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <button class="btn btn-ghost btn-sm btn-icon" onclick="changeMonth(1)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
     </div>
   </div>
+  <style>
+    .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+    .cal-day-hd{text-align:center;font:700 10px/1 var(--font-b);color:var(--ink-faint);letter-spacing:.06em;padding:8px 0;}
+    .cal-day{aspect-ratio:1;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;font:500 13px/1 var(--font-b);color:var(--ink-soft);cursor:pointer;transition:all .18s;position:relative;}
+    .cal-day:hover{background:rgba(45,212,191,.1);}
+    .cal-day.today{background:var(--theme-grad);color:#fff;font-weight:700;box-shadow:0 4px 14px rgba(45,212,191,.3);}
+    .cal-day.booked{background:rgba(67,97,255,.1);color:var(--electric);}
+    .cal-day.booked::after{content:'';position:absolute;bottom:4px;width:4px;height:4px;border-radius:50%;background:var(--electric);}
+    .cal-day.blocked{background:rgba(255,77,109,.08);color:var(--err);text-decoration:line-through;}
+    .cal-day.empty{cursor:default;}
+    .cal-legend{display:flex;gap:16px;margin-top:14px;padding-top:14px;border-top:1px solid var(--line);}
+    .cal-leg-item{display:flex;align-items:center;gap:6px;font:400 11px var(--font-b);color:var(--ink-soft);}
+    .cal-leg-dot{width:10px;height:10px;border-radius:3px;}
+  </style>
   <div class="cal-grid" id="cal-grid"></div>
   <div class="cal-legend">
-    <div class="cl-item"><div class="cl-dot" style="background:rgba(45,212,191,.3)"></div>Booked</div>
-    <div class="cl-item"><div class="cl-dot" style="background:rgba(255,77,109,.2)"></div>Blocked</div>
-    <div class="cl-item"><div class="cl-dot" style="background:rgba(139,111,232,.2)"></div>Today</div>
+    <div class="cal-leg-item"><div class="cal-leg-dot" style="background:var(--theme-grad)"></div>Today</div>
+    <div class="cal-leg-item"><div class="cal-leg-dot" style="background:rgba(67,97,255,.2)"></div>Booked</div>
+    <div class="cal-leg-item"><div class="cal-leg-dot" style="background:rgba(255,77,109,.15)"></div>Blocked</div>
   </div>
 </div>
-  </main>
-</div>
-<nav class="mobile-nav">
-  <a class="mn-item" href="partner-listings.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2zM17 21v-8H7v8M7 3v5h8"/></svg>Listings</a>
-  <a class="mn-item" href="partner-bookings.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg>Bookings</a>
-  <a class="mn-item" href="partner-earnings.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Earnings</a>
-  <a class="mn-item active" href="partner-calendar.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg>Calendar</a>
-  <a class="mn-item" href="partner-analytics.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18M18 9l-5 5-4-4-4 4"/></svg>Analytics</a>
-</nav>
-<div class="toast" id="toast"></div>
 
+<div class="card">
+  <div class="card-hd"><div class="card-title">Upcoming check-ins</div></div>
+  <div id="cal-upcoming">
+    <div class="empty"><div class="empty-icon">📅</div><div class="empty-title">No upcoming check-ins</div><div class="empty-sub">Your upcoming guest arrivals will appear here.</div></div>
+  </div>
+</div>
+</main>
+</div>
+
+<nav class="mobile-nav">
+  <a class="mn-item" href="partner-listings.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    Listings
+  </a>
+  <a class="mn-item" href="partner-bookings.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg>
+    Bookings
+  </a>
+  <a class="mn-item" href="partner-earnings.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+    Earnings
+  </a>
+  <a class="mn-item active" href="partner-calendar.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+    Calendar
+  </a>
+  <a class="mn-item" href="partner-analytics.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18M18 9l-5 5-4-4-4 4"/></svg>
+    Analytics
+  </a>
+</nav>
+
+<div class="toast" id="toast"></div>
 <script>
 
-const SUPA_URL = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
-const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
+const SUPA_URL='https://gfwgbgdvxtocwhilrtdw.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
 let sb=null,PARTNER=null;
 try{const{createClient}=supabase;sb=createClient(SUPA_URL,SUPA_KEY);}catch(e){console.warn('Supabase unavailable');}
-(async()=>{
-  if(!sb)return;
-  try{
-    const{data:{session}}=await sb.auth.getSession();
-    if(!session){window.location.href='auth.html';return;}
-    PARTNER=session.user;
-    const init=document.getElementById('tb-avatar');
-    if(init){
-      const{data:p}=await sb.from('profiles').select('first_name,last_name').eq('id',PARTNER.id).single();
-      const name=(p?.first_name||'P');
-      init.textContent=name[0].toUpperCase();
-    }
-  }catch(e){console.warn('Session error',e);}
-})();
-function showToast(msg,dur=3000){const t=document.getElementById('toast');if(!t)return;t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),dur);}
-async function signOut(){if(sb)await sb.auth.signOut();window.location.href='auth.html';}
 
-let calYear=new Date().getFullYear(),calMonth=new Date().getMonth();
-let blockedDates=new Set(),bookedDates=new Set(),pendingToggle=new Set();
-async function initCalendar(){
-  if(!sb||!PARTNER){setTimeout(initCalendar,400);return;}
-  const{data:listings}=await sb.from('listings').select('id,title').eq('partner_id',PARTNER.id);
-  const sel=document.getElementById('listing-select');
-  (listings||[]).forEach(l=>{const o=document.createElement('option');o.value=l.id;o.textContent=l.title||'Untitled';sel.appendChild(o);});
-  if(listings?.length){sel.value=listings[0].id;loadCalendar();}
+let _toast=null;
+function toast(msg,ok=true){
+  if(!_toast){_toast=document.getElementById('toast');}
+  if(!_toast)return;
+  _toast.textContent=msg;
+  _toast.style.background=ok?'#0A0A14':'#FF4D6D';
+  _toast.classList.add('show');
+  setTimeout(()=>_toast.classList.remove('show'),3200);
 }
-async function loadCalendar(){
-  const lid=document.getElementById('listing-select').value;
-  if(!lid||!sb)return;
-  blockedDates=new Set();bookedDates=new Set();pendingToggle=new Set();
-  const{data:bd}=await sb.from('blocked_dates').select('date').eq('listing_id',lid);
-  (bd||[]).forEach(r=>blockedDates.add(r.date));
-  const{data:bk}=await sb.from('apartment_bookings').select('checkin_date,checkout_date').eq('listing_id',lid).in('status',['paid_pending_checkin','checked_in']);
-  (bk||[]).forEach(b=>{
-    if(!b.checkin_date||!b.checkout_date)return;
-    let d=new Date(b.checkin_date);const end=new Date(b.checkout_date);
-    while(d<end){bookedDates.add(d.toISOString().split('T')[0]);d.setDate(d.getDate()+1);}
-  });
-  renderCalendar();
+function signOut(){
+  if(window.ApaSession)ApaSession.signOut();
+  else if(sb)sb.auth.signOut().then(()=>location.href='index.html');
 }
-function renderCalendar(){
-  const first=new Date(calYear,calMonth,1);
-  const last=new Date(calYear,calMonth+1,0);
-  const label=document.getElementById('cal-month-label');
-  label.textContent=first.toLocaleDateString('en-GB',{month:'long',year:'numeric'});
-  const grid=document.getElementById('cal-grid');
-  const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-  let html=days.map(d=>`<div class="cal-day-name">${d}</div>`).join('');
-  let start=(first.getDay()+6)%7;
-  for(let i=0;i<start;i++){
-    const d=new Date(calYear,calMonth,-(start-i-1));
-    html+=`<div class="cal-day other-month">${d.getDate()}</div>`;
+function fmt(n){return Number(n||0).toLocaleString();}
+function fmtKes(n){return 'KES '+fmt(n);}
+
+let curYear = new Date().getFullYear(), curMonth = new Date().getMonth();
+let bookedDates = new Set(), blockedDates = new Set();
+
+async function loadCalendar() {
+  if(!sb) return;
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if(!session) return;
+    document.getElementById('tb-avatar').textContent = (session.user.user_metadata?.first_name||'P')[0].toUpperCase();
+    const uid = session.user.id;
+    const { data: bookings } = await sb.from('bookings')
+      .select('check_in,check_out,listings(title),guests,status')
+      .eq('partner_id', uid).eq('status','confirmed');
+    (bookings||[]).forEach(b => {
+      let d = new Date(b.check_in+'T00:00:00');
+      const end = new Date(b.check_out+'T00:00:00');
+      while(d < end) { bookedDates.add(d.toISOString().split('T')[0]); d.setDate(d.getDate()+1); }
+    });
+    renderCalendar();
+    const upcoming = (bookings||[]).filter(b=>new Date(b.check_in)>=new Date()).sort((a,b)=>new Date(a.check_in)-new Date(b.check_in)).slice(0,5);
+    document.getElementById('cal-upcoming').innerHTML = upcoming.length
+      ? upcoming.map(b=>`<div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);">
+          <div style="width:44px;height:44px;border-radius:12px;background:var(--theme-soft);border:1.5px solid var(--theme-border);display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;">
+            <div style="font:700 14px var(--font-data);color:var(--mint-dark);">${new Date(b.check_in+'T00:00:00').getDate()}</div>
+            <div style="font:600 9px var(--font-b);color:var(--ink-faint);text-transform:uppercase;">${new Date(b.check_in+'T00:00:00').toLocaleString('en-KE',{month:'short'})}</div>
+          </div>
+          <div><div style="font:700 13px var(--font-b);color:var(--ink);">${b.listings?.title||'Your listing'}</div>
+          <div style="font:400 11px var(--font-b);color:var(--ink-faint);">${b.guests||1} guest${(b.guests||1)>1?'s':''} · until ${new Date(b.check_out+'T00:00:00').toLocaleDateString('en-KE',{day:'numeric',month:'short'})}</div></div>
+          <span class="badge badge-green" style="margin-left:auto;">Confirmed</span>
+        </div>`).join('')
+      : '<div class="empty"><div class="empty-icon">📅</div><div class="empty-title">No upcoming check-ins</div></div>';
+  } catch(e) { console.warn(e); }
+}
+
+function renderCalendar() {
+  const label = new Date(curYear, curMonth).toLocaleString('en-KE', {month:'long',year:'numeric'});
+  document.getElementById('cal-month-label').textContent = label;
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const first = new Date(curYear, curMonth, 1).getDay();
+  const last = new Date(curYear, curMonth+1, 0).getDate();
+  const todayStr = new Date().toISOString().split('T')[0];
+  let html = days.map(d=>`<div class="cal-day-hd">${d}</div>`).join('');
+  for(let i=0;i<first;i++) html += '<div class="cal-day empty"></div>';
+  for(let d=1;d<=last;d++) {
+    const ds = `${curYear}-${String(curMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const cls = ds===todayStr?'today':bookedDates.has(ds)?'booked':blockedDates.has(ds)?'blocked':'';
+    html += `<div class="cal-day ${cls}" title="${ds}">${d}</div>`;
   }
-  const today=new Date().toISOString().split('T')[0];
-  for(let d=1;d<=last.getDate();d++){
-    const iso=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const isToday=iso===today,isBooked=bookedDates.has(iso),isBlocked=blockedDates.has(iso)||pendingToggle.has(iso);
-    const cls=['cal-day',isToday?'today':'',isBooked?'booked':'',isBlocked?'blocked':''].filter(Boolean).join(' ');
-    html+=`<div class="${cls}" onclick="toggleDay('${iso}')">${d}</div>`;
-  }
-  const endPad=(7-((start+last.getDate())%7))%7;
-  for(let i=1;i<=endPad;i++)html+=`<div class="cal-day other-month">${i}</div>`;
-  grid.innerHTML=html;
+  document.getElementById('cal-grid').innerHTML = html;
 }
-function changeMonth(n){calMonth+=n;if(calMonth>11){calMonth=0;calYear++;}if(calMonth<0){calMonth=11;calYear--;}renderCalendar();}
-function toggleDay(iso){
-  if(bookedDates.has(iso)){showToast('This date has a confirmed booking');return;}
-  if(blockedDates.has(iso)){blockedDates.delete(iso);pendingToggle.delete(iso);}
-  else if(pendingToggle.has(iso)){pendingToggle.delete(iso);}
-  else pendingToggle.add(iso);
-  renderCalendar();
-}
-async function saveBlocked(){
-  const lid=document.getElementById('listing-select').value;
-  if(!lid||!sb)return;
-  const toAdd=[...pendingToggle].map(d=>({listing_id:lid,date:d}));
-  if(toAdd.length)await sb.from('blocked_dates').upsert(toAdd,{onConflict:'listing_id,date'});
-  showToast('✅ Calendar saved');
-  loadCalendar();
-}
-initCalendar();
-</script><script src="/pwa.js" defer></script>
-<script src="/brand.js" defer></script>
-  <script src="/apa-signal.js" defer></script>
-</body></html>
+
+function changeMonth(dir) { curMonth += dir; if(curMonth>11){curMonth=0;curYear++;}else if(curMonth<0){curMonth=11;curYear--;} renderCalendar(); }
+document.addEventListener('DOMContentLoaded', loadCalendar);
+</script></body></html>

@@ -3,10 +3,8 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Apatmento — My Listings</title>
+<title>Apatmento Partner — My Listings</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<!-- Session core: one Supabase client per tab. Multiple clients on the
-     same storage key race each other and silently drop the session. -->
 <script src="/apa-session.js"></script>
 <script src="/apa-admin-guard.js"></script>
 <script>
@@ -27,463 +25,500 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..700&display=swap" rel="stylesheet"/>
 <link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&f[]=geist@400,500,600&display=swap" rel="stylesheet"/>
 <style>
+
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
   --glass:#FCFCFD;--glass-2:#F4F5FB;--glass-3:#EBEDF7;
-  --ink:#0A0A14;--ink-soft:#4A4C66;--ink-faint:#8E90AD;
-  --lilac:#B8A4F4;--lilac-deep:#8B6FE8;--mint:#5EEAD4;--mint-deep:#2DD4BF;
-  --peach:#FFB59E;--electric:#4361FF;--violet:#7B2FF7;--ember:#FF6B2C;
-  --line:rgba(10,10,20,0.07);--line-2:rgba(10,10,20,0.13);
-  --theme:var(--lilac-deep);--theme-grad:linear-gradient(135deg,#B8A4F4,#7B2FF7);
-  --font-display:'Fraunces',serif;--font-body:'General Sans',system-ui,sans-serif;
+  --ink:#0A0A14;--ink-2:#12132A;--ink-soft:#4A4C66;--ink-faint:#8E90AD;
+  --mint:#5EEAD4;--mint-deep:#2DD4BF;--mint-dark:#0D9488;
+  --electric:#4361FF;--violet:#7B2FF7;--gold:#F5B12E;
+  --ember:#FF6B2C;--err:#FF4D6D;--ok:#2DD4BF;
+  --lilac:#B8A4F4;--lilac-deep:#8B6FE8;
+  --line:rgba(10,10,20,.07);--line-2:rgba(10,10,20,.13);
+  /* Partner theme: mint-teal → electric */
+  --theme:var(--mint-deep);--theme-2:var(--electric);
+  --theme-grad:linear-gradient(135deg,#2DD4BF,#4361FF);
+  --theme-soft:rgba(45,212,191,.08);
+  --theme-border:rgba(45,212,191,.2);
+  --font-d:'Fraunces',serif;--font-b:'General Sans',system-ui,sans-serif;
   --font-data:'Geist',monospace;
-  --shadow-sm:0 2px 8px rgba(10,10,20,0.06);
-  --shadow-md:0 8px 32px rgba(123,47,247,0.08);
-  --shadow-lift:0 20px 60px rgba(123,47,247,0.14);
-  --radius:18px;--err:#FF4D6D;--ok:#2DD4BF;
+  --shadow-sm:0 2px 8px rgba(10,10,20,.05);
+  --shadow-md:0 8px 32px rgba(45,212,191,.08),0 2px 12px rgba(10,10,20,.05);
+  --shadow-lift:0 20px 60px rgba(67,97,255,.14);
+  --radius:18px;--radius-lg:24px;
 }
 @media(prefers-reduced-motion:reduce){*{animation-duration:.01ms !important;transition-duration:.01ms !important;}}
-html,body{height:100%;font-family:var(--font-body);background:var(--glass-2);color:var(--ink);-webkit-font-smoothing:antialiased;}
+html,body{height:100%;font-family:var(--font-b);background:var(--glass-2);color:var(--ink);-webkit-font-smoothing:antialiased;}
 body{display:flex;flex-direction:column;overflow-x:hidden;}
 
-/* aurora */
+/* ── AURORA ── */
 .aurora{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;}
-.ab{position:absolute;border-radius:50%;filter:blur(90px);opacity:.28;mix-blend-mode:multiply;animation:drift 28s ease-in-out infinite;}
-.ab-1{width:500px;height:500px;background:radial-gradient(circle,var(--lilac),transparent 70%);top:-10%;left:-6%;}
-.ab-2{width:400px;height:400px;background:radial-gradient(circle,var(--mint),transparent 72%);bottom:-8%;right:-6%;animation-delay:-12s;opacity:.2;}
-@keyframes drift{0%,100%{transform:translate(0,0);}50%{transform:translate(30px,-20px);}}
+.ab{position:absolute;border-radius:50%;filter:blur(90px);opacity:.22;mix-blend-mode:multiply;animation:drift 30s ease-in-out infinite;}
+.ab-1{width:600px;height:600px;background:radial-gradient(circle,var(--mint),transparent 70%);top:-15%;left:-10%;}
+.ab-2{width:480px;height:480px;background:radial-gradient(circle,var(--electric),transparent 72%);bottom:-12%;right:-8%;animation-delay:-14s;opacity:.16;}
+.ab-3{width:360px;height:360px;background:radial-gradient(circle,var(--gold),transparent 70%);top:40%;left:50%;animation-delay:-7s;opacity:.12;}
+@keyframes drift{0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(28px,-18px) scale(1.05);}}
 
-/* topbar */
-.topbar{position:sticky;top:0;z-index:200;height:60px;background:rgba(252,252,253,.82);backdrop-filter:blur(20px) saturate(180%);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 20px;flex-shrink:0;}
+/* ── TOPBAR ── */
+.topbar{position:sticky;top:0;z-index:200;height:64px;background:rgba(252,252,253,.88);backdrop-filter:blur(24px) saturate(180%);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0;}
 .tb-left{display:flex;align-items:center;gap:12px;}
-.tb-logo{height:30px;}
-.tb-brand{font-family:var(--font-display);font-weight:500;font-size:17px;}
+.tb-back{width:36px;height:36px;border-radius:10px;border:1.5px solid var(--line-2);background:rgba(255,255,255,.7);display:flex;align-items:center;justify-content:center;color:var(--ink-soft);cursor:pointer;transition:all .2s;text-decoration:none;flex-shrink:0;}
+.tb-back:hover{border-color:var(--theme);color:var(--theme);}
+.tb-divider{width:1px;height:24px;background:var(--line-2);}
+.tb-brand{font-family:var(--font-d);font-weight:500;font-size:18px;letter-spacing:-.01em;}
 .tb-brand em{font-style:italic;background:var(--theme-grad);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.tb-hub-label{font-size:12px;font-weight:600;color:var(--ink-faint);letter-spacing:.04em;}
 .tb-right{display:flex;align-items:center;gap:10px;}
-.tb-avatar{width:36px;height:36px;border-radius:11px;background:var(--theme-grad);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:600;font-size:14px;color:#fff;cursor:pointer;box-shadow:0 4px 12px rgba(123,47,247,.25);}
-.tb-icon{width:36px;height:36px;border-radius:11px;border:1px solid var(--line);background:rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;color:var(--ink-soft);cursor:pointer;transition:all .2s;text-decoration:none;}
-.tb-icon:hover{border-color:var(--theme);color:var(--theme);}
-.tb-chip{font-size:11px;font-weight:600;color:var(--mint-deep);padding:6px 12px;border-radius:100px;background:rgba(45,212,191,.08);border:1px solid rgba(45,212,191,.18);}
+.tb-chip{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:6px 13px;border-radius:100px;background:linear-gradient(135deg,rgba(45,212,191,.12),rgba(67,97,255,.08));border:1px solid var(--theme-border);color:var(--mint-dark);}
+.tb-add-btn{display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:11px;border:none;font-family:var(--font-b);font-weight:700;font-size:12px;cursor:pointer;background:var(--theme-grad);color:#fff;box-shadow:0 4px 14px rgba(67,97,255,.25);transition:all .22s;letter-spacing:.02em;text-decoration:none;}
+.tb-add-btn:hover{transform:translateY(-1px);box-shadow:0 8px 22px rgba(67,97,255,.38);}
+.tb-avatar{width:36px;height:36px;border-radius:11px;background:var(--theme-grad);display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-weight:600;font-size:14px;color:#fff;cursor:pointer;box-shadow:0 3px 10px rgba(45,212,191,.3);flex-shrink:0;}
+@media(max-width:600px){.tb-hub-label{display:none;}.tb-chip{display:none;}}
 
-/* layout */
+/* ── SHELL ── */
 .shell{display:flex;flex:1;position:relative;z-index:2;}
-.sidebar{width:220px;flex-shrink:0;padding:16px 12px;background:rgba(252,252,253,.72);backdrop-filter:blur(16px);border-right:1px solid var(--line);display:flex;flex-direction:column;gap:3px;position:sticky;top:60px;height:calc(100vh - 60px);overflow-y:auto;}
-@media(max-width:800px){.sidebar{display:none;}}
-.sb-section{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);padding:12px 10px 6px;}
-.sb-link{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;font-size:13px;font-weight:500;color:var(--ink-soft);text-decoration:none;cursor:pointer;transition:all .22s;}
-.sb-link:hover{background:rgba(139,111,232,.08);color:var(--ink);}
-.sb-link.active{background:rgba(139,111,232,.12);color:var(--lilac-deep);font-weight:600;}
-.sb-link svg{width:16px;height:16px;flex-shrink:0;}
-.sb-foot{margin-top:auto;padding-top:12px;border-top:1px solid var(--line);}
-.main{flex:1;padding:24px;overflow-x:hidden;min-width:0;}
 
-/* page header */
-.page-hd{margin-bottom:24px;}
-.page-eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--theme);margin-bottom:10px;padding:5px 12px;border-radius:100px;background:rgba(139,111,232,.08);border:1px solid rgba(139,111,232,.16);}
-.page-title{font-family:var(--font-display);font-weight:400;font-size:clamp(22px,3vw,30px);letter-spacing:-.02em;margin-bottom:5px;}
-.page-title em{font-style:italic;font-weight:500;background:var(--theme-grad);-webkit-background-clip:text;background-clip:text;color:transparent;}
-.page-sub{font-size:13px;color:var(--ink-soft);}
+/* ── SIDEBAR ── */
+.sidebar{width:240px;flex-shrink:0;padding:20px 14px;background:rgba(252,252,253,.78);backdrop-filter:blur(20px);border-right:1px solid var(--line);display:flex;flex-direction:column;gap:2px;position:sticky;top:64px;height:calc(100vh - 64px);overflow-y:auto;}
+@media(max-width:860px){.sidebar{display:none;}}
+.sb-section{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);padding:14px 10px 6px;}
+.sb-link{display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:13px;font-size:13px;font-weight:500;color:var(--ink-soft);text-decoration:none;cursor:pointer;transition:all .2s;position:relative;}
+.sb-link svg{width:17px;height:17px;flex-shrink:0;opacity:.7;transition:opacity .2s;}
+.sb-link:hover{background:rgba(45,212,191,.07);color:var(--ink);}.sb-link:hover svg{opacity:1;}
+.sb-link.active{background:linear-gradient(135deg,rgba(45,212,191,.12),rgba(67,97,255,.08));color:var(--mint-dark);font-weight:700;}
+.sb-link.active svg{opacity:1;}
+.sb-link.active::before{content:'';position:absolute;left:0;top:25%;bottom:25%;width:3px;border-radius:2px;background:var(--theme-grad);}
+.sb-foot{margin-top:auto;padding-top:14px;border-top:1px solid var(--line);}
+.sb-link.danger{color:var(--err);}
 
-/* stat cards */
-.stat-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px;margin-bottom:24px;}
-.stat-card{background:rgba(255,255,255,.7);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:var(--radius);padding:18px;}
-.stat-label{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:8px;}
-.stat-val{font-family:var(--font-display);font-weight:600;font-size:26px;color:var(--ink);margin-bottom:4px;}
+/* ── REFER PROMO BANNER (sidebar) ── */
+.sb-refer-promo{margin:16px 0 8px;border-radius:16px;padding:16px 14px;background:linear-gradient(145deg,rgba(245,177,46,.1),rgba(255,107,44,.07));border:1.5px solid rgba(245,177,46,.22);overflow:hidden;position:relative;}
+.sb-refer-promo::before{content:'';position:absolute;top:-20px;right:-20px;width:80px;height:80px;border-radius:50%;background:radial-gradient(circle,rgba(245,177,46,.2),transparent 70%);pointer-events:none;}
+.sbp-eyebrow{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:7px;}
+.sbp-title{font-family:var(--font-d);font-size:14px;font-weight:500;line-height:1.3;color:var(--ink);margin-bottom:6px;}
+.sbp-title strong{font-weight:700;color:var(--ember);}
+.sbp-desc{font-size:11px;line-height:1.5;color:var(--ink-soft);margin-bottom:12px;}
+.sbp-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:9px;border-radius:10px;border:none;font-family:var(--font-b);font-weight:700;font-size:12px;cursor:pointer;background:linear-gradient(135deg,#F5B12E,#FF6B2C);color:#fff;box-shadow:0 4px 12px rgba(245,177,46,.28);transition:all .22s;text-decoration:none;}
+.sbp-btn:hover{transform:translateY(-1px);box-shadow:0 7px 18px rgba(245,177,46,.4);}
+.sbp-link-text{font-size:10px;color:var(--ink-faint);text-align:center;margin-top:8px;cursor:pointer;}
+.sbp-link-text a{color:var(--electric);text-decoration:none;}
+
+/* ── MAIN ── */
+.main{flex:1;padding:28px;overflow-x:hidden;min-width:0;max-width:1100px;}
+@media(max-width:600px){.main{padding:16px;}}
+
+/* ── PAGE HEADER ── */
+.page-hd{margin-bottom:28px;}
+.page-eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--mint-dark);margin-bottom:12px;padding:5px 13px;border-radius:100px;background:rgba(45,212,191,.09);border:1px solid rgba(45,212,191,.2);}
+.page-title{font-family:var(--font-d);font-weight:400;font-size:clamp(24px,3.2vw,32px);letter-spacing:-.025em;color:var(--ink-2);margin-bottom:6px;line-height:1.1;}
+.page-title em{font-style:italic;font-weight:500;background:linear-gradient(120deg,var(--mint-deep),var(--electric));-webkit-background-clip:text;background-clip:text;color:transparent;}
+.page-sub{font-size:13px;color:var(--ink-soft);line-height:1.6;}
+
+/* ── STAT CARDS ── */
+.stat-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:24px;}
+.stat-card{background:rgba(255,255,255,.78);backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:var(--radius);padding:20px 18px;position:relative;overflow:hidden;transition:transform .22s,box-shadow .22s;}
+.stat-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);}
+.stat-card::after{content:'';position:absolute;top:0;right:0;width:60px;height:60px;border-radius:0 var(--radius) 0 60px;background:var(--theme-soft);opacity:.5;}
+.stat-label{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:10px;}
+.stat-val{font-family:var(--font-d);font-weight:600;font-size:28px;color:var(--ink-2);margin-bottom:5px;line-height:1;}
 .stat-meta{font-size:12px;color:var(--ink-soft);}
-.stat-meta.up{color:var(--ok);}
-.stat-meta.down{color:var(--err);}
+.stat-meta.up{color:#059669;font-weight:600;}
+.stat-meta.up::before{content:'↑ ';}
+.stat-meta.down{color:var(--err);font-weight:600;}
+.stat-meta.down::before{content:'↓ ';}
+.stat-icon{position:absolute;top:16px;right:16px;font-size:24px;opacity:.35;}
 
-/* glass card */
-.card{background:rgba(255,255,255,.68);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:var(--radius);padding:20px;margin-bottom:16px;}
-.card-title{font-family:var(--font-display);font-weight:500;font-size:16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;}
-.card-title svg{width:18px;height:18px;color:var(--theme);}
+/* ── GLASS CARD ── */
+.card{background:rgba(255,255,255,.74);backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:var(--radius);padding:22px;margin-bottom:18px;}
+.card-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;gap:12px;}
+.card-title{font-family:var(--font-d);font-weight:500;font-size:16px;color:var(--ink-2);}
+.card-sub{font-size:12px;color:var(--ink-faint);margin-top:2px;}
 
-/* table */
-.tbl-wrap{overflow-x:auto;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.6);}
+/* ── TABLE ── */
+.tbl-wrap{overflow-x:auto;border-radius:14px;border:1px solid var(--line);}
 table{width:100%;border-collapse:collapse;font-size:13px;}
-th{padding:12px 16px;text-align:left;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);border-bottom:1px solid var(--line);background:rgba(244,245,251,.6);}
-td{padding:13px 16px;border-bottom:1px solid var(--line);color:var(--ink-soft);}
+th{padding:12px 16px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-faint);border-bottom:1px solid var(--line);background:rgba(244,245,251,.7);white-space:nowrap;}
+td{padding:14px 16px;border-bottom:1px solid var(--line);color:var(--ink-soft);vertical-align:middle;}
 tr:last-child td{border-bottom:none;}
-tr:hover td{background:rgba(139,111,232,.03);}
+tr:hover td{background:rgba(45,212,191,.025);}
 td strong{color:var(--ink);font-weight:600;}
 
-/* badges */
-.badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:4px 10px;border-radius:100px;}
-.badge-green{background:rgba(45,212,191,.1);color:var(--ok);}
-.badge-amber{background:rgba(255,181,158,.15);color:var(--ember);}
-.badge-red{background:rgba(255,77,109,.1);color:var(--err);}
-.badge-grey{background:var(--glass-3);color:var(--ink-faint);}
-.badge-purple{background:rgba(139,111,232,.1);color:var(--lilac-deep);}
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:4px 11px;border-radius:100px;white-space:nowrap;}
+.badge::before{content:'';width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.badge-green{background:rgba(5,150,105,.08);color:#059669;border:1px solid rgba(5,150,105,.2);}.badge-green::before{background:#059669;}
+.badge-amber{background:rgba(245,177,46,.1);color:#D97706;border:1px solid rgba(245,177,46,.25);}.badge-amber::before{background:#D97706;}
+.badge-red{background:rgba(255,77,109,.08);color:var(--err);border:1px solid rgba(255,77,109,.2);}.badge-red::before{background:var(--err);}
+.badge-blue{background:rgba(67,97,255,.08);color:var(--electric);border:1px solid rgba(67,97,255,.2);}.badge-blue::before{background:var(--electric);}
+.badge-grey{background:var(--glass-3);color:var(--ink-faint);border:1px solid var(--line-2);}.badge-grey::before{background:var(--ink-faint);}
 
-/* btn */
-.btn{display:inline-flex;align-items:center;gap:7px;padding:10px 18px;border-radius:11px;border:none;font-family:var(--font-body);font-weight:600;font-size:13px;cursor:pointer;transition:all .22s;}
-.btn-primary{background:var(--theme-grad);color:#fff;box-shadow:0 6px 20px rgba(123,47,247,.22);}
-.btn-primary:hover{transform:translateY(-1px);box-shadow:0 10px 28px rgba(123,47,247,.32);}
-.btn-ghost{background:rgba(255,255,255,.6);color:var(--ink-soft);border:1px solid var(--line);}
-.btn-ghost:hover{border-color:var(--theme);color:var(--theme);}
-.btn-sm{padding:7px 13px;font-size:12px;}
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:8px;padding:11px 20px;border-radius:12px;border:none;font-family:var(--font-b);font-weight:700;font-size:13px;cursor:pointer;transition:all .22s;letter-spacing:.01em;}
+.btn-primary{background:var(--theme-grad);color:#fff;box-shadow:0 6px 20px rgba(45,212,191,.2);}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(45,212,191,.35);}
+.btn-ghost{background:rgba(255,255,255,.7);color:var(--ink-soft);border:1.5px solid var(--line-2);}
+.btn-ghost:hover{border-color:var(--theme);color:var(--mint-dark);}
+.btn-danger{background:rgba(255,77,109,.08);color:var(--err);border:1.5px solid rgba(255,77,109,.2);}
+.btn-danger:hover{background:rgba(255,77,109,.14);}
+.btn-sm{padding:7px 14px;font-size:12px;border-radius:9px;}
+.btn-icon{padding:9px;border-radius:10px;}.btn-icon svg{width:16px;height:16px;}
 
-/* toggle */
-.toggle{width:42px;height:24px;border-radius:12px;border:none;cursor:pointer;position:relative;transition:background .3s;flex-shrink:0;}
-.toggle.on{background:var(--theme);}
-.toggle.off{background:#D1D5DB;}
-.toggle::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .3s;}
-.toggle.on::after{transform:translateX(18px);}
+/* ── FORM FIELDS ── */
+.field{margin-bottom:18px;}
+.field-label{display:block;font-size:12px;font-weight:700;color:var(--ink-soft);margin-bottom:7px;letter-spacing:.02em;}
+.field-hint{font-size:11px;color:var(--ink-faint);margin-top:5px;line-height:1.5;}
+.field-input,.field-select,.field-textarea{width:100%;padding:12px 15px;border:1.5px solid rgba(10,10,20,.1);border-radius:12px;background:rgba(255,255,255,.85);font-family:var(--font-b);font-size:13px;color:var(--ink);outline:none;transition:all .2s;}
+.field-input:focus,.field-select:focus,.field-textarea:focus{border-color:var(--theme);box-shadow:0 0 0 3px rgba(45,212,191,.12);}
+.field-textarea{resize:vertical;min-height:100px;line-height:1.7;}
+.row-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+@media(max-width:500px){.row-2,.row-3{grid-template-columns:1fr;}}
 
-/* form fields */
-.field{margin-bottom:16px;}
-.field-label{display:block;font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:6px;}
-.field-input,.field-select,.field-textarea{width:100%;padding:11px 14px;border:1.5px solid var(--line-2);border-radius:11px;background:var(--glass);font-family:var(--font-body);font-size:13px;color:var(--ink);outline:none;transition:all .2s;}
-.field-input:focus,.field-select:focus,.field-textarea:focus{border-color:var(--theme);box-shadow:0 0 0 3px rgba(139,111,232,.1);}
-.field-textarea{resize:vertical;min-height:90px;line-height:1.6;}
-.row-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-@media(max-width:480px){.row-2{grid-template-columns:1fr;}}
+/* ── CHART BARS ── */
+.chart-bars{display:flex;flex-direction:column;gap:10px;}
+.chart-row{display:flex;align-items:center;gap:14px;font-size:12px;}
+.chart-lbl{width:100px;color:var(--ink-soft);text-align:right;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.chart-track{flex:1;height:30px;background:var(--glass-3);border-radius:8px;overflow:hidden;position:relative;}
+.chart-fill{height:100%;border-radius:8px;background:var(--theme-grad);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;min-width:40px;transition:width 1s cubic-bezier(.22,1,.36,1);}
+.chart-val{width:60px;text-align:right;color:var(--ink);font-weight:700;font-family:var(--font-data);flex-shrink:0;}
 
-/* empty state */
-.empty{text-align:center;padding:50px 20px;}
-.empty svg{width:48px;height:48px;color:var(--ink-faint);opacity:.35;margin:0 auto 16px;display:block;}
-.empty-title{font-family:var(--font-display);font-size:18px;margin-bottom:6px;}
-.empty-sub{font-size:13px;color:var(--ink-soft);margin-bottom:20px;}
+/* ── MINI KPI BLOCKS ── */
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px;}
+.kpi{background:rgba(255,255,255,.6);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;align-items:center;gap:14px;}
+.kpi-icon{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.kpi-icon-teal{background:rgba(45,212,191,.12);}
+.kpi-icon-blue{background:rgba(67,97,255,.1);}
+.kpi-icon-gold{background:rgba(245,177,46,.12);}
+.kpi-icon-ember{background:rgba(255,107,44,.1);}
+.kpi-val{font-family:var(--font-d);font-size:20px;font-weight:600;color:var(--ink-2);line-height:1;}
+.kpi-lbl{font-size:11px;color:var(--ink-faint);margin-top:3px;}
 
-/* toast */
-.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(16px);z-index:9999;padding:12px 20px;border-radius:100px;background:var(--ink);color:#fff;font-size:13px;font-weight:500;box-shadow:var(--shadow-lift);opacity:0;transition:all .35s;pointer-events:none;}
+/* ── EMPTY STATE ── */
+.empty{text-align:center;padding:56px 24px;}
+.empty-icon{font-size:48px;margin-bottom:16px;}
+.empty-title{font-family:var(--font-d);font-size:20px;margin-bottom:8px;color:var(--ink-2);}
+.empty-sub{font-size:13px;color:var(--ink-soft);margin-bottom:22px;line-height:1.6;max-width:340px;margin-left:auto;margin-right:auto;}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(16px);z-index:9999;padding:12px 22px;border-radius:100px;background:var(--ink-2);color:#fff;font-size:13px;font-weight:600;box-shadow:0 8px 28px rgba(10,10,20,.25);opacity:0;transition:all .35s;pointer-events:none;white-space:nowrap;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
-/* mobile bottom nav */
-.mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;background:rgba(252,252,253,.9);backdrop-filter:blur(16px);border-top:1px solid var(--line);padding:8px 0 env(safe-area-inset-bottom,8px);}
-@media(max-width:800px){.mobile-nav{display:flex;}.main{padding-bottom:80px;}}
-.mn-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;font-weight:500;color:var(--ink-faint);text-decoration:none;padding:6px 0;cursor:pointer;}
-.mn-item.active{color:var(--lilac-deep);}
-.mn-item svg{width:20px;height:20px;}
+/* ── MOBILE NAV ── */
+.mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;background:rgba(252,252,253,.92);backdrop-filter:blur(20px);border-top:1px solid var(--line);padding:6px 0 env(safe-area-inset-bottom,6px);}
+@media(max-width:860px){.mobile-nav{display:flex;}.main{padding-bottom:82px;}}
+.mn-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:9px;font-weight:600;letter-spacing:.03em;color:var(--ink-faint);text-decoration:none;padding:7px 4px;cursor:pointer;transition:color .2s;}
+.mn-item:hover,.mn-item.active{color:var(--mint-dark);}
+.mn-item svg{width:21px;height:21px;}
 
-/* ── PARTNER HUB THEME OVERRIDE ── */
-:root {
-  --theme: var(--mint-deep);
-  --theme-2: var(--electric);
-  --theme-grad: linear-gradient(135deg, #2DD4BF, #4361FF);
-  --theme-soft: rgba(45,212,191,0.1);
-  --theme-border: rgba(45,212,191,0.2);
-}
-/* Active nav link uses mint */
-.sb-link.active { background: rgba(45,212,191,0.1); color: var(--mint-deep); }
-.sb-link:hover { background: rgba(45,212,191,0.07); color: var(--ink); }
-/* Topbar chip */
-.tb-chip { color: var(--electric); background: rgba(67,97,255,0.08); border-color: rgba(67,97,255,0.18); }
-/* Page eyebrow */
-.page-eyebrow { color: var(--mint-deep); background: rgba(45,212,191,0.08); border-color: rgba(45,212,191,0.2); }
-/* page-title em gradient */
-.page-title em {
-  background: linear-gradient(120deg, var(--mint-deep), var(--electric));
-  -webkit-background-clip: text; background-clip: text; color: transparent;
-}
-/* Buttons */
-.btn-primary { background: linear-gradient(135deg, #2DD4BF, #4361FF); }
-/* Avatar */
-.tb-avatar { background: linear-gradient(135deg, #2DD4BF, #4361FF); box-shadow: 0 4px 12px rgba(45,212,191,0.3); }
-/* stat-meta up */
-.stat-meta.up { color: var(--electric); }
-/* aurora blobs — mint leads */
-.ab-1 { background: radial-gradient(circle, var(--mint), transparent 70%); }
-.ab-2 { background: radial-gradient(circle, var(--electric), transparent 72%); }
+/* ── INVITE BANNER (inline, non-popup) ── */
+.invite-banner{border-radius:20px;padding:22px 24px;background:linear-gradient(135deg,rgba(245,177,46,.08) 0%,rgba(255,107,44,.06) 50%,rgba(123,47,247,.05) 100%);border:1.5px solid rgba(245,177,46,.2);margin-bottom:18px;display:flex;align-items:center;gap:18px;position:relative;overflow:hidden;}
+.invite-banner::before{content:'🏆';position:absolute;right:18px;top:50%;transform:translateY(-50%);font-size:52px;opacity:.12;pointer-events:none;}
+.invite-banner-icon{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#F5B12E,#FF6B2C);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;box-shadow:0 4px 14px rgba(245,177,46,.28);}
+.invite-banner-body{flex:1;min-width:0;}
+.invite-banner-pre{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:5px;}
+.invite-banner-title{font-family:var(--font-d);font-size:15px;font-weight:500;color:var(--ink);margin-bottom:4px;line-height:1.3;}
+.invite-banner-title strong{color:var(--ember);}
+.invite-banner-sub{font-size:12px;color:var(--ink-soft);line-height:1.5;}
+.invite-banner-btn{flex-shrink:0;display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:12px;border:none;font-family:var(--font-b);font-weight:700;font-size:12px;cursor:pointer;background:linear-gradient(135deg,#F5B12E,#FF6B2C);color:#fff;box-shadow:0 4px 14px rgba(245,177,46,.3);transition:all .22s;white-space:nowrap;}
+.invite-banner-btn:hover{transform:translateY(-1px);box-shadow:0 7px 20px rgba(245,177,46,.42);}
+@media(max-width:600px){.invite-banner{flex-direction:column;align-items:flex-start;}.invite-banner-btn{width:100%;justify-content:center;}}
 
-
-/* ══ PARTNER MOBILE FIXES ══ */
-@media(max-width:800px){
-  .layout{flex-direction:column!important;}
-  .sidebar{display:none!important;}
-  .main{padding:16px 14px 90px!important;width:100%!important;}
-  .topbar{padding:0 14px!important;}
-  .stat-grid{grid-template-columns:1fr 1fr!important;gap:10px!important;}
-  table{font-size:12px!important;display:block;overflow-x:auto;}
-  th,td{padding:8px 6px!important;white-space:nowrap;}
-  h2{font-size:18px!important;}
-  .card{padding:14px!important;}
-}
 </style>
 <link rel="stylesheet" href="/brand.css"/>
-</head><body>
-<div class="aurora"><div class="ab ab-1"></div><div class="ab ab-2"></div></div>
+</head>
+<body>
+<div class="aurora"><div class="ab ab-1"></div><div class="ab ab-2"></div><div class="ab ab-3"></div></div>
+
 <div class="topbar">
   <div class="tb-left">
-    <a href="dashboard.html?role=partner&back=1" class="tb-icon" title="Dashboard">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    <a href="dashboard.html?role=partner&back=1" class="tb-back" title="Back to dashboard" aria-label="Dashboard">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
     </a>
-    <img src="logo-mark.png" class="tb-logo" alt="" onerror="this.style.display='none'"/>
+    <div class="tb-divider"></div>
     <span class="tb-brand"><em>Apat</em>mento</span>
+    <span class="tb-hub-label">· Partner Hub</span>
   </div>
   <div class="tb-right">
     <span class="tb-chip">0% commission</span>
+    <a href="add-listing.html" class="tb-add-btn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Add listing
+    </a>
     <div class="tb-avatar" id="tb-avatar">P</div>
   </div>
 </div>
-<div class="shell">
-  <nav class="sidebar">
-    <div class="sb-section">Partner Hub</div>
-    <a class="sb-link active" href="partner-listings.html">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2zM17 21v-8H7v8M7 3v5h8"/></svg>
-      Listings
-    </a>
-    <a class="sb-link" href="partner-bookings.html">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg>
-      Bookings
-    </a>
-    <a class="sb-link" href="partner-earnings.html">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-      Earnings
-    </a>
-    <a class="sb-link" href="partner-calendar.html">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg>
-      Calendar
-    </a>
-    <a class="sb-link" href="partner-analytics.html">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18M18 9l-5 5-4-4-4 4"/></svg>
-      Analytics
-    </a>
-    <a class="sb-link" href="partner-reviews.html">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-      Reviews
-    </a>
-    <a class="sb-link" href="partner-settings.html">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg>
-      Settings
-    </a>
 
-    <div class="sb-foot">
-      <a class="sb-link" href="dashboard.html?role=guest&back=1">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4M4 7h16M16 21l4-4-4-4M20 17H4"/></svg>
-        Switch to Guest
-      </a>
-      <a class="sb-link" onclick="signOut()" style="color:var(--err);cursor:pointer;">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
-        Sign out
-      </a>
-    </div>
-  </nav>
-  <main class="main">
+<div class="shell">
+
+<nav class="sidebar">
+  <div class="sb-section">Partner Hub</div>
+  <a class="sb-link active" href="partner-listings.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    My Listings
+  </a>
+  <a class="sb-link" href="partner-bookings.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg>
+    Bookings
+  </a>
+  <a class="sb-link" href="partner-earnings.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+    Earnings
+  </a>
+  <a class="sb-link" href="partner-calendar.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+    Calendar
+  </a>
+  <a class="sb-link" href="partner-analytics.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 9l-5 5-4-4-4 4"/></svg>
+    Analytics
+  </a>
+  <a class="sb-link" href="partner-reviews.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+    Reviews
+  </a>
+  <a class="sb-link" href="partner-settings.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    Settings
+  </a>
+
+  <!-- Strategic Refer & Earn promo — non-popup, always visible -->
+  <div class="sb-refer-promo">
+    <div class="sbp-eyebrow">💰 Earn more</div>
+    <div class="sbp-title">Invite a host.<br/><strong>Earn 10% for life.</strong></div>
+    <div class="sbp-desc">Every booking your referred host completes earns you a 10% commission — forever. No cap, no expiry.</div>
+    <a href="rewards.html" class="sbp-btn">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+      Get my referral link
+    </a>
+    <div class="sbp-link-text">Also earn 20% for guest referrals · <a href="rewards.html">Learn more</a></div>
+  </div>
+
+  <div class="sb-foot">
+    <a class="sb-link" href="dashboard.html?role=guest&back=1">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4M4 7h16M16 21l4-4-4-4M20 17H4"/></svg>
+      Switch to Guest
+    </a>
+    <a class="sb-link danger" onclick="signOut()" style="cursor:pointer;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+      Sign out
+    </a>
+  </div>
+</nav>
+
+<main class="main">
 
 <div class="page-hd">
-  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
-    <div><span class="page-eyebrow">✦ Partner Hub</span>
-      <h1 class="page-title">My <em>listings</em></h1>
-      <p class="page-sub">Manage your properties. All earnings go directly to you.</p>
+  <span class="page-eyebrow">✦ Partner Hub</span>
+  <h1 class="page-title">My <em>listings</em></h1>
+  <p class="page-sub">Manage all your properties and services in one place.</p>
+</div>
+
+
+<div class="invite-banner">
+  <div class="invite-banner-icon">🤝</div>
+  <div class="invite-banner-body">
+    <div class="invite-banner-pre">Referral programme — Partner exclusive</div>
+    <div class="invite-banner-title">Know another host or tour operator? <strong>Earn 10% of their revenue — for life.</strong></div>
+    <div class="invite-banner-sub">Share your link. Every booking they complete earns you 10% of our platform fee, forever. No cap, no minimum.</div>
+  </div>
+  <a href="rewards.html" class="invite-banner-btn">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+    Invite & earn
+  </a>
+</div>
+
+
+<!-- Quick add section -->
+<div class="card" style="border:1.5px dashed rgba(45,212,191,.3);background:rgba(45,212,191,.04);">
+  <div class="card-hd">
+    <div>
+      <div class="card-title">Add a new listing</div>
+      <div class="card-sub">List stays, tours, rides, food, events, car hire and more</div>
     </div>
-    <a href="#" onclick="event.preventDefault();showAddServicePicker()" class="btn btn-primary">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>Add listing</a>
+    <a href="add-listing.html" class="btn btn-primary">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      New listing
+    </a>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-top:4px;">
+    <a href="add-listing.html?type=stay" class="service-chip">🏠 Stay</a>
+    <a href="add-listing.html?type=tour" class="service-chip">🦁 Tour / Safari</a>
+    <a href="add-listing.html?type=ride" class="service-chip">🚗 Ride</a>
+    <a href="add-listing.html?type=food" class="service-chip">🍽️ Food</a>
+    <a href="add-listing.html?type=event" class="service-chip">🎟️ Event</a>
+    <a href="add-listing.html?type=carhire" class="service-chip">🔑 Car hire</a>
   </div>
 </div>
-<div class="stat-row">
-  <div class="stat-card"><div class="stat-label">Total listings</div><div class="stat-val" id="stat-total">—</div></div>
-  <div class="stat-card"><div class="stat-label">Active now</div><div class="stat-val" id="stat-active">—</div><div class="stat-meta up">Visible to guests</div></div>
-  <div class="stat-card"><div class="stat-label">Total bookings</div><div class="stat-val" id="stat-bookings">—</div></div>
-</div>
+
+<style>
+.service-chip{display:flex;align-items:center;gap:7px;padding:11px 14px;border-radius:12px;border:1.5px solid var(--line-2);background:rgba(255,255,255,.7);font:600 12px/1 var(--font-b);color:var(--ink-soft);text-decoration:none;transition:all .2s;cursor:pointer;}
+.service-chip:hover{border-color:var(--theme);color:var(--mint-dark);background:rgba(45,212,191,.06);transform:translateY(-1px);}
+.listing-card{background:rgba(255,255,255,.8);border:1px solid var(--line);border-radius:16px;padding:18px;display:flex;align-items:center;gap:16px;transition:all .22s;margin-bottom:10px;}
+.listing-card:hover{box-shadow:var(--shadow-md);transform:translateX(2px);}
+.listing-thumb{width:70px;height:70px;border-radius:12px;object-fit:cover;flex-shrink:0;background:var(--theme-grad);display:flex;align-items:center;justify-content:center;font-size:28px;}
+.listing-info{flex:1;min-width:0;}
+.listing-name{font:700 14px/1.3 var(--font-b);color:var(--ink);margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.listing-meta{font:400 12px/1.4 var(--font-b);color:var(--ink-soft);}
+.listing-price{font:700 13px/1 var(--font-data);color:var(--mint-dark);margin-top:5px;}
+.listing-actions{display:flex;gap:7px;flex-shrink:0;}
+</style>
+
+<!-- Listings grid -->
 <div class="card">
-  <div class="card-title">Your properties
-    <select class="field-select" style="width:auto;padding:6px 28px 6px 10px;font-size:12px;" id="filter-status" onchange="renderListings(window._allListings||[])">
-      <option value="">All</option><option value="active">Active</option><option value="inactive">Paused</option>
-    </select>
+  <div class="card-hd">
+    <div class="card-title">Active listings</div>
+    <div style="display:flex;gap:8px;">
+      <select id="lst-filter" onchange="filterListings()" class="field-select" style="width:auto;padding:7px 11px;font-size:12px;">
+        <option value="all">All types</option>
+        <option value="stay">Stays</option>
+        <option value="tour">Tours</option>
+        <option value="ride">Rides</option>
+        <option value="food">Food</option>
+        <option value="event">Events</option>
+      </select>
+    </div>
   </div>
-  <div id="listings-container"><div class="empty">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2zM17 21v-8H7v8M7 3v5h8"/></svg>
-    <div class="empty-title">No listings yet</div><div class="empty-sub">Add your first property to start earning.</div>
-    <a href="#" onclick="event.preventDefault();showAddServicePicker()" class="btn btn-primary">Add first listing</a>
-  </div></div>
+  <div id="listings-list">
+    <div class="empty">
+      <div class="empty-icon">🏠</div>
+      <div class="empty-title">Loading your listings…</div>
+    </div>
+  </div>
 </div>
-  </main>
+
+</main>
 </div>
+
 <nav class="mobile-nav">
-  <a class="mn-item active" href="partner-listings.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2zM17 21v-8H7v8M7 3v5h8"/></svg>Listings</a>
-  <a class="mn-item" href="partner-bookings.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg>Bookings</a>
-  <a class="mn-item" href="partner-earnings.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Earnings</a>
-  <a class="mn-item" href="partner-calendar.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg>Calendar</a>
-  <a class="mn-item" href="partner-analytics.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18M18 9l-5 5-4-4-4 4"/></svg>Analytics</a>
+  <a class="mn-item active" href="partner-listings.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    Listings
+  </a>
+  <a class="mn-item" href="partner-bookings.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg>
+    Bookings
+  </a>
+  <a class="mn-item" href="partner-earnings.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+    Earnings
+  </a>
+  <a class="mn-item" href="partner-calendar.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+    Calendar
+  </a>
+  <a class="mn-item" href="partner-analytics.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18M18 9l-5 5-4-4-4 4"/></svg>
+    Analytics
+  </a>
 </nav>
+
 <div class="toast" id="toast"></div>
 
 <script>
 
-const SUPA_URL = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
-const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
+const SUPA_URL='https://gfwgbgdvxtocwhilrtdw.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
 let sb=null,PARTNER=null;
 try{const{createClient}=supabase;sb=createClient(SUPA_URL,SUPA_KEY);}catch(e){console.warn('Supabase unavailable');}
-(async()=>{
-  if(!sb)return;
-  try{
-    const{data:{session}}=await sb.auth.getSession();
-    if(!session){window.location.href='auth.html';return;}
-    PARTNER=session.user;
-    const init=document.getElementById('tb-avatar');
-    if(init){
-      const{data:p}=await sb.from('profiles').select('first_name,last_name').eq('id',PARTNER.id).single();
-      const name=(p?.first_name||'P');
-      init.textContent=name[0].toUpperCase();
-    }
-  }catch(e){console.warn('Session error',e);}
-})();
-function showToast(msg,dur=3000){const t=document.getElementById('toast');if(!t)return;t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),dur);}
-async function signOut(){if(sb)await sb.auth.signOut();window.location.href='auth.html';}
 
-async function loadListings(){
-  if(!sb||!PARTNER){setTimeout(loadListings,400);return;}
-  const{data:listings}=await sb.from('listings').select('*').eq('partner_id',PARTNER.id).order('created_at',{ascending:false});
-  const all=listings||[];
-  document.getElementById('stat-total').textContent=all.length;
-  document.getElementById('stat-active').textContent=all.filter(l=>l.status!=='inactive').length;
-  if(all.length){
-    const{count}=await sb.from('apartment_bookings').select('id',{count:'exact',head:true}).in('listing_id',all.map(l=>l.id));
-    document.getElementById('stat-bookings').textContent=count||0;
-  }else document.getElementById('stat-bookings').textContent=0;
-  window._allListings=all;renderListings(all);
+let _toast=null;
+function toast(msg,ok=true){
+  if(!_toast){_toast=document.getElementById('toast');}
+  if(!_toast)return;
+  _toast.textContent=msg;
+  _toast.style.background=ok?'#0A0A14':'#FF4D6D';
+  _toast.classList.add('show');
+  setTimeout(()=>_toast.classList.remove('show'),3200);
 }
-function renderListings(list){
-  const f=document.getElementById('filter-status')?.value;
-  const fl=f?list.filter(l=>(f==='active'?l.status!=='inactive':l.status==='inactive')):list;
-  const c=document.getElementById('listings-container');
-  if(!fl.length){c.innerHTML='<div class="empty"><div class="empty-title">No listings match</div></div>';return;}
-  c.innerHTML='<div class="tbl-wrap"><table><thead><tr><th>Property</th><th>Location</th><th>Price/night</th><th>Status</th><th>Actions</th></tr></thead><tbody>'+
-  fl.map(l=>`<tr><td><strong>${l.title||l.name||'Untitled'}</strong><br/><span style="font-size:11px;color:var(--ink-faint)">${l.type||'Apartment'}</span></td>
-  <td>${l.location||l.city||'—'}</td>
-  <td><strong>KES ${Number(l.price_night||0).toLocaleString()}</strong></td>
-  <td><span class="badge ${l.status==='inactive'?'badge-grey':'badge-green'}">${l.status==='inactive'?'Inactive':'Active'}</span></td>
-  <td><div style="display:flex;gap:6px;">
-    <button class="btn btn-ghost btn-sm" onclick="toggleStatus('${l.id}','${l.status}')">${l.status==='inactive'?'Activate':'Pause'}</button>
-    <button class="btn btn-ghost btn-sm" style="color:var(--theme);" onclick="window.location.href='add-listing.html?edit=${l.id}&back=1'">Edit</button>
-  </div></td></tr>`).join('')+'</tbody></table></div>';
+function signOut(){
+  if(window.ApaSession)ApaSession.signOut();
+  else if(sb)sb.auth.signOut().then(()=>location.href='index.html');
 }
-async function toggleStatus(id,cur){
-  if(!sb)return;
-  await sb.from('listings').update({status:cur==='inactive'?'active':'inactive'}).eq('id',id);
-  showToast(cur==='inactive'?'✅ Activated':'Listing paused');loadListings();
-}
-loadListings();
-</script><script src="/pwa.js" defer></script>
+function fmt(n){return Number(n||0).toLocaleString();}
+function fmtKes(n){return 'KES '+fmt(n);}
 
-<!-- Service Picker Modal -->
-<div id="svc-picker-overlay" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(10,10,20,.5);backdrop-filter:blur(4px);align-items:flex-end;justify-content:center;" onclick="if(event.target===this)closePicker()">
-  <div style="background:var(--glass);border-radius:24px 24px 0 0;padding:28px 24px 40px;width:100%;max-width:540px;box-shadow:0 -12px 48px rgba(0,0,0,.15);animation:slideUp .35s cubic-bezier(.22,1,.36,1);">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
-      <div style="font-family:var(--font-display);font-weight:500;font-size:20px;">What are you listing?</div>
-      <button onclick="closePicker()" style="width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--glass-2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--ink-soft);">×</button>
-    </div>
-    <p style="font-size:14px;color:var(--ink-soft);margin-bottom:20px;">Choose your service type to get started.</p>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-      <button onclick="goList('stays')" style="padding:16px;border-radius:16px;border:1.5px solid var(--line);background:rgba(255,255,255,.7);cursor:pointer;text-align:left;transition:all .2s;">
-        <div style="font-size:22px;margin-bottom:8px;">🏠</div>
-        <div style="font-weight:600;font-size:14px;color:var(--ink);">Stays</div>
-        <div style="font-size:12px;color:var(--ink-faint);">Apartments, villas, houses</div>
-      </button>
-      <button onclick="goList('tours')" style="padding:16px;border-radius:16px;border:1.5px solid var(--line);background:rgba(255,255,255,.7);cursor:pointer;text-align:left;transition:all .2s;">
-        <div style="font-size:22px;margin-bottom:8px;">🗺️</div>
-        <div style="font-weight:600;font-size:14px;color:var(--ink);">Tours & Safaris</div>
-        <div style="font-size:12px;color:var(--ink-faint);">Guided experiences</div>
-      </button>
-      <button onclick="goList('events')" style="padding:16px;border-radius:16px;border:1.5px solid var(--line);background:rgba(255,255,255,.7);cursor:pointer;text-align:left;transition:all .2s;">
-        <div style="font-size:22px;margin-bottom:8px;">🎟️</div>
-        <div style="font-weight:600;font-size:14px;color:var(--ink);">Events</div>
-        <div style="font-size:12px;color:var(--ink-faint);">Concerts, festivals, sports</div>
-      </button>
-      <button onclick="goList('food')" style="padding:16px;border-radius:16px;border:1.5px solid var(--line);background:rgba(255,255,255,.7);cursor:pointer;text-align:left;transition:all .2s;">
-        <div style="font-size:22px;margin-bottom:8px;">🍽️</div>
-        <div style="font-weight:600;font-size:14px;color:var(--ink);">Food & Dining</div>
-        <div style="font-size:12px;color:var(--ink-faint);">Restaurants, catering</div>
-      </button>
-      <button onclick="goList('carhire')" style="padding:16px;border-radius:16px;border:1.5px solid var(--line);background:rgba(255,255,255,.7);cursor:pointer;text-align:left;transition:all .2s;">
-        <div style="font-size:22px;margin-bottom:8px;">🚗</div>
-        <div style="font-weight:600;font-size:14px;color:var(--ink);">Car Hire</div>
-        <div style="font-size:12px;color:var(--ink-faint);">Self-drive & chauffeur</div>
-      </button>
-      <div style="padding:16px;border-radius:16px;border:1.5px dashed var(--line);background:var(--glass-2);display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;">
-        <div style="font-size:12px;color:var(--ink-faint);line-height:1.5;">✈️ Flights · 🛍️ Shopping · 🚖 Rides<br/><span style="font-size:11px;">Managed by Apatmento</span></div>
+let allListings = [];
+
+async function loadListings() {
+  if(!sb) return;
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if(!session) return;
+    const uid = session.user.id;
+    document.getElementById('tb-avatar').textContent = (session.user.user_metadata?.first_name||'P')[0].toUpperCase();
+
+    const { data, error } = await sb.from('listings')
+      .select('id,title,type,property_type,location,city,price_night,beds,status,avg_rating,review_count,booking_count,photos')
+      .eq('partner_id', uid)
+      .order('created_at', { ascending: false });
+
+    allListings = data || [];
+    renderListings(allListings);
+  } catch(e) { console.warn('Listings error', e); }
+}
+
+function renderListings(list) {
+  const el = document.getElementById('listings-list');
+  if(!list.length) {
+    el.innerHTML = `<div class="empty">
+      <div class="empty-icon">🏠</div>
+      <div class="empty-title">No listings yet</div>
+      <div class="empty-sub">Add your first listing and start receiving bookings today — at zero commission.</div>
+      <a href="add-listing.html" class="btn btn-primary" style="margin-top:16px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add first listing
+      </a>
+    </div>`;
+    return;
+  }
+
+  const typeEmoji = { stay:'🏠', tour:'🦁', ride:'🚗', food:'🍽️', event:'🎟️', carhire:'🔑', roommate:'🤝', flight:'✈️' };
+  el.innerHTML = list.map(l => {
+    const photo = l.photos?.[0];
+    const thumb = photo
+      ? `<img class="listing-thumb" src="${photo}" alt="${l.title}" onerror="this.style.background='var(--theme-grad)';this.textContent='${typeEmoji[l.type]||'🏠'}';">`
+      : `<div class="listing-thumb">${typeEmoji[l.type]||'🏠'}</div>`;
+    const status = l.status==='active'
+      ? '<span class="badge badge-green">Active</span>'
+      : '<span class="badge badge-amber">Paused</span>';
+    return `<div class="listing-card">
+      ${thumb}
+      <div class="listing-info">
+        <div class="listing-name">${l.title||'Untitled listing'}</div>
+        <div class="listing-meta">${l.location||l.city||'Kenya'} · ${l.type||'Stay'} · ${l.booking_count||0} bookings · ⭐ ${l.avg_rating||'—'}</div>
+        <div class="listing-price">KES ${fmt(l.price_night)}/night</div>
       </div>
-    </div>
-  </div>
-</div>
-<style>
-@keyframes slideUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
-/* Mobile sidebar fix */
-@media(max-width:800px){
-  .layout{flex-direction:column;}
-  .sidebar{display:none;}
-  .topbar{padding:0 14px;}
-  .main{padding:16px 14px 90px;}
-  h2{font-size:20px;}
-  table{font-size:12px;}
-  th,td{padding:8px 6px;}
+      <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
+        ${status}
+        <div class="listing-actions">
+          <a href="add-listing.html?edit=${l.id}" class="btn btn-ghost btn-sm" title="Edit">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Edit
+          </a>
+          <button class="btn btn-danger btn-sm" onclick="toggleStatus('${l.id}','${l.status}')">
+            ${l.status==='active'?'Pause':'Activate'}
+          </button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
 }
-</style>
-<script>
-function showAddServicePicker(){
-  const el=document.getElementById('svc-picker-overlay');
-  el.style.display='flex';
+
+function filterListings() {
+  const f = document.getElementById('lst-filter').value;
+  const filtered = f === 'all' ? allListings : allListings.filter(l => l.type === f);
+  renderListings(filtered);
 }
-function closePicker(){
-  document.getElementById('svc-picker-overlay').style.display='none';
+
+async function toggleStatus(id, current) {
+  if(!sb) return;
+  const next = current === 'active' ? 'inactive' : 'active';
+  const { error } = await sb.from('listings').update({ status: next }).eq('id', id);
+  if(!error) { toast(next==='active'?'Listing activated':'Listing paused'); loadListings(); }
+  else toast('Failed to update status', false);
 }
-function goList(svc){
-  closePicker();
-  const routes={
-    stays:'add-listing.html?type=apartment&back=1',
-    tours:'add-listing.html?type=tour&back=1',
-    events:'add-listing.html?type=event&back=1',
-    food:'add-listing.html?type=food&back=1',
-    carhire:'add-listing.html?type=carhire&back=1',
-  };
-  window.location.href=routes[svc]||'add-listing.html?back=1';
-}
+
+document.addEventListener('DOMContentLoaded', loadListings);
 </script>
-
-<!-- ── SERVICE PICKER ── -->
-<div id="svc-picker" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(10,10,20,.5);backdrop-filter:blur(6px);align-items:flex-end;justify-content:center;" onclick="if(event.target===this)closeSvcPicker()">
-  <div style="background:#FCFCFD;border-radius:24px 24px 0 0;padding:24px 20px 48px;width:100%;max-width:520px;animation:slideUp .3s cubic-bezier(.22,1,.36,1);max-height:90vh;overflow-y:auto;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-      <div style="font-family:var(--font-display);font-weight:500;font-size:20px;">What are you listing?</div>
-      <button onclick="closeSvcPicker()" style="width:34px;height:34px;border-radius:50%;border:1px solid rgba(10,10,20,.08);background:#F4F5FB;cursor:pointer;font-size:20px;line-height:1;display:flex;align-items:center;justify-content:center;color:#4A4C66;">×</button>
-    </div>
-    <p style="font-size:13px;color:#8E90AD;margin-bottom:18px;">Flights, shopping &amp; rides are managed by Apatmento — not listed by partners.</p>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-      <button onclick="goListing('apartment')" style="padding:16px 12px;border-radius:16px;border:1.5px solid rgba(10,10,20,.07);background:rgba(255,255,255,.8);cursor:pointer;text-align:left;transition:border-color .2s;">
-        <div style="font-size:24px;margin-bottom:8px;">🏠</div>
-        <div style="font-weight:600;font-size:14px;color:#0A0A14;margin-bottom:2px;">Stays</div>
-        <div style="font-size:11px;color:#8E90AD;">Apartments · Villas · Houses</div>
-      </button>
-      <button onclick="goListing('tour')" style="padding:16px 12px;border-radius:16px;border:1.5px solid rgba(10,10,20,.07);background:rgba(255,255,255,.8);cursor:pointer;text-align:left;transition:border-color .2s;">
-        <div style="font-size:24px;margin-bottom:8px;">🗺️</div>
-        <div style="font-weight:600;font-size:14px;color:#0A0A14;margin-bottom:2px;">Tours &amp; Safaris</div>
-        <div style="font-size:11px;color:#8E90AD;">Guided experiences</div>
-      </button>
-      <button onclick="goListing('event')" style="padding:16px 12px;border-radius:16px;border:1.5px solid rgba(10,10,20,.07);background:rgba(255,255,255,.8);cursor:pointer;text-align:left;transition:border-color .2s;">
-        <div style="font-size:24px;margin-bottom:8px;">🎟️</div>
-        <div style="font-weight:600;font-size:14px;color:#0A0A14;margin-bottom:2px;">Events</div>
-        <div style="font-size:11px;color:#8E90AD;">Concerts · Festivals · Sports</div>
-      </button>
-      <button onclick="goListing('food')" style="padding:16px 12px;border-radius:16px;border:1.5px solid rgba(10,10,20,.07);background:rgba(255,255,255,.8);cursor:pointer;text-align:left;transition:border-color .2s;">
-        <div style="font-size:24px;margin-bottom:8px;">🍽️</div>
-        <div style="font-weight:600;font-size:14px;color:#0A0A14;margin-bottom:2px;">Food &amp; Dining</div>
-        <div style="font-size:11px;color:#8E90AD;">Restaurants · Catering</div>
-      </button>
-      <button onclick="goListing('carhire')" style="padding:16px 12px;border-radius:16px;border:1.5px solid rgba(10,10,20,.07);background:rgba(255,255,255,.8);cursor:pointer;text-align:left;transition:border-color .2s;">
-        <div style="font-size:24px;margin-bottom:8px;">🚗</div>
-        <div style="font-weight:600;font-size:14px;color:#0A0A14;margin-bottom:2px;">Car Hire</div>
-        <div style="font-size:11px;color:#8E90AD;">Self-drive · Chauffeur</div>
-      </button>
-      <button onclick="goListing('roommate')" style="padding:16px 12px;border-radius:16px;border:1.5px solid rgba(10,10,20,.07);background:rgba(255,255,255,.8);cursor:pointer;text-align:left;transition:border-color .2s;">
-        <div style="font-size:24px;margin-bottom:8px;">🤝</div>
-        <div style="font-weight:600;font-size:14px;color:#0A0A14;margin-bottom:2px;">Roommates</div>
-        <div style="font-size:11px;color:#8E90AD;">Private room · Studio · Shared</div>
-      </button>
-    </div>
-  </div>
-</div>
-<style>@keyframes slideUp{from{transform:translateY(100%);}to{transform:none;}}</style>
-<script>
-function showSvcPicker(){document.getElementById('svc-picker').style.display='flex';}
-function closeSvcPicker(){document.getElementById('svc-picker').style.display='none';}
-function goListing(type){
-  closeSvcPicker();
-  window.location.href='add-listing.html?type='+type+'&back=1';
-}
-</script>
-<script src="/brand.js" defer></script>
-  <script src="/apa-signal.js" defer></script>
-</body></html>
-
-
+</body>
+</html>
