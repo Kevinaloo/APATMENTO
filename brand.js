@@ -132,9 +132,25 @@ var LEGACY = {
 };
 
 function injectIcons(){
+  /* Category PNG icon mapping */
+  var ICON_IMGS = {
+    stays: 'icon-stays.png',
+    flights: 'icon-flights.png',
+    tours: 'icon-tours.png',
+    events: 'icon-events.png',
+    rides: 'icon-rides.png',
+    food: 'icon-food.png',
+    shopping: 'icon-shopping.png',
+    carhire: 'icon-carhire.png',
+    roommates: 'icon-roommates.png'
+  };
   /* Service tiles + intro parade + hero cards */
   qsa('[data-svc]').forEach(function(el){
     var key = el.getAttribute('data-svc');
+    if (ICON_IMGS && ICON_IMGS[key]) {
+      var ico = el.querySelector('.svc-tile-ico,.svc-fly-ico');
+      if (ico) safe(function(){ ico.innerHTML = '<img src="' + ICON_IMGS[key] + '" alt="' + key + '" style="width:100%;height:100%;object-fit:contain;padding:6px;display:block;">'; return; });
+    }
     var svg = el.querySelector('svg');
     if (svg) safe(function(){ glyphInto(svg, key); });
   });
@@ -146,12 +162,28 @@ function injectIcons(){
     var svg = qs(p[0]);
     if (svg) safe(function(){ glyphInto(svg, p[1]); });
   });
+  /* Icon image mapping */
+  var ICON_IMGS = {
+    stays: 'icon-stays.png',
+    flights: 'icon-flights.png',
+    tours: 'icon-tours.png',
+    events: 'icon-events.png',
+    rides: 'icon-rides.png',
+    food: 'icon-food.png',
+    shopping: 'icon-shopping.png',
+    carhire: 'icon-carhire.png',
+    roommates: 'icon-roommates.png'
+  };
   qsa('.svc-fly').forEach(function(fly){
     var nameEl = fly.querySelector('.svc-fly-name');
     var box = fly.querySelector('.svc-fly-ico');
     if (!nameEl || !box) return;
     var key = (nameEl.textContent||'').toLowerCase().replace(/[^a-z]/g,'');
-    if (I[key]) safe(function(){ box.innerHTML = glyphSvg(key,'padding:22%'); });
+    if (ICON_IMGS[key]) {
+      safe(function(){ box.innerHTML = '<img src="' + ICON_IMGS[key] + '" alt="' + (nameEl.textContent||'') + '" style="width:100%;height:100%;object-fit:contain;padding:10px;display:block;">'; });
+    } else if (I[key]) {
+      safe(function(){ box.innerHTML = glyphSvg(key,'padding:22%'); });
+    }
   });
   /* Explicit hooks anywhere */
   qsa('[data-apa-icon]').forEach(function(el){
