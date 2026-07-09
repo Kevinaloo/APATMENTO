@@ -55,6 +55,7 @@
 <!-- Session core: the single source of truth for auth. Must load
      immediately after the Supabase lib and before any consumer. -->
 <script src="/apa-session.js"></script>
+<script src="/apa-admin-guard.js"></script>
 <script>
 /* ── Guaranteed loader failsafe — runs before anything else ── */
 window.addEventListener('load', function() {
@@ -1479,22 +1480,8 @@ function hideAddSheet(){ document.getElementById('add-scrim').classList.remove('
 
 </script>
 
-<!-- Admin detection: simple, in-HTML link revealed by email check -->
-<script>
-function checkAdminAccess(){
-  const ADMINS = ['apatmento@gmail.com','worlddossy@gmail.com'];
-  const email  = CURRENT_USER?.email?.toLowerCase().trim();
-  if(!email || !ADMINS.includes(email)) return;
-  // Just show the already-rendered link — no DOM injection, no race condition
-  const link = document.getElementById('admin-link');
-  if(link){ link.style.display = 'flex'; console.log('[Admin] link shown for', email); }
-}
-
-/* Global search removed. The trigger, the "/" shortcut and ~150 lines of
-   never present in the markup — every call threw on null.classList. It
-   occupied the widest slot in the toolbar and did nothing. */
-
-</script>
+<!-- Admin surface removed: apa-admin-guard.js redirects operators to the console. -->
 <script src="/brand.js" defer></script>
+  <script src="/apa-signal.js" defer></script>
 </body>
 </html>
