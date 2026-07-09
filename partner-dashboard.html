@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<meta name="robots" content="noindex, nofollow"/>
+<title>Partner Portal · Apatmento</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/apa-session.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300..900&display=swap" rel="stylesheet"/>
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --glass:#FCFCFD;--glass-2:#F4F5FB;--ink:#0A0A14;--ink-soft:#4A4C66;--ink-faint:#8E90AD;
+  --lilac:#B8A4F4;--violet:#7B2FF7;--electric:#4361FF;--mint:#5EEAD4;--mint-deep:#2DD4BF;--ember:#FF6B2C;
+  --line:rgba(10,10,20,0.08);--line-2:rgba(10,10,20,0.14);
+  --font-display:'Fraunces',serif;--font-body:'General Sans',system-ui,sans-serif;
+  --ok:#2DD4BF;--err:#FF4D6D;
+}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important;}}
+body{font-family:var(--font-body);background:#F7F8FC;color:var(--ink);-webkit-font-smoothing:antialiased;min-height:100vh;}
+
+/* ── loading / gate ── */
+#gate{position:fixed;inset:0;background:#F7F8FC;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:18px;z-index:99;}
+.spin{width:34px;height:34px;border:3px solid var(--line-2);border-top-color:var(--violet);border-radius:50%;animation:sp .8s linear infinite;}
+@keyframes sp{to{transform:rotate(360deg);}}
+#gate p{font-size:13px;color:var(--ink-faint);}
+
+.wrap{max-width:1080px;margin:0 auto;padding:26px 20px 60px;}
+
+/* ── header ── */
+.hd{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:26px;flex-wrap:wrap;}
+.hd-l{display:flex;align-items:center;gap:14px;}
+.avatar{width:50px;height:50px;border-radius:15px;background:linear-gradient(135deg,var(--violet),var(--electric));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:19px;flex:none;}
+.hd h1{font-family:var(--font-display);font-size:23px;font-weight:600;letter-spacing:-.4px;line-height:1.2;}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:10.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;margin-top:5px;}
+.badge.agent{background:rgba(67,97,255,.1);color:var(--electric);}
+.badge.influencer{background:rgba(255,107,44,.1);color:var(--ember);}
+.signout{padding:9px 16px;border:1.5px solid var(--line-2);border-radius:11px;background:var(--glass);font-family:var(--font-body);font-weight:600;font-size:13px;color:var(--ink-soft);cursor:pointer;transition:all .25s;}
+.signout:hover{border-color:var(--err);color:var(--err);}
+
+/* ── private banner ── */
+.priv{display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,rgba(123,47,247,.05),rgba(67,97,255,.04));border:1px solid rgba(123,47,247,.15);border-radius:13px;padding:12px 16px;margin-bottom:22px;font-size:12.5px;color:var(--ink-soft);line-height:1.5;}
+.priv svg{flex:none;color:var(--violet);}
+
+/* ── earnings hero ── */
+.hero{background:linear-gradient(135deg,#0A0A14,#1A1B2E);border-radius:22px;padding:32px;color:#fff;margin-bottom:20px;position:relative;overflow:hidden;}
+.hero::after{content:'';position:absolute;width:340px;height:340px;border-radius:50%;background:radial-gradient(circle,rgba(123,47,247,.4),transparent 66%);top:-140px;right:-90px;filter:blur(46px);}
+.hero-in{position:relative;z-index:1;display:grid;grid-template-columns:1.4fr 1fr;gap:26px;align-items:center;}
+.h-lab{font-size:11px;text-transform:uppercase;letter-spacing:1.4px;color:rgba(255,255,255,.55);font-weight:600;}
+.h-amt{font-family:var(--font-display);font-size:46px;font-weight:600;letter-spacing:-1.6px;margin:6px 0 4px;line-height:1;}
+.h-sub{font-size:13px;color:rgba(255,255,255,.62);}
+.rate-box{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.13);border-radius:16px;padding:20px;text-align:center;}
+.rate-pct{font-family:var(--font-display);font-size:38px;font-weight:600;color:var(--mint);letter-spacing:-1px;line-height:1;}
+.rate-lab{font-size:11px;color:rgba(255,255,255,.55);margin-top:6px;line-height:1.5;}
+
+/* ── stats ── */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-bottom:20px;}
+.stat{background:var(--glass);border:1px solid var(--line);border-radius:16px;padding:18px;transition:transform .25s,box-shadow .25s;}
+.stat:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(10,10,20,.05);}
+.s-ico{font-size:19px;margin-bottom:9px;}
+.s-val{font-family:var(--font-display);font-size:26px;font-weight:600;letter-spacing:-.7px;line-height:1;}
+.s-lab{font-size:11.5px;color:var(--ink-faint);margin-top:5px;}
+.s-foot{font-size:10.5px;color:var(--ink-faint);margin-top:8px;padding-top:8px;border-top:1px solid var(--line);}
+
+/* ── payout split ── */
+.pay{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-bottom:20px;}
+.pay-c{background:var(--glass);border:1px solid var(--line);border-radius:16px;padding:20px;}
+.pay-c.pending{border-color:rgba(45,212,191,.3);background:linear-gradient(135deg,rgba(45,212,191,.05),var(--glass));}
+.p-lab{font-size:11px;text-transform:uppercase;letter-spacing:1.1px;color:var(--ink-faint);font-weight:600;}
+.p-val{font-family:var(--font-display);font-size:29px;font-weight:600;letter-spacing:-.9px;margin-top:7px;line-height:1;}
+.pay-c.pending .p-val{color:#0E9384;}
+
+/* ── referral ── */
+.ref{background:var(--glass);border:1px solid var(--line);border-radius:18px;padding:24px;margin-bottom:20px;}
+.card-h{font-family:var(--font-display);font-size:17px;font-weight:600;margin-bottom:5px;}
+.card-s{font-size:12.5px;color:var(--ink-faint);margin-bottom:18px;line-height:1.55;}
+.ref-code{display:flex;align-items:center;gap:11px;background:var(--glass-2);border-radius:13px;padding:14px 16px;margin-bottom:11px;}
+.rc-val{flex:1;font-family:ui-monospace,SFMono-Regular,monospace;font-size:19px;font-weight:700;color:var(--violet);letter-spacing:2px;overflow:hidden;text-overflow:ellipsis;}
+.copy{padding:9px 15px;border:none;border-radius:10px;background:linear-gradient(135deg,var(--violet),var(--electric));color:#fff;font-family:var(--font-body);font-weight:600;font-size:12.5px;cursor:pointer;flex:none;transition:transform .2s;}
+.copy:hover{transform:translateY(-1px);}
+.copy.done{background:var(--mint-deep);}
+.ref-link{display:flex;align-items:center;gap:11px;background:var(--glass-2);border-radius:13px;padding:14px 16px;}
+.rl-val{flex:1;font-size:12.5px;color:var(--ink-soft);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+/* ── activity ── */
+.act{background:var(--glass);border:1px solid var(--line);border-radius:18px;padding:24px;}
+.row{display:flex;align-items:center;gap:13px;padding:13px 0;border-bottom:1px solid var(--line);}
+.row:last-child{border-bottom:none;}
+.r-ico{width:37px;height:37px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:15px;flex:none;background:var(--glass-2);}
+.r-mid{flex:1;min-width:0;}
+.r-t{font-size:13.5px;font-weight:600;}
+.r-d{font-size:11.5px;color:var(--ink-faint);margin-top:2px;}
+.r-amt{font-weight:700;font-size:14px;color:#0E9384;flex:none;}
+.empty{text-align:center;padding:36px 16px;color:var(--ink-faint);}
+.empty-e{font-size:34px;margin-bottom:12px;}
+.empty p{font-size:13px;line-height:1.65;max-width:330px;margin:0 auto;}
+
+@media(max-width:820px){
+  .stats{grid-template-columns:repeat(2,1fr);}
+  .hero-in{grid-template-columns:1fr;gap:20px;}
+  .h-amt{font-size:38px;}
+}
+@media(max-width:520px){
+  .pay{grid-template-columns:1fr;}
+  .wrap{padding:18px 14px 46px;}
+  .hero{padding:24px;}
+}
+</style>
+</head>
+<body>
+
+<div id="gate"><div class="spin"></div><p>Checking your credentials…</p></div>
+
+<div class="wrap" id="app" style="display:none;">
+
+  <div class="hd">
+    <div class="hd-l">
+      <div class="avatar" id="avatar">?</div>
+      <div>
+        <h1 id="greet">—</h1>
+        <span class="badge" id="role-badge">—</span>
+      </div>
+    </div>
+    <button class="signout" onclick="bye()">Sign out</button>
+  </div>
+
+  <div class="priv">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    <span>These numbers are yours alone. Commission rates and earnings are never shown publicly or to other partners.</span>
+  </div>
+
+  <!-- EARNINGS -->
+  <div class="hero">
+    <div class="hero-in">
+      <div>
+        <div class="h-lab">Total earned</div>
+        <div class="h-amt" id="earned">KSh 0</div>
+        <div class="h-sub" id="since">—</div>
+      </div>
+      <div class="rate-box">
+        <div class="rate-pct" id="rate">—</div>
+        <div class="rate-lab">your commission<br>on every booking</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAYOUTS -->
+  <div class="pay">
+    <div class="pay-c pending">
+      <div class="p-lab">Awaiting payout</div>
+      <div class="p-val" id="pending">KSh 0</div>
+    </div>
+    <div class="pay-c">
+      <div class="p-lab">Paid out to date</div>
+      <div class="p-val" id="paid">KSh 0</div>
+    </div>
+  </div>
+
+  <!-- PERFORMANCE -->
+  <div class="stats">
+    <div class="stat">
+      <div class="s-ico">👁</div>
+      <div class="s-val" id="clicks">0</div>
+      <div class="s-lab">Link clicks</div>
+      <div class="s-foot">People who tapped your link</div>
+    </div>
+    <div class="stat">
+      <div class="s-ico">✍️</div>
+      <div class="s-val" id="signups">0</div>
+      <div class="s-lab">Signups</div>
+      <div class="s-foot" id="cvr-signup">—</div>
+    </div>
+    <div class="stat">
+      <div class="s-ico">🎯</div>
+      <div class="s-val" id="conv">0</div>
+      <div class="s-lab">Bookings</div>
+      <div class="s-foot" id="cvr-book">—</div>
+    </div>
+    <div class="stat">
+      <div class="s-ico">💰</div>
+      <div class="s-val" id="gmv">KSh 0</div>
+      <div class="s-lab">Value driven</div>
+      <div class="s-foot">Gross bookings via you</div>
+    </div>
+  </div>
+
+  <!-- REFERRAL -->
+  <div class="ref">
+    <div class="card-h">Your referral code</div>
+    <div class="card-s">Anyone who arrives through this link is tracked to you — for good. Share it anywhere.</div>
+    <div class="ref-code">
+      <div class="rc-val" id="code">—</div>
+      <button class="copy" id="cp-code" onclick="cp('code','cp-code')">Copy</button>
+    </div>
+    <div class="ref-link">
+      <div class="rl-val" id="link">—</div>
+      <button class="copy" id="cp-link" onclick="cp('link','cp-link')">Copy link</button>
+    </div>
+  </div>
+
+  <!-- ACTIVITY -->
+  <div class="act">
+    <div class="card-h">Recent activity</div>
+    <div class="card-s">Your last 20 tracked events.</div>
+    <div id="feed"></div>
+  </div>
+
+</div>
+
+<script>
+const SUPABASE_URL  = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+const ksh = (n) => 'KSh ' + Number(n || 0).toLocaleString('en-KE', { maximumFractionDigits: 0 });
+const $   = (id) => document.getElementById(id);
+const pct = (a, b) => (!b ? '—' : ((a / b) * 100).toFixed(1) + '% of clicks');
+
+/* ── gate: signed in AND an active partner, or you don't get in ── */
+(async function boot() {
+  const { data: { session } } = await sb.auth.getSession().catch(() => ({ data: { session: null } }));
+  if (!session) return location.replace('auth.html?panel=partner');
+
+  /* RLS returns exactly one row — theirs. A traveller gets null. */
+  const { data: p, error } = await sb
+    .from('partners').select('*').eq('id', session.user.id).maybeSingle();
+
+  if (error || !p || !p.is_active) {
+    await sb.auth.signOut();
+    return location.replace('auth.html?panel=partner');
+  }
+
+  paint(p);
+  feed(p.id);
+
+  $('gate').style.display = 'none';
+  $('app').style.display  = 'block';
+})();
+
+function paint(p) {
+  const name  = p.nickname || p.full_name;
+  const first = (p.full_name || '').split(' ')[0] || 'there';
+
+  $('avatar').textContent = (name[0] || '?').toUpperCase();
+  $('greet').textContent  = `Karibu, ${first}`;
+
+  const b = $('role-badge');
+  b.textContent = p.role;
+  b.classList.add(p.role);
+
+  $('earned').textContent  = ksh(p.total_earned);
+  $('rate').textContent    = Number(p.commission_pct).toFixed(Number(p.commission_pct) % 1 ? 1 : 0) + '%';
+  $('pending').textContent = ksh(p.pending_payout);
+  $('paid').textContent    = ksh(p.total_paid_out);
+
+  $('since').textContent = 'Partner since ' + new Date(p.approved_at)
+    .toLocaleDateString('en-KE', { month: 'long', year: 'numeric' });
+
+  $('clicks').textContent  = (p.clicks || 0).toLocaleString();
+  $('signups').textContent = (p.signups || 0).toLocaleString();
+  $('conv').textContent    = (p.conversions || 0).toLocaleString();
+  $('gmv').textContent     = ksh(p.gmv);
+
+  $('cvr-signup').textContent = pct(p.signups, p.clicks);
+  $('cvr-book').textContent   = pct(p.conversions, p.clicks);
+
+  $('code').textContent = p.referral_code;
+  $('link').textContent = `${location.origin}/?ref=${p.referral_code}`;
+}
+
+async function feed(pid) {
+  const { data: ev } = await sb
+    .from('partner_events')
+    .select('event_type, reference, gross_amount, commission, created_at')
+    .eq('partner_id', pid)
+    .order('created_at', { ascending: false })
+    .limit(20);
+
+  const box = $('feed');
+
+  if (!ev || !ev.length) {
+    box.innerHTML = `<div class="empty">
+      <div class="empty-e">🌱</div>
+      <p>Nothing yet. Share your referral link and your first clicks will land here — usually within hours.</p>
+    </div>`;
+    return;
+  }
+
+  const META = {
+    click:   ['👁',  'Someone tapped your link'],
+    signup:  ['✍️', 'New signup through you'],
+    booking: ['🎯',  'Booking confirmed'],
+    payout:  ['🏦',  'Payout sent'],
+  };
+
+  box.innerHTML = ev.map((e) => {
+    const [ico, label] = META[e.event_type] || ['•', e.event_type];
+    const when = new Date(e.created_at).toLocaleDateString('en-KE',
+      { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+
+    let amt = '';
+    if (e.event_type === 'booking' && e.commission > 0) amt = `+${ksh(e.commission)}`;
+    if (e.event_type === 'payout') amt = `−${ksh(e.gross_amount)}`;
+
+    return `<div class="row">
+      <div class="r-ico">${ico}</div>
+      <div class="r-mid">
+        <div class="r-t">${label}</div>
+        <div class="r-d">${when}${e.reference ? ' · ' + esc(e.reference) : ''}</div>
+      </div>
+      ${amt ? `<div class="r-amt">${amt}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, (c) =>
+    ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
+function cp(srcId, btnId) {
+  const btn = $(btnId);
+  navigator.clipboard.writeText($(srcId).textContent).then(() => {
+    const was = btn.textContent;
+    btn.textContent = 'Copied ✓'; btn.classList.add('done');
+    setTimeout(() => { btn.textContent = was; btn.classList.remove('done'); }, 1800);
+  });
+}
+
+async function bye() {
+  await sb.auth.signOut();
+  location.href = 'auth.html';
+}
+</script>
+</body>
+</html>

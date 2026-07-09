@@ -38,7 +38,7 @@
         },
         {
           "key": "Access-Control-Allow-Headers",
-          "value": "Content-Type"
+          "value": "Content-Type, Authorization"
         }
       ]
     }
@@ -82,6 +82,9 @@
     },
     "api/utilities.js": {
       "maxDuration": 15
+    },
+    "api/partners.js": {
+      "maxDuration": 30
     }
   },
   "env": {

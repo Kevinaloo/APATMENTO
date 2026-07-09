@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="robots" content="noindex, nofollow"/>
+<title>Partners · Apatmento Console</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/apa-session.js"></script>
+<script src="/apa-admin-guard.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#070710; --bg-2:#0C0C18; --panel:#101020; --panel-2:#15152A;
+  --line:rgba(255,255,255,.07); --line-2:rgba(255,255,255,.13);
+  --ink:#F2F3FA; --ink-2:#B9BCD4; --ink-3:#7A7E9C; --ink-4:#4C5070;
+  --violet:#7C3AFF; --iris:#9B6BFF; --electric:#4F6DFF;
+  --mint:#2DE0C0; --gold:#F5B12E; --ember:#FF5E3A; --rose:#FF4D6D;
+  --ok:#2DE0C0; --warn:#F5B12E; --bad:#FF4D6D;
+  --f-d:'Fraunces',Georgia,serif; --f-b:system-ui,-apple-system,sans-serif;
+  --r:14px; --r-lg:20px; --ease:cubic-bezier(.22,1,.36,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-b);font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased;min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(900px 600px at 12% -8%,rgba(124,58,255,.13),transparent 62%),
+             radial-gradient(800px 500px at 92% 4%,rgba(45,224,192,.07),transparent 60%);}
+h1,h2,h3{font-family:var(--f-d);letter-spacing:-.02em;font-weight:600}
+h1 em{font-style:italic;background:linear-gradient(100deg,var(--iris),var(--mint));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.mono{font-variant-numeric:tabular-nums}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:99px}
+
+.wrap{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:26px 20px 70px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:8px;flex-wrap:wrap}
+.back{display:inline-flex;align-items:center;gap:7px;color:var(--ink-3);text-decoration:none;font-size:13px;transition:color .16s}
+.back:hover{color:var(--ink)}
+h1{font-size:27px;margin:14px 0 5px}
+.lede{color:var(--ink-3);font-size:13.5px;margin-bottom:26px;max-width:600px;line-height:1.65}
+
+/* defaults strip */
+.defaults{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-bottom:26px}
+.dcard{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:18px}
+.dc-h{display:flex;align-items:center;gap:9px;margin-bottom:13px}
+.dc-e{font-size:17px}
+.dc-t{font-size:12px;text-transform:uppercase;letter-spacing:.11em;color:var(--ink-3);font-weight:700}
+.dc-row{display:flex;align-items:center;gap:9px}
+.dc-in{flex:1;background:var(--bg-2);border:1px solid var(--line-2);border-radius:10px;padding:11px 13px;color:var(--ink);font-family:var(--f-b);font-size:16px;font-weight:700;font-variant-numeric:tabular-nums}
+.dc-in:focus{outline:none;border-color:var(--violet)}
+.dc-pct{color:var(--ink-3);font-size:16px;font-weight:700}
+.btn{padding:10px 15px;border:1px solid var(--line-2);border-radius:10px;background:var(--panel-2);color:var(--ink-2);font-family:var(--f-b);font-size:12.5px;font-weight:600;cursor:pointer;transition:all .16s;white-space:nowrap}
+.btn:hover{border-color:var(--violet);color:var(--ink)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.ok{background:linear-gradient(135deg,var(--mint),#1FB89C);color:#04120E;border:none}
+.btn.bad{background:transparent;border-color:rgba(255,77,109,.4);color:var(--rose)}
+.btn.bad:hover{background:rgba(255,77,109,.1);border-color:var(--rose)}
+.btn.pri{background:linear-gradient(135deg,var(--violet),var(--electric));color:#fff;border:none}
+
+/* filter tabs */
+.tabs{display:flex;gap:3px;border-bottom:1px solid var(--line);margin-bottom:20px;overflow-x:auto}
+.tab{padding:11px 17px;border:none;background:transparent;color:var(--ink-3);font-family:var(--f-b);font-size:13.5px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;transition:all .16s;white-space:nowrap}
+.tab:hover{color:var(--ink-2)}
+.tab.on{color:var(--ink);border-bottom-color:var(--violet)}
+.tab .n{margin-left:6px;background:rgba(255,255,255,.09);color:var(--ink-3);font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:99px}
+.tab.on .n{background:var(--violet);color:#fff}
+
+/* application card */
+.app{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);padding:20px;margin-bottom:13px;transition:border-color .18s}
+.app:hover{border-color:var(--line-2)}
+.app.pending{border-left:3px solid var(--gold)}
+.app.approved{border-left:3px solid var(--mint);opacity:.75}
+.app.declined{border-left:3px solid var(--ink-4);opacity:.6}
+
+.a-top{display:flex;align-items:flex-start;gap:14px;margin-bottom:16px}
+.a-av{width:44px;height:44px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:19px;flex:none}
+.a-av.agent{background:rgba(79,109,255,.16)}
+.a-av.influencer{background:rgba(255,94,58,.16)}
+.a-id{flex:1;min-width:0}
+.a-nm{font-size:16px;font-weight:700;letter-spacing:-.2px}
+.a-em{font-size:12.5px;color:var(--ink-3);margin-top:2px;word-break:break-all}
+.pill{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:99px;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;flex:none}
+.pill.pending{background:rgba(245,177,46,.14);color:var(--gold)}
+.pill.approved{background:rgba(45,224,192,.14);color:var(--mint)}
+.pill.declined{background:rgba(255,255,255,.07);color:var(--ink-3)}
+
+.a-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:11px;margin-bottom:16px}
+.f{background:var(--bg-2);border-radius:10px;padding:11px 13px}
+.f-k{font-size:9.5px;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-4);font-weight:700}
+.f-v{font-size:13px;color:var(--ink-2);margin-top:4px;word-break:break-word}
+
+.a-act{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding-top:15px;border-top:1px solid var(--line)}
+.rate-in{width:78px;background:var(--bg-2);border:1px solid var(--line-2);border-radius:9px;padding:9px 11px;color:var(--ink);font-family:var(--f-b);font-size:13.5px;font-weight:700;font-variant-numeric:tabular-nums}
+.rate-in:focus{outline:none;border-color:var(--violet)}
+.rate-lab{font-size:11.5px;color:var(--ink-3)}
+.spacer{flex:1}
+.a-meta{font-size:11.5px;color:var(--ink-4);padding-top:14px;border-top:1px solid var(--line);margin-top:3px}
+.a-meta b{color:var(--ink-3);font-weight:600}
+
+.empty{text-align:center;padding:64px 20px;color:var(--ink-4)}
+.empty-e{font-size:38px;margin-bottom:14px;opacity:.6}
+.empty p{font-size:13.5px;max-width:340px;margin:0 auto;line-height:1.7}
+
+.toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(90px);background:var(--panel-2);border:1px solid var(--line-2);border-radius:12px;padding:13px 20px;font-size:13.5px;font-weight:600;z-index:60;transition:transform .38s var(--ease);box-shadow:0 16px 44px rgba(0,0,0,.5)}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast.ok{border-color:rgba(45,224,192,.4);color:var(--mint)}
+.toast.bad{border-color:rgba(255,77,109,.4);color:var(--rose)}
+
+#load{text-align:center;padding:70px;color:var(--ink-4)}
+.spin{width:30px;height:30px;border:3px solid var(--line-2);border-top-color:var(--violet);border-radius:50%;animation:sp .8s linear infinite;margin:0 auto 14px}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+@media(max-width:640px){
+  .defaults{grid-template-columns:1fr}
+  .a-act{flex-direction:column;align-items:stretch}
+  .spacer{display:none}
+  .btn{width:100%}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <a class="back" href="admin.html">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m15 18-6-6 6-6"/></svg>
+      Console
+    </a>
+    <button class="btn" onclick="load()">Refresh</button>
+  </div>
+
+  <h1>Partner <em>programme</em></h1>
+  <p class="lede">Agents and influencers who want to grow Apatmento. Approving creates their account and emails them their commission rate. Declining sends a considered rejection — nobody is left wondering.</p>
+
+  <!-- commission defaults -->
+  <div class="defaults">
+    <div class="dcard">
+      <div class="dc-h"><span class="dc-e">🤝</span><span class="dc-t">Agent default rate</span></div>
+      <div class="dc-row">
+        <input class="dc-in mono" id="d-agent" type="number" min="0" max="100" step="0.5"/>
+        <span class="dc-pct">%</span>
+        <button class="btn" onclick="saveDefault('agent')">Save</button>
+      </div>
+    </div>
+    <div class="dcard">
+      <div class="dc-h"><span class="dc-e">🎬</span><span class="dc-t">Influencer default rate</span></div>
+      <div class="dc-row">
+        <input class="dc-in mono" id="d-influencer" type="number" min="0" max="100" step="0.5"/>
+        <span class="dc-pct">%</span>
+        <button class="btn" onclick="saveDefault('influencer')">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab on" data-f="pending"  onclick="filter('pending',this)">Pending <span class="n" id="n-pending">0</span></button>
+    <button class="tab"    data-f="approved" onclick="filter('approved',this)">Approved <span class="n" id="n-approved">0</span></button>
+    <button class="tab"    data-f="declined" onclick="filter('declined',this)">Declined <span class="n" id="n-declined">0</span></button>
+    <button class="tab"    data-f="all"      onclick="filter('all',this)">All</button>
+  </div>
+
+  <div id="load"><div class="spin"></div>Loading applications…</div>
+  <div id="list"></div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL  = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+let APPS = [];
+let VIEW = 'pending';
+const $ = (id) => document.getElementById(id);
+
+/* every admin call carries the caller's real access token — the API
+   verifies it against Supabase and checks the email against ADMINS. */
+async function token() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { location.replace('auth.html'); throw new Error('no session'); }
+  return session.access_token;
+}
+async function api(path, opts = {}) {
+  const r = await fetch(`/api/partners?${path}`, {
+    ...opts,
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${await token()}`, ...(opts.headers || {}) },
+  });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || 'Request failed');
+  return j;
+}
+
+function toast(msg, kind = 'ok') {
+  const t = $('toast');
+  t.textContent = msg;
+  t.className = `toast show ${kind}`;
+  setTimeout(() => t.classList.remove('show'), 3400);
+}
+
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) =>
+  ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+
+const when = (d) => new Date(d).toLocaleDateString('en-KE',
+  { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+
+const CM = { call:'📞 Call', sms:'✉️ SMS', whatsapp:'💬 WhatsApp', email:'📧 Email' };
+
+/* ── load ── */
+async function load() {
+  $('load').style.display = 'block';
+  $('list').innerHTML = '';
+  try {
+    const [{ applications }, { defaults }] = await Promise.all([
+      api('action=queue'),
+      api('action=defaults'),
+    ]);
+    APPS = applications || [];
+    (defaults || []).forEach((d) => { const el = $('d-' + d.role); if (el) el.value = d.rate_pct; });
+
+    ['pending','approved','declined'].forEach((s) =>
+      $('n-' + s).textContent = APPS.filter((a) => a.status === s).length);
+
+    render();
+  } catch (e) {
+    $('list').innerHTML = `<div class="empty"><div class="empty-e">⚠️</div><p>${esc(e.message)}</p></div>`;
+  }
+  $('load').style.display = 'none';
+}
+
+function filter(f, el) {
+  VIEW = f;
+  document.querySelectorAll('.tab').forEach((t) => t.classList.remove('on'));
+  el.classList.add('on');
+  render();
+}
+
+function render() {
+  const rows = VIEW === 'all' ? APPS : APPS.filter((a) => a.status === VIEW);
+
+  if (!rows.length) {
+    $('list').innerHTML = `<div class="empty">
+      <div class="empty-e">${VIEW === 'pending' ? '✨' : '📭'}</div>
+      <p>${VIEW === 'pending'
+        ? 'No applications waiting. The queue is clear.'
+        : 'Nothing here yet.'}</p></div>`;
+    return;
+  }
+
+  $('list').innerHTML = rows.map(card).join('');
+}
+
+function card(a) {
+  const inf = a.role === 'influencer';
+  const rate = a.granted_rate_pct ?? a.default_rate_pct ?? (inf ? 12 : 7);
+
+  const fields = [
+    ['Contact method', CM[a.contact_method] || a.contact_method],
+    ['Reach them at',  a.contact_value],
+  ];
+  if (inf) {
+    fields.unshift(['Nickname', a.nickname || '—']);
+    fields.push(['Social', `${a.social_handle || '—'}${a.social_platform ? ` · ${a.social_platform}` : ''}`]);
+    if (a.audience_size) fields.push(['Audience', Number(a.audience_size).toLocaleString()]);
+  }
+
+  const pending = a.status === 'pending';
+
+  return `<div class="app ${a.status}">
+    <div class="a-top">
+      <div class="a-av ${a.role}">${inf ? '🎬' : '🤝'}</div>
+      <div class="a-id">
+        <div class="a-nm">${esc(a.full_name)}</div>
+        <div class="a-em">${esc(a.email)}</div>
+      </div>
+      <span class="pill ${a.status}">${a.status}</span>
+    </div>
+
+    <div class="a-grid">
+      ${fields.map(([k, v]) => `<div class="f"><div class="f-k">${esc(k)}</div><div class="f-v">${esc(v)}</div></div>`).join('')}
+    </div>
+
+    ${pending ? `
+      <div class="a-act">
+        <input class="rate-in mono" id="r-${a.id}" type="number" min="0" max="100" step="0.5" value="${rate}"/>
+        <span class="rate-lab">% commission</span>
+        <div class="spacer"></div>
+        <button class="btn bad" onclick="decline('${a.id}','${esc(a.full_name)}')">Decline</button>
+        <button class="btn ok"  onclick="approve('${a.id}')">Approve &amp; notify</button>
+      </div>` : `
+      <div class="a-meta">
+        <b>${a.status === 'approved' ? 'Approved' : 'Declined'}</b> ${a.reviewed_at ? when(a.reviewed_at) : ''}
+        ${a.status === 'approved' && a.granted_rate_pct != null ? ` · granted <b>${a.granted_rate_pct}%</b>` : ''}
+        ${a.decline_reason ? `<br>Reason: ${esc(a.decline_reason)}` : ''}
+      </div>`}
+
+    <div class="a-meta">Applied ${when(a.created_at)}</div>
+  </div>`;
+}
+
+/* ── actions ── */
+async function approve(id) {
+  const rate = parseFloat($('r-' + id).value);
+  if (!(rate >= 0 && rate <= 100)) return toast('Rate must be between 0 and 100.', 'bad');
+  if (!confirm(`Approve at ${rate}% commission?\n\nThis creates their account and emails them their rate.`)) return;
+
+  try {
+    const j = await api('action=approve', { method:'POST', body: JSON.stringify({ application_id: id, rate_pct: rate }) });
+    toast(`Approved · code ${j.referral_code}`, 'ok');
+    load();
+  } catch (e) { toast(e.message, 'bad'); }
+}
+
+async function decline(id, name) {
+  const reason = prompt(`Decline ${name}?\n\nOptional reason — this is included, gently, in their email:`);
+  if (reason === null) return;
+
+  try {
+    await api('action=decline', { method:'POST', body: JSON.stringify({ application_id: id, reason: reason.trim() || null }) });
+    toast('Declined — they have been emailed.', 'ok');
+    load();
+  } catch (e) { toast(e.message, 'bad'); }
+}
+
+async function saveDefault(role) {
+  const rate = parseFloat($('d-' + role).value);
+  if (!(rate >= 0 && rate <= 100)) return toast('Rate must be between 0 and 100.', 'bad');
+  try {
+    await api('action=defaults', { method:'POST', body: JSON.stringify({ role, rate_pct: rate }) });
+    toast(`${role} default set to ${rate}%`, 'ok');
+  } catch (e) { toast(e.message, 'bad'); }
+}
+
+load();
+</script>
+</body>
+</html>

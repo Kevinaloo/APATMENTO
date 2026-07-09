@@ -138,6 +138,63 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
 .submit-btn.loading::after{opacity:1;}
 @keyframes spin{to{transform:rotate(360deg);}}
 
+/* ══════════ PARTNER PROGRAMME ══════════
+   Visually quarantined from traveller auth. A traveller reads the
+   divider, understands it isn't for them, and scrolls on. */
+.partner-sep{display:flex;align-items:center;gap:14px;margin:30px 0 18px;color:var(--ink-faint);font-size:11px;letter-spacing:1.4px;text-transform:uppercase;font-weight:600;}
+.partner-sep::before,.partner-sep::after{content:'';flex:1;height:1px;background:var(--line);}
+
+.partner-door{width:100%;border:1.5px dashed var(--line-2);border-radius:16px;background:linear-gradient(135deg,rgba(123,47,247,.03),rgba(67,97,255,.03));padding:16px 18px;cursor:pointer;display:flex;align-items:center;gap:14px;text-align:left;transition:all .3s cubic-bezier(.22,1,.36,1);font-family:var(--font-body);}
+.partner-door:hover{border-color:var(--lilac);border-style:solid;transform:translateY(-1px);box-shadow:0 8px 26px rgba(123,47,247,.1);}
+.pd-ico{width:38px;height:38px;flex:none;border-radius:11px;background:linear-gradient(135deg,var(--violet),var(--electric));display:flex;align-items:center;justify-content:center;font-size:18px;}
+.pd-txt{flex:1;min-width:0;}
+.pd-title{font-size:13.5px;font-weight:700;color:var(--ink);}
+.pd-sub{font-size:11.5px;color:var(--ink-faint);margin-top:2px;line-height:1.45;}
+.pd-chev{flex:none;color:var(--ink-faint);transition:transform .35s cubic-bezier(.22,1,.36,1);}
+.partner-door[aria-expanded="true"] .pd-chev{transform:rotate(180deg);}
+.partner-door[aria-expanded="true"]{border-style:solid;border-color:var(--lilac);}
+
+.partner-body{max-height:0;overflow:hidden;transition:max-height .5s cubic-bezier(.22,1,.36,1);}
+.partner-body.open{max-height:1900px;}
+.partner-inner{padding:22px 2px 4px;}
+
+/* role picker */
+.role-pick{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;}
+.role-card{padding:14px 12px;border:1.5px solid var(--line-2);border-radius:14px;background:var(--glass);cursor:pointer;text-align:center;transition:all .28s;font-family:var(--font-body);}
+.role-card:hover{border-color:var(--lilac);}
+.role-card.active{border-color:var(--violet);background:linear-gradient(135deg,rgba(123,47,247,.07),rgba(67,97,255,.05));box-shadow:0 4px 16px rgba(123,47,247,.12);}
+.rc-emoji{font-size:22px;display:block;margin-bottom:5px;}
+.rc-name{font-size:13px;font-weight:700;color:var(--ink);}
+.rc-desc{font-size:10.5px;color:var(--ink-faint);margin-top:2px;line-height:1.4;}
+
+/* partner tabs: Sign in | Apply */
+.p-tabs{display:flex;gap:6px;padding:5px;background:var(--glass-2);border-radius:14px;margin-bottom:20px;}
+.p-tab{flex:1;padding:10px;border:none;background:transparent;border-radius:10px;font-family:var(--font-body);font-weight:600;font-size:13px;color:var(--ink-faint);cursor:pointer;transition:all .3s cubic-bezier(.22,1,.36,1);}
+.p-tab.active{background:var(--glass);color:var(--ink);box-shadow:0 2px 10px rgba(10,10,20,.06);}
+
+/* contact method chips */
+.cm-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;}
+.cm-chip{padding:10px 4px;border:1.5px solid var(--line-2);border-radius:11px;background:var(--glass);cursor:pointer;text-align:center;transition:all .25s;font-family:var(--font-body);}
+.cm-chip:hover{border-color:var(--lilac);}
+.cm-chip.active{border-color:var(--violet);background:rgba(123,47,247,.06);}
+.cm-emoji{font-size:15px;display:block;}
+.cm-label{font-size:10px;font-weight:600;color:var(--ink-soft);margin-top:3px;}
+.cm-chip.active .cm-label{color:var(--violet);}
+
+.p-note{font-size:11.5px;color:var(--ink-faint);line-height:1.6;text-align:center;margin-top:14px;}
+.p-note strong{color:var(--ink-soft);}
+
+/* success state after applying */
+.p-sent{text-align:center;padding:26px 12px;}
+.p-sent-ico{width:62px;height:62px;margin:0 auto 16px;border-radius:50%;background:linear-gradient(135deg,var(--mint),var(--mint-deep));display:flex;align-items:center;justify-content:center;font-size:28px;}
+.p-sent h3{font-family:var(--font-display);font-size:21px;color:var(--ink);margin-bottom:8px;font-weight:600;}
+.p-sent p{font-size:13px;color:var(--ink-faint);line-height:1.65;}
+
+@media(max-width:640px){
+  .role-pick{grid-template-columns:1fr;}
+  .cm-grid{grid-template-columns:repeat(2,1fr);}
+}
+
 .alert{padding:12px 15px;border-radius:12px;font-size:13px;margin-bottom:18px;display:none;line-height:1.5;}
 .alert.show{display:block;animation:fadeUp .4s;}
 .alert-error{background:rgba(255,77,109,.08);color:#D62246;border:1px solid rgba(255,77,109,.2);}
@@ -344,6 +401,138 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
             <span>I agree to the <a href="terms.html" target="_blank">Terms of Service</a> and <a href="privacy.html" target="_blank">Privacy Policy</a>.</span>
           </label>
           <button class="submit-btn" id="signup-btn" onclick="handleSignup(event)">Create account</button>
+        </div>
+
+        <!-- ══════════════════════════════════════════════════════════
+             PARTNER PROGRAMME · Agents & Influencers
+             Deliberately below the fold of normal auth, visually distinct,
+             collapsed by default. A traveller will not stumble into this.
+             ══════════════════════════════════════════════════════════ -->
+        <div class="partner-sep">Work with us</div>
+
+        <button class="partner-door" id="partner-door" aria-expanded="false" onclick="togglePartner()">
+          <div class="pd-ico">💼</div>
+          <div class="pd-txt">
+            <div class="pd-title">Agent &amp; Influencer portal</div>
+            <div class="pd-sub">Earn commission promoting Apatmento. Sign in, or apply to join.</div>
+          </div>
+          <svg class="pd-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+
+        <div class="partner-body" id="partner-body">
+          <div class="partner-inner">
+
+            <div class="alert alert-error"   id="p-err"></div>
+            <div class="alert alert-success" id="p-ok"></div>
+
+            <!-- Sign in | Apply -->
+            <div class="p-tabs">
+              <button class="p-tab active" id="p-tab-login" onclick="pTab('login')">Log in</button>
+              <button class="p-tab"        id="p-tab-apply" onclick="pTab('apply')">Apply — first time</button>
+            </div>
+
+            <!-- ── PARTNER LOGIN ── -->
+            <div id="p-login">
+              <div class="field">
+                <label class="field-label">Email address</label>
+                <input class="field-input" id="p-login-email" type="email" placeholder="you@example.com" autocomplete="email"/>
+              </div>
+              <div class="field">
+                <label class="field-label">Password</label>
+                <input class="field-input" id="p-login-pw" type="password" placeholder="Your password" autocomplete="current-password"/>
+              </div>
+              <button class="submit-btn" id="p-login-btn" onclick="partnerLogin(event)">Sign in to portal</button>
+              <p class="p-note">Approved partners only. Applied recently? <strong>Watch your inbox</strong> — we review within 48 hours.</p>
+            </div>
+
+            <!-- ── APPLY ── -->
+            <div id="p-apply" style="display:none;">
+
+              <div class="role-pick">
+                <button class="role-card active" id="rc-agent" onclick="pickRole('agent')">
+                  <span class="rc-emoji">🤝</span>
+                  <div class="rc-name">Agent</div>
+                  <div class="rc-desc">Bring in bookings &amp; listings</div>
+                </button>
+                <button class="role-card" id="rc-influencer" onclick="pickRole('influencer')">
+                  <span class="rc-emoji">🎬</span>
+                  <div class="rc-name">Influencer</div>
+                  <div class="rc-desc">Promote to your audience</div>
+                </button>
+              </div>
+
+              <!-- influencer-only -->
+              <div id="inf-fields" style="display:none;">
+                <div class="field">
+                  <label class="field-label">Nickname / creator name</label>
+                  <input class="field-input" id="p-nickname" type="text" placeholder="e.g. NairobiNomad"/>
+                </div>
+                <div class="field-row">
+                  <div class="field">
+                    <label class="field-label">Social handle</label>
+                    <input class="field-input" id="p-handle" type="text" placeholder="@yourhandle"/>
+                  </div>
+                  <div class="field">
+                    <label class="field-label">Platform</label>
+                    <select class="field-input" id="p-platform">
+                      <option value="Instagram">Instagram</option>
+                      <option value="TikTok">TikTok</option>
+                      <option value="YouTube">YouTube</option>
+                      <option value="X">X / Twitter</option>
+                      <option value="Facebook">Facebook</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="field">
+                  <label class="field-label">Approx. audience size <span style="color:var(--ink-faint);font-weight:400;">(optional)</span></label>
+                  <input class="field-input" id="p-audience" type="number" min="0" placeholder="12000"/>
+                </div>
+              </div>
+
+              <!-- shared -->
+              <div class="field">
+                <label class="field-label" id="p-name-label">Full name</label>
+                <input class="field-input" id="p-name" type="text" placeholder="Amara Otieno"/>
+              </div>
+
+              <div class="field">
+                <label class="field-label">Email address</label>
+                <input class="field-input" id="p-email" type="email" placeholder="you@example.com"/>
+              </div>
+
+              <div class="field">
+                <label class="field-label">How should we reach you?</label>
+                <div class="cm-grid" id="cm-grid">
+                  <button class="cm-chip active" data-cm="whatsapp" onclick="pickContact('whatsapp')"><span class="cm-emoji">💬</span><span class="cm-label">WhatsApp</span></button>
+                  <button class="cm-chip" data-cm="call"  onclick="pickContact('call')"><span class="cm-emoji">📞</span><span class="cm-label">Call</span></button>
+                  <button class="cm-chip" data-cm="sms"   onclick="pickContact('sms')"><span class="cm-emoji">✉️</span><span class="cm-label">SMS</span></button>
+                  <button class="cm-chip" data-cm="email" onclick="pickContact('email')"><span class="cm-emoji">📧</span><span class="cm-label">Email</span></button>
+                </div>
+              </div>
+
+              <div class="field">
+                <label class="field-label" id="p-contact-label">WhatsApp number</label>
+                <input class="field-input" id="p-contact" type="text" placeholder="+254 7XX XXX XXX"/>
+              </div>
+
+              <div class="field">
+                <label class="field-label">Create a password</label>
+                <input class="field-input" id="p-pw" type="password" placeholder="At least 8 characters"/>
+              </div>
+
+              <button class="submit-btn" id="p-apply-btn" onclick="partnerApply(event)">Submit application</button>
+              <p class="p-note">A human reviews every application. You'll hear back within <strong>48 hours</strong> — approved or not. Your earnings are always private to you.</p>
+            </div>
+
+            <!-- ── APPLIED ── -->
+            <div id="p-sent" class="p-sent" style="display:none;">
+              <div class="p-sent-ico">📨</div>
+              <h3>Application in</h3>
+              <p>We've emailed you a confirmation. A real person will review it and get back to you within 48 hours — either way.</p>
+            </div>
+
+          </div>
         </div>
       </div>
 
@@ -601,6 +790,175 @@ function switchTab(t) {
   document.getElementById('tab-signup').classList.toggle('active', t==='signup');
   clearErr();
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   PARTNER PROGRAMME  ·  Agents & Influencers
+   Separate surface, separate state. Nothing here can be reached by
+   a traveller who isn't looking for it.
+   ══════════════════════════════════════════════════════════════════ */
+let pRole = 'agent';
+let pContact = 'whatsapp';
+
+const CONTACT_LABEL = {
+  whatsapp: ['WhatsApp number', '+254 7XX XXX XXX'],
+  call:     ['Phone number',    '+254 7XX XXX XXX'],
+  sms:      ['Mobile number',   '+254 7XX XXX XXX'],
+  email:    ['Contact email',   'you@example.com'],
+};
+
+function togglePartner() {
+  const door = document.getElementById('partner-door');
+  const body = document.getElementById('partner-body');
+  const open = door.getAttribute('aria-expanded') === 'true';
+  door.setAttribute('aria-expanded', String(!open));
+  body.classList.toggle('open', !open);
+  if (!open) setTimeout(() => body.scrollIntoView({ behavior:'smooth', block:'nearest' }), 260);
+}
+
+function pTab(t) {
+  const applying = t === 'apply';
+  document.getElementById('p-login').style.display = applying ? 'none' : 'block';
+  document.getElementById('p-apply').style.display = applying ? 'block' : 'none';
+  document.getElementById('p-sent').style.display  = 'none';
+  document.getElementById('p-tab-login').classList.toggle('active', !applying);
+  document.getElementById('p-tab-apply').classList.toggle('active',  applying);
+  pClear();
+}
+
+function pickRole(r) {
+  pRole = r;
+  document.getElementById('rc-agent').classList.toggle('active', r==='agent');
+  document.getElementById('rc-influencer').classList.toggle('active', r==='influencer');
+  document.getElementById('inf-fields').style.display = r==='influencer' ? 'block':'none';
+  document.getElementById('p-name-label').textContent =
+    r === 'influencer' ? 'Full name' : 'Full name';
+  pClear();
+}
+
+function pickContact(c) {
+  pContact = c;
+  document.querySelectorAll('#cm-grid .cm-chip').forEach(b =>
+    b.classList.toggle('active', b.dataset.cm === c));
+  const [label, ph] = CONTACT_LABEL[c];
+  document.getElementById('p-contact-label').textContent = label;
+  const inp = document.getElementById('p-contact');
+  inp.placeholder = ph;
+  inp.type = c === 'email' ? 'email' : 'tel';
+}
+
+/* ── partner alerts ── */
+function pClear() {
+  ['p-err','p-ok'].forEach(id => document.getElementById(id).classList.remove('show'));
+}
+function pErr(msg) {
+  const e = document.getElementById('p-err');
+  e.textContent = msg; e.classList.add('show');
+  document.getElementById('p-ok').classList.remove('show');
+}
+function pBusy(id, on) {
+  const b = document.getElementById(id);
+  b.classList.toggle('loading', on); b.disabled = on;
+}
+
+/* ── APPLY ─────────────────────────────────────────────────────────
+   Posts to /api/partners?action=apply. The password is hashed
+   server-side; no auth account exists until an admin approves.       */
+async function partnerApply(e) {
+  e.preventDefault(); pClear();
+
+  const payload = {
+    role: pRole,
+    full_name:      document.getElementById('p-name').value.trim(),
+    email:          document.getElementById('p-email').value.trim(),
+    contact_method: pContact,
+    contact_value:  document.getElementById('p-contact').value.trim(),
+    password:       document.getElementById('p-pw').value,
+  };
+
+  if (pRole === 'influencer') {
+    payload.nickname        = document.getElementById('p-nickname').value.trim();
+    payload.social_handle   = document.getElementById('p-handle').value.trim();
+    payload.social_platform = document.getElementById('p-platform').value;
+    payload.audience_size   = document.getElementById('p-audience').value;
+  }
+
+  /* client-side guard rails — the API validates again, properly */
+  if (!payload.full_name)                       return pErr('Please tell us your name.');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email))
+                                                return pErr('That email does not look right.');
+  if (!payload.contact_value)                   return pErr('Add your contact details so we can reach you.');
+  if (payload.password.length < 8)              return pErr('Password must be at least 8 characters.');
+  if (pRole === 'influencer') {
+    if (!payload.nickname)      return pErr('What should we call you? Add a nickname.');
+    if (!payload.social_handle) return pErr('Add the social handle you post from.');
+  }
+
+  pBusy('p-apply-btn', true);
+  try {
+    const r = await fetch('/api/partners?action=apply', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload),
+    });
+    const j = await r.json();
+    if (!r.ok) { pBusy('p-apply-btn', false); return pErr(j.error || 'Could not submit. Try again.'); }
+
+    document.getElementById('p-apply').style.display = 'none';
+    document.getElementById('p-sent').style.display  = 'block';
+    pClear();
+  } catch {
+    pErr('Network trouble. Check your connection and try again.');
+  }
+  pBusy('p-apply-btn', false);
+}
+
+/* ── PARTNER LOGIN ─────────────────────────────────────────────────
+   Sign in, then confirm they hold a partners row. A traveller's
+   credentials authenticate fine but must never open this portal —
+   so on failure we sign straight back out.                           */
+async function partnerLogin(e) {
+  e.preventDefault(); pClear();
+
+  const email = document.getElementById('p-login-email').value.trim();
+  const pw    = document.getElementById('p-login-pw').value;
+  if (!email || !pw) return pErr('Email and password, please.');
+
+  pBusy('p-login-btn', true);
+
+  const { data, error } = await sb.auth.signInWithPassword({ email, password: pw });
+  if (error) {
+    pBusy('p-login-btn', false);
+    return pErr(/confirm/i.test(error.message)
+      ? 'Your account is not active yet.'
+      : 'Wrong email or password.');
+  }
+
+  /* RLS lets a partner read exactly one row: their own. */
+  const { data: partner } = await sb
+    .from('partners')
+    .select('id, role, is_active')
+    .eq('id', data.user.id)
+    .maybeSingle();
+
+  if (!partner) {
+    await sb.auth.signOut();
+    pBusy('p-login-btn', false);
+    return pErr("That's a traveller account, not a partner one. Use the sign-in above — or apply to join.");
+  }
+  if (!partner.is_active) {
+    await sb.auth.signOut();
+    pBusy('p-login-btn', false);
+    return pErr('This partner account is paused. Reach out to us.');
+  }
+
+  location.href = 'partner-dashboard.html';
+}
+
+/* deep link: /auth.html?panel=partner  — the approval email lands here */
+(function () {
+  if (new URLSearchParams(location.search).get('panel') === 'partner') {
+    document.addEventListener('DOMContentLoaded', () => setTimeout(togglePartner, 300));
+  }
+})();
 function showReset() { showSpecial('reset-screen'); }
 function showLogin() {
   document.getElementById('main-auth').style.display='block';
