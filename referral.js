@@ -445,8 +445,8 @@ async function init() {
   // Don't show on auth page or booking funnel
   if (['auth','booking-confirm','add-listing'].includes(page)) return;
 
-  // Floating trigger ONLY on dashboard (Good morning page) — only for guests
-  if (page === 'dashboard' && !document.getElementById('apt-ref-trigger') && isGuest) {
+  // Floating trigger on dashboard for ALL users — guests and signed-in alike
+  if (page === 'dashboard' && !document.getElementById('apt-ref-trigger')) {
     document.body.appendChild(buildFloatingTrigger());
   }
 
