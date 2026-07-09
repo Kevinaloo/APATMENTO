@@ -73,6 +73,31 @@ for (const p of pages) {
 }
 if (!fails.some(f => f.includes('redefines'))) ok('chrome functions defined once, in apa-chrome.js');
 
+/* ── 5b. No control points at an element that doesn't exist ────────
+   The global search button called openSearch(), which did
+   document.getElementById('gsearch-overlay').classList.add(...) — but
+   that overlay was never in any page's markup. Every click threw. A
+   toolbar control that reaches for a missing element is always a bug. */
+console.log('\n[5b] No handlers pointing at missing elements');
+{
+  let dead = 0;
+  for (const p of pages) {
+    const h = fs.readFileSync(p, 'utf8');
+    // ids that JS resolves then immediately dereferences
+    const used = [...h.matchAll(/getElementById\(\s*['"]([\w-]+)['"]\s*\)\s*\./g)].map(m => m[1]);
+    for (const id of new Set(used)) {
+      // In the static markup?
+      if (new RegExp(`id=["']${id}["']`).test(h)) continue;
+      // Or built at runtime? (e.g. `modal.id = 'tenant-verify-modal'`)
+      if (new RegExp(`\\.id\\s*=\\s*['"]${id}['"]`).test(h)) continue;
+      if (new RegExp(`id=\\\\?["']${id}\\\\?["']`).test(h)) continue;  // inside a template string
+      fail(p, `JS dereferences #${id}, which is never created or in the markup`);
+      dead++;
+    }
+  }
+  if (!dead) ok('every dereferenced element id exists in its page');
+}
+
 /* ── 6. Viewport meta on every page ────────────────────────────── */
 console.log('\n[6] Responsive viewport');
 for (const p of pages) {

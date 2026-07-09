@@ -587,38 +587,7 @@ img,video,svg{max-width:100%;}
 @media(max-width:560px){.service-rail{grid-template-columns:repeat(4,1fr);gap:8px;}.hero-body{padding:28px;}.greeting-title{font-size:32px;}}
 
 /* ══ GLOBAL SEARCH ══ */
-#gsearch-trigger{display:flex;align-items:center;gap:7px;padding:7px 14px;border-radius:100px;border:1.5px solid var(--line-2);background:rgba(255,255,255,.5);cursor:pointer;font-family:var(--font-body);font-size:13px;color:var(--ink-faint);transition:all .2s;min-width:180px;}
-#gsearch-trigger:hover{border-color:var(--violet);color:var(--ink);background:#fff;}
-#gsearch-trigger svg{flex-shrink:0;opacity:.5;}
-@media(max-width:640px){#gsearch-trigger span{display:none;}#gsearch-trigger{min-width:auto;padding:7px 10px;}}
 
-#gsearch-overlay{position:fixed;inset:0;z-index:9000;opacity:0;visibility:hidden;transition:all .25s;}
-#gsearch-overlay.open{opacity:1;visibility:visible;}
-#gsearch-bg{position:absolute;inset:0;background:rgba(10,10,20,.7);backdrop-filter:none;}
-#gsearch-box{position:absolute;top:0;left:0;right:0;background:#fff;padding:0;transform:translateY(-100%);transition:transform .35s cubic-bezier(.22,1,.36,1);max-height:85vh;overflow:hidden;display:flex;flex-direction:column;}
-#gsearch-overlay.open #gsearch-box{transform:none;}
-#gsearch-header{display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid var(--line);}
-#gsearch-input{flex:1;border:none;outline:none;font-family:var(--font-body);font-size:18px;color:var(--ink);background:transparent;padding:4px 0;}
-#gsearch-input::placeholder{color:var(--ink-faint);}
-#gsearch-close{width:36px;height:36px;border-radius:50%;border:none;background:var(--bg-hover);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink-soft);flex-shrink:0;}
-#gsearch-close:hover{background:var(--line);}
-#gsearch-tabs{display:flex;gap:4px;padding:10px 20px 0;border-bottom:1px solid var(--line);}
-.gsearch-tab{padding:8px 14px;border-radius:100px 100px 0 0;font-size:12px;font-weight:600;border:none;background:transparent;cursor:pointer;color:var(--ink-faint);border-bottom:2px solid transparent;transition:all .2s;}
-.gsearch-tab.active{color:var(--violet);border-bottom-color:var(--violet);}
-#gsearch-results{flex:1;overflow-y:auto;padding:12px 20px 20px;}
-.gsr-section{margin-bottom:16px;}
-.gsr-section-label{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:8px;padding:4px 0;}
-.gsr-item{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:13px;cursor:pointer;transition:background .15s;text-decoration:none;color:var(--ink);}
-.gsr-item:hover{background:var(--bg-hover);}
-.gsr-thumb{width:46px;height:46px;border-radius:10px;object-fit:cover;flex-shrink:0;background:linear-gradient(135deg,#B8A4F4,#7B2FF7);}
-.gsr-thumb-placeholder{width:46px;height:46px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:20px;}
-.gsr-name{font-weight:600;font-size:14px;margin-bottom:2px;}
-.gsr-meta{font-size:11px;color:var(--ink-faint);}
-.gsr-price{font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--violet);white-space:nowrap;margin-left:auto;}
-.gsr-empty{text-align:center;padding:40px 20px;color:var(--ink-faint);font-size:14px;}
-.gsr-empty-ico{font-size:36px;margin-bottom:8px;}
-.gsr-loading{display:flex;justify-content:center;padding:32px;}
-.gsr-spinner{width:24px;height:24px;border:3px solid var(--line);border-top-color:var(--violet);border-radius:50%;animation:spin .7s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
 
 
@@ -698,12 +667,6 @@ img,video,svg{max-width:100%;}
         <img src="logo-mark.png" class="tb-logo" alt="" onerror="this.style.display='none'"/>
         <span class="tb-brand"><em>Apat</em>mento</span>
       </div>
-      <!-- Global search trigger -->
-      <button id="gsearch-trigger" onclick="openSearch()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-        <span>Search Apatmento…</span>
-        <kbd style="margin-left:auto;font-size:10px;padding:2px 6px;border:1px solid var(--line-2);border-radius:5px;background:rgba(0,0,0,.04);font-family:var(--font-body);color:var(--ink-faint);">/</kbd>
-      </button>
       <div class="tb-right" id="tb-right-guest">
         <!-- Guest nav — Sign In + Sign Up (hidden when logged in) -->
         <div id="dash-guest-nav" class="apa-nav" data-when="guest">
@@ -1527,167 +1490,9 @@ function checkAdminAccess(){
   if(link){ link.style.display = 'flex'; console.log('[Admin] link shown for', email); }
 }
 
-/* ══════════════════════════════════════════════════════════════
-   GLOBAL SEARCH — searches stays, tours, events, car hire
-   in real time from Supabase, debounced 280ms
-══════════════════════════════════════════════════════════════ */
-let _gsearchTab = 'all';
-let _gsearchTimer = null;
-let _gsearchOpen = false;
-
-function openSearch() {
-  _gsearchOpen = true;
-  document.getElementById('gsearch-overlay').classList.add('open');
-  document.body.style.overflow = 'hidden';
-  setTimeout(() => document.getElementById('gsearch-input').focus(), 200);
-}
-
-function closeSearch() {
-  _gsearchOpen = false;
-  document.getElementById('gsearch-overlay').classList.remove('open');
-  document.body.style.overflow = '';
-}
-
-function setSearchTab(tab, el) {
-  _gsearchTab = tab;
-  document.querySelectorAll('.gsearch-tab').forEach(t => t.classList.remove('active'));
-  el.classList.add('active');
-  const q = document.getElementById('gsearch-input').value.trim();
-  if (q.length >= 2) runSearch(q);
-}
-
-// Keyboard shortcut: "/" to open search
-document.addEventListener('keydown', e => {
-  if (e.key === '/' && !['INPUT','TEXTAREA'].includes(document.activeElement.tagName) && !_gsearchOpen) {
-    e.preventDefault(); openSearch();
-  }
-  if (e.key === 'Escape' && _gsearchOpen) closeSearch();
-});
-
-document.addEventListener('DOMContentLoaded', () => {
-  const input = document.getElementById('gsearch-input');
-  if (!input) return;
-  input.addEventListener('input', () => {
-    clearTimeout(_gsearchTimer);
-    const q = input.value.trim();
-    if (q.length < 2) {
-      document.getElementById('gsearch-results').innerHTML =
-        '<div class="gsr-empty"><div class="gsr-empty-ico">🔍</div>Start typing to search…</div>';
-      return;
-    }
-    document.getElementById('gsearch-results').innerHTML =
-      '<div class="gsr-loading"><div class="gsr-spinner"></div></div>';
-    _gsearchTimer = setTimeout(() => runSearch(q), 280);
-  });
-});
-
-async function runSearch(q) {
-  const SUPA = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
-  const KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
-  const H = { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY };
-
-  const enc = encodeURIComponent(q);
-  const like = `ilike.%25${enc}%25`;
-
-  try {
-    const fetches = [];
-
-    if (_gsearchTab === 'all' || _gsearchTab === 'stays') {
-      fetches.push(
-        fetch(`${SUPA}/rest/v1/listings?or=(title.${like},location.${like},city.${like})&status=eq.active&limit=5&select=id,title,location,price_night,listing_type,images`, { headers: H })
-          .then(r => r.ok ? r.json() : [])
-          .then(d => ({ type: 'stays', items: d||[] }))
-      );
-    }
-    if (_gsearchTab === 'all' || _gsearchTab === 'tours') {
-      fetches.push(
-        fetch(`${SUPA}/rest/v1/scraped_tours?or=(title.${like},location.${like})&active=eq.true&order=rating.desc.nullslast&limit=5&select=id,title,location,price_from,currency,rating,image_url,tour_url`, { headers: H })
-          .then(r => r.ok ? r.json() : [])
-          .then(d => ({ type: 'tours', items: d||[] }))
-      );
-    }
-    if (_gsearchTab === 'all' || _gsearchTab === 'events') {
-      fetches.push(
-        fetch(`${SUPA}/rest/v1/scraped_events?or=(title.${like},venue.${like})&active=eq.true&order=start_date.asc&limit=5&select=id,title,venue,start_date,price_from,currency,image_url,event_url`, { headers: H })
-          .then(r => r.ok ? r.json() : [])
-          .then(d => ({ type: 'events', items: d||[] }))
-      );
-    }
-    if (_gsearchTab === 'all' || _gsearchTab === 'carhire') {
-      fetches.push(
-        fetch(`${SUPA}/rest/v1/listings?or=(title.${like},location.${like})&listing_type=eq.carhire&status=eq.active&limit=4&select=id,title,location,price_night,listing_type,images`, { headers: H })
-          .then(r => r.ok ? r.json() : [])
-          .then(d => ({ type: 'carhire', items: d||[] }))
-      );
-    }
-
-    const results = await Promise.all(fetches);
-    renderSearchResults(results, q);
-
-  } catch (e) {
-    document.getElementById('gsearch-results').innerHTML =
-      '<div class="gsr-empty"><div class="gsr-empty-ico">⚠️</div>Search failed. Please try again.</div>';
-  }
-}
-
-function renderSearchResults(results, q) {
-  const el = document.getElementById('gsearch-results');
-  const labels = { stays: '🏠 Stays', tours: '🦁 Tours & Safaris', events: '🎟 Events', carhire: '🚗 Car Hire' };
-  const allEmpty = results.every(r => r.items.length === 0);
-
-  if (allEmpty) {
-    el.innerHTML = `<div class="gsr-empty"><div class="gsr-empty-ico">🔍</div>No results for "<strong>${q}</strong>"</div>`;
-    return;
-  }
-
-  let html = '';
-  results.forEach(({ type, items }) => {
-    if (!items.length) return;
-    html += `<div class="gsr-section"><div class="gsr-section-label">${labels[type]||type}</div>`;
-    items.forEach(item => {
-      if (type === 'stays' || type === 'carhire') {
-        const img = (item.images && item.images[0]) || '';
-        const price = item.price_night ? `KES ${Number(item.price_night).toLocaleString()}/night` : '';
-        html += `<a class="gsr-item" href="apartments.html#${item.id}" onclick="closeSearch()">
-          ${img ? `<img class="gsr-thumb" src="${img}" onerror="this.style.display='none'" alt=""/>` 
-                : `<div class="gsr-thumb-placeholder">🏠</div>`}
-          <div style="flex:1;min-width:0;">
-            <div class="gsr-name">${item.title||'—'}</div>
-            <div class="gsr-meta">${item.location||item.city||'Kenya'}</div>
-          </div>
-          ${price ? `<div class="gsr-price">${price}</div>` : ''}
-        </a>`;
-      } else if (type === 'tours') {
-        const price = item.price_from ? `${item.currency||'USD'} ${Number(item.price_from).toLocaleString()}` : '';
-        const rating = item.rating ? `⭐ ${item.rating}` : '';
-        html += `<a class="gsr-item" href="${item.tour_url||'tours.html'}" target="${item.tour_url?'_blank':'_self'}" onclick="closeSearch()">
-          ${item.image_url ? `<img class="gsr-thumb" src="${item.image_url}" onerror="this.style.display='none'" alt=""/>` 
-                           : `<div class="gsr-thumb-placeholder">🦁</div>`}
-          <div style="flex:1;min-width:0;">
-            <div class="gsr-name">${item.title||'—'}</div>
-            <div class="gsr-meta">${item.location||'Kenya'}${rating ? ' · '+rating : ''}</div>
-          </div>
-          ${price ? `<div class="gsr-price">${price}</div>` : ''}
-        </a>`;
-      } else if (type === 'events') {
-        const date = item.start_date ? new Date(item.start_date).toLocaleDateString('en-KE',{weekday:'short',month:'short',day:'numeric'}) : '';
-        const price = item.price_from != null ? (item.price_from === 0 ? 'Free' : `KES ${Number(item.price_from).toLocaleString()}`) : '';
-        html += `<a class="gsr-item" href="${item.event_url||'events.html'}" target="_blank" onclick="closeSearch()">
-          ${item.image_url ? `<img class="gsr-thumb" src="${item.image_url}" onerror="this.style.display='none'" alt=""/>` 
-                           : `<div class="gsr-thumb-placeholder">🎟</div>`}
-          <div style="flex:1;min-width:0;">
-            <div class="gsr-name">${item.title||'—'}</div>
-            <div class="gsr-meta">${date}${item.venue ? ' · '+item.venue.split(',')[0] : ''}</div>
-          </div>
-          ${price ? `<div class="gsr-price">${price}</div>` : ''}
-        </a>`;
-      }
-    });
-    html += '</div>';
-  });
-
-  el.innerHTML = html;
-}
+/* Global search removed. The trigger, the "/" shortcut and ~150 lines of
+   never present in the markup — every call threw on null.classList. It
+   occupied the widest slot in the toolbar and did nothing. */
 
 </script>
 <script src="/brand.js" defer></script>
