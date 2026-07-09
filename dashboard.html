@@ -173,8 +173,8 @@ body{overflow-x:hidden;}
   .svc{background:rgba(255,255,255,.9)!important;}
   /* Service rail: 4 per row, 2 rows = all 8 visible */
   .service-rail{grid-template-columns:repeat(4,1fr)!important;gap:8px!important;}
-  .svc{aspect-ratio:auto!important;min-height:108px;padding:16px 4px 12px!important;border-radius:14px!important;}
-  .svc-ico{width:40px!important;height:40px!important;}
+  .svc{aspect-ratio:auto!important;min-height:80px;padding:8px 4px!important;border-radius:14px!important;}
+  .svc-ico{width:64px!important;height:64px!important;}
   .svc-name{font-size:10px!important;white-space:normal!important;line-height:1.2!important;}
   /* Reduce aurora blur */
   .aurora .ab{filter:blur(40px)!important;opacity:.2!important;}
@@ -352,19 +352,19 @@ body{overflow-x:hidden;}
 
 /* ══════════ SERVICE RAIL ══════════ */
 .rail-label{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:16px;}
-.service-rail{display:grid;grid-template-columns:repeat(8,1fr);gap:14px;margin-bottom:32px;}
-.svc{background:rgba(255,255,255,.85);border:1px solid rgba(10,10,20,.06);border-radius:18px;padding:20px 8px 16px;display:flex;flex-direction:column;align-items:center;gap:10px;cursor:pointer;transition:transform .2s ease,box-shadow .2s ease;min-width:0;}
+.service-rail{display:grid;grid-template-columns:repeat(8,1fr);gap:10px;margin-bottom:32px;}
+.svc{background:rgba(255,255,255,.85);border:1px solid rgba(10,10,20,.06);border-radius:18px;padding:10px 6px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;cursor:pointer;transition:transform .2s ease,box-shadow .2s ease;min-width:0;}
 .svc:hover{background:#fff;transform:translateY(-4px);box-shadow:0 12px 32px rgba(10,10,20,.1);}
-.svc-ico{width:52px;height:52px;flex-shrink:0;}
+.svc-ico{width:80px;height:80px;flex-shrink:0;}
 .svc-name{font-size:13px;font-weight:600;color:var(--ink-soft,#4A4C66);text-align:center;white-space:nowrap;}
 @media(max-width:900px){.service-rail{grid-template-columns:repeat(4,1fr);gap:10px;}}
-@media(max-width:600px){.service-rail{grid-template-columns:repeat(4,1fr);gap:8px;}.svc{border-radius:16px;padding:14px 6px 12px;aspect-ratio:auto;min-height:100px;backdrop-filter:none;-webkit-backdrop-filter:none;}.svc-ico{width:40px;height:40px;}.svc-name{font-size:11px;white-space:normal;line-height:1.2;}}
-.svc{position:relative;aspect-ratio:1;border-radius:20px;border:1px solid var(--line);background:rgba(255,255,255,.88);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;cursor:pointer;overflow:hidden;transition:transform .2s ease,box-shadow .2s ease;}
+@media(max-width:600px){.service-rail{grid-template-columns:repeat(4,1fr);gap:8px;}.svc{border-radius:16px;padding:14px 6px 12px;aspect-ratio:auto;min-height:80px;backdrop-filter:none;-webkit-backdrop-filter:none;}.svc-ico{width:64px;height:64px;}.svc-name{font-size:11px;white-space:normal;line-height:1.2;}}
+.svc{position:relative;aspect-ratio:1;border-radius:20px;border:1px solid var(--line);background:rgba(255,255,255,.88);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;cursor:pointer;overflow:hidden;transition:transform .2s ease,box-shadow .2s ease;}
 .svc::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .35s;background:var(--svc-grad);}
 .svc:hover{transform:translateY(-6px);box-shadow:var(--shadow-lift);border-color:transparent;}
 .svc:hover::before{opacity:.14;}
 .svc:hover .svc-ico{transform:scale(1.12) translateY(-2px);}
-.svc-ico{width:52px;height:52px;color:var(--svc-color);transition:transform .35s cubic-bezier(.34,1.56,.64,1);position:relative;z-index:1;}
+.svc-ico{width:80px;height:80px;color:var(--svc-color);transition:transform .35s cubic-bezier(.34,1.56,.64,1);position:relative;z-index:1;}
 .svc-name{font-size:11px;font-weight:600;color:var(--ink-soft);position:relative;z-index:1;letter-spacing:.01em;}
 .svc[data-svc="stays"]{--svc-color:var(--lilac-deep);--svc-grad:linear-gradient(135deg,var(--lilac),var(--violet));}
 .svc[data-svc="flights"]{--svc-color:var(--electric);--svc-grad:linear-gradient(135deg,var(--electric),var(--lilac));}
@@ -797,15 +797,15 @@ body{overflow-x:hidden;}
       </div>
 
       <!-- ── MORE SERVICES ── -->
-      <div class="rail-label" style="margin-top:20px;font-size:9px;">More services</div>
+      
       <div class="service-rail">
-        <div class="svc" data-svc="flights" onclick="navigateToService('flights')"><img class="svc-ico" src="icon-flights.png" alt="Flights" style="width:52px;height:52px;object-fit:contain;"/><span class="svc-name">Flights</span></div>
-        <div class="svc" data-svc="tours" onclick="navigateToService('tours')"><img class="svc-ico" src="icon-tours.png" alt="Tours" style="width:52px;height:52px;object-fit:contain;"/><span class="svc-name">Tours</span></div>
-        <div class="svc" data-svc="events" onclick="navigateToService('events')"><img class="svc-ico" src="icon-events.png" alt="Events" style="width:52px;height:52px;object-fit:contain;"/><span class="svc-name">Events</span></div>
-        <div class="svc" data-svc="rides" onclick="navigateToService('rides')"><img class="svc-ico" src="icon-rides.png" alt="Rides" style="width:52px;height:52px;object-fit:contain;"/><span class="svc-name">Rides</span></div>
-        <div class="svc" data-svc="food" onclick="navigateToService('food')"><img class="svc-ico" src="icon-food.png" alt="Food" style="width:52px;height:52px;object-fit:contain;"/><span class="svc-name">Food</span></div>
-        <div class="svc" data-svc="shopping" onclick="navigateToService('shopping')"><img class="svc-ico" src="icon-shopping.png" alt="Shopping" style="width:52px;height:52px;object-fit:contain;"/><span class="svc-name">Shopping</span></div>
-        <div class="svc" data-svc="carhire" onclick="navigateToService('carhire')"><img class="svc-ico" src="icon-carhire.png" alt="Car Hire" style="width:52px;height:52px;object-fit:contain;"/><span class="svc-name">Car Hire</span></div>
+        <div class="svc" data-svc="flights" onclick="navigateToService('flights')"><img class="svc-ico" src="icon-flights.png" alt="Flights" style="width:80px;height:80px;object-fit:contain;"/></div>
+        <div class="svc" data-svc="tours" onclick="navigateToService('tours')"><img class="svc-ico" src="icon-tours.png" alt="Tours" style="width:80px;height:80px;object-fit:contain;"/></div>
+        <div class="svc" data-svc="events" onclick="navigateToService('events')"><img class="svc-ico" src="icon-events.png" alt="Events" style="width:80px;height:80px;object-fit:contain;"/></div>
+        <div class="svc" data-svc="rides" onclick="navigateToService('rides')"><img class="svc-ico" src="icon-rides.png" alt="Rides" style="width:80px;height:80px;object-fit:contain;"/></div>
+        <div class="svc" data-svc="food" onclick="navigateToService('food')"><img class="svc-ico" src="icon-food.png" alt="Food" style="width:80px;height:80px;object-fit:contain;"/></div>
+        <div class="svc" data-svc="shopping" onclick="navigateToService('shopping')"><img class="svc-ico" src="icon-shopping.png" alt="Shopping" style="width:80px;height:80px;object-fit:contain;"/></div>
+        <div class="svc" data-svc="carhire" onclick="navigateToService('carhire')"><img class="svc-ico" src="icon-carhire.png" alt="Car Hire" style="width:80px;height:80px;object-fit:contain;"/></div>
       </div><!-- /service-rail -->
 
       <!-- FEATURED VIDEO HERO — live ad from Supabase -->
