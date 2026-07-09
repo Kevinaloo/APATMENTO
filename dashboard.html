@@ -787,7 +787,7 @@ img,video,svg{max-width:100%;}
 
       <!-- ── MORE SERVICES ── -->
       
-      <div data-rail="compact" data-dots="off">
+      <div data-rail="compact" data-autoplay="4200">
       <div class="service-rail" data-rail-track aria-label="Explore services">
         <div class="svc" data-svc="flights" onclick="navigateToService('flights')"><img class="svc-ico" src="icon-flights.png" alt="Flights" style="width:100%;height:100%;object-fit:cover;"/><span class="svc-name">Flights</span></div>
         <div class="svc" data-svc="tours" onclick="navigateToService('tours')"><img class="svc-ico" src="icon-tours.png" alt="Tours" style="width:100%;height:100%;object-fit:cover;"/><span class="svc-name">Tours</span></div>
@@ -826,17 +826,15 @@ img,video,svg{max-width:100%;}
           <div class="prop-grid" id="stay-grid" data-rail-track aria-label="Stays"></div>
         </div>
       </div>
-    </div>
 
-      <!-- ══ MORE SERVICES — horizontal, each links to its full page ══ -->
-      <div class="section">
-        <div class="section-head">
-          <h2 class="section-title">Explore more</h2>
-        </div>
-        <div data-rail data-autoplay="5600">
-          <div class="svc-card-rail" id="svc-rail" data-rail-track aria-label="More services"></div>
-        </div>
-      </div>
+      <!-- ══ CATEGORY RAILS ══════════════════════════════════════════
+           One horizontal product carousel per service, stacked. Real
+           products from the same tables the service pages use, so the
+           dashboard preview matches what's behind the tap.
+           Flights and rides are excluded: they're search flows, not
+           catalogues, and have nothing worth browsing as thumbnails.  -->
+      <div id="cat-rails"></div>
+
     </div>
   </div>
 
@@ -1061,7 +1059,19 @@ var _painted = { stays:false, hero:false, svc:false, chat:false };
 
 function paintGuestContent(){
   if(!_painted.stays){ _painted.stays = true; _try(loadStays, 'stays'); }
-  if(!_painted.svc)  { _painted.svc   = true; _try(renderServiceRail, 'svcrail'); }
+  if(!_painted.svc)  {
+    _painted.svc = true;
+    /* apa-categories.js is deferred, so it may not exist yet on a fast
+       cold boot. Wait for it rather than silently skipping the rails. */
+    _try(function(){
+      var n = 0;
+      (function wait(){
+        if(window.ApaCategories){ ApaCategories.render('cat-rails'); return; }
+        if(++n > 60) return;                       // ~3s ceiling
+        setTimeout(wait, 50);
+      })();
+    }, 'catrails');
+  }
   if(!_painted.hero) {
     _painted.hero = true;
     _try(loadHeroVideo, 'herovideo');
@@ -1119,35 +1129,8 @@ function init(){
   ApaSession.subscribe(onSession);
 }
 
-/* ══ SERVICE RAIL ══ */
-var SVC_RAIL = [
-  { k:'flights',   n:'Flights',    d:'Compare and book',      i:'icon-flights.png'   },
-  { k:'tours',     n:'Tours',      d:'Safaris and day trips', i:'icon-tours.png'     },
-  { k:'events',    n:'Events',     d:'Concerts and shows',    i:'icon-events.png'    },
-  { k:'rides',     n:'Rides',      d:'Get around town',       i:'icon-rides.png'     },
-  { k:'food',      n:'Food',       d:'Delivered to you',      i:'icon-food.png'      },
-  { k:'shopping',  n:'Shopping',   d:'Local and global',      i:'icon-shopping.png'  },
-  { k:'carhire',   n:'Car Hire',   d:'Drive yourself',        i:'icon-carhire.png'   },
-  { k:'roommates', n:'Roommates',  d:'Find a flatmate',       i:'icon-roommates.png' }
-];
-
-function renderServiceRail(){
-  var rail = document.getElementById('svc-rail');
-  if(!rail) return;
-  rail.innerHTML = SVC_RAIL.map(function(s){
-    return '<button type="button" class="svc-card" onclick="navigateToService(\''+s.k+'\')">'
-      +   '<span class="svc-card-img"><img src="'+s.i+'" alt="" loading="lazy" decoding="async"></span>'
-      +   '<span class="svc-card-b">'
-      +     '<span class="svc-card-n">'+s.n+'</span>'
-      +     '<span class="svc-card-d">'+s.d+'</span>'
-      +   '</span>'
-      +   '<span class="svc-card-go">'
-      +     '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>'
-      +   '</span>'
-      + '</button>';
-  }).join('');
-  if(window.ApaRail) ApaRail.refresh();
-}
+/* The old generic service rail is replaced by apa-categories.js,
+   which shows real products instead of another row of icons. */
 
 function showScreen(role){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
@@ -1522,6 +1505,7 @@ function hideAddSheet(){ document.getElementById('add-scrim').classList.remove('
 <!-- Session core must resolve before any consumer script runs. -->
 <script src="/apa-chrome.js" defer></script>
 <script src="/apa-rail.js" defer></script>
+<script src="/apa-categories.js" defer></script>
 <script src="/analytics.js" defer></script>
 <script src="/chat.js" defer></script>
 <script src="/apa-ai.js" defer></script>

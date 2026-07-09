@@ -54,13 +54,26 @@ async function boot(session, label, file) {
       w.requestAnimationFrame = f => setTimeout(f, 0);
       w.scrollTo = () => {};
       w.HTMLElement.prototype.scrollTo = () => {};
-      w.fetch = () => Promise.resolve({ ok: true, json: () => Promise.resolve([]) });
+      // Return one plausible row per table so category rails render.
+      w.fetch = (u) => {
+        const url = String(u);
+        const row =
+          /scraped_events/.test(url)      ? [{ title:'Nairobi Fest', venue:'KICC', city:'Nairobi', start_date:'2026-08-01', image_url:'e.jpg', price_from:1500 }] :
+          /scraped_tours/.test(url)       ? [{ title:'Masai Mara', location:'Narok', duration:'3 days', image_url:'t.jpg', price_from:40000 }] :
+          /scraped_restaurants/.test(url) ? [{ name:'Talisman', cuisine:'Fusion', area:'Karen', image_url:'f.jpg', delivery_mins:35 }] :
+          /scraped_shopping/.test(url)    ? [{ name:'Kikoy', category:'Textiles', seller:'Soko', image_url:'s.jpg', price:1200 }] :
+          /scraped_carhire/.test(url)     ? [{ name:'Prado', vehicle_type:'SUV', seats:7, image_url:'c.jpg', price_self:12000 }] :
+          /type=eq\.share/.test(url)      ? [{ id:'r1', title:'Room in Kilimani', area:'Kilimani', price_night:25000, photos:['r.jpg'] }] :
+          /listings/.test(url)            ? [{ id:'l1', title:'Luxore', area:'Syokimau', price_night:3000, photos:['p.jpg'], beds:1, max_guests:2 }] :
+          [];
+        return Promise.resolve({ ok:true, json: () => Promise.resolve(row) });
+      };
     }
   });
 
   const w = dom.window;
   // load local module scripts by hand (jsdom won't fetch /apa-*.js)
-  for (const f of ['apa-session.js', 'apa-chrome.js', 'apa-rail.js']) {
+  for (const f of ['apa-session.js', 'apa-chrome.js', 'apa-rail.js', 'apa-categories.js']) {
     const s = w.document.createElement('script');
     s.textContent = fs.readFileSync(f, 'utf8');
     w.document.head.appendChild(s);
@@ -96,7 +109,6 @@ function check(w, name, cond, detail) {
   pass &= check(w, 'partner card label', w.document.getElementById('apa-psc-t').textContent === 'Switch to Partner', w.document.getElementById('apa-psc-t').textContent);
   pass &= check(w, 'loader dismissed', w.document.getElementById('loader').classList.contains('done'), '');
   pass &= check(w, 'guest screen active', w.document.getElementById('screen-guest').classList.contains('active'), '');
-  pass &= check(w, 'service rail populated', w.document.getElementById('svc-rail').children.length === 8, w.document.getElementById('svc-rail').children.length);
   pass &= check(w, 'stay-grid is rail track', w.document.getElementById('stay-grid').hasAttribute('data-rail-track'), '');
   pass &= check(w, 'rail arrows injected', w.document.querySelectorAll('.apa-rail-nav').length >= 4, w.document.querySelectorAll('.apa-rail-nav').length);
 
@@ -126,7 +138,19 @@ function check(w, name, cond, detail) {
   pass &= check(g.w, 'html[data-auth=guest]', groot.getAttribute('data-auth') === 'guest', groot.getAttribute('data-auth'));
   pass &= check(g.w, 'loader dismissed', g.w.document.getElementById('loader').classList.contains('done'), '');
   pass &= check(g.w, 'partner card visible', !!g.w.document.querySelector('[data-apa="role"]'), '');
-  pass &= check(g.w, 'service rail populated', g.w.document.getElementById('svc-rail').children.length === 8, '');
+
+  // ── category rails ──
+  console.log('\n── category rails ──');
+  await new Promise(r => setTimeout(r, 500));
+  const secs = w.document.querySelectorAll('#cat-rails .cat-sec');
+  pass &= check(w, 'rails rendered', secs.length === 6, secs.length + ' of 6');
+  const keys = [...secs].map(s2 => s2.getAttribute('data-cat'));
+  pass &= check(w, 'order stable', keys.join(',') === 'events,tours,food,shopping,carhire,roommates', keys.join(','));
+  pass &= check(w, 'no flights/rides rail', !keys.includes('flights') && !keys.includes('rides'), keys.join(','));
+  pass &= check(w, 'product cards present', w.document.querySelectorAll('#cat-rails .pc').length === 6, w.document.querySelectorAll('#cat-rails .pc').length);
+  pass &= check(w, 'product image rendered', !!w.document.querySelector('#cat-rails .pc-img img'), '');
+  pass &= check(w, 'each rail is a carousel', w.document.querySelectorAll('#cat-rails [data-rail-track]').length === 6, '');
+  pass &= check(w, 'service tiles autoplay', w.document.querySelector('[data-rail="compact"]').getAttribute('data-autoplay') === '4200', '');
 
   // ── index.html: previously referenced `supabase` without loading it,
   //    so the landing page ALWAYS looked signed-out.
