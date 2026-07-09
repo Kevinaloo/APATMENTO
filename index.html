@@ -14,7 +14,7 @@
   <meta http-equiv="Pragma" content="no-cache"/>
   <meta http-equiv="Expires" content="0"/>
 
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <!-- ══ SEO ══ -->
   <meta name="description" content="Apatmento is Kenya's zero-commission travel super-app. Book short-stay apartments, safaris, events and car hire in Nairobi and beyond. Hosts keep 100% — guests pay only face value. No hidden fees, ever.">
   <meta name="keywords" content="short stay apartments Nairobi, Kenya travel app, book apartment Nairobi, zero commission rentals Kenya, Nairobi airbnb alternative, Kenya safaris booking, tours Nairobi, roommates Nairobi, car hire Kenya, events tickets Nairobi, Kilimani apartments, Westlands apartments, Karen apartments, Mombasa apartments, Kenya accommodation, apatmento, short term rental Kenya"/>
@@ -864,6 +864,13 @@ document.querySelectorAll('.svc-tile').forEach((t,i)=>{t.style.transitionDelay=(
 
 
 
+<!-- These were missing entirely: index.html referenced `supabase` but
+     never loaded it, so the auth block silently no-opped and the landing
+     page always looked signed-out. -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/apa-session.js"></script>
+<script src="/apa-chrome.js" defer></script>
+<script src="/apa-rail.js" defer></script>
 <script src="/apa-ai.js" defer></script>
 <script src="/telemetry.js" defer></script>
 <script src="/pwa.js" defer></script>
@@ -871,40 +878,68 @@ document.querySelectorAll('.svc-tile').forEach((t,i)=>{t.style.transitionDelay=(
 <script src="/showcase.js" defer></script>
 
 <script>
-/* ── Auth-aware landing page ── */
-(async function(){
-  let sb2=null;
-  try{const{createClient}=supabase;sb2=createClient('https://gfwgbgdvxtocwhilrtdw.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw');}catch(e){}
-  if(!sb2) return;
-  try{
-    const{data:{session}}=await sb2.auth.getSession();
-    if(!session) return;
-    const user=session.user;
-    let name='there';
-    try{
-      const{data:p}=await sb2.from('profiles').select('first_name').eq('id',user.id).single();
-      name=p?.first_name||user.user_metadata?.first_name||user.email?.split('@')[0]||'there';
-    }catch(e){ name=user.user_metadata?.first_name||user.email?.split('@')[0]||'there'; }
-    name=name.charAt(0).toUpperCase()+name.slice(1);
+/* ── Auth-aware landing page (rewritten) ────────────────────────────
+   Previously this minted a second Supabase client and mutated the nav
+   inside one async IIFE. If any step threw (a slow profile query, a
+   missing element), the nav was left half-swapped — both guest and
+   user chrome visible, or neither.
 
-    /* Show user nav, hide guest nav */
-    document.getElementById('nav-guest').style.display='none';
-    document.getElementById('nav-user').style.display='flex';
-    document.getElementById('nav-welcome').textContent='Welcome, '+name;
-    document.getElementById('nav-avatar').textContent=name[0];
+   Now it reacts to ApaSession. Each mutation is isolated, so no single
+   failure can strand the header.
+   ─────────────────────────────────────────────────────────────────── */
+(function(){
+  function t(fn){ try{ fn(); }catch(e){ console.warn('[index]', e && e.message); } }
 
-    /* Update hero button to go straight to dashboard */
-    const btn=document.getElementById('hero-portal-btn');
-    if(btn){ btn.href='dashboard.html'; }
+  function paint(st){
+    var user = st.status === 'user';
 
-    /* Hide sign in/up links, show just the portal button */
-    document.body.classList.add('is-signed-in');
+    document.documentElement.setAttribute('data-auth', user ? 'user' : 'guest');
+    document.body.classList.toggle('is-signed-in', user);
 
-    /* Change CTA pair to "Go to dashboard" */
-    const pair=document.querySelector('.hero-cta-pair');
-    if(pair) pair.innerHTML=`<a href="dashboard.html" class="hero-cta-ghost" style="color:var(--mint);border-color:rgba(45,212,191,.3);">Go to dashboard →</a>`;
+    t(function(){
+      var g = document.getElementById('nav-guest');
+      var u = document.getElementById('nav-user');
+      if(g) g.style.display = user ? 'none' : 'flex';
+      if(u) u.style.display = user ? 'flex' : 'none';
+    });
 
-  }catch(e){}
+    if(!user) return;
+
+    t(function(){
+      var w = document.getElementById('nav-welcome');
+      if(w) w.textContent = 'Welcome, ' + st.name;
+    });
+    t(function(){
+      var a = document.getElementById('nav-avatar');
+      if(a) a.textContent = st.initial;
+    });
+    t(function(){
+      var b = document.getElementById('hero-portal-btn');
+      if(b) b.href = 'dashboard.html';
+    });
+    t(function(){
+      var p = document.querySelector('.hero-cta-pair');
+      if(!p) return;
+      p.innerHTML = '<a href="dashboard.html" class="hero-cta-ghost" '
+        + 'style="color:var(--mint);border-color:rgba(45,212,191,.3);">Go to dashboard \u2192</a>';
+    });
+  }
+
+  /* Bind to the session core. If it hasn't defined itself yet (script
+     ordering, a CDN hiccup, a slow parse), poll briefly rather than
+     silently giving up — the old code's `if(!sb2) return;` was exactly
+     that silent give-up, and it left the page permanently signed-out. */
+  function bind(){
+    if(window.ApaSession){ ApaSession.subscribe(paint); return true; }
+    return false;
+  }
+  if(!bind()){
+    paint({ status:'guest', name:'', initial:'?' });   // render something now
+    var n = 0;
+    var iv = setInterval(function(){
+      if(bind() || ++n > 60) clearInterval(iv);        // ~3s ceiling
+    }, 50);
+  }
 })();
 </script>
 

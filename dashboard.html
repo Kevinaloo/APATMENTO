@@ -6,7 +6,7 @@
   <meta http-equiv="Pragma" content="no-cache"/>
   <meta http-equiv="Expires" content="0"/>
 
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <!-- ══ SEO ══ -->
   <meta name="description" content="Your Apatmento dashboard."/>
   
@@ -52,6 +52,9 @@
   
 <title>Dashboard — Apatmento</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- Session core: the single source of truth for auth. Must load
+     immediately after the Supabase lib and before any consumer. -->
+<script src="/apa-session.js"></script>
 <script>
 /* ── Guaranteed loader failsafe — runs before anything else ── */
 window.addEventListener('load', function() {
@@ -146,7 +149,6 @@ body{overflow-x:hidden;}
   .hero-cta{padding:11px 20px!important;font-size:13px!important;}
   .hero-body{padding:20px!important;}
   .section-title{font-size:18px!important;}
-  .prop-grid{grid-template-columns:1fr!important;gap:14px!important;}
   .prop-card{border-radius:16px!important;}
   .prop-img{height:180px!important;}
 }
@@ -172,7 +174,7 @@ body{overflow-x:hidden;}
   .topbar{background:rgba(252,252,253,.97)!important;}
   .svc{background:rgba(255,255,255,.9)!important;}
   /* Service rail: 4 per row, 2 rows = all 8 visible */
-  .service-rail{grid-template-columns:repeat(4,1fr)!important;gap:8px!important;}
+  .service-rail{}
   .svc{aspect-ratio:auto!important;aspect-ratio:1!important;min-height:0!important;padding:0!important;border-radius:14px!important;}
   .svc-ico{width:100%!important;height:100%!important;}
   .svc-name{font-size:10px!important;white-space:normal!important;line-height:1.2!important;}
@@ -246,25 +248,22 @@ body{overflow-x:hidden;}
 
 /* ══ TOPBAR NAV MOBILE COMPRESSION ══ */
 @media(max-width:540px){
-  #dash-user-nav{gap:6px!important;}
   .admin-text{display:none!important;}
   #admin-link{padding:6px 8px!important;}
   .sos-btn{padding:6px 10px!important;font-size:11px!important;}
   .tb-icon-btn{width:32px!important;height:32px!important;}
   .tb-avatar{width:32px!important;height:32px!important;font-size:12px!important;border-radius:10px!important;}
-  #nav-user-name{display:none!important;}
 }
 
 /* ══ PARTNER SWITCH BTN ══ */
-#partner-switch-btn:hover{background:rgba(67,97,255,.15);border-color:rgba(67,97,255,.5);transform:translateY(-1px);}
+
 @media(max-width:540px){
-  .partner-btn-text{display:none!important;}
-  #partner-switch-btn{padding:6px 9px!important;}
+
 }
 
 /* ══ PARTNER SWITCH CARD (Good morning section) ══ */
 .partner-switch-card{
-  display:flex !important; /* override inline display:none set by JS when logged in */
+  display:flex;
   align-items:center;justify-content:space-between;
   padding:16px 20px;border-radius:20px;
   background:linear-gradient(135deg,rgba(67,97,255,.08),rgba(123,47,247,.06));
@@ -274,7 +273,6 @@ body{overflow-x:hidden;}
   position:relative;overflow:hidden;
   width:100%;box-sizing:border-box;
 }
-.partner-switch-card[style*="display:none"]{display:none !important;}
 .partner-switch-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(67,97,255,.1),rgba(123,47,247,.08));opacity:0;transition:opacity .3s;pointer-events:none;}
 .partner-switch-card:hover::before{opacity:1;}
 .partner-switch-card:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(67,97,255,.15);border-color:rgba(67,97,255,.35);}
@@ -290,13 +288,39 @@ body{overflow-x:hidden;}
   .psc-icon{width:38px;height:38px;border-radius:11px;}
   .psc-sub{display:none;}
 }
-.psc-hidden{display:none !important;}
-.partner-switch-card:not(.psc-hidden){display:flex !important;}
 
 /* ══ PARTNER ONBOARDING GRID ══ */
 .ob-ico{width:26px;height:26px;}
 .svc-onboard:hover{border-color:var(--mint-deep) !important;transform:translateY(-3px) !important;box-shadow:0 8px 24px rgba(10,10,20,.08) !important;}
 
+/* ══════════ SERVICE CARD RAIL (Explore more) ══════════ */
+.svc-card-rail{}
+.svc-card{
+  display:flex;align-items:center;gap:12px;width:100%;box-sizing:border-box;
+  padding:14px;border-radius:18px;cursor:pointer;text-align:left;
+  font-family:inherit;
+  background:rgba(255,255,255,.72);
+  border:1px solid var(--line,rgba(10,10,20,.08));
+  transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease;
+}
+.svc-card:hover{transform:translateY(-4px);box-shadow:0 12px 30px rgba(10,10,20,.12);
+  border-color:rgba(67,97,255,.3);background:#fff;}
+.svc-card:focus-visible{outline:2px solid #4361FF;outline-offset:2px;}
+.svc-card-img{width:52px;height:52px;flex-shrink:0;border-radius:14px;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;background:rgba(67,97,255,.06);}
+.svc-card-img img{width:100%;height:100%;object-fit:cover;}
+.svc-card-b{min-width:0;flex:1;display:block;}
+.svc-card-n{display:block;font-weight:700;font-size:14px;color:var(--ink,#0A0A14);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.svc-card-d{display:block;font-size:11.5px;color:var(--ink-faint,#8a8a99);margin-top:2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.svc-card-go{flex-shrink:0;color:var(--ink-faint,#8a8a99);opacity:.55;transition:all .25s;}
+.svc-card:hover .svc-card-go{opacity:1;color:#4361FF;transform:translateX(3px);}
+
+/* ══ GLOBAL OVERFLOW GUARD — nothing may exceed the viewport ══ */
+html,body{max-width:100%;overflow-x:hidden;}
+img,video,svg{max-width:100%;}
+*,*::before,*::after{box-sizing:border-box;}
 </style>
 
 <style>
@@ -400,8 +424,10 @@ body{overflow-x:hidden;}
 .section-link:hover{gap:9px;}
 
 /* property cards */
-.prop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:20px;}
-.prop-card{border-radius:var(--radius);overflow:hidden;background:rgba(255,255,255,.6);border:1px solid var(--line);cursor:pointer;transition:transform .2s ease,box-shadow .2s ease;}
+/* prop-grid is a rail track now — [data-rail-track] supplies flex+snap.
+   The grid rules were fighting the carousel, so they are gone. */
+.prop-grid{}
+.prop-card{width:100%;border-radius:var(--radius);overflow:hidden;background:rgba(255,255,255,.6);border:1px solid var(--line);cursor:pointer;transition:transform .2s ease,box-shadow .2s ease;}
 .prop-card:hover{transform:translateY(-8px);box-shadow:var(--shadow-lift);border-color:transparent;}
 .prop-thumb{height:180px;position:relative;overflow:hidden;background:linear-gradient(135deg,var(--lilac),var(--violet));display:flex;align-items:center;justify-content:center;}
 .prop-thumb img{width:100%;height:100%;object-fit:cover;transition:transform .6s cubic-bezier(.22,1,.36,1);}
@@ -596,41 +622,6 @@ body{overflow-x:hidden;}
 @keyframes spin{to{transform:rotate(360deg);}}
 
 
-/* ══ FLOATING MODE PILL — guest/partner toggle ══ */
-.mode-pill{
-  display:none;                    /* shown only when logged in */
-  align-items:center;gap:6px;
-  padding:6px 13px 6px 9px;
-  border-radius:100px;
-  background:rgba(255,255,255,.82);
-  -webkit-
-  border:1.5px solid rgba(67,97,255,.22);
-  cursor:pointer;
-  font-family:var(--font-body);font-size:12px;font-weight:700;
-  color:var(--ink);white-space:nowrap;
-  box-shadow:0 2px 16px rgba(67,97,255,.13);
-  transition:transform .2s ease,box-shadow .2s ease;
-  position:absolute;top:0;right:0;z-index:10;
-  user-select:none;
-}
-.mode-pill.visible{display:flex;}
-.mode-pill:hover{
-  transform:translateY(-2px);
-  box-shadow:0 5px 20px rgba(67,97,255,.22);
-  background:#fff;
-}
-.mode-pill:active{transform:translateY(0);}
-.mode-pill-ico{font-size:15px;line-height:1;}
-.mode-pill-dot{
-  width:7px;height:7px;border-radius:50%;
-  background:var(--ok);margin-left:1px;flex-shrink:0;
-  animation:pill-pulse 2.8s ease-in-out infinite;
-}
-.mode-pill.partner-active{
-  background:linear-gradient(135deg,rgba(67,97,255,.12),rgba(123,47,247,.09));
-  border-color:rgba(67,97,255,.35);color:#4361FF;
-}
-.mode-pill.partner-active .mode-pill-dot{background:#4361FF;}
 @keyframes pill-pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.55;transform:scale(.78);}}
 
 /* greeting wrapper needs relative positioning for pill anchor */
@@ -715,26 +706,32 @@ body{overflow-x:hidden;}
       </button>
       <div class="tb-right" id="tb-right-guest">
         <!-- Guest nav — Sign In + Sign Up (hidden when logged in) -->
-        <div id="dash-guest-nav" style="display:none;align-items:center;gap:8px;">
+        <div id="dash-guest-nav" class="apa-nav" data-when="guest">
           <a href="auth.html" style="font-size:13px;font-weight:600;color:var(--ink-soft);text-decoration:none;padding:8px 16px;border-radius:100px;border:1px solid var(--line);background:rgba(255,255,255,.7);transition:all .22s;">Sign in</a>
           <a href="auth.html?mode=signup" style="font-size:13px;font-weight:600;color:#fff;text-decoration:none;padding:9px 18px;border-radius:100px;background:linear-gradient(135deg,var(--violet),var(--electric));box-shadow:0 4px 14px rgba(123,47,247,.3);">Sign up</a>
         </div>
-        <!-- User nav — shown when logged in -->
-        <div id="dash-user-nav" style="display:none;align-items:center;gap:10px;">
-          <a id="admin-link" href="/admin.html" style="display:none;padding:7px 10px;border-radius:100px;background:rgba(123,47,247,.1);border:1px solid rgba(123,47,247,.3);color:#7B2FF7;font-size:11px;font-weight:700;text-decoration:none;letter-spacing:.04em;align-items:center;gap:5px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg><span class="admin-text">Admin</span></a>
-          <span id="nav-user-name" style="font-size:13px;font-weight:500;color:var(--ink-soft);"></span>
-          <button id="partner-switch-btn" onclick="switchRole()" style="display:flex;align-items:center;gap:5px;padding:7px 12px;border-radius:100px;border:1.5px solid rgba(67,97,255,.3);background:rgba(67,97,255,.08);color:#4361FF;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .25s;">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            <span class="partner-btn-text">Partner</span>
+        <!-- ══ USER NAV — rendered & governed solely by apa-chrome.js ══
+             Visibility is CSS-driven off <html data-auth>. No inline
+             display toggling, so it can never half-render. ══ -->
+        <div class="apa-nav" data-when="user">
+          <a class="apa-admin" data-when="admin" href="/admin.html" aria-label="Admin">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span>Admin</span>
+          </a>
+
+          <span class="apa-welcome" id="apa-welcome"></span>
+
+          <button class="apa-sos" data-apa="sos" type="button" aria-label="Emergency help">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 19h20z"/><path d="M12 9v4M12 17h.01"/></svg>
+            <span class="apa-sos-t">SOS</span>
           </button>
-          <button class="sos-btn" onclick="openSOS()">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 2 2 19h20z"/><path d="M12 9v4M12 17h.01"/></svg>
-            SOS
+
+          <button class="apa-ico" data-apa="notif" type="button" aria-label="Notifications">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/><path d="M3.3 16.6c-.6.7-.1 1.8.8 1.8h15.8c.9 0 1.4-1.1.8-1.8C19.5 15 18 13.2 18 8A6 6 0 0 0 6 8c0 5.2-1.5 7-2.7 8.6"/></svg>
+            <span class="apa-ico-dot"></span>
           </button>
-          <button class="tb-icon-btn" onclick="openNotifications()" aria-label="Notifications">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/><path d="M3.3 16.6c-.6.7-.1 1.8.8 1.8h15.8c.9 0 1.4-1.1.8-1.8C19.5 15 18 13.2 18 8A6 6 0 0 0 6 8c0 5.2-1.5 7-2.7 8.6"/></svg>
-          </button>
-          <div class="tb-avatar" id="g-avatar" onclick="window.location.href='profile.html?back=1'">?</div>
+
+          <button class="apa-avatar" id="apa-avatar" type="button" aria-label="Your profile"
+                  onclick="window.location.href='profile.html'">?</button>
         </div>
       </div>
     </div>
@@ -742,32 +739,23 @@ body{overflow-x:hidden;}
     <div class="content">
       <div class="greeting">
         <!-- Mode toggle pill — floats top-right, non-intrusive -->
-        <button class="mode-pill" id="mode-pill" onclick="switchRole()" aria-label="Switch mode">
-          <span class="mode-pill-ico" id="mode-pill-ico">🏠</span>
-          <span id="mode-pill-label">Guest</span>
-          <span class="mode-pill-dot"></span>
-        </button>
         <span class="greeting-eyebrow" id="g-eyebrow">✦ Your world, one tap away</span>
         <h1 class="greeting-title" id="g-title"><span id="g-greeting">Good afternoon</span><em id="g-name"></em></h1>
         <p class="greeting-sub">Stays, flights, tours, rides and more — every part of your trip, beautifully in one place.</p>
       </div>
 
-      <!-- ── PARTNER SWITCH CARD ── -->
-      <div class="partner-switch-card psc-hidden" id="partner-switch-card" onclick="switchRole()">
-        <div class="psc-left">
-          <div class="psc-icon">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4M4 7h16M16 21l4-4-4-4M20 17H4"/></svg>
-          </div>
-          <div>
-            <div class="psc-label" id="psc-label-text">Partner mode</div>
-            <div class="psc-title" id="psc-title-text">Switch to Partner</div>
-            <div class="psc-sub" id="psc-sub-text">Manage listings, bookings &amp; earnings</div>
-          </div>
-        </div>
-        <div class="psc-arrow">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        </div>
-      </div>
+      <!-- ══ PARTNER SWITCH — always visible, label reflects state ══ -->
+      <button class="apa-psc" type="button" data-apa="role" aria-label="Switch mode">
+        <span class="apa-psc-l">
+          <span class="apa-psc-i"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4M4 7h16M16 21l4-4-4-4M20 17H4"/></svg></span>
+          <span class="apa-psc-tx">
+            <span class="apa-psc-k" id="apa-psc-k">Partner mode</span>
+            <span class="apa-psc-t" id="apa-psc-t">Become a partner</span>
+            <span class="apa-psc-s" id="apa-psc-s">List your space and start earning</span>
+          </span>
+        </span>
+        <span class="apa-psc-a"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+      </button>
 
       <div class="rail-label">Explore services</div>
 
@@ -799,7 +787,8 @@ body{overflow-x:hidden;}
 
       <!-- ── MORE SERVICES ── -->
       
-      <div class="service-rail">
+      <div data-rail="compact" data-dots="off">
+      <div class="service-rail" data-rail-track aria-label="Explore services">
         <div class="svc" data-svc="flights" onclick="navigateToService('flights')"><img class="svc-ico" src="icon-flights.png" alt="Flights" style="width:100%;height:100%;object-fit:cover;"/><span class="svc-name">Flights</span></div>
         <div class="svc" data-svc="tours" onclick="navigateToService('tours')"><img class="svc-ico" src="icon-tours.png" alt="Tours" style="width:100%;height:100%;object-fit:cover;"/><span class="svc-name">Tours</span></div>
         <div class="svc" data-svc="events" onclick="navigateToService('events')"><img class="svc-ico" src="icon-events.png" alt="Events" style="width:100%;height:100%;object-fit:cover;"/><span class="svc-name">Events</span></div>
@@ -807,6 +796,7 @@ body{overflow-x:hidden;}
         <div class="svc" data-svc="food" onclick="navigateToService('food')"><img class="svc-ico" src="icon-food.png" alt="Food" style="width:100%;height:100%;object-fit:cover;"/><span class="svc-name">Food</span></div>
         <div class="svc" data-svc="shopping" onclick="navigateToService('shopping')"><img class="svc-ico" src="icon-shopping.png" alt="Shopping" style="width:100%;height:100%;object-fit:cover;"/><span class="svc-name">Shopping</span></div>
         <div class="svc" data-svc="carhire" onclick="navigateToService('carhire')"><img class="svc-ico" src="icon-carhire.png" alt="Car Hire" style="width:100%;height:100%;object-fit:cover;"/><span class="svc-name">Car Hire</span></div>
+      </div>
       </div><!-- /service-rail -->
 
       <!-- FEATURED VIDEO HERO — live ad from Supabase -->
@@ -832,7 +822,20 @@ body{overflow-x:hidden;}
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
           </a>
         </div>
-        <div class="prop-grid" id="stay-grid"></div>
+        <div data-rail data-autoplay="4800">
+          <div class="prop-grid" id="stay-grid" data-rail-track aria-label="Stays"></div>
+        </div>
+      </div>
+    </div>
+
+      <!-- ══ MORE SERVICES — horizontal, each links to its full page ══ -->
+      <div class="section">
+        <div class="section-head">
+          <h2 class="section-title">Explore more</h2>
+        </div>
+        <div data-rail data-autoplay="5600">
+          <div class="svc-card-rail" id="svc-rail" data-rail-track aria-label="More services"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -902,8 +905,11 @@ body{overflow-x:hidden;}
 ════════════════════════════════════════════════ */
 const SUPABASE_URL = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
-const { createClient } = supabase;
-const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+/* Reuse the single shared client from apa-session.js. Two clients on
+   one storage key race each other and silently drop the session — that
+   was a second, quieter source of the "signed out" bug. */
+const sb = (window.ApaSession && window.ApaSession.client())
+        || supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let CURRENT_USER = null;
 let CURRENT_ROLE = null;
@@ -1020,90 +1026,128 @@ function getGreeting(){
   return 'Good evening';
 }
 
-/* ── SESSION INIT ── */
-async function init(){
-  /* ══ Use onAuthStateChange INITIAL_SESSION event
-     This fires synchronously from localStorage — no race conditions.
-     ══════════════════════════════════════════════════════════ */
-  const loaderFail = setTimeout(()=>{ document.getElementById('loader')?.classList.add('done'); }, 4000);
+/* ══════════════════════════════════════════════════════════════════
+   SESSION INIT  v2 — rewritten.
 
-  sb.auth.onAuthStateChange(async (event, session) => {
-    // Handle both INITIAL_SESSION (page load) and SIGNED_IN (after OAuth/signup redirect)
-    if (event !== 'INITIAL_SESSION' && event !== 'SIGNED_IN') return;
-    if (event === 'SIGNED_IN' && document.getElementById('dash-user-nav')?.style.display === 'flex') return; // already handled
+   The old version threw a ReferenceError on every signed-in load:
+   it read `params` eleven lines before `const params` was declared
+   (temporal dead zone). That aborted the auth callback midway, which
+   is why the header half-rendered, SOS/avatar vanished, and the page
+   appeared signed-out after navigating back.
 
-    clearTimeout(loaderFail);
+   Now: ApaSession is the single source of truth. This file only
+   reacts to it. Every step is independent — one failing step can
+   never prevent the others from completing.
+   ══════════════════════════════════════════════════════════════════ */
 
-    if (!session) {
-      // ── GUEST ──
-      document.getElementById('dash-guest-nav').style.display = 'flex';
-      document.getElementById('dash-user-nav').style.display  = 'none';
-      document.getElementById('g-greeting').textContent = getGreeting();
-      document.getElementById('g-name').textContent = '';
-      document.getElementById('g-avatar').textContent = '?';
-      setTimeout(()=>document.getElementById('loader')?.classList.add('done'), 800);
-      CURRENT_ROLE = 'guest';
-      showScreen('guest');
-      loadStays();
-      loadHeroVideo();
-      setTimeout(loadDashboardHero, 400);
-      setTimeout(() => updateModeUI(CURRENT_ROLE), 50);
-      if(typeof ApatmentoChat!=="undefined") setTimeout(ApatmentoChat.initFAB, 800);
-      return;
-    }
-
-    // ── SIGNED IN ──
-    CURRENT_USER = session.user;
-
-    // Show admin link if admin email
-    const ADMINS = ['apatmento@gmail.com','worlddossy@gmail.com'];
-    if (ADMINS.includes(session.user.email?.toLowerCase())) {
-      const adminLink = document.getElementById('admin-link');
-      if (adminLink) adminLink.style.display = 'flex';
-    }
-
-    // Get profile
-    const meta = session.user.user_metadata || {};
-    let firstName = meta.first_name || meta.given_name || meta.name?.split(' ')[0] || '';
-    let savedRole = 'guest';
-    try {
-      const { data:p } = await sb.from('profiles').select('first_name,last_role').eq('id',session.user.id).maybeSingle();
-      if (p?.first_name) firstName = p.first_name;
-      if (p?.last_role)  savedRole  = p.last_role;
-    } catch(e){}
-
-    USER.firstName = firstName || 'there';
-
-    // Update nav
-    document.getElementById('dash-guest-nav').style.display = 'none';
-    document.getElementById('dash-user-nav').style.display  = 'flex';
-    const psc = document.getElementById('partner-switch-card');
-    if(psc) psc.classList.remove('psc-hidden');
-    const pill = document.getElementById('mode-pill');
-    if(pill) pill.classList.add('visible');
-    CURRENT_ROLE = params.get('role') || 'guest';
-    updateModeUI(CURRENT_ROLE);
-    document.getElementById('g-greeting').textContent = getGreeting();
-    document.getElementById('g-avatar').textContent   = (firstName||'?')[0].toUpperCase();
-    if (document.getElementById('nav-user-name'))
-      document.getElementById('nav-user-name').textContent = 'Welcome, '+firstName;
-    if (firstName) {
-      document.getElementById('g-name').innerHTML = ', <em style="font-style:italic;font-weight:500;background:linear-gradient(120deg,var(--violet),var(--electric),var(--mint-deep));-webkit-background-clip:text;background-clip:text;color:transparent;">'+firstName+'</em>';
-    }
-
-    setTimeout(()=>document.getElementById('loader')?.classList.add('done'), 1000);
-
-    const params = new URLSearchParams(location.search);
-    const role   = params.get('role') || 'guest'; // never auto-load partner; user must switch explicitly
-    CURRENT_ROLE = role;
-    showScreen(role);
-
-    if (role === 'guest') { loadStays(); loadHeroVideo(); }
-    if (role === 'partner') setTimeout(initPartnerFlow, 200);
-    setTimeout(loadDashboardHero, 400);
-  });
+function _try(fn, label){
+  try { return fn(); }
+  catch(e){ console.warn('[dash:'+(label||'?')+']', e && e.message); }
 }
 
+/* Loader is dismissed by a guaranteed path, never by a callback that
+   might throw first. Belt AND braces. */
+var _loaderDone = false;
+function hideLoader(){
+  if (_loaderDone) return;
+  _loaderDone = true;
+  _try(function(){ document.getElementById('loader')?.classList.add('done'); }, 'loader');
+}
+setTimeout(hideLoader, 3500);                       // hard ceiling
+window.addEventListener('load', function(){ setTimeout(hideLoader, 900); });
+
+/* Guard: content that must render exactly once per page life. */
+var _painted = { stays:false, hero:false, svc:false, chat:false };
+
+function paintGuestContent(){
+  if(!_painted.stays){ _painted.stays = true; _try(loadStays, 'stays'); }
+  if(!_painted.svc)  { _painted.svc   = true; _try(renderServiceRail, 'svcrail'); }
+  if(!_painted.hero) {
+    _painted.hero = true;
+    _try(loadHeroVideo, 'herovideo');
+    setTimeout(function(){ _try(loadDashboardHero, 'dashhero'); }, 400);
+  }
+  if(!_painted.chat){
+    _painted.chat = true;
+    setTimeout(function(){
+      if(typeof ApatmentoChat !== 'undefined') _try(ApatmentoChat.initFAB, 'chat');
+    }, 800);
+  }
+}
+
+/* The ONE reaction to session state. Idempotent and total. */
+function onSession(st){
+  CURRENT_USER = st.user;
+  CURRENT_ROLE = st.role;
+
+  /* Greeting — independent of everything else. */
+  _try(function(){
+    var g = document.getElementById('g-greeting');
+    if(g) g.textContent = getGreeting();
+    var n = document.getElementById('g-name');
+    if(!n) return;
+    if(st.status === 'user' && st.name){
+      n.innerHTML = ', <em style="font-style:italic;font-weight:500;'
+        + 'background:linear-gradient(120deg,var(--violet),var(--electric),var(--mint-deep));'
+        + '-webkit-background-clip:text;background-clip:text;color:transparent;">'
+        + st.name.replace(/[<>&]/g,'') + '</em>';
+    } else {
+      n.textContent = '';
+    }
+  }, 'greeting');
+
+  /* Screen routing. Partner is opt-in only, never automatic. */
+  var role = (st.status === 'user' && st.role === 'partner') ? 'partner' : 'guest';
+  _try(function(){ showScreen(role); }, 'screen');
+
+  if(role === 'partner'){
+    setTimeout(function(){ _try(initPartnerFlow, 'partner'); }, 200);
+  } else {
+    paintGuestContent();
+  }
+
+  hideLoader();
+}
+
+function init(){
+  if(!window.ApaSession){
+    /* Session core missing — degrade gracefully to a working guest page. */
+    console.warn('[dash] ApaSession absent; guest fallback');
+    onSession({ status:'guest', user:null, name:'', initial:'?', role:'guest', isAdmin:false });
+    return;
+  }
+  ApaSession.subscribe(onSession);
+}
+
+/* ══ SERVICE RAIL ══ */
+var SVC_RAIL = [
+  { k:'flights',   n:'Flights',    d:'Compare and book',      i:'icon-flights.png'   },
+  { k:'tours',     n:'Tours',      d:'Safaris and day trips', i:'icon-tours.png'     },
+  { k:'events',    n:'Events',     d:'Concerts and shows',    i:'icon-events.png'    },
+  { k:'rides',     n:'Rides',      d:'Get around town',       i:'icon-rides.png'     },
+  { k:'food',      n:'Food',       d:'Delivered to you',      i:'icon-food.png'      },
+  { k:'shopping',  n:'Shopping',   d:'Local and global',      i:'icon-shopping.png'  },
+  { k:'carhire',   n:'Car Hire',   d:'Drive yourself',        i:'icon-carhire.png'   },
+  { k:'roommates', n:'Roommates',  d:'Find a flatmate',       i:'icon-roommates.png' }
+];
+
+function renderServiceRail(){
+  var rail = document.getElementById('svc-rail');
+  if(!rail) return;
+  rail.innerHTML = SVC_RAIL.map(function(s){
+    return '<button type="button" class="svc-card" onclick="navigateToService(\''+s.k+'\')">'
+      +   '<span class="svc-card-img"><img src="'+s.i+'" alt="" loading="lazy" decoding="async"></span>'
+      +   '<span class="svc-card-b">'
+      +     '<span class="svc-card-n">'+s.n+'</span>'
+      +     '<span class="svc-card-d">'+s.d+'</span>'
+      +   '</span>'
+      +   '<span class="svc-card-go">'
+      +     '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>'
+      +   '</span>'
+      + '</button>';
+  }).join('');
+  if(window.ApaRail) ApaRail.refresh();
+}
 
 function showScreen(role){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
@@ -1116,44 +1160,10 @@ async function saveRole(role){
   try{ await sb.from('profiles').upsert({ id:CURRENT_USER.id, last_role:role, updated_at:new Date().toISOString() }); }catch(e){}
 }
 
-function switchRole(){
-  closeDrawer();
-  if(CURRENT_ROLE==='guest' && !CURRENT_USER){
-    window.location.href='auth.html?next=partner'; return;
-  }
-  const next = CURRENT_ROLE==='guest' ? 'partner' : 'guest';
-  CURRENT_ROLE = next;
-  saveRole(next);
-  showScreen(next);
-  updateModeUI(next);
-  if(next==='partner') setTimeout(initPartnerFlow,200);
-  else { loadStays(); loadHeroVideo(); }
-}
+/* switchRole + updateModeUI now live in apa-chrome.js — driven by
+   ApaSession, so the header can never desync from the session. */
 
-/* ── Sync all mode-switching UI to the active role ── */
-function updateModeUI(role){
-  const isPartner = role === 'partner';
-
-  // Mode pill (greeting section)
-  const pill = document.getElementById('mode-pill');
-  if(pill){
-    const ico   = document.getElementById('mode-pill-ico');
-    const label = document.getElementById('mode-pill-label');
-    if(ico)   ico.textContent   = isPartner ? '🏠' : '🤝';
-    if(label) label.textContent = isPartner ? 'Guest' : 'Partner';
-    pill.classList.toggle('partner-active', isPartner);
-  }
-
-  // Partner-switch-card (guest screen)
-  const title = document.getElementById('psc-title-text');
-  const sub   = document.getElementById('psc-sub-text');
-  const lbl   = document.getElementById('psc-label-text');
-  if(title) title.textContent = isPartner ? 'Switch to Guest' : 'Switch to Partner';
-  if(sub)   sub.textContent   = isPartner ? 'Browse listings as a guest' : 'Manage listings, bookings & earnings';
-  if(lbl)   lbl.textContent   = isPartner ? 'Guest mode' : 'Partner mode';
-}
-
-async function signOut(){ await sb.auth.signOut(); window.location.href='auth.html'; }
+function signOut(){ if(window.ApaSession) ApaSession.signOut(); else window.location.href='auth.html'; }
 
 /* ── LOAD STAYS ── */
 async function loadStays(){
@@ -1245,63 +1255,8 @@ async function applyVideoBackground(){
 function openDrawer(){ document.getElementById('drawer').classList.add('open'); document.getElementById('drawer-scrim').classList.add('open'); }
 function closeDrawer(){ document.getElementById('drawer').classList.remove('open'); document.getElementById('drawer-scrim').classList.remove('open'); }
 
-/* ── SOS ── */
-function openSOS(){
-  // Show real SOS modal
-  let m = document.getElementById('sos-modal');
-  if(!m){
-    m = document.createElement('div');
-    m.id = 'sos-modal';
-    m.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.6);display:flex;align-items:flex-end;justify-content:center;';
-    m.innerHTML = `<div style="background:#fff;border-radius:28px 28px 0 0;padding:28px 24px 48px;width:100%;max-width:480px;animation:slideUp .3s cubic-bezier(.22,1,.36,1)">
-      <div style="width:40px;height:4px;background:#E5E7EB;border-radius:2px;margin:0 auto 20px"></div>
-      <div style="font-size:32px;text-align:center;margin-bottom:8px;">🆘</div>
-      <h2 style="font-family:'Fraunces',serif;font-size:22px;text-align:center;margin-bottom:6px;color:#0A0A14">Emergency Help</h2>
-      <p style="font-size:13px;color:#8E90AD;text-align:center;margin-bottom:24px;line-height:1.6">Apatmento is not an emergency service. Contact local authorities immediately.</p>
-      <a href="tel:999" style="display:flex;align-items:center;justify-content:center;gap:10px;padding:16px;background:#E11D48;color:#fff;border-radius:14px;font-weight:700;font-size:16px;text-decoration:none;margin-bottom:10px;">📞 Call 999 — Police / Fire / Ambulance</a>
-      <a href="tel:112" style="display:flex;align-items:center;justify-content:center;gap:10px;padding:16px;background:#FF6B2C;color:#fff;border-radius:14px;font-weight:700;font-size:16px;text-decoration:none;margin-bottom:10px;">📞 Call 112 — Emergency (all networks)</a>
-      <a href="tel:0800720940" style="display:flex;align-items:center;justify-content:center;gap:10px;padding:16px;background:rgba(10,10,20,.06);color:#0A0A14;border-radius:14px;font-weight:600;font-size:14px;text-decoration:none;margin-bottom:20px;">🏥 0800 720 940 — Nairobi Hospital</a>
-      <button onclick="document.getElementById('sos-modal').remove()" style="width:100%;padding:14px;border-radius:14px;border:1.5px solid rgba(10,10,20,.1);background:transparent;font-weight:600;font-size:14px;cursor:pointer;">Close</button>
-    </div>`;
-    m.addEventListener('click', e => { if(e.target===m) m.remove(); });
-    document.body.appendChild(m);
-  }
-}
-
-/* ── NOTIFICATIONS ── */
-async function openNotifications(){
-  let panel = document.getElementById('notif-panel');
-  if(panel){ panel.remove(); return; }
-  panel = document.createElement('div');
-  panel.id = 'notif-panel';
-  panel.style.cssText = 'position:fixed;top:66px;right:12px;z-index:500;width:320px;max-width:calc(100vw - 24px);background:#fff;border-radius:20px;box-shadow:0 12px 48px rgba(0,0,0,.15);border:1px solid rgba(10,10,20,.06);overflow:hidden;animation:fadeIn .2s ease;';
-  
-  let notifHTML = '';
-  if(CURRENT_USER){
-    try {
-      const {data:bookings} = await sb.from('apartment_bookings').select('id,created_at,status,listing_title').eq('guest_id',CURRENT_USER.id).order('created_at',{ascending:false}).limit(5);
-      if(bookings?.length){
-        notifHTML = bookings.map(b=>`
-          <div style="padding:14px 16px;border-bottom:1px solid rgba(10,10,20,.05);">
-            <div style="font-weight:600;font-size:13px;color:#0A0A14;margin-bottom:2px;">Booking ${b.status==='paid_pending_checkin'?'confirmed ✅':b.status==='checked_in'?'checked in 🏠':'updated'}</div>
-            <div style="font-size:12px;color:#8E90AD;">${b.listing_title||'Your booking'} · ${new Date(b.created_at).toLocaleDateString('en-KE')}</div>
-          </div>`).join('');
-      }
-    } catch(e){}
-  }
-  if(!notifHTML) notifHTML = '<div style="padding:32px 16px;text-align:center;color:#8E90AD;font-size:14px;">No notifications yet</div>';
-  
-  panel.innerHTML = `
-    <div style="padding:14px 16px 10px;border-bottom:1px solid rgba(10,10,20,.06);display:flex;align-items:center;justify-content:space-between;">
-      <span style="font-weight:700;font-size:15px;color:#0A0A14;">Notifications</span>
-      <button onclick="document.getElementById('notif-panel')?.remove()" style="border:none;background:none;font-size:20px;cursor:pointer;color:#8E90AD;line-height:1;">×</button>
-    </div>
-    ${notifHTML}`;
-  
-  document.body.appendChild(panel);
-  setTimeout(()=>document.addEventListener('click', function h(e){if(!panel.contains(e.target)){panel.remove();document.removeEventListener('click',h);}},{once:false}), 100);
-}
-
+/* SOS + notifications now provided by apa-chrome.js (delegated,
+   idempotent, and impossible to lose on re-render). */
 
 /* ── TOAST ── */
 function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3200); }
@@ -1564,6 +1519,9 @@ function hideAddSheet(){ document.getElementById('add-scrim').classList.remove('
 </script>
 
 <div data-showcase="window"></div>
+<!-- Session core must resolve before any consumer script runs. -->
+<script src="/apa-chrome.js" defer></script>
+<script src="/apa-rail.js" defer></script>
 <script src="/analytics.js" defer></script>
 <script src="/chat.js" defer></script>
 <script src="/apa-ai.js" defer></script>

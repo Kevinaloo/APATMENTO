@@ -265,13 +265,18 @@ function buildVeil(){
   return veil;
 }
 var navigating = false;
+function clearVeil(){
+  navigating = false;
+  if (veil) veil.classList.remove('close');
+}
 function veilGo(fn){
   if (navigating) return;
   navigating = true;
   if (REDUCE) { fn(); return; }
   buildVeil().classList.add('close');
   setTimeout(fn, 300);
-  setTimeout(function(){ navigating = false; }, 1600);
+  /* Failsafe: if navigation is cancelled/blocked, never strand the page. */
+  setTimeout(clearVeil, 1400);
 }
 function isInternalNav(a){
   if (!a || !a.href) return false;
@@ -290,7 +295,9 @@ function bindVeil(){
   document.addEventListener('click', function(e){
     if (e.defaultPrevented) return;
     if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-    var a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
+    var t = e.target;
+    if (t && t.closest && t.closest('[data-rail],[data-apa],.apa-sheet')) return;
+    var a = t && t.closest ? t.closest('a[href]') : null;
     if (!isInternalNav(a)) return;
     e.preventDefault();
     var dest = a.href;
@@ -309,9 +316,11 @@ function bindVeil(){
     });
   }, 700);
 
-  window.addEventListener('pageshow', function(){
-    navigating = false;
-    if (veil) veil.classList.remove('close');
+  window.addEventListener('pageshow', clearVeil);
+  window.addEventListener('pagehide', clearVeil);
+  window.addEventListener('popstate', clearVeil);
+  document.addEventListener('visibilitychange', function(){
+    if (document.visibilityState === 'visible') clearVeil();
   });
 }
 

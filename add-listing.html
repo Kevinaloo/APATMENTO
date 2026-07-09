@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <!-- ══ SEO ══ -->
   <meta name="description" content="List your apartment, villa or cottage on Apatmento and keep 100% of every booking. No commission, no percentage cuts — just a small fixed fee paid by guests."/>
   <meta name="keywords" content="list property Kenya, become host Nairobi, rent apartment Kenya, earn from property Kenya, Airbnb alternative Kenya host"/>
@@ -57,6 +57,9 @@
   </script>
 <title>List Your Property — Earn with Zero Commission | Apatmento</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- Session core: one Supabase client per tab. Multiple clients on the
+     same storage key race each other and silently drop the session. -->
+<script src="/apa-session.js"></script>
 <script>
 (function(){
   var sb2=null;
