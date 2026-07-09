@@ -434,7 +434,7 @@
       dates_selected: intentSignals.dateSelected ? 1 : 0,
       saved_items: intentSignals.savedItems,
       checkout_started: intentSignals.checkoutStarted ? 1 : 0,
-      returning: intentSignals.returningVisitor ? 1 : 0,
+      is_returning: intentSignals.returningVisitor ? 1 : 0,
       prior_bookings: intentSignals.priorBookings,
 
       // device

@@ -1294,11 +1294,11 @@ function renderModeration(){
     <tr>
       <td><input type="checkbox" data-sel="mod" value="${esc(l.id)}" onchange="tick('mod','${esc(l.id)}',this.checked)" style="accent-color:var(--violet)"/></td>
       <td><div style="display:flex;gap:10px;align-items:center">
-        <img class="thumb" src="${esc(l.image_url||l.cover_url||'')}" onerror="this.style.visibility='hidden'"/>
+        <img class="thumb" src="${esc(Array.isArray(l.photos)&&l.photos[0]||l.image_url||l.cover_url||'')}" onerror="this.style.visibility='hidden'"/>
         <div><div class="t-main">${esc(l.title||'Untitled')}</div>
-        <div class="t-sub">${esc(l.location||l.city||'—')}</div></div></div></td>
+        <div class="t-sub">${esc(l.location||l.city||l.area||'—')}</div></div></div></td>
       <td class="t-sub">${esc(l.owner_email||l.owner_id||'—').slice(0,22)}</td>
-      <td class="num mono">${F.money(l.price||0)}</td>
+      <td class="num mono">${F.money(l.price_per_night||l.price_night||l.price||0)}</td>
       <td class="t-sub">${F.ago(l.created_at)}</td>
       <td><span class="pill p-warn">pending</span></td>
       <td><div class="t-act">
@@ -1392,8 +1392,8 @@ function renderTrust(){
     return `<tr>
       <td><div style="display:flex;gap:10px;align-items:center">
         <div class="avatar">${esc((x.first_name||x.email||'?')[0]).toUpperCase()}</div>
-        <div><div class="t-main">${esc(x.first_name||x.email||'Partner')}</div>
-        <div class="t-sub">${esc(x.email||x.id||'').slice(0,26)}</div></div></div></td>
+        <div><div class="t-main">${esc(x.first_name||x.last_name||(x.email&&x.email.split('@')[0])||'Partner')}</div>
+        <div class="t-sub">${esc(x.email||String(x.id||'').slice(0,8)+'…').slice(0,30)}</div></div></div></td>
       <td class="num"><div class="trust-wrap">
         <span class="trust-n" style="color:${trustColor(t.score)}">${t.score}</span>
         <div class="meter"><i style="width:${t.score}%;background:${trustColor(t.score)}"></i></div>
@@ -1460,7 +1460,7 @@ function renderInventory(){
   $('inv-rows').innerHTML = items.length ? items.map(({l,age,reason})=>`
     <tr>
       <td><input type="checkbox" data-sel="inv" value="${esc(l.id)}" onchange="tick('inv','${esc(l.id)}',this.checked)" style="accent-color:var(--violet)"/></td>
-      <td><div class="t-main">${esc(l.title||'Untitled')}</div><div class="t-sub">${esc(l.location||l.city||'—')}</div></td>
+      <td><div class="t-main">${esc(l.title||'Untitled')}</div><div class="t-sub">${esc(l.location||l.city||l.area||'—')}</div></td>
       <td class="num mono">${F.num(l.views||0)}</td>
       <td class="num mono">${F.num(l.bookings_count||0)}</td>
       <td class="num mono">${age}d</td>
@@ -1487,18 +1487,18 @@ function exportListings(){ AD.download('listings.csv', AD.toCSV(SNAP.listings), 
 /* ══ 11 · BOOKINGS ═══════════════════════════════════════════════ */
 function renderBookings(){
   const b = SNAP.bookings.slice(0,150);
-  const pillOf = s => /paid|confirmed|completed/i.test(s) ? 'p-ok'
+  const pillOf = s => /paid|confirmed|completed|checked_in/i.test(s) ? 'p-ok'
     : /cancel|refund/i.test(s) ? 'p-bad' : /pending/i.test(s) ? 'p-warn' : 'p-mute';
   $('bk-rows').innerHTML = b.length ? b.map(x=>{
     const s = x.status || x.payment_status || 'unknown';
     return `<tr>
       <td class="mono t-main">${esc(String(x.reference||x.id||'').slice(0,14))}</td>
-      <td><div class="t-main">${esc(x.guest_name||x.name||'—')}</div>
-      <td class="num mono">${F.money(x.total_amount||x.amount||x.price||0)}</td>
+      <td><div class="t-main">${esc(x.guest_name||x.name||'Guest')}</div>
+      <td class="num mono">${F.money(x.grand_total||x.total_amount||x.stay_total||x.amount||0)}</td>
       <td><span class="pill ${pillOf(s)}">${esc(s)}</span></td>
       <td class="t-sub">${F.ago(x.created_at)}</td>
       <td><div class="t-act">
-        ${!/refund/i.test(s)?`<button class="btn btn-d btn-sm" onclick="refund('${esc(x.id)}',${Number(x.total_amount||x.amount||0)})">Refund</button>`:'<span class="t-sub">refunded</span>'}
+        ${!/refund/i.test(s)?`<button class="btn btn-d btn-sm" onclick="refund('${esc(x.id)}',${Number(x.grand_total||x.total_amount||x.stay_total||0)})">Refund</button>`:'<span class="t-sub">refunded</span>'}
       </div></td></tr>`;
   }).join('') : emptyRow(6,'No bookings yet');
 }
@@ -1622,7 +1622,7 @@ function renderAds(){
   });
 
   $('ad-list').innerHTML = c.map(x=>{
-    const st = x.status||'live';
+    const st = x.status||(x.active===false?'paused':'live');
     const sp = { live:'p-ok', paused:'p-warn', draft:'p-mute' }[st] || 'p-mute';
     const m = evBySlot[x.id] || { v:0, c:0 };
     const ctr = m.v ? (m.c/m.v*100).toFixed(2) : '0.00';
@@ -1813,6 +1813,7 @@ async function saveCampaign(){
 
   const row = {
     advertiser: adv,
+    active: $('c-status').value === 'live',
     format: $('c-fmt').value,
     headline: $('c-head').value.trim(),
     sub_text: $('c-sub').value.trim(),

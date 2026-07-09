@@ -212,7 +212,7 @@
         if (isNaN(touched)) return;
         var age = (now - touched) / DAY;
         var views = Number(l.views || 0);
-        var books = Number(l.bookings_count || 0);
+        var books = Number(l.booking_count || l.bookings_count || 0);
 
         if (age > 90 && books === 0) { zombie++; stale.push({ l: l, age: Math.round(age), reason: 'zombie' }); }
         else if (age > 45) { stale.push({ l: l, age: Math.round(age), reason: 'stale' }); }
@@ -357,11 +357,11 @@
       var now = Date.now();
       var gmv = 0, gmv30 = 0, gmv60 = 0, paid = 0;
       bookings.forEach(function (b) {
-        var amt = Number(b.total_amount || b.amount || b.price || 0) || 0;
+        var amt = Number(b.grand_total || b.stay_total || b.total_amount || b.amount || 0) || 0;
         var t = new Date(b.created_at).getTime();
         gmv += amt;
-        if (String(b.status || '').toLowerCase() === 'paid' ||
-            String(b.payment_status || '').toLowerCase() === 'paid') paid += amt;
+        var st = String(b.status || b.payment_status || '').toLowerCase();
+        if (st === 'paid' || st === 'confirmed' || st === 'completed' || st === 'checked_in') paid += amt;
         var age = now - t;
         if (age <= 30 * DAY) gmv30 += amt;
         else if (age <= 60 * DAY) gmv60 += amt;
@@ -545,7 +545,7 @@
         .then(function (r) {
           if (!r.ok) return r;
           return write('listings', function (t) {
-            return t.update({ status: 'paused' }).eq('owner_id', id);
+            return t.update({ status: 'paused' }).eq('partner_id', id);
           }).then(function () { return r; });
         });
     },
@@ -579,7 +579,7 @@
         .then(function (r) {
           if (!r.ok) return r;
           return write('listings', function (t) {
-            return t.update({ status: 'removed' }).eq('owner_id', id);
+            return t.update({ status: 'removed' }).eq('partner_id', id);
           }).then(function () { return r; });
         });
     },
@@ -667,7 +667,7 @@
     return Promise.all([
       rows('listings', function (q) { return q.order('created_at', { ascending: false }).limit(2000); }),
       rows('profiles', function (q) { return q.order('created_at', { ascending: false }).limit(3000); }),
-      rows('apartment_bookings', function (q) { return q.order('created_at', { ascending: false }).limit(3000); }),
+      rows('apartment_bookings', function (q) { return q.select('*').order('created_at', { ascending: false }).limit(3000); }),
       rows('reviews', function (q) { return q.limit(2000); }),
       rows('partner_uploads', function (q) { return q.order('created_at', { ascending: false }).limit(600); }),
       rows('disputes', function (q) { return q.eq('status', 'open').limit(200); }),
@@ -681,12 +681,16 @@
 
       var allBookings = bookings.concat(tours, tickets);
 
+      // Any profile that has a listing, or self-identifies as partner
+      var partnerIds = {};
+      listings.forEach(function (l) { if (l.partner_id) partnerIds[l.partner_id] = true; });
       var partners = profiles.filter(function (p) {
-        return p.last_role === 'partner' || p.role === 'partner' || p.is_partner;
+        return p.last_role === 'partner' || p.role === 'partner' || p.is_partner || partnerIds[p.id];
       });
 
       var pending = listings.filter(function (l) {
-        return String(l.status || '').toLowerCase() === 'pending';
+        var st = String(l.status || '').toLowerCase();
+        return st === 'pending' || st === 'draft' || st === 'review';
       });
 
       var flagged = profiles.filter(function (p) {
@@ -694,7 +698,8 @@
       });
 
       var decay = Engine.decay(listings);
-      var conc = Engine.concentration(bookings, 'listing_id', 'total_amount');
+      var conc = Engine.concentration(bookings, 'listing_id', 'grand_total');
+      /* grand_total is the actual paid field in apartment_bookings */
       var rev = Engine.revenue(allBookings);
       var anom = Engine.anomalies(allBookings, 'created_at', 30);
 
@@ -705,8 +710,11 @@
         (reviewsByOwner[k] = reviewsByOwner[k] || []).push(rv);
       });
       var bookingsByOwner = {}, cancelsByOwner = {};
+      var listingToPartner = {};
+      listings.forEach(function (l) { if (l.id && l.partner_id) listingToPartner[l.id] = l.partner_id; });
+
       bookings.forEach(function (b) {
-        var k = b.owner_id || b.partner_id;
+        var k = b.partner_id || b.owner_id || listingToPartner[b.listing_id];
         if (!k) return;
         bookingsByOwner[k] = (bookingsByOwner[k] || 0) + 1;
         if (String(b.status || '').toLowerCase() === 'cancelled') {
@@ -715,7 +723,7 @@
       });
       var listingsByOwner = {};
       listings.forEach(function (l) {
-        var k = l.owner_id || l.user_id;
+        var k = l.partner_id || l.owner_id || l.user_id;
         if (k) listingsByOwner[k] = (listingsByOwner[k] || 0) + 1;
       });
 

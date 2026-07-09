@@ -412,7 +412,7 @@
     'reading_mode_ord',
     'searches', 'filters_used', 'listings_viewed', 'gallery_opens',
     'dates_selected', 'saved_items',
-    'returning', 'prior_bookings',
+    'is_returning', 'prior_bookings',
     'viewport_w', 'pwa', 'ads_viewable', 'ads_clicked'
   ];
 
