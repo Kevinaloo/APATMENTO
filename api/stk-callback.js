@@ -42,6 +42,29 @@ export default async function handler(req, res) {
     // Payout callbacks — don't update booking status
     if (externalReference.startsWith('PAYOUT-')) return res.status(200).json({ received: true });
 
+    // Balance payment: BAL-{booking_id_slice}-{timestamp}
+    // We patch balance_paid=true on the booking and stk-callback handles the rest
+    if (externalReference.startsWith('BAL-')) {
+      if (isSuccess) {
+        await fetch(
+          `${supabaseUrl}/rest/v1/apartment_bookings?balance_reference=eq.${externalReference}`,
+          {
+            method: 'PATCH',
+            headers: {
+              apikey: serviceKey, Authorization: `Bearer ${serviceKey}`,
+              'Content-Type': 'application/json', Prefer: 'return=minimal',
+            },
+            body: JSON.stringify({
+              balance_paid: true,
+              balance_paid_at: new Date().toISOString(),
+              status: 'paid_pending_checkin',
+            }),
+          }
+        );
+      }
+      return res.status(200).json({ received: true, type: 'balance' });
+    }
+
     if (!table) {
       console.warn('Unrecognised reference prefix:', externalReference);
       return res.status(200).json({ received: true });

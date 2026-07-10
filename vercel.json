@@ -91,7 +91,8 @@
     }
   },
   "env": {
-    "PAYHERO_CHANNEL_ID": "9424"
+    "PAYHERO_CHANNEL_ID": "9424",
+    "GROQ_API_KEY": "@groq-api-key"
   },
   "rewrites": [
     {
@@ -113,6 +114,10 @@
     {
       "source": "/api/check-payment-status",
       "destination": "/api/trust?action=check-payment-status"
+    },
+    {
+      "source": "/api/ask-apa",
+      "destination": "/api/trust?action=ask-apa"
     }
   ]
 }

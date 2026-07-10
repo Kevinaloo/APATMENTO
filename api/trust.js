@@ -25,6 +25,7 @@ import checkinIssue       from './_checkin-issue.js';
 import depositBalance     from './_deposit-balance.js';
 import verifyCheckin      from './_verify-checkin.js';
 import checkPaymentStatus from './_check-payment-status.js';
+import askApa           from './_ask-apa.js';
 
 const ROUTES = {
   'match-guest':          matchGuest,
@@ -32,6 +33,7 @@ const ROUTES = {
   'deposit-balance':      depositBalance,
   'verify-checkin':       verifyCheckin,
   'check-payment-status': checkPaymentStatus,
+  'ask-apa':              askApa,
 };
 
 export default async function handler(req, res) {

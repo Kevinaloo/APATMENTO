@@ -1,12 +1,18 @@
 /* ══════════════════════════════════════════════════════════════
-   APATMENTO — Deposit Balance  (api/deposit-balance.js)
+   APATMENTO — Deposit Balance  (api/_deposit-balance.js)
    ──────────────────────────────────────────────────────────────
-   A guest may hold a stay with a deposit and settle the rest on
-   arrival. The host's acceptance code is inert until they do.
+   stk-callback.js writes its verdict directly onto the booking row
+   (status = 'paid_pending_checkin' | 'failed'). There is no separate
+   payments table. So we verify here by checking whether stk-callback
+   already flipped the balance booking to paid — not by reading a
+   third table that doesn't exist.
 
-   This endpoint is the only thing that can flip balance_paid.
-   It verifies against the payment provider's record, never the
-   caller's word — a POST is a claim, not a receipt.
+   Flow:
+     1. Guest pays the balance via ApatmentoPay (M-Pesa STK push)
+     2. stk-callback fires, sees reference starts with 'BAL-', patches
+        the booking: balance_paid=true, status='paid_pending_checkin'
+     3. Guest's UI calls this endpoint to confirm and get a clean response
+     4. We read the booking, check balance_paid, done.
 ══════════════════════════════════════════════════════════════ */
 
 import { one, update, whoami, notify, cors } from './_db.js';
@@ -28,36 +34,26 @@ export default async function handler(req, res) {
     const bk = await one('apartment_bookings', `id=eq.${booking_id}&select=*`);
     if (!bk)                        return res.status(404).json({ error: 'booking_not_found' });
     if (bk.guest_id !== user.id)    return res.status(403).json({ error: 'not_your_booking' });
-    if (bk.balance_paid)            return res.status(200).json({ ok: true, already_settled: true });
-    if (bk.balance_reference !== reference) return res.status(400).json({ error: 'reference_mismatch' });
     if (bk.cancelled_at)            return res.status(409).json({ error: 'booking_cancelled' });
+    if (bk.balance_reference !== reference) return res.status(400).json({ error: 'reference_mismatch' });
 
-    /* The callback from PayHero (api/stk-callback.js) is what marks a
-       reference settled. We read its verdict; we do not take the
-       client's. If it hasn't landed yet, the guest waits a beat. */
-    const paid = await one('payments', `reference=eq.${reference}&status=eq.success&select=amount,reference`)
-      .catch(() => null);
+    // Already settled — stk-callback did its job
+    if (bk.balance_paid && bk.status === 'paid_pending_checkin') {
+      return res.status(200).json({ ok: true, already_settled: true, checkin_unlocked: true });
+    }
 
-    if (!paid) {
+    // stk-callback hasn't fired yet — tell the guest to wait a beat
+    if (!bk.balance_paid) {
       return res.status(202).json({
         ok: false, pending: true,
-        message: 'Payment not confirmed yet. This usually clears in a few seconds.',
+        message: 'Payment is being confirmed — this usually takes a few seconds. Try again shortly.',
       });
     }
 
-    const due = Number(bk.balance_amount || 0);
-    if (Number(paid.amount) + 1 < due) {   // 1 KES tolerance for rounding
-      return res.status(409).json({
-        ok: false, error: 'underpaid',
-        paid: Number(paid.amount), due,
-        message: `${money(due - paid.amount)} still outstanding.`,
-      });
-    }
-
+    // balance_paid = true but status not yet updated (edge case — fix it)
     const updated = await update('apartment_bookings', `id=eq.${booking_id}`, {
-      balance_paid: true,
-      balance_paid_at: new Date().toISOString(),
       status: 'paid_pending_checkin',
+      balance_paid_at: bk.balance_paid_at || new Date().toISOString(),
     });
 
     await notify(bk.guest_id, 'balance_settled', 'Paid in full',
@@ -67,11 +63,7 @@ export default async function handler(req, res) {
       `${bk.guest_name || 'Your guest'} settled the balance. Give them your code on arrival.`,
       { booking_id });
 
-    return res.status(200).json({
-      ok: true,
-      booking: updated,
-      checkin_unlocked: true,
-    });
+    return res.status(200).json({ ok: true, booking: updated, checkin_unlocked: true });
 
   } catch (e) {
     console.error('[deposit-balance]', e);
