@@ -167,7 +167,8 @@ body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webk
 .hero-title .line:nth-child(2){animation-delay:.5s;}
 .hero-title em{font-style:italic;font-weight:500;background:linear-gradient(120deg,var(--lilac),var(--mint),var(--peach));-webkit-background-clip:text;background-clip:text;color:transparent;}
 .hero-sub{font-size:clamp(16px,2vw,19px);line-height:1.65;color:rgba(255,255,255,.6);max-width:540px;margin-bottom:40px;opacity:0;animation:heroUp 1s .68s forwards;}
-.hero-ctas{display:flex;gap:14px;flex-wrap:wrap;opacity:0;animation:heroUp 1s .85s forwards;}
+.hero-ctas{display:flex;flex-direction:column;gap:14px;align-items:flex-start;opacity:0;animation:heroUp 1s .85s forwards;}
+.hero-cta-top{display:flex;gap:12px;align-items:center;flex-wrap:wrap;}
 .hero-cta-primary{display:inline-flex;align-items:center;gap:9px;padding:16px 32px;border-radius:100px;background:var(--glass);color:var(--ink);font-weight:600;font-size:15px;text-decoration:none;transition:all .3s cubic-bezier(.22,1,.36,1);box-shadow:0 10px 36px rgba(0,0,0,.3);}
 .hero-cta-primary:hover{transform:translateY(-3px);gap:13px;box-shadow:0 16px 48px rgba(123,47,247,.4);}
 .hero-cta-ghost{display:inline-flex;align-items:center;gap:9px;padding:16px 32px;border-radius:100px;background:rgba(255,255,255,.06);color:#fff;font-weight:600;font-size:15px;text-decoration:none;border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(8px);transition:all .3s;}
@@ -372,26 +373,26 @@ body.intro-lock{overflow:hidden;height:100vh;}
 @keyframes hpbGlow{0%,100%{transform:scale(1);opacity:.7;}50%{transform:scale(1.2);opacity:1;}}
 .hpb-inner{
   position:relative;z-index:2;
-  display:inline-flex;align-items:center;gap:12px;
-  padding:18px 36px;border-radius:100px;
+  display:inline-flex;align-items:center;gap:10px;
+  padding:15px 26px;border-radius:100px;
   background:linear-gradient(135deg,#7B2FF7,#4361FF,#2DD4BF);
   background-size:200% 200%;
   animation:hpbGrad 4s ease infinite;
-  color:#fff;font-family:var(--font-display);font-weight:500;font-size:18px;
+  color:#fff;font-family:var(--font-display);font-weight:500;font-size:15.5px;
   box-shadow:0 0 0 0 rgba(123,47,247,.5);
   transition:all .4s cubic-bezier(.22,1,.36,1);
   border:none;
 }
 @keyframes hpbGrad{0%{background-position:0% 50%;}50%{background-position:100% 50%;}100%{background-position:0% 50%;}}
 .hero-portal-btn:hover .hpb-inner{
-  transform:scale(1.06);
+  transform:scale(1.05);
   box-shadow:0 20px 60px rgba(123,47,247,.5),0 0 0 8px rgba(123,47,247,.15);
   letter-spacing:.01em;
 }
-.hpb-icon{width:22px;height:22px;flex-shrink:0;animation:hpbSpin 8s linear infinite;}
+.hpb-icon{width:19px;height:19px;flex-shrink:0;animation:hpbSpin 8s linear infinite;}
 @keyframes hpbSpin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
 .hpb-text{letter-spacing:.01em;}
-.hpb-arrow{width:20px;height:20px;flex-shrink:0;transition:transform .4s cubic-bezier(.22,1,.36,1);}
+.hpb-arrow{width:17px;height:17px;flex-shrink:0;transition:transform .4s cubic-bezier(.22,1,.36,1);}
 .hero-portal-btn:hover .hpb-arrow{transform:translateX(5px);}
 
 /* auth pair buttons */
@@ -406,20 +407,26 @@ body.intro-lock{overflow:hidden;height:100vh;}
 /* ══ INSTALL / DOWNLOAD APP BUTTON ══ */
 .hero-install{
   display:none;align-items:center;gap:9px;
-  padding:16px 28px;border-radius:100px;
-  background:rgba(94,234,212,.1);
-  border:1px solid rgba(94,234,212,.35);
-  color:#5EEAD4;font-weight:600;font-size:15px;text-decoration:none;
-  cursor:pointer;backdrop-filter:blur(8px);
+  padding:15px 26px;border-radius:100px;
+  background:linear-gradient(135deg,#2DD4BF,#14B8A6);
+  border:none;
+  color:#04201C;font-weight:700;font-size:15px;text-decoration:none;
+  cursor:pointer;letter-spacing:.01em;
+  box-shadow:0 10px 32px rgba(45,212,191,.34);
   transition:all .3s cubic-bezier(.22,1,.36,1);
 }
 .hero-install.on{display:inline-flex;}
-.hero-install:hover{background:rgba(94,234,212,.2);transform:translateY(-3px);box-shadow:0 12px 34px rgba(45,212,191,.25);}
+.hero-install:hover{transform:translateY(-3px);box-shadow:0 18px 46px rgba(45,212,191,.48);}
 .hero-install svg{width:18px;height:18px;flex-shrink:0;}
 .hero-install .hi-dl{animation:hiBounce 2.4s ease-in-out infinite;}
 @keyframes hiBounce{0%,100%{transform:translateY(0);}50%{transform:translateY(2px);}}
 /* Installed already? Nothing to offer. */
 @media(display-mode:standalone){.hero-install{display:none !important;}}
+@media(max-width:560px){
+  .hero-cta-top{width:100%;}
+  .hero-cta-top .hero-portal-btn,.hero-cta-top .hero-install{flex:1 1 100%;}
+  .hero-install{justify-content:center;}
+}
 
 /* Hide auth links if signed in */
 .is-signed-in .hero-cta-pair{display:none;}
@@ -696,27 +703,29 @@ body.intro-lock{overflow:hidden;height:100vh;}
     </h1>
     <p class="hero-sub">Stays, flights, tours, rides, food and more — beautifully unified for Kenya. Hosts keep 100%. You pay only face value. No commissions, ever.</p>
     <div class="hero-ctas">
-      <a href="dashboard.html" class="hero-portal-btn" id="hero-portal-btn">
-        <span class="hpb-ring hpb-ring-1"></span>
-        <span class="hpb-ring hpb-ring-2"></span>
-        <span class="hpb-ring hpb-ring-3"></span>
-        <span class="hpb-glow"></span>
-        <span class="hpb-inner">
-          <svg class="hpb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-          <span class="hpb-text">Take me to the site</span>
-          <svg class="hpb-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-        </span>
-      </a>
+      <div class="hero-cta-top">
+        <a href="dashboard.html" class="hero-portal-btn" id="hero-portal-btn">
+          <span class="hpb-ring hpb-ring-1"></span>
+          <span class="hpb-ring hpb-ring-2"></span>
+          <span class="hpb-ring hpb-ring-3"></span>
+          <span class="hpb-glow"></span>
+          <span class="hpb-inner">
+            <svg class="hpb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+            <span class="hpb-text">Take me to the site</span>
+            <svg class="hpb-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </span>
+        </a>
+        <button class="hero-install" id="hero-install-btn" type="button" aria-label="Install the Apatmento app">
+          <svg class="hi-dl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          <span id="hero-install-label">Get the App</span>
+        </button>
+      </div>
       <div class="hero-cta-pair">
         <a href="auth.html" class="hero-cta-ghost" id="hero-signin-link">Sign in</a>
         <a href="auth.html?mode=signup" class="hero-cta-ghost hero-cta-ghost-hi" id="hero-signup-link">Create account</a>
       </div>
-      <button class="hero-install" id="hero-install-btn" type="button" aria-label="Install the Apatmento app">
-        <svg class="hi-dl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
-        </svg>
-        <span id="hero-install-label">Get the App</span>
-      </button>
     </div></div>
   <div class="hero-marquee">
     <div class="marquee-track" id="marquee"></div>

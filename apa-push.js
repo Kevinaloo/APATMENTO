@@ -231,6 +231,98 @@
     return true;
   }
 
+  /* ── MANDATORY NOTIFICATION GATE ─────────────────────────────────
+     Once the user is inside the app, notifications are required — the
+     product is bookings and payments, and silent failures there are
+     worse than a permission prompt.
+
+     Browsers only surface the native permission dialog on a user
+     gesture, so we present our own modal and let their click drive it.
+     If they hard-deny, the OS locks us out permanently; at that point
+     nagging is pointless and we explain how to re-enable instead. */
+  function gateCSS() {
+    if (document.getElementById('apa-gate-css')) return;
+    var s = document.createElement('style');
+    s.id = 'apa-gate-css';
+    s.textContent = `
+.apa-gate{position:fixed;inset:0;z-index:99999;background:rgba(8,8,15,.72);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;transition:opacity .35s;}
+.apa-gate.show{opacity:1;}
+.apa-gate-card{background:#FCFCFE;border-radius:26px;padding:34px 30px;max-width:400px;width:100%;text-align:center;box-shadow:0 30px 80px rgba(8,8,15,.4);transform:translateY(16px) scale(.97);transition:transform .45s cubic-bezier(.22,1,.36,1);}
+.apa-gate.show .apa-gate-card{transform:none;}
+.apa-gate-ico{width:62px;height:62px;border-radius:19px;margin:0 auto 20px;display:flex;align-items:center;justify-content:center;color:#fff;background:linear-gradient(135deg,#6D28FF,#4F6DFF);box-shadow:0 12px 30px rgba(109,40,255,.34);}
+.apa-gate-ico svg{width:28px;height:28px;}
+.apa-gate-h{font-family:'Fraunces',Georgia,serif;font-size:23px;font-weight:500;color:#08080F;margin-bottom:10px;}
+.apa-gate-p{font-size:14px;color:#474A66;line-height:1.6;margin-bottom:24px;}
+.apa-gate-btn{width:100%;padding:15px;border-radius:100px;border:none;background:linear-gradient(135deg,#6D28FF,#4F6DFF);color:#fff;font-weight:600;font-size:15px;cursor:pointer;transition:transform .2s,box-shadow .2s;}
+.apa-gate-btn:hover{transform:translateY(-2px);box-shadow:0 14px 34px rgba(109,40,255,.34);}
+.apa-gate-btn:disabled{opacity:.6;cursor:default;transform:none;}
+.apa-gate-note{margin-top:16px;font-size:12px;color:#8B8EAC;line-height:1.55;}
+`;
+    (document.head || document.documentElement).appendChild(s);
+  }
+
+  function showGate(denied) {
+    gateCSS();
+    if (document.getElementById('apa-gate')) return;
+
+    var g = document.createElement('div');
+    g.className = 'apa-gate';
+    g.id = 'apa-gate';
+    g.innerHTML =
+      '<div class="apa-gate-card">' +
+      '<div class="apa-gate-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">' + ICONS.general + '</svg></div>' +
+      '<div class="apa-gate-h"></div>' +
+      '<div class="apa-gate-p"></div>' +
+      (denied ? '' : '<button class="apa-gate-btn" id="apa-gate-btn">Turn on notifications</button>') +
+      '<div class="apa-gate-note"></div>' +
+      '</div>';
+
+    g.querySelector('.apa-gate-h').textContent = denied
+      ? 'Notifications are blocked' : 'Stay in the loop';
+
+    g.querySelector('.apa-gate-p').textContent = denied
+      ? 'Apatmento needs notifications to tell you about bookings, payments and messages. Your browser has blocked them for this site.'
+      : 'Apatmento sends you booking confirmations, payment receipts and host messages the moment they happen. This is required to use the app.';
+
+    g.querySelector('.apa-gate-note').textContent = denied
+      ? 'Tap the lock icon in your address bar → Site settings → Notifications → Allow, then reload this page.'
+      : 'You can change this anytime in your browser settings.';
+
+    document.body.appendChild(g);
+    requestAnimationFrame(function () { g.classList.add('show'); });
+
+    var btn = g.querySelector('#apa-gate-btn');
+    if (btn) btn.addEventListener('click', async function () {
+      btn.disabled = true; btn.textContent = 'Waiting for permission…';
+      var uid = (global.ApaSession && ApaSession.get && ApaSession.get().user || {}).id;
+      var ok = await ask(uid);
+      if (ok) {
+        g.classList.remove('show');
+        setTimeout(function () { g.remove(); }, 400);
+        toast({ title: 'Notifications on', body: 'You\u2019re all set. We\u2019ll keep you posted.', kind: 'general' });
+      } else {
+        // Denied at the OS level. The prompt will never appear again,
+        // so swap to instructions rather than leaving a dead button.
+        g.remove();
+        showGate(true);
+      }
+    });
+  }
+
+  /* Call this from any in-app page once a user is signed in. */
+  function requireNotifications() {
+    if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
+    var p = Notification.permission;
+    if (p === 'granted') return;
+    if (p === 'denied') { showGate(true); return; }
+    showGate(false);
+  }
+
+  // Pages that count as "inside the app". Marketing and auth pages are
+  // deliberately excluded — gating a signed-out visitor is hostile.
+  // Declared before boot() so it is initialised when boot runs.
+  var IN_APP_PAGES = /(dashboard|my-bookings|profile|partner-|booking-confirm|apartments)/i;
+
   /* ── BOOT ────────────────────────────────────────────────────── */
   function boot(st) {
     injectCSS();
@@ -242,10 +334,13 @@
     safe(function () { loadUnread(uid); }, 'unread');
     safe(function () { listen(uid); }, 'realtime');
 
-    // Re-attach an existing push subscription silently. Only *prompt*
-    // if we've never asked — handled by pwa.js on its own timer.
+    if (!('Notification' in window)) return;
     if (Notification.permission === 'granted') {
       safe(function () { subscribe(uid); }, 'subscribe');
+    } else if (IN_APP_PAGES.test(location.pathname)) {
+      // Inside the app proper — notifications are mandatory here.
+      // Delay slightly so the page paints before we block it.
+      setTimeout(function () { safe(requireNotifications, 'gate'); }, 1200);
     }
   }
 
@@ -264,6 +359,7 @@
     subscribe: subscribe,
     toast: toast,
     setUnread: setUnread,
+    requireNotifications: requireNotifications,
     vapid: VAPID_PUBLIC,
   };
 })(window);

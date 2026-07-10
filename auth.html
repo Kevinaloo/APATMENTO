@@ -12,6 +12,9 @@
 <!-- Session core: one Supabase client per tab. Multiple clients on the
      same storage key race each other and silently drop the session. -->
 <script src="/apa-session.js"></script>
+<!-- Needed by the install gate: captures beforeinstallprompt and
+     exposes ApatmentoPWA.install(). -->
+<script src="/pwa.js" defer></script>
 <script src="/apa-agent.js"></script>
 <script src="/apa-admin-guard.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -125,6 +128,10 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
 .pws-bar.good{background:var(--lilac-deep);}
 .pws-bar.strong{background:var(--mint-deep);}
 .pw-strength-label{font-size:11px;color:var(--ink-faint);margin-top:6px;}
+.pw-match{font-size:11.5px;margin-top:6px;font-weight:600;display:none;align-items:center;gap:5px;}
+.pw-match.show{display:flex;}
+.pw-match.ok{color:#14B8A6;}
+.pw-match.no{color:#FF6A3C;}
 
 .row-between{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
 .checkbox-row{display:flex;align-items:flex-start;gap:9px;font-size:13px;color:var(--ink-soft);margin-bottom:20px;line-height:1.5;}
@@ -410,6 +417,15 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
             <div class="pw-strength-label" id="pw-strength-label"></div>
             <div class="field-err" id="signup-pw-err"></div>
           </div>
+          <div class="field">
+            <label class="field-label">Confirm password</label>
+            <div class="field-input-wrap">
+              <input class="field-input" id="signup-password2" type="password" placeholder="Re-enter your password" autocomplete="new-password" oninput="checkMatch()"/>
+              <button class="pw-toggle" onclick="togglePw('signup-password2',this)" type="button">👁</button>
+            </div>
+            <div class="pw-match" id="pw-match"></div>
+            <div class="field-err" id="signup-pw2-err"></div>
+          </div>
           <label class="checkbox-row">
             <input type="checkbox" id="terms-check"/>
             <span>I agree to the <a href="terms.html" target="_blank">Terms of Service</a> and <a href="privacy.html" target="_blank">Privacy Policy</a>.</span>
@@ -563,6 +579,53 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
         <button class="link-btn" id="resend-btn" onclick="resendVerification()">Resend email</button>
       </div>
 
+      <!-- NEW PASSWORD (arrived via recovery link) -->
+      <div class="special-screen" id="newpw-screen">
+        <div class="ss-icon mail" style="background:linear-gradient(135deg,#6D28FF,#4F6DFF);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+        <h2 class="ss-title">Choose a new password</h2>
+        <p class="ss-sub">Make it strong — at least 8 characters, ideally with a number and a symbol.</p>
+        <div class="alert alert-error" id="newpw-alert-error"></div>
+        <div class="alert alert-success" id="newpw-alert-success"></div>
+
+        <div class="field" style="text-align:left;">
+          <label class="field-label">New password</label>
+          <div class="field-input-wrap">
+            <input class="field-input" id="newpw" type="password" placeholder="At least 8 characters" autocomplete="new-password" oninput="checkNewStrength(this.value)"/>
+            <button class="pw-toggle" onclick="togglePw('newpw',this)" type="button">👁</button>
+          </div>
+          <div class="pw-strength"><div class="pws-bar" id="ns1"></div><div class="pws-bar" id="ns2"></div><div class="pws-bar" id="ns3"></div><div class="pws-bar" id="ns4"></div></div>
+          <div class="pw-strength-label" id="newpw-strength-label"></div>
+        </div>
+
+        <div class="field" style="text-align:left;">
+          <label class="field-label">Confirm new password</label>
+          <div class="field-input-wrap">
+            <input class="field-input" id="newpw2" type="password" placeholder="Re-enter your new password" autocomplete="new-password" oninput="checkNewMatch()"/>
+            <button class="pw-toggle" onclick="togglePw('newpw2',this)" type="button">👁</button>
+          </div>
+          <div class="pw-match" id="newpw-match"></div>
+        </div>
+
+        <button class="submit-btn" id="newpw-btn" onclick="handleNewPassword(event)" style="margin-bottom:14px;">Update password</button>
+      </div>
+
+      <!-- INSTALL GATE — mandatory tap before account is created -->
+      <div class="special-screen" id="setup-screen">
+        <div class="ss-icon mail" style="background:linear-gradient(135deg,#6D28FF,#4F6DFF);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        </div>
+        <h2 class="ss-title">Get the app</h2>
+        <p class="ss-sub" id="setup-sub">Apatmento installs to your home screen — full screen, offline-ready, and instant. It takes a second and installs in the background.</p>
+        <div class="alert alert-error" id="setup-alert"></div>
+
+        <button class="submit-btn" id="install-btn" onclick="doInstall()" style="margin-bottom:14px;">
+          Install the app
+        </button>
+        <button class="link-btn" id="setup-skip" onclick="skipSetup()" style="display:none;">Continue in browser instead</button>
+      </div>
+
     </div>
   </div>
 </div>
@@ -629,8 +692,28 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const { createClient } = supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+/* Guards the post-auth redirect: a recovery session is a real session,
+   so goDashboard() would otherwise bounce the user away before they set
+   a password. Declared here (not with `let` further down) because the
+   boot IIFE below reads it — a `let` at that point would be in the
+   temporal dead zone and throw. */
+var _inRecovery = false;
+
 /* ── Check existing session on load ── */
 (async () => {
+  // Recovery must be wired before anything reads the session. A
+  // recovery link *does* create a valid session, so an unguarded
+  // getSession() would show the "continue to dashboard" banner and the
+  // user would never reach the new-password form.
+  initRecovery();
+
+  const frag = new URLSearchParams(location.hash.replace(/^#/, ''));
+  const isRecovery = _inRecovery
+    || frag.get('type') === 'recovery'
+    || new URLSearchParams(location.search).get('recovery') === '1';
+
+  if (isRecovery) return;   // newpw-screen owns the page
+
   const { data:{ session } } = await sb.auth.getSession().catch(()=>({data:{session:null}}));
   if (session) showContinueBanner(session.user);
   const mode = new URLSearchParams(location.search).get('mode');
@@ -670,25 +753,109 @@ async function handleSignup(e) {
   const last  = document.getElementById('signup-last').value.trim();
   const email = document.getElementById('signup-email').value.trim();
   const pw    = document.getElementById('signup-password').value;
+  const pw2   = document.getElementById('signup-password2').value;
   const terms = document.getElementById('terms-check')?.checked;
   clearErr();
   if (!first)        { fieldErr('signup-first-err','Enter your first name.'); return; }
   if (!isEmail(email)){ fieldErr('signup-email-err','Enter a valid email.'); return; }
   if (pw.length < 8) { fieldErr('signup-pw-err','Minimum 8 characters.'); return; }
+  if (!pw2)          { fieldErr('signup-pw2-err','Please confirm your password.'); return; }
+  if (pw !== pw2)    { fieldErr('signup-pw2-err','Passwords do not match.'); return; }
   if (!terms)        { showErr('Please accept the Terms of Service.'); return; }
 
-  setBusy('signup-btn', true);
+  // Stash the form and show the install gate. The account is created
+  // only after they tap install — the install itself runs in the
+  // background, so they never wait on it.
+  _pendingSignup = { first, last, email, pw };
+
+  const standalone = window.matchMedia('(display-mode: standalone)').matches
+                  || window.navigator.standalone === true;
+  if (standalone) { doSignup(); return; }   // already installed, nothing to ask
+
+  prepInstallGate();
+  showSpecial('setup-screen');
+}
+
+/* Held between the form and the install gate. */
+let _pendingSignup = null;
+
+/* Tailor the gate to what this platform can actually do. */
+function prepInstallGate() {
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const btn   = document.getElementById('install-btn');
+  const sub   = document.getElementById('setup-sub');
+  const skip  = document.getElementById('setup-skip');
+
+  if (isIOS) {
+    btn.textContent = 'Show me how';
+    sub.textContent = 'Add Apatmento to your home screen for full screen, offline access and instant notifications.';
+  } else if (!window.__APA_INSTALL_PROMPT__) {
+    // Desktop Chrome withholds the prompt until engagement heuristics
+    // are met. Blocking signup on an event that may never fire would
+    // trap the user, so offer the browser path.
+    btn.textContent = 'Install the app';
+    skip.style.display = 'block';
+  }
+}
+
+async function doInstall() {
+  const btn   = document.getElementById('install-btn');
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const alertEl = document.getElementById('setup-alert');
+  alertEl.classList.remove('show');
+
+  if (isIOS && !window.__APA_INSTALL_PROMPT__) {
+    alert('To install Apatmento:\n\n1. Tap the Share button\n2. Scroll and tap "Add to Home Screen"\n3. Tap Add\n\nThen come back here to finish.');
+    doSignup();               // iOS gives no signal; trust the tap
+    return;
+  }
+
+  btn.disabled = true; btn.textContent = 'Installing…';
+  const outcome = await (window.ApatmentoPWA
+    ? window.ApatmentoPWA.install() : Promise.resolve('unavailable'));
+
+  if (outcome === 'accepted') {
+    btn.textContent = '✓ Installed';
+    doSignup();               // install continues in the background
+  } else if (outcome === 'unavailable') {
+    btn.disabled = false; btn.textContent = 'Install the app';
+    alertEl.textContent = 'Your browser hasn\u2019t offered the install option yet. You can continue in the browser and install later.';
+    alertEl.classList.add('show');
+    document.getElementById('setup-skip').style.display = 'block';
+  } else {
+    // They dismissed the native dialog. Don't dead-end them.
+    btn.disabled = false; btn.textContent = 'Install the app';
+    document.getElementById('setup-skip').style.display = 'block';
+  }
+}
+
+function skipSetup() { doSignup(); }
+
+/* The real account creation — runs once the install gate is satisfied. */
+async function doSignup() {
+  if (!_pendingSignup) return;
+  const { first, last, email, pw } = _pendingSignup;
+
+  const btn = document.getElementById('install-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Creating your account…'; }
+
   const { data, error } = await sb.auth.signUp({
     email, password: pw,
     options: { data:{ first_name:first, last_name:last }, emailRedirectTo: location.origin+'/dashboard.html' }
   });
-  setBusy('signup-btn', false);
 
   if (error) {
+    _pendingSignup = null;
+    // Restore the form: showSpecial() hid main-auth, so unhide it and
+    // clear the gate before reporting the failure.
+    document.querySelectorAll('.special-screen').forEach(s=>s.classList.remove('show'));
+    document.getElementById('main-auth').style.display='block';
+    switchTab('signup');
     showErr((error.message||'').toLowerCase().includes('already')
       ? 'Account already exists. Try signing in.' : error.message);
     return;
   }
+
   // Fire-and-forget branded welcome email
   try {
     fetch('/api/utilities?action=welcome-email', {
@@ -696,6 +863,8 @@ async function handleSignup(e) {
       body: JSON.stringify({ email, name: first + ' ' + last })
     }).catch(()=>{});
   } catch(e){}
+
+  _pendingSignup = null;
 
   if (data.session) {
     await goDashboard(data.user);
@@ -707,6 +876,10 @@ async function handleSignup(e) {
 
 /* ══ Core redirect ══ */
 async function goDashboard(user) {
+  // A recovery link creates a valid session before the password is
+  // set. Redirecting now would strand the user with a token they never
+  // used and an unchanged password.
+  if (_inRecovery) return;
   if (!user) {
     const { data:{ session } } = await sb.auth.getSession().catch(()=>({data:{session:null}}));
     user = session?.user;
@@ -732,18 +905,151 @@ async function signInWithGoogle() {
 }
 
 /* ══ PASSWORD RESET ══ */
+/* ══ FORGOT PASSWORD ══
+   Deliberately never reveals whether an account exists. Confirming an
+   email is registered hands an attacker a verified target list, so the
+   success copy is identical either way. */
+let _resetCooldown = 0;
+
 async function handleReset(e) {
   e.preventDefault();
   const email = document.getElementById('reset-email').value.trim();
   const errEl = document.getElementById('reset-alert-error');
   const sucEl = document.getElementById('reset-alert-success');
   errEl.classList.remove('show'); sucEl.classList.remove('show');
-  if (!isEmail(email)) { errEl.textContent='Enter a valid email.'; errEl.classList.add('show'); return; }
+
+  if (!isEmail(email)) {
+    errEl.textContent='Enter a valid email address.'; errEl.classList.add('show'); return;
+  }
+
+  // Throttle: the reset endpoint sends real mail, so an unthrottled
+  // button is an easy way to spam someone's inbox.
+  const now = Date.now();
+  if (now < _resetCooldown) {
+    const secs = Math.ceil((_resetCooldown - now)/1000);
+    errEl.textContent = `Please wait ${secs}s before requesting another link.`;
+    errEl.classList.add('show'); return;
+  }
+
   setBusy('reset-btn', true);
-  const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin+'/auth.html' });
+  // Land on auth.html; the recovery handler below picks it up.
+  await sb.auth.resetPasswordForEmail(email, {
+    redirectTo: location.origin + '/auth.html?recovery=1'
+  }).catch(()=>{});
   setBusy('reset-btn', false);
-  if (error) { errEl.textContent=error.message; errEl.classList.add('show'); }
-  else { sucEl.textContent='Reset link sent! Check your inbox.'; sucEl.classList.add('show'); }
+
+  _resetCooldown = Date.now() + 60000;
+
+  // Identical response regardless of whether the account exists.
+  sucEl.innerHTML = 'If an account exists for <strong>' + escapeHtml(email) +
+    '</strong>, a reset link is on its way. It expires in 1 hour.';
+  sucEl.classList.add('show');
+
+  const btn = document.getElementById('reset-btn');
+  if (btn) {
+    btn.disabled = true;
+    let left = 60;
+    btn.textContent = `Resend in ${left}s`;
+    const iv = setInterval(()=>{
+      left--;
+      if (left <= 0) { clearInterval(iv); btn.disabled=false; btn.textContent='Send reset link'; }
+      else btn.textContent = `Resend in ${left}s`;
+    }, 1000);
+  }
+}
+
+function escapeHtml(s){
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+/* ══ RECOVERY LINK HANDLER ══
+   Supabase returns the recovery token in the URL fragment and fires a
+   PASSWORD_RECOVERY event once detectSessionInUrl consumes it. Without
+   this listener the user lands on a plain login page and can never
+   actually set a new password — which is what used to happen. */
+function initRecovery() {
+  sb.auth.onAuthStateChange((event) => {
+    if (event === 'PASSWORD_RECOVERY') {
+      _inRecovery = true;
+      showSpecial('newpw-screen');
+    }
+  });
+
+  // Fallback: if the fragment names a recovery flow, show the screen
+  // directly. Some browsers strip the event on a cold load.
+  const frag = new URLSearchParams(location.hash.replace(/^#/, ''));
+  const qs   = new URLSearchParams(location.search);
+  if (frag.get('type') === 'recovery' || qs.get('recovery') === '1') {
+    if (frag.get('access_token') || frag.get('type') === 'recovery') {
+      _inRecovery = true;
+      showSpecial('newpw-screen');
+    }
+  }
+
+  if (frag.get('error_description')) {
+    showSpecial('reset-screen');
+    const errEl = document.getElementById('reset-alert-error');
+    errEl.textContent = 'That reset link has expired or was already used. Request a new one.';
+    errEl.classList.add('show');
+  }
+}
+
+/* _inRecovery is declared near the top, above the boot IIFE. */
+
+async function handleNewPassword(e) {
+  e.preventDefault();
+  const pw  = document.getElementById('newpw').value;
+  const pw2 = document.getElementById('newpw2').value;
+  const errEl = document.getElementById('newpw-alert-error');
+  const sucEl = document.getElementById('newpw-alert-success');
+  errEl.classList.remove('show'); sucEl.classList.remove('show');
+
+  if (pw.length < 8) { errEl.textContent='Password must be at least 8 characters.'; errEl.classList.add('show'); return; }
+  if (pw !== pw2)    { errEl.textContent='Passwords do not match.'; errEl.classList.add('show'); return; }
+
+  setBusy('newpw-btn', true);
+  const { error } = await sb.auth.updateUser({ password: pw });
+  setBusy('newpw-btn', false);
+
+  if (error) {
+    errEl.textContent = /same/i.test(error.message)
+      ? 'That is already your current password. Choose a different one.'
+      : (error.message || 'Could not update password. Request a fresh link.');
+    errEl.classList.add('show');
+    return;
+  }
+
+  sucEl.textContent = 'Password updated. Signing you in…';
+  sucEl.classList.add('show');
+
+  // Clear the token from the URL so a refresh doesn't replay it.
+  history.replaceState(null, '', location.pathname);
+  _inRecovery = false;
+
+  const { data:{ session } } = await sb.auth.getSession().catch(()=>({data:{session:null}}));
+  setTimeout(()=> goDashboard(session?.user), 900);
+}
+
+function checkNewStrength(pw) {
+  const score=[pw.length>=8,/[A-Z]/.test(pw),/[0-9]/.test(pw),/[^A-Za-z0-9]/.test(pw)].filter(Boolean).length;
+  const c=['','#FF4D6D','#FF6B2C','#F59E0B','#2DD4BF'];
+  [1,2,3,4].forEach(n=>{const b=document.getElementById('ns'+n);if(b)b.style.background=n<=score?c[score]:'rgba(10,10,20,.1)';});
+  const lbl=document.getElementById('newpw-strength-label');
+  if(lbl){lbl.textContent=['','Weak','Fair','Good','Strong'][score]||'';lbl.style.color=c[score];}
+  if(document.getElementById('newpw2')?.value) checkNewMatch();
+}
+
+function checkNewMatch() {
+  const pw=document.getElementById('newpw')?.value||'';
+  const pw2=document.getElementById('newpw2')?.value||'';
+  const el=document.getElementById('newpw-match');
+  if(!el) return;
+  if(!pw2){ el.classList.remove('show','ok','no'); return; }
+  const ok = pw===pw2;
+  el.className='pw-match show '+(ok?'ok':'no');
+  el.textContent = ok ? '✓ Passwords match' : '✕ Passwords don\u2019t match';
 }
 
 /* ══ RESEND ══ */
@@ -994,6 +1300,20 @@ function checkStrength(pw) {
   [1,2,3,4].forEach(n=>{const b=document.getElementById('ps'+n);if(b)b.style.background=n<=score?c[score]:'rgba(10,10,20,.1)';});
   const lbl=document.getElementById('pw-strength-label');
   if(lbl){lbl.textContent=['','Weak','Fair','Good','Strong'][score]||'';lbl.style.color=c[score];}
+  // Re-evaluate the match line: editing the first field can silently
+  // invalidate a confirmation the user already typed.
+  if(document.getElementById('signup-password2')?.value) checkMatch();
+}
+
+function checkMatch() {
+  const pw  = document.getElementById('signup-password')?.value || '';
+  const pw2 = document.getElementById('signup-password2')?.value || '';
+  const el  = document.getElementById('pw-match');
+  if(!el) return;
+  if(!pw2){ el.classList.remove('show','ok','no'); return; }
+  const ok = pw === pw2;
+  el.className = 'pw-match show ' + (ok?'ok':'no');
+  el.textContent = ok ? '✓ Passwords match' : '✕ Passwords don\u2019t match';
 }
 </script>
 <script src="/brand.js" defer></script>

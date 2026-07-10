@@ -125,21 +125,11 @@ async function promptInstall() {
 }
 
 function initInstallPrompt() {
-  // Don't show if already installed
-  if (window.matchMedia('(display-mode: standalone)').matches) return;
-  if (sessionStorage.getItem('pwa_install_dismissed')) return;
-
-  // Banner rides on the captured event above.
-  if (deferredInstallPrompt) setTimeout(showInstallBanner, 8000);
-  else window.addEventListener('apa:installable',
-    () => setTimeout(showInstallBanner, 8000), { once: true });
-
-  // iOS manual prompt (no beforeinstallprompt on Safari)
-  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-  const isInStandaloneMode = window.navigator.standalone;
-  if (isIOS && !isInStandaloneMode && !sessionStorage.getItem('pwa_ios_shown')) {
-    setTimeout(showIOSBanner, 10000);
-  }
+  // No auto-banner. Installation is driven explicitly by the signup
+  // gate and the hero "Get the App" button. An unprompted banner on
+  // top of those reads as nagging.
+  // beforeinstallprompt is still captured at module scope above, so
+  // ApatmentoPWA.install() works whenever we choose to call it.
 }
 
 function showInstallBanner() {
@@ -342,17 +332,9 @@ function init() {
   initInstallPrompt();
   initOfflineBanner();
 
-  // Ask for notifications after the user has settled in.
-  // 60s keeps it clear of the referral popup and the install banner —
-  // three modals stacking on a first visit reads as spam.
-  const page = location.pathname;
-  const skipPages = ['/auth.html'];
-  if (!skipPages.some(p => page.includes(p))) {
-    if (!sessionStorage.getItem('pwa_notif_dismissed') &&
-        'Notification' in window && Notification.permission === 'default') {
-      setTimeout(() => requestNotificationPermission(), 60000);
-    }
-  }
+  // Notification permission is no longer nagged on a timer. It is
+  // required once the user is actually inside the app — see
+  // apa-push.js requireNotifications(), invoked from the dashboard.
 }
 
 if (document.readyState === 'loading') {
