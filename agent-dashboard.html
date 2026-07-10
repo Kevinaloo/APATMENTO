@@ -400,8 +400,15 @@ function render() {
 }
 
 function photo(p) {
-  try { const a = typeof p === 'string' ? JSON.parse(p) : p; return (a && a[0]) || ''; }
-  catch (e) { return ''; }
+  // listings.photos is text[] in production — already an array, never JSON.
+  // Guard for null/undefined and for the rare legacy row that stored JSON.
+  if (!p) return '';
+  if (Array.isArray(p)) return p[0] || '';
+  if (typeof p === 'string') {
+    try { const a = JSON.parse(p); return Array.isArray(a) ? (a[0] || '') : p; }
+    catch (e) { return p; }   // bare URL string
+  }
+  return '';
 }
 
 /* ══ MY LISTINGS · the calendar is the point ══════════════════════════ */
@@ -566,8 +573,8 @@ async function doHunt() {
   const mine = new Set(ME.portfolio.map(function (p) { return String(p.listing_id); }));
 
   let query = sb.from('listings')
-    .select('id,title,city,location,price_night,photos,owner_id')
-    .eq('status', 'approved')
+    .select('id,title,city,location,price_night,photos,partner_id')
+    .eq('status', 'active')
     .limit(24);
 
   if (q) query = query.or('title.ilike.%' + q + '%,city.ilike.%' + q + '%,location.ilike.%' + q + '%');
@@ -576,7 +583,7 @@ async function doHunt() {
   if (r.error) { box.innerHTML = '<div class="cal-load">Could not search right now.</div>'; return; }
 
   FOUND = (r.data || []).filter(function (l) {
-    return l.owner_id !== ME.agent.id && !mine.has(String(l.id));
+    return l.partner_id !== ME.agent.id && !mine.has(String(l.id));
   });
 
   if (!FOUND.length) {

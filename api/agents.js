@@ -466,7 +466,7 @@ async function handleRequest(req, res) {
   (async () => {
     try {
       const [agent] = await db(`agents?id=eq.${s.user.id}&select=full_name,email`);
-      const [host]  = await db(`profiles?id=eq.${part.host_id}&select=email,full_name`);
+      const [host]  = await db(`profiles?id=eq.${part.host_id}&select=email,first_name,last_name`);
       const title   = await listingTitle(b.listing_id);
       if (host?.email) {
         const t = T.requestToHost(host, agent, title, pct, b.message);
