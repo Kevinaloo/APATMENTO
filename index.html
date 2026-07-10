@@ -403,6 +403,24 @@ body.intro-lock{overflow:hidden;height:100vh;}
 }
 .hero-cta-ghost-hi:hover{background:rgba(184,164,244,.22) !important;}
 
+/* ══ INSTALL / DOWNLOAD APP BUTTON ══ */
+.hero-install{
+  display:none;align-items:center;gap:9px;
+  padding:16px 28px;border-radius:100px;
+  background:rgba(94,234,212,.1);
+  border:1px solid rgba(94,234,212,.35);
+  color:#5EEAD4;font-weight:600;font-size:15px;text-decoration:none;
+  cursor:pointer;backdrop-filter:blur(8px);
+  transition:all .3s cubic-bezier(.22,1,.36,1);
+}
+.hero-install.on{display:inline-flex;}
+.hero-install:hover{background:rgba(94,234,212,.2);transform:translateY(-3px);box-shadow:0 12px 34px rgba(45,212,191,.25);}
+.hero-install svg{width:18px;height:18px;flex-shrink:0;}
+.hero-install .hi-dl{animation:hiBounce 2.4s ease-in-out infinite;}
+@keyframes hiBounce{0%,100%{transform:translateY(0);}50%{transform:translateY(2px);}}
+/* Installed already? Nothing to offer. */
+@media(display-mode:standalone){.hero-install{display:none !important;}}
+
 /* Hide auth links if signed in */
 .is-signed-in .hero-cta-pair{display:none;}
 .is-signed-in .nav-guest{display:none!important;}
@@ -484,6 +502,46 @@ body.intro-lock{overflow:hidden;height:100vh;}
   }
 }
 </script>
+
+  <!-- ═══ SIGNED-IN REDIRECT ═══
+       Runs before the intro film paints. A returning signed-in user
+       should land on their dashboard, not the marketing page.
+
+       Supabase persists its session in localStorage under a key derived
+       from the project ref, so we can detect auth synchronously here —
+       no await, no flash of the landing page. ApaSession later confirms
+       over the network and corrects us if the token turned out stale. -->
+  <script>
+  (function(){
+    try{
+      // Honour an explicit escape hatch: /?stay=1 or a "home" click
+      // from inside the app must not bounce straight back out.
+      var qs = new URLSearchParams(location.search);
+      if (qs.has('stay') || sessionStorage.getItem('apa_stay_home')) {
+        sessionStorage.removeItem('apa_stay_home');
+        return;
+      }
+
+      // apa-session.js overrides Supabase's default storageKey to
+      // 'apa-auth' (see installSingleton). Reading the default
+      // sb-<ref>-auth-token key would silently never match.
+      var raw = localStorage.getItem('apa-auth');
+      if (!raw) return;
+
+      var tok = JSON.parse(raw);
+      // v2 may nest under .currentSession depending on version.
+      var sess = (tok && tok.access_token) ? tok
+               : (tok && tok.currentSession) ? tok.currentSession
+               : null;
+      if (!sess || !sess.access_token) return;
+
+      // expires_at is unix seconds. An expired token means signed out.
+      if (sess.expires_at && sess.expires_at * 1000 < Date.now()) return;
+
+      location.replace('dashboard.html');
+    }catch(e){ /* never block the page on a parse error */ }
+  })();
+  </script>
 
   <!-- ═══ SW force-update: kills stale service workers immediately ═══ -->
   <script>
@@ -653,6 +711,12 @@ body.intro-lock{overflow:hidden;height:100vh;}
         <a href="auth.html" class="hero-cta-ghost" id="hero-signin-link">Sign in</a>
         <a href="auth.html?mode=signup" class="hero-cta-ghost hero-cta-ghost-hi" id="hero-signup-link">Create account</a>
       </div>
+      <button class="hero-install" id="hero-install-btn" type="button" aria-label="Install the Apatmento app">
+        <svg class="hi-dl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        <span id="hero-install-label">Get the App</span>
+      </button>
     </div></div>
   <div class="hero-marquee">
     <div class="marquee-track" id="marquee"></div>
@@ -955,6 +1019,58 @@ document.querySelectorAll('.svc-tile').forEach((t,i)=>{t.style.transitionDelay=(
 
 <script src="/brand.js" defer></script>
   <script src="/apa-signal.js" defer></script>
+  <script src="/apa-push.js" defer></script>
+
+<script>
+/* ── HERO INSTALL BUTTON ─────────────────────────────────────────
+   Three states, because "install" means different things per platform:
+     · Chrome/Edge/Android → native beforeinstallprompt dialog
+     · iOS Safari          → no API exists; show the Share-sheet steps
+     · Already installed   → hide entirely, there's nothing to offer
+   ──────────────────────────────────────────────────────────────── */
+(function(){
+  var btn   = document.getElementById('hero-install-btn');
+  var label = document.getElementById('hero-install-label');
+  if(!btn) return;
+
+  var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  var standalone = window.matchMedia('(display-mode: standalone)').matches
+                || window.navigator.standalone === true;
+
+  if (standalone) return;              // running as an app already
+
+  function show(text){
+    if(text && label) label.textContent = text;
+    btn.classList.add('on');
+  }
+
+  // Chrome fires beforeinstallprompt; pwa.js caches it and re-broadcasts.
+  if (window.__APA_INSTALL_PROMPT__) show();
+  window.addEventListener('apa:installable', function(){ show(); });
+  window.addEventListener('apa:installed', function(){ btn.classList.remove('on'); });
+
+  // iOS never fires the event, so surface the button unconditionally.
+  if (isIOS) show('Add to Home Screen');
+
+  btn.addEventListener('click', async function(){
+    if (isIOS && !window.__APA_INSTALL_PROMPT__){
+      alert('To install Apatmento:\n\n1. Tap the Share button below\n2. Scroll and tap "Add to Home Screen"\n3. Tap Add\n\nApatmento will open like a native app — full screen, offline-ready, with notifications.');
+      return;
+    }
+    var outcome = await (window.ApatmentoPWA
+      ? window.ApatmentoPWA.install()
+      : Promise.resolve('unavailable'));
+
+    if (outcome === 'accepted'){
+      btn.classList.remove('on');
+    } else if (outcome === 'unavailable'){
+      // Desktop Chrome sometimes withholds the prompt until engagement
+      // heuristics are met. Tell the truth rather than failing silently.
+      alert('Your browser hasn\u2019t offered the install option yet.\n\nTry the install icon in the address bar, or browse a page or two and come back \u2014 it appears after a little engagement.');
+    }
+  });
+})();
+</script>
 </body>
 </html>
 

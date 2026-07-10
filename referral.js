@@ -454,8 +454,10 @@ async function init() {
   // Signed-in users already know about referrals — never interrupt them
   if (isGuest && shouldShowPopup()) {
     // Only auto-show on homepage or dashboard, with a delay
-    if(page === 'index' || page === '') setTimeout(() => openPopup(), 10000);
-    else if(page === 'dashboard') setTimeout(() => openPopup(), 12000);
+    // 60s — long enough that the visitor has actually looked around.
+    // Anything sooner lands while they're still reading the hero.
+    if(page === 'index' || page === '') setTimeout(() => openPopup(), 60000);
+    else if(page === 'dashboard') setTimeout(() => openPopup(), 60000);
   }
 }
 

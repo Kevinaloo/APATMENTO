@@ -96,17 +96,43 @@ async function registerSW() {
 /* ── 2. INSTALL PROMPT ── */
 let deferredInstallPrompt = null;
 
+/* beforeinstallprompt fires exactly once, and often before any deferred
+   script has parsed. Capture it at the earliest possible moment and
+   re-broadcast, so late listeners (the hero button) can still hook on. */
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  window.__APA_INSTALL_PROMPT__ = e;
+  window.dispatchEvent(new CustomEvent('apa:installable'));
+});
+
+window.addEventListener('appinstalled', () => {
+  deferredInstallPrompt = null;
+  window.__APA_INSTALL_PROMPT__ = null;
+  window.dispatchEvent(new CustomEvent('apa:installed'));
+});
+
+/* Trigger the native install dialog. Returns the user's choice.
+   Exposed so any page can offer its own install affordance. */
+async function promptInstall() {
+  const p = deferredInstallPrompt || window.__APA_INSTALL_PROMPT__;
+  if (!p) return 'unavailable';
+  p.prompt();
+  const { outcome } = await p.userChoice;
+  deferredInstallPrompt = null;
+  window.__APA_INSTALL_PROMPT__ = null;
+  return outcome;
+}
+
 function initInstallPrompt() {
   // Don't show if already installed
   if (window.matchMedia('(display-mode: standalone)').matches) return;
   if (sessionStorage.getItem('pwa_install_dismissed')) return;
 
-  window.addEventListener('beforeinstallprompt', e => {
-    e.preventDefault();
-    deferredInstallPrompt = e;
-    // Wait a bit before showing — don't interrupt first visit
-    setTimeout(showInstallBanner, 8000);
-  });
+  // Banner rides on the captured event above.
+  if (deferredInstallPrompt) setTimeout(showInstallBanner, 8000);
+  else window.addEventListener('apa:installable',
+    () => setTimeout(showInstallBanner, 8000), { once: true });
 
   // iOS manual prompt (no beforeinstallprompt on Safari)
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
@@ -145,14 +171,11 @@ function showInstallBanner() {
 
   document.getElementById('pwa-install-btn').addEventListener('click', async () => {
     el.classList.remove('show');
-    if (!deferredInstallPrompt) return;
-    deferredInstallPrompt.prompt();
-    const { outcome } = await deferredInstallPrompt.userChoice;
-    deferredInstallPrompt = null;
+    const outcome = await promptInstall();
     if (outcome === 'accepted') {
       console.log('[PWA] User accepted install');
-      setTimeout(() => el.remove(), 500);
     }
+    setTimeout(() => el.remove(), 500);
   });
 
   document.getElementById('pwa-install-close').addEventListener('click', () => {
@@ -190,9 +213,9 @@ function showIOSBanner() {
 }
 
 /* ── 3. WEB PUSH NOTIFICATIONS ── */
-// VAPID public key — replace with your own from: https://vapidkeys.com/
-// Or generate via: npx web-push generate-vapid-keys
-const VAPID_PUBLIC_KEY = 'BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBkYIRNJ3oGl8-I-Mhog';
+// Apatmento's VAPID public key. The private half lives only in the
+// VAPID_PRIVATE_KEY env var on the server (see api/push-send.js).
+const VAPID_PUBLIC_KEY = 'BIteWNc_QXpcPP2rj0BDVOzFZYUs7mFpys-QdUwwFbtqGANd2l59OOplmMKjQ8X5i2F0SsDn3v4F9S-8XSMSXT8';
 
 function urlBase64ToUint8Array(base64String) {
   const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -202,20 +225,29 @@ function urlBase64ToUint8Array(base64String) {
 }
 
 async function subscribeToPush() {
-  if (!swRegistration || !('PushManager' in window)) return;
+  if (!swRegistration || !('PushManager' in window)) return null;
   try {
-    const existing = await swRegistration.pushManager.getSubscription();
-    if (existing) return existing;
-    const sub = await swRegistration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-    });
-    console.log('[PWA] Push subscription created');
-    // In production: send sub to your server to store
-    // await fetch('/api/push-subscribe', { method:'POST', body: JSON.stringify(sub), headers:{'Content-Type':'application/json'} });
+    let sub = await swRegistration.pushManager.getSubscription();
+    if (!sub) {
+      sub = await swRegistration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+      });
+      console.log('[PWA] Push subscription created');
+    }
+
+    // Always re-persist, even for an existing subscription. The old
+    // early-return meant a browser that subscribed before login stayed
+    // in the DB with user_id = null, and was never reachable again.
+    // apa-push.js owns the write because it knows the current user id.
+    if (window.ApaPush) {
+      const st = window.ApaSession && ApaSession.get && ApaSession.get();
+      await ApaPush.subscribe(st && st.user && st.user.id);
+    }
     return sub;
   } catch (err) {
     console.warn('[PWA] Push subscription failed:', err);
+    return null;
   }
 }
 
@@ -310,13 +342,15 @@ function init() {
   initInstallPrompt();
   initOfflineBanner();
 
-  // Ask for notifications after user has been on site 30s
-  // Only on pages where it makes sense (not auth/dashboard)
+  // Ask for notifications after the user has settled in.
+  // 60s keeps it clear of the referral popup and the install banner —
+  // three modals stacking on a first visit reads as spam.
   const page = location.pathname;
-  const skipPages = ['/auth.html', '/dashboard.html'];
+  const skipPages = ['/auth.html'];
   if (!skipPages.some(p => page.includes(p))) {
-    if (!sessionStorage.getItem('pwa_notif_dismissed') && Notification.permission === 'default') {
-      setTimeout(() => requestNotificationPermission(), 30000);
+    if (!sessionStorage.getItem('pwa_notif_dismissed') &&
+        'Notification' in window && Notification.permission === 'default') {
+      setTimeout(() => requestNotificationPermission(), 60000);
     }
   }
 }
@@ -328,6 +362,13 @@ if (document.readyState === 'loading') {
 }
 
 /* Expose for manual trigger */
-window.ApatmentoPWA = { requestNotifications: requestNotificationPermission, install: showInstallBanner };
+window.ApatmentoPWA = {
+  requestNotifications: requestNotificationPermission,
+  install: promptInstall,
+  showInstallBanner: showInstallBanner,
+  canInstall: () => !!(deferredInstallPrompt || window.__APA_INSTALL_PROMPT__),
+  isInstalled: () => window.matchMedia('(display-mode: standalone)').matches
+    || window.navigator.standalone === true,
+};
 
 })();

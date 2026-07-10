@@ -6,7 +6,7 @@
    No more stale JS/CSS causing inconsistent behaviour.
 ════════════════════════════════════════════════════════════════ */
 
-const VERSION = 'apatmento-v18';
+const VERSION = 'apatmento-v19';
 const CACHE = `${VERSION}`;
 
 // ── INSTALL: skip waiting immediately, take control NOW ──
@@ -119,4 +119,12 @@ self.addEventListener('notificationclick', e => {
 
 self.addEventListener('sync', e => {
   if (e.tag === 'sync-bookings') e.waitUntil(Promise.resolve());
+});
+
+// ── UPDATE HANDSHAKE ──
+// pwa.js posts SKIP_WAITING when the user taps "Update now". Without
+// this listener the message was dropped and the page reloaded straight
+// back into the old worker.
+self.addEventListener('message', e => {
+  if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
 });
