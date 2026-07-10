@@ -510,6 +510,26 @@ body.intro-lock{overflow:hidden;height:100vh;}
 }
 </script>
 
+  <!-- ═══ EARLIEST POSSIBLE beforeinstallprompt CAPTURE ═══
+       This event fires exactly once and can arrive before any deferred
+       script has parsed. pwa.js is `defer`, so on a fast load the event
+       was landing with no listener attached and the install prompt was
+       lost for the whole session. Catch it here, in <head>, and stash
+       it on window for pwa.js / the hero button to pick up later. -->
+  <script>
+  (function(){
+    window.addEventListener('beforeinstallprompt', function(e){
+      e.preventDefault();
+      window.__APA_INSTALL_PROMPT__ = e;
+      window.dispatchEvent(new CustomEvent('apa:installable'));
+    });
+    window.addEventListener('appinstalled', function(){
+      window.__APA_INSTALL_PROMPT__ = null;
+      window.dispatchEvent(new CustomEvent('apa:installed'));
+    });
+  })();
+  </script>
+
   <!-- ═══ SIGNED-IN REDIRECT ═══
        Runs before the intro film paints. A returning signed-in user
        should land on their dashboard, not the marketing page.
@@ -1032,51 +1052,130 @@ document.querySelectorAll('.svc-tile').forEach((t,i)=>{t.style.transitionDelay=(
 
 <script>
 /* ── HERO INSTALL BUTTON ─────────────────────────────────────────
-   Three states, because "install" means different things per platform:
-     · Chrome/Edge/Android → native beforeinstallprompt dialog
-     · iOS Safari          → no API exists; show the Share-sheet steps
-     · Already installed   → hide entirely, there's nothing to offer
+   The button is always visible unless we're already running as an
+   installed app. Whether Chrome has fired beforeinstallprompt is a
+   browser-internal heuristic we cannot predict, and hiding the button
+   until it fires meant most first-time desktop visitors never saw it
+   at all. Show it, then adapt what the click does.
    ──────────────────────────────────────────────────────────────── */
 (function(){
   var btn   = document.getElementById('hero-install-btn');
   var label = document.getElementById('hero-install-label');
   if(!btn) return;
 
-  var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  var ua = navigator.userAgent;
+  var isIOS     = /iphone|ipad|ipod/i.test(ua) ||
+                  (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1); // iPadOS 13+
+  var isFirefox = /firefox/i.test(ua);
+  var isSafari  = /^((?!chrome|android|crios|fxios).)*safari/i.test(ua);
   var standalone = window.matchMedia('(display-mode: standalone)').matches
                 || window.navigator.standalone === true;
 
-  if (standalone) return;              // running as an app already
+  if (standalone) return;   // already installed — nothing to offer
 
-  function show(text){
-    if(text && label) label.textContent = text;
-    btn.classList.add('on');
-  }
+  // Visible from the first paint.
+  btn.classList.add('on');
+  if (isIOS || isSafari) label.textContent = 'Add to Home Screen';
 
-  // Chrome fires beforeinstallprompt; pwa.js caches it and re-broadcasts.
-  if (window.__APA_INSTALL_PROMPT__) show();
-  window.addEventListener('apa:installable', function(){ show(); });
   window.addEventListener('apa:installed', function(){ btn.classList.remove('on'); });
 
-  // iOS never fires the event, so surface the button unconditionally.
-  if (isIOS) show('Add to Home Screen');
+  /* Branded instructions sheet. alert() is jarring and unstyleable, and
+     on iOS it obscures the very Share button we're telling them to tap. */
+  function sheet(title, steps, note){
+    var old = document.getElementById('apa-install-sheet');
+    if (old) old.remove();
+
+    var wrap = document.createElement('div');
+    wrap.id = 'apa-install-sheet';
+    wrap.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(8,8,15,.72);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;transition:opacity .3s;';
+
+    var card = document.createElement('div');
+    card.style.cssText = 'background:#FCFCFE;border-radius:24px;padding:30px 26px;max-width:380px;width:100%;box-shadow:0 30px 80px rgba(8,8,15,.4);transform:translateY(14px) scale(.97);transition:transform .4s cubic-bezier(.22,1,.36,1);';
+
+    var h = document.createElement('div');
+    h.style.cssText = "font-family:'Fraunces',Georgia,serif;font-size:21px;font-weight:500;color:#08080F;margin-bottom:16px;";
+    h.textContent = title;
+    card.appendChild(h);
+
+    var ol = document.createElement('ol');
+    ol.style.cssText = 'margin:0 0 18px;padding-left:20px;color:#474A66;font-size:14px;line-height:1.85;';
+    steps.forEach(function(s){
+      var li = document.createElement('li');
+      li.textContent = s;          // textContent: never parse as markup
+      ol.appendChild(li);
+    });
+    card.appendChild(ol);
+
+    if (note){
+      var n = document.createElement('div');
+      n.style.cssText = 'font-size:12.5px;color:#8B8EAC;line-height:1.6;margin-bottom:18px;';
+      n.textContent = note;
+      card.appendChild(n);
+    }
+
+    var close = document.createElement('button');
+    close.textContent = 'Got it';
+    close.style.cssText = 'width:100%;padding:14px;border-radius:100px;border:none;background:linear-gradient(135deg,#6D28FF,#4F6DFF);color:#fff;font-weight:600;font-size:15px;cursor:pointer;';
+    card.appendChild(close);
+
+    wrap.appendChild(card);
+    document.body.appendChild(wrap);
+    requestAnimationFrame(function(){
+      wrap.style.opacity = '1';
+      card.style.transform = 'none';
+    });
+
+    function dismiss(){
+      wrap.style.opacity='0';
+      setTimeout(function(){ wrap.remove(); }, 320);
+    }
+    close.addEventListener('click', dismiss);
+    wrap.addEventListener('click', function(e){ if(e.target===wrap) dismiss(); });
+  }
 
   btn.addEventListener('click', async function(){
-    if (isIOS && !window.__APA_INSTALL_PROMPT__){
-      alert('To install Apatmento:\n\n1. Tap the Share button below\n2. Scroll and tap "Add to Home Screen"\n3. Tap Add\n\nApatmento will open like a native app — full screen, offline-ready, with notifications.');
+    var prompt = window.__APA_INSTALL_PROMPT__;
+
+    // Native path — Chrome, Edge, Android, and desktop Chrome once its
+    // engagement heuristics are satisfied.
+    if (prompt && window.ApatmentoPWA){
+      var outcome = await window.ApatmentoPWA.install();
+      if (outcome === 'accepted'){ btn.classList.remove('on'); return; }
+      if (outcome !== 'unavailable') return;   // dismissed; leave them be
+      // fall through to instructions
+    }
+
+    if (isIOS){
+      sheet('Add Apatmento to your Home Screen', [
+        'Tap the Share button at the bottom of Safari',
+        'Scroll down and tap "Add to Home Screen"',
+        'Tap "Add" in the top right'
+      ], 'Apatmento will open full screen, work offline, and can send you booking notifications.');
       return;
     }
-    var outcome = await (window.ApatmentoPWA
-      ? window.ApatmentoPWA.install()
-      : Promise.resolve('unavailable'));
 
-    if (outcome === 'accepted'){
-      btn.classList.remove('on');
-    } else if (outcome === 'unavailable'){
-      // Desktop Chrome sometimes withholds the prompt until engagement
-      // heuristics are met. Tell the truth rather than failing silently.
-      alert('Your browser hasn\u2019t offered the install option yet.\n\nTry the install icon in the address bar, or browse a page or two and come back \u2014 it appears after a little engagement.');
+    if (isFirefox){
+      sheet('Install Apatmento', [
+        'Open the menu (three lines, top right)',
+        'Tap "Install" or "Add to Home Screen"'
+      ], 'Firefox on desktop does not support installing web apps. Chrome, Edge or Safari will work.');
+      return;
     }
+
+    if (isSafari){
+      sheet('Add Apatmento to your Dock', [
+        'Open the File menu',
+        'Choose "Add to Dock…"',
+        'Click "Add"'
+      ], 'Requires macOS Sonoma or newer.');
+      return;
+    }
+
+    // Chromium, but the prompt has not been offered yet.
+    sheet('Install Apatmento', [
+      'Look for the install icon (⊕) at the right of the address bar',
+      'Or open the ⋮ menu and choose "Cast, save and share" → "Install page as app"'
+    ], 'Chrome only offers the one-tap install button after you have browsed the site a little. Everything works in the browser meanwhile.');
   });
 })();
 </script>

@@ -94,11 +94,11 @@ async function registerSW() {
 }
 
 /* ── 2. INSTALL PROMPT ── */
-let deferredInstallPrompt = null;
+/* index.html captures beforeinstallprompt in <head> because this file is
+   `defer` and the event can fire before we parse. Adopt whatever was
+   already stashed rather than assuming we're first. */
+let deferredInstallPrompt = window.__APA_INSTALL_PROMPT__ || null;
 
-/* beforeinstallprompt fires exactly once, and often before any deferred
-   script has parsed. Capture it at the earliest possible moment and
-   re-broadcast, so late listeners (the hero button) can still hook on. */
 window.addEventListener('beforeinstallprompt', e => {
   e.preventDefault();
   deferredInstallPrompt = e;
@@ -106,10 +106,13 @@ window.addEventListener('beforeinstallprompt', e => {
   window.dispatchEvent(new CustomEvent('apa:installable'));
 });
 
+window.addEventListener('apa:installable', () => {
+  if (!deferredInstallPrompt) deferredInstallPrompt = window.__APA_INSTALL_PROMPT__;
+});
+
 window.addEventListener('appinstalled', () => {
   deferredInstallPrompt = null;
   window.__APA_INSTALL_PROMPT__ = null;
-  window.dispatchEvent(new CustomEvent('apa:installed'));
 });
 
 /* Trigger the native install dialog. Returns the user's choice.
@@ -117,11 +120,19 @@ window.addEventListener('appinstalled', () => {
 async function promptInstall() {
   const p = deferredInstallPrompt || window.__APA_INSTALL_PROMPT__;
   if (!p) return 'unavailable';
-  p.prompt();
-  const { outcome } = await p.userChoice;
-  deferredInstallPrompt = null;
-  window.__APA_INSTALL_PROMPT__ = null;
-  return outcome;
+  try {
+    p.prompt();
+    const { outcome } = await p.userChoice;
+    // The event is single-use; a second prompt() throws.
+    deferredInstallPrompt = null;
+    window.__APA_INSTALL_PROMPT__ = null;
+    return outcome;
+  } catch (err) {
+    console.warn('[PWA] install prompt failed:', err);
+    deferredInstallPrompt = null;
+    window.__APA_INSTALL_PROMPT__ = null;
+    return 'unavailable';
+  }
 }
 
 function initInstallPrompt() {

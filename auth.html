@@ -11,6 +11,21 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <!-- Session core: one Supabase client per tab. Multiple clients on the
      same storage key race each other and silently drop the session. -->
+<script>
+/* Capture beforeinstallprompt before the deferred pwa.js parses —
+   otherwise a fast load loses the event and the signup install gate
+   can never offer the native dialog. */
+(function(){
+  window.addEventListener('beforeinstallprompt', function(e){
+    e.preventDefault();
+    window.__APA_INSTALL_PROMPT__ = e;
+    window.dispatchEvent(new CustomEvent('apa:installable'));
+  });
+  window.addEventListener('appinstalled', function(){
+    window.__APA_INSTALL_PROMPT__ = null;
+  });
+})();
+</script>
 <script src="/apa-session.js"></script>
 <!-- Needed by the install gate: captures beforeinstallprompt and
      exposes ApatmentoPWA.install(). -->
@@ -781,7 +796,9 @@ let _pendingSignup = null;
 
 /* Tailor the gate to what this platform can actually do. */
 function prepInstallGate() {
-  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const ua    = navigator.userAgent;
+  const isIOS = /iphone|ipad|ipod/i.test(ua) ||
+                (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
   const btn   = document.getElementById('install-btn');
   const sub   = document.getElementById('setup-sub');
   const skip  = document.getElementById('setup-skip');
@@ -789,13 +806,20 @@ function prepInstallGate() {
   if (isIOS) {
     btn.textContent = 'Show me how';
     sub.textContent = 'Add Apatmento to your home screen for full screen, offline access and instant notifications.';
+    skip.style.display = 'block';   // iOS gives no completion signal
   } else if (!window.__APA_INSTALL_PROMPT__) {
-    // Desktop Chrome withholds the prompt until engagement heuristics
-    // are met. Blocking signup on an event that may never fire would
-    // trap the user, so offer the browser path.
+    // Chromium withholds the prompt until engagement heuristics are met,
+    // and Firefox desktop never offers one. Blocking account creation on
+    // an event that may never fire would trap the user entirely, so the
+    // browser path must always be reachable.
     btn.textContent = 'Install the app';
     skip.style.display = 'block';
   }
+
+  // If the prompt shows up while they're looking at the gate, upgrade.
+  window.addEventListener('apa:installable', function(){
+    if (btn) btn.textContent = 'Install the app';
+  }, { once: true });
 }
 
 async function doInstall() {
