@@ -93,7 +93,8 @@ export default async function handler(req, res) {
       if (bk.cancelled_at)        return res.status(409).json({ error: 'already_cancelled' });
       if (bk.status === 'checked_in') return res.status(409).json({ error: 'already_checked_in' });
 
-      const h = hoursToCheckin(bk.checkin_date);
+      const listingMeta = await one('listings', `id=eq.${bk.apartment_id}&select=checkin_time`).catch(()=>null);
+      const h = hoursToCheckin(bk.checkin_date, listingMeta?.checkin_time);
 
       // The gate. Recomputed here, on our clock, not theirs.
       if (h == null || h < 24) {
@@ -105,7 +106,7 @@ export default async function handler(req, res) {
         return res.status(403).json({
           blocked: true, reason: 'within_24h', hours: h,
           message: 'Check-in is under 24 hours away. Matching is closed. ' +
-                   'Cancelling now refunds your guest in full and issues you a yellow card.',
+                   'Cancelling now refunds your guest in full. Our team will review the situation.',
         });
       }
 
@@ -278,8 +279,8 @@ export default async function handler(req, res) {
         `${money(settle.refund_amount)} is on its way back to you. Nothing withheld.`,
         { booking_id: bk.id });
 
-      await notify(offer.origin_host_id, 'match_declined', 'Your guest declined',
-        'They chose a refund instead. No commission on this one.', { offer_id });
+      await notify(offer.origin_host_id, 'booking_update', 'Booking update',
+        'The guest has chosen an alternative arrangement. Our team will follow up within 24 hours.', { offer_id });
 
       return res.status(200).json({ ok: true, refunded: true, refund_amount: settle.refund_amount });
     }

@@ -228,11 +228,6 @@ td strong{color:var(--ink);font-weight:600;}
 .btn-match{background:#0f1117;color:#fff;border:none;border-radius:10px;padding:10px 15px;font-family:var(--font-body);font-weight:650;font-size:12.5px;cursor:pointer;white-space:nowrap;}
 .btn-match:disabled{background:#eceef1;color:#a3a8b2;cursor:not-allowed;}
 .match-why{font-size:11.5px;color:#a32a20;margin-top:6px;line-height:1.5;max-width:340px;}
-.cards-strip{display:flex;gap:7px;align-items:center;margin-bottom:16px;padding:11px 14px;border-radius:12px;background:#fdf3e8;border:1px solid #f0d9a8;font-size:12.5px;color:#7a4e12;}
-.cards-strip.red{background:#fdecea;border-color:#f2c4bf;color:#8c2118;}
-.yc{width:12px;height:16px;border-radius:2px;background:#f5c451;}
-.yc.spent{background:#e0473c;}
-.yc.empty{background:#e8eaee;}
 </style>
 </head><body>
 <div class="aurora"><div class="ab ab-1"></div><div class="ab ab-2"></div><div class="ab ab-3"></div></div>
@@ -336,10 +331,9 @@ td strong{color:var(--ink);font-weight:600;}
   <div class="card-hd">
     <div>
       <div class="card-title">Upcoming stays</div>
-      <div class="card-sub">If you can't host, act early. Matching closes 24 hours before check-in.</div>
+      <div class="card-sub">Upcoming paid reservations requiring your attention.</div>
     </div>
   </div>
-  <div id="cards-strip"></div>
   <div id="stays-list"></div>
 </div>
 
@@ -508,31 +502,12 @@ async function loadStays() {
     .order('checkin_date', { ascending: true }).limit(30);
 
   HOST_STAYS = data || [];
-  await renderCardsStrip(session.user.id);
   renderStays();
 }
 
 /* Discipline, shown to the host and nobody else. Three yellows is
    not a surprise you spring on someone. */
-async function renderCardsStrip(hostId) {
-  const { data } = await sb.from('host_cards').select('card,reason,created_at')
-    .eq('host_id', hostId).eq('voided', false);
-  const cards = data || [];
-  const yellows = cards.filter(c => c.card === 'yellow').length;
-  const red = cards.some(c => c.card === 'red');
-  const strip = document.getElementById('cards-strip');
 
-  if (!yellows && !red) { strip.innerHTML = ''; return; }
-
-  const pips = [0, 1, 2].map(i =>
-    `<span class="yc ${red ? 'spent' : i < yellows ? '' : 'empty'}"></span>`).join('');
-
-  strip.className = 'cards-strip' + (red ? ' red' : '');
-  strip.innerHTML = red
-    ? `${pips} <strong>Red card.</strong> Your listings are hidden and your account is under review.`
-    : `${pips} <strong>${yellows} of 3 yellow cards.</strong> ` +
-      `${3 - yellows === 1 ? 'One more' : `${3 - yellows} more`} and your account goes under review.`;
-}
 
 function renderStays() {
   const panel = document.getElementById('stays-panel');
@@ -554,7 +529,7 @@ function renderStays() {
       ? `<button class="btn-match" onclick="matchGuest('${b.id}')">Match guest</button>`
       : `<button class="btn-match" disabled>Match guest</button>`;
 
-    const why = h >= 24 ? '' : `<div class="match-why">Under 24 hours. Cancelling now refunds your guest in full, moves them at your cost, and issues you a yellow card.</div>`;
+    const why = h >= 24 ? '' : `<div class="match-why">Check-in is very soon. Matching is no longer available. Please contact your guest directly — our team can assist if needed.</div>`;
 
     return `<div class="stay-row" id="stay-${b.id}">
       <div class="stay-main">
@@ -580,7 +555,7 @@ async function matchGuest(bookingId) {
     if (j.blocked) {
       btn.textContent = 'Match guest';
       if (j.reason === 'within_24h') {
-        toast('Matching closed — check-in is under 24 hours away.', false);
+        toast('Matching is not available this close to check-in. Please contact your guest directly.', false);
         renderStays();
       } else if (j.reason === 'no_comparable_listing') {
         toast('Nothing comparable is free for those dates. Cancel to refund your guest in full.', false);

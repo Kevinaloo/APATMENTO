@@ -59,10 +59,15 @@
      Client clocks lie. We compute locally for instant UI, then let the
      server's compute_settlement() have the final word before any money
      moves. The two should agree; when they don't, the server wins.     */
-  function hoursTo(dateStr) {
+  /* The 24-hour window is measured from the host's actual check-in time,
+     not midnight, not noon. A 3 PM check-in that is 26 hours away gives
+     the host two more hours than a noon check-in on the same calendar day.
+     Pass checkinTime as 'HH:MM' (e.g. '15:00') from the listing.          */
+  function hoursTo(dateStr, checkinTime) {
     if (!dateStr) return null;
-    var t = new Date(dateStr + (dateStr.length <= 10 ? 'T14:00:00' : '')).getTime();
-    return (t - Date.now()) / 3600000;
+    var time = checkinTime || '14:00';
+    var combined = dateStr.length <= 10 ? dateStr + 'T' + time + ':00' : dateStr;
+    return (new Date(combined).getTime() - Date.now()) / 3600000;
   }
   function phaseOf(h) {
     if (h == null) return 'unknown';
@@ -404,12 +409,16 @@
      5 · DEPOSIT  — pay part now, the rest before you hold the keys
      ═══════════════════════════════════════════════════════════════ */
   var Deposit = {
-    MIN_PCT: 0.30,
+    /* Deposit rules:
+       1 night  → half of that night (50%)
+       2+ nights → 25% of grand total
+       Always at least 1 KES; never more than the full amount.    */
+    depositPct: function (nights) { return nights <= 1 ? 0.50 : 0.25; },
 
-    split: function (grandTotal, pct) {
-      var p = Math.min(0.9, Math.max(Deposit.MIN_PCT, pct || 0.30));
-      var deposit = Math.round(grandTotal * p);
-      return { deposit: deposit, balance: Math.max(0, grandTotal - deposit), pct: p };
+    split: function (grandTotal, nights) {
+      var pct = Deposit.depositPct(nights || 1);
+      var deposit = Math.round(grandTotal * pct);
+      return { deposit: deposit, balance: Math.max(0, grandTotal - deposit), pct: pct };
     },
 
     /* The gate. Everything else in the check-in UI defers to this. */
@@ -536,8 +545,7 @@
           lines.push(['Cancelling more than 24 hours out — nothing withheld.', '', 'note']);
         } else if (picked.fault === 'host') {
           lines.push(['Refund to you', money(s.refund_amount), 'good']);
-          if (picked.auto_redirect) lines.push(['We move you now, at our cost — including the ride.', '', 'note']);
-          lines.push(['Your host is issued a yellow card.', '', 'warn']);
+          if (picked.auto_redirect) lines.push(['We will arrange alternative accommodation for you immediately.', '', 'note']);
         } else if (picked.fault === 'guest') {
           lines.push(['Refund to you', money(s.refund_amount), '']);
           lines.push(['Retained by host', money(s.host_payout), 'warn']);
@@ -634,7 +642,7 @@
     },
 
     _outcomeToast: function (r) {
-      if (r.redirect)   return toast('You\'re being moved. A ride is on the way — we\'re covering it.');
+      if (r.redirect)   return toast('We\'re arranging alternative accommodation. Our team will contact you shortly.');
       if (r.refunded)   return toast('Refunded ' + money(r.refund_amount) + '. It\'s on its way back to you.');
       if (r.held)       return toast('Received. We\'re reviewing your photo now.');
       toast('Reported. We\'ll be in touch shortly.');

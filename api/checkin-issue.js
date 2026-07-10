@@ -31,9 +31,11 @@ function haversineKm(a, b, c, d) {
   return Number((2 * R * Math.asin(Math.sqrt(s))).toFixed(2));
 }
 
-function hoursToCheckin(dateStr) {
+function hoursToCheckin(dateStr, checkinTime) {
   if (!dateStr) return null;
-  return (new Date(`${dateStr}T14:00:00Z`).getTime() - Date.now()) / 3600000;
+  const time = (checkinTime || '14:00').replace(':', ':');
+  const iso = dateStr.length <= 10 ? `${dateStr}T${time}:00` : dateStr;
+  return (new Date(iso).getTime() - Date.now()) / 3600000;
 }
 
 /* Corroboration. A guest's word plus a photo taken 40km from the
@@ -112,7 +114,10 @@ export default async function handler(req, res) {
     if (!bk) return res.status(404).json({ error: 'booking_not_found' });
 
     const tax = await one('issue_taxonomy', `code=eq.${issue.issue_code}&select=*`);
-    const hours = hoursToCheckin(bk.checkin_date);
+    // Fetch host's set check-in time; fall back to 14:00 if not stored
+    const listing = await one('listings', `id=eq.${bk.apartment_id}&select=checkin_time,lat,lng,host_id`).catch(()=>null);
+    const checkinTime = listing?.checkin_time || '14:00';
+    const hours = hoursToCheckin(bk.checkin_date, checkinTime);
     const phase = hours >= 24 ? 'pre_24h' : hours >= 2 ? 'within_24h' : hours >= -6 ? 'at_checkin' : 'post_checkin';
 
     /* ── Fault ────────────────────────────────────────────────────
@@ -252,7 +257,7 @@ export default async function handler(req, res) {
       result.refuge = { listing_id: refuge.listing_id, title: refuge.title, booking_id: replacement.id };
     }
 
-    // 2 · The ride. We pay it from the float, then charge it to the host.
+    // 2 · The ride. Comes from platform float. We do not tell the host about ride logistics.
     if (refuge) {
       const km = refuge.distance_km ?? haversineKm(issue.geo_lat, issue.geo_lng, refuge.lat, refuge.lng) ?? 5;
       const fare = Math.round(RESCUE_BASE + RESCUE_PER_KM * km);
@@ -263,7 +268,7 @@ export default async function handler(req, res) {
           p_from_lat: issue.geo_lat, p_from_lng: issue.geo_lng,
           p_to: refuge.location || refuge.title,
           p_to_lat: refuge.lat, p_to_lng: refuge.lng,
-          p_distance_km: km, p_fare: fare, p_charge_host: true,
+          p_distance_km: km, p_fare: fare, p_charge_host: false,
         });
         result.rescue_ride = ride;
       } catch (e) {
@@ -314,17 +319,18 @@ export default async function handler(req, res) {
     await notify(bk.guest_id, 'redirected',
       replacement ? 'You\'re being moved' : 'Refunded in full',
       replacement
-        ? `${refuge.title} is ready for you, same dates, same price. A ride is on its way — we're paying for it.`
-        : `${money(settle.refund_amount)} is on its way back to you, and we're sorry.`,
+        ? `We've found you alternative accommodation at ${refuge.title} for the same dates. Our team will be in contact.`
+        : `${money(settle.refund_amount)} is being processed back to you. We're sorry for the inconvenience.`,
       { booking_id: replacement?.id || booking_id });
 
-    await notify(issue.host_id, 'yellow_card',
-      card?.card === 'red' ? 'Your account is under review' : 'You\'ve received a yellow card',
-      card?.card === 'red'
-        ? 'Three yellow cards. Your listings are hidden pending review. Reply to appeal.'
-        : `${tax?.label || 'A check-in issue'} was verified. This is yellow card ${card?.yellow_count || 1} of 3. ` +
-          `Your guest was refunded ${money(settle.refund_amount)} and re-homed at your cost.`,
-      { booking_id, issue_id, card: card?.card });
+    // Host notification: neutral, no card language, no ride mention.
+    // Cards and rankings are internal. We review within 24h and reach out
+    // with findings only if the complaint is validated.
+    await notify(issue.host_id, 'guest_departed',
+      'A guest departure was reported',
+      'A guest has reported they could not complete their stay. Our team is reviewing the matter ' +
+      'and will be in touch within 24 hours if further information is needed.',
+      { booking_id, issue_id });
 
     result.redirect = !!replacement;
     result.refunded = true;

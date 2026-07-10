@@ -269,7 +269,7 @@ body{overflow-x:hidden;}
           <input type="radio" name="paymode" value="deposit" onchange="setPayMode('deposit')"/>
           <div>
             <div class="pm-t">Deposit now, balance on arrival</div>
-            <div class="pm-s">Hold the dates for 30%. Pay the rest before you check in.</div>
+            <div class="pm-s" id="pm-dep-sub">Hold the dates with a deposit. Pay the rest before you check in.</div>
           </div>
           <b id="pm-dep-amt">KES 0</b>
         </label>
@@ -642,8 +642,8 @@ function generateCode(prefix) {
    here, once at the door — because a guest discovering it at the
    door for the first time is a guest we have failed.
    ═══════════════════════════════════════════════════════════════ */
-const DEPOSIT_PCT = 0.30;
 let PAY_MODE = 'full';
+function depositPct(nights) { return nights <= 1 ? 0.50 : 0.25; }
 
 function setPayMode(mode) {
   PAY_MODE = mode;
@@ -659,17 +659,26 @@ function setPayMode(mode) {
 }
 
 function payAmount() {
-  const total = getNights() * apt.price + calculateFee(getNights() * apt.price);
-  return PAY_MODE === 'deposit' ? Math.round(total * DEPOSIT_PCT) : total;
+  const nights = getNights();
+  const total = nights * apt.price + calculateFee(nights * apt.price);
+  return PAY_MODE === 'deposit' ? Math.round(total * depositPct(nights)) : total;
 }
 
 function refreshPayModeAmounts() {
-  const total = getNights() * apt.price + calculateFee(getNights() * apt.price);
-  const dep = Math.round(total * DEPOSIT_PCT);
+  const nights = getNights();
+  const total = nights * apt.price + calculateFee(nights * apt.price);
+  const dep = Math.round(total * depositPct(nights));
   const f = document.getElementById('pm-full-amt');
   const d = document.getElementById('pm-dep-amt');
   if (f) f.textContent = 'KES ' + total.toLocaleString();
   if (d) d.textContent = 'KES ' + dep.toLocaleString();
+  const sub = document.getElementById('pm-dep-sub');
+  if (sub) {
+    const n = getNights();
+    sub.textContent = n <= 1
+      ? 'Hold the dates for half of one night (' + Math.round(50) + '%). Pay the rest before you check in.'
+      : 'Hold the dates for 25% of the total. Pay the rest before you check in.';
+  }
   if (PAY_MODE) setPayMode(PAY_MODE);
 }
 
@@ -722,7 +731,7 @@ async function startPayment() {
     const hostCode  = generateCode('HOST');
 
     const isDeposit = PAY_MODE === 'deposit';
-    const depositAmt = isDeposit ? Math.round(total * DEPOSIT_PCT) : total;
+    const depositAmt = isDeposit ? Math.round(total * depositPct(nights)) : total;
     const balanceAmt = isDeposit ? total - depositAmt : 0;
 
     const { error } = await sb.from('apartment_bookings').insert({
