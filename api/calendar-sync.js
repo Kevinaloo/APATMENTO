@@ -8,7 +8,7 @@
 export const config = { maxDuration: 30 };
 
 const SUPA_URL = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
-const SUPA_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
+const SUPA_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 // Parse iCal VEVENT blocks
 function parseICal(icalText) {

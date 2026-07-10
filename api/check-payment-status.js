@@ -25,7 +25,7 @@ export default async function handler(req, res) {
     }
 
     const supabaseUrl = process.env.SUPABASE_URL;
-    const serviceKey  = process.env.SUPABASE_SERVICE_KEY;
+    const serviceKey  = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     const response = await fetch(
       `${supabaseUrl}/rest/v1/${table}?payment_reference=eq.${reference}&select=status`,

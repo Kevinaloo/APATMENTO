@@ -48,7 +48,7 @@ export default async function handler(req, res) {
     }
 
     const supabaseUrl = process.env.SUPABASE_URL;
-    const serviceKey  = process.env.SUPABASE_SERVICE_KEY;
+    const serviceKey  = process.env.SUPABASE_SERVICE_ROLE_KEY;
     const newStatus   = isSuccess ? 'paid_pending_checkin' : 'failed';
 
     /* Ask for the row back. We need it to attribute the booking to an
@@ -74,6 +74,38 @@ export default async function handler(req, res) {
       console.error('Supabase update failed:', errText);
     } else {
       try { rows = await updateRes.json(); } catch { /* minimal body */ }
+    }
+
+    /* ── Push / Realtime notifications ───────────────────────────────
+       Fire after the DB write so the guest sees the final state.
+       Fire-and-forget: a failed notification must never make PayHero
+       think the callback failed and retry it.                        */
+    if (rows[0]?.guest_id) {
+      const guestId = rows[0].guest_id;
+      const origin  = siteOrigin(req);
+
+      const notifPayload = isSuccess ? {
+        title: 'Booking confirmed! 🎉',
+        body:  `Your ${table === 'apartment_bookings' ? 'stay'
+               : table === 'tour_bookings' ? 'tour'
+               : 'ticket'} is locked in. Your check-in code is ready.`,
+        url:   '/my-bookings.html',
+        kind:  'booking',
+      } : {
+        title: 'Payment failed',
+        body:  'Your M-Pesa payment was not completed. Please try again.',
+        url:   '/my-bookings.html',
+        kind:  'general',
+      };
+
+      fetch(`${origin}/api/push-send`, {
+        method:  'POST',
+        headers: {
+          'Content-Type':    'application/json',
+          'x-admin-secret':  process.env.PUSH_ADMIN_SECRET || '',
+        },
+        body: JSON.stringify({ user_id: guestId, persist: true, ...notifPayload }),
+      }).catch(e => console.warn('[notif] push failed (non-fatal):', e.message));
     }
 
     /* ── Agent attribution ────────────────────────────────────────────
@@ -106,6 +138,40 @@ export default async function handler(req, res) {
         }
       } catch (e) {
         console.error('[attribute] failed, booking is still valid:', e.message);
+      }
+    }
+
+    /* ── Host notification for new confirmed bookings ─────────────────
+       Look up the listing's partner_id and notify them. Only for
+       apartment bookings where we know the listing_id.               */
+    if (isSuccess && table === 'apartment_bookings' && rows[0]?.apartment_id) {
+      const b        = rows[0];
+      const supaUrl  = process.env.SUPABASE_URL;
+      const svcKey   = process.env.SUPABASE_SERVICE_ROLE_KEY;
+      const origin   = siteOrigin(req);
+
+      try {
+        const lRes = await fetch(
+          `${supaUrl}/rest/v1/listings?id=eq.${b.listing_id || b.apartment_id}&select=partner_id,title`,
+          { headers: { apikey: svcKey, Authorization: `Bearer ${svcKey}` } }
+        );
+        const listings = lRes.ok ? await lRes.json() : [];
+        if (listings[0]?.partner_id) {
+          fetch(`${origin}/api/push-send`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json', 'x-admin-secret': process.env.PUSH_ADMIN_SECRET || '' },
+            body: JSON.stringify({
+              user_id: listings[0].partner_id,
+              persist: true,
+              title:   'New booking! 🏠',
+              body:    `${b.guest_name || 'A guest'} just booked ${listings[0].title || 'your property'}`,
+              url:     '/partner-bookings.html',
+              kind:    'booking',
+            }),
+          }).catch(e => console.warn('[host-notif] non-fatal:', e.message));
+        }
+      } catch (e) {
+        console.warn('[host-notif] lookup failed (non-fatal):', e.message);
       }
     }
 

@@ -8,7 +8,7 @@
      PAYHERO_PASSWORD
      PAYHERO_CHANNEL_ID
      SUPABASE_URL
-     SUPABASE_SERVICE_KEY
+     SUPABASE_SERVICE_ROLE_KEY
 ══════════════════════════════════════════════════════════════ */
 
 export default async function handler(req, res) {

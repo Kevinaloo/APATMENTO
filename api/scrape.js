@@ -25,8 +25,8 @@ export const config = { maxDuration: 60 };
    Cron: daily 3am UTC  ·  Manual: GET /api/scrape-events
 ═══════════════════════════════════════════════════════════════════ */
 
-const SUPA_URL = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
-const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
+const SUPA_URL = process.env.SUPABASE_URL || 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
+const SUPA_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const H = { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY, 'Content-Type': 'application/json' };
 
 /* Ultra-realistic browser headers to bypass basic bot detection */
