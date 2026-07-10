@@ -6,6 +6,7 @@
 <title>Apatmento Partner — Bookings</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/apa-session.js"></script>
+<script src="/apa-trust.js"></script>
 <script src="/apa-admin-guard.js"></script>
 <script>
 (function(){var sb2=null;try{var C=supabase.createClient('https://gfwgbgdvxtocwhilrtdw.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw');sb2=C;}catch(e){}if(!sb2)return;sb2.auth.getSession().then(function(res){if(!res.data.session){sessionStorage.setItem('auth_next',location.href);window.location.href='auth.html?next='+encodeURIComponent(location.pathname);}}); })();
@@ -213,6 +214,26 @@ td strong{color:var(--ink);font-weight:600;}
 @media(max-width:600px){.invite-banner{flex-direction:column;align-items:flex-start;}.invite-banner-btn{width:100%;justify-content:center;}}
 </style>
 <link rel="stylesheet" href="/brand.css"/>
+<style>
+.stays-card{background:rgba(255,255,255,.74);backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:var(--radius);padding:22px;margin-bottom:18px;}
+.stay-row{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--line);}
+.stay-row:last-child{border-bottom:none;}
+.stay-main{flex:1;min-width:0;}
+.stay-name{font-weight:650;font-size:14px;color:var(--ink-2);}
+.stay-meta{font-size:12px;color:var(--ink-faint);margin-top:3px;}
+.stay-when{font-size:11.5px;font-weight:700;padding:4px 9px;border-radius:7px;white-space:nowrap;}
+.when-safe{background:#e9f6f0;color:#0a6d4c;}
+.when-tight{background:#fdf3e8;color:#b3541e;}
+.when-locked{background:#fdecea;color:#a32a20;}
+.btn-match{background:#0f1117;color:#fff;border:none;border-radius:10px;padding:10px 15px;font-family:var(--font-body);font-weight:650;font-size:12.5px;cursor:pointer;white-space:nowrap;}
+.btn-match:disabled{background:#eceef1;color:#a3a8b2;cursor:not-allowed;}
+.match-why{font-size:11.5px;color:#a32a20;margin-top:6px;line-height:1.5;max-width:340px;}
+.cards-strip{display:flex;gap:7px;align-items:center;margin-bottom:16px;padding:11px 14px;border-radius:12px;background:#fdf3e8;border:1px solid #f0d9a8;font-size:12.5px;color:#7a4e12;}
+.cards-strip.red{background:#fdecea;border-color:#f2c4bf;color:#8c2118;}
+.yc{width:12px;height:16px;border-radius:2px;background:#f5c451;}
+.yc.spent{background:#e0473c;}
+.yc.empty{background:#e8eaee;}
+</style>
 </head><body>
 <div class="aurora"><div class="ab ab-1"></div><div class="ab ab-2"></div><div class="ab ab-3"></div></div>
 
@@ -311,6 +332,17 @@ td strong{color:var(--ink);font-weight:600;}
   <div class="stat-card"><span class="stat-icon">🕐</span><div class="stat-label">Check-ins today</div><div class="stat-val" id="b-today">—</div><div class="stat-meta">Guests arriving</div></div>
   <div class="stat-card"><span class="stat-icon">⭐</span><div class="stat-label">Avg rating</div><div class="stat-val" id="b-rating">—</div><div class="stat-meta">Guest satisfaction</div></div>
 </div>
+<div class="stays-card" id="stays-panel" style="display:none;">
+  <div class="card-hd">
+    <div>
+      <div class="card-title">Upcoming stays</div>
+      <div class="card-sub">If you can't host, act early. Matching closes 24 hours before check-in.</div>
+    </div>
+  </div>
+  <div id="cards-strip"></div>
+  <div id="stays-list"></div>
+</div>
+
 <div class="card">
   <div class="card-hd">
     <div class="card-title">All reservations</div>
@@ -439,5 +471,139 @@ async function markComplete(id) {
   else toast('Failed to update', false);
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   HOST STAYS · MATCH GUEST
+   ───────────────────────────────────────────────────────────────
+   A host who cannot host has exactly one good move, and it has a
+   deadline. We make the deadline visible before it passes, because
+   a button that greys out at midnight teaches nothing.
+
+   Inside 24 hours the button is gone. Not disabled with a shrug —
+   replaced with the consequence, in plain words.
+   ═══════════════════════════════════════════════════════════════ */
+
+async function authFetch(url, body) {
+  const { data } = await sb.auth.getSession();
+  return fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json',
+               Authorization: 'Bearer ' + (data.session?.access_token || '') },
+    body: JSON.stringify(body),
+  });
+}
+
+let HOST_STAYS = [];
+
+async function loadStays() {
+  if (!sb || !window.ApaTrust) return;
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) return;
+
+  const today = new Date().toISOString().slice(0, 10);
+  const { data } = await sb.from('apartment_bookings').select('*')
+    .eq('host_id', session.user.id)
+    .in('status', ['paid_pending_checkin', 'deposit_paid'])
+    .is('cancelled_at', null)
+    .gte('checkin_date', today)
+    .order('checkin_date', { ascending: true }).limit(30);
+
+  HOST_STAYS = data || [];
+  await renderCardsStrip(session.user.id);
+  renderStays();
+}
+
+/* Discipline, shown to the host and nobody else. Three yellows is
+   not a surprise you spring on someone. */
+async function renderCardsStrip(hostId) {
+  const { data } = await sb.from('host_cards').select('card,reason,created_at')
+    .eq('host_id', hostId).eq('voided', false);
+  const cards = data || [];
+  const yellows = cards.filter(c => c.card === 'yellow').length;
+  const red = cards.some(c => c.card === 'red');
+  const strip = document.getElementById('cards-strip');
+
+  if (!yellows && !red) { strip.innerHTML = ''; return; }
+
+  const pips = [0, 1, 2].map(i =>
+    `<span class="yc ${red ? 'spent' : i < yellows ? '' : 'empty'}"></span>`).join('');
+
+  strip.className = 'cards-strip' + (red ? ' red' : '');
+  strip.innerHTML = red
+    ? `${pips} <strong>Red card.</strong> Your listings are hidden and your account is under review.`
+    : `${pips} <strong>${yellows} of 3 yellow cards.</strong> ` +
+      `${3 - yellows === 1 ? 'One more' : `${3 - yellows} more`} and your account goes under review.`;
+}
+
+function renderStays() {
+  const panel = document.getElementById('stays-panel');
+  const list  = document.getElementById('stays-list');
+  if (!HOST_STAYS.length) { panel.style.display = 'none'; return; }
+  panel.style.display = '';
+
+  list.innerHTML = HOST_STAYS.map(b => {
+    const h = ApaTrust.hoursTo(b.checkin_date);
+    const days = Math.floor(h / 24);
+
+    const when = h >= 48
+      ? `<span class="stay-when when-safe">${days} days out</span>`
+      : h >= 24
+        ? `<span class="stay-when when-tight">${Math.round(h)}h — closing soon</span>`
+        : `<span class="stay-when when-locked">Matching closed</span>`;
+
+    const action = h >= 24
+      ? `<button class="btn-match" onclick="matchGuest('${b.id}')">Match guest</button>`
+      : `<button class="btn-match" disabled>Match guest</button>`;
+
+    const why = h >= 24 ? '' : `<div class="match-why">Under 24 hours. Cancelling now refunds your guest in full, moves them at your cost, and issues you a yellow card.</div>`;
+
+    return `<div class="stay-row" id="stay-${b.id}">
+      <div class="stay-main">
+        <div class="stay-name">${b.apartment_name || 'Stay'}</div>
+        <div class="stay-meta">${b.guest_name || 'Guest'} · ${b.checkin_date} → ${b.checkout_date} · ${b.num_guests || 1} guest${(b.num_guests||1)>1?'s':''} · KES ${fmt(b.grand_total||0)}${b.payment_mode==='deposit' && !b.balance_paid ? ' · deposit only' : ''}</div>
+        ${why}
+      </div>
+      ${when}
+      ${action}
+    </div>`;
+  }).join('');
+}
+
+async function matchGuest(bookingId) {
+  const row = document.getElementById(`stay-${bookingId}`);
+  const btn = row.querySelector('.btn-match');
+  btn.disabled = true; btn.textContent = 'Searching…';
+
+  try {
+    const res = await authFetch('/api/match-guest', { action: 'offer', booking_id: bookingId });
+    const j = await res.json();
+
+    if (j.blocked) {
+      btn.textContent = 'Match guest';
+      if (j.reason === 'within_24h') {
+        toast('Matching closed — check-in is under 24 hours away.', false);
+        renderStays();
+      } else if (j.reason === 'no_comparable_listing') {
+        toast('Nothing comparable is free for those dates. Cancel to refund your guest in full.', false);
+      } else {
+        toast('Could not open a match.', false);
+        btn.disabled = false;
+      }
+      return;
+    }
+
+    const fee = Number(j.commission || 0);
+    row.querySelector('.stay-main').insertAdjacentHTML('beforeend',
+      `<div class="match-why" style="color:#0a6d4c;">Sent ${j.candidates.length} option${j.candidates.length===1?'':'s'} to your guest. ` +
+      `If they accept, you earn KES ${fmt(fee)} — 30% of our service fee — and take no card.</div>`);
+    btn.textContent = 'Offer sent';
+    toast(`Offer sent. ${j.candidates.length} comparable stay${j.candidates.length===1?'':'s'} shared with your guest.`);
+
+  } catch (e) {
+    btn.disabled = false; btn.textContent = 'Match guest';
+    toast('Network error — try again', false);
+  }
+}
+
 document.addEventListener('DOMContentLoaded', loadBookings);
+document.addEventListener('DOMContentLoaded', loadStays);
 </script></body></html>
