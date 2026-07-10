@@ -6,7 +6,7 @@
    No more stale JS/CSS causing inconsistent behaviour.
 ════════════════════════════════════════════════════════════════ */
 
-const VERSION = 'apatmento-v19';
+const VERSION = 'apatmento-v20';
 const CACHE = `${VERSION}`;
 
 // ── INSTALL: skip waiting immediately, take control NOW ──
