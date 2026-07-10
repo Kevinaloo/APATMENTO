@@ -88,11 +88,19 @@
     },
     "api/trust.js": {
       "maxDuration": 30
+    },
+    "api/stk-callback.js": {
+      "maxDuration": 10
+    },
+    "api/stk-push.js": {
+      "maxDuration": 15
+    },
+    "api/push-send.js": {
+      "maxDuration": 10
     }
   },
   "env": {
-    "PAYHERO_CHANNEL_ID": "9424",
-    "GROQ_API_KEY": "@groq-api-key"
+    "PAYHERO_CHANNEL_ID": "9424"
   },
   "rewrites": [
     {
