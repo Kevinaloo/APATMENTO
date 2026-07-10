@@ -438,29 +438,13 @@ async function runEvents(res) {
 // SUPA_URL defined above
 // SUPA_KEY defined above
 
-const H = {
-  'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY, 'Content-Type': 'application/json'
-};
+// H defined above (line 30) — this second declaration threw at import time.
 
 // db() defined above
 
-async function fetchHtml(url) {
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), 14000);
-  try {
-    const r = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml',
-        'Accept-Language': 'en-US,en;q=0.9',
-        'Cache-Control': 'no-cache',
-      },
-      signal: ctrl.signal, redirect: 'follow',
-    });
-    clearTimeout(t);
-    return r.ok ? r.text() : null;
-  } catch (e) { clearTimeout(t); return null; }
-}
+// fetchHtml() defined at line 76 — redeclaration removed.
+// The two bodies were equivalent: same browser headers, 14s vs 15s abort.
+// All five call sites pass only a url, so the arrow version's default applies.
 
 /* ── Extract image src from any lazy-loading pattern ── */
 function extractImg(attrs) {
@@ -683,10 +667,7 @@ function parseViator(html) {
   return tours;
 }
 
-function dedup(rows) {
-  const s = new Set();
-  return rows.filter(r => s.has(r.dedupe_key) ? false : (s.add(r.dedupe_key), true));
-}
+// dedup() defined at line 142 — redeclaration removed (that copy dropped the null guard).
 
 async function runTours(res) {
   try {
@@ -947,10 +928,7 @@ function parseJumia(html, cat) {
   return products;
 }
 
-function dedup(rows) {
-  const s = new Set();
-  return rows.filter(r => r && !s.has(r.dedupe_key) && (s.add(r.dedupe_key), true));
-}
+// dedup() defined at line 142 — redeclaration removed (identical implementation).
 
 async function runShopping(res) {
   const t0 = Date.now();

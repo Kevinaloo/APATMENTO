@@ -85,9 +85,34 @@
     },
     "api/agents.js": {
       "maxDuration": 30
+    },
+    "api/trust.js": {
+      "maxDuration": 30
     }
   },
   "env": {
     "PAYHERO_CHANNEL_ID": "9424"
-  }
+  },
+  "rewrites": [
+    {
+      "source": "/api/match-guest",
+      "destination": "/api/trust?action=match-guest"
+    },
+    {
+      "source": "/api/checkin-issue",
+      "destination": "/api/trust?action=checkin-issue"
+    },
+    {
+      "source": "/api/deposit-balance",
+      "destination": "/api/trust?action=deposit-balance"
+    },
+    {
+      "source": "/api/verify-checkin",
+      "destination": "/api/trust?action=verify-checkin"
+    },
+    {
+      "source": "/api/check-payment-status",
+      "destination": "/api/trust?action=check-payment-status"
+    }
+  ]
 }
