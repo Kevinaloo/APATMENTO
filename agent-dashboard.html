@@ -4,408 +4,735 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
 <meta name="robots" content="noindex, nofollow"/>
-<title>Agent & Influencer Portal · Apatmento</title>
+<title>Agent Portal · Apatmento</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/apa-session.js"></script>
+<script src="/apa-agent.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300..900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..700&display=swap" rel="stylesheet"/>
 <link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet"/>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
-  --glass:#FCFCFD;--glass-2:#F4F5FB;--ink:#0A0A14;--ink-2:#1A1B2E;--ink-soft:#4A4C66;--ink-faint:#8E90AD;
-  --lilac:#B8A4F4;--violet:#7B2FF7;--electric:#4361FF;
-  --mint:#5EEAD4;--mint-deep:#2DD4BF;--ember:#FF6B2C;--peach:#FFB59E;
-  --line:rgba(10,10,20,0.07);--line-2:rgba(10,10,20,0.13);
+  --glass:#FCFCFE;--glass-2:#F5F5FC;--glass-3:#ECEDF8;
+  --ink:#08080F;--ink-2:#13142A;--ink-soft:#474A66;--ink-faint:#8B8EAC;
+  --violet:#6D28FF;--iris:#8B5CF6;--lilac:#C3AEFA;--electric:#4F6DFF;
+  --mint:#4EE0C8;--mint-deep:#14B8A6;--gold:#F5B12E;--ember:#FF6A3C;
+  --err:#FF4D6D;
+  --line:rgba(8,8,15,.07);--line-2:rgba(8,8,15,.13);
   --font-d:'Fraunces',serif;--font-b:'General Sans',system-ui,sans-serif;
-  --ok:#2DD4BF;--err:#FF4D6D;
   --ease:cubic-bezier(.22,1,.36,1);
 }
 @media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important;}}
 html,body{min-height:100%;font-family:var(--font-b);background:#F2F3FA;color:var(--ink);-webkit-font-smoothing:antialiased;}
 body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
-  background:radial-gradient(900px 700px at 110% -10%,rgba(123,47,247,.06),transparent 55%),
-             radial-gradient(700px 500px at -10% 100%,rgba(67,97,255,.05),transparent 55%);}
+  background:radial-gradient(900px 700px at 110% -10%,rgba(109,40,255,.06),transparent 55%),
+             radial-gradient(700px 500px at -10% 100%,rgba(79,109,255,.05),transparent 55%);}
 
-/* ── Gate ── */
-#gate{position:fixed;inset:0;background:#F2F3FA;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;z-index:999;}
-.spin{width:36px;height:36px;border:3px solid rgba(123,47,247,.2);border-top-color:var(--violet);border-radius:50%;animation:spin .75s linear infinite;}
+#gate{position:fixed;inset:0;background:#F2F3FA;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:999;}
+.spin{width:34px;height:34px;border:3px solid rgba(109,40,255,.18);border-top-color:var(--violet);border-radius:50%;animation:spin .75s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
 #gate p{font-size:13px;color:var(--ink-faint);}
 
-/* ── Layout ── */
-.wrap{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:28px 20px 72px;}
+.wrap{position:relative;z-index:1;max-width:1020px;margin:0 auto;padding:28px 20px 90px;}
 
-/* ── Top bar ── */
-.topbar{display:flex;align-items:center;gap:14px;margin-bottom:28px;flex-wrap:wrap;}
-.tb-av{width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,var(--violet),var(--electric));display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;font-weight:800;flex:none;box-shadow:0 8px 24px rgba(123,47,247,.28);}
-.tb-id{flex:1;min-width:0;}
-.tb-name{font-family:var(--font-d);font-size:22px;font-weight:600;letter-spacing:-.4px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.tb-role{display:inline-flex;align-items:center;gap:5px;margin-top:5px;padding:3px 11px;border-radius:20px;font-size:10.5px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;}
-.tb-role.agent{background:rgba(67,97,255,.1);color:var(--electric);}
-.tb-role.influencer{background:rgba(255,107,44,.1);color:var(--ember);}
-.tb-actions{display:flex;gap:9px;flex:none;}
-.btn-ghost{padding:9px 16px;border:1.5px solid var(--line-2);border-radius:12px;background:var(--glass);color:var(--ink-soft);font-family:var(--font-b);font-weight:600;font-size:13px;cursor:pointer;transition:all .22s;}
+/* ── Top ── */
+.top{display:flex;align-items:center;gap:14px;margin-bottom:22px;flex-wrap:wrap;}
+.av{width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,var(--violet),var(--electric));display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;font-weight:800;flex:none;box-shadow:0 8px 24px rgba(109,40,255,.26);}
+.who{flex:1;min-width:0;}
+.who-n{font-family:var(--font-d);font-size:23px;font-weight:600;letter-spacing:-.5px;line-height:1.15;}
+.who-m{font-size:12.5px;color:var(--ink-faint);margin-top:5px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.btn-ghost{padding:9px 16px;border:1.5px solid var(--line-2);border-radius:12px;background:var(--glass);color:var(--ink-soft);font-family:var(--font-b);font-weight:600;font-size:13px;cursor:pointer;transition:all .2s;}
 .btn-ghost:hover{border-color:var(--lilac);color:var(--ink);}
-.btn-danger:hover{border-color:var(--err);color:var(--err);}
 
-/* ── Privacy notice ── */
-.priv-bar{display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:14px;background:linear-gradient(135deg,rgba(123,47,247,.05),rgba(67,97,255,.04));border:1px solid rgba(123,47,247,.12);font-size:12.5px;color:var(--ink-soft);line-height:1.55;margin-bottom:22px;}
-.priv-bar svg{flex:none;color:var(--violet);}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:10.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;}
+.badge svg{width:11px;height:11px;}
+.b-verified{background:rgba(20,184,166,.12);color:var(--mint-deep);}
+.b-creator{background:rgba(255,106,60,.11);color:var(--ember);}
 
-/* ── Earnings hero ── */
-.hero{background:linear-gradient(140deg,#080B1A 0%,#12103A 50%,#0D1628 100%);border-radius:26px;padding:34px 36px;color:#fff;margin-bottom:18px;position:relative;overflow:hidden;}
-.hero-orbs{position:absolute;inset:0;pointer-events:none;}
-.orb{position:absolute;border-radius:50%;filter:blur(70px);opacity:.5;}
-.orb-1{width:400px;height:400px;background:radial-gradient(circle,rgba(123,47,247,.6),transparent 65%);top:-160px;right:-80px;}
-.orb-2{width:320px;height:320px;background:radial-gradient(circle,rgba(67,97,255,.4),transparent 65%);bottom:-120px;left:-60px;}
-.orb-3{width:260px;height:260px;background:radial-gradient(circle,rgba(45,212,191,.3),transparent 65%);bottom:10px;right:130px;}
-.hero-grid{position:relative;z-index:1;display:grid;grid-template-columns:1fr auto;gap:24px;align-items:center;}
-.h-lab{font-size:11px;text-transform:uppercase;letter-spacing:1.6px;color:rgba(255,255,255,.5);font-weight:700;margin-bottom:8px;}
-.h-amt{font-family:var(--font-d);font-size:52px;font-weight:600;letter-spacing:-2px;line-height:1;margin-bottom:6px;}
-.h-since{font-size:13px;color:rgba(255,255,255,.55);}
-.rate-pill{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:20px;padding:24px 28px;text-align:center;backdrop-filter:blur(12px);}
-.rate-n{font-family:var(--font-d);font-size:44px;font-weight:600;color:var(--mint);letter-spacing:-1.5px;line-height:1;}
-.rate-lab{font-size:11.5px;color:rgba(255,255,255,.5);margin-top:7px;line-height:1.5;}
+/* ── Verification clock ── */
+.clock{border-radius:20px;padding:20px 22px;margin-bottom:20px;display:flex;gap:16px;align-items:flex-start;border:1.5px solid transparent;}
+.clock-i{font-size:26px;line-height:1;flex:none;margin-top:1px;}
+.clock-t{font-size:14.5px;font-weight:700;margin-bottom:5px;}
+.clock-d{font-size:13px;line-height:1.65;}
+.clock-a{margin-top:13px;}
+.clock.calm{background:linear-gradient(135deg,rgba(79,109,255,.05),rgba(109,40,255,.035));border-color:rgba(79,109,255,.18);}
+.clock.calm .clock-t{color:var(--electric);} .clock.calm .clock-d{color:var(--ink-soft);}
+.clock.warn{background:linear-gradient(135deg,rgba(245,177,46,.09),rgba(245,177,46,.04));border-color:rgba(245,177,46,.32);}
+.clock.warn .clock-t{color:#B47908;} .clock.warn .clock-d{color:#7C5B0B;}
+.clock.urgent{background:linear-gradient(135deg,rgba(255,106,60,.09),rgba(255,106,60,.04));border-color:rgba(255,106,60,.34);}
+.clock.urgent .clock-t{color:#C2410C;} .clock.urgent .clock-d{color:#7C2D12;}
+.clock.expired{background:linear-gradient(135deg,rgba(255,77,109,.08),rgba(255,77,109,.03));border-color:rgba(255,77,109,.32);}
+.clock.expired .clock-t{color:var(--err);} .clock.expired .clock-d{color:#9F1239;}
+.clock.suspended{background:rgba(8,8,15,.04);border-color:var(--line-2);}
+.clock.verified{display:none;}
 
-/* ── Payout split ── */
-.pay-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;}
-.pay-card{background:var(--glass);border:1px solid var(--line);border-radius:18px;padding:20px 22px;transition:transform .22s,box-shadow .22s;}
-.pay-card:hover{transform:translateY(-2px);box-shadow:0 10px 32px rgba(10,10,20,.05);}
-.pay-card.pending{border-color:rgba(45,212,191,.25);background:linear-gradient(135deg,rgba(45,212,191,.04),var(--glass));}
-.pc-lab{font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--ink-faint);font-weight:700;}
-.pc-val{font-family:var(--font-d);font-size:32px;font-weight:600;letter-spacing:-1px;margin-top:8px;line-height:1;}
-.pay-card.pending .pc-val{color:#0E9384;}
+.btn{padding:10px 17px;border:none;border-radius:12px;font-family:var(--font-b);font-size:13px;font-weight:700;cursor:pointer;transition:all .2s var(--ease);display:inline-flex;align-items:center;gap:7px;}
+.btn svg{width:15px;height:15px;}
+.btn:disabled{opacity:.55;cursor:not-allowed;}
+.btn-primary{background:linear-gradient(135deg,var(--violet),var(--electric));color:#fff;}
+.btn-primary:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 8px 22px rgba(109,40,255,.3);}
+.btn-sm{padding:8px 13px;font-size:12.5px;}
 
 /* ── Stats ── */
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px;}
-.stat{background:var(--glass);border:1px solid var(--line);border-radius:18px;padding:20px;transition:transform .22s,box-shadow .22s;}
-.stat:hover{transform:translateY(-2px);box-shadow:0 10px 32px rgba(10,10,20,.05);}
-.st-ico{font-size:20px;margin-bottom:10px;}
-.st-val{font-family:var(--font-d);font-size:30px;font-weight:600;letter-spacing:-.8px;line-height:1;}
-.st-lab{font-size:12px;color:var(--ink-faint);margin-top:6px;}
-.st-cvr{font-size:11px;color:var(--ink-faint);margin-top:8px;padding-top:8px;border-top:1px solid var(--line);}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-bottom:22px;}
+.stat{background:var(--glass);border:1px solid var(--line);border-radius:18px;padding:19px;transition:transform .22s,box-shadow .22s;}
+.stat:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(8,8,15,.05);}
+.st-i{font-size:19px;margin-bottom:9px;}
+.st-v{font-family:var(--font-d);font-size:28px;font-weight:600;letter-spacing:-.8px;line-height:1;}
+.st-v.earn{color:var(--mint-deep);}
+.st-l{font-size:11.5px;color:var(--ink-faint);margin-top:6px;}
+@media(max-width:760px){.stats{grid-template-columns:repeat(2,1fr);}}
 
-/* ── Referral card ── */
-.ref-card{background:var(--glass);border:1px solid var(--line);border-radius:20px;padding:26px;margin-bottom:18px;}
-.card-h{font-family:var(--font-d);font-size:18px;font-weight:600;margin-bottom:5px;}
-.card-sub{font-size:13px;color:var(--ink-faint);margin-bottom:20px;line-height:1.6;}
-.ref-code-row{display:flex;align-items:center;gap:12px;background:var(--glass-2);border-radius:14px;padding:15px 18px;margin-bottom:11px;}
-.ref-code-val{flex:1;font-family:ui-monospace,'Cascadia Code','Courier New',monospace;font-size:22px;font-weight:800;color:var(--violet);letter-spacing:3px;}
-.copy-btn{padding:10px 17px;border:none;border-radius:11px;background:linear-gradient(135deg,var(--violet),var(--electric));color:#fff;font-family:var(--font-b);font-weight:700;font-size:12.5px;cursor:pointer;flex:none;transition:all .2s;white-space:nowrap;}
-.copy-btn:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(123,47,247,.35);}
-.copy-btn.done{background:linear-gradient(135deg,var(--mint-deep),#0EA5E9);}
-.ref-link-row{display:flex;align-items:center;gap:12px;background:var(--glass-2);border-radius:14px;padding:13px 18px;}
-.ref-link-val{flex:1;font-size:12.5px;color:var(--ink-soft);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+/* ── Tabs ── */
+.tabs{display:flex;gap:4px;background:var(--glass-2);padding:4px;border-radius:14px;margin-bottom:22px;width:fit-content;max-width:100%;overflow-x:auto;}
+.tab{padding:10px 18px;border:none;background:transparent;border-radius:11px;font-family:var(--font-b);font-size:13.5px;font-weight:600;color:var(--ink-faint);cursor:pointer;transition:all .2s var(--ease);white-space:nowrap;display:flex;align-items:center;gap:7px;}
+.tab.active{background:var(--glass);color:var(--ink);box-shadow:0 2px 10px rgba(8,8,15,.05);}
+.tab-c{min-width:19px;height:19px;padding:0 5px;border-radius:9px;background:var(--glass-3);color:var(--ink-soft);font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;}
+.tab.active .tab-c{background:var(--violet);color:#fff;}
 
-/* ── Activity feed ── */
-.activity{background:var(--glass);border:1px solid var(--line);border-radius:20px;padding:26px;}
-.event-row{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--line);}
-.event-row:last-child{border-bottom:none;}
-.ev-ico{width:40px;height:40px;border-radius:12px;background:var(--glass-2);display:flex;align-items:center;justify-content:center;font-size:16px;flex:none;}
-.ev-ico.booking{background:linear-gradient(135deg,rgba(45,212,191,.15),rgba(67,97,255,.1));}
-.ev-ico.payout{background:rgba(245,179,46,.12);}
-.ev-mid{flex:1;min-width:0;}
-.ev-t{font-size:14px;font-weight:600;}
-.ev-d{font-size:12px;color:var(--ink-faint);margin-top:3px;}
-.ev-amt{font-size:14px;font-weight:700;color:#0E9384;flex:none;}
-.ev-amt.out{color:var(--ink-faint);}
+/* ── Card ── */
+.card{background:var(--glass);border:1px solid var(--line);border-radius:20px;padding:22px;margin-bottom:15px;transition:box-shadow .24s;}
+.card:hover{box-shadow:0 12px 38px rgba(8,8,15,.055);}
+.card.pending{border-style:dashed;background:linear-gradient(135deg,rgba(245,177,46,.03),var(--glass));}
+.card-top{display:flex;gap:14px;align-items:flex-start;}
+.thumb{width:74px;height:74px;border-radius:14px;object-fit:cover;background:var(--glass-3);flex:none;}
+.c-id{flex:1;min-width:0;}
+.c-t{font-size:16px;font-weight:700;letter-spacing:-.3px;color:var(--ink-2);display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.c-s{font-size:12.5px;color:var(--ink-faint);margin-top:4px;}
+.c-p{font-size:13px;color:var(--ink-soft);margin-top:7px;}
+.c-p b{color:var(--ink-2);font-weight:700;}
+.rate-tag{padding:6px 12px;border-radius:20px;background:rgba(20,184,166,.1);color:var(--mint-deep);font-size:12.5px;font-weight:800;flex:none;white-space:nowrap;}
+.rate-tag.wait{background:rgba(245,177,46,.13);color:#B47908;}
 
-.empty-feed{text-align:center;padding:48px 16px;}
-.ef-ico{font-size:42px;margin-bottom:16px;opacity:.55;}
-.ef-t{font-family:var(--font-d);font-size:19px;font-weight:600;margin-bottom:8px;}
-.ef-s{font-size:13.5px;color:var(--ink-faint);max-width:300px;margin:0 auto;line-height:1.7;}
+/* ── Link row ── */
+.link-row{display:flex;align-items:center;gap:10px;background:var(--glass-2);border-radius:13px;padding:12px 14px;margin-top:15px;}
+.link-v{flex:1;font-size:12.5px;color:var(--ink-soft);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:ui-monospace,'Cascadia Code',monospace;}
+.copy{padding:8px 14px;border:none;border-radius:10px;background:linear-gradient(135deg,var(--violet),var(--electric));color:#fff;font-family:var(--font-b);font-weight:700;font-size:12px;cursor:pointer;flex:none;transition:all .2s;white-space:nowrap;}
+.copy:hover{transform:translateY(-1px);}
+.copy.done{background:linear-gradient(135deg,var(--mint-deep),var(--electric));}
 
-/* ── Tip bar ── */
-.tip-bar{background:linear-gradient(135deg,rgba(123,47,247,.06),rgba(67,97,255,.04));border:1px solid rgba(123,47,247,.12);border-radius:16px;padding:18px 20px;margin-bottom:18px;display:flex;gap:14px;align-items:flex-start;}
-.tip-ico{font-size:20px;flex:none;margin-top:1px;}
-.tip-body{flex:1;}
-.tip-t{font-size:13.5px;font-weight:700;color:var(--ink);margin-bottom:5px;}
-.tip-s{font-size:12.5px;color:var(--ink-soft);line-height:1.65;}
-.tip-s a{color:var(--violet);text-decoration:none;font-weight:600;}
-.tip-s a:hover{text-decoration:underline;}
+/* ── Calendar ── */
+.cal-wrap{margin-top:16px;border-top:1px solid var(--line);padding-top:16px;}
+.cal-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;}
+.cal-t{font-size:12.5px;font-weight:700;color:var(--ink-2);display:flex;align-items:center;gap:7px;}
+.cal-t .live{width:7px;height:7px;border-radius:50%;background:var(--mint-deep);box-shadow:0 0 0 3px rgba(20,184,166,.18);animation:pulse 2s infinite;}
+@keyframes pulse{50%{opacity:.45;}}
+.cal-nav{display:flex;align-items:center;gap:8px;}
+.cal-nav button{width:28px;height:28px;border:1px solid var(--line-2);background:var(--glass);border-radius:9px;cursor:pointer;color:var(--ink-soft);font-size:14px;line-height:1;display:flex;align-items:center;justify-content:center;transition:all .18s;}
+.cal-nav button:hover{border-color:var(--violet);color:var(--violet);}
+.cal-mon{font-size:12.5px;font-weight:700;color:var(--ink-2);min-width:106px;text-align:center;}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+.cal-dow{font-size:9.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--ink-faint);font-weight:700;text-align:center;padding-bottom:5px;}
+.cal-d{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:600;border-radius:8px;color:var(--ink-soft);background:rgba(20,184,166,.07);position:relative;}
+.cal-d.pad{background:transparent;}
+.cal-d.past{background:transparent;color:rgba(139,142,172,.4);}
+.cal-d.booked{background:rgba(255,77,109,.11);color:var(--err);}
+.cal-d.held{background:rgba(245,177,46,.15);color:#B47908;}
+.cal-d.today{box-shadow:inset 0 0 0 1.5px var(--violet);}
+.legend{display:flex;gap:14px;margin-top:11px;font-size:11px;color:var(--ink-faint);flex-wrap:wrap;}
+.lg{display:flex;align-items:center;gap:5px;}
+.lg i{width:9px;height:9px;border-radius:3px;display:block;}
+.cal-load{text-align:center;padding:26px;font-size:12.5px;color:var(--ink-faint);}
 
-@media(max-width:840px){
-  .stats{grid-template-columns:repeat(2,1fr);}
-  .hero-grid{grid-template-columns:1fr;}
-  .rate-pill{display:none;}
-  .h-amt{font-size:42px;}
-}
-@media(max-width:520px){
-  .pay-row{grid-template-columns:1fr;}
-  .wrap{padding:18px 14px 56px;}
-  .hero{padding:24px;}
-  .stats{grid-template-columns:1fr 1fr;}
-  .ref-code-val{font-size:17px;letter-spacing:1.5px;}
-}
+/* ── Discover ── */
+.search{display:flex;gap:9px;margin-bottom:18px;}
+.inp{flex:1;padding:13px 15px;border:1.5px solid var(--line-2);border-radius:13px;background:var(--glass);font-family:var(--font-b);font-size:14px;color:var(--ink);outline:none;transition:border-color .18s;}
+.inp:focus{border-color:var(--violet);}
+.inp-wrap{position:relative;display:flex;align-items:center;}
+.inp-sfx{position:absolute;right:14px;font-size:12.5px;font-weight:700;color:var(--ink-faint);pointer-events:none;}
+textarea.inp{resize:vertical;min-height:62px;line-height:1.6;font-size:13.5px;}
+.ask-box{border:1px solid var(--line);background:var(--glass-2);border-radius:15px;padding:16px;margin-top:14px;}
+.ask-h{font-size:12.5px;font-weight:700;color:var(--ink-2);margin-bottom:3px;}
+.ask-s{font-size:11.5px;color:var(--ink-faint);line-height:1.55;margin-bottom:12px;}
+.ask-grid{display:grid;grid-template-columns:120px 1fr;gap:9px;}
+@media(max-width:560px){.ask-grid{grid-template-columns:1fr;}}
+
+/* ── Earnings row ── */
+.erow{display:flex;align-items:center;gap:13px;background:var(--glass);border:1px solid var(--line);border-radius:15px;padding:15px 17px;margin-bottom:10px;flex-wrap:wrap;}
+.e-dot{width:9px;height:9px;border-radius:50%;flex:none;}
+.e-dot.converted{background:var(--mint-deep);}
+.e-dot.clicked{background:var(--gold);}
+.e-dot.expired,.e-dot.void{background:var(--ink-faint);}
+.e-id{flex:1;min-width:150px;}
+.e-t{font-size:13.5px;font-weight:600;color:var(--ink-2);}
+.e-s{font-size:11.5px;color:var(--ink-faint);margin-top:3px;}
+.e-v{font-family:var(--font-d);font-size:18px;font-weight:600;letter-spacing:-.4px;flex:none;}
+.e-v.earn{color:var(--mint-deep);}
+.e-v.pend{color:var(--ink-faint);font-size:12.5px;font-family:var(--font-b);font-weight:600;}
+
+/* ── Empty ── */
+.empty{text-align:center;padding:58px 24px;background:var(--glass);border:1px dashed var(--line-2);border-radius:22px;}
+.empty-i{font-size:36px;margin-bottom:13px;opacity:.55;}
+.empty-t{font-family:var(--font-d);font-size:18.5px;font-weight:600;margin-bottom:8px;}
+.empty-d{font-size:13.5px;color:var(--ink-faint);line-height:1.7;max-width:430px;margin:0 auto 18px;}
+
+/* ── Verify sheet ── */
+.veil{position:fixed;inset:0;background:rgba(8,8,15,.5);backdrop-filter:blur(6px);z-index:400;display:none;align-items:center;justify-content:center;padding:20px;}
+.veil.on{display:flex;}
+.sheet{background:var(--glass);border-radius:24px;padding:30px;max-width:450px;width:100%;max-height:88vh;overflow-y:auto;animation:pop .3s var(--ease);}
+@keyframes pop{from{opacity:0;transform:scale(.95) translateY(12px);}to{opacity:1;transform:none;}}
+.sheet-t{font-family:var(--font-d);font-size:22px;font-weight:600;letter-spacing:-.6px;margin-bottom:7px;}
+.sheet-s{font-size:13.5px;color:var(--ink-faint);line-height:1.65;margin-bottom:20px;}
+.opt{display:flex;align-items:flex-start;gap:12px;padding:14px;border:1.5px solid var(--line);border-radius:13px;cursor:pointer;margin-bottom:9px;transition:all .18s;background:var(--glass);}
+.opt:hover{border-color:var(--lilac);}
+.opt.on{border-color:var(--violet);background:rgba(109,40,255,.04);}
+.opt-r{width:18px;height:18px;border:2px solid var(--line-2);border-radius:50%;flex:none;margin-top:1px;position:relative;}
+.opt.on .opt-r{border-color:var(--violet);}
+.opt.on .opt-r::after{content:'';position:absolute;inset:3px;border-radius:50%;background:var(--violet);}
+.opt-t{font-size:13.5px;font-weight:600;color:var(--ink-2);}
+.opt-d{font-size:12px;color:var(--ink-faint);margin-top:3px;line-height:1.5;}
+.drop{border:2px dashed var(--line-2);border-radius:15px;padding:26px;text-align:center;cursor:pointer;transition:all .2s;margin:16px 0;}
+.drop:hover,.drop.over{border-color:var(--violet);background:rgba(109,40,255,.03);}
+.drop-i{font-size:28px;margin-bottom:9px;opacity:.6;}
+.drop-t{font-size:13.5px;font-weight:600;color:var(--ink-2);}
+.drop-s{font-size:11.5px;color:var(--ink-faint);margin-top:5px;}
+.priv{display:flex;gap:9px;background:var(--glass-2);border-radius:12px;padding:13px 15px;font-size:12px;color:var(--ink-soft);line-height:1.6;}
+
+.acts{display:flex;gap:9px;align-items:center;}
+.spacer{flex:1;}
+
+.toast{position:fixed;bottom:26px;left:50%;transform:translate(-50%,120%);background:var(--ink);color:#fff;padding:13px 22px;border-radius:14px;font-size:13.5px;font-weight:600;z-index:600;transition:transform .34s var(--ease);box-shadow:0 12px 36px rgba(8,8,15,.28);max-width:90vw;text-align:center;}
+.toast.on{transform:translate(-50%,0);}
+.toast.bad{background:var(--err);}
 </style>
 </head>
 <body>
 
-<div id="gate"><div class="spin"></div><p>Verifying your account…</p></div>
+<div id="gate"><div class="spin"></div><p>Opening your portal…</p></div>
 
-<div class="wrap" id="app" style="display:none;">
+<div class="wrap" id="wrap" style="display:none;">
 
-  <!-- Top bar -->
-  <div class="topbar">
-    <div class="tb-av" id="av">?</div>
-    <div class="tb-id">
-      <div class="tb-name" id="tb-name">—</div>
-      <span class="tb-role" id="tb-role">—</span>
+  <div class="top">
+    <div class="av" id="av">A</div>
+    <div class="who">
+      <div class="who-n" id="name">—</div>
+      <div class="who-m" id="meta"></div>
     </div>
-    <div class="tb-actions">
-      <a href="index.html" class="btn-ghost" style="text-decoration:none;">← Apatmento</a>
-      <button class="btn-ghost btn-danger" onclick="signOut()">Sign out</button>
-    </div>
+    <button class="btn-ghost" onclick="signOut()">Sign out</button>
   </div>
 
-  <!-- Privacy bar -->
-  <div class="priv-bar">
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-    Your commission rate and earnings are yours alone — private to you and to us. They are never visible publicly or to other programme members.
-  </div>
+  <div class="clock" id="clock"></div>
 
-  <!-- Tip bar (shown only when zero activity) -->
-  <div class="tip-bar" id="tip-bar" style="display:none;">
-    <div class="tip-ico">💡</div>
-    <div class="tip-body">
-      <div class="tip-t">Your first steps</div>
-      <div class="tip-s">Share your referral link anywhere — social posts, WhatsApp, bios. Every visitor who taps it is tracked to you. When they book, you earn. Your activity will appear here the moment something happens. <a href="#ref-section">Copy your link below →</a></div>
-    </div>
-  </div>
-
-  <!-- Earnings hero -->
-  <div class="hero">
-    <div class="hero-orbs"><div class="orb orb-1"></div><div class="orb orb-2"></div><div class="orb orb-3"></div></div>
-    <div class="hero-grid">
-      <div>
-        <div class="h-lab">Total earned</div>
-        <div class="h-amt" id="h-earned">KSh 0</div>
-        <div class="h-since" id="h-since">—</div>
-      </div>
-      <div class="rate-pill">
-        <div class="rate-n" id="h-rate">—</div>
-        <div class="rate-lab">your commission<br>on every booking</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Payouts -->
-  <div class="pay-row">
-    <div class="pay-card pending">
-      <div class="pc-lab">Awaiting payout</div>
-      <div class="pc-val" id="p-pending">KSh 0</div>
-    </div>
-    <div class="pay-card">
-      <div class="pc-lab">Paid out to date</div>
-      <div class="pc-val" id="p-paid">KSh 0</div>
-    </div>
-  </div>
-
-  <!-- Performance stats -->
   <div class="stats">
-    <div class="stat">
-      <div class="st-ico">👁</div>
-      <div class="st-val" id="s-clicks">0</div>
-      <div class="st-lab">Link clicks</div>
-      <div class="st-cvr" id="s-cvr1">—</div>
-    </div>
-    <div class="stat">
-      <div class="st-ico">✍️</div>
-      <div class="st-val" id="s-signups">0</div>
-      <div class="st-lab">Signups</div>
-      <div class="st-cvr" id="s-cvr2">—</div>
-    </div>
-    <div class="stat">
-      <div class="st-ico">🎯</div>
-      <div class="st-val" id="s-conv">0</div>
-      <div class="st-lab">Bookings</div>
-      <div class="st-cvr" id="s-cvr3">—</div>
-    </div>
-    <div class="stat">
-      <div class="st-ico">💰</div>
-      <div class="st-val" id="s-gmv">KSh 0</div>
-      <div class="st-lab">Value you've driven</div>
-      <div class="st-cvr">Gross booking value</div>
-    </div>
+    <div class="stat"><div class="st-i">🏠</div><div class="st-v" id="s-listings">0</div><div class="st-l">Listings you sell</div></div>
+    <div class="stat"><div class="st-i">👀</div><div class="st-v" id="s-leads">0</div><div class="st-l">Guests browsing</div></div>
+    <div class="stat"><div class="st-i">✅</div><div class="st-v" id="s-bookings">0</div><div class="st-l">Bookings driven</div></div>
+    <div class="stat"><div class="st-i">💰</div><div class="st-v earn" id="s-earned">KES 0</div><div class="st-l">Commission earned</div></div>
   </div>
 
-  <!-- Referral -->
-  <div class="ref-card" id="ref-section">
-    <div class="card-h">Your referral code</div>
-    <div class="card-sub">Share the link below — anyone who arrives through it is attributed to you permanently, across devices and sessions.</div>
-
-    <div class="ref-code-row">
-      <div class="ref-code-val" id="ref-code">—</div>
-      <button class="copy-btn" id="cp-code" onclick="copy('ref-code','cp-code')">Copy code</button>
-    </div>
-    <div class="ref-link-row">
-      <div class="ref-link-val" id="ref-link">—</div>
-      <button class="copy-btn" id="cp-link" onclick="copy('ref-link','cp-link')">Copy link</button>
-    </div>
+  <div class="tabs">
+    <button class="tab active" data-t="listings" onclick="go('listings')">My listings <span class="tab-c" id="c-listings">0</span></button>
+    <button class="tab" data-t="discover" onclick="go('discover')">Find listings</button>
+    <button class="tab" data-t="earnings" onclick="go('earnings')">Earnings</button>
   </div>
 
-  <!-- Activity -->
-  <div class="activity">
-    <div class="card-h">Activity</div>
-    <div class="card-sub" id="act-sub">Your last 30 tracked events.</div>
-    <div id="feed"></div>
-  </div>
-
+  <div id="pane"></div>
 </div>
 
+<!-- ── Verify sheet ── -->
+<div class="veil" id="v-veil">
+  <div class="sheet" role="dialog" aria-modal="true">
+    <div class="sheet-t">Verify your identity</div>
+    <div class="sheet-s">Hosts approve verified agents far more readily. It takes a minute, and it never expires.</div>
+
+    <div id="v-opts">
+      <label class="opt on" data-d="national_id" onclick="pickDoc(this)">
+        <span class="opt-r"></span>
+        <span><span class="opt-t">National ID</span><span class="opt-d">Front side, all four corners visible</span></span>
+      </label>
+      <label class="opt" data-d="passport" onclick="pickDoc(this)">
+        <span class="opt-r"></span>
+        <span><span class="opt-t">Passport</span><span class="opt-d">The photo page</span></span>
+      </label>
+    </div>
+
+    <div class="drop" id="drop" onclick="document.getElementById('file').click()">
+      <div class="drop-i">📎</div>
+      <div class="drop-t" id="drop-t">Choose a photo or PDF</div>
+      <div class="drop-s">Up to 8MB. A clear phone photo is fine.</div>
+    </div>
+    <input type="file" id="file" accept="image/*,application/pdf" style="display:none;" onchange="picked(this)"/>
+
+    <div class="priv">
+      <span>🔒</span>
+      <span>Stored privately. Hosts never see your document — only whether you are verified. Only Apatmento reviews it.</span>
+    </div>
+
+    <div class="acts" style="margin-top:20px;">
+      <button class="btn-ghost" onclick="closeV()">Cancel</button>
+      <div class="spacer"></div>
+      <button class="btn btn-primary" id="v-go" onclick="doUpload()" disabled>Upload</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
 <script>
-const SUPA_URL  = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
-const SUPA_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
-const sb = supabase.createClient(SUPA_URL, SUPA_ANON);
+'use strict';
 
-const $    = (id) => document.getElementById(id);
-const ksh  = (n)  => 'KSh\u00A0' + Number(n || 0).toLocaleString('en-KE', { maximumFractionDigits: 0 });
-const pct  = (a, b) => b ? ((a / b) * 100).toFixed(1) + '% of clicks' : '—';
-const esc  = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const E = ApaAgent.escape, MONEY = ApaAgent.money;
+let ME = null, TAB = 'listings';
+let docType = 'national_id', theFile = null;
+let sb = null;
+const CAL = {};   // listingId → { map, cursor, pid }
 
-/* ── Boot: auth gate ── */
-(async () => {
-  const { data: { session } } = await sb.auth.getSession()
-    .catch(() => ({ data: { session: null } }));
-
-  if (!session) return go();
-
-  /* RLS: returns only this member's row. Traveller accounts get null. */
-  const { data: m } = await sb.from('programme_members')
-    .select('*').eq('id', session.user.id).maybeSingle();
-
-  if (!m || !m.is_active) {
-    await sb.auth.signOut();
-    return go();
-  }
-
-  paint(m);
-  await loadFeed(m.id, m.clicks === 0 && m.conversions === 0);
-  $('gate').style.display = 'none';
-  $('app').style.display  = 'block';
-})();
-
-function go() { location.replace('auth.html?panel=programme'); }
-
-/* ── Paint the page ── */
-function paint(m) {
-  const displayName = m.nickname || m.full_name;
-  const first       = (m.full_name || '').split(' ')[0] || 'there';
-
-  $('av').textContent     = displayName[0].toUpperCase();
-  $('tb-name').textContent = `Karibu, ${first}`;
-
-  const rb = $('tb-role');
-  rb.textContent = m.role === 'influencer' ? '🎬 Influencer' : '🤝 Agent';
-  rb.className   = 'tb-role ' + m.role;
-
-  $('h-earned').textContent = ksh(m.total_earned);
-  $('h-rate').textContent   = `${Number(m.commission_pct).toFixed(Number(m.commission_pct) % 1 ? 1 : 0)}%`;
-  $('h-since').textContent  = 'Member since ' + new Date(m.approved_at)
-    .toLocaleDateString('en-KE', { month: 'long', year: 'numeric' });
-
-  $('p-pending').textContent = ksh(m.pending_payout);
-  $('p-paid').textContent    = ksh(m.total_paid_out);
-
-  const clicks = m.clicks || 0;
-  $('s-clicks').textContent  = clicks.toLocaleString();
-  $('s-signups').textContent = (m.signups || 0).toLocaleString();
-  $('s-conv').textContent    = (m.conversions || 0).toLocaleString();
-  $('s-gmv').textContent     = ksh(m.gmv);
-
-  $('s-cvr1').textContent = clicks ? 'Total reach' : 'Share your link to start';
-  $('s-cvr2').textContent = pct(m.signups, clicks);
-  $('s-cvr3').textContent = pct(m.conversions, m.signups || clicks);
-
-  $('ref-code').textContent = m.referral_code;
-  $('ref-link').textContent = `${location.origin}/?ref=${m.referral_code}`;
+let tT;
+function toast(m, bad) {
+  const t = document.getElementById('toast');
+  t.textContent = m; t.classList.toggle('bad', !!bad); t.classList.add('on');
+  clearTimeout(tT); tT = setTimeout(() => t.classList.remove('on'), 3600);
 }
+async function signOut() { await ApaSession.signOut(); location.href = 'index.html'; }
 
-/* ── Activity feed ── */
-async function loadFeed(memberId, isEmpty) {
-  if (isEmpty) {
-    $('tip-bar').style.display = 'flex';
-    $('act-sub').textContent   = 'Nothing yet — your first clicks will show here live.';
+/* ── boot ── */
+ApaSession.ready(async (s) => {
+  if (s.status !== 'user') {
+    sessionStorage.setItem('auth_next', location.href);
+    return location.href = 'auth.html?panel=agent';
   }
+  sb = ApaSession.client();
 
-  const { data: events } = await sb.from('programme_events')
-    .select('event_type, reference, gross_amount, commission, created_at')
-    .eq('member_id', memberId)
-    .order('created_at', { ascending: false })
-    .limit(30);
-
-  const feed = $('feed');
-
-  if (!events?.length) {
-    feed.innerHTML = `<div class="empty-feed">
-      <div class="ef-ico">🌱</div>
-      <div class="ef-t">Nothing yet</div>
-      <div class="ef-s">Share your referral link and your first tracked events will appear here — usually within minutes.</div>
-    </div>`;
+  try {
+    ME = await ApaAgent.me(true);
+  } catch (e) {
+    if (e.code === 'NOT_AGENT') return location.href = 'auth.html?panel=agent';
+    document.getElementById('gate').innerHTML = '<p>Could not load your portal. Refresh to try again.</p>';
     return;
   }
 
-  const META = {
-    click:   { ico: '👁',   label: 'Link click',          cls: '' },
-    signup:  { ico: '✍️',  label: 'New signup via you',   cls: '' },
-    booking: { ico: '🎯',   label: 'Booking confirmed',    cls: 'booking' },
-    payout:  { ico: '🏦',   label: 'Payout sent to you',  cls: 'payout' },
-  };
+  const t = new URLSearchParams(location.search).get('tab');
+  if (['listings','discover','earnings'].includes(t)) TAB = t;
+  if (t === 'verify') setTimeout(openV, 400);
 
-  feed.innerHTML = events.map(ev => {
-    const { ico, label, cls } = META[ev.event_type] || { ico: '•', label: ev.event_type, cls: '' };
-    const when = new Date(ev.created_at).toLocaleString('en-KE', {
-      day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
-    });
+  paint();
+  document.getElementById('gate').style.display = 'none';
+  document.getElementById('wrap').style.display = 'block';
+});
 
-    let amt = '', amtCls = '';
-    if (ev.event_type === 'booking' && ev.commission > 0) {
-      amt = '+' + ksh(ev.commission); amtCls = '';
+function initials(n) {
+  return String(n || '?').trim().split(/\s+/).slice(0,2).map(w => w[0]).join('').toUpperCase();
+}
+
+function paint() {
+  const a = ME.agent, t = ME.totals;
+
+  document.getElementById('av').textContent = initials(a.full_name);
+  document.getElementById('name').textContent = a.full_name;
+
+  let meta = '<span>Agent code <b style="color:var(--violet);font-family:ui-monospace,monospace;">' + E(a.referral_code) + '</b></span>';
+  if (a.kyc_status === 'verified') meta += '<span class="badge b-verified"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>Verified</span>';
+  if (a.is_creator) meta += '<span class="badge b-creator">Creator</span>';
+  document.getElementById('meta').innerHTML = meta;
+
+  document.getElementById('s-listings').textContent = t.approved;
+  document.getElementById('s-leads').textContent    = t.live_leads;
+  document.getElementById('s-bookings').textContent = t.bookings;
+  document.getElementById('s-earned').textContent   = MONEY(t.earned);
+  document.getElementById('c-listings').textContent = ME.portfolio.length;
+
+  clock();
+  document.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b.dataset.t === TAB));
+  render();
+}
+
+/* ── the clock ── */
+function clock() {
+  const a = ME.agent, el = document.getElementById('clock');
+
+  if (a.suspended) {
+    el.className = 'clock suspended';
+    el.innerHTML = '<div class="clock-i">⏸️</div><div>' +
+      '<div class="clock-t" style="color:var(--err);">Your account is suspended</div>' +
+      '<div class="clock-d">Multiple hosts reported this account. We are reviewing it. You can still see your listings, but your links have stopped earning. Reply to our email if you believe this is a mistake.</div>' +
+      '</div>';
+    return;
+  }
+
+  if (a.kyc_status === 'submitted') {
+    el.className = 'clock calm';
+    el.innerHTML = '<div class="clock-i">🔍</div><div>' +
+      '<div class="clock-t">We\'re checking your document</div>' +
+      '<div class="clock-d">Usually within a day. Nothing is paused — keep working while we look.</div>' +
+      '</div>';
+    return;
+  }
+
+  const c = ApaAgent.clockTone(a.days_left);
+  if (c.tone === 'verified') { el.className = 'clock verified'; return; }
+
+  const rejected = a.kyc_status === 'rejected';
+  el.className = 'clock ' + c.tone;
+
+  const copy = {
+    calm:    ['⏳', c.label, 'Everything works right now. Upload a national ID or passport before the clock runs out and it keeps working.'],
+    warn:    ['⏳', c.label, 'Upload your ID soon. When the clock runs out your links stop earning — nothing is lost, just paused until you verify.'],
+    urgent:  ['⚠️', c.label, 'Verify today. Tomorrow your referral links stop attributing bookings, and you cannot request new listings.'],
+    expired: ['🔒', 'Verification overdue', 'Your links have stopped earning and you cannot request new partnerships. Existing listings are untouched. Upload your ID and everything resumes immediately.'],
+  }[c.tone];
+
+  el.innerHTML =
+    '<div class="clock-i">' + copy[0] + '</div><div style="flex:1;">' +
+    '<div class="clock-t">' + E(copy[1]) + '</div>' +
+    '<div class="clock-d">' +
+      (rejected && a.kyc_reject_reason ? 'We could not verify your last upload: <b>' + E(a.kyc_reject_reason) + '</b><br/>' : '') +
+      copy[2] +
+    '</div>' +
+    '<div class="clock-a"><button class="btn btn-primary btn-sm" onclick="openV()">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>' +
+      (rejected ? 'Upload again' : 'Upload my ID') +
+    '</button></div></div>';
+}
+
+function go(t) {
+  TAB = t;
+  document.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b.dataset.t === t));
+  render();
+}
+
+function render() {
+  const p = document.getElementById('pane');
+  if (TAB === 'listings') return renderListings(p);
+  if (TAB === 'discover') return renderDiscover(p);
+  return renderEarnings(p);
+}
+
+function photo(p) {
+  try { const a = typeof p === 'string' ? JSON.parse(p) : p; return (a && a[0]) || ''; }
+  catch (e) { return ''; }
+}
+
+/* ══ MY LISTINGS · the calendar is the point ══════════════════════════ */
+function renderListings(pane) {
+  if (!ME.portfolio.length) {
+    pane.innerHTML =
+      '<div class="empty">' +
+      '<div class="empty-i">🗝️</div>' +
+      '<div class="empty-t">You don\'t represent anything yet</div>' +
+      '<div class="empty-d">Find a listing whose host you know, propose your commission, and ask. Once they approve, you\'ll see its live calendar here — so you never promise a guest dates that are already sold.</div>' +
+      '<button class="btn btn-primary" onclick="go(\'discover\')">Find listings</button>' +
+      '</div>';
+    return;
+  }
+
+  pane.innerHTML = ME.portfolio.map(function (p) {
+    const img = photo(p.photos);
+    const approved = p.status === 'approved';
+    const paused   = p.status === 'paused';
+
+    if (p.status === 'pending') {
+      return '<article class="card pending"><div class="card-top">' +
+        (img ? '<img class="thumb" src="' + E(img) + '" alt="" loading="lazy"/>' : '<div class="thumb"></div>') +
+        '<div class="c-id">' +
+          '<div class="c-t">' + E(p.title) + '</div>' +
+          '<div class="c-s">' + E(p.city || p.location || '') + ' · hosted by ' + E(p.host_name || 'the owner') + '</div>' +
+          '<div class="c-p">Waiting on the host to reply. They set the final commission.</div>' +
+        '</div>' +
+        '<span class="rate-tag wait">Pending</span>' +
+      '</div></article>';
     }
-    if (ev.event_type === 'payout') {
-      amt = '−' + ksh(ev.gross_amount); amtCls = 'out';
-    }
 
-    return `<div class="event-row">
-      <div class="ev-ico ${cls}">${ico}</div>
-      <div class="ev-mid">
-        <div class="ev-t">${label}</div>
-        <div class="ev-d">${esc(when)}${ev.reference ? ' · ' + esc(ev.reference) : ''}</div>
-      </div>
-      ${amt ? `<div class="ev-amt ${amtCls}">${amt}</div>` : ''}
-    </div>`;
+    if (!approved && !paused) return '';
+
+    const url = ApaAgent.link(ME.agent.referral_code, p.listing_id);
+
+    return '<article class="card"><div class="card-top">' +
+      (img ? '<img class="thumb" src="' + E(img) + '" alt="" loading="lazy"/>' : '<div class="thumb"></div>') +
+      '<div class="c-id">' +
+        '<div class="c-t">' + E(p.title) +
+          (paused ? ' <span class="badge" style="background:var(--glass-3);color:var(--ink-faint);">Paused</span>' : '') +
+        '</div>' +
+        '<div class="c-s">' + E(p.city || p.location || '') + ' · ' + MONEY(p.price_night) + ' / night</div>' +
+        '<div class="c-p"><b>' + p.live_leads + '</b> browsing · <b>' + p.bookings + '</b> booked · <b style="color:var(--mint-deep);">' + MONEY(p.earned) + '</b> earned</div>' +
+      '</div>' +
+      '<span class="rate-tag">' + E(ApaAgent.rateLabel(p.commission_pct, p.commission_flat)) + '</span>' +
+    '</div>' +
+
+    (paused
+      ? '<div class="c-p" style="margin-top:14px;color:var(--ink-faint);">The host paused this partnership. Your link is not attributing new bookings right now.</div>'
+      : '<div class="link-row">' +
+          '<span class="link-v">' + E(url) + '</span>' +
+          '<button class="copy" data-url="' + E(url) + '" onclick="copyLink(this)">Copy link</button>' +
+        '</div>') +
+
+    '<div class="cal-wrap">' +
+      '<div class="cal-h">' +
+        '<div class="cal-t"><span class="live"></span> Live availability</div>' +
+        '<div class="cal-nav">' +
+          '<button onclick="shift(\'' + E(p.listing_id) + '\',-1)" aria-label="Previous month">‹</button>' +
+          '<span class="cal-mon" id="mon-' + p.partnership_id + '">—</span>' +
+          '<button onclick="shift(\'' + E(p.listing_id) + '\',1)" aria-label="Next month">›</button>' +
+        '</div>' +
+      '</div>' +
+      '<div id="cal-' + p.partnership_id + '"><div class="cal-load">Loading the calendar…</div></div>' +
+      '<div class="legend">' +
+        '<span class="lg"><i style="background:rgba(20,184,166,.4);"></i> Free</span>' +
+        '<span class="lg"><i style="background:rgba(245,177,46,.55);"></i> Held (unpaid)</span>' +
+        '<span class="lg"><i style="background:rgba(255,77,109,.45);"></i> Booked</span>' +
+      '</div>' +
+    '</div></article>';
+  }).join('');
+
+  // Load each calendar independently. One slow listing must not block the rest.
+  ME.portfolio
+    .filter(function (p) { return p.status === 'approved' || p.status === 'paused'; })
+    .forEach(function (p) { loadCal(p.listing_id, p.partnership_id); });
+}
+
+async function loadCal(listingId, pid) {
+  try {
+    const map = await ApaAgent.calendarFor(listingId);
+    CAL[listingId] = { map: map, cursor: new Date(), pid: pid };
+    drawCal(listingId);
+  } catch (e) {
+    const el = document.getElementById('cal-' + pid);
+    if (el) el.innerHTML = '<div class="cal-load">Could not load availability.</div>';
+  }
+}
+
+function shift(listingId, n) {
+  const c = CAL[listingId];
+  if (!c) return;
+  c.cursor.setMonth(c.cursor.getMonth() + n);
+  drawCal(listingId);
+}
+
+function drawCal(listingId) {
+  const c = CAL[listingId];
+  const host = document.getElementById('cal-' + c.pid);
+  const mon  = document.getElementById('mon-' + c.pid);
+  if (!host) return;
+
+  const cur = c.cursor;
+  const y = cur.getFullYear(), m = cur.getMonth();
+  mon.textContent = cur.toLocaleDateString('en-KE', { month: 'long', year: 'numeric' });
+
+  const first = new Date(y, m, 1);
+  const days  = new Date(y, m + 1, 0).getDate();
+  const lead  = (first.getDay() + 6) % 7;           // Monday-first
+  const today = ApaAgent.iso(new Date());
+
+  let h = ['M','T','W','T','F','S','S'].map(function (d) { return '<div class="cal-dow">' + d + '</div>'; }).join('');
+  for (let i = 0; i < lead; i++) h += '<div class="cal-d pad"></div>';
+
+  for (let d = 1; d <= days; d++) {
+    const key  = ApaAgent.iso(new Date(y, m, d));
+    const st   = c.map.get(key) || '';
+    const past = key < today;
+    const cls  = ['cal-d', past ? 'past' : st, key === today ? 'today' : ''].filter(Boolean).join(' ');
+    h += '<div class="' + cls + '" title="' + key + (st ? ' · ' + st : '') + '">' + d + '</div>';
+  }
+  host.innerHTML = '<div class="cal">' + h + '</div>';
+}
+
+function copyLink(btn) {
+  const url = btn.dataset.url;
+  navigator.clipboard.writeText(url).then(function () {
+    btn.textContent = '✓ Copied'; btn.classList.add('done');
+    setTimeout(function () { btn.textContent = 'Copy link'; btn.classList.remove('done'); }, 1900);
+  }).catch(function () { toast('Could not copy. Select the link instead.', true); });
+}
+
+/* ══ DISCOVER ══════════════════════════════════════════════════════════ */
+let FOUND = [];
+function renderDiscover(pane) {
+  const blocked = ME.agent.state !== 'active';
+  pane.innerHTML =
+    (blocked
+      ? '<div class="clock expired" style="margin-bottom:18px;">' +
+        '<div class="clock-i">🔒</div><div>' +
+        '<div class="clock-t">Verify to request new listings</div>' +
+        '<div class="clock-d">Your existing partnerships still work. Upload your ID to start asking for new ones.</div>' +
+        '</div></div>'
+      : '') +
+    '<div class="search">' +
+      '<input class="inp" id="q" placeholder="Search by name, area, or city — e.g. Kilimani" oninput="hunt()"/>' +
+    '</div>' +
+    '<div id="found"><div class="cal-load">Searching…</div></div>';
+  hunt();
+}
+
+let hT;
+function hunt() { clearTimeout(hT); hT = setTimeout(doHunt, 260); }
+
+async function doHunt() {
+  const qEl = document.getElementById('q');
+  const q   = (qEl && qEl.value || '').trim();
+  const box = document.getElementById('found');
+  if (!box) return;
+
+  const mine = new Set(ME.portfolio.map(function (p) { return String(p.listing_id); }));
+
+  let query = sb.from('listings')
+    .select('id,title,city,location,price_night,photos,owner_id')
+    .eq('status', 'approved')
+    .limit(24);
+
+  if (q) query = query.or('title.ilike.%' + q + '%,city.ilike.%' + q + '%,location.ilike.%' + q + '%');
+
+  const r = await query;
+  if (r.error) { box.innerHTML = '<div class="cal-load">Could not search right now.</div>'; return; }
+
+  FOUND = (r.data || []).filter(function (l) {
+    return l.owner_id !== ME.agent.id && !mine.has(String(l.id));
+  });
+
+  if (!FOUND.length) {
+    box.innerHTML = '<div class="empty">' +
+      '<div class="empty-i">🔍</div>' +
+      '<div class="empty-t">Nothing matched</div>' +
+      '<div class="empty-d">Try a different area, or check My listings — you may already represent it.</div>' +
+      '</div>';
+    return;
+  }
+
+  const blocked = ME.agent.state !== 'active';
+
+  box.innerHTML = FOUND.map(function (l) {
+    const img = photo(l.photos);
+    return '<article class="card" id="d-' + E(l.id) + '"><div class="card-top">' +
+      (img ? '<img class="thumb" src="' + E(img) + '" alt="" loading="lazy"/>' : '<div class="thumb"></div>') +
+      '<div class="c-id">' +
+        '<div class="c-t">' + E(l.title) + '</div>' +
+        '<div class="c-s">' + E(l.city || l.location || '') + ' · ' + MONEY(l.price_night) + ' / night</div>' +
+      '</div>' +
+      '<button class="btn btn-primary btn-sm" onclick="openAsk(\'' + E(l.id) + '\')" ' + (blocked ? 'disabled' : '') + '>Ask to represent</button>' +
+    '</div><div id="ask-' + E(l.id) + '"></div></article>';
   }).join('');
 }
 
-/* ── Copy helper ── */
-function copy(srcId, btnId) {
-  const btn = $(btnId);
-  const val = $(srcId).textContent.trim();
-  navigator.clipboard.writeText(val).then(() => {
-    const was = btn.textContent;
-    btn.textContent = '✓ Copied';
-    btn.classList.add('done');
-    setTimeout(() => { btn.textContent = was; btn.classList.remove('done'); }, 2000);
-  }).catch(() => {
-    // fallback for older Safari
-    const ta = document.createElement('textarea');
-    ta.value = val;
-    document.body.appendChild(ta);
-    ta.select();
-    document.execCommand('copy');
-    document.body.removeChild(ta);
-    btn.textContent = '✓ Copied';
-    btn.classList.add('done');
-    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('done'); }, 2000);
-  });
+function openAsk(id) {
+  const l = FOUND.find(function (x) { return String(x.id) === String(id); });
+  const box = document.getElementById('ask-' + id);
+  if (!box || box.innerHTML.trim()) return;
+
+  const suggested = 10;
+  box.innerHTML = '<div class="ask-box">' +
+    '<div class="ask-h">Propose your commission</div>' +
+    '<div class="ask-s">The host decides the final number — they may counter with a percentage or a flat fee. On this listing, ' +
+      suggested + '% is about ' + MONEY(l.price_night * suggested / 100) + ' a night.</div>' +
+    '<div class="ask-grid">' +
+      '<div class="inp-wrap">' +
+        '<input class="inp" id="pct-' + E(id) + '" type="number" min="0" max="100" step="0.5" value="' + suggested + '" style="padding-right:38px;"/>' +
+        '<span class="inp-sfx">%</span>' +
+      '</div>' +
+      '<input class="inp" id="msg-' + E(id) + '" placeholder="Say hello — do they know you? (optional)"/>' +
+    '</div>' +
+    '<div class="acts" style="margin-top:12px;">' +
+      '<button class="btn btn-primary btn-sm" onclick="send(\'' + E(id) + '\')">Send request</button>' +
+      '<button class="btn-ghost" style="padding:8px 13px;font-size:12.5px;" onclick="document.getElementById(\'ask-' + E(id) + '\').innerHTML=\'\';">Cancel</button>' +
+    '</div></div>';
 }
 
-async function signOut() {
-  await sb.auth.signOut();
-  location.href = 'index.html';
+async function send(id) {
+  const pct = Number(document.getElementById('pct-' + id).value);
+  const msg = document.getElementById('msg-' + id).value.trim();
+  if (!(pct >= 0 && pct <= 100)) return toast('A percentage between 0 and 100.', true);
+
+  const btn = event.currentTarget; btn.disabled = true;
+  try {
+    await ApaAgent.request(id, pct, msg);
+    ME = await ApaAgent.me(true);
+    toast('Sent. The host decides — you\'ll hear either way.');
+    const card = document.getElementById('d-' + id);
+    if (card) card.remove();
+    paint();
+  } catch (e) { toast(e.message, true); btn.disabled = false; }
 }
+
+/* ══ EARNINGS ══════════════════════════════════════════════════════════ */
+function renderEarnings(pane) {
+  const rs = ME.referrals;
+  if (!rs.length) {
+    pane.innerHTML = '<div class="empty">' +
+      '<div class="empty-i">💰</div>' +
+      '<div class="empty-t">No activity yet</div>' +
+      '<div class="empty-d">Share a listing\'s link. When a guest opens it they appear here, and when they book, your commission does too. The host pays you directly.</div>' +
+      '</div>';
+    return;
+  }
+
+  const title = function (lid) {
+    const p = ME.portfolio.find(function (x) { return String(x.listing_id) === String(lid); });
+    return p ? p.title : 'A listing';
+  };
+
+  const LABEL = {
+    converted: 'Booked · commission agreed with the host',
+    clicked:   'Guest is browsing — not booked yet',
+    expired:   'The guest never booked',
+    void:      'Partnership ended before they booked',
+    booked:    'Booking in progress',
+  };
+
+  pane.innerHTML = rs.map(function (r) {
+    const when = new Date(r.booked_at || r.clicked_at)
+      .toLocaleDateString('en-KE', { month: 'short', day: 'numeric' });
+
+    return '<div class="erow">' +
+      '<span class="e-dot ' + r.status + '"></span>' +
+      '<div class="e-id">' +
+        '<div class="e-t">' + E(title(r.listing_id)) + '</div>' +
+        '<div class="e-s">' + E(LABEL[r.status] || r.status) + ' · ' + when + '</div>' +
+      '</div>' +
+      (r.status === 'converted'
+        ? '<div class="e-v earn">' + MONEY(r.commission) + '</div>'
+        : '<div class="e-v pend">' + (r.status === 'clicked' ? 'Pending' : '—') + '</div>') +
+    '</div>';
+  }).join('');
+}
+
+/* ══ VERIFY ════════════════════════════════════════════════════════════ */
+function openV()  { document.getElementById('v-veil').classList.add('on'); }
+function closeV() { document.getElementById('v-veil').classList.remove('on'); }
+function pickDoc(el) {
+  document.querySelectorAll('#v-opts .opt').forEach(function (o) { o.classList.remove('on'); });
+  el.classList.add('on'); docType = el.dataset.d;
+}
+function picked(input) {
+  theFile = input.files[0] || null;
+  if (!theFile) return;
+  document.getElementById('drop-t').textContent = theFile.name;
+  document.getElementById('v-go').disabled = false;
+}
+async function doUpload() {
+  if (!theFile) return;
+  const btn = document.getElementById('v-go');
+  btn.disabled = true; btn.textContent = 'Uploading…';
+  try {
+    await ApaAgent.uploadId(theFile, docType);
+    ME = await ApaAgent.me(true);
+    closeV();
+    toast('Sent. We usually check within a day.');
+    paint();
+  } catch (e) {
+    toast(e.message, true);
+    btn.disabled = false;
+  }
+  btn.textContent = 'Upload';
+}
+
+const drop = document.getElementById('drop');
+['dragenter','dragover'].forEach(function (ev) {
+  drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add('over'); });
+});
+['dragleave','drop'].forEach(function (ev) {
+  drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove('over'); });
+});
+drop.addEventListener('drop', function (e) {
+  const f = e.dataTransfer.files[0];
+  if (f) {
+    theFile = f;
+    document.getElementById('drop-t').textContent = f.name;
+    document.getElementById('v-go').disabled = false;
+  }
+});
+
+document.getElementById('v-veil').addEventListener('click', function (e) { if (e.target.id === 'v-veil') closeV(); });
+document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeV(); });
 </script>
+<link rel="stylesheet" href="/brand.css"/>
 </body>
 </html>

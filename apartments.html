@@ -80,6 +80,7 @@
 <!-- Session core: one Supabase client per tab. Multiple clients on the
      same storage key race each other and silently drop the session. -->
 <script src="/apa-session.js"></script>
+<script src="/apa-agent.js"></script>
 <script src="/apa-admin-guard.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
@@ -853,6 +854,62 @@ setTimeout(dismissEnterTx,3500);
 <script src="/showcase.js" defer></script>
 <script src="/brand.js" defer></script>
   <script src="/apa-signal.js" defer></script>
+
+<!-- ── Agent referral banner ──────────────────────────────────────────
+     When a guest arrives on an agent's link, say so plainly. Transparency
+     is the point: a guest who knows an agent introduced them is a guest
+     who is not being quietly brokered. The host sees the same fact. -->
+<style>
+#agent-ref{position:fixed;left:50%;bottom:18px;transform:translate(-50%,140%);z-index:500;
+  display:flex;align-items:center;gap:11px;max-width:min(92vw,460px);
+  background:rgba(8,8,15,.93);backdrop-filter:blur(14px);color:#fff;
+  padding:13px 17px;border-radius:16px;box-shadow:0 14px 44px rgba(8,8,15,.34);
+  transition:transform .42s cubic-bezier(.22,1,.36,1);}
+#agent-ref.on{transform:translate(-50%,0);}
+#agent-ref .ar-av{width:34px;height:34px;border-radius:11px;flex:none;
+  background:linear-gradient(135deg,#6D28FF,#4F6DFF);display:flex;align-items:center;
+  justify-content:center;font-weight:800;font-size:13px;}
+#agent-ref .ar-t{font-size:13px;font-weight:600;line-height:1.4;flex:1;min-width:0;}
+#agent-ref .ar-t b{color:#4EE0C8;}
+#agent-ref .ar-s{display:block;font-size:11.5px;color:rgba(255,255,255,.6);font-weight:400;margin-top:2px;}
+#agent-ref .ar-x{background:none;border:0;color:rgba(255,255,255,.45);font-size:19px;
+  cursor:pointer;line-height:1;padding:2px 4px;flex:none;}
+#agent-ref .ar-x:hover{color:#fff;}
+</style>
+
+<div id="agent-ref" role="status" aria-live="polite">
+  <div class="ar-av" id="ar-av">A</div>
+  <div class="ar-t" id="ar-t"></div>
+  <button class="ar-x" onclick="this.parentNode.classList.remove('on')" aria-label="Dismiss">&times;</button>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  if (!window.ApaAgent) return;
+
+  function initials(n) {
+    return String(n || 'A').trim().split(/\s+/).slice(0, 2)
+      .map(function (w) { return w[0]; }).join('').toUpperCase();
+  }
+
+  /* captureReferral() records the click, survives the sign-in round trip,
+     and returns null for a dead link — a guest never sees a broken page
+     because an agent's partnership lapsed. */
+  ApaAgent.captureReferral().then(function (ref) {
+    if (!ref || !ref.agent_name) return;
+
+    var bar = document.getElementById('agent-ref');
+    document.getElementById('ar-av').textContent = initials(ref.agent_name);
+    document.getElementById('ar-t').innerHTML =
+      'Referred by <b>Agent ' + ApaAgent.escape(ref.agent_name) + '</b>' +
+      '<span class="ar-s">You book with the host as normal. Your price is unchanged.</span>';
+
+    setTimeout(function () { bar.classList.add('on'); }, 900);
+    setTimeout(function () { bar.classList.remove('on'); }, 11000);
+  }).catch(function () { /* never break the page */ });
+})();
+</script>
 </body>
 </html>
 

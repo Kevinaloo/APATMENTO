@@ -454,9 +454,9 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
           Slot inventory
         </div>
-        <div class="nav-i" onclick="location.href='admin-programme.html'">
+        <div class="nav-i" data-sec="agents" onclick="go('agents',this)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M20 8v6M23 11h-6"/></svg>
-          Agents &amp; Influencers
+          Agent identity <span class="nav-b calm" id="b-agents">0</span>
         </div>
       </div>
 
@@ -737,6 +737,24 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
       </section>
 
       <!-- ─── ADS ─── -->
+      <!-- ─── AGENT IDENTITY ───
+           The only thing admin decides about agents now. Who represents
+           which listing, and for how much, is between host and agent.
+           We confirm a person is who they claim to be. Nothing more. -->
+      <section class="sec" id="s-agents">
+        <div class="hd">
+          <div><h1>Agent <em>identity</em></h1>
+          <p>Agents sign up instantly and work for 30 days while they verify. You confirm the document is real — you do not approve the agent. Hosts do that.</p></div>
+        </div>
+        <div class="tabs" style="margin-top:20px">
+          <button class="tab on" onclick="agFilter('submitted',this)">Awaiting review</button>
+          <button class="tab" onclick="agFilter('unverified',this)">Unverified</button>
+          <button class="tab" onclick="agFilter('rejected',this)">Rejected</button>
+          <button class="tab" onclick="agFilter('verified',this)">Verified</button>
+        </div>
+        <div id="ag-list"></div>
+      </section>
+
       <section class="sec" id="s-ads">
         <div class="hd">
           <div><h1>Ad <em>manager</em></h1><p>Create a campaign, pick the exact surfaces it runs on, and watch viewability in real time.</p></div>
@@ -970,6 +988,7 @@ function go(sec, el){
   document.querySelector('.nav').classList.remove('open');
   window.scrollTo({top:0, behavior:'instant'});
   if(sec==='audience'||sec==='ml'||sec==='slots') ensureAudience();
+  if(sec==='agents') loadAgents();
 }
 function setRange(d, el){
   RANGE = d;
@@ -1902,6 +1921,169 @@ function exportInventory(){
     }
   }catch(e){}
 })();
+
+
+/* ══════════════════════════════════════════════════════════════════
+   AGENT IDENTITY REVIEW
+   The queue is small by design. Most agents verify in the first week
+   because their links stop earning if they don't.
+   ══════════════════════════════════════════════════════════════════ */
+let AG_STATUS = 'submitted';
+let AG_ROWS   = [];
+
+async function agToken() {
+  const r = await sb.auth.getSession();
+  return r?.data?.session?.access_token || '';
+}
+
+function agFilter(status, el) {
+  AG_STATUS = status;
+  el.parentNode.querySelectorAll('button').forEach(b => b.classList.remove('on'));
+  el.classList.add('on');
+  loadAgents();
+}
+
+async function loadAgents() {
+  const box = document.getElementById('ag-list');
+  if (!box) return;
+  box.innerHTML = '<div class="t-sub" style="padding:32px;text-align:center;">Loading…</div>';
+
+  try {
+    const r = await fetch('/api/agents?action=kyc-review&status=' + AG_STATUS, {
+      headers: { Authorization: 'Bearer ' + await agToken() },
+    });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error || 'Failed');
+    AG_ROWS = j.agents || [];
+  } catch (e) {
+    box.innerHTML = '<div class="t-sub" style="padding:32px;text-align:center;">Could not load: ' + e.message + '</div>';
+    return;
+  }
+
+  // badge counts only the queue that needs a human
+  if (AG_STATUS === 'submitted') {
+    const b = document.getElementById('b-agents');
+    if (b) {
+      b.textContent = AG_ROWS.length;
+      b.classList.toggle('calm', AG_ROWS.length === 0);
+      b.classList.toggle('warn', AG_ROWS.length > 0);
+    }
+  }
+
+  if (!AG_ROWS.length) {
+    box.innerHTML = '<div class="t-sub" style="padding:44px;text-align:center;">Nothing here.</div>';
+    return;
+  }
+
+  box.innerHTML = AG_ROWS.map(agRow).join('');
+}
+
+function agDays(a) {
+  return Math.ceil((new Date(a.kyc_deadline) - Date.now()) / 864e5);
+}
+
+function agRow(a) {
+  const days = agDays(a);
+  const overdue = days < 0 && a.kyc_status !== 'verified';
+  const esc = (x) => String(x ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  const clock = a.kyc_status === 'verified'
+    ? '<span class="pill p-ok">Verified</span>'
+    : overdue
+      ? '<span class="pill p-bad">' + Math.abs(days) + 'd overdue</span>'
+      : '<span class="pill p-info">' + days + 'd left</span>';
+
+  const acts = [];
+  if (a.kyc_status === 'submitted') {
+    acts.push('<button class="btn btn-g btn-sm" onclick="agDoc(\'' + a.id + '\')">View doc</button>');
+    acts.push('<button class="btn btn-ok btn-sm" onclick="agAct(\'' + a.id + '\',\'verify\')">Verify</button>');
+    acts.push('<button class="btn btn-d btn-sm" onclick="agReject(\'' + a.id + '\')">Reject</button>');
+  }
+  if (a.kyc_status !== 'verified' && a.kyc_status !== 'submitted') {
+    acts.push('<button class="btn btn-g btn-sm" onclick="agExtend(\'' + a.id + '\')">Extend 30d</button>');
+  }
+  acts.push(a.suspended
+    ? '<button class="btn btn-ok btn-sm" onclick="agAct(\'' + a.id + '\',\'reinstate\')">Reinstate</button>'
+    : '<button class="btn btn-d btn-sm" onclick="agSuspend(\'' + a.id + '\')">Suspend</button>');
+
+  return '<div class="card" style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">' +
+    '<div style="flex:1;min-width:200px;">' +
+      '<div style="font-weight:700;font-size:14.5px;">' + esc(a.full_name) +
+        (a.suspended ? ' <span class="pill p-bad">Suspended</span>' : '') +
+        (a.report_count > 0 ? ' <span class="pill p-warn">' + a.report_count + ' reports</span>' : '') +
+      '</div>' +
+      '<div class="t-sub" style="font-size:12px;margin-top:3px;">' + esc(a.email) + ' &middot; /' + esc(a.slug) + '</div>' +
+    '</div>' +
+    clock +
+    '<div style="display:flex;gap:7px;flex-wrap:wrap;">' + acts.join('') + '</div>' +
+  '</div>';
+}
+
+/* The document lives in a private bucket. Mint a short-lived signed URL
+   rather than making anything public — an ID must never be one guessed
+   URL away from the open internet. */
+async function agDoc(agentId) {
+  try {
+    const { data: docs } = await sb
+      .from('agent_documents')
+      .select('storage_path,doc_type,uploaded_at')
+      .eq('agent_id', agentId)
+      .order('uploaded_at', { ascending: false })
+      .limit(1);
+
+    if (!docs?.length) return toast('No document on file.');
+
+    const { data, error } = await sb.storage
+      .from('agent-documents')
+      .createSignedUrl(docs[0].storage_path, 120);
+
+    if (error) throw error;
+    window.open(data.signedUrl, '_blank', 'noopener');
+  } catch (e) {
+    toast('Could not open the document.');
+  }
+}
+
+async function agPost(payload) {
+  const r = await fetch('/api/agents?action=kyc-review', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + await agToken() },
+    body: JSON.stringify(payload),
+  });
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.error || 'Failed');
+  return j;
+}
+
+async function agAct(agent_id, decision, reason) {
+  try {
+    await agPost({ agent_id, decision, reason });
+    toast(decision === 'verify' ? 'Verified. They have been emailed.' : 'Done.');
+    loadAgents();
+  } catch (e) { toast(e.message); }
+}
+
+function agReject(id) {
+  const reason = prompt('Why? This is emailed to them verbatim, so be specific and kind.\n\ne.g. "The photo was too blurred to read the number."');
+  if (reason === null) return;
+  agAct(id, 'reject', reason.trim() || null);
+}
+
+function agSuspend(id) {
+  const reason = prompt('Suspend this agent. Reason (internal):');
+  if (reason === null) return;
+  agAct(id, 'suspend', reason.trim() || null);
+}
+
+async function agExtend(id) {
+  if (!confirm('Give this agent another 30 days to verify?')) return;
+  try {
+    await agPost({ agent_id: id, decision: 'extend', days: 30 });
+    toast('Clock extended by 30 days.');
+    loadAgents();
+  } catch (e) { toast(e.message); }
+}
+
 </script>
 </body>
 </html>

@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<meta name="robots" content="noindex, nofollow"/>
+<title>My Agents · Apatmento Partner Hub</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/apa-session.js"></script>
+<script src="/apa-agent.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..700&display=swap" rel="stylesheet"/>
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --glass:#FCFCFE;--glass-2:#F5F5FC;--glass-3:#ECEDF8;
+  --ink:#08080F;--ink-2:#13142A;--ink-soft:#474A66;--ink-faint:#8B8EAC;
+  --violet:#6D28FF;--iris:#8B5CF6;--lilac:#C3AEFA;--electric:#4F6DFF;
+  --mint:#4EE0C8;--mint-deep:#14B8A6;--gold:#F5B12E;--ember:#FF6A3C;
+  --err:#FF4D6D;
+  --line:rgba(8,8,15,.07);--line-2:rgba(8,8,15,.13);
+  --font-d:'Fraunces',serif;--font-b:'General Sans',system-ui,sans-serif;
+  --ease:cubic-bezier(.22,1,.36,1);
+}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important;}}
+html,body{min-height:100%;font-family:var(--font-b);background:#F2F3FA;color:var(--ink);-webkit-font-smoothing:antialiased;}
+
+/* ── Gate ── */
+#gate{position:fixed;inset:0;background:#F2F3FA;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:999;}
+.spin{width:34px;height:34px;border:3px solid rgba(109,40,255,.18);border-top-color:var(--violet);border-radius:50%;animation:spin .75s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+#gate p{font-size:13px;color:var(--ink-faint);}
+
+/* ── Shell ── */
+.shell{display:grid;grid-template-columns:248px 1fr;min-height:100vh;}
+.sidebar{background:var(--glass);border-right:1px solid var(--line);padding:26px 16px;position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column;}
+.sb-section{font-size:10.5px;text-transform:uppercase;letter-spacing:1.4px;color:var(--ink-faint);font-weight:700;padding:0 12px;margin-bottom:14px;}
+.sb-link{display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:12px;color:var(--ink-soft);text-decoration:none;font-size:14px;font-weight:500;transition:all .18s var(--ease);margin-bottom:2px;}
+.sb-link svg{width:18px;height:18px;flex:none;}
+.sb-link:hover{background:var(--glass-2);color:var(--ink);}
+.sb-link.active{background:linear-gradient(135deg,rgba(109,40,255,.09),rgba(79,109,255,.06));color:var(--violet);font-weight:600;}
+.sb-link.danger:hover{color:var(--err);background:rgba(255,77,109,.06);}
+.sb-badge{margin-left:auto;min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:var(--ember);color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;}
+.sb-foot{margin-top:auto;padding-top:18px;border-top:1px solid var(--line);}
+
+.main{padding:34px 38px 80px;max-width:1080px;}
+@media(max-width:960px){
+  .shell{grid-template-columns:1fr;}
+  .sidebar{display:none;}
+  .main{padding:24px 18px 96px;}
+}
+
+/* ── Header ── */
+.page-eyebrow{display:inline-block;font-size:11px;text-transform:uppercase;letter-spacing:1.6px;color:var(--violet);font-weight:700;margin-bottom:10px;}
+.page-title{font-family:var(--font-d);font-size:clamp(30px,4.4vw,40px);font-weight:600;letter-spacing:-1.2px;line-height:1.1;}
+.page-title em{font-style:italic;color:var(--violet);}
+.page-sub{font-size:14.5px;color:var(--ink-soft);margin-top:10px;line-height:1.65;max-width:660px;}
+
+/* ── Explainer ── */
+.primer{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:18px;overflow:hidden;margin:26px 0 30px;}
+.primer-cell{background:var(--glass);padding:20px 22px;}
+.pc-n{width:26px;height:26px;border-radius:9px;background:linear-gradient(135deg,var(--violet),var(--electric));color:#fff;font-size:12.5px;font-weight:800;display:flex;align-items:center;justify-content:center;margin-bottom:11px;}
+.pc-t{font-size:13.5px;font-weight:700;color:var(--ink-2);margin-bottom:5px;}
+.pc-d{font-size:12.5px;color:var(--ink-faint);line-height:1.6;}
+@media(max-width:760px){.primer{grid-template-columns:1fr;}}
+
+/* ── Tabs ── */
+.tabs{display:flex;gap:4px;background:var(--glass-2);padding:4px;border-radius:14px;margin-bottom:24px;width:fit-content;max-width:100%;overflow-x:auto;}
+.tab{padding:10px 18px;border:none;background:transparent;border-radius:11px;font-family:var(--font-b);font-size:13.5px;font-weight:600;color:var(--ink-faint);cursor:pointer;transition:all .2s var(--ease);white-space:nowrap;display:flex;align-items:center;gap:7px;}
+.tab.active{background:var(--glass);color:var(--ink);box-shadow:0 2px 10px rgba(8,8,15,.05);}
+.tab-count{min-width:19px;height:19px;padding:0 5px;border-radius:9px;background:var(--glass-3);color:var(--ink-soft);font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;}
+.tab.active .tab-count{background:var(--violet);color:#fff;}
+.tab[data-tab="pending"] .tab-count.hot{background:var(--ember);color:#fff;}
+
+/* ── Request card ── */
+.req{background:var(--glass);border:1px solid var(--line);border-radius:20px;padding:24px;margin-bottom:16px;transition:box-shadow .24s var(--ease);}
+.req:hover{box-shadow:0 12px 40px rgba(8,8,15,.06);}
+.req.flagged{border-color:rgba(255,106,60,.35);background:linear-gradient(135deg,rgba(255,106,60,.035),var(--glass));}
+
+.req-top{display:flex;gap:14px;align-items:flex-start;}
+.av{width:50px;height:50px;border-radius:15px;background:linear-gradient(135deg,var(--violet),var(--electric));color:#fff;display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:800;flex:none;}
+.req-id{flex:1;min-width:0;}
+.req-name{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.rn{font-size:16.5px;font-weight:700;letter-spacing:-.3px;color:var(--ink-2);}
+.req-meta{font-size:12.5px;color:var(--ink-faint);margin-top:4px;line-height:1.5;}
+
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:10.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;}
+.badge svg{width:11px;height:11px;}
+.b-verified{background:rgba(20,184,166,.12);color:var(--mint-deep);}
+.b-unverified{background:rgba(245,177,46,.14);color:#B47908;}
+.b-restricted{background:rgba(255,77,109,.1);color:var(--err);}
+.b-creator{background:rgba(255,106,60,.11);color:var(--ember);}
+.b-flag{background:rgba(255,77,109,.1);color:var(--err);}
+.b-paused{background:var(--glass-3);color:var(--ink-faint);}
+
+/* ── Listing chip ── */
+.lst{display:flex;align-items:center;gap:11px;background:var(--glass-2);border-radius:13px;padding:11px 13px;margin:16px 0;}
+.lst-img{width:44px;height:44px;border-radius:10px;object-fit:cover;background:var(--glass-3);flex:none;}
+.lst-t{font-size:13.5px;font-weight:600;color:var(--ink-2);}
+.lst-s{font-size:11.5px;color:var(--ink-faint);margin-top:2px;}
+
+/* ── Ask ── */
+.ask{display:flex;align-items:center;justify-content:space-between;gap:16px;background:linear-gradient(135deg,rgba(109,40,255,.05),rgba(79,109,255,.035));border:1px solid rgba(109,40,255,.14);border-radius:14px;padding:15px 18px;margin-bottom:14px;flex-wrap:wrap;}
+.ask-l{font-size:11px;text-transform:uppercase;letter-spacing:1.1px;color:var(--ink-faint);font-weight:700;}
+.ask-v{font-family:var(--font-d);font-size:28px;font-weight:600;color:var(--violet);letter-spacing:-1px;line-height:1;margin-top:5px;}
+.ask-note{font-size:12px;color:var(--ink-faint);max-width:280px;line-height:1.55;text-align:right;}
+@media(max-width:600px){.ask-note{text-align:left;}}
+
+.msg{background:#fff;border-left:3px solid var(--lilac);border-radius:0 12px 12px 0;padding:13px 15px;margin-bottom:16px;}
+.msg-l{font-size:10.5px;text-transform:uppercase;letter-spacing:.9px;color:var(--ink-faint);font-weight:700;margin-bottom:5px;}
+.msg-t{font-size:13.5px;color:var(--ink-soft);line-height:1.6;}
+
+/* ── Terms editor ── */
+.terms{border:1px solid var(--line);border-radius:16px;padding:18px;background:var(--glass-2);margin-bottom:14px;}
+.terms-h{font-size:13px;font-weight:700;color:var(--ink-2);margin-bottom:3px;}
+.terms-s{font-size:12px;color:var(--ink-faint);line-height:1.55;margin-bottom:14px;}
+.seg{display:flex;gap:3px;background:var(--glass-3);padding:3px;border-radius:11px;margin-bottom:13px;width:fit-content;}
+.seg-b{padding:8px 15px;border:none;background:transparent;border-radius:9px;font-family:var(--font-b);font-size:12.5px;font-weight:600;color:var(--ink-faint);cursor:pointer;transition:all .18s;}
+.seg-b.on{background:var(--glass);color:var(--ink);box-shadow:0 1px 6px rgba(8,8,15,.06);}
+.inp-wrap{position:relative;display:flex;align-items:center;}
+.inp{width:100%;padding:13px 15px;padding-right:52px;border:1.5px solid var(--line-2);border-radius:12px;background:var(--glass);font-family:var(--font-b);font-size:15px;font-weight:600;color:var(--ink);outline:none;transition:border-color .18s;}
+.inp:focus{border-color:var(--violet);}
+.inp-suffix{position:absolute;right:15px;font-size:13px;font-weight:700;color:var(--ink-faint);pointer-events:none;}
+.calc{font-size:12.5px;color:var(--ink-soft);margin-top:10px;line-height:1.6;}
+.calc b{color:var(--mint-deep);font-weight:700;}
+textarea.inp{padding-right:15px;font-weight:400;font-size:13.5px;resize:vertical;min-height:64px;line-height:1.6;}
+
+/* ── Actions ── */
+.acts{display:flex;gap:9px;flex-wrap:wrap;align-items:center;}
+.btn{padding:11px 18px;border:none;border-radius:12px;font-family:var(--font-b);font-size:13.5px;font-weight:700;cursor:pointer;transition:all .2s var(--ease);display:inline-flex;align-items:center;gap:7px;}
+.btn svg{width:15px;height:15px;}
+.btn:disabled{opacity:.5;cursor:not-allowed;}
+.btn-primary{background:linear-gradient(135deg,var(--violet),var(--electric));color:#fff;}
+.btn-primary:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 8px 22px rgba(109,40,255,.32);}
+.btn-ghost{background:var(--glass);border:1.5px solid var(--line-2);color:var(--ink-soft);}
+.btn-ghost:hover{border-color:var(--ink-faint);color:var(--ink);}
+.btn-danger{background:transparent;border:1.5px solid transparent;color:var(--ink-faint);}
+.btn-danger:hover{color:var(--err);background:rgba(255,77,109,.07);}
+.btn-sm{padding:8px 13px;font-size:12.5px;}
+.spacer{flex:1;}
+
+/* ── Active roster row ── */
+.row{display:flex;align-items:center;gap:14px;background:var(--glass);border:1px solid var(--line);border-radius:16px;padding:16px 18px;margin-bottom:11px;flex-wrap:wrap;transition:box-shadow .22s;}
+.row:hover{box-shadow:0 8px 28px rgba(8,8,15,.05);}
+.row.paused{opacity:.62;}
+.row-id{flex:1;min-width:180px;}
+.row-stats{display:flex;gap:26px;flex:none;}
+.rs-v{font-family:var(--font-d);font-size:19px;font-weight:600;letter-spacing:-.5px;line-height:1;}
+.rs-v.earn{color:var(--mint-deep);}
+.rs-l{font-size:10.5px;color:var(--ink-faint);margin-top:4px;text-transform:uppercase;letter-spacing:.7px;font-weight:600;}
+.rate-tag{padding:6px 12px;border-radius:20px;background:rgba(20,184,166,.1);color:var(--mint-deep);font-size:12.5px;font-weight:800;flex:none;}
+@media(max-width:700px){.row-stats{width:100%;justify-content:space-between;gap:12px;}}
+
+/* ── Empty ── */
+.empty{text-align:center;padding:64px 24px;background:var(--glass);border:1px dashed var(--line-2);border-radius:22px;}
+.empty-i{font-size:38px;margin-bottom:14px;opacity:.55;}
+.empty-t{font-family:var(--font-d);font-size:19px;font-weight:600;margin-bottom:8px;}
+.empty-d{font-size:13.5px;color:var(--ink-faint);line-height:1.7;max-width:420px;margin:0 auto;}
+
+/* ── Modal ── */
+.veil{position:fixed;inset:0;background:rgba(8,8,15,.5);backdrop-filter:blur(6px);z-index:400;display:none;align-items:center;justify-content:center;padding:20px;}
+.veil.on{display:flex;}
+.sheet{background:var(--glass);border-radius:24px;padding:30px;max-width:460px;width:100%;max-height:88vh;overflow-y:auto;animation:pop .3s var(--ease);}
+@keyframes pop{from{opacity:0;transform:scale(.95) translateY(12px);}to{opacity:1;transform:none;}}
+.sheet-t{font-family:var(--font-d);font-size:22px;font-weight:600;letter-spacing:-.6px;margin-bottom:7px;}
+.sheet-s{font-size:13.5px;color:var(--ink-faint);line-height:1.65;margin-bottom:22px;}
+.opt{display:flex;align-items:flex-start;gap:12px;padding:14px;border:1.5px solid var(--line);border-radius:13px;cursor:pointer;margin-bottom:9px;transition:all .18s;background:var(--glass);}
+.opt:hover{border-color:var(--lilac);}
+.opt.on{border-color:var(--violet);background:rgba(109,40,255,.04);}
+.opt-r{width:18px;height:18px;border:2px solid var(--line-2);border-radius:50%;flex:none;margin-top:1px;position:relative;transition:border-color .18s;}
+.opt.on .opt-r{border-color:var(--violet);}
+.opt.on .opt-r::after{content:'';position:absolute;inset:3px;border-radius:50%;background:var(--violet);}
+.opt-t{font-size:13.5px;font-weight:600;color:var(--ink-2);}
+.opt-d{font-size:12px;color:var(--ink-faint);margin-top:3px;line-height:1.5;}
+.warn{background:rgba(255,77,109,.06);border:1px solid rgba(255,77,109,.2);border-radius:12px;padding:13px 15px;font-size:12.5px;color:#C2185B;line-height:1.6;margin:16px 0;}
+
+/* ── Toast ── */
+.toast{position:fixed;bottom:26px;left:50%;transform:translate(-50%,120%);background:var(--ink);color:#fff;padding:13px 22px;border-radius:14px;font-size:13.5px;font-weight:600;z-index:600;transition:transform .34s var(--ease);box-shadow:0 12px 36px rgba(8,8,15,.28);max-width:90vw;text-align:center;}
+.toast.on{transform:translate(-50%,0);}
+.toast.bad{background:var(--err);}
+
+/* ── Mobile nav ── */
+.mnav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;background:rgba(252,252,254,.94);backdrop-filter:blur(20px);border-top:1px solid var(--line);padding:6px 0 env(safe-area-inset-bottom,6px);}
+@media(max-width:960px){.mnav{display:flex;}}
+.mn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 0;color:var(--ink-faint);text-decoration:none;font-size:10px;font-weight:600;position:relative;}
+.mn svg{width:21px;height:21px;}
+.mn.active{color:var(--violet);}
+.mn-dot{position:absolute;top:5px;right:calc(50% - 16px);width:7px;height:7px;border-radius:50%;background:var(--ember);}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);}
+</style>
+</head>
+<body>
+
+<div id="gate"><div class="spin"></div><p>Loading your agents…</p></div>
+
+<div class="shell" id="shell" style="display:none;">
+
+<nav class="sidebar">
+  <div class="sb-section">Partner Hub</div>
+  <a class="sb-link" href="partner-listings.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    My Listings
+  </a>
+  <a class="sb-link" href="partner-bookings.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg>
+    Bookings
+  </a>
+  <a class="sb-link active" href="partner-agents.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    My Agents
+    <span class="sb-badge" id="sb-count" style="display:none;">0</span>
+  </a>
+  <a class="sb-link" href="partner-earnings.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+    Earnings
+  </a>
+  <a class="sb-link" href="partner-calendar.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+    Calendar
+  </a>
+  <a class="sb-link" href="partner-analytics.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 9l-5 5-4-4-4 4"/></svg>
+    Analytics
+  </a>
+  <a class="sb-link" href="partner-reviews.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+    Reviews
+  </a>
+  <a class="sb-link" href="partner-settings.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    Settings
+  </a>
+
+  <div class="sb-foot">
+    <a class="sb-link" href="dashboard.html?role=guest&back=1">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4M4 7h16M16 21l4-4-4-4M20 17H4"/></svg>
+      Switch to Guest
+    </a>
+    <a class="sb-link danger" onclick="signOut()" style="cursor:pointer;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+      Sign out
+    </a>
+  </div>
+</nav>
+
+<main class="main">
+  <span class="page-eyebrow">✦ Partner Hub</span>
+  <h1 class="page-title">My <em>agents</em></h1>
+  <p class="page-sub">Agents bring you guests. You decide who represents your listings and exactly what they earn — per listing, in your own words. Nobody is assigned to you.</p>
+
+  <div class="primer">
+    <div class="primer-cell">
+      <div class="pc-n">1</div>
+      <div class="pc-t">They ask, you decide</div>
+      <div class="pc-d">An agent requests one listing at a time and proposes a rate. You set the real number, or decline.</div>
+    </div>
+    <div class="primer-cell">
+      <div class="pc-n">2</div>
+      <div class="pc-t">They see your calendar</div>
+      <div class="pc-d">Approved agents see live availability — so they never promise a guest dates you've already sold.</div>
+    </div>
+    <div class="primer-cell">
+      <div class="pc-n">3</div>
+      <div class="pc-t">You run the booking</div>
+      <div class="pc-d">Guests book with you directly. Their agent is named on the booking, and their cut is shown.</div>
+    </div>
+  </div>
+
+  <div class="tabs" role="tablist">
+    <button class="tab active" data-tab="pending" onclick="go('pending')" role="tab">
+      Requests <span class="tab-count" id="c-pending">0</span>
+    </button>
+    <button class="tab" data-tab="active" onclick="go('active')" role="tab">
+      My roster <span class="tab-count" id="c-active">0</span>
+    </button>
+    <button class="tab" data-tab="archived" onclick="go('archived')" role="tab">
+      Past <span class="tab-count" id="c-archived">0</span>
+    </button>
+  </div>
+
+  <div id="pane"></div>
+</main>
+</div>
+
+<nav class="mnav">
+  <a class="mn" href="partner-listings.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Listings</a>
+  <a class="mn" href="partner-bookings.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg>Bookings</a>
+  <a class="mn active" href="partner-agents.html"><span class="mn-dot" id="mn-dot" style="display:none;"></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>Agents</a>
+  <a class="mn" href="partner-earnings.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Earnings</a>
+  <a class="mn" href="partner-calendar.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Calendar</a>
+</nav>
+
+<!-- ── Report modal ── -->
+<div class="veil" id="rep-veil">
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="rep-title">
+    <div class="sheet-t" id="rep-title">Report this agent</div>
+    <div class="sheet-s">Their request is declined immediately. Three reports from three different hosts and they are suspended across Apatmento.</div>
+
+    <div id="rep-opts">
+      <label class="opt on" data-r="spam" onclick="pickReason(this)">
+        <span class="opt-r"></span>
+        <span><span class="opt-t">Spam</span><span class="opt-d">Blanket requests with no real interest in the listing</span></span>
+      </label>
+      <label class="opt" data-r="impersonation" onclick="pickReason(this)">
+        <span class="opt-r"></span>
+        <span><span class="opt-t">Impersonation</span><span class="opt-d">Claiming to be someone they're not</span></span>
+      </label>
+      <label class="opt" data-r="misleading" onclick="pickReason(this)">
+        <span class="opt-r"></span>
+        <span><span class="opt-t">Misleading guests</span><span class="opt-d">Advertising this listing falsely, or sending guests elsewhere</span></span>
+      </label>
+      <label class="opt" data-r="abusive" onclick="pickReason(this)">
+        <span class="opt-r"></span>
+        <span><span class="opt-t">Abusive</span><span class="opt-d">Harassment, threats, or pressure</span></span>
+      </label>
+      <label class="opt" data-r="other" onclick="pickReason(this)">
+        <span class="opt-r"></span>
+        <span><span class="opt-t">Something else</span><span class="opt-d">Tell us below</span></span>
+      </label>
+    </div>
+
+    <textarea class="inp" id="rep-detail" placeholder="What happened? (optional, but it helps us act)" style="margin-top:6px;"></textarea>
+
+    <div class="warn">This is permanent for you — you cannot un-report an agent. They are never told who reported them.</div>
+
+    <div class="acts">
+      <button class="btn btn-ghost" onclick="closeRep()">Cancel</button>
+      <div class="spacer"></div>
+      <button class="btn btn-primary" id="rep-go" style="background:linear-gradient(135deg,#FF4D6D,#FF6A3C);" onclick="doReport()">Report &amp; decline</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+
+const E = ApaAgent.escape, MONEY = ApaAgent.money;
+let DATA = { pending: [], active: [], archived: [] };
+let TAB  = 'pending';
+let repCtx = null, repReason = 'spam';
+
+/* ── toast ── */
+let tT;
+function toast(msg, bad) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.toggle('bad', !!bad);
+  t.classList.add('on');
+  clearTimeout(tT);
+  tT = setTimeout(() => t.classList.remove('on'), 3400);
+}
+
+async function signOut() { await ApaSession.signOut(); location.href = 'auth.html'; }
+
+/* ── boot ── */
+ApaSession.ready(async (s) => {
+  if (s.status !== 'user') {
+    sessionStorage.setItem('auth_next', location.href);
+    return location.href = 'auth.html?next=' + encodeURIComponent(location.pathname);
+  }
+  await load();
+  document.getElementById('gate').style.display = 'none';
+  document.getElementById('shell').style.display = 'grid';
+});
+
+async function load() {
+  try {
+    DATA = await ApaAgent.inbox(true);
+  } catch (e) {
+    toast(e.message || 'Could not load your agents.', true);
+    DATA = { pending: [], active: [], archived: [] };
+  }
+  counts();
+  render();
+}
+
+function counts() {
+  const p = DATA.pending.length;
+  document.getElementById('c-pending').textContent  = p;
+  document.getElementById('c-pending').classList.toggle('hot', p > 0);
+  document.getElementById('c-active').textContent   = DATA.active.length;
+  document.getElementById('c-archived').textContent = DATA.archived.length;
+
+  const sb = document.getElementById('sb-count');
+  sb.textContent = p; sb.style.display = p ? 'flex' : 'none';
+  document.getElementById('mn-dot').style.display = p ? 'block' : 'none';
+}
+
+function go(t) {
+  TAB = t;
+  document.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b.dataset.tab === t));
+  render();
+}
+
+/* ── badges ── */
+function stateBadge(r) {
+  if (r.agent_state === 'suspended')  return '<span class="badge b-restricted">Suspended</span>';
+  if (r.kyc_status === 'verified')    return '<span class="badge b-verified"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>Verified</span>';
+  if (r.agent_state === 'restricted') return '<span class="badge b-restricted">Unverified · overdue</span>';
+  return '<span class="badge b-unverified">Verifying</span>';
+}
+
+function extraBadges(r) {
+  let h = '';
+  if (r.is_creator) h += '<span class="badge b-creator">Creator' + (r.audience_size ? ' · ' + Number(r.audience_size).toLocaleString() : '') + '</span>';
+  if (r.report_count > 0) h += '<span class="badge b-flag">' + r.report_count + ' report' + (r.report_count > 1 ? 's' : '') + '</span>';
+  return h;
+}
+
+function photo(p) {
+  try { const a = typeof p === 'string' ? JSON.parse(p) : p; return (a && a[0]) || ''; }
+  catch (e) { return ''; }
+}
+
+function initials(n) {
+  return String(n || '?').trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+}
+
+function contactLine(r) {
+  const m = { whatsapp: 'WhatsApp', call: 'Call', sms: 'SMS', email: 'Email' }[r.contact_method] || 'Contact';
+  return E(m) + ' · ' + E(r.contact_value);
+}
+
+function ago(ts) {
+  const d = Math.floor((Date.now() - new Date(ts)) / 864e5);
+  if (d === 0) return 'today';
+  if (d === 1) return 'yesterday';
+  if (d < 30)  return d + ' days ago';
+  return new Date(ts).toLocaleDateString('en-KE', { month: 'short', day: 'numeric' });
+}
+
+/* ── render ── */
+function render() {
+  const pane = document.getElementById('pane');
+  const rows = DATA[TAB] || [];
+
+  if (!rows.length) return pane.innerHTML = emptyFor(TAB);
+
+  if (TAB === 'pending')  return pane.innerHTML = rows.map(pendingCard).join('');
+  if (TAB === 'active')   return pane.innerHTML = rows.map(activeRow).join('');
+  return pane.innerHTML = rows.map(archivedRow).join('');
+}
+
+function emptyFor(t) {
+  if (t === 'pending') return `<div class="empty">
+    <div class="empty-i">📭</div>
+    <div class="empty-t">No requests waiting</div>
+    <div class="empty-d">When an agent asks to represent one of your listings, it lands here. You'll see who they are, whether they're verified, and what they're proposing — before you decide anything.</div>
+  </div>`;
+  if (t === 'active') return `<div class="empty">
+    <div class="empty-i">🤝</div>
+    <div class="empty-t">No agents yet</div>
+    <div class="empty-d">Agents who represent your listings appear here with what they've earned you. You can pause or end any partnership at any time.</div>
+  </div>`;
+  return `<div class="empty">
+    <div class="empty-i">🗂️</div>
+    <div class="empty-t">Nothing here</div>
+    <div class="empty-d">Declined and ended partnerships are kept here for your records.</div>
+  </div>`;
+}
+
+/* ── pending: the decision surface ── */
+function pendingCard(r) {
+  const img  = photo(r.listing_photos);
+  const flag = r.report_count > 0 || r.agent_state === 'restricted';
+
+  return `<article class="req ${flag ? 'flagged' : ''}" id="p-${r.partnership_id}">
+    <div class="req-top">
+      <div class="av">${E(initials(r.agent_name))}</div>
+      <div class="req-id">
+        <div class="req-name">
+          <span class="rn">${E(r.agent_name)}</span>
+          ${stateBadge(r)}${extraBadges(r)}
+        </div>
+        <div class="req-meta">${contactLine(r)} · asked ${ago(r.requested_at)}</div>
+      </div>
+    </div>
+
+    <div class="lst">
+      ${img ? `<img class="lst-img" src="${E(img)}" alt="" loading="lazy"/>` : '<div class="lst-img"></div>'}
+      <div>
+        <div class="lst-t">${E(r.listing_title)}</div>
+        <div class="lst-s">They want to represent this listing only</div>
+      </div>
+    </div>
+
+    <div class="ask">
+      <div>
+        <div class="ask-l">They proposed</div>
+        <div class="ask-v">${r.requested_pct}%</div>
+      </div>
+      <div class="ask-note">You set the final number. It applies to this listing alone, and you can change or end it later.</div>
+    </div>
+
+    ${r.agent_message ? `<div class="msg">
+      <div class="msg-l">Their message</div>
+      <div class="msg-t">${E(r.agent_message)}</div>
+    </div>` : ''}
+
+    <div class="terms">
+      <div class="terms-h">Set their commission</div>
+      <div class="terms-s">Taken from your payout when a guest they referred books. Apatmento never touches it — you settle with your agent.</div>
+
+      <div class="seg" role="group">
+        <button class="seg-b on"  data-m="pct"  onclick="mode(${r.partnership_id},'pct')">Percentage</button>
+        <button class="seg-b"     data-m="flat" onclick="mode(${r.partnership_id},'flat')">Flat fee</button>
+      </div>
+
+      <div class="inp-wrap">
+        <input class="inp" id="v-${r.partnership_id}" type="number" min="0" max="100" step="0.5"
+               value="${r.requested_pct}" oninput="recalc(${r.partnership_id})" aria-label="Commission"/>
+        <span class="inp-suffix" id="sfx-${r.partnership_id}">%</span>
+      </div>
+      <div class="calc" id="calc-${r.partnership_id}"></div>
+
+      <textarea class="inp" id="m-${r.partnership_id}" style="margin-top:12px;"
+        placeholder="A note to them (optional) — e.g. &quot;Happy to work together. Call before you send anyone.&quot;"></textarea>
+    </div>
+
+    <div class="acts">
+      <button class="btn btn-primary" onclick="approve(${r.partnership_id})">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        Approve
+      </button>
+      <button class="btn btn-ghost" onclick="decline(${r.partnership_id})">Decline</button>
+      <div class="spacer"></div>
+      <button class="btn btn-danger btn-sm"
+              onclick="openRep('${r.agent_id}', ${r.partnership_id}, '${E(r.agent_name).replace(/'/g, "\\'")}')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1zM4 22v-7"/></svg>
+        Report
+      </button>
+    </div>
+  </article>`;
+}
+
+/* percentage ⇄ flat. The calc line is the whole reason a host trusts
+   the number they are typing — show it against their own nightly rate. */
+const MODES = {};
+function mode(id, m) {
+  MODES[id] = m;
+  const card = document.getElementById('p-' + id) || document.getElementById('e-' + id);
+  card.querySelectorAll('.seg-b').forEach(b => b.classList.toggle('on', b.dataset.m === m));
+  const inp = document.getElementById('v-' + id);
+  const sfx = document.getElementById('sfx-' + id);
+  if (m === 'pct') { sfx.textContent = '%';   inp.max = 100; inp.step = '0.5'; inp.value = Math.min(100, inp.value || 10); }
+  else             { sfx.textContent = 'KES'; inp.removeAttribute('max'); inp.step = '100'; inp.value = 1500; }
+  recalc(id);
+}
+
+function recalc(id) {
+  const row = [...DATA.pending, ...DATA.active].find(x => x.partnership_id === id);
+  if (!row) return;
+  const m   = MODES[id] || 'pct';
+  const v   = Number(document.getElementById('v-' + id).value || 0);
+  const el  = document.getElementById('calc-' + id);
+  if (!el) return;
+
+  if (m === 'pct') {
+    el.innerHTML = `On a KES 10,000 booking, they keep <b>${MONEY(10000 * v / 100)}</b> and you keep <b>${MONEY(10000 * (1 - v / 100))}</b>.`;
+  } else {
+    el.innerHTML = `They keep <b>${MONEY(v)}</b> on every booking, whatever the length of stay.`;
+  }
+}
+
+async function approve(id) {
+  const m   = MODES[id] || 'pct';
+  const v   = Number(document.getElementById('v-' + id).value);
+  const msg = document.getElementById('m-' + id).value.trim();
+
+  if (m === 'pct' && !(v >= 0 && v <= 100)) return toast('A percentage between 0 and 100, please.', true);
+  if (m === 'flat' && !(v >= 0))            return toast('A flat fee cannot be negative.', true);
+
+  const btn = event.currentTarget; btn.disabled = true;
+  try {
+    await ApaAgent.respond(id, 'approve', {
+      pct:  m === 'pct'  ? v : null,
+      flat: m === 'flat' ? v : null,
+      message: msg,
+    });
+    toast('Approved. They can see your calendar now.');
+    await load();
+  } catch (e) { toast(e.message, true); btn.disabled = false; }
+}
+
+async function decline(id) {
+  const msg = document.getElementById('m-' + id).value.trim();
+  const btn = event.currentTarget; btn.disabled = true;
+  try {
+    await ApaAgent.respond(id, 'decline', { message: msg });
+    toast('Request declined.');
+    await load();
+  } catch (e) { toast(e.message, true); btn.disabled = false; }
+}
+
+/* ── active roster ── */
+function activeRow(r) {
+  const paused = r.status === 'paused';
+  return `<div class="row ${paused ? 'paused' : ''}">
+    <div class="av" style="width:42px;height:42px;font-size:16px;border-radius:13px;">${E(initials(r.agent_name))}</div>
+    <div class="row-id">
+      <div class="req-name">
+        <span class="rn" style="font-size:15px;">${E(r.agent_name)}</span>
+        ${paused ? '<span class="badge b-paused">Paused</span>' : ''}
+        ${r.kyc_status === 'verified' ? '<span class="badge b-verified"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>Verified</span>' : ''}
+      </div>
+      <div class="req-meta">${E(r.listing_title)}</div>
+    </div>
+
+    <span class="rate-tag">${E(ApaAgent.rateLabel(r.commission_pct, r.commission_flat))}</span>
+
+    <div class="row-stats">
+      <div>
+        <div class="rs-v">${r.bookings_driven || 0}</div>
+        <div class="rs-l">Bookings</div>
+      </div>
+      <div>
+        <div class="rs-v earn">${MONEY(r.commission_owed)}</div>
+        <div class="rs-l">You owe</div>
+      </div>
+    </div>
+
+    <div class="acts" style="flex:none;">
+      <button class="btn btn-ghost btn-sm" onclick="flip(${r.partnership_id},'${paused ? 'approved' : 'paused'}')">
+        ${paused ? 'Resume' : 'Pause'}
+      </button>
+      <button class="btn btn-danger btn-sm" onclick="revoke(${r.partnership_id},'${E(r.agent_name).replace(/'/g, "\\'")}')">End</button>
+    </div>
+  </div>`;
+}
+
+async function flip(id, state) {
+  try {
+    await ApaAgent.setState(id, state);
+    toast(state === 'paused'
+      ? 'Paused. Their existing referrals still count.'
+      : 'Resumed. Their link works again.');
+    await load();
+  } catch (e) { toast(e.message, true); }
+}
+
+async function revoke(id, name) {
+  if (!confirm(
+    'End your partnership with ' + name + '?\n\n' +
+    'Their link stops attributing new bookings immediately.\n\n' +
+    'Guests they already sent still count — you agreed to that when they sent them.'
+  )) return;
+  try {
+    await ApaAgent.setState(id, 'revoked');
+    toast('Partnership ended.');
+    await load();
+  } catch (e) { toast(e.message, true); }
+}
+
+/* ── archived ── */
+function archivedRow(r) {
+  return `<div class="row" style="opacity:.72;">
+    <div class="av" style="width:40px;height:40px;font-size:15px;border-radius:12px;background:var(--glass-3);color:var(--ink-faint);">${E(initials(r.agent_name))}</div>
+    <div class="row-id">
+      <div class="rn" style="font-size:14.5px;">${E(r.agent_name)}</div>
+      <div class="req-meta">${E(r.listing_title)} · ${r.status === 'declined' ? 'Declined' : 'Ended'} ${r.responded_at ? ago(r.responded_at) : ''}</div>
+    </div>
+    ${r.bookings_driven > 0 ? `<div class="row-stats"><div>
+      <div class="rs-v earn">${MONEY(r.commission_owed)}</div>
+      <div class="rs-l">Earned before</div>
+    </div></div>` : ''}
+  </div>`;
+}
+
+/* ── report ── */
+function openRep(agentId, partnershipId, name) {
+  repCtx = { agentId, partnershipId, name };
+  repReason = 'spam';
+  document.querySelectorAll('#rep-opts .opt').forEach((o, i) => o.classList.toggle('on', i === 0));
+  document.getElementById('rep-detail').value = '';
+  document.getElementById('rep-title').textContent = 'Report ' + name;
+  document.getElementById('rep-veil').classList.add('on');
+}
+function closeRep() { document.getElementById('rep-veil').classList.remove('on'); repCtx = null; }
+function pickReason(el) {
+  document.querySelectorAll('#rep-opts .opt').forEach(o => o.classList.remove('on'));
+  el.classList.add('on');
+  repReason = el.dataset.r;
+}
+async function doReport() {
+  if (!repCtx) return;
+  const btn = document.getElementById('rep-go'); btn.disabled = true;
+  try {
+    const r = await ApaAgent.report(repCtx.agentId, repReason,
+      document.getElementById('rep-detail').value.trim(), repCtx.partnershipId);
+    closeRep();
+    toast(r.agent_suspended
+      ? 'Reported. This agent is now suspended across Apatmento.'
+      : 'Reported and declined. Thank you — this protects other hosts too.');
+    await load();
+  } catch (e) { toast(e.message, true); }
+  btn.disabled = false;
+}
+
+document.getElementById('rep-veil').addEventListener('click', (e) => {
+  if (e.target.id === 'rep-veil') closeRep();
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeRep(); });
+</script>
+<link rel="stylesheet" href="/brand.css"/>
+</body>
+</html>
