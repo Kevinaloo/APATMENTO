@@ -1579,5 +1579,82 @@ function hideAddSheet(){ document.getElementById('add-scrim').classList.remove('
 <!-- Admin surface removed: apa-admin-guard.js redirects operators to the console. -->
 <script src="/brand.js" defer></script>
   <script src="/apa-signal.js" defer></script>
+
+<!-- ── SPOTIFY VIBE WIDGET — non-invasive, collapsed by default ── -->
+<div class="spotify-vibe" id="spotify-vibe">
+  <div style="display:flex;align-items:center;">
+    <button class="spotify-vibe-toggle" onclick="toggleSpotify()" aria-label="Nairobi Vibes playlist" title="Nairobi Vibes 🎵">
+      <svg viewBox="0 0 24 24" fill="#1DB954"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+      <div class="sp-eq">
+        <div class="sp-bar"></div>
+        <div class="sp-bar"></div>
+        <div class="sp-bar"></div>
+      </div>
+    </button>
+    <div class="spotify-vibe-head" id="spotify-vibe-head" style="display:none;flex:1;">
+      <span class="spotify-vibe-head-label">Nairobi Vibes 🎵</span>
+      <button class="spotify-vibe-close" onclick="toggleSpotify()">×</button>
+    </div>
+  </div>
+  <div class="spotify-vibe-body">
+    <div class="sp-playlist" id="sp-playlist">
+      <!-- Tracks injected by JS -->
+    </div>
+    <a href="https://open.spotify.com/playlist/37i9dQZEVXbLn7RkE6gxJo" target="_blank" rel="noopener" class="sp-open-spotify">
+      Open full playlist on Spotify ↗
+    </a>
+  </div>
+</div>
+
+<script>
+// ── Spotify Nairobi Vibes widget ──
+// Curated tracks reflecting Nairobi's music culture
+// Links go directly to Spotify for the full experience
+const SP_TRACKS = [
+  {name:'Jamhuri', artist:'Sauti Sol', art:'https://i.scdn.co/image/ab67616d00001e02c0b7c28f5b1d1dd6c0c79f19', url:'https://open.spotify.com/track/5yRWNGqGTlV0D2P1wME1fS'},
+  {name:'Bebi Bebi', artist:'Sauti Sol ft. Wizkid', art:'https://i.scdn.co/image/ab67616d00001e02a9c22a9b3e9fc5e1a6a4d3d8', url:'https://open.spotify.com/track/2HsL2R1GcGQMqJLxLqiXXc'},
+  {name:'Wamlambez', artist:'Sailors Gang', art:'https://i.scdn.co/image/ab67616d00001e027f6ed0e9d8e1a1b7d3d6c8d9', url:'https://open.spotify.com/playlist/37i9dQZEVXbLn7RkE6gxJo'},
+  {name:'Dunia Ina Mambo', artist:'Timmy Timmy', art:'https://i.scdn.co/image/ab67616d00001e023c4b2e9c5e7a1c2b3d4e5f6a', url:'https://open.spotify.com/playlist/37i9dQZEVXbLn7RkE6gxJo'},
+  {name:'Sawa Sawa', artist:'Bien & Xenia Manasseh', art:'https://i.scdn.co/image/ab67616d00001e021a2b3c4d5e6f7a8b9c0d1e2f', url:'https://open.spotify.com/playlist/37i9dQZEVXbLn7RkE6gxJo'},
+];
+
+let _spOpen = false;
+
+function toggleSpotify() {
+  _spOpen = !_spOpen;
+  const el = document.getElementById('spotify-vibe');
+  const head = document.getElementById('spotify-vibe-head');
+  if (_spOpen) {
+    el.classList.add('open');
+    head.style.display = 'flex';
+    renderSpotifyTracks();
+    // Remember preference for this session
+    try { sessionStorage.setItem('sp_open', '1'); } catch(e) {}
+  } else {
+    el.classList.remove('open');
+    head.style.display = 'none';
+    try { sessionStorage.removeItem('sp_open'); } catch(e) {}
+  }
+}
+
+function renderSpotifyTracks() {
+  const container = document.getElementById('sp-playlist');
+  if (!container || container.childElementCount > 0) return;
+  container.innerHTML = SP_TRACKS.map(t => `
+    <a class="sp-track" href="${t.url}" target="_blank" rel="noopener" aria-label="${t.name} by ${t.artist}">
+      <img class="sp-track-art" src="${t.art}" alt="" loading="lazy" decoding="async"
+        onerror="this.style.background='#1DB95444';this.removeAttribute('src')"/>
+      <div class="sp-track-info">
+        <div class="sp-track-name">${t.name}</div>
+        <div class="sp-track-artist">${t.artist}</div>
+      </div>
+      <svg class="sp-track-play" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+    </a>`).join('');
+}
+
+// Don't auto-open - only on explicit click
+// (non-invasive: user must opt in)
+</script>
+
 </body>
 </html>
