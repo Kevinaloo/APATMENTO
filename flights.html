@@ -400,9 +400,66 @@ html.via-dash #tx{display:none!important;animation:none!important;}
   <div id="kiwi-search-widget" style="margin-bottom:18px;">
     <script async src="https://tpwidg.com/content?currency=usd&trs=544145&shmarker=744334.Flights_page&locale=en&default_origin=NBO&stops=any&show_hotels=false&powered_by=false&border_radius=12&plain=true&color_button=%237B2FF7&color_button_text=%23ffffff&promo_id=3414&campaign_id=111" charset="utf-8"></script>
   </div>
+
 </div>
 
 <div style="max-width:1180px;margin:0 auto;padding:0 26px 0;"><div data-showcase="ticker"></div></div>
+
+<!-- ═══ LIVE FLIGHTS CONTENT ═══════════════════════════════════════ -->
+<div style="max-width:1180px;margin:0 auto;padding:28px 26px 0;">
+
+  <!-- AIRLINE PARTNER TABS -->
+  <div style="display:flex;gap:10px;margin-bottom:24px;flex-wrap:wrap;">
+    <button onclick="showAirline('tk')" id="btn-tk" style="display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:100px;font-family:var(--font-body);font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid #C70D3A;background:#C70D3A;color:#fff;transition:all .2s;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21 4 19 2c-2-2-4-2-5.5-.5L10 5 1.8 6.2l5 5-3 3L7 17l8-4 2.8 6.2z"/></svg>
+      Turkish Airlines
+    </button>
+    <button onclick="showAirline('fr')" id="btn-fr" style="display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:100px;font-family:var(--font-body);font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid var(--line-2);background:rgba(255,255,255,.8);color:var(--ink-soft);transition:all .2s;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="#073590"><circle cx="12" cy="12" r="10"/></svg>
+      Ryanair
+    </button>
+    <button onclick="showAirline('all')" id="btn-all" style="display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:100px;font-family:var(--font-body);font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid var(--line-2);background:rgba(255,255,255,.8);color:var(--ink-soft);transition:all .2s;">
+      🌍 All destinations
+    </button>
+  </div>
+
+  <!-- TURKISH AIRLINES FROM NBO -->
+  <div id="panel-tk">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+      <div>
+        <div style="font-family:var(--font-display);font-size:20px;font-weight:500;margin-bottom:3px;">Turkish Airlines from Nairobi</div>
+        <div style="font-size:12px;color:var(--ink-faint);">Direct & connecting routes via Istanbul (IST) hub</div>
+      </div>
+      <a href="https://www.turkishairlines.com/en-ke/flights/from/nairobi/" target="_blank" rel="noopener"
+         style="font-size:12px;font-weight:600;color:#C70D3A;text-decoration:none;display:flex;align-items:center;gap:4px;">
+        Book on TK ↗
+      </a>
+    </div>
+    <div class="dest-grid" id="tk-grid"></div>
+  </div>
+
+  <!-- RYANAIR CHEAPEST -->
+  <div id="panel-fr" style="display:none;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+      <div>
+        <div style="font-family:var(--font-display);font-size:20px;font-weight:500;margin-bottom:3px;">Cheapest Ryanair Flights — August 2026</div>
+        <div style="font-size:12px;color:var(--ink-faint);">From UK airports · One-way fares · Click to book on Ryanair</div>
+      </div>
+      <a href="https://www.ryanair.com/gb/en/cheap-flights" target="_blank" rel="noopener"
+         style="font-size:12px;font-weight:600;color:#073590;text-decoration:none;display:flex;align-items:center;gap:4px;">
+        All Ryanair deals ↗
+      </a>
+    </div>
+    <div class="dest-grid" id="fr-grid"></div>
+  </div>
+
+  <!-- ALL DESTINATIONS -->
+  <div id="panel-all" style="display:none;">
+    <div style="font-family:var(--font-display);font-size:20px;font-weight:500;margin-bottom:18px;">Popular destinations from Nairobi</div>
+    <div class="dest-grid" id="all-grid"></div>
+  </div>
+
+</div>
 
 <div style="max-width:1180px;margin:0 auto;padding:20px 26px 0;"><div data-showcase="video"></div></div>
 <div class="toast" id="toast"></div>
@@ -452,6 +509,85 @@ function showToast(m,d=3200){const t=document.getElementById('toast');if(!t)retu
     .catch(() => render(FALLBACK_RATE, false));
 })();
 
+// ── Turkish Airlines routes from NBO ──
+const TK_ROUTES = [
+  {dest:'Istanbul',country:'Turkey',code:'IST',price:'From $350',airline:'Turkish Airlines',img:'https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?w=500&q=80&fit=crop',url:'https://www.turkishairlines.com/en-ke/flights/nairobi-istanbul/',color:'#C70D3A'},
+  {dest:'Amsterdam',country:'Netherlands',code:'AMS',price:'Promotion on',airline:'Turkish Airlines',img:'https://images.unsplash.com/photo-1534351590666-13e3e96b5017?w=500&q=80&fit=crop',url:'https://www.turkishairlines.com/en-ke/flights/',color:'#C70D3A'},
+  {dest:'Paris',country:'France',code:'CDG',price:'Promotion on',airline:'Turkish Airlines',img:'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=500&q=80&fit=crop',url:'https://www.turkishairlines.com/en-ke/flights/',color:'#C70D3A'},
+  {dest:'London',country:'United Kingdom',code:'LHR',price:'From $520',airline:'Turkish Airlines',img:'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=500&q=80&fit=crop',url:'https://www.turkishairlines.com/en-ke/flights/',color:'#C70D3A'},
+  {dest:'New York',country:'United States',code:'JFK',price:'From $750',airline:'Turkish Airlines',img:'https://images.unsplash.com/photo-1546436836-07a91091f160?w=500&q=80&fit=crop',url:'https://www.turkishairlines.com/en-ke/flights/',color:'#C70D3A'},
+  {dest:'Dubai',country:'UAE',code:'DXB',price:'From $280',airline:'Turkish Airlines',img:'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=500&q=80&fit=crop',url:'https://www.turkishairlines.com/en-ke/flights/',color:'#C70D3A'},
+  {dest:'Mumbai',country:'India',code:'BOM',price:'From $320',airline:'Turkish Airlines',img:'https://images.unsplash.com/photo-1529253355930-ddbe423a2ac7?w=500&q=80&fit=crop',url:'https://www.turkishairlines.com/en-ke/flights/',color:'#C70D3A'},
+  {dest:'Bangkok',country:'Thailand',code:'BKK',price:'From $480',airline:'Turkish Airlines',img:'https://images.unsplash.com/photo-1508009603885-50cf7c8dd0d5?w=500&q=80&fit=crop',url:'https://www.turkishairlines.com/en-ke/flights/',color:'#C70D3A'},
+];
+
+// ── Ryanair cheapest fares (live, August 2026) ──
+const FR_ROUTES = [
+  {dest:'Kraków',country:'Poland',code:'KRK',price:'£20.99',airline:'Ryanair',from:'Aberdeen',date:'Aug 2026',img:'https://images.unsplash.com/photo-1515010009760-b1f3c0bd5dfd?w=500&q=80&fit=crop',url:'https://www.ryanair.com/gb/en/cheap-flights-to-krakow.html',color:'#073590'},
+  {dest:'Alicante',country:'Spain',code:'ALC',price:'£21.99',airline:'Ryanair',from:'Aberdeen',date:'Aug 2026',img:'https://images.unsplash.com/photo-1562883676-8c7feb83f09d?w=500&q=80&fit=crop',url:'https://www.ryanair.com/gb/en/cheap-flights-to-alicante.html',color:'#073590'},
+  {dest:'Faro',country:'Portugal',code:'FAO',price:'£21.99',airline:'Ryanair',from:'Aberdeen',date:'Aug 2026',img:'https://images.unsplash.com/photo-1555881400-74d7acaacd8b?w=500&q=80&fit=crop',url:'https://www.ryanair.com/gb/en/cheap-flights-to-faro.html',color:'#073590'},
+  {dest:'Málaga',country:'Spain',code:'AGP',price:'£21.99',airline:'Ryanair',from:'Aberdeen',date:'Aug 2026',img:'https://images.unsplash.com/photo-1571154765049-6be5a60d0c09?w=500&q=80&fit=crop',url:'https://www.ryanair.com/gb/en/cheap-flights-to-malaga.html',color:'#073590'},
+  {dest:'Alicante',country:'Spain',code:'ALC',price:'£21.99',airline:'Ryanair',from:'Belfast',date:'Aug 2026',img:'https://images.unsplash.com/photo-1562883676-8c7feb83f09d?w=500&q=80&fit=crop',url:'https://www.ryanair.com/gb/en/cheap-flights-to-alicante.html',color:'#073590'},
+  {dest:'Málaga',country:'Spain',code:'AGP',price:'£24.81',airline:'Ryanair',from:'Belfast',date:'Aug 2026',img:'https://images.unsplash.com/photo-1571154765049-6be5a60d0c09?w=500&q=80&fit=crop',url:'https://www.ryanair.com/gb/en/cheap-flights-to-malaga.html',color:'#073590'},
+  {dest:'Bergamo',country:'Italy',code:'BGY',price:'£39.55',airline:'Ryanair',from:'Belfast',date:'Aug 2026',img:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=500&q=80&fit=crop',url:'https://www.ryanair.com/gb/en/cheap-flights-to-milan.html',color:'#073590'},
+  {dest:'Lanzarote',country:'Spain',code:'ACE',price:'£30.19',airline:'Ryanair',from:'Belfast',date:'Aug 2026',img:'https://images.unsplash.com/photo-1525864768000-90f39eb55c09?w=500&q=80&fit=crop',url:'https://www.ryanair.com/gb/en/cheap-flights-to-lanzarote.html',color:'#073590'},
+];
+
+// ── All popular routes from Nairobi ──
+const ALL_ROUTES = [
+  {dest:'Mombasa',country:'Kenya',code:'MBA',price:'From KES 4,500',airline:'Domestic',img:'https://images.unsplash.com/photo-1504150558240-0b4fd8946624?w=500&q=80&fit=crop',url:'https://tpwidg.com/content?currency=usd&trs=544145&shmarker=744334.Flights_page&locale=en&default_origin=NBO',color:'#6D28FF'},
+  {dest:'Zanzibar',country:'Tanzania',code:'ZNZ',price:'From $89',airline:'Regional',img:'https://images.unsplash.com/photo-1531259922636-ed174e5da7c6?w=500&q=80&fit=crop',url:'https://tpwidg.com/content?currency=usd&trs=544145&shmarker=744334.Flights_page&locale=en&default_origin=NBO',color:'#6D28FF'},
+  {dest:'Kigali',country:'Rwanda',code:'KGL',price:'From $120',airline:'Regional',img:'https://images.unsplash.com/photo-1601231027740-7c4c2e8e9a02?w=500&q=80&fit=crop',url:'https://tpwidg.com/content?currency=usd&trs=544145&shmarker=744334.Flights_page&locale=en&default_origin=NBO',color:'#6D28FF'},
+  {dest:'Cape Town',country:'South Africa',code:'CPT',price:'From $280',airline:'Various',img:'https://images.unsplash.com/photo-1580060839134-75a5edca2e99?w=500&q=80&fit=crop',url:'https://tpwidg.com/content?currency=usd&trs=544145&shmarker=744334.Flights_page&locale=en&default_origin=NBO',color:'#6D28FF'},
+  {dest:'Dubai',country:'UAE',code:'DXB',price:'From $280',airline:'Various',img:'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=500&q=80&fit=crop',url:'https://tpwidg.com/content?currency=usd&trs=544145&shmarker=744334.Flights_page&locale=en&default_origin=NBO',color:'#6D28FF'},
+  {dest:'London',country:'United Kingdom',code:'LHR',price:'From $520',airline:'Various',img:'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=500&q=80&fit=crop',url:'https://tpwidg.com/content?currency=usd&trs=544145&shmarker=744334.Flights_page&locale=en&default_origin=NBO',color:'#6D28FF'},
+];
+
+function destCardHTML(r) {
+  const fromLabel = r.from ? `From ${r.from}` : `NBO → ${r.code}`;
+  const dateLabel = r.date || '';
+  return `
+  <a class="dest-card" href="${r.url}" target="_blank" rel="noopener" aria-label="${r.dest}, ${r.country}">
+    <div class="dest-card-img">
+      <img src="${r.img}" alt="${r.dest}" loading="lazy" decoding="async" onerror="this.parentElement.style.background='linear-gradient(135deg,#6D28FF,#4361FF)'"/>
+      <div class="dest-card-airline" style="background:${r.color};">${r.airline}</div>
+    </div>
+    <div class="dest-card-body">
+      <div class="dest-card-route">${fromLabel}${dateLabel ? ' · ' + dateLabel : ''}</div>
+      <div class="dest-card-dest">${r.dest}, ${r.country}</div>
+      <div class="dest-card-foot">
+        <div class="dest-card-price">${r.price} <small>one-way</small></div>
+        <div class="dest-card-go">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M7 7h10v10"/></svg>
+        </div>
+      </div>
+    </div>
+  </a>`;
+}
+
+function showAirline(key) {
+  ['tk','fr','all'].forEach(k => {
+    document.getElementById('panel-' + k).style.display = k === key ? '' : 'none';
+    const btn = document.getElementById('btn-' + k);
+    if (btn) {
+      if (k === key) {
+        btn.style.background = k === 'tk' ? '#C70D3A' : k === 'fr' ? '#073590' : 'var(--theme-grad)';
+        btn.style.color = '#fff';
+        btn.style.borderColor = k === 'tk' ? '#C70D3A' : k === 'fr' ? '#073590' : 'transparent';
+      } else {
+        btn.style.background = 'rgba(255,255,255,.8)';
+        btn.style.color = 'var(--ink-soft)';
+        btn.style.borderColor = 'var(--line-2)';
+      }
+    }
+  });
+}
+
+// Render all grids
+document.getElementById('tk-grid').innerHTML = TK_ROUTES.map(destCardHTML).join('');
+document.getElementById('fr-grid').innerHTML = FR_ROUTES.map(destCardHTML).join('');
+document.getElementById('all-grid').innerHTML = ALL_ROUTES.map(destCardHTML).join('');
+
 function dismissTx(){
   const el=document.getElementById('tx');
   if(!el)return;
@@ -477,3 +613,4 @@ setTimeout(dismissTx,3500);
 <script src="/apa-ask.js" defer></script>
 </body>
 </html>
+
