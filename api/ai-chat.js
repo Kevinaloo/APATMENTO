@@ -10,11 +10,11 @@ export const config = { maxDuration: 30 };
 const GROQ_KEY = process.env.GROQ_API_KEY;
 // Note: Set GROQ_API_KEY in Vercel Dashboard → Project Settings → Environment Variables
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
-// Model waterfall: start fast, fall back if rate limited
+// Model waterfall: current Groq models (Llama chat models deprecated Jun 2026)
 const MODELS = [
-  'llama-3.1-8b-instant',       // 1M TPD free — primary (fast, great personality)
-  'gemma2-9b-it',               // 1M TPD — fallback 1
-  'llama-3.3-70b-versatile',    // 100K TPD — fallback 2 (smartest but limited)
+  'openai/gpt-oss-120b',        // primary — smart, fast, current
+  'openai/gpt-oss-20b',         // fallback 1 — faster, cheaper
+  'llama-3.3-70b-versatile',    // fallback 2 — legacy, still up on some tiers
 ];
 
 

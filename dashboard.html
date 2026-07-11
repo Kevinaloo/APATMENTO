@@ -240,14 +240,14 @@ body{overflow-x:hidden;}
 .svc-hero-arrow{margin-top:10px;}
 @media(max-width:640px){
   .svc-featured-row{gap:10px;}
-  .svc-hero{min-height:auto;padding:14px 13px;border-radius:16px;}
-  .svc-hero-inner{flex-direction:column;align-items:flex-start;gap:10px;}
-  .svc-hero-icon{width:48px!important;height:48px!important;border-radius:12px!important;}
-  .svc-hero-icon svg{width:22px;height:22px;}
+  .svc-hero{min-height:auto;padding:16px 14px;border-radius:16px;}
+  .svc-hero-inner{flex-direction:column;align-items:flex-start;gap:12px;}
+  .svc-hero-icon{width:72px!important;height:72px!important;border-radius:16px!important;}
+  .svc-hero-icon svg{width:40px;height:40px;}
   .svc-hero-icon img{width:100%;height:100%;object-fit:contain;}
   .svc-hero-text{gap:4px;width:100%;}
-  .svc-hero-name{font-size:16px;line-height:1.1;}
-  .svc-hero-sub{font-size:11px;line-height:1.4;}
+  .svc-hero-name{font-size:17px;line-height:1.1;}
+  .svc-hero-sub{font-size:11.5px;line-height:1.4;}
   .svc-hero-badge{font-size:9px;padding:2px 7px;margin-top:1px;}
   .svc-hero-arrow{margin-top:6px;}
 }
@@ -979,15 +979,49 @@ const SCENES = {
 SCENES.stays && (SCENES.apartments = SCENES.stays);
 
 function navigateToService(key){
-  const cfg = SVC[key]; if(!cfg) return;
-  const overlay = document.getElementById('svc-transition');
-  document.getElementById('svct-bg').style.background = cfg.bg;
-  document.getElementById('svct-name').textContent = cfg.name;
-  document.getElementById('svct-sub').textContent = cfg.sub;
-  document.getElementById('svct-scene').innerHTML = SCENES[key] || '';
-  overlay.classList.add('active');
-  setTimeout(()=>{ window.location.href = cfg.dest + '?back=1'; }, 1250);
+  const cfg = SVC[key];
+  // Unknown key should still do something sensible rather than dying
+  // silently — fall back to a direct page guess so a click always lands.
+  if(!cfg){
+    const guess = (key||'').replace(/\.html$/,'');
+    if(guess) window.location.href = guess + '.html?back=1';
+    return;
+  }
+
+  // Guaranteed redirect: fire it even if the transition animation
+  // elements are missing or a style step throws. The animation is a
+  // nicety; the navigation is the contract.
+  const go = ()=>{ window.location.href = cfg.dest + '?back=1'; };
+  let navigated = false;
+  const safeGo = ()=>{ if(navigated) return; navigated = true; go(); };
+
+  try {
+    const overlay = document.getElementById('svc-transition');
+    if(overlay){
+      const bg = document.getElementById('svct-bg');
+      const nm = document.getElementById('svct-name');
+      const sb = document.getElementById('svct-sub');
+      const sc = document.getElementById('svct-scene');
+      if(bg) bg.style.background = cfg.bg;
+      if(nm) nm.textContent = cfg.name;
+      if(sb) sb.textContent = cfg.sub;
+      if(sc) sc.innerHTML = SCENES[key] || '';
+      overlay.classList.add('active');
+      setTimeout(safeGo, 1250);
+      // Hard safety net: if the timer is throttled (backgrounded tab)
+      // or anything stalls, still navigate.
+      setTimeout(safeGo, 2000);
+    } else {
+      safeGo();
+    }
+  } catch(e){
+    // Any failure in the animation path must not block navigation.
+    safeGo();
+  }
 }
+// Ensure inline onclick handlers in dynamically-injected carousel cards
+// can always reach it, regardless of script evaluation scope.
+window.navigateToService = navigateToService;
 
 /* ── TIME GREETING ── */
 function getGreeting(){

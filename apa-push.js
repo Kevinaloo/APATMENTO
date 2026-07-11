@@ -256,9 +256,21 @@
 .apa-gate-btn{width:100%;padding:15px;border-radius:100px;border:none;background:linear-gradient(135deg,#6D28FF,#4F6DFF);color:#fff;font-weight:600;font-size:15px;cursor:pointer;transition:transform .2s,box-shadow .2s;}
 .apa-gate-btn:hover{transform:translateY(-2px);box-shadow:0 14px 34px rgba(109,40,255,.34);}
 .apa-gate-btn:disabled{opacity:.6;cursor:default;transform:none;}
+.apa-gate-btn2{width:100%;padding:13px;margin-top:10px;border-radius:100px;border:1px solid #E4E4EE;background:#fff;color:#474A66;font-weight:600;font-size:14px;cursor:pointer;transition:background .2s;}
+.apa-gate-btn2:hover{background:#F4F4FA;}
 .apa-gate-note{margin-top:16px;font-size:12px;color:#8B8EAC;line-height:1.55;}
+.apa-gate-x{position:absolute;top:14px;right:14px;width:34px;height:34px;border-radius:50%;border:none;background:rgba(139,142,172,.12);color:#474A66;font-size:20px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s;}
+.apa-gate-x:hover{background:rgba(139,142,172,.22);}
+.apa-gate-card{position:relative;}
 `;
     (document.head || document.documentElement).appendChild(s);
+  }
+
+  function dismissGate(g) {
+    if (!g) return;
+    try { sessionStorage.setItem('apa_gate_dismissed', '1'); } catch (e) {}
+    g.classList.remove('show');
+    setTimeout(function () { if (g && g.parentNode) g.remove(); }, 400);
   }
 
   function showGate(denied) {
@@ -270,10 +282,12 @@
     g.id = 'apa-gate';
     g.innerHTML =
       '<div class="apa-gate-card">' +
+      '<button class="apa-gate-x" id="apa-gate-x" aria-label="Close">&times;</button>' +
       '<div class="apa-gate-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">' + ICONS.general + '</svg></div>' +
       '<div class="apa-gate-h"></div>' +
       '<div class="apa-gate-p"></div>' +
       (denied ? '' : '<button class="apa-gate-btn" id="apa-gate-btn">Turn on notifications</button>') +
+      '<button class="apa-gate-btn2" id="apa-gate-later">' + (denied ? 'Got it' : 'Maybe later') + '</button>' +
       '<div class="apa-gate-note"></div>' +
       '</div>';
 
@@ -281,15 +295,25 @@
       ? 'Notifications are blocked' : 'Stay in the loop';
 
     g.querySelector('.apa-gate-p').textContent = denied
-      ? 'Apatmento needs notifications to tell you about bookings, payments and messages. Your browser has blocked them for this site.'
-      : 'Apatmento sends you booking confirmations, payment receipts and host messages the moment they happen. This is required to use the app.';
+      ? 'Turn on notifications to hear about bookings, payments and messages the moment they happen. You can still use Apatmento without them.'
+      : 'Apatmento can send you booking confirmations, payment receipts and host messages the moment they happen.';
 
     g.querySelector('.apa-gate-note').textContent = denied
-      ? 'Tap the lock icon in your address bar → Site settings → Notifications → Allow, then reload this page.'
+      ? 'To enable later: tap the lock icon in your address bar \u2192 Site settings \u2192 Notifications \u2192 Allow, then reload.'
       : 'You can change this anytime in your browser settings.';
 
     document.body.appendChild(g);
     requestAnimationFrame(function () { g.classList.add('show'); });
+
+    // Dismiss paths — the gate must NEVER trap the user.
+    var xBtn = g.querySelector('#apa-gate-x');
+    if (xBtn) xBtn.addEventListener('click', function () { dismissGate(g); });
+    var later = g.querySelector('#apa-gate-later');
+    if (later) later.addEventListener('click', function () { dismissGate(g); });
+    g.addEventListener('click', function (e) { if (e.target === g) dismissGate(g); });
+    document.addEventListener('keydown', function onEsc(e) {
+      if (e.key === 'Escape') { dismissGate(g); document.removeEventListener('keydown', onEsc); }
+    });
 
     var btn = g.querySelector('#apa-gate-btn');
     if (btn) btn.addEventListener('click', async function () {
@@ -297,12 +321,11 @@
       var uid = (global.ApaSession && ApaSession.get && ApaSession.get().user || {}).id;
       var ok = await ask(uid);
       if (ok) {
-        g.classList.remove('show');
-        setTimeout(function () { g.remove(); }, 400);
+        dismissGate(g);
         toast({ title: 'Notifications on', body: 'You\u2019re all set. We\u2019ll keep you posted.', kind: 'general' });
       } else {
-        // Denied at the OS level. The prompt will never appear again,
-        // so swap to instructions rather than leaving a dead button.
+        // Denied at the OS level. Swap to instructions rather than
+        // leaving a dead button — still fully dismissible.
         g.remove();
         showGate(true);
       }
@@ -314,7 +337,12 @@
     if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
     var p = Notification.permission;
     if (p === 'granted') return;
-    if (p === 'denied') { showGate(true); return; }
+    // If the user already dismissed the gate this session, don't nag.
+    try { if (sessionStorage.getItem('apa_gate_dismissed') === '1') return; } catch (e) {}
+    // 'denied' means the browser has locked us out — showing a blocking
+    // modal there just traps the user, so we skip the auto-prompt entirely
+    // and only invite when the browser can still grant (default state).
+    if (p === 'denied') return;
     showGate(false);
   }
 

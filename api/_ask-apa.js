@@ -32,7 +32,15 @@
 import { select, cors } from './_db.js';
 
 const GROQ_API   = 'https://api.groq.com/openai/v1/chat/completions';
-const GROQ_MODEL = 'llama-3.3-70b-versatile';   // Groq's fastest capable model
+// Model waterfall — try in order, fall through on decommission/rate-limit.
+// Groq deprecated the Llama chat models (Jun 2026); GPT-OSS is the
+// current stable, free-tier-friendly line. Keeping a list means a
+// single future deprecation can never take the assistant fully down.
+const GROQ_MODELS = [
+  'openai/gpt-oss-120b',   // primary — smart, fast, current
+  'openai/gpt-oss-20b',    // fallback 1 — even faster, cheaper
+  'llama-3.3-70b-versatile', // fallback 2 — legacy, still up on some tiers
+];
 
 /* ── Rate limiter ──────────────────────────────────────────────
    Simple sliding window. Per cold-start; good enough for abuse
@@ -207,7 +215,6 @@ export default async function handler(req, res) {
   const sys = await systemPrompt(curPage);
 
   const payload = {
-    model: GROQ_MODEL,
     messages: [{ role: 'system', content: sys }, ...clean],
     max_tokens: 512,
     temperature: 0.6,
@@ -218,20 +225,39 @@ export default async function handler(req, res) {
   if (!GROQ_KEY) return res.status(503).json({ error: 'Assistant unavailable. GROQ_API_KEY not set.' });
 
   try {
-    const groq = await fetch(GROQ_API, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${GROQ_KEY}` },
-      body: JSON.stringify(payload),
-    });
+    let data = null, lastStatus = 0, lastErr = '';
 
-    if (!groq.ok) {
-      const err = await groq.text();
-      console.error('[ask-apa] Groq error:', groq.status, err.slice(0, 200));
-      return res.status(502).json({ error: 'Assistant temporarily unavailable. Please try again.' });
+    // Walk the model waterfall. A decommissioned model returns 400 with
+    // code "model_decommissioned"; a rate-limited one returns 429. In
+    // both cases we try the next model rather than failing outright.
+    for (const model of GROQ_MODELS) {
+      const groq = await fetch(GROQ_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${GROQ_KEY}` },
+        body: JSON.stringify({ ...payload, model }),
+      });
+
+      if (groq.ok) { data = await groq.json(); break; }
+
+      lastStatus = groq.status;
+      lastErr = (await groq.text()).slice(0, 300);
+      console.error(`[ask-apa] Groq ${model} error:`, groq.status, lastErr);
+
+      // 400 (decommissioned/bad model) and 429 (rate limit) → try next.
+      // Auth errors (401/403) won't be fixed by another model — stop.
+      if (groq.status === 401 || groq.status === 403) break;
     }
 
-    const data  = await groq.json();
-    let reply   = data.choices?.[0]?.message?.content || '';
+    if (!data) {
+      const authIssue = lastStatus === 401 || lastStatus === 403;
+      return res.status(502).json({
+        error: authIssue
+          ? 'Assistant unavailable — check the GROQ_API_KEY in Vercel.'
+          : 'Assistant temporarily unavailable. Please try again.',
+      });
+    }
+
+    let reply = data.choices?.[0]?.message?.content || '';
 
     /* ── Extract navigation directive ──────────────────────────────
        APA may append a directive like [[go:tours]] to actively move

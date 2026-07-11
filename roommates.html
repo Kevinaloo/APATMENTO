@@ -220,6 +220,31 @@ body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webk
 .sb-input::placeholder{color:var(--ink-faint);}
 
 html.via-dash #tx{display:none!important;animation:none!important;}
+
+/* ═══════════════════════════════════════════════════════════════
+   COMPACT ROOMMATE CARDS (mobile)
+   Tightens the tile so more rooms fit per screen.
+   ═══════════════════════════════════════════════════════════════ */
+@media(max-width:600px){
+  .grid{grid-template-columns:1fr;gap:12px;}
+  .card{display:flex;flex-direction:row;align-items:stretch;min-height:132px;}
+  .card-top{flex:0 0 118px;width:118px;height:auto;min-height:132px;}
+  .card-top svg{width:32px;height:32px;}
+  .badge{top:8px;left:8px;padding:3px 8px;font-size:9px;}
+  .card-save{top:8px;right:8px;width:28px;height:28px;font-size:12px;}
+  .card-body{flex:1;min-width:0;padding:10px 13px;display:flex;flex-direction:column;gap:2px;justify-content:center;}
+  .card-poster{margin-bottom:4px;}
+  .av{width:22px;height:22px;font-size:10px;}
+  .card-title{font-size:14px;margin-bottom:2px;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;}
+  .card-loc{margin-bottom:5px;font-size:11px;}
+  .card-tags{display:none;}
+  .card-stats{margin-bottom:7px;gap:4px;}
+  .stat{padding:4px 3px;}
+  .card-foot{margin-top:auto;}
+  .price-big{font-size:16px;}
+  .view-btn{padding:7px 13px;font-size:10.5px;}
+}
+
 </style>
 
   <!-- ═══ SW force-update: kills stale service workers immediately ═══ -->
