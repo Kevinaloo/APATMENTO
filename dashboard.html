@@ -1,6 +1,59 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<!-- ══ INTERSTITIAL · instant decision (must be first, runs before paint) ══
+     Decides synchronously — from a config snapshot cached last visit — whether
+     to cover the page with an opaque curtain, so a splash campaign never
+     flashes the landing page behind it. The engine (apa-interstitial.js,
+     loaded at the end of body) fills this curtain with the video/image and
+     dismisses it on a timer. If there's no cached campaign, nothing paints
+     and the site loads exactly as before. This can never trap the user:
+     the engine has hard failsafes, and if the engine never runs, a watchdog
+     below removes the curtain on its own. -->
+<style id="apa-splash-css">.apa-splash-lock{overflow:hidden !important;}</style>
+<script>
+(function(){
+  try{
+    var raw = localStorage.getItem('apa-splash-config');
+    if(!raw) return;
+    var c = JSON.parse(raw);
+    if(!c || c.active !== true) return;
+    if(c.type !== 'video' && c.type !== 'image') return;
+    if(typeof c.url !== 'string' || c.url.length < 8) return;
+
+    /* frequency cap — mirror of the engine's logic, kept tiny */
+    if(c.frequency !== 'always'){
+      var s = localStorage.getItem('apa-splash-seen');
+      if(s){ s = JSON.parse(s);
+        if(s && s.campaign === c.campaign){
+          if(c.frequency === 'daily'){ if(Date.now()-(s.ts||0) < 864e5) return; }
+          else return; /* once */
+        }
+      }
+    }
+
+    /* Paint the curtain now, before anything else renders. */
+    document.documentElement.classList.add('apa-splash-lock');
+    var d = document.createElement('div');
+    d.id = 'apa-splash-curtain';
+    d.style.cssText = 'position:fixed;inset:0;z-index:2147483000;background:#0A0A14;display:block;';
+    d.innerHTML = '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">'
+      + '<div style="width:34px;height:34px;border-radius:50%;border:2.5px solid rgba(255,255,255,.18);'
+      + 'border-top-color:rgba(255,255,255,.75);animation:apaSplashSpin .8s linear infinite;"></div></div>'
+      + '<style>@keyframes apaSplashSpin{to{transform:rotate(360deg)}}</style>';
+    (document.body || document.documentElement).appendChild(d);
+
+    /* WATCHDOG: if the engine hasn't taken over and dismissed within 8s
+       (e.g. its script failed to load), tear the curtain down ourselves.
+       The engine clears this the moment it starts a real media element. */
+    window.__apaSplashWatch = setTimeout(function(){
+      var el = document.getElementById('apa-splash-curtain');
+      if(el && el.parentNode){ el.parentNode.removeChild(el); }
+      document.documentElement.classList.remove('apa-splash-lock');
+    }, 8000);
+  }catch(e){ /* any failure ⇒ no curtain ⇒ site loads normally */ }
+})();
+</script>
 <meta charset="UTF-8"/>
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
   <meta http-equiv="Pragma" content="no-cache"/>
@@ -52,6 +105,7 @@
   
 <title>Dashboard — Apatmento</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/apa-interstitial.js"></script>
 <!-- Session core: the single source of truth for auth. Must load
      immediately after the Supabase lib and before any consumer. -->
 <script src="/apa-session.js"></script>
