@@ -754,7 +754,7 @@ img,video,svg{max-width:100%;}
 
       <!-- ── MORE SERVICES ── -->
       
-      <div data-rail="compact" data-autoplay="4200">
+      <div data-rail="compact" data-autoplay="2800">
       <div class="service-rail" data-rail-track aria-label="Explore services">
         <div class="svc" data-svc="flights" onclick="navigateToService('flights')"><img class="svc-ico" src="icon-flights.png" alt="Flights" style="width:100%;height:100%;object-fit:cover;"/><span class="svc-name">Flights</span></div>
         <div class="svc" data-svc="tours" onclick="navigateToService('tours')"><img class="svc-ico" src="icon-tours.png" alt="Tours" style="width:100%;height:100%;object-fit:cover;"/><span class="svc-name">Tours</span></div>
@@ -789,7 +789,7 @@ img,video,svg{max-width:100%;}
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
           </a>
         </div>
-        <div data-rail data-autoplay="4800">
+        <div data-rail data-autoplay="3000">
           <div class="prop-grid" id="stay-grid" data-rail-track aria-label="Stays"></div>
         </div>
       </div>
@@ -1297,7 +1297,7 @@ async function loadDashboardHero() {
     vid.addEventListener('ended',()=>{ cur=(cur+1)%pool.length; loadCamp(); });
     let gradTimer;
     vid.addEventListener('play',()=>clearTimeout(gradTimer));
-    function checkGrad(){ clearTimeout(gradTimer); if(!pool[cur].media_url){ gradTimer=setTimeout(()=>{ cur=(cur+1)%pool.length; loadCamp(); checkGrad(); },8000); } }
+    function checkGrad(){ clearTimeout(gradTimer); if(!pool[cur].media_url){ gradTimer=setTimeout(()=>{ cur=(cur+1)%pool.length; loadCamp(); checkGrad(); },5000); } }
     loadCamp();
     checkGrad();
 
@@ -1485,6 +1485,5 @@ function hideAddSheet(){ document.getElementById('add-scrim').classList.remove('
 <!-- Admin surface removed: apa-admin-guard.js redirects operators to the console. -->
 <script src="/brand.js" defer></script>
   <script src="/apa-signal.js" defer></script>
-<script src="/apa-ask.js" defer></script>
 </body>
 </html>

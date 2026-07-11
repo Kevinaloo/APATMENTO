@@ -223,7 +223,7 @@
       + 'View all <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
       + 'stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>'
       + '</button></div>'
-      + '<div data-rail data-autoplay="5200">'
+      + '<div data-rail data-autoplay="3200">'
       + '<div data-rail-track aria-label="' + esc(cat.title) + '">'
       + items.map(function (p) { return cardHTML(cat, p); }).join('')
       + '</div></div></section>';

@@ -49,10 +49,12 @@
 }
 @media (prefers-reduced-motion: reduce){*{animation-duration:.01ms !important;transition-duration:.01ms !important;}}
 html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:var(--ink);-webkit-font-smoothing:antialiased;overflow:hidden;}
+@media(max-width:880px){html,body{height:auto;min-height:100%;overflow:auto;}}
 
 /* ══════════ SPLIT LAYOUT ══════════ */
 .auth-wrap{display:grid;grid-template-columns:1.1fr 1fr;height:100vh;width:100vw;}
-@media(max-width:880px){.auth-wrap{grid-template-columns:1fr;}.brand-canvas{display:none;}}
+@media(max-width:880px){.auth-wrap{grid-template-columns:1fr;height:auto;min-height:100vh;}.brand-canvas{display:none;}}
+
 
 /* ══════════ LEFT: CINEMATIC BRAND CANVAS ══════════ */
 .brand-canvas{position:relative;overflow:hidden;background:#05060F;display:flex;flex-direction:column;justify-content:space-between;padding:56px;}
@@ -93,7 +95,8 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
 .bc-chip svg{width:14px;height:14px;color:var(--mint);}
 
 /* ══════════ RIGHT: GLASS AUTH PANEL ══════════ */
-.auth-panel{position:relative;background:var(--glass);display:flex;align-items:center;justify-content:center;padding:40px;overflow-y:auto;}
+.auth-panel{position:relative;background:var(--glass);display:flex;align-items:center;justify-content:center;padding:40px;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+@media(max-width:880px){.auth-panel{min-height:100vh;align-items:flex-start;padding:40px 20px 60px;}}
 .auth-panel-aurora{position:absolute;inset:0;z-index:0;overflow:hidden;opacity:.5;}
 .apa-blob{position:absolute;border-radius:50%;filter:blur(80px);}
 .apa-1{width:340px;height:340px;background:radial-gradient(circle,var(--lilac),transparent 70%);top:-10%;right:-10%;opacity:.4;}
@@ -269,16 +272,17 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
 @media(max-width:640px){
   .auth-wrap{grid-template-columns:1fr!important;}
   .brand-canvas{display:none!important;}
-  .auth-panel{padding:0!important;background:var(--glass)!important;}
-  .auth-panel-inner{padding:32px 20px 48px!important;}
+  .auth-panel{padding:0!important;background:var(--glass)!important;min-height:100vh!important;align-items:flex-start!important;justify-content:flex-start!important;}
+  .auth-panel > .auth-panel-aurora{display:none;}
+  .auth-card{max-width:100%!important;padding:32px 20px 60px!important;}
   .mobile-logo{display:block!important;margin-bottom:24px!important;}
-  .auth-card{max-width:100%!important;}
   .field-input{font-size:16px!important;padding:14px 15px!important;} /* prevents iOS zoom */
   .auth-tabs{width:100%!important;}
   .auth-tab{flex:1!important;text-align:center!important;font-size:14px!important;}
   .google-btn{font-size:14px!important;padding:14px!important;}
   .submit-btn{padding:15px!important;font-size:15px!important;border-radius:14px!important;}
   .divider-text{font-size:12px!important;}
+  .prog-sep{margin:24px 0 14px;}
 }
 
 /* ── Agent portal additions ── */
@@ -463,6 +467,95 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
           </div>
           <svg class="prog-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
         </button>
+
+        <!-- INFLUENCER / CREATOR PORTAL -->
+        <button class="prog-door" id="inf-door" aria-expanded="false" onclick="toggleInf()" style="margin-top:10px;border-color:rgba(255,107,44,.25);background:linear-gradient(135deg,rgba(255,107,44,.04),rgba(123,47,247,.04));">
+          <div class="prog-ico" style="background:linear-gradient(135deg,#FF6B2C,#7B2FF7);">✦</div>
+          <div class="prog-txt">
+            <div class="prog-title">Creator & Influencer</div>
+            <div class="prog-sub">Earn by sharing — post, earn commissions, unlock exclusive perks.</div>
+          </div>
+          <svg class="prog-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+
+        <div class="prog-body" id="inf-body">
+          <div class="prog-inner">
+            <div class="alert alert-error"   id="inf-err"></div>
+            <div class="alert alert-success" id="inf-ok"></div>
+
+            <div class="p-tabs">
+              <button class="p-tab active" id="inf-tab-login" onclick="infTab('login')">Log in</button>
+              <button class="p-tab"        id="inf-tab-apply" onclick="infTab('apply')">Join as creator</button>
+            </div>
+
+            <!-- ── INFLUENCER LOGIN ── -->
+            <div id="inf-login">
+              <div class="field">
+                <label class="field-label">Email address</label>
+                <input class="field-input" id="inf-login-email" type="email" placeholder="you@example.com" autocomplete="email"/>
+              </div>
+              <div class="field">
+                <label class="field-label">Password</label>
+                <input class="field-input" id="inf-login-pw" type="password" placeholder="Your password" autocomplete="current-password"/>
+              </div>
+              <button class="submit-btn" id="inf-login-btn" onclick="infLogin(event)" style="background:linear-gradient(135deg,#FF6B2C,#7B2FF7);">Sign in to creator portal</button>
+              <p class="p-note">New here? <strong>Join as creator</strong> — start earning from your first share.</p>
+            </div>
+
+            <!-- ── INFLUENCER SIGN UP ── -->
+            <div id="inf-apply" style="display:none;">
+              <div class="p-brief" style="background:linear-gradient(135deg,rgba(255,107,44,.06),rgba(123,47,247,.06));border:1px solid rgba(255,107,44,.15);">
+                <div class="p-brief-row"><span style="background:linear-gradient(135deg,#FF6B2C,#7B2FF7);">1</span> Sign up. Your creator account is live instantly.</div>
+                <div class="p-brief-row"><span style="background:linear-gradient(135deg,#FF6B2C,#7B2FF7);">2</span> Share your unique link to any Apatmento listing.</div>
+                <div class="p-brief-row"><span style="background:linear-gradient(135deg,#FF6B2C,#7B2FF7);">3</span> Earn commission every time someone books through your link.</div>
+                <div class="p-brief-row"><span style="background:linear-gradient(135deg,#FF6B2C,#7B2FF7);">4</span> Track clicks, earnings and payouts in your creator dashboard.</div>
+              </div>
+
+              <div class="field">
+                <label class="field-label">Full name</label>
+                <input class="field-input" id="inf-name" type="text" placeholder="Amara Otieno"/>
+              </div>
+              <div class="field">
+                <label class="field-label">Email address</label>
+                <input class="field-input" id="inf-email" type="email" placeholder="you@example.com" autocomplete="email"/>
+              </div>
+
+              <div class="field">
+                <label class="field-label">Your primary platform</label>
+                <div class="cm-grid" id="inf-cm-grid">
+                  <button class="cm-chip active" data-inf-cm="instagram" onclick="pickInfPlatform('instagram')"><span class="cm-emoji">📸</span><span class="cm-label">Instagram</span></button>
+                  <button class="cm-chip" data-inf-cm="tiktok"    onclick="pickInfPlatform('tiktok')"><span class="cm-emoji">🎵</span><span class="cm-label">TikTok</span></button>
+                  <button class="cm-chip" data-inf-cm="youtube"   onclick="pickInfPlatform('youtube')"><span class="cm-emoji">▶️</span><span class="cm-label">YouTube</span></button>
+                  <button class="cm-chip" data-inf-cm="other"     onclick="pickInfPlatform('other')"><span class="cm-emoji">🌐</span><span class="cm-label">Other</span></button>
+                </div>
+              </div>
+
+              <div class="field-row">
+                <div class="field">
+                  <label class="field-label">Your handle / channel</label>
+                  <input class="field-input" id="inf-handle" type="text" placeholder="@yourhandle"/>
+                </div>
+                <div class="field">
+                  <label class="field-label">Followers (approx.)</label>
+                  <input class="field-input" id="inf-followers" type="number" min="0" placeholder="12000"/>
+                </div>
+              </div>
+
+              <div class="field">
+                <label class="field-label">WhatsApp number</label>
+                <input class="field-input" id="inf-phone" type="tel" placeholder="+254 7XX XXX XXX"/>
+              </div>
+
+              <div class="field">
+                <label class="field-label">Create a password</label>
+                <input class="field-input" id="inf-pw" type="password" placeholder="At least 8 characters"/>
+              </div>
+
+              <button class="submit-btn" id="inf-apply-btn" onclick="infSignup(event)" style="background:linear-gradient(135deg,#FF6B2C,#7B2FF7);">Start earning as a creator</button>
+              <p class="p-note">By signing up you agree to our <a href="terms.html" target="_blank" style="color:#FF6B2C;">Creator Terms</a>. Payouts via M-Pesa, no threshold.</p>
+            </div>
+          </div>
+        </div>
 
         <div class="prog-body" id="prog-body">
           <div class="prog-inner">
@@ -1298,7 +1391,122 @@ async function progLogin(e) {
   if (p === 'agent' || p === 'programme') {
     document.addEventListener('DOMContentLoaded', () => setTimeout(toggleProg, 300));
   }
+  if (p === 'influencer' || p === 'creator') {
+    document.addEventListener('DOMContentLoaded', () => setTimeout(toggleInf, 300));
+  }
 })();
+
+/* ══════════════════════════════════════════════════════
+   INFLUENCER / CREATOR PORTAL
+══════════════════════════════════════════════════════ */
+let infPlatform = 'instagram';
+
+function toggleInf() {
+  const door = document.getElementById('inf-door');
+  const body = document.getElementById('inf-body');
+  const open = door.getAttribute('aria-expanded') === 'true';
+  door.setAttribute('aria-expanded', String(!open));
+  body.classList.toggle('open', !open);
+  if (!open) setTimeout(() => body.scrollIntoView({ behavior:'smooth', block:'nearest' }), 260);
+}
+
+function infTab(t) {
+  const applying = t === 'apply';
+  document.getElementById('inf-login').style.display = applying ? 'none' : 'block';
+  document.getElementById('inf-apply').style.display = applying ? 'block' : 'none';
+  document.getElementById('inf-tab-login').classList.toggle('active', !applying);
+  document.getElementById('inf-tab-apply').classList.toggle('active',  applying);
+  infClear();
+}
+
+function infClear() {
+  ['inf-err','inf-ok'].forEach(id => document.getElementById(id)?.classList.remove('show'));
+}
+function infErr(msg) {
+  const e = document.getElementById('inf-err');
+  e.textContent = msg; e.classList.add('show');
+  document.getElementById('inf-ok').classList.remove('show');
+}
+function infBusy(id, on) {
+  const b = document.getElementById(id);
+  b.classList.toggle('loading', on); b.disabled = on;
+}
+
+function pickInfPlatform(p) {
+  infPlatform = p;
+  document.querySelectorAll('#inf-cm-grid .cm-chip').forEach(b =>
+    b.classList.toggle('active', b.dataset.infCm === p));
+}
+
+async function infLogin(e) {
+  e.preventDefault(); infClear();
+  const email = document.getElementById('inf-login-email').value.trim();
+  const pw    = document.getElementById('inf-login-pw').value;
+  if (!email || !pw) return infErr('Email and password, please.');
+  infBusy('inf-login-btn', true);
+  const { data, error } = await sb.auth.signInWithPassword({ email, password: pw });
+  if (error) { infBusy('inf-login-btn', false); return infErr('Wrong email or password.'); }
+  // Check they have a creator flag
+  const { data: profile } = await sb.from('profiles').select('is_creator').eq('id', data.user.id).maybeSingle();
+  if (!profile?.is_creator) {
+    // Mark them as creator and continue - be welcoming
+    await sb.from('profiles').upsert({ id: data.user.id, is_creator: true }, { onConflict:'id' });
+  }
+  location.href = 'dashboard.html?uid=' + data.user.id + '&mode=creator';
+}
+
+async function infSignup(e) {
+  e.preventDefault(); infClear();
+  const full_name = document.getElementById('inf-name').value.trim();
+  const email     = document.getElementById('inf-email').value.trim();
+  const handle    = document.getElementById('inf-handle').value.trim();
+  const followers = document.getElementById('inf-followers').value;
+  const phone     = document.getElementById('inf-phone').value.trim();
+  const pw        = document.getElementById('inf-pw').value;
+
+  if (!full_name)                                  return infErr('Please enter your name.');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))  return infErr('Enter a valid email address.');
+  if (!handle)                                     return infErr('Add your social handle or channel name.');
+  if (pw.length < 8)                               return infErr('Password must be at least 8 characters.');
+
+  infBusy('inf-apply-btn', true);
+
+  const { data, error } = await sb.auth.signUp({
+    email, password: pw,
+    options: { data: { full_name, is_creator: true } }
+  });
+
+  if (error) {
+    infBusy('inf-apply-btn', false);
+    if (/already/i.test(error.message)) return infErr('Account exists. Sign in above.');
+    return infErr(error.message || 'Could not create your account.');
+  }
+
+  // Upsert profile with creator flag
+  try {
+    const uid = data.user?.id || data.session?.user?.id;
+    if (uid) {
+      await sb.from('profiles').upsert({
+        id: uid, email, first_name: full_name.split(' ')[0],
+        last_name: full_name.split(' ').slice(1).join(' '),
+        is_creator: true,
+        social_platform: infPlatform,
+        social_handle: handle,
+        audience_size: followers ? parseInt(followers) : null,
+        contact_phone: phone || null,
+      }, { onConflict:'id' });
+    }
+  } catch(_) {}
+
+  infBusy('inf-apply-btn', false);
+
+  if (data.session) {
+    await goDashboard(data.user);
+  } else {
+    document.getElementById('inf-ok').textContent = '🎉 Creator account created! Check your email to confirm, then sign in.';
+    document.getElementById('inf-ok').classList.add('show');
+  }
+}
 function showReset() { showSpecial('reset-screen'); }
 function showLogin() {
   document.getElementById('main-auth').style.display='block';
