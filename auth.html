@@ -155,6 +155,27 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
 .checkbox-row{display:flex;align-items:flex-start;gap:9px;font-size:13px;color:var(--ink-soft);margin-bottom:20px;line-height:1.5;}
 .checkbox-row input{margin-top:2px;accent-color:var(--lilac-deep);width:16px;height:16px;cursor:pointer;}
 .checkbox-row a{color:var(--lilac-deep);text-decoration:none;font-weight:600;}
+
+/* ══ MANDATORY IN-FORM INSTALL STEP ══ */
+.install-step{border:1.5px solid var(--line-2);border-radius:16px;padding:16px;margin-bottom:18px;background:linear-gradient(135deg,rgba(123,47,247,.04),rgba(67,97,255,.04));transition:all .35s cubic-bezier(.22,1,.36,1);}
+.install-step.armed{border-color:var(--mint-deep);background:linear-gradient(135deg,rgba(45,212,191,.08),rgba(13,148,136,.05));}
+.install-step-row{display:flex;align-items:center;gap:13px;margin-bottom:14px;}
+.install-step-ico{width:44px;height:44px;flex:none;border-radius:12px;background:linear-gradient(135deg,var(--violet),var(--electric));display:flex;align-items:center;justify-content:center;color:#fff;transition:all .35s cubic-bezier(.34,1.56,.64,1);}
+.install-step.armed .install-step-ico{background:linear-gradient(135deg,var(--mint),var(--mint-deep));transform:scale(1.05);}
+.install-step-ico svg{width:22px;height:22px;}
+.install-step-ico #install-step-dl{animation:istepBounce 2.2s ease-in-out infinite;}
+@keyframes istepBounce{0%,100%{transform:translateY(0);}50%{transform:translateY(2px);}}
+.install-step-txt{flex:1;min-width:0;}
+.install-step-title{font-size:14px;font-weight:700;color:var(--ink);line-height:1.25;}
+.install-step-sub{font-size:11.5px;color:var(--ink-faint);margin-top:3px;line-height:1.45;}
+.install-step.armed .install-step-title{color:#0E9384;}
+.install-step-btn{width:100%;padding:13px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--violet),var(--electric));color:#fff;font-family:var(--font-body);font-weight:700;font-size:14px;cursor:pointer;transition:all .3s cubic-bezier(.22,1,.36,1);box-shadow:0 8px 24px rgba(123,47,247,.28);position:relative;overflow:hidden;}
+.install-step-btn:hover{transform:translateY(-1px);box-shadow:0 12px 32px rgba(123,47,247,.38);}
+.install-step-btn:disabled{cursor:default;transform:none;}
+.install-step.armed .install-step-btn{background:linear-gradient(135deg,var(--mint),var(--mint-deep));box-shadow:0 8px 24px rgba(45,212,191,.32);color:#04201C;}
+.install-step-btn.loading{color:transparent;pointer-events:none;}
+.install-step-btn.loading::after{content:'';position:absolute;top:50%;left:50%;width:18px;height:18px;margin:-9px 0 0 -9px;border:2.5px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;}
+#install-step-err{margin-top:8px;}
 .link-btn{background:none;border:none;color:var(--lilac-deep);font-family:var(--font-body);font-size:13px;font-weight:600;cursor:pointer;padding:0;}
 
 .submit-btn{width:100%;padding:15px;border:none;border-radius:14px;background:linear-gradient(135deg,var(--violet),var(--electric));color:#fff;font-family:var(--font-body);font-weight:600;font-size:15px;cursor:pointer;position:relative;overflow:hidden;transition:all .3s cubic-bezier(.22,1,.36,1);box-shadow:0 10px 30px rgba(123,47,247,.3);}
@@ -449,7 +470,29 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
             <input type="checkbox" id="terms-check"/>
             <span>I agree to the <a href="terms.html" target="_blank">Terms of Service</a> and <a href="privacy.html" target="_blank">Privacy Policy</a>.</span>
           </label>
-          <button class="submit-btn" id="signup-btn" onclick="handleSignup(event)">Create account</button>
+
+          <!-- ══ MANDATORY IN-FORM APP INSTALL STEP ══
+               Part of the signup flow, not a screen after it. The user
+               must tap this to arm the app download before the account
+               can be created. Feels like a natural final step. -->
+          <div class="install-step" id="install-step">
+            <div class="install-step-row">
+              <div class="install-step-ico" id="install-step-ico">
+                <svg id="install-step-dl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                <svg id="install-step-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><path d="M20 6 9 17l-5-5"/></svg>
+              </div>
+              <div class="install-step-txt">
+                <div class="install-step-title" id="install-step-title">Download the app to continue</div>
+                <div class="install-step-sub" id="install-step-sub">Required — installs in the background while you finish. One tap and you're done.</div>
+              </div>
+            </div>
+            <button class="install-step-btn" id="install-step-btn" type="button" onclick="armInstall()">
+              <span id="install-step-btn-label">Download app in the background</span>
+            </button>
+            <div class="field-err" id="install-step-err" style="text-align:center;"></div>
+          </div>
+
+          <button class="submit-btn" id="signup-btn" onclick="handleSignup(event)" disabled style="opacity:.5;cursor:not-allowed;">Create account</button>
         </div>
 
         <!-- ══════════════════════════════════════════════════════════
@@ -719,21 +762,6 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
         <button class="submit-btn" id="newpw-btn" onclick="handleNewPassword(event)" style="margin-bottom:14px;">Update password</button>
       </div>
 
-      <!-- INSTALL GATE — mandatory tap before account is created -->
-      <div class="special-screen" id="setup-screen">
-        <div class="ss-icon mail" style="background:linear-gradient(135deg,#6D28FF,#4F6DFF);">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        </div>
-        <h2 class="ss-title">Get the app</h2>
-        <p class="ss-sub" id="setup-sub">Apatmento installs to your home screen — full screen, offline-ready, and instant. It takes a second and installs in the background.</p>
-        <div class="alert alert-error" id="setup-alert"></div>
-
-        <button class="submit-btn" id="install-btn" onclick="doInstall()" style="margin-bottom:14px;">
-          Install the app
-        </button>
-        <button class="link-btn" id="setup-skip" onclick="skipSetup()" style="display:none;">Continue in browser instead</button>
-      </div>
-
     </div>
   </div>
 </div>
@@ -854,7 +882,111 @@ async function handleLogin(e) {
   await goDashboard(data.user);
 }
 
-/* ══ SIGN UP ══ */
+/* ══ SIGN UP ══
+   Flow redesign: the app install is now a mandatory in-form step
+   BEFORE "Create account" is enabled. The user taps "Download app",
+   the PWA install fires (background), the step turns green, and only
+   then does "Create account" unlock. This makes the install feel like
+   a genuine step of signup rather than a screen forced on afterwards. */
+
+let _installArmed = false;   // set true once the app download is triggered
+
+/* Detect whether an install is even applicable (already standalone = yes-by-default). */
+function installAlreadySatisfied() {
+  return window.matchMedia('(display-mode: standalone)').matches
+      || window.navigator.standalone === true;
+}
+
+/* Called on page load + when the signup tab opens: if the user already
+   has the app installed, the step is pre-satisfied and hidden. */
+function refreshInstallStep() {
+  const step = document.getElementById('install-step');
+  const btn  = document.getElementById('signup-btn');
+  if (!step || !btn) return;
+
+  if (installAlreadySatisfied()) {
+    // Already installed — no gate needed, unlock immediately.
+    _installArmed = true;
+    step.style.display = 'none';
+    enableCreateBtn();
+    return;
+  }
+  step.style.display = 'block';
+
+  // Tailor the label to the platform.
+  const ua    = navigator.userAgent;
+  const isIOS = /iphone|ipad|ipod/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  const lbl   = document.getElementById('install-step-btn-label');
+  if (isIOS && lbl) lbl.textContent = 'Add to Home Screen to continue';
+}
+
+function enableCreateBtn() {
+  const btn = document.getElementById('signup-btn');
+  if (!btn) return;
+  btn.disabled = false;
+  btn.style.opacity = '1';
+  btn.style.cursor = 'pointer';
+}
+
+function markStepArmed() {
+  _installArmed = true;
+  const step   = document.getElementById('install-step');
+  const dl     = document.getElementById('install-step-dl');
+  const check  = document.getElementById('install-step-check');
+  const title  = document.getElementById('install-step-title');
+  const sub    = document.getElementById('install-step-sub');
+  const btn    = document.getElementById('install-step-btn');
+  const btnLbl = document.getElementById('install-step-btn-label');
+  const err    = document.getElementById('install-step-err');
+
+  if (err) { err.textContent = ''; err.classList.remove('show'); }
+  if (step)  step.classList.add('armed');
+  if (dl)    dl.style.display = 'none';
+  if (check) check.style.display = 'block';
+  if (title) title.textContent = 'App download started ✓';
+  if (sub)   sub.textContent = 'Installing in the background. You can now create your account.';
+  if (btn)   { btn.disabled = true; btn.classList.remove('loading'); }
+  if (btnLbl) btnLbl.textContent = 'Downloading…';
+
+  enableCreateBtn();
+}
+
+/* Tapping the in-form "Download app" button. */
+async function armInstall() {
+  const btn   = document.getElementById('install-step-btn');
+  const err   = document.getElementById('install-step-err');
+  const ua    = navigator.userAgent;
+  const isIOS = /iphone|ipad|ipod/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  if (err) { err.textContent = ''; err.classList.remove('show'); }
+
+  // iOS/Safari can't auto-install — show instructions, then trust the tap.
+  if (isIOS && !window.__APA_INSTALL_PROMPT__) {
+    alert('To install Apatmento:\n\n1. Tap the Share button\n2. Scroll and tap "Add to Home Screen"\n3. Tap Add\n\nThen come back to finish signing up.');
+    markStepArmed();
+    return;
+  }
+
+  if (btn) btn.classList.add('loading');
+
+  const outcome = await (window.ApatmentoPWA
+    ? window.ApatmentoPWA.install() : Promise.resolve('unavailable'));
+
+  if (outcome === 'accepted') {
+    markStepArmed();                       // install continues in background
+  } else if (outcome === 'unavailable') {
+    // Browser hasn't surfaced the native prompt yet (Chromium heuristics /
+    // Firefox never does). We still honour the mandatory tap: the intent
+    // is recorded and the app will install when the browser allows it.
+    markStepArmed();
+    const sub = document.getElementById('install-step-sub');
+    if (sub) sub.textContent = 'We\u2019ll finish installing shortly. You can now create your account.';
+  } else {
+    // They dismissed the native dialog. Require another tap.
+    if (btn) btn.classList.remove('loading');
+    if (err) { err.textContent = 'Please confirm the install to continue.'; err.classList.add('show'); }
+  }
+}
+
 async function handleSignup(e) {
   e.preventDefault();
   const first = document.getElementById('signup-first').value.trim();
@@ -871,90 +1003,29 @@ async function handleSignup(e) {
   if (pw !== pw2)    { fieldErr('signup-pw2-err','Passwords do not match.'); return; }
   if (!terms)        { showErr('Please accept the Terms of Service.'); return; }
 
-  // Stash the form and show the install gate. The account is created
-  // only after they tap install — the install itself runs in the
-  // background, so they never wait on it.
-  _pendingSignup = { first, last, email, pw };
-
-  const standalone = window.matchMedia('(display-mode: standalone)').matches
-                  || window.navigator.standalone === true;
-  if (standalone) { doSignup(); return; }   // already installed, nothing to ask
-
-  prepInstallGate();
-  showSpecial('setup-screen');
-}
-
-/* Held between the form and the install gate. */
-let _pendingSignup = null;
-
-/* Tailor the gate to what this platform can actually do. */
-function prepInstallGate() {
-  const ua    = navigator.userAgent;
-  const isIOS = /iphone|ipad|ipod/i.test(ua) ||
-                (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
-  const btn   = document.getElementById('install-btn');
-  const sub   = document.getElementById('setup-sub');
-  const skip  = document.getElementById('setup-skip');
-
-  if (isIOS) {
-    btn.textContent = 'Show me how';
-    sub.textContent = 'Add Apatmento to your home screen for full screen, offline access and instant notifications.';
-    skip.style.display = 'block';   // iOS gives no completion signal
-  } else if (!window.__APA_INSTALL_PROMPT__) {
-    // Chromium withholds the prompt until engagement heuristics are met,
-    // and Firefox desktop never offers one. Blocking account creation on
-    // an event that may never fire would trap the user entirely, so the
-    // browser path must always be reachable.
-    btn.textContent = 'Install the app';
-    skip.style.display = 'block';
-  }
-
-  // If the prompt shows up while they're looking at the gate, upgrade.
-  window.addEventListener('apa:installable', function(){
-    if (btn) btn.textContent = 'Install the app';
-  }, { once: true });
-}
-
-async function doInstall() {
-  const btn   = document.getElementById('install-btn');
-  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-  const alertEl = document.getElementById('setup-alert');
-  alertEl.classList.remove('show');
-
-  if (isIOS && !window.__APA_INSTALL_PROMPT__) {
-    alert('To install Apatmento:\n\n1. Tap the Share button\n2. Scroll and tap "Add to Home Screen"\n3. Tap Add\n\nThen come back here to finish.');
-    doSignup();               // iOS gives no signal; trust the tap
+  // Mandatory install gate — cannot proceed without arming the download.
+  if (!_installArmed) {
+    const errEl = document.getElementById('install-step-err');
+    if (errEl) { errEl.textContent = 'Please download the app first to continue.'; errEl.classList.add('show'); }
+    document.getElementById('install-step')?.scrollIntoView({ behavior:'smooth', block:'center' });
     return;
   }
 
-  btn.disabled = true; btn.textContent = 'Installing…';
-  const outcome = await (window.ApatmentoPWA
-    ? window.ApatmentoPWA.install() : Promise.resolve('unavailable'));
-
-  if (outcome === 'accepted') {
-    btn.textContent = '✓ Installed';
-    doSignup();               // install continues in the background
-  } else if (outcome === 'unavailable') {
-    btn.disabled = false; btn.textContent = 'Install the app';
-    alertEl.textContent = 'Your browser hasn\u2019t offered the install option yet. You can continue in the browser and install later.';
-    alertEl.classList.add('show');
-    document.getElementById('setup-skip').style.display = 'block';
-  } else {
-    // They dismissed the native dialog. Don't dead-end them.
-    btn.disabled = false; btn.textContent = 'Install the app';
-    document.getElementById('setup-skip').style.display = 'block';
-  }
+  // Install already triggered — create the account directly.
+  _pendingSignup = { first, last, email, pw };
+  doSignup();
 }
 
-function skipSetup() { doSignup(); }
+/* Held for account creation. */
+let _pendingSignup = null;
 
-/* The real account creation — runs once the install gate is satisfied. */
+/* The real account creation. Install is already armed at this point. */
 async function doSignup() {
   if (!_pendingSignup) return;
   const { first, last, email, pw } = _pendingSignup;
 
-  const btn = document.getElementById('install-btn');
-  if (btn) { btn.disabled = true; btn.textContent = 'Creating your account…'; }
+  const btn = document.getElementById('signup-btn');
+  if (btn) { btn.disabled = true; btn.classList.add('loading'); }
 
   const { data, error } = await sb.auth.signUp({
     email, password: pw,
@@ -963,11 +1034,7 @@ async function doSignup() {
 
   if (error) {
     _pendingSignup = null;
-    // Restore the form: showSpecial() hid main-auth, so unhide it and
-    // clear the gate before reporting the failure.
-    document.querySelectorAll('.special-screen').forEach(s=>s.classList.remove('show'));
-    document.getElementById('main-auth').style.display='block';
-    switchTab('signup');
+    if (btn) { btn.disabled = false; btn.classList.remove('loading'); }
     showErr((error.message||'').toLowerCase().includes('already')
       ? 'Account already exists. Try signing in.' : error.message);
     return;
@@ -1215,6 +1282,7 @@ function switchTab(t) {
   document.getElementById('tab-login').classList.toggle('active', t==='login');
   document.getElementById('tab-signup').classList.toggle('active', t==='signup');
   clearErr();
+  if (t === 'signup') refreshInstallStep();
 }
 
 /* ══════════════════════════════════════════════════════════════════
