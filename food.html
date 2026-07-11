@@ -520,6 +520,45 @@ function renderGrid(){
 
 renderGrid();
 </script>
+
+<style>
+.seo-content{position:relative;z-index:2;max-width:1180px;margin:0 auto;padding:20px 24px 70px;}
+.seo-content h2{font-family:var(--font-display,'Fraunces',serif);font-weight:500;font-size:clamp(22px,3vw,30px);letter-spacing:-.01em;margin-bottom:16px;line-height:1.2;}
+.seo-content h3{font-family:var(--font-display,'Fraunces',serif);font-weight:500;font-size:18px;margin:24px 0 10px;}
+.seo-content p{font-size:15px;line-height:1.75;color:var(--ink-soft,#4A4C66);margin-bottom:16px;max-width:820px;}
+.seo-content .faq-item{border-top:1px solid var(--line,rgba(10,10,20,.07));padding:18px 0;}
+.seo-content .faq-item summary{font-family:var(--font-display,'Fraunces',serif);font-weight:500;font-size:16px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;color:var(--ink,#0A0A14);}
+.seo-content .faq-item summary::-webkit-details-marker{display:none;}
+.seo-content .faq-item summary::after{content:'+';font-size:22px;color:var(--ink-faint,#8E90AD);transition:transform .2s;}
+.seo-content .faq-item[open] summary::after{transform:rotate(45deg);}
+.seo-content .faq-item p{margin-top:12px;margin-bottom:0;}
+.seo-content .seo-links{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px;}
+.seo-content .seo-links a{font-size:13px;font-weight:500;color:var(--t1,#6D28FF);text-decoration:none;padding:8px 15px;border-radius:100px;background:rgba(0,0,0,.03);border:1px solid var(--line,rgba(10,10,20,.07));transition:all .2s;}
+.seo-content .seo-links a:hover{border-color:var(--t1,#6D28FF);}
+</style>
+<section class="seo-content">
+  <h2>Food delivery in Nairobi, made simple</h2>
+  <p>Apatmento brings you food delivery from the best restaurants in Nairobi, powered by Glovo. Whether you're craving wood-fired pizza from Pizza Mojo, authentic Swahili biryani from Mianzi Swahili Restaurant, sizzling Indian curries from The Mayura, fresh sushi from Teddy's Sushi Bar, or a loaded burger from Mezza Burgers, you can browse real menus and order directly from your favourite spot. Every restaurant on this page is live in Nairobi with real ratings from thousands of diners.</p>
+  <p>Ordering food in Nairobi has never been easier. Simply choose your cuisine — Kenyan, Swahili, Indian, Italian, Japanese, Chinese or fast food — tap a restaurant, and you'll be taken straight to their Glovo menu where you can build your order and pay. Delivery is tracked to your door across Westlands, Kilimani, Karen, CBD, Parklands and beyond. From a quick lunch to a family dinner, Apatmento is your gateway to the best food Nairobi has to offer.</p>
+
+  <h3>Popular cuisines available for delivery in Nairobi</h3>
+  <p>Nairobi's food scene is one of the most vibrant in East Africa. Our restaurant partners cover everything from traditional Kenyan nyama choma and Swahili coastal dishes like pilau and coconut fish, to international favourites including pizza, gourmet burgers, Japanese ramen and sushi, North Indian tandoori, and Cantonese-style Chinese. Vegetarian, halal and healthy options are widely available, so there's something for every taste and dietary need.</p>
+
+  <h3>Frequently asked questions</h3>
+  <details class="faq-item"><summary>How do I order food delivery in Nairobi?</summary><p>Browse the restaurants on this page, tap the one you want, and you'll be taken to their live Glovo menu. Add items to your cart, enter your delivery address, and pay. Your food is prepared fresh and delivered to your door with live tracking.</p></details>
+  <details class="faq-item"><summary>Which restaurants deliver in Nairobi?</summary><p>Top-rated Nairobi restaurants including Pizza Mojo, Artcaffe, Mianzi Swahili Restaurant, Barbeque Nation, The Mayura Indian Restaurant, Teddy's Sushi Bar, Furusato Japanese, Mezza Burgers and many more all offer delivery through our platform.</p></details>
+  <details class="faq-item"><summary>How much does food delivery cost in Nairobi?</summary><p>Delivery fees vary by restaurant and distance, and are shown clearly at checkout on Glovo. Many restaurants also run offers and promotions. Prices are quoted in Kenyan Shillings (KES).</p></details>
+  <details class="faq-item"><summary>What areas of Nairobi do you deliver to?</summary><p>Delivery is available across Nairobi including Westlands, Kilimani, Karen, Lavington, CBD, Parklands, Kileleshwa, Gigiri and surrounding neighbourhoods, depending on the restaurant's delivery radius.</p></details>
+
+  <div class="seo-links">
+    <a href="/shopping.html">Grocery Delivery</a>
+    <a href="/tours.html">Nairobi Tours</a>
+    <a href="/rides.html">Rides & Transfers</a>
+    <a href="/apartments.html">Stays in Kenya</a>
+    <a href="/events.html">Events in Nairobi</a>
+  </div>
+</section>
+
 <div data-showcase="window"></div>
 <script src="/analytics.js" defer></script>
 <script src="/telemetry.js" defer></script>
