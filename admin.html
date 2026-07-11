@@ -410,6 +410,10 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           Audience <span class="nav-b calm" id="b-aud">—</span>
         </div>
+        <div class="nav-i" data-sec="customers" onclick="go('customers',this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/></svg>
+          Customer data <span class="nav-b calm" id="b-cust">0</span>
+        </div>
         <div class="nav-i" data-sec="ml" onclick="go('ml',this)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><circle cx="5" cy="5" r="2"/><circle cx="19" cy="5" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="19" r="2"/><path d="M6.5 6.5 10 10M17.5 6.5 14 10M6.5 17.5 10 14M17.5 17.5 14 14"/></svg>
           ML &amp; datasets
@@ -449,6 +453,10 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
         <div class="nav-i" data-sec="ads" onclick="go('ads',this)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="m3 11 18-5v12L3 13v-2z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>
           Ad manager <span class="nav-b calm" id="b-ads">0</span>
+        </div>
+        <div class="nav-i" data-sec="shadow" onclick="go('shadow',this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 0 12 6 6 0 0 1 0 6 9 9 0 0 0 0-18z"/><circle cx="12" cy="12" r="9"/></svg>
+          Shadow ads <span class="nav-b calm" id="b-shadow">0</span>
         </div>
         <div class="nav-i" data-sec="slots" onclick="go('slots',this)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
@@ -769,6 +777,54 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
         <div id="ad-list"></div>
       </section>
 
+      <!-- ─── SHADOW ADS ─── -->
+      <section class="sec" id="s-shadow">
+        <div class="hd">
+          <div><h1>Shadow <em>ads</em></h1>
+          <p>Non-invasive, behaviourally-targeted creatives that rise behind or beside what a guest is engaging with — never over it. Placement, timing and audience are decided live from real intent.</p></div>
+          <div class="hd-act"><button class="btn btn-p btn-sm" onclick="openShadow()">New shadow ad</button></div>
+        </div>
+        <div class="grid g4" id="sh-stats"></div>
+
+        <div class="grid g2" style="margin-top:16px">
+          <div class="card">
+            <div class="card-t">Intelligence — where they surface</div>
+            <div class="card-s">Impressions by intent band, learned from live behaviour</div>
+            <div id="sh-intel"></div>
+          </div>
+          <div class="card">
+            <div class="card-t">Engagement — how guests respond</div>
+            <div class="card-s">Click · dismiss · ignore mix. Convenience, not annoyance.</div>
+            <div id="sh-engage"></div>
+          </div>
+        </div>
+
+        <div class="tabs" style="margin-top:20px">
+          <button class="tab on" onclick="shTab('live',this)">Live</button>
+          <button class="tab" onclick="shTab('paused',this)">Paused</button>
+          <button class="tab" onclick="shTab('all',this)">All</button>
+        </div>
+        <div id="sh-list"></div>
+      </section>
+
+      <!-- ─── CUSTOMER DATA ─── (kept inside intelligence flow) -->
+      <section class="sec" id="s-customers">
+        <div class="hd">
+          <div><h1>Customer <em>data</em></h1>
+          <p>Every visitor the platform has learned, with their live intent, journey and the shadow ads they were shown. First-party only — no PII beyond what a signed-in guest gives us.</p></div>
+          <div class="hd-act"><button class="btn btn-g btn-sm" onclick="exportCustomers()">Export customers</button></div>
+        </div>
+        <div class="grid g4" id="cu-stats"></div>
+        <div class="card" style="margin-top:16px">
+          <div class="card-hd"><div><div class="card-t">Visitors &amp; behaviour</div>
+          <div class="card-s">Sorted by live intent. The people your shadow ads learn from.</div></div></div>
+          <div class="tw"><table>
+            <thead><tr><th>Visitor</th><th>Device</th><th class="num">Sessions</th><th class="num">Intent</th><th>Mode</th><th class="num">Shadow seen</th><th class="num">Clicks</th><th>Last seen</th></tr></thead>
+            <tbody id="cu-rows"></tbody>
+          </table></div>
+        </div>
+      </section>
+
       <!-- ─── SLOTS ─── -->
       <section class="sec" id="s-slots">
         <div class="hd">
@@ -903,6 +959,135 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
     <div class="mdl-f">
       <button class="btn btn-g" onclick="closeCampaign()">Cancel</button>
       <button class="btn btn-p" onclick="saveCampaign()">Save campaign</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ SHADOW AD MODAL ══════════ -->
+<div class="ov" id="shadow-ov">
+  <div class="mdl wide">
+    <div class="mdl-t" id="shadow-title">New shadow ad</div>
+    <div class="mdl-s">A quiet, behaviourally-targeted creative. It surfaces behind or beside what a guest is engaging with — decided live from their intent — and never covers it.</div>
+
+    <div class="tabs">
+      <button class="tab on" onclick="shModalTab('creative',this)">Creative</button>
+      <button class="tab" onclick="shModalTab('targeting',this)">Behaviour &amp; targeting</button>
+      <button class="tab" onclick="shModalTab('delivery',this)">Placement &amp; discipline</button>
+    </div>
+
+    <!-- CREATIVE -->
+    <div id="sht-creative">
+      <div class="row2">
+        <div class="fld"><label class="fld-l">Advertiser</label><input class="inp" id="sh-adv" placeholder="Colgate"/></div>
+        <div class="fld"><label class="fld-l">Internal title</label><input class="inp" id="sh-name" placeholder="Toothpaste — shopping shadow"/></div>
+      </div>
+      <div class="fld"><label class="fld-l">Headline</label><input class="inp" id="sh-head" placeholder="Fresh every morning"/></div>
+      <div class="fld"><label class="fld-l">Sub-text</label><input class="inp" id="sh-sub" placeholder="Colgate Total — now 20% off on Apatmento Shopping."/></div>
+      <div class="row2">
+        <div class="fld"><label class="fld-l">CTA label</label><input class="inp" id="sh-cta" placeholder="Shop now"/></div>
+        <div class="fld"><label class="fld-l">Click destination (URL)</label><input class="inp" id="sh-url" placeholder="/shopping.html?product=…"/></div>
+      </div>
+      <div class="row2">
+        <div class="fld"><label class="fld-l">Media type</label>
+          <select class="inp" id="sh-mtype"><option value="image">Image</option><option value="video">Video (mp4)</option></select>
+        </div>
+        <div class="fld"><label class="fld-l">Media URL</label><input class="inp" id="sh-media" placeholder="https://…/ads/toothpaste.jpg"/></div>
+      </div>
+      <div class="row2">
+        <div class="fld"><label class="fld-l">Poster URL (video only)</label><input class="inp" id="sh-poster" placeholder="https://…"/></div>
+        <div class="fld"><label class="fld-l">Accent colour</label><input class="inp" id="sh-accent" placeholder="#0EA5E9"/></div>
+      </div>
+      <div class="fld"><label class="fld-l">Theme gradient</label><input class="inp" id="sh-theme" placeholder="linear-gradient(135deg,#0EA5E9,#2563EB)"/></div>
+
+      <div class="preview" style="margin-top:16px">
+        <div class="preview-hd">Live preview — as it will surface</div>
+        <div class="preview-bd" id="sh-preview"><div class="empty"><div class="empty-s">Fill in the creative to preview</div></div></div>
+      </div>
+    </div>
+
+    <!-- TARGETING -->
+    <div id="sht-targeting" style="display:none">
+      <div class="note" style="margin-bottom:14px">
+        The engine reads live intent (0–100) from real behaviour. Show a creative only inside the band where it genuinely helps — and stay silent when a guest is very hot and converting, so you never distract a sale.
+      </div>
+      <div class="fld"><label class="fld-l">Surfaces (where it may appear)</label>
+        <select class="inp" id="sh-surfaces" multiple size="6">
+          <option value="all">All services</option>
+          <option value="apartments">Stays / Apartments</option>
+          <option value="shopping">Shopping</option>
+          <option value="tours">Tours</option>
+          <option value="events">Events</option>
+          <option value="food">Food</option>
+          <option value="rides">Rides</option>
+          <option value="carhire">Car hire</option>
+          <option value="flights">Flights</option>
+          <option value="roommates">Roommates</option>
+          <option value="index">Home</option>
+        </select>
+      </div>
+      <div class="row2">
+        <div class="fld"><label class="fld-l">Min intent (0–100)</label><input class="inp" id="sh-imin" type="number" value="10" min="0" max="100"/></div>
+        <div class="fld"><label class="fld-l">Max intent (stay quiet above)</label><input class="inp" id="sh-imax" type="number" value="85" min="0" max="100"/></div>
+      </div>
+      <div class="row2">
+        <div class="fld"><label class="fld-l">Min seconds on page</label><input class="inp" id="sh-dwell" type="number" value="6" min="0"/></div>
+        <div class="fld"><label class="fld-l">Min scroll depth (%)</label><input class="inp" id="sh-scroll" type="number" value="0" min="0" max="100"/></div>
+      </div>
+      <div class="row2">
+        <div class="fld"><label class="fld-l">Device</label>
+          <select class="inp" id="sh-device"><option value="all">All devices</option><option value="mobile">Mobile only</option><option value="desktop">Desktop only</option><option value="tablet">Tablet only</option></select>
+        </div>
+        <div class="fld"><label class="fld-l">Reading modes</label>
+          <select class="inp" id="sh-modes" multiple size="4">
+            <option value="skim" selected>Skim</option>
+            <option value="scan" selected>Scan</option>
+            <option value="browse" selected>Browse</option>
+            <option value="read" selected>Read</option>
+          </select>
+        </div>
+      </div>
+      <div class="fld"><label class="fld-l">Context keywords (comma-separated — matched against search / category)</label>
+        <input class="inp" id="sh-kw" placeholder="toothpaste, colgate, health, personal care"/>
+      </div>
+      <div class="note">Leave keywords empty to match the whole surface. With keywords, the ad only appears when the guest's search or category context is relevant — the toothpaste ad finds the shopper, not everyone.</div>
+    </div>
+
+    <!-- DELIVERY -->
+    <div id="sht-delivery" style="display:none">
+      <div class="fld"><label class="fld-l">Entry position</label>
+        <select class="inp" id="sh-pos">
+          <option value="auto">Auto — smartest, least intrusive per device</option>
+          <option value="rise">Rise behind the focused card (desktop signature)</option>
+          <option value="side">Slide in from the side</option>
+          <option value="bottom">Slide up from the bottom</option>
+          <option value="top">Descend from the top</option>
+        </select>
+      </div>
+      <div class="row2">
+        <div class="fld"><label class="fld-l">Times per session (max)</label><input class="inp" id="sh-cap" type="number" value="1" min="1" max="5"/></div>
+        <div class="fld"><label class="fld-l">Cooldown between any shadow ads (s)</label><input class="inp" id="sh-cd" type="number" value="90" min="10"/></div>
+      </div>
+      <div class="row2">
+        <div class="fld"><label class="fld-l">How long it stays (s)</label><input class="inp" id="sh-show" type="number" value="7" min="4" max="20"/></div>
+        <div class="fld"><label class="fld-l">Priority (higher wins ties)</label><input class="inp" id="sh-prio" type="number" value="5" min="1" max="10"/></div>
+      </div>
+      <div class="row2">
+        <div class="fld"><label class="fld-l">Start date</label><input class="inp" id="sh-start" type="date"/></div>
+        <div class="fld"><label class="fld-l">End date</label><input class="inp" id="sh-end" type="date"/></div>
+      </div>
+      <div class="row2">
+        <div class="fld"><label class="fld-l">Budget (KES, optional)</label><input class="inp" id="sh-budget" type="number" placeholder="120000"/></div>
+        <div class="fld"><label class="fld-l">Status</label>
+          <select class="inp" id="sh-status"><option value="live">Live</option><option value="paused">Paused</option><option value="draft">Draft</option></select>
+        </div>
+      </div>
+      <div class="note warn">Anti-annoyance is built in: one dismissal silences shadow ads for that visitor's whole session, and we never surface while a guest is bouncing or mid-checkout.</div>
+    </div>
+
+    <div class="mdl-f">
+      <button class="btn btn-g" onclick="previewShadowLive()">Preview on site</button>
+      <button class="btn btn-g" onclick="closeShadow()">Cancel</button>
+      <button class="btn btn-p" onclick="saveShadow()">Save shadow ad</button>
     </div>
   </div>
 </div>
@@ -1064,7 +1249,7 @@ async function ensureAudience(){
 function renderAll(){
   renderOverview(); renderTriage(); renderIntel(); renderFinance();
   renderModeration(); renderUploads(); renderTrust(); renderInventory();
-  renderBookings(); renderAds(); renderAudit(); renderSystem();
+  renderBookings(); renderAds(); renderShadow(); renderCustomers(); renderAudit(); renderSystem();
   badges();
 }
 
@@ -1077,6 +1262,8 @@ function badges(){
   b('b-up', SNAP.uploads.filter(u=>(u.status||'pending')==='pending').length || '', 'warn');
   b('b-trust', SNAP.partners.filter(p=>p._trust.score<30).length || '');
   b('b-ads', SNAP.campaigns.length || '', 'calm');
+  b('b-shadow', (SNAP.shadowAds||[]).filter(a=>a.status==='live').length || '', 'calm');
+  b('b-cust', (SNAP.sessions||[]).length || '', 'calm');
   b('b-sys', SNAP.faults.length || '', 'calm');
 }
 
@@ -1878,6 +2065,311 @@ function deleteCampaign(id){
     r.ok ? (toast('Campaign deleted','ok'), refresh()) : toast(r.error,'bad');
   });
 }
+
+/* ════════════════════════════════════════════════════════════════
+   SHADOW ADS — behavioural, non-invasive creatives
+   ════════════════════════════════════════════════════════════════ */
+let SH_EDIT = null, SH_TAB = 'live';
+
+function shList(){ return (SNAP && SNAP.shadowAds) ? SNAP.shadowAds : []; }
+
+function renderShadow(){
+  const ads = shList();
+  const imp = ads.reduce((s,a)=>s+(+a.impressions||0),0);
+  const clk = ads.reduce((s,a)=>s+(+a.clicks||0),0);
+  const dis = ads.reduce((s,a)=>s+(+a.dismissals||0),0);
+  const live = ads.filter(a=>a.status==='live' && a.active).length;
+  const ctr = imp ? (clk/imp*100) : 0;
+
+  $('sh-stats').innerHTML = [
+    stat('Live shadow ads', F.num(live), `${ads.length} total`),
+    stat('Viewable impressions', F.num(imp), 'behind-content surfaces', 'calm'),
+    stat('Click-through', ctr.toFixed(2)+'%', `${F.num(clk)} clicks`, ctr>=1?'gold':''),
+    stat('Dismiss rate', imp?((dis/imp*100).toFixed(1)+'%'):'0%', 'lower is better')
+  ].join('');
+
+  // Intelligence: impressions by intent band (derived from events, but we
+  // approximate from creative targeting when events aren't loaded).
+  const bands = { hot:0, warm:0, cool:0 };
+  ads.forEach(a=>{
+    const mid = ((+a.intent_min||0)+(+a.intent_max||100))/2;
+    const b = mid>=72?'hot':mid>=45?'warm':'cool';
+    bands[b] += (+a.impressions||0);
+  });
+  const totB = bands.hot+bands.warm+bands.cool || 1;
+  $('sh-intel').innerHTML = [
+    ['Hot intent (72+)', bands.hot, 'var(--gold,#F5B12E)'],
+    ['Warm (45–71)', bands.warm, '#4EE0C8'],
+    ['Cool (20–44)', bands.cool, '#6D28FF']
+  ].map(([lbl,v,c])=>`
+    <div style="margin:10px 0">
+      <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:5px">
+        <span>${lbl}</span><span class="mono">${F.num(v)}</span></div>
+      <div style="height:7px;border-radius:99px;background:var(--bg-2);overflow:hidden">
+        <div style="height:100%;width:${(v/totB*100).toFixed(1)}%;background:${c};border-radius:99px"></div></div>
+    </div>`).join('') || '<div class="empty"><div class="empty-s">No impressions yet</div></div>';
+
+  // Engagement mix.
+  const eng = clk+dis;
+  $('sh-engage').innerHTML = imp ? `
+    <div style="display:flex;gap:8px;margin:8px 0 14px">
+      <div style="flex:${clk||0.2};height:34px;border-radius:8px;background:linear-gradient(135deg,#2DD4BF,#0D9488);display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700" title="Clicks">${F.num(clk)}</div>
+      <div style="flex:${dis||0.2};height:34px;border-radius:8px;background:linear-gradient(135deg,#FF6B2C,#B45309);display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700" title="Dismissed">${F.num(dis)}</div>
+      <div style="flex:${Math.max(imp-eng,0.2)};height:34px;border-radius:8px;background:var(--bg-2);display:flex;align-items:center;justify-content:center;color:var(--ink-2);font-size:11px;font-weight:700" title="Shown, no action">${F.num(Math.max(imp-eng,0))}</div>
+    </div>
+    <div style="display:flex;gap:16px;font-size:11.5px;color:var(--ink-2)">
+      <span><b style="color:#0D9488">■</b> Clicked</span>
+      <span><b style="color:#B45309">■</b> Dismissed</span>
+      <span><b style="color:var(--ink-3,#8b8ba0)">■</b> Passive</span>
+    </div>` : '<div class="empty"><div class="empty-s">No engagement data yet</div></div>';
+
+  // List
+  let list = ads.slice();
+  if(SH_TAB==='live') list = list.filter(a=>a.status==='live');
+  else if(SH_TAB==='paused') list = list.filter(a=>a.status!=='live');
+
+  $('sh-list').innerHTML = list.length ? list.map(a=>{
+    const ctrA = a.impressions ? (a.clicks/a.impressions*100).toFixed(1) : '0.0';
+    const surf = Array.isArray(a.surfaces)?a.surfaces.join(', '):'all';
+    return `
+    <div class="card" style="margin-top:12px">
+      <div style="display:flex;gap:14px;align-items:flex-start">
+        <div style="width:74px;height:56px;border-radius:10px;flex:none;overflow:hidden;background:${esc(a.theme_gradient||'#222')};position:relative">
+          ${a.media_url && a.media_type!=='video' ? `<img src="${esc(a.media_url)}" style="width:100%;height:100%;object-fit:cover;opacity:.85" onerror="this.remove()"/>`:''}
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <strong style="font-size:14px">${esc(a.advertiser||'—')}</strong>
+            <span class="pill ${a.status==='live'?'p-ok':'p-mute'}" style="font-size:10px">${esc(a.status||'draft')}</span>
+            <span class="pill p-mute" style="font-size:10px;text-transform:capitalize">${esc(a.position||'auto')}</span>
+          </div>
+          <div style="font-size:12.5px;color:var(--ink-2);margin-top:3px">${esc(a.headline||a.title||'')}</div>
+          <div style="font-size:11px;color:var(--ink-3,#8b8ba0);margin-top:4px">
+            ${esc(surf)} · intent ${a.intent_min}–${a.intent_max} · ${F.num(a.impressions||0)} views · ${ctrA}% CTR
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;flex:none">
+          <button class="btn btn-g btn-sm" onclick="openShadow(${a.id})">Edit</button>
+          <button class="btn btn-g btn-sm" onclick="toggleShadow(${a.id},'${esc(a.status)}')">${a.status==='live'?'Pause':'Go live'}</button>
+          <button class="btn btn-d btn-sm" onclick="deleteShadow(${a.id})">Delete</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('') : '<div class="empty" style="margin-top:16px"><div class="empty-s">No shadow ads yet. Create one to start.</div></div>';
+}
+
+function shTab(t, el){
+  SH_TAB = t;
+  el.parentNode.querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  renderShadow();
+}
+
+function shModalTab(t, el){
+  ['creative','targeting','delivery'].forEach(k=> $('sht-'+k).style.display = k===t?'block':'none');
+  el.parentNode.querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+}
+
+function openShadow(id){
+  SH_EDIT = id || null;
+  $('shadow-title').textContent = id ? 'Edit shadow ad' : 'New shadow ad';
+  const F_ = ['sh-adv','sh-name','sh-head','sh-sub','sh-cta','sh-url','sh-media','sh-poster','sh-accent','sh-theme','sh-kw','sh-budget'];
+  F_.forEach(k=>$(k).value='');
+  $('sh-mtype').value='image'; $('sh-imin').value=10; $('sh-imax').value=85;
+  $('sh-dwell').value=6; $('sh-scroll').value=0; $('sh-device').value='all';
+  $('sh-pos').value='auto'; $('sh-cap').value=1; $('sh-cd').value=90;
+  $('sh-show').value=7; $('sh-prio').value=5; $('sh-status').value='live';
+  $('sh-start').value=''; $('sh-end').value='';
+  [...$('sh-surfaces').options].forEach(o=>o.selected=(o.value==='all'));
+  [...$('sh-modes').options].forEach(o=>o.selected=true);
+
+  if(id){
+    const a = shList().find(x=>String(x.id)===String(id));
+    if(a){
+      $('sh-adv').value=a.advertiser||''; $('sh-name').value=a.title||'';
+      $('sh-head').value=a.headline||''; $('sh-sub').value=a.sub_text||'';
+      $('sh-cta').value=a.cta_text||''; $('sh-url').value=a.cta_url||'';
+      $('sh-mtype').value=a.media_type||'image'; $('sh-media').value=a.media_url||'';
+      $('sh-poster').value=a.poster_url||''; $('sh-accent').value=a.accent||'';
+      $('sh-theme').value=a.theme_gradient||'';
+      $('sh-imin').value=a.intent_min??10; $('sh-imax').value=a.intent_max??85;
+      $('sh-dwell').value=a.min_dwell_s??6; $('sh-scroll').value=a.min_scroll_pct??0;
+      $('sh-device').value=a.device||'all'; $('sh-pos').value=a.position||'auto';
+      $('sh-cap').value=a.max_per_session??1; $('sh-cd').value=a.cooldown_s??90;
+      $('sh-show').value=a.dwell_show_s??7; $('sh-prio').value=a.priority??5;
+      $('sh-status').value=a.status||'live'; $('sh-budget').value=a.budget||'';
+      $('sh-start').value=a.start_date||''; $('sh-end').value=a.end_date||'';
+      $('sh-kw').value=(Array.isArray(a.keywords)?a.keywords.join(', '):'');
+      const surf = Array.isArray(a.surfaces)?a.surfaces:['all'];
+      [...$('sh-surfaces').options].forEach(o=>o.selected=surf.includes(o.value));
+      const modes = Array.isArray(a.reading_modes)?a.reading_modes:['skim','scan','browse','read'];
+      [...$('sh-modes').options].forEach(o=>o.selected=modes.includes(o.value));
+    }
+  }
+  document.querySelector('#shadow-ov .tab').click();
+  shModalTab('creative', document.querySelector('#shadow-ov .tab'));
+  document.querySelectorAll('#shadow-ov .tab').forEach((t,i)=>t.classList.toggle('on',i===0));
+  $('shadow-ov').classList.add('on');
+  previewShadow();
+}
+function closeShadow(){ $('shadow-ov').classList.remove('on'); SH_EDIT=null; }
+$('shadow-ov').addEventListener('click', e=>{ if(e.target.id==='shadow-ov') closeShadow(); });
+['sh-adv','sh-head','sh-sub','sh-cta','sh-theme','sh-media','sh-accent'].forEach(k=>
+  $(k)?.addEventListener('input', previewShadow));
+
+function previewShadow(){
+  const adv=$('sh-adv').value, head=$('sh-head').value, sub=$('sh-sub').value;
+  const cta=$('sh-cta').value, theme=$('sh-theme').value||'linear-gradient(135deg,#7C3AFF,#4F6DFF)';
+  const media=$('sh-media').value;
+  if(!head && !adv){ $('sh-preview').innerHTML=`<div class="empty"><div class="empty-s">Fill in the creative to preview</div></div>`; return; }
+  $('sh-preview').innerHTML=`
+    <div style="max-width:320px;border-radius:18px;overflow:hidden;position:relative;height:172px;background:${esc(theme)};box-shadow:0 18px 44px rgba(10,10,20,.24)">
+      ${media && /\.(jpg|jpeg|png|webp)$/i.test(media)?`<img src="${esc(media)}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.9" onerror="this.remove()"/>`:''}
+      <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(8,8,16,.05),rgba(8,8,16,.82))"></div>
+      <div style="position:absolute;top:11px;left:12px;font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.82);background:rgba(0,0,0,.28);padding:4px 9px;border-radius:99px">● Sponsored</div>
+      <div style="position:absolute;left:0;right:0;bottom:0;padding:15px 16px">
+        <div style="font-size:10.5px;font-weight:600;color:rgba(255,255,255,.72);margin-bottom:3px">${esc(adv||'Advertiser')}</div>
+        <div style="font-family:var(--f-d);font-size:17px;font-weight:500;color:#fff;line-height:1.15;margin-bottom:4px">${esc(head||'Headline')}</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.82);margin-bottom:11px">${esc(sub||'')}</div>
+        ${cta?`<span style="display:inline-flex;align-items:center;gap:5px;background:#fff;color:#0A0A14;font-size:12px;font-weight:700;padding:8px 15px;border-radius:99px">${esc(cta)} →</span>`:''}
+      </div>
+    </div>`;
+}
+
+function collectShadow(){
+  const surfaces = [...$('sh-surfaces').selectedOptions].map(o=>o.value);
+  const modes = [...$('sh-modes').selectedOptions].map(o=>o.value);
+  const kws = $('sh-kw').value.split(',').map(s=>s.trim()).filter(Boolean);
+  return {
+    advertiser: $('sh-adv').value.trim(),
+    title: $('sh-name').value.trim() || $('sh-adv').value.trim(),
+    active: $('sh-status').value==='live',
+    status: $('sh-status').value,
+    priority: Number($('sh-prio').value)||5,
+    media_type: $('sh-mtype').value,
+    media_url: $('sh-media').value.trim(),
+    poster_url: $('sh-poster').value.trim(),
+    headline: $('sh-head').value.trim(),
+    sub_text: $('sh-sub').value.trim(),
+    cta_text: $('sh-cta').value.trim()||'View',
+    cta_url: $('sh-url').value.trim(),
+    theme_gradient: $('sh-theme').value.trim()||'linear-gradient(135deg,#7C3AFF,#4F6DFF)',
+    accent: $('sh-accent').value.trim()||'#7C3AFF',
+    surfaces: surfaces.length?surfaces:['all'],
+    position: $('sh-pos').value,
+    intent_min: Number($('sh-imin').value)||0,
+    intent_max: Number($('sh-imax').value)??100,
+    min_dwell_s: Number($('sh-dwell').value)||0,
+    min_scroll_pct: Number($('sh-scroll').value)||0,
+    reading_modes: modes.length?modes:['skim','scan','browse','read'],
+    device: $('sh-device').value,
+    keywords: kws,
+    max_per_session: Number($('sh-cap').value)||1,
+    cooldown_s: Number($('sh-cd').value)||90,
+    dwell_show_s: Number($('sh-show').value)||7,
+    budget: Number($('sh-budget').value)||null,
+    start_date: $('sh-start').value||null,
+    end_date: $('sh-end').value||null,
+    updated_at: new Date().toISOString()
+  };
+}
+
+async function saveShadow(){
+  const row = collectShadow();
+  if(!row.advertiser) return toast('Advertiser name is required','bad');
+  if(!row.surfaces.length) return toast('Pick at least one surface','bad');
+
+  const r = SH_EDIT
+    ? await AD.write('shadow_ads', t=>t.update(row).eq('id', SH_EDIT))
+    : await AD.write('shadow_ads', t=>t.insert({...row, created_at:new Date().toISOString()}));
+
+  if(r.ok){
+    await AD.audit(SH_EDIT?'shadow.update':'shadow.create', {type:'shadow_ad', id:SH_EDIT}, {advertiser:row.advertiser, surfaces:row.surfaces});
+    toast('Shadow ad saved','ok'); closeShadow(); refresh();
+  } else toast(r.error,'bad');
+}
+
+async function toggleShadow(id, st){
+  const next = st==='live' ? 'paused' : 'live';
+  const r = await AD.write('shadow_ads', t=>t.update({status:next, active:next==='live'}).eq('id',id));
+  r.ok ? (toast(`Shadow ad ${next}`,'ok'), refresh()) : toast(r.error,'bad');
+}
+function deleteShadow(id){
+  confirmAct('Delete shadow ad','This removes it from every surface immediately.', false, async ()=>{
+    await AD.audit('shadow.delete', {type:'shadow_ad', id});
+    const r = await AD.write('shadow_ads', t=>t.delete().eq('id',id));
+    r.ok ? (toast('Shadow ad deleted','ok'), refresh()) : toast(r.error,'bad');
+  });
+}
+
+/* Preview the current creative live in a new tab on a matching surface. */
+function previewShadowLive(){
+  const row = collectShadow();
+  const surf = (row.surfaces[0] && row.surfaces[0]!=='all') ? row.surfaces[0] : 'shopping';
+  const page = surf==='index'?'index':surf;
+  const url = `/${page==='apartments'?'apartments':page}.html?shadow_preview=${encodeURIComponent(JSON.stringify({
+    advertiser:row.advertiser, headline:row.headline, sub_text:row.sub_text,
+    cta_text:row.cta_text, cta_url:row.cta_url, media_url:row.media_url, media_type:row.media_type,
+    theme_gradient:row.theme_gradient, accent:row.accent, position:row.position
+  }))}`;
+  window.open(url, '_blank', 'noopener');
+}
+
+/* ════════════════════════════════════════════════════════════════
+   CUSTOMER DATA — first-party visitors & the shadow ads they saw
+   ════════════════════════════════════════════════════════════════ */
+function renderCustomers(){
+  const sessions = (SNAP && SNAP.sessions) ? SNAP.sessions : [];
+  // Collapse sessions to unique visitors.
+  const byVisitor = {};
+  sessions.forEach(s=>{
+    const v = s.visitor_id || s.visitorId || 'unknown';
+    if(!byVisitor[v]) byVisitor[v] = { id:v, sessions:0, intent:0, mode:'—', device:s.device||'—', adsSeen:0, clicks:0, last:s.captured_at||s.created_at };
+    const o = byVisitor[v];
+    o.sessions++;
+    o.intent = Math.max(o.intent, +s.intent_score||0);
+    if(s.reading_mode) o.mode = s.reading_mode;
+    if(s.device) o.device = s.device;
+    o.adsSeen += (+s.ads_viewable||0);
+    o.clicks += (+s.ads_clicked||0);
+    if(s.captured_at && (!o.last || s.captured_at>o.last)) o.last = s.captured_at;
+  });
+  const visitors = Object.values(byVisitor).sort((a,b)=>b.intent-a.intent);
+
+  const totalV = visitors.length;
+  const hot = visitors.filter(v=>v.intent>=72).length;
+  const avgIntent = totalV ? Math.round(visitors.reduce((s,v)=>s+v.intent,0)/totalV) : 0;
+  const withAds = visitors.filter(v=>v.adsSeen>0).length;
+
+  $('cu-stats').innerHTML = [
+    stat('Known visitors', F.num(totalV), 'first-party, this window'),
+    stat('Hot intent', F.num(hot), 'purchase-ready', hot?'gold':''),
+    stat('Avg intent', avgIntent, 'across all visitors', 'calm'),
+    stat('Reached by shadow', F.num(withAds), 'saw ≥1 shadow ad')
+  ].join('');
+
+  $('cu-rows').innerHTML = visitors.slice(0,200).map(v=>`
+    <tr>
+      <td class="mono" style="font-size:11px">${esc(String(v.id).slice(0,16))}</td>
+      <td style="text-transform:capitalize">${esc(v.device)}</td>
+      <td class="num">${F.num(v.sessions)}</td>
+      <td class="num"><span class="pill ${v.intent>=72?'p-ok':v.intent>=45?'p-info':'p-mute'}" style="font-size:10px">${v.intent}</span></td>
+      <td style="text-transform:capitalize">${esc(v.mode)}</td>
+      <td class="num">${F.num(v.adsSeen)}</td>
+      <td class="num">${F.num(v.clicks)}</td>
+      <td style="font-size:11px;color:var(--ink-3,#8b8ba0)">${v.last?F.ago(v.last):'—'}</td>
+    </tr>`).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--ink-3,#8b8ba0);padding:20px">No visitor data yet. It populates as guests browse.</td></tr>';
+}
+
+function exportCustomers(){
+  const sessions = (SNAP && SNAP.sessions) ? SNAP.sessions : [];
+  if(!sessions.length) return toast('No customer data to export','bad');
+  AD.download('apatmento-customers.csv', AD.toCSV(sessions));
+  toast('Customer data exported','ok');
+}
+
+
 
 /* ── slot inventory ──────────────────────────────────────────── */
 function renderSlots(){
