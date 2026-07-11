@@ -285,6 +285,8 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .seg button{background:none;border:0;color:var(--ink-4);font:inherit;font-size:12px;font-weight:600;
   padding:6px 12px;border-radius:7px;cursor:pointer;transition:background .15s,color .15s}
 .seg button.on{background:rgba(124,58,255,.2);color:#fff}
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;letter-spacing:.04em;
+  color:#2DD4BF;background:rgba(45,212,191,.1);border:1px solid rgba(45,212,191,.28);padding:5px 11px;border-radius:100px}
 
 .chk{display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;font-size:12.5px;color:var(--ink-2)}
 .chk input{accent-color:var(--violet);width:15px;height:15px;cursor:pointer}
@@ -433,6 +435,10 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
         <div class="nav-i" data-sec="uploads" onclick="go('uploads',this)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5M12 3v12"/></svg>
           Partner uploads <span class="nav-b warn" id="b-up">0</span>
+        </div>
+        <div class="nav-i" data-sec="splash" onclick="go('splash',this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+          Splash screen <span class="nav-b calm" id="b-splash">off</span>
         </div>
         <div class="nav-i" data-sec="trust" onclick="go('trust',this)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M20 13c0 5-3.5 7.5-8 9-4.5-1.5-8-4-8-9V6l8-3 8 3z"/><circle cx="12" cy="11" r="2.4"/></svg>
@@ -853,6 +859,83 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
       </section>
 
       <!-- ─── SYSTEM ─── -->
+      <!-- ─── SPLASH / INTERSTITIAL ─── -->
+      <section class="sec" id="s-splash">
+        <div class="hd">
+          <div><h1>Splash <em>screen</em></h1>
+          <p>A full-screen video or image that plays the instant someone lands on the homepage, then dismisses itself on a timer. No skip button. Silent video only. Leave it off and the site loads normally.</p></div>
+          <div class="hd-act">
+            <span class="badge" id="sp-live-badge" style="display:none">● LIVE</span>
+            <button class="btn btn-g btn-sm" onclick="loadSplash()">Refresh</button>
+          </div>
+        </div>
+
+        <div class="note warn" style="margin-bottom:18px">
+          Whatever you set here shows to <b>every first-time visitor</b> on the homepage. Video plays for the exact duration you choose; images always show for 3 seconds. Upload videos <b>with no audio</b> — playback is muted by design.
+        </div>
+
+        <div class="grid g2" style="align-items:start">
+          <!-- CONFIG -->
+          <div class="card">
+            <div class="card-t">Campaign</div>
+            <div class="card-s">Upload the media, set how long it runs, then publish.</div>
+
+            <div class="fld">
+              <label class="fld-l">Media file (video or image)</label>
+              <input type="file" id="sp-file" accept="video/mp4,video/webm,image/jpeg,image/png,image/webp,image/gif" class="inp" onchange="spPickFile(this)"/>
+              <div class="card-s" style="margin-top:7px;margin-bottom:0">MP4 / WebM video, or JPG / PNG / WebP / GIF image. Keep videos short and lightweight for a smooth load.</div>
+            </div>
+
+            <div class="fld" id="sp-dur-wrap">
+              <label class="fld-l">Video duration</label>
+              <div style="display:flex;gap:9px">
+                <input type="number" id="sp-dur-val" class="inp" min="1" value="15" style="flex:1" oninput="spSyncPreview()"/>
+                <select id="sp-dur-unit" class="inp" style="flex:1.2" onchange="spSyncPreview()">
+                  <option value="1000">Seconds</option>
+                  <option value="60000">Minutes</option>
+                </select>
+              </div>
+              <div class="card-s" style="margin-top:7px;margin-bottom:0">Images ignore this and always show for 3 seconds.</div>
+            </div>
+
+            <div class="fld">
+              <label class="fld-l">How often each visitor sees it</label>
+              <select id="sp-freq" class="inp">
+                <option value="once">Once per device (recommended)</option>
+                <option value="daily">Once every 24 hours</option>
+                <option value="always">Every single visit</option>
+              </select>
+            </div>
+
+            <div class="fld">
+              <label class="fld-l">Campaign name</label>
+              <input type="text" id="sp-campaign" class="inp" placeholder="e.g. worldcup-2026" maxlength="60"/>
+              <div class="card-s" style="margin-top:7px;margin-bottom:0">Change this whenever you want returning visitors to see a new splash again.</div>
+            </div>
+
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">
+              <button class="btn btn-p" id="sp-publish" onclick="publishSplash()">Publish &amp; go live</button>
+              <button class="btn btn-g" onclick="disableSplash()">Turn off</button>
+            </div>
+            <div class="gate-err" id="sp-msg" style="text-align:left"></div>
+          </div>
+
+          <!-- PREVIEW / STATUS -->
+          <div class="card">
+            <div class="card-t">Live preview</div>
+            <div class="card-s">Exactly what visitors will see, at phone aspect.</div>
+            <div id="sp-preview" style="position:relative;width:100%;max-width:280px;margin:0 auto 16px;aspect-ratio:9/16;background:var(--bg-2);border:1px solid var(--line-2);border-radius:16px;overflow:hidden;display:flex;align-items:center;justify-content:center">
+              <div class="card-s" style="margin:0;text-align:center;padding:20px" id="sp-preview-empty">No media selected</div>
+            </div>
+            <div class="note" id="sp-status">Loading current status…</div>
+            <div style="margin-top:12px;display:flex;gap:9px">
+              <button class="btn btn-g btn-sm" onclick="spTestPlay()">▶ Test on this screen</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
       <section class="sec" id="s-system">
         <div class="hd"><div><h1>Diagnostics</h1><p>The console renders with a half-broken database. Here is what did not respond.</p></div>
         <div class="hd-act"><button class="btn btn-g btn-sm" onclick="runSchemaCheck()">Re-check schema</button></div></div>
@@ -1174,6 +1257,7 @@ function go(sec, el){
   window.scrollTo({top:0, behavior:'instant'});
   if(sec==='audience'||sec==='ml'||sec==='slots') ensureAudience();
   if(sec==='agents') loadAgents();
+  if(sec==='splash') loadSplash();
 }
 function setRange(d, el){
   RANGE = d;
@@ -2574,6 +2658,245 @@ async function agExtend(id) {
     toast('Clock extended by 30 days.');
     loadAgents();
   } catch (e) { toast(e.message); }
+}
+
+/* ══ SPLASH / INTERSTITIAL ═══════════════════════════════════════
+   Config + media live in a PUBLIC storage bucket. The homepage engine
+   (apa-interstitial.js) reads splash.json from the same bucket. No
+   schema, no server function — just storage. */
+const SPLASH_BUCKET = 'interstitial';
+const SPLASH_CONFIG = 'splash.json';
+let SP_PENDING = null;   // { file, type, objectUrl } for a freshly picked, not-yet-published file
+
+function spPublicUrl(key){
+  const { data } = sb.storage.from(SPLASH_BUCKET).getPublicUrl(key);
+  return data?.publicUrl || '';
+}
+
+async function spEnsureBucket(){
+  try { await sb.storage.createBucket(SPLASH_BUCKET, { public:true, fileSizeLimit: 209715200 }); }
+  catch(e){ /* already exists — fine */ }
+}
+
+async function spFetchConfig(){
+  try{
+    const url = spPublicUrl(SPLASH_CONFIG) + '?t=' + Date.now();
+    const r = await fetch(url, { cache:'no-store' });
+    if(!r.ok) return null;
+    return await r.json();
+  }catch(e){ return null; }
+}
+
+function spKindOf(file){
+  if(!file) return null;
+  if(file.type.startsWith('video/')) return 'video';
+  if(file.type.startsWith('image/')) return 'image';
+  return null;
+}
+
+function spPickFile(input){
+  const file = input.files && input.files[0];
+  const msg = $('sp-msg'); msg.textContent = '';
+  if(!file){ return; }
+  const kind = spKindOf(file);
+  if(!kind){ msg.textContent = 'Unsupported file. Choose a video or image.'; input.value=''; return; }
+
+  // Soft size guidance — big videos load slowly on mobile.
+  if(kind==='video' && file.size > 60*1024*1024){
+    msg.style.color = 'var(--warn)';
+    msg.textContent = 'Heads up: this video is ' + (file.size/1048576).toFixed(0) + ' MB. Under ~30 MB loads noticeably smoother on phones.';
+  } else {
+    msg.style.color = '';
+    msg.textContent = '';
+  }
+
+  if(SP_PENDING?.objectUrl) URL.revokeObjectURL(SP_PENDING.objectUrl);
+  SP_PENDING = { file, type: kind, objectUrl: URL.createObjectURL(file) };
+
+  // Show/hide duration control based on type
+  $('sp-dur-wrap').style.display = kind==='video' ? 'block' : 'none';
+  spRenderPreview(SP_PENDING.objectUrl, kind);
+}
+
+function spRenderPreview(url, kind){
+  const box = $('sp-preview');
+  if(!url){
+    box.innerHTML = '<div class="card-s" id="sp-preview-empty" style="margin:0;text-align:center;padding:20px">No media selected</div>';
+    return;
+  }
+  if(kind==='video'){
+    box.innerHTML = '<video src="'+esc(url)+'" muted autoplay loop playsinline '
+      + 'style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"></video>';
+  } else {
+    box.innerHTML = '<img src="'+esc(url)+'" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"/>';
+  }
+}
+
+function spDurationMs(){
+  const val = Math.max(1, parseInt($('sp-dur-val').value,10) || 15);
+  const unit = parseInt($('sp-dur-unit').value,10) || 1000;
+  return val * unit;
+}
+
+function spSyncPreview(){ /* reserved: could show computed duration; kept for future */ }
+
+async function loadSplash(){
+  await spEnsureBucket();
+  const cfg = await spFetchConfig();
+  const status = $('sp-status');
+  const badge = $('sp-live-badge');
+  const navB = $('b-splash');
+
+  if(cfg && cfg.active){
+    badge.style.display = 'inline-flex';
+    if(navB){ navB.textContent = 'on'; navB.className = 'nav-b'; }
+    const dur = cfg.type==='image' ? '3s' : spHuman(cfg.durationMs);
+    const freqTxt = { once:'once per device', daily:'once per day', always:'every visit' }[cfg.frequency] || cfg.frequency;
+    status.className = 'note';
+    status.innerHTML = '<b style="color:var(--ok)">Live now.</b> A '+esc(cfg.type)+' is playing for <b>'+esc(dur)
+      + '</b>, shown <b>'+esc(freqTxt)+'</b>. Campaign: <b>'+esc(cfg.campaign||'—')+'</b>.';
+    // Populate the form to reflect current state (unless a new file is staged)
+    if(!SP_PENDING){
+      $('sp-freq').value = ['once','daily','always'].includes(cfg.frequency) ? cfg.frequency : 'once';
+      $('sp-campaign').value = cfg.campaign || '';
+      if(cfg.type==='video'){
+        $('sp-dur-wrap').style.display='block';
+        const ms = cfg.durationMs||15000;
+        if(ms % 60000 === 0){ $('sp-dur-unit').value='60000'; $('sp-dur-val').value = ms/60000; }
+        else { $('sp-dur-unit').value='1000'; $('sp-dur-val').value = Math.round(ms/1000); }
+      } else {
+        $('sp-dur-wrap').style.display='none';
+      }
+      spRenderPreview(cfg.url, cfg.type);
+    }
+  } else {
+    badge.style.display = 'none';
+    if(navB){ navB.textContent = 'off'; navB.className = 'nav-b calm'; }
+    status.className = 'note';
+    status.innerHTML = 'Splash is <b>off</b>. The homepage loads normally. Upload media and publish to turn it on.';
+    if(!SP_PENDING) spRenderPreview('', null);
+  }
+}
+
+function spHuman(ms){
+  ms = ms|0;
+  if(ms >= 60000 && ms % 60000 === 0) return (ms/60000) + (ms===60000?' minute':' minutes');
+  if(ms >= 60000){ const m=Math.floor(ms/60000), s=Math.round((ms%60000)/1000); return m+'m '+s+'s'; }
+  return Math.round(ms/1000) + 's';
+}
+
+async function publishSplash(){
+  const msg = $('sp-msg'); msg.style.color=''; msg.textContent='';
+  const btn = $('sp-publish');
+
+  const cfgNow = await spFetchConfig();
+  const haveExisting = cfgNow && cfgNow.active && cfgNow.url;
+
+  if(!SP_PENDING && !haveExisting){
+    msg.style.color='var(--bad)';
+    msg.textContent = 'Choose a video or image first.';
+    return;
+  }
+
+  const campaign = ($('sp-campaign').value.trim() || ('campaign-'+Date.now())).toLowerCase().replace(/[^a-z0-9\-_]/g,'-');
+  const freq = $('sp-freq').value;
+
+  btn.disabled = true; const orig = btn.textContent; btn.textContent = 'Publishing…';
+
+  try{
+    await spEnsureBucket();
+    let url, type;
+
+    if(SP_PENDING){
+      type = SP_PENDING.type;
+      const ext = (SP_PENDING.file.name.split('.').pop() || (type==='video'?'mp4':'jpg')).toLowerCase();
+      // Unique key per publish so caches never serve a stale clip.
+      const key = 'media/' + campaign + '-' + Date.now() + '.' + ext;
+      btn.textContent = 'Uploading media…';
+      const { error: upErr } = await sb.storage.from(SPLASH_BUCKET).upload(key, SP_PENDING.file, {
+        upsert: true, contentType: SP_PENDING.file.type, cacheControl: '31536000'
+      });
+      if(upErr) throw upErr;
+      url = spPublicUrl(key);
+    } else {
+      // Re-publishing existing media with new settings
+      type = cfgNow.type; url = cfgNow.url;
+    }
+
+    const config = {
+      active: true,
+      type,
+      url,
+      durationMs: type==='video' ? spDurationMs() : 3000,
+      frequency: freq,
+      campaign,
+      updatedAt: Date.now()
+    };
+
+    btn.textContent = 'Saving config…';
+    const blob = new Blob([JSON.stringify(config, null, 2)], { type:'application/json' });
+    const { error: cfgErr } = await sb.storage.from(SPLASH_BUCKET).upload(SPLASH_CONFIG, blob, {
+      upsert: true, contentType:'application/json', cacheControl:'0'
+    });
+    if(cfgErr) throw cfgErr;
+
+    // Clean up staged file
+    if(SP_PENDING?.objectUrl) URL.revokeObjectURL(SP_PENDING.objectUrl);
+    SP_PENDING = null;
+
+    toast('Splash is live.', 'ok');
+    await loadSplash();
+  }catch(e){
+    console.error(e);
+    msg.style.color='var(--bad)';
+    msg.textContent = 'Publish failed: ' + (e.message || e);
+  }finally{
+    btn.disabled = false; btn.textContent = orig;
+  }
+}
+
+async function disableSplash(){
+  if(!confirm('Turn the splash screen off? The homepage will load normally for everyone.')) return;
+  try{
+    await spEnsureBucket();
+    const config = { active:false, updatedAt: Date.now() };
+    const blob = new Blob([JSON.stringify(config, null, 2)], { type:'application/json' });
+    const { error } = await sb.storage.from(SPLASH_BUCKET).upload(SPLASH_CONFIG, blob, {
+      upsert:true, contentType:'application/json', cacheControl:'0'
+    });
+    if(error) throw error;
+    toast('Splash turned off.', 'ok');
+    await loadSplash();
+  }catch(e){
+    toast('Could not turn off: ' + (e.message||e), 'bad');
+  }
+}
+
+/* Full-screen test on the operator's own screen — same feel as production. */
+function spTestPlay(){
+  let url, type, durMs;
+  if(SP_PENDING){ url = SP_PENDING.objectUrl; type = SP_PENDING.type; durMs = spDurationMs(); }
+  else {
+    const img = $('sp-preview').querySelector('img,video');
+    if(!img){ toast('Nothing to test — pick or publish media first.'); return; }
+    url = img.getAttribute('src'); type = img.tagName==='VIDEO'?'video':'image'; durMs = spDurationMs();
+  }
+  const ms = type==='image' ? 3000 : Math.max(1000, durMs);
+
+  const cover = document.createElement('div');
+  cover.style.cssText = 'position:fixed;inset:0;z-index:2147483600;background:#0A0A14;';
+  const media = type==='video'
+    ? `<video src="${esc(url)}" muted autoplay playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"></video>`
+    : `<img src="${esc(url)}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"/>`;
+  cover.innerHTML = media
+    + '<div style="position:absolute;left:0;bottom:0;height:3px;width:0;background:linear-gradient(90deg,#7B2FF7,#5EEAD4);box-shadow:0 0 12px rgba(123,47,247,.6)" id="sp-test-bar"></div>'
+    + '<div style="position:absolute;left:50%;bottom:22px;transform:translateX(-50%);font:600 11px/1 system-ui;letter-spacing:.18em;color:rgba(255,255,255,.55);text-transform:uppercase">APATMENTO · PREVIEW</div>';
+  document.body.appendChild(cover);
+
+  const bar = cover.querySelector('#sp-test-bar');
+  const start = Date.now();
+  (function tick(){ const p=Math.min(100,((Date.now()-start)/ms)*100); bar.style.width=p+'%'; if(p<100 && cover.parentNode) requestAnimationFrame(tick); })();
+  setTimeout(()=>{ cover.style.transition='opacity .4s'; cover.style.opacity='0'; setTimeout(()=>cover.remove(),420); }, ms);
 }
 
 </script>
