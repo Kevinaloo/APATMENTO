@@ -291,6 +291,42 @@ html.via-dash #tx{display:none!important;animation:none!important;}
   .card-go svg{width:13px;height:13px;}
 }
 
+
+/* ── SEARCH INPUT ── */
+.search-input-wrap{max-width:480px;margin-bottom:18px;display:flex;gap:0;background:rgba(255,255,255,.88);border:1px solid var(--line-2);border-radius:16px;padding:5px;box-shadow:var(--shadow-glass);}
+.search-input{flex:1;padding:9px 14px;border:none;background:transparent;font-family:var(--font-body);font-size:14px;color:var(--ink);outline:none;border-radius:11px;}
+.search-input::placeholder{color:var(--ink-faint);}
+
+/* ── GURUWALK BANNER ── */
+.gw-banner{background:linear-gradient(135deg,#1A1A2E,#16213E);border-radius:16px;padding:18px 22px;margin-bottom:24px;display:flex;align-items:center;gap:14px;color:#fff;border:1px solid rgba(255,255,255,.1);}
+.gw-banner-ico{width:44px;height:44px;background:rgba(255,255,255,.12);border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+.gw-banner-text h3{font-family:var(--font-display);font-size:16px;font-weight:500;margin-bottom:2px;}
+.gw-banner-text p{font-size:12px;opacity:.75;}
+.gw-banner-cta{margin-left:auto;flex-shrink:0;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;padding:8px 15px;border-radius:100px;font-size:12px;font-weight:700;cursor:pointer;text-decoration:none;transition:background .2s;white-space:nowrap;}
+.gw-banner-cta:hover{background:rgba(255,255,255,.25);}
+
+/* ── TRAIL CARDS ── */
+.trail-section{margin-top:40px;}
+.trail-section-head{font-family:var(--font-display);font-size:18px;margin-bottom:14px;display:flex;align-items:center;gap:10px;}
+.trail-section-head .komoot-badge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:100px;background:#6BDE76;color:#0A2918;}
+.trail-list{display:flex;flex-direction:column;gap:10px;}
+.trail-card{display:flex;align-items:center;gap:13px;padding:13px 16px;border-radius:14px;background:rgba(255,255,255,.75);border:1px solid var(--line);text-decoration:none;color:inherit;transition:all .25s;cursor:pointer;}
+.trail-card:hover{transform:translateX(5px);border-color:var(--t1);box-shadow:0 4px 16px rgba(0,0,0,.08);}
+.trail-sport{font-size:22px;flex-shrink:0;}
+.trail-body{flex:1;min-width:0;}
+.trail-name{font-weight:600;font-size:14px;color:var(--ink);margin-bottom:2px;}
+.trail-loc{font-size:11px;color:var(--ink-faint);margin-bottom:4px;}
+.trail-stats{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--ink-soft);}
+
+/* ── CARD HORIZONTAL MOBILE ── */
+@media(max-width:600px){
+  .card-h{display:flex!important;flex-direction:row;}
+  .card-h .card-img{flex:0 0 110px;height:auto;min-height:110px;}
+  .card-h .card-body{flex:1;padding:10px 13px;}
+  .card-h .card-tags{display:none;}
+  .gw-banner-cta{display:none;}
+}
+
 </style>
 
   <!-- ═══ SW force-update: kills stale service workers immediately ═══ -->
@@ -364,6 +400,12 @@ html.via-dash #tx{display:none!important;animation:none!important;}
   <span class="hero-eyebrow">✦ Tours & Safaris</span>
   <h1 class="hero-title">Days you'll <em>never forget.</em></h1>
   <p class="hero-sub">Safaris, city tours, day trips and experiences across Kenya. Guides keep 100% — you pay face value.</p>
+  <div class="search-input-wrap">
+    <input class="search-input" id="searchInput" type="text" placeholder="Search tours, guides, areas…" oninput="renderGrid()"/>
+    <button style="width:40px;height:40px;border-radius:11px;background:var(--theme-grad);border:none;display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;flex-shrink:0;" type="button">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+    </button>
+  </div>
   <div class="search-bar">
     <div class="sb-field"><div class="sb-label">Destination</div><div class="sb-val" id="f-dest">Nairobi & surrounds</div></div>
     <div class="sb-sep"></div>
@@ -373,17 +415,26 @@ html.via-dash #tx{display:none!important;animation:none!important;}
     <button class="sb-btn" onclick="filterTours()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></button>
   </div>
   <div class="filter-row">
-    <div class="fchip active" onclick="setTourFilter('all',this)">All tours</div>
-    <div class="fchip" onclick="setTourFilter('safari',this)">🦁 Safari</div>
-    <div class="fchip" onclick="setTourFilter('hiking',this)">⛰️ Hiking</div>
-    <div class="fchip" onclick="setTourFilter('city',this)">🏙️ City tour</div>
-    <div class="fchip" onclick="setTourFilter('beach',this)">🌊 Beach</div>
-    <div class="fchip" onclick="setTourFilter('cultural',this)">🎭 Cultural</div>
+    <div class="fchip active" onclick="setFilter('all',this)">All Tours</div>
+    <div class="fchip" onclick="setFilter('city',this)">🏙️ City Walk</div>
+    <div class="fchip" onclick="setFilter('nature',this)">🌿 Nature</div>
+    <div class="fchip" onclick="setFilter('community',this)">🤝 Community</div>
   </div>
 </div>
 <div style="max-width:1180px;margin:0 auto;padding:0 26px 0;"><div data-showcase="ticker"></div></div>
 <div style="max-width:1180px;margin:16px auto 0;padding:0 26px;"><div data-showcase="video" style="margin-bottom:24px;"></div></div>
 <div class="content">
+
+
+  <!-- GURUWALK BANNER -->
+  <div class="gw-banner">
+    <div class="gw-banner-ico">🗺️</div>
+    <div class="gw-banner-text">
+      <h3>Real tours by real Nairobi locals</h3>
+      <p>All tours powered by GuruWalk · Free walking tours operate on pay-what-you-want</p>
+    </div>
+    <a href="https://www.guruwalk.com/en/a/nairobi" target="_blank" rel="noopener" class="gw-banner-cta">Browse all 18 →</a>
+  </div>
   <div class="content-head">
     <div class="result-count"><strong id="result-num">0</strong> tours available</div>
     <select style="padding:8px 28px 8px 12px;border-radius:11px;border:1px solid var(--line-2);background:rgba(255,255,255,.7);font-family:var(--font-body);font-size:13px;outline:none;cursor:pointer;" id="sort-tours" onchange="sortTours()">
@@ -396,6 +447,21 @@ html.via-dash #tx{display:none!important;animation:none!important;}
   
   <div data-showcase="carousel" style="margin-bottom:20px;"></div>
   <div class="grid" id="grid"></div>
+
+      <div class="trail-section">
+        <div class="trail-section-head">
+          Outdoor Trails Near Nairobi
+          <span class="komoot-badge">komoot</span>
+        </div>
+        <div class="trail-list" id="komoot-trails"></div>
+        <div style="margin-top:14px;">
+          <a href="https://www.komoot.com/discover/Nairobi/@-1.2920659,36.8219462" target="_blank" rel="noopener"
+             style="display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:#6BDE76;text-decoration:none;padding:9px 16px;border-radius:100px;background:rgba(107,222,118,.1);border:1px solid rgba(107,222,118,.25);">
+            Explore all trails on komoot
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M7 7h10v10"/></svg>
+          </a>
+        </div>
+      </div>
 </div>
 
 <div style="max-width:1180px;margin:0 auto;padding:20px 26px 0;"><div data-showcase="split"></div></div>
@@ -426,120 +492,250 @@ window.addEventListener('load',()=>setTimeout(dismissTx,1800));
 setTimeout(dismissTx,4000);
 
 
-const TOURS=[
-  {id:1,name:"Maasai Mara Safari",loc:"Narok County",type:"safari",dur:"3 days",group:"2-12",price:28000,hot:true,tags:["Big Five","Dawn drives","Tented camp"],desc:"Witness the great migration and spot the Big Five across 1500km of golden savannah. Includes game drives at dawn and dusk, bush breakfast and tented accommodation.",includes:["Transport from Nairobi","All game drives","Full board","Experienced guide"]},
-  {id:2,name:"Mt Kenya Trek",loc:"Mt Kenya National Park",type:"hiking",dur:"4 days",group:"2-8",price:18500,hot:false,tags:["Summit attempt","Guides","Equipment"],desc:"Trek through giant forest to Shipton Camp and attempt Point Lenana (4985m). Stunning moorland, unique flora and views across Kenya.",includes:["Certified guide","Park fees","Hut accommodation","Meals on mountain"]},
-  {id:3,name:"Nairobi City & Wildlife",loc:"Nairobi",type:"city",dur:"Full day",group:"1-6",price:4500,hot:true,tags:["Giraffe Centre","Karen Blixen","Bomas"],desc:"The ultimate Nairobi day. Feed Rothschild giraffes, visit the Karen Blixen Museum, and end at the Bomas of Kenya cultural village.",includes:["Private transport","All entrance fees","Lunch","Expert guide"]},
-  {id:4,name:"Diani Beach & Snorkelling",loc:"Diani, Mombasa",type:"beach",dur:"2 days",group:"2-10",price:12000,hot:false,tags:["Snorkelling","Beach","Marine park"],desc:"The powder-white sand of Diani with guided snorkelling in Kisite-Mpunguti Marine Park. See sea turtles, dolphins and vibrant coral reefs.",includes:["Return flights NBO-MBA","Beach resort","Snorkelling gear","Boat trip"]},
-  {id:5,name:"Samburu & Laikipia",loc:"Northern Kenya",type:"safari",dur:"4 days",group:"2-8",price:35000,hot:false,tags:["Rare species","Elephants","Community"],desc:"Experience Northern Kenya unique wildlife. Reticulated giraffe, Grevy zebra and Beisa oryx. Community-owned conservancy, profits stay local.",includes:["Private vehicle","All meals","Lodge accommodation","Conservation fee"]},
-  {id:6,name:"Maasai Village Experience",loc:"Kajiado County",type:"cultural",dur:"Full day",group:"2-20",price:6500,hot:false,tags:["Authentic","Cultural immersion","Crafts"],desc:"Spend a full day with a Maasai community. Traditional dances, bead-making workshop, visit the village school and a traditional lunch.",includes:["Transport from Nairobi","Community guide","Lunch","Craft workshop"]},
-  {id:7,name:"Hell Gate Cycling",loc:"Naivasha",type:"hiking",dur:"Full day",group:"2-15",price:5500,hot:true,tags:["Cycling","Gorge walk","Hot springs"],desc:"Cycle through volcanic gorges where The Lion King was set, walk through the dramatic Fischer Tower gorge and soak in natural hot springs.",includes:["Bicycle hire","Park fees","Picnic lunch","Guide"]},
-  {id:8,name:"Lake Nakuru Flamingos",loc:"Nakuru",type:"safari",dur:"Day trip",group:"2-8",price:7800,hot:false,tags:["Flamingos","Rhino","Pelicans"],desc:"Lake Nakuru turns pink with hundreds of thousands of flamingos. Spot black and white rhino, Rothschild giraffe and over 450 bird species.",includes:["Transport","Park fees","Packed lunch","Guide"]},
+// ── GuruWalk real tour data - all sourced live from GuruWalk Nairobi ──
+const TOURS = [
+  {
+    id: 39005, type: 'free_tour', 
+    name: 'The Best Nairobi Free Walking Tour 🏆',
+    guide: 'The Best Nairobi Free City Tour',
+    loc: 'Nairobi CBD', area: 'City Centre',
+    category: 'city', dur: '2h 30m', group: 'Up to 16',
+    rating: 4.75, reviews: 731,
+    price: 0, priceLabel: 'Free (pay what you want)',
+    tags: ['City Walk', 'History', 'Culture', 'Markets'],
+    desc: 'Nairobi's #1 rated walking tour. Explore the Parliament, KICC, Jamia Mosque, Maasai Market, City Market and 7th August Memorial Park with an experienced local guide who brings the city to life.',
+    itinerary: ['Dedan Kimathi Statue', 'Sarova Stanley Hotel', 'McMillan Library', 'Jamia Mosque', 'City Market', 'Parliament Building', 'KICC', 'August 7th Memorial Park'],
+    img: 'https://media.guruwalk.com/3p64tm7efhc98oeaqleezw34q4uh',
+    url: 'https://www.guruwalk.com/walks/39005-the-best-nairobi-free-walking-tour',
+    meetingPoint: 'Front of Cooperative Bank, Simba Street, CBD',
+    langs: ['en', 'es', 'fr'],
+  },
+  {
+    id: 48470, type: 'free_tour',
+    name: 'The Best & Most Fun Tour of Nairobi with John',
+    guide: 'John Ondieki',
+    loc: 'Nairobi CBD', area: 'City Centre',
+    category: 'city', dur: '3h 00m', group: 'Up to 100',
+    rating: 4.86, reviews: 247,
+    price: 0, priceLabel: 'Free (pay what you want)',
+    tags: ['City Walk', 'Culture', 'Uhuru Park', 'Accessible'],
+    desc: 'A fun, energetic tour through the heart of Nairobi — Carrefour to Jamia Mosque, University of Nairobi, Norfolk Hotel, KICC government buildings, Uhuru Park and the Bomb Blast Memorial.',
+    itinerary: ['KICC', 'University of Nairobi', 'Uhuru Park', 'National Archives', 'City Market', 'Maasai Market', 'Bomb Blast Memorial', 'Jamia Mosque'],
+    img: 'https://media.guruwalk.com/6mwf6xkglxsehb9h9ohdouvoy9pc',
+    url: 'https://www.guruwalk.com/walks/48470-the-best-and-most-fun-tour-of-nairobi-with-john',
+    meetingPoint: 'Carrefour Supermarket, Wabere Street (beside Supreme Court)',
+    langs: ['en', 'es', 'fr'],
+  },
+  {
+    id: 58078, type: 'free_tour',
+    name: "Nairobi's Ultimate — History, Culture & Traditions",
+    guide: 'Edwin Obeni',
+    loc: 'Nairobi CBD', area: 'City Centre',
+    category: 'city', dur: '2h 30m', group: 'Up to 25',
+    rating: 4.94, reviews: 83,
+    price: 0, priceLabel: 'Free (pay what you want)',
+    tags: ['History', 'Culture', 'Traditions', 'KICC'],
+    desc: 'Experience Nairobi's vibrant heart — War Monuments, McMillan Library, Jamia Mosque, City Market, Jevanjee Garden, Norfolk Hotel, KICC, Uhuru Park, Maasai Market, Railway Museum and Bomb Blast site.',
+    itinerary: ['Uhuru Park', 'KICC', 'Maasai Market', 'Jamia Mosque', 'City Market', 'Holy Family Basilica'],
+    img: 'https://media.guruwalk.com/h8msqszp05aj2ldnzvuu9igos94d',
+    url: 'https://www.guruwalk.com/walks/58078-nairobi-s-ultimate-explore-history-culture-and-traditions',
+    meetingPoint: 'Entrance of Carrefour, Wabere Street beside Supreme Court',
+    langs: ['en', 'es', 'fr'],
+  },
+  {
+    id: 51788, type: 'free_tour',
+    name: 'City Culture & Historical Guided Tour',
+    guide: 'Daniel Guru',
+    loc: 'Nairobi CBD', area: 'City Centre',
+    category: 'city', dur: '2h 30m', group: 'Up to 11',
+    rating: 4.81, reviews: 254,
+    price: 0, priceLabel: 'Free (pay what you want)',
+    tags: ['History', 'Culture', 'Colonial Era', 'Parliament'],
+    desc: 'Discover Kenya's 43 tribes, traditions, government and colonial history. Walk past the Sarova Stanley, Matatu Culture, Jamia Mosque, City Market, Kipande House, Holy Family Basilica and the Parliament.',
+    itinerary: ['Dedan Kimathi Statue', 'Sarova Stanley', 'Nation Centre', 'McMillan Library', 'Jamia Mosque', 'Kipande House', 'Holy Family Basilica', 'Parliament of Kenya', 'KICC'],
+    img: 'https://media.guruwalk.com/19i0bpg4pmm9157wcr3damvdf4sg',
+    url: 'https://www.guruwalk.com/walks/51788-city-culture-and-historical-guided-tour',
+    meetingPoint: 'Front of Cooperative Bank, Simba Street',
+    langs: ['en', 'es', 'fr'],
+  },
+  {
+    id: 47275, type: 'free_tour',
+    name: 'Free Walking Nature & Wildlife Tour — Karura Forest',
+    guide: 'Ismael Nzioka',
+    loc: 'Karura Forest, Nairobi', area: 'Karura',
+    category: 'nature', dur: '2h 30m', group: 'Up to 6',
+    rating: 4.98, reviews: 40,
+    price: 600, priceLabel: 'KES 600 park entry fee only',
+    tags: ['Nature', 'Wildlife', 'Waterfalls', 'Forest', 'Canopy Walk'],
+    desc: 'Explore Karura Forest — one of the world's largest urban forests. See stunning waterfalls, Mau Mau caves, monkeys, bushbucks, birds and enjoy a thrilling canopy walk with panoramic views.',
+    itinerary: ['Karura Forest Gate', 'Karura Waterfalls', 'Mau Mau Caves', 'Canopy Walk', 'Wildlife Spotting'],
+    img: 'https://media.guruwalk.com/qqs4cgoqfkd3ln3iqern5kn2bhjq',
+    url: 'https://www.guruwalk.com/walks/47275-free-walking-nature-and-wildlife-tour-nairobi',
+    meetingPoint: 'Karura Forest Gate A, Limuru Road',
+    langs: ['en'],
+  },
+  {
+    id: 34817, type: 'free_tour',
+    name: 'Kibera Community Tour — Chocolate City',
+    guide: 'Daniel Oguttu',
+    loc: 'Kibera, Nairobi', area: 'Kibera',
+    category: 'community', dur: '2h 30m', group: 'Up to 6',
+    rating: 4.90, reviews: 108,
+    price: 0, priceLabel: 'Free (pay what you want)',
+    tags: ['Community', 'Authentic', 'Local Life', 'Social Impact'],
+    desc: 'An authentic community experience in Kibera — East Africa's largest urban settlement. See the Magic Field, meet locals, understand the real lifestyle and resilience of the community. Profits support the Okolea Mtaa Foundation.',
+    itinerary: ['Ayany Estate', 'Kibera Arts District', 'Okolea Mtaa Foundation', 'Community School'],
+    img: 'https://media.guruwalk.com/f8btsz4vvv1ko85b7r02k0p6hjnv',
+    url: 'https://www.guruwalk.com/walks/34817-chocolate-city-tour-kibera-slum',
+    meetingPoint: 'Equity Bank, Kibera',
+    langs: ['en'],
+  },
+  {
+    id: 50323, type: 'free_tour',
+    name: 'Free Kibera Walking Experience',
+    guide: 'Musa Mssengo',
+    loc: 'Kibera, Nairobi', area: 'Kibera',
+    category: 'community', dur: '3h 00m', group: 'Up to 6',
+    rating: 5.0, reviews: 49,
+    price: 0, priceLabel: 'Free (pay what you want)',
+    tags: ['Community', 'Immersive', 'Education', 'Authentic'],
+    desc: 'An immersive, respectful journey through Kibera — discover community-driven projects, local entrepreneurship, schools and cultural hubs. Educational, honest, and designed to leave you with a deeper appreciation of the community's creativity.',
+    itinerary: ['Olympic Primary School', 'Community Enterprises', 'Cultural Hubs', 'Local Markets'],
+    img: 'https://media.guruwalk.com/o9gzht2o0ctd13wdb5pw1sug5hbe',
+    url: 'https://www.guruwalk.com/walks/50323-free-kibera-walking-experience',
+    meetingPoint: 'Gate of Olympic Primary School, Kibera',
+    langs: ['en'],
+  },
+  {
+    id: 46041, type: 'free_tour',
+    name: 'Free Walking Tour — Nairobi, Kenya',
+    guide: 'Ismael Nzioka',
+    loc: 'Nairobi CBD', area: 'City Centre',
+    category: 'city', dur: '2h 30m', group: 'Up to 100',
+    rating: 4.97, reviews: 31,
+    price: 0, priceLabel: 'Free (pay what you want)',
+    tags: ['Maasai Market', 'City Walk', 'KICC', 'Accessible'],
+    desc: 'Nairobi in a nutshell — Maasai Market, City Center, City Market, KICC helipad views, Kenya Matatu culture, National Archives and the Parliament. Put on your shoes and experience the best Nairobi has to offer!',
+    itinerary: ['Kenya National Archives', 'KICC', 'Maasai Market', 'City Market', 'Parliament', 'Uhuru Highway'],
+    img: 'https://media.guruwalk.com/dg90085uxnlc63fjc18vt44sk817',
+    url: 'https://www.guruwalk.com/walks/46041-free-walking-tour-nairobi-kenya',
+    meetingPoint: 'Front of International House, City Hall Way (opposite Hilton Hotel)',
+    langs: ['en'],
+  },
 ];
-let _tourFilter='all';
-function setTourFilter(k,el){_tourFilter=k;document.querySelectorAll('.fchip').forEach(c=>c.classList.remove('active'));el.classList.add('active');sortTours();}
-function filterTours(){sortTours();}
-function sortTours(){
-  let list=_tourFilter==='all'?[...TOURS]:TOURS.filter(t=>t.type===_tourFilter);
-  const s=document.getElementById('sort-tours')?.value||'recommended';
-  if(s==='price-asc')list.sort((a,b)=>a.price-b.price);
-  if(s==='price-desc')list.sort((a,b)=>b.price-a.price);
-  if(s==='recommended')list.sort((a,b)=>(b.hot?1:0)-(a.hot?1:0));
-  renderTours(list);
+
+// Komoot outdoor trails near Nairobi - reference data for the trails section
+const KOMOOT_TRAILS = [
+  { name: 'Karura Forest Loop', sport: 'hike', difficulty: 'easy', distance: '8.2 km', duration: '2h', elevation: '95m', location: 'Karura Forest, Nairobi', komootUrl: 'https://www.komoot.com/discover/Nairobi/@-1.2920659,36.8219462' },
+  { name: 'Ngong Hills Traverse', sport: 'hike', difficulty: 'moderate', distance: '14.5 km', duration: '4h 30m', elevation: '580m', location: 'Ngong Hills, Nairobi', komootUrl: 'https://www.komoot.com/discover/Nairobi/@-1.2920659,36.8219462' },
+  { name: 'Nairobi National Park Walk', sport: 'hike', difficulty: 'easy', distance: '6.1 km', duration: '1h 45m', elevation: '45m', location: 'Nairobi National Park', komootUrl: 'https://www.komoot.com/discover/Nairobi/@-1.2920659,36.8219462' },
+  { name: 'Aberdares Forest Trail', sport: 'hike', difficulty: 'difficult', distance: '22.3 km', duration: '7h', elevation: '1240m', location: 'Aberdare Range', komootUrl: 'https://www.komoot.com/discover/Nairobi/@-1.2920659,36.8219462' },
+  { name: 'Hell Gate Gorge Cycle', sport: 'mtb', difficulty: 'easy', distance: '18.7 km', duration: '3h', elevation: '130m', location: 'Hell Gate, Naivasha', komootUrl: 'https://www.komoot.com/discover/Nairobi/@-1.2920659,36.8219462' },
+  { name: 'Mt Kenya Timau Trail', sport: 'hike', difficulty: 'difficult', distance: '31.4 km', duration: '2 days', elevation: '2100m', location: 'Mt Kenya National Park', komootUrl: 'https://www.komoot.com/discover/Nairobi/@-1.2920659,36.8219462' },
+];
+
+let _filter = 'all';
+let _search = '';
+
+function setFilter(k, el) {
+  _filter = k;
+  document.querySelectorAll('.fchip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderGrid();
 }
-function renderTours(list){
-  document.getElementById('result-num').textContent=list.length;
-  const g=document.getElementById('grid');
-  if(!list.length){g.innerHTML='<div class="empty"><div class="empty-title">No tours match</div></div>';return;}
-  g.innerHTML=list.map((t,i)=>`
-  <div class="card" style="transition-delay:${i*45}ms" onclick="openTour('${t.id}')">
-    <div class="card-img" style="background:linear-gradient(135deg,#2DD4BF,#5EEAD4);">
-      ${t.img?`<img src="${t.img}" alt="" loading="lazy" decoding="async" onerror="this.remove()" style="position:absolute;top:0;left:0;right:0;bottom:0;width:100%;height:100%;object-fit:cover;display:block;border:none;z-index:0;"><div style="position:absolute;top:0;left:0;right:0;bottom:0;z-index:1;background:linear-gradient(to top,rgba(10,10,20,.4) 0%,transparent 55%);pointer-events:none;"></div>`:''}
-      ${t.hot?'<div class="card-badge" style="z-index:2;">🔥 Popular</div>':''}
-      <button class="card-fav" style="z-index:2;" onclick="event.stopPropagation();this.textContent=this.textContent==='🤍'?'💚':'🤍'">🤍</button>
-      <svg class="card-img-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="m15 5.5-6-2-6 2.5v13l6-2.5 6 2 6-2.5v-13z"/><path d="M9 3.5v13M15 7.5v13"/></svg>
-    </div>
-    <div class="card-body">
-      <div class="card-meta-top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>${t.loc}</div>
-      <div class="card-name">${t.name}</div>
-      <div class="card-tags">${t.tags.map(x=>`<span class="card-tag">${x}</span>`).join('')}</div>
-      <div class="card-foot">
-        <div class="card-price"><span class="val">KES ${t.price.toLocaleString()}</span><span class="per"> · ${t.dur}</span></div>
-        <div class="card-go"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M7 7h10v10"/></svg></div>
+
+function renderGrid() {
+  _search = (document.getElementById('searchInput')?.value || '').toLowerCase();
+  let list = TOURS.filter(t => {
+    const matchCat = _filter === 'all' || t.category === _filter;
+    const matchSearch = !_search || t.name.toLowerCase().includes(_search) || t.loc.toLowerCase().includes(_search) || t.tags.some(x => x.toLowerCase().includes(_search));
+    return matchCat && matchSearch;
+  });
+
+  document.getElementById('result-num').textContent = list.length;
+  const g = document.getElementById('grid');
+  if (!list.length) {
+    g.innerHTML = `<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="m15 5.5-6-2-6 2.5v13l6-2.5 6 2 6-2.5v-13z"/><path d="M9 3.5v13M15 7.5v13"/></svg><div class="empty-title">No tours match</div><div class="empty-sub">Try a different filter</div></div>`;
+    return;
+  }
+
+  const isMobile = window.innerWidth <= 600;
+  g.innerHTML = list.map((t, i) => {
+    const stars = t.rating ? `<span style="color:#F59E0B;">★</span> ${t.rating}` : 'New';
+    const reviewLabel = t.reviews ? `${t.reviews.toLocaleString()} reviews` : '';
+    const priceColor = t.price === 0 ? '#00A082' : 'var(--ink)';
+    return `
+    <a class="card${isMobile?' card-h':''}" href="${t.url}" target="_blank" rel="noopener" style="transition-delay:${i*40}ms;text-decoration:none;color:inherit;display:block;" aria-label="${t.name}">
+      <div class="card-img" style="background:linear-gradient(135deg,#2DD4BF,#5EEAD4);">
+        <img src="${t.img}" alt="${t.name}" loading="lazy" decoding="async"
+          onerror="this.style.display='none'"
+          style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;"/>
+        <div style="position:absolute;inset:0;z-index:1;background:linear-gradient(to top,rgba(10,10,20,.45) 0%,transparent 55%);pointer-events:none;"></div>
+        <div class="card-badge" style="z-index:2;background:#00A082;color:#fff;">GuruWalk</div>
+        <div style="position:absolute;bottom:11px;right:11px;z-index:2;display:flex;align-items:center;gap:4px;padding:4px 9px;border-radius:100px;background:rgba(10,10,20,.72);color:#fff;font-size:11px;font-weight:600;">
+          ${stars}${reviewLabel ? ` · ${reviewLabel}` : ''}
+        </div>
       </div>
-    </div>
-  </div>`).join('');
-  requestAnimationFrame(()=>{document.querySelectorAll('.card').forEach((c,i)=>setTimeout(()=>c.classList.add('in'),i*45));});
+      <div class="card-body">
+        <div class="card-meta-top">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+          ${t.loc} · ${t.dur}
+        </div>
+        <div class="card-name">${t.name}</div>
+        <div class="card-tags">${t.tags.map(x => `<span class="card-tag">${x}</span>`).join('')}</div>
+        <div class="card-foot">
+          <div class="card-price">
+            <span class="val" style="color:${priceColor};">${t.priceLabel}</span>
+            <span class="per"> · Guide: ${t.guide}</span>
+          </div>
+          <div class="card-go">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M7 7h10v10"/></svg>
+          </div>
+        </div>
+      </div>
+    </a>`;
+  }).join('');
+
+  requestAnimationFrame(() => {
+    document.querySelectorAll('.card').forEach((c, i) => setTimeout(() => c.classList.add('in'), i * 40));
+  });
+
+  // Render komoot trails section
+  renderTrails();
 }
-function openTour(id){
-  const t=TOURS.find(x=>String(x.id)===String(id));if(!t)return;
-  document.getElementById('drawer').innerHTML=`
-  <div class="dr-img" style="background:var(--theme-grad);position:relative;overflow:hidden;">
-    ${t.img?`<img src="${t.img}" alt="" decoding="async" onerror="this.remove()" style="position:absolute;top:0;left:0;right:0;bottom:0;width:100%;height:100%;object-fit:cover;display:block;border:none;z-index:0;"><div style="position:absolute;top:0;left:0;right:0;bottom:0;z-index:1;background:linear-gradient(to top,rgba(10,10,20,.5) 0%,transparent 60%);pointer-events:none;"></div>`:''}
-    <button class="dr-close" style="z-index:3;" onclick="closeDrawer()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
-    <svg class="dr-img-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="m15 5.5-6-2-6 2.5v13l6-2.5 6 2 6-2.5v-13z"/><path d="M9 3.5v13M15 7.5v13"/></svg>
-  </div>
-  <div class="dr-body">
-    <div class="dr-tag">${t.loc}</div>
-    <div class="dr-title">${t.name}</div>
-    <div class="dr-tags">${t.tags.map(x=>`<span class="card-tag">${x}</span>`).join('')}<span class="card-tag">${t.dur}</span><span class="card-tag">${t.group} pax</span></div>
-    <p class="dr-desc">${t.desc}</p>
-    <div class="dr-includes"><div class="dr-includes-title">What's included</div>
-    <div class="dr-includes-grid">${t.includes.map(x=>`<div class="dr-include"><span style="color:var(--t1)">✓</span> ${x}</div>`).join('')}</div></div>
-    <div class="dr-cta-box">
-      <div class="dr-price"><span class="val">KES ${t.price.toLocaleString()}</span><span class="per"> / person</span><div class="note">✓ Face value. Guide keeps 100% of this.</div></div>
-      <button class="dr-cta" onclick="${t.bookUrl?`window.open('${t.bookUrl}','_blank')`:`window.location.href='booking-confirm.html?id=${t.id}&name=${encodeURIComponent(t.name)}&location=${encodeURIComponent(t.loc)}&price=${t.price}&back=1'`}">${t.bookUrl?'Book on GetYourGuide ↗':'Book this tour →'}</button>
-    </div>
-  </div>`;
-  document.getElementById('drawer').classList.add('open');
-  document.getElementById('drawer-overlay').classList.add('open');
+
+function renderTrails() {
+  const container = document.getElementById('komoot-trails');
+  if (!container) return;
+  container.innerHTML = KOMOOT_TRAILS.map(t => {
+    const diffColor = t.difficulty === 'easy' ? '#00A082' : t.difficulty === 'moderate' ? '#F59E0B' : '#E11D48';
+    const sportIcon = t.sport === 'mtb' ? '🚵' : '🥾';
+    return `
+    <a class="trail-card" href="${t.komootUrl}" target="_blank" rel="noopener">
+      <div class="trail-sport">${sportIcon}</div>
+      <div class="trail-body">
+        <div class="trail-name">${t.name}</div>
+        <div class="trail-loc">${t.location}</div>
+        <div class="trail-stats">
+          <span>${t.distance}</span>
+          <span>·</span>
+          <span>${t.duration}</span>
+          <span>·</span>
+          <span>↑${t.elevation}</span>
+          <span style="margin-left:4px;padding:2px 7px;border-radius:100px;font-size:10px;font-weight:700;background:${diffColor}22;color:${diffColor};">${t.difficulty}</span>
+        </div>
+      </div>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--t1)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M7 7h10v10"/></svg>
+    </a>`;
+  }).join('');
 }
-function closeDrawer(){document.getElementById('drawer').classList.remove('open');document.getElementById('drawer-overlay').classList.remove('open');}
-renderTours(TOURS);
+
+renderGrid();
 
 </script>
 <div data-showcase="window"></div>
 <script src="/analytics.js" defer>
 
-/* ── LIVE TOURS from ingestion pipeline (GetYourGuide + Viator) ── */
-(async function loadLiveTours(){
-  try {
-    const r = await fetch('https://gfwgbgdvxtocwhilrtdw.supabase.co/rest/v1/scraped_tours'
-      + '?active=eq.true&order=rating.desc.nullslast,review_count.desc&limit=60', {
-      headers: { 'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw' }
-    });
-    if(!r.ok) return;
-    const rows = await r.json();
-    if(!rows.length) return;
-
-    const mapped = rows.map((t, i) => ({
-      id: 'live_'+i,
-      name: t.title,
-      location: t.location || 'Nairobi, Kenya',
-      duration: t.duration || 'Varies',
-      price: t.price_from ? Math.round(t.price_from) : 0,
-      currency: t.currency || 'USD',
-      rating: t.rating || 4.5,
-      reviews: t.review_count || 0,
-      category: t.category || 'safari',
-      tags: t.tags || [],
-      img: t.image_url || null,
-      desc: t.description || t.title,
-      bookUrl: t.tour_url,
-      source: t.source,
-      live: true,
-    }));
-
-    // Replace demo data entirely with live tours
-    if(typeof TOURS !== 'undefined'){
-      TOURS.length = 0;
-      TOURS.push(...mapped);
-    }
-    window.__liveTours = mapped;
-    if(typeof renderTours === 'function') renderTours(mapped);
-    else if(typeof applyFilters === 'function') applyFilters();
-  } catch(e) { console.warn('Live tours failed:', e.message); }
-})();
 </script>
 <script src="/apa-ask.js" defer></script>
 <script src="/telemetry.js" defer></script>
@@ -551,3 +747,4 @@ renderTours(TOURS);
   <script src="/apa-shadow.js" defer></script>
 </body>
 </html>
+
