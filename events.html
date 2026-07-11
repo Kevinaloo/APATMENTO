@@ -445,9 +445,11 @@ function sortEvents(){
   renderEvents(list);
 }
 function renderEvents(list){
+  // Only show events with real display photos
+  list = list.filter(e => e.img && e.img.length > 10 && !e.img.includes('placeholder') && !e.img.includes('default'));
   document.getElementById('result-num').textContent=list.length;
   const g=document.getElementById('grid');
-  if(!list.length){g.innerHTML='<div class="empty"><div class="empty-title">'+(window.__evLoaded?'No events match — try another filter':'Loading live events…')+'</div></div>';return;}
+  if(!list.length){g.innerHTML='<div class="empty"><div class="empty-title">'+(window.__evLoaded?'No events with photos yet — check back soon':'Loading live events…')+'</div></div>';return;}
   const typeColor={music:'#7B2FF7',festival:'#FF6B2C',sports:'#4361FF',comedy:'#FFB59E',art:'#2DD4BF'};
   g.innerHTML=list.map((e,i)=>`
   <div class="card" style="transition-delay:${i*45}ms" onclick="openEvent('${e.id}')">
