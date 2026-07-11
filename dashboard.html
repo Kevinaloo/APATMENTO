@@ -239,13 +239,19 @@ body{overflow-x:hidden;}
 .svc-hero:hover .svc-hero-arrow{opacity:1;transform:translateX(3px);}
 .svc-hero-arrow{margin-top:10px;}
 @media(max-width:640px){
-  .svc-hero{min-height:106px;padding:14px 12px 12px;border-radius:16px;}
-  .svc-hero-name{font-size:15px;}
-  .svc-hero-sub{font-size:10px;}
-  .svc-hero-icon{width:64px!important;height:64px!important;border-radius:12px!important;}
-  .svc-hero-icon svg{width:20px;height:20px;}
+  .svc-featured-row{gap:10px;}
+  .svc-hero{min-height:auto;padding:14px 13px;border-radius:16px;}
+  .svc-hero-inner{flex-direction:column;align-items:flex-start;gap:10px;}
+  .svc-hero-icon{width:48px!important;height:48px!important;border-radius:12px!important;}
+  .svc-hero-icon svg{width:22px;height:22px;}
+  .svc-hero-icon img{width:100%;height:100%;object-fit:contain;}
+  .svc-hero-text{gap:4px;width:100%;}
+  .svc-hero-name{font-size:16px;line-height:1.1;}
+  .svc-hero-sub{font-size:11px;line-height:1.4;}
+  .svc-hero-badge{font-size:9px;padding:2px 7px;margin-top:1px;}
+  .svc-hero-arrow{margin-top:6px;}
 }
-@media(max-width:380px){.svc-featured-row{grid-template-columns:1fr;}}
+@media(max-width:380px){.svc-featured-row{grid-template-columns:1fr 1fr;}}
 
 /* ══ TOPBAR NAV MOBILE COMPRESSION ══ */
 @media(max-width:540px){

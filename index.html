@@ -423,9 +423,16 @@ body.intro-lock{overflow:hidden;height:100vh;}
 /* Installed already? Nothing to offer. */
 @media(display-mode:standalone){.hero-install{display:none !important;}}
 @media(max-width:560px){
-  .hero-cta-top{width:100%;}
-  .hero-cta-top .hero-portal-btn,.hero-cta-top .hero-install{flex:1 1 100%;}
-  .hero-install{justify-content:center;}
+  .hero-eyebrow{margin-bottom:18px;font-size:11px;padding:7px 14px;}
+  .hero-title{margin-bottom:18px;line-height:1.02;}
+  .hero-sub{margin-bottom:26px;font-size:15px;line-height:1.55;}
+  .hero-cta-top{width:100%;flex-direction:column;gap:11px;}
+  .hero-cta-top .hero-portal-btn{width:100%;padding:14px 24px;}
+  .hero-cta-top .hero-portal-btn .hpb-text{font-size:15px;}
+  .hero-cta-top .hero-install{width:100%;flex:1 1 100%;padding:14px 24px;justify-content:center;}
+  .hero-install.on{display:inline-flex;}
+  .hero-cta-pair{width:100%;}
+  .hero-cta-pair .hero-cta-ghost{flex:1;justify-content:center;text-align:center;padding:13px 18px;}
 }
 
 /* Hide auth links if signed in */
@@ -1179,7 +1186,6 @@ document.querySelectorAll('.svc-tile').forEach((t,i)=>{t.style.transitionDelay=(
   });
 })();
 </script>
-<script src="/apa-ask.js" defer></script>
 </body>
 </html>
 
