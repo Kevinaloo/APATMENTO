@@ -434,45 +434,106 @@ img,video,svg{max-width:100%;}
 
 /* ══ REBRAND INLINE ANNOUNCEMENT ══ */
 .drb-inline{
-  margin-bottom:26px;
-  padding-bottom:20px;
+  margin-top:56px;           /* clear the fixed EARN tab (top:72px, right:0) */
+  margin-bottom:30px;
+  padding-bottom:24px;
   border-bottom:1px solid rgba(10,10,20,.06);
+  text-align:center;         /* centre the whole block */
 }
 .drb-inline-title{
-  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
-  margin-bottom:8px;
+  display:flex;align-items:center;justify-content:center;
+  gap:12px;flex-wrap:wrap;
+  margin-bottom:12px;
 }
 .drb-i-apat{
-  font-family:var(--font-display);font-weight:800;
-  font-size:clamp(18px,5vw,32px);letter-spacing:.07em;line-height:1;
-  background:linear-gradient(120deg,#8B5CF6,#C3AEFA);
-  -webkit-background-clip:text;background-clip:text;color:transparent;
+  font-family:'Bricolage Grotesque',var(--font-display);font-weight:800;
+  font-size:clamp(22px,6vw,40px);letter-spacing:.04em;line-height:1;
+  background:linear-gradient(120deg,#8B5CF6,#C3AEFA 60%,#8B5CF6);
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:transparent;
 }
 .drb-i-now{
-  font-size:clamp(10px,2vw,12px);font-weight:700;
-  color:var(--ink-faint);letter-spacing:.12em;text-transform:uppercase;
-  padding:3px 9px;border-radius:100px;
-  background:rgba(10,10,20,.06);border:1px solid rgba(10,10,20,.1);
-  flex-shrink:0;
+  font-size:clamp(10px,2vw,13px);font-weight:700;
+  color:var(--ink-faint);letter-spacing:.14em;text-transform:uppercase;
+  padding:4px 11px;border-radius:100px;
+  background:rgba(10,10,20,.05);border:1px solid rgba(10,10,20,.1);
+  flex-shrink:0;transform:translateY(-2px);
 }
+
+/* ══ GLOWING CABANA — layered technique for a REAL glow ══
+   Base layer = solid warm-gradient fill.
+   ::before = blurred colour copy behind it → the halo/bloom.
+   ::after  = a moving specular sheen sweeping the letter edges. */
 .drb-i-cab{
-  font-family:var(--font-display);font-weight:800;
-  font-size:clamp(18px,5vw,32px);letter-spacing:.07em;line-height:1;
-  background:linear-gradient(120deg,#FF6A3C,#FFB347,#4EE0C8);
-  -webkit-background-clip:text;background-clip:text;color:transparent;
-  filter:drop-shadow(0 0 14px rgba(255,120,50,.45));
+  position:relative;display:inline-block;
+  font-family:'Bricolage Grotesque',var(--font-display);font-weight:800;
+  font-size:clamp(22px,6vw,40px);letter-spacing:.04em;line-height:1;
+  background:linear-gradient(120deg,#FF6A3C 0%,#FF3D8B 28%,#FFB347 55%,#4EE0C8 100%);
+  background-size:220% 100%;
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:transparent;
+  animation:cabHue 6s linear infinite;
+  isolation:isolate;
 }
+/* HALO — a blurred, brighter copy sitting behind, pulsing */
+.drb-i-cab::before{
+  content:attr(data-text);
+  position:absolute;inset:0;z-index:-1;
+  background:linear-gradient(120deg,#FF6A3C,#FF3D8B,#FFB347,#4EE0C8);
+  background-size:220% 100%;
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:transparent;
+  filter:blur(11px) saturate(1.7) brightness(1.35);
+  opacity:.85;
+  animation:cabHue 6s linear infinite,cabPulse 2.6s ease-in-out infinite;
+}
+/* SHEEN — a bright band sweeping across the letters, clipped to the glyphs */
+.drb-i-cab::after{
+  content:attr(data-text);
+  position:absolute;inset:0;z-index:1;
+  background:linear-gradient(105deg,
+    transparent 20%,
+    rgba(255,255,255,.15) 38%,
+    rgba(255,255,255,.95) 50%,
+    rgba(255,255,255,.15) 62%,
+    transparent 80%);
+  background-size:250% 100%;
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:transparent;
+  mix-blend-mode:screen;
+  animation:cabSheen 3.4s cubic-bezier(.5,0,.2,1) infinite;
+}
+@keyframes cabHue{
+  0%{background-position:0% 50%;}
+  100%{background-position:220% 50%;}
+}
+@keyframes cabPulse{
+  0%,100%{opacity:.62;filter:blur(10px) saturate(1.6) brightness(1.25);}
+  50%{opacity:.95;filter:blur(15px) saturate(1.9) brightness(1.5);}
+}
+@keyframes cabSheen{
+  0%{background-position:180% 0;}
+  55%,100%{background-position:-80% 0;}
+}
+@media(prefers-reduced-motion:reduce){
+  .drb-i-cab,.drb-i-cab::before,.drb-i-cab::after{animation:none;}
+  .drb-i-cab::before{opacity:.8;}
+}
+
 .drb-i-sub{
-  font-size:clamp(13px,2.5vw,15px);font-weight:600;
-  color:var(--ink-soft);letter-spacing:.02em;margin-bottom:4px;
+  font-family:'Bricolage Grotesque',var(--font-display);
+  font-size:clamp(13px,2.6vw,16px);font-weight:700;
+  color:var(--ink-soft);letter-spacing:.01em;margin-bottom:5px;
 }
 .drb-i-tagline{
-  font-size:clamp(12px,2vw,14px);font-style:italic;font-weight:400;
-  color:var(--ink-faint);
+  font-size:clamp(12px,2.1vw,14.5px);font-style:italic;font-weight:400;
+  color:var(--ink-faint);letter-spacing:.01em;
 }
 @media(max-width:460px){
-  .drb-inline-title{gap:7px;}
-  .drb-i-apat,.drb-i-cab{font-size:clamp(16px,6.5vw,26px);letter-spacing:.05em;}
+  .drb-inline{margin-top:52px;}
+  .drb-inline-title{gap:9px;}
+  .drb-i-apat,.drb-i-cab{font-size:clamp(19px,7vw,30px);letter-spacing:.03em;}
+  .drb-i-cab::before{filter:blur(8px) saturate(1.7) brightness(1.35);}
 }
 
 .greeting{margin-bottom:34px;opacity:0;animation:fadeUp .8s .1s forwards;}
@@ -732,7 +793,7 @@ img,video,svg{max-width:100%;}
     }
   </script>
 <link rel="stylesheet" href="/brand.css"/>
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="/cabana-ds.css"/>
 </head>
 <body>
@@ -817,7 +878,7 @@ img,video,svg{max-width:100%;}
           <div class="drb-inline-title">
             <span class="drb-i-apat">APATMENTO</span>
             <span class="drb-i-now">now</span>
-            <span class="drb-i-cab">CABANA</span>
+            <span class="drb-i-cab" data-text="CABANA">CABANA</span>
           </div>
           <p class="drb-i-sub">Zero Commission &nbsp;·&nbsp; Pay What You See</p>
           <p class="drb-i-tagline"><em>Fair for all.</em></p>
