@@ -130,7 +130,9 @@ body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webk
 .nav{position:fixed;top:0;left:0;right:0;z-index:100;height:72px;display:flex;align-items:center;justify-content:space-between;padding:0 40px;background:rgba(252,252,253,0);backdrop-filter:blur(0px);transition:all .4s;}
 .nav.scrolled{background:rgba(252,252,253,.8);backdrop-filter:blur(24px) saturate(180%);border-bottom:1px solid var(--line);}
 .nav-left{display:flex;align-items:center;gap:12px;}
-.nav-logo{height:38px;transition:filter .4s;}
+.nav-logo{height:36px;transition:filter .4s;}
+.nav-logo-cabana{height:36px;/* white version — always readable on dark hero */}
+.nav.scrolled .nav-logo-cabana{filter:brightness(0) saturate(100%) invert(14%) sepia(70%) saturate(2000%) hue-rotate(250deg) brightness(0.7);}
 .nav-brand{font-family:var(--font-display);font-weight:500;font-size:21px;letter-spacing:-.01em;transition:color .4s;}
 .nav-brand em{font-style:italic;background:linear-gradient(120deg,var(--violet),var(--electric));-webkit-background-clip:text;background-clip:text;color:transparent;}
 .nav.on-dark .nav-brand{color:#fff;}
@@ -227,6 +229,44 @@ body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webk
 
 /* ══════════ HOW IT WORKS ══════════ */
 .how{padding:90px 40px;background:var(--glass-2);}
+
+/* ══════════ REBRAND STORY SECTION ══════════ */
+.rebrand-story{position:relative;padding:100px 40px;background:linear-gradient(180deg,var(--glass-2) 0%,#0A0A14 100%);overflow:hidden;}
+.rb-aurora{position:absolute;inset:0;z-index:0;pointer-events:none;}
+.rb-blob{position:absolute;border-radius:50%;filter:blur(100px);}
+.rb-b1{width:500px;height:500px;background:radial-gradient(circle,rgba(109,40,255,.28),transparent 65%);top:-10%;left:-8%;}
+.rb-b2{width:440px;height:440px;background:radial-gradient(circle,rgba(79,109,255,.22),transparent 68%);bottom:-5%;right:-5%;}
+.rb-b3{width:380px;height:380px;background:radial-gradient(circle,rgba(245,177,46,.18),transparent 70%);top:40%;left:40%;}
+.rb-inner{position:relative;z-index:2;max-width:1080px;margin:0 auto;}
+.rb-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:100px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:rgba(255,255,255,.7);font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;margin-bottom:28px;}
+.rb-badge-dot{width:7px;height:7px;border-radius:50%;background:var(--mint);box-shadow:0 0 8px var(--mint);animation:pulse 2s ease infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.6;transform:scale(.85);}}
+.rb-chapter{display:flex;align-items:center;gap:16px;margin-bottom:22px;flex-wrap:wrap;}
+.rb-chapter-apat{font-family:var(--font-display);font-size:clamp(26px,4vw,44px);font-weight:300;color:rgba(255,255,255,.38);letter-spacing:-.02em;}
+.rb-chapter-arrow{color:rgba(255,255,255,.3);}
+.rb-chapter-cab{font-family:var(--font-display);font-size:clamp(26px,4vw,44px);font-weight:600;letter-spacing:-.02em;background:linear-gradient(120deg,var(--violet),var(--electric),var(--mint));-webkit-background-clip:text;background-clip:text;color:transparent;}
+.rb-headline{font-family:var(--font-display);font-weight:300;font-size:clamp(30px,4.5vw,56px);line-height:1.06;letter-spacing:-.03em;color:#fff;margin-bottom:60px;max-width:720px;}
+.rb-headline em{font-style:italic;font-weight:500;background:linear-gradient(120deg,var(--lilac),var(--mint),var(--peach));-webkit-background-clip:text;background-clip:text;color:transparent;}
+.rb-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;margin-bottom:54px;}
+@media(max-width:760px){.rb-cards{grid-template-columns:1fr;}}
+.rb-card{padding:30px;border-radius:24px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);backdrop-filter:blur(12px);transition:all .35s cubic-bezier(.22,1,.36,1);}
+.rb-card:hover{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.16);transform:translateY(-4px);}
+.rb-card-wide{grid-column:1/-1;}
+.rb-card-wide-inner{display:grid;grid-template-columns:1.3fr 1fr;gap:36px;align-items:start;}
+@media(max-width:680px){.rb-card-wide-inner{grid-template-columns:1fr;gap:24px;}}
+.rb-card-icon{width:46px;height:46px;border-radius:14px;background:linear-gradient(135deg,rgba(109,40,255,.18),rgba(184,164,244,.12));color:var(--lilac);display:flex;align-items:center;justify-content:center;margin-bottom:18px;}
+.rb-card-title{font-family:var(--font-display);font-weight:500;font-size:18px;color:#fff;margin-bottom:10px;letter-spacing:-.01em;}
+.rb-card-body{font-size:14px;color:rgba(255,255,255,.55);line-height:1.7;}
+.rb-pledge{display:flex;flex-direction:column;gap:13px;padding:24px;border-radius:18px;background:rgba(109,40,255,.1);border:1px solid rgba(109,40,255,.22);}
+.rb-pledge-item{font-size:14px;color:rgba(255,255,255,.75);display:flex;align-items:flex-start;gap:10px;}
+.rb-pledge-check{color:var(--mint);font-size:14px;flex-shrink:0;margin-top:1px;}
+.rb-cta{text-align:center;}
+.rb-cta-btn{display:inline-flex;align-items:center;gap:10px;padding:16px 34px;border-radius:100px;background:linear-gradient(135deg,var(--violet),var(--electric));color:#fff;font-weight:600;font-size:15px;text-decoration:none;box-shadow:0 10px 36px rgba(109,40,255,.35);transition:all .3s cubic-bezier(.22,1,.36,1);}
+.rb-cta-btn:hover{transform:translateY(-3px);gap:14px;box-shadow:0 18px 52px rgba(109,40,255,.45);}
+.rb-cta-note{margin-top:14px;font-size:13px;color:rgba(255,255,255,.35);}
+@media(max-width:520px){.rebrand-story{padding:72px 22px;}.rb-headline{margin-bottom:38px;}}
+
+
 .how-inner{max-width:1080px;margin:0 auto;}
 .how-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:56px;}
 @media(max-width:780px){.how-steps{grid-template-columns:1fr;}}
@@ -646,13 +686,14 @@ body.intro-lock{overflow:hidden;height:100vh;}
 <!-- NAV -->
 <nav class="nav on-dark" id="nav">
   <div class="nav-left">
-    <img src="logo-mark.png" class="nav-logo" alt="Apatmento" onerror="this.style.display='none'"/>
-    <span class="nav-brand"><em>Apat</em>mento</span>
+    <img src="cabana-wordmark-white.png" class="nav-logo nav-logo-cabana" alt="Cabana" onerror="this.style.display='none'"/>
+    <span class="nav-brand" style="display:none;"></span>
   </div>
   <div class="nav-links">
     <a href="#services">Services</a>
     <a href="#how">How it works</a>
     <a href="#promise">Our promise</a>
+    <a href="#rebrand-story" style="color:var(--mint-deep);font-weight:600;">Apatmento → Cabana</a>
   </div>
   <div class="nav-right" style="display:flex;align-items:center;gap:8px;">
     <!-- SOS — always visible, clean red text, NO triangle -->
@@ -724,6 +765,62 @@ body.intro-lock{overflow:hidden;height:100vh;}
       <div class="pstat reveal"><div class="pstat-num">0%</div><div class="pstat-label">Commission on bookings</div></div>
       <div class="pstat reveal"><div class="pstat-num">100%</div><div class="pstat-label">Hosts keep their earnings</div></div>
       <div class="pstat reveal"><div class="pstat-num">8</div><div class="pstat-label">Services, one account</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- REBRAND STORY -->
+<section class="rebrand-story" id="rebrand-story">
+  <div class="rb-aurora"><div class="rb-blob rb-b1"></div><div class="rb-blob rb-b2"></div><div class="rb-blob rb-b3"></div></div>
+  <div class="rb-inner">
+    <div class="rb-badge reveal"><span class="rb-badge-dot"></span><span>The Story</span></div>
+    <div class="rb-chapter reveal">
+      <span class="rb-chapter-apat">Apatmento</span>
+      <span class="rb-chapter-arrow"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      <span class="rb-chapter-cab">Cabana</span>
+    </div>
+    <h2 class="rb-headline reveal">A new name.<br/><em>The same promise, bigger.</em></h2>
+    <div class="rb-cards">
+      <article class="rb-card reveal">
+        <div class="rb-card-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg></div>
+        <h3 class="rb-card-title">Where it began</h3>
+        <p class="rb-card-body">Apatmento started with one idea that felt radical in Kenya: what if hosts kept every shilling they earned? No commission, no hidden markup &mdash; just transparent, honest bookings. We launched with apartments in Nairobi, and guests discovered a new way to travel.</p>
+      </article>
+      <article class="rb-card reveal">
+        <div class="rb-card-icon" style="background:linear-gradient(135deg,rgba(79,109,255,.15),rgba(94,234,212,.15));color:#4F6DFF;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m15 5.5-6-2-6 2.5v13l6-2.5 6 2 6-2.5v-13z"/><path d="M9 3.5v13M15 7.5v13"/></svg></div>
+        <h3 class="rb-card-title">Why we needed to grow</h3>
+        <p class="rb-card-body">You asked for more. Flights, safaris, food, rides, events &mdash; you wanted one place for your entire life, not just your accommodation. Apatmento, as a name, spoke to apartments. But what we were building was far larger: a full travel and lifestyle super-app. The name had to catch up.</p>
+      </article>
+      <article class="rb-card reveal">
+        <div class="rb-card-icon" style="background:linear-gradient(135deg,rgba(245,177,46,.15),rgba(255,106,60,.15));color:#F5B12E;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
+        <h3 class="rb-card-title">Choosing Cabana</h3>
+        <p class="rb-card-body">A cabana is a place of ease and welcome &mdash; where you arrive, drop your bags, and feel instantly at home. Whether that&#x2019;s a beachside apartment in Diani, a morning safari in Amboseli, or a plate of nyama choma after a long day. Cabana is the feeling. That&#x2019;s the brand we wanted to build.</p>
+      </article>
+      <article class="rb-card reveal">
+        <div class="rb-card-icon" style="background:linear-gradient(135deg,rgba(94,234,212,.15),rgba(109,40,255,.15));color:#2DD4BF;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>
+        <h3 class="rb-card-title">What doesn&#x2019;t change</h3>
+        <p class="rb-card-body">Everything that made you trust Apatmento stays exactly the same. Zero commission. Hosts keep 100%. You pay only what you see. M-Pesa payments. The same team. The same accounts. The same mission. Cabana is Apatmento, grown into the name it always deserved.</p>
+      </article>
+      <article class="rb-card rb-card-wide reveal">
+        <div class="rb-card-wide-inner">
+          <div>
+            <div class="rb-card-icon" style="background:linear-gradient(135deg,rgba(109,40,255,.15),rgba(79,109,255,.15));color:#6D28FF;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+            <h3 class="rb-card-title">Our commitment to you</h3>
+            <p class="rb-card-body">A rebrand is a statement of ambition, not a signal that anything is wrong. We&#x2019;re growing &mdash; into more cities, more services, more ways to make your life easier and your money go further. You&#x2019;ve been with us from the beginning. Come with us into what&#x2019;s next.</p>
+          </div>
+          <div class="rb-pledge">
+            <div class="rb-pledge-item"><span class="rb-pledge-check">&#x2713;</span> Your login, bookings and wallet remain intact</div>
+            <div class="rb-pledge-item"><span class="rb-pledge-check">&#x2713;</span> Zero commission &mdash; never changes</div>
+            <div class="rb-pledge-item"><span class="rb-pledge-check">&#x2713;</span> Hosts keep 100% of what they earn</div>
+            <div class="rb-pledge-item"><span class="rb-pledge-check">&#x2713;</span> Same M-Pesa security you rely on</div>
+            <div class="rb-pledge-item"><span class="rb-pledge-check">&#x2713;</span> Apatmento.space still works &mdash; forever</div>
+          </div>
+        </div>
+      </article>
+    </div>
+    <div class="rb-cta reveal">
+      <a href="dashboard.html" class="rb-cta-btn">Enter Cabana <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      <p class="rb-cta-note">Same account. Same trust. New name.</p>
     </div>
   </div>
 </section>

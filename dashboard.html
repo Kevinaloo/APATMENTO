@@ -426,6 +426,26 @@ img,video,svg{max-width:100%;}
 .content{max-width:1180px;margin:0 auto;padding:36px 32px 80px;}
 
 /* hero greeting */
+.tb-logo-cab{height:32px;width:auto;display:block;}
+
+/* ══ REBRAND TAGLINE BANNER ══ */
+.dash-rebrand-banner{display:flex;flex-direction:column;align-items:flex-start;gap:6px;margin-bottom:22px;padding:16px 20px;border-radius:18px;background:linear-gradient(115deg,rgba(109,40,255,.07) 0%,rgba(79,109,255,.06) 40%,rgba(94,234,212,.06) 80%,rgba(245,177,46,.07) 100%);border:1px solid rgba(109,40,255,.12);position:relative;overflow:hidden;}
+.dash-rebrand-banner::before{content:'';position:absolute;inset:0;background:linear-gradient(115deg,rgba(109,40,255,.04),rgba(94,234,212,.04));pointer-events:none;}
+.drb-inner{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.drb-word{font-family:var(--font-display);font-weight:700;font-size:clamp(17px,4vw,24px);letter-spacing:.06em;line-height:1;}
+.drb-apat{background:linear-gradient(120deg,#8B5CF6,#C3AEFA);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.drb-now{font-size:12px;font-weight:600;color:var(--ink-faint);letter-spacing:.08em;text-transform:uppercase;padding:2px 0;}
+.drb-cab{background:linear-gradient(120deg,#FF6A3C,#F5B12E,#4EE0C8);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.drb-tags{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.drb-tag{font-size:11px;font-weight:700;letter-spacing:.05em;padding:4px 10px;border-radius:100px;}
+.drb-tag-1{background:rgba(109,40,255,.1);color:#8B5CF6;}
+.drb-tag-2{background:rgba(94,234,212,.1);color:#0D9488;}
+.drb-tag-3{background:rgba(245,177,46,.1);color:#D98E0B;}
+.drb-sep{color:var(--ink-faint);font-size:11px;}
+.drb-learn{font-size:11px;font-weight:600;color:var(--violet);text-decoration:none;display:inline-flex;align-items:center;gap:4px;opacity:.8;transition:opacity .2s;}
+.drb-learn:hover{opacity:1;}
+@media(max-width:480px){.drb-word{font-size:15px;letter-spacing:.04em;}.drb-tags{gap:5px;}.drb-tag{font-size:10px;}}
+
 .greeting{margin-bottom:34px;opacity:0;animation:fadeUp .8s .1s forwards;}
 .greeting-eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--lilac-deep);margin-bottom:12px;padding:6px 14px;border-radius:100px;background:rgba(184,164,244,.12);border:1px solid rgba(184,164,244,.25);}
 .greeting-title{font-family:var(--font-display);font-optical-sizing:auto;font-weight:400;font-size:clamp(32px,5vw,52px);line-height:1.05;letter-spacing:-.02em;color:var(--ink);margin-bottom:10px;}
@@ -506,6 +526,7 @@ img,video,svg{max-width:100%;}
 .drawer.open{transform:none;}
 .drawer-head{display:flex;align-items:center;gap:12px;margin-bottom:28px;padding-bottom:20px;border-bottom:1px solid var(--line);}
 .drawer-logo{height:36px;}
+.drawer-logo-cab{height:30px;width:auto;display:block;}
 .drawer-link{display:flex;align-items:center;gap:13px;padding:13px 14px;border-radius:14px;font-size:14px;font-weight:500;color:var(--ink-soft);text-decoration:none;cursor:pointer;transition:all .25s;margin-bottom:3px;}
 .drawer-link:hover{background:rgba(184,164,244,.12);color:var(--ink);}
 .drawer-link svg{width:20px;height:20px;color:var(--lilac-deep);}
@@ -717,8 +738,7 @@ img,video,svg{max-width:100%;}
         <button class="tb-icon-btn" onclick="openDrawer()" aria-label="Menu">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
         </button>
-        <img src="logo-mark.png" class="tb-logo" alt="" onerror="this.style.display='none'"/>
-        <span class="tb-brand"><em>Apat</em>mento</span>
+        <img src="cabana-wordmark-color.png" class="tb-logo tb-logo-cab" alt="Cabana" onerror="this.style.display='none'"/>
       </div>
       <div class="tb-right" id="tb-right-guest">
         <!-- Guest nav — Sign In + Sign Up (hidden when logged in) -->
@@ -758,6 +778,22 @@ img,video,svg{max-width:100%;}
 
     <div class="content">
       <div class="greeting">
+        <!-- ══ REBRAND TAGLINE ══ -->
+        <div class="dash-rebrand-banner" id="dash-rebrand-banner">
+          <div class="drb-inner">
+            <span class="drb-word drb-apat">APATMENTO</span>
+            <span class="drb-now">now</span>
+            <span class="drb-word drb-cab">CABANA</span>
+          </div>
+          <div class="drb-tags">
+            <span class="drb-tag drb-tag-1">Zero Commission</span>
+            <span class="drb-sep">·</span>
+            <span class="drb-tag drb-tag-2">Pay What You See</span>
+            <span class="drb-sep">·</span>
+            <span class="drb-tag drb-tag-3">Fair For All</span>
+          </div>
+          <a href="index.html#rebrand-story" class="drb-learn">Learn more <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        </div>
         <!-- Mode toggle pill — floats top-right, non-intrusive -->
         <span class="greeting-eyebrow" id="g-eyebrow">Your world, one tap away</span>
         <h1 class="greeting-title" id="g-title"><span id="g-greeting">Good afternoon</span><em id="g-name"></em></h1>
@@ -872,8 +908,7 @@ img,video,svg{max-width:100%;}
 <div class="drawer-scrim" id="drawer-scrim" onclick="closeDrawer()"></div>
 <nav class="drawer" id="drawer">
   <div class="drawer-head">
-    <img src="logo-mark.png" class="drawer-logo" alt="" onerror="this.style.display='none'"/>
-    <span class="tb-brand"><em>Apat</em>mento</span>
+    <img src="cabana-wordmark-color.png" class="drawer-logo drawer-logo-cab" alt="Cabana" onerror="this.style.display='none'"/>
   </div>
   <a class="drawer-link" href="profile.html?back=1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg> Profile</a>
   <a class="drawer-link" href="my-bookings.html?back=1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg> My Bookings</a>
