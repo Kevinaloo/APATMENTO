@@ -1074,6 +1074,42 @@ function navigateToService(key){
 // can always reach it, regardless of script evaluation scope.
 window.navigateToService = navigateToService;
 
+/* ── TRANSITION OVERLAY CLEANUP ────────────────────────────────────
+   The #svc-transition overlay is added when navigating TO a service.
+   The browser often restores dashboard.html from bfcache (back/forward
+   cache) with the overlay still .active, completely blocking the UI.
+
+   Three defence lines:
+   1. pageshow (persisted=true)  — bfcache restore on mobile back button.
+   2. visibilitychange (visible) — tab switch back to the page.
+   3. Immediate check on load   — catches non-bfcache restores (?back=1).
+   ─────────────────────────────────────────────────────────────────── */
+function _clearSvcOverlay() {
+  try {
+    const ov = document.getElementById('svc-transition');
+    if (ov && ov.classList.contains('active')) {
+      ov.classList.remove('active');
+      // Also wipe scene HTML so stale animations don't replay next open
+      const sc = document.getElementById('svct-scene');
+      if (sc) sc.innerHTML = '';
+    }
+  } catch(e) {}
+}
+
+// bfcache restore — fires when browser pops the page from memory cache
+window.addEventListener('pageshow', function(e) {
+  if (e.persisted) _clearSvcOverlay();
+});
+
+// Tab / app switch back
+document.addEventListener('visibilitychange', function() {
+  if (document.visibilityState === 'visible') _clearSvcOverlay();
+});
+
+// Immediate: if we landed here via ?back=1 and the page wasn't cached,
+// the overlay might still be in the DOM from a previous visit this session.
+if (location.search.indexOf('back=1') !== -1) _clearSvcOverlay();
+
 /* ── TIME GREETING ── */
 function getGreeting(){
   const h = new Date().getHours();
