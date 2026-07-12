@@ -105,6 +105,37 @@
     doc.head.appendChild(s);
   }
 
+  /* ═══ FIXED-HEADER OFFSET ═══════════════════════════════════════
+     The site pins its nav/topbar with position:fixed;top:0. When the
+     announcement bar is in flow above everything, those headers would
+     overlap it. We push them down by exactly the bar's height. Applied
+     as inline style with a data-flag so it's trivially reversible.     */
+  function offsetFixedHeaders(bar) {
+    safe(function () {
+      var h = bar && bar.offsetParent !== null ? bar.offsetHeight : 0;
+      var sel = '.nav, .topbar, .cnav';
+      var headers = doc.querySelectorAll(sel);
+      for (var i = 0; i < headers.length; i++) {
+        var el = headers[i];
+        var pos = global.getComputedStyle(el).position;
+        if (pos === 'fixed' || pos === 'sticky') {
+          el.style.top = h + 'px';
+          el.setAttribute('data-cabana-offset', '1');
+        }
+      }
+    }, 'offset');
+  }
+
+  function clearFixedHeaderOffset() {
+    safe(function () {
+      var offset = doc.querySelectorAll('[data-cabana-offset="1"]');
+      for (var i = 0; i < offset.length; i++) {
+        offset[i].style.top = '';
+        offset[i].removeAttribute('data-cabana-offset');
+      }
+    }, 'clear-offset');
+  }
+
   /* ═══ ANNOUNCEMENT BAR ══════════════════════════════════════════
      Injected at the very top of <body>. Fixed-nav pages: the bar sits
      above the fold and pushes nothing (nav is fixed) — so we only show
@@ -135,6 +166,7 @@
       x.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
       x.addEventListener('click', function () {
         try { global.localStorage.setItem(LS_DISMISS, '1'); } catch (e) {}
+        clearFixedHeaderOffset();
         bar.style.transition = 'opacity .3s,max-height .35s,padding .35s';
         bar.style.overflow = 'hidden';
         bar.style.maxHeight = bar.offsetHeight + 'px';
@@ -149,6 +181,17 @@
       // Insert as the very first element in body
       if (doc.body.firstChild) doc.body.insertBefore(bar, doc.body.firstChild);
       else doc.body.appendChild(bar);
+
+      // The site's nav/topbar is position:fixed at top:0, so it would sit
+      // under the bar. Offset any fixed header down by the bar's height, and
+      // keep it in sync on resize. When the bar is dismissed we clear it.
+      offsetFixedHeaders(bar);
+      var ro;
+      try {
+        ro = new global.ResizeObserver(function () { offsetFixedHeaders(bar); });
+        ro.observe(bar);
+      } catch (e) {}
+      global.addEventListener('resize', function () { offsetFixedHeaders(bar); }, { passive: true });
     }, 'announce');
   }
 

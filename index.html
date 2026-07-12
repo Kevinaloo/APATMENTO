@@ -894,7 +894,13 @@ body.intro-lock{overflow:hidden;height:100vh;}
 
   // auto-end after the full three-act sequence resolves
   window._introTimer = setTimeout(endIntro, 8250);
-  // allow skip via scroll/tap/key})();
+
+  // allow skip via scroll / tap / key
+  const skip = function(){ if(!intro.classList.contains('lift')) endIntro(); };
+  window.addEventListener('wheel', skip, {once:true, passive:true});
+  window.addEventListener('touchmove', skip, {once:true, passive:true});
+  window.addEventListener('keydown', function(e){ if(e.key==='Escape'||e.key===' ') skip(); }, {once:true});
+})();
 
 function endIntro(){
   const intro=document.getElementById('intro');
