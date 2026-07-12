@@ -275,7 +275,7 @@
       }).join('');
       body += '<div style="text-align:center;margin-top:14px;">'
         + '<a href="apartments.html" style="font:600 13px/1 system-ui;color:#4361FF;text-decoration:none;">'
-        + 'Browse more stays →</a></div>';
+        + 'Browse more Spaces →</a></div>';
     }
     sheet('apa-fav-sheet', '❤️ Saved places (' + favs.length + ')', body);
   }
@@ -516,7 +516,7 @@
       if (!isUser) {
         txt(k, 'Partner mode'); txt(t, 'Become a partner'); txt(s, 'List your space and start earning');
       } else if (isPartner) {
-        txt(k, 'Guest mode'); txt(t, 'Switch to Guest'); txt(s, 'Browse stays, flights and more');
+        txt(k, 'Traveller mode'); txt(t, 'Switch to Traveller'); txt(s, 'Browse Spaces, flights and more');
       } else {
         txt(k, 'Partner mode'); txt(t, 'Switch to Partner'); txt(s, 'Manage listings, bookings & earnings');
       }
