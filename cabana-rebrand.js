@@ -155,21 +155,29 @@
   /* ═══ HEADER "BECOMING CABANA" PILL ═════════════════════════════
      Finds any Apatmento wordmark (.nav-brand / .footer-brand span) and
      drops a small Cabana pill beside it. Non-destructive.            */
+  function makePill() {
+    var pill = el('a', '');
+    pill.className = 'cabana-becoming';
+    pill.href = '/cabana.html';
+    pill.title = 'Apatmento is becoming Cabana';
+    pill.setAttribute('aria-label', 'Learn about the Cabana rebrand');
+    pill.innerHTML = '<span class="lab">becoming</span>' +
+      '<img src="/cabana-wordmark-color.png" alt="Cabana" onerror="this.style.display=\'none\'"/>';
+    return pill;
+  }
+
   function mountBecomingPill() {
     safe(function () {
-      // Primary target: the top-nav brand wordmark
-      var brand = doc.querySelector('.nav-brand');
-      if (brand && !brand.parentNode.querySelector('.cabana-becoming')) {
-        var pill = el('a', '');
-        pill.className = 'cabana-becoming';
-        pill.href = '/cabana.html';
-        pill.title = 'Apatmento is becoming Cabana';
-        pill.setAttribute('aria-label', 'Learn about the Cabana rebrand');
-        pill.innerHTML = '<span class="lab">becoming</span>' +
-          '<img src="/cabana-wordmark-color.png" alt="Cabana" onerror="this.style.display=\'none\'"/>';
-        // place right after the brand text
-        if (brand.nextSibling) brand.parentNode.insertBefore(pill, brand.nextSibling);
-        else brand.parentNode.appendChild(pill);
+      // Targets, in priority order: home-page nav wordmark, then the
+      // service-page top-bar title. Whichever exists gets the pill.
+      var targets = ['.nav-brand', '.tb-title'];
+      for (var i = 0; i < targets.length; i++) {
+        var brand = doc.querySelector(targets[i]);
+        if (brand && !brand.parentNode.querySelector('.cabana-becoming')) {
+          var pill = makePill();
+          if (brand.nextSibling) brand.parentNode.insertBefore(pill, brand.nextSibling);
+          else brand.parentNode.appendChild(pill);
+        }
       }
     }, 'pill');
   }
@@ -190,8 +198,8 @@
           '<img class="cab" src="/cabana-wordmark-color.png" alt="Cabana" onerror="this.style.display=\'none\'"/>' +
         '</div>' +
         '<div class="cabana-foot-txt"><b>Apatmento is becoming Cabana.</b> ' +
-        'Same team, same zero-commission promise, same Kenya. ' +
-        'A brighter name for the same home. <a href="/cabana.html">Read the story</a></div>';
+        'Same team, same zero-commission promise, the same home you trust. ' +
+        'A brighter name, built to travel the world. <a href="/cabana.html">Read the story</a></div>';
 
       // Insert just before the copyright line if present, else at end
       var copy = footer.querySelector('.footer-copy');
