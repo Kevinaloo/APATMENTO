@@ -427,6 +427,14 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
       </div>
 
       <div class="nav-grp">
+        <div class="nav-h">God mode</div>
+        <div class="nav-i" data-sec="godmode" onclick="go('godmode',this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.4 7.8 8 10 4.6-2.2 8-5 8-10V6z"/><path d="m9 12 2 2 4-4"/></svg>
+          Services & listings <span class="nav-b calm" id="b-god">—</span>
+        </div>
+      </div>
+
+      <div class="nav-grp">
         <div class="nav-h">Operate</div>
         <div class="nav-i" data-sec="moderation" onclick="go('moderation',this)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
@@ -739,6 +747,47 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
           <tbody id="inv-rows"></tbody>
         </table></div>
       </section>
+
+      <!-- ─── GOD MODE: Services & first-party listings ─── -->
+      <section class="sec" id="s-godmode">
+        <div class="hd">
+          <div><h1>God <em>mode</em></h1><p>Add and manage Apatmento's own services and listings across every tab. Third-party redirect listings are never shown or touched here — you only see and edit first-party items you create.</p></div>
+          <div class="hd-act">
+            <button class="btn btn-p btn-sm" onclick="gmNew()">+ Add item</button>
+            <button class="btn btn-g btn-sm" onclick="gmLoad()">Refresh</button>
+          </div>
+        </div>
+
+        <div class="seg" id="gm-tabs" style="flex-wrap:wrap;max-width:100%">
+          <button class="on" data-svc="stays"    onclick="gmTab('stays',this)">Stays</button>
+          <button data-svc="rooms"    onclick="gmTab('rooms',this)">Rooms</button>
+          <button data-svc="carhire"  onclick="gmTab('carhire',this)">Car hire</button>
+          <button data-svc="events"   onclick="gmTab('events',this)">Events</button>
+          <button data-svc="tours"    onclick="gmTab('tours',this)">Tours</button>
+          <button data-svc="food"     onclick="gmTab('food',this)">Food</button>
+          <button data-svc="shopping" onclick="gmTab('shopping',this)">Shopping</button>
+        </div>
+
+        <div id="gm-note" style="margin:14px 0 4px;font-size:12.5px;color:var(--ink-3)"></div>
+        <div class="tw" style="margin-top:8px"><table>
+          <thead><tr><th>Item</th><th>Detail</th><th class="num">Price</th><th>Status</th><th class="num">Actions</th></tr></thead>
+          <tbody id="gm-rows"><tr><td colspan="5" style="padding:20px;color:var(--ink-4)">Loading…</td></tr></tbody>
+        </table></div>
+      </section>
+
+      <!-- God-mode editor drawer -->
+      <div id="gm-overlay" onclick="gmClose()" style="display:none;position:fixed;inset:0;background:rgba(4,4,10,.66);backdrop-filter:blur(3px);z-index:120"></div>
+      <div id="gm-drawer" style="display:none;position:fixed;top:0;right:0;bottom:0;width:min(460px,100%);background:var(--panel);border-left:1px solid var(--line-2);z-index:121;overflow-y:auto;padding:22px 22px 40px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+          <h2 id="gm-title" style="font-size:20px">Add item</h2>
+          <button class="btn btn-g btn-sm" onclick="gmClose()">Close</button>
+        </div>
+        <div id="gm-form"></div>
+        <div style="display:flex;gap:9px;margin-top:22px">
+          <button class="btn btn-p btn-block" id="gm-save" onclick="gmSave()">Save</button>
+          <button class="btn btn-d btn-sm" id="gm-del" style="display:none" onclick="gmDelete()">Delete</button>
+        </div>
+      </div>
 
       <!-- ─── BOOKINGS ─── -->
       <section class="sec" id="s-bookings">
@@ -1258,6 +1307,7 @@ function go(sec, el){
   if(sec==='audience'||sec==='ml'||sec==='slots') ensureAudience();
   if(sec==='agents') loadAgents();
   if(sec==='splash') loadSplash();
+  if(sec==='godmode') gmLoad();
 }
 function setRange(d, el){
   RANGE = d;
@@ -2897,6 +2947,291 @@ function spTestPlay(){
   const start = Date.now();
   (function tick(){ const p=Math.min(100,((Date.now()-start)/ms)*100); bar.style.width=p+'%'; if(p<100 && cover.parentNode) requestAnimationFrame(tick); })();
   setTimeout(()=>{ cover.style.transition='opacity .4s'; cover.style.opacity='0'; setTimeout(()=>cover.remove(),420); }, ms);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   GOD MODE — first-party services & listings
+   Lets an operator add/edit/delete Apatmento's own items in each
+   service tab. Third-party redirect listings are protected: God
+   mode only ever reads/writes rows tagged source='apatmento', so
+   scraped/affiliate entries are never listed or modified here.
+   ═══════════════════════════════════════════════════════════════ */
+const GM = { svc: 'stays', rows: [], editing: null };
+
+const GM_CFG = {
+  stays: {
+    label: 'Stays', table: 'listings',
+    filter: q => q.eq('source','apatmento').eq('type','stay'),
+    activeCol: 'is_active',
+    fields: [
+      {k:'title', label:'Title', type:'text', req:true, ph:'e.g. Skyline 2BR Apartment'},
+      {k:'location', label:'Location', type:'text', ph:'Area, City, Country'},
+      {k:'price_night', label:'Price / night (KES)', type:'number'},
+      {k:'max_guests', label:'Max guests', type:'number'},
+      {k:'description', label:'Description', type:'textarea'},
+      {k:'photo', label:'Cover image URL', type:'text', ph:'https://…'},
+    ],
+    toRow: r => ({id:r.id, name:r.title, detail:r.location||'—', price:r.price_night?('KES '+Number(r.price_night).toLocaleString()):'—', active:r.is_active!==false}),
+    toDB: v => ({
+      source:'apatmento', type:'stay', title:v.title, location:v.location||null,
+      property_type:'stay', listing_type:'stay',
+      price_night: v.price_night?parseFloat(v.price_night):null,
+      max_guests: v.max_guests?parseInt(v.max_guests):null,
+      description: v.description||null,
+      photos: v.photo?[v.photo]:[], currency:'KES', is_active:true, status:'active',
+    }),
+  },
+  rooms: {
+    label: 'Rooms', table: 'listings',
+    filter: q => q.eq('source','apatmento').eq('type','room'),
+    activeCol: 'is_active',
+    fields: [
+      {k:'title', label:'Title', type:'text', req:true, ph:'e.g. Furnished room in Westlands'},
+      {k:'location', label:'Location', type:'text', ph:'Area, City, Country'},
+      {k:'price_month', label:'Price / month (KES)', type:'number'},
+      {k:'description', label:'Description', type:'textarea'},
+      {k:'photo', label:'Cover image URL', type:'text', ph:'https://…'},
+    ],
+    toRow: r => ({id:r.id, name:r.title, detail:r.location||'—', price:r.price_month?('KES '+Number(r.price_month).toLocaleString()+'/mo'):'—', active:r.is_active!==false}),
+    toDB: v => ({
+      source:'apatmento', type:'room', title:v.title, location:v.location||null,
+      property_type:'room', listing_type:'room',
+      price_month: v.price_month?parseFloat(v.price_month):null,
+      description:v.description||null, photos:v.photo?[v.photo]:[], currency:'KES', is_active:true, status:'active',
+    }),
+  },
+  carhire: {
+    label: 'Car hire', table: 'scraped_carhire',
+    filter: q => q.eq('source','apatmento'),
+    activeCol: 'active',
+    fields: [
+      {k:'name', label:'Vehicle name', type:'text', req:true, ph:'e.g. Toyota Land Cruiser Prado'},
+      {k:'vehicle_type', label:'Type', type:'select', opts:['economy','sedan','suv','luxury','van','4x4']},
+      {k:'seats', label:'Seats', type:'number'},
+      {k:'transmission', label:'Transmission', type:'select', opts:['Automatic','Manual']},
+      {k:'fuel_type', label:'Fuel', type:'select', opts:['Petrol','Diesel','Hybrid','Electric']},
+      {k:'price_self', label:'Self-drive / day (KES)', type:'number'},
+      {k:'price_chauffeur', label:'Chauffeur / day (KES)', type:'number'},
+      {k:'company', label:'Company / owner', type:'text'},
+      {k:'phone', label:'Contact phone', type:'text'},
+      {k:'image_url', label:'Image URL', type:'text', ph:'https://…'},
+    ],
+    toRow: r => ({id:r.id, name:r.name, detail:(r.vehicle_type||'—'), price:r.price_self?('KES '+Number(r.price_self).toLocaleString()+'/day'):'—', active:r.active!==false}),
+    toDB: v => ({
+      source:'apatmento', name:v.name, vehicle_type:v.vehicle_type||'economy',
+      seats:v.seats?parseInt(v.seats):5, transmission:v.transmission||'Manual', fuel_type:v.fuel_type||'Petrol',
+      price_self:v.price_self?parseFloat(v.price_self):null, price_chauffeur:v.price_chauffeur?parseFloat(v.price_chauffeur):null,
+      company:v.company||null, phone:v.phone||null, image_url:v.image_url||null, active:true,
+    }),
+  },
+  events: {
+    label: 'Events', table: 'scraped_events',
+    filter: q => q.eq('source','apatmento'),
+    activeCol: 'active',
+    fields: [
+      {k:'title', label:'Event name', type:'text', req:true, ph:'e.g. Summer Jazz Night'},
+      {k:'venue', label:'Venue', type:'text'},
+      {k:'start_date', label:'Date', type:'date'},
+      {k:'price_from', label:'Price from (KES)', type:'number'},
+      {k:'event_url', label:'Ticket URL', type:'text', ph:'https://…'},
+      {k:'image_url', label:'Image URL', type:'text', ph:'https://…'},
+      {k:'description', label:'Description', type:'textarea'},
+    ],
+    toRow: r => ({id:r.id, name:r.title, detail:(r.venue||'—')+(r.start_date?(' · '+r.start_date):''), price:r.price_from?('KES '+Number(r.price_from).toLocaleString()):'Free', active:r.active!==false}),
+    toDB: v => ({
+      source:'apatmento', title:v.title, venue:v.venue||null, start_date:v.start_date||null,
+      price_from:v.price_from?parseFloat(v.price_from):0, event_url:v.event_url||null,
+      image_url:v.image_url||null, description:v.description||null, active:true,
+    }),
+  },
+  tours: {
+    label: 'Tours', table: 'listings',
+    filter: q => q.eq('source','apatmento').eq('type','tour'),
+    activeCol: 'is_active',
+    fields: [
+      {k:'title', label:'Tour name', type:'text', req:true, ph:'e.g. City Heritage Walk'},
+      {k:'location', label:'Location', type:'text'},
+      {k:'price_night', label:'Price / person (KES)', type:'number', ph:'0 for free'},
+      {k:'description', label:'Description', type:'textarea'},
+      {k:'photo', label:'Cover image URL', type:'text', ph:'https://…'},
+    ],
+    toRow: r => ({id:r.id, name:r.title, detail:r.location||'—', price:r.price_night?('KES '+Number(r.price_night).toLocaleString()):'Free', active:r.is_active!==false}),
+    toDB: v => ({
+      source:'apatmento', type:'tour', title:v.title, location:v.location||null,
+      property_type:'tour', listing_type:'tour',
+      price_night:v.price_night?parseFloat(v.price_night):0, description:v.description||null,
+      photos:v.photo?[v.photo]:[], currency:'KES', is_active:true, status:'active',
+    }),
+  },
+  food: {
+    label: 'Food', table: 'listings',
+    filter: q => q.eq('source','apatmento').eq('type','food'),
+    activeCol: 'is_active',
+    fields: [
+      {k:'title', label:'Restaurant name', type:'text', req:true},
+      {k:'location', label:'Area', type:'text'},
+      {k:'description', label:'Cuisine / description', type:'textarea'},
+      {k:'street', label:'Order / menu URL', type:'text', ph:'https://…'},
+      {k:'photo', label:'Cover image URL', type:'text', ph:'https://…'},
+    ],
+    toRow: r => ({id:r.id, name:r.title, detail:r.location||'—', price:'—', active:r.is_active!==false}),
+    toDB: v => ({
+      source:'apatmento', type:'food', title:v.title, location:v.location||null,
+      property_type:'food', listing_type:'food', description:v.description||null,
+      street:v.street||null, photos:v.photo?[v.photo]:[], currency:'KES', is_active:true, status:'active',
+    }),
+  },
+  shopping: {
+    label: 'Shopping', table: 'listings',
+    filter: q => q.eq('source','apatmento').eq('type','shopping'),
+    activeCol: 'is_active',
+    fields: [
+      {k:'title', label:'Product / store name', type:'text', req:true},
+      {k:'location', label:'Store / brand', type:'text'},
+      {k:'price_night', label:'Price (KES)', type:'number'},
+      {k:'street', label:'Product URL', type:'text', ph:'https://…'},
+      {k:'photo', label:'Image URL', type:'text', ph:'https://…'},
+    ],
+    toRow: r => ({id:r.id, name:r.title, detail:r.location||'—', price:r.price_night?('KES '+Number(r.price_night).toLocaleString()):'—', active:r.is_active!==false}),
+    toDB: v => ({
+      source:'apatmento', type:'shopping', title:v.title, location:v.location||null,
+      property_type:'shopping', listing_type:'shopping',
+      price_night:v.price_night?parseFloat(v.price_night):null,
+      street:v.street||null, photos:v.photo?[v.photo]:[], currency:'KES', is_active:true, status:'active',
+    }),
+  },
+};
+
+function gmTab(svc, el){
+  GM.svc = svc;
+  document.querySelectorAll('#gm-tabs button').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  gmLoad();
+}
+
+async function gmLoad(){
+  const cfg = GM_CFG[GM.svc];
+  const note = $('gm-note'), body = $('gm-rows');
+  note.textContent = 'Showing only Apatmento-owned '+cfg.label.toLowerCase()+' items. Third-party redirect listings are not shown here.';
+  body.innerHTML = '<tr><td colspan="5" style="padding:20px;color:var(--ink-4)">Loading…</td></tr>';
+  try{
+    let q = sb.from(cfg.table).select('*').order('id',{ascending:false}).limit(200);
+    q = cfg.filter(q);
+    const { data, error } = await q;
+    if(error) throw error;
+    GM.rows = data||[];
+    const badge = $('b-god'); if(badge) badge.textContent = GM.rows.length;
+    if(!GM.rows.length){ body.innerHTML = '<tr><td colspan="5" style="padding:20px;color:var(--ink-4)">No items yet. Click the Add item button to create your first '+cfg.label.toLowerCase()+' listing.</td></tr>'; return; }
+    body.innerHTML = GM.rows.map(r=>{
+      const v = cfg.toRow(r);
+      return '<tr>'+
+        '<td style="font-weight:600">'+esc(v.name||'—')+'</td>'+
+        '<td style="color:var(--ink-3)">'+esc(v.detail||'—')+'</td>'+
+        '<td class="num">'+esc(v.price||'—')+'</td>'+
+        '<td>'+(v.active?'<span style="color:var(--ok)">Active</span>':'<span style="color:var(--ink-4)">Hidden</span>')+'</td>'+
+        '<td class="num"><button class="btn btn-g btn-sm" onclick="gmEdit(\''+String(v.id).replace(/[^a-zA-Z0-9_-]/g,"")+'\')">Edit</button></td>'+
+      '</tr>';
+    }).join('');
+  }catch(err){
+    body.innerHTML = '<tr><td colspan="5" style="padding:20px;color:var(--bad)">Could not load: '+esc(err.message||'error')+'. If this table lacks a source column, add one (text) in Supabase.</td></tr>';
+  }
+}
+
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function gmRenderForm(values){
+  const cfg = GM_CFG[GM.svc];
+  values = values || {};
+  $('gm-form').innerHTML = cfg.fields.map(f=>{
+    const val = values[f.k]!=null ? String(values[f.k]) : '';
+    let ctrl;
+    if(f.type==='textarea'){
+      ctrl = '<textarea class="inp" id="gmf-'+f.k+'" placeholder="'+(f.ph||'')+'">'+esc(val)+'</textarea>';
+    } else if(f.type==='select'){
+      ctrl = '<select class="inp" id="gmf-'+f.k+'">'+f.opts.map(o=>'<option'+(o===val?' selected':'')+'>'+esc(o)+'</option>').join('')+'</select>';
+    } else {
+      ctrl = '<input class="inp" id="gmf-'+f.k+'" type="'+f.type+'" value="'+esc(val)+'" placeholder="'+(f.ph||'')+'"/>';
+    }
+    return '<label style="display:block;margin-bottom:13px"><span style="display:block;font-size:12px;color:var(--ink-3);margin-bottom:5px">'+esc(f.label)+(f.req?' *':'')+'</span>'+ctrl+'</label>';
+  }).join('');
+}
+
+function gmOpen(){ $('gm-overlay').style.display='block'; $('gm-drawer').style.display='block'; }
+function gmClose(){ $('gm-overlay').style.display='none'; $('gm-drawer').style.display='none'; GM.editing=null; }
+
+function gmNew(){
+  GM.editing = null;
+  $('gm-title').textContent = 'Add '+GM_CFG[GM.svc].label.toLowerCase();
+  $('gm-del').style.display = 'none';
+  gmRenderForm({});
+  gmOpen();
+}
+
+function gmEdit(id){
+  const cfg = GM_CFG[GM.svc];
+  const rec = GM.rows.find(r=>String(r.id).replace(/[^a-zA-Z0-9_-]/g,"")===String(id));
+  if(!rec) return;
+  GM.editing = rec;
+  $('gm-title').textContent = 'Edit '+cfg.label.toLowerCase();
+  $('gm-del').style.display = '';
+  const pre = {};
+  cfg.fields.forEach(f=>{
+    if(f.k==='photo'){ pre.photo = Array.isArray(rec.photos)&&rec.photos[0] ? rec.photos[0] : ''; }
+    else pre[f.k] = rec[f.k];
+  });
+  gmRenderForm(pre);
+  gmOpen();
+}
+
+function gmCollect(){
+  const cfg = GM_CFG[GM.svc];
+  const v = {};
+  for(const f of cfg.fields){
+    const el = $('gmf-'+f.k);
+    v[f.k] = el ? el.value.trim() : '';
+    if(f.req && !v[f.k]){ el && el.focus(); throw new Error(f.label+' is required'); }
+  }
+  return v;
+}
+
+async function gmSave(){
+  const cfg = GM_CFG[GM.svc];
+  const btn = $('gm-save');
+  try{
+    const v = gmCollect();
+    const payload = cfg.toDB(v);
+    btn.disabled = true; btn.textContent = 'Saving…';
+    let res;
+    if(GM.editing){
+      res = await sb.from(cfg.table).update(payload).eq('id', GM.editing.id);
+    } else {
+      res = await sb.from(cfg.table).insert(payload);
+    }
+    if(res.error) throw res.error;
+    if(typeof logAudit==='function'){ try{ await logAudit((GM.editing?'godmode_edit_':'godmode_add_')+GM.svc, {table:cfg.table}); }catch(e){} }
+    gmClose();
+    gmLoad();
+  }catch(err){
+    alert('Save failed: '+(err.message||err));
+  }finally{
+    btn.disabled = false; btn.textContent = 'Save';
+  }
+}
+
+async function gmDelete(){
+  const cfg = GM_CFG[GM.svc];
+  if(!GM.editing) return;
+  if(!confirm('Delete this '+cfg.label.toLowerCase()+' item permanently?')) return;
+  try{
+    if(GM.editing.source && GM.editing.source!=='apatmento'){ throw new Error('Refusing to delete a third-party listing'); }
+    const { error } = await sb.from(cfg.table).delete().eq('id', GM.editing.id).eq('source','apatmento');
+    if(error) throw error;
+    if(typeof logAudit==='function'){ try{ await logAudit('godmode_delete_'+GM.svc, {table:cfg.table, id:GM.editing.id}); }catch(e){} }
+    gmClose();
+    gmLoad();
+  }catch(err){
+    alert('Delete failed: '+(err.message||err));
+  }
 }
 
 </script>

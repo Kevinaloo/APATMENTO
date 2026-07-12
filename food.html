@@ -14,8 +14,8 @@
 <meta http-equiv="Pragma" content="no-cache"/>
 <meta http-equiv="Expires" content="0"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="Order food delivery in Nairobi from top restaurants — Artcaffe, Pizza Mojo, Mianzi Swahili, Barbeque Nation, Teddy's Sushi and more. Live menus via Glovo. Free to order, delivered to your door."/>
-<meta name="keywords" content="food delivery Nairobi, order food Nairobi, Glovo Nairobi, Nairobi restaurants delivery, best food Nairobi, pizza delivery Nairobi, burger delivery Nairobi, Swahili food delivery Nairobi, Indian food Nairobi delivery, sushi Nairobi delivery, restaurant delivery Nairobi Kenya, food near me Nairobi"/>
+<meta name="description" content="Order food delivery from top restaurants — pizza, Swahili, Indian, sushi, burgers and more. Live menus, free to order, delivered to your door."/>
+<meta name="keywords" content="food delivery Kenya, order food online, restaurant delivery, best food delivery, pizza delivery, burger delivery, Swahili food delivery, Indian food delivery, sushi delivery, food near me"/>
 <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1"/>
   <link rel="canonical" href="https://www.apatmento.space/food.html"/>
 <link rel="alternate" hreflang="en-ke" href="https://www.apatmento.space/food.html"/>
@@ -23,7 +23,7 @@
 <link rel="alternate" hreflang="x-default" href="https://www.apatmento.space/food.html"/>
 <meta name="author" content="Apatmento"/>
 <meta name="geo.region" content="KE"/>
-<meta name="geo.placename" content="Nairobi, Kenya"/>
+<meta name="geo.placename" content="Kenya"/>
 <meta name="theme-color" content="#FF6B2C"/>
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
@@ -31,15 +31,15 @@
 <meta name="apple-mobile-web-app-title" content="Apatmento"/>
 <link rel="manifest" href="/manifest.json"/>
 <meta property="og:site_name" content="Apatmento"/>
-<meta property="og:title" content="Food Delivery in Nairobi — Best Restaurants | Apatmento"/>
-<meta property="og:description" content="Order food delivery from the best restaurants in Nairobi. Powered by Glovo."/>
+<meta property="og:title" content="Food Delivery — Best Restaurants | Apatmento"/>
+<meta property="og:description" content="Order food delivery from the best local restaurants. Live menus, delivered to your door."/>
 <meta property="og:url" content="https://www.apatmento.space/food.html"/>
 <meta property="og:type" content="website"/>
 <meta property="og:image" content="https://www.apatmento.space/og-food.jpg"/>
 <meta property="og:locale" content="en_KE"/>
 <meta name="twitter:card" content="summary_large_image"/>
-<meta name="twitter:title" content="Food Delivery in Nairobi — Best Restaurants | Apatmento"/>
-<meta name="twitter:description" content="Order food delivery from the best restaurants in Nairobi. Powered by Glovo."/>
+<meta name="twitter:title" content="Food Delivery — Best Restaurants | Apatmento"/>
+<meta name="twitter:description" content="Order food delivery from the best local restaurants. Live menus, delivered to your door."/>
 <meta name="twitter:image" content="https://www.apatmento.space/og-food.jpg"/>
 <link rel="dns-prefetch" href="//fonts.googleapis.com"/>
 <link rel="dns-prefetch" href="//fonts.gstatic.com"/>
@@ -48,15 +48,15 @@
 {
   "@context": "https://schema.org",
   "@type": "FoodEstablishment",
-  "name": "Apatmento Food Delivery Nairobi",
+  "name": "Apatmento Food Delivery",
   "url": "https://www.apatmento.space/food.html",
-  "description": "Order food delivery from top Nairobi restaurants via Glovo. Pizza, Swahili, Indian, Japanese, burgers and more.",
-  "areaServed": {"@type": "City", "name": "Nairobi", "addressCountry": "KE"},
+  "description": "Order food delivery from top local restaurants. Pizza, Swahili, Indian, Japanese, burgers and more.",
+  "areaServed": {"@type": "Country", "name": "Kenya"},
   "servesCuisine": ["Kenyan", "Swahili", "Indian", "Pizza", "Japanese", "Burgers", "Chinese"],
   "priceRange": "KES 65–1200",
   "hasOfferCatalog": {
     "@type": "OfferCatalog",
-    "name": "Nairobi Restaurant Delivery",
+    "name": "Restaurant Delivery",
     "itemListElement": [
       {"@type": "Offer", "name": "Pizza Mojo — 100% rating on Glovo", "url": "https://glovoapp.com/ke/en/nairobi/pizza-mojo-nrb/"},
       {"@type": "Offer", "name": "Mianzi Swahili Restaurant — 100% rating", "url": "https://glovoapp.com/ke/en/nairobi/mianzi-swahili-restaurant-nrb/"},
@@ -65,7 +65,7 @@
   }
 }
 </script>
-<title>Food Delivery in Nairobi — Best Restaurants | Apatmento</title>
+<title>Food Delivery — Best Restaurants | Apatmento</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/apa-session.js"></script>
 <script src="/apa-admin-guard.js"></script>
@@ -171,37 +171,32 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--glass);c
 .section-label h2{font-family:var(--font-display);font-weight:500;font-size:20px;letter-spacing:-.01em;}
 .section-label .pill{font-size:11px;font-weight:600;padding:3px 10px;border-radius:100px;background:rgba(255,107,44,.1);color:var(--t1);}
 
-/* ── RESTAURANT GRID ── */
-.r-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:18px;margin-bottom:40px;}
+/* ── RESTAURANT GRID (compact, matches shopping) ── */
+.r-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:14px;margin-bottom:40px;}
 
 /* ── RESTAURANT CARD ── */
-.r-card{border-radius:var(--radius);overflow:hidden;background:#fff;border:1px solid var(--line);cursor:pointer;transition:all .4s cubic-bezier(.22,1,.36,1);opacity:0;transform:translateY(18px);text-decoration:none;display:block;color:inherit;}
+.r-card{border-radius:16px;overflow:hidden;background:#fff;border:1px solid var(--line);cursor:pointer;transition:all .38s cubic-bezier(.22,1,.36,1);opacity:0;transform:translateY(14px);text-decoration:none;display:block;color:inherit;position:relative;}
 .r-card.in{opacity:1;transform:none;}
-.r-card:hover{transform:translateY(-6px);box-shadow:var(--shadow-lift);border-color:transparent;}
-.r-card-img{height:185px;position:relative;overflow:hidden;background:linear-gradient(135deg,#FF6B2C22,#FFB59E33);}
-.r-card-img img{width:100%;height:100%;object-fit:cover;transition:transform .6s cubic-bezier(.22,1,.36,1);}
-.r-card:hover .r-card-img img{transform:scale(1.06);}
+.r-card:hover{transform:translateY(-5px);box-shadow:var(--shadow-lift);border-color:transparent;}
+.r-card-img{height:150px;position:relative;overflow:hidden;background:linear-gradient(135deg,#FF6B2C22,#FFB59E33);display:flex;align-items:center;justify-content:center;}
+.r-card-img img{width:100%;height:100%;object-fit:cover;transition:transform .5s cubic-bezier(.22,1,.36,1);}
+.r-card:hover .r-card-img img{transform:scale(1.07);}
 .r-card-img-fallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#FF6B2C,#FFB59E);}
-.r-card-img-fallback svg{width:48px;height:48px;color:rgba(255,255,255,.8);}
-.r-badge{position:absolute;top:11px;left:11px;padding:4px 10px;border-radius:100px;font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;background:rgba(252,252,253,.92);backdrop-filter:blur(6px);color:var(--t1);}
+.r-card-img-fallback svg{width:44px;height:44px;color:rgba(255,255,255,.85);}
+.r-badge{position:absolute;top:8px;left:8px;padding:3px 8px;border-radius:100px;font-size:9.5px;font-weight:700;letter-spacing:.03em;background:rgba(252,252,253,.92);backdrop-filter:blur(6px);color:var(--t1);}
 .r-badge.glovo{background:#00A082;color:#fff;}
 .r-badge.promo{background:#FF3B5C;color:#fff;}
-.r-rating-badge{position:absolute;bottom:11px;right:11px;display:flex;align-items:center;gap:4px;padding:4px 9px;border-radius:100px;background:rgba(10,10,20,.72);backdrop-filter:blur(6px);color:#fff;font-size:11px;font-weight:600;}
+.r-rating-badge{position:absolute;bottom:8px;right:8px;display:flex;align-items:center;gap:4px;padding:3px 8px;border-radius:100px;background:rgba(10,10,20,.72);backdrop-filter:blur(6px);color:#fff;font-size:10.5px;font-weight:600;}
 .r-rating-badge svg{width:11px;height:11px;fill:#F59E0B;stroke:none;}
-.r-card-body{padding:14px 16px 16px;}
-.r-meta{font-size:11px;color:var(--ink-faint);margin-bottom:5px;display:flex;align-items:center;gap:4px;}
+.r-card-body{padding:11px 12px 13px;}
+.r-meta{font-size:10.5px;color:var(--ink-faint);margin-bottom:5px;display:flex;align-items:center;gap:4px;}
 .r-meta svg{width:10px;height:10px;}
-.r-name{font-family:var(--font-display);font-weight:500;font-size:16.5px;color:var(--ink);margin-bottom:8px;line-height:1.25;}
-.r-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px;}
-.r-tag{font-size:10.5px;color:var(--ink-soft);padding:3px 8px;border-radius:100px;background:var(--glass-2);border:1px solid var(--line);}
-.r-foot{display:flex;align-items:center;justify-content:space-between;}
-.r-delivery{display:flex;align-items:center;gap:12px;}
-.r-delivery-item{display:flex;flex-direction:column;}
-.r-delivery-label{font-size:9.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-faint);font-weight:600;}
-.r-delivery-val{font-size:13px;font-weight:600;color:var(--ink);}
-.r-go-btn{display:flex;align-items:center;gap:5px;background:var(--theme-grad);color:#fff;border:none;padding:8px 14px;border-radius:100px;font-size:12px;font-weight:600;cursor:pointer;transition:all .25s;white-space:nowrap;}
-.r-go-btn:hover{filter:brightness(1.08);transform:scale(1.04);}
-.r-go-btn svg{width:12px;height:12px;}
+.r-name{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:8px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:34px;}
+.r-foot{display:flex;align-items:center;justify-content:space-between;gap:6px;}
+.r-status{font-size:11px;font-weight:600;color:#00A082;}
+.r-go-btn{width:30px;height:30px;border-radius:50%;background:var(--theme-grad);display:flex;align-items:center;justify-content:center;color:#fff;border:none;cursor:pointer;flex-shrink:0;transition:transform .2s;}
+.r-go-btn:hover{transform:scale(1.1);}
+.r-go-btn svg{width:14px;height:14px;}
 
 /* ── GLOVO PROMO BANNER ── */
 .glovo-promo{background:linear-gradient(135deg,#00A082,#00C49A);border-radius:16px;padding:20px 24px;margin-bottom:28px;display:flex;align-items:center;gap:16px;color:#fff;}
@@ -226,15 +221,13 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--glass);c
 @media(max-width:700px){
   .topbar,.search-bar,.r-card,.glovo-promo{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;}
   .r-card{background:#fff!important;opacity:1!important;transform:none!important;}
-  .r-grid{grid-template-columns:1fr;gap:14px;}
-  .r-card.horizontal{display:flex;flex-direction:row;}
-  .r-card.horizontal .r-card-img{flex:0 0 110px;height:auto;min-height:110px;}
-  .r-card.horizontal .r-card-body{flex:1;}
-  .r-card.horizontal .r-tags{display:none;}
-  .hero,.content{padding-left:16px;padding-right:16px;}
+  .r-grid{grid-template-columns:repeat(2,1fr);gap:10px;}
+  .r-card-img{height:120px;}
+  .hero,.content{padding-left:14px;padding-right:14px;}
   .ab{filter:blur(40px)!important;opacity:.12!important;}
   .glovo-promo-cta{display:none;}
 }
+@media(max-width:380px){.r-grid{grid-template-columns:repeat(2,1fr);}}
 html.via-dash #tx{display:none!important;}
 </style>
 <link rel="stylesheet" href="/brand.css"/>
@@ -275,19 +268,19 @@ html.via-dash #tx{display:none!important;}
     <button class="apa-sos" data-apa="sos" type="button" aria-label="Emergency help">SOS</button>
     <span class="glovo-badge">
       <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
-      Powered by Glovo
+      Live menus
     </span>
   </div>
 </div>
 
 <!-- HERO -->
 <div class="hero">
-  <span class="hero-eyebrow">🍽️ Food Delivery · Nairobi</span>
+  <span class="hero-eyebrow">🍽️ Food Delivery</span>
   <h1 class="hero-title">Your favourites,<br/><em>delivered hot.</em></h1>
-  <p class="hero-sub">Real restaurants, live menus — powered by Glovo. Tap any restaurant to order directly.</p>
+  <p class="hero-sub">Real restaurants, live menus. Tap any restaurant to order directly.</p>
   <div class="powered">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00A082" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-    Live data <strong>powered by Glovo</strong> · Click any card to order
+    Live menus · Click any card to order
   </div>
 
   <!-- Search -->
@@ -295,7 +288,7 @@ html.via-dash #tx{display:none!important;}
     <div class="search-bar" id="searchBar">
       <div class="sb-field" onclick="activateSearch()">
         <div class="sb-label">Search</div>
-        <div class="sb-val" id="searchDisplay">Restaurants near Nairobi</div>
+        <div class="sb-val" id="searchDisplay">Restaurants near you</div>
       </div>
       <input class="sb-input" id="searchInput" type="text" placeholder="Search restaurants, cuisines…" oninput="filterCards()" onblur="deactivateSearch()"/>
       <button class="sb-btn" onclick="filterCards()">
@@ -329,10 +322,10 @@ html.via-dash #tx{display:none!important;}
       </svg>
     </div>
     <div class="glovo-promo-text">
-      <h3>Order directly on Glovo</h3>
-      <p>Click any restaurant card below to go straight to their Glovo menu and order with tracked delivery.</p>
+      <h3>Order in a few taps</h3>
+      <p>Click any restaurant card below to go straight to their live menu and order with tracked delivery.</p>
     </div>
-    <a href="https://glovoapp.com/ke/en/nairobi/" target="_blank" rel="noopener" class="glovo-promo-cta">Browse All →</a>
+    <a href="https://glovoapp.com/ke/en/" target="_blank" rel="noopener" class="glovo-promo-cta">Browse All →</a>
   </div>
 
   <div class="content-head">
@@ -484,10 +477,9 @@ function renderGrid(){
     const ratingLabel = r.rating === 'New' ? '<span style="color:#8B6FE8;font-weight:700;font-size:10px;">NEW</span>' :
       `<svg viewBox="0 0 24 24" style="width:11px;height:11px;fill:#F59E0B;flex-shrink:0;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> ${r.rating}`;
     return `
-    <a class="r-card${isMobile?' horizontal':''}" href="${r.glovoUrl}" target="_blank" rel="noopener" style="transition-delay:${i*35}ms" aria-label="Order from ${r.name} on Glovo">
+    <a class="r-card" href="${r.glovoUrl}" target="_blank" rel="noopener" style="transition-delay:${i*35}ms" aria-label="Order from ${r.name}">
       <div class="r-card-img">
         <img src="${r.img}" alt="${r.name}" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='<div class=r-card-img-fallback><svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;1.3&quot;><path d=&quot;M4 16h16a8 8 0 0 0-16 0z&quot;/><path d=&quot;M2 19h20&quot;/></svg></div>'"/>
-        <div class="r-badge glovo">Glovo</div>
         <div class="r-rating-badge">${ratingLabel}</div>
       </div>
       <div class="r-card-body">
@@ -496,16 +488,9 @@ function renderGrid(){
           ${r.area} · ${r.distance} away
         </div>
         <div class="r-name">${r.name}</div>
-        <div class="r-tags">${r.tags.map(t=>`<span class="r-tag">${t}</span>`).join('')}</div>
         <div class="r-foot">
-          <div class="r-delivery">
-            <div class="r-delivery-item">
-              <span class="r-delivery-label">Status</span>
-              <span class="r-delivery-val" style="color:#00A082;">Open</span>
-            </div>
-          </div>
-          <button class="r-go-btn" onclick="event.preventDefault();event.stopPropagation();window.open('${r.glovoUrl}','_blank');">
-            Order
+          <span class="r-status">Open</span>
+          <button class="r-go-btn" onclick="event.preventDefault();event.stopPropagation();window.open('${r.glovoUrl}','_blank');" aria-label="Order from ${r.name}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M7 7h10v10"/></svg>
           </button>
         </div>
@@ -537,25 +522,25 @@ renderGrid();
 .seo-content .seo-links a:hover{border-color:var(--t1,#6D28FF);}
 </style>
 <section class="seo-content">
-  <h2>Food delivery in Nairobi, made simple</h2>
-  <p>Apatmento brings you food delivery from the best restaurants in Nairobi, powered by Glovo. Whether you're craving wood-fired pizza from Pizza Mojo, authentic Swahili biryani from Mianzi Swahili Restaurant, sizzling Indian curries from The Mayura, fresh sushi from Teddy's Sushi Bar, or a loaded burger from Mezza Burgers, you can browse real menus and order directly from your favourite spot. Every restaurant on this page is live in Nairobi with real ratings from thousands of diners.</p>
-  <p>Ordering food in Nairobi has never been easier. Simply choose your cuisine — Kenyan, Swahili, Indian, Italian, Japanese, Chinese or fast food — tap a restaurant, and you'll be taken straight to their Glovo menu where you can build your order and pay. Delivery is tracked to your door across Westlands, Kilimani, Karen, CBD, Parklands and beyond. From a quick lunch to a family dinner, Apatmento is your gateway to the best food Nairobi has to offer.</p>
+  <h2>Food delivery, made simple</h2>
+  <p>Apatmento brings you food delivery from top restaurants across the country. Whether you're craving wood-fired pizza, authentic Swahili biryani, sizzling Indian curries, fresh sushi, or a loaded burger, you can browse real menus and order directly from your favourite spot. Every restaurant on this page is live with real ratings from thousands of diners.</p>
+  <p>Ordering food has never been easier. Choose your cuisine — Kenyan, Swahili, Indian, Italian, Japanese, Chinese or fast food — tap a restaurant, and you'll be taken straight to their live menu where you can build your order and pay. Delivery is tracked to your door. From a quick lunch to a family dinner, Apatmento is your gateway to great food near you.</p>
 
-  <h3>Popular cuisines available for delivery in Nairobi</h3>
-  <p>Nairobi's food scene is one of the most vibrant in East Africa. Our restaurant partners cover everything from traditional Kenyan nyama choma and Swahili coastal dishes like pilau and coconut fish, to international favourites including pizza, gourmet burgers, Japanese ramen and sushi, North Indian tandoori, and Cantonese-style Chinese. Vegetarian, halal and healthy options are widely available, so there's something for every taste and dietary need.</p>
+  <h3>Popular cuisines available for delivery</h3>
+  <p>Our restaurant partners cover everything from traditional Kenyan nyama choma and Swahili coastal dishes like pilau and coconut fish, to international favourites including pizza, gourmet burgers, Japanese ramen and sushi, North Indian tandoori, and Cantonese-style Chinese. Vegetarian, halal and healthy options are widely available, so there's something for every taste and dietary need.</p>
 
   <h3>Frequently asked questions</h3>
-  <details class="faq-item"><summary>How do I order food delivery in Nairobi?</summary><p>Browse the restaurants on this page, tap the one you want, and you'll be taken to their live Glovo menu. Add items to your cart, enter your delivery address, and pay. Your food is prepared fresh and delivered to your door with live tracking.</p></details>
-  <details class="faq-item"><summary>Which restaurants deliver in Nairobi?</summary><p>Top-rated Nairobi restaurants including Pizza Mojo, Artcaffe, Mianzi Swahili Restaurant, Barbeque Nation, The Mayura Indian Restaurant, Teddy's Sushi Bar, Furusato Japanese, Mezza Burgers and many more all offer delivery through our platform.</p></details>
-  <details class="faq-item"><summary>How much does food delivery cost in Nairobi?</summary><p>Delivery fees vary by restaurant and distance, and are shown clearly at checkout on Glovo. Many restaurants also run offers and promotions. Prices are quoted in Kenyan Shillings (KES).</p></details>
-  <details class="faq-item"><summary>What areas of Nairobi do you deliver to?</summary><p>Delivery is available across Nairobi including Westlands, Kilimani, Karen, Lavington, CBD, Parklands, Kileleshwa, Gigiri and surrounding neighbourhoods, depending on the restaurant's delivery radius.</p></details>
+  <details class="faq-item"><summary>How do I order food delivery?</summary><p>Browse the restaurants on this page, tap the one you want, and you'll be taken to their live menu. Add items to your cart, enter your delivery address, and pay. Your food is prepared fresh and delivered to your door with live tracking.</p></details>
+  <details class="faq-item"><summary>Which restaurants deliver near me?</summary><p>Top-rated local restaurants across a wide range of cuisines offer delivery through our platform. Use the filters and search above to find what's available in your area.</p></details>
+  <details class="faq-item"><summary>How much does food delivery cost?</summary><p>Delivery fees vary by restaurant and distance, and are shown clearly at checkout. Many restaurants also run offers and promotions. Prices are quoted in Kenyan Shillings (KES).</p></details>
+  <details class="faq-item"><summary>What areas do you deliver to?</summary><p>Delivery is available across a growing number of towns and neighbourhoods, depending on each restaurant's delivery radius. We're continually expanding coverage.</p></details>
 
   <div class="seo-links">
     <a href="/shopping.html">Grocery Delivery</a>
-    <a href="/tours.html">Nairobi Tours</a>
+    <a href="/tours.html">Tours</a>
     <a href="/rides.html">Rides & Transfers</a>
-    <a href="/apartments.html">Stays in Kenya</a>
-    <a href="/events.html">Events in Nairobi</a>
+    <a href="/apartments.html">Stays</a>
+    <a href="/events.html">Events</a>
   </div>
 </section>
 
