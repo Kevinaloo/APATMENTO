@@ -205,7 +205,7 @@
   function cardHTML(cat, p) {
     var img = p.img
       ? '<img src="' + esc(p.img) + '" alt="" loading="lazy" decoding="async" onerror="this.remove()">'
-      : '<span class="pc-ph">' + (PH[cat.key] || '✦') + '</span>';
+      : '<span class="pc-ph">' + (PH[cat.key] || cat.name.charAt(0)) + '</span>';
     return '<button type="button" class="pc" onclick="navigateToService(\'' + cat.dest + '\')">'
       + '<span class="pc-img">' + img + '</span>'
       + '<span class="pc-b">'

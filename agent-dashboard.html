@@ -9,10 +9,6 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/apa-session.js"></script>
 <script src="/apa-agent.js"></script>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..700&display=swap" rel="stylesheet"/>
-<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet"/>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
@@ -22,7 +18,7 @@
   --mint:#4EE0C8;--mint-deep:#14B8A6;--gold:#F5B12E;--ember:#FF6A3C;
   --err:#FF4D6D;
   --line:rgba(8,8,15,.07);--line-2:rgba(8,8,15,.13);
-  --font-d:'Fraunces',serif;--font-b:'General Sans',system-ui,sans-serif;
+  --font-d:'Geist','Inter',sans-serif;--font-b:'Inter',system-ui,sans-serif;
   --ease:cubic-bezier(.22,1,.36,1);
 }
 @media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important;}}
@@ -198,6 +194,8 @@ textarea.inp{resize:vertical;min-height:62px;line-height:1.6;font-size:13.5px;}
 .toast.on{transform:translate(-50%,0);}
 .toast.bad{background:var(--err);}
 </style>
+<link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/><link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/cabana-ds.css"/>
 </head>
 <body>
 
@@ -742,5 +740,6 @@ document.getElementById('v-veil').addEventListener('click', function (e) { if (e
 document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeV(); });
 </script>
 <link rel="stylesheet" href="/brand.css"/>
+<script src="/cabana-rebrand.js" defer></script>
 </body>
 </html>

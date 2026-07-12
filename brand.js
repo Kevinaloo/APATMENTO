@@ -241,9 +241,10 @@ function meridianMark(){
   '</svg>';
 }
 function meridianLoaderHTML(){
-  return '<div class="apa-meridian">' + meridianDefs() + meridianMark() +
-    '<div class="apa-load-word">Apat<em>mento</em></div>' +
-    '<div class="apa-load-tag">0&deg; &middot; Where journeys begin</div>' +
+  return '<div class="apa-meridian">' +
+    '<img class="apa-load-emblem" src="/cabana-emblem.png" alt="Cabana" onerror="this.style.display=\'none\'"/>' +
+    '<div class="apa-load-word">Welcome to <em>Cabana</em></div>' +
+    '<div class="apa-load-tag">Where journeys begin</div>' +
     '<div class="apa-load-line"><i></i><b></b></div>' +
   '</div>';
 }

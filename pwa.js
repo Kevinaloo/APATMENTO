@@ -35,7 +35,7 @@ const PWA_CSS = `
 .pwa-install-ico{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#B8A4F4,#7B2FF7);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .pwa-install-ico svg{width:24px;height:24px;color:#fff;}
 .pwa-install-text{flex:1;min-width:0;}
-.pwa-install-title{font-family:'Fraunces',serif;font-weight:500;font-size:15px;color:#0A0A14;margin-bottom:3px;}
+.pwa-install-title{font-family:'Geist','Inter',sans-serif;font-weight:500;font-size:15px;color:#0A0A14;margin-bottom:3px;}
 .pwa-install-sub{font-size:12px;color:#8E90AD;line-height:1.4;}
 .pwa-install-btns{display:flex;gap:8px;align-items:center;flex-shrink:0;}
 .pwa-install-cta{padding:10px 18px;border-radius:100px;background:linear-gradient(135deg,#B8A4F4,#7B2FF7);color:#fff;font-size:13px;font-weight:600;border:none;cursor:pointer;white-space:nowrap;box-shadow:0 4px 14px rgba(123,47,247,.3);transition:transform .2s;}

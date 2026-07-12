@@ -74,18 +74,13 @@
 }
 </script>
 
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..700&display=swap" rel="stylesheet"/>
-<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet"/>
-
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
   --glass:#FCFCFE;--glass-2:#F5F5FC;--ink:#08080F;--ink-2:#13142A;--ink-soft:#474A66;--ink-faint:#8B8EAC;
   --violet:#6D28FF;--electric:#4F6DFF;--mint:#4EE0C8;--gold:#F5B12E;--ember:#FF6A3C;--magenta:#FF3B6B;
   --line:rgba(8,8,15,.08);--line-2:rgba(8,8,15,.14);
-  --font-display:'Fraunces',Georgia,serif;--font-body:'General Sans',system-ui,-apple-system,sans-serif;
+  --font-display:'Geist','Inter',sans-serif;--font-body:'Inter',system-ui,-apple-system,sans-serif;
   --ease-out:cubic-bezier(.22,1,.36,1);
 }
 @media (prefers-reduced-motion: reduce){*{animation-duration:.01ms !important;transition-duration:.01ms !important;}}
@@ -218,6 +213,8 @@ a{text-decoration:none;color:inherit;}
 .cfoot-links a{font-size:13px;color:var(--ink-soft);transition:color .2s;}
 .cfoot-links a:hover{color:var(--violet);}
 </style>
+<link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/><link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/cabana-ds.css"/>
 </head>
 <body>
 
@@ -368,5 +365,6 @@ a{text-decoration:none;color:inherit;}
   onScroll();
 })();
 </script>
+<script src="/cabana-rebrand.js" defer></script>
 </body>
 </html>

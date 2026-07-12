@@ -8,8 +8,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>APATMENTO — My Profile</title>
 <meta name="description" content="Manage your Apatmento profile, saved places, bookings and preferences. Kenya's zero-commission travel and lifestyle super-app."/>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..700&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <!-- Session core: one Supabase client per tab. Multiple clients on the
      same storage key race each other and silently drop the session. -->
@@ -73,8 +71,9 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--bg);colo
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:white;padding:12px 20px;border-radius:12px;font-size:13px;font-weight:500;box-shadow:0 20px 60px rgba(15,17,23,.14);z-index:999;opacity:0;pointer-events:none;transition:opacity .3s;white-space:nowrap;}
 .toast.show{opacity:1;}
 </style>
-<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&f[]=geist@400,500,600&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="/brand.css"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/><link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/cabana-ds.css"/>
 </head>
 <body>
 <nav class="top-nav">
@@ -97,7 +96,7 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--bg);colo
     <div>
       <div class="profile-name" id="prof-name">Loading…</div>
       <div class="profile-email" id="prof-email"></div>
-      <div class="profile-member" id="prof-member">✦ Apatmento Member</div>
+      <div class="profile-member" id="prof-member">Apatmento Member</div>
     </div>
   </div>
 
@@ -223,7 +222,7 @@ async function loadProfile() {
 
   const joinDate = new Date(CURRENT_USER.created_at);
   document.getElementById('prof-member').textContent =
-    `✦ Member since ${joinDate.toLocaleDateString('en-GB',{month:'long',year:'numeric'})}`;
+    `Member since ${joinDate.toLocaleDateString('en-GB',{month:'long',year:'numeric'})}`;
 
   // Load booking stats
   const [aptRes, tourRes, evRes] = await Promise.all([

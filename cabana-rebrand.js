@@ -46,32 +46,34 @@
     var s = doc.createElement('style');
     s.id = 'cabana-rebrand-css';
     s.textContent = [
-      /* ── announcement bar ── */
-      '.cabana-announce{position:relative;z-index:120;width:100%;',
+      /* ── announcement bar — FIXED at top, own layer, never overlaps ── */
+      '.cabana-announce{position:fixed;top:0;left:0;right:0;z-index:1300;width:100%;',
       'background:linear-gradient(100deg,#6D28FF 0%,#4F6DFF 34%,#FF6A3C 78%,#F5B12E 100%);',
       'background-size:200% 100%;color:#fff;overflow:hidden;',
       'font-family:var(--font-body,system-ui,-apple-system,sans-serif);}',
       REDUCE ? '' : '.cabana-announce{animation:cabanaShift 14s ease infinite;}',
       '@keyframes cabanaShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}',
-      '.cabana-announce-inner{max-width:1180px;margin:0 auto;padding:9px 44px 9px 20px;',
-      'display:flex;align-items:center;justify-content:center;gap:10px;',
-      'font-size:13.5px;font-weight:500;line-height:1.35;text-align:center;flex-wrap:wrap;}',
+      '.cabana-announce-inner{max-width:1180px;margin:0 auto;padding:8px 46px 8px 18px;',
+      'display:flex;align-items:center;justify-content:center;gap:8px;',
+      'font-size:13px;font-weight:500;line-height:1.4;text-align:center;flex-wrap:wrap;}',
       '.cabana-announce-inner b{font-weight:700;}',
-      '.cabana-announce em{font-style:italic;font-family:var(--font-display,Georgia,serif);',
-      'font-weight:600;letter-spacing:.01em;}',
+      '.cabana-announce em{font-style:normal;font-weight:700;letter-spacing:.005em;}',
       '.cabana-announce a{color:#fff;text-decoration:underline;text-underline-offset:2px;',
       'font-weight:600;white-space:nowrap;}',
       '.cabana-announce a:hover{opacity:.85;}',
       '.cabana-chip{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;',
-      'border-radius:100px;background:rgba(255,255,255,.18);font-size:11px;font-weight:700;',
-      'letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;}',
+      'border-radius:100px;background:rgba(255,255,255,.18);font-size:10.5px;font-weight:700;',
+      'letter-spacing:.09em;text-transform:uppercase;white-space:nowrap;}',
       '.cabana-x{position:absolute;top:50%;right:12px;transform:translateY(-50%);',
       'width:26px;height:26px;border:none;border-radius:50%;cursor:pointer;',
       'background:rgba(255,255,255,.16);color:#fff;display:flex;align-items:center;',
       'justify-content:center;transition:background .2s;padding:0;}',
       '.cabana-x:hover{background:rgba(255,255,255,.3);}',
-      '@media(max-width:560px){.cabana-announce-inner{font-size:12px;padding:8px 40px 8px 14px;gap:7px;}',
-      '.cabana-announce em{font-size:13px;}}',
+      /* Reserve space for the fixed bar. --cabana-bar is set live by JS. */
+      'body.cabana-has-bar{padding-top:var(--cabana-bar,40px);}',
+      '@media(max-width:560px){.cabana-announce-inner{font-size:11.5px;padding:8px 42px 8px 14px;gap:6px;line-height:1.35;}',
+      '.cabana-chip{font-size:10px;padding:2px 8px;}}',
+      '@media(max-width:380px){.cabana-chip{display:none;}}',
 
       /* ── header co-brand pill (rides beside Apatmento wordmark) ── */
       '.cabana-becoming{display:inline-flex;align-items:center;gap:5px;margin-left:9px;',
@@ -106,21 +108,29 @@
   }
 
   /* ═══ FIXED-HEADER OFFSET ═══════════════════════════════════════
-     The site pins its nav/topbar with position:fixed;top:0. When the
-     announcement bar is in flow above everything, those headers would
-     overlap it. We push them down by exactly the bar's height. Applied
-     as inline style with a data-flag so it's trivially reversible.     */
+     The bar is position:fixed at top:0. We publish its live height as
+     the --cabana-bar CSS variable on <html>. body.cabana-has-bar then
+     reserves that much top padding (so nothing hides under the bar),
+     and every fixed/sticky header is pushed down by the same variable.
+     This is deterministic — no per-element measuring races on mobile. */
+  function syncBarHeight(bar) {
+    safe(function () {
+      var h = bar && bar.parentNode ? bar.offsetHeight : 0;
+      doc.documentElement.style.setProperty('--cabana-bar', h + 'px');
+    }, 'sync');
+  }
+
   function offsetFixedHeaders(bar) {
     safe(function () {
-      var h = bar && bar.offsetParent !== null ? bar.offsetHeight : 0;
+      syncBarHeight(bar);
       var sel = '.nav, .topbar, .cnav';
       var headers = doc.querySelectorAll(sel);
       for (var i = 0; i < headers.length; i++) {
-        var el = headers[i];
-        var pos = global.getComputedStyle(el).position;
+        var node = headers[i];
+        var pos = global.getComputedStyle(node).position;
         if (pos === 'fixed' || pos === 'sticky') {
-          el.style.top = h + 'px';
-          el.setAttribute('data-cabana-offset', '1');
+          node.style.top = 'var(--cabana-bar,0px)';
+          node.setAttribute('data-cabana-offset', '1');
         }
       }
     }, 'offset');
@@ -128,6 +138,8 @@
 
   function clearFixedHeaderOffset() {
     safe(function () {
+      doc.body.classList.remove('cabana-has-bar');
+      doc.documentElement.style.setProperty('--cabana-bar', '0px');
       var offset = doc.querySelectorAll('[data-cabana-offset="1"]');
       for (var i = 0; i < offset.length; i++) {
         offset[i].style.top = '';
@@ -154,10 +166,10 @@
 
       var inner = el('div', '');
       inner.className = 'cabana-announce-inner';
-      inner.appendChild(el('span', '', '<span class="cabana-chip">✦ New chapter</span>'));
+      inner.appendChild(el('span', '', '<span class="cabana-chip">New chapter</span>'));
       inner.appendChild(el('span', '',
         '<b>Apatmento</b> is becoming <em>Cabana</em> — same zero-commission home, a fresh name. ' +
-        '<a href="/cabana.html">See what\'s changing →</a>'));
+        '<a href="/cabana.html">See what\'s changing &rarr;</a>'));
       bar.appendChild(inner);
 
       var x = el('button', '');
@@ -182,47 +194,80 @@
       if (doc.body.firstChild) doc.body.insertBefore(bar, doc.body.firstChild);
       else doc.body.appendChild(bar);
 
-      // The site's nav/topbar is position:fixed at top:0, so it would sit
-      // under the bar. Offset any fixed header down by the bar's height, and
-      // keep it in sync on resize. When the bar is dismissed we clear it.
+      // The bar is fixed at top:0. Reserve page space + push fixed headers
+      // down by the bar's live height (published as --cabana-bar). Keep it
+      // in sync across load, font-swaps and resize; clear on dismiss.
+      doc.body.classList.add('cabana-has-bar');
       offsetFixedHeaders(bar);
+      var resync = function () { offsetFixedHeaders(bar); };
       var ro;
-      try {
-        ro = new global.ResizeObserver(function () { offsetFixedHeaders(bar); });
-        ro.observe(bar);
-      } catch (e) {}
-      global.addEventListener('resize', function () { offsetFixedHeaders(bar); }, { passive: true });
+      try { ro = new global.ResizeObserver(resync); ro.observe(bar); } catch (e) {}
+      global.addEventListener('resize', resync, { passive: true });
+      global.addEventListener('load', resync, { passive: true });
+      // Fonts change line-count → re-measure once webfonts settle.
+      try { if (doc.fonts && doc.fonts.ready) doc.fonts.ready.then(resync); } catch (e) {}
+      setTimeout(resync, 300); setTimeout(resync, 900);
     }, 'announce');
   }
 
-  /* ═══ HEADER "BECOMING CABANA" PILL ═════════════════════════════
-     Finds any Apatmento wordmark (.nav-brand / .footer-brand span) and
-     drops a small Cabana pill beside it. Non-destructive.            */
-  function makePill() {
-    var pill = el('a', '');
-    pill.className = 'cabana-becoming';
-    pill.href = '/cabana.html';
-    pill.title = 'Apatmento is becoming Cabana';
-    pill.setAttribute('aria-label', 'Learn about the Cabana rebrand');
-    pill.innerHTML = '<span class="lab">becoming</span>' +
-      '<img src="/cabana-wordmark-color.png" alt="Cabana" onerror="this.style.display=\'none\'"/>';
-    return pill;
+  /* ═══ CABANA WORDMARK — becomes the primary header identity ═══════
+     Swaps the text "Apatmento" wordmark for the real Cabana wordmark
+     asset, and removes the generic SOS + "zero added fees" chips that
+     cluttered the top-right of service pages. Non-destructive & guarded. */
+  function swapWordmark() {
+    safe(function () {
+      var marks = doc.querySelectorAll('.tb-brand, .nav-brand, .tb-title');
+      for (var i = 0; i < marks.length; i++) {
+        var m = marks[i];
+        if (m.getAttribute('data-cabana-wm') === '1') continue;
+        // Only swap wordmarks that live in a real page header — never in
+        // the side drawer or the footer (those keep their own treatment).
+        var inHeader = m.closest && m.closest('.topbar, .nav, .tb-left, .nav-left');
+        var inDrawer = m.closest && m.closest('.drawer, footer, .footer');
+        if (!inHeader || inDrawer) { m.setAttribute('data-cabana-wm', '1'); continue; }
+        var wrap = doc.createElement('a');
+        wrap.className = 'cab-wordmark';
+        wrap.href = '/cabana.html';
+        wrap.setAttribute('aria-label', 'Cabana — home');
+        wrap.innerHTML = '<img src="/cabana-wordmark-color.png" alt="Cabana" ' +
+          'onerror="this.style.display=\'none\'"/>';
+        m.setAttribute('data-cabana-wm', '1');
+        m.style.display = 'none';
+        if (m.parentNode) m.parentNode.insertBefore(wrap, m.nextSibling);
+      }
+    }, 'wordmark');
   }
 
-  function mountBecomingPill() {
+  function cleanChrome() {
     safe(function () {
-      // Targets, in priority order: home-page nav wordmark, then the
-      // service-page top-bar title. Whichever exists gets the pill.
-      var targets = ['.nav-brand', '.tb-title'];
-      for (var i = 0; i < targets.length; i++) {
-        var brand = doc.querySelector(targets[i]);
-        if (brand && !brand.parentNode.querySelector('.cabana-becoming')) {
-          var pill = makePill();
-          if (brand.nextSibling) brand.parentNode.insertBefore(pill, brand.nextSibling);
-          else brand.parentNode.appendChild(pill);
+      // Remove the generic "Zero added fees" / "Zero commission" topbar chips
+      var chips = doc.querySelectorAll('.tb-chip');
+      for (var i = 0; i < chips.length; i++) {
+        var t = (chips[i].textContent || '').toLowerCase();
+        if (t.indexOf('zero') !== -1 || t.indexOf('fee') !== -1 || t.indexOf('commission') !== -1) {
+          chips[i].parentNode && chips[i].parentNode.removeChild(chips[i]);
         }
       }
-    }, 'pill');
+      // Remove SOS buttons from the top chrome (kept available in-drawer)
+      var sos = doc.querySelectorAll('.tb-right .apa-sos, .topbar .apa-sos, .nav .apa-sos, [data-apa="sos"].apa-sos');
+      for (var j = 0; j < sos.length; j++) {
+        var inBar = sos[j].closest && sos[j].closest('.tb-right, .topbar, .nav, .apa-nav');
+        if (inBar) sos[j].parentNode && sos[j].parentNode.removeChild(sos[j]);
+      }
+      // The Cabana wordmark is a complete lockup, so hide the small
+      // standalone mark beside it in headers to avoid a double logo.
+      var logos = doc.querySelectorAll('.tb-logo, .nav-logo');
+      for (var k = 0; k < logos.length; k++) {
+        var lg = logos[k];
+        if (lg.getAttribute('data-cabana-logo') === '1') continue;
+        var inHead = lg.closest && lg.closest('.topbar, .nav, .tb-left, .nav-left');
+        var inDraw = lg.closest && lg.closest('.drawer, footer, .footer');
+        if (inHead && !inDraw) {
+          lg.style.display = 'none';
+          lg.setAttribute('data-cabana-logo', '1');
+        }
+      }
+    }, 'clean-chrome');
   }
 
   /* ═══ FOOTER TRANSITION BLOCK ═══════════════════════════════════ */
@@ -255,7 +300,8 @@
   function boot() {
     injectCSS();
     mountAnnounce();
-    mountBecomingPill();
+    cleanChrome();
+    swapWordmark();
     mountFooter();
   }
 
@@ -265,9 +311,13 @@
     boot();
   }
 
-  // Re-run pill/footer after late chrome injection (index/dashboard swap headers)
+  // Re-run after late chrome injection (index/dashboard swap headers)
   global.addEventListener('load', function () {
-    setTimeout(function () { safe(mountBecomingPill, 'pill-late'); safe(mountFooter, 'footer-late'); }, 400);
+    setTimeout(function () {
+      safe(cleanChrome, 'clean-late');
+      safe(swapWordmark, 'wordmark-late');
+      safe(mountFooter, 'footer-late');
+    }, 400);
   });
 
   // Public handle (for debugging / manual re-mount)

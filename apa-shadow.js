@@ -243,7 +243,7 @@
     s.textContent = [
       '.apa-sa{position:fixed;z-index:7400;pointer-events:none;opacity:0;',
         'transition:transform .7s cubic-bezier(.19,1,.22,1),opacity .55s ease;',
-        'font-family:"General Sans",system-ui,sans-serif;will-change:transform,opacity;}',
+        'font-family:"Inter",system-ui,sans-serif;will-change:transform,opacity;}',
       '.apa-sa.in{opacity:1;pointer-events:auto;}',
       '.apa-sa-card{position:relative;overflow:hidden;border-radius:20px;cursor:pointer;',
         'box-shadow:0 24px 70px rgba(10,10,20,.28),0 6px 20px rgba(10,10,20,.14);',
@@ -262,7 +262,7 @@
         'transition:background .16s,transform .16s;}',
       '.apa-sa-close:hover{background:rgba(0,0,0,.6);transform:scale(1.08);}',
       '.apa-sa-adv{font-size:10.5px;font-weight:600;color:rgba(255,255,255,.72);margin-bottom:3px;}',
-      '.apa-sa-h{font-family:"Fraunces",Georgia,serif;font-weight:500;font-size:17px;line-height:1.15;color:#fff;margin-bottom:4px;letter-spacing:-.01em;}',
+      '.apa-sa-h{font-family:"Geist","Inter",sans-serif;font-weight:500;font-size:17px;line-height:1.15;color:#fff;margin-bottom:4px;letter-spacing:-.01em;}',
       '.apa-sa-sub{font-size:12px;line-height:1.45;color:rgba(255,255,255,.82);margin-bottom:11px;}',
       '.apa-sa-cta{align-self:flex-start;display:inline-flex;align-items:center;gap:6px;background:#fff;color:#0A0A14;',
         'font-size:12px;font-weight:700;padding:8px 15px;border-radius:100px;border:none;cursor:pointer;',

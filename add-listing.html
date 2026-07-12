@@ -48,8 +48,6 @@
   <link rel="dns-prefetch" href="//fonts.gstatic.com"/>
   <link rel="dns-prefetch" href="//cdn.jsdelivr.net"/>
   <link rel="dns-prefetch" href="//api.unsplash.com"/>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -78,10 +76,6 @@
   });
 })();
 </script>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..700&display=swap" rel="stylesheet"/>
-<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet"/>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
@@ -90,7 +84,7 @@
   --electric:#4361FF;--violet:#7B2FF7;--ember:#FF6B2C;
   --line:rgba(10,10,20,0.07);--line-2:rgba(10,10,20,0.13);
   --theme:var(--lilac-deep);--theme-grad:linear-gradient(135deg,#B8A4F4,#7B2FF7);
-  --font-display:'Fraunces',serif;--font-body:'General Sans',system-ui,sans-serif;
+  --font-display:'Geist','Inter',sans-serif;--font-body:'Inter',system-ui,sans-serif;
   --shadow-glass:0 8px 40px rgba(123,47,247,0.07),0 2px 12px rgba(10,10,20,0.04);
   --shadow-lift:0 24px 70px rgba(123,47,247,0.16),0 8px 24px rgba(10,10,20,0.06);
   --radius:20px;--err:#FF4D6D;
@@ -482,6 +476,8 @@ body{overflow-x:hidden;}
 
 </style>
 <link rel="stylesheet" href="/brand.css"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/><link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/cabana-ds.css"/>
 </head><body>
 <div class="aurora"><div class="ab ab-1"></div><div class="ab ab-2"></div></div>
 
@@ -491,7 +487,6 @@ body{overflow-x:hidden;}
     <img src="logo-mark.png" class="tb-logo" alt="" onerror="this.style.display='none'"/>
     <span class="tb-brand"><em>Apat</em>mento</span>
   </div>
-  <span class="tb-chip">0% commission</span>
 </div>
 
 <div class="prog-wrap">
@@ -506,7 +501,7 @@ body{overflow-x:hidden;}
 
   <!-- STEP 1: TYPE -->
   <div class="step-card active" id="step-1">
-    <span class="step-eyebrow">✦ Step 1 · Property type</span>
+    <span class="step-eyebrow">Step 1 · Property type</span>
     <h1 class="step-title">What are you <em>listing</em>?</h1>
     <p class="step-sub">Choose the type that best describes your space. You keep 100% of every booking.</p>
     <div class="type-grid" id="type-grid-container">
@@ -516,7 +511,7 @@ body{overflow-x:hidden;}
 (function(){
   const configs = {
     apartment:{ 
-      eyebrow:'✦ Step 1 · Property type',
+      eyebrow:'Step 1 · Property type',
       heading:'What are you <em>listing</em>?',
       sub:'Choose the type that best describes your space. You keep 100% of every booking.',
       types:[
@@ -533,7 +528,7 @@ body{overflow-x:hidden;}
       ]
     },
     tour:{
-      eyebrow:'✦ Step 1 · Experience type',
+      eyebrow:'Step 1 · Experience type',
       heading:'What kind of <em>experience</em>?',
       sub:'Choose the tour type you are offering. You keep 100% of every booking.',
       types:[
@@ -550,7 +545,7 @@ body{overflow-x:hidden;}
       ]
     },
     event:{
-      eyebrow:'✦ Step 1 · Event type',
+      eyebrow:'Step 1 · Event type',
       heading:'What type of <em>event</em>?',
       sub:'Choose the event category. You keep 100% of every booking.',
       types:[
@@ -567,7 +562,7 @@ body{overflow-x:hidden;}
       ]
     },
     food:{
-      eyebrow:'✦ Step 1 · Venue type',
+      eyebrow:'Step 1 · Venue type',
       heading:'What type of <em>venue</em>?',
       sub:'Choose your food & dining category. You keep 100% of every booking.',
       types:[
@@ -584,7 +579,7 @@ body{overflow-x:hidden;}
       ]
     },
     carhire:{
-      eyebrow:'✦ Step 1 · Vehicle type',
+      eyebrow:'Step 1 · Vehicle type',
       heading:'What type of <em>vehicle</em>?',
       sub:'Choose the vehicle category. You keep 100% of every booking.',
       types:[
@@ -601,7 +596,7 @@ body{overflow-x:hidden;}
       ]
     },
     roommate:{
-      eyebrow:'✦ Step 1 · Room type',
+      eyebrow:'Step 1 · Room type',
       heading:'What kind of <em>room</em> are you listing?',
       sub:'Choose the room type. You keep 100% of what guests pay.',
       types:[
@@ -631,7 +626,7 @@ body{overflow-x:hidden;}
   const eyebrow = document.querySelector('#step-1 .step-eyebrow');
   const heading = document.querySelector('#step-1 .step-title');
   const sub = document.querySelector('#step-1 .step-sub');
-  if(eyebrow) eyebrow.textContent = cfg.eyebrow.replace('✦ ','');
+  if(eyebrow) eyebrow.textContent = cfg.eyebrow.replace('','');
   if(heading) heading.innerHTML = cfg.heading;
   if(sub) sub.textContent = cfg.sub;
   
@@ -658,7 +653,7 @@ body{overflow-x:hidden;}
 
   <!-- STEP 2: LOCATION -->
   <div class="step-card" id="step-2">
-    <span class="step-eyebrow">✦ Step 2 · Location & title</span>
+    <span class="step-eyebrow">Step 2 · Location & title</span>
     <h1 class="step-title">Where is it <em>located</em>?</h1>
     <p class="step-sub">Give your listing a memorable title and tell guests where to find it.</p>
     <div class="field">
@@ -681,7 +676,7 @@ body{overflow-x:hidden;}
 
   <!-- STEP 3: DETAILS — dynamic by service type -->
   <div class="step-card" id="step-3">
-    <span class="step-eyebrow" id="s3-eyebrow">✦ Step 3 · Details</span>
+    <span class="step-eyebrow" id="s3-eyebrow">Step 3 · Details</span>
     <h1 class="step-title" id="s3-title">Tell us about the <em>space</em>.</h1>
     <p class="step-sub" id="s3-sub">The details that help guests picture themselves there.</p>
     <div id="s3-fields"><!-- injected by JS --></div>
@@ -695,7 +690,7 @@ body{overflow-x:hidden;}
 
   <!-- STEP 4: AMENITIES/FEATURES — dynamic by service type -->
   <div class="step-card" id="step-4">
-    <span class="step-eyebrow" id="s4-eyebrow">✦ Step 4 · Features</span>
+    <span class="step-eyebrow" id="s4-eyebrow">Step 4 · Features</span>
     <h1 class="step-title" id="s4-title">What's <em>included</em>?</h1>
     <p class="step-sub" id="s4-sub">Select everything on offer. Guests filter by these.</p>
     <div id="s4-amen-grid" class="amen-grid"></div>
@@ -722,7 +717,7 @@ body{overflow-x:hidden;}
 
   <!-- STEP 5: PRICING -->
   <div class="step-card" id="step-5">
-    <span class="step-eyebrow">✦ Step 5 · Pricing</span>
+    <span class="step-eyebrow">Step 5 · Pricing</span>
     <h1 class="step-title">Set your <em>price</em>.</h1>
     <p class="step-sub" id="s5-sub">You set the rate. Guests pay exactly that — Apatmento adds only a small fixed fee on top, never a cut of yours.</p>
     <div class="row-2">
@@ -746,7 +741,7 @@ body{overflow-x:hidden;}
 
   <!-- STEP 6: PHOTOS + RULES -->
   <div class="step-card" id="step-6">
-    <span class="step-eyebrow">✦ Step 6 · Photos & rules</span>
+    <span class="step-eyebrow">Step 6 · Photos & rules</span>
     <h1 class="step-title">Show it <em>off</em>.</h1>
     <p class="step-sub">Great photos get more bookings. Add a few, then set your house rules.</p>
     <div class="upload-zone" id="upload-zone" onclick="document.getElementById('photo-input').click()" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropFiles(event)">
@@ -777,7 +772,7 @@ body{overflow-x:hidden;}
 
   <!-- STEP 7: REVIEW -->
   <div class="step-card" id="step-7">
-    <span class="step-eyebrow">✦ Step 7 · Review & publish</span>
+    <span class="step-eyebrow">Step 7 · Review & publish</span>
     <h1 class="step-title">Looks <em>good</em>?</h1>
     <p class="step-sub">Review everything before going live. You can edit anytime from your dashboard.</p>
     <div class="review-card">
@@ -793,7 +788,7 @@ body{overflow-x:hidden;}
       <div class="rv-row"><span class="lbl">Cancellation</span><span class="val" id="rv-cancel">—</span></div>
     </div>
     <div id="rv-photos"></div>
-    <div class="step-nav-btns"><button class="btn-back" onclick="prevStep()">Back</button><button class="btn-next" id="publish-btn" onclick="publishListing()">Publish listing ✦</button></div>
+    <div class="step-nav-btns"><button class="btn-back" onclick="prevStep()">Back</button><button class="btn-next" id="publish-btn" onclick="publishListing()">Publish listing</button></div>
   </div>
 </div>
 
@@ -858,7 +853,7 @@ const formData  = {
 const STEP_CONFIGS = {
   apartment: {
     s3: {
-      eyebrow: '✦ Step 3 · Space & details',
+      eyebrow: 'Step 3 · Space & details',
       title: 'Tell us about the <em>space</em>.',
       sub: 'The details that help guests picture themselves there.',
       descLabel: 'Description',
@@ -875,7 +870,7 @@ const STEP_CONFIGS = {
         </div>`
     },
     s4: {
-      eyebrow: '✦ Step 4 · Amenities',
+      eyebrow: 'Step 4 · Amenities',
       title: "What's <em>included</em>?",
       sub: 'Select everything your space offers. Guests filter by these.',
       amenities: ['📶 WiFi','❄️ Air Con','🍳 Kitchen','🅿️ Parking','📺 Smart TV','🧺 Washer','🏊 Pool','🏋️ Gym','☕ Coffee','🔥 Heating','🛗 Elevator','🐕 Pet Friendly','🔒 Security','🌳 Garden','🍽️ Dishwasher','💧 Hot Water','🛁 Bathtub','🚿 Shower']
@@ -885,7 +880,7 @@ const STEP_CONFIGS = {
   },
   roommate: {
     s3: {
-      eyebrow: '✦ Step 3 · Room details',
+      eyebrow: 'Step 3 · Room details',
       title: 'Tell us about the <em>room</em>.',
       sub: 'Help potential flatmates picture life there.',
       descLabel: 'About the room & flat',
@@ -901,7 +896,7 @@ const STEP_CONFIGS = {
         </div>`
     },
     s4: {
-      eyebrow: '✦ Step 4 · What\'s included',
+      eyebrow: 'Step 4 · What\'s included',
       title: "What's <em>available</em>?",
       sub: 'Select shared facilities and perks. Flatmates look for these.',
       amenities: ['📶 WiFi','🅿️ Parking','🍳 Shared kitchen','🧺 Washer','📺 TV lounge','🏊 Pool','🏋️ Gym','🐕 Pets OK','🔒 Security','🌳 Garden','🔥 Heating','❄️ Air Con','💧 Hot Water','🚿 Shower','🛁 Bathtub','🛗 Elevator','♿ Accessible','🚌 Near bus']
@@ -911,7 +906,7 @@ const STEP_CONFIGS = {
   },
   tour: {
     s3: {
-      eyebrow: '✦ Step 3 · Experience details',
+      eyebrow: 'Step 3 · Experience details',
       title: 'Tell us about the <em>experience</em>.',
       sub: 'Help guests know exactly what to expect.',
       descLabel: 'Tour description',
@@ -927,7 +922,7 @@ const STEP_CONFIGS = {
         </div>`
     },
     s4: {
-      eyebrow: '✦ Step 4 · Inclusions',
+      eyebrow: 'Step 4 · Inclusions',
       title: "What's <em>included</em>?",
       sub: 'Tell guests exactly what comes with the experience.',
       amenities: ['🚗 Transport','🍱 Meals','💧 Drinks','🏨 Accommodation','📷 Photos','🎒 Equipment','👟 Gear rental','🔭 Binoculars','🌍 Guide','🎧 Headsets','🦺 Safety gear','🎫 Entry fees','🛡️ Insurance','🤿 Snorkel gear','🏕️ Camping','🔦 Torch']
@@ -937,7 +932,7 @@ const STEP_CONFIGS = {
   },
   event: {
     s3: {
-      eyebrow: '✦ Step 3 · Event details',
+      eyebrow: 'Step 3 · Event details',
       title: 'Tell us about the <em>event</em>.',
       sub: 'Help ticket buyers know what to expect.',
       descLabel: 'Event description',
@@ -953,7 +948,7 @@ const STEP_CONFIGS = {
         </div>`
     },
     s4: {
-      eyebrow: '✦ Step 4 · What\'s included',
+      eyebrow: 'Step 4 · What\'s included',
       title: "What's <em>in the ticket</em>?",
       sub: 'Let buyers know what their ticket covers.',
       amenities: ['🎫 General entry','🎟️ VIP access','🍻 Open bar','🍽️ Catering','🎵 Live music','🎤 DJ set','🎪 Meet & greet','📸 Photographer','🅿️ Parking','♿ Accessible','🔞 18+ only','👶 Family friendly','🎁 Goodie bag','🏆 Awards','💺 Seating','🎭 Performers']
@@ -963,7 +958,7 @@ const STEP_CONFIGS = {
   },
   carhire: {
     s3: {
-      eyebrow: '✦ Step 3 · Vehicle details',
+      eyebrow: 'Step 3 · Vehicle details',
       title: 'Tell us about the <em>vehicle</em>.',
       sub: 'The spec guests need to decide and book.',
       descLabel: 'Vehicle description',
@@ -981,7 +976,7 @@ const STEP_CONFIGS = {
         </div>`
     },
     s4: {
-      eyebrow: '✦ Step 4 · Features',
+      eyebrow: 'Step 4 · Features',
       title: "What's <em>included</em>?",
       sub: 'Features guests can expect with this vehicle.',
       amenities: ['❄️ A/C','📡 GPS','🛜 WiFi hotspot','🚗 4WD','🔑 Keyless entry','🎵 Bluetooth audio','🔌 USB charging','💺 Leather seats','🌞 Sunroof','🐕 Pet friendly','🧒 Baby seat','♿ Accessible','🏕️ Camping setup','🗺️ Roof rack','🛠️ Full-size spare','⛽ Full tank on pickup']
@@ -991,7 +986,7 @@ const STEP_CONFIGS = {
   },
   food: {
     s3: {
-      eyebrow: '✦ Step 3 · Venue details',
+      eyebrow: 'Step 3 · Venue details',
       title: 'Tell us about the <em>venue</em>.',
       sub: 'Help diners know what to expect before they book.',
       descLabel: 'About the venue',
@@ -1007,7 +1002,7 @@ const STEP_CONFIGS = {
         </div>`
     },
     s4: {
-      eyebrow: '✦ Step 4 · Features & facilities',
+      eyebrow: 'Step 4 · Features & facilities',
       title: "What do you <em>offer</em>?",
       sub: 'Diners look for these when choosing where to eat.',
       amenities: ['🅿️ Parking','📶 WiFi','🍺 Alcohol','🎵 Live music','🌳 Outdoor seating','❄️ A/C','🐕 Pet friendly','♿ Accessible','👶 Kids menu','💳 Card payment','🎂 Birthday setup','🎤 Karaoke','🎭 Entertainment','🚀 Fast delivery','📦 Takeaway','🤝 Corporate events']
@@ -1025,7 +1020,7 @@ function _buildStep3(svcType) {
   const fields  = document.getElementById('s3-fields');
   const descLbl = document.getElementById('s3-desc-label');
   const descTxt = document.getElementById('f-desc');
-  if (eyebrow) eyebrow.textContent = cfg.eyebrow.replace('✦ ', '');
+  if (eyebrow) eyebrow.textContent = cfg.eyebrow.replace('', '');
   if (title)   title.innerHTML     = cfg.title;
   if (sub)     sub.textContent     = cfg.sub;
   if (fields)  fields.innerHTML    = cfg.extraFields || '';
@@ -1039,7 +1034,7 @@ function _buildStep4(svcType) {
   const title   = document.getElementById('s4-title');
   const sub     = document.getElementById('s4-sub');
   const grid    = document.getElementById('s4-amen-grid');
-  if (eyebrow) eyebrow.textContent = cfg.eyebrow.replace('✦ ', '');
+  if (eyebrow) eyebrow.textContent = cfg.eyebrow.replace('', '');
   if (title)   title.innerHTML     = cfg.title;
   if (sub)     sub.textContent     = cfg.sub;
   if (grid) {

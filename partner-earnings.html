@@ -20,10 +20,6 @@
   });
 })();
 </script>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..700&display=swap" rel="stylesheet"/>
-<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&f[]=geist@400,500,600&display=swap" rel="stylesheet"/>
 <style>
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -40,7 +36,7 @@
   --theme-grad:linear-gradient(135deg,#2DD4BF,#4361FF);
   --theme-soft:rgba(45,212,191,.08);
   --theme-border:rgba(45,212,191,.2);
-  --font-d:'Fraunces',serif;--font-b:'General Sans',system-ui,sans-serif;
+  --font-d:'Geist','Inter',sans-serif;--font-b:'Inter',system-ui,sans-serif;
   --font-data:'Geist',monospace;
   --shadow-sm:0 2px 8px rgba(10,10,20,.05);
   --shadow-md:0 8px 32px rgba(45,212,191,.08),0 2px 12px rgba(10,10,20,.05);
@@ -231,6 +227,8 @@ td strong{color:var(--ink);font-weight:600;}
 @media(max-width:520px){.tb-switch-txt{display:none;}}
 </style>
 <link rel="stylesheet" href="/brand.css"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/><link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/cabana-ds.css"/>
 </head>
 <body>
 <div class="aurora"><div class="ab ab-1"></div><div class="ab ab-2"></div><div class="ab ab-3"></div></div>
@@ -245,7 +243,6 @@ td strong{color:var(--ink);font-weight:600;}
     <span class="tb-hub-label">· Partner Hub</span>
   </div>
   <div class="tb-right">
-    <span class="tb-chip">0% commission</span>
     <button class="apa-sos" data-apa="sos" type="button" aria-label="Emergency help">SOS</button>
     <button class="apa-ico" id="apa-fav-btn" data-apa="fav" type="button" aria-label="Saved places" title="Saved places" data-when="user">
       <svg class="apa-fav-heart" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -327,7 +324,7 @@ td strong{color:var(--ink);font-weight:600;}
 <main class="main">
 
 <div class="page-hd">
-  <span class="page-eyebrow">✦ Partner Hub</span>
+  <span class="page-eyebrow">Partner Hub</span>
   <h1 class="page-title">Your <em>earnings</em></h1>
   <p class="page-sub">100% of every booking goes directly to you. No commissions, ever.</p>
 </div>
@@ -535,5 +532,6 @@ async function requestPayout() {
 
 document.addEventListener('DOMContentLoaded', loadEarnings);
 </script>
+<script src="/cabana-rebrand.js" defer></script>
 </body>
 </html>

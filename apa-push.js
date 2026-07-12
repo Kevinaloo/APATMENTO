@@ -50,7 +50,7 @@
 .apa-toast[data-kind=booking] .apa-toast-ico{background:linear-gradient(135deg,#14B8A6,#4EE0C8);}
 .apa-toast[data-kind=payment] .apa-toast-ico{background:linear-gradient(135deg,#F5B12E,#D98E0B);}
 .apa-toast-body{flex:1;min-width:0;}
-.apa-toast-title{font-family:'Fraunces',Georgia,serif;font-weight:500;font-size:14px;color:#08080F;margin-bottom:2px;line-height:1.3;}
+.apa-toast-title{font-family:'Geist','Inter',sans-serif;font-weight:500;font-size:14px;color:#08080F;margin-bottom:2px;line-height:1.3;}
 .apa-toast-text{font-size:12.5px;color:#474A66;line-height:1.45;}
 .apa-toast-x{width:26px;height:26px;border-radius:50%;border:none;background:rgba(8,8,15,.05);color:#8B8EAC;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .apa-toast-x:hover{background:rgba(8,8,15,.1);}
@@ -251,7 +251,7 @@
 .apa-gate.show .apa-gate-card{transform:none;}
 .apa-gate-ico{width:62px;height:62px;border-radius:19px;margin:0 auto 20px;display:flex;align-items:center;justify-content:center;color:#fff;background:linear-gradient(135deg,#6D28FF,#4F6DFF);box-shadow:0 12px 30px rgba(109,40,255,.34);}
 .apa-gate-ico svg{width:28px;height:28px;}
-.apa-gate-h{font-family:'Fraunces',Georgia,serif;font-size:23px;font-weight:500;color:#08080F;margin-bottom:10px;}
+.apa-gate-h{font-family:'Geist','Inter',sans-serif;font-size:23px;font-weight:500;color:#08080F;margin-bottom:10px;}
 .apa-gate-p{font-size:14px;color:#474A66;line-height:1.6;margin-bottom:24px;}
 .apa-gate-btn{width:100%;padding:15px;border-radius:100px;border:none;background:linear-gradient(135deg,#6D28FF,#4F6DFF);color:#fff;font-weight:600;font-size:15px;cursor:pointer;transition:transform .2s,box-shadow .2s;}
 .apa-gate-btn:hover{transform:translateY(-2px);box-shadow:0 14px 34px rgba(109,40,255,.34);}

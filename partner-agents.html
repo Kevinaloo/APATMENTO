@@ -8,10 +8,6 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/apa-session.js"></script>
 <script src="/apa-agent.js"></script>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..700&display=swap" rel="stylesheet"/>
-<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet"/>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
@@ -21,7 +17,7 @@
   --mint:#4EE0C8;--mint-deep:#14B8A6;--gold:#F5B12E;--ember:#FF6A3C;
   --err:#FF4D6D;
   --line:rgba(8,8,15,.07);--line-2:rgba(8,8,15,.13);
-  --font-d:'Fraunces',serif;--font-b:'General Sans',system-ui,sans-serif;
+  --font-d:'Geist','Inter',sans-serif;--font-b:'Inter',system-ui,sans-serif;
   --ease:cubic-bezier(.22,1,.36,1);
 }
 @media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important;}}
@@ -190,6 +186,8 @@ textarea.inp{padding-right:15px;font-weight:400;font-size:13.5px;resize:vertical
 .mn-dot{position:absolute;top:5px;right:calc(50% - 16px);width:7px;height:7px;border-radius:50%;background:var(--ember);}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);}
 </style>
+<link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/><link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/cabana-ds.css"/>
 </head>
 <body>
 
@@ -246,7 +244,7 @@ textarea.inp{padding-right:15px;font-weight:400;font-size:13.5px;resize:vertical
 </nav>
 
 <main class="main">
-  <span class="page-eyebrow">✦ Partner Hub</span>
+  <span class="page-eyebrow">Partner Hub</span>
   <h1 class="page-title">My <em>agents</em></h1>
   <p class="page-sub">Agents bring you guests. You decide who represents your listings and exactly what they earn — per listing, in your own words. Nobody is assigned to you.</p>
 
@@ -706,5 +704,6 @@ document.getElementById('rep-veil').addEventListener('click', (e) => {
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeRep(); });
 </script>
 <link rel="stylesheet" href="/brand.css"/>
+<script src="/cabana-rebrand.js" defer></script>
 </body>
 </html>

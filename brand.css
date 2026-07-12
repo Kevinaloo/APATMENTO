@@ -40,9 +40,9 @@
   --grad-reef:linear-gradient(135deg,var(--electric),var(--mint));
 
   /* Type */
-  --font-display:'Fraunces',Georgia,serif;
-  --font-body:'General Sans','Geist',system-ui,-apple-system,sans-serif;
-  --font-data:'Geist','General Sans',ui-monospace,monospace;
+  --font-display:'Geist','Inter',sans-serif;
+  --font-body:'Inter',system-ui,-apple-system,sans-serif;
+  --font-data:'Geist','Inter',ui-monospace,monospace;
   --font-d:var(--font-display);
   --font-b:var(--font-body);
 
@@ -153,13 +153,21 @@ body::after{
 @keyframes apa-ride{ 0%{offset-distance:0%;opacity:0} 12%{opacity:1} 100%{offset-distance:100%;opacity:1} }
 @keyframes apa-pulse{ 0%,100%{opacity:.5;r:2.6} 50%{opacity:1;r:3.4} }
 
+.apa-load-emblem{
+  width:118px; height:118px; display:block; object-fit:contain;
+  filter:drop-shadow(0 14px 40px rgba(109,40,255,.35));
+  opacity:0; transform:scale(.86) translateY(10px);
+  animation:apa-emblem-in .9s .1s var(--ease-out) forwards;
+}
+@keyframes apa-emblem-in{ to{ opacity:1; transform:scale(1) translateY(0); } }
+
 .apa-load-word{
   margin-top:26px;
-  font-family:var(--font-display); font-weight:340; font-size:clamp(26px,4vw,34px);
-  letter-spacing:.02em; color:#FCFCFE;
+  font-family:var(--font-display); font-weight:600; font-size:clamp(26px,4vw,32px);
+  letter-spacing:-.02em; color:#FCFCFE;
   opacity:0; animation:apa-rise .7s .5s var(--ease-out) forwards;
 }
-.apa-load-word em{ font-style:italic; font-weight:500;
+.apa-load-word em{ font-style:normal; font-weight:700;
   background:var(--grad-equator); -webkit-background-clip:text; background-clip:text; color:transparent; }
 .apa-load-tag{
   margin-top:10px; font-family:var(--font-body); font-size:10.5px; font-weight:600;

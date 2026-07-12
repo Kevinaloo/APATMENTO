@@ -105,13 +105,13 @@ const DEMO = {
     {id:'d_v2',advertiser:'Apatmento Tours',tag:'Featured',headline:"Days you\'ll never forget",sub:'Maasai Mara · Mt Kenya · Diani Beach · Guides keep 100%',cta:'Explore tours',url:'tours.html',media:'',poster:'',grad:'linear-gradient(135deg,#2DD4BF,#4361FF)',accent:'#5EEAD4',price:'',icon:'<path d="m15 5.5-6-2-6 2.5v13l6-2.5 6 2 6-2.5v-13zM9 3.5v13M15 7.5v13"/>'},
   ],
   carousel:[
-    {id:'d_cab_c',advertiser:'Cabana',tag:'✦ New chapter',headline:'Apatmento is becoming Cabana',sub:'Same home, same 100% to hosts — a brighter name built to travel',cta:'See the story',url:'cabana.html',media:'',poster:'',grad:'linear-gradient(135deg,#6D28FF,#4F6DFF,#FF6A3C)',accent:'#FF6A3C',price:'',icon:'<path d=\"M12 2 2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5\"/>'},
+    {id:'d_cab_c',advertiser:'Cabana',tag:'New chapter',headline:'Apatmento is becoming Cabana',sub:'Same home, same 100% to hosts — a brighter name built to travel',cta:'See the story',url:'cabana.html',media:'',poster:'',grad:'linear-gradient(135deg,#6D28FF,#4F6DFF,#FF6A3C)',accent:'#FF6A3C',price:'',icon:'<path d=\"M12 2 2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5\"/>'},
     {id:'d_c1',advertiser:'M-Pesa',tag:'Sponsored',headline:'Pay the smart way',sub:'Instant M-Pesa payments on every Apatmento booking',cta:'Learn more',url:'#',media:'',poster:'',grad:'linear-gradient(135deg,#2DD4BF,#5EEAD4)',accent:'#5EEAD4',price:'',icon:'<rect width="20" height="14" x="2" y="5" rx="2"/><path d="M2 10h20"/>'},
     {id:'d_c2',advertiser:'Jambojet',tag:'Sponsored',headline:'Fly Kenya for less',sub:'Domestic flights from KES 2,800 — no added fees',cta:'Book flights',url:'flights.html',media:'',poster:'',grad:'linear-gradient(135deg,#4361FF,#B8A4F4)',accent:'#4361FF',price:'',icon:'<path d="M17.8 19.2 16 11l3.5-3.5C21 6 21 4 21 4s-2 0-3.5 1.5L14 9 5.8 6.2l-1.9 1.9 7.1 3.4L9.6 14H6l-1 1 3 1 1 3 1-1v-3.6l3.5-1.4 3.4 7.1z"/>'},
     {id:'d_c3',advertiser:'Safaricom',tag:'Sponsored',headline:'Stay connected everywhere',sub:'Kenya\'s best network — fibre-verified Apatmento properties',cta:'See stays',url:'apartments.html',media:'',poster:'',grad:'linear-gradient(135deg,#7B2FF7,#B8A4F4)',accent:'#B8A4F4',price:'',icon:'<path d="M5 13a10 10 0 0 1 14 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/>'},
   ],
   native:[
-    {id:'d_cabana',advertiser:'Cabana',tag:'✦ New chapter',headline:'Apatmento is becoming Cabana',sub:'Same team. Same zero-commission promise. A brighter name, built to travel the world.',cta:'See what\'s changing',url:'cabana.html',media:'',poster:'',grad:'linear-gradient(135deg,#6D28FF 0%,#4F6DFF 45%,#FF6A3C 100%)',accent:'#FF6A3C',price:'',icon:'<path d=\"M12 2 2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5\"/>'},
+    {id:'d_cabana',advertiser:'Cabana',tag:'New chapter',headline:'Apatmento is becoming Cabana',sub:'Same team. Same zero-commission promise. A brighter name, built to travel the world.',cta:'See what\'s changing',url:'cabana.html',media:'',poster:'',grad:'linear-gradient(135deg,#6D28FF 0%,#4F6DFF 45%,#FF6A3C 100%)',accent:'#FF6A3C',price:'',icon:'<path d=\"M12 2 2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5\"/>'},
     {id:'d_n1',advertiser:'Sankara Nairobi',tag:'Promoted',headline:'Sankara Nairobi — Westlands',sub:'5-star · Rooftop pool · Sky bar',cta:'View hotel',url:'#',media:'',poster:'',grad:'linear-gradient(135deg,#B8A4F4,#7B2FF7)',accent:'#B8A4F4',price:'From KES 18,000',icon:'<path d="M3 21h18M5 21V7l7-4 7 4v14"/>'},
   ],
   split:[
@@ -132,7 +132,7 @@ const DEMO = {
 ════════════════════════════════════════════════════════════════ */
 const BRAND_FALLBACK = {
   video: {
-    id:'brand_video', advertiser:'Apatmento', tag:'✦ Apatmento',
+    id:'brand_video', advertiser:'Apatmento', tag:'Apatmento',
     headline:'Travel in style.\nLive without limits.',
     sub:'Kenya\'s first zero-commission travel super-app. Stays, flights, tours, events, rides, food and more — all in one place.',
     cta:'Explore Apatmento', url:'index.html',
@@ -142,12 +142,12 @@ const BRAND_FALLBACK = {
     price:'', icon:'<path d="M3 10.5 12 4l9 6.5M5 9.5V20h14V9.5M9 20v-5a3 3 0 0 1 6 0v5"/>',
   },
   carousel: [
-    {id:'brand_c1', advertiser:'Apatmento Stays', tag:'✦ Featured', headline:'Find your perfect space', sub:'Apartments from KES 3,200 · Hosts keep 100%', cta:'Browse stays', url:'apartments.html', media:'', poster:'', grad:'linear-gradient(135deg,#B8A4F4,#7B2FF7)', accent:'#B8A4F4', price:'', icon:'<path d="M3 10.5 12 4l9 6.5M5 9.5V20h14V9.5"/>'},
-    {id:'brand_c2', advertiser:'Apatmento Tours', tag:'✦ Featured', headline:"Days you\'ll never forget", sub:'Safaris, treks & experiences across Kenya', cta:'See tours', url:'tours.html', media:'', poster:'', grad:'linear-gradient(135deg,#2DD4BF,#4361FF)', accent:'#5EEAD4', price:'', icon:'<path d="m15 5.5-6-2-6 2.5v13l6-2.5 6 2 6-2.5v-13z"/>'},
-    {id:'brand_c3', advertiser:'Apatmento Events', tag:'✦ Featured', headline:'Face-value tickets. Nothing added.', sub:'Concerts, festivals, sports — you pay exactly what the organiser charges', cta:'Get tickets', url:'events.html', media:'', poster:'', grad:'linear-gradient(135deg,#7B2FF7,#B8A4F4)', accent:'#B8A4F4', price:'', icon:'<path d="M3 9a2 2 0 0 0 0 6v2a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-2a2 2 0 0 0 0-6V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1z"/>'},
+    {id:'brand_c1', advertiser:'Apatmento Stays', tag:'Featured', headline:'Find your perfect space', sub:'Apartments from KES 3,200 · Hosts keep 100%', cta:'Browse stays', url:'apartments.html', media:'', poster:'', grad:'linear-gradient(135deg,#B8A4F4,#7B2FF7)', accent:'#B8A4F4', price:'', icon:'<path d="M3 10.5 12 4l9 6.5M5 9.5V20h14V9.5"/>'},
+    {id:'brand_c2', advertiser:'Apatmento Tours', tag:'Featured', headline:"Days you\'ll never forget", sub:'Safaris, treks & experiences across Kenya', cta:'See tours', url:'tours.html', media:'', poster:'', grad:'linear-gradient(135deg,#2DD4BF,#4361FF)', accent:'#5EEAD4', price:'', icon:'<path d="m15 5.5-6-2-6 2.5v13l6-2.5 6 2 6-2.5v-13z"/>'},
+    {id:'brand_c3', advertiser:'Apatmento Events', tag:'Featured', headline:'Face-value tickets. Nothing added.', sub:'Concerts, festivals, sports — you pay exactly what the organiser charges', cta:'Get tickets', url:'events.html', media:'', poster:'', grad:'linear-gradient(135deg,#7B2FF7,#B8A4F4)', accent:'#B8A4F4', price:'', icon:'<path d="M3 9a2 2 0 0 0 0 6v2a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-2a2 2 0 0 0 0-6V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1z"/>'},
   ],
   native: {
-    id:'brand_n1', advertiser:'Apatmento', tag:'✦ Apatmento',
+    id:'brand_n1', advertiser:'Apatmento', tag:'Apatmento',
     headline:'Apatmento — Travel in style', sub:'Zero commission · Hosts keep 100%', cta:'Explore', url:'index.html',
     media:'', poster:'', grad:'linear-gradient(135deg,#B8A4F4,#7B2FF7)', accent:'#B8A4F4', price:'From KES 3,200/night',
     icon:'<path d="M3 10.5 12 4l9 6.5M5 9.5V20h14V9.5"/>',
@@ -162,7 +162,7 @@ const BRAND_FALLBACK = {
   },
   ticker: {
     id:'brand_t1', advertiser:'Apatmento', tag:'Live',
-    headline:'✦ Apatmento for Life — Travel in Style · Stays from KES 3,200/night · Zero Commission · Hosts keep 100% · Book flights, safaris, events & more · Kenya\'s premium travel super-app · Apatmento for Life — Travel in Style ·',
+    headline:'Apatmento for Life — Travel in Style · Stays from KES 3,200/night · Zero Commission · Hosts keep 100% · Book flights, safaris, events & more · Kenya\'s premium travel super-app · Apatmento for Life — Travel in Style ·',
     sub:'', cta:'', url:'index.html', media:'', poster:'',
     grad:'linear-gradient(135deg,#0A0A14,#1A1A35)', accent:'#B8A4F4', price:'',
     icon:'',
@@ -197,7 +197,7 @@ const CSS = `
 .scv-content{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:clamp(18px,3vw,44px);z-index:2;background:none;}
 .scv-adv{font-size:12px;font-weight:600;color:rgba(255,255,255,.75);margin-bottom:10px;display:flex;align-items:center;gap:8px;}
 .scv-adv svg{width:15px;height:15px;}
-.scv-h{font-family:'Fraunces',serif;font-weight:400;font-size:clamp(22px,3.5vw,42px);color:#fff;line-height:1.05;margin-bottom:8px;max-width:68%;text-shadow:0 2px 24px rgba(0,0,0,.3);}
+.scv-h{font-family:'Geist','Inter',sans-serif;font-weight:400;font-size:clamp(22px,3.5vw,42px);color:#fff;line-height:1.05;margin-bottom:8px;max-width:68%;text-shadow:0 2px 24px rgba(0,0,0,.3);}
 .scv-sub{font-size:13px;color:rgba(255,255,255,.82);margin-bottom:20px;max-width:58%;}
 .scv-cta{display:inline-flex;align-items:center;gap:9px;padding:13px 24px;border-radius:100px;background:#fff;color:#0A0A14;font-size:14px;font-weight:700;border:none;cursor:pointer;transition:all .35s;align-self:flex-start;box-shadow:0 6px 24px rgba(0,0,0,.25);}
 .scv:hover .scv-cta{box-shadow:0 10px 32px rgba(0,0,0,.35);transform:translateY(-2px);}
@@ -220,7 +220,7 @@ const CSS = `
 .sc-slide-ico svg{width:28px;height:28px;}
 .sc-slide-body{flex:1;min-width:0;}
 .sc-slide-who{font-size:11px;font-weight:700;color:rgba(255,255,255,.9);margin-bottom:3px;letter-spacing:.04em;text-shadow:0 1px 3px rgba(0,0,0,.3);}
-.sc-slide-h{font-family:'Fraunces',serif;font-weight:400;font-size:clamp(16px,2.4vw,23px);color:#fff;line-height:1.1;margin-bottom:3px;}
+.sc-slide-h{font-family:'Geist','Inter',sans-serif;font-weight:400;font-size:clamp(16px,2.4vw,23px);color:#fff;line-height:1.1;margin-bottom:3px;}
 .sc-slide-sub{font-size:12px;color:rgba(255,255,255,.8);}
 .sc-slide-cta{flex-shrink:0;margin-left:20px;padding:12px 22px;border-radius:100px;background:#fff;color:#0A0A14;font-size:13px;font-weight:700;border:none;cursor:pointer;transition:all .25s;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.18);}
 .sc-slide-cta:hover{transform:scale(1.05);}
@@ -244,10 +244,10 @@ const CSS = `
 .scn-tag{position:absolute;top:12px;left:12px;padding:5px 12px;border-radius:100px;font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;background:rgba(252,252,253,.94);backdrop-filter:blur(8px);color:#4A4C66;z-index:2;}
 .scn-body{padding:16px 18px 18px;}
 .scn-who{font-size:11px;color:#8E90AD;margin-bottom:4px;}
-.scn-h{font-family:'Fraunces',serif;font-weight:500;font-size:17px;color:#0A0A14;margin-bottom:5px;line-height:1.2;}
+.scn-h{font-family:'Geist','Inter',sans-serif;font-weight:500;font-size:17px;color:#0A0A14;margin-bottom:5px;line-height:1.2;}
 .scn-sub{font-size:12px;color:#4A4C66;margin-bottom:14px;line-height:1.5;}
 .scn-foot{display:flex;align-items:center;justify-content:space-between;}
-.scn-price{font-family:'Fraunces',serif;font-weight:500;font-size:16px;color:#0A0A14;}
+.scn-price{font-family:'Geist','Inter',sans-serif;font-weight:500;font-size:16px;color:#0A0A14;}
 .scn-cta{padding:9px 18px;border-radius:100px;color:#fff;font-size:12px;font-weight:700;border:none;cursor:pointer;transition:all .22s;}
 .scn-cta:hover{filter:brightness(1.1);transform:scale(1.04);}
 
@@ -258,7 +258,7 @@ const CSS = `
 .scs-left::before{display:none;}
 .scs-tag{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.8);background:rgba(255,255,255,.15);backdrop-filter:blur(8px);padding:5px 12px;border-radius:100px;border:1px solid rgba(255,255,255,.2);margin-bottom:16px;align-self:flex-start;}
 .scs-tag::before{content:'';width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.9);}
-.scs-h{font-family:'Fraunces',serif;font-weight:400;font-size:clamp(22px,3vw,36px);color:#fff;line-height:1.1;margin-bottom:12px;white-space:pre-line;}
+.scs-h{font-family:'Geist','Inter',sans-serif;font-weight:400;font-size:clamp(22px,3vw,36px);color:#fff;line-height:1.1;margin-bottom:12px;white-space:pre-line;}
 .scs-sub{font-size:13px;color:rgba(255,255,255,.8);line-height:1.65;margin-bottom:24px;max-width:340px;}
 .scs-cta{display:inline-flex;align-items:center;gap:9px;padding:13px 24px;border-radius:100px;background:#fff;color:#0A0A14;font-size:14px;font-weight:700;border:none;cursor:pointer;align-self:flex-start;transition:all .3s;box-shadow:0 6px 20px rgba(0,0,0,.2);}
 .scs-cta:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(0,0,0,.3);}
@@ -271,7 +271,7 @@ const CSS = `
 
 .scs-stat-grid{position:relative;z-index:2;display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:32px;}
 .scs-stat{background:rgba(255,255,255,.12);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.2);border-radius:16px;padding:18px;text-align:center;}
-.scs-stat-val{font-family:'Fraunces',serif;font-weight:600;font-size:26px;color:#fff;margin-bottom:4px;}
+.scs-stat-val{font-family:'Geist','Inter',sans-serif;font-weight:600;font-size:26px;color:#fff;margin-bottom:4px;}
 .scs-stat-label{font-size:11px;color:rgba(255,255,255,.7);font-weight:500;}
 .scs-adv{position:absolute;bottom:16px;right:16px;font-size:10px;color:rgba(255,255,255,.45);font-weight:600;letter-spacing:.06em;text-transform:uppercase;}
 @media(max-width:700px){.scs{grid-template-columns:1fr;}.scs-right{min-height:180px;}.scs-stat-grid{grid-template-columns:repeat(4,1fr);padding:20px;gap:10px;}.scs-stat-val{font-size:18px;}}
@@ -297,7 +297,7 @@ const CSS = `
 .sc-sticky-ico svg{width:20px;height:20px;}
 .sc-sticky-body{flex:1;min-width:0;}
 .sc-sticky-who{font-size:10px;font-weight:700;color:rgba(255,255,255,.6);margin-bottom:2px;letter-spacing:.05em;text-transform:uppercase;}
-.sc-sticky-h{font-family:'Fraunces',serif;font-weight:500;font-size:14px;color:#fff;line-height:1.2;margin-bottom:3px;}
+.sc-sticky-h{font-family:'Geist','Inter',sans-serif;font-weight:500;font-size:14px;color:#fff;line-height:1.2;margin-bottom:3px;}
 .sc-sticky-sub{font-size:12px;color:rgba(255,255,255,.78);}
 .sc-sticky-cta{display:block;margin-top:10px;padding:9px 16px;border-radius:100px;background:#fff;color:#0A0A14;font-size:12px;font-weight:700;text-decoration:none;text-align:center;transition:transform .2s;}
 .sc-sticky-cta:hover{transform:scale(1.04);}
@@ -332,7 +332,7 @@ const CSS = `
 .sc-window-tag{position:absolute;top:12px;left:14px;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:rgba(255,255,255,.9);background:rgba(0,0,0,.3);backdrop-filter:blur(10px);padding:4px 10px;border-radius:100px;border:1px solid rgba(255,255,255,.15);z-index:2;}
 .sc-window-content{position:absolute;bottom:0;left:0;right:0;padding:16px 18px;z-index:2;}
 .sc-window-adv{font-size:11px;font-weight:600;color:rgba(255,255,255,.7);margin-bottom:4px;}
-.sc-window-h{font-family:'Fraunces',serif;font-weight:500;font-size:clamp(15px,2.2vw,20px);color:#fff;margin-bottom:8px;line-height:1.15;}
+.sc-window-h{font-family:'Geist','Inter',sans-serif;font-weight:500;font-size:clamp(15px,2.2vw,20px);color:#fff;margin-bottom:8px;line-height:1.15;}
 .sc-window-foot{display:flex;align-items:center;justify-content:space-between;}
 .sc-window-cta{padding:8px 16px;border-radius:100px;background:#fff;color:#0A0A14;font-size:12px;font-weight:700;border:none;cursor:pointer;transition:transform .2s;}
 .sc-window-cta:hover{transform:scale(1.05);}

@@ -234,7 +234,7 @@ function buildPopup(myCode, myStats, isGuest) {
 .ref-badge{display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:6px 14px;border-radius:100px;background:linear-gradient(135deg,rgba(251,191,36,.15),rgba(245,158,11,.08));border:1px solid rgba(251,191,36,.25);color:#FCD34D;margin-bottom:18px;}
 .ref-badge-dot{width:6px;height:6px;border-radius:50%;background:#FCD34D;animation:refPulse 2s ease-in-out infinite;}
 @keyframes refPulse{0%,100%{box-shadow:0 0 0 0 rgba(252,211,77,.4);}50%{box-shadow:0 0 0 6px rgba(252,211,77,0);}}
-.ref-headline{font-family:'Fraunces',serif;font-weight:300;font-size:clamp(26px,4vw,40px);line-height:1.1;letter-spacing:-.02em;color:#fff;margin-bottom:8px;}
+.ref-headline{font-family:'Geist','Inter',sans-serif;font-weight:300;font-size:clamp(26px,4vw,40px);line-height:1.1;letter-spacing:-.02em;color:#fff;margin-bottom:8px;}
 .ref-headline strong{font-weight:700;background:linear-gradient(120deg,#FCD34D,#F59E0B,#FBBF24);-webkit-background-clip:text;background-clip:text;color:transparent;}
 .ref-sub{font-size:14px;color:rgba(255,255,255,.55);line-height:1.6;max-width:480px;margin:0 auto 28px;}
 
@@ -247,7 +247,7 @@ function buildPopup(myCode, myStats, isGuest) {
 .ref-card-a{background:linear-gradient(145deg,rgba(123,47,247,.15),rgba(67,97,255,.1));border:1px solid rgba(123,47,247,.25);}
 .ref-card-b{background:linear-gradient(145deg,rgba(252,211,77,.1),rgba(245,158,11,.08));border:1px solid rgba(252,211,77,.2);}
 .ref-card-icon{font-size:28px;margin-bottom:10px;}
-.ref-card-title{font-family:'Fraunces',serif;font-size:15px;font-weight:600;color:#fff;margin-bottom:6px;}
+.ref-card-title{font-family:'Geist','Inter',sans-serif;font-size:15px;font-weight:600;color:#fff;margin-bottom:6px;}
 .ref-card-stat{font-size:26px;font-weight:800;background:linear-gradient(120deg,#A78BFA,#7C3AED);-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1;margin-bottom:4px;}
 .ref-card-b .ref-card-stat{background:linear-gradient(120deg,#FCD34D,#F59E0B);-webkit-background-clip:text;background-clip:text;color:transparent;}
 .ref-card-desc{font-size:11px;color:rgba(255,255,255,.5);line-height:1.5;}
@@ -260,13 +260,13 @@ function buildPopup(myCode, myStats, isGuest) {
 .ref-share-label{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:10px;}
 .ref-link-box{display:flex;align-items:center;gap:0;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:14px;overflow:hidden;margin-bottom:14px;}
 .ref-link-text{flex:1;padding:12px 16px;font-size:12px;color:rgba(255,255,255,.6);font-family:monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.ref-copy-btn{padding:12px 18px;background:linear-gradient(135deg,#7B2FF7,#4361FF);color:#fff;border:none;font-family:'General Sans',sans-serif;font-weight:600;font-size:12px;cursor:pointer;transition:all .2s;white-space:nowrap;}
+.ref-copy-btn{padding:12px 18px;background:linear-gradient(135deg,#7B2FF7,#4361FF);color:#fff;border:none;font-family:'Inter',sans-serif;font-weight:600;font-size:12px;cursor:pointer;transition:all .2s;white-space:nowrap;}
 .ref-copy-btn:hover{filter:brightness(1.1);}
 .ref-copy-btn.copied{background:linear-gradient(135deg,#059669,#10B981);}
 
 /* Action buttons */
 .ref-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
-.ref-btn-share{padding:12px;border-radius:12px;border:none;font-family:'General Sans',sans-serif;font-weight:600;font-size:13px;cursor:pointer;transition:all .25s;display:flex;align-items:center;justify-content:center;gap:8px;}
+.ref-btn-share{padding:12px;border-radius:12px;border:none;font-family:'Inter',sans-serif;font-weight:600;font-size:13px;cursor:pointer;transition:all .25s;display:flex;align-items:center;justify-content:center;gap:8px;}
 .ref-btn-wa{background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;box-shadow:0 4px 14px rgba(37,211,102,.25);}
 .ref-btn-wa:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(37,211,102,.35);}
 .ref-btn-tw{background:linear-gradient(135deg,#1DA1F2,#0EA5E9);color:#fff;box-shadow:0 4px 14px rgba(29,161,242,.25);}
@@ -274,7 +274,7 @@ function buildPopup(myCode, myStats, isGuest) {
 
 /* Guest CTA */
 .ref-guest-cta{padding:0 32px 28px;text-align:center;}
-.ref-signup-btn{display:block;width:100%;padding:16px;border-radius:16px;background:linear-gradient(135deg,#7B2FF7,#4361FF);color:#fff;border:none;font-family:'General Sans',sans-serif;font-weight:700;font-size:15px;cursor:pointer;transition:all .3s;box-shadow:0 8px 24px rgba(123,47,247,.35);letter-spacing:.02em;}
+.ref-signup-btn{display:block;width:100%;padding:16px;border-radius:16px;background:linear-gradient(135deg,#7B2FF7,#4361FF);color:#fff;border:none;font-family:'Inter',sans-serif;font-weight:700;font-size:15px;cursor:pointer;transition:all .3s;box-shadow:0 8px 24px rgba(123,47,247,.35);letter-spacing:.02em;}
 .ref-signup-btn:hover{transform:translateY(-3px);box-shadow:0 14px 32px rgba(123,47,247,.45);}
 .ref-signin-link{margin-top:10px;font-size:12px;color:rgba(255,255,255,.4);}
 .ref-signin-link a{color:rgba(255,255,255,.7);text-decoration:none;border-bottom:1px solid rgba(255,255,255,.2);}
@@ -286,7 +286,7 @@ function buildPopup(myCode, myStats, isGuest) {
 /* Stats bar (logged in) */
 .ref-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:16px 32px 0;margin-bottom:4px;}
 .ref-stat{text-align:center;padding:12px 8px;border-radius:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);}
-.ref-stat-val{font-family:'Fraunces',serif;font-size:18px;font-weight:600;color:#fff;line-height:1;}
+.ref-stat-val{font-family:'Geist','Inter',sans-serif;font-size:18px;font-weight:600;color:#fff;line-height:1;}
 .ref-stat-lbl{font-size:10px;color:rgba(255,255,255,.4);margin-top:3px;text-transform:uppercase;letter-spacing:.06em;}
 
 @media(max-width:520px){
@@ -362,8 +362,8 @@ function buildPopup(myCode, myStats, isGuest) {
     <div class="ref-signin-link">Already have an account? <a href="auth.html">Sign in</a></div>
   </div>` : `
   <div style="padding:0 32px 28px;display:flex;gap:10px;">
-    <button onclick="window.AptReferral.closePopup()" style="flex:1;padding:13px;border-radius:13px;border:1.5px solid rgba(255,255,255,.1);background:transparent;color:rgba(255,255,255,.6);font-family:'General Sans',sans-serif;font-weight:600;font-size:13px;cursor:pointer;">Close</button>
-    <button onclick="location.href='rewards.html'" style="flex:2;padding:13px;border-radius:13px;background:linear-gradient(135deg,#7B2FF7,#4361FF);color:#fff;border:none;font-family:'General Sans',sans-serif;font-weight:700;font-size:13px;cursor:pointer;box-shadow:0 4px 16px rgba(123,47,247,.3);">View my rewards dashboard →</button>
+    <button onclick="window.AptReferral.closePopup()" style="flex:1;padding:13px;border-radius:13px;border:1.5px solid rgba(255,255,255,.1);background:transparent;color:rgba(255,255,255,.6);font-family:'Inter',sans-serif;font-weight:600;font-size:13px;cursor:pointer;">Close</button>
+    <button onclick="location.href='rewards.html'" style="flex:2;padding:13px;border-radius:13px;background:linear-gradient(135deg,#7B2FF7,#4361FF);color:#fff;border:none;font-family:'Inter',sans-serif;font-weight:700;font-size:13px;cursor:pointer;box-shadow:0 4px 16px rgba(123,47,247,.3);">View my rewards dashboard →</button>
   </div>`}
 </div>`;
 
@@ -392,8 +392,8 @@ function buildFloatingTrigger() {
 .ref-tab:hover{padding-right:16px;box-shadow:-8px 0 28px rgba(123,47,247,.5);}
 .ref-tab-coin{font-size:20px;animation:refCoinSpin 3s ease-in-out infinite;}
 @keyframes refCoinSpin{0%,100%{transform:rotateY(0);}50%{transform:rotateY(180deg);}}
-.ref-tab-text{font-family:'General Sans',sans-serif;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#fff;white-space:nowrap;}
-.ref-tab-earn{font-family:'Fraunces',serif;font-size:11px;font-style:italic;color:rgba(255,255,255,.8);white-space:nowrap;}
+.ref-tab-text{font-family:'Inter',sans-serif;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#fff;white-space:nowrap;}
+.ref-tab-earn{font-family:'Geist','Inter',sans-serif;font-size:11px;font-style:italic;color:rgba(255,255,255,.8);white-space:nowrap;}
 .ref-tab-pulse{position:absolute;top:8px;right:8px;width:7px;height:7px;border-radius:50%;background:#FCD34D;box-shadow:0 0 0 0 rgba(252,211,77,.4);animation:refDotPulse 2s ease-in-out infinite;}
 @keyframes refDotPulse{0%{box-shadow:0 0 0 0 rgba(252,211,77,.5);}70%{box-shadow:0 0 0 6px rgba(252,211,77,0);}100%{box-shadow:0 0 0 0 rgba(252,211,77,0);}}
 @media(max-width:700px){

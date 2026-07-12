@@ -55,17 +55,13 @@
      same storage key race each other and silently drop the session. -->
 <script src="/apa-session.js"></script>
 <script src="/apa-admin-guard.js"></script>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..700&display=swap" rel="stylesheet"/>
-<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet"/>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
   --glass:#FCFCFD;--glass-2:#F4F5FB;--ink:#0A0A14;--ink-soft:#4A4C66;--ink-faint:#8E90AD;
   --t1:#2DD4BF;--t2:#5EEAD4;--t3:#0D9488;
   --lilac:#B8A4F4;--violet:#7B2FF7;--line:rgba(10,10,20,.07);--line-2:rgba(10,10,20,.13);
-  --font-display:'Fraunces',serif;--font-body:'General Sans',system-ui,sans-serif;
+  --font-display:'Geist','Inter',sans-serif;--font-body:'Inter',system-ui,sans-serif;
   --shadow:0 8px 40px rgba(45,212,191,.08),0 2px 12px rgba(10,10,20,.04);
   --shadow-lift:0 24px 70px rgba(45,212,191,.18),0 8px 24px rgba(10,10,20,.06);
   --radius:20px;
@@ -279,6 +275,8 @@ html.via-dash #tx{display:none!important;animation:none!important;}
     }
   </script>
 <link rel="stylesheet" href="/brand.css"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/><link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/cabana-ds.css"/>
 </head>
 <body>
 <script>if(new URLSearchParams(location.search).get('back')==='1')document.documentElement.classList.add('via-dash');</script>
@@ -294,7 +292,7 @@ html.via-dash #tx{display:none!important;animation:none!important;}
     </svg>
   </div>
   <div class="tx-label">Find your flatmate.</div>
-  <div class="tx-sub">Apatmento · Roommates</div>
+  <div class="tx-sub">Cabana · Roommates</div>
 </div>
 
 <!-- Topbar -->
@@ -315,7 +313,7 @@ html.via-dash #tx{display:none!important;animation:none!important;}
 
 <!-- Hero -->
 <section class="hero">
-  <div class="eyebrow">✦ Kenya's first roommate platform</div>
+  <div class="eyebrow">Kenya's first roommate platform</div>
   <h1 class="hero-title">Find your <em>perfect flatmate</em><br/>across Kenya.</h1>
   <p class="hero-sub">Browse verified rooms and shared spaces in Nairobi, Mombasa and beyond. Zero commission — always.</p>
 
@@ -380,7 +378,7 @@ html.via-dash #tx{display:none!important;animation:none!important;}
   <div class="content-top">
     <div class="count"><strong id="cnt">0</strong> rooms available</div>
     <select class="sort" id="sort" onchange="render()">
-      <option value="rec">✦ Recommended</option>
+      <option value="rec">Recommended</option>
       <option value="asc">Price: Low to High</option>
       <option value="desc">Price: High to Low</option>
       <option value="new">Newest first</option>

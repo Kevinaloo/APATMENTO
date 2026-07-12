@@ -36,10 +36,6 @@
 <script src="/pwa.js" defer></script>
 <script src="/apa-agent.js"></script>
 <script src="/apa-admin-guard.js"></script>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..700&display=swap" rel="stylesheet"/>
-<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet"/>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
@@ -47,7 +43,7 @@
   --lilac:#B8A4F4;--lilac-deep:#8B6FE8;--mint:#5EEAD4;--mint-deep:#2DD4BF;--peach:#FFB59E;
   --electric:#4361FF;--violet:#7B2FF7;--ember:#FF6B2C;
   --line:rgba(10,10,20,0.08);--line-2:rgba(10,10,20,0.14);
-  --font-display:'Fraunces',serif;--font-body:'General Sans',system-ui,sans-serif;
+  --font-display:'Geist','Inter',sans-serif;--font-body:'Inter',system-ui,sans-serif;
   --shadow-lift:0 24px 80px rgba(123,47,247,0.16),0 8px 24px rgba(10,10,20,0.06);
   --ok:#2DD4BF;--err:#FF4D6D;
 }
@@ -348,6 +344,8 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
     }
   </script>
 <link rel="stylesheet" href="/brand.css"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/><link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/cabana-ds.css"/>
 </head>
 <body>
 
@@ -363,12 +361,13 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
     <div class="ember-field" id="ember-field"></div>
 
     <div class="bc-top">
-      <img src="logo-mark.png" class="bc-logo" alt="Apatmento" onerror="this.style.display='none'"/>
-      <span class="bc-brand"><em>Apat</em>mento</span>
+      <a href="/index.html" class="cab-wordmark" aria-label="Cabana — home" style="line-height:0;">
+        <img src="cabana-wordmark-white.png" alt="Cabana" style="height:26px;width:auto;display:block;" onerror="this.src='cabana-wordmark-color.png'"/>
+      </a>
     </div>
 
     <div class="bc-mid">
-      <span class="bc-eyebrow">✦ Your world · One app</span>
+      <span class="bc-eyebrow">Your world · One app</span>
       <h1 class="bc-headline">
         Everything for<br/>your next
         <span class="rotator" id="rotator">adventure.</span>
@@ -388,12 +387,12 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
     <div class="auth-panel-aurora"><div class="apa-blob apa-1"></div><div class="apa-blob apa-2"></div></div>
 
     <div class="auth-card">
-      <div class="mobile-logo"><img src="logo-mark.png" alt="Apatmento" onerror="this.style.display='none'"/></div>
+      <div class="mobile-logo"><img src="cabana-wordmark-color.png" alt="Cabana" style="height:24px;width:auto;" onerror="this.style.display='none'"/></div>
 
       <!-- MAIN AUTH -->
       <div id="main-auth">
         <div class="ac-head">
-          <h2 class="ac-title">Welcome to <em>Apatmento</em></h2>
+          <h2 class="ac-title">Welcome to <em>Cabana</em></h2>
           <p class="ac-sub">Sign in or create your account to begin.</p>
         </div>
 
@@ -517,7 +516,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
 
         <!-- INFLUENCER / CREATOR PORTAL -->
         <button class="prog-door" id="inf-door" aria-expanded="false" onclick="toggleInf()" style="margin-top:10px;border-color:rgba(255,107,44,.25);background:linear-gradient(135deg,rgba(255,107,44,.04),rgba(123,47,247,.04));">
-          <div class="prog-ico" style="background:linear-gradient(135deg,#FF6B2C,#7B2FF7);">✦</div>
+          <div class="prog-ico" style="background:linear-gradient(135deg,#FF6B2C,#7B2FF7);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
           <div class="prog-txt">
             <div class="prog-title">Creator & Influencer</div>
             <div class="prog-sub">Earn by sharing — post, earn commissions, unlock exclusive perks.</div>
