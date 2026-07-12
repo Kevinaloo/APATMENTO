@@ -743,6 +743,7 @@ img,video,svg{max-width:100%;}
       <div class="tb-right" id="tb-right-guest">
         <!-- Guest nav — Sign In + Sign Up (hidden when logged in) -->
         <div id="dash-guest-nav" class="apa-nav" data-when="guest">
+          <button class="apa-sos" data-apa="sos" type="button" aria-label="Emergency help">SOS</button>
           <a href="auth.html" class="cab-auth">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
             Sign in / up
@@ -1565,7 +1566,7 @@ async function renderServicePicker(listings){
   const active = Object.entries(groups).filter(([,a])=>a.length);
   c.innerHTML = `
     <div class="topbar">
-      <div class="tb-left"><img src="logo-mark.png" class="tb-logo" onerror="this.style.display='none'"/><span class="tb-brand"><em>Apat</em>mento</span></div>
+      <div class="tb-left"><img src="cabana-wordmark-color.png" class="tb-logo tb-cab-wm" alt="Cabana" onerror="this.style.display='none'"/></div>
       <div class="tb-right"><button class="hero-cta" style="padding:9px 18px;font-size:13px;box-shadow:none;" onclick="showAddSheet()">+ Add service</button><button onclick="switchRole()" style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:100px;border:1.5px solid rgba(255,255,255,.35);background:rgba(255,255,255,.15);-webkit-color:#fff;font-family:var(--font-body);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .2s;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 5-7 7 7 7"/></svg>Traveller →</button></div>
     </div>
     <div class="content" style="max-width:760px;">
@@ -1603,7 +1604,7 @@ async function renderSingleDashboard(listing){
 
   c.innerHTML = `
     <div class="topbar">
-      <div class="tb-left"><button class="tb-icon-btn" onclick="openDrawer()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button><img src="logo-mark.png" class="tb-logo" onerror="this.style.display='none'"/><span class="tb-brand"><em>Apat</em>mento</span></div>
+      <div class="tb-left"><button class="tb-icon-btn" onclick="openDrawer()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button><img src="cabana-wordmark-color.png" class="tb-logo tb-cab-wm" alt="Cabana" onerror="this.style.display='none'"/></div>
       <div class="tb-right">
         <a href="dashboard.html?back=1" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:11px;border:1.5px solid rgba(45,212,191,.3);background:rgba(45,212,191,.08);color:#0D9488;font-family:var(--font-body);font-weight:700;font-size:12px;text-decoration:none;transition:all .22s;white-space:nowrap;" title="Switch to Traveller view">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 5-7 7 7 7"/></svg>Traveller
