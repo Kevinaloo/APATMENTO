@@ -154,7 +154,9 @@
      it on the first paint and it scrolls away naturally. We keep it in
      normal flow so it never covers content.                          */
   function mountAnnounce() {
+    // DISABLED — announcement bar removed; rebrand story is now in-page
     safe(function () {
+      return; // no banner
       if (doc.getElementById('cabana-announce')) return;
       var dismissed = false;
       try { dismissed = global.localStorage.getItem(LS_DISMISS) === '1'; } catch (e) {}
@@ -215,7 +217,8 @@
      asset, and removes the generic SOS + "zero added fees" chips that
      cluttered the top-right of service pages. Non-destructive & guarded. */
   function swapWordmark() {
-    safe(function () {
+    // DISABLED — wordmarks now set directly in HTML
+    safe(function () { return;
       var marks = doc.querySelectorAll('.tb-brand, .nav-brand, .tb-title');
       for (var i = 0; i < marks.length; i++) {
         var m = marks[i];
@@ -254,19 +257,8 @@
         var inBar = sos[j].closest && sos[j].closest('.tb-right, .topbar, .nav, .apa-nav');
         if (inBar) sos[j].parentNode && sos[j].parentNode.removeChild(sos[j]);
       }
-      // The Cabana wordmark is a complete lockup, so hide the small
-      // standalone mark beside it in headers to avoid a double logo.
-      var logos = doc.querySelectorAll('.tb-logo, .nav-logo');
-      for (var k = 0; k < logos.length; k++) {
-        var lg = logos[k];
-        if (lg.getAttribute('data-cabana-logo') === '1') continue;
-        var inHead = lg.closest && lg.closest('.topbar, .nav, .tb-left, .nav-left');
-        var inDraw = lg.closest && lg.closest('.drawer, footer, .footer');
-        if (inHead && !inDraw) {
-          lg.style.display = 'none';
-          lg.setAttribute('data-cabana-logo', '1');
-        }
-      }
+      // Logo hiding DISABLED — icon+wordmark pair now set directly in HTML
+      // var logos = doc.querySelectorAll('.tb-logo, .nav-logo');
     }, 'clean-chrome');
   }
 

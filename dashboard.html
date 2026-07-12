@@ -428,23 +428,21 @@ img,video,svg{max-width:100%;}
 /* hero greeting */
 .tb-logo-cab{height:32px;width:auto;display:block;}
 
-/* ══ REBRAND TAGLINE BANNER ══ */
-.dash-rebrand-banner{display:flex;flex-direction:column;align-items:flex-start;gap:6px;margin-bottom:22px;padding:16px 20px;border-radius:18px;background:linear-gradient(115deg,rgba(109,40,255,.07) 0%,rgba(79,109,255,.06) 40%,rgba(94,234,212,.06) 80%,rgba(245,177,46,.07) 100%);border:1px solid rgba(109,40,255,.12);position:relative;overflow:hidden;}
-.dash-rebrand-banner::before{content:'';position:absolute;inset:0;background:linear-gradient(115deg,rgba(109,40,255,.04),rgba(94,234,212,.04));pointer-events:none;}
-.drb-inner{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
-.drb-word{font-family:var(--font-display);font-weight:700;font-size:clamp(17px,4vw,24px);letter-spacing:.06em;line-height:1;}
-.drb-apat{background:linear-gradient(120deg,#8B5CF6,#C3AEFA);-webkit-background-clip:text;background-clip:text;color:transparent;}
-.drb-now{font-size:12px;font-weight:600;color:var(--ink-faint);letter-spacing:.08em;text-transform:uppercase;padding:2px 0;}
-.drb-cab{background:linear-gradient(120deg,#FF6A3C,#F5B12E,#4EE0C8);-webkit-background-clip:text;background-clip:text;color:transparent;}
-.drb-tags{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
-.drb-tag{font-size:11px;font-weight:700;letter-spacing:.05em;padding:4px 10px;border-radius:100px;}
-.drb-tag-1{background:rgba(109,40,255,.1);color:#8B5CF6;}
-.drb-tag-2{background:rgba(94,234,212,.1);color:#0D9488;}
-.drb-tag-3{background:rgba(245,177,46,.1);color:#D98E0B;}
-.drb-sep{color:var(--ink-faint);font-size:11px;}
-.drb-learn{font-size:11px;font-weight:600;color:var(--violet);text-decoration:none;display:inline-flex;align-items:center;gap:4px;opacity:.8;transition:opacity .2s;}
-.drb-learn:hover{opacity:1;}
-@media(max-width:480px){.drb-word{font-size:15px;letter-spacing:.04em;}.drb-tags{gap:5px;}.drb-tag{font-size:10px;}}
+/* ══ REBRAND HERO BLOCK ══ */
+.drb-hero{position:relative;overflow:hidden;margin-bottom:28px;padding:36px 28px 32px;border-radius:24px;background:linear-gradient(145deg,#0D0820 0%,#100D24 50%,#0A1628 100%);border:1px solid rgba(109,40,255,.2);text-align:center;}
+.drb-glow{position:absolute;border-radius:50%;pointer-events:none;filter:blur(70px);}
+.drb-glow-1{width:280px;height:280px;background:radial-gradient(circle,rgba(109,40,255,.55),transparent 68%);top:-60px;left:-40px;}
+.drb-glow-2{width:240px;height:240px;background:radial-gradient(circle,rgba(245,177,46,.4),transparent 68%);top:-40px;right:-30px;}
+.drb-glow-3{width:320px;height:200px;background:radial-gradient(circle,rgba(79,109,255,.35),transparent 70%);bottom:-60px;left:50%;transform:translateX(-50%);}
+.drb-title-row{position:relative;z-index:2;display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;margin-bottom:14px;}
+.drb-title-apat{font-family:var(--font-display);font-weight:800;font-size:clamp(22px,6vw,42px);letter-spacing:.08em;line-height:1;background:linear-gradient(120deg,#C3AEFA,#9B79FF,#7B55F0);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;filter:drop-shadow(0 0 20px rgba(155,121,255,.6));}
+.drb-title-now{font-size:clamp(11px,2vw,14px);font-weight:700;color:rgba(255,255,255,.5);letter-spacing:.14em;text-transform:uppercase;padding:4px 10px;border-radius:100px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);flex-shrink:0;position:relative;z-index:2;}
+.drb-title-cab{font-family:var(--font-display);font-weight:800;font-size:clamp(22px,6vw,42px);letter-spacing:.08em;line-height:1;background:linear-gradient(120deg,#FF6A3C,#FFB347,#F5E642,#4EE0C8);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 24px rgba(255,140,60,.65));position:relative;z-index:2;}
+.drb-sub{position:relative;z-index:2;font-size:clamp(13px,3vw,16px);font-weight:600;color:rgba(255,255,255,.88);letter-spacing:.04em;margin-bottom:8px;}
+.drb-tagline{position:relative;z-index:2;font-size:clamp(13px,2.5vw,15px);font-style:italic;font-weight:400;color:rgba(255,255,255,.55);margin-bottom:20px;letter-spacing:.02em;}
+.drb-cta{position:relative;z-index:2;display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;letter-spacing:.05em;color:rgba(255,255,255,.7);text-decoration:none;padding:7px 16px;border-radius:100px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);transition:all .25s;text-transform:uppercase;}
+.drb-cta:hover{background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.3);}
+@media(max-width:480px){.drb-hero{padding:28px 18px 24px;border-radius:18px;}.drb-title-row{gap:8px;}.drb-title-apat,.drb-title-cab{font-size:clamp(20px,7vw,32px);}.drb-sub{font-size:13px;}}
 
 .greeting{margin-bottom:34px;opacity:0;animation:fadeUp .8s .1s forwards;}
 .greeting-eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--lilac-deep);margin-bottom:12px;padding:6px 14px;border-radius:100px;background:rgba(184,164,244,.12);border:1px solid rgba(184,164,244,.25);}
@@ -526,7 +524,10 @@ img,video,svg{max-width:100%;}
 .drawer.open{transform:none;}
 .drawer-head{display:flex;align-items:center;gap:12px;margin-bottom:28px;padding-bottom:20px;border-bottom:1px solid var(--line);}
 .drawer-logo{height:36px;}
-.drawer-logo-cab{height:30px;width:auto;display:block;}
+.drawer-logo-cab{height:28px;width:auto;display:block;}
+.drawer-icon{height:32px;width:32px;object-fit:contain;flex-shrink:0;}
+.drawer-head{display:flex;align-items:center;gap:10px;}
+.tb-icon-sm{height:30px;width:30px;object-fit:contain;flex-shrink:0;border-radius:8px;}
 .drawer-link{display:flex;align-items:center;gap:13px;padding:13px 14px;border-radius:14px;font-size:14px;font-weight:500;color:var(--ink-soft);text-decoration:none;cursor:pointer;transition:all .25s;margin-bottom:3px;}
 .drawer-link:hover{background:rgba(184,164,244,.12);color:var(--ink);}
 .drawer-link svg{width:20px;height:20px;color:var(--lilac-deep);}
@@ -738,6 +739,7 @@ img,video,svg{max-width:100%;}
         <button class="tb-icon-btn" onclick="openDrawer()" aria-label="Menu">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
         </button>
+        <img src="cabana-emblem.png" class="tb-icon-sm" alt=""/>
         <img src="cabana-wordmark-color.png" class="tb-logo tb-logo-cab" alt="Cabana" onerror="this.style.display='none'"/>
       </div>
       <div class="tb-right" id="tb-right-guest">
@@ -779,24 +781,20 @@ img,video,svg{max-width:100%;}
 
     <div class="content">
       <div class="greeting">
-        <!-- ══ REBRAND TAGLINE ══ -->
-        <div class="dash-rebrand-banner" id="dash-rebrand-banner">
-          <div class="drb-inner">
-            <span class="drb-word drb-apat">APATMENTO</span>
-            <span class="drb-now">now</span>
-            <span class="drb-word drb-cab">CABANA</span>
+        <!-- ══ REBRAND HERO ══ -->
+        <div class="drb-hero" id="dash-rebrand-banner">
+          <div class="drb-glow drb-glow-1"></div>
+          <div class="drb-glow drb-glow-2"></div>
+          <div class="drb-glow drb-glow-3"></div>
+          <div class="drb-title-row">
+            <span class="drb-title-apat">APATMENTO</span>
+            <span class="drb-title-now">now</span>
+            <span class="drb-title-cab">CABANA</span>
           </div>
-          <div class="drb-tags">
-            <span class="drb-tag drb-tag-1">Zero Commission</span>
-            <span class="drb-sep">·</span>
-            <span class="drb-tag drb-tag-2">Pay What You See</span>
-            <span class="drb-sep">·</span>
-            <span class="drb-tag drb-tag-3">Fair For All</span>
-          </div>
-          <a href="index.html#rebrand-story" class="drb-learn">Learn more <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+          <p class="drb-sub">Zero Commission &nbsp;·&nbsp; Pay What You See</p>
+          <p class="drb-tagline"><em>Fair for all.</em></p>
+          <a href="index.html#rebrand-story" class="drb-cta">See what&rsquo;s changing <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
         </div>
-        <!-- Mode toggle pill — floats top-right, non-intrusive -->
-        <span class="greeting-eyebrow" id="g-eyebrow">Your world, one tap away</span>
         <h1 class="greeting-title" id="g-title"><span id="g-greeting">Good afternoon</span><em id="g-name"></em></h1>
         <p class="greeting-sub">Spaces, flights, tours, rides and more — every part of your trip, beautifully in one place.</p>
       </div>
@@ -909,6 +907,7 @@ img,video,svg{max-width:100%;}
 <div class="drawer-scrim" id="drawer-scrim" onclick="closeDrawer()"></div>
 <nav class="drawer" id="drawer">
   <div class="drawer-head">
+    <img src="cabana-emblem.png" class="drawer-icon" alt=""/>
     <img src="cabana-wordmark-color.png" class="drawer-logo drawer-logo-cab" alt="Cabana" onerror="this.style.display='none'"/>
   </div>
   <a class="drawer-link" href="profile.html?back=1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg> Profile</a>
@@ -1566,7 +1565,7 @@ async function renderServicePicker(listings){
   const active = Object.entries(groups).filter(([,a])=>a.length);
   c.innerHTML = `
     <div class="topbar">
-      <div class="tb-left"><img src="cabana-wordmark-color.png" class="tb-logo tb-cab-wm" alt="Cabana" onerror="this.style.display='none'"/></div>
+      <div class="tb-left"><img src="cabana-emblem.png" class="tb-icon-sm" alt=""/><img src="cabana-wordmark-color.png" class="tb-logo tb-cab-wm" alt="Cabana" onerror="this.style.display='none'"/></div>
       <div class="tb-right"><button class="hero-cta" style="padding:9px 18px;font-size:13px;box-shadow:none;" onclick="showAddSheet()">+ Add service</button><button onclick="switchRole()" style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:100px;border:1.5px solid rgba(255,255,255,.35);background:rgba(255,255,255,.15);-webkit-color:#fff;font-family:var(--font-body);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .2s;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 5-7 7 7 7"/></svg>Traveller →</button></div>
     </div>
     <div class="content" style="max-width:760px;">
@@ -1604,7 +1603,7 @@ async function renderSingleDashboard(listing){
 
   c.innerHTML = `
     <div class="topbar">
-      <div class="tb-left"><button class="tb-icon-btn" onclick="openDrawer()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button><img src="cabana-wordmark-color.png" class="tb-logo tb-cab-wm" alt="Cabana" onerror="this.style.display='none'"/></div>
+      <div class="tb-left"><button class="tb-icon-btn" onclick="openDrawer()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button><img src="cabana-emblem.png" class="tb-icon-sm" alt=""/><img src="cabana-wordmark-color.png" class="tb-logo tb-cab-wm" alt="Cabana" onerror="this.style.display='none'"/></div>
       <div class="tb-right">
         <a href="dashboard.html?back=1" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:11px;border:1.5px solid rgba(45,212,191,.3);background:rgba(45,212,191,.08);color:#0D9488;font-family:var(--font-body);font-weight:700;font-size:12px;text-decoration:none;transition:all .22s;white-space:nowrap;" title="Switch to Traveller view">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 5-7 7 7 7"/></svg>Traveller
