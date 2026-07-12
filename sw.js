@@ -100,7 +100,7 @@ async function staleWhileRevalidate(request) {
 
 // ── PUSH NOTIFICATIONS ──
 self.addEventListener('push', e => {
-  let d = { title:'Apatmento', body:'You have a notification', icon:'/logo-mark.png', tag:'apatmento' };
+  let d = { title:'Cabana', body:'You have a notification', icon:'/cabana-icon-192.png', tag:'cabana' };
   try { if (e.data) d = { ...d, ...e.data.json() }; } catch {}
   e.waitUntil(self.registration.showNotification(d.title, {
     body: d.body, icon: d.icon, badge: d.icon, tag: d.tag,

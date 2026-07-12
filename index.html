@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <link rel="preload" as="image" href="/cabana-emblem.png" fetchpriority="high"/>
+  <link rel="preload" as="image" href="/cabana-wordmark-color.png" fetchpriority="high"/>
 <!-- ══ INTERSTITIAL: splash only runs on dashboard.html, not here ══ -->
 <style id="apa-splash-css">.apa-splash-lock{overflow:hidden !important;}</style>
 <!-- Google tag (gtag.js) -->
@@ -59,7 +61,9 @@
   <meta name="twitter:image:alt" content="Apatmento — Spaces, Flights, Tours & More in Kenya | Zero Commission"/>
 
   <!-- DNS prefetch for performance (also helps SEO via speed) -->
-  <link rel="dns-prefetch" href="//fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link rel="dns-prefetch" href="//fonts.googleapis.com"/>
   <link rel="dns-prefetch" href="//fonts.gstatic.com"/>
   <link rel="dns-prefetch" href="//cdn.jsdelivr.net"/>
   <link rel="dns-prefetch" href="//api.unsplash.com"/>
@@ -73,7 +77,7 @@
         "name": "Apatmento",
         "alternateName": ["Cabana", "Cabana Travel", "Cabana App"],
         "url": "https://www.apatmento.space",
-        "logo": { "@type": "ImageObject", "url": "https://www.apatmento.space/logo-mark.png", "width": 512, "height": 512 },
+        "logo": { "@type": "ImageObject", "url": "https://www.apatmento.space/cabana-appicon-master.png", "width": 512, "height": 512 },
         "description": "Kenya's zero-commission travel super-app — stays, flights, tours, rides, food and shopping in one platform.",
         "foundingDate": "2026",
         "areaServed": { "@type": "Country", "name": "Kenya" },
@@ -302,6 +306,8 @@ body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webk
 .footer{background:#05060F;border-top:1px solid rgba(255,255,255,.08);padding:50px 40px;}
 .footer-inner{max-width:1180px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px;}
 .footer-brand{display:flex;align-items:center;gap:11px;}
+.footer-icon{height:28px;width:28px;object-fit:contain;}
+.footer-wm{height:20px;width:auto;}
 .footer-brand img{height:32px;}
 .footer-brand span{font-family:var(--font-display);font-weight:500;font-size:18px;color:#fff;}
 .footer-links{display:flex;gap:26px;flex-wrap:wrap;}
@@ -645,7 +651,7 @@ body.intro-lock{overflow:hidden;height:100vh;}
     }
   </script>
 <link rel="stylesheet" href="/brand.css"/>
-<link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/><link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="/cabana-ds.css"/>
 </head>
 <body class="intro-lock">
@@ -770,7 +776,7 @@ body.intro-lock{overflow:hidden;height:100vh;}
 <!-- PROMISE -->
 <section class="promise" id="promise">
   <div class="promise-inner">
-    <div class="promise-eyebrow reveal">The Apatmento promise</div>
+    <div class="promise-eyebrow reveal">The Cabana promise</div>
     <h2 class="promise-headline reveal">Built so <em>hosts keep everything</em> and guests pay only what's fair.</h2>
     <p class="promise-sub reveal">No percentage cuts. No hidden booking levies. Just a small fixed fee per confirmed booking — the way it should be.</p>
     <div class="promise-stats">
@@ -914,9 +920,9 @@ body.intro-lock{overflow:hidden;height:100vh;}
 <section class="final">
   <div class="final-aurora"><div class="fa-blob fa-1"></div><div class="fa-blob fa-2"></div><div class="fa-blob fa-3"></div></div>
   <div class="final-inner">
-    <img src="logo-mark.png" class="final-logo" alt="Apatmento" onerror="this.style.display='none'"/>
+    <img src="cabana-emblem.png" class="final-logo" alt="Cabana"/>
     <h2 class="final-headline">Your next <em>adventure</em><br/>starts here.</h2>
-    <p class="final-sub">Join Apatmento today — it's free to start, and your whole world fits in one app.</p>
+    <p class="final-sub">Join Cabana today — it's free to start, and your whole world fits in one app.</p>
     <div class="final-ctas">
       <a href="auth.html" class="hero-cta-primary">Create free account
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
@@ -934,8 +940,8 @@ body.intro-lock{overflow:hidden;height:100vh;}
 <footer class="footer">
   <div class="footer-inner">
     <div class="footer-brand">
-      <img src="logo-mark.png" alt="" onerror="this.style.display='none'"/>
-      <span>Apatmento</span>
+      <img src="cabana-emblem.png" class="footer-icon" alt=""/>
+      <img src="cabana-wordmark-color.png" class="footer-wm" alt="Cabana" onerror="this.style.display='none'"/>
     </div>
     <div class="footer-links">
       <a href="#services">Services</a>

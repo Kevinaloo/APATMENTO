@@ -304,9 +304,9 @@ function buildPopup(myCode, myStats, isGuest) {
   <button class="ref-close" onclick="window.AptReferral.closePopup()">×</button>
 
   <div class="ref-header">
-    <div class="ref-badge"><span class="ref-badge-dot"></span>Apatmento Referral Programme</div>
+    <div class="ref-badge"><span class="ref-badge-dot"></span>Cabana Referral Programme</div>
     <h2 class="ref-headline">Refer &amp; earn up to<br/><strong>20% for life.</strong></h2>
-    <p class="ref-sub">Bring a guest or a host to Apatmento — earn up to 20% of our fee on every booking they make for a full 365 days. Simple. Unlimited.</p>
+    <p class="ref-sub">Bring a guest or a host to Cabana — earn up to 20% of our fee on every booking they make for a full 365 days. Simple. Unlimited.</p>
   </div>
 
   ${!isGuest && myStats ? `
@@ -495,12 +495,12 @@ function copyLink() {
 }
 
 function shareWA() {
-  const msg = encodeURIComponent(`🚀 I'm using Apatmento — Kenya's zero-commission travel app. Book stays, safaris, rides & more at face value. Use my link and we both earn: ${SITE_URL}?ref=${_myCode}`);
+  const msg = encodeURIComponent(`🚀 I'm using Cabana — Kenya's zero-commission travel app. Book stays, safaris, rides & more at face value. Use my link and we both earn: ${SITE_URL}?ref=${_myCode}`);
   window.open(`https://wa.me/?text=${msg}`, '_blank');
 }
 
 function shareTwitter() {
-  const msg = encodeURIComponent(`Discovered the best travel app in Kenya 🇰🇪 — @Apatmento. Zero commission, hosts keep 100%. Sign up with my link: ${SITE_URL}?ref=${_myCode}`);
+  const msg = encodeURIComponent(`Discovered the best travel app in Kenya 🇰🇪 — @Cabana. Zero commission, hosts keep 100%. Sign up with my link: ${SITE_URL}?ref=${_myCode}`);
   window.open(`https://twitter.com/intent/tweet?text=${msg}`, '_blank');
 }
 

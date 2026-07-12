@@ -180,7 +180,7 @@
         '<path d="M6 20c0-3.31 2.69-6 6-6s6 2.69 6 6"/></svg></div>' +
         '<div class="apa-head-info">' +
           '<div class="apa-head-name">APA</div>' +
-          '<div class="apa-head-sub">Apatmento Assistant · Online</div>' +
+          '<div class="apa-head-sub">Cabana Assistant · Online</div>' +
         '</div>' +
         '<div class="apa-head-dot" aria-hidden="true"></div>' +
         '<button class="apa-head-close" onclick="AskAPA.close()" aria-label="Close">×</button>' +
@@ -266,7 +266,7 @@
     var hour = new Date().getHours();
     var g = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
     var page = pageLabel();
-    var msg = g + '! I\u2019m APA, your Apatmento guide. ';
+    var msg = g + '! I\u2019m APA, your Cabana guide. ';
     if (page) msg += 'You\u2019re on the ' + page + ' page. ';
     msg += 'I can help you find and book stays, tours, rides, food, events and more — and take you straight to the right page. What are you after?';
     appendMsg('apa', msg);

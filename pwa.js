@@ -62,7 +62,7 @@ const PWA_CSS = `
 }
 `;
 
-function injectCSS() {
+function pwaInjectCSS() {
   if (document.getElementById('pwa-styles')) return;
   const s = document.createElement('style');
   s.id = 'pwa-styles';
@@ -145,7 +145,7 @@ function initInstallPrompt() {
 
 function showInstallBanner() {
   if (!deferredInstallPrompt) return;
-  injectCSS();
+  pwaInjectCSS();
   const el = document.createElement('div');
   el.className = 'pwa-install-banner';
   el.id = 'pwa-install-banner';
@@ -158,7 +158,7 @@ function showInstallBanner() {
       </svg>
     </div>
     <div class="pwa-install-text">
-      <div class="pwa-install-title">Install Apatmento</div>
+      <div class="pwa-install-title">Install Cabana</div>
       <div class="pwa-install-sub">Add to your home screen — works offline, feels native</div>
     </div>
     <div class="pwa-install-btns">
@@ -187,7 +187,7 @@ function showInstallBanner() {
 }
 
 function showIOSBanner() {
-  injectCSS();
+  pwaInjectCSS();
   sessionStorage.setItem('pwa_ios_shown', '1');
   const el = document.createElement('div');
   el.className = 'pwa-install-banner';
@@ -262,7 +262,7 @@ async function requestNotificationPermission() {
 
 function showNotifPrompt() {
   return new Promise(resolve => {
-    injectCSS();
+    pwaInjectCSS();
     const el = document.createElement('div');
     el.className = 'pwa-notif-banner';
     el.id = 'pwa-notif-banner';
@@ -302,7 +302,7 @@ function showNotifPrompt() {
 
 /* ── 4. OFFLINE / ONLINE BANNER ── */
 function initOfflineBanner() {
-  injectCSS();
+  pwaInjectCSS();
   const bar = document.createElement('div');
   bar.className = 'pwa-offline-bar';
   bar.id = 'pwa-offline-bar';
@@ -324,10 +324,10 @@ function initOfflineBanner() {
 
 /* ── 5. UPDATE AVAILABLE BANNER ── */
 function showUpdateBar(newSW) {
-  injectCSS();
+  pwaInjectCSS();
   const bar = document.createElement('div');
   bar.className = 'pwa-update-bar';
-  bar.innerHTML = `✨ A new version of Apatmento is ready <button class="pwa-update-cta" id="pwa-update-btn">Update now</button>`;
+  bar.innerHTML = `✨ A new version of Cabana is ready <button class="pwa-update-cta" id="pwa-update-btn">Update now</button>`;
   document.body.appendChild(bar);
   requestAnimationFrame(() => bar.classList.add('show'));
   document.getElementById('pwa-update-btn').addEventListener('click', () => {
@@ -338,7 +338,7 @@ function showUpdateBar(newSW) {
 
 /* ── INIT ── */
 function init() {
-  injectCSS();
+  pwaInjectCSS();
   registerSW();
   initInstallPrompt();
   initOfflineBanner();

@@ -143,3 +143,38 @@ h1 em, h2 em, h3 em,
 
 /* ── 5 · SILENCE THE OLD SPARKLE IN CSS-GENERATED CONTENT ───────────*/
 .hero-eyebrow::before, .section-eyebrow::before{content:none !important;}
+
+/* ── 6 · TOPBAR LOGO PAIR (icon + wordmark) ─────────────────────────
+   Every page topbar shows cabana-emblem.png (icon) + cabana-wordmark-color.png
+   (wordmark) side by side. These classes make them the right size and
+   keep them pixel-crisp at all viewport widths.                       */
+.tb-icon-sm{
+  height:28px;width:28px;
+  object-fit:contain;flex-shrink:0;
+  border-radius:7px;
+}
+.tb-cab-wm{
+  height:26px;width:auto;
+  display:block;flex-shrink:0;
+}
+.rm-tb-logo{
+  height:26px;width:auto;
+  display:block;flex-shrink:0;
+}
+.drawer-icon{
+  height:30px;width:30px;
+  object-fit:contain;flex-shrink:0;
+}
+.drawer-logo-cab{
+  height:28px;width:auto;
+  display:block;flex-shrink:0;
+}
+/* Pair container alignment */
+.tb-left .tb-icon-sm + .tb-logo,
+.tb-left .tb-icon-sm + .tb-cab-wm{
+  margin-left:0;
+}
+@media(max-width:480px){
+  .tb-icon-sm{height:24px;width:24px;}
+  .tb-cab-wm,.rm-tb-logo{height:22px;}
+}

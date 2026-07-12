@@ -450,7 +450,7 @@ function buildMatchPanel(b, offer) {
     <div class="match-s">Same dates, same price to you. We've ranked these by how closely they match what you booked. Choose one, or take a full refund — no penalty either way.</div>
     ${cands.map(c => `
       <div class="match-opt" data-listing="${c.listing_id}" onclick="pickMatch('${b.id}','${c.listing_id}')">
-        <img class="match-thumb" src="${(Array.isArray(c.photos)?c.photos[0]:'')||'/logo-mark.png'}" alt=""/>
+        <img class="match-thumb" src="${(Array.isArray(c.photos)?c.photos[0]:'')||'/cabana-emblem.png'}" alt=""/>
         <div class="match-info">
           <div class="match-name">${c.title || 'Listing'}</div>
           <div class="match-meta">${c.location||''}${c.distance_km!=null?` · ${c.distance_km} km away`:''} · ${c.beds||'?'} bed${c.beds===1?'':'s'} · KES ${Number(c.price_night||0).toLocaleString()}/night</div>

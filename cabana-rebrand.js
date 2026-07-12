@@ -273,7 +273,7 @@
       block.className = 'cabana-foot';
       block.innerHTML =
         '<div class="cabana-foot-logos">' +
-          '<img class="apa" src="/logo-mark.png" alt="Apatmento" onerror="this.style.display=\'none\'"/>' +
+          '<img class="apa" src="/cabana-emblem.png" alt="Cabana" style="height:22px;width:22px;object-fit:contain;" onerror="this.style.display=\'none\'"/>' +
           '<svg class="cabana-foot-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>' +
           '<img class="cab" src="/cabana-wordmark-color.png" alt="Cabana" onerror="this.style.display=\'none\'"/>' +
         '</div>' +

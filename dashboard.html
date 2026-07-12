@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <link rel="preload" as="image" href="/cabana-emblem.png" fetchpriority="high"/>
+  <link rel="preload" as="image" href="/cabana-wordmark-color.png" fetchpriority="high"/>
 <!-- ══ INTERSTITIAL · instant decision (must be first, runs before paint) ══
      Paints a curtain ONLY on a fresh dashboard visit — never when the
      user is navigating back from a service page (identified by ?back=1).
@@ -98,7 +100,9 @@
   <meta name="twitter:image:alt" content="Dashboard — Apatmento"/>
 
   <!-- DNS prefetch for performance (also helps SEO via speed) -->
-  <link rel="dns-prefetch" href="//fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link rel="dns-prefetch" href="//fonts.googleapis.com"/>
   <link rel="dns-prefetch" href="//fonts.gstatic.com"/>
   <link rel="dns-prefetch" href="//cdn.jsdelivr.net"/>
   <link rel="dns-prefetch" href="//api.unsplash.com"/>
@@ -701,7 +705,7 @@ img,video,svg{max-width:100%;}
     }
   </script>
 <link rel="stylesheet" href="/brand.css"/>
-<link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/><link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="/cabana-ds.css"/>
 </head>
 <body>

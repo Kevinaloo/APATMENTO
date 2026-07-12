@@ -106,7 +106,7 @@
 
     // textContent, not innerHTML — notification bodies are user-influenced
     // (host names, listing titles) and must never be parsed as markup.
-    el.querySelector('.apa-toast-title').textContent = n.title || 'Apatmento';
+    el.querySelector('.apa-toast-title').textContent = n.title || 'Cabana';
     el.querySelector('.apa-toast-text').textContent = n.body || '';
 
     wrap().appendChild(el);
@@ -295,7 +295,7 @@
       ? 'Notifications are blocked' : 'Stay in the loop';
 
     g.querySelector('.apa-gate-p').textContent = denied
-      ? 'Turn on notifications to hear about bookings, payments and messages the moment they happen. You can still use Apatmento without them.'
+      ? 'Turn on notifications to hear about bookings, payments and messages the moment they happen. You can still use Cabanato without them.'
       : 'Apatmento can send you booking confirmations, payment receipts and host messages the moment they happen.';
 
     g.querySelector('.apa-gate-note').textContent = denied
