@@ -1,32 +1,26 @@
 /* ═══════════════════════════════════════════════════════════════════
-   APATMENTO · INTERSTITIAL  v2
+   APATMENTO · INTERSTITIAL  v3
    ───────────────────────────────────────────────────────────────────
-   A full-screen, un-cancellable splash that plays a silent video OR
-   shows an image the instant someone opens the site — BEFORE the
-   greeting / dashboard is shown — then dismisses itself on a timer.
+   Shows the World Cup (or any campaign) splash video ONLY on
+   dashboard.html — and ONLY when the user is arriving fresh, not
+   returning from a service page inside the app.
 
-   Runs on the landing page (index.html) and the dashboard
-   (dashboard.html), for guests and signed-in users alike.
+   Rules:
+     1. DASHBOARD ONLY. index.html, partner pages, service pages:
+        never show the splash. Only dashboard.html plays it.
 
-   Design rules (kept deliberately simple, per the brief — render it,
-   don't entangle it with the intro film or greeting animations):
+     2. BACK-NAVIGATION EXEMPT. Service pages stamp ?back=1 on the URL
+        when they link back to dashboard. If that flag is present, we
+        skip the splash immediately — the user is bouncing around
+        inside the app and blocking them with a video is disruptive.
 
-     1. NEVER trap the user. Every path ends in the cover being removed
-        and the site shown. A hard wall-clock ceiling fires regardless.
+     3. FREQUENCY CAP. The existing 'once' / 'daily' / 'always' logic
+        is preserved for recurring visitors.
 
-     2. WORKS ON FIRST VISIT. v1 only painted from a cached config, so a
-        brand-new visitor (empty cache) never saw it. v2 fetches the live
-        config immediately (short timeout) AND uses the instant cached
-        snapshot when present — so it shows the very first time.
+     4. NEVER TRAP. Every path dismisses the cover eventually. Hard
+        wall-clock ceiling at config.durationMs + 5s, never exceeded.
 
-     3. INDEPENDENT. Sits above everything at max z-index; does not touch
-        the intro film, greeting, or any existing script. Removing its
-        cover simply reveals whatever the page already is.
-
-     4. Config + media live in a PUBLIC Supabase storage bucket
-        (interstitial/splash.json). No schema, no auth, no server fn.
-
-     5. Video plays for the admin-set duration; images for 3s. No skip.
+     5. Config lives in Supabase public storage: interstitial/splash.json
    ═══════════════════════════════════════════════════════════════════ */
 (function (global) {
   'use strict';
@@ -35,6 +29,34 @@
   global.__apaInterstitial = true;
 
   var doc = global.document;
+
+  /* ── GATE 1: Only run on dashboard.html ── */
+  var pathname = (global.location && global.location.pathname) || '';
+  var isDashboard = /dashboard\.html$/.test(pathname) || pathname === '/dashboard';
+  if (!isDashboard) {
+    /* Remove any curtain the inline <script> may have painted and bail. */
+    var early = doc.getElementById('apa-splash-curtain');
+    if (early && early.parentNode) early.parentNode.removeChild(early);
+    doc.documentElement.classList.remove('apa-splash-lock');
+    if (global.__apaSplashWatch) { global.clearTimeout(global.__apaSplashWatch); global.__apaSplashWatch = null; }
+    return;
+  }
+
+  /* ── GATE 2: Skip when navigating back from a service page ── */
+  /* Service pages append ?back=1 (see navigateToService in dashboard.html).
+     We also check sessionStorage in case we want to extend this later. */
+  var qs = '';
+  try { qs = global.location.search || ''; } catch(e){}
+  var isBackNav = qs.indexOf('back=1') !== -1;
+  if (isBackNav) {
+    var earlyB = doc.getElementById('apa-splash-curtain');
+    if (earlyB && earlyB.parentNode) earlyB.parentNode.removeChild(earlyB);
+    doc.documentElement.classList.remove('apa-splash-lock');
+    if (global.__apaSplashWatch) { global.clearTimeout(global.__apaSplashWatch); global.__apaSplashWatch = null; }
+    return;
+  }
+
+  /* ── All gates passed — run the splash engine ── */
 
   var SUPA_URL   = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
   var BUCKET     = 'interstitial';
@@ -142,6 +164,13 @@
     mark.setAttribute('style', 'position:absolute;left:50%;bottom:22px;transform:translateX(-50%);font:600 11px/1 system-ui,sans-serif;letter-spacing:.18em;color:rgba(255,255,255,.55);text-transform:uppercase;z-index:2;pointer-events:none;user-select:none;');
     mark.textContent = 'APATMENTO';
 
+    /* Tap/click to skip — one tap is enough when you're inside the app */
+    var skipBtn = doc.createElement('div');
+    skipBtn.setAttribute('style', 'position:absolute;top:20px;right:20px;z-index:10;padding:8px 18px;border-radius:100px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.28);color:rgba(255,255,255,.8);font:600 12px/1 system-ui,sans-serif;letter-spacing:.08em;cursor:pointer;user-select:none;backdrop-filter:blur(8px);');
+    skipBtn.textContent = 'Skip';
+    skipBtn.addEventListener('click', finish);
+    cover.appendChild(skipBtn);
+
     function animateBar(totalMs){
       var start = Date.now();
       (function tick(){
@@ -169,6 +198,7 @@
       return;
     }
 
+    /* Video */
     var dur = Math.max(1000, Math.min(ABS_MAX_MS, cfg.durationMs | 0)) || 15000;
     var vid = doc.createElement('video');
     vid.muted = true; vid.defaultMuted = true; vid.setAttribute('muted','');

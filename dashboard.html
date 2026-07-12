@@ -2,18 +2,17 @@
 <html lang="en">
 <head>
 <!-- ══ INTERSTITIAL · instant decision (must be first, runs before paint) ══
-     Decides synchronously — from a config snapshot cached last visit — whether
-     to cover the page with an opaque curtain, so a splash campaign never
-     flashes the landing page behind it. The engine (apa-interstitial.js,
-     loaded at the end of body) fills this curtain with the video/image and
-     dismisses it on a timer. If there's no cached campaign, nothing paints
-     and the site loads exactly as before. This can never trap the user:
-     the engine has hard failsafes, and if the engine never runs, a watchdog
-     below removes the curtain on its own. -->
+     Paints a curtain ONLY on a fresh dashboard visit — never when the
+     user is navigating back from a service page (identified by ?back=1).
+     The engine (apa-interstitial.js) fills the curtain with the video/image.
+     If back=1 is present, or no active campaign exists, nothing paints. ══ -->
 <style id="apa-splash-css">.apa-splash-lock{overflow:hidden !important;}</style>
 <script>
 (function(){
   try{
+    /* Skip entirely when returning from a service page inside the app */
+    if(location.search.indexOf('back=1') !== -1) return;
+
     var raw = localStorage.getItem('apa-splash-config');
     if(!raw) return;
     var c = JSON.parse(raw);
@@ -43,9 +42,7 @@
       + '<style>@keyframes apaSplashSpin{to{transform:rotate(360deg)}}</style>';
     (document.body || document.documentElement).appendChild(d);
 
-    /* WATCHDOG: if the engine hasn't taken over and dismissed within 8s
-       (e.g. its script failed to load), tear the curtain down ourselves.
-       The engine clears this the moment it starts a real media element. */
+    /* WATCHDOG: if the engine hasn't taken over within 8s, tear down. */
     window.__apaSplashWatch = setTimeout(function(){
       var el = document.getElementById('apa-splash-curtain');
       if(el && el.parentNode){ el.parentNode.removeChild(el); }
