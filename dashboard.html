@@ -432,21 +432,48 @@ img,video,svg{max-width:100%;}
 /* hero greeting */
 .tb-logo-cab{height:32px;width:auto;display:block;}
 
-/* ══ REBRAND HERO BLOCK ══ */
-.drb-hero{position:relative;overflow:hidden;margin-bottom:28px;padding:36px 28px 32px;border-radius:24px;background:linear-gradient(145deg,#0D0820 0%,#100D24 50%,#0A1628 100%);border:1px solid rgba(109,40,255,.2);text-align:center;}
-.drb-glow{position:absolute;border-radius:50%;pointer-events:none;filter:blur(70px);}
-.drb-glow-1{width:280px;height:280px;background:radial-gradient(circle,rgba(109,40,255,.55),transparent 68%);top:-60px;left:-40px;}
-.drb-glow-2{width:240px;height:240px;background:radial-gradient(circle,rgba(245,177,46,.4),transparent 68%);top:-40px;right:-30px;}
-.drb-glow-3{width:320px;height:200px;background:radial-gradient(circle,rgba(79,109,255,.35),transparent 70%);bottom:-60px;left:50%;transform:translateX(-50%);}
-.drb-title-row{position:relative;z-index:2;display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;margin-bottom:14px;}
-.drb-title-apat{font-family:var(--font-display);font-weight:800;font-size:clamp(22px,6vw,42px);letter-spacing:.08em;line-height:1;background:linear-gradient(120deg,#C3AEFA,#9B79FF,#7B55F0);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;filter:drop-shadow(0 0 20px rgba(155,121,255,.6));}
-.drb-title-now{font-size:clamp(11px,2vw,14px);font-weight:700;color:rgba(255,255,255,.5);letter-spacing:.14em;text-transform:uppercase;padding:4px 10px;border-radius:100px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);flex-shrink:0;position:relative;z-index:2;}
-.drb-title-cab{font-family:var(--font-display);font-weight:800;font-size:clamp(22px,6vw,42px);letter-spacing:.08em;line-height:1;background:linear-gradient(120deg,#FF6A3C,#FFB347,#F5E642,#4EE0C8);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 24px rgba(255,140,60,.65));position:relative;z-index:2;}
-.drb-sub{position:relative;z-index:2;font-size:clamp(13px,3vw,16px);font-weight:600;color:rgba(255,255,255,.88);letter-spacing:.04em;margin-bottom:8px;}
-.drb-tagline{position:relative;z-index:2;font-size:clamp(13px,2.5vw,15px);font-style:italic;font-weight:400;color:rgba(255,255,255,.55);margin-bottom:20px;letter-spacing:.02em;}
-.drb-cta{position:relative;z-index:2;display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;letter-spacing:.05em;color:rgba(255,255,255,.7);text-decoration:none;padding:7px 16px;border-radius:100px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);transition:all .25s;text-transform:uppercase;}
-.drb-cta:hover{background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.3);}
-@media(max-width:480px){.drb-hero{padding:28px 18px 24px;border-radius:18px;}.drb-title-row{gap:8px;}.drb-title-apat,.drb-title-cab{font-size:clamp(20px,7vw,32px);}.drb-sub{font-size:13px;}}
+/* ══ REBRAND INLINE ANNOUNCEMENT ══ */
+.drb-inline{
+  margin-bottom:26px;
+  padding-bottom:20px;
+  border-bottom:1px solid rgba(10,10,20,.06);
+}
+.drb-inline-title{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  margin-bottom:8px;
+}
+.drb-i-apat{
+  font-family:var(--font-display);font-weight:800;
+  font-size:clamp(18px,5vw,32px);letter-spacing:.07em;line-height:1;
+  background:linear-gradient(120deg,#8B5CF6,#C3AEFA);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.drb-i-now{
+  font-size:clamp(10px,2vw,12px);font-weight:700;
+  color:var(--ink-faint);letter-spacing:.12em;text-transform:uppercase;
+  padding:3px 9px;border-radius:100px;
+  background:rgba(10,10,20,.06);border:1px solid rgba(10,10,20,.1);
+  flex-shrink:0;
+}
+.drb-i-cab{
+  font-family:var(--font-display);font-weight:800;
+  font-size:clamp(18px,5vw,32px);letter-spacing:.07em;line-height:1;
+  background:linear-gradient(120deg,#FF6A3C,#FFB347,#4EE0C8);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 0 14px rgba(255,120,50,.45));
+}
+.drb-i-sub{
+  font-size:clamp(13px,2.5vw,15px);font-weight:600;
+  color:var(--ink-soft);letter-spacing:.02em;margin-bottom:4px;
+}
+.drb-i-tagline{
+  font-size:clamp(12px,2vw,14px);font-style:italic;font-weight:400;
+  color:var(--ink-faint);
+}
+@media(max-width:460px){
+  .drb-inline-title{gap:7px;}
+  .drb-i-apat,.drb-i-cab{font-size:clamp(16px,6.5vw,26px);letter-spacing:.05em;}
+}
 
 .greeting{margin-bottom:34px;opacity:0;animation:fadeUp .8s .1s forwards;}
 .greeting-eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--lilac-deep);margin-bottom:12px;padding:6px 14px;border-radius:100px;background:rgba(184,164,244,.12);border:1px solid rgba(184,164,244,.25);}
@@ -458,7 +485,7 @@ img,video,svg{max-width:100%;}
 .rail-label{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:16px;}
 .service-rail{display:grid;grid-template-columns:repeat(8,1fr);gap:12px;margin-bottom:32px;}
 .service-rail .svc{width:100%;}
-.svc{background:#fff;border:1px solid rgba(10,10,20,.07);border-radius:16px;padding:0 0 10px 0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;cursor:pointer;transition:transform .2s ease,box-shadow .2s ease;min-width:0;overflow:hidden;}
+.svc{background:#fff;border:1px solid rgba(10,10,20,.07);border-radius:16px;padding:0 0 10px 0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;cursor:pointer;transition:transform .2s ease,box-shadow .2s ease;min-width:0;overflow:hidden;;position:relative;z-index:1;}
 .svc:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(10,10,20,.12);}
 .svc-ico{width:100%;height:72px;object-fit:contain;display:block;padding:10px 8px 4px;}
 .svc-name{font-size:11px;font-weight:600;color:var(--ink-soft,#4A4C66);text-align:center;white-space:nowrap;line-height:1;display:block;}
@@ -785,19 +812,15 @@ img,video,svg{max-width:100%;}
 
     <div class="content">
       <div class="greeting">
-        <!-- ══ REBRAND HERO ══ -->
-        <div class="drb-hero" id="dash-rebrand-banner">
-          <div class="drb-glow drb-glow-1"></div>
-          <div class="drb-glow drb-glow-2"></div>
-          <div class="drb-glow drb-glow-3"></div>
-          <div class="drb-title-row">
-            <span class="drb-title-apat">APATMENTO</span>
-            <span class="drb-title-now">now</span>
-            <span class="drb-title-cab">CABANA</span>
+        <!-- ══ REBRAND INLINE ══ -->
+        <div class="drb-inline" id="dash-rebrand-banner">
+          <div class="drb-inline-title">
+            <span class="drb-i-apat">APATMENTO</span>
+            <span class="drb-i-now">now</span>
+            <span class="drb-i-cab">CABANA</span>
           </div>
-          <p class="drb-sub">Zero Commission &nbsp;·&nbsp; Pay What You See</p>
-          <p class="drb-tagline"><em>Fair for all.</em></p>
-          <a href="index.html#rebrand-story" class="drb-cta">See what&rsquo;s changing <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+          <p class="drb-i-sub">Zero Commission &nbsp;·&nbsp; Pay What You See</p>
+          <p class="drb-i-tagline"><em>Fair for all.</em></p>
         </div>
         <h1 class="greeting-title" id="g-title"><span id="g-greeting">Good afternoon</span><em id="g-name"></em></h1>
         <p class="greeting-sub">Spaces, flights, tours, rides and more — every part of your trip, beautifully in one place.</p>
@@ -846,7 +869,7 @@ img,video,svg{max-width:100%;}
 
       <!-- ── MORE SERVICES ── -->
       
-      <div data-rail="compact" data-autoplay="2800">
+      <div data-rail="compact">
       <div class="service-rail" data-rail-track aria-label="Explore services">
         <div class="svc" data-svc="flights" onclick="navigateToService('flights')"><img class="svc-ico" src="icon-flights.png" alt="Flights" style="width:100%;height:100%;object-fit:cover;"/><span class="svc-name">Flights</span></div>
         <div class="svc" data-svc="tours" onclick="navigateToService('tours')"><img class="svc-ico" src="icon-tours.png" alt="Tours" style="width:100%;height:100%;object-fit:cover;"/><span class="svc-name">Tours</span></div>

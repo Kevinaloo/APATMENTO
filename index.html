@@ -183,6 +183,94 @@ body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webk
 .hero-title .line{display:block;opacity:0;animation:heroUp 1s forwards;}
 .hero-title .line:nth-child(1){animation-delay:.35s;}
 .hero-title .line:nth-child(2){animation-delay:.5s;}
+
+/* ── HERO REBRAND STATEMENT ── */
+.hero-rebrand-block{
+  display:flex;flex-direction:column;align-items:flex-start;
+  gap:0;margin-bottom:36px;
+  opacity:0;animation:heroUp .9s .15s forwards;
+}
+.hero-rb-title-row{
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  margin-bottom:10px;
+}
+.hero-rb-apat{
+  font-family:var(--font-display);font-weight:800;
+  font-size:clamp(18px,4.5vw,36px);letter-spacing:.1em;line-height:1;
+  background:linear-gradient(120deg,#C3AEFA,#9B79FF);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.hero-rb-now{
+  font-size:clamp(10px,1.8vw,13px);font-weight:700;
+  color:rgba(255,255,255,.55);letter-spacing:.14em;text-transform:uppercase;
+  padding:3px 10px;border-radius:100px;
+  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);
+  flex-shrink:0;
+}
+.hero-rb-cab{
+  font-family:var(--font-display);font-weight:800;
+  font-size:clamp(18px,4.5vw,36px);letter-spacing:.1em;line-height:1;
+  background:linear-gradient(120deg,#FF6A3C,#FFB347,#F5E642,#4EE0C8);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 0 18px rgba(255,140,60,.7));
+}
+.hero-rb-sub{
+  font-size:clamp(12px,2vw,15px);font-weight:600;
+  color:rgba(255,255,255,.82);letter-spacing:.04em;margin-bottom:6px;
+}
+.hero-rb-tagline{
+  font-size:clamp(12px,1.8vw,14px);font-style:italic;font-weight:400;
+  color:rgba(255,255,255,.5);margin-bottom:14px;
+}
+.hero-rb-learn{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  color:rgba(255,255,255,.6);text-decoration:none;
+  padding:6px 14px;border-radius:100px;
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);
+  transition:all .25s;
+}
+.hero-rb-learn:hover{background:rgba(255,255,255,.14);color:#fff;}
+@media(max-width:520px){
+  .hero-rb-title-row{gap:8px;}
+  .hero-rebrand-block{margin-bottom:26px;}
+}
+
+/* ── GLOWING SIGN IN BUTTON (nav on dark hero) ── */
+.hero-signin-glow{
+  position:relative;
+  background:rgba(255,255,255,.1) !important;
+  border:1px solid rgba(255,255,255,.28) !important;
+  box-shadow:
+    0 0 0 1px rgba(109,40,255,.5),
+    0 0 18px rgba(109,40,255,.4),
+    0 4px 20px rgba(0,0,0,.3),
+    inset 0 1px 0 rgba(255,255,255,.2) !important;
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  color:#fff !important;
+  animation:signinPulse 3s ease infinite;
+}
+.hero-signin-glow:hover{
+  box-shadow:
+    0 0 0 1px rgba(109,40,255,.8),
+    0 0 28px rgba(109,40,255,.6),
+    0 8px 28px rgba(0,0,0,.4),
+    inset 0 1px 0 rgba(255,255,255,.3) !important;
+  background:rgba(255,255,255,.16) !important;
+}
+@keyframes signinPulse{
+  0%,100%{box-shadow:0 0 0 1px rgba(109,40,255,.5),0 0 18px rgba(109,40,255,.4),0 4px 20px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.2);}
+  50%{box-shadow:0 0 0 1px rgba(109,40,255,.8),0 0 30px rgba(109,40,255,.6),0 4px 24px rgba(79,109,255,.4),inset 0 1px 0 rgba(255,255,255,.25);}
+}
+/* When nav scrolls to light bg — remove glow, revert to normal */
+.nav.scrolled .hero-signin-glow{
+  animation:none;
+  background:linear-gradient(135deg,#6D28FF,#4F6DFF) !important;
+  border:none !important;
+  box-shadow:0 4px 16px rgba(109,40,255,.28),inset 0 1px 0 rgba(255,255,255,.16) !important;
+  color:#fff !important;
+}
+
 .hero-title em{font-style:italic;font-weight:500;background:linear-gradient(120deg,var(--lilac),var(--mint),var(--peach));-webkit-background-clip:text;background-clip:text;color:transparent;}
 .hero-sub{font-size:clamp(16px,2vw,19px);line-height:1.65;color:rgba(255,255,255,.6);max-width:540px;margin-bottom:40px;opacity:0;animation:heroUp 1s .68s forwards;}
 .hero-ctas{display:flex;flex-direction:column;gap:14px;align-items:flex-start;opacity:0;animation:heroUp 1s .85s forwards;}
@@ -724,7 +812,7 @@ body.intro-lock{overflow:hidden;height:100vh;}
     </button>
 
     <div id="nav-guest" style="display:flex;align-items:center;gap:8px;">
-      <a href="auth.html" class="cab-auth" id="nav-auth-btn">
+      <a href="auth.html" class="cab-auth hero-signin-glow" id="nav-auth-btn">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
         Sign in / up
       </a>
@@ -742,7 +830,17 @@ body.intro-lock{overflow:hidden;height:100vh;}
   <div class="hero-stars" id="hero-stars"></div>
   <div class="hero-glyphs" id="hero-glyphs"></div>
   <div class="hero-inner">
-    <span class="hero-eyebrow">Your world · One app</span>
+    <!-- ── REBRAND STATEMENT ── -->
+    <div class="hero-rebrand-block">
+      <div class="hero-rb-title-row">
+        <span class="hero-rb-apat">APATMENTO</span>
+        <span class="hero-rb-now">now</span>
+        <span class="hero-rb-cab">CABANA</span>
+      </div>
+      <p class="hero-rb-sub">Zero Commission &nbsp;·&nbsp; Pay What You See</p>
+      <p class="hero-rb-tagline"><em>Fair for all.</em></p>
+      <a href="#rebrand-story" class="hero-rb-learn">See what&rsquo;s changing <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+    </div>
     <h1 class="hero-title">
       <span class="line">One app for</span>
       <span class="line">every <em>journey.</em></span>

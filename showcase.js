@@ -213,7 +213,7 @@ const CSS = `
 
 /* ══ CAROUSEL ══ */
 .scc{position:relative;border-radius:22px;overflow:hidden;height:168px;box-shadow:0 12px 44px rgba(10,10,20,.12);}
-.sc-slide{position:absolute;inset:0;display:flex;align-items:center;padding:0 clamp(18px,4vw,48px);opacity:0;transform:translateX(36px);transition:opacity .55s cubic-bezier(.22,1,.36,1),transform .55s cubic-bezier(.22,1,.36,1);pointer-events:none;}
+.sc-slide{position:absolute;inset:0;display:flex;align-items:center;padding:0 clamp(18px,4vw,48px);opacity:0;transform:translateX(36px);transition:opacity .55s cubic-bezier(.22,1,.36,1),transform .55s cubic-bezier(.22,1,.36,1);pointer-events:none;;cursor:pointer;}
 .sc-slide-img{position:absolute;inset:0;z-index:0;border-radius:22px;}
 .sc-slide.active{opacity:1;transform:none;pointer-events:all;}
 .sc-slide-ico{width:58px;height:58px;border-radius:17px;background:rgba(255,255,255,.18);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0;margin-right:22px;}
@@ -563,6 +563,13 @@ function renderCarousel(slot, cs){
   }
 
   wrap.querySelectorAll('.sc-slide-cta').forEach((b,i)=>b.addEventListener('click',e=>{e.stopPropagation();trackClick(cs[i].id,'carousel',cs[i].advertiser);const u=b.dataset.url;if(u&&u!=='#')window.location.href=u;}));
+  // Make entire slide card clickable (not just CTA button)
+  slides.forEach((sl,i)=>sl.addEventListener('click',e=>{
+    if(e.target.closest('.sc-slide-cta')||e.target.closest('.scc-nav')||e.target.closest('.scc-dot')) return;
+    trackClick(cs[i].id,'carousel-card',cs[i].advertiser);
+    const u=cs[i].url;
+    if(u&&u!=='#') window.location.href=u;
+  }));
   dots.forEach(d=>d.addEventListener('click',()=>go(+d.dataset.i)));
   wrap.querySelector('.scc-prev').addEventListener('click',()=>go(cur-1));
   wrap.querySelector('.scc-next').addEventListener('click',()=>go(cur+1));
