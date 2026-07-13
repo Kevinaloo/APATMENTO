@@ -1392,7 +1392,7 @@ async function loadStays(){
 
 function cardHTML(name, loc, price, id, photo, beds, guests) {
   var onClick = id
-    ? "openListingDetail('" + id + "','" + name.replace(/'/g, "\\'") + "','" + loc.replace(/'/g, "\\'") + "'," + price + ",'" + (photo||'') + "'," + (beds||1) + "," + (guests||2) + ")"
+    ? "window.location.href='apartments.html?open=" + id + "'"
     : "navigateToService('stays')";
   var imgHtml = photo
     ? '<img src="' + photo + '" alt="" loading="lazy" decoding="async"'
