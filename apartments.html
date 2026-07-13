@@ -1049,7 +1049,13 @@ function messageHost(id) {
   const apt = currentListings.find(a => a.id === id);
   if (!apt) return;
   const dbId = apt._dbId || apt.id;
-  window.location.href = `chat.html?listing=${dbId}&host=${encodeURIComponent(apt.host||'Host')}&name=${encodeURIComponent(apt.name)}`;
+  if (window.ApatmentoChat) {
+    ApatmentoChat.open({
+      listingId:    dbId,
+      listingType:  'apartment',
+      listingTitle: apt.name,
+    });
+  }
 }
 
 function closeDrawer() {
