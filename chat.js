@@ -70,30 +70,57 @@ const ApatmentoChat = (() => {
     s.id = 'apt-chat-css';
     s.textContent = `
 /* ═══ APATMENTO CHAT ═══ */
+
+/* ── Small chat panel (host-specific, from listing) ── */
 #apt-chat-overlay{position:fixed;inset:0;z-index:8000;display:none;align-items:flex-end;justify-content:flex-end;padding:0 16px 16px;pointer-events:none;}
 #apt-chat-overlay.open{display:flex;pointer-events:all;}
-#apt-chat-panel{width:100%;max-width:380px;height:580px;max-height:92vh;background:#fff;border-radius:20px;box-shadow:0 20px 60px rgba(10,10,20,.22),0 4px 16px rgba(10,10,20,.1);display:flex;flex-direction:column;overflow:hidden;animation:chat-rise .35s cubic-bezier(.22,1,.36,1);}
+#apt-chat-panel{width:100%;max-width:400px;height:600px;max-height:94vh;background:#fff;border-radius:22px;box-shadow:0 20px 60px rgba(10,10,20,.22),0 4px 16px rgba(10,10,20,.1);display:flex;flex-direction:column;overflow:hidden;animation:chat-rise .35s cubic-bezier(.22,1,.36,1);}
 @keyframes chat-rise{from{opacity:0;transform:translateY(30px) scale(.97);}to{opacity:1;transform:none;}}
-@media(max-width:440px){#apt-chat-panel{max-width:100%;border-radius:20px 20px 0 0;}#apt-chat-overlay{padding:0;align-items:flex-end;}}
+@media(max-width:480px){
+  #apt-chat-panel{max-width:100%;border-radius:22px 22px 0 0;height:88vh;}
+  #apt-chat-overlay{padding:0;align-items:flex-end;}
+}
 
-/* Header */
-.apt-ch-head{padding:14px 16px;background:linear-gradient(135deg,#4361FF,#7B2FF7);display:flex;align-items:center;gap:10px;flex-shrink:0;}
-.apt-ch-head-ico{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
-.apt-ch-head-info{flex:1;min-width:0;}
-.apt-ch-head-title{font-weight:700;font-size:14px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.apt-ch-head-sub{font-size:11px;color:rgba(255,255,255,.7);margin-top:1px;}
-.apt-ch-close{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.15);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0;transition:background .2s;}
-.apt-ch-close:hover{background:rgba(255,255,255,.25);}
+/* ── Full-screen inbox overlay (topbar inbox button) ── */
+#apt-inbox-overlay{position:fixed;inset:0;z-index:8100;background:var(--glass,#FCFCFD);display:none;flex-direction:column;transform:translateX(100%);transition:transform .38s cubic-bezier(.22,1,.36,1);}
+#apt-inbox-overlay.open{display:flex;transform:none;}
+.apt-inbox-bar{height:60px;display:flex;align-items:center;gap:12px;padding:0 18px;background:rgba(252,252,253,.92);backdrop-filter:blur(20px);border-bottom:1px solid rgba(10,10,20,.07);flex-shrink:0;}
+.apt-inbox-back{width:38px;height:38px;border-radius:12px;border:1px solid rgba(10,10,20,.1);background:rgba(255,255,255,.7);display:flex;align-items:center;justify-content:center;cursor:pointer;color:#0A0A14;transition:all .2s;flex-shrink:0;}
+.apt-inbox-back:hover{border-color:#8B6FE8;color:#8B6FE8;}
+.apt-inbox-bar-title{font-family:'Geist','Inter',sans-serif;font-weight:600;font-size:18px;color:#0A0A14;flex:1;}
+.apt-inbox-bar-sub{font-size:12px;color:#8E90AD;margin-top:1px;}
 
-/* Safety banner */
-.apt-ch-banner{background:rgba(67,97,255,.07);border-bottom:1px solid rgba(67,97,255,.1);padding:8px 14px;font-size:11px;color:#4361FF;display:flex;align-items:center;gap:6px;flex-shrink:0;}
+/* Thread view inside full inbox */
+#apt-inbox-thread{display:none;flex-direction:column;flex:1;overflow:hidden;}
+#apt-inbox-thread.open{display:flex;}
+#apt-inbox-thread .apt-inbox-thread-head{height:56px;display:flex;align-items:center;gap:10px;padding:0 16px;border-bottom:1px solid rgba(10,10,20,.07);flex-shrink:0;}
+#apt-inbox-thread .apt-thread-back{width:34px;height:34px;border-radius:10px;border:1px solid rgba(10,10,20,.1);background:rgba(255,255,255,.7);display:flex;align-items:center;justify-content:center;cursor:pointer;color:#0A0A14;transition:all .2s;flex-shrink:0;}
+#apt-inbox-thread .apt-thread-back:hover{border-color:#8B6FE8;color:#8B6FE8;}
+.apt-thread-title{font-weight:700;font-size:14px;color:#0A0A14;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.apt-thread-ico{font-size:20px;}
 
-/* Messages area */
+/* Conversation list */
+#apt-inbox-list-wrap{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+#apt-inbox-list-wrap::-webkit-scrollbar{width:4px;}
+#apt-inbox-list-wrap::-webkit-scrollbar-thumb{background:rgba(10,10,20,.12);border-radius:2px;}
+.apt-inbox-conv{display:flex;align-items:center;gap:14px;padding:16px 18px;cursor:pointer;border-bottom:1px solid rgba(10,10,20,.05);transition:background .15s;position:relative;}
+.apt-inbox-conv:active{background:rgba(139,111,232,.05);}
+.apt-inbox-conv-ava{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#B8A4F4,#7B2FF7);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;position:relative;}
+.apt-inbox-conv-unread-dot{position:absolute;top:1px;right:1px;width:12px;height:12px;border-radius:50%;background:#4361FF;border:2px solid #FCFCFD;display:none;}
+.apt-inbox-conv-unread-dot.on{display:block;}
+.apt-inbox-conv-body{flex:1;min-width:0;}
+.apt-inbox-conv-name{font-weight:700;font-size:14px;color:#0A0A14;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.apt-inbox-conv-preview{font-size:13px;color:#8E90AD;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.apt-inbox-conv.unread .apt-inbox-conv-name{color:#0A0A14;}
+.apt-inbox-conv.unread .apt-inbox-conv-preview{color:#4A4C66;font-weight:500;}
+.apt-inbox-conv-meta{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;}
+.apt-inbox-conv-time{font-size:11px;color:#8E90AD;}
+.apt-inbox-conv-badge{min-width:20px;height:20px;border-radius:10px;background:#4361FF;color:#fff;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 5px;}
+
+/* Messages area (reused inside thread) */
 .apt-ch-msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;scroll-behavior:smooth;}
 .apt-ch-msgs::-webkit-scrollbar{width:4px;}
 .apt-ch-msgs::-webkit-scrollbar-thumb{background:rgba(10,10,20,.15);border-radius:2px;}
-
-/* Message bubbles */
 .apt-ch-msg{max-width:78%;display:flex;flex-direction:column;gap:3px;}
 .apt-ch-msg.me{align-self:flex-end;align-items:flex-end;}
 .apt-ch-msg.them{align-self:flex-start;align-items:flex-start;}
@@ -101,20 +128,12 @@ const ApatmentoChat = (() => {
 .apt-ch-msg.me .apt-ch-bubble{background:linear-gradient(135deg,#4361FF,#6B4FE8);color:#fff;border-bottom-right-radius:4px;}
 .apt-ch-msg.them .apt-ch-bubble{background:#F1F2F8;color:#0A0A14;border-bottom-left-radius:4px;}
 .apt-ch-msg.system .apt-ch-bubble{background:#FFF8E7;color:#856404;font-size:12px;border-radius:10px;text-align:center;max-width:100%;}
-.apt-ch-msg.them .apt-ch-bubble .scrubbed{background:rgba(255,77,109,.12);color:#CC2233;border-radius:4px;padding:1px 5px;font-size:11px;font-weight:700;}
 .apt-ch-time{font-size:10px;color:rgba(10,10,20,.35);padding:0 2px;}
-
-/* Empty state */
 .apt-ch-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:20px;text-align:center;}
 .apt-ch-empty-ico{font-size:40px;}
 .apt-ch-empty-title{font-size:15px;font-weight:700;color:#0A0A14;}
 .apt-ch-empty-sub{font-size:13px;color:#8E90AD;line-height:1.55;max-width:240px;}
-
-/* Typing indicator */
-.apt-ch-typing{display:none;padding:4px 14px 0;font-size:11px;color:#8E90AD;flex-shrink:0;}
-.apt-ch-typing.visible{display:block;}
-
-/* Input area */
+.apt-ch-banner{background:rgba(67,97,255,.07);border-bottom:1px solid rgba(67,97,255,.1);padding:8px 14px;font-size:11px;color:#4361FF;display:flex;align-items:center;gap:6px;flex-shrink:0;}
 .apt-ch-input-wrap{padding:10px 12px;border-top:1px solid rgba(10,10,20,.07);display:flex;align-items:flex-end;gap:8px;flex-shrink:0;}
 .apt-ch-input{flex:1;border:1.5px solid rgba(10,10,20,.1);border-radius:20px;padding:10px 14px;font-size:14px;font-family:inherit;resize:none;outline:none;max-height:100px;min-height:40px;overflow-y:auto;line-height:1.4;transition:border-color .2s;background:#FAFAFA;}
 .apt-ch-input:focus{border-color:#4361FF;background:#fff;}
@@ -123,26 +142,29 @@ const ApatmentoChat = (() => {
 .apt-ch-send:disabled{background:rgba(10,10,20,.12);transform:none;cursor:not-allowed;}
 .apt-ch-send svg{color:#fff;}
 
-/* Inbox mode */
-.apt-ch-inbox-list{flex:1;overflow-y:auto;}
-.apt-ch-inbox-item{display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;border-bottom:1px solid rgba(10,10,20,.05);transition:background .15s;}
-.apt-ch-inbox-item:hover{background:#F8F9FF;}
-.apt-ch-inbox-avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#B8A4F4,#7B2FF7);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
-.apt-ch-inbox-title{font-weight:700;font-size:14px;color:#0A0A14;margin-bottom:2px;}
-.apt-ch-inbox-preview{font-size:12px;color:#8E90AD;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px;}
-.apt-ch-inbox-badge{min-width:18px;height:18px;border-radius:9px;background:#4361FF;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 5px;margin-left:auto;flex-shrink:0;}
+/* Small panel header (host chat) */
+.apt-ch-head{padding:14px 16px;background:linear-gradient(135deg,#4361FF,#7B2FF7);display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.apt-ch-head-ico{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.apt-ch-head-info{flex:1;min-width:0;}
+.apt-ch-head-title{font-weight:700;font-size:14px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.apt-ch-head-sub{font-size:11px;color:rgba(255,255,255,.7);margin-top:1px;}
+.apt-ch-close{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.15);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0;transition:background .2s;}
+.apt-ch-close:hover{background:rgba(255,255,255,.25);}
 
-/* Floating chat button */
+/* Empty state for inbox */
+.apt-inbox-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:40px 28px;text-align:center;}
+.apt-inbox-empty-ico{font-size:56px;}
+.apt-inbox-empty-title{font-weight:700;font-size:18px;color:#0A0A14;}
+.apt-inbox-empty-sub{font-size:14px;color:#8E90AD;line-height:1.6;max-width:260px;}
+
+/* FAB — hidden by default, kept for other pages that use initFAB */
 #apt-chat-fab{position:fixed;bottom:80px;right:16px;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#4361FF,#7B2FF7);border:none;cursor:pointer;display:none;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(67,97,255,.4);z-index:7999;transition:all .3s;}
 #apt-chat-fab.visible{display:flex;}
-#apt-chat-fab:hover{transform:scale(1.1);}
-#apt-chat-fab-badge{position:absolute;top:-2px;right:-2px;min-width:18px;height:18px;border-radius:9px;background:#FF4D6D;color:#fff;font-size:10px;font-weight:800;display:none;align-items:center;justify-content:center;border:2px solid #fff;padding:0 4px;}
-#apt-chat-fab-badge.visible{display:flex;}
     `;
     document.head.appendChild(s);
   }
 
-  /* ── Build overlay HTML ──────────────────────────────────────── */
+  /* ── Build small chat panel (host-specific) ──────────────────── */
   function buildOverlay() {
     if (document.getElementById('apt-chat-overlay')) return;
     const el = document.createElement('div');
@@ -152,7 +174,7 @@ const ApatmentoChat = (() => {
         <div class="apt-ch-head">
           <div class="apt-ch-head-ico" id="apt-ch-head-ico">💬</div>
           <div class="apt-ch-head-info">
-            <div class="apt-ch-head-title" id="apt-ch-head-title">Apatmento Chat</div>
+            <div class="apt-ch-head-title" id="apt-ch-head-title">Chat with Host</div>
             <div class="apt-ch-head-sub" id="apt-ch-head-sub">Secure messaging</div>
           </div>
           <button class="apt-ch-close" onclick="ApatmentoChat.close()">
@@ -163,7 +185,6 @@ const ApatmentoChat = (() => {
           🔒 Sharing contact details is not permitted — use this chat to arrange everything.
         </div>
         <div id="apt-ch-msgs" class="apt-ch-msgs"></div>
-        <div class="apt-ch-typing" id="apt-ch-typing">typing…</div>
         <div class="apt-ch-input-wrap" id="apt-ch-input-wrap">
           <textarea class="apt-ch-input" id="apt-ch-input" placeholder="Type a message…" rows="1"
             onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();ApatmentoChat.send();}"
@@ -175,17 +196,51 @@ const ApatmentoChat = (() => {
       </div>
     `;
     document.body.appendChild(el);
+  }
 
-    // FAB button
-    const fab = document.createElement('button');
-    fab.id = 'apt-chat-fab';
-    fab.title = 'Messages';
-    fab.innerHTML = `
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-      <span id="apt-chat-fab-badge"></span>
+  /* ── Build full-screen inbox overlay ─────────────────────────── */
+  function buildInboxOverlay() {
+    if (document.getElementById('apt-inbox-overlay')) return;
+    const el = document.createElement('div');
+    el.id = 'apt-inbox-overlay';
+    el.innerHTML = `
+      <div class="apt-inbox-bar">
+        <button class="apt-inbox-back" onclick="ApatmentoChat.closeInbox()" aria-label="Back">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        </button>
+        <div>
+          <div class="apt-inbox-bar-title">Messages</div>
+          <div class="apt-inbox-bar-sub" id="apt-inbox-bar-sub">All conversations</div>
+        </div>
+      </div>
+
+      <!-- Conversation list view -->
+      <div id="apt-inbox-list-wrap" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;"></div>
+
+      <!-- Thread view (shown when a conversation is opened) -->
+      <div id="apt-inbox-thread">
+        <div class="apt-inbox-thread-head">
+          <button class="apt-thread-back" onclick="ApatmentoChat._inboxBackToList()" aria-label="Back to messages">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          </button>
+          <span class="apt-thread-ico" id="apt-thread-ico">🏠</span>
+          <span class="apt-thread-title" id="apt-thread-title">Conversation</span>
+        </div>
+        <div class="apt-ch-banner">
+          🔒 Sharing contact details is not permitted — use this chat to arrange everything.
+        </div>
+        <div id="apt-inbox-msgs" class="apt-ch-msgs"></div>
+        <div class="apt-ch-input-wrap">
+          <textarea class="apt-ch-input" id="apt-inbox-input" placeholder="Type a message…" rows="1"
+            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();ApatmentoChat._inboxSend();}"
+            oninput="ApatmentoChat._autosize(this)"></textarea>
+          <button class="apt-ch-send" id="apt-inbox-send" onclick="ApatmentoChat._inboxSend()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13M22 2 15 22l-4-9-9-4 20-7z"/></svg>
+          </button>
+        </div>
+      </div>
     `;
-    fab.onclick = () => ApatmentoChat.openInbox();
-    document.body.appendChild(fab);
+    document.body.appendChild(el);
   }
 
   /* ── Format timestamp ────────────────────────────────────────── */
@@ -323,56 +378,196 @@ const ApatmentoChat = (() => {
     }
   }
 
-  /* ── Open inbox (all conversations) ─────────────────────────── */
+  /* ── Open full-screen inbox ──────────────────────────────────── */
   async function openInbox() {
     const user = window.CURRENT_USER;
-    if (!user) { window.location.href = 'auth.html'; return; }
+    if (!user) { window.location.href = 'auth.html?next=' + encodeURIComponent(location.href); return; }
 
     _userId = user.id;
-    _inbox = true;
     injectCSS();
-    buildOverlay();
+    buildInboxOverlay();
 
-    document.getElementById('apt-ch-head-title').textContent = 'Messages';
-    document.getElementById('apt-ch-head-sub').textContent = 'All conversations';
-    document.getElementById('apt-ch-head-ico').textContent = '📬';
-    document.getElementById('apt-ch-input-wrap').style.display = 'none';
-    document.getElementById('apt-chat-overlay').classList.add('open');
+    const overlay = document.getElementById('apt-inbox-overlay');
+    const listWrap = document.getElementById('apt-inbox-list-wrap');
+    const thread   = document.getElementById('apt-inbox-thread');
+
+    // Make sure thread is hidden, list is shown
+    thread.classList.remove('open');
+    listWrap.style.display = 'flex';
+    listWrap.style.flexDirection = 'column';
+
+    // Loading state
+    listWrap.innerHTML = `<div class="apt-inbox-empty"><div class="apt-inbox-empty-ico">⏳</div><div class="apt-inbox-empty-title">Loading…</div></div>`;
+    overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
 
     const s = window.sb;
-    if (!s) return;
+    if (!s) {
+      listWrap.innerHTML = `<div class="apt-inbox-empty"><div class="apt-inbox-empty-ico">⚠️</div><div class="apt-inbox-empty-title">Not connected</div><div class="apt-inbox-empty-sub">Please refresh and try again.</div></div>`;
+      return;
+    }
 
     const { data: convs } = await s.from('chat_conversations')
       .select('*')
-      .or(`host_id.eq.${user.id},guest_id.eq.${user.id}`)
-      .order('last_message_at', { ascending: false })
-      .limit(50);
+      .or(\`host_id.eq.\${user.id},guest_id.eq.\${user.id}\`)
+      .order('last_message_at', { ascending: false, nullsFirst: false })
+      .limit(100);
 
-    const el = document.getElementById('apt-ch-msgs');
     if (!convs?.length) {
-      el.innerHTML = `<div class="apt-ch-empty">
-        <div class="apt-ch-empty-ico">📭</div>
-        <div class="apt-ch-empty-title">No messages yet</div>
-        <div class="apt-ch-empty-sub">When you enquire about a listing or receive an enquiry, your messages will appear here.</div>
+      listWrap.innerHTML = `<div class="apt-inbox-empty">
+        <div class="apt-inbox-empty-ico">📭</div>
+        <div class="apt-inbox-empty-title">No messages yet</div>
+        <div class="apt-inbox-empty-sub">When you enquire about a listing or a guest messages you, conversations will appear here.</div>
       </div>`;
       return;
     }
 
-    el.innerHTML = '<div class="apt-ch-inbox-list" id="apt-ch-inbox-list"></div>';
-    const list = document.getElementById('apt-ch-inbox-list');
-    list.innerHTML = convs.map(c => {
+    document.getElementById('apt-inbox-bar-sub').textContent = \`\${convs.length} conversation\${convs.length !== 1 ? 's' : ''}\`;
+
+    const ICO = { apartment:'🏠', roommate:'🤝', tour:'🦁', event:'🎟', carhire:'🚗', food:'🍽', shopping:'🛍' };
+
+    listWrap.innerHTML = convs.map(c => {
       const isHost = c.host_id === user.id;
-      const unread = isHost ? c.host_unread : c.guest_unread;
-      const ico = { apartment:'🏠', roommate:'🤝', tour:'🦁', event:'🎟', carhire:'🚗' }[c.listing_type] || '💬';
-      return `<div class="apt-ch-inbox-item" onclick="ApatmentoChat._openConvById('${c.id}')">
-        <div class="apt-ch-inbox-avatar">${ico}</div>
-        <div style="flex:1;min-width:0;">
-          <div class="apt-ch-inbox-title">${c.listing_title || 'Conversation'}</div>
-          <div class="apt-ch-inbox-preview">${c.last_message || 'No messages yet'}</div>
+      const unread = isHost ? (c.host_unread || 0) : (c.guest_unread || 0);
+      const ico = ICO[c.listing_type] || '💬';
+      const time = c.last_message_at ? _fmtInboxTime(c.last_message_at) : '';
+      const preview = c.last_message || 'No messages yet';
+      return \`<div class="apt-inbox-conv\${unread > 0 ? ' unread' : ''}" onclick="ApatmentoChat._inboxOpenConv('\${c.id}')">
+        <div class="apt-inbox-conv-ava">
+          \${ico}
+          <div class="apt-inbox-conv-unread-dot \${unread > 0 ? 'on' : ''}"></div>
         </div>
-        ${unread > 0 ? `<div class="apt-ch-inbox-badge">${unread}</div>` : ''}
-      </div>`;
+        <div class="apt-inbox-conv-body">
+          <div class="apt-inbox-conv-name">\${c.listing_title || 'Conversation'}</div>
+          <div class="apt-inbox-conv-preview">\${preview}</div>
+        </div>
+        <div class="apt-inbox-conv-meta">
+          <div class="apt-inbox-conv-time">\${time}</div>
+          \${unread > 0 ? \`<div class="apt-inbox-conv-badge">\${unread}</div>\` : ''}
+        </div>
+      </div>\`;
     }).join('');
+  }
+
+  /* ── Format time for inbox list ──────────────────────────────── */
+  function _fmtInboxTime(iso) {
+    const d = new Date(iso);
+    const now = new Date();
+    const diffMs = now - d;
+    const diffMins = Math.floor(diffMs / 60000);
+    if (diffMins < 1)   return 'Now';
+    if (diffMins < 60)  return diffMins + 'm';
+    if (diffMins < 1440) return Math.floor(diffMins / 60) + 'h';
+    if (diffMins < 10080) return d.toLocaleDateString('en-KE', { weekday: 'short' });
+    return d.toLocaleDateString('en-KE', { month: 'short', day: 'numeric' });
+  }
+
+  /* ── Open a conversation thread from inbox ───────────────────── */
+  async function _inboxOpenConv(convId) {
+    const s = window.sb;
+    if (!s) return;
+
+    const { data: c } = await s.from('chat_conversations').select('*').eq('id', convId).maybeSingle();
+    if (!c) return;
+
+    _conv = c;
+    const ICO = { apartment:'🏠', roommate:'🤝', tour:'🦁', event:'🎟', carhire:'🚗', food:'🍽', shopping:'🛍' };
+
+    // Switch from list to thread view
+    const listWrap = document.getElementById('apt-inbox-list-wrap');
+    const thread   = document.getElementById('apt-inbox-thread');
+    listWrap.style.display = 'none';
+    thread.classList.add('open');
+
+    document.getElementById('apt-thread-ico').textContent = ICO[c.listing_type] || '💬';
+    document.getElementById('apt-thread-title').textContent = c.listing_title || 'Conversation';
+
+    const msgsEl = document.getElementById('apt-inbox-msgs');
+    msgsEl.innerHTML = '<div class="apt-ch-empty"><div class="apt-ch-empty-ico">⏳</div><div class="apt-ch-empty-title">Loading…</div></div>';
+
+    const msgs = await _loadMsgsForEl(convId, msgsEl);
+
+    // Mark as read
+    const field = _userId === c.host_id ? 'host_unread' : 'guest_unread';
+    await s.from('chat_conversations').update({ [field]: 0 }).eq('id', convId);
+
+    // Subscribe realtime to the inbox msgs element
+    if (_realtimeSub) { _realtimeSub.unsubscribe(); _realtimeSub = null; }
+    _realtimeSub = s.channel('inbox-' + convId)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: \`conversation_id=eq.\${convId}\` },
+        async () => { await _loadMsgsForEl(convId, msgsEl); })
+      .subscribe();
+  }
+
+  /* ── Load messages into a given element ──────────────────────── */
+  async function _loadMsgsForEl(convId, el) {
+    const s = window.sb;
+    if (!s) return;
+    const { data } = await s.from('chat_messages')
+      .select('*').eq('conversation_id', convId)
+      .order('created_at', { ascending: true }).limit(100);
+    const msgs = data || [];
+    if (!msgs.length) {
+      el.innerHTML = \`<div class="apt-ch-empty">
+        <div class="apt-ch-empty-ico">👋</div>
+        <div class="apt-ch-empty-title">Start the conversation</div>
+        <div class="apt-ch-empty-sub">Ask about availability, check-in details, or anything else.</div>
+      </div>\`;
+      return;
+    }
+    el.innerHTML = msgs.map(m => {
+      const isMe = m.sender_id === _userId;
+      const cls = m.is_system ? 'system' : isMe ? 'me' : 'them';
+      const content = m.content.replace(/\[(phone|email|link|website|WhatsApp|social handle|social media|direct contact|number) removed\]/gi, '<span style="background:rgba(255,77,109,.12);color:#CC2233;border-radius:4px;padding:1px 5px;font-size:11px;font-weight:700;">[$1 removed]</span>');
+      return \`<div class="apt-ch-msg \${cls}">
+        <div class="apt-ch-bubble">\${content}</div>
+        <div class="apt-ch-time">\${fmtTime(m.created_at)}</div>
+      </div>\`;
+    }).join('');
+    el.scrollTop = el.scrollHeight;
+  }
+
+  /* ── Send from inbox thread ───────────────────────────────────── */
+  async function _inboxSend() {
+    const input = document.getElementById('apt-inbox-input');
+    const raw = input?.value.trim();
+    if (!raw || !_conv) return;
+    const s = window.sb;
+    if (!s) return;
+    const { text: clean, scrubbed } = scrubContactInfo(raw);
+    if (clean.replace(/\[.*? removed\]/g, '').trim().length < 2) {
+      const el = document.getElementById('apt-inbox-msgs');
+      el.insertAdjacentHTML('beforeend', '<div class="apt-ch-msg system"><div class="apt-ch-bubble">⚠️ Your message contained only contact information, which is not permitted.</div></div>');
+      el.scrollTop = el.scrollHeight;
+      input.value = '';
+      return;
+    }
+    const btn = document.getElementById('apt-inbox-send');
+    if (btn) btn.disabled = true;
+    input.value = '';
+    input.style.height = '';
+    await s.from('chat_messages').insert({ conversation_id: _conv.id, sender_id: _userId, content: clean, content_raw: scrubbed ? raw : null, was_scrubbed: scrubbed });
+    const otherField = _userId === _conv.host_id ? 'guest_unread' : 'host_unread';
+    await s.from('chat_conversations').update({ last_message: clean.length > 60 ? clean.slice(0,60)+'…' : clean, last_message_at: new Date().toISOString(), last_sender_id: _userId, [otherField]: (_conv[otherField]||0)+1 }).eq('id', _conv.id);
+    if (btn) btn.disabled = false;
+    await _loadMsgsForEl(_conv.id, document.getElementById('apt-inbox-msgs'));
+  }
+
+  /* ── Back to list from thread ─────────────────────────────────── */
+  function _inboxBackToList() {
+    if (_realtimeSub) { _realtimeSub.unsubscribe(); _realtimeSub = null; }
+    document.getElementById('apt-inbox-thread').classList.remove('open');
+    const listWrap = document.getElementById('apt-inbox-list-wrap');
+    listWrap.style.display = 'flex';
+    listWrap.style.flexDirection = 'column';
+  }
+
+  /* ── Close full-screen inbox ──────────────────────────────────── */
+  function closeInbox() {
+    const overlay = document.getElementById('apt-inbox-overlay');
+    if (overlay) overlay.classList.remove('open');
+    document.body.style.overflow = '';
+    if (_realtimeSub) { _realtimeSub.unsubscribe(); _realtimeSub = null; }
   }
 
   /* ── Open conversation by ID (from inbox) ────────────────────── */
@@ -479,5 +674,5 @@ const ApatmentoChat = (() => {
     if (fab) fab.classList.add('visible');
   }
 
-  return { open, openInbox, close, send, _autosize, _openConvById, initFAB, scrubContactInfo };
+  return { open, openInbox, closeInbox, close, send, _autosize, _openConvById, _inboxOpenConv, _inboxBackToList, _inboxSend, initFAB, scrubContactInfo };
 })();
