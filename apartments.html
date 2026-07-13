@@ -1059,9 +1059,12 @@ function toggleDesc(id, encodedFull) {
 
 /* ── topbar inbox button ── */
 function openInboxFromTopbar() {
-  // Ensure sb and CURRENT_USER are wired up
   window.sb = window.sb || sb;
-  if (!window.CURRENT_USER && window.ApaSession) {
+  if (window.CURRENT_USER) {
+    if (window.ApatmentoChat) ApatmentoChat.openInbox();
+    return;
+  }
+  if (window.ApaSession) {
     ApaSession.ready(function(state) {
       if (state && state.user) {
         window.CURRENT_USER = state.user;
@@ -1071,9 +1074,9 @@ function openInboxFromTopbar() {
         window.location.href = 'auth.html?next=' + encodeURIComponent(location.href);
       }
     });
-    return;
+  } else {
+    window.location.href = 'auth.html?next=' + encodeURIComponent(location.href);
   }
-  if (window.ApatmentoChat) ApatmentoChat.openInbox();
 }
 
 /* ── message host ── */
