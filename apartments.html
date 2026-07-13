@@ -580,8 +580,18 @@ const UNSPLASH_KEY = 'YoImDCLHHDFQbvp_VJaFkC0oPMDuDiDp7zB0q8JQHXE'; // demo key 
 let sb = null;
 try { const { createClient } = supabase; sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY); } catch(e) {}
 
-// Init chat FAB when user is logged in
-document.addEventListener("DOMContentLoaded",()=>{if(typeof ApatmentoChat!=="undefined")setTimeout(ApatmentoChat.initFAB,1000);});
+// Resolve session + expose window.CURRENT_USER and window.sb for chat.js
+document.addEventListener("DOMContentLoaded", () => {
+  if (window.ApaSession) {
+    ApaSession.ready(function(state) {
+      if (state && state.user) {
+        window.CURRENT_USER = state.user;
+        window.sb = window.sb || ApaSession.client();
+      }
+    });
+  }
+  if (typeof ApatmentoChat !== "undefined") setTimeout(ApatmentoChat.initFAB, 1000);
+});
 
 let currentListings = [];
 let activeFilters = new Set(['all']);
@@ -1049,12 +1059,26 @@ function messageHost(id) {
   const apt = currentListings.find(a => a.id === id);
   if (!apt) return;
   const dbId = apt._dbId || apt.id;
-  if (window.ApatmentoChat) {
-    ApatmentoChat.open({
-      listingId:    dbId,
-      listingType:  'apartment',
-      listingTitle: apt.name,
+
+  function _doOpen() {
+    if (!window.ApatmentoChat) return;
+    ApatmentoChat.open({ listingId: dbId, listingType: 'apartment', listingTitle: apt.name });
+  }
+
+  if (window.CURRENT_USER) {
+    _doOpen();
+  } else if (window.ApaSession) {
+    ApaSession.ready(function(state) {
+      if (state && state.user) {
+        window.CURRENT_USER = state.user;
+        window.sb = window.sb || ApaSession.client();
+        _doOpen();
+      } else {
+        window.location.href = 'auth.html?next=' + encodeURIComponent(location.href);
+      }
     });
+  } else {
+    window.location.href = 'auth.html?next=' + encodeURIComponent(location.href);
   }
 }
 
@@ -1124,7 +1148,20 @@ function openField(field) {
 }
 
 /* ── GO ── */
-loadListings();
+loadListings().then(() => {
+  // Deep-link: apartments.html?open=LISTING_ID  (sent from dashboard cards)
+  const openId = new URLSearchParams(location.search).get('open');
+  if (!openId) return;
+  // Try immediately, then retry while listings are still populating
+  const tryOpen = (attempts) => {
+    const apt = currentListings.find(a =>
+      a.id === openId || a._dbId === openId || String(a._dbId) === String(openId)
+    );
+    if (apt) { openDrawer(apt.id); return; }
+    if (attempts > 0) setTimeout(() => tryOpen(attempts - 1), 300);
+  };
+  tryOpen(10);
+});
 
 /* ── Entry transition dismiss ── */
 function dismissEnterTx(){
