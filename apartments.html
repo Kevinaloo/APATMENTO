@@ -487,7 +487,10 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
     <img src="cabana-emblem.png" class="tb-icon-sm" alt=""/><img src="cabana-wordmark-color.png" class="tb-logo tb-cab-wm" alt="Cabana" onerror="this.style.display='none'"/>
   </div>
   <div class="tb-right">
-    <span class="tb-title">Cabana <em>Spaces</em></span>
+    <button id="tb-inbox-btn" onclick="openInboxFromTopbar()" aria-label="Messages" style="width:40px;height:40px;border-radius:13px;border:1px solid var(--line);background:rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink-soft);transition:all .25s;position:relative;" title="Messages">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      <span id="tb-inbox-badge" style="display:none;position:absolute;top:-3px;right:-3px;min-width:16px;height:16px;border-radius:8px;background:#FF4D6D;color:#fff;font-size:9px;font-weight:800;align-items:center;justify-content:center;border:2px solid #FCFCFD;padding:0 3px;"></span>
+    </button>
     <button class="apa-sos" data-apa="sos" type="button" aria-label="Emergency help">SOS</button>
     <button class="apa-ico" id="apa-fav-btn" data-apa="fav" type="button" aria-label="Saved places" title="Saved places" style="display:none;" data-when="user">
             <svg class="apa-fav-heart" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -578,7 +581,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const UNSPLASH_KEY = 'YoImDCLHHDFQbvp_VJaFkC0oPMDuDiDp7zB0q8JQHXE'; // demo key — replace with your own at unsplash.com/developers
 
 let sb = null;
-try { const { createClient } = supabase; sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY); } catch(e) {}
+try { const { createClient } = supabase; sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY); window.sb = sb; } catch(e) {}
 
 // Resolve session + expose window.CURRENT_USER and window.sb for chat.js
 document.addEventListener("DOMContentLoaded", () => {
@@ -586,11 +589,11 @@ document.addEventListener("DOMContentLoaded", () => {
     ApaSession.ready(function(state) {
       if (state && state.user) {
         window.CURRENT_USER = state.user;
-        window.sb = window.sb || ApaSession.client();
+        window.sb = window.sb || sb || ApaSession.client();
       }
     });
   }
-  if (typeof ApatmentoChat !== "undefined") setTimeout(ApatmentoChat.initFAB, 1000);
+  // Do NOT call initFAB — we have a topbar inbox button instead of the bottom-right FAB
 });
 
 let currentListings = [];
@@ -1054,14 +1057,39 @@ function toggleDesc(id, encodedFull) {
   if (btn) btn.remove();
 }
 
+/* ── topbar inbox button ── */
+function openInboxFromTopbar() {
+  // Ensure sb and CURRENT_USER are wired up
+  window.sb = window.sb || sb;
+  if (!window.CURRENT_USER && window.ApaSession) {
+    ApaSession.ready(function(state) {
+      if (state && state.user) {
+        window.CURRENT_USER = state.user;
+        window.sb = window.sb || sb || ApaSession.client();
+        if (window.ApatmentoChat) ApatmentoChat.openInbox();
+      } else {
+        window.location.href = 'auth.html?next=' + encodeURIComponent(location.href);
+      }
+    });
+    return;
+  }
+  if (window.ApatmentoChat) ApatmentoChat.openInbox();
+}
+
 /* ── message host ── */
 function messageHost(id) {
   const apt = currentListings.find(a => a.id === id);
   if (!apt) return;
   const dbId = apt._dbId || apt.id;
 
+  // Always sync the local sb to window.sb first — chat.js reads window.sb
+  window.sb = window.sb || sb;
+
   function _doOpen() {
-    if (!window.ApatmentoChat) return;
+    if (!window.ApatmentoChat) {
+      console.warn('ApatmentoChat not loaded');
+      return;
+    }
     ApatmentoChat.open({ listingId: dbId, listingType: 'apartment', listingTitle: apt.name });
   }
 
@@ -1071,7 +1099,7 @@ function messageHost(id) {
     ApaSession.ready(function(state) {
       if (state && state.user) {
         window.CURRENT_USER = state.user;
-        window.sb = window.sb || ApaSession.client();
+        window.sb = window.sb || sb || ApaSession.client();
         _doOpen();
       } else {
         window.location.href = 'auth.html?next=' + encodeURIComponent(location.href);
