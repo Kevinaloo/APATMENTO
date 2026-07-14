@@ -161,24 +161,32 @@
   /* ── Cabana Avatar Popup + FAB avatar ── */
   var avatarStyle = document.createElement('style');
   avatarStyle.textContent = [
-    '#apa-avatar-popup{position:fixed;bottom:92px;right:14px;z-index:8999;display:flex;flex-direction:column;align-items:flex-end;transition:opacity .45s ease,transform .45s cubic-bezier(.34,1.2,.64,1);}',
-    '#apa-avatar-popup.apa-av-hidden{opacity:0;transform:translateY(22px) scale(.94);pointer-events:none;}',
+    /* Popup container — sits bottom-right, avatar is big, bubble is compact */
+    '#apa-avatar-popup{position:fixed;bottom:88px;right:10px;z-index:8999;display:flex;flex-direction:row;align-items:flex-end;gap:0;transition:opacity .5s ease,transform .5s cubic-bezier(.34,1.2,.64,1);max-width:calc(100vw - 20px);}',
+    '#apa-avatar-popup.apa-av-hidden{opacity:0;transform:translateY(28px) scale(.93);pointer-events:none;}',
     '#apa-avatar-popup.apa-av-visible{opacity:1;transform:none;pointer-events:all;}',
-    '#apa-avatar-img{width:118px;height:auto;filter:drop-shadow(0 10px 28px rgba(0,0,0,.25));display:block;cursor:pointer;transition:transform .22s;user-select:none;}',
-    '#apa-avatar-img:hover{transform:scale(1.04) translateY(-3px);}',
-    '#apa-avatar-bubble{position:absolute;bottom:122px;right:104px;background:#fff;border-radius:20px 20px 4px 20px;padding:14px 16px 12px;width:220px;box-shadow:0 10px 36px rgba(10,10,20,.16),0 2px 8px rgba(0,0,0,.08);}',
-    '#apa-avatar-bubble .av-name{font:700 14px/1 "Inter",system-ui,sans-serif;color:#7B2FF7;margin-bottom:3px;}',
-    '#apa-avatar-bubble .av-role{font:600 10.5px/1 "Inter",system-ui,sans-serif;color:#0D9467;margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em;}',
-    '#apa-avatar-bubble .av-body{font:400 12.5px/1.55 "Inter",system-ui,sans-serif;color:#4A4C66;}',
-    '#apa-avatar-bubble .av-actions{display:flex;gap:7px;margin-top:11px;flex-wrap:wrap;}',
-    '#apa-avatar-bubble .av-btn{display:inline-flex;align-items:center;gap:5px;padding:7px 12px;border-radius:20px;font:600 11.5px "Inter",system-ui,sans-serif;cursor:pointer;border:none;transition:.16s;white-space:nowrap;}',
-    '#apa-avatar-bubble .av-btn-primary{background:linear-gradient(135deg,#0D9467,#7B2FF7);color:#fff;box-shadow:0 4px 14px rgba(13,148,103,.28);}',
-    '#apa-avatar-bubble .av-btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(13,148,103,.38);}',
+    /* Avatar image — the star of the show, tall and prominent */
+    '#apa-avatar-img{width:160px;height:auto;max-height:55vh;object-fit:contain;filter:drop-shadow(0 12px 32px rgba(0,0,0,.28));display:block;cursor:pointer;transition:transform .22s;user-select:none;flex-shrink:0;}',
+    '#apa-avatar-img:hover{transform:scale(1.03) translateY(-4px);}',
+    /* Compact bubble to the left of the avatar */
+    '#apa-avatar-bubble{background:#fff;border-radius:16px 16px 16px 4px;padding:11px 13px 10px;width:168px;flex-shrink:0;',
+    'box-shadow:0 8px 28px rgba(10,10,20,.15),0 2px 6px rgba(0,0,0,.08);margin-bottom:24px;position:relative;}',
+    /* Tail pointing right toward avatar */
+    '#apa-avatar-bubble::after{content:"";position:absolute;right:-9px;bottom:16px;border:9px solid transparent;border-left-color:#fff;border-right:0;border-bottom:0;}',
+    '#apa-avatar-bubble .av-name{font:700 12.5px/1 "Inter",system-ui,sans-serif;color:#7B2FF7;margin-bottom:2px;}',
+    '#apa-avatar-bubble .av-role{font:600 9.5px/1 "Inter",system-ui,sans-serif;color:#0D9467;margin-bottom:7px;text-transform:uppercase;letter-spacing:.04em;}',
+    '#apa-avatar-bubble .av-body{font:400 11.5px/1.5 "Inter",system-ui,sans-serif;color:#4A4C66;}',
+    '#apa-avatar-bubble .av-actions{display:flex;gap:6px;margin-top:9px;flex-wrap:wrap;}',
+    '#apa-avatar-bubble .av-btn{display:inline-flex;align-items:center;gap:4px;padding:6px 10px;border-radius:20px;font:600 10.5px "Inter",system-ui,sans-serif;cursor:pointer;border:none;transition:.16s;white-space:nowrap;}',
+    '#apa-avatar-bubble .av-btn-primary{background:linear-gradient(135deg,#0D9467,#7B2FF7);color:#fff;box-shadow:0 3px 10px rgba(13,148,103,.28);}',
+    '#apa-avatar-bubble .av-btn-primary:hover{transform:translateY(-1px);box-shadow:0 5px 14px rgba(13,148,103,.38);}',
     '#apa-avatar-bubble .av-btn-secondary{background:#f4f5fb;color:#4A4C66;border:1.5px solid #e5e7ec;}',
     '#apa-avatar-bubble .av-btn-secondary:hover{border-color:#0D9467;color:#0D9467;background:#edfdf6;}',
-    '#apa-avatar-bubble .av-btn svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}',
-    '#apa-av-dismiss{position:absolute;top:-8px;right:-8px;width:22px;height:22px;border-radius:50%;background:#1A1B2E;border:none;color:#fff;font-size:13px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.22);transition:.15s;}',
+    '#apa-avatar-bubble .av-btn svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}',
+    '#apa-av-dismiss{position:absolute;top:-8px;left:-8px;width:22px;height:22px;border-radius:50%;background:#1A1B2E;border:none;color:#fff;font-size:13px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.22);transition:.15s;}',
     '#apa-av-dismiss:hover{background:#7B2FF7;}',
+    '@media(max-width:420px){#apa-avatar-img{width:130px;}#apa-avatar-bubble{width:148px;}#apa-avatar-popup{right:6px;}}',
+    /* FAB */
     '#apa-fab{position:fixed;bottom:24px;right:24px;z-index:9000;width:62px;height:62px;border-radius:50%;border:3px solid rgba(255,255,255,.9);cursor:pointer;overflow:hidden;padding:0;background:linear-gradient(135deg,#0D9467 0%,#7B2FF7 100%);box-shadow:0 8px 28px rgba(13,148,103,.38),0 2px 8px rgba(0,0,0,.12);display:flex;align-items:center;justify-content:center;transition:transform .22s cubic-bezier(.34,1.56,.64,1),box-shadow .22s;outline:none;}',
     '#apa-fab:hover{transform:scale(1.09);box-shadow:0 12px 36px rgba(13,148,103,.45);}',
     '#apa-fab:focus-visible{outline:3px solid #7B2FF7;outline-offset:3px;}',
@@ -574,6 +582,7 @@
 
   /* ── Cabana Avatar Welcome Popup ──────────────────────────────────── */
   var avatarPopup = null;
+  var avatarAutoTimer = null;
 
   function buildAvatarPopup() {
     var popup = document.createElement('div');
@@ -584,11 +593,11 @@
         '<button id="apa-av-dismiss" aria-label="Dismiss" onclick="dismissAvatar(event)">\xd7</button>' +
         '<div class="av-name">Hi, I\u2019m APA! \ud83d\udc4b</div>' +
         '<div class="av-role">Cabana Travel Guide</div>' +
-        '<div class="av-body">Welcome to Cabana! I\u2019m here to help you discover stays, tours, food, rides and more across Africa. Got a question? I\u2019m just a tap away \u2014 or talk to me by voice!</div>' +
+        '<div class="av-body">Welcome to Cabana! Discover stays, tours, food & rides across Africa. Ask me anything!</div>' +
         '<div class="av-actions">' +
           '<button class="av-btn av-btn-primary" onclick="openFromAvatar()">' +
             '<svg viewBox="0 0 24 24"><path d="m22 2-11 11M22 2 15 22l-4-9-9-4 20-7z"/></svg>' +
-            'Chat with me' +
+            'Chat' +
           '</button>' +
           '<button class="av-btn av-btn-secondary" onclick="openVoiceFromAvatar()">' +
             '<svg viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 19v3M9 22h6"/></svg>' +
@@ -600,14 +609,30 @@
     document.body.appendChild(popup);
     avatarPopup = popup;
 
-    /* show after short delay */
-    setTimeout(function () {
-      popup.classList.remove('apa-av-hidden');
-      popup.classList.add('apa-av-visible');
-    }, 1200);
+    /* Only show for guests (not signed-in users) */
+    function maybeShow() {
+      if (global.ApaSession) {
+        ApaSession.ready(function (state) {
+          if (state.status !== 'guest') return; /* signed-in: skip entirely */
+          /* 15s delay before appearing */
+          setTimeout(function () {
+            if (!avatarPopup) return;
+            popup.classList.remove('apa-av-hidden');
+            popup.classList.add('apa-av-visible');
+            /* auto-collapse after 8s */
+            avatarAutoTimer = setTimeout(function () { hideAvatarPopup(); }, 8000);
+          }, 15000);
+        });
+      } else {
+        /* ApaSession not loaded yet — try after DOM ready */
+        setTimeout(maybeShow, 800);
+      }
+    }
+    maybeShow();
   }
 
   function hideAvatarPopup() {
+    if (avatarAutoTimer) { clearTimeout(avatarAutoTimer); avatarAutoTimer = null; }
     if (avatarPopup) {
       avatarPopup.classList.remove('apa-av-visible');
       avatarPopup.classList.add('apa-av-hidden');
