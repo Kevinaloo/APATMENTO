@@ -620,8 +620,8 @@
             popup.classList.remove('apa-av-hidden');
             popup.classList.add('apa-av-visible');
             /* auto-collapse after 8s */
-            avatarAutoTimer = setTimeout(function () { hideAvatarPopup(); }, 3000);
-          }, 15000);
+            avatarAutoTimer = setTimeout(function () { hideAvatarPopup(); }, 8000);
+          }, 20000);
         });
       } else {
         /* ApaSession not loaded yet — try after DOM ready */
