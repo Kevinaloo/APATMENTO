@@ -158,6 +158,37 @@
   ].join('');
   document.head.appendChild(style);
 
+  /* ── Cabana Avatar Popup + FAB avatar ── */
+  var avatarStyle = document.createElement('style');
+  avatarStyle.textContent = [
+    '#apa-avatar-popup{position:fixed;bottom:92px;right:14px;z-index:8999;display:flex;flex-direction:column;align-items:flex-end;transition:opacity .45s ease,transform .45s cubic-bezier(.34,1.2,.64,1);}',
+    '#apa-avatar-popup.apa-av-hidden{opacity:0;transform:translateY(22px) scale(.94);pointer-events:none;}',
+    '#apa-avatar-popup.apa-av-visible{opacity:1;transform:none;pointer-events:all;}',
+    '#apa-avatar-img{width:118px;height:auto;filter:drop-shadow(0 10px 28px rgba(0,0,0,.25));display:block;cursor:pointer;transition:transform .22s;user-select:none;}',
+    '#apa-avatar-img:hover{transform:scale(1.04) translateY(-3px);}',
+    '#apa-avatar-bubble{position:absolute;bottom:122px;right:104px;background:#fff;border-radius:20px 20px 4px 20px;padding:14px 16px 12px;width:220px;box-shadow:0 10px 36px rgba(10,10,20,.16),0 2px 8px rgba(0,0,0,.08);}',
+    '#apa-avatar-bubble .av-name{font:700 14px/1 "Inter",system-ui,sans-serif;color:#7B2FF7;margin-bottom:3px;}',
+    '#apa-avatar-bubble .av-role{font:600 10.5px/1 "Inter",system-ui,sans-serif;color:#0D9467;margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em;}',
+    '#apa-avatar-bubble .av-body{font:400 12.5px/1.55 "Inter",system-ui,sans-serif;color:#4A4C66;}',
+    '#apa-avatar-bubble .av-actions{display:flex;gap:7px;margin-top:11px;flex-wrap:wrap;}',
+    '#apa-avatar-bubble .av-btn{display:inline-flex;align-items:center;gap:5px;padding:7px 12px;border-radius:20px;font:600 11.5px "Inter",system-ui,sans-serif;cursor:pointer;border:none;transition:.16s;white-space:nowrap;}',
+    '#apa-avatar-bubble .av-btn-primary{background:linear-gradient(135deg,#0D9467,#7B2FF7);color:#fff;box-shadow:0 4px 14px rgba(13,148,103,.28);}',
+    '#apa-avatar-bubble .av-btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(13,148,103,.38);}',
+    '#apa-avatar-bubble .av-btn-secondary{background:#f4f5fb;color:#4A4C66;border:1.5px solid #e5e7ec;}',
+    '#apa-avatar-bubble .av-btn-secondary:hover{border-color:#0D9467;color:#0D9467;background:#edfdf6;}',
+    '#apa-avatar-bubble .av-btn svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}',
+    '#apa-av-dismiss{position:absolute;top:-8px;right:-8px;width:22px;height:22px;border-radius:50%;background:#1A1B2E;border:none;color:#fff;font-size:13px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.22);transition:.15s;}',
+    '#apa-av-dismiss:hover{background:#7B2FF7;}',
+    '#apa-fab{position:fixed;bottom:24px;right:24px;z-index:9000;width:62px;height:62px;border-radius:50%;border:3px solid rgba(255,255,255,.9);cursor:pointer;overflow:hidden;padding:0;background:linear-gradient(135deg,#0D9467 0%,#7B2FF7 100%);box-shadow:0 8px 28px rgba(13,148,103,.38),0 2px 8px rgba(0,0,0,.12);display:flex;align-items:center;justify-content:center;transition:transform .22s cubic-bezier(.34,1.56,.64,1),box-shadow .22s;outline:none;}',
+    '#apa-fab:hover{transform:scale(1.09);box-shadow:0 12px 36px rgba(13,148,103,.45);}',
+    '#apa-fab:focus-visible{outline:3px solid #7B2FF7;outline-offset:3px;}',
+    '#apa-fab-avatar{width:100%;height:100%;object-fit:cover;object-position:top center;display:block;}',
+    '#apa-fab .apa-pulse{position:absolute;inset:-3px;border-radius:50%;border:2px solid rgba(13,148,103,.4);animation:apaPulse 2s ease-out infinite;pointer-events:none;}',
+    '.apa-head-av{width:44px;height:44px;border-radius:50%;overflow:hidden;flex:0 0 auto;border:2px solid rgba(255,255,255,.55);}',
+    '.apa-head-av img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block;}'
+  ].join('');
+  document.head.appendChild(avatarStyle);
+
   /* ── Markup ──────────────────────────────────────────────────────── */
   function build() {
     fab = document.createElement('button');
@@ -165,8 +196,7 @@
     fab.setAttribute('aria-label', 'Ask APA — open assistant');
     fab.innerHTML =
       '<div class="apa-pulse"></div>' +
-      '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/>' +
-      '<path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>';
+      '<img id="apa-fab-avatar" src="/cabana-avatar.png" alt="APA" />';
     fab.onclick = toggle;
     document.body.appendChild(fab);
 
@@ -176,8 +206,7 @@
     panel.setAttribute('aria-label', 'Ask APA assistant');
     panel.innerHTML =
       '<div class="apa-head">' +
-        '<div class="apa-head-av"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/>' +
-        '<path d="M6 20c0-3.31 2.69-6 6-6s6 2.69 6 6"/></svg></div>' +
+        '<div class="apa-head-av"><img src="/cabana-avatar.png" alt="APA" /></div>' +
         '<div class="apa-head-info">' +
           '<div class="apa-head-name">APA</div>' +
           '<div class="apa-head-sub">Cabana Assistant · Online</div>' +
@@ -249,6 +278,7 @@
     open = true;
     panel.classList.add('open');
     fab.setAttribute('aria-expanded', 'true');
+    hideAvatarPopup();
     if (!history.length) greet();
     rAF(function () { var inp = document.getElementById('apa-input'); if (inp) inp.focus(); });
   }
@@ -541,7 +571,60 @@
   }
 
   /* ── Init ────────────────────────────────────────────────────────── */
+
+  /* ── Cabana Avatar Welcome Popup ──────────────────────────────────── */
+  var avatarPopup = null;
+
+  function buildAvatarPopup() {
+    var popup = document.createElement('div');
+    popup.id = 'apa-avatar-popup';
+    popup.className = 'apa-av-hidden';
+    popup.innerHTML =
+      '<div id="apa-avatar-bubble">' +
+        '<button id="apa-av-dismiss" aria-label="Dismiss" onclick="dismissAvatar(event)">\xd7</button>' +
+        '<div class="av-name">Hi, I\u2019m APA! \ud83d\udc4b</div>' +
+        '<div class="av-role">Cabana Travel Guide</div>' +
+        '<div class="av-body">Welcome to Cabana! I\u2019m here to help you discover stays, tours, food, rides and more across Africa. Got a question? I\u2019m just a tap away \u2014 or talk to me by voice!</div>' +
+        '<div class="av-actions">' +
+          '<button class="av-btn av-btn-primary" onclick="openFromAvatar()">' +
+            '<svg viewBox="0 0 24 24"><path d="m22 2-11 11M22 2 15 22l-4-9-9-4 20-7z"/></svg>' +
+            'Chat with me' +
+          '</button>' +
+          '<button class="av-btn av-btn-secondary" onclick="openVoiceFromAvatar()">' +
+            '<svg viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 19v3M9 22h6"/></svg>' +
+            'Voice' +
+          '</button>' +
+        '</div>' +
+      '</div>' +
+      '<img id="apa-avatar-img" src="/cabana-avatar.png" alt="APA - Cabana Guide" onclick="openFromAvatar()" />';
+    document.body.appendChild(popup);
+    avatarPopup = popup;
+
+    /* show after short delay */
+    setTimeout(function () {
+      popup.classList.remove('apa-av-hidden');
+      popup.classList.add('apa-av-visible');
+    }, 1200);
+  }
+
+  function hideAvatarPopup() {
+    if (avatarPopup) {
+      avatarPopup.classList.remove('apa-av-visible');
+      avatarPopup.classList.add('apa-av-hidden');
+    }
+  }
+
+  /* global helpers called from inline onclick */
+  global.dismissAvatar = function (e) { e.stopPropagation(); hideAvatarPopup(); };
+  global.openFromAvatar = function () { hideAvatarPopup(); openPanel(); };
+  global.openVoiceFromAvatar = function () {
+    hideAvatarPopup();
+    openPanel();
+    setTimeout(function () { if (global.AskAPA) AskAPA.toggleHandsFree(); }, 400);
+  };
+
   function init() {
+    buildAvatarPopup();
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', build);
     else build();
   }
