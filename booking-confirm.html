@@ -624,6 +624,11 @@ document.getElementById('checkin-date').addEventListener('change', () => {
 });
 document.getElementById('checkout-date').addEventListener('change', updateSummary);
 
+/* PAY_MODE must exist before the first updateSummary() below —
+   refreshPayModeAmounts() reads it, and a `let` further down would
+   throw a TDZ ReferenceError and leave the whole summary blank. */
+let PAY_MODE = 'full';
+
 updateSummary();
 
 /* ══ START PAYMENT ══ */
@@ -640,8 +645,8 @@ function generateCode(prefix) {
    A deposit buys the dates, not the keys. We say so twice — once
    here, once at the door — because a guest discovering it at the
    door for the first time is a guest we have failed.
+   (PAY_MODE itself is declared earlier, before the first updateSummary.)
    ═══════════════════════════════════════════════════════════════ */
-let PAY_MODE = 'full';
 function depositPct(nights) { return nights <= 1 ? 0.50 : 0.25; }
 
 function setPayMode(mode) {

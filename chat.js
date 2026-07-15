@@ -409,7 +409,7 @@ const ApatmentoChat = (() => {
 
     const { data: convs } = await s.from('chat_conversations')
       .select('*')
-      .or(\`host_id.eq.\${user.id},guest_id.eq.\${user.id}\`)
+      .or(`host_id.eq.${user.id},guest_id.eq.${user.id}`)
       .order('last_message_at', { ascending: false, nullsFirst: false })
       .limit(100);
 
@@ -422,7 +422,7 @@ const ApatmentoChat = (() => {
       return;
     }
 
-    document.getElementById('apt-inbox-bar-sub').textContent = \`\${convs.length} conversation\${convs.length !== 1 ? 's' : ''}\`;
+    document.getElementById('apt-inbox-bar-sub').textContent = `${convs.length} conversation${convs.length !== 1 ? 's' : ''}`;
 
     const ICO = { apartment:'🏠', roommate:'🤝', tour:'🦁', event:'🎟', carhire:'🚗', food:'🍽', shopping:'🛍' };
 
@@ -432,20 +432,20 @@ const ApatmentoChat = (() => {
       const ico = ICO[c.listing_type] || '💬';
       const time = c.last_message_at ? _fmtInboxTime(c.last_message_at) : '';
       const preview = c.last_message || 'No messages yet';
-      return \`<div class="apt-inbox-conv\${unread > 0 ? ' unread' : ''}" onclick="ApatmentoChat._inboxOpenConv('\${c.id}')">
+      return `<div class="apt-inbox-conv${unread > 0 ? ' unread' : ''}" onclick="ApatmentoChat._inboxOpenConv('${c.id}')">
         <div class="apt-inbox-conv-ava">
-          \${ico}
-          <div class="apt-inbox-conv-unread-dot \${unread > 0 ? 'on' : ''}"></div>
+          ${ico}
+          <div class="apt-inbox-conv-unread-dot ${unread > 0 ? 'on' : ''}"></div>
         </div>
         <div class="apt-inbox-conv-body">
-          <div class="apt-inbox-conv-name">\${c.listing_title || 'Conversation'}</div>
-          <div class="apt-inbox-conv-preview">\${preview}</div>
+          <div class="apt-inbox-conv-name">${c.listing_title || 'Conversation'}</div>
+          <div class="apt-inbox-conv-preview">${preview}</div>
         </div>
         <div class="apt-inbox-conv-meta">
-          <div class="apt-inbox-conv-time">\${time}</div>
-          \${unread > 0 ? \`<div class="apt-inbox-conv-badge">\${unread}</div>\` : ''}
+          <div class="apt-inbox-conv-time">${time}</div>
+          ${unread > 0 ? `<div class="apt-inbox-conv-badge">${unread}</div>` : ''}
         </div>
-      </div>\`;
+      </div>`;
     }).join('');
   }
 
@@ -494,7 +494,7 @@ const ApatmentoChat = (() => {
     // Subscribe realtime to the inbox msgs element
     if (_realtimeSub) { _realtimeSub.unsubscribe(); _realtimeSub = null; }
     _realtimeSub = s.channel('inbox-' + convId)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: \`conversation_id=eq.\${convId}\` },
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `conversation_id=eq.${convId}` },
         async () => { await _loadMsgsForEl(convId, msgsEl); })
       .subscribe();
   }
@@ -508,21 +508,21 @@ const ApatmentoChat = (() => {
       .order('created_at', { ascending: true }).limit(100);
     const msgs = data || [];
     if (!msgs.length) {
-      el.innerHTML = \`<div class="apt-ch-empty">
+      el.innerHTML = `<div class="apt-ch-empty">
         <div class="apt-ch-empty-ico">👋</div>
         <div class="apt-ch-empty-title">Start the conversation</div>
         <div class="apt-ch-empty-sub">Ask about availability, check-in details, or anything else.</div>
-      </div>\`;
+      </div>`;
       return;
     }
     el.innerHTML = msgs.map(m => {
       const isMe = m.sender_id === _userId;
       const cls = m.is_system ? 'system' : isMe ? 'me' : 'them';
       const content = m.content.replace(/\[(phone|email|link|website|WhatsApp|social handle|social media|direct contact|number) removed\]/gi, '<span style="background:rgba(255,77,109,.12);color:#CC2233;border-radius:4px;padding:1px 5px;font-size:11px;font-weight:700;">[$1 removed]</span>');
-      return \`<div class="apt-ch-msg \${cls}">
-        <div class="apt-ch-bubble">\${content}</div>
-        <div class="apt-ch-time">\${fmtTime(m.created_at)}</div>
-      </div>\`;
+      return `<div class="apt-ch-msg ${cls}">
+        <div class="apt-ch-bubble">${content}</div>
+        <div class="apt-ch-time">${fmtTime(m.created_at)}</div>
+      </div>`;
     }).join('');
     el.scrollTop = el.scrollHeight;
   }

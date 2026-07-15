@@ -9,7 +9,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
 
 <!-- ══ SEO · Cabana brand ══ -->
-<title>Cabana — The World's Stays, Flights &amp; More in One App | Formerly Apatmento</title>
+<title>Cabana — Zero-Commission Travel App | Formerly Apatmento</title>
 <meta name="description" content="Cabana is the zero-commission travel super-app — book stays, flights, tours, rides and more, anywhere. Formerly Apatmento. Hosts keep 100%, guests pay only face value."/>
 <meta name="keywords" content="cabana, cabana app, cabana travel, cabana stays, cabana booking, cabana flights, book stays cabana, zero commission travel app, cabana travel app, apatmento cabana, cabana super app"/>
 <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large"/>
@@ -42,9 +42,10 @@
   "@type": "Organization",
   "name": "Cabana",
   "alternateName": ["Apatmento", "Cabana Travel", "Cabana App"],
-  "url": "https://www.apatmento.space/cabana.html",
+  "url": "https://www.apatmento.space",
   "logo": { "@type": "ImageObject", "url": "https://www.apatmento.space/cabana-icon-512.png", "width": 512, "height": 512 },
-  "description": "Cabana (formerly Apatmento) is a zero-commission travel super-app for stays, flights, tours, rides, food and more.",
+  "description": "Cabana (formerly Apatmento) is a zero-commission travel super-app for stays, flights, tours, rides, food and more — born in Nairobi, built for Africa and beyond.",
+  "areaServed": [{ "@type": "Country", "name": "Kenya" }, { "@type": "Place", "name": "Africa" }],
   "foundingDate": "2026",
   "brand": { "@type": "Brand", "name": "Cabana" },
   "sameAs": []
@@ -62,14 +63,34 @@
     },
     {
       "@type": "Question",
-      "name": "Do I need a new account for Cabana?",
-      "acceptedAnswer": { "@type": "Answer", "text": "No. Everything stays where it is. Sign in exactly as you always have — the same login works, and all your bookings and saved places are intact." }
+      "name": "What is Cabana?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Cabana is a zero-commission travel super-app, born in Nairobi and built for Africa and beyond. Book short-stay apartments, flights, tours, events, rides, food and more from one account. Hosts keep 100% of what they earn and guests pay only face value — no hidden fees." }
     },
     {
       "@type": "Question",
-      "name": "What is Cabana?",
-      "acceptedAnswer": { "@type": "Answer", "text": "Cabana is a zero-commission travel super-app. Book short-stay apartments, flights, tours, events, rides, food and more from one account. Hosts keep 100% of what they earn and guests pay only face value — no hidden fees." }
+      "name": "What can I book on Cabana?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Everything a trip needs: short-stay apartments and villas, flights, tours and safaris, event tickets, rides, car hire, food delivery and grocery shopping — plus roommate matching if you're staying longer." }
+    },
+    {
+      "@type": "Question",
+      "name": "How does zero commission work?",
+      "acceptedAnswer": { "@type": "Answer", "text": "The price a host sets is the price a host keeps — Cabana takes 0% of it. Guests pay only a small fixed booking fee, never a percentage, so what you see is what you pay. No service-fee surprises at checkout, for either side." }
+    },
+    {
+      "@type": "Question",
+      "name": "Do I need a new account for Cabana?",
+      "acceptedAnswer": { "@type": "Answer", "text": "No. Everything stays where it is. Sign in exactly as you always have — the same login works, and all your bookings and saved places are intact." }
     }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.apatmento.space/" },
+    { "@type": "ListItem", "position": 2, "name": "Cabana", "item": "https://www.apatmento.space/cabana.html" }
   ]
 }
 </script>
@@ -190,6 +211,24 @@ a{text-decoration:none;color:inherit;}
 .vstat-n{font-family:var(--font-display);font-weight:500;font-size:clamp(32px,5vw,44px);line-height:1;background:linear-gradient(135deg,var(--mint),var(--electric));-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:8px;}
 .vstat-l{font-size:13px;color:rgba(255,255,255,.6);font-weight:500;}
 
+/* ══ FAQ — the questions people actually search ══ */
+.cfaq{padding:clamp(64px,9vw,110px) 24px;background:linear-gradient(180deg,var(--glass-2),var(--glass));}
+.cfaq-inner{max-width:760px;margin:0 auto;}
+.cfaq-head{text-align:center;margin-bottom:44px;}
+.cfaq-head .eyebrow{font-size:12px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--violet);margin-bottom:16px;}
+.cfaq-head h2{font-family:var(--font-display);font-weight:400;font-size:clamp(26px,4vw,44px);line-height:1.1;letter-spacing:-.02em;color:var(--ink);}
+.cfaq-head h2 em{font-style:italic;font-weight:500;color:var(--violet);}
+.cfaq-item{background:#fff;border:1px solid var(--line);border-radius:18px;margin-bottom:12px;overflow:hidden;transition:box-shadow .3s,border-color .3s;}
+.cfaq-item[open]{border-color:rgba(109,40,255,.24);box-shadow:0 14px 40px rgba(109,40,255,.08);}
+.cfaq-item summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px 22px;font-family:var(--font-display);font-weight:500;font-size:clamp(15.5px,2vw,17.5px);color:var(--ink);}
+.cfaq-item summary::-webkit-details-marker{display:none;}
+.cfaq-item summary:focus-visible{outline:2px solid var(--violet);outline-offset:-2px;border-radius:18px;}
+.cfaq-chev{flex-shrink:0;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--glass-2);color:var(--ink-soft);transition:transform .3s var(--ease-out),background .3s,color .3s;}
+.cfaq-item[open] .cfaq-chev{transform:rotate(180deg);background:linear-gradient(135deg,var(--violet),var(--electric));color:#fff;}
+.cfaq-a{padding:0 22px 22px;font-size:15px;line-height:1.7;color:var(--ink-soft);}
+.cfaq-a a{color:var(--violet);font-weight:600;border-bottom:1px solid rgba(109,40,255,.25);transition:border-color .2s;}
+.cfaq-a a:hover{border-color:var(--violet);}
+
 /* ══ CTA ══ */
 .cend{padding:clamp(70px,10vw,120px) 24px;background:var(--glass);text-align:center;}
 .cend-inner{max-width:640px;margin:0 auto;}
@@ -213,7 +252,9 @@ a{text-decoration:none;color:inherit;}
 .cfoot-links a{font-size:13px;color:var(--ink-soft);transition:color .2s;}
 .cfoot-links a:hover{color:var(--violet);}
 </style>
-<link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/><link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/><link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" media="print" onload="this.media='all';this.onload=null"/>
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"/></noscript>
 <link rel="stylesheet" href="/cabana-ds.css"/>
 </head>
 <body>
@@ -235,8 +276,8 @@ a{text-decoration:none;color:inherit;}
   <div class="chero-inner">
     <span class="chero-badge"><span class="dot"></span>A new chapter for Apatmento</span>
     <img class="chero-emblem" src="/cabana-emblem.png" alt="Cabana" onerror="this.style.display='none'"/>
-    <img class="chero-wm" src="/cabana-wordmark-white.png" alt="Cabana" onerror="this.style.display='none'"/>
-    <p class="chero-lede">The world's stays, flights &amp; more — <em>one home</em>.</p>
+    <img class="chero-wm" src="/cabana-wordmark-white.png" alt="Cabana wordmark" onerror="this.style.display='none'"/>
+    <h1 class="chero-lede">Cabana — the world's stays, flights &amp; more, <em>one home</em>.</h1>
     <p class="chero-sub">Apatmento is becoming Cabana. Same team, same zero-commission promise, a name built to travel the world.</p>
     <div class="chero-ctas">
       <a href="/dashboard.html" class="chero-primary">Explore the app
@@ -325,6 +366,51 @@ a{text-decoration:none;color:inherit;}
 </section>
 
 <!-- CTA -->
+<!-- FAQ — visible content backing the FAQPage structured data -->
+<section class="cfaq" id="faq" aria-labelledby="cfaq-title">
+  <div class="cfaq-inner">
+    <div class="cfaq-head">
+      <div class="eyebrow">Questions, answered</div>
+      <h2 id="cfaq-title">Everything about <em>Cabana</em>.</h2>
+    </div>
+
+    <details class="cfaq-item" open>
+      <summary>Is Cabana the same as Apatmento?
+        <span class="cfaq-chev" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>
+      </summary>
+      <div class="cfaq-a">Yes. Cabana is the new name for Apatmento. The team, the platform, and the zero-commission promise are exactly the same — only the name is changing. Your account, bookings and listings all carry over.</div>
+    </details>
+
+    <details class="cfaq-item">
+      <summary>What is Cabana?
+        <span class="cfaq-chev" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>
+      </summary>
+      <div class="cfaq-a">Cabana is a zero-commission travel super-app, born in Nairobi and built for Africa and beyond. Book short-stay apartments, flights, tours, events, rides, food and more from one account. Hosts keep 100% of what they earn and guests pay only face value — no hidden fees.</div>
+    </details>
+
+    <details class="cfaq-item">
+      <summary>What can I book on Cabana?
+        <span class="cfaq-chev" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>
+      </summary>
+      <div class="cfaq-a">Everything a trip needs: <a href="/apartments.html">short-stay apartments and villas</a>, <a href="/flights.html">flights</a>, <a href="/tours.html">tours and safaris</a>, <a href="/events.html">event tickets</a>, <a href="/rides.html">rides</a>, <a href="/carhire.html">car hire</a>, <a href="/food.html">food delivery</a> and <a href="/shopping.html">grocery shopping</a> — plus <a href="/roommates.html">roommate matching</a> if you're staying longer.</div>
+    </details>
+
+    <details class="cfaq-item">
+      <summary>How does zero commission work?
+        <span class="cfaq-chev" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>
+      </summary>
+      <div class="cfaq-a">The price a host sets is the price a host keeps — Cabana takes 0% of it. Guests pay only a small fixed booking fee, never a percentage, so what you see is what you pay. No service-fee surprises at checkout, for either side.</div>
+    </details>
+
+    <details class="cfaq-item">
+      <summary>Do I need a new account for Cabana?
+        <span class="cfaq-chev" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>
+      </summary>
+      <div class="cfaq-a">No. Everything stays where it is. Sign in exactly as you always have — the same login works, and all your bookings and saved places are intact.</div>
+    </details>
+  </div>
+</section>
+
 <section class="cend">
   <div class="cend-inner">
     <img class="cend-emblem" src="/cabana-emblem.png" alt="Cabana" onerror="this.style.display='none'"/>
