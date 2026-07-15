@@ -541,6 +541,13 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
     <div class="fchip" onclick="toggleFilter(this,'kitchen')">Kitchen</div>
     <div class="fchip" onclick="toggleFilter(this,'rooms')">2+ Bedrooms</div>
   </div>
+  <!-- Area guides: internal paths into the neighbourhood pages -->
+  <nav class="area-strip" aria-label="Nairobi area guides" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:10px 0 2px;">
+    <span style="font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint,#8B8EAC);">Guides</span>
+    <a href="/nairobi-apartments.html" class="fchip" style="text-decoration:none;">Nairobi areas &amp; prices</a>
+    <a href="/kilimani-apartments.html" class="fchip" style="text-decoration:none;">Kilimani</a>
+    <a href="/westlands-apartments.html" class="fchip" style="text-decoration:none;">Westlands</a>
+  </nav>
 </div>
 
 <!-- CONTENT -->
@@ -1129,6 +1136,16 @@ function bookNow(id) {
 }
 
 /* ── Filters + Sort ── */
+/* ?q= deep-link: area guides and the sitelinks searchbox land here
+   with a location query. Reflect it in the Where field and filter. */
+(function(){
+  const q = new URLSearchParams(location.search).get('q');
+  if (!q) return;
+  window._qLoc = q.trim().toLowerCase();
+  const f = document.getElementById('field-where');
+  if (f) f.textContent = q.trim() + ', Kenya';
+})();
+
 function toggleFilter(el, key) {
   if (key === 'all') {
     activeFilters.clear(); activeFilters.add('all');
@@ -1147,6 +1164,7 @@ function toggleFilter(el, key) {
 
 function applyAndRender() {
   let list = [...currentListings];
+  if (window._qLoc) list = list.filter(a => ((a.location||'')+' '+(a.name||'')).toLowerCase().includes(window._qLoc));
   if (!activeFilters.has('all')) {
     if (activeFilters.has('wifi'))    list = list.filter(a => (a.amenities||[]).some(x => x.includes('WiFi')));
     if (activeFilters.has('pool'))    list = list.filter(a => (a.amenities||[]).some(x => x.includes('Pool')));
