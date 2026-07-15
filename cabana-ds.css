@@ -178,3 +178,58 @@ h1 em, h2 em, h3 em,
   .tb-icon-sm{height:24px;width:24px;}
   .tb-cab-wm,.rm-tb-logo{height:22px;}
 }
+
+/* ── 9 · SILK LAYER — feel, focus & motion discipline ────────────────
+   Appended polish pass. Interaction feel only: tap response, focus
+   visibility, selection, scroll. No layout opinions.                  */
+
+/* Instant, clean taps on mobile — no gray flash, no double-tap zoom lag */
+a, button, [role="button"], input, select, textarea, label, summary{
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* Keyboard focus: one confident brand ring, only when it should appear */
+:focus{ outline: none; }
+:focus-visible{
+  outline: 2px solid var(--violet, #6D28FF);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Text selection carries the brand */
+::selection{ background: rgba(109,40,255,.16); color: inherit; }
+
+/* Headlines never orphan; paragraphs rag cleanly (progressive) */
+h1, h2, h3, .hero-title, .section-headline{ text-wrap: balance; }
+p, li, .svc-tile-desc{ text-wrap: pretty; }
+
+/* Quiet, brand-tinted scrollbars */
+*{ scrollbar-width: thin; scrollbar-color: rgba(109,40,255,.28) transparent; }
+::-webkit-scrollbar{ width: 9px; height: 9px; }
+::-webkit-scrollbar-track{ background: transparent; }
+::-webkit-scrollbar-thumb{
+  background: rgba(109,40,255,.26);
+  border-radius: 99px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover{ background-color: rgba(109,40,255,.45); }
+
+/* In-page anchors glide — but only for people who want motion */
+@media (prefers-reduced-motion: no-preference){
+  html{ scroll-behavior: smooth; }
+}
+
+/* Full respect for reduced motion: everything settles instantly */
+@media (prefers-reduced-motion: reduce){
+  *, *::before, *::after{
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Rendered images stay crisp when scaled */
+img{ image-rendering: auto; }

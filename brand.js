@@ -149,7 +149,7 @@ function injectIcons(){
     var key = el.getAttribute('data-svc');
     if (ICON_IMGS && ICON_IMGS[key]) {
       var ico = el.querySelector('.svc-tile-ico,.svc-fly-ico');
-      if (ico) safe(function(){ ico.innerHTML = '<img src="' + ICON_IMGS[key] + '" alt="' + key + '" style="width:100%;height:100%;object-fit:contain;padding:6px;display:block;">'; return; });
+      if (ico) safe(function(){ ico.innerHTML = '<img src="' + ICON_IMGS[key] + '" alt="' + key + '" width="216" height="216" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:contain;padding:6px;display:block;">'; return; });
     }
     var svg = el.querySelector('svg');
     if (svg) safe(function(){ glyphInto(svg, key); });
@@ -180,7 +180,7 @@ function injectIcons(){
     if (!nameEl || !box) return;
     var key = (nameEl.textContent||'').toLowerCase().replace(/[^a-z]/g,'');
     if (ICON_IMGS[key]) {
-      safe(function(){ box.innerHTML = '<img src="' + ICON_IMGS[key] + '" alt="' + (nameEl.textContent||'') + '" style="width:100%;height:100%;object-fit:contain;padding:10px;display:block;">'; });
+      safe(function(){ box.innerHTML = '<img src="' + ICON_IMGS[key] + '" alt="' + (nameEl.textContent||'') + '" width="216" height="216" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:contain;padding:10px;display:block;">'; });
     } else if (I[key]) {
       safe(function(){ box.innerHTML = glyphSvg(key,'padding:22%'); });
     }
