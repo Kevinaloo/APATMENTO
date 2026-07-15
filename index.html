@@ -129,6 +129,7 @@ html{scroll-behavior:smooth;}
 body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webkit-font-smoothing:antialiased;overflow-x:hidden;}
 
 /* ══════════ NAV ══════════ */
+section[id],div[id^='services'],div[id^='how']{scroll-margin-top:84px;}
 .nav{position:fixed;top:0;left:0;right:0;z-index:100;height:72px;display:flex;align-items:center;justify-content:space-between;padding:0 40px;background:rgba(252,252,253,0);backdrop-filter:blur(0px);transition:all .4s;}
 .nav.scrolled{background:rgba(252,252,253,.8);backdrop-filter:blur(24px) saturate(180%);border-bottom:1px solid var(--line);}
 .nav-left{display:flex;align-items:center;gap:12px;}

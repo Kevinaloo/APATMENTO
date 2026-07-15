@@ -77,7 +77,7 @@
   /* ── CSS ─────────────────────────────────────────────────────────── */
   var style = document.createElement('style');
   style.textContent = [
-    '#apa-fab{position:fixed;bottom:24px;right:24px;z-index:9000;width:58px;height:58px;border-radius:50%;border:none;cursor:pointer;',
+    '#apa-fab{position:fixed;bottom:calc(24px + env(safe-area-inset-bottom,0px));right:24px;z-index:9000;width:58px;height:58px;border-radius:50%;border:none;cursor:pointer;',
     'background:linear-gradient(135deg,#0D9467 0%,#7B2FF7 100%);box-shadow:0 8px 28px rgba(13,148,103,.38),0 2px 8px rgba(0,0,0,.12);',
     'display:flex;align-items:center;justify-content:center;transition:transform .22s cubic-bezier(.34,1.56,.64,1),box-shadow .22s;outline:none;}',
     '#apa-fab:hover{transform:scale(1.09);box-shadow:0 12px 36px rgba(13,148,103,.45);}',
@@ -86,7 +86,7 @@
     '#apa-fab .apa-pulse{position:absolute;inset:-3px;border-radius:50%;border:2px solid rgba(13,148,103,.4);animation:apaPulse 2s ease-out infinite;pointer-events:none;}',
     '@keyframes apaPulse{0%{transform:scale(1);opacity:1;}100%{transform:scale(1.6);opacity:0;}}',
 
-    '#apa-panel{position:fixed;bottom:94px;right:24px;z-index:9001;width:372px;max-width:calc(100vw - 32px);',
+    '#apa-panel{position:fixed;bottom:calc(94px + env(safe-area-inset-bottom,0px));right:24px;z-index:9001;width:372px;max-width:calc(100vw - 32px);',
     'background:#fff;border-radius:22px;box-shadow:0 24px 80px rgba(10,10,20,.15),0 8px 24px rgba(10,10,20,.08);',
     'display:flex;flex-direction:column;overflow:hidden;transform:translateY(12px) scale(.97);opacity:0;pointer-events:none;',
     'transition:transform .28s cubic-bezier(.34,1.2,.64,1),opacity .22s;}',
@@ -162,7 +162,7 @@
   var avatarStyle = document.createElement('style');
   avatarStyle.textContent = [
     /* Popup container — sits bottom-right, avatar is big, bubble is compact */
-    '#apa-avatar-popup{position:fixed;bottom:88px;right:10px;z-index:8999;display:flex;flex-direction:row;align-items:flex-end;gap:0;transition:opacity .5s ease,transform .5s cubic-bezier(.34,1.2,.64,1);max-width:calc(100vw - 20px);}',
+    '#apa-avatar-popup{position:fixed;bottom:calc(88px + env(safe-area-inset-bottom,0px));right:10px;z-index:8999;display:flex;flex-direction:row;align-items:flex-end;gap:0;transition:opacity .5s ease,transform .5s cubic-bezier(.34,1.2,.64,1);max-width:calc(100vw - 20px);}',
     '#apa-avatar-popup.apa-av-hidden{opacity:0;transform:translateY(28px) scale(.93);pointer-events:none;}',
     '#apa-avatar-popup.apa-av-visible{opacity:1;transform:none;pointer-events:all;}',
     /* Avatar image — the star of the show, tall and prominent */

@@ -183,7 +183,8 @@ const CSS = `
 .sc-el.in{opacity:1;transform:none;} .scv.in{opacity:1;transform:none;}
 
 /* ══ VIDEO HERO (cinematic 21:9) ══ */
-.scv{position:relative;border-radius:26px;overflow:hidden;cursor:pointer;aspect-ratio:21/9;box-shadow:0 20px 60px rgba(10,10,20,.15);}
+.scv{position:relative;border-radius:26px;overflow:hidden;cursor:pointer;aspect-ratio:21/9;box-shadow:0 20px 60px rgba(10,10,20,.15);background:linear-gradient(135deg,#151530,#241A4D);}
+.scv::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(8,8,20,.10),rgba(8,8,20,0) 32%,rgba(8,8,20,.58) 100%);pointer-events:none;z-index:1;}
 .scv:hover{box-shadow:0 32px 80px rgba(123,47,247,.25);}
 .scv-bg{position:absolute;inset:0;}
 .scv-bg video{width:100%;height:100%;object-fit:cover;}
@@ -304,6 +305,8 @@ const CSS = `
 .sc-sticky-x{position:absolute;top:8px;right:8px;width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.18);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;}
 .sc-sticky-x svg{width:10px;height:10px;}
 
+@media(prefers-reduced-motion:reduce){.scv-orb1,.scv-orb2,.scv-shimmer{animation:none!important;}.sc-el{transition:none!important;}}
+
 /* ── misc ── */
 @media(max-width:600px){.sc-sticky{right:10px;bottom:80px;width:calc(100vw - 20px);}}
 
@@ -368,7 +371,7 @@ function renderVideo(slot, c){
 
   slot.innerHTML = `
     <div class="sc-label">Sponsored content</div>
-    <div class="scv sc-el" id="scv-main">
+    <div class="scv sc-el" id="scv-main" style="background:${camp().grad}">
       <div class="scv-bg"><video id="scv-vid" muted playsinline preload="auto" style="width:100%;height:100%;object-fit:cover;"></video></div>
       <div class="scv-grad" style="background:${camp().grad}"></div>
       <div class="scv-orb1" style="width:240px;height:240px;background:${camp().accent};top:-15%;left:5%;"></div>
@@ -403,6 +406,7 @@ function renderVideo(slot, c){
   /* ── update all UI elements for current campaign ── */
   function updateUI(){
     const cp = camp();
+    if(cp.grad) el.style.background = cp.grad;
     // fade transition
     el.style.opacity = '0.7';
     el.style.transition = 'opacity .4s';
