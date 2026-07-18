@@ -1,43 +1,92 @@
-# Apatmento robots.txt
+# ═══════════════════════════════════════════════════════════════
+#  robots.txt — Apatmento by Cabana  |  https://www.apatmento.space
+#  Updated: 2026-07-18
+# ═══════════════════════════════════════════════════════════════
+
+# ── All crawlers ──────────────────────────────────────────────
 User-agent: *
 Allow: /
 
-# Public service pages — high crawl priority
+# High-value public pages — crawl these first
 Allow: /index.html
 Allow: /cabana.html
 Allow: /apartments.html
+Allow: /nairobi-apartments.html
+Allow: /kilimani-apartments.html
+Allow: /westlands-apartments.html
+Allow: /karen-apartments.html
+Allow: /mombasa-apartments.html
+Allow: /diani-apartments.html
 Allow: /roommates.html
-Allow: /flights.html
 Allow: /tours.html
 Allow: /events.html
+Allow: /flights.html
+Allow: /carhire.html
 Allow: /rides.html
 Allow: /food.html
 Allow: /shopping.html
-Allow: /carhire.html
 Allow: /auth.html
+Allow: /rewards.html
 Allow: /terms.html
 Allow: /privacy.html
 
-# Private — keep out of index
-Disallow: /dashboard.html
-Disallow: /booking-confirm.html
-Disallow: /my-bookings.html
-Disallow: /admin.html
-Disallow: /profile.html
-Disallow: /partner-listings.html
-Disallow: /add-listing.html
-Disallow: /rewards.html
-Disallow: /agent-dashboard.html
-Disallow: /admin-programme.html
-
-# Assets
+# Static assets — always crawlable for CWV / image indexing
 Allow: /*.css$
 Allow: /*.js$
 Allow: /*.png$
 Allow: /*.jpg$
 Allow: /*.webp$
 Allow: /*.svg$
+Allow: /*.ico$
 
-# Sitemap
+# Private — keep out of index
+Disallow: /dashboard.html
+Disallow: /booking-confirm.html
+Disallow: /my-bookings.html
+Disallow: /admin.html
+Disallow: /admin-photos.html
+Disallow: /profile.html
+Disallow: /partner-listings.html
+Disallow: /partner-bookings.html
+Disallow: /partner-calendar.html
+Disallow: /partner-agents.html
+Disallow: /partner-analytics.html
+Disallow: /partner-earnings.html
+Disallow: /partner-reviews.html
+Disallow: /partner-settings.html
+Disallow: /add-listing.html
+Disallow: /agent-dashboard.html
+Disallow: /api/
+Disallow: /offline.html
+
+# ── Googlebot specific ────────────────────────────────────────
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 1
+
+# ── Googlebot-Image ──────────────────────────────────────────
+User-agent: Googlebot-Image
+Allow: /*.jpg$
+Allow: /*.png$
+Allow: /*.webp$
+Allow: /og-home.jpg
+Allow: /og-stays.jpg
+Allow: /og-tours.jpg
+Allow: /og-flights.jpg
+Allow: /og-events.jpg
+Allow: /og-carhire.jpg
+Allow: /og-food.jpg
+Allow: /og-rides.jpg
+Allow: /og-roommates.jpg
+Allow: /og-shopping.jpg
+Allow: /cabana-splash-banner.png
+Allow: /cabana-icon-512.png
+Allow: /cabana-full.png
+
+# ── Bingbot ───────────────────────────────────────────────────
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 2
+
+# ── Sitemaps ──────────────────────────────────────────────────
 Sitemap: https://www.apatmento.space/sitemap.xml
-
