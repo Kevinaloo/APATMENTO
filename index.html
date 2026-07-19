@@ -1393,133 +1393,227 @@ document.querySelectorAll('.svc-tile').forEach((t,i)=>{t.style.transitionDelay=(
   <script src="/apa-shadow.js" defer></script>
   <script src="/apa-push.js" defer></script>
 
+<style>
+/* ── APA INSTALL MODAL ── */
+#apa-install-modal{position:fixed;inset:0;z-index:99999;background:rgba(5,5,12,.78);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);display:flex;align-items:flex-end;justify-content:center;padding:0 0 env(safe-area-inset-bottom,0);opacity:0;transition:opacity .32s;pointer-events:none;}
+#apa-install-modal.open{opacity:1;pointer-events:all;}
+@media(min-width:560px){#apa-install-modal{align-items:center;padding:20px;}}
+#apa-install-card{background:#FCFCFE;border-radius:28px 28px 0 0;padding:28px 26px 34px;width:100%;max-width:440px;box-shadow:0 -8px 60px rgba(5,5,12,.32),0 -2px 12px rgba(5,5,12,.12);transform:translateY(40px);transition:transform .45s cubic-bezier(.22,1,.36,1);}
+@media(min-width:560px){#apa-install-card{border-radius:26px;transform:translateY(18px) scale(.97);}}
+#apa-install-modal.open #apa-install-card{transform:none;}
+.aim-badge{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,rgba(109,40,255,.1),rgba(79,109,255,.08));border:1px solid rgba(109,40,255,.18);border-radius:100px;padding:5px 12px;font-size:11.5px;font-weight:700;color:#6D28FF;letter-spacing:.02em;margin-bottom:14px;}
+.aim-title{font-family:'Geist','Inter',sans-serif;font-size:22px;font-weight:600;color:#08080F;line-height:1.2;margin-bottom:6px;}
+.aim-sub{font-size:13.5px;color:#696B85;line-height:1.55;margin-bottom:22px;}
+.aim-steps{display:flex;flex-direction:column;gap:0;margin-bottom:22px;}
+.aim-step{display:flex;align-items:flex-start;gap:13px;padding:13px 0;border-bottom:1px solid #F0F0F5;}
+.aim-step:last-child{border-bottom:none;}
+.aim-step-num{width:28px;height:28px;flex:none;border-radius:50%;background:linear-gradient(135deg,#6D28FF,#4F6DFF);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:1px;}
+.aim-step-ico{width:28px;height:28px;flex:none;border-radius:8px;background:#F3F0FF;display:flex;align-items:center;justify-content:center;margin-top:1px;}
+.aim-step-ico svg{width:15px;height:15px;color:#6D28FF;}
+.aim-step-body{flex:1;min-width:0;}
+.aim-step-label{font-size:13.5px;font-weight:600;color:#1A1A2E;line-height:1.3;}
+.aim-step-hint{font-size:12px;color:#8B8EAC;margin-top:2px;line-height:1.45;}
+.aim-note{font-size:12px;color:#9B9EBB;line-height:1.6;margin-bottom:18px;padding:10px 14px;background:#F8F8FC;border-radius:10px;}
+.aim-cta{width:100%;padding:15px;border-radius:100px;border:none;background:linear-gradient(135deg,#6D28FF,#4F6DFF);color:#fff;font-family:'Geist','Inter',sans-serif;font-weight:700;font-size:15.5px;cursor:pointer;box-shadow:0 8px 28px rgba(109,40,255,.35);transition:all .25s cubic-bezier(.22,1,.36,1);}
+.aim-cta:hover{transform:translateY(-2px);box-shadow:0 12px 36px rgba(109,40,255,.45);}
+.aim-cta:active{transform:none;}
+.aim-dismiss{display:block;width:100%;margin-top:12px;padding:10px;border:none;background:none;color:#9B9EBB;font-size:13px;cursor:pointer;font-family:'Geist','Inter',sans-serif;}
+.aim-dismiss:hover{color:#696B85;}
+.aim-perks{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:22px;}
+.aim-perk{display:flex;align-items:center;gap:7px;background:#F8F8FC;border-radius:10px;padding:10px 12px;}
+.aim-perk svg{width:14px;height:14px;color:#6D28FF;flex:none;}
+.aim-perk-txt{font-size:12px;font-weight:500;color:#474A66;line-height:1.3;}
+</style>
 <script>
-/* ── HERO INSTALL BUTTON ─────────────────────────────────────────
-   The button is always visible unless we're already running as an
-   installed app. Whether Chrome has fired beforeinstallprompt is a
-   browser-internal heuristic we cannot predict, and hiding the button
-   until it fires meant most first-time desktop visitors never saw it
-   at all. Show it, then adapt what the click does.
-   ──────────────────────────────────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════════════
+   HERO INSTALL BUTTON — world-class, every platform handled
+   ══════════════════════════════════════════════════════════════════ */
 (function(){
   var btn   = document.getElementById('hero-install-btn');
   var label = document.getElementById('hero-install-label');
-  if(!btn) return;
+  if (!btn) return;
 
   var ua = navigator.userAgent;
-  var isIOS     = /iphone|ipad|ipod/i.test(ua) ||
-                  (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1); // iPadOS 13+
-  var isFirefox = /firefox/i.test(ua);
-  var isSafari  = /^((?!chrome|android|crios|fxios).)*safari/i.test(ua);
-  var standalone = window.matchMedia('(display-mode: standalone)').matches
-                || window.navigator.standalone === true;
+  var isIOS      = /iphone|ipad|ipod/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  var isAndroid  = /android/i.test(ua);
+  var isFirefox  = /firefox\/\d/i.test(ua) && !/seamonkey/i.test(ua);
+  var isSamsungBrowser = /samsungbrowser/i.test(ua);
+  var isInAppBrowser   = /fbav|fban|instagram|twitter|line\/|wechat|snapchat|tiktok/i.test(ua);
+  var isSafariDesktop  = /^((?!chrome|android|crios|fxios).)*safari/i.test(ua) && !isIOS;
+  var standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 
-  if (standalone) return;   // already installed — nothing to offer
+  // Already installed — nothing to show
+  if (standalone) return;
 
-  // Visible from the first paint.
+  // Set correct label immediately based on platform
+  if (isIOS)            label.textContent = 'Add to Home Screen';
+  else if (isSafariDesktop) label.textContent = 'Add to Dock';
+  else                  label.textContent = 'Get the app';
+
   btn.classList.add('on');
-  if (isIOS || isSafari) label.textContent = 'Add to Home Screen';
-
   window.addEventListener('apa:installed', function(){ btn.classList.remove('on'); });
 
-  /* Branded instructions sheet. alert() is jarring and unstyleable, and
-     on iOS it obscures the very Share button we're telling them to tap. */
-  function sheet(title, steps, note){
-    var old = document.getElementById('apa-install-sheet');
-    if (old) old.remove();
-
-    var wrap = document.createElement('div');
-    wrap.id = 'apa-install-sheet';
-    wrap.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(8,8,15,.72);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;transition:opacity .3s;';
-
-    var card = document.createElement('div');
-    card.style.cssText = 'background:#FCFCFE;border-radius:24px;padding:30px 26px;max-width:380px;width:100%;box-shadow:0 30px 80px rgba(8,8,15,.4);transform:translateY(14px) scale(.97);transition:transform .4s cubic-bezier(.22,1,.36,1);';
-
-    var h = document.createElement('div');
-    h.style.cssText = "font-family:'Geist','Inter',sans-serif;font-size:21px;font-weight:500;color:#08080F;margin-bottom:16px;";
-    h.textContent = title;
-    card.appendChild(h);
-
-    var ol = document.createElement('ol');
-    ol.style.cssText = 'margin:0 0 18px;padding-left:20px;color:#474A66;font-size:14px;line-height:1.85;';
-    steps.forEach(function(s){
-      var li = document.createElement('li');
-      li.textContent = s;          // textContent: never parse as markup
-      ol.appendChild(li);
-    });
-    card.appendChild(ol);
-
-    if (note){
-      var n = document.createElement('div');
-      n.style.cssText = 'font-size:12.5px;color:#8B8EAC;line-height:1.6;margin-bottom:18px;';
-      n.textContent = note;
-      card.appendChild(n);
-    }
-
-    var close = document.createElement('button');
-    close.textContent = 'Got it';
-    close.style.cssText = 'width:100%;padding:14px;border-radius:100px;border:none;background:linear-gradient(135deg,#6D28FF,#4F6DFF);color:#fff;font-weight:600;font-size:15px;cursor:pointer;';
-    card.appendChild(close);
-
-    wrap.appendChild(card);
-    document.body.appendChild(wrap);
-    requestAnimationFrame(function(){
-      wrap.style.opacity = '1';
-      card.style.transform = 'none';
-    });
-
-    function dismiss(){
-      wrap.style.opacity='0';
-      setTimeout(function(){ wrap.remove(); }, 320);
-    }
-    close.addEventListener('click', dismiss);
-    wrap.addEventListener('click', function(e){ if(e.target===wrap) dismiss(); });
+  /* ── Build the modal once, reuse it ── */
+  var _modal = null;
+  function ensureModal() {
+    if (_modal) return _modal;
+    _modal = document.createElement('div');
+    _modal.id = 'apa-install-modal';
+    _modal.setAttribute('role', 'dialog');
+    _modal.setAttribute('aria-modal', 'true');
+    document.body.appendChild(_modal);
+    _modal.addEventListener('click', function(e){ if (e.target === _modal) closeModal(); });
+    // Keyboard: Escape closes
+    document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && _modal.classList.contains('open')) closeModal(); });
+    return _modal;
   }
 
+  function openModal(html) {
+    var m = ensureModal();
+    m.innerHTML = html;
+    m.querySelector('.aim-dismiss') && m.querySelector('.aim-dismiss').addEventListener('click', closeModal);
+    document.body.style.overflow = 'hidden';
+    requestAnimationFrame(function(){ m.classList.add('open'); });
+  }
+
+  function closeModal() {
+    if (!_modal) return;
+    _modal.classList.remove('open');
+    document.body.style.overflow = '';
+    // Remove from DOM after transition
+    setTimeout(function(){ if (_modal) { _modal.innerHTML = ''; } }, 450);
+  }
+
+  /* ── Perk chips shared across platforms ── */
+  var perksHTML = '<div class="aim-perks">'
+    + '<div class="aim-perk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg><span class="aim-perk-txt">Instant booking access</span></div>'
+    + '<div class="aim-perk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 6v16l7-4 8 4 7-4V2l-7 4-8-4-7 4z"/><path d="M8 2v16M16 6v16"/></svg><span class="aim-perk-txt">Works offline</span></div>'
+    + '<div class="aim-perk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8zM6 1v3M10 1v3M14 1v3"/></svg><span class="aim-perk-txt">Booking notifications</span></div>'
+    + '<div class="aim-perk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span class="aim-perk-txt">Secure & fast</span></div>'
+    + '</div>';
+
+  /* ── Platform-specific modal content ── */
+  function buildCard(inner) {
+    return '<div id="apa-install-card">' + inner + '</div>';
+  }
+
+  function showIOSModal() {
+    openModal(buildCard(
+      '<div class="aim-badge">📱 iPhone & iPad</div>'
+      + '<div class="aim-title">Add Apatmento to your Home Screen</div>'
+      + '<div class="aim-sub">Install in 3 taps — feels like a native app, no App Store needed.</div>'
+      + perksHTML
+      + '<div class="aim-steps">'
+      + '<div class="aim-step"><div class="aim-step-num">1</div><div class="aim-step-body"><div class="aim-step-label">Tap the Share button</div><div class="aim-step-hint">The square with an arrow at the bottom of Safari (or top on iPad)</div></div></div>'
+      + '<div class="aim-step"><div class="aim-step-num">2</div><div class="aim-step-body"><div class="aim-step-label">Scroll and tap "Add to Home Screen"</div><div class="aim-step-hint">Scroll the share sheet until you see the option with a plus icon</div></div></div>'
+      + '<div class="aim-step"><div class="aim-step-num">3</div><div class="aim-step-body"><div class="aim-step-label">Tap "Add" to confirm</div><div class="aim-step-hint">Apatmento appears on your home screen instantly</div></div></div>'
+      + '</div>'
+      + '<div class="aim-note">💡 Already done? The app icon is on your home screen — open it from there for the full experience.</div>'
+      + '<button class="aim-dismiss">I\'ll do this later</button>'
+    ));
+  }
+
+  function showSafariDesktopModal() {
+    openModal(buildCard(
+      '<div class="aim-badge">🖥️ Mac · Safari</div>'
+      + '<div class="aim-title">Add Apatmento to your Dock</div>'
+      + '<div class="aim-sub">Install as a desktop app on macOS Sonoma or newer — no browser chrome, just the app.</div>'
+      + perksHTML
+      + '<div class="aim-steps">'
+      + '<div class="aim-step"><div class="aim-step-num">1</div><div class="aim-step-body"><div class="aim-step-label">Open the File menu</div><div class="aim-step-hint">In the Safari menu bar at the top of your screen</div></div></div>'
+      + '<div class="aim-step"><div class="aim-step-num">2</div><div class="aim-step-body"><div class="aim-step-label">Choose "Add to Dock…"</div><div class="aim-step-hint">You\'ll see a preview of the icon before confirming</div></div></div>'
+      + '<div class="aim-step"><div class="aim-step-num">3</div><div class="aim-step-body"><div class="aim-step-label">Click "Add"</div><div class="aim-step-hint">Apatmento appears in your Dock — launch it any time</div></div></div>'
+      + '</div>'
+      + '<div class="aim-note">Requires macOS Sonoma (14.0) or newer. On older macOS, use Chrome or Edge to install.</div>'
+      + '<button class="aim-dismiss">I\'ll do this later</button>'
+    ));
+  }
+
+  function showFirefoxModal() {
+    openModal(buildCard(
+      '<div class="aim-badge">🦊 Firefox</div>'
+      + '<div class="aim-title">Install Apatmento</div>'
+      + '<div class="aim-sub">Firefox on Android supports PWA install. On desktop, Chrome or Edge gives you the best experience.</div>'
+      + '<div class="aim-steps">'
+      + (isAndroid
+          ? '<div class="aim-step"><div class="aim-step-num">1</div><div class="aim-step-body"><div class="aim-step-label">Tap the menu (⋮ three dots)</div><div class="aim-step-hint">At the top right of Firefox</div></div></div>'
+            + '<div class="aim-step"><div class="aim-step-num">2</div><div class="aim-step-body"><div class="aim-step-label">Tap "Install" or "Add to Home Screen"</div><div class="aim-step-hint">The app installs to your home screen</div></div></div>'
+          : '<div class="aim-step"><div class="aim-step-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></div><div class="aim-step-body"><div class="aim-step-label">Switch to Chrome or Edge</div><div class="aim-step-hint">Firefox desktop does not support installing web apps. Chrome and Edge do — download either for the best Apatmento experience.</div></div></div>')
+      + '</div>'
+      + '<button class="aim-dismiss">Maybe later</button>'
+    ));
+  }
+
+  function showSamsungModal() {
+    openModal(buildCard(
+      '<div class="aim-badge">📱 Samsung Internet</div>'
+      + '<div class="aim-title">Add Apatmento to your Home Screen</div>'
+      + '<div class="aim-sub">Install in a few taps directly from Samsung Internet.</div>'
+      + '<div class="aim-steps">'
+      + '<div class="aim-step"><div class="aim-step-num">1</div><div class="aim-step-body"><div class="aim-step-label">Tap the menu (☰ three lines)</div><div class="aim-step-hint">At the bottom right of the screen</div></div></div>'
+      + '<div class="aim-step"><div class="aim-step-num">2</div><div class="aim-step-body"><div class="aim-step-label">Tap "Add page to"</div></div></div>'
+      + '<div class="aim-step"><div class="aim-step-num">3</div><div class="aim-step-body"><div class="aim-step-label">Tap "Home screen"</div><div class="aim-step-hint">Apatmento appears on your home screen as a full app</div></div></div>'
+      + '</div>'
+      + '<button class="aim-dismiss">I\'ll do this later</button>'
+    ));
+  }
+
+  function showInAppBrowserModal() {
+    openModal(buildCard(
+      '<div class="aim-badge">⚠️ In-app browser</div>'
+      + '<div class="aim-title">Open in your browser to install</div>'
+      + '<div class="aim-sub">This in-app browser can\'t install apps. Open Apatmento in Chrome or Safari for the full experience.</div>'
+      + '<div class="aim-steps">'
+      + '<div class="aim-step"><div class="aim-step-num">1</div><div class="aim-step-body"><div class="aim-step-label">Tap the ⋮ or ··· menu</div><div class="aim-step-hint">Usually in the top right of the current view</div></div></div>'
+      + '<div class="aim-step"><div class="aim-step-num">2</div><div class="aim-step-body"><div class="aim-step-label">Choose "Open in Chrome" or "Open in Safari"</div></div></div>'
+      + '<div class="aim-step"><div class="aim-step-num">3</div><div class="aim-step-body"><div class="aim-step-label">Tap "Get the app" from the real browser</div><div class="aim-step-hint">Install happens in one tap from there</div></div></div>'
+      + '</div>'
+      + '<button class="aim-dismiss">Got it</button>'
+    ));
+  }
+
+  function showChromiumWaitingModal(hasPrompt) {
+    if (hasPrompt) return; // shouldn't happen, but guard anyway
+    openModal(buildCard(
+      '<div class="aim-badge">💻 Chrome / Edge</div>'
+      + '<div class="aim-title">Install Apatmento</div>'
+      + '<div class="aim-sub">Install it as a desktop or mobile app — no app store, instant access from your taskbar or home screen.</div>'
+      + perksHTML
+      + '<div class="aim-steps">'
+      + '<div class="aim-step"><div class="aim-step-num">1</div><div class="aim-step-body"><div class="aim-step-label">Look for the install icon (⊕)</div><div class="aim-step-hint">It appears at the right edge of the address bar once Chrome is ready</div></div></div>'
+      + '<div class="aim-step"><div class="aim-step-num">2</div><div class="aim-step-body"><div class="aim-step-label">Or open the ⋮ menu</div><div class="aim-step-hint">Choose "Cast, save and share" → "Install page as app"</div></div></div>'
+      + '</div>'
+      + '<div class="aim-note">Chrome offers one-tap install after you\'ve browsed a little. Everything works in the browser while you wait — the app just makes it even faster.</div>'
+      + '<button class="aim-dismiss">Got it</button>'
+    ));
+  }
+
+  /* ── Button click handler ── */
   btn.addEventListener('click', async function(){
-    var prompt = window.__APA_INSTALL_PROMPT__;
+    // 1. In-app browsers cannot install — handle first
+    if (isInAppBrowser) { showInAppBrowserModal(); return; }
 
-    // Native path — Chrome, Edge, Android, and desktop Chrome once its
-    // engagement heuristics are satisfied.
-    if (prompt && window.ApatmentoPWA){
+    // 2. Native one-tap prompt (Chrome, Edge, Android Chrome)
+    var nativePrompt = window.__APA_INSTALL_PROMPT__;
+    if (nativePrompt && window.ApatmentoPWA) {
+      btn.style.opacity = '.6';
       var outcome = await window.ApatmentoPWA.install();
-      if (outcome === 'accepted'){ btn.classList.remove('on'); return; }
-      if (outcome !== 'unavailable') return;   // dismissed; leave them be
-      // fall through to instructions
+      btn.style.opacity = '';
+      if (outcome === 'accepted') { btn.classList.remove('on'); return; }
+      if (outcome === 'dismissed') return; // user said no, respect it
+      // outcome === 'unavailable': prompt was consumed — fall through to manual
     }
 
-    if (isIOS){
-      sheet('Add Apatmento to your Home Screen', [
-        'Tap the Share button at the bottom of Safari',
-        'Scroll down and tap "Add to Home Screen"',
-        'Tap "Add" in the top right'
-      ], 'Apatmento will open full screen, work offline, and can send you booking notifications.');
-      return;
-    }
+    // 3. Platform-specific manual paths
+    if (isIOS)               { showIOSModal();            return; }
+    if (isSafariDesktop)     { showSafariDesktopModal();  return; }
+    if (isFirefox)           { showFirefoxModal();        return; }
+    if (isSamsungBrowser)    { showSamsungModal();        return; }
 
-    if (isFirefox){
-      sheet('Install Apatmento', [
-        'Open the menu (three lines, top right)',
-        'Tap "Install" or "Add to Home Screen"'
-      ], 'Firefox on desktop does not support installing web apps. Chrome, Edge or Safari will work.');
-      return;
-    }
-
-    if (isSafari){
-      sheet('Add Apatmento to your Dock', [
-        'Open the File menu',
-        'Choose "Add to Dock…"',
-        'Click "Add"'
-      ], 'Requires macOS Sonoma or newer.');
-      return;
-    }
-
-    // Chromium, but the prompt has not been offered yet.
-    sheet('Install Apatmento', [
-      'Look for the install icon (⊕) at the right of the address bar',
-      'Or open the ⋮ menu and choose "Cast, save and share" → "Install page as app"'
-    ], 'Chrome only offers the one-tap install button after you have browsed the site a little. Everything works in the browser meanwhile.');
+    // 4. Chromium but prompt not yet available
+    showChromiumWaitingModal(false);
   });
+
 })();
 </script>
 </body>

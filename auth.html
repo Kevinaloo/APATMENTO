@@ -185,6 +185,14 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
 .install-step-btn.loading{color:transparent;pointer-events:none;}
 .install-step-btn.loading::after{content:'';position:absolute;top:50%;left:50%;width:18px;height:18px;margin:-9px 0 0 -9px;border:2.5px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;}
 #install-step-err{margin-top:8px;}
+/* Install perks chips */
+.install-perks{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:13px;}
+.install-perk{display:flex;align-items:center;gap:6px;background:rgba(123,47,247,.06);border:1px solid rgba(123,47,247,.1);border-radius:9px;padding:7px 10px;font-size:11.5px;font-weight:600;color:var(--ink);line-height:1.3;}
+.install-step.armed .install-perks{display:none;}
+/* Skip link — de-emphasised but always accessible */
+.install-skip-btn{display:block;width:100%;margin-top:10px;padding:9px;border:none;background:none;color:var(--ink-faint);font-family:var(--font-body);font-size:12px;cursor:pointer;text-align:center;transition:color .2s;}
+.install-skip-btn:hover{color:var(--ink);}
+.install-step.armed .install-skip-btn{display:none;}
 .link-btn{background:none;border:none;color:var(--lilac-deep);font-family:var(--font-body);font-size:13px;font-weight:600;cursor:pointer;padding:0;}
 
 .submit-btn{width:100%;padding:15px;border:none;border-radius:14px;background:linear-gradient(135deg,var(--violet),var(--electric));color:#fff;font-family:var(--font-body);font-weight:600;font-size:15px;cursor:pointer;position:relative;overflow:hidden;transition:all .3s cubic-bezier(.22,1,.36,1);box-shadow:0 10px 30px rgba(123,47,247,.3);}
@@ -485,10 +493,9 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
             <span>I agree to the <a href="terms.html" target="_blank">Terms of Service</a> and <a href="privacy.html" target="_blank">Privacy Policy</a>.</span>
           </label>
 
-          <!-- ══ MANDATORY IN-FORM APP INSTALL STEP ══
-               Part of the signup flow, not a screen after it. The user
-               must tap this to arm the app download before the account
-               can be created. Feels like a natural final step. -->
+          <!-- ══ APP INSTALL STEP — recommended, not mandatory ══
+               Users are strongly nudged to download first (more benefits highlighted),
+               but can skip and sign up without the app. -->
           <div class="install-step" id="install-step">
             <div class="install-step-row">
               <div class="install-step-ico" id="install-step-ico">
@@ -496,14 +503,26 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
                 <svg id="install-step-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><path d="M20 6 9 17l-5-5"/></svg>
               </div>
               <div class="install-step-txt">
-                <div class="install-step-title" id="install-step-title">Download the app to continue</div>
-                <div class="install-step-sub" id="install-step-sub">Required — installs in the background while you finish. One tap and you're done.</div>
+                <div class="install-step-title" id="install-step-title">Get the app for the best experience</div>
+                <div class="install-step-sub" id="install-step-sub">Recommended — unlock instant check-ins, offline access &amp; booking alerts.</div>
               </div>
             </div>
+
+            <div class="install-perks" id="install-perks">
+              <div class="install-perk">&#x26A1; Faster checkout</div>
+              <div class="install-perk">&#x1F4F4; Works offline</div>
+              <div class="install-perk">&#x1F514; Booking alerts</div>
+              <div class="install-perk">&#x1F511; Instant check-in</div>
+            </div>
+
             <button class="install-step-btn" id="install-step-btn" type="button" onclick="armInstall()">
-              <span id="install-step-btn-label">Download app in the background</span>
+              <span id="install-step-btn-label">Download app now (recommended)</span>
             </button>
             <div class="field-err" id="install-step-err" style="text-align:center;"></div>
+
+            <button class="install-skip-btn" id="install-skip-btn" type="button" onclick="skipInstall()">
+              Skip for now — continue without the app
+            </button>
           </div>
 
           <button class="submit-btn" id="signup-btn" onclick="handleSignup(event)" disabled style="opacity:.5;cursor:not-allowed;">Create account</button>
@@ -1018,6 +1037,12 @@ function showManualInstall(env) {
   if (check) check.style.display = 'block';
   if (btn)   btn.classList.remove('loading');
 
+  // Hide perks + skip — instructions are now showing
+  const perks   = document.getElementById('install-perks');
+  const skipBtn = document.getElementById('install-skip-btn');
+  if (perks)   perks.style.display = 'none';
+  if (skipBtn) skipBtn.style.display = 'none';
+
   _installArmed = true;   // gate satisfied: user has real install instructions
   enableCreateBtn();
 }
@@ -1066,6 +1091,37 @@ async function armInstall() {
   showManualInstall(env);
 }
 
+/* ── Skip install — user chooses to continue without downloading now ── */
+function skipInstall() {
+  _installArmed = true;  // gate satisfied by explicit user choice
+
+  const step    = document.getElementById('install-step');
+  const title   = document.getElementById('install-step-title');
+  const sub     = document.getElementById('install-step-sub');
+  const btn     = document.getElementById('install-step-btn');
+  const btnLbl  = document.getElementById('install-step-btn-label');
+  const skipBtn = document.getElementById('install-skip-btn');
+  const perks   = document.getElementById('install-perks');
+  const dl      = document.getElementById('install-step-dl');
+  const check   = document.getElementById('install-step-check');
+  const ico     = document.getElementById('install-step-ico');
+
+  // Visual: dim the step, show neutral state
+  if (step)   step.style.opacity = '.55';
+  if (title)  title.textContent  = 'You can install the app later';
+  if (sub)    sub.textContent    = 'Find the install option in your browser menu at any time.';
+  if (btnLbl) btnLbl.textContent = 'Skipped';
+  if (btn)    { btn.disabled = true; btn.style.background = 'var(--line-2)'; btn.style.boxShadow = 'none'; btn.style.color = 'var(--ink-faint)'; }
+  if (skipBtn) skipBtn.style.display = 'none';
+  if (perks)   perks.style.display   = 'none';
+  if (dl && check) { dl.style.display = 'none'; check.style.display = 'block'; }
+  if (ico) { ico.style.background = '#E5E7F0'; ico.style.color = 'var(--ink-faint)'; }
+
+  // Unlock the Create account button
+  const signupBtn = document.getElementById('signup-btn');
+  if (signupBtn) { signupBtn.disabled = false; signupBtn.style.opacity = '1'; signupBtn.style.cursor = 'pointer'; }
+}
+
 async function handleSignup(e) {
   e.preventDefault();
   const first = document.getElementById('signup-first').value.trim();
@@ -1082,15 +1138,15 @@ async function handleSignup(e) {
   if (pw !== pw2)    { fieldErr('signup-pw2-err','Passwords do not match.'); return; }
   if (!terms)        { showErr('Please accept the Terms of Service.'); return; }
 
-  // Mandatory install gate — cannot proceed without arming the download.
+  // If neither download nor skip has been chosen yet, nudge them to decide.
   if (!_installArmed) {
     const errEl = document.getElementById('install-step-err');
-    if (errEl) { errEl.textContent = 'Please download the app first to continue.'; errEl.classList.add('show'); }
+    if (errEl) { errEl.textContent = 'Download the app for the best experience — or tap "Skip for now" below.'; errEl.classList.add('show'); }
     document.getElementById('install-step')?.scrollIntoView({ behavior:'smooth', block:'center' });
     return;
   }
 
-  // Install already triggered — create the account directly.
+  // Proceed — either app download triggered or user explicitly skipped.
   _pendingSignup = { first, last, email, pw };
   doSignup();
 }
