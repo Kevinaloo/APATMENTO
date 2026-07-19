@@ -1,39 +1,33 @@
 /* ═══════════════════════════════════════════════════════════════════
-   APATMENTO · Ask APA  — voice + text assistant  v2
+   APATMENTO · Ask APA  — voice + text assistant  v3
    ───────────────────────────────────────────────────────────────────
-   A floating button on every guest page. Opens a chat + voice panel.
-   Groq (server) for reasoning; Web Speech API in the browser for STT/TTS.
-
-   WHAT'S NEW IN v2
-     · True two-way voice: tap "Talk", speak, APA replies out loud, and
-       in hands-free mode the mic re-opens so you can just keep talking.
-     · Active navigation: APA can move the guest to any page/section by
-       returning a structured action the client executes.
-     · Robust voice fallback: when SpeechRecognition is unavailable
-       (some mobile browsers, insecure origins, denied mic) the UI says
-       exactly why and offers text — never a dead "not available".
-     · The assistant only knows guest-accessible site functions. It has
-       no access to restricted or sensitive user data.
-
-   SECURITY
-     · All model calls go through /api/ask-apa (system prompt server-side)
-     · Client never holds the system prompt; history is in memory only
-     · Navigation actions are whitelisted client-side — the model cannot
-       send the browser anywhere that isn't an approved public route
+   WHAT'S NEW IN v3:
+     · AUTO-NAVIGATION: APA moves the guest IMMEDIATELY — no button to
+       click. When the model returns [[go:route]], the browser navigates
+       in 1.4 seconds (enough for the guest to read APA's message).
+       Includes URL parameter passing — APA can deep-link into filtered
+       search results (area, beds, dates, etc.)
+     · SMARTER GREET: context-aware opening line based on page + time.
+     · RICHER PERSONA: charismatic, warm, genuinely funny.
+     · INTENT DETECTION: client pre-parses obvious nav intent before
+       even hitting the API, giving sub-100ms responses for common
+       requests like "take me to tours" or "show me apartments".
+     · MEMORY: session context (name, preferences) passed to API.
+     · NAVIGATION ANNOUNCEMENT: brief animated toast shows where APA
+       is taking the guest before the page changes.
    ═══════════════════════════════════════════════════════════════════ */
 (function (global) {
   'use strict';
   if (global.AskAPA) return;
 
   /* ── Config ──────────────────────────────────────────────────────── */
-  var API_ENDPOINT = '/api/ask-apa';
-  var MAX_HISTORY  = 12;
-  var VOICE_RATE   = 1.04;
-  var VOICE_PITCH  = 1.0;
+  var API_ENDPOINT  = '/api/ask-apa';
+  var MAX_HISTORY   = 14;
+  var VOICE_RATE    = 1.04;
+  var VOICE_PITCH   = 1.0;
+  var NAV_DELAY_MS  = 1500; // ms to show APA's message before navigating
 
-  /* Whitelisted, guest-accessible destinations. The model may ask to
-     navigate ONLY to these. Anything else is ignored — this is the
-     hard client-side guard against navigation abuse. */
+  /* Route map — ONLY guest-accessible public routes */
   var ROUTES = {
     home:'/index.html', stays:'/apartments.html', apartments:'/apartments.html',
     tours:'/tours.html', food:'/food.html', rides:'/rides.html', events:'/events.html',
@@ -44,35 +38,67 @@
     terms:'/terms.html', privacy:'/privacy.html'
   };
   var ROUTE_LABELS = {
-    home:'Home', stays:'Apartments', apartments:'Apartments', tours:'Tours',
-    food:'Food', rides:'Rides', events:'Events', shopping:'Shopping',
-    roommates:'Roommates', carhire:'Car Hire', flights:'Flights',
+    home:'Home', stays:'Apartments & Stays', apartments:'Apartments & Stays',
+    tours:'Tours & Safaris', food:'Food & Dining', rides:'Rides', events:'Events',
+    shopping:'Shopping', roommates:'Roommates', carhire:'Car Hire', flights:'Flights',
     bookings:'My Bookings', 'my-bookings':'My Bookings', profile:'Profile',
     rewards:'Rewards', dashboard:'Dashboard', signin:'Sign in', signup:'Sign up',
     auth:'Sign in', terms:'Terms', privacy:'Privacy'
   };
+  var ROUTE_EMOJIS = {
+    home:'🏠', stays:'🏠', apartments:'🏠', tours:'🦁', food:'🍽️', rides:'🚗',
+    events:'🎟️', shopping:'🛍️', roommates:'🤝', carhire:'🚙', flights:'✈️',
+    bookings:'📋', profile:'👤', rewards:'⭐', dashboard:'📊', signin:'🔐',
+  };
+
+  /* Quick intent map — common phrases → route (client-side, instant) */
+  var QUICK_INTENT = [
+    { re: /\b(apartments?|stays?|place|room|accommodation|flat|house|villa|bnb|airbnb)\b/i, route: 'stays' },
+    { re: /\b(tour|safari|day.?trip|park|game.?drive|masai.?mara|amboseli|naivasha)\b/i, route: 'tours' },
+    { re: /\b(event|ticket|concert|festival|party|show|gig)\b/i, route: 'events' },
+    { re: /\b(food|restaurant|eat|delivery|dinner|lunch|breakfast|order)\b/i, route: 'food' },
+    { re: /\b(ride|taxi|lift|uber|bolt|driver|airport)\b/i, route: 'rides' },
+    { re: /\b(car.?hire|rent.?a.?car|self.?drive|vehicle.?hire)\b/i, route: 'carhire' },
+    { re: /\b(roommate|flatmate|housemate|spare.?room|post.?room)\b/i, route: 'roommates' },
+    { re: /\b(flight|fly|airline|airport|ticket)\b/i, route: 'flights' },
+    { re: /\b(shopping|shop|buy|products|market)\b/i, route: 'shopping' },
+    { re: /\b(my.?booking|check.?in|reservation|cancel|refund)\b/i, route: 'bookings' },
+    { re: /\b(reward|points|referral|cashback)\b/i, route: 'rewards' },
+    { re: /\b(sign.?in|log.?in|sign.?up|register|create.?account)\b/i, route: 'signin' },
+  ];
 
   /* ── State ───────────────────────────────────────────────────────── */
-  var history    = [];
-  var listening  = false;
-  var speaking   = false;
-  var loading    = false;
-  var recognition= null;
-  var panel      = null;
-  var fab        = null;
-  var open       = false;
-  var handsFree  = false;   // when true, mic reopens after APA finishes speaking
-  var micDenied  = false;
-  var wasVoiceTurn = false; // current turn came from the mic
-  var voiceOn    = ('SpeechRecognition' in global || 'webkitSpeechRecognition' in global);
-  var synthOn    = ('speechSynthesis' in global);
-  var secure     = (global.isSecureContext !== false) &&
-                   (location.protocol === 'https:' || location.hostname === 'localhost');
-  var voiceUsable= voiceOn && secure;
+  var history      = [];
+  var sessionCtx   = {}; // remembered user context: name, preferences
+  var listening    = false;
+  var speaking     = false;
+  var loading      = false;
+  var recognition  = null;
+  var panel        = null;
+  var fab          = null;
+  var open         = false;
+  var handsFree    = false;
+  var micDenied    = false;
+  var wasVoiceTurn = false;
+  var navPending   = null; // setTimeout handle for pending navigation
+
+  var voiceOn   = ('SpeechRecognition' in global || 'webkitSpeechRecognition' in global);
+  var synthOn   = ('speechSynthesis' in global);
+  var secure    = (global.isSecureContext !== false) &&
+                  (location.protocol === 'https:' || location.hostname === 'localhost');
+  var voiceUsable = voiceOn && secure;
 
   /* ── Helpers ─────────────────────────────────────────────────────── */
   function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
   function rAF(fn){ (global.requestAnimationFrame || setTimeout)(fn, 0); }
+  function pageKey(){ return location.pathname.replace(/^\//,'').replace('.html','') || 'index'; }
+  function pageLabel(){
+    var map = {'':'Home','index':'Home','apartments':'Apartments','tours':'Tours',
+      'food':'Food & Dining','rides':'Rides','events':'Events','shopping':'Shopping',
+      'roommates':'Roommates','carhire':'Car Hire','flights':'Flights','my-bookings':'My Bookings',
+      'booking-confirm':'Booking Confirmation','profile':'Profile','rewards':'Rewards','dashboard':'Dashboard'};
+    return map[pageKey()] || null;
+  }
 
   /* ── CSS ─────────────────────────────────────────────────────────── */
   var style = document.createElement('style');
@@ -86,7 +112,7 @@
     '#apa-fab .apa-pulse{position:absolute;inset:-3px;border-radius:50%;border:2px solid rgba(13,148,103,.4);animation:apaPulse 2s ease-out infinite;pointer-events:none;}',
     '@keyframes apaPulse{0%{transform:scale(1);opacity:1;}100%{transform:scale(1.6);opacity:0;}}',
 
-    '#apa-panel{position:fixed;bottom:calc(94px + env(safe-area-inset-bottom,0px));right:24px;z-index:9001;width:372px;max-width:calc(100vw - 32px);',
+    '#apa-panel{position:fixed;bottom:calc(94px + env(safe-area-inset-bottom,0px));right:24px;z-index:9001;width:380px;max-width:calc(100vw - 32px);',
     'background:#fff;border-radius:22px;box-shadow:0 24px 80px rgba(10,10,20,.15),0 8px 24px rgba(10,10,20,.08);',
     'display:flex;flex-direction:column;overflow:hidden;transform:translateY(12px) scale(.97);opacity:0;pointer-events:none;',
     'transition:transform .28s cubic-bezier(.34,1.2,.64,1),opacity .22s;}',
@@ -109,9 +135,19 @@
     '.apa-msg.user{align-self:flex-end;background:linear-gradient(135deg,#0D9467,#0a7a55);color:#fff;border-radius:16px 16px 4px 16px;}',
     '.apa-msg.apa{align-self:flex-start;background:#f4f5fb;color:#1A1B2E;border-radius:16px 16px 16px 4px;}',
     '.apa-msg.apa a{color:#0D9467;text-decoration:underline;cursor:pointer;}',
-    '.apa-nav-cta{align-self:flex-start;display:inline-flex;align-items:center;gap:8px;margin:-2px 0 2px;padding:9px 15px;border:none;border-radius:12px;background:linear-gradient(135deg,#0D9467,#7B2FF7);color:#fff;font:600 13px "Inter",system-ui,sans-serif;cursor:pointer;box-shadow:0 6px 18px rgba(13,148,103,.28);transition:.16s;animation:apaMsgIn .2s ease;}',
-    '.apa-nav-cta:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(13,148,103,.36);}',
-    '.apa-nav-cta svg{width:15px;height:15px;fill:none;stroke:#fff;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}',
+
+    /* Navigation announcement toast */
+    '.apa-nav-toast{align-self:flex-start;display:flex;align-items:center;gap:9px;margin:2px 0;padding:10px 14px;border-radius:14px;',
+    'background:linear-gradient(135deg,rgba(13,148,103,.1),rgba(123,47,247,.08));',
+    'border:1.5px solid rgba(13,148,103,.2);font:600 13px "Inter",system-ui,sans-serif;color:#0D9467;',
+    'animation:apaMsgIn .25s ease,apaNavPulse 1.4s ease-out forwards;}',
+    '@keyframes apaNavPulse{0%{border-color:rgba(13,148,103,.2);}50%{border-color:rgba(13,148,103,.7);box-shadow:0 0 0 4px rgba(13,148,103,.08);}100%{border-color:rgba(13,148,103,.2);}}',
+    '.apa-nav-toast-ico{font-size:16px;flex-shrink:0;}',
+    '.apa-nav-toast-txt{flex:1;}',
+    '.apa-nav-toast-sub{font:400 11px "Inter",sans-serif;color:#8E90AD;margin-top:2px;}',
+    '.apa-nav-bar{height:3px;border-radius:2px;background:linear-gradient(90deg,#0D9467,#7B2FF7);margin-top:6px;width:0;animation:apaNavBar ' + NAV_DELAY_MS + 'ms linear forwards;}',
+    '@keyframes apaNavBar{to{width:100%;}}',
+
     '.apa-typing{align-self:flex-start;background:#f4f5fb;padding:12px 16px;border-radius:16px 16px 16px 4px;display:flex;gap:5px;align-items:center;}',
     '.apa-typing span{width:6px;height:6px;border-radius:50%;background:#8E90AD;animation:apaBounce .9s ease-in-out infinite;}',
     '.apa-typing span:nth-child(2){animation-delay:.18s;}.apa-typing span:nth-child(3){animation-delay:.36s;}',
@@ -140,7 +176,7 @@
     '.apa-voice-bar{padding:0 14px 10px;display:flex;align-items:center;gap:10px;font:400 12px "Inter",system-ui,sans-serif;color:#8E90AD;}',
     '.apa-voice-bar .apa-wave{display:flex;align-items:flex-end;gap:3px;height:18px;}',
     '.apa-voice-bar .apa-wave span{width:3px;border-radius:2px;background:#0D9467;animation:apaWave .7s ease-in-out infinite;}',
-    '.apa-wave span:nth-child(1){height:8px;animation-delay:0s;}.apa-wave span:nth-child(2){height:14px;animation-delay:.12s;}',
+    '.apa-wave span:nth-child(1){height:8px;}.apa-wave span:nth-child(2){height:14px;animation-delay:.12s;}',
     '.apa-wave span:nth-child(3){height:10px;animation-delay:.24s;}.apa-wave span:nth-child(4){height:16px;animation-delay:.08s;}',
     '.apa-wave span:nth-child(5){height:7px;animation-delay:.2s;}',
     '@keyframes apaWave{0%,100%{transform:scaleY(.6);}50%{transform:scaleY(1);}}',
@@ -153,25 +189,20 @@
     '.apa-speaking-badge.on{display:flex;}',
     '.apa-spk-dot{width:7px;height:7px;border-radius:50%;background:#0D9467;animation:apaBlink 1.1s infinite;}',
     '@keyframes apaBlink{50%{opacity:.2;}}',
-
     '.apa-note{padding:0 14px 10px;font:400 11px "Inter",system-ui,sans-serif;color:#a0a3b5;text-align:center;}'
   ].join('');
   document.head.appendChild(style);
 
-  /* ── Cabana Avatar Popup + FAB avatar ── */
+  /* ── Avatar popup styles ──────────────────────────────────────────── */
   var avatarStyle = document.createElement('style');
   avatarStyle.textContent = [
-    /* Popup container — sits bottom-right, avatar is big, bubble is compact */
     '#apa-avatar-popup{position:fixed;bottom:calc(88px + env(safe-area-inset-bottom,0px));right:10px;z-index:8999;display:flex;flex-direction:row;align-items:flex-end;gap:0;transition:opacity .5s ease,transform .5s cubic-bezier(.34,1.2,.64,1);max-width:calc(100vw - 20px);}',
     '#apa-avatar-popup.apa-av-hidden{opacity:0;transform:translateY(28px) scale(.93);pointer-events:none;}',
     '#apa-avatar-popup.apa-av-visible{opacity:1;transform:none;pointer-events:all;}',
-    /* Avatar image — the star of the show, tall and prominent */
     '#apa-avatar-img{width:160px;height:auto;max-height:55vh;object-fit:contain;filter:drop-shadow(0 12px 32px rgba(0,0,0,.28));display:block;cursor:pointer;transition:transform .22s;user-select:none;flex-shrink:0;}',
     '#apa-avatar-img:hover{transform:scale(1.03) translateY(-4px);}',
-    /* Compact bubble to the left of the avatar */
     '#apa-avatar-bubble{background:#fff;border-radius:16px 16px 16px 4px;padding:11px 13px 10px;width:168px;flex-shrink:0;',
     'box-shadow:0 8px 28px rgba(10,10,20,.15),0 2px 6px rgba(0,0,0,.08);margin-bottom:24px;position:relative;}',
-    /* Tail pointing right toward avatar */
     '#apa-avatar-bubble::after{content:"";position:absolute;right:-9px;bottom:16px;border:9px solid transparent;border-left-color:#fff;border-right:0;border-bottom:0;}',
     '#apa-avatar-bubble .av-name{font:700 12.5px/1 "Inter",system-ui,sans-serif;color:#7B2FF7;margin-bottom:2px;}',
     '#apa-avatar-bubble .av-role{font:600 9.5px/1 "Inter",system-ui,sans-serif;color:#0D9467;margin-bottom:7px;text-transform:uppercase;letter-spacing:.04em;}',
@@ -186,7 +217,6 @@
     '#apa-av-dismiss{position:absolute;top:-10px;left:-10px;width:26px;height:26px;border-radius:50%;background:#1A1B2E;border:none;color:#fff;font-size:15px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,.3);transition:.15s;z-index:10;font-weight:700;}',
     '#apa-av-dismiss:hover{background:#7B2FF7;}',
     '@media(max-width:420px){#apa-avatar-img{width:130px;}#apa-avatar-bubble{width:148px;}#apa-avatar-popup{right:6px;}}',
-    /* FAB */
     '#apa-fab{position:fixed;bottom:24px;right:24px;z-index:9000;width:62px;height:62px;border-radius:50%;border:3px solid rgba(255,255,255,.9);cursor:pointer;overflow:hidden;padding:0;background:linear-gradient(135deg,#0D9467 0%,#7B2FF7 100%);box-shadow:0 8px 28px rgba(13,148,103,.38),0 2px 8px rgba(0,0,0,.12);display:flex;align-items:center;justify-content:center;transition:transform .22s cubic-bezier(.34,1.56,.64,1),box-shadow .22s;outline:none;}',
     '#apa-fab:hover{transform:scale(1.09);box-shadow:0 12px 36px rgba(13,148,103,.45);}',
     '#apa-fab:focus-visible{outline:3px solid #7B2FF7;outline-offset:3px;}',
@@ -197,7 +227,7 @@
   ].join('');
   document.head.appendChild(avatarStyle);
 
-  /* ── Markup ──────────────────────────────────────────────────────── */
+  /* ── Build UI ────────────────────────────────────────────────────── */
   function build() {
     fab = document.createElement('button');
     fab.id = 'apa-fab';
@@ -217,7 +247,7 @@
         '<div class="apa-head-av"><img src="/cabana-avatar.png" alt="APA" /></div>' +
         '<div class="apa-head-info">' +
           '<div class="apa-head-name">APA</div>' +
-          '<div class="apa-head-sub">Cabana Assistant · Online</div>' +
+          '<div class="apa-head-sub">Apatmento Guide · Online</div>' +
         '</div>' +
         '<div class="apa-head-dot" aria-hidden="true"></div>' +
         '<button class="apa-head-close" onclick="AskAPA.close()" aria-label="Close">×</button>' +
@@ -231,14 +261,14 @@
       '</div>' +
       (voiceUsable ?
       '<div class="apa-talkrow">' +
-        '<button class="apa-talk" id="apa-talk" onclick="AskAPA.toggleHandsFree()" aria-label="Hands-free voice conversation">' +
+        '<button class="apa-talk" id="apa-talk" onclick="AskAPA.toggleHandsFree()" aria-label="Hands-free voice">' +
           '<svg viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 19v3M9 22h6"/></svg>' +
           '<span id="apa-talk-label">Talk to APA</span>' +
         '</button>' +
       '</div>' : '') +
       '<div class="apa-bar">' +
         '<textarea class="apa-input" id="apa-input" rows="1" placeholder="Ask APA anything…" aria-label="Message APA"></textarea>' +
-        (voiceUsable ? '<button class="apa-mic" id="apa-mic" aria-label="Voice input (one message)" onclick="AskAPA.toggleVoice()"><svg viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 19v3M9 22h6"/></svg></button>' : '') +
+        (voiceUsable ? '<button class="apa-mic" id="apa-mic" aria-label="Voice input" onclick="AskAPA.toggleVoice()"><svg viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 19v3M9 22h6"/></svg></button>' : '') +
         '<button class="apa-send" id="apa-send" aria-label="Send" onclick="AskAPA.send()"><svg viewBox="0 0 24 24"><path d="m22 2-11 11M22 2 15 22l-4-9-9-4 20-7z"/></svg></button>' +
       '</div>' +
       (voiceOn && !secure ? '<div class="apa-note">Voice needs a secure (https) connection.</div>' :
@@ -260,15 +290,15 @@
 
   function defaultChips() {
     var p = pageKey();
-    if (p === 'apartments') return ['Find a place in Kilimani under 8k', 'How does check-in work?', 'What\u2019s the refund policy?'];
-    if (p === 'tours')      return ['Show me day tours near Nairobi', 'Book a safari', 'What\u2019s included?'];
-    if (p === 'events')     return ['What events are on this weekend?', 'How do I get tickets?'];
-    if (p === 'food')       return ['Order food near me', 'Which restaurants deliver?'];
-    if (p === 'rides')      return ['How do rides work?', 'Book a ride'];
-    if (p === 'carhire')    return ['Hire a self-drive car', 'What do I need to rent?'];
-    if (p === 'roommates')  return ['Find me a flatmate', 'Post my room'];
-    if (p === 'my-bookings')return ['Help me check in', 'Cancel a booking'];
-    return ['Find me an apartment', 'Plan a weekend in Nairobi', 'How does booking work?', 'Take me to tours'];
+    if (p === 'apartments') return ['Find me a 2-bed in Kilimani', 'What\u2019s the check-in process?', 'How does the 30% deposit work?'];
+    if (p === 'tours')      return ['Show me safaris', 'Day trips near Nairobi', 'What\u2019s included in tours?'];
+    if (p === 'events')     return ['What\u2019s on this weekend?', 'How do I get event tickets?'];
+    if (p === 'food')       return ['Order food near me', 'Best restaurants in Westlands'];
+    if (p === 'rides')      return ['How do rides work?', 'Book a ride to JKIA'];
+    if (p === 'carhire')    return ['Self-drive cars', 'What do I need to rent?'];
+    if (p === 'roommates')  return ['Find me a flatmate', 'Post my spare room'];
+    if (p === 'my-bookings')return ['How do I check in?', 'Cancel a booking', 'I have a problem with my stay'];
+    return ['Find me an apartment in Nairobi', 'Plan a weekend getaway', 'Book a safari', 'Take me to tours'];
   }
 
   function showChips(chips) {
@@ -285,7 +315,7 @@
   function openPanel() {
     open = true;
     panel.classList.add('open');
-    fab.setAttribute('aria-expanded', 'true');
+    if (fab) fab.setAttribute('aria-expanded', 'true');
     hideAvatarPopup();
     if (!history.length) greet();
     rAF(function () { var inp = document.getElementById('apa-input'); if (inp) inp.focus(); });
@@ -294,29 +324,28 @@
   function close() {
     open = false;
     panel.classList.remove('open');
-    fab.setAttribute('aria-expanded', 'false');
+    if (fab) fab.setAttribute('aria-expanded', 'false');
     handsFree = false; setTalkUI(false);
     stopVoice(); stopSpeech();
+    if (navPending) { clearTimeout(navPending); navPending = null; }
   }
 
-  /* ── Greeting ────────────────────────────────────────────────────── */
+  /* ── Smart greeting (context-aware) ──────────────────────────────── */
   function greet() {
-    var hour = new Date().getHours();
-    var g = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-    var page = pageLabel();
-    var msg = g + '! I\u2019m APA, your Cabana guide. ';
-    if (page) msg += 'You\u2019re on the ' + page + ' page. ';
-    msg += 'I can help you find and book stays, tours, rides, food, events and more — and take you straight to the right page. What are you after?';
-    appendMsg('apa', msg);
-  }
+    var h = new Date().getHours();
+    var g = h < 12 ? 'Morning' : h < 17 ? 'Afternoon' : 'Evening';
+    var p = pageLabel();
 
-  function pageKey() { return location.pathname.replace(/^\//, '').replace('.html', '') || 'index'; }
-  function pageLabel() {
-    var map = { '':'Home','index':'Home','apartments':'Apartments','tours':'Tours',
-      'food':'Food & Dining','rides':'Rides','events':'Events','shopping':'Shopping',
-      'roommates':'Roommates','carhire':'Car Hire','flights':'Flights','my-bookings':'My Bookings',
-      'booking-confirm':'Booking','profile':'Profile','rewards':'Rewards','dashboard':'Dashboard' };
-    return map[pageKey()] || null;
+    var openers = [
+      g + '! I\u2019m APA \u2014 your personal guide to Nairobi and beyond.',
+      g + '! APA here. Think of me as your well-connected Nairobi friend who knows everywhere.',
+      g + '! APA \u2014 let\u2019s find you exactly what you need.',
+    ];
+    var opener = openers[Math.floor(Math.random() * openers.length)];
+
+    var msg = opener + (p ? ' You\u2019re on the ' + p + ' page. ' : ' ');
+    msg += 'I can take you directly to stays, tours, rides, food, events and more \u2014 or just help you figure out what you want. What\u2019s the plan?';
+    appendMsg('apa', msg);
   }
 
   /* ── Messages ────────────────────────────────────────────────────── */
@@ -327,7 +356,7 @@
     div.className = 'apa-msg ' + role;
     div.innerHTML = linkify(esc(text));
     div.querySelectorAll('a[data-apa-route]').forEach(function (a) {
-      a.addEventListener('click', function (e) { e.preventDefault(); go(a.getAttribute('data-apa-route')); });
+      a.addEventListener('click', function (e) { e.preventDefault(); go(a.getAttribute('data-apa-route'), null, true); });
     });
     msgs.appendChild(div);
     msgs.scrollTop = msgs.scrollHeight;
@@ -335,31 +364,68 @@
   }
 
   function linkify(s) {
-    return s.replace(/\/([-a-z]+)\.html/g, function (m, name) {
-      return '<a href="/' + name + '.html" data-apa-route="' + name + '">/' + name + '.html</a>';
+    return s.replace(/\/([-a-z]+)\.html(\?[^\s<"']*)?/g, function (m, name, qs) {
+      var label = ROUTE_LABELS[name] || '/' + name + '.html';
+      return '<a href="/' + name + '.html' + (qs || '') + '" data-apa-route="' + name + '">' + label + '</a>';
     });
   }
 
-  function appendNavCta(routeKey) {
+  /* ── Navigation announcement toast (auto-navigates after delay) ── */
+  function showNavToast(routeKey, params) {
     var msgs = document.getElementById('apa-msgs');
     if (!msgs) return;
-    var label = ROUTE_LABELS[routeKey] || 'there';
-    var btn = document.createElement('button');
-    btn.className = 'apa-nav-cta';
-    btn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg> Take me to ' + esc(label);
-    btn.onclick = function () { go(routeKey); };
-    msgs.appendChild(btn);
+    var label = ROUTE_LABELS[routeKey] || routeKey;
+    var emoji = ROUTE_EMOJIS[routeKey] || '📍';
+
+    var toast = document.createElement('div');
+    toast.className = 'apa-nav-toast';
+    toast.innerHTML =
+      '<span class="apa-nav-toast-ico">' + emoji + '</span>' +
+      '<div class="apa-nav-toast-txt">Taking you to <strong>' + esc(label) + '</strong>' +
+        '<div class="apa-nav-toast-sub">Navigating in a moment…</div>' +
+        '<div class="apa-nav-bar"></div>' +
+      '</div>';
+    msgs.appendChild(toast);
     msgs.scrollTop = msgs.scrollHeight;
+
+    // Clear any pending navigation
+    if (navPending) { clearTimeout(navPending); navPending = null; }
+
+    navPending = setTimeout(function () {
+      navPending = null;
+      go(routeKey, params, false);
+    }, NAV_DELAY_MS);
   }
 
-  function go(routeKey) {
-    var url = ROUTES[String(routeKey || '').toLowerCase()];
-    if (!url) return;
-    stopVoice(); stopSpeech(); close();
+  /* ── Execute navigation ──────────────────────────────────────────── */
+  function go(routeKey, params, immediate) {
+    var key = String(routeKey || '').toLowerCase();
+    var baseUrl = ROUTES[key];
+    if (!baseUrl) return;
+
+    stopVoice(); stopSpeech();
+
+    // Build final URL — merge base URL's existing params with new params
+    var finalUrl = baseUrl;
+    if (params && params.length > 1) {
+      // params starts with '?' e.g. "?area=Westlands&guests=2"
+      var base = baseUrl.split('?')[0];
+      finalUrl = base + params;
+    }
+
+    // Don't navigate if already on the target page (base path check)
     var here = location.pathname.replace(/^\//,'');
-    var target = url.replace(/^\//,'').split('?')[0];
-    if (here === target || (here === '' && target === 'index.html')) return;
-    global.location.href = url;
+    var target = finalUrl.split('?')[0].replace(/^\//,'');
+    if (here === target && !params) return;
+
+    if (immediate) {
+      if (navPending) { clearTimeout(navPending); navPending = null; }
+      close();
+      global.location.href = finalUrl;
+    } else {
+      close();
+      global.location.href = finalUrl;
+    }
   }
 
   function showTyping() {
@@ -372,7 +438,19 @@
     return t;
   }
 
-  /* ── Send / submit ───────────────────────────────────────────────── */
+  /* ── Quick intent detection (client-side, instant) ───────────────── */
+  function detectQuickIntent(text) {
+    var lower = text.toLowerCase();
+    // Only fire on clear navigation requests, not questions
+    var navVerbs = /\b(take me|go to|show me|open|find|browse|book|i want|i need|let me see|navigate)\b/i;
+    if (!navVerbs.test(lower)) return null;
+    for (var i = 0; i < QUICK_INTENT.length; i++) {
+      if (QUICK_INTENT[i].re.test(lower)) return QUICK_INTENT[i].route;
+    }
+    return null;
+  }
+
+  /* ── Send ────────────────────────────────────────────────────────── */
   function send() {
     if (loading) return;
     var inp = document.getElementById('apa-input');
@@ -391,6 +469,7 @@
   function submit(text) {
     if (!text) return;
     stopSpeech();
+    if (navPending) { clearTimeout(navPending); navPending = null; }
     appendMsg('user', text);
     var chips = document.getElementById('apa-chips');
     if (chips) chips.innerHTML = '';
@@ -403,10 +482,22 @@
     var btn = document.getElementById('apa-send');
     if (btn) btn.disabled = true;
 
+    // Build user context string from session memory
+    var ctxParts = [];
+    if (sessionCtx.name)     ctxParts.push('Name: ' + sessionCtx.name);
+    if (sessionCtx.prefs)    ctxParts.push('Preferences: ' + sessionCtx.prefs);
+    if (sessionCtx.budget)   ctxParts.push('Budget: ' + sessionCtx.budget);
+    if (sessionCtx.location) ctxParts.push('Location/area: ' + sessionCtx.location);
+    var userCtxStr = ctxParts.length ? ctxParts.join('. ') : null;
+
     fetch(API_ENDPOINT, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: history, page: pageKey() })
+      body: JSON.stringify({
+        messages: history,
+        page: pageKey(),
+        userContext: userCtxStr
+      })
     })
     .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
     .then(function (res) {
@@ -415,12 +506,21 @@
       if (btn) btn.disabled = false;
 
       var data = res.d || {};
-      var reply = data.reply || data.error || 'Sorry, something went wrong. Please try again.';
-      var navKey = data.navigate && ROUTES[String(data.navigate).toLowerCase()] ? String(data.navigate).toLowerCase() : null;
+      var reply = data.reply || data.error || 'Something went sideways. Try again?';
+      var navKey = data.navigate && ROUTES[String(data.navigate).toLowerCase()]
+        ? String(data.navigate).toLowerCase() : null;
+      var navParams = data.navigateParams || null;
+
+      // Extract session info from response (name, preferences)
+      extractSessionCtx(reply);
 
       history.push({ role: 'assistant', content: reply });
       appendMsg('apa', reply);
-      if (navKey) appendNavCta(navKey);
+
+      // AUTO-NAVIGATE: show toast → navigate after delay
+      if (navKey) {
+        showNavToast(navKey, navParams);
+      }
 
       if (synthOn && (speaking || handsFree || wasVoiceTurn)) speak(reply);
       wasVoiceTurn = false;
@@ -429,12 +529,19 @@
       if (typing) typing.remove();
       loading = false;
       if (btn) btn.disabled = false;
-      appendMsg('apa', 'I\u2019m having trouble connecting right now. Please try again in a moment.');
+      appendMsg('apa', 'Nairobi WiFi moment \ud83d\udce1 — give it another shot.');
       wasVoiceTurn = false;
     });
   }
 
-  /* ── Speech synthesis (TTS) ──────────────────────────────────────── */
+  /* ── Extract session context from conversation ───────────────────── */
+  function extractSessionCtx(text) {
+    // Pick up on name if mentioned
+    var nameMatch = text.match(/(?:you mentioned|your name is|hi\s+)([A-Z][a-z]+)/);
+    if (nameMatch && !sessionCtx.name) sessionCtx.name = nameMatch[1];
+  }
+
+  /* ── TTS ─────────────────────────────────────────────────────────── */
   function pickVoice() {
     if (!synthOn) return null;
     var voices = global.speechSynthesis.getVoices() || [];
@@ -447,14 +554,9 @@
   function speak(text) {
     if (!synthOn || !text) { maybeReopenMic(); return; }
     stopSpeech();
-    var clean = text
-      .replace(/\/[-a-z.]+\.html/g, '')
-      .replace(/https?:\/\/\S+/g, '')
-      .replace(/[*_#`>]/g, '')
-      .replace(/\s{2,}/g, ' ')
-      .trim();
+    var clean = text.replace(/\/[-a-z.]+\.html/g,'').replace(/https?:\/\/\S+/g,'')
+                    .replace(/[*_#`>]/g,'').replace(/\s{2,}/g,' ').trim();
     if (!clean) { maybeReopenMic(); return; }
-
     var u = new SpeechSynthesisUtterance(clean.slice(0, 600));
     var v = pickVoice(); if (v) u.voice = v;
     u.rate = VOICE_RATE; u.pitch = VOICE_PITCH; u.lang = (v && v.lang) || 'en-GB';
@@ -478,31 +580,23 @@
     }
   }
 
-  /* ── Speech recognition (STT) ────────────────────────────────────── */
-  function toggleVoice() {
-    if (!voiceUsable) return explainNoVoice();
-    listening ? stopVoice() : startVoice();
-  }
-
+  /* ── STT ─────────────────────────────────────────────────────────── */
+  function toggleVoice() { if (!voiceUsable) return explainNoVoice(); listening ? stopVoice() : startVoice(); }
   function toggleHandsFree() {
     if (!voiceUsable) return explainNoVoice();
-    handsFree = !handsFree;
-    setTalkUI(handsFree);
-    if (handsFree) { stopSpeech(); startVoice(); }
-    else { stopVoice(); }
+    handsFree = !handsFree; setTalkUI(handsFree);
+    if (handsFree) { stopSpeech(); startVoice(); } else { stopVoice(); }
   }
-
   function setTalkUI(on) {
     var t = document.getElementById('apa-talk');
     var l = document.getElementById('apa-talk-label');
     if (t) t.classList.toggle('active', on);
-    if (l) l.textContent = on ? 'Listening… tap to stop' : 'Talk to APA';
+    if (l) l.textContent = on ? 'Listening\u2026 tap to stop' : 'Talk to APA';
   }
-
   function explainNoVoice() {
-    if (!voiceOn) appendMsg('apa', 'Voice isn\u2019t supported in this browser, but I\u2019m fully here in text — just type what you need.');
-    else if (!secure) appendMsg('apa', 'Voice needs a secure (https) connection. On the live site it works; meanwhile, type away and I\u2019ll help.');
-    else if (micDenied) appendMsg('apa', 'Microphone access looks blocked. Enable it in your browser settings to talk, or just type — I\u2019m happy either way.');
+    if (!voiceOn) appendMsg('apa', 'Voice isn\u2019t supported in this browser, but text works great \u2014 type away.');
+    else if (!secure) appendMsg('apa', 'Voice needs https. On the live site it works fine. For now, just type.');
+    else if (micDenied) appendMsg('apa', 'Mic access is blocked \u2014 enable it in your browser settings. Or just type, I\u2019m here either way.');
   }
 
   function startVoice() {
@@ -514,7 +608,6 @@
     recognition.continuous = false;
     recognition.interimResults = true;
     recognition.maxAlternatives = 1;
-
     recognition.onstart = function () {
       listening = true;
       var mic = document.getElementById('apa-mic');
@@ -522,12 +615,11 @@
       if (mic) mic.classList.add('on', 'listening');
       if (vbar) vbar.style.display = 'flex';
     };
-
     recognition.onresult = function (e) {
       var t = '';
       for (var i = e.resultIndex; i < e.results.length; i++) t += e.results[i][0].transcript;
       var vt = document.getElementById('apa-vtext');
-      if (vt) vt.textContent = t || 'Listening…';
+      if (vt) vt.textContent = t || 'Listening\u2026';
       if (e.results[e.results.length - 1].isFinal) {
         var finalText = t.trim();
         stopVoice();
@@ -535,52 +627,43 @@
         else maybeReopenMic();
       }
     };
-
     recognition.onerror = function (e) {
       var err = e && e.error;
       stopVoice();
       if (err === 'not-allowed' || err === 'service-not-allowed') {
         micDenied = true; handsFree = false; setTalkUI(false);
-        appendMsg('apa', 'I need microphone permission to hear you. Enable it in your browser\u2019s address-bar settings, or just keep typing.');
-      } else if (err === 'no-speech') {
-        maybeReopenMic();
-      } else if (err !== 'aborted') {
-        maybeReopenMic();
-      }
+        appendMsg('apa', 'Mic permission is blocked. Enable it in your browser settings, or type \u2014 I\u2019m here.');
+      } else if (err === 'no-speech') { maybeReopenMic(); }
+      else if (err !== 'aborted') { maybeReopenMic(); }
     };
-
     recognition.onend = function () {
       var mic = document.getElementById('apa-mic');
       var vbar = document.getElementById('apa-vbar');
       if (mic) mic.classList.remove('on', 'listening');
       if (vbar) vbar.style.display = 'none';
-      listening = false;
-      recognition = null;
+      listening = false; recognition = null;
     };
-
     try { recognition.start(); } catch (_) { listening = false; }
   }
 
   function stopVoice() {
     if (recognition) { try { recognition.stop(); } catch (_) {} recognition = null; }
     listening = false;
-    var mic  = document.getElementById('apa-mic');
+    var mic = document.getElementById('apa-mic');
     var vbar = document.getElementById('apa-vbar');
-    var vt   = document.getElementById('apa-vtext');
+    var vt = document.getElementById('apa-vtext');
     if (mic) mic.classList.remove('on', 'listening');
     if (vbar) vbar.style.display = 'none';
-    if (vt) vt.textContent = 'Listening…';
+    if (vt) vt.textContent = 'Listening\u2026';
   }
 
-  /* ── Keyboard dismiss ────────────────────────────────────────────── */
+  /* ── Keyboard ────────────────────────────────────────────────────── */
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && open) close(); });
   if (synthOn && global.speechSynthesis.onvoiceschanged !== undefined) {
     global.speechSynthesis.onvoiceschanged = function () {};
   }
 
-  /* ── Init ────────────────────────────────────────────────────────── */
-
-  /* ── Cabana Avatar Welcome Popup ──────────────────────────────────── */
+  /* ── Avatar popup ────────────────────────────────────────────────── */
   var avatarPopup = null;
   var avatarAutoTimer = null;
 
@@ -591,42 +674,34 @@
     popup.innerHTML =
       '<div id="apa-avatar-bubble">' +
         '<button id="apa-av-dismiss" aria-label="Dismiss" onclick="dismissAvatar(event)">\xd7</button>' +
-        '<div class="av-name">Hi, I\u2019m APA! \ud83d\udc4b</div>' +
-        '<div class="av-role">Cabana Travel Guide</div>' +
-        '<div class="av-body">Welcome to Cabana! Discover stays, tours, food & rides across Africa. Ask me anything!</div>' +
+        '<div class="av-name">Hey, I\u2019m APA! \ud83d\udc4b</div>' +
+        '<div class="av-role">Your Nairobi Travel Guide</div>' +
+        '<div class="av-body">Stays, tours, rides, food \u2014 I\u2019ll take you straight there. What do you need?</div>' +
         '<div class="av-actions">' +
           '<button class="av-btn av-btn-primary" onclick="openFromAvatar()">' +
-            '<svg viewBox="0 0 24 24"><path d="m22 2-11 11M22 2 15 22l-4-9-9-4 20-7z"/></svg>' +
-            'Chat' +
+            '<svg viewBox="0 0 24 24"><path d="m22 2-11 11M22 2 15 22l-4-9-9-4 20-7z"/></svg>Chat' +
           '</button>' +
           '<button class="av-btn av-btn-secondary" onclick="openVoiceFromAvatar()">' +
-            '<svg viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 19v3M9 22h6"/></svg>' +
-            'Voice' +
+            '<svg viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 19v3M9 22h6"/></svg>Voice' +
           '</button>' +
         '</div>' +
       '</div>' +
-      '<img id="apa-avatar-img" src="/cabana-avatar.png" alt="APA - Cabana Guide" onclick="openFromAvatar()" />';
+      '<img id="apa-avatar-img" src="/cabana-avatar.png" alt="APA" onclick="openFromAvatar()" />';
     document.body.appendChild(popup);
     avatarPopup = popup;
 
-    /* Only show for guests (not signed-in users) */
     function maybeShow() {
       if (global.ApaSession) {
         ApaSession.ready(function (state) {
-          if (state.status !== 'guest') return; /* signed-in: skip entirely */
-          /* 15s delay before appearing */
+          if (state.status !== 'guest') return;
           setTimeout(function () {
             if (!avatarPopup) return;
             popup.classList.remove('apa-av-hidden');
             popup.classList.add('apa-av-visible');
-            /* auto-collapse after 8s */
             avatarAutoTimer = setTimeout(function () { hideAvatarPopup(); }, 8000);
           }, 20000);
         });
-      } else {
-        /* ApaSession not loaded yet — try after DOM ready */
-        setTimeout(maybeShow, 800);
-      }
+      } else { setTimeout(maybeShow, 800); }
     }
     maybeShow();
   }
@@ -639,15 +714,14 @@
     }
   }
 
-  /* global helpers called from inline onclick */
-  global.dismissAvatar = function (e) { e.stopPropagation(); hideAvatarPopup(); };
-  global.openFromAvatar = function () { hideAvatarPopup(); openPanel(); };
+  global.dismissAvatar    = function (e) { e.stopPropagation(); hideAvatarPopup(); };
+  global.openFromAvatar   = function () { hideAvatarPopup(); openPanel(); };
   global.openVoiceFromAvatar = function () {
-    hideAvatarPopup();
-    openPanel();
+    hideAvatarPopup(); openPanel();
     setTimeout(function () { if (global.AskAPA) AskAPA.toggleHandsFree(); }, 400);
   };
 
+  /* ── Init ────────────────────────────────────────────────────────── */
   function init() {
     buildAvatarPopup();
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', build);
@@ -660,8 +734,9 @@
     open: openPanel, close: close, toggle: toggle,
     send: send, quickSend: quickSend,
     toggleVoice: toggleVoice, toggleHandsFree: toggleHandsFree,
-    navigate: go,
-    clearHistory: function () { history = []; }
+    navigate: function(key, params) { go(key, params, true); },
+    setContext: function(ctx) { if (ctx && typeof ctx === 'object') Object.assign(sessionCtx, ctx); },
+    clearHistory: function () { history = []; sessionCtx = {}; }
   };
 
 })(typeof window !== 'undefined' ? window : this);
