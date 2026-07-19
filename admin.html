@@ -431,6 +431,14 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.4 7.8 8 10 4.6-2.2 8-5 8-10V6z"/><path d="m9 12 2 2 4-4"/></svg>
           Services & listings <span class="nav-b calm" id="b-god">—</span>
         </div>
+        <div class="nav-i" data-sec="lazy" onclick="go('lazy',this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          Lazy requests <span class="nav-b warn" id="b-lazy">0</span>
+        </div>
+        <div class="nav-i" data-sec="impersonate" onclick="go('impersonate',this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M21 21v-2a4 4 0 0 0-3-3.87"/></svg>
+          Account access <span class="nav-b" style="background:rgba(255,77,109,.15);color:#FF4D6D">admin</span>
+        </div>
       </div>
 
       <div class="nav-grp">
@@ -778,6 +786,55 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
         </div>
         <div id="gm-msg" style="margin-top:10px;font-size:12.5px"></div>
       </div>
+
+      <!-- ─── LAZY REQUESTS ─── -->
+      <section class="sec" id="s-lazy">
+        <div class="hd">
+          <div>
+            <h1>Lazy <em>requests</em></h1>
+            <p>Partners who couldn't be bothered to list themselves. Our job now. Contact them, collect details, build the listing on their behalf from the admin godmode panel.</p>
+          </div>
+          <div class="hd-act">
+            <button class="btn btn-g btn-sm" onclick="lazyExport()">Export</button>
+          </div>
+        </div>
+        <div class="grid g4" id="lazy-stats" style="margin-bottom:16px"></div>
+        <div class="tabs" style="margin-top:8px">
+          <button class="tab on" onclick="lazyFilter('pending',this)">Pending</button>
+          <button class="tab" onclick="lazyFilter('contacted',this)">Contacted</button>
+          <button class="tab" onclick="lazyFilter('listed',this)">Listed ✓</button>
+          <button class="tab" onclick="lazyFilter('all',this)">All</button>
+        </div>
+        <div class="tw"><table>
+          <thead><tr><th>Name</th><th>WhatsApp</th><th>Listing type</th><th>Notes</th><th>Submitted</th><th class="num">Status</th><th class="num">Actions</th></tr></thead>
+          <tbody id="lazy-rows"><tr><td colspan="7" style="padding:20px;color:var(--ink-4)">Loading…</td></tr></tbody>
+        </table></div>
+      </section>
+
+      <!-- ─── ACCOUNT ACCESS / IMPERSONATE ─── -->
+      <section class="sec" id="s-impersonate">
+        <div class="hd">
+          <div>
+            <h1>Account <em>access</em></h1>
+            <p>Search any user by email or phone. View their account as they see it, edit their listings, or act on their behalf — useful when a lazy partner has sent you their details and you're setting up their listing for them.</p>
+          </div>
+        </div>
+        <div class="card" style="margin-bottom:20px">
+          <div class="card-hd"><div class="card-t">Find a user account</div><div class="card-s">Enter email address or phone number to look up any registered user.</div></div>
+          <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">
+            <input class="inp" id="imp-search" type="text" placeholder="Email or phone (e.g. wanjiru@gmail.com or +254712…)" style="flex:1;min-width:220px"/>
+            <button class="btn btn-p" onclick="impSearch()">Look up</button>
+          </div>
+          <div id="imp-result" style="margin-top:16px"></div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><div class="card-t">Recent account lookups</div><div class="card-s">Audit trail of admin account access. Every lookup is logged.</div></div>
+          <div class="tw" style="margin-top:12px"><table>
+            <thead><tr><th>User</th><th>Email</th><th>Looked up by</th><th>When</th><th class="num">Action taken</th></tr></thead>
+            <tbody id="imp-log-rows"><tr><td colspan="5" style="padding:16px;color:var(--ink-4)">No recent lookups.</td></tr></tbody>
+          </table></div>
+        </div>
+      </section>
 
       <!-- ─── BOOKINGS ─── -->
       <section class="sec" id="s-bookings">
@@ -1358,6 +1415,8 @@ function go(sec, el){
   if(sec==='agents') loadAgents();
   if(sec==='splash') loadSplash();
   if(sec==='godmode') gmRenderAll();
+  if(sec==='lazy') lazyLoad('pending');
+  if(sec==='impersonate') impLogLoad();
 }
 function setRange(d, el){
   RANGE = d;
@@ -3182,6 +3241,155 @@ function gmMsg(txt, kind){
   s.textContent = '.gm-lbl{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--ink-3);margin-bottom:13px}';
   document.head.appendChild(s);
 })();
+
+// ─── LAZY REQUESTS ───
+const LAZY_STATUSES = {pending:'warn',contacted:'calm',listed:'good'};
+let lazyCurrentFilter = 'pending';
+
+async function lazyLoad(status='pending') {
+  lazyCurrentFilter = status;
+  const rows = $('lazy-rows');
+  if(rows) rows.innerHTML = '<tr><td colspan="7" style="padding:20px;color:var(--ink-4)">Loading…</td></tr>';
+  try {
+    let url = `${SB}/rest/v1/lazy_requests?order=created_at.desc`;
+    if(status !== 'all') url += `&status=eq.${status}`;
+    const res = await fetch(url, {headers:{...H,'Range':'0-99'}});
+    const data = await res.json();
+    renderLazyRows(data);
+    updateLazyBadge(data.length);
+  } catch(e) {
+    if(rows) rows.innerHTML = `<tr><td colspan="7" style="padding:20px;color:var(--bad)">Error loading requests.</td></tr>`;
+  }
+}
+
+function renderLazyRows(items) {
+  const rows = $('lazy-rows');
+  if(!rows) return;
+  if(!items||!items.length){ rows.innerHTML='<tr><td colspan="7" style="padding:20px;color:var(--ink-4)">No requests here yet.</td></tr>'; return; }
+  rows.innerHTML = items.map(r => `
+    <tr>
+      <td><strong>${esc(r.name||'—')}</strong></td>
+      <td><a href="https://wa.me/${esc(r.phone?.replace('+',''))}" target="_blank" style="color:var(--good);font-weight:600">${esc(r.phone||'—')}</a></td>
+      <td>${esc(r.listing_type||'Not specified')}</td>
+      <td style="max-width:200px;white-space:normal;font-size:12px;color:var(--ink-3)">${esc(r.notes||'—')}</td>
+      <td style="font-size:12px;color:var(--ink-4)">${r.created_at?new Date(r.created_at).toLocaleDateString('en-KE',{day:'numeric',month:'short'}):'—'}</td>
+      <td class="num"><span class="nav-b ${LAZY_STATUSES[r.status]||'calm'}" style="font-size:11px">${esc(r.status||'pending')}</span></td>
+      <td class="num" style="white-space:nowrap">
+        <button class="btn btn-g btn-sm" onclick="lazySetStatus('${r.id}','contacted')" title="Mark contacted">📞</button>
+        <button class="btn btn-p btn-sm" onclick="lazySetStatus('${r.id}','listed')" title="Mark listed">✓ Done</button>
+        <button class="btn btn-d btn-sm" onclick="lazyDelete('${r.id}')" title="Delete">✕</button>
+      </td>
+    </tr>`).join('');
+}
+
+async function lazySetStatus(id, status) {
+  await fetch(`${SB}/rest/v1/lazy_requests?id=eq.${id}`, {method:'PATCH',headers:{...H,'Prefer':'return=minimal'},body:JSON.stringify({status})});
+  lazyLoad(lazyCurrentFilter);
+}
+
+async function lazyDelete(id) {
+  if(!confirm('Delete this request?')) return;
+  await fetch(`${SB}/rest/v1/lazy_requests?id=eq.${id}`, {method:'DELETE',headers:{...H}});
+  lazyLoad(lazyCurrentFilter);
+}
+
+function lazyFilter(status, el) {
+  document.querySelectorAll('#s-lazy .tab').forEach(t=>t.classList.remove('on'));
+  if(el) el.classList.add('on');
+  lazyLoad(status);
+}
+
+function updateLazyBadge(n) {
+  const b = $('b-lazy');
+  if(b) b.textContent = n||0;
+}
+
+function lazyExport() {
+  fetch(`${SB}/rest/v1/lazy_requests?order=created_at.desc`,{headers:{...H,'Range':'0-999'}})
+    .then(r=>r.json()).then(data=>{
+      const csv = ['Name,WhatsApp,Type,Notes,Status,Submitted',...data.map(r=>[r.name,r.phone,r.listing_type,r.notes,r.status,r.created_at].map(v=>`"${(v||'').replace(/"/g,'""')}"`).join(','))].join('\n');
+      const a=document.createElement('a');a.href='data:text/csv,'+encodeURIComponent(csv);a.download='lazy-requests.csv';a.click();
+    });
+}
+
+// ─── ACCOUNT ACCESS / IMPERSONATE ───
+async function impSearch() {
+  const q = $('imp-search')?.value?.trim();
+  if(!q){ alert('Enter an email or phone'); return; }
+  const res = $('imp-result');
+  if(res) res.innerHTML = '<div style="color:var(--ink-4);font-size:13px">Searching…</div>';
+  try {
+    const emailQ = `${SB}/rest/v1/profiles?or=(email.ilike.*${encodeURIComponent(q)}*,phone.ilike.*${encodeURIComponent(q)}*)&limit=10`;
+    const r = await fetch(emailQ, {headers:{...H}});
+    const data = await r.json();
+    if(!data||!data.length){ if(res) res.innerHTML='<div style="color:var(--ink-4);font-size:13px;padding:12px 0">No user found with that email or phone.</div>'; return; }
+    if(res) res.innerHTML = data.map(u=>`
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:var(--panel-2);border-radius:10px;margin-bottom:8px;border:1px solid var(--line)">
+        <div>
+          <div style="font-weight:700;font-size:14px;color:var(--ink)">${esc(u.full_name||u.name||'Unknown')}</div>
+          <div style="font-size:12px;color:var(--ink-3);margin-top:2px">${esc(u.email||'—')} · ${esc(u.phone||'—')}</div>
+          <div style="font-size:11px;color:var(--ink-4);margin-top:3px">ID: ${esc(u.id||u.user_id||'—')} · Joined ${u.created_at?new Date(u.created_at).toLocaleDateString('en-KE',{month:'short',year:'numeric'}):'unknown'}</div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-g btn-sm" onclick="impViewListings('${u.id||u.user_id}','${esc(u.full_name||u.name||'User')}')" title="View their listings">View listings</button>
+          <button class="btn btn-p btn-sm" onclick="impAddListing('${u.id||u.user_id}','${esc(u.full_name||u.name||'User')}')" title="Add listing on their behalf">Add listing for them</button>
+        </div>
+      </div>`).join('');
+    impLogEntry(q, data[0]);
+  } catch(e) {
+    if(res) res.innerHTML = '<div style="color:var(--bad);font-size:13px">Error looking up user. Check table permissions.</div>';
+  }
+}
+
+function impViewListings(userId, name) {
+  go('godmode', document.querySelector('[data-sec="godmode"]'));
+  setTimeout(()=>{ 
+    const fi = document.querySelector('#gm-all-rows');
+    if(fi) fi.closest('section').scrollIntoView({behavior:'smooth'});
+    notify(`Showing listings for ${name} — filter by partner in the table below`,'calm');
+  },300);
+}
+
+function impAddListing(userId, name) {
+  go('godmode', document.querySelector('[data-sec="godmode"]'));
+  setTimeout(()=>{ 
+    gmOpenAdd();
+    notify(`Adding listing on behalf of ${name}. Fill in their details.`,'warn');
+  },300);
+}
+
+function impLogLoad() {
+  // Placeholder — log from localStorage for now
+  const log = JSON.parse(localStorage.getItem('imp_log')||'[]');
+  const rows = $('imp-log-rows');
+  if(!rows) return;
+  if(!log.length){ rows.innerHTML='<tr><td colspan="5" style="padding:16px;color:var(--ink-4)">No recent lookups.</td></tr>'; return; }
+  rows.innerHTML = log.slice(0,20).map(e=>`
+    <tr>
+      <td><strong>${esc(e.userName)}</strong></td>
+      <td style="font-size:12px;color:var(--ink-3)">${esc(e.query)}</td>
+      <td style="font-size:12px;color:var(--ink-3)">Admin</td>
+      <td style="font-size:12px;color:var(--ink-4)">${new Date(e.when).toLocaleString('en-KE',{dateStyle:'short',timeStyle:'short'})}</td>
+      <td class="num" style="font-size:12px;color:var(--ink-3)">Viewed</td>
+    </tr>`).join('');
+}
+
+function impLogEntry(query, user) {
+  const log = JSON.parse(localStorage.getItem('imp_log')||'[]');
+  log.unshift({query, userName: user?.full_name||user?.name||'Unknown', when: new Date().toISOString()});
+  localStorage.setItem('imp_log', JSON.stringify(log.slice(0,50)));
+  impLogLoad();
+}
+
+function notify(msg, type='calm') {
+  const n = document.createElement('div');
+  n.style.cssText = `position:fixed;top:72px;right:20px;z-index:999;padding:12px 18px;border-radius:10px;font-size:13px;font-weight:600;background:var(--panel-2);border:1px solid var(--line-2);color:var(--ink);box-shadow:0 8px 24px rgba(0,0,0,.3);max-width:300px`;
+  n.textContent = msg;
+  document.body.appendChild(n);
+  setTimeout(()=>n.remove(),3000);
+}
+
+function esc(s){ if(!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 </script>
 <script src="/cabana-rebrand.js" defer></script>

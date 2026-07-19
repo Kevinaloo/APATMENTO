@@ -305,6 +305,103 @@ body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webk
   </div>
 </section>
 
+<!-- TOO LAZY TO LIST -->
+<section class="section lazy-section">
+  <div class="container">
+    <div class="lazy-card">
+      <div class="lazy-badge">For the chronically busy</div>
+      <div class="lazy-inner">
+        <div class="lazy-left">
+          <div class="lazy-emoji">🛋️</div>
+          <h2 class="lazy-title">Oh, you're <em>still</em> here?</h2>
+          <p class="lazy-sub">So forms aren't your thing. Filling in descriptions sounds like work. Uploading photos requires finding them first. We get it — you're a busy entrepreneur, not a content creator.</p>
+          <p class="lazy-sub">Here's a wild idea: <strong>just tell us your WhatsApp number.</strong> Our team will do the whole listing for you — photos, description, pricing, the works. You'll get a notification when you're live and can start receiving bookings.</p>
+          <p class="lazy-sub" style="font-size:13px;color:var(--ink-faint);">Yes, this is a real thing we do. Yes, it's free. No, there's no catch. We just really, really want you on the platform.</p>
+        </div>
+        <div class="lazy-right">
+          <div class="lazy-form-wrap">
+            <div class="lazy-form-title">
+              <span>🙋</span> Sure, do it for me
+            </div>
+            <p class="lazy-form-sub">Drop your WhatsApp below. We'll reach out, grab the details and get you live. You do nothing except answer our messages — which, honestly, feels manageable.</p>
+            <div class="lf-field">
+              <label class="lf-label">Your name <span class="lf-req">*</span></label>
+              <input class="lf-inp" id="lazy-name" type="text" placeholder="e.g. Wanjiru, David, whoever you are"/>
+            </div>
+            <div class="lf-field">
+              <label class="lf-label">WhatsApp number <span class="lf-req">*</span></label>
+              <div class="lf-phone-wrap">
+                <span class="lf-flag">🇰🇪 +254</span>
+                <input class="lf-inp lf-phone" id="lazy-phone" type="tel" placeholder="7XX XXX XXX"/>
+              </div>
+            </div>
+            <div class="lf-field">
+              <label class="lf-label">What are you listing?</label>
+              <select class="lf-inp lf-sel" id="lazy-type">
+                <option value="">— Pick one (or guess, we won't judge) —</option>
+                <option value="apartment">Apartment / Stay</option>
+                <option value="tour">Tour / Safari</option>
+                <option value="car">Car Hire</option>
+                <option value="event">Event / Ticket</option>
+                <option value="room">Room / Flatmate</option>
+                <option value="food">Restaurant / Food</option>
+                <option value="other">Something else entirely</option>
+              </select>
+            </div>
+            <div class="lf-field">
+              <label class="lf-label">Anything else we should know?</label>
+              <textarea class="lf-inp lf-ta" id="lazy-notes" placeholder="e.g. '2-bedroom in Kilimani, already on Airbnb' or 'I have no idea what I'm doing but I have a safari vehicle'" rows="3"></textarea>
+            </div>
+            <button class="lf-btn" onclick="submitLazyRequest()">
+              <span id="lazy-btn-text">📨 Yes please, sort me out</span>
+            </button>
+            <div id="lazy-msg" class="lazy-msg" style="display:none"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+.lazy-section{background:linear-gradient(160deg,#F4F0FF,#EFF9F7);}
+.lazy-card{border-radius:28px;overflow:hidden;border:1px solid rgba(123,47,247,.15);background:#fff;box-shadow:0 32px 80px rgba(123,47,247,.08);}
+.lazy-badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ember);background:rgba(255,107,44,.1);border:1px solid rgba(255,107,44,.2);padding:8px 20px;border-radius:0 0 16px 0;}
+.lazy-inner{display:grid;grid-template-columns:1fr 1fr;gap:0;align-items:stretch;}
+.lazy-left{padding:48px 48px 48px 48px;}
+.lazy-emoji{font-size:52px;margin-bottom:20px;line-height:1;}
+.lazy-title{font-family:var(--font-display);font-size:clamp(28px,3.5vw,42px);font-weight:700;letter-spacing:-.03em;color:var(--ink-2);margin-bottom:16px;line-height:1.1;}
+.lazy-title em{font-style:italic;color:var(--violet);}
+.lazy-sub{font-size:15px;color:var(--ink-soft);line-height:1.7;margin-bottom:14px;}
+.lazy-right{background:linear-gradient(160deg,rgba(123,47,247,.05),rgba(45,212,191,.04));border-left:1px solid rgba(123,47,247,.1);padding:40px 40px;}
+.lazy-form-wrap{}
+.lazy-form-title{font-family:var(--font-display);font-size:20px;font-weight:700;color:var(--ink-2);margin-bottom:10px;display:flex;align-items:center;gap:10px;}
+.lazy-form-sub{font-size:13px;color:var(--ink-soft);line-height:1.65;margin-bottom:24px;}
+.lf-field{margin-bottom:16px;}
+.lf-label{display:block;font-size:12px;font-weight:700;color:var(--ink-soft);margin-bottom:6px;letter-spacing:.02em;}
+.lf-req{color:var(--ember);}
+.lf-inp{width:100%;padding:11px 14px;border-radius:10px;border:1.5px solid var(--line-2);font-family:var(--font-body);font-size:14px;color:var(--ink);background:#fff;outline:none;transition:border-color .2s;}
+.lf-inp:focus{border-color:var(--violet);}
+.lf-phone-wrap{display:flex;align-items:stretch;gap:0;border:1.5px solid var(--line-2);border-radius:10px;overflow:hidden;transition:border-color .2s;background:#fff;}
+.lf-phone-wrap:focus-within{border-color:var(--violet);}
+.lf-flag{padding:0 12px;background:var(--glass-2);font-size:13px;font-weight:600;color:var(--ink-soft);display:flex;align-items:center;border-right:1px solid var(--line-2);white-space:nowrap;}
+.lf-phone{border:none;border-radius:0;flex:1;padding:11px 12px;}
+.lf-phone:focus{border:none;outline:none;}
+.lf-sel{appearance:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238E90AD' stroke-width='2.5'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;}
+.lf-ta{resize:vertical;min-height:72px;}
+.lf-btn{width:100%;padding:14px 24px;border-radius:100px;background:linear-gradient(135deg,var(--violet),var(--electric));color:#fff;font-family:var(--font-body);font-weight:700;font-size:15px;border:none;cursor:pointer;margin-top:4px;transition:transform .2s,box-shadow .2s;box-shadow:0 8px 24px rgba(123,47,247,.3);}
+.lf-btn:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(123,47,247,.4);}
+.lf-btn:active{transform:translateY(0);}
+.lazy-msg{margin-top:12px;padding:12px 16px;border-radius:10px;font-size:13px;font-weight:600;line-height:1.5;}
+.lazy-msg.ok{background:rgba(45,212,191,.1);color:#0D9488;border:1px solid rgba(45,212,191,.3);}
+.lazy-msg.err{background:rgba(255,77,109,.08);color:#E11D48;border:1px solid rgba(255,77,109,.2);}
+@media(max-width:768px){
+  .lazy-inner{grid-template-columns:1fr;}
+  .lazy-left{padding:32px 24px 24px;}
+  .lazy-right{padding:28px 24px 36px;border-left:none;border-top:1px solid rgba(123,47,247,.1);}
+}
+</style>
+
 <!-- ZERO COMMISSION PROOF -->
 <section class="section proof-section">
   <div class="container">
@@ -470,6 +567,54 @@ body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webk
 </footer>
 
 <script>
+async function submitLazyRequest() {
+  const name = document.getElementById('lazy-name').value.trim();
+  const phone = document.getElementById('lazy-phone').value.trim().replace(/\s/g,'');
+  const type = document.getElementById('lazy-type').value;
+  const notes = document.getElementById('lazy-notes').value.trim();
+  const btn = document.getElementById('lazy-btn-text');
+  const msg = document.getElementById('lazy-msg');
+
+  if (!name) { showLazyMsg('Come on, at least tell us your name 🙄', 'err'); return; }
+  if (!phone || phone.length < 9) { showLazyMsg('That doesn\'t look like a valid number. Try again.', 'err'); return; }
+
+  btn.textContent = '⏳ Sending...';
+  document.querySelector('.lf-btn').disabled = true;
+  msg.style.display = 'none';
+
+  try {
+    const SUPABASE_URL = 'https://lkrpvtfqkijwxkfmuqin.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxrcnb2dGZxa2lqd3hrZm11cWluIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDMwNzAxNzUsImV4cCI6MjA1ODY0NjE3NX0.E8pvNv7IqHJPJVRO4jlVJlYHJgjORdmXCLHTATpUJco';
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/lazy_requests`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({ name, phone: `+254${phone.replace(/^0/,'')}`, listing_type: type || null, notes: notes || null, status: 'pending', source: 'become-partner' })
+    });
+    if (res.ok || res.status === 201) {
+      showLazyMsg('🎉 Done! We\'ll WhatsApp you shortly. Sit back, relax — you\'ve already done the hard part (finding this button).', 'ok');
+      ['lazy-name','lazy-phone','lazy-type','lazy-notes'].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
+      btn.textContent = '✓ Request sent!';
+    } else {
+      throw new Error('Non-ok response');
+    }
+  } catch(e) {
+    showLazyMsg('Something went wrong on our end. Just WhatsApp us directly — +254745802200', 'err');
+    btn.textContent = '📨 Yes please, sort me out';
+    document.querySelector('.lf-btn').disabled = false;
+  }
+}
+function showLazyMsg(text, type) {
+  const msg = document.getElementById('lazy-msg');
+  msg.textContent = text;
+  msg.className = `lazy-msg ${type}`;
+  msg.style.display = 'block';
+}
+
 function toggleFaq(btn) {
   const expanded = btn.getAttribute('aria-expanded') === 'true';
   document.querySelectorAll('.faq-q').forEach(b => {
