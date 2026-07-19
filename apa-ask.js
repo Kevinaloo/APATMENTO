@@ -602,6 +602,23 @@
   function startVoice() {
     if (listening || !voiceUsable) return;
     stopSpeech();
+
+    // Chrome ~126+ no longer shows the mic permission popup via recognition.start() alone.
+    // We must call getUserMedia first — that's what triggers the "Allow microphone" dialog.
+    // Once the user allows (or it's already allowed), we start recognition immediately.
+    (navigator.mediaDevices
+      ? navigator.mediaDevices.getUserMedia({ audio: true })
+      : Promise.resolve(null)
+    ).then(function(stream) {
+      if (stream) stream.getTracks().forEach(function(t) { t.stop(); }); // release stream, recognition manages its own
+      _startRecognitionNow();
+    }).catch(function() {
+      micDenied = true; handsFree = false; setTalkUI(false);
+      appendMsg('apa', 'Microphone access was blocked. Tap the lock icon in your browser address bar, allow Microphone, then try again.');
+    });
+  }
+
+  function _startRecognitionNow() {
     var SR = global.SpeechRecognition || global.webkitSpeechRecognition;
     try { recognition = new SR(); } catch (_) { explainNoVoice(); return; }
     recognition.lang = 'en-KE';
