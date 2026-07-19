@@ -474,6 +474,21 @@ section[id],div[id^='services'],div[id^='how']{scroll-margin-top:84px;}
 .svc-tile-arrow{position:absolute;top:28px;right:28px;color:var(--tile-color);opacity:0;transform:translate(-6px,6px);transition:all .35s;}
 .svc-tile:hover .svc-tile-arrow{opacity:1;transform:none;}
 
+/* ── Live preview strip inside service tiles ── */
+.svc-live{margin-top:14px;border-radius:12px;overflow:hidden;position:relative;height:100px;background:rgba(0,0,0,.05);}
+.svc-live-inner{display:flex;height:100%;transition:transform .6s cubic-bezier(.22,1,.36,1);}
+.svc-live-frame{flex:0 0 100%;height:100%;position:relative;}
+.svc-live-frame img{width:100%;height:100%;object-fit:cover;display:block;}
+.svc-live-caption{position:absolute;bottom:0;left:0;right:0;padding:6px 9px;background:linear-gradient(to top,rgba(8,8,20,.75),transparent);color:#fff;}
+.svc-live-title{font-size:10px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.svc-live-sub{font-size:9.5px;opacity:.8;}
+.svc-live-pips{position:absolute;top:7px;right:8px;display:flex;gap:3px;}
+.svc-live-pip{width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,.38);transition:all .35s;}
+.svc-live-pip.on{width:14px;border-radius:2px;background:#fff;}
+.svc-live-count{display:inline-flex;align-items:center;gap:5px;margin-top:9px;font-size:10.5px;font-weight:600;color:var(--tile-color);background:rgba(0,0,0,.04);padding:3px 9px;border-radius:100px;border:1px solid rgba(0,0,0,.07);}
+.svc-live-dot{width:5px;height:5px;border-radius:50%;background:currentColor;animation:liveDot 2s ease infinite;}
+@keyframes liveDot{0%,100%{opacity:1;}50%{opacity:.25;}}
+
 /* ══════════ HOW IT WORKS ══════════ */
 .how{padding:90px 40px;background:var(--glass-2);}
 
@@ -1104,6 +1119,8 @@ body.intro-lock{overflow:hidden;height:100vh;}
         <div class="svc-tile-ico"><img src="icon-stays.png" alt="Spaces" width="216" height="216" loading="lazy" decoding="async"/></div>
         <div class="svc-tile-name">Spaces</div>
         <div class="svc-tile-desc">Short-stay apartments, vetted and ready</div>
+        <div class="svc-live" id="svl-stays"><div class="svc-live-inner" id="svl-stays-track"></div><div class="svc-live-pips" id="svl-stays-pips"></div></div>
+        <div id="svl-stays-count"></div>
         <div class="svc-tile-arrow"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M7 7h10v10"/></svg></div>
       </a>
       <a href="flights.html" class="svc-tile" style="--tile-grad:linear-gradient(135deg,#4361FF,#B8A4F4);--tile-color:#4361FF;" data-i="1">
@@ -1116,12 +1133,16 @@ body.intro-lock{overflow:hidden;height:100vh;}
         <div class="svc-tile-ico"><img src="icon-tours.png" alt="Tours &amp; Safaris" width="216" height="216" loading="lazy" decoding="async"/></div>
         <div class="svc-tile-name">Tours & Safaris</div>
         <div class="svc-tile-desc">Day trips and unforgettable experiences</div>
+        <div class="svc-live" id="svl-tours"><div class="svc-live-inner" id="svl-tours-track"></div><div class="svc-live-pips" id="svl-tours-pips"></div></div>
+        <div id="svl-tours-count"></div>
         <div class="svc-tile-arrow"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M7 7h10v10"/></svg></div>
       </a>
       <a href="events.html" class="svc-tile" style="--tile-grad:linear-gradient(135deg,#7B2FF7,#B8A4F4);--tile-color:#7B2FF7;" data-i="3">
         <div class="svc-tile-ico"><img src="icon-events.png" alt="Events" width="216" height="216" loading="lazy" decoding="async"/></div>
         <div class="svc-tile-name">Events</div>
         <div class="svc-tile-desc">Concerts, festivals — face value tickets</div>
+        <div class="svc-live" id="svl-events"><div class="svc-live-inner" id="svl-events-track"></div><div class="svc-live-pips" id="svl-events-pips"></div></div>
+        <div id="svl-events-count"></div>
         <div class="svc-tile-arrow"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M7 7h10v10"/></svg></div>
       </a>
       <a href="rides.html" class="svc-tile" style="--tile-grad:linear-gradient(135deg,#FFB59E,#FF6B2C);--tile-color:#FF6B2C;" data-i="4">
@@ -1670,6 +1691,125 @@ document.querySelectorAll('.svc-tile').forEach((t,i)=>{t.style.transitionDelay=(
     showChromiumWaitingModal(false);
   });
 
+})();
+</script>
+
+<script>
+/* ═══════════════════════════════════════════════════════
+   LIVE SERVICE PREVIEWS — real data from Supabase
+   Photo slideshows inside Stays / Tours / Events tiles
+═══════════════════════════════════════════════════════ */
+(function(){
+  const SUPA = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
+  const KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
+  const H    = { apikey: KEY, Authorization: 'Bearer ' + KEY };
+
+  function buildStrip(trackEl, pipsEl, items, countEl, label) {
+    if (!trackEl || !items.length) return;
+    const show = items.slice(0, 5);
+
+    trackEl.innerHTML = show.map(it => `
+      <div class="svc-live-frame">
+        <img src="${it.img}" alt="${it.title}" loading="lazy" decoding="async"
+             onerror="this.style.display='none'">
+        <div class="svc-live-caption">
+          <div class="svc-live-title">${it.title}</div>
+          <div class="svc-live-sub">${it.sub}</div>
+        </div>
+      </div>`).join('');
+
+    if (pipsEl) pipsEl.innerHTML = show.map((_, i) =>
+      `<div class="svc-live-pip${i===0?' on':''}"></div>`).join('');
+
+    if (countEl && items.length > 0)
+      countEl.innerHTML = `<span class="svc-live-count"><span class="svc-live-dot"></span>${items.length} ${label} available</span>`;
+
+    const pips = pipsEl ? [...pipsEl.querySelectorAll('.svc-live-pip')] : [];
+    let cur = 0;
+    function go(i) {
+      cur = (i + show.length) % show.length;
+      trackEl.style.transform = `translateX(-${cur * 100}%)`;
+      pips.forEach((p, j) => p.classList.toggle('on', j === cur));
+    }
+    setInterval(() => go(cur + 1), 3000 + Math.random() * 500);
+  }
+
+  /* Stays — live from Supabase listings */
+  async function loadStays() {
+    try {
+      const r = await fetch(
+        `${SUPA}/rest/v1/listings?status=eq.active&select=title,photos,price_night,location&order=internal_score.desc&limit=8`,
+        { headers: H }
+      );
+      if (!r.ok) return;
+      const rows = await r.json();
+      const items = rows.filter(l => l.photos?.length).map(l => ({
+        img:   l.photos[0],
+        title: l.title,
+        sub:   `KES ${(l.price_night||0).toLocaleString()}/night · ${l.location||'Nairobi'}`
+      }));
+      buildStrip(
+        document.getElementById('svl-stays-track'),
+        document.getElementById('svl-stays-pips'),
+        items,
+        document.getElementById('svl-stays-count'),
+        'stays'
+      );
+    } catch(e) {}
+  }
+
+  /* Tours — GuruWalk static (always reliable) */
+  function loadTours() {
+    const items = [
+      { img:'https://media.guruwalk.com/3p64tm7efhc98oeaqleezw34q4uh', title:'Best Nairobi Free Walking Tour 🏆', sub:'CBD · Free (pay what you want)' },
+      { img:'https://media.guruwalk.com/6mwf6xkglxsehb9h9ohdouvoy9pc', title:'Most Fun Tour of Nairobi with John', sub:'City Centre · Free tour' },
+      { img:'https://media.guruwalk.com/cb5prxlnbj9j6zidacw5njvmqadc', title:'Nairobi Street Art & Culture Walk', sub:'Westlands · Free tour' },
+      { img:'https://media.guruwalk.com/n2fuvtbkz8zx0f2e7hblqqmiguzv', title:'Kibera Community Walking Tour', sub:'Kibera · Pay what you want' },
+    ];
+    buildStrip(
+      document.getElementById('svl-tours-track'),
+      document.getElementById('svl-tours-pips'),
+      items,
+      document.getElementById('svl-tours-count'),
+      'tours'
+    );
+  }
+
+  /* Events — live from scraped_events */
+  async function loadEvents() {
+    try {
+      const now = new Date().toISOString();
+      const r = await fetch(
+        `${SUPA}/rest/v1/scraped_events?active=eq.true&start_date=gte.${now}&select=title,image_url,venue,city,start_date&order=start_date.asc&limit=8`,
+        { headers: H }
+      );
+      if (!r.ok) throw new Error();
+      const rows = await r.json();
+      const items = rows.filter(e => e.image_url).map(e => ({
+        img:   e.image_url,
+        title: e.title,
+        sub:   `${e.venue||e.city||'Kenya'} · ${e.start_date ? new Date(e.start_date).toLocaleDateString('en-KE',{month:'short',day:'numeric'}) : 'Soon'}`
+      }));
+      if (!items.length) throw new Error();
+      buildStrip(
+        document.getElementById('svl-events-track'),
+        document.getElementById('svl-events-pips'),
+        items,
+        document.getElementById('svl-events-count'),
+        'events'
+      );
+    } catch(e) {
+      const el = document.getElementById('svl-events');
+      if (el) el.style.display = 'none';
+    }
+  }
+
+  /* Run after layout — non-blocking, no effect on page load */
+  if (document.readyState === 'loading')
+    document.addEventListener('DOMContentLoaded', run);
+  else run();
+
+  function run() { loadStays(); loadTours(); loadEvents(); }
 })();
 </script>
 </body>
