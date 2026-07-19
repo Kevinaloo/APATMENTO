@@ -40,7 +40,7 @@
   var PAGE = (global.location.pathname.split('/').pop() || 'index').replace('.html', '') || 'index';
 
   /* Never on funnel, auth, admin, partner or the assistant's own flows. */
-  var BLOCK = ['booking-confirm','auth','add-listing','admin','admin-photos',
+  var BLOCK = ['booking-confirm','auth','add-listing','admin',
                'agent-dashboard','partner-bookings','partner-listings','partner-calendar',
                'partner-earnings','partner-reviews','partner-analytics','partner-agents',
                'partner-settings','dashboard'];
