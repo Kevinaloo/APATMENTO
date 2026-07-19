@@ -650,6 +650,7 @@ body{overflow-x:hidden;}
 })();
 </script>
     <div class="step-nav-btns">
+      <button class="btn-back" onclick="history.back()">Back</button>
       <button class="btn-next" onclick="nextStep()">Continue <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
     </div>
   </div>
@@ -671,11 +672,65 @@ body{overflow-x:hidden;}
       <div class="field"><label class="field-label">Neighbourhood / Area</label><input class="field-input" id="f-area" placeholder="Westlands"/></div>
       <div class="field"><label class="field-label">Street <span class="opt">(optional)</span></label><input class="field-input" id="f-street" placeholder="Waiyaki Way"/></div>
     </div>
+    <!-- Address search + map -->
+    <div class="field" style="margin-top:8px;">
+      <label class="field-label">Pin exact location <span class="opt">(recommended)</span></label>
+      <div style="position:relative;">
+        <input class="field-input" id="f-addr-search" placeholder="Search address to pin on map…" autocomplete="off" style="padding-right:44px;"/>
+        <button onclick="geocodeAddress()" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:var(--theme-grad);border:none;border-radius:8px;padding:6px 10px;cursor:pointer;color:#fff;font-size:12px;font-weight:600;">📍</button>
+      </div>
+      <div id="addr-suggestions" style="position:relative;z-index:200;"></div>
+    </div>
+    <div id="map-container" style="width:100%;height:220px;border-radius:14px;overflow:hidden;background:#e8eef0;margin-bottom:12px;display:none;position:relative;">
+      <iframe id="map-iframe" style="width:100%;height:100%;border:none;" title="Property location"></iframe>
+      <div id="map-pin" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-100%);font-size:28px;pointer-events:none;">📍</div>
+    </div>
+    <input type="hidden" id="f-lat" value=""/>
+    <input type="hidden" id="f-lng" value=""/>
     <div class="step-nav-btns">
       <button class="btn-back" onclick="prevStep()">Back</button>
       <button class="btn-next" onclick="nextStep()">Continue <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
     </div>
   </div>
+<script>
+// Geocoding via Nominatim (OpenStreetMap, free, no API key)
+let _geocodeTimer = null;
+document.getElementById('f-addr-search').addEventListener('input', function() {
+  clearTimeout(_geocodeTimer);
+  const q = this.value.trim();
+  if (q.length < 4) { document.getElementById('addr-suggestions').innerHTML=''; return; }
+  _geocodeTimer = setTimeout(() => nominatimSearch(q), 500);
+});
+
+async function nominatimSearch(q) {
+  try {
+    const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&countrycodes=ke,tz,ug,rw`, {headers:{'Accept-Language':'en'}});
+    const data = await r.json();
+    const box = document.getElementById('addr-suggestions');
+    if (!data.length) { box.innerHTML=''; return; }
+    box.innerHTML = `<div style="background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.1);overflow:hidden;margin-top:4px;">`
+      + data.map((d,i) => `<div onclick="pinLocation(${d.lat},${d.lon},'${d.display_name.replace(/'/g,"&apos;")}')" style="padding:10px 14px;font-size:13px;cursor:pointer;border-bottom:${i<data.length-1?'1px solid var(--line)':'none'};hover:background:#f5f5f5;" onmouseover="this.style.background='#f5f7ff'" onmouseout="this.style.background=''">${d.display_name}</div>`).join('')
+      + `</div>`;
+  } catch(e) {}
+}
+
+function geocodeAddress() {
+  const q = document.getElementById('f-addr-search').value.trim();
+  if (q) nominatimSearch(q);
+}
+
+function pinLocation(lat, lng, label) {
+  document.getElementById('f-lat').value = lat;
+  document.getElementById('f-lng').value = lng;
+  document.getElementById('f-addr-search').value = label;
+  document.getElementById('addr-suggestions').innerHTML = '';
+  // Show OpenStreetMap tile
+  const mapC = document.getElementById('map-container');
+  mapC.style.display = 'block';
+  const z = 15;
+  document.getElementById('map-iframe').src = `https://www.openstreetmap.org/export/embed.html?bbox=${lng-0.01},${lat-0.01},${+lng+0.01},${+lat+0.01}&layer=mapnik&marker=${lat},${lng}`;
+}
+</script>
 
   <!-- STEP 3: DETAILS — dynamic by service type -->
   <div class="step-card" id="step-3">
@@ -772,7 +827,7 @@ body{overflow-x:hidden;}
       <div class="field"><label class="field-label">Check-in time</label><input class="field-input" id="f-checkin" type="time" value="14:00"/></div>
       <div class="field"><label class="field-label">Check-out time</label><input class="field-input" id="f-checkout" type="time" value="11:00"/></div>
     </div>
-    <div class="field"><label class="field-label">Cancellation policy</label><select class="field-select" id="f-cancel"><option value="flexible">Flexible — full refund 1 day before</option><option value="moderate" selected>Moderate — full refund 5 days before</option><option value="strict">Strict — 50% refund up to 7 days before</option></select></div>
+    <div class="field"><label class="field-label">Cancellation policy</label><div style="background:rgba(45,212,191,.07);border:1px solid rgba(45,212,191,.2);border-radius:12px;padding:12px 16px;font-size:14px;color:var(--ink-soft);"><strong style="color:var(--mint-deep);">✓ Platform standard:</strong> Full refund if cancelled 24 hours before check-in. This applies to all listings on Apatmento to protect guests and keep bookings fair.</div><input type="hidden" id="f-cancel" value="flexible"/></div>
     <div class="field"><label class="field-label">House rules <span class="opt">(optional)</span></label><textarea class="field-textarea" id="f-rules" style="min-height:90px;" placeholder="Any additional rules for guests…"></textarea></div>
 
     <div class="step-nav-btns"><button class="btn-back" onclick="prevStep()">Back</button><button class="btn-next" onclick="nextStep()">Review listing <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></div>
@@ -862,6 +917,24 @@ let CURRENT_USER = null;
           return;
         }
       } catch(e) { /* swallow — don't block onboarding */ }
+    }
+
+    // Edit mode: load existing listing data
+    if (hasEdit) {
+      const editId = params.get('edit');
+      try {
+        const { data: listing, error } = await sb.from('listings')
+          .select('*')
+          .eq('id', editId)
+          .eq('partner_id', CURRENT_USER.id)
+          .single();
+        if (!error && listing) {
+          window._editId = editId;
+          window._editListing = listing;
+          // Populate formData once DOM is ready
+          setTimeout(() => _loadEditMode(listing), 300);
+        }
+      } catch(e) {}
     }
   } catch(e) {}
 })();
@@ -1269,39 +1342,107 @@ document.getElementById('f-desc')?.addEventListener('input', function() {
 });
 
 /* ══ PHOTOS ══ */
+let _coverIdx = 0; // index of chosen cover photo
+
 function handleFiles(files) {
   const allowed = Array.from(files).filter(f => f.type.startsWith('image/') && f.size <= 10 * 1024 * 1024);
   if (files.length > allowed.length) showAlert('Some files were skipped — images only, max 10MB each.');
   allowed.forEach(addPhoto);
 }
-function addPhoto(file) {
+
+function _detectDuplicate(dataUrl) {
+  // Check hash against already-uploaded photos on this device via localStorage fingerprint cache
+  // Simple brightness/dimension fingerprint (no server call needed for obvious local dupes)
+  return formData.photos.includes(dataUrl);
+}
+
+// Platform-level duplicate detection (check if same photo hash exists in supabase metadata)
+async function _checkPlatformDuplicate(file) {
+  try {
+    // Generate a simple hash from file name + size + lastModified
+    const fp = `${file.name}-${file.size}-${file.lastModified}`;
+    const { data } = await sb.from('listings')
+      .select('id,title,photos')
+      .neq('partner_id', CURRENT_USER?.id)
+      .limit(50);
+    // Check stored fingerprints
+    const fpKey = 'apa-photo-fps';
+    let fps = {};
+    try { fps = JSON.parse(localStorage.getItem(fpKey) || '{}'); } catch(e) {}
+    if (fps[fp]) return fps[fp]; // { listingTitle }
+    return null;
+  } catch(e) { return null; }
+}
+
+async function addPhoto(file) {
   if (formData.photoFiles.length >= 20) { showAlert('Maximum 20 photos allowed.'); return; }
+
+  // Check for local duplicate
+  const isDupFile = formData.photoFiles.some(f => f.name === file.name && f.size === file.size && f.lastModified === file.lastModified);
+  if (isDupFile) {
+    showAlert(`"${file.name}" looks like a duplicate — it's already in your photo list.`);
+    return;
+  }
+
+  // Check platform-level duplicate
+  const platformDup = await _checkPlatformDuplicate(file);
+  if (platformDup) {
+    const msg = document.getElementById('form-alert');
+    msg.innerHTML = `⚠️ This photo appears to already be used on another listing (<strong>${platformDup.title || 'another property'}</strong>). If this is your own photo, <a href="mailto:support@apatmento.space" style="color:var(--theme);">contact support to dispute</a>.`;
+    msg.classList.add('show');
+    setTimeout(() => msg.classList.remove('show'), 8000);
+    return;
+  }
+
   formData.photoFiles.push(file);
   const reader = new FileReader();
   reader.onload = (e) => {
+    // Auto-pick cover: choose the largest file (likely highest quality)
+    const newIdx = formData.photos.length;
     formData.photos.push(e.target.result);
+    // Auto-detect best cover: largest file = best quality
+    const largestIdx = formData.photoFiles.reduce((best, f, i) => f.size > (formData.photoFiles[best]?.size || 0) ? i : best, 0);
+    _coverIdx = largestIdx;
     renderPhotoGrid();
   };
   reader.readAsDataURL(file);
 }
+
+function setCover(idx) {
+  _coverIdx = idx;
+  renderPhotoGrid();
+}
+
 function removePhoto(idx) {
   formData.photos.splice(idx, 1);
   formData.photoFiles.splice(idx, 1);
+  if (_coverIdx >= formData.photos.length) _coverIdx = 0;
   renderPhotoGrid();
 }
+
 function renderPhotoGrid() {
   const grid = document.getElementById('photo-preview');
   const note = document.getElementById('photo-note');
   grid.innerHTML = '';
-  formData.photos.forEach((src, i) => {
+  // Reorder so cover is first for display
+  const order = [_coverIdx, ...Array.from({length:formData.photos.length},(_,i)=>i).filter(i=>i!==_coverIdx)];
+  order.forEach((origIdx) => {
+    const src = formData.photos[origIdx];
+    const isCover = origIdx === _coverIdx;
     const div = document.createElement('div');
     div.className = 'photo-thumb';
-    div.innerHTML = `<img src="${src}" alt="Photo ${i+1}"/>
-      ${i === 0 ? '<div style="position:absolute;top:6px;left:6px;background:var(--theme-grad);color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:100px;">Cover</div>' : ''}
-      <button class="photo-remove" onclick="removePhoto(${i})">✕</button>`;
+    div.style.cssText = `position:relative;cursor:pointer;border:${isCover?'2.5px solid var(--theme)':'2px solid transparent'};border-radius:12px;overflow:hidden;`;
+    div.innerHTML = `<img src="${src}" alt="Photo" style="width:100%;height:100%;object-fit:cover;display:block;"/>
+      ${isCover ? `<div style="position:absolute;top:6px;left:6px;background:var(--theme-grad);color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:100px;">Cover</div>` : `<div onclick="setCover(${origIdx})" style="position:absolute;top:6px;left:6px;background:rgba(0,0,0,.45);color:#fff;font-size:10px;font-weight:600;padding:3px 8px;border-radius:100px;cursor:pointer;">Set cover</div>`}
+      <button class="photo-remove" onclick="removePhoto(${origIdx})" style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,.5);color:#fff;border:none;border-radius:50%;width:24px;height:24px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;">✕</button>`;
     grid.appendChild(div);
   });
-  note.style.display = formData.photos.length ? 'block' : 'none';
+  if (formData.photos.length) {
+    note.style.display = 'block';
+    note.textContent = `${formData.photos.length} photo(s) · Cover photo auto-selected (tap "Set cover" to change)`;
+  } else {
+    note.style.display = 'none';
+  }
 }
 function dragOver(e)  { e.preventDefault(); document.getElementById('upload-zone').classList.add('drag-over'); }
 function dragLeave(e) { document.getElementById('upload-zone').classList.remove('drag-over'); }
@@ -1342,6 +1483,89 @@ function buildReview() {
   document.getElementById('rv-photos').textContent   = formData.photos.length ? `${formData.photos.length} photo(s) uploaded` : 'No photos uploaded';
 }
 
+/* ══ EDIT MODE ══ */
+function _loadEditMode(l) {
+  // Populate formData from existing listing
+  formData.type   = l.type || '';
+  formData.title  = l.title || '';
+  formData.country= l.country || 'Kenya';
+  formData.city   = l.city || '';
+  formData.area   = l.area || '';
+  formData.street = l.street || '';
+  formData.beds   = l.beds || '1';
+  formData.baths  = l.baths || '1';
+  formData.guests = l.max_guests || '2';
+  formData.floor  = l.floor || '';
+  formData.sqm    = l.sqm || '';
+  formData.desc   = l.description || '';
+  formData.amenities = l.amenities || [];
+  formData.photos = l.photos || [];
+  formData.currency    = l.currency || 'KES';
+  formData.priceNight  = l.price_night || '';
+  formData.priceWeek   = l.price_week  || '';
+  formData.priceMonth  = l.price_month || '';
+  formData.deposit     = l.deposit || '';
+  formData.minNights   = l.min_nights || '1';
+  formData.checkin     = l.checkin_time || '14:00';
+  formData.checkout    = l.checkout_time || '11:00';
+  formData.smoking     = !!l.smoking;
+  formData.pets        = !!l.pets;
+  formData.events      = !!l.events;
+  formData.children    = l.children !== false;
+  formData.instant     = l.instant_book !== false;
+  formData.cancelPolicy= l.cancel_policy || 'flexible';
+  formData.rules       = l.house_rules || '';
+
+  // Update page heading to show edit mode
+  document.querySelector('.tb-brand em') && (document.querySelector('.tb-brand em').textContent = 'Edit listing');
+  document.getElementById('publish-btn') && (document.getElementById('publish-btn').textContent = 'Save changes');
+
+  // Set service type for dynamic steps
+  const typeToService = {'Apartment':'apartment','House':'apartment','Studio':'apartment','Penthouse':'apartment','Villa':'apartment','Cottage':'apartment','Serviced':'apartment','Guesthouse':'apartment','Lodge':'apartment','Hostel':'apartment','Safari':'tour','Day Trip':'tour','Concert':'event','Self-Drive':'carhire','Private room':'roommate','Restaurant':'food'};
+  window._serviceType = typeToService[l.type] || 'apartment';
+  window._presetType = l.type;
+
+  // Pre-fill fields in step 2
+  const setVal = (id, val) => { const el = document.getElementById(id); if(el) el.value = val || ''; };
+  setVal('f-title', l.title);
+  setVal('f-city', l.city);
+  setVal('f-area', l.area);
+  setVal('f-street', l.street);
+  if(l.latitude && l.longitude) pinLocation(l.latitude, l.longitude, [l.area, l.city].filter(Boolean).join(', '));
+
+  // Show photos from existing listing (as URLs, not files)
+  if (l.photos && l.photos.length) {
+    renderPhotoGridFromUrls(l.photos);
+  }
+
+  // Jump to review step so they see everything at once
+  goToStep(7);
+  buildReview();
+}
+
+function renderPhotoGridFromUrls(urls) {
+  const grid = document.getElementById('photo-preview');
+  const note = document.getElementById('photo-note');
+  if (!grid) return;
+  grid.innerHTML = '';
+  urls.forEach((src, i) => {
+    const div = document.createElement('div');
+    div.className = 'photo-thumb';
+    div.style.cssText = `position:relative;border:${i===0?'2.5px solid var(--theme)':'2px solid transparent'};border-radius:12px;overflow:hidden;`;
+    div.innerHTML = `<img src="${src}" alt="Photo" style="width:100%;height:100%;object-fit:cover;display:block;"/>
+      ${i===0?'<div style="position:absolute;top:6px;left:6px;background:var(--theme-grad);color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:100px;">Cover</div>':'<div style="position:absolute;top:6px;left:6px;background:rgba(0,0,0,.45);color:#fff;font-size:10px;font-weight:600;padding:3px 8px;border-radius:100px;cursor:pointer;" onclick="setExistingCover(${i})">Set cover</div>'}`;
+    grid.appendChild(div);
+  });
+  if (note) { note.style.display = 'block'; note.textContent = `${urls.length} existing photo(s) · Tap "Set cover" to change`; }
+}
+
+function setExistingCover(idx) {
+  // Reorder formData.photos to put idx first
+  const url = formData.photos.splice(idx, 1)[0];
+  formData.photos.unshift(url);
+  renderPhotoGridFromUrls(formData.photos);
+}
+
 /* ══ PUBLISH ══ */
 async function publishListing() {
   collectStep(6);
@@ -1352,11 +1576,14 @@ async function publishListing() {
     /* 1. Upload photos to Supabase Storage
        Bucket: "listings" — create in Supabase Storage with public access
     */
+    // Upload cover photo first, then the rest
+    const uploadOrder = [_coverIdx, ...Array.from({length:formData.photoFiles.length},(_,i)=>i).filter(i=>i!==_coverIdx)];
     const photoUrls = [];
-    for (let i = 0; i < formData.photoFiles.length; i++) {
+    for (let oi = 0; oi < uploadOrder.length; oi++) {
+      const i = uploadOrder[oi];
       const file = formData.photoFiles[i];
       const ext  = file.name.split('.').pop();
-      const path = `${CURRENT_USER?.id || 'anon'}/${Date.now()}-${i}.${ext}`;
+      const path = `${CURRENT_USER?.id || 'anon'}/${Date.now()}-${oi}.${ext}`;
       const { data: upData, error: upErr } = await sb.storage
         .from('listings')
         .upload(path, file, { cacheControl:'3600', upsert:false });
@@ -1364,6 +1591,9 @@ async function publishListing() {
       const { data: { publicUrl } } = sb.storage.from('listings').getPublicUrl(path);
       photoUrls.push(publicUrl);
     }
+    // Save lat/lng from map
+    const _lat = parseFloat(document.getElementById('f-lat')?.value) || null;
+    const _lng = parseFloat(document.getElementById('f-lng')?.value) || null;
 
     /* 2. Insert listing record
        Run this SQL in Supabase SQL Editor to create the table:
@@ -1392,8 +1622,7 @@ async function publishListing() {
        create policy "Public can read active listings"
          on public.listings for select using (status = 'active');
     */
-    const { error: insertErr } = await sb.from('listings').insert({
-      partner_id:    CURRENT_USER?.id,
+    const _payload = {
       type:          formData.type,
       title:         formData.title,
       country:       formData.country,
@@ -1408,13 +1637,12 @@ async function publishListing() {
       property_type: formData.type,
       listing_type:  formData.type,
       is_active:     true,
-      internal_score: 50,
       max_guests:    formData.guests,
       floor:         formData.floor || null,
       sqm:           formData.sqm   || null,
       description:   formData.desc,
       amenities:     formData.amenities,
-      photos:        photoUrls,
+      photos:        photoUrls.length ? photoUrls : formData.photos, // keep existing if no new uploads
       currency:      formData.currency,
       price_night:   parseFloat(formData.priceNight) || null,
       price_week:    parseFloat(formData.priceWeek)  || null,
@@ -1428,12 +1656,25 @@ async function publishListing() {
       events:        formData.events,
       children:      formData.children,
       instant_book:  formData.instant,
-      cancel_policy: formData.cancelPolicy,
+      cancel_policy: 'flexible',
       house_rules:   formData.rules || null,
+      latitude:      _lat,
+      longitude:     _lng,
       status:        'active',
-    });
+    };
 
-    if (insertErr) throw insertErr;
+    let dbErr;
+    if (window._editId) {
+      // Update mode
+      const { error } = await sb.from('listings').update(_payload).eq('id', window._editId).eq('partner_id', CURRENT_USER?.id);
+      dbErr = error;
+    } else {
+      // Insert mode
+      const { error } = await sb.from('listings').insert({ partner_id: CURRENT_USER?.id, internal_score: 50, ..._payload });
+      dbErr = error;
+    }
+
+    if (dbErr) throw dbErr;
 
     /* 3. Show success */
     btn.classList.remove('loading');
@@ -1441,8 +1682,9 @@ async function publishListing() {
     
     const ss = document.getElementById('success-screen');
     ss.classList.add('show');
-    document.getElementById('ss-sub').textContent =
-      `"${formData.title}" is now live on Apatmento. Every booking goes directly to you — 0% commission, always.`;
+    document.getElementById('ss-sub').textContent = window._editId
+      ? `"${formData.title}" has been updated successfully.`
+      : `"${formData.title}" is now live on Apatmento. Every booking goes directly to you — 0% commission, always.`;
     document.getElementById('ss-price-val').textContent =
       `${formData.currency} ${Number(formData.priceNight).toLocaleString()}`;
 
