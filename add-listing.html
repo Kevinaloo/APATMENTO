@@ -1350,26 +1350,61 @@ function handleFiles(files) {
   allowed.forEach(addPhoto);
 }
 
-function _detectDuplicate(dataUrl) {
-  // Check hash against already-uploaded photos on this device via localStorage fingerprint cache
-  // Simple brightness/dimension fingerprint (no server call needed for obvious local dupes)
-  return formData.photos.includes(dataUrl);
+/* ── Perceptual hash (8×8 average hash) for duplicate detection ── */
+async function _pHash(file) {
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const SIZE = 8;
+          const canvas = document.createElement('canvas');
+          canvas.width = SIZE; canvas.height = SIZE;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, SIZE, SIZE);
+          const data = ctx.getImageData(0, 0, SIZE, SIZE).data;
+          const pixels = [];
+          for (let i = 0; i < SIZE * SIZE; i++) {
+            pixels.push(0.299 * data[i*4] + 0.587 * data[i*4+1] + 0.114 * data[i*4+2]);
+          }
+          const avg = pixels.reduce((s, v) => s + v, 0) / pixels.length;
+          resolve(pixels.map(v => v >= avg ? '1' : '0').join(''));
+        } catch(e) { resolve(null); }
+      };
+      img.onerror = () => resolve(null);
+      img.src = e.target.result;
+    };
+    reader.onerror = () => resolve(null);
+    reader.readAsDataURL(file);
+  });
 }
 
-// Platform-level duplicate detection (check if same photo hash exists in supabase metadata)
-async function _checkPlatformDuplicate(file) {
+function _hammingDist(a, b) {
+  let d = 0;
+  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) d++;
+  return d;
+}
+
+const _sessionHashes = []; // hashes of photos added this session
+
+async function _checkPlatformDuplicate(file, newHash) {
+  if (!newHash) return null;
   try {
-    // Generate a simple hash from file name + size + lastModified
-    const fp = `${file.name}-${file.size}-${file.lastModified}`;
     const { data } = await sb.from('listings')
-      .select('id,title,photos')
+      .select('id,title,photo_hashes')
       .neq('partner_id', CURRENT_USER?.id)
-      .limit(50);
-    // Check stored fingerprints
-    const fpKey = 'apa-photo-fps';
-    let fps = {};
-    try { fps = JSON.parse(localStorage.getItem(fpKey) || '{}'); } catch(e) {}
-    if (fps[fp]) return fps[fp]; // { listingTitle }
+      .not('photo_hashes', 'is', null)
+      .limit(200);
+    if (!data?.length) return null;
+    for (const listing of data) {
+      const hashes = Array.isArray(listing.photo_hashes) ? listing.photo_hashes : [];
+      for (const h of hashes) {
+        if (typeof h === 'string' && h.length === 64 && _hammingDist(newHash, h) <= 5) {
+          return { title: listing.title };
+        }
+      }
+    }
     return null;
   } catch(e) { return null; }
 }
@@ -1377,21 +1412,32 @@ async function _checkPlatformDuplicate(file) {
 async function addPhoto(file) {
   if (formData.photoFiles.length >= 20) { showAlert('Maximum 20 photos allowed.'); return; }
 
-  // Check for local duplicate
+  // 1. Exact file duplicate (same session)
   const isDupFile = formData.photoFiles.some(f => f.name === file.name && f.size === file.size && f.lastModified === file.lastModified);
   if (isDupFile) {
     showAlert(`"${file.name}" looks like a duplicate — it's already in your photo list.`);
     return;
   }
 
-  // Check platform-level duplicate
-  const platformDup = await _checkPlatformDuplicate(file);
-  if (platformDup) {
-    const msg = document.getElementById('form-alert');
-    msg.innerHTML = `⚠️ This photo appears to already be used on another listing (<strong>${platformDup.title || 'another property'}</strong>). If this is your own photo, <a href="mailto:support@apatmento.space" style="color:var(--theme);">contact support to dispute</a>.`;
-    msg.classList.add('show');
-    setTimeout(() => msg.classList.remove('show'), 8000);
-    return;
+  // 2. Perceptual hash — catches recompressed / renamed copies
+  const newHash = await _pHash(file);
+  if (newHash) {
+    // Check within this session first (fast)
+    const sessionDup = _sessionHashes.find(h => _hammingDist(h.hash, newHash) <= 5);
+    if (sessionDup) {
+      showAlert(`This photo looks identical to "${sessionDup.name}" already in your list.`);
+      return;
+    }
+    // Check against other listings in the platform
+    const platformDup = await _checkPlatformDuplicate(file, newHash);
+    if (platformDup) {
+      const msg = document.getElementById('form-alert');
+      msg.innerHTML = `⚠️ This photo appears to already be used on another listing (<strong>${platformDup.title || 'another property'}</strong>). If this is your own photo, <a href="mailto:support@apatmento.space" style="color:var(--theme);">contact support to dispute</a>.`;
+      msg.classList.add('show');
+      setTimeout(() => msg.classList.remove('show'), 8000);
+      return;
+    }
+    _sessionHashes.push({ hash: newHash, name: file.name });
   }
 
   formData.photoFiles.push(file);

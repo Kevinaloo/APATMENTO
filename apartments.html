@@ -554,8 +554,6 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
 </div>
 
 <!-- CONTENT -->
-<div style="max-width:1180px;margin:0 auto;padding:0 26px;"><div data-showcase="ticker"></div></div>
-<div style="max-width:1180px;margin:16px auto 0;padding:0 26px;"><div data-showcase="video" style="margin-bottom:24px;"></div></div>
 <div class="content">
   <div class="content-head">
     <div class="results-count"><strong id="result-num">0</strong> stays in Nairobi</div>
@@ -569,7 +567,6 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
     </div>
   </div>
   <div id="native-banner"
-  <div data-showcase="carousel" style="margin-bottom:20px;"></div>
   
   <div class="grid" id="grid"></div>
 </div>
@@ -699,7 +696,7 @@ async function loadNativeListings() {
   if (!sb) return [];
   try {
     const { data } = await sb.from('listings')
-      .select('id,title,location,city,price_night,beds,baths,max_guests,amenities,description,avg_rating,review_count,booking_count,days_listed,internal_score,status,photos,type,property_type,area')
+      .select('id,title,location,city,price_night,beds,baths,max_guests,amenities,description,avg_rating,review_count,booking_count,days_listed,internal_score,status,photos,type,property_type,area,partner_id')
       .eq('status', 'active')
       .order('internal_score', { ascending: false })
       .limit(50);
@@ -721,7 +718,8 @@ async function loadNativeListings() {
       hot: (l.internal_score || 0) > 60,
       amenities: l.amenities || [],
       desc: l.description || '',
-      host: 'Verified Partner', hostInit: 'V',
+      host: 'Apatmento Partner', hostInit: 'V',
+      hostId: l.partner_id || null,
       query: 'luxury apartment interior nairobi',
       grad: 'linear-gradient(135deg,#B8A4F4,#7B2FF7)',
       source: 'native',   // ← priority flag
@@ -918,8 +916,8 @@ function openDrawer(id) {
       <div class="dl-host">
         <div class="dl-host-ava">${apt.hostInit || 'H'}</div>
         <div class="dl-host-info">
-          <div class="dl-host-name">Hosted by ${apt.host || 'Verified Host'}</div>
-          <div class="dl-host-tag">${isNative ? 'Verified Apatmento partner' : 'Partner host · Verified'}</div>
+          <div class="dl-host-name">Hosted by ${apt.host || 'Apatmento Partner'}</div>
+          <div class="dl-host-tag">${isNative ? 'Apatmento partner' : 'Partner host'}</div>
         </div>
         <div class="dl-host-100">Keeps 100%</div>
       </div>
@@ -1104,7 +1102,7 @@ function messageHost(id) {
       console.warn('ApatmentoChat not loaded');
       return;
     }
-    ApatmentoChat.open({ listingId: dbId, listingType: 'apartment', listingTitle: apt.name });
+    ApatmentoChat.open({ listingId: dbId, listingType: 'apartment', listingTitle: apt.name, hostId: apt.hostId || undefined });
   }
 
   if (window.CURRENT_USER) {
