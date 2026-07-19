@@ -1801,21 +1801,10 @@ async function initPartnerFlow(){
 
   document.getElementById('p-state-loading').style.display='none';
 
-  // No listings yet.
-  // Rules:
-  //   - ?back=1 means user just returned from add-listing or another page — show
-  //     the partner shell with an "Add your first listing" prompt, never redirect.
-  //   - __addServiceIntent means user clicked "+ Add service" — show the picker.
-  //   - Fresh first-time partner arrival — redirect to add-listing to start setup.
+  // No listings yet — always go to add-listing. No onboarding screen here.
   if(!partnerServices.length){
-    var isBackNav = false;
-    try { isBackNav = new URLSearchParams(location.search).has('back'); } catch(e) {}
-    if(isBackNav || window.__addServiceIntent){
-      window.__addServiceIntent = false;
-      renderOnboarding();
-    } else {
-      window.location.replace('add-listing.html?back=1');
-    }
+    window.__addServiceIntent = false;
+    window.location.replace('add-listing.html?back=1');
     return;
   }
   else if(partnerServices.length===1) renderSingleDashboard(partnerServices[0]);
@@ -1823,25 +1812,8 @@ async function initPartnerFlow(){
 }
 
 function renderOnboarding(){
-  const c = document.getElementById('p-state-onboarding');
-  c.style.display='block';
-  c.innerHTML = `
-    <div class="content" style="max-width:900px;text-align:center;padding-top:32px;padding-bottom:60px;">
-      <span class="greeting-eyebrow" style="margin:0 auto 16px;">Free to list · 0% commission</span>
-      <h1 class="greeting-title" style="margin-bottom:12px;">What will you <em>offer</em>?</h1>
-      <p class="greeting-sub" style="margin:0 auto 6px;max-width:520px;">Listing is completely free. Apatmento charges only a small fixed fee per confirmed booking — never a percentage.</p>
-      <p style="font-size:13px;color:var(--ember);font-weight:600;margin-bottom:36px;">You keep almost everything. Always.</p>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;max-width:900px;margin:0 auto 32px;">
-        ${Object.entries(PARTNER_SERVICES).map(([k,s])=>`
-          <div class="svc-onboard" id="ob-${k}" onclick="selectService('${k}')" style="position:relative;border-radius:18px;border:1.5px solid var(--line);background:rgba(255,255,255,.7);padding:24px 14px 20px;cursor:pointer;transition:transform .2s ease,box-shadow .2s ease;text-align:center;">
-            <div class="ob-tick" style="position:absolute;top:10px;right:10px;width:20px;height:20px;border-radius:50%;background:var(--mint-deep);display:none;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;">✓</div>
-            <div style="width:48px;height:48px;margin:0 auto 12px;border-radius:14px;background:${s.grad};display:flex;align-items:center;justify-content:center;color:#fff;">${s.ico}</div>
-            <div style="font-family:var(--font-display);font-weight:600;font-size:14px;margin-bottom:4px;color:var(--ink);">${s.name}</div>
-            <div style="font-size:11px;color:var(--ink-faint);line-height:1.4;">${s.sub}</div>
-          </div>`).join('')}
-      </div>
-      <button id="ob-cta" onclick="startSetup()" style="padding:14px 48px;border-radius:100px;border:none;background:linear-gradient(135deg,var(--violet),var(--electric));color:#fff;font-family:var(--font-body);font-weight:700;font-size:15px;cursor:pointer;opacity:.35;pointer-events:none;transition:all .3s;box-shadow:0 10px 30px rgba(123,47,247,.3);">Continue to setup →</button>
-    </div>`;
+  // Onboarding screen removed. Any stray call goes straight to add-listing.
+  window.location.replace('add-listing.html?back=1');
 }
 
 function selectService(k){
