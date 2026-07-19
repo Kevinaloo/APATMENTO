@@ -900,11 +900,24 @@ let CURRENT_USER = null;
     // Smart redirect: if no ?type= and no ?edit=, check if they already have listings.
     // Existing partners should land on partner-listings.html, not the blank form.
     const params = new URLSearchParams(location.search);
-    const hasType = params.has('type');
-    const hasEdit = params.has('edit');
-    const isBack  = params.has('back');
+    const hasType    = params.has('type');
+    const hasEdit    = params.has('edit');
+    const hasPrefill = params.has('prefill');
+    const isBack     = params.has('back');
 
-    if (!hasType && !hasEdit) {
+    // Import prefill from sessionStorage (set by partner-listings import modal)
+    if (hasPrefill) {
+      try {
+        const raw = sessionStorage.getItem('apa-import-prefill');
+        if (raw) {
+          const p = JSON.parse(raw);
+          sessionStorage.removeItem('apa-import-prefill');
+          setTimeout(() => _loadPrefill(p), 300);
+        }
+      } catch(e) {}
+    }
+
+    if (!hasType && !hasEdit && !hasPrefill) {
       try {
         const { data: existing } = await sb.from('listings')
           .select('id')
@@ -1527,6 +1540,66 @@ function buildReview() {
   document.getElementById('rv-cancel').textContent   = cancelMap[formData.cancelPolicy] || formData.cancelPolicy;
   document.getElementById('rv-amenities').textContent = formData.amenities.length ? formData.amenities.join(' · ') : 'None selected';
   document.getElementById('rv-photos').textContent   = formData.photos.length ? `${formData.photos.length} photo(s) uploaded` : 'No photos uploaded';
+}
+
+/* ══ IMPORT PREFILL ══ */
+function _loadPrefill(p) {
+  // Map AI-returned fields onto formData
+  const typeMap = {
+    'Apartment':'Apartment','House':'House','Studio':'Studio','Penthouse':'Penthouse',
+    'Villa':'Villa','Cottage':'Cottage','Serviced':'Serviced','Guesthouse':'Guesthouse',
+    'Lodge':'Lodge','Hostel':'Hostel'
+  };
+
+  if (p.property_type && typeMap[p.property_type]) {
+    formData.type = p.property_type;
+    // Pre-select the type card visually
+    document.querySelectorAll('.type-card').forEach(c => {
+      c.classList.toggle('selected', c.dataset.type === p.property_type);
+    });
+    window._serviceType = 'apartment';
+    window._presetType  = p.property_type;
+    initStepsForService('apartment');
+  }
+
+  // Step 2 fields
+  const setVal = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
+  setVal('f-title',  p.title);
+  setVal('f-city',   p.city);
+  setVal('f-area',   p.area);
+  setVal('f-street', p.street || '');
+  if (p.country) {
+    const sel = document.getElementById('f-country');
+    if (sel) { for (const o of sel.options) { if (o.value === p.country || o.text === p.country) { sel.value = o.value; break; } } }
+  }
+
+  // formData sync
+  formData.type      = p.property_type || '';
+  formData.title     = p.title         || '';
+  formData.city      = p.city          || '';
+  formData.area      = p.area          || '';
+  formData.beds      = String(p.bedrooms   || 1);
+  formData.baths     = String(p.bathrooms  || 1);
+  formData.guests    = String(p.max_guests || 2);
+  formData.sqm       = p.sqm ? String(p.sqm) : '';
+  formData.desc      = p.description  || '';
+  formData.amenities = p.amenities    || [];
+  formData.priceNight= p.price_night  ? String(p.price_night)  : '';
+  formData.priceWeek = p.price_week   ? String(p.price_week)   : '';
+  formData.priceMonth= p.price_month  ? String(p.price_month)  : '';
+  formData.minNights = String(p.min_nights || 1);
+  formData.checkin   = p.checkin_time  || '14:00';
+  formData.checkout  = p.checkout_time || '11:00';
+
+  // Show a prefill banner on step 2 so user knows data was imported
+  const banner = document.createElement('div');
+  banner.style.cssText = 'background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.2);border-radius:12px;padding:12px 14px;font:500 12px/1.5 var(--font-b);color:#6366f1;margin-bottom:16px;';
+  banner.innerHTML = '✨ <strong>AI import complete</strong> — review the pre-filled details below, then continue through the steps. Add your photos in step 4.';
+  const step2 = document.getElementById('step-2');
+  if (step2) step2.insertBefore(banner, step2.querySelector('.field'));
+
+  // Jump to step 2 (they still need to verify location + add photos)
+  goToStep(2);
 }
 
 /* ══ EDIT MODE ══ */

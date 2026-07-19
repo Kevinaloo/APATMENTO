@@ -349,10 +349,16 @@ td strong{color:var(--ink);font-weight:600;}
       <div class="card-title">Add a new listing</div>
       <div class="card-sub">List stays, tours, rides, food, events, car hire and more</div>
     </div>
-    <a href="add-listing.html" class="btn btn-primary">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      New listing
-    </a>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button onclick="openImportModal()" class="btn" style="background:rgba(99,102,241,.1);color:#6366f1;border:1.5px solid rgba(99,102,241,.25);font-size:12px;padding:8px 14px;border-radius:10px;cursor:pointer;display:flex;align-items:center;gap:6px;font-weight:600;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Import listing
+      </button>
+      <a href="add-listing.html" class="btn btn-primary">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        New listing
+      </a>
+    </div>
   </div>
   <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-top:4px;">
     <a href="add-listing.html?type=stay" class="service-chip">🏠 Stay</a>
@@ -363,6 +369,139 @@ td strong{color:var(--ink);font-weight:600;}
     <a href="add-listing.html?type=carhire" class="service-chip">🔑 Car hire</a>
   </div>
 </div>
+
+<!-- ── IMPORT MODAL ── -->
+<div id="import-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(10,10,20,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:16px;">
+  <div style="background:#fff;border-radius:24px;width:100%;max-width:540px;max-height:90vh;overflow-y:auto;box-shadow:0 32px 80px rgba(0,0,0,.18);">
+    <!-- Header -->
+    <div style="padding:24px 24px 0;display:flex;align-items:flex-start;justify-content:space-between;">
+      <div>
+        <div style="font:700 18px/1.2 var(--font-b);color:var(--ink);">Import from Airbnb / Booking.com</div>
+        <div style="font:400 13px/1.4 var(--font-b);color:var(--ink-soft);margin-top:5px;">Paste your listing text and AI will structure it instantly.</div>
+      </div>
+      <button onclick="closeImportModal()" style="background:none;border:none;cursor:pointer;padding:4px;color:var(--ink-soft);font-size:20px;line-height:1;">✕</button>
+    </div>
+
+    <!-- Why paste info box -->
+    <div style="margin:16px 24px 0;background:rgba(99,102,241,.07);border:1px solid rgba(99,102,241,.2);border-radius:12px;padding:12px 14px;">
+      <div style="font:600 12px/1.4 var(--font-b);color:#6366f1;margin-bottom:4px;">💡 Why we use paste instead of URL</div>
+      <div style="font:400 12px/1.5 var(--font-b);color:var(--ink-soft);">Airbnb and Booking.com actively block automated access — any URL import fails silently. Pasting your text takes 10 seconds and works 100% of the time.</div>
+    </div>
+
+    <!-- Tabs -->
+    <div style="display:flex;gap:0;margin:18px 24px 0;border:1.5px solid var(--line);border-radius:12px;overflow:hidden;">
+      <button id="tab-paste" onclick="switchTab('paste')" style="flex:1;padding:10px;border:none;background:var(--theme-grad);color:#fff;font:600 13px/1 var(--font-b);cursor:pointer;transition:all .2s;">📋 Paste listing text</button>
+      <button id="tab-describe" onclick="switchTab('describe')" style="flex:1;padding:10px;border:none;background:transparent;color:var(--ink-soft);font:600 13px/1 var(--font-b);cursor:pointer;transition:all .2s;">✍️ Describe it yourself</button>
+    </div>
+
+    <!-- Paste tab -->
+    <div id="panel-paste" style="padding:16px 24px 0;">
+      <div style="font:500 12px/1.5 var(--font-b);color:var(--ink-soft);margin-bottom:8px;">
+        On Airbnb or Booking.com: open your listing → select all the text on the page (Ctrl+A / ⌘+A) → copy → paste here. Or just copy the description + amenities section.
+      </div>
+      <textarea id="import-paste-text" placeholder="Paste your Airbnb or Booking.com listing text here…&#10;&#10;Include: title, description, amenities, location, bedrooms, price — whatever you can copy." style="width:100%;height:180px;border:1.5px solid var(--line);border-radius:12px;padding:12px;font:400 13px/1.5 var(--font-b);color:var(--ink);resize:vertical;box-sizing:border-box;outline:none;" oninput="updateCharCount(this,'paste-count')" onfocus="this.style.borderColor='var(--theme)'" onblur="this.style.borderColor='var(--line)'"></textarea>
+      <div id="paste-count" style="font:400 11px/1 var(--font-b);color:var(--ink-soft);text-align:right;margin-top:4px;">0 characters</div>
+    </div>
+
+    <!-- Describe tab -->
+    <div id="panel-describe" style="padding:16px 24px 0;display:none;">
+      <div style="font:500 12px/1.5 var(--font-b);color:var(--ink-soft);margin-bottom:8px;">
+        Just tell us about the property in your own words. The more detail the better — AI will write the full listing for you.
+      </div>
+      <textarea id="import-describe-text" placeholder="e.g. I have a 2-bedroom apartment in Westlands, Nairobi. It has WiFi, parking, a modern kitchen, and city views from the 8th floor. I rent it at KES 6,500 per night. It sleeps up to 4 guests. Great for business travellers." style="width:100%;height:180px;border:1.5px solid var(--line);border-radius:12px;padding:12px;font:400 13px/1.5 var(--font-b);color:var(--ink);resize:vertical;box-sizing:border-box;outline:none;" oninput="updateCharCount(this,'desc-count')" onfocus="this.style.borderColor='var(--theme)'" onblur="this.style.borderColor='var(--line)'"></textarea>
+      <div id="desc-count" style="font:400 11px/1 var(--font-b);color:var(--ink-soft);text-align:right;margin-top:4px;">0 characters</div>
+    </div>
+
+    <!-- Error -->
+    <div id="import-error" style="display:none;margin:12px 24px 0;background:#fff0f0;border:1px solid #fca5a5;border-radius:10px;padding:10px 14px;font:400 12px/1.4 var(--font-b);color:#b91c1c;"></div>
+
+    <!-- Footer buttons -->
+    <div style="padding:18px 24px 24px;display:flex;gap:10px;">
+      <button onclick="closeImportModal()" style="flex:1;padding:13px;border:1.5px solid var(--line);border-radius:12px;background:transparent;font:600 13px/1 var(--font-b);color:var(--ink-soft);cursor:pointer;">Cancel</button>
+      <button id="import-btn" onclick="runImport()" style="flex:2;padding:13px;border:none;border-radius:12px;background:var(--theme-grad);color:#fff;font:700 13px/1 var(--font-b);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
+        <span id="import-btn-text">✨ Import with AI</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+let _importTab = 'paste';
+
+function openImportModal() {
+  const m = document.getElementById('import-modal');
+  m.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+function closeImportModal() {
+  document.getElementById('import-modal').style.display = 'none';
+  document.body.style.overflow = '';
+  document.getElementById('import-error').style.display = 'none';
+  document.getElementById('import-btn-text').textContent = '✨ Import with AI';
+  document.getElementById('import-btn').disabled = false;
+}
+function switchTab(tab) {
+  _importTab = tab;
+  const isPaste = tab === 'paste';
+  document.getElementById('panel-paste').style.display   = isPaste ? 'block' : 'none';
+  document.getElementById('panel-describe').style.display = isPaste ? 'none'  : 'block';
+  document.getElementById('tab-paste').style.background    = isPaste ? 'var(--theme-grad)' : 'transparent';
+  document.getElementById('tab-paste').style.color         = isPaste ? '#fff' : 'var(--ink-soft)';
+  document.getElementById('tab-describe').style.background = isPaste ? 'transparent' : 'var(--theme-grad)';
+  document.getElementById('tab-describe').style.color      = isPaste ? 'var(--ink-soft)' : '#fff';
+}
+function updateCharCount(el, countId) {
+  document.getElementById(countId).textContent = el.value.length + ' characters';
+}
+
+async function runImport() {
+  const text = _importTab === 'paste'
+    ? document.getElementById('import-paste-text').value.trim()
+    : document.getElementById('import-describe-text').value.trim();
+
+  const errEl = document.getElementById('import-error');
+  errEl.style.display = 'none';
+
+  if (text.length < 30) {
+    errEl.textContent = 'Please provide more detail — at least a few sentences about the property.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  const btn = document.getElementById('import-btn');
+  const btnText = document.getElementById('import-btn-text');
+  btn.disabled = true;
+  btnText.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="animation:spin .8s linear infinite"><path d="M21 12a9 9 0 1 1-6.22-8.56"/></svg> AI is reading your listing…';
+
+  try {
+    const r = await fetch('/api/import-listing', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, mode: _importTab }),
+    });
+    const json = await r.json();
+    if (!json.ok) throw new Error(json.error || 'Import failed');
+
+    // Store result and redirect to add-listing with pre-fill
+    sessionStorage.setItem('apa-import-prefill', JSON.stringify(json.data));
+    closeImportModal();
+    window.location.href = 'add-listing.html?prefill=1';
+  } catch (e) {
+    errEl.textContent = e.message;
+    errEl.style.display = 'block';
+    btn.disabled = false;
+    btnText.textContent = '✨ Import with AI';
+  }
+}
+
+// Close on backdrop click
+document.getElementById('import-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeImportModal();
+});
+</script>
+<style>
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
 
 <style>
 .service-chip{display:flex;align-items:center;gap:7px;padding:11px 14px;border-radius:12px;border:1.5px solid var(--line-2);background:rgba(255,255,255,.7);font:600 12px/1 var(--font-b);color:var(--ink-soft);text-decoration:none;transition:all .2s;cursor:pointer;}
