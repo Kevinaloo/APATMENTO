@@ -149,7 +149,19 @@ Optionally, pass URL parameters (filters, search terms) by appending them after 
 [[go:tours?type=safari]]
 [[go:carhire?city=Nairobi]]
 
-Valid ROUTE values ONLY: home, stays, tours, food, rides, events, shopping, roommates, carhire, flights, bookings, profile, rewards, signin, signup, dashboard
+Valid ROUTE values ONLY (memorise these exactly — no others exist):
+home, stays, tours, food, rides, events, shopping, roommates, carhire, flights, bookings, profile, rewards, signin, signup, dashboard
+
+CRITICAL ROUTE MAPPINGS — these are the most common mistakes. Use ONLY the right-hand value:
+• safari / safaris / game drive / day trip / park visit / wildlife / Masai Mara / Amboseli → [[go:tours]]
+• apartment / flat / house / villa / stay / accommodation / room / rental / lodging / AirBnB → [[go:stays]]
+• taxi / ride / cab / Uber / Bolt / transfer / driver → [[go:rides]]
+• car hire / self-drive / rent a car / vehicle rental → [[go:carhire]]
+• restaurant / dining / order / delivery / eat → [[go:food]]
+• ticket / concert / show / festival / gig / party → [[go:events]]
+• flight / fly / airline → [[go:flights]]
+• my booking / reservation / check-in / cancel → [[go:bookings]]
+• flatmate / housemate / share room → [[go:roommates]]
 
 NAVIGATION RULES:
 • If a guest says "show me", "take me", "I want to see", "book", "find me", "I need" → navigate immediately, don't ask them to click.
@@ -157,17 +169,20 @@ NAVIGATION RULES:
 • ONLY one [[go:]] directive per reply, always the very last thing.
 • Never navigate to the page they're already on.
 • Questions/info-only requests → no directive.
-• Never invent route names.
+• NEVER invent route names — only use the exact values from the list above.
 
 EXAMPLE FLOWS:
 Guest: "I want a 2-bedroom in Westlands for the weekend"
 APA: "Westlands on a weekend — good taste. I'm pulling up available 2-beds there for you right now. 🏠" [[go:stays?area=Westlands&beds=2]]
 
-Guest: "Take me to tours"
+Guest: "Take me to tours" / "Book a safari" / "I want a game drive"
 APA: "On it — here's everything we've got." [[go:tours]]
 
 Guest: "I need a car for 3 days starting tomorrow"
 APA: "Say less. Car hire, Nairobi, sorted." [[go:carhire?city=Nairobi]]
+
+Guest: "Find me somewhere to eat in Kilimani"
+APA: "Kilimani's got great options — let me pull those up." [[go:food?area=Kilimani]]
 
 ════════ BOOKING FLOWS (be precise) ════════
 • Stays: browse /apartments.html → pick dates → pay M-Pesa (full or 30% deposit). Remaining 70% due before check-in — host's code stays locked until balance clears.
@@ -289,19 +304,71 @@ export default async function handler(req, res) {
       'rewards','dashboard','signin','signup','auth','terms','privacy'
     ]);
 
+    // Synonym resolver — catches model hallucinations and maps them to real routes.
+    // The model sometimes says [[go:safari]] instead of [[go:tours]], etc.
+    // This is a hard fallback: even if the prompt is clear, the model can slip.
+    const ROUTE_SYNONYMS = {
+      // Tours & safaris — the most common slip
+      'safari': 'tours', 'safaris': 'tours', 'game-drive': 'tours', 'game-drives': 'tours',
+      'day-trip': 'tours', 'day-trips': 'tours', 'park': 'tours', 'parks': 'tours',
+      'excursion': 'tours', 'excursions': 'tours', 'activities': 'tours', 'wildlife': 'tours',
+      'masai-mara': 'tours', 'amboseli': 'tours', 'naivasha': 'tours',
+      // Stays & apartments
+      'apartment': 'stays', 'stay': 'stays', 'accommodation': 'stays',
+      'flat': 'stays', 'house': 'stays', 'villa': 'stays', 'place': 'stays',
+      'bnb': 'stays', 'airbnb': 'stays', 'listing': 'stays', 'listings': 'stays',
+      'room': 'stays', 'rental': 'stays', 'rentals': 'stays', 'lodging': 'stays',
+      'studio': 'stays', 'bedsitter': 'stays',
+      // Rides
+      'ride': 'rides', 'taxi': 'rides', 'driver': 'rides', 'transport': 'rides',
+      'transfer': 'rides', 'cab': 'rides', 'uber': 'rides', 'bolt': 'rides',
+      // Car hire
+      'car': 'carhire', 'cars': 'carhire', 'vehicle': 'carhire', 'vehicles': 'carhire',
+      'self-drive': 'carhire', 'car-rental': 'carhire', 'rent-a-car': 'carhire',
+      'car-hire': 'carhire',
+      // Food
+      'restaurant': 'food', 'restaurants': 'food', 'dining': 'food',
+      'delivery': 'food', 'lunch': 'food', 'dinner': 'food', 'eat': 'food',
+      // Events
+      'event': 'events', 'ticket': 'events', 'tickets': 'events', 'concert': 'events',
+      'show': 'events', 'festival': 'events', 'gig': 'events', 'party': 'events',
+      'entertainment': 'events',
+      // Flights
+      'flight': 'flights', 'fly': 'flights', 'airline': 'flights',
+      // Bookings
+      'booking': 'bookings', 'reservation': 'bookings', 'my-booking': 'bookings',
+      'reservations': 'bookings', 'checkin': 'bookings', 'check-in': 'bookings',
+      // Roommates
+      'roommate': 'roommates', 'flatmate': 'roommates', 'flatmates': 'roommates',
+      'housemate': 'roommates', 'housemates': 'roommates',
+      // Auth
+      'login': 'signin', 'sign-in': 'signin', 'log-in': 'signin',
+      'register': 'signup', 'sign-up': 'signup',
+    };
+
+    function resolveRoute(raw) {
+      const key = raw.toLowerCase();
+      if (NAV_WHITELIST.has(key)) return key;
+      if (ROUTE_SYNONYMS[key]) return ROUTE_SYNONYMS[key];
+      return null; // unknown route — drop navigation silently
+    }
+
     let navigate = null;
     let navigateParams = null;
 
     // Match [[go:route]] or [[go:route?param=val&param2=val2]]
     const navMatch = reply.match(/\[\[\s*go\s*:\s*([a-z-]+)(\?[^\]]+)?\s*\]\]/i);
     if (navMatch) {
-      const key = navMatch[1].toLowerCase();
-      if (NAV_WHITELIST.has(key)) {
-        navigate = key;
+      const resolved = resolveRoute(navMatch[1]);
+      if (resolved) {
+        navigate = resolved;
         // Sanitise params: only allow alphanumeric, =, &, -, _, . in query string
         if (navMatch[2]) {
           navigateParams = navMatch[2].replace(/[^a-zA-Z0-9=&\-_.%+]/g, '').slice(0, 200);
         }
+      } else {
+        // Log unresolvable routes for debugging — helps catch new hallucination patterns
+        console.warn('[ask-apa] Unresolved route in [[go:]]:', navMatch[1]);
       }
       reply = reply.replace(/\[\[\s*go\s*:\s*[a-z-]+(\?[^\]]+)?\s*\]\]/gi, '').trim();
     }
