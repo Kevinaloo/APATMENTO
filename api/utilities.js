@@ -239,6 +239,52 @@ async function handleWelcomeEmail(req, res) {
 /* ══════════════════════════════════════
    ROUTER
 ══════════════════════════════════════ */
+
+/* ══════════════════════════════════════════════════════════════
+   INDEX NOW  (merged from api/indexnow.js to stay under
+   Vercel Hobby plan's 12-function limit)
+══════════════════════════════════════════════════════════════ */
+const INDEXNOW_HOST = 'www.apatmento.space';
+const INDEXNOW_KEY  = 'cc18b1bc5dc43435c44f29f125a500f5';
+
+async function handleIndexNow(req, res) {
+  try {
+    let urls;
+    const single = req.query?.url ? String(req.query.url) : null;
+
+    if (single) {
+      const path = single.startsWith('http') ? new URL(single).pathname : single;
+      urls = ['https://' + INDEXNOW_HOST + (path.startsWith('/') ? path : '/' + path)];
+    } else {
+      const sm = await fetch('https://' + INDEXNOW_HOST + '/sitemap.xml');
+      if (!sm.ok) throw new Error('sitemap fetch failed: ' + sm.status);
+      const xml = await sm.text();
+      urls = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m => m[1].trim());
+      if (!urls.length) throw new Error('no <loc> entries in sitemap');
+    }
+
+    const r = await fetch('https://api.indexnow.org/indexnow', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
+      body: JSON.stringify({
+        host: INDEXNOW_HOST,
+        key: INDEXNOW_KEY,
+        keyLocation: 'https://' + INDEXNOW_HOST + '/' + INDEXNOW_KEY + '.txt',
+        urlList: urls,
+      }),
+    });
+
+    res.status(200).json({
+      ok: r.status === 200 || r.status === 202,
+      indexnow_status: r.status,
+      submitted: urls.length,
+      urls,
+    });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: String(err.message || err) });
+  }
+}
+
 export default async function handler(req, res) {
   const action = req.query?.action 
     || (typeof req.body === 'object' ? req.body?.action : null)
@@ -253,5 +299,9 @@ export default async function handler(req, res) {
     return handleWelcomeEmail(req, res);
   }
 
-  return res.status(400).json({ error: 'Unknown action. Available: verify-checkin, welcome-email' });
+  if (action === 'indexnow') {
+    return handleIndexNow(req, res);
+  }
+
+  return res.status(400).json({ error: 'Unknown action. Available: verify-checkin, welcome-email, indexnow' });
 }

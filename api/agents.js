@@ -44,7 +44,7 @@ const ANON_KEY    = process.env.SUPABASE_ANON_KEY;
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const RESEND_KEY  = process.env.RESEND_API_KEY;
 const INTERNAL    = process.env.INTERNAL_API_SECRET;
-const FROM        = 'Apatmento <hello@apatmento.space>';
+const FROM        = 'Apatmento <connect@apatmento.space>';
 const SITE        = 'https://www.apatmento.space';
 const ADMINS      = ['apatmento@gmail.com', 'worlddossy@gmail.com'];
 

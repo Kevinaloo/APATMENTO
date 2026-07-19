@@ -322,7 +322,7 @@
     security: [
       { n: 'Kenya Police',               d: 'Safety threat response',     tel: '999' },
       { n: 'Emergency (All Networks)',   d: 'Works on any network',       tel: '112' },
-      { n: 'Cabana Safety Line',      d: '24/7 guest safety support',  tel: '+254700000000' }
+      { n: 'Cabana Safety Line',      d: '24/7 guest safety support',  tel: '+254745802200' }
     ],
     roadside: [
       { n: 'Kenya AA (Breakdown)',        d: 'Automobile Association',     tel: '0800723232' },
@@ -330,8 +330,8 @@
       { n: 'Emergency (All Networks)',   d: 'Police · Fire · Ambulance',  tel: '112' }
     ],
     support:  [
-      { n: 'Cabana Support',          d: '24/7 booking & host issues', tel: '+254700000000' },
-      { n: 'WhatsApp Support',           d: 'Chat with our team',         tel: '+254700000000', wa: true }
+      { n: 'Cabana Support',          d: '24/7 booking & host issues', tel: '+254745802200' },
+      { n: 'WhatsApp Support',           d: 'Chat with our team',         tel: '+254745802200', wa: true }
     ]
   };
 
