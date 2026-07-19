@@ -1625,6 +1625,7 @@ async function publishListing() {
     // Upload cover photo first, then the rest
     const uploadOrder = [_coverIdx, ...Array.from({length:formData.photoFiles.length},(_,i)=>i).filter(i=>i!==_coverIdx)];
     const photoUrls = [];
+    const photoHashes = [];
     for (let oi = 0; oi < uploadOrder.length; oi++) {
       const i = uploadOrder[oi];
       const file = formData.photoFiles[i];
@@ -1636,6 +1637,9 @@ async function publishListing() {
       if (upErr) throw upErr;
       const { data: { publicUrl } } = sb.storage.from('listings').getPublicUrl(path);
       photoUrls.push(publicUrl);
+      // Compute perceptual hash for duplicate detection
+      const h = await _pHash(file);
+      if (h) photoHashes.push(h);
     }
     // Save lat/lng from map
     const _lat = parseFloat(document.getElementById('f-lat')?.value) || null;
@@ -1653,6 +1657,7 @@ async function publishListing() {
          floor           text, sqm text, description text,
          amenities       text[],
          photos          text[],
+         photo_hashes    text[],
          currency        text, price_night numeric, price_week numeric, price_month numeric,
          deposit         numeric, min_nights int,
          checkin_time    text, checkout_time text,
@@ -1689,6 +1694,7 @@ async function publishListing() {
       description:   formData.desc,
       amenities:     formData.amenities,
       photos:        photoUrls.length ? photoUrls : formData.photos, // keep existing if no new uploads
+      photo_hashes:  photoHashes.length ? photoHashes : undefined,
       currency:      formData.currency,
       price_night:   parseFloat(formData.priceNight) || null,
       price_week:    parseFloat(formData.priceWeek)  || null,
