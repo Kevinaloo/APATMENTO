@@ -314,6 +314,7 @@
 
   function openPanel() {
     open = true;
+    micDenied = false;
     panel.classList.add('open');
     if (fab) fab.setAttribute('aria-expanded', 'true');
     hideAvatarPopup();
@@ -602,23 +603,6 @@
   function startVoice() {
     if (listening || !voiceUsable) return;
     stopSpeech();
-
-    // Chrome ~126+ no longer shows the mic permission popup via recognition.start() alone.
-    // We must call getUserMedia first — that's what triggers the "Allow microphone" dialog.
-    // Once the user allows (or it's already allowed), we start recognition immediately.
-    (navigator.mediaDevices
-      ? navigator.mediaDevices.getUserMedia({ audio: true })
-      : Promise.resolve(null)
-    ).then(function(stream) {
-      if (stream) stream.getTracks().forEach(function(t) { t.stop(); }); // release stream, recognition manages its own
-      _startRecognitionNow();
-    }).catch(function() {
-      micDenied = true; handsFree = false; setTalkUI(false);
-      appendMsg('apa', 'Microphone access was blocked. Tap the lock icon in your browser address bar, allow Microphone, then try again.');
-    });
-  }
-
-  function _startRecognitionNow() {
     var SR = global.SpeechRecognition || global.webkitSpeechRecognition;
     try { recognition = new SR(); } catch (_) { explainNoVoice(); return; }
     recognition.lang = 'en-KE';
@@ -627,6 +611,7 @@
     recognition.maxAlternatives = 1;
     recognition.onstart = function () {
       listening = true;
+      micDenied = false;
       var mic = document.getElementById('apa-mic');
       var vbar = document.getElementById('apa-vbar');
       if (mic) mic.classList.add('on', 'listening');
@@ -649,7 +634,7 @@
       stopVoice();
       if (err === 'not-allowed' || err === 'service-not-allowed') {
         micDenied = true; handsFree = false; setTalkUI(false);
-        appendMsg('apa', 'Mic permission is blocked. Enable it in your browser settings, or type \u2014 I\u2019m here.');
+        appendMsg('apa', 'Microphone is blocked. Go to Chrome \u2192 Settings \u2192 Site settings \u2192 Microphone \u2192 find apatmento.space and set it to Allow, then try again.');
       } else if (err === 'no-speech') { maybeReopenMic(); }
       else if (err !== 'aborted') { maybeReopenMic(); }
     };
