@@ -1781,7 +1781,7 @@ async function initPartnerFlow(){
   if(!CURRENT_USER){ renderOnboarding(); return; }
   try{
     const { data:listings } = await sb.from('listings')
-      .select('id,title,name,status,listing_type,service_category,price_night,created_at')
+      .select('id,title,name,status,listing_type,price_night,created_at')
       .eq('partner_id', CURRENT_USER.id);
     // Map any sub-type (e.g. "Apartment", "Studio", "Safari") back to a service category key
     const _subToCategory = {
@@ -1802,7 +1802,7 @@ async function initPartnerFlow(){
     };
     partnerServices = (listings||[]).map(l=>{
       const rawType = (l.listing_type||'').toLowerCase();
-      const cat = l.service_category || _subToCategory[rawType] || 'apartment';
+      const cat = _subToCategory[rawType] || 'apartment';
       return {...l, listing_type: cat, is_active:l.status!=='inactive', price_per_night:l.price_night||0};
     });
   }catch(e){ partnerServices=[]; }

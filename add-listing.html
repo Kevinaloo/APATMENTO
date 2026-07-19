@@ -1407,7 +1407,6 @@ async function publishListing() {
       location:      [formData.area, formData.city, formData.country].filter(Boolean).join(', '),
       property_type: formData.type,
       listing_type:  formData.type,
-      service_category: window._serviceType || 'apartment',
       is_active:     true,
       internal_score: 50,
       max_guests:    formData.guests,
