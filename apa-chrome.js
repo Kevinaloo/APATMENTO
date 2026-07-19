@@ -490,13 +490,12 @@
       global.location.href = 'auth.html?next=partner';
       return;
     }
-    var next = st.role === 'partner' ? 'guest' : 'partner';
-
-    // Persist the chosen role to localStorage so every subsequent page load
-    // remembers it — fixes the bug where partners lost their mode on navigation.
+    // Use URL param as ground truth — not localStorage
+    var urlRole = '';
+    try { urlRole = new URLSearchParams(global.location.search).get('role') || ''; } catch(e) {}
+    var currentlyPartner = urlRole === 'partner';
+    var next = currentlyPartner ? 'guest' : 'partner';
     try { localStorage.setItem('apa-last-role', next); } catch(e) {}
-
-    // Always navigate to dashboard with the explicit role param
     global.location.href = 'dashboard.html?role=' + next + '&back=1';
   }
 
@@ -504,7 +503,11 @@
   function render(st) {
     st = st || { status: 'guest', role: 'guest' };
     var isUser = st.status === 'user';
-    var isPartner = st.role === 'partner';
+    // Read role from URL param, not session — session.role reads localStorage which
+    // can be stale. The URL is the ground truth for which screen you're on.
+    var urlRole = '';
+    try { urlRole = new URLSearchParams(global.location.search).get('role') || ''; } catch(e) {}
+    var isPartner = isUser && urlRole === 'partner';
     var root = doc.documentElement;
 
     root.setAttribute('data-auth', isUser ? 'user' : 'guest');

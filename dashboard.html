@@ -1802,10 +1802,15 @@ async function initPartnerFlow(){
   document.getElementById('p-state-loading').style.display='none';
 
   // No listings yet.
-  // If user clicked "Add service/listing" button, show the onboarding picker so
-  // they can choose a service type. Otherwise redirect to add-listing directly.
+  // Rules:
+  //   - ?back=1 means user just returned from add-listing or another page — show
+  //     the partner shell with an "Add your first listing" prompt, never redirect.
+  //   - __addServiceIntent means user clicked "+ Add service" — show the picker.
+  //   - Fresh first-time partner arrival — redirect to add-listing to start setup.
   if(!partnerServices.length){
-    if(window.__addServiceIntent){
+    var isBackNav = false;
+    try { isBackNav = new URLSearchParams(location.search).has('back'); } catch(e) {}
+    if(isBackNav || window.__addServiceIntent){
       window.__addServiceIntent = false;
       renderOnboarding();
     } else {
