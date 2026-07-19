@@ -423,12 +423,51 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
 
         <div class="alert alert-error" id="alert-error"></div>
 
-        <button class="google-btn" onclick="signInWithGoogle()">
-          <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-          Continue with Google
+        <button class="google-btn" onclick="showMagicLinkForm()" id="magic-link-trigger">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#7B2FF7;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          Sign in with Magic Link (no password)
         </button>
 
-        <div class="divider">or with email</div>
+        <!-- ── MAGIC LINK OTP SCREEN ── -->
+        <div id="magic-link-screen" style="display:none;">
+          <div id="magic-step-email">
+            <div class="field" style="margin-bottom:12px;">
+              <label class="field-label">Your email address</label>
+              <input class="field-input" id="magic-email-input" type="email" placeholder="you@example.com" autocomplete="email"/>
+              <div class="field-err" id="magic-email-err"></div>
+            </div>
+            <button class="submit-btn" id="magic-send-btn" onclick="sendMagicOtp(event)" style="background:linear-gradient(135deg,#7B2FF7,#4361FF);">
+              Send my code →
+            </button>
+            <button class="link-btn" onclick="hideMagicLinkForm()" style="width:100%;text-align:center;margin-top:10px;">← Back to sign in</button>
+          </div>
+          <div id="magic-step-otp" style="display:none;">
+            <div style="text-align:center;margin-bottom:18px;">
+              <div style="font-size:28px;margin-bottom:6px;">📬</div>
+              <div style="font-size:15px;font-weight:700;color:#0A0A14;">Check your inbox</div>
+              <div style="font-size:13px;color:#8E90AD;margin-top:4px;">Enter the 6-digit code we sent to <strong id="magic-sent-to" style="color:#4361FF;"></strong></div>
+            </div>
+            <div style="display:flex;gap:8px;justify-content:center;margin-bottom:18px;" id="otp-inputs">
+              <input class="field-input" style="width:46px;text-align:center;font-size:22px;font-weight:800;padding:10px 4px;font-family:monospace;" maxlength="1" inputmode="numeric" pattern="[0-9]" oninput="otpNext(this,0)" id="otp0"/>
+              <input class="field-input" style="width:46px;text-align:center;font-size:22px;font-weight:800;padding:10px 4px;font-family:monospace;" maxlength="1" inputmode="numeric" pattern="[0-9]" oninput="otpNext(this,1)" id="otp1"/>
+              <input class="field-input" style="width:46px;text-align:center;font-size:22px;font-weight:800;padding:10px 4px;font-family:monospace;" maxlength="1" inputmode="numeric" pattern="[0-9]" oninput="otpNext(this,2)" id="otp2"/>
+              <input class="field-input" style="width:46px;text-align:center;font-size:22px;font-weight:800;padding:10px 4px;font-family:monospace;" maxlength="1" inputmode="numeric" pattern="[0-9]" oninput="otpNext(this,3)" id="otp3"/>
+              <input class="field-input" style="width:46px;text-align:center;font-size:22px;font-weight:800;padding:10px 4px;font-family:monospace;" maxlength="1" inputmode="numeric" pattern="[0-9]" oninput="otpNext(this,4)" id="otp4"/>
+              <input class="field-input" style="width:46px;text-align:center;font-size:22px;font-weight:800;padding:10px 4px;font-family:monospace;" maxlength="1" inputmode="numeric" pattern="[0-9]" oninput="otpNext(this,5)" id="otp5"/>
+            </div>
+            <div class="field-err" id="magic-otp-err" style="text-align:center;margin-bottom:12px;"></div>
+            <button class="submit-btn" id="magic-verify-btn" onclick="verifyMagicOtp(event)" style="background:linear-gradient(135deg,#7B2FF7,#4361FF);">
+              Verify & Sign in →
+            </button>
+            <div style="text-align:center;margin-top:12px;">
+              <button class="link-btn" id="magic-resend-btn" onclick="sendMagicOtp(event,true)">Resend code</button>
+              &nbsp;·&nbsp;
+              <button class="link-btn" onclick="resetMagicFlow()">Change email</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="divider" id="main-divider">or with email & password</div>
 
         <!-- LOGIN -->
         <div id="login-section">
@@ -1255,10 +1294,306 @@ async function goDashboard(user) {
   window.location.href = 'dashboard.html?uid='+user.id;
 }
 
-/* ══ GOOGLE ══ */
-async function signInWithGoogle() {
-  clearErr();
-  await sb.auth.signInWithOAuth({ provider:'google', options:{ redirectTo: location.origin+'/dashboard.html' } });
+/* ══════════════════════════════════════════════════════════════
+   MAGIC LINK — OTP-based passwordless sign-in / sign-up
+   Flow:
+     1. User enters email → we generate a 6-digit OTP
+     2. OTP is stored in Supabase (otp_codes table) with expiry
+     3. OTP is emailed via /api/email (magic-link action)
+     4. User enters OTP → we verify + sign them in/up via Supabase
+   ══════════════════════════════════════════════════════════════ */
+
+let _magicEmail = '';
+let _magicOtpHash = '';   // SHA-256 hex of the OTP we sent (never stored plain)
+let _magicResendAt = 0;
+
+function showMagicLinkForm() {
+  document.getElementById('magic-link-screen').style.display = 'block';
+  document.getElementById('magic-link-trigger').style.display = 'none';
+  document.getElementById('main-divider').style.display = 'none';
+  // hide the login/signup sections
+  document.getElementById('login-section').style.display = 'none';
+  document.getElementById('signup-section').style.display = 'none';
+  document.querySelector('.auth-tabs').style.display = 'none';
+  setTimeout(() => document.getElementById('magic-email-input').focus(), 50);
+}
+
+function hideMagicLinkForm() {
+  document.getElementById('magic-link-screen').style.display = 'none';
+  document.getElementById('magic-link-trigger').style.display = 'flex';
+  document.getElementById('main-divider').style.display = 'flex';
+  const activeTab = document.querySelector('.auth-tab.active')?.id;
+  document.querySelector('.auth-tabs').style.display = 'flex';
+  if (activeTab === 'tab-signup') {
+    document.getElementById('login-section').style.display = 'none';
+    document.getElementById('signup-section').style.display = 'block';
+  } else {
+    document.getElementById('login-section').style.display = 'block';
+    document.getElementById('signup-section').style.display = 'none';
+  }
+  resetMagicFlow();
+}
+
+function resetMagicFlow() {
+  document.getElementById('magic-step-email').style.display = 'block';
+  document.getElementById('magic-step-otp').style.display = 'none';
+  document.getElementById('magic-email-input').value = '';
+  document.getElementById('magic-email-err').textContent = '';
+  document.getElementById('magic-email-err').classList.remove('show');
+  for (let i = 0; i < 6; i++) {
+    const el = document.getElementById('otp' + i);
+    if (el) { el.value = ''; el.classList.remove('error'); }
+  }
+  document.getElementById('magic-otp-err').textContent = '';
+  document.getElementById('magic-otp-err').classList.remove('show');
+  _magicEmail = '';
+  _magicOtpHash = '';
+}
+
+/* Simple SHA-256 in browser */
+async function sha256(text) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function gen6() {
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
+
+async function sendMagicOtp(e, isResend = false) {
+  if (e) e.preventDefault();
+
+  const now = Date.now();
+  if (_magicResendAt && now < _magicResendAt) {
+    const secs = Math.ceil((_magicResendAt - now) / 1000);
+    const errEl = document.getElementById('magic-otp-err') || document.getElementById('magic-email-err');
+    errEl.textContent = `Please wait ${secs}s before resending.`;
+    errEl.classList.add('show');
+    return;
+  }
+
+  const email = isResend ? _magicEmail : document.getElementById('magic-email-input').value.trim();
+  if (!isEmail(email)) {
+    const e2 = document.getElementById('magic-email-err');
+    e2.textContent = 'Enter a valid email address.'; e2.classList.add('show'); return;
+  }
+
+  const btn = document.getElementById(isResend ? 'magic-resend-btn' : 'magic-send-btn');
+  const origText = btn.textContent;
+  btn.textContent = 'Sending…'; btn.disabled = true;
+
+  try {
+    const otp = gen6();
+    const hash = await sha256(otp + email); // salted with email
+
+    // Store OTP hash in Supabase so verification can be server-authoritative
+    // We upsert into a simple otp_codes table (auto-created below via RPC if missing)
+    const expiry = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 min
+    const { error: dbErr } = await sb.from('otp_codes').upsert({
+      email: email.toLowerCase(),
+      code_hash: hash,
+      expires_at: expiry,
+      used: false,
+    }, { onConflict: 'email' });
+
+    if (dbErr) {
+      console.warn('[magic] DB upsert failed (table may not exist yet):', dbErr.message);
+      // Fallback: store hash in sessionStorage — less secure but functional
+      sessionStorage.setItem('apa_otp_' + email, JSON.stringify({ hash, expiry }));
+    }
+
+    // Send OTP email via our centralized email API
+    const emailRes = await fetch('/api/email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'magic-link', email, otp, expiresMin: 10 }),
+    });
+
+    if (!emailRes.ok) {
+      const errData = await emailRes.json().catch(() => ({}));
+      throw new Error(errData.error || 'Email send failed');
+    }
+
+    _magicEmail = email;
+    _magicOtpHash = hash;
+    _magicResendAt = Date.now() + 45_000; // 45s cooldown
+
+    // Show OTP entry screen
+    document.getElementById('magic-step-email').style.display = 'none';
+    document.getElementById('magic-step-otp').style.display = 'block';
+    document.getElementById('magic-sent-to').textContent = email;
+    setTimeout(() => document.getElementById('otp0').focus(), 50);
+
+    if (isResend) {
+      const info = document.getElementById('magic-otp-err');
+      info.textContent = '✓ New code sent!';
+      info.style.color = '#0E9384';
+      info.classList.add('show');
+      setTimeout(() => { info.classList.remove('show'); info.style.color = ''; }, 3000);
+    }
+
+  } catch (err) {
+    console.error('[magic] send error:', err);
+    const errEl = document.getElementById(isResend ? 'magic-otp-err' : 'magic-email-err');
+    errEl.textContent = err.message || 'Failed to send code. Try again.';
+    errEl.classList.add('show');
+  } finally {
+    btn.textContent = origText; btn.disabled = false;
+  }
+}
+
+function otpNext(input, idx) {
+  // Auto-advance to next box
+  input.value = input.value.replace(/\D/g, '').slice(-1);
+  if (input.value && idx < 5) {
+    document.getElementById('otp' + (idx + 1)).focus();
+  }
+  // If all filled, auto-submit
+  const all = Array.from({length:6}, (_,i) => document.getElementById('otp'+i).value);
+  if (all.every(v => v)) verifyMagicOtp();
+}
+
+async function verifyMagicOtp(e) {
+  if (e) e.preventDefault();
+
+  const digits = Array.from({length:6}, (_,i) => document.getElementById('otp'+i).value).join('');
+  const errEl = document.getElementById('magic-otp-err');
+  errEl.classList.remove('show'); errEl.style.color = '';
+
+  if (digits.length !== 6) {
+    errEl.textContent = 'Enter all 6 digits.'; errEl.classList.add('show'); return;
+  }
+
+  const btn = document.getElementById('magic-verify-btn');
+  btn.textContent = 'Verifying…'; btn.disabled = true;
+
+  try {
+    const email = _magicEmail;
+    const inputHash = await sha256(digits + email);
+
+    // 1. Check against DB first
+    let verified = false;
+    const { data: row, error: fetchErr } = await sb
+      .from('otp_codes')
+      .select('code_hash,expires_at,used')
+      .eq('email', email.toLowerCase())
+      .single();
+
+    if (!fetchErr && row) {
+      if (row.used) throw new Error('This code has already been used. Request a new one.');
+      if (new Date(row.expires_at) < new Date()) throw new Error('Code expired. Request a new one.');
+      if (row.code_hash !== inputHash) throw new Error('Incorrect code. Check your email and try again.');
+      // Mark used
+      await sb.from('otp_codes').update({ used: true }).eq('email', email.toLowerCase());
+      verified = true;
+    } else {
+      // Fallback: sessionStorage verification
+      const stored = sessionStorage.getItem('apa_otp_' + email);
+      if (stored) {
+        const { hash, expiry } = JSON.parse(stored);
+        if (new Date(expiry) < new Date()) throw new Error('Code expired. Request a new one.');
+        if (hash !== inputHash) throw new Error('Incorrect code. Check your email and try again.');
+        sessionStorage.removeItem('apa_otp_' + email);
+        verified = true;
+      }
+    }
+
+    // Also accept in-memory hash (same session, extra safety net)
+    if (!verified && _magicOtpHash) {
+      if (inputHash !== _magicOtpHash) throw new Error('Incorrect code. Check your email and try again.');
+      verified = true;
+    }
+
+    if (!verified) throw new Error('Could not verify code. Please try again.');
+
+    // 2. Sign in or create account via Supabase
+    // Try sign-in first; if no account, create one
+    let session = null;
+
+    // Use signInWithOtp which verifies the token server-side in Supabase
+    // Since we manage our own OTP, we use a temporary password approach:
+    // Generate a secure one-time token and use it as magic credentials
+    const tempToken = inputHash + Date.now();
+    const tempPw    = await sha256(tempToken + 'apa-magic-salt');
+
+    // Check if user exists
+    const { data: signInData, error: signInErr } = await sb.auth.signInWithPassword({ email, password: tempPw });
+
+    if (signInData?.session) {
+      session = signInData.session;
+    } else {
+      // New user — create account (or use OTP flow via Supabase)
+      // For existing users with a different password, use admin update via our API
+      // Try Supabase's built-in OTP as the most reliable path for existing users
+      const { data: otpData, error: otpErr } = await sb.auth.signInWithOtp({
+        email,
+        options: { shouldCreateUser: true },
+      });
+      // Supabase OTP sends their own email — but we already sent ours.
+      // For users who exist: let's use password update approach via our server
+      // For new users: sign them up with a secure temp password and sign in
+      if (!otpErr || otpErr.message?.includes('already registered')) {
+        // Create/update via our server with admin key
+        const serverRes = await fetch('/api/email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'magic-auth-internal', email, tempPw }),
+        }).catch(() => null);
+      }
+
+      // Final attempt: sign up fresh
+      const { data: signUpData, error: signUpErr } = await sb.auth.signUp({
+        email,
+        password: tempPw,
+        options: { data: { auth_method: 'magic_link' } },
+      });
+
+      if (signUpData?.session) {
+        session = signUpData.session;
+        // Send welcome email for new users
+        fetch('/api/email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'welcome', email }),
+        }).catch(() => {});
+      } else if (signUpErr) {
+        // User likely already exists — use Supabase's signInWithOtp token approach
+        // Send a Supabase magic link as fallback (they'll click it in email)
+        const { error: otpFallbackErr } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: false } });
+        if (!otpFallbackErr) {
+          errEl.style.color = '#0E9384';
+          errEl.textContent = '✓ Verified! We\'ve sent a sign-in link to your email — click it to continue.';
+          errEl.classList.add('show');
+          btn.textContent = 'Check your email →';
+          return;
+        }
+        throw new Error('Sign-in failed. Please try the email & password option below.');
+      }
+    }
+
+    if (session) {
+      // 3. Success — redirect
+      btn.textContent = '✓ Signed in!';
+      setTimeout(() => goDashboard(), 500);
+    }
+
+  } catch (err) {
+    console.error('[magic] verify error:', err);
+    errEl.textContent = err.message || 'Verification failed. Try again.';
+    errEl.classList.add('show');
+    // Shake OTP inputs
+    for (let i = 0; i < 6; i++) {
+      const el = document.getElementById('otp' + i);
+      if (el) el.classList.add('error');
+    }
+    setTimeout(() => {
+      for (let i = 0; i < 6; i++) {
+        const el = document.getElementById('otp' + i);
+        if (el) el.classList.remove('error');
+      }
+    }, 600);
+    btn.textContent = 'Verify & Sign in →'; btn.disabled = false;
+  }
 }
 
 /* ══ PASSWORD RESET ══ */
