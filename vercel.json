@@ -99,7 +99,7 @@
         },
         {
           "key": "Permissions-Policy",
-          "value": "camera=(self), microphone=(), geolocation=(self), interest-cohort=()"
+          "value": "camera=(self), microphone=(self), geolocation=(self), interest-cohort=()"
         },
         {
           "key": "X-DNS-Prefetch-Control",
@@ -199,6 +199,10 @@
     {
       "source": "/api/ask-apa",
       "destination": "/api/trust?action=ask-apa"
+    },
+    {
+      "source": "/api/indexnow",
+      "destination": "/api/utilities?action=indexnow"
     }
   ]
 }

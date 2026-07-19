@@ -332,6 +332,7 @@
 
   function openPanel() {
     open = true;
+    micDenied = false;
     panel.classList.add('open');
     if (fab) fab.setAttribute('aria-expanded', 'true');
     hideAvatarPopup();
@@ -636,6 +637,7 @@
     recognition.maxAlternatives = 1;
     recognition.onstart = function () {
       listening = true;
+      micDenied = false;
       var mic = document.getElementById('apa-mic');
       var vbar = document.getElementById('apa-vbar');
       if (mic) mic.classList.add('on', 'listening');
@@ -658,7 +660,7 @@
       stopVoice();
       if (err === 'not-allowed' || err === 'service-not-allowed') {
         micDenied = true; handsFree = false; setTalkUI(false);
-        appendMsg('apa', 'Mic permission is blocked. Enable it in your browser settings, or type \u2014 I\u2019m here.');
+        appendMsg('apa', 'Microphone is blocked. Go to Chrome \u2192 Settings \u2192 Site settings \u2192 Microphone \u2192 find apatmento.space and set it to Allow, then try again.');
       } else if (err === 'no-speech') { maybeReopenMic(); }
       else if (err !== 'aborted') { maybeReopenMic(); }
     };
