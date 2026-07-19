@@ -611,11 +611,9 @@ body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webk
       // Already a partner with listings → go to partner dashboard
       try { localStorage.setItem('apa-last-role', 'partner'); } catch(e) {}
       window.location.replace('dashboard.html?role=partner&back=1');
-    } else {
-      // Signed in but no listings → take them to partner onboarding on dashboard
-      try { localStorage.setItem('apa-last-role', 'partner'); } catch(e) {}
-      window.location.replace('dashboard.html?role=partner&back=1');
     }
+    // Signed in but no listings → show this marketing page so they can read about benefits
+    // (do NOT redirect — they may want to review the page before committing)
   } catch(e) {
     showNavBackBtn(false); // Network error — show page normally
   }
