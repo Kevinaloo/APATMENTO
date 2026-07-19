@@ -445,6 +445,12 @@ img,video,svg{max-width:100%;}
 .tb-avatar:hover{transform:translateY(-2px) scale(1.04);}
 .sos-btn{padding:9px 16px;border-radius:100px;background:linear-gradient(135deg,#FF3B5C,#E11D48);color:#fff;border:none;font-family:var(--font-body);font-weight:600;font-size:12px;letter-spacing:.04em;cursor:pointer;display:flex;align-items:center;gap:6px;box-shadow:0 4px 16px rgba(225,29,72,.3);animation:sosPulse 2.6s ease-in-out infinite;}
 @keyframes sosPulse{0%,100%{box-shadow:0 4px 16px rgba(225,29,72,.3);}50%{box-shadow:0 4px 28px rgba(225,29,72,.6);}}
+/* ── SOS hardcoded — renders immediately, not dependent on deferred apa-chrome.js ── */
+.apa-sos{display:inline-flex;align-items:center;flex-shrink:0;padding:8px 16px;border-radius:100px;border:none;cursor:pointer;background:linear-gradient(135deg,#FF1744,#D50000);color:#fff;font-family:var(--font-body);font-weight:800;font-size:12px;letter-spacing:.12em;line-height:1;box-shadow:0 3px 14px rgba(213,0,0,.38);transition:transform .2s ease,box-shadow .2s ease;animation:apaSosPulse 3s ease-in-out infinite;}
+.apa-sos:hover{transform:translateY(-1px) scale(1.03);box-shadow:0 6px 20px rgba(213,0,0,.55);}
+.apa-sos:active{transform:translateY(0) scale(.98);}
+@keyframes apaSosPulse{0%,100%{box-shadow:0 3px 14px rgba(213,0,0,.38);}50%{box-shadow:0 4px 24px rgba(213,0,0,.65);}}
+@media(max-width:560px){.apa-sos{padding:7px 12px;font-size:11px;}}
 
 /* ══════════ CONTENT ══════════ */
 .content{max-width:1180px;margin:0 auto;padding:36px 32px 80px;}
@@ -953,59 +959,7 @@ img,video,svg{max-width:100%;}
           </div>
         </div>
 
-        <!-- ── CHARITY — impact card ── -->
-        <div class="svc-charity-card" onclick="document.getElementById('charity-modal').style.display='flex'">
-          <div class="svc-charity-glow"></div>
-          <div class="svc-charity-icon"><img src="icon-charity.png" alt="Apatmento Gives"/></div>
-          <div class="svc-charity-body">
-            <span class="svc-charity-eyebrow">Apatmento Gives</span>
-            <div class="svc-charity-name">Built to Give Back</div>
-            <div class="svc-charity-stat">
-              <span class="svc-charity-stat-num">10%</span>
-              <span class="svc-charity-stat-label">of every booking goes to Africa</span>
-            </div>
-            <div class="svc-charity-mission">We're not here to bandage problems. Every transaction on this platform funds permanent, structural solutions to the real challenges facing Africa — one booking at a time.</div>
-            <span class="svc-charity-cta">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-              Apply for Support
-              <span class="svc-charity-coming">· Coming Soon</span>
-            </span>
-          </div>
-        </div>
-
       </div><!-- /svc-section -->
-
-      <!-- ── CHARITY MODAL ── -->
-      <div id="charity-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(10,10,20,.7);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:24px;" onclick="if(event.target===this)this.style.display='none'">
-        <div style="background:#fff;border-radius:24px;max-width:480px;width:100%;padding:0;overflow:hidden;box-shadow:0 32px 80px rgba(10,10,20,.3);">
-          <!-- Header gradient -->
-          <div style="background:linear-gradient(135deg,#fffdf0,#f0fdfb);padding:28px 24px 20px;border-bottom:1px solid rgba(212,175,55,.15);display:flex;align-items:center;gap:16px;">
-            <img src="icon-charity.png" style="width:60px;height:60px;object-fit:contain;flex-shrink:0;" alt=""/>
-            <div>
-              <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#B8860B;margin-bottom:4px;">Apatmento Gives</div>
-              <div style="font-family:var(--font-display);font-size:22px;font-weight:500;background:linear-gradient(120deg,#B8860B,#0D9488);-webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:-.01em;line-height:1.1;">Permanent Solutions.<br>Not Band-Aids.</div>
-            </div>
-          </div>
-          <!-- Body -->
-          <div style="padding:24px;">
-            <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(212,175,55,.1);border:1px solid rgba(212,175,55,.25);border-radius:20px;padding:6px 14px;margin-bottom:16px;">
-              <span style="font-family:var(--font-display);font-size:20px;font-weight:600;color:#B8860B;">10%</span>
-              <span style="font-size:12px;font-weight:600;color:#92720A;">of all Apatmento revenue funds change in Africa</span>
-            </div>
-            <p style="font-size:14px;color:var(--ink);line-height:1.7;margin-bottom:14px;">Every stay booked, every ride taken, every meal ordered on this platform contributes directly to solving Africa's most persistent challenges — not through temporary relief, but through building permanent infrastructure, systems and opportunities.</p>
-            <p style="font-size:13px;color:var(--ink-soft);line-height:1.65;margin-bottom:20px;">Africa doesn't need more band-aids. It needs bold, structural change. That's exactly what we're building — and you're a part of it every time you use Apatmento.</p>
-            <div style="background:linear-gradient(135deg,rgba(212,175,55,.06),rgba(13,148,136,.06));border:1px solid rgba(212,175,55,.15);border-radius:16px;padding:16px;margin-bottom:20px;">
-              <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#0D9488;margin-bottom:8px;">Apply for Support</div>
-              <p style="font-size:12.5px;color:var(--ink-soft);line-height:1.6;margin:0;">We're building the framework for organisations, communities and individuals across Africa to apply for direct support. This will be open soon — and it will be unlike anything you've seen before.</p>
-              <div style="margin-top:12px;display:inline-flex;align-items:center;gap:6px;background:rgba(184,134,11,.1);border-radius:12px;padding:6px 12px;">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#B8860B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
-                <span style="font-size:11px;font-weight:700;color:#B8860B;letter-spacing:.05em;text-transform:uppercase;">Coming Soon</span>
-              </div>
-            </div>
-            <button onclick="document.getElementById('charity-modal').style.display='none'" style="width:100%;padding:14px;border-radius:14px;border:1.5px solid var(--line);background:transparent;font-family:var(--font-body);font-size:14px;font-weight:600;color:var(--ink-soft);cursor:pointer;">Close</button>
-          </div>
-        </div>
-      </div>
 
       <!-- FEATURED VIDEO HERO — live ad from Supabase -->
       <div class="hero-stage" id="hero-stage">
@@ -1042,6 +996,56 @@ img,video,svg{max-width:100%;}
            Flights and rides are excluded: they're search flows, not
            catalogues, and have nothing worth browsing as thumbnails.  -->
       <div id="cat-rails"></div>
+
+      <!-- ── APATMENTO GIVES — charity impact card (below all carousels) ── -->
+      <div class="svc-charity-card" onclick="document.getElementById('charity-modal').style.display='flex'" style="margin-bottom:40px;">
+        <div class="svc-charity-glow"></div>
+        <div class="svc-charity-icon"><img src="icon-charity.png" alt="Apatmento Gives"/></div>
+        <div class="svc-charity-body">
+          <span class="svc-charity-eyebrow">Apatmento Gives</span>
+          <div class="svc-charity-name">Built to Give Back</div>
+          <div class="svc-charity-stat">
+            <span class="svc-charity-stat-num">10%</span>
+            <span class="svc-charity-stat-label">of every booking goes to Africa</span>
+          </div>
+          <div class="svc-charity-mission">We're not here to bandage problems. Every transaction on this platform funds permanent, structural solutions to the real challenges facing Africa — one booking at a time.</div>
+          <span class="svc-charity-cta">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            Apply for Support
+            <span class="svc-charity-coming">· Coming Soon</span>
+          </span>
+        </div>
+      </div>
+
+      <!-- ── CHARITY MODAL ── -->
+      <div id="charity-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(10,10,20,.7);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:24px;" onclick="if(event.target===this)this.style.display='none'">
+        <div style="background:#fff;border-radius:24px;max-width:480px;width:100%;padding:0;overflow:hidden;box-shadow:0 32px 80px rgba(10,10,20,.3);max-height:90vh;overflow-y:auto;">
+          <div style="background:linear-gradient(135deg,#fffdf0,#f0fdfb);padding:28px 24px 20px;border-bottom:1px solid rgba(212,175,55,.15);display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:1;">
+            <img src="icon-charity.png" style="width:60px;height:60px;object-fit:contain;flex-shrink:0;" alt=""/>
+            <div>
+              <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#B8860B;margin-bottom:4px;">Apatmento Gives</div>
+              <div style="font-family:var(--font-display);font-size:22px;font-weight:500;background:linear-gradient(120deg,#B8860B,#0D9488);-webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:-.01em;line-height:1.1;">Permanent Solutions.<br>Not Band-Aids.</div>
+            </div>
+          </div>
+          <div style="padding:24px;">
+            <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(212,175,55,.1);border:1px solid rgba(212,175,55,.25);border-radius:20px;padding:6px 14px;margin-bottom:16px;">
+              <span style="font-family:var(--font-display);font-size:20px;font-weight:600;color:#B8860B;">10%</span>
+              <span style="font-size:12px;font-weight:600;color:#92720A;">of all Apatmento revenue funds change in Africa</span>
+            </div>
+            <p style="font-size:14px;color:var(--ink);line-height:1.7;margin-bottom:14px;">Every stay booked, every ride taken, every meal ordered on this platform contributes directly to solving Africa's most persistent challenges — not through temporary relief, but through building permanent infrastructure, systems and opportunities.</p>
+            <p style="font-size:13px;color:var(--ink-soft);line-height:1.65;margin-bottom:20px;">Africa doesn't need more band-aids. It needs bold, structural change. That's exactly what we're building — and you're a part of it every time you use Apatmento.</p>
+            <div style="background:linear-gradient(135deg,rgba(212,175,55,.06),rgba(13,148,136,.06));border:1px solid rgba(212,175,55,.15);border-radius:16px;padding:16px;margin-bottom:20px;">
+              <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#0D9488;margin-bottom:8px;">Apply for Support</div>
+              <p style="font-size:12.5px;color:var(--ink-soft);line-height:1.6;margin:0;">We're building the framework for organisations, communities and individuals across Africa to apply for direct support. This will be open soon — and it will be unlike anything you've seen before.</p>
+              <div style="margin-top:12px;display:inline-flex;align-items:center;gap:6px;background:rgba(184,134,11,.1);border-radius:12px;padding:6px 12px;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#B8860B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+                <span style="font-size:11px;font-weight:700;color:#B8860B;letter-spacing:.05em;text-transform:uppercase;">Coming Soon</span>
+              </div>
+            </div>
+            <button onclick="document.getElementById('charity-modal').style.display='none'" style="width:100%;padding:14px;border-radius:14px;border:1.5px solid var(--line);background:transparent;font-family:var(--font-body);font-size:14px;font-weight:600;color:var(--ink-soft);cursor:pointer;">Close</button>
+          </div>
+        </div>
+      </div>
 
     </div>
   </div>
