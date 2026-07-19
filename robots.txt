@@ -1,6 +1,6 @@
 # ═══════════════════════════════════════════════════════════════
 #  robots.txt — Apatmento by Cabana  |  https://www.apatmento.space
-#  Updated: 2026-07-18
+#  Updated: 2026-07-19
 # ═══════════════════════════════════════════════════════════════
 
 # ── All crawlers ──────────────────────────────────────────────
@@ -25,10 +25,11 @@ Allow: /carhire.html
 Allow: /rides.html
 Allow: /food.html
 Allow: /shopping.html
-Allow: /auth.html
 Allow: /rewards.html
 Allow: /terms.html
 Allow: /privacy.html
+Allow: /become-partner.html
+Allow: /become-agent.html
 
 # Static assets — always crawlable for CWV / image indexing
 Allow: /*.css$
@@ -40,6 +41,7 @@ Allow: /*.svg$
 Allow: /*.ico$
 
 # Private — keep out of index
+Disallow: /auth.html
 Disallow: /dashboard.html
 Disallow: /booking-confirm.html
 Disallow: /my-bookings.html

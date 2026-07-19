@@ -431,6 +431,14 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.4 7.8 8 10 4.6-2.2 8-5 8-10V6z"/><path d="m9 12 2 2 4-4"/></svg>
           Services & listings <span class="nav-b calm" id="b-god">—</span>
         </div>
+        <div class="nav-i" data-sec="lazy" onclick="go('lazy',this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          Lazy requests <span class="nav-b warn" id="b-lazy">0</span>
+        </div>
+        <div class="nav-i" data-sec="impersonate" onclick="go('impersonate',this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M21 21v-2a4 4 0 0 0-3-3.87"/></svg>
+          Account access <span class="nav-b" style="background:rgba(255,77,109,.15);color:#FF4D6D">admin</span>
+        </div>
       </div>
 
       <div class="nav-grp">
@@ -778,6 +786,55 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
         </div>
         <div id="gm-msg" style="margin-top:10px;font-size:12.5px"></div>
       </div>
+
+      <!-- ─── LAZY REQUESTS ─── -->
+      <section class="sec" id="s-lazy">
+        <div class="hd">
+          <div>
+            <h1>Lazy <em>requests</em></h1>
+            <p>Partners who couldn't be bothered to list themselves. Our job now. Contact them, collect details, build the listing on their behalf from the admin godmode panel.</p>
+          </div>
+          <div class="hd-act">
+            <button class="btn btn-g btn-sm" onclick="lazyExport()">Export</button>
+          </div>
+        </div>
+        <div class="grid g4" id="lazy-stats" style="margin-bottom:16px"></div>
+        <div class="tabs" style="margin-top:8px">
+          <button class="tab on" onclick="lazyFilter('pending',this)">Pending</button>
+          <button class="tab" onclick="lazyFilter('contacted',this)">Contacted</button>
+          <button class="tab" onclick="lazyFilter('listed',this)">Listed ✓</button>
+          <button class="tab" onclick="lazyFilter('all',this)">All</button>
+        </div>
+        <div class="tw"><table>
+          <thead><tr><th>Name</th><th>WhatsApp</th><th>Listing type</th><th>Notes</th><th>Submitted</th><th class="num">Status</th><th class="num">Actions</th></tr></thead>
+          <tbody id="lazy-rows"><tr><td colspan="7" style="padding:20px;color:var(--ink-4)">Loading…</td></tr></tbody>
+        </table></div>
+      </section>
+
+      <!-- ─── ACCOUNT ACCESS / IMPERSONATE ─── -->
+      <section class="sec" id="s-impersonate">
+        <div class="hd">
+          <div>
+            <h1>Account <em>access</em></h1>
+            <p>Search any user by email or phone. View their account as they see it, edit their listings, or act on their behalf — useful when a lazy partner has sent you their details and you're setting up their listing for them.</p>
+          </div>
+        </div>
+        <div class="card" style="margin-bottom:20px">
+          <div class="card-hd"><div class="card-t">Find a user account</div><div class="card-s">Enter email address or phone number to look up any registered user.</div></div>
+          <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">
+            <input class="inp" id="imp-search" type="text" placeholder="Email or phone (e.g. wanjiru@gmail.com or +254712…)" style="flex:1;min-width:220px"/>
+            <button class="btn btn-p" onclick="impSearch()">Look up</button>
+          </div>
+          <div id="imp-result" style="margin-top:16px"></div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><div class="card-t">Recent account lookups</div><div class="card-s">Audit trail of admin account access. Every lookup is logged.</div></div>
+          <div class="tw" style="margin-top:12px"><table>
+            <thead><tr><th>User</th><th>Email</th><th>Looked up by</th><th>When</th><th class="num">Action taken</th></tr></thead>
+            <tbody id="imp-log-rows"><tr><td colspan="5" style="padding:16px;color:var(--ink-4)">No recent lookups.</td></tr></tbody>
+          </table></div>
+        </div>
+      </section>
 
       <!-- ─── BOOKINGS ─── -->
       <section class="sec" id="s-bookings">
@@ -1172,6 +1229,66 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
         <input class="inp" id="sh-kw" placeholder="toothpaste, colgate, health, personal care"/>
       </div>
       <div class="note">Leave keywords empty to match the whole surface. With keywords, the ad only appears when the guest's search or category context is relevant — the toothpaste ad finds the shopper, not everyone.</div>
+
+      <div class="fld" style="margin-top:18px"><label class="fld-l">📍 Area targeting — Nairobi neighbourhoods (leave empty = city-wide / Kenya-wide)</label>
+        <select class="inp" id="sh-areas" multiple size="8">
+          <option value="all">All areas (no geo restriction)</option>
+          <optgroup label="West / North West">
+            <option value="Westlands">Westlands</option>
+            <option value="Parklands">Parklands</option>
+            <option value="Spring Valley">Spring Valley</option>
+            <option value="Muthaiga">Muthaiga</option>
+            <option value="Gigiri">Gigiri</option>
+            <option value="Runda">Runda</option>
+            <option value="Ridgeways">Ridgeways</option>
+            <option value="Ruaka">Ruaka</option>
+            <option value="Rosslyn">Rosslyn</option>
+          </optgroup>
+          <optgroup label="Central / Uptown">
+            <option value="Kilimani">Kilimani</option>
+            <option value="Lavington">Lavington</option>
+            <option value="Kileleshwa">Kileleshwa</option>
+            <option value="Hurlingham">Hurlingham</option>
+            <option value="Upper Hill">Upper Hill</option>
+            <option value="CBD">CBD / City Centre</option>
+          </optgroup>
+          <optgroup label="South / South West">
+            <option value="Karen">Karen</option>
+            <option value="Ngong Road">Ngong Road</option>
+            <option value="Langata">Langata</option>
+            <option value="South B">South B</option>
+            <option value="South C">South C</option>
+          </optgroup>
+          <optgroup label="East / North East">
+            <option value="Kasarani">Kasarani</option>
+            <option value="Roysambu">Roysambu</option>
+            <option value="Thika Road">Thika Road</option>
+            <option value="Eastlands">Eastlands</option>
+          </optgroup>
+          <optgroup label="Outside Nairobi">
+            <option value="Mombasa">Mombasa</option>
+            <option value="Diani">Diani</option>
+            <option value="Naivasha">Naivasha</option>
+            <option value="Nakuru">Nakuru</option>
+            <option value="Kisumu">Kisumu</option>
+          </optgroup>
+        </select>
+        <div class="note" style="margin-top:6px">APA uses this to recommend the ad only when a guest's search or booking is in a matching area. The visual shadow ad uses it too.</div>
+      </div>
+
+      <div class="fld" style="margin-top:18px;padding:14px;border:1.5px solid rgba(124,58,255,.25);border-radius:12px;background:rgba(124,58,255,.04)">
+        <label class="fld-l" style="color:var(--violet)">🤖 APA Smart Suggestion — in-conversation ad</label>
+        <div style="display:flex;align-items:center;gap:10px;margin:10px 0 14px">
+          <label style="font-size:13px;color:var(--ink-2);display:flex;align-items:center;gap:8px;cursor:pointer">
+            <input type="checkbox" id="sh-apa-enabled" style="width:16px;height:16px;accent-color:var(--violet)"/>
+            Enable APA in-chat suggestion (APA will mention this naturally during conversations)
+          </label>
+        </div>
+        <div class="fld"><label class="fld-l">APA message template <span style="font-weight:400;color:var(--ink-3)">(how APA mentions it — keep it natural, 1 sentence, no hard sell)</span></label>
+          <input class="inp" id="sh-apa-msg" placeholder="e.g. Also — KFC Westlands currently has a 30% off bucket deal if you want food sorted after your check-in 🍗"/>
+        </div>
+        <div class="note">APA will weave this into the conversation when: the guest is in a matching area, the surface matches, and it fits naturally (after navigation, after booking help, etc). It never interrupts or forces it. The guest should feel like APA just remembered something useful.</div>
+      </div>
     </div>
 
     <!-- DELIVERY -->
@@ -1298,6 +1415,8 @@ function go(sec, el){
   if(sec==='agents') loadAgents();
   if(sec==='splash') loadSplash();
   if(sec==='godmode') gmRenderAll();
+  if(sec==='lazy') lazyLoad('pending');
+  if(sec==='impersonate') impLogLoad();
 }
 function setRange(d, el){
   RANGE = d;
@@ -2299,15 +2418,17 @@ function shModalTab(t, el){
 function openShadow(id){
   SH_EDIT = id || null;
   $('shadow-title').textContent = id ? 'Edit shadow ad' : 'New shadow ad';
-  const F_ = ['sh-adv','sh-name','sh-head','sh-sub','sh-cta','sh-url','sh-media','sh-poster','sh-accent','sh-theme','sh-kw','sh-budget'];
-  F_.forEach(k=>$(k).value='');
+  const F_ = ['sh-adv','sh-name','sh-head','sh-sub','sh-cta','sh-url','sh-media','sh-poster','sh-accent','sh-theme','sh-kw','sh-budget','sh-apa-msg'];
+  F_.forEach(k=>$(k)&&($(k).value=''));
   $('sh-mtype').value='image'; $('sh-imin').value=10; $('sh-imax').value=85;
   $('sh-dwell').value=6; $('sh-scroll').value=0; $('sh-device').value='all';
   $('sh-pos').value='auto'; $('sh-cap').value=1; $('sh-cd').value=90;
   $('sh-show').value=7; $('sh-prio').value=5; $('sh-status').value='live';
   $('sh-start').value=''; $('sh-end').value='';
+  if($('sh-apa-enabled')) $('sh-apa-enabled').checked=false;
   [...$('sh-surfaces').options].forEach(o=>o.selected=(o.value==='all'));
   [...$('sh-modes').options].forEach(o=>o.selected=true);
+  [...($('sh-areas')?.options||[])].forEach(o=>o.selected=(o.value==='all'));
 
   if(id){
     const a = shList().find(x=>String(x.id)===String(id));
@@ -2330,6 +2451,10 @@ function openShadow(id){
       [...$('sh-surfaces').options].forEach(o=>o.selected=surf.includes(o.value));
       const modes = Array.isArray(a.reading_modes)?a.reading_modes:['skim','scan','browse','read'];
       [...$('sh-modes').options].forEach(o=>o.selected=modes.includes(o.value));
+      const areas = Array.isArray(a.areas)?a.areas:['all'];
+      [...($('sh-areas')?.options||[])].forEach(o=>o.selected=areas.includes(o.value));
+      if($('sh-apa-enabled')) $('sh-apa-enabled').checked=!!(a.apa_enabled);
+      if($('sh-apa-msg')) $('sh-apa-msg').value=a.apa_message||'';
     }
   }
   document.querySelector('#shadow-ov .tab').click();
@@ -2340,8 +2465,27 @@ function openShadow(id){
 }
 function closeShadow(){ $('shadow-ov').classList.remove('on'); SH_EDIT=null; }
 $('shadow-ov').addEventListener('click', e=>{ if(e.target.id==='shadow-ov') closeShadow(); });
-['sh-adv','sh-head','sh-sub','sh-cta','sh-theme','sh-media','sh-accent'].forEach(k=>
+['sh-adv','sh-head','sh-sub','sh-cta','sh-theme','sh-media','sh-accent','sh-apa-msg'].forEach(k=>
   $(k)?.addEventListener('input', previewShadow));
+
+// "All areas" toggle — selecting 'all' clears specific selections and vice versa
+$('sh-areas')?.addEventListener('change', function(e){
+  const opts = [...this.options];
+  const allOpt = opts.find(o=>o.value==='all');
+  if(!allOpt) return;
+  if(e.target.value==='all' && allOpt.selected){
+    opts.forEach(o=>{ if(o.value!=='all') o.selected=false; });
+  } else if(e.target.value!=='all'){
+    allOpt.selected=false;
+    if(opts.filter(o=>o.value!=='all').every(o=>!o.selected)) allOpt.selected=true;
+  }
+});
+
+// APA enabled toggle shows/hides the APA message field
+$('sh-apa-enabled')?.addEventListener('change', function(){
+  const row = $('sh-apa-msg')?.closest('.fld');
+  if(row) row.style.opacity = this.checked ? '1' : '0.45';
+});
 
 function previewShadow(){
   const adv=$('sh-adv').value, head=$('sh-head').value, sub=$('sh-sub').value;
@@ -2366,6 +2510,7 @@ function collectShadow(){
   const surfaces = [...$('sh-surfaces').selectedOptions].map(o=>o.value);
   const modes = [...$('sh-modes').selectedOptions].map(o=>o.value);
   const kws = $('sh-kw').value.split(',').map(s=>s.trim()).filter(Boolean);
+  const areas = [...($('sh-areas')?.selectedOptions||[])].map(o=>o.value);
   return {
     advertiser: $('sh-adv').value.trim(),
     title: $('sh-name').value.trim() || $('sh-adv').value.trim(),
@@ -2396,6 +2541,9 @@ function collectShadow(){
     budget: Number($('sh-budget').value)||null,
     start_date: $('sh-start').value||null,
     end_date: $('sh-end').value||null,
+    areas: areas.length?areas:['all'],
+    apa_enabled: $('sh-apa-enabled')?.checked||false,
+    apa_message: $('sh-apa-msg')?.value.trim()||null,
     updated_at: new Date().toISOString()
   };
 }
@@ -3093,6 +3241,155 @@ function gmMsg(txt, kind){
   s.textContent = '.gm-lbl{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--ink-3);margin-bottom:13px}';
   document.head.appendChild(s);
 })();
+
+// ─── LAZY REQUESTS ───
+const LAZY_STATUSES = {pending:'warn',contacted:'calm',listed:'good'};
+let lazyCurrentFilter = 'pending';
+
+async function lazyLoad(status='pending') {
+  lazyCurrentFilter = status;
+  const rows = $('lazy-rows');
+  if(rows) rows.innerHTML = '<tr><td colspan="7" style="padding:20px;color:var(--ink-4)">Loading…</td></tr>';
+  try {
+    let url = `${SB}/rest/v1/lazy_requests?order=created_at.desc`;
+    if(status !== 'all') url += `&status=eq.${status}`;
+    const res = await fetch(url, {headers:{...H,'Range':'0-99'}});
+    const data = await res.json();
+    renderLazyRows(data);
+    updateLazyBadge(data.length);
+  } catch(e) {
+    if(rows) rows.innerHTML = `<tr><td colspan="7" style="padding:20px;color:var(--bad)">Error loading requests.</td></tr>`;
+  }
+}
+
+function renderLazyRows(items) {
+  const rows = $('lazy-rows');
+  if(!rows) return;
+  if(!items||!items.length){ rows.innerHTML='<tr><td colspan="7" style="padding:20px;color:var(--ink-4)">No requests here yet.</td></tr>'; return; }
+  rows.innerHTML = items.map(r => `
+    <tr>
+      <td><strong>${esc(r.name||'—')}</strong></td>
+      <td><a href="https://wa.me/${esc(r.phone?.replace('+',''))}" target="_blank" style="color:var(--good);font-weight:600">${esc(r.phone||'—')}</a></td>
+      <td>${esc(r.listing_type||'Not specified')}</td>
+      <td style="max-width:200px;white-space:normal;font-size:12px;color:var(--ink-3)">${esc(r.notes||'—')}</td>
+      <td style="font-size:12px;color:var(--ink-4)">${r.created_at?new Date(r.created_at).toLocaleDateString('en-KE',{day:'numeric',month:'short'}):'—'}</td>
+      <td class="num"><span class="nav-b ${LAZY_STATUSES[r.status]||'calm'}" style="font-size:11px">${esc(r.status||'pending')}</span></td>
+      <td class="num" style="white-space:nowrap">
+        <button class="btn btn-g btn-sm" onclick="lazySetStatus('${r.id}','contacted')" title="Mark contacted">📞</button>
+        <button class="btn btn-p btn-sm" onclick="lazySetStatus('${r.id}','listed')" title="Mark listed">✓ Done</button>
+        <button class="btn btn-d btn-sm" onclick="lazyDelete('${r.id}')" title="Delete">✕</button>
+      </td>
+    </tr>`).join('');
+}
+
+async function lazySetStatus(id, status) {
+  await fetch(`${SB}/rest/v1/lazy_requests?id=eq.${id}`, {method:'PATCH',headers:{...H,'Prefer':'return=minimal'},body:JSON.stringify({status})});
+  lazyLoad(lazyCurrentFilter);
+}
+
+async function lazyDelete(id) {
+  if(!confirm('Delete this request?')) return;
+  await fetch(`${SB}/rest/v1/lazy_requests?id=eq.${id}`, {method:'DELETE',headers:{...H}});
+  lazyLoad(lazyCurrentFilter);
+}
+
+function lazyFilter(status, el) {
+  document.querySelectorAll('#s-lazy .tab').forEach(t=>t.classList.remove('on'));
+  if(el) el.classList.add('on');
+  lazyLoad(status);
+}
+
+function updateLazyBadge(n) {
+  const b = $('b-lazy');
+  if(b) b.textContent = n||0;
+}
+
+function lazyExport() {
+  fetch(`${SB}/rest/v1/lazy_requests?order=created_at.desc`,{headers:{...H,'Range':'0-999'}})
+    .then(r=>r.json()).then(data=>{
+      const csv = ['Name,WhatsApp,Type,Notes,Status,Submitted',...data.map(r=>[r.name,r.phone,r.listing_type,r.notes,r.status,r.created_at].map(v=>`"${(v||'').replace(/"/g,'""')}"`).join(','))].join('\n');
+      const a=document.createElement('a');a.href='data:text/csv,'+encodeURIComponent(csv);a.download='lazy-requests.csv';a.click();
+    });
+}
+
+// ─── ACCOUNT ACCESS / IMPERSONATE ───
+async function impSearch() {
+  const q = $('imp-search')?.value?.trim();
+  if(!q){ alert('Enter an email or phone'); return; }
+  const res = $('imp-result');
+  if(res) res.innerHTML = '<div style="color:var(--ink-4);font-size:13px">Searching…</div>';
+  try {
+    const emailQ = `${SB}/rest/v1/profiles?or=(email.ilike.*${encodeURIComponent(q)}*,phone.ilike.*${encodeURIComponent(q)}*)&limit=10`;
+    const r = await fetch(emailQ, {headers:{...H}});
+    const data = await r.json();
+    if(!data||!data.length){ if(res) res.innerHTML='<div style="color:var(--ink-4);font-size:13px;padding:12px 0">No user found with that email or phone.</div>'; return; }
+    if(res) res.innerHTML = data.map(u=>`
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:var(--panel-2);border-radius:10px;margin-bottom:8px;border:1px solid var(--line)">
+        <div>
+          <div style="font-weight:700;font-size:14px;color:var(--ink)">${esc(u.full_name||u.name||'Unknown')}</div>
+          <div style="font-size:12px;color:var(--ink-3);margin-top:2px">${esc(u.email||'—')} · ${esc(u.phone||'—')}</div>
+          <div style="font-size:11px;color:var(--ink-4);margin-top:3px">ID: ${esc(u.id||u.user_id||'—')} · Joined ${u.created_at?new Date(u.created_at).toLocaleDateString('en-KE',{month:'short',year:'numeric'}):'unknown'}</div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-g btn-sm" onclick="impViewListings('${u.id||u.user_id}','${esc(u.full_name||u.name||'User')}')" title="View their listings">View listings</button>
+          <button class="btn btn-p btn-sm" onclick="impAddListing('${u.id||u.user_id}','${esc(u.full_name||u.name||'User')}')" title="Add listing on their behalf">Add listing for them</button>
+        </div>
+      </div>`).join('');
+    impLogEntry(q, data[0]);
+  } catch(e) {
+    if(res) res.innerHTML = '<div style="color:var(--bad);font-size:13px">Error looking up user. Check table permissions.</div>';
+  }
+}
+
+function impViewListings(userId, name) {
+  go('godmode', document.querySelector('[data-sec="godmode"]'));
+  setTimeout(()=>{ 
+    const fi = document.querySelector('#gm-all-rows');
+    if(fi) fi.closest('section').scrollIntoView({behavior:'smooth'});
+    notify(`Showing listings for ${name} — filter by partner in the table below`,'calm');
+  },300);
+}
+
+function impAddListing(userId, name) {
+  go('godmode', document.querySelector('[data-sec="godmode"]'));
+  setTimeout(()=>{ 
+    gmOpenAdd();
+    notify(`Adding listing on behalf of ${name}. Fill in their details.`,'warn');
+  },300);
+}
+
+function impLogLoad() {
+  // Placeholder — log from localStorage for now
+  const log = JSON.parse(localStorage.getItem('imp_log')||'[]');
+  const rows = $('imp-log-rows');
+  if(!rows) return;
+  if(!log.length){ rows.innerHTML='<tr><td colspan="5" style="padding:16px;color:var(--ink-4)">No recent lookups.</td></tr>'; return; }
+  rows.innerHTML = log.slice(0,20).map(e=>`
+    <tr>
+      <td><strong>${esc(e.userName)}</strong></td>
+      <td style="font-size:12px;color:var(--ink-3)">${esc(e.query)}</td>
+      <td style="font-size:12px;color:var(--ink-3)">Admin</td>
+      <td style="font-size:12px;color:var(--ink-4)">${new Date(e.when).toLocaleString('en-KE',{dateStyle:'short',timeStyle:'short'})}</td>
+      <td class="num" style="font-size:12px;color:var(--ink-3)">Viewed</td>
+    </tr>`).join('');
+}
+
+function impLogEntry(query, user) {
+  const log = JSON.parse(localStorage.getItem('imp_log')||'[]');
+  log.unshift({query, userName: user?.full_name||user?.name||'Unknown', when: new Date().toISOString()});
+  localStorage.setItem('imp_log', JSON.stringify(log.slice(0,50)));
+  impLogLoad();
+}
+
+function notify(msg, type='calm') {
+  const n = document.createElement('div');
+  n.style.cssText = `position:fixed;top:72px;right:20px;z-index:999;padding:12px 18px;border-radius:10px;font-size:13px;font-weight:600;background:var(--panel-2);border:1px solid var(--line-2);color:var(--ink);box-shadow:0 8px 24px rgba(0,0,0,.3);max-width:300px`;
+  n.textContent = msg;
+  document.body.appendChild(n);
+  setTimeout(()=>n.remove(),3000);
+}
+
+function esc(s){ if(!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 </script>
 <script src="/cabana-rebrand.js" defer></script>

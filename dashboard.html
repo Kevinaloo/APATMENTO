@@ -59,9 +59,9 @@
   <meta name="description" content="Your Apatmento dashboard."/>
   
   <meta name="robots" content="noindex, nofollow"/>
-  <link rel="canonical" href="https://www.apatmento.space/dashboard.html"/>
-  <link rel="alternate" hreflang="en-ke" href="https://www.apatmento.space/dashboard.html"/>
-  <link rel="alternate" hreflang="en" href="https://www.apatmento.space/dashboard.html"/>
+  <link rel="canonical" href="https://www.apatmento.space/dashboard"/>
+  <link rel="alternate" hreflang="en-ke" href="https://www.apatmento.space/dashboard"/>
+  <link rel="alternate" hreflang="en" href="https://www.apatmento.space/dashboard"/>
   <meta name="author" content="Apatmento"/>
   <meta name="geo.region" content="KE"/>
   <meta name="geo.placename" content="Nairobi, Kenya"/>
@@ -80,7 +80,7 @@
   <meta property="og:site_name" content="Apatmento"/>
   <meta property="og:title" content="Dashboard — Apatmento"/>
   <meta property="og:description" content="Your Apatmento dashboard."/>
-  <meta property="og:url" content="https://www.apatmento.space/dashboard.html"/>
+  <meta property="og:url" content="https://www.apatmento.space/dashboard"/>
   <meta property="og:type" content="website"/>
   <meta property="og:image" content="https://www.apatmento.space/og-home.jpg"/>
   <meta property="og:image:width" content="1200"/>
@@ -1781,7 +1781,7 @@ async function initPartnerFlow(){
   if(!CURRENT_USER){ renderOnboarding(); return; }
   try{
     const { data:listings } = await sb.from('listings')
-      .select('id,title,name,status,listing_type,service_category,price_night,created_at')
+      .select('id,title,name,status,listing_type,price_night,created_at')
       .eq('partner_id', CURRENT_USER.id);
     // Map any sub-type (e.g. "Apartment", "Studio", "Safari") back to a service category key
     const _subToCategory = {
@@ -1802,7 +1802,7 @@ async function initPartnerFlow(){
     };
     partnerServices = (listings||[]).map(l=>{
       const rawType = (l.listing_type||'').toLowerCase();
-      const cat = l.service_category || _subToCategory[rawType] || 'apartment';
+      const cat = _subToCategory[rawType] || 'apartment';
       return {...l, listing_type: cat, is_active:l.status!=='inactive', price_per_night:l.price_night||0};
     });
   }catch(e){ partnerServices=[]; }

@@ -8,11 +8,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Sign in or Sign up — Apatmento (Cabana)</title>
 <meta name="description" content="Sign in or create your free Apatmento account to book stays, flights, tours, rides, food and more across Kenya — zero added commission."/>
-<link rel="canonical" href="https://www.apatmento.space/auth.html"/>
+<meta name="robots" content="noindex, nofollow"/>
+<link rel="canonical" href="https://www.apatmento.space/auth"/>
 <meta property="og:site_name" content="Apatmento"/>
 <meta property="og:title" content="Sign in or Sign up — Apatmento (Cabana)"/>
 <meta property="og:description" content="Sign in or create your free Apatmento account to book stays, flights, tours, rides, food and more across Kenya — zero added commission."/>
-<meta property="og:url" content="https://www.apatmento.space/auth.html"/>
+<meta property="og:url" content="https://www.apatmento.space/auth"/>
 <meta property="og:type" content="website"/>
 <meta property="og:image" content="https://www.apatmento.space/og-home.jpg"/>
 <meta property="og:image:width" content="1200"/>
@@ -1213,7 +1214,25 @@ async function goDashboard(user) {
       last_name:  m.last_name||m.family_name||m.name?.split(' ').slice(1).join(' ')||'',
     },{ onConflict:'id' });
   } catch(e){}
-  // Always land as guest — user can explicitly switch to partner
+
+  // Check if returning partner: has last_role=partner in DB OR has existing listings.
+  // Returning partners should always land on their partner dashboard, not the guest screen.
+  try {
+    const [profileRes, listingsRes] = await Promise.all([
+      sb.from('profiles').select('last_role').eq('id', user.id).single(),
+      sb.from('listings').select('id').eq('partner_id', user.id).limit(1)
+    ]);
+    const isPartner =
+      (profileRes.data && profileRes.data.last_role === 'partner') ||
+      (listingsRes.data && listingsRes.data.length > 0);
+    if (isPartner) {
+      try { localStorage.setItem('apa-last-role', 'partner'); } catch(e) {}
+      window.location.href = 'dashboard.html?role=partner&uid=' + user.id;
+      return;
+    }
+  } catch(e) {}
+
+  // New user or traveller-only — land on guest screen
   window.location.href = 'dashboard.html?uid='+user.id;
 }
 
