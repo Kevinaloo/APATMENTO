@@ -847,10 +847,11 @@ body.intro-lock{overflow:hidden;height:100vh;}
         return;
       }
 
-      // The session core (loaded after the lib below) overrides Supabase's default storageKey to
-      // 'apa-auth' (see installSingleton). Reading the default
-      // sb-<ref>-auth-token key would silently never match.
-      var raw = localStorage.getItem('apa-auth');
+      // apa-session.js sets storageKey:'apa-auth' but loads after this script.
+      // On first visit / fresh install the token may still live under the
+      // default Supabase key. Check both so the redirect never misses.
+      var raw = localStorage.getItem('apa-auth')
+             || localStorage.getItem('sb-gfwgbgdvxtocwhilrtdw-auth-token');
       if (!raw) return;
 
       var tok = JSON.parse(raw);
@@ -860,8 +861,10 @@ body.intro-lock{overflow:hidden;height:100vh;}
                : null;
       if (!sess || !sess.access_token) return;
 
-      // expires_at is unix seconds. An expired token means signed out.
-      if (sess.expires_at && sess.expires_at * 1000 < Date.now()) return;
+      // expires_at is unix seconds. Give a 5-minute buffer — Supabase will
+      // auto-refresh tokens that expire within 60s, so a nearly-expired
+      // token is still valid for the redirect; the session core handles refresh.
+      if (sess.expires_at && (sess.expires_at - 300) * 1000 < Date.now()) return;
 
       location.replace('dashboard.html');
     }catch(e){ /* never block the page on a parse error */ }
@@ -877,18 +880,10 @@ body.intro-lock{overflow:hidden;height:100vh;}
           if (r.active && !r.active.scriptURL.includes('sw.js')) r.unregister();
         });
       });
-      // Force the new SW to activate immediately
-      navigator.serviceWorker.register('/sw.js').then(reg => {
-        reg.onupdatefound = () => {
-          const w = reg.installing;
-          if (w) w.onstatechange = () => {
-            if (w.state === 'installed' && navigator.serviceWorker.controller) {
-              // New version available — reload silently
-              window.location.reload();
-            }
-          };
-        };
-      });
+      // Register SW. skipWaiting() in sw.js + clients.claim() handles
+      // activation automatically — no manual reload needed or wanted.
+      // A forced reload here was causing a double page-load on every deploy.
+      navigator.serviceWorker.register('/sw.js');
     }
   </script>
 <link rel="stylesheet" href="/brand.css"/>
@@ -1259,8 +1254,17 @@ body.intro-lock{overflow:hidden;height:100vh;}
   const intro = document.getElementById('intro');
   if(!intro) return;
 
-  // Returning within same session? Skip straight in.
-  if(sessionStorage.getItem('cabana_intro_seen') || sessionStorage.getItem('apatmento_intro_seen')){
+  // Skip intro if seen today (localStorage persists across tabs/reopens).
+  // Also honour legacy sessionStorage keys from prior deploys.
+  var _introSeen = (function(){
+    try {
+      if(sessionStorage.getItem('cabana_intro_seen') || sessionStorage.getItem('apatmento_intro_seen')) return true;
+      var ts = localStorage.getItem('apa_intro_seen_ts');
+      if(ts && (Date.now() - parseInt(ts,10)) < 86400000) return true;
+    } catch(e){}
+    return false;
+  })();
+  if(_introSeen){
     intro.style.display='none';
     document.body.classList.remove('intro-lock');
     return;
@@ -1296,6 +1300,7 @@ function endIntro(){
   if(!intro||intro.classList.contains('lift')) return;
   clearTimeout(window._introTimer);
   sessionStorage.setItem('cabana_intro_seen','1');
+  try { localStorage.setItem('apa_intro_seen_ts', String(Date.now())); } catch(e){}
   intro.classList.add('lift');
   document.body.classList.remove('intro-lock');
   setTimeout(()=>{ intro.style.display='none'; }, 950);
