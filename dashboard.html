@@ -1318,28 +1318,16 @@ function onSession(st){
   /* Screen routing.
      Priority: 1) URL ?role= param   2) localStorage apa-last-role   3) DB last_role
      Safety net: if role=guest but user has listings, quietly promote to partner. */
-  var role = (st.status === 'user' && st.role === 'partner') ? 'partner' : 'guest';
+  // Only go to partner screen if URL explicitly says ?role=partner.
+  // Never auto-route based on localStorage or listings check — that hijacks
+  // the user dashboard on every app open. Partner mode is an explicit choice.
+  var urlRoleParam = '';
+  try { urlRoleParam = new URLSearchParams(location.search).get('role') || ''; } catch(e) {}
+  var role = (st.status === 'user' && urlRoleParam === 'partner') ? 'partner' : 'guest';
   _try(function(){ showScreen(role); }, 'screen');
 
   if(role === 'partner'){
     setTimeout(function(){ _try(initPartnerFlow, 'partner'); }, 200);
-  } else if(st.status === 'user') {
-    // Safety net: check if this user already has listings.
-    // If so, silently route them to partner view so they never get stuck.
-    paintGuestContent();
-    _try(function(){
-      var c = window.ApaSession && window.ApaSession.client();
-      if(!c || !CURRENT_USER) return;
-      c.from('listings').select('id').eq('partner_id', CURRENT_USER.id).limit(1)
-        .then(function(res){
-          if(res && res.data && res.data.length > 0){
-            // User has listings — they ARE a partner. Remember and show partner screen.
-            try{ localStorage.setItem('apa-last-role','partner'); }catch(e){}
-            showScreen('partner');
-            setTimeout(function(){ _try(initPartnerFlow, 'partner'); }, 200);
-          }
-        }, function(){});
-    }, 'autoPartnerCheck');
   } else {
     paintGuestContent();
   }
@@ -1813,9 +1801,16 @@ async function initPartnerFlow(){
 
   document.getElementById('p-state-loading').style.display='none';
 
-  // No listings yet — go straight to add-listing instead of showing the onboarding screen
+  // No listings yet.
+  // If user clicked "Add service/listing" button, show the onboarding picker so
+  // they can choose a service type. Otherwise redirect to add-listing directly.
   if(!partnerServices.length){
-    window.location.replace('add-listing.html?back=1');
+    if(window.__addServiceIntent){
+      window.__addServiceIntent = false;
+      renderOnboarding();
+    } else {
+      window.location.replace('add-listing.html?back=1');
+    }
     return;
   }
   else if(partnerServices.length===1) renderSingleDashboard(partnerServices[0]);
@@ -1871,7 +1866,7 @@ async function renderServicePicker(listings){
   c.innerHTML = `
     <div class="topbar">
       <div class="tb-left"><img src="cabana-emblem.png" class="tb-icon-sm" alt=""/><img src="cabana-wordmark-color.png" class="tb-logo tb-cab-wm" alt="Cabana" onerror="this.style.display='none'"/></div>
-      <div class="tb-right"><button class="hero-cta" style="padding:9px 18px;font-size:13px;box-shadow:none;" onclick="showAddSheet()">+ Add service</button><button onclick="switchToGuest()" style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:100px;border:1.5px solid rgba(255,255,255,.35);background:rgba(255,255,255,.15);-webkit-color:#fff;font-family:var(--font-body);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .2s;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 5-7 7 7 7"/></svg>Traveller →</button></div>
+      <div class="tb-right"><button class="hero-cta" style="padding:9px 18px;font-size:13px;box-shadow:none;" onclick="showAddSheet()">+ Add service</button><button onclick="switchToGuest()" style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:100px;border:1.5px solid rgba(255,255,255,.35);background:rgba(255,255,255,.15);-webkit-color:#fff;font-family:var(--font-body);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .2s;">← Traveller dashboard</button></div>
     </div>
     <div class="content" style="max-width:760px;">
       <div class="greeting"><h1 class="greeting-title">Your <em>services</em></h1><p class="greeting-sub">${active.length} active service${active.length!==1?'s':''}. Select one to manage.</p></div>
@@ -1911,7 +1906,7 @@ async function renderSingleDashboard(listing){
       <div class="tb-left"><button class="tb-icon-btn" onclick="openDrawer()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button><img src="cabana-emblem.png" class="tb-icon-sm" alt=""/><img src="cabana-wordmark-color.png" class="tb-logo tb-cab-wm" alt="Cabana" onerror="this.style.display='none'"/></div>
       <div class="tb-right">
         <a href="#" onclick="switchToGuest();return false;" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:11px;border:1.5px solid rgba(45,212,191,.3);background:rgba(45,212,191,.08);color:#0D9488;font-family:var(--font-body);font-weight:700;font-size:12px;text-decoration:none;transition:all .22s;white-space:nowrap;" title="Switch to Traveller view">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 5-7 7 7 7"/></svg>Traveller
+          ← Traveller dashboard
         </a>
         <button class="sos-btn" onclick="openSOS()">SOS</button>
         <div class="tb-avatar">${(USER.firstName||'P')[0].toUpperCase()}</div>
@@ -1954,7 +1949,7 @@ function addSheetHTML(){return `
         <div><div style="font-family:var(--font-display);font-weight:500;font-size:14px;">${s.name}</div><div style="font-size:11px;color:var(--ink-faint);">${s.sub}</div></div>
       </button>`).join('')}
   </div>`;}
-function showAddSheet(){ document.getElementById('add-scrim').classList.add('open'); document.getElementById('add-sheet').style.display='block'; }
+function showAddSheet(){ window.__addServiceIntent = true; document.getElementById('add-scrim').classList.add('open'); document.getElementById('add-sheet').style.display='block'; }
 function hideAddSheet(){ document.getElementById('add-scrim').classList.remove('open'); document.getElementById('add-sheet').style.display='none'; }
 </script>
 
