@@ -276,20 +276,7 @@ body{overflow-x:hidden;}
 .svc-stays-mega-arrow{flex-shrink:0;color:rgba(109,40,255,.4);transition:all .3s;position:relative;z-index:1;}
 .svc-stays-mega:hover .svc-stays-mega-arrow{color:#7B2FF7;transform:translateX(3px);}
 
-/* ── SECONDARY ROW: Roommates full-width (smaller than Stays) ── */
-.svc-rooms-row{position:relative;border-radius:18px;overflow:hidden;cursor:pointer;border:1.5px solid rgba(13,148,136,.15);background:linear-gradient(135deg,#f0fdfb 0%,#e6faf7 100%);padding:16px 18px;display:flex;align-items:center;gap:16px;transition:transform .22s ease,box-shadow .22s ease;min-height:80px;}
-.svc-rooms-row:hover{transform:translateY(-3px);box-shadow:0 16px 40px rgba(45,212,191,.16);border-color:rgba(13,148,136,.28);}
-.svc-rooms-row-glow{position:absolute;inset:0;background:linear-gradient(135deg,#2DD4BF,#0D9488);opacity:0;transition:opacity .4s;pointer-events:none;}
-.svc-rooms-row:hover .svc-rooms-row-glow{opacity:.07;}
-.svc-rooms-row-icon{width:64px;height:64px;flex-shrink:0;display:flex;align-items:center;justify-content:center;position:relative;z-index:1;}
-.svc-rooms-row-icon img{width:100%;height:100%;object-fit:contain;transition:transform .3s ease;}
-.svc-rooms-row:hover .svc-rooms-row-icon img{transform:scale(1.08) translateY(-1px);}
-.svc-rooms-row-body{flex:1;min-width:0;position:relative;z-index:1;}
-.svc-rooms-row-name{font-family:var(--font-display);font-weight:500;font-size:19px;line-height:1;letter-spacing:-.01em;background:linear-gradient(120deg,#2DD4BF,#0D9488);-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:4px;}
-.svc-rooms-row-sub{font-size:12px;color:var(--ink-soft);line-height:1.4;font-weight:500;}
-.svc-rooms-row-badge{display:inline-flex;align-items:center;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;padding:3px 9px;border-radius:5px;background:rgba(13,148,136,.1);color:#0D9488;margin-top:5px;}
-.svc-rooms-row-arrow{flex-shrink:0;color:rgba(13,148,136,.4);transition:all .3s;position:relative;z-index:1;}
-.svc-rooms-row:hover .svc-rooms-row-arrow{color:#0D9488;transform:translateX(3px);}
+/* svc-rooms-row removed — Roommates is now a standard icon tile */
 
 /* ── 4-COL ICON GRID — all remaining services, always fully visible ── */
 .svc-icon-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
@@ -304,9 +291,6 @@ body{overflow-x:hidden;}
   .svc-stays-mega-icon{width:72px;height:72px;}
   .svc-stays-mega-name{font-size:22px;}
   .svc-stays-mega-sub{font-size:12px;}
-  .svc-rooms-row{padding:13px 14px;gap:12px;}
-  .svc-rooms-row-icon{width:52px;height:52px;}
-  .svc-rooms-row-name{font-size:17px;}
   .svc-icon-grid{gap:8px;}
   .svc-icon-tile{padding:12px 6px 10px;border-radius:14px;}
   .svc-icon-tile-img{width:52px;height:52px;margin-bottom:6px;}
@@ -315,6 +299,31 @@ body{overflow-x:hidden;}
 @media(max-width:360px){
   .svc-stays-mega-name{font-size:20px;}
   .svc-icon-tile-img{width:46px;height:46px;}
+}
+
+/* ── CHARITY IMPACT CARD ── */
+.svc-charity-card{position:relative;border-radius:22px;overflow:hidden;cursor:pointer;border:1.5px solid rgba(212,175,55,.22);background:linear-gradient(135deg,#fffdf0 0%,#fff8e1 60%,#f0fdfb 100%);padding:22px 20px;display:flex;gap:18px;align-items:flex-start;transition:transform .22s ease,box-shadow .22s ease;margin-top:4px;}
+.svc-charity-card:hover{transform:translateY(-4px);box-shadow:0 20px 50px rgba(212,175,55,.18);border-color:rgba(212,175,55,.4);}
+.svc-charity-glow{position:absolute;inset:0;background:linear-gradient(135deg,#D4AF37,#0D9488);opacity:0;transition:opacity .4s;pointer-events:none;}
+.svc-charity-card:hover .svc-charity-glow{opacity:.06;}
+.svc-charity-icon{width:72px;height:72px;flex-shrink:0;position:relative;z-index:1;}
+.svc-charity-icon img{width:100%;height:100%;object-fit:contain;transition:transform .35s ease;}
+.svc-charity-card:hover .svc-charity-icon img{transform:scale(1.08) translateY(-2px);}
+.svc-charity-body{flex:1;min-width:0;position:relative;z-index:1;}
+.svc-charity-eyebrow{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#B8860B;margin-bottom:5px;display:block;}
+.svc-charity-name{font-family:var(--font-display);font-weight:500;font-size:20px;line-height:1;letter-spacing:-.01em;background:linear-gradient(120deg,#B8860B,#0D9488);-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:6px;}
+.svc-charity-stat{display:inline-flex;align-items:center;gap:6px;background:rgba(212,175,55,.12);border:1px solid rgba(212,175,55,.25);border-radius:20px;padding:4px 12px;margin-bottom:8px;}
+.svc-charity-stat-num{font-family:var(--font-display);font-size:16px;font-weight:600;color:#B8860B;line-height:1;}
+.svc-charity-stat-label{font-size:11px;font-weight:600;color:#92720A;line-height:1.2;}
+.svc-charity-mission{font-size:12px;color:var(--ink-soft);line-height:1.55;font-weight:500;margin-bottom:10px;}
+.svc-charity-cta{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#0D9488;padding:7px 14px;border-radius:20px;background:rgba(13,148,136,.08);border:1px solid rgba(13,148,136,.18);transition:all .25s;cursor:pointer;}
+.svc-charity-cta:hover{background:rgba(13,148,136,.14);gap:9px;}
+.svc-charity-coming{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#B8860B;opacity:.7;margin-left:8px;}
+@media(max-width:640px){
+  .svc-charity-card{padding:16px 14px;gap:14px;}
+  .svc-charity-icon{width:58px;height:58px;}
+  .svc-charity-name{font-size:18px;}
+  .svc-charity-mission{font-size:11.5px;}
 }
 
 /* ══ TOPBAR NAV MOBILE COMPRESSION ══ */
@@ -908,20 +917,12 @@ img,video,svg{max-width:100%;}
           <div class="svc-stays-mega-arrow"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
         </div>
 
-        <!-- ── ROOMMATES — secondary full-width card ── -->
-        <div class="svc-rooms-row" onclick="navigateToService('roommates')">
-          <div class="svc-rooms-row-glow"></div>
-          <div class="svc-rooms-row-icon"><img src="icon-roommates.png" alt="Roommates"/></div>
-          <div class="svc-rooms-row-body">
-            <div class="svc-rooms-row-name">Roommates</div>
-            <div class="svc-rooms-row-sub">Find a flatmate or post your room</div>
-            <span class="svc-rooms-row-badge">New</span>
-          </div>
-          <div class="svc-rooms-row-arrow"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
-        </div>
-
-        <!-- ── MORE SERVICES — 4-col grid, always fully visible ── -->
+        <!-- ── 8-SERVICE ICON GRID — 4 cols, 2 rows, always fully visible ── -->
         <div class="svc-icon-grid">
+          <div class="svc-icon-tile" onclick="navigateToService('roommates')">
+            <img class="svc-icon-tile-img" src="icon-roommates.png" alt="Roommates"/>
+            <span class="svc-icon-tile-name">Roommates</span>
+          </div>
           <div class="svc-icon-tile" onclick="navigateToService('flights')">
             <img class="svc-icon-tile-img" src="icon-flights.png" alt="Flights"/>
             <span class="svc-icon-tile-name">Flights</span>
@@ -952,7 +953,59 @@ img,video,svg{max-width:100%;}
           </div>
         </div>
 
+        <!-- ── CHARITY — impact card ── -->
+        <div class="svc-charity-card" onclick="document.getElementById('charity-modal').style.display='flex'">
+          <div class="svc-charity-glow"></div>
+          <div class="svc-charity-icon"><img src="icon-charity.png" alt="Apatmento Gives"/></div>
+          <div class="svc-charity-body">
+            <span class="svc-charity-eyebrow">Apatmento Gives</span>
+            <div class="svc-charity-name">Built to Give Back</div>
+            <div class="svc-charity-stat">
+              <span class="svc-charity-stat-num">10%</span>
+              <span class="svc-charity-stat-label">of every booking goes to Africa</span>
+            </div>
+            <div class="svc-charity-mission">We're not here to bandage problems. Every transaction on this platform funds permanent, structural solutions to the real challenges facing Africa — one booking at a time.</div>
+            <span class="svc-charity-cta">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+              Apply for Support
+              <span class="svc-charity-coming">· Coming Soon</span>
+            </span>
+          </div>
+        </div>
+
       </div><!-- /svc-section -->
+
+      <!-- ── CHARITY MODAL ── -->
+      <div id="charity-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(10,10,20,.7);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:24px;" onclick="if(event.target===this)this.style.display='none'">
+        <div style="background:#fff;border-radius:24px;max-width:480px;width:100%;padding:0;overflow:hidden;box-shadow:0 32px 80px rgba(10,10,20,.3);">
+          <!-- Header gradient -->
+          <div style="background:linear-gradient(135deg,#fffdf0,#f0fdfb);padding:28px 24px 20px;border-bottom:1px solid rgba(212,175,55,.15);display:flex;align-items:center;gap:16px;">
+            <img src="icon-charity.png" style="width:60px;height:60px;object-fit:contain;flex-shrink:0;" alt=""/>
+            <div>
+              <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#B8860B;margin-bottom:4px;">Apatmento Gives</div>
+              <div style="font-family:var(--font-display);font-size:22px;font-weight:500;background:linear-gradient(120deg,#B8860B,#0D9488);-webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:-.01em;line-height:1.1;">Permanent Solutions.<br>Not Band-Aids.</div>
+            </div>
+          </div>
+          <!-- Body -->
+          <div style="padding:24px;">
+            <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(212,175,55,.1);border:1px solid rgba(212,175,55,.25);border-radius:20px;padding:6px 14px;margin-bottom:16px;">
+              <span style="font-family:var(--font-display);font-size:20px;font-weight:600;color:#B8860B;">10%</span>
+              <span style="font-size:12px;font-weight:600;color:#92720A;">of all Apatmento revenue funds change in Africa</span>
+            </div>
+            <p style="font-size:14px;color:var(--ink);line-height:1.7;margin-bottom:14px;">Every stay booked, every ride taken, every meal ordered on this platform contributes directly to solving Africa's most persistent challenges — not through temporary relief, but through building permanent infrastructure, systems and opportunities.</p>
+            <p style="font-size:13px;color:var(--ink-soft);line-height:1.65;margin-bottom:20px;">Africa doesn't need more band-aids. It needs bold, structural change. That's exactly what we're building — and you're a part of it every time you use Apatmento.</p>
+            <div style="background:linear-gradient(135deg,rgba(212,175,55,.06),rgba(13,148,136,.06));border:1px solid rgba(212,175,55,.15);border-radius:16px;padding:16px;margin-bottom:20px;">
+              <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#0D9488;margin-bottom:8px;">Apply for Support</div>
+              <p style="font-size:12.5px;color:var(--ink-soft);line-height:1.6;margin:0;">We're building the framework for organisations, communities and individuals across Africa to apply for direct support. This will be open soon — and it will be unlike anything you've seen before.</p>
+              <div style="margin-top:12px;display:inline-flex;align-items:center;gap:6px;background:rgba(184,134,11,.1);border-radius:12px;padding:6px 12px;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#B8860B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+                <span style="font-size:11px;font-weight:700;color:#B8860B;letter-spacing:.05em;text-transform:uppercase;">Coming Soon</span>
+              </div>
+            </div>
+            <button onclick="document.getElementById('charity-modal').style.display='none'" style="width:100%;padding:14px;border-radius:14px;border:1.5px solid var(--line);background:transparent;font-family:var(--font-body);font-size:14px;font-weight:600;color:var(--ink-soft);cursor:pointer;">Close</button>
+          </div>
+        </div>
+      </div>
 
       <!-- FEATURED VIDEO HERO — live ad from Supabase -->
       <div class="hero-stage" id="hero-stage">
