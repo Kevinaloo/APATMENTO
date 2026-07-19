@@ -1778,7 +1778,11 @@ async function initPartnerFlow(){
   document.getElementById('p-state-loading').style.display='flex';
   ['onboarding','picker','dashboard'].forEach(s=>document.getElementById('p-state-'+s).style.display='none');
 
-  if(!CURRENT_USER){ renderOnboarding(); return; }
+  // Not signed in — send to auth, come back as partner
+  if(!CURRENT_USER){
+    window.location.replace('auth.html?role=partner&next=dashboard.html%3Frole%3Dpartner');
+    return;
+  }
   try{
     const { data:listings } = await sb.from('listings')
       .select('id,title,name,status,listing_type,price_night,created_at')
@@ -1809,7 +1813,11 @@ async function initPartnerFlow(){
 
   document.getElementById('p-state-loading').style.display='none';
 
-  if(!partnerServices.length) renderOnboarding();
+  // No listings yet — go straight to add-listing instead of showing the onboarding screen
+  if(!partnerServices.length){
+    window.location.replace('add-listing.html?back=1');
+    return;
+  }
   else if(partnerServices.length===1) renderSingleDashboard(partnerServices[0]);
   else renderServicePicker(partnerServices);
 }

@@ -1215,6 +1215,25 @@ async function goDashboard(user) {
     },{ onConflict:'id' });
   } catch(e){}
 
+  // Honour ?next= param (e.g. when redirected from partner flow)
+  try {
+    const _nextParam = new URLSearchParams(location.search).get('next');
+    if (_nextParam && _nextParam.startsWith('dashboard')) {
+      window.location.href = decodeURIComponent(_nextParam) + '&uid=' + user.id;
+      return;
+    }
+  } catch(e) {}
+
+  // If arriving with ?role=partner intent, skip DB check and go straight to partner dash
+  try {
+    const _roleParam = new URLSearchParams(location.search).get('role');
+    if (_roleParam === 'partner') {
+      try { localStorage.setItem('apa-last-role', 'partner'); } catch(e) {}
+      window.location.href = 'dashboard.html?role=partner&uid=' + user.id;
+      return;
+    }
+  } catch(e) {}
+
   // Check if returning partner: has last_role=partner in DB OR has existing listings.
   // Returning partners should always land on their partner dashboard, not the guest screen.
   try {
