@@ -285,7 +285,8 @@
     });
 
     showChips(defaultChips());
-    if (synthOn) { try { global.speechSynthesis.getVoices(); } catch (_) {} }
+    // Edge TTS used for speech — no preload needed
+    if (synthOn) { try { global.speechSynthesis.getVoices(); } catch (_) {} } // kept for fallback
   }
 
   function defaultChips() {
@@ -523,7 +524,7 @@
         showNavToast(navKey, navParams);
       }
 
-      if (synthOn && (speaking || handsFree || wasVoiceTurn)) speak(reply);
+      if (speaking || handsFree || wasVoiceTurn) speak(reply);
       wasVoiceTurn = false;
     })
     .catch(function () {
@@ -542,34 +543,68 @@
     if (nameMatch && !sessionCtx.name) sessionCtx.name = nameMatch[1];
   }
 
-  /* ── TTS ─────────────────────────────────────────────────────────── */
-  function pickVoice() {
-    if (!synthOn) return null;
-    var voices = global.speechSynthesis.getVoices() || [];
-    var pref = voices.filter(function (v) { return /en[-_]/i.test(v.lang); });
-    return (pref.find(function (v){ return /ke/i.test(v.lang); })
-         || pref.find(function (v){ return /gb/i.test(v.lang); })
-         || pref[0] || voices[0] || null);
-  }
+  /* ── TTS (Edge TTS neural voice — Aria, en-US) ───────────────────── */
+  var currentAudio = null; // active HTMLAudioElement
 
   function speak(text) {
-    if (!synthOn || !text) { maybeReopenMic(); return; }
+    if (!text) { maybeReopenMic(); return; }
     stopSpeech();
-    var clean = text.replace(/\/[-a-z.]+\.html/g,'').replace(/https?:\/\/\S+/g,'')
-                    .replace(/[*_#`>]/g,'').replace(/\s{2,}/g,' ').trim();
+
+    var clean = text
+      .replace(/\[\[.*?\]\]/g, '')
+      .replace(/https?:\/\/\S+/g, '')
+      .replace(/\/[-a-z.]+\.html/g, '')
+      .replace(/[*_#`>~|]/g, '')
+      .replace(/\s{2,}/g, ' ').trim();
     if (!clean) { maybeReopenMic(); return; }
-    var u = new SpeechSynthesisUtterance(clean.slice(0, 600));
-    var v = pickVoice(); if (v) u.voice = v;
-    u.rate = VOICE_RATE; u.pitch = VOICE_PITCH; u.lang = (v && v.lang) || 'en-GB';
+
     var badge = document.getElementById('apa-spk');
-    u.onstart = function () { speaking = true; if (badge) badge.classList.add('on'); };
-    u.onend = function () { speaking = false; if (badge) badge.classList.remove('on'); maybeReopenMic(); };
-    u.onerror = function () { speaking = false; if (badge) badge.classList.remove('on'); maybeReopenMic(); };
-    try { global.speechSynthesis.speak(u); } catch (_) { maybeReopenMic(); }
+    var encoded = encodeURIComponent(clean.slice(0, 600));
+    var url = '/api/tts?text=' + encoded;
+
+    var audio = new Audio(url);
+    currentAudio = audio;
+
+    audio.onplay = function () {
+      speaking = true;
+      if (badge) badge.classList.add('on');
+    };
+    audio.onended = function () {
+      speaking = false;
+      currentAudio = null;
+      if (badge) badge.classList.remove('on');
+      maybeReopenMic();
+    };
+    audio.onerror = function () {
+      // Edge TTS failed (503 / network) — fall back to SpeechSynthesis silently
+      speaking = false;
+      currentAudio = null;
+      if (badge) badge.classList.remove('on');
+      if (synthOn) {
+        var u = new SpeechSynthesisUtterance(clean.slice(0, 600));
+        u.rate = 1.05; u.pitch = 1.05; u.lang = 'en-GB';
+        u.onend  = function () { speaking = false; if (badge) badge.classList.remove('on'); maybeReopenMic(); };
+        u.onerror = function () { speaking = false; if (badge) badge.classList.remove('on'); maybeReopenMic(); };
+        try { global.speechSynthesis.speak(u); } catch (_) { maybeReopenMic(); }
+      } else {
+        maybeReopenMic();
+      }
+    };
+
+    audio.play().catch(function () {
+      // Autoplay blocked — trigger via onerror path
+      audio.onerror();
+    });
   }
 
   function stopSpeech() {
-    if (synthOn && global.speechSynthesis.speaking) { try { global.speechSynthesis.cancel(); } catch (_) {} }
+    if (currentAudio) {
+      try { currentAudio.pause(); currentAudio.src = ''; } catch (_) {}
+      currentAudio = null;
+    }
+    if (synthOn && global.speechSynthesis.speaking) {
+      try { global.speechSynthesis.cancel(); } catch (_) {}
+    }
     speaking = false;
     var badge = document.getElementById('apa-spk');
     if (badge) badge.classList.remove('on');
