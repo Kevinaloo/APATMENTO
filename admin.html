@@ -1172,6 +1172,66 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
         <input class="inp" id="sh-kw" placeholder="toothpaste, colgate, health, personal care"/>
       </div>
       <div class="note">Leave keywords empty to match the whole surface. With keywords, the ad only appears when the guest's search or category context is relevant — the toothpaste ad finds the shopper, not everyone.</div>
+
+      <div class="fld" style="margin-top:18px"><label class="fld-l">📍 Area targeting — Nairobi neighbourhoods (leave empty = city-wide / Kenya-wide)</label>
+        <select class="inp" id="sh-areas" multiple size="8">
+          <option value="all">All areas (no geo restriction)</option>
+          <optgroup label="West / North West">
+            <option value="Westlands">Westlands</option>
+            <option value="Parklands">Parklands</option>
+            <option value="Spring Valley">Spring Valley</option>
+            <option value="Muthaiga">Muthaiga</option>
+            <option value="Gigiri">Gigiri</option>
+            <option value="Runda">Runda</option>
+            <option value="Ridgeways">Ridgeways</option>
+            <option value="Ruaka">Ruaka</option>
+            <option value="Rosslyn">Rosslyn</option>
+          </optgroup>
+          <optgroup label="Central / Uptown">
+            <option value="Kilimani">Kilimani</option>
+            <option value="Lavington">Lavington</option>
+            <option value="Kileleshwa">Kileleshwa</option>
+            <option value="Hurlingham">Hurlingham</option>
+            <option value="Upper Hill">Upper Hill</option>
+            <option value="CBD">CBD / City Centre</option>
+          </optgroup>
+          <optgroup label="South / South West">
+            <option value="Karen">Karen</option>
+            <option value="Ngong Road">Ngong Road</option>
+            <option value="Langata">Langata</option>
+            <option value="South B">South B</option>
+            <option value="South C">South C</option>
+          </optgroup>
+          <optgroup label="East / North East">
+            <option value="Kasarani">Kasarani</option>
+            <option value="Roysambu">Roysambu</option>
+            <option value="Thika Road">Thika Road</option>
+            <option value="Eastlands">Eastlands</option>
+          </optgroup>
+          <optgroup label="Outside Nairobi">
+            <option value="Mombasa">Mombasa</option>
+            <option value="Diani">Diani</option>
+            <option value="Naivasha">Naivasha</option>
+            <option value="Nakuru">Nakuru</option>
+            <option value="Kisumu">Kisumu</option>
+          </optgroup>
+        </select>
+        <div class="note" style="margin-top:6px">APA uses this to recommend the ad only when a guest's search or booking is in a matching area. The visual shadow ad uses it too.</div>
+      </div>
+
+      <div class="fld" style="margin-top:18px;padding:14px;border:1.5px solid rgba(124,58,255,.25);border-radius:12px;background:rgba(124,58,255,.04)">
+        <label class="fld-l" style="color:var(--violet)">🤖 APA Smart Suggestion — in-conversation ad</label>
+        <div style="display:flex;align-items:center;gap:10px;margin:10px 0 14px">
+          <label style="font-size:13px;color:var(--ink-2);display:flex;align-items:center;gap:8px;cursor:pointer">
+            <input type="checkbox" id="sh-apa-enabled" style="width:16px;height:16px;accent-color:var(--violet)"/>
+            Enable APA in-chat suggestion (APA will mention this naturally during conversations)
+          </label>
+        </div>
+        <div class="fld"><label class="fld-l">APA message template <span style="font-weight:400;color:var(--ink-3)">(how APA mentions it — keep it natural, 1 sentence, no hard sell)</span></label>
+          <input class="inp" id="sh-apa-msg" placeholder="e.g. Also — KFC Westlands currently has a 30% off bucket deal if you want food sorted after your check-in 🍗"/>
+        </div>
+        <div class="note">APA will weave this into the conversation when: the guest is in a matching area, the surface matches, and it fits naturally (after navigation, after booking help, etc). It never interrupts or forces it. The guest should feel like APA just remembered something useful.</div>
+      </div>
     </div>
 
     <!-- DELIVERY -->
@@ -2299,15 +2359,17 @@ function shModalTab(t, el){
 function openShadow(id){
   SH_EDIT = id || null;
   $('shadow-title').textContent = id ? 'Edit shadow ad' : 'New shadow ad';
-  const F_ = ['sh-adv','sh-name','sh-head','sh-sub','sh-cta','sh-url','sh-media','sh-poster','sh-accent','sh-theme','sh-kw','sh-budget'];
-  F_.forEach(k=>$(k).value='');
+  const F_ = ['sh-adv','sh-name','sh-head','sh-sub','sh-cta','sh-url','sh-media','sh-poster','sh-accent','sh-theme','sh-kw','sh-budget','sh-apa-msg'];
+  F_.forEach(k=>$(k)&&($(k).value=''));
   $('sh-mtype').value='image'; $('sh-imin').value=10; $('sh-imax').value=85;
   $('sh-dwell').value=6; $('sh-scroll').value=0; $('sh-device').value='all';
   $('sh-pos').value='auto'; $('sh-cap').value=1; $('sh-cd').value=90;
   $('sh-show').value=7; $('sh-prio').value=5; $('sh-status').value='live';
   $('sh-start').value=''; $('sh-end').value='';
+  if($('sh-apa-enabled')) $('sh-apa-enabled').checked=false;
   [...$('sh-surfaces').options].forEach(o=>o.selected=(o.value==='all'));
   [...$('sh-modes').options].forEach(o=>o.selected=true);
+  [...($('sh-areas')?.options||[])].forEach(o=>o.selected=(o.value==='all'));
 
   if(id){
     const a = shList().find(x=>String(x.id)===String(id));
@@ -2330,6 +2392,10 @@ function openShadow(id){
       [...$('sh-surfaces').options].forEach(o=>o.selected=surf.includes(o.value));
       const modes = Array.isArray(a.reading_modes)?a.reading_modes:['skim','scan','browse','read'];
       [...$('sh-modes').options].forEach(o=>o.selected=modes.includes(o.value));
+      const areas = Array.isArray(a.areas)?a.areas:['all'];
+      [...($('sh-areas')?.options||[])].forEach(o=>o.selected=areas.includes(o.value));
+      if($('sh-apa-enabled')) $('sh-apa-enabled').checked=!!(a.apa_enabled);
+      if($('sh-apa-msg')) $('sh-apa-msg').value=a.apa_message||'';
     }
   }
   document.querySelector('#shadow-ov .tab').click();
@@ -2340,8 +2406,27 @@ function openShadow(id){
 }
 function closeShadow(){ $('shadow-ov').classList.remove('on'); SH_EDIT=null; }
 $('shadow-ov').addEventListener('click', e=>{ if(e.target.id==='shadow-ov') closeShadow(); });
-['sh-adv','sh-head','sh-sub','sh-cta','sh-theme','sh-media','sh-accent'].forEach(k=>
+['sh-adv','sh-head','sh-sub','sh-cta','sh-theme','sh-media','sh-accent','sh-apa-msg'].forEach(k=>
   $(k)?.addEventListener('input', previewShadow));
+
+// "All areas" toggle — selecting 'all' clears specific selections and vice versa
+$('sh-areas')?.addEventListener('change', function(e){
+  const opts = [...this.options];
+  const allOpt = opts.find(o=>o.value==='all');
+  if(!allOpt) return;
+  if(e.target.value==='all' && allOpt.selected){
+    opts.forEach(o=>{ if(o.value!=='all') o.selected=false; });
+  } else if(e.target.value!=='all'){
+    allOpt.selected=false;
+    if(opts.filter(o=>o.value!=='all').every(o=>!o.selected)) allOpt.selected=true;
+  }
+});
+
+// APA enabled toggle shows/hides the APA message field
+$('sh-apa-enabled')?.addEventListener('change', function(){
+  const row = $('sh-apa-msg')?.closest('.fld');
+  if(row) row.style.opacity = this.checked ? '1' : '0.45';
+});
 
 function previewShadow(){
   const adv=$('sh-adv').value, head=$('sh-head').value, sub=$('sh-sub').value;
@@ -2366,6 +2451,7 @@ function collectShadow(){
   const surfaces = [...$('sh-surfaces').selectedOptions].map(o=>o.value);
   const modes = [...$('sh-modes').selectedOptions].map(o=>o.value);
   const kws = $('sh-kw').value.split(',').map(s=>s.trim()).filter(Boolean);
+  const areas = [...($('sh-areas')?.selectedOptions||[])].map(o=>o.value);
   return {
     advertiser: $('sh-adv').value.trim(),
     title: $('sh-name').value.trim() || $('sh-adv').value.trim(),
@@ -2396,6 +2482,9 @@ function collectShadow(){
     budget: Number($('sh-budget').value)||null,
     start_date: $('sh-start').value||null,
     end_date: $('sh-end').value||null,
+    areas: areas.length?areas:['all'],
+    apa_enabled: $('sh-apa-enabled')?.checked||false,
+    apa_message: $('sh-apa-msg')?.value.trim()||null,
     updated_at: new Date().toISOString()
   };
 }

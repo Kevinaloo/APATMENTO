@@ -184,6 +184,8 @@
     '.apa-chips{display:flex;flex-wrap:wrap;gap:7px;padding:0 14px 10px;}',
     '.apa-chip{background:#f4f5fb;border:1.5px solid #e8eaee;color:#4A4C66;border-radius:99px;padding:6px 12px;font:500 12px "Inter",system-ui,sans-serif;cursor:pointer;transition:.15s;white-space:nowrap;}',
     '.apa-chip:hover{border-color:#0D9467;color:#0D9467;background:#edfdf6;}',
+    '.apa-chip-nav{background:linear-gradient(135deg,rgba(13,148,103,.07),rgba(123,47,247,.05));border-color:rgba(13,148,103,.3);color:#0D9467;font-weight:600;}',
+    '.apa-chip-nav:hover{background:linear-gradient(135deg,rgba(13,148,103,.15),rgba(123,47,247,.1));border-color:#0D9467;transform:translateY(-1px);box-shadow:0 3px 10px rgba(13,148,103,.15);}',
 
     '.apa-speaking-badge{display:none;align-items:center;gap:6px;padding:4px 10px 10px 14px;font:400 11.5px "Inter",system-ui,sans-serif;color:#0D9467;}',
     '.apa-speaking-badge.on{display:flex;}',
@@ -307,6 +309,22 @@
     el.innerHTML = chips.map(function (c) {
       return '<button class="apa-chip" onclick="AskAPA.quickSend(\'' + c.replace(/'/g, "\\'") + '\')">' + esc(c) + '</button>';
     }).join('');
+  }
+
+  /* Predictive next-step chips from API — navigate directly, no round-trip */
+  function showNextStepChips(steps) {
+    var el = document.getElementById('apa-chips');
+    if (!el || !steps || !steps.length) return;
+    el.innerHTML = steps.map(function(s) {
+      var label = esc(s.label || '');
+      var route = s.route || '';
+      var params = s.params || '';
+      if (!label || !route) return '';
+      var emoji = ROUTE_EMOJIS[route] || '→';
+      return '<button class="apa-chip apa-chip-nav" onclick="AskAPA._stepGo(\'' +
+        route.replace(/'/g,"\\'") + '\',\'' + params.replace(/'/g,"\\'") + '\')">' +
+        emoji + ' ' + label + '</button>';
+    }).filter(Boolean).join('');
   }
 
   /* ── Open / close ────────────────────────────────────────────────── */
@@ -522,6 +540,14 @@
         showNavToast(navKey, navParams);
       }
 
+      // PREDICTIVE NEXT STEPS — show smart suggestion chips
+      if (!navKey && data.nextSteps && data.nextSteps.length) {
+        showNextStepChips(data.nextSteps);
+      } else if (!navKey) {
+        // Fallback: context-aware default chips
+        showChips(defaultChips());
+      }
+
       if (synthOn && (speaking || handsFree || wasVoiceTurn)) speak(reply);
       wasVoiceTurn = false;
     })
@@ -735,6 +761,13 @@
     send: send, quickSend: quickSend,
     toggleVoice: toggleVoice, toggleHandsFree: toggleHandsFree,
     navigate: function(key, params) { go(key, params, true); },
+    _stepGo: function(route, params) {
+      // Predictive chip tap: tell APA where we're going, then navigate
+      var label = ROUTE_LABELS[route] || route;
+      appendMsg('user', 'Take me to ' + label);
+      history.push({ role: 'user', content: 'Take me to ' + label });
+      showNavToast(route, params || null);
+    },
     setContext: function(ctx) { if (ctx && typeof ctx === 'object') Object.assign(sessionCtx, ctx); },
     clearHistory: function () { history = []; sessionCtx = {}; }
   };
