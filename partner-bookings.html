@@ -10,7 +10,7 @@
 <script src="/apa-trust.js"></script>
 <script src="/apa-admin-guard.js"></script>
 <script>
-(function(){var sb2=null;try{var C=supabase.createClient('https://gfwgbgdvxtocwhilrtdw.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw');sb2=C;}catch(e){}if(!sb2)return;sb2.auth.getSession().then(function(res){if(!res.data.session){sessionStorage.setItem('auth_next',location.href);window.location.href='auth.html?next='+encodeURIComponent(location.pathname);}}); })();
+(function(){var sb2=null;try{var C=supabase.createClient('https://gfwgbgdvxtocwhilrtdw.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw');sb2=C;}catch(e){}if(!sb2)return;sb2.auth.getSession().then(function(res){if(!res.data.session){sessionStorage.setItem('auth_next',location.href);window.location.href='auth.html?next='+encodeURIComponent(location.pathname);return;}try{localStorage.setItem('apa-last-role','partner');}catch(e){}}); })();
 </script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -253,7 +253,7 @@ td strong{color:var(--ink);font-weight:600;}
       <svg class="apa-fav-heart" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
       <span class="apa-fav-badge"></span>
     </button>
-    <a href="dashboard.html?role=guest&back=1" class="tb-switch-btn" title="Switch to Traveller view" aria-label="Switch to Traveller">
+    <a href="#" onclick="switchToGuest();return false;" class="tb-switch-btn" title="Switch to Traveller view" aria-label="Switch to Traveller">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 5-7 7 7 7"/></svg>
       <span class="tb-switch-txt">Traveller</span>
     </a>
@@ -313,7 +313,7 @@ td strong{color:var(--ink);font-weight:600;}
   </div>
 
   <div class="sb-foot">
-    <a class="sb-link" href="dashboard.html?role=guest&back=1">
+    <a class="sb-link" href="#" onclick="switchToGuest();return false;">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4M4 7h16M16 21l4-4-4-4M20 17H4"/></svg>
       Switch to Guest
     </a>
@@ -592,4 +592,12 @@ document.addEventListener('DOMContentLoaded', loadBookings);
 document.addEventListener('DOMContentLoaded', loadStays);
 </script>
 <script src="/cabana-rebrand.js" defer></script>
+
+<script>
+/* Clear partner role cache when explicitly switching to Traveller view */
+function switchToGuest(){
+  try{ localStorage.setItem('apa-last-role','guest'); }catch(e){}
+  window.location.href='dashboard.html?role=guest&back=1';
+}
+</script>
 </body></html>

@@ -817,11 +817,48 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 let sb = null;
 try { const { createClient } = supabase; sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY); } catch(e){ console.warn('Supabase unavailable'); }
 
-/* Session guard */
+/* ═══════════════════════════════════════════════════════════════
+   SESSION GUARD + PARTNER SMART REDIRECT
+   ───────────────────────────────────────────────────────────────
+   If the user arrives at add-listing.html WITHOUT a ?type= or
+   ?edit= param, and they already have listings, they should go
+   directly to their partner dashboard — not see a blank listing
+   form. This fixes the #1 partner UX complaint.
+   ═══════════════════════════════════════════════════════════════ */
 let CURRENT_USER = null;
 (async () => {
   if (!sb) return;
-  try { const { data: { session } } = await sb.auth.getSession(); if (!session) { window.location.href = 'auth.html'; return; } CURRENT_USER = session.user; } catch(e){}
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) {
+      sessionStorage.setItem('auth_next', location.href);
+      window.location.href = 'auth.html?next=' + encodeURIComponent(location.pathname + location.search);
+      return;
+    }
+    CURRENT_USER = session.user;
+
+    // Smart redirect: if no ?type= and no ?edit=, check if they already have listings.
+    // Existing partners should land on partner-listings.html, not the blank form.
+    const params = new URLSearchParams(location.search);
+    const hasType = params.has('type');
+    const hasEdit = params.has('edit');
+    const isBack  = params.has('back');
+
+    if (!hasType && !hasEdit) {
+      try {
+        const { data: existing } = await sb.from('listings')
+          .select('id')
+          .eq('partner_id', CURRENT_USER.id)
+          .limit(1);
+        if (existing && existing.length > 0) {
+          // They're a partner already — take them to their dashboard
+          localStorage.setItem('apa-last-role', 'partner');
+          window.location.replace('partner-listings.html?back=1');
+          return;
+        }
+      } catch(e) { /* swallow — don't block onboarding */ }
+    }
+  } catch(e) {}
 })();
 
 /* ══ STATE ══ */

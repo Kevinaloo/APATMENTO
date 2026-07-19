@@ -491,10 +491,13 @@
       return;
     }
     var next = st.role === 'partner' ? 'guest' : 'partner';
-    var u = new URL(global.location.href);
-    if (next === 'partner') u.searchParams.set('role', 'partner');
-    else u.searchParams.delete('role');
-    global.location.href = u.toString();
+
+    // Persist the chosen role to localStorage so every subsequent page load
+    // remembers it — fixes the bug where partners lost their mode on navigation.
+    try { localStorage.setItem('apa-last-role', next); } catch(e) {}
+
+    // Always navigate to dashboard with the explicit role param
+    global.location.href = 'dashboard.html?role=' + next + '&back=1';
   }
 
   /* ═══ RENDER ═════════════════════════════════════════════════════ */

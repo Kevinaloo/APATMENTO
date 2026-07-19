@@ -1315,12 +1315,31 @@ function onSession(st){
     }
   }, 'greeting');
 
-  /* Screen routing. Partner is opt-in only, never automatic. */
+  /* Screen routing.
+     Priority: 1) URL ?role= param   2) localStorage apa-last-role   3) DB last_role
+     Safety net: if role=guest but user has listings, quietly promote to partner. */
   var role = (st.status === 'user' && st.role === 'partner') ? 'partner' : 'guest';
   _try(function(){ showScreen(role); }, 'screen');
 
   if(role === 'partner'){
     setTimeout(function(){ _try(initPartnerFlow, 'partner'); }, 200);
+  } else if(st.status === 'user') {
+    // Safety net: check if this user already has listings.
+    // If so, silently route them to partner view so they never get stuck.
+    paintGuestContent();
+    _try(function(){
+      var c = window.ApaSession && window.ApaSession.client();
+      if(!c || !CURRENT_USER) return;
+      c.from('listings').select('id').eq('partner_id', CURRENT_USER.id).limit(1)
+        .then(function(res){
+          if(res && res.data && res.data.length > 0){
+            // User has listings — they ARE a partner. Remember and show partner screen.
+            try{ localStorage.setItem('apa-last-role','partner'); }catch(e){}
+            showScreen('partner');
+            setTimeout(function(){ _try(initPartnerFlow, 'partner'); }, 200);
+          }
+        }, function(){});
+    }, 'autoPartnerCheck');
   } else {
     paintGuestContent();
   }
@@ -1349,6 +1368,8 @@ function showScreen(role){
 
 async function saveRole(role){
   if(!CURRENT_USER) return;
+  // Persist to localStorage immediately so the next page load gets it without waiting for DB
+  try{ localStorage.setItem('apa-last-role', role); }catch(e){}
   try{ await sb.from('profiles').upsert({ id:CURRENT_USER.id, last_role:role, updated_at:new Date().toISOString() }); }catch(e){}
 }
 
@@ -1356,6 +1377,13 @@ async function saveRole(role){
    ApaSession, so the header can never desync from the session. */
 
 function signOut(){ if(window.ApaSession) ApaSession.signOut(); else window.location.href='auth.html'; }
+
+/* switchToGuest — called when the partner clicks "Traveller" to go back.
+   Clears the cached role so they land on the guest screen next time.     */
+function switchToGuest(){
+  try{ localStorage.setItem('apa-last-role','guest'); }catch(e){}
+  window.location.href='dashboard.html?role=guest&back=1';
+}
 
 /* ── LOAD STAYS ── */
 async function loadStays(){
@@ -1835,7 +1863,7 @@ async function renderServicePicker(listings){
   c.innerHTML = `
     <div class="topbar">
       <div class="tb-left"><img src="cabana-emblem.png" class="tb-icon-sm" alt=""/><img src="cabana-wordmark-color.png" class="tb-logo tb-cab-wm" alt="Cabana" onerror="this.style.display='none'"/></div>
-      <div class="tb-right"><button class="hero-cta" style="padding:9px 18px;font-size:13px;box-shadow:none;" onclick="showAddSheet()">+ Add service</button><button onclick="switchRole()" style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:100px;border:1.5px solid rgba(255,255,255,.35);background:rgba(255,255,255,.15);-webkit-color:#fff;font-family:var(--font-body);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .2s;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 5-7 7 7 7"/></svg>Traveller →</button></div>
+      <div class="tb-right"><button class="hero-cta" style="padding:9px 18px;font-size:13px;box-shadow:none;" onclick="showAddSheet()">+ Add service</button><button onclick="switchToGuest()" style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:100px;border:1.5px solid rgba(255,255,255,.35);background:rgba(255,255,255,.15);-webkit-color:#fff;font-family:var(--font-body);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .2s;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 5-7 7 7 7"/></svg>Traveller →</button></div>
     </div>
     <div class="content" style="max-width:760px;">
       <div class="greeting"><h1 class="greeting-title">Your <em>services</em></h1><p class="greeting-sub">${active.length} active service${active.length!==1?'s':''}. Select one to manage.</p></div>
@@ -1874,7 +1902,7 @@ async function renderSingleDashboard(listing){
     <div class="topbar">
       <div class="tb-left"><button class="tb-icon-btn" onclick="openDrawer()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button><img src="cabana-emblem.png" class="tb-icon-sm" alt=""/><img src="cabana-wordmark-color.png" class="tb-logo tb-cab-wm" alt="Cabana" onerror="this.style.display='none'"/></div>
       <div class="tb-right">
-        <a href="dashboard.html?back=1" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:11px;border:1.5px solid rgba(45,212,191,.3);background:rgba(45,212,191,.08);color:#0D9488;font-family:var(--font-body);font-weight:700;font-size:12px;text-decoration:none;transition:all .22s;white-space:nowrap;" title="Switch to Traveller view">
+        <a href="#" onclick="switchToGuest();return false;" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:11px;border:1.5px solid rgba(45,212,191,.3);background:rgba(45,212,191,.08);color:#0D9488;font-family:var(--font-body);font-weight:700;font-size:12px;text-decoration:none;transition:all .22s;white-space:nowrap;" title="Switch to Traveller view">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 5-7 7 7 7"/></svg>Traveller
         </a>
         <button class="sos-btn" onclick="openSOS()">SOS</button>

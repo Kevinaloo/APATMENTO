@@ -232,7 +232,7 @@ textarea.inp{padding-right:15px;font-weight:400;font-size:13.5px;resize:vertical
   </a>
 
   <div class="sb-foot">
-    <a class="sb-link" href="dashboard.html?role=guest&back=1">
+    <a class="sb-link" href="#" onclick="switchToGuest();return false;">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4M4 7h16M16 21l4-4-4-4M20 17H4"/></svg>
       Switch to Guest
     </a>
@@ -359,7 +359,9 @@ ApaSession.ready(async (s) => {
   if (s.status !== 'user') {
     sessionStorage.setItem('auth_next', location.href);
     return location.href = 'auth.html?next=' + encodeURIComponent(location.pathname);
+    return;
   }
+  try{ localStorage.setItem('apa-last-role','partner'); }catch(e){}
   await load();
   document.getElementById('gate').style.display = 'none';
   document.getElementById('shell').style.display = 'grid';
@@ -705,5 +707,13 @@ document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeRep()
 </script>
 <link rel="stylesheet" href="/brand.css"/>
 <script src="/cabana-rebrand.js" defer></script>
+
+<script>
+/* Clear partner role cache when explicitly switching to Traveller view */
+function switchToGuest(){
+  try{ localStorage.setItem('apa-last-role','guest'); }catch(e){}
+  window.location.href='dashboard.html?role=guest&back=1';
+}
+</script>
 </body>
 </html>

@@ -136,12 +136,34 @@
   }
 
   /* ── derive role from URL, never from stale memory ──────────── */
-  function urlRole() {
+  /* ── Role persistence: URL param wins, then localStorage, then 'guest' ──
+     Fixes the bug where partners landing without ?role=partner always saw
+     the guest screen. Now the last chosen role is remembered in localStorage
+     so a signed-in partner is always routed to their partner screen.       */
+  var ROLE_KEY = 'apa-last-role';
+
+  function persistRole(role) {
+    safe(function () { localStorage.setItem(ROLE_KEY, role); }, 'persistRole');
+  }
+
+  function cachedRole() {
     var r = 'guest';
-    safe(function () {
-      r = new URLSearchParams(global.location.search).get('role') || 'guest';
-    }, 'urlRole');
+    safe(function () { r = localStorage.getItem(ROLE_KEY) || 'guest'; }, 'cachedRole');
     return (r === 'partner') ? 'partner' : 'guest';
+  }
+
+  function urlRole() {
+    var r = null;
+    safe(function () {
+      r = new URLSearchParams(global.location.search).get('role');
+    }, 'urlRole');
+    // Explicit URL param — trust it and persist so future loads remember
+    if (r === 'partner' || r === 'guest') {
+      persistRole(r);
+      return r;
+    }
+    // No URL param — use whatever the partner last selected
+    return cachedRole();
   }
 
   /* ── profile fetch is best-effort, never blocking ───────────── */
@@ -163,13 +185,18 @@
 
     var email = (user.email || '').toLowerCase();
 
+    // If the DB profile carries a last_role, persist it so urlRole() picks it up
+    // on subsequent page loads (even without a ?role= param).
+    var dbRole = p && (p.last_role === 'partner' ? 'partner' : null);
+    if (dbRole) persistRole(dbRole);
+
     return {
       status: 'user',
       user: user,
       profile: p,
       name: name,
       initial: (name[0] || '?').toUpperCase(),
-      role: urlRole(),
+      role: urlRole(),   // honours URL > localStorage (updated above if DB had one)
       isAdmin: ADMINS.indexOf(email) > -1
     };
   }
