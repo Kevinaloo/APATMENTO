@@ -980,11 +980,25 @@ img,video,svg{max-width:100%;}
   <!-- ════ PARTNER SCREEN (dynamic) ════ -->
   <div class="screen" id="screen-partner">
     <div id="p-state-loading"><div class="p-spin"></div><div style="font-family:var(--font-display);font-style:italic;color:var(--ink-soft);">Loading your services…</div></div>
-    <div id="p-state-onboarding" style="display:none;"></div>
     <div id="p-state-picker" style="display:none;"></div>
     <div id="p-state-dashboard" style="display:none;"></div>
   </div>
 
+</div>
+
+<style>
+#add-scrim{position:fixed;inset:0;z-index:201;background:rgba(10,10,20,.45);opacity:0;pointer-events:none;transition:opacity .28s ease;}
+#add-scrim.open{opacity:1;pointer-events:all;}
+#add-sheet{position:fixed;bottom:0;left:0;right:0;z-index:202;background:#fff;border-radius:28px 28px 0 0;padding:28px 24px 44px;box-shadow:0 -20px 60px rgba(0,0,0,.18);transform:translateY(100%);transition:transform .32s cubic-bezier(.22,1,.36,1);}
+</style>
+
+<!-- PERMANENT ADD-SERVICE SHEET — always in DOM, shown via CSS transform only -->
+<div id="add-scrim" onclick="hideAddSheet()"></div>
+<div id="add-sheet">
+  <div style="width:40px;height:4px;border-radius:2px;background:#e0e0e8;margin:0 auto 22px;"></div>
+  <h3 style="font-family:var(--font-display);font-size:20px;margin-bottom:6px;">Add a service</h3>
+  <p style="font-size:13px;color:var(--ink-soft,#555);margin-bottom:20px;">Free to set up. Small fixed fee per booking only.</p>
+  <div id="add-sheet-inner"></div>
 </div>
 
 <!-- DRAWER -->
@@ -1764,7 +1778,7 @@ let selectedServiceType = null;
 
 async function initPartnerFlow(){
   document.getElementById('p-state-loading').style.display='flex';
-  ['onboarding','picker','dashboard'].forEach(s=>document.getElementById('p-state-'+s).style.display='none');
+  ['picker','dashboard'].forEach(s=>document.getElementById('p-state-'+s).style.display='none');
 
   // Not signed in — send to auth, come back as partner
   if(!CURRENT_USER){
@@ -1811,28 +1825,7 @@ async function initPartnerFlow(){
   else renderServicePicker(partnerServices);
 }
 
-function renderOnboarding(){
-  // Onboarding screen removed. Any stray call goes straight to add-listing.
-  window.location.replace('add-listing.html?back=1');
-}
 
-function selectService(k){
-  selectedServiceType = k;
-  document.querySelectorAll('.svc-onboard').forEach(el=>{el.style.borderColor='var(--line)';el.style.transform='none';el.querySelector('.ob-tick').style.display='none';});
-  const card = document.getElementById('ob-'+k);
-  card.style.borderColor='var(--mint-deep)';
-  card.style.transform='translateY(-4px)';
-  card.style.boxShadow='var(--shadow-lift)';
-  card.querySelector('.ob-tick').style.display='flex';
-  const cta = document.getElementById('ob-cta');
-  cta.style.opacity='1'; cta.style.pointerEvents='all';
-}
-function startSetup(){
-  if(!selectedServiceType) return;
-  const svc = PARTNER_SERVICES[selectedServiceType];
-  const url = svc ? svc.dest : 'add-listing.html?type='+selectedServiceType;
-  window.location.href = url + '&back=1';
-}
 
 async function renderServicePicker(listings){
   const c = document.getElementById('p-state-picker');
@@ -1914,20 +1907,31 @@ function goToService(type){
   window.location.href = url + '&back=1';
 }
 
-function addSheetHTML(){return `
-  <div class="drawer-scrim" id="add-scrim" onclick="hideAddSheet()"></div>
-  <div id="add-sheet" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:202;background:var(--glass);border-radius:28px 28px 0 0;padding:28px 24px 40px;box-shadow:0 -20px 60px rgba(0,0,0,.15);">
-    <div style="width:40px;height:4px;border-radius:2px;background:var(--line-2);margin:0 auto 22px;"></div>
-    <h3 style="font-family:var(--font-display);font-size:20px;margin-bottom:6px;">Add a service</h3>
-    <p style="font-size:13px;color:var(--ink-soft);margin-bottom:20px;">Free to set up. Small fixed fee per booking only.</p>
-    ${Object.entries(PARTNER_SERVICES).map(([k,s])=>`
-      <button onclick="window.location.href='add-listing.html?type=${k}&back=1'" style="display:flex;align-items:center;gap:14px;width:100%;padding:15px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.5);cursor:pointer;text-align:left;margin-bottom:10px;">
-        <div style="width:42px;height:42px;border-radius:12px;background:${s.grad};display:flex;align-items:center;justify-content:center;color:#fff;">${s.ico.replace('class="svc-ico"','').replace('width="30" height="30"','width="22" height="22"')}</div>
-        <div><div style="font-family:var(--font-display);font-weight:500;font-size:14px;">${s.name}</div><div style="font-size:11px;color:var(--ink-faint);">${s.sub}</div></div>
-      </button>`).join('')}
-  </div>`;}
-function showAddSheet(){ window.__addServiceIntent = true; document.getElementById('add-scrim').classList.add('open'); document.getElementById('add-sheet').style.display='block'; }
-function hideAddSheet(){ document.getElementById('add-scrim').classList.remove('open'); document.getElementById('add-sheet').style.display='none'; }
+function addSheetHTML(){ return ''; /* sheet now lives permanently in DOM */ }
+function showAddSheet(){
+  var scrim = document.getElementById('add-scrim');
+  var sheet = document.getElementById('add-sheet');
+  if(!scrim || !sheet) return;
+  // Populate service buttons fresh each open
+  var inner = sheet.querySelector('#add-sheet-inner');
+  if(inner && !inner.dataset.built){
+    inner.dataset.built = '1';
+    inner.innerHTML = Object.entries(PARTNER_SERVICES).map(([k,s])=>
+      '<button onclick="window.location.href=\'add-listing.html?type='+k+'&back=1\'" style="display:flex;align-items:center;gap:14px;width:100%;padding:15px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.5);cursor:pointer;text-align:left;margin-bottom:10px;">'
+      +'<div style="width:42px;height:42px;border-radius:12px;background:'+s.grad+';display:flex;align-items:center;justify-content:center;color:#fff;">'+s.ico.replace(/class="[^"]*"/g,'').replace(/width="30" height="30"/g,'width="22" height="22"')+'</div>'
+      +'<div><div style="font-family:var(--font-display);font-weight:500;font-size:14px;">'+s.name+'</div><div style="font-size:11px;color:var(--ink-faint);">'+s.sub+'</div></div>'
+      +'</button>'
+    ).join('');
+  }
+  scrim.classList.add('open');
+  sheet.style.transform='translateY(0)';
+}
+function hideAddSheet(){
+  var scrim = document.getElementById('add-scrim');
+  var sheet = document.getElementById('add-sheet');
+  if(scrim) scrim.classList.remove('open');
+  if(sheet) sheet.style.transform='translateY(100%)';
+}
 </script>
 
 <div data-showcase="window"></div>
