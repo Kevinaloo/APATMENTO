@@ -16,9 +16,9 @@ import { select, cors } from './_db.js';
 
 const GROQ_API    = 'https://api.groq.com/openai/v1/chat/completions';
 const GROQ_MODELS = [
-  'openai/gpt-oss-120b',
-  'openai/gpt-oss-20b',
-  'llama-3.3-70b-versatile',
+  'llama-3.3-70b-versatile',    // primary
+  'llama3-70b-8192',            // fallback 1
+  'gemma2-9b-it',               // fallback 2 — fast
 ];
 
 /* ── Rate limiter ────────────────────────────────────────────── */
