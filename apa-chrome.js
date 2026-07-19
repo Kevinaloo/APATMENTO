@@ -298,7 +298,7 @@
     { id: 'fire',      e: '🔥', n: 'Fire / Rescue',        d: 'Fire, trapped persons, floods' },
     { id: 'security',  e: '🛡️', n: 'Personal Safety',      d: 'Threat, harassment, unsafe area' },
     { id: 'roadside',  e: '🚗', n: 'Roadside Emergency',   d: 'Accident, breakdown, car trouble' },
-    { id: 'support',   e: '💬', n: 'Cabana Support',    d: 'Booking issues, host problems' }
+    { id: 'support',   e: '💬', n: 'Apatmento Support',    d: 'Booking issues, host problems' }
   ];
 
   /* Emergency contacts keyed by category */
@@ -322,7 +322,7 @@
     security: [
       { n: 'Kenya Police',               d: 'Safety threat response',     tel: '999' },
       { n: 'Emergency (All Networks)',   d: 'Works on any network',       tel: '112' },
-      { n: 'Cabana Safety Line',      d: '24/7 guest safety support',  tel: '+254745802200' }
+      { n: 'Apatmento Safety Line',      d: '24/7 guest safety support',  tel: '+254745802200' }
     ],
     roadside: [
       { n: 'Kenya AA (Breakdown)',        d: 'Automobile Association',     tel: '0800723232' },
@@ -330,7 +330,7 @@
       { n: 'Emergency (All Networks)',   d: 'Police · Fire · Ambulance',  tel: '112' }
     ],
     support:  [
-      { n: 'Cabana Support',          d: '24/7 booking & host issues', tel: '+254745802200' },
+      { n: 'Apatmento Support',          d: '24/7 booking & host issues', tel: '+254745802200' },
       { n: 'WhatsApp Support',           d: 'Chat with our team',         tel: '+254745802200', wa: true }
     ]
   };
@@ -358,7 +358,7 @@
       + 'Select the type of emergency and we\'ll find the closest help.</p>'
       + rows
       + '<p style="font:400 11px/1.5 system-ui;color:#c0c0c8;margin:14px 0 0;text-align:center;">'
-      + 'Cabana is not an emergency service. Always call 999 or 112 first if life is at risk.</p>');
+      + 'Apatmento is not an emergency service. Always call 999 or 112 first if life is at risk.</p>');
   }
 
   function sosSelectCat(catId) {
