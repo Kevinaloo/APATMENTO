@@ -455,6 +455,10 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
           Splash screen <span class="nav-b calm" id="b-splash">off</span>
         </div>
+        <div class="nav-i" data-sec="push" onclick="go('push',this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0M3.3 16.6c-.6.7-.1 1.8.8 1.8h15.8c.9 0 1.4-1.1.8-1.8C19.5 15 18 13.2 18 8A6 6 0 0 0 6 8c0 5.2-1.5 7-2.7 8.6"/></svg>
+          Push notifications <span class="nav-b calm" id="b-push">0</span>
+        </div>
         <div class="nav-i" data-sec="trust" onclick="go('trust',this)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M20 13c0 5-3.5 7.5-8 9-4.5-1.5-8-4-8-9V6l8-3 8 3z"/><circle cx="12" cy="11" r="2.4"/></svg>
           Trust centre <span class="nav-b" id="b-trust">0</span>
@@ -1048,6 +1052,193 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
         </div>
       </section>
 
+
+      <!-- ─── PUSH NOTIFICATIONS ─── -->
+      <section class="sec" id="s-push">
+        <div class="hd">
+          <div><h1>Push <em>notifications</em></h1><p>Send real-time push notifications to all subscribers, individual users, or schedule recurring campaigns.</p></div>
+          <div class="hd-act">
+            <button class="btn btn-g btn-sm" onclick="pushLoadStats()">Refresh stats</button>
+          </div>
+        </div>
+
+        <!-- Stats row -->
+        <div class="grid g3" id="push-stats-row">
+          <div class="card"><div class="card-t">Total subscribers</div><div class="card-s">Active push subscriptions</div><div id="push-stat-subs" style="font-size:28px;font-weight:700;color:#7C3AFF;margin-top:8px">—</div></div>
+          <div class="card"><div class="card-t">Sent today</div><div class="card-s">Pushes delivered in last 24h</div><div id="push-stat-sent" style="font-size:28px;font-weight:700;color:#14B8A6;margin-top:8px">—</div></div>
+          <div class="card"><div class="card-t">Scheduled</div><div class="card-s">Queued campaigns</div><div id="push-stat-sched" style="font-size:28px;font-weight:700;color:#F59E0B;margin-top:8px">—</div></div>
+        </div>
+
+        <!-- Test push (send to yourself) -->
+        <div class="card" style="margin-top:20px;border:2px solid rgba(124,58,255,.25);background:rgba(124,58,255,.04)">
+          <div class="card-hd">
+            <div class="card-t">🔔 Test push — send to yourself</div>
+            <div class="card-s">Fires a real Web Push to your own subscribed device right now. Use this to confirm delivery is working.</div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;align-items:flex-end">
+            <div style="flex:1;min-width:200px">
+              <label style="font-size:11px;color:#9499AD;font-weight:600;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Title</label>
+              <input id="push-test-title" class="inp" value="👋 Test from Admin" placeholder="Notification title" style="width:100%"/>
+            </div>
+            <div style="flex:2;min-width:240px">
+              <label style="font-size:11px;color:#9499AD;font-weight:600;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Body</label>
+              <input id="push-test-body" class="inp" value="Push delivery is working correctly on Apatmento." placeholder="Notification body text" style="width:100%"/>
+            </div>
+            <div style="min-width:140px">
+              <label style="font-size:11px;color:#9499AD;font-weight:600;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Link (optional)</label>
+              <input id="push-test-url" class="inp" value="/" placeholder="e.g. /dashboard.html" style="width:100%"/>
+            </div>
+            <button class="btn btn-p" onclick="pushSendTest()" style="white-space:nowrap;padding:10px 20px">Send test →</button>
+          </div>
+          <div id="push-test-result" style="margin-top:10px;font-size:13px;color:#9499AD"></div>
+        </div>
+
+        <!-- Broadcast to all -->
+        <div class="card" style="margin-top:16px">
+          <div class="card-hd">
+            <div class="card-t">📢 Broadcast to all subscribers</div>
+            <div class="card-s">Sends a push notification to every user who has granted push permission. Use for platform-wide announcements.</div>
+          </div>
+          <div style="display:grid;gap:12px;margin-top:14px">
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <div style="flex:1;min-width:200px">
+                <label style="font-size:11px;color:#9499AD;font-weight:600;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Title *</label>
+                <input id="push-bc-title" class="inp" placeholder="e.g. New listings in Westlands!" style="width:100%"/>
+              </div>
+              <div style="flex:1;min-width:200px">
+                <label style="font-size:11px;color:#9499AD;font-weight:600;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Category</label>
+                <select id="push-bc-kind" class="inp" style="width:100%">
+                  <option value="general">📣 General</option>
+                  <option value="booking">🏠 Booking</option>
+                  <option value="payment">💳 Payment</option>
+                  <option value="promo">🎉 Promotion</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label style="font-size:11px;color:#9499AD;font-weight:600;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Body *</label>
+              <textarea id="push-bc-body" class="inp" rows="2" placeholder="The notification message seen by all users…" style="width:100%;resize:vertical"></textarea>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+              <div style="flex:1;min-width:200px">
+                <label style="font-size:11px;color:#9499AD;font-weight:600;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Deep link (optional)</label>
+                <input id="push-bc-url" class="inp" placeholder="/apartments.html" style="width:100%"/>
+              </div>
+              <button class="btn btn-p" onclick="pushBroadcast()" style="padding:10px 22px">Broadcast to all →</button>
+            </div>
+          </div>
+          <div id="push-bc-result" style="margin-top:10px;font-size:13px;color:#9499AD"></div>
+        </div>
+
+        <!-- Send to single user -->
+        <div class="card" style="margin-top:16px">
+          <div class="card-hd">
+            <div class="card-t">👤 Send to a specific user</div>
+            <div class="card-s">Target one user by their Supabase user ID or email address. Great for booking confirmations and support messages.</div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;align-items:flex-end">
+            <div style="min-width:240px;flex:1">
+              <label style="font-size:11px;color:#9499AD;font-weight:600;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">User ID or email *</label>
+              <input id="push-u-target" class="inp" placeholder="user UUID or email@example.com" style="width:100%"/>
+            </div>
+            <div style="min-width:180px;flex:1">
+              <label style="font-size:11px;color:#9499AD;font-weight:600;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Title *</label>
+              <input id="push-u-title" class="inp" placeholder="Notification title" style="width:100%"/>
+            </div>
+            <div style="min-width:220px;flex:2">
+              <label style="font-size:11px;color:#9499AD;font-weight:600;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Body *</label>
+              <input id="push-u-body" class="inp" placeholder="Message body" style="width:100%"/>
+            </div>
+            <div style="min-width:140px">
+              <label style="font-size:11px;color:#9499AD;font-weight:600;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Link</label>
+              <input id="push-u-url" class="inp" placeholder="/dashboard.html" style="width:100%"/>
+            </div>
+            <button class="btn btn-ok" onclick="pushSendUser()" style="padding:10px 18px">Send →</button>
+          </div>
+          <div id="push-u-result" style="margin-top:10px;font-size:13px;color:#9499AD"></div>
+        </div>
+
+        <!-- Scheduled / recurring campaigns -->
+        <div class="card" style="margin-top:16px">
+          <div class="card-hd">
+            <div class="card-t">🗓 Scheduled campaigns</div>
+            <div class="card-s">Set a push to go out at a fixed time, or on a recurring schedule (daily, weekly). Stored in the database and fired server-side.</div>
+          </div>
+
+          <!-- New campaign form -->
+          <div style="background:rgba(15,17,23,.03);border:1px solid rgba(15,17,23,.07);border-radius:12px;padding:16px;margin-top:14px">
+            <div style="font-size:12px;font-weight:700;color:#9499AD;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px">New scheduled campaign</div>
+            <div style="display:grid;gap:12px">
+              <div style="display:flex;gap:10px;flex-wrap:wrap">
+                <div style="flex:2;min-width:200px">
+                  <label style="font-size:11px;color:#9499AD;font-weight:600;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Campaign title *</label>
+                  <input id="sc-title" class="inp" placeholder="e.g. Weekend deals reminder" style="width:100%"/>
+                </div>
+                <div style="flex:1;min-width:140px">
+                  <label style="font-size:11px;color:#9499AD;font-weight:600;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Category</label>
+                  <select id="sc-kind" class="inp" style="width:100%">
+                    <option value="general">📣 General</option>
+                    <option value="booking">🏠 Booking</option>
+                    <option value="promo">🎉 Promotion</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label style="font-size:11px;color:#9499AD;font-weight:600;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Body *</label>
+                <textarea id="sc-body" class="inp" rows="2" placeholder="Notification message…" style="width:100%;resize:vertical"></textarea>
+              </div>
+              <div style="display:flex;gap:10px;flex-wrap:wrap">
+                <div style="flex:1;min-width:160px">
+                  <label style="font-size:11px;color:#9499AD;font-weight:600;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Deep link</label>
+                  <input id="sc-url" class="inp" placeholder="/apartments.html" style="width:100%"/>
+                </div>
+                <div style="flex:1;min-width:160px">
+                  <label style="font-size:11px;color:#9499AD;font-weight:600;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Send at (Nairobi time) *</label>
+                  <input id="sc-send-at" class="inp" type="datetime-local" style="width:100%"/>
+                </div>
+                <div style="flex:1;min-width:140px">
+                  <label style="font-size:11px;color:#9499AD;font-weight:600;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Repeat</label>
+                  <select id="sc-repeat" class="inp" style="width:100%">
+                    <option value="none">One-time only</option>
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="monthly">Monthly</option>
+                  </select>
+                </div>
+                <div style="flex:1;min-width:140px">
+                  <label style="font-size:11px;color:#9499AD;font-weight:600;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Audience</label>
+                  <select id="sc-audience" class="inp" style="width:100%">
+                    <option value="all">All subscribers</option>
+                    <option value="guests">Guests only</option>
+                    <option value="partners">Partners only</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <button class="btn btn-p" onclick="pushScheduleSave()" style="padding:10px 22px">Save campaign →</button>
+                <span id="sc-result" style="margin-left:14px;font-size:13px;color:#9499AD"></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Campaign list -->
+          <div style="margin-top:16px">
+            <div style="font-size:12px;font-weight:700;color:#9499AD;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Saved campaigns</div>
+            <div id="push-campaigns-list"><div style="color:#9499AD;font-size:13px">Loading…</div></div>
+          </div>
+        </div>
+
+        <!-- Recent push log -->
+        <div class="card" style="margin-top:16px">
+          <div class="card-hd">
+            <div class="card-t">📋 Recent push log</div>
+            <div class="card-s">Last 20 notifications sent via the platform</div>
+          </div>
+          <div id="push-log-list" style="margin-top:12px"><div style="color:#9499AD;font-size:13px">Loading…</div></div>
+        </div>
+
+      </section>
+
     </main>
   </div>
 </div>
@@ -1414,6 +1605,7 @@ function go(sec, el){
   if(sec==='audience'||sec==='ml'||sec==='slots') ensureAudience();
   if(sec==='agents') loadAgents();
   if(sec==='splash') loadSplash();
+  if(sec==='push') pushLoadStats();
   if(sec==='godmode') gmRenderAll();
   if(sec==='lazy') lazyLoad('pending');
   if(sec==='impersonate') impLogLoad();
@@ -3387,6 +3579,236 @@ function notify(msg, type='calm') {
   n.textContent = msg;
   document.body.appendChild(n);
   setTimeout(()=>n.remove(),3000);
+}
+
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   ADMIN · PUSH NOTIFICATIONS PANEL
+   ═══════════════════════════════════════════════════════════════════ */
+
+const PUSH_ADMIN_SECRET_STORED = (() => {
+  const meta = document.querySelector('meta[name="push-admin-secret"]');
+  return (meta && meta.content) || sessionStorage.getItem('apa_push_secret') || '';
+})();
+
+function pushHeaders() {
+  const secret = sessionStorage.getItem('apa_push_secret') || PUSH_ADMIN_SECRET_STORED;
+  return { 'Content-Type': 'application/json', 'x-admin-secret': secret };
+}
+
+function pushEnsureSecret() {
+  if (sessionStorage.getItem('apa_push_secret')) return true;
+  const secret = prompt('Enter PUSH_ADMIN_SECRET to authorise push sends:');
+  if (!secret) return false;
+  sessionStorage.setItem('apa_push_secret', secret);
+  return true;
+}
+
+async function pushLoadStats() {
+  const [subs, todayR, camps, logs] = await Promise.all([
+    sb.from('push_subscriptions').select('id', { count: 'exact', head: true }),
+    sb.from('notifications').select('id', { count: 'exact', head: true })
+      .gte('created_at', new Date(Date.now() - 86400000).toISOString()),
+    sb.from('push_campaigns').select('id', { count: 'exact', head: true }).eq('active', true),
+    sb.from('notifications').select('id,title,body,kind,created_at').order('created_at', { ascending: false }).limit(20),
+  ]);
+  const g = id => document.getElementById(id);
+  if (g('push-stat-subs'))  g('push-stat-subs').textContent  = subs.count  ?? '—';
+  if (g('push-stat-sent'))  g('push-stat-sent').textContent  = todayR.count ?? '—';
+  if (g('push-stat-sched')) g('push-stat-sched').textContent = camps.count  ?? '—';
+  if (g('b-push')) g('b-push').textContent = subs.count > 0 ? subs.count : '0';
+  renderPushLog(logs.data || []);
+  await pushLoadCampaigns();
+}
+
+function renderPushLog(rows) {
+  const el = document.getElementById('push-log-list');
+  if (!el) return;
+  if (!rows.length) { el.innerHTML = '<div style="color:#9499AD;font-size:13px;padding:8px 0">No notifications sent yet.</div>'; return; }
+  const ki = { booking:'🏠', payment:'💳', general:'📣', promo:'🎉', message:'💬' };
+  el.innerHTML = rows.map(n =>
+    '<div style="display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid rgba(15,17,23,.06)">' +
+    '<div style="font-size:20px;line-height:1;margin-top:2px">' + (ki[n.kind] || '📣') + '</div>' +
+    '<div style="flex:1;min-width:0">' +
+    '<div style="font-size:13px;font-weight:600;color:#0F1117">' + esc(n.title) + '</div>' +
+    '<div style="font-size:12px;color:#5A5E70;margin-top:1px">' + esc(n.body || '') + '</div>' +
+    '</div>' +
+    '<div style="font-size:11px;color:#9499AD;white-space:nowrap;margin-top:2px">' +
+    new Date(n.created_at).toLocaleString('en-KE',{dateStyle:'short',timeStyle:'short'}) +
+    '</div></div>'
+  ).join('');
+}
+
+async function pushSendTest() {
+  const title  = document.getElementById('push-test-title').value.trim();
+  const body   = document.getElementById('push-test-body').value.trim();
+  const url    = document.getElementById('push-test-url').value.trim() || '/';
+  const res_el = document.getElementById('push-test-result');
+  if (!title) { res_el.textContent = '⚠ Title is required.'; return; }
+  if (!pushEnsureSecret()) { res_el.textContent = 'Cancelled.'; return; }
+  res_el.textContent = 'Sending…';
+  try {
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) { res_el.textContent = '⚠ Not signed in.'; return; }
+    const r = await fetch('/api/push-send', {
+      method: 'POST', headers: pushHeaders(),
+      body: JSON.stringify({ user_id: user.id, title, body, url, kind: 'general', persist: true }),
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || r.status);
+    if (d.sent === 0 && d.total === 0) {
+      res_el.innerHTML = '<span style="color:#F59E0B">⚠ No push subscription on this device yet — open the main Apatmento site, accept the notification prompt, then try again.</span>';
+    } else {
+      res_el.innerHTML = '<span style="color:#0D9467">✓ Delivered to ' + d.sent + ' of ' + d.total + ' subscription(s)' + (d.persisted ? ' · also in notification feed' : '') + '.</span>';
+    }
+    setTimeout(pushLoadStats, 1500);
+  } catch(e) { res_el.innerHTML = '<span style="color:#EF4444">✗ ' + esc(e.message) + '</span>'; }
+}
+
+async function pushBroadcast() {
+  const title  = document.getElementById('push-bc-title').value.trim();
+  const body   = document.getElementById('push-bc-body').value.trim();
+  const url    = document.getElementById('push-bc-url').value.trim() || '/';
+  const kind   = document.getElementById('push-bc-kind').value;
+  const res_el = document.getElementById('push-bc-result');
+  if (!title || !body) { res_el.textContent = '⚠ Title and body required.'; return; }
+  if (!confirm('Send "' + title + '" to ALL subscribers? This cannot be undone.')) return;
+  if (!pushEnsureSecret()) { res_el.textContent = 'Cancelled.'; return; }
+  res_el.textContent = 'Fetching subscriber list…';
+  try {
+    const { data: subs, error } = await sb.from('push_subscriptions').select('user_id').limit(2000);
+    if (error) throw new Error(error.message);
+    const userIds = [...new Set((subs||[]).map(s => s.user_id).filter(Boolean))];
+    res_el.textContent = 'Sending to ' + userIds.length + ' users…';
+    let sent = 0, failed = 0;
+    const BATCH = 20;
+    for (let i = 0; i < userIds.length; i += BATCH) {
+      const batch = userIds.slice(i, i + BATCH);
+      const results = await Promise.allSettled(batch.map(uid =>
+        fetch('/api/push-send', {
+          method: 'POST', headers: pushHeaders(),
+          body: JSON.stringify({ user_id: uid, title, body, url, kind, persist: true }),
+        }).then(r => r.json())
+      ));
+      results.forEach(r => { if (r.status === 'fulfilled' && r.value && r.value.sent > 0) sent++; else failed++; });
+      res_el.textContent = 'Progress: ' + Math.min(i + BATCH, userIds.length) + ' / ' + userIds.length + '…';
+    }
+    res_el.innerHTML = '<span style="color:#0D9467">✓ Broadcast complete — ' + sent + ' delivered, ' + failed + ' failed/no-sub.</span>';
+    setTimeout(pushLoadStats, 2000);
+  } catch(e) { res_el.innerHTML = '<span style="color:#EF4444">✗ ' + esc(e.message) + '</span>'; }
+}
+
+async function pushSendUser() {
+  const target = document.getElementById('push-u-target').value.trim();
+  const title  = document.getElementById('push-u-title').value.trim();
+  const body   = document.getElementById('push-u-body').value.trim();
+  const url    = document.getElementById('push-u-url').value.trim() || '/';
+  const res_el = document.getElementById('push-u-result');
+  if (!target || !title || !body) { res_el.textContent = '⚠ Target, title and body are required.'; return; }
+  if (!pushEnsureSecret()) { res_el.textContent = 'Cancelled.'; return; }
+  res_el.textContent = 'Sending…';
+  try {
+    const r = await fetch('/api/push-send', {
+      method: 'POST', headers: pushHeaders(),
+      body: JSON.stringify({ user_id: target, title, body, url, kind: 'general', persist: true }),
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || r.status);
+    res_el.innerHTML = d.sent > 0
+      ? '<span style="color:#0D9467">✓ Delivered to ' + d.sent + ' device(s).</span>'
+      : '<span style="color:#F59E0B">⚠ No active push subscription for this user (persisted to in-app feed).</span>';
+    setTimeout(pushLoadStats, 1500);
+  } catch(e) { res_el.innerHTML = '<span style="color:#EF4444">✗ ' + esc(e.message) + '</span>'; }
+}
+
+async function pushLoadCampaigns() {
+  const el = document.getElementById('push-campaigns-list');
+  if (!el) return;
+  const { data, error } = await sb.from('push_campaigns')
+    .select('*').order('send_at', { ascending: true }).limit(50);
+  if (error || !data || !data.length) {
+    el.innerHTML = '<div style="color:#9499AD;font-size:13px;padding:8px 0">No campaigns yet. Create one above.</div>';
+    return;
+  }
+  const rLabel = { none:'One-time', daily:'Daily', weekly:'Weekly', monthly:'Monthly' };
+  function badge(c) {
+    if (!c.active) return '<span style="font-size:10px;padding:2px 7px;border-radius:100px;background:rgba(15,17,23,.08);color:#9499AD">Inactive</span>';
+    if (c.last_sent_at && c.repeat === 'none') return '<span style="font-size:10px;padding:2px 7px;border-radius:100px;background:rgba(13,148,103,.1);color:#0D9467">Sent</span>';
+    if (new Date(c.send_at) < new Date()) return '<span style="font-size:10px;padding:2px 7px;border-radius:100px;background:rgba(245,158,11,.1);color:#D97706">Overdue</span>';
+    return '<span style="font-size:10px;padding:2px 7px;border-radius:100px;background:rgba(124,58,255,.1);color:#7C3AFF">Scheduled</span>';
+  }
+  el.innerHTML = data.map(c =>
+    '<div style="display:grid;grid-template-columns:1fr auto;gap:12px;align-items:start;padding:12px 0;border-bottom:1px solid rgba(15,17,23,.06)">' +
+    '<div>' +
+    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">' + badge(c) +
+    '<span style="font-size:13px;font-weight:600;color:#0F1117">' + esc(c.title) + '</span>' +
+    '<span style="font-size:11px;color:#9499AD">' + (rLabel[c.repeat]||'One-time') + ' · ' + esc(c.audience||'all') + '</span></div>' +
+    '<div style="font-size:12px;color:#5A5E70">' + esc(c.body) + '</div>' +
+    '<div style="font-size:11px;color:#9499AD;margin-top:3px">📅 ' +
+    new Date(c.send_at).toLocaleString('en-KE',{dateStyle:'medium',timeStyle:'short'}) +
+    (c.last_sent_at ? ' · Last sent: ' + new Date(c.last_sent_at).toLocaleString('en-KE',{dateStyle:'short',timeStyle:'short'}) : '') +
+    '</div></div>' +
+    '<div style="display:flex;gap:7px;flex-shrink:0">' +
+    '<button class="btn btn-ok btn-sm" onclick="pushFireNow(\'' + c.id + '\',\'' + c.title.replace(/'/g,"\\'") + '\')">Send now</button>' +
+    (c.active
+      ? '<button class="btn btn-g btn-sm" onclick="pushToggleCampaign(\'' + c.id + '\',false)">Pause</button>'
+      : '<button class="btn btn-ok btn-sm" onclick="pushToggleCampaign(\'' + c.id + '\',true)">Activate</button>') +
+    '<button class="btn btn-d btn-sm" onclick="pushDeleteCampaign(\'' + c.id + '\')">Delete</button>' +
+    '</div></div>'
+  ).join('');
+}
+
+async function pushScheduleSave() {
+  const title    = document.getElementById('sc-title').value.trim();
+  const body     = document.getElementById('sc-body').value.trim();
+  const url      = document.getElementById('sc-url').value.trim() || '/';
+  const kind     = document.getElementById('sc-kind').value;
+  const sendAt   = document.getElementById('sc-send-at').value;
+  const repeat   = document.getElementById('sc-repeat').value;
+  const audience = document.getElementById('sc-audience').value;
+  const res_el   = document.getElementById('sc-result');
+  if (!title || !body || !sendAt) { res_el.textContent = '⚠ Title, body and time required.'; return; }
+  res_el.textContent = 'Saving…';
+  const { error } = await sb.from('push_campaigns').insert({
+    title, body, url, kind, repeat, audience, active: true,
+    send_at: new Date(sendAt).toISOString(),
+  });
+  if (error) { res_el.innerHTML = '<span style="color:#EF4444">✗ ' + esc(error.message) + '</span>'; return; }
+  res_el.innerHTML = '<span style="color:#0D9467">✓ Campaign saved.</span>';
+  ['sc-title','sc-body','sc-url','sc-send-at'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+  await pushLoadCampaigns();
+  await pushLoadStats();
+}
+
+async function pushToggleCampaign(id, active) {
+  await sb.from('push_campaigns').update({ active }).eq('id', id);
+  await pushLoadCampaigns();
+}
+
+async function pushDeleteCampaign(id) {
+  if (!confirm('Delete this campaign?')) return;
+  await sb.from('push_campaigns').delete().eq('id', id);
+  await pushLoadCampaigns();
+  await pushLoadStats();
+}
+
+async function pushFireNow(id, title) {
+  if (!confirm('Send "' + title + '" to all subscribers right now?')) return;
+  if (!pushEnsureSecret()) return;
+  const { data: camp } = await sb.from('push_campaigns').select('*').eq('id', id).single();
+  if (!camp) { toast('Campaign not found.', 'bad'); return; }
+  const bcTitle = document.getElementById('push-bc-title');
+  const bcBody  = document.getElementById('push-bc-body');
+  const bcUrl   = document.getElementById('push-bc-url');
+  const bcKind  = document.getElementById('push-bc-kind');
+  if (bcTitle) bcTitle.value = camp.title;
+  if (bcBody)  bcBody.value  = camp.body;
+  if (bcUrl)   bcUrl.value   = camp.url || '/';
+  if (bcKind)  bcKind.value  = camp.kind || 'general';
+  await pushBroadcast();
+  await sb.from('push_campaigns').update({ last_sent_at: new Date().toISOString() }).eq('id', id);
+  await pushLoadCampaigns();
 }
 
 function esc(s){ if(!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
