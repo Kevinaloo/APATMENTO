@@ -500,7 +500,7 @@ body{overflow-x:hidden;}
       pollAttempts++;
       if (pollAttempts > MAX_POLL_ATTEMPTS) {
         clearInterval(pollInterval);
-        render('failed', { ...opts, errorMsg: 'Payment timed out. If money was deducted, contact support with your reference number.' });
+        render('failed', { ...opts, errorMsg: 'Payment timed out. If money was deducted, WhatsApp us immediately on +254 716 206 494 with your reference number.' });
         if (opts.onFailure) opts.onFailure({ reason: 'timeout' });
         return;
       }
@@ -895,5 +895,6 @@ function showToast(msg) {
 <script src="/cabana-rebrand.js" defer></script>
   <script src="/apa-signal.js" defer></script>
 <script src="/apa-ask.js" defer></script>
+<script src="/apa-contact.js" defer></script>
 </body>
 </html>

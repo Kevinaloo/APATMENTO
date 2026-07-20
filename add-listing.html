@@ -1445,7 +1445,7 @@ async function addPhoto(file) {
     const platformDup = await _checkPlatformDuplicate(file, newHash);
     if (platformDup) {
       const msg = document.getElementById('form-alert');
-      msg.innerHTML = `⚠️ This photo appears to already be used on another listing (<strong>${platformDup.title || 'another property'}</strong>). If this is your own photo, <a href="mailto:support@apatmento.space" style="color:var(--theme);">contact support to dispute</a>.`;
+      msg.innerHTML = `⚠️ This photo appears to already be used on another listing (<strong>${platformDup.title || 'another property'}</strong>). If this is your own photo, <a href="mailto:connect@apatmento.space" style="color:var(--theme);">contact support to dispute</a>.`;
       msg.classList.add('show');
       setTimeout(() => msg.classList.remove('show'), 8000);
       return;
@@ -2238,6 +2238,7 @@ window.addEventListener('load', () => {
 <script src="/brand.js" defer></script>
 <script src="/cabana-rebrand.js" defer></script>
   <script src="/apa-signal.js" defer></script>
+<script src="/apa-contact.js" defer></script>
 </body></html>
 
 
