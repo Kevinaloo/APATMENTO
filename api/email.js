@@ -24,6 +24,9 @@ const ADMIN_SECRET     = process.env.PUSH_ADMIN_SECRET || '';
 const MAGIC_SECRET     = process.env.MAGIC_AUTH_SECRET || 'apa-magic-2025';
 const SUPABASE_URL     = process.env.SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const AT_API_KEY       = process.env.AT_API_KEY;
+const AT_USERNAME      = process.env.AT_USERNAME || 'Cabana';
+const AT_SMS_URL       = 'https://api.africastalking.com/version1/messaging';
 const FROM_NOTIFY  = 'Apatmento <notify@apatmento.space>';
 const FROM_BOOKING = 'Apatmento Bookings <bookings@apatmento.space>';
 const FROM_MAGIC   = 'Apatmento <auth@apatmento.space>';
@@ -257,6 +260,24 @@ function buildReset({ resetUrl, email }) {
   `);
 }
 
+/* ── send SMS via Africa's Talking ────────────────────────────── */
+async function sendSMS({ to, message, from = 'APATMENTO' }) {
+  if (!AT_API_KEY) throw new Error('AT_API_KEY not set');
+  const phone = to.startsWith('+') ? to : `+254${to.replace(/^0/, '')}`;
+  const params = new URLSearchParams({ username: AT_USERNAME, to: phone, message, from });
+  const r = await fetch(AT_SMS_URL, {
+    method: 'POST',
+    headers: { 'apiKey': AT_API_KEY, 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json' },
+    body: params.toString(),
+  });
+  const data = await r.json().catch(() => ({}));
+  const entry = data?.SMSMessageData?.Recipients?.[0];
+  if (!r.ok || entry?.status === 'InvalidPhoneNumber') {
+    throw new Error(entry?.status || `AT ${r.status}`);
+  }
+  return { id: entry?.messageId, status: entry?.status, cost: entry?.cost };
+}
+
 /* ── send via Resend ───────────────────────────────────────────── */
 async function sendEmail({ from, to, subject, html }) {
   if (!RESEND_KEY) throw new Error('RESEND_API_KEY not set');
@@ -298,7 +319,7 @@ export default async function handler(req, res) {
   const secret = req.headers['x-admin-secret'];
 
   // magic-link + magic-auth are public but rate-limited. All others require admin secret.
-  const publicActions = ['magic-link', 'magic-auth'];
+  const publicActions = ['magic-link', 'magic-auth', 'sms-otp'];
   if (!publicActions.includes(action) && secret !== ADMIN_SECRET && ADMIN_SECRET) {
     return res.status(403).json({ error: 'Forbidden' });
   }
@@ -453,10 +474,53 @@ export default async function handler(req, res) {
         });
       }
 
+      // ── SMS actions (Africa's Talking) ──────────────────────────
+      case 'sms-otp': {
+        // Send OTP via SMS instead of / in addition to email
+        const { phone: smsPhone, otp: smsOtp } = body;
+        if (!smsPhone || !smsOtp) return res.status(400).json({ error: 'phone + otp required' });
+        const smsResult = await sendSMS({
+          to: smsPhone,
+          message: `${smsOtp} is your Apatmento sign-in code. Valid for 10 minutes. Do not share it.`,
+        });
+        return res.status(200).json({ ok: true, ...smsResult });
+      }
+
+      case 'sms-booking': {
+        // Notify guest of booking confirmation via SMS
+        const { phone: gPhone, guestName, propertyName, checkIn, checkOut, amount: bAmt } = body;
+        if (!gPhone) return res.status(400).json({ error: 'phone required' });
+        const smsResult = await sendSMS({
+          to: gPhone,
+          message: `Hi ${guestName || 'there'}! Your Apatmento booking at ${propertyName} is confirmed. Check-in: ${checkIn}, Check-out: ${checkOut}. Total: KES ${bAmt}. Questions? Reply to this message.`,
+        });
+        return res.status(200).json({ ok: true, ...smsResult });
+      }
+
+      case 'sms-host': {
+        // Alert host of new booking via SMS
+        const { phone: hPhone, hostName, guestName: hGuest, propertyName: hProp, checkIn: hIn, checkOut: hOut } = body;
+        if (!hPhone) return res.status(400).json({ error: 'phone required' });
+        const smsResult = await sendSMS({
+          to: hPhone,
+          message: `New booking on Apatmento! ${hGuest || 'A guest'} booked ${hProp}. Check-in: ${hIn}, Check-out: ${hOut}. Log in to apatmento.space to manage.`,
+        });
+        return res.status(200).json({ ok: true, ...smsResult });
+      }
+
+      case 'sms-custom': {
+        // Send any custom SMS (admin only)
+        if (secret !== ADMIN_SECRET && ADMIN_SECRET) return res.status(403).json({ error: 'Forbidden' });
+        const { phone: cPhone, message: cMsg } = body;
+        if (!cPhone || !cMsg) return res.status(400).json({ error: 'phone + message required' });
+        const smsResult = await sendSMS({ to: cPhone, message: cMsg });
+        return res.status(200).json({ ok: true, ...smsResult });
+      }
+
       default:
         return res.status(400).json({
           error: 'Unknown action',
-          available: ['magic-link','magic-auth','welcome','booking','host-booking','payout','booking-cancel','reset'],
+          available: ['magic-link','magic-auth','sms-otp','sms-booking','sms-host','sms-custom','welcome','booking','host-booking','payout','booking-cancel','reset'],
         });
     }
 
