@@ -30,13 +30,30 @@ body{font-family:var(--font-body);background:#F7F6F2;color:#0F1117;line-height:1
 .back:hover{background:#F7F6F2;}
 .page{max-width:740px;margin:0 auto;padding:48px 24px 80px;}
 h1{font-family:var(--font-display);font-size:32px;font-weight:700;margin-bottom:8px;}
-.updated{font-size:12px;color:#9499AD;margin-bottom:40px;}
-h2{font-family:var(--font-body);font-size:16px;font-weight:700;margin:32px 0 12px;color:#0F1117;}
+.updated{font-size:12px;color:#9499AD;margin-bottom:16px;}
+.toc{background:white;border:1px solid rgba(15,17,23,.07);border-radius:14px;padding:20px 24px;margin-bottom:40px;}
+.toc-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#9499AD;margin-bottom:12px;}
+.toc ol{padding-left:18px;margin:0;}
+.toc li{font-size:13px;margin-bottom:4px;}
+.toc a{color:#C8970A;text-decoration:none;}
+.toc a:hover{text-decoration:underline;}
+h2{font-family:var(--font-body);font-size:16px;font-weight:700;margin:36px 0 12px;color:#0F1117;scroll-margin-top:80px;}
 p{font-size:14px;color:#2A2D38;margin-bottom:14px;}
-ul{font-size:14px;color:#2A2D38;padding-left:20px;margin-bottom:14px;}
+ul,ol{font-size:14px;color:#2A2D38;padding-left:20px;margin-bottom:14px;}
 li{margin-bottom:6px;}
 .highlight{background:rgba(13,148,103,.07);border:1px solid rgba(13,148,103,.18);border-radius:12px;padding:16px 20px;margin:24px 0;}
 .highlight p{margin:0;font-weight:500;color:#0D9467;}
+.warn{background:rgba(234,88,12,.06);border:1px solid rgba(234,88,12,.18);border-radius:12px;padding:16px 20px;margin:24px 0;}
+.warn p{margin:0;font-weight:500;color:#C2410C;}
+.fee-table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:14px;}
+.fee-table th{text-align:left;font-weight:600;color:#5A5E70;font-size:11px;text-transform:uppercase;letter-spacing:.06em;padding:8px 12px;border-bottom:2px solid rgba(15,17,23,.08);}
+.fee-table td{padding:10px 12px;border-bottom:1px solid rgba(15,17,23,.05);color:#2A2D38;}
+.fee-table tr:last-child td{border-bottom:none;}
+.fee-table tr:hover td{background:rgba(15,17,23,.02);}
+.policy-links{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:32px;}
+.policy-link{font-size:12px;color:#C8970A;text-decoration:none;padding:6px 12px;border-radius:8px;border:1px solid rgba(200,151,10,.25);background:rgba(200,151,10,.04);}
+.policy-link:hover{background:rgba(200,151,10,.08);}
+.section-divider{border:none;border-top:1px solid rgba(15,17,23,.07);margin:8px 0;}
 </style>
 <link rel="stylesheet" href="/brand.css"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/><link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"/>
@@ -52,74 +69,311 @@ li{margin-bottom:6px;}
 </nav>
 <div class="page">
   <h1>Terms of Service</h1>
-  <div class="updated">Last updated: June 2026</div>
+  <div class="updated">Last updated: July 2026 · Effective immediately for new users, 30 days notice for existing users of material changes.</div>
+
+  <div class="policy-links">
+    <a href="privacy.html" class="policy-link">🔒 Privacy Policy</a>
+    <a href="cookies.html" class="policy-link">🍪 Cookie Policy</a>
+  </div>
 
   <div class="highlight">
     <p>✓ Apatmento charges zero commission on all bookings. Hosts keep 100% of every payment. We only charge a small fixed platform fee per confirmed booking — never a percentage.</p>
   </div>
 
-  <h2>1. Acceptance of Terms</h2>
-  <p>By accessing or using the Apatmento platform ("Service"), you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use the Service.</p>
+  <div class="toc">
+    <div class="toc-title">Contents</div>
+    <ol>
+      <li><a href="#acceptance">Acceptance of Terms</a></li>
+      <li><a href="#description">Description of Service</a></li>
+      <li><a href="#accounts">User Accounts</a></li>
+      <li><a href="#bookings">Bookings and Payments</a></li>
+      <li><a href="#platform-fees">Platform Fees</a></li>
+      <li><a href="#cancellations">Cancellations and Refunds</a></li>
+      <li><a href="#host-responsibilities">Host / Partner Responsibilities</a></li>
+      <li><a href="#guest-responsibilities">Guest Responsibilities</a></li>
+      <li><a href="#agents">Agent Programme</a></li>
+      <li><a href="#referrals">Referral &amp; Rewards Programme</a></li>
+      <li><a href="#prohibited">Prohibited Conduct</a></li>
+      <li><a href="#content">User-Generated Content</a></li>
+      <li><a href="#third-party">Third-Party Services</a></li>
+      <li><a href="#disputes">Dispute Resolution</a></li>
+      <li><a href="#liability">Limitation of Liability</a></li>
+      <li><a href="#indemnification">Indemnification</a></li>
+      <li><a href="#termination">Account Suspension &amp; Termination</a></li>
+      <li><a href="#governing-law">Governing Law</a></li>
+      <li><a href="#changes">Changes to These Terms</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ol>
+  </div>
 
-  <h2>2. Description of Service</h2>
-  <p>Apatmento is a marketplace platform connecting guests with hosts offering short-stay accommodations, tours, events, and related services across Kenya. We also provide referral links to third-party services including rides, food delivery, shopping, and flights.</p>
+  <!-- 1 -->
+  <h2 id="acceptance">1. Acceptance of Terms</h2>
+  <p>By accessing or using the Apatmento platform, mobile application, or any related services (collectively, the "Service") operated by Apatmento ("we", "us", "our"), you confirm that you have read, understood, and agree to be bound by these Terms of Service ("Terms") and our <a href="privacy.html">Privacy Policy</a>.</p>
+  <p>If you are using the Service on behalf of a business or other legal entity, you represent that you have the authority to bind that entity to these Terms. If you do not agree, you must not access or use the Service.</p>
 
-  <h2>3. User Accounts</h2>
-  <p>You must create an account to book services on Apatmento. You are responsible for maintaining the confidentiality of your account credentials and for all activity that occurs under your account.</p>
+  <!-- 2 -->
+  <h2 id="description">2. Description of Service</h2>
+  <p>Apatmento is an online marketplace platform connecting guests with hosts offering short-stay accommodations ("Stays"), guided experiences ("Tours"), ticketed experiences ("Events"), and other services across Kenya. The platform operates under the consumer brand <strong>Cabana</strong>.</p>
+  <p>In addition to directly facilitated bookings, we provide curated referral links to third-party providers of rides, food delivery, shopping, and flights. These third-party services are governed by the respective providers' own terms and are not operated by Apatmento.</p>
+  <p>We are a technology marketplace — we do not own, operate, or control any of the listed properties, experiences, or third-party services. We are not a hotel, tour operator, or transportation company.</p>
+
+  <!-- 3 -->
+  <h2 id="accounts">3. User Accounts</h2>
+  <p>You must register for an account to make bookings or list services on Apatmento. By creating an account you agree to:</p>
   <ul>
-    <li>You must provide accurate and complete information when creating your account</li>
-    <li>You must be at least 18 years of age to use the Service</li>
-    <li>You are responsible for all activity on your account</li>
-    <li>You must notify us immediately of any unauthorized use of your account</li>
+    <li>Provide accurate, current, and complete information during registration and keep it up to date</li>
+    <li>Be at least 18 years of age (or the age of majority in your jurisdiction if higher)</li>
+    <li>Maintain the confidentiality of your login credentials and not share them with any third party</li>
+    <li>Be solely responsible for all activity that occurs under your account</li>
+    <li>Notify us immediately at <a href="mailto:support@apatmento.com">support@apatmento.com</a> if you suspect unauthorised access to your account</li>
+  </ul>
+  <p>We reserve the right to suspend or terminate accounts that provide false information, are dormant for more than 24 months, or are found to be in violation of these Terms.</p>
+
+  <!-- 4 -->
+  <h2 id="bookings">4. Bookings and Payments</h2>
+  <p>All payments on Apatmento are processed securely via <strong>M-Pesa through PayHero</strong>. When you initiate a booking:</p>
+  <ul>
+    <li>An STK Push is sent to your M-Pesa-registered phone number to authorise payment</li>
+    <li>You authorise Apatmento to collect the full listing amount plus the applicable platform fee in a single transaction</li>
+    <li>The host receives the full listing amount directly — Apatmento retains only its fixed platform fee</li>
+    <li>Payments are processed immediately upon your authorisation; bookings are confirmed once payment is verified</li>
+    <li>You will receive an SMS and/or email confirmation with a booking reference number</li>
+    <li>Booking confirmation is subject to host acceptance where indicated on the listing</li>
+  </ul>
+  <p>You are responsible for ensuring your M-Pesa account has sufficient funds and that the phone number on your Apatmento account matches your M-Pesa registered number.</p>
+
+  <!-- 5 -->
+  <h2 id="platform-fees">5. Platform Fees</h2>
+  <p>Apatmento charges a fixed platform fee per confirmed booking. These fees are displayed clearly on the checkout screen before you confirm any payment. We never charge percentage-based commissions.</p>
+
+  <table class="fee-table">
+    <thead>
+      <tr>
+        <th>Service Type</th>
+        <th>Booking Value</th>
+        <th>Platform Fee (Guest)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Apartments / Stays</td>
+        <td>Under KES 5,000</td>
+        <td>KES 300</td>
+      </tr>
+      <tr>
+        <td>Apartments / Stays</td>
+        <td>KES 5,000 and above</td>
+        <td>KES 800</td>
+      </tr>
+      <tr>
+        <td>Tours</td>
+        <td>Under KES 5,000</td>
+        <td>KES 200</td>
+      </tr>
+      <tr>
+        <td>Tours</td>
+        <td>KES 5,000 and above</td>
+        <td>KES 500</td>
+      </tr>
+      <tr>
+        <td>Events (per ticket)</td>
+        <td>Under KES 1,000 / ticket</td>
+        <td>KES 50</td>
+      </tr>
+      <tr>
+        <td>Events (per ticket)</td>
+        <td>KES 1,000 and above / ticket</td>
+        <td>KES 150</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p><strong>Platform fees are non-refundable</strong> in all circumstances, including cancellations by either party. Fees may be updated from time to time with 14 days' notice published on this page and by email notification.</p>
+
+  <!-- 6 -->
+  <h2 id="cancellations">6. Cancellations and Refunds</h2>
+  <p>Each listing on Apatmento has a cancellation policy set by the host, which is prominently displayed on the listing page before you book. Common policies include:</p>
+  <ul>
+    <li><strong>Flexible:</strong> Full refund (minus platform fee) if cancelled at least 24 hours before check-in</li>
+    <li><strong>Moderate:</strong> Full refund (minus platform fee) if cancelled at least 5 days before check-in</li>
+    <li><strong>Strict:</strong> 50% refund (minus platform fee) if cancelled at least 7 days before check-in; no refund thereafter</li>
+    <li><strong>Non-refundable:</strong> No refund on cancellation; listing price may reflect a discount for this policy</li>
+  </ul>
+  <p>In all cases, the platform fee is non-refundable.</p>
+  <p><strong>How to cancel:</strong> Log into your account, navigate to My Bookings, and select "Cancel Booking". Refunds (where applicable) are processed back to your M-Pesa number within 3–7 business days.</p>
+  <p><strong>Host-initiated cancellations:</strong> If a host cancels a confirmed booking, you will receive a full refund of the listing amount plus the platform fee within 3–5 business days. Hosts who repeatedly cancel confirmed bookings may be suspended.</p>
+  <p><strong>Force majeure:</strong> In exceptional circumstances (natural disasters, public health emergencies, civil unrest) Apatmento may, at its sole discretion, offer additional refund flexibility beyond the standard policy. We are not obligated to do so.</p>
+  <p><strong>Disputes:</strong> Refund disputes must be submitted within <strong>7 days</strong> of the check-in date to <a href="mailto:support@apatmento.com">support@apatmento.com</a> with your booking reference. We aim to resolve disputes within 10 business days.</p>
+
+  <!-- 7 -->
+  <h2 id="host-responsibilities">7. Host / Partner Responsibilities</h2>
+  <p>If you list properties, tours, events, or other services on Apatmento as a Partner, you agree to:</p>
+  <ul>
+    <li>Provide accurate, truthful descriptions, pricing, and photographs of your listing</li>
+    <li>Only list properties or services that you own, are legally authorised to rent/offer, and have all required licences and permissions for</li>
+    <li>Honour all confirmed bookings and maintain your listing in the condition described</li>
+    <li>Comply with all applicable Kenyan laws and regulations, including tax obligations (including Tourism Levy where applicable), fire safety, and health standards</li>
+    <li>Set a clear cancellation policy on your listing before publishing</li>
+    <li>Respond to guest enquiries and check-in requests within 24 hours</li>
+    <li>Not charge guests any fees outside of the Apatmento platform for bookings sourced through Apatmento</li>
+    <li>Immediately report any property damage, safety incidents, or disputes with guests to <a href="mailto:support@apatmento.com">support@apatmento.com</a></li>
+    <li>Maintain accurate calendar availability to avoid double bookings</li>
+    <li>Ensure listed properties meet basic safety standards, including working locks, fire exits, and emergency contact information on-site</li>
+  </ul>
+  <p>Apatmento reserves the right to remove any listing at any time for policy violations, quality concerns, or guest safety. Partners who receive consistently poor reviews or have multiple unresolved complaints may be suspended or permanently removed from the platform.</p>
+
+  <!-- 8 -->
+  <h2 id="guest-responsibilities">8. Guest Responsibilities</h2>
+  <p>As a guest booking services through Apatmento, you agree to:</p>
+  <ul>
+    <li>Treat all properties, venues, and services with care and respect</li>
+    <li>Comply with the house rules, check-in/check-out times, and occupancy limits set by each host</li>
+    <li>Not use booked properties or services for any illegal activities, parties beyond the agreed guest count, or any purpose other than short-term accommodation or the booked experience</li>
+    <li>Report any pre-existing damage to the host at check-in and document it with photographs</li>
+    <li>Report any issues or damage caused during your stay to both the host and Apatmento promptly</li>
+    <li>Pay for any damage you cause beyond normal wear and tear, as determined through our dispute resolution process</li>
+    <li>Not smoke in non-smoking properties</li>
+    <li>Vacate the property by the stated check-out time to avoid late checkout fees charged by the host</li>
+    <li>Only book for the number of guests you declare at checkout; bringing additional guests may result in cancellation</li>
   </ul>
 
-  <h2>4. Bookings and Payments</h2>
-  <p>All payments on Apatmento are processed securely via M-Pesa (PayHero). When you make a booking:</p>
+  <!-- 9 -->
+  <h2 id="agents">9. Agent Programme</h2>
+  <p>The Apatmento Agent Programme allows approved individuals ("Agents") to earn commissions by sourcing bookings and listings for the platform. By participating as an Agent, you agree to the following additional terms:</p>
   <ul>
-    <li>You authorize Apatmento to collect the full booking amount plus the applicable platform fee</li>
-    <li>The host receives the booking amount in full — Apatmento retains only the fixed platform fee</li>
-    <li>Payments are processed immediately upon booking confirmation</li>
-    <li>Cancellation policies are set by individual hosts and disclosed before booking</li>
+    <li>Agent status is granted at Apatmento's sole discretion and may be revoked at any time for policy violations</li>
+    <li>Agents must accurately represent Apatmento's services and not make false or misleading claims to potential guests or hosts</li>
+    <li>Commission rates and structures are set by Apatmento and communicated in your Agent dashboard; these may change with 14 days' notice</li>
+    <li>Commissions are calculated on confirmed and completed bookings only; cancelled bookings do not generate commission</li>
+    <li>Commission payouts are made via M-Pesa once your balance reaches the minimum withdrawal threshold, as displayed in your Agent dashboard</li>
+    <li>Agents must not engage in spamming, unsolicited messaging, or any other aggressive or deceptive marketing practices</li>
+    <li>Agents are independent contractors, not employees of Apatmento, and are responsible for their own tax obligations on commissions earned</li>
+    <li>Agents must not self-refer — creating duplicate accounts or fraudulently attributing bookings is grounds for immediate termination and forfeiture of outstanding earnings</li>
   </ul>
 
-  <h2>5. Host Responsibilities</h2>
-  <p>If you list properties or services on Apatmento as a Partner/Host, you agree to:</p>
+  <!-- 10 -->
+  <h2 id="referrals">10. Referral &amp; Rewards Programme</h2>
+  <p>Apatmento operates a Referral Programme and a Points-based Rewards Programme. By participating, you agree to:</p>
   <ul>
-    <li>Provide accurate descriptions and photos of your listing</li>
-    <li>Honor all confirmed bookings</li>
-    <li>Maintain the listing in the condition described</li>
-    <li>Comply with all applicable Kenyan laws and regulations</li>
-    <li>Not list properties you do not have the right to rent</li>
+    <li><strong>Referral commissions:</strong> You earn a commission on bookings made by users you refer, for a period of 12 months from the referred user's registration. Commission rates are: 20% of the platform fee for referred users, and 10% of the platform fee for referred hosts/providers.</li>
+    <li><strong>Rewards points:</strong> You earn 10 points per KES 1,000 spent on bookings (excluding platform fees and third-party referrals). 1 point = KES 1 in redemption value.</li>
+    <li><strong>Minimum withdrawal:</strong> KES 50 for referral earnings. Points can be redeemed against future bookings with no minimum.</li>
+    <li>Referral and rewards balances have no cash value beyond redemption within the Apatmento platform and cannot be transferred to other users.</li>
+    <li>Fraudulent referrals (self-referrals, fake accounts, manipulation of the system) will result in forfeiture of all earnings and account termination.</li>
+    <li>Apatmento reserves the right to modify or terminate the Referral and Rewards programmes at any time with 14 days' notice. Earned balances will be honoured for 90 days after programme termination.</li>
+    <li>Points expire after 24 months of account inactivity.</li>
   </ul>
 
-  <h2>6. Guest Responsibilities</h2>
+  <!-- 11 -->
+  <h2 id="prohibited">11. Prohibited Conduct</h2>
+  <p>You must not use the Apatmento platform to:</p>
   <ul>
-    <li>Treat all properties and services with respect</li>
-    <li>Comply with house rules set by hosts</li>
-    <li>Not use properties for illegal activities</li>
-    <li>Report any damage or issues promptly</li>
+    <li>Violate any Kenyan or international laws or regulations</li>
+    <li>Post false, misleading, or fraudulent listings or reviews</li>
+    <li>Impersonate any person or entity, or misrepresent your affiliation with any person or entity</li>
+    <li>Harass, abuse, threaten, or discriminate against any user, host, guest, or Apatmento staff</li>
+    <li>Attempt to circumvent the platform by conducting transactions off-platform with contacts made through Apatmento</li>
+    <li>Use the platform for money laundering, fraud, or any other financial crime</li>
+    <li>Scrape, crawl, or systematically download content from the platform without written permission</li>
+    <li>Introduce malware, viruses, or other harmful code</li>
+    <li>Interfere with or disrupt the security, integrity, or performance of the platform</li>
+    <li>Create multiple accounts to circumvent bans, referral policies, or other restrictions</li>
+    <li>Use automated bots or scripts to create bookings, reviews, or accounts</li>
+  </ul>
+  <div class="warn">
+    <p>⚠️ Violations may result in immediate account suspension, forfeiture of earnings and rewards balances, and referral to law enforcement where appropriate.</p>
+  </div>
+
+  <!-- 12 -->
+  <h2 id="content">12. User-Generated Content</h2>
+  <p>By posting content on Apatmento — including listing descriptions, photos, reviews, and profile information — you grant Apatmento a non-exclusive, royalty-free, worldwide licence to use, reproduce, display, and distribute that content for the purposes of operating and promoting the Service.</p>
+  <ul>
+    <li>You confirm you own or have the right to submit all content you post</li>
+    <li>You confirm your content does not infringe any third-party intellectual property, privacy, or other rights</li>
+    <li>Reviews must be honest and based on genuine first-hand experiences. Fake, incentivised, or retaliatory reviews are prohibited</li>
+    <li>Apatmento may remove any content that violates these Terms or is otherwise deemed inappropriate, without prior notice</li>
+    <li>You retain ownership of your content; our licence ends when you delete the content or your account, except where content has been shared publicly</li>
   </ul>
 
-  <h2>7. Platform Fees</h2>
-  <p>Apatmento charges a fixed platform fee per confirmed booking:</p>
+  <!-- 13 -->
+  <h2 id="third-party">13. Third-Party Services</h2>
+  <p>The Apatmento platform provides referral links to third-party services including rides, food delivery, flights, and shopping. These services:</p>
   <ul>
-    <li>Apartments: KES 300 (bookings under KES 5,000 total) or KES 800 (KES 5,000 and above)</li>
-    <li>Tours: KES 200 (tours under KES 5,000) or KES 500 (KES 5,000 and above)</li>
-    <li>Events: KES 50 per ticket (under KES 1,000) or KES 150 per ticket (KES 1,000 and above)</li>
+    <li>Are operated independently by third parties and are not operated, endorsed, or controlled by Apatmento</li>
+    <li>Are subject to the third party's own terms of service, privacy policies, and pricing</li>
+    <li>May result in Apatmento receiving a referral fee from the third party — this does not affect the price you pay</li>
   </ul>
-  <p>These fees are clearly shown before you confirm any booking. We do not charge percentage-based commissions.</p>
+  <p>Apatmento is not liable for any issues, losses, or disputes arising from third-party services. Please contact the third-party provider directly for support on their services.</p>
 
-  <h2>8. Cancellations and Refunds</h2>
-  <p>Cancellation policies vary by listing and are shown on each listing page. Platform fees are non-refundable in all cases. For refund disputes, contact us at support@apatmento.com within 7 days of your booking.</p>
+  <!-- 14 -->
+  <h2 id="disputes">14. Dispute Resolution</h2>
+  <p>We encourage guests and hosts to resolve disputes directly and in good faith in the first instance. If a dispute cannot be resolved, please contact us:</p>
+  <ul>
+    <li>Email: <a href="mailto:support@apatmento.com">support@apatmento.com</a> with your booking reference and a description of the issue</li>
+    <li>We will review the dispute and aim to respond within 5 business days</li>
+    <li>Our decision is not legally binding, but we will endeavour to be fair to all parties</li>
+    <li>For disputes involving financial amounts, we may request supporting evidence (photographs, M-Pesa transaction records, communications)</li>
+  </ul>
+  <p>If a dispute cannot be resolved through our internal process, it shall be submitted to mediation or arbitration under Kenyan law before any court proceedings are initiated.</p>
 
-  <h2>9. Limitation of Liability</h2>
-  <p>Apatmento is a marketplace platform and is not responsible for the actions of hosts or guests. We do not own or control any of the listed properties. Our liability is limited to the platform fee collected for any given transaction.</p>
+  <!-- 15 -->
+  <h2 id="liability">15. Limitation of Liability</h2>
+  <p>To the maximum extent permitted by applicable Kenyan law:</p>
+  <ul>
+    <li>Apatmento provides its platform "as is" and "as available" without any warranties, express or implied</li>
+    <li>We do not warrant that the Service will be uninterrupted, error-free, or free of viruses or other harmful components</li>
+    <li>We are not responsible for the actions, behaviour, or content of any host, guest, agent, or third-party service provider on the platform</li>
+    <li>We do not own or control any listed property or experience and are not responsible for their condition, safety, or accuracy of description</li>
+    <li>Our aggregate liability to you for any claim arising from or related to these Terms or the Service is limited to the platform fee(s) paid by you in the 12-month period preceding the claim</li>
+    <li>We are not liable for any indirect, incidental, special, consequential, or punitive damages, including loss of profit, data, or goodwill</li>
+  </ul>
 
-  <h2>10. Changes to Terms</h2>
-  <p>We may update these terms from time to time. Continued use of the Service after changes constitutes acceptance of the new terms. We will notify users of material changes via email.</p>
+  <!-- 16 -->
+  <h2 id="indemnification">16. Indemnification</h2>
+  <p>You agree to indemnify, defend, and hold harmless Apatmento and its directors, officers, employees, and agents from and against any claims, liabilities, damages, losses, and expenses (including reasonable legal fees) arising out of or in any way connected with:</p>
+  <ul>
+    <li>Your access to or use of the Service</li>
+    <li>Your violation of these Terms</li>
+    <li>Any content you post or transmit through the Service</li>
+    <li>Your interactions with any host, guest, or third party through the Service</li>
+    <li>Your violation of any applicable law or the rights of any third party</li>
+  </ul>
 
-  <h2>11. Contact</h2>
-  <p>For questions about these Terms of Service, contact us at:<br/>Email: support@apatmento.com<br/>Nairobi, Kenya</p>
+  <!-- 17 -->
+  <h2 id="termination">17. Account Suspension &amp; Termination</h2>
+  <p>Apatmento may suspend or terminate your account with or without prior notice if we reasonably believe you have:</p>
+  <ul>
+    <li>Violated these Terms or our policies</li>
+    <li>Engaged in fraudulent, illegal, or harmful conduct</li>
+    <li>Posed a safety risk to other users of the platform</li>
+    <li>Been repeatedly the subject of well-founded complaints</li>
+  </ul>
+  <p>You may delete your account at any time by contacting <a href="mailto:support@apatmento.com">support@apatmento.com</a>. Upon deletion, your data is handled in accordance with our <a href="privacy.html">Privacy Policy</a>. Outstanding confirmed bookings remain valid and will be honoured notwithstanding account deletion.</p>
+  <p>Where an account is terminated for cause, any outstanding referral earnings or rewards balances may be forfeited.</p>
+
+  <!-- 18 -->
+  <h2 id="governing-law">18. Governing Law</h2>
+  <p>These Terms are governed by and construed in accordance with the laws of the Republic of Kenya. Any disputes arising under these Terms shall be subject to the jurisdiction of the courts of Nairobi, Kenya, save that either party may seek emergency injunctive relief in any court of competent jurisdiction.</p>
+
+  <!-- 19 -->
+  <h2 id="changes">19. Changes to These Terms</h2>
+  <p>We may update these Terms from time to time to reflect changes to our services, legal requirements, or business practices. We will:</p>
+  <ul>
+    <li>Post the updated Terms on this page with a revised "Last updated" date</li>
+    <li>Notify you of material changes via email at least 30 days before they take effect</li>
+    <li>Obtain your fresh consent where legally required</li>
+  </ul>
+  <p>Your continued use of the Service after the effective date of updated Terms constitutes your acceptance of the changes. If you do not agree to the updated Terms, you must stop using the Service.</p>
+
+  <!-- 20 -->
+  <h2 id="contact">20. Contact</h2>
+  <p>For questions about these Terms of Service:</p>
+  <ul>
+    <li>Email: <a href="mailto:support@apatmento.com">support@apatmento.com</a></li>
+    <li>Privacy-specific queries: <a href="mailto:privacy@apatmento.com">privacy@apatmento.com</a></li>
+    <li>Location: Nairobi, Kenya</li>
+  </ul>
+  <p>See also: <a href="privacy.html">Privacy Policy</a> · <a href="cookies.html">Cookie Policy</a></p>
 </div>
 <script src="/brand.js" defer></script>
 <script src="/cabana-rebrand.js" defer></script>

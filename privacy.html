@@ -30,11 +30,27 @@ body{font-family:var(--font-body);background:#F7F6F2;color:#0F1117;line-height:1
 .back:hover{background:#F7F6F2;}
 .page{max-width:740px;margin:0 auto;padding:48px 24px 80px;}
 h1{font-family:var(--font-display);font-size:32px;font-weight:700;margin-bottom:8px;}
-.updated{font-size:12px;color:#9499AD;margin-bottom:40px;}
-h2{font-size:16px;font-weight:700;margin:32px 0 12px;}
+.updated{font-size:12px;color:#9499AD;margin-bottom:16px;}
+.toc{background:white;border:1px solid rgba(15,17,23,.07);border-radius:14px;padding:20px 24px;margin-bottom:40px;}
+.toc-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#9499AD;margin-bottom:12px;}
+.toc ol{padding-left:18px;margin:0;}
+.toc li{font-size:13px;margin-bottom:4px;}
+.toc a{color:#C8970A;text-decoration:none;}
+.toc a:hover{text-decoration:underline;}
+h2{font-size:16px;font-weight:700;margin:36px 0 12px;scroll-margin-top:80px;}
 p{font-size:14px;color:#2A2D38;margin-bottom:14px;}
-ul{font-size:14px;color:#2A2D38;padding-left:20px;margin-bottom:14px;}
+ul,ol{font-size:14px;color:#2A2D38;padding-left:20px;margin-bottom:14px;}
 li{margin-bottom:6px;}
+.highlight{background:rgba(13,148,103,.07);border:1px solid rgba(13,148,103,.18);border-radius:12px;padding:16px 20px;margin:24px 0;}
+.highlight p{margin:0;font-weight:500;color:#0D9467;}
+.data-table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:14px;}
+.data-table th{text-align:left;font-weight:600;color:#5A5E70;font-size:11px;text-transform:uppercase;letter-spacing:.06em;padding:8px 12px;border-bottom:2px solid rgba(15,17,23,.08);}
+.data-table td{padding:10px 12px;border-bottom:1px solid rgba(15,17,23,.05);color:#2A2D38;vertical-align:top;}
+.data-table tr:last-child td{border-bottom:none;}
+.data-table tr:hover td{background:rgba(15,17,23,.02);}
+.policy-links{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:32px;}
+.policy-link{font-size:12px;color:#C8970A;text-decoration:none;padding:6px 12px;border-radius:8px;border:1px solid rgba(200,151,10,.25);background:rgba(200,151,10,.04);}
+.policy-link:hover{background:rgba(200,151,10,.08);}
 </style>
 <link rel="stylesheet" href="/brand.css"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/><link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"/>
@@ -50,75 +66,230 @@ li{margin-bottom:6px;}
 </nav>
 <div class="page">
   <h1>Privacy Policy</h1>
-  <div class="updated">Last updated: June 2026</div>
+  <div class="updated">Last updated: July 2026 · Effective immediately. We will notify you of material changes by email.</div>
 
-  <p>Apatmento ("we", "us", "our") is committed to protecting your privacy. This policy explains what data we collect, how we use it, and your rights regarding your personal information.</p>
+  <div class="policy-links">
+    <a href="terms.html" class="policy-link">📋 Terms of Service</a>
+    <a href="cookies.html" class="policy-link">🍪 Cookie Policy</a>
+  </div>
 
-  <h2>1. Information We Collect</h2>
-  <p>We collect information you provide directly:</p>
+  <div class="highlight">
+    <p>✓ We do not sell your personal data. We do not use advertising cookies or third-party tracking pixels. We collect only what we need to run the platform.</p>
+  </div>
+
+  <p>Apatmento ("we", "us", "our") is committed to protecting your privacy. This policy explains what personal data we collect, why we collect it, how we use it, who we share it with, and your rights under Kenyan law and good data protection practice.</p>
+
+  <div class="toc">
+    <div class="toc-title">Contents</div>
+    <ol>
+      <li><a href="#controller">Data Controller</a></li>
+      <li><a href="#what-we-collect">Information We Collect</a></li>
+      <li><a href="#legal-basis">Legal Basis for Processing</a></li>
+      <li><a href="#how-we-use">How We Use Your Data</a></li>
+      <li><a href="#payment-data">Payment Data</a></li>
+      <li><a href="#sharing">Data Sharing</a></li>
+      <li><a href="#retention">Data Retention</a></li>
+      <li><a href="#security">Security</a></li>
+      <li><a href="#cookies">Cookies &amp; Tracking</a></li>
+      <li><a href="#push-notifications">Push Notifications</a></li>
+      <li><a href="#location">Location Data</a></li>
+      <li><a href="#third-party-links">Third-Party Links</a></li>
+      <li><a href="#children">Children's Privacy</a></li>
+      <li><a href="#your-rights">Your Rights</a></li>
+      <li><a href="#changes">Changes to This Policy</a></li>
+      <li><a href="#contact">Contact &amp; Complaints</a></li>
+    </ol>
+  </div>
+
+  <!-- 1 -->
+  <h2 id="controller">1. Data Controller</h2>
+  <p>The data controller responsible for your personal information is <strong>Apatmento</strong>, operating the Cabana platform, based in Nairobi, Kenya. For privacy-related matters, contact us at <a href="mailto:privacy@apatmento.com">privacy@apatmento.com</a>.</p>
+
+  <!-- 2 -->
+  <h2 id="what-we-collect">2. Information We Collect</h2>
+  <p><strong>Information you provide directly:</strong></p>
+  <table class="data-table">
+    <thead>
+      <tr><th>Category</th><th>Examples</th><th>When Collected</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Account information</td><td>Full name, email address, phone number, profile photo</td><td>Registration</td></tr>
+      <tr><td>Identity verification</td><td>Government ID (for hosts); selfie verification</td><td>Partner/Agent onboarding</td></tr>
+      <tr><td>Booking information</td><td>Check-in/out dates, guest count, special requests, booking reference</td><td>When you make or receive a booking</td></tr>
+      <tr><td>Host / listing data</td><td>Property name, address, description, photos, pricing, availability, M-Pesa payout number</td><td>Listing creation and management</td></tr>
+      <tr><td>Payment references</td><td>M-Pesa transaction reference numbers, payment amounts</td><td>Each transaction</td></tr>
+      <tr><td>Communications</td><td>Reviews, support messages, dispute submissions</td><td>When you contact us or post content</td></tr>
+      <tr><td>Agent &amp; referral data</td><td>Referral codes, commission balances, referred user IDs</td><td>Agent / referral programme participation</td></tr>
+      <tr><td>Rewards data</td><td>Points balance, redemption history</td><td>On each qualifying booking</td></tr>
+    </tbody>
+  </table>
+
+  <p><strong>Information collected automatically:</strong></p>
   <ul>
-    <li>Account information: name, email address, phone number</li>
-    <li>Booking information: dates, guest counts, payment references</li>
-    <li>Host information: property details, pricing, M-Pesa payout number</li>
-    <li>Communications: reviews, messages, support requests</li>
+    <li><strong>Usage data:</strong> Pages visited, features used, search queries, time spent, click paths</li>
+    <li><strong>Device &amp; browser data:</strong> Browser type and version, operating system, screen resolution, language preferences</li>
+    <li><strong>Network data:</strong> IP address, approximate location derived from IP (city/country level), internet service provider</li>
+    <li><strong>Session data:</strong> Authentication tokens stored in your browser's local storage or as session cookies</li>
+    <li><strong>Push notification tokens:</strong> Device tokens used to deliver push notifications (only if you opt in)</li>
   </ul>
-  <p>We also collect information automatically:</p>
+
+  <!-- 3 -->
+  <h2 id="legal-basis">3. Legal Basis for Processing</h2>
+  <p>We process your personal data on the following legal grounds:</p>
   <ul>
-    <li>Usage data: pages visited, features used, search queries</li>
-    <li>Device information: browser type, operating system, IP address</li>
-    <li>Location data: only when you use the Emergency SOS feature and grant permission</li>
+    <li><strong>Contract performance:</strong> Processing necessary to provide you with bookings, payouts, and account services you have requested</li>
+    <li><strong>Legitimate interests:</strong> Platform security, fraud prevention, improving our services, and analytics — provided these interests are not overridden by your rights</li>
+    <li><strong>Legal obligation:</strong> Retaining financial records for tax and regulatory compliance under Kenyan law</li>
+    <li><strong>Consent:</strong> Push notifications, marketing communications, and optional features — you may withdraw consent at any time</li>
   </ul>
 
-  <h2>2. How We Use Your Information</h2>
+  <!-- 4 -->
+  <h2 id="how-we-use">4. How We Use Your Data</h2>
   <ul>
-    <li>To process bookings and payments</li>
-    <li>To connect guests with hosts</li>
-    <li>To send booking confirmations and receipts</li>
-    <li>To improve the platform and resolve disputes</li>
-    <li>To send service updates (you can opt out at any time)</li>
-    <li>To comply with legal obligations</li>
+    <li>To create and manage your account</li>
+    <li>To process bookings and payments, and send confirmations and receipts</li>
+    <li>To connect guests with hosts and facilitate the booking relationship</li>
+    <li>To calculate and pay referral commissions and agent earnings</li>
+    <li>To manage your rewards points balance and process redemptions</li>
+    <li>To respond to customer support requests and resolve disputes</li>
+    <li>To send transactional communications (booking confirmations, check-in reminders, receipts) — these cannot be opted out of while you have active bookings</li>
+    <li>To send service updates and platform announcements (you may opt out)</li>
+    <li>To improve the platform through aggregated, anonymised analytics</li>
+    <li>To detect, investigate, and prevent fraud, abuse, and security incidents</li>
+    <li>To comply with Kenyan legal and regulatory obligations</li>
+    <li>To enforce our Terms of Service</li>
   </ul>
+  <p>We do not use your data for automated decision-making or profiling that produces legal or similarly significant effects without human review.</p>
 
-  <h2>3. Payment Data</h2>
-  <p>Payments are processed via M-Pesa through PayHero. We do not store your M-Pesa PIN or full payment credentials. We store only transaction references and amounts necessary to confirm bookings. Your M-Pesa number is stored to enable payouts to hosts.</p>
-
-  <h2>4. Data Sharing</h2>
-  <p>We do not sell your personal data. We share data only with:</p>
+  <!-- 5 -->
+  <h2 id="payment-data">5. Payment Data</h2>
+  <p>Payments are processed via <strong>M-Pesa through PayHero</strong>. We handle payment data as follows:</p>
   <ul>
-    <li>Hosts/Operators: your name and contact details for confirmed bookings</li>
-    <li>Payment processors: PayHero (for M-Pesa transactions)</li>
-    <li>Infrastructure providers: Supabase (database), Netlify (hosting) — under data processing agreements</li>
-    <li>Law enforcement: when required by Kenyan law</li>
+    <li>We do not store your M-Pesa PIN, full M-Pesa credentials, or any card details — we never see them</li>
+    <li>We store M-Pesa transaction reference numbers and payment amounts to verify and confirm bookings</li>
+    <li>We store your M-Pesa phone number (as provided on your account) solely to initiate STK Push payment requests and to pay out earnings to hosts and agents</li>
+    <li>PayHero processes the actual M-Pesa transaction; their privacy policy governs how they handle payment data</li>
+    <li>Financial records (booking amounts, platform fees, payout records) are retained for 7 years for tax and legal compliance purposes, even after account deletion</li>
   </ul>
 
-  <h2>5. Data Retention</h2>
-  <p>We retain your account data for as long as your account is active. Booking records are retained for 7 years for tax and legal compliance purposes. You can request deletion of your account at any time — see Section 7.</p>
-
-  <h2>6. Cookies</h2>
-  <p>We use minimal cookies necessary for authentication (Supabase session tokens). We do not use advertising cookies or third-party tracking. You can clear cookies via your browser settings, which will log you out of your account.</p>
-
-  <h2>7. Your Rights</h2>
-  <p>You have the right to:</p>
+  <!-- 6 -->
+  <h2 id="sharing">6. Data Sharing</h2>
+  <p>We do not sell, rent, or trade your personal data. We share data only in the following limited circumstances:</p>
   <ul>
-    <li>Access the personal data we hold about you</li>
-    <li>Correct inaccurate data via your account settings</li>
-    <li>Request deletion of your account and personal data</li>
-    <li>Object to processing of your data</li>
-    <li>Data portability — receive your data in a readable format</li>
+    <li><strong>Hosts:</strong> When you book a property or tour, we share your name and phone number with the host to facilitate check-in and communication</li>
+    <li><strong>Guests:</strong> When you accept a booking as a host, we share the guest's name and contact details with you</li>
+    <li><strong>Agents:</strong> Agents can see that a referred user signed up and made bookings (without personal identifying details beyond what is necessary to verify commission eligibility)</li>
+    <li><strong>PayHero / M-Pesa:</strong> Your phone number and booking amount are shared to initiate and process payments</li>
+    <li><strong>Supabase:</strong> Our database provider (USA/EU) stores your account and booking data under a Data Processing Agreement. Supabase is SOC 2 Type II certified.</li>
+    <li><strong>Vercel / Netlify:</strong> Our hosting provider processes web traffic logs including IP addresses. These providers are contractually bound to data protection obligations.</li>
+    <li><strong>Push notification services:</strong> If you opt in to push notifications, your device token is processed to deliver notifications. We use no third-party advertising networks for notifications.</li>
+    <li><strong>Law enforcement and regulators:</strong> Where required by a court order, subpoena, or applicable Kenyan law, we may disclose personal data. We will notify you of such disclosures where legally permitted.</li>
+    <li><strong>Business transfers:</strong> In the event of a merger, acquisition, or sale of all or substantially all of our assets, your data may be transferred. We will notify you before such transfer and your rights under this policy will be maintained.</li>
   </ul>
-  <p>To exercise these rights, contact us at privacy@apatmento.com</p>
 
-  <h2>8. Security</h2>
-  <p>We use industry-standard security measures including encrypted connections (HTTPS), secure database storage via Supabase, and server-side environment variables for all sensitive credentials. Passwords are hashed and never stored in plaintext.</p>
+  <!-- 7 -->
+  <h2 id="retention">7. Data Retention</h2>
+  <ul>
+    <li><strong>Account data:</strong> Retained for the duration of your active account</li>
+    <li><strong>Booking records:</strong> Retained for 7 years after the booking date for tax and legal compliance</li>
+    <li><strong>Financial records (platform fees, payouts):</strong> 7 years</li>
+    <li><strong>Communications and support tickets:</strong> 3 years after closure</li>
+    <li><strong>Usage and analytics logs:</strong> Aggregated and anonymised after 12 months; raw logs deleted after 90 days</li>
+    <li><strong>Deleted accounts:</strong> Personal data is anonymised or deleted within 30 days of account deletion, except where retention is required by law (e.g. financial records)</li>
+    <li><strong>Marketing preferences:</strong> Retained until you opt out or delete your account</li>
+  </ul>
 
-  <h2>9. Children's Privacy</h2>
-  <p>Apatmento is not intended for users under 18 years of age. We do not knowingly collect personal data from children.</p>
+  <!-- 8 -->
+  <h2 id="security">8. Security</h2>
+  <p>We implement appropriate technical and organisational measures to protect your personal data, including:</p>
+  <ul>
+    <li>All data transmitted between your browser and our servers is encrypted using HTTPS (TLS 1.2 or higher)</li>
+    <li>Database storage via Supabase with row-level security policies and encrypted storage at rest</li>
+    <li>Sensitive credentials (API keys, M-Pesa secrets) stored as server-side environment variables, never in client-side code</li>
+    <li>Passwords are hashed using bcrypt and never stored in plaintext</li>
+    <li>Access to production data is restricted to authorised personnel only</li>
+    <li>Session tokens are rotated on authentication and expire after a period of inactivity</li>
+  </ul>
+  <p>No system is completely secure. In the event of a personal data breach that poses a risk to your rights, we will notify you promptly by email and take immediate steps to contain and remediate the breach.</p>
 
-  <h2>10. Changes to This Policy</h2>
-  <p>We may update this policy periodically. We will notify you of significant changes via email. Continued use of the Service constitutes acceptance of the updated policy.</p>
+  <!-- 9 -->
+  <h2 id="cookies">9. Cookies &amp; Tracking</h2>
+  <p>We use minimal cookies necessary for the operation of the platform. We do not use advertising cookies, third-party tracking pixels, or behavioural profiling tools. For full details, see our <a href="cookies.html">Cookie Policy</a>.</p>
+  <p>In summary, we use:</p>
+  <ul>
+    <li><strong>Authentication cookies / local storage:</strong> Supabase session tokens to keep you logged in — these are strictly necessary and cannot be opted out of while using the Service</li>
+    <li><strong>Preference storage:</strong> Local storage for UI preferences (dark mode, notification settings) — no personal data is sent to third parties</li>
+  </ul>
+  <p>We do not use Google Analytics, Facebook Pixel, or any other third-party analytics or advertising tracking.</p>
 
-  <h2>11. Contact Us</h2>
-  <p>For privacy-related questions or requests:<br/>Email: privacy@apatmento.com<br/>Nairobi, Kenya</p>
+  <!-- 10 -->
+  <h2 id="push-notifications">10. Push Notifications</h2>
+  <p>If you opt in to push notifications through your browser or our Progressive Web App:</p>
+  <ul>
+    <li>Your browser generates a unique device push token which is stored in our database linked to your account</li>
+    <li>We use this token to send you notifications about booking confirmations, check-in reminders, and platform updates</li>
+    <li>You can opt out at any time through your browser's notification settings or your Apatmento account settings</li>
+    <li>Revoking push notification permission does not delete your account or affect your bookings</li>
+    <li>We do not share push notification tokens with third-party advertising networks</li>
+  </ul>
+
+  <!-- 11 -->
+  <h2 id="location">11. Location Data</h2>
+  <p>We do not continuously track your location. Location data is used only in the following specific contexts:</p>
+  <ul>
+    <li><strong>Emergency SOS:</strong> If you use the in-app Emergency SOS feature, your precise GPS location is shared with emergency services (and only when you explicitly activate this feature)</li>
+    <li><strong>IP-based location:</strong> We derive an approximate city or country from your IP address for fraud detection and to improve search relevance — this is not precise GPS location data</li>
+    <li><strong>"Near me" searches:</strong> If you use location-based search features, your browser may request your location. This is processed locally in your browser to return relevant results and is not stored on our servers.</li>
+  </ul>
+
+  <!-- 12 -->
+  <h2 id="third-party-links">12. Third-Party Links &amp; Services</h2>
+  <p>Apatmento contains referral links to third-party services (rides, food, flights, shopping). When you click these links and use those services:</p>
+  <ul>
+    <li>You will be subject to the third party's own privacy policy and terms</li>
+    <li>Apatmento is not responsible for the privacy practices of third-party services</li>
+    <li>We may receive confirmation that a referral was completed (for commission purposes) without receiving your personal data from the third party</li>
+  </ul>
+  <p>We encourage you to review the privacy policies of any third-party services you use.</p>
+
+  <!-- 13 -->
+  <h2 id="children">13. Children's Privacy</h2>
+  <p>Apatmento is not intended for, and does not knowingly collect personal data from, individuals under the age of 18. If we become aware that we have collected personal data from a child under 18 without parental consent, we will delete that data promptly. If you believe a child has provided us with personal data, please contact <a href="mailto:privacy@apatmento.com">privacy@apatmento.com</a>.</p>
+
+  <!-- 14 -->
+  <h2 id="your-rights">14. Your Rights</h2>
+  <p>You have the following rights regarding your personal data:</p>
+  <ul>
+    <li><strong>Access:</strong> You can request a copy of the personal data we hold about you</li>
+    <li><strong>Correction:</strong> You can correct inaccurate or incomplete data via your account settings, or by contacting us</li>
+    <li><strong>Deletion:</strong> You can request deletion of your account and associated personal data. We will honour this within 30 days, subject to legal retention requirements for financial records</li>
+    <li><strong>Restriction:</strong> You can ask us to restrict processing of your data in certain circumstances (e.g. while a dispute is under review)</li>
+    <li><strong>Objection:</strong> You can object to processing of your data based on legitimate interests</li>
+    <li><strong>Data portability:</strong> You can request your account data in a machine-readable format (JSON)</li>
+    <li><strong>Withdraw consent:</strong> Where processing is based on consent (e.g. marketing emails, push notifications), you can withdraw at any time without affecting the lawfulness of prior processing</li>
+  </ul>
+  <p>To exercise any of these rights, email <a href="mailto:privacy@apatmento.com">privacy@apatmento.com</a> with the subject line "Data Rights Request". We will respond within 30 days. We may need to verify your identity before processing the request.</p>
+  <p>If you are not satisfied with our response, you have the right to lodge a complaint with the relevant data protection authority in Kenya.</p>
+
+  <!-- 15 -->
+  <h2 id="changes">15. Changes to This Policy</h2>
+  <p>We may update this Privacy Policy from time to time. When we do:</p>
+  <ul>
+    <li>We will update the "Last updated" date at the top of this page</li>
+    <li>We will notify you of material changes by email at least 30 days before they take effect</li>
+    <li>For significant changes that affect how we use your data, we may ask for your renewed consent</li>
+  </ul>
+  <p>Your continued use of the Service after the effective date of changes constitutes acceptance of the updated policy.</p>
+
+  <!-- 16 -->
+  <h2 id="contact">16. Contact &amp; Complaints</h2>
+  <p>For any privacy-related questions, requests, or concerns:</p>
+  <ul>
+    <li>Email: <a href="mailto:privacy@apatmento.com">privacy@apatmento.com</a></li>
+    <li>General support: <a href="mailto:support@apatmento.com">support@apatmento.com</a></li>
+    <li>Location: Nairobi, Kenya</li>
+  </ul>
+  <p>See also: <a href="terms.html">Terms of Service</a> · <a href="cookies.html">Cookie Policy</a></p>
 </div>
 <script src="/brand.js" defer></script>
 <script src="/cabana-rebrand.js" defer></script>
