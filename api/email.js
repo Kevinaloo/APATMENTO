@@ -333,11 +333,21 @@ export default async function handler(req, res) {
         if (!rateOk(ip, 'magic-link', 3, 60_000)) {
           return res.status(429).json({ error: 'Too many requests. Wait a minute.' });
         }
-        const { email, otp, name, expiresMin } = body;
+        const { email, otp, name, expiresMin, phone } = body;
         if (!email || !otp) return res.status(400).json({ error: 'email + otp required' });
+
+        // Send email
         to = email; from = FROM_MAGIC;
         subject = `${otp} — your Apatmento sign-in code`;
         html = buildMagicLink({ email, otp, name, expiresMin });
+
+        // Also send SMS if phone provided (fire and forget — don't fail email if SMS fails)
+        if (phone && AT_API_KEY) {
+          sendSMS({
+            to: phone,
+            message: `${otp} is your Apatmento sign-in code. Valid 10 mins.`,
+          }).catch(e => console.warn('[magic-link] SMS failed:', e.message));
+        }
         break;
       }
 

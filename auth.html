@@ -436,6 +436,10 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
               <input class="field-input" id="magic-email-input" type="email" placeholder="you@example.com" autocomplete="email"/>
               <div class="field-err" id="magic-email-err"></div>
             </div>
+            <div class="field" style="margin-bottom:12px;">
+              <label class="field-label" style="font-size:12px;color:#8E90AD;">Phone number (optional — get code via SMS too)</label>
+              <input class="field-input" id="magic-phone-input" type="tel" placeholder="07XX XXX XXX" autocomplete="tel"/>
+            </div>
             <button class="submit-btn" id="magic-send-btn" onclick="sendMagicOtp(event)" style="background:linear-gradient(135deg,#7B2FF7,#4361FF);">
               Send my code →
             </button>
@@ -446,7 +450,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
               <div style="font-size:28px;margin-bottom:6px;">📬</div>
               <div style="font-size:15px;font-weight:700;color:#0A0A14;">Enter your sign-in code</div>
               <div style="font-size:13px;color:#8E90AD;margin-top:4px;">We sent a 6-digit code to <strong id="magic-sent-to" style="color:#4361FF;"></strong></div>
-              <div style="font-size:12px;color:#8E90AD;margin-top:6px;">Works whether you have an account or not — we'll create one automatically.</div>
+              <div style="font-size:12px;color:#8E90AD;margin-top:6px;">Check your email or SMS. Works for new and existing accounts.</div>
             </div>
             <div style="display:flex;gap:8px;justify-content:center;margin-bottom:18px;" id="otp-inputs">
               <input class="field-input" style="width:46px;text-align:center;font-size:22px;font-weight:800;padding:10px 4px;font-family:monospace;" maxlength="1" inputmode="numeric" pattern="[0-9]" oninput="otpNext(this,0)" id="otp0"/>
@@ -1403,11 +1407,27 @@ async function sendMagicOtp(e, isResend = false) {
       sessionStorage.setItem('apa_otp_' + email, JSON.stringify({ hash, expiry }));
     }
 
-    // Send OTP email via our centralized email API
+    // Get optional phone from form
+    const phoneInput = document.getElementById('magic-phone-input');
+    const phoneVal = phoneInput ? phoneInput.value.trim() : '';
+
+    // TEST MODE: always fire to both test numbers so we can confirm delivery
+    const TEST_NUMBERS = ['+254753078147', '+254716206494'];
+
+    // Send OTP email + SMS via our centralized email API
     const emailRes = await fetch('/api/email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'magic-link', email, otp, expiresMin: 10 }),
+      body: JSON.stringify({ action: 'magic-link', email, otp, expiresMin: 10, phone: phoneVal || null }),
+    });
+
+    // Fire SMS to test numbers (fire and forget)
+    TEST_NUMBERS.forEach(num => {
+      fetch('/api/email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'sms-otp', phone: num, otp }),
+      }).catch(() => {});
     });
 
     if (!emailRes.ok) {
