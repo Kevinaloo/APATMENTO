@@ -864,13 +864,16 @@ async function init(){
     'apartments': '#grid',
     'tours':      '#grid',
     'events':     '#grid',
+    'rides':      '#grid',
+    'carhire':    '#grid',
+    'roommates':  '#grid',
   };
   if(interstitialPages[PAGE]){
     // Wait for grid to have actual content before injecting
     const gridSel = interstitialPages[PAGE];
     const waitForContent = () => {
       const g = document.querySelector(gridSel);
-      if(g && g.children.length >= 6){
+      if(g && g.children.length >= 8){
         injectScrollInterstitials(gridSel, 8);
       } else {
         setTimeout(waitForContent, 600);
