@@ -1473,10 +1473,10 @@ async function verifyMagicOtp(e) {
     const otpHash = await sha256(digits + email);
 
     // Single server call: verify OTP + get a real Supabase session back
-    const res = await fetch('/api/magic-auth', {
+    const res = await fetch('/api/email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, otpHash, secret: 'apa-magic-2025' }),
+      body: JSON.stringify({ action: 'magic-auth', email, otpHash, secret: 'apa-magic-2025' }),
     });
 
     const data = await res.json();
