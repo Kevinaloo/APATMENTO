@@ -1121,8 +1121,11 @@ const UNSPLASH_KEY = 'YoImDCLHHDFQbvp_VJaFkC0oPMDuDiDp7zB0q8JQHXE'; // demo key 
 let sb = null;
 try { const { createClient } = supabase; sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY); window.sb = sb; } catch(e) {}
 
-// Resolve session + expose window.CURRENT_USER and window.sb for chat.js
+// Expose sb globally so chat.js can pick it up immediately
+window.sb = sb;
+// ApaSession will populate CURRENT_USER when ready — chat.js also resolves this itself
 document.addEventListener("DOMContentLoaded", () => {
+  window.sb = window.sb || sb;
   if (window.ApaSession) {
     ApaSession.ready(function(state) {
       if (state && state.user) {
@@ -1131,7 +1134,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
-  // Do NOT call initFAB — we have a topbar inbox button instead of the bottom-right FAB
 });
 
 let currentListings = [];
@@ -1621,80 +1623,20 @@ function toggleDesc(id, encodedFull) {
 
 /* ── topbar inbox button ── */
 function openInboxFromTopbar() {
-  window.sb = window.sb || sb;
-  if (window.CURRENT_USER) {
-    if (window.ApatmentoChat) ApatmentoChat.openInbox();
-    return;
-  }
-  if (window.ApaSession) {
-    ApaSession.ready(function(state) {
-      if (state && state.user) {
-        window.CURRENT_USER = state.user;
-        window.sb = window.sb || sb || ApaSession.client();
-        if (window.ApatmentoChat) ApatmentoChat.openInbox();
-      } else {
-        window.location.href = 'auth.html?next=' + encodeURIComponent(location.href);
-      }
-    });
-  } else {
-    window.location.href = 'auth.html?next=' + encodeURIComponent(location.href);
-  }
+  if (window.ApatmentoChat) ApatmentoChat.openInbox();
 }
 
-/* ── message host ── */
+/* ── Message host — calls ApatmentoChat directly; auth handled inside chat.js ── */
 function messageHost(id) {
   const apt = currentListings.find(a => a.id === id);
   if (!apt) return;
-  const dbId = apt._dbId || apt.id;
-  const hostId = apt.hostId || undefined;
-
-  window.sb = window.sb || sb;
-
-  function _showChatError() {
-    // Show a helpful message instead of silently failing
-    const t = document.createElement('div');
-    t.innerHTML = '💬 Sign in to message the host';
-    Object.assign(t.style, {
-      position:'fixed',bottom:'90px',left:'50%',transform:'translateX(-50%)',
-      background:'rgba(10,10,20,.88)',color:'#fff',padding:'12px 20px',
-      borderRadius:'100px',fontSize:'13px',fontWeight:'600',
-      zIndex:'9999',whiteSpace:'nowrap',
-      boxShadow:'0 8px 24px rgba(10,10,20,.3)',cursor:'pointer'
-    });
-    t.onclick = () => { window.location.href = 'auth.html?next=' + encodeURIComponent(location.href); };
-    document.body.appendChild(t);
-    setTimeout(()=>t.remove(), 3500);
-  }
-
-  function _doOpen() {
-    let attempts = 0;
-    function tryOpen() {
-      if (window.ApatmentoChat) {
-        ApatmentoChat.open({ listingId: dbId, listingType: 'apartment', listingTitle: apt.name, hostId });
-      } else if (attempts++ < 15) {
-        setTimeout(tryOpen, 100);
-      } else {
-        _showChatError();
-      }
-    }
-    tryOpen();
-  }
-
-  if (window.CURRENT_USER) {
-    _doOpen();
-  } else if (window.ApaSession) {
-    ApaSession.ready(function(state) {
-      if (state && state.user) {
-        window.CURRENT_USER = state.user;
-        window.sb = window.sb || sb || ApaSession.client();
-        _doOpen();
-      } else {
-        window.location.href = 'auth.html?next=' + encodeURIComponent(location.href);
-      }
-    });
-  } else {
-    window.location.href = 'auth.html?next=' + encodeURIComponent(location.href);
-  }
+  if (!window.ApatmentoChat) return;
+  ApatmentoChat.open({
+    listingId: apt._dbId || apt.id,
+    listingType: 'apartment',
+    listingTitle: apt.name,
+    hostId: apt.hostId || undefined,
+  });
 }
 
 function closeDrawer() {

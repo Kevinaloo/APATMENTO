@@ -311,9 +311,36 @@ const ApatmentoChat = (() => {
       .subscribe();
   }
 
+
+  /* ── Resolve current user — works even if CURRENT_USER not yet set ── */
+  async function _resolveUser() {
+    if (window.CURRENT_USER) return window.CURRENT_USER;
+    // Try ApaSession (apa-session.js)
+    if (window.ApaSession) {
+      return new Promise(resolve => {
+        ApaSession.ready(state => {
+          if (state && state.user) {
+            window.CURRENT_USER = state.user;
+            if (!window.sb && ApaSession.client) window.sb = ApaSession.client();
+          }
+          resolve(window.CURRENT_USER || null);
+        });
+      });
+    }
+    // Direct Supabase session fallback
+    try {
+      const s = window.sb;
+      if (s) {
+        const { data: { session } } = await s.auth.getSession();
+        if (session?.user) { window.CURRENT_USER = session.user; return session.user; }
+      }
+    } catch(e) {}
+    return null;
+  }
+
   /* ── Open a chat with a listing ──────────────────────────────── */
   async function open({ listingId, listingType, listingTitle, hostId }) {
-    const user = window.CURRENT_USER;
+    const user = await _resolveUser();
     if (!user) { window.location.href = 'auth.html?next=' + encodeURIComponent(location.href); return; }
     if (user.id === hostId) { alert('You cannot message yourself.'); return; }
 
@@ -380,7 +407,7 @@ const ApatmentoChat = (() => {
 
   /* ── Open full-screen inbox ──────────────────────────────────── */
   async function openInbox() {
-    const user = window.CURRENT_USER;
+    const user = await _resolveUser();
     if (!user) { window.location.href = 'auth.html?next=' + encodeURIComponent(location.href); return; }
 
     _userId = user.id;
