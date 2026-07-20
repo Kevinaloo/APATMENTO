@@ -159,11 +159,7 @@ body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webk
 .search-btn:hover{filter:brightness(1.08);transform:scale(1.04);}
 
 /* filter chips */
-.filter-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:8px;}
-.fchip{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:500;color:var(--ink-soft);padding:9px 16px;border-radius:100px;background:rgba(255,255,255,.6);border:1px solid var(--line);cursor:pointer;transition:all .25s;}
-.fchip:hover{border-color:var(--theme);color:var(--theme);}
-.fchip.active{background:var(--theme-grad);color:#fff;border-color:transparent;}
-.fchip svg{width:14px;height:14px;}
+/* filter-bar CSS now in new premium block above */
 
 /* ── LAYOUT ── */
 .content{position:relative;z-index:2;max-width:1180px;margin:0 auto;padding:18px 28px 70px;}
@@ -171,7 +167,7 @@ body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webk
 .results-count{font-size:14px;color:var(--ink-soft);}
 .results-count strong{color:var(--ink);font-weight:600;}
 .sort-wrap{display:flex;align-items:center;gap:10px;}
-.sort-select{padding:10px 16px;border-radius:12px;border:1px solid var(--line-2);background:rgba(255,255,255,.7);font-family:var(--font-body);font-size:13px;font-weight:500;color:var(--ink);cursor:pointer;outline:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 10 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238B6FE8' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;background-size:10px 6px;padding-right:34px;}
+
 
 /* ── CARD GRID ── */
 /* ══ STAY CARDS — compact horizontal rows ═══════════════════════════
@@ -507,64 +503,206 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
   <h1 class="hero-title">Stay somewhere <em>remarkable.</em></h1>
   <p class="hero-sub">Hand-picked apartments across Kenya. What you see is what you pay — hosts keep 100%.</p>
 
-  <div class="search-bar">
-    <div class="search-field" onclick="openField('where')">
-      <div class="search-field-label">Where</div>
-      <div class="search-field-val" id="field-where">Nairobi, Kenya</div>
+  <!-- ── Premium search bar ── -->
+  <div class="search-wrap">
+    <div class="search-main">
+      <!-- Where -->
+      <div class="sf" id="sf-where" onclick="openSF('where')">
+        <div class="sf-label">Where</div>
+        <div class="sf-val ph" id="field-where">Anywhere in Kenya</div>
+        <!-- Dropdown -->
+        <div class="sf-panel" id="sfp-where" onclick="event.stopPropagation()">
+          <div class="sf-panel-title">Popular destinations</div>
+          <div class="loc-options">
+            <div class="loc-opt" onclick="pickLoc('Nairobi')">📍 Nairobi</div>
+            <div class="loc-opt" onclick="pickLoc('Mombasa')">🏖 Mombasa</div>
+            <div class="loc-opt" onclick="pickLoc('Diani')">🌴 Diani</div>
+            <div class="loc-opt" onclick="pickLoc('Naivasha')">🏞 Naivasha</div>
+            <div class="loc-opt" onclick="pickLoc('Nakuru')">🦒 Nakuru</div>
+            <div class="loc-opt" onclick="pickLoc('Kisumu')">🌊 Kisumu</div>
+            <div class="loc-opt" onclick="pickLoc('Nanyuki')">⛰ Nanyuki</div>
+          </div>
+        </div>
+      </div>
+      <div class="sf-divider"></div>
+      <!-- Check in -->
+      <div class="sf" id="sf-checkin" onclick="openSF('checkin')">
+        <div class="sf-label">Check in</div>
+        <div class="sf-val ph" id="field-checkin">Add date</div>
+        <div class="sf-panel" id="sfp-checkin" onclick="event.stopPropagation()">
+          <div class="sf-panel-title">Check-in date</div>
+          <div class="date-grid">
+            <div class="date-input-wrap">
+              <label>Check in</label>
+              <input type="date" id="date-in" onchange="pickDate('in',this.value)">
+            </div>
+            <div class="date-input-wrap">
+              <label>Check out</label>
+              <input type="date" id="date-out" onchange="pickDate('out',this.value)">
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="sf-divider"></div>
+      <!-- Guests -->
+      <div class="sf" id="sf-guests" onclick="openSF('guests')">
+        <div class="sf-label">Guests</div>
+        <div class="sf-val ph" id="field-guests">Add guests</div>
+        <div class="sf-panel" id="sfp-guests" onclick="event.stopPropagation()">
+          <div class="sf-panel-title">Who's coming?</div>
+          <div class="guest-rows">
+            <div class="guest-row">
+              <div class="guest-row-info">
+                <div class="guest-row-label">Adults</div>
+                <div class="guest-row-sub">Age 13+</div>
+              </div>
+              <div class="guest-counter">
+                <button class="g-btn" id="g-adults-minus" onclick="adjustGuests('adults',-1)" disabled>−</button>
+                <span class="g-val" id="g-adults-val">1</span>
+                <button class="g-btn" onclick="adjustGuests('adults',1)">+</button>
+              </div>
+            </div>
+            <div class="guest-row">
+              <div class="guest-row-info">
+                <div class="guest-row-label">Children</div>
+                <div class="guest-row-sub">Ages 2–12</div>
+              </div>
+              <div class="guest-counter">
+                <button class="g-btn" id="g-children-minus" onclick="adjustGuests('children',-1)" disabled>−</button>
+                <span class="g-val" id="g-children-val">0</span>
+                <button class="g-btn" onclick="adjustGuests('children',1)">+</button>
+              </div>
+            </div>
+            <div class="guest-row">
+              <div class="guest-row-info">
+                <div class="guest-row-label">Infants</div>
+                <div class="guest-row-sub">Under 2</div>
+              </div>
+              <div class="guest-counter">
+                <button class="g-btn" id="g-infants-minus" onclick="adjustGuests('infants',-1)" disabled>−</button>
+                <span class="g-val" id="g-infants-val">0</span>
+                <button class="g-btn" onclick="adjustGuests('infants',1)">+</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button class="search-go" onclick="runSearch()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        Search
+      </button>
     </div>
-    <div class="search-divider"></div>
-    <div class="search-field" onclick="openField('checkin')">
-      <div class="search-field-label">Check in</div>
-      <div class="search-field-val placeholder" id="field-checkin">Add date</div>
+
+    <!-- AI Smart Search -->
+    <div class="ai-search-bar" onclick="focusAISearch()">
+      <span class="ai-badge">AI</span>
+      <input type="text" id="ai-search-input" placeholder='Try "quiet place for 2 adults and a toddler" or "party-friendly penthouse"…' onkeydown="if(event.key==='Enter')runAISearch()">
+      <button class="ai-search-btn" onclick="event.stopPropagation();runAISearch()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </button>
     </div>
-    <div class="search-divider"></div>
-    <div class="search-field" onclick="openField('checkout')">
-      <div class="search-field-label">Check out</div>
-      <div class="search-field-val placeholder" id="field-checkout">Add date</div>
+
+    <!-- AI response area -->
+    <div class="ai-response" id="ai-response">
+      <div class="ai-response-head">
+        <div class="ai-response-ico">✦</div>
+        <div class="ai-response-name">Apa · AI Assistant</div>
+      </div>
+      <div class="ai-response-text" id="ai-response-text">
+        <div class="ai-typing"><span></span><span></span><span></span></div>
+      </div>
     </div>
-    <div class="search-divider"></div>
-    <div class="search-field" onclick="openField('guests')">
-      <div class="search-field-label">Guests</div>
-      <div class="search-field-val placeholder" id="field-guests">Add guests</div>
-    </div>
-    <button class="search-btn" onclick="runSearch()">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-    </button>
   </div>
 
-  <div class="filter-row">
+  <!-- ── Filter + Sort bar ── -->
+  <div class="filter-bar">
+    <!-- Type filters -->
     <div class="fchip active" onclick="toggleFilter(this,'all')">All stays</div>
-    <div class="fchip" onclick="toggleFilter(this,'wifi')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13a10 10 0 0 1 14 0M8.5 16.5a5 5 0 0 1 7 0M2 8.8a15 15 0 0 1 20 0"/><path d="M12 20h.01"/></svg> WiFi</div>
-    <div class="fchip" onclick="toggleFilter(this,'pool')">Pool</div>
-    <div class="fchip" onclick="toggleFilter(this,'parking')">Parking</div>
-    <div class="fchip" onclick="toggleFilter(this,'ac')">Air Con</div>
-    <div class="fchip" onclick="toggleFilter(this,'kitchen')">Kitchen</div>
-    <div class="fchip" onclick="toggleFilter(this,'rooms')">2+ Bedrooms</div>
+    <div class="fchip" onclick="toggleFilter(this,'hotel')">🏨 Hotels</div>
+    <div class="fchip" onclick="toggleFilter(this,'apartment')">🏢 Furnished apartments</div>
+    <div class="fchip" onclick="toggleFilter(this,'home')">🏠 Homes</div>
+    <div class="filter-divider"></div>
+    <!-- Smart sort -->
+    <div class="fchip" id="fc-nearest" onclick="toggleFilter(this,'nearest')">📍 Near me</div>
+    <div class="fchip" id="fc-affordable" onclick="toggleFilter(this,'affordable')">💰 Most affordable</div>
+    <div class="fchip" id="fc-bestvalue" onclick="toggleFilter(this,'bestvalue')">⭐ Best value</div>
+    <div class="filter-divider"></div>
+    <!-- Filters & Sort button -->
+    <button class="filter-sort-btn" onclick="openFilterModal()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+      Filters &amp; Sort
+    </button>
   </div>
-  <!-- Area guides: internal paths into the neighbourhood pages -->
-  <nav class="area-strip" aria-label="Nairobi area guides" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:10px 0 2px;">
-    <span style="font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint,#8B8EAC);">Guides</span>
-    <a href="/nairobi-apartments.html" class="fchip" style="text-decoration:none;">Nairobi areas &amp; prices</a>
-    <a href="/kilimani-apartments.html" class="fchip" style="text-decoration:none;">Kilimani</a>
-    <a href="/westlands-apartments.html" class="fchip" style="text-decoration:none;">Westlands</a>
-    <a href="/karen-apartments.html" class="fchip" style="text-decoration:none;">Karen</a>
-    <a href="/mombasa-apartments.html" class="fchip" style="text-decoration:none;">Mombasa</a>
-    <a href="/diani-apartments.html" class="fchip" style="text-decoration:none;">Diani Beach</a>
-  </nav>
+</div>
+
+<!-- ── Filter Modal ── -->
+<div class="filter-modal-overlay" id="fm-overlay" onclick="closeFilterModal()"></div>
+<div class="filter-modal" id="fm-modal">
+  <div class="fm-handle"></div>
+  <div class="fm-title">Filters &amp; Sort</div>
+
+  <!-- Sort -->
+  <div class="fm-section">
+    <div class="fm-section-label">Sort by</div>
+    <div class="fm-chips" id="fm-sort-chips">
+      <div class="fm-chip on" data-sort="recommended" onclick="fmPickSort(this)">Recommended</div>
+      <div class="fm-chip" data-sort="price-asc" onclick="fmPickSort(this)">Price: Low → High</div>
+      <div class="fm-chip" data-sort="price-desc" onclick="fmPickSort(this)">Price: High → Low</div>
+      <div class="fm-chip" data-sort="newest" onclick="fmPickSort(this)">Newest first</div>
+    </div>
+  </div>
+
+  <!-- Price range -->
+  <div class="fm-section">
+    <div class="fm-section-label">Price per night</div>
+    <div class="price-range-row">
+      <span style="font-size:12px;color:var(--ink-faint);">KES</span>
+      <input type="range" class="price-range-input" id="fm-price-min" min="0" max="30000" step="500" value="0" oninput="updatePriceRange()">
+      <div class="price-range-val" id="fm-price-min-val">0</div>
+      <span style="font-size:12px;color:var(--ink-faint);">–</span>
+      <input type="range" class="price-range-input" id="fm-price-max" min="0" max="30000" step="500" value="30000" oninput="updatePriceRange()">
+      <div class="price-range-val" id="fm-price-max-val">Any</div>
+    </div>
+  </div>
+
+  <!-- Bedrooms -->
+  <div class="fm-section">
+    <div class="fm-section-label">Bedrooms</div>
+    <div class="fm-chips" id="fm-beds-chips">
+      <div class="fm-chip on" data-beds="0" onclick="fmPickBeds(this)">Any</div>
+      <div class="fm-chip" data-beds="1" onclick="fmPickBeds(this)">1</div>
+      <div class="fm-chip" data-beds="2" onclick="fmPickBeds(this)">2</div>
+      <div class="fm-chip" data-beds="3" onclick="fmPickBeds(this)">3+</div>
+    </div>
+  </div>
+
+  <!-- Amenities -->
+  <div class="fm-section">
+    <div class="fm-section-label">Amenities</div>
+    <div class="fm-chips" id="fm-amen-chips">
+      <div class="fm-chip" data-amen="WiFi" onclick="this.classList.toggle('on')">📶 WiFi</div>
+      <div class="fm-chip" data-amen="Pool" onclick="this.classList.toggle('on')">🏊 Pool</div>
+      <div class="fm-chip" data-amen="Parking" onclick="this.classList.toggle('on')">🚗 Parking</div>
+      <div class="fm-chip" data-amen="Air Con" onclick="this.classList.toggle('on')">❄️ Air Con</div>
+      <div class="fm-chip" data-amen="Kitchen" onclick="this.classList.toggle('on')">🍳 Kitchen</div>
+      <div class="fm-chip" data-amen="Gym" onclick="this.classList.toggle('on')">🏋️ Gym</div>
+      <div class="fm-chip" data-amen="Security" onclick="this.classList.toggle('on')">🔒 Security</div>
+      <div class="fm-chip" data-amen="Balcony" onclick="this.classList.toggle('on')">🌅 Balcony</div>
+      <div class="fm-chip" data-amen="Netflix" onclick="this.classList.toggle('on')">📺 Netflix</div>
+      <div class="fm-chip" data-amen="Washer" onclick="this.classList.toggle('on')">🫧 Washer</div>
+    </div>
+  </div>
+
+  <div class="fm-footer">
+    <button class="fm-reset" onclick="resetFilters()">Reset all</button>
+    <button class="fm-apply" onclick="applyFilterModal()">Show stays</button>
+  </div>
 </div>
 
 <!-- CONTENT -->
 <div class="content">
   <div class="content-head">
-    <div class="results-count"><strong id="result-num">0</strong> stays in Nairobi</div>
-    <div class="sort-wrap">
-      <select class="sort-select" id="sort-select" onchange="sortListings()">
-        <option value="rating">Recommended</option>
-        <option value="price-asc">Price: Low to High</option>
-        <option value="price-desc">Price: High to Low</option>
-        <option value="newest">Newest first</option>
-      </select>
-    </div>
+    <div class="results-count"><strong id="result-num">0</strong> <span id="result-label">stays available</span></div>
   </div>
   <div id="native-banner" style="display:none;align-items:center;gap:7px;font-size:12px;font-weight:600;color:var(--mint-deep);padding:8px 14px;border-radius:100px;background:rgba(45,212,191,.08);border:1px solid rgba(45,212,191,.18);margin-bottom:16px;width:fit-content;"></div>
 
@@ -1044,16 +1182,39 @@ function _updateGalleryUI() {
 }
 
 /* ── touch/swipe on gallery ── */
+let _galAutoTimer = null;
+
+function _clearAutoScroll() {
+  if (_galAutoTimer) { clearInterval(_galAutoTimer); _galAutoTimer = null; }
+}
+
+function _startAutoScroll() {
+  _clearAutoScroll();
+  if (_galPhotos.length < 2) return;
+  _galAutoTimer = setInterval(() => {
+    // Loop back to 0 after last photo
+    _galIdx = (_galIdx + 1) % _galPhotos.length;
+    _updateGalleryUI();
+  }, 3800);
+}
+
 function _attachGallerySwipe() {
   const gal = document.querySelector('.dl-gallery');
-  if (!gal || _galPhotos.length < 2) return;
-  gal.addEventListener('touchstart', e => { _galTouchX = e.touches[0].clientX; }, { passive:true });
+  if (!gal) return;
+  // Touch swipe
+  gal.addEventListener('touchstart', e => { _galTouchX = e.touches[0].clientX; _clearAutoScroll(); }, { passive:true });
   gal.addEventListener('touchend', e => {
     if (_galTouchX === null) return;
     const dx = e.changedTouches[0].clientX - _galTouchX;
     if (Math.abs(dx) > 40) galStep(dx < 0 ? 1 : -1);
     _galTouchX = null;
+    _startAutoScroll();
   }, { passive:true });
+  // Pause on hover (desktop)
+  gal.addEventListener('mouseenter', _clearAutoScroll);
+  gal.addEventListener('mouseleave', _startAutoScroll);
+  // Start
+  _startAutoScroll();
 }
 
 /* ── description expand ── */
@@ -1093,16 +1254,25 @@ function messageHost(id) {
   const apt = currentListings.find(a => a.id === id);
   if (!apt) return;
   const dbId = apt._dbId || apt.id;
+  const hostId = apt.hostId || undefined;
 
   // Always sync the local sb to window.sb first — chat.js reads window.sb
   window.sb = window.sb || sb;
 
   function _doOpen() {
-    if (!window.ApatmentoChat) {
-      console.warn('ApatmentoChat not loaded');
-      return;
+    // Retry up to 10× (100ms each) while chat.js finishes loading
+    let attempts = 0;
+    function tryOpen() {
+      if (window.ApatmentoChat) {
+        ApatmentoChat.open({ listingId: dbId, listingType: 'apartment', listingTitle: apt.name, hostId });
+      } else if (attempts++ < 10) {
+        setTimeout(tryOpen, 100);
+      } else {
+        console.warn('ApatmentoChat not available — redirecting to auth');
+        window.location.href = 'auth.html?next=' + encodeURIComponent(location.href);
+      }
     }
-    ApatmentoChat.open({ listingId: dbId, listingType: 'apartment', listingTitle: apt.name, hostId: apt.hostId || undefined });
+    tryOpen();
   }
 
   if (window.CURRENT_USER) {
@@ -1123,6 +1293,7 @@ function messageHost(id) {
 }
 
 function closeDrawer() {
+  _clearAutoScroll();
   document.getElementById('drawer').classList.remove('open');
   document.getElementById('drawer-overlay').classList.remove('open');
   document.body.style.overflow = '';
@@ -1136,67 +1307,419 @@ function bookNow(id) {
   window.location.href = `booking-confirm.html?${params.toString()}`;
 }
 
-/* ── Filters + Sort ── */
-/* ?q= deep-link: area guides and the sitelinks searchbox land here
-   with a location query. Reflect it in the Where field and filter. */
+/* ═══════════════════════════════════════════════════════════════
+   SEARCH + FILTER + SORT + AI — world-class stays discovery
+   ═══════════════════════════════════════════════════════════════ */
+
+/* State */
+let _searchState = {
+  loc: '',           // city/location filter
+  dateIn: '',
+  dateOut: '',
+  adults: 1,
+  children: 0,
+  infants: 0,
+  sortMode: 'recommended',
+  minPrice: 0,
+  maxPrice: 999999,
+  minBeds: 0,
+  amenities: new Set(),
+  typeFilter: 'all', // all | hotel | apartment | home
+  smartMode: null,   // null | 'nearest' | 'affordable' | 'bestvalue'
+  aiQuery: '',
+  userLat: null,
+  userLng: null,
+};
+
+/* Deep-link ?q= support */
 (function(){
   const q = new URLSearchParams(location.search).get('q');
   if (!q) return;
-  window._qLoc = q.trim().toLowerCase();
+  _searchState.loc = q.trim().toLowerCase();
   const f = document.getElementById('field-where');
-  if (f) f.textContent = q.trim() + ', Kenya';
+  if (f) { f.textContent = q.trim() + ', Kenya'; f.classList.remove('ph'); }
 })();
 
-function toggleFilter(el, key) {
-  if (key === 'all') {
-    activeFilters.clear(); activeFilters.add('all');
-    document.querySelectorAll('.fchip').forEach(c => c.classList.remove('active'));
-    el.classList.add('active');
+/* ── Search field dropdowns ── */
+let _activeSF = null;
+function openSF(name) {
+  const panelId = 'sfp-' + name;
+  const panel = document.getElementById(panelId);
+  if (!panel) return;
+  if (_activeSF && _activeSF !== panelId) {
+    document.getElementById(_activeSF)?.classList.remove('open');
+  }
+  panel.classList.toggle('open');
+  _activeSF = panel.classList.contains('open') ? panelId : null;
+}
+document.addEventListener('click', e => {
+  if (_activeSF && !e.target.closest('.sf')) {
+    document.getElementById(_activeSF)?.classList.remove('open');
+    _activeSF = null;
+  }
+});
+
+/* ── Location picker ── */
+function pickLoc(city) {
+  _searchState.loc = city.toLowerCase();
+  const f = document.getElementById('field-where');
+  f.textContent = city + ', Kenya';
+  f.classList.remove('ph');
+  document.getElementById('sfp-where')?.classList.remove('open');
+  _activeSF = null;
+  // Mark active
+  document.querySelectorAll('.loc-opt').forEach(o => o.classList.toggle('picked', o.textContent.includes(city)));
+  applyAndRender();
+}
+
+/* ── Date pickers ── */
+function pickDate(which, val) {
+  if (which === 'in') {
+    _searchState.dateIn = val;
+    const f = document.getElementById('field-checkin');
+    f.textContent = val ? new Date(val).toLocaleDateString('en-KE',{month:'short',day:'numeric'}) : 'Add date';
+    f.classList.toggle('ph', !val);
+    // set min for checkout
+    const out = document.getElementById('date-out');
+    if (out) out.min = val;
   } else {
-    document.querySelector('.fchip[onclick*="\'all\'"]')?.classList.remove('active');
-    activeFilters.delete('all');
-    el.classList.toggle('active');
-    if (el.classList.contains('active')) activeFilters.add(key);
-    else activeFilters.delete(key);
-    if (!activeFilters.size) { activeFilters.add('all'); document.querySelector('.fchip[onclick*="\'all\'"]')?.classList.add('active'); }
+    _searchState.dateOut = val;
+    const f = document.getElementById('field-checkout');
+    if (f) { f.textContent = val ? new Date(val).toLocaleDateString('en-KE',{month:'short',day:'numeric'}) : 'Add date'; f.classList.toggle('ph',!val); }
+  }
+  updateResultLabel();
+}
+
+/* ── Guest counter ── */
+function adjustGuests(type, dir) {
+  const key = type; // 'adults'|'children'|'infants'
+  const min = type === 'adults' ? 1 : 0;
+  _searchState[key] = Math.max(min, (_searchState[key]||0) + dir);
+  document.getElementById('g-' + type + '-val').textContent = _searchState[key];
+  document.getElementById('g-' + type + '-minus').disabled = _searchState[key] <= min;
+  const total = _searchState.adults + _searchState.children;
+  const f = document.getElementById('field-guests');
+  f.textContent = total === 1 ? '1 guest' : `${total} guests${_searchState.infants ? ' + infant' : ''}`;
+  f.classList.remove('ph');
+  applyAndRender();
+}
+
+/* ── Run search (main search button) ── */
+function runSearch() {
+  // Close all dropdowns
+  document.querySelectorAll('.sf-panel').forEach(p => p.classList.remove('open'));
+  _activeSF = null;
+  applyAndRender();
+}
+
+/* ── AI Smart Search ── */
+function focusAISearch() {
+  document.getElementById('ai-search-input')?.focus();
+}
+
+const SUPA_URL = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
+
+async function runAISearch() {
+  const input = document.getElementById('ai-search-input');
+  const query = (input?.value || '').trim();
+  if (!query) { input?.focus(); return; }
+
+  _searchState.aiQuery = query;
+
+  // Show thinking state
+  const resp = document.getElementById('ai-response');
+  const text = document.getElementById('ai-response-text');
+  resp.classList.add('show');
+  text.innerHTML = '<div class="ai-typing"><span></span><span></span><span></span></div>';
+
+  try {
+    // Build context from current listings
+    const listingSummary = currentListings.slice(0,20).map(l =>
+      `ID:${l.id} | ${l.name} | ${l.location} | KES ${l.price}/night | ${l.beds} bed | ${l.maxGuests} guests max | amenities: ${(l.amenities||[]).join(', ')}`
+    ).join('\n');
+
+    const systemPrompt = `You are Apa, a smart assistant for Apatmento — Kenya's #1 short-stay apartment platform. 
+Your job is to help guests find the perfect place to stay.
+Current listings available:
+${listingSummary}
+
+Given the user's request, do THREE things:
+1. Interpret what they need (type of stay, number of people, special needs, vibe)
+2. Give a warm, helpful 1-2 sentence response explaining what you're showing them
+3. Return a JSON block at the end (no markdown fences) with this exact format:
+{"filter":{"loc":"","minBeds":0,"maxPrice":0,"amenities":[],"typeHint":""},"sort":"recommended","ids":["id1","id2"]}
+- ids: list of listing IDs that best match, ordered best first (can be empty if none match well)
+- loc: location keyword to filter by (empty string = all)
+- minBeds: minimum bedrooms needed (0 = any)
+- maxPrice: max price per night in KES (0 = any)
+- amenities: required amenities
+- typeHint: "hotel", "apartment", "home", or "" for any
+- sort: "recommended", "price-asc", "bestvalue"
+
+Always be warm, concise, and friendly. If you need clarification, ask one short question at the end.`;
+
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1000,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: query }]
+      })
+    });
+
+    const data = await res.json();
+    const raw = data.content?.[0]?.text || '';
+
+    // Extract JSON block
+    const jsonMatch = raw.match(/\{[\s\S]*"filter"[\s\S]*\}/);
+    let aiResult = null;
+    let narrative = raw;
+
+    if (jsonMatch) {
+      try {
+        aiResult = JSON.parse(jsonMatch[0]);
+        // Strip JSON from display text
+        narrative = raw.replace(jsonMatch[0], '').trim();
+      } catch(e) {}
+    }
+
+    // Show Apa's response
+    text.innerHTML = narrative || "I found some great options for you!";
+
+    // Apply AI filters
+    if (aiResult?.filter) {
+      const f = aiResult.filter;
+      if (f.loc) { _searchState.loc = f.loc.toLowerCase(); }
+      if (f.minBeds) _searchState.minBeds = f.minBeds;
+      if (f.maxPrice) _searchState.maxPrice = f.maxPrice;
+      if (f.amenities?.length) f.amenities.forEach(a => _searchState.amenities.add(a));
+      if (f.typeHint) _searchState.typeFilter = f.typeHint;
+      _searchState.sortMode = aiResult.sort || 'recommended';
+    }
+
+    // If AI returned specific IDs, surface those first
+    if (aiResult?.ids?.length) {
+      const aiIds = new Set(aiResult.ids);
+      const reordered = [
+        ...currentListings.filter(l => aiIds.has(l.id)),
+        ...currentListings.filter(l => !aiIds.has(l.id))
+      ];
+      renderCards(reordered);
+    } else {
+      applyAndRender();
+    }
+
+  } catch(e) {
+    text.innerHTML = "I couldn't connect right now. Showing all available stays — use the filters above to narrow down!";
+    applyAndRender();
+  }
+}
+
+/* ── Type filter chips (All / Hotels / Apartments / Homes) ── */
+function toggleFilter(el, key) {
+  // Clear all chip active states in filter-bar first
+  document.querySelectorAll('.filter-bar .fchip').forEach(c => c.classList.remove('active'));
+
+  if (['all','hotel','apartment','home'].includes(key)) {
+    _searchState.typeFilter = key;
+    _searchState.smartMode = null;
+    el.classList.add('active');
+  } else if (['nearest','affordable','bestvalue'].includes(key)) {
+    _searchState.smartMode = key;
+    _searchState.typeFilter = 'all';
+    el.classList.add('active');
+    if (key === 'nearest') _requestLocation();
+  } else {
+    // fallback
+    _searchState.typeFilter = 'all';
+    document.querySelector('.filter-bar .fchip')?.classList.add('active');
   }
   applyAndRender();
 }
 
+/* ── Geolocation for "Near me" ── */
+function _requestLocation() {
+  if (!navigator.geolocation) { alert('Location not supported on this browser.'); return; }
+  navigator.geolocation.getCurrentPosition(pos => {
+    _searchState.userLat = pos.coords.latitude;
+    _searchState.userLng = pos.coords.longitude;
+    applyAndRender();
+  }, () => {
+    // Permission denied — fall back to general recommended sort
+    _searchState.smartMode = 'recommended';
+    applyAndRender();
+  });
+}
+
+/* ── Filter modal ── */
+let _fmSort = 'recommended';
+let _fmMinBeds = 0;
+
+function openFilterModal() {
+  document.getElementById('fm-overlay').classList.add('open');
+  document.getElementById('fm-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeFilterModal() {
+  document.getElementById('fm-overlay').classList.remove('open');
+  document.getElementById('fm-modal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function fmPickSort(el) {
+  document.querySelectorAll('#fm-sort-chips .fm-chip').forEach(c => c.classList.remove('on'));
+  el.classList.add('on');
+  _fmSort = el.dataset.sort;
+}
+function fmPickBeds(el) {
+  document.querySelectorAll('#fm-beds-chips .fm-chip').forEach(c => c.classList.remove('on'));
+  el.classList.add('on');
+  _fmMinBeds = parseInt(el.dataset.beds);
+}
+function updatePriceRange() {
+  const min = parseInt(document.getElementById('fm-price-min').value);
+  const max = parseInt(document.getElementById('fm-price-max').value);
+  document.getElementById('fm-price-min-val').textContent = min === 0 ? '0' : 'KES ' + min.toLocaleString();
+  document.getElementById('fm-price-max-val').textContent = max >= 30000 ? 'Any' : 'KES ' + max.toLocaleString();
+}
+function resetFilters() {
+  _searchState.minPrice = 0; _searchState.maxPrice = 999999;
+  _searchState.minBeds = 0; _searchState.amenities = new Set();
+  _searchState.sortMode = 'recommended'; _searchState.typeFilter = 'all';
+  _searchState.smartMode = null;
+  document.getElementById('fm-price-min').value = 0;
+  document.getElementById('fm-price-max').value = 30000;
+  updatePriceRange();
+  document.querySelectorAll('#fm-beds-chips .fm-chip').forEach((c,i) => c.classList.toggle('on', i===0));
+  document.querySelectorAll('#fm-sort-chips .fm-chip').forEach((c,i) => c.classList.toggle('on', i===0));
+  document.querySelectorAll('#fm-amen-chips .fm-chip').forEach(c => c.classList.remove('on'));
+  document.querySelectorAll('.filter-bar .fchip').forEach((c,i) => c.classList.toggle('active', i===0));
+  applyAndRender();
+}
+function applyFilterModal() {
+  _searchState.sortMode = _fmSort;
+  _searchState.minBeds = _fmMinBeds;
+  _searchState.minPrice = parseInt(document.getElementById('fm-price-min').value) || 0;
+  const rawMax = parseInt(document.getElementById('fm-price-max').value) || 30000;
+  _searchState.maxPrice = rawMax >= 30000 ? 999999 : rawMax;
+  _searchState.amenities = new Set(
+    [...document.querySelectorAll('#fm-amen-chips .fm-chip.on')].map(c => c.dataset.amen)
+  );
+  closeFilterModal();
+  applyAndRender();
+}
+
+/* ── Core filter + sort engine ── */
 function applyAndRender() {
   let list = [...currentListings];
-  if (window._qLoc) list = list.filter(a => ((a.location||'')+' '+(a.name||'')).toLowerCase().includes(window._qLoc));
-  if (!activeFilters.has('all')) {
-    if (activeFilters.has('wifi'))    list = list.filter(a => (a.amenities||[]).some(x => x.includes('WiFi')));
-    if (activeFilters.has('pool'))    list = list.filter(a => (a.amenities||[]).some(x => x.includes('Pool')));
-    if (activeFilters.has('parking')) list = list.filter(a => (a.amenities||[]).some(x => x.includes('Parking')));
-    if (activeFilters.has('ac'))      list = list.filter(a => (a.amenities||[]).some(x => x.includes('Air Con')));
-    if (activeFilters.has('kitchen')) list = list.filter(a => (a.amenities||[]).some(x => x.includes('Kitchen')));
-    if (activeFilters.has('rooms'))   list = list.filter(a => a.beds >= 2);
+  const s = _searchState;
+
+  // Location filter
+  if (s.loc) {
+    list = list.filter(a =>
+      ((a.location||'') + ' ' + (a.city||'') + ' ' + (a.name||'')).toLowerCase().includes(s.loc)
+    );
   }
-  const order = document.getElementById('sort-select')?.value || 'rating';
-  renderCards(smartSort(list, order));
+
+  // Type filter
+  if (s.typeFilter && s.typeFilter !== 'all') {
+    list = list.filter(a => {
+      const t = (a.type||'').toLowerCase();
+      if (s.typeFilter === 'hotel') return t.includes('hotel');
+      if (s.typeFilter === 'apartment') return t.includes('apartment') || t.includes('studio') || t.includes('flat');
+      if (s.typeFilter === 'home') return t.includes('home') || t.includes('house') || t.includes('villa') || t.includes('cottage');
+      return true;
+    });
+  }
+
+  // Guest filter — only show places that can fit the party
+  const totalGuests = (s.adults || 1) + (s.children || 0);
+  if (totalGuests > 1) {
+    list = list.filter(a => (a.maxGuests || 1) >= totalGuests);
+  }
+
+  // Price filter
+  if (s.minPrice > 0) list = list.filter(a => a.price >= s.minPrice);
+  if (s.maxPrice < 999999) list = list.filter(a => a.price <= s.maxPrice);
+
+  // Bedrooms
+  if (s.minBeds > 0) {
+    if (s.minBeds >= 3) list = list.filter(a => a.beds >= 3);
+    else list = list.filter(a => a.beds >= s.minBeds);
+  }
+
+  // Amenities
+  if (s.amenities.size) {
+    list = list.filter(a =>
+      [...s.amenities].every(req =>
+        (a.amenities||[]).some(am => am.toLowerCase().includes(req.toLowerCase()))
+      )
+    );
+  }
+
+  // Smart modes
+  if (s.smartMode === 'affordable') {
+    list = [...list].sort((a, b) => a.price - b.price);
+    updateResultLabel('affordable');
+  } else if (s.smartMode === 'bestvalue') {
+    // Best value = score combining: rating, reviews, proximity (if we have coords), price efficiency, capacity per price
+    list = [...list].sort((a, b) => {
+      const scoreA = _bestValueScore(a, s);
+      const scoreB = _bestValueScore(b, s);
+      return scoreB - scoreA;
+    });
+    updateResultLabel('bestvalue');
+  } else if (s.smartMode === 'nearest' && s.userLat && s.userLng) {
+    list = [...list].sort((a, b) => {
+      const dA = _distKm(s.userLat, s.userLng, a.lat || -1.286, a.lng || 36.817);
+      const dB = _distKm(s.userLat, s.userLng, b.lat || -1.286, b.lng || 36.817);
+      return dA - dB;
+    });
+    updateResultLabel('nearest');
+  } else {
+    // Standard smart sort
+    list = smartSort(list, s.sortMode || 'recommended');
+    updateResultLabel();
+  }
+
+  renderCards(list);
 }
 
-function sortListings() { applyAndRender(); }
+function _bestValueScore(apt, s) {
+  const totalGuests = (s.adults || 1) + (s.children || 0);
+  const pricePerGuest = apt.price / Math.max(apt.maxGuests || 1, totalGuests);
+  const ratingWeight = (apt.rating || 3.5) * 15;
+  const reviewWeight = Math.log10((apt.reviews || 1) + 1) * 8;
+  const capacityFit = apt.maxGuests >= totalGuests ? 10 : -20; // penalty for too-small
+  const priceScore = Math.max(0, 50 - (pricePerGuest / 100)); // cheaper = higher
+  const hasKids = s.children > 0;
+  const kidFriendly = hasKids && (apt.amenities||[]).some(a => /kitchen|wash|safe|child|family/i.test(a)) ? 8 : 0;
+  return ratingWeight + reviewWeight + capacityFit + priceScore + kidFriendly + (apt.source === 'native' ? 15 : 0);
+}
+
+function _distKm(lat1, lng1, lat2, lng2) {
+  const R = 6371;
+  const dLat = (lat2-lat1) * Math.PI/180;
+  const dLon = (lng2-lng1) * Math.PI/180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function updateResultLabel(mode) {
+  const num = document.getElementById('result-num');
+  const label = document.getElementById('result-label');
+  if (!label) return;
+  const loc = _searchState.loc ? (' in ' + _searchState.loc.charAt(0).toUpperCase() + _searchState.loc.slice(1)) : '';
+  if (mode === 'affordable') label.textContent = `most affordable stays${loc}`;
+  else if (mode === 'bestvalue') label.textContent = `best value stays${loc}`;
+  else if (mode === 'nearest') label.textContent = `stays nearest to you${loc}`;
+  else label.textContent = `stays available${loc}`;
+}
+
 function toggleHeart(e, el) { e.stopPropagation(); el.textContent = el.textContent === '🤍' ? '❤️' : '🤍'; }
-function runSearch() { applyAndRender(); }
-
-/* ── City filter from search bar ── */
-function openField(field) {
-  if (field === 'where') {
-    const opts = ['All Kenya','Nairobi','Mombasa','Diani','Naivasha','Nakuru','Kisumu','Nanyuki'];
-    const cur = document.getElementById('field-where').textContent;
-    const next = opts[(opts.indexOf(cur) + 1) % opts.length];
-    document.getElementById('field-where').textContent = next;
-    document.getElementById('field-where').classList.remove('placeholder');
-    // Filter by city
-    if (next === 'All Kenya') {
-      activeFilters.clear(); activeFilters.add('all');
-    }
-    applyAndRender();
-  }
-}
+function sortListings() { applyAndRender(); }
 
 /* ── GO ── */
 loadListings().then(() => {
