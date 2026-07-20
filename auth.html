@@ -444,8 +444,9 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
           <div id="magic-step-otp" style="display:none;">
             <div style="text-align:center;margin-bottom:18px;">
               <div style="font-size:28px;margin-bottom:6px;">📬</div>
-              <div style="font-size:15px;font-weight:700;color:#0A0A14;">Check your inbox</div>
-              <div style="font-size:13px;color:#8E90AD;margin-top:4px;">Enter the 6-digit code we sent to <strong id="magic-sent-to" style="color:#4361FF;"></strong></div>
+              <div style="font-size:15px;font-weight:700;color:#0A0A14;">Enter your sign-in code</div>
+              <div style="font-size:13px;color:#8E90AD;margin-top:4px;">We sent a 6-digit code to <strong id="magic-sent-to" style="color:#4361FF;"></strong></div>
+              <div style="font-size:12px;color:#8E90AD;margin-top:6px;">Works whether you have an account or not — we'll create one automatically.</div>
             </div>
             <div style="display:flex;gap:8px;justify-content:center;margin-bottom:18px;" id="otp-inputs">
               <input class="field-input" style="width:46px;text-align:center;font-size:22px;font-weight:800;padding:10px 4px;font-family:monospace;" maxlength="1" inputmode="numeric" pattern="[0-9]" oninput="otpNext(this,0)" id="otp0"/>
@@ -1469,119 +1470,43 @@ async function verifyMagicOtp(e) {
 
   try {
     const email = _magicEmail;
-    const inputHash = await sha256(digits + email);
+    const otpHash = await sha256(digits + email);
 
-    // 1. Check against DB first
-    let verified = false;
-    const { data: row, error: fetchErr } = await sb
-      .from('otp_codes')
-      .select('code_hash,expires_at,used')
-      .eq('email', email.toLowerCase())
-      .single();
+    // Single server call: verify OTP + get a real Supabase session back
+    const res = await fetch('/api/magic-auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, otpHash, secret: 'apa-magic-2025' }),
+    });
 
-    if (!fetchErr && row) {
-      if (row.used) throw new Error('This code has already been used. Request a new one.');
-      if (new Date(row.expires_at) < new Date()) throw new Error('Code expired. Request a new one.');
-      if (row.code_hash !== inputHash) throw new Error('Incorrect code. Check your email and try again.');
-      // Mark used
-      await sb.from('otp_codes').update({ used: true }).eq('email', email.toLowerCase());
-      verified = true;
-    } else {
-      // Fallback: sessionStorage verification
-      const stored = sessionStorage.getItem('apa_otp_' + email);
-      if (stored) {
-        const { hash, expiry } = JSON.parse(stored);
-        if (new Date(expiry) < new Date()) throw new Error('Code expired. Request a new one.');
-        if (hash !== inputHash) throw new Error('Incorrect code. Check your email and try again.');
-        sessionStorage.removeItem('apa_otp_' + email);
-        verified = true;
-      }
+    const data = await res.json();
+
+    if (!res.ok || !data.access_token) {
+      throw new Error(data.error || 'Verification failed. Try again.');
     }
 
-    // Also accept in-memory hash (same session, extra safety net)
-    if (!verified && _magicOtpHash) {
-      if (inputHash !== _magicOtpHash) throw new Error('Incorrect code. Check your email and try again.');
-      verified = true;
+    // Set the session in Supabase client so getSession() works immediately
+    await sb.auth.setSession({
+      access_token: data.access_token,
+      refresh_token: data.refresh_token,
+    });
+
+    // Send welcome email for brand new users (fire and forget)
+    if (data.is_new_user) {
+      fetch('/api/email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'welcome', email }),
+      }).catch(() => {});
     }
 
-    if (!verified) throw new Error('Could not verify code. Please try again.');
-
-    // 2. Sign in or create account via Supabase
-    // Try sign-in first; if no account, create one
-    let session = null;
-
-    // Use signInWithOtp which verifies the token server-side in Supabase
-    // Since we manage our own OTP, we use a temporary password approach:
-    // Generate a secure one-time token and use it as magic credentials
-    const tempToken = inputHash + Date.now();
-    const tempPw    = await sha256(tempToken + 'apa-magic-salt');
-
-    // Check if user exists
-    const { data: signInData, error: signInErr } = await sb.auth.signInWithPassword({ email, password: tempPw });
-
-    if (signInData?.session) {
-      session = signInData.session;
-    } else {
-      // New user — create account (or use OTP flow via Supabase)
-      // For existing users with a different password, use admin update via our API
-      // Try Supabase's built-in OTP as the most reliable path for existing users
-      const { data: otpData, error: otpErr } = await sb.auth.signInWithOtp({
-        email,
-        options: { shouldCreateUser: true },
-      });
-      // Supabase OTP sends their own email — but we already sent ours.
-      // For users who exist: let's use password update approach via our server
-      // For new users: sign them up with a secure temp password and sign in
-      if (!otpErr || otpErr.message?.includes('already registered')) {
-        // Create/update via our server with admin key
-        const serverRes = await fetch('/api/email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'magic-auth-internal', email, tempPw }),
-        }).catch(() => null);
-      }
-
-      // Final attempt: sign up fresh
-      const { data: signUpData, error: signUpErr } = await sb.auth.signUp({
-        email,
-        password: tempPw,
-        options: { data: { auth_method: 'magic_link' } },
-      });
-
-      if (signUpData?.session) {
-        session = signUpData.session;
-        // Send welcome email for new users
-        fetch('/api/email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'welcome', email }),
-        }).catch(() => {});
-      } else if (signUpErr) {
-        // User likely already exists — use Supabase's signInWithOtp token approach
-        // Send a Supabase magic link as fallback (they'll click it in email)
-        const { error: otpFallbackErr } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: false } });
-        if (!otpFallbackErr) {
-          errEl.style.color = '#0E9384';
-          errEl.textContent = '✓ Verified! We\'ve sent a sign-in link to your email — click it to continue.';
-          errEl.classList.add('show');
-          btn.textContent = 'Check your email →';
-          return;
-        }
-        throw new Error('Sign-in failed. Please try the email & password option below.');
-      }
-    }
-
-    if (session) {
-      // 3. Success — redirect
-      btn.textContent = '✓ Signed in!';
-      setTimeout(() => goDashboard(), 500);
-    }
+    btn.textContent = '✓ Signed in!';
+    setTimeout(() => goDashboard(data.user), 600);
 
   } catch (err) {
     console.error('[magic] verify error:', err);
     errEl.textContent = err.message || 'Verification failed. Try again.';
     errEl.classList.add('show');
-    // Shake OTP inputs
     for (let i = 0; i < 6; i++) {
       const el = document.getElementById('otp' + i);
       if (el) el.classList.add('error');
