@@ -319,7 +319,7 @@ export default async function handler(req, res) {
   const secret = req.headers['x-admin-secret'];
 
   // magic-link + magic-auth are public but rate-limited. All others require admin secret.
-  const publicActions = ['magic-link', 'magic-auth', 'sms-otp'];
+  const publicActions = ['sms-otp'];
   if (!publicActions.includes(action) && secret !== ADMIN_SECRET && ADMIN_SECRET) {
     return res.status(403).json({ error: 'Forbidden' });
   }
@@ -330,25 +330,8 @@ export default async function handler(req, res) {
     switch (action) {
 
       case 'magic-link': {
-        if (!rateOk(ip, 'magic-link', 3, 60_000)) {
-          return res.status(429).json({ error: 'Too many requests. Wait a minute.' });
-        }
-        const { email, otp, name, expiresMin, phone } = body;
-        if (!email || !otp) return res.status(400).json({ error: 'email + otp required' });
-
-        // Send email
-        to = email; from = FROM_MAGIC;
-        subject = `${otp} — your Apatmento sign-in code`;
-        html = buildMagicLink({ email, otp, name, expiresMin });
-
-        // Also send SMS if phone provided (fire and forget — don't fail email if SMS fails)
-        if (phone && AT_API_KEY) {
-          sendSMS({
-            to: phone,
-            message: `${otp} is your Apatmento sign-in code. Valid 10 mins.`,
-          }).catch(e => console.warn('[magic-link] SMS failed:', e.message));
-        }
-        break;
+        // Removed: magic-link / OTP auth replaced by Supabase email+password and Google OAuth.
+        return res.status(410).json({ error: 'Magic-link auth is no longer supported. Use email + password or Google.' });
       }
 
       case 'welcome': {
@@ -406,82 +389,8 @@ export default async function handler(req, res) {
       }
 
       case 'magic-auth': {
-        // Verify OTP hash + create/sign-in user via Supabase admin API
-        if (!rateOk(ip, 'magic-auth', 5, 60_000)) {
-          return res.status(429).json({ error: 'Too many attempts. Wait a minute.' });
-        }
-        const { email: mEmail, otpHash, secret: mSecret } = body;
-        if (!mEmail || !otpHash) return res.status(400).json({ error: 'email + otpHash required' });
-        if (mSecret !== MAGIC_SECRET) return res.status(403).json({ error: 'Forbidden' });
-
-        // 1. Verify OTP hash in DB
-        const otpRes = await fetch(
-          `${SUPABASE_URL}/rest/v1/otp_codes?email=eq.${encodeURIComponent(mEmail.toLowerCase())}&select=code_hash,expires_at,used`,
-          { headers: adminHeaders() }
-        );
-        const rows = await otpRes.json();
-        const row = rows?.[0];
-        if (!row)      return res.status(401).json({ error: 'No code found. Request a new one.' });
-        if (row.used)  return res.status(401).json({ error: 'Code already used. Request a new one.' });
-        if (new Date(row.expires_at) < new Date()) return res.status(401).json({ error: 'Code expired. Request a new one.' });
-        if (row.code_hash !== otpHash) return res.status(401).json({ error: 'Incorrect code.' });
-
-        // 2. Mark OTP used
-        await fetch(
-          `${SUPABASE_URL}/rest/v1/otp_codes?email=eq.${encodeURIComponent(mEmail.toLowerCase())}`,
-          { method: 'PATCH', headers: adminHeaders(), body: JSON.stringify({ used: true }) }
-        );
-
-        // 3. Find or create user
-        const listRes  = await fetch(`${SUPABASE_URL}/auth/v1/admin/users?filter=${encodeURIComponent(mEmail)}`, { headers: adminHeaders() });
-        const listData = await listRes.json();
-        const existing = listData?.users?.find(u => u.email?.toLowerCase() === mEmail.toLowerCase());
-        let userId;
-
-        if (existing) {
-          userId = existing.id;
-          if (!existing.email_confirmed_at) {
-            await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${userId}`, {
-              method: 'PUT', headers: adminHeaders(), body: JSON.stringify({ email_confirm: true }),
-            });
-          }
-        } else {
-          const createRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users`, {
-            method: 'POST', headers: adminHeaders(),
-            body: JSON.stringify({ email: mEmail, email_confirm: true, user_metadata: { auth_method: 'magic_link' } }),
-          });
-          const newUser = await createRes.json();
-          if (!newUser?.id) return res.status(500).json({ error: 'Could not create account.' });
-          userId = newUser.id;
-          await fetch(`${SUPABASE_URL}/rest/v1/profiles`, {
-            method: 'POST',
-            headers: { ...adminHeaders(), 'Prefer': 'resolution=merge-duplicates' },
-            body: JSON.stringify({ id: userId, email: mEmail.toLowerCase(), first_name: '', last_name: '' }),
-          });
-        }
-
-        // 4. Generate session via admin magic link
-        const linkRes  = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${userId}/generate-link`, {
-          method: 'POST', headers: adminHeaders(), body: JSON.stringify({ type: 'magiclink', email: mEmail }),
-        });
-        const linkData = await linkRes.json();
-        if (!linkData?.properties?.hashed_token) return res.status(500).json({ error: 'Session generation failed. Try password login.' });
-
-        const verifyRes = await fetch(`${SUPABASE_URL}/auth/v1/verify`, {
-          method: 'POST',
-          headers: { 'apikey': SERVICE_ROLE_KEY, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ type: 'magiclink', token_hash: linkData.properties.hashed_token }),
-        });
-        const session = await verifyRes.json();
-        if (!session?.access_token) return res.status(500).json({ error: 'Session creation failed. Try password login.' });
-
-        return res.status(200).json({
-          ok: true,
-          access_token: session.access_token,
-          refresh_token: session.refresh_token,
-          user: session.user,
-          is_new_user: !existing,
-        });
+        // Removed: OTP-based magic auth replaced by Supabase email+password and Google OAuth.
+        return res.status(410).json({ error: 'Magic-auth is no longer supported. Use email + password or Google.' });
       }
 
       // ── SMS actions (Africa's Talking) ──────────────────────────
