@@ -895,13 +895,30 @@ var _inRecovery = false;
 
   if (isRecovery) return;   // newpw-screen owns the page
 
+  // Google OAuth callback: Supabase has already set the session in localStorage
+  // via detectSessionInUrl. Just read it and go to dashboard.
+  const qs = new URLSearchParams(location.search);
+  if (qs.get('callback') === 'google') {
+    // Give Supabase up to 2s to process the fragment token into a real session
+    let attempts = 0;
+    const waitForSession = async () => {
+      const { data:{ session: cbSess } } = await sb.auth.getSession().catch(()=>({data:{session:null}}));
+      if (cbSess) {
+        await goDashboard(cbSess.user);
+        return;
+      }
+      if (++attempts < 8) setTimeout(waitForSession, 250);
+      else showErr('Sign-in with Google succeeded but session could not be loaded. Please sign in again.');
+    };
+    await waitForSession();
+    return;
+  }
+
   const { data:{ session } } = await sb.auth.getSession().catch(()=>({data:{session:null}}));
   if (session) showContinueBanner(session.user);
-  const mode = new URLSearchParams(location.search).get('mode');
+  const mode = qs.get('mode');
   if (mode === 'signup') switchTab('signup');
 })();
-
-/* ── Google OAuth returns to dashboard.html directly — no handling needed here ── */
 
 /* ══ SIGN IN ══ */
 async function handleLogin(e) {
@@ -1278,7 +1295,7 @@ async function signInWithGoogle() {
     const { error } = await sb.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: window.location.origin + '/dashboard.html',
+        redirectTo: window.location.origin + '/auth.html?callback=google',
         queryParams: {
           access_type: 'offline',
           prompt: 'consent',
