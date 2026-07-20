@@ -602,6 +602,34 @@ function showToast(m,d=3200){const t=document.getElementById('toast');t.textCont
 
 /* Init — synchronous, no external calls */
 render();
+
+// ── Load admin-added room listings from listings table ──
+(async () => {
+  try {
+    const _sb = window.sb;
+    if (!_sb) return;
+    const { data } = await _sb.from('listings').select('*').eq('type','room').eq('is_active',true);
+    if (data && data.length) {
+      const mapped = data.map(l => ({
+        id: String(l.id), title: l.title || 'Room Available',
+        area: l.location || l.city || 'Nairobi',
+        price: l.price_month || l.price_night || 0,
+        type: 'Private', furnished: true, bills: false, gender: 'Any',
+        mates: 0, occ: 'Any', vibe: 'Any', floor: '', light: 'Good',
+        avail: 'Now', min_stay: '1 month', deposit: l.price_month || 0,
+        pets: false, smoking: false, wifi: true, parking: false,
+        quiet_hrs: false, guests: true, clean: '', laundry: '', security: '',
+        landlord: false, mates_detail: '', badge: 'n',
+        desc: l.description || '',
+        poster: 'Apatmento',
+        since: new Date().getFullYear().toString(),
+      }));
+      const existing = new Set(DATA.map(r => r.id));
+      mapped.filter(r => !existing.has(r.id)).forEach(r => DATA.unshift(r));
+      render();
+    }
+  } catch(e) {}
+})();
 </script>
 
 <script src="/analytics.js" defer></script>

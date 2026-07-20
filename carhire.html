@@ -506,6 +506,27 @@ function closeDrawer(){document.getElementById("drawer").classList.remove("open"
 })();
 window.addEventListener("DOMContentLoaded", renderCars);
 
+// ── Load admin-added cars from listings table ──
+(async () => {
+  try {
+    const { createClient } = supabase;
+    const _sb = createClient('https://gfwgbgdvxtocwhilrtdw.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw');
+    const { data } = await _sb.from('listings').select('*').eq('type','carhire').eq('is_active',true);
+    if (data && data.length) {
+      const mapped = data.map(l => ({
+        id: String(l.id), type: 'economy', sub: l.location || 'Nairobi',
+        name: l.title || 'Vehicle', seats: 5, fuel: 'Petrol', trans: 'Automatic',
+        tags: l.tags || [],
+        selfPrice: l.price_night || 0, chauffeurPrice: (l.price_night||0) * 1.5,
+        img: Array.isArray(l.photos) ? l.photos[0] : '',
+        desc: l.description || '', partner: l.partner_id || null,
+      }));
+      CARS.unshift(...mapped);
+      renderCars();
+    }
+  } catch(e) {}
+})();
+
 </script>
 
 <style>

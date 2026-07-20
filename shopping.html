@@ -593,6 +593,28 @@ function productCardHTML(p, i){
 }
 
 renderAll();
+
+// ── Load admin-added shopping listings from listings table ──
+(async () => {
+  try {
+    const { createClient } = supabase;
+    const _sb = createClient('https://gfwgbgdvxtocwhilrtdw.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw');
+    const { data } = await _sb.from('listings').select('*').eq('type','shopping').eq('is_active',true);
+    if (data && data.length) {
+      const mapped = data.map(l => ({
+        id: String(l.id), name: l.title || 'Product',
+        category: 'other', tags: l.tags || [],
+        area: l.location || l.city || 'Nairobi',
+        desc: l.description || '',
+        price: l.price_night || 0,
+        img: Array.isArray(l.photos) ? l.photos[0] : '',
+        url: l.street || l.external_url || '#',
+      }));
+      PRODUCTS.unshift(...mapped);
+      renderAll();
+    }
+  } catch(e) {}
+})();
 </script>
 
 <style>

@@ -509,6 +509,27 @@ function renderGrid(){
 }
 
 renderGrid();
+
+// ── Load admin-added food listings from listings table ──
+(async () => {
+  try {
+    const { createClient } = supabase;
+    const _sb = createClient('https://gfwgbgdvxtocwhilrtdw.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw');
+    const { data } = await _sb.from('listings').select('*').eq('type','food').eq('is_active',true);
+    if (data && data.length) {
+      const mapped = data.map(l => ({
+        id: String(l.id), name: l.title || 'Restaurant',
+        categories: ['other'], tags: l.tags || [],
+        distance: '', rating: '', ratingTier: 'good', ratingNum: 0,
+        area: l.location || l.city || 'Nairobi', note: l.description || null,
+        img: Array.isArray(l.photos) ? l.photos[0] : '',
+        glovoUrl: l.street || l.external_url || '#',
+      }));
+      RESTAURANTS.unshift(...mapped);
+      renderGrid();
+    }
+  } catch(e) {}
+})();
 </script>
 
 <style>

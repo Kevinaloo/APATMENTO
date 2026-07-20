@@ -527,6 +527,30 @@ renderEvents(EVENTS);
   } catch(err) { /* silent — demo events remain */ }
 })();
 
+// ── Load admin-added events from listings table ──
+(async () => {
+  try {
+    const { createClient } = supabase;
+    const _sb = createClient('https://gfwgbgdvxtocwhilrtdw.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw');
+    const { data } = await _sb.from('listings').select('*').eq('type','event').eq('is_active',true);
+    if (data && data.length) {
+      const mapped = data.map(l => ({
+        id: String(l.id), name: l.title || 'Event',
+        type: 'Music', venue: l.location || l.city || 'Nairobi',
+        date: '', time: '', price: l.price_night ? `KES ${Number(l.price_night).toLocaleString()}` : 'Free',
+        tags: l.tags || [], desc: l.description || '',
+        img: Array.isArray(l.photos) ? l.photos[0] : null,
+        url: l.street || l.external_url || '#',
+      }));
+      const existing = new Set(EVENTS.map(e=>e.name.toLowerCase()));
+      const fresh = mapped.filter(e=>!existing.has(e.name.toLowerCase()));
+      EVENTS.unshift(...fresh);
+      if(typeof applyFilters==='function') applyFilters();
+      else renderEvents(EVENTS);
+    }
+  } catch(e) {}
+})();
+
 </script>
 
 <style>
