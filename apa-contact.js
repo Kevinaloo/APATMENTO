@@ -451,7 +451,7 @@
 
   /* ─── 7. Init ───────────────────────────────────────────────────── */
   function init() {
-    buildFAB();
+    // FAB removed — floating WhatsApp button disabled site-wide
 
     const footer = document.querySelector('footer.footer, footer');
     if (footer) {
