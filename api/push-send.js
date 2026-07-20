@@ -1,6 +1,7 @@
 /* ═══════════════════════════════════════════════════════════════════
-   APATMENTO · PUSH SEND
-   POST /api/push-send
+   APATMENTO · PUSH SEND + CRON
+   POST /api/push-send          → send push to user_id or endpoint
+   POST /api/push-send?action=cron → fire due scheduled campaigns
 
    Implements Web Push end-to-end with zero dependencies:
      · VAPID  (RFC 8292) — ES256 JWT, ieee-p1363 signature
@@ -160,6 +161,57 @@ async function supa(path, opts = {}) {
   return res.status === 204 ? null : res.json().catch(() => null);
 }
 
+/* ── cron: check and fire due campaigns ─────────────────────────── */
+function isDue(c) {
+  const now = new Date();
+  const sendAt = new Date(c.send_at);
+  if (!c.last_sent_at) return sendAt <= now;
+  const last = new Date(c.last_sent_at);
+  switch (c.repeat) {
+    case 'daily':   return (now - last) >= 23*3600*1000 && sendAt.getHours() === now.getHours();
+    case 'weekly':  return (now - last) >= 6.5*86400*1000 && sendAt.getDay() === now.getDay();
+    case 'monthly': return (now - last) >= 27*86400*1000 && sendAt.getDate() === now.getDate();
+    default:        return false;
+  }
+}
+
+async function handleCron(req, res) {
+  const campaigns = await supa('push_campaigns?active=eq.true&select=*').catch(() => []) || [];
+  const due = campaigns.filter(isDue);
+  if (!due.length) return res.status(200).json({ fired: 0, checked: campaigns.length });
+
+  const SELF = process.env.PUSH_SEND_URL || 'https://www.apatmento.space/api/push-send';
+  const fired = [];
+  for (const camp of due) {
+    try {
+      const subs = await supa('push_subscriptions?select=user_id') || [];
+      let userIds = [...new Set(subs.map(s => s.user_id).filter(Boolean))];
+      if (camp.audience === 'partners') {
+        const partners = await supa('listings?select=user_id') || [];
+        const pids = new Set(partners.map(p => p.user_id));
+        userIds = userIds.filter(id => pids.has(id));
+      }
+      let sent = 0;
+      const BATCH = 20;
+      for (let i = 0; i < userIds.length; i += BATCH) {
+        await Promise.allSettled(userIds.slice(i, i+BATCH).map(uid =>
+          fetch(SELF, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-admin-secret': ADMIN_SECRET },
+            body: JSON.stringify({ user_id: uid, title: camp.title, body: camp.body,
+              url: camp.url || '/', kind: camp.kind || 'general', persist: true }),
+          }).then(r => r.json()).then(d => { if (d.sent > 0) sent++; })
+        ));
+      }
+      const upd = { last_sent_at: new Date().toISOString() };
+      if (camp.repeat === 'none') upd.active = false;
+      await supa(`push_campaigns?id=eq.${camp.id}`, { method: 'PATCH', body: JSON.stringify(upd) });
+      fired.push({ id: camp.id, title: camp.title, sent });
+    } catch (e) { console.error('[push-cron]', camp.id, e.message); }
+  }
+  return res.status(200).json({ fired: fired.length, campaigns: fired });
+}
+
 /* ── handler ─────────────────────────────────────────────────────── */
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
@@ -181,6 +233,10 @@ export default async function handler(req, res) {
   if (ADMIN_SECRET && req.headers['x-admin-secret'] !== ADMIN_SECRET) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
+
+  // action=cron → fire scheduled campaigns
+  const action = req.query?.action || (req.body && req.body.action);
+  if (action === 'cron') return handleCron(req, res);
 
   try {
     const b = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});

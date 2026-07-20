@@ -134,6 +134,10 @@
     {
       "path": "/api/scrape?service=tours",
       "schedule": "0 4 * * *"
+    },
+    {
+      "path": "/api/push-send?action=cron",
+      "schedule": "* * * * *"
     }
   ],
   "functions": {
@@ -168,7 +172,10 @@
       "maxDuration": 15
     },
     "api/push-send.js": {
-      "maxDuration": 10
+      "maxDuration": 30
+    },
+    "api/email.js": {
+      "maxDuration": 15
     }
   },
   "env": {
@@ -206,6 +213,10 @@
     {
       "source": "/api/indexnow",
       "destination": "/api/utilities?action=indexnow"
+    },
+    {
+      "source": "/api/push-cron",
+      "destination": "/api/push-send?action=cron"
     }
   ]
 }
