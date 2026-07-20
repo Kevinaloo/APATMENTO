@@ -1621,6 +1621,31 @@ function setRange(d, el){
 const sb = AD.client();
 const ADMINS = ['apatmento@gmail.com','worlddossy@gmail.com'];
 
+/* ── REST helpers (used by lazy_requests, profiles, impersonate) ─ */
+const SB_URL = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
+const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
+// SB = base REST URL; H = auth headers using live session JWT (falls back to anon)
+const SB = SB_URL;
+async function getRestHeaders() {
+  try {
+    const { data } = await sb.auth.getSession();
+    const token = data?.session?.access_token || SB_ANON;
+    return {
+      'Content-Type': 'application/json',
+      'apikey': SB_ANON,
+      'Authorization': 'Bearer ' + token,
+    };
+  } catch(e) {
+    return { 'Content-Type':'application/json','apikey':SB_ANON,'Authorization':'Bearer '+SB_ANON };
+  }
+}
+// Sync H object — refreshed on each use via restH()
+let H = { 'Content-Type':'application/json','apikey':SB_ANON,'Authorization':'Bearer '+SB_ANON };
+async function restH() {
+  H = await getRestHeaders();
+  return H;
+}
+
 $('g-pass').addEventListener('keydown', e => { if(e.key==='Enter') login(); });
 $('g-btn').addEventListener('click', login);
 
@@ -1638,6 +1663,7 @@ async function login(){
       throw new Error('Access denied. This account is not an operator.');
     }
     ADMIN = data.user;
+    await restH(); // prime H with real session JWT
     boot();
   }catch(e){
     err.textContent = e.message || 'Something went wrong.';
@@ -3443,9 +3469,10 @@ async function lazyLoad(status='pending') {
   const rows = $('lazy-rows');
   if(rows) rows.innerHTML = '<tr><td colspan="7" style="padding:20px;color:var(--ink-4)">Loading…</td></tr>';
   try {
+    const rh = await restH();
     let url = `${SB}/rest/v1/lazy_requests?order=created_at.desc`;
     if(status !== 'all') url += `&status=eq.${status}`;
-    const res = await fetch(url, {headers:{...H,'Range':'0-99'}});
+    const res = await fetch(url, {headers:{...rh,'Range':'0-99'}});
     const data = await res.json();
     renderLazyRows(data);
     updateLazyBadge(data.length);
@@ -3475,13 +3502,15 @@ function renderLazyRows(items) {
 }
 
 async function lazySetStatus(id, status) {
-  await fetch(`${SB}/rest/v1/lazy_requests?id=eq.${id}`, {method:'PATCH',headers:{...H,'Prefer':'return=minimal'},body:JSON.stringify({status})});
+  const rh = await restH();
+  await fetch(`${SB}/rest/v1/lazy_requests?id=eq.${id}`, {method:'PATCH',headers:{...rh,'Prefer':'return=minimal'},body:JSON.stringify({status})});
   lazyLoad(lazyCurrentFilter);
 }
 
 async function lazyDelete(id) {
   if(!confirm('Delete this request?')) return;
-  await fetch(`${SB}/rest/v1/lazy_requests?id=eq.${id}`, {method:'DELETE',headers:{...H}});
+  const rh = await restH();
+  await fetch(`${SB}/rest/v1/lazy_requests?id=eq.${id}`, {method:'DELETE',headers:{...rh}});
   lazyLoad(lazyCurrentFilter);
 }
 
@@ -3497,7 +3526,7 @@ function updateLazyBadge(n) {
 }
 
 function lazyExport() {
-  fetch(`${SB}/rest/v1/lazy_requests?order=created_at.desc`,{headers:{...H,'Range':'0-999'}})
+  restH().then(rh => fetch(`${SB}/rest/v1/lazy_requests?order=created_at.desc`,{headers:{...rh,'Range':'0-999'}}))
     .then(r=>r.json()).then(data=>{
       const csv = ['Name,WhatsApp,Type,Notes,Status,Submitted',...data.map(r=>[r.name,r.phone,r.listing_type,r.notes,r.status,r.created_at].map(v=>`"${(v||'').replace(/"/g,'""')}"`).join(','))].join('\n');
       const a=document.createElement('a');a.href='data:text/csv,'+encodeURIComponent(csv);a.download='lazy-requests.csv';a.click();
@@ -3511,8 +3540,9 @@ async function impSearch() {
   const res = $('imp-result');
   if(res) res.innerHTML = '<div style="color:var(--ink-4);font-size:13px">Searching…</div>';
   try {
+    const rh = await restH();
     const emailQ = `${SB}/rest/v1/profiles?or=(email.ilike.*${encodeURIComponent(q)}*,phone.ilike.*${encodeURIComponent(q)}*)&limit=10`;
-    const r = await fetch(emailQ, {headers:{...H}});
+    const r = await fetch(emailQ, {headers:{...rh}});
     const data = await r.json();
     if(!data||!data.length){ if(res) res.innerHTML='<div style="color:var(--ink-4);font-size:13px;padding:12px 0">No user found with that email or phone.</div>'; return; }
     if(res) res.innerHTML = data.map(u=>`
@@ -3594,7 +3624,14 @@ const PUSH_ADMIN_SECRET_STORED = (() => {
 
 function pushHeaders() {
   const secret = sessionStorage.getItem('apa_push_secret') || PUSH_ADMIN_SECRET_STORED;
-  return { 'Content-Type': 'application/json', 'x-admin-secret': secret };
+  // Include both x-admin-secret (for edge function) and supabase auth headers
+  const token = H?.Authorization?.replace('Bearer ','') || SB_ANON;
+  return {
+    'Content-Type': 'application/json',
+    'x-admin-secret': secret,
+    'apikey': SB_ANON,
+    'Authorization': 'Bearer ' + token,
+  };
 }
 
 function pushEnsureSecret() {
