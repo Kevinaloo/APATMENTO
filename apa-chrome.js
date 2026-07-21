@@ -477,10 +477,19 @@
   });
 
   function openNotifications() {
-    sheet('apa-notif-sheet', 'Notifications',
-      '<div class="apa-empty"><div class="apa-empty-e">🔔</div>'
-      + '<div style="font:700 14px/1.3 system-ui;color:#0A0A14;margin-bottom:6px">You\'re all caught up</div>'
-      + '<div style="font:400 13px/1.4 system-ui">Booking updates and messages will appear here.</div></div>');
+    /* Delegate to CabanaChat messenger if loaded, otherwise fall back */
+    if (global.CabanaChat) { global.CabanaChat.openInbox(); return; }
+    if (global.ApatmentoChat) { global.ApatmentoChat.openInbox(); return; }
+    sheet('apa-notif-sheet', 'Messages',
+      '<div class="apa-empty"><div class="apa-empty-e">💬</div>'
+      + '<div style="font:700 14px/1.3 system-ui;color:#0A0A14;margin-bottom:6px">Messages</div>'
+      + '<div style="font:400 13px/1.4 system-ui">Loading messenger…</div></div>');
+    var tries = 0;
+    var iv = setInterval(function() {
+      tries++;
+      if (global.CabanaChat) { clearInterval(iv); close('apa-notif-sheet'); global.CabanaChat.openInbox(); }
+      if (tries > 20) clearInterval(iv);
+    }, 250);
   }
 
   /* ═══ ROLE ═══════════════════════════════════════════════════════ */

@@ -1,705 +1,1306 @@
-/* ════════════════════════════════════════════════════════════════
-   APATMENTO CHAT SYSTEM — chat.js
-   Real-time in-app messaging via Supabase Realtime.
-   
-   CONTACT INFO SCRUBBING: All outbound messages are scanned for
-   phone numbers, emails, WhatsApp references, social handles,
-   and other bypass attempts before storage and display.
-   This is enforced client-side AND noted to the user.
-   Server-side enforcement via Supabase functions is additive.
-   
-   Usage:
-     ApatmentoChat.open({ listingId, listingType, listingTitle, hostId })
-     ApatmentoChat.openInbox()
-   
-   Requires: Supabase client `sb` to be available globally,
-             CURRENT_USER to be set.
-════════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════════════════
+   CABANA MESSENGER  v4  —  chat.js
+   ────────────────────────────────────────────────────────────────────────────
+   World-class in-app messaging for Cabana (Apatmento).
 
-const ApatmentoChat = (() => {
+   ARCHITECTURE
+   ────────────
+   • Two surfaces:
+       1. Host Chat Panel  — floats from listing card ("Message the host")
+       2. Full-screen Inbox — slides in from notification bell / topbar icon
 
+   • Realtime via Supabase Realtime channels (postgres_changes + presence)
+   • Contact-info scrubbing: phones, emails, WhatsApp, socials, URLs
+     enforced client-side; server-side additive via Supabase functions
+
+   • Notification bell integration:
+       – On load, polls unread count every 30 s
+       – On new message, bell badge updates instantly via realtime
+       – ApaChrome.bell() is called to set/clear the dot
+       – dashboard.html bell (data-apa="notif") opens inbox via openNotifications()
+         which is overridden here to open the full messenger
+
+   PUBLIC API
+   ──────────
+   CabanaChat.open({ listingId, listingType, listingTitle, hostId })
+   CabanaChat.openInbox()
+   CabanaChat.closeInbox()
+   CabanaChat.close()
+   CabanaChat.getUnreadCount()   → Promise<number>
+   CabanaChat.initBell()         → starts unread polling + realtime badge
+
+   Requires: window.sb (Supabase client), window.CURRENT_USER or ApaSession
+   ════════════════════════════════════════════════════════════════════════════ */
+
+const CabanaChat = (() => {
+  'use strict';
+
+  /* ── Constants ──────────────────────────────────────────────────────────── */
   const SUPA_URL = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
   const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
-  let _sb = null; // will use window.sb
 
-  let _conv = null;      // active conversation
-  let _realtimeSub = null;
-  let _userId = null;
-  let _inbox = false;
+  const TYPE_ICONS = {
+    apartment: '🏠', roommate: '🤝', tour: '🦁', event: '🎟',
+    carhire: '🚗', food: '🍽', shopping: '🛍', stays: '🏠',
+  };
+  const POLL_INTERVAL_MS = 30_000;
+  const MSG_LIMIT        = 200;
 
-  /* ── Contact info scrubbing ─────────────────────────────────── */
+  /* ── State ──────────────────────────────────────────────────────────────── */
+  let _userId        = null;
+  let _activeConv    = null;   // current conversation object
+  let _panelSub      = null;   // realtime sub for floating panel
+  let _inboxSub      = null;   // realtime sub for inbox thread
+  let _globalSub     = null;   // realtime sub for unread badge
+  let _pollTimer     = null;
+  let _bellEl        = null;   // cached bell button element
+  let _inboxView     = 'list'; // 'list' | 'thread'
+
+  /* ── Supabase client accessor ───────────────────────────────────────────── */
+  function sb() { return window.sb || null; }
+
+  /* ════════════════════════════════════════════════════════════════════════
+     CONTACT-INFO SCRUBBER
+     Scans outbound messages for phone numbers, emails, socials, URLs.
+     Enforced before insert; warning shown inline on scrub.
+  ════════════════════════════════════════════════════════════════════════ */
   const SCRUB_PATTERNS = [
-    // Phone numbers (Kenyan + international)
-    { re: /(?:\+?254|0)[\s\-.]?[17]\d{2}[\s\-.]?\d{3}[\s\-.]?\d{3}/g,   label: 'phone' },
-    { re: /(?:\+?\d{1,3}[\s\-.]?)?\(?\d{3}\)?[\s\-.]?\d{3}[\s\-.]?\d{4}/g, label: 'phone' },
-    { re: /\b0[17]\d{8}\b/g, label: 'phone' },
-    // Email addresses
-    { re: /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g, label: 'email' },
-    // WhatsApp / social hints
-    { re: /wh?a?ts?a?pp?[\s:]*(?:me|us|number)?/gi, label: 'WhatsApp' },
-    { re: /text\s+me/gi, label: 'direct contact' },
-    { re: /call\s+me/gi, label: 'direct contact' },
-    { re: /dm\s+me/gi, label: 'direct contact' },
-    { re: /reach\s+me\s+(?:on|at|via)/gi, label: 'direct contact' },
-    // Social handles
-    { re: /@[a-zA-Z0-9_]{2,30}\b(?!\s*apatmento)/g, label: 'social handle' },
-    { re: /(?:instagram|twitter|facebook|telegram|tiktok|snapchat|linkedin)[\s:\/]+[a-zA-Z0-9_.]+/gi, label: 'social media' },
-    // URL/link attempts
-    { re: /https?:\/\/[^\s]+/gi, label: 'link' },
-    { re: /[a-zA-Z0-9\-]+\.(?:com|co\.ke|ke|org|net|me|io)\b/gi, label: 'website' },
-    // Number spelled out tricks
-    { re: /\b(?:zero|one|two|three|four|five|six|seven|eight|nine)[\s\-]+(?:zero|one|two|three|four|five|six|seven|eight|nine)/gi, label: 'number' },
-    // Number obfuscation (dots/dashes between digits)
-    { re: /\b\d[\s.\-]{1,2}\d[\s.\-]{1,2}\d[\s.\-]{1,2}\d[\s.\-]{1,2}\d[\s.\-]{1,2}\d/g, label: 'phone' },
+    // Kenyan phone numbers
+    { re: /(?:\+?254|0)[\s\-.]?[17]\d{2}[\s\-.]?\d{3}[\s\-.]?\d{3}/g,      tag: 'phone' },
+    { re: /\b0[17]\d{8}\b/g,                                                  tag: 'phone' },
+    // International numbers
+    { re: /(?:\+?\d{1,3}[\s\-.]?)?\(?\d{3}\)?[\s\-.]?\d{3}[\s\-.]?\d{4}/g, tag: 'phone' },
+    // Email
+    { re: /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g,             tag: 'email' },
+    // WhatsApp / direct contact hints
+    { re: /wh?a?ts?a?pp?[\s:]*/gi,                                            tag: 'WhatsApp' },
+    { re: /\btext\s+me\b/gi,                                                   tag: 'direct contact' },
+    { re: /\bcall\s+me\b/gi,                                                   tag: 'direct contact' },
+    { re: /\bdm\s+me\b/gi,                                                     tag: 'direct contact' },
+    { re: /\breach\s+me\s+(?:on|at|via)\b/gi,                                 tag: 'direct contact' },
+    // Social handles & platforms
+    { re: /@[a-zA-Z0-9_.]{2,30}\b(?!\s*(?:apatmento|cabana))/g,              tag: 'social handle' },
+    { re: /(?:instagram|twitter|facebook|telegram|tiktok|snapchat|linkedin)[\s:/]+[a-zA-Z0-9_.]+/gi, tag: 'social' },
+    // URLs
+    { re: /https?:\/\/[^\s]+/gi,                                              tag: 'link' },
+    { re: /[a-zA-Z0-9\-]+\.(?:com|co\.ke|ke|org|net|me|io|app)\b/gi,         tag: 'website' },
+    // Spelled-out / obfuscated numbers
+    { re: /\b(?:zero|one|two|three|four|five|six|seven|eight|nine)[\s\-]+(?:zero|one|two|three|four|five|six|seven|eight|nine)/gi, tag: 'number' },
+    { re: /\b\d[\s.\-]{1,2}\d[\s.\-]{1,2}\d[\s.\-]{1,2}\d[\s.\-]{1,2}\d[\s.\-]{1,2}\d/g, tag: 'phone' },
   ];
 
-  function scrubContactInfo(text) {
-    let scrubbed = false;
-    let result = text;
-    for (const { re, label } of SCRUB_PATTERNS) {
-      const replaced = result.replace(re, `[${label} removed]`);
-      if (replaced !== result) { scrubbed = true; result = replaced; }
+  function scrub(text) {
+    let result = text, dirty = false;
+    for (const { re, tag } of SCRUB_PATTERNS) {
+      const next = result.replace(re, `[${tag} removed]`);
+      if (next !== result) { dirty = true; result = next; }
     }
-    return { text: result, scrubbed };
+    return { text: result, scrubbed: dirty };
   }
 
-  /* ── CSS injection ───────────────────────────────────────────── */
-  function injectCSS() {
-    if (document.getElementById('apt-chat-css')) return;
-    const s = document.createElement('style');
-    s.id = 'apt-chat-css';
-    s.textContent = `
-/* ═══ APATMENTO CHAT ═══ */
-
-/* ── Small chat panel (host-specific, from listing) ── */
-#apt-chat-overlay{position:fixed;inset:0;z-index:8000;display:none;align-items:flex-end;justify-content:flex-end;padding:0 16px 16px;pointer-events:none;}
-#apt-chat-overlay.open{display:flex;pointer-events:all;}
-#apt-chat-panel{width:100%;max-width:400px;height:600px;max-height:94vh;background:#fff;border-radius:22px;box-shadow:0 20px 60px rgba(10,10,20,.22),0 4px 16px rgba(10,10,20,.1);display:flex;flex-direction:column;overflow:hidden;animation:chat-rise .35s cubic-bezier(.22,1,.36,1);}
-@keyframes chat-rise{from{opacity:0;transform:translateY(30px) scale(.97);}to{opacity:1;transform:none;}}
-@media(max-width:480px){
-  #apt-chat-panel{max-width:100%;border-radius:22px 22px 0 0;height:88vh;}
-  #apt-chat-overlay{padding:0;align-items:flex-end;}
-}
-
-/* ── Full-screen inbox overlay (topbar inbox button) ── */
-#apt-inbox-overlay{position:fixed;inset:0;z-index:8100;background:var(--glass,#FCFCFD);display:none;flex-direction:column;transform:translateX(100%);transition:transform .38s cubic-bezier(.22,1,.36,1);}
-#apt-inbox-overlay.open{display:flex;transform:none;}
-.apt-inbox-bar{height:60px;display:flex;align-items:center;gap:12px;padding:0 18px;background:rgba(252,252,253,.92);backdrop-filter:blur(20px);border-bottom:1px solid rgba(10,10,20,.07);flex-shrink:0;}
-.apt-inbox-back{width:38px;height:38px;border-radius:12px;border:1px solid rgba(10,10,20,.1);background:rgba(255,255,255,.7);display:flex;align-items:center;justify-content:center;cursor:pointer;color:#0A0A14;transition:all .2s;flex-shrink:0;}
-.apt-inbox-back:hover{border-color:#8B6FE8;color:#8B6FE8;}
-.apt-inbox-bar-title{font-family:'Geist','Inter',sans-serif;font-weight:600;font-size:18px;color:#0A0A14;flex:1;}
-.apt-inbox-bar-sub{font-size:12px;color:#8E90AD;margin-top:1px;}
-
-/* Thread view inside full inbox */
-#apt-inbox-thread{display:none;flex-direction:column;flex:1;overflow:hidden;}
-#apt-inbox-thread.open{display:flex;}
-#apt-inbox-thread .apt-inbox-thread-head{height:56px;display:flex;align-items:center;gap:10px;padding:0 16px;border-bottom:1px solid rgba(10,10,20,.07);flex-shrink:0;}
-#apt-inbox-thread .apt-thread-back{width:34px;height:34px;border-radius:10px;border:1px solid rgba(10,10,20,.1);background:rgba(255,255,255,.7);display:flex;align-items:center;justify-content:center;cursor:pointer;color:#0A0A14;transition:all .2s;flex-shrink:0;}
-#apt-inbox-thread .apt-thread-back:hover{border-color:#8B6FE8;color:#8B6FE8;}
-.apt-thread-title{font-weight:700;font-size:14px;color:#0A0A14;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.apt-thread-ico{font-size:20px;}
-
-/* Conversation list */
-#apt-inbox-list-wrap{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
-#apt-inbox-list-wrap::-webkit-scrollbar{width:4px;}
-#apt-inbox-list-wrap::-webkit-scrollbar-thumb{background:rgba(10,10,20,.12);border-radius:2px;}
-.apt-inbox-conv{display:flex;align-items:center;gap:14px;padding:16px 18px;cursor:pointer;border-bottom:1px solid rgba(10,10,20,.05);transition:background .15s;position:relative;}
-.apt-inbox-conv:active{background:rgba(139,111,232,.05);}
-.apt-inbox-conv-ava{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#B8A4F4,#7B2FF7);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;position:relative;}
-.apt-inbox-conv-unread-dot{position:absolute;top:1px;right:1px;width:12px;height:12px;border-radius:50%;background:#4361FF;border:2px solid #FCFCFD;display:none;}
-.apt-inbox-conv-unread-dot.on{display:block;}
-.apt-inbox-conv-body{flex:1;min-width:0;}
-.apt-inbox-conv-name{font-weight:700;font-size:14px;color:#0A0A14;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.apt-inbox-conv-preview{font-size:13px;color:#8E90AD;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.apt-inbox-conv.unread .apt-inbox-conv-name{color:#0A0A14;}
-.apt-inbox-conv.unread .apt-inbox-conv-preview{color:#4A4C66;font-weight:500;}
-.apt-inbox-conv-meta{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;}
-.apt-inbox-conv-time{font-size:11px;color:#8E90AD;}
-.apt-inbox-conv-badge{min-width:20px;height:20px;border-radius:10px;background:#4361FF;color:#fff;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 5px;}
-
-/* Messages area (reused inside thread) */
-.apt-ch-msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;scroll-behavior:smooth;}
-.apt-ch-msgs::-webkit-scrollbar{width:4px;}
-.apt-ch-msgs::-webkit-scrollbar-thumb{background:rgba(10,10,20,.15);border-radius:2px;}
-.apt-ch-msg{max-width:78%;display:flex;flex-direction:column;gap:3px;}
-.apt-ch-msg.me{align-self:flex-end;align-items:flex-end;}
-.apt-ch-msg.them{align-self:flex-start;align-items:flex-start;}
-.apt-ch-bubble{padding:10px 13px;border-radius:16px;font-size:14px;line-height:1.45;word-break:break-word;}
-.apt-ch-msg.me .apt-ch-bubble{background:linear-gradient(135deg,#4361FF,#6B4FE8);color:#fff;border-bottom-right-radius:4px;}
-.apt-ch-msg.them .apt-ch-bubble{background:#F1F2F8;color:#0A0A14;border-bottom-left-radius:4px;}
-.apt-ch-msg.system .apt-ch-bubble{background:#FFF8E7;color:#856404;font-size:12px;border-radius:10px;text-align:center;max-width:100%;}
-.apt-ch-time{font-size:10px;color:rgba(10,10,20,.35);padding:0 2px;}
-.apt-ch-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:20px;text-align:center;}
-.apt-ch-empty-ico{font-size:40px;}
-.apt-ch-empty-title{font-size:15px;font-weight:700;color:#0A0A14;}
-.apt-ch-empty-sub{font-size:13px;color:#8E90AD;line-height:1.55;max-width:240px;}
-.apt-ch-banner{background:rgba(67,97,255,.07);border-bottom:1px solid rgba(67,97,255,.1);padding:8px 14px;font-size:11px;color:#4361FF;display:flex;align-items:center;gap:6px;flex-shrink:0;}
-.apt-ch-input-wrap{padding:10px 12px;border-top:1px solid rgba(10,10,20,.07);display:flex;align-items:flex-end;gap:8px;flex-shrink:0;}
-.apt-ch-input{flex:1;border:1.5px solid rgba(10,10,20,.1);border-radius:20px;padding:10px 14px;font-size:14px;font-family:inherit;resize:none;outline:none;max-height:100px;min-height:40px;overflow-y:auto;line-height:1.4;transition:border-color .2s;background:#FAFAFA;}
-.apt-ch-input:focus{border-color:#4361FF;background:#fff;}
-.apt-ch-send{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#4361FF,#7B2FF7);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;}
-.apt-ch-send:hover{transform:scale(1.08);}
-.apt-ch-send:disabled{background:rgba(10,10,20,.12);transform:none;cursor:not-allowed;}
-.apt-ch-send svg{color:#fff;}
-
-/* Small panel header (host chat) */
-.apt-ch-head{padding:14px 16px;background:linear-gradient(135deg,#4361FF,#7B2FF7);display:flex;align-items:center;gap:10px;flex-shrink:0;}
-.apt-ch-head-ico{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
-.apt-ch-head-info{flex:1;min-width:0;}
-.apt-ch-head-title{font-weight:700;font-size:14px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.apt-ch-head-sub{font-size:11px;color:rgba(255,255,255,.7);margin-top:1px;}
-.apt-ch-close{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.15);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0;transition:background .2s;}
-.apt-ch-close:hover{background:rgba(255,255,255,.25);}
-
-/* Empty state for inbox */
-.apt-inbox-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:40px 28px;text-align:center;}
-.apt-inbox-empty-ico{font-size:56px;}
-.apt-inbox-empty-title{font-weight:700;font-size:18px;color:#0A0A14;}
-.apt-inbox-empty-sub{font-size:14px;color:#8E90AD;line-height:1.6;max-width:260px;}
-
-/* FAB — hidden by default, kept for other pages that use initFAB */
-#apt-chat-fab{position:fixed;bottom:80px;right:16px;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#4361FF,#7B2FF7);border:none;cursor:pointer;display:none;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(67,97,255,.4);z-index:7999;transition:all .3s;}
-#apt-chat-fab.visible{display:flex;}
-    `;
-    document.head.appendChild(s);
-  }
-
-  /* ── Build small chat panel (host-specific) ──────────────────── */
-  function buildOverlay() {
-    if (document.getElementById('apt-chat-overlay')) return;
-    const el = document.createElement('div');
-    el.id = 'apt-chat-overlay';
-    el.innerHTML = `
-      <div id="apt-chat-panel">
-        <div class="apt-ch-head">
-          <div class="apt-ch-head-ico" id="apt-ch-head-ico">💬</div>
-          <div class="apt-ch-head-info">
-            <div class="apt-ch-head-title" id="apt-ch-head-title">Chat with Host</div>
-            <div class="apt-ch-head-sub" id="apt-ch-head-sub">Secure messaging</div>
-          </div>
-          <button class="apt-ch-close" onclick="ApatmentoChat.close()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-          </button>
-        </div>
-        <div class="apt-ch-banner">
-          🔒 Sharing contact details is not permitted — use this chat to arrange everything.
-        </div>
-        <div id="apt-ch-msgs" class="apt-ch-msgs"></div>
-        <div class="apt-ch-input-wrap" id="apt-ch-input-wrap">
-          <textarea class="apt-ch-input" id="apt-ch-input" placeholder="Type a message…" rows="1"
-            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();ApatmentoChat.send();}"
-            oninput="ApatmentoChat._autosize(this)"></textarea>
-          <button class="apt-ch-send" id="apt-ch-send" onclick="ApatmentoChat.send()">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13M22 2 15 22l-4-9-9-4 20-7z"/></svg>
-          </button>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(el);
-  }
-
-  /* ── Build full-screen inbox overlay ─────────────────────────── */
-  function buildInboxOverlay() {
-    if (document.getElementById('apt-inbox-overlay')) return;
-    const el = document.createElement('div');
-    el.id = 'apt-inbox-overlay';
-    el.innerHTML = `
-      <div class="apt-inbox-bar">
-        <button class="apt-inbox-back" onclick="ApatmentoChat.closeInbox()" aria-label="Back">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-        </button>
-        <div>
-          <div class="apt-inbox-bar-title">Messages</div>
-          <div class="apt-inbox-bar-sub" id="apt-inbox-bar-sub">All conversations</div>
-        </div>
-      </div>
-
-      <!-- Conversation list view -->
-      <div id="apt-inbox-list-wrap" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;"></div>
-
-      <!-- Thread view (shown when a conversation is opened) -->
-      <div id="apt-inbox-thread">
-        <div class="apt-inbox-thread-head">
-          <button class="apt-thread-back" onclick="ApatmentoChat._inboxBackToList()" aria-label="Back to messages">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-          </button>
-          <span class="apt-thread-ico" id="apt-thread-ico">🏠</span>
-          <span class="apt-thread-title" id="apt-thread-title">Conversation</span>
-        </div>
-        <div class="apt-ch-banner">
-          🔒 Sharing contact details is not permitted — use this chat to arrange everything.
-        </div>
-        <div id="apt-inbox-msgs" class="apt-ch-msgs"></div>
-        <div class="apt-ch-input-wrap">
-          <textarea class="apt-ch-input" id="apt-inbox-input" placeholder="Type a message…" rows="1"
-            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();ApatmentoChat._inboxSend();}"
-            oninput="ApatmentoChat._autosize(this)"></textarea>
-          <button class="apt-ch-send" id="apt-inbox-send" onclick="ApatmentoChat._inboxSend()">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13M22 2 15 22l-4-9-9-4 20-7z"/></svg>
-          </button>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(el);
-  }
-
-  /* ── Format timestamp ────────────────────────────────────────── */
-  function fmtTime(iso) {
-    const d = new Date(iso);
-    const now = new Date();
-    if (d.toDateString() === now.toDateString())
-      return d.toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' });
-    return d.toLocaleDateString('en-KE', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
-  }
-
-  /* ── Render messages ─────────────────────────────────────────── */
-  function renderMessages(messages) {
-    const el = document.getElementById('apt-ch-msgs');
-    if (!el) return;
-    if (!messages.length) {
-      el.innerHTML = `<div class="apt-ch-empty">
-        <div class="apt-ch-empty-ico">👋</div>
-        <div class="apt-ch-empty-title">Start the conversation</div>
-        <div class="apt-ch-empty-sub">Ask about availability, check-in details, or anything else. Keep it all in-app — it's safer for everyone.</div>
-      </div>`;
-      return;
-    }
-    el.innerHTML = messages.map(m => {
-      const isMe = m.sender_id === _userId;
-      const cls = m.is_system ? 'system' : isMe ? 'me' : 'them';
-      // Highlight scrubbed text
-      const content = m.content.replace(
-        /\[(phone|email|link|website|WhatsApp|social handle|social media|direct contact|number) removed\]/gi,
-        '<span class="scrubbed">[$1 removed]</span>'
-      );
-      return `<div class="apt-ch-msg ${cls}">
-        <div class="apt-ch-bubble">${content}</div>
-        <div class="apt-ch-time">${fmtTime(m.created_at)}${m.was_scrubbed ? ' · <span style="color:#CC2233;font-size:10px;">⚠ contact info removed</span>' : ''}</div>
-      </div>`;
-    }).join('');
-    el.scrollTop = el.scrollHeight;
-  }
-
-  /* ── Load conversation messages ──────────────────────────────── */
-  async function loadMessages(convId) {
-    const getSb = () => window.sb || null;
-    const s = getSb();
-    if (!s) return [];
-    const { data } = await s.from('chat_messages')
-      .select('*')
-      .eq('conversation_id', convId)
-      .order('created_at', { ascending: true })
-      .limit(100);
-    return data || [];
-  }
-
-  /* ── Subscribe to real-time new messages ────────────────────── */
-  function subscribeRealtime(convId) {
-    const s = window.sb;
-    if (!s || _realtimeSub) return;
-    _realtimeSub = s.channel('chat-' + convId)
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'chat_messages',
-        filter: `conversation_id=eq.${convId}`
-      }, async (payload) => {
-        // Append new message
-        const msgs = await loadMessages(convId);
-        renderMessages(msgs);
-      })
-      .subscribe();
-  }
-
-
-  /* ── Resolve current user — works even if CURRENT_USER not yet set ── */
-  async function _resolveUser() {
+  /* ════════════════════════════════════════════════════════════════════════
+     AUTH RESOLUTION — works before or after ApaSession fires
+  ════════════════════════════════════════════════════════════════════════ */
+  async function resolveUser() {
     if (window.CURRENT_USER) return window.CURRENT_USER;
-    // Try ApaSession (apa-session.js)
     if (window.ApaSession) {
-      return new Promise(resolve => {
-        ApaSession.ready(state => {
-          if (state && state.user) {
-            window.CURRENT_USER = state.user;
+      return new Promise(res => {
+        ApaSession.ready(st => {
+          if (st?.user) {
+            window.CURRENT_USER = st.user;
             if (!window.sb && ApaSession.client) window.sb = ApaSession.client();
           }
-          resolve(window.CURRENT_USER || null);
+          res(window.CURRENT_USER || null);
         });
       });
     }
-    // Direct Supabase session fallback
     try {
-      const s = window.sb;
+      const s = sb();
       if (s) {
         const { data: { session } } = await s.auth.getSession();
         if (session?.user) { window.CURRENT_USER = session.user; return session.user; }
       }
-    } catch(e) {}
+    } catch (_) {}
     return null;
   }
 
-  /* ── Open a chat with a listing ──────────────────────────────── */
-  async function open({ listingId, listingType, listingTitle, hostId }) {
-    const user = await _resolveUser();
-    if (!user) { window.location.href = 'auth.html?next=' + encodeURIComponent(location.href); return; }
-    if (user.id === hostId) { alert('You cannot message yourself.'); return; }
-
-    _userId = user.id;
-    _inbox = false;
-    injectCSS();
-    buildOverlay();
-
-    // Update header
-    document.getElementById('apt-ch-head-title').textContent = listingTitle || 'Chat with Host';
-    document.getElementById('apt-ch-head-sub').textContent = listingType ? listingType.charAt(0).toUpperCase() + listingType.slice(1) : 'Listing';
-    document.getElementById('apt-ch-head-ico').textContent = { apartment:'🏠', roommate:'🤝', tour:'🦁', event:'🎟', carhire:'🚗', food:'🍽', shopping:'🛍' }[listingType] || '💬';
-
-    // Show panel
-    document.getElementById('apt-chat-overlay').classList.add('open');
-    document.getElementById('apt-ch-msgs').innerHTML = '<div class="apt-ch-empty"><div class="apt-ch-empty-ico">⏳</div><div class="apt-ch-empty-title">Loading…</div></div>';
-
-    const s = window.sb;
-    if (!s) return;
-
-    // Get or create conversation
-    let conv;
-    const { data: existing } = await s.from('chat_conversations')
-      .select('*').eq('listing_id', listingId).eq('guest_id', user.id).maybeSingle();
-
-    if (existing) {
-      conv = existing;
-    } else {
-      const { data: created } = await s.from('chat_conversations').insert({
-        listing_id: listingId,
-        listing_type: listingType,
-        listing_title: listingTitle,
-        host_id: hostId,
-        guest_id: user.id,
-      }).select().maybeSingle();
-      conv = created;
-
-      // Send welcome system message
-      if (conv) {
-        await s.from('chat_messages').insert({
-          conversation_id: conv.id,
-          sender_id: user.id,
-          content: `Hi! I'm interested in "${listingTitle}". Could you tell me more about availability?`,
-          is_system: false,
-        });
-      }
-    }
-
-    _conv = conv;
-
-    // Mark as read
-    if (conv) {
-      const field = user.id === conv.host_id ? 'host_unread' : 'guest_unread';
-      await s.from('chat_conversations').update({ [field]: 0 }).eq('id', conv.id);
-    }
-
-    // Load and render messages
-    if (conv) {
-      const msgs = await loadMessages(conv.id);
-      renderMessages(msgs);
-      subscribeRealtime(conv.id);
-    }
+  /* ════════════════════════════════════════════════════════════════════════
+     TIME FORMATTING
+  ════════════════════════════════════════════════════════════════════════ */
+  function fmtMsg(iso) {
+    const d = new Date(iso), now = new Date();
+    if (d.toDateString() === now.toDateString())
+      return d.toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleDateString('en-KE', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
   }
-
-  /* ── Open full-screen inbox ──────────────────────────────────── */
-  async function openInbox() {
-    const user = await _resolveUser();
-    if (!user) { window.location.href = 'auth.html?next=' + encodeURIComponent(location.href); return; }
-
-    _userId = user.id;
-    injectCSS();
-    buildInboxOverlay();
-
-    const overlay = document.getElementById('apt-inbox-overlay');
-    const listWrap = document.getElementById('apt-inbox-list-wrap');
-    const thread   = document.getElementById('apt-inbox-thread');
-
-    // Make sure thread is hidden, list is shown
-    thread.classList.remove('open');
-    listWrap.style.display = 'flex';
-    listWrap.style.flexDirection = 'column';
-
-    // Loading state
-    listWrap.innerHTML = `<div class="apt-inbox-empty"><div class="apt-inbox-empty-ico">⏳</div><div class="apt-inbox-empty-title">Loading…</div></div>`;
-    overlay.classList.add('open');
-    document.body.style.overflow = 'hidden';
-
-    const s = window.sb;
-    if (!s) {
-      listWrap.innerHTML = `<div class="apt-inbox-empty"><div class="apt-inbox-empty-ico">⚠️</div><div class="apt-inbox-empty-title">Not connected</div><div class="apt-inbox-empty-sub">Please refresh and try again.</div></div>`;
-      return;
-    }
-
-    const { data: convs } = await s.from('chat_conversations')
-      .select('*')
-      .or(`host_id.eq.${user.id},guest_id.eq.${user.id}`)
-      .order('last_message_at', { ascending: false, nullsFirst: false })
-      .limit(100);
-
-    if (!convs?.length) {
-      listWrap.innerHTML = `<div class="apt-inbox-empty">
-        <div class="apt-inbox-empty-ico">📭</div>
-        <div class="apt-inbox-empty-title">No messages yet</div>
-        <div class="apt-inbox-empty-sub">When you enquire about a listing or a guest messages you, conversations will appear here.</div>
-      </div>`;
-      return;
-    }
-
-    document.getElementById('apt-inbox-bar-sub').textContent = `${convs.length} conversation${convs.length !== 1 ? 's' : ''}`;
-
-    const ICO = { apartment:'🏠', roommate:'🤝', tour:'🦁', event:'🎟', carhire:'🚗', food:'🍽', shopping:'🛍' };
-
-    listWrap.innerHTML = convs.map(c => {
-      const isHost = c.host_id === user.id;
-      const unread = isHost ? (c.host_unread || 0) : (c.guest_unread || 0);
-      const ico = ICO[c.listing_type] || '💬';
-      const time = c.last_message_at ? _fmtInboxTime(c.last_message_at) : '';
-      const preview = c.last_message || 'No messages yet';
-      return `<div class="apt-inbox-conv${unread > 0 ? ' unread' : ''}" onclick="ApatmentoChat._inboxOpenConv('${c.id}')">
-        <div class="apt-inbox-conv-ava">
-          ${ico}
-          <div class="apt-inbox-conv-unread-dot ${unread > 0 ? 'on' : ''}"></div>
-        </div>
-        <div class="apt-inbox-conv-body">
-          <div class="apt-inbox-conv-name">${c.listing_title || 'Conversation'}</div>
-          <div class="apt-inbox-conv-preview">${preview}</div>
-        </div>
-        <div class="apt-inbox-conv-meta">
-          <div class="apt-inbox-conv-time">${time}</div>
-          ${unread > 0 ? `<div class="apt-inbox-conv-badge">${unread}</div>` : ''}
-        </div>
-      </div>`;
-    }).join('');
-  }
-
-  /* ── Format time for inbox list ──────────────────────────────── */
-  function _fmtInboxTime(iso) {
-    const d = new Date(iso);
-    const now = new Date();
-    const diffMs = now - d;
-    const diffMins = Math.floor(diffMs / 60000);
-    if (diffMins < 1)   return 'Now';
-    if (diffMins < 60)  return diffMins + 'm';
-    if (diffMins < 1440) return Math.floor(diffMins / 60) + 'h';
-    if (diffMins < 10080) return d.toLocaleDateString('en-KE', { weekday: 'short' });
+  function fmtList(iso) {
+    const d = new Date(iso), now = new Date();
+    const diff = Math.floor((now - d) / 60000);
+    if (diff < 1)    return 'Now';
+    if (diff < 60)   return diff + 'm';
+    if (diff < 1440) return Math.floor(diff / 60) + 'h';
+    if (diff < 10080) return d.toLocaleDateString('en-KE', { weekday: 'short' });
     return d.toLocaleDateString('en-KE', { month: 'short', day: 'numeric' });
   }
 
-  /* ── Open a conversation thread from inbox ───────────────────── */
-  async function _inboxOpenConv(convId) {
-    const s = window.sb;
-    if (!s) return;
+  /* ════════════════════════════════════════════════════════════════════════
+     CSS INJECTION
+  ════════════════════════════════════════════════════════════════════════ */
+  function injectCSS() {
+    if (document.getElementById('cbm-css')) return;
+    const s = document.createElement('style');
+    s.id = 'cbm-css';
+    s.textContent = `
+/* ═══ CABANA MESSENGER ═══════════════════════════════════════════════════ */
+:root{
+  --cbm-ink:#0A0A14;
+  --cbm-ink2:#4A4C66;
+  --cbm-ink3:#8E90AD;
+  --cbm-bg:#FCFCFD;
+  --cbm-card:#fff;
+  --cbm-line:rgba(10,10,20,.08);
+  --cbm-pri:#4361FF;
+  --cbm-pri2:#7B2FF7;
+  --cbm-teal:#2DD4BF;
+  --cbm-danger:#FF4D6D;
+  --cbm-warn:#F59E0B;
+  --cbm-radius:24px;
+  --cbm-shadow:0 24px 72px rgba(10,10,20,.2),0 4px 16px rgba(10,10,20,.08);
+  --cbm-font:'Inter',system-ui,-apple-system,sans-serif;
+  --cbm-font-d:'Geist','Inter',sans-serif;
+}
 
-    const { data: c } = await s.from('chat_conversations').select('*').eq('id', convId).maybeSingle();
-    if (!c) return;
+/* ─── HOST CHAT PANEL (floating, corner) ──────────────────────────────── */
+#cbm-panel-wrap{
+  position:fixed;inset:0;z-index:8800;
+  display:flex;align-items:flex-end;justify-content:flex-end;
+  padding:16px;pointer-events:none;
+}
+#cbm-panel-wrap.open{pointer-events:all;}
+#cbm-panel{
+  width:390px;max-width:calc(100vw - 24px);
+  height:min(640px,92vh);
+  background:var(--cbm-card);
+  border-radius:var(--cbm-radius);
+  box-shadow:var(--cbm-shadow);
+  display:flex;flex-direction:column;overflow:hidden;
+  transform:translateY(24px) scale(.97);opacity:0;
+  transition:transform .38s cubic-bezier(.22,1,.36,1),opacity .28s;
+  pointer-events:none;
+}
+#cbm-panel-wrap.open #cbm-panel{
+  transform:translateY(0) scale(1);opacity:1;pointer-events:all;
+}
+@media(max-width:480px){
+  #cbm-panel-wrap{padding:0;align-items:flex-end;}
+  #cbm-panel{width:100%;max-width:100%;height:88vh;border-radius:22px 22px 0 0;}
+}
 
-    _conv = c;
-    const ICO = { apartment:'🏠', roommate:'🤝', tour:'🦁', event:'🎟', carhire:'🚗', food:'🍽', shopping:'🛍' };
+/* ─── Panel header ───────────────────────────────────────────────────── */
+.cbm-head{
+  padding:0 16px;height:66px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--cbm-pri),var(--cbm-pri2));
+  display:flex;align-items:center;gap:12px;position:relative;
+}
+.cbm-head-ava{
+  width:40px;height:40px;border-radius:50%;
+  background:rgba(255,255,255,.2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;flex-shrink:0;
+}
+.cbm-head-info{flex:1;min-width:0;}
+.cbm-head-name{font:700 15px/1.2 var(--cbm-font-d);color:#fff;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cbm-head-sub{font:500 11px/1 var(--cbm-font);color:rgba(255,255,255,.72);margin-top:3px;}
+.cbm-head-status{
+  display:flex;align-items:center;gap:5px;
+  font:500 11px/1 var(--cbm-font);color:rgba(255,255,255,.72);
+  flex-shrink:0;
+}
+.cbm-online-dot{width:7px;height:7px;border-radius:50%;background:#2DD4BF;flex-shrink:0;}
+.cbm-head-close{
+  width:32px;height:32px;border-radius:50%;
+  background:rgba(255,255,255,.15);border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;color:#fff;
+  flex-shrink:0;transition:background .2s;
+}
+.cbm-head-close:hover{background:rgba(255,255,255,.28);}
 
-    // Switch from list to thread view
-    const listWrap = document.getElementById('apt-inbox-list-wrap');
-    const thread   = document.getElementById('apt-inbox-thread');
-    listWrap.style.display = 'none';
-    thread.classList.add('open');
+/* ─── Security notice banner ─────────────────────────────────────────── */
+.cbm-notice{
+  padding:9px 14px;font:500 11px/1.45 var(--cbm-font);
+  background:rgba(67,97,255,.06);border-bottom:1px solid rgba(67,97,255,.1);
+  color:#4361FF;display:flex;align-items:center;gap:7px;flex-shrink:0;
+}
+.cbm-notice svg{flex-shrink:0;opacity:.8;}
 
-    document.getElementById('apt-thread-ico').textContent = ICO[c.listing_type] || '💬';
-    document.getElementById('apt-thread-title').textContent = c.listing_title || 'Conversation';
+/* ─── Scrubbed badge (in messages) ──────────────────────────────────── */
+.cbm-scrub{
+  display:inline-flex;align-items:center;gap:3px;
+  padding:1px 6px;border-radius:5px;
+  background:rgba(255,77,109,.1);color:#CC2233;
+  font-size:10px;font-weight:700;vertical-align:middle;
+}
 
-    const msgsEl = document.getElementById('apt-inbox-msgs');
-    msgsEl.innerHTML = '<div class="apt-ch-empty"><div class="apt-ch-empty-ico">⏳</div><div class="apt-ch-empty-title">Loading…</div></div>';
+/* ─── Messages area ──────────────────────────────────────────────────── */
+.cbm-msgs{
+  flex:1;overflow-y:auto;padding:14px 14px 10px;
+  display:flex;flex-direction:column;gap:10px;
+  scroll-behavior:smooth;
+}
+.cbm-msgs::-webkit-scrollbar{width:3px;}
+.cbm-msgs::-webkit-scrollbar-thumb{background:rgba(10,10,20,.1);border-radius:2px;}
 
-    const msgs = await _loadMsgsForEl(convId, msgsEl);
+/* Message bubbles */
+.cbm-msg{display:flex;flex-direction:column;max-width:80%;gap:4px;}
+.cbm-msg.me{align-self:flex-end;align-items:flex-end;}
+.cbm-msg.them{align-self:flex-start;align-items:flex-start;}
+.cbm-msg.sys{align-self:center;max-width:90%;}
 
-    // Mark as read
-    const field = _userId === c.host_id ? 'host_unread' : 'guest_unread';
-    await s.from('chat_conversations').update({ [field]: 0 }).eq('id', convId);
+.cbm-bubble{
+  padding:10px 14px;border-radius:18px;
+  font:400 14px/1.5 var(--cbm-font);word-break:break-word;
+}
+.cbm-msg.me .cbm-bubble{
+  background:linear-gradient(135deg,#4361FF,#7B2FF7);color:#fff;
+  border-bottom-right-radius:4px;
+}
+.cbm-msg.them .cbm-bubble{
+  background:#F1F2F8;color:var(--cbm-ink);
+  border-bottom-left-radius:4px;
+}
+.cbm-msg.sys .cbm-bubble{
+  background:rgba(243,249,255,.9);border:1px solid rgba(67,97,255,.15);
+  color:#4361FF;font-size:12px;text-align:center;border-radius:10px;
+  padding:8px 14px;
+}
+.cbm-msg.warn .cbm-bubble{
+  background:rgba(255,168,0,.08);border:1px solid rgba(255,168,0,.2);
+  color:#92600A;font-size:12px;text-align:center;border-radius:10px;
+}
+.cbm-time{
+  font:400 10px/1 var(--cbm-font);color:rgba(10,10,20,.35);
+  padding:0 3px;display:flex;align-items:center;gap:6px;
+}
+.cbm-tick{color:var(--cbm-teal);display:inline-flex;}
 
-    // Subscribe realtime to the inbox msgs element
-    if (_realtimeSub) { _realtimeSub.unsubscribe(); _realtimeSub = null; }
-    _realtimeSub = s.channel('inbox-' + convId)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `conversation_id=eq.${convId}` },
-        async () => { await _loadMsgsForEl(convId, msgsEl); })
-      .subscribe();
+/* Typing indicator */
+.cbm-typing{display:flex;gap:4px;align-items:center;padding:10px 14px;
+  background:#F1F2F8;border-radius:18px;border-bottom-left-radius:4px;
+  width:fit-content;align-self:flex-start;}
+.cbm-dot{width:7px;height:7px;border-radius:50%;background:var(--cbm-ink3);
+  animation:cbmBounce 1.2s ease-in-out infinite;}
+.cbm-dot:nth-child(2){animation-delay:.2s;}
+.cbm-dot:nth-child(3){animation-delay:.4s;}
+@keyframes cbmBounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
+
+/* Day divider */
+.cbm-divider{
+  display:flex;align-items:center;gap:10px;
+  font:600 10px/1 var(--cbm-font);color:var(--cbm-ink3);
+  letter-spacing:.06em;text-transform:uppercase;margin:6px 0;align-self:stretch;
+}
+.cbm-divider::before,.cbm-divider::after{
+  content:'';flex:1;height:1px;background:var(--cbm-line);
+}
+
+/* Empty state */
+.cbm-empty{
+  flex:1;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:12px;padding:30px 20px;text-align:center;
+}
+.cbm-empty-ico{font-size:48px;}
+.cbm-empty-ttl{font:700 16px/1.3 var(--cbm-font-d);color:var(--cbm-ink);}
+.cbm-empty-sub{font:400 13px/1.6 var(--cbm-font);color:var(--cbm-ink3);max-width:230px;}
+
+/* ─── Input bar ──────────────────────────────────────────────────────── */
+.cbm-input-bar{
+  padding:10px 12px 12px;border-top:1px solid var(--cbm-line);
+  display:flex;align-items:flex-end;gap:9px;flex-shrink:0;
+  background:var(--cbm-card);
+}
+.cbm-input{
+  flex:1;border:1.5px solid rgba(10,10,20,.1);border-radius:22px;
+  padding:10px 15px;font:400 14px/1.4 var(--cbm-font);
+  resize:none;outline:none;max-height:110px;min-height:42px;
+  overflow-y:auto;background:#F8F9FF;color:var(--cbm-ink);
+  transition:border-color .2s,background .2s;
+}
+.cbm-input:focus{border-color:var(--cbm-pri);background:#fff;}
+.cbm-input::placeholder{color:var(--cbm-ink3);}
+.cbm-send{
+  width:42px;height:42px;border-radius:50%;flex-shrink:0;
+  background:linear-gradient(135deg,#4361FF,#7B2FF7);
+  border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;box-shadow:0 4px 16px rgba(67,97,255,.35);
+  transition:transform .18s,box-shadow .18s,opacity .15s;
+}
+.cbm-send:hover{transform:scale(1.1);box-shadow:0 6px 22px rgba(67,97,255,.5);}
+.cbm-send:active{transform:scale(.94);}
+.cbm-send:disabled{opacity:.4;transform:none;cursor:not-allowed;box-shadow:none;}
+
+/* ═══ FULL-SCREEN INBOX ═══════════════════════════════════════════════════ */
+#cbm-inbox{
+  position:fixed;inset:0;z-index:8900;
+  background:var(--cbm-bg);
+  display:flex;flex-direction:column;
+  transform:translateX(100%);
+  transition:transform .4s cubic-bezier(.22,1,.36,1);
+  will-change:transform;
+}
+#cbm-inbox.open{transform:translateX(0);}
+
+/* Inbox topbar */
+.cbm-ib-bar{
+  height:64px;display:flex;align-items:center;gap:12px;
+  padding:0 18px;flex-shrink:0;
+  background:rgba(252,252,253,.94);
+  -webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--cbm-line);position:relative;z-index:2;
+}
+.cbm-ib-back{
+  width:40px;height:40px;border-radius:14px;flex-shrink:0;
+  border:1.5px solid var(--cbm-line);background:rgba(255,255,255,.8);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;color:var(--cbm-ink);transition:border-color .2s,color .2s;
+}
+.cbm-ib-back:hover{border-color:var(--cbm-pri);color:var(--cbm-pri);}
+.cbm-ib-titles{flex:1;min-width:0;}
+.cbm-ib-title{font:700 19px/1.1 var(--cbm-font-d);color:var(--cbm-ink);}
+.cbm-ib-sub{font:400 12px/1 var(--cbm-font);color:var(--cbm-ink3);margin-top:3px;}
+.cbm-ib-compose{
+  width:40px;height:40px;border-radius:14px;flex-shrink:0;
+  border:1.5px solid var(--cbm-line);background:rgba(255,255,255,.8);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;color:var(--cbm-pri);transition:border-color .2s,background .2s;
+}
+.cbm-ib-compose:hover{border-color:var(--cbm-pri);background:rgba(67,97,255,.06);}
+
+/* Search bar */
+.cbm-search-wrap{padding:10px 16px 8px;flex-shrink:0;border-bottom:1px solid var(--cbm-line);}
+.cbm-search{
+  display:flex;align-items:center;gap:9px;
+  background:#F1F2F8;border-radius:13px;padding:9px 14px;
+  border:1.5px solid transparent;transition:border-color .2s,background .2s;
+}
+.cbm-search:focus-within{background:#fff;border-color:rgba(67,97,255,.25);}
+.cbm-search svg{color:var(--cbm-ink3);flex-shrink:0;}
+.cbm-search-input{
+  flex:1;border:none;background:none;outline:none;
+  font:400 14px/1 var(--cbm-font);color:var(--cbm-ink);
+}
+.cbm-search-input::placeholder{color:var(--cbm-ink3);}
+
+/* List view */
+#cbm-ib-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;}
+#cbm-ib-list::-webkit-scrollbar{width:3px;}
+#cbm-ib-list::-webkit-scrollbar-thumb{background:rgba(10,10,20,.1);border-radius:2px;}
+
+/* Conversation row */
+.cbm-conv{
+  display:flex;align-items:center;gap:14px;
+  padding:15px 18px;cursor:pointer;
+  border-bottom:1px solid rgba(10,10,20,.04);
+  transition:background .14s;-webkit-tap-highlight-color:transparent;
+  position:relative;
+}
+.cbm-conv:active,.cbm-conv:hover{background:rgba(67,97,255,.04);}
+.cbm-conv-ava{
+  width:54px;height:54px;border-radius:50%;flex-shrink:0;
+  background:linear-gradient(135deg,#B8A4F4,#7B2FF7);
+  display:flex;align-items:center;justify-content:center;
+  font-size:24px;position:relative;
+}
+.cbm-conv-badge{
+  position:absolute;top:0;right:0;
+  min-width:20px;height:20px;border-radius:10px;
+  background:var(--cbm-pri);color:#fff;
+  font:800 10px/1 var(--cbm-font);
+  display:flex;align-items:center;justify-content:center;
+  padding:0 5px;border:2.5px solid var(--cbm-bg);
+}
+.cbm-conv-body{flex:1;min-width:0;}
+.cbm-conv-name{
+  font:700 14px/1.3 var(--cbm-font-d);color:var(--cbm-ink);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  margin-bottom:4px;
+}
+.cbm-conv-prev{
+  font:400 13px/1.3 var(--cbm-font);color:var(--cbm-ink3);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.cbm-conv.unread .cbm-conv-prev{color:var(--cbm-ink2);font-weight:500;}
+.cbm-conv-meta{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;}
+.cbm-conv-time{font:400 11px/1 var(--cbm-font);color:var(--cbm-ink3);}
+.cbm-conv-unread-pill{
+  min-width:20px;height:20px;border-radius:10px;
+  background:var(--cbm-pri);color:#fff;
+  font:800 10px/1 var(--cbm-font);
+  display:flex;align-items:center;justify-content:center;padding:0 5px;
+}
+
+/* Section headers in list */
+.cbm-section-head{
+  padding:8px 18px 5px;
+  font:700 10px/1 var(--cbm-font);letter-spacing:.08em;text-transform:uppercase;
+  color:var(--cbm-ink3);background:var(--cbm-bg);
+  border-bottom:1px solid var(--cbm-line);flex-shrink:0;
+}
+
+/* Thread view */
+#cbm-thread{
+  position:absolute;inset:0;
+  background:var(--cbm-bg);
+  display:flex;flex-direction:column;
+  transform:translateX(100%);
+  transition:transform .36s cubic-bezier(.22,1,.36,1);
+  z-index:1;
+}
+#cbm-thread.open{transform:translateX(0);}
+
+.cbm-thread-bar{
+  height:64px;display:flex;align-items:center;gap:12px;
+  padding:0 16px;flex-shrink:0;
+  background:rgba(252,252,253,.94);
+  -webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--cbm-line);
+}
+.cbm-thread-back{
+  width:38px;height:38px;border-radius:12px;flex-shrink:0;
+  border:1.5px solid var(--cbm-line);background:rgba(255,255,255,.8);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;color:var(--cbm-ink);transition:border-color .2s,color .2s;
+}
+.cbm-thread-back:hover{border-color:var(--cbm-pri);color:var(--cbm-pri);}
+.cbm-thread-ava{
+  width:38px;height:38px;border-radius:50%;
+  background:linear-gradient(135deg,#B8A4F4,#7B2FF7);
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;flex-shrink:0;
+}
+.cbm-thread-info{flex:1;min-width:0;}
+.cbm-thread-name{
+  font:700 15px/1.2 var(--cbm-font-d);color:var(--cbm-ink);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.cbm-thread-sub{font:400 11px/1 var(--cbm-font);color:var(--cbm-ink3);margin-top:2px;}
+
+/* Inbox empty */
+.cbm-ib-empty{
+  flex:1;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:14px;padding:40px 28px;text-align:center;
+}
+.cbm-ib-empty-ico{font-size:60px;}
+.cbm-ib-empty-ttl{font:700 20px/1.3 var(--cbm-font-d);color:var(--cbm-ink);}
+.cbm-ib-empty-sub{font:400 14px/1.6 var(--cbm-font);color:var(--cbm-ink3);max-width:260px;}
+
+/* Loading skeleton */
+.cbm-skeleton{
+  flex:1;padding:12px 18px;display:flex;flex-direction:column;gap:16px;overflow:hidden;
+}
+.cbm-skel-row{display:flex;align-items:center;gap:14px;}
+.cbm-skel-ava{width:54px;height:54px;border-radius:50%;background:#F1F2F8;flex-shrink:0;}
+.cbm-skel-body{flex:1;display:flex;flex-direction:column;gap:8px;}
+.cbm-skel-l{height:13px;border-radius:7px;background:#F1F2F8;}
+.cbm-skel-s{height:11px;border-radius:6px;background:#F1F2F8;width:70%;}
+@keyframes cbmShim{0%{opacity:1}50%{opacity:.5}100%{opacity:1}}
+.cbm-skel-ava,.cbm-skel-l,.cbm-skel-s{animation:cbmShim 1.6s ease-in-out infinite;}
+
+/* ─── Bell badge integration ──────────────────────────────────────────── */
+.cbm-bell-badge{
+  position:absolute;top:6px;right:6px;
+  width:10px;height:10px;border-radius:50%;
+  background:var(--cbm-danger);border:2.5px solid #fff;
+  display:none;
+}
+.cbm-bell-badge.on{display:block;}
+.cbm-bell-count{
+  position:absolute;top:-4px;right:-5px;
+  min-width:18px;height:18px;border-radius:9px;
+  background:var(--cbm-danger);color:#fff;
+  font:800 9px/1 var(--cbm-font);
+  display:none;align-items:center;justify-content:center;
+  padding:0 4px;border:2px solid var(--cbm-bg);
+}
+.cbm-bell-count.on{display:flex;}
+
+/* Toast */
+.cbm-toast{
+  position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:rgba(10,10,20,.92);color:#fff;
+  padding:11px 22px;border-radius:100px;
+  font:600 13px/1 var(--cbm-font);
+  z-index:9999;pointer-events:none;
+  opacity:0;transition:opacity .25s,transform .25s;
+  white-space:nowrap;
+}
+.cbm-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* Safe-area padding */
+@supports(padding:env(safe-area-inset-bottom)){
+  .cbm-input-bar{padding-bottom:max(12px,env(safe-area-inset-bottom));}
+  #cbm-inbox{padding-bottom:env(safe-area-inset-bottom);}
+}
+    `;
+    document.head.appendChild(s);
   }
 
-  /* ── Load messages into a given element ──────────────────────── */
-  async function _loadMsgsForEl(convId, el) {
-    const s = window.sb;
-    if (!s) return;
-    const { data } = await s.from('chat_messages')
-      .select('*').eq('conversation_id', convId)
-      .order('created_at', { ascending: true }).limit(100);
-    const msgs = data || [];
+  /* ════════════════════════════════════════════════════════════════════════
+     DOM BUILDERS
+  ════════════════════════════════════════════════════════════════════════ */
+
+  /* ── Floating host panel ─────────────────────────────────────────────── */
+  function buildPanel() {
+    if (document.getElementById('cbm-panel-wrap')) return;
+    const w = document.createElement('div');
+    w.id = 'cbm-panel-wrap';
+    w.innerHTML = `
+      <div id="cbm-panel" role="dialog" aria-label="Chat with host" aria-modal="true">
+        <div class="cbm-head">
+          <div class="cbm-head-ava" id="cbm-head-ava">💬</div>
+          <div class="cbm-head-info">
+            <div class="cbm-head-name" id="cbm-head-name">Chat with Host</div>
+            <div class="cbm-head-sub" id="cbm-head-sub">Secure in-app messaging</div>
+          </div>
+          <div class="cbm-head-status" id="cbm-head-status">
+            <span class="cbm-online-dot"></span> Secure
+          </div>
+          <button class="cbm-head-close" onclick="CabanaChat.close()" aria-label="Close chat">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <div class="cbm-notice">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Contact info sharing isn't allowed — keep all communication here for your safety.
+        </div>
+        <div id="cbm-panel-msgs" class="cbm-msgs"></div>
+        <div class="cbm-input-bar">
+          <textarea class="cbm-input" id="cbm-panel-input"
+            placeholder="Type a message…" rows="1" aria-label="Message"
+            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();CabanaChat._panelSend();}"
+            oninput="CabanaChat._grow(this)"></textarea>
+          <button class="cbm-send" id="cbm-panel-send" onclick="CabanaChat._panelSend()" aria-label="Send message" title="Send">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13M22 2 15 22l-4-9-9-4 20-7z"/></svg>
+          </button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(w);
+  }
+
+  /* ── Full inbox overlay ──────────────────────────────────────────────── */
+  function buildInbox() {
+    if (document.getElementById('cbm-inbox')) return;
+    const el = document.createElement('div');
+    el.id = 'cbm-inbox';
+    el.setAttribute('role', 'dialog');
+    el.setAttribute('aria-label', 'Messages');
+    el.setAttribute('aria-modal', 'true');
+    el.innerHTML = `
+      <!-- INBOX BAR -->
+      <div class="cbm-ib-bar">
+        <button class="cbm-ib-back" onclick="CabanaChat.closeInbox()" aria-label="Close messages">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        </button>
+        <div class="cbm-ib-titles">
+          <div class="cbm-ib-title">Messages</div>
+          <div class="cbm-ib-sub" id="cbm-ib-sub">Loading…</div>
+        </div>
+        <button class="cbm-ib-compose" onclick="CabanaChat._goToStays()" aria-label="New message" title="Browse stays to message a host">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+      </div>
+
+      <!-- SEARCH -->
+      <div class="cbm-search-wrap">
+        <div class="cbm-search">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input class="cbm-search-input" id="cbm-search" placeholder="Search conversations…" oninput="CabanaChat._filterConvs(this.value)" autocomplete="off"/>
+        </div>
+      </div>
+
+      <!-- CONVERSATION LIST -->
+      <div id="cbm-ib-list"></div>
+
+      <!-- THREAD VIEW (slides over list) -->
+      <div id="cbm-thread">
+        <div class="cbm-thread-bar">
+          <button class="cbm-thread-back" onclick="CabanaChat._threadBack()" aria-label="Back to inbox">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          </button>
+          <div class="cbm-thread-ava" id="cbm-thread-ava">🏠</div>
+          <div class="cbm-thread-info">
+            <div class="cbm-thread-name" id="cbm-thread-name">Conversation</div>
+            <div class="cbm-thread-sub" id="cbm-thread-sub">Secure messaging</div>
+          </div>
+        </div>
+        <div class="cbm-notice">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Contact info sharing isn't allowed — keep all communication here for your safety.
+        </div>
+        <div id="cbm-thread-msgs" class="cbm-msgs"></div>
+        <div class="cbm-input-bar">
+          <textarea class="cbm-input" id="cbm-thread-input"
+            placeholder="Type a message…" rows="1" aria-label="Message"
+            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();CabanaChat._threadSend();}"
+            oninput="CabanaChat._grow(this)"></textarea>
+          <button class="cbm-send" id="cbm-thread-send" onclick="CabanaChat._threadSend()" aria-label="Send message" title="Send">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13M22 2 15 22l-4-9-9-4 20-7z"/></svg>
+          </button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(el);
+  }
+
+  /* ── Toast ───────────────────────────────────────────────────────────── */
+  let _toastTimer;
+  function toast(msg) {
+    let t = document.getElementById('cbm-toast');
+    if (!t) { t = document.createElement('div'); t.id = 'cbm-toast'; t.className = 'cbm-toast'; document.body.appendChild(t); }
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(_toastTimer);
+    _toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+  }
+
+  /* ════════════════════════════════════════════════════════════════════════
+     MESSAGE RENDERING
+  ════════════════════════════════════════════════════════════════════════ */
+  function renderMsgs(msgs, el) {
+    if (!el) return;
     if (!msgs.length) {
-      el.innerHTML = `<div class="apt-ch-empty">
-        <div class="apt-ch-empty-ico">👋</div>
-        <div class="apt-ch-empty-title">Start the conversation</div>
-        <div class="apt-ch-empty-sub">Ask about availability, check-in details, or anything else.</div>
+      el.innerHTML = `<div class="cbm-empty">
+        <div class="cbm-empty-ico">👋</div>
+        <div class="cbm-empty-ttl">Start the conversation</div>
+        <div class="cbm-empty-sub">Ask about availability, check-in details, house rules — everything stays safely in-app.</div>
       </div>`;
       return;
     }
-    el.innerHTML = msgs.map(m => {
+
+    let html = '';
+    let lastDay = '';
+    for (const m of msgs) {
+      const day = new Date(m.created_at).toLocaleDateString('en-KE', { weekday: 'long', month: 'long', day: 'numeric' });
+      if (day !== lastDay) {
+        html += `<div class="cbm-divider">${day}</div>`;
+        lastDay = day;
+      }
       const isMe = m.sender_id === _userId;
-      const cls = m.is_system ? 'system' : isMe ? 'me' : 'them';
-      const content = m.content.replace(/\[(phone|email|link|website|WhatsApp|social handle|social media|direct contact|number) removed\]/gi, '<span style="background:rgba(255,77,109,.12);color:#CC2233;border-radius:4px;padding:1px 5px;font-size:11px;font-weight:700;">[$1 removed]</span>');
-      return `<div class="apt-ch-msg ${cls}">
-        <div class="apt-ch-bubble">${content}</div>
-        <div class="apt-ch-time">${fmtTime(m.created_at)}</div>
-      </div>`;
-    }).join('');
+      const cls = m.is_system ? 'sys' : isMe ? 'me' : 'them';
+      const content = (m.content || '').replace(
+        /\[(phone|email|link|website|WhatsApp|social|social handle|social media|direct contact|number) removed\]/gi,
+        '<span class="cbm-scrub">⚠ $1 removed</span>'
+      );
+      const timeHtml = `<div class="cbm-time">${fmtMsg(m.created_at)}${m.was_scrubbed ? ' · <span style="color:#CC2233;font-size:9px;font-weight:700;">Contact info removed</span>' : ''}${isMe && !m.is_system ? `<span class="cbm-tick"><svg width="13" height="9" viewBox="0 0 16 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 5l4 4L15 1"/>${m.is_read ? '<path d="M6 5l4 4"/>' : ''}</svg></span>` : ''}</div>`;
+      html += `<div class="cbm-msg ${cls}"><div class="cbm-bubble">${content}</div>${m.is_system ? '' : timeHtml}</div>`;
+    }
+    el.innerHTML = html;
     el.scrollTop = el.scrollHeight;
   }
 
-  /* ── Send from inbox thread ───────────────────────────────────── */
-  async function _inboxSend() {
-    const input = document.getElementById('apt-inbox-input');
-    const raw = input?.value.trim();
-    if (!raw || !_conv) return;
-    const s = window.sb;
-    if (!s) return;
-    const { text: clean, scrubbed } = scrubContactInfo(raw);
-    if (clean.replace(/\[.*? removed\]/g, '').trim().length < 2) {
-      const el = document.getElementById('apt-inbox-msgs');
-      el.insertAdjacentHTML('beforeend', '<div class="apt-ch-msg system"><div class="apt-ch-bubble">⚠️ Your message contained only contact information, which is not permitted.</div></div>');
-      el.scrollTop = el.scrollHeight;
-      input.value = '';
-      return;
-    }
-    const btn = document.getElementById('apt-inbox-send');
-    if (btn) btn.disabled = true;
-    input.value = '';
-    input.style.height = '';
-    await s.from('chat_messages').insert({ conversation_id: _conv.id, sender_id: _userId, content: clean, content_raw: scrubbed ? raw : null, was_scrubbed: scrubbed });
-    const otherField = _userId === _conv.host_id ? 'guest_unread' : 'host_unread';
-    await s.from('chat_conversations').update({ last_message: clean.length > 60 ? clean.slice(0,60)+'…' : clean, last_message_at: new Date().toISOString(), last_sender_id: _userId, [otherField]: (_conv[otherField]||0)+1 }).eq('id', _conv.id);
-    if (btn) btn.disabled = false;
-    await _loadMsgsForEl(_conv.id, document.getElementById('apt-inbox-msgs'));
+  /* ════════════════════════════════════════════════════════════════════════
+     DATA LAYER
+  ════════════════════════════════════════════════════════════════════════ */
+  async function loadMsgs(convId) {
+    const s = sb();
+    if (!s) return [];
+    const { data } = await s.from('chat_messages')
+      .select('*').eq('conversation_id', convId)
+      .order('created_at', { ascending: true }).limit(MSG_LIMIT);
+    return data || [];
   }
 
-  /* ── Back to list from thread ─────────────────────────────────── */
-  function _inboxBackToList() {
-    if (_realtimeSub) { _realtimeSub.unsubscribe(); _realtimeSub = null; }
-    document.getElementById('apt-inbox-thread').classList.remove('open');
-    const listWrap = document.getElementById('apt-inbox-list-wrap');
-    listWrap.style.display = 'flex';
-    listWrap.style.flexDirection = 'column';
-  }
+  async function getOrCreateConv({ listingId, listingType, listingTitle, hostId }) {
+    const s = sb();
+    if (!s) return null;
+    const { data: existing } = await s.from('chat_conversations')
+      .select('*').eq('listing_id', listingId).eq('guest_id', _userId).maybeSingle();
+    if (existing) return existing;
 
-  /* ── Close full-screen inbox ──────────────────────────────────── */
-  function closeInbox() {
-    const overlay = document.getElementById('apt-inbox-overlay');
-    if (overlay) overlay.classList.remove('open');
-    document.body.style.overflow = '';
-    if (_realtimeSub) { _realtimeSub.unsubscribe(); _realtimeSub = null; }
-  }
+    const { data: created, error } = await s.from('chat_conversations').insert({
+      listing_id:    listingId,
+      listing_type:  listingType,
+      listing_title: listingTitle,
+      host_id:       hostId,
+      guest_id:      _userId,
+    }).select().maybeSingle();
 
-  /* ── Open conversation by ID (from inbox) ────────────────────── */
-  async function _openConvById(convId) {
-    const s = window.sb;
-    if (!s) return;
-    const { data: c } = await s.from('chat_conversations').select('*').eq('id', convId).maybeSingle();
-    if (!c) return;
+    if (error || !created) return null;
 
-    _conv = c;
-    _inbox = false;
-    document.getElementById('apt-ch-input-wrap').style.display = 'flex';
-    document.getElementById('apt-ch-head-title').textContent = c.listing_title || 'Conversation';
-    document.getElementById('apt-ch-head-sub').textContent = 'Chat';
-    const ico = { apartment:'🏠', roommate:'🤝', tour:'🦁', event:'🎟', carhire:'🚗' }[c.listing_type] || '💬';
-    document.getElementById('apt-ch-head-ico').textContent = ico;
-
-    document.getElementById('apt-ch-msgs').innerHTML = '<div class="apt-ch-empty"><div class="apt-ch-empty-ico">⏳</div><div class="apt-ch-empty-title">Loading…</div></div>';
-    const msgs = await loadMessages(convId);
-    renderMessages(msgs);
-
-    if (_realtimeSub) { _realtimeSub.unsubscribe(); _realtimeSub = null; }
-    subscribeRealtime(convId);
-
-    // Mark read
-    const field = _userId === c.host_id ? 'host_unread' : 'guest_unread';
-    await s.from('chat_conversations').update({ [field]: 0 }).eq('id', convId);
-  }
-
-  /* ── Send a message ──────────────────────────────────────────── */
-  async function send() {
-    const input = document.getElementById('apt-ch-input');
-    const raw = input?.value.trim();
-    if (!raw || !_conv) return;
-
-    const s = window.sb;
-    if (!s) return;
-
-    // Scrub contact info
-    const { text: clean, scrubbed } = scrubContactInfo(raw);
-
-    // Block if entire message was contact info
-    if (clean.replace(/\[.*? removed\]/g, '').trim().length < 2) {
-      // Show warning in chat
-      const el = document.getElementById('apt-ch-msgs');
-      const warn = document.createElement('div');
-      warn.className = 'apt-ch-msg system';
-      warn.innerHTML = '<div class="apt-ch-bubble">⚠️ Your message contained only contact information, which is not permitted. Please use this chat to communicate.</div>';
-      el.appendChild(warn);
-      el.scrollTop = el.scrollHeight;
-      input.value = '';
-      return;
-    }
-
-    // Disable button while sending
-    const btn = document.getElementById('apt-ch-send');
-    if (btn) btn.disabled = true;
-    input.value = '';
-    input.style.height = '';
-
+    // Auto-open message
     await s.from('chat_messages').insert({
-      conversation_id: _conv.id,
-      sender_id: _userId,
-      content: clean,
-      content_raw: scrubbed ? raw : null,
-      was_scrubbed: scrubbed,
+      conversation_id: created.id,
+      sender_id:       _userId,
+      content:         `Hi! I'm interested in "${listingTitle}". Is it available and could you share more details?`,
+      is_system:       false,
+    });
+    await s.from('chat_conversations').update({
+      last_message:    `Hi! I'm interested in "${listingTitle}".`,
+      last_message_at: new Date().toISOString(),
+      last_sender_id:  _userId,
+      host_unread:     1,
+    }).eq('id', created.id);
+
+    return created;
+  }
+
+  async function markRead(conv) {
+    if (!conv || !_userId) return;
+    const s = sb();
+    if (!s) return;
+    const field = _userId === conv.host_id ? 'host_unread' : 'guest_unread';
+    await s.from('chat_conversations').update({ [field]: 0 }).eq('id', conv.id);
+  }
+
+  async function sendMessage(convId, text, sendBtnId, inputId, msgsElId) {
+    const s = sb();
+    if (!s || !convId || !text.trim()) return;
+
+    const { text: clean, scrubbed } = scrub(text.trim());
+
+    // Block all-contact messages
+    const cleanContent = clean.replace(/\[.*? removed\]/g, '').trim();
+    if (cleanContent.length < 2) {
+      const el = document.getElementById(msgsElId);
+      if (el) {
+        el.insertAdjacentHTML('beforeend', '<div class="cbm-msg warn"><div class="cbm-bubble">⚠️ Your message contained only contact info. Sharing contact details is not permitted — please keep communication in-app.</div></div>');
+        el.scrollTop = el.scrollHeight;
+      }
+      const inp = document.getElementById(inputId);
+      if (inp) { inp.value = ''; inp.style.height = ''; }
+      return;
+    }
+
+    const sendBtn = document.getElementById(sendBtnId);
+    const inp     = document.getElementById(inputId);
+    if (sendBtn) sendBtn.disabled = true;
+    if (inp) { inp.value = ''; inp.style.height = ''; }
+
+    try {
+      await s.from('chat_messages').insert({
+        conversation_id: convId,
+        sender_id:       _userId,
+        content:         clean,
+        content_raw:     scrubbed ? text : null,
+        was_scrubbed:    scrubbed,
+      });
+      const { data: conv } = await s.from('chat_conversations').select('host_id,host_unread,guest_unread').eq('id', convId).maybeSingle();
+      if (conv) {
+        const otherField = _userId === conv.host_id ? 'guest_unread' : 'host_unread';
+        const preview    = clean.length > 60 ? clean.slice(0, 60) + '…' : clean;
+        await s.from('chat_conversations').update({
+          last_message:    preview,
+          last_message_at: new Date().toISOString(),
+          last_sender_id:  _userId,
+          [otherField]:    (conv[otherField] || 0) + 1,
+        }).eq('id', convId);
+      }
+      if (scrubbed) toast('Some contact info was removed from your message.');
+    } catch (err) {
+      toast('Message failed to send. Please try again.');
+    } finally {
+      if (sendBtn) sendBtn.disabled = false;
+    }
+  }
+
+  /* ════════════════════════════════════════════════════════════════════════
+     REALTIME SUBSCRIPTIONS
+  ════════════════════════════════════════════════════════════════════════ */
+  function subPanel(convId) {
+    const s = sb();
+    if (!s || _panelSub) return;
+    _panelSub = s.channel('cbm-panel-' + convId)
+      .on('postgres_changes', {
+        event: 'INSERT', schema: 'public', table: 'chat_messages',
+        filter: `conversation_id=eq.${convId}`,
+      }, async () => {
+        const msgs = await loadMsgs(convId);
+        renderMsgs(msgs, document.getElementById('cbm-panel-msgs'));
+        await markRead(_activeConv);
+      })
+      .subscribe();
+  }
+
+  function subThread(convId) {
+    const s = sb();
+    if (!s) return;
+    if (_inboxSub) { _inboxSub.unsubscribe(); _inboxSub = null; }
+    _inboxSub = s.channel('cbm-thread-' + convId)
+      .on('postgres_changes', {
+        event: 'INSERT', schema: 'public', table: 'chat_messages',
+        filter: `conversation_id=eq.${convId}`,
+      }, async () => {
+        const msgs = await loadMsgs(convId);
+        renderMsgs(msgs, document.getElementById('cbm-thread-msgs'));
+        await markRead(_activeConv);
+        updateBell();
+      })
+      .subscribe();
+  }
+
+  function subGlobal() {
+    const s = sb();
+    if (!s || _globalSub || !_userId) return;
+    _globalSub = s.channel('cbm-global-' + _userId)
+      .on('postgres_changes', {
+        event: '*', schema: 'public', table: 'chat_conversations',
+        filter: `guest_id=eq.${_userId}`,
+      }, () => { updateBell(); })
+      .on('postgres_changes', {
+        event: '*', schema: 'public', table: 'chat_conversations',
+        filter: `host_id=eq.${_userId}`,
+      }, () => { updateBell(); })
+      .subscribe();
+  }
+
+  function clearSub(subRef) {
+    try { if (subRef) subRef.unsubscribe(); } catch(_) {}
+    return null;
+  }
+
+  /* ════════════════════════════════════════════════════════════════════════
+     BELL / UNREAD BADGE
+     Works with:
+       • apa-chrome.js bell:  .apa-ico[data-apa="notif"]  +  .apa-ico-dot
+       • apartments.html: #tb-inbox-btn  +  #tb-inbox-badge
+       • dashboard.html:  .apa-ico[data-apa="notif"]  +  .apa-ico-dot
+  ════════════════════════════════════════════════════════════════════════ */
+  async function getUnreadCount() {
+    const s = sb();
+    if (!s || !_userId) return 0;
+    try {
+      const { data } = await s.from('chat_conversations')
+        .select('host_id,host_unread,guest_unread')
+        .or(`host_id.eq.${_userId},guest_id.eq.${_userId}`);
+      if (!data) return 0;
+      return data.reduce((sum, c) => {
+        const u = c.host_id === _userId ? (c.host_unread || 0) : (c.guest_unread || 0);
+        return sum + u;
+      }, 0);
+    } catch (_) { return 0; }
+  }
+
+  function setBellCount(n) {
+    // 1. apa-chrome bell dot (.apa-ico[data-apa="notif"] .apa-ico-dot)
+    const chromeBells = document.querySelectorAll('.apa-ico[data-apa="notif"]');
+    chromeBells.forEach(btn => {
+      const dot = btn.querySelector('.apa-ico-dot');
+      if (dot) dot.style.display = n > 0 ? 'block' : 'none';
+      btn.setAttribute('data-unread', n > 0 ? '1' : '0');
     });
 
-    // Update conversation last message + unread for other party
-    const otherField = _userId === _conv.host_id ? 'guest_unread' : 'host_unread';
-    await s.from('chat_conversations').update({
-      last_message: clean.length > 60 ? clean.slice(0, 60) + '…' : clean,
-      last_message_at: new Date().toISOString(),
-      last_sender_id: _userId,
-      [otherField]: (_conv[otherField] || 0) + 1,
-    }).eq('id', _conv.id);
+    // 2. apartments.html topbar inbox badge (#tb-inbox-badge)
+    const tbBadge = document.getElementById('tb-inbox-badge');
+    if (tbBadge) {
+      if (n > 0) {
+        tbBadge.textContent = n > 99 ? '99+' : n;
+        tbBadge.style.display = 'flex';
+      } else {
+        tbBadge.style.display = 'none';
+      }
+    }
 
-    if (btn) btn.disabled = false;
-
-    // Reload messages (realtime will also trigger but this is instant)
-    const msgs = await loadMessages(_conv.id);
-    renderMessages(msgs);
+    // 3. Any element with id="cbm-bell-count"
+    const countEl = document.getElementById('cbm-bell-count');
+    if (countEl) {
+      countEl.textContent = n > 99 ? '99+' : n;
+      countEl.classList.toggle('on', n > 0);
+    }
   }
 
-  /* ── Textarea auto-size ──────────────────────────────────────── */
-  function _autosize(el) {
-    el.style.height = 'auto';
-    el.style.height = Math.min(el.scrollHeight, 100) + 'px';
+  async function updateBell() {
+    const n = await getUnreadCount();
+    setBellCount(n);
+    return n;
   }
 
-  /* ── Close ───────────────────────────────────────────────────── */
-  function close() {
-    document.getElementById('apt-chat-overlay')?.classList.remove('open');
-    if (_realtimeSub) { _realtimeSub.unsubscribe(); _realtimeSub = null; }
+  function initBell() {
+    // Resolve user first, then start polling
+    resolveUser().then(user => {
+      if (!user) return;
+      _userId = user.id;
+      updateBell();
+      subGlobal();
+      clearInterval(_pollTimer);
+      _pollTimer = setInterval(updateBell, POLL_INTERVAL_MS);
+    });
   }
 
-  /* ── Show FAB if logged in ───────────────────────────────────── */
-  function initFAB() {
-    const user = window.CURRENT_USER;
-    if (!user) return;
+  /* ════════════════════════════════════════════════════════════════════════
+     OPEN HOST CHAT (from listing card "Message the host")
+  ════════════════════════════════════════════════════════════════════════ */
+  async function open({ listingId, listingType, listingTitle, hostId }) {
+    const user = await resolveUser();
+    if (!user) { window.location.href = 'auth.html?next=' + encodeURIComponent(location.href); return; }
+    if (user.id === hostId) { toast("You can't message your own listing."); return; }
+
+    _userId = user.id;
     injectCSS();
-    buildOverlay();
-    const fab = document.getElementById('apt-chat-fab');
-    if (fab) fab.classList.add('visible');
+    buildPanel();
+
+    // Populate header
+    const ico = TYPE_ICONS[listingType] || '💬';
+    document.getElementById('cbm-head-ava').textContent = ico;
+    document.getElementById('cbm-head-name').textContent = listingTitle || 'Chat with Host';
+    document.getElementById('cbm-head-sub').textContent  = (listingType ? listingType.charAt(0).toUpperCase() + listingType.slice(1) : 'Listing') + ' · Secure messaging';
+
+    // Show panel immediately with loading state
+    const msgsEl = document.getElementById('cbm-panel-msgs');
+    msgsEl.innerHTML = `<div class="cbm-empty"><div class="cbm-empty-ico">⏳</div><div class="cbm-empty-ttl">Loading…</div></div>`;
+    document.getElementById('cbm-panel-wrap').classList.add('open');
+    document.body.style.overflow = 'hidden';
+
+    const s = sb();
+    if (!s) { msgsEl.innerHTML = `<div class="cbm-empty"><div class="cbm-empty-ico">⚠️</div><div class="cbm-empty-ttl">Connection error</div><div class="cbm-empty-sub">Please refresh the page and try again.</div></div>`; return; }
+
+    // Unsubscribe old sub
+    _panelSub = clearSub(_panelSub);
+
+    // Get or create conversation
+    const conv = await getOrCreateConv({ listingId, listingType, listingTitle, hostId });
+    if (!conv) {
+      msgsEl.innerHTML = `<div class="cbm-empty"><div class="cbm-empty-ico">⚠️</div><div class="cbm-empty-ttl">Could not start conversation</div><div class="cbm-empty-sub">Please try again or contact support.</div></div>`;
+      return;
+    }
+
+    _activeConv = conv;
+    await markRead(conv);
+    const msgs = await loadMsgs(conv.id);
+    renderMsgs(msgs, msgsEl);
+    subPanel(conv.id);
+    updateBell();
   }
 
-  return { open, openInbox, closeInbox, close, send, _autosize, _openConvById, _inboxOpenConv, _inboxBackToList, _inboxSend, initFAB, scrubContactInfo };
+  /* ── Send from floating panel ─────────────────────────────────────────── */
+  async function _panelSend() {
+    const inp = document.getElementById('cbm-panel-input');
+    const txt = inp?.value || '';
+    if (!txt.trim() || !_activeConv) return;
+    await sendMessage(_activeConv.id, txt, 'cbm-panel-send', 'cbm-panel-input', 'cbm-panel-msgs');
+    const msgs = await loadMsgs(_activeConv.id);
+    renderMsgs(msgs, document.getElementById('cbm-panel-msgs'));
+  }
+
+  /* ── Close floating panel ────────────────────────────────────────────── */
+  function close() {
+    const w = document.getElementById('cbm-panel-wrap');
+    if (w) w.classList.remove('open');
+    document.body.style.overflow = '';
+    _panelSub = clearSub(_panelSub);
+    _activeConv = null;
+  }
+
+  /* ════════════════════════════════════════════════════════════════════════
+     FULL-SCREEN INBOX
+  ════════════════════════════════════════════════════════════════════════ */
+  let _allConvs  = [];   // cached for search filtering
+
+  async function openInbox() {
+    const user = await resolveUser();
+    if (!user) { window.location.href = 'auth.html?next=' + encodeURIComponent(location.href); return; }
+    _userId = user.id;
+
+    injectCSS();
+    buildInbox();
+
+    const inbox = document.getElementById('cbm-inbox');
+    const list  = document.getElementById('cbm-ib-list');
+    const thread = document.getElementById('cbm-thread');
+
+    // Reset to list view
+    thread.classList.remove('open');
+    _inboxView = 'list';
+    inbox.classList.add('open');
+    document.body.style.overflow = 'hidden';
+
+    // Loading skeleton
+    list.innerHTML = skeletonHTML();
+    document.getElementById('cbm-ib-sub').textContent = 'Loading…';
+
+    // Clear search
+    const si = document.getElementById('cbm-search');
+    if (si) si.value = '';
+
+    await loadConvList();
+    subGlobal();
+  }
+
+  function skeletonHTML() {
+    let h = '<div class="cbm-skeleton">';
+    for (let i = 0; i < 5; i++) {
+      h += `<div class="cbm-skel-row">
+        <div class="cbm-skel-ava"></div>
+        <div class="cbm-skel-body">
+          <div class="cbm-skel-l" style="width:${55+Math.random()*30}%"></div>
+          <div class="cbm-skel-s" style="width:${40+Math.random()*30}%"></div>
+        </div>
+      </div>`;
+    }
+    return h + '</div>';
+  }
+
+  async function loadConvList() {
+    const s = sb();
+    if (!s) return;
+    const list = document.getElementById('cbm-ib-list');
+    if (!list) return;
+
+    const { data: convs } = await s.from('chat_conversations')
+      .select('*')
+      .or(`host_id.eq.${_userId},guest_id.eq.${_userId}`)
+      .order('last_message_at', { ascending: false, nullsFirst: false })
+      .limit(200);
+
+    _allConvs = convs || [];
+    renderConvList(_allConvs);
+  }
+
+  function renderConvList(convs) {
+    const list = document.getElementById('cbm-ib-list');
+    if (!list) return;
+    const sub  = document.getElementById('cbm-ib-sub');
+
+    if (!convs.length) {
+      list.innerHTML = `<div class="cbm-ib-empty">
+        <div class="cbm-ib-empty-ico">📭</div>
+        <div class="cbm-ib-empty-ttl">No messages yet</div>
+        <div class="cbm-ib-empty-sub">When you enquire about a listing or a guest contacts you, conversations appear here.</div>
+      </div>`;
+      if (sub) sub.textContent = 'No conversations yet';
+      return;
+    }
+
+    const unread = convs.filter(c => {
+      const u = c.host_id === _userId ? (c.host_unread||0) : (c.guest_unread||0);
+      return u > 0;
+    });
+    const read   = convs.filter(c => {
+      const u = c.host_id === _userId ? (c.host_unread||0) : (c.guest_unread||0);
+      return u === 0;
+    });
+
+    if (sub) {
+      const total  = convs.length;
+      const unreadC = unread.length;
+      sub.textContent = unreadC > 0 ? `${unreadC} unread · ${total} total` : `${total} conversation${total !== 1 ? 's' : ''}`;
+    }
+
+    let html = '';
+    if (unread.length) {
+      html += `<div class="cbm-section-head">Unread</div>`;
+      html += unread.map(c => convRow(c)).join('');
+    }
+    if (read.length) {
+      if (unread.length) html += `<div class="cbm-section-head">All Messages</div>`;
+      html += read.map(c => convRow(c)).join('');
+    }
+    list.innerHTML = html;
+  }
+
+  function convRow(c) {
+    const isHost = c.host_id === _userId;
+    const unread = isHost ? (c.host_unread || 0) : (c.guest_unread || 0);
+    const ico    = TYPE_ICONS[c.listing_type] || '💬';
+    const time   = c.last_message_at ? fmtList(c.last_message_at) : '';
+    const preview = c.last_message || 'No messages yet';
+    return `<div class="cbm-conv${unread > 0 ? ' unread' : ''}" onclick="CabanaChat._openThread('${c.id}')" role="button" tabindex="0">
+      <div class="cbm-conv-ava">${ico}${unread > 0 ? `<div class="cbm-conv-badge">${unread > 99 ? '99+' : unread}</div>` : ''}</div>
+      <div class="cbm-conv-body">
+        <div class="cbm-conv-name">${esc(c.listing_title || 'Conversation')}</div>
+        <div class="cbm-conv-prev">${esc(preview)}</div>
+      </div>
+      <div class="cbm-conv-meta">
+        <div class="cbm-conv-time">${time}</div>
+        ${unread > 0 ? `<div class="cbm-conv-unread-pill">${unread > 99 ? '99+' : unread}</div>` : ''}
+      </div>
+    </div>`;
+  }
+
+  function esc(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  /* ── Search / filter ────────────────────────────────────────────────── */
+  function _filterConvs(q) {
+    if (!q.trim()) { renderConvList(_allConvs); return; }
+    const lq = q.toLowerCase();
+    const filtered = _allConvs.filter(c =>
+      (c.listing_title || '').toLowerCase().includes(lq) ||
+      (c.last_message  || '').toLowerCase().includes(lq)
+    );
+    renderConvList(filtered);
+  }
+
+  /* ── Open a thread ──────────────────────────────────────────────────── */
+  async function _openThread(convId) {
+    const s = sb();
+    if (!s) return;
+    const { data: conv } = await s.from('chat_conversations').select('*').eq('id', convId).maybeSingle();
+    if (!conv) return;
+
+    _activeConv = conv;
+    const ico = TYPE_ICONS[conv.listing_type] || '💬';
+
+    // Slide in thread view
+    document.getElementById('cbm-thread-ava').textContent  = ico;
+    document.getElementById('cbm-thread-name').textContent = conv.listing_title || 'Conversation';
+    document.getElementById('cbm-thread-sub').textContent  =
+      (conv.listing_type ? conv.listing_type.charAt(0).toUpperCase() + conv.listing_type.slice(1) : 'Listing') + ' · Secure messaging';
+
+    const msgsEl = document.getElementById('cbm-thread-msgs');
+    msgsEl.innerHTML = `<div class="cbm-empty"><div class="cbm-empty-ico">⏳</div><div class="cbm-empty-ttl">Loading…</div></div>`;
+
+    const thread = document.getElementById('cbm-thread');
+    thread.classList.add('open');
+    _inboxView = 'thread';
+
+    const msgs = await loadMsgs(convId);
+    renderMsgs(msgs, msgsEl);
+
+    await markRead(conv);
+    subThread(convId);
+    updateBell();
+    // Refresh list in background
+    loadConvList();
+  }
+
+  /* ── Send from thread ───────────────────────────────────────────────── */
+  async function _threadSend() {
+    const inp = document.getElementById('cbm-thread-input');
+    const txt = inp?.value || '';
+    if (!txt.trim() || !_activeConv) return;
+    await sendMessage(_activeConv.id, txt, 'cbm-thread-send', 'cbm-thread-input', 'cbm-thread-msgs');
+    const msgs = await loadMsgs(_activeConv.id);
+    renderMsgs(msgs, document.getElementById('cbm-thread-msgs'));
+  }
+
+  /* ── Back to list ───────────────────────────────────────────────────── */
+  function _threadBack() {
+    _inboxSub = clearSub(_inboxSub);
+    _activeConv = null;
+    document.getElementById('cbm-thread').classList.remove('open');
+    _inboxView = 'list';
+    loadConvList(); // refresh unread counts
+  }
+
+  /* ── Navigate to stays (compose new) ───────────────────────────────── */
+  function _goToStays() {
+    closeInbox();
+    window.location.href = 'apartments.html';
+  }
+
+  /* ── Close inbox ────────────────────────────────────────────────────── */
+  function closeInbox() {
+    const inbox = document.getElementById('cbm-inbox');
+    if (inbox) inbox.classList.remove('open');
+    document.body.style.overflow = '';
+    _inboxSub = clearSub(_inboxSub);
+    _activeConv = null;
+    _inboxView = 'list';
+  }
+
+  /* ════════════════════════════════════════════════════════════════════════
+     UTILITY
+  ════════════════════════════════════════════════════════════════════════ */
+  function _grow(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 110) + 'px';
+  }
+
+  /* ════════════════════════════════════════════════════════════════════════
+     OVERRIDE APA-CHROME NOTIFICATIONS
+     When apa-chrome.js calls openNotifications(), we intercept and open inbox.
+     This wires the dashboard bell → Cabana Messenger.
+  ════════════════════════════════════════════════════════════════════════ */
+  function _hookChrome() {
+    if (window.ApaChrome) {
+      window.ApaChrome.openNotifications = openInbox;
+      window.ApaChrome.openInbox         = openInbox;
+    }
+  }
+
+  /* ════════════════════════════════════════════════════════════════════════
+     BACKWARD COMPAT — keep old ApatmentoChat API alive
+  ════════════════════════════════════════════════════════════════════════ */
+  function _legacyCompat() {
+    window.ApatmentoChat = {
+      open:         open,
+      openInbox:    openInbox,
+      closeInbox:   closeInbox,
+      close:        close,
+      send:         _panelSend,
+      _autosize:    _grow,
+      _inboxSend:   _threadSend,
+      _inboxOpenConv: _openThread,
+      _inboxBackToList: _threadBack,
+      _openConvById:  _openThread,
+      initFAB:      initBell,
+      scrubContactInfo: scrub,
+    };
+  }
+
+  /* ════════════════════════════════════════════════════════════════════════
+     INIT
+  ════════════════════════════════════════════════════════════════════════ */
+  function _init() {
+    injectCSS();
+    _legacyCompat();
+
+    // Hook ApaChrome if already loaded, or watch for it
+    _hookChrome();
+    if (!window.ApaChrome) {
+      const iv = setInterval(() => {
+        if (window.ApaChrome) { _hookChrome(); clearInterval(iv); }
+      }, 200);
+    }
+
+    // Start bell polling once session is ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initBell);
+    } else {
+      // Slight delay to let ApaSession boot
+      setTimeout(initBell, 600);
+    }
+
+    // Keyboard: Escape closes panel / inbox
+    document.addEventListener('keydown', e => {
+      if (e.key !== 'Escape') return;
+      if (_inboxView === 'thread') { _threadBack(); return; }
+      if (document.getElementById('cbm-inbox')?.classList.contains('open')) { closeInbox(); return; }
+      if (document.getElementById('cbm-panel-wrap')?.classList.contains('open')) { close(); return; }
+    });
+  }
+
+  _init();
+
+  /* ── Public API ──────────────────────────────────────────────────────── */
+  return {
+    open,
+    openInbox,
+    closeInbox,
+    close,
+    getUnreadCount,
+    initBell,
+    updateBell,
+    scrub,
+    _panelSend,
+    _threadSend,
+    _threadBack,
+    _openThread,
+    _filterConvs,
+    _grow,
+    _goToStays,
+  };
+
 })();
+
+/* ────────────────────────────────────────────────────────────────────────────
+   NAMED EXPORT for pages that call openInboxFromTopbar()  (apartments.html)
+   and messageHost()  (apartments.html, dashboard.html)
+   These are defined in the HTML files themselves and call CabanaChat.open /
+   CabanaChat.openInbox — so no changes needed in the HTML.
+   ────────────────────────────────────────────────────────────────────────── */
