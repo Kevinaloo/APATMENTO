@@ -6,7 +6,7 @@
 <link rel="apple-touch-icon" href="/cabana-apple-touch-icon.png"/>
 <meta name="apple-mobile-web-app-title" content="Cabana"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Apatmento — Confirm booking</title>
+<title>Apatmento: Confirm booking</title>
 <meta name="description" content="Confirm your Apatmento booking securely. Zero commission, M-Pesa payments, instant confirmation for stays, tours and more in Kenya."/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <!-- Session core: one Supabase client per tab. Multiple clients on the
@@ -252,7 +252,7 @@ body{overflow-x:hidden;}
       <div class="sum-row"><span>Apatmento fee <span style="font-size:11px;color:var(--ink-faint);">(fixed)</span></span><span class="v" id="sum-fee">KES 0</span></div>
       <div class="sum-divider"></div>
       <div class="sum-total-row"><span class="sum-total-label">Total</span><span class="sum-total-val" id="sum-total">KES 0</span></div>
-      <div class="sum-note" id="sum-note">100% of the stay price goes directly to the host. Our fee is fixed — never a percentage.</div>
+      <div class="sum-note" id="sum-note">100% of the stay price goes directly to the host. Our fee is fixed. Never a percentage.</div>
 
       <div class="pay-mode">
         <div class="pay-mode-lbl">How would you like to pay?</div>
@@ -613,7 +613,7 @@ function updateSummary() {
   document.getElementById('sum-fee').textContent = `KES ${fee.toLocaleString()}`;
   document.getElementById('sum-total').textContent = `KES ${total.toLocaleString()}`;
   document.getElementById('sum-note').textContent =
-    `100% of the stay price (KES ${subtotal.toLocaleString()}) goes directly to the host. Our fee is fixed — never a percentage.`;
+    `100% of the stay price (KES ${subtotal.toLocaleString()}) goes directly to the host. Our fee is fixed. Never a percentage.`;
   refreshPayModeAmounts();
 }
 

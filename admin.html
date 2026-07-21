@@ -635,7 +635,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
       <section class="sec" id="s-ml">
         <div class="hd">
           <div><h1>Machine <em>learning</em></h1>
-          <p>Model-ready feature vectors, label correlations, and one-click dataset export. Leakage is excluded by construction — the data leaves in a shape a model accepts and a reviewer trusts.</p></div>
+          <p>Model-ready feature vectors, label correlations, and one-click dataset export. Leakage is excluded by construction. The data leaves in a shape a model accepts and a reviewer trusts.</p></div>
         </div>
         <div class="grid g4" id="ml-stats"></div>
         <div class="grid g-2-1" style="margin-top:16px">
@@ -651,11 +651,11 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
             <button class="btn btn-p btn-block" style="margin-bottom:8px" onclick="exportDataset('csv')">Download CSV</button>
             <button class="btn btn-g btn-block" style="margin-bottom:8px" onclick="exportDataset('jsonl')">Download JSONL</button>
             <button class="btn btn-g btn-block" onclick="exportDataset('schema')">Download schema</button>
-            <div class="note" style="margin-top:14px">Label is <span class="mono">label_converted</span> — the session reached checkout. <span class="mono">intent_score</span> and <span class="mono">checkout_started</span> are excluded from the feature set: both encode the answer, and training on them yields a perfect score with no predictive value.</div>
+            <div class="note" style="margin-top:14px">Label is <span class="mono">label_converted</span>: the session reached checkout. <span class="mono">intent_score</span> and <span class="mono">checkout_started</span> are excluded from the feature set: both encode the answer, and training on them yields a perfect score with no predictive value.</div>
           </div>
         </div>
         <div class="card" style="margin-top:16px">
-          <div class="card-t">Feature vector — live sample</div>
+          <div class="card-t">Feature vector: live sample</div>
           <div class="card-s">This is exactly what a training row looks like</div>
           <pre id="ml-sample" style="font:11.5px/1.6 ui-monospace,monospace;color:var(--ink-2);background:var(--bg-2);padding:16px;border-radius:10px;border:1px solid var(--line);max-height:340px;overflow:auto"></pre>
         </div>
@@ -725,11 +725,11 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
       <section class="sec" id="s-trust">
         <div class="hd">
           <div><h1>Trust <em>centre</em></h1>
-          <p>Every partner scored 0–100 from behaviour, not self-declaration. Lowest first — these are the ones to look at.</p></div>
+          <p>Every partner scored 0–100 from behaviour, not self-declaration. Lowest first. These are the ones to look at.</p></div>
           <div class="hd-act"><button class="btn btn-g btn-sm" onclick="exportPartners()">Export</button></div>
         </div>
         <div class="note warn" style="margin-bottom:16px">
-          A ban is terminal and requires a written reason. Listings are unpublished, never purged — evidence must survive the ban.
+          A ban is terminal and requires a written reason. Listings are unpublished, never purged. Evidence must survive the ban.
         </div>
         <div class="tw"><table>
           <thead><tr><th>Partner</th><th class="num">Trust</th><th class="num">Listings</th><th class="num">Bookings</th><th class="num">Cancel %</th><th class="num">Flags</th><th>Status</th><th class="num">Actions</th></tr></thead>
@@ -820,7 +820,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
         <div class="hd">
           <div>
             <h1>Account <em>access</em></h1>
-            <p>Search any user by email or phone. View their account as they see it, edit their listings, or act on their behalf — useful when a lazy partner has sent you their details and you're setting up their listing for them.</p>
+            <p>Search any user by email or phone. View their account as they see it, edit their listings, or act on their behalf. Useful when a lazy partner has sent you their details and you're setting up their listing for them.</p>
           </div>
         </div>
         <div class="card" style="margin-bottom:20px">
@@ -858,7 +858,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
       <section class="sec" id="s-agents">
         <div class="hd">
           <div><h1>Agent <em>identity</em></h1>
-          <p>Agents sign up instantly and work for 30 days while they verify. You confirm the document is real — you do not approve the agent. Hosts do that.</p></div>
+          <p>Agents sign up instantly and work for 30 days while they verify. You confirm the document is real. You do not approve the agent. Hosts do that.</p></div>
         </div>
         <div class="tabs" style="margin-top:20px">
           <button class="tab on" onclick="agFilter('submitted',this)">Awaiting review</button>
@@ -887,19 +887,19 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
       <section class="sec" id="s-shadow">
         <div class="hd">
           <div><h1>Shadow <em>ads</em></h1>
-          <p>Non-invasive, behaviourally-targeted creatives that rise behind or beside what a guest is engaging with — never over it. Placement, timing and audience are decided live from real intent.</p></div>
+          <p>Non-invasive, behaviourally-targeted creatives that rise behind or beside what a guest is engaging with. Never over it. Placement, timing and audience are decided live from real intent.</p></div>
           <div class="hd-act"><button class="btn btn-p btn-sm" onclick="openShadow()">New shadow ad</button></div>
         </div>
         <div class="grid g4" id="sh-stats"></div>
 
         <div class="grid g2" style="margin-top:16px">
           <div class="card">
-            <div class="card-t">Intelligence — where they surface</div>
+            <div class="card-t">Intelligence: where they surface</div>
             <div class="card-s">Impressions by intent band, learned from live behaviour</div>
             <div id="sh-intel"></div>
           </div>
           <div class="card">
-            <div class="card-t">Engagement — how guests respond</div>
+            <div class="card-t">Engagement: how guests respond</div>
             <div class="card-s">Click · dismiss · ignore mix. Convenience, not annoyance.</div>
             <div id="sh-engage"></div>
           </div>
@@ -917,7 +917,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
       <section class="sec" id="s-customers">
         <div class="hd">
           <div><h1>Customer <em>data</em></h1>
-          <p>Every visitor the platform has learned, with their live intent, journey and the shadow ads they were shown. First-party only — no PII beyond what a signed-in guest gives us.</p></div>
+          <p>Every visitor the platform has learned, with their live intent, journey and the shadow ads they were shown. First-party only. No PII beyond what a signed-in guest gives us.</p></div>
           <div class="hd-act"><button class="btn btn-g btn-sm" onclick="exportCustomers()">Export customers</button></div>
         </div>
         <div class="grid g4" id="cu-stats"></div>
@@ -940,7 +940,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
         </div>
         <div class="grid g4" id="sl-stats"></div>
         <div class="note" style="margin:16px 0">
-          We bill only IAB-viewable impressions — 50% of pixels for one continuous second, two for video. Bouncers and frustrated sessions are excluded from paid inventory entirely.
+          We bill only IAB-viewable impressions: 50% of pixels for one continuous second, two for video. Bouncers and frustrated sessions are excluded from paid inventory entirely.
         </div>
         <div class="tw"><table>
           <thead><tr><th>Surface</th><th>Format</th><th class="num">Pageviews</th><th class="num">Viewable</th><th class="num">View rate</th><th class="num">CTR</th><th>Intent</th><th class="num">CPM</th><th class="num">Monthly value</th></tr></thead>
@@ -971,7 +971,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
         </div>
 
         <div class="note warn" style="margin-bottom:18px">
-          Whatever you set here shows to <b>every first-time visitor</b> on the homepage. Video plays for the exact duration you choose; images always show for 3 seconds. Upload videos <b>with no audio</b> — playback is muted by design.
+          Whatever you set here shows to <b>every first-time visitor</b> on the homepage. Video plays for the exact duration you choose; images always show for 3 seconds. Upload videos <b>with no audio</b>. Playback is muted by design.
         </div>
 
         <div class="grid g2" style="align-items:start">
@@ -1072,7 +1072,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
         <!-- Test push (send to yourself) -->
         <div class="card" style="margin-top:20px;border:2px solid rgba(124,58,255,.25);background:rgba(124,58,255,.04)">
           <div class="card-hd">
-            <div class="card-t">🔔 Test push — send to yourself</div>
+            <div class="card-t">🔔 Test push: send to yourself</div>
             <div class="card-s">Fires a real Web Push to your own subscribed device right now. Use this to confirm delivery is working.</div>
           </div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;align-items:flex-end">
@@ -1293,7 +1293,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
     <!-- PLACEMENT -->
     <div id="ct-placement" style="display:none">
       <div class="note" style="margin-bottom:14px">
-        Greyed slots do not exist on that page. Selecting a surface with no matching anchor means the ad silently never renders — so we do not let you.
+        Greyed slots do not exist on that page. Selecting a surface with no matching anchor means the ad silently never renders. So we do not let you.
       </div>
       <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
         <button class="btn btn-g btn-sm" onclick="selectAllSlots(true)">Select all available</button>
@@ -1317,13 +1317,13 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
         <div class="fld"><label class="fld-l">Budget (KES)</label><input class="inp" id="c-budget" type="number" placeholder="250000"/></div>
         <div class="fld"><label class="fld-l">Priority (higher shows first)</label><input class="inp" id="c-prio" type="number" value="5" min="1" max="10"/></div>
       </div>
-      <div class="fld"><label class="fld-l">Target segments (optional — leave empty for run-of-site)</label>
+      <div class="fld"><label class="fld-l">Target segments (optional, leave empty for run-of-site)</label>
         <select class="inp" id="c-segs" multiple size="6"></select>
       </div>
       <div class="fld"><label class="fld-l">Status</label>
         <select class="inp" id="c-status"><option value="live">Live</option><option value="paused">Paused</option><option value="draft">Draft</option></select>
       </div>
-      <div class="note warn">Suppressed segments — bouncers and frustrated sessions — are excluded automatically. You never pay to reach someone who is leaving.</div>
+      <div class="note warn">Suppressed segments (bouncers and frustrated sessions) are excluded automatically. You never pay to reach someone who is leaving.</div>
     </div>
 
     <div class="mdl-f">
@@ -1337,7 +1337,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 <div class="ov" id="shadow-ov">
   <div class="mdl wide">
     <div class="mdl-t" id="shadow-title">New shadow ad</div>
-    <div class="mdl-s">A quiet, behaviourally-targeted creative. It surfaces behind or beside what a guest is engaging with — decided live from their intent — and never covers it.</div>
+    <div class="mdl-s">A quiet, behaviourally-targeted creative. It surfaces behind or beside what a guest is engaging with, decided live from their intent, and never covers it.</div>
 
     <div class="tabs">
       <button class="tab on" onclick="shModalTab('creative',this)">Creative</button>
@@ -1349,10 +1349,10 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
     <div id="sht-creative">
       <div class="row2">
         <div class="fld"><label class="fld-l">Advertiser</label><input class="inp" id="sh-adv" placeholder="Colgate"/></div>
-        <div class="fld"><label class="fld-l">Internal title</label><input class="inp" id="sh-name" placeholder="Toothpaste — shopping shadow"/></div>
+        <div class="fld"><label class="fld-l">Internal title</label><input class="inp" id="sh-name" placeholder="Toothpaste: shopping shadow"/></div>
       </div>
       <div class="fld"><label class="fld-l">Headline</label><input class="inp" id="sh-head" placeholder="Fresh every morning"/></div>
-      <div class="fld"><label class="fld-l">Sub-text</label><input class="inp" id="sh-sub" placeholder="Colgate Total — now 20% off on Apatmento Shopping."/></div>
+      <div class="fld"><label class="fld-l">Sub-text</label><input class="inp" id="sh-sub" placeholder="Colgate Total: now 20% off on Apatmento Shopping."/></div>
       <div class="row2">
         <div class="fld"><label class="fld-l">CTA label</label><input class="inp" id="sh-cta" placeholder="Shop now"/></div>
         <div class="fld"><label class="fld-l">Click destination (URL)</label><input class="inp" id="sh-url" placeholder="/shopping.html?product=…"/></div>
@@ -1370,7 +1370,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
       <div class="fld"><label class="fld-l">Theme gradient</label><input class="inp" id="sh-theme" placeholder="linear-gradient(135deg,#0EA5E9,#2563EB)"/></div>
 
       <div class="preview" style="margin-top:16px">
-        <div class="preview-hd">Live preview — as it will surface</div>
+        <div class="preview-hd">Live preview: as it will surface</div>
         <div class="preview-bd" id="sh-preview"><div class="empty"><div class="empty-s">Fill in the creative to preview</div></div></div>
       </div>
     </div>
@@ -1378,7 +1378,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
     <!-- TARGETING -->
     <div id="sht-targeting" style="display:none">
       <div class="note" style="margin-bottom:14px">
-        The engine reads live intent (0–100) from real behaviour. Show a creative only inside the band where it genuinely helps — and stay silent when a guest is very hot and converting, so you never distract a sale.
+        The engine reads live intent (0–100) from real behaviour. Show a creative only inside the band where it genuinely helps. Stay silent when a guest is very hot and converting so you never distract a sale.
       </div>
       <div class="fld"><label class="fld-l">Surfaces (where it may appear)</label>
         <select class="inp" id="sh-surfaces" multiple size="6">
@@ -1416,12 +1416,12 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
           </select>
         </div>
       </div>
-      <div class="fld"><label class="fld-l">Context keywords (comma-separated — matched against search / category)</label>
+      <div class="fld"><label class="fld-l">Context keywords (comma-separated, matched against search / category)</label>
         <input class="inp" id="sh-kw" placeholder="toothpaste, colgate, health, personal care"/>
       </div>
-      <div class="note">Leave keywords empty to match the whole surface. With keywords, the ad only appears when the guest's search or category context is relevant — the toothpaste ad finds the shopper, not everyone.</div>
+      <div class="note">Leave keywords empty to match the whole surface. With keywords, the ad only appears when the guest's search or category context is relevant. The toothpaste ad finds the shopper, not everyone.</div>
 
-      <div class="fld" style="margin-top:18px"><label class="fld-l">📍 Area targeting — Nairobi neighbourhoods (leave empty = city-wide / Kenya-wide)</label>
+      <div class="fld" style="margin-top:18px"><label class="fld-l">📍 Area targeting: Nairobi neighbourhoods (leave empty = city-wide / Kenya-wide)</label>
         <select class="inp" id="sh-areas" multiple size="8">
           <option value="all">All areas (no geo restriction)</option>
           <optgroup label="West / North West">
@@ -1468,15 +1468,15 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
       </div>
 
       <div class="fld" style="margin-top:18px;padding:14px;border:1.5px solid rgba(124,58,255,.25);border-radius:12px;background:rgba(124,58,255,.04)">
-        <label class="fld-l" style="color:var(--violet)">🤖 APA Smart Suggestion — in-conversation ad</label>
+        <label class="fld-l" style="color:var(--violet)">🤖 APA Smart Suggestion: in-conversation ad</label>
         <div style="display:flex;align-items:center;gap:10px;margin:10px 0 14px">
           <label style="font-size:13px;color:var(--ink-2);display:flex;align-items:center;gap:8px;cursor:pointer">
             <input type="checkbox" id="sh-apa-enabled" style="width:16px;height:16px;accent-color:var(--violet)"/>
             Enable APA in-chat suggestion (APA will mention this naturally during conversations)
           </label>
         </div>
-        <div class="fld"><label class="fld-l">APA message template <span style="font-weight:400;color:var(--ink-3)">(how APA mentions it — keep it natural, 1 sentence, no hard sell)</span></label>
-          <input class="inp" id="sh-apa-msg" placeholder="e.g. Also — KFC Westlands currently has a 30% off bucket deal if you want food sorted after your check-in 🍗"/>
+        <div class="fld"><label class="fld-l">APA message template <span style="font-weight:400;color:var(--ink-3)">(how APA mentions it. Keep it natural, 1 sentence, no hard sell)</span></label>
+          <input class="inp" id="sh-apa-msg" placeholder="e.g. KFC Westlands has a 30% off bucket deal if you want food sorted after your check-in 🍗"/>
         </div>
         <div class="note">APA will weave this into the conversation when: the guest is in a matching area, the surface matches, and it fits naturally (after navigation, after booking help, etc). It never interrupts or forces it. The guest should feel like APA just remembered something useful.</div>
       </div>
@@ -1486,7 +1486,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
     <div id="sht-delivery" style="display:none">
       <div class="fld"><label class="fld-l">Entry position</label>
         <select class="inp" id="sh-pos">
-          <option value="auto">Auto — smartest, least intrusive per device</option>
+          <option value="auto">Auto: smartest, least intrusive per device</option>
           <option value="rise">Rise behind the focused card (desktop signature)</option>
           <option value="side">Slide in from the side</option>
           <option value="bottom">Slide up from the bottom</option>
@@ -1591,7 +1591,7 @@ function bars(items, max){
 }
 function emptyRow(cols, msg='Nothing here'){
   return `<tr><td colspan="${cols}"><div class="empty"><div class="empty-t">${esc(msg)}</div>
-    <div class="empty-s">This panel is live — it will populate as data arrives.</div></div></td></tr>`;
+    <div class="empty-s">This panel is live. It will populate as data arrives.</div></div></td></tr>`;
 }
 
 /* ── nav ──────────────────────────────────────────────────────── */
@@ -1814,7 +1814,7 @@ function renderIntel(){
   $('in-friction').innerHTML = [
     ['Rage clicks', a.friction.rage, 'Three clicks in one spot inside 1.2s'],
     ['Dead clicks', a.friction.dead, 'Clicked something that cannot respond'],
-    ['Nav thrash', a.friction.thrash, 'Bounced between pages inside 5s — lost'],
+    ['Nav thrash', a.friction.thrash, 'Bounced between pages inside 5s. Lost'],
     ['JS errors', a.friction.errors, 'Uncaught exceptions in the wild']
   ].map(([k,v,d])=>`<div class="kv" style="flex-direction:column;align-items:flex-start;gap:2px">
     <div style="display:flex;justify-content:space-between;width:100%"><span>${k}</span><span>${F.num(v)}</span></div>
