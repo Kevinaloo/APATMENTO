@@ -780,11 +780,33 @@ function pinLocation(lat, lng, label) {
     <p class="step-sub" id="s5-sub">You set the rate. Guests pay exactly that. Apatmento adds only a small fixed fee, never a cut of yours.</p>
     <div class="row-2">
       <div class="field"><label class="field-label">Currency</label><select class="field-select" id="f-currency"><option>KES</option><option>USD</option></select></div>
-      <div class="field">
-        <label class="field-label">Your WhatsApp number <span style="font-size:11px;font-weight:500;color:#8E90AD;">(guests contact you here)</span></label>
-        <input class="field-input" id="f-whatsapp" type="tel" placeholder="+254 7XX XXX XXX" autocomplete="tel"/>
-        <div class="field-hint" style="font-size:12px;color:#8E90AD;margin-top:4px;">Guests use this to reach you directly at check-in. Format: +2547XXXXXXXX</div>
+      <div class="field" style="grid-column:1/-1;">
+        <div style="background:linear-gradient(135deg,rgba(45,212,191,.08),rgba(109,40,255,.06));border:1px solid rgba(45,212,191,.2);border-radius:16px;padding:18px 20px;margin-bottom:18px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--mint-deep,#1ca88a)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <span style="font-size:12px;font-weight:700;color:var(--mint-deep,#1ca88a);letter-spacing:.04em;">Contact details — released after payment</span>
+          </div>
+          <p style="font-size:12.5px;color:var(--ink-soft,#474A66);line-height:1.6;margin:0;">These details are <strong>kept private</strong> until a guest pays. Once payment clears, they'll see your WhatsApp, phone and email so they can coordinate check-in directly with you.</p>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;" class="contact-fields-grid">
+          <div class="field" style="margin:0;">
+            <label class="field-label">WhatsApp number <span style="color:#E53E3E;font-size:13px;">*</span></label>
+            <input class="field-input" id="f-whatsapp" type="tel" placeholder="+254 7XX XXX XXX" autocomplete="tel"/>
+            <div class="field-hint" style="font-size:12px;color:#8E90AD;margin-top:4px;">Primary contact for guests at check-in</div>
+          </div>
+          <div class="field" style="margin:0;">
+            <label class="field-label">Phone / call number <span style="font-size:11px;color:#8E90AD;">(optional)</span></label>
+            <input class="field-input" id="f-phone" type="tel" placeholder="+254 7XX XXX XXX" autocomplete="tel"/>
+            <div class="field-hint" style="font-size:12px;color:#8E90AD;margin-top:4px;">If different from WhatsApp</div>
+          </div>
+          <div class="field" style="margin:0;grid-column:1/-1;">
+            <label class="field-label">Email address <span style="font-size:11px;color:#8E90AD;">(optional but recommended)</span></label>
+            <input class="field-input" id="f-contact-email" type="email" placeholder="you@example.com" autocomplete="email"/>
+            <div class="field-hint" style="font-size:12px;color:#8E90AD;margin-top:4px;">Sent to guests after payment for booking confirmations</div>
+          </div>
+        </div>
       </div>
+      <style>@media(max-width:560px){.contact-fields-grid{grid-template-columns:1fr!important;}.contact-fields-grid .field{grid-column:auto!important;}}</style>
       <div class="field"><label class="field-label" id="s5-price-label">Per night</label><input class="field-input" id="f-price-night" type="number" placeholder="4500"/></div>
     </div>
     <div class="row-2">
@@ -1254,6 +1276,7 @@ function validateStep(n) {
   if (n === 2 && !document.getElementById('f-city').value.trim())  { showAlert('Please enter the city.'); return false; }
   if (n === 2 && !document.getElementById('f-area').value.trim())  { showAlert('Please enter the neighbourhood or area.'); return false; }
   if (n === 3 && !document.getElementById('f-desc').value.trim())  { showAlert('Please write a description for your listing.'); return false; }
+  if (n === 5 && !document.getElementById('f-whatsapp').value.trim()) { showAlert('Please enter your WhatsApp number — guests need this to reach you after payment.'); return false; }
   if (n === 5 && !document.getElementById('f-price-night').value)  { showAlert('Please set a nightly rate.'); return false; }
   return true;
 }
@@ -1311,12 +1334,15 @@ function collectStep(n) {
     }
   }
   if (n === 5) {
-    formData.currency   = document.getElementById('f-currency').value;
-    formData.priceNight = document.getElementById('f-price-night').value;
-    formData.priceWeek  = document.getElementById('f-price-week').value;
-    formData.priceMonth = document.getElementById('f-price-month').value;
-    formData.deposit    = document.getElementById('f-deposit').value;
-    formData.minNights  = document.getElementById('f-min-nights').value;
+    formData.currency      = document.getElementById('f-currency').value;
+    formData.whatsapp      = document.getElementById('f-whatsapp')?.value.trim() || '';
+    formData.phone         = document.getElementById('f-phone')?.value.trim() || '';
+    formData.contactEmail  = document.getElementById('f-contact-email')?.value.trim() || '';
+    formData.priceNight    = document.getElementById('f-price-night').value;
+    formData.priceWeek     = document.getElementById('f-price-week').value;
+    formData.priceMonth    = document.getElementById('f-price-month').value;
+    formData.deposit       = document.getElementById('f-deposit').value;
+    formData.minNights     = document.getElementById('f-min-nights').value;
   }
   if (n === 6) {
     formData.checkin      = document.getElementById('f-checkin').value;
@@ -1632,8 +1658,11 @@ function _loadEditMode(l) {
   formData.events      = !!l.events;
   formData.children    = l.children !== false;
   formData.instant     = l.instant_book !== false;
-  formData.cancelPolicy= l.cancel_policy || 'flexible';
-  formData.rules       = l.house_rules || '';
+  formData.cancelPolicy  = l.cancel_policy || 'flexible';
+  formData.rules         = l.house_rules || '';
+  formData.whatsapp      = l.contact_whatsapp || '';
+  formData.phone         = l.contact_phone || '';
+  formData.contactEmail  = l.contact_email || '';
 
   // Update page heading to show edit mode
   document.querySelector('.tb-brand em') && (document.querySelector('.tb-brand em').textContent = 'Edit listing');
@@ -1650,6 +1679,9 @@ function _loadEditMode(l) {
   setVal('f-city', l.city);
   setVal('f-area', l.area);
   setVal('f-street', l.street);
+  setVal('f-whatsapp', l.contact_whatsapp);
+  setVal('f-phone', l.contact_phone);
+  setVal('f-contact-email', l.contact_email);
   if(l.latitude && l.longitude) pinLocation(l.latitude, l.longitude, [l.area, l.city].filter(Boolean).join(', '));
 
   // Show photos from existing listing (as URLs, not files)
@@ -1737,6 +1769,9 @@ async function publishListing() {
          smoking         boolean, pets boolean, events boolean,
          children        boolean, instant_book boolean,
          cancel_policy   text, house_rules text,
+         contact_whatsapp text,
+         contact_phone   text,
+         contact_email   text,
          status          text default 'active',
          created_at      timestamptz default now()
        );
@@ -1781,11 +1816,14 @@ async function publishListing() {
       events:        formData.events,
       children:      formData.children,
       instant_book:  formData.instant,
-      cancel_policy: 'flexible',
-      house_rules:   formData.rules || null,
-      latitude:      _lat,
-      longitude:     _lng,
-      status:        'active',
+      cancel_policy:  'flexible',
+      house_rules:    formData.rules || null,
+      latitude:       _lat,
+      longitude:      _lng,
+      contact_whatsapp: formData.whatsapp || null,
+      contact_phone:    formData.phone    || formData.whatsapp || null,
+      contact_email:    formData.contactEmail || null,
+      status:         'active',
     };
 
     let dbErr;
