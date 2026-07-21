@@ -59,6 +59,18 @@
   <link rel="dns-prefetch" href="//fonts.gstatic.com"/>
   <link rel="dns-prefetch" href="//cdn.jsdelivr.net"/>
   <link rel="dns-prefetch" href="//api.unsplash.com"/>
+  <link rel="dns-prefetch" href="//maps.googleapis.com"/>
+  <!-- Google Maps Places — set GOOGLE_MAPS_KEY in your env or replace the placeholder -->
+  <script>
+    (function(){
+      const key = window.GOOGLE_MAPS_KEY || '';
+      if (!key) return; // Falls back to built-in city list when no key set
+      const s = document.createElement('script');
+      s.src = 'https://maps.googleapis.com/maps/api/js?key=' + key + '&libraries=places&callback=gMapsReady';
+      s.async = true; s.defer = true;
+      document.head.appendChild(s);
+    })();
+  </script>
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -727,13 +739,66 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
   #apa-avatar-popup{bottom:calc(148px + env(safe-area-inset-bottom,0px)) !important;right:6px !important;}
 }
 
+/* ── Location input (replaces static where field) ── */
+.sf-where-wrap{cursor:text;}
+.sf-loc-input{
+  display:block;width:100%;border:none;outline:none;
+  background:transparent;
+  font-family:var(--font-body);
+  font-size:14px;font-weight:500;color:var(--ink);
+  padding:0;margin:0;
+}
+.sf-loc-input.ph,.sf-loc-input::placeholder{color:var(--ink-faint);font-weight:400;}
+.sf-loc-input:focus{color:var(--ink);}
+
+/* Autocomplete panel */
+.loc-autocomplete-panel{min-width:280px;}
+.loc-suggestion{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 12px;border-radius:12px;cursor:pointer;
+  font-size:14px;color:var(--ink-soft);transition:all .15s;
+}
+.loc-suggestion:hover,.loc-suggestion.focused{background:rgba(139,111,232,.08);color:var(--ink);}
+.loc-suggestion-ico{font-size:16px;flex-shrink:0;}
+.loc-suggestion-main{flex:1;min-width:0;}
+.loc-suggestion-name{font-weight:500;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.loc-suggestion-sub{font-size:11px;color:var(--ink-faint);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.loc-suggestion-type{font-size:10px;font-weight:600;color:var(--ink-faint);background:var(--glass-2);padding:2px 7px;border-radius:100px;flex-shrink:0;}
+.loc-no-result{padding:12px;font-size:13px;color:var(--ink-faint);text-align:center;}
+
+/* Bedrooms picker */
+.rooms-options{display:flex;flex-direction:column;gap:2px;min-width:180px;}
+.rooms-opt{
+  padding:10px 12px;border-radius:12px;cursor:pointer;
+  font-size:14px;color:var(--ink-soft);transition:all .15s;
+}
+.rooms-opt:hover{background:rgba(139,111,232,.08);color:var(--ink);}
+.rooms-opt.picked{background:rgba(139,111,232,.12);color:var(--violet);font-weight:600;}
+
+/* ── Filter bar: wrap on mobile so all chips are visible ── */
+.filter-bar{
+  flex-wrap:wrap;
+  overflow-x:visible;
+  gap:8px 6px;
+  padding:4px 0 8px;
+}
+/* On larger screens, revert to single-row scroll */
+@media(min-width:640px){
+  .filter-bar{flex-wrap:nowrap;overflow-x:auto;}
+}
+
 /* ── Mobile search bar: stack vertically ── */
 @media(max-width:640px){
   .search-ring{border-radius:18px;}
   .search-main{flex-wrap:wrap;border-radius:16px;}
-  .sf{flex:1 1 45%;padding:12px 14px;}
+  /* Where and Check-in side-by-side, Guests and Bedrooms side-by-side */
+  .sf{flex:1 1 calc(50% - 8px);min-width:0;padding:12px 14px;}
+  #sf-where{flex:1 1 100%;} /* Where gets full row on mobile for typing room */
   .sf-divider{display:none;}
-  .search-go{width:100%;margin:0 6px 6px;padding:13px;justify-content:center;}
+  .search-go{width:calc(100% - 12px);margin:0 6px 6px;padding:13px;justify-content:center;}
+  /* prevent panel overflow */
+  .sf-panel{left:0;right:0;min-width:unset;width:calc(100vw - 48px);max-width:400px;}
+  .loc-autocomplete-panel{width:calc(100vw - 48px);max-width:400px;}
 }
 </style>
 
@@ -810,28 +875,29 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
 <div class="hero">
   <span class="hero-eyebrow">Short-stay apartments</span>
   <h1 class="hero-title">Stay somewhere <em>remarkable.</em></h1>
-  <p class="hero-sub">Hand-picked apartments across Kenya. What you see is what you pay — hosts keep 100%.</p>
+  <p class="hero-sub">Hand-picked stays worldwide. What you see is what you pay — hosts keep 100%.</p>
 
   <!-- ── Premium search bar ── -->
   <div class="search-wrap">
     <div class="search-ring">
     <div class="search-main">
       <!-- Where -->
-      <div class="sf" id="sf-where" onclick="openSF('where')">
+      <div class="sf sf-where-wrap" id="sf-where" onclick="focusLocationInput(event)">
         <div class="sf-label">Where</div>
-        <div class="sf-val ph" id="field-where">Anywhere in Kenya</div>
-        <!-- Dropdown -->
-        <div class="sf-panel" id="sfp-where" onclick="event.stopPropagation()">
-          <div class="sf-panel-title">Popular destinations</div>
-          <div class="loc-options">
-            <div class="loc-opt" onclick="pickLoc('Nairobi')">📍 Nairobi</div>
-            <div class="loc-opt" onclick="pickLoc('Mombasa')">🏖 Mombasa</div>
-            <div class="loc-opt" onclick="pickLoc('Diani')">🌴 Diani</div>
-            <div class="loc-opt" onclick="pickLoc('Naivasha')">🏞 Naivasha</div>
-            <div class="loc-opt" onclick="pickLoc('Nakuru')">🦒 Nakuru</div>
-            <div class="loc-opt" onclick="pickLoc('Kisumu')">🌊 Kisumu</div>
-            <div class="loc-opt" onclick="pickLoc('Nanyuki')">⛰ Nanyuki</div>
-          </div>
+        <input
+          type="text"
+          id="location-input"
+          class="sf-val sf-loc-input ph"
+          placeholder="Search destinations worldwide"
+          autocomplete="off"
+          oninput="onLocationInput(this)"
+          onfocus="onLocationFocus()"
+          onblur="onLocationBlur()"
+          onkeydown="onLocKeydown(event)"
+        >
+        <!-- Autocomplete dropdown -->
+        <div class="sf-panel loc-autocomplete-panel" id="sfp-where" onclick="event.stopPropagation()">
+          <div id="loc-suggestions" class="loc-options"></div>
         </div>
       </div>
       <div class="sf-divider"></div>
@@ -894,6 +960,23 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
                 <button class="g-btn" onclick="adjustGuests('infants',1)">+</button>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+      <div class="sf-divider"></div>
+      <!-- Bedrooms -->
+      <div class="sf" id="sf-rooms" onclick="openSF('rooms')">
+        <div class="sf-label">Bedrooms</div>
+        <div class="sf-val ph" id="field-rooms">Any</div>
+        <div class="sf-panel" id="sfp-rooms" onclick="event.stopPropagation()">
+          <div class="sf-panel-title">Minimum bedrooms</div>
+          <div class="rooms-options">
+            <div class="rooms-opt picked" onclick="pickRooms(0,false)">Any</div>
+            <div class="rooms-opt" onclick="pickRooms(0,true)" data-rooms="studio">Studio</div>
+            <div class="rooms-opt" onclick="pickRooms(1)">1 bed</div>
+            <div class="rooms-opt" onclick="pickRooms(2)">2 beds</div>
+            <div class="rooms-opt" onclick="pickRooms(3)">3 beds</div>
+            <div class="rooms-opt" onclick="pickRooms(4)">4+ beds</div>
           </div>
         </div>
       </div>
@@ -1014,7 +1097,7 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
   <div class="content-head">
     <div class="results-count"><strong id="result-num">0</strong> <span id="result-label">stays available</span></div>
   </div>
-  <div id="native-banner" style="display:none;align-items:center;gap:7px;font-size:12px;font-weight:600;color:var(--mint-deep);padding:8px 14px;border-radius:100px;background:rgba(45,212,191,.08);border:1px solid rgba(45,212,191,.18);margin-bottom:16px;width:fit-content;"></div>
+
 
   <div class="grid" id="grid"></div>
 </div>
@@ -1207,17 +1290,8 @@ async function loadListings() {
   updateBanner('ready');
 }
 
-/* ── Banner: show native count when >0 ── */
-function updateBanner(state) {
-  const el = document.getElementById('native-banner');
-  if (!el) return;
-  if (state === 'loading') {
-    el.style.display = 'none';
-  } else if (state === 'ready' && nativeCount > 0) {
-    el.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> ${nativeCount} verified Apatmento listing${nativeCount!==1?'s':''} shown first`;
-    el.style.display = 'flex';
-  }
-}
+/* ── Banner: removed – listings show without verification labels ── */
+function updateBanner(state) { /* no-op */ }
 
 /* ── Render cards ── */
 const HOUSE_SVG = `<svg class="card-img-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/><path d="M9 20v-5a3 3 0 0 1 6 0v5"/></svg>`;
@@ -1252,9 +1326,7 @@ function renderCards(list) {
       ? `<img src="${photo}" alt="" loading="lazy" decoding="async" onerror="this.remove()">`
       : HOUSE_SVG;
 
-    const badge = isNative
-      ? `<span class="card-tag card-tag-native">Listed here</span>`
-      : (apt.hot ? `<span class="card-tag card-tag-hot">🔥 Popular</span>` : '');
+    const badge = apt.hot ? `<span class="card-tag card-tag-hot">🔥 Popular</span>` : '';
 
     return `<article class="card${isNative?' is-native':''}" style="transition-delay:${Math.min(i,8) * 40}ms"
         data-card-id="${apt.id}" onclick="openDrawer('${apt.id}')">
@@ -1596,6 +1668,7 @@ let _searchState = {
   minPrice: 0,
   maxPrice: 999999,
   minBeds: 0,
+  studioOnly: false,
   amenities: new Set(),
   typeFilter: 'all', // all | hotel | apartment | home
   smartMode: null,   // null | 'nearest' | 'affordable' | 'bestvalue'
@@ -1609,9 +1682,12 @@ let _searchState = {
   const q = new URLSearchParams(location.search).get('q');
   if (!q) return;
   _searchState.loc = q.trim().toLowerCase();
-  const f = document.getElementById('field-where');
-  if (f) { f.textContent = q.trim() + ', Kenya'; f.classList.remove('ph'); }
+  const inp = document.getElementById('location-input');
+  if (inp) { inp.value = q.trim(); inp.classList.remove('ph'); }
 })();
+
+/* Google Maps Places init callback */
+function gMapsReady() { initGooglePlaces(); }
 
 /* ── Search field dropdowns ── */
 let _activeSF = null;
@@ -1632,16 +1708,210 @@ document.addEventListener('click', e => {
   }
 });
 
-/* ── Location picker ── */
-function pickLoc(city) {
-  _searchState.loc = city.toLowerCase();
-  const f = document.getElementById('field-where');
-  f.textContent = city + ', Kenya';
-  f.classList.remove('ph');
+/* ── Location autocomplete ── */
+let _locDebounce = null;
+let _locFocusIdx = -1;
+let _locSuggestions = [];
+let _googleAutocompleteService = null;
+
+// Initialize Google Maps Places if API key available
+function initGooglePlaces() {
+  if (window.google && window.google.maps && window.google.maps.places) {
+    _googleAutocompleteService = new google.maps.places.AutocompleteService();
+  }
+}
+
+function focusLocationInput(e) {
+  const inp = document.getElementById('location-input');
+  if (inp) inp.focus();
+}
+
+function onLocationFocus() {
+  const inp = document.getElementById('location-input');
+  if (inp && inp.classList.contains('ph')) {
+    // placeholder mode — clear visual
+  }
+  // Show panel if we have suggestions or input
+  if (_locSuggestions.length || (inp && inp.value.trim())) {
+    document.getElementById('sfp-where')?.classList.add('open');
+    _activeSF = 'sfp-where';
+  }
+  inp?.select();
+}
+
+function onLocationBlur() {
+  // Delay to allow click on suggestion
+  setTimeout(() => {
+    document.getElementById('sfp-where')?.classList.remove('open');
+    if (_activeSF === 'sfp-where') _activeSF = null;
+  }, 180);
+}
+
+function onLocKeydown(e) {
+  const panel = document.getElementById('sfp-where');
+  const items = document.querySelectorAll('.loc-suggestion');
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    _locFocusIdx = Math.min(_locFocusIdx + 1, items.length - 1);
+    items.forEach((el, i) => el.classList.toggle('focused', i === _locFocusIdx));
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    _locFocusIdx = Math.max(_locFocusIdx - 1, 0);
+    items.forEach((el, i) => el.classList.toggle('focused', i === _locFocusIdx));
+  } else if (e.key === 'Enter') {
+    if (_locFocusIdx >= 0 && items[_locFocusIdx]) {
+      items[_locFocusIdx].click();
+    } else {
+      const val = document.getElementById('location-input')?.value.trim();
+      if (val) commitLocation(val, val);
+      panel?.classList.remove('open');
+    }
+  } else if (e.key === 'Escape') {
+    panel?.classList.remove('open');
+  }
+}
+
+function onLocationInput(inp) {
+  const q = inp.value.trim();
+  _locFocusIdx = -1;
+  clearTimeout(_locDebounce);
+  if (!q) {
+    _searchState.loc = '';
+    const panel = document.getElementById('sfp-where');
+    panel?.classList.remove('open');
+    inp.classList.add('ph');
+    applyAndRender();
+    return;
+  }
+  inp.classList.remove('ph');
+  _locDebounce = setTimeout(() => fetchLocationSuggestions(q), 280);
+}
+
+function fetchLocationSuggestions(q) {
+  if (_googleAutocompleteService) {
+    _googleAutocompleteService.getPlacePredictions(
+      { input: q, types: ['(regions)'] },
+      (predictions, status) => {
+        if (status === 'OK' && predictions) {
+          _locSuggestions = predictions.map(p => ({
+            main: p.structured_formatting.main_text,
+            secondary: p.structured_formatting.secondary_text || '',
+            full: p.description,
+            placeId: p.place_id,
+          }));
+        } else {
+          _locSuggestions = buildFallbackSuggestions(q);
+        }
+        renderLocationSuggestions();
+      }
+    );
+  } else {
+    _locSuggestions = buildFallbackSuggestions(q);
+    renderLocationSuggestions();
+  }
+}
+
+function buildFallbackSuggestions(q) {
+  // Broad list of world cities + African cities; filter by query
+  const all = [
+    { main:'Nairobi', secondary:'Kenya', icon:'📍' },
+    { main:'Mombasa', secondary:'Kenya', icon:'🏖' },
+    { main:'Diani Beach', secondary:'Kwale, Kenya', icon:'🌴' },
+    { main:'Naivasha', secondary:'Nakuru County, Kenya', icon:'🏞' },
+    { main:'Nakuru', secondary:'Kenya', icon:'🦒' },
+    { main:'Kisumu', secondary:'Kenya', icon:'🌊' },
+    { main:'Nanyuki', secondary:'Laikipia, Kenya', icon:'⛰' },
+    { main:'Kampala', secondary:'Uganda', icon:'📍' },
+    { main:'Dar es Salaam', secondary:'Tanzania', icon:'📍' },
+    { main:'Accra', secondary:'Ghana', icon:'📍' },
+    { main:'Lagos', secondary:'Nigeria', icon:'📍' },
+    { main:'Kigali', secondary:'Rwanda', icon:'📍' },
+    { main:'Addis Ababa', secondary:'Ethiopia', icon:'📍' },
+    { main:'Cape Town', secondary:'South Africa', icon:'📍' },
+    { main:'Johannesburg', secondary:'South Africa', icon:'📍' },
+    { main:'Casablanca', secondary:'Morocco', icon:'📍' },
+    { main:'Dubai', secondary:'UAE', icon:'📍' },
+    { main:'London', secondary:'United Kingdom', icon:'📍' },
+    { main:'New York', secondary:'USA', icon:'📍' },
+    { main:'Paris', secondary:'France', icon:'📍' },
+    { main:'Barcelona', secondary:'Spain', icon:'📍' },
+    { main:'Amsterdam', secondary:'Netherlands', icon:'📍' },
+    { main:'Zanzibar', secondary:'Tanzania', icon:'🏝' },
+    { main:'Zanzibar City', secondary:'Tanzania', icon:'🏝' },
+    { main:'Arusha', secondary:'Tanzania', icon:'📍' },
+    { main:'Abuja', secondary:'Nigeria', icon:'📍' },
+    { main:'Maputo', secondary:'Mozambique', icon:'📍' },
+    { main:'Lusaka', secondary:'Zambia', icon:'📍' },
+    { main:'Harare', secondary:'Zimbabwe', icon:'📍' },
+    { main:'Windhoek', secondary:'Namibia', icon:'📍' },
+    { main:'Westlands', secondary:'Nairobi, Kenya', icon:'📍' },
+    { main:'Karen', secondary:'Nairobi, Kenya', icon:'📍' },
+    { main:'Kilimani', secondary:'Nairobi, Kenya', icon:'📍' },
+    { main:'Lavington', secondary:'Nairobi, Kenya', icon:'📍' },
+    { main:'Syokimau', secondary:'Nairobi, Kenya', icon:'📍' },
+    { main:'Nyali', secondary:'Mombasa, Kenya', icon:'📍' },
+  ];
+  const lq = q.toLowerCase();
+  return all
+    .filter(c => c.main.toLowerCase().includes(lq) || c.secondary.toLowerCase().includes(lq))
+    .slice(0, 7)
+    .map(c => ({ main: c.main, secondary: c.secondary, full: `${c.main}, ${c.secondary}`, icon: c.icon || '📍' }));
+}
+
+function renderLocationSuggestions() {
+  const container = document.getElementById('loc-suggestions');
+  const panel = document.getElementById('sfp-where');
+  if (!container || !panel) return;
+  if (!_locSuggestions.length) {
+    container.innerHTML = `<div class="loc-no-result">No places found — try a different search</div>`;
+  } else {
+    container.innerHTML = _locSuggestions.map((s, i) => `
+      <div class="loc-suggestion" data-idx="${i}" onclick="commitLocation('${s.main.replace(/'/g,"\\'")}','${s.full.replace(/'/g,"\\'")}')">
+        <div class="loc-suggestion-ico">${s.icon || '📍'}</div>
+        <div class="loc-suggestion-main">
+          <div class="loc-suggestion-name">${s.main}</div>
+          ${s.secondary ? `<div class="loc-suggestion-sub">${s.secondary}</div>` : ''}
+        </div>
+      </div>
+    `).join('');
+  }
+  panel.classList.add('open');
+  _activeSF = 'sfp-where';
+}
+
+function commitLocation(name, full) {
+  _searchState.loc = name.toLowerCase();
+  const inp = document.getElementById('location-input');
+  if (inp) { inp.value = full || name; inp.classList.remove('ph'); }
   document.getElementById('sfp-where')?.classList.remove('open');
   _activeSF = null;
-  // Mark active
-  document.querySelectorAll('.loc-opt').forEach(o => o.classList.toggle('picked', o.textContent.includes(city)));
+  applyAndRender();
+}
+
+/* Legacy pickLoc kept for any deep links */
+function pickLoc(city) { commitLocation(city, city); }
+
+/* ── Bedrooms picker ── */
+function pickRooms(n, isStudio) {
+  _searchState.minBeds = isStudio ? 0 : n;
+  _searchState.studioOnly = !!isStudio;
+  const f = document.getElementById('field-rooms');
+  if (n === 0 && !isStudio) {
+    f.textContent = 'Any'; f.classList.add('ph');
+  } else if (isStudio) {
+    f.textContent = 'Studio'; f.classList.remove('ph');
+  } else {
+    f.textContent = n === 4 ? '4+ beds' : `${n} bed${n !== 1 ? 's' : ''}`;
+    f.classList.remove('ph');
+  }
+  document.querySelectorAll('.rooms-opt').forEach(o => {
+    const on = (n === 0 && !isStudio && o.textContent === 'Any') ||
+               (isStudio && o.dataset.rooms === 'studio') ||
+               (!isStudio && n > 0 && o.textContent === f.textContent);
+    o.classList.toggle('picked', on);
+  });
+  document.getElementById('sfp-rooms')?.classList.remove('open');
+  _activeSF = null;
   applyAndRender();
 }
 
