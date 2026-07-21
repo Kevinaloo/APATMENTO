@@ -104,7 +104,7 @@
   --line:rgba(10,10,20,0.07);--line-2:rgba(10,10,20,0.13);
   /* STAYS theme = lilac → violet lead */
   --theme:var(--lilac-deep);--theme-2:var(--violet);--theme-grad:linear-gradient(135deg,#B8A4F4,#7B2FF7);
-  --font-display:'Geist','Inter',sans-serif;--font-body:'Inter',system-ui,sans-serif;
+  --font-display:'Manrope','Inter',sans-serif;--font-body:'Inter','Manrope',system-ui,sans-serif;
   --shadow-glass:0 8px 40px rgba(123,47,247,0.07),0 2px 12px rgba(10,10,20,0.04);
   --shadow-lift:0 24px 70px rgba(123,47,247,0.16),0 8px 24px rgba(10,10,20,0.06);
   --radius:22px;
@@ -527,7 +527,7 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
 .fm-apply:hover{filter:brightness(1.08);transform:translateY(-1px);}
 
 /* ── Search wrap with glowing ring ── */
-.search-wrap{position:relative;max-width:780px;margin-bottom:24px;}
+.search-wrap{position:relative;max-width:780px;margin-bottom:24px;isolation:isolate;}
 
 /* The glowing ring around the search bar */
 .search-ring{
@@ -580,54 +580,55 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
 .search-go svg{width:16px;height:16px;}
 .search-go:hover{filter:brightness(1.1);transform:translateY(-1px);}
 
-/* Dropdown panels */
+/* Dropdown panels — fixed position relative to search-wrap, not sf */
 .sf-panel{
-  display:none;position:absolute;top:calc(100% + 10px);left:0;
-  background:#fff;border-radius:18px;
+  display:none;
+  position:absolute;
+  top:calc(100% + 8px);
+  left:0;
+  background:#fff;
+  border-radius:16px;
   border:1px solid rgba(123,47,247,.15);
-  box-shadow:0 20px 60px rgba(10,10,20,.12),0 4px 20px rgba(123,47,247,.1);
-  z-index:200;min-width:220px;padding:16px;
-  animation:panelIn .2s cubic-bezier(.34,1.56,.64,1);
+  box-shadow:0 16px 48px rgba(10,10,20,.13),0 4px 16px rgba(123,47,247,.09);
+  z-index:300;
+  padding:14px;
+  animation:panelIn .18s cubic-bezier(.34,1.56,.64,1);
+  min-width:200px;
 }
 .sf-panel.open{display:block;}
-@keyframes panelIn{from{opacity:0;transform:translateY(-8px) scale(.97);}to{opacity:1;transform:none;}}
-.sf-panel-title{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:12px;}
+@keyframes panelIn{from{opacity:0;transform:translateY(-6px) scale(.98);}to{opacity:1;transform:none;}}
+.sf-panel-title{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:10px;}
 
-/* Location options */
-.loc-options{display:flex;flex-direction:column;gap:2px;}
-.loc-opt{
-  padding:10px 12px;border-radius:12px;cursor:pointer;
-  font-size:14px;color:var(--ink-soft);transition:all .15s;
-}
-.loc-opt:hover{background:rgba(139,111,232,.08);color:var(--ink);}
-.loc-opt.picked{background:rgba(139,111,232,.12);color:var(--violet);font-weight:600;}
-
-/* Date grid */
-.date-grid{display:flex;flex-direction:column;gap:12px;min-width:260px;}
-.date-input-wrap label{font-size:11px;font-weight:600;color:var(--ink-faint);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em;}
-.date-input-wrap input[type=date]{
-  width:100%;padding:10px 14px;border-radius:12px;
+/* Compact date row */
+.date-compact-row{display:flex;align-items:center;gap:8px;min-width:280px;}
+.date-compact-item{flex:1;display:flex;flex-direction:column;gap:4px;}
+.date-compact-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-faint);}
+.date-compact-input{
+  width:100%;padding:8px 10px;border-radius:10px;
   border:1.5px solid var(--line-2);
-  font-family:var(--font-body);font-size:14px;color:var(--ink);
+  font-family:var(--font-body);font-size:13px;color:var(--ink);
   background:#fff;outline:none;transition:border-color .2s;
 }
-.date-input-wrap input[type=date]:focus{border-color:var(--violet);}
+.date-compact-input:focus{border-color:var(--violet);}
+.date-compact-sep{font-size:14px;color:var(--ink-faint);flex-shrink:0;margin-top:16px;}
+.sf-panel-dates{min-width:300px;}
 
-/* Guest rows */
-.guest-rows{display:flex;flex-direction:column;gap:14px;min-width:240px;}
-.guest-row{display:flex;align-items:center;justify-content:space-between;gap:12px;}
-.guest-row-label{font-size:14px;font-weight:500;color:var(--ink);}
-.guest-row-sub{font-size:12px;color:var(--ink-faint);margin-top:1px;}
-.guest-counter{display:flex;align-items:center;gap:12px;}
+/* Compact guest rows */
+.sf-panel-guests{min-width:230px;}
+.guest-rows{display:flex;flex-direction:column;gap:8px;}
+.guest-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:4px 0;}
+.guest-row-label{font-size:13px;font-weight:500;color:var(--ink);display:flex;align-items:center;gap:5px;}
+.guest-row-sub{font-size:11px;color:var(--ink-faint);font-weight:400;}
+.guest-counter{display:flex;align-items:center;gap:8px;}
 .g-btn{
-  width:32px;height:32px;border-radius:50%;border:1.5px solid var(--line-2);
-  background:#fff;color:var(--ink);font-size:18px;line-height:1;
+  width:28px;height:28px;border-radius:50%;border:1.5px solid var(--line-2);
+  background:#fff;color:var(--ink);font-size:16px;line-height:1;
   display:flex;align-items:center;justify-content:center;cursor:pointer;
-  transition:all .2s;font-family:var(--font-body);
+  transition:all .18s;font-family:var(--font-body);flex-shrink:0;
 }
 .g-btn:hover:not(:disabled){border-color:var(--violet);color:var(--violet);background:rgba(123,47,247,.06);}
-.g-btn:disabled{opacity:.3;cursor:default;}
-.g-val{font-size:15px;font-weight:600;color:var(--ink);min-width:20px;text-align:center;}
+.g-btn:disabled{opacity:.28;cursor:default;}
+.g-val{font-size:14px;font-weight:600;color:var(--ink);min-width:18px;text-align:center;}
 
 /* ── Special Search pill (AI natural language) ── */
 .special-search-bar{
@@ -752,25 +753,24 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
 .sf-loc-input:focus{color:var(--ink);}
 
 /* Autocomplete panel */
-.loc-autocomplete-panel{min-width:280px;}
+.loc-autocomplete-panel{min-width:280px;max-height:320px;overflow-y:auto;}
 .loc-suggestion{
   display:flex;align-items:center;gap:10px;
-  padding:10px 12px;border-radius:12px;cursor:pointer;
-  font-size:14px;color:var(--ink-soft);transition:all .15s;
+  padding:8px 10px;border-radius:10px;cursor:pointer;
+  font-size:13px;color:var(--ink-soft);transition:all .15s;
 }
 .loc-suggestion:hover,.loc-suggestion.focused{background:rgba(139,111,232,.08);color:var(--ink);}
-.loc-suggestion-ico{font-size:16px;flex-shrink:0;}
+.loc-suggestion-ico{font-size:15px;flex-shrink:0;}
 .loc-suggestion-main{flex:1;min-width:0;}
 .loc-suggestion-name{font-weight:500;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .loc-suggestion-sub{font-size:11px;color:var(--ink-faint);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.loc-suggestion-type{font-size:10px;font-weight:600;color:var(--ink-faint);background:var(--glass-2);padding:2px 7px;border-radius:100px;flex-shrink:0;}
-.loc-no-result{padding:12px;font-size:13px;color:var(--ink-faint);text-align:center;}
+.loc-no-result{padding:10px;font-size:12px;color:var(--ink-faint);text-align:center;}
 
 /* Bedrooms picker */
-.rooms-options{display:flex;flex-direction:column;gap:2px;min-width:180px;}
+.rooms-options{display:flex;flex-direction:column;gap:2px;min-width:160px;}
 .rooms-opt{
-  padding:10px 12px;border-radius:12px;cursor:pointer;
-  font-size:14px;color:var(--ink-soft);transition:all .15s;
+  padding:8px 10px;border-radius:10px;cursor:pointer;
+  font-size:13px;color:var(--ink-soft);transition:all .15s;
 }
 .rooms-opt:hover{background:rgba(139,111,232,.08);color:var(--ink);}
 .rooms-opt.picked{background:rgba(139,111,232,.12);color:var(--violet);font-weight:600;}
@@ -787,18 +787,29 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
   .filter-bar{flex-wrap:nowrap;overflow-x:auto;}
 }
 
-/* ── Mobile search bar: stack vertically ── */
+/* ── Mobile search bar: stack vertically, panels escape ring ── */
 @media(max-width:640px){
   .search-ring{border-radius:18px;}
   .search-main{flex-wrap:wrap;border-radius:16px;}
-  /* Where and Check-in side-by-side, Guests and Bedrooms side-by-side */
+  /* Where gets full row, others pair up */
   .sf{flex:1 1 calc(50% - 8px);min-width:0;padding:12px 14px;}
-  #sf-where{flex:1 1 100%;} /* Where gets full row on mobile for typing room */
+  #sf-where{flex:1 1 100%;}
   .sf-divider{display:none;}
   .search-go{width:calc(100% - 12px);margin:0 6px 6px;padding:13px;justify-content:center;}
-  /* prevent panel overflow */
-  .sf-panel{left:0;right:0;min-width:unset;width:calc(100vw - 48px);max-width:400px;}
-  .loc-autocomplete-panel{width:calc(100vw - 48px);max-width:400px;}
+  /* Panels: full-width below, escape ring overflow */
+  .sf-panel{
+    position:fixed;
+    left:16px;right:16px;
+    top:auto;
+    width:auto;min-width:unset;max-width:none;
+    border-radius:14px;
+    z-index:1000;
+  }
+  /* Position panels just below the search bar — use JS for exact top */
+  .sf-panel-dates{min-width:unset;}
+  .date-compact-row{flex-direction:column;gap:10px;min-width:unset;}
+  .date-compact-sep{display:none;}
+  .loc-autocomplete-panel{max-height:240px;}
 }
 </style>
 
@@ -826,9 +837,9 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
     }
   </script>
 <link rel="stylesheet" href="/brand.css"/>
-<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"/>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" media="print" onload="this.media='all';this.onload=null"/>
-<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"/></noscript>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" media="print" onload="this.media='all';this.onload=null"/>
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"/></noscript>
 <link rel="stylesheet" href="/cabana-ds.css"/>
 <script type="application/ld+json">
 {"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.apatmento.space/"}, {"@type": "ListItem", "position": 2, "name": "Stays", "item": "https://www.apatmento.space/apartments"}]}
@@ -905,16 +916,16 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
       <div class="sf" id="sf-checkin" onclick="openSF('checkin')">
         <div class="sf-label">Check in</div>
         <div class="sf-val ph" id="field-checkin">Add date</div>
-        <div class="sf-panel" id="sfp-checkin" onclick="event.stopPropagation()">
-          <div class="sf-panel-title">Check-in date</div>
-          <div class="date-grid">
-            <div class="date-input-wrap">
-              <label>Check in</label>
-              <input type="date" id="date-in" onchange="pickDate('in',this.value)">
+        <div class="sf-panel sf-panel-dates" id="sfp-checkin" onclick="event.stopPropagation()">
+          <div class="date-compact-row">
+            <div class="date-compact-item">
+              <label class="date-compact-label">Check in</label>
+              <input type="date" id="date-in" class="date-compact-input" onchange="pickDate('in',this.value)">
             </div>
-            <div class="date-input-wrap">
-              <label>Check out</label>
-              <input type="date" id="date-out" onchange="pickDate('out',this.value)">
+            <div class="date-compact-sep">→</div>
+            <div class="date-compact-item">
+              <label class="date-compact-label">Check out</label>
+              <input type="date" id="date-out" class="date-compact-input" onchange="pickDate('out',this.value)">
             </div>
           </div>
         </div>
@@ -924,13 +935,11 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
       <div class="sf" id="sf-guests" onclick="openSF('guests')">
         <div class="sf-label">Guests</div>
         <div class="sf-val ph" id="field-guests">Add guests</div>
-        <div class="sf-panel" id="sfp-guests" onclick="event.stopPropagation()">
-          <div class="sf-panel-title">Who's coming?</div>
+        <div class="sf-panel sf-panel-guests" id="sfp-guests" onclick="event.stopPropagation()">
           <div class="guest-rows">
             <div class="guest-row">
               <div class="guest-row-info">
-                <div class="guest-row-label">Adults</div>
-                <div class="guest-row-sub">Age 13+</div>
+                <div class="guest-row-label">Adults <span class="guest-row-sub">13+</span></div>
               </div>
               <div class="guest-counter">
                 <button class="g-btn" id="g-adults-minus" onclick="adjustGuests('adults',-1)" disabled>−</button>
@@ -940,8 +949,7 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
             </div>
             <div class="guest-row">
               <div class="guest-row-info">
-                <div class="guest-row-label">Children</div>
-                <div class="guest-row-sub">Ages 2–12</div>
+                <div class="guest-row-label">Children <span class="guest-row-sub">2–12</span></div>
               </div>
               <div class="guest-counter">
                 <button class="g-btn" id="g-children-minus" onclick="adjustGuests('children',-1)" disabled>−</button>
@@ -951,8 +959,7 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
             </div>
             <div class="guest-row">
               <div class="guest-row-info">
-                <div class="guest-row-label">Infants</div>
-                <div class="guest-row-sub">Under 2</div>
+                <div class="guest-row-label">Infants <span class="guest-row-sub">&lt;2</span></div>
               </div>
               <div class="guest-counter">
                 <button class="g-btn" id="g-infants-minus" onclick="adjustGuests('infants',-1)" disabled>−</button>
@@ -1698,11 +1705,22 @@ function openSF(name) {
   if (_activeSF && _activeSF !== panelId) {
     document.getElementById(_activeSF)?.classList.remove('open');
   }
+  const isOpen = panel.classList.contains('open');
   panel.classList.toggle('open');
-  _activeSF = panel.classList.contains('open') ? panelId : null;
+  _activeSF = !isOpen ? panelId : null;
+  // On mobile, position panel below search bar using fixed coords
+  if (!isOpen && window.innerWidth <= 640) {
+    const ring = document.querySelector('.search-ring');
+    if (ring) {
+      const rect = ring.getBoundingClientRect();
+      panel.style.top = (rect.bottom + 8) + 'px';
+    }
+  } else {
+    panel.style.top = '';
+  }
 }
 document.addEventListener('click', e => {
-  if (_activeSF && !e.target.closest('.sf')) {
+  if (_activeSF && !e.target.closest('.sf') && !e.target.closest('.sf-panel')) {
     document.getElementById(_activeSF)?.classList.remove('open');
     _activeSF = null;
   }
@@ -1728,12 +1746,16 @@ function focusLocationInput(e) {
 
 function onLocationFocus() {
   const inp = document.getElementById('location-input');
-  if (inp && inp.classList.contains('ph')) {
-    // placeholder mode — clear visual
-  }
   // Show panel if we have suggestions or input
   if (_locSuggestions.length || (inp && inp.value.trim())) {
-    document.getElementById('sfp-where')?.classList.add('open');
+    const panel = document.getElementById('sfp-where');
+    if (panel) {
+      panel.classList.add('open');
+      if (window.innerWidth <= 640) {
+        const ring = document.querySelector('.search-ring');
+        if (ring) panel.style.top = (ring.getBoundingClientRect().bottom + 8) + 'px';
+      }
+    }
     _activeSF = 'sfp-where';
   }
   inp?.select();
@@ -1876,6 +1898,10 @@ function renderLocationSuggestions() {
     `).join('');
   }
   panel.classList.add('open');
+  if (window.innerWidth <= 640) {
+    const ring = document.querySelector('.search-ring');
+    if (ring) panel.style.top = (ring.getBoundingClientRect().bottom + 8) + 'px';
+  }
   _activeSF = 'sfp-where';
 }
 
