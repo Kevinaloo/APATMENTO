@@ -337,12 +337,7 @@ html.via-dash #tx{display:none!important;animation:none!important;}
 .trail-loc{font-size:11px;color:var(--ink-faint);margin-bottom:4px;}
 .trail-stats{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--ink-soft);}
 
-/* ── CARD HORIZONTAL MOBILE ── */
 @media(max-width:600px){
-  .card-h{display:flex!important;flex-direction:row;}
-  .card-h .card-img{flex:0 0 110px;height:auto;min-height:110px;}
-  .card-h .card-body{flex:1;padding:10px 13px;}
-  .card-h .card-tags{display:none;}
   .gw-banner-cta{display:none;}
 }
 
@@ -683,7 +678,7 @@ function renderGrid() {
     return;
   }
 
-  const isMobile = window.innerWidth <= 600;
+  const isMobile = false; // always use vertical 2-col grid layout
   g.innerHTML = list.map((t, i) => {
     const stars = t.rating ? `<span style="color:#F59E0B;">★</span> ${t.rating}` : 'New';
     const reviewLabel = t.reviews ? `${t.reviews.toLocaleString()} reviews` : '';
