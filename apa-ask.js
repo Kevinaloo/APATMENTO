@@ -753,16 +753,24 @@
     document.body.appendChild(popup);
     avatarPopup = popup;
 
+    /* Only pop the avatar ONCE per browser session — not on every page visit.
+       We store a flag in sessionStorage so navigating to tours, stays etc.
+       doesn't re-trigger the popup; only a fresh site entry (new tab / first load) shows it. */
+    var APA_AVATAR_SHOWN_KEY = 'apa_avatar_shown';
     function maybeShow() {
+      /* Already shown once this session — stay quiet. */
+      try { if (global.sessionStorage.getItem(APA_AVATAR_SHOWN_KEY)) return; } catch(e){}
       if (global.ApaSession) {
         ApaSession.ready(function (state) {
           if (state.status !== 'guest') return;
+          /* 30 seconds after first page load, as intended. */
           setTimeout(function () {
             if (!avatarPopup) return;
+            try { global.sessionStorage.setItem(APA_AVATAR_SHOWN_KEY, '1'); } catch(e){}
             popup.classList.remove('apa-av-hidden');
             popup.classList.add('apa-av-visible');
             avatarAutoTimer = setTimeout(function () { hideAvatarPopup(); }, 8000);
-          }, 20000);
+          }, 30000);
         });
       } else { setTimeout(maybeShow, 800); }
     }

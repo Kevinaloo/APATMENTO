@@ -111,9 +111,9 @@ body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webk
 
 /* ── SERVICE ENTRY TRANSITION (house rises) ── */
 #enter-tx{position:fixed;inset:0;z-index:9999;background:var(--ink);display:flex;align-items:center;justify-content:center;overflow:hidden;
-  animation:txLift .8s cubic-bezier(.7,0,.2,1) 2.2s forwards;}
+  animation:txLift .8s cubic-bezier(.7,0,.2,1) 2.2s forwards;pointer-events:none;}
 #enter-tx.done{animation:txLift .4s cubic-bezier(.7,0,.2,1) 0s forwards!important;}
-@keyframes txLift{to{opacity:0;transform:scale(1.1);}}
+@keyframes txLift{to{opacity:0;transform:scale(1.1);pointer-events:none;visibility:hidden;}}
 .tx-aurora{position:absolute;inset:0;}
 .tx-blob{position:absolute;border-radius:50%;filter:blur(80px);opacity:0;animation:txIgnite 1s forwards;}
 .txb-1{width:420px;height:420px;background:radial-gradient(circle,var(--lilac),transparent 68%);top:30%;left:30%;}
@@ -2047,8 +2047,8 @@ function dismissEnterTx(){
   setTimeout(()=>{el.style.display='none';},900);
 }
 document.getElementById('enter-tx')?.addEventListener('animationend',dismissEnterTx,{once:true});
-window.addEventListener('load',()=>setTimeout(dismissEnterTx,1800));
-setTimeout(dismissEnterTx,3500);
+window.addEventListener('load',()=>setTimeout(dismissEnterTx,800));
+setTimeout(dismissEnterTx,2800);
 
 </script>
 <div data-showcase="window"></div>

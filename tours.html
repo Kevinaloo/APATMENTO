@@ -281,21 +281,34 @@ html.via-dash #tx{display:none!important;animation:none!important;}
 
 /* ═══════════════════════════════════════════════════════════════
    COMPACT LISTING CARDS (mobile)
-   Reflows the large vertical card into a tight horizontal tile so
-   more products fit on screen — matching the Stays layout.
-   Purely presentational: no markup or JS changes required.
+   Compact 2-column tile grid for mobile — more tours visible per screen.
+   Each tile: square-ish photo on top, tight body below.
    ═══════════════════════════════════════════════════════════════ */
 @media(max-width:700px){
   .grid{grid-template-columns:repeat(2,1fr);gap:10px;}
-  .card{background:#fff!important;opacity:1!important;transform:none!important;}
-  .card-img{height:120px;}
-  .card-img-ico{width:34px;height:34px;}
-  .card-badge{top:8px;left:8px;padding:3px 7px;font-size:9px;}
-  .card-fav{top:8px;right:8px;width:28px;height:28px;font-size:12px;}
-  .card-name{font-size:12.5px;}
+  .card{
+    background:#fff!important;opacity:1!important;transform:none!important;
+    border-radius:14px;display:block;/* vertical stack, not row */
+  }
+  .card-img{height:115px;width:100%;flex:none;}
+  .card-img-ico{width:32px;height:32px;}
+  .card-badge{top:7px;left:7px;padding:3px 8px;font-size:9px;}
+  .card-fav{top:7px;right:7px;width:28px;height:28px;font-size:12px;}
+  .card-body{padding:8px 10px 10px;}
+  .card-meta-top{font-size:10px;margin-bottom:3px;}
+  .card-name{font-size:12px;margin-bottom:6px;min-height:30px;}
+  .card-tags{gap:4px;margin-bottom:8px;}
+  .card-tag{font-size:10px;padding:3px 7px;}
   .card-price .val{font-size:14px;}
+  .card-price .per{font-size:10px;}
+  .card-go{width:28px;height:28px;}
 }
-@media(max-width:380px){.grid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:380px){
+  .grid{grid-template-columns:repeat(2,1fr);gap:8px;}
+  .card-img{height:100px;}
+  .card-body{padding:7px 8px 9px;}
+  .card-name{font-size:11.5px;}
+}
 
 
 /* ── SEARCH INPUT ── */
