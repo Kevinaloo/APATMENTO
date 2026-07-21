@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cabana Match — Partner Hub</title>
+<meta name="robots" content="noindex, nofollow"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/apa-session.js"></script>
+<script src="/apa-admin-guard.js"></script>
+<script>
+(function(){var sb2=null;try{var C=supabase.createClient('https://gfwgbgdvxtocwhilrtdw.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw');sb2=C;}catch(e){}if(!sb2)return;sb2.auth.getSession().then(function(res){if(!res.data.session){sessionStorage.setItem('auth_next',location.href);window.location.href='auth.html?next='+encodeURIComponent(location.pathname);return;}try{localStorage.setItem('apa-last-role','partner');}catch(e){}}); })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap" rel="stylesheet"/>
+<link rel="icon" href="/favicon.ico" sizes="any"/>
+<link rel="apple-touch-icon" href="/cabana-apple-touch-icon.png"/>
+<link rel="manifest" href="/manifest.json"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --glass:#FCFCFD;--glass-2:#F4F5FB;--glass-3:#EBEDF7;
+  --ink:#0A0A14;--ink-2:#12132A;--ink-soft:#4A4C66;--ink-faint:#8E90AD;
+  --mint:#5EEAD4;--mint-deep:#2DD4BF;--mint-dark:#0D9488;
+  --electric:#4361FF;--violet:#7B2FF7;--gold:#F5B12E;
+  --ember:#FF6B2C;--err:#FF4D6D;--ok:#2DD4BF;
+  --lilac:#B8A4F4;--lilac-deep:#8B6FE8;
+  --line:rgba(10,10,20,.07);--line-2:rgba(10,10,20,.13);
+  --theme:var(--mint-deep);--theme-2:var(--electric);
+  --theme-grad:linear-gradient(135deg,#2DD4BF,#4361FF);
+  --theme-soft:rgba(45,212,191,.08);--theme-border:rgba(45,212,191,.2);
+  --font-d:'Inter',sans-serif;--font-b:'Inter',system-ui,sans-serif;
+  --shadow-sm:0 2px 8px rgba(10,10,20,.05);
+  --shadow-md:0 8px 32px rgba(45,212,191,.08),0 2px 12px rgba(10,10,20,.05);
+  --radius:18px;
+}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms !important;transition-duration:.01ms !important;}}
+html,body{height:100%;font-family:var(--font-b);background:var(--glass-2);color:var(--ink);-webkit-font-smoothing:antialiased;}
+body{display:flex;flex-direction:column;overflow-x:hidden;}
+
+/* AURORA */
+.aurora{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;}
+.ab{position:absolute;border-radius:50%;filter:blur(90px);opacity:.22;mix-blend-mode:multiply;animation:drift 30s ease-in-out infinite;}
+.ab-1{width:600px;height:600px;background:radial-gradient(circle,#C77DFF,transparent 70%);top:-15%;left:-10%;}
+.ab-2{width:480px;height:480px;background:radial-gradient(circle,#4D96FF,transparent 72%);bottom:-12%;right:-8%;animation-delay:-14s;opacity:.16;}
+.ab-3{width:360px;height:360px;background:radial-gradient(circle,#6BCB77,transparent 70%);top:40%;left:50%;animation-delay:-7s;opacity:.12;}
+@keyframes drift{0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(28px,-18px) scale(1.05);}}
+
+/* TOPBAR */
+.topbar{position:sticky;top:0;z-index:200;height:64px;background:rgba(252,252,253,.88);backdrop-filter:blur(24px) saturate(180%);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0;}
+.tb-left{display:flex;align-items:center;gap:12px;}
+.tb-back{width:36px;height:36px;border-radius:10px;border:1.5px solid var(--line-2);background:rgba(255,255,255,.7);display:flex;align-items:center;justify-content:center;color:var(--ink-soft);cursor:pointer;transition:all .2s;text-decoration:none;flex-shrink:0;}
+.tb-back:hover{border-color:var(--mint-deep);color:var(--mint-deep);}
+.tb-divider{width:1px;height:24px;background:var(--line-2);}
+.tb-cab-wm{height:26px;width:auto;display:block;}
+.tb-hub-label{font-size:12px;font-weight:600;color:var(--ink-faint);letter-spacing:.04em;}
+.tb-right{display:flex;align-items:center;gap:10px;}
+.tb-avatar{width:36px;height:36px;border-radius:11px;background:var(--theme-grad);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px;color:#fff;cursor:pointer;box-shadow:0 3px 10px rgba(45,212,191,.3);flex-shrink:0;}
+
+/* SHELL */
+.shell{display:flex;flex:1;position:relative;z-index:2;}
+
+/* SIDEBAR */
+.sidebar{width:240px;flex-shrink:0;padding:20px 14px;background:rgba(252,252,253,.78);backdrop-filter:blur(20px);border-right:1px solid var(--line);display:flex;flex-direction:column;gap:2px;position:sticky;top:64px;height:calc(100vh - 64px);overflow-y:auto;}
+@media(max-width:860px){.sidebar{display:none;}}
+.sb-section{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);padding:14px 10px 6px;}
+.sb-link{display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:13px;font-size:13px;font-weight:500;color:var(--ink-soft);text-decoration:none;cursor:pointer;transition:all .2s;position:relative;}
+.sb-link svg{width:17px;height:17px;flex-shrink:0;opacity:.7;}
+.sb-link:hover{background:rgba(45,212,191,.07);color:var(--ink);}
+.sb-link.active{background:linear-gradient(135deg,rgba(199,125,255,.15),rgba(77,150,255,.08));color:#7B2FF7;font-weight:700;}
+.sb-link.active svg{opacity:1;}
+.sb-link.active::before{content:'';position:absolute;left:0;top:25%;bottom:25%;width:3px;border-radius:2px;background:linear-gradient(180deg,#C77DFF,#4D96FF);}
+.sb-foot{margin-top:auto;padding-top:14px;border-top:1px solid var(--line);}
+.sb-link.danger{color:var(--err);}
+
+/* MAIN */
+.main{flex:1;padding:32px 28px 60px;max-width:900px;}
+@media(max-width:860px){.main{padding:24px 18px 60px;max-width:100%;}}
+
+/* PAGE HEADER */
+.page-hd{margin-bottom:28px;}
+.page-eyebrow{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mint-dark);display:block;margin-bottom:8px;}
+.page-title{font-family:var(--font-d);font-weight:300;font-size:clamp(28px,4vw,38px);letter-spacing:-.025em;color:var(--ink);line-height:1.1;margin-bottom:8px;}
+.page-title em{font-style:italic;font-weight:700;background:linear-gradient(90deg,#C77DFF,#4D96FF,#6BCB77,#FFD93D);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.page-sub{font-size:14px;color:var(--ink-soft);line-height:1.6;}
+
+/* CABANA MATCH BANNER */
+.cm-banner{
+  position:relative;border-radius:22px;overflow:hidden;
+  background:#fff;
+  border:2px solid transparent;
+  background-clip:padding-box;
+  margin-bottom:24px;
+  isolation:isolate;
+  padding:3px;
+}
+.cm-banner-ring{
+  position:absolute;inset:0;border-radius:22px;z-index:0;
+  background:conic-gradient(from var(--cmb-a,0deg),#FF6B6B,#FFD93D,#6BCB77,#4D96FF,#C77DFF,#FF6B6B);
+  animation:cmBannerSpin 4s linear infinite;
+}
+@property --cmb-a{syntax:'<angle>';inherits:false;initial-value:0deg;}
+@keyframes cmBannerSpin{to{--cmb-a:360deg;}}
+.cm-banner-inner{
+  position:relative;z-index:1;
+  background:#fff;border-radius:20px;
+  padding:24px 22px;
+  display:flex;align-items:center;gap:18px;
+}
+.cm-banner-icon{
+  width:56px;height:56px;border-radius:16px;flex-shrink:0;
+  background:conic-gradient(from 45deg,#FF6B6B,#FFD93D,#6BCB77,#4D96FF,#C77DFF,#FF6B6B);
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-size:24px;
+  animation:cmIconHue 6s linear infinite;
+}
+@keyframes cmIconHue{0%{filter:hue-rotate(0deg);}100%{filter:hue-rotate(360deg);}}
+.cm-banner-body{flex:1;min-width:0;}
+.cm-banner-title{
+  font-weight:800;font-size:17px;
+  background:linear-gradient(90deg,#C77DFF,#4D96FF,#6BCB77,#FFD93D,#FF6B6B);
+  background-size:200% auto;
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  animation:cmTextShimmer 4s linear infinite;
+  margin-bottom:4px;
+}
+@keyframes cmTextShimmer{0%{background-position:0%;}100%{background-position:200%;}}
+.cm-banner-sub{font-size:13px;color:var(--ink-soft);}
+.cm-banner-badge{
+  flex-shrink:0;font-size:10px;font-weight:800;letter-spacing:.08em;
+  padding:5px 12px;border-radius:100px;color:#fff;
+  background:linear-gradient(135deg,#C77DFF,#4D96FF);
+  animation:cmBadgePulse 2s ease-in-out infinite;
+}
+@keyframes cmBadgePulse{0%,100%{box-shadow:0 0 0 0 rgba(199,125,255,.4);}50%{box-shadow:0 0 0 8px rgba(199,125,255,0);}}
+
+/* CARD */
+.card{background:#fff;border-radius:var(--radius);border:1px solid var(--line);padding:22px;margin-bottom:18px;}
+.card-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;gap:10px;}
+.card-title{font-weight:700;font-size:15px;color:var(--ink);}
+.card-sub{font-size:12px;color:var(--ink-faint);margin-top:2px;}
+
+/* OPT-IN TOGGLE CARD */
+.optin-card{
+  background:linear-gradient(135deg,rgba(199,125,255,.07),rgba(77,150,255,.04));
+  border:1.5px solid rgba(199,125,255,.2);
+  border-radius:20px;padding:24px;margin-bottom:18px;
+}
+.optin-row{display:flex;align-items:center;gap:20px;justify-content:space-between;flex-wrap:wrap;}
+.optin-body{}
+.optin-title{font-weight:700;font-size:16px;color:var(--ink);margin-bottom:6px;}
+.optin-desc{font-size:13px;color:var(--ink-soft);line-height:1.6;max-width:480px;}
+.optin-status{
+  display:inline-flex;align-items:center;gap:7px;
+  font-size:12px;font-weight:700;margin-top:10px;
+  padding:5px 14px;border-radius:100px;
+}
+.optin-status.on{background:rgba(107,203,119,.12);color:#16a34a;border:1px solid rgba(107,203,119,.3);}
+.optin-status.on::before{content:'';width:7px;height:7px;border-radius:50%;background:#22c55e;animation:optDot 1.5s ease-in-out infinite;box-shadow:0 0 0 0 rgba(34,197,94,.4);}
+@keyframes optDot{0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,.4);}70%{box-shadow:0 0 0 6px rgba(34,197,94,0);}}
+.optin-status.off{background:rgba(10,10,20,.04);color:var(--ink-faint);border:1px solid var(--line);}
+
+/* Toggle switch */
+.toggle-big{
+  position:relative;width:58px;height:32px;flex-shrink:0;cursor:pointer;
+}
+.toggle-big input{opacity:0;width:0;height:0;position:absolute;}
+.toggle-big-track{
+  position:absolute;inset:0;border-radius:100px;
+  background:var(--glass-3);border:1.5px solid var(--line-2);
+  transition:all .3s;
+}
+.toggle-big input:checked + .toggle-big-track{
+  background:linear-gradient(135deg,#6BCB77,#2DD4BF);
+  border-color:transparent;
+  box-shadow:0 4px 14px rgba(107,203,119,.35);
+}
+.toggle-big-thumb{
+  position:absolute;top:4px;left:4px;
+  width:22px;height:22px;border-radius:50%;
+  background:#fff;box-shadow:0 2px 6px rgba(10,10,20,.14);
+  transition:transform .3s cubic-bezier(.34,1.56,.64,1);
+}
+.toggle-big input:checked ~ .toggle-big-thumb{transform:translateX(26px);}
+
+/* COMING SOON BADGE */
+.cs-pill{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:11px;font-weight:700;letter-spacing:.05em;
+  color:#fff;background:linear-gradient(135deg,#C77DFF,#4D96FF);
+  padding:4px 12px;border-radius:100px;
+}
+
+/* HOW IT WORKS */
+.how-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:18px;}
+@media(max-width:640px){.how-grid{grid-template-columns:1fr;}}
+.how-item{
+  padding:18px;border-radius:16px;
+  background:var(--glass-2);border:1px solid var(--line);
+  text-align:center;
+}
+.how-num{
+  width:36px;height:36px;border-radius:12px;
+  background:linear-gradient(135deg,#C77DFF,#4D96FF);
+  display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:15px;color:#fff;
+  margin:0 auto 12px;
+}
+.how-title{font-weight:700;font-size:13px;color:var(--ink);margin-bottom:6px;}
+.how-desc{font-size:12px;color:var(--ink-soft);line-height:1.55;}
+
+/* EARNINGS CALLOUT */
+.earn-callout{
+  background:linear-gradient(135deg,rgba(107,203,119,.08),rgba(77,150,255,.05));
+  border:1.5px solid rgba(107,203,119,.2);
+  border-radius:16px;padding:18px 20px;
+  display:flex;align-items:flex-start;gap:14px;
+  margin-bottom:18px;
+}
+.earn-icon{font-size:24px;flex-shrink:0;margin-top:2px;}
+.earn-title{font-weight:700;font-size:14px;color:var(--ink);margin-bottom:4px;}
+.earn-desc{font-size:13px;color:var(--ink-soft);line-height:1.6;}
+.earn-highlight{color:#16a34a;font-weight:700;}
+
+/* REQUEST CARDS */
+.req-list{display:flex;flex-direction:column;gap:12px;}
+.req-card{
+  background:#fff;border:1.5px solid var(--line);
+  border-radius:16px;padding:16px 18px;
+  transition:border-color .2s,box-shadow .2s;
+}
+.req-card:hover{border-color:rgba(199,125,255,.3);box-shadow:0 4px 18px rgba(199,125,255,.08);}
+.req-card-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px;}
+.req-card-title{font-weight:700;font-size:14px;color:var(--ink);}
+.req-card-sub{font-size:12px;color:var(--ink-faint);margin-top:2px;}
+.req-card-timer{
+  font-family:'Inter',monospace;font-weight:800;font-size:14px;
+  background:linear-gradient(90deg,#FF6B6B,#FFD93D);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  white-space:nowrap;flex-shrink:0;
+}
+.req-card-details{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
+.req-tag{
+  font-size:11px;color:var(--ink-soft);
+  background:var(--glass-2);
+  padding:4px 10px;border-radius:100px;border:1px solid var(--line);
+}
+.req-card-footer{display:flex;gap:8px;flex-wrap:wrap;}
+.btn-respond{
+  font-size:12px;font-weight:700;color:#fff;border:none;
+  background:linear-gradient(135deg,#C77DFF,#4D96FF);
+  padding:9px 18px;border-radius:100px;cursor:pointer;
+  transition:all .2s;box-shadow:0 4px 12px rgba(199,125,255,.3);
+}
+.btn-respond:hover{transform:translateY(-1px);box-shadow:0 7px 18px rgba(199,125,255,.45);}
+.btn-respond:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+
+/* ACCEPTED REQUEST CARD (host dashboard widget) */
+.host-accepted-card{
+  background:linear-gradient(135deg,rgba(199,125,255,.07),rgba(77,150,255,.04));
+  border:1.5px solid rgba(199,125,255,.25);
+  border-radius:16px;padding:16px 18px;
+  margin-bottom:12px;
+}
+.hac-header{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.hac-dot{width:8px;height:8px;border-radius:50%;background:#6BCB77;animation:optDot 1.5s ease-in-out infinite;}
+.hac-label{font-weight:700;font-size:13px;color:#7B2FF7;}
+.hac-guest{font-size:13px;color:var(--ink-soft);margin-bottom:10px;}
+.hac-actions{display:flex;gap:8px;}
+.btn-chat{
+  font-size:12px;font-weight:700;padding:8px 16px;border-radius:100px;
+  background:linear-gradient(135deg,#C77DFF,#4D96FF);color:#fff;border:none;
+  cursor:pointer;transition:all .2s;
+}
+.btn-chat:hover{transform:translateY(-1px);}
+
+/* EMPTY STATE */
+.empty-state{text-align:center;padding:48px 24px;}
+.empty-ico{font-size:40px;margin-bottom:14px;}
+.empty-title{font-weight:700;font-size:16px;color:var(--ink);margin-bottom:6px;}
+.empty-sub{font-size:13px;color:var(--ink-faint);line-height:1.6;max-width:320px;margin:0 auto;}
+
+/* LOADING SKELETON */
+.skeleton{background:linear-gradient(90deg,var(--glass-2) 25%,var(--glass-3) 50%,var(--glass-2) 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:10px;}
+@keyframes shimmer{0%{background-position:200% 0;}100%{background-position:-200% 0;}}
+</style>
+</head>
+<body>
+<div class="aurora"><div class="ab ab-1"></div><div class="ab ab-2"></div><div class="ab ab-3"></div></div>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="tb-left">
+    <a href="dashboard.html?role=partner&back=1" class="tb-back" title="Dashboard">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    </a>
+    <div class="tb-divider"></div>
+    <img src="cabana-wordmark-color.png" class="tb-cab-wm" alt="Cabana" onerror="this.style.display='none'"/>
+    <span class="tb-hub-label">· Partner Hub</span>
+  </div>
+  <div class="tb-right">
+    <div class="tb-avatar" id="tb-avatar">P</div>
+  </div>
+</div>
+
+<div class="shell">
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sb-section">Partner Hub</div>
+  <a class="sb-link" href="partner-listings.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    My Listings
+  </a>
+  <a class="sb-link" href="partner-bookings.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg>
+    Bookings
+  </a>
+  <a class="sb-link active" href="partner-cabana.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8l-5-5-5 5h3v6h4V8h3z"/><circle cx="12" cy="15" r="3"/></svg>
+    Cabana Match
+  </a>
+  <a class="sb-link" href="partner-agents.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    My Agents
+  </a>
+  <a class="sb-link" href="partner-earnings.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+    Earnings
+  </a>
+  <a class="sb-link" href="partner-calendar.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+    Calendar
+  </a>
+  <a class="sb-link" href="partner-analytics.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 9l-5 5-4-4-4 4"/></svg>
+    Analytics
+  </a>
+  <a class="sb-link" href="partner-settings.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    Settings
+  </a>
+  <div class="sb-foot">
+    <a class="sb-link danger" onclick="signOut()" style="cursor:pointer;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+      Sign out
+    </a>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="page-hd">
+    <span class="page-eyebrow">Partner Hub · Cabana Match</span>
+    <h1 class="page-title">World's first <em>reverse booking</em></h1>
+    <p class="page-sub">Guests broadcast what they need. You respond. They choose you. You earn more — with less effort.</p>
+  </div>
+
+  <!-- Animated banner -->
+  <div class="cm-banner">
+    <span class="cm-banner-ring"></span>
+    <div class="cm-banner-inner">
+      <div class="cm-banner-icon">🏠</div>
+      <div class="cm-banner-body">
+        <div class="cm-banner-title">Cabana Match — Hosts Chase Guests</div>
+        <div class="cm-banner-sub">Stop waiting for guests to find you. Get notified of real travel requests in your area and respond directly.</div>
+      </div>
+      <span class="cm-banner-badge">COMING SOON</span>
+    </div>
+  </div>
+
+  <!-- Opt-in card -->
+  <div class="optin-card">
+    <div class="optin-row">
+      <div class="optin-body">
+        <div class="optin-title">Opt in to Cabana Match</div>
+        <div class="optin-desc">When a guest searches for a stay in your area and presses "Match with Cabana," you'll see their request and can respond within 20 minutes. Only opted-in hosts receive these requests.</div>
+        <div class="optin-status off" id="optin-status">Not opted in yet</div>
+      </div>
+      <label class="toggle-big" id="optin-toggle-label" title="Toggle Cabana Match opt-in">
+        <input type="checkbox" id="optin-toggle" onchange="handleOptInToggle(this)"/>
+        <div class="toggle-big-track"></div>
+        <div class="toggle-big-thumb"></div>
+      </label>
+    </div>
+  </div>
+
+  <!-- Earnings callout -->
+  <div class="earn-callout">
+    <div class="earn-icon">💰</div>
+    <div>
+      <div class="earn-title">Cabana Match pays more</div>
+      <div class="earn-desc">Every booking that originates from a Cabana Match request earns you the full listing price. Cabana takes a small <span class="earn-highlight">5% referral fee</span> — far less than any other platform. Your regular service terms still apply, giving you more in your pocket on every matched booking.</div>
+    </div>
+  </div>
+
+  <!-- How it works -->
+  <div class="card">
+    <div class="card-hd">
+      <div>
+        <div class="card-title">How Cabana Match works for you</div>
+        <div class="card-sub">Three simple steps to more bookings</div>
+      </div>
+      <span class="cs-pill">Coming Soon</span>
+    </div>
+    <div class="how-grid">
+      <div class="how-item">
+        <div class="how-num">1</div>
+        <div class="how-title">Guest broadcasts</div>
+        <div class="how-desc">A guest fills in their travel details and hits "Match with Cabana." Their request goes live for 20 minutes.</div>
+      </div>
+      <div class="how-item">
+        <div class="how-num">2</div>
+        <div class="how-title">You respond</div>
+        <div class="how-desc">You see their request and click Respond with your listing, price, and availability. The guest sees your offer instantly.</div>
+      </div>
+      <div class="how-item">
+        <div class="how-num">3</div>
+        <div class="how-title">Guest engages, you book</div>
+        <div class="how-desc">If the guest is interested, they engage — opening a conversation in Cabana messaging. If it clicks, they book.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Live requests section -->
+  <div class="card">
+    <div class="card-hd">
+      <div>
+        <div class="card-title">Live guest requests</div>
+        <div class="card-sub" id="req-count-label">Loading…</div>
+      </div>
+      <span class="cs-pill">Coming Soon</span>
+    </div>
+    <div id="req-list-zone">
+      <!-- Skeleton -->
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="skeleton" style="height:80px;border-radius:14px;"></div>
+        <div class="skeleton" style="height:80px;border-radius:14px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Active accepted cards -->
+  <div id="accepted-zone" style="display:none;">
+    <div class="card">
+      <div class="card-hd">
+        <div class="card-title">Your active Cabana responses</div>
+        <div class="card-sub">Guests you've responded to and are still in window</div>
+      </div>
+      <div id="accepted-list"></div>
+    </div>
+  </div>
+
+  <!-- History -->
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-title">Match history</div>
+      <div class="card-sub">Past requests you responded to</div>
+    </div>
+    <div id="history-zone">
+      <div class="empty-state">
+        <div class="empty-ico">🏁</div>
+        <div class="empty-title">No history yet</div>
+        <div class="empty-sub">Once Cabana Match launches, your response history and conversion stats will appear here.</div>
+      </div>
+    </div>
+  </div>
+</main>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
+let sb = null;
+try { const { createClient } = supabase; sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY); window.sb = sb; } catch(e) {}
+
+let currentUser = null;
+let isOptedIn = false;
+
+/* ── Boot ── */
+document.addEventListener('DOMContentLoaded', async () => {
+  if (window.ApaSession) {
+    const state = await new Promise(r => ApaSession.ready(r));
+    if (state?.user) {
+      currentUser = state.user;
+      const initials = (state.user.user_metadata?.name || state.user.email || 'P').slice(0,1).toUpperCase();
+      const av = document.getElementById('tb-avatar');
+      if (av) av.textContent = initials;
+    }
+  }
+  await loadOptInStatus();
+  await loadLiveRequests();
+  await loadAcceptedResponses();
+});
+
+/* ── Opt-in status ── */
+async function loadOptInStatus() {
+  if (!sb || !currentUser) return;
+  const { data } = await sb
+    .from('cabana_host_opt_ins')
+    .select('opted_in')
+    .eq('host_id', currentUser.id)
+    .maybeSingle();
+
+  isOptedIn = data?.opted_in === true;
+  updateOptInUI(isOptedIn);
+}
+
+function updateOptInUI(on) {
+  const toggle = document.getElementById('optin-toggle');
+  const status = document.getElementById('optin-status');
+  if (toggle) toggle.checked = on;
+  if (status) {
+    status.textContent = on ? '✓ Opted in — you will receive guest requests' : 'Not opted in yet';
+    status.className = 'optin-status ' + (on ? 'on' : 'off');
+  }
+}
+
+async function handleOptInToggle(checkbox) {
+  if (!sb || !currentUser) return;
+  const on = checkbox.checked;
+  updateOptInUI(on);
+
+  const { error } = await sb
+    .from('cabana_host_opt_ins')
+    .upsert({
+      host_id: currentUser.id,
+      opted_in: on,
+      opted_in_at: on ? new Date().toISOString() : undefined,
+      opted_out_at: on ? null : new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'host_id' });
+
+  if (error) {
+    // Revert on failure
+    checkbox.checked = !on;
+    updateOptInUI(!on);
+    alert('Failed to update opt-in. Please try again.');
+  } else {
+    isOptedIn = on;
+    if (on) await loadLiveRequests();
+  }
+}
+
+/* ── Live requests (full system — coming soon overlay shown) ── */
+async function loadLiveRequests() {
+  const zone = document.getElementById('req-list-zone');
+  const label = document.getElementById('req-count-label');
+  if (!zone) return;
+
+  if (!isOptedIn) {
+    zone.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-ico">🔒</div>
+        <div class="empty-title">Opt in to see requests</div>
+        <div class="empty-sub">Toggle the opt-in above to start receiving guest requests in your area.</div>
+      </div>`;
+    if (label) label.textContent = 'Opt in to see requests';
+    return;
+  }
+
+  if (!sb || !currentUser) { zone.innerHTML = ''; return; }
+
+  // Full system query — will work post-launch when schema is deployed
+  try {
+    const { data: requests, error } = await sb
+      .from('cabana_match_requests')
+      .select('*')
+      .eq('status', 'live')
+      .gt('expires_at', new Date().toISOString())
+      .order('created_at', { ascending: false })
+      .limit(20);
+
+    if (error || !requests?.length) {
+      zone.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-ico">🎉</div>
+          <div class="empty-title">No live requests right now</div>
+          <div class="empty-sub">When guests broadcast a request in your area, it will appear here instantly. Stay opted in and be ready!</div>
+        </div>`;
+      if (label) label.textContent = 'No live requests right now';
+      return;
+    }
+
+    if (label) label.textContent = `${requests.length} live request${requests.length > 1 ? 's' : ''} in your area`;
+    zone.innerHTML = `<div class="req-list">${requests.map(buildReqCard).join('')}</div>`;
+    requests.forEach(r => startReqTimer(r.id, r.expires_at));
+
+    // Realtime subscription
+    try {
+      sb.channel('host-req-' + currentUser.id)
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'cabana_match_requests' }, () => loadLiveRequests())
+        .subscribe();
+    } catch(e) {}
+
+  } catch(e) {
+    zone.innerHTML = `<div class="empty-state"><div class="empty-ico">🚧</div><div class="empty-title">Coming Soon</div><div class="empty-sub">Cabana Match is almost ready. You're already opted in — you'll be among the first to receive guest requests when we launch.</div></div>`;
+    if (label) label.textContent = 'Launching soon';
+  }
+}
+
+function buildReqCard(req) {
+  const expiresAt = new Date(req.expires_at);
+  const secsLeft = Math.max(0, Math.floor((expiresAt - new Date()) / 1000));
+  const mins = Math.floor(secsLeft / 60);
+  const secs = secsLeft % 60;
+  const timer = `${mins}:${secs.toString().padStart(2,'0')}`;
+
+  return `
+  <div class="req-card" id="req-card-${req.id}">
+    <div class="req-card-header">
+      <div>
+        <div class="req-card-title">${req.guest_name || 'Guest'} is looking for a stay</div>
+        <div class="req-card-sub">Request live · respond before timer ends</div>
+      </div>
+      <div class="req-card-timer" id="req-timer-${req.id}">${timer}</div>
+    </div>
+    <div class="req-card-details">
+      <span class="req-tag">📍 ${req.location}</span>
+      <span class="req-tag">📅 ${req.checkin_date} → ${req.checkout_date}</span>
+      <span class="req-tag">🌙 ${req.nights} night${req.nights > 1 ? 's' : ''}</span>
+      <span class="req-tag">👥 ${req.guests} guest${req.guests > 1 ? 's' : ''}</span>
+      ${req.bedrooms ? `<span class="req-tag">🛏 ${req.bedrooms} bed${req.bedrooms > 1 ? 's' : ''}</span>` : ''}
+      ${req.max_price ? `<span class="req-tag">💰 Up to KES ${req.max_price.toLocaleString()}/night</span>` : ''}
+    </div>
+    ${req.notes ? `<div style="font-size:12px;color:var(--ink-soft);margin-bottom:10px;font-style:italic;">"${req.notes}"</div>` : ''}
+    <div class="req-card-footer">
+      <button class="btn-respond" onclick="openRespondModal('${req.id}', '${(req.guest_name||'Guest').replace(/'/g,"\\'")}')">
+        Respond to this guest →
+      </button>
+    </div>
+  </div>`;
+}
+
+function startReqTimer(requestId, expiresAt) {
+  const el = document.getElementById('req-timer-' + requestId);
+  if (!el) return;
+  const iv = setInterval(() => {
+    const secsLeft = Math.max(0, Math.floor((new Date(expiresAt) - new Date()) / 1000));
+    const mins = Math.floor(secsLeft / 60);
+    const secs = secsLeft % 60;
+    el.textContent = `${mins}:${secs.toString().padStart(2,'0')}`;
+    if (secsLeft <= 0) {
+      clearInterval(iv);
+      const card = document.getElementById('req-card-' + requestId);
+      if (card) { card.style.opacity = '.4'; card.querySelector('.btn-respond').disabled = true; }
+    }
+  }, 1000);
+}
+
+/* ── Accepted responses ── */
+async function loadAcceptedResponses() {
+  if (!sb || !currentUser) return;
+  try {
+    const { data } = await sb
+      .from('cabana_match_responses')
+      .select('*, cabana_match_requests(*)')
+      .eq('host_id', currentUser.id)
+      .in('status', ['pending','engaged'])
+      .order('created_at', { ascending: false })
+      .limit(10);
+
+    if (!data?.length) return;
+
+    const zone = document.getElementById('accepted-zone');
+    const list = document.getElementById('accepted-list');
+    if (!zone || !list) return;
+    zone.style.display = 'block';
+    list.innerHTML = data.map(r => {
+      const req = r.cabana_match_requests;
+      return `
+      <div class="host-accepted-card">
+        <div class="hac-header">
+          <span class="hac-dot"></span>
+          <span class="hac-label">${r.status === 'engaged' ? 'Guest engaged' : 'Awaiting guest'}</span>
+        </div>
+        <div class="hac-guest">
+          <strong>${req?.guest_name || 'Guest'}</strong> · ${req?.location} · ${req?.checkin_date} → ${req?.checkout_date}
+        </div>
+        <div class="hac-actions">
+          ${r.conversation_id
+            ? `<button class="btn-chat" onclick="window.location.href='chat.html?conv=${r.conversation_id}'">Open chat →</button>`
+            : `<span style="font-size:12px;color:var(--ink-faint);">Waiting for guest to engage…</span>`
+          }
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e) {}
+}
+
+/* ── Respond modal (simplified for now) ── */
+function openRespondModal(requestId, guestName) {
+  // Coming soon — full modal will allow host to select listing + price
+  alert(`Cabana Match is launching soon!\n\nYou're opted in and ready. When we go live, you'll be able to respond to ${guestName}'s request directly from here with your listing details.`);
+}
+
+/* ── Sign out ── */
+async function signOut() {
+  if (sb) await sb.auth.signOut();
+  window.location.href = 'auth.html';
+}
+</script>
+</body>
+</html>

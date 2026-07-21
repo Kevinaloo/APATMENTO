@@ -734,11 +734,351 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
 .filter-sort-btn svg{width:14px;height:14px;}
 
 /* ── Fix: APA FAB doesn't cover Reserve button ── */
-/* On mobile, move the fab left so it doesn't overlap sticky CTA */
 @media(max-width:700px){
   #apa-fab{bottom:calc(80px + env(safe-area-inset-bottom,0px)) !important;right:14px !important;}
   #apa-avatar-popup{bottom:calc(148px + env(safe-area-inset-bottom,0px)) !important;right:6px !important;}
 }
+
+/* ════════════════════════════════════════════════════════
+   HERO COMPACT ROW
+════════════════════════════════════════════════════════ */
+.hero-compact-row{margin-bottom:18px;}
+.hero-title-compact{
+  font-family:'Inter','Manrope',sans-serif;
+  font-weight:300;font-size:clamp(26px,4vw,38px);
+  letter-spacing:-.03em;color:var(--ink);line-height:1.1;
+  margin-bottom:4px;
+}
+.hero-title-compact em{
+  font-style:italic;font-weight:600;
+  background:var(--theme-grad);-webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.hero-sub-compact{font-size:12px;color:var(--ink-faint);font-weight:500;letter-spacing:.01em;}
+
+/* ════════════════════════════════════════════════════════
+   CABANA MATCH ZONE
+════════════════════════════════════════════════════════ */
+.cabana-match-zone{margin-top:4px;}
+.filter-bar-inline{margin-top:12px;}
+
+/* ── THE BUTTON ── */
+.cabana-match-btn{
+  position:relative;
+  width:100%;
+  border:none;background:none;
+  padding:3px;
+  border-radius:20px;
+  cursor:pointer;
+  isolation:isolate;
+  overflow:visible;
+}
+
+/* Animated rainbow conic-gradient ring */
+.cmb-ring{
+  position:absolute;inset:0;
+  border-radius:20px;
+  background:conic-gradient(
+    from var(--cmb-angle,0deg),
+    #FF6B6B, #FFD93D, #6BCB77, #4D96FF, #C77DFF, #FF6B6B
+  );
+  animation:cabanaRingSpin 3s linear infinite;
+  z-index:0;
+}
+@property --cmb-angle{syntax:'<angle>';inherits:false;initial-value:0deg;}
+@keyframes cabanaRingSpin{to{--cmb-angle:360deg;}}
+
+/* Fallback for browsers without @property */
+@supports not (background:conic-gradient(from 1turn,red,red)){
+  .cmb-ring{
+    background:linear-gradient(90deg,#FF6B6B,#FFD93D,#6BCB77,#4D96FF,#C77DFF);
+    animation:cmFallbackSpin 3s linear infinite;
+    background-size:200% 100%;
+  }
+  @keyframes cmFallbackSpin{0%{background-position:0% 50%;}100%{background-position:200% 50%;}}
+}
+
+.cmb-inner{
+  position:relative;z-index:1;
+  display:flex;align-items:center;gap:14px;
+  background:#fff;
+  border-radius:18px;
+  padding:14px 18px;
+  text-align:left;
+  transition:background .2s;
+}
+.cabana-match-btn:hover .cmb-inner{background:rgba(252,252,253,.96);}
+.cabana-match-btn:active{transform:scale(.995);}
+
+.cmb-icon{
+  width:44px;height:44px;border-radius:14px;flex-shrink:0;
+  background:conic-gradient(from 45deg,#FF6B6B,#FFD93D,#6BCB77,#4D96FF,#C77DFF,#FF6B6B);
+  display:flex;align-items:center;justify-content:center;color:#fff;
+  animation:cmIconHue 6s linear infinite;
+  filter:drop-shadow(0 4px 12px rgba(100,100,255,.3));
+}
+@keyframes cmIconHue{0%{filter:hue-rotate(0deg) drop-shadow(0 4px 12px rgba(100,100,255,.3));}100%{filter:hue-rotate(360deg) drop-shadow(0 4px 12px rgba(255,100,100,.3));}}
+
+.cmb-text{flex:1;min-width:0;}
+.cmb-label{
+  display:block;
+  font-family:'Inter',sans-serif;font-weight:700;font-size:15px;
+  background:linear-gradient(90deg,#7B2FF7,#4D96FF,#6BCB77,#FFD93D,#FF6B6B);
+  background-size:200% auto;
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  animation:cmTextShimmer 4s linear infinite;
+  white-space:nowrap;
+}
+@keyframes cmTextShimmer{0%{background-position:0% center;}100%{background-position:200% center;}}
+.cmb-sub{
+  display:block;font-size:11px;color:var(--ink-faint);margin-top:2px;font-weight:400;
+}
+
+.cmb-badge{
+  flex-shrink:0;
+  font-size:9px;font-weight:800;letter-spacing:.1em;
+  color:#fff;
+  background:linear-gradient(135deg,#FF6B6B,#C77DFF);
+  padding:4px 8px;border-radius:100px;
+  animation:cmBadgePulse 2s ease-in-out infinite;
+}
+@keyframes cmBadgePulse{0%,100%{box-shadow:0 0 0 0 rgba(199,125,255,.4);}50%{box-shadow:0 0 0 6px rgba(199,125,255,0);}}
+
+/* ════════════════════════════════════════════════════════
+   CABANA MATCH MODAL
+════════════════════════════════════════════════════════ */
+.cm-overlay{
+  position:fixed;inset:0;z-index:500;
+  background:rgba(10,10,20,.65);
+  backdrop-filter:blur(8px);
+  opacity:0;visibility:hidden;
+  transition:opacity .35s,visibility .35s;
+}
+.cm-overlay.open{opacity:1;visibility:visible;}
+
+.cm-modal{
+  position:fixed;
+  bottom:0;left:0;right:0;
+  z-index:501;
+  max-height:92vh;
+  border-radius:28px 28px 0 0;
+  background:#fff;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  transform:translateY(100%);
+  transition:transform .4s cubic-bezier(.34,1.1,.64,1);
+}
+.cm-modal.open{transform:translateY(0);}
+@media(min-width:640px){
+  .cm-modal{
+    left:50%;right:auto;top:50%;bottom:auto;
+    transform:translate(-50%,-50%) scale(.95);
+    width:480px;max-height:88vh;
+    border-radius:28px;
+  }
+  .cm-modal.open{transform:translate(-50%,-50%) scale(1);}
+}
+
+.cm-modal-inner{padding:0 0 40px;}
+
+/* Header */
+.cm-header{
+  position:sticky;top:0;z-index:10;
+  padding:16px 20px 14px;
+  background:#fff;
+  border-bottom:1px solid rgba(10,10,20,.06);
+  display:flex;align-items:flex-start;gap:14px;
+}
+.cm-close{
+  flex-shrink:0;width:36px;height:36px;border-radius:50%;
+  border:1.5px solid rgba(10,10,20,.1);background:rgba(252,252,253,.9);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;color:var(--ink-soft);transition:all .2s;
+}
+.cm-close:hover{border-color:var(--violet);color:var(--violet);}
+
+.cm-wordmark{
+  font-family:'Inter',sans-serif;font-weight:800;font-size:22px;
+  letter-spacing:-.02em;display:flex;align-items:center;gap:0;
+}
+.cm-wm-c{color:#FF6B6B;}.cm-wm-a1{color:#FF9A5C;}.cm-wm-b{color:#FFD93D;}
+.cm-wm-a2{color:#6BCB77;}.cm-wm-n{color:#4D96FF;}.cm-wm-a3{color:#9B5DE5;}
+.cm-wm-space{width:6px;}
+.cm-wm-match{
+  background:linear-gradient(90deg,#7B2FF7,#4D96FF);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.cm-world-first{
+  display:flex;align-items:center;gap:6px;
+  font-size:10px;color:var(--ink-faint);margin-top:4px;letter-spacing:.01em;
+}
+.cm-wf-dot{
+  width:6px;height:6px;border-radius:50%;
+  background:linear-gradient(135deg,#FFD93D,#FF6B6B);
+  animation:cmDotPulse 1.5s ease-in-out infinite;
+}
+@keyframes cmDotPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.4);}}
+
+/* Hero panel */
+.cm-hero-panel{padding:24px 20px 0;}
+.cm-hero-graphic{
+  display:flex;align-items:center;justify-content:center;gap:12px;
+  margin-bottom:20px;
+}
+.cm-hg-avatar{
+  width:44px;height:44px;border-radius:14px;
+  background:var(--glass-2);border:1.5px solid var(--line);
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;
+}
+.cm-hg-guest-av{
+  background:linear-gradient(135deg,rgba(123,47,247,.12),rgba(77,150,255,.1));
+  border-color:rgba(123,47,247,.2);
+}
+.cm-hg-host-av{
+  width:38px;height:38px;border-radius:12px;
+  background:linear-gradient(135deg,rgba(107,203,119,.1),rgba(77,150,255,.08));
+  border-color:rgba(107,203,119,.2);
+  font-size:17px;
+}
+.cm-hg-arrows{
+  display:flex;flex-direction:column;gap:2px;
+  font-size:18px;color:var(--ink-faint);
+}
+.cm-hg-arrow{
+  animation:cmArrowPulse 1.2s ease-in-out infinite;
+  background:linear-gradient(90deg,#7B2FF7,#4D96FF,#6BCB77);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  font-weight:700;
+}
+.cm-hg-arrow-1{animation-delay:0s;}
+.cm-hg-arrow-2{animation-delay:.15s;}
+.cm-hg-arrow-3{animation-delay:.3s;}
+@keyframes cmArrowPulse{0%,100%{opacity:.3;transform:translateX(0);}50%{opacity:1;transform:translateX(4px);}}
+.cm-hg-hosts{display:flex;flex-direction:column;gap:4px;}
+.cm-hero-title{
+  font-family:'Inter',sans-serif;font-weight:700;
+  font-size:clamp(22px,5vw,28px);letter-spacing:-.025em;
+  color:var(--ink);margin-bottom:10px;line-height:1.15;
+}
+.cm-hero-title em{
+  font-style:italic;
+  background:linear-gradient(90deg,#7B2FF7,#4D96FF);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.cm-hero-desc{font-size:14px;line-height:1.7;color:var(--ink-soft);}
+
+/* Steps */
+.cm-steps{padding:24px 20px 0;display:flex;flex-direction:column;gap:16px;}
+.cm-step{display:flex;gap:14px;align-items:flex-start;}
+.cm-step-num{
+  flex-shrink:0;width:32px;height:32px;border-radius:10px;
+  background:linear-gradient(135deg,rgba(123,47,247,.12),rgba(77,150,255,.1));
+  border:1.5px solid rgba(123,47,247,.2);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Inter',sans-serif;font-weight:800;font-size:13px;
+  background:linear-gradient(135deg,#7B2FF7,#4D96FF);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  /* text gradient needs a separate element trick */
+  color:var(--violet);font-size:14px;
+}
+.cm-step-title{font-weight:700;font-size:14px;color:var(--ink);margin-bottom:3px;}
+.cm-step-desc{font-size:13px;color:var(--ink-soft);line-height:1.55;}
+
+/* Badges */
+.cm-badges{
+  display:flex;flex-direction:column;gap:8px;
+  padding:20px 20px 0;
+}
+.cm-badge-item{
+  display:flex;align-items:center;gap:8px;
+  font-size:13px;color:var(--ink-soft);font-weight:500;
+}
+.cm-badge-ico{
+  width:20px;height:20px;border-radius:50%;flex-shrink:0;
+  background:linear-gradient(135deg,#6BCB77,#4D96FF);
+  color:#fff;font-size:11px;font-weight:800;
+  display:flex;align-items:center;justify-content:center;
+}
+
+/* Coming Soon */
+.cm-coming-soon{
+  margin:24px 20px 0;
+  position:relative;
+  border-radius:20px;overflow:hidden;
+  background:linear-gradient(135deg,rgba(123,47,247,.05),rgba(77,150,255,.04));
+  border:1.5px dashed rgba(123,47,247,.25);
+  padding:24px 22px;
+  text-align:center;
+}
+.cm-cs-glow{
+  position:absolute;top:-30px;left:50%;transform:translateX(-50%);
+  width:180px;height:180px;
+  background:radial-gradient(circle,rgba(123,47,247,.15),transparent 70%);
+  pointer-events:none;
+}
+.cm-cs-eyebrow{
+  font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--violet);margin-bottom:6px;
+}
+.cm-cs-title{
+  font-family:'Inter',sans-serif;font-weight:700;font-size:20px;
+  color:var(--ink);margin-bottom:8px;letter-spacing:-.02em;
+}
+.cm-cs-desc{font-size:13px;color:var(--ink-soft);line-height:1.6;margin-bottom:18px;}
+.cm-cs-notify-btn{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:13px 24px;border-radius:14px;border:none;
+  font-family:'Inter',sans-serif;font-weight:700;font-size:14px;
+  color:#fff;cursor:pointer;
+  background:linear-gradient(135deg,#7B2FF7,#4D96FF);
+  box-shadow:0 6px 20px rgba(123,47,247,.35);
+  transition:all .25s;
+  width:100%;justify-content:center;
+}
+.cm-cs-notify-btn:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(123,47,247,.5);}
+.cm-cs-host-note{margin-top:14px;font-size:12px;color:var(--ink-faint);}
+.cm-cs-host-link{color:var(--violet);font-weight:600;cursor:pointer;text-decoration:none;}
+.cm-cs-host-link:hover{text-decoration:underline;}
+
+/* ════════════════════════════════════════════════════════
+   FLOATING FILTER FAB
+════════════════════════════════════════════════════════ */
+.fab-filter{
+  position:fixed;
+  bottom:calc(20px + env(safe-area-inset-bottom,0px));
+  left:50%;transform:translateX(-50%);
+  z-index:90;
+  display:inline-flex;align-items:center;gap:8px;
+  padding:12px 22px;border-radius:100px;
+  font-family:'Inter',sans-serif;font-weight:700;font-size:13px;
+  color:var(--ink);
+  background:rgba(255,255,255,.92);
+  border:1.5px solid rgba(10,10,20,.1);
+  box-shadow:0 8px 30px rgba(10,10,20,.15),0 2px 8px rgba(10,10,20,.06);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  cursor:pointer;transition:all .25s;
+  white-space:nowrap;
+}
+.fab-filter:hover{
+  background:#fff;
+  box-shadow:0 12px 36px rgba(123,47,247,.2),0 4px 12px rgba(10,10,20,.08);
+  border-color:rgba(123,47,247,.3);
+  color:var(--violet);
+  transform:translateX(-50%) translateY(-2px);
+}
+.fab-filter-badge{
+  background:var(--violet);color:#fff;
+  font-size:9px;font-weight:800;
+  width:16px;height:16px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  margin-left:2px;
+}
+/* Hide fab-filter on desktop — it's in modal there */
+@media(min-width:900px){.fab-filter{display:none;}}
+
+/* ── Push content up from floating FAB ── */
+.content{padding-bottom:80px;}
+@media(min-width:900px){.content{padding-bottom:40px;}}
 
 /* ── Location input (replaces static where field) ── */
 .sf-where-wrap{cursor:text;}
@@ -882,11 +1222,14 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
   </div>
 </div>
 
-<!-- HERO + SEARCH -->
+<!-- HERO + SEARCH — redesigned: compact, premium, Cabana Match prominent -->
 <div class="hero">
-  <span class="hero-eyebrow">Short-stay apartments</span>
-  <h1 class="hero-title">Stay somewhere <em>remarkable.</em></h1>
-  <p class="hero-sub">Hand-picked stays worldwide. What you see is what you pay — hosts keep 100%.</p>
+
+  <!-- Compact heading row -->
+  <div class="hero-compact-row">
+    <h1 class="hero-title-compact">Find your <em>stay</em></h1>
+    <div class="hero-sub-compact">Zero commission · Hosts keep 100%</div>
+  </div>
 
   <!-- ── Premium search bar ── -->
   <div class="search-wrap">
@@ -899,14 +1242,13 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
           type="text"
           id="location-input"
           class="sf-val sf-loc-input ph"
-          placeholder="Search destinations worldwide"
+          placeholder="Destination"
           autocomplete="off"
           oninput="onLocationInput(this)"
           onfocus="onLocationFocus()"
           onblur="onLocationBlur()"
           onkeydown="onLocKeydown(event)"
         >
-        <!-- Autocomplete dropdown -->
         <div class="sf-panel loc-autocomplete-panel" id="sfp-where" onclick="event.stopPropagation()">
           <div id="loc-suggestions" class="loc-options"></div>
         </div>
@@ -994,18 +1336,6 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
     </div>
     </div><!-- /search-ring -->
 
-    <!-- Special Search — AI natural language -->
-    <div class="special-search-bar" onclick="focusAISearch()">
-      <span class="special-badge">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>
-        Special Search
-      </span>
-      <input type="text" id="ai-search-input" placeholder='e.g. "hosting a birthday party" or "quiet retreat for elderly guests"…' onkeydown="if(event.key==='Enter')runAISearch()">
-      <button class="special-search-btn" onclick="event.stopPropagation();runAISearch()">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-      </button>
-    </div>
-
     <!-- AI response area -->
     <div class="ai-response" id="ai-response">
       <div class="ai-response-head">
@@ -1018,22 +1348,144 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
     </div>
   </div>
 
-  <!-- ── Filter bar — clean, focused, no clutter ── -->
-  <div class="filter-bar">
-    <div class="fchip active" onclick="toggleFilter(this,'all')">All stays</div>
-    <div class="fchip" onclick="toggleFilter(this,'hotel')">🏨 Hotels</div>
-    <div class="fchip" onclick="toggleFilter(this,'apartment')">🏡 Self-catering</div>
-    <div class="fchip" id="fc-nearest" onclick="toggleFilter(this,'nearest')">📍 Near me</div>
-    <div class="fchip" id="fc-affordable" onclick="toggleFilter(this,'affordable')">💰 Most affordable</div>
-    <div class="fchip chip-ai" id="fc-autorecommend" onclick="runAutoRecommend(this)">✦ Auto Recommend</div>
-    <div class="fchip chip-ai" onclick="focusSpecialSearch()">✨ Special Search</div>
-    <!-- Filters & Sort — always last -->
-    <button class="filter-sort-btn" onclick="openFilterModal()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
-      Filters &amp; Sort
+  <!-- ── CABANA MATCH — world's first reverse short-stay marketplace ── -->
+  <div class="cabana-match-zone">
+    <!-- The main button -->
+    <button class="cabana-match-btn" onclick="openCabanaMatch()" id="cabana-match-btn" aria-label="Match with Cabana — let hosts find you">
+      <!-- Animated rainbow border -->
+      <span class="cmb-ring"></span>
+      <!-- Inner content -->
+      <span class="cmb-inner">
+        <span class="cmb-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z" fill="none"/><path d="M17 8l-5-5-5 5h3v6h4V8h3z" fill="currentColor" opacity=".9"/><circle cx="12" cy="12" r="3.5" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M8.5 12a3.5 3.5 0 0 1 3.5-3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </span>
+        <span class="cmb-text">
+          <span class="cmb-label">Match with Cabana</span>
+          <span class="cmb-sub">Let hosts come to you · World's first</span>
+        </span>
+        <span class="cmb-badge">NEW</span>
+      </span>
     </button>
+    <!-- Pill chips row -->
+    <div class="filter-bar filter-bar-inline">
+      <div class="fchip active" onclick="toggleFilter(this,'all')">All stays</div>
+      <div class="fchip" onclick="toggleFilter(this,'hotel')">🏨 Hotels</div>
+      <div class="fchip" onclick="toggleFilter(this,'apartment')">🏡 Self-catering</div>
+      <div class="fchip" id="fc-nearest" onclick="toggleFilter(this,'nearest')">📍 Near me</div>
+      <div class="fchip" id="fc-affordable" onclick="toggleFilter(this,'affordable')">💰 Best price</div>
+      <div class="fchip chip-ai" id="fc-autorecommend" onclick="runAutoRecommend(this)">✦ Auto Recommend</div>
+      <div class="fchip chip-ai" onclick="focusSpecialSearch()">✨ AI Search</div>
+    </div>
   </div>
 </div>
+
+<!-- ── CABANA MATCH MODAL ── -->
+<div class="cm-overlay" id="cm-overlay" onclick="closeCabanaMatch()"></div>
+<div class="cm-modal" id="cm-modal">
+  <div class="cm-modal-inner">
+    <!-- Header -->
+    <div class="cm-header">
+      <button class="cm-close" onclick="closeCabanaMatch()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+      <div class="cm-header-logo">
+        <!-- Rainbow Cabana Match wordmark -->
+        <div class="cm-wordmark">
+          <span class="cm-wm-c">C</span><span class="cm-wm-a1">a</span><span class="cm-wm-b">b</span><span class="cm-wm-a2">a</span><span class="cm-wm-n">n</span><span class="cm-wm-a3">a</span>
+          <span class="cm-wm-space"> </span>
+          <span class="cm-wm-match">Match</span>
+        </div>
+        <div class="cm-world-first">
+          <span class="cm-wf-dot"></span>
+          World's first reverse short-stay marketplace
+        </div>
+      </div>
+    </div>
+
+    <!-- Hero explainer -->
+    <div class="cm-hero-panel">
+      <div class="cm-hero-graphic">
+        <div class="cm-hg-guest">
+          <div class="cm-hg-avatar cm-hg-guest-av">👤</div>
+          <div class="cm-hg-label">You</div>
+        </div>
+        <div class="cm-hg-arrows">
+          <!-- Animated arrows going outward from guest to hosts -->
+          <div class="cm-hg-arrow cm-hg-arrow-1">→</div>
+          <div class="cm-hg-arrow cm-hg-arrow-2">→</div>
+          <div class="cm-hg-arrow cm-hg-arrow-3">→</div>
+        </div>
+        <div class="cm-hg-hosts">
+          <div class="cm-hg-avatar cm-hg-host-av">🏠</div>
+          <div class="cm-hg-avatar cm-hg-host-av">🏠</div>
+          <div class="cm-hg-avatar cm-hg-host-av">🏠</div>
+        </div>
+      </div>
+      <h2 class="cm-hero-title">Stop searching. <em>Get found.</em></h2>
+      <p class="cm-hero-desc">Broadcast your travel request to available hosts in your destination. Eager hosts respond — you simply pick the best match. No scrolling. No guessing. Pure confidence.</p>
+    </div>
+
+    <!-- How it works steps -->
+    <div class="cm-steps">
+      <div class="cm-step">
+        <div class="cm-step-num">1</div>
+        <div class="cm-step-body">
+          <div class="cm-step-title">You set your criteria</div>
+          <div class="cm-step-desc">Location, dates, guests, bedrooms — your request goes live instantly.</div>
+        </div>
+      </div>
+      <div class="cm-step">
+        <div class="cm-step-num">2</div>
+        <div class="cm-step-body">
+          <div class="cm-step-title">Hosts come to you</div>
+          <div class="cm-step-desc">Opted-in hosts with availability respond within your 20-minute window.</div>
+        </div>
+      </div>
+      <div class="cm-step">
+        <div class="cm-step-num">3</div>
+        <div class="cm-step-body">
+          <div class="cm-step-title">You engage, then book</div>
+          <div class="cm-step-desc">See who responded, open a conversation with whoever interests you, then book — all inside Cabana.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Badges row -->
+    <div class="cm-badges">
+      <div class="cm-badge-item">
+        <span class="cm-badge-ico">✓</span> Guaranteed availability
+      </div>
+      <div class="cm-badge-item">
+        <span class="cm-badge-ico">✓</span> Hosts are eager to welcome you
+      </div>
+      <div class="cm-badge-item">
+        <span class="cm-badge-ico">✓</span> Zero pressure — close anytime
+      </div>
+    </div>
+
+    <!-- Coming soon state -->
+    <div class="cm-coming-soon">
+      <div class="cm-cs-glow"></div>
+      <div class="cm-cs-eyebrow">Coming Soon</div>
+      <div class="cm-cs-title">Launching on Cabana</div>
+      <div class="cm-cs-desc">We're putting the finishing touches on the world's first reverse booking experience. Be among the first to use it.</div>
+      <button class="cm-cs-notify-btn" onclick="registerCabanaInterest()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        Notify me at launch
+      </button>
+      <div class="cm-cs-host-note">
+        Are you a host? <a class="cm-cs-host-link" onclick="closeCabanaMatch();window.location.href='partner-settings.html'">Opt in early →</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Floating Filter & Sort FAB ── -->
+<button class="fab-filter" id="fab-filter" onclick="openFilterModal()" aria-label="Filters and Sort">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+  Filters &amp; Sort
+  <span class="fab-filter-badge" id="fab-filter-badge" style="display:none"></span>
+</button>
 
 <!-- ── Filter Modal ── -->
 <div class="filter-modal-overlay" id="fm-overlay" onclick="closeFilterModal()"></div>
@@ -2511,6 +2963,301 @@ setTimeout(dismissEnterTx,2800);
 .sf-bottom-right{display:flex;gap:16px;}
 .sf-bottom-right a{font-size:12px;color:rgba(255,255,255,.25);text-decoration:none;transition:color .2s;}
 .sf-bottom-right a:hover{color:rgba(255,255,255,.6);}
+</style>
+
+<script>
+/* ════════════════════════════════════════════════════════════
+   CABANA MATCH — Full System JS
+   Coming Soon UI + full backend plumbing ready for launch
+════════════════════════════════════════════════════════════ */
+
+/* ── Modal open/close ── */
+function openCabanaMatch() {
+  document.getElementById('cm-overlay').classList.add('open');
+  document.getElementById('cm-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeCabanaMatch() {
+  document.getElementById('cm-overlay').classList.remove('open');
+  document.getElementById('cm-modal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+/* ── Notify interest ── */
+async function registerCabanaInterest() {
+  const btn = document.querySelector('.cm-cs-notify-btn');
+  if (!btn) return;
+
+  // Check if logged in
+  const session = window.ApaSession ? await new Promise(r => ApaSession.ready(r)) : null;
+  const user = session?.user;
+
+  if (!user) {
+    // Redirect to auth with return
+    sessionStorage.setItem('auth_next', location.href + '#cabana-match');
+    window.location.href = 'auth.html?next=' + encodeURIComponent(location.pathname + '#cabana-match');
+    return;
+  }
+
+  const orig = btn.innerHTML;
+  btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> You\'re on the list!';
+  btn.style.background = 'linear-gradient(135deg,#6BCB77,#4D96FF)';
+  btn.disabled = true;
+
+  // Store interest in Supabase (cabana_interest table or use push subscriptions)
+  try {
+    const sb = window.sb || window.ApaSession?.client();
+    if (sb) {
+      await sb.from('cabana_interest').upsert({
+        user_id: user.id,
+        email: user.email,
+        created_at: new Date().toISOString()
+      }, { onConflict: 'user_id' });
+    }
+  } catch(e) { /* silent — interest noted client-side */ }
+
+  setTimeout(() => {
+    btn.innerHTML = orig;
+    btn.style.background = '';
+    btn.disabled = false;
+  }, 4000);
+}
+
+/* ── FULL SYSTEM: Submit a Cabana Match Request ── */
+async function submitCabanaMatchRequest(criteria) {
+  /*
+    criteria: {
+      location, checkin_date, checkout_date, guests, bedrooms, max_price, notes
+    }
+    Returns: { success, request_id, error }
+  */
+  const session = window.ApaSession ? await new Promise(r => ApaSession.ready(r)) : null;
+  const user = session?.user;
+  if (!user) return { success: false, error: 'not_logged_in' };
+
+  // Check for duplicate active request (same dates)
+  const sb = window.sb || window.ApaSession?.client();
+  if (!sb) return { success: false, error: 'no_db' };
+
+  const { data: existing } = await sb
+    .from('cabana_match_requests')
+    .select('id, expires_at')
+    .eq('guest_id', user.id)
+    .eq('status', 'live')
+    .gte('checkin_date', criteria.checkin_date)
+    .lte('checkout_date', criteria.checkout_date)
+    .gt('expires_at', new Date().toISOString())
+    .maybeSingle();
+
+  if (existing) {
+    return { success: false, error: 'duplicate', existing_id: existing.id };
+  }
+
+  const { data, error } = await sb
+    .from('cabana_match_requests')
+    .insert({
+      guest_id: user.id,
+      guest_name: user.user_metadata?.name || user.email?.split('@')[0] || 'Guest',
+      location: criteria.location,
+      checkin_date: criteria.checkin_date,
+      checkout_date: criteria.checkout_date,
+      guests: criteria.guests || 1,
+      bedrooms: criteria.bedrooms || null,
+      max_price: criteria.max_price || null,
+      notes: criteria.notes || null,
+      status: 'live'
+    })
+    .select('id')
+    .single();
+
+  if (error) return { success: false, error: error.message };
+  return { success: true, request_id: data.id };
+}
+
+/* ── FULL SYSTEM: Close a guest's own request ── */
+async function closeCabanaMatchRequest(request_id) {
+  const sb = window.sb || window.ApaSession?.client();
+  if (!sb) return;
+  await sb
+    .from('cabana_match_requests')
+    .update({ status: 'closed', closed_at: new Date().toISOString() })
+    .eq('id', request_id);
+}
+
+/* ── FULL SYSTEM: Host accepts/responds to a request ── */
+async function hostRespondToRequest(request_id, listing) {
+  /*
+    listing: { id, title, image, price_per_night, host_name, host_avatar }
+  */
+  const session = window.ApaSession ? await new Promise(r => ApaSession.ready(r)) : null;
+  const user = session?.user;
+  if (!user) return { success: false, error: 'not_logged_in' };
+
+  const sb = window.sb || window.ApaSession?.client();
+  const { data, error } = await sb
+    .from('cabana_match_responses')
+    .insert({
+      request_id,
+      host_id: user.id,
+      listing_id: listing.id,
+      listing_title: listing.title,
+      listing_image: listing.image,
+      price_per_night: listing.price_per_night,
+      host_name: listing.host_name,
+      host_avatar: listing.host_avatar,
+      status: 'pending'
+    })
+    .select('id')
+    .single();
+
+  if (error) return { success: false, error: error.message };
+  return { success: true, response_id: data.id };
+}
+
+/* ── FULL SYSTEM: Guest engages with a host response ── */
+async function guestEngageResponse(response_id, request_id, host_id, listing_id, listing_title) {
+  const session = window.ApaSession ? await new Promise(r => ApaSession.ready(r)) : null;
+  const user = session?.user;
+  if (!user) return { success: false, error: 'not_logged_in' };
+
+  const sb = window.sb || window.ApaSession?.client();
+
+  // Create chat conversation
+  const { data: conv, error: convErr } = await sb
+    .from('chat_conversations')
+    .upsert({
+      listing_id,
+      listing_type: 'apartment',
+      listing_title,
+      host_id,
+      guest_id: user.id,
+      status: 'open'
+    }, { onConflict: 'listing_id,guest_id' })
+    .select('id')
+    .single();
+
+  if (convErr) return { success: false, error: convErr.message };
+
+  // Update response status to engaged
+  await sb
+    .from('cabana_match_responses')
+    .update({
+      status: 'engaged',
+      engaged_at: new Date().toISOString(),
+      conversation_id: conv.id
+    })
+    .eq('id', response_id);
+
+  // Send opening system message
+  await sb.from('chat_messages').insert({
+    conversation_id: conv.id,
+    sender_id: user.id,
+    content: '👋 Hi! I found your listing through Cabana Match. I\'m interested in booking — can we discuss the details?',
+    is_system: false
+  });
+
+  return { success: true, conversation_id: conv.id };
+}
+
+/* ── FULL SYSTEM: Auto-close request when booking completes ── */
+async function markCabanaMatchBooked(request_id, response_id, host_id) {
+  const sb = window.sb || window.ApaSession?.client();
+  if (!sb) return;
+  await Promise.all([
+    sb.from('cabana_match_requests').update({
+      status: 'booked',
+      booked_at: new Date().toISOString(),
+      booked_via_response_id: response_id,
+      referred_host_id: host_id,
+      referral_fee_pct: 5.00
+    }).eq('id', request_id),
+    sb.from('cabana_match_responses').update({ status: 'booked' }).eq('id', response_id)
+  ]);
+}
+
+/* ── Live guest request card (for dashboard + stays page) ── */
+function renderActiveCabanaRequestCard(request, responses) {
+  if (!request) return '';
+  const expiresAt = new Date(request.expires_at);
+  const now = new Date();
+  const secsLeft = Math.max(0, Math.floor((expiresAt - now) / 1000));
+  const mins = Math.floor(secsLeft / 60);
+  const secs = secsLeft % 60;
+  const timerStr = `${mins}:${secs.toString().padStart(2,'0')}`;
+  const responseCount = responses?.length || 0;
+
+  return `
+  <div class="cmr-card" id="cmr-card-${request.id}">
+    <div class="cmr-card-header">
+      <div class="cmr-card-title">
+        <span class="cmr-card-dot"></span>
+        Your Cabana Match request is live
+      </div>
+      <div class="cmr-card-timer" id="cmr-timer-${request.id}">${timerStr}</div>
+    </div>
+    <div class="cmr-card-details">
+      <span class="cmr-detail">📍 ${request.location}</span>
+      <span class="cmr-detail">📅 ${request.checkin_date} → ${request.checkout_date}</span>
+      <span class="cmr-detail">👥 ${request.guests} guest${request.guests > 1 ? 's' : ''}</span>
+    </div>
+    <div class="cmr-response-count">
+      ${responseCount > 0
+        ? `<strong>${responseCount}</strong> host${responseCount > 1 ? 's' : ''} responded — <a onclick="viewCabanaResponses('${request.id}')">See who →</a>`
+        : `Waiting for hosts to respond…`
+      }
+    </div>
+    <button class="cmr-close-btn" onclick="closeCabanaMatchRequest('${request.id}').then(()=>document.getElementById('cmr-card-${request.id}').remove())">
+      Close request
+    </button>
+  </div>`;
+}
+
+/* ── Filter chip special search helper ── */
+function focusSpecialSearch() {
+  const input = document.getElementById('ai-search-input');
+  if (input) { input.scrollIntoView({behavior:'smooth',block:'center'}); input.focus(); }
+}
+
+/* ── Fab filter badge update (called from applyAndRender) ── */
+function updateFabFilterBadge(count) {
+  const badge = document.getElementById('fab-filter-badge');
+  if (!badge) return;
+  if (count > 0) { badge.textContent = count; badge.style.display = 'flex'; }
+  else { badge.style.display = 'none'; }
+}
+</script>
+
+<style>
+/* ── Cabana Match Request Live Card ── */
+.cmr-card{
+  background:linear-gradient(135deg,rgba(123,47,247,.06),rgba(77,150,255,.04));
+  border:1.5px solid rgba(123,47,247,.2);
+  border-radius:18px;padding:16px 18px;margin-bottom:18px;
+}
+.cmr-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.cmr-card-title{display:flex;align-items:center;gap:8px;font-weight:700;font-size:13px;color:var(--violet);}
+.cmr-card-dot{
+  width:8px;height:8px;border-radius:50%;
+  background:#6BCB77;
+  box-shadow:0 0 0 0 rgba(107,203,119,.4);
+  animation:cmrDotPulse 1.5s ease-in-out infinite;
+}
+@keyframes cmrDotPulse{0%,100%{box-shadow:0 0 0 0 rgba(107,203,119,.4);}70%{box-shadow:0 0 0 7px rgba(107,203,119,0);}}
+.cmr-card-timer{
+  font-family:'Inter',monospace;font-weight:800;font-size:15px;
+  background:linear-gradient(90deg,#FF6B6B,#FFD93D);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.cmr-card-details{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+.cmr-detail{font-size:12px;color:var(--ink-soft);background:rgba(255,255,255,.7);padding:4px 10px;border-radius:100px;border:1px solid var(--line);}
+.cmr-response-count{font-size:13px;color:var(--ink-soft);margin-bottom:12px;}
+.cmr-response-count a{color:var(--violet);font-weight:700;cursor:pointer;}
+.cmr-close-btn{
+  font-size:12px;font-weight:600;color:var(--ink-faint);
+  background:none;border:1.5px solid var(--line-2);
+  padding:6px 14px;border-radius:100px;cursor:pointer;transition:all .2s;
+}
+.cmr-close-btn:hover{border-color:var(--err);color:var(--err);}
 </style>
 </body>
 </html>

@@ -976,6 +976,26 @@ img,video,svg{max-width:100%;}
         <div id="hero-ad-tag" style="position:absolute;top:18px;left:20px;z-index:3;display:none;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:rgba(255,255,255,.9);background:rgba(0,0,0,.28);padding:5px 12px;border-radius:100px;border:1px solid rgba(255,255,255,.18);">Sponsored</div>
       </div>
 
+      <!-- ── CABANA MATCH — live request card (shows only when guest has active request) ── -->
+      <div id="dash-cabana-match-zone" style="display:none;margin-bottom:8px;">
+        <!-- Active request card injected here by JS -->
+      </div>
+
+      <!-- ── CABANA MATCH ENTRY CARD ── -->
+      <div class="dash-cabana-entry" onclick="window.location.href='apartments.html#cabana-match'" id="dash-cabana-entry">
+        <span class="dash-cabana-ring"></span>
+        <div class="dash-cabana-inner">
+          <div class="dash-cabana-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M17 8l-5-5-5 5h3v6h4V8h3z" fill="currentColor"/><circle cx="12" cy="15" r="3" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
+          </div>
+          <div class="dash-cabana-text">
+            <div class="dash-cabana-label">Match with Cabana</div>
+            <div class="dash-cabana-sub">Let hosts come to you · World's first</div>
+          </div>
+          <div class="dash-cabana-badge">NEW</div>
+        </div>
+      </div>
+
       <!-- BOOK A STAY -->
       <div class="section">
         <div class="section-head">
@@ -2103,5 +2123,212 @@ function renderSpotifyTracks() {
 </script>
 
 <script src="/apa-contact.js" defer></script>
+
+<style>
+/* ════════════════════════════════════════════════════════
+   DASHBOARD — Cabana Match Entry Card
+════════════════════════════════════════════════════════ */
+.dash-cabana-entry{
+  position:relative;
+  width:100%;border:none;background:none;
+  padding:3px;border-radius:18px;
+  cursor:pointer;isolation:isolate;
+  overflow:visible;margin-bottom:20px;
+  display:block;text-decoration:none;
+}
+.dash-cabana-ring{
+  position:absolute;inset:0;border-radius:18px;
+  background:conic-gradient(from var(--dc-angle,0deg),#FF6B6B,#FFD93D,#6BCB77,#4D96FF,#C77DFF,#FF6B6B);
+  animation:dcRingSpin 3s linear infinite;z-index:0;
+}
+@property --dc-angle{syntax:'<angle>';inherits:false;initial-value:0deg;}
+@keyframes dcRingSpin{to{--dc-angle:360deg;}}
+.dash-cabana-inner{
+  position:relative;z-index:1;
+  display:flex;align-items:center;gap:14px;
+  background:rgba(255,255,255,.95);
+  border-radius:16px;padding:14px 16px;
+  transition:background .2s;
+}
+.dash-cabana-entry:hover .dash-cabana-inner{background:#fff;}
+.dash-cabana-icon{
+  width:44px;height:44px;border-radius:13px;flex-shrink:0;
+  background:conic-gradient(from 45deg,#FF6B6B,#FFD93D,#6BCB77,#4D96FF,#C77DFF,#FF6B6B);
+  display:flex;align-items:center;justify-content:center;color:#fff;
+  animation:dcIconHue 6s linear infinite;
+}
+@keyframes dcIconHue{0%{filter:hue-rotate(0deg);}100%{filter:hue-rotate(360deg);}}
+.dash-cabana-text{flex:1;min-width:0;}
+.dash-cabana-label{
+  font-family:'Inter',sans-serif;font-weight:700;font-size:14px;
+  background:linear-gradient(90deg,#7B2FF7,#4D96FF,#6BCB77,#FFD93D,#FF6B6B);
+  background-size:200% auto;
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  animation:dcLabelShimmer 4s linear infinite;
+}
+@keyframes dcLabelShimmer{0%{background-position:0%;}100%{background-position:200%;}}
+.dash-cabana-sub{font-size:11px;color:var(--ink-faint,#8E90AD);margin-top:2px;}
+.dash-cabana-badge{
+  flex-shrink:0;font-size:9px;font-weight:800;letter-spacing:.1em;
+  color:#fff;background:linear-gradient(135deg,#FF6B6B,#C77DFF);
+  padding:4px 8px;border-radius:100px;
+  animation:dcBadgePulse 2s ease-in-out infinite;
+}
+@keyframes dcBadgePulse{0%,100%{box-shadow:0 0 0 0 rgba(199,125,255,.4);}50%{box-shadow:0 0 0 6px rgba(199,125,255,0);}}
+
+/* ── Active request card on dashboard ── */
+.dash-cmr-card{
+  background:linear-gradient(135deg,rgba(123,47,247,.07),rgba(77,150,255,.04));
+  border:1.5px solid rgba(123,47,247,.22);
+  border-radius:18px;padding:16px;margin-bottom:18px;
+}
+.dash-cmr-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.dash-cmr-live{display:flex;align-items:center;gap:7px;font-weight:700;font-size:12px;color:#7B2FF7;}
+.dash-cmr-live-dot{
+  width:7px;height:7px;border-radius:50%;background:#6BCB77;
+  animation:cmrDotPulse 1.5s ease-in-out infinite;
+  box-shadow:0 0 0 0 rgba(107,203,119,.4);
+}
+@keyframes cmrDotPulse{0%,100%{box-shadow:0 0 0 0 rgba(107,203,119,.4);}70%{box-shadow:0 0 0 7px rgba(107,203,119,0);}}
+.dash-cmr-timer{
+  font-family:'Inter',monospace;font-weight:800;font-size:14px;
+  background:linear-gradient(90deg,#FF6B6B,#FFD93D);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.dash-cmr-details{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+.dash-cmr-detail{font-size:11px;color:var(--ink-soft);background:rgba(255,255,255,.8);padding:3px 10px;border-radius:100px;border:1px solid var(--line);}
+.dash-cmr-responses{font-size:13px;color:var(--ink-soft);margin-bottom:12px;}
+.dash-cmr-responses strong{color:var(--violet);}
+.dash-cmr-responses a{color:var(--violet);font-weight:700;cursor:pointer;text-decoration:none;}
+.dash-cmr-footer{display:flex;gap:8px;flex-wrap:wrap;}
+.dash-cmr-view-btn{
+  font-size:12px;font-weight:700;color:#fff;
+  background:linear-gradient(135deg,#7B2FF7,#4D96FF);
+  border:none;padding:8px 16px;border-radius:100px;cursor:pointer;transition:all .2s;
+}
+.dash-cmr-close-btn{
+  font-size:12px;font-weight:600;color:var(--ink-faint);
+  background:none;border:1.5px solid var(--line-2);
+  padding:7px 14px;border-radius:100px;cursor:pointer;transition:all .2s;
+}
+.dash-cmr-close-btn:hover{border-color:#FF4D6D;color:#FF4D6D;}
+</style>
+
+<script>
+/* ── Dashboard: Load active Cabana Match request ── */
+(async function loadDashCabanaMatch() {
+  if (!window.ApaSession) return;
+  const session = await new Promise(r => ApaSession.ready(r));
+  if (!session?.user) return;
+
+  const sb = window.sb || window.ApaSession?.client();
+  if (!sb) return;
+
+  // Check for live request
+  const { data: req } = await sb
+    .from('cabana_match_requests')
+    .select('*')
+    .eq('guest_id', session.user.id)
+    .eq('status', 'live')
+    .gt('expires_at', new Date().toISOString())
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const zone = document.getElementById('dash-cabana-match-zone');
+  if (!zone) return;
+
+  if (req) {
+    // Fetch responses
+    const { data: responses } = await sb
+      .from('cabana_match_responses')
+      .select('*')
+      .eq('request_id', req.id)
+      .order('created_at', { ascending: true });
+
+    zone.style.display = 'block';
+    zone.innerHTML = buildDashCabanaCard(req, responses || []);
+    startDashCabanaTimer(req.id, req.expires_at);
+
+    // Subscribe to realtime response updates
+    try {
+      sb.channel('cmr-' + req.id)
+        .on('postgres_changes', {
+          event: 'INSERT', schema: 'public', table: 'cabana_match_responses',
+          filter: `request_id=eq.${req.id}`
+        }, () => loadDashCabanaMatch())
+        .subscribe();
+    } catch(e) {}
+  }
+})();
+
+function buildDashCabanaCard(req, responses) {
+  const count = responses.length;
+  const expiresAt = new Date(req.expires_at);
+  const secsLeft = Math.max(0, Math.floor((expiresAt - new Date()) / 1000));
+  const mins = Math.floor(secsLeft / 60);
+  const secs = secsLeft % 60;
+  const timerStr = `${mins}:${secs.toString().padStart(2,'0')}`;
+
+  return `
+  <div class="dash-cmr-card" id="dash-cmr-${req.id}">
+    <div class="dash-cmr-header">
+      <div class="dash-cmr-live">
+        <span class="dash-cmr-live-dot"></span>
+        Cabana Match · Live
+      </div>
+      <div class="dash-cmr-timer" id="dash-cmr-timer-${req.id}">${timerStr}</div>
+    </div>
+    <div class="dash-cmr-details">
+      <span class="dash-cmr-detail">📍 ${req.location}</span>
+      <span class="dash-cmr-detail">📅 ${req.checkin_date} → ${req.checkout_date}</span>
+      <span class="dash-cmr-detail">👥 ${req.guests} guest${req.guests > 1 ? 's' : ''}</span>
+    </div>
+    <div class="dash-cmr-responses">
+      ${count > 0
+        ? `<strong>${count} host${count > 1 ? 's' : ''}</strong> responded to your request`
+        : `Waiting for hosts to respond…`
+      }
+    </div>
+    <div class="dash-cmr-footer">
+      <button class="dash-cmr-view-btn" onclick="window.location.href='apartments.html#cabana-responses-${req.id}'">
+        ${count > 0 ? `View ${count} response${count > 1 ? 's' : ''}` : 'View request'}
+      </button>
+      <button class="dash-cmr-close-btn" onclick="dashCloseCabanaMatch('${req.id}')">Close request</button>
+    </div>
+  </div>`;
+}
+
+function startDashCabanaTimer(requestId, expiresAt) {
+  const el = document.getElementById('dash-cmr-timer-' + requestId);
+  if (!el) return;
+  const interval = setInterval(() => {
+    const secsLeft = Math.max(0, Math.floor((new Date(expiresAt) - new Date()) / 1000));
+    const mins = Math.floor(secsLeft / 60);
+    const secs = secsLeft % 60;
+    el.textContent = `${mins}:${secs.toString().padStart(2,'0')}`;
+    if (secsLeft <= 0) {
+      clearInterval(interval);
+      const card = document.getElementById('dash-cmr-' + requestId);
+      if (card) card.remove();
+      const zone = document.getElementById('dash-cabana-match-zone');
+      if (zone) zone.style.display = 'none';
+    }
+  }, 1000);
+}
+
+async function dashCloseCabanaMatch(requestId) {
+  const sb = window.sb || window.ApaSession?.client();
+  if (sb) {
+    await sb.from('cabana_match_requests')
+      .update({ status: 'closed', closed_at: new Date().toISOString() })
+      .eq('id', requestId);
+  }
+  const card = document.getElementById('dash-cmr-' + requestId);
+  if (card) card.remove();
+  const zone = document.getElementById('dash-cabana-match-zone');
+  if (zone) zone.style.display = 'none';
+}
+</script>
 </body>
 </html>
