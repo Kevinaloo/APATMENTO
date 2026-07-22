@@ -679,7 +679,7 @@ img,video,svg{max-width:100%;}
 /* ══════════ SIDEBAR DRAWER ══════════ */
 .drawer-scrim{position:fixed;inset:0;z-index:200;background:rgba(10,10,20,.4);backdrop-filter:blur(4px);opacity:0;visibility:hidden;transition:all .4s;}
 .drawer-scrim.open{opacity:1;visibility:visible;}
-.drawer{position:fixed;top:0;left:0;bottom:0;width:300px;z-index:201;background:rgba(252,252,253,.86);backdrop-filter:none;border-right:1px solid var(--line);transform:translateX(-100%);transition:transform .5s cubic-bezier(.22,1,.36,1);display:flex;flex-direction:column;padding:24px;}
+.drawer{position:fixed;top:0;left:0;bottom:0;width:300px;z-index:201;background:rgba(252,252,253,.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-right:1px solid var(--line);transform:translateX(-100%);transition:transform .5s cubic-bezier(.22,1,.36,1);display:flex;flex-direction:column;padding:24px;overflow-y:auto;overscroll-behavior:contain;}
 .drawer.open{transform:none;}
 .drawer-head{display:flex;align-items:center;gap:12px;margin-bottom:28px;padding-bottom:20px;border-bottom:1px solid var(--line);}
 .drawer-logo{height:36px;}
@@ -945,18 +945,7 @@ img,video,svg{max-width:100%;}
         <p class="greeting-sub">Stays, flights, tours, rides and more — every part of your trip, beautifully in one place.</p>
       </div>
 
-      <!-- ══ PARTNER SWITCH — always visible, label reflects state ══ -->
-      <button class="apa-psc" type="button" data-apa="role" aria-label="Switch mode">
-        <span class="apa-psc-l">
-          <span class="apa-psc-i"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4M4 7h16M16 21l4-4-4-4M20 17H4"/></svg></span>
-          <span class="apa-psc-tx">
-            <span class="apa-psc-k" id="apa-psc-k">Partner mode</span>
-            <span class="apa-psc-t" id="apa-psc-t">Become a partner</span>
-            <span class="apa-psc-s" id="apa-psc-s">List your space and start earning</span>
-          </span>
-        </span>
-        <span class="apa-psc-a"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
-      </button>
+
 
       <div class="rail-label">Explore services</div>
 
