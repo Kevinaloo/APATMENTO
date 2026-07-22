@@ -1209,9 +1209,9 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
     <img src="cabana-emblem.png" class="tb-icon-sm" alt=""/><img src="cabana-wordmark-color.png" class="tb-logo tb-cab-wm" alt="Cabana" onerror="this.style.display='none'"/>
   </div>
   <div class="tb-right">
-    <button id="tb-inbox-btn" onclick="openInboxFromTopbar()" aria-label="Messages" style="width:40px;height:40px;border-radius:13px;border:1px solid var(--line);background:rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink-soft);transition:all .25s;position:relative;" title="Messages">
+    <button id="tb-inbox-btn" onclick="openInboxFromTopbar()" aria-label="Messages" title="Messages">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-      <span id="tb-inbox-badge" style="display:none;position:absolute;top:-3px;right:-3px;min-width:16px;height:16px;border-radius:8px;background:#FF4D6D;color:#fff;font-size:9px;font-weight:800;align-items:center;justify-content:center;border:2px solid #FCFCFD;padding:0 3px;"></span>
+      <span id="tb-inbox-badge"></span>
     </button>
     <button class="apa-sos" data-apa="sos" type="button" aria-label="Emergency help">SOS</button>
     <button class="apa-ico" id="apa-fav-btn" data-apa="fav" type="button" aria-label="Saved places" title="Saved places" style="display:none;" data-when="user">
