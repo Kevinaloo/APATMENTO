@@ -511,11 +511,285 @@ function renderCars(){
 function openCar(id){
   const c=CARS.find(x=>String(x.id)===String(id));if(!c)return;
   const price=_withDriver?c.chauffeurPrice:c.selfPrice;
-  document.getElementById("drawer").innerHTML=`<div class="dr-img" style="background:${BG[c.type]||BG.economy};position:relative;overflow:hidden;">${(c.img||CAR_IMGS_MAP[c.type])?`<img src="${c.img||CAR_IMGS_MAP[c.type]}" alt="" decoding="async" onerror="this.remove()" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;"><div style="position:absolute;inset:0;z-index:1;background:linear-gradient(to top,rgba(10,10,20,.5) 0%,transparent 55%);pointer-events:none;"></div>`:''}<button class="dr-close" style="z-index:3;" onclick="closeDrawer()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>${(c.img||CAR_IMGS_MAP[c.type])?'':(CAR_ICONS[c.type]||CAR_ICONS.economy)}</div><div class="dr-body"><div class="dr-tag">${c.sub}${_withDriver?" · With Chauffeur":" · Self Drive"}</div><div class="dr-title">${c.name}</div><div class="dr-tags"><span class="card-tag">👥 ${c.seats} seats</span><span class="card-tag">⛽ ${c.fuel}</span><span class="card-tag">⚙️ ${c.trans}</span>${c.tags.map(t=>`<span class="card-tag">${t}</span>`).join("")}</div><div class="dr-includes"><div class="dr-includes-title">Included</div><div class="dr-includes-grid"><div class="dr-include"><span style="color:var(--t1)">✓</span> Comprehensive insurance</div><div class="dr-include"><span style="color:var(--t1)">✓</span> 24/7 roadside support</div><div class="dr-include"><span style="color:var(--t1)">✓</span> Unlimited mileage</div><div class="dr-include"><span style="color:var(--t1)">✓</span> Sanitised vehicle</div></div></div><div style="background:rgba(45,212,191,.06);border:1px solid rgba(45,212,191,.18);border-radius:12px;padding:14px;margin-bottom:20px;font-size:13px;color:var(--ink-soft);line-height:1.6;"><strong style="color:var(--mint-deep);">Self drive KES ${c.selfPrice.toLocaleString()}/day</strong> · <strong>With chauffeur KES ${c.chauffeurPrice.toLocaleString()}/day</strong><br/>Hire company keeps 100% — we charge only a small fixed booking fee.</div><div class="dr-cta-box"><div class="dr-price"><span class="val">KES ${price.toLocaleString()}</span><span class="per">/day</span><div class="note">✓ Fixed price. No hidden charges.</div></div><button class="dr-cta" onclick="showToast('Car hire booking coming soon — contact carhire@apatmento.com',5000)">Book this vehicle →</button></div></div>`;
+  document.getElementById("drawer").innerHTML=`<div class="dr-img" style="background:${BG[c.type]||BG.economy};position:relative;overflow:hidden;">${(c.img||CAR_IMGS_MAP[c.type])?`<img src="${c.img||CAR_IMGS_MAP[c.type]}" alt="" decoding="async" onerror="this.remove()" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;"><div style="position:absolute;inset:0;z-index:1;background:linear-gradient(to top,rgba(10,10,20,.5) 0%,transparent 55%);pointer-events:none;"></div>`:''}<button class="dr-close" style="z-index:3;" onclick="closeDrawer()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>${(c.img||CAR_IMGS_MAP[c.type])?'':(CAR_ICONS[c.type]||CAR_ICONS.economy)}</div><div class="dr-body"><div class="dr-tag">${c.sub}${_withDriver?" · With Chauffeur":" · Self Drive"}</div><div class="dr-title">${c.name}</div><div class="dr-tags"><span class="card-tag">👥 ${c.seats} seats</span><span class="card-tag">⛽ ${c.fuel}</span><span class="card-tag">⚙️ ${c.trans}</span>${c.tags.map(t=>`<span class="card-tag">${t}</span>`).join("")}</div><div class="dr-includes"><div class="dr-includes-title">Included</div><div class="dr-includes-grid"><div class="dr-include"><span style="color:var(--t1)">✓</span> Comprehensive insurance</div><div class="dr-include"><span style="color:var(--t1)">✓</span> 24/7 roadside support</div><div class="dr-include"><span style="color:var(--t1)">✓</span> Unlimited mileage</div><div class="dr-include"><span style="color:var(--t1)">✓</span> Sanitised vehicle</div></div></div><div style="background:rgba(45,212,191,.06);border:1px solid rgba(45,212,191,.18);border-radius:12px;padding:14px;margin-bottom:20px;font-size:13px;color:var(--ink-soft);line-height:1.6;"><strong style="color:var(--mint-deep);">Self drive KES ${c.selfPrice.toLocaleString()}/day</strong> · <strong>With chauffeur KES ${c.chauffeurPrice.toLocaleString()}/day</strong><br/>Hire company keeps 100% — we charge only a small fixed booking fee.</div><div class="dr-cta-box"><div class="dr-price"><span class="val">KES ${price.toLocaleString()}</span><span class="per">/day</span><div class="note">✓ Fixed price. No hidden charges.</div></div><button class="dr-cta" onclick="openCarBooking(c)">Book this vehicle →</button></div></div>`;
   document.getElementById("drawer").classList.add("open");
   document.getElementById("drawer-overlay").classList.add("open");
 }
 function closeDrawer(){document.getElementById("drawer").classList.remove("open");document.getElementById("drawer-overlay").classList.remove("open");}
+
+/* ══════════════════════════════════════════════════════════
+   CAR HIRE BOOKING — full modal flow
+   Step 1: dates, pickup location, driver preference
+   Step 2: contact details (name, phone, email)
+   Step 3: confirmation + WhatsApp
+   Saves to Supabase transport_requests table.
+   ══════════════════════════════════════════════════════════ */
+let _CAR_BOOK = null;
+let _CAR_STEP = 1;
+let _CAR_DATA = {};
+let _CAR_REF = null;
+
+function openCarBooking(car){
+  _CAR_BOOK = car;
+  _CAR_STEP = 1;
+  _CAR_DATA = {};
+  _CAR_REF = null;
+  let m = document.getElementById('ch-modal');
+  if(!m){
+    m = document.createElement('div');
+    m.id = 'ch-modal';
+    m.innerHTML = `
+    <style>
+      #ch-overlay{position:fixed;inset:0;z-index:500;background:rgba(10,10,20,.55);backdrop-filter:blur(6px);display:flex;align-items:flex-end;justify-content:center;animation:chFadeIn .25s ease;}
+      @keyframes chFadeIn{from{opacity:0}to{opacity:1}}
+      @keyframes chFadeOut{to{opacity:0}}
+      #ch-sheet{background:#FCFCFD;border-radius:28px 28px 0 0;width:100%;max-width:540px;max-height:92vh;overflow-y:auto;padding:0 0 env(safe-area-inset-bottom);box-shadow:0 -24px 80px rgba(0,0,0,.22);animation:chSlideUp .35s cubic-bezier(.32,1.28,.28,1);}
+      @keyframes chSlideUp{from{transform:translateY(100%)}to{transform:none}}
+      #ch-handle{width:40px;height:4px;background:rgba(10,10,20,.13);border-radius:99px;margin:12px auto 0;}
+      #ch-head{padding:20px 24px 0;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;}
+      #ch-car-name{font-family:'Geist','Inter',sans-serif;font-weight:500;font-size:22px;color:#0A0A14;line-height:1.15;margin-bottom:3px;}
+      #ch-car-meta{font-size:13px;color:#8E90AD;}
+      #ch-close{width:34px;height:34px;border-radius:50%;background:#F4F5FB;border:1px solid rgba(10,10,20,.07);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:16px;color:#4A4C66;transition:all .2s;}
+      #ch-close:hover{background:#EBEDF7;}
+      #ch-steps{display:flex;gap:6px;padding:14px 24px 0;}
+      .ch-dot{flex:1;height:3px;border-radius:99px;background:rgba(10,10,20,.1);transition:background .3s;}
+      .ch-dot.done{background:var(--t1,#2DD4BF);}
+      .ch-dot.active{background:var(--t1,#2DD4BF);opacity:.5;}
+      #ch-body{padding:20px 24px 6px;}
+      .ch-label{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8E90AD;margin-bottom:6px;display:block;}
+      .ch-inp{width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid rgba(10,10,20,.13);background:rgba(255,255,255,.7);font-family:'Inter',system-ui,sans-serif;font-size:14px;color:#0A0A14;outline:none;transition:border-color .2s;margin-bottom:14px;}
+      .ch-inp:focus{border-color:var(--t1,#2DD4BF);}
+      .ch-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+      .ch-price-box{background:rgba(45,212,191,.06);border:1.5px solid rgba(45,212,191,.2);border-radius:14px;padding:14px 16px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;}
+      .ch-price-box .val{font-family:'Geist','Inter',sans-serif;font-weight:600;font-size:24px;color:#0A0A14;}
+      .ch-price-box .per{font-size:12px;color:#8E90AD;}
+      .ch-drv-toggle{display:flex;gap:10px;margin-bottom:16px;}
+      .ch-drv-opt{flex:1;padding:11px;border-radius:12px;border:1.5px solid rgba(10,10,20,.13);text-align:center;cursor:pointer;font-size:13px;font-weight:500;color:#4A4C66;transition:all .2s;}
+      .ch-drv-opt.sel{border-color:var(--t1,#2DD4BF);background:rgba(45,212,191,.07);color:#0A0A14;}
+      #ch-footer{padding:14px 24px 28px;display:flex;gap:10px;border-top:1px solid rgba(10,10,20,.07);margin-top:4px;}
+      .ch-btn{flex:1;padding:14px;border-radius:14px;border:none;font-family:'Inter',system-ui,sans-serif;font-weight:600;font-size:15px;cursor:pointer;transition:all .25s;}
+      .ch-btn-ghost{background:#F4F5FB;color:#4A4C66;}
+      .ch-btn-ghost:hover{background:#EBEDF7;}
+      .ch-btn-cta{background:linear-gradient(135deg,#2DD4BF,#0EA5E9);color:#fff;box-shadow:0 8px 24px rgba(45,212,191,.28);}
+      .ch-btn-cta:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(45,212,191,.38);}
+      .ch-btn-cta:disabled{opacity:.5;pointer-events:none;}
+      .ch-confirm-icon{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#2DD4BF,#0EA5E9);display:flex;align-items:center;justify-content:center;margin:10px auto 16px;font-size:28px;}
+      .ch-confirm-title{font-family:'Geist','Inter',sans-serif;font-size:22px;font-weight:500;text-align:center;margin-bottom:8px;}
+      .ch-confirm-sub{font-size:14px;color:#4A4C66;text-align:center;line-height:1.6;margin-bottom:20px;}
+      .ch-wa-btn{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;padding:14px;background:#25D366;color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:600;cursor:pointer;text-decoration:none;transition:all .25s;margin-bottom:10px;font-family:'Inter',system-ui,sans-serif;}
+      .ch-wa-btn:hover{background:#1faf56;transform:translateY(-1px);}
+      .ch-summary{background:#F4F5FB;border-radius:12px;padding:14px;margin-bottom:16px;font-size:13px;color:#4A4C66;line-height:1.8;}
+      .ch-summary strong{color:#0A0A14;}
+      .ch-error{font-size:13px;color:#ef4444;margin:-8px 0 12px;padding:10px 12px;background:rgba(239,68,68,.07);border-radius:10px;display:none;}
+    </style>
+    <div id="ch-overlay" onclick="if(event.target===this)closeCarModal()">
+      <div id="ch-sheet">
+        <div id="ch-handle"></div>
+        <div id="ch-head">
+          <div>
+            <div id="ch-car-name"></div>
+            <div id="ch-car-meta"></div>
+          </div>
+          <button id="ch-close" onclick="closeCarModal()">✕</button>
+        </div>
+        <div id="ch-steps">
+          <div class="ch-dot active" id="ch-dot-1"></div>
+          <div class="ch-dot" id="ch-dot-2"></div>
+          <div class="ch-dot" id="ch-dot-3"></div>
+        </div>
+        <div id="ch-body"></div>
+        <div id="ch-footer"></div>
+      </div>
+    </div>`;
+    document.body.appendChild(m);
+  }
+  renderCarStep();
+  document.getElementById('ch-overlay').style.display = 'flex';
+  document.getElementById('ch-overlay').style.animation = 'chFadeIn .25s ease';
+}
+
+function closeCarModal(){
+  const ov = document.getElementById('ch-overlay');
+  if(ov){ ov.style.animation='chFadeOut .2s ease forwards'; setTimeout(()=>{ov.style.display='none';},200); }
+}
+
+let _CH_DRIVER = 'self';
+
+function setCarDriver(v){
+  _CH_DRIVER = v;
+  document.querySelectorAll('.ch-drv-opt').forEach(el=>el.classList.toggle('sel', el.dataset.val===v));
+  const c = _CAR_BOOK;
+  if(!c) return;
+  const price = v==='chauffeur' ? c.chauffeurPrice : c.selfPrice;
+  const vEl = document.getElementById('ch-price-val');
+  if(vEl) vEl.textContent = 'KES ' + price.toLocaleString();
+}
+
+function renderCarStep(){
+  const c = _CAR_BOOK;
+  if(!c) return;
+  document.getElementById('ch-car-name').textContent = c.name;
+  document.getElementById('ch-car-meta').textContent = `${c.sub} · ${c.seats} seats · ${c.fuel}`;
+
+  [1,2,3].forEach(i=>{
+    const d = document.getElementById('ch-dot-'+i);
+    d.className = 'ch-dot' + (i<_CAR_STEP?' done':i===_CAR_STEP?' active':'');
+  });
+
+  const body = document.getElementById('ch-body');
+  const foot = document.getElementById('ch-footer');
+  const today = new Date().toISOString().slice(0,10);
+  const tomorrow = new Date(Date.now()+86400000).toISOString().slice(0,10);
+
+  if(_CAR_STEP===1){
+    const priceVal = _CH_DRIVER==='chauffeur' ? c.chauffeurPrice : c.selfPrice;
+    body.innerHTML = `
+      <div class="ch-price-box">
+        <div>
+          <div class="val" id="ch-price-val">KES ${priceVal.toLocaleString()}</div>
+          <div class="per">per day · final price confirmed on booking</div>
+        </div>
+        <div style="font-size:28px">🚗</div>
+      </div>
+      <div class="ch-label">Driver preference</div>
+      <div class="ch-drv-toggle">
+        <div class="ch-drv-opt ${_CH_DRIVER==='self'?'sel':''}" data-val="self" onclick="setCarDriver('self')">🔑 Self drive<br/><span style="font-size:11px;color:#8E90AD">KES ${c.selfPrice.toLocaleString()}/day</span></div>
+        <div class="ch-drv-opt ${_CH_DRIVER==='chauffeur'?'sel':''}" data-val="chauffeur" onclick="setCarDriver('chauffeur')">👔 With chauffeur<br/><span style="font-size:11px;color:#8E90AD">KES ${c.chauffeurPrice.toLocaleString()}/day</span></div>
+      </div>
+      <div class="ch-row">
+        <div>
+          <label class="ch-label">Pick-up date</label>
+          <input class="ch-inp" id="ch-start" type="date" value="${tomorrow}" min="${today}" style="margin-bottom:0"/>
+        </div>
+        <div>
+          <label class="ch-label">Return date</label>
+          <input class="ch-inp" id="ch-end" type="date" value="${new Date(Date.now()+3*86400000).toISOString().slice(0,10)}" min="${tomorrow}" style="margin-bottom:0"/>
+        </div>
+      </div>
+      <div style="margin-top:14px"></div>
+      <label class="ch-label">Pick-up location</label>
+      <input class="ch-inp" id="ch-pickup" placeholder="e.g. Westlands, Karen, JKIA, your hotel…"/>
+      <label class="ch-label">Notes (optional)</label>
+      <textarea class="ch-inp" id="ch-notes" rows="2" placeholder="e.g. Flight number for airport pickup, child seat needed…" style="resize:none;margin-bottom:0"></textarea>
+      <div class="ch-error" id="ch-err-1"></div>`;
+    foot.innerHTML = `
+      <button class="ch-btn ch-btn-ghost" onclick="closeCarModal()">Cancel</button>
+      <button class="ch-btn ch-btn-cta" onclick="chNext1()">Next → Your details</button>`;
+  }
+
+  else if(_CAR_STEP===2){
+    const days = Math.max(1, Math.ceil((new Date(_CAR_DATA.end)-new Date(_CAR_DATA.start))/86400000));
+    const pricePerDay = _CH_DRIVER==='chauffeur' ? c.chauffeurPrice : c.selfPrice;
+    const total = days * pricePerDay;
+    body.innerHTML = `
+      <div class="ch-summary" id="ch-s1">
+        <strong>${c.name}</strong> · ${_CH_DRIVER==='chauffeur'?'With chauffeur':'Self drive'}<br/>
+        🗓 ${_CAR_DATA.start} → ${_CAR_DATA.end} · <strong>${days} day${days!==1?'s':''}</strong><br/>
+        📍 ${_CAR_DATA.pickup}<br/>
+        Estimated total: <strong style="color:#0EA5E9">KES ${total.toLocaleString()}</strong>
+      </div>
+      <label class="ch-label">Your name</label>
+      <input class="ch-inp" id="ch-name" placeholder="Full name"/>
+      <label class="ch-label">Phone number (M-Pesa)</label>
+      <input class="ch-inp" id="ch-phone" type="tel" placeholder="07XX XXX XXX"/>
+      <label class="ch-label">Email (optional — for receipt)</label>
+      <input class="ch-inp" id="ch-email" type="email" placeholder="you@email.com"/>
+      <div style="background:rgba(45,212,191,.06);border:1.5px solid rgba(45,212,191,.18);border-radius:12px;padding:13px 15px;margin-bottom:14px;font-size:13px;color:#4A4C66;line-height:1.65;">
+        <strong style="color:#0A0A14">Payment: M-Pesa deposit on confirmation</strong><br/>
+        A deposit of <strong>KES 2,000</strong> secures your booking. Balance due on collection. Till number <strong>5483920</strong>.
+      </div>
+      <div class="ch-error" id="ch-err-2"></div>`;
+    foot.innerHTML = `
+      <button class="ch-btn ch-btn-ghost" onclick="_CAR_STEP=1;renderCarStep()">← Back</button>
+      <button class="ch-btn ch-btn-cta" id="ch-submit-btn" onclick="chSubmit()">Confirm hire →</button>`;
+
+    setTimeout(()=>{
+      try {
+        ApaSession.ready(state=>{
+          if(state?.user?.email && document.getElementById('ch-email')) document.getElementById('ch-email').value=state.user.email;
+          if(state?.profile?.full_name && document.getElementById('ch-name')) document.getElementById('ch-name').value=state.profile.full_name;
+          if(state?.profile?.phone && document.getElementById('ch-phone')) document.getElementById('ch-phone').value=state.profile.phone;
+        });
+      } catch(e){}
+    }, 50);
+  }
+
+  else if(_CAR_STEP===3){
+    const waMsg = `Hi! I just booked a car hire on Apatmento.\n\n🚗 ${_CAR_BOOK.name} · ${_CH_DRIVER==='chauffeur'?'With chauffeur':'Self drive'}\n📅 ${_CAR_DATA.start} → ${_CAR_DATA.end}\n📍 Pick-up: ${_CAR_DATA.pickup}\n👤 ${_CAR_DATA.name} · ${_CAR_DATA.phone}\n\nRef: ${_CAR_REF||'—'}`;
+    const wa = `https://wa.me/254716206494?text=${encodeURIComponent(waMsg)}`;
+    body.innerHTML = `
+      <div class="ch-confirm-icon">✓</div>
+      <div class="ch-confirm-title">Car hire confirmed!</div>
+      <div class="ch-confirm-sub">Your request is in. We'll contact you within 30 minutes to confirm your vehicle and arrange deposit payment.</div>
+      <div class="ch-summary">
+        <strong>${_CAR_BOOK.name}</strong> · ${_CH_DRIVER==='chauffeur'?'Chauffeur driven':'Self drive'}<br/>
+        📅 ${_CAR_DATA.start} → ${_CAR_DATA.end}<br/>
+        📍 ${_CAR_DATA.pickup}<br/>
+        Reference: <strong style="color:#0EA5E9">${_CAR_REF||'—'}</strong>
+      </div>
+      <a class="ch-wa-btn" href="${wa}" target="_blank" rel="noopener">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        Chat with us on WhatsApp
+      </a>`;
+    foot.innerHTML = `<button class="ch-btn ch-btn-ghost" style="flex:none;width:100%" onclick="closeCarModal()">Close</button>`;
+  }
+}
+
+function chNext1(){
+  const start = document.getElementById('ch-start')?.value;
+  const end = document.getElementById('ch-end')?.value;
+  const pickup = document.getElementById('ch-pickup')?.value.trim();
+  const err = document.getElementById('ch-err-1');
+  if(!pickup){ if(err){err.textContent='Please enter a pick-up location.';err.style.display='block';} return; }
+  if(start>=end){ if(err){err.textContent='Return date must be after pick-up date.';err.style.display='block';} return; }
+  if(err) err.style.display='none';
+  _CAR_DATA = { start, end, pickup, notes: document.getElementById('ch-notes')?.value.trim()||'', withDriver: _CH_DRIVER==='chauffeur' };
+  _CAR_STEP = 2;
+  renderCarStep();
+}
+
+async function chSubmit(){
+  const name = document.getElementById('ch-name')?.value.trim();
+  const phone = document.getElementById('ch-phone')?.value.trim();
+  const email = document.getElementById('ch-email')?.value.trim();
+  const err = document.getElementById('ch-err-2');
+  if(!name){ if(err){err.textContent='Please enter your name.';err.style.display='block';} return; }
+  if(!phone){ if(err){err.textContent='Please enter your phone number.';err.style.display='block';} return; }
+  if(err) err.style.display='none';
+  _CAR_DATA = { ..._CAR_DATA, name, phone, email };
+
+  const btn = document.getElementById('ch-submit-btn');
+  if(btn){ btn.disabled=true; btn.textContent='Confirming…'; }
+
+  _CAR_REF = 'CH-' + Date.now().toString(36).toUpperCase().slice(-6);
+  const c = _CAR_BOOK;
+  const days = Math.max(1, Math.ceil((new Date(_CAR_DATA.end)-new Date(_CAR_DATA.start))/86400000));
+  const pricePerDay = _CH_DRIVER==='chauffeur' ? c.chauffeurPrice : c.selfPrice;
+
+  try {
+    const { createClient } = supabase;
+    const _sb = createClient('https://gfwgbgdvxtocwhilrtdw.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw');
+    await _sb.from('transport_requests').insert({
+      ref: _CAR_REF,
+      type: 'carhire',
+      ride_name: c.name,
+      ride_type: c.type,
+      pickup: _CAR_DATA.pickup,
+      ride_date: _CAR_DATA.start,
+      dropoff: _CAR_DATA.end,
+      notes: (_CAR_DATA.notes||'') + (_CAR_DATA.withDriver?' [With chauffeur]':' [Self drive]'),
+      customer_name: _CAR_DATA.name,
+      phone: _CAR_DATA.phone,
+      email: _CAR_DATA.email||null,
+      estimated_fare: pricePerDay * days,
+      status: 'pending',
+      created_at: new Date().toISOString()
+    });
+  } catch(e){ console.warn('Car hire save failed (will continue):', e); }
+
+  _CAR_STEP = 3;
+  renderCarStep();
+}
 (function(){
   const today=new Date(),d1=new Date(today),d2=new Date(today);
   d1.setDate(today.getDate()+1);d2.setDate(today.getDate()+3);

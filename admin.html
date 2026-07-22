@@ -471,6 +471,10 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
           Bookings
         </div>
+        <div class="nav-i" data-sec="transport" onclick="go('transport',this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13h14l-1.5-5a2 2 0 0 0-2-1.5h-7a2 2 0 0 0-2 1.5z"/><path d="M4 13h16v4a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1v-1H7v1a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z"/></svg>
+          Transport <span class="nav-b warn" id="b-transport"></span>
+        </div>
       </div>
 
       <div class="nav-grp">
@@ -939,6 +943,27 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
         <div class="tw"><table>
           <thead><tr><th>Reference</th><th>Guest</th><th class="num">Amount</th><th>Status</th><th>Created</th><th class="num">Actions</th></tr></thead>
           <tbody id="bk-rows"></tbody>
+        </table></div>
+      </section>
+
+      <!-- ─── TRANSPORT REQUESTS (Rides + Car Hire) ─── -->
+      <section class="sec" id="s-transport">
+        <div class="hd">
+          <div><h1>Transport <em>requests</em></h1><p>Ride bookings and car hire enquiries submitted via the site.</p></div>
+          <div class="hd-act">
+            <button class="btn btn-g btn-sm" onclick="exportTransport()">Export CSV</button>
+          </div>
+        </div>
+        <div class="tabs" style="margin-top:16px">
+          <button class="tab on" onclick="trFilter('all',this)">All</button>
+          <button class="tab" onclick="trFilter('ride',this)">Rides</button>
+          <button class="tab" onclick="trFilter('carhire',this)">Car hire</button>
+          <button class="tab" onclick="trFilter('pending',this)">Pending</button>
+          <button class="tab" onclick="trFilter('confirmed',this)">Confirmed</button>
+        </div>
+        <div class="tw" style="margin-top:12px"><table>
+          <thead><tr><th>Ref</th><th>Type</th><th>Customer</th><th>Journey</th><th>Date</th><th class="num">Fare</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="tr-rows"></tbody>
         </table></div>
       </section>
 
@@ -1809,6 +1834,7 @@ function go(sec, el){
   if(sec==='lazy') lazyLoad('pending');
   if(sec==='impersonate') impLogLoad();
   if(sec==='cabana') cabanaLoad();
+  if(sec==='transport') renderTransport();
 }
 function setRange(d, el){
   RANGE = d;
@@ -2142,7 +2168,7 @@ async function ensureAudience(){
 function renderAll(){
   renderOverview(); renderTriage(); renderIntel(); renderFinance();
   renderModeration(); renderUploads(); renderTrust(); renderInventory();
-  renderBookings(); renderAds(); renderShadow(); renderCustomers(); renderAudit(); renderSystem();
+  renderBookings(); renderTransport(); renderAds(); renderShadow(); renderCustomers(); renderAudit(); renderSystem();
   if($('s-godmode')?.classList.contains('on')) gmRenderAll();
   badges();
 }
@@ -2614,6 +2640,70 @@ function refund(id, amt){
 }
 function exportBookings(){ AD.download('bookings.csv', AD.toCSV(SNAP.bookings), 'text/csv'); toast('Exported','ok'); }
 
+/* ── Transport Requests ── */
+let _trFilter = 'all';
+function trFilter(f, el){
+  _trFilter = f;
+  document.querySelectorAll('#s-transport .tab').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');
+  renderTransport();
+}
+function renderTransport(){
+  const all = SNAP.transportRequests || [];
+  const list = all.filter(r => {
+    if(_trFilter === 'all') return true;
+    if(_trFilter === 'ride') return r.type === 'ride';
+    if(_trFilter === 'carhire') return r.type === 'carhire';
+    if(_trFilter === 'pending') return r.status === 'pending';
+    if(_trFilter === 'confirmed') return r.status === 'confirmed';
+    return true;
+  });
+  const pillOf = s => s==='confirmed'?'p-ok':s==='cancelled'?'p-bad':'p-warn';
+  const waLink = r => {
+    const msg = encodeURIComponent(`Hi ${r.customer_name||''}! Your ${r.ride_name||'transport'} request (ref: ${r.ref||r.id}) has been confirmed. Please contact us with any questions.`);
+    return `https://wa.me/${(r.phone||'').replace(/\D/g,'')}?text=${msg}`;
+  };
+  $('tr-rows').innerHTML = list.length ? list.map(r=>`<tr>
+    <td class="mono t-main">${esc(r.ref||String(r.id||'').slice(0,8))}</td>
+    <td><span class="pill ${r.type==='carhire'?'p-calm':'p-mute'}">${r.type==='carhire'?'Car hire':'Ride'}</span></td>
+    <td>
+      <div class="t-main">${esc(r.customer_name||'—')}</div>
+      <div class="t-sub">${esc(r.phone||'')}${r.email?` · ${esc(r.email)}`:''}
+    </td>
+    <td class="t-sub">
+      <div>${esc(r.ride_name||'—')}</div>
+      <div>${esc(r.pickup||'—')} → ${esc(r.dropoff||r.ride_date||'—')}</div>
+      <div>${esc(r.ride_date||'')}${r.ride_time?' '+esc(r.ride_time):''}</div>
+    </td>
+    <td class="t-sub">${F.ago(r.created_at)}</td>
+    <td class="num mono">${r.estimated_fare?F.money(r.estimated_fare):'—'}</td>
+    <td><span class="pill ${pillOf(r.status||'pending')}">${esc(r.status||'pending')}</span></td>
+    <td><div class="t-act">
+      ${r.status!=='confirmed'?`<button class="btn btn-p btn-sm" onclick="confirmTransport('${esc(r.id)}')">Confirm</button>`:''}
+      ${r.phone?`<a class="btn btn-g btn-sm" href="${waLink(r)}" target="_blank" rel="noopener" style="text-decoration:none">WhatsApp</a>`:''}
+      <button class="btn btn-d btn-sm" onclick="cancelTransport('${esc(r.id)}')">Cancel</button>
+    </div></td>
+  </tr>`).join('') : emptyRow(8,'No transport requests yet');
+
+  // Badge
+  const pending = all.filter(r=>r.status==='pending').length;
+  b('b-transport', pending||'', pending?'warn':'');
+}
+async function confirmTransport(id){
+  const r = await AD.write('transport_requests', t=>t.update({status:'confirmed',confirmed_at:new Date().toISOString()}).eq('id',id));
+  r.ok ? (toast('Request confirmed','ok'), refresh()) : toast(r.error,'bad');
+}
+async function cancelTransport(id){
+  confirmAct('Cancel transport request','This will mark the request as cancelled.', false, async ()=>{
+    const r = await AD.write('transport_requests', t=>t.update({status:'cancelled'}).eq('id',id));
+    r.ok ? (toast('Cancelled','ok'), refresh()) : toast(r.error,'bad');
+  });
+}
+function exportTransport(){
+  AD.download('transport-requests.csv', AD.toCSV(SNAP.transportRequests||[]), 'text/csv');
+  toast('Exported','ok');
+}
+
 /* ══ 12 · AUDIT + SYSTEM ═════════════════════════════════════════ */
 function renderAudit(){
   const local = AD.localAudit();
@@ -2848,6 +2938,13 @@ function openCampaign(id){
   $('camp-title').textContent = id ? 'Edit campaign' : 'New campaign';
   ['c-adv','c-head','c-sub','c-cta','c-url','c-media','c-poster','c-price','c-theme','c-budget'].forEach(k=>$(k).value='');
   $('c-prio').value = 5; $('c-status').value = 'live';
+  // Reset file picker UI
+  CAMP_PENDING_FILE = null;
+  if($('c-file')) $('c-file').value = '';
+  if($('c-file-name')) $('c-file-name').textContent = 'No file chosen';
+  if($('c-upload-btn')) $('c-upload-btn').style.display = 'none';
+  if($('c-upload-progress')) $('c-upload-progress').style.display = 'none';
+  if($('c-media-thumb')){ $('c-media-thumb').style.display = 'none'; $('c-media-thumb').innerHTML = ''; }
 
   const segs = (AUD?.segments||[]).filter(s=>!s.suppress);
   $('c-segs').innerHTML = segs.map(s=>
@@ -3170,6 +3267,10 @@ function openShadow(id){
   $('shadow-title').textContent = id ? 'Edit shadow ad' : 'New shadow ad';
   const F_ = ['sh-adv','sh-name','sh-head','sh-sub','sh-cta','sh-url','sh-media','sh-poster','sh-accent','sh-theme','sh-kw','sh-budget','sh-apa-msg'];
   F_.forEach(k=>$(k)&&($(k).value=''));
+  SH_PENDING_FILE = null;
+  if($('sh-file')) $('sh-file').value = '';
+  if($('sh-file-name')) $('sh-file-name').textContent = 'No file chosen';
+  if($('sh-file-upload-btn')) $('sh-file-upload-btn').style.display = 'none';
   $('sh-mtype').value='image'; $('sh-imin').value=10; $('sh-imax').value=85;
   $('sh-dwell').value=6; $('sh-scroll').value=0; $('sh-device').value='all';
   $('sh-pos').value='auto'; $('sh-cap').value=1; $('sh-cd').value=90;

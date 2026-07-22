@@ -675,13 +675,15 @@
       rows('tour_bookings', function (q) { return q.limit(1000); }),
       rows('event_tickets', function (q) { return q.limit(1000); }),
       rows('shadow_ads', function (q) { return q.order('priority', { ascending: false }).limit(300); }),
-      rows('session_features', function (q) { return q.order('captured_at', { ascending: false }).limit(2000); })
+      rows('session_features', function (q) { return q.order('captured_at', { ascending: false }).limit(2000); }),
+      rows('transport_requests', function (q) { return q.order('created_at', { ascending: false }).limit(500); })
     ]).then(function (r) {
       var listings = r[0], profiles = r[1], bookings = r[2], reviews = r[3];
       var uploads = r[4], disputes = r[5], campaigns = r[6];
       var tours = r[7], tickets = r[8];
       var shadowAds = r[9] || [];
       var sessions = r[10] || [];
+      var transportRequests = r[11] || [];
 
       var allBookings = bookings.concat(tours, tickets);
 
@@ -775,6 +777,7 @@
         campaigns: campaigns,
         shadowAds: shadowAds,
         sessions: sessions,
+        transportRequests: transportRequests,
         pending: pending,
         flagged: flagged,
         engine: {
