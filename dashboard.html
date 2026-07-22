@@ -457,6 +457,49 @@ img,video,svg{max-width:100%;}
 
 /* hero greeting */
 .tb-logo-cab{height:32px;width:auto;display:block;}
+/* ══ ANIMATED CABANA WORDMARK — header only ══ */
+.tb-cab-anim{
+  position:relative;display:inline-block;
+  font-family:'Bricolage Grotesque',var(--font-display);font-weight:800;
+  font-size:20px;letter-spacing:.05em;line-height:1;
+  background:linear-gradient(120deg,#FF6A3C 0%,#FF3D8B 28%,#FFB347 55%,#4EE0C8 100%);
+  background-size:220% 100%;
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:transparent;
+  animation:cabHue 6s linear infinite;
+  isolation:isolate;
+}
+.tb-cab-anim::before{
+  content:attr(data-text);
+  position:absolute;inset:0;z-index:-1;
+  background:linear-gradient(120deg,#FF6A3C,#FF3D8B,#FFB347,#4EE0C8);
+  background-size:220% 100%;
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:transparent;
+  filter:blur(8px) saturate(1.7) brightness(1.35);
+  opacity:.7;
+  animation:cabHue 6s linear infinite,cabPulse 2.6s ease-in-out infinite;
+}
+.tb-cab-anim::after{
+  content:attr(data-text);
+  position:absolute;inset:0;z-index:1;
+  background:linear-gradient(105deg,
+    transparent 20%,
+    rgba(255,255,255,.12) 38%,
+    rgba(255,255,255,.9) 50%,
+    rgba(255,255,255,.12) 62%,
+    transparent 80%);
+  background-size:250% 100%;
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:transparent;
+  mix-blend-mode:screen;
+  animation:cabSheen 3.4s cubic-bezier(.5,0,.2,1) infinite;
+}
+@media(prefers-reduced-motion:reduce){
+  .tb-cab-anim,.tb-cab-anim::before,.tb-cab-anim::after{animation:none;}
+  .tb-cab-anim::before{opacity:.6;}
+}
+
 
 /* ══ REBRAND INLINE ANNOUNCEMENT ══ */
 .drb-inline{
@@ -562,7 +605,7 @@ img,video,svg{max-width:100%;}
   .drb-i-cab::before{filter:blur(8px) saturate(1.7) brightness(1.35);}
 }
 
-.greeting{margin-bottom:34px;opacity:0;animation:fadeUp .8s .1s forwards;}
+.greeting{margin-bottom:34px;opacity:0;animation:fadeUp .7s .05s forwards;}
 .greeting-eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--lilac-deep);margin-bottom:12px;padding:6px 14px;border-radius:100px;background:rgba(184,164,244,.12);border:1px solid rgba(184,164,244,.25);}
 .greeting-title{font-family:var(--font-display);font-optical-sizing:auto;font-weight:400;font-size:clamp(32px,5vw,52px);line-height:1.05;letter-spacing:-.02em;color:var(--ink);margin-bottom:10px;}
 .greeting-title em{font-style:italic;font-weight:500;background:linear-gradient(120deg,var(--violet),var(--electric),var(--mint-deep));-webkit-background-clip:text;background-clip:text;color:transparent;}
@@ -839,7 +882,7 @@ img,video,svg{max-width:100%;}
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
         </button>
         <img src="cabana-emblem.png" class="tb-icon-sm" alt=""/>
-        <img src="cabana-wordmark-color.png" class="tb-logo tb-logo-cab" alt="Cabana" onerror="this.style.display='none'"/>
+        <span class="tb-cab-anim" data-text="CABANA">CABANA</span>
       </div>
       <div class="tb-right" id="tb-right-guest">
         <!-- Guest nav — Sign In + Sign Up (hidden when logged in) -->
@@ -880,16 +923,7 @@ img,video,svg{max-width:100%;}
 
     <div class="content">
       <div class="greeting">
-        <!-- ══ REBRAND INLINE ══ -->
-        <div class="drb-inline" id="dash-rebrand-banner">
-          <div class="drb-inline-title">
-            <span class="drb-i-apat">APATMENTO</span>
-            <span class="drb-i-now">now</span>
-            <span class="drb-i-cab" data-text="CABANA">CABANA</span>
-          </div>
-          <p class="drb-i-sub">Zero Commission &nbsp;·&nbsp; Pay What You See</p>
-          <p class="drb-i-tagline"><em>Fair for all.</em></p>
-        </div>
+        
         <h1 class="greeting-title" id="g-title"><span id="g-greeting">Good afternoon</span><em id="g-name"></em></h1>
         <p class="greeting-sub">Stays, flights, tours, rides and more — every part of your trip, beautifully in one place.</p>
       </div>
@@ -1931,7 +1965,7 @@ async function renderServicePicker(listings){
   const active = Object.entries(groups).filter(([,a])=>a.length);
   c.innerHTML = `
     <div class="topbar">
-      <div class="tb-left"><img src="cabana-emblem.png" class="tb-icon-sm" alt=""/><img src="cabana-wordmark-color.png" class="tb-logo tb-cab-wm" alt="Cabana" onerror="this.style.display='none'"/></div>
+      <div class="tb-left"><img src="cabana-emblem.png" class="tb-icon-sm" alt=""/><span class="tb-cab-anim" data-text="CABANA">CABANA</span></div>
       <div class="tb-right"><button class="hero-cta" style="padding:9px 18px;font-size:13px;box-shadow:none;" onclick="showAddSheet()">+ Add service</button><button onclick="switchToGuest()" style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:100px;border:1.5px solid rgba(255,255,255,.35);background:rgba(255,255,255,.15);-webkit-color:#fff;font-family:var(--font-body);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .2s;">← Traveller dashboard</button></div>
     </div>
     <div class="content" style="max-width:760px;">
@@ -1969,7 +2003,7 @@ async function renderSingleDashboard(listing){
 
   c.innerHTML = `
     <div class="topbar">
-      <div class="tb-left"><button class="tb-icon-btn" onclick="openDrawer()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button><img src="cabana-emblem.png" class="tb-icon-sm" alt=""/><img src="cabana-wordmark-color.png" class="tb-logo tb-cab-wm" alt="Cabana" onerror="this.style.display='none'"/></div>
+      <div class="tb-left"><button class="tb-icon-btn" onclick="openDrawer()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button><img src="cabana-emblem.png" class="tb-icon-sm" alt=""/><span class="tb-cab-anim" data-text="CABANA">CABANA</span></div>
       <div class="tb-right">
         <a href="#" onclick="switchToGuest();return false;" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:11px;border:1.5px solid rgba(45,212,191,.3);background:rgba(45,212,191,.08);color:#0D9488;font-family:var(--font-body);font-weight:700;font-size:12px;text-decoration:none;transition:all .22s;white-space:nowrap;" title="Switch to Traveller view">
           ← Traveller dashboard
