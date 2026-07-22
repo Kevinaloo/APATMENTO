@@ -762,33 +762,78 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
       <!-- ─── GOD MODE ─── -->
       <section class="sec" id="s-godmode">
         <div class="hd">
-          <div><h1>God <em>mode</em></h1><p>Add your own listings to any service tab, and edit any partner listing on the platform.</p></div>
+          <div><h1>God <em>mode</em></h1><p>Add Apatmento-owned listings to any service. Edit any partner listing on the platform.</p></div>
           <div class="hd-act">
             <button class="btn btn-p btn-sm" onclick="gmOpenAdd()">+ Add listing</button>
           </div>
         </div>
 
-        <!-- Partner listings — all listings, editable -->
-        <h3 style="font-size:14px;font-weight:600;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px">All listings</h3>
+        <!-- Service filter + search bar -->
+        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:16px">
+          <div style="display:flex;flex-wrap:wrap;gap:6px;flex:1">
+            <button class="gm-svc-tab on" data-svc="all" onclick="gmFilterSvc('all',this)">All</button>
+            <button class="gm-svc-tab" data-svc="apartment" onclick="gmFilterSvc('apartment',this)">🏠 Stays</button>
+            <button class="gm-svc-tab" data-svc="tour" onclick="gmFilterSvc('tour',this)">🗺️ Tours</button>
+            <button class="gm-svc-tab" data-svc="food" onclick="gmFilterSvc('food',this)">🍽️ Food</button>
+            <button class="gm-svc-tab" data-svc="carhire" onclick="gmFilterSvc('carhire',this)">🚗 Car hire</button>
+            <button class="gm-svc-tab" data-svc="shopping" onclick="gmFilterSvc('shopping',this)">🛍️ Shopping</button>
+            <button class="gm-svc-tab" data-svc="event" onclick="gmFilterSvc('event',this)">🎟️ Events</button>
+            <button class="gm-svc-tab" data-svc="room" onclick="gmFilterSvc('room',this)">🛏️ Roommates</button>
+            <button class="gm-svc-tab" data-svc="ride" onclick="gmFilterSvc('ride',this)">🛺 Rides</button>
+          </div>
+          <input id="gm-search" class="inp" placeholder="Search listings…" oninput="gmSearch(this.value)" style="width:200px;max-width:100%"/>
+        </div>
+
         <div class="tw"><table>
-          <thead><tr><th>Title</th><th>Partner</th><th>Type</th><th class="num">Price</th><th>Status</th><th class="num">Actions</th></tr></thead>
+          <thead><tr>
+            <th>Listing</th>
+            <th>Service</th>
+            <th>Partner</th>
+            <th class="num">Price</th>
+            <th>Status</th>
+            <th class="num">Actions</th>
+          </tr></thead>
           <tbody id="gm-all-rows"><tr><td colspan="6" style="padding:20px;color:var(--ink-4)">Loading…</td></tr></tbody>
         </table></div>
+        <div id="gm-count" style="font-size:12px;color:var(--ink-4);margin-top:8px;text-align:right"></div>
       </section>
 
-      <!-- God-mode slide-in editor (shared for add + edit) -->
-      <div id="gm-overlay" onclick="gmClose()" style="display:none;position:fixed;inset:0;background:rgba(4,4,10,.7);z-index:120"></div>
-      <div id="gm-panel" style="display:none;position:fixed;top:0;right:0;bottom:0;width:min(420px,100%);background:var(--panel);border-left:1px solid var(--line-2);z-index:121;overflow-y:auto;padding:24px 20px 48px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
-          <span id="gm-panel-title" style="font-size:17px;font-weight:600">Edit listing</span>
-          <button class="btn btn-g btn-sm" onclick="gmClose()">✕</button>
+      <!-- God-mode slide-in editor -->
+      <div id="gm-overlay" onclick="gmClose()" style="display:none;position:fixed;inset:0;background:rgba(4,4,10,.75);z-index:120;backdrop-filter:blur(2px)"></div>
+      <div id="gm-panel" style="display:none;position:fixed;top:0;right:0;bottom:0;width:min(480px,100%);background:var(--panel);border-left:1px solid var(--line-2);z-index:121;overflow-y:auto;padding:0 0 80px;box-shadow:-8px 0 40px rgba(0,0,0,.18)">
+        <!-- Panel header -->
+        <div style="position:sticky;top:0;background:var(--panel);border-bottom:1px solid var(--line-2);padding:18px 20px;display:flex;align-items:center;justify-content:space-between;z-index:2">
+          <div>
+            <div id="gm-panel-title" style="font-size:17px;font-weight:700;color:var(--ink)">Edit listing</div>
+            <div id="gm-panel-sub" style="font-size:12px;color:var(--ink-4);margin-top:2px"></div>
+          </div>
+          <button class="btn btn-g btn-sm" onclick="gmClose()" style="font-size:16px;padding:6px 12px">✕</button>
         </div>
-        <div id="gm-panel-body"></div>
-        <div style="display:flex;gap:8px;margin-top:20px">
-          <button class="btn btn-p" style="flex:1" id="gm-btn-save" onclick="gmSave()">Save changes</button>
+
+        <!-- Service type picker (only shown when adding) -->
+        <div id="gm-svc-picker" style="display:none;padding:20px 20px 0">
+          <div style="font-size:12px;font-weight:600;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px">Service *</div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px" id="gm-svc-grid">
+            <div class="gm-svc-pick" data-type="apartment" onclick="gmPickSvc(this)"><div style="font-size:20px">🏠</div><div>Stays</div></div>
+            <div class="gm-svc-pick" data-type="tour" onclick="gmPickSvc(this)"><div style="font-size:20px">🗺️</div><div>Tours</div></div>
+            <div class="gm-svc-pick" data-type="food" onclick="gmPickSvc(this)"><div style="font-size:20px">🍽️</div><div>Food</div></div>
+            <div class="gm-svc-pick" data-type="carhire" onclick="gmPickSvc(this)"><div style="font-size:20px">🚗</div><div>Car hire</div></div>
+            <div class="gm-svc-pick" data-type="shopping" onclick="gmPickSvc(this)"><div style="font-size:20px">🛍️</div><div>Shopping</div></div>
+            <div class="gm-svc-pick" data-type="event" onclick="gmPickSvc(this)"><div style="font-size:20px">🎟️</div><div>Events</div></div>
+            <div class="gm-svc-pick" data-type="room" onclick="gmPickSvc(this)"><div style="font-size:20px">🛏️</div><div>Rooms</div></div>
+            <div class="gm-svc-pick" data-type="ride" onclick="gmPickSvc(this)"><div style="font-size:20px">🛺</div><div>Rides</div></div>
+          </div>
+        </div>
+
+        <!-- Dynamic form body -->
+        <div id="gm-panel-body" style="padding:20px"></div>
+
+        <!-- Sticky footer actions -->
+        <div style="position:sticky;bottom:0;background:var(--panel);border-top:1px solid var(--line-2);padding:14px 20px;display:flex;gap:8px;z-index:2">
+          <button class="btn btn-p" style="flex:1;font-weight:600" id="gm-btn-save" onclick="gmSave()">Save listing</button>
           <button class="btn btn-d btn-sm" id="gm-btn-del" onclick="gmConfirmDelete()" style="display:none">Delete</button>
         </div>
-        <div id="gm-msg" style="margin-top:10px;font-size:12.5px"></div>
+        <div id="gm-msg" style="padding:0 20px 8px;font-size:12.5px;min-height:20px"></div>
       </div>
 
       <!-- ─── LAZY REQUESTS ─── -->
@@ -3308,157 +3353,569 @@ function spTestPlay(){
 
 /* ── GOD MODE ─────────────────────────────────────────────────── */
 
-let GM_EDIT = null; // listing currently being edited (null = adding new)
+// ─── GOD MODE — Services & Listings ───────────────────────────────────────────
 
-/* Load all listings from SNAP (already fetched at boot) into the God Mode table */
+(function injectGmStyles(){
+  const s = document.createElement('style');
+  s.textContent = `
+    /* Filter tabs */
+    .gm-svc-tab{
+      padding:5px 12px;border-radius:100px;border:1px solid var(--line-2);
+      background:transparent;color:var(--ink-3);font-size:12px;font-weight:500;
+      cursor:pointer;transition:all .15s;white-space:nowrap;
+    }
+    .gm-svc-tab:hover{background:var(--panel-2);color:var(--ink)}
+    .gm-svc-tab.on{background:var(--violet);color:#fff;border-color:var(--violet)}
+
+    /* Service picker grid (add mode) */
+    .gm-svc-pick{
+      display:flex;flex-direction:column;align-items:center;gap:4px;
+      padding:12px 6px;border-radius:10px;border:1.5px solid var(--line-2);
+      cursor:pointer;font-size:11px;font-weight:500;color:var(--ink-3);
+      background:var(--panel-2);transition:all .15s;text-align:center;
+    }
+    .gm-svc-pick:hover{border-color:var(--violet);color:var(--ink)}
+    .gm-svc-pick.on{border-color:var(--violet);background:rgba(109,40,255,.08);color:var(--violet);font-weight:700}
+
+    /* Form labels */
+    .gm-lbl{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:500;color:var(--ink-3);margin-bottom:14px}
+    .gm-lbl input,.gm-lbl select,.gm-lbl textarea{font-size:13px}
+    .gm-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .gm-sec{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+            color:var(--ink-4);margin:18px 0 10px;padding-top:14px;border-top:1px solid var(--line-2)}
+    .gm-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+    .gm-chip{padding:4px 10px;border-radius:100px;border:1px solid var(--line-2);font-size:11px;
+             cursor:pointer;background:var(--panel-2);color:var(--ink-3);transition:all .12s;user-select:none}
+    .gm-chip.on{background:var(--violet);color:#fff;border-color:var(--violet)}
+    .gm-photo-preview{width:100%;height:140px;object-fit:cover;border-radius:10px;
+                      margin-bottom:8px;display:none;border:1px solid var(--line-2)}
+    .gm-active-row{display:flex;align-items:center;gap:10px;cursor:pointer;
+                   padding:12px 14px;background:var(--panel-2);border-radius:10px;
+                   border:1px solid var(--line-2);margin-bottom:14px}
+    .gm-active-row input[type=checkbox]{accent-color:var(--violet);width:17px;height:17px;cursor:pointer}
+    .gm-active-row span{font-size:13px;font-weight:500;color:var(--ink)}
+    .gm-featured-row{display:flex;align-items:center;gap:10px;cursor:pointer;
+                   padding:10px 14px;background:rgba(255,184,0,.06);border-radius:10px;
+                   border:1px solid rgba(255,184,0,.25);margin-bottom:14px}
+    .gm-featured-row input[type=checkbox]{accent-color:var(--gold,#F59E0B);width:17px;height:17px;cursor:pointer}
+    .gm-featured-row span{font-size:13px;font-weight:500;color:var(--ink)}
+  `;
+  document.head.appendChild(s);
+})();
+
+let GM_EDIT = null;       // listing being edited (null = new)
+let GM_TYPE = null;       // selected service type
+let GM_FILTER = 'all';    // current table filter
+let GM_SEARCH = '';       // current search string
+let GM_AMENITIES = [];    // toggled amenity chips
+let GM_TAGS = [];         // toggled tag chips
+
+// ── Service configuration ──────────────────────────────────────────────────
+const GM_SERVICES = {
+  apartment:{label:'Stay',icon:'🏠',priceLabel:'Price / night (KES)',priceKey:'price_night',
+    extraFields:['beds','baths','max_guests','price_week','price_month','min_nights','checkin_time','checkout_time','contact_whatsapp','house_rules'],
+    amenities:['WiFi','Parking','Pool','Gym','Security','DSTV','Generator','Water','AC','Kitchen','Laundry','Balcony','Rooftop','Pet friendly','Smoking allowed','Instant book'],
+    tags:['Ensuite','Self-contained','Furnished','Serviced','Bedsitter','Studio','1 Bedroom','2 Bedrooms','3 Bedrooms','Penthouse','Villa'],
+  },
+  tour:{label:'Tour',icon:'🗺️',priceLabel:'Price / person (KES)',priceKey:'price_night',
+    extraFields:['contact_whatsapp','contact_phone'],
+    amenities:['Guide included','Transport included','Meals included','Accommodation included','Group tours','Private tours','Child friendly'],
+    tags:['Safari','Day trip','Hiking','Cultural','Beach','Bush walk','City tour','Night tour','Photographic'],
+  },
+  food:{label:'Food & Dining',icon:'🍽️',priceLabel:'Avg order (KES)',priceKey:'price_night',
+    extraFields:['contact_whatsapp','contact_phone'],
+    amenities:['Dine-in','Takeaway','Delivery','WiFi','Alcohol','Outdoor seating','AC','Kids menu','Parking','Card payment','Karaoke','Live music'],
+    tags:['African','Fast food','Pizza','Burgers','Grill','Indian','Chinese','Italian','Vegan','Seafood','Breakfast','Rooftop'],
+  },
+  carhire:{label:'Car Hire',icon:'🚗',priceLabel:'Price / day (KES)',priceKey:'price_night',
+    extraFields:['contact_whatsapp','contact_phone'],
+    amenities:['Chauffeur available','Self-drive','Airport pickup','Long-distance','AC','GPS','Insurance included','Fuel included'],
+    tags:['Saloon','SUV','4x4','Minivan','Van','Luxury','Economy','7-seater','14-seater'],
+  },
+  shopping:{label:'Shopping',icon:'🛍️',priceLabel:'Starting price (KES)',priceKey:'price_night',
+    extraFields:['contact_whatsapp'],
+    amenities:['Delivery available','Pickup','Online store','Card payment','M-Pesa','Returns accepted','Warranty'],
+    tags:['Electronics','Fashion','Groceries','Beauty','Home','Sports','Books','Baby','Pets','Art'],
+  },
+  event:{label:'Event',icon:'🎟️',priceLabel:'Ticket price (KES, 0 = Free)',priceKey:'price_night',
+    extraFields:['contact_whatsapp','event_date','event_time'],
+    amenities:['Free entry','RSVP required','Bar','Food','Parking','18+','Child friendly','Live music','Outdoor','Indoor'],
+    tags:['Concert','Festival','Networking','Comedy','Theatre','Sports','Art','Food','Cultural','Workshop'],
+  },
+  room:{label:'Room / Roommate',icon:'🛏️',priceLabel:'Price / month (KES)',priceKey:'price_month',
+    extraFields:['beds','baths','contact_whatsapp'],
+    amenities:['WiFi','Security','Parking','Water 24hr','Generator','Kitchen','Laundry','Gym','Rooftop'],
+    tags:['Private room','Shared room','Ensuite','Studio','Bachelor pad','Mixed','Ladies only','Gentlemen only','Professionals only'],
+  },
+  ride:{label:'Ride / Transport',icon:'🛺',priceLabel:'Starting price (KES)',priceKey:'price_night',
+    extraFields:['contact_whatsapp','contact_phone'],
+    amenities:['AC','Door-to-door','Airport transfers','Intercounty','Night rides','Child seat','Luggage space'],
+    tags:['Economy','Comfort','Premium','Boda boda','Tuk-tuk','Shuttle','Airport transfer','Intercounty','School run'],
+  },
+};
+
+// ── Table rendering ────────────────────────────────────────────────────────
+const GM_SVC_LABELS = {apartment:'🏠 Stay',tour:'🗺️ Tour',food:'🍽️ Food',carhire:'🚗 Car hire',
+  shopping:'🛍️ Shopping',event:'🎟️ Event',room:'🛏️ Room',ride:'🛺 Ride'};
+
 function gmRenderAll(){
-  const rows = (SNAP.listings || []).slice().sort((a,b)=>(b.created_at||'').localeCompare(a.created_at||''));
+  let rows = (SNAP.listings||[]).slice().sort((a,b)=>(b.created_at||'').localeCompare(a.created_at||''));
+
+  // Filter by service
+  if(GM_FILTER !== 'all') rows = rows.filter(l=>
+    (l.type||l.property_type||l.listing_type) === GM_FILTER
+  );
+
+  // Filter by search
+  if(GM_SEARCH){
+    const q = GM_SEARCH.toLowerCase();
+    rows = rows.filter(l=>
+      (l.title||'').toLowerCase().includes(q) ||
+      (l.location||l.city||'').toLowerCase().includes(q)
+    );
+  }
+
   const body = $('gm-all-rows');
   if(!body) return;
-  if(!rows.length){ body.innerHTML = emptyRow(6,'No listings yet'); return; }
+
+  const cnt = $('gm-count');
+  if(cnt) cnt.textContent = rows.length ? `${rows.length} listing${rows.length===1?'':'s'}` : '';
+
+  if(!rows.length){
+    body.innerHTML = `<tr><td colspan="6" style="padding:24px;color:var(--ink-4);text-align:center">
+      ${GM_FILTER==='all'&&!GM_SEARCH ? 'No listings yet — add the first one.' : 'No listings match.'}
+    </td></tr>`;
+    return;
+  }
+
   body.innerHTML = rows.map(l => {
-    const price  = l.price_night ? 'KES '+F.num(l.price_night)+'/night'
-                 : l.price_month ? 'KES '+F.num(l.price_month)+'/mo'
-                 : '—';
-    const status = l.is_active===false||l.status==='inactive' ? '<span class="pill p-bad">Hidden</span>'
-                 : l.status==='pending' ? '<span class="pill p-warn">Pending</span>'
-                 : '<span class="pill p-ok">Active</span>';
-    const partner = l.partner_id ? l.partner_id.slice(0,8)+'…' : '<em style="color:var(--ink-4)">Apatmento</em>';
+    const type = l.type||l.property_type||l.listing_type||'—';
+    const price = l.price_night ? `KES ${F.num(l.price_night)}`
+                : l.price_month ? `KES ${F.num(l.price_month)}/mo`
+                : '—';
+    const isActive = l.is_active!==false && l.status!=='inactive' && l.status!=='paused';
+    const statusPill = l.status==='pending'
+      ? '<span class="pill p-warn">Pending</span>'
+      : isActive ? '<span class="pill p-ok">Active</span>'
+      : '<span class="pill p-bad">Hidden</span>';
+    const partner = l.partner_id
+      ? `<span style="font-size:11px;color:var(--ink-4)">${l.partner_id.slice(0,8)}…</span>`
+      : '<span style="font-size:11px;color:var(--violet);font-weight:600">Apatmento</span>';
+    const svcLabel = GM_SVC_LABELS[type] || type;
     return `<tr>
-      <td><div class="t-main">${esc(l.title||'Untitled')}</div><div class="t-sub">${esc(l.location||l.city||'—')}</div></td>
-      <td style="font-size:12px;color:var(--ink-3)">${partner}</td>
-      <td style="font-size:12px">${esc(l.type||l.property_type||'—')}</td>
-      <td class="num">${price}</td>
-      <td>${status}</td>
-      <td class="num"><button class="btn btn-g btn-sm" onclick="gmOpenEdit('${esc(l.id)}')">Edit</button></td>
+      <td>
+        <div style="display:flex;align-items:center;gap:10px">
+          ${Array.isArray(l.photos)&&l.photos[0]
+            ? `<img src="${esc(l.photos[0])}" style="width:36px;height:36px;border-radius:7px;object-fit:cover;flex-shrink:0" onerror="this.style.display='none'">`
+            : `<div style="width:36px;height:36px;border-radius:7px;background:var(--panel-2);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">${GM_SERVICES[type]?.icon||'📋'}</div>`}
+          <div>
+            <div class="t-main">${esc(l.title||'Untitled')}</div>
+            <div class="t-sub">${esc(l.location||l.city||l.area||'—')}</div>
+          </div>
+        </div>
+      </td>
+      <td style="font-size:12px">${svcLabel}</td>
+      <td>${partner}</td>
+      <td class="num" style="font-size:12px">${price}</td>
+      <td>${statusPill}</td>
+      <td class="num">
+        <button class="btn btn-g btn-sm" onclick="gmOpenEdit('${esc(l.id)}')">Edit</button>
+      </td>
     </tr>`;
   }).join('');
 }
 
-/* Open the panel to EDIT an existing listing */
+function gmFilterSvc(svc, el){
+  GM_FILTER = svc;
+  document.querySelectorAll('.gm-svc-tab').forEach(t=>t.classList.remove('on'));
+  if(el) el.classList.add('on');
+  gmRenderAll();
+}
+
+function gmSearch(q){
+  GM_SEARCH = q.trim();
+  gmRenderAll();
+}
+
+// ── Panel open/close ───────────────────────────────────────────────────────
 function gmOpenEdit(id){
   const l = (SNAP.listings||[]).find(r=>String(r.id)===String(id));
-  if(!l) return;
+  if(!l){ toast('Listing not found — try refreshing','bad'); return; }
   GM_EDIT = l;
+  GM_TYPE = l.type||l.property_type||l.listing_type||'apartment';
   $('gm-panel-title').textContent = 'Edit listing';
+  $('gm-panel-sub').textContent = GM_SERVICES[GM_TYPE]?.label || GM_TYPE;
   $('gm-btn-del').style.display = '';
+  $('gm-svc-picker').style.display = 'none';
   gmBuildForm(l);
   gmShowPanel();
 }
 
-/* Open the panel to ADD a new listing */
 function gmOpenAdd(){
   GM_EDIT = null;
+  GM_TYPE = null;
+  GM_AMENITIES = [];
+  GM_TAGS = [];
   $('gm-panel-title').textContent = 'Add listing';
+  $('gm-panel-sub').textContent = 'Choose a service below';
   $('gm-btn-del').style.display = 'none';
-  gmBuildForm({});
+  $('gm-svc-picker').style.display = 'block';
+  document.querySelectorAll('.gm-svc-pick').forEach(el=>el.classList.remove('on'));
+  $('gm-panel-body').innerHTML = `<div style="padding:40px 0;text-align:center;color:var(--ink-4);font-size:13px">Select a service above to continue</div>`;
   gmShowPanel();
+}
+
+function gmPickSvc(el){
+  document.querySelectorAll('.gm-svc-pick').forEach(e=>e.classList.remove('on'));
+  el.classList.add('on');
+  GM_TYPE = el.dataset.type;
+  GM_AMENITIES = [];
+  GM_TAGS = [];
+  $('gm-panel-sub').textContent = GM_SERVICES[GM_TYPE]?.label || GM_TYPE;
+  gmBuildForm({});
 }
 
 function gmShowPanel(){
   $('gm-overlay').style.display = 'block';
-  const p = $('gm-panel');
-  p.style.display = 'block';
+  $('gm-panel').style.display = 'block';
   $('gm-msg').textContent = '';
+  $('gm-panel').scrollTop = 0;
 }
 
 function gmClose(){
   $('gm-overlay').style.display = 'none';
-  $('gm-panel').style.display   = 'none';
-  GM_EDIT = null;
+  $('gm-panel').style.display = 'none';
+  GM_EDIT = null; GM_TYPE = null;
 }
 
-/* Build a simple inline form — just the fields that matter */
+// ── Form builder ───────────────────────────────────────────────────────────
+function gmV(l, k, fb){ return l&&l[k]!=null ? esc(String(l[k])) : (fb||''); }
+
 function gmBuildForm(l){
-  const v = (k,fb) => l[k]!=null ? esc(String(l[k])) : (fb||'');
-  const photo = Array.isArray(l.photos)&&l.photos[0] ? esc(l.photos[0]) : '';
-  $('gm-panel-body').innerHTML = `
-    <label class="gm-lbl">Title *<input class="inp" id="gm-title-in" value="${v('title')}" placeholder="e.g. Cosy 1BR in Westlands"/></label>
-    <label class="gm-lbl">Type
-      <select class="inp" id="gm-type-in">
-        ${['stay','room','tour','food','shopping','carhire','event'].map(t=>`<option${l.type===t?' selected':''}>${t}</option>`).join('')}
-      </select>
+  if(!GM_TYPE){ return; }
+  const cfg = GM_SERVICES[GM_TYPE] || GM_SERVICES.apartment;
+  const v = (k,fb) => gmV(l, k, fb);
+  const photo0 = Array.isArray(l.photos)&&l.photos[0] ? esc(l.photos[0]) : '';
+  const photo1 = Array.isArray(l.photos)&&l.photos[1] ? esc(l.photos[1]) : '';
+  const photo2 = Array.isArray(l.photos)&&l.photos[2] ? esc(l.photos[2]) : '';
+
+  // Pre-select amenities/tags from existing listing
+  GM_AMENITIES = l.amenities ? [...l.amenities] : [];
+  GM_TAGS = l.tags ? [...l.tags] : [];
+
+  // Active state
+  const isActive = l.is_active!==false && l.status!=='inactive' && l.status!=='paused';
+
+  let html = '';
+
+  // ── Core fields ──
+  html += `
+    <div class="gm-sec">Core details</div>
+
+    <label class="gm-lbl">Title *
+      <input class="inp" id="gm-title-in" value="${v('title')}" placeholder="${cfg.icon} e.g. ${gmPlaceholderTitle(GM_TYPE)}"/>
     </label>
-    <label class="gm-lbl">Location<input class="inp" id="gm-loc-in" value="${v('location',l.city||l.area||'')}" placeholder="Area, City"/></label>
-    <label class="gm-lbl">Price / night (KES)<input class="inp" type="number" id="gm-pricen-in" value="${v('price_night')}" placeholder="0"/></label>
-    <label class="gm-lbl">Price / month (KES)<input class="inp" type="number" id="gm-pricem-in" value="${v('price_month')}" placeholder="0"/></label>
-    <label class="gm-lbl">Description<textarea class="inp" id="gm-desc-in" rows="3" placeholder="Short description">${v('description')}</textarea></label>
-    <label class="gm-lbl">Cover photo URL<input class="inp" id="gm-photo-in" value="${photo}" placeholder="https://…"/></label>
-    <label class="gm-lbl">Booking / order URL<input class="inp" id="gm-url-in" value="${v('street',l.external_url||'')}" placeholder="https://… (optional)"/></label>
-    <label class="gm-lbl" style="flex-direction:row;align-items:center;gap:10px;cursor:pointer">
-      <input type="checkbox" id="gm-active-in" ${l.is_active===false?'':'checked'} style="accent-color:var(--violet);width:16px;height:16px"/>
-      <span>Active (visible on site)</span>
+
+    <label class="gm-lbl">Location / Area *
+      <input class="inp" id="gm-loc-in" value="${v('location', l.city||l.area||'')}" placeholder="e.g. Westlands, Nairobi"/>
+    </label>
+
+    <label class="gm-lbl">Description
+      <textarea class="inp" id="gm-desc-in" rows="3" placeholder="Short, punchy description visible to users">${v('description')}</textarea>
+    </label>
+  `;
+
+  // ── Pricing ──
+  html += `<div class="gm-sec">Pricing</div>`;
+
+  if(GM_TYPE === 'apartment'){
+    html += `
+      <div class="gm-row">
+        <label class="gm-lbl">Per night (KES)
+          <input class="inp" type="number" id="gm-pricen-in" value="${v('price_night')}" placeholder="0" min="0"/>
+        </label>
+        <label class="gm-lbl">Per week (KES)
+          <input class="inp" type="number" id="gm-pricew-in" value="${v('price_week')}" placeholder="0" min="0"/>
+        </label>
+      </div>
+      <label class="gm-lbl">Per month (KES)
+        <input class="inp" type="number" id="gm-pricem-in" value="${v('price_month')}" placeholder="0" min="0"/>
+      </label>
+      <label class="gm-lbl">Deposit (KES)
+        <input class="inp" type="number" id="gm-deposit-in" value="${v('deposit')}" placeholder="0" min="0"/>
+      </label>`;
+  } else if(GM_TYPE === 'room'){
+    html += `
+      <label class="gm-lbl">${cfg.priceLabel} *
+        <input class="inp" type="number" id="gm-pricem-in" value="${v('price_month')}" placeholder="0" min="0"/>
+      </label>
+      <label class="gm-lbl">Deposit (KES)
+        <input class="inp" type="number" id="gm-deposit-in" value="${v('deposit')}" placeholder="0" min="0"/>
+      </label>`;
+  } else {
+    html += `
+      <label class="gm-lbl">${cfg.priceLabel}
+        <input class="inp" type="number" id="gm-pricen-in" value="${v('price_night')}" placeholder="0" min="0"/>
+      </label>`;
+  }
+
+  // ── Service-specific extra fields ──
+  const extras = cfg.extraFields || [];
+
+  if(extras.includes('beds') || extras.includes('baths')){
+    html += `<div class="gm-sec">Property details</div>
+    <div class="gm-row">
+      ${extras.includes('beds') ? `<label class="gm-lbl">Bedrooms<input class="inp" type="number" id="gm-beds-in" value="${v('beds',l.bedrooms||'')}" placeholder="1" min="0"/></label>` : ''}
+      ${extras.includes('baths') ? `<label class="gm-lbl">Bathrooms<input class="inp" type="number" id="gm-baths-in" value="${v('baths',l.bathrooms||'')}" placeholder="1" min="0"/></label>` : ''}
+    </div>`;
+    if(extras.includes('max_guests')){
+      html += `<label class="gm-lbl">Max guests<input class="inp" type="number" id="gm-guests-in" value="${v('max_guests')}" placeholder="2" min="1"/></label>`;
+    }
+  }
+
+  if(extras.includes('min_nights')){
+    html += `<div class="gm-row">
+      <label class="gm-lbl">Min nights<input class="inp" type="number" id="gm-minn-in" value="${v('min_nights','1')}" placeholder="1" min="1"/></label>
+      <label class="gm-lbl">Check-in time<input class="inp" type="time" id="gm-cin-in" value="${v('checkin_time','14:00')}"/></label>
+    </div>
+    <label class="gm-lbl">Check-out time<input class="inp" type="time" id="gm-cout-in" value="${v('checkout_time','11:00')}"/></label>`;
+  }
+
+  if(extras.includes('event_date')){
+    html += `<div class="gm-sec">Event details</div>
+    <div class="gm-row">
+      <label class="gm-lbl">Date<input class="inp" type="date" id="gm-edate-in" value="${v('event_date')}"/></label>
+      <label class="gm-lbl">Time<input class="inp" type="time" id="gm-etime-in" value="${v('event_time')}"/></label>
+    </div>`;
+  }
+
+  // ── Contact ──
+  html += `<div class="gm-sec">Contact & booking</div>`;
+  if(extras.includes('contact_whatsapp')){
+    html += `<label class="gm-lbl">WhatsApp number (with country code)
+      <input class="inp" id="gm-wa-in" value="${v('contact_whatsapp')}" placeholder="+254712345678"/>
     </label>`;
+  }
+  if(extras.includes('contact_phone')){
+    html += `<label class="gm-lbl">Phone / Call number
+      <input class="inp" id="gm-phone-in" value="${v('contact_phone')}" placeholder="+254…"/>
+    </label>`;
+  }
+  html += `<label class="gm-lbl">Booking / order URL (optional)
+    <input class="inp" id="gm-url-in" value="${v('street', l.external_url||'')}" placeholder="https://… link to book or order"/>
+  </label>`;
+
+  if(extras.includes('house_rules')){
+    html += `<label class="gm-lbl">House rules
+      <textarea class="inp" id="gm-rules-in" rows="2" placeholder="No smoking, no parties…">${v('house_rules')}</textarea>
+    </label>`;
+  }
+
+  // ── Photos ──
+  html += `<div class="gm-sec">Photos (URL)</div>
+    <img id="gm-preview-0" class="gm-photo-preview" src="${photo0}" style="${photo0?'display:block':'display:none'}" onerror="this.style.display='none'"/>
+    <label class="gm-lbl">Cover photo URL *
+      <input class="inp" id="gm-photo0-in" value="${photo0}" placeholder="https://… main image"
+        oninput="gmPreviewPhoto(this,'gm-preview-0')"/>
+    </label>
+    <label class="gm-lbl">Photo 2 URL (optional)
+      <input class="inp" id="gm-photo1-in" value="${photo1}" placeholder="https://…"/>
+    </label>
+    <label class="gm-lbl">Photo 3 URL (optional)
+      <input class="inp" id="gm-photo2-in" value="${photo2}" placeholder="https://…"/>
+    </label>
+  `;
+
+  // ── Amenities ──
+  if(cfg.amenities&&cfg.amenities.length){
+    html += `<div class="gm-sec">Amenities & features</div>
+    <div class="gm-chips" id="gm-amenity-chips">
+      ${cfg.amenities.map(a=>`<div class="gm-chip${GM_AMENITIES.includes(a)?' on':''}" onclick="gmToggleChip(this,'amenity','${esc(a)}')">${esc(a)}</div>`).join('')}
+    </div>`;
+  }
+
+  // ── Tags ──
+  if(cfg.tags&&cfg.tags.length){
+    html += `<div class="gm-sec">Tags</div>
+    <div class="gm-chips" id="gm-tag-chips">
+      ${cfg.tags.map(t=>`<div class="gm-chip${GM_TAGS.includes(t)?' on':''}" onclick="gmToggleChip(this,'tag','${esc(t)}')">${esc(t)}</div>`).join('')}
+    </div>`;
+  }
+
+  // ── Custom tag input ──
+  html += `<label class="gm-lbl" style="margin-top:10px">Custom tags (comma-separated)
+    <input class="inp" id="gm-custom-tags-in" value="${(l.tags||[]).filter(t=>!(cfg.tags||[]).includes(t)).join(', ')}" placeholder="e.g. Lakeview, Ground floor"/>
+  </label>`;
+
+  // ── Visibility ──
+  html += `<div class="gm-sec">Visibility</div>
+    <label class="gm-active-row">
+      <input type="checkbox" id="gm-active-in" ${isActive?'checked':''}/>
+      <span>Active — visible on site</span>
+    </label>
+    <label class="gm-featured-row">
+      <input type="checkbox" id="gm-featured-in" ${l.featured?'checked':''}/>
+      <span>⭐ Featured — pinned at top of listings</span>
+    </label>
+  `;
+
+  $('gm-panel-body').innerHTML = html;
 }
 
-async function gmSave(){
-  const titleEl = $('gm-title-in');
-  const title = titleEl.value.trim();
-  if(!title){ titleEl.focus(); gmMsg('Title is required','bad'); return; }
+function gmPlaceholderTitle(type){
+  return {
+    apartment:'2BR fully furnished apartment',tour:'Maasai Mara 3-day safari',
+    food:'Java House Westlands',carhire:'Toyota Prado Self-Drive',
+    shopping:'Fresh groceries delivery',event:'Blankets & Wine 2025',
+    room:'Private ensuite room in Kilimani',ride:'Economy city ride — Nairobi',
+  }[type]||'Listing title';
+}
 
-  const photo = $('gm-photo-in').value.trim();
+function gmPreviewPhoto(input, previewId){
+  const img = $(previewId);
+  if(!img) return;
+  const url = input.value.trim();
+  if(url){ img.src = url; img.style.display = 'block'; }
+  else img.style.display = 'none';
+}
+
+function gmToggleChip(el, kind, value){
+  el.classList.toggle('on');
+  const arr = kind==='amenity' ? GM_AMENITIES : GM_TAGS;
+  const idx = arr.indexOf(value);
+  if(idx>=0) arr.splice(idx,1); else arr.push(value);
+}
+
+// ── Collect form data ──────────────────────────────────────────────────────
+function gmCollect(){
+  const get = id => { const el = $(id); return el ? el.value.trim() : null; };
+  const getNum = id => { const v=parseFloat(get(id)); return isNaN(v)||v===0 ? null : v; };
+  const getInt = id => { const v=parseInt(get(id)); return isNaN(v)||v===0 ? null : v; };
+  const getCheck = id => { const el=$(id); return el ? el.checked : false; };
+
+  // Gather photos
+  const photos = [get('gm-photo0-in'),get('gm-photo1-in'),get('gm-photo2-in')]
+    .filter(Boolean);
+
+  // Gather tags (chips + custom)
+  const customTags = (get('gm-custom-tags-in')||'').split(',').map(s=>s.trim()).filter(Boolean);
+  const allTags = [...new Set([...GM_TAGS,...customTags])];
+
+  const loc = get('gm-loc-in');
+
   const payload = {
-    title,
-    type:        $('gm-type-in').value,
-    location:    $('gm-loc-in').value.trim()||null,
-    price_night: parseFloat($('gm-pricen-in').value)||null,
-    price_month: parseFloat($('gm-pricem-in').value)||null,
-    description: $('gm-desc-in').value.trim()||null,
-    photos:      photo ? [photo] : (GM_EDIT?.photos||[]),
-    street:      $('gm-url-in').value.trim()||null,
-    is_active:   $('gm-active-in').checked,
-    status:      $('gm-active-in').checked ? 'active' : 'inactive',
+    title:      get('gm-title-in'),
+    type:       GM_TYPE,
+    property_type: GM_TYPE,
+    listing_type:  GM_TYPE,
+    location:   loc||null,
+    city:       loc||null,
+    area:       loc||null,
+    description: get('gm-desc-in')||null,
+    photos:     photos.length ? photos : (GM_EDIT?.photos||[]),
+    street:     get('gm-url-in')||null,
+    external_url: get('gm-url-in')||null,
+    is_active:  getCheck('gm-active-in'),
+    status:     getCheck('gm-active-in') ? 'active' : 'inactive',
+    featured:   getCheck('gm-featured-in'),
+    amenities:  GM_AMENITIES.length ? GM_AMENITIES : null,
+    tags:       allTags.length ? allTags : null,
   };
+
+  // Per-service numeric fields
+  if($('gm-pricen-in'))  payload.price_night = getNum('gm-pricen-in');
+  if($('gm-pricew-in'))  payload.price_week  = getNum('gm-pricew-in');
+  if($('gm-pricem-in'))  payload.price_month = getNum('gm-pricem-in');
+  if($('gm-deposit-in')) payload.deposit     = getNum('gm-deposit-in');
+  if($('gm-beds-in'))    payload.beds = get('gm-beds-in'), payload.bedrooms   = getInt('gm-beds-in');
+  if($('gm-baths-in'))   payload.baths = get('gm-baths-in'), payload.bathrooms = getInt('gm-baths-in');
+  if($('gm-guests-in'))  payload.max_guests  = get('gm-guests-in');
+  if($('gm-minn-in'))    payload.min_nights  = getInt('gm-minn-in');
+  if($('gm-cin-in'))     payload.checkin_time  = get('gm-cin-in')||null;
+  if($('gm-cout-in'))    payload.checkout_time = get('gm-cout-in')||null;
+  if($('gm-wa-in'))      payload.contact_whatsapp = get('gm-wa-in')||null;
+  if($('gm-phone-in'))   payload.contact_phone    = get('gm-phone-in')||null;
+  if($('gm-rules-in'))   payload.house_rules = get('gm-rules-in')||null;
+  if($('gm-edate-in'))   payload.event_date  = get('gm-edate-in')||null;
+  if($('gm-etime-in'))   payload.event_time  = get('gm-etime-in')||null;
+
+  return payload;
+}
+
+// ── Save ───────────────────────────────────────────────────────────────────
+async function gmSave(){
+  if(!GM_TYPE){ gmMsg('Please select a service type','bad'); return; }
+
+  const payload = gmCollect();
+
+  if(!payload.title){ $('gm-title-in')?.focus(); gmMsg('Title is required','bad'); return; }
+  if(!payload.location){ $('gm-loc-in')?.focus(); gmMsg('Location is required','bad'); return; }
 
   const btn = $('gm-btn-save');
   btn.disabled = true; btn.textContent = 'Saving…';
+  gmMsg('','');
 
   try{
     let res;
     if(GM_EDIT){
+      // Edit existing
       res = await sb.from('listings').update(payload).eq('id', GM_EDIT.id);
     } else {
-      // New listing — mark as Apatmento-owned, no partner
-      payload.source       = 'apatmento';
-      payload.property_type= payload.type;
-      payload.listing_type = payload.type;
-      payload.currency     = 'KES';
-      payload.is_active    = true;
-      payload.status       = 'active';
+      // Insert new — Apatmento-owned
+      payload.source         = 'apatmento';
+      payload.currency       = 'KES';
       payload.internal_score = 50;
+      if(payload.is_active !== false){
+        payload.is_active = true;
+        payload.status = 'active';
+      }
       res = await sb.from('listings').insert(payload);
     }
+
     if(res.error) throw res.error;
-    gmMsg('Saved ✓','ok');
+
+    gmMsg('✓ Saved successfully','ok');
     toast('Listing saved','ok');
-    setTimeout(()=>{ gmClose(); refresh(); }, 800);
+
+    // Optimistically update SNAP so table reflects change immediately
+    if(GM_EDIT && SNAP.listings){
+      const idx = SNAP.listings.findIndex(l=>String(l.id)===String(GM_EDIT.id));
+      if(idx>=0) SNAP.listings[idx] = {...SNAP.listings[idx], ...payload};
+    }
+
+    setTimeout(()=>{ gmClose(); gmRenderAll(); refresh(); }, 700);
   } catch(err){
-    gmMsg('Error: '+(err.message||err),'bad');
+    console.error('gmSave error', err);
+    gmMsg('Error: '+(err.message||JSON.stringify(err)),'bad');
   } finally {
-    btn.disabled = false; btn.textContent = 'Save changes';
+    btn.disabled = false; btn.textContent = 'Save listing';
   }
 }
 
+// ── Delete ─────────────────────────────────────────────────────────────────
 async function gmConfirmDelete(){
   if(!GM_EDIT) return;
-  confirmAct('Delete listing', 'This will soft-delete the listing. It can be recovered from the database.', false, async ()=>{
-    const r = await AD.Moderate.deleteListing(GM_EDIT.id, false);
-    r.ok ? (gmClose(), toast('Deleted','ok'), refresh()) : toast(r.error,'bad');
-  });
+  confirmAct('Delete listing',
+    `"${GM_EDIT.title||'This listing'}" will be soft-deleted. It can be recovered from the database.`,
+    false, async ()=>{
+      const r = await AD.Moderate.deleteListing(GM_EDIT.id, false);
+      if(r.ok){
+        // Remove from local SNAP
+        if(SNAP.listings) SNAP.listings = SNAP.listings.filter(l=>String(l.id)!==String(GM_EDIT.id));
+        gmClose(); gmRenderAll(); toast('Listing deleted','ok'); refresh();
+      } else {
+        toast(r.error||'Delete failed','bad');
+      }
+    }
+  );
 }
 
 function gmMsg(txt, kind){
   const el = $('gm-msg');
+  if(!el) return;
   el.textContent = txt;
   el.style.color = kind==='ok' ? 'var(--ok)' : kind==='bad' ? 'var(--bad)' : 'var(--ink-3)';
 }
-
-/* Inline label style for God Mode form */
-(function addGmStyle(){
-  const s = document.createElement('style');
-  s.textContent = '.gm-lbl{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--ink-3);margin-bottom:13px}';
-  document.head.appendChild(s);
-})();
 
 // ─── LAZY REQUESTS ───
 const LAZY_STATUSES = {pending:'warn',contacted:'calm',listed:'good'};
