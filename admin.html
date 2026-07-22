@@ -873,25 +873,64 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
         <div class="hd">
           <div>
             <h1>Account <em>access</em></h1>
-            <p>Search any user by email or phone. View their account as they see it, edit their listings, or act on their behalf. Useful when a lazy partner has sent you their details and you're setting up their listing for them.</p>
+            <p>Browse, search, and manage every user on the platform. Edit profiles, adjust roles, view listings, or add listings on a partner's behalf.</p>
+          </div>
+          <div class="hd-act">
+            <button class="btn btn-g btn-sm" onclick="impLoad()">↻ Refresh</button>
           </div>
         </div>
-        <div class="card" style="margin-bottom:20px">
-          <div class="card-hd"><div class="card-t">Find a user account</div><div class="card-s">Enter email address or phone number to look up any registered user.</div></div>
-          <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">
-            <input class="inp" id="imp-search" type="text" placeholder="Email or phone (e.g. wanjiru@gmail.com or +254712…)" style="flex:1;min-width:220px"/>
-            <button class="btn btn-p" onclick="impSearch()">Look up</button>
+
+        <!-- Search + role filter bar -->
+        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:16px">
+          <div style="display:flex;flex-wrap:wrap;gap:6px;flex:1">
+            <button class="imp-role-tab on" data-role="all" onclick="impFilterRole('all',this)">All users</button>
+            <button class="imp-role-tab" data-role="partner" onclick="impFilterRole('partner',this)">Partners</button>
+            <button class="imp-role-tab" data-role="guest" onclick="impFilterRole('guest',this)">Guests</button>
+            <button class="imp-role-tab" data-role="flagged" onclick="impFilterRole('flagged',this)">🚩 Flagged</button>
           </div>
-          <div id="imp-result" style="margin-top:16px"></div>
+          <div style="display:flex;gap:6px">
+            <input id="imp-search" class="inp" placeholder="Search name, phone…" oninput="impSearchFilter(this.value)" style="width:190px;max-width:100%"/>
+            <button class="btn btn-p btn-sm" onclick="impSearchFilter($('imp-search').value)">Go</button>
+          </div>
         </div>
-        <div class="card">
-          <div class="card-hd"><div class="card-t">Recent account lookups</div><div class="card-s">Audit trail of admin account access. Every lookup is logged.</div></div>
-          <div class="tw" style="margin-top:12px"><table>
-            <thead><tr><th>User</th><th>Email</th><th>Looked up by</th><th>When</th><th class="num">Action taken</th></tr></thead>
-            <tbody id="imp-log-rows"><tr><td colspan="5" style="padding:16px;color:var(--ink-4)">No recent lookups.</td></tr></tbody>
-          </table></div>
-        </div>
+
+        <!-- Users table -->
+        <div class="tw"><table>
+          <thead><tr>
+            <th>User</th>
+            <th>Role</th>
+            <th class="num">Listings</th>
+            <th>Joined</th>
+            <th>Status</th>
+            <th class="num">Actions</th>
+          </tr></thead>
+          <tbody id="imp-rows"><tr><td colspan="6" style="padding:24px;color:var(--ink-4);text-align:center">Loading users…</td></tr></tbody>
+        </table></div>
+        <div id="imp-count" style="font-size:12px;color:var(--ink-4);margin-top:8px;text-align:right"></div>
       </section>
+
+      <!-- Account access slide-in panel -->
+      <div id="imp-overlay" onclick="impClose()" style="display:none;position:fixed;inset:0;background:rgba(4,4,10,.75);z-index:120;backdrop-filter:blur(2px)"></div>
+      <div id="imp-panel" style="display:none;position:fixed;top:0;right:0;bottom:0;width:min(460px,100%);background:var(--panel);border-left:1px solid var(--line-2);z-index:121;overflow-y:auto;padding:0 0 80px;box-shadow:-8px 0 40px rgba(0,0,0,.18)">
+
+        <!-- Panel header -->
+        <div style="position:sticky;top:0;background:var(--panel);border-bottom:1px solid var(--line-2);padding:18px 20px;display:flex;align-items:center;justify-content:space-between;z-index:2">
+          <div>
+            <div id="imp-panel-title" style="font-size:17px;font-weight:700;color:var(--ink)">User profile</div>
+            <div id="imp-panel-sub" style="font-size:12px;color:var(--ink-4);margin-top:2px"></div>
+          </div>
+          <button class="btn btn-g btn-sm" onclick="impClose()" style="font-size:16px;padding:6px 12px">✕</button>
+        </div>
+
+        <div id="imp-panel-body" style="padding:20px"></div>
+
+        <div style="position:sticky;bottom:0;background:var(--panel);border-top:1px solid var(--line-2);padding:14px 20px;display:flex;gap:8px;z-index:2">
+          <button class="btn btn-p" style="flex:1;font-weight:600" onclick="impSaveProfile()">Save changes</button>
+          <button class="btn btn-g btn-sm" id="imp-btn-listings" onclick="impGoListings()">View listings</button>
+          <button class="btn btn-g btn-sm" id="imp-btn-add" onclick="impAddForUser()">+ Listing for them</button>
+        </div>
+        <div id="imp-pmsg" style="padding:0 20px 8px;font-size:12.5px;min-height:20px"></div>
+      </div>
 
       <!-- ─── BOOKINGS ─── -->
       <section class="sec" id="s-bookings">
@@ -4309,10 +4348,18 @@ async function gmSave(){
       // Edit existing
       res = await sb.from('listings').update(payload).eq('id', GM_EDIT.id);
     } else {
-      // Insert new — Apatmento-owned
-      payload.source         = 'apatmento';
-      payload.currency       = 'KES';
-      payload.internal_score = 50;
+      // If triggered from Account Access "Add listing for them"
+      if(window._IMP_PARTNER_ID){
+        payload.partner_id = window._IMP_PARTNER_ID;
+        payload.source     = 'partner';
+        delete window._IMP_PARTNER_ID;
+        delete window._IMP_PARTNER_NAME;
+      } else {
+        // Apatmento-owned listing
+        payload.source         = 'apatmento';
+        payload.currency       = 'KES';
+        payload.internal_score = 50;
+      }
       if(payload.is_active !== false){
         payload.is_active = true;
         payload.status = 'active';
@@ -4439,74 +4486,403 @@ function lazyExport() {
 }
 
 // ─── ACCOUNT ACCESS / IMPERSONATE ───
-async function impSearch() {
-  const q = $('imp-search')?.value?.trim();
-  if(!q){ alert('Enter an email or phone'); return; }
-  const res = $('imp-result');
-  if(res) res.innerHTML = '<div style="color:var(--ink-4);font-size:13px">Searching…</div>';
-  try {
+// ─── ACCOUNT ACCESS — Users & Profiles ────────────────────────────────────────
+
+(function injectImpStyles(){
+  const s = document.createElement('style');
+  s.textContent = `
+    .imp-role-tab{
+      padding:5px 12px;border-radius:100px;border:1px solid var(--line-2);
+      background:transparent;color:var(--ink-3);font-size:12px;font-weight:500;
+      cursor:pointer;transition:all .15s;white-space:nowrap;
+    }
+    .imp-role-tab:hover{background:var(--panel-2);color:var(--ink)}
+    .imp-role-tab.on{background:var(--violet);color:#fff;border-color:var(--violet)}
+    .imp-field{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:500;
+              color:var(--ink-3);margin-bottom:14px}
+    .imp-field input,.imp-field select{font-size:13px}
+    .imp-row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .imp-sec{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+             color:var(--ink-4);margin:18px 0 10px;padding-top:14px;border-top:1px solid var(--line-2)}
+    .imp-stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:4px}
+    .imp-stat{background:var(--panel-2);border:1px solid var(--line-2);border-radius:10px;
+              padding:12px;text-align:center}
+    .imp-stat-n{font-size:22px;font-weight:800;color:var(--ink)}
+    .imp-stat-l{font-size:11px;color:var(--ink-4);margin-top:2px}
+    .imp-avatar{width:52px;height:52px;border-radius:50%;object-fit:cover;border:2px solid var(--line-2)}
+    .imp-danger-zone{background:rgba(239,68,68,.04);border:1px solid rgba(239,68,68,.2);
+                     border-radius:10px;padding:14px;margin-top:4px}
+    .imp-action-pill{
+      display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:100px;
+      font-size:11px;font-weight:600;border:none;cursor:pointer;transition:all .15s;
+    }
+  `;
+  document.head.appendChild(s);
+})();
+
+let IMP_ALL = [];       // all profiles loaded
+let IMP_ROLE = 'all';   // current role filter
+let IMP_Q = '';         // search query
+let IMP_USER = null;    // user currently open in panel
+
+// ── Load & render ──────────────────────────────────────────────────────────
+async function impLoad(){
+  const tbody = $('imp-rows');
+  if(tbody) tbody.innerHTML = `<tr><td colspan="6" style="padding:24px;color:var(--ink-4);text-align:center">Loading…</td></tr>`;
+
+  // Use already-loaded SNAP.profiles if fresh (< 2 min old)
+  if(SNAP && SNAP.profiles && SNAP.profiles.length){
+    IMP_ALL = SNAP.profiles;
+    impRender();
+    return;
+  }
+  // Otherwise fetch directly
+  try{
     const rh = await restH();
-    const emailQ = `${SB}/rest/v1/profiles?or=(email.ilike.*${encodeURIComponent(q)}*,phone.ilike.*${encodeURIComponent(q)}*)&limit=10`;
-    const r = await fetch(emailQ, {headers:{...rh}});
+    const r = await fetch(`${SB}/rest/v1/profiles?order=created_at.desc&limit=3000`,{headers:{...rh,'Range':'0-2999'}});
     const data = await r.json();
-    if(!data||!data.length){ if(res) res.innerHTML='<div style="color:var(--ink-4);font-size:13px;padding:12px 0">No user found with that email or phone.</div>'; return; }
-    if(res) res.innerHTML = data.map(u=>`
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:var(--panel-2);border-radius:10px;margin-bottom:8px;border:1px solid var(--line)">
-        <div>
-          <div style="font-weight:700;font-size:14px;color:var(--ink)">${esc(u.full_name||u.name||'Unknown')}</div>
-          <div style="font-size:12px;color:var(--ink-3);margin-top:2px">${esc(u.email||'—')} · ${esc(u.phone||'—')}</div>
-          <div style="font-size:11px;color:var(--ink-4);margin-top:3px">ID: ${esc(u.id||u.user_id||'—')} · Joined ${u.created_at?new Date(u.created_at).toLocaleDateString('en-KE',{month:'short',year:'numeric'}):'unknown'}</div>
-        </div>
-        <div style="display:flex;gap:6px">
-          <button class="btn btn-g btn-sm" onclick="impViewListings('${u.id||u.user_id}','${esc(u.full_name||u.name||'User')}')" title="View their listings">View listings</button>
-          <button class="btn btn-p btn-sm" onclick="impAddListing('${u.id||u.user_id}','${esc(u.full_name||u.name||'User')}')" title="Add listing on their behalf">Add listing for them</button>
-        </div>
-      </div>`).join('');
-    impLogEntry(q, data[0]);
-  } catch(e) {
-    if(res) res.innerHTML = '<div style="color:var(--bad);font-size:13px">Error looking up user. Check table permissions.</div>';
+    if(Array.isArray(data)){ IMP_ALL = data; impRender(); }
+    else throw new Error(data?.message||'Failed');
+  } catch(e){
+    if(tbody) tbody.innerHTML = `<tr><td colspan="6" style="padding:20px;color:var(--bad);text-align:center">Could not load users — ${esc(e.message)}</td></tr>`;
   }
 }
 
-function impViewListings(userId, name) {
-  go('godmode', document.querySelector('[data-sec="godmode"]'));
-  setTimeout(()=>{ 
-    const fi = document.querySelector('#gm-all-rows');
-    if(fi) fi.closest('section').scrollIntoView({behavior:'smooth'});
-    notify(`Showing listings for ${name} — filter by partner in the table below`,'calm');
-  },300);
+function impRender(){
+  // Build listing count map from SNAP
+  const listingsByPartner = {};
+  (SNAP?.listings||[]).forEach(l=>{
+    if(l.partner_id) listingsByPartner[l.partner_id] = (listingsByPartner[l.partner_id]||0)+1;
+  });
+
+  let rows = IMP_ALL.slice();
+
+  // Role filter
+  if(IMP_ROLE==='partner') rows = rows.filter(u=>u.role==='partner'||u.is_partner||u.last_role==='partner');
+  else if(IMP_ROLE==='guest') rows = rows.filter(u=>!u.role||u.role==='guest'||u.role==='user');
+  else if(IMP_ROLE==='flagged') rows = rows.filter(u=>Number(u.flags||0)>0||u.reported||u.banned);
+
+  // Search filter
+  if(IMP_Q){
+    const q = IMP_Q.toLowerCase();
+    rows = rows.filter(u=>
+      (u.full_name||u.first_name||u.name||'').toLowerCase().includes(q) ||
+      (u.phone||'').toLowerCase().includes(q) ||
+      (u.id||'').toLowerCase().includes(q)
+    );
+  }
+
+  const tbody = $('imp-rows');
+  const cnt = $('imp-count');
+  if(cnt) cnt.textContent = rows.length ? `${rows.length} user${rows.length===1?'':'s'}` : '';
+
+  if(!rows.length){
+    if(tbody) tbody.innerHTML = `<tr><td colspan="6" style="padding:24px;color:var(--ink-4);text-align:center">
+      ${IMP_ALL.length===0 ? 'No users found.' : 'No users match that filter.'}
+    </td></tr>`;
+    return;
+  }
+
+  if(tbody) tbody.innerHTML = rows.slice(0,200).map(u=>{
+    const name  = esc(u.full_name||((u.first_name||'')+(u.last_name?' '+u.last_name:'')).trim()||'Unknown');
+    const phone = esc(u.phone||'—');
+    const role  = u.role||u.last_role||'guest';
+    const isPartner = role==='partner'||u.is_partner;
+    const isBanned  = u.banned||u.status==='banned';
+    const isFlagged = Number(u.flags||0)>0||u.reported;
+    const listCount = listingsByPartner[u.id]||0;
+    const joined = u.created_at ? new Date(u.created_at).toLocaleDateString('en-KE',{month:'short',year:'numeric'}) : '—';
+
+    const rolePill = isPartner
+      ? '<span class="pill p-ok">Partner</span>'
+      : '<span class="pill" style="background:var(--panel-2);color:var(--ink-3);border:1px solid var(--line-2)">Guest</span>';
+    const statusPill = isBanned
+      ? '<span class="pill p-bad">Banned</span>'
+      : isFlagged
+        ? '<span class="pill p-warn">🚩 Flagged</span>'
+        : '<span class="pill p-ok" style="opacity:.5">OK</span>';
+
+    const avatar = u.avatar_url
+      ? `<img src="${esc(u.avatar_url)}" class="imp-avatar" onerror="this.style.display='none'">`
+      : `<div class="imp-avatar" style="background:var(--violet);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#fff">${(name[0]||'?').toUpperCase()}</div>`;
+
+    return `<tr style="cursor:pointer" onclick="impOpenUser('${esc(u.id)}')">
+      <td>
+        <div style="display:flex;align-items:center;gap:10px">
+          ${avatar}
+          <div>
+            <div class="t-main">${name}</div>
+            <div class="t-sub">${phone}</div>
+          </div>
+        </div>
+      </td>
+      <td>${rolePill}</td>
+      <td class="num" style="font-size:13px;font-weight:600;color:${listCount?'var(--violet)':'var(--ink-4)'}">${listCount||'—'}</td>
+      <td style="font-size:12px;color:var(--ink-3)">${joined}</td>
+      <td>${statusPill}</td>
+      <td class="num">
+        <button class="btn btn-g btn-sm" onclick="event.stopPropagation();impOpenUser('${esc(u.id)}')">Manage</button>
+      </td>
+    </tr>`;
+  }).join('');
 }
 
-function impAddListing(userId, name) {
+function impFilterRole(role, el){
+  IMP_ROLE = role;
+  document.querySelectorAll('.imp-role-tab').forEach(t=>t.classList.remove('on'));
+  if(el) el.classList.add('on');
+  impRender();
+}
+
+function impSearchFilter(q){
+  IMP_Q = q.trim();
+  impRender();
+}
+
+// ── Panel open/close ───────────────────────────────────────────────────────
+function impOpenUser(uid){
+  const u = IMP_ALL.find(p=>p.id===uid);
+  if(!u){ toast('User not found','bad'); return; }
+  IMP_USER = u;
+
+  // Count their listings
+  const listCount = (SNAP?.listings||[]).filter(l=>l.partner_id===u.id).length;
+  const bookCount = (SNAP?.bookings||[]).filter(b=>b.user_id===u.id||b.guest_id===u.id).length;
+
+  const name = u.full_name||((u.first_name||'')+(u.last_name?' '+u.last_name:'')).trim()||'Unknown';
+  $('imp-panel-title').textContent = name;
+  $('imp-panel-sub').textContent = `ID: ${u.id?.slice(0,12)}… · Joined ${u.created_at ? new Date(u.created_at).toLocaleDateString('en-KE',{dateStyle:'medium'}) : 'unknown'}`;
+
+  const isBanned = u.banned||u.status==='banned';
+  const isPartner = u.role==='partner'||u.is_partner||u.last_role==='partner';
+
+  $('imp-panel-body').innerHTML = `
+    <!-- Stats -->
+    <div class="imp-stat-grid">
+      <div class="imp-stat"><div class="imp-stat-n">${listCount}</div><div class="imp-stat-l">Listings</div></div>
+      <div class="imp-stat"><div class="imp-stat-n">${bookCount}</div><div class="imp-stat-l">Bookings</div></div>
+      <div class="imp-stat"><div class="imp-stat-n">${Number(u.flags||0)}</div><div class="imp-stat-l">Flags</div></div>
+    </div>
+
+    <div class="imp-sec">Profile details</div>
+
+    <div class="imp-row2">
+      <label class="imp-field">First name
+        <input class="inp" id="imp-fname" value="${esc(u.first_name||u.full_name?.split(' ')[0]||'')}"/>
+      </label>
+      <label class="imp-field">Last name
+        <input class="inp" id="imp-lname" value="${esc(u.last_name||u.full_name?.split(' ').slice(1).join(' ')||'')}"/>
+      </label>
+    </div>
+
+    <label class="imp-field">Phone number
+      <input class="inp" id="imp-phone" value="${esc(u.phone||'')}" placeholder="+254…"/>
+    </label>
+
+    <label class="imp-field">Role
+      <select class="inp" id="imp-role">
+        <option value="guest"${(!isPartner)?' selected':''}>Guest / User</option>
+        <option value="partner"${isPartner?' selected':''}>Partner (host / business)</option>
+        <option value="admin"${u.role==='admin'?' selected':''}>Admin</option>
+      </select>
+    </label>
+
+    <label class="imp-field">Verification status
+      <select class="inp" id="imp-verified">
+        <option value="0"${!u.is_verified?' selected':''}>Not verified</option>
+        <option value="1"${u.is_verified?' selected':''}>Verified ✓</option>
+      </select>
+    </label>
+
+    <div class="imp-sec">Admin actions</div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px">
+      <button class="btn btn-g btn-sm" onclick="impClearFlags()">
+        🚩 Clear flags ${Number(u.flags||0)>0?`(${u.flags})`:''}
+      </button>
+      ${isBanned
+        ? `<button class="btn btn-g btn-sm" style="border-color:var(--ok);color:var(--ok)" onclick="impUnban()">✓ Unban user</button>`
+        : `<button class="btn btn-g btn-sm" style="border-color:var(--bad);color:var(--bad)" onclick="impBan()">⊘ Ban user</button>`
+      }
+      <button class="btn btn-g btn-sm" onclick="impCopyId('${esc(u.id)}')">📋 Copy ID</button>
+    </div>
+
+    ${Number(u.flags||0)>0||isBanned ? `
+    <div class="imp-danger-zone">
+      <div style="font-size:12px;font-weight:700;color:var(--bad);margin-bottom:4px">
+        ${isBanned?'⊘ This account is banned':'🚩 This account has been flagged'}
+      </div>
+      <div style="font-size:12px;color:var(--ink-3)">
+        ${isBanned?'The user cannot log in or access the platform.':'Repeated flags may indicate policy violations.'}
+      </div>
+    </div>` : ''}
+
+    <div class="imp-sec">Account info</div>
+    <div style="display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--ink-3)">
+      <div>User ID: <span style="font-family:monospace;color:var(--ink)">${esc(u.id||'—')}</span></div>
+      <div>Created: <span style="color:var(--ink)">${u.created_at?new Date(u.created_at).toLocaleString('en-KE',{dateStyle:'medium',timeStyle:'short'}):'—'}</span></div>
+      <div>Last updated: <span style="color:var(--ink)">${u.updated_at?new Date(u.updated_at).toLocaleString('en-KE',{dateStyle:'medium',timeStyle:'short'}):'—'}</span></div>
+    </div>
+  `;
+
+  $('imp-pmsg').textContent = '';
+  $('imp-overlay').style.display = 'block';
+  $('imp-panel').style.display = 'block';
+  $('imp-panel').scrollTop = 0;
+}
+
+function impClose(){
+  $('imp-overlay').style.display = 'none';
+  $('imp-panel').style.display   = 'none';
+  IMP_USER = null;
+}
+
+// ── Save profile ───────────────────────────────────────────────────────────
+async function impSaveProfile(){
+  if(!IMP_USER){ return; }
+  const fname = $('imp-fname')?.value?.trim()||'';
+  const lname = $('imp-lname')?.value?.trim()||'';
+  const phone = $('imp-phone')?.value?.trim()||null;
+  const role  = $('imp-role')?.value||'guest';
+  const isVerified = $('imp-verified')?.value==='1';
+
+  const payload = {
+    first_name: fname||null,
+    last_name:  lname||null,
+    full_name:  [fname,lname].filter(Boolean).join(' ')||null,
+    phone:      phone,
+    role:       role,
+    last_role:  role,
+    is_partner: role==='partner',
+    is_verified: isVerified,
+    updated_at: new Date().toISOString(),
+  };
+
+  const msg = $('imp-pmsg');
+  if(msg){ msg.textContent='Saving…'; msg.style.color='var(--ink-3)'; }
+
+  try{
+    const rh = await restH();
+    const r = await fetch(`${SB}/rest/v1/profiles?id=eq.${encodeURIComponent(IMP_USER.id)}`,{
+      method:'PATCH',
+      headers:{...rh,'Content-Type':'application/json','Prefer':'return=minimal'},
+      body:JSON.stringify(payload)
+    });
+    if(!r.ok){ const e=await r.text(); throw new Error(e); }
+
+    // Update local cache
+    Object.assign(IMP_USER, payload);
+    const idx = IMP_ALL.findIndex(p=>p.id===IMP_USER.id);
+    if(idx>=0) IMP_ALL[idx] = {...IMP_ALL[idx], ...payload};
+
+    if(msg){ msg.textContent='✓ Saved'; msg.style.color='var(--ok)'; }
+    toast('Profile updated','ok');
+    setTimeout(()=>{ impRender(); if(msg) msg.textContent=''; }, 1000);
+  } catch(e){
+    if(msg){ msg.textContent='Error: '+(e.message||e); msg.style.color='var(--bad)'; }
+  }
+}
+
+// ── Admin actions ──────────────────────────────────────────────────────────
+async function impBan(){
+  if(!IMP_USER) return;
+  confirmAct('Ban user',
+    `Ban ${IMP_USER.full_name||'this user'}? They will be locked out of the platform.`,
+    true, async ()=>{
+      const rh = await restH();
+      await fetch(`${SB}/rest/v1/profiles?id=eq.${encodeURIComponent(IMP_USER.id)}`,{
+        method:'PATCH',
+        headers:{...rh,'Content-Type':'application/json','Prefer':'return=minimal'},
+        body:JSON.stringify({banned:true,status:'banned',updated_at:new Date().toISOString()})
+      });
+      IMP_USER.banned=true; IMP_USER.status='banned';
+      const idx=IMP_ALL.findIndex(p=>p.id===IMP_USER.id);
+      if(idx>=0){IMP_ALL[idx].banned=true;IMP_ALL[idx].status='banned';}
+      toast('User banned','ok');
+      impClose(); impRender();
+    }
+  );
+}
+
+async function impUnban(){
+  if(!IMP_USER) return;
+  const rh = await restH();
+  await fetch(`${SB}/rest/v1/profiles?id=eq.${encodeURIComponent(IMP_USER.id)}`,{
+    method:'PATCH',
+    headers:{...rh,'Content-Type':'application/json','Prefer':'return=minimal'},
+    body:JSON.stringify({banned:false,status:'active',updated_at:new Date().toISOString()})
+  });
+  IMP_USER.banned=false; IMP_USER.status='active';
+  const idx=IMP_ALL.findIndex(p=>p.id===IMP_USER.id);
+  if(idx>=0){IMP_ALL[idx].banned=false;IMP_ALL[idx].status='active';}
+  toast('User unbanned','ok');
+  impClose(); impRender();
+}
+
+async function impClearFlags(){
+  if(!IMP_USER) return;
+  const r = await AD.Moderate.clearFlags(IMP_USER.id);
+  if(r.ok){
+    IMP_USER.flags=0; IMP_USER.reported=false;
+    const idx=IMP_ALL.findIndex(p=>p.id===IMP_USER.id);
+    if(idx>=0){IMP_ALL[idx].flags=0;IMP_ALL[idx].reported=false;}
+    toast('Flags cleared','ok');
+    impClose(); impRender();
+  } else { toast(r.error||'Failed','bad'); }
+}
+
+function impCopyId(id){
+  navigator.clipboard?.writeText(id).then(()=>toast('ID copied','ok')).catch(()=>{});
+}
+
+// ── Cross-section actions ──────────────────────────────────────────────────
+function impGoListings(){
+  if(!IMP_USER) return;
+  const uid = IMP_USER.id;
+  const name = IMP_USER.full_name||'this user';
+  impClose();
   go('godmode', document.querySelector('[data-sec="godmode"]'));
-  setTimeout(()=>{ 
+  setTimeout(()=>{
+    // Filter table to this partner
+    GM_FILTER = 'all'; GM_SEARCH = '';
+    $('imp-search') && ($('imp-search').value='');
+    // Override render to show only their listings
+    const orig = SNAP.listings;
+    const theirs = (orig||[]).filter(l=>l.partner_id===uid);
+    if(!theirs.length){ toast(`${name} has no listings yet`,'calm'); return; }
+    // Temporarily highlight by filtering SNAP
+    const body = $('gm-all-rows');
+    if(body){
+      // Render just their listings inline
+      const tmp = SNAP.listings;
+      SNAP.listings = theirs;
+      gmRenderAll();
+      SNAP.listings = tmp;
+      $('gm-count').textContent = `Showing ${theirs.length} listing${theirs.length===1?'':'s'} for ${name}`;
+    }
+    toast(`Showing ${theirs.length} listing${theirs.length===1?'':'s'} for ${name}`,'ok');
+  }, 300);
+}
+
+function impAddForUser(){
+  if(!IMP_USER) return;
+  const uid  = IMP_USER.id;
+  const name = IMP_USER.full_name||IMP_USER.first_name||'this user';
+  impClose();
+  go('godmode', document.querySelector('[data-sec="godmode"]'));
+  setTimeout(()=>{
     gmOpenAdd();
-    notify(`Adding listing on behalf of ${name}. Fill in their details.`,'warn');
-  },300);
+    // Store the partner override so gmSave attaches it
+    window._IMP_PARTNER_ID   = uid;
+    window._IMP_PARTNER_NAME = name;
+    toast(`Adding listing on behalf of ${name} — fill in and save.`,'calm');
+  }, 350);
 }
 
-function impLogLoad() {
-  // Placeholder — log from localStorage for now
-  const log = JSON.parse(localStorage.getItem('imp_log')||'[]');
-  const rows = $('imp-log-rows');
-  if(!rows) return;
-  if(!log.length){ rows.innerHTML='<tr><td colspan="5" style="padding:16px;color:var(--ink-4)">No recent lookups.</td></tr>'; return; }
-  rows.innerHTML = log.slice(0,20).map(e=>`
-    <tr>
-      <td><strong>${esc(e.userName)}</strong></td>
-      <td style="font-size:12px;color:var(--ink-3)">${esc(e.query)}</td>
-      <td style="font-size:12px;color:var(--ink-3)">Admin</td>
-      <td style="font-size:12px;color:var(--ink-4)">${new Date(e.when).toLocaleString('en-KE',{dateStyle:'short',timeStyle:'short'})}</td>
-      <td class="num" style="font-size:12px;color:var(--ink-3)">Viewed</td>
-    </tr>`).join('');
-}
+// (gmSave is defined in God Mode section above — partner_id injection happens there)
 
-function impLogEntry(query, user) {
-  const log = JSON.parse(localStorage.getItem('imp_log')||'[]');
-  log.unshift({query, userName: user?.full_name||user?.name||'Unknown', when: new Date().toISOString()});
-  localStorage.setItem('imp_log', JSON.stringify(log.slice(0,50)));
-  impLogLoad();
-}
+// ── Load trigger ───────────────────────────────────────────────────────────
+function impLogLoad(){ impLoad(); } // keeps existing trigger in go() working
 
 function notify(msg, type='calm') {
   const n = document.createElement('div');
