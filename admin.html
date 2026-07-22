@@ -1403,7 +1403,30 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
         <div class="fld"><label class="fld-l">CTA label</label><input class="inp" id="c-cta" placeholder="Book now"/></div>
         <div class="fld"><label class="fld-l">CTA URL</label><input class="inp" id="c-url" placeholder="https://…"/></div>
       </div>
-      <div class="fld"><label class="fld-l">Media URL (mp4 / jpg / webp)</label><input class="inp" id="c-media" placeholder="https://…/storage/v1/object/public/ads/…"/></div>
+      <!-- Media upload section -->
+      <div class="fld" style="border:1.5px dashed var(--line-2);border-radius:12px;padding:16px;background:var(--bg-2)">
+        <label class="fld-l" style="margin-bottom:10px;display:block">Media file <span style="color:var(--ink-3);font-weight:400">(mp4 · jpg · webp · png · gif)</span></label>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <label class="btn btn-g btn-sm" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Choose file
+            <input type="file" id="c-file" accept="video/mp4,video/webm,image/jpeg,image/png,image/webp,image/gif" style="display:none" onchange="campPickFile(this)"/>
+          </label>
+          <span id="c-file-name" style="font-size:13px;color:var(--ink-3)">No file chosen</span>
+          <button class="btn btn-p btn-sm" id="c-upload-btn" onclick="campUploadMedia()" style="display:none">Upload &amp; use</button>
+        </div>
+        <div id="c-upload-progress" style="display:none;margin-top:10px">
+          <div style="height:4px;background:var(--line-2);border-radius:99px;overflow:hidden">
+            <div id="c-upload-bar" style="height:100%;background:var(--violet);width:0%;transition:width .3s"></div>
+          </div>
+          <div id="c-upload-status" style="font-size:12px;color:var(--ink-3);margin-top:5px">Uploading…</div>
+        </div>
+        <div style="margin-top:12px">
+          <label class="fld-l" style="font-size:12px;margin-bottom:5px;display:block;color:var(--ink-3)">OR paste URL directly</label>
+          <input class="inp" id="c-media" placeholder="https://…/storage/v1/object/public/ads/…" style="font-size:13px"/>
+        </div>
+        <div id="c-media-thumb" style="margin-top:10px;display:none"></div>
+      </div>
       <div class="row2">
         <div class="fld"><label class="fld-l">Poster URL (video only)</label><input class="inp" id="c-poster" placeholder="https://…"/></div>
         <div class="fld"><label class="fld-l">Price display</label><input class="inp" id="c-price" placeholder="From KES 4,900"/></div>
@@ -1483,11 +1506,22 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
         <div class="fld"><label class="fld-l">CTA label</label><input class="inp" id="sh-cta" placeholder="Shop now"/></div>
         <div class="fld"><label class="fld-l">Click destination (URL)</label><input class="inp" id="sh-url" placeholder="/shopping.html?product=…"/></div>
       </div>
-      <div class="row2">
-        <div class="fld"><label class="fld-l">Media type</label>
-          <select class="inp" id="sh-mtype"><option value="image">Image</option><option value="video">Video (mp4)</option></select>
+      <div class="fld" style="border:1.5px dashed var(--line-2);border-radius:12px;padding:16px;background:var(--bg-2)">
+        <label class="fld-l" style="margin-bottom:10px;display:block">Media file <span style="color:var(--ink-3);font-weight:400">(jpg · webp · png · mp4)</span></label>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <select class="inp" id="sh-mtype" style="max-width:130px"><option value="image">Image</option><option value="video">Video (mp4)</option></select>
+          <label class="btn btn-g btn-sm" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Choose file
+            <input type="file" id="sh-file" accept="video/mp4,video/webm,image/jpeg,image/png,image/webp" style="display:none" onchange="shPickMedia(this)"/>
+          </label>
+          <span id="sh-file-name" style="font-size:13px;color:var(--ink-3)">No file chosen</span>
+          <button class="btn btn-p btn-sm" id="sh-file-upload-btn" onclick="shUploadMedia()" style="display:none">Upload &amp; use</button>
         </div>
-        <div class="fld"><label class="fld-l">Media URL</label><input class="inp" id="sh-media" placeholder="https://…/ads/toothpaste.jpg"/></div>
+        <div style="margin-top:10px">
+          <label class="fld-l" style="font-size:12px;color:var(--ink-3);margin-bottom:5px;display:block">OR paste URL</label>
+          <input class="inp" id="sh-media" placeholder="https://…/ads/toothpaste.jpg" style="font-size:13px"/>
+        </div>
       </div>
       <div class="row2">
         <div class="fld"><label class="fld-l">Poster URL (video only)</label><input class="inp" id="sh-poster" placeholder="https://…"/></div>
@@ -1799,7 +1833,239 @@ async function login(){
 }
 
 async function signOut(){ try{ await sb.auth.signOut(); }catch(e){} location.href='/auth.html'; }
-function viewAsGuest(){ location.href = '/index.html?asguest=1'; }
+/* ══════════════════════════════════════════════════════════════════
+   GUEST VIEW — Full-site preview with floating admin toolbar
+   Opens the live site in an iframe overlay with device switcher,
+   page picker, and one-click exit. Lets the admin inspect every
+   user-facing page without leaving the console or losing state.
+   ═════════════════════════════════════════════════════════════════ */
+function viewAsGuest(){
+  // Inject the guest view overlay if not already present
+  if($('gv-overlay')) { openGuestView(); return; }
+
+  const PAGES = [
+    { label:'Home', url:'/index.html' },
+    { label:'Stays', url:'/apartments.html' },
+    { label:'Tours', url:'/tours.html' },
+    { label:'Food', url:'/food.html' },
+    { label:'Rides', url:'/rides.html' },
+    { label:'Events', url:'/events.html' },
+    { label:'Shopping', url:'/shopping.html' },
+    { label:'Flights', url:'/flights.html' },
+    { label:'Car hire', url:'/carhire.html' },
+    { label:'Roommates', url:'/roommates.html' },
+    { label:'Cabana', url:'/cabana.html' },
+  ];
+
+  const el = document.createElement('div');
+  el.id = 'gv-overlay';
+  el.style.cssText = `
+    position:fixed;inset:0;z-index:9999;background:rgba(8,8,16,.92);
+    display:flex;flex-direction:column;animation:gvIn .22s cubic-bezier(.32,1,.28,1);
+  `;
+
+  el.innerHTML = `
+    <style>
+      @keyframes gvIn{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:none}}
+      #gv-bar{
+        display:flex;align-items:center;gap:10px;padding:10px 16px;
+        background:var(--panel);border-bottom:1px solid var(--line-2);
+        flex-shrink:0;flex-wrap:wrap;
+      }
+      #gv-bar .gv-label{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--violet);white-space:nowrap}
+      #gv-page-sel{
+        background:var(--bg-2);border:1px solid var(--line-2);color:var(--ink);
+        padding:6px 10px;border-radius:8px;font-size:13px;cursor:pointer;max-width:160px;
+      }
+      #gv-url-inp{
+        flex:1;background:var(--bg-2);border:1px solid var(--line-2);color:var(--ink);
+        padding:6px 11px;border-radius:8px;font-size:13px;min-width:0;
+        font-family:monospace;
+      }
+      #gv-url-inp:focus{border-color:var(--violet);outline:none}
+      .gv-dev-btn{
+        background:transparent;border:1px solid var(--line-2);color:var(--ink-2);
+        padding:5px 10px;border-radius:8px;font-size:12px;cursor:pointer;
+        display:flex;align-items:center;gap:5px;transition:all .15s;white-space:nowrap;
+      }
+      .gv-dev-btn:hover,.gv-dev-btn.on{background:var(--violet);border-color:var(--violet);color:#fff}
+      #gv-frame-wrap{
+        flex:1;display:flex;justify-content:center;align-items:flex-start;
+        padding:16px;overflow:auto;
+        background:repeating-linear-gradient(45deg,transparent,transparent 10px,rgba(255,255,255,.015) 10px,rgba(255,255,255,.015) 20px);
+      }
+      #gv-frame-device{
+        background:#fff;border-radius:12px;overflow:hidden;
+        box-shadow:0 24px 80px rgba(0,0,0,.7);
+        transition:all .3s cubic-bezier(.32,1,.28,1);
+        position:relative;flex-shrink:0;
+      }
+      #gv-frame{width:100%;height:100%;border:none;display:block}
+      #gv-device-frame{
+        position:absolute;inset:-3px;border:3px solid rgba(255,255,255,.12);
+        border-radius:inherit;pointer-events:none;
+      }
+      #gv-close{
+        background:rgba(255,60,60,.15);border:1px solid rgba(255,60,60,.3);color:#ff6b6b;
+        padding:6px 13px;border-radius:8px;font-size:12px;cursor:pointer;white-space:nowrap;
+        transition:all .15s;font-weight:600;
+      }
+      #gv-close:hover{background:rgba(255,60,60,.3)}
+      #gv-reload{
+        background:transparent;border:1px solid var(--line-2);color:var(--ink-2);
+        padding:5px 9px;border-radius:8px;cursor:pointer;font-size:13px;
+        transition:all .15s;
+      }
+      #gv-reload:hover{border-color:var(--violet);color:var(--violet)}
+      #gv-loading{
+        position:absolute;top:0;left:0;right:0;height:3px;
+        background:linear-gradient(90deg,var(--violet),#4F6DFF);
+        transform-origin:left;transform:scaleX(0);transition:transform .3s;
+        border-radius:0 99px 99px 0;z-index:2;
+      }
+      #gv-shadow-inject{
+        background:rgba(124,58,255,.1);border:1px solid rgba(124,58,255,.25);color:var(--violet);
+        padding:5px 10px;border-radius:8px;font-size:12px;cursor:pointer;white-space:nowrap;
+        transition:all .15s;
+      }
+      #gv-shadow-inject:hover{background:rgba(124,58,255,.2)}
+    </style>
+    <div id="gv-bar">
+      <span class="gv-label">👁 Guest view</span>
+      <select id="gv-page-sel" onchange="gvNavPage(this.value)">
+        ${PAGES.map(p=>`<option value="${p.url}">${p.label}</option>`).join('')}
+      </select>
+      <input id="gv-url-inp" placeholder="/apartments.html" value="/index.html" onkeydown="if(event.key==='Enter')gvGo(this.value)"/>
+      <button id="gv-reload" onclick="gvReload()" title="Reload">↻</button>
+      <button class="gv-dev-btn on" id="gv-d-desktop" onclick="gvDevice('desktop',this)">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+        Desktop
+      </button>
+      <button class="gv-dev-btn" id="gv-d-tablet" onclick="gvDevice('tablet',this)">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><circle cx="12" cy="18" r="1" fill="currentColor"/></svg>
+        Tablet
+      </button>
+      <button class="gv-dev-btn" id="gv-d-mobile" onclick="gvDevice('mobile',this)">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><circle cx="12" cy="18" r="1" fill="currentColor"/></svg>
+        Mobile
+      </button>
+      <div style="flex:1"></div>
+      <button id="gv-shadow-inject" onclick="gvTestShadow()" title="Test shadow ads on live page">🎯 Test shadow</button>
+      <button id="gv-close" onclick="closeGuestView()">✕ Exit guest view</button>
+    </div>
+    <div id="gv-frame-wrap">
+      <div id="gv-frame-device">
+        <div id="gv-loading"></div>
+        <iframe id="gv-frame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-top-navigation-by-user-activation"></iframe>
+        <div id="gv-device-frame"></div>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(el);
+
+  // Device sizing
+  const DEVICES = {
+    desktop: { w:'100%', h:'100%', maxW:'none', maxH:'none', radius:'8px' },
+    tablet:  { w:'768px', h:'1024px', maxW:'768px', maxH:'calc(100vh - 100px)', radius:'16px' },
+    mobile:  { w:'390px', h:'844px', maxW:'390px', maxH:'calc(100vh - 100px)', radius:'32px' }
+  };
+  let curDevice = 'desktop';
+  let gvFrame = null, gvDeviceEl = null, gvUrlInp = null, gvLoading = null;
+
+  function initRefs(){
+    gvFrame = document.getElementById('gv-frame');
+    gvDeviceEl = document.getElementById('gv-frame-device');
+    gvUrlInp = document.getElementById('gv-url-inp');
+    gvLoading = document.getElementById('gv-loading');
+  }
+  initRefs();
+
+  window.gvDevice = function(dev, btn){
+    curDevice = dev;
+    document.querySelectorAll('.gv-dev-btn').forEach(b=>b.classList.remove('on'));
+    btn.classList.add('on');
+    const d = DEVICES[dev];
+    const wrap = document.getElementById('gv-frame-wrap');
+    const devEl = document.getElementById('gv-frame-device');
+    if(dev==='desktop'){
+      wrap.style.padding = '0';
+      devEl.style.cssText = 'background:#fff;border-radius:0;overflow:hidden;width:100%;height:100%;box-shadow:none;position:relative;flex-shrink:0;';
+    } else {
+      wrap.style.padding = '16px';
+      devEl.style.cssText = `background:#fff;border-radius:${d.radius};overflow:hidden;width:${d.w};height:${d.h};max-width:${d.maxW};max-height:${d.maxH};box-shadow:0 24px 80px rgba(0,0,0,.7);position:relative;flex-shrink:0;transition:all .3s cubic-bezier(.32,1,.28,1);`;
+    }
+  };
+
+  window.gvNavPage = function(url){
+    if(gvUrlInp) gvUrlInp.value = url;
+    gvGo(url);
+  };
+
+  window.gvGo = function(url){
+    if(!url) return;
+    if(!/^\//.test(url)) url = '/' + url;
+    const loading = document.getElementById('gv-loading');
+    if(loading){ loading.style.transform='scaleX(.6)'; }
+    if(gvFrame) gvFrame.src = url;
+    // Sync page selector
+    const sel = document.getElementById('gv-page-sel');
+    if(sel){ const opt = [...sel.options].find(o=>o.value===url); if(opt) sel.value=url; }
+  };
+
+  window.gvReload = function(){
+    if(gvFrame) gvFrame.contentWindow?.location.reload();
+  };
+
+  window.gvTestShadow = function(){
+    const frame = document.getElementById('gv-frame');
+    if(!frame?.contentWindow) { toast('Load a page first','bad'); return; }
+    // Pick first live shadow ad
+    const ads = (SNAP?.shadowAds||[]).filter(a=>a.status==='live');
+    if(!ads.length){ toast('No live shadow ads to test','bad'); return; }
+    const ad = ads[0];
+    frame.contentWindow.postMessage({ type:'apa_shadow_preview', ad }, '*');
+    toast('Shadow ad injected into guest view','ok');
+  };
+
+  window.openGuestView = function(){
+    const ov = document.getElementById('gv-overlay');
+    if(ov) ov.style.display='flex';
+  };
+
+  window.closeGuestView = function(){
+    const ov = document.getElementById('gv-overlay');
+    if(ov){ ov.style.animation='gvOut .2s ease forwards'; setTimeout(()=>ov.remove(),220); }
+  };
+
+  // Add close animation
+  const style = document.createElement('style');
+  style.textContent = '@keyframes gvOut{to{opacity:0;transform:scale(.97)}}';
+  document.head.appendChild(style);
+
+  // Wire iframe load events
+  function setupFrameEvents(){
+    const frame = document.getElementById('gv-frame');
+    const loading = document.getElementById('gv-loading');
+    const urlInp = document.getElementById('gv-url-inp');
+    if(!frame) return;
+    frame.addEventListener('load', ()=>{
+      if(loading) loading.style.transform='scaleX(1)';
+      setTimeout(()=>{ if(loading) loading.style.transform='scaleX(0)'; }, 500);
+      try {
+        const url = frame.contentWindow?.location.pathname;
+        if(url && urlInp) urlInp.value = url;
+        const sel = document.getElementById('gv-page-sel');
+        if(sel){ const opt=[...sel.options].find(o=>o.value===url); if(opt) sel.value=url; }
+      } catch(e){}
+    });
+    frame.src = '/index.html';
+  }
+  setupFrameEvents();
+  // Escape key closes
+  const keyHandler = (e)=>{ if(e.key==='Escape') { window.closeGuestView(); document.removeEventListener('keydown',keyHandler); } };
+  document.addEventListener('keydown', keyHandler);
+}
 
 function boot(){
   $('gate').style.display = 'none';
@@ -2568,7 +2834,107 @@ function openCampaign(id){
   previewCampaign();
 }
 function editCampaign(id){ openCampaign(id); }
-function closeCampaign(){ $('camp-ov').classList.remove('on'); EDIT_ID = null; }
+function closeCampaign(){ $('camp-ov').classList.remove('on'); EDIT_ID = null; CAMP_PENDING_FILE = null; }
+
+/* ── Ad media upload ── */
+const ADS_BUCKET = 'ads-media';
+let CAMP_PENDING_FILE = null;
+
+async function adsEnsureBucket(){
+  try { await sb.storage.createBucket(ADS_BUCKET, { public:true, fileSizeLimit:209715200 }); } catch(e){}
+}
+function adsPublicUrl(key){
+  const { data } = sb.storage.from(ADS_BUCKET).getPublicUrl(key);
+  return data?.publicUrl || '';
+}
+
+function campPickFile(input){
+  const file = input.files && input.files[0];
+  if(!file){ CAMP_PENDING_FILE=null; $('c-file-name').textContent='No file chosen'; $('c-upload-btn').style.display='none'; return; }
+  CAMP_PENDING_FILE = file;
+  $('c-file-name').textContent = file.name + ' (' + (file.size/1048576).toFixed(1) + ' MB)';
+  $('c-upload-btn').style.display = '';
+  // Show thumb preview
+  const thumb = $('c-media-thumb');
+  const isVid = file.type.startsWith('video/');
+  const objUrl = URL.createObjectURL(file);
+  thumb.style.display = '';
+  thumb.innerHTML = isVid
+    ? `<video src="${objUrl}" style="max-width:100%;max-height:120px;border-radius:8px;object-fit:cover" muted preload="metadata"></video>`
+    : `<img src="${objUrl}" style="max-width:100%;max-height:120px;border-radius:8px;object-fit:cover"/>`;
+}
+
+async function campUploadMedia(){
+  if(!CAMP_PENDING_FILE) return;
+  const btn = $('c-upload-btn');
+  const prog = $('c-upload-progress');
+  const bar = $('c-upload-bar');
+  const status = $('c-upload-status');
+  btn.disabled = true; btn.textContent = 'Uploading…';
+  prog.style.display = '';
+  try {
+    await adsEnsureBucket();
+    const ext = (CAMP_PENDING_FILE.name.split('.').pop()||'jpg').toLowerCase();
+    const key = 'campaign-' + Date.now() + '-' + Math.random().toString(36).slice(2,8) + '.' + ext;
+    bar.style.width = '30%';
+    status.textContent = 'Uploading to storage…';
+    const { error } = await sb.storage.from(ADS_BUCKET).upload(key, CAMP_PENDING_FILE, {
+      upsert:true, contentType:CAMP_PENDING_FILE.type, cacheControl:'31536000'
+    });
+    if(error) throw error;
+    bar.style.width = '100%';
+    status.textContent = 'Done!';
+    const url = adsPublicUrl(key);
+    $('c-media').value = url;
+    previewCampaign();
+    toast('Media uploaded ✓ URL set', 'ok');
+    CAMP_PENDING_FILE = null;
+    setTimeout(()=>{ prog.style.display='none'; bar.style.width='0%'; }, 1800);
+  } catch(e) {
+    status.textContent = 'Upload failed: ' + (e.message||e);
+    status.style.color = 'var(--bad)';
+    toast('Upload failed: '+(e.message||e), 'bad');
+  } finally {
+    btn.disabled=false; btn.textContent='Upload & use';
+  }
+}
+
+/* ── Shadow ad media upload ── */
+let SH_PENDING_FILE = null;
+let SH_POSTER_FILE = null;
+
+function shPickMedia(input){
+  const file = input.files && input.files[0];
+  if(!file){ SH_PENDING_FILE=null; $('sh-file-name').textContent='No file chosen'; $('sh-file-upload-btn').style.display='none'; return; }
+  SH_PENDING_FILE = file;
+  $('sh-file-name').textContent = file.name + ' (' + (file.size/1048576).toFixed(1) + ' MB)';
+  $('sh-file-upload-btn').style.display = '';
+  const isVid = file.type.startsWith('video/');
+  $('sh-mtype').value = isVid ? 'video' : 'image';
+}
+
+async function shUploadMedia(){
+  if(!SH_PENDING_FILE) return;
+  const btn = $('sh-file-upload-btn');
+  btn.disabled=true; btn.textContent='Uploading…';
+  try {
+    await adsEnsureBucket();
+    const ext = (SH_PENDING_FILE.name.split('.').pop()||'jpg').toLowerCase();
+    const key = 'shadow-' + Date.now() + '-' + Math.random().toString(36).slice(2,8) + '.' + ext;
+    const { error } = await sb.storage.from(ADS_BUCKET).upload(key, SH_PENDING_FILE, {
+      upsert:true, contentType:SH_PENDING_FILE.type, cacheControl:'31536000'
+    });
+    if(error) throw error;
+    $('sh-media').value = adsPublicUrl(key);
+    previewShadow();
+    toast('Shadow media uploaded ✓', 'ok');
+    SH_PENDING_FILE = null;
+  } catch(e) {
+    toast('Upload failed: '+(e.message||e), 'bad');
+  } finally {
+    btn.disabled=false; btn.textContent='Upload & use';
+  }
+}
 $('camp-ov').addEventListener('click', e=>{ if(e.target.id==='camp-ov') closeCampaign(); });
 
 ['c-adv','c-head','c-sub','c-cta','c-price','c-theme','c-media'].forEach(k=>
@@ -2808,7 +3174,7 @@ function openShadow(id){
   $('shadow-ov').classList.add('on');
   previewShadow();
 }
-function closeShadow(){ $('shadow-ov').classList.remove('on'); SH_EDIT=null; }
+function closeShadow(){ $('shadow-ov').classList.remove('on'); SH_EDIT=null; SH_PENDING_FILE=null; }
 $('shadow-ov').addEventListener('click', e=>{ if(e.target.id==='shadow-ov') closeShadow(); });
 ['sh-adv','sh-head','sh-sub','sh-cta','sh-theme','sh-media','sh-accent','sh-apa-msg'].forEach(k=>
   $(k)?.addEventListener('input', previewShadow));

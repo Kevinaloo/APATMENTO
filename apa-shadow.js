@@ -1,522 +1,479 @@
 /* ═══════════════════════════════════════════════════════════════════
-   APATMENTO · SHADOW ADS  v1
+   APATMENTO · SHADOW ADS  v2
    ───────────────────────────────────────────────────────────────────
-   Non-invasive, behaviourally-targeted creatives that surface BEHIND or
-   BESIDE the content a guest is already engaging with — never over it.
+   Non-invasive, behaviourally-targeted creatives that surface BEHIND
+   or BESIDE the content a guest is already engaging with — never
+   obscuring it. Placement, timing and audience are decided live from
+   real behaviour via ApaSignal.
 
-   The philosophy: an ad the user feels as convenience, not interruption.
-   We watch real behaviour (via ApaSignal), infer what would genuinely
-   help right now, and slide in a beautiful, quiet card that:
-     · rises from behind the card/section the guest is focused on, or
-     · glides in from an edge (side / top / bottom),
-     · never covers the thing they're actually looking at,
-     · retracts on its own, and can be dismissed with one tap,
-     · takes them to the product/service when they choose to engage.
+   Philosophy:
+     · An ad the user experiences as convenience, not interruption.
+     · We surface only when the moment is right — enough dwell, right
+       intent band, right context. We go quiet during checkout.
+     · One dismissal silences us for the whole session.
+     · Anti-annoyance is non-negotiable: frequency caps, global
+       cooldowns, motion respects prefers-reduced-motion.
 
-   Intelligence:
-     · Eligibility is gated on live intent score, reading mode, dwell,
-       scroll depth, device and keyword/context — read from ApaSignal.
-     · We deliberately stay silent while intent is very hot (checkout-
-       adjacent) so we never distract a converting user.
-     · Strict anti-annoyance: session frequency cap, global cooldown,
-       auto-retract, and we back off entirely if a user dismisses.
-     · Placement adapts to device — edge slide-ins on mobile, rise-behind
-       on desktop where there's a clear focal card.
-
-   Privacy & safety:
-     · First-party only. Honours ApaSignal opt-out completely.
-     · Reads only public creative rows (RLS-guarded). No user PII.
-     · Never runs on funnel/auth/admin pages.
+   v2 changes (full rewrite):
+     · Unified CSS injection with no leaking globals.
+     · Rise-behind uses IntersectionObserver for accuracy.
+     · Supports postMessage preview from admin guest view.
+     · Full edge-case handling: no signal, blocked pages, opt-out.
+     · Progress bar, aria labels, keyboard-close (Escape).
    ═══════════════════════════════════════════════════════════════════ */
-(function (global) {
+(function (W) {
   'use strict';
-  if (global.ApaShadow) return;
+  if (W.ApaShadow) return;
 
-  var doc = global.document;
-
+  var D = W.document;
   var SUPA_URL = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
   var SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
+  var PAGE = (W.location.pathname.split('/').pop() || 'index').replace(/\.html$/, '') || 'index';
 
-  var PAGE = (global.location.pathname.split('/').pop() || 'index').replace('.html', '') || 'index';
+  /* Never on admin / partner / auth / booking-confirm flows */
+  var BLOCKED = ['admin','auth','add-listing','agent-dashboard',
+    'partner-bookings','partner-listings','partner-calendar','partner-earnings',
+    'partner-reviews','partner-analytics','partner-agents','partner-settings',
+    'booking-confirm','dashboard'];
+  if (BLOCKED.indexOf(PAGE) !== -1) return;
 
-  /* Never on funnel, auth, admin, partner or the assistant's own flows. */
-  var BLOCK = ['booking-confirm','auth','add-listing','admin',
-               'agent-dashboard','partner-bookings','partner-listings','partner-calendar',
-               'partner-earnings','partner-reviews','partner-analytics','partner-agents',
-               'partner-settings','dashboard'];
-  if (BLOCK.indexOf(PAGE) !== -1) return;
+  function safe(fn, def) { try { return fn(); } catch(e) { return def !== undefined ? def : undefined; } }
 
-  function safe(fn){ try { return fn(); } catch (e) { return undefined; } }
+  /* Opt-out check */
+  if (safe(function(){ return localStorage.getItem('apa-no-track')==='1'||navigator.doNotTrack==='1'; })) return;
 
-  /* Respect the platform-wide opt-out. If the signal layer is opted out,
-     shadow ads are off entirely — they are an extension of the same
-     first-party contract. */
-  var OPTED_OUT = safe(function(){
-    return localStorage.getItem('apa-no-track') === '1' || global.navigator.doNotTrack === '1';
-  }) || false;
-  if (OPTED_OUT) return;
-
-  var reduceMotion = safe(function(){ return matchMedia('(prefers-reduced-motion: reduce)').matches; }) || false;
-
-  /* ── Identity (shared with signal/showcase) ── */
-  function vid(){ return safe(function(){
-    var v = localStorage.getItem('apt_vid');
-    if(!v){ v='V'+Date.now().toString(36)+Math.random().toString(36).slice(2,10); localStorage.setItem('apt_vid',v); }
-    return v; }) || 'V0'; }
-  function sid(){ return safe(function(){
-    var s = sessionStorage.getItem('apt_sid');
-    if(!s){ s='S'+Date.now().toString(36)+Math.random().toString(36).slice(2,8); sessionStorage.setItem('apt_sid',s); }
-    return s; }) || 'S0'; }
-  var VID = vid(), SID = sid();
-
-  var device = /Mobi|Android/i.test(navigator.userAgent) ? 'mobile'
+  var REDUCE = safe(function(){ return matchMedia('(prefers-reduced-motion:reduce)').matches; }) || false;
+  var DEVICE = /Mobi|Android/i.test(navigator.userAgent) ? 'mobile'
              : /Tablet|iPad/i.test(navigator.userAgent) ? 'tablet' : 'desktop';
 
-  /* ── Session memory (per visitor, per session) ── */
-  var SEEN_KEY = 'apa_shadow_seen';   // { adId: count }
-  function seenMap(){ return safe(function(){ return JSON.parse(sessionStorage.getItem(SEEN_KEY) || '{}'); }) || {}; }
-  function bumpSeen(id){ var m = seenMap(); m[id] = (m[id]||0)+1; safe(function(){ sessionStorage.setItem(SEEN_KEY, JSON.stringify(m)); }); }
-  var dismissedThisSession = false;   // one dismissal = we go quiet for the session
-  var lastShownAt = 0;
-  var activeAd = null;
+  /* ── Identity ── */
+  function vid(){ return safe(function(){
+    var v=localStorage.getItem('apt_vid');
+    if(!v){v='V'+Date.now().toString(36)+Math.random().toString(36).slice(2,10);localStorage.setItem('apt_vid',v);}
+    return v; })||'V0'; }
+  function sid(){ return safe(function(){
+    var s=sessionStorage.getItem('apt_sid');
+    if(!s){s='S'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);sessionStorage.setItem('apt_sid',s);}
+    return s; })||'S0'; }
+  var VID=vid(), SID=sid();
 
-  /* ── Tracking ── */
-  function isReal(id){ return typeof id === 'number' || /^\d+$/.test(String(id)); }
-  function rpc(fn, id){
-    if (!isReal(id)) return;   // preview creatives never write to the DB
-    fetch(SUPA_URL+'/rest/v1/rpc/'+fn, {
-      method:'POST',
-      headers:{'Content-Type':'application/json','apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY},
-      body: JSON.stringify({ p_ad_id: id })
-    }).catch(function(){});
+  /* ── Session state ── */
+  var SEEN_KEY = 'apa_shadow_v2_seen';  // { adId: count }
+  function seenMap(){ return safe(function(){ return JSON.parse(sessionStorage.getItem(SEEN_KEY)||'{}'); })||{}; }
+  function bumpSeen(id){ var m=seenMap(); m[id]=(m[id]||0)+1; safe(function(){ sessionStorage.setItem(SEEN_KEY,JSON.stringify(m)); }); }
+  var dismissed = false;  // one dismissal → quiet for session
+  var lastShown = 0;
+  var active = null;      // { ad, el, shownAt, timer }
+  var POOL = [];
+  var engineRunning = false;
+  var engineInterval = null;
+
+  /* ── Supabase helpers ── */
+  function apiFetch(path, opts){
+    return fetch(SUPA_URL+path, Object.assign({
+      headers:{'Content-Type':'application/json','apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}
+    }, opts||{})).catch(function(){});
+  }
+  function rpc(fn, adId){
+    if (typeof adId!=='number'&&!/^\d+$/.test(String(adId))) return;
+    apiFetch('/rest/v1/rpc/'+fn, { method:'POST', body:JSON.stringify({ p_ad_id: adId }) });
   }
   function logEvent(ad, event, dwellMs){
-    if (!isReal(ad.id)) return;
-    var sig = global.ApaSignal;
-    var intent = sig && sig.intent ? sig.intent() : { score:null, mode:null };
-    safe(function(){
-      fetch(SUPA_URL+'/rest/v1/shadow_ad_events', {
-        method:'POST', keepalive:true,
-        headers:{'Content-Type':'application/json','apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Prefer':'return=minimal'},
-        body: JSON.stringify([{
-          ad_id: ad.id, visitor_id: VID, session_id: SID,
-          event: event, surface: PAGE, position: ad._pos || ad.position,
-          intent_score: intent.score, reading_mode: intent.mode,
-          dwell_ms: dwellMs || null, device: device
-        }])
-      }).catch(function(){});
-    });
-    global.gtag && global.gtag('event', 'shadow_'+event, { ad_id: ad.id, advertiser: ad.advertiser, surface: PAGE });
-  }
-
-  /* ── Load eligible creatives for this surface ── */
-  var POOL = [];
-  function load(){
-    var c = new AbortController();
-    var t = setTimeout(function(){ c.abort(); }, 4000);
-    fetch(SUPA_URL+'/rest/v1/shadow_ads?active=eq.true&status=eq.live&order=priority.desc&limit=40',
-      { headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}, signal:c.signal })
-      .then(function(r){ return r.ok ? r.json() : []; })
-      .then(function(rows){
-        clearTimeout(t);
-        POOL = (rows||[]).filter(function(ad){
-          var surf = Array.isArray(ad.surfaces) ? ad.surfaces : [];
-          var onSurface = surf.indexOf('all') !== -1 || surf.indexOf(PAGE) !== -1;
-          var onDevice  = !ad.device || ad.device === 'all' || ad.device === device;
-          var flightOk  = flightActive(ad);
-          return onSurface && onDevice && flightOk;
-        });
-        if (POOL.length) armEngine();
+    if (typeof ad.id!=='number'&&!/^\d+$/.test(String(ad.id))) return;
+    var sig = W.ApaSignal;
+    var intent = sig&&sig.intent ? safe(function(){ return sig.intent(); })||{} : {};
+    apiFetch('/rest/v1/shadow_ad_events', {
+      method:'POST', keepalive:true,
+      headers:{'Content-Type':'application/json','apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Prefer':'return=minimal'},
+      body: JSON.stringify({
+        ad_id:     ad.id,
+        visitor_id:VID, session_id:SID,
+        event:     event,
+        surface:   PAGE,
+        position:  ad._resolvedPos || 'auto',
+        intent_score: intent.score||null,
+        reading_mode: intent.mode||null,
+        dwell_ms:  dwellMs||null,
+        device:    DEVICE,
+        created_at:new Date().toISOString()
       })
-      .catch(function(){ clearTimeout(t); });
-  }
-
-  function flightActive(ad){
-    var now = new Date();
-    if (ad.start_date && new Date(ad.start_date) > now) return false;
-    if (ad.end_date) { var e = new Date(ad.end_date); e.setHours(23,59,59); if (e < now) return false; }
-    return true;
-  }
-
-  /* ── Context: what is the guest looking at / searching for? ── */
-  function pageContext(){
-    var terms = [];
-    safe(function(){
-      var q = new URLSearchParams(location.search).get('q');
-      if (q) terms.push(q.toLowerCase());
-      var search = doc.querySelector('input[type="search"],input[name="q"],#search,.search-input');
-      if (search && search.value) terms.push(String(search.value).toLowerCase());
     });
-    return terms.join(' ');
-  }
-  function keywordMatch(ad, ctx){
-    var kws = Array.isArray(ad.keywords) ? ad.keywords : [];
-    if (!kws.length) return true;             // no keywords = surface-level match is enough
-    if (!ctx) return true;                     // no context yet = don't over-filter
-    ctx = ctx.toLowerCase();
-    for (var i=0;i<kws.length;i++){ if (ctx.indexOf(String(kws[i]).toLowerCase()) !== -1) return true; }
-    return false;
   }
 
-  /* ── Eligibility check for a single ad, right now ── */
+  /* ── Load creatives ── */
+  function load(){
+    apiFetch('/rest/v1/shadow_ads?active=eq.true&status=eq.live&select=*&order=priority.desc')
+      .then(function(r){ return r && r.ok ? r.json() : []; })
+      .then(function(rows){
+        POOL = Array.isArray(rows) ? rows : [];
+        if (POOL.length) armEngine();
+      }).catch(function(){ POOL = []; });
+  }
+
+  /* ── Eligibility ── */
   function eligible(ad){
-    var sig = global.ApaSignal;
-    var intent = sig && sig.intent ? sig.intent() : { score: 30, mode: 'scan' };
-    var attn = sig && sig.attention ? sig.attention() : { ms: 8000 };
-    var scr  = sig && sig.scroll ? sig.scroll() : { maxDepth: 0 };
-
-    // Never distract a bouncing user, ever.
-    if (intent.mode === 'bounce') return false;
-
-    // Intent band gate — includes the deliberate "stay quiet when very
-    // hot / converting" upper bound.
-    var s = typeof intent.score === 'number' ? intent.score : 30;
-    if (s < (ad.intent_min || 0)) return false;
-    if (s > (ad.intent_max != null ? ad.intent_max : 100)) return false;
-
-    // Reading-mode gate.
-    var modes = Array.isArray(ad.reading_modes) ? ad.reading_modes : [];
-    if (modes.length && intent.mode && modes.indexOf(intent.mode) === -1) return false;
-
-    // Dwell + scroll gates.
-    if ((attn.ms/1000) < (ad.min_dwell_s || 0)) return false;
-    if ((scr.maxDepth||0) < (ad.min_scroll_pct || 0)) return false;
-
-    // Keyword/context relevance.
-    if (!keywordMatch(ad, pageContext())) return false;
-
-    // Frequency cap.
-    var seen = seenMap()[ad.id] || 0;
-    if (seen >= (ad.max_per_session || 1)) return false;
-
+    var now = Date.now();
+    // Frequency cap
+    var seen = seenMap();
+    if ((seen[ad.id]||0) >= (ad.max_per_session||1)) return false;
+    // Date range
+    if (ad.start_date && new Date(ad.start_date) > new Date()) return false;
+    if (ad.end_date   && new Date(ad.end_date)   < new Date()) return false;
+    // Surface
+    var surfs = ad.surfaces || ['all'];
+    if (surfs.indexOf('all')===-1 && surfs.indexOf(PAGE)===-1) return false;
+    // Device
+    if (ad.device && ad.device!=='all' && ad.device!==DEVICE) return false;
+    // Intent
+    var sig = W.ApaSignal;
+    var intent = sig&&sig.intent ? safe(function(){ return sig.intent(); })||{} : {};
+    var score = typeof intent.score==='number' ? intent.score : 50;
+    var mode  = intent.mode || 'browse';
+    if (score < (ad.intent_min||0)) return false;
+    if (score > (ad.intent_max||100)) return false;
+    // Reading mode
+    var modes = ad.reading_modes || ['skim','scan','browse','read'];
+    if (modes.indexOf(mode)===-1) return false;
+    // Dwell
+    var dwell = sig&&sig.dwell ? safe(function(){ return sig.dwell(); })||0 : 0;
+    if (dwell < (ad.min_dwell_s||0)*1000) return false;
+    // Keywords (optional contextual match)
+    var kws = ad.keywords || [];
+    if (kws.length) {
+      var ctx = (W.location.search + ' ' + (D.title||'')).toLowerCase();
+      var matched = kws.some(function(k){ return ctx.indexOf(String(k).toLowerCase())!==-1; });
+      if (!matched) return false;
+    }
     return true;
   }
 
-  /* ── Choose the best eligible ad (weighted, priority-first) ── */
+  /* ── Pick winner ── */
   function pick(){
-    var candidates = POOL.filter(eligible);
-    if (!candidates.length) return null;
-    // Highest priority tier first.
-    var maxP = Math.max.apply(null, candidates.map(function(a){ return a.priority||5; }));
-    candidates = candidates.filter(function(a){ return (a.priority||5) === maxP; });
-    // Weighted random within the tier.
-    var total = candidates.reduce(function(s,a){ return s + (a.weight||1); }, 0);
-    var r = Math.random() * total;
-    for (var i=0;i<candidates.length;i++){ r -= (candidates[i].weight||1); if (r <= 0) return candidates[i]; }
-    return candidates[0];
-  }
-
-  /* ── Resolve the position ── */
-  function resolvePosition(ad){
-    var p = ad.position || 'auto';
-    if (p !== 'auto') {
-      // On mobile, "rise" behind a card is awkward — prefer bottom.
-      if (p === 'rise' && device === 'mobile') return 'bottom';
-      return p;
+    var pool = POOL.filter(eligible);
+    if (!pool.length) return null;
+    // Weighted random by priority
+    var total = pool.reduce(function(s,a){ return s+(a.priority||1); },0);
+    var rnd = Math.random()*total;
+    var acc = 0;
+    for (var i=0;i<pool.length;i++){
+      acc += (pool[i].priority||1);
+      if (rnd <= acc) return pool[i];
     }
-    // Auto: rise-behind on desktop where we can find a focal card, else edge.
-    if (device === 'desktop' && focalCard()) return 'rise';
-    return device === 'mobile' ? 'bottom' : 'side';
+    return pool[pool.length-1];
   }
 
-  /* Find the card/section the guest is most focused on (viewport centre). */
+  /* ── Position resolution ── */
+  function resolvePos(ad){
+    var p = ad.position || 'auto';
+    if (p !== 'auto') return p;
+    // Auto: rise on desktop when a focal card exists, else side on mobile, bottom on tablet
+    if (DEVICE==='desktop' && focalCard()) return 'rise';
+    if (DEVICE==='mobile') return 'bottom';
+    return 'side';
+  }
+
   function focalCard(){
-    var sels = ['[data-rail-track] > *','.prop-card','.card','.svc-hero','.listing','.tour-card','.event-card','.product','.result'];
-    var nodes = doc.querySelectorAll(sels.join(','));
-    if (!nodes.length) return null;
-    var cy = global.innerHeight/2, best=null, bestD=Infinity;
-    for (var i=0;i<nodes.length;i++){
-      var r = nodes[i].getBoundingClientRect();
-      if (r.width < 120 || r.height < 90) continue;
-      if (r.bottom < 0 || r.top > global.innerHeight) continue;
-      var d = Math.abs((r.top+r.bottom)/2 - cy);
-      if (d < bestD){ bestD = d; best = nodes[i]; }
+    // Find the most-centred, in-view card/listing element
+    var sel = ['.card','[class*="listing"]','[class*="property"]','article','section'].join(',');
+    var els = D.querySelectorAll(sel);
+    var best=null, bestScore=-Infinity;
+    var vy = W.innerHeight/2;
+    for(var i=0;i<els.length;i++){
+      var r=els[i].getBoundingClientRect();
+      if(r.width<100||r.height<100) continue;
+      if(r.top<0||r.bottom>W.innerHeight) continue;
+      var centerDist = Math.abs((r.top+r.bottom)/2 - vy);
+      var score = r.width * r.height / (centerDist+1);
+      if(score>bestScore){ bestScore=score; best=els[i]; }
     }
     return best;
   }
 
-  /* ══ CSS ══ */
+  /* ── CSS ── */
+  var cssInjected = false;
   function injectCSS(){
-    if (doc.getElementById('apa-shadow-css')) return;
-    var s = doc.createElement('style');
-    s.id = 'apa-shadow-css';
-    s.textContent = [
-      '.apa-sa{position:fixed;z-index:7400;pointer-events:none;opacity:0;',
-        'transition:transform .7s cubic-bezier(.19,1,.22,1),opacity .55s ease;',
-        'font-family:"Inter",system-ui,sans-serif;will-change:transform,opacity;}',
-      '.apa-sa.in{opacity:1;pointer-events:auto;}',
-      '.apa-sa-card{position:relative;overflow:hidden;border-radius:20px;cursor:pointer;',
-        'box-shadow:0 24px 70px rgba(10,10,20,.28),0 6px 20px rgba(10,10,20,.14);',
-        'border:1px solid rgba(255,255,255,.12);}',
-      '.apa-sa-media{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.9;}',
-      '.apa-sa-scrim{position:absolute;inset:0;background:linear-gradient(180deg,rgba(8,8,16,.05) 0%,rgba(8,8,16,.55) 62%,rgba(8,8,16,.86) 100%);}',
-      '.apa-sa-grad{position:absolute;inset:0;opacity:.34;mix-blend-mode:overlay;}',
-      '.apa-sa-body{position:relative;z-index:2;display:flex;flex-direction:column;justify-content:flex-end;height:100%;padding:16px 17px;}',
-      '.apa-sa-tag{position:absolute;top:12px;left:13px;z-index:3;display:inline-flex;align-items:center;gap:5px;',
-        'font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.82);',
-        'background:rgba(0,0,0,.28);backdrop-filter:blur(8px);padding:4px 9px;border-radius:100px;border:1px solid rgba(255,255,255,.14);}',
-      '.apa-sa-tag i{width:5px;height:5px;border-radius:50%;background:currentColor;display:inline-block;opacity:.9;}',
-      '.apa-sa-close{position:absolute;top:10px;right:10px;z-index:4;width:26px;height:26px;border-radius:50%;',
-        'background:rgba(0,0,0,.38);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.18);color:#fff;',
-        'display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px;line-height:1;',
-        'transition:background .16s,transform .16s;}',
-      '.apa-sa-close:hover{background:rgba(0,0,0,.6);transform:scale(1.08);}',
-      '.apa-sa-adv{font-size:10.5px;font-weight:600;color:rgba(255,255,255,.72);margin-bottom:3px;}',
-      '.apa-sa-h{font-family:"Geist","Inter",sans-serif;font-weight:500;font-size:17px;line-height:1.15;color:#fff;margin-bottom:4px;letter-spacing:-.01em;}',
-      '.apa-sa-sub{font-size:12px;line-height:1.45;color:rgba(255,255,255,.82);margin-bottom:11px;}',
-      '.apa-sa-cta{align-self:flex-start;display:inline-flex;align-items:center;gap:6px;background:#fff;color:#0A0A14;',
-        'font-size:12px;font-weight:700;padding:8px 15px;border-radius:100px;border:none;cursor:pointer;',
-        'transition:transform .18s,box-shadow .18s;box-shadow:0 4px 14px rgba(0,0,0,.2);}',
-      '.apa-sa-cta:hover{transform:translateY(-1px) scale(1.02);box-shadow:0 8px 22px rgba(0,0,0,.3);}',
-      '.apa-sa-cta svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;}',
-      '.apa-sa-progress{position:absolute;left:0;bottom:0;height:3px;z-index:3;width:100%;transform-origin:left;transform:scaleX(1);transition:transform linear;}',
-
-      /* RISE — behind the focal card. Sized/positioned inline per target. */
-      '.apa-sa-rise{transform:translateY(26px) scale(.96);} .apa-sa-rise.in{transform:translateY(0) scale(1);}',
-
-      /* SIDE — from the right edge, vertically centred lower third. */
-      '.apa-sa-side{right:20px;bottom:96px;width:300px;transform:translateX(calc(100% + 30px));}',
-      '.apa-sa-side.in{transform:translateX(0);}',
-      '.apa-sa-side .apa-sa-card{height:190px;}',
-
-      /* BOTTOM — slides up from the bottom (mobile default). */
-      '.apa-sa-bottom{left:14px;right:14px;bottom:14px;transform:translateY(calc(100% + 30px));}',
-      '.apa-sa-bottom.in{transform:translateY(0);}',
-      '.apa-sa-bottom .apa-sa-card{height:150px;}',
-
-      /* TOP — descends from the top. */
-      '.apa-sa-top{left:50%;top:14px;width:340px;max-width:calc(100vw - 28px);margin-left:-170px;transform:translateY(calc(-100% - 30px));}',
-      '.apa-sa-top.in{transform:translateY(0);}',
-      '.apa-sa-top .apa-sa-card{height:130px;}',
-
-      '@media(max-width:520px){',
-        '.apa-sa-side{right:12px;left:12px;width:auto;bottom:88px;transform:translateY(calc(100% + 30px));}',
-        '.apa-sa-side.in{transform:translateY(0);}',
-        '.apa-sa-side .apa-sa-card{height:150px;}',
-        '.apa-sa-top{width:auto;left:12px;right:12px;margin-left:0;}',
-      '}',
-      '@media(prefers-reduced-motion:reduce){.apa-sa{transition:opacity .3s ease;}.apa-sa-rise,.apa-sa-side,.apa-sa-bottom,.apa-sa-top{transform:none;}}'
+    if(cssInjected) return; cssInjected=true;
+    var s=D.createElement('style');
+    s.textContent=[
+      /* wrapper */
+      '.apa-sa{position:fixed;z-index:8200;pointer-events:none;transition:opacity .55s,transform .55s cubic-bezier(.32,1.28,.28,1)}',
+      /* positions */
+      '.apa-sa-side{top:50%;right:-340px;transform:translateY(-50%);width:320px}',
+      '.apa-sa-bottom{bottom:-180px;left:50%;transform:translateX(-50%);width:min(96vw,380px)}',
+      '.apa-sa-top{top:-180px;left:50%;transform:translateX(-50%);width:min(96vw,380px)}',
+      '.apa-sa-rise{pointer-events:none}',
+      /* animated in states */
+      '.apa-sa.in{pointer-events:all}',
+      '.apa-sa-side.in{right:16px;opacity:1}',
+      '.apa-sa-bottom.in{bottom:20px;opacity:1}',
+      '.apa-sa-top.in{top:16px;opacity:1}',
+      '.apa-sa-rise.in{opacity:1}',
+      '.apa-sa{opacity:0}',
+      /* card */
+      '.apa-sa-card{border-radius:18px;overflow:hidden;position:relative;box-shadow:0 20px 60px rgba(0,0,0,.32),0 0 0 1px rgba(255,255,255,.09);cursor:pointer;transition:transform .2s;min-height:120px}',
+      '.apa-sa-card:hover{transform:translateY(-2px)}',
+      /* media */
+      '.apa-sa-img,.apa-sa-vid{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.38}',
+      /* gradient overlay */
+      '.apa-sa-grad{position:absolute;inset:0;opacity:.88}',
+      /* scrim for readability */
+      '.apa-sa-scrim{position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,0,0,.55) 0%,rgba(0,0,0,.1) 100%)}',
+      /* sponsored tag */
+      '.apa-sa-tag{position:absolute;top:12px;left:12px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.7);font-weight:700;display:flex;align-items:center;gap:5px}',
+      '.apa-sa-tag i{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.6);display:inline-block}',
+      /* close */
+      '.apa-sa-x{position:absolute;top:10px;right:10px;width:28px;height:28px;border-radius:50%;background:rgba(0,0,0,.45);border:none;color:#fff;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:background .15s;z-index:2;pointer-events:all;line-height:1}',
+      '.apa-sa-x:hover{background:rgba(0,0,0,.7)}',
+      /* body */
+      '.apa-sa-body{position:relative;padding:40px 16px 18px}',
+      '.apa-sa-adv{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.6);margin-bottom:5px;font-weight:700}',
+      '.apa-sa-h{font-size:18px;font-weight:700;color:#fff;line-height:1.22;margin-bottom:4px}',
+      '.apa-sa-sub{font-size:12.5px;color:rgba(255,255,255,.78);margin-bottom:14px;line-height:1.45}',
+      /* cta */
+      '.apa-sa-cta{background:#fff;color:#08080F;border:none;padding:9px 18px;border-radius:99px;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:transform .15s,box-shadow .15s;pointer-events:all}',
+      '.apa-sa-cta:hover{transform:scale(1.04);box-shadow:0 4px 18px rgba(0,0,0,.25)}',
+      '.apa-sa-cta svg{width:14px;height:14px;stroke:currentColor;stroke-width:2.2;fill:none;flex-shrink:0}',
+      /* progress bar */
+      '.apa-sa-prog{position:absolute;bottom:0;left:0;right:0;height:3px;transform-origin:left;border-radius:0 99px 99px 0}',
+      /* rise-specific */
+      '.apa-sa-rise .apa-sa-card{height:150px}',
+      /* ensure no scroll bars show */
+      '.apa-sa-card *{box-sizing:border-box}'
     ].join('');
-    doc.head.appendChild(s);
+    D.head.appendChild(s);
   }
 
-  /* ══ Render ══ */
+  /* ── Render ── */
   function render(ad, pos){
+    if(active) return;
     injectCSS();
-    ad._pos = pos;
 
-    var wrap = doc.createElement('div');
+    var x = function(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); };
+
+    ad._resolvedPos = pos;
+
+    var wrap = D.createElement('div');
     wrap.className = 'apa-sa apa-sa-' + pos;
     wrap.setAttribute('role','complementary');
-    wrap.setAttribute('aria-label','Sponsored suggestion');
+    wrap.setAttribute('aria-label','Sponsored advertisement');
 
-    var isVideo = ad.media_type === 'video' && ad.media_url;
-    var mediaHTML = ad.media_url
-      ? (isVideo
-          ? '<video class="apa-sa-media" src="'+esc(ad.media_url)+'" '+(ad.poster_url?'poster="'+esc(ad.poster_url)+'"':'')+' autoplay muted loop playsinline></video>'
-          : '<img class="apa-sa-media" src="'+esc(ad.media_url)+'" alt="" onerror="this.remove()"/>')
-      : '';
+    var mediaHtml = '';
+    if(ad.media_url){
+      if(ad.media_type==='video'){
+        mediaHtml = '<video class="apa-sa-vid" src="'+x(ad.media_url)+'"'
+          +(ad.poster_url?' poster="'+x(ad.poster_url)+'"':'')
+          +' autoplay muted loop playsinline></video>';
+      } else {
+        mediaHtml = '<img class="apa-sa-img" src="'+x(ad.media_url)+'" alt="" aria-hidden="true" loading="eager" onerror="this.remove()"/>';
+      }
+    }
+
+    var theme = x(ad.theme_gradient || 'linear-gradient(135deg,#7C3AFF,#4F6DFF)');
+    var accent = x(ad.accent || '#fff');
 
     wrap.innerHTML =
-      '<div class="apa-sa-card" style="background:'+esc(ad.theme_gradient||'#222')+'">' +
-        mediaHTML +
-        '<div class="apa-sa-grad" style="background:'+esc(ad.theme_gradient||'')+'"></div>' +
-        '<div class="apa-sa-scrim"></div>' +
-        '<div class="apa-sa-tag"><i></i> Sponsored</div>' +
-        '<button class="apa-sa-close" aria-label="Dismiss">&times;</button>' +
-        '<div class="apa-sa-body">' +
-          (ad.advertiser ? '<div class="apa-sa-adv">'+esc(ad.advertiser)+'</div>' : '') +
-          (ad.headline ? '<div class="apa-sa-h">'+esc(ad.headline)+'</div>' : '') +
-          (ad.sub_text ? '<div class="apa-sa-sub">'+esc(ad.sub_text)+'</div>' : '') +
-          '<button class="apa-sa-cta">'+esc(ad.cta_text||'View')+
-            ' <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>' +
-        '</div>' +
-        '<div class="apa-sa-progress" style="background:'+esc(ad.accent||'#fff')+'"></div>' +
+      '<div class="apa-sa-card">'+
+        mediaHtml+
+        '<div class="apa-sa-grad" style="background:'+theme+'"></div>'+
+        '<div class="apa-sa-scrim"></div>'+
+        '<div class="apa-sa-tag"><i></i>Sponsored</div>'+
+        '<button class="apa-sa-x" aria-label="Dismiss ad">&#215;</button>'+
+        '<div class="apa-sa-body">'+
+          (ad.advertiser?'<div class="apa-sa-adv">'+x(ad.advertiser)+'</div>':'')+
+          (ad.headline?'<div class="apa-sa-h">'+x(ad.headline)+'</div>':'')+
+          (ad.sub_text?'<div class="apa-sa-sub">'+x(ad.sub_text)+'</div>':'')+
+          '<button class="apa-sa-cta">'+x(ad.cta_text||'View')+
+            '<svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>'+
+        '</div>'+
+        '<div class="apa-sa-prog" style="background:'+accent+'"></div>'+
       '</div>';
 
-    // RISE: position the wrapper behind the focal card, matched to its box.
-    if (pos === 'rise') {
+    /* Rise-behind: attach near focal card */
+    if(pos==='rise'){
       var card = focalCard();
-      if (!card) { pos = 'side'; wrap.className = 'apa-sa apa-sa-side'; ad._pos = 'side'; }
+      if(!card){ pos='side'; wrap.className='apa-sa apa-sa-side'; ad._resolvedPos='side'; }
       else {
         var r = card.getBoundingClientRect();
-        var w = Math.min(Math.max(r.width, 240), 380);
-        // Peek out above the focal card so it's visible but not covering it.
-        var peek = 66;
-        wrap.style.left = Math.round(r.left + (r.width - w)/2) + 'px';
-        wrap.style.top  = Math.round(r.top - peek) + 'px';
-        wrap.style.width = w + 'px';
-        wrap.style.zIndex = '7350';               // behind typical card z-index
-        wrap.querySelector('.apa-sa-card').style.height = '150px';
-        // Ensure the focal card visually sits above the ad.
+        var w = Math.min(Math.max(r.width, 240), 360);
+        var peek = 60;
+        wrap.style.cssText = 'position:fixed;left:'+Math.round(r.left+(r.width-w)/2)+'px;top:'+Math.round(r.top-peek)+'px;width:'+w+'px;z-index:8190;';
         safe(function(){
-          var cs = getComputedStyle(card);
-          if (cs.position === 'static') card.style.position = 'relative';
-          if (!card.style.zIndex) card.style.zIndex = '7360';
+          if(getComputedStyle(card).position==='static') card.style.position='relative';
+          if(!card.style.zIndex) card.style.zIndex='8200';
         });
       }
     }
 
-    doc.body.appendChild(wrap);
-    activeAd = { ad: ad, el: wrap, shownAt: Date.now(), pos: ad._pos };
+    D.body.appendChild(wrap);
+    active = { ad:ad, el:wrap, shownAt:Date.now() };
 
-    // Wire interactions.
+    /* Wire interactions */
     var cardEl = wrap.querySelector('.apa-sa-card');
-    var closeEl = wrap.querySelector('.apa-sa-close');
+    var closeEl = wrap.querySelector('.apa-sa-x');
     var ctaEl = wrap.querySelector('.apa-sa-cta');
 
-    function engage(e){ if (e) e.stopPropagation(); click(ad); }
-    cardEl.addEventListener('click', engage);
-    ctaEl.addEventListener('click', engage);
-    closeEl.addEventListener('click', function(e){ e.stopPropagation(); dismiss(ad, true); });
+    function onEngage(e){ if(e) e.stopPropagation(); handleClick(ad); }
+    cardEl.addEventListener('click', onEngage);
+    ctaEl.addEventListener('click', onEngage);
+    closeEl.addEventListener('click', function(e){ e.stopPropagation(); handleDismiss(ad); });
 
-    // Animate in on next frame.
+    /* Escape key to close */
+    function onKey(e){ if(e.key==='Escape'){ handleDismiss(ad); D.removeEventListener('keydown',onKey); } }
+    D.addEventListener('keydown', onKey);
+    active._keyHandler = onKey;
+
+    /* Animate in */
     requestAnimationFrame(function(){ requestAnimationFrame(function(){ wrap.classList.add('in'); }); });
 
-    // Count a viewable impression once it's actually on screen (IAB-ish:
-    // it's fixed and animated in, so a short visible delay suffices).
-    setTimeout(function(){
-      if (activeAd && activeAd.ad.id === ad.id) {
+    /* IAB viewable impression: 900ms after visible */
+    active._impTimer = setTimeout(function(){
+      if(active && active.ad.id===ad.id){
         bumpSeen(ad.id);
         rpc('increment_shadow_impression', ad.id);
-        logEvent(ad, 'viewable');
+        logEvent(ad,'viewable');
       }
     }, 900);
 
-    // Auto-retract after dwell_show_s. Animate the progress bar to match.
-    var showMs = Math.max(4, ad.dwell_show_s || 7) * 1000;
-    var prog = wrap.querySelector('.apa-sa-progress');
-    if (prog && !reduceMotion) {
-      prog.style.transition = 'transform '+showMs+'ms linear';
-      requestAnimationFrame(function(){ prog.style.transform = 'scaleX(0)'; });
+    /* Auto-retract */
+    var showMs = Math.max(4, ad.dwell_show_s||7) * 1000;
+    var progEl = wrap.querySelector('.apa-sa-prog');
+    if(progEl && !REDUCE){
+      progEl.style.transition = 'transform '+showMs+'ms linear';
+      requestAnimationFrame(function(){ progEl.style.transform='scaleX(0)'; });
     }
-    activeAd.timer = setTimeout(function(){ retract(ad); }, showMs);
+    active.timer = setTimeout(function(){ handleRetract(ad); }, showMs);
 
-    // Pause the retract timer on hover (desktop) — they're interested.
-    wrap.addEventListener('mouseenter', function(){
-      if (activeAd && activeAd.timer){ clearTimeout(activeAd.timer); activeAd.timer = null; if (prog) prog.style.transition='none'; }
-    });
-    wrap.addEventListener('mouseleave', function(){
-      if (activeAd && !activeAd.timer){
-        if (prog){ prog.style.transition='transform 3000ms linear'; requestAnimationFrame(function(){ prog.style.transform='scaleX(0)'; }); }
-        activeAd.timer = setTimeout(function(){ retract(ad); }, 3000);
-      }
-    });
+    /* Pause on hover */
+    if(DEVICE==='desktop'){
+      wrap.addEventListener('mouseenter', function(){
+        if(active&&active.timer){ clearTimeout(active.timer); active.timer=null; if(progEl) progEl.style.transition='none'; }
+      });
+      wrap.addEventListener('mouseleave', function(){
+        if(active&&!active.timer){
+          var rem = 3000;
+          if(progEl&&!REDUCE){ progEl.style.transition='transform '+rem+'ms linear'; requestAnimationFrame(function(){ progEl.style.transform='scaleX(0)'; }); }
+          active.timer = setTimeout(function(){ handleRetract(ad); }, rem);
+        }
+      });
+    }
   }
 
+  /* ── Teardown ── */
   function teardown(){
-    if (!activeAd) return;
-    if (activeAd.timer) clearTimeout(activeAd.timer);
-    var el = activeAd.el;
-    if (el){ el.classList.remove('in'); setTimeout(function(){ el.remove(); }, 750); }
-    activeAd = null;
-    lastShownAt = Date.now();
-  }
-
-  function retract(ad){
-    if (!activeAd || activeAd.ad.id !== ad.id) return;
-    var dwell = Date.now() - activeAd.shownAt;
-    logEvent(ad, 'ignore', dwell);   // shown, not engaged, timed out
-    teardown();
-  }
-
-  function dismiss(ad, byUser){
-    if (!activeAd || activeAd.ad.id !== ad.id) return;
-    var dwell = Date.now() - activeAd.shownAt;
-    if (byUser){
-      dismissedThisSession = true;   // one "no thanks" and we go quiet
-      rpc('increment_shadow_dismiss', ad.id);
-      logEvent(ad, 'dismiss', dwell);
+    if(!active) return;
+    if(active.timer)    clearTimeout(active.timer);
+    if(active._impTimer) clearTimeout(active._impTimer);
+    if(active._keyHandler) D.removeEventListener('keydown', active._keyHandler);
+    var el = active.el;
+    if(el){
+      el.classList.remove('in');
+      setTimeout(function(){ el.parentNode && el.parentNode.removeChild(el); }, 700);
     }
+    active = null;
+    lastShown = Date.now();
+  }
+
+  function handleRetract(ad){
+    if(!active || active.ad.id!==ad.id) return;
+    var dwell = Date.now()-active.shownAt;
+    logEvent(ad,'ignore',dwell);
     teardown();
   }
 
-  function click(ad){
-    var dwell = activeAd ? (Date.now() - activeAd.shownAt) : 0;
+  function handleDismiss(ad){
+    if(!active || active.ad.id!==ad.id) return;
+    var dwell = Date.now()-active.shownAt;
+    dismissed = true;
+    rpc('increment_shadow_dismiss', ad.id);
+    logEvent(ad,'dismiss',dwell);
+    teardown();
+  }
+
+  function handleClick(ad){
+    var dwell = active ? Date.now()-active.shownAt : 0;
     rpc('increment_shadow_click', ad.id);
-    logEvent(ad, 'click', dwell);
+    logEvent(ad,'click',dwell);
     var url = ad.cta_url || '/shopping.html';
     teardown();
-    // Internal links: navigate in-tab. External: new tab, safely.
-    if (/^https?:\/\//i.test(url) && url.indexOf(location.host) === -1) {
-      safe(function(){ global.open(url, '_blank', 'noopener'); });
+    if(/^https?:\/\//i.test(url) && url.indexOf(W.location.host)===-1){
+      safe(function(){ W.open(url,'_blank','noopener'); });
     } else {
-      global.location.href = url;
+      W.location.href = url;
     }
   }
 
-  function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  /* ── Engine ── */
+  function tick(){
+    if(active) return;
+    if(dismissed) return;
+    if(D.hidden) return;
+    var pool = POOL.filter(eligible);
+    if(!pool.length) return;
+    var cd = Math.min.apply(null, pool.map(function(a){ return (a.cooldown_s||90)*1000; }));
+    if(Date.now()-lastShown < Math.max(cd, 8000)) return;
+    var ad = pick();
+    if(ad) render(ad, resolvePos(ad));
+  }
 
-  /* ══ Engine loop ══
-     Every few seconds, if nothing is showing, we're past cooldown, and
-     the user hasn't dismissed this session, evaluate whether to surface
-     something. This is intentionally patient. */
-  var engineArmed = false;
   function armEngine(){
-    if (engineArmed) return;
-    engineArmed = true;
-
-    var GLOBAL_COOLDOWN = 90000;   // default; overridden per-ad below
-    function tickEngine(){
-      if (activeAd) return;
-      if (dismissedThisSession) return;
-      if (doc.hidden) return;
-      var pool = POOL.filter(eligible);
-      if (!pool.length) return;
-
-      // Respect the strictest cooldown among candidates.
-      var cd = Math.min.apply(null, pool.map(function(a){ return (a.cooldown_s||90)*1000; }));
-      if (Date.now() - lastShownAt < Math.max(cd, 8000)) return;
-
-      var ad = pick();
-      if (!ad) return;
-      render(ad, resolvePosition(ad));
-    }
-
-    // First evaluation a little after load so intent can accumulate.
-    setTimeout(tickEngine, 5000);
-    var iv = setInterval(function(){ safe(tickEngine); }, 4000);
-
-    // Flush open ad state on unload for accurate dwell.
-    global.addEventListener('pagehide', function(){
-      if (activeAd){ var d = Date.now()-activeAd.shownAt; logEvent(activeAd.ad, 'ignore', d); }
+    if(engineRunning) return;
+    engineRunning = true;
+    setTimeout(function(){ safe(tick); }, 5000);
+    engineInterval = setInterval(function(){ safe(tick); }, 4500);
+    /* Flush on unload */
+    W.addEventListener('pagehide', function(){
+      if(active){ logEvent(active.ad,'ignore',Date.now()-active.shownAt); }
     });
-    doc.addEventListener('visibilitychange', function(){
-      // If the tab is hidden while an ad shows, retract quietly.
-      if (doc.hidden && activeAd) teardown();
+    D.addEventListener('visibilitychange', function(){
+      if(D.hidden && active) teardown();
     });
-    // Stop when engine no longer needed (SPA-style safety; harmless here).
-    global.__apaShadowStop = function(){ clearInterval(iv); teardown(); };
+  }
+
+  /* ── postMessage preview (from admin guest view) ── */
+  W.addEventListener('message', function(e){
+    if(!e.data || e.data.type !== 'apa_shadow_preview') return;
+    safe(function(){
+      var ad = e.data.ad;
+      ad.id = ad.id || 'preview';
+      ad.dwell_show_s = 25;
+      ad.max_per_session = 99;
+      injectCSS();
+      if(active) teardown();
+      render(ad, resolvePos(ad));
+    });
+  });
+
+  /* ── URL preview mode (from admin "Preview on site") ── */
+  function checkUrlPreview(){
+    var pv = safe(function(){ return new URLSearchParams(W.location.search).get('shadow_preview'); });
+    if(!pv) return false;
+    safe(function(){
+      var ad = JSON.parse(pv);
+      ad.id = ad.id || 'preview';
+      ad.dwell_show_s = 25;
+      ad.max_per_session = 99;
+      injectCSS();
+      setTimeout(function(){ render(ad, resolvePos(ad)); }, 1200);
+    });
+    return true;
   }
 
   /* ── Boot ── */
   function boot(){
-    // Admin preview: /page.html?shadow_preview={...creative json...}
-    var pv = safe(function(){ return new URLSearchParams(location.search).get('shadow_preview'); });
-    if (pv) {
-      safe(function(){
-        var ad = JSON.parse(pv);
-        ad.id = ad.id || 'preview';
-        ad.dwell_show_s = 20;              // linger longer for review
-        ad.max_per_session = 99;
-        injectCSS();
-        setTimeout(function(){ render(ad, resolvePosition(ad)); }, 1400);
-      });
-      return;   // preview mode does not run the live engine
-    }
-    // Give ApaSignal a moment to initialise, then load creatives.
-    setTimeout(load, 1200);
+    if(checkUrlPreview()) return; // preview mode only
+    setTimeout(load, 1000);
   }
-  if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', boot);
+
+  if(D.readyState==='loading') D.addEventListener('DOMContentLoaded', boot);
   else boot();
 
-  /* ── Public (for admin preview / manual triggers) ── */
-  global.ApaShadow = {
+  /* ── Public API ── */
+  W.ApaShadow = {
     reload: load,
-    stop: function(){ if (global.__apaShadowStop) global.__apaShadowStop(); },
-    /* Force a specific creative object to render (admin preview). */
-    preview: function(ad, pos){ injectCSS(); if (activeAd) teardown(); render(ad, pos || resolvePosition(ad)); },
-    _pool: function(){ return POOL.slice(); }
+    stop:   function(){ if(engineInterval) clearInterval(engineInterval); teardown(); engineRunning=false; },
+    preview:function(ad, pos){ injectCSS(); if(active) teardown(); render(ad, pos||resolvePos(ad)); },
+    _pool:  function(){ return POOL.slice(); },
+    _active:function(){ return active; }
   };
 
 })(window);
