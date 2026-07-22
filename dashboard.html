@@ -450,38 +450,22 @@ img,video,svg{max-width:100%;}
 .apa-sos:hover{transform:translateY(-1px) scale(1.03);box-shadow:0 6px 20px rgba(213,0,0,.55);}
 .apa-sos:active{transform:translateY(0) scale(.98);}
 @keyframes apaSosPulse{0%,100%{box-shadow:0 3px 14px rgba(213,0,0,.38);}50%{box-shadow:0 4px 24px rgba(213,0,0,.65);}}
-/* ══ SINGLE FIXED SOS — bottom-right, never overlaps topbar ══ */
-.cab-sos-fixed{
-  position:fixed;
-  bottom:28px;
-  right:20px;
-  z-index:9999;
-  display:inline-flex;
-  align-items:center;
-  gap:5px;
-  padding:9px 16px;
-  border-radius:100px;
+/* ══ SOS emoji button — sits inline in topbar ══ */
+.tb-sos-emoji{
+  background:none;
   border:none;
   cursor:pointer;
-  background:linear-gradient(135deg,#FF1744,#D50000);
-  color:#fff;
-  font-family:var(--font-body);
-  font-weight:800;
-  font-size:12px;
-  letter-spacing:.12em;
+  font-size:24px;
   line-height:1;
-  box-shadow:0 4px 18px rgba(213,0,0,.42);
-  transition:transform .2s ease, box-shadow .2s ease;
-  animation:apaSosPulse 3s ease-in-out infinite;
-  /* keep clear of bottom nav on PWA installs */
-  margin-bottom:env(safe-area-inset-bottom,0px);
+  padding:2px 0;
+  flex-shrink:0;
+  display:inline-flex;
+  align-items:center;
+  transition:transform .18s ease;
+  filter:drop-shadow(0 1px 3px rgba(0,0,0,.12));
 }
-.cab-sos-fixed:hover{transform:translateY(-2px) scale(1.04);box-shadow:0 8px 24px rgba(213,0,0,.6);}
-.cab-sos-fixed:active{transform:translateY(0) scale(.97);}
-/* On very small screens don't overlap bottom service bar */
-@media(max-width:480px){
-  .cab-sos-fixed{bottom:80px;right:14px;padding:8px 13px;font-size:11px;}
-}
+.tb-sos-emoji:hover{transform:scale(1.15);}
+.tb-sos-emoji:active{transform:scale(.93);}
 
 @media(max-width:560px){.apa-sos{padding:7px 12px;font-size:11px;}}
 
@@ -907,17 +891,6 @@ img,video,svg{max-width:100%;}
 
 <div class="app">
 
-  <!-- ══ SINGLE GLOBAL SOS — fixed position, never overlaps nav ══ -->
-  <button
-    class="cab-sos-fixed"
-    data-apa="sos"
-    type="button"
-    aria-label="Emergency SOS"
-  >
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-    SOS
-  </button>
-
   <!-- ════ GUEST SCREEN ════ -->
   <div class="screen active" id="screen-guest">
     <div class="topbar">
@@ -931,6 +904,7 @@ img,video,svg{max-width:100%;}
       <div class="tb-right" id="tb-right-guest">
         <!-- Guest nav — Sign In + Sign Up (hidden when logged in) -->
         <div id="dash-guest-nav" class="apa-nav" data-when="guest">
+          <button class="tb-sos-emoji" data-apa="sos" type="button" aria-label="Emergency SOS">🆘</button>
           <a href="auth.html" class="cab-auth">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
             Sign in / up
@@ -945,6 +919,8 @@ img,video,svg{max-width:100%;}
           </a>
 
           <span class="apa-welcome" id="apa-welcome"></span>
+
+          <button class="tb-sos-emoji" data-apa="sos" type="button" aria-label="Emergency SOS">🆘</button>
 
           <button class="apa-ico" id="apa-fav-btn" data-apa="fav" type="button" aria-label="Saved places" title="Saved places">
             <svg class="apa-fav-heart" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
