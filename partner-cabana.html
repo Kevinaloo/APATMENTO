@@ -687,6 +687,15 @@ async function saveOptIns() {
 
     if (error) throw error;
 
+    // Capture host in cabana_interest for admin warm launch list
+    if (pendingSelections.size > 0) {
+      await sb.from('cabana_interest').upsert({
+        user_id: currentUser.id,
+        email: currentUser.email,
+        role: 'host'
+      }, { onConflict: 'email' });
+    }
+
     // Update local state
     optedInIds = new Set(pendingSelections);
     renderOptinListings();
