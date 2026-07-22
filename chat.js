@@ -913,6 +913,16 @@ const CabanaChat = (() => {
 
   async function doSend(convId, raw, btnId, inputId, msgsId) {
     const s = sb(); if (!s || !convId || !raw.trim()) return;
+    // Block sending if conversation is locked
+    if (_conv && _conv.status === 'locked') {
+      const el = document.getElementById(msgsId);
+      if (el) {
+        el.insertAdjacentHTML('beforeend',
+          `<div class="cbm-row warn"><div class="cbm-col"><div class="cbm-bubble">This conversation is closed and no longer accepting messages.</div></div></div>`);
+        el.scrollTop = el.scrollHeight;
+      }
+      return;
+    }
     const { text: clean, scrubbed } = scrub(raw.trim());
 
     // Block purely-contact messages
@@ -975,6 +985,27 @@ const CabanaChat = (() => {
           renderMsgs(await loadMsgs(convId), document.getElementById('cbm-panel-msgs'));
           await markRead(_conv);
         })
+      .on('postgres_changes', { event:'UPDATE', schema:'public', table:'chat_conversations', filter:`id=eq.${convId}` },
+        async (payload) => {
+          const updated = payload.new;
+          if (_conv) Object.assign(_conv, updated);
+          // If just locked, apply lock UI live
+          if (updated.status === 'locked' && window.CabanaNotif) {
+            const msgsEl = document.getElementById('cbm-panel-msgs');
+            const inputBar = document.querySelector('#cbm-panel .cbm-bar');
+            CabanaNotif.applyConvLock(updated, msgsEl, inputBar);
+            const pBtn = document.getElementById('cbm-panel-send');
+            const pInp = document.getElementById('cbm-panel-input');
+            if (pBtn) pBtn.disabled = true;
+            if (pInp) { pInp.disabled = true; pInp.placeholder = 'This conversation is closed.'; }
+          }
+          // If contact just released, show banner
+          if (updated.contact_released && !(_conv?.contact_released) && window.CabanaNotif) {
+            const msgsEl = document.getElementById('cbm-panel-msgs');
+            CabanaNotif.insertContactBanner(updated, msgsEl, {});
+            renderMsgs(await loadMsgs(convId), msgsEl);
+          }
+        })
       .subscribe();
   }
 
@@ -987,6 +1018,27 @@ const CabanaChat = (() => {
           renderMsgs(await loadMsgs(convId), document.getElementById('cbm-thr-msgs'));
           await markRead(_conv);
           updateBell();
+        })
+      .on('postgres_changes', { event:'UPDATE', schema:'public', table:'chat_conversations', filter:`id=eq.${convId}` },
+        async (payload) => {
+          const updated = payload.new;
+          if (_conv) Object.assign(_conv, updated);
+          if (updated.status === 'locked' && window.CabanaNotif) {
+            const msgsEl = document.getElementById('cbm-thr-msgs');
+            const inputBar = document.querySelector('#cbm-thread .cbm-bar');
+            CabanaNotif.applyConvLock(updated, msgsEl, inputBar);
+            const tBtn = document.getElementById('cbm-thr-send');
+            const tInp = document.getElementById('cbm-thr-input');
+            if (tBtn) tBtn.disabled = true;
+            if (tInp) { tInp.disabled = true; tInp.placeholder = 'This conversation is closed.'; }
+          }
+          if (updated.contact_released && window.CabanaNotif) {
+            const msgsEl = document.getElementById('cbm-thr-msgs');
+            if (msgsEl) {
+              renderMsgs(await loadMsgs(convId), msgsEl);
+              CabanaNotif.insertContactBanner(updated, msgsEl, {});
+            }
+          }
         })
       .subscribe();
   }
@@ -1084,6 +1136,20 @@ const CabanaChat = (() => {
     renderMsgs(await loadMsgs(cv.id), msgsEl);
     subPanel(cv.id);
     updateBell();
+
+    // Apply lock UI if conversation is locked
+    if (cv.status === 'locked') {
+      const inputBar = document.querySelector('#cbm-panel .cbm-bar');
+      if (window.CabanaNotif) CabanaNotif.applyConvLock(cv, msgsEl, inputBar);
+      const pBtn = document.getElementById('cbm-panel-send');
+      const pInp = document.getElementById('cbm-panel-input');
+      if (pBtn) pBtn.disabled = true;
+      if (pInp) { pInp.disabled = true; pInp.placeholder = 'This conversation is closed.'; }
+    }
+    // Show contact release banner
+    if (cv.contact_released && window.CabanaNotif) {
+      CabanaNotif.insertContactBanner(cv, msgsEl, { address: null, phone: null });
+    }
   }
 
   async function _pSend() {
@@ -1225,6 +1291,32 @@ const CabanaChat = (() => {
     subThread(convId);
     updateBell();
     loadList(); // background refresh
+
+    // Apply lock UI if conversation is locked
+    if (cv.status === 'locked') {
+      const inputBar = document.querySelector('#cbm-thread .cbm-bar');
+      if (window.CabanaNotif) CabanaNotif.applyConvLock(cv, msgsEl, inputBar);
+      // Disable send button and textarea
+      const tBtn = document.getElementById('cbm-thr-send');
+      const tInp = document.getElementById('cbm-thr-input');
+      if (tBtn) tBtn.disabled = true;
+      if (tInp) { tInp.disabled = true; tInp.placeholder = 'This conversation is closed.'; }
+    }
+    // Show contact release banner if applicable
+    if (cv.contact_released && window.CabanaNotif) {
+      // Load contact data for banner
+      const s = sb();
+      if (s) {
+        const { data: bk } = await s.from('apartment_bookings')
+          .select('exact_address, apartment_id')
+          .eq('id', cv.booking_id || '00000000-0000-0000-0000-000000000000')
+          .maybeSingle();
+        CabanaNotif.insertContactBanner(cv, msgsEl, {
+          address: bk?.exact_address,
+          phone: null, // shown in system message already
+        });
+      }
+    }
   }
 
   async function _tSend() {
@@ -1313,4 +1405,500 @@ const CabanaChat = (() => {
     getUnread, initBell, updateBell, scrub,
     _pSend, _tSend, _thrBack, _openThr, _filter, _grow, _goStays,
   };
+})();
+
+/* ════════════════════════════════════════════════════════════════════════════
+   CABANA NOTIFICATIONS ENGINE  — appended to chat.js
+   ────────────────────────────────────────────────────────────────────────────
+   Powers:
+     1. Dashboard "ring" card notification feed (replaces static bell sheet)
+     2. Real-time toast for incoming notifications
+     3. Conversation locking UI (locked banner + disable input)
+     4. Contact release banner inside thread
+   Requires: window.sb, CabanaChat already initialised above
+   ════════════════════════════════════════════════════════════════════════════ */
+
+const CabanaNotif = (() => {
+  'use strict';
+
+  const SUPA_URL = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
+  const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
+
+  let _uid       = null;
+  let _notifSub  = null;
+  let _feed      = [];      // cached notifications
+  const sb = () => window.sb || null;
+
+  /* ── KIND → icon map ────────────────────────────────────────────────── */
+  const KIND_ICO = {
+    booking: '📅', payment: '💰', message: '💬',
+    general: '🔔', alert: '⚠️', checkin: '🔑',
+  };
+
+  /* ── CSS ────────────────────────────────────────────────────────────── */
+  function injectNotifCSS() {
+    if (document.getElementById('cbn-css')) return;
+    const s = document.createElement('style');
+    s.id = 'cbn-css';
+    s.textContent = `
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+:root{
+  --cbn-f:'Inter',-apple-system,system-ui,sans-serif;
+  --cbn-ink:#0A0A14;--cbn-ink3:#8E90AD;--cbn-bg:#FCFCFD;
+  --cbn-line:rgba(10,10,20,.07);--cbn-pri:#4361FF;--cbn-danger:#FF4D6D;
+}
+
+/* ── Notification ring card ── */
+#cbn-ring-card{
+  position:relative;border-radius:18px;overflow:visible;
+  cursor:pointer;margin-bottom:16px;display:block;
+  transition:transform .2s;
+}
+#cbn-ring-card:hover{transform:translateY(-1px);}
+.cbn-ring{
+  position:absolute;inset:-2px;border-radius:20px;
+  background:conic-gradient(from var(--cbn-angle,0deg),#FF6B6B,#FFD93D,#6BCB77,#4D96FF,#C77DFF,#FF6B6B);
+  animation:cbnRingSpin 3s linear infinite;z-index:0;
+}
+@property --cbn-angle{syntax:'<angle>';inherits:false;initial-value:0deg;}
+@keyframes cbnRingSpin{to{--cbn-angle:360deg;}}
+.cbn-ring-inner{
+  position:relative;z-index:1;
+  background:#fff;border-radius:16px;
+  overflow:hidden;
+}
+.cbn-ring-head{
+  padding:14px 16px 10px;
+  display:flex;align-items:center;gap:10px;
+  border-bottom:1px solid var(--cbn-line);
+}
+.cbn-ring-ico{
+  width:38px;height:38px;border-radius:12px;flex-shrink:0;
+  background:linear-gradient(135deg,#3D5BFF,#7B2FF7);
+  display:flex;align-items:center;justify-content:center;font-size:18px;
+}
+.cbn-ring-title{
+  flex:1;font:700 14px/1.2 var(--cbn-f);color:var(--cbn-ink);letter-spacing:-.01em;
+}
+.cbn-ring-badge{
+  min-width:20px;height:20px;border-radius:10px;
+  background:var(--cbn-danger);color:#fff;
+  font:800 10px/1 var(--cbn-f);
+  display:flex;align-items:center;justify-content:center;padding:0 5px;
+}
+.cbn-ring-badge.hidden{display:none;}
+.cbn-ring-mark-all{
+  font:600 11px/1 var(--cbn-f);color:var(--cbn-pri);
+  background:none;border:none;cursor:pointer;padding:0;
+  flex-shrink:0;
+}
+.cbn-ring-mark-all:hover{text-decoration:underline;}
+
+/* Notification rows */
+.cbn-feed{max-height:340px;overflow-y:auto;}
+.cbn-feed::-webkit-scrollbar{width:3px;}
+.cbn-feed::-webkit-scrollbar-thumb{background:rgba(10,10,20,.1);border-radius:2px;}
+.cbn-item{
+  display:flex;align-items:flex-start;gap:11px;
+  padding:12px 16px;
+  border-bottom:1px solid rgba(10,10,20,.04);
+  cursor:pointer;transition:background .12s;
+  -webkit-tap-highlight-color:transparent;
+}
+.cbn-item:last-child{border-bottom:none;}
+.cbn-item:hover{background:rgba(67,97,255,.04);}
+.cbn-item.unread{background:rgba(67,97,255,.03);}
+.cbn-item-ico{
+  width:36px;height:36px;border-radius:50%;flex-shrink:0;
+  background:rgba(67,97,255,.08);
+  display:flex;align-items:center;justify-content:center;font-size:17px;
+  position:relative;
+}
+.cbn-item-dot{
+  position:absolute;top:0;right:0;
+  width:9px;height:9px;border-radius:50%;
+  background:var(--cbn-pri);border:2px solid #fff;
+}
+.cbn-item-body{flex:1;min-width:0;}
+.cbn-item-title{
+  font:600 13px/1.3 var(--cbn-f);color:var(--cbn-ink);letter-spacing:-.01em;
+  margin-bottom:3px;
+}
+.cbn-item.unread .cbn-item-title{font-weight:700;}
+.cbn-item-body-txt{
+  font:400 12px/1.45 var(--cbn-f);color:var(--cbn-ink3);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.cbn-item-time{
+  font:400 10px/1 var(--cbn-f);color:var(--cbn-ink3);flex-shrink:0;
+  margin-top:1px;
+}
+.cbn-feed-empty{
+  padding:28px 16px;text-align:center;
+  font:400 13px/1.5 var(--cbn-f);color:var(--cbn-ink3);
+}
+.cbn-feed-foot{
+  padding:10px 16px;text-align:center;
+  border-top:1px solid var(--cbn-line);
+}
+.cbn-feed-foot a{
+  font:600 12px/1 var(--cbn-f);color:var(--cbn-pri);
+  text-decoration:none;cursor:pointer;
+}
+.cbn-feed-foot a:hover{text-decoration:underline;}
+
+/* ── Locked conversation banner ── */
+.cbm-locked-banner{
+  margin:0;padding:13px 16px;
+  background:rgba(255,77,109,.05);
+  border-top:1px solid rgba(255,77,109,.12);
+  border-bottom:1px solid rgba(255,77,109,.12);
+  display:flex;align-items:center;gap:9px;flex-shrink:0;
+}
+.cbm-locked-banner svg{flex-shrink:0;color:#FF4D6D;}
+.cbm-locked-text{font:500 12px/1.45 var(--cbn-f);color:#C0122A;}
+.cbm-locked-text strong{font-weight:700;}
+.cbm-input-locked{
+  opacity:.45;pointer-events:none;user-select:none;
+}
+
+/* ── Contact released banner ── */
+.cbm-contact-banner{
+  margin:10px 14px;padding:14px 16px;
+  background:rgba(23,198,176,.06);
+  border:1px solid rgba(23,198,176,.2);
+  border-radius:14px;
+}
+.cbm-contact-banner-head{
+  display:flex;align-items:center;gap:8px;
+  font:700 13px/1.2 var(--cbn-f);color:#0E7A6D;
+  margin-bottom:8px;
+}
+.cbm-contact-banner-body{
+  font:400 12px/1.6 var(--cbn-f);color:#1A5C55;
+}
+.cbm-contact-row{
+  display:flex;align-items:center;gap:7px;
+  font:600 13px/1.3 var(--cbn-f);color:#0A0A14;
+  margin-top:6px;
+}
+.cbm-contact-row svg{color:#17C6B0;flex-shrink:0;}
+
+/* ── Toast (override for wider notif toasts) ── */
+.cbn-toast-wide{
+  max-width:calc(100vw - 32px);white-space:normal;
+  text-align:left;padding:13px 18px;
+  line-height:1.45;
+}
+
+/* Bell dot — match chrome */
+.apa-ico[data-apa="notif"] .apa-ico-dot{
+  display:none;
+}
+.apa-ico[data-apa="notif"][data-unread="1"] .apa-ico-dot{
+  display:block;
+}
+    `;
+    document.head.appendChild(s);
+  }
+
+  /* ── Time formatting ─────────────────────────────────────────────────── */
+  function fmtAge(iso) {
+    const d = new Date(iso), now = new Date();
+    const diff = Math.floor((now - d) / 60000);
+    if (diff < 1)     return 'Just now';
+    if (diff < 60)    return diff + 'm ago';
+    if (diff < 1440)  return Math.floor(diff/60) + 'h ago';
+    if (diff < 10080) return d.toLocaleDateString('en-KE', { weekday:'short' });
+    return d.toLocaleDateString('en-KE', { month:'short', day:'numeric' });
+  }
+
+  /* ── Load notifications ──────────────────────────────────────────────── */
+  async function loadNotifs(limit = 30) {
+    const s = sb(); if (!s || !_uid) return [];
+    try {
+      const { data } = await s.from('notifications')
+        .select('*')
+        .eq('user_id', _uid)
+        .order('created_at', { ascending:false })
+        .limit(limit);
+      _feed = data || [];
+      return _feed;
+    } catch (_) { return []; }
+  }
+
+  /* ── Unread count ────────────────────────────────────────────────────── */
+  async function getUnreadNotifCount() {
+    const s = sb(); if (!s || !_uid) return 0;
+    try {
+      const { count } = await s.from('notifications')
+        .select('id', { count:'exact', head:true })
+        .eq('user_id', _uid).eq('read', false);
+      return count || 0;
+    } catch (_) { return 0; }
+  }
+
+  /* ── Mark all read ───────────────────────────────────────────────────── */
+  async function markAllRead() {
+    const s = sb(); if (!s || !_uid) return;
+    await s.from('notifications')
+      .update({ read:true })
+      .eq('user_id', _uid).eq('read', false);
+    _feed = _feed.map(n => ({ ...n, read:true }));
+    renderRingCard();
+    updateAllBadges(0);
+  }
+
+  async function markOneRead(id) {
+    const s = sb(); if (!s) return;
+    await s.from('notifications').update({ read:true }).eq('id', id);
+    _feed = _feed.map(n => n.id === id ? { ...n, read:true } : n);
+    await syncBadges();
+  }
+
+  /* ── Badge sync — messages + notifications combined ─────────────────── */
+  async function syncBadges() {
+    const [msgs, notifs] = await Promise.all([
+      CabanaChat.getUnread ? CabanaChat.getUnread() : 0,
+      getUnreadNotifCount(),
+    ]);
+    const total = msgs + notifs;
+    updateAllBadges(total, msgs, notifs);
+    return total;
+  }
+
+  function updateAllBadges(total, msgs, notifs) {
+    // Chrome bell dot
+    document.querySelectorAll('.apa-ico[data-apa="notif"]').forEach(btn => {
+      const dot = btn.querySelector('.apa-ico-dot');
+      if (dot) dot.style.display = total > 0 ? 'block' : 'none';
+      btn.setAttribute('data-unread', total > 0 ? '1' : '0');
+    });
+    // Stays topbar inbox badge (msgs only)
+    const tb = document.getElementById('tb-inbox-badge');
+    if (tb) {
+      if ((msgs||0) > 0) { tb.textContent = msgs > 99 ? '99+' : String(msgs); tb.classList.add('on'); }
+      else tb.classList.remove('on');
+    }
+    // Ring card badge
+    const rb = document.getElementById('cbn-ring-badge');
+    if (rb) {
+      if (total > 0) { rb.textContent = total > 99 ? '99+' : String(total); rb.classList.remove('hidden'); }
+      else rb.classList.add('hidden');
+    }
+  }
+
+  /* ── Realtime subscription for new notifications ─────────────────────── */
+  function subNotifs() {
+    const s = sb(); if (!s || _notifSub || !_uid) return;
+    _notifSub = s.channel('cbn-notif-' + _uid)
+      .on('postgres_changes', {
+        event:'INSERT', schema:'public', table:'notifications',
+        filter:`user_id=eq.${_uid}`,
+      }, async (payload) => {
+        const n = payload.new;
+        _feed.unshift(n);
+        renderRingCard();
+        syncBadges();
+        showNotifToast(n);
+      })
+      .subscribe();
+  }
+
+  /* ── Toast for new incoming notification ─────────────────────────────── */
+  function showNotifToast(n) {
+    const ico = KIND_ICO[n.kind] || '🔔';
+    let t = document.getElementById('cbm-toast');
+    if (!t) { t = Object.assign(document.createElement('div'), { id:'cbm-toast', className:'cbm-toast' }); document.body.appendChild(t); }
+    t.className = 'cbm-toast cbn-toast-wide show';
+    t.innerHTML = `<span style="margin-right:7px">${ico}</span><strong>${escHtml(n.title)}</strong>${n.body ? '<br><span style="font-weight:400;font-size:12px">' + escHtml(n.body) + '</span>' : ''}`;
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => t.classList.remove('show'), 5000);
+    // Click opens relevant destination
+    t.onclick = () => { t.classList.remove('show'); if (n.url) location.href = n.url; };
+  }
+
+  function escHtml(str) {
+    return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  /* ── Render the ring card (dashboard) ───────────────────────────────── */
+  function renderRingCard() {
+    const card = document.getElementById('cbn-ring-card');
+    if (!card) return;
+
+    const unread = _feed.filter(n => !n.read).length;
+    const badge  = card.querySelector('#cbn-ring-badge');
+    if (badge) {
+      if (unread > 0) { badge.textContent = unread > 99 ? '99+' : String(unread); badge.classList.remove('hidden'); }
+      else badge.classList.add('hidden');
+    }
+
+    const feed = card.querySelector('.cbn-feed');
+    if (!feed) return;
+
+    if (!_feed.length) {
+      feed.innerHTML = '<div class="cbn-feed-empty">You\'re all caught up 🎉</div>';
+      return;
+    }
+
+    feed.innerHTML = _feed.slice(0, 15).map(n => {
+      const ico = KIND_ICO[n.kind] || '🔔';
+      return `<div class="cbn-item${n.read?'':' unread'}" onclick="CabanaNotif._handleNotifClick('${n.id}','${escHtml(n.url||'')}')">
+        <div class="cbn-item-ico">${ico}${!n.read?'<span class="cbn-item-dot"></span>':''}</div>
+        <div class="cbn-item-body">
+          <div class="cbn-item-title">${escHtml(n.title)}</div>
+          <div class="cbn-item-body-txt">${escHtml(n.body||'')}</div>
+        </div>
+        <div class="cbn-item-time">${fmtAge(n.created_at)}</div>
+      </div>`;
+    }).join('');
+  }
+
+  /* ── Build the ring card DOM (called once on dashboard) ─────────────── */
+  function buildRingCard(containerSelector) {
+    const container = document.querySelector(containerSelector || '#cbn-ring-slot');
+    if (!container) return;
+    if (document.getElementById('cbn-ring-card')) return;
+
+    const card = document.createElement('div');
+    card.id = 'cbn-ring-card';
+    card.innerHTML = `
+      <div class="cbn-ring"></div>
+      <div class="cbn-ring-inner">
+        <div class="cbn-ring-head">
+          <div class="cbn-ring-ico">🔔</div>
+          <div class="cbn-ring-title">Notifications</div>
+          <span class="cbn-ring-badge hidden" id="cbn-ring-badge">0</span>
+          <button class="cbn-ring-mark-all" onclick="CabanaNotif.markAllRead()" title="Mark all as read">Mark all read</button>
+        </div>
+        <div class="cbn-feed" id="cbn-feed">
+          <div class="cbn-feed-empty">Loading…</div>
+        </div>
+        <div class="cbn-feed-foot">
+          <a onclick="CabanaNotif.loadMore()">View all notifications</a>
+        </div>
+      </div>`;
+    container.appendChild(card);
+  }
+
+  /* ── Handle notification click ───────────────────────────────────────── */
+  async function _handleNotifClick(id, url) {
+    await markOneRead(id);
+    renderRingCard();
+    if (url && url !== 'undefined') {
+      // If it's a message notification, open messenger
+      if (url.includes('dashboard') || url.includes('inbox')) {
+        if (window.CabanaChat) { CabanaChat.openInbox(); return; }
+      }
+      location.href = url;
+    }
+  }
+
+  async function loadMore() {
+    _feed = await loadNotifs(100);
+    renderRingCard();
+  }
+
+  /* ── CONVERSATION LOCK UI ────────────────────────────────────────────── */
+  function applyConvLock(conv, msgsEl, inputBarEl) {
+    if (!conv || conv.status !== 'locked') return;
+
+    const reason = conv.locked_reason;
+    let msg = '';
+    if (reason === '24h_no_booking') {
+      msg = '<strong>Chat closed.</strong> No booking was made within 24 hours. Enquire again from the listing page to restart.';
+    } else if (reason === 'stay_ended') {
+      msg = '<strong>Stay complete.</strong> This conversation has been closed as the stay period ended.';
+    } else {
+      msg = '<strong>Conversation closed.</strong> This chat is no longer active.';
+    }
+
+    // Insert locked banner before input bar
+    if (inputBarEl && !inputBarEl.previousElementSibling?.classList.contains('cbm-locked-banner')) {
+      const banner = document.createElement('div');
+      banner.className = 'cbm-locked-banner';
+      banner.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><span class="cbm-locked-text">${msg}</span>`;
+      inputBarEl.parentNode.insertBefore(banner, inputBarEl);
+    }
+
+    // Disable input
+    if (inputBarEl) inputBarEl.classList.add('cbm-input-locked');
+  }
+
+  /* ── CONTACT RELEASED BANNER ─────────────────────────────────────────── */
+  function insertContactBanner(conv, msgsEl, contactData) {
+    if (!conv?.contact_released || !msgsEl) return;
+    if (msgsEl.querySelector('.cbm-contact-banner')) return; // already shown
+
+    const { phone, address } = contactData || {};
+    const banner = document.createElement('div');
+    banner.className = 'cbm-contact-banner';
+    banner.innerHTML = `
+      <div class="cbm-contact-banner-head">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12.11 19.79 19.79 0 0 1 1.56 3.5 2 2 0 0 1 3.55 1.32h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.91a16 16 0 0 0 6.18 6.18l1.76-1.76a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        Contact Details Released
+      </div>
+      <div class="cbm-contact-banner-body">
+        Your booking is confirmed. Contact details have been shared.
+        ${address ? `<div class="cbm-contact-row"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>${escHtml(address)}</div>` : ''}
+        ${phone  ? `<div class="cbm-contact-row"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12.11"/></svg>${escHtml(phone)}</div>` : ''}
+        <div class="cbm-contact-row" style="margin-top:10px;color:#C0122A;font-size:11px">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <strong>Check-in code:</strong>&nbsp;Share this face-to-face upon arrival only. Never send it over chat.
+        </div>
+      </div>`;
+    msgsEl.prepend(banner);
+  }
+
+  /* ── INIT ────────────────────────────────────────────────────────────── */
+  async function init() {
+    injectNotifCSS();
+
+    // Resolve user
+    const user = await (window.CabanaChat
+      ? (async () => {
+          if (window.CURRENT_USER) return window.CURRENT_USER;
+          if (window.ApaSession) return new Promise(res => ApaSession.ready(st => res(st?.user||null)));
+          return null;
+        })()
+      : Promise.resolve(null));
+
+    if (!user) return;
+    _uid = user.id;
+
+    // Build ring card if slot exists on dashboard
+    buildRingCard('#cbn-ring-slot');
+
+    // Load notifications
+    await loadNotifs();
+    renderRingCard();
+    await syncBadges();
+
+    // Start realtime subscription
+    subNotifs();
+
+    // Poll every 60s as fallback
+    setInterval(async () => {
+      await loadNotifs();
+      renderRingCard();
+      syncBadges();
+    }, 60_000);
+  }
+
+  // Auto-init with delay to let session boot
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => setTimeout(init, 800));
+  } else {
+    setTimeout(init, 800);
+  }
+
+  /* ── Public API ──────────────────────────────────────────────────────── */
+  window.CabanaNotif = {
+    init, loadNotifs, markAllRead, markOneRead, syncBadges,
+    buildRingCard, renderRingCard, showNotifToast, loadMore,
+    applyConvLock, insertContactBanner,
+    _handleNotifClick,
+  };
+  return window.CabanaNotif;
 })();
