@@ -229,6 +229,78 @@ td strong{color:var(--ink);font-weight:600;}
 .tb-switch-btn:hover{background:rgba(45,212,191,.14);border-color:rgba(45,212,191,.55);transform:translateY(-1px);}
 .tb-switch-btn svg{flex-shrink:0;}
 @media(max-width:520px){.tb-switch-txt{display:none;}}
+
+/* ── Host Cabana Match glow card ── */
+.host-cabana-card{
+  position:relative;
+  width:100%;border:none;background:none;
+  padding:3px;border-radius:20px;
+  cursor:pointer;isolation:isolate;
+  overflow:visible;
+  display:block;text-decoration:none;
+  margin-bottom:20px;
+  animation:hostCabanaVibrate 4s ease-in-out infinite;
+}
+@keyframes hostCabanaVibrate{
+  0%,100%{transform:scale(1);}
+  92%{transform:scale(1);}
+  93%{transform:scale(1.005) rotate(.3deg);}
+  94%{transform:scale(1.005) rotate(-.3deg);}
+  95%{transform:scale(1.005) rotate(.2deg);}
+  96%{transform:scale(1.005) rotate(0);}
+  97%{transform:scale(1);}
+}
+.hcc-ring{
+  position:absolute;inset:0;border-radius:20px;
+  background:conic-gradient(from var(--hcc-angle,0deg),#FF6B6B,#FFD93D,#6BCB77,#4D96FF,#C77DFF,#FF6B6B);
+  animation:hccRingSpin 3s linear infinite;
+  filter:blur(1px);
+  z-index:0;
+}
+@property --hcc-angle{syntax:"<angle>";inherits:false;initial-value:0deg;}
+@keyframes hccRingSpin{to{--hcc-angle:360deg;}}
+.hcc-glow{
+  position:absolute;inset:-4px;border-radius:24px;z-index:-1;
+  background:conic-gradient(from var(--hcc-angle,0deg),#FF6B6B,#FFD93D,#6BCB77,#4D96FF,#C77DFF,#FF6B6B);
+  filter:blur(12px);opacity:.45;
+  animation:hccRingSpin 3s linear infinite;
+}
+.hcc-inner{
+  position:relative;z-index:1;
+  display:flex;align-items:center;gap:14px;
+  background:#fff;
+  border-radius:18px;
+  padding:16px 18px;
+}
+.host-cabana-card:hover .hcc-inner{background:rgba(253,253,254,1);}
+.hcc-icon{
+  width:52px;height:52px;border-radius:15px;flex-shrink:0;
+  background:conic-gradient(from 45deg,#FF6B6B,#FFD93D,#6BCB77,#4D96FF,#C77DFF,#FF6B6B);
+  display:flex;align-items:center;justify-content:center;color:#fff;font-size:24px;
+  animation:hccIconHue 6s linear infinite;
+  box-shadow:0 4px 18px rgba(123,47,247,.3);
+}
+@keyframes hccIconHue{0%{filter:hue-rotate(0deg);}100%{filter:hue-rotate(360deg);}}
+.hcc-body{flex:1;min-width:0;}
+.hcc-label{
+  display:block;
+  font-family:"Inter",sans-serif;font-weight:800;font-size:15px;
+  background:linear-gradient(90deg,#C77DFF,#4D96FF,#6BCB77,#FFD93D,#FF6B6B);
+  background-size:200% auto;
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  animation:hccLabelShimmer 4s linear infinite;
+  margin-bottom:3px;
+}
+@keyframes hccLabelShimmer{0%{background-position:0%;}100%{background-position:200%;}}
+.hcc-sub{font-size:11.5px;color:var(--ink-faint,#8E90AD);}
+.hcc-badge{
+  flex-shrink:0;font-size:9px;font-weight:800;letter-spacing:.1em;
+  color:#fff;
+  background:linear-gradient(135deg,#FF6B6B,#C77DFF);
+  padding:5px 10px;border-radius:100px;
+  animation:hccBadgePulse 2s ease-in-out infinite;
+}
+@keyframes hccBadgePulse{0%,100%{box-shadow:0 0 0 0 rgba(199,125,255,.5);}50%{box-shadow:0 0 0 8px rgba(199,125,255,0);}}
 </style>
 <link rel="stylesheet" href="/brand.css"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/><link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
@@ -345,6 +417,20 @@ td strong{color:var(--ink);font-weight:600;}
     Invite & earn
   </a>
 </div>
+
+<!-- HOST CABANA MATCH GLOW CARD -->
+<a class="host-cabana-card" href="partner-cabana.html">
+  <span class="hcc-ring"></span>
+  <span class="hcc-glow"></span>
+  <span class="hcc-inner">
+    <span class="hcc-icon">🏠</span>
+    <span class="hcc-body">
+      <span class="hcc-label">Opt in to Cabana Match</span>
+      <span class="hcc-sub">Let guests find you · World's first reverse booking · Hosts chase guests</span>
+    </span>
+    <span class="hcc-badge">NEW</span>
+  </span>
+</a>
 
 
 <!-- Quick add section -->
@@ -552,25 +638,25 @@ document.getElementById('import-modal').addEventListener('click', function(e) {
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
     Listings
   </a>
-  <a class="mn-item" href="partner-bookings.html">
+  <a class="mn-item " href="partner-bookings.html">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg>
     Bookings
   </a>
-  <a class="mn-item" href="partner-agents.html">
+  <a class="mn-item " href="partner-agents.html">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-    <span>Agents</span>
+    Agents
   </a>
-  <a class="mn-item" href="partner-earnings.html">
+  <a class="mn-item " href="partner-earnings.html">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
     Earnings
   </a>
-  <a class="mn-item" href="partner-calendar.html">
+  <a class="mn-item " href="partner-calendar.html">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
     Calendar
   </a>
-  <a class="mn-item" href="partner-analytics.html">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18M18 9l-5 5-4-4-4 4"/></svg>
-    Analytics
+  <a class="mn-item " href="partner-cabana.html" style="position:relative;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8l-5-5-5 5h3v6h4V8h3z"/><circle cx="12" cy="15" r="3"/></svg>
+    Match <span style="position:absolute;top:0;right:0;width:6px;height:6px;border-radius:50%;background:linear-gradient(135deg,#C77DFF,#4D96FF);animation:cmBadgePulse 2s ease-in-out infinite;"></span>
   </a>
 </nav>
 

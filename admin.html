@@ -493,6 +493,14 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
         </div>
       </div>
 
+
+      <div class="nav-grp">
+        <div class="nav-h">Cabana Match</div>
+        <div class="nav-i" data-sec="cabana" onclick="go('cabana',this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8l-5-5-5 5h3v6h4V8h3z"/><circle cx="12" cy="15" r="3"/></svg>
+          Cabana Match <span class="nav-b" id="b-cabana" style="background:linear-gradient(135deg,#C77DFF,#4D96FF);">0</span>
+        </div>
+      </div>
       <div class="nav-grp">
         <div class="nav-h">System</div>
         <div class="nav-i" data-sec="audit" onclick="go('audit',this)">
@@ -1081,6 +1089,79 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
       </section>
 
 
+
+      <!-- ─── CABANA MATCH ADMIN ─── -->
+      <section class="sec" id="s-cabana">
+        <div class="hd">
+          <div>
+            <h1>Cabana <em>Match</em></h1>
+            <p>World's first reverse short-stay marketplace. Manage opted-in hosts, live guest requests, responses, and launch interest signups.</p>
+          </div>
+          <div class="hd-act">
+            <button class="btn btn-g btn-sm" onclick="cabanaLoad()">↻ Refresh</button>
+          </div>
+        </div>
+
+        <!-- Stats row -->
+        <div class="grid g4" id="cabana-stats" style="margin-bottom:20px;">
+          <div class="fn-card"><div class="fn-v" id="cs-opted-in">—</div><div class="fn-p">Opted-in listings</div></div>
+          <div class="fn-card"><div class="fn-v" id="cs-live-req">—</div><div class="fn-p">Live requests now</div></div>
+          <div class="fn-card"><div class="fn-v" id="cs-responses">—</div><div class="fn-p">Host responses (all time)</div></div>
+          <div class="fn-card"><div class="fn-v" id="cs-interest">—</div><div class="fn-p">Interest signups</div></div>
+        </div>
+
+        <!-- Opted-in hosts/listings -->
+        <div class="card" style="margin-bottom:16px;">
+          <div class="card-t">Opted-in Listings</div>
+          <div class="card-s">Hosts who have opted their listings into Cabana Match. Remove any listing here — changes reflect immediately.</div>
+          <div class="tabs">
+            <button class="tab on" onclick="cabanaFilterOptins('all',this)">All</button>
+            <button class="tab" onclick="cabanaFilterOptins('stay',this)">Stays</button>
+            <button class="tab" onclick="cabanaFilterOptins('tour',this)">Tours</button>
+          </div>
+          <div style="overflow-x:auto;">
+            <table>
+              <thead><tr>
+                <th>Listing</th><th>Host email</th><th>Type</th><th>Opted in</th><th>Status</th><th>Action</th>
+              </tr></thead>
+              <tbody id="cabana-optins-tbody">
+                <tr><td colspan="6"><div class="empty"><div class="empty-t">Loading…</div></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Live requests -->
+        <div class="card" style="margin-bottom:16px;">
+          <div class="card-t">Live Guest Requests</div>
+          <div class="card-s">Requests currently active with time remaining. Auto-expire after 20 minutes.</div>
+          <div style="overflow-x:auto;">
+            <table>
+              <thead><tr>
+                <th>Guest</th><th>Location</th><th>Dates</th><th>Guests</th><th>Expires</th><th>Responses</th><th>Status</th><th>Action</th>
+              </tr></thead>
+              <tbody id="cabana-requests-tbody">
+                <tr><td colspan="8"><div class="empty"><div class="empty-t">Loading…</div></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Interest signups -->
+        <div class="card">
+          <div class="card-t">Interest Signups</div>
+          <div class="card-s">Users who clicked "Notify me at launch" on the Cabana Match modal. These are your warm launch list.</div>
+          <div style="overflow-x:auto;">
+            <table>
+              <thead><tr><th>Email</th><th>Role</th><th>User ID</th><th>Signed up</th></tr></thead>
+              <tbody id="cabana-interest-tbody">
+                <tr><td colspan="4"><div class="empty"><div class="empty-t">Loading…</div></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
       <section class="sec" id="s-system">
         <div class="hd"><div><h1>Diagnostics</h1><p>The console renders with a half-broken database. Here is what did not respond.</p></div>
         <div class="hd-act"><button class="btn btn-g btn-sm" onclick="runSchemaCheck()">Re-check schema</button></div></div>
@@ -1654,6 +1735,7 @@ function go(sec, el){
   if(sec==='godmode') gmRenderAll();
   if(sec==='lazy') lazyLoad('pending');
   if(sec==='impersonate') impLogLoad();
+  if(sec==='cabana') cabanaLoad();
 }
 function setRange(d, el){
   RANGE = d;
@@ -4305,6 +4387,184 @@ async function pushFireNow(id, title) {
   await pushLoadCampaigns();
 }
 
+
+/* ════════════════════════════════════════════════════════
+   CABANA MATCH — Admin Panel JS
+════════════════════════════════════════════════════════ */
+let cabanaOptin_all = [];
+
+async function cabanaLoad() {
+  await Promise.all([
+    cabanaLoadOptins(),
+    cabanaLoadRequests(),
+    cabanaLoadInterest(),
+    cabanaLoadStats()
+  ]);
+}
+
+async function cabanaLoadStats() {
+  try {
+    const [optRes, reqRes, rspRes, intRes] = await Promise.all([
+      sb.from("cabana_host_opt_ins").select("id", { count:"exact", head:true }).eq("opted_in", true),
+      sb.from("cabana_match_requests").select("id", { count:"exact", head:true }).eq("status", "live"),
+      sb.from("cabana_match_responses").select("id", { count:"exact", head:true }),
+      sb.from("cabana_interest").select("id", { count:"exact", head:true })
+    ]);
+    const  = id => document.getElementById(id);
+    if(("cs-opted-in")) ("cs-opted-in").textContent = optRes.count ?? "—";
+    if(("cs-live-req")) ("cs-live-req").textContent = reqRes.count ?? "—";
+    if(("cs-responses")) ("cs-responses").textContent = rspRes.count ?? "—";
+    if(("cs-interest")) ("cs-interest").textContent = intRes.count ?? "—";
+    // Update nav badge
+    const badge = document.getElementById("b-cabana");
+    if(badge) badge.textContent = (optRes.count||0);
+  } catch(e) { console.warn("cabana stats", e); }
+}
+
+async function cabanaLoadOptins(filter="all") {
+  const tbody = document.getElementById("cabana-optins-tbody");
+  if(!tbody) return;
+  tbody.innerHTML = "<tr><td colspan=6><div class=empty><div class=empty-t>Loading…</div></div></td></tr>";
+  try {
+    let q = sb.from("cabana_host_opt_ins")
+      .select("id,host_id,listing_id,listing_title,listing_type,opted_in,opted_in_at,opted_out_at")
+      .order("opted_in_at", { ascending: false })
+      .limit(200);
+    if(filter !== "all") q = q.eq("listing_type", filter);
+    const { data, error } = await q;
+    if(error || !data?.length) {
+      tbody.innerHTML = "<tr><td colspan=6><div class=empty><div class=empty-t>No opted-in listings yet</div><div class=empty-s>Hosts opt in from their partner dashboard.</div></div></td></tr>";
+      return;
+    }
+    cabanaOptin_all = data;
+    renderCabanaOptins(data);
+  } catch(e) { tbody.innerHTML = "<tr><td colspan=6><div class=empty><div class=empty-t>Error loading</div></div></td></tr>"; }
+}
+
+function renderCabanaOptins(rows) {
+  const tbody = document.getElementById("cabana-optins-tbody");
+  if(!tbody) return;
+  tbody.innerHTML = rows.map(r => {
+    const statusBadge = r.opted_in
+      ? "<span style=background:#16a34a;color:#fff;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700;>Active</span>"
+      : "<span style=background:#6b7280;color:#fff;padding:2px 8px;border-radius:6px;font-size:11px;>Opted out</span>";
+    const since = r.opted_in ? F.ago(r.opted_in_at) : F.ago(r.opted_out_at);
+    return `<tr>
+      <td><div style=font-weight:600;font-size:13px;>${esc(r.listing_title||r.listing_id)}</div><div style=font-size:11px;color:var(--ink-3);>${esc(r.listing_id)}</div></td>
+      <td style=font-size:12px;>${esc(r.host_id?.slice(0,8))}…</td>
+      <td>${esc(r.listing_type||"stay")}</td>
+      <td style=font-size:12px;>${since}</td>
+      <td>${statusBadge}</td>
+      <td>
+        ${r.opted_in
+          ? `<button onclick=cabanaRemoveOptin('${r.id}') class="btn btn-danger btn-sm" style=font-size:11px;>Remove</button>`
+          : `<button onclick=cabanaRestoreOptin('${r.id}') class="btn btn-g btn-sm" style=font-size:11px;>Restore</button>`
+        }
+      </td>
+    </tr>`;
+  }).join("");
+}
+
+function cabanaFilterOptins(type, el) {
+  el.parentNode.querySelectorAll(".tab").forEach(t => t.classList.remove("on"));
+  el.classList.add("on");
+  if(type === "all") renderCabanaOptins(cabanaOptin_all);
+  else renderCabanaOptins(cabanaOptin_all.filter(r => r.listing_type === type));
+}
+
+async function cabanaRemoveOptin(id) {
+  if(!confirm("Remove this listing from Cabana Match? The host can re-opt-in anytime.")) return;
+  const { error } = await sb.from("cabana_host_opt_ins").update({ opted_in: false, opted_out_at: new Date().toISOString() }).eq("id", id);
+  if(error) { alert("Error: " + error.message); return; }
+  await cabanaLoad();
+}
+
+async function cabanaRestoreOptin(id) {
+  const { error } = await sb.from("cabana_host_opt_ins").update({ opted_in: true, opted_out_at: null, opted_in_at: new Date().toISOString() }).eq("id", id);
+  if(error) { alert("Error: " + error.message); return; }
+  await cabanaLoad();
+}
+
+async function cabanaLoadRequests() {
+  const tbody = document.getElementById("cabana-requests-tbody");
+  if(!tbody) return;
+  tbody.innerHTML = "<tr><td colspan=8><div class=empty><div class=empty-t>Loading…</div></div></td></tr>";
+  try {
+    const { data, error } = await sb.from("cabana_match_requests")
+      .select("id,guest_id,guest_name,location,checkin_date,checkout_date,guests,status,expires_at,created_at")
+      .order("created_at", { ascending: false })
+      .limit(100);
+    if(error || !data?.length) {
+      tbody.innerHTML = "<tr><td colspan=8><div class=empty><div class=empty-t>No requests yet</div><div class=empty-s>Requests appear here as guests use Cabana Match.</div></div></td></tr>";
+      return;
+    }
+    // Get response counts
+    const ids = data.map(r => r.id);
+    const { data: rspCounts } = await sb.from("cabana_match_responses")
+      .select("request_id")
+      .in("request_id", ids);
+    const countMap = {};
+    (rspCounts||[]).forEach(r => { countMap[r.request_id] = (countMap[r.request_id]||0) + 1; });
+    tbody.innerHTML = data.map(r => {
+      const secsLeft = Math.max(0, Math.floor((new Date(r.expires_at) - new Date()) / 1000));
+      const timerStr = r.status === "live"
+        ? `<span style=color:#FF6B6B;font-weight:700;>${Math.floor(secsLeft/60)}:${String(secsLeft%60).padStart(2,"0")}</span>`
+        : "—";
+      const statusBadge = {
+        live:    "<span style=background:#7B2FF7;color:#fff;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700;>Live</span>",
+        expired: "<span style=background:#6b7280;color:#fff;padding:2px 8px;border-radius:6px;font-size:11px;>Expired</span>",
+        booked:  "<span style=background:#16a34a;color:#fff;padding:2px 8px;border-radius:6px;font-size:11px;>Booked</span>",
+        closed:  "<span style=background:#374151;color:#fff;padding:2px 8px;border-radius:6px;font-size:11px;>Closed</span>"
+      }[r.status] || r.status;
+      return `<tr>
+        <td><div style=font-weight:600;font-size:13px;>${esc(r.guest_name||"Guest")}</div><div style=font-size:10px;color:var(--ink-3);>${esc(r.guest_id?.slice(0,8))}…</div></td>
+        <td>${esc(r.location)}</td>
+        <td style=font-size:12px;>${r.checkin_date} → ${r.checkout_date}</td>
+        <td>${r.guests}</td>
+        <td>${timerStr}</td>
+        <td style=font-weight:700;>${countMap[r.id]||0}</td>
+        <td>${statusBadge}</td>
+        <td>
+          ${r.status === "live"
+            ? `<button onclick=cabanaExpireRequest('${r.id}') class="btn btn-danger btn-sm" style=font-size:11px;>Force expire</button>`
+            : ""
+          }
+        </td>
+      </tr>`;
+    }).join("");
+  } catch(e) { tbody.innerHTML = "<tr><td colspan=8><div class=empty><div class=empty-t>Error</div></div></td></tr>"; }
+}
+
+async function cabanaExpireRequest(id) {
+  if(!confirm("Force-expire this request? All pending host responses will be cleared.")) return;
+  const { error } = await sb.from("cabana_match_requests")
+    .update({ status: "expired", closed_at: new Date().toISOString() })
+    .eq("id", id);
+  if(error) { alert("Error: " + error.message); return; }
+  await cabanaLoadRequests();
+}
+
+async function cabanaLoadInterest() {
+  const tbody = document.getElementById("cabana-interest-tbody");
+  if(!tbody) return;
+  tbody.innerHTML = "<tr><td colspan=4><div class=empty><div class=empty-t>Loading…</div></div></td></tr>";
+  try {
+    const { data, error } = await sb.from("cabana_interest")
+      .select("id,user_id,email,role,created_at")
+      .order("created_at", { ascending: false })
+      .limit(500);
+    if(error || !data?.length) {
+      tbody.innerHTML = "<tr><td colspan=4><div class=empty><div class=empty-t>No interest signups yet</div><div class=empty-s>Guests who click Notify Me on the Cabana modal appear here.</div></div></td></tr>";
+      return;
+    }
+    tbody.innerHTML = data.map(r => `<tr>
+      <td style=font-weight:600;>${esc(r.email)}</td>
+      <td><span style=background:rgba(123,47,247,.12);color:#7B2FF7;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;>${esc(r.role||"guest")}</span></td>
+      <td style=font-size:11px;color:var(--ink-3);>${esc(r.user_id?.slice(0,10)||"—")}…</td>
+      <td style=font-size:12px;>${F.ago(r.created_at)}</td>
+    </tr>`).join("");
+  } catch(e) { tbody.innerHTML = "<tr><td colspan=4><div class=empty><div class=empty-t>Error</div></div></td></tr>"; }
+}
 function esc(s){ if(!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 </script>

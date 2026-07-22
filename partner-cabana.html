@@ -284,6 +284,71 @@ body{display:flex;flex-direction:column;overflow-x:hidden;}
 /* LOADING SKELETON */
 .skeleton{background:linear-gradient(90deg,var(--glass-2) 25%,var(--glass-3) 50%,var(--glass-2) 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:10px;}
 @keyframes shimmer{0%{background-position:200% 0;}100%{background-position:-200% 0;}}
+
+/* ── Listing optin checkboxes ── */
+.listing-optin-row{
+  display:flex;align-items:center;gap:14px;
+  padding:12px 14px;border-radius:14px;
+  border:1.5px solid var(--line);
+  background:#fff;margin-bottom:8px;
+  transition:border-color .2s,box-shadow .2s;
+  cursor:pointer;
+}
+.listing-optin-row:hover{border-color:rgba(199,125,255,.35);box-shadow:0 3px 12px rgba(199,125,255,.08);}
+.listing-optin-row.checked{
+  border-color:rgba(107,203,119,.4);
+  background:linear-gradient(135deg,rgba(107,203,119,.05),rgba(77,150,255,.03));
+}
+.lor-check{
+  width:22px;height:22px;border-radius:7px;border:2px solid var(--line-2);
+  background:#fff;display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;transition:all .2s;
+}
+.listing-optin-row.checked .lor-check{
+  background:linear-gradient(135deg,#6BCB77,#2DD4BF);border-color:transparent;
+}
+.lor-check svg{display:none;}
+.listing-optin-row.checked .lor-check svg{display:block;}
+.lor-thumb{
+  width:40px;height:40px;border-radius:10px;flex-shrink:0;
+  background:var(--glass-3);object-fit:cover;
+  display:flex;align-items:center;justify-content:center;font-size:18px;
+}
+.lor-body{flex:1;min-width:0;}
+.lor-title{font-weight:700;font-size:13px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lor-sub{font-size:11px;color:var(--ink-faint);margin-top:2px;}
+.lor-badge{
+  flex-shrink:0;font-size:10px;font-weight:700;
+  padding:3px 8px;border-radius:100px;
+  background:rgba(107,203,119,.12);color:#16a34a;
+  border:1px solid rgba(107,203,119,.25);
+}
+.lor-badge.off{background:var(--glass-3);color:var(--ink-faint);border-color:var(--line);}
+
+.optin-all-btn{
+  font-size:12px;font-weight:600;color:var(--ink-soft);
+  background:var(--glass-2);border:1.5px solid var(--line);
+  padding:7px 14px;border-radius:100px;cursor:pointer;transition:all .2s;
+}
+.optin-all-btn:hover{border-color:var(--mint-deep);color:var(--mint-deep);}
+.optin-save-btn{
+  display:inline-flex;align-items:center;gap:7px;
+  font-size:13px;font-weight:700;color:#fff;border:none;
+  background:linear-gradient(135deg,#6BCB77,#2DD4BF);
+  padding:9px 20px;border-radius:100px;cursor:pointer;
+  box-shadow:0 4px 14px rgba(107,203,119,.35);
+  transition:all .25s;
+}
+.optin-save-btn:hover{transform:translateY(-1px);box-shadow:0 7px 20px rgba(107,203,119,.5);}
+.optin-save-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+
+/* Mobile bottom nav */
+.mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;background:rgba(252,252,253,.92);backdrop-filter:blur(20px);border-top:1px solid var(--line);padding:6px 0 env(safe-area-inset-bottom,6px);}
+@media(max-width:860px){.mobile-nav{display:flex;}.main{padding-bottom:88px;}}
+.mn-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;font-size:10px;font-weight:600;color:var(--ink-faint);text-decoration:none;position:relative;transition:color .15s;}
+.mn-item svg{width:22px;height:22px;stroke-width:1.7;}
+.mn-item.active{color:var(--violet);}
+@keyframes cmBadgePulse2{0%,100%{box-shadow:0 0 0 0 rgba(199,125,255,.5);}50%{box-shadow:0 0 0 5px rgba(199,125,255,0);}}
 </style>
 </head>
 <body>
@@ -369,20 +434,27 @@ body{display:flex;flex-direction:column;overflow-x:hidden;}
     </div>
   </div>
 
-  <!-- Opt-in card -->
-  <div class="optin-card">
-    <div class="optin-row">
-      <div class="optin-body">
-        <div class="optin-title">Opt in to Cabana Match</div>
-        <div class="optin-desc">When a guest searches for a stay in your area and presses "Match with Cabana," you'll see their request and can respond within 20 minutes. Only opted-in hosts receive these requests.</div>
-        <div class="optin-status off" id="optin-status">Not opted in yet</div>
-      </div>
-      <label class="toggle-big" id="optin-toggle-label" title="Toggle Cabana Match opt-in">
-        <input type="checkbox" id="optin-toggle" onchange="handleOptInToggle(this)"/>
-        <div class="toggle-big-track"></div>
-        <div class="toggle-big-thumb"></div>
-      </label>
+  <!-- Opt-in card — per listing -->
+  <div class="optin-card" id="optin-section">
+    <div class="optin-title" style="margin-bottom:6px;">Opt your listings in to Cabana Match</div>
+    <div class="optin-desc" style="margin-bottom:16px;">Select which of your stays you want to receive guest requests for. Guests broadcasting in your area will reach you only if that listing is opted in. You can add or remove listings at any time.</div>
+
+    <!-- Listings checkboxes -->
+    <div id="optin-listings-zone">
+      <div class="skeleton" style="height:56px;border-radius:12px;margin-bottom:8px;"></div>
+      <div class="skeleton" style="height:56px;border-radius:12px;margin-bottom:8px;"></div>
     </div>
+
+    <!-- Select all + Save row -->
+    <div style="display:flex;align-items:center;gap:10px;margin-top:14px;flex-wrap:wrap;">
+      <button class="optin-all-btn" onclick="selectAllListings(true)">Select all</button>
+      <button class="optin-all-btn" onclick="selectAllListings(false)">Deselect all</button>
+      <button class="optin-save-btn" id="optin-save-btn" onclick="saveOptIns()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        Save opt-in selections
+      </button>
+    </div>
+    <div class="optin-status off" id="optin-status" style="margin-top:10px;"></div>
   </div>
 
   <!-- Earnings callout -->
@@ -475,93 +547,196 @@ let sb = null;
 try { const { createClient } = supabase; sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY); window.sb = sb; } catch(e) {}
 
 let currentUser = null;
-let isOptedIn = false;
+let hostListings = [];      // all listings this host owns
+let optedInIds = new Set(); // listing_ids currently opted in
+let pendingSelections = new Set(); // UI selections before save
 
 /* ── Boot ── */
 document.addEventListener('DOMContentLoaded', async () => {
-  if (window.ApaSession) {
-    const state = await new Promise(r => ApaSession.ready(r));
-    if (state?.user) {
-      currentUser = state.user;
-      const initials = (state.user.user_metadata?.name || state.user.email || 'P').slice(0,1).toUpperCase();
-      const av = document.getElementById('tb-avatar');
-      if (av) av.textContent = initials;
-    }
+  // Auth
+  if (sb) {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { sessionStorage.setItem('auth_next', location.href); window.location.href = 'auth.html'; return; }
+    currentUser = session.user;
+    const initials = (session.user.user_metadata?.first_name || session.user.email || 'P')[0].toUpperCase();
+    const av = document.getElementById('tb-avatar');
+    if (av) av.textContent = initials;
   }
-  await loadOptInStatus();
-  await loadLiveRequests();
-  await loadAcceptedResponses();
+  await Promise.all([loadListingsAndOptins(), loadLiveRequests(), loadAcceptedResponses()]);
 });
 
-/* ── Opt-in status ── */
-async function loadOptInStatus() {
+/* ── Load host listings + their optin status ── */
+async function loadListingsAndOptins() {
   if (!sb || !currentUser) return;
-  const { data } = await sb
-    .from('cabana_host_opt_ins')
-    .select('opted_in')
-    .eq('host_id', currentUser.id)
-    .maybeSingle();
+  try {
+    // 1. Get host's listings
+    const { data: listings } = await sb
+      .from('listings')
+      .select('id,title,type,photos,city,location,status,price_night')
+      .eq('partner_id', currentUser.id)
+      .eq('status', 'active')
+      .order('created_at', { ascending: false });
 
-  isOptedIn = data?.opted_in === true;
-  updateOptInUI(isOptedIn);
+    hostListings = listings || [];
+
+    // 2. Get which ones are opted in
+    const { data: optins } = await sb
+      .from('cabana_host_opt_ins')
+      .select('listing_id,opted_in')
+      .eq('host_id', currentUser.id);
+
+    optedInIds = new Set((optins || []).filter(o => o.opted_in).map(o => o.listing_id));
+    pendingSelections = new Set(optedInIds); // pre-populate UI
+
+    renderOptinListings();
+    updateOptinStatus();
+  } catch(e) { console.warn('loadListingsAndOptins', e); }
 }
 
-function updateOptInUI(on) {
-  const toggle = document.getElementById('optin-toggle');
-  const status = document.getElementById('optin-status');
-  if (toggle) toggle.checked = on;
-  if (status) {
-    status.textContent = on ? '✓ Opted in — you will receive guest requests' : 'Not opted in yet';
-    status.className = 'optin-status ' + (on ? 'on' : 'off');
+function renderOptinListings() {
+  const zone = document.getElementById('optin-listings-zone');
+  if (!zone) return;
+
+  if (!hostListings.length) {
+    zone.innerHTML = `
+      <div style="text-align:center;padding:24px;border:1.5px dashed var(--line-2);border-radius:14px;">
+        <div style="font-size:24px;margin-bottom:8px;">🏠</div>
+        <div style="font-weight:700;font-size:14px;color:var(--ink);margin-bottom:4px;">No active listings yet</div>
+        <div style="font-size:12px;color:var(--ink-soft);">Add a listing first, then opt it into Cabana Match.</div>
+        <a href="add-listing.html" style="display:inline-block;margin-top:12px;font-size:12px;font-weight:700;color:var(--mint-deep);">+ Add listing →</a>
+      </div>`;
+    return;
   }
+
+  const typeEmoji = { stay:'🏠', tour:'🦁', ride:'🚗', food:'🍽️', event:'🎟️', carhire:'🔑' };
+  zone.innerHTML = hostListings.map(l => {
+    const isChecked = pendingSelections.has(l.id);
+    const isOptedIn = optedInIds.has(l.id);
+    const photo = l.photos?.[0];
+    const thumbHTML = photo
+      ? `<img class="lor-thumb" src="${photo}" alt="${l.title}" onerror="this.textContent='${typeEmoji[l.type]||'🏠'}';this.style.fontSize='20px';">`
+      : `<div class="lor-thumb">${typeEmoji[l.type]||'🏠'}</div>`;
+    const badgeHTML = isOptedIn
+      ? `<span class="lor-badge">Opted in</span>`
+      : `<span class="lor-badge off">Not opted in</span>`;
+    return `
+    <div class="listing-optin-row ${isChecked ? 'checked' : ''}" id="lor-${l.id}" onclick="toggleListing('${l.id}')">
+      <div class="lor-check">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+      </div>
+      ${thumbHTML}
+      <div class="lor-body">
+        <div class="lor-title">${l.title || 'Untitled'}</div>
+        <div class="lor-sub">${l.location || l.city || 'Kenya'} · KES ${Number(l.price_night||0).toLocaleString()}/night</div>
+      </div>
+      ${badgeHTML}
+    </div>`;
+  }).join('');
 }
 
-async function handleOptInToggle(checkbox) {
-  if (!sb || !currentUser) return;
-  const on = checkbox.checked;
-  updateOptInUI(on);
-
-  const { error } = await sb
-    .from('cabana_host_opt_ins')
-    .upsert({
-      host_id: currentUser.id,
-      opted_in: on,
-      opted_in_at: on ? new Date().toISOString() : undefined,
-      opted_out_at: on ? null : new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    }, { onConflict: 'host_id' });
-
-  if (error) {
-    // Revert on failure
-    checkbox.checked = !on;
-    updateOptInUI(!on);
-    alert('Failed to update opt-in. Please try again.');
+function toggleListing(listingId) {
+  const row = document.getElementById('lor-' + listingId);
+  if (!row) return;
+  if (pendingSelections.has(listingId)) {
+    pendingSelections.delete(listingId);
+    row.classList.remove('checked');
   } else {
-    isOptedIn = on;
-    if (on) await loadLiveRequests();
+    pendingSelections.add(listingId);
+    row.classList.add('checked');
   }
 }
 
-/* ── Live requests (full system — coming soon overlay shown) ── */
+function selectAllListings(all) {
+  hostListings.forEach(l => {
+    const row = document.getElementById('lor-' + l.id);
+    if (all) {
+      pendingSelections.add(l.id);
+      row?.classList.add('checked');
+    } else {
+      pendingSelections.delete(l.id);
+      row?.classList.remove('checked');
+    }
+  });
+}
+
+async function saveOptIns() {
+  if (!sb || !currentUser) return;
+  const btn = document.getElementById('optin-save-btn');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg> Saving…'; }
+
+  try {
+    const allListingIds = hostListings.map(l => l.id);
+
+    // Build upsert rows for all listings
+    const upsertRows = allListingIds.map(lid => {
+      const listing = hostListings.find(l => l.id === lid);
+      return {
+        host_id: currentUser.id,
+        listing_id: lid,
+        listing_title: listing?.title || 'Untitled',
+        listing_type: listing?.type || 'stay',
+        opted_in: pendingSelections.has(lid),
+        opted_in_at: pendingSelections.has(lid) ? new Date().toISOString() : undefined,
+        opted_out_at: !pendingSelections.has(lid) ? new Date().toISOString() : null,
+        updated_at: new Date().toISOString()
+      };
+    });
+
+    const { error } = await sb.from('cabana_host_opt_ins')
+      .upsert(upsertRows, { onConflict: 'host_id,listing_id' });
+
+    if (error) throw error;
+
+    // Update local state
+    optedInIds = new Set(pendingSelections);
+    renderOptinListings();
+    updateOptinStatus();
+
+    const status = document.getElementById('optin-status');
+    if (status) {
+      const count = pendingSelections.size;
+      status.textContent = count > 0
+        ? `✓ ${count} listing${count > 1 ? 's' : ''} opted in — you will receive guest requests`
+        : 'No listings opted in';
+      status.className = 'optin-status ' + (count > 0 ? 'on' : 'off');
+    }
+  } catch(e) {
+    alert('Error saving: ' + e.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Save opt-in selections';
+    }
+  }
+}
+
+function updateOptinStatus() {
+  const status = document.getElementById('optin-status');
+  if (!status) return;
+  const count = optedInIds.size;
+  if (count > 0) {
+    status.textContent = `✓ ${count} listing${count > 1 ? 's' : ''} currently opted in`;
+    status.className = 'optin-status on';
+  } else {
+    status.textContent = 'No listings opted in yet — select listings above and save';
+    status.className = 'optin-status off';
+  }
+}
+
+/* ── Live requests ── */
 async function loadLiveRequests() {
   const zone = document.getElementById('req-list-zone');
   const label = document.getElementById('req-count-label');
   if (!zone) return;
 
-  if (!isOptedIn) {
-    zone.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-ico">🔒</div>
-        <div class="empty-title">Opt in to see requests</div>
-        <div class="empty-sub">Toggle the opt-in above to start receiving guest requests in your area.</div>
-      </div>`;
+  if (!sb || !currentUser) { zone.innerHTML = ''; return; }
+
+  if (optedInIds.size === 0) {
+    zone.innerHTML = `<div class="empty-state"><div class="empty-ico">🔒</div><div class="empty-title">Opt in first</div><div class="empty-sub">Select your listings above and save to start receiving guest requests.</div></div>`;
     if (label) label.textContent = 'Opt in to see requests';
     return;
   }
 
-  if (!sb || !currentUser) { zone.innerHTML = ''; return; }
-
-  // Full system query — will work post-launch when schema is deployed
   try {
     const { data: requests, error } = await sb
       .from('cabana_match_requests')
@@ -571,13 +746,10 @@ async function loadLiveRequests() {
       .order('created_at', { ascending: false })
       .limit(20);
 
-    if (error || !requests?.length) {
-      zone.innerHTML = `
-        <div class="empty-state">
-          <div class="empty-ico">🎉</div>
-          <div class="empty-title">No live requests right now</div>
-          <div class="empty-sub">When guests broadcast a request in your area, it will appear here instantly. Stay opted in and be ready!</div>
-        </div>`;
+    if (error) throw error;
+
+    if (!requests?.length) {
+      zone.innerHTML = `<div class="empty-state"><div class="empty-ico">🎉</div><div class="empty-title">No live requests right now</div><div class="empty-sub">You're opted in and ready. Guest requests in your area will appear here instantly when Cabana Match launches.</div></div>`;
       if (label) label.textContent = 'No live requests right now';
       return;
     }
@@ -586,7 +758,7 @@ async function loadLiveRequests() {
     zone.innerHTML = `<div class="req-list">${requests.map(buildReqCard).join('')}</div>`;
     requests.forEach(r => startReqTimer(r.id, r.expires_at));
 
-    // Realtime subscription
+    // Realtime
     try {
       sb.channel('host-req-' + currentUser.id)
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'cabana_match_requests' }, () => loadLiveRequests())
@@ -594,38 +766,34 @@ async function loadLiveRequests() {
     } catch(e) {}
 
   } catch(e) {
-    zone.innerHTML = `<div class="empty-state"><div class="empty-ico">🚧</div><div class="empty-title">Coming Soon</div><div class="empty-sub">Cabana Match is almost ready. You're already opted in — you'll be among the first to receive guest requests when we launch.</div></div>`;
+    zone.innerHTML = `<div class="empty-state"><div class="empty-ico">🚧</div><div class="empty-title">Launching soon</div><div class="empty-sub">You're opted in. You'll be among the first to receive guest requests when Cabana Match goes live.</div></div>`;
     if (label) label.textContent = 'Launching soon';
   }
 }
 
 function buildReqCard(req) {
-  const expiresAt = new Date(req.expires_at);
-  const secsLeft = Math.max(0, Math.floor((expiresAt - new Date()) / 1000));
-  const mins = Math.floor(secsLeft / 60);
-  const secs = secsLeft % 60;
-  const timer = `${mins}:${secs.toString().padStart(2,'0')}`;
-
+  const secsLeft = Math.max(0, Math.floor((new Date(req.expires_at) - new Date()) / 1000));
+  const timer = `${Math.floor(secsLeft/60)}:${String(secsLeft%60).padStart(2,'0')}`;
   return `
   <div class="req-card" id="req-card-${req.id}">
     <div class="req-card-header">
       <div>
-        <div class="req-card-title">${req.guest_name || 'Guest'} is looking for a stay</div>
-        <div class="req-card-sub">Request live · respond before timer ends</div>
+        <div class="req-card-title">${req.guest_name||'Guest'} wants a stay</div>
+        <div class="req-card-sub">Respond before timer runs out</div>
       </div>
       <div class="req-card-timer" id="req-timer-${req.id}">${timer}</div>
     </div>
     <div class="req-card-details">
       <span class="req-tag">📍 ${req.location}</span>
       <span class="req-tag">📅 ${req.checkin_date} → ${req.checkout_date}</span>
-      <span class="req-tag">🌙 ${req.nights} night${req.nights > 1 ? 's' : ''}</span>
-      <span class="req-tag">👥 ${req.guests} guest${req.guests > 1 ? 's' : ''}</span>
-      ${req.bedrooms ? `<span class="req-tag">🛏 ${req.bedrooms} bed${req.bedrooms > 1 ? 's' : ''}</span>` : ''}
-      ${req.max_price ? `<span class="req-tag">💰 Up to KES ${req.max_price.toLocaleString()}/night</span>` : ''}
+      <span class="req-tag">🌙 ${req.nights||''} nights</span>
+      <span class="req-tag">👥 ${req.guests} guest${req.guests>1?'s':''}</span>
+      ${req.bedrooms ? `<span class="req-tag">🛏 ${req.bedrooms} bed${req.bedrooms>1?'s':''}</span>` : ''}
+      ${req.max_price ? `<span class="req-tag">💰 Up to KES ${Number(req.max_price).toLocaleString()}/night</span>` : ''}
     </div>
     ${req.notes ? `<div style="font-size:12px;color:var(--ink-soft);margin-bottom:10px;font-style:italic;">"${req.notes}"</div>` : ''}
     <div class="req-card-footer">
-      <button class="btn-respond" onclick="openRespondModal('${req.id}', '${(req.guest_name||'Guest').replace(/'/g,"\\'")}')">
+      <button class="btn-respond" onclick="openRespondModal('${req.id}','${(req.guest_name||'Guest').replace(/'/g,"\\'")}','${req.checkin_date}','${req.checkout_date}',${req.guests})">
         Respond to this guest →
       </button>
     </div>
@@ -637,9 +805,7 @@ function startReqTimer(requestId, expiresAt) {
   if (!el) return;
   const iv = setInterval(() => {
     const secsLeft = Math.max(0, Math.floor((new Date(expiresAt) - new Date()) / 1000));
-    const mins = Math.floor(secsLeft / 60);
-    const secs = secsLeft % 60;
-    el.textContent = `${mins}:${secs.toString().padStart(2,'0')}`;
+    el.textContent = `${Math.floor(secsLeft/60)}:${String(secsLeft%60).padStart(2,'0')}`;
     if (secsLeft <= 0) {
       clearInterval(iv);
       const card = document.getElementById('req-card-' + requestId);
@@ -661,7 +827,6 @@ async function loadAcceptedResponses() {
       .limit(10);
 
     if (!data?.length) return;
-
     const zone = document.getElementById('accepted-zone');
     const list = document.getElementById('accepted-list');
     if (!zone || !list) return;
@@ -672,10 +837,10 @@ async function loadAcceptedResponses() {
       <div class="host-accepted-card">
         <div class="hac-header">
           <span class="hac-dot"></span>
-          <span class="hac-label">${r.status === 'engaged' ? 'Guest engaged' : 'Awaiting guest'}</span>
+          <span class="hac-label">${r.status === 'engaged' ? '✓ Guest engaged with you' : 'Awaiting guest response'}</span>
         </div>
         <div class="hac-guest">
-          <strong>${req?.guest_name || 'Guest'}</strong> · ${req?.location} · ${req?.checkin_date} → ${req?.checkout_date}
+          <strong>${req?.guest_name||'Guest'}</strong> · ${req?.location} · ${req?.checkin_date} → ${req?.checkout_date}
         </div>
         <div class="hac-actions">
           ${r.conversation_id
@@ -688,10 +853,131 @@ async function loadAcceptedResponses() {
   } catch(e) {}
 }
 
-/* ── Respond modal (simplified for now) ── */
-function openRespondModal(requestId, guestName) {
-  // Coming soon — full modal will allow host to select listing + price
-  alert(`Cabana Match is launching soon!\n\nYou're opted in and ready. When we go live, you'll be able to respond to ${guestName}'s request directly from here with your listing details.`);
+/* ── Respond modal ── */
+let activeRespondRequest = null;
+function openRespondModal(requestId, guestName, checkin, checkout, guests) {
+  activeRespondRequest = requestId;
+  // Build listing select options
+  const availableListings = hostListings.filter(l => optedInIds.has(l.id));
+  if (!availableListings.length) {
+    alert('No opted-in listings available to respond with.');
+    return;
+  }
+  const listingOptions = availableListings.map(l =>
+    `<option value="${l.id}" data-price="${l.price_night||0}" data-title="${l.title||''}" data-img="${l.photos?.[0]||''}">${l.title} — KES ${Number(l.price_night||0).toLocaleString()}/night</option>`
+  ).join('');
+
+  const modalHTML = `
+  <div class="cm-overlay open" id="respond-overlay" onclick="closeRespondModal()"></div>
+  <div class="cm-modal open" id="respond-modal" style="max-height:80vh;">
+    <div class="cm-modal-inner">
+      <div class="cm-header" style="position:sticky;top:0;background:#fff;z-index:10;">
+        <button class="cm-close" onclick="closeRespondModal()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+        <div>
+          <div style="font-weight:800;font-size:16px;color:var(--ink);">Respond to ${guestName}</div>
+          <div style="font-size:12px;color:var(--ink-faint);">${checkin} → ${checkout} · ${guests} guest${guests>1?'s':''}</div>
+        </div>
+      </div>
+      <div style="padding:20px;">
+        <div style="margin-bottom:16px;">
+          <label style="font-size:12px;font-weight:700;color:var(--ink);display:block;margin-bottom:6px;">Select listing to offer</label>
+          <select id="respond-listing-sel" onchange="updateRespondPrice()" style="width:100%;padding:11px 14px;border-radius:12px;border:1.5px solid var(--line-2);font-size:13px;font-family:inherit;color:var(--ink);background:#fff;">
+            ${listingOptions}
+          </select>
+        </div>
+        <div style="margin-bottom:16px;">
+          <label style="font-size:12px;font-weight:700;color:var(--ink);display:block;margin-bottom:6px;">Your price per night (KES)</label>
+          <input type="number" id="respond-price" style="width:100%;padding:11px 14px;border-radius:12px;border:1.5px solid var(--line-2);font-size:13px;font-family:inherit;" placeholder="Enter price per night"/>
+        </div>
+        <div style="margin-bottom:20px;">
+          <label style="font-size:12px;font-weight:700;color:var(--ink);display:block;margin-bottom:6px;">Message (optional)</label>
+          <textarea id="respond-msg" rows="3" style="width:100%;padding:11px 14px;border-radius:12px;border:1.5px solid var(--line-2);font-size:13px;font-family:inherit;resize:vertical;" placeholder="Hi! My place is perfect for your trip…"></textarea>
+        </div>
+        <button onclick="submitResponse()" style="width:100%;padding:13px;border-radius:14px;border:none;font-family:inherit;font-weight:700;font-size:14px;color:#fff;background:linear-gradient(135deg,#C77DFF,#4D96FF);cursor:pointer;box-shadow:0 6px 20px rgba(199,125,255,.35);">
+          Send response to guest →
+        </button>
+        <div id="respond-error" style="margin-top:10px;font-size:12px;color:var(--err);text-align:center;"></div>
+      </div>
+    </div>
+  </div>`;
+
+  const div = document.createElement('div');
+  div.id = 'respond-modal-wrap';
+  div.innerHTML = modalHTML;
+  document.body.appendChild(div);
+  updateRespondPrice();
+}
+
+function updateRespondPrice() {
+  const sel = document.getElementById('respond-listing-sel');
+  const priceInput = document.getElementById('respond-price');
+  if (!sel || !priceInput) return;
+  const opt = sel.selectedOptions[0];
+  if (opt) priceInput.value = opt.dataset.price || '';
+}
+
+function closeRespondModal() {
+  const wrap = document.getElementById('respond-modal-wrap');
+  if (wrap) wrap.remove();
+  activeRespondRequest = null;
+}
+
+async function submitResponse() {
+  if (!sb || !currentUser || !activeRespondRequest) return;
+  const sel = document.getElementById('respond-listing-sel');
+  const priceInput = document.getElementById('respond-price');
+  const msgInput = document.getElementById('respond-msg');
+  const errEl = document.getElementById('respond-error');
+
+  const listingId = sel?.value;
+  const price = parseInt(priceInput?.value);
+  const listing = hostListings.find(l => l.id === listingId);
+
+  if (!listingId || !price || price < 1) {
+    if (errEl) errEl.textContent = 'Please select a listing and enter a valid price.';
+    return;
+  }
+
+  const submitBtn = document.querySelector('#respond-modal-wrap button[onclick="submitResponse()"]');
+  if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Sending…'; }
+
+  try {
+    const { error } = await sb.from('cabana_match_responses').insert({
+      request_id: activeRespondRequest,
+      host_id: currentUser.id,
+      listing_id: listingId,
+      listing_title: listing?.title || 'Listing',
+      listing_image: listing?.photos?.[0] || null,
+      price_per_night: price,
+      host_name: currentUser.user_metadata?.first_name || currentUser.email?.split('@')[0] || 'Host',
+      host_avatar: currentUser.user_metadata?.avatar_url || null,
+      status: 'pending'
+    });
+
+    if (error) {
+      if (error.code === '23505') {
+        if (errEl) errEl.textContent = 'You already responded to this request.';
+      } else {
+        throw error;
+      }
+      if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Send response to guest →'; }
+      return;
+    }
+
+    closeRespondModal();
+    await loadAcceptedResponses();
+    // Show success toast
+    const t = document.createElement('div');
+    t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#16a34a;color:#fff;padding:12px 24px;border-radius:100px;font-weight:700;font-size:13px;z-index:9999;box-shadow:0 8px 24px rgba(0,0,0,.2);';
+    t.textContent = '✓ Response sent! Waiting for guest to engage.';
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3500);
+  } catch(e) {
+    if (errEl) errEl.textContent = 'Error: ' + e.message;
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Send response to guest →'; }
+  }
 }
 
 /* ── Sign out ── */
@@ -700,5 +986,33 @@ async function signOut() {
   window.location.href = 'auth.html';
 }
 </script>
+
+<nav class="mobile-nav">
+  <a class="mn-item" href="partner-listings.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    Listings
+  </a>
+  <a class="mn-item" href="partner-bookings.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg>
+    Bookings
+  </a>
+  <a class="mn-item" href="partner-agents.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    Agents
+  </a>
+  <a class="mn-item" href="partner-earnings.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+    Earnings
+  </a>
+  <a class="mn-item" href="partner-calendar.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+    Calendar
+  </a>
+  <a class="mn-item active" href="partner-cabana.html" style="position:relative;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8l-5-5-5 5h3v6h4V8h3z"/><circle cx="12" cy="15" r="3"/></svg>
+    Match
+    <span style="position:absolute;top:6px;right:calc(50% - 18px);width:6px;height:6px;border-radius:50%;background:linear-gradient(135deg,#C77DFF,#4D96FF);animation:cmBadgePulse2 2s ease-in-out infinite;"></span>
+  </a>
+</nav>
 </body>
 </html>
