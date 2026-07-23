@@ -1167,6 +1167,536 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
   .svc-list-cta:active{transform:translateY(0) scale(.97);}
   .svc-list-cta svg{width:13px;height:13px;flex-shrink:0;opacity:.9;}
   @media(max-width:400px){.svc-list-cta{padding:7px 12px;font-size:12px;}}
+
+/* ════════════════════════════════════════════════════════
+   SEARCH ACTIONS COLUMN — Search + Get Matched stacked
+════════════════════════════════════════════════════════ */
+.search-actions-col{
+  display:flex;flex-direction:column;gap:5px;
+  flex-shrink:0;margin:6px 6px 6px 0;
+}
+@media(max-width:640px){
+  .search-actions-col{
+    flex-direction:row;width:calc(100% - 12px);
+    margin:0 6px 6px;gap:8px;
+  }
+  .search-actions-col .search-go{flex:1;}
+  .search-actions-col .get-matched-btn{flex:1;}
+}
+
+/* ════════════════════════════════════════════════════════
+   GET MATCHED BUTTON
+════════════════════════════════════════════════════════ */
+.get-matched-btn{
+  position:relative;
+  flex-shrink:0;
+  padding:0;border:none;border-radius:13px;
+  cursor:pointer;overflow:hidden;
+  background:transparent;
+  isolation:isolate;
+  min-height:36px;
+}
+.gmb-shimmer{
+  position:absolute;inset:0;border-radius:13px;z-index:0;
+  background:linear-gradient(
+    135deg,
+    #FF6B6B 0%,
+    #FF9A5C 20%,
+    #FFD93D 40%,
+    #6BCB77 60%,
+    #4D96FF 80%,
+    #C77DFF 100%
+  );
+  background-size:300% 300%;
+  animation:gmbRainbow 3s ease infinite;
+}
+@keyframes gmbRainbow{
+  0%{background-position:0% 50%;}
+  50%{background-position:100% 50%;}
+  100%{background-position:0% 50%;}
+}
+/* Subtle inner background so it doesn't look fully rainbow */
+.gmb-shimmer::after{
+  content:'';position:absolute;inset:1.5px;border-radius:11.5px;
+  background:linear-gradient(135deg,#1a0533,#0d1f3c);
+  z-index:1;
+}
+.gmb-inner{
+  position:relative;z-index:2;
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  padding:8px 14px;
+  white-space:nowrap;
+}
+.gmb-icon{
+  display:flex;align-items:center;justify-content:center;
+  width:20px;height:20px;border-radius:6px;flex-shrink:0;
+  background:linear-gradient(135deg,#FF6B6B,#C77DFF);
+  animation:gmbIconHue 4s linear infinite;
+}
+@keyframes gmbIconHue{
+  0%{filter:hue-rotate(0deg);}
+  100%{filter:hue-rotate(360deg);}
+}
+.gmb-icon svg{fill:#fff;}
+.gmb-label{
+  font-family:'Inter',sans-serif;font-weight:800;font-size:12px;
+  letter-spacing:.02em;
+  background:linear-gradient(90deg,#FF9A5C,#FFD93D,#6BCB77,#4D96FF,#C77DFF,#FF6B6B);
+  background-size:300% auto;
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  animation:gmbTextShimmer 3s linear infinite;
+}
+@keyframes gmbTextShimmer{
+  0%{background-position:0% center;}
+  100%{background-position:300% center;}
+}
+.gmb-pulse{
+  width:6px;height:6px;border-radius:50%;flex-shrink:0;
+  background:#6BCB77;
+  box-shadow:0 0 0 0 rgba(107,203,119,.6);
+  animation:gmbPulse 1.8s ease-in-out infinite;
+}
+@keyframes gmbPulse{
+  0%{box-shadow:0 0 0 0 rgba(107,203,119,.6);}
+  70%{box-shadow:0 0 0 6px rgba(107,203,119,0);}
+  100%{box-shadow:0 0 0 0 rgba(107,203,119,0);}
+}
+.get-matched-btn:hover .gmb-shimmer{animation-duration:1.5s;}
+.get-matched-btn:active{transform:scale(.97);}
+
+/* ════════════════════════════════════════════════════════
+   REQUEST SENT OVERLAY — fullscreen celebration
+════════════════════════════════════════════════════════ */
+.gm-sent-overlay{
+  position:fixed;inset:0;z-index:2000;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(5,2,18,.92);
+  backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+  opacity:0;visibility:hidden;
+  transition:opacity .4s cubic-bezier(.22,1,.36,1),visibility .4s;
+}
+.gm-sent-overlay.show{opacity:1;visibility:visible;}
+
+.gm-sent-card{
+  position:relative;
+  width:min(420px,calc(100vw - 32px));
+  background:linear-gradient(160deg,#0f0521 0%,#071128 100%);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:28px;padding:40px 32px 36px;
+  text-align:center;
+  overflow:hidden;
+  transform:scale(.9) translateY(20px);
+  transition:transform .5s cubic-bezier(.34,1.26,.64,1);
+}
+.gm-sent-overlay.show .gm-sent-card{transform:scale(1) translateY(0);}
+
+/* Ambient glow orbs behind card content */
+.gm-orb{
+  position:absolute;border-radius:50%;pointer-events:none;
+  filter:blur(60px);opacity:.5;
+}
+.gm-orb-1{width:300px;height:300px;top:-80px;left:-60px;background:radial-gradient(circle,rgba(123,47,247,.6),transparent 70%);}
+.gm-orb-2{width:250px;height:250px;bottom:-60px;right:-40px;background:radial-gradient(circle,rgba(77,150,255,.5),transparent 70%);}
+.gm-orb-3{width:200px;height:200px;top:40%;left:50%;transform:translate(-50%,-50%);background:radial-gradient(circle,rgba(107,203,119,.3),transparent 70%);}
+
+/* Burst animation ring */
+.gm-burst{
+  position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  width:200px;height:200px;border-radius:50%;
+  border:2px solid rgba(107,203,119,.4);
+  animation:gmburst 2s ease-out infinite;
+  pointer-events:none;
+}
+.gm-burst-2{animation-delay:.6s;border-color:rgba(77,150,255,.3);}
+.gm-burst-3{animation-delay:1.2s;border-color:rgba(199,125,255,.25);}
+@keyframes gmburst{
+  0%{transform:translate(-50%,-50%) scale(0);opacity:1;}
+  100%{transform:translate(-50%,-50%) scale(3);opacity:0;}
+}
+
+.gm-sent-icon{
+  position:relative;z-index:1;
+  width:72px;height:72px;border-radius:22px;
+  margin:0 auto 24px;
+  background:linear-gradient(135deg,#1a0533,#0d1f3c);
+  border:1.5px solid rgba(107,203,119,.4);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 40px rgba(107,203,119,.3),0 0 80px rgba(107,203,119,.1);
+  animation:gm-icon-appear .6s .2s cubic-bezier(.34,1.4,.64,1) both;
+}
+@keyframes gm-icon-appear{from{transform:scale(0) rotate(-20deg);}to{transform:scale(1) rotate(0deg);}}
+.gm-sent-icon svg{width:32px;height:32px;}
+
+.gm-sent-eyebrow{
+  position:relative;z-index:1;
+  font-family:'Inter',sans-serif;font-size:10px;font-weight:800;
+  letter-spacing:.18em;text-transform:uppercase;
+  color:#6BCB77;margin-bottom:12px;
+  opacity:0;animation:gm-fadeup .5s .35s forwards;
+}
+.gm-sent-title{
+  position:relative;z-index:1;
+  font-family:'Inter',sans-serif;font-weight:800;
+  font-size:clamp(22px,5vw,28px);letter-spacing:-.025em;
+  color:#fff;line-height:1.15;margin-bottom:8px;
+  opacity:0;animation:gm-fadeup .5s .45s forwards;
+}
+.gm-sent-title em{
+  font-style:italic;
+  background:linear-gradient(90deg,#6BCB77,#4D96FF);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.gm-sent-sub{
+  position:relative;z-index:1;
+  font-family:'Inter',sans-serif;font-size:14px;font-weight:400;
+  color:rgba(255,255,255,.6);line-height:1.65;margin-bottom:28px;
+  opacity:0;animation:gm-fadeup .5s .55s forwards;
+}
+.gm-sent-sub strong{color:rgba(255,255,255,.9);font-weight:600;}
+
+/* Bouncing dots row */
+.gm-dots-row{
+  position:relative;z-index:1;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  margin-bottom:28px;
+  opacity:0;animation:gm-fadeup .5s .65s forwards;
+}
+.gm-dot{
+  width:8px;height:8px;border-radius:50%;
+}
+.gm-dot-1{background:#FF6B6B;animation:gm-dot-bounce 1.4s .1s ease-in-out infinite;}
+.gm-dot-2{background:#FFD93D;animation:gm-dot-bounce 1.4s .25s ease-in-out infinite;}
+.gm-dot-3{background:#6BCB77;animation:gm-dot-bounce 1.4s .4s ease-in-out infinite;}
+.gm-dot-4{background:#4D96FF;animation:gm-dot-bounce 1.4s .55s ease-in-out infinite;}
+.gm-dot-5{background:#C77DFF;animation:gm-dot-bounce 1.4s .7s ease-in-out infinite;}
+@keyframes gm-dot-bounce{
+  0%,80%,100%{transform:scale(.7) translateY(0);opacity:.5;}
+  40%{transform:scale(1.3) translateY(-6px);opacity:1;}
+}
+
+.gm-sent-cta{
+  position:relative;z-index:1;
+  display:inline-flex;align-items:center;justify-content:center;gap:10px;
+  width:100%;padding:16px 24px;
+  border:none;border-radius:16px;cursor:pointer;
+  font-family:'Inter',sans-serif;font-weight:800;font-size:15px;
+  color:#fff;letter-spacing:.01em;
+  background:linear-gradient(135deg,#7B2FF7,#4D96FF);
+  box-shadow:0 8px 32px rgba(123,47,247,.5);
+  transition:all .25s;
+  opacity:0;animation:gm-fadeup .5s .75s forwards;
+}
+.gm-sent-cta:hover{transform:translateY(-2px);box-shadow:0 14px 40px rgba(123,47,247,.65);}
+.gm-sent-cta svg{width:16px;height:16px;}
+.gm-sent-cta-note{
+  position:relative;z-index:1;
+  font-size:12px;color:rgba(255,255,255,.35);margin-top:12px;
+  opacity:0;animation:gm-fadeup .5s .85s forwards;
+}
+
+@keyframes gm-fadeup{
+  from{opacity:0;transform:translateY(8px);}
+  to{opacity:1;transform:translateY(0);}
+}
+
+/* ════════════════════════════════════════════════════════
+   GHOST LIVE REQUEST TAB — stays page (below match card)
+════════════════════════════════════════════════════════ */
+#gm-live-tab{
+  display:none;
+  margin-top:10px;
+  animation:gm-tab-appear .5s cubic-bezier(.34,1.26,.64,1) both;
+}
+#gm-live-tab.visible{display:block;}
+@keyframes gm-tab-appear{
+  from{opacity:0;transform:translateY(-8px) scale(.98);}
+  to{opacity:1;transform:translateY(0) scale(1);}
+}
+
+/* The collapsible trigger pill */
+.gm-tab-pill{
+  display:flex;align-items:center;gap:10px;
+  padding:12px 18px;border-radius:16px;
+  background:linear-gradient(135deg,rgba(10,5,25,.95),rgba(5,15,40,.95));
+  border:1px solid rgba(107,203,119,.35);
+  cursor:pointer;
+  box-shadow:0 4px 24px rgba(107,203,119,.15),0 0 0 1px rgba(107,203,119,.1);
+  transition:all .25s;
+  position:relative;overflow:hidden;
+}
+.gm-tab-pill::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(107,203,119,.06),transparent);
+  background-size:200% 100%;
+  animation:gm-pill-sweep 3s ease-in-out infinite;
+}
+@keyframes gm-pill-sweep{
+  0%{background-position:200% center;}
+  100%{background-position:-200% center;}
+}
+.gm-tab-pill:hover{border-color:rgba(107,203,119,.6);box-shadow:0 6px 32px rgba(107,203,119,.25);}
+
+.gm-tab-live-dot{
+  width:9px;height:9px;border-radius:50%;flex-shrink:0;
+  background:#6BCB77;
+  box-shadow:0 0 8px rgba(107,203,119,.8);
+  animation:gm-live-glow 1.5s ease-in-out infinite;
+}
+@keyframes gm-live-glow{
+  0%,100%{box-shadow:0 0 4px rgba(107,203,119,.6);opacity:1;}
+  50%{box-shadow:0 0 14px rgba(107,203,119,1);opacity:.85;}
+}
+
+.gm-tab-text{flex:1;min-width:0;}
+.gm-tab-label{
+  font-family:'Inter',sans-serif;font-weight:700;font-size:13px;
+  color:#fff;white-space:nowrap;
+}
+.gm-tab-sub{
+  font-family:'Inter',sans-serif;font-size:11px;color:rgba(255,255,255,.45);margin-top:1px;
+}
+
+.gm-tab-timer{
+  font-family:'Inter',sans-serif;font-weight:900;font-size:16px;
+  background:linear-gradient(90deg,#FFD93D,#FF9A5C);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  letter-spacing:-.01em;flex-shrink:0;
+  font-variant-numeric:tabular-nums;
+}
+.gm-tab-timer.urgent{
+  background:linear-gradient(90deg,#FF4D6D,#FF9A5C);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  animation:gm-timer-urgent .8s ease-in-out infinite;
+}
+@keyframes gm-timer-urgent{
+  0%,100%{opacity:1;}50%{opacity:.6;}
+}
+
+.gm-tab-chevron{
+  flex-shrink:0;color:rgba(255,255,255,.3);
+  transition:transform .3s;
+}
+.gm-tab-pill.open .gm-tab-chevron{transform:rotate(180deg);}
+
+/* ── Panel that expands below pill ── */
+.gm-panel{
+  display:none;
+  background:linear-gradient(160deg,#0a0519,#06101e);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:20px;margin-top:6px;
+  overflow:hidden;
+}
+.gm-panel.open{display:block;animation:gm-panel-in .35s cubic-bezier(.22,1,.36,1) both;}
+@keyframes gm-panel-in{
+  from{opacity:0;transform:translateY(-6px);}
+  to{opacity:1;transform:translateY(0);}
+}
+
+/* Panel header */
+.gm-panel-head{
+  padding:20px 22px 0;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.gm-panel-title{
+  font-family:'Inter',sans-serif;font-weight:800;font-size:15px;
+  color:#fff;letter-spacing:-.01em;
+}
+.gm-panel-close{
+  width:28px;height:28px;border-radius:8px;
+  border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;color:rgba(255,255,255,.4);transition:all .2s;
+}
+.gm-panel-close:hover{border-color:rgba(255,75,75,.4);color:#FF4D6D;}
+.gm-panel-close svg{width:14px;height:14px;}
+
+/* Request details strip */
+.gm-req-details{
+  display:flex;flex-wrap:wrap;gap:6px;
+  padding:12px 22px 0;
+}
+.gm-req-chip{
+  font-family:'Inter',sans-serif;font-size:11px;font-weight:500;
+  color:rgba(255,255,255,.5);
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.08);
+  padding:4px 10px;border-radius:100px;
+}
+
+/* ── Response list ── */
+.gm-responses-wrap{padding:14px 22px 0;}
+.gm-responses-label{
+  font-family:'Inter',sans-serif;font-size:10px;font-weight:800;
+  letter-spacing:.12em;text-transform:uppercase;
+  color:rgba(255,255,255,.3);margin-bottom:10px;
+}
+
+/* Empty state */
+.gm-empty-state{
+  padding:28px 0;text-align:center;
+}
+.gm-empty-icon{
+  width:48px;height:48px;border-radius:14px;margin:0 auto 14px;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);
+  display:flex;align-items:center;justify-content:center;
+}
+.gm-empty-icon svg{width:22px;height:22px;color:rgba(255,255,255,.2);}
+.gm-empty-text{
+  font-family:'Inter',sans-serif;font-size:13px;color:rgba(255,255,255,.35);
+  line-height:1.6;
+}
+.gm-empty-text strong{color:rgba(255,255,255,.6);display:block;font-size:15px;font-weight:700;margin-bottom:4px;}
+
+/* Individual response card */
+.gm-response-card{
+  display:flex;align-items:center;gap:14px;
+  padding:14px;border-radius:14px;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.07);
+  margin-bottom:8px;cursor:pointer;
+  transition:all .2s;
+  position:relative;overflow:hidden;
+}
+.gm-response-card::after{
+  content:'';position:absolute;inset:0;border-radius:14px;
+  background:linear-gradient(135deg,rgba(107,203,119,.08),rgba(77,150,255,.06));
+  opacity:0;transition:opacity .2s;
+}
+.gm-response-card:hover{
+  border-color:rgba(107,203,119,.3);
+  transform:translateY(-1px);
+  box-shadow:0 8px 24px rgba(0,0,0,.3);
+}
+.gm-response-card:hover::after{opacity:1;}
+.gm-response-card.new-response{
+  animation:gm-card-flash .6s ease-in-out;
+}
+@keyframes gm-card-flash{
+  0%,100%{background:rgba(255,255,255,.04);}
+  50%{background:rgba(107,203,119,.12);}
+}
+
+.gm-resp-img{
+  width:50px;height:50px;border-radius:12px;flex-shrink:0;
+  object-fit:cover;background:rgba(255,255,255,.08);
+}
+.gm-resp-img-placeholder{
+  width:50px;height:50px;border-radius:12px;flex-shrink:0;
+  background:linear-gradient(135deg,rgba(123,47,247,.2),rgba(77,150,255,.15));
+  display:flex;align-items:center;justify-content:center;
+}
+.gm-resp-img-placeholder svg{width:22px;height:22px;color:rgba(255,255,255,.3);}
+
+.gm-resp-body{flex:1;min-width:0;}
+.gm-resp-name{
+  font-family:'Inter',sans-serif;font-weight:700;font-size:13px;
+  color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  margin-bottom:3px;
+}
+.gm-resp-host{font-size:11px;color:rgba(255,255,255,.4);margin-bottom:4px;}
+.gm-resp-price{
+  font-family:'Inter',sans-serif;font-weight:800;font-size:13px;
+  color:#FFD93D;
+}
+.gm-resp-price span{font-size:10px;font-weight:500;color:rgba(255,255,255,.35);}
+
+.gm-resp-action{
+  flex-shrink:0;
+  font-family:'Inter',sans-serif;font-size:11px;font-weight:700;
+  color:#fff;
+  background:linear-gradient(135deg,#7B2FF7,#4D96FF);
+  padding:8px 14px;border-radius:10px;border:none;
+  cursor:pointer;transition:all .2s;white-space:nowrap;
+}
+.gm-resp-action:hover{filter:brightness(1.15);transform:translateY(-1px);}
+
+/* Still waiting strip (shown even with accepts) */
+.gm-still-waiting{
+  margin:6px 0 2px;padding:10px 14px;
+  border-radius:10px;
+  background:rgba(255,255,255,.03);
+  border:1px dashed rgba(255,255,255,.07);
+  display:flex;align-items:center;gap:10px;
+}
+.gm-sw-text{
+  flex:1;font-family:'Inter',sans-serif;font-size:11px;
+  color:rgba(255,255,255,.35);line-height:1.5;
+}
+.gm-sw-timer{
+  font-family:'Inter',sans-serif;font-weight:900;font-size:15px;
+  background:linear-gradient(90deg,#FFD93D,#FF9A5C);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  font-variant-numeric:tabular-nums;flex-shrink:0;
+}
+.gm-sw-timer.urgent{
+  background:linear-gradient(90deg,#FF4D6D,#FF9A5C);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+
+/* ── Expired / no-response state ── */
+.gm-expired-state{
+  padding:32px 22px 28px;text-align:center;
+}
+.gm-expired-icon{
+  width:64px;height:64px;border-radius:18px;margin:0 auto 20px;
+  background:linear-gradient(135deg,rgba(255,75,110,.1),rgba(255,154,92,.08));
+  border:1px solid rgba(255,75,110,.2);
+  display:flex;align-items:center;justify-content:center;
+}
+.gm-expired-icon svg{width:30px;height:30px;color:#FF4D6D;}
+.gm-expired-title{
+  font-family:'Inter',sans-serif;font-weight:800;font-size:18px;
+  color:#fff;letter-spacing:-.01em;margin-bottom:8px;
+}
+.gm-expired-sub{
+  font-family:'Inter',sans-serif;font-size:13px;
+  color:rgba(255,255,255,.4);line-height:1.7;margin-bottom:20px;
+}
+.gm-expired-sub em{color:rgba(255,255,255,.65);font-style:normal;}
+.gm-fallback-btn{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:13px 22px;border-radius:14px;border:none;
+  font-family:'Inter',sans-serif;font-weight:700;font-size:14px;
+  color:#fff;cursor:pointer;
+  background:linear-gradient(135deg,#7B2FF7,#4D96FF);
+  box-shadow:0 6px 24px rgba(123,47,247,.4);
+  transition:all .25s;
+}
+.gm-fallback-btn:hover{transform:translateY(-2px);box-shadow:0 10px 32px rgba(123,47,247,.55);}
+.gm-fallback-btn svg{width:15px;height:15px;}
+
+/* Countdown big display in panel */
+.gm-panel-countdown{
+  padding:10px 22px 4px;
+  display:flex;align-items:center;gap:12px;
+}
+.gm-countdown-track{
+  flex:1;height:3px;border-radius:100px;
+  background:rgba(255,255,255,.08);overflow:hidden;
+}
+.gm-countdown-fill{
+  height:100%;border-radius:100px;
+  background:linear-gradient(90deg,#6BCB77,#4D96FF);
+  transition:width 1s linear;
+}
+.gm-countdown-fill.urgent{background:linear-gradient(90deg,#FF4D6D,#FF9A5C);}
+.gm-panel-countdown-label{
+  font-family:'Inter',sans-serif;font-size:10px;font-weight:700;
+  color:rgba(255,255,255,.25);letter-spacing:.05em;white-space:nowrap;
+}
+
+.gm-panel-footer{
+  padding:16px 22px 22px;
+  display:flex;gap:8px;
+}
+.gm-panel-dismiss-btn{
+  flex:1;padding:11px;border-radius:12px;
+  border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);
+  font-family:'Inter',sans-serif;font-size:12px;font-weight:600;
+  color:rgba(255,255,255,.4);cursor:pointer;transition:all .2s;
+}
+.gm-panel-dismiss-btn:hover{border-color:rgba(255,75,110,.4);color:#FF4D6D;}
 </style>
 
 <!-- ═══ SW force-update: kills stale service workers immediately ═══ -->
@@ -1349,10 +1879,23 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
           </div>
         </div>
       </div>
-      <button class="search-go" onclick="runSearch()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-        Search
-      </button>
+      <!-- Search actions column: Search + Get Matched -->
+      <div class="search-actions-col">
+        <button class="search-go" onclick="runSearch()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          Search
+        </button>
+        <button class="get-matched-btn" id="get-matched-btn" onclick="handleGetMatched()" aria-label="Get Matched — let hosts come to you">
+          <span class="gmb-shimmer"></span>
+          <span class="gmb-inner">
+            <span class="gmb-icon">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="currentColor"/></svg>
+            </span>
+            <span class="gmb-label">Get Matched</span>
+            <span class="gmb-pulse"></span>
+          </span>
+        </button>
+      </div>
     </div>
     </div><!-- /search-ring -->
 
@@ -1396,6 +1939,86 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
       <div class="fchip chip-ai" id="fc-autorecommend" onclick="runAutoRecommend(this)">✦ Auto Recommend</div>
       <div class="fchip chip-ai" onclick="focusSpecialSearch()">✨ AI Search</div>
     </div>
+  </div>
+</div>
+
+<!-- ── GET MATCHED GHOST TAB — hidden until active request ── -->
+<div id="gm-live-tab">
+  <!-- Pill trigger -->
+  <div class="gm-tab-pill" id="gm-tab-pill" onclick="toggleGmPanel()">
+    <span class="gm-tab-live-dot"></span>
+    <span class="gm-tab-text">
+      <span class="gm-tab-label" id="gm-tab-label">Match Live · Hosts responding</span>
+      <span class="gm-tab-sub" id="gm-tab-sub">Tap to see who's ready for you</span>
+    </span>
+    <span class="gm-tab-timer" id="gm-tab-timer">20:00</span>
+    <svg class="gm-tab-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <!-- Expanding panel -->
+  <div class="gm-panel" id="gm-panel">
+    <!-- Panel header -->
+    <div class="gm-panel-head">
+      <span class="gm-panel-title">Your Match Request</span>
+      <button class="gm-panel-close" onclick="closeGmTab()" title="Close request">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <!-- Request chip details -->
+    <div class="gm-req-details" id="gm-req-details"></div>
+    <!-- Countdown progress -->
+    <div class="gm-panel-countdown">
+      <div class="gm-countdown-track">
+        <div class="gm-countdown-fill" id="gm-countdown-fill" style="width:100%"></div>
+      </div>
+      <span class="gm-panel-countdown-label" id="gm-countdown-label">20:00 left</span>
+    </div>
+    <!-- Responses list -->
+    <div class="gm-responses-wrap">
+      <div class="gm-responses-label" id="gm-responses-label">Waiting for hosts…</div>
+      <div id="gm-responses-list"></div>
+    </div>
+    <!-- Footer -->
+    <div class="gm-panel-footer">
+      <button class="gm-panel-dismiss-btn" onclick="gmCloseRequest()">Close request</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── REQUEST SENT OVERLAY ── -->
+<div class="gm-sent-overlay" id="gm-sent-overlay">
+  <div class="gm-sent-card">
+    <div class="gm-orb gm-orb-1"></div>
+    <div class="gm-orb gm-orb-2"></div>
+    <div class="gm-orb gm-orb-3"></div>
+    <div class="gm-burst"></div>
+    <div class="gm-burst gm-burst-2"></div>
+    <div class="gm-burst gm-burst-3"></div>
+    <div class="gm-sent-icon">
+      <svg viewBox="0 0 24 24" fill="none">
+        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="url(#gm-bolt-grad)" stroke="none"/>
+        <defs>
+          <linearGradient id="gm-bolt-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#6BCB77"/>
+            <stop offset="100%" stop-color="#4D96FF"/>
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+    <div class="gm-sent-eyebrow">Request sent</div>
+    <div class="gm-sent-title">Hosts can't wait<br>to <em>meet you.</em></div>
+    <div class="gm-sent-sub">Your request is live. <strong>Opted-in hosts nearby are seeing it right now</strong> and the keenest ones will respond within your 20-minute window.</div>
+    <div class="gm-dots-row">
+      <span class="gm-dot gm-dot-1"></span>
+      <span class="gm-dot gm-dot-2"></span>
+      <span class="gm-dot gm-dot-3"></span>
+      <span class="gm-dot gm-dot-4"></span>
+      <span class="gm-dot gm-dot-5"></span>
+    </div>
+    <button class="gm-sent-cta" onclick="gmSentCtaClick()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+      Watch your matches come in
+    </button>
+    <div class="gm-sent-cta-note">We'll keep this live for 20 minutes · close anytime</div>
   </div>
 </div>
 
@@ -3274,6 +3897,472 @@ function updateFabFilterBadge(count) {
   if (count > 0) { badge.textContent = count; badge.style.display = 'flex'; }
   else { badge.style.display = 'none'; }
 }
+
+/* ════════════════════════════════════════════════════════════════
+   GET MATCHED — complete system
+   State lives in gmState. Survives hash navigation within session.
+════════════════════════════════════════════════════════════════ */
+const gmState = {
+  requestId: null,
+  expiresAt: null,
+  timerInterval: null,
+  realtimeChan: null,
+  responses: [],
+  panelOpen: false,
+  totalSecs: 20 * 60,
+};
+
+/* ── Read search bar current values ── */
+function gmGetCriteria() {
+  const loc = (document.getElementById('location-input')?.value || '').trim();
+  const checkin = document.getElementById('date-in')?.value || '';
+  const checkout = document.getElementById('date-out')?.value || '';
+  const guests = parseInt(document.getElementById('g-adults-val')?.textContent || '1')
+               + parseInt(document.getElementById('g-children-val')?.textContent || '0');
+  const rooms = document.getElementById('field-rooms')?.textContent?.trim();
+  let bedrooms = null;
+  if (rooms && rooms !== 'Any') {
+    const m = rooms.match(/(\d+)/);
+    if (m) bedrooms = parseInt(m[1]);
+  }
+  return { location: loc, checkin_date: checkin, checkout_date: checkout, guests: Math.max(1, guests), bedrooms };
+}
+
+/* ── Main entry: user clicks Get Matched button ── */
+async function handleGetMatched() {
+  // Auth check
+  const session = window.ApaSession ? await new Promise(r => ApaSession.ready(r)) : null;
+  if (!session?.user) {
+    sessionStorage.setItem('gm_pending', '1');
+    window.location.href = 'auth.html?next=' + encodeURIComponent(location.pathname + '#get-matched');
+    return;
+  }
+
+  const criteria = gmGetCriteria();
+
+  // Validate location
+  if (!criteria.location) {
+    const locInput = document.getElementById('location-input');
+    if (locInput) {
+      locInput.focus();
+      locInput.style.outline = '2px solid #FF4D6D';
+      setTimeout(() => locInput.style.outline = '', 2000);
+    }
+    return;
+  }
+
+  // Validate dates
+  if (!criteria.checkin_date || !criteria.checkout_date) {
+    document.getElementById('sf-checkin')?.click();
+    return;
+  }
+
+  // Disable button while submitting
+  const btn = document.getElementById('get-matched-btn');
+  if (btn) { btn.disabled = true; btn.style.opacity = '.5'; }
+
+  const result = await submitCabanaMatchRequest(criteria);
+
+  if (btn) { btn.disabled = false; btn.style.opacity = ''; }
+
+  if (!result.success) {
+    if (result.error === 'duplicate') {
+      // Already have a live request — just show the tab
+      gmState.requestId = result.existing_id;
+      gmActivateTab(criteria);
+      gmShowPanel();
+      return;
+    }
+    // Silent fail — open traditional match modal as fallback
+    openCabanaMatch();
+    return;
+  }
+
+  gmState.requestId = result.request_id;
+  gmState.expiresAt = new Date(Date.now() + 20 * 60 * 1000).toISOString();
+  gmState.responses = [];
+  gmState.totalSecs = 20 * 60;
+
+  // Show the celebration overlay
+  gmShowSentOverlay();
+
+  // Start the live tab system
+  gmActivateTab(criteria);
+  gmStartTimer();
+  gmSubscribeRealtime();
+}
+
+/* ── Show the "Request Sent" celebration overlay ── */
+function gmShowSentOverlay() {
+  const overlay = document.getElementById('gm-sent-overlay');
+  if (!overlay) return;
+  overlay.classList.add('show');
+  // Auto-dismiss after 5s unless user interacts
+  gmState._sentTimeout = setTimeout(() => {
+    overlay.classList.remove('show');
+    gmShowPanel();
+  }, 5500);
+}
+
+function gmSentCtaClick() {
+  clearTimeout(gmState._sentTimeout);
+  const overlay = document.getElementById('gm-sent-overlay');
+  if (overlay) overlay.classList.remove('show');
+  gmShowPanel();
+  // Scroll ghost tab into view
+  setTimeout(() => {
+    document.getElementById('gm-live-tab')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, 300);
+}
+
+/* ── Activate the ghost tab (make it visible with data) ── */
+function gmActivateTab(criteria) {
+  const tab = document.getElementById('gm-live-tab');
+  if (tab) tab.classList.add('visible');
+
+  // Set request detail chips
+  const detailsEl = document.getElementById('gm-req-details');
+  if (detailsEl && criteria) {
+    const chips = [];
+    if (criteria.location) chips.push(criteria.location);
+    if (criteria.checkin_date) chips.push(criteria.checkin_date + (criteria.checkout_date ? ' → ' + criteria.checkout_date : ''));
+    if (criteria.guests > 1) chips.push(criteria.guests + ' guests');
+    if (criteria.bedrooms) chips.push(criteria.bedrooms + ' bed');
+    detailsEl.innerHTML = chips.map(c => `<span class="gm-req-chip">${c}</span>`).join('');
+  }
+}
+
+/* ── Show/hide the expanding panel ── */
+function gmShowPanel() {
+  const panel = document.getElementById('gm-panel');
+  const pill = document.getElementById('gm-tab-pill');
+  if (!panel || !pill) return;
+  panel.classList.add('open');
+  pill.classList.add('open');
+  gmState.panelOpen = true;
+  gmRenderResponses();
+}
+
+function toggleGmPanel() {
+  const panel = document.getElementById('gm-panel');
+  if (!panel) return;
+  if (panel.classList.contains('open')) {
+    panel.classList.remove('open');
+    document.getElementById('gm-tab-pill')?.classList.remove('open');
+    gmState.panelOpen = false;
+  } else {
+    gmShowPanel();
+  }
+}
+
+/* ── 20-minute countdown ── */
+function gmStartTimer() {
+  clearInterval(gmState.timerInterval);
+  gmState.timerInterval = setInterval(gmTickTimer, 1000);
+  gmTickTimer();
+}
+
+function gmTickTimer() {
+  if (!gmState.expiresAt) return;
+  const secsLeft = Math.max(0, Math.floor((new Date(gmState.expiresAt) - Date.now()) / 1000));
+  const mins = Math.floor(secsLeft / 60);
+  const secs = secsLeft % 60;
+  const timeStr = `${mins}:${secs.toString().padStart(2, '0')}`;
+  const urgent = secsLeft < 120;
+
+  // Update pill timer
+  const pillTimer = document.getElementById('gm-tab-timer');
+  if (pillTimer) {
+    pillTimer.textContent = timeStr;
+    pillTimer.classList.toggle('urgent', urgent);
+  }
+
+  // Update panel countdown label
+  const countLabel = document.getElementById('gm-countdown-label');
+  if (countLabel) countLabel.textContent = timeStr + ' left';
+
+  // Update countdown bar
+  const fill = document.getElementById('gm-countdown-fill');
+  if (fill) {
+    const pct = (secsLeft / gmState.totalSecs) * 100;
+    fill.style.width = pct + '%';
+    fill.classList.toggle('urgent', urgent);
+  }
+
+  // Update "still waiting" timers inside panel
+  document.querySelectorAll('.gm-sw-timer').forEach(el => {
+    el.textContent = timeStr;
+    el.classList.toggle('urgent', urgent);
+  });
+
+  if (secsLeft <= 0) {
+    clearInterval(gmState.timerInterval);
+    gmOnExpired();
+  }
+}
+
+/* ── When timer expires ── */
+function gmOnExpired() {
+  const hasResponses = gmState.responses.length > 0;
+
+  // Update pill to show expired
+  const label = document.getElementById('gm-tab-label');
+  const sub = document.getElementById('gm-tab-sub');
+  const timer = document.getElementById('gm-tab-timer');
+  if (label) label.textContent = hasResponses ? 'Matches closed · Responses in' : 'Time\'s up · No bites';
+  if (sub) sub.textContent = hasResponses ? 'Tap to view who responded' : 'Tap for options';
+  if (timer) { timer.textContent = '0:00'; timer.classList.add('urgent'); }
+
+  // If panel is open, re-render
+  if (gmState.panelOpen) gmRenderExpiredState();
+
+  // Unsubscribe realtime
+  if (gmState.realtimeChan) {
+    try { gmState.realtimeChan.unsubscribe(); } catch(e) {}
+    gmState.realtimeChan = null;
+  }
+}
+
+/* ── Render the responses list inside the panel ── */
+function gmRenderResponses() {
+  const listEl = document.getElementById('gm-responses-list');
+  const labelEl = document.getElementById('gm-responses-label');
+  if (!listEl) return;
+
+  const responses = gmState.responses;
+  const secsLeft = gmState.expiresAt
+    ? Math.max(0, Math.floor((new Date(gmState.expiresAt) - Date.now()) / 1000)) : 0;
+  const expired = secsLeft <= 0;
+
+  if (expired && responses.length === 0) {
+    gmRenderExpiredState();
+    return;
+  }
+
+  if (responses.length === 0) {
+    if (labelEl) labelEl.textContent = 'Waiting for hosts…';
+    listEl.innerHTML = `
+      <div class="gm-empty-state">
+        <div class="gm-empty-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/>
+          </svg>
+        </div>
+        <div class="gm-empty-text">
+          <strong>Broadcasting to hosts…</strong>
+          Opted-in hosts in your area are seeing your request right now. The keenest will respond first.
+        </div>
+      </div>`;
+    return;
+  }
+
+  if (labelEl) labelEl.textContent = `${responses.length} host${responses.length > 1 ? 's' : ''} responded`;
+
+  const secsStr = `${Math.floor(secsLeft/60)}:${(secsLeft%60).toString().padStart(2,'0')}`;
+  const urgentClass = secsLeft < 120 ? ' urgent' : '';
+
+  const cards = responses.map(r => {
+    const img = r.listing_image
+      ? `<img class="gm-resp-img" src="${r.listing_image}" alt="${r.listing_title || 'Listing'}" onerror="this.style.display='none'"/>`
+      : `<div class="gm-resp-img-placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg></div>`;
+    const price = r.price_per_night ? `KES ${Number(r.price_per_night).toLocaleString()}` : '';
+    return `
+      <div class="gm-response-card" id="gm-resp-${r.id}" onclick="gmOpenListing('${r.listing_id}', '${r.id}')">
+        ${img}
+        <div class="gm-resp-body">
+          <div class="gm-resp-name">${r.listing_title || 'Stay available'}</div>
+          <div class="gm-resp-host">${r.host_name || 'Host'} is ready for you</div>
+          ${price ? `<div class="gm-resp-price">${price} <span>/ night</span></div>` : ''}
+        </div>
+        <button class="gm-resp-action">View →</button>
+      </div>`;
+  }).join('');
+
+  const stillWaiting = expired ? '' : `
+    <div class="gm-still-waiting">
+      <div class="gm-sw-text">More hosts may still respond — your window is open for another <span class="gm-sw-timer${urgentClass}">${secsStr}</span></div>
+    </div>`;
+
+  listEl.innerHTML = cards + stillWaiting;
+}
+
+/* ── Expired state render ── */
+function gmRenderExpiredState() {
+  const listEl = document.getElementById('gm-responses-list');
+  const labelEl = document.getElementById('gm-responses-label');
+  if (!listEl) return;
+
+  if (gmState.responses.length > 0) {
+    if (labelEl) labelEl.textContent = `${gmState.responses.length} response${gmState.responses.length > 1 ? 's' : ''} · Window closed`;
+    gmRenderResponses();
+    return;
+  }
+
+  if (labelEl) labelEl.textContent = '';
+  listEl.innerHTML = `
+    <div class="gm-expired-state">
+      <div class="gm-expired-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M12 8v4l2.5 2.5"/>
+        </svg>
+      </div>
+      <div class="gm-expired-title">No takers. Rude, honestly.</div>
+      <div class="gm-expired-sub">
+        We sent your request far and wide — apparently our hosts were busy living their best lives tonight.
+        <em>The audacity.</em> Don't worry though, the traditional search is very much awake and at your service.
+      </div>
+      <button class="gm-fallback-btn" onclick="gmFallbackToSearch()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        Browse all stays instead
+      </button>
+    </div>`;
+}
+
+/* ── Navigate to a host's listing when guest clicks a response ── */
+async function gmOpenListing(listingId, responseId) {
+  if (!listingId) return;
+  // Mark as engaged in DB (async, don't block navigation)
+  const session = window.ApaSession ? await new Promise(r => ApaSession.ready(r)) : null;
+  if (session?.user && responseId && gmState.requestId) {
+    const sb = window.sb || window.ApaSession?.client();
+    if (sb) {
+      sb.from('cabana_match_responses')
+        .update({ status: 'engaged', engaged_at: new Date().toISOString() })
+        .eq('id', responseId)
+        .then(() => {});
+    }
+  }
+  // Navigate to listing — open drawer if possible, else navigate
+  if (typeof openDrawer === 'function') {
+    openDrawer(listingId);
+  } else {
+    window.location.href = `apartments.html?listing=${listingId}`;
+  }
+}
+
+/* ── Fallback to search ── */
+function gmFallbackToSearch() {
+  const tab = document.getElementById('gm-live-tab');
+  if (tab) tab.classList.remove('visible');
+  // Scroll to search bar
+  document.querySelector('.search-wrap')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* ── Close/cancel active request ── */
+async function gmCloseRequest() {
+  if (gmState.requestId) {
+    await closeCabanaMatchRequest(gmState.requestId);
+  }
+  clearInterval(gmState.timerInterval);
+  if (gmState.realtimeChan) {
+    try { gmState.realtimeChan.unsubscribe(); } catch(e) {}
+  }
+  gmState.requestId = null;
+  gmState.responses = [];
+  const tab = document.getElementById('gm-live-tab');
+  if (tab) tab.classList.remove('visible');
+  const panel = document.getElementById('gm-panel');
+  if (panel) panel.classList.remove('open');
+}
+
+function closeGmTab() {
+  const panel = document.getElementById('gm-panel');
+  if (panel) panel.classList.remove('open');
+  document.getElementById('gm-tab-pill')?.classList.remove('open');
+  gmState.panelOpen = false;
+}
+
+/* ── Realtime subscription for new host responses ── */
+function gmSubscribeRealtime() {
+  const sb = window.sb || window.ApaSession?.client();
+  if (!sb || !gmState.requestId) return;
+  try {
+    gmState.realtimeChan = sb.channel('gm-responses-' + gmState.requestId)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'cabana_match_responses',
+        filter: `request_id=eq.${gmState.requestId}`
+      }, (payload) => {
+        const r = payload.new;
+        if (r) {
+          gmState.responses.push(r);
+          // Update pill label
+          const label = document.getElementById('gm-tab-label');
+          const sub = document.getElementById('gm-tab-sub');
+          const count = gmState.responses.length;
+          if (label) label.textContent = `${count} host${count > 1 ? 's' : ''} responded`;
+          if (sub) sub.textContent = 'Tap to see who\'s ready for you';
+          // Flash new card if panel open
+          if (gmState.panelOpen) {
+            gmRenderResponses();
+            setTimeout(() => {
+              document.getElementById('gm-resp-' + r.id)?.classList.add('new-response');
+            }, 50);
+          }
+        }
+      })
+      .subscribe();
+  } catch(e) {}
+}
+
+/* ── On page load: restore active request from DB ── */
+(async function gmRestoreOnLoad() {
+  if (!window.ApaSession) return;
+  const session = await new Promise(r => ApaSession.ready(r));
+  if (!session?.user) return;
+  const sb = window.sb || window.ApaSession?.client();
+  if (!sb) return;
+
+  const { data: req } = await sb
+    .from('cabana_match_requests')
+    .select('*')
+    .eq('guest_id', session.user.id)
+    .eq('status', 'live')
+    .gt('expires_at', new Date().toISOString())
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (!req) return;
+
+  const { data: responses } = await sb
+    .from('cabana_match_responses')
+    .select('*')
+    .eq('request_id', req.id)
+    .order('created_at', { ascending: true });
+
+  gmState.requestId = req.id;
+  gmState.expiresAt = req.expires_at;
+  gmState.responses = responses || [];
+  gmState.totalSecs = 20 * 60;
+
+  // Build criteria from DB row
+  const criteria = {
+    location: req.location,
+    checkin_date: req.checkin_date,
+    checkout_date: req.checkout_date,
+    guests: req.guests,
+    bedrooms: req.bedrooms
+  };
+  gmActivateTab(criteria);
+  gmStartTimer();
+  gmSubscribeRealtime();
+
+  // If returning via hash #get-matched, open the panel
+  if (location.hash === '#get-matched') {
+    setTimeout(gmShowPanel, 200);
+  }
+})();
+
+/* ── Handle hash #get-matched (from dashboard) ── */
+window.addEventListener('hashchange', () => {
+  if (location.hash === '#get-matched' && gmState.requestId) {
+    gmShowPanel();
+    document.getElementById('gm-live-tab')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+});
 </script>
 
 <style>
