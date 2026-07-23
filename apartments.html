@@ -3007,27 +3007,21 @@ function closeCabanaMatch() {
   }
 }
 
-/* ── Auto-open from hash (#cabana-match) ── */
+/* ── Hash-based auto-open intentionally removed ──
+   The modal only opens when the user explicitly clicks "Match with Cabana".
+   Arriving via apartments.html#cabana-match (e.g. from the dashboard card)
+   no longer auto-opens the sheet — the hash is cleaned up silently instead. ── */
 (function () {
-  function maybeOpenFromHash() {
+  function cleanHash() {
     if (location.hash === '#cabana-match') {
-      // Small delay so page has rendered
-      setTimeout(openCabanaMatch, 120);
+      history.replaceState(null, '', location.pathname + location.search);
     }
   }
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', maybeOpenFromHash, { once: true });
+    document.addEventListener('DOMContentLoaded', cleanHash, { once: true });
   } else {
-    maybeOpenFromHash();
+    cleanHash();
   }
-  // Handle back/forward navigation to hash
-  window.addEventListener('hashchange', function () {
-    if (location.hash === '#cabana-match') {
-      openCabanaMatch();
-    } else {
-      closeCabanaMatch();
-    }
-  });
 })();
 
 /* ── Escape key to close ── */
