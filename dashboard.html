@@ -1052,79 +1052,106 @@ img,video,svg{max-width:100%;}
         </div>
       </div>
 
-      <!-- ══ CATEGORY RAILS ══════════════════════════════════════════
-           One horizontal product carousel per service, stacked. Real
-           products from the same tables the service pages use, so the
-           dashboard preview matches what's behind the tap.
-           Flights and rides are excluded: they're search flows, not
-           catalogues, and have nothing worth browsing as thumbnails.  -->
-      <div id="cat-rails"></div>
+      <!-- ── WAITLIST COUNTER ── -->
+      <div id="wl-section" style="padding:48px 0 12px;text-align:center;">
 
-      <!-- ── WAITLIST COUNTER + PARTNERS SECTION ── -->
-      <div id="waitlist-partners-section" style="margin:0 0 40px;border-radius:28px;overflow:hidden;background:#fff;border:1.5px solid rgba(10,10,20,0.07);box-shadow:0 4px 32px rgba(10,10,20,0.06);">
-
-        <!-- Waitlist Counter -->
-        <div style="padding:48px 28px 40px;text-align:center;background:linear-gradient(160deg,#0A0A14 0%,#1A1B2E 60%,#0f1729 100%);position:relative;overflow:hidden;">
-          <!-- Background glow -->
-          <div style="position:absolute;inset:0;background:radial-gradient(ellipse 70% 60% at 50% 0%,rgba(123,47,247,0.18) 0%,transparent 70%);pointer-events:none;"></div>
-          <div style="position:absolute;bottom:-40px;left:50%;transform:translateX(-50%);width:300px;height:80px;background:radial-gradient(ellipse,rgba(67,97,255,0.15) 0%,transparent 70%);pointer-events:none;"></div>
-
-          <!-- Eyebrow label -->
-          <div style="display:inline-flex;align-items:center;gap:8px;margin-bottom:24px;">
-            <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#4361FF;box-shadow:0 0 10px rgba(67,97,255,.8);animation:wl-pulse 2s ease-in-out infinite;"></span>
-            <span style="font-family:var(--font-body);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.5);">Live Waitlist</span>
-            <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#4361FF;box-shadow:0 0 10px rgba(67,97,255,.8);animation:wl-pulse 2s ease-in-out infinite .5s;"></span>
-          </div>
-
-          <!-- The big number -->
-          <div style="margin-bottom:10px;line-height:1;">
-            <span id="wl-count" style="font-family:'Geist','Inter',sans-serif;font-size:clamp(64px,14vw,96px);font-weight:800;letter-spacing:-.04em;color:#fff;font-feature-settings:'tnum';tabular-nums:true;">1,283</span><span style="font-family:'Geist','Inter',sans-serif;font-size:clamp(36px,8vw,56px);font-weight:800;color:#4361FF;letter-spacing:-.02em;">+</span>
-          </div>
-
-          <div style="font-family:var(--font-display);font-size:clamp(15px,3.5vw,19px);font-weight:500;color:rgba(255,255,255,.65);letter-spacing:-.01em;margin-bottom:8px;">people waiting for Cabana</div>
-          <div style="font-size:12px;font-weight:500;color:rgba(255,255,255,.3);letter-spacing:.02em;">and the list keeps growing</div>
+        <!-- Live dot + label -->
+        <div style="display:inline-flex;align-items:center;gap:9px;margin-bottom:20px;">
+          <span style="width:7px;height:7px;border-radius:50%;background:#4361FF;display:inline-block;animation:wl-pulse 2s ease-in-out infinite;box-shadow:0 0 0 0 rgba(67,97,255,.6);"></span>
+          <span style="font-family:var(--font-body);font-size:11px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-3,rgba(10,10,20,.4));">Live Waitlist</span>
         </div>
 
-        <!-- Divider strip -->
-        <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(10,10,20,.08) 30%,rgba(10,10,20,.08) 70%,transparent);"></div>
+        <!-- Big number -->
+        <div style="line-height:1;margin-bottom:12px;">
+          <span id="wl-count" style="font-family:'Geist','Inter',var(--font-display),sans-serif;font-size:clamp(72px,18vw,108px);font-weight:900;letter-spacing:-.05em;color:var(--ink,#0A0A14);font-variant-numeric:tabular-nums;">1,283</span><span style="font-family:'Geist','Inter',var(--font-display),sans-serif;font-size:clamp(40px,10vw,64px);font-weight:900;color:#4361FF;letter-spacing:-.03em;">+</span>
+        </div>
 
-        <!-- Partners / Backed By -->
-        <div style="padding:36px 28px 40px;background:#fff;">
-          <p style="font-family:var(--font-body);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(10,10,20,.3);text-align:center;margin:0 0 28px;">Built and backed by world-class technology</p>
+        <div style="font-family:var(--font-body);font-size:clamp(14px,3.5vw,17px);font-weight:500;color:var(--ink-2,rgba(10,10,20,.55));letter-spacing:-.01em;margin-bottom:4px;">people waiting for Cabana</div>
+        <div style="font-size:11.5px;font-weight:500;color:var(--ink-3,rgba(10,10,20,.3));letter-spacing:.01em;">and the list keeps growing</div>
+      </div>
 
-          <div id="wl-logos" style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px 16px;align-items:center;justify-items:center;max-width:480px;margin:0 auto;">
+      <!-- ── PARTNERS TICKER ── -->
+      <div style="padding:32px 0 44px;">
+        <p style="font-family:var(--font-body);font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2,rgba(10,10,20,.45));text-align:center;margin:0 0 28px;">Backed by world-class technology</p>
 
+        <!-- Marquee track -->
+        <div style="overflow:hidden;width:100%;position:relative;">
+          <!-- Fade edges -->
+          <div style="position:absolute;left:0;top:0;bottom:0;width:48px;background:linear-gradient(to right,var(--surface,#F7F7F8),transparent);z-index:2;pointer-events:none;"></div>
+          <div style="position:absolute;right:0;top:0;bottom:0;width:48px;background:linear-gradient(to left,var(--surface,#F7F7F8),transparent);z-index:2;pointer-events:none;"></div>
+
+          <div id="wl-ticker" style="display:flex;align-items:center;gap:0;width:max-content;animation:wl-scroll 28s linear infinite;">
+
+            <!-- SET 1 -->
             <!-- Supabase -->
-            <div class="wl-logo-item" style="display:flex;align-items:center;gap:7px;opacity:0;animation:wl-fadein .5s ease forwards;" data-delay="0">
-              <svg width="20" height="20" viewBox="0 0 109 113" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M63.7076 110.284C60.8481 113.885 55.0502 111.912 54.9813 107.314L53.9738 40.0627L99.1935 40.0627C107.384 40.0627 111.952 49.5228 106.859 55.9374L63.7076 110.284Z" fill="url(#sb-a)"/><path d="M63.7076 110.284C60.8481 113.885 55.0502 111.912 54.9813 107.314L53.9738 40.0627L99.1935 40.0627C107.384 40.0627 111.952 49.5228 106.859 55.9374L63.7076 110.284Z" fill="url(#sb-b)" fill-opacity="0.2"/><path d="M45.317 2.07103C48.1765 -1.53037 53.9745 0.442937 54.0434 5.041L54.4849 72.2922H9.83113C1.64038 72.2922 -2.92775 62.8321 2.1655 56.4175L45.317 2.07103Z" fill="#3ECF8E"/><defs><linearGradient id="sb-a" x1="53.9738" y1="54.974" x2="94.1635" y2="71.8295" gradientUnits="userSpaceOnUse"><stop stop-color="#249361"/><stop offset="1" stop-color="#3ECF8E"/></linearGradient><linearGradient id="sb-b" x1="36.1558" y1="30.578" x2="54.4844" y2="65.0806" gradientUnits="userSpaceOnUse"><stop/><stop offset="1" stop-opacity="0"/></linearGradient></defs></svg>
-              <span style="font-family:'Geist','Inter',sans-serif;font-size:14px;font-weight:700;color:#0A0A14;letter-spacing:-.02em;">supabase</span>
+            <div style="display:inline-flex;align-items:center;gap:12px;padding:0 44px;flex-shrink:0;">
+              <svg width="36" height="36" viewBox="0 0 109 113" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M63.7076 110.284C60.8481 113.885 55.0502 111.912 54.9813 107.314L53.9738 40.0627L99.1935 40.0627C107.384 40.0627 111.952 49.5228 106.859 55.9374L63.7076 110.284Z" fill="url(#t-sb-a)"/><path d="M63.7076 110.284C60.8481 113.885 55.0502 111.912 54.9813 107.314L53.9738 40.0627L99.1935 40.0627C107.384 40.0627 111.952 49.5228 106.859 55.9374L63.7076 110.284Z" fill="url(#t-sb-b)" fill-opacity="0.2"/><path d="M45.317 2.071C48.1765 -1.53 53.9745 .443 54.0434 5.041L54.4849 72.292H9.831C1.64 72.292 -2.928 62.832 2.165 56.418L45.317 2.071Z" fill="#3ECF8E"/><defs><linearGradient id="t-sb-a" x1="53.9738" y1="54.974" x2="94.1635" y2="71.8295" gradientUnits="userSpaceOnUse"><stop stop-color="#249361"/><stop offset="1" stop-color="#3ECF8E"/></linearGradient><linearGradient id="t-sb-b" x1="36.1558" y1="30.578" x2="54.4844" y2="65.0806" gradientUnits="userSpaceOnUse"><stop/><stop offset="1" stop-opacity="0"/></linearGradient></defs></svg>
+              <span style="font-family:'Geist','Inter',sans-serif;font-size:28px;font-weight:800;color:var(--ink,#0A0A14);letter-spacing:-.03em;">supabase</span>
             </div>
+
+            <!-- Separator dot -->
+            <span style="width:5px;height:5px;border-radius:50%;background:var(--ink-3,rgba(10,10,20,.2));flex-shrink:0;"></span>
 
             <!-- Vercel -->
-            <div class="wl-logo-item" style="display:flex;align-items:center;gap:8px;opacity:0;animation:wl-fadein .5s ease forwards;" data-delay="1">
-              <svg width="16" height="16" viewBox="0 0 116 100" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M57.5 0L115 100H0L57.5 0Z" fill="#0A0A14"/></svg>
-              <span style="font-family:'Geist','Inter',sans-serif;font-size:14px;font-weight:700;color:#0A0A14;letter-spacing:-.02em;">Vercel</span>
+            <div style="display:inline-flex;align-items:center;gap:12px;padding:0 44px;flex-shrink:0;">
+              <svg width="30" height="30" viewBox="0 0 116 100" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M57.5 0L115 100H0L57.5 0Z" fill="var(--ink,#0A0A14)"/></svg>
+              <span style="font-family:'Geist','Inter',sans-serif;font-size:28px;font-weight:800;color:var(--ink,#0A0A14);letter-spacing:-.03em;">Vercel</span>
             </div>
+
+            <span style="width:5px;height:5px;border-radius:50%;background:var(--ink-3,rgba(10,10,20,.2));flex-shrink:0;"></span>
 
             <!-- Anthropic -->
-            <div class="wl-logo-item" style="display:flex;align-items:center;opacity:0;animation:wl-fadein .5s ease forwards;" data-delay="2">
-              <span style="font-family:'Geist','Inter',sans-serif;font-size:13px;font-weight:800;color:#0A0A14;letter-spacing:.02em;">ANTHROPIC</span>
+            <div style="display:inline-flex;align-items:center;padding:0 44px;flex-shrink:0;">
+              <span style="font-family:'Geist','Inter',sans-serif;font-size:28px;font-weight:900;color:var(--ink,#0A0A14);letter-spacing:.04em;">ANTHROPIC</span>
             </div>
+
+            <span style="width:5px;height:5px;border-radius:50%;background:var(--ink-3,rgba(10,10,20,.2));flex-shrink:0;"></span>
 
             <!-- Resend -->
-            <div class="wl-logo-item" style="display:flex;align-items:center;gap:7px;opacity:0;animation:wl-fadein .5s ease forwards;" data-delay="3">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 5C4.89543 5 4 5.89543 4 7V17C4 18.1046 4.89543 19 6 19H18C19.1046 19 20 18.1046 20 17V7C20 5.89543 19.1046 5 18 5H6ZM6 7H18V9L12 13L6 9V7ZM6 11.23L12 15.23L18 11.23V17H6V11.23Z" fill="#0A0A14"/></svg>
-              <span style="font-family:'Geist','Inter',sans-serif;font-size:14px;font-weight:700;color:#0A0A14;letter-spacing:-.02em;">Resend</span>
+            <div style="display:inline-flex;align-items:center;padding:0 44px;flex-shrink:0;">
+              <span style="font-family:'Geist','Inter',sans-serif;font-size:28px;font-weight:800;color:var(--ink,#0A0A14);letter-spacing:-.03em;">Resend</span>
             </div>
 
+            <span style="width:5px;height:5px;border-radius:50%;background:var(--ink-3,rgba(10,10,20,.2));flex-shrink:0;"></span>
+
             <!-- Eagle Gem Ventures -->
-            <div class="wl-logo-item" style="grid-column:span 2;display:flex;align-items:center;gap:8px;opacity:0;animation:wl-fadein .5s ease forwards;justify-self:center;" data-delay="4">
-              <svg width="20" height="20" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="40" cy="40" r="38" stroke="#1565C0" stroke-width="4"/><path d="M24 44C24 44 28 26 40 26C52 26 56 38 48 42C44 44 36 44 36 50C36 56 44 58 44 58" stroke="#1565C0" stroke-width="3.5" stroke-linecap="round"/><path d="M36 32L54 22" stroke="#1565C0" stroke-width="3" stroke-linecap="round"/><path d="M38 36L60 30" stroke="#1565C0" stroke-width="2.5" stroke-linecap="round"/></svg>
-              <div>
-                <span style="font-family:'Geist','Inter',sans-serif;font-size:12px;font-weight:800;color:#C0392B;letter-spacing:.02em;">EAGLE GEM</span>
-                <span style="font-family:'Geist','Inter',sans-serif;font-size:12px;font-weight:700;color:#1565C0;letter-spacing:-.01em;"> Ventures</span>
+            <div style="display:inline-flex;align-items:center;gap:10px;padding:0 44px;flex-shrink:0;">
+              <svg width="32" height="32" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="40" cy="40" r="36" stroke="#1565C0" stroke-width="5"/><path d="M26 46C26 46 30 27 40 27C50 27 54 38 47 42C43 44 36 44 36 51C36 57 43 59 43 59" stroke="#1565C0" stroke-width="4" stroke-linecap="round"/><path d="M37 33L55 23" stroke="#1565C0" stroke-width="3.5" stroke-linecap="round"/><path d="M38 38L60 31" stroke="#1565C0" stroke-width="3" stroke-linecap="round"/></svg>
+              <div style="line-height:1.1;">
+                <span style="font-family:'Geist','Inter',sans-serif;font-size:26px;font-weight:900;color:#C0392B;letter-spacing:.02em;">EAGLE GEM</span>
+                <span style="font-family:'Geist','Inter',sans-serif;font-size:26px;font-weight:700;color:#1565C0;letter-spacing:-.02em;"> Ventures</span>
               </div>
             </div>
+
+            <span style="width:5px;height:5px;border-radius:50%;background:var(--ink-3,rgba(10,10,20,.2));flex-shrink:0;"></span>
+
+            <!-- SET 2 — exact duplicate for seamless loop -->
+            <div style="display:inline-flex;align-items:center;gap:12px;padding:0 44px;flex-shrink:0;">
+              <svg width="36" height="36" viewBox="0 0 109 113" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M63.7076 110.284C60.8481 113.885 55.0502 111.912 54.9813 107.314L53.9738 40.0627L99.1935 40.0627C107.384 40.0627 111.952 49.5228 106.859 55.9374L63.7076 110.284Z" fill="url(#t-sb-a2)"/><path d="M63.7076 110.284C60.8481 113.885 55.0502 111.912 54.9813 107.314L53.9738 40.0627L99.1935 40.0627C107.384 40.0627 111.952 49.5228 106.859 55.9374L63.7076 110.284Z" fill="url(#t-sb-b2)" fill-opacity="0.2"/><path d="M45.317 2.071C48.1765 -1.53 53.9745 .443 54.0434 5.041L54.4849 72.292H9.831C1.64 72.292 -2.928 62.832 2.165 56.418L45.317 2.071Z" fill="#3ECF8E"/><defs><linearGradient id="t-sb-a2" x1="53.9738" y1="54.974" x2="94.1635" y2="71.8295" gradientUnits="userSpaceOnUse"><stop stop-color="#249361"/><stop offset="1" stop-color="#3ECF8E"/></linearGradient><linearGradient id="t-sb-b2" x1="36.1558" y1="30.578" x2="54.4844" y2="65.0806" gradientUnits="userSpaceOnUse"><stop/><stop offset="1" stop-opacity="0"/></linearGradient></defs></svg>
+              <span style="font-family:'Geist','Inter',sans-serif;font-size:28px;font-weight:800;color:var(--ink,#0A0A14);letter-spacing:-.03em;">supabase</span>
+            </div>
+            <span style="width:5px;height:5px;border-radius:50%;background:var(--ink-3,rgba(10,10,20,.2));flex-shrink:0;"></span>
+            <div style="display:inline-flex;align-items:center;gap:12px;padding:0 44px;flex-shrink:0;">
+              <svg width="30" height="30" viewBox="0 0 116 100" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M57.5 0L115 100H0L57.5 0Z" fill="var(--ink,#0A0A14)"/></svg>
+              <span style="font-family:'Geist','Inter',sans-serif;font-size:28px;font-weight:800;color:var(--ink,#0A0A14);letter-spacing:-.03em;">Vercel</span>
+            </div>
+            <span style="width:5px;height:5px;border-radius:50%;background:var(--ink-3,rgba(10,10,20,.2));flex-shrink:0;"></span>
+            <div style="display:inline-flex;align-items:center;padding:0 44px;flex-shrink:0;">
+              <span style="font-family:'Geist','Inter',sans-serif;font-size:28px;font-weight:900;color:var(--ink,#0A0A14);letter-spacing:.04em;">ANTHROPIC</span>
+            </div>
+            <span style="width:5px;height:5px;border-radius:50%;background:var(--ink-3,rgba(10,10,20,.2));flex-shrink:0;"></span>
+            <div style="display:inline-flex;align-items:center;padding:0 44px;flex-shrink:0;">
+              <span style="font-family:'Geist','Inter',sans-serif;font-size:28px;font-weight:800;color:var(--ink,#0A0A14);letter-spacing:-.03em;">Resend</span>
+            </div>
+            <span style="width:5px;height:5px;border-radius:50%;background:var(--ink-3,rgba(10,10,20,.2));flex-shrink:0;"></span>
+            <div style="display:inline-flex;align-items:center;gap:10px;padding:0 44px;flex-shrink:0;">
+              <svg width="32" height="32" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="40" cy="40" r="36" stroke="#1565C0" stroke-width="5"/><path d="M26 46C26 46 30 27 40 27C50 27 54 38 47 42C43 44 36 44 36 51C36 57 43 59 43 59" stroke="#1565C0" stroke-width="4" stroke-linecap="round"/><path d="M37 33L55 23" stroke="#1565C0" stroke-width="3.5" stroke-linecap="round"/><path d="M38 38L60 31" stroke="#1565C0" stroke-width="3" stroke-linecap="round"/></svg>
+              <div style="line-height:1.1;">
+                <span style="font-family:'Geist','Inter',sans-serif;font-size:26px;font-weight:900;color:#C0392B;letter-spacing:.02em;">EAGLE GEM</span>
+                <span style="font-family:'Geist','Inter',sans-serif;font-size:26px;font-weight:700;color:#1565C0;letter-spacing:-.02em;"> Ventures</span>
+              </div>
+            </div>
+            <span style="width:5px;height:5px;border-radius:50%;background:var(--ink-3,rgba(10,10,20,.2));flex-shrink:0;"></span>
 
           </div>
         </div>
@@ -1132,75 +1159,61 @@ img,video,svg{max-width:100%;}
 
       <style>
         @keyframes wl-pulse {
-          0%,100%{opacity:1;transform:scale(1);}
-          50%{opacity:.4;transform:scale(.7);}
+          0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(67,97,255,.5);}
+          50%{opacity:.5;box-shadow:0 0 0 5px rgba(67,97,255,0);}
         }
-        @keyframes wl-fadein {
-          from{opacity:0;transform:translateY(12px);}
-          to{opacity:1;transform:translateY(0);}
+        @keyframes wl-scroll {
+          0%{transform:translateX(0);}
+          100%{transform:translateX(-50%);}
         }
         @keyframes wl-count-bump {
           0%{transform:scale(1);}
-          40%{transform:scale(1.06);}
+          40%{transform:scale(1.04);}
           100%{transform:scale(1);}
         }
-        .wl-logo-item { transition: opacity .2s; }
+        #wl-ticker:hover { animation-play-state: paused; }
       </style>
 
       <script>
       (function(){
-        // Waitlist counter logic
-        // Base: 1283 on July 23 2026 (day 0). Each day adds a random but seeded amount between 50-150.
         var BASE = 1283;
         var BASE_DATE = new Date('2026-07-23T00:00:00Z');
-        function dailyAdd(dayOffset) {
-          // Deterministic pseudo-random from day offset
-          var seed = dayOffset * 2654435761 >>> 0;
-          return 50 + (seed % 101);
-        }
+        function dailyAdd(d) { var s = (d * 2654435761) >>> 0; return 50 + (s % 101); }
         function getTarget() {
-          var now = new Date();
-          var msPerDay = 86400000;
-          var days = Math.floor((now - BASE_DATE) / msPerDay);
-          var total = BASE;
-          for (var i = 1; i <= days; i++) total += dailyAdd(i);
-          return total;
+          var days = Math.floor((Date.now() - BASE_DATE) / 86400000);
+          var t = BASE;
+          for (var i = 1; i <= days; i++) t += dailyAdd(i);
+          return t;
         }
         function fmt(n) { return n.toLocaleString('en-US'); }
         var el = document.getElementById('wl-count');
         if (!el) return;
         var target = getTarget();
-        var start = Math.max(0, target - 80);
-        var current = start;
-        var duration = 2200;
+        var start = Math.max(1100, target - 120);
+        var duration = 4200; // slower: 4.2s
         var startTime = null;
-        function easeOut(t) { return 1 - Math.pow(1-t, 3); }
+        function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
         function tick(ts) {
           if (!startTime) startTime = ts;
-          var progress = Math.min((ts - startTime) / duration, 1);
-          current = Math.round(start + (target - start) * easeOut(progress));
-          el.textContent = fmt(current);
-          if (progress < 1) requestAnimationFrame(tick);
-          else {
-            el.textContent = fmt(target);
-            el.style.animation = 'wl-count-bump .35s ease';
-          }
+          var p = Math.min((ts - startTime) / duration, 1);
+          el.textContent = fmt(Math.round(start + (target - start) * easeOut(p)));
+          if (p < 1) { requestAnimationFrame(tick); }
+          else { el.textContent = fmt(target); el.style.animation = 'wl-count-bump .4s ease'; }
         }
-        // Start animation when element is visible
-        var observer = new IntersectionObserver(function(entries) {
-          if (entries[0].isIntersecting) {
-            observer.disconnect();
-            requestAnimationFrame(tick);
-            // Stagger logo animations
-            var logos = document.querySelectorAll('.wl-logo-item');
-            logos.forEach(function(l, i) {
-              l.style.animationDelay = (0.3 + i * 0.12) + 's';
-            });
-          }
-        }, { threshold: 0.3 });
-        observer.observe(el);
+        var obs = new IntersectionObserver(function(e) {
+          if (e[0].isIntersecting) { obs.disconnect(); requestAnimationFrame(tick); }
+        }, { threshold: 0.2 });
+        obs.observe(el);
       })();
       </script>
+
+      <!-- ══ CATEGORY RAILS ══════════════════════════════════════════
+           One horizontal product carousel per service, stacked. Real
+           products from the same tables the service pages use, so the
+           dashboard preview matches what's behind the tap.
+           Flights and rides are excluded: they're search flows, not
+           catalogues, and have nothing worth browsing as thumbnails.  -->
+      <div id="cat-rails"></div>
 
       <!-- ── APATMENTO GIVES — charity impact card (below all carousels) ── -->
       <div class="svc-charity-card" onclick="document.getElementById('charity-modal').style.display='flex'" style="margin-bottom:40px;">
