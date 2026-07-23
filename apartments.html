@@ -3001,7 +3001,42 @@ function closeCabanaMatch() {
   document.getElementById('cm-overlay').classList.remove('open');
   document.getElementById('cm-modal').classList.remove('open');
   document.body.style.overflow = '';
+  // Clean up hash without adding a history entry
+  if (location.hash === '#cabana-match') {
+    history.replaceState(null, '', location.pathname + location.search);
+  }
 }
+
+/* ── Auto-open from hash (#cabana-match) ── */
+(function () {
+  function maybeOpenFromHash() {
+    if (location.hash === '#cabana-match') {
+      // Small delay so page has rendered
+      setTimeout(openCabanaMatch, 120);
+    }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', maybeOpenFromHash, { once: true });
+  } else {
+    maybeOpenFromHash();
+  }
+  // Handle back/forward navigation to hash
+  window.addEventListener('hashchange', function () {
+    if (location.hash === '#cabana-match') {
+      openCabanaMatch();
+    } else {
+      closeCabanaMatch();
+    }
+  });
+})();
+
+/* ── Escape key to close ── */
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape') {
+    const modal = document.getElementById('cm-modal');
+    if (modal && modal.classList.contains('open')) closeCabanaMatch();
+  }
+});
 
 /* ── Notify interest ── */
 async function registerCabanaInterest() {
