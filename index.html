@@ -904,33 +904,16 @@ body.intro-lock{overflow:hidden;height:100vh;}
   <script>
   (function(){
     try{
-      // Honour an explicit escape hatch: /?stay=1 or a "home" click
-      // from inside the app must not bounce straight back out.
+      // Honour an explicit escape hatch: /?stay=1 keeps the landing page visible.
+      // Links in the footer use this to let people read about Cabana's story.
       var qs = new URLSearchParams(location.search);
       if (qs.has('stay') || sessionStorage.getItem('apa_stay_home')) {
         sessionStorage.removeItem('apa_stay_home');
         return;
       }
 
-      // apa-session.js sets storageKey:'apa-auth' but loads after this script.
-      // On first visit / fresh install the token may still live under the
-      // default Supabase key. Check both so the redirect never misses.
-      var raw = localStorage.getItem('apa-auth')
-             || localStorage.getItem('sb-gfwgbgdvxtocwhilrtdw-auth-token');
-      if (!raw) return;
-
-      var tok = JSON.parse(raw);
-      // v2 may nest under .currentSession depending on version.
-      var sess = (tok && tok.access_token) ? tok
-               : (tok && tok.currentSession) ? tok.currentSession
-               : null;
-      if (!sess || !sess.access_token) return;
-
-      // expires_at is unix seconds. Give a 5-minute buffer — Supabase will
-      // auto-refresh tokens that expire within 60s, so a nearly-expired
-      // token is still valid for the redirect; the session core handles refresh.
-      if (sess.expires_at && (sess.expires_at - 300) * 1000 < Date.now()) return;
-
+      // Everyone — signed in or not — goes straight to the dashboard.
+      // The dashboard handles its own auth state and shows the right UI.
       location.replace('dashboard.html');
     }catch(e){ /* never block the page on a parse error */ }
   })();
@@ -1545,6 +1528,7 @@ body.intro-lock{overflow:hidden;height:100vh;}
 
     <div class="sf-nav-col">
       <div class="sf-col-head">Company</div>
+      <a href="/?stay=1">Our story</a>
       <a href="/cabana.html">About Cabana</a>
       <a href="/terms.html">Terms of use</a>
       <a href="/privacy.html">Privacy policy</a>
