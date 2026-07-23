@@ -2191,6 +2191,7 @@ function badges(){
 
 /* ══ 1 · OVERVIEW ════════════════════════════════════════════════ */
 function renderOverview(){
+  if(!SNAP) return;
   const e = SNAP.engine;
   $('ov-stats').innerHTML = [
     stat('Listings', F.num(SNAP.listings.length), deltaEl(e.listingVelocity.delta) + ' vs prior'),
@@ -2241,6 +2242,7 @@ function renderOverview(){
 
 /* ══ 2 · TRIAGE ══════════════════════════════════════════════════ */
 function renderTriage(){
+  if(!SNAP) return;
   const t = SNAP.triage;
   $('tri-list').innerHTML = t.length ? t.map(x=>`
     <div class="tri ${x.severity}">
@@ -2381,6 +2383,7 @@ function exportSignals(){
 
 /* ══ 6 · FINANCE ═════════════════════════════════════════════════ */
 function renderFinance(){
+  if(!SNAP) return;
   const e = SNAP.engine, r = e.revenue, c = e.concentration;
   $('fi-stats').innerHTML = [
     stat('GMV (all time)', F.money(r.gmv), `${F.money(r.gmv30)} last 30d`, 'gold'),
@@ -2421,6 +2424,7 @@ function renderFinance(){
 
 /* ══ 7 · MODERATION ══════════════════════════════════════════════ */
 function renderModeration(){
+  if(!SNAP) return;
   const p = SNAP.pending;
   $('mod-rows').innerHTML = p.length ? p.map(l=>`
     <tr>
@@ -2473,6 +2477,7 @@ function filterUploads(f, el){
   el.classList.add('on'); renderUploads();
 }
 function renderUploads(){
+  if(!SNAP) return;
   let u = SNAP.uploads;
   if(UP_FILTER!=='all') u = u.filter(x=>(x.status||'pending')===UP_FILTER);
   const pillOf = s => ({pending:'p-warn',approved:'p-ok',rejected:'p-bad'}[s]||'p-mute');
@@ -2517,6 +2522,7 @@ async function upAct(kind, id, path){
 
 /* ══ 9 · TRUST ═══════════════════════════════════════════════════ */
 function renderTrust(){
+  if(!SNAP) return;
   const p = SNAP.partners;
   $('tr-rows').innerHTML = p.length ? p.slice(0,120).map(x=>{
     const t = x._trust, s = x.status||'active';
@@ -2561,6 +2567,7 @@ async function trAct(kind, id){
   });
 }
 function exportPartners(){
+  if(!SNAP) return toast('Data loading','bad');
   AD.download('partners.csv', AD.toCSV(SNAP.partners.map(p=>({
     id:p.id, email:p.email, name:p.first_name, status:p.status||'active',
     trust:p._trust.score, band:p._trust.band, listings:p._trust.signals.listings,
@@ -2576,6 +2583,7 @@ function filterInv(f, el){
   el.classList.add('on'); renderInventory();
 }
 function renderInventory(){
+  if(!SNAP) return;
   const d = SNAP.engine.decay;
   $('inv-stats').innerHTML = [
     stat('Health score', d.healthScore+'%', 'fresh supply share', d.healthScore<60?'bad':'ok'),
@@ -2614,10 +2622,11 @@ async function invAct(kind, id){
     });
   }
 }
-function exportListings(){ AD.download('listings.csv', AD.toCSV(SNAP.listings), 'text/csv'); toast('Exported','ok'); }
+function exportListings(){ if(!SNAP) return toast('Data loading','bad'); AD.download('listings.csv', AD.toCSV(SNAP.listings), 'text/csv'); toast('Exported','ok'); }
 
 /* ══ 11 · BOOKINGS ═══════════════════════════════════════════════ */
 function renderBookings(){
+  if(!SNAP) return;
   const b = SNAP.bookings.slice(0,150);
   const pillOf = s => /paid|confirmed|completed|checked_in/i.test(s) ? 'p-ok'
     : /cancel|refund/i.test(s) ? 'p-bad' : /pending/i.test(s) ? 'p-warn' : 'p-mute';
@@ -2640,7 +2649,7 @@ function refund(id, amt){
     r.ok ? (toast('Refund recorded','ok'), refresh()) : toast(r.error,'bad');
   });
 }
-function exportBookings(){ AD.download('bookings.csv', AD.toCSV(SNAP.bookings), 'text/csv'); toast('Exported','ok'); }
+function exportBookings(){ if(!SNAP) return toast('Data loading','bad'); AD.download('bookings.csv', AD.toCSV(SNAP.bookings), 'text/csv'); toast('Exported','ok'); }
 
 /* ── Transport Requests ── */
 let _trFilter = 'all';
@@ -2651,6 +2660,7 @@ function trFilter(f, el){
   renderTransport();
 }
 function renderTransport(){
+  if(!SNAP) return;
   const all = SNAP.transportRequests || [];
   const list = all.filter(r => {
     if(_trFilter === 'all') return true;
@@ -2703,6 +2713,7 @@ async function cancelTransport(id){
   });
 }
 function exportTransport(){
+  if(!SNAP) return toast('Data loading','bad');
   AD.download('transport-requests.csv', AD.toCSV(SNAP.transportRequests||[]), 'text/csv');
   toast('Exported','ok');
 }
@@ -2957,7 +2968,7 @@ function openCampaign(id){
     || '<option disabled>Audience layer still loading</option>';
 
   if(id){
-    const c = SNAP.campaigns.find(x=>String(x.id)===String(id));
+    const c = (SNAP?.campaigns||[]).find(x=>String(x.id)===String(id));
     if(c){
       $('c-adv').value = c.advertiser||''; $('c-fmt').value = c.format||'window';
       $('c-head').value = c.headline||''; $('c-sub').value = c.sub_text||c.sub||'';
@@ -4052,6 +4063,7 @@ const GM_SVC_LABELS = {apartment:'🏠 Stay',tour:'🗺️ Tour',food:'🍽️ F
   shopping:'🛍️ Shopping',event:'🎟️ Event',room:'🛏️ Room',ride:'🛺 Ride'};
 
 function gmRenderAll(){
+  if(!SNAP) return;
   let rows = (SNAP.listings||[]).slice().sort((a,b)=>(b.created_at||'').localeCompare(a.created_at||''));
 
   // Filter by service
@@ -4132,6 +4144,7 @@ function gmSearch(q){
 
 // ── Panel open/close ───────────────────────────────────────────────────────
 function gmOpenEdit(id){
+  if(!SNAP) { toast('Data still loading — try again','bad'); return; }
   const l = (SNAP.listings||[]).find(r=>String(r.id)===String(id));
   if(!l){ toast('Listing not found — try refreshing','bad'); return; }
   GM_EDIT = l;
@@ -4954,12 +4967,12 @@ function impGoListings(){
     GM_FILTER = 'all'; GM_SEARCH = '';
     $('imp-search') && ($('imp-search').value='');
     // Override render to show only their listings
-    const orig = SNAP.listings;
-    const theirs = (orig||[]).filter(l=>l.partner_id===uid);
+    const orig = SNAP?.listings || [];
+    const theirs = orig.filter(l=>l.partner_id===uid);
     if(!theirs.length){ toast(`${name} has no listings yet`,'calm'); return; }
     // Temporarily highlight by filtering SNAP
     const body = $('gm-all-rows');
-    if(body){
+    if(body && SNAP){
       // Render just their listings inline
       const tmp = SNAP.listings;
       SNAP.listings = theirs;
