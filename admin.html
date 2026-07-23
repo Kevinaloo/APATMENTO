@@ -5236,17 +5236,37 @@ async function pushFireNow(id, title) {
   if (!pushEnsureSecret()) return;
   const { data: camp } = await sb.from('push_campaigns').select('*').eq('id', id).single();
   if (!camp) { toast('Campaign not found.', 'bad'); return; }
-  const bcTitle = document.getElementById('push-bc-title');
-  const bcBody  = document.getElementById('push-bc-body');
-  const bcUrl   = document.getElementById('push-bc-url');
-  const bcKind  = document.getElementById('push-bc-kind');
-  if (bcTitle) bcTitle.value = camp.title;
-  if (bcBody)  bcBody.value  = camp.body;
-  if (bcUrl)   bcUrl.value   = camp.url || '/';
-  if (bcKind)  bcKind.value  = camp.kind || 'general';
-  await pushBroadcast();
-  await sb.from('push_campaigns').update({ last_sent_at: new Date().toISOString() }).eq('id', id);
-  await pushLoadCampaigns();
+
+  // Fire directly without touching the broadcast form DOM
+  const res_el = document.getElementById('push-bc-result') || document.createElement('div');
+  res_el.textContent = 'Fetching subscriber list…';
+  try {
+    const { data: subs, error } = await sb.from('push_subscriptions').select('user_id').limit(2000);
+    if (error) throw new Error(error.message);
+    let userIds = [...new Set((subs||[]).map(s => s.user_id).filter(Boolean))];
+    if (camp.audience === 'partners') {
+      const { data: listings } = await sb.from('listings').select('user_id');
+      const pids = new Set((listings||[]).map(p => p.user_id));
+      userIds = userIds.filter(id => pids.has(id));
+    }
+    let sent = 0, failed = 0;
+    const BATCH = 20;
+    for (let i = 0; i < userIds.length; i += BATCH) {
+      const batch = userIds.slice(i, i + BATCH);
+      const results = await Promise.allSettled(batch.map(uid =>
+        fetch('/api/push-send', {
+          method: 'POST', headers: pushHeaders(),
+          body: JSON.stringify({ user_id: uid, title: camp.title, body: camp.body,
+            url: camp.url || '/', kind: camp.kind || 'general', persist: true }),
+        }).then(r => r.json())
+      ));
+      results.forEach(r => { if (r.status === 'fulfilled' && r.value && r.value.sent > 0) sent++; else failed++; });
+    }
+    toast('Sent to ' + sent + ' user(s), ' + failed + ' failed/no-sub.', sent > 0 ? 'ok' : 'calm');
+    await sb.from('push_campaigns').update({ last_sent_at: new Date().toISOString() }).eq('id', id);
+    await pushLoadCampaigns();
+    setTimeout(pushLoadStats, 1500);
+  } catch(e) { toast('Fire failed: ' + e.message, 'bad'); }
 }
 
 
