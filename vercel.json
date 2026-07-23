@@ -114,6 +114,10 @@
         {
           "key": "Cross-Origin-Opener-Policy",
           "value": "same-origin-allow-popups"
+        },
+        {
+          "key": "X-Robots-Tag",
+          "value": "index, follow"
         }
       ]
     }
@@ -214,5 +218,14 @@
       "source": "/api/push-cron",
       "destination": "/api/push-send?action=cron"
     }
-  ]
+  ],
+  "buildCommand": null,
+  "outputDirectory": null,
+  "installCommand": null,
+  "framework": null,
+  "build": {
+    "env": {
+      "ENABLE_ROOT_PATH_BUILD_CACHE": "1"
+    }
+  }
 }

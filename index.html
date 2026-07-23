@@ -62,7 +62,7 @@
   <link rel="apple-touch-icon" href="/cabana-apple-touch-icon.png"/>
 
   <!-- ── Open Graph (Facebook / LinkedIn / WhatsApp) ── -->
-  <meta property="og:site_name" content="Apatmento by Cabana"/>
+  <meta property="og:site_name" content="Cabana"/>
   <meta property="og:title" content="Apatmento by Cabana: Kenya's Zero-Commission Travel Super-App"/>
   <meta property="og:description" content="Book short-stay apartments, flights, safaris, events and car hire across Kenya — with zero commission. Hosts keep 100%. Pay securely with M-Pesa. Apatmento, now Cabana."/>
   <meta property="og:url" content="https://www.apatmento.space/"/>
@@ -951,6 +951,115 @@ body.intro-lock{overflow:hidden;height:100vh;}
       navigator.serviceWorker.register('/sw.js');
     }
   </script>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Cabana",
+    "alternateName": "Apatmento by Cabana",
+    "applicationCategory": "TravelApplication",
+    "applicationSubCategory": "BookingApplication",
+    "operatingSystem": "Web, Android, iOS",
+    "url": "https://www.apatmento.space",
+    "description": "Africa's #1 zero commission travel platform. Book stays, flights, tours, rides, food and more across Africa. Hosts set the price. You pay exactly that. Zero commission on every booking.",
+    "screenshot": "https://www.apatmento.space/og-home.jpg",
+    "featureList": [
+      "Zero commission on all bookings",
+      "Short-stay apartment rentals",
+      "Safari and tour booking",
+      "Flight search and booking",
+      "Event ticketing",
+      "Rides and transport",
+      "Food delivery",
+      "Car hire",
+      "Roommate matching",
+      "M-Pesa payments",
+      "Cabana Match — reverse marketplace"
+    ],
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "KES",
+      "description": "Free to use. Zero commission on all bookings."
+    },
+    "provider": {
+      "@type": "Organization",
+      "name": "Cabana",
+      "url": "https://www.apatmento.space",
+      "logo": "https://www.apatmento.space/cabana-icon-512.png",
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "telephone": "+254716206494",
+        "contactType": "customer support",
+        "availableLanguage": ["English", "Swahili"],
+        "areaServed": "KE"
+      }
+    },
+    "areaServed": [
+      {"@type": "Country", "name": "Kenya"},
+      {"@type": "Country", "name": "Tanzania"},
+      {"@type": "Country", "name": "Uganda"},
+      {"@type": "Place", "name": "East Africa"}
+    ],
+    "inLanguage": ["en-KE", "sw-KE"],
+    "isAccessibleForFree": true,
+    "availableOnDevice": ["Desktop", "Mobile", "Tablet"],
+    "softwareVersion": "2.0",
+    "datePublished": "2026-01-01",
+    "dateModified": "2026-07-23"
+  }
+  </script>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "What is Cabana?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Cabana (formerly Apatmento) is Africa's zero commission travel platform. You can book stays, flights, tours, rides, food delivery, car hire and events all in one place. Hosts set their own prices and keep 100% — we charge zero commission."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does Cabana charge commission?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No. Cabana charges zero commission on all bookings. The price you see is the price you pay. Hosts list at their own rate and keep every shilling."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How do I pay on Cabana?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Cabana supports M-Pesa payments for all bookings across Kenya. Payments are processed securely and hosts receive funds directly."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What is Cabana Match?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Cabana Match is Africa's first reverse travel marketplace. Instead of searching for a space, you tell us what you need and verified hosts come to you with tailored offers. World's first of its kind."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Where does Cabana operate?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Cabana currently operates across Kenya including Nairobi, Mombasa, Diani, Kilimani, Westlands and Karen. We are expanding across East Africa."
+        }
+      }
+    ]
+  }
+  </script>
+
 <link rel="stylesheet" href="/brand.css"/>
 <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"/>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" media="print" onload="this.media='all';this.onload=null"/>
