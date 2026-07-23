@@ -893,7 +893,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
             <button class="imp-role-tab" data-role="flagged" onclick="impFilterRole('flagged',this)">🚩 Flagged</button>
           </div>
           <div style="display:flex;gap:6px">
-            <input id="imp-search" class="inp" placeholder="Search name, phone…" oninput="impSearchFilter(this.value)" style="width:190px;max-width:100%"/>
+            <input id="imp-search" class="inp" placeholder="Search name, email, phone…" oninput="impSearchFilter(this.value)" style="width:220px;max-width:100%"/>
             <button class="btn btn-p btn-sm" onclick="impSearchFilter($('imp-search').value)">Go</button>
           </div>
         </div>
@@ -2166,6 +2166,7 @@ async function ensureAudience(){
 }
 
 function renderAll(){
+  if(!SNAP) return;
   renderOverview(); renderTriage(); renderIntel(); renderFinance();
   renderModeration(); renderUploads(); renderTrust(); renderInventory();
   renderBookings(); renderTransport(); renderAds(); renderShadow(); renderCustomers(); renderAudit(); renderSystem();
@@ -2174,6 +2175,7 @@ function renderAll(){
 }
 
 function badges(){
+  if(!SNAP) return;
   const b = (id,v,cls) => { const e=$(id); if(!e) return;
     e.textContent = v; e.className = 'nav-b ' + (cls||'');
     e.style.display = v ? 'grid' : 'none'; };
@@ -2687,7 +2689,8 @@ function renderTransport(){
 
   // Badge
   const pending = all.filter(r=>r.status==='pending').length;
-  b('b-transport', pending||'', pending?'warn':'');
+  const btEl = $('b-transport');
+  if(btEl){ btEl.textContent = pending||''; btEl.className = 'nav-b ' + (pending?'warn':''); btEl.style.display = pending ? 'grid' : 'none'; }
 }
 async function confirmTransport(id){
   const r = await AD.write('transport_requests', t=>t.update({status:'confirmed',confirmed_at:new Date().toISOString()}).eq('id',id));
@@ -2716,6 +2719,7 @@ function renderAudit(){
     : emptyRow(5,'No actions recorded yet');
 }
 function renderSystem(){
+  if(!SNAP) return;
   const f = SNAP.faults;
   $('sy-stats').innerHTML = [
     stat('Data faults', F.num(f.length), 'tables that did not respond', f.length?'bad':'ok'),
@@ -2778,7 +2782,7 @@ function adTab(t, el){
 }
 
 function renderAdStats(){
-  if(!AUD) return;
+  if(!AUD || !SNAP) return;
   const c = SNAP.campaigns;
   const ev = AUD.events;
   const viewable = ev.filter(e=>e.event==='ad_viewable').length;
@@ -2795,6 +2799,7 @@ function renderAdStats(){
 }
 
 function renderAds(){
+  if(!SNAP) return;
   renderAdStats();
   let c = SNAP.campaigns;
   if(AD_TAB!=='all') c = c.filter(x=>(x.status||'live')===AD_TAB);
@@ -4668,6 +4673,7 @@ function impRender(){
     const q = IMP_Q.toLowerCase();
     rows = rows.filter(u=>
       (u.full_name||u.first_name||u.name||'').toLowerCase().includes(q) ||
+      (u.email||'').toLowerCase().includes(q) ||
       (u.phone||'').toLowerCase().includes(q) ||
       (u.id||'').toLowerCase().includes(q)
     );
@@ -5253,11 +5259,11 @@ async function cabanaLoadStats() {
       sb.from("cabana_match_responses").select("id", { count:"exact", head:true }),
       sb.from("cabana_interest").select("id", { count:"exact", head:true })
     ]);
-    const  = id => document.getElementById(id);
-    if(("cs-opted-in")) ("cs-opted-in").textContent = optRes.count ?? "—";
-    if(("cs-live-req")) ("cs-live-req").textContent = reqRes.count ?? "—";
-    if(("cs-responses")) ("cs-responses").textContent = rspRes.count ?? "—";
-    if(("cs-interest")) ("cs-interest").textContent = intRes.count ?? "—";
+    const g = id => document.getElementById(id);
+    if(g("cs-opted-in")) g("cs-opted-in").textContent = optRes.count ?? "—";
+    if(g("cs-live-req")) g("cs-live-req").textContent = reqRes.count ?? "—";
+    if(g("cs-responses")) g("cs-responses").textContent = rspRes.count ?? "—";
+    if(g("cs-interest")) g("cs-interest").textContent = intRes.count ?? "—";
     // Update nav badge
     const badge = document.getElementById("b-cabana");
     if(badge) badge.textContent = (optRes.count||0);
@@ -5408,7 +5414,7 @@ async function cabanaLoadInterest() {
     </tr>`).join("");
   } catch(e) { tbody.innerHTML = "<tr><td colspan=4><div class=empty><div class=empty-t>Error</div></div></td></tr>"; }
 }
-function esc(s){ if(!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+// esc() is defined globally at the top of this script block
 
 </script>
 <script src="/cabana-rebrand.js" defer></script>
