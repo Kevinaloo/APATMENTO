@@ -1178,30 +1178,139 @@ img,video,svg{max-width:100%;}
       (function(){
         var BASE = 1283;
         var BASE_DATE = new Date('2026-07-23T00:00:00Z');
-        function dailyAdd(d) { var s = (d * 2654435761) >>> 0; return 50 + (s % 101); }
-        function getTarget() {
-          var days = Math.floor((Date.now() - BASE_DATE) / 86400000);
-          var t = BASE;
-          for (var i = 1; i <= days; i++) t += dailyAdd(i);
-          return t;
+
+        // Seeded pseudo-random — deterministic per day so every visitor sees the same number
+        function seededRand(seed) {
+          var s = (seed ^ 0xDEADBEEF) >>> 0;
+          s = Math.imul(s ^ (s >>> 16), 0x45d9f3b) >>> 0;
+          s = Math.imul(s ^ (s >>> 16), 0x45d9f3b) >>> 0;
+          return (s >>> 0) / 0xFFFFFFFF;
         }
+
+        // Total signups for a given day index (1-based)
+        function dailyTotal(d) { return 50 + Math.floor(seededRand(d * 7919) * 101); }
+
+        // Build a list of intraday signup events for day d: returns array of {frac, amount}
+        // where frac is the fraction through the day (0–1) that this batch arrives
+        function intradayEvents(d) {
+          var total = dailyTotal(d);
+          var events = [];
+          var remaining = total;
+          var eventCount = 6 + Math.floor(seededRand(d * 1301) * 9); // 6–14 events per day
+          for (var i = 0; i < eventCount; i++) {
+            var isLast = (i === eventCount - 1);
+            var amount = isLast ? remaining : Math.max(1, Math.floor(seededRand(d * 9973 + i * 17) * (remaining / (eventCount - i) * 2)));
+            amount = Math.min(amount, remaining);
+            remaining -= amount;
+            var frac = seededRand(d * 3331 + i * 23); // random position in the day
+            events.push({ frac: frac, amount: amount });
+            if (remaining <= 0) break;
+          }
+          // Sort chronologically
+          events.sort(function(a, b) { return a.frac - b.frac; });
+          return events;
+        }
+
+        // Calculate exact current count: completed days + partial today
+        function getCurrentCount() {
+          var now = new Date();
+          var msSinceBase = now - BASE_DATE;
+          var daysFull = Math.floor(msSinceBase / 86400000);
+          var fracToday = (msSinceBase % 86400000) / 86400000; // 0–1 through today
+
+          var count = BASE;
+
+          // Add all fully completed days
+          for (var d = 1; d <= daysFull; d++) {
+            count += dailyTotal(d);
+          }
+
+          // Add partial today: only events whose frac < fracToday
+          var todayDay = daysFull + 1;
+          var todayEvents = intradayEvents(todayDay);
+          for (var j = 0; j < todayEvents.length; j++) {
+            if (todayEvents[j].frac < fracToday) {
+              count += todayEvents[j].amount;
+            }
+          }
+
+          return count;
+        }
+
+        // Find the next intraday event time (ms until next increment)
+        function msUntilNextEvent() {
+          var now = new Date();
+          var msSinceBase = now - BASE_DATE;
+          var daysFull = Math.floor(msSinceBase / 86400000);
+          var fracToday = (msSinceBase % 86400000) / 86400000;
+          var todayDay = daysFull + 1;
+          var todayEvents = intradayEvents(todayDay);
+          for (var i = 0; i < todayEvents.length; i++) {
+            if (todayEvents[i].frac > fracToday) {
+              return Math.round((todayEvents[i].frac - fracToday) * 86400000);
+            }
+          }
+          // No more events today — next event is tomorrow's first
+          var msUntilMidnight = 86400000 - (msSinceBase % 86400000);
+          var tomorrowDay = daysFull + 2;
+          var tomorrowEvents = intradayEvents(tomorrowDay);
+          if (tomorrowEvents.length > 0) {
+            return msUntilMidnight + Math.round(tomorrowEvents[0].frac * 86400000);
+          }
+          return msUntilMidnight;
+        }
+
         function fmt(n) { return n.toLocaleString('en-US'); }
+
         var el = document.getElementById('wl-count');
         if (!el) return;
-        var target = getTarget();
-        var start = Math.max(1100, target - 120);
-        var duration = 4200; // slower: 4.2s
-        var startTime = null;
-        function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
-        function tick(ts) {
-          if (!startTime) startTime = ts;
-          var p = Math.min((ts - startTime) / duration, 1);
-          el.textContent = fmt(Math.round(start + (target - start) * easeOut(p)));
-          if (p < 1) { requestAnimationFrame(tick); }
-          else { el.textContent = fmt(target); el.style.animation = 'wl-count-bump .4s ease'; }
+
+        var displayed = null;
+
+        // Smooth roll-up animation from `from` to `to`
+        function animateTo(from, to, onDone) {
+          var duration = 4200;
+          var startTime = null;
+          function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
+          function tick(ts) {
+            if (!startTime) startTime = ts;
+            var p = Math.min((ts - startTime) / duration, 1);
+            el.textContent = fmt(Math.round(from + (to - from) * easeOut(p)));
+            if (p < 1) { requestAnimationFrame(tick); }
+            else {
+              el.textContent = fmt(to);
+              displayed = to;
+              el.style.animation = 'none';
+              void el.offsetWidth; // reflow
+              el.style.animation = 'wl-count-bump .4s ease';
+              if (onDone) onDone();
+            }
+          }
+          requestAnimationFrame(tick);
         }
+
+        // Schedule next live increment
+        function scheduleNext() {
+          var ms = msUntilNextEvent();
+          setTimeout(function() {
+            var newCount = getCurrentCount();
+            if (newCount > displayed) {
+              animateTo(displayed, newCount, scheduleNext);
+            } else {
+              scheduleNext();
+            }
+          }, ms);
+        }
+
+        // Initial load: animate from a bit below current count
+        function init() {
+          var target = getCurrentCount();
+          var startFrom = Math.max(BASE, target - 100);
+          animateTo(startFrom, target, scheduleNext);
+        }
+
         var obs = new IntersectionObserver(function(e) {
-          if (e[0].isIntersecting) { obs.disconnect(); requestAnimationFrame(tick); }
+          if (e[0].isIntersecting) { obs.disconnect(); init(); }
         }, { threshold: 0.2 });
         obs.observe(el);
       })();
