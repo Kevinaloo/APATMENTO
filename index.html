@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <link rel="preload" as="image" href="/cabana-emblem.png" fetchpriority="high"/>
-  <link rel="preload" as="image" href="/cabana-wordmark-color.png" fetchpriority="high"/>
-  <link rel="preload" as="image" href="/cabana-wordmark-white.png"/>
+  <link rel="preload" as="image" href="/cabana-appicon-master.png" fetchpriority="high"/>
+  <link rel="preload" as="image" href="/cabana-wordmark-white.png" fetchpriority="high"/>
+  <link rel="preload" as="image" href="/cabana-wordmark-color.png"/>
+  <link rel="preload" as="image" href="/cabana-emblem.png"/>
 <!-- ══ INTERSTITIAL: splash only runs on dashboard.html, not here ══ -->
 <style id="apa-splash-css">.apa-splash-lock{overflow:hidden !important;}</style>
 <!-- Google tag (gtag.js) -->
@@ -617,96 +618,94 @@ section[id],div[id^='services'],div[id^='how']{scroll-margin-top:84px;}
 
 /* ══════════════════════════════════════════════════════════════════
    INTRO · "SUNRISE OVER THE HORIZON"  — Cabana brand overture
-   A single orchestrated moment: the mark rises like a sun over a world
-   horizon, the wordmark draws in, and the acquired-brand handoff resolves.
-   Global in feel (a horizon, not a skyline). Premium through restraint.
+   A single unified moment: the icon rises with warmth, then the wordmark
+   and "Choose Better" resolve below it — one composed frame, one brand.
+   Premium through restraint. Cinematic through timing.
    ══════════════════════════════════════════════════════════════════ */
-#intro{position:fixed;inset:0;z-index:9999;background:#060814;overflow:hidden;display:flex;align-items:center;justify-content:center;transition:opacity 1s cubic-bezier(.7,0,.3,1),transform 1s cubic-bezier(.7,0,.3,1);}
-#intro.lift{opacity:0;transform:scale(1.06);pointer-events:none;}
+#intro{position:fixed;inset:0;z-index:9999;background:#060814;overflow:hidden;display:flex;align-items:center;justify-content:center;transition:opacity 1.1s cubic-bezier(.7,0,.3,1),transform 1.1s cubic-bezier(.7,0,.3,1);}
+#intro.lift{opacity:0;transform:scale(1.05);pointer-events:none;}
 body.intro-lock{overflow:hidden;height:100vh;}
 
-/* deep-space gradient wash that warms as the sun rises */
+/* deep-space gradient wash that warms as the icon rises */
 .intro-sky{position:absolute;inset:0;z-index:0;background:
-  radial-gradient(120% 80% at 50% 118%, rgba(255,106,60,.00) 0%, rgba(255,106,60,.00) 40%, transparent 70%);
+  radial-gradient(120% 80% at 50% 118%, rgba(255,106,60,.00) 0%, transparent 70%);
   transition:none;}
-.intro-sky.dawn{animation:dawnWarm 3.2s .3s cubic-bezier(.22,1,.36,1) forwards;}
+.intro-sky.dawn{animation:dawnWarm 3.6s .2s cubic-bezier(.22,1,.36,1) forwards;}
 @keyframes dawnWarm{
-  0%{background:radial-gradient(120% 80% at 50% 118%, rgba(255,106,60,0) 0%, transparent 70%);}
-  55%{background:radial-gradient(120% 85% at 50% 116%, rgba(255,106,60,.22) 0%, rgba(190,14,137,.10) 35%, transparent 72%);}
-  100%{background:radial-gradient(130% 90% at 50% 114%, rgba(255,106,60,.16) 0%, rgba(109,40,255,.10) 40%, transparent 74%);}
+  0%  {background:radial-gradient(120% 80% at 50% 118%, rgba(255,106,60,0) 0%, transparent 70%);}
+  50% {background:radial-gradient(130% 88% at 50% 115%, rgba(255,106,60,.20) 0%, rgba(190,14,137,.09) 38%, transparent 72%);}
+  100%{background:radial-gradient(140% 96% at 50% 112%, rgba(255,106,60,.13) 0%, rgba(109,40,255,.09) 44%, transparent 76%);}
 }
 
-/* faint star field, high above the horizon */
+/* faint star field, high above */
 .intro-particles{position:absolute;inset:0;z-index:1;}
 .iparticle{position:absolute;width:2px;height:2px;border-radius:50%;background:#fff;opacity:0;animation:iStar ease-out forwards;}
-@keyframes iStar{0%{opacity:0;transform:scale(0);}40%{opacity:.7;}100%{opacity:.25;transform:scale(1);}}
+@keyframes iStar{0%{opacity:0;transform:scale(0);}40%{opacity:.65;}100%{opacity:.22;transform:scale(1);}}
 
-/* the horizon line the sun rises over */
-.intro-horizon{position:absolute;left:50%;top:58%;transform:translateX(-50%);width:min(760px,86vw);height:1px;z-index:4;
-  background:linear-gradient(90deg,transparent,rgba(255,255,255,.18) 18%,rgba(255,255,255,.35) 50%,rgba(255,255,255,.18) 82%,transparent);
-  opacity:0;transform-origin:center;animation:horizonDraw 1.1s .5s cubic-bezier(.22,1,.36,1) forwards;}
-.intro-horizon::after{content:'';position:absolute;inset:-1px 0;background:inherit;filter:blur(6px);opacity:.6;}
-@keyframes horizonDraw{0%{opacity:0;transform:translateX(-50%) scaleX(.2);}100%{opacity:1;transform:translateX(-50%) scaleX(1);}}
+/* horizon line */
+.intro-horizon{position:absolute;left:50%;top:60%;transform:translateX(-50%);width:min(640px,80vw);height:1px;z-index:4;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.15) 18%,rgba(255,255,255,.30) 50%,rgba(255,255,255,.15) 82%,transparent);
+  opacity:0;animation:horizonDraw 1.2s .4s cubic-bezier(.22,1,.36,1) forwards;}
+.intro-horizon::after{content:'';position:absolute;inset:-1px 0;background:inherit;filter:blur(8px);opacity:.5;}
+@keyframes horizonDraw{0%{opacity:0;transform:translateX(-50%) scaleX(.15);}100%{opacity:1;transform:translateX(-50%) scaleX(1);}}
 
+/* ─── SINGLE STAGE — icon + wordmark + slogan compose into one frame ─── */
 .intro-stage{position:relative;z-index:5;width:100%;height:100%;display:flex;align-items:center;justify-content:center;}
-.act{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;pointer-events:none;}
+.intro-compose{display:flex;flex-direction:column;align-items:center;gap:0;}
 
-/* ─── ACT 1 · THE RISE ─── the emblem ascends through the horizon ─── */
-.act1{animation:act1in .1s 0s forwards, act1out .6s 3.55s forwards;}
-@keyframes act1in{to{opacity:1;}}
-@keyframes act1out{to{opacity:0;transform:scale(1.12);filter:blur(6px);}}
-.intro-sun{position:relative;text-align:center;}
-.intro-sun .emblem{width:clamp(120px,20vw,168px);height:auto;display:block;margin:0 auto;
-  filter:drop-shadow(0 18px 60px rgba(255,106,60,.34)) drop-shadow(0 6px 24px rgba(109,40,255,.28));
-  opacity:0;transform:translateY(64px) scale(.86);
-  animation:sunRise 1.7s .45s cubic-bezier(.34,1.2,.4,1) forwards;}
-@keyframes sunRise{0%{opacity:0;transform:translateY(64px) scale(.86);}55%{opacity:1;}100%{opacity:1;transform:translateY(0) scale(1);}}
-/* warm glow that blooms behind the emblem as it clears the horizon */
-.intro-sun{position:relative;}
-.intro-sun-mark{position:relative;display:inline-block;}
-.intro-sun .bloom{position:absolute;top:50%;left:50%;width:240px;height:240px;transform:translate(-50%,-50%) scale(.3);
-  border-radius:50%;background:radial-gradient(circle,rgba(255,140,80,.5),rgba(255,59,107,.22),transparent 68%);
-  filter:blur(24px);opacity:0;animation:bloom 2s .9s cubic-bezier(.22,1,.36,1) forwards;pointer-events:none;z-index:-1;}
-@keyframes bloom{0%{opacity:0;transform:translate(-50%,-50%) scale(.3);}60%{opacity:.9;}100%{opacity:.65;transform:translate(-50%,-50%) scale(1);}}
-.intro-tagline{margin-top:26px;font-family:var(--font-body);font-size:11px;font-weight:600;letter-spacing:.42em;text-transform:uppercase;color:rgba(255,255,255,.5);opacity:0;animation:fadeIn .7s 1.7s forwards;}
+/* BEAT 1 · ICON RISE */
+.intro-icon-wrap{position:relative;display:inline-block;margin-bottom:clamp(28px,4vw,40px);}
+.intro-icon-wrap .bloom{
+  position:absolute;top:50%;left:50%;width:280px;height:280px;
+  transform:translate(-50%,-50%) scale(.25);border-radius:50%;
+  background:radial-gradient(circle,rgba(255,140,80,.52),rgba(255,59,107,.20),transparent 66%);
+  filter:blur(28px);opacity:0;
+  animation:bloom 2.2s .8s cubic-bezier(.22,1,.36,1) forwards;pointer-events:none;z-index:-1;}
+@keyframes bloom{0%{opacity:0;transform:translate(-50%,-50%) scale(.25);}55%{opacity:.95;}100%{opacity:.62;transform:translate(-50%,-50%) scale(1);}}
+.intro-icon{
+  width:clamp(108px,18vw,152px);height:auto;display:block;
+  filter:drop-shadow(0 16px 56px rgba(255,106,60,.32)) drop-shadow(0 4px 20px rgba(109,40,255,.26));
+  opacity:0;transform:translateY(56px) scale(.84);
+  animation:iconRise 1.8s .35s cubic-bezier(.34,1.18,.4,1) forwards;}
+@keyframes iconRise{0%{opacity:0;transform:translateY(56px) scale(.84);}50%{opacity:1;}100%{opacity:1;transform:translateY(0) scale(1);}}
 
-/* ─── ACT 2 · THE NAME ─── wordmark draws in ─── */
-.act2{animation:act2in .55s 3.35s forwards, act2out .6s 6.0s forwards;}
-@keyframes act2in{from{opacity:0;}to{opacity:1;}}
-@keyframes act2out{to{opacity:0;transform:translateY(-24px) scale(1.04);filter:blur(6px);}}
-.intro-name{text-align:center;}
-.intro-name .wm{width:clamp(240px,42vw,440px);height:auto;display:block;margin:0 auto;
-  opacity:0;transform:scale(.94);animation:wmIn 1s 3.5s cubic-bezier(.22,1,.36,1) forwards;
-  filter:drop-shadow(0 8px 30px rgba(109,40,255,.25));}
-@keyframes wmIn{0%{opacity:0;transform:scale(.94);}100%{opacity:1;transform:scale(1);}}
-.intro-name .lede{margin-top:22px;font-family:var(--font-display);font-weight:300;font-style:italic;
-  font-size:clamp(19px,3.4vw,30px);letter-spacing:-.01em;color:rgba(255,255,255,.9);
-  opacity:0;animation:fadeUp .9s 4.1s cubic-bezier(.22,1,.36,1) forwards;}
-.intro-name .lede em{font-style:italic;font-weight:500;background:linear-gradient(110deg,#FF8C50,#FF3B6B,#6D28FF);-webkit-background-clip:text;background-clip:text;color:transparent;}
+/* BEAT 2 · WORDMARK */
+.intro-wordmark{
+  width:clamp(220px,38vw,400px);height:auto;display:block;margin:0 auto;
+  filter:drop-shadow(0 6px 28px rgba(109,40,255,.22));
+  opacity:0;transform:translateY(16px) scale(.96);
+  animation:wordmarkIn 1.1s 2.0s cubic-bezier(.22,1,.36,1) forwards;}
+@keyframes wordmarkIn{0%{opacity:0;transform:translateY(16px) scale(.96);}100%{opacity:1;transform:translateY(0) scale(1);}}
 
-/* ─── ACT 3 · THE HANDOFF ─── acquired-brand resolve ─── */
-.act3{animation:act3in .6s 5.75s forwards, act3out .6s 7.7s forwards;}
-@keyframes act3in{from{opacity:0;}to{opacity:1;}}
-@keyframes act3out{to{opacity:0;transform:scale(1.03);filter:blur(6px);}}
-.intro-handoff{display:flex;align-items:center;gap:clamp(14px,3vw,26px);flex-wrap:nowrap;}
-.intro-handoff .ho-apa-text{font-family:var(--font-display,Georgia,serif);font-weight:400;font-style:italic;font-size:clamp(22px,3.4vw,32px);color:rgba(255,255,255,.4);opacity:0;white-space:nowrap;animation:hoApaIn .7s 5.85s forwards;}
-@keyframes hoApaIn{0%{opacity:0;transform:translateX(-14px);}100%{opacity:.45;transform:none;}}
-.intro-handoff .ho-arrow{color:rgba(255,255,255,.4);opacity:0;flex-shrink:0;animation:fadeIn .5s 6.25s forwards;}
-.intro-handoff .ho-cab{height:clamp(26px,4vw,38px);width:auto;opacity:0;
-  animation:hoCabIn .8s 6.35s cubic-bezier(.34,1.2,.4,1) forwards;}
-@keyframes hoCabIn{0%{opacity:0;transform:translateX(14px) scale(.92);}100%{opacity:1;transform:none;}}
-.intro-handoff-cap{position:absolute;bottom:calc(50% - 96px);left:50%;transform:translateX(-50%);
-  font-family:var(--font-body);font-size:12.5px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;
-  color:rgba(255,255,255,.5);white-space:nowrap;opacity:0;animation:fadeIn .7s 6.7s forwards;}
+/* BEAT 3 · SLOGAN */
+.intro-slogan{
+  margin-top:clamp(14px,2.4vw,22px);
+  font-family:var(--font-body,sans-serif);font-size:clamp(10px,1.5vw,12.5px);
+  font-weight:700;letter-spacing:.45em;text-transform:uppercase;
+  /* gradient shimmer: warm-to-cool matching brand palette */
+  background:linear-gradient(100deg,rgba(255,255,255,.28) 0%,rgba(255,140,80,.80) 28%,rgba(109,40,255,.85) 60%,rgba(255,255,255,.28) 100%);
+  background-size:200% auto;
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  opacity:0;
+  animation:sloganReveal .9s 3.05s cubic-bezier(.22,1,.36,1) forwards,
+            sloganShimmer 3.2s 3.95s ease-in-out infinite;}
+@keyframes sloganReveal{
+  0%{opacity:0;transform:translateY(10px);}
+  100%{opacity:1;transform:translateY(0);}
+}
+@keyframes sloganShimmer{
+  0%{background-position:200% center;}
+  100%{background-position:-200% center;}
+}
 
 /* skip hint */
-.intro-skip{position:absolute;bottom:32px;left:50%;transform:translateX(-50%);z-index:10;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.32);cursor:pointer;opacity:0;animation:fadeIn .6s 1s forwards;transition:color .25s;display:flex;align-items:center;gap:8px;}
-.intro-skip:hover{color:rgba(255,255,255,.68);}
+.intro-skip{position:absolute;bottom:32px;left:50%;transform:translateX(-50%);z-index:10;font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.30);cursor:pointer;opacity:0;animation:fadeIn .7s 1.2s forwards;transition:color .25s;display:flex;align-items:center;gap:8px;}
+.intro-skip:hover{color:rgba(255,255,255,.65);}
 @keyframes fadeIn{to{opacity:1;}}
-@keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:none;}}
 @media (prefers-reduced-motion: reduce){
   #intro *{animation-duration:.01ms !important;animation-delay:0s !important;}
-  .intro-sun .emblem,.intro-name .wm{opacity:1 !important;transform:none !important;}
+  .intro-icon,.intro-wordmark{opacity:1 !important;transform:none !important;}
+  .intro-slogan{opacity:1 !important;transform:none !important;}
 }
 
 .reveal{opacity:0;transform:translateY(30px);transition:all .8s cubic-bezier(.22,1,.36,1);}
@@ -1050,40 +1049,23 @@ body.intro-lock{overflow:hidden;height:100vh;}
 <link rel="stylesheet" href="/cabana-ds.css"/>
 </head>
 <body class="intro-lock">
-<!-- ════════ THE OVERTURE · Cabana sunrise ════════ -->
+<!-- ════════ THE OVERTURE · Cabana · Choose Better ════════ -->
 <div id="intro">
   <div class="intro-sky" id="intro-sky"></div>
   <div class="intro-particles" id="intro-particles"></div>
   <div class="intro-horizon"></div>
 
   <div class="intro-stage">
-    <!-- ACT 1 · THE RISE -->
-    <div class="act act1">
-      <div class="intro-sun">
-        <div class="intro-sun-mark">
-          <div class="bloom"></div>
-          <img class="emblem" src="cabana-emblem.png" alt="Cabana" onerror="this.style.display='none'"/>
-        </div>
-        <div class="intro-tagline">A place to arrive · anywhere in the world</div>
+    <div class="intro-compose">
+      <!-- BEAT 1 · ICON RISE -->
+      <div class="intro-icon-wrap">
+        <div class="bloom"></div>
+        <img class="intro-icon" src="cabana-appicon-master.png" alt="Cabana" onerror="this.src='cabana-emblem.png'"/>
       </div>
-    </div>
-
-    <!-- ACT 2 · THE NAME -->
-    <div class="act act2">
-      <div class="intro-name">
-        <img class="wm" src="cabana-wordmark-white.png" alt="Cabana" onerror="this.style.display='none'"/>
-        <div class="lede">Every way to travel Africa. <em>One place.</em></div>
-      </div>
-    </div>
-
-    <!-- ACT 3 · THE HANDOFF -->
-    <div class="act act3">
-      <div class="intro-handoff">
-        <span class="ho-apa-text">Apatmento</span>
-        <svg class="ho-arrow" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-        <img class="ho-cab" src="cabana-wordmark-white.png" alt="Cabana" onerror="this.style.display='none'"/>
-      </div>
-      <div class="intro-handoff-cap">The next chapter of the same promise</div>
+      <!-- BEAT 2 · WORDMARK -->
+      <img class="intro-wordmark" src="cabana-wordmark-white.png" alt="Cabana" onerror="this.style.display='none'"/>
+      <!-- BEAT 3 · SLOGAN -->
+      <div class="intro-slogan">Choose Better</div>
     </div>
   </div>
 
@@ -1617,8 +1599,8 @@ body.intro-lock{overflow:hidden;height:100vh;}
     pf.appendChild(p);
   }
 
-  // auto-end after the full three-act sequence resolves
-  window._introTimer = setTimeout(endIntro, 8250);
+  // auto-end after the composed sequence resolves (~4.5s in, hold 1.5s, then lift)
+  window._introTimer = setTimeout(endIntro, 6200);
 
   // allow skip via scroll / tap / key
   const skip = function(){ if(!intro.classList.contains('lift')) endIntro(); };
