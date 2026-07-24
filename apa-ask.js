@@ -569,11 +569,86 @@
     if (nameMatch && !sessionCtx.name) sessionCtx.name = nameMatch[1];
   }
 
-  /* ── TTS (Edge TTS neural voice — Aria, en-US) ───────────────────── */
-  var currentAudio = null; // active HTMLAudioElement
+  /* ── TTS — client-side Web Speech API with smart neural voice picker ──
+     Strategy: rank every voice the browser ships, pick the best neural one.
+     Priority list (ordered best→acceptable):
+       Tier 1 — Microsoft Online Neural (Edge/Windows, very high quality)
+       Tier 2 — Google online neural (Chrome/Android, excellent)
+       Tier 3 — Microsoft Online (non-neural but good)
+       Tier 4 — Any online English voice
+       Tier 5 — Any local English voice (last resort)
+     No server call. Zero latency. 100% reliable.
+  ─────────────────────────────────────────────────────────────────────── */
+  var _pickedVoice  = null;   // cached SpeechSynthesisVoice
+  var _voiceReady   = false;  // true once voices have been scanned
+
+  /* Score a SpeechSynthesisVoice — higher is better */
+  function _scoreVoice(v) {
+    var n = (v.name || '').toLowerCase();
+    var l = (v.lang || '').toLowerCase();
+    if (!l.startsWith('en')) return -1;          // English only
+    var score = 0;
+    if (v.localService === false) score += 40;   // online = higher quality
+    // Microsoft neural (Edge / Windows built-in)
+    if (n.includes('microsoft') && n.includes('neural')) score += 50;
+    // Specific great voices
+    if (n.includes('aria'))   score += 30;       // Microsoft Aria — best
+    if (n.includes('jenny'))  score += 28;
+    if (n.includes('guy'))    score += 26;
+    if (n.includes('sonia'))  score += 25;       // UK neural
+    if (n.includes('ryan'))   score += 24;
+    if (n.includes('libby'))  score += 22;
+    // Google voices
+    if (n.includes('google') && (n.includes('uk') || n.includes('us'))) score += 20;
+    if (n.includes('google')) score += 15;
+    // Generic Microsoft (not neural) still decent
+    if (n.includes('microsoft')) score += 10;
+    // Prefer en-GB/en-US over en-AU/en-IN etc
+    if (l === 'en-gb' || l === 'en-us') score += 5;
+    return score;
+  }
+
+  function _pickVoice() {
+    if (!synthOn) return null;
+    var voices = [];
+    try { voices = global.speechSynthesis.getVoices() || []; } catch (_) {}
+    if (!voices.length) return null;
+    var best = null; var bestScore = -Infinity;
+    for (var i = 0; i < voices.length; i++) {
+      var s = _scoreVoice(voices[i]);
+      if (s > bestScore) { bestScore = s; best = voices[i]; }
+    }
+    return (bestScore >= 0) ? best : null;
+  }
+
+  /* Warm up voice list — browsers load voices asynchronously */
+  function _initVoices() {
+    if (!synthOn || _voiceReady) return;
+    var v = _pickVoice();
+    if (v) { _pickedVoice = v; _voiceReady = true; return; }
+    // Chrome fires onvoiceschanged when ready
+    if ('onvoiceschanged' in global.speechSynthesis) {
+      global.speechSynthesis.onvoiceschanged = function () {
+        _pickedVoice = _pickVoice();
+        _voiceReady = true;
+      };
+    } else {
+      // Firefox/Safari — poll briefly
+      var attempts = 0;
+      var poll = setInterval(function () {
+        var v2 = _pickVoice();
+        if (v2 || ++attempts > 10) {
+          _pickedVoice = v2;
+          _voiceReady = true;
+          clearInterval(poll);
+        }
+      }, 200);
+    }
+  }
+  _initVoices();
 
   function speak(text) {
-    if (!text) { maybeReopenMic(); return; }
+    if (!synthOn || !text) { maybeReopenMic(); return; }
     stopSpeech();
 
     var clean = text
@@ -581,54 +656,51 @@
       .replace(/https?:\/\/\S+/g, '')
       .replace(/\/[-a-z.]+\.html/g, '')
       .replace(/[*_#`>~|]/g, '')
-      .replace(/\s{2,}/g, ' ').trim();
+      .replace(/\s{2,}/g, ' ').trim()
+      .slice(0, 600);
     if (!clean) { maybeReopenMic(); return; }
 
     var badge = document.getElementById('apa-spk');
-    var encoded = encodeURIComponent(clean.slice(0, 600));
-    var url = '/api/tts?text=' + encoded;
 
-    var audio = new Audio(url);
-    currentAudio = audio;
+    /* Re-pick voice in case browser loaded more since init */
+    var voice = _pickedVoice || _pickVoice();
 
-    audio.onplay = function () {
+    var u = new SpeechSynthesisUtterance(clean);
+    if (voice) u.voice = voice;
+    u.lang  = (voice && voice.lang) || 'en-GB';
+    u.rate  = 1.05;
+    u.pitch = 1.0;
+    u.volume = 1.0;
+
+    u.onstart = function () {
       speaking = true;
       if (badge) badge.classList.add('on');
     };
-    audio.onended = function () {
+    u.onend = function () {
       speaking = false;
-      currentAudio = null;
       if (badge) badge.classList.remove('on');
       maybeReopenMic();
     };
-    audio.onerror = function () {
-      // Edge TTS failed (503 / network) — fall back to SpeechSynthesis silently
+    u.onerror = function () {
       speaking = false;
-      currentAudio = null;
       if (badge) badge.classList.remove('on');
-      if (synthOn) {
-        var u = new SpeechSynthesisUtterance(clean.slice(0, 600));
-        u.rate = 1.05; u.pitch = 1.05; u.lang = 'en-GB';
-        u.onend  = function () { speaking = false; if (badge) badge.classList.remove('on'); maybeReopenMic(); };
-        u.onerror = function () { speaking = false; if (badge) badge.classList.remove('on'); maybeReopenMic(); };
-        try { global.speechSynthesis.speak(u); } catch (_) { maybeReopenMic(); }
-      } else {
-        maybeReopenMic();
-      }
+      maybeReopenMic();
     };
 
-    audio.play().catch(function () {
-      // Autoplay blocked — trigger via onerror path
-      audio.onerror();
-    });
+    try {
+      /* Chrome bug: speech synthesis stalls after ~15s of page idle.
+         Cancel any stuck queue before speaking. */
+      global.speechSynthesis.cancel();
+      setTimeout(function () {
+        try { global.speechSynthesis.speak(u); } catch (_) { maybeReopenMic(); }
+      }, 50);
+    } catch (_) {
+      maybeReopenMic();
+    }
   }
 
   function stopSpeech() {
-    if (currentAudio) {
-      try { currentAudio.pause(); currentAudio.src = ''; } catch (_) {}
-      currentAudio = null;
-    }
-    if (synthOn && global.speechSynthesis.speaking) {
+    if (synthOn) {
       try { global.speechSynthesis.cancel(); } catch (_) {}
     }
     speaking = false;

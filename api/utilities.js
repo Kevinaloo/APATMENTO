@@ -5,95 +5,6 @@
 ════════════════════════════════════════════════════════════════ */
 export const config = { maxDuration: 15 };
 
-import { WebSocket } from 'ws';
-
-/* ══════════════════════════════════════
-   EDGE TTS  (merged from api/tts.js)
-   Microsoft Edge neural TTS — no API key needed, always free.
-   Voice: en-US-AriaNeural — warm, human-sounding female voice.
-   Sec-MS-GEC: required DRM token — SHA-256(floor(winFileTime/3e9)*3e9 + TOKEN)
-══════════════════════════════════════ */
-import { createHash } from 'crypto';
-
-const TTS_PRIMARY_VOICE = 'en-US-AriaNeural';
-const TTS_RATE    = '+8%';
-const TTS_PITCH   = '+2Hz';
-const TTS_MAX_CHARS = 600;
-const EDGE_TOKEN  = '6A5AA1D4EAFF4E9FB37E23D68491D6F4';
-const CHROMIUM_VER = '130.0.2849.68';
-const EDGE_WS_BASE = 'wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1';
-
-/* Generate the Sec-MS-GEC token required by Microsoft since late 2024.
-   Algorithm (reverse-engineered from Edge browser):
-   1. Get Windows FILETIME (100-ns ticks since 1601-01-01 UTC)
-   2. Floor to nearest 3,000,000,000 tick boundary (changes every 5 min)
-   3. SHA-256(ticks_string + TRUSTED_CLIENT_TOKEN) → uppercase hex */
-function secMsGec() {
-  const EPOCH_DIFF = 11644473600000n; // ms between 1601-01-01 and 1970-01-01
-  const nowMs = BigInt(Date.now());
-  let ticks = (nowMs + EPOCH_DIFF) * 10000n; // convert ms → 100-ns ticks
-  ticks -= ticks % 3_000_000_000n;           // floor to 5-min boundary
-  const str = ticks.toString() + EDGE_TOKEN;
-  return createHash('sha256').update(str, 'ascii').digest('hex').toUpperCase();
-}
-
-function ttsUUID() {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'
-    .replace(/[xy]/g, c => { const r=Math.random()*16|0; return(c==='x'?r:(r&0x3|0x8)).toString(16); })
-    .replace(/-/g,'');
-}
-function ttsSSML(text, voice) {
-  const safe = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');
-  return `<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='en-US'><voice name='${voice}'><prosody rate='${TTS_RATE}' pitch='${TTS_PITCH}'>${safe}</prosody></voice></speak>`;
-}
-function edgeTTS(text, voice) {
-  return new Promise((resolve, reject) => {
-    const gec = secMsGec();
-    const url = `${EDGE_WS_BASE}?TrustedClientToken=${EDGE_TOKEN}&Sec-MS-GEC=${gec}&Sec-MS-GEC-Version=1-${CHROMIUM_VER}&ConnectionId=${ttsUUID()}`;
-    const ws = new WebSocket(url, {
-      headers: {
-        'Origin': 'chrome-extension://jdiccldimpdaibmpdkjnbmckianbfold',
-        'User-Agent': `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0`,
-        'Pragma': 'no-cache',
-        'Cache-Control': 'no-cache',
-      },
-    });
-    const chunks=[]; const reqId=ttsUUID(); let settled=false;
-    const done=(err,buf)=>{ if(settled)return; settled=true; try{if(ws.readyState===1)ws.close();}catch(_){} err?reject(err):resolve(buf); };
-    const timer=setTimeout(()=>done(new Error('Edge TTS timeout')),12000);
-    ws.on('open',()=>{
-      ws.send(`X-Timestamp:${new Date().toISOString()}\r\nContent-Type:application/json; charset=utf-8\r\nPath:speech.config\r\n\r\n`+JSON.stringify({context:{synthesis:{audio:{metadataoptions:{sentenceBoundaryEnabled:false,wordBoundaryEnabled:false},outputFormat:'audio-24khz-96kbitrate-mono-mp3'}}}}));
-      ws.send(`X-RequestId:${reqId}\r\nContent-Type:application/ssml+xml\r\nX-Timestamp:${new Date().toISOString()}\r\nPath:ssml\r\n\r\n`+ttsSSML(text,voice));
-    });
-    ws.on('message',(data,isBinary)=>{
-      if(isBinary){const M=Buffer.from('Path:audio\r\n');const i=data.indexOf(M);if(i!==-1)chunks.push(data.slice(i+M.length));return;}
-      if(data.toString().includes('Path:turn.end')){clearTimeout(timer);chunks.length?done(null,Buffer.concat(chunks)):done(new Error('No audio'));}
-    });
-    ws.on('error',err=>{clearTimeout(timer);done(err);});
-  });
-}
-
-async function handleTTS(req, res) {
-  res.setHeader('Access-Control-Allow-Origin','*');
-  if(req.method==='OPTIONS') return res.status(204).end();
-  if(req.method!=='GET') return res.status(405).json({error:'GET only'});
-  const raw=(req.query.text||'').trim();
-  const voice=(req.query.voice||TTS_PRIMARY_VOICE).trim();
-  if(!raw) return res.status(400).json({error:'text required'});
-  const text=raw.replace(/\[\[.*?\]\]/g,'').replace(/https?:\/\/\S+/g,'').replace(/\/[-a-z.]+\.html/g,'').replace(/[*_#`>~|]/g,'').replace(/\s{2,}/g,' ').trim().slice(0,TTS_MAX_CHARS);
-  if(!text) return res.status(400).json({error:'text empty after cleaning'});
-  try {
-    const mp3=await edgeTTS(text,voice);
-    res.setHeader('Content-Type','audio/mpeg');
-    res.setHeader('Content-Length',mp3.length);
-    res.setHeader('Cache-Control','private, max-age=60');
-    return res.status(200).end(mp3);
-  } catch(err) {
-    console.error('[tts]',err.message);
-    return res.status(503).json({error:'TTS unavailable'});
-  }
-}
-
 /* ══════════════════════════════════════
    VERIFY CHECKIN
 ══════════════════════════════════════ */
@@ -392,9 +303,5 @@ export default async function handler(req, res) {
     return handleIndexNow(req, res);
   }
 
-  if (action === 'tts') {
-    return handleTTS(req, res);
-  }
-
-  return res.status(400).json({ error: 'Unknown action. Available: verify-checkin, welcome-email, indexnow, tts' });
+  return res.status(400).json({ error: 'Unknown action. Available: verify-checkin, welcome-email, indexnow' });
 }
