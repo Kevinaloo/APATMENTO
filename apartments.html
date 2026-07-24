@@ -146,14 +146,14 @@ body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webk
 .tb-logo{height:34px;}
 .tb-cab-wm{height:26px;width:auto;display:block;}
 .tb-icon-sm{height:28px;width:28px;object-fit:contain;flex-shrink:0;border-radius:7px;}
-.tb-title{font-family:var(--font-display);font-weight:500;font-size:19px;color:var(--ink);}
-.tb-title em{font-style:italic;color:var(--theme);}
+.tb-title{font-family:'Inter',sans-serif;font-weight:600;font-size:19px;color:var(--ink);letter-spacing:-.02em;}
+.tb-title em{font-style:normal;color:var(--theme);}
 .tb-right{display:flex;align-items:center;gap:10px;}
 .tb-chip{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:var(--mint-deep);padding:8px 14px;border-radius:100px;background:rgba(45,212,191,.08);border:1px solid rgba(45,212,191,.18);}
 .tb-chip svg{width:13px;height:13px;}
 
 /* ── HERO SEARCH ── */
-.hero{position:relative;z-index:2;padding:40px 28px 8px;max-width:1180px;margin:0 auto;}
+.hero{position:relative;z-index:2;padding:52px 28px 12px;max-width:1180px;margin:0 auto;}
 .hero-eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--theme);margin-bottom:14px;padding:6px 14px;border-radius:100px;background:rgba(139,111,232,.1);border:1px solid rgba(139,111,232,.2);}
 .hero-title{font-family:var(--font-display);font-weight:400;font-size:clamp(30px,4.6vw,48px);line-height:1.04;letter-spacing:-.02em;color:var(--ink);margin-bottom:10px;}
 .hero-title em{font-style:italic;font-weight:500;background:var(--theme-grad);-webkit-background-clip:text;background-clip:text;color:transparent;}
@@ -176,8 +176,8 @@ body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webk
 /* ── LAYOUT ── */
 .content{position:relative;z-index:2;max-width:1180px;margin:0 auto;padding:18px 28px 70px;}
 .content-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:12px;}
-.results-count{font-size:14px;color:var(--ink-soft);}
-.results-count strong{color:var(--ink);font-weight:600;}
+.results-count{font-size:14px;color:var(--ink-soft);font-family:'Inter',sans-serif;font-weight:500;letter-spacing:.01em;}
+.results-count strong{color:var(--ink);font-weight:700;font-size:15px;}
 .sort-wrap{display:flex;align-items:center;gap:10px;}
 
 
@@ -554,19 +554,24 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
   border-radius:22px;
   overflow:visible;
   position:relative;
-  padding:0 2px;
+  padding:6px;
+  gap:4px;
 }
 
 /* Individual search fields — each with its own visible box */
 .sf{
-  flex:1;min-width:0;padding:16px 20px;cursor:pointer;
-  border-radius:18px;transition:background .18s,box-shadow .18s,border-color .18s;
+  flex:1;min-width:0;padding:14px 18px;cursor:pointer;
+  border-radius:16px;transition:background .18s,box-shadow .18s,border-color .18s;
   position:relative;
   border:1.5px solid rgba(10,10,20,.07);
-  background:rgba(249,248,255,.6);
-  margin:6px 0 6px 6px;
+  background:rgba(249,248,255,.55);
+  margin:0;
 }
-.sf:last-of-type,.sf-where-wrap:last-of-type{margin-right:0;}
+/* Proportional widths: Where wider, date/guest fields compact */
+#sf-where{flex:1.5;min-width:120px;}
+#sf-checkin,#sf-checkout{flex:0.85;min-width:88px;}
+#sf-guests{flex:0.85;min-width:88px;}
+#sf-rooms{flex:0.75;min-width:78px;}
 .sf:hover{background:rgba(139,111,232,.06);border-color:rgba(139,111,232,.22);}
 .sf.active,.sf:focus-within{background:rgba(139,111,232,.08);border-color:rgba(123,47,247,.4);box-shadow:0 0 0 3px rgba(123,47,247,.09);}
 .sf-label{
@@ -580,7 +585,7 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
   font-family:'Inter',sans-serif;
 }
 .sf-val.ph{color:rgba(10,10,20,.3);font-weight:400;font-size:13.5px;}
-.sf-divider{width:1px;background:rgba(10,10,20,.08);margin:14px 2px;flex-shrink:0;align-self:stretch;height:auto;}
+.sf-divider{display:none;}
 
 /* Location input inherits sf-val style */
 .sf-loc-input{
@@ -592,9 +597,9 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
 
 /* Search actions — side by side on desktop */
 .search-actions-col{
-  display:flex;flex-direction:column;gap:6px;
-  flex-shrink:0;margin:8px 8px 8px 4px;
-  align-items:stretch;min-width:140px;
+  display:flex;flex-direction:column;gap:5px;
+  flex-shrink:0;margin:0;
+  align-items:stretch;min-width:148px;
 }
 
 /* ── Classic Search button — old-school bold label ── */
@@ -730,9 +735,9 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
 .special-badge svg{width:11px;height:11px;}
 .special-search-bar input{
   flex:1;border:none;background:transparent;
-  font-family:var(--font-body);font-size:13.5px;color:var(--ink);outline:none;
+  font-family:'Inter',sans-serif;font-size:13.5px;color:var(--ink);outline:none;
 }
-.special-search-bar input::placeholder{color:var(--ink-faint);}
+.special-search-bar input::placeholder{color:var(--ink-faint);font-style:italic;}
 .special-search-btn{
   flex-shrink:0;width:30px;height:30px;border-radius:10px;
   background:var(--theme-grad);border:none;color:#fff;
@@ -774,10 +779,12 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
   white-space:nowrap;flex-shrink:0;
   padding:8px 16px;border-radius:100px;
   font-size:13px;font-weight:500;color:var(--ink-soft);
-  background:rgba(255,255,255,.7);
+  font-family:'Inter',sans-serif;
+  background:rgba(255,255,255,.85);
   border:1.5px solid rgba(10,10,20,.1);
   cursor:pointer;transition:all .2s;
   user-select:none;
+  letter-spacing:.01em;
 }
 .fchip:hover{border-color:rgba(139,111,232,.4);color:var(--violet);background:rgba(139,111,232,.05);}
 .fchip.active{
@@ -817,18 +824,18 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
 /* ════════════════════════════════════════════════════════
    HERO COMPACT ROW
 ════════════════════════════════════════════════════════ */
-.hero-compact-row{margin-bottom:18px;}
+.hero-compact-row{margin-bottom:22px;}
 .hero-title-compact{
   font-family:'Inter','Manrope',sans-serif;
-  font-weight:300;font-size:clamp(26px,4vw,38px);
-  letter-spacing:-.03em;color:var(--ink);line-height:1.1;
-  margin-bottom:4px;
+  font-weight:300;font-size:clamp(28px,4.5vw,46px);
+  letter-spacing:-.04em;color:var(--ink);line-height:1.08;
+  margin-bottom:6px;
 }
 .hero-title-compact em{
-  font-style:italic;font-weight:600;
+  font-style:normal;font-weight:700;
   background:var(--theme-grad);-webkit-background-clip:text;background-clip:text;color:transparent;
 }
-.hero-sub-compact{font-size:12px;color:var(--ink-faint);font-weight:500;letter-spacing:.01em;}
+.hero-sub-compact{font-size:13px;color:var(--ink-faint);font-weight:500;letter-spacing:.02em;font-family:'Inter',sans-serif;}
 
 /* ════════════════════════════════════════════════════════
    CABANA MATCH ZONE
@@ -1157,11 +1164,11 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
 .sf-loc-input{
   display:block;width:100%;border:none;outline:none;
   background:transparent;
-  font-family:var(--font-body);
+  font-family:'Inter',sans-serif;
   font-size:14px;font-weight:500;color:var(--ink);
   padding:0;margin:0;
 }
-.sf-loc-input.ph,.sf-loc-input::placeholder{color:var(--ink-faint);font-weight:400;}
+.sf-loc-input.ph,.sf-loc-input::placeholder{color:rgba(10,10,20,.3);font-weight:400;font-size:13.5px;}
 .sf-loc-input:focus{color:var(--ink);}
 
 /* Autocomplete panel */
@@ -1202,10 +1209,11 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
 /* ── Mobile search bar: stack vertically, panels escape ring ── */
 @media(max-width:640px){
   .search-ring{border-radius:18px;}
-  .search-main{flex-wrap:wrap;border-radius:16px;padding:4px;}
-  /* Where gets full row, others pair up */
-  .sf{flex:1 1 calc(50% - 8px);min-width:0;padding:11px 13px;margin:3px;}
+  .search-main{flex-wrap:wrap;border-radius:16px;padding:4px;gap:4px;}
+  /* Where gets full row; date fields pair up; guests+rooms pair up */
+  .sf{flex:1 1 calc(50% - 6px);min-width:0;padding:11px 13px;}
   #sf-where{flex:1 1 calc(100% - 6px);}
+  #sf-checkin,#sf-checkout,#sf-guests,#sf-rooms{flex:1 1 calc(50% - 6px);}
   .sf-divider{display:none;}
   .search-go{width:calc(100% - 12px);margin:0 6px 6px;padding:13px;justify-content:center;}
   /* Panels: full-width below, escape ring overflow */
@@ -1794,9 +1802,9 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
     }
   </script>
 <link rel="stylesheet" href="/brand.css"/>
-<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"/>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" media="print" onload="this.media='all';this.onload=null"/>
-<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"/></noscript>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700;800;900&display=swap"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700;800;900&display=swap" media="print" onload="this.media='all';this.onload=null"/>
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700;800;900&display=swap"/></noscript>
 <link rel="stylesheet" href="/cabana-ds.css"/>
 <script type="application/ld+json">
 {"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.apatmento.space/"}, {"@type": "ListItem", "position": 2, "name": "Stays", "item": "https://www.apatmento.space/apartments"}]}
@@ -1908,6 +1916,11 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
           </div>
         </div>
       </div>
+      <!-- Check out — opens same calendar, auto-steps to checkout pick -->
+      <div class="sf" id="sf-checkout" onclick="openCheckoutSF()">
+        <div class="sf-label">Check out</div>
+        <div class="sf-val ph" id="field-checkout">Add date</div>
+      </div>
       <div class="sf-divider"></div>
       <!-- Guests -->
       <div class="sf" id="sf-guests" onclick="openSF('guests')">
@@ -1995,11 +2008,28 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
     <div class="ai-response" id="ai-response">
       <div class="ai-response-head">
         <div class="ai-response-ico">✦</div>
-        <div class="ai-response-name">Apa · AI Assistant</div>
+        <div class="ai-response-name">Apa · Smart Assistant</div>
       </div>
       <div class="ai-response-text" id="ai-response-text">
         <div class="ai-typing"><span></span><span></span><span></span></div>
       </div>
+    </div>
+
+    <!-- Smart Search bar (shown when user clicks Smart Search chip) -->
+    <div class="special-search-bar" id="special-search-wrap" style="display:none;">
+      <span class="special-badge">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        Smart Search
+      </span>
+      <input
+        type="text"
+        id="ai-search-input"
+        placeholder="Describe your ideal stay — e.g. quiet 2-bed near Westlands under 8k"
+        onkeydown="if(event.key==='Enter')runAISearch()"
+      />
+      <button class="special-search-btn" onclick="runAISearch()" aria-label="Search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      </button>
     </div>
   </div>
 
@@ -2028,7 +2058,7 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
       <div class="fchip" onclick="toggleFilter(this,'apartment')">🏡 Self-catering</div>
       <div class="fchip" id="fc-nearest" onclick="toggleFilter(this,'nearest')">📍 Near me</div>
       <div class="fchip" id="fc-affordable" onclick="toggleFilter(this,'affordable')">💰 Best price</div>
-      <div class="fchip chip-ai" id="fc-autorecommend" onclick="runAutoRecommend(this)">✦ Auto Recommend</div>
+      <div class="fchip chip-ai" id="fc-autorecommend" onclick="runAutoRecommend(this)">✦ Best Match</div>
       <div class="fchip chip-ai" onclick="focusSpecialSearch()">✨ Smart Search</div>
     </div>
   </div>
@@ -3266,6 +3296,18 @@ function calClear(){
 /* Hook into openSF to init calendar */
 const _origOpenSF = typeof openSF === 'function' ? openSF : null;
 
+/* Clicking Check Out field: open the calendar panel and prime it to pick checkout */
+function openCheckoutSF() {
+  openSF('checkin'); // opens same panel
+  // If check-in already set, next click picks checkout
+  if (_searchState.dateIn) _calPickStep = 1;
+  // Scroll calendar into view
+  setTimeout(() => {
+    const p = document.getElementById('sfp-checkin');
+    if (p) p.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, 60);
+}
+
 /* ── Guest counter ── */
 function adjustGuests(type, dir) {
   const key = type; // 'adults'|'children'|'infants'
@@ -3435,12 +3477,14 @@ function runAutoRecommend(el) {
   setTimeout(()=>t.remove(), 2800);
 }
 
-/* ── Special Search: focus the AI search bar ── */
+/* ── Special Search: show and focus the Smart Search bar ── */
 function focusSpecialSearch() {
-  const bar = document.querySelector('.special-search-bar input');
-  if (bar) {
-    bar.scrollIntoView({behavior:'smooth',block:'center'});
-    setTimeout(()=>bar.focus(), 350);
+  const wrap = document.getElementById('special-search-wrap');
+  const bar = document.getElementById('ai-search-input');
+  if (wrap) {
+    wrap.style.display = 'flex';
+    wrap.scrollIntoView({behavior:'smooth', block:'center'});
+    setTimeout(()=>{ if(bar) bar.focus(); }, 300);
   }
 }
 
@@ -4105,12 +4149,6 @@ function renderActiveCabanaRequestCard(request, responses) {
       Close request
     </button>
   </div>`;
-}
-
-/* ── Filter chip special search helper ── */
-function focusSpecialSearch() {
-  const input = document.getElementById('ai-search-input');
-  if (input) { input.scrollIntoView({behavior:'smooth',block:'center'}); input.focus(); }
 }
 
 /* ── Fab filter badge update (called from applyAndRender) ── */
