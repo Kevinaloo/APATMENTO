@@ -1567,12 +1567,9 @@ body.intro-lock{overflow:hidden;height:100vh;}
   const intro = document.getElementById('intro');
   if(!intro) return;
 
-  // Skip intro if seen this session. Version key ensures redesigns always show fresh.
-  var INTRO_VER = 'v3';
+  // Show only on true first visit to this domain — never again after that.
   var _introSeen = (function(){
-    try {
-      if(sessionStorage.getItem('cabana_intro_seen_'+INTRO_VER)) return true;
-    } catch(e){}
+    try { return !!localStorage.getItem('cabana_first_visit_done'); } catch(e){}
     return false;
   })();
   if(_introSeen){
@@ -1610,7 +1607,7 @@ function endIntro(){
   const intro=document.getElementById('intro');
   if(!intro||intro.classList.contains('lift')) return;
   clearTimeout(window._introTimer);
-  try { sessionStorage.setItem('cabana_intro_seen_v3','1'); } catch(e){}
+  try { localStorage.setItem('cabana_first_visit_done','1'); } catch(e){}
   intro.classList.add('lift');
   document.body.classList.remove('intro-lock');
   setTimeout(()=>{ intro.style.display='none'; }, 950);
