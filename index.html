@@ -666,29 +666,28 @@ body.intro-lock{overflow:hidden;height:100vh;}
   width:clamp(108px,18vw,152px);height:auto;display:block;
   filter:drop-shadow(0 16px 56px rgba(255,106,60,.32)) drop-shadow(0 4px 20px rgba(109,40,255,.26));
   opacity:0;transform:translateY(56px) scale(.84);
-  animation:iconRise 1.8s .35s cubic-bezier(.34,1.18,.4,1) forwards;}
+  animation:iconRise 2.0s .35s cubic-bezier(.34,1.18,.4,1) forwards;}
 @keyframes iconRise{0%{opacity:0;transform:translateY(56px) scale(.84);}50%{opacity:1;}100%{opacity:1;transform:translateY(0) scale(1);}}
 
-/* BEAT 2 · WORDMARK */
+/* BEAT 2 · WORDMARK — enters at 2.6s, after icon fully settles */
 .intro-wordmark{
   width:clamp(220px,38vw,400px);height:auto;display:block;margin:0 auto;
   filter:drop-shadow(0 6px 28px rgba(109,40,255,.22));
   opacity:0;transform:translateY(16px) scale(.96);
-  animation:wordmarkIn 1.1s 2.0s cubic-bezier(.22,1,.36,1) forwards;}
+  animation:wordmarkIn 1.2s 2.6s cubic-bezier(.22,1,.36,1) forwards;}
 @keyframes wordmarkIn{0%{opacity:0;transform:translateY(16px) scale(.96);}100%{opacity:1;transform:translateY(0) scale(1);}}
 
-/* BEAT 3 · SLOGAN */
+/* BEAT 3 · SLOGAN — enters at 3.9s, after wordmark fully settles */
 .intro-slogan{
   margin-top:clamp(14px,2.4vw,22px);
   font-family:var(--font-body,sans-serif);font-size:clamp(10px,1.5vw,12.5px);
   font-weight:700;letter-spacing:.45em;text-transform:uppercase;
-  /* gradient shimmer: warm-to-cool matching brand palette */
   background:linear-gradient(100deg,rgba(255,255,255,.28) 0%,rgba(255,140,80,.80) 28%,rgba(109,40,255,.85) 60%,rgba(255,255,255,.28) 100%);
   background-size:200% auto;
   -webkit-background-clip:text;background-clip:text;color:transparent;
   opacity:0;
-  animation:sloganReveal .9s 3.05s cubic-bezier(.22,1,.36,1) forwards,
-            sloganShimmer 3.2s 3.95s ease-in-out infinite;}
+  animation:sloganReveal 1.0s 3.9s cubic-bezier(.22,1,.36,1) forwards,
+            sloganShimmer 3.4s 4.9s ease-in-out infinite;}
 @keyframes sloganReveal{
   0%{opacity:0;transform:translateY(10px);}
   100%{opacity:1;transform:translateY(0);}
@@ -1568,13 +1567,11 @@ body.intro-lock{overflow:hidden;height:100vh;}
   const intro = document.getElementById('intro');
   if(!intro) return;
 
-  // Skip intro if seen today (localStorage persists across tabs/reopens).
-  // Also honour legacy sessionStorage keys from prior deploys.
+  // Skip intro if seen this session. Version key ensures redesigns always show fresh.
+  var INTRO_VER = 'v3';
   var _introSeen = (function(){
     try {
-      if(sessionStorage.getItem('cabana_intro_seen') || sessionStorage.getItem('apatmento_intro_seen')) return true;
-      var ts = localStorage.getItem('apa_intro_seen_ts');
-      if(ts && (Date.now() - parseInt(ts,10)) < 86400000) return true;
+      if(sessionStorage.getItem('cabana_intro_seen_'+INTRO_VER)) return true;
     } catch(e){}
     return false;
   })();
@@ -1599,8 +1596,8 @@ body.intro-lock{overflow:hidden;height:100vh;}
     pf.appendChild(p);
   }
 
-  // auto-end after the composed sequence resolves (~4.5s in, hold 1.5s, then lift)
-  window._introTimer = setTimeout(endIntro, 6200);
+  // full sequence: icon@0.35s, wordmark@2.6s, slogan@3.9s — all settled by ~5.2s, hold then lift
+  window._introTimer = setTimeout(endIntro, 7200);
 
   // allow skip via scroll / tap / key
   const skip = function(){ if(!intro.classList.contains('lift')) endIntro(); };
@@ -1613,8 +1610,7 @@ function endIntro(){
   const intro=document.getElementById('intro');
   if(!intro||intro.classList.contains('lift')) return;
   clearTimeout(window._introTimer);
-  sessionStorage.setItem('cabana_intro_seen','1');
-  try { localStorage.setItem('apa_intro_seen_ts', String(Date.now())); } catch(e){}
+  try { sessionStorage.setItem('cabana_intro_seen_v3','1'); } catch(e){}
   intro.classList.add('lift');
   document.body.classList.remove('intro-lock');
   setTimeout(()=>{ intro.style.display='none'; }, 950);
