@@ -11,12 +11,31 @@ import { WebSocket } from 'ws';
    EDGE TTS  (merged from api/tts.js)
    Microsoft Edge neural TTS — no API key needed, always free.
    Voice: en-US-AriaNeural — warm, human-sounding female voice.
+   Sec-MS-GEC: required DRM token — SHA-256(floor(winFileTime/3e9)*3e9 + TOKEN)
 ══════════════════════════════════════ */
+import { createHash } from 'crypto';
+
 const TTS_PRIMARY_VOICE = 'en-US-AriaNeural';
 const TTS_RATE    = '+8%';
 const TTS_PITCH   = '+2Hz';
 const TTS_MAX_CHARS = 600;
-const EDGE_WS = 'wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1?TrustedClientToken=6A5AA1D4EAFF4E9FB37E23D68491D6F4&ConnectionId=';
+const EDGE_TOKEN  = '6A5AA1D4EAFF4E9FB37E23D68491D6F4';
+const CHROMIUM_VER = '130.0.2849.68';
+const EDGE_WS_BASE = 'wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1';
+
+/* Generate the Sec-MS-GEC token required by Microsoft since late 2024.
+   Algorithm (reverse-engineered from Edge browser):
+   1. Get Windows FILETIME (100-ns ticks since 1601-01-01 UTC)
+   2. Floor to nearest 3,000,000,000 tick boundary (changes every 5 min)
+   3. SHA-256(ticks_string + TRUSTED_CLIENT_TOKEN) → uppercase hex */
+function secMsGec() {
+  const EPOCH_DIFF = 11644473600000n; // ms between 1601-01-01 and 1970-01-01
+  const nowMs = BigInt(Date.now());
+  let ticks = (nowMs + EPOCH_DIFF) * 10000n; // convert ms → 100-ns ticks
+  ticks -= ticks % 3_000_000_000n;           // floor to 5-min boundary
+  const str = ticks.toString() + EDGE_TOKEN;
+  return createHash('sha256').update(str, 'ascii').digest('hex').toUpperCase();
+}
 
 function ttsUUID() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'
@@ -29,10 +48,14 @@ function ttsSSML(text, voice) {
 }
 function edgeTTS(text, voice) {
   return new Promise((resolve, reject) => {
-    const ws = new WebSocket(EDGE_WS + ttsUUID(), {
+    const gec = secMsGec();
+    const url = `${EDGE_WS_BASE}?TrustedClientToken=${EDGE_TOKEN}&Sec-MS-GEC=${gec}&Sec-MS-GEC-Version=1-${CHROMIUM_VER}&ConnectionId=${ttsUUID()}`;
+    const ws = new WebSocket(url, {
       headers: {
         'Origin': 'chrome-extension://jdiccldimpdaibmpdkjnbmckianbfold',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0',
+        'User-Agent': `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0`,
+        'Pragma': 'no-cache',
+        'Cache-Control': 'no-cache',
       },
     });
     const chunks=[]; const reqId=ttsUUID(); let settled=false;
