@@ -847,15 +847,15 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
    CABANA MATCH MODAL
 ════════════════════════════════════════════════════════ */
 .cm-overlay{
+  display:none;
   position:fixed;inset:0;z-index:500;
   background:rgba(10,10,20,.65);
   backdrop-filter:blur(8px);
-  opacity:0;visibility:hidden;
-  transition:opacity .35s,visibility .35s;
 }
-.cm-overlay.open{opacity:1;visibility:visible;}
+.cm-overlay.open{display:block;}
 
 .cm-modal{
+  display:none;
   position:fixed;
   bottom:0;left:0;right:0;
   z-index:501;
@@ -864,18 +864,15 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
   background:#fff;
   overflow-y:auto;
   overscroll-behavior:contain;
-  transform:translateY(100%);
-  transition:transform .4s cubic-bezier(.34,1.1,.64,1);
 }
-.cm-modal.open{transform:translateY(0);}
+.cm-modal.open{display:block;}
 @media(min-width:640px){
   .cm-modal{
     left:50%;right:auto;top:50%;bottom:auto;
-    transform:translate(-50%,-50%) scale(.95);
-    width:480px;max-height:88vh;
+    transform:translate(-50%,-50%);
+    width:500px;max-height:88vh;
     border-radius:28px;
   }
-  .cm-modal.open{transform:translate(-50%,-50%) scale(1);}
 }
 
 .cm-modal-inner{padding:0 0 40px;}
@@ -1914,7 +1911,7 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
   <!-- ── CABANA MATCH — world's first reverse short-stay marketplace ── -->
   <div class="cabana-match-zone">
     <!-- The main button -->
-    <button class="cabana-match-btn" onclick="openCabanaMatch()" id="cabana-match-btn" aria-label="Match with Cabana — let hosts find you">
+    <button class="cabana-match-btn" type="button" id="cabana-match-btn" aria-label="Match with Cabana — let hosts find you">
       <!-- Animated rainbow border -->
       <span class="cmb-ring"></span>
       <!-- Inner content -->
@@ -2023,12 +2020,12 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
 </div>
 
 <!-- ── CABANA MATCH MODAL ── -->
-<div class="cm-overlay" id="cm-overlay" onclick="closeCabanaMatch()"></div>
+<div class="cm-overlay" id="cm-overlay"></div>
 <div class="cm-modal" id="cm-modal">
   <div class="cm-modal-inner">
     <!-- Header -->
     <div class="cm-header">
-      <button class="cm-close" onclick="closeCabanaMatch()">
+      <button class="cm-close" type="button">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
       </button>
       <div class="cm-header-logo">
@@ -3616,43 +3613,54 @@ setTimeout(dismissEnterTx,2800);
 
 /* ── Modal open/close ── */
 function openCabanaMatch() {
-  document.getElementById('cm-overlay').classList.add('open');
-  document.getElementById('cm-modal').classList.add('open');
+  var overlay = document.getElementById('cm-overlay');
+  var modal   = document.getElementById('cm-modal');
+  if (!overlay || !modal) return;
+  overlay.classList.add('open');
+  modal.classList.add('open');
   document.body.style.overflow = 'hidden';
 }
 function closeCabanaMatch() {
-  document.getElementById('cm-overlay').classList.remove('open');
-  document.getElementById('cm-modal').classList.remove('open');
+  var overlay = document.getElementById('cm-overlay');
+  var modal   = document.getElementById('cm-modal');
+  if (!overlay || !modal) return;
+  overlay.classList.remove('open');
+  modal.classList.remove('open');
   document.body.style.overflow = '';
-  // Clean up hash without adding a history entry
   if (location.hash === '#cabana-match') {
     history.replaceState(null, '', location.pathname + location.search);
   }
 }
 
-/* ── Hash-based auto-open intentionally removed ──
-   The modal only opens when the user explicitly clicks "Match with Cabana".
-   Arriving via apartments.html#cabana-match (e.g. from the dashboard card)
-   no longer auto-opens the sheet — the hash is cleaned up silently instead. ── */
-(function () {
-  function cleanHash() {
-    if (location.hash === '#cabana-match') {
-      history.replaceState(null, '', location.pathname + location.search);
-    }
+/* ── Wire up all close triggers once DOM is ready ── */
+document.addEventListener('DOMContentLoaded', function () {
+  // Clean any #cabana-match hash from URL without opening the modal
+  if (location.hash === '#cabana-match') {
+    history.replaceState(null, '', location.pathname + location.search);
   }
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', cleanHash, { once: true });
-  } else {
-    cleanHash();
-  }
-})();
 
-/* ── Escape key to close ── */
-document.addEventListener('keydown', function (e) {
-  if (e.key === 'Escape') {
-    const modal = document.getElementById('cm-modal');
-    if (modal && modal.classList.contains('open')) closeCabanaMatch();
+  // Overlay backdrop click
+  var overlay = document.getElementById('cm-overlay');
+  if (overlay) overlay.addEventListener('click', closeCabanaMatch);
+
+  // X close button
+  var closeBtn = document.querySelector('.cm-close');
+  if (closeBtn) {
+    closeBtn.removeAttribute('onclick');
+    closeBtn.addEventListener('click', closeCabanaMatch);
   }
+
+  // Open trigger button
+  var openBtn = document.getElementById('cabana-match-btn');
+  if (openBtn) {
+    openBtn.removeAttribute('onclick');
+    openBtn.addEventListener('click', openCabanaMatch);
+  }
+
+  // Escape key
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') closeCabanaMatch();
+  });
 });
 
 /* ── Notify interest ── */
