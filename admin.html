@@ -3137,6 +3137,7 @@ async function saveCampaign(){
   const targets = picked.length === allPages.length ? ['all'] : picked;
 
   const row = {
+    campaign_id: 'camp_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7),
     advertiser: adv,
     active: $('c-status').value === 'live',
     format: $('c-fmt').value,
