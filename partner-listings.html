@@ -320,7 +320,7 @@ td strong{color:var(--ink);font-weight:600;}
     <span class="tb-hub-label">· Partner Hub</span>
   </div>
   <div class="tb-right">
-    <a href="add-listing.html?back=1" class="tb-add-btn">
+    <a href="add-listing.html?from=dashboard" class="tb-add-btn">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       + Add listing
     </a>
@@ -445,19 +445,19 @@ td strong{color:var(--ink);font-weight:600;}
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         Import listing
       </button>
-      <a href="add-listing.html" class="btn btn-primary">
+      <a href="add-listing.html?from=dashboard" class="btn btn-primary">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         New listing
       </a>
     </div>
   </div>
   <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-top:4px;">
-    <a href="add-listing.html?type=stay" class="service-chip">🏠 Stay</a>
-    <a href="add-listing.html?type=tour" class="service-chip">🦁 Tour / Safari</a>
-    <a href="add-listing.html?type=ride" class="service-chip">🚗 Ride</a>
-    <a href="add-listing.html?type=food" class="service-chip">🍽️ Food</a>
-    <a href="add-listing.html?type=event" class="service-chip">🎟️ Event</a>
-    <a href="add-listing.html?type=carhire" class="service-chip">🔑 Car hire</a>
+    <a href="add-listing.html?from=dashboard&service=stays" class="service-chip">🏠 Stay</a>
+    <a href="add-listing.html?from=dashboard&service=tours" class="service-chip">🦁 Tour / Safari</a>
+    <a href="add-listing.html?from=dashboard&service=rides" class="service-chip">🚗 Ride</a>
+    <a href="add-listing.html?from=dashboard&service=food" class="service-chip">🍽️ Food</a>
+    <a href="add-listing.html?from=dashboard&service=events" class="service-chip">🎟️ Event</a>
+    <a href="add-listing.html?from=dashboard&service=carhire" class="service-chip">🔑 Car hire</a>
   </div>
 </div>
 
@@ -576,7 +576,7 @@ async function runImport() {
     // Store result and redirect to add-listing with pre-fill
     sessionStorage.setItem('apa-import-prefill', JSON.stringify(json.data));
     closeImportModal();
-    window.location.href = 'add-listing.html?prefill=1';
+    window.location.href = 'add-listing.html?from=dashboard&prefill=1';
   } catch (e) {
     errEl.textContent = e.message;
     errEl.style.display = 'block';
@@ -712,7 +712,7 @@ function renderListings(list) {
       <div class="empty-icon">🏠</div>
       <div class="empty-title">No listings yet</div>
       <div class="empty-sub">Add your first listing and start receiving bookings today — at zero commission.</div>
-      <a href="add-listing.html" class="btn btn-primary" style="margin-top:16px;">
+      <a href="add-listing.html?from=dashboard" class="btn btn-primary" style="margin-top:16px;">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Add first listing
       </a>
@@ -739,7 +739,7 @@ function renderListings(list) {
       <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
         ${status}
         <div class="listing-actions">
-          <a href="add-listing.html?edit=${l.id}" class="btn btn-ghost btn-sm" title="Edit">
+          <a href="add-listing.html?from=dashboard&edit=${l.id}" class="btn btn-ghost btn-sm" title="Edit">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             Edit
           </a>

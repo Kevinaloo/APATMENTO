@@ -593,7 +593,7 @@ async function goListSpace(){
   try{
     const sb2=supabase.createClient(SUPA_URL,SUPA_KEY);
     const{data:{session}}=await sb2.auth.getSession();
-    window.location.href=session?'add-listing.html?type=roommate&back=1':'auth.html?mode=signup';
+    window.location.href=session?'partner-listings.html':'auth.html?mode=signup';
   }catch(e){window.location.href='auth.html?mode=signup';}
 }
 
@@ -706,7 +706,7 @@ function openTenantVerify(pendingRoom) {
             <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:#636480;">⏱️ Verification usually takes under 24 hours</div>
             <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:#636480;">✅ One-time process — applies to all roommate enquiries</div>
           </div>
-          <button onclick="window.location.href='add-listing.html?type=roommate&verify_tenant=1&back=1'" style="width:100%;padding:15px;border-radius:100px;background:linear-gradient(135deg,#4361FF,#7B2FF7);color:#fff;border:none;font-family:var(--font-body);font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 20px rgba(67,97,255,.3);">
+          <button onclick="window.location.href='partner-listings.html'" style="width:100%;padding:15px;border-radius:100px;background:linear-gradient(135deg,#4361FF,#7B2FF7);color:#fff;border:none;font-family:var(--font-body);font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 20px rgba(67,97,255,.3);">
             Verify my identity →
           </button>
           <button onclick="document.getElementById('tenant-verify-modal').remove()" style="width:100%;padding:13px;border-radius:100px;background:transparent;border:1.5px solid rgba(10,10,20,.12);font-family:var(--font-body);font-size:14px;font-weight:600;color:#636480;cursor:pointer;margin-top:10px;">
@@ -766,7 +766,7 @@ function openTenantVerify(pendingRoom) {
       <div class="sf-col-head">For partners</div>
       <a href="/become-partner.html">List your property</a>
       <a href="/become-agent.html">Become an agent</a>
-      <a href="/add-listing.html">Add a listing</a>
+      <a href="/partner-listings.html">Add a listing</a>
       <a href="/dashboard.html">Partner dashboard</a>
       <a href="/referral.js" style="display:none"></a>
     </div>
