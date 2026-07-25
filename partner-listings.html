@@ -3,11 +3,10 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Apatmento Partner — My Listings</title>
-<meta name="description" content="Manage your Apatmento partner listings — update availability, pricing and photos. Keep 100% of what you earn, zero commission."/>
+<title>My Listings | Apatmento Partner</title>
+<meta name="robots" content="noindex"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/apa-session.js"></script>
-<script src="/apa-admin-guard.js"></script>
 <script>
 (function(){
   var sb2=null;
@@ -15,736 +14,613 @@
   if(!sb2)return;
   sb2.auth.getSession().then(function(res){
     if(!res.data.session){
-      sessionStorage.setItem('auth_next', location.href);
+      sessionStorage.setItem('auth_next',location.href);
       window.location.href='auth.html?next='+encodeURIComponent(location.pathname);
       return;
     }
-    // User is authenticated and on a partner page — persist the role
-    try{ localStorage.setItem('apa-last-role','partner'); }catch(e){}
+    try{localStorage.setItem('apa-last-role','partner');}catch(e){}
   });
 })();
 </script>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
 <style>
-
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
-  --glass:#FCFCFD;--glass-2:#F4F5FB;--glass-3:#EBEDF7;
-  --ink:#0A0A14;--ink-2:#12132A;--ink-soft:#4A4C66;--ink-faint:#8E90AD;
-  --mint:#5EEAD4;--mint-deep:#2DD4BF;--mint-dark:#0D9488;
-  --electric:#4361FF;--violet:#7B2FF7;--gold:#F5B12E;
-  --ember:#FF6B2C;--err:#FF4D6D;--ok:#2DD4BF;
-  --lilac:#B8A4F4;--lilac-deep:#8B6FE8;
-  --line:rgba(10,10,20,.07);--line-2:rgba(10,10,20,.13);
-  /* Partner theme: mint-teal → electric */
-  --theme:var(--mint-deep);--theme-2:var(--electric);
-  --theme-grad:linear-gradient(135deg,#2DD4BF,#4361FF);
-  --theme-soft:rgba(45,212,191,.08);
-  --theme-border:rgba(45,212,191,.2);
-  --font-d:'Geist','Inter',sans-serif;--font-b:'Inter',system-ui,sans-serif;
-  --font-data:'Geist',monospace;
-  --shadow-sm:0 2px 8px rgba(10,10,20,.05);
-  --shadow-md:0 8px 32px rgba(45,212,191,.08),0 2px 12px rgba(10,10,20,.05);
-  --shadow-lift:0 20px 60px rgba(67,97,255,.14);
-  --radius:18px;--radius-lg:24px;
+  --bg:#F5F6FA;--surface:#FFFFFF;--s2:#F0F1F8;--s3:#E6E8F3;
+  --ink:#0A0B18;--ink2:#14152E;--soft:#4C4E6A;--faint:#8E90AD;
+  --mint:#2DD4BF;--mint-d:#0D9488;--electric:#4361FF;--violet:#7B2FF7;
+  --gold:#F5B12E;--ember:#FF6B2C;--err:#FF3D5A;--ok:#10B981;
+  --line:rgba(10,11,24,0.07);--line2:rgba(10,11,24,0.13);
+  --grad:linear-gradient(135deg,#2DD4BF,#4361FF);
+  --grad-soft:linear-gradient(135deg,rgba(45,212,191,0.1),rgba(67,97,255,0.07));
+  --sh-sm:0 2px 8px rgba(10,11,24,0.05);
+  --sh-md:0 8px 32px rgba(67,97,255,0.1),0 2px 8px rgba(10,11,24,0.04);
+  --sh-lg:0 24px 64px rgba(67,97,255,0.15),0 4px 16px rgba(10,11,24,0.06);
+  --fh:'Manrope',system-ui,sans-serif;
+  --fb:'Inter',system-ui,sans-serif;
+  --r:16px;--rl:24px;
 }
-@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms !important;transition-duration:.01ms !important;}}
-html,body{height:100%;font-family:var(--font-b);background:var(--glass-2);color:var(--ink);-webkit-font-smoothing:antialiased;}
-body{display:flex;flex-direction:column;overflow-x:hidden;}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important;}}
+html,body{height:100%;font-family:var(--fb);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;overflow-x:hidden;}
+body{display:flex;flex-direction:column;}
 
-/* ── AURORA ── */
-.aurora{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;}
-.ab{position:absolute;border-radius:50%;filter:blur(90px);opacity:.22;mix-blend-mode:multiply;animation:drift 30s ease-in-out infinite;}
-.ab-1{width:600px;height:600px;background:radial-gradient(circle,var(--mint),transparent 70%);top:-15%;left:-10%;}
-.ab-2{width:480px;height:480px;background:radial-gradient(circle,var(--electric),transparent 72%);bottom:-12%;right:-8%;animation-delay:-14s;opacity:.16;}
-.ab-3{width:360px;height:360px;background:radial-gradient(circle,var(--gold),transparent 70%);top:40%;left:50%;animation-delay:-7s;opacity:.12;}
-@keyframes drift{0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(28px,-18px) scale(1.05);}}
+/* AMBIENT */
+.amb{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
+.ab{position:absolute;border-radius:50%;filter:blur(90px);opacity:.14;animation:drift 30s ease-in-out infinite;}
+.ab1{width:600px;height:600px;background:radial-gradient(circle,var(--mint),transparent 70%);top:-15%;left:-10%;}
+.ab2{width:480px;height:480px;background:radial-gradient(circle,var(--electric),transparent 72%);bottom:-12%;right:-8%;animation-delay:-14s;opacity:.1;}
+@keyframes drift{0%,100%{transform:translate(0,0)scale(1);}50%{transform:translate(28px,-18px)scale(1.05);}}
 
-/* ── TOPBAR ── */
-.topbar{position:sticky;top:0;z-index:200;height:64px;background:rgba(252,252,253,.88);backdrop-filter:blur(24px) saturate(180%);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0;}
+/* TOPBAR */
+.topbar{position:sticky;top:0;z-index:200;height:62px;background:rgba(245,246,250,0.92);backdrop-filter:blur(24px) saturate(180%);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0;}
 .tb-left{display:flex;align-items:center;gap:12px;}
-.tb-back{width:36px;height:36px;border-radius:10px;border:1.5px solid var(--line-2);background:rgba(255,255,255,.7);display:flex;align-items:center;justify-content:center;color:var(--ink-soft);cursor:pointer;transition:all .2s;text-decoration:none;flex-shrink:0;}
-.tb-back:hover{border-color:var(--theme);color:var(--theme);}
-.tb-divider{width:1px;height:24px;background:var(--line-2);}
-.tb-brand{font-family:var(--font-d);font-weight:500;font-size:18px;letter-spacing:-.01em;}
-.tb-brand em{font-style:italic;background:var(--theme-grad);-webkit-background-clip:text;background-clip:text;color:transparent;}
-.tb-hub-label{font-size:12px;font-weight:600;color:var(--ink-faint);letter-spacing:.04em;}
-.tb-right{display:flex;align-items:center;gap:10px;}
-.tb-chip{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:6px 13px;border-radius:100px;background:linear-gradient(135deg,rgba(45,212,191,.12),rgba(67,97,255,.08));border:1px solid var(--theme-border);color:var(--mint-dark);}
-.tb-add-btn{display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:11px;border:none;font-family:var(--font-b);font-weight:700;font-size:12px;cursor:pointer;background:var(--theme-grad);color:#fff;box-shadow:0 4px 14px rgba(67,97,255,.25);transition:all .22s;letter-spacing:.02em;text-decoration:none;}
-.tb-add-btn:hover{transform:translateY(-1px);box-shadow:0 8px 22px rgba(67,97,255,.38);}
-.tb-avatar{width:36px;height:36px;border-radius:11px;background:var(--theme-grad);display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-weight:600;font-size:14px;color:#fff;cursor:pointer;box-shadow:0 3px 10px rgba(45,212,191,.3);flex-shrink:0;}
-@media(max-width:600px){.tb-hub-label{display:none;}.tb-chip{display:none;}}
+.tb-back{width:34px;height:34px;border-radius:9px;border:1.5px solid var(--line2);background:var(--surface);display:flex;align-items:center;justify-content:center;color:var(--soft);text-decoration:none;transition:all .2s;flex-shrink:0;}
+.tb-back:hover{border-color:var(--mint);color:var(--mint-d);}
+.tb-back svg{width:15px;height:15px;}
+.tb-divider{width:1px;height:22px;background:var(--line2);}
+.tb-wm{font-family:var(--fh);font-size:17px;font-weight:800;letter-spacing:-.02em;color:var(--ink2);}
+.tb-wm span{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.tb-pill{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:4px 11px;border-radius:100px;background:var(--grad-soft);border:1px solid rgba(45,212,191,0.2);color:var(--mint-d);}
+.tb-right{display:flex;align-items:center;gap:9px;}
+.tb-add{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:11px;border:none;font-family:var(--fh);font-weight:800;font-size:12px;cursor:pointer;background:var(--grad);color:#fff;box-shadow:0 4px 16px rgba(67,97,255,0.28);transition:all .22s;letter-spacing:.02em;}
+.tb-add:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(67,97,255,0.42);}
+.tb-add svg{width:14px;height:14px;}
+.tb-av{width:34px;height:34px;border-radius:10px;background:var(--grad);display:flex;align-items:center;justify-content:center;font-family:var(--fh);font-weight:700;font-size:13px;color:#fff;cursor:pointer;box-shadow:0 3px 10px rgba(45,212,191,0.28);flex-shrink:0;}
+.tb-ghost{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;border:1.5px solid var(--line2);background:var(--surface);color:var(--soft);font-family:var(--fb);font-weight:600;font-size:12px;text-decoration:none;cursor:pointer;transition:all .2s;}
+.tb-ghost:hover{border-color:var(--mint);color:var(--mint-d);}
+@media(max-width:600px){.tb-pill,.tb-ghost{display:none;}}
 
-/* ── SHELL ── */
+/* SHELL */
 .shell{display:flex;flex:1;position:relative;z-index:2;}
 
-/* ── SIDEBAR ── */
-.sidebar{width:240px;flex-shrink:0;padding:20px 14px;background:rgba(252,252,253,.78);backdrop-filter:blur(20px);border-right:1px solid var(--line);display:flex;flex-direction:column;gap:2px;position:sticky;top:64px;height:calc(100vh - 64px);overflow-y:auto;}
+/* SIDEBAR */
+.sidebar{width:232px;flex-shrink:0;padding:18px 12px;background:rgba(245,246,250,0.8);backdrop-filter:blur(20px);border-right:1px solid var(--line);display:flex;flex-direction:column;gap:2px;position:sticky;top:62px;height:calc(100vh - 62px);overflow-y:auto;}
 @media(max-width:860px){.sidebar{display:none;}}
-.sb-section{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);padding:14px 10px 6px;}
-.sb-link{display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:13px;font-size:13px;font-weight:500;color:var(--ink-soft);text-decoration:none;cursor:pointer;transition:all .2s;position:relative;}
-.sb-link svg{width:17px;height:17px;flex-shrink:0;opacity:.7;transition:opacity .2s;}
-.sb-link:hover{background:rgba(45,212,191,.07);color:var(--ink);}.sb-link:hover svg{opacity:1;}
-.sb-link.active{background:linear-gradient(135deg,rgba(45,212,191,.12),rgba(67,97,255,.08));color:var(--mint-dark);font-weight:700;}
-.sb-link.active svg{opacity:1;}
-.sb-link.active::before{content:'';position:absolute;left:0;top:25%;bottom:25%;width:3px;border-radius:2px;background:var(--theme-grad);}
-.sb-foot{margin-top:auto;padding-top:14px;border-top:1px solid var(--line);}
-.sb-link.danger{color:var(--err);}
+.sb-sec{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);padding:13px 10px 6px;}
+.sbl{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:12px;font-size:13px;font-weight:500;color:var(--soft);text-decoration:none;transition:all .2s;position:relative;cursor:pointer;}
+.sbl svg{width:16px;height:16px;flex-shrink:0;opacity:.7;transition:opacity .2s;}
+.sbl:hover{background:rgba(45,212,191,0.07);color:var(--ink);}
+.sbl:hover svg{opacity:1;}
+.sbl.active{background:var(--grad-soft);color:var(--mint-d);font-weight:700;border:1px solid rgba(45,212,191,0.15);}
+.sbl.active svg{opacity:1;}
+.sbl.active::before{content:'';position:absolute;left:0;top:25%;bottom:25%;width:3px;border-radius:2px;background:var(--grad);}
+.sb-foot{margin-top:auto;padding-top:13px;border-top:1px solid var(--line);}
+.sbl.danger{color:var(--err);}
 
-/* ── REFER PROMO BANNER (sidebar) ── */
-.sb-refer-promo{margin:16px 0 8px;border-radius:16px;padding:16px 14px;background:linear-gradient(145deg,rgba(245,177,46,.1),rgba(255,107,44,.07));border:1.5px solid rgba(245,177,46,.22);overflow:hidden;position:relative;}
-.sb-refer-promo::before{content:'';position:absolute;top:-20px;right:-20px;width:80px;height:80px;border-radius:50%;background:radial-gradient(circle,rgba(245,177,46,.2),transparent 70%);pointer-events:none;}
-.sbp-eyebrow{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:7px;}
-.sbp-title{font-family:var(--font-d);font-size:14px;font-weight:500;line-height:1.3;color:var(--ink);margin-bottom:6px;}
-.sbp-title strong{font-weight:700;color:var(--ember);}
-.sbp-desc{font-size:11px;line-height:1.5;color:var(--ink-soft);margin-bottom:12px;}
-.sbp-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:9px;border-radius:10px;border:none;font-family:var(--font-b);font-weight:700;font-size:12px;cursor:pointer;background:linear-gradient(135deg,#F5B12E,#FF6B2C);color:#fff;box-shadow:0 4px 12px rgba(245,177,46,.28);transition:all .22s;text-decoration:none;}
-.sbp-btn:hover{transform:translateY(-1px);box-shadow:0 7px 18px rgba(245,177,46,.4);}
-.sbp-link-text{font-size:10px;color:var(--ink-faint);text-align:center;margin-top:8px;cursor:pointer;}
-.sbp-link-text a{color:var(--electric);text-decoration:none;}
+/* REFER SIDEBAR BLOCK */
+.sb-refer{margin:14px 0 6px;border-radius:14px;padding:14px 13px;background:linear-gradient(145deg,rgba(245,177,46,0.09),rgba(255,107,44,0.06));border:1.5px solid rgba(245,177,46,0.2);position:relative;overflow:hidden;}
+.sb-refer-title{font-family:var(--fh);font-size:13px;font-weight:800;color:var(--ink2);line-height:1.3;margin-bottom:4px;}
+.sb-refer-title strong{color:var(--ember);}
+.sb-refer-sub{font-size:11px;color:var(--soft);line-height:1.5;margin-bottom:11px;}
+.sb-refer-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:9px;border-radius:9px;border:none;font-family:var(--fb);font-weight:700;font-size:11px;cursor:pointer;background:linear-gradient(135deg,#F5B12E,#FF6B2C);color:#fff;box-shadow:0 4px 12px rgba(245,177,46,0.26);transition:all .2s;text-decoration:none;}
+.sb-refer-btn:hover{transform:translateY(-1px);box-shadow:0 7px 18px rgba(245,177,46,0.38);}
 
-/* ── MAIN ── */
-.main{flex:1;padding:28px;overflow-x:hidden;min-width:0;max-width:1100px;}
-@media(max-width:600px){.main{padding:16px;}}
+/* MAIN */
+.main{flex:1;padding:28px 28px 80px;overflow-x:hidden;min-width:0;}
+@media(max-width:600px){.main{padding:16px 16px 90px;}}
 
-/* ── PAGE HEADER ── */
-.page-hd{margin-bottom:28px;}
-.page-eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--mint-dark);margin-bottom:12px;padding:5px 13px;border-radius:100px;background:rgba(45,212,191,.09);border:1px solid rgba(45,212,191,.2);}
-.page-title{font-family:var(--font-d);font-weight:400;font-size:clamp(24px,3.2vw,32px);letter-spacing:-.025em;color:var(--ink-2);margin-bottom:6px;line-height:1.1;}
-.page-title em{font-style:italic;font-weight:500;background:linear-gradient(120deg,var(--mint-deep),var(--electric));-webkit-background-clip:text;background-clip:text;color:transparent;}
-.page-sub{font-size:13px;color:var(--ink-soft);line-height:1.6;}
+/* PAGE HEADER */
+.pg-hd{margin-bottom:24px;display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+.pg-hd-left{}
+.pg-eyebrow{display:inline-flex;align-items:center;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mint-d);padding:4px 12px;border-radius:100px;background:rgba(45,212,191,0.09);border:1px solid rgba(45,212,191,0.2);margin-bottom:10px;}
+.pg-title{font-family:var(--fh);font-size:clamp(22px,2.8vw,30px);font-weight:800;letter-spacing:-.03em;color:var(--ink2);line-height:1.1;margin-bottom:5px;}
+.pg-title em{font-style:italic;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.pg-sub{font-size:13px;color:var(--soft);line-height:1.6;}
 
-/* ── STAT CARDS ── */
-.stat-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:24px;}
-.stat-card{background:rgba(255,255,255,.78);backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:var(--radius);padding:20px 18px;position:relative;overflow:hidden;transition:transform .22s,box-shadow .22s;}
-.stat-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);}
-.stat-card::after{content:'';position:absolute;top:0;right:0;width:60px;height:60px;border-radius:0 var(--radius) 0 60px;background:var(--theme-soft);opacity:.5;}
-.stat-label{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:10px;}
-.stat-val{font-family:var(--font-d);font-weight:600;font-size:28px;color:var(--ink-2);margin-bottom:5px;line-height:1;}
-.stat-meta{font-size:12px;color:var(--ink-soft);}
-.stat-meta.up{color:#059669;font-weight:600;}
-.stat-meta.up::before{content:'↑ ';}
-.stat-meta.down{color:var(--err);font-weight:600;}
-.stat-meta.down::before{content:'↓ ';}
-.stat-icon{position:absolute;top:16px;right:16px;font-size:24px;opacity:.35;}
+/* STAT ROW */
+.stat-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:13px;margin-bottom:22px;}
+.stat-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px 16px;position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s;}
+.stat-card:hover{transform:translateY(-2px);box-shadow:var(--sh-md);}
+.stat-card::after{content:'';position:absolute;top:0;right:0;width:56px;height:56px;border-radius:0 var(--r) 0 56px;background:rgba(45,212,191,0.06);}
+.sc-lbl{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin-bottom:9px;}
+.sc-val{font-family:var(--fh);font-weight:800;font-size:26px;color:var(--ink2);line-height:1;margin-bottom:4px;}
+.sc-meta{font-size:11px;color:var(--soft);}
 
-/* ── GLASS CARD ── */
-.card{background:rgba(255,255,255,.74);backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:var(--radius);padding:22px;margin-bottom:18px;}
-.card-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;gap:12px;}
-.card-title{font-family:var(--font-d);font-weight:500;font-size:16px;color:var(--ink-2);}
-.card-sub{font-size:12px;color:var(--ink-faint);margin-top:2px;}
+/* FILTER BAR */
+.filter-bar{display:flex;align-items:center;gap:9px;margin-bottom:16px;flex-wrap:wrap;}
+.filter-chip{padding:7px 14px;border-radius:100px;border:1.5px solid var(--line2);background:var(--surface);font-size:12px;font-weight:700;color:var(--soft);cursor:pointer;transition:all .2s;}
+.filter-chip:hover{border-color:rgba(45,212,191,0.4);color:var(--mint-d);}
+.filter-chip.active{background:var(--grad);border-color:transparent;color:#fff;box-shadow:0 4px 12px rgba(67,97,255,0.22);}
+.filter-right{margin-left:auto;display:flex;gap:8px;}
 
-/* ── TABLE ── */
-.tbl-wrap{overflow-x:auto;border-radius:14px;border:1px solid var(--line);}
-table{width:100%;border-collapse:collapse;font-size:13px;}
-th{padding:12px 16px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-faint);border-bottom:1px solid var(--line);background:rgba(244,245,251,.7);white-space:nowrap;}
-td{padding:14px 16px;border-bottom:1px solid var(--line);color:var(--ink-soft);vertical-align:middle;}
-tr:last-child td{border-bottom:none;}
-tr:hover td{background:rgba(45,212,191,.025);}
-td strong{color:var(--ink);font-weight:600;}
+/* LISTING CARDS */
+.listing-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;align-items:center;gap:14px;transition:all .2s;margin-bottom:9px;}
+.listing-card:hover{box-shadow:var(--sh-md);border-color:rgba(45,212,191,0.2);transform:translateX(2px);}
+.lc-thumb{width:66px;height:66px;border-radius:12px;object-fit:cover;flex-shrink:0;background:var(--grad);display:flex;align-items:center;justify-content:center;font-size:26px;}
+.lc-thumb img{width:100%;height:100%;object-fit:cover;border-radius:12px;}
+.lc-info{flex:1;min-width:0;}
+.lc-name{font-family:var(--fh);font-size:14px;font-weight:800;color:var(--ink);margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.lc-meta{font-size:12px;color:var(--soft);line-height:1.5;}
+.lc-price{font-family:var(--fh);font-size:13px;font-weight:800;color:var(--mint-d);margin-top:4px;}
+.lc-right{flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:8px;}
+.lc-acts{display:flex;gap:6px;}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:4px 10px;border-radius:100px;white-space:nowrap;}
+.badge::before{content:'';width:5px;height:5px;border-radius:50%;flex-shrink:0;}
+.b-green{background:rgba(16,185,129,0.08);color:#059669;border:1px solid rgba(16,185,129,0.2);}.b-green::before{background:#059669;}
+.b-amber{background:rgba(245,177,46,0.1);color:#D97706;border:1px solid rgba(245,177,46,0.25);}.b-amber::before{background:#D97706;}
+.b-grey{background:var(--s2);color:var(--faint);border:1px solid var(--line2);}.b-grey::before{background:var(--faint);}
 
-/* ── BADGES ── */
-.badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:4px 11px;border-radius:100px;white-space:nowrap;}
-.badge::before{content:'';width:6px;height:6px;border-radius:50%;flex-shrink:0;}
-.badge-green{background:rgba(5,150,105,.08);color:#059669;border:1px solid rgba(5,150,105,.2);}.badge-green::before{background:#059669;}
-.badge-amber{background:rgba(245,177,46,.1);color:#D97706;border:1px solid rgba(245,177,46,.25);}.badge-amber::before{background:#D97706;}
-.badge-red{background:rgba(255,77,109,.08);color:var(--err);border:1px solid rgba(255,77,109,.2);}.badge-red::before{background:var(--err);}
-.badge-blue{background:rgba(67,97,255,.08);color:var(--electric);border:1px solid rgba(67,97,255,.2);}.badge-blue::before{background:var(--electric);}
-.badge-grey{background:var(--glass-3);color:var(--ink-faint);border:1px solid var(--line-2);}.badge-grey::before{background:var(--ink-faint);}
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:7px;padding:10px 18px;border-radius:11px;border:none;font-family:var(--fb);font-weight:700;font-size:13px;cursor:pointer;transition:all .2s;}
+.btn-primary{background:var(--grad);color:#fff;box-shadow:0 6px 18px rgba(67,97,255,0.22);}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(67,97,255,0.36);}
+.btn-ghost{background:var(--surface);color:var(--soft);border:1.5px solid var(--line2);}
+.btn-ghost:hover{border-color:var(--mint);color:var(--mint-d);}
+.btn-danger{background:rgba(255,61,90,0.07);color:var(--err);border:1.5px solid rgba(255,61,90,0.18);}
+.btn-danger:hover{background:rgba(255,61,90,0.13);}
+.btn-sm{padding:7px 13px;font-size:11px;border-radius:9px;}
 
-/* ── BUTTONS ── */
-.btn{display:inline-flex;align-items:center;gap:8px;padding:11px 20px;border-radius:12px;border:none;font-family:var(--font-b);font-weight:700;font-size:13px;cursor:pointer;transition:all .22s;letter-spacing:.01em;}
-.btn-primary{background:var(--theme-grad);color:#fff;box-shadow:0 6px 20px rgba(45,212,191,.2);}
-.btn-primary:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(45,212,191,.35);}
-.btn-ghost{background:rgba(255,255,255,.7);color:var(--ink-soft);border:1.5px solid var(--line-2);}
-.btn-ghost:hover{border-color:var(--theme);color:var(--mint-dark);}
-.btn-danger{background:rgba(255,77,109,.08);color:var(--err);border:1.5px solid rgba(255,77,109,.2);}
-.btn-danger:hover{background:rgba(255,77,109,.14);}
-.btn-sm{padding:7px 14px;font-size:12px;border-radius:9px;}
-.btn-icon{padding:9px;border-radius:10px;}.btn-icon svg{width:16px;height:16px;}
+/* EMPTY STATE */
+.empty{text-align:center;padding:52px 24px;}
+.empty-icon{width:72px;height:72px;border-radius:22px;background:var(--grad-soft);border:1px solid rgba(45,212,191,0.2);display:flex;align-items:center;justify-content:center;margin:0 auto 18px;}
+.empty-icon svg{width:32px;height:32px;color:var(--mint-d);}
+.empty-title{font-family:var(--fh);font-size:20px;font-weight:800;color:var(--ink2);margin-bottom:7px;}
+.empty-sub{font-size:13px;color:var(--soft);line-height:1.65;max-width:320px;margin:0 auto 20px;}
 
-/* ── FORM FIELDS ── */
-.field{margin-bottom:18px;}
-.field-label{display:block;font-size:12px;font-weight:700;color:var(--ink-soft);margin-bottom:7px;letter-spacing:.02em;}
-.field-hint{font-size:11px;color:var(--ink-faint);margin-top:5px;line-height:1.5;}
-.field-input,.field-select,.field-textarea{width:100%;padding:12px 15px;border:1.5px solid rgba(10,10,20,.1);border-radius:12px;background:rgba(255,255,255,.85);font-family:var(--font-b);font-size:13px;color:var(--ink);outline:none;transition:all .2s;}
-.field-input:focus,.field-select:focus,.field-textarea:focus{border-color:var(--theme);box-shadow:0 0 0 3px rgba(45,212,191,.12);}
-.field-textarea{resize:vertical;min-height:100px;line-height:1.7;}
-.row-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
-.row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
-@media(max-width:500px){.row-2,.row-3{grid-template-columns:1fr;}}
-
-/* ── CHART BARS ── */
-.chart-bars{display:flex;flex-direction:column;gap:10px;}
-.chart-row{display:flex;align-items:center;gap:14px;font-size:12px;}
-.chart-lbl{width:100px;color:var(--ink-soft);text-align:right;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.chart-track{flex:1;height:30px;background:var(--glass-3);border-radius:8px;overflow:hidden;position:relative;}
-.chart-fill{height:100%;border-radius:8px;background:var(--theme-grad);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;min-width:40px;transition:width 1s cubic-bezier(.22,1,.36,1);}
-.chart-val{width:60px;text-align:right;color:var(--ink);font-weight:700;font-family:var(--font-data);flex-shrink:0;}
-
-/* ── MINI KPI BLOCKS ── */
-.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px;}
-.kpi{background:rgba(255,255,255,.6);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;align-items:center;gap:14px;}
-.kpi-icon{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
-.kpi-icon-teal{background:rgba(45,212,191,.12);}
-.kpi-icon-blue{background:rgba(67,97,255,.1);}
-.kpi-icon-gold{background:rgba(245,177,46,.12);}
-.kpi-icon-ember{background:rgba(255,107,44,.1);}
-.kpi-val{font-family:var(--font-d);font-size:20px;font-weight:600;color:var(--ink-2);line-height:1;}
-.kpi-lbl{font-size:11px;color:var(--ink-faint);margin-top:3px;}
-
-/* ── EMPTY STATE ── */
-.empty{text-align:center;padding:56px 24px;}
-.empty-icon{font-size:48px;margin-bottom:16px;}
-.empty-title{font-family:var(--font-d);font-size:20px;margin-bottom:8px;color:var(--ink-2);}
-.empty-sub{font-size:13px;color:var(--ink-soft);margin-bottom:22px;line-height:1.6;max-width:340px;margin-left:auto;margin-right:auto;}
-
-/* ── TOAST ── */
-.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(16px);z-index:9999;padding:12px 22px;border-radius:100px;background:var(--ink-2);color:#fff;font-size:13px;font-weight:600;box-shadow:0 8px 28px rgba(10,10,20,.25);opacity:0;transition:all .35s;pointer-events:none;white-space:nowrap;}
+/* TOAST */
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(16px);z-index:9999;padding:11px 22px;border-radius:100px;background:var(--ink2);color:#fff;font-size:13px;font-weight:600;box-shadow:0 8px 28px rgba(10,11,24,0.22);opacity:0;transition:all .32s;pointer-events:none;white-space:nowrap;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
-/* ── MOBILE NAV ── */
-.mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;background:rgba(252,252,253,.92);backdrop-filter:blur(20px);border-top:1px solid var(--line);padding:6px 0 env(safe-area-inset-bottom,6px);}
-@media(max-width:860px){.mobile-nav{display:flex;}.main{padding-bottom:82px;}}
-.mn-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:9px;font-weight:600;letter-spacing:.03em;color:var(--ink-faint);text-decoration:none;padding:7px 4px;cursor:pointer;transition:color .2s;}
-.mn-item:hover,.mn-item.active{color:var(--mint-dark);}
-.mn-item svg{width:21px;height:21px;}
+/* MOBILE NAV */
+.mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;background:rgba(245,246,250,0.94);backdrop-filter:blur(20px);border-top:1px solid var(--line);padding:6px 0 env(safe-area-inset-bottom,6px);}
+@media(max-width:860px){.mobile-nav{display:flex;}}
+.mn-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:9px;font-weight:600;letter-spacing:.03em;color:var(--faint);text-decoration:none;padding:7px 4px;cursor:pointer;transition:color .2s;}
+.mn-item:hover,.mn-item.active{color:var(--mint-d);}
+.mn-item svg{width:20px;height:20px;}
 
-/* ── INVITE BANNER (inline, non-popup) ── */
-.invite-banner{border-radius:20px;padding:22px 24px;background:linear-gradient(135deg,rgba(245,177,46,.08) 0%,rgba(255,107,44,.06) 50%,rgba(123,47,247,.05) 100%);border:1.5px solid rgba(245,177,46,.2);margin-bottom:18px;display:flex;align-items:center;gap:18px;position:relative;overflow:hidden;}
-.invite-banner::before{content:'🏆';position:absolute;right:18px;top:50%;transform:translateY(-50%);font-size:52px;opacity:.12;pointer-events:none;}
-.invite-banner-icon{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#F5B12E,#FF6B2C);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;box-shadow:0 4px 14px rgba(245,177,46,.28);}
-.invite-banner-body{flex:1;min-width:0;}
-.invite-banner-pre{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:5px;}
-.invite-banner-title{font-family:var(--font-d);font-size:15px;font-weight:500;color:var(--ink);margin-bottom:4px;line-height:1.3;}
-.invite-banner-title strong{color:var(--ember);}
-.invite-banner-sub{font-size:12px;color:var(--ink-soft);line-height:1.5;}
-.invite-banner-btn{flex-shrink:0;display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:12px;border:none;font-family:var(--font-b);font-weight:700;font-size:12px;cursor:pointer;background:linear-gradient(135deg,#F5B12E,#FF6B2C);color:#fff;box-shadow:0 4px 14px rgba(245,177,46,.3);transition:all .22s;white-space:nowrap;}
-.invite-banner-btn:hover{transform:translateY(-1px);box-shadow:0 7px 20px rgba(245,177,46,.42);}
-@media(max-width:600px){.invite-banner{flex-direction:column;align-items:flex-start;}.invite-banner-btn{width:100%;justify-content:center;}}
+/* ============================================
+   ADD LISTING MODAL OVERLAY
+============================================ */
+.al-overlay{display:none;position:fixed;inset:0;z-index:500;background:rgba(10,11,24,0.6);backdrop-filter:blur(8px);align-items:flex-end;justify-content:center;padding:0;}
+.al-overlay.open{display:flex;animation:ovIn .28s ease-out;}
+@keyframes ovIn{from{opacity:0;}to{opacity:1;}}
 
+.al-sheet{width:100%;max-width:780px;max-height:92vh;background:var(--surface);border-radius:24px 24px 0 0;box-shadow:0 -24px 80px rgba(10,11,24,0.2);display:flex;flex-direction:column;overflow:hidden;animation:sheetUp .36s cubic-bezier(.22,1,.36,1);}
+@keyframes sheetUp{from{transform:translateY(48px);opacity:0;}to{transform:none;opacity:1;}}
 
-/* ── SWITCH TO TRAVELLER TOPBAR BTN ── */
-.tb-switch-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:11px;border:1.5px solid rgba(45,212,191,.3);background:rgba(45,212,191,.07);color:var(--mint-dark);font-family:var(--font-b);font-weight:700;font-size:12px;text-decoration:none;cursor:pointer;transition:all .22s;white-space:nowrap;}
-.tb-switch-btn:hover{background:rgba(45,212,191,.14);border-color:rgba(45,212,191,.55);transform:translateY(-1px);}
-.tb-switch-btn svg{flex-shrink:0;}
-@media(max-width:520px){.tb-switch-txt{display:none;}}
+.al-header{padding:20px 24px 0;display:flex;align-items:flex-start;justify-content:space-between;flex-shrink:0;}
+.al-header-left{}
+.al-header-eyebrow{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mint-d);margin-bottom:8px;}
+.al-header-title{font-family:var(--fh);font-size:22px;font-weight:800;letter-spacing:-.03em;color:var(--ink2);line-height:1.1;}
+.al-header-title em{font-style:italic;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.al-header-sub{font-size:13px;color:var(--soft);margin-top:5px;line-height:1.6;}
+.al-close{width:34px;height:34px;border-radius:9px;border:1.5px solid var(--line2);background:var(--s2);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--soft);transition:all .2s;flex-shrink:0;}
+.al-close:hover{border-color:var(--err);color:var(--err);}
+.al-close svg{width:14px;height:14px;}
 
-/* ── Host Cabana Match glow card ── */
-.host-cabana-card{
-  position:relative;
-  width:100%;border:none;background:none;
-  padding:3px;border-radius:20px;
-  cursor:pointer;isolation:isolate;
-  overflow:visible;
-  display:block;text-decoration:none;
-  margin-bottom:20px;
-  animation:hostCabanaVibrate 4s ease-in-out infinite;
-}
-@keyframes hostCabanaVibrate{
-  0%,100%{transform:scale(1);}
-  92%{transform:scale(1);}
-  93%{transform:scale(1.005) rotate(.3deg);}
-  94%{transform:scale(1.005) rotate(-.3deg);}
-  95%{transform:scale(1.005) rotate(.2deg);}
-  96%{transform:scale(1.005) rotate(0);}
-  97%{transform:scale(1);}
-}
-.hcc-ring{
-  position:absolute;inset:0;border-radius:20px;
-  background:conic-gradient(from var(--hcc-angle,0deg),#FF6B6B,#FFD93D,#6BCB77,#4D96FF,#C77DFF,#FF6B6B);
-  animation:hccRingSpin 3s linear infinite;
-  filter:blur(1px);
-  z-index:0;
-}
-@property --hcc-angle{syntax:"<angle>";inherits:false;initial-value:0deg;}
-@keyframes hccRingSpin{to{--hcc-angle:360deg;}}
-.hcc-glow{
-  position:absolute;inset:-4px;border-radius:24px;z-index:-1;
-  background:conic-gradient(from var(--hcc-angle,0deg),#FF6B6B,#FFD93D,#6BCB77,#4D96FF,#C77DFF,#FF6B6B);
-  filter:blur(12px);opacity:.45;
-  animation:hccRingSpin 3s linear infinite;
-}
-.hcc-inner{
-  position:relative;z-index:1;
-  display:flex;align-items:center;gap:14px;
-  background:#fff;
-  border-radius:18px;
-  padding:16px 18px;
-}
-.host-cabana-card:hover .hcc-inner{background:rgba(253,253,254,1);}
-.hcc-icon{
-  width:52px;height:52px;border-radius:15px;flex-shrink:0;
-  background:conic-gradient(from 45deg,#FF6B6B,#FFD93D,#6BCB77,#4D96FF,#C77DFF,#FF6B6B);
-  display:flex;align-items:center;justify-content:center;color:#fff;font-size:24px;
-  animation:hccIconHue 6s linear infinite;
-  box-shadow:0 4px 18px rgba(123,47,247,.3);
-}
-@keyframes hccIconHue{0%{filter:hue-rotate(0deg);}100%{filter:hue-rotate(360deg);}}
-.hcc-body{flex:1;min-width:0;}
-.hcc-label{
-  display:block;
-  font-family:"Inter",sans-serif;font-weight:800;font-size:15px;
-  background:linear-gradient(90deg,#C77DFF,#4D96FF,#6BCB77,#FFD93D,#FF6B6B);
-  background-size:200% auto;
-  -webkit-background-clip:text;background-clip:text;color:transparent;
-  animation:hccLabelShimmer 4s linear infinite;
-  margin-bottom:3px;
-}
-@keyframes hccLabelShimmer{0%{background-position:0%;}100%{background-position:200%;}}
-.hcc-sub{font-size:11.5px;color:var(--ink-faint,#8E90AD);}
-.hcc-badge{
-  flex-shrink:0;font-size:9px;font-weight:800;letter-spacing:.1em;
-  color:#fff;
-  background:linear-gradient(135deg,#FF6B6B,#C77DFF);
-  padding:5px 10px;border-radius:100px;
-  animation:hccBadgePulse 2s ease-in-out infinite;
-}
-@keyframes hccBadgePulse{0%,100%{box-shadow:0 0 0 0 rgba(199,125,255,.5);}50%{box-shadow:0 0 0 8px rgba(199,125,255,0);}}
+.al-body{flex:1;overflow-y:auto;padding:24px;}
+
+/* SERVICE GRID inside modal */
+.al-svc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:20px;}
+@media(max-width:560px){.al-svc-grid{grid-template-columns:1fr 1fr;}}
+.al-svc-card{padding:20px 12px;border-radius:16px;border:2px solid var(--line);background:var(--s2);cursor:pointer;text-align:center;transition:all .25s cubic-bezier(.22,1,.36,1);position:relative;text-decoration:none;display:block;}
+.al-svc-card:hover{border-color:rgba(67,97,255,0.35);background:var(--surface);transform:translateY(-2px);box-shadow:var(--sh-md);}
+.al-svc-icon{width:46px;height:46px;margin:0 auto 11px;border-radius:13px;background:var(--surface);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;transition:all .25s;}
+.al-svc-icon svg{width:22px;height:22px;color:var(--soft);transition:color .25s;}
+.al-svc-card:hover .al-svc-icon{background:var(--grad);border-color:transparent;}
+.al-svc-card:hover .al-svc-icon svg{color:#fff;}
+.al-svc-name{font-family:var(--fh);font-size:13px;font-weight:800;color:var(--ink);margin-bottom:3px;}
+.al-svc-desc{font-size:10px;color:var(--faint);line-height:1.4;}
+
+.al-divider{height:1px;background:var(--line);margin:4px 0 20px;}
+.al-import-row{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-radius:14px;border:1.5px solid rgba(99,102,241,0.2);background:rgba(99,102,241,0.04);cursor:pointer;transition:all .2s;}
+.al-import-row:hover{border-color:rgba(99,102,241,0.4);background:rgba(99,102,241,0.08);}
+.al-import-left{display:flex;align-items:center;gap:12px;}
+.al-import-icon{width:40px;height:40px;border-radius:11px;background:rgba(99,102,241,0.1);display:flex;align-items:center;justify-content:center;}
+.al-import-icon svg{width:20px;height:20px;color:#6366f1;}
+.al-import-title{font-family:var(--fh);font-size:13px;font-weight:800;color:var(--ink);}
+.al-import-sub{font-size:11px;color:var(--soft);margin-top:2px;}
+.al-import-arrow{color:var(--faint);}
+.al-import-arrow svg{width:16px;height:16px;}
+
+/* IMPORT PANEL inside modal */
+.al-import-panel{display:none;}
+.al-import-panel.open{display:block;animation:fadeUp .3s;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+.al-back-row{display:flex;align-items:center;gap:9px;margin-bottom:18px;cursor:pointer;color:var(--soft);font-size:13px;font-weight:600;transition:color .2s;}
+.al-back-row:hover{color:var(--ink);}
+.al-back-row svg{width:16px;height:16px;}
+.al-tabs{display:flex;gap:0;border:1.5px solid var(--line);border-radius:11px;overflow:hidden;margin-bottom:16px;}
+.al-tab{flex:1;padding:10px;border:none;background:transparent;color:var(--soft);font-family:var(--fb);font-weight:700;font-size:12px;cursor:pointer;transition:all .2s;}
+.al-tab.active{background:var(--grad);color:#fff;}
+.al-textarea{width:100%;height:160px;border:1.5px solid var(--line2);border-radius:12px;padding:12px;font-family:var(--fb);font-size:13px;color:var(--ink);resize:vertical;outline:none;transition:border-color .2s;}
+.al-textarea:focus{border-color:var(--electric);box-shadow:0 0 0 3px rgba(67,97,255,0.09);}
+.al-textarea::placeholder{color:var(--faint);}
+.al-info-box{padding:11px 13px;border-radius:11px;background:rgba(99,102,241,0.06);border:1px solid rgba(99,102,241,0.18);margin-bottom:14px;font-size:12px;color:var(--soft);line-height:1.6;}
+.al-info-box strong{color:#6366f1;}
+.al-err{display:none;padding:10px 13px;border-radius:10px;background:rgba(255,61,90,0.07);border:1px solid rgba(255,61,90,0.2);color:#CC1133;font-size:12px;margin-bottom:12px;line-height:1.5;}
+.al-err.show{display:block;}
+.al-footer{padding:16px 24px 24px;display:flex;gap:9px;flex-shrink:0;border-top:1px solid var(--line);}
+.al-footer-left{flex:1;}
 </style>
-<link rel="stylesheet" href="/brand.css"/>
-<link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/><link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/cabana-ds.css"/>
-<style>.tb-icon-sm{height:28px;width:28px;object-fit:contain;flex-shrink:0;border-radius:7px;}.tb-cab-wm{height:26px;width:auto;display:block;}</style>
 </head>
 <body>
-<div class="aurora"><div class="ab ab-1"></div><div class="ab ab-2"></div><div class="ab ab-3"></div></div>
+<div class="amb"><div class="ab ab1"></div><div class="ab ab2"></div></div>
 
-<div class="topbar">
+<!-- TOPBAR -->
+<header class="topbar">
   <div class="tb-left">
-    <a href="dashboard.html?role=partner&back=1" class="tb-back" title="Back to dashboard" aria-label="Dashboard">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    <a href="dashboard.html?role=partner&back=1" class="tb-back" title="Dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
     </a>
     <div class="tb-divider"></div>
-    <img src="cabana-wordmark-color.png" class="tb-logo tb-cab-wm" alt="Cabana" onerror="this.style.display='none'"/>
-    <span class="tb-hub-label">· Partner Hub</span>
+    <span class="tb-wm">Apat<span>mento</span></span>
+    <span class="tb-pill">Partner Hub</span>
   </div>
   <div class="tb-right">
-    <a href="add-listing.html?from=dashboard" class="tb-add-btn">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      + Add listing
+    <button class="tb-add" onclick="openAddModal()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Add listing
+    </button>
+    <a href="#" onclick="switchGuest();return false;" class="tb-ghost">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><path d="M8 3 4 7l4 4M4 7h16M16 21l4-4-4-4M20 17H4"/></svg>
+      Guest view
     </a>
-    <a href="#" onclick="switchToGuest();return false;" class="tb-switch-btn" title="Switch to Traveller view" aria-label="Switch to Traveller">
-      ← Traveller
-    </a>
+    <div class="tb-av" id="tb-av">P</div>
   </div>
-</div>
+</header>
 
+<!-- SHELL -->
 <div class="shell">
 
+<!-- SIDEBAR -->
 <nav class="sidebar">
-  <div class="sb-section">Partner Hub</div>
-  <a class="sb-link active" href="partner-listings.html">
+  <div class="sb-sec">Partner Hub</div>
+  <a class="sbl active" href="partner-listings.html">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
     My Listings
   </a>
-  <a class="sb-link" href="partner-bookings.html">
+  <a class="sbl" href="partner-bookings.html">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg>
     Bookings
   </a>
-  <a class="sb-link" href="partner-agents.html">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-    My Agents <span class="sb-count" id="sb-count"></span>
-  </a>
-  <a class="sb-link" href="partner-earnings.html">
+  <a class="sbl" href="partner-earnings.html">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
     Earnings
   </a>
-  <a class="sb-link" href="partner-calendar.html">
+  <a class="sbl" href="partner-calendar.html">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
     Calendar
   </a>
-  <a class="sb-link" href="partner-analytics.html">
+  <a class="sbl" href="partner-analytics.html">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 9l-5 5-4-4-4 4"/></svg>
     Analytics
   </a>
-  <a class="sb-link" href="partner-cabana.html">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8l-5-5-5 5h3v6h4V8h3z"/><circle cx="12" cy="15" r="3"/></svg>
-    Cabana Match
-    <span style="margin-left:auto;font-size:8px;font-weight:800;letter-spacing:.06em;background:linear-gradient(135deg,#C77DFF,#4D96FF);color:#fff;padding:2px 7px;border-radius:100px;">NEW</span>
+  <a class="sbl" href="partner-agents.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    My Agents
   </a>
-  <a class="sb-link" href="partner-reviews.html">
+  <a class="sbl" href="partner-reviews.html">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
     Reviews
   </a>
-  <a class="sb-link" href="partner-settings.html">
+  <a class="sbl" href="partner-settings.html">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
     Settings
   </a>
 
-  <!-- Strategic Refer & Earn promo — non-popup, always visible -->
-  <div class="sb-refer-promo">
-    <div class="sbp-eyebrow">💰 Earn more</div>
-    <div class="sbp-title">Invite a host.<br/><strong>Earn 10% for life.</strong></div>
-    <div class="sbp-desc">Every booking your referred host completes earns you a 10% commission. Forever. No cap, no expiry.</div>
-    <a href="rewards.html" class="sbp-btn">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-      Get my referral link
-    </a>
-    <div class="sbp-link-text">Also earn 20% for guest referrals · <a href="rewards.html">Learn more</a></div>
+  <div class="sb-refer">
+    <div class="sb-refer-title">Invite a host.<br/><strong>Earn 10% for life.</strong></div>
+    <div class="sb-refer-sub">Every booking your referred host gets earns you 10% of the platform fee. No cap, no expiry.</div>
+    <a href="rewards.html" class="sb-refer-btn">Get my referral link</a>
   </div>
 
   <div class="sb-foot">
-    <a class="sb-link" href="#" onclick="switchToGuest();return false;">
+    <a class="sbl" onclick="switchGuest();return false;" href="#">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4M4 7h16M16 21l4-4-4-4M20 17H4"/></svg>
       Switch to Guest
     </a>
-    <a class="sb-link danger" onclick="signOut()" style="cursor:pointer;">
+    <a class="sbl danger" onclick="signOut()" style="cursor:pointer;">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
       Sign out
     </a>
   </div>
 </nav>
 
+<!-- MAIN -->
 <main class="main">
 
-<div class="page-hd">
-  <span class="page-eyebrow">Partner Hub</span>
-  <h1 class="page-title">My <em>listings</em></h1>
-  <p class="page-sub">Manage all your properties and services in one place.</p>
-</div>
-
-
-<div class="invite-banner">
-  <div class="invite-banner-icon">🤝</div>
-  <div class="invite-banner-body">
-    <div class="invite-banner-pre">Referral programme — Partner exclusive</div>
-    <div class="invite-banner-title">Know another host or tour operator? <strong>Earn 10% of their revenue — for life.</strong></div>
-    <div class="invite-banner-sub">Share your link. Every booking they complete earns you 10% of our platform fee, forever. No cap, no minimum.</div>
-  </div>
-  <a href="rewards.html" class="invite-banner-btn">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-    Invite & earn
-  </a>
-</div>
-
-<!-- HOST CABANA MATCH GLOW CARD -->
-<a class="host-cabana-card" href="partner-cabana.html">
-  <span class="hcc-ring"></span>
-  <span class="hcc-glow"></span>
-  <span class="hcc-inner">
-    <span class="hcc-icon">🏠</span>
-    <span class="hcc-body">
-      <span class="hcc-label">Opt in to Cabana Match</span>
-      <span class="hcc-sub">Let guests find you · World's first reverse booking · Hosts chase guests</span>
-    </span>
-    <span class="hcc-badge">NEW</span>
-  </span>
-</a>
-
-
-<!-- Quick add section -->
-<div class="card" style="border:1.5px dashed rgba(45,212,191,.3);background:rgba(45,212,191,.04);">
-  <div class="card-hd">
-    <div>
-      <div class="card-title">Add a new listing</div>
-      <div class="card-sub">List stays, tours, rides, food, events, car hire and more</div>
+  <div class="pg-hd">
+    <div class="pg-hd-left">
+      <div class="pg-eyebrow">Partner Hub</div>
+      <h1 class="pg-title">My <em>listings</em></h1>
+      <p class="pg-sub">All your services in one place. Add, edit, pause or activate anytime.</p>
     </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;">
-      <button onclick="openImportModal()" class="btn" style="background:rgba(99,102,241,.1);color:#6366f1;border:1.5px solid rgba(99,102,241,.25);font-size:12px;padding:8px 14px;border-radius:10px;cursor:pointer;display:flex;align-items:center;gap:6px;font-weight:600;">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Import listing
-      </button>
-      <a href="add-listing.html?from=dashboard" class="btn btn-primary">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        New listing
-      </a>
+    <button class="btn btn-primary" onclick="openAddModal()" style="flex-shrink:0;align-self:flex-end;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Add listing
+    </button>
+  </div>
+
+  <!-- STATS -->
+  <div class="stat-row" id="stat-row">
+    <div class="stat-card">
+      <div class="sc-lbl">Total listings</div>
+      <div class="sc-val" id="st-count">0</div>
+      <div class="sc-meta">across all services</div>
+    </div>
+    <div class="stat-card">
+      <div class="sc-lbl">Active now</div>
+      <div class="sc-val" id="st-active">0</div>
+      <div class="sc-meta">visible to guests</div>
+    </div>
+    <div class="stat-card">
+      <div class="sc-lbl">Total bookings</div>
+      <div class="sc-val" id="st-bk">0</div>
+      <div class="sc-meta">all time</div>
+    </div>
+    <div class="stat-card">
+      <div class="sc-lbl">Avg rating</div>
+      <div class="sc-val" id="st-rating">—</div>
+      <div class="sc-meta">from guest reviews</div>
     </div>
   </div>
-  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-top:4px;">
-    <a href="add-listing.html?from=dashboard&service=stays" class="service-chip">🏠 Stay</a>
-    <a href="add-listing.html?from=dashboard&service=tours" class="service-chip">🦁 Tour / Safari</a>
-    <a href="add-listing.html?from=dashboard&service=rides" class="service-chip">🚗 Ride</a>
-    <a href="add-listing.html?from=dashboard&service=food" class="service-chip">🍽️ Food</a>
-    <a href="add-listing.html?from=dashboard&service=events" class="service-chip">🎟️ Event</a>
-    <a href="add-listing.html?from=dashboard&service=carhire" class="service-chip">🔑 Car hire</a>
+
+  <!-- FILTER BAR -->
+  <div class="filter-bar">
+    <button class="filter-chip active" data-filter="all" onclick="setFilter(this)">All</button>
+    <button class="filter-chip" data-filter="stays" onclick="setFilter(this)">Stays</button>
+    <button class="filter-chip" data-filter="roommates" onclick="setFilter(this)">Roommates</button>
+    <button class="filter-chip" data-filter="tours" onclick="setFilter(this)">Tours</button>
+    <button class="filter-chip" data-filter="events" onclick="setFilter(this)">Events</button>
+    <button class="filter-chip" data-filter="food" onclick="setFilter(this)">Food</button>
+    <button class="filter-chip" data-filter="carhire" onclick="setFilter(this)">Car Hire</button>
+    <button class="filter-chip" data-filter="rides" onclick="setFilter(this)">Rides</button>
+    <button class="filter-chip" data-filter="shopping" onclick="setFilter(this)">Shopping</button>
   </div>
-</div>
 
-<!-- ── IMPORT MODAL ── -->
-<div id="import-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(10,10,20,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:16px;">
-  <div style="background:#fff;border-radius:24px;width:100%;max-width:540px;max-height:90vh;overflow-y:auto;box-shadow:0 32px 80px rgba(0,0,0,.18);">
-    <!-- Header -->
-    <div style="padding:24px 24px 0;display:flex;align-items:flex-start;justify-content:space-between;">
-      <div>
-        <div style="font:700 18px/1.2 var(--font-b);color:var(--ink);">Import from Airbnb / Booking.com</div>
-        <div style="font:400 13px/1.4 var(--font-b);color:var(--ink-soft);margin-top:5px;">Paste your listing text and AI will structure it instantly.</div>
-      </div>
-      <button onclick="closeImportModal()" style="background:none;border:none;cursor:pointer;padding:4px;color:var(--ink-soft);font-size:20px;line-height:1;">✕</button>
-    </div>
-
-    <!-- Why paste info box -->
-    <div style="margin:16px 24px 0;background:rgba(99,102,241,.07);border:1px solid rgba(99,102,241,.2);border-radius:12px;padding:12px 14px;">
-      <div style="font:600 12px/1.4 var(--font-b);color:#6366f1;margin-bottom:4px;">💡 Why we use paste instead of URL</div>
-      <div style="font:400 12px/1.5 var(--font-b);color:var(--ink-soft);">Airbnb and Booking.com actively block automated access — any URL import fails silently. Pasting your text takes 10 seconds and works 100% of the time.</div>
-    </div>
-
-    <!-- Tabs -->
-    <div style="display:flex;gap:0;margin:18px 24px 0;border:1.5px solid var(--line);border-radius:12px;overflow:hidden;">
-      <button id="tab-paste" onclick="switchTab('paste')" style="flex:1;padding:10px;border:none;background:var(--theme-grad);color:#fff;font:600 13px/1 var(--font-b);cursor:pointer;transition:all .2s;">📋 Paste listing text</button>
-      <button id="tab-describe" onclick="switchTab('describe')" style="flex:1;padding:10px;border:none;background:transparent;color:var(--ink-soft);font:600 13px/1 var(--font-b);cursor:pointer;transition:all .2s;">✍️ Describe it yourself</button>
-    </div>
-
-    <!-- Paste tab -->
-    <div id="panel-paste" style="padding:16px 24px 0;">
-      <div style="font:500 12px/1.5 var(--font-b);color:var(--ink-soft);margin-bottom:8px;">
-        On Airbnb or Booking.com: open your listing → select all the text on the page (Ctrl+A / ⌘+A) → copy → paste here. Or just copy the description + amenities section.
-      </div>
-      <textarea id="import-paste-text" placeholder="Paste your Airbnb or Booking.com listing text here…&#10;&#10;Include: title, description, amenities, location, bedrooms, price — whatever you can copy." style="width:100%;height:180px;border:1.5px solid var(--line);border-radius:12px;padding:12px;font:400 13px/1.5 var(--font-b);color:var(--ink);resize:vertical;box-sizing:border-box;outline:none;" oninput="updateCharCount(this,'paste-count')" onfocus="this.style.borderColor='var(--theme)'" onblur="this.style.borderColor='var(--line)'"></textarea>
-      <div id="paste-count" style="font:400 11px/1 var(--font-b);color:var(--ink-soft);text-align:right;margin-top:4px;">0 characters</div>
-    </div>
-
-    <!-- Describe tab -->
-    <div id="panel-describe" style="padding:16px 24px 0;display:none;">
-      <div style="font:500 12px/1.5 var(--font-b);color:var(--ink-soft);margin-bottom:8px;">
-        Just tell us about the property in your own words. The more detail the better — AI will write the full listing for you.
-      </div>
-      <textarea id="import-describe-text" placeholder="e.g. I have a 2-bedroom apartment in Westlands, Nairobi. It has WiFi, parking, a modern kitchen, and city views from the 8th floor. I rent it at KES 6,500 per night. It sleeps up to 4 guests. Great for business travellers." style="width:100%;height:180px;border:1.5px solid var(--line);border-radius:12px;padding:12px;font:400 13px/1.5 var(--font-b);color:var(--ink);resize:vertical;box-sizing:border-box;outline:none;" oninput="updateCharCount(this,'desc-count')" onfocus="this.style.borderColor='var(--theme)'" onblur="this.style.borderColor='var(--line)'"></textarea>
-      <div id="desc-count" style="font:400 11px/1 var(--font-b);color:var(--ink-soft);text-align:right;margin-top:4px;">0 characters</div>
-    </div>
-
-    <!-- Error -->
-    <div id="import-error" style="display:none;margin:12px 24px 0;background:#fff0f0;border:1px solid #fca5a5;border-radius:10px;padding:10px 14px;font:400 12px/1.4 var(--font-b);color:#b91c1c;"></div>
-
-    <!-- Footer buttons -->
-    <div style="padding:18px 24px 24px;display:flex;gap:10px;">
-      <button onclick="closeImportModal()" style="flex:1;padding:13px;border:1.5px solid var(--line);border-radius:12px;background:transparent;font:600 13px/1 var(--font-b);color:var(--ink-soft);cursor:pointer;">Cancel</button>
-      <button id="import-btn" onclick="runImport()" style="flex:2;padding:13px;border:none;border-radius:12px;background:var(--theme-grad);color:#fff;font:700 13px/1 var(--font-b);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
-        <span id="import-btn-text">✨ Import with AI</span>
-      </button>
-    </div>
-  </div>
-</div>
-
-<script>
-let _importTab = 'paste';
-
-function openImportModal() {
-  const m = document.getElementById('import-modal');
-  m.style.display = 'flex';
-  document.body.style.overflow = 'hidden';
-}
-function closeImportModal() {
-  document.getElementById('import-modal').style.display = 'none';
-  document.body.style.overflow = '';
-  document.getElementById('import-error').style.display = 'none';
-  document.getElementById('import-btn-text').textContent = '✨ Import with AI';
-  document.getElementById('import-btn').disabled = false;
-}
-function switchTab(tab) {
-  _importTab = tab;
-  const isPaste = tab === 'paste';
-  document.getElementById('panel-paste').style.display   = isPaste ? 'block' : 'none';
-  document.getElementById('panel-describe').style.display = isPaste ? 'none'  : 'block';
-  document.getElementById('tab-paste').style.background    = isPaste ? 'var(--theme-grad)' : 'transparent';
-  document.getElementById('tab-paste').style.color         = isPaste ? '#fff' : 'var(--ink-soft)';
-  document.getElementById('tab-describe').style.background = isPaste ? 'transparent' : 'var(--theme-grad)';
-  document.getElementById('tab-describe').style.color      = isPaste ? 'var(--ink-soft)' : '#fff';
-}
-function updateCharCount(el, countId) {
-  document.getElementById(countId).textContent = el.value.length + ' characters';
-}
-
-async function runImport() {
-  const text = _importTab === 'paste'
-    ? document.getElementById('import-paste-text').value.trim()
-    : document.getElementById('import-describe-text').value.trim();
-
-  const errEl = document.getElementById('import-error');
-  errEl.style.display = 'none';
-
-  if (text.length < 30) {
-    errEl.textContent = 'Please provide more detail — at least a few sentences about the property.';
-    errEl.style.display = 'block';
-    return;
-  }
-
-  const btn = document.getElementById('import-btn');
-  const btnText = document.getElementById('import-btn-text');
-  btn.disabled = true;
-  btnText.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="animation:spin .8s linear infinite"><path d="M21 12a9 9 0 1 1-6.22-8.56"/></svg> AI is reading your listing…';
-
-  try {
-    const r = await fetch('/api/import-listing', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text, mode: _importTab }),
-    });
-    const json = await r.json();
-    if (!json.ok) throw new Error(json.error || 'Import failed');
-
-    // Store result and redirect to add-listing with pre-fill
-    sessionStorage.setItem('apa-import-prefill', JSON.stringify(json.data));
-    closeImportModal();
-    window.location.href = 'add-listing.html?from=dashboard&prefill=1';
-  } catch (e) {
-    errEl.textContent = e.message;
-    errEl.style.display = 'block';
-    btn.disabled = false;
-    btnText.textContent = '✨ Import with AI';
-  }
-}
-
-// Close on backdrop click
-document.getElementById('import-modal').addEventListener('click', function(e) {
-  if (e.target === this) closeImportModal();
-});
-</script>
-<style>
-@keyframes spin { to { transform: rotate(360deg); } }
-</style>
-
-<style>
-.service-chip{display:flex;align-items:center;gap:7px;padding:11px 14px;border-radius:12px;border:1.5px solid var(--line-2);background:rgba(255,255,255,.7);font:600 12px/1 var(--font-b);color:var(--ink-soft);text-decoration:none;transition:all .2s;cursor:pointer;}
-.service-chip:hover{border-color:var(--theme);color:var(--mint-dark);background:rgba(45,212,191,.06);transform:translateY(-1px);}
-.listing-card{background:rgba(255,255,255,.8);border:1px solid var(--line);border-radius:16px;padding:18px;display:flex;align-items:center;gap:16px;transition:all .22s;margin-bottom:10px;}
-.listing-card:hover{box-shadow:var(--shadow-md);transform:translateX(2px);}
-.listing-thumb{width:70px;height:70px;border-radius:12px;object-fit:cover;flex-shrink:0;background:var(--theme-grad);display:flex;align-items:center;justify-content:center;font-size:28px;}
-.listing-info{flex:1;min-width:0;}
-.listing-name{font:700 14px/1.3 var(--font-b);color:var(--ink);margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.listing-meta{font:400 12px/1.4 var(--font-b);color:var(--ink-soft);}
-.listing-price{font:700 13px/1 var(--font-data);color:var(--mint-dark);margin-top:5px;}
-.listing-actions{display:flex;gap:7px;flex-shrink:0;}
-</style>
-
-<!-- Listings grid -->
-<div class="card">
-  <div class="card-hd">
-    <div class="card-title">Active listings</div>
-    <div style="display:flex;gap:8px;">
-      <select id="lst-filter" onchange="filterListings()" class="field-select" style="width:auto;padding:7px 11px;font-size:12px;">
-        <option value="all">All types</option>
-        <option value="stay">Stays</option>
-        <option value="tour">Tours</option>
-        <option value="ride">Rides</option>
-        <option value="food">Food</option>
-        <option value="event">Events</option>
-      </select>
-    </div>
-  </div>
+  <!-- LISTINGS -->
   <div id="listings-list">
     <div class="empty">
-      <div class="empty-icon">🏠</div>
-      <div class="empty-title">Loading your listings…</div>
+      <div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+      <div class="empty-title">Loading listings...</div>
     </div>
   </div>
-</div>
 
 </main>
 </div>
 
+<!-- MOBILE NAV -->
 <nav class="mobile-nav">
   <a class="mn-item active" href="partner-listings.html">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
     Listings
   </a>
-  <a class="mn-item " href="partner-bookings.html">
+  <a class="mn-item" href="partner-bookings.html">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg>
     Bookings
   </a>
-  <a class="mn-item " href="partner-agents.html">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-    Agents
-  </a>
-  <a class="mn-item " href="partner-earnings.html">
+  <a class="mn-item" href="partner-earnings.html">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
     Earnings
   </a>
-  <a class="mn-item " href="partner-calendar.html">
+  <a class="mn-item" href="partner-calendar.html">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
     Calendar
   </a>
-  <a class="mn-item " href="partner-cabana.html" style="position:relative;">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8l-5-5-5 5h3v6h4V8h3z"/><circle cx="12" cy="15" r="3"/></svg>
-    Match <span style="position:absolute;top:0;right:0;width:6px;height:6px;border-radius:50%;background:linear-gradient(135deg,#C77DFF,#4D96FF);animation:cmBadgePulse 2s ease-in-out infinite;"></span>
+  <a class="mn-item" href="partner-analytics.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 9l-5 5-4-4-4 4"/></svg>
+    Analytics
+  </a>
+  <a class="mn-item" onclick="openAddModal();return false;" href="#">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Add
   </a>
 </nav>
+
+<!-- ============================================
+     ADD LISTING MODAL
+============================================ -->
+<div class="al-overlay" id="al-overlay" onclick="overlayClick(event)">
+  <div class="al-sheet" id="al-sheet">
+
+    <!-- HEADER -->
+    <div class="al-header">
+      <div class="al-header-left">
+        <div class="al-header-eyebrow">Partner Hub</div>
+        <h2 class="al-header-title">Add a <em>listing</em></h2>
+        <p class="al-header-sub">Choose the service you want to list. You will be taken to the full form.</p>
+      </div>
+      <button class="al-close" onclick="closeAddModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <!-- BODY -->
+    <div class="al-body">
+
+      <!-- SERVICE SELECTOR PANEL -->
+      <div id="al-main-panel">
+        <div class="al-svc-grid">
+          <a class="al-svc-card" href="add-listing.html?from=dashboard&service=stays">
+            <div class="al-svc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5V21H3z"/><path d="M9 21V12h6v9"/></svg></div>
+            <div class="al-svc-name">Stays</div>
+            <div class="al-svc-desc">Apartments, villas, cottages, serviced units</div>
+          </a>
+          <a class="al-svc-card" href="add-listing.html?from=dashboard&service=roommates">
+            <div class="al-svc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4"/><path d="M16 11l2 2 4-4"/></svg></div>
+            <div class="al-svc-name">Roommates</div>
+            <div class="al-svc-desc">Rooms, bedsitters, flatshares, en-suites</div>
+          </a>
+          <a class="al-svc-card" href="add-listing.html?from=dashboard&service=tours">
+            <div class="al-svc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 18 0 9 9 0 0 0-18 0"/><path d="M12 8v4l3 3"/></svg></div>
+            <div class="al-svc-name">Tours</div>
+            <div class="al-svc-desc">Safaris, city tours, experiences, day trips</div>
+          </a>
+          <a class="al-svc-card" href="add-listing.html?from=dashboard&service=events">
+            <div class="al-svc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+            <div class="al-svc-name">Events</div>
+            <div class="al-svc-desc">Concerts, festivals, shows, conferences</div>
+          </a>
+          <a class="al-svc-card" href="add-listing.html?from=dashboard&service=food">
+            <div class="al-svc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2M7 2v20M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/></svg></div>
+            <div class="al-svc-name">Food</div>
+            <div class="al-svc-desc">Restaurants, cafes, bars, catering</div>
+          </a>
+          <a class="al-svc-card" href="add-listing.html?from=dashboard&service=carhire">
+            <div class="al-svc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13h14l-1.5-5a2 2 0 0 0-2-1.5h-7a2 2 0 0 0-2 1.5z"/><path d="M4 13h16v4H4z"/><circle cx="7.5" cy="17.5" r="1.5"/><circle cx="16.5" cy="17.5" r="1.5"/></svg></div>
+            <div class="al-svc-name">Car Hire</div>
+            <div class="al-svc-desc">Self-drive, chauffeur, 4x4, transfers</div>
+          </a>
+          <a class="al-svc-card" href="add-listing.html?from=dashboard&service=rides">
+            <div class="al-svc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s-8-5-8-11a8 8 0 0 1 16 0c0 6-8 11-8 11z"/><circle cx="12" cy="11" r="3"/></svg></div>
+            <div class="al-svc-name">Rides</div>
+            <div class="al-svc-desc">Ride-hailing, boda boda, shuttles</div>
+          </a>
+          <a class="al-svc-card" href="add-listing.html?from=dashboard&service=shopping">
+            <div class="al-svc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></div>
+            <div class="al-svc-name">Shopping</div>
+            <div class="al-svc-desc">Products, crafts, souvenirs, retail</div>
+          </a>
+        </div>
+
+        <div class="al-divider"></div>
+
+        <!-- IMPORT ROW -->
+        <div class="al-import-row" onclick="openImportPanel()">
+          <div class="al-import-left">
+            <div class="al-import-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            </div>
+            <div>
+              <div class="al-import-title">Import from Airbnb or Booking.com</div>
+              <div class="al-import-sub">Paste your existing listing text and AI will structure it in seconds</div>
+            </div>
+          </div>
+          <div class="al-import-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+        </div>
+      </div>
+
+      <!-- IMPORT PANEL -->
+      <div class="al-import-panel" id="al-import-panel">
+        <div class="al-back-row" onclick="closeImportPanel()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          Back to services
+        </div>
+        <div class="al-info-box"><strong>Why paste instead of URL?</strong> Airbnb and Booking.com block automated access. Pasting your listing text takes 10 seconds and works 100% of the time.</div>
+        <div class="al-tabs">
+          <button class="al-tab active" id="imp-tab-paste" onclick="impTab('paste')">Paste listing text</button>
+          <button class="al-tab" id="imp-tab-desc" onclick="impTab('desc')">Describe it yourself</button>
+        </div>
+        <div id="imp-panel-paste">
+          <p style="font-size:12px;color:var(--soft);margin-bottom:8px;line-height:1.6;">On Airbnb or Booking.com: open your listing, select all text (Ctrl+A), copy and paste it below.</p>
+          <textarea class="al-textarea" id="imp-paste" placeholder="Paste your listing text here. Include the title, description, amenities, location and price — whatever you can copy."></textarea>
+        </div>
+        <div id="imp-panel-desc" style="display:none;">
+          <p style="font-size:12px;color:var(--soft);margin-bottom:8px;line-height:1.6;">Describe your property in your own words. The more detail the better.</p>
+          <textarea class="al-textarea" id="imp-desc" placeholder="e.g. I have a 2-bedroom apartment in Westlands, Nairobi. It has WiFi, parking, a modern kitchen and city views from the 8th floor. I rent it at KES 6,500 per night..."></textarea>
+        </div>
+        <div class="al-err" id="imp-err"></div>
+      </div>
+
+    </div><!-- al-body -->
+
+    <!-- FOOTER — only shows when import panel open -->
+    <div class="al-footer" id="al-footer" style="display:none;">
+      <button class="btn btn-ghost" onclick="closeImportPanel()" style="flex:none;">Cancel</button>
+      <button class="btn btn-primary" id="imp-run-btn" onclick="runImport()" style="flex:1;justify-content:center;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <span id="imp-run-txt">Import with AI</span>
+      </button>
+    </div>
+
+  </div><!-- al-sheet -->
+</div>
 
 <div class="toast" id="toast"></div>
 
 <script>
+const SURL='https://gfwgbgdvxtocwhilrtdw.supabase.co';
+const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
+let sb=null;try{sb=supabase.createClient(SURL,SKEY);}catch(e){}
+let allListings=[],activeFilter='all';
 
-const SUPA_URL='https://gfwgbgdvxtocwhilrtdw.supabase.co';
-const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
-let sb=null,PARTNER=null;
-try{const{createClient}=supabase;sb=createClient(SUPA_URL,SUPA_KEY);}catch(e){console.warn('Supabase unavailable');}
+/* TOAST */
+function toast(m,ok=true){const t=document.getElementById('toast');t.textContent=m;t.style.background=ok?'#0A0B18':'#FF3D5A';t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3200);}
 
-let _toast=null;
-function toast(msg,ok=true){
-  if(!_toast){_toast=document.getElementById('toast');}
-  if(!_toast)return;
-  _toast.textContent=msg;
-  _toast.style.background=ok?'#0A0A14':'#FF4D6D';
-  _toast.classList.add('show');
-  setTimeout(()=>_toast.classList.remove('show'),3200);
-}
-function signOut(){
-  if(window.ApaSession)ApaSession.signOut();
-  else if(sb)sb.auth.signOut().then(()=>location.href='index.html');
-}
+/* AUTH */
+function signOut(){if(sb)sb.auth.signOut().then(()=>location.href='index.html');}
+function switchGuest(){try{localStorage.setItem('apa-last-role','guest');}catch(e){}location.href='dashboard.html?role=guest&back=1';}
 function fmt(n){return Number(n||0).toLocaleString();}
-function fmtKes(n){return 'KES '+fmt(n);}
 
-let allListings = [];
+/* LOAD */
+async function loadListings(){
+  if(!sb)return;
+  try{
+    const{data:{session}}=await sb.auth.getSession();
+    if(!session)return;
+    const uid=session.user.id;
+    const av=document.getElementById('tb-av');
+    if(av)av.textContent=(session.user.user_metadata?.first_name||session.user.email||'P')[0].toUpperCase();
 
-async function loadListings() {
-  if(!sb) return;
-  try {
-    const { data: { session } } = await sb.auth.getSession();
-    if(!session) return;
-    const uid = session.user.id;
-    document.getElementById('tb-avatar').textContent = (session.user.user_metadata?.first_name||'P')[0].toUpperCase();
+    const{data,error}=await sb.from('listings')
+      .select('id,title,service,type,location,city,area,price_night,currency,status,avg_rating,review_count,booking_count,photos,is_active,created_at')
+      .eq('partner_id',uid)
+      .order('created_at',{ascending:false});
 
-    const { data, error } = await sb.from('listings')
-      .select('id,title,type,property_type,location,city,price_night,beds,status,avg_rating,review_count,booking_count,photos')
-      .eq('partner_id', uid)
-      .order('created_at', { ascending: false });
-
-    allListings = data || [];
+    allListings=data||[];
+    updateStats(allListings);
     renderListings(allListings);
-  } catch(e) { console.warn('Listings error', e); }
+  }catch(e){console.warn(e);}
 }
 
-function renderListings(list) {
-  const el = document.getElementById('listings-list');
-  if(!list.length) {
-    el.innerHTML = `<div class="empty">
-      <div class="empty-icon">🏠</div>
-      <div class="empty-title">No listings yet</div>
-      <div class="empty-sub">Add your first listing and start receiving bookings today — at zero commission.</div>
-      <a href="add-listing.html?from=dashboard" class="btn btn-primary" style="margin-top:16px;">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        Add first listing
-      </a>
+function updateStats(list){
+  document.getElementById('st-count').textContent=list.length;
+  document.getElementById('st-active').textContent=list.filter(l=>l.status==='active'||l.is_active).length;
+  const bk=list.reduce((s,l)=>s+(l.booking_count||0),0);
+  document.getElementById('st-bk').textContent=fmt(bk);
+  const rated=list.filter(l=>l.avg_rating);
+  if(rated.length){const avg=rated.reduce((s,l)=>s+parseFloat(l.avg_rating),0)/rated.length;document.getElementById('st-rating').textContent=avg.toFixed(1);}
+}
+
+const SVC_LABELS={stays:'Stays',roommates:'Roommates',tours:'Tours',events:'Events',food:'Food',carhire:'Car Hire',rides:'Rides',shopping:'Shopping'};
+
+function setFilter(btn){
+  document.querySelectorAll('.filter-chip').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  activeFilter=btn.dataset.filter;
+  const filtered=activeFilter==='all'?allListings:allListings.filter(l=>(l.service||l.type||'').toLowerCase()===activeFilter||(l.type||'').toLowerCase().includes(activeFilter));
+  renderListings(filtered);
+}
+
+function renderListings(list){
+  const el=document.getElementById('listings-list');
+  if(!list.length){
+    const isEmpty=allListings.length===0;
+    el.innerHTML=`<div class="empty">
+      <div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+      <div class="empty-title">${isEmpty?'No listings yet':'No listings in this category'}</div>
+      <div class="empty-sub">${isEmpty?'Press Add listing to publish your first service on Apatmento at zero commission.':'Try a different filter or add a new listing in this category.'}</div>
+      ${isEmpty?`<button class="btn btn-primary" onclick="openAddModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add first listing</button>`:''}
     </div>`;
     return;
   }
-
-  const typeEmoji = { stay:'🏠', tour:'🦁', ride:'🚗', food:'🍽️', event:'🎟️', carhire:'🔑', roommate:'🤝', flight:'✈️' };
-  el.innerHTML = list.map(l => {
-    const photo = l.photos?.[0];
-    const thumb = photo
-      ? `<img class="listing-thumb" src="${photo}" alt="${l.title}" onerror="this.style.background='var(--theme-grad)';this.textContent='${typeEmoji[l.type]||'🏠'}';">`
-      : `<div class="listing-thumb">${typeEmoji[l.type]||'🏠'}</div>`;
-    const status = l.status==='active'
-      ? '<span class="badge badge-green">Active</span>'
-      : '<span class="badge badge-amber">Paused</span>';
-    return `<div class="listing-card">
-      ${thumb}
-      <div class="listing-info">
-        <div class="listing-name">${l.title||'Untitled listing'}</div>
-        <div class="listing-meta">${l.location||l.city||'Kenya'} · ${l.type||'Stay'} · ${l.booking_count||0} bookings · ⭐ ${l.avg_rating||'—'}</div>
-        <div class="listing-price">KES ${fmt(l.price_night)}/night</div>
+  el.innerHTML=list.map(l=>{
+    const photo=l.photos?.[0];
+    const svc=SVC_LABELS[l.service]||l.type||'Stay';
+    const isActive=l.status==='active'||l.is_active;
+    const loc=[l.area,l.city].filter(Boolean).join(', ')||l.location||'Kenya';
+    return`<div class="listing-card">
+      ${photo
+        ?`<div class="lc-thumb"><img src="${photo}" alt="${l.title||''}" onerror="this.parentElement.innerHTML='${svc[0]}'"/></div>`
+        :`<div class="lc-thumb">${svc[0]}</div>`
+      }
+      <div class="lc-info">
+        <div class="lc-name">${l.title||'Untitled listing'}</div>
+        <div class="lc-meta">${svc} &middot; ${loc} &middot; ${l.booking_count||0} booking${l.booking_count!==1?'s':''}</div>
+        <div class="lc-price">${l.currency||'KES'} ${fmt(l.price_night)} / night</div>
       </div>
-      <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
-        ${status}
-        <div class="listing-actions">
-          <a href="add-listing.html?from=dashboard&edit=${l.id}" class="btn btn-ghost btn-sm" title="Edit">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      <div class="lc-right">
+        <span class="badge ${isActive?'b-green':'b-amber'}">${isActive?'Active':'Paused'}</span>
+        <div class="lc-acts">
+          <a href="add-listing.html?from=dashboard&edit=${l.id}" class="btn btn-ghost btn-sm">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="12" height="12"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             Edit
           </a>
-          <button class="btn btn-danger btn-sm" onclick="toggleStatus('${l.id}','${l.status}')">
-            ${l.status==='active'?'Pause':'Activate'}
+          <button class="btn btn-danger btn-sm" onclick="toggleStatus('${l.id}','${l.status||'active'}','${l.is_active}')">
+            ${isActive?'Pause':'Activate'}
           </button>
         </div>
       </div>
@@ -752,31 +628,88 @@ function renderListings(list) {
   }).join('');
 }
 
-function filterListings() {
-  const f = document.getElementById('lst-filter').value;
-  const filtered = f === 'all' ? allListings : allListings.filter(l => l.type === f);
-  renderListings(filtered);
+async function toggleStatus(id,status,isActive){
+  if(!sb)return;
+  const activate=(status!=='active'||isActive==='false');
+  const{error}=await sb.from('listings').update({status:activate?'active':'inactive',is_active:activate}).eq('id',id);
+  if(!error){toast(activate?'Listing activated':'Listing paused');loadListings();}
+  else toast('Failed to update',false);
 }
 
-async function toggleStatus(id, current) {
-  if(!sb) return;
-  const next = current === 'active' ? 'inactive' : 'active';
-  const { error } = await sb.from('listings').update({ status: next }).eq('id', id);
-  if(!error) { toast(next==='active'?'Listing activated':'Listing paused'); loadListings(); }
-  else toast('Failed to update status', false);
+/* ============================================
+   ADD LISTING MODAL
+============================================ */
+function openAddModal(){
+  document.getElementById('al-overlay').classList.add('open');
+  document.body.style.overflow='hidden';
+  // reset to main panel
+  closeImportPanel(true);
+}
+function closeAddModal(){
+  document.getElementById('al-overlay').classList.remove('open');
+  document.body.style.overflow='';
+}
+function overlayClick(e){
+  if(e.target===document.getElementById('al-overlay'))closeAddModal();
 }
 
-document.addEventListener('DOMContentLoaded', loadListings);
+/* IMPORT PANEL */
+let impTabActive='paste';
+function openImportPanel(){
+  document.getElementById('al-main-panel').style.display='none';
+  document.getElementById('al-import-panel').classList.add('open');
+  document.getElementById('al-footer').style.display='flex';
+}
+function closeImportPanel(silent){
+  document.getElementById('al-import-panel').classList.remove('open');
+  document.getElementById('al-main-panel').style.display='';
+  document.getElementById('al-footer').style.display='none';
+  document.getElementById('imp-err').classList.remove('show');
+  if(!silent){
+    document.getElementById('imp-paste').value='';
+    document.getElementById('imp-desc').value='';
+    document.getElementById('imp-run-txt').textContent='Import with AI';
+    document.getElementById('imp-run-btn').disabled=false;
+  }
+}
+function impTab(t){
+  impTabActive=t;
+  const isPaste=t==='paste';
+  document.getElementById('imp-tab-paste').classList.toggle('active',isPaste);
+  document.getElementById('imp-tab-desc').classList.toggle('active',!isPaste);
+  document.getElementById('imp-panel-paste').style.display=isPaste?'':'none';
+  document.getElementById('imp-panel-desc').style.display=isPaste?'none':'';
+}
+
+async function runImport(){
+  const text=impTabActive==='paste'
+    ?document.getElementById('imp-paste').value.trim()
+    :document.getElementById('imp-desc').value.trim();
+  const err=document.getElementById('imp-err');
+  err.classList.remove('show');
+  if(text.length<30){err.textContent='Provide more detail — at least a few sentences about the property.';err.classList.add('show');return;}
+  const btn=document.getElementById('imp-run-btn');
+  const txt=document.getElementById('imp-run-txt');
+  btn.disabled=true;txt.textContent='AI is reading your listing...';
+  try{
+    const r=await fetch('/api/import-listing',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,mode:impTabActive})});
+    const json=await r.json();
+    if(!json.ok)throw new Error(json.error||'Import failed');
+    sessionStorage.setItem('apa-import-prefill',JSON.stringify(json.data));
+    closeAddModal();
+    location.href='add-listing.html?from=dashboard&prefill=1';
+  }catch(e){
+    err.textContent=e.message;err.classList.add('show');
+    btn.disabled=false;txt.textContent='Import with AI';
+  }
+}
+
+/* KEYBOARD ESC */
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAddModal();});
+
+document.addEventListener('DOMContentLoaded',loadListings);
 </script>
 <script src="/cabana-rebrand.js" defer></script>
-
-<script>
-/* Clear partner role cache when explicitly switching to Traveller view */
-function switchToGuest(){
-  try{ localStorage.setItem('apa-last-role','guest'); }catch(e){}
-  window.location.href='dashboard.html?role=guest&back=1';
-}
-</script>
 <script src="/apa-contact.js" defer></script>
 </body>
 </html>
