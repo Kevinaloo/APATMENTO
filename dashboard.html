@@ -454,53 +454,63 @@ img,video,svg{max-width:100%;}
 .tb-sos-emoji{
   display:inline-flex;
   align-items:center;
-  gap:5px;
+  justify-content:center;
   flex-shrink:0;
-  padding:0 13px;
-  height:34px;
-  border-radius:10px;
+  padding:0 12px;
+  height:32px;
+  border-radius:9px;
   border:none;
   cursor:pointer;
-  background:rgba(220,38,38,.12);
-  color:#F87171;
-  font-family:var(--font-body,system-ui,sans-serif);
-  font-size:11px;
-  font-weight:700;
-  letter-spacing:.08em;
+  background:linear-gradient(145deg,#C0392B 0%,#96261B 100%);
+  color:#fff;
+  font-family:'SF Pro Display','Inter','Geist',system-ui,sans-serif;
+  font-size:11.5px;
+  font-weight:800;
+  letter-spacing:.18em;
   text-transform:uppercase;
   line-height:1;
-  transition:background .2s ease, color .2s ease, box-shadow .2s ease, transform .15s ease;
-  box-shadow:0 0 0 1px rgba(220,38,38,.25);
   position:relative;
   overflow:hidden;
+  transition:transform .18s ease, box-shadow .18s ease;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.15) inset,
+    0 -1px 0 rgba(0,0,0,.25) inset,
+    0 3px 10px rgba(150,38,27,.45),
+    0 1px 3px rgba(0,0,0,.3);
 }
+/* glass sheen */
 .tb-sos-emoji::before{
   content:'';
   position:absolute;
-  inset:0;
-  border-radius:inherit;
-  background:rgba(248,113,113,.06);
-  opacity:0;
-  transition:opacity .2s;
+  top:0;left:0;right:0;
+  height:50%;
+  border-radius:9px 9px 0 0;
+  background:linear-gradient(180deg,rgba(255,255,255,.13) 0%,rgba(255,255,255,0) 100%);
+  pointer-events:none;
+}
+/* subtle engraved text shadow for depth */
+.tb-sos-emoji .tb-sos-label{
+  text-shadow:0 -1px 0 rgba(0,0,0,.35), 0 1px 0 rgba(255,255,255,.08);
+  position:relative;
+  z-index:1;
 }
 .tb-sos-emoji:hover{
-  background:rgba(220,38,38,.2);
-  color:#FCA5A5;
-  box-shadow:0 0 0 1px rgba(220,38,38,.45), 0 4px 16px rgba(220,38,38,.2);
   transform:translateY(-1px);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.15) inset,
+    0 -1px 0 rgba(0,0,0,.25) inset,
+    0 6px 18px rgba(150,38,27,.55),
+    0 2px 6px rgba(0,0,0,.3);
 }
-.tb-sos-emoji:hover::before{opacity:1;}
 .tb-sos-emoji:active{transform:translateY(0) scale(.97);}
-/* Subtle pulse on the ring only — not the whole button */
+/* slow glow pulse on the shadow only */
 @keyframes sosBorderPulse{
-  0%,100%{box-shadow:0 0 0 1px rgba(220,38,38,.25);}
-  50%{box-shadow:0 0 0 1px rgba(220,38,38,.55), 0 0 12px rgba(220,38,38,.15);}
+  0%,100%{box-shadow:0 1px 0 rgba(255,255,255,.15) inset,0 -1px 0 rgba(0,0,0,.25) inset,0 3px 10px rgba(150,38,27,.45),0 1px 3px rgba(0,0,0,.3);}
+  50%{box-shadow:0 1px 0 rgba(255,255,255,.15) inset,0 -1px 0 rgba(0,0,0,.25) inset,0 4px 18px rgba(192,57,43,.65),0 1px 3px rgba(0,0,0,.3);}
 }
-.tb-sos-emoji{animation:sosBorderPulse 3.5s ease-in-out infinite;}
-/* On small screens: icon-only square so it doesn't crowd the logo */
+.tb-sos-emoji{animation:sosBorderPulse 4s ease-in-out infinite;}
 @media(max-width:560px){
-  .tb-sos-emoji{padding:0;width:34px;height:34px;border-radius:10px;gap:0;}
-  .tb-sos-label{display:none;}
+  .tb-sos-emoji{padding:0;width:36px;height:32px;letter-spacing:.14em;font-size:10.5px;}
 }
 @media(max-width:560px){.apa-sos{padding:7px 12px;font-size:11px;}}
 
@@ -940,7 +950,6 @@ img,video,svg{max-width:100%;}
         <!-- Guest nav — Sign In + Sign Up (hidden when logged in) -->
         <div id="dash-guest-nav" class="apa-nav" data-when="guest">
           <button class="tb-sos-emoji" data-apa="sos" type="button" aria-label="Emergency SOS">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             <span class="tb-sos-label">SOS</span>
           </button>
           <a href="auth.html" class="cab-auth">
@@ -959,7 +968,6 @@ img,video,svg{max-width:100%;}
           <span class="apa-welcome" id="apa-welcome"></span>
 
           <button class="tb-sos-emoji" data-apa="sos" type="button" aria-label="Emergency SOS">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             <span class="tb-sos-label">SOS</span>
           </button>
 
