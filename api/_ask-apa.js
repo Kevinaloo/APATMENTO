@@ -62,42 +62,95 @@ function filterOutput(text) {
 }
 
 /* ── Live listing context ────────────────────────────────────── */
+/* ── Live inventory snapshot — ALL service types ─────────────────
+   Everything lives in the `listings` table with a `type` column.
+   We pull every active record once and bucket by type so APA knows
+   exactly what exists right now — nothing more, nothing less.
+─────────────────────────────────────────────────────────────── */
 async function liveContext() {
   try {
-    const [listings, tours] = await Promise.all([
-      select('listings',
-        'status=eq.active&select=title,city,area,price_night,beds,max_guests,property_type&order=internal_score.desc&limit=12'),
-      select('tours',
-        'status=eq.active&select=title,city,area&order=created_at.desc&limit=50').catch(() => []),
-    ]);
+    const all = await select('listings',
+      'is_active=eq.true&select=title,type,city,area,price,price_night,beds,max_guests&order=created_at.desc&limit=200'
+    );
 
-    let out = '';
-
-    if (listings && listings.length) {
-      const lines = listings.map(l =>
-        `• ${l.title} — ${l.area || l.city}, KES ${Number(l.price_night).toLocaleString()}/night, ${l.beds} bed${l.beds===1?'':'s'}, up to ${l.max_guests} guests`
-      ).join('\n');
-      out += `\n\nCURRENTLY AVAILABLE LISTINGS (live data — reference these, never invent others):\n${lines}\n`;
+    if (!all || !all.length) {
+      return `\n\nLIVE INVENTORY: The platform currently has no active listings of any kind. Be honest with guests — tell them the platform is growing and check back soon. Do NOT navigate to any category page or suggest booking anything.\n`;
     }
 
-    if (tours && tours.length) {
-      // Summarise which cities actually have tours
-      const cityCounts = {};
-      for (const t of tours) {
-        const loc = (t.area || t.city || 'Unknown').trim();
-        cityCounts[loc] = (cityCounts[loc] || 0) + 1;
+    // Bucket by type
+    const buckets = {};
+    for (const row of all) {
+      const type = (row.type || 'unknown').toLowerCase().trim();
+      if (!buckets[type]) buckets[type] = [];
+      buckets[type].push(row);
+    }
+
+    // Type → friendly label + APA route
+    const TYPE_META = {
+      apartment:  { label: 'Stays / Apartments', route: 'stays'     },
+      stay:       { label: 'Stays / Apartments', route: 'stays'     },
+      carhire:    { label: 'Car Hire',            route: 'carhire'   },
+      car:        { label: 'Car Hire',            route: 'carhire'   },
+      tour:       { label: 'Tours & Safaris',     route: 'tours'     },
+      safari:     { label: 'Tours & Safaris',     route: 'tours'     },
+      event:      { label: 'Events',              route: 'events'    },
+      food:       { label: 'Food & Dining',       route: 'food'      },
+      restaurant: { label: 'Food & Dining',       route: 'food'      },
+      ride:       { label: 'Rides',               route: 'rides'     },
+      shopping:   { label: 'Shopping',            route: 'shopping'  },
+      product:    { label: 'Shopping',            route: 'shopping'  },
+      room:       { label: 'Roommates',           route: 'roommates' },
+      roommate:   { label: 'Roommates',           route: 'roommates' },
+    };
+
+    let out = '\n\nLIVE PLATFORM INVENTORY (real-time — use this as your source of truth):\n';
+    out += 'These are EVERY active listing on the platform right now. If a category or city is not listed here, it has ZERO inventory — do not navigate there or suggest it.\n\n';
+
+    const covered = new Set();
+
+    for (const [type, rows] of Object.entries(buckets)) {
+      const meta = TYPE_META[type] || { label: type, route: null };
+      // Merge duplicate labels (e.g. 'apartment' and 'stay' both → Stays)
+      const key = meta.label;
+      if (covered.has(key)) continue;
+      // Collect all rows across aliased types
+      const allRows = Object.entries(buckets)
+        .filter(([t]) => (TYPE_META[t] || {}).label === key)
+        .flatMap(([, r]) => r);
+      covered.add(key);
+
+      // City breakdown
+      const cityMap = {};
+      for (const r of allRows) {
+        const loc = (r.area || r.city || 'Unknown').trim();
+        cityMap[loc] = (cityMap[loc] || 0) + 1;
       }
-      const cityList = Object.entries(cityCounts)
-        .map(([city, n]) => `${city} (${n} tour${n===1?'':'s'})`)
+      const cityList = Object.entries(cityMap)
+        .sort((a, b) => b[1] - a[1])
+        .map(([city, n]) => `${city} (${n})`)
         .join(', ');
-      out += `\n\nCITIES WITH ACTIVE TOURS (live data — ONLY navigate to /tours for these cities):\n${cityList}\n`;
-      out += `\nIF A GUEST ASKS FOR TOURS IN A CITY NOT ON THIS LIST: tell them honestly that tours aren't available there yet, offer to alert them when they launch, and suggest the nearest city that does have tours instead. DO NOT navigate to /tours for a city with no inventory.\n`;
-    } else {
-      out += `\n\nTOURS INVENTORY: No active tours are currently listed on the platform. Do NOT navigate to /tours or suggest booking a tour — tell the guest tours are coming soon and offer stays or other services instead.\n`;
+
+      // Sample titles (up to 3)
+      const samples = allRows.slice(0, 3).map(r => r.title).filter(Boolean).join(' · ');
+
+      out += `▸ ${key} [route: ${meta.route || '?'}] — ${allRows.length} active\n`;
+      out += `  Cities/areas: ${cityList}\n`;
+      if (samples) out += `  Examples: ${samples}\n`;
+      out += '\n';
     }
+
+    out += `NAVIGATION RULE — CRITICAL:\n`;
+    out += `Before sending [[go:ROUTE]], check the inventory above.\n`;
+    out += `• If the guest's requested city/area appears under that route's section → navigate.\n`;
+    out += `• If the category has ZERO listings → do NOT navigate. Tell the guest honestly: "[Category] isn't live on the platform yet — we're adding [city] soon! Here's what I can help with today: [list what IS available]."\n`;
+    out += `• If the category exists but NOT in the guest's city → say so, name the nearest city that does have listings, and offer that instead.\n`;
+    out += `• Never make up listings, prices, or availability. If it's not in this list, it doesn't exist on the platform right now.\n`;
 
     return out;
-  } catch { return ''; }
+  } catch (e) {
+    console.error('[liveContext]', e.message);
+    return '';
+  }
 }
 
 /* ── Live shadow ads eligible for APA injection ─────────────── */
@@ -252,15 +305,16 @@ These are the ONLY services. Never invent others, never claim services that don'
 
 Supporting: Home · My Bookings /my-bookings · Rewards /rewards · Profile /profile · Sign in /auth · Dashboard /dashboard
 ${here}
-════════ GEOGRAPHIC SCOPE ════════
+════════ GEOGRAPHIC SCOPE & INVENTORY AWARENESS ════════
 Pan-African, not Kenya-only. Kenya is the launch market with deepest inventory but Apatmento is built for the whole continent.
 
-CRITICAL — INVENTORY-AWARE NAVIGATION:
-The live data above tells you exactly which cities have active tours, stays, etc. You MUST check it before navigating.
-• If a guest asks for tours/safaris in City X and City X is NOT in the "CITIES WITH ACTIVE TOURS" list → DO NOT send [[go:tours]]. Instead: apologise warmly, tell them tours aren't live in that city yet, offer to note their interest, and suggest the closest city that does have tours OR pivot to stays/rides/food in that city.
-• Same rule applies to any other service category — never navigate to a page that will return empty or 404 results for the guest's requested location.
-• Being honest about gaps builds more trust than sending someone to a dead end. A guest who hits a 404 because APA sent them there loses faith in the whole platform.
-• Example response for Accra tours: "Tours in Accra aren't live on the platform yet — we're working on it! I can keep you posted when they launch. In the meantime, want me to find you a great place to stay in Accra while you're there?"
+The LIVE PLATFORM INVENTORY block above is your single source of truth — updated every request with exactly what's active right now. This covers stays, tours, car hire, food, events, rides, shopping, roommates — everything except flights.
+
+CRITICAL NAVIGATION RULES:
+• A category with no entries in the inventory block = zero listings. Do NOT navigate there. Be honest: "Tours in Accra aren't live yet — we're growing fast though! I can help you with [what IS available in their city]."
+• A category that exists but not in the guest's city → name the nearest city that has it and offer that.
+• Never invent listings, prices, or availability. Only reference what's in the live inventory.
+• A guest hitting a 404 or empty page because APA sent them there destroys trust. Honest gaps are better than false promises.
 
 Payment: M-Pesa is primary in Kenya. Don't assume. Let them reach checkout naturally.
 
