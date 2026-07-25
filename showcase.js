@@ -186,8 +186,9 @@ const CSS = `
 .scv{position:relative;border-radius:26px;overflow:hidden;cursor:pointer;aspect-ratio:21/9;box-shadow:0 20px 60px rgba(10,10,20,.15);background:linear-gradient(135deg,#151530,#241A4D);}
 .scv::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(8,8,20,.10),rgba(8,8,20,0) 32%,rgba(8,8,20,.58) 100%);pointer-events:none;z-index:1;}
 .scv:hover{box-shadow:0 32px 80px rgba(123,47,247,.25);}
-.scv-bg{position:absolute;inset:0;}
-.scv-bg video{width:100%;height:100%;object-fit:cover;}
+.scv-bg{position:absolute;inset:0;z-index:0;}
+.scv-bg video{width:100%;height:100%;object-fit:cover;position:relative;z-index:0;}
+.scv-photo-mode::after{opacity:.35!important;background:linear-gradient(180deg,rgba(0,0,0,.05),rgba(0,0,0,0) 30%,rgba(0,0,0,.55) 100%)!important;}
 .scv-grad{display:none;}
 .scv-orb1,.scv-orb2{display:none;}
 .scv-orb2{animation-delay:-4.5s;opacity:.3;}
@@ -416,21 +417,28 @@ function renderVideo(slot, c){
     if(cp.media){
       const isVid = /\.(mp4|webm|ogg|mov)$/i.test(cp.media) || cp.media.includes('youtube') || cp.media.includes('youtu.be');
       if(isVid){
-        vid.src = cp.media; vid.poster = cp.poster||''; vid.muted = true; vid.load(); vid.play().catch(()=>{});
-        el.querySelector('.scv-photo-img')?.remove();
+        vid.style.display = ''; vid.src = cp.media; vid.poster = cp.poster||''; vid.muted = true; vid.load(); vid.play().catch(()=>{});
+        el.classList.remove('scv-photo-mode');
+        el.style.removeProperty('--scv-after-opacity');
+        const oldPi = el.querySelector('.scv-photo-img');
+        if(oldPi) oldPi.style.display = 'none';
       } else {
-        // Photo ad — show as img element, gradient overlay stays light
-        vid.src = ''; vid.poster = '';
+        // Photo ad — show as img element above the video element
+        vid.src = ''; vid.poster = ''; vid.style.display = 'none';
         let pi = el.querySelector('.scv-photo-img');
-        if(!pi){ pi=document.createElement('img'); pi.className='scv-photo-img'; pi.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;'; el.querySelector('.scv-bg').appendChild(pi); }
+        if(!pi){ pi=document.createElement('img'); pi.className='scv-photo-img'; pi.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;'; el.querySelector('.scv-bg').appendChild(pi); }
+        pi.style.display = 'block';
         pi.src = cp.media;
-        // Lighten the gradient overlay for photos
-        const grad = el.querySelector('.scv-grad');
-        if(grad) grad.style.opacity = '0';
+        // Soften the dark vignette for photo ads so the image shows clearly
+        el.style.setProperty('--scv-after-opacity', '0.45');
+        el.classList.add('scv-photo-mode');
       }
     } else {
-      vid.src = ''; vid.poster = '';
-      el.querySelector('.scv-photo-img')?.remove();
+      vid.style.display = ''; vid.src = ''; vid.poster = '';
+      el.classList.remove('scv-photo-mode');
+      el.style.removeProperty('--scv-after-opacity');
+      const oldPi2 = el.querySelector('.scv-photo-img');
+      if(oldPi2) oldPi2.style.display = 'none';
     }
 
     // gradient background (shows when no video)
