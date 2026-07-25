@@ -2993,7 +2993,15 @@ const ADS_BUCKET = 'ads-media';
 let CAMP_PENDING_FILE = null;
 
 async function adsEnsureBucket(){
-  try { await sb.storage.createBucket(ADS_BUCKET, { public:true, fileSizeLimit:209715200 }); } catch(e){}
+  // First check if bucket already exists
+  const { data: buckets, error: listErr } = await sb.storage.listBuckets();
+  if(!listErr && buckets && buckets.find(b => b.name === ADS_BUCKET)) return; // already exists
+  // Try to create it (requires service role — may fail on anon key, that's OK if bucket exists in Supabase)
+  const { error: createErr } = await sb.storage.createBucket(ADS_BUCKET, { public:true, fileSizeLimit:209715200 });
+  if(createErr && !createErr.message?.includes('already exists')){
+    console.warn('[adsEnsureBucket] Could not create bucket:', createErr.message,
+      '— Please create the "ads-media" public bucket manually in your Supabase dashboard (Storage → New bucket).');
+  }
 }
 function adsPublicUrl(key){
   const { data } = sb.storage.from(ADS_BUCKET).getPublicUrl(key);
