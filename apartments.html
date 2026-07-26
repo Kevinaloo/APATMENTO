@@ -386,6 +386,10 @@ body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webk
 .dl-cta-note{font-size:11px;color:var(--mint-deep);font-weight:600;margin-top:3px;}
 .dl-book-btn{flex-shrink:0;padding:14px 28px;border-radius:14px;background:var(--theme-grad);color:#fff;border:none;font-family:var(--font-body);font-weight:700;font-size:15px;cursor:pointer;transition:all .3s;box-shadow:0 8px 24px rgba(123,47,247,.3);white-space:nowrap;}
 .dl-book-btn:hover{transform:translateY(-2px);box-shadow:0 12px 34px rgba(123,47,247,.42);}
+.dl-wishlist-btn{width:44px;height:44px;border-radius:13px;border:1.5px solid var(--line-2);background:rgba(255,255,255,.8);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .25s;flex-shrink:0;}
+.dl-wishlist-btn svg{width:20px;height:20px;}
+.dl-wishlist-btn:hover{border-color:#FF4D6D;background:rgba(255,77,109,.06);}
+.dl-wishlist-btn.wishlisted{border-color:#FF4D6D;background:rgba(255,77,109,.08);}
 
 /* legacy class kept so nothing else breaks */
 .drawer-img-ico{width:64px;height:64px;color:rgba(255,255,255,.7);}
@@ -773,6 +777,8 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
   margin-bottom:4px;
 }
 .filter-bar::-webkit-scrollbar{display:none;}
+.filter-bar-divider{color:var(--line-2);font-size:14px;display:flex;align-items:center;padding:0 4px;user-select:none;}
+.fchip-budget.active{background:linear-gradient(135deg,var(--gold),var(--ember));border-color:transparent;color:#fff;}
 
 .fchip{
   display:inline-flex;align-items:center;gap:6px;
@@ -1078,6 +1084,21 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
   color:#fff;font-size:11px;font-weight:800;
   display:flex;align-items:center;justify-content:center;
 }
+
+/* Budget chips + launch form */
+.cm-section-label{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px;}
+.cm-budget-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;}
+.cm-budget-chip{padding:9px 16px;border-radius:100px;border:1.5px solid var(--line-2);background:#fff;font-size:13.5px;font-weight:600;color:var(--ink-soft);cursor:pointer;transition:all .2s;font-family:var(--font-body);}
+.cm-budget-chip:hover{border-color:var(--violet);color:var(--violet);background:rgba(123,47,247,.05);}
+.cm-budget-chip.selected{border-color:var(--violet);color:#fff;background:linear-gradient(135deg,var(--violet),var(--electric));box-shadow:0 4px 14px rgba(123,47,247,.3);}
+.cm-budget-display{font-size:12px;color:var(--ink-faint);margin-bottom:4px;min-height:18px;transition:color .2s;}
+.cm-budget-display.active{color:var(--violet);font-weight:600;}
+.cm-notes-input{width:100%;border:1.5px solid var(--line-2);border-radius:14px;padding:12px 14px;font-family:var(--font-body);font-size:14px;color:var(--ink);resize:none;outline:none;transition:border-color .2s;background:rgba(255,255,255,.8);}
+.cm-notes-input:focus{border-color:var(--violet);}
+.cm-launch-btn{width:100%;margin-top:18px;padding:16px;border-radius:16px;border:none;background:linear-gradient(135deg,var(--violet),var(--electric));color:#fff;font-family:var(--font-body);font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 10px 32px rgba(123,47,247,.35);transition:all .3s;letter-spacing:.01em;}
+.cm-launch-btn:hover{transform:translateY(-2px);box-shadow:0 16px 44px rgba(123,47,247,.48);}
+.cm-launch-btn:disabled{opacity:.5;transform:none;cursor:default;}
+.cm-launch-note{text-align:center;font-size:11.5px;color:var(--ink-faint);margin-top:10px;}
 
 /* Coming Soon */
 .cm-coming-soon{
@@ -2060,6 +2081,12 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
       <div class="fchip" id="fc-affordable" onclick="toggleFilter(this,'affordable')">💰 Best price</div>
       <div class="fchip chip-ai" id="fc-autorecommend" onclick="runAutoRecommend(this)">✦ Best Match</div>
       <div class="fchip chip-ai" onclick="focusSpecialSearch()">✨ Smart Search</div>
+      <div class="fchip" id="fc-saved" onclick="toggleSavedFilter(this)">♥ Saved</div>
+      <div class="filter-bar-divider">|</div>
+      <div class="fchip fchip-budget" data-min="0" data-max="3000" onclick="toggleBudgetFilter(this,0,3000)">💸 Under 3K</div>
+      <div class="fchip fchip-budget" data-min="3000" data-max="6000" onclick="toggleBudgetFilter(this,3000,6000)">3K–6K</div>
+      <div class="fchip fchip-budget" data-min="6000" data-max="12000" onclick="toggleBudgetFilter(this,6000,12000)">6K–12K</div>
+      <div class="fchip fchip-budget" data-min="12000" data-max="0" onclick="toggleBudgetFilter(this,12000,0)">12K+</div>
     </div>
   </div>
 </div>
@@ -2228,19 +2255,29 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
       </div>
     </div>
 
-    <!-- Coming soon state -->
-    <div class="cm-coming-soon">
-      <div class="cm-cs-glow"></div>
-      <div class="cm-cs-eyebrow">Coming Soon</div>
-      <div class="cm-cs-title">Launching on Cabana</div>
-      <div class="cm-cs-desc">We're putting the finishing touches on the world's first reverse booking experience. Be among the first to use it.</div>
-      <button class="cm-cs-notify-btn" onclick="registerCabanaInterest()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-        Notify me at launch
-      </button>
-      <div class="cm-cs-host-note">
-        Are you a host? <a class="cm-cs-host-link" onclick="closeCabanaMatch();window.location.href='partner-settings.html'">Opt in early →</a>
-      </div>
+    <!-- Budget picker -->
+    <div class="cm-section-label">Your nightly budget <span style="font-weight:400;font-size:11px;color:var(--ink-faint);">(KES / night)</span></div>
+    <div class="cm-budget-chips" id="cm-budget-chips">
+      <button class="cm-budget-chip" data-min="0" data-max="3000" onclick="cmPickBudget(this)">Under 3K</button>
+      <button class="cm-budget-chip" data-min="3000" data-max="6000" onclick="cmPickBudget(this)">3K – 6K</button>
+      <button class="cm-budget-chip" data-min="6000" data-max="12000" onclick="cmPickBudget(this)">6K – 12K</button>
+      <button class="cm-budget-chip" data-min="12000" data-max="25000" onclick="cmPickBudget(this)">12K – 25K</button>
+      <button class="cm-budget-chip" data-min="25000" data-max="0" onclick="cmPickBudget(this)">25K+</button>
+    </div>
+    <div class="cm-budget-display" id="cm-budget-display">No budget selected — hosts of all price ranges will see your request</div>
+
+    <!-- Optional note to hosts -->
+    <div class="cm-section-label" style="margin-top:16px;">Add a note for hosts <span style="font-weight:400;color:var(--ink-faint);">(optional)</span></div>
+    <textarea class="cm-notes-input" id="cm-notes-input" placeholder="e.g. Couple celebrating an anniversary — looking for something romantic with a view…" rows="2" maxlength="280"></textarea>
+
+    <!-- Launch CTA -->
+    <button class="cm-launch-btn" id="cm-launch-btn" onclick="cmLaunchMatch()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="currentColor"/></svg>
+      Broadcast my request · Go live now
+    </button>
+    <div class="cm-launch-note">Your request is live for 20 minutes · close anytime · zero obligation</div>
+    <div class="cm-cs-host-note" style="margin-top:12px;">
+      Are you a host? <a class="cm-cs-host-link" onclick="closeCabanaMatch();window.location.href='partner-cabana.html'">Manage your Match opt-in →</a>
     </div>
   </div>
 </div>
@@ -2272,6 +2309,13 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
   <!-- Price range -->
   <div class="fm-section">
     <div class="fm-section-label">Price per night</div>
+    <div class="fm-chips" style="margin-bottom:12px;" id="fm-budget-presets">
+      <div class="fm-chip" data-min="0" data-max="3000" onclick="fmPickBudget(this,0,3000)">Under 3K</div>
+      <div class="fm-chip" data-min="3000" data-max="6000" onclick="fmPickBudget(this,3000,6000)">3K–6K</div>
+      <div class="fm-chip" data-min="6000" data-max="12000" onclick="fmPickBudget(this,6000,12000)">6K–12K</div>
+      <div class="fm-chip" data-min="12000" data-max="25000" onclick="fmPickBudget(this,12000,25000)">12K–25K</div>
+      <div class="fm-chip" data-min="25000" data-max="0" onclick="fmPickBudget(this,25000,0)">25K+</div>
+    </div>
     <div class="price-range-row">
       <span style="font-size:12px;color:var(--ink-faint);">KES</span>
       <input type="range" class="price-range-input" id="fm-price-min" min="0" max="30000" step="500" value="0" oninput="updatePriceRange()">
@@ -2561,7 +2605,9 @@ function renderCards(list) {
       <div class="card-body">
         <div class="card-top">
           <div class="card-loc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>${apt.location}</div>
-          <button class="card-heart" onclick="toggleHeart(event,this)" aria-label="Save">🤍</button>
+          <button class="card-heart${isWishlisted('${apt.id}')?\' on\':\'\'}" onclick="event.stopPropagation();toggleWishlist('${apt.id}',null);this.classList.toggle('on');this.textContent=this.classList.contains('on')?'❤️':'🤍';" aria-label="Save">
+          ${isWishlisted('${apt.id}')?'❤️':'🤍'}
+        </button>
         </div>
         <h3 class="card-name">${apt.name}</h3>
         <div class="card-meta">
@@ -2702,9 +2748,14 @@ function openDrawer(id) {
     <div class="dl-cta">
       <div class="dl-cta-price">
         <div class="dl-cta-val">KES ${Number(apt.price).toLocaleString()}<span style="font-size:14px;font-weight:400;color:var(--ink-faint);"> / night</span></div>
-        <div class="dl-cta-note">✓ Zero added fees</div>
+        ${(()=>{const ci=_searchState.dateIn,co=_searchState.dateOut;if(ci&&co){const n=Math.round((new Date(co)-new Date(ci))/86400000);if(n>0)return `<div class="dl-cta-note" style="color:var(--ink-soft);">KES ${Number(apt.price*n).toLocaleString()} total · ${n} night${n!==1?'s':''}</div>`;}return '<div class="dl-cta-note">✓ Zero added fees</div>';})()} 
       </div>
-      <button class="dl-book-btn" onclick="bookNow('${apt.id}')">Reserve →</button>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="dl-wishlist-btn" title="Save to wishlist" onclick="toggleWishlist('${apt.id}',this)">
+          ${isWishlisted('${apt.id}')?'<svg viewBox="0 0 24 24" fill="#FF4D6D" stroke="#FF4D6D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'  :'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'}
+        </button>
+        <button class="dl-book-btn" onclick="bookNow('${apt.id}')">Reserve →</button>
+      </div>
     </div>
   `;
 
@@ -2874,6 +2925,64 @@ function bookNow(id) {
   const dbId = apt._dbId || apt.id;
   const params = new URLSearchParams({ id: dbId, name: apt.name, location: apt.location, price: apt.price, maxGuests: apt.maxGuests });
   window.location.href = `booking-confirm.html?${params.toString()}`;
+}
+
+/* ════════════════════════════════════════════════
+   WISHLIST — localStorage-based save/unsave
+════════════════════════════════════════════════ */
+function _getWishlist() {
+  try { return new Set(JSON.parse(localStorage.getItem('apa_wishlist') || '[]')); }
+  catch(e) { return new Set(); }
+}
+function _saveWishlist(set) {
+  try { localStorage.setItem('apa_wishlist', JSON.stringify([...set])); } catch(e) {}
+}
+function isWishlisted(id) { return _getWishlist().has(String(id)); }
+function toggleWishlist(id, btn) {
+  const wl = _getWishlist();
+  const key = String(id);
+  if (wl.has(key)) {
+    wl.delete(key);
+    if (btn) {
+      btn.classList.remove('wishlisted');
+      btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
+    }
+    showToast('Removed from saved');
+  } else {
+    wl.add(key);
+    if (btn) {
+      btn.classList.add('wishlisted');
+      btn.innerHTML = '<svg viewBox="0 0 24 24" fill="#FF4D6D" stroke="#FF4D6D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
+    }
+    showToast('Saved ♥');
+  }
+  _saveWishlist(wl);
+  // Refresh card heart indicator
+  const cardHeart = document.querySelector(`[data-card-id="${key}"] .card-heart`);
+  if (cardHeart) cardHeart.classList.toggle('on', wl.has(key));
+}
+
+/* ── Lightweight toast notification ── */
+function showToast(msg) {
+  const existing = document.getElementById('apa-toast');
+  if (existing) existing.remove();
+  const t = document.createElement('div');
+  t.id = 'apa-toast';
+  t.textContent = msg;
+  Object.assign(t.style, {
+    position:'fixed', bottom:'100px', left:'50%', transform:'translateX(-50%) translateY(8px)',
+    background:'rgba(10,10,20,.88)', color:'#fff', padding:'10px 20px',
+    borderRadius:'100px', fontSize:'13px', fontWeight:'600',
+    zIndex:'9999', backdropFilter:'blur(12px)',
+    opacity:'0', transition:'opacity .25s, transform .25s',
+    whiteSpace:'nowrap', boxShadow:'0 6px 24px rgba(10,10,20,.3)'
+  });
+  document.body.appendChild(t);
+  requestAnimationFrame(() => { t.style.opacity='1'; t.style.transform='translateX(-50%) translateY(0)'; });
+  setTimeout(() => {
+    t.style.opacity='0'; t.style.transform='translateX(-50%) translateY(8px)';
+    setTimeout(() => t.remove(), 300);
+  }, 2200);
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -3436,6 +3545,33 @@ Always be warm, concise, and friendly. If you need clarification, ask one short 
   }
 }
 
+/* ── Saved / Wishlist filter ── */
+let _savedFilterActive = false;
+function toggleSavedFilter(el) {
+  _savedFilterActive = !_savedFilterActive;
+  el.classList.toggle('active', _savedFilterActive);
+  applyAndRender();
+  if (_savedFilterActive) showToast('Showing saved stays');
+}
+
+/* ── Budget quick-filter chips ── */
+function toggleBudgetFilter(el, min, max) {
+  const wasActive = el.classList.contains('active');
+  document.querySelectorAll('.fchip-budget').forEach(c => c.classList.remove('active'));
+  if (!wasActive) {
+    el.classList.add('active');
+    _searchState.minPrice = min;
+    _searchState.maxPrice = max > 0 ? max : 999999;
+    // Sync modal budget chips
+    _cmBudgetMin = min; _cmBudgetMax = max;
+  } else {
+    _searchState.minPrice = 0;
+    _searchState.maxPrice = 999999;
+    _cmBudgetMin = 0; _cmBudgetMax = 0;
+  }
+  applyAndRender();
+}
+
 /* ── Type filter chips ── */
 function toggleFilter(el, key) {
   document.querySelectorAll('.filter-bar .fchip').forEach(c => c.classList.remove('active'));
@@ -3526,6 +3662,15 @@ function fmPickBeds(el) {
   el.classList.add('on');
   _fmMinBeds = parseInt(el.dataset.beds);
 }
+function fmPickBudget(el, min, max) {
+  document.querySelectorAll('#fm-budget-presets .fm-chip').forEach(c => c.classList.remove('on'));
+  el.classList.add('on');
+  const minInput = document.getElementById('fm-price-min');
+  const maxInput = document.getElementById('fm-price-max');
+  if (minInput) minInput.value = Math.min(min, 29500);
+  if (maxInput) maxInput.value = max > 0 ? Math.min(max, 30000) : 30000;
+  updatePriceRange();
+}
 function updatePriceRange() {
   const min = parseInt(document.getElementById('fm-price-min').value);
   const max = parseInt(document.getElementById('fm-price-max').value);
@@ -3543,7 +3688,12 @@ function resetFilters() {
   document.querySelectorAll('#fm-beds-chips .fm-chip').forEach((c,i) => c.classList.toggle('on', i===0));
   document.querySelectorAll('#fm-sort-chips .fm-chip').forEach((c,i) => c.classList.toggle('on', i===0));
   document.querySelectorAll('#fm-amen-chips .fm-chip').forEach(c => c.classList.remove('on'));
-  document.querySelectorAll('.filter-bar .fchip').forEach((c,i) => c.classList.toggle('active', i===0));
+  document.querySelectorAll('#fm-budget-presets .fm-chip').forEach(c => c.classList.remove('on'));
+  document.querySelectorAll('.fchip-budget').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('.filter-bar .fchip:not(.fchip-budget)').forEach((c,i) => c.classList.toggle('active', i===0));
+  _cmBudgetMin = 0; _cmBudgetMax = 0;
+  _savedFilterActive = false;
+  document.getElementById('fc-saved')?.classList.remove('active');
   applyAndRender();
 }
 function applyFilterModal() {
@@ -3596,6 +3746,12 @@ function applyAndRender() {
   if (s.minBeds > 0) {
     if (s.minBeds >= 3) list = list.filter(a => a.beds >= 3);
     else list = list.filter(a => a.beds >= s.minBeds);
+  }
+
+  // Saved / wishlist filter
+  if (_savedFilterActive) {
+    const wl = _getWishlist();
+    list = list.filter(a => wl.has(String(a.id)));
   }
 
   // Amenities
@@ -4002,6 +4158,7 @@ async function submitCabanaMatchRequest(criteria) {
       checkout_date: criteria.checkout_date,
       guests: criteria.guests || 1,
       bedrooms: criteria.bedrooms || null,
+      min_price: criteria.min_price || null,
       max_price: criteria.max_price || null,
       notes: criteria.notes || null,
       status: 'live'
@@ -4174,6 +4331,79 @@ const gmState = {
 };
 
 /* ── Read search bar current values ── */
+/* ── Budget state for Cabana Match modal ── */
+let _cmBudgetMin = 0, _cmBudgetMax = 0;
+function cmPickBudget(el) {
+  document.querySelectorAll('.cm-budget-chip').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  _cmBudgetMin = parseInt(el.dataset.min) || 0;
+  _cmBudgetMax = parseInt(el.dataset.max) || 0;
+  const display = document.getElementById('cm-budget-display');
+  if (display) {
+    const label = _cmBudgetMax === 0
+      ? 'KES 25,000+ per night'
+      : `KES ${Number(_cmBudgetMin).toLocaleString()} – ${Number(_cmBudgetMax).toLocaleString()} per night`;
+    display.textContent = label;
+    display.classList.add('active');
+  }
+  // Also apply to the search filter
+  _searchState.minPrice = _cmBudgetMin;
+  _searchState.maxPrice = _cmBudgetMax > 0 ? _cmBudgetMax : 999999;
+  applyAndRender();
+}
+
+/* ── Launch Cabana Match from modal (replaces registerCabanaInterest for live) ── */
+async function cmLaunchMatch() {
+  const session = window.ApaSession ? await new Promise(r => ApaSession.ready(r)) : null;
+  if (!session?.user) {
+    sessionStorage.setItem('gm_pending', '1');
+    closeCabanaMatch();
+    window.location.href = 'auth.html?next=' + encodeURIComponent(location.pathname + '#get-matched');
+    return;
+  }
+
+  const criteria = gmGetCriteria();
+  if (!criteria.location) {
+    closeCabanaMatch();
+    const locInput = document.getElementById('location-input');
+    if (locInput) { locInput.focus(); locInput.style.outline = '2px solid #FF4D6D'; setTimeout(() => locInput.style.outline = '', 2000); }
+    return;
+  }
+  if (!criteria.checkin_date || !criteria.checkout_date) {
+    closeCabanaMatch();
+    document.getElementById('sf-checkin')?.click();
+    return;
+  }
+
+  const btn = document.getElementById('cm-launch-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+
+  const result = await submitCabanaMatchRequest(criteria);
+
+  if (btn) { btn.disabled = false; btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="currentColor"/></svg> Broadcast my request · Go live now'; }
+
+  closeCabanaMatch();
+
+  if (!result.success) {
+    if (result.error === 'duplicate') {
+      gmState.requestId = result.existing_id;
+      gmActivateTab(criteria);
+      gmShowPanel();
+      return;
+    }
+    return;
+  }
+
+  gmState.requestId = result.request_id;
+  gmState.expiresAt = new Date(Date.now() + 20 * 60 * 1000).toISOString();
+  gmState.responses = [];
+  gmState.totalSecs = 20 * 60;
+  gmShowSentOverlay();
+  gmActivateTab(criteria);
+  gmStartTimer();
+  gmSubscribeRealtime();
+}
+
 function gmGetCriteria() {
   const loc = (document.getElementById('location-input')?.value || '').trim();
   const checkin = document.getElementById('date-in')?.value || '';
@@ -4186,7 +4416,10 @@ function gmGetCriteria() {
     const m = rooms.match(/(\d+)/);
     if (m) bedrooms = parseInt(m[1]);
   }
-  return { location: loc, checkin_date: checkin, checkout_date: checkout, guests: Math.max(1, guests), bedrooms };
+  const notes = (document.getElementById('cm-notes-input')?.value || '').trim();
+  const min_price = _cmBudgetMin > 0 ? _cmBudgetMin : null;
+  const max_price = _cmBudgetMax > 0 ? _cmBudgetMax : null;
+  return { location: loc, checkin_date: checkin, checkout_date: checkout, guests: Math.max(1, guests), bedrooms, min_price, max_price, notes };
 }
 
 /* ── Main entry: user clicks Get Matched button ── */
@@ -4289,6 +4522,14 @@ function gmActivateTab(criteria) {
     if (criteria.checkin_date) chips.push(criteria.checkin_date + (criteria.checkout_date ? ' → ' + criteria.checkout_date : ''));
     if (criteria.guests > 1) chips.push(criteria.guests + ' guests');
     if (criteria.bedrooms) chips.push(criteria.bedrooms + ' bed');
+    if (criteria.min_price || criteria.max_price) {
+      const budgetLabel = criteria.max_price === 0 || !criteria.max_price
+        ? `KES ${Number(criteria.min_price||0).toLocaleString()}+`
+        : criteria.min_price
+          ? `KES ${Number(criteria.min_price).toLocaleString()}–${Number(criteria.max_price).toLocaleString()}`
+          : `Up to KES ${Number(criteria.max_price).toLocaleString()}`;
+      chips.push(budgetLabel);
+    }
     detailsEl.innerHTML = chips.map(c => `<span class="gm-req-chip">${c}</span>`).join('');
   }
 }

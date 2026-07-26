@@ -46,8 +46,9 @@ create table if not exists public.cabana_match_requests (
   nights          integer     not null generated always as (checkout_date - checkin_date) stored,
   guests          integer     not null default 1,
   bedrooms        integer,                -- null = any
-  max_price       integer,                -- null = any, KES per night
-  notes           text,                   -- optional guest message
+  min_price       integer,                -- null = any, KES per night (budget floor)
+  max_price       integer,                -- null = any, KES per night (budget ceiling)
+  notes           text,                   -- optional guest message to host
 
   -- Lifecycle
   status          text        not null default 'live'
