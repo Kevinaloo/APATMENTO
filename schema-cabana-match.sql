@@ -46,9 +46,9 @@ create table if not exists public.cabana_match_requests (
   nights          integer     not null generated always as (checkout_date - checkin_date) stored,
   guests          integer     not null default 1,
   bedrooms        integer,                -- null = any
-  min_price       integer,                -- null = any, KES per night (budget floor)
-  max_price       integer,                -- null = any, KES per night (budget ceiling)
-  notes           text,                   -- optional guest message to host
+  min_price       integer,                -- KES/night floor — for SYSTEM ROUTING ONLY, never shown to hosts
+  max_price       integer,                -- KES/night ceiling — for SYSTEM ROUTING ONLY, never shown to hosts
+  notes           text,                   -- optional guest message shown to hosts (no budget info here)
 
   -- Lifecycle
   status          text        not null default 'live'
@@ -132,9 +132,22 @@ drop policy if exists "req_select_host" on public.cabana_match_requests;
 create policy "req_select_host" on public.cabana_match_requests
   for select using (
     status = 'live'
+    -- Only opted-in hosts see requests
     and exists (
       select 1 from public.cabana_host_opt_ins o
       where o.host_id = auth.uid() and o.opted_in = true
+    )
+    -- Budget routing: host's cheapest opted-in listing must fall within guest's range.
+    -- min_price/max_price are NEVER exposed to hosts in the app layer — filtering happens here.
+    and (
+      min_price is null  -- guest set no budget floor, any host qualifies
+      or exists (
+        select 1 from public.listings l
+        where l.partner_id = auth.uid()
+          and l.status = 'active'
+          and l.price_night >= min_price
+          and (max_price is null or l.price_night <= max_price)
+      )
     )
   );
 

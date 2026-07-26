@@ -1088,11 +1088,17 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
 /* Budget chips + launch form */
 .cm-section-label{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px;}
 .cm-budget-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;}
-.cm-budget-chip{padding:9px 16px;border-radius:100px;border:1.5px solid var(--line-2);background:#fff;font-size:13.5px;font-weight:600;color:var(--ink-soft);cursor:pointer;transition:all .2s;font-family:var(--font-body);}
-.cm-budget-chip:hover{border-color:var(--violet);color:var(--violet);background:rgba(123,47,247,.05);}
-.cm-budget-chip.selected{border-color:var(--violet);color:#fff;background:linear-gradient(135deg,var(--violet),var(--electric));box-shadow:0 4px 14px rgba(123,47,247,.3);}
-.cm-budget-display{font-size:12px;color:var(--ink-faint);margin-bottom:4px;min-height:18px;transition:color .2s;}
+.cm-budget-chip{padding:10px 16px;border-radius:16px;border:1.5px solid var(--line-2);background:#fff;font-size:13px;font-weight:600;color:var(--ink-soft);cursor:pointer;transition:all .2s;font-family:var(--font-body);display:flex;flex-direction:column;align-items:flex-start;gap:2px;flex:1;min-width:130px;}
+.cm-budget-chip:hover{border-color:var(--violet);background:rgba(123,47,247,.04);}
+.cm-budget-chip.selected{border-color:var(--violet);background:linear-gradient(135deg,var(--violet),var(--electric));box-shadow:0 4px 14px rgba(123,47,247,.28);}
+.cm-budget-chip.selected .cmbc-range{color:#fff;}
+.cm-budget-chip.selected .cmbc-label{color:rgba(255,255,255,.78);}
+.cmbc-range{font-size:13.5px;font-weight:700;color:var(--ink);}
+.cmbc-label{font-size:11px;font-weight:500;color:var(--ink-faint);line-height:1.3;}
+.cm-budget-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;}
+.cm-budget-display{font-size:12px;color:var(--ink-faint);margin-bottom:2px;min-height:18px;transition:color .2s;}
 .cm-budget-display.active{color:var(--violet);font-weight:600;}
+.cm-budget-hint{font-size:11.5px;color:var(--ink-faint);margin-bottom:4px;min-height:16px;line-height:1.5;font-style:italic;}
 .cm-notes-input{width:100%;border:1.5px solid var(--line-2);border-radius:14px;padding:12px 14px;font-family:var(--font-body);font-size:14px;color:var(--ink);resize:none;outline:none;transition:border-color .2s;background:rgba(255,255,255,.8);}
 .cm-notes-input:focus{border-color:var(--violet);}
 .cm-launch-btn{width:100%;margin-top:18px;padding:16px;border-radius:16px;border:none;background:linear-gradient(135deg,var(--violet),var(--electric));color:#fff;font-family:var(--font-body);font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 10px 32px rgba(123,47,247,.35);transition:all .3s;letter-spacing:.01em;}
@@ -2083,10 +2089,10 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
       <div class="fchip chip-ai" onclick="focusSpecialSearch()">✨ Smart Search</div>
       <div class="fchip" id="fc-saved" onclick="toggleSavedFilter(this)">♥ Saved</div>
       <div class="filter-bar-divider">|</div>
-      <div class="fchip fchip-budget" data-min="0" data-max="3000" onclick="toggleBudgetFilter(this,0,3000)">💸 Under 3K</div>
-      <div class="fchip fchip-budget" data-min="3000" data-max="6000" onclick="toggleBudgetFilter(this,3000,6000)">3K–6K</div>
-      <div class="fchip fchip-budget" data-min="6000" data-max="12000" onclick="toggleBudgetFilter(this,6000,12000)">6K–12K</div>
-      <div class="fchip fchip-budget" data-min="12000" data-max="0" onclick="toggleBudgetFilter(this,12000,0)">12K+</div>
+      <div class="fchip fchip-budget" data-min="1000" data-max="2000" onclick="toggleBudgetFilter(this,1000,2000)">1K–2K</div>
+      <div class="fchip fchip-budget" data-min="2000" data-max="3500" onclick="toggleBudgetFilter(this,2000,3500)">2K–3.5K</div>
+      <div class="fchip fchip-budget" data-min="3500" data-max="5000" onclick="toggleBudgetFilter(this,3500,5000)">3.5K–5K</div>
+      <div class="fchip fchip-budget" data-min="5000" data-max="0" onclick="toggleBudgetFilter(this,5000,0)">✦ 5K+ Premium</div>
     </div>
   </div>
 </div>
@@ -2258,13 +2264,25 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
     <!-- Budget picker -->
     <div class="cm-section-label">Your nightly budget <span style="font-weight:400;font-size:11px;color:var(--ink-faint);">(KES / night)</span></div>
     <div class="cm-budget-chips" id="cm-budget-chips">
-      <button class="cm-budget-chip" data-min="0" data-max="3000" onclick="cmPickBudget(this)">Under 3K</button>
-      <button class="cm-budget-chip" data-min="3000" data-max="6000" onclick="cmPickBudget(this)">3K – 6K</button>
-      <button class="cm-budget-chip" data-min="6000" data-max="12000" onclick="cmPickBudget(this)">6K – 12K</button>
-      <button class="cm-budget-chip" data-min="12000" data-max="25000" onclick="cmPickBudget(this)">12K – 25K</button>
-      <button class="cm-budget-chip" data-min="25000" data-max="0" onclick="cmPickBudget(this)">25K+</button>
+      <button class="cm-budget-chip" data-min="1000" data-max="2000" onclick="cmPickBudget(this)">
+        <span class="cmbc-range">1K – 2K</span>
+        <span class="cmbc-label">Basic &amp; functional</span>
+      </button>
+      <button class="cm-budget-chip" data-min="2000" data-max="3500" onclick="cmPickBudget(this)">
+        <span class="cmbc-range">2K – 3.5K</span>
+        <span class="cmbc-label">Comfortable &amp; clean</span>
+      </button>
+      <button class="cm-budget-chip" data-min="3500" data-max="5000" onclick="cmPickBudget(this)">
+        <span class="cmbc-range">3.5K – 5K</span>
+        <span class="cmbc-label">Well-appointed</span>
+      </button>
+      <button class="cm-budget-chip" data-min="5000" data-max="0" onclick="cmPickBudget(this)">
+        <span class="cmbc-range">5K+ ✦ Premium</span>
+        <span class="cmbc-label">Prime locations · full amenities</span>
+      </button>
     </div>
-    <div class="cm-budget-display" id="cm-budget-display">No budget selected — hosts of all price ranges will see your request</div>
+    <div class="cm-budget-display" id="cm-budget-display">Pick a range so we match you with the right hosts</div>
+    <div class="cm-budget-hint" id="cm-budget-hint"></div>
 
     <!-- Optional note to hosts -->
     <div class="cm-section-label" style="margin-top:16px;">Add a note for hosts <span style="font-weight:400;color:var(--ink-faint);">(optional)</span></div>
@@ -2310,11 +2328,10 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
   <div class="fm-section">
     <div class="fm-section-label">Price per night</div>
     <div class="fm-chips" style="margin-bottom:12px;" id="fm-budget-presets">
-      <div class="fm-chip" data-min="0" data-max="3000" onclick="fmPickBudget(this,0,3000)">Under 3K</div>
-      <div class="fm-chip" data-min="3000" data-max="6000" onclick="fmPickBudget(this,3000,6000)">3K–6K</div>
-      <div class="fm-chip" data-min="6000" data-max="12000" onclick="fmPickBudget(this,6000,12000)">6K–12K</div>
-      <div class="fm-chip" data-min="12000" data-max="25000" onclick="fmPickBudget(this,12000,25000)">12K–25K</div>
-      <div class="fm-chip" data-min="25000" data-max="0" onclick="fmPickBudget(this,25000,0)">25K+</div>
+      <div class="fm-chip" data-min="1000" data-max="2000" onclick="fmPickBudget(this,1000,2000)">1K–2K · Basic &amp; functional</div>
+      <div class="fm-chip" data-min="2000" data-max="3500" onclick="fmPickBudget(this,2000,3500)">2K–3.5K · Comfortable</div>
+      <div class="fm-chip" data-min="3500" data-max="5000" onclick="fmPickBudget(this,3500,5000)">3.5K–5K · Well-appointed</div>
+      <div class="fm-chip" data-min="5000" data-max="0" onclick="fmPickBudget(this,5000,0)">✦ 5K+ Premium</div>
     </div>
     <div class="price-range-row">
       <span style="font-size:12px;color:var(--ink-faint);">KES</span>
@@ -4333,20 +4350,35 @@ const gmState = {
 /* ── Read search bar current values ── */
 /* ── Budget state for Cabana Match modal ── */
 let _cmBudgetMin = 0, _cmBudgetMax = 0;
+
+const CM_BUDGET_META = [
+  { min: 1000, max: 2000,
+    display: 'KES 1,000 – 2,000 / night',
+    hint: 'Expect a clean, no-frills space — great for short stays where comfort matters more than extras.' },
+  { min: 2000, max: 3500,
+    display: 'KES 2,000 – 3,500 / night',
+    hint: 'Solid, well-kept spaces with reliable essentials — the sweet spot for most travellers.' },
+  { min: 3500, max: 5000,
+    display: 'KES 3,500 – 5,000 / night',
+    hint: 'Thoughtfully furnished spaces with more amenities, often in good neighbourhoods.' },
+  { min: 5000, max: 0,
+    display: 'KES 5,000+ / night · Premium',
+    hint: 'Prime locations, full amenity sets, quality finishes — the best available on the platform.' },
+];
+
 function cmPickBudget(el) {
   document.querySelectorAll('.cm-budget-chip').forEach(c => c.classList.remove('selected'));
   el.classList.add('selected');
   _cmBudgetMin = parseInt(el.dataset.min) || 0;
   _cmBudgetMax = parseInt(el.dataset.max) || 0;
+
+  const meta = CM_BUDGET_META.find(m => m.min === _cmBudgetMin && m.max === _cmBudgetMax);
   const display = document.getElementById('cm-budget-display');
-  if (display) {
-    const label = _cmBudgetMax === 0
-      ? 'KES 25,000+ per night'
-      : `KES ${Number(_cmBudgetMin).toLocaleString()} – ${Number(_cmBudgetMax).toLocaleString()} per night`;
-    display.textContent = label;
-    display.classList.add('active');
-  }
-  // Also apply to the search filter
+  const hint = document.getElementById('cm-budget-hint');
+  if (display) { display.textContent = meta ? meta.display : ''; display.classList.add('active'); }
+  if (hint) hint.textContent = meta ? meta.hint : '';
+
+  // Sync search results so cards narrow live
   _searchState.minPrice = _cmBudgetMin;
   _searchState.maxPrice = _cmBudgetMax > 0 ? _cmBudgetMax : 999999;
   applyAndRender();
@@ -4522,13 +4554,9 @@ function gmActivateTab(criteria) {
     if (criteria.checkin_date) chips.push(criteria.checkin_date + (criteria.checkout_date ? ' → ' + criteria.checkout_date : ''));
     if (criteria.guests > 1) chips.push(criteria.guests + ' guests');
     if (criteria.bedrooms) chips.push(criteria.bedrooms + ' bed');
-    if (criteria.min_price || criteria.max_price) {
-      const budgetLabel = criteria.max_price === 0 || !criteria.max_price
-        ? `KES ${Number(criteria.min_price||0).toLocaleString()}+`
-        : criteria.min_price
-          ? `KES ${Number(criteria.min_price).toLocaleString()}–${Number(criteria.max_price).toLocaleString()}`
-          : `Up to KES ${Number(criteria.max_price).toLocaleString()}`;
-      chips.push(budgetLabel);
+    if (criteria.min_price) {
+      const meta = CM_BUDGET_META.find(m => m.min === criteria.min_price);
+      chips.push(meta ? meta.display.split(' /')[0] : `KES ${Number(criteria.min_price).toLocaleString()}+`);
     }
     detailsEl.innerHTML = chips.map(c => `<span class="gm-req-chip">${c}</span>`).join('');
   }
