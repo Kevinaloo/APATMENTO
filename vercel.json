@@ -141,7 +141,7 @@
     }
   ],
   "functions": {
-    "api/send-receipt.js": {
+    "api/rewards.js": {
       "maxDuration": 15
     },
     "api/import-listing.js": {
@@ -213,6 +213,10 @@
     {
       "source": "/api/push-cron",
       "destination": "/api/push-send?action=cron"
+    },
+    {
+      "source": "/api/send-receipt",
+      "destination": "/api/email?action=booking"
     }
   ],
   "buildCommand": null,

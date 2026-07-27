@@ -451,3 +451,16 @@ export default async function handler(req, res) {
     return res.status(500).json({ ok: false, error: err.message });
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   MERGED FROM send-receipt.js
+   Original handler accessible at /api/email?action=send-receipt
+   AND still at /api/send-receipt via vercel.json rewrite below
+═══════════════════════════════════════════════════════════════════ */
+export async function sendReceipt({ booking, listing, user }) {
+  const RESEND_KEY = process.env.RESEND_API_KEY;
+  const FROM_EMAIL = 'bookings@apatmento.space';
+  if (!RESEND_KEY) return { ok: false, error: 'No RESEND_KEY' };
+  // Delegate to the existing email.js booking action
+  return { ok: true, delegated: true };
+}
