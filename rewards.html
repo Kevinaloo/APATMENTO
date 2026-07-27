@@ -334,97 +334,140 @@ body{font-family:var(--font-b);background:#07050F;color:#fff;-webkit-font-smooth
     </div>
   </div>
 
+  <!-- Points history panel -->
+  <div class="panel" style="margin-top:16px;">
+    <div class="panel-head">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="panel-icon" style="background:rgba(251,191,36,.1);">⭐</div>
+        <div class="panel-title">Points history</div>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div class="pt-list" id="pt-list">
+        <div class="earn-empty"><div class="earn-empty-icon">⭐</div>No points activity yet. Points are earned on every completed booking.</div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
+/* ══════════════════════════════════════════════════════════════
+   rewards.html — secure client JS
+   All mutations go through /api/rewards (service-role key).
+   Reads use the user's own session token (RLS-gated).
+══════════════════════════════════════════════════════════════ */
 const SUPA_URL = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
-const SITE    = 'https://www.apatmento.space';
+const SITE = 'https://www.apatmento.space';
+
 const { createClient } = supabase;
 const sb = createClient(SUPA_URL, SUPA_KEY);
 
-let USER = null, MY_CODE = null, MY_BALANCE = 0;
+let USER = null, TOKEN = null, MY_CODE = null, MY_AVAILABLE_KES = 0;
 
-async function dbGet(table, params='') {
+/* ── Read helper (uses user's session token for RLS) ── */
+async function dbGet(table, params = '') {
   const r = await fetch(`${SUPA_URL}/rest/v1/${table}${params}`, {
-    headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}
+    headers: { apikey: SUPA_KEY, Authorization: 'Bearer ' + (TOKEN || SUPA_KEY) },
   });
   return r.ok ? r.json() : [];
 }
 
-async function init() {
-  const { data:{session} } = await sb.auth.getSession();
-  if (!session) { location.href='auth.html'; return; }
-  USER = session.user;
+/* ── Route all mutations through the secure API ── */
+async function api(action, body = {}) {
+  const r = await fetch('/api/rewards', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: 'Bearer ' + TOKEN,
+    },
+    body: JSON.stringify({ action, ...body }),
+  });
+  return r.json();
+}
 
-  // Get or create referral code
+async function init() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { location.href = 'auth.html'; return; }
+  USER  = session.user;
+  TOKEN = session.access_token;
+
+  /* Get referral code (read-only, anon-key is fine) */
   let codes = await dbGet('referral_codes', `?user_id=eq.${USER.id}&select=code`);
-  if (!codes?.length) {
-    const meta = USER.user_metadata || {};
-    const name = (meta.first_name || meta.given_name || meta.name?.split(' ')[0] || 'APT').replace(/[^A-Za-z]/g,'').toUpperCase().slice(0,5);
+  if (codes?.length) {
+    MY_CODE = codes[0].code;
+  } else {
+    /* Generate deterministically; api/rewards will persist it */
+    const meta   = USER.user_metadata || {};
+    const name   = (meta.first_name || meta.given_name || meta.name?.split(' ')[0] || 'APT').replace(/[^A-Za-z]/g,'').toUpperCase().slice(0,5) || 'APT';
     const suffix = USER.id.replace(/-/g,'').slice(0,6).toUpperCase();
     MY_CODE = `${name}-${suffix}`;
-    await fetch(`${SUPA_URL}/rest/v1/referral_codes`, {
-      method:'POST', headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
-      body: JSON.stringify({user_id:USER.id, code:MY_CODE})
-    });
-  } else {
-    MY_CODE = codes[0].code;
+    /* Fire-and-forget persist via service role */
+    fetch('/api/rewards', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + TOKEN },
+      body: JSON.stringify({ action: 'ensure-code', user_id: USER.id, code: MY_CODE }),
+    }).catch(() => {});
   }
 
-  // Load all data in parallel
-  const [earnings, points, referrals, ptTxns] = await Promise.all([
+  /* Load stats from secure API (computes net balance) and raw lists for display */
+  const [stats, earnings, points, referrals, ptTxns] = await Promise.all([
+    api('stats'),
     dbGet('referral_earnings', `?referrer_id=eq.${USER.id}&order=created_at.desc&limit=20`),
     dbGet('user_points', `?user_id=eq.${USER.id}&select=available_points,lifetime_points`),
     dbGet('referrals', `?referrer_id=eq.${USER.id}&order=created_at.desc&select=referred_id,referral_type,created_at,expires_at`),
-    dbGet('point_transactions', `?user_id=eq.${USER.id}&order=created_at.desc&limit=15`)
+    dbGet('point_transactions', `?user_id=eq.${USER.id}&order=created_at.desc&limit=20`),
   ]);
 
-  // Stats
-  const totalEarned = (earnings||[]).reduce((s,e)=>s+parseFloat(e.commission_kes||0),0);
-  const availPts = points?.[0]?.available_points || 0;
-  MY_BALANCE = totalEarned;
+  /* Net balance = earned minus already-pending/paid withdrawals */
+  MY_AVAILABLE_KES = stats.available_kes || 0;
+  const availPts   = stats.available_points || points?.[0]?.available_points || 0;
+  const totalEarned = stats.total_earned_kes || 0;
 
-  document.getElementById('s-earned').textContent = 'KES '+Math.round(totalEarned).toLocaleString();
+  /* ── Hero stats ── */
+  document.getElementById('s-earned').textContent = 'KES ' + Math.round(totalEarned).toLocaleString();
   document.getElementById('s-points').textContent = availPts.toLocaleString();
-  document.getElementById('s-refs').textContent = (referrals||[]).length;
+  document.getElementById('s-refs').textContent   = (referrals || []).length;
 
-  // Referral link
+  /* ── Referral link ── */
   const link = `${SITE}?ref=${MY_CODE}`;
   document.getElementById('ref-link-val').textContent = link;
-  document.getElementById('w-balance').textContent = 'KES '+Math.round(totalEarned).toLocaleString();
 
-  // Points display
+  /* ── Withdraw panel: show NET available (after pending withdrawals) ── */
+  document.getElementById('w-balance').textContent = 'KES ' + Math.round(MY_AVAILABLE_KES).toLocaleString();
+
+  /* ── Points display ── */
   document.getElementById('pts-val').textContent = availPts.toLocaleString();
-  const nextMilestone = Math.ceil((availPts+1)/100)*100;
-  const pct = Math.min((availPts/nextMilestone)*100, 100);
-  document.getElementById('pts-bar').style.width = pct+'%';
+  const nextMilestone = Math.ceil((availPts + 1) / 100) * 100;
+  const pct = Math.min((availPts / nextMilestone) * 100, 100);
+  document.getElementById('pts-bar').style.width = pct + '%';
   document.getElementById('pts-next-milestone').textContent = `Next: ${nextMilestone} pts = KES ${nextMilestone}`;
 
-  // Earnings list
+  /* ── Earnings history ── */
   const earnEl = document.getElementById('earn-list');
   if (earnings?.length) {
-    earnEl.innerHTML = earnings.map(e=>`
+    earnEl.innerHTML = earnings.map(e => `
       <div class="earn-item">
         <div class="earn-ico">${serviceIcon(e.service_type)}</div>
         <div class="earn-info">
           <div class="earn-title">${capitalize(e.service_type)} booking</div>
           <div class="earn-date">${formatDate(e.created_at)}</div>
-          <span class="earn-status ${e.status==='confirmed'?'status-confirmed':'status-pending'}">${e.status}</span>
+          <span class="earn-status ${e.status === 'confirmed' ? 'status-confirmed' : 'status-pending'}">${e.status}</span>
         </div>
         <div style="text-align:right;">
-          <div class="earn-amount">+KES ${parseFloat(e.commission_kes).toLocaleString()}</div>
-          <div style="font-size:10px;color:rgba(255,255,255,.3);">${Math.round(e.commission_rate*100)}% commission</div>
+          <div class="earn-amount">+KES ${parseFloat(e.commission_kes || 0).toLocaleString()}</div>
+          <div style="font-size:10px;color:rgba(255,255,255,.3);">${Math.round((e.commission_rate || 0) * 100)}% commission</div>
         </div>
       </div>`).join('');
   }
 
-  // Referrals list
+  /* ── Referrals list ── */
   const refEl = document.getElementById('ref-list');
   if (referrals?.length) {
-    refEl.innerHTML = referrals.map(r=>`
+    refEl.innerHTML = referrals.map(r => `
       <div class="ref-item">
         <div class="ref-av">👤</div>
         <div style="flex:1;">
@@ -435,51 +478,74 @@ async function init() {
       </div>`).join('');
   }
 
+  /* ── Points history (previously fetched but never rendered) ── */
+  const ptEl = document.getElementById('pt-list');
+  if (ptEl) {
+    if (ptTxns?.length) {
+      ptEl.innerHTML = ptTxns.map(t => `
+        <div class="pt-item">
+          <div class="pt-ico ${t.type}">${t.type === 'earn' ? '⭐' : '🎟'}</div>
+          <div class="pt-desc">${t.description || (t.type === 'earn' ? 'Points earned' : 'Points redeemed')}</div>
+          <div class="pt-pts ${t.type === 'earn' ? 'pt-earn' : 'pt-redeem'}">${t.points > 0 ? '+' : ''}${t.points} pts</div>
+        </div>`).join('');
+    } else {
+      ptEl.innerHTML = '<div class="earn-empty"><div class="earn-empty-icon">⭐</div>No points activity yet.</div>';
+    }
+  }
+
   document.getElementById('loader').classList.add('done');
 }
 
 function copyLink() {
   const link = `${SITE}?ref=${MY_CODE}`;
-  navigator.clipboard?.writeText(link).catch(()=>{
-    const el=document.createElement('textarea');el.value=link;document.body.appendChild(el);el.select();document.execCommand('copy');el.remove();
+  navigator.clipboard?.writeText(link).catch(() => {
+    const el = document.createElement('textarea');
+    el.value = link; document.body.appendChild(el); el.select(); document.execCommand('copy'); el.remove();
   });
-  const btn=document.getElementById('ref-copy-btn');
-  btn.textContent='✓ Copied!';btn.classList.add('ok');
-  setTimeout(()=>{btn.textContent='Copy';btn.classList.remove('ok');},2500);
+  const btn = document.getElementById('ref-copy-btn');
+  btn.textContent = '✓ Copied!'; btn.classList.add('ok');
+  setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('ok'); }, 2500);
 }
 
-function shareWA(){
-  const msg=encodeURIComponent(`🚀 Join Apatmento — Kenya's zero-commission travel app. Book stays, tours, rides & more. Use my link: ${SITE}?ref=${MY_CODE}`);
-  window.open(`https://wa.me/?text=${msg}`,'_blank');
+function shareWA() {
+  const msg = encodeURIComponent(`🚀 Join Cabana — Kenya's zero-commission travel app. Book stays, tours, rides & more. Use my link: ${SITE}?ref=${MY_CODE}`);
+  window.open(`https://wa.me/?text=${msg}`, '_blank');
 }
-function shareTwitter(){
-  const msg=encodeURIComponent(`Discovered the best travel app in Kenya 🇰🇪 — @Apatmento. Zero commission, hosts keep 100%. ${SITE}?ref=${MY_CODE}`);
-  window.open(`https://twitter.com/intent/tweet?text=${msg}`,'_blank');
+function shareTwitter() {
+  const msg = encodeURIComponent(`Discovered the best travel app in Kenya 🇰🇪 — @Cabana. Zero commission, hosts keep 100%. ${SITE}?ref=${MY_CODE}`);
+  window.open(`https://twitter.com/intent/tweet?text=${msg}`, '_blank');
 }
 
 async function requestWithdraw() {
   const amount = parseFloat(document.getElementById('w-amount').value);
   const mpesa  = document.getElementById('w-mpesa').value.trim();
-  if (!amount || amount < 50) { showToast('Minimum withdrawal is KES 50'); return; }
-  if (!mpesa) { showToast('Please enter your M-Pesa number'); return; }
-  if (amount > MY_BALANCE) { showToast('Amount exceeds your available balance'); return; }
-  const r = await fetch(`${SUPA_URL}/rest/v1/referral_withdrawals`, {
-    method:'POST', headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
-    body: JSON.stringify({user_id:USER.id, amount_kes:amount, mpesa_number:mpesa, status:'pending'})
-  });
-  if (r.ok) {
+
+  if (!amount || amount < 50)    { showToast('Minimum withdrawal is KES 50'); return; }
+  if (!mpesa)                    { showToast('Please enter your M-Pesa number'); return; }
+
+  const btn = document.querySelector('.withdraw-btn');
+  btn.disabled = true; btn.textContent = 'Submitting…';
+
+  /* Server validates amount against real net balance — no client-side bypass */
+  const result = await api('withdraw', { amount_kes: amount, mpesa_number: mpesa });
+
+  btn.disabled = false; btn.textContent = 'Request withdrawal →';
+
+  if (result.ok) {
+    MY_AVAILABLE_KES = result.available_after;
+    document.getElementById('w-balance').textContent = 'KES ' + Math.round(MY_AVAILABLE_KES).toLocaleString();
     showToast('✓ Withdrawal request submitted! We\'ll process within 1–2 business days.');
-    document.getElementById('w-amount').value='';
-    document.getElementById('w-mpesa').value='';
+    document.getElementById('w-amount').value = '';
+    document.getElementById('w-mpesa').value  = '';
   } else {
-    showToast('Something went wrong. Please try again.');
+    showToast(result.error || 'Something went wrong. Please try again.');
   }
 }
 
-function serviceIcon(s){return{stays:'🏠',tours:'🦁',events:'🎟',rides:'🚗',food:'🍽',shopping:'🛍',carhire:'🚙',roommates:'🤝',flights:'✈'}[s]||'📦';}
-function capitalize(s){return s?s.charAt(0).toUpperCase()+s.slice(1):'';}
-function formatDate(iso){try{return new Date(iso).toLocaleDateString('en-KE',{day:'numeric',month:'short',year:'numeric'});}catch{return iso;}}
-function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),3500);}
+function serviceIcon(s) { return { stays: '🏠', tours: '🦁', events: '🎟', rides: '🚗', food: '🍽', shopping: '🛍', carhire: '🚙', roommates: '🤝', flights: '✈' }[s] || '📦'; }
+function capitalize(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''; }
+function formatDate(iso) { try { return new Date(iso).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' }); } catch { return iso; } }
+function showToast(m) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('on'); setTimeout(() => t.classList.remove('on'), 3500); }
 
 init();
 </script>

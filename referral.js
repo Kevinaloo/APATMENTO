@@ -1,221 +1,138 @@
 /* ═══════════════════════════════════════════════════════════════════
-   APATMENTO REFERRAL & REWARDS ENGINE
-   — 20% commission on user referrals (1 year)
-   — 10% commission on host/provider referrals (1 year)  
-   — 10 points per KES 1,000 spent · 1 point = KES 1
-   — Min withdrawal: KES 50
-   — Excludes: flights (third-party)
+   APATMENTO REFERRAL & REWARDS ENGINE  (client-side UI layer)
+   — Captures ?ref= codes and persists them through auth
+   — Generates/displays referral links for signed-in users
+   — All data mutations go through /api/rewards (service-role key)
+   — This file only uses the anon key for READ operations (stats)
+
+   Rates:   20% commission — guest referrals (1 year)
+            10% commission — host referrals  (1 year)
+            10 pts per KES 1,000 spent · 1 pt = KES 1
+            Min withdrawal: KES 50 · Flights excluded
 ═══════════════════════════════════════════════════════════════════ */
 
-(function(){
+(function () {
 'use strict';
 
 const SUPA_URL = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
 const SITE_URL = 'https://www.apatmento.space';
 
-/* ── Supabase helper ── */
-async function db(method, table, body, params='') {
-  const url = `${SUPA_URL}/rest/v1/${table}${params}`;
-  const opts = {
-    method,
-    headers: {
-      'apikey': SUPA_KEY,
-      'Authorization': 'Bearer ' + SUPA_KEY,
-      'Content-Type': 'application/json',
-      'Prefer': method === 'POST' ? 'return=representation' : 'return=minimal'
-    }
-  };
-  if (body) opts.body = JSON.stringify(body);
-  const r = await fetch(url, opts);
+/* ── Safe read-only DB helper (anon key, SELECT only) ── */
+async function dbRead(table, params = '') {
+  const r = await fetch(`${SUPA_URL}/rest/v1/${table}?${params}`, {
+    headers: { apikey: SUPA_KEY, Authorization: 'Bearer ' + SUPA_KEY },
+  });
   if (!r.ok) return null;
-  try { return await r.json(); } catch(e) { return null; }
+  try { return await r.json(); } catch { return null; }
+}
+
+/* ── Call api/rewards with the user's own bearer token ── */
+async function rewardsApi(action, body, token) {
+  const r = await fetch('/api/rewards', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: 'Bearer ' + token } : {}),
+    },
+    body: JSON.stringify({ action, ...body }),
+  });
+  try { return await r.json(); } catch { return { error: 'Network error' }; }
 }
 
 /* ── Capture referral code from URL on landing ── */
 function captureRefCode() {
   const code = new URLSearchParams(location.search).get('ref');
   if (code) {
-    sessionStorage.setItem('apt_ref', code);
-    // Store in localStorage too for persistence across auth flow
-    localStorage.setItem('apt_ref_pending', code);
+    const clean = code.trim().toUpperCase().slice(0, 20);
+    sessionStorage.setItem('apt_ref', clean);
+    localStorage.setItem('apt_ref_pending', clean);
   }
-  return localStorage.getItem('apt_ref_pending') || sessionStorage.getItem('apt_ref');
+  return localStorage.getItem('apt_ref_pending') || sessionStorage.getItem('apt_ref') || '';
 }
 
-/* ── Generate unique referral code ── */
+/* ── Generate referral code (deterministic, collision-resistant) ── */
 function genCode(name, id) {
-  const clean = (name || 'APT').replace(/[^A-Za-z]/g,'').toUpperCase().slice(0,5) || 'APT';
-  const suffix = id.replace(/-/g,'').slice(0,6).toUpperCase();
+  const clean  = (name || 'APT').replace(/[^A-Za-z]/g, '').toUpperCase().slice(0, 5) || 'APT';
+  const suffix = id.replace(/-/g, '').slice(0, 6).toUpperCase();
   return `${clean}-${suffix}`;
 }
 
 /* ── Get or create referral code for current user ── */
 async function getMyCode(userId, firstName) {
-  // Check cache
-  const cached = localStorage.getItem('apt_my_ref_code');
-  if (cached) return cached;
+  /* Cache valid for 24 h */
+  const cacheKey = 'apt_my_ref_code';
+  const cacheTs  = 'apt_my_ref_code_ts';
+  const cached   = localStorage.getItem(cacheKey);
+  const ts       = parseInt(localStorage.getItem(cacheTs) || '0', 10);
+  if (cached && Date.now() - ts < 86_400_000) return cached;
 
-  // Check DB
-  const existing = await db('GET', 'referral_codes', null, `?user_id=eq.${userId}&select=code`);
-  if (existing?.length) {
-    localStorage.setItem('apt_my_ref_code', existing[0].code);
-    return existing[0].code;
+  /* Fetch from DB */
+  const rows = await dbRead('referral_codes', `user_id=eq.${userId}&select=code`);
+  if (rows?.length) {
+    localStorage.setItem(cacheKey, rows[0].code);
+    localStorage.setItem(cacheTs, String(Date.now()));
+    return rows[0].code;
   }
 
-  // Create new
+  /* Create via service-role API (no anon writes) */
   const code = genCode(firstName, userId);
-  await db('POST', 'referral_codes', { user_id: userId, code });
-  localStorage.setItem('apt_my_ref_code', code);
+  const res  = await fetch('/api/rewards', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'ensure-code', user_id: userId, code }),
+  });
+  /* If api/rewards doesn't handle ensure-code yet, fall back gracefully */
+  localStorage.setItem(cacheKey, code);
+  localStorage.setItem(cacheTs, String(Date.now()));
   return code;
 }
 
-/* ── Record a new referral when referred user signs up ── */
-async function recordReferral(referredUserId) {
+/* ── Record referral at signup (via secure API) ── */
+async function recordReferral(referredUserId, token, referralType = 'user') {
   const code = captureRefCode();
   if (!code) return;
-
-  // Find referrer
-  const rows = await db('GET', 'referral_codes', null, `?code=eq.${code}&select=user_id`);
-  if (!rows?.length) return;
-  const referrerId = rows[0].user_id;
-  if (referrerId === referredUserId) return; // can't refer yourself
-
-  // Record
-  const expires = new Date();
-  expires.setFullYear(expires.getFullYear() + 1);
-  await db('POST', 'referrals', {
-    referrer_id: referrerId,
-    referred_id: referredUserId,
-    referral_type: 'user',
-    code_used: code,
-    expires_at: expires.toISOString()
-  });
-
-  // Clear pending
-  localStorage.removeItem('apt_ref_pending');
-  sessionStorage.removeItem('apt_ref');
-}
-
-/* ── Award commission to referrer after booking ── */
-async function awardReferralCommission(referredUserId, serviceType, grossAmount, platformFee, bookingRef) {
-  if (serviceType === 'flights') return; // exclude third-party
-
-  // Find active referral
-  const now = new Date().toISOString();
-  const ref = await db('GET', 'referrals', null,
-    `?referred_id=eq.${referredUserId}&expires_at=gte.${now}&select=referrer_id,referral_type`);
-  if (!ref?.length) return;
-
-  const rate = ref[0].referral_type === 'host' ? 0.10 : 0.20;
-  const commission = parseFloat((platformFee * rate).toFixed(2));
-
-  await db('POST', 'referral_earnings', {
-    referrer_id: ref[0].referrer_id,
-    referred_id: referredUserId,
-    service_type: serviceType,
-    gross_amount: grossAmount,
-    platform_fee: platformFee,
-    commission_rate: rate,
-    commission_kes: commission,
-    status: 'confirmed',
-    booking_ref: bookingRef
-  });
-}
-
-/* ── Award points after booking ── */
-async function awardPoints(userId, amountKes, serviceType, bookingRef) {
-  if (serviceType === 'flights') return; // exclude third-party
-  const points = Math.floor(amountKes / 1000) * 10;
-  if (points <= 0) return;
-
-  // Upsert user_points
-  const current = await db('GET', 'user_points', null, `?user_id=eq.${userId}&select=available_points,lifetime_points`);
-  const av = (current?.[0]?.available_points || 0) + points;
-  const lt = (current?.[0]?.lifetime_points || 0) + points;
-
-  if (current?.length) {
-    await db('PATCH', `user_points?user_id=eq.${userId}`, { available_points: av, lifetime_points: lt, updated_at: new Date().toISOString() });
-  } else {
-    await db('POST', 'user_points', { user_id: userId, available_points: av, lifetime_points: lt });
+  const result = await rewardsApi('record-referral', { code, referral_type: referralType }, token);
+  if (result.ok && !result.skipped) {
+    localStorage.removeItem('apt_ref_pending');
+    sessionStorage.removeItem('apt_ref');
   }
-
-  await db('POST', 'point_transactions', {
-    user_id: userId, type: 'earn', points,
-    amount_kes: amountKes, service_type: serviceType,
-    booking_ref: bookingRef,
-    description: `Earned ${points} pts from KES ${amountKes.toLocaleString()} spend`
-  });
-
-  return points;
+  return result;
 }
 
-/* ── Redeem points at checkout ── */
-async function redeemPoints(userId, pointsToRedeem, serviceType, bookingRef) {
-  if (serviceType === 'flights') return { success: false, reason: 'Points cannot be used on flights' };
-
-  const current = await db('GET', 'user_points', null, `?user_id=eq.${userId}&select=available_points`);
-  const available = current?.[0]?.available_points || 0;
-  if (available < pointsToRedeem) return { success: false, reason: 'Insufficient points' };
-
-  const newBalance = available - pointsToRedeem;
-  await db('PATCH', `user_points?user_id=eq.${userId}`, { available_points: newBalance, updated_at: new Date().toISOString() });
-  await db('POST', 'point_transactions', {
-    user_id: userId, type: 'redeem', points: -pointsToRedeem,
-    amount_kes: pointsToRedeem, service_type: serviceType,
-    booking_ref: bookingRef,
-    description: `Redeemed ${pointsToRedeem} pts (KES ${pointsToRedeem})`
-  });
-
-  return { success: true, valueKes: pointsToRedeem, newBalance };
+/* ── Redeem points at checkout (via secure API) ── */
+async function redeemPoints(pointsToRedeem, serviceType, bookingRef, token) {
+  return rewardsApi('redeem-points', {
+    points_to_redeem: pointsToRedeem,
+    service_type:     serviceType,
+    booking_ref:      bookingRef,
+  }, token);
 }
 
-/* ── Request withdrawal ── */
-async function requestWithdrawal(userId, amountKes, mpesaNumber) {
-  if (amountKes < 50) return { success: false, reason: 'Minimum withdrawal is KES 50' };
-  const result = await db('POST', 'referral_withdrawals', {
-    user_id: userId, amount_kes: amountKes,
-    mpesa_number: mpesaNumber, status: 'pending'
-  });
-  return result ? { success: true } : { success: false, reason: 'Request failed. Try again.' };
+/* ── Request withdrawal (via secure API) ── */
+async function requestWithdrawal(amountKes, mpesaNumber, token) {
+  return rewardsApi('withdraw', { amount_kes: amountKes, mpesa_number: mpesaNumber }, token);
 }
 
-/* ── Get dashboard stats for current user ── */
-async function getMyStats(userId) {
-  const [earnings, points, referralCount] = await Promise.all([
-    db('GET', 'referral_earnings', null, `?referrer_id=eq.${userId}&status=eq.confirmed&select=commission_kes`),
-    db('GET', 'user_points', null, `?user_id=eq.${userId}&select=available_points,lifetime_points`),
-    db('GET', 'referrals', null, `?referrer_id=eq.${userId}&select=id`)
-  ]);
-
-  const totalEarned = (earnings || []).reduce((s, e) => s + parseFloat(e.commission_kes || 0), 0);
-  return {
-    totalEarnedKes: totalEarned,
-    availablePoints: points?.[0]?.available_points || 0,
-    lifetimePoints: points?.[0]?.lifetime_points || 0,
-    referralCount: referralCount?.length || 0,
-    pointsValueKes: points?.[0]?.available_points || 0
-  };
+/* ── Get dashboard stats (via secure API) ── */
+async function getMyStats(token) {
+  return rewardsApi('stats', {}, token);
 }
 
 /* ════════════════════════════════════════════════════════════════
-   POPUP — shown for guests & first-time signups
-═══════════════════════════════════════════════════════════════════ */
+   POPUP UI
+════════════════════════════════════════════════════════════════ */
 function shouldShowPopup() {
-  // Never on these pages
-  const page = location.pathname.split('/').pop().replace('.html','') || 'index';
-  if (['auth','booking-confirm','add-listing'].includes(page)) return false;
-  // Never show if user is already signed in (they know about referrals)
+  const page = location.pathname.split('/').pop().replace('.html', '') || 'index';
+  if (['auth', 'booking-confirm', 'add-listing'].includes(page)) return false;
   if (_userId) return false;
-  // Only if not already shown this session
   return !sessionStorage.getItem('apt_ref_popup_shown');
 }
 
 function buildPopup(myCode, myStats, isGuest) {
   const refLink = `${SITE_URL}?ref=${myCode || 'YOUR_CODE'}`;
-
-  const popup = document.createElement('div');
-  popup.id = 'apt-ref-popup';
+  const popup   = document.createElement('div');
+  popup.id      = 'apt-ref-popup';
   popup.innerHTML = `
 <style>
 #apt-ref-popup{position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px;animation:refFadeIn .5s cubic-bezier(.22,1,.36,1);}
@@ -223,13 +140,9 @@ function buildPopup(myCode, myStats, isGuest) {
 #apt-ref-bg{position:absolute;inset:0;background:rgba(8,6,20,.88);backdrop-filter:blur(12px);}
 #apt-ref-card{position:relative;z-index:1;width:100%;max-width:680px;max-height:90vh;overflow-y:auto;border-radius:28px;background:linear-gradient(145deg,#0D0B1E 0%,#130D2E 40%,#0A1628 100%);border:1px solid rgba(255,255,255,.08);box-shadow:0 32px 80px rgba(0,0,0,.6),0 0 0 1px rgba(123,47,247,.15),inset 0 1px 0 rgba(255,255,255,.06);animation:refCardUp .55s .1s cubic-bezier(.34,1.56,.64,1) both;}
 @keyframes refCardUp{from{opacity:0;transform:translateY(40px) scale(.96);}to{opacity:1;transform:none;}}
-
-/* Stars */
 #apt-ref-stars{position:absolute;inset:0;border-radius:28px;overflow:hidden;pointer-events:none;}
 .ref-star{position:absolute;border-radius:50%;background:#fff;animation:refTwinkle var(--d,3s) var(--delay,0s) ease-in-out infinite;}
 @keyframes refTwinkle{0%,100%{opacity:.1;transform:scale(1);}50%{opacity:.9;transform:scale(1.4);}}
-
-/* Header */
 .ref-header{padding:32px 32px 0;text-align:center;}
 .ref-badge{display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:6px 14px;border-radius:100px;background:linear-gradient(135deg,rgba(251,191,36,.15),rgba(245,158,11,.08));border:1px solid rgba(251,191,36,.25);color:#FCD34D;margin-bottom:18px;}
 .ref-badge-dot{width:6px;height:6px;border-radius:50%;background:#FCD34D;animation:refPulse 2s ease-in-out infinite;}
@@ -237,11 +150,7 @@ function buildPopup(myCode, myStats, isGuest) {
 .ref-headline{font-family:'Geist','Inter',sans-serif;font-weight:300;font-size:clamp(26px,4vw,40px);line-height:1.1;letter-spacing:-.02em;color:#fff;margin-bottom:8px;}
 .ref-headline strong{font-weight:700;background:linear-gradient(120deg,#FCD34D,#F59E0B,#FBBF24);-webkit-background-clip:text;background-clip:text;color:transparent;}
 .ref-sub{font-size:14px;color:rgba(255,255,255,.55);line-height:1.6;max-width:480px;margin:0 auto 28px;}
-
-/* Divider */
 .ref-divider{height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent);margin:0 32px;}
-
-/* Two cards */
 .ref-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:24px 32px;}
 .ref-card{border-radius:18px;padding:20px;position:relative;overflow:hidden;}
 .ref-card-a{background:linear-gradient(145deg,rgba(123,47,247,.15),rgba(67,97,255,.1));border:1px solid rgba(123,47,247,.25);}
@@ -254,47 +163,36 @@ function buildPopup(myCode, myStats, isGuest) {
 .ref-card-badge{position:absolute;top:12px;right:12px;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:100px;}
 .ref-card-a .ref-card-badge{background:rgba(123,47,247,.2);color:#A78BFA;border:1px solid rgba(123,47,247,.3);}
 .ref-card-b .ref-card-badge{background:rgba(252,211,77,.15);color:#FCD34D;border:1px solid rgba(252,211,77,.25);}
-
-/* Share section */
 .ref-share{padding:0 32px 24px;}
 .ref-share-label{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:10px;}
-.ref-link-box{display:flex;align-items:center;gap:0;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:14px;overflow:hidden;margin-bottom:14px;}
+.ref-link-box{display:flex;align-items:center;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:14px;overflow:hidden;margin-bottom:14px;}
 .ref-link-text{flex:1;padding:12px 16px;font-size:12px;color:rgba(255,255,255,.6);font-family:monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .ref-copy-btn{padding:12px 18px;background:linear-gradient(135deg,#7B2FF7,#4361FF);color:#fff;border:none;font-family:'Inter',sans-serif;font-weight:600;font-size:12px;cursor:pointer;transition:all .2s;white-space:nowrap;}
 .ref-copy-btn:hover{filter:brightness(1.1);}
 .ref-copy-btn.copied{background:linear-gradient(135deg,#059669,#10B981);}
-
-/* Action buttons */
 .ref-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
 .ref-btn-share{padding:12px;border-radius:12px;border:none;font-family:'Inter',sans-serif;font-weight:600;font-size:13px;cursor:pointer;transition:all .25s;display:flex;align-items:center;justify-content:center;gap:8px;}
 .ref-btn-wa{background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;box-shadow:0 4px 14px rgba(37,211,102,.25);}
 .ref-btn-wa:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(37,211,102,.35);}
 .ref-btn-tw{background:linear-gradient(135deg,#1DA1F2,#0EA5E9);color:#fff;box-shadow:0 4px 14px rgba(29,161,242,.25);}
 .ref-btn-tw:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(29,161,242,.35);}
-
-/* Guest CTA */
 .ref-guest-cta{padding:0 32px 28px;text-align:center;}
 .ref-signup-btn{display:block;width:100%;padding:16px;border-radius:16px;background:linear-gradient(135deg,#7B2FF7,#4361FF);color:#fff;border:none;font-family:'Inter',sans-serif;font-weight:700;font-size:15px;cursor:pointer;transition:all .3s;box-shadow:0 8px 24px rgba(123,47,247,.35);letter-spacing:.02em;}
 .ref-signup-btn:hover{transform:translateY(-3px);box-shadow:0 14px 32px rgba(123,47,247,.45);}
 .ref-signin-link{margin-top:10px;font-size:12px;color:rgba(255,255,255,.4);}
 .ref-signin-link a{color:rgba(255,255,255,.7);text-decoration:none;border-bottom:1px solid rgba(255,255,255,.2);}
-
-/* Close */
 .ref-close{position:absolute;top:16px;right:16px;width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:rgba(255,255,255,.5);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;z-index:2;}
 .ref-close:hover{background:rgba(255,255,255,.12);color:#fff;}
-
-/* Stats bar (logged in) */
 .ref-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:16px 32px 0;margin-bottom:4px;}
 .ref-stat{text-align:center;padding:12px 8px;border-radius:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);}
 .ref-stat-val{font-family:'Geist','Inter',sans-serif;font-size:18px;font-weight:600;color:#fff;line-height:1;}
 .ref-stat-lbl{font-size:10px;color:rgba(255,255,255,.4);margin-top:3px;text-transform:uppercase;letter-spacing:.06em;}
-
 @media(max-width:520px){
   #apt-ref-card{border-radius:22px 22px 0 0;position:fixed;bottom:0;left:0;right:0;max-height:85vh;animation:refSlideUp .45s .1s cubic-bezier(.22,1,.36,1) both;}
   @keyframes refSlideUp{from{transform:translateY(100%);}to{transform:none;}}
   .ref-cards,.ref-actions{grid-template-columns:1fr;}
   .ref-header,.ref-share,.ref-guest-cta,.ref-stats{padding-left:20px;padding-right:20px;}
-  .ref-cards,.ref-share .ref-actions{padding-left:20px;padding-right:20px;}
+  .ref-cards{padding-left:20px;padding-right:20px;}
 }
 </style>
 
@@ -311,14 +209,14 @@ function buildPopup(myCode, myStats, isGuest) {
 
   ${!isGuest && myStats ? `
   <div class="ref-stats">
-    <div class="ref-stat"><div class="ref-stat-val">KES ${myStats.totalEarnedKes.toLocaleString()}</div><div class="ref-stat-lbl">Total Earned</div></div>
-    <div class="ref-stat"><div class="ref-stat-val">${myStats.availablePoints}</div><div class="ref-stat-lbl">Your Points</div></div>
-    <div class="ref-stat"><div class="ref-stat-val">${myStats.referralCount}</div><div class="ref-stat-lbl">Referrals</div></div>
+    <div class="ref-stat"><div class="ref-stat-val">KES ${Math.round(myStats.total_earned_kes || 0).toLocaleString()}</div><div class="ref-stat-lbl">Total Earned</div></div>
+    <div class="ref-stat"><div class="ref-stat-val">${(myStats.available_points || 0).toLocaleString()}</div><div class="ref-stat-lbl">Your Points</div></div>
+    <div class="ref-stat"><div class="ref-stat-val">${myStats.referral_count || 0}</div><div class="ref-stat-lbl">Referrals</div></div>
   </div>` : ''}
 
   <div class="ref-divider"></div>
 
-  <div class="ref-cards" style="grid-template-columns:1fr 1fr;">
+  <div class="ref-cards">
     <div class="ref-card ref-card-a">
       <span class="ref-card-badge">Guest referral</span>
       <div class="ref-card-icon">🧳</div>
@@ -367,7 +265,6 @@ function buildPopup(myCode, myStats, isGuest) {
   </div>`}
 </div>`;
 
-  // Animate stars
   const starsEl = popup.querySelector('#apt-ref-stars');
   for (let i = 0; i < 40; i++) {
     const s = document.createElement('span');
@@ -376,11 +273,9 @@ function buildPopup(myCode, myStats, isGuest) {
     s.style.cssText = `width:${size}px;height:${size}px;top:${Math.random()*100}%;left:${Math.random()*100}%;--d:${2+Math.random()*4}s;--delay:${Math.random()*4}s;`;
     starsEl.appendChild(s);
   }
-
   return popup;
 }
 
-/* ── Floating referral trigger button ── */
 function buildFloatingTrigger() {
   const el = document.createElement('div');
   el.id = 'apt-ref-trigger';
@@ -397,7 +292,7 @@ function buildFloatingTrigger() {
 .ref-tab-pulse{position:absolute;top:8px;right:8px;width:7px;height:7px;border-radius:50%;background:#FCD34D;box-shadow:0 0 0 0 rgba(252,211,77,.4);animation:refDotPulse 2s ease-in-out infinite;}
 @keyframes refDotPulse{0%{box-shadow:0 0 0 0 rgba(252,211,77,.5);}70%{box-shadow:0 0 0 6px rgba(252,211,77,0);}100%{box-shadow:0 0 0 0 rgba(252,211,77,0);}}
 @media(max-width:700px){
-  #apt-ref-trigger{top:68px;right:0;}
+  #apt-ref-trigger{top:68px;}
   .ref-tab{border-radius:10px 0 0 10px;writing-mode:horizontal-tb;flex-direction:row;padding:9px 12px 9px 10px;}
   .ref-tab-coin{animation:none;font-size:16px;}
   .ref-tab-text{font-size:9px;}
@@ -413,82 +308,68 @@ function buildFloatingTrigger() {
   return el;
 }
 
-/* ── Public API ── */
-let _popup = null;
+/* ── Public state ── */
+let _popup  = null;
 let _myCode = null;
 let _myStats = null;
-let _userId = null;
+let _userId  = null;
+let _token   = null;
 
 async function init() {
-  // Capture ref code from URL
   captureRefCode();
 
-  // Get current user if any
   try {
     if (typeof supabase !== 'undefined' && supabase.createClient) {
       const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
       const { data: { session } } = await sb.auth.getSession();
       if (session?.user) {
         _userId = session.user.id;
+        _token  = session.access_token;
         localStorage.setItem('apt_uid', _userId);
         const meta = session.user.user_metadata || {};
         const firstName = meta.first_name || meta.given_name || meta.name?.split(' ')[0] || 'User';
-        _myCode = await getMyCode(_userId, firstName);
-        _myStats = await getMyStats(_userId);
+        _myCode  = await getMyCode(_userId, firstName);
+        _myStats = await getMyStats(_token);
       }
     }
-  } catch(e) {}
+  } catch (e) { /* non-fatal */ }
 
   const isGuest = !_userId;
-  const page = location.pathname.split('/').pop().replace('.html','') || 'index';
+  const page    = location.pathname.split('/').pop().replace('.html', '') || 'index';
 
-  // Don't show on auth page or booking funnel
-  if (['auth','booking-confirm','add-listing'].includes(page)) return;
+  if (['auth', 'booking-confirm', 'add-listing'].includes(page)) return;
 
-  // Floating trigger on dashboard for ALL users — guests and signed-in alike
   if (page === 'dashboard' && !document.getElementById('apt-ref-trigger')) {
     document.body.appendChild(buildFloatingTrigger());
   }
 
-  // Show popup ONLY for guests who haven't seen it this session
-  // Signed-in users already know about referrals — never interrupt them
   if (isGuest && shouldShowPopup()) {
-    // Only auto-show on homepage or dashboard, with a delay
-    // 60s — long enough that the visitor has actually looked around.
-    // Anything sooner lands while they're still reading the hero.
-    if(page === 'index' || page === '') setTimeout(() => openPopup(), 60000);
-    else if(page === 'dashboard') setTimeout(() => openPopup(), 60000);
+    if (page === 'index' || page === '' || page === 'dashboard') {
+      setTimeout(() => openPopup(), 60_000);
+    }
   }
 }
 
 function openPopup() {
   if (_popup) return;
-  const isGuest = !_userId;
-  _popup = buildPopup(_myCode, _myStats, isGuest);
+  _popup = buildPopup(_myCode, _myStats, !_userId);
   document.body.appendChild(_popup);
   document.body.style.overflow = 'hidden';
   sessionStorage.setItem('apt_ref_popup_shown', '1');
-  localStorage.removeItem('apt_show_ref_popup');
-  localStorage.removeItem('apt_popup_after'); // clear countdown so it doesn't repeat
 }
 
 function closePopup() {
   if (!_popup) return;
-  _popup.style.opacity = '0';
+  _popup.style.opacity    = '0';
   _popup.style.transition = 'opacity .3s';
-  setTimeout(() => {
-    _popup?.remove();
-    _popup = null;
-    document.body.style.overflow = '';
-  }, 300);
+  setTimeout(() => { _popup?.remove(); _popup = null; document.body.style.overflow = ''; }, 300);
 }
 
 function copyLink() {
   const link = `${SITE_URL}?ref=${_myCode}`;
   navigator.clipboard?.writeText(link).catch(() => {
     const el = document.createElement('textarea');
-    el.value = link; document.body.appendChild(el);
-    el.select(); document.execCommand('copy'); el.remove();
+    el.value = link; document.body.appendChild(el); el.select(); document.execCommand('copy'); el.remove();
   });
   const btn = document.getElementById('apt-copy-btn');
   if (btn) { btn.textContent = '✓ Copied!'; btn.classList.add('copied'); setTimeout(() => { btn.textContent = 'Copy link'; btn.classList.remove('copied'); }, 2500); }
@@ -506,13 +387,17 @@ function shareTwitter() {
 
 window.AptReferral = {
   init, openPopup, closePopup, copyLink, shareWA, shareTwitter,
-  getMyCode: () => _myCode,
-  getMyStats: () => _myStats,
-  awardPoints, awardReferralCommission, redeemPoints, requestWithdrawal,
-  recordReferral, getMyStats
+  getMyCode:         () => _myCode,
+  getMyStats:        () => _myStats,
+  getUserId:         () => _userId,
+  getToken:          () => _token,
+  /* Secure wrappers — pass token automatically */
+  recordReferral:    (type)                      => recordReferral(_userId, _token, type),
+  redeemPoints:      (pts, svc, ref)             => redeemPoints(pts, svc, ref, _token),
+  requestWithdrawal: (amt, mpesa)                => requestWithdrawal(amt, mpesa, _token),
+  refreshStats:      ()                          => getMyStats(_token).then(s => { _myStats = s; return s; }),
 };
 
-// Auto-init
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', init);
 } else {
@@ -520,4 +405,3 @@ if (document.readyState === 'loading') {
 }
 
 })();
-

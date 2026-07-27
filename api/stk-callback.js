@@ -131,6 +131,36 @@ export default async function handler(req, res) {
       }).catch(e => console.warn('[notif] push failed (non-fatal):', e.message));
     }
 
+    /* ── Rewards: points + referral commission ───────────────────────
+       Called for ALL service types (stays, tours, events) on success.
+       api/rewards.js uses the service-role key, is idempotent via
+       booking_ref unique constraints, and never throws in a way that
+       would make PayHero retry this callback.                         */
+    if (isSuccess && rows[0]?.guest_id) {
+      const b           = rows[0];
+      const serviceType = table === 'apartment_bookings' ? 'stays'
+                        : table === 'tour_bookings'      ? 'tours'
+                        : 'events';
+      const grossAmount = Number(b.grand_total || b.total_amount || b.amount || 0);
+
+      fetch(`${siteOrigin(req)}/api/rewards`, {
+        method: 'POST',
+        headers: {
+          'Content-Type':      'application/json',
+          'x-internal-secret': process.env.INTERNAL_API_SECRET || '',
+        },
+        body: JSON.stringify({
+          action:       'award',
+          booking_ref:  externalReference,
+          guest_id:     b.guest_id,
+          service_type: serviceType,
+          gross_amount: grossAmount,
+        }),
+      }).then(r => r.json())
+        .then(j => console.log('[rewards] award:', j))
+        .catch(e => console.warn('[rewards] award failed (non-fatal):', e.message));
+    }
+
     /* ── Agent attribution ────────────────────────────────────────────
        Money has actually moved. Only now does a referral convert.
        Doing this at booking creation would pay commission on abandoned
