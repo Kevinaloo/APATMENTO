@@ -2515,7 +2515,7 @@ async function loadNativeListings() {
   try {
     const { data } = await sb.from('listings')
       .select('id,title,location,city,price_night,beds,baths,max_guests,amenities,description,avg_rating,review_count,booking_count,days_listed,internal_score,status,photos,type,property_type,area,partner_id')
-      .eq('status', 'active')
+      .eq('is_active', true)
       .order('internal_score', { ascending: false })
       .limit(50);
     if (!data?.length) return [];
