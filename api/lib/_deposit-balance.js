@@ -15,7 +15,7 @@
      4. We read the booking, check balance_paid, done.
 ══════════════════════════════════════════════════════════════ */
 
-import { one, update, whoami, notify, cors } from './_db.js';
+import { one, update, whoami, notify, cors } from './lib/_db.js';
 
 const money = (n) => 'KES ' + Number(n || 0).toLocaleString();
 

@@ -13,7 +13,7 @@
    Actions: offer | accept | decline
 ══════════════════════════════════════════════════════════════ */
 
-import { select, one, insert, update, rpc, whoami, notify, cors } from './_db.js';
+import { select, one, insert, update, rpc, whoami, notify, cors } from './lib/_db.js';
 
 const COMMISSION_RATE = 0.30;
 const OFFER_TTL_HOURS = 6;

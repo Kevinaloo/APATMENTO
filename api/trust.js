@@ -20,12 +20,12 @@
      /api/check-payment-status → /api/trust?action=check-payment-status
 ══════════════════════════════════════════════════════════════ */
 
-import matchGuest         from './_match-guest.js';
-import checkinIssue       from './_checkin-issue.js';
-import depositBalance     from './_deposit-balance.js';
-import verifyCheckin      from './_verify-checkin.js';
-import checkPaymentStatus from './_check-payment-status.js';
-import askApa           from './_ask-apa.js';
+import matchGuest         from './lib/_match-guest.js';
+import checkinIssue       from './lib/_checkin-issue.js';
+import depositBalance     from './lib/_deposit-balance.js';
+import verifyCheckin      from './lib/_verify-checkin.js';
+import checkPaymentStatus from './lib/_check-payment-status.js';
+import askApa           from './lib/_ask-apa.js';
 
 const ROUTES = {
   'match-guest':          matchGuest,

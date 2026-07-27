@@ -18,7 +18,7 @@
    settles; money is slower than a person with luggage.
 ══════════════════════════════════════════════════════════════ */
 
-import { select, one, insert, update, rpc, whoami, notify, cors } from './_db.js';
+import { select, one, insert, update, rpc, whoami, notify, cors } from './lib/_db.js';
 
 const money = (n) => 'KES ' + Number(n || 0).toLocaleString();
 const RESCUE_BASE = 150, RESCUE_PER_KM = 60;
