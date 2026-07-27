@@ -1455,7 +1455,7 @@ img,video,svg{max-width:100%;}
       <div class="sf-col-head">For partners</div>
       <a href="/become-partner.html">List your property</a>
       <a href="/become-agent.html">Become an agent</a>
-      <a href="/add-listing.html">Add a listing</a>
+      <a href="/partner-listings.html">Add a listing</a>
       <a href="/partner-listings.html">Partner dashboard</a>
     </div>
 
@@ -2296,11 +2296,11 @@ async function loadDashboardHero() {
 <script>
 /* ════ PARTNER FLOW — Iridescent Glass ════ */
 const PARTNER_SERVICES = {
-  apartment: { name:'Spaces',         sub:'Apartments, villas & short stays', dest:'add-listing.html?type=apartment', manage:'partner-listings.html?type=apartment', ico:'<svg class="ob-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/><path d="M9 20v-5a3 3 0 0 1 6 0v5"/></svg>', grad:'linear-gradient(135deg,#B8A4F4,#7B2FF7)' },
-  tour:      { name:'Tours & Safaris', sub:'Day trips & safari experiences', dest:'add-listing.html?type=tour',      manage:'partner-listings.html?type=tour',      ico:'<svg class="ob-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m15 5.5-6-2-6 2.5v13l6-2.5 6 2 6-2.5v-13z"/><path d="M9 3.5v13M15 7.5v13"/></svg>', grad:'linear-gradient(135deg,#5EEAD4,#4361FF)' },
-  event:     { name:'Events',          sub:'Concerts, shows & festivals',    dest:'add-listing.html?type=event',     manage:'partner-listings.html?type=event',     ico:'<svg class="ob-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9a2 2 0 0 0 0 6v2a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-2a2 2 0 0 0 0-6V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1z"/><path d="M14 6v12" stroke-dasharray="2 2.5"/></svg>', grad:'linear-gradient(135deg,#7B2FF7,#B8A4F4)' },
-  carhire:   { name:'Car Hire',        sub:'Self-drive & chauffeur hire',    dest:'add-listing.html?type=carhire',   manage:'partner-listings.html?type=carhire',   ico:'<svg class="ob-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13h14l-1.5-5a2 2 0 0 0-2-1.5h-7a2 2 0 0 0-2 1.5z"/><path d="M4 13h16v4H4z"/><circle cx="7.5" cy="17.5" r="1.5"/><circle cx="16.5" cy="17.5" r="1.5"/></svg>', grad:'linear-gradient(135deg,#2DD4BF,#5EEAD4)' },
-  roommate:  { name:'Roommates',       sub:'List a room or shared space',    dest:'add-listing.html?type=roommate',  manage:'partner-listings.html?type=roommate',  ico:'<svg class="ob-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>', grad:'linear-gradient(135deg,#2DD4BF,#0D9488)' },
+  apartment: { name:'Spaces',         sub:'Apartments, villas & short stays', dest:'partner-listings.html', manage:'partner-listings.html?type=apartment', ico:'<svg class="ob-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/><path d="M9 20v-5a3 3 0 0 1 6 0v5"/></svg>', grad:'linear-gradient(135deg,#B8A4F4,#7B2FF7)' },
+  tour:      { name:'Tours & Safaris', sub:'Day trips & safari experiences', dest:'partner-listings.html',      manage:'partner-listings.html?type=tour',      ico:'<svg class="ob-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m15 5.5-6-2-6 2.5v13l6-2.5 6 2 6-2.5v-13z"/><path d="M9 3.5v13M15 7.5v13"/></svg>', grad:'linear-gradient(135deg,#5EEAD4,#4361FF)' },
+  event:     { name:'Events',          sub:'Concerts, shows & festivals',    dest:'partner-listings.html',     manage:'partner-listings.html?type=event',     ico:'<svg class="ob-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9a2 2 0 0 0 0 6v2a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-2a2 2 0 0 0 0-6V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1z"/><path d="M14 6v12" stroke-dasharray="2 2.5"/></svg>', grad:'linear-gradient(135deg,#7B2FF7,#B8A4F4)' },
+  carhire:   { name:'Car Hire',        sub:'Self-drive & chauffeur hire',    dest:'partner-listings.html',   manage:'partner-listings.html?type=carhire',   ico:'<svg class="ob-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13h14l-1.5-5a2 2 0 0 0-2-1.5h-7a2 2 0 0 0-2 1.5z"/><path d="M4 13h16v4H4z"/><circle cx="7.5" cy="17.5" r="1.5"/><circle cx="16.5" cy="17.5" r="1.5"/></svg>', grad:'linear-gradient(135deg,#2DD4BF,#5EEAD4)' },
+  roommate:  { name:'Roommates',       sub:'List a room or shared space',    dest:'partner-listings.html',  manage:'partner-listings.html?type=roommate',  ico:'<svg class="ob-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>', grad:'linear-gradient(135deg,#2DD4BF,#0D9488)' },
 };
 let partnerServices = [];
 let selectedServiceType = null;
@@ -2347,7 +2347,7 @@ async function initPartnerFlow(){
   // No listings yet — always go to add-listing. No onboarding screen here.
   if(!partnerServices.length){
     window.__addServiceIntent = false;
-    window.location.replace('add-listing.html?back=1');
+    window.location.replace('partner-listings.html');
     return;
   }
   else if(partnerServices.length===1) renderSingleDashboard(partnerServices[0]);
@@ -2419,7 +2419,7 @@ async function renderSingleDashboard(listing){
       </div>
       <div class="section-head"><h2 class="section-title">Quick actions</h2></div>
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;margin-bottom:36px;">
-        ${actionBtn('Add listing','add-listing.html?type='+type+'&back=1','M12 5v14M5 12h14')}
+        ${actionBtn('Add listing','partner-listings.html','M12 5v14M5 12h14')}
         ${actionBtn('Bookings','partner-bookings.html?back=1','M8 2v4M16 2v4M3 10h18')}
         ${actionBtn('Earnings','partner-earnings.html?back=1','M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6')}
         ${actionBtn('Calendar','partner-calendar.html?back=1','M8 2v4M16 2v4M3 10h18')}
