@@ -2547,30 +2547,16 @@ async function loadNativeListings() {
 }
 
 /* ── Main init ── */
-/* ── Sample listings — shown while Supabase loads or if no active listings yet ── */
-const SAMPLE_LISTINGS = [
-  { id:'s1', name:'Kilimani Studio', location:'Kilimani, Nairobi, Kenya', city:'Nairobi', neighbourhood:'Kilimani', type:'Apartment', beds:0, baths:1, maxGuests:2, price:3500, rating:4.8, reviews:12, hot:true, amenities:['\uD83D\uDCF6 WiFi','\u2744\uFE0F Air Con','\uD83C\uDF73 Kitchen','\uD83D\uDD12 Security'], desc:'A stylish studio in the heart of Kilimani. Perfect for solo travellers or couples.', host:'Apatmento Partner', hostInit:'A', grad:'linear-gradient(135deg,#B8A4F4,#7B2FF7)', photos:[], source:'sample' },
-  { id:'s2', name:'Westlands 1BR Apartment', location:'Westlands, Nairobi, Kenya', city:'Nairobi', neighbourhood:'Westlands', type:'Apartment', beds:1, baths:1, maxGuests:3, price:5500, rating:4.9, reviews:27, hot:true, amenities:['\uD83D\uDCF6 WiFi','\uD83C\uDD7F\uFE0F Parking','\u2744\uFE0F Air Con','\uD83C\uDF73 Kitchen','\uD83D\uDCAA Gym'], desc:'Modern 1-bedroom in Westlands with city views. Close to restaurants and nightlife.', host:'Apatmento Partner', hostInit:'W', grad:'linear-gradient(135deg,#4361FF,#B8A4F4)', photos:[], source:'sample' },
-  { id:'s3', name:'Karen Ridgeline Home', location:'Karen, Nairobi, Kenya', city:'Nairobi', neighbourhood:'Karen', type:'Home', beds:3, baths:2, maxGuests:6, price:14000, rating:4.7, reviews:8, hot:false, amenities:['\uD83D\uDCF6 WiFi','\uD83C\uDD7F\uFE0F Parking','\uD83C\uDFCA Pool','\uD83C\uDF73 Kitchen','\uD83D\uDD12 Security'], desc:'Spacious 3-bedroom home in quiet Karen. Large garden, private parking and pool access.', host:'Apatmento Partner', hostInit:'K', grad:'linear-gradient(135deg,#2DD4BF,#4361FF)', photos:[], source:'sample' },
-  { id:'s4', name:'Diani Beach Cottage', location:'Diani, Mombasa, Kenya', city:'Mombasa', neighbourhood:'Diani', type:'Home', beds:2, baths:1, maxGuests:4, price:8000, rating:4.9, reviews:34, hot:true, amenities:['\uD83D\uDCF6 WiFi','\uD83C\uDFCA Pool','\uD83C\uDF73 Kitchen','\uD83C\uDF0A Beach access'], desc:'Steps from Diani Beach. Wake up to ocean breezes in this charming 2-bedroom cottage.', host:'Apatmento Partner', hostInit:'D', grad:'linear-gradient(135deg,#F5B12E,#FF6A3C)', photos:[], source:'sample' },
-];
+
 
 async function loadListings() {
   updateBanner('loading');
 
-  // Show samples immediately — page is never blank
-  currentListings = [...SAMPLE_LISTINGS];
-  applyAndRender();
-
-  // Fetch real listings from Supabase
+  // Fetch real listings from Supabase only
   const native = await loadNativeListings();
   nativeCount = native.length;
+  currentListings = [...native];
 
-  if (native.length > 0) {
-    // Real listings replace samples
-    currentListings = [...native];
-  }
-  // If Supabase returns nothing, samples remain — page stays alive
   applyAndRender();
   updateBanner('ready');
 }
