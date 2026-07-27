@@ -2511,14 +2511,24 @@ function injectPhoto(id, url) {
 
 /* ── Load native partner listings from Supabase ── */
 async function loadNativeListings() {
-  if (!sb) return [];
+  // Wait up to 3s for supabase SDK to initialise if not ready yet
+  if (!sb) {
+    for (let i = 0; i < 30; i++) {
+      await new Promise(r => setTimeout(r, 100));
+      if (window.sb) { sb = window.sb; break; }
+      try { const { createClient } = supabase; sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY); window.sb = sb; break; } catch(e) {}
+    }
+  }
+  if (!sb) { console.warn('[listings] Supabase not ready'); return []; }
   try {
-    const { data } = await sb.from('listings')
+    const { data, error } = await sb.from('listings')
       .select('id,title,location,city,price_night,beds,baths,max_guests,amenities,description,avg_rating,review_count,booking_count,days_listed,internal_score,status,photos,type,property_type,area,partner_id')
       .eq('is_active', true)
       .order('internal_score', { ascending: false })
       .limit(50);
-    if (!data?.length) return [];
+    if (error) { console.warn('[listings] Supabase error:', error.message); return []; }
+    if (!data?.length) { console.log('[listings] No active listings returned'); return []; }
+    console.log('[listings] Loaded', data.length, 'listings');
     return data.map(l => ({
       id: `n_${l.id}`,
       _dbId: l.id,
@@ -2527,10 +2537,11 @@ async function loadNativeListings() {
       city: l.city || 'Nairobi',
       neighbourhood: l.area || l.location || '',
       type: l.property_type || l.type || 'Apartment',
-      beds: parseInt(l.beds)||1, baths: parseInt(l.baths)||1,
+      beds: parseInt(l.beds) || parseInt(l.bedrooms) || 1,
+      baths: parseInt(l.baths) || parseInt(l.bathrooms) || 1,
       sqm: l.sqm || 60, floor: 0,
       maxGuests: l.max_guests || 2,
-      price: l.price_night || 0,
+      price: l.price_night || l.price_per_night || 0,
       rating: l.avg_rating || 0, reviews: l.review_count || 0,
       bookings: l.booking_count || 0, daysListed: l.days_listed || 1,
       hot: (l.internal_score || 0) > 60,
@@ -2540,10 +2551,10 @@ async function loadNativeListings() {
       hostId: l.partner_id || null,
       query: 'luxury apartment interior nairobi',
       grad: 'linear-gradient(135deg,#B8A4F4,#7B2FF7)',
-      source: 'native',   // ← priority flag
+      source: 'native',
       photos: l.photos || [],
     }));
-  } catch(e) { return []; }
+  } catch(e) { console.warn('[listings] Exception:', e.message); return []; }
 }
 
 /* ── Main init ── */
