@@ -22,7 +22,7 @@
 
   /* ── Config ──────────────────────────────────────────────────────── */
   var API_ENDPOINT  = '/api/ask-apa';
-  var MAX_HISTORY   = 14;
+  var MAX_HISTORY   = 8;
   var VOICE_RATE    = 1.04;
   var VOICE_PITCH   = 1.0;
   var NAV_DELAY_MS  = 1500; // ms to show APA's message before navigating
