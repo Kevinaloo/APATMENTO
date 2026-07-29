@@ -428,7 +428,7 @@ export default async function handler(req, res) {
 
   const [ads] = await Promise.all([adsPromise]);
   const sys = await systemPrompt(curPage, userCtx, ads);
-  const payload = { messages: [{ role: 'system', content: sys }, ...clean], max_tokens: 380, temperature: 0.72, stream: false };
+  const payload = { messages: [{ role: 'system', content: sys }, ...clean], max_tokens: 550, temperature: 0.72, stream: false };
 
   const GROQ_KEY = process.env.GROQ_API_KEY;
   if (!GROQ_KEY) {
@@ -446,7 +446,11 @@ export default async function handler(req, res) {
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${GROQ_KEY}` },
           body: JSON.stringify({ ...payload, model }),
         }), GROQ_CALL_TIMEOUT);
-        if (groq.ok) { data = await groq.json(); break; }
+        if (groq.ok) {
+          data = await groq.json();
+          console.log('[ask-apa] model used:', model);
+          break;
+        }
         lastStatus = groq.status;
         lastErr = (await groq.text()).slice(0, 300);
         console.error(`[ask-apa] Groq ${model} error:`, groq.status, lastErr);
