@@ -2012,7 +2012,7 @@ document.querySelectorAll('.svc-tile').forEach((t,i)=>{t.style.transitionDelay=(
   async function loadStays() {
     try {
       const r = await fetch(
-        `${SUPA}/rest/v1/listings?status=eq.active&select=title,photos,price_night,location&order=internal_score.desc&limit=8`,
+        `${SUPA}/rest/v1/listings?is_active=eq.true&select=title,photos,price_night,location&order=created_at.desc&limit=8`,
         { headers: H }
       );
       if (!r.ok) return;

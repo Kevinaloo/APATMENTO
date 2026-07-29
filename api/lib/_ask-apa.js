@@ -16,10 +16,11 @@ import { select, cors } from './lib/_db.js';
 
 const GROQ_API    = 'https://api.groq.com/openai/v1/chat/completions';
 const GROQ_MODELS = [
-  'openai/gpt-oss-120b',        // primary   — replaces llama-3.3-70b-versatile (deprecated Jul 2025)
-  'openai/gpt-oss-20b',         // fallback 1 — fast, high quality
-  'meta-llama/llama-4-scout-17b-16e-instruct', // fallback 2 — Llama 4, still active
+  'openai/gpt-oss-20b',         // primary   — fast, reliable, lower TPM cost
+  'openai/gpt-oss-120b',        // fallback 1 — higher quality if 20b fails
+  'qwen/qwen3.6-27b',           // fallback 2 — active as of Jul 2026
 ];
+const GROQ_CALL_TIMEOUT = 12000; // 12s per model attempt
 
 /* ── Rate limiter ────────────────────────────────────────────── */
 const RATE = new Map();
@@ -67,14 +68,22 @@ function filterOutput(text) {
    We pull every active record once and bucket by type so APA knows
    exactly what exists right now — nothing more, nothing less.
 ─────────────────────────────────────────────────────────────── */
+/* ── Timeout wrapper — never let DB hang the whole request ───── */
+function withTimeout(promise, ms = 5000) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms)),
+  ]);
+}
+
 async function liveContext() {
   try {
-    const all = await select('listings',
+    const all = await withTimeout(select('listings',
       'is_active=eq.true&select=title,type,city,area,price,price_night,beds,max_guests&order=created_at.desc&limit=200'
-    );
+    ), 5000);
 
     if (!all || !all.length) {
-      return `\n\nLIVE INVENTORY: The platform currently has no active listings of any kind. Be honest with guests — tell them the platform is growing and check back soon. Do NOT navigate to any category page or suggest booking anything.\n`;
+      return `\n\nLIVE INVENTORY: No active listings found right now (could be a data sync delay). You MAY still navigate guests to category pages — just don't promise specific listings or prices until they browse. Be warm and helpful.\n`;
     }
 
     // Bucket by type
@@ -149,15 +158,16 @@ async function liveContext() {
     return out;
   } catch (e) {
     console.error('[liveContext]', e.message);
-    return '';
+    // DB timeout or error — don't block APA, let it navigate normally
+    return `\n\nLIVE INVENTORY: Inventory data temporarily unavailable (${e.message}). Navigate guests to category pages as normal — the browsing pages will show real listings.\n`;
   }
 }
 
 /* ── Live shadow ads eligible for APA injection ─────────────── */
 async function liveAds(userArea) {
   try {
-    const ads = await select('shadow_ads',
-      'active=eq.true&status=eq.live&apa_enabled=eq.true&select=id,advertiser,headline,sub_text,apa_message,areas,surfaces,keywords,priority,weight&order=priority.desc&limit=20');
+    const ads = await withTimeout(select('shadow_ads',
+      'active=eq.true&status=eq.live&apa_enabled=eq.true&select=id,advertiser,headline,sub_text,apa_message,areas,surfaces,keywords,priority,weight&order=priority.desc&limit=20'), 4000);
     if (!ads || !ads.length) return [];
     const now = new Date();
     return ads.filter(ad => {
@@ -472,16 +482,22 @@ export default async function handler(req, res) {
   try {
     let data = null, lastStatus = 0, lastErr = '';
     for (const model of GROQ_MODELS) {
-      const groq = await fetch(GROQ_API, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${GROQ_KEY}` },
-        body: JSON.stringify({ ...payload, model }),
-      });
-      if (groq.ok) { data = await groq.json(); break; }
-      lastStatus = groq.status;
-      lastErr = (await groq.text()).slice(0, 300);
-      console.error(`[ask-apa] Groq ${model} error:`, groq.status, lastErr);
-      if (groq.status === 401 || groq.status === 403) break;
+      try {
+        const groq = await withTimeout(fetch(GROQ_API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${GROQ_KEY}` },
+          body: JSON.stringify({ ...payload, model }),
+        }), GROQ_CALL_TIMEOUT);
+        if (groq.ok) { data = await groq.json(); break; }
+        lastStatus = groq.status;
+        lastErr = (await groq.text()).slice(0, 300);
+        console.error(`[ask-apa] Groq ${model} error:`, groq.status, lastErr);
+        if (groq.status === 401 || groq.status === 403) break;
+      } catch (callErr) {
+        console.error(`[ask-apa] Groq ${model} timeout/network:`, callErr.message);
+        lastErr = callErr.message;
+        // continue to next model
+      }
     }
 
     if (!data) {
