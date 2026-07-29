@@ -876,297 +876,204 @@ img,video,svg{max-width:100%;}
 @keyframes pill-pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.55;transform:scale(.78);}}
 
 /* greeting wrapper needs relative positioning for pill anchor */
-.greeting{position:relative;}
+.greeting{position:relative;overflow:visible;}
 
-/* ═══════════════════════════════════════════════════════════════════
-   LIQUID GLASS DANCING CLOCK  — Cabana Live Clock v1.0
-   A world-first: kinetic typographic clock fused into liquid glass,
-   alive and breathing alongside the time-of-day greeting.
-   ═══════════════════════════════════════════════════════════════════ */
-
-/* Greeting row: flex so clock sits beside the text */
-.greeting-row {
+/* ═══════════════════════════════════════════════════════════════
+   GHOST CLOCK v2 — Background canvas digits, no card, no layout change
+   Pure visual energy floating behind the greeting text on the right.
+   Each digit is independent, alive, dancing on its own rhythm.
+   ═══════════════════════════════════════════════════════════════ */
+#gclk {
+  position: absolute;
+  top: 50%;
+  right: -8px;
+  transform: translateY(-50%);
   display: flex;
-  align-items: flex-start;
-  gap: 24px;
-  flex-wrap: wrap;
-}
-.greeting-text { flex: 1 1 280px; min-width: 0; }
-
-/* THE GLASS CLOCK CONTAINER */
-.lc-wrap {
-  flex-shrink: 0;
-  position: relative;
-  width: 172px;
-  align-self: center;
-}
-
-/* Glass pill */
-.lc-glass {
-  position: relative;
-  border-radius: 24px;
-  padding: 18px 20px 14px;
-  background: rgba(255,255,255,0.13);
-  backdrop-filter: blur(24px) saturate(1.8) brightness(1.08);
-  -webkit-backdrop-filter: blur(24px) saturate(1.8) brightness(1.08);
-  border: 1.5px solid rgba(255,255,255,0.32);
-  box-shadow:
-    0 8px 32px rgba(120,80,255,0.13),
-    0 2px 8px rgba(0,0,0,0.07),
-    inset 0 1px 0 rgba(255,255,255,0.45),
-    inset 0 -1px 0 rgba(120,80,255,0.10);
-  overflow: hidden;
-  transition: box-shadow 0.4s ease, transform 0.4s ease;
-  cursor: default;
+  align-items: center;
+  gap: 0px;
+  pointer-events: none;
+  z-index: 0;        /* behind the text */
   user-select: none;
 }
-.lc-glass:hover {
-  box-shadow:
-    0 16px 48px rgba(120,80,255,0.22),
-    0 4px 12px rgba(0,0,0,0.10),
-    inset 0 1px 0 rgba(255,255,255,0.55),
-    inset 0 -1px 0 rgba(120,80,255,0.18);
-  transform: translateY(-2px) scale(1.015);
-}
 
-/* Animated gradient shimmer inside glass */
-.lc-glass::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 24px;
-  background: linear-gradient(
-    135deg,
-    rgba(184,164,244,0.18) 0%,
-    rgba(100,200,255,0.08) 40%,
-    rgba(255,180,100,0.06) 70%,
-    rgba(184,164,244,0.12) 100%
-  );
-  animation: lc-shimmer 6s ease-in-out infinite;
-  pointer-events: none;
-}
-@keyframes lc-shimmer {
-  0%,100% { opacity: 1; }
-  50% { opacity: 0.55; }
-}
-
-/* Orb glow behind the digits */
-.lc-glow {
-  position: absolute;
-  inset: -20px;
-  border-radius: 50%;
-  background: radial-gradient(ellipse at 50% 50%, rgba(120,80,255,0.22) 0%, transparent 70%);
-  animation: lc-pulse 3s ease-in-out infinite;
-  pointer-events: none;
-  z-index: 0;
-}
-@keyframes lc-pulse {
-  0%,100% { opacity: 0.7; transform: scale(1); }
-  50%      { opacity: 1;   transform: scale(1.12); }
-}
-
-/* DIGIT GROUP — hours, colon, minutes */
-.lc-digits {
+/* Each digit is its own living entity */
+.gd {
   position: relative;
-  z-index: 1;
   display: flex;
   align-items: center;
-  gap: 2px;
   justify-content: center;
+  width: 52px;
+  height: 72px;
+  overflow: visible;
+}
+
+/* The digit character */
+.gd-char {
+  font-family: var(--font-display, 'Geist', 'Inter', sans-serif);
+  font-weight: 900;
+  font-size: clamp(52px, 7vw, 72px);
   line-height: 1;
-}
-
-/* Individual digit cells */
-.lc-d {
-  position: relative;
-  overflow: hidden;
-  height: 52px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.lc-d span {
-  display: block;
-  font-family: var(--font-display, 'Playfair Display', Georgia, serif);
-  font-weight: 700;
-  font-size: 42px;
-  letter-spacing: -0.03em;
-  background: linear-gradient(135deg, #7c3aed 0%, #3b82f6 50%, #06b6d4 100%);
+  letter-spacing: -0.04em;
+  /* Liquid glass text effect */
+  background: linear-gradient(
+    160deg,
+    rgba(123, 47, 247, 0.22) 0%,
+    rgba(67, 97, 255, 0.18) 35%,
+    rgba(94, 234, 212, 0.15) 65%,
+    rgba(184, 164, 244, 0.20) 100%
+  );
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  text-shadow: none;
-  transform-origin: center bottom;
-  will-change: transform, opacity;
+  /* Soft glow on the digit itself */
+  filter: drop-shadow(0 0 18px rgba(123,47,247,0.18)) drop-shadow(0 0 6px rgba(67,97,255,0.12));
+  will-change: transform, filter;
+  display: block;
+  transition: filter 0.6s ease;
 }
 
-/* Colon */
-.lc-colon {
+/* Colon between H and M */
+.gclk-colon {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 8px;
   align-items: center;
   justify-content: center;
-  height: 52px;
-  padding-bottom: 4px;
+  height: 72px;
+  width: 18px;
+  padding-bottom: 6px;
+  pointer-events: none;
 }
-.lc-colon-dot {
+.gclk-dot {
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #7c3aed, #3b82f6);
-  animation: lc-blink 1s ease-in-out infinite;
-  box-shadow: 0 0 6px rgba(120,80,255,0.5);
+  background: rgba(123, 47, 247, 0.25);
+  animation: gclk-blink 1s ease-in-out infinite;
 }
-.lc-colon-dot:nth-child(2) { animation-delay: 0.5s; }
-@keyframes lc-blink {
-  0%,100% { opacity: 1; transform: scale(1); }
-  50%      { opacity: 0.25; transform: scale(0.6); }
-}
-
-/* SECONDS BAR */
-.lc-sec-row {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 8px;
-}
-.lc-sec-bar-track {
-  flex: 1;
-  height: 3px;
-  border-radius: 3px;
-  background: rgba(120,80,255,0.15);
-  overflow: hidden;
-}
-.lc-sec-bar-fill {
-  height: 100%;
-  border-radius: 3px;
-  background: linear-gradient(90deg, #7c3aed, #3b82f6, #06b6d4);
-  transform-origin: left;
-  will-change: transform;
-  box-shadow: 0 0 4px rgba(120,80,255,0.4);
-  transition: transform 0.25s linear;
-}
-.lc-sec-label {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  color: var(--lilac-deep, #7c3aed);
-  opacity: 0.7;
-  min-width: 18px;
-  text-align: right;
+.gclk-dot:nth-child(2) { animation-delay: 0.5s; }
+@keyframes gclk-blink {
+  0%,100% { opacity: 0.8; transform: scale(1); }
+  50%      { opacity: 0.15; transform: scale(0.5); }
 }
 
-/* PERIOD tag (AM / PM) */
-.lc-period {
-  position: relative;
-  z-index: 1;
-  text-align: center;
-  margin-top: 6px;
+/* ── INDEPENDENT DIGIT DANCES ──
+   Each digit has its own personality, its own frequency, its own groove.
+   They never sync — they vibe independently like musicians in a band. */
+
+/* Digit 0 (first hour): slow pendulum sway */
+@keyframes gd-dance-0 {
+  0%   { transform: translateY(0px) rotate(0deg) scale(1); }
+  15%  { transform: translateY(-8px) rotate(-2deg) scale(1.04); }
+  30%  { transform: translateY(2px) rotate(1.5deg) scale(0.98); }
+  50%  { transform: translateY(-5px) rotate(-1deg) scale(1.02); }
+  70%  { transform: translateY(3px) rotate(2deg) scale(0.99); }
+  85%  { transform: translateY(-3px) rotate(-1.5deg) scale(1.01); }
+  100% { transform: translateY(0px) rotate(0deg) scale(1); }
 }
-.lc-period span {
-  display: inline-block;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--lilac-deep, #7c3aed);
-  background: rgba(120,80,255,0.10);
-  border: 1px solid rgba(120,80,255,0.18);
-  padding: 2px 8px;
-  border-radius: 100px;
-  animation: lc-period-glow 4s ease-in-out infinite;
+/* Digit 1 (second hour): energetic bounce */
+@keyframes gd-dance-1 {
+  0%   { transform: translateY(0px) scaleY(1) scaleX(1); }
+  10%  { transform: translateY(-12px) scaleY(1.08) scaleX(0.95); }
+  20%  { transform: translateY(4px) scaleY(0.94) scaleX(1.04); }
+  35%  { transform: translateY(-6px) scaleY(1.04) scaleX(0.98); }
+  50%  { transform: translateY(2px) scaleY(0.98) scaleX(1.01); }
+  65%  { transform: translateY(-9px) scaleY(1.06) scaleX(0.96); }
+  80%  { transform: translateY(3px) scaleY(0.96) scaleX(1.03); }
+  100% { transform: translateY(0px) scaleY(1) scaleX(1); }
 }
-@keyframes lc-period-glow {
-  0%,100% { box-shadow: 0 0 0 rgba(120,80,255,0); }
-  50%      { box-shadow: 0 0 8px rgba(120,80,255,0.3); }
+/* Digit 2 (first min): figure-8 drift */
+@keyframes gd-dance-2 {
+  0%   { transform: translate(0,0) rotate(0deg); }
+  20%  { transform: translate(4px,-7px) rotate(2.5deg); }
+  40%  { transform: translate(-3px,-3px) rotate(-1.5deg); }
+  55%  { transform: translate(5px,5px) rotate(3deg); }
+  70%  { transform: translate(-4px,2px) rotate(-2deg); }
+  85%  { transform: translate(2px,-4px) rotate(1deg); }
+  100% { transform: translate(0,0) rotate(0deg); }
+}
+/* Digit 3 (second min): skip-hop rhythm */
+@keyframes gd-dance-3 {
+  0%   { transform: translateY(0) skewX(0deg) scale(1); }
+  12%  { transform: translateY(-10px) skewX(-3deg) scale(1.05); }
+  24%  { transform: translateY(4px) skewX(2deg) scale(0.97); }
+  38%  { transform: translateY(-7px) skewX(-2deg) scale(1.03); }
+  52%  { transform: translateY(2px) skewX(1.5deg) scale(0.99); }
+  68%  { transform: translateY(-5px) skewX(-1deg) scale(1.02); }
+  80%  { transform: translateY(3px) skewX(2deg) scale(0.98); }
+  92%  { transform: translateY(-2px) skewX(-1deg) scale(1.01); }
+  100% { transform: translateY(0) skewX(0deg) scale(1); }
 }
 
-/* DIGIT ANIMATION KEYFRAMES */
-/* When a digit changes, it does a quick "vibe" bounce */
-@keyframes lc-digit-vibe {
-  0%   { transform: translateY(0) scale(1) rotate(0deg); }
-  20%  { transform: translateY(-6px) scale(1.1) rotate(-1.5deg); }
-  40%  { transform: translateY(3px) scale(0.96) rotate(1deg); }
-  60%  { transform: translateY(-3px) scale(1.04) rotate(-0.5deg); }
-  80%  { transform: translateY(1px) scale(1.01) rotate(0.3deg); }
-  100% { transform: translateY(0) scale(1) rotate(0deg); }
+/* Apply dances with staggered speeds — each genuinely different */
+#gd-h1 .gd-char { animation: gd-dance-0 3.7s cubic-bezier(.45,.05,.55,.95) infinite; }
+#gd-h2 .gd-char { animation: gd-dance-1 2.8s cubic-bezier(.36,.07,.19,.97) infinite; animation-delay: -0.9s; }
+#gd-m1 .gd-char { animation: gd-dance-2 4.3s cubic-bezier(.25,.46,.45,.94) infinite; animation-delay: -1.6s; }
+#gd-m2 .gd-char { animation: gd-dance-3 2.3s cubic-bezier(.55,.06,.68,.19) infinite; animation-delay: -0.4s; }
+
+/* When a digit changes value: a sharp SNAP vibe */
+@keyframes gd-snap {
+  0%   { transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 18px rgba(123,47,247,0.18)); }
+  18%  { transform: scale(1.28) rotate(-4deg); filter: drop-shadow(0 0 32px rgba(123,47,247,0.55)) drop-shadow(0 0 12px rgba(67,97,255,0.4)); }
+  36%  { transform: scale(0.85) rotate(3deg); filter: drop-shadow(0 0 14px rgba(94,234,212,0.4)); }
+  54%  { transform: scale(1.12) rotate(-2deg); filter: drop-shadow(0 0 22px rgba(123,47,247,0.35)); }
+  72%  { transform: scale(0.95) rotate(1deg); filter: drop-shadow(0 0 16px rgba(67,97,255,0.2)); }
+  88%  { transform: scale(1.03) rotate(-0.5deg); }
+  100% { transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 18px rgba(123,47,247,0.18)); }
 }
-/* Idle micro-float so digits feel alive even when not changing */
-@keyframes lc-digit-float {
-  0%,100% { transform: translateY(0); }
-  33%     { transform: translateY(-1.5px); }
-  66%     { transform: translateY(1px); }
-}
-.lc-d span { animation: lc-digit-float 4s ease-in-out infinite; }
-.lc-d:nth-child(1) span { animation-delay: 0s; }
-.lc-d:nth-child(3) span { animation-delay: 0.4s; }
-.lc-d:nth-child(5) span { animation-delay: 0.8s; }
-.lc-d:nth-child(7) span { animation-delay: 1.2s; }
-/* Vibrate class applied by JS on digit change */
-.lc-d.vibrate span {
-  animation: lc-digit-vibe 0.55s cubic-bezier(.36,.07,.19,.97) both !important;
+.gd.snap .gd-char {
+  animation: gd-snap 0.65s cubic-bezier(.36,.07,.19,.97) both !important;
 }
 
-/* LIVE DOT top-right corner */
-.lc-live-dot {
+/* Every-minute full-band celebration */
+@keyframes gd-celebrate {
+  0%   { transform: translateY(0) scale(1); }
+  20%  { transform: translateY(-18px) scale(1.2) rotate(-5deg); filter: drop-shadow(0 0 40px rgba(123,47,247,0.7)); }
+  40%  { transform: translateY(8px) scale(0.88) rotate(4deg); }
+  60%  { transform: translateY(-10px) scale(1.12) rotate(-2deg); filter: drop-shadow(0 0 28px rgba(67,97,255,0.5)); }
+  80%  { transform: translateY(4px) scale(0.96) rotate(1deg); }
+  100% { transform: translateY(0) scale(1); }
+}
+.gd.celebrate .gd-char {
+  animation: gd-celebrate 0.8s cubic-bezier(.36,.07,.19,.97) both !important;
+}
+
+/* AM/PM ghost tag — floats below the clock */
+#gclk-period {
   position: absolute;
-  top: 10px;
-  right: 12px;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #22c55e;
-  box-shadow: 0 0 0 0 rgba(34,197,94,0.5);
-  animation: lc-live-ping 1.8s ease-out infinite;
-  z-index: 2;
-}
-@keyframes lc-live-ping {
-  0%   { box-shadow: 0 0 0 0 rgba(34,197,94,0.6); }
-  70%  { box-shadow: 0 0 0 7px rgba(34,197,94,0); }
-  100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+  bottom: -16px;
+  right: 0;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: rgba(123, 47, 247, 0.30);
+  pointer-events: none;
 }
 
-/* TIME-OF-DAY colour shifts on the glass */
-.lc-glass[data-period="morning"] { background: rgba(255,240,220,0.15); }
-.lc-glass[data-period="morning"] .lc-glow {
-  background: radial-gradient(ellipse, rgba(255,180,60,0.20) 0%, transparent 70%);
-}
-.lc-glass[data-period="afternoon"] { background: rgba(200,230,255,0.12); }
-.lc-glass[data-period="afternoon"] .lc-glow {
-  background: radial-gradient(ellipse, rgba(60,160,255,0.18) 0%, transparent 70%);
-}
-.lc-glass[data-period="evening"] { background: rgba(120,60,180,0.12); }
-.lc-glass[data-period="evening"] .lc-glow {
-  background: radial-gradient(ellipse, rgba(140,60,255,0.22) 0%, transparent 70%);
-}
+/* ── COLOUR SHIFT per minute — the background canvas breathes colour ──
+   Applied via data-hue attribute on #gclk every minute change */
+#gclk[data-hue="0"]  .gd-char { background-image: linear-gradient(160deg, rgba(123,47,247,0.22) 0%, rgba(67,97,255,0.18) 50%, rgba(94,234,212,0.15) 100%); }
+#gclk[data-hue="1"]  .gd-char { background-image: linear-gradient(160deg, rgba(67,97,255,0.22) 0%, rgba(94,234,212,0.18) 50%, rgba(255,105,180,0.15) 100%); }
+#gclk[data-hue="2"]  .gd-char { background-image: linear-gradient(160deg, rgba(94,234,212,0.22) 0%, rgba(45,212,191,0.18) 50%, rgba(123,47,247,0.15) 100%); }
+#gclk[data-hue="3"]  .gd-char { background-image: linear-gradient(160deg, rgba(255,160,50,0.22) 0%, rgba(255,80,120,0.18) 50%, rgba(123,47,247,0.15) 100%); }
+#gclk[data-hue="4"]  .gd-char { background-image: linear-gradient(160deg, rgba(255,80,120,0.20) 0%, rgba(123,47,247,0.18) 50%, rgba(67,97,255,0.15) 100%); }
+#gclk[data-hue="5"]  .gd-char { background-image: linear-gradient(160deg, rgba(45,212,191,0.22) 0%, rgba(67,97,255,0.18) 50%, rgba(255,160,50,0.15) 100%); }
 
 /* ── RESPONSIVE ── */
-/* Desktop: clock floats right of greeting text */
-@media(min-width: 640px) {
-  .lc-wrap { margin-top: 4px; }
+/* On narrow screens, shrink and shift inward so it doesn't overflow */
+@media(max-width: 480px) {
+  #gclk { right: -4px; gap: 0; }
+  .gd { width: 38px; height: 54px; }
+  .gd-char { font-size: 42px !important; }
+  .gclk-colon { width: 12px; }
+  .gclk-dot { width: 4px; height: 4px; }
 }
-/* Mobile: clock goes below the greeting text, centered */
-@media(max-width: 639px) {
-  .greeting-row { flex-direction: column; gap: 16px; }
-  .lc-wrap { width: 100%; }
-  .lc-glass { display: flex; gap: 20px; align-items: center; padding: 14px 20px; border-radius: 18px; }
-  .lc-digits { font-size: 36px; }
-  .lc-d span { font-size: 36px; }
-  .lc-d { height: 44px; }
-  .lc-colon { height: 44px; }
-  .lc-right-col { flex: 1; }
-  .lc-sec-row { margin-top: 4px; }
-  .lc-period { text-align: left; margin-top: 6px; }
-  .lc-glass::before { animation: none; }
-}
-/* Very small screens */
 @media(max-width: 380px) {
-  .lc-d span { font-size: 30px; }
-  .lc-d { height: 38px; }
+  .gd { width: 32px; height: 46px; }
+  .gd-char { font-size: 34px !important; }
 }
+
 
 </style>
 
@@ -1279,42 +1186,18 @@ img,video,svg{max-width:100%;}
 
     <div class="content">
       <div class="greeting">
-        <div class="greeting-row">
-          <!-- Text side -->
-          <div class="greeting-text">
-            <h1 class="greeting-title" id="g-title"><span id="g-greeting">Good afternoon</span><em id="g-name"></em></h1>
-            <p class="greeting-sub">#1 zero commission travel platform. Book everything in one place at fair prices.</p>
-          </div>
-
-          <!-- LIQUID GLASS DANCING CLOCK -->
-          <div class="lc-wrap" id="lc-wrap" aria-label="Live clock" role="timer">
-            <div class="lc-glass" id="lc-glass" data-period="afternoon">
-              <div class="lc-live-dot" title="Live"></div>
-              <div class="lc-glow"></div>
-
-              <!-- Desktop layout: digits stacked above sec bar -->
-              <!-- Mobile layout: digits left, sec+period right (handled by CSS) -->
-              <div class="lc-digits" id="lc-digits">
-                <div class="lc-d" id="lc-h1"><span>0</span></div>
-                <div class="lc-d" id="lc-h2"><span>0</span></div>
-                <div class="lc-colon"><div class="lc-colon-dot"></div><div class="lc-colon-dot"></div></div>
-                <div class="lc-d" id="lc-m1"><span>0</span></div>
-                <div class="lc-d" id="lc-m2"><span>0</span></div>
-              </div>
-
-              <!-- Seconds progress + period — wrapped for mobile flex -->
-              <div class="lc-right-col">
-                <div class="lc-sec-row">
-                  <div class="lc-sec-bar-track">
-                    <div class="lc-sec-bar-fill" id="lc-sec-fill"></div>
-                  </div>
-                  <div class="lc-sec-label" id="lc-sec-label">00</div>
-                </div>
-                <div class="lc-period"><span id="lc-period">AM</span></div>
-              </div>
-            </div>
-          </div>
+        <!-- GHOST CLOCK: absolutely-positioned background canvas, z-index 0, pointer-events none -->
+        <div id="gclk" data-hue="0" aria-hidden="true">
+          <div class="gd" id="gd-h1"><span class="gd-char">0</span></div>
+          <div class="gd" id="gd-h2"><span class="gd-char">8</span></div>
+          <div class="gclk-colon"><div class="gclk-dot"></div><div class="gclk-dot"></div></div>
+          <div class="gd" id="gd-m1"><span class="gd-char">0</span></div>
+          <div class="gd" id="gd-m2"><span class="gd-char">0</span></div>
+          <div id="gclk-period">AM</div>
         </div>
+        <!-- Greeting text sits on top, z-index auto (above z-index:0) -->
+        <h1 class="greeting-title" id="g-title" style="position:relative;z-index:1;"><span id="g-greeting">Good afternoon</span><em id="g-name"></em></h1>
+        <p class="greeting-sub" style="position:relative;z-index:1;">#1 zero commission travel platform. Book everything in one place at fair prices.</p>
       </div>
 
       <!-- ── GET MATCHED GHOST TAB — visible only when guest has active match request ── -->
@@ -2099,124 +1982,107 @@ function getGreeting(){
   return 'Good evening';
 }
 
-/* ═══════════════════════════════════════════════════════════════════
-   LIQUID GLASS DANCING CLOCK ENGINE  v1.0
-   Live, kinetic, alive — updates every second with digit-vibe animation
-   ═══════════════════════════════════════════════════════════════════ */
-(function() {
+/* ═══════════════════════════════════════════════════════
+   GHOST CLOCK ENGINE v2 — Background dancing digits
+   Each digit is an independent dancer. No card. No layout change.
+   Pure background canvas energy behind the greeting.
+   ═══════════════════════════════════════════════════════ */
+(function(){
   'use strict';
 
-  // State
-  var _prev = { h1:'', h2:'', m1:'', m2:'', period:'' };
-  var _tickTimer = null;
+  var _prev = { h1:'', h2:'', m1:'', m2:'', period:'', minute:-1, hue:0 };
+  var _timer = null;
 
-  /* Vibrate a single digit cell on change */
-  function _vibe(el) {
-    el.classList.remove('vibrate');
-    // Trigger reflow to restart animation
-    void el.offsetWidth;
-    el.classList.add('vibrate');
-    // Clean up after animation
-    setTimeout(function() { el.classList.remove('vibrate'); }, 600);
-  }
-
-  /* Set a digit's value and vibe if changed */
-  function _setDigit(id, val) {
+  /* Trigger snap animation on a digit cell */
+  function snap(id){
     var el = document.getElementById(id);
-    if (!el) return;
-    var span = el.querySelector('span');
-    if (!span) return;
-    var prev = _prev[id] || '';
-    if (span.textContent !== val) {
-      span.textContent = val;
-      if (prev !== '') _vibe(el);
-    }
-    _prev[id] = val;
+    if(!el) return;
+    el.classList.remove('snap','celebrate');
+    void el.offsetWidth; // reflow
+    el.classList.add('snap');
+    setTimeout(function(){ el.classList.remove('snap'); }, 700);
   }
 
-  /* Main tick function */
-  function tick() {
-    var now = new Date();
-    var h = now.getHours();
-    var m = now.getMinutes();
-    var s = now.getSeconds();
+  /* Trigger celebrate on all digits (every new minute) */
+  function celebrate(){
+    ['gd-h1','gd-h2','gd-m1','gd-m2'].forEach(function(id,i){
+      setTimeout(function(){
+        var el = document.getElementById(id);
+        if(!el) return;
+        el.classList.remove('snap','celebrate');
+        void el.offsetWidth;
+        el.classList.add('celebrate');
+        setTimeout(function(){ el.classList.remove('celebrate'); }, 900);
+      }, i * 90); // staggered so they each pop individually
+    });
+  }
 
-    /* 12-hour display */
+  /* Set digit value, fire snap if changed */
+  function setD(id, val, prevKey){
+    var el = document.getElementById(id);
+    if(!el) return;
+    var ch = el.querySelector('.gd-char');
+    if(!ch) return;
+    if(ch.textContent !== val){
+      ch.textContent = val;
+      if(_prev[prevKey] !== '') snap(id);
+    }
+    _prev[prevKey] = val;
+  }
+
+  function tick(){
+    var now = new Date();
+    var h   = now.getHours();
+    var m   = now.getMinutes();
+
     var period = h >= 12 ? 'PM' : 'AM';
     var h12 = h % 12 || 12;
-    var h12s = String(h12).padStart(2, '0');
-    var ms   = String(m).padStart(2, '0');
+    var hs  = String(h12).padStart(2,'0');
+    var ms  = String(m).padStart(2,'0');
 
-    /* Update digits with vibe on change */
-    _setDigit('lc-h1', h12s[0]);
-    _setDigit('lc-h2', h12s[1]);
-    _setDigit('lc-m1', ms[0]);
-    _setDigit('lc-m2', ms[1]);
+    /* Update digits */
+    setD('gd-h1', hs[0], 'h1');
+    setD('gd-h2', hs[1], 'h2');
+    setD('gd-m1', ms[0], 'm1');
+    setD('gd-m2', ms[1], 'm2');
 
-    /* Seconds bar — smooth sweep */
-    var fill = document.getElementById('lc-sec-fill');
-    if (fill) {
-      var pct = (s / 59) * 100;
-      fill.style.transform = 'scaleX(' + (pct / 100) + ')';
-    }
-
-    /* Seconds label */
-    var secLabel = document.getElementById('lc-sec-label');
-    if (secLabel) secLabel.textContent = String(s).padStart(2, '0');
-
-    /* AM / PM */
-    var periodEl = document.getElementById('lc-period');
-    if (periodEl && _prev.period !== period) {
-      periodEl.textContent = period;
+    /* AM/PM ghost */
+    var pel = document.getElementById('gclk-period');
+    if(pel && _prev.period !== period){
+      pel.textContent = period;
       _prev.period = period;
     }
 
-    /* Update glass data-period for colour theming */
-    var glass = document.getElementById('lc-glass');
-    if (glass) {
-      var dp = h < 12 ? 'morning' : h < 17 ? 'afternoon' : 'evening';
-      if (glass.dataset.period !== dp) glass.dataset.period = dp;
-    }
-
-    /* Minute vibe — every new minute, all digits briefly celebrate */
-    if (s === 0) {
-      ['lc-h1','lc-h2','lc-m1','lc-m2'].forEach(function(id, i) {
-        var el = document.getElementById(id);
-        if (!el) return;
-        setTimeout(function() { _vibe(el); }, i * 80);
-      });
+    /* New minute: celebrate + shift colour hue */
+    if(m !== _prev.minute){
+      _prev.minute = m;
+      if(_prev.h1 !== '') celebrate(); // only after first paint
+      /* Cycle hue 0-5 */
+      _prev.hue = (_prev.hue + 1) % 6;
+      var clk = document.getElementById('gclk');
+      if(clk) clk.setAttribute('data-hue', String(_prev.hue));
     }
   }
 
-  /* Start the clock */
-  function startClock() {
-    // Check elements exist
-    if (!document.getElementById('lc-glass')) return;
-
-    // Tick immediately
-    tick();
-
-    // Align to next second boundary for precision
-    var now = new Date();
-    var msUntilNextSecond = 1000 - now.getMilliseconds();
-    setTimeout(function() {
+  function start(){
+    if(!document.getElementById('gclk')) return;
+    tick(); // immediate first paint
+    /* Align to next second boundary */
+    var ms = 1000 - new Date().getMilliseconds();
+    setTimeout(function(){
       tick();
-      _tickTimer = setInterval(tick, 1000);
-    }, msUntilNextSecond);
+      _timer = setInterval(tick, 1000);
+    }, ms);
   }
 
-  /* Boot when DOM ready */
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', startClock);
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', start);
   } else {
-    startClock();
+    start();
   }
-
-  /* Expose for debugging */
-  window._lcStop = function() { clearInterval(_tickTimer); };
-  window._lcStart = startClock;
-
 })();
+
+
 
 /* ══════════════════════════════════════════════════════════════════
    SESSION INIT  v2 — rewritten.
