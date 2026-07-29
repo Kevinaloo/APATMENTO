@@ -878,11 +878,13 @@ img,video,svg{max-width:100%;}
 /* greeting wrapper needs relative positioning for pill anchor */
 .greeting{position:relative;overflow:visible;}
 
-/* ═══════════════════════════════════════════════════════════════
-   GHOST CLOCK v2 — Background canvas digits, no card, no layout change
-   Pure visual energy floating behind the greeting text on the right.
-   Each digit is independent, alive, dancing on its own rhythm.
-   ═══════════════════════════════════════════════════════════════ */
+/* ═════════════════════════════════════════════════════════════════════
+   GHOST CLOCK v3 — VIVID, BOLD, EACH DIGIT ITS OWN GENRE
+   Bolder colours, deeper opacity, bigger on mobile, wilder dances.
+   Still a ghost — behind the text, no layout shift. Just more ALIVE.
+   ═════════════════════════════════════════════════════════════════════ */
+
+/* ── CONTAINER ── */
 #gclk {
   position: absolute;
   top: 50%;
@@ -890,188 +892,250 @@ img,video,svg{max-width:100%;}
   transform: translateY(-50%);
   display: flex;
   align-items: center;
-  gap: 0px;
+  gap: 2px;
   pointer-events: none;
-  z-index: 0;        /* behind the text */
+  z-index: 0;
   user-select: none;
 }
 
-/* Each digit is its own living entity */
+/* ── DIGIT CELL ── */
 .gd {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 52px;
-  height: 72px;
+  width: 58px;
+  height: 80px;
   overflow: visible;
 }
 
-/* The digit character */
+/* ── THE CHARACTER ── */
 .gd-char {
   font-family: var(--font-display, 'Geist', 'Inter', sans-serif);
   font-weight: 900;
-  font-size: clamp(52px, 7vw, 72px);
+  font-size: clamp(60px, 8vw, 80px);
   line-height: 1;
   letter-spacing: -0.04em;
-  /* Liquid glass text effect */
-  background: linear-gradient(
-    160deg,
-    rgba(123, 47, 247, 0.22) 0%,
-    rgba(67, 97, 255, 0.18) 35%,
-    rgba(94, 234, 212, 0.15) 65%,
-    rgba(184, 164, 244, 0.20) 100%
-  );
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  /* Soft glow on the digit itself */
-  filter: drop-shadow(0 0 18px rgba(123,47,247,0.18)) drop-shadow(0 0 6px rgba(67,97,255,0.12));
   will-change: transform, filter;
   display: block;
-  transition: filter 0.6s ease;
+  opacity: 0.58;
 }
 
-/* Colon between H and M */
+/* ── INDIVIDUAL DIGIT COLOUR IDENTITIES ──
+   H1 = violet/purple (bass)
+   H2 = electric blue (lead)
+   M1 = teal/mint (rhythm)
+   M2 = coral/rose/gold (melody) */
+#gd-h1 .gd-char {
+  background-image: linear-gradient(165deg, #7B2FF7 0%, #9B5FFF 40%, #B8A4F4 100%);
+  filter: drop-shadow(0 0 16px rgba(123,47,247,0.45)) drop-shadow(0 2px 8px rgba(123,47,247,0.25));
+}
+#gd-h2 .gd-char {
+  background-image: linear-gradient(165deg, #4361FF 0%, #00B4D8 50%, #7B2FF7 100%);
+  filter: drop-shadow(0 0 16px rgba(67,97,255,0.45)) drop-shadow(0 2px 8px rgba(0,180,216,0.25));
+}
+#gd-m1 .gd-char {
+  background-image: linear-gradient(165deg, #2DD4BF 0%, #5EEAD4 40%, #4361FF 100%);
+  filter: drop-shadow(0 0 16px rgba(45,212,191,0.45)) drop-shadow(0 2px 8px rgba(94,234,212,0.25));
+}
+#gd-m2 .gd-char {
+  background-image: linear-gradient(165deg, #FF5C8A 0%, #FF9A5C 50%, #FFD93D 100%);
+  filter: drop-shadow(0 0 16px rgba(255,92,138,0.45)) drop-shadow(0 2px 8px rgba(255,154,92,0.25));
+}
+
+/* ── COLON ── */
 .gclk-colon {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   align-items: center;
   justify-content: center;
-  height: 72px;
-  width: 18px;
+  height: 80px;
+  width: 20px;
   padding-bottom: 6px;
   pointer-events: none;
 }
 .gclk-dot {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  background: rgba(123, 47, 247, 0.25);
+  background: rgba(123, 47, 247, 0.55);
+  box-shadow: 0 0 8px rgba(123,47,247,0.4);
   animation: gclk-blink 1s ease-in-out infinite;
 }
-.gclk-dot:nth-child(2) { animation-delay: 0.5s; }
+.gclk-dot:nth-child(2) {
+  animation-delay: 0.5s;
+  background: rgba(67, 97, 255, 0.55);
+  box-shadow: 0 0 8px rgba(67,97,255,0.4);
+}
 @keyframes gclk-blink {
-  0%,100% { opacity: 0.8; transform: scale(1); }
-  50%      { opacity: 0.15; transform: scale(0.5); }
+  0%,100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.12; transform: scale(0.45); }
 }
 
-/* ── INDEPENDENT DIGIT DANCES ──
-   Each digit has its own personality, its own frequency, its own groove.
-   They never sync — they vibe independently like musicians in a band. */
+/* ── AM/PM GHOST TAG ── */
+#gclk-period {
+  position: absolute;
+  bottom: -18px;
+  right: 0;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(123, 47, 247, 0.50);
+  text-shadow: 0 0 8px rgba(123,47,247,0.3);
+  pointer-events: none;
+}
 
-/* Digit 0 (first hour): slow pendulum sway */
-@keyframes gd-dance-0 {
+/* ══════════════════════════════════════════════════════════════════
+   INDEPENDENT DANCE ANIMATIONS — 4 music genres, never in sync
+
+   H1 = AFROBEATS  — syncopated hip-roll, confident swagger
+   H2 = REGGAE     — slow deep full-body sway, roots feel
+   M1 = AMAPIANO   — log-drum bounce, springy side-step
+   M2 = TRAP       — hard snap hits, then long float/hang
+   ══════════════════════════════════════════════════════════════════ */
+
+@keyframes gd-afrobeat {
   0%   { transform: translateY(0px) rotate(0deg) scale(1); }
-  15%  { transform: translateY(-8px) rotate(-2deg) scale(1.04); }
-  30%  { transform: translateY(2px) rotate(1.5deg) scale(0.98); }
-  50%  { transform: translateY(-5px) rotate(-1deg) scale(1.02); }
-  70%  { transform: translateY(3px) rotate(2deg) scale(0.99); }
-  85%  { transform: translateY(-3px) rotate(-1.5deg) scale(1.01); }
+  8%   { transform: translateY(-14px) rotate(-3.5deg) scale(1.07); }
+  18%  { transform: translateY(5px) rotate(2deg) scale(0.96); }
+  28%  { transform: translateY(-9px) rotate(-2deg) scale(1.04); }
+  40%  { transform: translateY(3px) rotate(3deg) scale(0.98); }
+  52%  { transform: translateY(-12px) rotate(-1.5deg) scale(1.05); }
+  64%  { transform: translateY(6px) rotate(2.5deg) scale(0.97); }
+  76%  { transform: translateY(-5px) rotate(-1deg) scale(1.02); }
+  88%  { transform: translateY(2px) rotate(1deg) scale(0.99); }
   100% { transform: translateY(0px) rotate(0deg) scale(1); }
 }
-/* Digit 1 (second hour): energetic bounce */
-@keyframes gd-dance-1 {
-  0%   { transform: translateY(0px) scaleY(1) scaleX(1); }
-  10%  { transform: translateY(-12px) scaleY(1.08) scaleX(0.95); }
-  20%  { transform: translateY(4px) scaleY(0.94) scaleX(1.04); }
-  35%  { transform: translateY(-6px) scaleY(1.04) scaleX(0.98); }
-  50%  { transform: translateY(2px) scaleY(0.98) scaleX(1.01); }
-  65%  { transform: translateY(-9px) scaleY(1.06) scaleX(0.96); }
-  80%  { transform: translateY(3px) scaleY(0.96) scaleX(1.03); }
-  100% { transform: translateY(0px) scaleY(1) scaleX(1); }
-}
-/* Digit 2 (first min): figure-8 drift */
-@keyframes gd-dance-2 {
-  0%   { transform: translate(0,0) rotate(0deg); }
-  20%  { transform: translate(4px,-7px) rotate(2.5deg); }
-  40%  { transform: translate(-3px,-3px) rotate(-1.5deg); }
-  55%  { transform: translate(5px,5px) rotate(3deg); }
-  70%  { transform: translate(-4px,2px) rotate(-2deg); }
-  85%  { transform: translate(2px,-4px) rotate(1deg); }
-  100% { transform: translate(0,0) rotate(0deg); }
-}
-/* Digit 3 (second min): skip-hop rhythm */
-@keyframes gd-dance-3 {
-  0%   { transform: translateY(0) skewX(0deg) scale(1); }
-  12%  { transform: translateY(-10px) skewX(-3deg) scale(1.05); }
-  24%  { transform: translateY(4px) skewX(2deg) scale(0.97); }
-  38%  { transform: translateY(-7px) skewX(-2deg) scale(1.03); }
-  52%  { transform: translateY(2px) skewX(1.5deg) scale(0.99); }
-  68%  { transform: translateY(-5px) skewX(-1deg) scale(1.02); }
-  80%  { transform: translateY(3px) skewX(2deg) scale(0.98); }
-  92%  { transform: translateY(-2px) skewX(-1deg) scale(1.01); }
-  100% { transform: translateY(0) skewX(0deg) scale(1); }
+
+@keyframes gd-reggae {
+  0%   { transform: translateX(0px) translateY(0px) rotate(0deg) scale(1); }
+  12%  { transform: translateX(-8px) translateY(-6px) rotate(-4deg) scale(1.06); }
+  28%  { transform: translateX(6px) translateY(3px) rotate(3deg) scale(0.95); }
+  44%  { transform: translateX(-5px) translateY(-10px) rotate(-2.5deg) scale(1.08); }
+  58%  { transform: translateX(9px) translateY(4px) rotate(4deg) scale(0.94); }
+  72%  { transform: translateX(-3px) translateY(-5px) rotate(-1.5deg) scale(1.03); }
+  86%  { transform: translateX(4px) translateY(2px) rotate(2deg) scale(0.98); }
+  100% { transform: translateX(0px) translateY(0px) rotate(0deg) scale(1); }
 }
 
-/* Apply dances with staggered speeds — each genuinely different */
-#gd-h1 .gd-char { animation: gd-dance-0 3.7s cubic-bezier(.45,.05,.55,.95) infinite; }
-#gd-h2 .gd-char { animation: gd-dance-1 2.8s cubic-bezier(.36,.07,.19,.97) infinite; animation-delay: -0.9s; }
-#gd-m1 .gd-char { animation: gd-dance-2 4.3s cubic-bezier(.25,.46,.45,.94) infinite; animation-delay: -1.6s; }
-#gd-m2 .gd-char { animation: gd-dance-3 2.3s cubic-bezier(.55,.06,.68,.19) infinite; animation-delay: -0.4s; }
+@keyframes gd-amapiano {
+  0%   { transform: translateY(0) scaleY(1) scaleX(1) skewX(0deg); }
+  7%   { transform: translateY(-18px) scaleY(1.12) scaleX(0.92) skewX(-2deg); }
+  14%  { transform: translateY(7px) scaleY(0.90) scaleX(1.06) skewX(1.5deg); }
+  22%  { transform: translateY(-10px) scaleY(1.07) scaleX(0.96) skewX(-1deg); }
+  30%  { transform: translateY(4px) scaleY(0.96) scaleX(1.02) skewX(0.5deg); }
+  40%  { transform: translateY(-15px) scaleY(1.10) scaleX(0.93) skewX(-2.5deg); }
+  50%  { transform: translateY(6px) scaleY(0.92) scaleX(1.05) skewX(2deg); }
+  62%  { transform: translateY(-8px) scaleY(1.05) scaleX(0.97) skewX(-1deg); }
+  75%  { transform: translateY(3px) scaleY(0.97) scaleX(1.01) skewX(0.5deg); }
+  88%  { transform: translateY(-5px) scaleY(1.03) scaleX(0.99) skewX(-0.5deg); }
+  100% { transform: translateY(0) scaleY(1) scaleX(1) skewX(0deg); }
+}
 
-/* When a digit changes value: a sharp SNAP vibe */
+@keyframes gd-trap {
+  0%   { transform: translateY(0) scale(1) rotate(0deg); }
+  5%   { transform: translateY(-20px) scale(1.15) rotate(-5deg); }
+  10%  { transform: translateY(8px) scale(0.88) rotate(4deg); }
+  15%  { transform: translateY(-14px) scale(1.10) rotate(-3deg); }
+  22%  { transform: translateY(0px) scale(1) rotate(0deg); }
+  40%  { transform: translateY(-6px) scale(1.03) rotate(-1deg); }
+  58%  { transform: translateY(-6px) scale(1.03) rotate(-1deg); }
+  65%  { transform: translateY(10px) scale(0.90) rotate(3deg); }
+  70%  { transform: translateY(-16px) scale(1.12) rotate(-4deg); }
+  76%  { transform: translateY(5px) scale(0.94) rotate(2.5deg); }
+  82%  { transform: translateY(0) scale(1) rotate(0deg); }
+  90%  { transform: translateY(-4px) scale(1.02) rotate(-0.5deg); }
+  100% { transform: translateY(0) scale(1) rotate(0deg); }
+}
+
+/* Genre assignments — fully independent durations */
+#gd-h1 .gd-char { animation: gd-afrobeat 3.4s cubic-bezier(.45,.05,.55,.95) infinite; }
+#gd-h2 .gd-char { animation: gd-reggae   5.1s cubic-bezier(.25,.1,.25,1)     infinite; animation-delay: -1.3s; }
+#gd-m1 .gd-char { animation: gd-amapiano 2.6s cubic-bezier(.36,.07,.19,.97) infinite; animation-delay: -0.8s; }
+#gd-m2 .gd-char { animation: gd-trap     4.8s cubic-bezier(.55,.06,.68,.19) infinite; animation-delay: -2.1s; }
+
+/* ── ON CHANGE: SNAP FLASH ── */
 @keyframes gd-snap {
-  0%   { transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 18px rgba(123,47,247,0.18)); }
-  18%  { transform: scale(1.28) rotate(-4deg); filter: drop-shadow(0 0 32px rgba(123,47,247,0.55)) drop-shadow(0 0 12px rgba(67,97,255,0.4)); }
-  36%  { transform: scale(0.85) rotate(3deg); filter: drop-shadow(0 0 14px rgba(94,234,212,0.4)); }
-  54%  { transform: scale(1.12) rotate(-2deg); filter: drop-shadow(0 0 22px rgba(123,47,247,0.35)); }
-  72%  { transform: scale(0.95) rotate(1deg); filter: drop-shadow(0 0 16px rgba(67,97,255,0.2)); }
-  88%  { transform: scale(1.03) rotate(-0.5deg); }
-  100% { transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 18px rgba(123,47,247,0.18)); }
+  0%   { transform: scale(1) rotate(0deg);     opacity: 0.58; }
+  15%  { transform: scale(1.4) rotate(-6deg);  opacity: 1; }
+  30%  { transform: scale(0.80) rotate(5deg);  opacity: 0.85; }
+  50%  { transform: scale(1.18) rotate(-3deg); opacity: 0.95; }
+  70%  { transform: scale(0.93) rotate(2deg);  opacity: 0.75; }
+  88%  { transform: scale(1.05) rotate(-1deg); opacity: 0.65; }
+  100% { transform: scale(1) rotate(0deg);     opacity: 0.58; }
 }
 .gd.snap .gd-char {
   animation: gd-snap 0.65s cubic-bezier(.36,.07,.19,.97) both !important;
 }
 
-/* Every-minute full-band celebration */
+/* ── EVERY-MINUTE CELEBRATE ── */
 @keyframes gd-celebrate {
-  0%   { transform: translateY(0) scale(1); }
-  20%  { transform: translateY(-18px) scale(1.2) rotate(-5deg); filter: drop-shadow(0 0 40px rgba(123,47,247,0.7)); }
-  40%  { transform: translateY(8px) scale(0.88) rotate(4deg); }
-  60%  { transform: translateY(-10px) scale(1.12) rotate(-2deg); filter: drop-shadow(0 0 28px rgba(67,97,255,0.5)); }
-  80%  { transform: translateY(4px) scale(0.96) rotate(1deg); }
-  100% { transform: translateY(0) scale(1); }
+  0%   { transform: translateY(0) scale(1) rotate(0deg);       opacity: 0.58; }
+  15%  { transform: translateY(-22px) scale(1.3) rotate(-7deg); opacity: 1; }
+  30%  { transform: translateY(9px) scale(0.85) rotate(6deg);  opacity: 0.9; }
+  50%  { transform: translateY(-12px) scale(1.18) rotate(-3deg); opacity: 0.95; }
+  68%  { transform: translateY(5px) scale(0.94) rotate(2deg);  opacity: 0.8; }
+  84%  { transform: translateY(-4px) scale(1.04) rotate(-1deg); opacity: 0.7; }
+  100% { transform: translateY(0) scale(1) rotate(0deg);       opacity: 0.58; }
 }
 .gd.celebrate .gd-char {
-  animation: gd-celebrate 0.8s cubic-bezier(.36,.07,.19,.97) both !important;
+  animation: gd-celebrate 0.85s cubic-bezier(.36,.07,.19,.97) both !important;
 }
 
-/* AM/PM ghost tag — floats below the clock */
-#gclk-period {
-  position: absolute;
-  bottom: -16px;
-  right: 0;
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.20em;
-  text-transform: uppercase;
-  color: rgba(123, 47, 247, 0.30);
-  pointer-events: none;
-}
+/* ── PER-MINUTE COLOUR SHIFTS — 6 vivid palettes ── */
+#gclk[data-hue="0"] #gd-h1 .gd-char { background-image: linear-gradient(165deg,#7B2FF7,#9B5FFF,#B8A4F4); }
+#gclk[data-hue="0"] #gd-h2 .gd-char { background-image: linear-gradient(165deg,#4361FF,#00B4D8,#7B2FF7); }
+#gclk[data-hue="0"] #gd-m1 .gd-char { background-image: linear-gradient(165deg,#2DD4BF,#5EEAD4,#4361FF); }
+#gclk[data-hue="0"] #gd-m2 .gd-char { background-image: linear-gradient(165deg,#FF5C8A,#FF9A5C,#FFD93D); }
 
-/* ── COLOUR SHIFT per minute — the background canvas breathes colour ──
-   Applied via data-hue attribute on #gclk every minute change */
-#gclk[data-hue="0"]  .gd-char { background-image: linear-gradient(160deg, rgba(123,47,247,0.22) 0%, rgba(67,97,255,0.18) 50%, rgba(94,234,212,0.15) 100%); }
-#gclk[data-hue="1"]  .gd-char { background-image: linear-gradient(160deg, rgba(67,97,255,0.22) 0%, rgba(94,234,212,0.18) 50%, rgba(255,105,180,0.15) 100%); }
-#gclk[data-hue="2"]  .gd-char { background-image: linear-gradient(160deg, rgba(94,234,212,0.22) 0%, rgba(45,212,191,0.18) 50%, rgba(123,47,247,0.15) 100%); }
-#gclk[data-hue="3"]  .gd-char { background-image: linear-gradient(160deg, rgba(255,160,50,0.22) 0%, rgba(255,80,120,0.18) 50%, rgba(123,47,247,0.15) 100%); }
-#gclk[data-hue="4"]  .gd-char { background-image: linear-gradient(160deg, rgba(255,80,120,0.20) 0%, rgba(123,47,247,0.18) 50%, rgba(67,97,255,0.15) 100%); }
-#gclk[data-hue="5"]  .gd-char { background-image: linear-gradient(160deg, rgba(45,212,191,0.22) 0%, rgba(67,97,255,0.18) 50%, rgba(255,160,50,0.15) 100%); }
+#gclk[data-hue="1"] #gd-h1 .gd-char { background-image: linear-gradient(165deg,#FF5C8A,#FF2D78,#C026D3); }
+#gclk[data-hue="1"] #gd-h2 .gd-char { background-image: linear-gradient(165deg,#C026D3,#7B2FF7,#4361FF); }
+#gclk[data-hue="1"] #gd-m1 .gd-char { background-image: linear-gradient(165deg,#FF9A5C,#FFD93D,#FF5C8A); }
+#gclk[data-hue="1"] #gd-m2 .gd-char { background-image: linear-gradient(165deg,#00B4D8,#2DD4BF,#5EEAD4); }
+
+#gclk[data-hue="2"] #gd-h1 .gd-char { background-image: linear-gradient(165deg,#2DD4BF,#00B4D8,#4361FF); }
+#gclk[data-hue="2"] #gd-h2 .gd-char { background-image: linear-gradient(165deg,#FFD93D,#FF9A5C,#FF5C8A); }
+#gclk[data-hue="2"] #gd-m1 .gd-char { background-image: linear-gradient(165deg,#7B2FF7,#C026D3,#FF2D78); }
+#gclk[data-hue="2"] #gd-m2 .gd-char { background-image: linear-gradient(165deg,#4361FF,#7B2FF7,#9B5FFF); }
+
+#gclk[data-hue="3"] #gd-h1 .gd-char { background-image: linear-gradient(165deg,#FFD93D,#FF9A5C,#FF5C8A); }
+#gclk[data-hue="3"] #gd-h2 .gd-char { background-image: linear-gradient(165deg,#5EEAD4,#2DD4BF,#00B4D8); }
+#gclk[data-hue="3"] #gd-m1 .gd-char { background-image: linear-gradient(165deg,#9B5FFF,#7B2FF7,#4361FF); }
+#gclk[data-hue="3"] #gd-m2 .gd-char { background-image: linear-gradient(165deg,#FF2D78,#C026D3,#7B2FF7); }
+
+#gclk[data-hue="4"] #gd-h1 .gd-char { background-image: linear-gradient(165deg,#00B4D8,#4361FF,#7B2FF7); }
+#gclk[data-hue="4"] #gd-h2 .gd-char { background-image: linear-gradient(165deg,#FF5C8A,#FF9A5C,#FFD93D); }
+#gclk[data-hue="4"] #gd-m1 .gd-char { background-image: linear-gradient(165deg,#C026D3,#FF2D78,#FF5C8A); }
+#gclk[data-hue="4"] #gd-m2 .gd-char { background-image: linear-gradient(165deg,#5EEAD4,#2DD4BF,#4361FF); }
+
+#gclk[data-hue="5"] #gd-h1 .gd-char { background-image: linear-gradient(165deg,#C026D3,#7B2FF7,#4361FF); }
+#gclk[data-hue="5"] #gd-h2 .gd-char { background-image: linear-gradient(165deg,#2DD4BF,#5EEAD4,#FFD93D); }
+#gclk[data-hue="5"] #gd-m1 .gd-char { background-image: linear-gradient(165deg,#FF9A5C,#FF5C8A,#C026D3); }
+#gclk[data-hue="5"] #gd-m2 .gd-char { background-image: linear-gradient(165deg,#4361FF,#00B4D8,#2DD4BF); }
 
 /* ── RESPONSIVE ── */
-/* On narrow screens, shrink and shift inward so it doesn't overflow */
-@media(max-width: 480px) {
-  #gclk { right: -4px; gap: 0; }
-  .gd { width: 38px; height: 54px; }
-  .gd-char { font-size: 42px !important; }
-  .gclk-colon { width: 12px; }
-  .gclk-dot { width: 4px; height: 4px; }
+@media(max-width: 640px) {
+  #gclk { right: 0px; gap: 1px; }
+  .gd { width: 46px; height: 64px; }
+  .gd-char { font-size: 52px !important; opacity: 0.65 !important; }
+  .gclk-colon { width: 14px; gap: 8px; }
+  .gclk-dot { width: 5px; height: 5px; }
+  #gclk-period { font-size: 9px; bottom: -16px; }
 }
-@media(max-width: 380px) {
-  .gd { width: 32px; height: 46px; }
-  .gd-char { font-size: 34px !important; }
+@media(max-width: 420px) {
+  #gclk { right: 0; gap: 0; }
+  .gd { width: 40px; height: 56px; }
+  .gd-char { font-size: 44px !important; opacity: 0.65 !important; }
+  .gclk-colon { width: 11px; gap: 7px; }
+}
+@media(max-width: 360px) {
+  .gd { width: 34px; height: 50px; }
+  .gd-char { font-size: 38px !important; }
 }
 
 
