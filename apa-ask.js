@@ -519,7 +519,16 @@
         userContext: userCtxStr
       })
     })
-    .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+    .then(function (r) {
+      return r.text().then(function (text) {
+        var d;
+        try { d = JSON.parse(text); } catch(e) {
+          console.error('[APA] Non-JSON response:', r.status, text.slice(0, 200));
+          d = { reply: r.status >= 500 ? 'Server hiccup — try again. 🔄' : 'Something went wrong — try again.' };
+        }
+        return { ok: r.ok, status: r.status, d: d };
+      });
+    })
     .then(function (res) {
       if (typing) typing.remove();
       loading = false;
@@ -553,11 +562,19 @@
       if (speaking || handsFree || wasVoiceTurn) speak(reply);
       wasVoiceTurn = false;
     })
-    .catch(function () {
+    .catch(function (err) {
       if (typing) typing.remove();
       loading = false;
       if (btn) btn.disabled = false;
-      appendMsg('apa', 'Nairobi WiFi moment \ud83d\udce1 — give it another shot.');
+      var msg = (err && err.message) ? err.message : String(err);
+      console.error('[APA fetch error]', msg);
+      // Show specific message based on error type
+      var display = msg.indexOf('JSON') !== -1 || msg.indexOf('SyntaxError') !== -1
+        ? 'Server hiccup — try again in a moment. 🔄'
+        : msg.indexOf('NetworkError') !== -1 || msg.indexOf('Failed to fetch') !== -1
+        ? 'Connection issue — check your signal and retry. 📶'
+        : 'Something went sideways — try again. 🔄';
+      appendMsg('apa', display);
       wasVoiceTurn = false;
     });
   }

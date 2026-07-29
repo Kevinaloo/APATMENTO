@@ -16,9 +16,10 @@ import { select, cors } from './lib/_db.js';
 
 const GROQ_API    = 'https://api.groq.com/openai/v1/chat/completions';
 const GROQ_MODELS = [
-  'openai/gpt-oss-20b',         // primary   — fast, reliable, lower TPM cost
-  'openai/gpt-oss-120b',        // fallback 1 — higher quality if 20b fails
-  'qwen/qwen3.6-27b',           // fallback 2 — active as of Jul 2026
+  'openai/gpt-oss-20b',              // primary   — fast, 1k RPD
+  'openai/gpt-oss-120b',             // fallback 1 — higher quality, 1k RPD
+  'qwen/qwen3.6-27b',                // fallback 2 — multimodal, ~1k RPD
+  'llama-3.1-8b-instant',            // fallback 3 — 14,400 RPD safety net
 ];
 const GROQ_CALL_TIMEOUT = 12000; // 12s per model attempt
 
@@ -430,7 +431,11 @@ export default async function handler(req, res) {
   const payload = { messages: [{ role: 'system', content: sys }, ...clean], max_tokens: 380, temperature: 0.72, stream: false };
 
   const GROQ_KEY = process.env.GROQ_API_KEY;
-  if (!GROQ_KEY) return res.status(503).json({ reply: 'I\'m temporarily offline — Kevin needs to configure my API key. Back soon!', error: 'GROQ_API_KEY not set' });
+  if (!GROQ_KEY) {
+    console.error('[ask-apa] GROQ_API_KEY not set in environment');
+    return res.status(503).json({ reply: 'I\'m temporarily offline — Kevin needs to configure my API key. Back soon!', error: 'GROQ_API_KEY not set' });
+  }
+  console.log('[ask-apa] request from', ip, '| page:', curPage, '| msgs:', clean.length);
 
   try {
     let data = null, lastStatus = 0, lastErr = '';
@@ -454,6 +459,7 @@ export default async function handler(req, res) {
     }
 
     if (!data) {
+      console.error('[ask-apa] All models failed. lastStatus:', lastStatus, 'lastErr:', lastErr);
       const msg = lastStatus === 401 || lastStatus === 403
         ? 'I\'m having an auth issue on my end — Kevin, check the GROQ_API_KEY in Vercel.'
         : lastStatus === 429
