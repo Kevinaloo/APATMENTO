@@ -12,7 +12,7 @@
    5. Rate limit: 20 req / 60s per IP
 ══════════════════════════════════════════════════════════════ */
 
-import { select, cors } from './lib/_db.js';
+import { select, cors } from './_db.js';
 
 const GROQ_API    = 'https://api.groq.com/openai/v1/chat/completions';
 const GROQ_MODELS = [

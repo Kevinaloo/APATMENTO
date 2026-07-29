@@ -10,7 +10,7 @@
    will not release money we have not collected.
 ══════════════════════════════════════════════════════════════ */
 
-import { one, update, whoami, notify, cors } from './lib/_db.js';
+import { one, update, whoami, notify, cors } from './_db.js';
 
 const money = (n) => 'KES ' + Number(n || 0).toLocaleString();
 const ALLOWED = ['apartment_bookings', 'tour_bookings', 'event_tickets'];
