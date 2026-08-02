@@ -879,44 +879,40 @@ img,video,svg{max-width:100%;}
 .greeting{}
 
 /* ═══════════════════════════════════════════════════════════
-   DANCER CLOCK STAGE — 4-person troupe, full-body stick figures
-   Sits below greeting. All 4 dance same genre each minute,
-   rotating: Afrobeats → Reggae → Amapiano → Trap → loop.
-   Numbers + dancers stay in sync. Genre label fades in/out.
+   DANCER CLOCK — ghost background, zero layout impact
+   Absolute inside .greeting, behind text, pointer-events none.
+   Digit + stick figure are one SVG unit — dance as a couple.
+   Genre rotates every minute, no label shown.
    ═══════════════════════════════════════════════════════════ */
 
-/* ── STAGE CONTAINER ── */
+/* ── STAGE: absolute ghost, fills greeting area ── */
 #dancer-stage {
-  width: 100%;
+  position: absolute;
+  top: 0; right: -12px;
+  height: 100%;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  margin-bottom: 28px;
-  gap: 6px;
-  opacity: 0;
-  animation: fadeUp .7s .2s forwards;
+  pointer-events: none;
+  z-index: 0;
+  user-select: none;
 }
 
 /* ── TROUPE ROW ── */
 .ds-troupe {
   display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  gap: 8px;
+  align-items: center;
+  gap: 2px;
 }
 
 /* ── SINGLE DANCER CELL ── */
 .ds-dancer {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 0;
-  /* digit is inside SVG — no separate element needed */
 }
 
 /* ── SVG BODY + DIGIT UNIT ── */
-.ds-svg { overflow: visible; display: block; }
-.ds-digit { filter: drop-shadow(0 0 8px currentColor); }
+.ds-svg { overflow: visible; display: block; opacity: 0.62; }
+.ds-digit { filter: drop-shadow(0 0 6px currentColor); }
 /* Each limb has its transform-origin baked into inline style on the <g> */
 
 /* ── COLON ── */
@@ -926,7 +922,7 @@ img,video,svg{max-width:100%;}
   gap: 8px;
   align-items: center;
   justify-content: flex-end;
-  padding-bottom: 28px;
+  padding-bottom: 14px;
   width: 16px;
 }
 .ds-dot {
@@ -942,16 +938,7 @@ img,video,svg{max-width:100%;}
   50%    { opacity:.12; transform:scale(.45); }
 }
 
-/* ── GENRE LABEL ── */
-.ds-genre-label {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  color: rgba(123,47,247,.45);
-  transition: opacity .4s;
-}
-.ds-genre-label.changing { opacity: 0; }
+/* genre label hidden */
 
 /* ══════════════════════════════════════════════════════════════
    GENRE ANIMATIONS — applied to .ds-body (.ds-dancer wrapper)
@@ -1047,18 +1034,19 @@ img,video,svg{max-width:100%;}
 @keyframes ds-pop { 0%{transform:scale(1)rotate(0)}15%{transform:scale(1.4)rotate(-7deg)}30%{transform:scale(.8)rotate(5deg)}55%{transform:scale(1.15)rotate(-3deg)}75%{transform:scale(.95)rotate(2deg)}100%{transform:scale(1)rotate(0)} }
 
 /* ── RESPONSIVE ── */
-@media(max-width:600px) {
-  .ds-svg { width: 40px; height: 76px; }
-  .ds-troupe { gap: 4px; }
-  .ds-colon { padding-bottom: 22px; }
+@media(max-width:640px) {
+  #dancer-stage { right: -4px; }
+  .ds-svg { width: 36px; height: 68px; }
+  .ds-troupe { gap: 0; }
+  .ds-colon { width: 10px; padding-bottom: 10px; }
 }
 @media(max-width:420px) {
-  .ds-svg { width: 34px; height: 64px; }
-  .ds-troupe { gap: 2px; }
-  .ds-colon { width: 12px; padding-bottom: 18px; }
+  #dancer-stage { right: 0; }
+  .ds-svg { width: 30px; height: 56px; }
+  .ds-colon { width: 8px; }
 }
 @media(max-width:360px) {
-  .ds-svg { width: 28px; height: 54px; }
+  .ds-svg { width: 26px; height: 48px; }
 }
 
 
@@ -1173,16 +1161,11 @@ img,video,svg{max-width:100%;}
 
     <div class="content">
       <div class="greeting">
-
-        <h1 class="greeting-title" id="g-title"><span id="g-greeting">Good afternoon</span><em id="g-name"></em></h1>
-        <p class="greeting-sub">#1 zero commission travel platform. Book everything in one place at fair prices.</p>
-      </div>
-
-        <!-- ── DANCER CLOCK STAGE ── -->
+        <!-- Ghost dancer stage — sits in background, zero layout impact -->
         <div id="dancer-stage" aria-hidden="true">
           <div class="ds-troupe">
             <div class="ds-dancer" id="ds-h1">
-              <div class="ds-body"><svg class="ds-svg" viewBox="0 0 48 90" width="48" height="90" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <div class="ds-body"><svg class="ds-svg" viewBox="0 0 48 90" width="44" height="82" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="dg-h1" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#9B5FFF"/>
@@ -1193,7 +1176,7 @@ img,video,svg{max-width:100%;}
   <g class="ds-unit">
     <!-- Digit number -->
     <text class="ds-digit" x="24" y="19" text-anchor="middle" dominant-baseline="middle"
-      font-family="Geist,Inter,sans-serif" font-weight="900" font-size="22"
+      font-family="Geist,Inter,sans-serif" font-weight="900" font-size="20"
       fill="url(#dg-h1)">0</text>
     <!-- Head -->
     <g class="ds-head" style="transform-origin:24px 30px">
@@ -1223,7 +1206,7 @@ img,video,svg{max-width:100%;}
 </svg></div>
             </div>
             <div class="ds-dancer" id="ds-h2">
-              <div class="ds-body"><svg class="ds-svg" viewBox="0 0 48 90" width="48" height="90" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <div class="ds-body"><svg class="ds-svg" viewBox="0 0 48 90" width="44" height="82" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="dg-h2" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#4361FF"/>
@@ -1234,7 +1217,7 @@ img,video,svg{max-width:100%;}
   <g class="ds-unit">
     <!-- Digit number -->
     <text class="ds-digit" x="24" y="19" text-anchor="middle" dominant-baseline="middle"
-      font-family="Geist,Inter,sans-serif" font-weight="900" font-size="22"
+      font-family="Geist,Inter,sans-serif" font-weight="900" font-size="20"
       fill="url(#dg-h2)">8</text>
     <!-- Head -->
     <g class="ds-head" style="transform-origin:24px 30px">
@@ -1268,7 +1251,7 @@ img,video,svg{max-width:100%;}
               <div class="ds-dot"></div>
             </div>
             <div class="ds-dancer" id="ds-m1">
-              <div class="ds-body"><svg class="ds-svg" viewBox="0 0 48 90" width="48" height="90" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <div class="ds-body"><svg class="ds-svg" viewBox="0 0 48 90" width="44" height="82" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="dg-m1" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#2DD4BF"/>
@@ -1279,7 +1262,7 @@ img,video,svg{max-width:100%;}
   <g class="ds-unit">
     <!-- Digit number -->
     <text class="ds-digit" x="24" y="19" text-anchor="middle" dominant-baseline="middle"
-      font-family="Geist,Inter,sans-serif" font-weight="900" font-size="22"
+      font-family="Geist,Inter,sans-serif" font-weight="900" font-size="20"
       fill="url(#dg-m1)">0</text>
     <!-- Head -->
     <g class="ds-head" style="transform-origin:24px 30px">
@@ -1309,7 +1292,7 @@ img,video,svg{max-width:100%;}
 </svg></div>
             </div>
             <div class="ds-dancer" id="ds-m2">
-              <div class="ds-body"><svg class="ds-svg" viewBox="0 0 48 90" width="48" height="90" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <div class="ds-body"><svg class="ds-svg" viewBox="0 0 48 90" width="44" height="82" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="dg-m2" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#FF5C8A"/>
@@ -1320,7 +1303,7 @@ img,video,svg{max-width:100%;}
   <g class="ds-unit">
     <!-- Digit number -->
     <text class="ds-digit" x="24" y="19" text-anchor="middle" dominant-baseline="middle"
-      font-family="Geist,Inter,sans-serif" font-weight="900" font-size="22"
+      font-family="Geist,Inter,sans-serif" font-weight="900" font-size="20"
       fill="url(#dg-m2)">0</text>
     <!-- Head -->
     <g class="ds-head" style="transform-origin:24px 30px">
@@ -1350,8 +1333,10 @@ img,video,svg{max-width:100%;}
 </svg></div>
             </div>
           </div>
-          <div class="ds-genre-label" id="ds-genre-label">Afrobeats</div>
         </div>
+        <h1 class="greeting-title" id="g-title" style="position:relative;z-index:1;"><span id="g-greeting">Good afternoon</span><em id="g-name"></em></h1>
+        <p class="greeting-sub" style="position:relative;z-index:1;">#1 zero commission travel platform. Book everything in one place at fair prices.</p>
+      </div>
 
       <!-- ── GET MATCHED GHOST TAB — visible only when guest has active match request ── -->
       <div id="dash-gm-tab" style="display:none;margin-bottom:14px;">
@@ -2147,8 +2132,6 @@ function getGreeting(){
   'use strict';
 
   var GENRES = ['afrobeats','reggae','amapiano','trap'];
-  var GENRE_LABELS = { afrobeats:'Afrobeats', reggae:'Reggae', amapiano:'Amapiano', trap:'Trap' };
-
   var _prev = { h1:'', h2:'', m1:'', m2:'', minute:-1, genreIdx:0 };
   var _timer = null;
 
@@ -2164,21 +2147,13 @@ function getGreeting(){
     setTimeout(function(){ digit.classList.remove('popping'); }, 600);
   }
 
-  /* Switch genre on #dancer-stage */
+  /* Switch genre on #dancer-stage — silent, no label */
   function setGenre(idx){
     var stage = document.getElementById('dancer-stage');
     if(!stage) return;
-    var label = document.getElementById('ds-genre-label');
-    // fade label out
-    if(label) label.classList.add('changing');
-    // swap genre class after brief pause
     setTimeout(function(){
       GENRES.forEach(function(g){ stage.classList.remove('genre-'+g); });
       stage.classList.add('genre-'+GENRES[idx]);
-      if(label){
-        label.textContent = GENRE_LABELS[GENRES[idx]];
-        label.classList.remove('changing');
-      }
     }, 350);
   }
 
@@ -2226,9 +2201,6 @@ function getGreeting(){
     _prev.genreIdx = now.getMinutes() % GENRES.length;
     var stage = document.getElementById('dancer-stage');
     if(stage) stage.classList.add('genre-'+GENRES[_prev.genreIdx]);
-    var label = document.getElementById('ds-genre-label');
-    if(label) label.textContent = GENRE_LABELS[GENRES[_prev.genreIdx]];
-
     tick();
     var ms = 1000 - now.getMilliseconds();
     setTimeout(function(){
