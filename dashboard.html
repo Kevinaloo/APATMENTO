@@ -911,34 +911,13 @@ img,video,svg{max-width:100%;}
   flex-direction: column;
   align-items: center;
   gap: 0;
+  /* digit is inside SVG — no separate element needed */
 }
 
-/* ── NUMBER ── */
-.ds-num {
-  font-family: var(--font-display,'Geist','Inter',sans-serif);
-  font-weight: 900;
-  font-size: 42px;
-  line-height: 1;
-  letter-spacing: -.04em;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  display: block;
-  will-change: transform;
-}
-#ds-h1 .ds-num { background-image: linear-gradient(160deg,#7B2FF7,#9B5FFF,#B8A4F4); }
-#ds-h2 .ds-num { background-image: linear-gradient(160deg,#4361FF,#00B4D8,#7B2FF7); }
-#ds-m1 .ds-num { background-image: linear-gradient(160deg,#2DD4BF,#5EEAD4,#4361FF); }
-#ds-m2 .ds-num { background-image: linear-gradient(160deg,#FF5C8A,#FF9A5C,#FFD93D); }
-
-/* ── SVG BODY ── */
+/* ── SVG BODY + DIGIT UNIT ── */
 .ds-svg { overflow: visible; display: block; }
-.ds-head  { transform-origin: 20px 12px; }
-.ds-torso { transform-origin: 20px 14px; }
-.ds-arm-l { transform-origin: 20px 16px; }
-.ds-arm-r { transform-origin: 20px 16px; }
-.ds-leg-l { transform-origin: 20px 40px; }
-.ds-leg-r { transform-origin: 20px 40px; }
+.ds-digit { filter: drop-shadow(0 0 8px currentColor); }
+/* Each limb has its transform-origin baked into inline style on the <g> */
 
 /* ── COLON ── */
 .ds-colon {
@@ -947,7 +926,7 @@ img,video,svg{max-width:100%;}
   gap: 8px;
   align-items: center;
   justify-content: flex-end;
-  padding-bottom: 18px;
+  padding-bottom: 28px;
   width: 16px;
 }
 .ds-dot {
@@ -1001,11 +980,6 @@ img,video,svg{max-width:100%;}
 #dancer-stage.genre-afrobeats #ds-h2 .ds-body { animation-delay: .08s; }
 #dancer-stage.genre-afrobeats #ds-m1 .ds-body { animation-delay: .16s; }
 #dancer-stage.genre-afrobeats #ds-m2 .ds-body { animation-delay: .24s; }
-#dancer-stage.genre-afrobeats .ds-num { animation: af-body 1.6s cubic-bezier(.45,.05,.55,.95) infinite; }
-#dancer-stage.genre-afrobeats #ds-h1 .ds-num  { animation-delay: 0s; }
-#dancer-stage.genre-afrobeats #ds-h2 .ds-num  { animation-delay: .08s; }
-#dancer-stage.genre-afrobeats #ds-m1 .ds-num  { animation-delay: .16s; }
-#dancer-stage.genre-afrobeats #ds-m2 .ds-num  { animation-delay: .24s; }
 
 /* ── REGGAE ── slow deep sway, side-to-side, floating arms */
 @keyframes rg-body  { 0%{transform:translateX(0)translateY(0)rotate(0)}20%{transform:translateX(-11px)translateY(-5px)rotate(-4deg)}40%{transform:translateX(2px)translateY(3px)rotate(2deg)}60%{transform:translateX(11px)translateY(-6px)rotate(4.5deg)}80%{transform:translateX(-3px)translateY(2px)rotate(-2deg)}100%{transform:translateX(0)translateY(0)rotate(0)} }
@@ -1027,11 +1001,6 @@ img,video,svg{max-width:100%;}
 #dancer-stage.genre-reggae #ds-h2 .ds-body { animation-delay: .18s; }
 #dancer-stage.genre-reggae #ds-m1 .ds-body { animation-delay: .36s; }
 #dancer-stage.genre-reggae #ds-m2 .ds-body { animation-delay: .54s; }
-#dancer-stage.genre-reggae .ds-num { animation: rg-body 3.2s cubic-bezier(.25,.1,.25,1) infinite; }
-#dancer-stage.genre-reggae #ds-h1 .ds-num  { animation-delay: 0s; }
-#dancer-stage.genre-reggae #ds-h2 .ds-num  { animation-delay: .18s; }
-#dancer-stage.genre-reggae #ds-m1 .ds-num  { animation-delay: .36s; }
-#dancer-stage.genre-reggae #ds-m2 .ds-num  { animation-delay: .54s; }
 
 /* ── AMAPIANO ── vertical bounce, squash-stretch, high knees */
 @keyframes ap-body  { 0%{transform:translateY(0)scaleY(1)scaleX(1)}8%{transform:translateY(-15px)scaleY(1.09)scaleX(.93)}16%{transform:translateY(4px)scaleY(.92)scaleX(1.06)}24%{transform:translateY(-11px)scaleY(1.07)scaleX(.96)}34%{transform:translateY(3px)scaleY(.95)scaleX(1.03)}44%{transform:translateY(-17px)scaleY(1.11)scaleX(.91)}54%{transform:translateY(5px)scaleY(.90)scaleX(1.07)}64%{transform:translateY(-9px)scaleY(1.05)scaleX(.97)}76%{transform:translateY(2px)scaleY(.96)scaleX(1.02)}88%{transform:translateY(-6px)scaleY(1.04)scaleX(.98)}100%{transform:translateY(0)scaleY(1)scaleX(1)} }
@@ -1053,11 +1022,6 @@ img,video,svg{max-width:100%;}
 #dancer-stage.genre-amapiano #ds-h2 .ds-body { animation-delay: .06s; }
 #dancer-stage.genre-amapiano #ds-m1 .ds-body { animation-delay: .12s; }
 #dancer-stage.genre-amapiano #ds-m2 .ds-body { animation-delay: .18s; }
-#dancer-stage.genre-amapiano .ds-num { animation: ap-body 1.3s cubic-bezier(.36,.07,.19,.97) infinite; }
-#dancer-stage.genre-amapiano #ds-h1 .ds-num  { animation-delay: 0s; }
-#dancer-stage.genre-amapiano #ds-h2 .ds-num  { animation-delay: .06s; }
-#dancer-stage.genre-amapiano #ds-m1 .ds-num  { animation-delay: .12s; }
-#dancer-stage.genre-amapiano #ds-m2 .ds-num  { animation-delay: .18s; }
 
 /* ── TRAP ── hard snap → freeze → slow float, dramatic */
 @keyframes tr-body  { 0%{transform:translateY(0)scale(1)rotate(0)}4%{transform:translateY(-19px)scale(1.13)rotate(-4.5deg)}9%{transform:translateY(7px)scale(.89)rotate(3deg)}14%{transform:translateY(-13px)scale(1.09)rotate(-2deg)}20%,55%{transform:translateY(0)scale(1)rotate(0)}38%{transform:translateY(-4px)scale(1.02)rotate(-1deg)}60%{transform:translateY(9px)scale(.91)rotate(2.5deg)}65%{transform:translateY(-15px)scale(1.11)rotate(-3deg)}70%{transform:translateY(4px)scale(.94)rotate(2deg)}76%,100%{transform:translateY(0)scale(1)rotate(0)} }
@@ -1078,31 +1042,23 @@ img,video,svg{max-width:100%;}
 #dancer-stage.genre-trap #ds-h2 .ds-body { animation-delay: .1s; }
 #dancer-stage.genre-trap #ds-m1 .ds-body { animation-delay: .2s; }
 #dancer-stage.genre-trap #ds-m2 .ds-body { animation-delay: .3s; }
-#dancer-stage.genre-trap .ds-num { animation: tr-body 2.4s cubic-bezier(.55,.06,.68,.19) infinite; }
-#dancer-stage.genre-trap #ds-h1 .ds-num  { animation-delay: 0s; }
-#dancer-stage.genre-trap #ds-h2 .ds-num  { animation-delay: .1s; }
-#dancer-stage.genre-trap #ds-m1 .ds-num  { animation-delay: .2s; }
-#dancer-stage.genre-trap #ds-m2 .ds-num  { animation-delay: .3s; }
 
 /* ── DIGIT CHANGE POP ── */
 @keyframes ds-pop { 0%{transform:scale(1)rotate(0)}15%{transform:scale(1.4)rotate(-7deg)}30%{transform:scale(.8)rotate(5deg)}55%{transform:scale(1.15)rotate(-3deg)}75%{transform:scale(.95)rotate(2deg)}100%{transform:scale(1)rotate(0)} }
-.ds-num.popping { animation: ds-pop .55s cubic-bezier(.36,.07,.19,.97) both !important; }
 
 /* ── RESPONSIVE ── */
 @media(max-width:600px) {
-  .ds-num { font-size: 34px; }
-  .ds-svg { width: 34px; height: 58px; }
+  .ds-svg { width: 40px; height: 76px; }
   .ds-troupe { gap: 4px; }
+  .ds-colon { padding-bottom: 22px; }
 }
 @media(max-width:420px) {
-  .ds-num { font-size: 28px; }
-  .ds-svg { width: 28px; height: 48px; }
+  .ds-svg { width: 34px; height: 64px; }
   .ds-troupe { gap: 2px; }
-  .ds-colon { width: 12px; }
+  .ds-colon { width: 12px; padding-bottom: 18px; }
 }
 @media(max-width:360px) {
-  .ds-num { font-size: 24px; }
-  .ds-svg { width: 24px; height: 40px; }
+  .ds-svg { width: 28px; height: 54px; }
 }
 
 
@@ -1226,27 +1182,85 @@ img,video,svg{max-width:100%;}
         <div id="dancer-stage" aria-hidden="true">
           <div class="ds-troupe">
             <div class="ds-dancer" id="ds-h1">
-              <span class="ds-num">0</span>
-              <div class="ds-body"><svg class="ds-svg" viewBox="0 0 40 68" width="40" height="68" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <defs><linearGradient id="dg-h1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#9B5FFF"/><stop offset="100%" stop-color="#7B2FF7"/></linearGradient></defs>
-  <g class="ds-head"><circle cx="20" cy="7" r="5.5" stroke="url(#dg-h1)" stroke-width="2.5" fill="none"/></g>
-  <g class="ds-torso" style="transform-origin:20px 14px"><line x1="20" y1="14" x2="20" y2="40" stroke="url(#dg-h1)" stroke-width="2.5" stroke-linecap="round"/></g>
-  <g class="ds-arm-l" style="transform-origin:20px 16px"><line x1="20" y1="16" x2="4" y2="30" stroke="url(#dg-h1)" stroke-width="2.5" stroke-linecap="round"/></g>
-  <g class="ds-arm-r" style="transform-origin:20px 16px"><line x1="20" y1="16" x2="36" y2="30" stroke="url(#dg-h1)" stroke-width="2.5" stroke-linecap="round"/></g>
-  <g class="ds-leg-l" style="transform-origin:20px 40px"><line x1="20" y1="40" x2="10" y2="63" stroke="url(#dg-h1)" stroke-width="2.5" stroke-linecap="round"/></g>
-  <g class="ds-leg-r" style="transform-origin:20px 40px"><line x1="20" y1="40" x2="30" y2="63" stroke="url(#dg-h1)" stroke-width="2.5" stroke-linecap="round"/></g>
+              <div class="ds-body"><svg class="ds-svg" viewBox="0 0 48 90" width="48" height="90" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="dg-h1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#9B5FFF"/>
+      <stop offset="100%" stop-color="#7B2FF7"/>
+    </linearGradient>
+  </defs>
+  <!-- Digit rides on top — part of the body unit -->
+  <g class="ds-unit">
+    <!-- Digit number -->
+    <text class="ds-digit" x="24" y="19" text-anchor="middle" dominant-baseline="middle"
+      font-family="Geist,Inter,sans-serif" font-weight="900" font-size="22"
+      fill="url(#dg-h1)">0</text>
+    <!-- Head -->
+    <g class="ds-head" style="transform-origin:24px 30px">
+      <circle cx="24" cy="30" r="6" stroke="url(#dg-h1)" stroke-width="2.5" fill="none"/>
+    </g>
+    <!-- Torso -->
+    <g class="ds-torso" style="transform-origin:24px 36px">
+      <line x1="24" y1="36" x2="24" y2="60" stroke="url(#dg-h1)" stroke-width="2.5" stroke-linecap="round"/>
+    </g>
+    <!-- Left arm -->
+    <g class="ds-arm-l" style="transform-origin:24px 40px">
+      <line x1="24" y1="40" x2="8" y2="54" stroke="url(#dg-h1)" stroke-width="2.5" stroke-linecap="round"/>
+    </g>
+    <!-- Right arm -->
+    <g class="ds-arm-r" style="transform-origin:24px 40px">
+      <line x1="24" y1="40" x2="40" y2="54" stroke="url(#dg-h1)" stroke-width="2.5" stroke-linecap="round"/>
+    </g>
+    <!-- Left leg -->
+    <g class="ds-leg-l" style="transform-origin:24px 60px">
+      <line x1="24" y1="60" x2="14" y2="82" stroke="url(#dg-h1)" stroke-width="2.5" stroke-linecap="round"/>
+    </g>
+    <!-- Right leg -->
+    <g class="ds-leg-r" style="transform-origin:24px 60px">
+      <line x1="24" y1="60" x2="34" y2="82" stroke="url(#dg-h1)" stroke-width="2.5" stroke-linecap="round"/>
+    </g>
+  </g>
 </svg></div>
             </div>
             <div class="ds-dancer" id="ds-h2">
-              <span class="ds-num">8</span>
-              <div class="ds-body"><svg class="ds-svg" viewBox="0 0 40 68" width="40" height="68" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <defs><linearGradient id="dg-h2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#4361FF"/><stop offset="100%" stop-color="#00B4D8"/></linearGradient></defs>
-  <g class="ds-head"><circle cx="20" cy="7" r="5.5" stroke="url(#dg-h2)" stroke-width="2.5" fill="none"/></g>
-  <g class="ds-torso" style="transform-origin:20px 14px"><line x1="20" y1="14" x2="20" y2="40" stroke="url(#dg-h2)" stroke-width="2.5" stroke-linecap="round"/></g>
-  <g class="ds-arm-l" style="transform-origin:20px 16px"><line x1="20" y1="16" x2="4" y2="30" stroke="url(#dg-h2)" stroke-width="2.5" stroke-linecap="round"/></g>
-  <g class="ds-arm-r" style="transform-origin:20px 16px"><line x1="20" y1="16" x2="36" y2="30" stroke="url(#dg-h2)" stroke-width="2.5" stroke-linecap="round"/></g>
-  <g class="ds-leg-l" style="transform-origin:20px 40px"><line x1="20" y1="40" x2="10" y2="63" stroke="url(#dg-h2)" stroke-width="2.5" stroke-linecap="round"/></g>
-  <g class="ds-leg-r" style="transform-origin:20px 40px"><line x1="20" y1="40" x2="30" y2="63" stroke="url(#dg-h2)" stroke-width="2.5" stroke-linecap="round"/></g>
+              <div class="ds-body"><svg class="ds-svg" viewBox="0 0 48 90" width="48" height="90" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="dg-h2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4361FF"/>
+      <stop offset="100%" stop-color="#00B4D8"/>
+    </linearGradient>
+  </defs>
+  <!-- Digit rides on top — part of the body unit -->
+  <g class="ds-unit">
+    <!-- Digit number -->
+    <text class="ds-digit" x="24" y="19" text-anchor="middle" dominant-baseline="middle"
+      font-family="Geist,Inter,sans-serif" font-weight="900" font-size="22"
+      fill="url(#dg-h2)">8</text>
+    <!-- Head -->
+    <g class="ds-head" style="transform-origin:24px 30px">
+      <circle cx="24" cy="30" r="6" stroke="url(#dg-h2)" stroke-width="2.5" fill="none"/>
+    </g>
+    <!-- Torso -->
+    <g class="ds-torso" style="transform-origin:24px 36px">
+      <line x1="24" y1="36" x2="24" y2="60" stroke="url(#dg-h2)" stroke-width="2.5" stroke-linecap="round"/>
+    </g>
+    <!-- Left arm -->
+    <g class="ds-arm-l" style="transform-origin:24px 40px">
+      <line x1="24" y1="40" x2="8" y2="54" stroke="url(#dg-h2)" stroke-width="2.5" stroke-linecap="round"/>
+    </g>
+    <!-- Right arm -->
+    <g class="ds-arm-r" style="transform-origin:24px 40px">
+      <line x1="24" y1="40" x2="40" y2="54" stroke="url(#dg-h2)" stroke-width="2.5" stroke-linecap="round"/>
+    </g>
+    <!-- Left leg -->
+    <g class="ds-leg-l" style="transform-origin:24px 60px">
+      <line x1="24" y1="60" x2="14" y2="82" stroke="url(#dg-h2)" stroke-width="2.5" stroke-linecap="round"/>
+    </g>
+    <!-- Right leg -->
+    <g class="ds-leg-r" style="transform-origin:24px 60px">
+      <line x1="24" y1="60" x2="34" y2="82" stroke="url(#dg-h2)" stroke-width="2.5" stroke-linecap="round"/>
+    </g>
+  </g>
 </svg></div>
             </div>
             <div class="ds-colon">
@@ -1254,27 +1268,85 @@ img,video,svg{max-width:100%;}
               <div class="ds-dot"></div>
             </div>
             <div class="ds-dancer" id="ds-m1">
-              <span class="ds-num">0</span>
-              <div class="ds-body"><svg class="ds-svg" viewBox="0 0 40 68" width="40" height="68" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <defs><linearGradient id="dg-m1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#2DD4BF"/><stop offset="100%" stop-color="#4361FF"/></linearGradient></defs>
-  <g class="ds-head"><circle cx="20" cy="7" r="5.5" stroke="url(#dg-m1)" stroke-width="2.5" fill="none"/></g>
-  <g class="ds-torso" style="transform-origin:20px 14px"><line x1="20" y1="14" x2="20" y2="40" stroke="url(#dg-m1)" stroke-width="2.5" stroke-linecap="round"/></g>
-  <g class="ds-arm-l" style="transform-origin:20px 16px"><line x1="20" y1="16" x2="4" y2="30" stroke="url(#dg-m1)" stroke-width="2.5" stroke-linecap="round"/></g>
-  <g class="ds-arm-r" style="transform-origin:20px 16px"><line x1="20" y1="16" x2="36" y2="30" stroke="url(#dg-m1)" stroke-width="2.5" stroke-linecap="round"/></g>
-  <g class="ds-leg-l" style="transform-origin:20px 40px"><line x1="20" y1="40" x2="10" y2="63" stroke="url(#dg-m1)" stroke-width="2.5" stroke-linecap="round"/></g>
-  <g class="ds-leg-r" style="transform-origin:20px 40px"><line x1="20" y1="40" x2="30" y2="63" stroke="url(#dg-m1)" stroke-width="2.5" stroke-linecap="round"/></g>
+              <div class="ds-body"><svg class="ds-svg" viewBox="0 0 48 90" width="48" height="90" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="dg-m1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2DD4BF"/>
+      <stop offset="100%" stop-color="#4361FF"/>
+    </linearGradient>
+  </defs>
+  <!-- Digit rides on top — part of the body unit -->
+  <g class="ds-unit">
+    <!-- Digit number -->
+    <text class="ds-digit" x="24" y="19" text-anchor="middle" dominant-baseline="middle"
+      font-family="Geist,Inter,sans-serif" font-weight="900" font-size="22"
+      fill="url(#dg-m1)">0</text>
+    <!-- Head -->
+    <g class="ds-head" style="transform-origin:24px 30px">
+      <circle cx="24" cy="30" r="6" stroke="url(#dg-m1)" stroke-width="2.5" fill="none"/>
+    </g>
+    <!-- Torso -->
+    <g class="ds-torso" style="transform-origin:24px 36px">
+      <line x1="24" y1="36" x2="24" y2="60" stroke="url(#dg-m1)" stroke-width="2.5" stroke-linecap="round"/>
+    </g>
+    <!-- Left arm -->
+    <g class="ds-arm-l" style="transform-origin:24px 40px">
+      <line x1="24" y1="40" x2="8" y2="54" stroke="url(#dg-m1)" stroke-width="2.5" stroke-linecap="round"/>
+    </g>
+    <!-- Right arm -->
+    <g class="ds-arm-r" style="transform-origin:24px 40px">
+      <line x1="24" y1="40" x2="40" y2="54" stroke="url(#dg-m1)" stroke-width="2.5" stroke-linecap="round"/>
+    </g>
+    <!-- Left leg -->
+    <g class="ds-leg-l" style="transform-origin:24px 60px">
+      <line x1="24" y1="60" x2="14" y2="82" stroke="url(#dg-m1)" stroke-width="2.5" stroke-linecap="round"/>
+    </g>
+    <!-- Right leg -->
+    <g class="ds-leg-r" style="transform-origin:24px 60px">
+      <line x1="24" y1="60" x2="34" y2="82" stroke="url(#dg-m1)" stroke-width="2.5" stroke-linecap="round"/>
+    </g>
+  </g>
 </svg></div>
             </div>
             <div class="ds-dancer" id="ds-m2">
-              <span class="ds-num">0</span>
-              <div class="ds-body"><svg class="ds-svg" viewBox="0 0 40 68" width="40" height="68" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <defs><linearGradient id="dg-m2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#FF5C8A"/><stop offset="100%" stop-color="#FF9A5C"/></linearGradient></defs>
-  <g class="ds-head"><circle cx="20" cy="7" r="5.5" stroke="url(#dg-m2)" stroke-width="2.5" fill="none"/></g>
-  <g class="ds-torso" style="transform-origin:20px 14px"><line x1="20" y1="14" x2="20" y2="40" stroke="url(#dg-m2)" stroke-width="2.5" stroke-linecap="round"/></g>
-  <g class="ds-arm-l" style="transform-origin:20px 16px"><line x1="20" y1="16" x2="4" y2="30" stroke="url(#dg-m2)" stroke-width="2.5" stroke-linecap="round"/></g>
-  <g class="ds-arm-r" style="transform-origin:20px 16px"><line x1="20" y1="16" x2="36" y2="30" stroke="url(#dg-m2)" stroke-width="2.5" stroke-linecap="round"/></g>
-  <g class="ds-leg-l" style="transform-origin:20px 40px"><line x1="20" y1="40" x2="10" y2="63" stroke="url(#dg-m2)" stroke-width="2.5" stroke-linecap="round"/></g>
-  <g class="ds-leg-r" style="transform-origin:20px 40px"><line x1="20" y1="40" x2="30" y2="63" stroke="url(#dg-m2)" stroke-width="2.5" stroke-linecap="round"/></g>
+              <div class="ds-body"><svg class="ds-svg" viewBox="0 0 48 90" width="48" height="90" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="dg-m2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF5C8A"/>
+      <stop offset="100%" stop-color="#FF9A5C"/>
+    </linearGradient>
+  </defs>
+  <!-- Digit rides on top — part of the body unit -->
+  <g class="ds-unit">
+    <!-- Digit number -->
+    <text class="ds-digit" x="24" y="19" text-anchor="middle" dominant-baseline="middle"
+      font-family="Geist,Inter,sans-serif" font-weight="900" font-size="22"
+      fill="url(#dg-m2)">0</text>
+    <!-- Head -->
+    <g class="ds-head" style="transform-origin:24px 30px">
+      <circle cx="24" cy="30" r="6" stroke="url(#dg-m2)" stroke-width="2.5" fill="none"/>
+    </g>
+    <!-- Torso -->
+    <g class="ds-torso" style="transform-origin:24px 36px">
+      <line x1="24" y1="36" x2="24" y2="60" stroke="url(#dg-m2)" stroke-width="2.5" stroke-linecap="round"/>
+    </g>
+    <!-- Left arm -->
+    <g class="ds-arm-l" style="transform-origin:24px 40px">
+      <line x1="24" y1="40" x2="8" y2="54" stroke="url(#dg-m2)" stroke-width="2.5" stroke-linecap="round"/>
+    </g>
+    <!-- Right arm -->
+    <g class="ds-arm-r" style="transform-origin:24px 40px">
+      <line x1="24" y1="40" x2="40" y2="54" stroke="url(#dg-m2)" stroke-width="2.5" stroke-linecap="round"/>
+    </g>
+    <!-- Left leg -->
+    <g class="ds-leg-l" style="transform-origin:24px 60px">
+      <line x1="24" y1="60" x2="14" y2="82" stroke="url(#dg-m2)" stroke-width="2.5" stroke-linecap="round"/>
+    </g>
+    <!-- Right leg -->
+    <g class="ds-leg-r" style="transform-origin:24px 60px">
+      <line x1="24" y1="60" x2="34" y2="82" stroke="url(#dg-m2)" stroke-width="2.5" stroke-linecap="round"/>
+    </g>
+  </g>
 </svg></div>
             </div>
           </div>
@@ -2080,16 +2152,16 @@ function getGreeting(){
   var _prev = { h1:'', h2:'', m1:'', m2:'', minute:-1, genreIdx:0 };
   var _timer = null;
 
-  /* Pop animation on digit change */
+  /* Pop animation on digit change — targets SVG text element */
   function popNum(id){
     var el = document.getElementById(id);
     if(!el) return;
-    var num = el.querySelector('.ds-num');
-    if(!num) return;
-    num.classList.remove('popping');
-    void num.offsetWidth;
-    num.classList.add('popping');
-    setTimeout(function(){ num.classList.remove('popping'); }, 600);
+    var digit = el.querySelector('.ds-digit');
+    if(!digit) return;
+    digit.classList.remove('popping');
+    void digit.getBoundingClientRect(); // reflow
+    digit.classList.add('popping');
+    setTimeout(function(){ digit.classList.remove('popping'); }, 600);
   }
 
   /* Switch genre on #dancer-stage */
@@ -2110,14 +2182,14 @@ function getGreeting(){
     }, 350);
   }
 
-  /* Update a single digit */
+  /* Update a single digit — writes into SVG <text class="ds-digit"> */
   function setD(id, val, prevKey){
     var el = document.getElementById(id);
     if(!el) return;
-    var num = el.querySelector('.ds-num');
-    if(!num) return;
-    if(num.textContent !== val){
-      num.textContent = val;
+    var digit = el.querySelector('.ds-digit');
+    if(!digit) return;
+    if(digit.textContent !== val){
+      digit.textContent = val;
       if(_prev[prevKey] !== '') popNum(id);
     }
     _prev[prevKey] = val;
