@@ -16,12 +16,12 @@ import { select, cors } from './_db.js';
 
 const GROQ_API    = 'https://api.groq.com/openai/v1/chat/completions';
 const GROQ_MODELS = [
-  'openai/gpt-oss-20b',              // primary   — fast, 1k RPD
-  'openai/gpt-oss-120b',             // fallback 1 — higher quality, 1k RPD
-  'qwen/qwen3.6-27b',                // fallback 2 — multimodal, ~1k RPD
+  'moonshotai/kimi-k2-instruct',     // primary   — high quality, fast
+  'llama-3.3-70b-versatile',         // fallback 1 — excellent quality, generous RPD
+  'llama-3.1-70b-versatile',         // fallback 2 — solid, high RPD
   'llama-3.1-8b-instant',            // fallback 3 — 14,400 RPD safety net
 ];
-const GROQ_CALL_TIMEOUT = 12000; // 12s per model attempt
+const GROQ_CALL_TIMEOUT = 9000; // 9s per model attempt (4 models × 9s = 36s max, well within 45s)
 
 /* ── Rate limiter ────────────────────────────────────────────── */
 const RATE = new Map();

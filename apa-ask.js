@@ -524,7 +524,7 @@
         var d;
         try { d = JSON.parse(text); } catch(e) {
           console.error('[APA] Non-JSON response:', r.status, text.slice(0, 200));
-          d = { reply: r.status >= 500 ? 'Server hiccup — try again. 🔄' : 'Something went wrong — try again.' };
+          d = { reply: r.status >= 500 ? 'One moment — my server had a hiccup. Try again. 🔄' : 'Something slipped — try that again.' };
         }
         return { ok: r.ok, status: r.status, d: d };
       });
@@ -535,7 +535,7 @@
       if (btn) btn.disabled = false;
 
       var data = res.d || {};
-      var reply = data.reply || data.error || 'Something went sideways. Try again?';
+      var reply = data.reply || data.error || 'One sec — something slipped. Try again. 🔄';
       var navKey = data.navigate && ROUTES[String(data.navigate).toLowerCase()]
         ? String(data.navigate).toLowerCase() : null;
       var navParams = data.navigateParams || null;
@@ -568,12 +568,10 @@
       if (btn) btn.disabled = false;
       var msg = (err && err.message) ? err.message : String(err);
       console.error('[APA fetch error]', msg);
-      // Show specific message based on error type
-      var display = msg.indexOf('JSON') !== -1 || msg.indexOf('SyntaxError') !== -1
-        ? 'Server hiccup — try again in a moment. 🔄'
-        : msg.indexOf('NetworkError') !== -1 || msg.indexOf('Failed to fetch') !== -1
-        ? 'Connection issue — check your signal and retry. 📶'
-        : 'Something went sideways — try again. 🔄';
+      var isNetwork = msg.indexOf('NetworkError') !== -1 || msg.indexOf('Failed to fetch') !== -1 || msg.indexOf('Load failed') !== -1;
+      var display = isNetwork
+        ? 'Looks like your connection dropped — give it a sec and try again. 📶'
+        : 'One sec — I hit a small bump. Try that again. 🔄';
       appendMsg('apa', display);
       wasVoiceTurn = false;
     });
