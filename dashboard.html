@@ -667,7 +667,7 @@ img,video,svg{max-width:100%;}
   .drb-i-cab::before{filter:blur(8px) saturate(1.7) brightness(1.35);}
 }
 
-.greeting{margin-bottom:34px;opacity:0;animation:fadeUp .7s .05s forwards;}
+.greeting{margin-bottom:34px;opacity:0;animation:fadeUp .7s .05s forwards;position:relative;overflow:hidden;}
 .greeting-eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--lilac-deep);margin-bottom:12px;padding:6px 14px;border-radius:100px;background:rgba(184,164,244,.12);border:1px solid rgba(184,164,244,.25);}
 .greeting-title{font-family:var(--font-display);font-optical-sizing:auto;font-weight:400;font-size:clamp(32px,5vw,52px);line-height:1.05;letter-spacing:-.02em;color:var(--ink);margin-bottom:10px;}
 .greeting-title em{font-style:italic;font-weight:500;background:linear-gradient(120deg,var(--violet),var(--electric),var(--mint-deep));-webkit-background-clip:text;background-clip:text;color:transparent;}
@@ -875,8 +875,6 @@ img,video,svg{max-width:100%;}
 
 @keyframes pill-pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.55;transform:scale(.78);}}
 
-/* greeting wrapper needs relative positioning for pill anchor */
-.greeting{}
 
 /* ═══════════════════════════════════════════════════════════
    DANCER CLOCK — ghost background, zero layout impact
@@ -885,11 +883,12 @@ img,video,svg{max-width:100%;}
    Genre rotates every minute, no label shown.
    ═══════════════════════════════════════════════════════════ */
 
-/* ── STAGE: absolute ghost, fills greeting area ── */
+/* ── STAGE: absolute ghost, right side of greeting, behind text ── */
 #dancer-stage {
   position: absolute;
-  top: 0; right: -12px;
-  height: 100%;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
   display: flex;
   align-items: center;
   pointer-events: none;
@@ -911,22 +910,22 @@ img,video,svg{max-width:100%;}
 }
 
 /* ── COUPLE UNIT ── */
-.ds-svg { overflow: visible; display: block; opacity: 0.65; }
+.ds-svg { overflow: visible; display: block; opacity: 0.55; }
 .ds-body-wrap { display: flex; align-items: center; }
-/* digit-body counter-sways slightly — responsive partner */
 .ds-digit-body { transform-origin: 58px 36px; }
-.ds-digit { filter: drop-shadow(0 0 8px currentColor); }
+/* NO filter/blur on digit — crisp vector text */
+.ds-digit { }
 /* Each limb has its transform-origin baked into inline style on the <g> */
 
 /* ── COLON ── */
 .ds-colon {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   align-items: center;
-  justify-content: flex-end;
-  padding-bottom: 14px;
-  width: 16px;
+  justify-content: center;
+  padding-bottom: 0;
+  width: 10px;
 }
 .ds-dot {
   width: 5px; height: 5px;
@@ -1054,18 +1053,16 @@ img,video,svg{max-width:100%;}
 
 /* ── RESPONSIVE ── */
 @media(max-width:640px) {
-  #dancer-stage { right: -4px; }
-  .ds-svg { width: 46px; height: 40px; }
+  .ds-svg { width: 50px; height: 45px; }
   .ds-troupe { gap: 0; }
-  .ds-colon { width: 8px; padding-bottom: 8px; }
+  .ds-colon { width: 8px; padding-bottom: 6px; }
 }
 @media(max-width:420px) {
-  #dancer-stage { right: 0; }
-  .ds-svg { width: 38px; height: 34px; }
+  .ds-svg { width: 42px; height: 38px; }
   .ds-colon { width: 6px; }
 }
 @media(max-width:360px) {
-  .ds-svg { width: 32px; height: 28px; }
+  .ds-svg { width: 36px; height: 32px; }
 }
 
 
@@ -1144,7 +1141,7 @@ img,video,svg{max-width:100%;}
             <span class="tb-sos-label">SOS</span>
           </button>
           <a href="auth.html" class="cab-auth">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
             Sign in / up
           </a>
         </div>
@@ -1184,7 +1181,7 @@ img,video,svg{max-width:100%;}
         <div id="dancer-stage" aria-hidden="true">
           <div class="ds-troupe">
             <div class="ds-dancer" id="ds-h1">
-              <div class="ds-body-wrap"><svg class="ds-svg" viewBox="0 0 80 72" width="56" height="50" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <div class="ds-body-wrap"><svg class="ds-svg" viewBox="0 0 80 72" width="60" height="54" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="dg-h1" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#9B5FFF"/>
@@ -1195,44 +1192,44 @@ img,video,svg{max-width:100%;}
   <g class="ds-body" style="transform-origin:40px 36px">
     <!-- Head -->
     <g class="ds-head" style="transform-origin:18px 10px">
-      <circle cx="18" cy="10" r="6" stroke="url(#dg-h1)" stroke-width="2.2" fill="none"/>
+      <circle cx="18" cy="10" r="6" stroke="url(#dg-h1)" stroke-width="2.8" fill="none"/>
     </g>
     <!-- Torso -->
     <g class="ds-torso" style="transform-origin:18px 18px">
-      <line x1="18" y1="18" x2="18" y2="40" stroke="url(#dg-h1)" stroke-width="2.2" stroke-linecap="round"/>
+      <line x1="18" y1="18" x2="18" y2="40" stroke="url(#dg-h1)" stroke-width="2.8" stroke-linecap="round"/>
     </g>
     <!-- Left arm (swings free) -->
     <g class="ds-arm-l" style="transform-origin:18px 22px">
-      <line x1="18" y1="22" x2="4" y2="34" stroke="url(#dg-h1)" stroke-width="2.2" stroke-linecap="round"/>
+      <line x1="18" y1="22" x2="4" y2="34" stroke="url(#dg-h1)" stroke-width="2.8" stroke-linecap="round"/>
     </g>
     <!-- Right arm reaches toward digit partner -->
     <g class="ds-arm-r" style="transform-origin:18px 22px">
-      <line x1="18" y1="22" x2="38" y2="28" stroke="url(#dg-h1)" stroke-width="2.2" stroke-linecap="round"/>
+      <line x1="18" y1="22" x2="38" y2="28" stroke="url(#dg-h1)" stroke-width="2.8" stroke-linecap="round"/>
     </g>
     <!-- Left leg -->
     <g class="ds-leg-l" style="transform-origin:18px 40px">
-      <line x1="18" y1="40" x2="10" y2="62" stroke="url(#dg-h1)" stroke-width="2.2" stroke-linecap="round"/>
+      <line x1="18" y1="40" x2="10" y2="62" stroke="url(#dg-h1)" stroke-width="2.8" stroke-linecap="round"/>
     </g>
     <!-- Right leg -->
     <g class="ds-leg-r" style="transform-origin:18px 40px">
-      <line x1="18" y1="40" x2="26" y2="62" stroke="url(#dg-h1)" stroke-width="2.2" stroke-linecap="round"/>
+      <line x1="18" y1="40" x2="26" y2="62" stroke="url(#dg-h1)" stroke-width="2.8" stroke-linecap="round"/>
     </g>
     <!-- DIGIT PARTNER (right side, held by figure's arm) -->
     <!-- "Body" of digit — a subtle outline so it feels like a character -->
     <g class="ds-digit-body" style="transform-origin:58px 36px">
       <!-- Connection: wrist of figure holds digit -->
-      <line x1="38" y1="28" x2="50" y2="24" stroke="url(#dg-h1)" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="2 2" opacity="0.5"/>
+      <line x1="38" y1="28" x2="50" y2="24" stroke="url(#dg-h1)" stroke-width="0" opacity="0"/>
       <!-- The digit itself — large, bold, centered on right -->
       <text class="ds-digit" x="60" y="36"
         text-anchor="middle" dominant-baseline="middle"
-        font-family="Geist,Inter,sans-serif" font-weight="900" font-size="34"
-        fill="url(#dg-h1)" opacity="0.85">0</text>
+        font-family="Geist,Inter,sans-serif" font-weight="900" font-size="38"
+        fill="url(#dg-h1)">0</text>
     </g>
   </g>
 </svg></div>
             </div>
             <div class="ds-dancer" id="ds-h2">
-              <div class="ds-body-wrap"><svg class="ds-svg" viewBox="0 0 80 72" width="56" height="50" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <div class="ds-body-wrap"><svg class="ds-svg" viewBox="0 0 80 72" width="60" height="54" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="dg-h2" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#4361FF"/>
@@ -1243,38 +1240,38 @@ img,video,svg{max-width:100%;}
   <g class="ds-body" style="transform-origin:40px 36px">
     <!-- Head -->
     <g class="ds-head" style="transform-origin:18px 10px">
-      <circle cx="18" cy="10" r="6" stroke="url(#dg-h2)" stroke-width="2.2" fill="none"/>
+      <circle cx="18" cy="10" r="6" stroke="url(#dg-h2)" stroke-width="2.8" fill="none"/>
     </g>
     <!-- Torso -->
     <g class="ds-torso" style="transform-origin:18px 18px">
-      <line x1="18" y1="18" x2="18" y2="40" stroke="url(#dg-h2)" stroke-width="2.2" stroke-linecap="round"/>
+      <line x1="18" y1="18" x2="18" y2="40" stroke="url(#dg-h2)" stroke-width="2.8" stroke-linecap="round"/>
     </g>
     <!-- Left arm (swings free) -->
     <g class="ds-arm-l" style="transform-origin:18px 22px">
-      <line x1="18" y1="22" x2="4" y2="34" stroke="url(#dg-h2)" stroke-width="2.2" stroke-linecap="round"/>
+      <line x1="18" y1="22" x2="4" y2="34" stroke="url(#dg-h2)" stroke-width="2.8" stroke-linecap="round"/>
     </g>
     <!-- Right arm reaches toward digit partner -->
     <g class="ds-arm-r" style="transform-origin:18px 22px">
-      <line x1="18" y1="22" x2="38" y2="28" stroke="url(#dg-h2)" stroke-width="2.2" stroke-linecap="round"/>
+      <line x1="18" y1="22" x2="38" y2="28" stroke="url(#dg-h2)" stroke-width="2.8" stroke-linecap="round"/>
     </g>
     <!-- Left leg -->
     <g class="ds-leg-l" style="transform-origin:18px 40px">
-      <line x1="18" y1="40" x2="10" y2="62" stroke="url(#dg-h2)" stroke-width="2.2" stroke-linecap="round"/>
+      <line x1="18" y1="40" x2="10" y2="62" stroke="url(#dg-h2)" stroke-width="2.8" stroke-linecap="round"/>
     </g>
     <!-- Right leg -->
     <g class="ds-leg-r" style="transform-origin:18px 40px">
-      <line x1="18" y1="40" x2="26" y2="62" stroke="url(#dg-h2)" stroke-width="2.2" stroke-linecap="round"/>
+      <line x1="18" y1="40" x2="26" y2="62" stroke="url(#dg-h2)" stroke-width="2.8" stroke-linecap="round"/>
     </g>
     <!-- DIGIT PARTNER (right side, held by figure's arm) -->
     <!-- "Body" of digit — a subtle outline so it feels like a character -->
     <g class="ds-digit-body" style="transform-origin:58px 36px">
       <!-- Connection: wrist of figure holds digit -->
-      <line x1="38" y1="28" x2="50" y2="24" stroke="url(#dg-h2)" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="2 2" opacity="0.5"/>
+      <line x1="38" y1="28" x2="50" y2="24" stroke="url(#dg-h2)" stroke-width="0" opacity="0"/>
       <!-- The digit itself — large, bold, centered on right -->
       <text class="ds-digit" x="60" y="36"
         text-anchor="middle" dominant-baseline="middle"
-        font-family="Geist,Inter,sans-serif" font-weight="900" font-size="34"
-        fill="url(#dg-h2)" opacity="0.85">8</text>
+        font-family="Geist,Inter,sans-serif" font-weight="900" font-size="38"
+        fill="url(#dg-h2)">8</text>
     </g>
   </g>
 </svg></div>
@@ -1284,7 +1281,7 @@ img,video,svg{max-width:100%;}
               <div class="ds-dot"></div>
             </div>
             <div class="ds-dancer" id="ds-m1">
-              <div class="ds-body-wrap"><svg class="ds-svg" viewBox="0 0 80 72" width="56" height="50" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <div class="ds-body-wrap"><svg class="ds-svg" viewBox="0 0 80 72" width="60" height="54" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="dg-m1" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#2DD4BF"/>
@@ -1295,44 +1292,44 @@ img,video,svg{max-width:100%;}
   <g class="ds-body" style="transform-origin:40px 36px">
     <!-- Head -->
     <g class="ds-head" style="transform-origin:18px 10px">
-      <circle cx="18" cy="10" r="6" stroke="url(#dg-m1)" stroke-width="2.2" fill="none"/>
+      <circle cx="18" cy="10" r="6" stroke="url(#dg-m1)" stroke-width="2.8" fill="none"/>
     </g>
     <!-- Torso -->
     <g class="ds-torso" style="transform-origin:18px 18px">
-      <line x1="18" y1="18" x2="18" y2="40" stroke="url(#dg-m1)" stroke-width="2.2" stroke-linecap="round"/>
+      <line x1="18" y1="18" x2="18" y2="40" stroke="url(#dg-m1)" stroke-width="2.8" stroke-linecap="round"/>
     </g>
     <!-- Left arm (swings free) -->
     <g class="ds-arm-l" style="transform-origin:18px 22px">
-      <line x1="18" y1="22" x2="4" y2="34" stroke="url(#dg-m1)" stroke-width="2.2" stroke-linecap="round"/>
+      <line x1="18" y1="22" x2="4" y2="34" stroke="url(#dg-m1)" stroke-width="2.8" stroke-linecap="round"/>
     </g>
     <!-- Right arm reaches toward digit partner -->
     <g class="ds-arm-r" style="transform-origin:18px 22px">
-      <line x1="18" y1="22" x2="38" y2="28" stroke="url(#dg-m1)" stroke-width="2.2" stroke-linecap="round"/>
+      <line x1="18" y1="22" x2="38" y2="28" stroke="url(#dg-m1)" stroke-width="2.8" stroke-linecap="round"/>
     </g>
     <!-- Left leg -->
     <g class="ds-leg-l" style="transform-origin:18px 40px">
-      <line x1="18" y1="40" x2="10" y2="62" stroke="url(#dg-m1)" stroke-width="2.2" stroke-linecap="round"/>
+      <line x1="18" y1="40" x2="10" y2="62" stroke="url(#dg-m1)" stroke-width="2.8" stroke-linecap="round"/>
     </g>
     <!-- Right leg -->
     <g class="ds-leg-r" style="transform-origin:18px 40px">
-      <line x1="18" y1="40" x2="26" y2="62" stroke="url(#dg-m1)" stroke-width="2.2" stroke-linecap="round"/>
+      <line x1="18" y1="40" x2="26" y2="62" stroke="url(#dg-m1)" stroke-width="2.8" stroke-linecap="round"/>
     </g>
     <!-- DIGIT PARTNER (right side, held by figure's arm) -->
     <!-- "Body" of digit — a subtle outline so it feels like a character -->
     <g class="ds-digit-body" style="transform-origin:58px 36px">
       <!-- Connection: wrist of figure holds digit -->
-      <line x1="38" y1="28" x2="50" y2="24" stroke="url(#dg-m1)" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="2 2" opacity="0.5"/>
+      <line x1="38" y1="28" x2="50" y2="24" stroke="url(#dg-m1)" stroke-width="0" opacity="0"/>
       <!-- The digit itself — large, bold, centered on right -->
       <text class="ds-digit" x="60" y="36"
         text-anchor="middle" dominant-baseline="middle"
-        font-family="Geist,Inter,sans-serif" font-weight="900" font-size="34"
-        fill="url(#dg-m1)" opacity="0.85">0</text>
+        font-family="Geist,Inter,sans-serif" font-weight="900" font-size="38"
+        fill="url(#dg-m1)">0</text>
     </g>
   </g>
 </svg></div>
             </div>
             <div class="ds-dancer" id="ds-m2">
-              <div class="ds-body-wrap"><svg class="ds-svg" viewBox="0 0 80 72" width="56" height="50" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <div class="ds-body-wrap"><svg class="ds-svg" viewBox="0 0 80 72" width="60" height="54" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="dg-m2" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#FF5C8A"/>
@@ -1343,38 +1340,38 @@ img,video,svg{max-width:100%;}
   <g class="ds-body" style="transform-origin:40px 36px">
     <!-- Head -->
     <g class="ds-head" style="transform-origin:18px 10px">
-      <circle cx="18" cy="10" r="6" stroke="url(#dg-m2)" stroke-width="2.2" fill="none"/>
+      <circle cx="18" cy="10" r="6" stroke="url(#dg-m2)" stroke-width="2.8" fill="none"/>
     </g>
     <!-- Torso -->
     <g class="ds-torso" style="transform-origin:18px 18px">
-      <line x1="18" y1="18" x2="18" y2="40" stroke="url(#dg-m2)" stroke-width="2.2" stroke-linecap="round"/>
+      <line x1="18" y1="18" x2="18" y2="40" stroke="url(#dg-m2)" stroke-width="2.8" stroke-linecap="round"/>
     </g>
     <!-- Left arm (swings free) -->
     <g class="ds-arm-l" style="transform-origin:18px 22px">
-      <line x1="18" y1="22" x2="4" y2="34" stroke="url(#dg-m2)" stroke-width="2.2" stroke-linecap="round"/>
+      <line x1="18" y1="22" x2="4" y2="34" stroke="url(#dg-m2)" stroke-width="2.8" stroke-linecap="round"/>
     </g>
     <!-- Right arm reaches toward digit partner -->
     <g class="ds-arm-r" style="transform-origin:18px 22px">
-      <line x1="18" y1="22" x2="38" y2="28" stroke="url(#dg-m2)" stroke-width="2.2" stroke-linecap="round"/>
+      <line x1="18" y1="22" x2="38" y2="28" stroke="url(#dg-m2)" stroke-width="2.8" stroke-linecap="round"/>
     </g>
     <!-- Left leg -->
     <g class="ds-leg-l" style="transform-origin:18px 40px">
-      <line x1="18" y1="40" x2="10" y2="62" stroke="url(#dg-m2)" stroke-width="2.2" stroke-linecap="round"/>
+      <line x1="18" y1="40" x2="10" y2="62" stroke="url(#dg-m2)" stroke-width="2.8" stroke-linecap="round"/>
     </g>
     <!-- Right leg -->
     <g class="ds-leg-r" style="transform-origin:18px 40px">
-      <line x1="18" y1="40" x2="26" y2="62" stroke="url(#dg-m2)" stroke-width="2.2" stroke-linecap="round"/>
+      <line x1="18" y1="40" x2="26" y2="62" stroke="url(#dg-m2)" stroke-width="2.8" stroke-linecap="round"/>
     </g>
     <!-- DIGIT PARTNER (right side, held by figure's arm) -->
     <!-- "Body" of digit — a subtle outline so it feels like a character -->
     <g class="ds-digit-body" style="transform-origin:58px 36px">
       <!-- Connection: wrist of figure holds digit -->
-      <line x1="38" y1="28" x2="50" y2="24" stroke="url(#dg-m2)" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="2 2" opacity="0.5"/>
+      <line x1="38" y1="28" x2="50" y2="24" stroke="url(#dg-m2)" stroke-width="0" opacity="0"/>
       <!-- The digit itself — large, bold, centered on right -->
       <text class="ds-digit" x="60" y="36"
         text-anchor="middle" dominant-baseline="middle"
-        font-family="Geist,Inter,sans-serif" font-weight="900" font-size="34"
-        fill="url(#dg-m2)" opacity="0.85">0</text>
+        font-family="Geist,Inter,sans-serif" font-weight="900" font-size="38"
+        fill="url(#dg-m2)">0</text>
     </g>
   </g>
 </svg></div>
@@ -2455,7 +2452,7 @@ function cardHTML(name, loc, price, id, photo, beds, guests) {
     + '<div class="prop-loc"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>' + loc + '</div>'
     + '<div class="prop-foot">'
     + '<div class="prop-price">KES ' + Number(price).toLocaleString() + '<span>/night</span></div>'
-    + '<div class="prop-go"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M7 7h10v10"/></svg></div>'
+    + '<div class="prop-go"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M7 7h10v10"/></svg></div>'
     + '</div></div></div>';
 }
 
@@ -2563,7 +2560,7 @@ function openListingDetail(id, name, loc, price, photo, beds, guests) {
   document.getElementById('dl-modal').innerHTML = `
     <div class="dl-gallery">
       <button class="dl-close-btn" onclick="closeDlModal()">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
       </button>
       <div class="dl-gallery-track">${slideHTML}</div>
     </div>
@@ -2864,7 +2861,7 @@ async function renderServicePicker(listings){
           <div class="prop-card" style="display:flex;align-items:center;gap:18px;padding:20px 22px;" onclick="goToService('${t}')">
             <div style="width:54px;height:54px;border-radius:16px;background:${s.grad};display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0;">${s.ico.replace('class="svc-ico"','')}</div>
             <div style="flex:1;"><div style="font-family:var(--font-display);font-weight:500;font-size:17px;">${s.name}</div><div style="font-size:12px;color:var(--ink-faint);">${arr.length} listing${arr.length!==1?'s':''}</div></div>
-            <div class="prop-go"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></div>
+            <div class="prop-go"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></div>
           </div>`;}).join('')}
         <button onclick="showAddSheet()" style="padding:18px;border:1.5px dashed var(--line-2);border-radius:18px;background:transparent;color:var(--ink-faint);font-size:14px;font-weight:500;cursor:pointer;">+ Add another service</button>
       </div>
@@ -3449,7 +3446,7 @@ function dashGmRenderBody(expired = false) {
         <div class="dash-gm-expired-title">No takers. The audacity.</div>
         <div class="dash-gm-expired-sub">Our hosts were apparently busy. Try the traditional search — it never sleeps.</div>
         <button class="dash-gm-fallback" onclick="window.location.href='apartments.html'">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
           Browse all stays
         </button>
       </div>`;
