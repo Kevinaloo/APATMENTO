@@ -667,7 +667,7 @@ img,video,svg{max-width:100%;}
   .drb-i-cab::before{filter:blur(8px) saturate(1.7) brightness(1.35);}
 }
 
-.greeting{margin-bottom:34px;opacity:0;animation:fadeUp .7s .05s forwards;position:relative;overflow:hidden;}
+.greeting{margin-bottom:34px;opacity:0;animation:fadeUp .7s .05s forwards;position:relative;overflow:visible;}
 .greeting-eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--lilac-deep);margin-bottom:12px;padding:6px 14px;border-radius:100px;background:rgba(184,164,244,.12);border:1px solid rgba(184,164,244,.25);}
 .greeting-title{font-family:var(--font-display);font-optical-sizing:auto;font-weight:400;font-size:clamp(32px,5vw,52px);line-height:1.05;letter-spacing:-.02em;color:var(--ink);margin-bottom:10px;}
 .greeting-title em{font-style:italic;font-weight:500;background:linear-gradient(120deg,var(--violet),var(--electric),var(--mint-deep));-webkit-background-clip:text;background-clip:text;color:transparent;}
@@ -684,7 +684,7 @@ img,video,svg{max-width:100%;}
 .hero-stage{position:relative;border-radius:20px;overflow:hidden;margin-bottom:32px;height:300px;background:linear-gradient(135deg,#0A0A14,#1A0A3E 40%,#2B0F6F);box-shadow:0 16px 48px rgba(10,10,20,.18);}
 .hero-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;}
 .hero-stage::after{display:none;}
-.hero-body{position:relative;z-index:2;padding:48px;max-width:560px;height:100%;display:flex;flex-direction:column;justify-content:center;min-height:340px;}
+.hero-body{position:relative;z-index:2;padding:48px;max-width:560px;height:100%;display:flex;flex-direction:column;justify-content:center;}
 .hero-eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--mint);margin-bottom:16px;}
 .hero-title{font-family:var(--font-display);font-weight:400;font-size:clamp(28px,4vw,42px);line-height:1.08;color:#fff;margin-bottom:14px;letter-spacing:-.02em;}
 .hero-title em{font-style:italic;font-weight:500;color:var(--peach);}
@@ -883,11 +883,11 @@ img,video,svg{max-width:100%;}
    Genre rotates every minute, no label shown.
    ═══════════════════════════════════════════════════════════ */
 
-/* ── STAGE: absolute ghost, right side of greeting, behind text ── */
+/* ── STAGE: absolute ghost inside .greeting — right side, z-index 0 ── */
 #dancer-stage {
   position: absolute;
   top: 50%;
-  right: 0;
+  right: -8px;
   transform: translateY(-50%);
   display: flex;
   align-items: center;
@@ -1172,215 +1172,21 @@ img,video,svg{max-width:100%;}
           <button class="apa-avatar" id="apa-avatar" type="button" aria-label="Your profile"
                   onclick="window.location.href='profile.html'">?</button>
         </div>
+
       </div>
     </div>
 
     <div class="content">
       <div class="greeting">
-        <!-- Ghost dancer stage — sits in background, zero layout impact -->
-        <div id="dancer-stage" aria-hidden="true">
-          <div class="ds-troupe">
-            <div class="ds-dancer" id="ds-h1">
-              <div class="ds-body-wrap"><svg class="ds-svg" viewBox="0 0 80 72" width="60" height="54" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="dg-h1" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#9B5FFF"/>
-      <stop offset="100%" stop-color="#7B2FF7"/>
-    </linearGradient>
-  </defs>
-  <!-- STICK FIGURE (left side, center x=18) -->
-  <g class="ds-body" style="transform-origin:40px 36px">
-    <!-- Head -->
-    <g class="ds-head" style="transform-origin:18px 10px">
-      <circle cx="18" cy="10" r="6" stroke="url(#dg-h1)" stroke-width="2.8" fill="none"/>
-    </g>
-    <!-- Torso -->
-    <g class="ds-torso" style="transform-origin:18px 18px">
-      <line x1="18" y1="18" x2="18" y2="40" stroke="url(#dg-h1)" stroke-width="2.8" stroke-linecap="round"/>
-    </g>
-    <!-- Left arm (swings free) -->
-    <g class="ds-arm-l" style="transform-origin:18px 22px">
-      <line x1="18" y1="22" x2="4" y2="34" stroke="url(#dg-h1)" stroke-width="2.8" stroke-linecap="round"/>
-    </g>
-    <!-- Right arm reaches toward digit partner -->
-    <g class="ds-arm-r" style="transform-origin:18px 22px">
-      <line x1="18" y1="22" x2="38" y2="28" stroke="url(#dg-h1)" stroke-width="2.8" stroke-linecap="round"/>
-    </g>
-    <!-- Left leg -->
-    <g class="ds-leg-l" style="transform-origin:18px 40px">
-      <line x1="18" y1="40" x2="10" y2="62" stroke="url(#dg-h1)" stroke-width="2.8" stroke-linecap="round"/>
-    </g>
-    <!-- Right leg -->
-    <g class="ds-leg-r" style="transform-origin:18px 40px">
-      <line x1="18" y1="40" x2="26" y2="62" stroke="url(#dg-h1)" stroke-width="2.8" stroke-linecap="round"/>
-    </g>
-    <!-- DIGIT PARTNER (right side, held by figure's arm) -->
-    <!-- "Body" of digit — a subtle outline so it feels like a character -->
-    <g class="ds-digit-body" style="transform-origin:58px 36px">
-      <!-- Connection: wrist of figure holds digit -->
-      <line x1="38" y1="28" x2="50" y2="24" stroke="url(#dg-h1)" stroke-width="0" opacity="0"/>
-      <!-- The digit itself — large, bold, centered on right -->
-      <text class="ds-digit" x="60" y="36"
-        text-anchor="middle" dominant-baseline="middle"
-        font-family="Geist,Inter,sans-serif" font-weight="900" font-size="38"
-        fill="url(#dg-h1)">0</text>
-    </g>
-  </g>
-</svg></div>
-            </div>
-            <div class="ds-dancer" id="ds-h2">
-              <div class="ds-body-wrap"><svg class="ds-svg" viewBox="0 0 80 72" width="60" height="54" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="dg-h2" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#4361FF"/>
-      <stop offset="100%" stop-color="#00B4D8"/>
-    </linearGradient>
-  </defs>
-  <!-- STICK FIGURE (left side, center x=18) -->
-  <g class="ds-body" style="transform-origin:40px 36px">
-    <!-- Head -->
-    <g class="ds-head" style="transform-origin:18px 10px">
-      <circle cx="18" cy="10" r="6" stroke="url(#dg-h2)" stroke-width="2.8" fill="none"/>
-    </g>
-    <!-- Torso -->
-    <g class="ds-torso" style="transform-origin:18px 18px">
-      <line x1="18" y1="18" x2="18" y2="40" stroke="url(#dg-h2)" stroke-width="2.8" stroke-linecap="round"/>
-    </g>
-    <!-- Left arm (swings free) -->
-    <g class="ds-arm-l" style="transform-origin:18px 22px">
-      <line x1="18" y1="22" x2="4" y2="34" stroke="url(#dg-h2)" stroke-width="2.8" stroke-linecap="round"/>
-    </g>
-    <!-- Right arm reaches toward digit partner -->
-    <g class="ds-arm-r" style="transform-origin:18px 22px">
-      <line x1="18" y1="22" x2="38" y2="28" stroke="url(#dg-h2)" stroke-width="2.8" stroke-linecap="round"/>
-    </g>
-    <!-- Left leg -->
-    <g class="ds-leg-l" style="transform-origin:18px 40px">
-      <line x1="18" y1="40" x2="10" y2="62" stroke="url(#dg-h2)" stroke-width="2.8" stroke-linecap="round"/>
-    </g>
-    <!-- Right leg -->
-    <g class="ds-leg-r" style="transform-origin:18px 40px">
-      <line x1="18" y1="40" x2="26" y2="62" stroke="url(#dg-h2)" stroke-width="2.8" stroke-linecap="round"/>
-    </g>
-    <!-- DIGIT PARTNER (right side, held by figure's arm) -->
-    <!-- "Body" of digit — a subtle outline so it feels like a character -->
-    <g class="ds-digit-body" style="transform-origin:58px 36px">
-      <!-- Connection: wrist of figure holds digit -->
-      <line x1="38" y1="28" x2="50" y2="24" stroke="url(#dg-h2)" stroke-width="0" opacity="0"/>
-      <!-- The digit itself — large, bold, centered on right -->
-      <text class="ds-digit" x="60" y="36"
-        text-anchor="middle" dominant-baseline="middle"
-        font-family="Geist,Inter,sans-serif" font-weight="900" font-size="38"
-        fill="url(#dg-h2)">8</text>
-    </g>
-  </g>
-</svg></div>
-            </div>
-            <div class="ds-colon">
-              <div class="ds-dot"></div>
-              <div class="ds-dot"></div>
-            </div>
-            <div class="ds-dancer" id="ds-m1">
-              <div class="ds-body-wrap"><svg class="ds-svg" viewBox="0 0 80 72" width="60" height="54" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="dg-m1" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#2DD4BF"/>
-      <stop offset="100%" stop-color="#4361FF"/>
-    </linearGradient>
-  </defs>
-  <!-- STICK FIGURE (left side, center x=18) -->
-  <g class="ds-body" style="transform-origin:40px 36px">
-    <!-- Head -->
-    <g class="ds-head" style="transform-origin:18px 10px">
-      <circle cx="18" cy="10" r="6" stroke="url(#dg-m1)" stroke-width="2.8" fill="none"/>
-    </g>
-    <!-- Torso -->
-    <g class="ds-torso" style="transform-origin:18px 18px">
-      <line x1="18" y1="18" x2="18" y2="40" stroke="url(#dg-m1)" stroke-width="2.8" stroke-linecap="round"/>
-    </g>
-    <!-- Left arm (swings free) -->
-    <g class="ds-arm-l" style="transform-origin:18px 22px">
-      <line x1="18" y1="22" x2="4" y2="34" stroke="url(#dg-m1)" stroke-width="2.8" stroke-linecap="round"/>
-    </g>
-    <!-- Right arm reaches toward digit partner -->
-    <g class="ds-arm-r" style="transform-origin:18px 22px">
-      <line x1="18" y1="22" x2="38" y2="28" stroke="url(#dg-m1)" stroke-width="2.8" stroke-linecap="round"/>
-    </g>
-    <!-- Left leg -->
-    <g class="ds-leg-l" style="transform-origin:18px 40px">
-      <line x1="18" y1="40" x2="10" y2="62" stroke="url(#dg-m1)" stroke-width="2.8" stroke-linecap="round"/>
-    </g>
-    <!-- Right leg -->
-    <g class="ds-leg-r" style="transform-origin:18px 40px">
-      <line x1="18" y1="40" x2="26" y2="62" stroke="url(#dg-m1)" stroke-width="2.8" stroke-linecap="round"/>
-    </g>
-    <!-- DIGIT PARTNER (right side, held by figure's arm) -->
-    <!-- "Body" of digit — a subtle outline so it feels like a character -->
-    <g class="ds-digit-body" style="transform-origin:58px 36px">
-      <!-- Connection: wrist of figure holds digit -->
-      <line x1="38" y1="28" x2="50" y2="24" stroke="url(#dg-m1)" stroke-width="0" opacity="0"/>
-      <!-- The digit itself — large, bold, centered on right -->
-      <text class="ds-digit" x="60" y="36"
-        text-anchor="middle" dominant-baseline="middle"
-        font-family="Geist,Inter,sans-serif" font-weight="900" font-size="38"
-        fill="url(#dg-m1)">0</text>
-    </g>
-  </g>
-</svg></div>
-            </div>
-            <div class="ds-dancer" id="ds-m2">
-              <div class="ds-body-wrap"><svg class="ds-svg" viewBox="0 0 80 72" width="60" height="54" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="dg-m2" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#FF5C8A"/>
-      <stop offset="100%" stop-color="#FF9A5C"/>
-    </linearGradient>
-  </defs>
-  <!-- STICK FIGURE (left side, center x=18) -->
-  <g class="ds-body" style="transform-origin:40px 36px">
-    <!-- Head -->
-    <g class="ds-head" style="transform-origin:18px 10px">
-      <circle cx="18" cy="10" r="6" stroke="url(#dg-m2)" stroke-width="2.8" fill="none"/>
-    </g>
-    <!-- Torso -->
-    <g class="ds-torso" style="transform-origin:18px 18px">
-      <line x1="18" y1="18" x2="18" y2="40" stroke="url(#dg-m2)" stroke-width="2.8" stroke-linecap="round"/>
-    </g>
-    <!-- Left arm (swings free) -->
-    <g class="ds-arm-l" style="transform-origin:18px 22px">
-      <line x1="18" y1="22" x2="4" y2="34" stroke="url(#dg-m2)" stroke-width="2.8" stroke-linecap="round"/>
-    </g>
-    <!-- Right arm reaches toward digit partner -->
-    <g class="ds-arm-r" style="transform-origin:18px 22px">
-      <line x1="18" y1="22" x2="38" y2="28" stroke="url(#dg-m2)" stroke-width="2.8" stroke-linecap="round"/>
-    </g>
-    <!-- Left leg -->
-    <g class="ds-leg-l" style="transform-origin:18px 40px">
-      <line x1="18" y1="40" x2="10" y2="62" stroke="url(#dg-m2)" stroke-width="2.8" stroke-linecap="round"/>
-    </g>
-    <!-- Right leg -->
-    <g class="ds-leg-r" style="transform-origin:18px 40px">
-      <line x1="18" y1="40" x2="26" y2="62" stroke="url(#dg-m2)" stroke-width="2.8" stroke-linecap="round"/>
-    </g>
-    <!-- DIGIT PARTNER (right side, held by figure's arm) -->
-    <!-- "Body" of digit — a subtle outline so it feels like a character -->
-    <g class="ds-digit-body" style="transform-origin:58px 36px">
-      <!-- Connection: wrist of figure holds digit -->
-      <line x1="38" y1="28" x2="50" y2="24" stroke="url(#dg-m2)" stroke-width="0" opacity="0"/>
-      <!-- The digit itself — large, bold, centered on right -->
-      <text class="ds-digit" x="60" y="36"
-        text-anchor="middle" dominant-baseline="middle"
-        font-family="Geist,Inter,sans-serif" font-weight="900" font-size="38"
-        fill="url(#dg-m2)">0</text>
-    </g>
-  </g>
-</svg></div>
-            </div>
-          </div>
-        </div>
-        </div>
-        <h1 class="greeting-title" id="g-title" style="position:relative;z-index:1;"><span id="g-greeting">Good afternoon</span><em id="g-name"></em></h1>
-        <p class="greeting-sub" style="position:relative;z-index:1;">#1 zero commission travel platform. Book everything in one place at fair prices.</p>
+        <div id="dancer-stage" aria-hidden="true"><div class="ds-troupe">
+          <div class="ds-dancer" id="ds-h1"><div class="ds-body-wrap"><svg class="ds-svg" viewBox="0 0 80 72" width="60" height="54" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="dg-h1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#9B5FFF"/><stop offset="100%" stop-color="#7B2FF7"/></linearGradient></defs><g class="ds-body" style="transform-origin:40px 36px"><g class="ds-head" style="transform-origin:18px 10px"><circle cx="18" cy="10" r="6" stroke="url(#dg-h1)" stroke-width="2.8" fill="none"/></g><g class="ds-torso" style="transform-origin:18px 18px"><line x1="18" y1="18" x2="18" y2="40" stroke="url(#dg-h1)" stroke-width="2.8" stroke-linecap="round"/></g><g class="ds-arm-l" style="transform-origin:18px 22px"><line x1="18" y1="22" x2="4" y2="34" stroke="url(#dg-h1)" stroke-width="2.8" stroke-linecap="round"/></g><g class="ds-arm-r" style="transform-origin:18px 22px"><line x1="18" y1="22" x2="38" y2="28" stroke="url(#dg-h1)" stroke-width="2.8" stroke-linecap="round"/></g><g class="ds-leg-l" style="transform-origin:18px 40px"><line x1="18" y1="40" x2="10" y2="62" stroke="url(#dg-h1)" stroke-width="2.8" stroke-linecap="round"/></g><g class="ds-leg-r" style="transform-origin:18px 40px"><line x1="18" y1="40" x2="26" y2="62" stroke="url(#dg-h1)" stroke-width="2.8" stroke-linecap="round"/></g><g class="ds-digit-body" style="transform-origin:58px 36px"><text class="ds-digit" x="60" y="36" text-anchor="middle" dominant-baseline="middle" font-family="Geist,Inter,sans-serif" font-weight="900" font-size="38" fill="url(#dg-h1)">0</text></g></g></svg></div></div>
+          <div class="ds-dancer" id="ds-h2"><div class="ds-body-wrap"><svg class="ds-svg" viewBox="0 0 80 72" width="60" height="54" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="dg-h2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#4361FF"/><stop offset="100%" stop-color="#00B4D8"/></linearGradient></defs><g class="ds-body" style="transform-origin:40px 36px"><g class="ds-head" style="transform-origin:18px 10px"><circle cx="18" cy="10" r="6" stroke="url(#dg-h2)" stroke-width="2.8" fill="none"/></g><g class="ds-torso" style="transform-origin:18px 18px"><line x1="18" y1="18" x2="18" y2="40" stroke="url(#dg-h2)" stroke-width="2.8" stroke-linecap="round"/></g><g class="ds-arm-l" style="transform-origin:18px 22px"><line x1="18" y1="22" x2="4" y2="34" stroke="url(#dg-h2)" stroke-width="2.8" stroke-linecap="round"/></g><g class="ds-arm-r" style="transform-origin:18px 22px"><line x1="18" y1="22" x2="38" y2="28" stroke="url(#dg-h2)" stroke-width="2.8" stroke-linecap="round"/></g><g class="ds-leg-l" style="transform-origin:18px 40px"><line x1="18" y1="40" x2="10" y2="62" stroke="url(#dg-h2)" stroke-width="2.8" stroke-linecap="round"/></g><g class="ds-leg-r" style="transform-origin:18px 40px"><line x1="18" y1="40" x2="26" y2="62" stroke="url(#dg-h2)" stroke-width="2.8" stroke-linecap="round"/></g><g class="ds-digit-body" style="transform-origin:58px 36px"><text class="ds-digit" x="60" y="36" text-anchor="middle" dominant-baseline="middle" font-family="Geist,Inter,sans-serif" font-weight="900" font-size="38" fill="url(#dg-h2)">8</text></g></g></svg></div></div>
+          <div class="ds-colon"><div class="ds-dot"></div><div class="ds-dot"></div></div>
+          <div class="ds-dancer" id="ds-m1"><div class="ds-body-wrap"><svg class="ds-svg" viewBox="0 0 80 72" width="60" height="54" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="dg-m1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#2DD4BF"/><stop offset="100%" stop-color="#4361FF"/></linearGradient></defs><g class="ds-body" style="transform-origin:40px 36px"><g class="ds-head" style="transform-origin:18px 10px"><circle cx="18" cy="10" r="6" stroke="url(#dg-m1)" stroke-width="2.8" fill="none"/></g><g class="ds-torso" style="transform-origin:18px 18px"><line x1="18" y1="18" x2="18" y2="40" stroke="url(#dg-m1)" stroke-width="2.8" stroke-linecap="round"/></g><g class="ds-arm-l" style="transform-origin:18px 22px"><line x1="18" y1="22" x2="4" y2="34" stroke="url(#dg-m1)" stroke-width="2.8" stroke-linecap="round"/></g><g class="ds-arm-r" style="transform-origin:18px 22px"><line x1="18" y1="22" x2="38" y2="28" stroke="url(#dg-m1)" stroke-width="2.8" stroke-linecap="round"/></g><g class="ds-leg-l" style="transform-origin:18px 40px"><line x1="18" y1="40" x2="10" y2="62" stroke="url(#dg-m1)" stroke-width="2.8" stroke-linecap="round"/></g><g class="ds-leg-r" style="transform-origin:18px 40px"><line x1="18" y1="40" x2="26" y2="62" stroke="url(#dg-m1)" stroke-width="2.8" stroke-linecap="round"/></g><g class="ds-digit-body" style="transform-origin:58px 36px"><text class="ds-digit" x="60" y="36" text-anchor="middle" dominant-baseline="middle" font-family="Geist,Inter,sans-serif" font-weight="900" font-size="38" fill="url(#dg-m1)">0</text></g></g></svg></div></div>
+          <div class="ds-dancer" id="ds-m2"><div class="ds-body-wrap"><svg class="ds-svg" viewBox="0 0 80 72" width="60" height="54" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="dg-m2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#FF5C8A"/><stop offset="100%" stop-color="#FF9A5C"/></linearGradient></defs><g class="ds-body" style="transform-origin:40px 36px"><g class="ds-head" style="transform-origin:18px 10px"><circle cx="18" cy="10" r="6" stroke="url(#dg-m2)" stroke-width="2.8" fill="none"/></g><g class="ds-torso" style="transform-origin:18px 18px"><line x1="18" y1="18" x2="18" y2="40" stroke="url(#dg-m2)" stroke-width="2.8" stroke-linecap="round"/></g><g class="ds-arm-l" style="transform-origin:18px 22px"><line x1="18" y1="22" x2="4" y2="34" stroke="url(#dg-m2)" stroke-width="2.8" stroke-linecap="round"/></g><g class="ds-arm-r" style="transform-origin:18px 22px"><line x1="18" y1="22" x2="38" y2="28" stroke="url(#dg-m2)" stroke-width="2.8" stroke-linecap="round"/></g><g class="ds-leg-l" style="transform-origin:18px 40px"><line x1="18" y1="40" x2="10" y2="62" stroke="url(#dg-m2)" stroke-width="2.8" stroke-linecap="round"/></g><g class="ds-leg-r" style="transform-origin:18px 40px"><line x1="18" y1="40" x2="26" y2="62" stroke="url(#dg-m2)" stroke-width="2.8" stroke-linecap="round"/></g><g class="ds-digit-body" style="transform-origin:58px 36px"><text class="ds-digit" x="60" y="36" text-anchor="middle" dominant-baseline="middle" font-family="Geist,Inter,sans-serif" font-weight="900" font-size="38" fill="url(#dg-m2)">0</text></g></g></svg></div></div>
+        </div></div>
+        <h1 class="greeting-title" id="g-title"><span id="g-greeting">Good afternoon</span><em id="g-name"></em></h1>
+        <p class="greeting-sub">#1 zero commission travel platform. Book everything in one place at fair prices.</p>
       </div>
 
       <!-- ── GET MATCHED GHOST TAB — visible only when guest has active match request ── -->
