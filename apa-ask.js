@@ -350,22 +350,54 @@
     if (navPending) { clearTimeout(navPending); navPending = null; }
   }
 
-  /* ── Smart greeting (context-aware) ──────────────────────────────── */
+  /* ── Smart greeting — AI-powered, never the same twice ───────────── */
   function greet() {
-    var h = new Date().getHours();
-    var g = h < 12 ? 'Morning' : h < 17 ? 'Afternoon' : 'Evening';
     var p = pageLabel();
+    var h = new Date().getHours();
+    var timeHint = h < 6 ? 'late night' : h < 12 ? 'morning' : h < 17 ? 'afternoon' : h < 21 ? 'evening' : 'night';
 
-    var openers = [
-      g + '! I\u2019m APA \u2014 your personal guide to Nairobi and beyond.',
-      g + '! APA here. Think of me as your well-connected Nairobi friend who knows everywhere.',
-      g + '! APA \u2014 let\u2019s find you exactly what you need.',
-    ];
-    var opener = openers[Math.floor(Math.random() * openers.length)];
+    // Build a rich greeting prompt so every open feels fresh and personal
+    var greetPrompt = 'You are APA, Apatmento\'s AI concierge. The user just opened your chat for the first time in this session.' +
+      (p ? ' They are currently on the ' + p + ' page.' : '') +
+      ' It is ' + timeHint + ' local time.' +
+      ' Write a single, short, punchy opening greeting (2-3 sentences max).' +
+      ' Be warm, confident, a little witty — like a well-travelled friend who just picked up the phone.' +
+      ' Reference the time or page naturally if it adds flavour. Tell them your name is APA.' +
+      ' End with one open question that invites them to share what they need.' +
+      ' NO navigation directives. NO [[go:]]. NO bullet points. Just talk.';
 
-    var msg = opener + (p ? ' You\u2019re on the ' + p + ' page. ' : ' ');
-    msg += 'I can take you directly to stays, tours, rides, food, events and more \u2014 or just help you figure out what you want. What\u2019s the plan?';
-    appendMsg('apa', msg);
+    var typing = showTyping();
+
+    fetch(API_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: [{ role: 'user', content: greetPrompt }],
+        page: pageKey(),
+        _greet: true
+      })
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      if (typing) typing.remove();
+      var msg = (data && data.reply) ? data.reply : null;
+      // Strip any accidental [[go:]] from greeting
+      if (msg) msg = msg.replace(/\[\[.*?\]\]/g, '').trim();
+      if (!msg) {
+        // Fallback: still better than the old static message
+        var g = h < 12 ? 'Morning' : h < 17 ? 'Afternoon' : 'Evening';
+        msg = g + '! I\u2019m APA \u2014 your guide to the best of Africa. Stays, tours, food, rides and more. What are we doing today?';
+      }
+      appendMsg('apa', msg);
+      showChips(defaultChips());
+    })
+    .catch(function () {
+      if (typing) typing.remove();
+      var g = h < 12 ? 'Morning' : h < 17 ? 'Afternoon' : 'Evening';
+      var msg = g + '! I\u2019m APA \u2014 think of me as your well-connected friend across Africa. What are we sorting today?';
+      appendMsg('apa', msg);
+      showChips(defaultChips());
+    });
   }
 
   /* ── Messages ────────────────────────────────────────────────────── */
