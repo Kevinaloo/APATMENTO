@@ -22,7 +22,8 @@
 
   /* ── Config ──────────────────────────────────────────────────────── */
   var API_ENDPOINT  = '/api/ask-apa';
-  var MAX_HISTORY   = 8;
+  var MAX_HISTORY   = 12;  // keep more context — trimmed server-side too
+  var FETCH_TIMEOUT = 30000; // 30s client fetch timeout
   var VOICE_RATE    = 1.04;
   var VOICE_PITCH   = 1.0;
   var NAV_DELAY_MS  = 1500; // ms to show APA's message before navigating
@@ -51,25 +52,30 @@
     bookings:'📋', profile:'👤', rewards:'⭐', dashboard:'📊', signin:'🔐',
   };
 
-  /* Quick intent map — common phrases → route (client-side, instant) */
+  /* Quick intent map — NAV VERB required + service keyword → instant route
+     These only fire from detectQuickIntent() which already checks for question patterns */
   var QUICK_INTENT = [
-    { re: /\b(apartments?|stays?|place|room|accommodation|flat|house|villa|bnb|airbnb)\b/i, route: 'stays' },
-    { re: /\b(tour|safari|day.?trip|park|game.?drive|masai.?mara|amboseli|naivasha)\b/i, route: 'tours' },
-    { re: /\b(event|ticket|concert|festival|party|show|gig)\b/i, route: 'events' },
-    { re: /\b(food|restaurant|eat|delivery|dinner|lunch|breakfast|order)\b/i, route: 'food' },
-    { re: /\b(ride|taxi|lift|uber|bolt|driver|airport)\b/i, route: 'rides' },
-    { re: /\b(car.?hire|rent.?a.?car|self.?drive|vehicle.?hire)\b/i, route: 'carhire' },
-    { re: /\b(roommate|flatmate|housemate|spare.?room|post.?room)\b/i, route: 'roommates' },
-    { re: /\b(flight|fly|airline|airport|ticket)\b/i, route: 'flights' },
-    { re: /\b(shopping|shop|buy|products|market)\b/i, route: 'shopping' },
-    { re: /\b(my.?booking|check.?in|reservation|cancel|refund)\b/i, route: 'bookings' },
-    { re: /\b(reward|points|referral|cashback)\b/i, route: 'rewards' },
+    { re: /\b(show me|take me to|open|go to|browse|find me|i need|book)\b.{0,30}\b(apartments?|stays?|accommodation|flat|house|villa|bnb)\b/i, route: 'stays' },
+    { re: /\b(show me|take me to|open|go to|browse|find me|i need|book)\b.{0,30}\b(tours?|safari|safaris|game.?drive|day.?trip)\b/i, route: 'tours' },
+    { re: /\b(show me|take me to|open|go to|browse|find me|i want)\b.{0,30}\b(events?|tickets?|concert|festival)\b/i, route: 'events' },
+    { re: /\b(show me|take me to|open|go to|order|find me|i need)\b.{0,30}\b(food|restaurant|eat|delivery|dinner|lunch)\b/i, route: 'food' },
+    { re: /\b(book|i need|find me|get me)\b.{0,20}\b(ride|taxi|lift|uber|bolt|driver)\b/i, route: 'rides' },
+    { re: /\b(hire|rent|book|find me)\b.{0,20}\b(car|vehicle|self.?drive)\b/i, route: 'carhire' },
+    { re: /\b(find me|looking for|i need)\b.{0,20}\b(roommate|flatmate|housemate|spare.?room)\b/i, route: 'roommates' },
+    { re: /\b(book|find|search|show me)\b.{0,20}\b(flight|flights|fly|airline)\b/i, route: 'flights' },
+    { re: /\b(take me to|open|show me)\b.{0,20}\b(shopping|shop|marketplace)\b/i, route: 'shopping' },
+    { re: /\b(show me|take me to|open)\b.{0,20}\b(my.?bookings?|reservations?)\b/i, route: 'bookings' },
+    { re: /\b(show me|take me to|open)\b.{0,20}\b(rewards?|points|cashback)\b/i, route: 'rewards' },
     { re: /\b(sign.?in|log.?in|sign.?up|register|create.?account)\b/i, route: 'signin' },
+    // Very explicit short-form nav commands (no ambiguity)
+    { re: /^(tours?|safaris?|apartments?|stays?|food|rides?|events?|carhire|flights?|shopping|roommates?)[\s!.]*$/i, route: null }, // handled below
+    { re: /^take me to (tours?|safaris?|apartments?|stays?|food|rides?|events?|carhire|flights?|shopping|roommates?)\s*$/i, route: null },
   ];
 
   /* ── State ───────────────────────────────────────────────────────── */
   var history      = [];
-  var sessionCtx   = {}; // remembered user context: name, preferences
+  var sessionCtx   = {}; // name, budget, location, partySize, vibe, prefs
+  var lastErrorMsg = null; // track last error so we don't push it to history
   var listening    = false;
   var speaking     = false;
   var loading      = false;
@@ -145,6 +151,8 @@
     '.apa-nav-toast-ico{font-size:16px;flex-shrink:0;}',
     '.apa-nav-toast-txt{flex:1;}',
     '.apa-nav-toast-sub{font:400 11px "Inter",sans-serif;color:#8E90AD;margin-top:2px;}',
+    '.apa-nav-cancel{background:none;border:none;color:#8E90AD;cursor:pointer;font-size:14px;padding:4px 6px;border-radius:6px;flex-shrink:0;transition:.15s;line-height:1;}',
+    '.apa-nav-cancel:hover{background:rgba(0,0,0,.06);color:#4A4C66;}',
     '.apa-nav-bar{height:3px;border-radius:2px;background:linear-gradient(90deg,#0D9467,#7B2FF7);margin-top:6px;width:0;animation:apaNavBar ' + NAV_DELAY_MS + 'ms linear forwards;}',
     '@keyframes apaNavBar{to{width:100%;}}',
 
@@ -389,13 +397,16 @@
         msg = g + '! I\u2019m APA \u2014 your guide to the best of Africa. Stays, tours, food, rides and more. What are we doing today?';
       }
       appendMsg('apa', msg);
+      // Push greeting to history so model has context on first user turn
+      history.push({ role: 'assistant', content: msg });
       showChips(defaultChips());
     })
     .catch(function () {
       if (typing) typing.remove();
       var g = h < 12 ? 'Morning' : h < 17 ? 'Afternoon' : 'Evening';
-      var msg = g + '! I\u2019m APA \u2014 think of me as your well-connected friend across Africa. What are we sorting today?';
+      var msg = g + '! I\u2019m APA \u2014 your guide across Africa. Stays, tours, food, rides and more. What are we sorting?';
       appendMsg('apa', msg);
+      history.push({ role: 'assistant', content: msg });
       showChips(defaultChips());
     });
   }
@@ -431,16 +442,18 @@
 
     var toast = document.createElement('div');
     toast.className = 'apa-nav-toast';
+    var toastId = 'nav-toast-' + Date.now();
+    toast.id = toastId;
     toast.innerHTML =
       '<span class="apa-nav-toast-ico">' + emoji + '</span>' +
       '<div class="apa-nav-toast-txt">Taking you to <strong>' + esc(label) + '</strong>' +
         '<div class="apa-nav-toast-sub">Navigating in a moment…</div>' +
         '<div class="apa-nav-bar"></div>' +
-      '</div>';
+      '</div>' +
+      '<button class="apa-nav-cancel" aria-label="Cancel navigation" onclick="AskAPA._cancelNav(\'' + toastId + '\')">✕</button>';
     msgs.appendChild(toast);
     msgs.scrollTop = msgs.scrollHeight;
 
-    // Clear any pending navigation
     if (navPending) { clearTimeout(navPending); navPending = null; }
 
     navPending = setTimeout(function () {
@@ -491,13 +504,22 @@
   }
 
   /* ── Quick intent detection (client-side, instant) ───────────────── */
+  var SINGLE_WORD_ROUTES = {
+    'tours':'tours','tour':'tours','safari':'tours','safaris':'tours',
+    'apartments':'stays','apartment':'stays','stays':'stays','stay':'stays',
+    'food':'food','rides':'rides','ride':'rides','events':'events','event':'events',
+    'carhire':'carhire','flights':'flights','flight':'flights',
+    'shopping':'shopping','roommates':'roommates'
+  };
   function detectQuickIntent(text) {
-    var lower = text.toLowerCase();
-    // Only fire on clear navigation requests, not questions
-    var navVerbs = /\b(take me|go to|show me|open|find|browse|book|i want|i need|let me see|navigate)\b/i;
-    if (!navVerbs.test(lower)) return null;
+    var trimmed = text.trim().toLowerCase().replace(/[!.?]+$/, '');
+    // Single-word or "take me to X" commands — instant nav
+    if (SINGLE_WORD_ROUTES[trimmed]) return SINGLE_WORD_ROUTES[trimmed];
+    var takeMeMatch = trimmed.match(/^take me to ([a-z]+)$/);
+    if (takeMeMatch && SINGLE_WORD_ROUTES[takeMeMatch[1]]) return SINGLE_WORD_ROUTES[takeMeMatch[1]];
+    // Pattern-based (nav verb + service keyword pairs)
     for (var i = 0; i < QUICK_INTENT.length; i++) {
-      if (QUICK_INTENT[i].re.test(lower)) return QUICK_INTENT[i].route;
+      if (QUICK_INTENT[i].route && QUICK_INTENT[i].re.test(text)) return QUICK_INTENT[i].route;
     }
     return null;
   }
@@ -526,42 +548,84 @@
     var chips = document.getElementById('apa-chips');
     if (chips) chips.innerHTML = '';
 
+    // Extract context from what user just said (before pushing to history)
+    extractSessionCtxFromUser(text);
+
     history.push({ role: 'user', content: text });
     if (history.length > MAX_HISTORY) history = history.slice(-MAX_HISTORY);
+
+    // ── Quick intent: instant nav for unambiguous requests ──────────
+    // Only fire if there's a clear action verb + known service keyword
+    // Never fire on questions (what/how/why/when/is/are/can)
+    var isQuestion = /^(what|how|why|when|where|who|is|are|can|could|does|do|should|which|will)\b/i.test(text.trim());
+    if (!isQuestion) {
+      var quickRoute = detectQuickIntent(text);
+      if (quickRoute && quickRoute !== pageKey().replace('-','')) {
+        // Instant nav — no API call needed
+        history.push({ role: 'assistant', content: 'On it — taking you there now.' });
+        showNavToast(quickRoute, null);
+        showChips([]);
+        return;
+      }
+    }
 
     var typing = showTyping();
     loading = true;
     var btn = document.getElementById('apa-send');
     if (btn) btn.disabled = true;
 
+    // ── Typing indicator timeout — never spin forever ───────────────
+    var fetchTimeoutId = setTimeout(function () {
+      if (!loading) return;
+      if (typing) typing.remove();
+      loading = false;
+      if (btn) btn.disabled = false;
+      lastErrorMsg = "Taking longer than usual — please try again. 🔄";
+      appendMsg('apa', lastErrorMsg);
+      wasVoiceTurn = false;
+    }, FETCH_TIMEOUT);
+
     // Build user context string from session memory
     var ctxParts = [];
-    if (sessionCtx.name)     ctxParts.push('Name: ' + sessionCtx.name);
-    if (sessionCtx.prefs)    ctxParts.push('Preferences: ' + sessionCtx.prefs);
-    if (sessionCtx.budget)   ctxParts.push('Budget: ' + sessionCtx.budget);
-    if (sessionCtx.location) ctxParts.push('Location/area: ' + sessionCtx.location);
+    if (sessionCtx.name)      ctxParts.push('Name: ' + sessionCtx.name);
+    if (sessionCtx.location)  ctxParts.push('Area interest: ' + sessionCtx.location);
+    if (sessionCtx.budget)    ctxParts.push('Budget: ' + sessionCtx.budget);
+    if (sessionCtx.partySize) ctxParts.push('Party size: ' + sessionCtx.partySize);
+    if (sessionCtx.vibe)      ctxParts.push('Vibe/preferences: ' + sessionCtx.vibe);
     var userCtxStr = ctxParts.length ? ctxParts.join('. ') : null;
 
-    fetch(API_ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        messages: history,
-        page: pageKey(),
-        userContext: userCtxStr
-      })
+    // Auto-retry once on network failure
+    function doFetch(attempt) {
+      return fetch(API_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: history,
+          page: pageKey(),
+          userContext: userCtxStr
+        })
+      });
+    }
+
+    doFetch(1)
+    .catch(function (e) {
+      // Auto-retry once on network error (e.g. single dropped packet)
+      console.warn('[APA] fetch error, retrying:', e.message);
+      return new Promise(function(resolve) { setTimeout(resolve, 1200); })
+        .then(function() { return doFetch(2); });
     })
     .then(function (r) {
-      return r.text().then(function (text) {
+      return r.text().then(function (txt) {
         var d;
-        try { d = JSON.parse(text); } catch(e) {
-          console.error('[APA] Non-JSON response:', r.status, text.slice(0, 200));
-          d = { reply: r.status >= 500 ? 'One moment — my server had a hiccup. Try again. 🔄' : 'Something slipped — try that again.' };
+        try { d = JSON.parse(txt); } catch(e) {
+          d = { reply: r.status >= 500 ? 'My server had a hiccup — try again. 🔄' : 'Something slipped — try again.' };
         }
         return { ok: r.ok, status: r.status, d: d };
       });
     })
     .then(function (res) {
+      clearTimeout(fetchTimeoutId);
+      if (!loading) return; // timeout already fired
       if (typing) typing.remove();
       loading = false;
       if (btn) btn.disabled = false;
@@ -572,47 +636,75 @@
         ? String(data.navigate).toLowerCase() : null;
       var navParams = data.navigateParams || null;
 
-      // Extract session info from response (name, preferences)
-      extractSessionCtx(reply);
+      // Extract context from APA's reply too (name confirmation, etc.)
+      extractSessionCtxFromReply(reply);
 
+      // Only push genuine AI replies to history — not error fallbacks
+      lastErrorMsg = null;
       history.push({ role: 'assistant', content: reply });
       appendMsg('apa', reply);
 
-      // AUTO-NAVIGATE: show toast → navigate after delay
       if (navKey) {
         showNavToast(navKey, navParams);
       }
 
-      // PREDICTIVE NEXT STEPS — show smart suggestion chips
       if (!navKey && data.nextSteps && data.nextSteps.length) {
         showNextStepChips(data.nextSteps);
       } else if (!navKey) {
-        // Fallback: context-aware default chips
         showChips(defaultChips());
       }
 
-      if (speaking || handsFree || wasVoiceTurn) speak(reply);
+      // Speak only conversational replies — skip if navigating (less jarring)
+      if (!navKey && (speaking || handsFree || wasVoiceTurn)) speak(reply);
       wasVoiceTurn = false;
     })
     .catch(function (err) {
+      clearTimeout(fetchTimeoutId);
+      if (!loading) return;
       if (typing) typing.remove();
       loading = false;
       if (btn) btn.disabled = false;
       var msg = (err && err.message) ? err.message : String(err);
       console.error('[APA fetch error]', msg);
-      var isNetwork = msg.indexOf('NetworkError') !== -1 || msg.indexOf('Failed to fetch') !== -1 || msg.indexOf('Load failed') !== -1;
+      var isNetwork = /NetworkError|Failed to fetch|Load failed|network/i.test(msg);
       var display = isNetwork
-        ? 'Looks like your connection dropped — give it a sec and try again. 📶'
-        : 'One sec — I hit a small bump. Try that again. 🔄';
+        ? 'Connection dropped — check your signal and try again. 📶'
+        : 'One sec — hit a small bump. Try that again. 🔄';
+      // Don't push error messages to history — keeps context clean
+      lastErrorMsg = display;
       appendMsg('apa', display);
       wasVoiceTurn = false;
     });
   }
 
-  /* ── Extract session context from conversation ───────────────────── */
-  function extractSessionCtx(text) {
-    // Pick up on name if mentioned
-    var nameMatch = text.match(/(?:you mentioned|your name is|hi\s+)([A-Z][a-z]+)/);
+  /* ── Extract session context from USER messages ──────────────────── */
+  function extractSessionCtxFromUser(text) {
+    // Name: "I'm Kevin" / "my name is Kevin"
+    var nameMatch = text.match(/\b(?:i[''']?m|my name is|call me|i am)\s+([A-Z][a-z]{1,15})\b/);
+    if (nameMatch && !sessionCtx.name) sessionCtx.name = nameMatch[1];
+
+    // Budget: "under 5k", "budget of 10000", "max 3k", "5000 a night"
+    var budgetMatch = text.match(/\b(?:under|below|max|budget\s+of?|around|up to)\s*([\d,]+)\s*(?:k|kes|ksh|ksh)?/i);
+    if (budgetMatch) sessionCtx.budget = budgetMatch[0].trim();
+
+    // Party size: "2 of us", "group of 4", "family of 5", "3 people"
+    var partyMatch = text.match(/\b(\d+)\s+(?:of us|people|guests|adults|pax|friends|kids|children)\b/i)
+      || text.match(/\bgroup of\s+(\d+)\b/i) || text.match(/\bfamily of\s+(\d+)\b/i);
+    if (partyMatch) sessionCtx.partySize = partyMatch[1] + ' people';
+
+    // Location: mentioned cities/areas picked up by server, but cache locally too
+    var areaMatch = text.match(/\b(Westlands|Kilimani|Karen|Lavington|Parklands|Runda|Ruaka|Kasarani|Hurlingham|Kileleshwa|Gigiri|Langata|Nairobi|Mombasa|Diani|Kisumu|Nakuru|Eldoret|Malindi|Lamu|Naivasha|Nanyuki|Zanzibar|Cape Town|Lagos|Accra|Kampala|Kigali)\b/i);
+    if (areaMatch) sessionCtx.location = areaMatch[1];
+
+    // Vibe: "quiet", "luxurious", "affordable", "party", "romantic", "family-friendly"
+    var vibeMatch = text.match(/\b(quiet|peaceful|luxury|luxurious|affordable|budget|party|romantic|honeymoon|family.friendly|pet.friendly|modern|cozy|cosy|minimalist|spacious)\b/i);
+    if (vibeMatch) sessionCtx.vibe = (sessionCtx.vibe ? sessionCtx.vibe + ', ' : '') + vibeMatch[1].toLowerCase();
+  }
+
+  /* ── Extract context from APA's reply (confirmation signals) ─────── */
+  function extractSessionCtxFromReply(text) {
+    // If APA confirms a name "Nice to meet you, Kevin!" pick it up
+    var nameMatch = text.match(/(?:nice to meet you|hey|hi there|great|welcome)[,\s]+([A-Z][a-z]{1,15})[!.,]/);
     if (nameMatch && !sessionCtx.name) sessionCtx.name = nameMatch[1];
   }
 
@@ -785,7 +877,9 @@
     stopSpeech();
     var SR = global.SpeechRecognition || global.webkitSpeechRecognition;
     try { recognition = new SR(); } catch (_) { explainNoVoice(); return; }
-    recognition.lang = 'en-KE';
+    // Use browser language if available, fallback to en-KE
+    // This handles Swahili, Pidgin, SA English, Nigerian English etc.
+    recognition.lang = navigator.language || 'en-KE';
     recognition.continuous = false;
     recognition.interimResults = true;
     recognition.maxAlternatives = 1;
@@ -926,11 +1020,21 @@
     toggleVoice: toggleVoice, toggleHandsFree: toggleHandsFree,
     navigate: function(key, params) { go(key, params, true); },
     _stepGo: function(route, params) {
-      // Predictive chip tap: tell APA where we're going, then navigate
       var label = ROUTE_LABELS[route] || route;
       appendMsg('user', 'Take me to ' + label);
       history.push({ role: 'user', content: 'Take me to ' + label });
       showNavToast(route, params || null);
+    },
+    _cancelNav: function(toastId) {
+      if (navPending) { clearTimeout(navPending); navPending = null; }
+      var toast = document.getElementById(toastId);
+      if (toast) {
+        toast.style.opacity = '0.4';
+        toast.style.textDecoration = 'line-through';
+        setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 600);
+      }
+      appendMsg('apa', 'No problem — what did you actually want to do?');
+      showChips(defaultChips());
     },
     setContext: function(ctx) { if (ctx && typeof ctx === 'object') Object.assign(sessionCtx, ctx); },
     clearHistory: function () { history = []; sessionCtx = {}; }
