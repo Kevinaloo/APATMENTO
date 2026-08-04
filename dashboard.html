@@ -3,172 +3,184 @@
 <head>
   <link rel="preload" as="image" href="/cabana-emblem.png" fetchpriority="high"/>
   <link rel="preload" as="image" href="/cabana-wordmark-color.png" fetchpriority="high"/>
-<!-- ══ CABANA CINEMATIC LOADING SCREEN ══
-     Randomly picks bedroom or sofa girl on each fresh session visit.
-     Skipped on back-navigation (?back=1). Auto-dismisses after video plays. ══ -->
+<!-- ══ CABANA — Cinematic Loading Screen v2 ══ -->
 <style id="apa-splash-css">
-  .apa-splash-lock{overflow:hidden !important;}
+  .apa-splash-lock { overflow: hidden !important; }
 
   #cbp-splash {
     position: fixed; inset: 0; z-index: 2147483000;
-    background: #000;
-    /* Poster image fills instantly before video loads */
+    background: #050505;
     background-size: cover;
     background-position: center top;
-    background-repeat: no-repeat;
+  }
+
+  /* Film grain — unifies UI with cinematic footage */
+  #cbp-splash::before {
+    content: '';
+    position: absolute; inset: 0; z-index: 4;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 160px 160px;
+    opacity: .03;
+    mix-blend-mode: overlay;
   }
 
   #cbp-splash video {
     position: absolute; inset: 0;
     width: 100%; height: 100%;
-    /* contain shows full portrait frame without any cropping */
-    object-fit: cover;
-    object-position: center top;
-    z-index: 0;
-    opacity: 0;
-    transition: opacity 0.6s ease;
+    object-fit: cover; object-position: center top;
+    z-index: 0; opacity: 0;
+    transition: opacity 1.1s cubic-bezier(.4,0,.2,1);
   }
-  #cbp-splash video.cbp-vid-ready { opacity: 1; }
+  #cbp-splash video.cbp-rdy { opacity: 1; }
 
+  /* 4-stop cinematic gradient — top dark for brand, clear middle, dark bottom for CTA */
   #cbp-splash-veil {
     position: absolute; inset: 0; z-index: 1;
     background: linear-gradient(
       to bottom,
-      rgba(0,0,0,.52) 0%,
-      rgba(0,0,0,.08) 30%,
-      rgba(0,0,0,.08) 65%,
-      rgba(0,0,0,.72) 100%
+      rgba(3,3,6,.68) 0%,
+      rgba(3,3,6,.12) 28%,
+      rgba(3,3,6,.04) 50%,
+      rgba(3,3,6,.18) 72%,
+      rgba(3,3,6,.78) 100%
     );
   }
 
   #cbp-splash-ui {
-    position: absolute; inset: 0; z-index: 2;
+    position: absolute; inset: 0; z-index: 3;
     display: flex; flex-direction: column;
     align-items: center; justify-content: space-between;
-    padding: clamp(44px,9vh,76px) clamp(24px,6vw,48px) clamp(52px,10vh,84px);
+    padding: clamp(52px,10vh,82px) clamp(28px,7vw,52px) clamp(60px,12vh,92px);
   }
 
-  .cbps-brand { text-align: center; animation: cbpsD .9s ease both; }
+  /* Brand */
+  .cbps-brand { text-align: center; animation: cbpsD 1.1s cubic-bezier(.16,1,.3,1) both; }
   .cbps-name {
     font-family: "Cormorant Garamond", serif;
     font-weight: 300;
-    font-size: clamp(36px,10vw,58px);
-    letter-spacing: 14px;
+    font-size: clamp(38px,10vw,60px);
+    letter-spacing: 16px;
     text-transform: uppercase;
     color: #fff;
-    text-shadow: 0 0 80px rgba(255,255,255,.2);
     line-height: 1;
+    text-shadow: 0 2px 60px rgba(0,0,0,.25);
   }
   .cbps-sub {
     font-family: "Montserrat", sans-serif;
-    font-size: 8px; letter-spacing: 5px;
+    font-size: 7.5px; letter-spacing: 5.5px;
     text-transform: uppercase;
-    color: rgba(255,255,255,.45);
-    margin-top: 8px; font-weight: 200;
+    color: rgba(255,255,255,.38);
+    margin-top: 9px; font-weight: 200;
   }
   .cbps-iris {
-    width: 48px; height: 1.5px;
-    margin: 10px auto 0;
-    background: linear-gradient(90deg,#7DF9FF,#FF6EFF,#FFE14D,#7DF9FF);
-    background-size: 300%;
-    animation: cbpsSh 3.2s linear infinite;
+    width: 56px; height: 2px;
+    margin: 13px auto 0; border-radius: 2px;
+    background: linear-gradient(90deg,#7DF9FF,#B06EFF,#FF6EFF,#FFD84D,#7DF9FF);
+    background-size: 400%;
+    animation: cbpsSh 4s linear infinite;
   }
 
+  /* Tagline — centre of screen, italic, breathes in late */
   .cbps-tag {
     font-family: "Cormorant Garamond", serif;
     font-style: italic; font-weight: 300;
-    font-size: clamp(17px,4.5vw,26px);
-    color: rgba(255,255,255,.82);
-    text-align: center;
-    animation: cbpsU 1s ease .8s both;
-    line-height: 1.5;
-    text-shadow: 0 2px 20px rgba(0,0,0,.4);
+    font-size: clamp(18px,4.8vw,28px);
+    color: rgba(255,255,255,.88);
+    text-align: center; line-height: 1.45;
+    text-shadow: 0 2px 24px rgba(0,0,0,.45);
+    animation: cbpsU 1.1s cubic-bezier(.16,1,.3,1) .85s both;
+    max-width: 300px;
   }
 
+  /* Bottom CTA group */
   .cbps-bottom {
     display: flex; flex-direction: column;
-    align-items: center; gap: 14px;
-    animation: cbpsU 1s ease 1.3s both;
+    align-items: center; gap: 16px;
+    animation: cbpsU 1s cubic-bezier(.16,1,.3,1) 1.4s both;
   }
 
+  /* Enter button — glass pill with heartbeat */
   #cbp-splash-enter {
     font-family: "Montserrat", sans-serif;
-    font-size: 9px; font-weight: 300;
+    font-size: 8.5px; font-weight: 300;
     letter-spacing: 6px; text-transform: uppercase;
     color: rgba(255,255,255,.7);
     cursor: pointer;
     background: rgba(255,255,255,.08);
-    border: 1px solid rgba(255,255,255,.28);
-    padding: 14px 36px; border-radius: 2px;
-    transition: all .3s ease;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,.22);
+    padding: 16px 40px; border-radius: 2px;
+    transition: background .3s, border-color .3s, color .3s, transform .25s;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    animation: cbpsBtnPulse 3.2s ease-in-out infinite;
   }
-  #cbp-splash-enter:hover {
+  #cbp-splash-enter:hover, #cbp-splash-enter:active {
     background: rgba(255,255,255,.18);
     border-color: rgba(255,255,255,.6);
-    color: #fff;
-    transform: translateY(-1px);
+    color: #fff; transform: translateY(-2px);
   }
 
   .cbps-foot {
     font-family: "Montserrat", sans-serif;
-    font-size: 8px; letter-spacing: 3px;
-    text-transform: uppercase;
-    color: rgba(255,255,255,.22);
+    font-size: 7.5px; letter-spacing: 3.5px;
+    text-transform: uppercase; color: rgba(255,255,255,.2);
   }
 
+  /* Dismiss — scale + fade like the video pulls back into the world */
+  @keyframes cbpsSplashOut {
+    0%   { opacity:1; transform:scale(1); }
+    100% { opacity:0; transform:scale(1.07); }
+  }
   @keyframes cbpsD {
-    from { opacity: 0; transform: translateY(-14px); }
-    to   { opacity: 1; transform: translateY(0); }
+    from { opacity:0; transform:translateY(-18px) scale(.96); }
+    to   { opacity:1; transform:translateY(0) scale(1); }
   }
   @keyframes cbpsU {
-    from { opacity: 0; transform: translateY(14px); }
-    to   { opacity: 1; transform: translateY(0); }
+    from { opacity:0; transform:translateY(16px); }
+    to   { opacity:1; transform:translateY(0); }
   }
   @keyframes cbpsSh {
-    0%   { background-position: 0% 50%; }
-    100% { background-position: 300% 50%; }
+    0%   { background-position:0% 50%; }
+    100% { background-position:400% 50%; }
   }
-  @keyframes cbpsOut {
-    to { opacity: 0; transform: scale(1.03); }
+  @keyframes cbpsBtnPulse {
+    0%,100% { box-shadow:0 0 0 0 rgba(255,255,255,0); }
+    50%     { box-shadow:0 0 0 8px rgba(255,255,255,.04); }
   }
 </style>
 <script>
 (function(){
   try {
-    /* Skip on back-navigation from a service page */
     if (location.search.indexOf('back=1') !== -1) return;
 
-    /* Reset per-login: Supabase writes auth state to localStorage.
-       We tie the splash to the session so it shows once per fresh login,
-       not once per browser session — clearing on each new auth event. */
-    var authKey = null;
+    /* Per-login fingerprint — shows once per user per day */
+    var uid = 'anon';
     try {
-      /* Find the Supabase auth token key */
       for (var k in localStorage) {
-        if (k.indexOf('supabase.auth.token') !== -1 || k.indexOf('-auth-token') !== -1) {
-          authKey = k; break;
+        if (k.indexOf('supabase.auth') !== -1 || k.indexOf('-auth-token') !== -1) {
+          var t = JSON.parse(localStorage.getItem(k) || '{}');
+          uid = (t.user && t.user.id) ||
+                (t.currentSession && t.currentSession.user && t.currentSession.user.id) ||
+                'anon';
+          break;
         }
       }
-    } catch(e) {}
+    } catch(_) {}
 
-    /* Build a fingerprint: auth user id + today's date so it shows once per login per day */
-    var fingerprint = 'none';
-    if (authKey) {
-      try {
-        var tok = JSON.parse(localStorage.getItem(authKey) || '{}');
-        var uid = (tok.user && tok.user.id) || (tok.currentSession && tok.currentSession.user && tok.currentSession.user.id) || '';
-        fingerprint = uid || 'anon';
-      } catch(e) { fingerprint = 'anon'; }
-    }
-    var today = new Date().toISOString().slice(0, 10); /* YYYY-MM-DD */
-    var splashKey = 'cbp_splash_' + fingerprint + '_' + today;
+    var day = new Date().toISOString().slice(0,10);
+    var key = 'cbp2_' + uid + '_' + day;
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, '1');
 
-    if (sessionStorage.getItem(splashKey)) return;
-    sessionStorage.setItem(splashKey, '1');
+    /* Preload both videos now so whichever isn't picked loads in background */
+    ['/cabana-vid-bedroom.mp4','/cabana-vid-sofa.mp4'].forEach(function(src){
+      var l = document.createElement('link');
+      l.rel = 'preload'; l.as = 'video'; l.href = src;
+      document.head.appendChild(l);
+    });
 
-    /* Inject fonts */
+    /* Fonts */
     var fl = document.createElement('link');
     fl.rel = 'stylesheet';
     fl.href = 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;1,300&family=Montserrat:wght@200;300&display=swap';
@@ -176,26 +188,29 @@
 
     document.documentElement.classList.add('apa-splash-lock');
 
-    /* Pick one video + its poster at random — different every session */
     var picks = [
       { src: '/cabana-vid-bedroom.mp4', poster: '/cabana-poster-bedroom.jpg' },
       { src: '/cabana-vid-sofa.mp4',    poster: '/cabana-poster-sofa.jpg'    },
     ];
-    var pick = picks[Math.floor(Math.random() * picks.length)];
+    /* Guarantee alternation: remember last pick in sessionStorage across same day */
+    var lastPick = sessionStorage.getItem('cbp2_last_pick') || '';
+    var available = picks.filter(function(p){ return p.src !== lastPick; });
+    if (!available.length) available = picks;
+    var pick = available[Math.floor(Math.random() * available.length)];
+    sessionStorage.setItem('cbp2_last_pick', pick.src);
 
     var tags = [
       'Every journey deserves a statement.',
       'Where you stay is who you are.',
       'Pack light. Arrive boldly.',
+      'The world is more beautiful from the right room.',
     ];
     var tag = tags[Math.floor(Math.random() * tags.length)];
 
-    /* Build splash element */
+    /* Build element — poster shows instantly, video cross-fades in */
     var el = document.createElement('div');
     el.id = 'cbp-splash';
-    /* Poster image shows instantly — no black flash */
     el.style.backgroundImage = 'url(' + pick.poster + ')';
-
     el.innerHTML =
       '<video src="' + pick.src + '" autoplay muted loop playsinline></video>' +
       '<div id="cbp-splash-veil"></div>' +
@@ -214,30 +229,34 @@
 
     (document.body || document.documentElement).appendChild(el);
 
-    /* Fade video in once it can play — eliminates black flash */
+    /* Video cross-dissolve on canplay */
     var vid = el.querySelector('video');
-    vid.addEventListener('canplay', function() {
-      vid.classList.add('cbp-vid-ready');
+    vid.addEventListener('canplay', function(){
+      vid.classList.add('cbp-rdy');
     }, { once: true });
+    /* Failsafe */
+    setTimeout(function(){ vid.classList.add('cbp-rdy'); }, 1800);
 
     function dismiss() {
-      el.style.animation = 'cbpsOut .55s cubic-bezier(.7,0,.3,1) forwards';
-      setTimeout(function() {
+      el.style.animation = 'cbpsSplashOut .6s cubic-bezier(.7,0,.3,1) forwards';
+      setTimeout(function(){
         if (el.parentNode) el.parentNode.removeChild(el);
         document.documentElement.classList.remove('apa-splash-lock');
-      }, 560);
+      }, 610);
     }
 
-    document.getElementById('cbp-splash-enter').addEventListener('click', dismiss);
-    /* Tap anywhere on the video bg also dismisses */
-    el.addEventListener('click', function(e) {
-      if (e.target.id !== 'cbp-splash-enter') dismiss();
+    document.getElementById('cbp-splash-enter').addEventListener('click', function(e){
+      e.stopPropagation(); dismiss();
     });
+    /* Tap anywhere also dismisses */
+    el.addEventListener('click', dismiss);
 
-    /* Auto-dismiss after one full video (~6s) + 1.5s grace */
-    setTimeout(dismiss, 7500);
+    /* Auto-dismiss after one video loop + grace */
+    var auto = setTimeout(dismiss, 7800);
+    /* Cancel auto if user taps — prevents double dismiss */
+    el.addEventListener('click', function(){ clearTimeout(auto); }, { once: true });
 
-  } catch(e) { /* any error — site loads normally */ }
+  } catch(_) {}
 })();
 </script>
 <meta charset="UTF-8"/>
