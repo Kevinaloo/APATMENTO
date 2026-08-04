@@ -38,14 +38,19 @@
   /* ── Full-bleed video layer ── */
   .cbp-video-layer {
     position: absolute; inset: 0; overflow: hidden;
+    background-size: cover;
+    background-position: center top;
+    background-repeat: no-repeat;
   }
   .cbp-video-layer video {
     position: absolute; inset: 0;
     width: 100%; height: 100%;
     object-fit: cover;
-    transition: opacity 1.1s ease;
+    object-position: center top;
+    opacity: 0;
+    transition: opacity 0.6s ease;
   }
-  .cbp-video-layer video.cbp-hidden { opacity: 0; pointer-events: none; }
+  .cbp-video-layer video.cbp-hidden { opacity: 0 !important; pointer-events: none; }
 
   /* gradient veil */
   .cbp-veil {
@@ -295,7 +300,7 @@
   ];
   let _failIdx = 0;
 
-  /* ── Video sources ──────────────────────────────────────────── */
+  /* ── Video sources + poster frames ──────────────────────────── */
   const _VIDS = {
     oldguy:   '/cabana-vid-oldguy.mp4',
     sofa:     '/cabana-vid-sofa.mp4',
@@ -303,6 +308,14 @@
     bedroom:  '/cabana-vid-bedroom.mp4',
     swing:    '/cabana-vid-swing.mp4',
     facepalm: '/cabana-vid-facepalm.mp4',
+  };
+  const _POSTERS = {
+    oldguy:   '/cabana-poster-oldguy.jpg',
+    sofa:     '/cabana-poster-sofa.jpg',
+    suitcase: '/cabana-poster-suitcase.jpg',
+    bedroom:  '/cabana-poster-bedroom.jpg',
+    swing:    '/cabana-poster-swing.jpg',
+    facepalm: '/cabana-poster-facepalm.jpg',
   };
 
   /* ── DOM construction ───────────────────────────────────────── */
@@ -386,17 +399,34 @@
   function _getVid(id) { return document.getElementById('cbp-vid-' + id); }
 
   function _crossfadeTo(src, loop = true) {
-    const curr = _activeVideo;
-    const next = curr === 'a' ? 'b' : 'a';
+    const curr  = _activeVideo;
+    const next  = curr === 'a' ? 'b' : 'a';
     const vNext = _getVid(next);
+    const vl    = document.getElementById('cbp-vl');
 
+    // Find poster key from src path
+    const posterKey = Object.keys(_VIDS).find(k => _VIDS[k] === src);
+    if (posterKey && vl) {
+      vl.style.backgroundImage = 'url(' + _POSTERS[posterKey] + ')';
+      vl.style.backgroundSize  = 'cover';
+      vl.style.backgroundPosition = 'center top';
+    }
+
+    vNext.style.opacity = '0';
+    vNext.style.transition = 'opacity 0.6s ease';
     vNext.src  = src;
     vNext.loop = loop;
     vNext.currentTime = 0;
     vNext.play().catch(() => {});
 
-    // Swap visibility
+    // Fade video in once buffered — poster stays visible until then
+    vNext.addEventListener('canplay', function onCanPlay() {
+      vNext.removeEventListener('canplay', onCanPlay);
+      vNext.style.opacity = '1';
+    });
+
     _getVid(curr).classList.add('cbp-hidden');
+    _getVid(curr).style.opacity = '0';
     vNext.classList.remove('cbp-hidden');
     _activeVideo = next;
   }

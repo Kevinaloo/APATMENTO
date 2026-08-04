@@ -8,77 +8,236 @@
      Skipped on back-navigation (?back=1). Auto-dismisses after video plays. ══ -->
 <style id="apa-splash-css">
   .apa-splash-lock{overflow:hidden !important;}
-  #cbp-splash{position:fixed;inset:0;z-index:2147483000;background:#000;}
-  #cbp-splash video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;}
-  #cbp-splash-veil{position:absolute;inset:0;z-index:1;background:linear-gradient(to bottom,rgba(0,0,0,.44) 0%,rgba(0,0,0,.08) 35%,rgba(0,0,0,.08) 62%,rgba(0,0,0,.66) 100%);}
-  #cbp-splash-ui{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:clamp(44px,9vh,76px) clamp(20px,6vw,48px) clamp(48px,10vh,84px);}
-  .cbps-brand{text-align:center;animation:cbpsD .9s ease both;}
-  .cbps-name{font-family:"Cormorant Garamond",serif;font-weight:300;font-size:clamp(34px,9vw,58px);letter-spacing:14px;text-transform:uppercase;color:#fff;text-shadow:0 0 60px rgba(255,255,255,.18);line-height:1;}
-  .cbps-sub{font-family:"Montserrat",sans-serif;font-size:8px;letter-spacing:5px;text-transform:uppercase;color:rgba(255,255,255,.4);margin-top:7px;font-weight:200;}
-  .cbps-iris{width:48px;height:1.5px;margin:10px auto 0;background:linear-gradient(90deg,#7DF9FF,#FF6EFF,#FFE14D,#7DF9FF);background-size:300%;animation:cbpsSh 3.2s linear infinite;}
-  .cbps-tag{font-family:"Cormorant Garamond",serif;font-style:italic;font-weight:300;font-size:clamp(16px,4vw,24px);color:rgba(255,255,255,.7);text-align:center;animation:cbpsU 1s ease .7s both;line-height:1.5;}
-  #cbp-splash-enter{font-family:"Montserrat",sans-serif;font-size:9px;font-weight:300;letter-spacing:5px;text-transform:uppercase;color:rgba(255,255,255,.6);animation:cbpsU 1s ease 1.3s both;cursor:pointer;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.22);padding:13px 30px;border-radius:2px;transition:all .3s;backdrop-filter:blur(4px);}
-  #cbp-splash-enter:hover{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.5);color:#fff;}
-  .cbps-foot{font-family:"Montserrat",sans-serif;font-size:8px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.2);animation:cbpsU 1.2s ease 1.8s both;}
-  @keyframes cbpsD{from{opacity:0;transform:translateY(-12px);}to{opacity:1;transform:translateY(0);}}
-  @keyframes cbpsU{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
-  @keyframes cbpsSh{0%{background-position:0% 50%;}100%{background-position:300% 50%;}}
-  @keyframes cbpsOut{to{opacity:0;transform:scale(1.04);}}
+
+  #cbp-splash {
+    position: fixed; inset: 0; z-index: 2147483000;
+    background: #000;
+    /* Poster image fills instantly before video loads */
+    background-size: cover;
+    background-position: center top;
+    background-repeat: no-repeat;
+  }
+
+  #cbp-splash video {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    /* contain shows full portrait frame without any cropping */
+    object-fit: cover;
+    object-position: center top;
+    z-index: 0;
+    opacity: 0;
+    transition: opacity 0.6s ease;
+  }
+  #cbp-splash video.cbp-vid-ready { opacity: 1; }
+
+  #cbp-splash-veil {
+    position: absolute; inset: 0; z-index: 1;
+    background: linear-gradient(
+      to bottom,
+      rgba(0,0,0,.52) 0%,
+      rgba(0,0,0,.08) 30%,
+      rgba(0,0,0,.08) 65%,
+      rgba(0,0,0,.72) 100%
+    );
+  }
+
+  #cbp-splash-ui {
+    position: absolute; inset: 0; z-index: 2;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: space-between;
+    padding: clamp(44px,9vh,76px) clamp(24px,6vw,48px) clamp(52px,10vh,84px);
+  }
+
+  .cbps-brand { text-align: center; animation: cbpsD .9s ease both; }
+  .cbps-name {
+    font-family: "Cormorant Garamond", serif;
+    font-weight: 300;
+    font-size: clamp(36px,10vw,58px);
+    letter-spacing: 14px;
+    text-transform: uppercase;
+    color: #fff;
+    text-shadow: 0 0 80px rgba(255,255,255,.2);
+    line-height: 1;
+  }
+  .cbps-sub {
+    font-family: "Montserrat", sans-serif;
+    font-size: 8px; letter-spacing: 5px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,.45);
+    margin-top: 8px; font-weight: 200;
+  }
+  .cbps-iris {
+    width: 48px; height: 1.5px;
+    margin: 10px auto 0;
+    background: linear-gradient(90deg,#7DF9FF,#FF6EFF,#FFE14D,#7DF9FF);
+    background-size: 300%;
+    animation: cbpsSh 3.2s linear infinite;
+  }
+
+  .cbps-tag {
+    font-family: "Cormorant Garamond", serif;
+    font-style: italic; font-weight: 300;
+    font-size: clamp(17px,4.5vw,26px);
+    color: rgba(255,255,255,.82);
+    text-align: center;
+    animation: cbpsU 1s ease .8s both;
+    line-height: 1.5;
+    text-shadow: 0 2px 20px rgba(0,0,0,.4);
+  }
+
+  .cbps-bottom {
+    display: flex; flex-direction: column;
+    align-items: center; gap: 14px;
+    animation: cbpsU 1s ease 1.3s both;
+  }
+
+  #cbp-splash-enter {
+    font-family: "Montserrat", sans-serif;
+    font-size: 9px; font-weight: 300;
+    letter-spacing: 6px; text-transform: uppercase;
+    color: rgba(255,255,255,.7);
+    cursor: pointer;
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.28);
+    padding: 14px 36px; border-radius: 2px;
+    transition: all .3s ease;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  #cbp-splash-enter:hover {
+    background: rgba(255,255,255,.18);
+    border-color: rgba(255,255,255,.6);
+    color: #fff;
+    transform: translateY(-1px);
+  }
+
+  .cbps-foot {
+    font-family: "Montserrat", sans-serif;
+    font-size: 8px; letter-spacing: 3px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,.22);
+  }
+
+  @keyframes cbpsD {
+    from { opacity: 0; transform: translateY(-14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes cbpsU {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes cbpsSh {
+    0%   { background-position: 0% 50%; }
+    100% { background-position: 300% 50%; }
+  }
+  @keyframes cbpsOut {
+    to { opacity: 0; transform: scale(1.03); }
+  }
 </style>
 <script>
 (function(){
-  try{
-    if(location.search.indexOf('back=1')!==-1) return;
-    if(sessionStorage.getItem('cbp_splash_shown')) return;
-    sessionStorage.setItem('cbp_splash_shown','1');
+  try {
+    /* Skip on back-navigation from a service page */
+    if (location.search.indexOf('back=1') !== -1) return;
 
-    var fl=document.createElement('link');
-    fl.rel='stylesheet';fl.href='https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;1,300&family=Montserrat:wght@200;300&display=swap';
+    /* Reset per-login: Supabase writes auth state to localStorage.
+       We tie the splash to the session so it shows once per fresh login,
+       not once per browser session — clearing on each new auth event. */
+    var authKey = null;
+    try {
+      /* Find the Supabase auth token key */
+      for (var k in localStorage) {
+        if (k.indexOf('supabase.auth.token') !== -1 || k.indexOf('-auth-token') !== -1) {
+          authKey = k; break;
+        }
+      }
+    } catch(e) {}
+
+    /* Build a fingerprint: auth user id + today's date so it shows once per login per day */
+    var fingerprint = 'none';
+    if (authKey) {
+      try {
+        var tok = JSON.parse(localStorage.getItem(authKey) || '{}');
+        var uid = (tok.user && tok.user.id) || (tok.currentSession && tok.currentSession.user && tok.currentSession.user.id) || '';
+        fingerprint = uid || 'anon';
+      } catch(e) { fingerprint = 'anon'; }
+    }
+    var today = new Date().toISOString().slice(0, 10); /* YYYY-MM-DD */
+    var splashKey = 'cbp_splash_' + fingerprint + '_' + today;
+
+    if (sessionStorage.getItem(splashKey)) return;
+    sessionStorage.setItem(splashKey, '1');
+
+    /* Inject fonts */
+    var fl = document.createElement('link');
+    fl.rel = 'stylesheet';
+    fl.href = 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;1,300&family=Montserrat:wght@200;300&display=swap';
     document.head.appendChild(fl);
 
     document.documentElement.classList.add('apa-splash-lock');
 
-    var vids=['/cabana-vid-bedroom.mp4','/cabana-vid-sofa.mp4'];
-    var src=vids[Math.floor(Math.random()*vids.length)];
+    /* Pick one video + its poster at random — different every session */
+    var picks = [
+      { src: '/cabana-vid-bedroom.mp4', poster: '/cabana-poster-bedroom.jpg' },
+      { src: '/cabana-vid-sofa.mp4',    poster: '/cabana-poster-sofa.jpg'    },
+    ];
+    var pick = picks[Math.floor(Math.random() * picks.length)];
 
-    var tags=['Every journey deserves a statement.','Where you stay is who you are.','Pack light. Arrive boldly.'];
-    var tag=tags[Math.floor(Math.random()*tags.length)];
+    var tags = [
+      'Every journey deserves a statement.',
+      'Where you stay is who you are.',
+      'Pack light. Arrive boldly.',
+    ];
+    var tag = tags[Math.floor(Math.random() * tags.length)];
 
-    var el=document.createElement('div');
-    el.id='cbp-splash';
-    el.innerHTML=
-      '<video src="'+src+'" autoplay muted loop playsinline></video>'+
-      '<div id="cbp-splash-veil"></div>'+
-      '<div id="cbp-splash-ui">'+
-        '<div class="cbps-brand">'+
-          '<div class="cbps-name">Cabana</div>'+
-          '<div class="cbps-sub">Luxury Travel</div>'+
-          '<div class="cbps-iris"></div>'+
-        '</div>'+
-        '<div class="cbps-tag">'+tag+'</div>'+
-        '<div style="display:flex;flex-direction:column;align-items:center;gap:14px;">'+
-          '<button id="cbp-splash-enter">Enter &rarr;</button>'+
-          '<div class="cbps-foot">cabana.co &nbsp;&middot;&nbsp; Kenya</div>'+
-        '</div>'+
+    /* Build splash element */
+    var el = document.createElement('div');
+    el.id = 'cbp-splash';
+    /* Poster image shows instantly — no black flash */
+    el.style.backgroundImage = 'url(' + pick.poster + ')';
+
+    el.innerHTML =
+      '<video src="' + pick.src + '" autoplay muted loop playsinline></video>' +
+      '<div id="cbp-splash-veil"></div>' +
+      '<div id="cbp-splash-ui">' +
+        '<div class="cbps-brand">' +
+          '<div class="cbps-name">Cabana</div>' +
+          '<div class="cbps-sub">Luxury Travel</div>' +
+          '<div class="cbps-iris"></div>' +
+        '</div>' +
+        '<div class="cbps-tag">' + tag + '</div>' +
+        '<div class="cbps-bottom">' +
+          '<button id="cbp-splash-enter">Enter &rarr;</button>' +
+          '<div class="cbps-foot">cabana.co &nbsp;&middot;&nbsp; Kenya</div>' +
+        '</div>' +
       '</div>';
 
-    (document.body||document.documentElement).appendChild(el);
+    (document.body || document.documentElement).appendChild(el);
 
-    function dismiss(){
-      el.style.animation='cbpsOut .55s cubic-bezier(.7,0,.3,1) forwards';
-      setTimeout(function(){
-        if(el.parentNode) el.parentNode.removeChild(el);
+    /* Fade video in once it can play — eliminates black flash */
+    var vid = el.querySelector('video');
+    vid.addEventListener('canplay', function() {
+      vid.classList.add('cbp-vid-ready');
+    }, { once: true });
+
+    function dismiss() {
+      el.style.animation = 'cbpsOut .55s cubic-bezier(.7,0,.3,1) forwards';
+      setTimeout(function() {
+        if (el.parentNode) el.parentNode.removeChild(el);
         document.documentElement.classList.remove('apa-splash-lock');
-      },560);
+      }, 560);
     }
 
-    document.getElementById('cbp-splash-enter').onclick=dismiss;
-    el.addEventListener('click',function(e){if(e.target.id!=='cbp-splash-enter'){dismiss();}});
+    document.getElementById('cbp-splash-enter').addEventListener('click', dismiss);
+    /* Tap anywhere on the video bg also dismisses */
+    el.addEventListener('click', function(e) {
+      if (e.target.id !== 'cbp-splash-enter') dismiss();
+    });
 
-    /* Auto-dismiss after one full video loop (~6s) + 1.2s grace */
-    setTimeout(dismiss,7400);
+    /* Auto-dismiss after one full video (~6s) + 1.5s grace */
+    setTimeout(dismiss, 7500);
 
-  }catch(e){}
+  } catch(e) { /* any error — site loads normally */ }
 })();
 </script>
 <meta charset="UTF-8"/>
