@@ -403,13 +403,10 @@
 
   function _startProcCycle() {
     _stopProcCycle();
+    // Each payment attempt randomly picks one of the two waiting videos and plays it fully in loop
     const srcs = [_VIDS.oldguy, _VIDS.swing];
-    _procVidIdx = 0;
-    _crossfadeTo(srcs[_procVidIdx], true);
-    _procXfadeInt = setInterval(() => {
-      _procVidIdx = (_procVidIdx + 1) % srcs.length;
-      _crossfadeTo(srcs[_procVidIdx], true);
-    }, 6200);
+    const pick = srcs[Math.floor(Math.random() * srcs.length)];
+    _crossfadeTo(pick, true);
   }
 
   function _stopProcCycle() {

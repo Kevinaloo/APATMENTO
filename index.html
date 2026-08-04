@@ -1113,29 +1113,21 @@ body.intro-lock{overflow:hidden;height:100vh;}
 
 <!-- HERO -->
 <section class="hero" style="position:relative;overflow:hidden;">
-  <!-- Cabana cinematic hero videos -->
+  <!-- Cabana cinematic hero: randomly picks bedroom or sofa each visit, plays fully in loop -->
   <div id="cbp-hero-bg" style="position:absolute;inset:0;z-index:0;">
-    <video id="cbp-hv-a" src="/cabana-vid-bedroom.mp4" autoplay muted loop playsinline
-      style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:opacity 1.4s ease;"></video>
-    <video id="cbp-hv-b" src="/cabana-vid-sofa.mp4" autoplay muted loop playsinline
-      style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 1.4s ease;"></video>
-    <div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(10,10,20,.52) 0%,rgba(10,10,20,.18) 40%,rgba(10,10,20,.18) 60%,rgba(10,10,20,.72) 100%);z-index:1;"></div>
+    <video id="cbp-hero-vid" autoplay muted loop playsinline
+      style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;"></video>
+    <div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(10,10,20,.45) 0%,rgba(10,10,20,.10) 38%,rgba(10,10,20,.10) 62%,rgba(10,10,20,.68) 100%);z-index:1;"></div>
   </div>
   <div class="hero-aurora" style="position:relative;z-index:2;"><div class="ha-blob hab-1"></div><div class="ha-blob hab-2"></div><div class="ha-blob hab-3"></div><div class="ha-blob hab-4"></div></div>
   <script>
   (function(){
-    var srcs = ['/cabana-vid-bedroom.mp4', '/cabana-vid-sofa.mp4'];
-    var active = 0;
-    var va = document.getElementById('cbp-hv-a');
-    var vb = document.getElementById('cbp-hv-b');
-    setInterval(function(){
-      active = (active + 1) % 2;
-      var show = active === 0 ? va : vb;
-      var hide = active === 0 ? vb : va;
-      show.src = srcs[active]; show.play();
-      show.style.opacity = '1';
-      hide.style.opacity = '0';
-    }, 8000);
+    // Each visit randomly picks one of the two loading-screen videos
+    var opts = ['/cabana-vid-bedroom.mp4', '/cabana-vid-sofa.mp4'];
+    var pick = opts[Math.floor(Math.random() * opts.length)];
+    var v = document.getElementById('cbp-hero-vid');
+    v.src = pick;
+    v.play().catch(function(){});
   })();
   </script>
   <div class="hero-stars" id="hero-stars" style="position:relative;z-index:2;"></div>
