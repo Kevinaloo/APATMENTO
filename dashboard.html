@@ -3,54 +3,82 @@
 <head>
   <link rel="preload" as="image" href="/cabana-emblem.png" fetchpriority="high"/>
   <link rel="preload" as="image" href="/cabana-wordmark-color.png" fetchpriority="high"/>
-<!-- ══ INTERSTITIAL · instant decision (must be first, runs before paint) ══
-     Paints a curtain ONLY on a fresh dashboard visit — never when the
-     user is navigating back from a service page (identified by ?back=1).
-     The engine (apa-interstitial.js) fills the curtain with the video/image.
-     If back=1 is present, or no active campaign exists, nothing paints. ══ -->
-<style id="apa-splash-css">.apa-splash-lock{overflow:hidden !important;}</style>
+<!-- ══ CABANA CINEMATIC LOADING SCREEN ══
+     Randomly picks bedroom or sofa girl on each fresh session visit.
+     Skipped on back-navigation (?back=1). Auto-dismisses after video plays. ══ -->
+<style id="apa-splash-css">
+  .apa-splash-lock{overflow:hidden !important;}
+  #cbp-splash{position:fixed;inset:0;z-index:2147483000;background:#000;}
+  #cbp-splash video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;}
+  #cbp-splash-veil{position:absolute;inset:0;z-index:1;background:linear-gradient(to bottom,rgba(0,0,0,.44) 0%,rgba(0,0,0,.08) 35%,rgba(0,0,0,.08) 62%,rgba(0,0,0,.66) 100%);}
+  #cbp-splash-ui{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:clamp(44px,9vh,76px) clamp(20px,6vw,48px) clamp(48px,10vh,84px);}
+  .cbps-brand{text-align:center;animation:cbpsD .9s ease both;}
+  .cbps-name{font-family:"Cormorant Garamond",serif;font-weight:300;font-size:clamp(34px,9vw,58px);letter-spacing:14px;text-transform:uppercase;color:#fff;text-shadow:0 0 60px rgba(255,255,255,.18);line-height:1;}
+  .cbps-sub{font-family:"Montserrat",sans-serif;font-size:8px;letter-spacing:5px;text-transform:uppercase;color:rgba(255,255,255,.4);margin-top:7px;font-weight:200;}
+  .cbps-iris{width:48px;height:1.5px;margin:10px auto 0;background:linear-gradient(90deg,#7DF9FF,#FF6EFF,#FFE14D,#7DF9FF);background-size:300%;animation:cbpsSh 3.2s linear infinite;}
+  .cbps-tag{font-family:"Cormorant Garamond",serif;font-style:italic;font-weight:300;font-size:clamp(16px,4vw,24px);color:rgba(255,255,255,.7);text-align:center;animation:cbpsU 1s ease .7s both;line-height:1.5;}
+  #cbp-splash-enter{font-family:"Montserrat",sans-serif;font-size:9px;font-weight:300;letter-spacing:5px;text-transform:uppercase;color:rgba(255,255,255,.6);animation:cbpsU 1s ease 1.3s both;cursor:pointer;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.22);padding:13px 30px;border-radius:2px;transition:all .3s;backdrop-filter:blur(4px);}
+  #cbp-splash-enter:hover{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.5);color:#fff;}
+  .cbps-foot{font-family:"Montserrat",sans-serif;font-size:8px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.2);animation:cbpsU 1.2s ease 1.8s both;}
+  @keyframes cbpsD{from{opacity:0;transform:translateY(-12px);}to{opacity:1;transform:translateY(0);}}
+  @keyframes cbpsU{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+  @keyframes cbpsSh{0%{background-position:0% 50%;}100%{background-position:300% 50%;}}
+  @keyframes cbpsOut{to{opacity:0;transform:scale(1.04);}}
+</style>
 <script>
 (function(){
   try{
-    /* Skip entirely when returning from a service page inside the app */
-    if(location.search.indexOf('back=1') !== -1) return;
+    if(location.search.indexOf('back=1')!==-1) return;
+    if(sessionStorage.getItem('cbp_splash_shown')) return;
+    sessionStorage.setItem('cbp_splash_shown','1');
 
-    var raw = localStorage.getItem('apa-splash-config');
-    if(!raw) return;
-    var c = JSON.parse(raw);
-    if(!c || c.active !== true) return;
-    if(c.type !== 'video' && c.type !== 'image') return;
-    if(typeof c.url !== 'string' || c.url.length < 8) return;
+    var fl=document.createElement('link');
+    fl.rel='stylesheet';fl.href='https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;1,300&family=Montserrat:wght@200;300&display=swap';
+    document.head.appendChild(fl);
 
-    /* frequency cap — mirror of the engine's logic, kept tiny */
-    if(c.frequency !== 'always'){
-      var s = localStorage.getItem('apa-splash-seen');
-      if(s){ s = JSON.parse(s);
-        if(s && s.campaign === c.campaign){
-          if(c.frequency === 'daily'){ if(Date.now()-(s.ts||0) < 864e5) return; }
-          else return; /* once */
-        }
-      }
+    document.documentElement.classList.add('apa-splash-lock');
+
+    var vids=['/cabana-vid-bedroom.mp4','/cabana-vid-sofa.mp4'];
+    var src=vids[Math.floor(Math.random()*vids.length)];
+
+    var tags=['Every journey deserves a statement.','Where you stay is who you are.','Pack light. Arrive boldly.'];
+    var tag=tags[Math.floor(Math.random()*tags.length)];
+
+    var el=document.createElement('div');
+    el.id='cbp-splash';
+    el.innerHTML=
+      '<video src="'+src+'" autoplay muted loop playsinline></video>'+
+      '<div id="cbp-splash-veil"></div>'+
+      '<div id="cbp-splash-ui">'+
+        '<div class="cbps-brand">'+
+          '<div class="cbps-name">Cabana</div>'+
+          '<div class="cbps-sub">Luxury Travel</div>'+
+          '<div class="cbps-iris"></div>'+
+        '</div>'+
+        '<div class="cbps-tag">'+tag+'</div>'+
+        '<div style="display:flex;flex-direction:column;align-items:center;gap:14px;">'+
+          '<button id="cbp-splash-enter">Enter &rarr;</button>'+
+          '<div class="cbps-foot">cabana.co &nbsp;&middot;&nbsp; Kenya</div>'+
+        '</div>'+
+      '</div>';
+
+    (document.body||document.documentElement).appendChild(el);
+
+    function dismiss(){
+      el.style.animation='cbpsOut .55s cubic-bezier(.7,0,.3,1) forwards';
+      setTimeout(function(){
+        if(el.parentNode) el.parentNode.removeChild(el);
+        document.documentElement.classList.remove('apa-splash-lock');
+      },560);
     }
 
-    /* Paint the curtain now, before anything else renders. */
-    document.documentElement.classList.add('apa-splash-lock');
-    var d = document.createElement('div');
-    d.id = 'apa-splash-curtain';
-    d.style.cssText = 'position:fixed;inset:0;z-index:2147483000;background:#0A0A14;display:block;';
-    d.innerHTML = '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">'
-      + '<div style="width:34px;height:34px;border-radius:50%;border:2.5px solid rgba(255,255,255,.18);'
-      + 'border-top-color:rgba(255,255,255,.75);animation:apaSplashSpin .8s linear infinite;"></div></div>'
-      + '<style>@keyframes apaSplashSpin{to{transform:rotate(360deg)}}</style>';
-    (document.body || document.documentElement).appendChild(d);
+    document.getElementById('cbp-splash-enter').onclick=dismiss;
+    el.addEventListener('click',function(e){if(e.target.id!=='cbp-splash-enter'){dismiss();}});
 
-    /* WATCHDOG: if the engine hasn't taken over within 8s, tear down. */
-    window.__apaSplashWatch = setTimeout(function(){
-      var el = document.getElementById('apa-splash-curtain');
-      if(el && el.parentNode){ el.parentNode.removeChild(el); }
-      document.documentElement.classList.remove('apa-splash-lock');
-    }, 8000);
-  }catch(e){ /* any failure ⇒ no curtain ⇒ site loads normally */ }
+    /* Auto-dismiss after one full video loop (~6s) + 1.2s grace */
+    setTimeout(dismiss,7400);
+
+  }catch(e){}
 })();
 </script>
 <meta charset="UTF-8"/>
