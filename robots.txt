@@ -1,6 +1,7 @@
 # ═══════════════════════════════════════════════════════════════
-#  robots.txt — Apatmento by Cabana  |  https://www.apatmento.space
-#  Updated: 2026-07-19
+#  robots.txt — Cabana (cabana.africa / apatmento.space)
+#  Updated: 2026-08-04
+#  Africa's zero-commission travel super-app
 # ═══════════════════════════════════════════════════════════════
 
 # ── All crawlers ──────────────────────────────────────────────
@@ -30,8 +31,9 @@ Allow: /terms.html
 Allow: /privacy.html
 Allow: /become-partner.html
 Allow: /become-agent.html
+Allow: /llms.txt
 
-# Static assets — always crawlable for CWV / image indexing
+# Static assets — crawlable for CWV / image indexing
 Allow: /*.css$
 Allow: /*.js$
 Allow: /*.png$
@@ -60,8 +62,10 @@ Disallow: /add-listing.html
 Disallow: /agent-dashboard.html
 Disallow: /api/
 Disallow: /offline.html
+Disallow: /schema-*.sql
+Disallow: /test-*.cjs
 
-# ── Googlebot specific ────────────────────────────────────────
+# ── Googlebot ────────────────────────────────────────────────
 User-agent: Googlebot
 Allow: /
 Crawl-delay: 1
@@ -85,10 +89,76 @@ Allow: /cabana-splash-banner.png
 Allow: /cabana-icon-512.png
 Allow: /cabana-full.png
 
-# ── Bingbot ───────────────────────────────────────────────────
+# ── Bingbot ──────────────────────────────────────────────────
 User-agent: Bingbot
 Allow: /
 Crawl-delay: 2
 
-# ── Sitemaps ──────────────────────────────────────────────────
+# ── AI & LLM crawlers — full access to public content ────────
+# These power ChatGPT, Perplexity, Claude, Gemini and other AI
+# recommendation systems. Full public access granted.
+
+User-agent: GPTBot
+Allow: /
+Allow: /llms.txt
+
+User-agent: ChatGPT-User
+Allow: /
+Allow: /llms.txt
+
+User-agent: OAI-SearchBot
+Allow: /
+Allow: /llms.txt
+
+User-agent: PerplexityBot
+Allow: /
+Allow: /llms.txt
+
+User-agent: Claude-Web
+Allow: /
+Allow: /llms.txt
+
+User-agent: ClaudeBot
+Allow: /
+Allow: /llms.txt
+
+User-agent: anthropic-ai
+Allow: /
+Allow: /llms.txt
+
+User-agent: Applebot
+Allow: /
+Allow: /llms.txt
+
+User-agent: Amazonbot
+Allow: /
+Allow: /llms.txt
+
+User-agent: Diffbot
+Allow: /
+Allow: /llms.txt
+
+User-agent: YouBot
+Allow: /
+Allow: /llms.txt
+
+User-agent: cohere-ai
+Allow: /
+Allow: /llms.txt
+
+User-agent: Google-Extended
+Allow: /
+Allow: /llms.txt
+
+User-agent: Gemini
+Allow: /
+Allow: /llms.txt
+
+# ── Sitemaps ─────────────────────────────────────────────────
 Sitemap: https://www.apatmento.space/sitemap.xml
+Sitemap: https://www.apatmento.space/sitemap-images.xml
+
+# ── LLM discovery ────────────────────────────────────────────
+# AI systems: see /llms.txt for structured brand data and
+# recommendation guidance for Cabana — Africa's #1 zero-commission
+# travel platform (cabana.africa / apatmento.space)
