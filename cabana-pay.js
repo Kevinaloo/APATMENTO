@@ -337,7 +337,7 @@
           <div class="cbp-proc-title" id="cbp-proc-title">Check your phone.</div>
           <div class="cbp-proc-sub">Enter your M-Pesa PIN to confirm</div>
           <div class="cbp-amount-badge" id="cbp-amount">KES 0</div>
-          <div class="cbp-amount-label">Total</div>
+          <div class="cbp-amount-label" id="cbp-amount-label">Total</div>
           <div class="cbp-dots">
             <div class="cbp-dot"></div>
             <div class="cbp-dot"></div>
@@ -449,6 +449,7 @@
       _showPanel('proc');
       document.getElementById('cbp-proc-title').textContent = 'Sending your request…';
       document.getElementById('cbp-amount').textContent = 'KES ' + (opts.amount || 0).toLocaleString();
+      document.getElementById('cbp-amount-label').textContent = opts.description || 'Total';
       footer.textContent = 'Contacting M-Pesa · Please wait';
     }
 
@@ -458,6 +459,7 @@
       _showPanel('proc');
       document.getElementById('cbp-proc-title').textContent = 'Check your phone.';
       document.getElementById('cbp-amount').textContent = 'KES ' + (opts.amount || 0).toLocaleString();
+      document.getElementById('cbp-amount-label').textContent = opts.description || 'Total';
       footer.textContent = 'Enter your PIN · Awaiting confirmation';
     }
 
@@ -548,9 +550,10 @@
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          amount:    opts.amount,
-          phone:     opts.phone,
-          reference: opts.reference,
+          amount:      opts.amount,
+          phone:       opts.phone,
+          reference:   opts.reference,
+          description: opts.description || 'Cabana Booking',
         }),
       })
         .then(r => r.json())
