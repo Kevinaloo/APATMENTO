@@ -949,181 +949,598 @@ img,video,svg{max-width:100%;}
    ══════════════════════════════════════════════════════════════ */
 
 /* ══════════════════════════════════════════════════════════════════════
-   WORLD-CLASS CHOREOGRAPHY v5 — FULLY JOINTED SKELETON
-   Every dancer now has: elbow, knee, hip, forearm, shin
-   Moves reference real techniques by name.
-   Easing: snappy entries, smooth holds, elastic releases.
+   VIBE ENGINE v6 — 4 PERMANENT DANCE PERSONALITIES
+   No genres, no rotation. Each dancer owns their style forever.
+   D1 (violet)  = TWERK QUEEN    — hip-dominant, low bounce, gluteal pop
+   D2 (blue)    = TUTTING ROBOT  — geometric arm locks, angular precision  
+   D3 (teal)    = LIQUID GLIDE   — boneless fluid wave, slow melt
+   D4 (coral)   = CRUMP/FREEZE   — explosive hit, chest pop, freeze pose
+   All 4 run simultaneously. No switching. Pure vibe.
    ══════════════════════════════════════════════════════════════════════ */
 
-/* Joint transform origins are baked into SVG inline styles.
-   CSS only needs to define the animation keyframes and apply them. */
+/* ══════════════════════════════════════════════════════════════════════
+   D1 — TWERK QUEEN (ds-h1, violet)
+   Signature: LOW squat bounce, hip drops side-to-side, chest counter-roll
+   Body: stays LOW — translateY stays positive (crouched position)
+   Hip: massive rotation + translateY — the pop is in the hip
+   Arms: out wide for balance, forearms relaxed down
+   Knees: deep bend — shin almost parallel to floor
+   Head: counter-rolls opposite to hip (chest isolation)
+   ══════════════════════════════════════════════════════════════════════ */
+@keyframes tw-body {
+  0%   { transform: translateY(12px) translateX(0)   scaleY(0.88) rotate(0);      }
+  12%  { transform: translateY(14px) translateX(-5px) scaleY(0.85) rotate(-4deg); }
+  24%  { transform: translateY(8px)  translateX(-4px) scaleY(0.92) rotate(-3deg); }
+  36%  { transform: translateY(15px) translateX(0)   scaleY(0.84) rotate(0);      }
+  48%  { transform: translateY(14px) translateX(5px)  scaleY(0.85) rotate(4deg);  }
+  60%  { transform: translateY(8px)  translateX(4px)  scaleY(0.92) rotate(3deg);  }
+  72%  { transform: translateY(15px) translateX(0)   scaleY(0.83) rotate(0);      }
+  84%  { transform: translateY(10px) translateX(-3px) scaleY(0.89) rotate(-2deg); }
+  100% { transform: translateY(12px) translateX(0)   scaleY(0.88) rotate(0);      }
+}
+@keyframes tw-hip {
+  0%   { transform: rotate(0)    translateX(0)    translateY(0);   }
+  10%  { transform: rotate(-28deg) translateX(-6px) translateY(-4px); }
+  22%  { transform: rotate(-35deg) translateX(-8px) translateY(4px);  }
+  34%  { transform: rotate(-20deg) translateX(-4px) translateY(-2px); }
+  46%  { transform: rotate(0)    translateX(0)    translateY(-5px);  }
+  58%  { transform: rotate(32deg)  translateX(7px)  translateY(4px);  }
+  70%  { transform: rotate(38deg)  translateX(9px)  translateY(-3px); }
+  82%  { transform: rotate(22deg)  translateX(5px)  translateY(2px);  }
+  100% { transform: rotate(0)    translateX(0)    translateY(0);   }
+}
+@keyframes tw-torso {
+  /* Chest counter-isolates against hip — opposite direction */
+  0%,100% { transform: rotate(0)   skewX(0);    }
+  14%  { transform: rotate(12deg)  skewX(5deg);  }
+  28%  { transform: rotate(15deg)  skewX(8deg);  }
+  42%  { transform: rotate(5deg)   skewX(2deg);  }
+  56%  { transform: rotate(-14deg) skewX(-6deg); }
+  70%  { transform: rotate(-16deg) skewX(-8deg); }
+  85%  { transform: rotate(-6deg)  skewX(-3deg); }
+}
+@keyframes tw-head {
+  /* Rolls with chest not with hip */
+  0%,100% { transform: rotate(0)    translateY(0);  }
+  16%  { transform: rotate(10deg)  translateY(-3px); }
+  32%  { transform: rotate(14deg)  translateY(-5px); }
+  48%  { transform: rotate(2deg)   translateY(-2px); }
+  62%  { transform: rotate(-12deg) translateY(-4px); }
+  78%  { transform: rotate(-15deg) translateY(-5px); }
+  92%  { transform: rotate(-4deg)  translateY(-2px); }
+}
+@keyframes tw-arm-l {
+  /* Wide out for balance, rides the body sway */
+  0%,100% { transform: rotate(-75deg); }
+  20%  { transform: rotate(-90deg);  }
+  40%  { transform: rotate(-65deg);  }
+  60%  { transform: rotate(-100deg); }
+  80%  { transform: rotate(-70deg);  }
+}
+@keyframes tw-fore-l {
+  0%,100% { transform: rotate(50deg); }
+  25%  { transform: rotate(70deg);  }
+  50%  { transform: rotate(45deg);  }
+  75%  { transform: rotate(65deg);  }
+}
+@keyframes tw-arm-r {
+  0%,100% { transform: rotate(75deg); }
+  20%  { transform: rotate(65deg);  }
+  40%  { transform: rotate(90deg);  }
+  60%  { transform: rotate(70deg);  }
+  80%  { transform: rotate(100deg); }
+}
+@keyframes tw-fore-r {
+  0%,100% { transform: rotate(-50deg); }
+  25%  { transform: rotate(-45deg);  }
+  50%  { transform: rotate(-70deg);  }
+  75%  { transform: rotate(-48deg);  }
+}
+@keyframes tw-leg-l {
+  /* Deep squat — knees pushed OUT, shin parallel to ground */
+  0%,100% { transform: rotate(-30deg); }
+  15%  { transform: rotate(-38deg); }
+  30%  { transform: rotate(-22deg); }
+  45%  { transform: rotate(-42deg); }
+  60%  { transform: rotate(-25deg); }
+  75%  { transform: rotate(-40deg); }
+}
+@keyframes tw-shin-l {
+  0%,100% { transform: rotate(75deg);  }
+  15%  { transform: rotate(88deg);   }
+  30%  { transform: rotate(65deg);   }
+  45%  { transform: rotate(92deg);   }
+  60%  { transform: rotate(68px);    }
+  75%  { transform: rotate(85deg);   }
+}
+@keyframes tw-leg-r {
+  0%,100% { transform: rotate(30deg); }
+  15%  { transform: rotate(22deg);  }
+  30%  { transform: rotate(40deg);  }
+  45%  { transform: rotate(26deg);  }
+  60%  { transform: rotate(42deg);  }
+  75%  { transform: rotate(20deg);  }
+}
+@keyframes tw-shin-r {
+  0%,100% { transform: rotate(-75deg); }
+  15%  { transform: rotate(-65deg);  }
+  30%  { transform: rotate(-88deg);  }
+  45%  { transform: rotate(-70deg);  }
+  60%  { transform: rotate(-90deg);  }
+  75%  { transform: rotate(-62deg);  }
+}
+#ds-h1 .ds-body   { animation: tw-body   1.4s cubic-bezier(.4,.0,.2,1) infinite; }
+#ds-h1 .ds-head   { animation: tw-head   1.4s cubic-bezier(.4,.0,.2,1) infinite; }
+#ds-h1 .ds-hip    { animation: tw-hip    0.7s cubic-bezier(.4,.0,.2,1) infinite; }
+#ds-h1 .ds-torso  { animation: tw-torso  1.4s cubic-bezier(.4,.0,.2,1) infinite; }
+#ds-h1 .ds-arm-l  { animation: tw-arm-l  1.4s ease-in-out infinite; }
+#ds-h1 .ds-fore-l { animation: tw-fore-l 1.4s ease-in-out infinite; }
+#ds-h1 .ds-arm-r  { animation: tw-arm-r  1.4s ease-in-out infinite; }
+#ds-h1 .ds-fore-r { animation: tw-fore-r 1.4s ease-in-out infinite; }
+#ds-h1 .ds-leg-l  { animation: tw-leg-l  0.7s cubic-bezier(.4,.0,.2,1) infinite; }
+#ds-h1 .ds-shin-l { animation: tw-shin-l 0.7s cubic-bezier(.4,.0,.2,1) infinite; }
+#ds-h1 .ds-leg-r  { animation: tw-leg-r  0.7s cubic-bezier(.4,.0,.2,1) infinite; }
+#ds-h1 .ds-shin-r { animation: tw-shin-r 0.7s cubic-bezier(.4,.0,.2,1) infinite; }
+@keyframes tw-digit { 0%,100%{transform:rotate(0)translateY(0)} 25%{transform:rotate(-8deg)translateY(4px)} 50%{transform:rotate(0)translateY(8px)} 75%{transform:rotate(8deg)translateY(4px)} }
+#ds-h1 .ds-digit-body { animation: tw-digit 0.7s cubic-bezier(.4,.0,.2,1) infinite; }
 
-/* ══ AFROBEATS — SHAKU SHAKU + ZANKU ════════════════════════════════
-   Full technique: weight pops LEFT then RIGHT with hip isolation.
-   Arms: shoulder drops with bent elbow pointing out, wrist snap.
-   Legs: knee drives UP-ACROSS body (not just out), shin flicks.
-   Hip: rotates independently on ds-hip for visible pop.
-   ════════════════════════════════════════════════════════════════════ */
-@keyframes af-body  { 0%{transform:translateX(0)translateY(0)rotate(0)} 12%{transform:translateX(-8px)translateY(-10px)rotate(-6deg)} 24%{transform:translateX(-6px)translateY(3px)rotate(-4deg)} 36%{transform:translateX(5px)translateY(-12px)rotate(5deg)} 48%{transform:translateX(8px)translateY(2px)rotate(5deg)} 60%{transform:translateX(3px)translateY(-8px)rotate(3deg)} 72%{transform:translateX(-6px)translateY(-10px)rotate(-5deg)} 84%{transform:translateX(-8px)translateY(2px)rotate(-4deg)} 100%{transform:translateX(0)translateY(0)rotate(0)} }
-@keyframes af-head  { 0%,100%{transform:rotate(0)translateY(0)} 10%{transform:rotate(-14deg)translateY(-4px)} 24%{transform:rotate(10deg)translateY(-6px)} 38%{transform:rotate(-10deg)translateY(-3px)} 52%{transform:rotate(16deg)translateY(-5px)} 66%{transform:rotate(-12deg)translateY(-4px)} 82%{transform:rotate(8deg)translateY(-3px)} }
-@keyframes af-hip   { 0%,100%{transform:rotate(0)translateX(0)} 14%{transform:rotate(-14deg)translateX(-3px)} 28%{transform:rotate(5deg)translateX(2px)} 42%{transform:rotate(16deg)translateX(4px)} 56%{transform:rotate(-6deg)translateX(-2px)} 70%{transform:rotate(-18deg)translateX(-4px)} 85%{transform:rotate(8deg)translateX(2px)} }
-@keyframes af-torso { 0%,100%{transform:skewX(0)scaleX(1)} 16%{transform:skewX(-10deg)scaleX(0.94)} 32%{transform:skewX(8deg)scaleX(1.04)} 50%{transform:skewX(-11deg)scaleX(0.93)} 68%{transform:skewX(9deg)scaleX(1.05)} 86%{transform:skewX(-6deg)scaleX(0.97)} }
-/* Left upper arm: shoulder drops DOWN, elbow OUT — classic afro shoulder roll */
-@keyframes af-arm-l { 0%,100%{transform:rotate(-15deg)} 10%{transform:rotate(-100deg)} 20%{transform:rotate(-40deg)} 32%{transform:rotate(-130deg)} 44%{transform:rotate(-25deg)} 58%{transform:rotate(-115deg)} 72%{transform:rotate(-35deg)} 86%{transform:rotate(-105deg)} }
-/* Left forearm: bends at elbow — wrist flicks OUT on each pump */
-@keyframes af-fore-l{ 0%,100%{transform:rotate(20deg)} 10%{transform:rotate(-60deg)} 22%{transform:rotate(40deg)} 34%{transform:rotate(-70deg)} 46%{transform:rotate(30deg)} 60%{transform:rotate(-65deg)} 74%{transform:rotate(25deg)} 88%{transform:rotate(-55deg)} }
-/* Right upper arm: opposite shoulder — up when left is down */
-@keyframes af-arm-r { 0%,100%{transform:rotate(15deg)} 10%{transform:rotate(50deg)} 22%{transform:rotate(120deg)} 34%{transform:rotate(30deg)} 46%{transform:rotate(130deg)} 60%{transform:rotate(40deg)} 72%{transform:rotate(125deg)} 86%{transform:rotate(35deg)} }
-/* Right forearm: elbow bends dramatically inward */
-@keyframes af-fore-r{ 0%,100%{transform:rotate(-15deg)} 12%{transform:rotate(70deg)} 24%{transform:rotate(-30deg)} 38%{transform:rotate(80deg)} 52%{transform:rotate(-25deg)} 66%{transform:rotate(75deg)} 80%{transform:rotate(-20deg)} }
-/* Left thigh: knee drives ACROSS body — signature zanku move */
-@keyframes af-leg-l { 0%,100%{transform:rotate(-5deg)} 15%{transform:rotate(-52deg)} 28%{transform:rotate(-8deg)} 42%{transform:rotate(15deg)} 55%{transform:rotate(-48deg)} 68%{transform:rotate(-5deg)} 82%{transform:rotate(10deg)} }
-/* Left shin: snaps straight on plant, flicks heel back on lift */
-@keyframes af-shin-l{ 0%,100%{transform:rotate(5deg)} 15%{transform:rotate(-45deg)} 28%{transform:rotate(8deg)} 42%{transform:rotate(-10deg)} 55%{transform:rotate(-50deg)} 68%{transform:rotate(6deg)} }
-/* Right thigh: steps OUT while left crosses */
-@keyframes af-leg-r { 0%,100%{transform:rotate(5deg)} 15%{transform:rotate(20deg)} 28%{transform:rotate(50deg)} 42%{transform:rotate(-50deg)} 55%{transform:rotate(18deg)} 68%{transform:rotate(48deg)} 82%{transform:rotate(-45deg)} }
-@keyframes af-shin-r{ 0%,100%{transform:rotate(-5deg)} 18%{transform:rotate(-40deg)} 32%{transform:rotate(50deg)} 46%{transform:rotate(-55deg)} 60%{transform:rotate(10deg)} 74%{transform:rotate(-42deg)} 88%{transform:rotate(48deg)} }
+/* ══════════════════════════════════════════════════════════════════════
+   D2 — TUTTING / ROBOT (ds-h2, blue)
+   Signature: GEOMETRIC arm locks at 90° angles, head pops on grid
+   Arms: move in strict 90° increments with hard stops
+   Forearms: lock perpendicular to upper arm — box shapes
+   Body: minimal — slight pulse, weight shifts on beat
+   Legs: step-lock — one up, freeze, other up, freeze
+   Head: pops to strict angles — left/right/up/neutral only
+   ══════════════════════════════════════════════════════════════════════ */
+@keyframes rb-body {
+  0%,9%   { transform: translateX(0)   translateY(0)   rotate(0);    }
+  10%,24% { transform: translateX(-4px) translateY(-3px) rotate(-2deg); }
+  25%,39% { transform: translateX(-4px) translateY(2px)  rotate(-2deg); }
+  40%,54% { transform: translateX(0)   translateY(-4px) rotate(0);    }
+  55%,69% { transform: translateX(4px)  translateY(-3px) rotate(2deg);  }
+  70%,84% { transform: translateX(4px)  translateY(2px)  rotate(2deg);  }
+  85%,99% { transform: translateX(0)   translateY(0)   rotate(0);    }
+  100%    { transform: translateX(0)   translateY(0)   rotate(0);    }
+}
+@keyframes rb-head {
+  0%,14%  { transform: rotate(0)    translateY(0);  }
+  15%,29% { transform: rotate(-25deg) translateY(0);  }
+  30%,44% { transform: rotate(0)    translateY(-5px); }
+  45%,59% { transform: rotate(25deg)  translateY(0);  }
+  60%,74% { transform: rotate(0)    translateY(0);  }
+  75%,89% { transform: rotate(-15deg) translateY(-3px); }
+  90%,100%{ transform: rotate(0)    translateY(0);  }
+}
+@keyframes rb-hip {
+  0%,100% { transform: rotate(0); }
+  25%  { transform: rotate(-8deg); }
+  50%  { transform: rotate(5deg);  }
+  75%  { transform: rotate(8deg);  }
+}
+@keyframes rb-torso {
+  0%,100% { transform: scaleX(1) skewX(0); }
+  20%  { transform: scaleX(0.96) skewX(-3deg); }
+  50%  { transform: scaleX(1.03) skewX(2deg);  }
+  75%  { transform: scaleX(0.97) skewX(-2deg); }
+}
+/* LEFT ARM: locks to strict 90deg positions — T-shape, L-shape, box */
+@keyframes rb-arm-l {
+  0%,9%   { transform: rotate(-90deg); } /* straight left horizontal */
+  10%,24% { transform: rotate(-90deg); }
+  25%,39% { transform: rotate(-180deg);} /* straight up */
+  40%,54% { transform: rotate(-90deg); } /* horizontal again */
+  55%,69% { transform: rotate(-45deg); } /* diagonal */
+  70%,84% { transform: rotate(-135deg);} /* up-left diagonal */
+  85%,99% { transform: rotate(-90deg); }
+  100%    { transform: rotate(-90deg); }
+}
+@keyframes rb-fore-l {
+  0%,9%   { transform: rotate(-90deg); } /* forearm points down — L */
+  10%,24% { transform: rotate(0deg);   } /* forearm straight — T */
+  25%,39% { transform: rotate(90deg);  } /* forearm points right */
+  40%,54% { transform: rotate(-90deg); }
+  55%,69% { transform: rotate(90deg);  }
+  70%,84% { transform: rotate(-90deg); }
+  85%,99% { transform: rotate(0deg);   }
+  100%    { transform: rotate(-90deg); }
+}
+@keyframes rb-arm-r {
+  0%,9%   { transform: rotate(90deg);  }
+  10%,24% { transform: rotate(45deg);  }
+  25%,39% { transform: rotate(90deg);  }
+  40%,54% { transform: rotate(180deg); } /* up */
+  55%,69% { transform: rotate(90deg);  }
+  70%,84% { transform: rotate(135deg); }
+  85%,99% { transform: rotate(90deg);  }
+  100%    { transform: rotate(90deg);  }
+}
+@keyframes rb-fore-r {
+  0%,9%   { transform: rotate(90deg);  }
+  10%,24% { transform: rotate(-90deg); }
+  25%,39% { transform: rotate(90deg);  }
+  40%,54% { transform: rotate(-90deg); }
+  55%,69% { transform: rotate(0deg);   }
+  70%,84% { transform: rotate(90deg);  }
+  85%,99% { transform: rotate(-90deg); }
+  100%    { transform: rotate(90deg);  }
+}
+/* Legs: step-lock with full stops */
+@keyframes rb-leg-l {
+  0%,19%  { transform: rotate(-5deg);  }
+  20%,44% { transform: rotate(-35deg); } /* lock kick out */
+  45%,64% { transform: rotate(-5deg);  }
+  65%,84% { transform: rotate(10deg);  } /* cross */
+  85%,100%{ transform: rotate(-5deg);  }
+}
+@keyframes rb-shin-l {
+  0%,19%  { transform: rotate(8deg);   }
+  20%,44% { transform: rotate(-60deg); } /* snap straight */
+  45%,64% { transform: rotate(8deg);   }
+  65%,84% { transform: rotate(-20deg); }
+  85%,100%{ transform: rotate(8deg);   }
+}
+@keyframes rb-leg-r {
+  0%,19%  { transform: rotate(5deg);   }
+  20%,44% { transform: rotate(8deg);   }
+  45%,64% { transform: rotate(38deg);  } /* lock right */
+  65%,84% { transform: rotate(5deg);   }
+  85%,100%{ transform: rotate(-10deg); }
+}
+@keyframes rb-shin-r {
+  0%,19%  { transform: rotate(-8deg);  }
+  20%,44% { transform: rotate(-10deg); }
+  45%,64% { transform: rotate(-62deg); }
+  65%,84% { transform: rotate(-8deg);  }
+  85%,100%{ transform: rotate(15deg);  }
+}
+#ds-h2 .ds-body   { animation: rb-body   2.4s steps(1) infinite; }
+#ds-h2 .ds-head   { animation: rb-head   2.4s steps(1) infinite; }
+#ds-h2 .ds-hip    { animation: rb-hip    2.4s ease-in-out infinite; }
+#ds-h2 .ds-torso  { animation: rb-torso  2.4s ease-in-out infinite; }
+#ds-h2 .ds-arm-l  { animation: rb-arm-l  2.4s steps(1) infinite; }
+#ds-h2 .ds-fore-l { animation: rb-fore-l 2.4s steps(1) infinite; }
+#ds-h2 .ds-arm-r  { animation: rb-arm-r  2.4s steps(1) infinite; }
+#ds-h2 .ds-fore-r { animation: rb-fore-r 2.4s steps(1) infinite; }
+#ds-h2 .ds-leg-l  { animation: rb-leg-l  2.4s steps(1) infinite; }
+#ds-h2 .ds-shin-l { animation: rb-shin-l 2.4s steps(1) infinite; }
+#ds-h2 .ds-leg-r  { animation: rb-leg-r  2.4s steps(1) infinite; }
+#ds-h2 .ds-shin-r { animation: rb-shin-r 2.4s steps(1) infinite; }
+@keyframes rb-digit { 0%,24%{transform:rotate(0)} 25%,49%{transform:rotate(-15deg)} 50%,74%{transform:rotate(0)} 75%,99%{transform:rotate(15deg)} 100%{transform:rotate(0)} }
+#ds-h2 .ds-digit-body { animation: rb-digit 2.4s steps(1) infinite; }
 
-#dancer-stage.genre-afrobeats .ds-body   { animation: af-body  1.8s cubic-bezier(.4,0,.2,1) infinite; }
-#dancer-stage.genre-afrobeats .ds-head   { animation: af-head  1.8s cubic-bezier(.4,0,.2,1) infinite; }
-#dancer-stage.genre-afrobeats .ds-hip    { animation: af-hip   1.8s cubic-bezier(.4,0,.2,1) infinite; }
-#dancer-stage.genre-afrobeats .ds-torso  { animation: af-torso 1.8s cubic-bezier(.4,0,.2,1) infinite; }
-#dancer-stage.genre-afrobeats .ds-arm-l  { animation: af-arm-l 1.8s cubic-bezier(.4,0,.2,1) infinite; }
-#dancer-stage.genre-afrobeats .ds-fore-l { animation: af-fore-l 1.8s cubic-bezier(.4,0,.2,1) infinite; }
-#dancer-stage.genre-afrobeats .ds-arm-r  { animation: af-arm-r 1.8s cubic-bezier(.4,0,.2,1) infinite; }
-#dancer-stage.genre-afrobeats .ds-fore-r { animation: af-fore-r 1.8s cubic-bezier(.4,0,.2,1) infinite; }
-#dancer-stage.genre-afrobeats .ds-leg-l  { animation: af-leg-l 1.8s cubic-bezier(.4,0,.2,1) infinite; }
-#dancer-stage.genre-afrobeats .ds-shin-l { animation: af-shin-l 1.8s cubic-bezier(.4,0,.2,1) infinite; }
-#dancer-stage.genre-afrobeats .ds-leg-r  { animation: af-leg-r 1.8s cubic-bezier(.4,0,.2,1) infinite; }
-#dancer-stage.genre-afrobeats .ds-shin-r { animation: af-shin-r 1.8s cubic-bezier(.4,0,.2,1) infinite; }
-#dancer-stage.genre-afrobeats #ds-h1 .ds-body { animation-delay:0s }
-#dancer-stage.genre-afrobeats #ds-h2 .ds-body { animation-delay:.12s }
-#dancer-stage.genre-afrobeats #ds-m1 .ds-body { animation-delay:.24s }
-#dancer-stage.genre-afrobeats #ds-m2 .ds-body { animation-delay:.36s }
-@keyframes af-digit { 0%,100%{transform:rotate(0)translateY(0)} 25%{transform:rotate(7deg)translateY(-5px)} 50%{transform:rotate(-5deg)translateY(3px)} 75%{transform:rotate(6deg)translateY(-4px)} }
-#dancer-stage.genre-afrobeats .ds-digit-body { animation: af-digit 1.8s cubic-bezier(.4,0,.2,1) infinite; }
+/* ══════════════════════════════════════════════════════════════════════
+   D3 — LIQUID / BONELESS WAVE (ds-m1, teal)
+   Signature: body wave travels from head down through spine to hips
+   Everything moves in flowing S-curves — nothing sharp
+   Arms: slow arcing sweeps like ribbon dancers
+   Legs: weight shift with deep knee — melting into the ground
+   Head: initiates the wave, tilts and circles
+   Hip: smooth figure-8 loop
+   ══════════════════════════════════════════════════════════════════════ */
+@keyframes lq-body {
+  0%   { transform: translateX(0)   translateY(0)   rotate(0)   scaleY(1);    }
+  14%  { transform: translateX(-8px) translateY(-6px) rotate(-5deg) scaleY(1.04); }
+  28%  { transform: translateX(-6px) translateY(4px)  rotate(-3deg) scaleY(0.97); }
+  42%  { transform: translateX(2px)  translateY(-8px) rotate(2deg)  scaleY(1.05); }
+  56%  { transform: translateX(9px)  translateY(-5px) rotate(5deg)  scaleY(1.03); }
+  70%  { transform: translateX(7px)  translateY(5px)  rotate(4deg)  scaleY(0.96); }
+  84%  { transform: translateX(-2px) translateY(-4px) rotate(-2deg) scaleY(1.02); }
+  100% { transform: translateX(0)   translateY(0)   rotate(0)   scaleY(1);    }
+}
+@keyframes lq-head {
+  /* Initiates the wave — leads everything */
+  0%   { transform: rotate(0)    translateY(0)   translateX(0);  }
+  10%  { transform: rotate(-18deg) translateY(-8px) translateX(-3px); }
+  25%  { transform: rotate(-8deg)  translateY(3px)  translateX(-4px); }
+  40%  { transform: rotate(5deg)   translateY(-10px) translateX(2px); }
+  55%  { transform: rotate(20deg)  translateY(-7px)  translateX(5px); }
+  70%  { transform: rotate(10deg)  translateY(4px)   translateX(4px); }
+  85%  { transform: rotate(-6deg)  translateY(-5px)  translateX(-2px); }
+  100% { transform: rotate(0)    translateY(0)    translateX(0);  }
+}
+@keyframes lq-hip {
+  /* Figure-8 loop */
+  0%   { transform: rotate(0)    translateX(0)    translateY(0);   }
+  12%  { transform: rotate(-18deg) translateX(-5px) translateY(-3px); }
+  25%  { transform: rotate(-25deg) translateX(-7px) translateY(4px);  }
+  38%  { transform: rotate(-10deg) translateX(-3px) translateY(6px);  }
+  50%  { transform: rotate(5deg)   translateX(2px)  translateY(3px);  }
+  62%  { transform: rotate(22deg)  translateX(6px)  translateY(-2px); }
+  75%  { transform: rotate(28deg)  translateX(8px)  translateY(-5px); }
+  88%  { transform: rotate(12deg)  translateX(4px)  translateY(-6px); }
+  100% { transform: rotate(0)    translateX(0)    translateY(0);   }
+}
+@keyframes lq-torso {
+  0%,100% { transform: rotate(0)   skewX(0)   scaleX(1);   }
+  18%  { transform: rotate(-8deg)  skewX(-6deg) scaleX(0.95); }
+  36%  { transform: rotate(-4deg)  skewX(-3deg) scaleX(0.98); }
+  54%  { transform: rotate(6deg)   skewX(5deg)  scaleX(1.04); }
+  72%  { transform: rotate(9deg)   skewX(7deg)  scaleX(1.05); }
+  88%  { transform: rotate(3deg)   skewX(2deg)  scaleX(1.01); }
+}
+/* Arms: long slow sweeping arcs — ribbon quality */
+@keyframes lq-arm-l {
+  0%   { transform: rotate(-20deg); }
+  15%  { transform: rotate(-80deg); }
+  30%  { transform: rotate(-140deg);}
+  45%  { transform: rotate(-160deg);}
+  60%  { transform: rotate(-120deg);}
+  75%  { transform: rotate(-60deg); }
+  90%  { transform: rotate(-30deg); }
+  100% { transform: rotate(-20deg); }
+}
+@keyframes lq-fore-l {
+  0%   { transform: rotate(30deg);  }
+  15%  { transform: rotate(60deg);  }
+  30%  { transform: rotate(90deg);  }
+  45%  { transform: rotate(60deg);  }
+  60%  { transform: rotate(20deg);  }
+  75%  { transform: rotate(-10deg); }
+  90%  { transform: rotate(15deg);  }
+  100% { transform: rotate(30deg);  }
+}
+@keyframes lq-arm-r {
+  0%   { transform: rotate(20deg);  }
+  15%  { transform: rotate(60deg);  }
+  30%  { transform: rotate(30deg);  }
+  45%  { transform: rotate(-20deg); }
+  60%  { transform: rotate(-60deg); }
+  75%  { transform: rotate(-120deg);}
+  90%  { transform: rotate(-60deg); }
+  100% { transform: rotate(20deg);  }
+}
+@keyframes lq-fore-r {
+  0%   { transform: rotate(-30deg); }
+  15%  { transform: rotate(-15deg); }
+  30%  { transform: rotate(20deg);  }
+  45%  { transform: rotate(55deg);  }
+  60%  { transform: rotate(80deg);  }
+  75%  { transform: rotate(50deg);  }
+  90%  { transform: rotate(10deg);  }
+  100% { transform: rotate(-30deg); }
+}
+/* Legs: slow melt weight shift — like standing in water */
+@keyframes lq-leg-l {
+  0%,100% { transform: rotate(-10deg); }
+  20%  { transform: rotate(-25deg); }
+  40%  { transform: rotate(-15deg); }
+  60%  { transform: rotate(5deg);   }
+  80%  { transform: rotate(-8deg);  }
+}
+@keyframes lq-shin-l {
+  0%,100% { transform: rotate(18deg); }
+  20%  { transform: rotate(45deg);  }
+  40%  { transform: rotate(30deg);  }
+  60%  { transform: rotate(10deg);  }
+  80%  { transform: rotate(22deg);  }
+}
+@keyframes lq-leg-r {
+  0%,100% { transform: rotate(10deg); }
+  20%  { transform: rotate(5deg);   }
+  40%  { transform: rotate(25deg);  }
+  60%  { transform: rotate(18deg);  }
+  80%  { transform: rotate(-5deg);  }
+}
+@keyframes lq-shin-r {
+  0%,100% { transform: rotate(-18deg); }
+  20%  { transform: rotate(-12deg);  }
+  40%  { transform: rotate(-40deg);  }
+  60%  { transform: rotate(-30deg);  }
+  80%  { transform: rotate(-8deg);   }
+}
+#ds-m1 .ds-body   { animation: lq-body   3.6s cubic-bezier(.45,.05,.55,.95) infinite; }
+#ds-m1 .ds-head   { animation: lq-head   3.6s cubic-bezier(.45,.05,.55,.95) infinite; }
+#ds-m1 .ds-hip    { animation: lq-hip    3.6s cubic-bezier(.45,.05,.55,.95) infinite; }
+#ds-m1 .ds-torso  { animation: lq-torso  3.6s cubic-bezier(.45,.05,.55,.95) infinite; }
+#ds-m1 .ds-arm-l  { animation: lq-arm-l  3.6s cubic-bezier(.45,.05,.55,.95) infinite; }
+#ds-m1 .ds-fore-l { animation: lq-fore-l 3.6s cubic-bezier(.45,.05,.55,.95) infinite; }
+#ds-m1 .ds-arm-r  { animation: lq-arm-r  3.6s cubic-bezier(.45,.05,.55,.95) infinite; }
+#ds-m1 .ds-fore-r { animation: lq-fore-r 3.6s cubic-bezier(.45,.05,.55,.95) infinite; }
+#ds-m1 .ds-leg-l  { animation: lq-leg-l  3.6s cubic-bezier(.45,.05,.55,.95) infinite; }
+#ds-m1 .ds-shin-l { animation: lq-shin-l 3.6s cubic-bezier(.45,.05,.55,.95) infinite; }
+#ds-m1 .ds-leg-r  { animation: lq-leg-r  3.6s cubic-bezier(.45,.05,.55,.95) infinite; }
+#ds-m1 .ds-shin-r { animation: lq-shin-r 3.6s cubic-bezier(.45,.05,.55,.95) infinite; }
+@keyframes lq-digit { 0%{transform:rotate(0)translateX(0)} 25%{transform:rotate(6deg)translateX(3px)} 50%{transform:rotate(0)translateX(5px)} 75%{transform:rotate(-6deg)translateX(2px)} 100%{transform:rotate(0)translateX(0)} }
+#ds-m1 .ds-digit-body { animation: lq-digit 3.6s cubic-bezier(.45,.05,.55,.95) infinite; }
 
-/* ══ REGGAE — WINE & BUBBLE ══════════════════════════════════════════
-   Technique: deep side-lean with hip circle, arms open like wings
-   then fold inward. Knee bend into the hip — not a step but a SINK.
-   Forearm hangs loose below elbow as upper arm moves — fluid.
-   ════════════════════════════════════════════════════════════════════ */
-@keyframes rg-body  { 0%{transform:translateX(0)translateY(0)rotate(0)scaleX(1)} 18%{transform:translateX(-14px)translateY(-6px)rotate(-9deg)scaleX(0.96)} 36%{transform:translateX(-10px)translateY(5px)rotate(-5deg)scaleX(0.98)} 50%{transform:translateX(0)translateY(-3px)rotate(0)scaleX(1)} 68%{transform:translateX(15px)translateY(-7px)rotate(9deg)scaleX(0.96)} 84%{transform:translateX(10px)translateY(4px)rotate(5deg)scaleX(0.98)} 100%{transform:translateX(0)translateY(0)rotate(0)scaleX(1)} }
-@keyframes rg-head  { 0%,100%{transform:rotate(0)translateY(0)} 20%{transform:rotate(-20deg)translateY(-7px)} 50%{transform:rotate(2deg)translateY(-4px)} 70%{transform:rotate(20deg)translateY(-7px)} }
-@keyframes rg-hip   { 0%,100%{transform:rotate(0)translateX(0)} 15%{transform:rotate(-20deg)translateX(-5px)} 35%{transform:rotate(-8deg)translateX(-3px)} 50%{transform:rotate(5deg)translateX(1px)} 65%{transform:rotate(22deg)translateX(5px)} 82%{transform:rotate(10deg)translateX(3px)} }
-@keyframes rg-torso { 0%,100%{transform:rotate(0)skewX(0)} 20%{transform:rotate(-8deg)skewX(-5deg)} 50%{transform:rotate(2deg)skewX(1deg)} 70%{transform:rotate(8deg)skewX(5deg)} }
-/* Arms open to horizontal — HOLD — then fold in S-curve */
-@keyframes rg-arm-l { 0%,100%{transform:rotate(-30deg)} 12%{transform:rotate(-160deg)} 30%{transform:rotate(-130deg)} 46%{transform:rotate(-40deg)} 65%{transform:rotate(-90deg)} 80%{transform:rotate(-145deg)} }
-/* Forearm hangs below, wrist relaxed — loose fluid quality */
-@keyframes rg-fore-l{ 0%,100%{transform:rotate(25deg)} 14%{transform:rotate(60deg)} 30%{transform:rotate(80deg)} 46%{transform:rotate(15deg)} 65%{transform:rotate(50deg)} 80%{transform:rotate(70deg)} }
-@keyframes rg-arm-r { 0%,100%{transform:rotate(30deg)} 12%{transform:rotate(55deg)} 28%{transform:rotate(80deg)} 46%{transform:rotate(165deg)} 65%{transform:rotate(95deg)} 80%{transform:rotate(50deg)} }
-@keyframes rg-fore-r{ 0%,100%{transform:rotate(-25deg)} 15%{transform:rotate(-18deg)} 30%{transform:rotate(-60deg)} 48%{transform:rotate(-75deg)} 65%{transform:rotate(-45deg)} 82%{transform:rotate(-25deg)} }
-/* Hip sink — knee BENDS into body weight, not a kick */
-@keyframes rg-leg-l { 0%,100%{transform:rotate(-8deg)} 20%{transform:rotate(-28deg)} 38%{transform:rotate(-15deg)} 52%{transform:rotate(5deg)} 68%{transform:rotate(-5deg)} 85%{transform:rotate(-22deg)} }
-@keyframes rg-shin-l{ 0%,100%{transform:rotate(10deg)} 20%{transform:rotate(55deg)} 38%{transform:rotate(25deg)} 52%{transform:rotate(5deg)} 68%{transform:rotate(15deg)} 85%{transform:rotate(50deg)} }
-@keyframes rg-leg-r { 0%,100%{transform:rotate(8deg)} 20%{transform:rotate(5deg)} 38%{transform:rotate(-5deg)} 52%{transform:rotate(-28deg)} 68%{transform:rotate(-30deg)} 85%{transform:rotate(-18deg)} }
-@keyframes rg-shin-r{ 0%,100%{transform:rotate(-10deg)} 20%{transform:rotate(-8deg)} 38%{transform:rotate(-15deg)} 52%{transform:rotate(58deg)} 68%{transform:rotate(60deg)} 85%{transform:rotate(28deg)} }
+/* ══════════════════════════════════════════════════════════════════════
+   D4 — CRUMP + CHEST POP + FREEZE POSE (ds-m2, coral)
+   Signature: CHEST POPS violently forward/back independent of body
+   Arms: swinging wide arcs — not controlled, explosive
+   Hits: body convulses on the hit, settles into a held pose
+   Legs: stomp with attitude — heel-toe weight transfer
+   Head: aggressive nods, snaps to look over shoulder
+   ══════════════════════════════════════════════════════════════════════ */
+@keyframes cr-body {
+  0%,100%{ transform: translateY(0)  scale(1)    rotate(0);     }
+  6%  { transform: translateY(-16px) scale(1.12) rotate(-5deg); }
+  11% { transform: translateY(8px)   scale(0.90) rotate(4deg);  }
+  16% { transform: translateY(-20px) scale(1.14) rotate(-7deg); }
+  21% { transform: translateY(6px)   scale(0.88) rotate(5deg);  }
+  /* chest pop phase — body shudders */
+  28% { transform: translateY(-6px)  scale(1.06) rotate(-3deg); }
+  32% { transform: translateY(4px)   scale(0.96) rotate(2deg);  }
+  36% { transform: translateY(-8px)  scale(1.08) rotate(-4deg); }
+  40% { transform: translateY(3px)   scale(0.94) rotate(3deg);  }
+  /* settle into lean pose */
+  48%,65%{ transform: translateY(0) scale(1.02) rotate(-4deg); }
+  /* second hit */
+  70% { transform: translateY(-18px) scale(1.13) rotate(6deg);  }
+  75% { transform: translateY(9px)   scale(0.88) rotate(-5deg); }
+  80% { transform: translateY(-14px) scale(1.10) rotate(5deg);  }
+  85% { transform: translateY(5px)   scale(0.91) rotate(-3deg); }
+  /* settle lean other side */
+  90%,98%{ transform: translateY(0) scale(1.02) rotate(3deg); }
+}
+@keyframes cr-head {
+  0%,100%{ transform: rotate(0)    translateY(0);  }
+  6%  { transform: rotate(-18deg) translateY(-6px); }
+  16% { transform: rotate(-22deg) translateY(-8px); }
+  28% { transform: rotate(8deg)   translateY(3px);  }
+  35% { transform: rotate(-8deg)  translateY(-4px); }
+  48%,65%{ transform: rotate(20deg) translateY(0); } /* over-shoulder look */
+  70% { transform: rotate(20deg)  translateY(-6px); }
+  80% { transform: rotate(-18deg) translateY(-7px); }
+  90%,98%{ transform: rotate(-18deg) translateY(0); }
+}
+@keyframes cr-hip {
+  0%,100%{ transform: rotate(0)   translateX(0);   }
+  8%  { transform: rotate(-12deg) translateX(-4px); }
+  18% { transform: rotate(10deg)  translateX(3px);  }
+  30% { transform: rotate(-18deg) translateX(-5px); }
+  38% { transform: rotate(15deg)  translateX(4px);  }
+  48%,65%{ transform: rotate(-10deg) translateX(-3px); }
+  72% { transform: rotate(14deg)  translateX(4px);  }
+  82% { transform: rotate(-12deg) translateX(-4px); }
+  90%,98%{ transform: rotate(10deg) translateX(3px); }
+}
+@keyframes cr-torso {
+  /* Chest pops FORWARD independently — the crump signature */
+  0%,100%{ transform: skewX(0)   scaleX(1)   scaleY(1);   }
+  6%  { transform: skewX(-10deg) scaleX(1.08) scaleY(0.94); }
+  11% { transform: skewX(8deg)   scaleX(0.94) scaleY(1.06); }
+  28% { transform: skewX(-14deg) scaleX(1.12) scaleY(0.90); }
+  32% { transform: skewX(12deg)  scaleX(0.90) scaleY(1.10); }
+  36% { transform: skewX(-14deg) scaleX(1.14) scaleY(0.89); }
+  40% { transform: skewX(10deg)  scaleX(0.92) scaleY(1.08); }
+  48%,65%{ transform: skewX(-5deg) scaleX(1.04) scaleY(0.97); }
+  70% { transform: skewX(12deg)  scaleX(1.10) scaleY(0.92); }
+  80% { transform: skewX(-10deg) scaleX(0.92) scaleY(1.08); }
+  90%,98%{ transform: skewX(5deg) scaleX(1.03) scaleY(0.97); }
+}
+/* Arms swing WIDE and WILD — crump style */
+@keyframes cr-arm-l {
+  0%,100%{ transform: rotate(-20deg);  }
+  6%  { transform: rotate(-150deg); }
+  12% { transform: rotate(-40deg);  }
+  18% { transform: rotate(-130deg); }
+  28% { transform: rotate(-10deg);  }
+  35% { transform: rotate(-160deg); }
+  48%,65%{ transform: rotate(-90deg); } /* held pose */
+  70% { transform: rotate(-155deg); }
+  78% { transform: rotate(-30deg);  }
+  85% { transform: rotate(-140deg); }
+  90%,98%{ transform: rotate(-80deg); }
+}
+@keyframes cr-fore-l {
+  0%,100%{ transform: rotate(20deg);  }
+  6%  { transform: rotate(-100deg); }
+  12% { transform: rotate(60deg);   }
+  18% { transform: rotate(-80deg);  }
+  28% { transform: rotate(80deg);   }
+  35% { transform: rotate(-90deg);  }
+  48%,65%{ transform: rotate(45deg); }
+  70% { transform: rotate(-95deg);  }
+  78% { transform: rotate(70deg);   }
+  85% { transform: rotate(-85deg);  }
+  90%,98%{ transform: rotate(40deg); }
+}
+@keyframes cr-arm-r {
+  0%,100%{ transform: rotate(20deg);  }
+  6%  { transform: rotate(50deg);   }
+  12% { transform: rotate(148deg);  }
+  18% { transform: rotate(40deg);   }
+  28% { transform: rotate(155deg);  }
+  35% { transform: rotate(25deg);   }
+  48%,65%{ transform: rotate(95deg); }
+  70% { transform: rotate(30deg);   }
+  78% { transform: rotate(150deg);  }
+  85% { transform: rotate(35deg);   }
+  90%,98%{ transform: rotate(85deg); }
+}
+@keyframes cr-fore-r {
+  0%,100%{ transform: rotate(-20deg); }
+  6%  { transform: rotate(90deg);   }
+  12% { transform: rotate(-60deg);  }
+  18% { transform: rotate(75deg);   }
+  28% { transform: rotate(-85deg);  }
+  35% { transform: rotate(95deg);   }
+  48%,65%{ transform: rotate(-48deg);}
+  70% { transform: rotate(88deg);   }
+  78% { transform: rotate(-68deg);  }
+  85% { transform: rotate(80deg);   }
+  90%,98%{ transform: rotate(-42deg);}
+}
+/* Legs stomp with attitude */
+@keyframes cr-leg-l {
+  0%,100%{ transform: rotate(-8deg);  }
+  6%  { transform: rotate(-45deg); }
+  12% { transform: rotate(12deg);  }
+  18% { transform: rotate(-38deg); }
+  28% { transform: rotate(8deg);   }
+  35% { transform: rotate(-50deg); }
+  48%,65%{ transform: rotate(-12deg); }
+  70% { transform: rotate(-42deg); }
+  78% { transform: rotate(10deg);  }
+  85% { transform: rotate(-36deg); }
+  90%,98%{ transform: rotate(-8deg); }
+}
+@keyframes cr-shin-l {
+  0%,100%{ transform: rotate(10deg);  }
+  6%  { transform: rotate(-62deg);  }
+  12% { transform: rotate(18deg);   }
+  18% { transform: rotate(-55deg);  }
+  28% { transform: rotate(14px);    }
+  35% { transform: rotate(-70deg);  }
+  48%,65%{ transform: rotate(15deg); }
+  70% { transform: rotate(-58deg);  }
+  78% { transform: rotate(16deg);   }
+  85% { transform: rotate(-52deg);  }
+  90%,98%{ transform: rotate(12deg); }
+}
+@keyframes cr-leg-r {
+  0%,100%{ transform: rotate(8deg);   }
+  6%  { transform: rotate(15deg);   }
+  12% { transform: rotate(48deg);   }
+  18% { transform: rotate(10deg);   }
+  28% { transform: rotate(42deg);   }
+  35% { transform: rotate(12deg);   }
+  48%,65%{ transform: rotate(14deg); }
+  70% { transform: rotate(10deg);   }
+  78% { transform: rotate(46deg);   }
+  85% { transform: rotate(8deg);    }
+  90%,98%{ transform: rotate(12deg); }
+}
+@keyframes cr-shin-r {
+  0%,100%{ transform: rotate(-10deg); }
+  6%  { transform: rotate(-15deg);  }
+  12% { transform: rotate(65deg);   }
+  18% { transform: rotate(-12deg);  }
+  28% { transform: rotate(58deg);   }
+  35% { transform: rotate(-18deg);  }
+  48%,65%{ transform: rotate(-16deg);}
+  70% { transform: rotate(-14deg);  }
+  78% { transform: rotate(62deg);   }
+  85% { transform: rotate(-10deg);  }
+  90%,98%{ transform: rotate(-14deg);}
+}
+#ds-m2 .ds-body   { animation: cr-body   2.2s cubic-bezier(.55,.06,.68,.19) infinite; }
+#ds-m2 .ds-head   { animation: cr-head   2.2s cubic-bezier(.55,.06,.68,.19) infinite; }
+#ds-m2 .ds-hip    { animation: cr-hip    2.2s cubic-bezier(.55,.06,.68,.19) infinite; }
+#ds-m2 .ds-torso  { animation: cr-torso  2.2s cubic-bezier(.55,.06,.68,.19) infinite; }
+#ds-m2 .ds-arm-l  { animation: cr-arm-l  2.2s cubic-bezier(.55,.06,.68,.19) infinite; }
+#ds-m2 .ds-fore-l { animation: cr-fore-l 2.2s cubic-bezier(.55,.06,.68,.19) infinite; }
+#ds-m2 .ds-arm-r  { animation: cr-arm-r  2.2s cubic-bezier(.55,.06,.68,.19) infinite; }
+#ds-m2 .ds-fore-r { animation: cr-fore-r 2.2s cubic-bezier(.55,.06,.68,.19) infinite; }
+#ds-m2 .ds-leg-l  { animation: cr-leg-l  2.2s cubic-bezier(.55,.06,.68,.19) infinite; }
+#ds-m2 .ds-shin-l { animation: cr-shin-l 2.2s cubic-bezier(.55,.06,.68,.19) infinite; }
+#ds-m2 .ds-leg-r  { animation: cr-leg-r  2.2s cubic-bezier(.55,.06,.68,.19) infinite; }
+#ds-m2 .ds-shin-r { animation: cr-shin-r 2.2s cubic-bezier(.55,.06,.68,.19) infinite; }
+@keyframes cr-digit { 0%,100%{transform:scale(1)rotate(0)} 6%{transform:scale(1.18)rotate(-8deg)} 12%{transform:scale(0.86)rotate(6deg)} 28%{transform:scale(1.2)rotate(-10deg)} 35%{transform:scale(0.84)rotate(8deg)} 48%,65%{transform:scale(1.05)rotate(-4deg)} 70%{transform:scale(1.16)rotate(8deg)} 80%{transform:scale(0.87)rotate(-6deg)} }
+#ds-m2 .ds-digit-body { animation: cr-digit 2.2s cubic-bezier(.55,.06,.68,.19) infinite; animation-delay:.3s }
 
-#dancer-stage.genre-reggae .ds-body   { animation: rg-body   3.4s cubic-bezier(.25,.1,.25,1) infinite; }
-#dancer-stage.genre-reggae .ds-head   { animation: rg-head   3.4s ease-in-out infinite; }
-#dancer-stage.genre-reggae .ds-hip    { animation: rg-hip    3.4s cubic-bezier(.25,.1,.25,1) infinite; }
-#dancer-stage.genre-reggae .ds-torso  { animation: rg-torso  3.4s ease-in-out infinite; }
-#dancer-stage.genre-reggae .ds-arm-l  { animation: rg-arm-l  3.4s cubic-bezier(.25,.1,.25,1) infinite; }
-#dancer-stage.genre-reggae .ds-fore-l { animation: rg-fore-l 3.4s ease-in-out infinite; }
-#dancer-stage.genre-reggae .ds-arm-r  { animation: rg-arm-r  3.4s cubic-bezier(.25,.1,.25,1) infinite; }
-#dancer-stage.genre-reggae .ds-fore-r { animation: rg-fore-r 3.4s ease-in-out infinite; }
-#dancer-stage.genre-reggae .ds-leg-l  { animation: rg-leg-l  3.4s ease-in-out infinite; }
-#dancer-stage.genre-reggae .ds-shin-l { animation: rg-shin-l 3.4s ease-in-out infinite; }
-#dancer-stage.genre-reggae .ds-leg-r  { animation: rg-leg-r  3.4s ease-in-out infinite; }
-#dancer-stage.genre-reggae .ds-shin-r { animation: rg-shin-r 3.4s ease-in-out infinite; }
-#dancer-stage.genre-reggae #ds-h1 .ds-body { animation-delay:0s }
-#dancer-stage.genre-reggae #ds-h2 .ds-body { animation-delay:.22s }
-#dancer-stage.genre-reggae #ds-m1 .ds-body { animation-delay:.44s }
-#dancer-stage.genre-reggae #ds-m2 .ds-body { animation-delay:.66s }
-@keyframes rg-digit { 0%,100%{transform:rotate(0)} 25%{transform:rotate(10deg)translateX(5px)} 50%{transform:rotate(2deg)} 75%{transform:rotate(-10deg)translateX(-5px)} }
-#dancer-stage.genre-reggae .ds-digit-body { animation: rg-digit 3.4s ease-in-out infinite; }
-
-/* ══ AMAPIANO — LOG DRUM STOMP + WAIST ROLL ═════════════════════════
-   Technique: violent squat on the beat, spring up between
-   Arms swing DOWN hard then FLING up — both sides simultaneous
-   Knee comes ALL the way up to hip height on the lift
-   Shin snaps straight down on the stomp like a piston
-   Hip drops side on squat — waist roll visible
-   ════════════════════════════════════════════════════════════════════ */
-@keyframes ap-body  { 0%{transform:translateY(0)scaleY(1)scaleX(1)rotate(0)} 8%{transform:translateY(-20px)scaleY(1.14)scaleX(0.90)rotate(-3deg)} 16%{transform:translateY(8px)scaleY(0.85)scaleX(1.10)rotate(2deg)} 24%{transform:translateY(-16px)scaleY(1.11)scaleX(0.92)rotate(-2deg)} 32%{transform:translateY(6px)scaleY(0.87)scaleX(1.08)rotate(3deg)} 42%{transform:translateY(-22px)scaleY(1.16)scaleX(0.88)rotate(-4deg)} 50%{transform:translateY(9px)scaleY(0.83)scaleX(1.12)rotate(2deg)} 60%{transform:translateY(-18px)scaleY(1.12)scaleX(0.91)rotate(-3deg)} 70%{transform:translateY(7px)scaleY(0.86)scaleX(1.09)rotate(3deg)} 80%{transform:translateY(-12px)scaleY(1.08)scaleX(0.94)rotate(-2deg)} 90%{transform:translateY(4px)scaleY(0.92)scaleX(1.06)rotate(1deg)} 100%{transform:translateY(0)scaleY(1)scaleX(1)rotate(0)} }
-@keyframes ap-head  { 0%,100%{transform:rotate(0)translateY(0)} 8%{transform:rotate(6deg)translateY(-9px)} 16%{transform:rotate(-8deg)translateY(5px)} 42%{transform:rotate(8deg)translateY(-11px)} 50%{transform:rotate(-10deg)translateY(6px)} 70%{transform:rotate(5deg)translateY(5px)} }
-@keyframes ap-hip   { 0%,100%{transform:rotate(0)translateX(0)translateY(0)} 12%{transform:rotate(-16deg)translateX(-4px)translateY(-3px)} 24%{transform:rotate(8deg)translateX(3px)translateY(2px)} 38%{transform:rotate(-20deg)translateX(-5px)translateY(-4px)} 50%{transform:rotate(10deg)translateX(4px)translateY(3px)} 65%{transform:rotate(-14deg)translateX(-3px)translateY(-2px)} 80%{transform:rotate(12deg)translateX(3px)translateY(2px)} }
-@keyframes ap-torso { 0%,100%{transform:scaleY(1)skewX(0)} 10%{transform:scaleY(1.10)skewX(-7deg)} 20%{transform:scaleY(0.84)skewX(7deg)} 40%{transform:scaleY(1.12)skewX(-8deg)} 50%{transform:scaleY(0.82)skewX(8deg)} 70%{transform:scaleY(1.08)skewX(-6deg)} 85%{transform:scaleY(0.87)skewX(6deg)} }
-/* ARMS: both fling DOWN on stomp, PUNCH up on spring — simultaneous power */
-@keyframes ap-arm-l { 0%,100%{transform:rotate(-20deg)} 8%{transform:rotate(-35deg)} 16%{transform:rotate(-130deg)} 24%{transform:rotate(-28deg)} 32%{transform:rotate(-125deg)} 42%{transform:rotate(-22deg)} 50%{transform:rotate(-135deg)} 60%{transform:rotate(-25deg)} 70%{transform:rotate(-120deg)} 82%{transform:rotate(-28deg)} }
-@keyframes ap-fore-l{ 0%,100%{transform:rotate(15deg)} 8%{transform:rotate(50deg)} 16%{transform:rotate(-80deg)} 24%{transform:rotate(40deg)} 32%{transform:rotate(-75deg)} 42%{transform:rotate(45deg)} 50%{transform:rotate(-85deg)} 62%{transform:rotate(35deg)} 74%{transform:rotate(-70deg)} }
-@keyframes ap-arm-r { 0%,100%{transform:rotate(20deg)} 8%{transform:rotate(35deg)} 16%{transform:rotate(133deg)} 24%{transform:rotate(28deg)} 32%{transform:rotate(128deg)} 42%{transform:rotate(22deg)} 50%{transform:rotate(138deg)} 60%{transform:rotate(25deg)} 70%{transform:rotate(123deg)} 82%{transform:rotate(28deg)} }
-@keyframes ap-fore-r{ 0%,100%{transform:rotate(-15deg)} 8%{transform:rotate(-50deg)} 16%{transform:rotate(82deg)} 24%{transform:rotate(-40deg)} 32%{transform:rotate(78deg)} 42%{transform:rotate(-45deg)} 50%{transform:rotate(88deg)} 62%{transform:rotate(-35deg)} 74%{transform:rotate(72deg)} }
-/* KNEE: full lift to hip height on spring, piston-slam on stomp */
-@keyframes ap-leg-l { 0%,100%{transform:rotate(-5deg)} 8%{transform:rotate(-58deg)} 16%{transform:rotate(10deg)} 24%{transform:rotate(-55deg)} 32%{transform:rotate(12deg)} 42%{transform:rotate(-62deg)} 50%{transform:rotate(14px)} 60%{transform:rotate(-52deg)} 72%{transform:rotate(8deg)} 85%{transform:rotate(-48deg)} }
-@keyframes ap-shin-l{ 0%,100%{transform:rotate(8deg)} 8%{transform:rotate(-70deg)} 16%{transform:rotate(15deg)} 24%{transform:rotate(-65deg)} 32%{transform:rotate(12deg)} 42%{transform:rotate(-75deg)} 50%{transform:rotate(18deg)} 60%{transform:rotate(-60deg)} 72%{transform:rotate(10deg)} }
-@keyframes ap-leg-r { 0%,100%{transform:rotate(5deg)} 8%{transform:rotate(12deg)} 16%{transform:rotate(62deg)} 24%{transform:rotate(8deg)} 32%{transform:rotate(-56deg)} 42%{transform:rotate(10deg)} 50%{transform:rotate(65deg)} 60%{transform:rotate(8deg)} 72%{transform:rotate(-50deg)} 85%{transform:rotate(10deg)} }
-@keyframes ap-shin-r{ 0%,100%{transform:rotate(-8deg)} 8%{transform:rotate(-12deg)} 16%{transform:rotate(72deg)} 24%{transform:rotate(-10deg)} 32%{transform:rotate(-68deg)} 42%{transform:rotate(-8deg)} 50%{transform:rotate(78deg)} 60%{transform:rotate(-12deg)} 72%{transform:rotate(-62deg)} }
-
-#dancer-stage.genre-amapiano .ds-body   { animation: ap-body   1.3s cubic-bezier(.36,.07,.19,.97) infinite; }
-#dancer-stage.genre-amapiano .ds-head   { animation: ap-head   1.3s cubic-bezier(.36,.07,.19,.97) infinite; }
-#dancer-stage.genre-amapiano .ds-hip    { animation: ap-hip    1.3s cubic-bezier(.36,.07,.19,.97) infinite; }
-#dancer-stage.genre-amapiano .ds-torso  { animation: ap-torso  1.3s cubic-bezier(.36,.07,.19,.97) infinite; }
-#dancer-stage.genre-amapiano .ds-arm-l  { animation: ap-arm-l  1.3s cubic-bezier(.36,.07,.19,.97) infinite; }
-#dancer-stage.genre-amapiano .ds-fore-l { animation: ap-fore-l 1.3s cubic-bezier(.36,.07,.19,.97) infinite; }
-#dancer-stage.genre-amapiano .ds-arm-r  { animation: ap-arm-r  1.3s cubic-bezier(.36,.07,.19,.97) infinite; }
-#dancer-stage.genre-amapiano .ds-fore-r { animation: ap-fore-r 1.3s cubic-bezier(.36,.07,.19,.97) infinite; }
-#dancer-stage.genre-amapiano .ds-leg-l  { animation: ap-leg-l  1.3s cubic-bezier(.36,.07,.19,.97) infinite; }
-#dancer-stage.genre-amapiano .ds-shin-l { animation: ap-shin-l 1.3s cubic-bezier(.36,.07,.19,.97) infinite; }
-#dancer-stage.genre-amapiano .ds-leg-r  { animation: ap-leg-r  1.3s cubic-bezier(.36,.07,.19,.97) infinite; }
-#dancer-stage.genre-amapiano .ds-shin-r { animation: ap-shin-r 1.3s cubic-bezier(.36,.07,.19,.97) infinite; }
-#dancer-stage.genre-amapiano #ds-h1 .ds-body { animation-delay:0s }
-#dancer-stage.genre-amapiano #ds-h2 .ds-body { animation-delay:.08s }
-#dancer-stage.genre-amapiano #ds-m1 .ds-body { animation-delay:.16s }
-#dancer-stage.genre-amapiano #ds-m2 .ds-body { animation-delay:.24s }
-@keyframes ap-digit { 0%,100%{transform:scaleY(1)translateY(0)} 14%{transform:scaleY(0.86)translateY(7px)} 38%{transform:scaleY(1.12)translateY(-8px)} 60%{transform:scaleY(0.88)translateY(5px)} 82%{transform:scaleY(1.10)translateY(-6px)} }
-#dancer-stage.genre-amapiano .ds-digit-body { animation: ap-digit 1.3s cubic-bezier(.36,.07,.19,.97) infinite; animation-delay:.18s }
-
-/* ══ TRAP — DUNK + WHOA + FREEZE ════════════════════════════════════
-   Technique: explosive HIT → cruciform arms fully open
-   → hard FREEZE (body locked, arms held) → slow cinematic melt
-   Elbow LOCKED on the freeze. Leg kicks out on hit, STAYS up through freeze.
-   Forearm flips UP on the hit for wrist/hand emphasis.
-   ════════════════════════════════════════════════════════════════════ */
-@keyframes tr-body  { 0%,100%{transform:translateY(0)scale(1)rotate(0)} 5%{transform:translateY(-24px)scale(1.16)rotate(-7deg)} 10%{transform:translateY(10px)scale(0.86)rotate(5deg)} 15%{transform:translateY(-17px)scale(1.12)rotate(-4deg)} 20%,50%{transform:translateY(0)scale(1)rotate(-1.5deg)} 53%{transform:translateY(-7px)scale(1.04)rotate(-3deg)} 58%{transform:translateY(11px)scale(0.85)rotate(6deg)} 63%{transform:translateY(-20px)scale(1.14)rotate(-6deg)} 68%{transform:translateY(7px)scale(0.89)rotate(4deg)} 73%,95%{transform:translateY(0)scale(1)rotate(1.5deg)} }
-@keyframes tr-head  { 0%,100%{transform:rotate(0)} 5%{transform:rotate(-16deg)translateY(-7px)} 10%{transform:rotate(12deg)translateY(4px)} 20%,50%{transform:rotate(-5deg)translateY(0)} 58%{transform:rotate(14deg)translateY(5px)} 63%{transform:rotate(-14deg)translateY(-7px)} 73%,95%{transform:rotate(4deg)translateY(0)} }
-@keyframes tr-hip   { 0%,100%{transform:rotate(0)} 5%{transform:rotate(-10deg)} 10%{transform:rotate(8deg)} 20%,50%{transform:rotate(-3deg)} 58%{transform:rotate(10deg)} 63%{transform:rotate(-12deg)} 73%,95%{transform:rotate(4deg)} }
-@keyframes tr-torso { 0%,100%{transform:skewX(0)scaleX(1)} 5%{transform:skewX(-10deg)scaleX(1.07)} 10%{transform:skewX(8deg)scaleX(0.94)} 20%,50%{transform:skewX(-3deg)scaleX(1.03)} 58%{transform:skewX(10deg)scaleX(0.94)} 63%{transform:skewX(-9deg)scaleX(1.06)} 73%,95%{transform:skewX(3deg)scaleX(1.02)} }
-/* Arms EXPLODE fully open on hit — lock in cruciform through freeze */
-@keyframes tr-arm-l { 0%,100%{transform:rotate(-20deg)} 5%{transform:rotate(-155deg)} 10%{transform:rotate(-60deg)} 15%{transform:rotate(-145deg)} 20%,50%{transform:rotate(-65deg)} 54%{transform:rotate(-95deg)} 58%{transform:rotate(-25deg)} 63%{transform:rotate(-150deg)} 68%{transform:rotate(-55deg)} 73%,95%{transform:rotate(-70deg)} }
-/* Forearm flips UP sharply — wrist snap on the hit */
-@keyframes tr-fore-l{ 0%,100%{transform:rotate(15deg)} 5%{transform:rotate(-90deg)} 10%{transform:rotate(60deg)} 15%{transform:rotate(-80deg)} 20%,50%{transform:rotate(50deg)} 58%{transform:rotate(70deg)} 63%{transform:rotate(-85deg)} 68%{transform:rotate(55deg)} 73%,95%{transform:rotate(45deg)} }
-@keyframes tr-arm-r { 0%,100%{transform:rotate(20deg)} 5%{transform:rotate(158deg)} 10%{transform:rotate(62deg)} 15%{transform:rotate(148deg)} 20%,50%{transform:rotate(68deg)} 54%{transform:rotate(98deg)} 58%{transform:rotate(25deg)} 63%{transform:rotate(152deg)} 68%{transform:rotate(58deg)} 73%,95%{transform:rotate(72deg)} }
-@keyframes tr-fore-r{ 0%,100%{transform:rotate(-15deg)} 5%{transform:rotate(92deg)} 10%{transform:rotate(-60deg)} 15%{transform:rotate(82deg)} 20%,50%{transform:rotate(-52deg)} 58%{transform:rotate(-72deg)} 63%{transform:rotate(88deg)} 68%{transform:rotate(-56deg)} 73%,95%{transform:rotate(-46deg)} }
-/* Leg kicks OUT on hit, HOLDS extended through freeze — signature move */
-@keyframes tr-leg-l { 0%,100%{transform:rotate(-5deg)} 5%{transform:rotate(-55deg)} 10%{transform:rotate(18deg)} 15%{transform:rotate(-45deg)} 20%,50%{transform:rotate(-10deg)} 58%{transform:rotate(15deg)} 63%{transform:rotate(-60deg)} 68%{transform:rotate(14deg)} 73%,95%{transform:rotate(-8deg)} }
-@keyframes tr-shin-l{ 0%,100%{transform:rotate(8deg)} 5%{transform:rotate(-65deg)} 10%{transform:rotate(25deg)} 15%{transform:rotate(-55deg)} 20%,50%{transform:rotate(12deg)} 58%{transform:rotate(22deg)} 63%{transform:rotate(-70deg)} 68%{transform:rotate(20deg)} 73%,95%{transform:rotate(10deg)} }
-@keyframes tr-leg-r { 0%,100%{transform:rotate(5deg)} 5%{transform:rotate(20deg)} 10%{transform:rotate(58deg)} 15%{transform:rotate(16deg)} 20%,50%{transform:rotate(12deg)} 58%{transform:rotate(60deg)} 63%{transform:rotate(18deg)} 68%{transform:rotate(55deg)} 73%,95%{transform:rotate(10deg)} }
-@keyframes tr-shin-r{ 0%,100%{transform:rotate(-8deg)} 5%{transform:rotate(-22deg)} 10%{transform:rotate(68deg)} 15%{transform:rotate(-18deg)} 20%,50%{transform:rotate(-14deg)} 58%{transform:rotate(72deg)} 63%{transform:rotate(-20deg)} 68%{transform:rotate(65deg)} 73%,95%{transform:rotate(-12deg)} }
-
-#dancer-stage.genre-trap .ds-body   { animation: tr-body   2.6s cubic-bezier(.55,.06,.68,.19) infinite; }
-#dancer-stage.genre-trap .ds-head   { animation: tr-head   2.6s cubic-bezier(.55,.06,.68,.19) infinite; }
-#dancer-stage.genre-trap .ds-hip    { animation: tr-hip    2.6s cubic-bezier(.55,.06,.68,.19) infinite; }
-#dancer-stage.genre-trap .ds-torso  { animation: tr-torso  2.6s cubic-bezier(.55,.06,.68,.19) infinite; }
-#dancer-stage.genre-trap .ds-arm-l  { animation: tr-arm-l  2.6s cubic-bezier(.55,.06,.68,.19) infinite; }
-#dancer-stage.genre-trap .ds-fore-l { animation: tr-fore-l 2.6s cubic-bezier(.55,.06,.68,.19) infinite; }
-#dancer-stage.genre-trap .ds-arm-r  { animation: tr-arm-r  2.6s cubic-bezier(.55,.06,.68,.19) infinite; }
-#dancer-stage.genre-trap .ds-fore-r { animation: tr-fore-r 2.6s cubic-bezier(.55,.06,.68,.19) infinite; }
-#dancer-stage.genre-trap .ds-leg-l  { animation: tr-leg-l  2.6s cubic-bezier(.55,.06,.68,.19) infinite; }
-#dancer-stage.genre-trap .ds-shin-l { animation: tr-shin-l 2.6s cubic-bezier(.55,.06,.68,.19) infinite; }
-#dancer-stage.genre-trap .ds-leg-r  { animation: tr-leg-r  2.6s cubic-bezier(.55,.06,.68,.19) infinite; }
-#dancer-stage.genre-trap .ds-shin-r { animation: tr-shin-r 2.6s cubic-bezier(.55,.06,.68,.19) infinite; }
-#dancer-stage.genre-trap #ds-h1 .ds-body { animation-delay:0s }
-#dancer-stage.genre-trap #ds-h2 .ds-body { animation-delay:.15s }
-#dancer-stage.genre-trap #ds-m1 .ds-body { animation-delay:.3s }
-#dancer-stage.genre-trap #ds-m2 .ds-body { animation-delay:.45s }
-@keyframes tr-digit { 0%,20%,73%,100%{transform:rotate(0)scale(1)} 5%{transform:rotate(-9deg)scale(1.14)} 10%{transform:rotate(7deg)scale(0.89)} 58%{transform:rotate(8deg)scale(1.12)} 63%{transform:rotate(-7deg)scale(0.90)} }
-#dancer-stage.genre-trap .ds-digit-body { animation: tr-digit 2.6s cubic-bezier(.55,.06,.68,.19) infinite; animation-delay:.28s }
+/* Remove genre class dependencies — dancers run independently always */
+#dancer-stage .ds-body,
+#dancer-stage .ds-head,
+#dancer-stage .ds-hip,
+#dancer-stage .ds-torso,
+#dancer-stage .ds-arm-l, #dancer-stage .ds-arm-r,
+#dancer-stage .ds-fore-l, #dancer-stage .ds-fore-r,
+#dancer-stage .ds-leg-l,  #dancer-stage .ds-leg-r,
+#dancer-stage .ds-shin-l, #dancer-stage .ds-shin-r { 
+  will-change: transform; 
+}
 
 /* ── DIGIT CHANGE POP ── */
 @keyframes ds-pop { 0%{transform:scale(1)rotate(0)}15%{transform:scale(1.4)rotate(-7deg)}30%{transform:scale(.8)rotate(5deg)}55%{transform:scale(1.15)rotate(-3deg)}75%{transform:scale(.95)rotate(2deg)}100%{transform:scale(1)rotate(0)} }
@@ -2049,99 +2466,46 @@ function getGreeting(){
 }
 
 /* ═══════════════════════════════════════════════════════
-   DANCER CLOCK ENGINE v4
-   - 4 stick-figure dancers below greeting, never overlapping
-   - All 4 dance same genre each minute, rotate each minute:
-     Afrobeats → Reggae → Amapiano → Trap → loop
-   - Numbers stay synced with their dancer body
-   - Genre label fades in/out on each switch
+   DANCER CLOCK ENGINE v6 — VIBE MODE
+   4 permanent dance personalities, always running.
+   No genre switching. Just clock digits + pure movement.
    ═══════════════════════════════════════════════════════ */
 (function(){
   'use strict';
-
-  var GENRES = ['afrobeats','reggae','amapiano','trap'];
-  var _prev = { h1:'', h2:'', m1:'', m2:'', minute:-1, genreIdx:0 };
-  var _timer = null;
-
-  /* Pop animation on digit change — targets SVG text element */
+  var _prev = { h1:'', h2:'', m1:'', m2:'' };
   function popNum(id){
-    var el = document.getElementById(id);
-    if(!el) return;
-    var digit = el.querySelector('.ds-digit');
-    if(!digit) return;
-    digit.classList.remove('popping');
-    void digit.getBoundingClientRect(); // reflow
-    digit.classList.add('popping');
-    setTimeout(function(){ digit.classList.remove('popping'); }, 600);
+    var el = document.getElementById(id); if(!el) return;
+    var d = el.querySelector('.ds-digit'); if(!d) return;
+    d.classList.remove('popping'); void d.getBoundingClientRect();
+    d.classList.add('popping');
+    setTimeout(function(){ d.classList.remove('popping'); }, 600);
   }
-
-  /* Switch genre on #dancer-stage — silent, no label */
-  function setGenre(idx){
-    var stage = document.getElementById('dancer-stage');
-    if(!stage) return;
-    setTimeout(function(){
-      GENRES.forEach(function(g){ stage.classList.remove('genre-'+g); });
-      stage.classList.add('genre-'+GENRES[idx]);
-    }, 350);
-  }
-
-  /* Update a single digit — writes into SVG <text class="ds-digit"> */
-  function setD(id, val, prevKey){
-    var el = document.getElementById(id);
-    if(!el) return;
-    var digit = el.querySelector('.ds-digit');
-    if(!digit) return;
-    if(digit.textContent !== val){
-      digit.textContent = val;
-      if(_prev[prevKey] !== '') popNum(id);
+  function setD(id, val, key){
+    var el = document.getElementById(id); if(!el) return;
+    var d = el.querySelector('.ds-digit'); if(!d) return;
+    if(d.textContent !== val){
+      d.textContent = val;
+      if(_prev[key] !== '') popNum(id);
     }
-    _prev[prevKey] = val;
+    _prev[key] = val;
   }
-
   function tick(){
     var now = new Date();
-    var h   = now.getHours();
-    var m   = now.getMinutes();
-
-    var h12 = h % 12 || 12;
+    var h12 = now.getHours() % 12 || 12;
     var hs  = String(h12).padStart(2,'0');
-    var ms  = String(m).padStart(2,'0');
-
-    setD('ds-h1', hs[0], 'h1');
-    setD('ds-h2', hs[1], 'h2');
-    setD('ds-m1', ms[0], 'm1');
-    setD('ds-m2', ms[1], 'm2');
-
-    /* New minute: rotate genre */
-    if(m !== _prev.minute){
-      if(_prev.minute !== -1){
-        _prev.genreIdx = (_prev.genreIdx + 1) % GENRES.length;
-        setGenre(_prev.genreIdx);
-      }
-      _prev.minute = m;
-    }
+    var ms  = String(now.getMinutes()).padStart(2,'0');
+    setD('ds-h1', hs[0], 'h1'); setD('ds-h2', hs[1], 'h2');
+    setD('ds-m1', ms[0], 'm1'); setD('ds-m2', ms[1], 'm2');
   }
-
   function start(){
     if(!document.getElementById('dancer-stage')) return;
-    /* Set initial genre based on current minute */
-    var now = new Date();
-    _prev.genreIdx = now.getMinutes() % GENRES.length;
-    var stage = document.getElementById('dancer-stage');
-    if(stage) stage.classList.add('genre-'+GENRES[_prev.genreIdx]);
     tick();
-    var ms = 1000 - now.getMilliseconds();
-    setTimeout(function(){
-      tick();
-      _timer = setInterval(tick, 1000);
-    }, ms);
+    setTimeout(function(){ tick(); setInterval(tick, 1000); },
+               1000 - new Date().getMilliseconds());
   }
-
-  if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', start);
-  } else {
-    start();
-  }
+  document.readyState==='loading'
+    ? document.addEventListener('DOMContentLoaded', start)
+    : start();
 })();
 
 
