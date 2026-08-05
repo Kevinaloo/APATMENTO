@@ -188,6 +188,39 @@
 
     document.documentElement.classList.add('apa-splash-lock');
 
+    // witty rotating welcome messages on the dashboard loader
+    var _dMsgs = [
+      'You deserve fair prices.',
+      'Zero commission. Always.',
+      'Built for Kenya, made for you.',
+      'Your wallet said “finally.”',
+      'Real places. Real magic.',
+      'Treat yourself. Seriously.',
+      'Less fees. More life.',
+      'The nicest travel app around.',
+      'We love you more than you love us.',
+      'Book everything. Stress nothing.',
+    ];
+    var _dEl = document.getElementById('dash-load-tag');
+    if(_dEl){
+      var _dIdx = Math.floor(Math.random() * _dMsgs.length);
+      _dEl.textContent = _dMsgs[_dIdx];
+      var _dTimer = setInterval(function(){
+        _dIdx = (_dIdx + 1) % _dMsgs.length;
+        _dEl.style.opacity = '0';
+        setTimeout(function(){
+          _dEl.textContent = _dMsgs[_dIdx];
+          _dEl.style.opacity = '';
+        }, 350);
+      }, 1800);
+      // clear when loader is dismissed
+      var _origDone = document.getElementById('loader');
+      var _ob = new MutationObserver(function(){
+        if(_origDone && _origDone.classList.contains('done')) clearInterval(_dTimer);
+      });
+      if(_origDone) _ob.observe(_origDone, {attributes:true, attributeFilter:['class']});
+    }
+
     var picks = [
       { src: '/cabana-vid-bedroom.mp4', poster: '/cabana-poster-bedroom.jpg' },
       { src: '/cabana-vid-sofa.mp4',    poster: '/cabana-poster-sofa.jpg'    },
@@ -611,7 +644,7 @@ img,video,svg{max-width:100%;}
 
 <style>
 /* ══════════ LOADING SCREEN ══════════ */
-#loader{position:fixed;inset:0;z-index:9999;background:var(--ink);display:flex;align-items:center;justify-content:center;flex-direction:column;transition:opacity .8s cubic-bezier(.4,0,.2,1),visibility .8s;}
+#loader{position:fixed;inset:0;z-index:9999;background:#ffffff;display:flex;align-items:center;justify-content:center;flex-direction:column;transition:opacity .8s cubic-bezier(.4,0,.2,1),visibility .8s;}
 #loader.done{opacity:0;visibility:hidden;}
 .loader-aurora{display:none;}
 .lb-1{width:380px;height:380px;background:radial-gradient(circle,var(--violet),transparent 70%);top:15%;left:20%;}
@@ -1428,7 +1461,7 @@ img,video,svg{max-width:100%;}
     </defs></svg>
     <img class="apa-load-emblem" src="cabana-emblem.png" alt="Cabana" onerror="this.style.display='none'"/>
     <div class="apa-load-word">Welcome to <em>Cabana</em></div>
-    <div class="apa-load-tag">Where journeys begin</div>
+    <div class="apa-load-tag" id="dash-load-tag">You deserve fair prices.</div>
     <div class="apa-load-line"><i></i><b></b></div>
   </div>
 </div>

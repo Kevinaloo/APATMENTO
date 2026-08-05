@@ -164,19 +164,20 @@ body::after{
 .apa-load-word{
   margin-top:26px;
   font-family:var(--font-display); font-weight:600; font-size:clamp(26px,4vw,32px);
-  letter-spacing:-.02em; color:#FCFCFE;
+  letter-spacing:-.02em; color:#1a1a2e;
   opacity:0; animation:apa-rise .7s .5s var(--ease-out) forwards;
 }
 .apa-load-word em{ font-style:normal; font-weight:700;
   background:var(--grad-equator); -webkit-background-clip:text; background-clip:text; color:transparent; }
 .apa-load-tag{
   margin-top:10px; font-family:var(--font-body); font-size:10.5px; font-weight:600;
-  letter-spacing:.42em; text-transform:uppercase; color:rgba(255,255,255,.4);
+  letter-spacing:.42em; text-transform:uppercase; color:rgba(26,26,46,.45);
   opacity:0; animation:apa-rise .7s .75s var(--ease-out) forwards;
+  transition:opacity .35s ease;
 }
 .apa-load-line{
   width:210px; height:1.5px; margin:26px auto 0; position:relative;
-  background:rgba(255,255,255,.09); border-radius:2px; overflow:visible;
+  background:rgba(26,26,46,.10); border-radius:2px; overflow:visible;
 }
 .apa-load-line i{
   position:absolute; left:0; top:0; bottom:0; width:0%;
