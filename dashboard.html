@@ -59,38 +59,41 @@
   .cbps-name {
     font-family: "Cormorant Garamond", serif;
     font-weight: 300;
-    font-size: clamp(38px,10vw,60px);
+    font-size: clamp(40px,11vw,64px);
     letter-spacing: 16px;
     text-transform: uppercase;
     color: #fff;
     line-height: 1;
-    text-shadow: 0 2px 60px rgba(0,0,0,.25);
+    text-shadow: 0 2px 40px rgba(0,0,0,.5), 0 0 80px rgba(255,255,255,.08);
   }
   .cbps-sub {
     font-family: "Montserrat", sans-serif;
-    font-size: 7.5px; letter-spacing: 5.5px;
+    font-size: 8px; letter-spacing: 5.5px;
     text-transform: uppercase;
-    color: rgba(255,255,255,.38);
+    color: rgba(255,255,255,.55);
     margin-top: 9px; font-weight: 200;
   }
   .cbps-iris {
-    width: 56px; height: 2px;
-    margin: 13px auto 0; border-radius: 2px;
-    background: linear-gradient(90deg,#7DF9FF,#B06EFF,#FF6EFF,#FFD84D,#7DF9FF);
+    width: 72px; height: 2px;
+    margin: 14px auto 0; border-radius: 2px;
+    background: linear-gradient(90deg,#FF8C00,#FF3E9D,#7B2FF7,#00CFFF,#FF8C00);
     background-size: 400%;
-    animation: cbpsSh 4s linear infinite;
+    animation: cbpsSh 3.5s linear infinite;
+    box-shadow: 0 0 12px rgba(123,47,247,.5);
   }
 
   /* Tagline — centre of screen, italic, breathes in late */
   .cbps-tag {
     font-family: "Cormorant Garamond", serif;
     font-style: italic; font-weight: 300;
-    font-size: clamp(18px,4.8vw,28px);
-    color: rgba(255,255,255,.88);
-    text-align: center; line-height: 1.45;
-    text-shadow: 0 2px 24px rgba(0,0,0,.45);
+    font-size: clamp(22px,5.8vw,34px);
+    color: rgba(255,255,255,.95);
+    text-align: center; line-height: 1.5;
+    text-shadow: 0 2px 32px rgba(0,0,0,.65), 0 1px 8px rgba(0,0,0,.8);
     animation: cbpsU 1.1s cubic-bezier(.16,1,.3,1) .85s both;
-    max-width: 300px;
+    max-width: min(320px, 86vw);
+    white-space: pre-line;
+    padding: 0 8px;
   }
 
   /* Bottom CTA group */
@@ -124,7 +127,7 @@
   .cbps-foot {
     font-family: "Montserrat", sans-serif;
     font-size: 7.5px; letter-spacing: 3.5px;
-    text-transform: uppercase; color: rgba(255,255,255,.2);
+    text-transform: uppercase; color: rgba(255,255,255,.32);
   }
 
   /* Dismiss — scale + fade like the video pulls back into the world */
@@ -235,10 +238,20 @@
     sessionStorage.setItem('cbp2_last_pick', pick.src);
 
     var tags = [
-      'Every journey deserves a statement.',
-      'Where you stay is who you are.',
-      'Pack light. Arrive boldly.',
-      'The world is more beautiful from the right room.',
+      'Your ex moved on. Your landlord raised rent.\nAt least Cabana loves you.',
+      'Other apps take 30%.\nWe take nothing. We\'re built different.',
+      'Five-star experience.\nNot five-star prices. You\'re welcome, bestie.',
+      'Hosts keep 100%. Guests save big.\nThe middleman can sit down.',
+      'We put the fun in funds —\nbecause we don\'t take yours.',
+      'Plot twist:\nthe travel app is actually on your side.',
+      'If Cabana were a person, it\'d always show up\nand never overcharge you.',
+      'Your mum called. She wants you\nto book somewhere nice. We agree.',
+      'Booking travel used to cost a kidney.\nWe only need your loyalty.',
+      'The only travel app that won\'t make you feel robbed\nafter booking.',
+      'Nairobi traffic is bad.\nFinding a great stay doesn\'t have to be.',
+      'Sleep well. Eat well. Travel well.\nSpend less. Flex more.',
+      'We\'re not saying we\'re your favourite app.\nBut we\'re not not saying it either.',
+      'This loading screen is the only thing\nbetween you and living your best life.',
     ];
     var tag = tags[Math.floor(Math.random() * tags.length)];
 
@@ -306,7 +319,7 @@
   <meta name="author" content="Apatmento"/>
   <meta name="geo.region" content="KE"/>
   <meta name="geo.placename" content="Nairobi, Kenya"/>
-  <meta name="theme-color" content="#080808">
+  <meta name="theme-color" content="#ffffff">
   <meta name="mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>

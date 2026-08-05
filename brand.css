@@ -154,26 +154,27 @@ body::after{
 @keyframes apa-pulse{ 0%,100%{opacity:.5;r:2.6} 50%{opacity:1;r:3.4} }
 
 .apa-load-emblem{
-  width:118px; height:118px; display:block; object-fit:contain;
-  filter:drop-shadow(0 14px 48px rgba(255,120,0,.40)) drop-shadow(0 4px 20px rgba(0,120,255,.30)) drop-shadow(0 2px 10px rgba(200,0,200,.20));
-  opacity:0; transform:scale(.86) translateY(10px);
-  animation:apa-emblem-in .9s .1s var(--ease-out) forwards;
+  width:140px; height:140px; display:block; object-fit:contain;
+  filter:drop-shadow(0 16px 52px rgba(255,120,0,.35)) drop-shadow(0 4px 22px rgba(0,100,255,.25)) drop-shadow(0 2px 10px rgba(180,0,200,.18));
+  opacity:0; transform:scale(.82) translateY(14px);
+  animation:apa-emblem-in 1.0s .1s var(--ease-out) forwards;
 }
 @keyframes apa-emblem-in{ to{ opacity:1; transform:scale(1) translateY(0); } }
 
 .apa-load-word{
-  margin-top:26px;
-  font-family:var(--font-display); font-weight:600; font-size:clamp(26px,4vw,32px);
+  margin-top:28px;
+  font-family:var(--font-display); font-weight:700; font-size:clamp(28px,5vw,36px);
   letter-spacing:-.02em; color:#1a1a2e;
   opacity:0; animation:apa-rise .7s .5s var(--ease-out) forwards;
 }
 .apa-load-word em{ font-style:normal; font-weight:700;
   background:var(--grad-equator); -webkit-background-clip:text; background-clip:text; color:transparent; }
 .apa-load-tag{
-  margin-top:10px; font-family:var(--font-body); font-size:10.5px; font-weight:600;
-  letter-spacing:.42em; text-transform:uppercase; color:rgba(26,26,46,.45);
+  margin-top:14px; font-family:var(--font-body); font-size:13.5px; font-weight:500;
+  letter-spacing:.04em; text-transform:none; color:rgba(26,26,46,.55);
   opacity:0; animation:apa-rise .7s .75s var(--ease-out) forwards;
   transition:opacity .35s ease;
+  text-align:center; max-width:min(280px,78vw); line-height:1.5;
 }
 .apa-load-line{
   width:210px; height:1.5px; margin:26px auto 0; position:relative;
