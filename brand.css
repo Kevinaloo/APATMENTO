@@ -155,7 +155,7 @@ body::after{
 
 .apa-load-emblem{
   width:118px; height:118px; display:block; object-fit:contain;
-  filter:drop-shadow(0 14px 40px rgba(109,40,255,.35));
+  filter:drop-shadow(0 14px 48px rgba(255,120,0,.40)) drop-shadow(0 4px 20px rgba(0,120,255,.30)) drop-shadow(0 2px 10px rgba(200,0,200,.20));
   opacity:0; transform:scale(.86) translateY(10px);
   animation:apa-emblem-in .9s .1s var(--ease-out) forwards;
 }

@@ -398,7 +398,7 @@ section[id],div[id^='services'],div[id^='how']{scroll-margin-top:84px;}
 .nav.scrolled{background:rgba(252,252,253,.8);backdrop-filter:blur(24px) saturate(180%);border-bottom:1px solid var(--line);}
 .nav-left{display:flex;align-items:center;gap:12px;}
 .nav-brand-link{display:flex;align-items:center;gap:9px;text-decoration:none;}
-.nav-icon{height:32px;width:32px;object-fit:contain;flex-shrink:0;transition:filter .4s;filter:drop-shadow(0 2px 8px rgba(255,140,60,.4));}
+.nav-icon{height:34px;width:34px;object-fit:contain;flex-shrink:0;transition:filter .4s;filter:drop-shadow(0 2px 10px rgba(255,120,0,.45)) drop-shadow(0 1px 6px rgba(0,100,255,.25));}
 .nav-wm-white{height:28px;width:auto;display:block;transition:opacity .35s;}
 .nav-wm-color{height:28px;width:auto;display:none;transition:opacity .35s;}
 /* On dark hero: show white wordmark */
@@ -764,13 +764,13 @@ body.intro-lock{overflow:hidden;height:100vh;}
 .intro-icon-wrap .bloom{
   position:absolute;top:50%;left:50%;width:280px;height:280px;
   transform:translate(-50%,-50%) scale(.25);border-radius:50%;
-  background:radial-gradient(circle,rgba(255,140,80,.52),rgba(255,59,107,.20),transparent 66%);
+  background:radial-gradient(circle,rgba(255,140,0,.55),rgba(255,59,107,.25),rgba(109,40,255,.20),transparent 66%);
   filter:blur(28px);opacity:0;
   animation:bloom 2.2s .8s cubic-bezier(.22,1,.36,1) forwards;pointer-events:none;z-index:-1;}
 @keyframes bloom{0%{opacity:0;transform:translate(-50%,-50%) scale(.25);}55%{opacity:.95;}100%{opacity:.62;transform:translate(-50%,-50%) scale(1);}}
 .intro-icon{
   width:clamp(108px,18vw,152px);height:auto;display:block;
-  filter:drop-shadow(0 16px 56px rgba(255,106,60,.32)) drop-shadow(0 4px 20px rgba(109,40,255,.26));
+  filter:drop-shadow(0 16px 64px rgba(255,120,0,.45)) drop-shadow(0 4px 28px rgba(0,120,255,.35)) drop-shadow(0 2px 12px rgba(200,0,200,.22));
   opacity:0;transform:translateY(56px) scale(.84);
   animation:iconRise 2.0s .35s cubic-bezier(.34,1.18,.4,1) forwards;}
 @keyframes iconRise{0%{opacity:0;transform:translateY(56px) scale(.84);}50%{opacity:1;}100%{opacity:1;transform:translateY(0) scale(1);}}
