@@ -72,7 +72,16 @@
       ]
     },
     {
-      "source": "/(manifest.json|sitemap.xml|robots.txt|llms.txt)",
+      "source": "/manifest.json",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/(sitemap.xml|robots.txt|llms.txt)",
       "headers": [
         {
           "key": "Cache-Control",
