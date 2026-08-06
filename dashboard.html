@@ -1131,280 +1131,644 @@ img,video,svg{max-width:100%;}
 
 
 /* ══════════════════════════════════════════════════════════════════════
-   GHOST CLOCK — subtle background dancer digits
-   Small, tasteful, right side of greeting. Rewards those who notice.
-   Figure + digit side by side as a couple. Synchronized troupe.
-   Never competes with content. Pure background charm.
+   GHOST CLOCK v11 — WORLD CLASS
+   Subtle background clock. Digits clearly readable beside each dancer.
+   4 distinct dance styles — afrobeats, waacking, liquid, salsa.
+   Each style has its own animation personality.
+   Desktop: comfortable size. Mobile: pulled back so layout breathes.
    ══════════════════════════════════════════════════════════════════════ */
 
-/* ── GREETING ── */
-.greeting { position: relative; overflow: visible; display: block; }
-.greeting-title { position: relative; z-index: 2; }
-.greeting-sub   { position: relative; z-index: 2; }
+.greeting         { position: relative; overflow: visible; display: block; }
+.greeting-title   { position: relative; z-index: 2; }
+.greeting-sub     { position: relative; z-index: 2; }
 
-/* ── STAGE — ghost anchor, right side ── */
+/* Stage — absolute ghost, right side */
 #dancer-stage {
   position: absolute;
   top: 50%;
-  right: -8px;
+  right: -10px;
   transform: translateY(-50%);
   pointer-events: none;
   z-index: 1;
   overflow: visible;
 }
+.ds-troupe  { display: flex; align-items: center; gap: 2px; }
+.ds-dancer  { display: flex; align-items: center; }
 
-/* ── TROUPE ── */
-.ds-troupe {
-  display: flex;
-  align-items: center;
-  gap: 1px;
-}
-.ds-dancer { display: flex; align-items: center; }
-
-/* ── SVG — small and tasteful ── */
+/* SVG — desktop comfortable, scales down on mobile */
 .ds-svg {
   display: block;
   overflow: visible;
-  width: 34px;
-  height: 54px;
-  opacity: 0.55;
+  width: 44px;
+  height: 58px;
+  opacity: 0.60;
 }
 
-/* ── JOINTS ── */
-.ds-head, .ds-hip, .ds-torso,
-.ds-arm-l, .ds-arm-r, .ds-fore-l, .ds-fore-r,
-.ds-leg-l, .ds-leg-r, .ds-shin-l, .ds-shin-r,
+/* Joints */
+.ds-head,.ds-hip,.ds-torso,
+.ds-arm-l,.ds-arm-r,.ds-fore-l,.ds-fore-r,
+.ds-leg-l,.ds-leg-r,.ds-shin-l,.ds-shin-r,
 .ds-digit-body { will-change: transform; }
-.ds-digit { transform-box: fill-box; transform-origin: center; font-smooth: always; }
+.ds-digit { transform-box: fill-box; transform-origin: center; }
 
-/* ── COLON ── */
+/* Colon */
 .ds-colon {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  align-items: center;
-  justify-content: center;
-  width: 8px;
-  padding-bottom: 14px;
+  display: flex; flex-direction: column;
+  gap: 5px; align-items: center; justify-content: center;
+  width: 8px; padding-bottom: 16px;
 }
 .ds-dot {
   width: 4px; height: 4px; border-radius: 50%;
   animation: ds-dot-pulse 1s ease-in-out infinite;
 }
-.ds-dot:nth-child(1) { background: rgba(155,95,255,0.7); }
-.ds-dot:nth-child(2) { background: rgba(255,92,138,0.7); animation-delay:.5s; }
+.ds-dot:nth-child(1) { background: rgba(155,95,255,0.75); }
+.ds-dot:nth-child(2) { background: rgba(255,92,138,0.75); animation-delay:.5s; }
 @keyframes ds-dot-pulse {
-  0%,100% { transform: scale(1); opacity:.8; }
-  50%     { transform: scale(.3); opacity:.1; }
+  0%,100% { transform:scale(1); opacity:.8; }
+  50%     { transform:scale(.25); opacity:.1; }
 }
 
-/* ── GLOW — whisper-level ── */
-#ds-h1 .ds-svg { filter: drop-shadow(0 0 4px rgba(155,95,255,0.45)); }
-#ds-h2 .ds-svg { filter: drop-shadow(0 0 4px rgba(67,97,255,0.45));  }
-#ds-m1 .ds-svg { filter: drop-shadow(0 0 4px rgba(45,212,191,0.45)); }
-#ds-m2 .ds-svg { filter: drop-shadow(0 0 4px rgba(255,92,138,0.45)); }
+/* Whisper glow */
+#ds-h1 .ds-svg { filter: drop-shadow(0 0 5px rgba(155,95,255,0.5)); }
+#ds-h2 .ds-svg { filter: drop-shadow(0 0 5px rgba(67,97,255,0.5));  }
+#ds-m1 .ds-svg { filter: drop-shadow(0 0 5px rgba(45,212,191,0.5)); }
+#ds-m2 .ds-svg { filter: drop-shadow(0 0 5px rgba(255,92,138,0.5)); }
 
-/* ══ SYNCHRONIZED 8s ROUTINE — same moves, 80ms wave stagger ══ */
-
-@keyframes sync-body {
-  0%   { transform: translateY(0) rotate(0) scaleY(1) scaleX(1); }
-  6%   { transform: translateY(-10px) rotate(-4deg) scaleY(1.1) scaleX(0.93); }
-  12%  { transform: translateY(4px) rotate(2deg) scaleY(0.88) scaleX(1.08); }
-  18%  { transform: translateY(-8px) rotate(-3deg) scaleY(1.07) scaleX(0.94); }
-  24%  { transform: translateY(3px) rotate(1deg) scaleY(0.92) scaleX(1.06); }
-  28%  { transform: translateX(-7px) translateY(-4px) rotate(-7deg) scaleX(0.95); }
-  34%  { transform: translateX(-8px) translateY(3px) rotate(-5deg) scaleX(0.97); }
-  40%  { transform: translateX(0) translateY(-2px) rotate(0) scaleX(1); }
-  46%  { transform: translateX(8px) translateY(-4px) rotate(7deg) scaleX(0.95); }
-  50%  { transform: translateX(6px) translateY(3px) rotate(5deg) scaleX(0.97); }
-  54%  { transform: translateY(-12px) scaleY(1.14) scaleX(0.89) rotate(-3deg); }
-  58%  { transform: translateY(5px) scaleY(0.84) scaleX(1.12) rotate(2deg); }
-  62%  { transform: translateY(-10px) scaleY(1.11) scaleX(0.91) rotate(-2deg); }
-  66%  { transform: translateY(5px) scaleY(0.86) scaleX(1.10) rotate(2deg); }
-  72%  { transform: translateY(-7px) scaleY(1.07) scaleX(0.95) rotate(-1deg); }
-  76%  { transform: translateY(-14px) scale(1.18) rotate(-6deg); }
-  80%  { transform: translateY(6px) scale(0.84) rotate(5deg); }
-  85%  { transform: translateY(-4px) scale(1.05) rotate(-2deg); }
-  90%,96% { transform: translateY(0) scale(1.02) rotate(-3deg); }
-  100% { transform: translateY(0) rotate(0) scaleY(1) scaleX(1); }
+/* ══════════════════════════════════════════════════════════════════════
+   STYLE 1 — AFROBEATS (ds-h1, violet)
+   Syncopated side-step, shoulder isolation, alternating knee lift
+   Hip leads every move. Arms pump opposite to hips.
+   ══════════════════════════════════════════════════════════════════════ */
+@keyframes afro-body {
+  0%   { transform:translateX(0) translateY(0) rotate(0) scaleX(1); }
+  10%  { transform:translateX(-6px) translateY(-8px) rotate(-5deg) scaleX(0.95); }
+  20%  { transform:translateX(-5px) translateY(2px) rotate(-3deg) scaleX(0.97); }
+  32%  { transform:translateX(0) translateY(-10px) rotate(2deg) scaleX(1); }
+  44%  { transform:translateX(6px) translateY(2px) rotate(5deg) scaleX(0.95); }
+  56%  { transform:translateX(5px) translateY(-7px) rotate(4deg) scaleX(0.96); }
+  68%  { transform:translateX(-4px) translateY(-8px) rotate(-4deg) scaleX(0.96); }
+  80%  { transform:translateX(-6px) translateY(1px) rotate(-3deg) scaleX(0.97); }
+  100% { transform:translateX(0) translateY(0) rotate(0) scaleX(1); }
 }
-@keyframes sync-head {
-  0%,100% { transform: rotate(0) translateY(0); }
-  6%  { transform: rotate(5deg) translateY(-4px); }
-  12% { transform: rotate(-6deg) translateY(2px); }
-  18% { transform: rotate(6deg) translateY(-4px); }
-  28% { transform: rotate(-18deg) translateY(-4px); }
-  40% { transform: rotate(2deg) translateY(-2px); }
-  46% { transform: rotate(18deg) translateY(-4px); }
-  54% { transform: rotate(7deg) translateY(-5px); }
-  58% { transform: rotate(-8deg) translateY(3px); }
-  76% { transform: rotate(-20deg) translateY(-4px); }
-  90%,96% { transform: rotate(22deg) translateY(0); }
+@keyframes afro-hip  {
+  0%,100%{ transform:rotate(0) translateX(0); }
+  12%  { transform:rotate(-20deg) translateX(-5px); }
+  26%  { transform:rotate(-28deg) translateX(-7px); }
+  40%  { transform:rotate(4deg) translateX(1px); }
+  52%  { transform:rotate(22deg) translateX(6px); }
+  65%  { transform:rotate(30deg) translateX(8px); }
+  80%  { transform:rotate(-8deg) translateX(-2px); }
 }
-@keyframes sync-hip {
-  0%,100% { transform: rotate(0) translateX(0); }
-  28% { transform: rotate(-22deg) translateX(-5px); }
-  34% { transform: rotate(-28deg) translateX(-6px); }
-  40% { transform: rotate(0) translateX(0); }
-  46% { transform: rotate(24deg) translateX(5px); }
-  50% { transform: rotate(28deg) translateX(6px); }
-  54% { transform: rotate(-14deg) translateX(-3px); }
-  62% { transform: rotate(-15deg) translateX(-4px); }
-  90%,96% { transform: rotate(-12deg) translateX(-3px); }
+@keyframes afro-head {
+  0%,100%{ transform:rotate(0) translateY(0); }
+  10%  { transform:rotate(-12deg) translateY(-4px); }
+  24%  { transform:rotate(10deg) translateY(-5px); }
+  38%  { transform:rotate(-8deg) translateY(-3px); }
+  52%  { transform:rotate(14deg) translateY(-5px); }
+  68%  { transform:rotate(-10deg) translateY(-4px); }
+  84%  { transform:rotate(8deg) translateY(-3px); }
 }
-@keyframes sync-torso {
-  0%,100% { transform: skewX(0) scaleX(1); }
-  6%  { transform: skewX(-5deg) scaleX(0.95); }
-  12% { transform: skewX(5deg) scaleX(1.04); }
-  28% { transform: skewX(-9deg) scaleX(0.93); }
-  46% { transform: skewX(9deg) scaleX(0.93); }
-  54% { transform: skewX(-8deg) scaleX(1.10); }
-  62% { transform: skewX(-9deg) scaleX(1.11); }
-  76% { transform: skewX(-10deg) scaleX(1.07); }
-  90%,96% { transform: skewX(-4deg) scaleX(1.04); }
+@keyframes afro-torso {
+  0%,100%{ transform:skewX(0) scaleX(1); }
+  14%  { transform:skewX(-9deg) scaleX(0.94); }
+  30%  { transform:skewX(8deg) scaleX(1.04); }
+  48%  { transform:skewX(-10deg) scaleX(0.93); }
+  65%  { transform:skewX(9deg) scaleX(1.04); }
+  82%  { transform:skewX(-6deg) scaleX(0.96); }
 }
-@keyframes sync-arm-l {
-  0%,100% { transform: rotate(-20deg); }
-  6%  { transform: rotate(-120deg); } 12% { transform: rotate(-22deg); }
-  18% { transform: rotate(-115deg); } 28% { transform: rotate(-145deg); }
-  34% { transform: rotate(-120deg); } 40% { transform: rotate(-30deg); }
-  46% { transform: rotate(-80deg);  } 50% { transform: rotate(-135deg); }
-  54% { transform: rotate(-20deg);  } 58% { transform: rotate(-125deg); }
-  62% { transform: rotate(-16deg);  } 66% { transform: rotate(-118deg); }
-  76% { transform: rotate(-148deg); } 80% { transform: rotate(-50deg); }
-  90%,96% { transform: rotate(-90deg); }
+@keyframes afro-arm-l {
+  0%,100%{ transform:rotate(-20deg); }
+  10%  { transform:rotate(-125deg); }
+  22%  { transform:rotate(-22deg); }
+  34%  { transform:rotate(-118deg); }
+  48%  { transform:rotate(-18deg); }
+  60%  { transform:rotate(-130deg); }
+  74%  { transform:rotate(-20deg); }
+  88%  { transform:rotate(-120deg); }
 }
-@keyframes sync-fore-l {
-  0%,100% { transform: rotate(20deg); }
-  6%  { transform: rotate(-65deg); } 12% { transform: rotate(30deg); }
-  18% { transform: rotate(-58deg); } 28% { transform: rotate(60deg); }
-  34% { transform: rotate(75deg);  } 40% { transform: rotate(15deg); }
-  46% { transform: rotate(48deg);  } 50% { transform: rotate(70deg); }
-  54% { transform: rotate(-70deg); } 58% { transform: rotate(62deg); }
-  62% { transform: rotate(-65deg); } 66% { transform: rotate(58deg); }
-  76% { transform: rotate(-85deg); } 80% { transform: rotate(55deg); }
-  90%,96% { transform: rotate(42deg); }
+@keyframes afro-fore-l {
+  0%,100%{ transform:rotate(18deg); }
+  10%  { transform:rotate(-68deg); }
+  22%  { transform:rotate(28deg); }
+  34%  { transform:rotate(-60deg); }
+  48%  { transform:rotate(22deg); }
+  60%  { transform:rotate(-72deg); }
+  74%  { transform:rotate(20deg); }
+  88%  { transform:rotate(-64deg); }
 }
-@keyframes sync-arm-r {
-  0%,100% { transform: rotate(20deg); }
-  6%  { transform: rotate(35deg);  } 12% { transform: rotate(118deg); }
-  18% { transform: rotate(27deg);  } 28% { transform: rotate(44deg);  }
-  34% { transform: rotate(32deg);  } 40% { transform: rotate(148deg); }
-  46% { transform: rotate(85deg);  } 50% { transform: rotate(38deg);  }
-  54% { transform: rotate(130deg); } 58% { transform: rotate(20deg);  }
-  62% { transform: rotate(122deg); } 66% { transform: rotate(22deg);  }
-  76% { transform: rotate(150deg); } 80% { transform: rotate(55deg);  }
-  90%,96% { transform: rotate(95deg); }
+@keyframes afro-arm-r {
+  0%,100%{ transform:rotate(20deg); }
+  10%  { transform:rotate(35deg); }
+  22%  { transform:rotate(122deg); }
+  34%  { transform:rotate(28deg); }
+  48%  { transform:rotate(128deg); }
+  60%  { transform:rotate(30deg); }
+  74%  { transform:rotate(118deg); }
+  88%  { transform:rotate(25deg); }
 }
-@keyframes sync-fore-r {
-  0%,100% { transform: rotate(-20deg); }
-  6%  { transform: rotate(-32deg); } 12% { transform: rotate(72deg); }
-  18% { transform: rotate(-24deg); } 28% { transform: rotate(-62deg); }
-  34% { transform: rotate(-76deg); } 40% { transform: rotate(78deg);  }
-  46% { transform: rotate(-46deg); } 50% { transform: rotate(-68deg); }
-  54% { transform: rotate(78deg);  } 58% { transform: rotate(-66deg); }
-  62% { transform: rotate(72deg);  } 66% { transform: rotate(-62deg); }
-  76% { transform: rotate(90deg);  } 80% { transform: rotate(-54deg); }
-  90%,96% { transform: rotate(-44deg); }
+@keyframes afro-fore-r {
+  0%,100%{ transform:rotate(-18deg); }
+  10%  { transform:rotate(-28deg); }
+  22%  { transform:rotate(74deg); }
+  34%  { transform:rotate(-22deg); }
+  48%  { transform:rotate(68deg); }
+  60%  { transform:rotate(-24deg); }
+  74%  { transform:rotate(72deg); }
+  88%  { transform:rotate(-20deg); }
 }
-@keyframes sync-leg-l {
-  0%,100% { transform: rotate(-5deg); }
-  6%  { transform: rotate(-45deg); } 12% { transform: rotate(7deg);   }
-  18% { transform: rotate(-42deg); } 28% { transform: rotate(-24deg); }
-  34% { transform: rotate(-30deg); } 40% { transform: rotate(4deg);   }
-  46% { transform: rotate(-9deg);  } 50% { transform: rotate(-22deg); }
-  54% { transform: rotate(-55deg); } 58% { transform: rotate(10deg);  }
-  62% { transform: rotate(-50deg); } 66% { transform: rotate(8deg);   }
-  72% { transform: rotate(-46deg); } 76% { transform: rotate(-50deg); }
-  80% { transform: rotate(12deg);  } 90%,96% { transform: rotate(-11deg); }
+@keyframes afro-leg-l {
+  0%,100%{ transform:rotate(-5deg); }
+  12%  { transform:rotate(-48deg); }
+  24%  { transform:rotate(8deg); }
+  38%  { transform:rotate(-52deg); }
+  52%  { transform:rotate(10deg); }
+  65%  { transform:rotate(-44deg); }
+  80%  { transform:rotate(6deg); }
 }
-@keyframes sync-shin-l {
-  0%,100% { transform: rotate(7deg); }
-  6%  { transform: rotate(-58deg); } 12% { transform: rotate(12px);   }
-  18% { transform: rotate(-52deg); } 28% { transform: rotate(48deg);  }
-  34% { transform: rotate(55deg);  } 40% { transform: rotate(8deg);   }
-  46% { transform: rotate(17deg);  } 50% { transform: rotate(52deg);  }
-  54% { transform: rotate(-65deg); } 58% { transform: rotate(15deg);  }
-  62% { transform: rotate(-60deg); } 66% { transform: rotate(11deg);  }
-  72% { transform: rotate(-56deg); } 76% { transform: rotate(-60deg); }
-  80% { transform: rotate(17deg);  } 90%,96% { transform: rotate(12deg); }
+@keyframes afro-shin-l {
+  0%,100%{ transform:rotate(7deg); }
+  12%  { transform:rotate(-62deg); }
+  24%  { transform:rotate(12deg); }
+  38%  { transform:rotate(-68deg); }
+  52%  { transform:rotate(14deg); }
+  65%  { transform:rotate(-58deg); }
+  80%  { transform:rotate(9deg); }
 }
-@keyframes sync-leg-r {
-  0%,100% { transform: rotate(5deg); }
-  6%  { transform: rotate(10deg);  } 12% { transform: rotate(48deg); }
-  18% { transform: rotate(7deg);   } 28% { transform: rotate(7deg);  }
-  34% { transform: rotate(8deg);   } 40% { transform: rotate(-24deg);}
-  46% { transform: rotate(26deg);  } 50% { transform: rotate(10deg); }
-  54% { transform: rotate(9deg);   } 58% { transform: rotate(52deg); }
-  62% { transform: rotate(7deg);   } 66% { transform: rotate(48deg); }
-  72% { transform: rotate(9deg);   } 76% { transform: rotate(12deg); }
-  80% { transform: rotate(46deg);  } 90%,96% { transform: rotate(9deg); }
+@keyframes afro-leg-r {
+  0%,100%{ transform:rotate(5deg); }
+  12%  { transform:rotate(10deg); }
+  24%  { transform:rotate(50deg); }
+  38%  { transform:rotate(8deg); }
+  52%  { transform:rotate(54deg); }
+  65%  { transform:rotate(7deg); }
+  80%  { transform:rotate(48deg); }
 }
-@keyframes sync-shin-r {
-  0%,100% { transform: rotate(-7deg); }
-  6%  { transform: rotate(-12deg); } 12% { transform: rotate(64deg);  }
-  18% { transform: rotate(-8deg);  } 28% { transform: rotate(-11deg); }
-  34% { transform: rotate(-13deg); } 40% { transform: rotate(-56deg); }
-  46% { transform: rotate(-19deg); } 50% { transform: rotate(-13deg); }
-  54% { transform: rotate(-15deg); } 58% { transform: rotate(68deg);  }
-  62% { transform: rotate(-11deg); } 66% { transform: rotate(62deg);  }
-  72% { transform: rotate(-10deg); } 76% { transform: rotate(-15deg); }
-  80% { transform: rotate(60deg);  } 90%,96% { transform: rotate(-11deg); }
+@keyframes afro-shin-r {
+  0%,100%{ transform:rotate(-7deg); }
+  12%  { transform:rotate(-12deg); }
+  24%  { transform:rotate(65deg); }
+  38%  { transform:rotate(-10deg); }
+  52%  { transform:rotate(70deg); }
+  65%  { transform:rotate(-9deg); }
+  80%  { transform:rotate(62deg); }
 }
-@keyframes sync-digit {
-  0%,100% { transform: scale(1) rotate(0); }
-  6%  { transform: scale(1.1) rotate(-3deg); }
-  12% { transform: scale(0.92) rotate(2deg); }
-  28% { transform: scale(1.07) rotate(5deg); }
-  46% { transform: scale(1.08) rotate(-5deg); }
-  54% { transform: scale(1.12) rotate(-6deg); }
-  76% { transform: scale(1.14) rotate(-7deg); }
-  80% { transform: scale(0.88) rotate(5deg); }
-  90% { transform: scale(1.04) rotate(-2deg); }
+@keyframes afro-digit {
+  0%,100%{ transform:scale(1) rotate(0) translateY(0); }
+  12%  { transform:scale(1.1) rotate(-5deg) translateY(-3px); }
+  26%  { transform:scale(0.92) rotate(4deg) translateY(2px); }
+  44%  { transform:scale(1.08) rotate(6deg) translateY(-3px); }
+  62%  { transform:scale(0.94) rotate(-4deg) translateY(2px); }
+  82%  { transform:scale(1.06) rotate(-5deg) translateY(-2px); }
 }
 
-/* Apply — same for all */
-.ds-body     { animation: sync-body   8s cubic-bezier(.4,0,.2,1) infinite; }
-.ds-head     { animation: sync-head   8s cubic-bezier(.4,0,.2,1) infinite; }
-.ds-hip      { animation: sync-hip    8s cubic-bezier(.4,0,.2,1) infinite; }
-.ds-torso    { animation: sync-torso  8s cubic-bezier(.4,0,.2,1) infinite; }
-.ds-arm-l    { animation: sync-arm-l  8s cubic-bezier(.4,0,.2,1) infinite; }
-.ds-fore-l   { animation: sync-fore-l 8s cubic-bezier(.4,0,.2,1) infinite; }
-.ds-arm-r    { animation: sync-arm-r  8s cubic-bezier(.4,0,.2,1) infinite; }
-.ds-fore-r   { animation: sync-fore-r 8s cubic-bezier(.4,0,.2,1) infinite; }
-.ds-leg-l    { animation: sync-leg-l  8s cubic-bezier(.4,0,.2,1) infinite; }
-.ds-shin-l   { animation: sync-shin-l 8s cubic-bezier(.4,0,.2,1) infinite; }
-.ds-leg-r    { animation: sync-leg-r  8s cubic-bezier(.4,0,.2,1) infinite; }
-.ds-shin-r   { animation: sync-shin-r 8s cubic-bezier(.4,0,.2,1) infinite; }
-.ds-digit-body { animation: sync-digit 8s cubic-bezier(.4,0,.2,1) infinite; }
+#ds-h1 .ds-body     { animation: afro-body  3.2s cubic-bezier(.4,0,.2,1) infinite; }
+#ds-h1 .ds-head     { animation: afro-head  3.2s cubic-bezier(.4,0,.2,1) infinite; }
+#ds-h1 .ds-hip      { animation: afro-hip   3.2s cubic-bezier(.4,0,.2,1) infinite; }
+#ds-h1 .ds-torso    { animation: afro-torso 3.2s cubic-bezier(.4,0,.2,1) infinite; }
+#ds-h1 .ds-arm-l    { animation: afro-arm-l  3.2s cubic-bezier(.4,0,.2,1) infinite; }
+#ds-h1 .ds-fore-l   { animation: afro-fore-l 3.2s cubic-bezier(.4,0,.2,1) infinite; }
+#ds-h1 .ds-arm-r    { animation: afro-arm-r  3.2s cubic-bezier(.4,0,.2,1) infinite; }
+#ds-h1 .ds-fore-r   { animation: afro-fore-r 3.2s cubic-bezier(.4,0,.2,1) infinite; }
+#ds-h1 .ds-leg-l    { animation: afro-leg-l  3.2s cubic-bezier(.4,0,.2,1) infinite; }
+#ds-h1 .ds-shin-l   { animation: afro-shin-l 3.2s cubic-bezier(.4,0,.2,1) infinite; }
+#ds-h1 .ds-leg-r    { animation: afro-leg-r  3.2s cubic-bezier(.4,0,.2,1) infinite; }
+#ds-h1 .ds-shin-r   { animation: afro-shin-r 3.2s cubic-bezier(.4,0,.2,1) infinite; }
+#ds-h1 .ds-digit-body { animation: afro-digit 3.2s cubic-bezier(.4,0,.2,1) infinite; }
 
-/* 80ms wave stagger */
-#ds-h1 .ds-body,#ds-h1 .ds-head,#ds-h1 .ds-hip,#ds-h1 .ds-torso,
-#ds-h1 .ds-arm-l,#ds-h1 .ds-fore-l,#ds-h1 .ds-arm-r,#ds-h1 .ds-fore-r,
-#ds-h1 .ds-leg-l,#ds-h1 .ds-shin-l,#ds-h1 .ds-leg-r,#ds-h1 .ds-shin-r,
-#ds-h1 .ds-digit-body { animation-delay: 0s; }
-#ds-h2 .ds-body,#ds-h2 .ds-head,#ds-h2 .ds-hip,#ds-h2 .ds-torso,
-#ds-h2 .ds-arm-l,#ds-h2 .ds-fore-l,#ds-h2 .ds-arm-r,#ds-h2 .ds-fore-r,
-#ds-h2 .ds-leg-l,#ds-h2 .ds-shin-l,#ds-h2 .ds-leg-r,#ds-h2 .ds-shin-r,
-#ds-h2 .ds-digit-body { animation-delay: -7.92s; }
-#ds-m1 .ds-body,#ds-m1 .ds-head,#ds-m1 .ds-hip,#ds-m1 .ds-torso,
-#ds-m1 .ds-arm-l,#ds-m1 .ds-fore-l,#ds-m1 .ds-arm-r,#ds-m1 .ds-fore-r,
-#ds-m1 .ds-leg-l,#ds-m1 .ds-shin-l,#ds-m1 .ds-leg-r,#ds-m1 .ds-shin-r,
-#ds-m1 .ds-digit-body { animation-delay: -7.84s; }
-#ds-m2 .ds-body,#ds-m2 .ds-head,#ds-m2 .ds-hip,#ds-m2 .ds-torso,
-#ds-m2 .ds-arm-l,#ds-m2 .ds-fore-l,#ds-m2 .ds-arm-r,#ds-m2 .ds-fore-r,
-#ds-m2 .ds-leg-l,#ds-m2 .ds-shin-l,#ds-m2 .ds-leg-r,#ds-m2 .ds-shin-r,
-#ds-m2 .ds-digit-body { animation-delay: -7.76s; }
+/* ══════════════════════════════════════════════════════════════════════
+   STYLE 2 — WAACKING (ds-h2, blue)
+   Explosive arm throws, body stays grounded, wrist flicks
+   Arms whip to full extension then snap back fast
+   ══════════════════════════════════════════════════════════════════════ */
+@keyframes waack-body {
+  0%,100%{ transform:translateY(0) rotate(0) scaleX(1); }
+  8%   { transform:translateY(-12px) rotate(-5deg) scaleX(0.94); }
+  16%  { transform:translateY(4px) rotate(3deg) scaleX(1.05); }
+  30%  { transform:translateY(-8px) rotate(-3deg) scaleX(0.96); }
+  44%  { transform:translateY(3px) rotate(2deg) scaleX(1.03); }
+  58%  { transform:translateY(-14px) rotate(-6deg) scaleX(0.93); }
+  70%  { transform:translateY(5px) rotate(4deg) scaleX(1.04); }
+  84%  { transform:translateY(-6px) rotate(-2deg) scaleX(0.97); }
+}
+@keyframes waack-head {
+  0%,100%{ transform:rotate(0); }
+  8%  { transform:rotate(-15deg) translateY(-5px); }
+  20% { transform:rotate(12deg) translateY(-3px); }
+  35% { transform:rotate(-10deg) translateY(-4px); }
+  50% { transform:rotate(16deg) translateY(-5px); }
+  65% { transform:rotate(-14deg) translateY(-4px); }
+  80% { transform:rotate(10deg) translateY(-3px); }
+}
+@keyframes waack-hip {
+  0%,100%{ transform:rotate(0); }
+  15%  { transform:rotate(-8deg); }
+  35%  { transform:rotate(10deg); }
+  55%  { transform:rotate(-12deg); }
+  75%  { transform:rotate(8deg); }
+}
+@keyframes waack-torso {
+  0%,100%{ transform:skewX(0); }
+  10%  { transform:skewX(-7deg); }
+  25%  { transform:skewX(6deg); }
+  45%  { transform:skewX(-8deg); }
+  62%  { transform:skewX(7deg); }
+  80%  { transform:skewX(-5deg); }
+}
+/* WAACKING signature: arm WHIPS to 160deg then snaps back */
+@keyframes waack-arm-l {
+  0%,100%{ transform:rotate(-20deg); }
+  6%   { transform:rotate(-165deg); }  /* WHIP */
+  12%  { transform:rotate(-25deg); }   /* snap back */
+  28%  { transform:rotate(-155deg); }
+  36%  { transform:rotate(-22deg); }
+  55%  { transform:rotate(-170deg); }  /* biggest throw */
+  62%  { transform:rotate(-20deg); }
+  78%  { transform:rotate(-148deg); }
+  85%  { transform:rotate(-24deg); }
+}
+@keyframes waack-fore-l {
+  0%,100%{ transform:rotate(15deg); }
+  6%   { transform:rotate(-95deg); }   /* wrist snap UP */
+  12%  { transform:rotate(30deg); }
+  28%  { transform:rotate(-88deg); }
+  36%  { transform:rotate(25deg); }
+  55%  { transform:rotate(-100deg); }
+  62%  { transform:rotate(20deg); }
+  78%  { transform:rotate(-82deg); }
+  85%  { transform:rotate(28deg); }
+}
+@keyframes waack-arm-r {
+  0%,100%{ transform:rotate(20deg); }
+  6%   { transform:rotate(30deg); }
+  12%  { transform:rotate(158deg); }   /* right whips when left snaps */
+  22%  { transform:rotate(25deg); }
+  36%  { transform:rotate(162deg); }
+  44%  { transform:rotate(22deg); }
+  55%  { transform:rotate(28deg); }
+  62%  { transform:rotate(155deg); }
+  72%  { transform:rotate(24deg); }
+  88%  { transform:rotate(150deg); }
+}
+@keyframes waack-fore-r {
+  0%,100%{ transform:rotate(-15deg); }
+  12%  { transform:rotate(90deg); }
+  22%  { transform:rotate(-20deg); }
+  36%  { transform:rotate(95deg); }
+  44%  { transform:rotate(-18deg); }
+  62%  { transform:rotate(88deg); }
+  72%  { transform:rotate(-22deg); }
+  88%  { transform:rotate(85deg); }
+}
+@keyframes waack-leg-l {
+  0%,100%{ transform:rotate(-5deg); }
+  15%  { transform:rotate(-20deg); }
+  35%  { transform:rotate(5deg); }
+  55%  { transform:rotate(-25deg); }
+  75%  { transform:rotate(8deg); }
+}
+@keyframes waack-shin-l {
+  0%,100%{ transform:rotate(6deg); }
+  15%  { transform:rotate(25deg); }
+  35%  { transform:rotate(8deg); }
+  55%  { transform:rotate(30deg); }
+  75%  { transform:rotate(10deg); }
+}
+@keyframes waack-leg-r {
+  0%,100%{ transform:rotate(5deg); }
+  15%  { transform:rotate(22deg); }
+  35%  { transform:rotate(-5deg); }
+  55%  { transform:rotate(18deg); }
+  75%  { transform:rotate(-8deg); }
+}
+@keyframes waack-shin-r {
+  0%,100%{ transform:rotate(-6deg); }
+  15%  { transform:rotate(-22deg); }
+  35%  { transform:rotate(-8deg); }
+  55%  { transform:rotate(-20deg); }
+  75%  { transform:rotate(-10deg); }
+}
+@keyframes waack-digit {
+  0%,100%{ transform:scale(1) rotate(0); }
+  6%  { transform:scale(1.14) rotate(-7deg); }
+  12% { transform:scale(0.88) rotate(5deg); }
+  36% { transform:scale(1.12) rotate(8deg); }
+  55% { transform:scale(1.16) rotate(-9deg); }
+  62% { transform:scale(0.86) rotate(6deg); }
+}
 
-/* Responsive */
-@media(max-width:480px) {
-  .ds-svg { width: 30px; height: 48px; }
-  #dancer-stage { right: -4px; }
+#ds-h2 .ds-body     { animation: waack-body  2.4s cubic-bezier(.55,.05,.68,.19) infinite; animation-delay:-.4s; }
+#ds-h2 .ds-head     { animation: waack-head  2.4s cubic-bezier(.55,.05,.68,.19) infinite; animation-delay:-.4s; }
+#ds-h2 .ds-hip      { animation: waack-hip   2.4s ease-in-out infinite; animation-delay:-.4s; }
+#ds-h2 .ds-torso    { animation: waack-torso 2.4s cubic-bezier(.55,.05,.68,.19) infinite; animation-delay:-.4s; }
+#ds-h2 .ds-arm-l    { animation: waack-arm-l  2.4s cubic-bezier(.55,.05,.68,.19) infinite; animation-delay:-.4s; }
+#ds-h2 .ds-fore-l   { animation: waack-fore-l 2.4s cubic-bezier(.55,.05,.68,.19) infinite; animation-delay:-.4s; }
+#ds-h2 .ds-arm-r    { animation: waack-arm-r  2.4s cubic-bezier(.55,.05,.68,.19) infinite; animation-delay:-.4s; }
+#ds-h2 .ds-fore-r   { animation: waack-fore-r 2.4s cubic-bezier(.55,.05,.68,.19) infinite; animation-delay:-.4s; }
+#ds-h2 .ds-leg-l    { animation: waack-leg-l  2.4s ease-in-out infinite; animation-delay:-.4s; }
+#ds-h2 .ds-shin-l   { animation: waack-shin-l 2.4s ease-in-out infinite; animation-delay:-.4s; }
+#ds-h2 .ds-leg-r    { animation: waack-leg-r  2.4s ease-in-out infinite; animation-delay:-.4s; }
+#ds-h2 .ds-shin-r   { animation: waack-shin-r 2.4s ease-in-out infinite; animation-delay:-.4s; }
+#ds-h2 .ds-digit-body { animation: waack-digit 2.4s cubic-bezier(.55,.05,.68,.19) infinite; animation-delay:-.4s; }
+
+/* ══════════════════════════════════════════════════════════════════════
+   STYLE 3 — LIQUID / BODY WAVE (ds-m1, teal)
+   S-curve travels head→spine→hip→legs, arms ribbon-sweep
+   Slowest and most fluid. No sharp transitions. Pure flow.
+   ══════════════════════════════════════════════════════════════════════ */
+@keyframes liquid-body {
+  0%   { transform:translateX(0) translateY(0) rotate(0) scaleY(1); }
+  16%  { transform:translateX(-8px) translateY(-6px) rotate(-5deg) scaleY(1.04); }
+  32%  { transform:translateX(-6px) translateY(4px) rotate(-3deg) scaleY(0.97); }
+  48%  { transform:translateX(4px) translateY(-8px) rotate(4deg) scaleY(1.05); }
+  64%  { transform:translateX(9px) translateY(-4px) rotate(6deg) scaleY(1.03); }
+  80%  { transform:translateX(6px) translateY(5px) rotate(4deg) scaleY(0.96); }
+  100% { transform:translateX(0) translateY(0) rotate(0) scaleY(1); }
+}
+@keyframes liquid-head {
+  0%   { transform:rotate(0) translateY(0) translateX(0); }
+  12%  { transform:rotate(-20deg) translateY(-8px) translateX(-3px); }
+  28%  { transform:rotate(-8deg) translateY(3px) translateX(-4px); }
+  44%  { transform:rotate(6deg) translateY(-10px) translateX(2px); }
+  60%  { transform:rotate(22deg) translateY(-7px) translateX(5px); }
+  76%  { transform:rotate(10deg) translateY(4px) translateX(4px); }
+  100% { transform:rotate(0) translateY(0) translateX(0); }
+}
+@keyframes liquid-hip {
+  0%,100%{ transform:rotate(0) translateX(0) translateY(0); }
+  15%  { transform:rotate(-20deg) translateX(-5px) translateY(-3px); }
+  30%  { transform:rotate(-26deg) translateX(-7px) translateY(4px); }
+  45%  { transform:rotate(-8deg) translateX(-2px) translateY(6px); }
+  60%  { transform:rotate(22deg) translateX(6px) translateY(-2px); }
+  75%  { transform:rotate(28deg) translateX(8px) translateY(-5px); }
+  90%  { transform:rotate(12deg) translateX(4px) translateY(-6px); }
+}
+@keyframes liquid-torso {
+  0%,100%{ transform:rotate(0) skewX(0) scaleX(1); }
+  18%  { transform:rotate(-7deg) skewX(-5deg) scaleX(0.95); }
+  36%  { transform:rotate(-4deg) skewX(-3deg) scaleX(0.97); }
+  54%  { transform:rotate(6deg) skewX(5deg) scaleX(1.04); }
+  72%  { transform:rotate(9deg) skewX(7deg) scaleX(1.05); }
+  88%  { transform:rotate(3deg) skewX(2deg) scaleX(1.02); }
+}
+@keyframes liquid-arm-l {
+  0%   { transform:rotate(-18deg); }
+  16%  { transform:rotate(-85deg); }
+  32%  { transform:rotate(-148deg); }
+  48%  { transform:rotate(-165deg); }
+  64%  { transform:rotate(-120deg); }
+  80%  { transform:rotate(-60deg); }
+  100% { transform:rotate(-18deg); }
+}
+@keyframes liquid-fore-l {
+  0%   { transform:rotate(25deg); }
+  16%  { transform:rotate(55deg); }
+  32%  { transform:rotate(88deg); }
+  48%  { transform:rotate(58deg); }
+  64%  { transform:rotate(18deg); }
+  80%  { transform:rotate(-8deg); }
+  100% { transform:rotate(25deg); }
+}
+@keyframes liquid-arm-r {
+  0%   { transform:rotate(18deg); }
+  16%  { transform:rotate(55deg); }
+  32%  { transform:rotate(28deg); }
+  48%  { transform:rotate(-18deg); }
+  64%  { transform:rotate(-62deg); }
+  80%  { transform:rotate(-125deg); }
+  100% { transform:rotate(18deg); }
+}
+@keyframes liquid-fore-r {
+  0%   { transform:rotate(-25deg); }
+  16%  { transform:rotate(-14deg); }
+  32%  { transform:rotate(18deg); }
+  48%  { transform:rotate(50deg); }
+  64%  { transform:rotate(78deg); }
+  80%  { transform:rotate(48deg); }
+  100% { transform:rotate(-25deg); }
+}
+@keyframes liquid-leg-l {
+  0%,100%{ transform:rotate(-10deg); }
+  20%  { transform:rotate(-24deg); }
+  40%  { transform:rotate(-15deg); }
+  60%  { transform:rotate(5deg); }
+  80%  { transform:rotate(-8deg); }
+}
+@keyframes liquid-shin-l {
+  0%,100%{ transform:rotate(16deg); }
+  20%  { transform:rotate(42deg); }
+  40%  { transform:rotate(28deg); }
+  60%  { transform:rotate(10deg); }
+  80%  { transform:rotate(20deg); }
+}
+@keyframes liquid-leg-r {
+  0%,100%{ transform:rotate(10deg); }
+  20%  { transform:rotate(5deg); }
+  40%  { transform:rotate(24deg); }
+  60%  { transform:rotate(18deg); }
+  80%  { transform:rotate(-4deg); }
+}
+@keyframes liquid-shin-r {
+  0%,100%{ transform:rotate(-16deg); }
+  20%  { transform:rotate(-10deg); }
+  40%  { transform:rotate(-38deg); }
+  60%  { transform:rotate(-28deg); }
+  80%  { transform:rotate(-8deg); }
+}
+@keyframes liquid-digit {
+  0%,100%{ transform:rotate(0) translateX(0); }
+  25%  { transform:rotate(7deg) translateX(3px); }
+  50%  { transform:rotate(2deg) translateX(5px); }
+  75%  { transform:rotate(-6deg) translateX(2px); }
+}
+
+#ds-m1 .ds-body     { animation: liquid-body  4.2s cubic-bezier(.45,.05,.55,.95) infinite; animation-delay:-1.1s; }
+#ds-m1 .ds-head     { animation: liquid-head  4.2s cubic-bezier(.45,.05,.55,.95) infinite; animation-delay:-1.1s; }
+#ds-m1 .ds-hip      { animation: liquid-hip   4.2s cubic-bezier(.45,.05,.55,.95) infinite; animation-delay:-1.1s; }
+#ds-m1 .ds-torso    { animation: liquid-torso 4.2s cubic-bezier(.45,.05,.55,.95) infinite; animation-delay:-1.1s; }
+#ds-m1 .ds-arm-l    { animation: liquid-arm-l  4.2s cubic-bezier(.45,.05,.55,.95) infinite; animation-delay:-1.1s; }
+#ds-m1 .ds-fore-l   { animation: liquid-fore-l 4.2s cubic-bezier(.45,.05,.55,.95) infinite; animation-delay:-1.1s; }
+#ds-m1 .ds-arm-r    { animation: liquid-arm-r  4.2s cubic-bezier(.45,.05,.55,.95) infinite; animation-delay:-1.1s; }
+#ds-m1 .ds-fore-r   { animation: liquid-fore-r 4.2s cubic-bezier(.45,.05,.55,.95) infinite; animation-delay:-1.1s; }
+#ds-m1 .ds-leg-l    { animation: liquid-leg-l  4.2s cubic-bezier(.45,.05,.55,.95) infinite; animation-delay:-1.1s; }
+#ds-m1 .ds-shin-l   { animation: liquid-shin-l 4.2s cubic-bezier(.45,.05,.55,.95) infinite; animation-delay:-1.1s; }
+#ds-m1 .ds-leg-r    { animation: liquid-leg-r  4.2s cubic-bezier(.45,.05,.55,.95) infinite; animation-delay:-1.1s; }
+#ds-m1 .ds-shin-r   { animation: liquid-shin-r 4.2s cubic-bezier(.45,.05,.55,.95) infinite; animation-delay:-1.1s; }
+#ds-m1 .ds-digit-body { animation: liquid-digit 4.2s cubic-bezier(.45,.05,.55,.95) infinite; animation-delay:-1.1s; }
+
+/* ══════════════════════════════════════════════════════════════════════
+   STYLE 4 — SALSA (ds-m2, coral)
+   Sharp hip counter-rotation, cha-cha step, arms frame the body
+   Quick-quick-slow rhythm. Footwork drives the movement.
+   ══════════════════════════════════════════════════════════════════════ */
+@keyframes salsa-body {
+  0%   { transform:translateX(0) translateY(0) rotate(0); }
+  8%   { transform:translateX(-5px) translateY(-4px) rotate(-3deg); }
+  16%  { transform:translateX(-8px) translateY(2px) rotate(-5deg); }
+  24%  { transform:translateX(-4px) translateY(-6px) rotate(-2deg); }
+  32%  { transform:translateX(0) translateY(0) rotate(0); }
+  40%  { transform:translateX(5px) translateY(-4px) rotate(3deg); }
+  48%  { transform:translateX(8px) translateY(2px) rotate(5deg); }
+  56%  { transform:translateX(4px) translateY(-5px) rotate(2deg); }
+  64%  { transform:translateX(0) translateY(0) rotate(0); }
+  72%  { transform:translateX(-6px) translateY(-3px) rotate(-4deg); }
+  84%  { transform:translateX(6px) translateY(-3px) rotate(4deg); }
+  100% { transform:translateX(0) translateY(0) rotate(0); }
+}
+@keyframes salsa-hip {
+  0%,100%{ transform:rotate(0) translateX(0); }
+  8%   { transform:rotate(-22deg) translateX(-6px); }
+  16%  { transform:rotate(-32deg) translateX(-8px); }
+  24%  { transform:rotate(-14deg) translateX(-4px); }
+  32%  { transform:rotate(4deg) translateX(1px); }
+  40%  { transform:rotate(24deg) translateX(7px); }
+  48%  { transform:rotate(34deg) translateX(9px); }
+  56%  { transform:rotate(16deg) translateX(5px); }
+  64%  { transform:rotate(-4deg) translateX(-1px); }
+  72%  { transform:rotate(-20deg) translateX(-5px); }
+  84%  { transform:rotate(22deg) translateX(6px); }
+}
+@keyframes salsa-head {
+  0%,100%{ transform:rotate(0); }
+  16%  { transform:rotate(-10deg) translateY(-3px); }
+  32%  { transform:rotate(2deg) translateY(-4px); }
+  48%  { transform:rotate(10deg) translateY(-3px); }
+  64%  { transform:rotate(-2deg) translateY(-4px); }
+  80%  { transform:rotate(-8deg) translateY(-3px); }
+}
+@keyframes salsa-torso {
+  /* Torso counters the hip — classic latin separation */
+  0%,100%{ transform:rotate(0) skewX(0); }
+  8%   { transform:rotate(14deg) skewX(5deg); }
+  16%  { transform:rotate(20deg) skewX(8deg); }
+  24%  { transform:rotate(8deg) skewX(3deg); }
+  32%  { transform:rotate(-2deg) skewX(-1deg); }
+  40%  { transform:rotate(-16deg) skewX(-6deg); }
+  48%  { transform:rotate(-22deg) skewX(-9deg); }
+  56%  { transform:rotate(-10deg) skewX(-4deg); }
+  64%  { transform:rotate(2deg) skewX(1deg); }
+  72%  { transform:rotate(12deg) skewX(4deg); }
+  84%  { transform:rotate(-14deg) skewX(-5deg); }
+}
+/* Salsa arms: frame the body — curved, graceful */
+@keyframes salsa-arm-l {
+  0%,100%{ transform:rotate(-45deg); }
+  12%  { transform:rotate(-80deg); }
+  24%  { transform:rotate(-120deg); }
+  36%  { transform:rotate(-95deg); }
+  48%  { transform:rotate(-50deg); }
+  60%  { transform:rotate(-85deg); }
+  72%  { transform:rotate(-130deg); }
+  84%  { transform:rotate(-70deg); }
+}
+@keyframes salsa-fore-l {
+  0%,100%{ transform:rotate(40deg); }
+  12%  { transform:rotate(60deg); }
+  24%  { transform:rotate(80deg); }
+  36%  { transform:rotate(65deg); }
+  48%  { transform:rotate(35deg); }
+  60%  { transform:rotate(55deg); }
+  72%  { transform:rotate(85deg); }
+  84%  { transform:rotate(50deg); }
+}
+@keyframes salsa-arm-r {
+  0%,100%{ transform:rotate(45deg); }
+  12%  { transform:rotate(88deg); }
+  24%  { transform:rotate(55deg); }
+  36%  { transform:rotate(100deg); }
+  48%  { transform:rotate(125deg); }
+  60%  { transform:rotate(92deg); }
+  72%  { transform:rotate(58deg); }
+  84%  { transform:rotate(105deg); }
+}
+@keyframes salsa-fore-r {
+  0%,100%{ transform:rotate(-40deg); }
+  12%  { transform:rotate(-62deg); }
+  24%  { transform:rotate(-38deg); }
+  36%  { transform:rotate(-70deg); }
+  48%  { transform:rotate(-80deg); }
+  60%  { transform:rotate(-65deg); }
+  72%  { transform:rotate(-40deg); }
+  84%  { transform:rotate(-72deg); }
+}
+/* Salsa footwork: quick cross-step pattern */
+@keyframes salsa-leg-l {
+  0%,100%{ transform:rotate(-8deg); }
+  8%   { transform:rotate(-28deg); }
+  16%  { transform:rotate(-18deg); }
+  32%  { transform:rotate(5deg); }
+  48%  { transform:rotate(-5deg); }
+  56%  { transform:rotate(-22deg); }
+  64%  { transform:rotate(-12deg); }
+  80%  { transform:rotate(-30deg); }
+}
+@keyframes salsa-shin-l {
+  0%,100%{ transform:rotate(10deg); }
+  8%   { transform:rotate(38deg); }
+  16%  { transform:rotate(22deg); }
+  32%  { transform:rotate(6deg); }
+  48%  { transform:rotate(8deg); }
+  56%  { transform:rotate(34deg); }
+  64%  { transform:rotate(16deg); }
+  80%  { transform:rotate(42deg); }
+}
+@keyframes salsa-leg-r {
+  0%,100%{ transform:rotate(8deg); }
+  8%   { transform:rotate(5deg); }
+  16%  { transform:rotate(20deg); }
+  32%  { transform:rotate(30deg); }
+  48%  { transform:rotate(24deg); }
+  56%  { transform:rotate(8deg); }
+  64%  { transform:rotate(25deg); }
+  80%  { transform:rotate(6deg); }
+}
+@keyframes salsa-shin-r {
+  0%,100%{ transform:rotate(-10deg); }
+  8%   { transform:rotate(-7deg); }
+  16%  { transform:rotate(-25deg); }
+  32%  { transform:rotate(-35deg); }
+  48%  { transform:rotate(-28deg); }
+  56%  { transform:rotate(-10deg); }
+  64%  { transform:rotate(-30deg); }
+  80%  { transform:rotate(-8deg); }
+}
+@keyframes salsa-digit {
+  0%,100%{ transform:rotate(0) translateY(0); }
+  16%  { transform:rotate(-8deg) translateY(-3px); }
+  32%  { transform:rotate(2deg) translateY(-2px); }
+  48%  { transform:rotate(8deg) translateY(-3px); }
+  64%  { transform:rotate(-2deg) translateY(-2px); }
+  80%  { transform:rotate(-6deg) translateY(-2px); }
+}
+
+#ds-m2 .ds-body     { animation: salsa-body  2.8s cubic-bezier(.4,0,.2,1) infinite; animation-delay:-.8s; }
+#ds-m2 .ds-head     { animation: salsa-head  2.8s cubic-bezier(.4,0,.2,1) infinite; animation-delay:-.8s; }
+#ds-m2 .ds-hip      { animation: salsa-hip   2.8s cubic-bezier(.4,0,.2,1) infinite; animation-delay:-.8s; }
+#ds-m2 .ds-torso    { animation: salsa-torso 2.8s cubic-bezier(.4,0,.2,1) infinite; animation-delay:-.8s; }
+#ds-m2 .ds-arm-l    { animation: salsa-arm-l  2.8s cubic-bezier(.4,0,.2,1) infinite; animation-delay:-.8s; }
+#ds-m2 .ds-fore-l   { animation: salsa-fore-l 2.8s cubic-bezier(.4,0,.2,1) infinite; animation-delay:-.8s; }
+#ds-m2 .ds-arm-r    { animation: salsa-arm-r  2.8s cubic-bezier(.4,0,.2,1) infinite; animation-delay:-.8s; }
+#ds-m2 .ds-fore-r   { animation: salsa-fore-r 2.8s cubic-bezier(.4,0,.2,1) infinite; animation-delay:-.8s; }
+#ds-m2 .ds-leg-l    { animation: salsa-leg-l  2.8s cubic-bezier(.4,0,.2,1) infinite; animation-delay:-.8s; }
+#ds-m2 .ds-shin-l   { animation: salsa-shin-l 2.8s cubic-bezier(.4,0,.2,1) infinite; animation-delay:-.8s; }
+#ds-m2 .ds-leg-r    { animation: salsa-leg-r  2.8s cubic-bezier(.4,0,.2,1) infinite; animation-delay:-.8s; }
+#ds-m2 .ds-shin-r   { animation: salsa-shin-r 2.8s cubic-bezier(.4,0,.2,1) infinite; animation-delay:-.8s; }
+#ds-m2 .ds-digit-body { animation: salsa-digit 2.8s cubic-bezier(.4,0,.2,1) infinite; animation-delay:-.8s; }
+
+/* ── RESPONSIVE — pull back on mobile so layout breathes ── */
+@media(max-width:640px) {
+  .ds-svg { width: 36px; height: 48px; opacity: 0.52; }
+  #dancer-stage { right: -6px; }
+  .ds-troupe { gap: 1px; }
   .ds-colon { width: 6px; gap: 4px; }
 }
-@media(max-width:380px) {
-  .ds-svg { width: 26px; height: 42px; }
+@media(max-width:480px) {
+  .ds-svg { width: 30px; height: 40px; opacity: 0.48; }
+  #dancer-stage { right: -4px; }
   .ds-troupe { gap: 0; }
+  .ds-colon { width: 5px; }
+}
+@media(max-width:380px) {
+  .ds-svg { width: 26px; height: 35px; opacity: 0.45; }
 }
 
 /* ── DIGIT CHANGE POP ── */
@@ -1539,12 +1903,13 @@ img,video,svg{max-width:100%;}
       <div class="greeting">
         <div id="dancer-stage" aria-hidden="true">
           <div class="ds-troupe">
-            <div class="ds-dancer" id="ds-h1"><svg class="ds-svg" viewBox="0 0 32 52" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="dg-h1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#9B5FFF"/><stop offset="100%" stop-color="#C026D3"/></linearGradient></defs><g class="ds-body" style="transform-origin:11px 30px"><g class="ds-digit-body" style="transform-origin:24px 22px"><text class="ds-digit" x="24" y="22" text-anchor="middle" dominant-baseline="middle" font-family="Geist,Inter,sans-serif" font-weight="900" font-size="20" fill="url(#dg-h1)">0</text></g><g class="ds-head" style="transform-origin:11px 7px"><circle cx="11" cy="5" r="4" stroke="url(#dg-h1)" stroke-width="2.2" fill="none"/></g><g class="ds-torso" style="transform-origin:11px 12px"><line x1="11" y1="9" x2="11" y2="28" stroke="url(#dg-h1)" stroke-width="2.2" stroke-linecap="round"/></g><g class="ds-hip" style="transform-origin:11px 28px"><line x1="5" y1="28" x2="17" y2="28" stroke="url(#dg-h1)" stroke-width="2.2" stroke-linecap="round"/></g><g class="ds-arm-l" style="transform-origin:11px 13px"><line x1="11" y1="13" x2="4" y2="20" stroke="url(#dg-h1)" stroke-width="2.2" stroke-linecap="round"/><g class="ds-fore-l" style="transform-origin:4px 20px"><line x1="4" y1="20" x2="1" y2="27" stroke="url(#dg-h1)" stroke-width="1.8" stroke-linecap="round"/></g></g><g class="ds-arm-r" style="transform-origin:11px 13px"><line x1="11" y1="13" x2="18" y2="20" stroke="url(#dg-h1)" stroke-width="2.2" stroke-linecap="round"/><g class="ds-fore-r" style="transform-origin:18px 20px"><line x1="18" y1="20" x2="21" y2="27" stroke="url(#dg-h1)" stroke-width="1.8" stroke-linecap="round"/></g></g><g class="ds-leg-l" style="transform-origin:11px 28px"><line x1="11" y1="28" x2="7" y2="39" stroke="url(#dg-h1)" stroke-width="2.2" stroke-linecap="round"/><g class="ds-shin-l" style="transform-origin:7px 39px"><line x1="7" y1="39" x2="5" y2="50" stroke="url(#dg-h1)" stroke-width="1.8" stroke-linecap="round"/></g></g><g class="ds-leg-r" style="transform-origin:11px 28px"><line x1="11" y1="28" x2="15" y2="39" stroke="url(#dg-h1)" stroke-width="2.2" stroke-linecap="round"/><g class="ds-shin-r" style="transform-origin:15px 39px"><line x1="15" y1="39" x2="17" y2="50" stroke="url(#dg-h1)" stroke-width="1.8" stroke-linecap="round"/></g></g></g></svg></div>
-            <div class="ds-dancer" id="ds-h2"><svg class="ds-svg" viewBox="0 0 32 52" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="dg-h2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#4361FF"/><stop offset="100%" stop-color="#00B4D8"/></linearGradient></defs><g class="ds-body" style="transform-origin:11px 30px"><g class="ds-digit-body" style="transform-origin:24px 22px"><text class="ds-digit" x="24" y="22" text-anchor="middle" dominant-baseline="middle" font-family="Geist,Inter,sans-serif" font-weight="900" font-size="20" fill="url(#dg-h2)">8</text></g><g class="ds-head" style="transform-origin:11px 7px"><circle cx="11" cy="5" r="4" stroke="url(#dg-h2)" stroke-width="2.2" fill="none"/></g><g class="ds-torso" style="transform-origin:11px 12px"><line x1="11" y1="9" x2="11" y2="28" stroke="url(#dg-h2)" stroke-width="2.2" stroke-linecap="round"/></g><g class="ds-hip" style="transform-origin:11px 28px"><line x1="5" y1="28" x2="17" y2="28" stroke="url(#dg-h2)" stroke-width="2.2" stroke-linecap="round"/></g><g class="ds-arm-l" style="transform-origin:11px 13px"><line x1="11" y1="13" x2="4" y2="20" stroke="url(#dg-h2)" stroke-width="2.2" stroke-linecap="round"/><g class="ds-fore-l" style="transform-origin:4px 20px"><line x1="4" y1="20" x2="1" y2="27" stroke="url(#dg-h2)" stroke-width="1.8" stroke-linecap="round"/></g></g><g class="ds-arm-r" style="transform-origin:11px 13px"><line x1="11" y1="13" x2="18" y2="20" stroke="url(#dg-h2)" stroke-width="2.2" stroke-linecap="round"/><g class="ds-fore-r" style="transform-origin:18px 20px"><line x1="18" y1="20" x2="21" y2="27" stroke="url(#dg-h2)" stroke-width="1.8" stroke-linecap="round"/></g></g><g class="ds-leg-l" style="transform-origin:11px 28px"><line x1="11" y1="28" x2="7" y2="39" stroke="url(#dg-h2)" stroke-width="2.2" stroke-linecap="round"/><g class="ds-shin-l" style="transform-origin:7px 39px"><line x1="7" y1="39" x2="5" y2="50" stroke="url(#dg-h2)" stroke-width="1.8" stroke-linecap="round"/></g></g><g class="ds-leg-r" style="transform-origin:11px 28px"><line x1="11" y1="28" x2="15" y2="39" stroke="url(#dg-h2)" stroke-width="2.2" stroke-linecap="round"/><g class="ds-shin-r" style="transform-origin:15px 39px"><line x1="15" y1="39" x2="17" y2="50" stroke="url(#dg-h2)" stroke-width="1.8" stroke-linecap="round"/></g></g></g></svg></div>
+            <div class="ds-dancer" id="ds-h1"><svg class="ds-svg ds-afro" viewBox="0 0 38 52" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="dg-h1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#9B5FFF"/><stop offset="100%" stop-color="#C026D3"/></linearGradient></defs><g class="ds-body" style="transform-origin:11px 30px"><g class="ds-digit-body" style="transform-origin:28px 20px"><text class="ds-digit" x="28" y="20" text-anchor="middle" dominant-baseline="middle" font-family="Geist,Inter,sans-serif" font-weight="900" font-size="22" fill="url(#dg-h1)" opacity="0.82">0</text></g><g class="ds-head" style="transform-origin:11px 6px"><circle cx="11" cy="5" r="4" stroke="url(#dg-h1)" stroke-width="2.2" fill="none"/></g><g class="ds-torso" style="transform-origin:11px 11px"><line x1="11" y1="9" x2="11" y2="28" stroke="url(#dg-h1)" stroke-width="2.2" stroke-linecap="round"/></g><g class="ds-hip" style="transform-origin:11px 28px"><line x1="5" y1="28" x2="17" y2="28" stroke="url(#dg-h1)" stroke-width="2.2" stroke-linecap="round"/></g><g class="ds-arm-l" style="transform-origin:11px 13px"><line x1="11" y1="13" x2="3" y2="21" stroke="url(#dg-h1)" stroke-width="2.2" stroke-linecap="round"/><g class="ds-fore-l" style="transform-origin:3px 21px"><line x1="3" y1="21" x2="0" y2="29" stroke="url(#dg-h1)" stroke-width="1.7" stroke-linecap="round"/></g></g><g class="ds-arm-r" style="transform-origin:11px 13px"><line x1="11" y1="13" x2="19" y2="21" stroke="url(#dg-h1)" stroke-width="2.2" stroke-linecap="round"/><g class="ds-fore-r" style="transform-origin:19px 21px"><line x1="19" y1="21" x2="22" y2="29" stroke="url(#dg-h1)" stroke-width="1.7" stroke-linecap="round"/></g></g><g class="ds-leg-l" style="transform-origin:11px 28px"><line x1="11" y1="28" x2="7" y2="39" stroke="url(#dg-h1)" stroke-width="2.2" stroke-linecap="round"/><g class="ds-shin-l" style="transform-origin:7px 39px"><line x1="7" y1="39" x2="5" y2="50" stroke="url(#dg-h1)" stroke-width="1.7" stroke-linecap="round"/></g></g><g class="ds-leg-r" style="transform-origin:11px 28px"><line x1="11" y1="28" x2="15" y2="39" stroke="url(#dg-h1)" stroke-width="2.2" stroke-linecap="round"/><g class="ds-shin-r" style="transform-origin:15px 39px"><line x1="15" y1="39" x2="17" y2="50" stroke="url(#dg-h1)" stroke-width="1.7" stroke-linecap="round"/></g></g></g></svg></div>
+            <div class="ds-dancer" id="ds-h2"><svg class="ds-svg ds-waack" viewBox="0 0 38 52" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="dg-h2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#4361FF"/><stop offset="100%" stop-color="#00B4D8"/></linearGradient></defs><g class="ds-body" style="transform-origin:11px 30px"><g class="ds-digit-body" style="transform-origin:28px 20px"><text class="ds-digit" x="28" y="20" text-anchor="middle" dominant-baseline="middle" font-family="Geist,Inter,sans-serif" font-weight="900" font-size="22" fill="url(#dg-h2)" opacity="0.82">8</text></g><g class="ds-head" style="transform-origin:11px 6px"><circle cx="11" cy="5" r="4" stroke="url(#dg-h2)" stroke-width="2.2" fill="none"/></g><g class="ds-torso" style="transform-origin:11px 11px"><line x1="11" y1="9" x2="11" y2="28" stroke="url(#dg-h2)" stroke-width="2.2" stroke-linecap="round"/></g><g class="ds-hip" style="transform-origin:11px 28px"><line x1="5" y1="28" x2="17" y2="28" stroke="url(#dg-h2)" stroke-width="2.2" stroke-linecap="round"/></g><g class="ds-arm-l" style="transform-origin:11px 13px"><line x1="11" y1="13" x2="3" y2="21" stroke="url(#dg-h2)" stroke-width="2.2" stroke-linecap="round"/><g class="ds-fore-l" style="transform-origin:3px 21px"><line x1="3" y1="21" x2="0" y2="29" stroke="url(#dg-h2)" stroke-width="1.7" stroke-linecap="round"/></g></g><g class="ds-arm-r" style="transform-origin:11px 13px"><line x1="11" y1="13" x2="19" y2="21" stroke="url(#dg-h2)" stroke-width="2.2" stroke-linecap="round"/><g class="ds-fore-r" style="transform-origin:19px 21px"><line x1="19" y1="21" x2="22" y2="29" stroke="url(#dg-h2)" stroke-width="1.7" stroke-linecap="round"/></g></g><g class="ds-leg-l" style="transform-origin:11px 28px"><line x1="11" y1="28" x2="7" y2="39" stroke="url(#dg-h2)" stroke-width="2.2" stroke-linecap="round"/><g class="ds-shin-l" style="transform-origin:7px 39px"><line x1="7" y1="39" x2="5" y2="50" stroke="url(#dg-h2)" stroke-width="1.7" stroke-linecap="round"/></g></g><g class="ds-leg-r" style="transform-origin:11px 28px"><line x1="11" y1="28" x2="15" y2="39" stroke="url(#dg-h2)" stroke-width="2.2" stroke-linecap="round"/><g class="ds-shin-r" style="transform-origin:15px 39px"><line x1="15" y1="39" x2="17" y2="50" stroke="url(#dg-h2)" stroke-width="1.7" stroke-linecap="round"/></g></g></g></svg></div>
             <div class="ds-colon"><div class="ds-dot"></div><div class="ds-dot"></div></div>
-            <div class="ds-dancer" id="ds-m1"><svg class="ds-svg" viewBox="0 0 32 52" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="dg-m1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#2DD4BF"/><stop offset="100%" stop-color="#059669"/></linearGradient></defs><g class="ds-body" style="transform-origin:11px 30px"><g class="ds-digit-body" style="transform-origin:24px 22px"><text class="ds-digit" x="24" y="22" text-anchor="middle" dominant-baseline="middle" font-family="Geist,Inter,sans-serif" font-weight="900" font-size="20" fill="url(#dg-m1)">0</text></g><g class="ds-head" style="transform-origin:11px 7px"><circle cx="11" cy="5" r="4" stroke="url(#dg-m1)" stroke-width="2.2" fill="none"/></g><g class="ds-torso" style="transform-origin:11px 12px"><line x1="11" y1="9" x2="11" y2="28" stroke="url(#dg-m1)" stroke-width="2.2" stroke-linecap="round"/></g><g class="ds-hip" style="transform-origin:11px 28px"><line x1="5" y1="28" x2="17" y2="28" stroke="url(#dg-m1)" stroke-width="2.2" stroke-linecap="round"/></g><g class="ds-arm-l" style="transform-origin:11px 13px"><line x1="11" y1="13" x2="4" y2="20" stroke="url(#dg-m1)" stroke-width="2.2" stroke-linecap="round"/><g class="ds-fore-l" style="transform-origin:4px 20px"><line x1="4" y1="20" x2="1" y2="27" stroke="url(#dg-m1)" stroke-width="1.8" stroke-linecap="round"/></g></g><g class="ds-arm-r" style="transform-origin:11px 13px"><line x1="11" y1="13" x2="18" y2="20" stroke="url(#dg-m1)" stroke-width="2.2" stroke-linecap="round"/><g class="ds-fore-r" style="transform-origin:18px 20px"><line x1="18" y1="20" x2="21" y2="27" stroke="url(#dg-m1)" stroke-width="1.8" stroke-linecap="round"/></g></g><g class="ds-leg-l" style="transform-origin:11px 28px"><line x1="11" y1="28" x2="7" y2="39" stroke="url(#dg-m1)" stroke-width="2.2" stroke-linecap="round"/><g class="ds-shin-l" style="transform-origin:7px 39px"><line x1="7" y1="39" x2="5" y2="50" stroke="url(#dg-m1)" stroke-width="1.8" stroke-linecap="round"/></g></g><g class="ds-leg-r" style="transform-origin:11px 28px"><line x1="11" y1="28" x2="15" y2="39" stroke="url(#dg-m1)" stroke-width="2.2" stroke-linecap="round"/><g class="ds-shin-r" style="transform-origin:15px 39px"><line x1="15" y1="39" x2="17" y2="50" stroke="url(#dg-m1)" stroke-width="1.8" stroke-linecap="round"/></g></g></g></svg></div>
-            <div class="ds-dancer" id="ds-m2"><svg class="ds-svg" viewBox="0 0 32 52" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="dg-m2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#FF5C8A"/><stop offset="100%" stop-color="#FF9A5C"/></linearGradient></defs><g class="ds-body" style="transform-origin:11px 30px"><g class="ds-digit-body" style="transform-origin:24px 22px"><text class="ds-digit" x="24" y="22" text-anchor="middle" dominant-baseline="middle" font-family="Geist,Inter,sans-serif" font-weight="900" font-size="20" fill="url(#dg-m2)">0</text></g><g class="ds-head" style="transform-origin:11px 7px"><circle cx="11" cy="5" r="4" stroke="url(#dg-m2)" stroke-width="2.2" fill="none"/></g><g class="ds-torso" style="transform-origin:11px 12px"><line x1="11" y1="9" x2="11" y2="28" stroke="url(#dg-m2)" stroke-width="2.2" stroke-linecap="round"/></g><g class="ds-hip" style="transform-origin:11px 28px"><line x1="5" y1="28" x2="17" y2="28" stroke="url(#dg-m2)" stroke-width="2.2" stroke-linecap="round"/></g><g class="ds-arm-l" style="transform-origin:11px 13px"><line x1="11" y1="13" x2="4" y2="20" stroke="url(#dg-m2)" stroke-width="2.2" stroke-linecap="round"/><g class="ds-fore-l" style="transform-origin:4px 20px"><line x1="4" y1="20" x2="1" y2="27" stroke="url(#dg-m2)" stroke-width="1.8" stroke-linecap="round"/></g></g><g class="ds-arm-r" style="transform-origin:11px 13px"><line x1="11" y1="13" x2="18" y2="20" stroke="url(#dg-m2)" stroke-width="2.2" stroke-linecap="round"/><g class="ds-fore-r" style="transform-origin:18px 20px"><line x1="18" y1="20" x2="21" y2="27" stroke="url(#dg-m2)" stroke-width="1.8" stroke-linecap="round"/></g></g><g class="ds-leg-l" style="transform-origin:11px 28px"><line x1="11" y1="28" x2="7" y2="39" stroke="url(#dg-m2)" stroke-width="2.2" stroke-linecap="round"/><g class="ds-shin-l" style="transform-origin:7px 39px"><line x1="7" y1="39" x2="5" y2="50" stroke="url(#dg-m2)" stroke-width="1.8" stroke-linecap="round"/></g></g><g class="ds-leg-r" style="transform-origin:11px 28px"><line x1="11" y1="28" x2="15" y2="39" stroke="url(#dg-m2)" stroke-width="2.2" stroke-linecap="round"/><g class="ds-shin-r" style="transform-origin:15px 39px"><line x1="15" y1="39" x2="17" y2="50" stroke="url(#dg-m2)" stroke-width="1.8" stroke-linecap="round"/></g></g></g></svg></div>
+            <div class="ds-dancer" id="ds-m1"><svg class="ds-svg ds-liquid" viewBox="0 0 38 52" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="dg-m1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#2DD4BF"/><stop offset="100%" stop-color="#059669"/></linearGradient></defs><g class="ds-body" style="transform-origin:11px 30px"><g class="ds-digit-body" style="transform-origin:28px 20px"><text class="ds-digit" x="28" y="20" text-anchor="middle" dominant-baseline="middle" font-family="Geist,Inter,sans-serif" font-weight="900" font-size="22" fill="url(#dg-m1)" opacity="0.82">0</text></g><g class="ds-head" style="transform-origin:11px 6px"><circle cx="11" cy="5" r="4" stroke="url(#dg-m1)" stroke-width="2.2" fill="none"/></g><g class="ds-torso" style="transform-origin:11px 11px"><line x1="11" y1="9" x2="11" y2="28" stroke="url(#dg-m1)" stroke-width="2.2" stroke-linecap="round"/></g><g class="ds-hip" style="transform-origin:11px 28px"><line x1="5" y1="28" x2="17" y2="28" stroke="url(#dg-m1)" stroke-width="2.2" stroke-linecap="round"/></g><g class="ds-arm-l" style="transform-origin:11px 13px"><line x1="11" y1="13" x2="3" y2="21" stroke="url(#dg-m1)" stroke-width="2.2" stroke-linecap="round"/><g class="ds-fore-l" style="transform-origin:3px 21px"><line x1="3" y1="21" x2="0" y2="29" stroke="url(#dg-m1)" stroke-width="1.7" stroke-linecap="round"/></g></g><g class="ds-arm-r" style="transform-origin:11px 13px"><line x1="11" y1="13" x2="19" y2="21" stroke="url(#dg-m1)" stroke-width="2.2" stroke-linecap="round"/><g class="ds-fore-r" style="transform-origin:19px 21px"><line x1="19" y1="21" x2="22" y2="29" stroke="url(#dg-m1)" stroke-width="1.7" stroke-linecap="round"/></g></g><g class="ds-leg-l" style="transform-origin:11px 28px"><line x1="11" y1="28" x2="7" y2="39" stroke="url(#dg-m1)" stroke-width="2.2" stroke-linecap="round"/><g class="ds-shin-l" style="transform-origin:7px 39px"><line x1="7" y1="39" x2="5" y2="50" stroke="url(#dg-m1)" stroke-width="1.7" stroke-linecap="round"/></g></g><g class="ds-leg-r" style="transform-origin:11px 28px"><line x1="11" y1="28" x2="15" y2="39" stroke="url(#dg-m1)" stroke-width="2.2" stroke-linecap="round"/><g class="ds-shin-r" style="transform-origin:15px 39px"><line x1="15" y1="39" x2="17" y2="50" stroke="url(#dg-m1)" stroke-width="1.7" stroke-linecap="round"/></g></g></g></svg></div>
+            <div class="ds-dancer" id="ds-m2"><svg class="ds-svg ds-salsa" viewBox="0 0 38 52" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="dg-m2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#FF5C8A"/><stop offset="100%" stop-color="#FF9A5C"/></linearGradient></defs><g class="ds-body" style="transform-origin:11px 30px"><g class="ds-digit-body" style="transform-origin:28px 20px"><text class="ds-digit" x="28" y="20" text-anchor="middle" dominant-baseline="middle" font-family="Geist,Inter,sans-serif" font-weight="900" font-size="22" fill="url(#dg-m2)" opacity="0.82">0</text></g><g class="ds-head" style="transform-origin:11px 6px"><circle cx="11" cy="5" r="4" stroke="url(#dg-m2)" stroke-width="2.2" fill="none"/></g><g class="ds-torso" style="transform-origin:11px 11px"><line x1="11" y1="9" x2="11" y2="28" stroke="url(#dg-m2)" stroke-width="2.2" stroke-linecap="round"/></g><g class="ds-hip" style="transform-origin:11px 28px"><line x1="5" y1="28" x2="17" y2="28" stroke="url(#dg-m2)" stroke-width="2.2" stroke-linecap="round"/></g><g class="ds-arm-l" style="transform-origin:11px 13px"><line x1="11" y1="13" x2="3" y2="21" stroke="url(#dg-m2)" stroke-width="2.2" stroke-linecap="round"/><g class="ds-fore-l" style="transform-origin:3px 21px"><line x1="3" y1="21" x2="0" y2="29" stroke="url(#dg-m2)" stroke-width="1.7" stroke-linecap="round"/></g></g><g class="ds-arm-r" style="transform-origin:11px 13px"><line x1="11" y1="13" x2="19" y2="21" stroke="url(#dg-m2)" stroke-width="2.2" stroke-linecap="round"/><g class="ds-fore-r" style="transform-origin:19px 21px"><line x1="19" y1="21" x2="22" y2="29" stroke="url(#dg-m2)" stroke-width="1.7" stroke-linecap="round"/></g></g><g class="ds-leg-l" style="transform-origin:11px 28px"><line x1="11" y1="28" x2="7" y2="39" stroke="url(#dg-m2)" stroke-width="2.2" stroke-linecap="round"/><g class="ds-shin-l" style="transform-origin:7px 39px"><line x1="7" y1="39" x2="5" y2="50" stroke="url(#dg-m2)" stroke-width="1.7" stroke-linecap="round"/></g></g><g class="ds-leg-r" style="transform-origin:11px 28px"><line x1="11" y1="28" x2="15" y2="39" stroke="url(#dg-m2)" stroke-width="2.2" stroke-linecap="round"/><g class="ds-shin-r" style="transform-origin:15px 39px"><line x1="15" y1="39" x2="17" y2="50" stroke="url(#dg-m2)" stroke-width="1.7" stroke-linecap="round"/></g></g></g></svg></div>
           </div>
+        </div>
         </div>
         <h1 class="greeting-title" id="g-title"><span id="g-greeting">Good afternoon</span><em id="g-name"></em></h1>
         <p class="greeting-sub">#1 zero commission travel platform. Book everything in one place at fair prices.</p>
