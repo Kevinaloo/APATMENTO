@@ -490,8 +490,15 @@
       _loadVideo(V.facepalm, true);
       veil.classList.add('cbp-heavy');
       _panel('cbp-fail');
-      _failIdx = (_failIdx + 1) % FAIL_LINES.length;
-      document.getElementById('cbp-fail-msg').textContent = FAIL_LINES[_failIdx];
+      /* If PayHero told us WHY, say so plainly — "not enough M-Pesa
+         balance" is far more useful than a witty line. The rotating
+         copy is only for when we genuinely do not know. */
+      if (opts && opts.failureReason) {
+        document.getElementById('cbp-fail-msg').textContent = opts.failureReason;
+      } else {
+        _failIdx = (_failIdx + 1) % FAIL_LINES.length;
+        document.getElementById('cbp-fail-msg').textContent = FAIL_LINES[_failIdx];
+      }
       foot.textContent = state === 'error'
         ? 'Network error · Please retry'
         : 'Payment not completed · tap to retry';
@@ -508,12 +515,12 @@
       /* Show a live countdown in the footer — guests had no idea how long
          to wait. Timeout is 60 s (20 × 3 s polls) after which the
          facepalm video plays and they can retry. */
-      const _remaining = Math.max(0, 20 - _attempts) * 3;
+      const _remaining = Math.max(0, 45 - _attempts) * 2;
       const _foot = document.getElementById('cbp-foot');
       if (_foot && _remaining > 0) {
         _foot.textContent = `Enter your PIN  ·  ${_remaining}s`;
       }
-      if (_attempts > 30) {
+      if (_attempts > 45) {
         clearInterval(_pollTimer);
         _cut(() => _setState('failed', opts));
         opts.onFailure?.({ reason: 'timeout' });
@@ -537,12 +544,16 @@
           _cut(() => _setState('success', opts));
           opts.onSuccess?.(d);
         } else if (d.status === 'failed') {
+          /* PayHero has told us the transaction is dead — insufficient
+             balance, wrong PIN, cancelled. Cut straight to the failure
+             screen rather than letting the clock run out. */
           clearInterval(_pollTimer);
+          if (d.reason) opts.failureReason = d.reason;
           _cut(() => _setState('failed', opts));
           opts.onFailure?.(d);
         }
       } catch (_) { /* transient — keep polling */ }
-    }, 3000);
+    }, 2000);
   }
 
   /* ── Public API ─────────────────────────────────────────────────── */

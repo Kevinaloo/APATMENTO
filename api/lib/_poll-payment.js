@@ -1,33 +1,95 @@
 /* ══════════════════════════════════════════════════════════════
-   APATMENTO — Direct PayHero Transaction Status Poller
-   GET /api/poll-payment?ref=APT-xxx-P1
+   APATMENTO — PayHero Transaction Status Poller (self-discovering)
 
-   THE PERMANENT FIX
-   ─────────────────
-   Every previous approach relied on PayHero calling back our server.
-   All 7 payments sat at status:pending because PayHero never posted
-   to our callback URL (domain likely not whitelisted, or Vercel env
-   vars missing causing 500s on receipt). PayHero silently stops
-   retrying after 3 failures.
+   Imported by api/stk-push.js, which dispatches GET (or ?action=poll)
+   here. Lives under api/lib/ so it is not routed as its own serverless
+   function — the Hobby plan caps deployments at 12.
 
-   This endpoint queries PayHero's OWN transaction status API using
-   the CheckoutRequestID stored at push time. The browser polls this
-   instead of waiting for a callback that may never come. When PayHero
-   confirms success we write the DB ourselves, synchronously.
+   Reached from the browser as:
+     GET /api/poll-payment?ref=APT-xxx-P1
+     GET /api/poll-payment?ref=APT-xxx-P1&debug=1   ← shows every probe
 
-   No callback dependency. No race condition. No timeout false-negative.
+   WHY THIS EXISTS
+   ───────────────
+   PayHero never calls our callback URL. Eight payments, zero callbacks,
+   zero edge-function logs. So we stopped waiting and ask PayHero
+   directly, using the CheckoutRequestID stored at push time.
+
+   PayHero's status endpoint is not documented in machine-readable form
+   (their docs render client-side), so rather than hard-code a guessed
+   URL this probes the known candidate shapes, keeps whichever answers,
+   and caches it for the life of the warm lambda. ?debug=1 returns every
+   probe verbatim so the real contract can be confirmed from a browser
+   in a single request instead of another blind test cycle.
 ══════════════════════════════════════════════════════════════ */
 
-const PAYHERO_BASE = 'https://backend.payhero.co.ke/api/v2';
+const BASE = 'https://backend.payhero.co.ke/api/v2';
+
+/* {CK} = CheckoutRequestID, {REF} = our external_reference. */
+const CANDIDATES = [
+  '/transaction-status?reference={CK}',
+  '/transaction-status?reference={REF}',
+  '/payments/{CK}',
+  '/transaction-status?checkout_request_id={CK}',
+  '/payments?reference={REF}',
+  '/payment-status?reference={CK}',
+];
+
+let LEARNED = null;   /* cached across warm invocations */
+
+const TERMINAL_OK   = ['SUCCESS', 'COMPLETED', 'COMPLETE', 'PAID'];
+const TERMINAL_FAIL = ['FAILED', 'CANCELLED', 'CANCELED', 'TIMEOUT',
+                       'INSUFFICIENT', 'REJECTED', 'DECLINED', 'ERROR'];
+
+/* Pull a status + reason out of whatever shape PayHero returns. */
+function readStatus(body) {
+  if (!body || typeof body !== 'object') return null;
+  const r = body.response || body.data || body.transaction || body;
+
+  const raw = String(
+    r.status ?? r.Status ?? r.transaction_status ?? r.state ??
+    body.status ?? body.Status ?? ''
+  ).toUpperCase().trim();
+
+  const desc = r.ResultDesc || r.result_desc || r.description || r.message
+            || r.failure_reason || body.message || '';
+  const receipt = r.MpesaReceiptNumber || r.mpesa_receipt_number
+               || r.receipt || r.provider_reference || null;
+  const code = r.ResultCode ?? r.result_code ?? r.ResponseCode ?? null;
+
+  if (!raw && code == null) return null;
+
+  let verdict = 'pending';
+  if (TERMINAL_OK.some(s => raw.includes(s)) || String(code) === '0') verdict = 'paid';
+  else if (TERMINAL_FAIL.some(s => raw.includes(s)))                  verdict = 'failed';
+  else if (String(desc).toUpperCase().match(/INSUFFICIENT|BALANCE|CANCEL|WRONG PIN|TIMEOUT|DECLINE/))
+    verdict = 'failed';
+
+  return { verdict, raw, desc: String(desc), receipt, code };
+}
+
+/* PayHero wording → something a guest actually understands. */
+function friendlyReason(desc, raw) {
+  const d = String(desc || raw || '').toUpperCase();
+  if (d.includes('INSUFFICIENT') || d.includes('BALANCE'))
+    return 'Not enough M-Pesa balance. Top up and try again.';
+  if (d.includes('CANCEL') || d.includes('ABORT'))
+    return 'You cancelled the payment request.';
+  if (d.includes('WRONG') || d.includes('INVALID') || d.includes('PIN'))
+    return 'Incorrect M-Pesa PIN.';
+  if (d.includes('TIMEOUT') || d.includes('TIMED'))
+    return 'The request timed out before your PIN was entered.';
+  if (d.includes('LOCK') || d.includes('BLOCK'))
+    return 'This M-Pesa number is temporarily blocked. Try another number.';
+  return desc || 'The payment did not go through.';
+}
 
 export async function pollPayment(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Cache-Control', 'no-store');
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'GET')    return res.status(405).end();
 
-  const { ref } = req.query;
+  const { ref, debug } = req.query || {};
   if (!ref) return res.status(400).json({ error: 'ref required' });
 
   const username   = process.env.PAYHERO_USERNAME;
@@ -35,133 +97,128 @@ export async function pollPayment(req, res) {
   const supaUrl    = process.env.SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  if (!username || !password) {
-    return res.status(500).json({ error: 'PayHero credentials not configured' });
-  }
+  if (!username || !password)
+    return res.status(500).json({ status: 'pending', error: 'PAYHERO_* missing in Vercel env' });
+  if (!supaUrl || !serviceKey)
+    return res.status(500).json({ status: 'pending', error: 'SUPABASE_* missing in Vercel env' });
 
   const auth = 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64');
-  const H    = extra => ({ apikey: serviceKey, Authorization: `Bearer ${serviceKey}`, ...extra });
+  const H = extra => ({ apikey: serviceKey, Authorization: `Bearer ${serviceKey}`, ...extra });
 
   try {
-    // 1. Load the ledger row to get CheckoutRequestID and booking_ref.
-    let ledger = null;
-    if (supaUrl && serviceKey) {
-      const lr = await fetch(
-        `${supaUrl}/rest/v1/booking_payments?reference=eq.${encodeURIComponent(ref)}&select=*&limit=1`,
-        { headers: H() }
-      );
-      ledger = lr.ok ? (await lr.json())[0] : null;
-    }
+    const lr = await fetch(
+      `${supaUrl}/rest/v1/booking_payments?reference=eq.${encodeURIComponent(ref)}&select=*&limit=1`,
+      { headers: H() });
+    const ledger = lr.ok ? (await lr.json())[0] : null;
+    if (!ledger) return res.status(404).json({ status: 'pending', error: 'unknown reference' });
 
-    // Already settled — return cached result immediately.
-    if (ledger?.status === 'paid')   return res.json({ status: 'paid',   settled: true });
-    if (ledger?.status === 'failed') return res.json({ status: 'failed', settled: true });
+    if (ledger.status === 'paid')   return res.json({ status: 'paid',   settled: true });
+    if (ledger.status === 'failed') return res.json({ status: 'failed', settled: true });
 
-    const ckid = ledger?.checkout_request_id;
-    if (!ckid) {
-      // CheckoutRequestID not stored yet (race on first poll) — return pending.
-      return res.json({ status: 'pending', reason: 'no_checkout_id' });
-    }
+    const CK = ledger.checkout_request_id;
+    if (!CK) return res.json({ status: 'pending', reason: 'awaiting_checkout_id' });
 
-    // 2. Ask PayHero directly.
-    const phRes = await fetch(
-      `${PAYHERO_BASE}/payments/${encodeURIComponent(ckid)}`,
-      { headers: { Authorization: auth, Accept: 'application/json' } }
-    );
+    // ── Probe PayHero ─────────────────────────────────────────────
+    const probes = [];
+    const order  = LEARNED ? [LEARNED, ...CANDIDATES.filter(c => c !== LEARNED)] : CANDIDATES;
 
-    let ph = {};
-    try { ph = await phRes.json(); } catch (_) {}
-    console.log('[poll-payment] PayHero status for', ckid, ':', JSON.stringify(ph).slice(0, 300));
-
-    /* PayHero status field: SUCCESS | FAILED | PENDING */
-    const phStatus = String(ph.status || ph.StatusCode || '').toUpperCase();
-    const receipt  = ph.MpesaReceiptNumber || ph.mpesa_receipt_number
-                  || ph.response?.MpesaReceiptNumber || null;
-
-    const isSuccess = phStatus === 'SUCCESS';
-    const isFailed  = phStatus === 'FAILED';
-
-    if (!isSuccess && !isFailed) {
-      return res.json({ status: 'pending', payhero_status: phStatus });
-    }
-
-    // 3. Write to DB — we own this update now, no callback needed.
-    if (supaUrl && serviceKey && ledger) {
-      // Update ledger row.
-      await fetch(
-        `${supaUrl}/rest/v1/booking_payments?reference=eq.${encodeURIComponent(ref)}`,
-        {
-          method: 'PATCH',
-          headers: H({ 'Content-Type': 'application/json', Prefer: 'return=minimal' }),
-          body: JSON.stringify({
-            status:        isSuccess ? 'paid' : 'failed',
-            paid_at:       isSuccess ? new Date().toISOString() : null,
-            mpesa_receipt: receipt,
-          }),
-        }
-      );
-
-      if (isSuccess) {
-        // Re-sum all paid instalments for this booking.
-        const sr = await fetch(
-          `${supaUrl}/rest/v1/booking_payments`
-            + `?booking_ref=eq.${encodeURIComponent(ledger.booking_ref)}&status=eq.paid&select=amount`,
-          { headers: H() }
-        );
-        // Include the current payment (status was just updated above).
-        const paidRows  = sr.ok ? await sr.json() : [];
-        const amountPaid = paidRows.reduce((s, p) => s + Number(p.amount || 0), 0)
-                         + Number(ledger.amount || 0); // add current row
-
-        // Load booking for grand_total.
-        const br = await fetch(
-          `${supaUrl}/rest/v1/apartment_bookings`
-            + `?payment_reference=eq.${encodeURIComponent(ledger.booking_ref)}&select=*&limit=1`,
-          { headers: H() }
-        );
-        const booking = br.ok ? (await br.json())[0] : null;
-        const total   = Number(booking?.grand_total || 0);
-        const deposit = Math.round(total * 0.25);
-        const nowFull = amountPaid >= total && total > 0;
-
-        const newStatus = amountPaid <= 0        ? 'pending_payment'
-                        : nowFull               ? 'paid_pending_checkin'
-                        : amountPaid >= deposit  ? 'confirmed_balance_due'
-                        : 'part_paid';
-
-        await fetch(
-          `${supaUrl}/rest/v1/apartment_bookings`
-            + `?payment_reference=eq.${encodeURIComponent(ledger.booking_ref)}`,
-          {
-            method: 'PATCH',
-            headers: H({ 'Content-Type': 'application/json', Prefer: 'return=minimal' }),
-            body: JSON.stringify({
-              amount_paid:      amountPaid,
-              deposit_required: deposit,
-              status:           newStatus,
-              balance_amount:   Math.max(0, total - amountPaid),
-              balance_paid:     nowFull,
-              ...(nowFull ? { fully_paid_at: new Date().toISOString() } : {}),
-            }),
-          }
-        );
-
-        return res.json({
-          status:        newStatus,
-          amount_paid:   amountPaid,
-          grand_total:   total,
-          deposit_required: deposit,
-          mpesa_receipt: receipt,
-          confirmed:     amountPaid >= deposit,
-          fully_paid:    nowFull,
+    let found = null;
+    for (const tpl of order) {
+      const path = tpl.replace('{CK}', encodeURIComponent(CK))
+                      .replace('{REF}', encodeURIComponent(ledger.booking_ref || ref));
+      try {
+        const r   = await fetch(BASE + path, {
+          headers: { Authorization: auth, Accept: 'application/json' },
         });
+        const txt = await r.text();
+        let body; try { body = JSON.parse(txt); } catch { body = txt; }
+
+        if (debug) probes.push({ path, http: r.status,
+          body: typeof body === 'string' ? body.slice(0, 400) : body });
+
+        if (!r.ok) continue;
+        const parsed = readStatus(body);
+        if (parsed) { found = parsed; LEARNED = tpl; if (!debug) break; }
+      } catch (e) {
+        if (debug) probes.push({ path, error: e.message });
       }
     }
 
-    return res.json({ status: isSuccess ? 'paid' : 'failed', mpesa_receipt: receipt });
+    if (debug) return res.json({ ref, checkout_request_id: CK, learned: LEARNED, found, probes });
+
+    if (!found || found.verdict === 'pending')
+      return res.json({ status: 'pending', payhero_raw: found?.raw || null });
+
+    // ── Terminal — record it ourselves ────────────────────────────
+    const isPaid = found.verdict === 'paid';
+
+    await fetch(`${supaUrl}/rest/v1/booking_payments?reference=eq.${encodeURIComponent(ref)}`, {
+      method: 'PATCH',
+      headers: H({ 'Content-Type': 'application/json', Prefer: 'return=minimal' }),
+      body: JSON.stringify({
+        status:        isPaid ? 'paid' : 'failed',
+        paid_at:       isPaid ? new Date().toISOString() : null,
+        mpesa_receipt: found.receipt,
+      }),
+    });
+
+    if (!isPaid) {
+      return res.json({
+        status: 'failed',
+        reason: friendlyReason(found.desc, found.raw),
+        payhero_raw: found.raw,
+      });
+    }
+
+    const sr = await fetch(
+      `${supaUrl}/rest/v1/booking_payments`
+        + `?booking_ref=eq.${encodeURIComponent(ledger.booking_ref)}&status=eq.paid&select=amount`,
+      { headers: H() });
+    const amountPaid = (sr.ok ? await sr.json() : [])
+      .reduce((s, p) => s + Number(p.amount || 0), 0);
+
+    const br = await fetch(
+      `${supaUrl}/rest/v1/apartment_bookings`
+        + `?payment_reference=eq.${encodeURIComponent(ledger.booking_ref)}&select=*&limit=1`,
+      { headers: H() });
+    const booking = br.ok ? (await br.json())[0] : null;
+    const total   = Number(booking?.grand_total || 0);
+    const deposit = Math.round(total * 0.25);
+    const nowFull = total > 0 && amountPaid >= total;
+
+    const newStatus = amountPaid <= 0       ? 'pending_payment'
+                    : nowFull               ? 'paid_pending_checkin'
+                    : amountPaid >= deposit ? 'confirmed_balance_due'
+                    : 'part_paid';
+
+    await fetch(
+      `${supaUrl}/rest/v1/apartment_bookings`
+        + `?payment_reference=eq.${encodeURIComponent(ledger.booking_ref)}`,
+      {
+        method: 'PATCH',
+        headers: H({ 'Content-Type': 'application/json', Prefer: 'return=minimal' }),
+        body: JSON.stringify({
+          amount_paid:      amountPaid,
+          deposit_required: deposit,
+          status:           newStatus,
+          balance_amount:   Math.max(0, total - amountPaid),
+          balance_paid:     nowFull,
+          ...(nowFull ? { fully_paid_at: new Date().toISOString() } : {}),
+        }),
+      });
+
+    return res.json({
+      status:           newStatus,
+      amount_paid:      amountPaid,
+      grand_total:      total,
+      deposit_required: deposit,
+      mpesa_receipt:    found.receipt,
+      confirmed:        amountPaid >= deposit,
+      fully_paid:       nowFull,
+    });
 
   } catch (err) {
-    console.error('[poll-payment] error:', err.message);
-    return res.status(500).json({ error: err.message, status: 'pending' });
+    console.error('[poll-payment]', err);
+    return res.status(500).json({ status: 'pending', error: err.message });
   }
 }
