@@ -21,7 +21,6 @@ export const config = { maxDuration: 15 };
 
 const RESEND_KEY       = process.env.RESEND_API_KEY;
 const ADMIN_SECRET     = process.env.PUSH_ADMIN_SECRET || '';
-const MAGIC_SECRET     = process.env.MAGIC_AUTH_SECRET || 'apa-magic-2025';
 const SUPABASE_URL     = process.env.SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const AT_API_KEY       = process.env.AT_API_KEY;

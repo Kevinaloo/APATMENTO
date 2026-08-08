@@ -26,7 +26,7 @@ const VAPID_PUBLIC  = process.env.VAPID_PUBLIC_KEY;
 const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY;
 const VAPID_SUBJECT = process.env.VAPID_SUBJECT || 'mailto:apatmento@gmail.com';
 
-const SUPA_URL      = process.env.SUPABASE_URL || 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
+const SUPA_URL      = process.env.SUPABASE_URL;
 const SERVICE_KEY   = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const ADMIN_SECRET  = process.env.PUSH_ADMIN_SECRET;
 

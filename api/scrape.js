@@ -25,7 +25,7 @@ export const config = { maxDuration: 60 };
    Cron: daily 3am UTC  ·  Manual: GET /api/scrape-events
 ═══════════════════════════════════════════════════════════════════ */
 
-const SUPA_URL = process.env.SUPABASE_URL || 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
+const SUPA_URL = process.env.SUPABASE_URL;
 const SUPA_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const H = { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY, 'Content-Type': 'application/json' };
 

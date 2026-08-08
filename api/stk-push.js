@@ -61,10 +61,23 @@ export default async function handler(req, res) {
     }
 
     // ── Build auth & callback ────────────────────────────────────────
-    const authToken   = Buffer.from(`${username}:${password}`).toString('base64');
-    const host        = req.headers['x-forwarded-host'] || req.headers.host;
-    const proto       = req.headers['x-forwarded-proto'] || 'https';
-    const callbackUrl = `${proto}://${host}/api/stk-callback`;
+    const authToken = Buffer.from(`${username}:${password}`).toString('base64');
+
+    /* PayHero policy (Jul 2026): production callback URLs must point at a
+       dedicated, verified domain — free-tier hosts and *.vercel.app
+       preview URLs risk account suspension. So the callback is PINNED to
+       the production domain rather than derived from req.headers.host.
+       A preview deploy therefore reports payments to production, which is
+       correct: PayHero only ever knows one accountable address. */
+    const PRODUCTION_ORIGIN = process.env.PUBLIC_BASE_URL || 'https://www.apatmento.space';
+    const callbackUrl = `${PRODUCTION_ORIGIN.replace(/\/+$/, '')}/api/stk-callback`;
+
+    if (/vercel\.app|ngrok|localhost|127\.0\.0\.1/i.test(callbackUrl)) {
+      console.error('[stk-push] Refusing non-production callback URL:', callbackUrl);
+      return res.status(500).json({
+        error: 'Payment callback misconfigured. Set PUBLIC_BASE_URL to the production domain.',
+      });
+    }
 
     // PayHero requires channel_id as integer
     const parsedChannelId = parseInt(String(channelId).trim(), 10);

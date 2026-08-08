@@ -39,7 +39,7 @@
 
 export const config = { maxDuration: 30 };
 
-const SUPA_URL    = process.env.SUPABASE_URL || 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
+const SUPA_URL    = process.env.SUPABASE_URL;
 const ANON_KEY    = process.env.SUPABASE_ANON_KEY;
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const RESEND_KEY  = process.env.RESEND_API_KEY;

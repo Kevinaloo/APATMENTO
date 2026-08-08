@@ -7,7 +7,7 @@
 ════════════════════════════════════════════════════════════════ */
 export const config = { maxDuration: 30 };
 
-const SUPA_URL = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
+const SUPA_URL = process.env.SUPABASE_URL;
 const SUPA_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 // Parse iCal VEVENT blocks
