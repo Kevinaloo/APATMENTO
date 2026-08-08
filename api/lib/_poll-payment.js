@@ -44,8 +44,13 @@ const BASE = 'https://backend.payhero.co.ke/api/v2';
    send every plausible spelling at once — unknown params are ignored,
    and both the instalment reference and the CheckoutRequestID are
    included so whichever PayHero indexes by is present. */
+/* {PH} = PayHero's own reference from the STK response — the only key
+   /api/v2/transaction-status accepts. Confirmed by live probe: querying
+   with our external_reference or the CheckoutRequestID both returned
+   NOT_FOUND while authenticating successfully. */
 const CANDIDATES = [
-  '/transaction-status?reference={REF}&checkout_request_id={CK}&external_reference={REF}',
+  '/transaction-status?reference={PH}',
+  '/transaction-status?reference={REF}',
   '/transaction-status?reference={CK}',
 ];
 
@@ -146,13 +151,16 @@ export async function pollPayment(req, res) {
 
     let found = null;
     for (const tpl of order) {
-      const path = tpl.replace('{CK}', encodeURIComponent(CK))
+      const PH = ledger.payhero_reference || '';
+      if (tpl.includes('{PH}') && !PH) continue;   // nothing to query with yet
+      const path = tpl.split('{PH}').join(encodeURIComponent(PH))
+                      .split('{CK}').join(encodeURIComponent(CK))
                       /* external_reference we sent to PayHero is the
                          instalment ref (…-P1), NOT the booking ref.
                          Querying the booking ref found no transaction,
                          and a not-found was being read as a failure —
                          which is why a paid KES 10 showed the facepalm. */
-                      .replace('{REF}', encodeURIComponent(ref));
+                      .split('{REF}').join(encodeURIComponent(ref));
       try {
         const r   = await fetch(BASE + path, {
           headers: { Authorization: auth, Accept: 'application/json' },

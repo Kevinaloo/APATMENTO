@@ -248,8 +248,15 @@ export default async function handler(req, res) {
       return res.status(phRes.ok ? 502 : phRes.status).json({ error: errMsg, details: data });
     }
 
-    if (data.CheckoutRequestID) {
-      await markLedger(supabaseUrl, serviceKey, payRef, 'pending', data.CheckoutRequestID);
+    /* PayHero returns its OWN reference alongside CheckoutRequestID:
+         {"success":true,"status":"QUEUED","reference":"E8UWT7CLUW",
+          "CheckoutRequestID":"ws_CO_..."}
+       /api/v2/transaction-status is indexed by that `reference`. Querying
+       with our external_reference or the CheckoutRequestID both returned
+       NOT_FOUND, which is why polling never resolved. Store it. */
+    if (data.CheckoutRequestID || data.reference) {
+      await markLedger(supabaseUrl, serviceKey, payRef, 'pending',
+                       data.CheckoutRequestID, data.reference);
     }
 
     return res.status(200).json({
@@ -271,9 +278,10 @@ export default async function handler(req, res) {
   }
 }
 
-async function markLedger(url, key, reference, status, checkoutId) {
+async function markLedger(url, key, reference, status, checkoutId, payheroRef) {
   const body = { status };
   if (checkoutId) body.checkout_request_id = checkoutId;
+  if (payheroRef) body.payhero_reference   = payheroRef;
   try {
     await fetchWithTimeout(
       `${url}/rest/v1/booking_payments?reference=eq.${encodeURIComponent(reference)}`,
