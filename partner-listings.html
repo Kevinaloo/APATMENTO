@@ -67,10 +67,36 @@ body{display:flex;flex-direction:column;}
 .tb-add{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:11px;border:none;font-family:var(--fh);font-weight:800;font-size:12px;cursor:pointer;background:var(--grad);color:#fff;box-shadow:0 4px 16px rgba(67,97,255,0.28);transition:all .22s;letter-spacing:.02em;}
 .tb-add:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(67,97,255,0.42);}
 .tb-add svg{width:14px;height:14px;}
-.tb-av{width:34px;height:34px;border-radius:10px;background:var(--grad);display:flex;align-items:center;justify-content:center;font-family:var(--fh);font-weight:700;font-size:13px;color:#fff;cursor:pointer;box-shadow:0 3px 10px rgba(45,212,191,0.28);flex-shrink:0;}
+.tb-av{width:34px;height:34px;border:none;padding:0;border-radius:10px;background:var(--grad);display:flex;align-items:center;justify-content:center;font-family:var(--fh);font-weight:700;font-size:13px;color:#fff;cursor:pointer;box-shadow:0 3px 10px rgba(45,212,191,0.28);flex-shrink:0;-webkit-tap-highlight-color:transparent;}
+.tb-add{text-decoration:none;}
 .tb-ghost{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;border:1.5px solid var(--line2);background:var(--surface);color:var(--soft);font-family:var(--fb);font-weight:600;font-size:12px;text-decoration:none;cursor:pointer;transition:all .2s;}
 .tb-ghost:hover{border-color:var(--mint);color:var(--mint-d);}
-@media(max-width:600px){.tb-pill,.tb-ghost{display:none;}}
+/* The escape hatch is NEVER hidden. Only the pill and the button's text
+   label collapse on small screens — the guest-switch control itself must
+   survive every breakpoint, or hosts get stranded in the Partner Hub. */
+@media(max-width:600px){.tb-pill{display:none;}}
+@media(max-width:600px){
+  .topbar{padding:0 14px;gap:8px;}
+  /* The wordmark yields first — controls must never be pushed off-screen. */
+  .tb-left{gap:9px;min-width:0;overflow:hidden;}
+  .tb-wm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .tb-right{flex-shrink:0;}
+  .tb-ghost{padding:8px 10px;}
+  .tb-ghost-txt{display:none;}
+  .tb-add{padding:9px 12px;}
+  .tb-add-txt{display:none;}
+}
+/* Account menu */
+.tb-av-wrap{position:relative;}
+.acct-menu{position:absolute;top:calc(100% + 9px);right:0;z-index:400;min-width:216px;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 48px rgba(10,11,24,.16);padding:6px;opacity:0;visibility:hidden;transform:translateY(-6px);transition:opacity .18s,transform .18s,visibility .18s;}
+.acct-menu.open{opacity:1;visibility:visible;transform:translateY(0);}
+.acct-item{display:flex;align-items:center;gap:10px;width:100%;padding:10px 11px;border:none;background:transparent;border-radius:10px;font-family:var(--fb);font-size:13px;font-weight:600;color:var(--ink);text-align:left;text-decoration:none;cursor:pointer;transition:background .16s;}
+.acct-item:hover{background:var(--s2);}
+.acct-item svg{width:16px;height:16px;flex-shrink:0;color:var(--soft);}
+.acct-item.primary{color:var(--mint-d);}.acct-item.primary svg{color:var(--mint-d);}
+.acct-item.danger{color:var(--err);}.acct-item.danger svg{color:var(--err);}
+.acct-sep{height:1px;background:var(--line);margin:5px 8px;}
+.acct-head{padding:9px 11px 3px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);}
 
 /* SHELL */
 .shell{display:flex;flex:1;position:relative;z-index:2;}
@@ -242,7 +268,7 @@ body{display:flex;flex-direction:column;}
 <!-- TOPBAR -->
 <header class="topbar">
   <div class="tb-left">
-    <a href="dashboard.html?role=partner&back=1" class="tb-back" title="Dashboard">
+    <a href="dashboard.html?role=guest&back=1" onclick="switchGuest();return false;" class="tb-back" title="Back to guest" aria-label="Back to guest">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
     </a>
     <div class="tb-divider"></div>
@@ -250,15 +276,42 @@ body{display:flex;flex-direction:column;}
     <span class="tb-pill">Partner Hub</span>
   </div>
   <div class="tb-right">
-    <button class="tb-add" onclick="openAddModal()">
+    <a href="add-listing.html" class="tb-add" onclick="return openAddModal(event);">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      Add listing
-    </button>
-    <a href="#" onclick="switchGuest();return false;" class="tb-ghost">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><path d="M8 3 4 7l4 4M4 7h16M16 21l4-4-4-4M20 17H4"/></svg>
-      Guest view
+      <span class="tb-add-txt">Add listing</span>
     </a>
-    <div class="tb-av" id="tb-av">P</div>
+    <a href="dashboard.html?role=guest&back=1" onclick="switchGuest();return false;" class="tb-ghost" title="Switch to guest view">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><path d="M8 3 4 7l4 4M4 7h16M16 21l4-4-4-4M20 17H4"/></svg>
+      <span class="tb-ghost-txt">Guest view</span>
+    </a>
+    <div class="tb-av-wrap">
+      <button class="tb-av" id="tb-av" onclick="toggleAcct(event)" aria-haspopup="true" aria-expanded="false" aria-label="Account menu">P</button>
+      <div class="acct-menu" id="acct-menu" role="menu">
+        <div class="acct-head">Host mode</div>
+        <a class="acct-item primary" role="menuitem" href="dashboard.html?role=guest&back=1" onclick="switchGuest();return false;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4M4 7h16M16 21l4-4-4-4M20 17H4"/></svg>
+          Switch to guest view
+        </a>
+        <div class="acct-sep"></div>
+        <a class="acct-item" role="menuitem" href="my-bookings.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg>
+          My trips
+        </a>
+        <a class="acct-item" role="menuitem" href="profile.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Profile
+        </a>
+        <a class="acct-item" role="menuitem" href="partner-settings.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          Settings
+        </a>
+        <div class="acct-sep"></div>
+        <button class="acct-item danger" role="menuitem" onclick="signOut()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+          Sign out
+        </button>
+      </div>
+    </div>
   </div>
 </header>
 
@@ -651,12 +704,43 @@ async function toggleStatus(id,status,isActive){
 /* ============================================
    ADD LISTING MODAL
 ============================================ */
-function openAddModal(){
-  document.getElementById('al-overlay').classList.add('open');
-  document.body.style.overflow='hidden';
-  // reset to main panel
-  closeImportPanel(true);
+/* Add listing.
+   The trigger is a real <a href="add-listing.html">, so if the sheet or any
+   of its panels is missing the tap still goes somewhere useful instead of
+   dying silently. We only cancel navigation once the sheet is actually open. */
+function openAddModal(ev){
+  try{
+    var ov=document.getElementById('al-overlay');
+    if(!ov) return true;                 // let the link navigate
+    ov.classList.add('open');
+    document.body.style.overflow='hidden';
+    try{ closeImportPanel(true); }catch(e){ console.warn('[listings] import panel',e); }
+    if(ev&&ev.preventDefault) ev.preventDefault();
+    return false;
+  }catch(e){
+    console.warn('[listings] openAddModal fell back to page',e);
+    return true;
+  }
 }
+
+/* ACCOUNT MENU — the avatar was previously a dead <div>. */
+function toggleAcct(ev){
+  if(ev){ev.preventDefault();ev.stopPropagation();}
+  var m=document.getElementById('acct-menu'),b=document.getElementById('tb-av');
+  if(!m)return;
+  var open=m.classList.toggle('open');
+  if(b)b.setAttribute('aria-expanded',open?'true':'false');
+}
+function closeAcct(){
+  var m=document.getElementById('acct-menu'),b=document.getElementById('tb-av');
+  if(m)m.classList.remove('open');
+  if(b)b.setAttribute('aria-expanded','false');
+}
+document.addEventListener('click',function(e){
+  var w=e.target.closest?e.target.closest('.tb-av-wrap'):null;
+  if(!w)closeAcct();
+});
+document.addEventListener('keydown',function(e){ if(e.key==='Escape')closeAcct(); });
 function closeAddModal(){
   document.getElementById('al-overlay').classList.remove('open');
   document.body.style.overflow='';

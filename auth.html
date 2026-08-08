@@ -1285,16 +1285,17 @@ async function goDashboard(user) {
     }
   } catch(e) {}
 
-  // Check if returning partner: has last_role=partner in DB OR has existing listings.
-  // Returning partners should always land on their partner dashboard, not the guest screen.
+  // Which mode do we resume in?
+  // RULE: owning a listing does NOT mean the user wants host mode. Only an
+  // explicit prior choice (last_role) does. Forcing partner on every sign-in
+  // stranded hosts in the Partner Hub with no obvious way back to guest.
   try {
-    const [profileRes, listingsRes] = await Promise.all([
-      sb.from('profiles').select('last_role').eq('id', user.id).single(),
-      sb.from('listings').select('id').eq('partner_id', user.id).limit(1)
-    ]);
+    const profileRes = await sb.from('profiles').select('last_role').eq('id', user.id).single();
+    let lastRole = '';
+    try { lastRole = localStorage.getItem('apa-last-role') || ''; } catch(e) {}
     const isPartner =
       (profileRes.data && profileRes.data.last_role === 'partner') ||
-      (listingsRes.data && listingsRes.data.length > 0);
+      lastRole === 'partner';
     if (isPartner) {
       try { localStorage.setItem('apa-last-role', 'partner'); } catch(e) {}
       window.location.href = 'dashboard.html?role=partner&uid=' + user.id;

@@ -3342,10 +3342,21 @@ async function initPartnerFlow(){
 
   document.getElementById('p-state-loading').style.display='none';
 
-  // No listings yet — always go to add-listing. No onboarding screen here.
-  if(!partnerServices.length){
+  // No listings yet — send them to the listings screen to create one.
+  // GUARD: never redirect when the user arrived here *from* that screen
+  // (?back=1) or when the listings query failed — that produced an
+  // inescapable ping-pong between dashboard and partner-listings.
+  var _cameBack = false;
+  try { _cameBack = new URLSearchParams(location.search).get('back') === '1'; } catch(e){}
+  if(!partnerServices.length && !_cameBack){
     window.__addServiceIntent = false;
     window.location.replace('partner-listings.html');
+    return;
+  }
+  if(!partnerServices.length){
+    // Stay put and let the partner screen render its own empty state.
+    var _empty = document.getElementById('p-state-picker');
+    if(_empty) _empty.style.display='block';
     return;
   }
   else if(partnerServices.length===1) renderSingleDashboard(partnerServices[0]);
