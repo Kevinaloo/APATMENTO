@@ -239,16 +239,13 @@
       "maxDuration": 10
     },
     "api/stk-push.js": {
-      "maxDuration": 15
+      "maxDuration": 20
     },
     "api/push-send.js": {
       "maxDuration": 30
     },
     "api/email.js": {
       "maxDuration": 15
-    },
-    "api/poll-payment.js": {
-      "maxDuration": 10
     }
   },
   "rewrites": [
@@ -287,6 +284,10 @@
     {
       "source": "/api/send-receipt",
       "destination": "/api/email?action=booking"
+    },
+    {
+      "source": "/api/poll-payment",
+      "destination": "/api/stk-push?action=poll"
     }
   ],
   "buildCommand": null,

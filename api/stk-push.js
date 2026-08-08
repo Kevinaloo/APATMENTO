@@ -16,6 +16,7 @@
 ══════════════════════════════════════════════════════════════ */
 
 import { validateInstalment, depositRequired } from './lib/_payment-rules.js';
+import { pollPayment } from './lib/_poll-payment.js';
 
 const PAYHERO_URL   = 'https://backend.payhero.co.ke/api/v2/payments';
 const FETCH_TIMEOUT = 12000;
@@ -44,10 +45,20 @@ function sbHeaders(key, extra = {}) {
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
+
+  /* Payment status polling lives here rather than in its own file: the
+     Hobby plan caps a deployment at 12 Serverless Functions and this
+     project is at the ceiling. Same PayHero credentials, same domain,
+     so co-locating costs nothing. Reached via GET /api/poll-payment,
+     which vercel.json rewrites to /api/stk-push?action=poll. */
+  if (req.method === 'GET' || (req.query && req.query.action === 'poll')) {
+    return pollPayment(req, res);
+  }
+
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
