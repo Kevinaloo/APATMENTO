@@ -2061,6 +2061,9 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
   </div>
 
   <!-- ── CABANA MATCH — world's first reverse short-stay marketplace ── -->
+  <!-- Upcoming trip strip. Empty until a paid booking exists, so the stays layout is untouched otherwise. -->
+  <div id="apa-trip-mount"></div>
+
   <div class="cabana-match-zone">
     <!-- The main button -->
     <button class="cabana-match-btn" type="button" id="cabana-match-btn" aria-label="Match with Cabana — let hosts find you">
@@ -4951,6 +4954,7 @@ window.addEventListener('hashchange', () => {
 }
 .cmr-close-btn:hover{border-color:var(--err);color:var(--err);}
 </style>
+<script src="/apa-trip-strip.js" defer></script>
 </body>
 </html>
 
