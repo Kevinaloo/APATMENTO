@@ -159,6 +159,23 @@
 }
 #cbp-curtain.on { opacity: 1; pointer-events: all; }
 
+
+/*  Trip detail lines on the success panel  */
+.cbp-trip-prop { display:block; font-family: Helvetica, Arial, sans-serif;
+  font-weight:700; font-size:15px; letter-spacing:.16em; text-transform:uppercase;
+  color:rgba(255,255,255,.97); margin-top:14px; }
+.cbp-trip-loc  { display:block; font-size:13.5px; color:rgba(255,255,255,.76);
+  margin-top:5px; letter-spacing:.02em; }
+.cbp-trip-when { display:block; font-weight:600; font-size:15px;
+  color:rgba(255,255,255,.93); margin-top:13px; letter-spacing:.03em; }
+.cbp-trip-note { display:block; font-size:12px; letter-spacing:.13em;
+  text-transform:uppercase; color:rgba(255,255,255,.62); margin-top:15px; }
+
+.cbp-act-row { display:flex; gap:11px; align-items:center; justify-content:center;
+  flex-wrap:wrap; margin-top:6px; }
+.cbp-btn-share { border-color:rgba(255,255,255,.55) !important; }
+.cbp-btn-share:hover { background:rgba(255,255,255,.13) !important; }
+
 /* ── shell ── */
 #cbp-shell {
   position: absolute; inset: 0; z-index: 10;
@@ -411,7 +428,10 @@
         <div class="cbp-panel" id="cbp-success">
           <div class="cbp-success-title">You're booked.</div>
           <div class="cbp-success-msg">Pack light. Arrive boldly.<br>Your Cabana awaits.</div>
-          <button class="cbp-btn" id="cbp-done">Continue →</button>
+          <div class="cbp-act-row">
+            <button class="cbp-btn cbp-btn-share" id="cbp-share">Share this</button>
+            <button class="cbp-btn" id="cbp-done">Continue →</button>
+          </div>
         </div>
 
         <div class="cbp-panel" id="cbp-fail">
@@ -426,8 +446,138 @@
     document.body.appendChild(r);
     document.getElementById('cbp-cancel').onclick = () => ApatmentoPay.cancel();
     document.getElementById('cbp-done').onclick   = () => ApatmentoPay.close();
+    const shareBtn = document.getElementById('cbp-share');
+    if (shareBtn) shareBtn.onclick = () => _shareCard(_lastOpts && _lastOpts.trip);
     document.getElementById('cbp-retry').onclick  = () => ApatmentoPay.retry();
   }
+
+  /*  Shareable card
+      Composites the live video frame with the guest's name and trip
+      into a 1080x1920 story-shaped image, then hands it to the native
+      share sheet (WhatsApp, Instagram, TikTok) with a download fallback.
+
+      An image rather than a clip, deliberately: personalising the video
+      itself would mean re-encoding on the device, and MediaRecorder
+      only produces .webm, which Instagram and TikTok reject on iOS. A
+      still posts everywhere instantly and is what people screenshot
+      anyway.
+
+      Carries no amounts. Ever. */
+
+  function _esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/[&<>"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
+  }
+
+  function _fmtDayShort(iso) {
+    try {
+      const d = new Date(iso + 'T00:00:00');
+      return d.toLocaleDateString('en-KE', { weekday:'short', day:'numeric', month:'short' });
+    } catch (_) { return iso || ''; }
+  }
+
+  async function _buildCard(trip) {
+    const W = 1080, H = 1920;
+    const cv = document.createElement('canvas');
+    cv.width = W; cv.height = H;
+    const g = cv.getContext('2d');
+
+    const vid = [_va(), _vb()].find(v => v && v.classList.contains('cbp-show') && v.videoWidth);
+    if (vid) {
+      const vr = vid.videoWidth / vid.videoHeight, cr = W / H;
+      let sw, sh, sx, sy;
+      if (vr > cr) { sh = vid.videoHeight; sw = sh * cr; sx = (vid.videoWidth - sw) / 2; sy = 0; }
+      else         { sw = vid.videoWidth;  sh = sw / cr; sx = 0; sy = (vid.videoHeight - sh) / 2; }
+      g.drawImage(vid, sx, sy, sw, sh, 0, 0, W, H);
+    } else {
+      g.fillStyle = '#0b0b12'; g.fillRect(0, 0, W, H);
+    }
+
+    let grad = g.createLinearGradient(0, 0, 0, H);
+    grad.addColorStop(0,    'rgba(6,6,14,.72)');
+    grad.addColorStop(0.30, 'rgba(6,6,14,.18)');
+    grad.addColorStop(0.58, 'rgba(6,6,14,.32)');
+    grad.addColorStop(1,    'rgba(6,6,14,.92)');
+    g.fillStyle = grad; g.fillRect(0, 0, W, H);
+
+    const centre = (txt, y, font, fill, spacing) => {
+      g.font = font; g.fillStyle = fill; g.textAlign = 'center';
+      g.shadowColor = 'rgba(0,0,0,.85)'; g.shadowBlur = 26; g.shadowOffsetY = 3;
+      if (spacing) {
+        const chars = String(txt).split('');
+        const total = chars.reduce((w, ch) => w + g.measureText(ch).width + spacing, -spacing);
+        let x = W / 2 - total / 2;
+        g.textAlign = 'left';
+        chars.forEach(ch => { g.fillText(ch, x, y); x += g.measureText(ch).width + spacing; });
+        g.textAlign = 'center';
+      } else {
+        g.fillText(txt, W / 2, y);
+      }
+      g.shadowBlur = 0; g.shadowOffsetY = 0;
+    };
+
+    centre('CABANA', 190, '600 62px Georgia, "Times New Roman", serif', '#fff', 18);
+    centre('LUXURY TRAVEL', 246, '600 21px Helvetica, Arial, sans-serif', 'rgba(255,255,255,.72)', 9);
+
+    grad = g.createLinearGradient(W/2 - 90, 0, W/2 + 90, 0);
+    grad.addColorStop(0, '#7B2FF7'); grad.addColorStop(.5, '#22D3EE'); grad.addColorStop(1, '#F472B6');
+    g.fillStyle = grad; g.fillRect(W/2 - 90, 276, 180, 3);
+
+    const name = trip.guestName || 'Traveller';
+    centre(name + ', you\u2019re in.', 1140, 'italic 600 84px Georgia, serif', '#fff');
+    centre(String(trip.property || '').toUpperCase(), 1250,
+           '700 40px Helvetica, Arial, sans-serif', 'rgba(255,255,255,.97)', 3);
+    if (trip.location)
+      centre(trip.location, 1310, '400 30px Helvetica, Arial, sans-serif', 'rgba(255,255,255,.80)');
+
+    if (trip.checkin && trip.checkout) {
+      const when = _fmtDayShort(trip.checkin) + '   \u2192   ' + _fmtDayShort(trip.checkout);
+      centre(when, 1408, '600 34px Helvetica, Arial, sans-serif', 'rgba(255,255,255,.94)');
+      const meta = [
+        trip.nights ? trip.nights + (trip.nights > 1 ? ' nights' : ' night') : null,
+        trip.guests ? trip.guests + (trip.guests > 1 ? ' guests'  : ' guest') : null,
+      ].filter(Boolean).join('   \u00b7   ');
+      if (meta) centre(meta, 1462, '400 26px Helvetica, Arial, sans-serif', 'rgba(255,255,255,.72)', 2);
+    }
+
+    const now = new Date();
+    const stamp = 'BOOKED ' + now.toLocaleDateString('en-KE',
+                    { day:'numeric', month:'short', year:'numeric' }).toUpperCase()
+                + '  \u00b7  ' + now.toLocaleTimeString('en-KE',
+                    { hour:'2-digit', minute:'2-digit', hour12:false });
+    centre(stamp, 1700, '600 23px Helvetica, Arial, sans-serif', 'rgba(255,255,255,.62)', 4);
+    centre('apatmento.space', 1790, '600 26px Helvetica, Arial, sans-serif', 'rgba(255,255,255,.80)', 3);
+
+    return new Promise(res => cv.toBlob(res, 'image/png', 0.95));
+  }
+
+  async function _shareCard(trip) {
+    const btn = document.getElementById('cbp-share');
+    const was = btn ? btn.textContent : '';
+    if (btn) { btn.textContent = 'Preparing...'; btn.disabled = true; }
+    try {
+      const blob = await _buildCard(trip || {});
+      if (!blob) throw new Error('no blob');
+      const file = new File([blob], 'cabana-booking.png', { type: 'image/png' });
+      const text = (trip && trip.property)
+        ? 'Booked ' + trip.property + ' on Cabana'
+        : 'Booked on Cabana';
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], text, title: 'Cabana' });
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'cabana-booking.png';
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 4000);
+      }
+    } catch (e) {
+      if (e && e.name !== 'AbortError') console.warn('[share]', e.message);
+    } finally {
+      if (btn) { btn.textContent = was || 'Share this'; btn.disabled = false; }
+    }
+  }
+
 
   /* ── Video engine ───────────────────────────────────────────────── */
   let _active = 'a';
@@ -534,28 +684,41 @@
     }
 
     if (state === 'success') {
-      /* The suitcase plays whenever money cleared, but the words must
-         match reality: KES 10 against a KES 575 deposit is NOT a booking.
-         d.status comes straight from the poller's state machine. */
-      const st = (opts && opts.result && opts.result.status) || '';
-      const tEl = document.querySelector('.cbp-success-title');
-      const mEl = document.querySelector('.cbp-success-msg');
+      /* What the guest sees here is the surface they screenshot, so it
+         leads with the trip, never the money. Someone who has paid a
+         holding amount and someone who paid in full get the same proud
+         card; only the private panel behind Continue discusses balances.
+         Nobody is embarrassed by a screenshot of their own booking. */
+      const st   = (opts && opts.result && opts.result.status) || '';
+      const trip = (opts && opts.trip) || {};
+      const tEl  = document.querySelector('.cbp-success-title');
+      const mEl  = document.querySelector('.cbp-success-msg');
+
+      const fmtDay = iso => {
+        try {
+          const d = new Date(iso + 'T00:00:00');
+          return d.toLocaleDateString('en-KE', { weekday:'short', day:'numeric', month:'short' });
+        } catch (_) { return iso || ''; }
+      };
+
       if (tEl && mEl) {
+        const who   = trip.guestName ? trip.guestName + ', you\u2019re in.' : 'You\u2019re in.';
+        const where = trip.property || 'Your stay';
+        const when  = trip.checkin && trip.checkout
+          ? fmtDay(trip.checkin) + ' \u2192 ' + fmtDay(trip.checkout)
+          : '';
+        const nn = trip.nights ? trip.nights + (trip.nights > 1 ? ' nights' : ' night') : '';
+
+        tEl.textContent = who;
+        mEl.innerHTML =
+            '<span class="cbp-trip-prop">' + _esc(where) + '</span>'
+          + (trip.location ? '<span class="cbp-trip-loc">' + _esc(trip.location) + '</span>' : '')
+          + (when ? '<span class="cbp-trip-when">' + when + (nn ? '  \u00b7  ' + nn : '') + '</span>' : '');
+
+        /* Only the wholly-unpaid edge case needs a nudge, and even then
+           it stays warm rather than corrective. */
         if (st === 'part_paid') {
-          const r  = opts.result || {};
-          const gap = Math.max(0, Math.round((r.deposit_required || 0) - (r.amount_paid || 0)));
-          tEl.textContent = 'Payment received.';
-          mEl.innerHTML   = 'KES ' + gap.toLocaleString() + ' more secures your dates.<br>'
-                          + 'Not booked yet.';
-        } else if (st === 'confirmed_balance_due') {
-          const r  = opts.result || {};
-          const bal = Math.max(0, Math.round((r.grand_total || 0) - (r.amount_paid || 0)));
-          tEl.textContent = "You're booked.";
-          mEl.innerHTML   = 'KES ' + bal.toLocaleString() + ' due before check-in.<br>'
-                          + 'Your code unlocks once settled.';
-        } else {
-          tEl.textContent = "You're booked.";
-          mEl.innerHTML   = 'Pack light. Arrive boldly.<br>Your Cabana awaits.';
+          mEl.innerHTML += '<span class="cbp-trip-note">Dates held \u00b7 finish up inside</span>';
         }
       }
 

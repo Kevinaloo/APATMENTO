@@ -682,6 +682,18 @@ async function startPayment() {
       phone:       phone,
       reference:   paymentReference,
       table:       'apartment_bookings',
+      /* Structured trip details for the shareable card. Deliberately no
+         money here: the card is something guests post publicly, so it
+         carries the destination and dates, never what they paid. */
+      trip: {
+        guestName: (name || '').trim().split(/\s+/)[0] || 'Traveller',
+        property:  apt.name,
+        location:  apt.location || apt.area || '',
+        checkin:   checkin,
+        checkout:  checkout,
+        nights:    nights,
+        guests:    guestCount,
+      },
       description: isDeposit
         ? `Deposit · ${apt.name} — ${nights} night${nights>1?'s':''}`
         : `${apt.name} — ${nights} night${nights>1?'s':''}`,
