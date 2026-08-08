@@ -59,8 +59,6 @@ export default async function handler(req, res) {
     }
 
     // ── Declare Supabase creds at top of try{} ──────────────────────
-    // CRITICAL: must be declared before any branch that uses them
-    // (previously declared after the BAL- block → TDZ ReferenceError)
     const supabaseUrl = process.env.SUPABASE_URL;
     const serviceKey  = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -69,7 +67,22 @@ export default async function handler(req, res) {
       return res.status(200).json({ received: true, error: 'config_missing' });
     }
 
-    // ── Route by reference prefix ────────────────────────────────────
+    /* ── Instalment ledger path ──────────────────────────────────────
+       References ending -P<n> are individual instalments. Credit the
+       ledger row, re-sum every successful payment, and let the shared
+       rules module derive the booking status. Money accumulates: a
+       guest may pay below the 25% deposit and the booking stays
+       unconfirmed until the running total crosses it. The check-in code
+       is only released at 100%.                                       */
+    if (/-P\d+$/.test(externalReference)) {
+      const settled = await creditInstalment({
+        supabaseUrl, serviceKey, reference: externalReference,
+        isSuccess, payload, origin: siteOrigin(req),
+      });
+      return res.status(200).json({ received: true, type: 'instalment', ...settled });
+    }
+
+    // ── Route by reference prefix (legacy / balance flows) ───────────
     let table = null;
     if (externalReference.startsWith('TOUR-'))   table = 'tour_bookings';
     if (externalReference.startsWith('EVENT-'))  table = 'event_tickets';
@@ -283,4 +296,129 @@ export default async function handler(req, res) {
     // Always 200 to PayHero — never trigger a retry on our error
     return res.status(200).json({ received: true, error: err.message });
   }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Credit a single instalment and re-derive the booking's state.
+
+   The ledger is the source of truth. amount_paid is always recomputed
+   as the SUM of successful rows rather than incremented, so a duplicate
+   callback delivery cannot inflate it — PayHero retries until it gets a
+   200, and an increment would double-count.
+══════════════════════════════════════════════════════════════ */
+async function creditInstalment({ supabaseUrl, serviceKey, reference, isSuccess, payload, origin }) {
+  const H = extra => ({ apikey: serviceKey, Authorization: 'Bearer ' + serviceKey, ...extra });
+
+  // 1. Find the ledger row.
+  const lr = await fetch(
+    `${supabaseUrl}/rest/v1/booking_payments?reference=eq.${encodeURIComponent(reference)}&select=*&limit=1`,
+    { headers: H() });
+  const ledger = lr.ok ? (await lr.json())[0] : null;
+  if (!ledger) { console.warn('[stk-callback] no ledger row for', reference); return { unknown: true }; }
+
+  // Idempotent: a row already settled is never re-processed.
+  if (ledger.status === 'paid') return { alreadyProcessed: true };
+
+  const receipt = payload.mpesa_receipt_number || payload.MpesaReceiptNumber
+               || payload.response?.MpesaReceiptNumber || null;
+
+  await fetch(`${supabaseUrl}/rest/v1/booking_payments?reference=eq.${encodeURIComponent(reference)}`, {
+    method: 'PATCH',
+    headers: H({ 'Content-Type': 'application/json', Prefer: 'return=minimal' }),
+    body: JSON.stringify({
+      status:  isSuccess ? 'paid' : 'failed',
+      paid_at: isSuccess ? new Date().toISOString() : null,
+      mpesa_receipt: receipt,
+    }),
+  });
+
+  if (!isSuccess) return { success: false };
+
+  // 2. Re-sum ALL successful instalments for this booking.
+  const sr = await fetch(
+    `${supabaseUrl}/rest/v1/booking_payments`
+      + `?booking_ref=eq.${encodeURIComponent(ledger.booking_ref)}&status=eq.paid&select=amount`,
+    { headers: H() });
+  const amountPaid = (sr.ok ? (await sr.json()) : [])
+    .reduce((s, p) => s + Number(p.amount || 0), 0);
+
+  // 3. Load the booking and derive its new state.
+  const br = await fetch(
+    `${supabaseUrl}/rest/v1/${ledger.booking_table}`
+      + `?payment_reference=eq.${encodeURIComponent(ledger.booking_ref)}&select=*&limit=1`,
+    { headers: H() });
+  const booking = br.ok ? (await br.json())[0] : null;
+  if (!booking) return { success: true, amountPaid, bookingMissing: true };
+
+  const total    = Number(booking.grand_total || 0);
+  const deposit  = Math.round(total * 0.25);
+  const wasFull  = Number(booking.amount_paid || 0) >= total;
+  const nowFull  = amountPaid >= total && total > 0;
+  const status   = amountPaid <= 0        ? 'pending_payment'
+                 : nowFull                ? 'paid_pending_checkin'
+                 : amountPaid >= deposit  ? 'confirmed_balance_due'
+                 : 'part_paid';
+
+  await fetch(
+    `${supabaseUrl}/rest/v1/${ledger.booking_table}`
+      + `?payment_reference=eq.${encodeURIComponent(ledger.booking_ref)}`,
+    {
+      method: 'PATCH',
+      headers: H({ 'Content-Type': 'application/json', Prefer: 'return=minimal' }),
+      body: JSON.stringify({
+        amount_paid:      amountPaid,
+        deposit_required: deposit,
+        status,
+        balance_amount:   Math.max(0, total - amountPaid),
+        balance_paid:     nowFull,
+        ...(nowFull && !wasFull ? { fully_paid_at: new Date().toISOString() } : {}),
+      }),
+    });
+
+  // 4. Tell the guest exactly where they stand.
+  if (booking.guest_id) {
+    const shortfall = Math.max(0, deposit - amountPaid);
+    const notif = nowFull
+      ? { title: 'Paid in full ✅',
+          body: 'Your booking is complete. Your check-in code is now available.' }
+      : status === 'confirmed_balance_due'
+      ? { title: 'Booking confirmed 🎉',
+          body: `Deposit received. KES ${Math.round(total - amountPaid).toLocaleString()} `
+              + `remains — your check-in code unlocks once it is paid.` }
+      : { title: 'Payment received',
+          body: `KES ${Math.round(amountPaid).toLocaleString()} received. Add KES `
+              + `${shortfall.toLocaleString()} more to confirm this booking.` };
+
+    fetch(`${origin}/api/push-send`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json',
+                 'x-admin-secret': process.env.PUSH_ADMIN_SECRET || '' },
+      body: JSON.stringify({ user_id: booking.guest_id, persist: true,
+                             url: '/my-bookings.html', kind: 'booking', ...notif }),
+    }).catch(e => console.warn('[notif] non-fatal:', e.message));
+  }
+
+  /* Rewards, referral commission and agent attribution fire ONCE, only
+     when the booking becomes fully paid. */
+  if (nowFull && !wasFull && booking.guest_id) {
+    fetch(`${origin}/api/rewards`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json',
+                 'x-internal-secret': process.env.INTERNAL_API_SECRET || '' },
+      body: JSON.stringify({ action: 'award', booking_ref: ledger.booking_ref,
+                             guest_id: booking.guest_id, service_type: 'stays',
+                             gross_amount: total }),
+    }).catch(e => console.warn('[rewards] non-fatal:', e.message));
+
+    fetch(`${origin}/api/agents?action=attribute`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json',
+                 'x-internal-secret': process.env.INTERNAL_API_SECRET || '' },
+      body: JSON.stringify({ listing_id: String(booking.apartment_id),
+                             booking_ref: ledger.booking_ref, gross: total,
+                             guest_id: booking.guest_id || null }),
+    }).catch(e => console.warn('[attribute] non-fatal:', e.message));
+  }
+
+  return { success: true, amountPaid, status, confirmed: amountPaid >= deposit, fullyPaid: nowFull };
 }

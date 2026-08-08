@@ -207,7 +207,17 @@ function generateCode(prefix) {
    door for the first time is a guest we have failed.
    (PAY_MODE itself is declared earlier, before the first updateSummary.)
    ═══════════════════════════════════════════════════════════════ */
-function depositPct(nights) { return nights <= 1 ? 0.50 : 0.25; }
+const MIN_TXN = 50;   /* per-transaction floor — M-Pesa fees make smaller pushes lossmaking */
+function depositPct(nights) { return 0.25; }   /* 25% on every stay, any length */
+
+/* Guest-entered instalment. The server re-validates every one of these
+   in api/lib/_payment-rules.js — this is convenience, not enforcement. */
+function customAmount() {
+  const el = document.getElementById('pm-custom');
+  if (!el || !el.value) return null;
+  const v = Math.round(Number(el.value));
+  return Number.isFinite(v) && v > 0 ? v : null;
+}
 
 function setPayMode(mode) {
   PAY_MODE = mode;
@@ -215,17 +225,75 @@ function setPayMode(mode) {
   document.getElementById('pm-dep').classList.toggle('on', mode === 'deposit');
   document.getElementById('pm-warn').hidden = mode !== 'deposit';
 
+  ensureCustomField();
+  renderShortfall();
+
   const btn = document.getElementById('pay-btn');
   const amt = payAmount();
   btn.lastChild.textContent = mode === 'deposit'
-    ? ` Pay deposit · KES ${amt.toLocaleString()}`
+    ? ` Pay KES ${amt.toLocaleString()}`
     : ' Pay with M-Pesa';
+}
+
+/* Inject the "pay another amount" field under the deposit option. */
+function ensureCustomField() {
+  const warn = document.getElementById('pm-warn');
+  if (!warn || document.getElementById('pm-custom')) return;
+  const wrap = document.createElement('div');
+  wrap.id = 'pm-custom-wrap';
+  wrap.style.cssText = 'margin-top:12px';
+  wrap.innerHTML =
+    '<label style="display:block;font-size:12px;font-weight:700;color:#5A5E70;margin-bottom:6px">'
+    + 'Paying a different amount? (optional)</label>'
+    + '<input id="pm-custom" type="number" inputmode="numeric" min="' + MIN_TXN + '" step="1" '
+    + 'placeholder="Leave blank to pay the 25% deposit" '
+    + 'style="width:100%;padding:11px 13px;border:1px solid #E5E7EB;border-radius:10px;'
+    + 'font-size:15px;font-weight:700;outline:none">'
+    + '<div id="pm-shortfall" style="margin-top:8px;font-size:12.5px;line-height:1.55"></div>';
+  warn.appendChild(wrap);
+  document.getElementById('pm-custom').addEventListener('input', () => {
+    renderShortfall();
+    const b = document.getElementById('pay-btn');
+    if (b) b.lastChild.textContent = ` Pay KES ${payAmount().toLocaleString()}`;
+  });
+}
+
+/* Tell the guest exactly what their number buys — before they pay. */
+function renderShortfall() {
+  const el = document.getElementById('pm-shortfall');
+  if (!el) return;
+  if (PAY_MODE !== 'deposit') { el.textContent = ''; return; }
+
+  const nights = getNights();
+  const total  = nights * apt.price + calculateFee(nights * apt.price);
+  const dep    = Math.round(total * depositPct(nights));
+  const amt    = payAmount();
+
+  if (amt < MIN_TXN) {
+    el.innerHTML = '<span style="color:#B91C1C;font-weight:700">The smallest single payment is KES '
+      + MIN_TXN.toLocaleString() + '.</span>';
+  } else if (amt < dep) {
+    el.innerHTML = '<span style="color:#B45309;font-weight:700">This payment is accepted, but your '
+      + 'booking is not confirmed yet.</span><br>You need KES '
+      + (dep - amt).toLocaleString() + ' more to reach the KES ' + dep.toLocaleString()
+      + ' minimum that secures these dates.';
+  } else if (amt < total) {
+    el.innerHTML = '<span style="color:#0D9467;font-weight:700">This confirms your booking.</span><br>'
+      + 'KES ' + (total - amt).toLocaleString() + ' will remain — your check-in code is released '
+      + 'once the full amount is paid.';
+  } else {
+    el.innerHTML = '<span style="color:#0D9467;font-weight:700">Paid in full — check-in code released '
+      + 'immediately.</span>';
+  }
 }
 
 function payAmount() {
   const nights = getNights();
   const total = nights * apt.price + calculateFee(nights * apt.price);
-  return PAY_MODE === 'deposit' ? Math.round(total * depositPct(nights)) : total;
+  if (PAY_MODE !== 'deposit') return total;          // full is binding
+  const custom = customAmount();
+  const dep    = Math.round(total * depositPct(nights));
+  return custom == null ? dep : Math.min(custom, total);
 }
 
 function refreshPayModeAmounts() {
@@ -238,10 +306,7 @@ function refreshPayModeAmounts() {
   if (d) d.textContent = 'KES ' + dep.toLocaleString();
   const sub = document.getElementById('pm-dep-sub');
   if (sub) {
-    const n = getNights();
-    sub.textContent = n <= 1
-      ? 'Hold the dates for half of one night (' + Math.round(50) + '%). Pay the rest before you check in.'
-      : 'Hold the dates for 25% of the total. Pay the rest before you check in.';
+    sub.textContent = 'Hold the dates for 25% of the total. Pay the rest before you check in.';
   }
   if (PAY_MODE) setPayMode(PAY_MODE);
 }
