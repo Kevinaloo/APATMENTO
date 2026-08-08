@@ -520,32 +520,19 @@
         return;
       }
       try {
-        /* Primary: poll the instalment ledger row (-P<n> reference). */
-        const primaryRef = opts.pollRef || opts.reference;
-        const r = await fetch(
-          `/api/check-payment-status?table=${opts.table}&reference=${encodeURIComponent(primaryRef)}`
-        );
-        let d = await r.json();
-
-        /* Fallback after 15 s: if the ledger row is still pending, also
-           check the booking table directly. PayHero may have sent the callback
-           but the ledger write failed (e.g. a Vercel env var missing causes a
-           500 and PayHero stops retrying). If the booking is already
-           paid/confirmed we show success regardless. */
-        if (_attempts >= 5 && (d.status === 'pending' || !d.status)) {
-          const br = await fetch(
-            `/api/check-payment-status?table=${opts.table}&reference=${encodeURIComponent(opts.reference)}`
-          ).then(r2 => r2.json()).catch(() => ({}));
-          if (br.status === 'paid_pending_checkin' || br.status === 'paid' ||
-              br.status === 'confirmed_balance_due' || br.status === 'part_paid') {
-            d = { ...br, _fromBooking: true };
-          }
-        }
-        /* 'paid' = this instalment cleared. The booking may still be
-           part_paid or confirmed_balance_due overall; that is a state for
-           the receipt to explain, not a payment failure. */
+        /* Direct PayHero query — no callback dependency.
+           /api/poll-payment asks PayHero's own transaction status API
+           using the CheckoutRequestID stored at push time, then writes
+           the DB itself. Previously we waited for PayHero to call our
+           callback URL; those calls never arrived (domain not whitelisted
+           or Vercel env vars missing), leaving every payment at 'pending'
+           regardless of whether the guest had paid. */
+        const pollRef = opts.pollRef || opts.reference;
+        const r = await fetch(`/api/poll-payment?ref=${encodeURIComponent(pollRef)}`);
+        let d = await r.json().catch(() => ({}));
+        /* Any non-pending, non-failed status = money cleared. */
         if (d.status === 'paid' || d.status === 'paid_pending_checkin'
-            || d.status === 'confirmed_balance_due') {
+            || d.status === 'confirmed_balance_due' || d.status === 'part_paid') {
           clearInterval(_pollTimer);
           _cut(() => _setState('success', opts));
           opts.onSuccess?.(d);
