@@ -230,18 +230,53 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--glass-2)
 <div class="toast" id="toast"></div>
 
 <script>
+/* SUPABASE_URL / SUPABASE_ANON_KEY were referenced here but never
+   defined anywhere in this file. The try/catch swallowed the resulting
+   ReferenceError, leaving sb null; the async IIFE below then threw on
+   sb.auth with no catch, so loadAllBookings() never ran and the page sat
+   on its loading skeletons forever — even though the bookings existed
+   and RLS allowed them.
+
+   apa-session.js memoises createClient, so asking for a client here
+   returns the same one the rest of the app uses rather than starting a
+   competing client on the same storage key. */
+const SUPABASE_URL      = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
+
 let sb=null;
-try{const{createClient}=supabase;sb=createClient(SUPABASE_URL,SUPABASE_ANON_KEY);}catch(e){}
+try{
+  const{createClient}=supabase;
+  sb=createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+}catch(e){
+  console.error('[my-bookings] Supabase client failed to initialise:',e);
+}
 
 let CURRENT_USER = null;
 let allBookings  = [];
 let currentTab   = 'all';
 
 (async () => {
-  const { data: { session } } = await sb.auth.getSession();
-  if (!session) { window.location.href = 'auth.html'; return; }
-  CURRENT_USER = session.user;
-  await loadAllBookings();
+  try {
+    if (!sb) throw new Error('Supabase client unavailable');
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) {
+      try{sessionStorage.setItem('auth_next', location.pathname+location.search);}catch(_){}
+      window.location.href = 'auth.html?next=' + encodeURIComponent(location.pathname);
+      return;
+    }
+    CURRENT_USER = session.user;
+    await loadAllBookings();
+  } catch (e) {
+    /* Show the problem rather than leaving skeletons spinning. */
+    console.error('[my-bookings] init failed:', e);
+    const c = document.getElementById('bookings-container');
+    if (c) c.innerHTML =
+      '<div class="empty"><div class="empty-title">Could not load your bookings</div>'
+      + '<div class="empty-sub">' + String(e.message || e) + '</div>'
+      + '<button onclick="location.reload()" style="margin-top:16px;padding:11px 22px;'
+      + 'border:none;border-radius:12px;background:var(--theme-grad);color:#fff;'
+      + 'font-weight:700;cursor:pointer">Try again</button></div>';
+  }
 })();
 
 let PENDING_OFFERS = {};   // booking_id → offer
@@ -255,6 +290,10 @@ async function loadAllBookings() {
     sb.from('tour_bookings').select('*').eq('guest_id', uid).order('created_at',{ascending:false}),
     sb.from('event_tickets').select('*').eq('guest_id', uid).order('created_at',{ascending:false}),
   ]);
+
+  [['apartment',aptRes],['tour',tourRes],['event',evRes]].forEach(([n,r])=>{
+    if (r && r.error) console.error('[my-bookings] '+n+' query failed:', r.error.message);
+  });
 
   const apts  = (aptRes.data||[]).map(b=>({...b,_type:'apartment',_table:'apartment_bookings',_name:b.apartment_name,_detail:`${b.checkin_date} → ${b.checkout_date} · ${b.nights} night${b.nights!==1?'s':''}`,_icon:'🏠',_iconBg:'linear-gradient(135deg,#0a1628,#1a3a5a)'}));
   const tours = (tourRes.data||[]).map(b=>({...b,_type:'tour',_table:'tour_bookings',_name:b.tour_name,_detail:`${b.tour_date} · ${b.num_people} person${b.num_people!==1?'s':''}`,_icon:'🗺️',_iconBg:'linear-gradient(135deg,#1a1206,#3d2810)'}));
