@@ -325,17 +325,30 @@ function calculateFee(totalPrice) {
 
 /* ══ DEFAULT DATES ══ */
 const today = new Date();
+/* Local calendar date, never toISOString(). Kenya is UTC+3, so between
+   midnight and 03:00 toISOString() reports YESTERDAY — which silently
+   shifted the default stay back a day and could offer a past date. */
+function isoLocal(d){
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0')
+       + '-' + String(d.getDate()).padStart(2,'0');
+}
 const checkinDefault  = new Date(today); checkinDefault.setDate(today.getDate() + 3);
-const checkoutDefault = new Date(today); checkoutDefault.setDate(today.getDate() + 5);
-document.getElementById('checkin-date').value  = checkinDefault.toISOString().split('T')[0];
-document.getElementById('checkout-date').value = checkoutDefault.toISOString().split('T')[0];
+const checkoutDefault = new Date(today); checkoutDefault.setDate(today.getDate() + 4);  // 1 night
+document.getElementById('checkin-date').value  = isoLocal(checkinDefault);
+document.getElementById('checkout-date').value = isoLocal(checkoutDefault);
+document.getElementById('checkin-date').min    = isoLocal(today);
+document.getElementById('checkout-date').min   = isoLocal(checkoutDefault);
 document.getElementById('checkin-date').min    = today.toISOString().split('T')[0];
 document.getElementById('checkout-date').min   = checkinDefault.toISOString().split('T')[0];
 
 function getNights() {
-  const ci = new Date(document.getElementById('checkin-date').value);
-  const co = new Date(document.getElementById('checkout-date').value);
-  const diff = Math.round((co - ci) / (1000*60*60*24));
+  const ciV = document.getElementById('checkin-date').value;
+  const coV = document.getElementById('checkout-date').value;
+  if (!ciV || !coV) return 1;
+  const ci = new Date(ciV + 'T00:00:00');
+  const co = new Date(coV + 'T00:00:00');
+  if (isNaN(ci) || isNaN(co)) return 1;
+  const diff = Math.round((co - ci) / 86400000);
   return diff > 0 ? diff : 1;
 }
 
@@ -355,11 +368,32 @@ function updateSummary() {
 }
 
 document.getElementById('checkin-date').addEventListener('change', () => {
-  const ci = document.getElementById('checkin-date').value;
-  document.getElementById('checkout-date').min = ci;
+  const ciEl = document.getElementById('checkin-date');
+  const coEl = document.getElementById('checkout-date');
+  const ci = new Date(ciEl.value + 'T00:00:00');
+  if (isNaN(ci)) return;
+
+  /* Check-out must always sit strictly after check-in. Previously only
+     the `min` attribute moved, so a guest could leave check-out on or
+     before check-in: the form displayed an impossible range while
+     getNights() quietly fell back to 1 and charged for a single night. */
+  const minCo = new Date(ci); minCo.setDate(ci.getDate() + 1);
+  coEl.min = isoLocal(minCo);
+  const co = new Date(coEl.value + 'T00:00:00');
+  if (isNaN(co) || co <= ci) coEl.value = isoLocal(minCo);
   updateSummary();
 });
-document.getElementById('checkout-date').addEventListener('change', updateSummary);
+document.getElementById('checkout-date').addEventListener('change', () => {
+  const ciEl = document.getElementById('checkin-date');
+  const coEl = document.getElementById('checkout-date');
+  const ci = new Date(ciEl.value + 'T00:00:00');
+  const co = new Date(coEl.value + 'T00:00:00');
+  if (!isNaN(ci) && (isNaN(co) || co <= ci)) {
+    const minCo = new Date(ci); minCo.setDate(ci.getDate() + 1);
+    coEl.value = isoLocal(minCo);
+  }
+  updateSummary();
+});
 
 /* PAY_MODE must exist before the first updateSummary() below —
    refreshPayModeAmounts() reads it, and a `let` further down would

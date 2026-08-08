@@ -79,6 +79,44 @@
 }
 #cbp-vl video.cbp-show { opacity: 1; }
 
+/*  Desktop letterbox  ────────────────────────────────────────────────
+    Every payment video is shot portrait (602x1072 … 1168x1728). On a
+    landscape viewport, object-fit:cover scales them to fill the width
+    and crops away almost the entire frame — the guest sees a sliver
+    (an eye, a shoulder) instead of the scene. Mobile is portrait so it
+    was never visible there.
+
+    On wider-than-tall viewports the video is CONTAINed so the whole
+    frame shows, and the already-loaded poster is reused as a blurred,
+    over-scaled backdrop to fill the sides. No extra video decode, no
+    black pillarbox.                                                     */
+@media (min-aspect-ratio: 1/1) {
+  #cbp-vl::before {
+    content: '';
+    position: absolute; inset: -8%;
+    background-image: inherit;
+    background-size: cover;
+    background-position: center;
+    filter: blur(42px) saturate(1.2) brightness(.5);
+    transform: scale(1.15);
+    z-index: 0;
+  }
+  #cbp-vl video {
+    object-fit: contain;
+    object-position: center;
+    z-index: 1;
+  }
+  /* The layer's own cover-painted poster would show through unblurred
+     around the contained video, so hide it behind the ::before wash. */
+  #cbp-vl { background-color: #0b0b10; }
+}
+
+/* Very tall/narrow desktop windows behave like mobile — keep cover. */
+@media (min-aspect-ratio: 1/1) and (max-width: 720px) {
+  #cbp-vl video { object-fit: cover; }
+  #cbp-vl::before { display: none; }
+}
+
 /* ── cinematic grain overlay ── */
 #cbp-root::after {
   content: '';
