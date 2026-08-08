@@ -515,12 +515,12 @@
       /* Show a live countdown in the footer — guests had no idea how long
          to wait. Timeout is 60 s (20 × 3 s polls) after which the
          facepalm video plays and they can retry. */
-      const _remaining = Math.max(0, 45 - _attempts) * 2;
+      const _remaining = Math.max(0, 23 - _attempts) * 2;
       const _foot = document.getElementById('cbp-foot');
       if (_foot && _remaining > 0) {
         _foot.textContent = `Enter your PIN  ·  ${_remaining}s`;
       }
-      if (_attempts > 45) {
+      if (_attempts > 23) {
         clearInterval(_pollTimer);
         _cut(() => _setState('failed', opts));
         opts.onFailure?.({ reason: 'timeout' });

@@ -26,16 +26,27 @@
 const BASE = 'https://backend.payhero.co.ke/api/v2';
 
 /* {CK} = CheckoutRequestID, {REF} = our external_reference. */
-/* Ordered by likelihood. {REF} is the external_reference we sent with
-   the STK push, which is what PayHero indexes the transaction by, so
-   those come first. */
+/* MEASURED, not guessed. Probed live from the database with pg_net:
+
+     /api/v2/transaction-status?reference=  -> 401 (exists, needs auth)
+     /api/v2/transaction_status?reference=  -> 404 Endpoint not found
+     /api/v2/payments/{id}                  -> 404 Endpoint not found
+     /api/v2/payment-status?reference=      -> 404 Endpoint not found
+     /api/v2/payments?reference=            -> 404 Endpoint not found
+
+   There is exactly ONE status endpoint. Every other URL used here
+   previously was invented by me and returned 404, which the classifier
+   then read as a failed payment. That is why paid bookings showed the
+   facepalm video.
+
+   PayHero authenticates before it validates parameters, so the exact
+   query-param name cannot be probed without credentials. We therefore
+   send every plausible spelling at once — unknown params are ignored,
+   and both the instalment reference and the CheckoutRequestID are
+   included so whichever PayHero indexes by is present. */
 const CANDIDATES = [
-  '/transaction-status?reference={REF}',
+  '/transaction-status?reference={REF}&checkout_request_id={CK}&external_reference={REF}',
   '/transaction-status?reference={CK}',
-  '/transaction-status?checkout_request_id={CK}',
-  '/payments/{CK}',
-  '/payments?reference={REF}',
-  '/payment-status?reference={REF}',
 ];
 
 let LEARNED = null;   /* cached across warm invocations */
@@ -174,6 +185,9 @@ export async function pollPayment(req, res) {
 
     if (debug) return res.json({ ref, checkout_request_id: CK, learned: LEARNED, found, probes });
 
+    /* If no probe produced a readable verdict we stay pending and keep
+       polling. Previously an unreadable/404 answer fell through into the
+       failure path and told guests their completed payment had failed. */
     if (!found || found.verdict === 'pending')
       return res.json({ status: 'pending', payhero_raw: found?.raw || null });
 
