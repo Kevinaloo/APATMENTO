@@ -155,7 +155,7 @@
   position: absolute; inset: 0; z-index: 50;
   background: #050505;
   opacity: 0; pointer-events: none;
-  transition: opacity .38s ease;
+  transition: opacity .5s cubic-bezier(.4,0,.2,1);
 }
 #cbp-curtain.on { opacity: 1; pointer-events: all; }
 
@@ -198,6 +198,35 @@
 }
 
 /* ── panels ── */
+/*  Readability scrim  ─────────────────────────────────────────────
+    The copy sits directly on footage that ranges from a bright pavement
+    to a dark field, so neither a light nor a dark text colour worked on
+    its own. A soft radial wash anchored behind the panel lifts contrast
+    everywhere without hiding the video — the scene stays fully visible
+    around the edges.                                                   */
+.cbp-panel.on::before {
+  content: '';
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 168%; height: 148%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(ellipse at center,
+    rgba(6,6,12,.80) 0%,
+    rgba(6,6,12,.66) 34%,
+    rgba(6,6,12,.34) 62%,
+    rgba(6,6,12,0)   82%);
+  z-index: -1;
+  pointer-events: none;
+}
+.cbp-panel { position: relative; }
+
+/* Every line also carries its own shadow so it survives a bright frame. */
+.cbp-proc-title, .cbp-success-title, .cbp-fail-title,
+.cbp-amount, .cbp-amount-desc, .cbp-success-msg, .cbp-fail-msg,
+.cbp-proc-sub, #cbp-foot { color: rgba(255,255,255,.86);
+  text-shadow: 0 1px 3px rgba(0,0,0,.9), 0 3px 18px rgba(0,0,0,.75);
+}
+
 .cbp-panel {
   display: none; flex-direction: column;
   align-items: center; text-align: center;
@@ -224,7 +253,7 @@
   color: #fff; letter-spacing: 1px;
   line-height: 1;
 }
-.cbp-amount-desc {
+.cbp-amount-desc { color: rgba(255,255,255,.92);
   font-size: 8.5px; letter-spacing: 3px;
   text-transform: uppercase;
   color: rgba(255,255,255,.38);
@@ -300,7 +329,7 @@
 }
 
 /* ── footer ── */
-#cbp-foot {
+#cbp-foot { color: rgba(255,255,255,.86);
   font-size: 7.5px; letter-spacing: 3px;
   text-transform: uppercase;
   color: rgba(255,255,255,.18);
@@ -380,7 +409,6 @@
         </div>
 
         <div class="cbp-panel" id="cbp-success">
-          <div class="cbp-success-glyph">✦</div>
           <div class="cbp-success-title">You're booked.</div>
           <div class="cbp-success-msg">Pack light. Arrive boldly.<br>Your Cabana awaits.</div>
           <button class="cbp-btn" id="cbp-done">Continue →</button>
@@ -448,10 +476,37 @@
   }
 
   /* ── State transitions ──────────────────────────────────────────── */
+  /* Hold the curtain until the incoming video can actually paint.
+     Previously it lifted on a fixed 380 ms timer while the new clip was
+     still decoding, so the swing/facepalm/suitcase change flashed the
+     old frame, a black gap, or a stalled first frame. Now the curtain
+     stays down until the next <video> reports it can play (or 2.2 s
+     passes, so a slow network can never strand the guest). */
   function _cut(fn) {
     const c = document.getElementById('cbp-curtain');
     c.classList.add('on');
-    setTimeout(() => { fn(); c.classList.remove('on'); }, 380);
+
+    setTimeout(() => {
+      fn();
+
+      const vids = [document.getElementById('cbp-va'),
+                    document.getElementById('cbp-vb')].filter(Boolean);
+      let done = false;
+      const lift = () => {
+        if (done) return;
+        done = true;
+        vids.forEach(v => v.removeEventListener('canplay', lift));
+        /* One frame of settle so the poster/video swap is committed
+           before the curtain starts fading. */
+        requestAnimationFrame(() => setTimeout(() => c.classList.remove('on'), 60));
+      };
+
+      const ready = vids.some(v => v.readyState >= 3 && v.classList.contains('cbp-show'));
+      if (ready) return lift();
+
+      vids.forEach(v => v.addEventListener('canplay', lift, { once: true }));
+      setTimeout(lift, 2200);          // hard fallback
+    }, 380);
   }
 
   let _pollTimer = null;
@@ -479,6 +534,31 @@
     }
 
     if (state === 'success') {
+      /* The suitcase plays whenever money cleared, but the words must
+         match reality: KES 10 against a KES 575 deposit is NOT a booking.
+         d.status comes straight from the poller's state machine. */
+      const st = (opts && opts.result && opts.result.status) || '';
+      const tEl = document.querySelector('.cbp-success-title');
+      const mEl = document.querySelector('.cbp-success-msg');
+      if (tEl && mEl) {
+        if (st === 'part_paid') {
+          const r  = opts.result || {};
+          const gap = Math.max(0, Math.round((r.deposit_required || 0) - (r.amount_paid || 0)));
+          tEl.textContent = 'Payment received.';
+          mEl.innerHTML   = 'KES ' + gap.toLocaleString() + ' more secures your dates.<br>'
+                          + 'Not booked yet.';
+        } else if (st === 'confirmed_balance_due') {
+          const r  = opts.result || {};
+          const bal = Math.max(0, Math.round((r.grand_total || 0) - (r.amount_paid || 0)));
+          tEl.textContent = "You're booked.";
+          mEl.innerHTML   = 'KES ' + bal.toLocaleString() + ' due before check-in.<br>'
+                          + 'Your code unlocks once settled.';
+        } else {
+          tEl.textContent = "You're booked.";
+          mEl.innerHTML   = 'Pack light. Arrive boldly.<br>Your Cabana awaits.';
+        }
+      }
+
       _loadVideo(V.suitcase, true); /* loop so it never freezes on last frame */
       veil.classList.remove('cbp-heavy');
       _panel('cbp-success');
@@ -541,6 +621,7 @@
         if (d.status === 'paid' || d.status === 'paid_pending_checkin'
             || d.status === 'confirmed_balance_due' || d.status === 'part_paid') {
           clearInterval(_pollTimer);
+          opts.result = d;
           _cut(() => _setState('success', opts));
           opts.onSuccess?.(d);
         } else if (d.status === 'failed') {
