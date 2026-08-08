@@ -513,17 +513,34 @@
       if (_foot && _remaining > 0) {
         _foot.textContent = `Enter your PIN  ·  ${_remaining}s`;
       }
-      if (_attempts > 20) {
+      if (_attempts > 30) {
         clearInterval(_pollTimer);
         _cut(() => _setState('failed', opts));
         opts.onFailure?.({ reason: 'timeout' });
         return;
       }
       try {
+        /* Primary: poll the instalment ledger row (-P<n> reference). */
+        const primaryRef = opts.pollRef || opts.reference;
         const r = await fetch(
-          `/api/check-payment-status?table=${opts.table}&reference=${encodeURIComponent(opts.pollRef || opts.reference)}`
+          `/api/check-payment-status?table=${opts.table}&reference=${encodeURIComponent(primaryRef)}`
         );
-        const d = await r.json();
+        let d = await r.json();
+
+        /* Fallback after 15 s: if the ledger row is still pending, also
+           check the booking table directly. PayHero may have sent the callback
+           but the ledger write failed (e.g. a Vercel env var missing causes a
+           500 and PayHero stops retrying). If the booking is already
+           paid/confirmed we show success regardless. */
+        if (_attempts >= 5 && (d.status === 'pending' || !d.status)) {
+          const br = await fetch(
+            `/api/check-payment-status?table=${opts.table}&reference=${encodeURIComponent(opts.reference)}`
+          ).then(r2 => r2.json()).catch(() => ({}));
+          if (br.status === 'paid_pending_checkin' || br.status === 'paid' ||
+              br.status === 'confirmed_balance_due' || br.status === 'part_paid') {
+            d = { ...br, _fromBooking: true };
+          }
+        }
         /* 'paid' = this instalment cleared. The booking may still be
            part_paid or confirmed_balance_due overall; that is a state for
            the receipt to explain, not a payment failure. */

@@ -116,6 +116,19 @@ body{overflow-x:hidden;}
 .tb-cab-wm{height:26px;width:auto;display:block;}
 .tb-logo{height:26px;width:auto;}
 
+/* Custom amount input — must look like a field you type into. */
+.pm-custom-label{font-size:12.5px;font-weight:700;color:var(--ink-soft);margin-bottom:8px;
+  display:flex;align-items:center;gap:7px;}
+.pm-custom-label::before{content:'KES';font-size:10px;font-weight:800;letter-spacing:.06em;
+  color:#fff;background:var(--violet);padding:2px 7px;border-radius:100px;}
+.pm-custom-input{display:flex;align-items:center;border:2px solid var(--violet);border-radius:14px;
+  background:#fff;overflow:hidden;transition:box-shadow .18s ease;}
+.pm-custom-input:focus-within{box-shadow:0 0 0 3px rgba(123,47,247,.14);}
+.pm-custom-pfx{padding:0 10px 0 14px;font-size:16px;font-weight:700;color:var(--ink-faint);}
+.pm-custom-input input{flex:1;border:none;outline:none;padding:14px 14px 14px 2px;
+  font-size:18px;font-weight:800;color:var(--ink);font-family:var(--font-data);}
+.pm-custom-hint{font-size:11.5px;color:var(--ink-faint);margin-top:7px;line-height:1.5;}
+
 /* Pay mode — two selectable cards, not radio rows. */
 .pay-mode{margin:20px 0 6px;}
 .pay-mode-lbl{font-size:11px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;
@@ -281,7 +294,7 @@ body{overflow-x:hidden;}
    smaller amounts cost more to collect than they bring in.
    `var` (not const) so init paths that run before this point cannot
    hit a temporal dead zone. Server re-validates in _payment-rules.js. */
-var MIN_TXN = 50;
+var MIN_TXN = 10;
 
 /* ══ SUPABASE ══ */
 const SUPABASE_URL      = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
@@ -451,15 +464,17 @@ function ensureCustomField() {
   if (!warn || document.getElementById('pm-custom')) return;
   const wrap = document.createElement('div');
   wrap.id = 'pm-custom-wrap';
-  wrap.style.cssText = 'margin-top:12px';
+  wrap.style.cssText = 'margin-top:16px';
   wrap.innerHTML =
-    '<label style="display:block;font-size:12px;font-weight:700;color:#5A5E70;margin-bottom:6px">'
-    + 'Paying a different amount? (optional)</label>'
-    + '<input id="pm-custom" type="number" inputmode="numeric" min="' + MIN_TXN + '" step="1" '
-    + 'placeholder="Leave blank to pay the 25% deposit" '
-    + 'style="width:100%;padding:11px 13px;border:1px solid #E5E7EB;border-radius:10px;'
-    + 'font-size:15px;font-weight:700;outline:none">'
-    + '<div id="pm-shortfall" style="margin-top:8px;font-size:12.5px;line-height:1.55"></div>';
+    '<div class="pm-custom-label">Pay a different amount</div>'
+    + '<div class="pm-custom-input">'
+    + '  <span class="pm-custom-pfx">KES</span>'
+    + '  <input id="pm-custom" type="number" inputmode="numeric" min="' + MIN_TXN + '" step="1" '
+    + '    placeholder="e.g. 200, 500, 1000" aria-label="Amount to pay"/>'
+    + '</div>'
+    + '<div class="pm-custom-hint">Any amount from KES ' + MIN_TXN + ' upward — we\'ll track your balance. '
+    + 'Leave empty to pay the 25% deposit.</div>'
+    + '<div id="pm-shortfall" style="margin-top:10px;font-size:12.5px;line-height:1.55"></div>';
   warn.appendChild(wrap);
   document.getElementById('pm-custom').addEventListener('input', () => {
     renderShortfall();

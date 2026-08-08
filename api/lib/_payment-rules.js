@@ -30,7 +30,7 @@ export const DEPOSIT_PCT = 0.25;
    push costs more to collect than it brings in. This floor lets a guest
    still pay far below the 25% deposit while keeping each individual
    transaction economic. Tune via MIN_TXN_KES without a code change. */
-export const MIN_TXN = Number(process.env.MIN_TXN_KES || 50);
+export const MIN_TXN = Number(process.env.MIN_TXN_KES || 10);
 
 /* Unconfirmed part-payments are a refund liability: the guest's money is
    held but no room is blocked. Surfaced for the sweeper job. */

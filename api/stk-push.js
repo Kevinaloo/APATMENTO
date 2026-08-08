@@ -176,18 +176,16 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Could not record payment attempt' });
     }
 
-    // ── Callback (pinned + secret) ──────────────────────────────────
-    const origin = (process.env.PUBLIC_BASE_URL || 'https://www.apatmento.space').replace(/\/+$/, '');
-    const token  = process.env.PAYHERO_CALLBACK_TOKEN;
-    let callbackUrl = origin + '/api/stk-callback';
+    /* PRIMARY callback → Supabase Edge Function (payhero-callback).
+       WHY: All 6 test payments sat at status:pending because the Vercel
+       /api/stk-callback was returning 500s and PayHero stops retrying
+       after 3 failures. The Edge Function runs on Supabase infrastructure,
+       always has the service role key, is co-located with the DB. */
+    const supaProject = (supabaseUrl || 'https://gfwgbgdvxtocwhilrtdw.supabase.co')
+      .replace('https://', '').split('.')[0];
+    const token = process.env.PAYHERO_CALLBACK_TOKEN;
+    let callbackUrl = `https://${supaProject}.supabase.co/functions/v1/payhero-callback`;
     if (token) callbackUrl += '?t=' + encodeURIComponent(token);
-    else console.warn('[stk-push] PAYHERO_CALLBACK_TOKEN unset — callbacks are UNAUTHENTICATED');
-
-    if (/vercel\.app|ngrok|localhost|127\.0\.0\.1/i.test(callbackUrl)) {
-      return res.status(500).json({
-        error: 'Payment callback misconfigured. Set PUBLIC_BASE_URL to the production domain.',
-      });
-    }
 
     console.log('[stk-push] charging', chargeAmount, 'of', grandTotal,
                 '(paid so far', amountPaid + ')', 'ref', payRef);
