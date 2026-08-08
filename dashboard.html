@@ -34,6 +34,36 @@
   }
   #cbp-splash video.cbp-rdy { opacity: 1; }
 
+  /*  Desktop letterbox  ───────────────────────────────────────────────
+      All Cabana videos are shot portrait (bedroom 1168x1744, sofa
+      648x1152, oldguy 602x1072). On a landscape viewport
+      object-fit:cover scales them to fill the width and crops away most
+      of the frame, so desktop users saw a sliver of ceiling or an eye.
+      Portrait phones matched the source, which is why it only ever
+      looked wrong on desktop.
+
+      Above a 1/1 aspect ratio the frame is CONTAINed in full, and the
+      poster already loaded for the first paint is reused as a blurred,
+      over-scaled backdrop so the sides are filled rather than black. */
+  @media (min-aspect-ratio: 1/1) {
+    #cbp-splash::before {
+      content: '';
+      position: absolute; inset: -8%;
+      background-image: var(--cbp-poster);
+      background-size: cover; background-position: center;
+      filter: blur(46px) saturate(1.2) brightness(.46);
+      transform: scale(1.16);
+      z-index: 0;
+    }
+    #cbp-splash video { object-fit: contain; object-position: center; z-index: 1; }
+    #cbp-splash { background-color: #0b0b10; }
+  }
+  @media (min-aspect-ratio: 1/1) and (max-width: 720px) {
+    #cbp-splash video { object-fit: cover; }
+    #cbp-splash::before { display: none; }
+  }
+
+
   /* 4-stop cinematic gradient — top dark for brand, clear middle, dark bottom for CTA */
   #cbp-splash-veil {
     position: absolute; inset: 0; z-index: 1;
@@ -236,6 +266,8 @@
     if (!available.length) available = picks;
     var pick = available[Math.floor(Math.random() * available.length)];
     sessionStorage.setItem('cbp2_last_pick', pick.src);
+    /* Feed the poster to the blurred desktop backdrop above. */
+    try{document.documentElement.style.setProperty('--cbp-poster','url("'+pick.poster+'")');}catch(e){}
 
     var tags = [
       'Your ex moved on. Your landlord raised rent.\nAt least Cabana loves you.',

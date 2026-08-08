@@ -1282,8 +1282,34 @@ body.intro-lock{overflow:hidden;height:100vh;}
     var pick = opts[Math.floor(Math.random() * opts.length)];
     var v = document.getElementById('cbp-hero-vid');
     v.src = pick;
+    /* Feed the matching still to the blurred desktop backdrop. */
+    var poster = pick.replace('cabana-vid-','cabana-poster-').replace('.mp4','.jpg');
+    v.poster = poster;
+    try{document.documentElement.style.setProperty('--cbp-hero-poster','url("'+poster+'")');}catch(e){}
     v.play().catch(function(){});
   })();
+  </script>
+  <style>
+  /*  Desktop letterbox  ───────────────────────────────────────────────
+      Both hero sources are portrait (bedroom 1168x1744, sofa 648x1152).
+      object-fit:cover on a landscape viewport cropped away most of the
+      frame, so desktop showed a sliver while portrait phones looked
+      correct. Contain the frame and fill the sides with a blurred,
+      over-scaled copy of the same still.                              */
+  @media (min-aspect-ratio: 1/1){
+    #cbp-hero-bg::before{content:'';position:absolute;inset:-8%;
+      background-image:var(--cbp-hero-poster);background-size:cover;
+      background-position:center;filter:blur(46px) saturate(1.2) brightness(.5);
+      transform:scale(1.16);z-index:0;}
+    #cbp-hero-vid{object-fit:contain !important;object-position:center;z-index:1;}
+    #cbp-hero-bg{background-color:#0b0b10;}
+  }
+  @media (min-aspect-ratio: 1/1) and (max-width:720px){
+    #cbp-hero-vid{object-fit:cover !important;}
+    #cbp-hero-bg::before{display:none;}
+  }
+  </style>
+  <script>
   </script>
   <div class="hero-stars" id="hero-stars" style="position:relative;z-index:2;"></div>
   <div class="hero-glyphs" id="hero-glyphs" style="position:relative;z-index:2;"></div>
