@@ -555,12 +555,24 @@ async function loadListings(){
     const av=document.getElementById('tb-av');
     if(av)av.textContent=(session.user.user_metadata?.first_name||session.user.email||'P')[0].toUpperCase();
 
+    /* SELECT * — naming columns here previously failed the whole query
+       with HTTP 400 whenever one was absent, which looked identical to
+       "you have no listings". Sorting is client-side for the same reason. */
     const{data,error}=await sb.from('listings')
-      .select('id,title,service,type,location,city,area,price_night,currency,status,avg_rating,review_count,booking_count,photos,is_active,created_at')
-      .eq('partner_id',uid)
-      .order('created_at',{ascending:false});
+      .select('*')
+      .eq('partner_id',uid);
 
-    allListings=data||[];
+    if(error){
+      console.error('[partner-listings] QUERY FAILED —',error.message,error);
+      const host=document.getElementById('list-wrap')||document.body;
+      const warn=document.createElement('div');
+      warn.style.cssText='margin:16px 0;padding:12px 14px;border-radius:10px;background:#FEF2F2;color:#B91C1C;font-size:13px;font-weight:600';
+      warn.textContent='Could not load your listings: '+error.message;
+      host.prepend(warn);
+    }
+
+    allListings=(data||[]).sort((a,b)=>
+      new Date(b.created_at||0)-new Date(a.created_at||0));
     updateStats(allListings);
     renderListings(allListings);
   }catch(e){console.warn(e);}

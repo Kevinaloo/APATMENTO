@@ -3358,10 +3358,17 @@ async function renderSingleDashboard(listing){
   try{
     const [er,lr] = await Promise.all([
       sb.from(bookingTable).select('grand_total,service_fee').eq('status','paid_pending_checkin'),
-      sb.from('listings').select('id,title,name,status,price_night').eq('partner_id',CURRENT_USER.id),
+      /* SELECT * — this previously named a `name` column that the
+         publish flow never writes. PostgREST 400s the whole query on an
+         unknown column, and supabase-js returns {data:null,error} rather
+         than throwing, so the catch below never fired and the partner
+         simply saw zero listings. */
+      sb.from('listings').select('*').eq('partner_id',CURRENT_USER.id),
     ]);
     const paid = er.data||[]; count=paid.length;
     earned = paid.reduce((a,b)=>a+Number(b.grand_total||0)-Number(b.service_fee||0),0);
+    if(lr.error) console.error('[dashboard] partner listings query failed —',lr.error.message,lr.error);
+    if(er.error) console.error('[dashboard] bookings query failed —',er.error.message,er.error);
     listingCount = (lr.data||[]).length;
     var listings = lr.data||[];
   }catch(e){ var listings=[]; }

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Listings Diagnostic — Cabana</title>
+<style>
+  :root{--ink:#0F1117;--faint:#6B7280;--line:#E5E7EB;--ok:#0D9467;--bad:#DC2626;--warn:#B45309;--violet:#7B2FF7}
+  *{box-sizing:border-box}
+  body{margin:0;padding:28px 20px 80px;font:14px/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);background:#FAFAFB;max-width:1000px;margin-inline:auto}
+  h1{font-size:22px;margin:0 0 4px}
+  .sub{color:var(--faint);font-size:13px;margin-bottom:24px}
+  section{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin-bottom:16px}
+  h2{font-size:15px;margin:0 0 12px;letter-spacing:.01em}
+  code,pre{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px}
+  pre{background:#F6F7F9;border-radius:8px;padding:12px;overflow:auto;margin:0}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th,td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-weight:700;color:var(--faint);font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+  .ok{color:var(--ok);font-weight:700}
+  .bad{color:var(--bad);font-weight:700}
+  .warn{color:var(--warn);font-weight:700}
+  .pill{display:inline-block;padding:1px 8px;border-radius:100px;font-size:11px;font-weight:700;background:#F3F4F6}
+  .muted{color:var(--faint)}
+  button{background:var(--violet);color:#fff;border:0;border-radius:10px;padding:10px 18px;font-weight:700;cursor:pointer;font-size:13px}
+  button:disabled{opacity:.5;cursor:default}
+  .grid2{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px}
+  .col{display:flex;justify-content:space-between;gap:8px;padding:5px 9px;border-radius:7px;background:#F6F7F9}
+  .mono{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;word-break:break-all}
+</style>
+</head>
+<body>
+
+<h1>Listings Diagnostic</h1>
+<div class="sub">Read-only. Answers: which columns exist, how many listings are visible, and which account owns each one.</div>
+
+<section>
+  <button id="run">Run diagnostic</button>
+  <span id="state" class="muted" style="margin-left:10px"></span>
+</section>
+
+<section id="s-auth" hidden><h2>1 · Who am I signed in as</h2><div id="auth"></div></section>
+<section id="s-cols" hidden><h2>2 · Column existence on <code>listings</code></h2><div id="cols"></div></section>
+<section id="s-queries" hidden><h2>3 · The three real queries in your app</h2><div id="queries"></div></section>
+<section id="s-rows" hidden><h2>4 · Every visible listing &amp; its owner</h2><div id="rows"></div></section>
+<section id="s-verdict" hidden><h2>5 · Verdict</h2><div id="verdict"></div></section>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPA_URL = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
+
+/* Every column referenced anywhere in the app for `listings`. */
+const PROBE = ['id','title','name','service','type','listing_type','property_type','location','city','area','country','street',
+ 'price_night','price_per_night','price_week','price_month','currency','deposit','min_nights',
+ 'beds','baths','bedrooms','bathrooms','max_guests','floor','sqm','amenities','description','photos',
+ 'status','is_active','internal_score','partner_id','host_id','created_at',
+ 'avg_rating','review_count','booking_count','days_listed','source','extras',
+ 'contact_whatsapp','contact_phone','contact_email','latitude','longitude'];
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let sb;
+
+async function rest(qs){
+  const r = await fetch(SUPA_URL+'/rest/v1/listings?'+qs,
+    {headers:{apikey:SUPA_KEY,Authorization:'Bearer '+SUPA_KEY,Prefer:'count=exact'}});
+  const txt = await r.text();
+  let body; try{ body = JSON.parse(txt); }catch{ body = txt; }
+  return {ok:r.ok, status:r.status, body, count:r.headers.get('content-range')};
+}
+
+$('run').onclick = async () => {
+  $('run').disabled = true; $('state').textContent = 'running…';
+
+  /* ── 1. Auth ─────────────────────────────────────────────── */
+  sb = supabase.createClient(SUPA_URL, SUPA_KEY);
+  const {data:{session}} = await sb.auth.getSession();
+  const uid = session?.user?.id || null;
+  $('s-auth').hidden = false;
+  $('auth').innerHTML = uid
+    ? `Signed in as <b>${esc(session.user.email||'—')}</b><br><span class="mono">user id: ${esc(uid)}</span>
+       <div class="muted" style="margin-top:6px">Listings only appear under “listings I manage” if <code>partner_id</code> equals this id.</div>`
+    : `<span class="warn">Not signed in.</span> Sign in first, then re-run — otherwise section 4 can’t compare ownership.`;
+
+  /* ── 2. Probe each column individually ───────────────────── */
+  const missing = [], present = [];
+  for (const c of PROBE){
+    const r = await rest('select='+c+'&limit=1');
+    (r.ok ? present : missing).push(c);
+  }
+  $('s-cols').hidden = false;
+  $('cols').innerHTML =
+    (missing.length
+      ? `<p class="bad">${missing.length} column(s) DO NOT exist on the table:</p>
+         <pre>${esc(missing.join('\n'))}</pre>
+         <p class="muted">Any query selecting one of these returns HTTP 400 and the whole query fails — not just that field.</p>`
+      : `<p class="ok">All ${present.length} probed columns exist.</p>`)
+    + `<div class="grid2" style="margin-top:12px">` +
+      PROBE.map(c=>`<div class="col"><span class="mono">${esc(c)}</span>${
+        missing.includes(c)?'<span class="bad">missing</span>':'<span class="ok">ok</span>'}</div>`).join('')
+    + `</div>`;
+
+  /* ── 3. Replay the three real app queries verbatim ────────── */
+  const QUERIES = [
+    {name:'dashboard.html — “Book a Space” grid', where:'status=eq.active&is_active=eq.true',
+     sel:'id,title,location,area,city,price_night,price_per_night,photos,beds,max_guests,type,property_type'},
+    {name:'apartments.html — “Find your stay”', where:'is_active=eq.true',
+     sel:'id,title,location,city,price_night,beds,baths,max_guests,amenities,description,avg_rating,review_count,booking_count,days_listed,internal_score,status,photos,type,property_type,area,partner_id'},
+    {name:'partner-listings.html — “listings I manage”', where: uid?`partner_id=eq.${uid}`:'is_active=eq.true',
+     sel:'id,title,service,type,location,city,area,price_night,currency,status,avg_rating,review_count,booking_count,photos,is_active,created_at'},
+    {name:'dashboard.html — partner panel count', where: uid?`partner_id=eq.${uid}`:'is_active=eq.true',
+     sel:'id,title,name,status,price_night'},
+  ];
+  let qh = '<table><tr><th>Query</th><th>HTTP</th><th>Rows</th><th>Error</th></tr>';
+  for (const q of QUERIES){
+    const r = await rest(`${q.where}&select=${q.sel}&limit=50`);
+    const n = Array.isArray(r.body) ? r.body.length : '—';
+    qh += `<tr><td>${esc(q.name)}</td>
+      <td class="${r.ok?'ok':'bad'}">${r.status}</td>
+      <td>${r.ok?n:'0'}</td>
+      <td class="mono">${r.ok?'':esc(r.body?.message||r.body?.hint||JSON.stringify(r.body).slice(0,160))}</td></tr>`;
+  }
+  $('s-queries').hidden = false;
+  $('queries').innerHTML = qh + '</table>';
+
+  /* ── 4. Ownership map (select * never 400s on missing cols) ─ */
+  const all = await rest('select=*&order=created_at.desc&limit=200');
+  $('s-rows').hidden = false;
+  if (!all.ok){
+    $('rows').innerHTML = `<p class="bad">Could not read listings: ${esc(JSON.stringify(all.body))}</p>`;
+  } else {
+    const rows = all.body || [];
+    const mine = rows.filter(r=>uid && r.partner_id===uid).length;
+    const orphan = rows.filter(r=>!r.partner_id).length;
+    const owners = [...new Set(rows.map(r=>r.partner_id||'(null)'))];
+    $('rows').innerHTML =
+      `<p><b>${rows.length}</b> listing(s) visible ·
+        <b>${mine}</b> owned by you ·
+        <span class="${orphan?'bad':'muted'}"><b>${orphan}</b> with no owner (partner_id null)</span> ·
+        <b>${owners.length}</b> distinct owner id(s)</p>` +
+      '<table><tr><th>Title</th><th>service / type</th><th>status</th><th>is_active</th><th>partner_id (owner)</th></tr>' +
+      rows.map(r=>{
+        const own = r.partner_id ? (r.partner_id===uid?'<span class="ok">YOU</span>':'<span class="bad">other account</span>') : '<span class="bad">NULL — orphan</span>';
+        return `<tr><td><b>${esc(r.title||r.name||'(untitled)')}</b><br><span class="muted">${esc(r.area||r.location||'')}</span></td>
+          <td><span class="pill">${esc(r.service||'—')}</span> ${esc(r.type||'')}</td>
+          <td>${esc(r.status)}</td><td>${String(r.is_active)}</td>
+          <td class="mono">${esc(r.partner_id||'—')}<br>${own}</td></tr>`;
+      }).join('') + '</table>';
+  }
+
+  /* ── 5. Verdict ──────────────────────────────────────────── */
+  $('s-verdict').hidden = false;
+  const bullets = [];
+  if (missing.length) bullets.push(`<li class="bad">Missing columns (<code>${esc(missing.join(', '))}</code>) are being selected by real queries — that is why pages show zero results.</li>`);
+  if (all.ok){
+    const rows = all.body||[];
+    if (uid && rows.length && !rows.some(r=>r.partner_id===uid))
+      bullets.push('<li class="bad">None of the visible listings carry your user id in <code>partner_id</code> — they were published under a different account (or with none).</li>');
+    if (rows.some(r=>!r.partner_id))
+      bullets.push('<li class="bad">Some listings have <code>partner_id = null</code> — published while signed out. They belong to nobody and can never appear in a partner dashboard.</li>');
+  }
+  if (!bullets.length) bullets.push('<li class="ok">No schema or ownership faults detected.</li>');
+  $('verdict').innerHTML = '<ul>'+bullets.join('')+'</ul>';
+
+  $('state').textContent = 'done'; $('run').disabled = false;
+};
+</script>
+</body>
+</html>

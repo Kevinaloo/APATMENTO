@@ -22,6 +22,24 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
+  /* ── Authenticate the callback ──────────────────────────────────────
+     Without this, anyone who can guess a reference could POST
+     {status:'SUCCESS', external_reference:'APT-…'} and mark a booking
+     paid without paying. PayHero echoes back the exact callback_url we
+     registered in stk-push, so a genuine callback carries this token
+     and a forged one cannot.                                          */
+  const expectedToken = process.env.PAYHERO_CALLBACK_TOKEN;
+  if (expectedToken) {
+    const supplied = (req.query && req.query.t) || '';
+    if (supplied !== expectedToken) {
+      console.error('[stk-callback] REJECTED — bad or missing token from',
+                    req.headers['x-forwarded-for'] || 'unknown');
+      return res.status(401).json({ error: 'unauthorized' });
+    }
+  } else {
+    console.warn('[stk-callback] PAYHERO_CALLBACK_TOKEN unset — accepting UNAUTHENTICATED callbacks');
+  }
+
   try {
     const payload = req.body;
     console.log('PayHero callback received:', JSON.stringify(payload));
@@ -68,7 +86,8 @@ export default async function handler(req, res) {
     if (externalReference.startsWith('BAL-')) {
       if (isSuccess) {
         const balRes = await fetch(
-          `${supabaseUrl}/rest/v1/apartment_bookings?balance_reference=eq.${externalReference}`,
+          `${supabaseUrl}/rest/v1/apartment_bookings?balance_reference=eq.${encodeURIComponent(externalReference)}`
+            + `&balance_paid=is.false`,
           {
             method: 'PATCH',
             headers: {
@@ -114,8 +133,14 @@ export default async function handler(req, res) {
     const newStatus = isSuccess ? 'paid_pending_checkin' : 'failed';
 
     // ── Update booking status ────────────────────────────────────────
+    /* `status=neq.paid_pending_checkin` makes this idempotent: PayHero
+       retries a callback until it gets a 200, and without this filter a
+       second delivery would re-return the row and re-fire the rewards
+       award, referral commission and agent attribution below. A repeat
+       now updates 0 rows, so those side effects run exactly once. */
     const updateRes = await fetch(
-      `${supabaseUrl}/rest/v1/${table}?payment_reference=eq.${externalReference}`,
+      `${supabaseUrl}/rest/v1/${table}?payment_reference=eq.${encodeURIComponent(externalReference)}`
+        + `&status=neq.paid_pending_checkin`,
       {
         method:  'PATCH',
         headers: {

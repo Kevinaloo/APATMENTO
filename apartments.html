@@ -2521,15 +2521,42 @@ async function loadNativeListings() {
   }
   if (!sb) { console.warn('[listings] Supabase not ready'); return []; }
   try {
+    /* SELECT * on purpose — never name columns here.
+       PostgREST fails the ENTIRE query with HTTP 400 if a single selected
+       column is absent, which previously turned a schema drift into a
+       silent "0 stays available". `*` is immune to that. Ordering and
+       service filtering are done client-side below for the same reason. */
     const { data, error } = await sb.from('listings')
-      .select('id,title,location,city,price_night,beds,baths,max_guests,amenities,description,avg_rating,review_count,booking_count,days_listed,internal_score,status,photos,type,property_type,area,partner_id')
+      .select('*')
       .eq('is_active', true)
-      .order('internal_score', { ascending: false })
-      .limit(50);
-    if (error) { console.warn('[listings] Supabase error:', error.message); return []; }
+      .limit(60);
+
+    if (error) {
+      console.error('[listings] QUERY FAILED —', error.message, error);
+      window.__listingsError = error.message || 'query failed';
+      return [];
+    }
+    window.__listingsError = null;
     if (!data?.length) { console.log('[listings] No active listings returned'); return []; }
-    console.log('[listings] Loaded', data.length, 'listings');
-    return data.map(l => ({
+
+    /* Keep stays only. Prefer the explicit `service` tag; fall back to
+       type for legacy/admin-imported rows. Unknown → keep, so a new
+       property type can never silently empty the page. */
+    const STAY_TYPES = ['apartment','house','villa','studio','cottage','bungalow',
+                        'room','hotel','guesthouse','maisonette','penthouse','bnb'];
+    const isStay = l => {
+      const svc = String(l.service || '').toLowerCase().trim();
+      if (svc) return svc === 'stays';
+      const t = String(l.type || l.property_type || l.listing_type || '').toLowerCase();
+      return !t || STAY_TYPES.some(k => t.includes(k));
+    };
+
+    const stays = data.filter(isStay)
+      .sort((a, b) => (Number(b.internal_score) || 0) - (Number(a.internal_score) || 0))
+      .slice(0, 50);
+
+    console.log('[listings] Loaded', data.length, 'rows →', stays.length, 'stays');
+    return stays.map(l => ({
       id: `n_${l.id}`,
       _dbId: l.id,
       name: l.title || 'Untitled',
@@ -2619,8 +2646,8 @@ function renderCards(list) {
       <div class="card-body">
         <div class="card-top">
           <div class="card-loc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>${apt.location}</div>
-          <button class="card-heart${isWishlisted('${apt.id}')?\' on\':\'\'}" onclick="event.stopPropagation();toggleWishlist('${apt.id}',null);this.classList.toggle('on');this.textContent=this.classList.contains('on')?'❤️':'🤍';" aria-label="Save">
-          ${isWishlisted('${apt.id}')?'❤️':'🤍'}
+          <button class="card-heart${isWishlisted(apt.id)?' on':''}" onclick="event.stopPropagation();toggleWishlist('${apt.id}',null);this.classList.toggle('on');this.textContent=this.classList.contains('on')?'❤️':'🤍';" aria-label="Save">
+          ${isWishlisted(apt.id)?'❤️':'🤍'}
         </button>
         </div>
         <h3 class="card-name">${apt.name}</h3>
@@ -2766,7 +2793,7 @@ function openDrawer(id) {
       </div>
       <div style="display:flex;gap:8px;align-items:center;">
         <button class="dl-wishlist-btn" title="Save to wishlist" onclick="toggleWishlist('${apt.id}',this)">
-          ${isWishlisted('${apt.id}')?'<svg viewBox="0 0 24 24" fill="#FF4D6D" stroke="#FF4D6D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'  :'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'}
+          ${isWishlisted(apt.id)?'<svg viewBox="0 0 24 24" fill="#FF4D6D" stroke="#FF4D6D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'  :'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'}
         </button>
         <button class="dl-book-btn" onclick="bookNow('${apt.id}')">Reserve →</button>
       </div>
