@@ -21,8 +21,11 @@
   if(!sb2)return;
   sb2.auth.getSession().then(function(res){
     if(!res.data.session){
-      sessionStorage.setItem('auth_next', location.href);
-      window.location.href='auth.html?next='+encodeURIComponent(location.pathname);
+      /* Full href, not pathname: the listing id, dates and price all
+         live in the query string, and losing them meant restarting the
+         booking from scratch after signing in. */
+      try{sessionStorage.setItem('auth_next', location.pathname+location.search);}catch(e){}
+      window.location.href='auth.html?next='+encodeURIComponent(location.pathname+location.search);
     }
   });
 })();
@@ -103,6 +106,57 @@ body{overflow-x:hidden;}
 .pay-secure{text-align:center;font-size:12px;color:var(--ink-faint);margin-top:14px;display:flex;align-items:center;justify-content:center;gap:6px;}
 .pay-secure svg{width:13px;height:13px;color:var(--mint-deep);}
 
+
+/* ── Restored + rebuilt: commit 0100fc9 truncated this stylesheet and
+      took the topbar logo sizing, the whole pay-mode block and .toast
+      with it. Without .tb-icon-sm the emblem rendered at natural size
+      and covered the page heading; without .pm-* the pay selector fell
+      back to bare radio buttons. ─────────────────────────────────── */
+.tb-icon-sm{height:28px;width:28px;object-fit:contain;flex-shrink:0;border-radius:7px;}
+.tb-cab-wm{height:26px;width:auto;display:block;}
+.tb-logo{height:26px;width:auto;}
+
+/* Pay mode — two selectable cards, not radio rows. */
+.pay-mode{margin:20px 0 6px;}
+.pay-mode-lbl{font-size:11px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--ink-faint);margin-bottom:11px;}
+.pm-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+@media(max-width:520px){.pm-grid{grid-template-columns:1fr;}}
+.pm-opt{position:relative;display:block;cursor:pointer;padding:15px 15px 14px;
+  border:1.5px solid var(--line-2);border-radius:16px;background:#fff;
+  transition:border-color .18s ease,box-shadow .18s ease,transform .18s ease;}
+.pm-opt:hover{border-color:var(--lilac-deep);transform:translateY(-1px);}
+.pm-opt.on{border-color:var(--violet);box-shadow:0 0 0 3px rgba(123,47,247,.11);}
+.pm-opt input{position:absolute;opacity:0;pointer-events:none;}
+.pm-t{font-weight:700;font-size:14px;color:var(--ink);letter-spacing:-.01em;}
+.pm-s{font-size:12px;color:var(--ink-faint);margin-top:3px;line-height:1.45;}
+.pm-amt{margin-top:10px;font-family:var(--font-data);font-size:19px;font-weight:800;
+  color:var(--ink);letter-spacing:-.02em;}
+.pm-opt.on .pm-amt{color:var(--violet);}
+.pm-tick{position:absolute;top:13px;right:13px;width:18px;height:18px;border-radius:50%;
+  border:1.5px solid var(--line-2);transition:all .18s ease;}
+.pm-opt.on .pm-tick{border-color:var(--violet);background:var(--violet);
+  box-shadow:inset 0 0 0 3px #fff;}
+.pm-warn{margin-top:12px;font-size:12.5px;line-height:1.6;color:var(--ink-soft);
+  background:var(--glass-2);border:1px solid var(--line);border-radius:14px;padding:13px 14px;}
+
+/* Map — draggable, but never reveals the exact address. */
+.map-wrap{position:relative;border-radius:var(--radius);overflow:hidden;
+  border:1px solid var(--line);box-shadow:var(--shadow-glass);}
+.map-note{position:absolute;left:12px;bottom:12px;z-index:500;display:flex;align-items:center;
+  gap:6px;padding:7px 11px;border-radius:100px;background:rgba(252,252,253,.93);
+  backdrop-filter:blur(10px);border:1px solid var(--line);font-size:11.5px;font-weight:650;
+  color:var(--ink-soft);pointer-events:none;}
+.map-reset{position:absolute;right:12px;bottom:12px;z-index:500;padding:7px 12px;border-radius:100px;
+  background:rgba(252,252,253,.93);backdrop-filter:blur(10px);border:1px solid var(--line);
+  font-size:11.5px;font-weight:700;color:var(--ink-soft);cursor:pointer;}
+.map-reset:hover{color:var(--violet);border-color:var(--violet);}
+
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(14px);z-index:9999;
+  background:var(--ink);color:#fff;padding:13px 20px;border-radius:14px;font-size:13.5px;
+  font-weight:600;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;
+  box-shadow:0 18px 50px rgba(10,10,20,.3);max-width:88vw;text-align:center;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 </style>
 </head>
 <body>
@@ -191,25 +245,23 @@ body{overflow-x:hidden;}
 
       <div class="pay-mode">
         <div class="pay-mode-lbl">How would you like to pay?</div>
-        <label class="pm-opt on" id="pm-full">
-          <input type="radio" name="paymode" value="full" checked onchange="setPayMode('full')"/>
-          <div>
-            <div class="pm-t">Pay in full now</div>
-            <div class="pm-s">Settled. Show your code at the door.</div>
-          </div>
-          <b id="pm-full-amt">KES 0</b>
-        </label>
-        <label class="pm-opt" id="pm-dep">
-          <input type="radio" name="paymode" value="deposit" onchange="setPayMode('deposit')"/>
-          <div>
-            <div class="pm-t">Deposit now, balance on arrival</div>
-            <div class="pm-s" id="pm-dep-sub">Hold the dates with a deposit. Pay the rest before you check in.</div>
-          </div>
-          <b id="pm-dep-amt">KES 0</b>
-        </label>
-        <div class="pm-warn" id="pm-warn" hidden>
-          ⚠ Your host's check-in code won't work until the balance is paid. Settle it in the app on arrival.
+        <div class="pm-grid">
+          <label class="pm-opt on" id="pm-full">
+            <input type="radio" name="paymode" value="full" checked onchange="setPayMode('full')"/>
+            <span class="pm-tick"></span>
+            <div class="pm-t">Pay in full</div>
+            <div class="pm-s">Settled — code at the door.</div>
+            <div class="pm-amt" id="pm-full-amt">KES 0</div>
+          </label>
+          <label class="pm-opt" id="pm-dep">
+            <input type="radio" name="paymode" value="deposit" onchange="setPayMode('deposit')"/>
+            <span class="pm-tick"></span>
+            <div class="pm-t">Pay a deposit</div>
+            <div class="pm-s" id="pm-dep-sub">25% now, balance before check-in.</div>
+            <div class="pm-amt" id="pm-dep-amt">KES 0</div>
+          </label>
         </div>
+        <div class="pm-warn" id="pm-warn" hidden></div>
       </div>
 
       <button class="pay-btn" id="pay-btn" onclick="startPayment()">
@@ -430,9 +482,54 @@ function refreshPayModeAmounts() {
   if (d) d.textContent = 'KES ' + dep.toLocaleString();
   const sub = document.getElementById('pm-dep-sub');
   if (sub) {
-    sub.textContent = 'Hold the dates for 25% of the total. Pay the rest before you check in.';
+    sub.textContent = '25% now, balance before check-in.';
   }
   if (PAY_MODE) setPayMode(PAY_MODE);
+}
+
+/* Shown when money cleared but the stay is not fully settled. Guests
+   must never be left guessing what their payment bought. */
+function showPartialResult(d) {
+  const total    = Number(d && d.grand_total) || 0;
+  const paid     = Number(d && d.amount_paid) || 0;
+  const deposit  = Math.round(total * 0.25);
+  const confirmed = paid >= deposit;
+  const wrap = document.createElement('div');
+  wrap.style.cssText='position:fixed;inset:0;z-index:9000;background:rgba(10,10,20,.62);'
+    +'backdrop-filter:blur(7px);display:flex;align-items:center;justify-content:center;padding:22px;';
+  wrap.innerHTML =
+    '<div style="background:var(--glass);border-radius:26px;padding:34px 28px;max-width:420px;'
+    +'width:100%;text-align:center;box-shadow:var(--shadow-lift)">'
+    + '<div style="font-size:40px;margin-bottom:12px">' + (confirmed?'🎉':'⏳') + '</div>'
+    + '<div style="font-family:var(--font-display);font-size:22px;font-weight:600;margin-bottom:10px">'
+    + (confirmed ? 'Booking confirmed' : 'Payment received') + '</div>'
+    + '<div style="font-size:13.5px;color:var(--ink-soft);line-height:1.65;margin-bottom:22px">'
+    + (confirmed
+        ? 'Your dates are held. <b>KES ' + Math.round(total-paid).toLocaleString() + '</b> remains — '
+          + 'your check-in code unlocks once the stay is paid in full.'
+        : 'We received <b>KES ' + Math.round(paid).toLocaleString() + '</b>. Add <b>KES '
+          + Math.round(deposit-paid).toLocaleString() + '</b> more to secure these dates. '
+          + 'Until then the booking is not confirmed.')
+    + '</div>'
+    + '<button onclick="window.location.href=\'my-bookings.html\'" style="width:100%;padding:15px;'
+    + 'border:none;border-radius:14px;background:var(--theme-grad);color:#fff;font-weight:700;'
+    + 'font-size:14.5px;cursor:pointer">View my booking</button></div>';
+  document.body.appendChild(wrap);
+}
+
+/* A failed payment previously produced a toast against missing CSS, so
+   nothing at all appeared and the guest was stranded. */
+function showRetryPanel(msg) {
+  if (document.getElementById('pay-retry-panel')) return;
+  const el = document.createElement('div');
+  el.id='pay-retry-panel';
+  el.style.cssText='margin-top:14px;padding:14px 16px;border-radius:14px;background:#FEF2F2;'
+    +'border:1px solid #FECACA;color:#991B1B;font-size:13px;line-height:1.6';
+  el.innerHTML = msg + '<br><button onclick="this.closest(\'#pay-retry-panel\').remove();'
+    + 'startPayment();" style="margin-top:10px;padding:9px 16px;border:none;border-radius:10px;'
+    + 'background:#991B1B;color:#fff;font-weight:700;font-size:12.5px;cursor:pointer">Try again</button>';
+  const btn=document.getElementById('pay-btn');
+  if(btn&&btn.parentNode) btn.parentNode.insertBefore(el,btn.nextSibling);
 }
 
 async function startPayment() {
@@ -533,9 +630,16 @@ async function startPayment() {
       description: isDeposit
         ? `Deposit · ${apt.name} — ${nights} night${nights>1?'s':''}`
         : `${apt.name} — ${nights} night${nights>1?'s':''}`,
-      onSuccess: async () => {
+      onSuccess: async (d) => {
         payBtn.disabled = false;
-        showCheckinCodes();
+        /* The check-in code is released only when the stay is settled in
+           full. A deposit confirms the dates; it does not open the door. */
+        const st = d && d.status;
+        if (st === 'paid' || st === 'paid_pending_checkin' || !isDeposit) {
+          showCheckinCodes();
+        } else {
+          showPartialResult(d);
+        }
         try {
           await fetch('/api/send-receipt', {
             method:'POST', headers:{'Content-Type':'application/json'},
@@ -549,8 +653,15 @@ async function startPayment() {
           });
         } catch(e){ console.warn('Receipt:',e.message); }
       },
-      onFailure: () => {
-        showToast('Payment was not completed. You can try again.');
+      onFailure: (d) => {
+        const why = d && d.reason === 'timeout'
+          ? 'We did not hear back from M-Pesa in time. If you were charged, '
+            + 'check My Bookings before paying again.'
+          : d && d.reason === 'network'
+          ? 'Network problem — no payment was taken. Please try again.'
+          : 'The payment was not completed. No money has left your account.';
+        showToast(why, 7000);
+        showRetryPanel(why);
         payBtn.disabled = false;
       },
     });
@@ -634,10 +745,18 @@ function showCheckinCodes() {
   sessionStorage.removeItem('pending_host_email');
 }
 
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 8000);
+function showToast(msg, ms) {
+  /* Self-healing: this threw on a null element if #toast was ever
+     missing, which silently swallowed every payment-failure message. */
+  let t = document.getElementById('toast');
+  if (!t) { t = document.createElement('div'); t.id='toast'; t.className='toast';
+            document.body.appendChild(t); }
+  t.className = 'toast';
+  t.textContent = msg;
+  void t.offsetWidth;
+  t.classList.add('show');
+  clearTimeout(t._h);
+  t._h = setTimeout(() => t.classList.remove('show'), ms || 5000);
 }
 </script>
 <!-- payment.js intentionally NOT loaded here: it also defines
@@ -663,7 +782,11 @@ function showToast(msg) {
     ljs.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
     ljs.onload=()=>{
       mapEl.innerHTML='';
-      const map=L.map('apa-location-map',{center:[lat,lon],zoom:13,zoomControl:false,scrollWheelZoom:false,dragging:false});
+      const map=L.map('apa-location-map',{center:[lat,lon],zoom:14,zoomControl:true,
+        scrollWheelZoom:false,dragging:true,minZoom:12,maxZoom:16,
+        maxBounds:L.latLng(lat,lon).toBounds(4000),maxBoundsViscosity:0.9});
+      map.on('dblclick',function(e){e.originalEvent.preventDefault();});
+      window.__apaResetMap=function(){map.setView([lat,lon],14);};
       L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{subdomains:'abcd',maxZoom:19}).addTo(map);
       setTimeout(()=>map.flyTo([lat,lon],15,{animate:true,duration:2.2}),500);
       L.circle([lat,lon],{color:'#4361FF',fillColor:'#4361FF',fillOpacity:.12,weight:2,radius:320}).addTo(map);

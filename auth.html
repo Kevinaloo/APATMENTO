@@ -1243,12 +1243,35 @@ async function goDashboard(user) {
     },{ onConflict:'id' });
   } catch(e){}
 
-  // Honour ?next= param (e.g. when redirected from partner flow)
+  /* Return the user to EXACTLY where they were interrupted.
+     Previously this only fired when next started with "dashboard", so a
+     guest bounced out of checkout was dumped on their host dashboard and
+     had to restart the whole booking. sessionStorage carries the full
+     URL including query params (listing id, dates, price); the ?next=
+     param carries only the path, so it is the fallback. */
   try {
-    const _nextParam = new URLSearchParams(location.search).get('next');
-    if (_nextParam && _nextParam.startsWith('dashboard')) {
-      window.location.href = decodeURIComponent(_nextParam) + '&uid=' + user.id;
-      return;
+    let dest = null;
+    try { dest = sessionStorage.getItem('auth_next'); } catch(e) {}
+    if (!dest) {
+      const q = new URLSearchParams(location.search).get('next');
+      if (q) dest = decodeURIComponent(q);
+    }
+    if (dest) {
+      /* Only ever return to our own site — never an attacker-supplied
+         absolute URL. Reject protocol-relative and cross-origin targets. */
+      let safe = null;
+      if (/^\/(?!\/)/.test(dest)) safe = dest;
+      else if (/^[a-zA-Z0-9._-]+\.html/.test(dest)) safe = '/' + dest;
+      else {
+        try { const u = new URL(dest, location.origin);
+              if (u.origin === location.origin) safe = u.pathname + u.search + u.hash; } catch(e) {}
+      }
+      if (safe) {
+        try { sessionStorage.removeItem('auth_next'); } catch(e) {}
+        const sep = safe.includes('?') ? '&' : '?';
+        window.location.href = safe + sep + 'uid=' + user.id;
+        return;
+      }
     }
   } catch(e) {}
 
