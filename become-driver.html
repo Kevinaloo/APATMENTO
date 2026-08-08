@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Drive with Cabana in Nairobi. Keep 90 percent of every fare, M-Pesa payouts every Monday, no joining fee. Apply in five minutes with your PSV badge, logbook and insurance."/>
+<meta name="keywords" content="become a driver Nairobi, taxi driver jobs Nairobi, drive with Cabana, PSV driver Nairobi, driver onboarding Kenya, taxi driver earnings Nairobi"/>
+<meta name="robots" content="index, follow, max-image-preview:large"/>
+<link rel="canonical" href="https://www.apatmento.space/become-driver"/>
+<meta name="author" content="Cabana"/>
+<meta name="geo.region" content="KE"/>
+<meta name="geo.placename" content="Nairobi, Kenya"/>
+<meta name="theme-color" content="#0B0D14"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<link rel="manifest" href="/manifest.json"/>
+<link rel="icon" href="/favicon.ico" sizes="any"/>
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png"/>
+<link rel="apple-touch-icon" href="/cabana-apple-touch-icon.png"/>
+<meta property="og:site_name" content="Cabana"/>
+<meta property="og:title" content="Drive with Cabana: keep 90 percent of every fare"/>
+<meta property="og:description" content="We are onboarding the first Nairobi fleet. No joining fee, weekly M-Pesa payouts, your own hours."/>
+<meta property="og:url" content="https://www.apatmento.space/become-driver"/>
+<meta property="og:type" content="website"/>
+<meta property="og:image" content="https://www.apatmento.space/og-rides.jpg"/>
+<meta property="og:locale" content="en_KE"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<title>Drive with Cabana Nairobi: keep 90% of every fare</title>
+
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"JobPosting",
+ "title":"Cabana Driver, Nairobi",
+ "description":"Drive for Cabana in Nairobi. Metered rides, fixed-price airport transfers and private chauffeur work. Drivers keep 90 percent of every fare with weekly M-Pesa payouts and no joining fee.",
+ "employmentType":"CONTRACTOR",
+ "hiringOrganization":{"@type":"Organization","name":"Cabana","url":"https://www.apatmento.space/"},
+ "jobLocation":{"@type":"Place","address":{"@type":"PostalAddress","addressLocality":"Nairobi","addressCountry":"KE"}},
+ "datePosted":"2026-08-01","validThrough":"2027-08-01",
+ "qualifications":"Valid Kenyan driving licence, PSV badge, certificate of good conduct, roadworthy vehicle with valid insurance and inspection."}
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/apa-session.js"></script>
+<script src="/cabana-fare.js"></script>
+
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --ember:#FF6B2C; --ember-soft:#FFB59E;
+  --asphalt:#0B0D14; --asphalt-2:#141828; --asphalt-3:#1D2234; --asphalt-line:rgba(255,255,255,.09);
+  --paper:#EDEEF5; --paper-2:rgba(237,238,245,.62); --paper-3:rgba(237,238,245,.36);
+  --signal:#00D68F; --kerb:#F5C24C;
+  --glass:#FCFCFD; --glass-2:#F4F5FB; --glass-3:#EBEDF7;
+  --ink:#0A0A14; --ink-soft:#4A4C66; --ink-faint:#8E90AD;
+  --line:rgba(10,10,20,.08); --line-2:rgba(10,10,20,.14);
+  --font-display:'Geist','Inter',system-ui,sans-serif;
+  --font-body:'Inter',system-ui,sans-serif;
+  --wrap:1140px;
+}
+html{scroll-behavior:smooth;}
+html,body{min-height:100%;font-family:var(--font-body);background:var(--glass);color:var(--ink);
+  -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;overflow-x:hidden;letter-spacing:-.011em;}
+img{max-width:100%;display:block;}
+button,input,select,textarea{font:inherit;color:inherit;}
+:focus-visible{outline:2px solid var(--ember);outline-offset:3px;border-radius:6px;}
+.wrap{max-width:var(--wrap);margin:0 auto;padding:0 28px;}
+@media(max-width:640px){.wrap{padding:0 18px;}}
+h1,h2,h3,h4{font-family:var(--font-display);letter-spacing:-.032em;font-weight:600;line-height:1.09;}
+h2{font-size:clamp(26px,3.4vw,38px);}
+.num{font-family:var(--font-display);font-variant-numeric:tabular-nums;letter-spacing:-.035em;}
+.eyebrow{display:inline-flex;align-items:center;gap:9px;font-size:10.5px;font-weight:650;
+  letter-spacing:.18em;text-transform:uppercase;color:var(--ink-faint);}
+.eyebrow::before{content:'';width:22px;height:1px;background:currentColor;opacity:.5;}
+.eyebrow.on-dark{color:var(--paper-3);}
+.lede{font-size:16px;line-height:1.65;color:var(--ink-soft);max-width:58ch;}
+.sec{padding:74px 0;}
+@media(max-width:640px){.sec{padding:52px 0;}}
+.sec-dark{background:var(--asphalt);color:var(--paper);}
+.sec-dark h2,.sec-dark h3{color:#fff;}
+.sec-dark .lede{color:var(--paper-2);}
+.sec-head{max-width:60ch;margin-bottom:36px;}
+.sec-head h2{margin:16px 0 14px;}
+
+/* topbar */
+.topbar{position:sticky;top:0;z-index:120;background:rgba(252,252,253,.88);
+  backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);
+  border-bottom:1px solid var(--line);}
+.tb-in{max-width:var(--wrap);margin:0 auto;padding:0 28px;height:62px;display:flex;align-items:center;
+  justify-content:space-between;gap:14px;}
+@media(max-width:640px){.tb-in{padding:0 14px;height:56px;}}
+.tb-left{display:flex;align-items:center;gap:11px;min-width:0;}
+.tb-back{width:36px;height:36px;border-radius:11px;border:1px solid var(--line);background:#fff;display:flex;
+  align-items:center;justify-content:center;color:var(--ink-soft);text-decoration:none;flex-shrink:0;transition:all .2s;}
+.tb-back:hover{border-color:var(--ember);color:var(--ember);}
+.tb-emblem{height:26px;width:26px;object-fit:contain;border-radius:7px;}
+.tb-wordmark{height:19px;width:auto;}
+.tb-div{width:1px;height:18px;background:var(--line-2);}
+.tb-svc{font-size:12.5px;font-weight:600;color:var(--ink-soft);white-space:nowrap;}
+@media(max-width:520px){.tb-div,.tb-svc{display:none;}}
+.tb-cta{display:inline-flex;align-items:center;gap:8px;padding:9px 17px;border-radius:100px;
+  background:var(--ember);color:#fff;font-size:12.5px;font-weight:600;text-decoration:none;
+  white-space:nowrap;transition:transform .2s;}
+.tb-cta:hover{transform:translateY(-1px);}
+
+/* hero */
+.hero{background:var(--asphalt);color:var(--paper);padding:66px 0 74px;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;inset:0;
+  background:radial-gradient(720px 460px at 84% -6%, rgba(255,107,44,.30), transparent 62%),
+             radial-gradient(500px 400px at 6% 100%, rgba(0,214,143,.13), transparent 66%);}
+.hero-in{position:relative;z-index:1;display:grid;grid-template-columns:minmax(0,1fr) 424px;gap:52px;align-items:start;}
+@media(max-width:1000px){.hero-in{grid-template-columns:1fr;gap:34px;}}
+@media(max-width:640px){.hero{padding:40px 0 48px;}}
+.hero h1{font-size:clamp(36px,5.4vw,60px);letter-spacing:-.046em;font-weight:640;margin:18px 0 18px;color:#fff;}
+.hero h1 .hi{color:var(--signal);}
+.hero p.sub{font-size:16.5px;line-height:1.62;color:var(--paper-2);max-width:46ch;}
+.hero-pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:28px;}
+.hpill{font-size:12.5px;font-weight:550;color:var(--paper-2);background:rgba(255,255,255,.06);
+  border:1px solid var(--asphalt-line);padding:8px 14px;border-radius:100px;}
+.hpill b{color:#fff;font-weight:650;}
+
+/* earnings estimator: the signature instrument */
+.est{background:rgba(255,255,255,.04);border:1px solid var(--asphalt-line);border-radius:20px;overflow:hidden;
+  box-shadow:0 30px 70px -24px rgba(0,0,0,.6);}
+.est-head{padding:15px 20px;border-bottom:1px solid var(--asphalt-line);display:flex;
+  align-items:center;justify-content:space-between;gap:12px;}
+.est-head .t{font-size:10.5px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--paper-3);}
+.est-head .n{font-size:11px;color:var(--paper-3);}
+.est-body{padding:20px;}
+.est-field{margin-bottom:18px;}
+.est-field:last-of-type{margin-bottom:22px;}
+.est-lab{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:10px;}
+.est-lab .k{font-size:12.5px;color:var(--paper-2);}
+.est-lab .v{font-family:var(--font-display);font-size:15px;font-weight:620;color:#fff;font-variant-numeric:tabular-nums;}
+input[type=range]{width:100%;-webkit-appearance:none;appearance:none;height:3px;border-radius:99px;
+  background:var(--asphalt-3);outline:none;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;
+  background:var(--ember);cursor:pointer;border:3px solid var(--asphalt);box-shadow:0 2px 10px rgba(255,107,44,.6);}
+input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:var(--ember);
+  cursor:pointer;border:3px solid var(--asphalt);}
+.est-cls{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:20px;}
+.est-cls button{padding:8px 13px;border-radius:100px;border:1px solid var(--asphalt-line);
+  background:transparent;color:var(--paper-2);font-size:12.5px;font-weight:600;cursor:pointer;transition:all .2s;}
+.est-cls button[aria-pressed="true"]{background:var(--ember);border-color:var(--ember);color:#fff;}
+.est-out{border-top:1px dashed var(--asphalt-line);padding-top:18px;}
+.est-row{display:flex;align-items:flex-end;gap:8px;padding:5px 0;font-size:13px;}
+.est-row .k{color:var(--paper-2);}
+.est-row .d{flex:1;height:6px;min-width:12px;background-image:radial-gradient(circle,var(--paper-3) .9px,transparent .9px);
+  background-size:5px 6px;background-repeat:repeat-x;background-position:bottom;opacity:.5;}
+.est-row .v{font-family:var(--font-display);font-weight:600;color:var(--paper);font-variant-numeric:tabular-nums;}
+.est-row.minus .v{color:var(--ember-soft);}
+.est-big{margin-top:16px;padding-top:16px;border-top:1px solid var(--asphalt-line);
+  display:flex;align-items:flex-end;justify-content:space-between;gap:12px;}
+.est-big .k{font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--paper-3);}
+.est-big .v{font-family:var(--font-display);font-size:34px;font-weight:660;letter-spacing:-.045em;
+  color:var(--signal);font-variant-numeric:tabular-nums;line-height:.95;white-space:nowrap;}
+.est-note{font-size:11.5px;color:var(--paper-3);line-height:1.55;margin-top:14px;}
+
+/* requirements */
+.req-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(258px,1fr));gap:1px;
+  background:var(--line);border:1px solid var(--line);border-radius:18px;overflow:hidden;}
+.req{background:#fff;padding:26px 24px;}
+.req h3{font-size:16px;font-weight:620;letter-spacing:-.02em;margin-bottom:10px;display:flex;align-items:center;gap:9px;}
+.req h3 svg{width:17px;height:17px;color:var(--ember);flex-shrink:0;}
+.req ul{list-style:none;display:flex;flex-direction:column;gap:8px;}
+.req li{font-size:13.5px;color:var(--ink-soft);line-height:1.6;padding-left:19px;position:relative;}
+.req li::before{content:'';position:absolute;left:0;top:8px;width:9px;height:1px;background:var(--ink-faint);}
+
+/* class ladder */
+.ladder{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;}
+.rung{background:rgba(255,255,255,.03);border:1px solid var(--asphalt-line);border-radius:16px;padding:22px;}
+.rung .cn{font-family:var(--font-display);font-size:18px;font-weight:620;letter-spacing:-.025em;color:#fff;margin-bottom:6px;}
+.rung .cv{font-size:12.5px;color:var(--paper-3);line-height:1.55;margin-bottom:16px;min-height:40px;}
+.rung .cr{font-size:12.5px;color:var(--paper-2);line-height:1.6;padding-top:14px;border-top:1px solid var(--asphalt-line);}
+.rung .cr b{color:#fff;font-weight:600;display:block;font-family:var(--font-display);font-size:15px;
+  letter-spacing:-.02em;margin-bottom:4px;font-variant-numeric:tabular-nums;}
+
+/* steps */
+.tl{border-top:1px solid var(--line);}
+.tl-item{display:grid;grid-template-columns:76px 1fr;gap:22px;padding:26px 0;border-bottom:1px solid var(--line);}
+@media(max-width:600px){.tl-item{grid-template-columns:1fr;gap:10px;}}
+.tl-n{font-family:var(--font-display);font-size:11px;font-weight:700;letter-spacing:.14em;color:var(--ember);
+  padding-top:4px;font-variant-numeric:tabular-nums;}
+.tl-b h3{font-size:17px;font-weight:620;letter-spacing:-.025em;margin-bottom:8px;}
+.tl-b p{font-size:14px;color:var(--ink-soft);line-height:1.68;max-width:62ch;}
+.tl-when{font-size:12px;color:var(--ink-faint);margin-top:8px;}
+
+/* form */
+.form-shell{max-width:640px;margin:0 auto;background:#fff;border:1px solid var(--line);border-radius:22px;
+  box-shadow:0 26px 62px -28px rgba(10,10,20,.3);overflow:hidden;}
+.fs-head{padding:26px 28px 0;}
+.fs-head h2{font-size:24px;letter-spacing:-.032em;}
+.fs-head p{font-size:14px;color:var(--ink-soft);margin-top:8px;line-height:1.6;}
+.fs-prog{display:flex;gap:6px;padding:20px 28px 0;}
+.fs-dot{flex:1;height:3px;border-radius:99px;background:var(--glass-3);transition:background .3s;}
+.fs-dot.on{background:var(--ember);}
+.fs-body{padding:24px 28px 6px;}
+.fs-step{display:none;}
+.fs-step.on{display:block;animation:stepIn .3s cubic-bezier(.22,1,.36,1);}
+@keyframes stepIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+.fl{display:block;font-size:11px;font-weight:650;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-faint);margin-bottom:7px;}
+.fi{width:100%;padding:13px 14px;border-radius:12px;border:1.5px solid var(--line-2);background:#fff;
+  font-size:14.5px;outline:none;transition:border-color .18s;margin-bottom:16px;}
+.fi:focus{border-color:var(--ember);}
+select.fi{appearance:none;background-image:url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238E90AD' stroke-width='2'%3e%3cpath d='m6 9 6 6 6-6'/%3e%3c/svg%3e");
+  background-repeat:no-repeat;background-position:right 13px center;background-size:15px;padding-right:38px;}
+.f2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+@media(max-width:480px){.f2{grid-template-columns:1fr;gap:0;}}
+.f-hint{font-size:12.5px;color:var(--ink-faint);margin:-8px 0 16px;line-height:1.55;}
+.chk{display:flex;align-items:flex-start;gap:11px;padding:13px 14px;border:1.5px solid var(--line-2);
+  border-radius:12px;margin-bottom:9px;cursor:pointer;transition:all .18s;}
+.chk:hover{border-color:var(--line-2);background:var(--glass-2);}
+.chk input{width:18px;height:18px;accent-color:var(--ember);margin-top:1px;flex-shrink:0;cursor:pointer;}
+.chk .cn{font-size:14px;font-weight:550;line-height:1.4;}
+.chk .cd{font-size:12.5px;color:var(--ink-faint);margin-top:3px;line-height:1.5;}
+.chk.has input:checked ~ span .cn{color:var(--ink);}
+.f-err{font-size:13px;color:#DC2626;background:rgba(220,38,38,.07);border-radius:10px;padding:11px 13px;
+  margin-bottom:14px;display:none;line-height:1.5;}
+.fs-foot{padding:18px 28px 28px;border-top:1px solid var(--line);display:flex;gap:10px;}
+.fb{padding:15px;border-radius:13px;border:0;font-size:14.5px;font-weight:650;cursor:pointer;transition:all .22s;}
+.fb-ghost{background:var(--glass-2);color:var(--ink-soft);padding:15px 22px;}
+.fb-ghost:hover{background:var(--glass-3);}
+.fb-go{flex:1;background:var(--ember);color:#fff;box-shadow:0 10px 24px -8px rgba(255,107,44,.65);}
+.fb-go:hover:not(:disabled){transform:translateY(-2px);}
+.fb-go:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+
+/* done */
+.done{text-align:center;padding:8px 0 4px;}
+.done-mark{width:62px;height:62px;border-radius:50%;background:rgba(0,214,143,.12);color:var(--signal);
+  display:flex;align-items:center;justify-content:center;margin:0 auto 20px;}
+.done h3{font-size:23px;letter-spacing:-.03em;margin-bottom:10px;}
+.done p{font-size:14.5px;color:var(--ink-soft);line-height:1.68;max-width:44ch;margin:0 auto 18px;}
+.done-ref{display:inline-flex;align-items:center;gap:9px;font-size:12.5px;color:var(--ink-soft);
+  background:var(--glass-2);border:1px solid var(--line);padding:9px 16px;border-radius:100px;margin-bottom:22px;}
+.done-ref b{color:var(--ink);letter-spacing:.06em;font-family:var(--font-display);}
+.done-next{text-align:left;background:var(--glass-2);border-radius:14px;padding:18px 20px;margin-bottom:18px;}
+.done-next h4{font-size:12px;font-weight:650;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-faint);margin-bottom:12px;}
+.done-next li{list-style:none;font-size:13.5px;color:var(--ink-soft);line-height:1.6;padding-left:20px;
+  position:relative;margin-bottom:9px;}
+.done-next li::before{content:'';position:absolute;left:0;top:8px;width:10px;height:1px;background:var(--ember);}
+.wa-btn{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;padding:15px;
+  background:#25D366;color:#04220f;border:0;border-radius:13px;font-size:14.5px;font-weight:650;
+  text-decoration:none;transition:all .2s;}
+.wa-btn:hover{background:#1faf56;}
+
+/* faq */
+.faq{border-top:1px solid var(--line);max-width:74ch;}
+.faq details{border-bottom:1px solid var(--line);}
+.faq summary{font-family:var(--font-display);font-weight:580;font-size:16px;letter-spacing:-.02em;
+  padding:19px 40px 19px 0;cursor:pointer;list-style:none;position:relative;}
+.faq summary::-webkit-details-marker{display:none;}
+.faq summary::after{content:'';position:absolute;right:6px;top:50%;width:10px;height:10px;
+  border-right:1.6px solid var(--ink-faint);border-bottom:1.6px solid var(--ink-faint);
+  transform:translateY(-70%) rotate(45deg);transition:transform .22s;}
+.faq details[open] summary::after{transform:translateY(-20%) rotate(-135deg);}
+.faq p{font-size:14.5px;line-height:1.72;color:var(--ink-soft);padding:0 0 20px;}
+
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;transition-duration:.001ms!important;
+    scroll-behavior:auto!important;}
+}
+</style>
+<link rel="stylesheet" href="/brand.css"/>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" media="print" onload="this.media='all';this.onload=null"/>
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"/></noscript>
+<link rel="stylesheet" href="/cabana-ds.css"/>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="tb-in">
+    <div class="tb-left">
+      <a href="/rides.html" class="tb-back" aria-label="Back to Rides">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </a>
+      <img src="/cabana-emblem.png" class="tb-emblem" alt="" onerror="this.style.display='none'"/>
+      <img src="/cabana-wordmark-color.png" class="tb-wordmark" alt="Cabana" onerror="this.style.display='none'"/>
+      <span class="tb-div"></span><span class="tb-svc">Drivers</span>
+    </div>
+    <a href="#apply" class="tb-cta">Apply now</a>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap hero-in">
+    <div>
+      <span class="eyebrow on-dark">Now recruiting &nbsp;·&nbsp; Nairobi</span>
+      <h1>You drive.<br/>You keep <span class="hi">90 percent</span>.</h1>
+      <p class="sub">Cabana is building its own Nairobi fleet, and we are onboarding the first drivers
+        this month. No joining fee, no daily target, no pressure to stay online. Work the hours that
+        suit you and get paid to M-Pesa every Monday.</p>
+      <div class="hero-pills">
+        <span class="hpill"><b>KSh 0</b> to join</span>
+        <span class="hpill">Paid <b>every Monday</b></span>
+        <span class="hpill">Reviewed in <b>2 working days</b></span>
+        <span class="hpill">Airport and chauffeur work <b>available</b></span>
+      </div>
+    </div>
+
+    <div class="est">
+      <div class="est-head">
+        <span class="t">Earnings estimator</span>
+        <span class="n">Built on the live tariff</span>
+      </div>
+      <div class="est-body">
+        <div class="est-cls" id="est-cls" role="group" aria-label="Your vehicle class"></div>
+
+        <div class="est-field">
+          <div class="est-lab"><span class="k">Trips a day</span><span class="v" id="v-trips">12</span></div>
+          <input type="range" id="r-trips" min="4" max="26" value="12" step="1" aria-label="Trips a day"/>
+        </div>
+        <div class="est-field">
+          <div class="est-lab"><span class="k">Average trip distance</span><span class="v" id="v-km">9 km</span></div>
+          <input type="range" id="r-km" min="3" max="30" value="9" step="1" aria-label="Average trip distance"/>
+        </div>
+        <div class="est-field">
+          <div class="est-lab"><span class="k">Days a week</span><span class="v" id="v-days">6</span></div>
+          <input type="range" id="r-days" min="3" max="7" value="6" step="1" aria-label="Days a week"/>
+        </div>
+
+        <div class="est-out" id="est-out"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">What we need</span>
+      <h2>What it takes to be approved</h2>
+      <p class="lede">We check every driver properly, because a rider who trusts the fleet books again.
+        Nothing here is unusual. If you already drive commercially in Nairobi you almost certainly have it.</p>
+    </div>
+    <div class="req-grid">
+      <div class="req">
+        <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>You</h3>
+        <ul>
+          <li>Kenyan national ID or valid passport</li>
+          <li>Driving licence held for at least three years</li>
+          <li>PSV badge, current</li>
+          <li>Certificate of good conduct issued within the last twelve months</li>
+          <li>A smartphone that can run the driver console and share location</li>
+        </ul>
+      </div>
+      <div class="req">
+        <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="6" width="15" height="12" rx="2"/><path d="M16 10h3.5a2 2 0 0 1 1.8 1.1L23 14v4h-7z"/><circle cx="5.5" cy="18" r="2"/><circle cx="18.5" cy="18" r="2"/></svg>Your vehicle</h3>
+        <ul>
+          <li>Logbook in your name, or a signed owner authority</li>
+          <li>Comprehensive insurance with PSV cover, current</li>
+          <li>Valid NTSA inspection certificate</li>
+          <li>Working seatbelts on every seat and a clean interior</li>
+          <li>2014 or newer for Economy, 2018 or newer for Comfort and above</li>
+        </ul>
+      </div>
+      <div class="req">
+        <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.4 9.4 8 10 4.6-.6 8-5 8-10V6z"/><path d="m9 12 2 2 4-4"/></svg>The standard</h3>
+        <ul>
+          <li>Accept or decline quickly, so riders are not left waiting</li>
+          <li>Arrive at the pick-up point, not the general area</li>
+          <li>Help with luggage on airport and transfer work</li>
+          <li>Keep the rating above 4.6 across your last fifty trips</li>
+          <li>Take the induction before your first trip. It takes an hour</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec sec-dark">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow on-dark">Classes</span>
+      <h2>Your car decides what work you get offered</h2>
+      <p class="lede">Every driver starts on Economy. Once your documents and vehicle are verified we
+        clear you for the classes your car qualifies for, and higher classes pay considerably more per
+        kilometre. You cannot promote your own car. An inspection decides it.</p>
+    </div>
+    <div class="ladder" id="ladder"></div>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">The process</span>
+      <h2>From application to your first trip</h2>
+      <p class="lede">Four stages, usually done inside a week. We tell you where you stand at every one
+        of them rather than leaving you guessing.</p>
+    </div>
+    <div class="tl">
+      <div class="tl-item">
+        <div class="tl-n">STAGE 01</div>
+        <div class="tl-b">
+          <h3>Apply on this page</h3>
+          <p>About five minutes. Your details, your vehicle, and the M-Pesa number you want to be paid
+            on. You do not need to upload anything yet.</p>
+          <div class="tl-when">Today</div>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-n">STAGE 02</div>
+        <div class="tl-b">
+          <h3>Send your documents on WhatsApp</h3>
+          <p>We reply on the number you gave us with a checklist. Photograph each document and send them
+            in one message. We record the expiry date on every one so we can warn you before anything
+            lapses.</p>
+          <div class="tl-when">Within a few hours of applying</div>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-n">STAGE 03</div>
+        <div class="tl-b">
+          <h3>Vehicle check and induction</h3>
+          <p>You bring the car to us in Nairobi for a short physical inspection, and we run the induction
+            in the same visit. This is where your class is decided. Budget about ninety minutes in total.</p>
+          <div class="tl-when">Two to five days after your documents clear</div>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-n">STAGE 04</div>
+        <div class="tl-b">
+          <h3>Go online and start earning</h3>
+          <p>Your account is approved and the driver console opens. Tap online, share your location, and
+            trips start coming to your phone. Your first payout lands the following Monday.</p>
+          <div class="tl-when">Same day as your inspection, in most cases</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ APPLICATION ══ -->
+<section class="sec" id="apply" style="background:var(--glass-2);">
+  <div class="wrap">
+    <div class="sec-head" style="max-width:56ch;margin:0 auto 34px;text-align:center;">
+      <span class="eyebrow" style="justify-content:center;">Apply</span>
+      <h2>Join the first Nairobi fleet</h2>
+      <p class="lede" style="margin:0 auto;">Five minutes, no documents needed yet, no fee at any stage.</p>
+    </div>
+
+    <div class="form-shell">
+      <div class="fs-prog"><span class="fs-dot on" id="d1"></span><span class="fs-dot" id="d2"></span><span class="fs-dot" id="d3"></span></div>
+      <div class="fs-head">
+        <h2 id="fs-title">About you</h2>
+        <p id="fs-sub">The name on your licence, and a number we can reach you on today.</p>
+      </div>
+
+      <div class="fs-body">
+        <div class="f-err" id="f-err"></div>
+
+        <!-- step 1 -->
+        <div class="fs-step on" id="s1">
+          <label class="fl" for="a-name">Full name, as on your licence</label>
+          <input class="fi" id="a-name" type="text" autocomplete="name" placeholder="Peter Mwangi Kariuki"/>
+          <div class="f2">
+            <div>
+              <label class="fl" for="a-phone">Phone, also your M-Pesa number</label>
+              <input class="fi" id="a-phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="07xx xxx xxx"/>
+            </div>
+            <div>
+              <label class="fl" for="a-id">National ID number</label>
+              <input class="fi" id="a-id" type="text" inputmode="numeric" placeholder="12345678"/>
+            </div>
+          </div>
+          <label class="fl" for="a-email">Email, optional</label>
+          <input class="fi" id="a-email" type="email" autocomplete="email" placeholder="you@example.com"/>
+          <div class="f2">
+            <div>
+              <label class="fl" for="a-licence">Driving licence number</label>
+              <input class="fi" id="a-licence" type="text" placeholder="DL123456"/>
+            </div>
+            <div>
+              <label class="fl" for="a-years">Years driving commercially</label>
+              <select class="fi" id="a-years">
+                <option value="">Choose</option>
+                <option value="1">Under 2 years</option>
+                <option value="3">2 to 4 years</option>
+                <option value="6">5 to 9 years</option>
+                <option value="12">10 years or more</option>
+              </select>
+            </div>
+          </div>
+          <label class="fl" for="a-psv">Do you hold a current PSV badge?</label>
+          <select class="fi" id="a-psv">
+            <option value="">Choose</option>
+            <option value="yes">Yes, current</option>
+            <option value="expired">I had one, it has expired</option>
+            <option value="no">No, not yet</option>
+          </select>
+          <p class="f-hint">A PSV badge is required before your first trip. If you do not have one yet you
+            can still apply, and we will tell you how to get it.</p>
+        </div>
+
+        <!-- step 2 -->
+        <div class="fs-step" id="s2">
+          <div class="f2">
+            <div>
+              <label class="fl" for="a-make">Make</label>
+              <input class="fi" id="a-make" type="text" placeholder="Toyota"/>
+            </div>
+            <div>
+              <label class="fl" for="a-model">Model</label>
+              <input class="fi" id="a-model" type="text" placeholder="Premio"/>
+            </div>
+          </div>
+          <div class="f2">
+            <div>
+              <label class="fl" for="a-year">Year of manufacture</label>
+              <input class="fi" id="a-year" type="number" inputmode="numeric" min="2005" max="2027" placeholder="2019"/>
+            </div>
+            <div>
+              <label class="fl" for="a-plate">Registration</label>
+              <input class="fi" id="a-plate" type="text" placeholder="KDA 123A" style="text-transform:uppercase;"/>
+            </div>
+          </div>
+          <div class="f2">
+            <div>
+              <label class="fl" for="a-colour">Colour</label>
+              <input class="fi" id="a-colour" type="text" placeholder="Silver"/>
+            </div>
+            <div>
+              <label class="fl" for="a-seats">Passenger seats</label>
+              <select class="fi" id="a-seats">
+                <option value="4">4</option><option value="5">5</option>
+                <option value="7">7</option><option value="9">9 or more</option>
+              </select>
+            </div>
+          </div>
+          <label class="fl" for="a-class">Class you are applying for</label>
+          <select class="fi" id="a-class"></select>
+          <p class="f-hint">This is a request, not a decision. The inspection sets your final class, and
+            you may be cleared for more than one.</p>
+
+          <label class="fl">Which of these do you already have?</label>
+          <label class="chk"><input type="checkbox" data-doc="logbook"/><span><span class="cn">Logbook</span><span class="cd">In your name, or an owner authority letter</span></span></label>
+          <label class="chk"><input type="checkbox" data-doc="insurance"/><span><span class="cn">Comprehensive insurance with PSV cover</span><span class="cd">Current, not expiring this month</span></span></label>
+          <label class="chk"><input type="checkbox" data-doc="inspection"/><span><span class="cn">NTSA inspection certificate</span><span class="cd">Valid on the day you come in</span></span></label>
+          <label class="chk"><input type="checkbox" data-doc="good_conduct"/><span><span class="cn">Certificate of good conduct</span><span class="cd">Issued in the last twelve months</span></span></label>
+        </div>
+
+        <!-- step 3 -->
+        <div class="fs-step" id="s3">
+          <label class="fl" for="a-mpesa">M-Pesa number for payouts</label>
+          <input class="fi" id="a-mpesa" type="tel" inputmode="tel" placeholder="Same as your phone, or a different number"/>
+          <p class="f-hint">Payouts run every Monday morning for the week that just ended. There is no
+            minimum balance and no withdrawal charge from our side.</p>
+
+          <label class="fl" for="a-area">Where do you usually work from?</label>
+          <select class="fi" id="a-area">
+            <option value="">Choose your base</option>
+            <option>Nairobi CBD</option><option>Westlands and Parklands</option>
+            <option>Kilimani, Kileleshwa and Lavington</option><option>Karen and Langata</option>
+            <option>Gigiri, Runda and Muthaiga</option><option>Embakasi and Syokimau</option>
+            <option>Thika Road and Kasarani</option><option>South B and South C</option>
+            <option>Rongai and Ngong</option><option>Kiambu and Ruaka</option>
+            <option>I move around the whole city</option>
+          </select>
+
+          <label class="fl" for="a-hours">When can you usually drive?</label>
+          <select class="fi" id="a-hours">
+            <option value="">Choose</option>
+            <option>Mornings, roughly 5am to noon</option>
+            <option>Afternoons and evenings</option>
+            <option>Nights, roughly 8pm to 5am</option>
+            <option>Full days</option>
+            <option>Weekends only</option>
+            <option>Flexible, it changes week to week</option>
+          </select>
+
+          <label class="fl" for="a-ref">Who told you about Cabana? Optional</label>
+          <input class="fi" id="a-ref" type="text" placeholder="A driver's name, or where you saw us"/>
+
+          <label class="chk" style="margin-top:6px;">
+            <input type="checkbox" id="a-agree"/>
+            <span><span class="cn">I confirm the details above are true</span>
+            <span class="cd">And I understand Cabana will verify my documents and inspect the vehicle before I can go online.</span></span>
+          </label>
+        </div>
+
+        <!-- done -->
+        <div class="fs-step" id="s4">
+          <div class="done">
+            <div class="done-mark">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            </div>
+            <h3>Application received</h3>
+            <p id="done-copy">We have your details. The next step is your documents, and the fastest way
+              to send them is WhatsApp.</p>
+            <div class="done-ref">Your reference <b id="done-ref">.</b></div>
+            <div class="done-next">
+              <h4>What happens next</h4>
+              <ul>
+                <li>Send your document photos on WhatsApp using the button below. One message is fine.</li>
+                <li>We review them and reply within two working days with a yes, a no, or exactly what is missing.</li>
+                <li>If it is a yes, we book you in for the vehicle check and induction in Nairobi.</li>
+                <li>You are approved the same day as the inspection in most cases, and can go online straight after.</li>
+              </ul>
+            </div>
+            <a class="wa-btn" id="done-wa" href="#" target="_blank" rel="noopener">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+              Send my documents on WhatsApp
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="fs-foot" id="fs-foot">
+        <button class="fb fb-ghost" type="button" id="b-back" style="display:none;">Back</button>
+        <button class="fb fb-go" type="button" id="b-next">Continue</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec" style="padding-top:0;">
+  <div class="wrap">
+    <h2 style="margin-bottom:22px;">Driver questions</h2>
+    <div class="faq">
+      <details>
+        <summary>What does Cabana actually take?</summary>
+        <p>Ten percent of the fare. Nothing else. There is no joining fee, no weekly subscription, no
+          charge for the app, and no deduction for support or dispatch. On a KSh 1,000 trip you receive
+          KSh 900. The rider sees that split on their own fare breakdown before they book, which is
+          deliberate: it keeps us honest with both of you.</p>
+      </details>
+      <details>
+        <summary>When exactly am I paid?</summary>
+        <p>Every Monday morning, covering the week from Monday to Sunday just ended. Payment goes to the
+          M-Pesa number on your account. There is no minimum balance to reach and no withdrawal fee from
+          us. Cash fares stay with you and are reconciled against your account on the same weekly cycle.</p>
+      </details>
+      <details>
+        <summary>Do I have to hit a target or stay online for set hours?</summary>
+        <p>No. There is no daily target, no minimum shift and no penalty for being offline. What does
+          matter is what you do when you are online: if you take a trip, take it properly, and if you
+          cannot, decline it quickly so the rider goes to somebody who can.</p>
+      </details>
+      <details>
+        <summary>Can I drive a car that is not in my name?</summary>
+        <p>Yes, with a signed authority from the registered owner and a copy of their ID alongside the
+          logbook. The insurance must cover you by name as a driver. If you drive for a fleet owner, the
+          owner can register the vehicles and add you as a driver on them.</p>
+      </details>
+      <details>
+        <summary>What is airport and chauffeur work, and how do I get it?</summary>
+        <p>Fixed-price airport transfers and full-day chauffeur bookings pay considerably more than a
+          metered city trip, and they are assigned rather than broadcast. Drivers become eligible after
+          fifty completed trips with a rating of 4.8 or better, a Comfort-class vehicle or above, and the
+          extended induction covering arrivals protocol and luggage handling.</p>
+      </details>
+      <details>
+        <summary>What happens if a document expires?</summary>
+        <p>We record the expiry date on every document when you join and warn you three weeks, one week
+          and one day before. On the expiry date the account pauses automatically and you stop receiving
+          trips. Send the renewed document and you are back online the same day. Nothing is deleted and
+          you do not reapply.</p>
+      </details>
+      <details>
+        <summary>Is my location tracked when I am offline?</summary>
+        <p>No. Your phone reports position only while you are online in the driver console. Go offline
+          and the reporting stops. While you are online, riders never see your position until you have
+          accepted their trip, and after that they see only your car on the way to them.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<script>
+(function(){
+'use strict';
+var F = window.CabFare;
+var SUPA_URL='https://gfwgbgdvxtocwhilrtdw.supabase.co';
+var SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
+var WA='254716206494';
+var sb=null;
+try{ sb=(window.ApaSession&&ApaSession.client&&ApaSession.client())||window.supabase.createClient(SUPA_URL,SUPA_KEY); }catch(e){}
+function $(i){return document.getElementById(i);}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+
+/* ── earnings estimator ───────────────────────────────────────────────
+   Uses the same fare engine the rider sees. A driver can check our
+   arithmetic against the published tariff on the rides page, and it will
+   match. Fuel is the honest deduction most estimators leave out.        */
+var EST_CLASSES = ['economy','comfort','executive','van'];
+var estCls = 'economy';
+var FUEL_PER_LITRE = 190;   // Nairobi pump price, adjust in one place
+var KM_PER_LITRE   = 12;    // typical saloon in city traffic
+var DEADHEAD = 0.35;        // km driven empty for every km with a rider
+
+function renderEstClasses(){
+  var box = $('est-cls'); box.innerHTML='';
+  EST_CLASSES.forEach(function(k){
+    var b=document.createElement('button');
+    b.type='button'; b.textContent=F.TARIFFS[k].label;
+    b.setAttribute('aria-pressed', k===estCls?'true':'false');
+    b.addEventListener('click',function(){ estCls=k; renderEstClasses(); calcEst(); });
+    box.appendChild(b);
+  });
+}
+
+function calcEst(){
+  var trips = +$('r-trips').value, km = +$('r-km').value, days = +$('r-days').value;
+  $('v-trips').textContent = trips;
+  $('v-km').textContent = km + ' km';
+  $('v-days').textContent = days;
+
+  var t = F.TARIFFS[estCls];
+  // a mid-morning trip: the honest middle of the day, not the best case
+  var mins = F.minutes(km, new Date(new Date().setHours(11,0,0,0)));
+  var gross = t.base + km*t.perKm + mins*t.perMin;
+  if(gross < t.minFare) gross = t.minFare;
+  gross = Math.round(gross/10)*10;
+
+  var weekGross = gross * trips * days;
+  var fee = Math.round(weekGross * F.RULES.platformFeePct/100);
+  var fuelKm = km * trips * days * (1 + DEADHEAD);
+  var fuel = Math.round(fuelKm / KM_PER_LITRE * FUEL_PER_LITRE);
+  var net = weekGross - fee - fuel;
+
+  $('est-out').innerHTML =
+    '<div class="est-row"><span class="k">Average fare, '+km+' km at about '+mins+' min</span>'+
+      '<span class="d"></span><span class="v">'+F.money(gross)+'</span></div>'+
+    '<div class="est-row"><span class="k">'+(trips*days)+' trips a week</span>'+
+      '<span class="d"></span><span class="v">'+F.money(weekGross)+'</span></div>'+
+    '<div class="est-row minus"><span class="k">Cabana fee, '+F.RULES.platformFeePct+' percent</span>'+
+      '<span class="d"></span><span class="v">-'+F.num(fee)+'</span></div>'+
+    '<div class="est-row minus"><span class="k">Fuel, about '+Math.round(fuelKm)+' km including empty running</span>'+
+      '<span class="d"></span><span class="v">-'+F.num(fuel)+'</span></div>'+
+    '<div class="est-big"><div><div class="k">Your week, after fuel</div></div>'+
+      '<div class="v">'+F.money(net)+'</div></div>'+
+    '<p class="est-note">Worked out from the published tariff at a mid-morning traffic speed, so it is a '+
+    'realistic middle rather than a best case. Fuel assumes KSh '+FUEL_PER_LITRE+' a litre at '+KM_PER_LITRE+
+    ' km per litre and '+Math.round(DEADHEAD*100)+' percent empty running. Maintenance, insurance and '+
+    'financing are yours and are not deducted here.</p>';
+}
+['r-trips','r-km','r-days'].forEach(function(id){ $(id).addEventListener('input', calcEst); });
+
+/* ── class ladder ─────────────────────────────────────────────────── */
+(function ladder(){
+  var g = $('ladder'); g.innerHTML='';
+  [['economy','2014 or newer saloon or hatchback. The volume work, and where every driver starts.'],
+   ['comfort','2018 or newer, roomier, air conditioning that works and a boot that takes two suitcases.'],
+   ['executive','2020 or newer black-plate executive saloon or large SUV. Uniform required, extended induction.'],
+   ['van','Seven seats or more with real luggage space. Families, crews, safaris and airport groups.']
+  ].forEach(function(row){
+    var t = F.TARIFFS[row[0]];
+    var d = document.createElement('div'); d.className='rung';
+    d.innerHTML = '<div class="cn">'+esc(t.label)+'</div><div class="cv">'+esc(row[1])+'</div>'+
+      '<div class="cr"><b>'+F.money(Math.round(t.perKm*0.9))+' per km to you</b>'+
+      'Plus '+F.money(Math.round(t.base*0.9))+' base and '+F.money(Math.round(t.perMin*0.9))+
+      ' a minute, after the Cabana fee.</div>';
+    g.appendChild(d);
+  });
+})();
+
+/* ── class select in the form ─────────────────────────────────────── */
+(function(){
+  var s = $('a-class');
+  ['economy','comfort','executive','van'].forEach(function(k){
+    var o=document.createElement('option'); o.value=k;
+    o.textContent=F.TARIFFS[k].label+': '+F.TARIFFS[k].vehicle;
+    s.appendChild(o);
+  });
+})();
+
+/* ── the application ──────────────────────────────────────────────── */
+var step = 1;
+var TITLES = [
+  ['About you','The name on your licence, and a number we can reach you on today.'],
+  ['Your vehicle','What you drive. If you are between cars, put the one you plan to use.'],
+  ['Payouts and hours','Where the money goes, and when you are usually available.'],
+  ['','']
+];
+
+function show(n){
+  step = n;
+  for(var i=1;i<=4;i++) $('s'+i).classList.toggle('on', i===n);
+  for(var d=1;d<=3;d++) $('d'+d).classList.toggle('on', d<=Math.min(n,3));
+  if(n<4){
+    $('fs-title').textContent = TITLES[n-1][0];
+    $('fs-sub').textContent = TITLES[n-1][1];
+    $('fs-title').parentElement.style.display='';
+    $('b-back').style.display = n>1 ? '' : 'none';
+    $('b-next').textContent = n===3 ? 'Submit application' : 'Continue';
+  } else {
+    $('fs-title').parentElement.style.display='none';
+    $('fs-foot').style.display='none';
+  }
+  $('f-err').style.display='none';
+  document.getElementById('apply').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function fail(m){ var e=$('f-err'); e.textContent=m; e.style.display='block'; }
+function val(id){ return ($(id).value||'').trim(); }
+
+$('b-back').addEventListener('click', function(){ if(step>1) show(step-1); });
+$('b-next').addEventListener('click', function(){
+  if(step===1){
+    if(val('a-name').split(' ').filter(Boolean).length < 2) return fail('Please give both your first and last name, as they appear on your licence.');
+    if(!/^(\+?254|0)[17]\d{8}$/.test(val('a-phone').replace(/\s/g,''))) return fail('That phone number does not look right. Use 07xx xxx xxx or +2547xx xxx xxx.');
+    if(val('a-id').length < 6) return fail('Please enter your national ID number.');
+    if(!val('a-years')) return fail('Please tell us how long you have been driving commercially.');
+    if(!val('a-psv')) return fail('Please tell us whether you hold a PSV badge.');
+    return show(2);
+  }
+  if(step===2){
+    if(!val('a-make') || !val('a-model')) return fail('Please enter the make and model of your vehicle.');
+    var y = parseInt(val('a-year'),10);
+    if(!y || y < 2005 || y > 2027) return fail('Please enter the year your vehicle was manufactured.');
+    if(val('a-plate').replace(/\s/g,'').length < 6) return fail('Please enter the full registration, for example KDA 123A.');
+    return show(3);
+  }
+  if(step===3){
+    if(!$('a-agree').checked) return fail('Please confirm your details are true before submitting.');
+    submit();
+  }
+});
+
+function submit(){
+  var btn = $('b-next'); btn.disabled = true; btn.textContent = 'Sending your application';
+
+  var name = val('a-name');
+  var phone = val('a-phone').replace(/\s/g,'');
+  var plate = val('a-plate').toUpperCase().replace(/\s+/g,' ').trim();
+  var cls = val('a-class') || 'economy';
+  var ref = 'DR' + Date.now().toString(36).toUpperCase().slice(-6);
+
+  var docs = [];
+  Array.prototype.forEach.call(document.querySelectorAll('[data-doc]'), function(c){
+    if(c.checked) docs.push(c.dataset.doc);
+  });
+
+  var driver = {
+    full_name: name, phone: phone, email: val('a-email') || null,
+    national_id: val('a-id') || null,
+    licence_no: val('a-licence') || null,
+    psv_badge: val('a-psv') === 'yes',
+    years_driving: parseInt(val('a-years'),10) || null,
+    city: 'Nairobi',
+    payout_method: 'mpesa',
+    payout_number: (val('a-mpesa') || phone).replace(/\s/g,''),
+    referred_by: val('a-ref') || null,
+    status_note: 'Ref ' + ref +
+      ' · applying for ' + cls +
+      ' · base ' + (val('a-area')||'not given') +
+      ' · hours ' + (val('a-hours')||'not given') +
+      ' · has: ' + (docs.join(', ') || 'none declared')
+  };
+
+  function finish(driverId){
+    $('done-ref').textContent = ref;
+    var msg = 'Hello Cabana. I have applied to drive.\n\nReference: ' + ref +
+      '\nName: ' + name + '\nPhone: ' + phone +
+      '\nVehicle: ' + val('a-make') + ' ' + val('a-model') + ' ' + val('a-year') + ', ' + plate +
+      '\nApplying for: ' + F.TARIFFS[cls].label +
+      '\n\nSending my documents now.';
+    $('done-wa').href = 'https://wa.me/' + WA + '?text=' + encodeURIComponent(msg);
+    btn.disabled = false;
+    show(4);
+    try{ localStorage.setItem('cab_driver_ref', ref); }catch(e){}
+  }
+
+  if(!sb){ finish(null); return; }
+
+  sb.from('drivers').insert(driver).select('id').single().then(function(res){
+    if(res.error){ console.warn('[driver] save failed', res.error.message); return finish(null); }
+    var id = res.data.id;
+    var vehicle = {
+      driver_id: id, make: val('a-make'), model: val('a-model'),
+      year: parseInt(val('a-year'),10), plate: plate,
+      colour: val('a-colour') || null,
+      seats: parseInt(val('a-seats'),10) || 4,
+      class: cls, is_primary: true
+    };
+    var docRows = docs.map(function(k){ return { driver_id:id, kind:k, status:'pending' }; });
+    var jobs = [ sb.from('driver_vehicles').insert(vehicle) ];
+    if(docRows.length) jobs.push(sb.from('driver_documents').insert(docRows));
+    Promise.all(jobs.map(function(p){ return p.then(null, function(){ return null; }); }))
+      .then(function(){ finish(id); });
+  }).catch(function(e){
+    console.warn('[driver] save failed', e); finish(null);
+  });
+}
+
+/* ── boot ─────────────────────────────────────────────────────────── */
+renderEstClasses();
+calcEst();
+try{ ApaSession.ready(function(st){
+  if(st && st.profile){
+    if(st.profile.full_name && !$('a-name').value) $('a-name').value = st.profile.full_name;
+    if(st.profile.phone && !$('a-phone').value) $('a-phone').value = st.profile.phone;
+    if(st.user && st.user.email && !$('a-email').value) $('a-email').value = st.user.email;
+  }
+}); }catch(e){}
+})();
+</script>
+
+<script src="/analytics.js" defer></script>
+<script src="/pwa.js" defer></script>
+<script src="/brand.js" defer></script>
+
+<footer style="background:#0A0A14;color:rgba(255,255,255,.5);padding:44px 0;font-size:13px;">
+  <div class="wrap" style="display:flex;flex-wrap:wrap;gap:20px;align-items:center;justify-content:space-between;">
+    <span>© 2026 Apatmento Ltd, trading as Cabana. Nairobi, Kenya.</span>
+    <span style="display:flex;gap:18px;flex-wrap:wrap;">
+      <a href="/rides.html" style="color:rgba(255,255,255,.6);text-decoration:none;">Rides</a>
+      <a href="/driver.html" style="color:rgba(255,255,255,.6);text-decoration:none;">Driver console</a>
+      <a href="/terms.html" style="color:rgba(255,255,255,.6);text-decoration:none;">Terms</a>
+      <a href="/privacy.html" style="color:rgba(255,255,255,.6);text-decoration:none;">Privacy</a>
+      <a href="https://wa.me/254716206494" target="_blank" rel="noopener" style="color:#25D366;text-decoration:none;">WhatsApp</a>
+    </span>
+  </div>
+</footer>
+</body>
+</html>
