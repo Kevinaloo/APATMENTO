@@ -442,7 +442,7 @@ function setPayMode(mode) {
   const amt = payAmount();
   btn.lastChild.textContent = mode === 'deposit'
     ? ` Pay KES ${amt.toLocaleString()}`
-    : ' Pay with M-Pesa';
+    : ` Pay KES ${payAmount().toLocaleString()}`;
 }
 
 /* Inject the "pay another amount" field under the deposit option. */
@@ -614,15 +614,21 @@ async function startPayment() {
     const guestCode = generateCode('GUEST');
     const hostCode  = generateCode('HOST');
 
-    const isDeposit = PAY_MODE === 'deposit';
-    const depositAmt = isDeposit ? Math.round(total * depositPct(nights)) : total;
-    const balanceAmt = isDeposit ? total - depositAmt : 0;
+    const isDeposit  = PAY_MODE === 'deposit';
+    /* Use the guest's typed amount if provided — payAmount() already
+       validates it through the same MIN_TXN / total-cap logic shown
+       in the shortfall panel, so what they see is what gets charged.
+       Previously this always sent the 25% deposit regardless of what
+       was in the custom field. */
+    const depositAmt = payAmount();
+    const balanceAmt = Math.max(0, total - depositAmt);
 
     const { error } = await sb.from('apartment_bookings').insert({
       guest_id:          CURRENT_USER?.id || null,
       host_id:           apt.host_id || null,
       payment_mode:      isDeposit ? 'deposit' : 'full',
       deposit_amount:    depositAmt,
+      deposit_required:  Math.round(total * 0.25),
       balance_amount:    balanceAmt,
       balance_paid:      !isDeposit,
       apartment_id:      apt.id,

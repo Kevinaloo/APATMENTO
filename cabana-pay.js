@@ -463,8 +463,7 @@
     const foot = document.getElementById('cbp-foot');
 
     if (state === 'sending' || state === 'waiting') {
-      const pick = Math.random() < .5 ? V.oldguy : V.swing;
-      _loadVideo(pick, true);
+      _loadVideo(V.swing, true);
       veil.classList.add('cbp-heavy');
       _panel('cbp-proc');
       document.getElementById('cbp-proc-title').textContent =
@@ -506,7 +505,15 @@
     _attempts = 0;
     _pollTimer = setInterval(async () => {
       _attempts++;
-      if (_attempts > 40) {
+      /* Show a live countdown in the footer — guests had no idea how long
+         to wait. Timeout is 60 s (20 × 3 s polls) after which the
+         facepalm video plays and they can retry. */
+      const _remaining = Math.max(0, 20 - _attempts) * 3;
+      const _foot = document.getElementById('cbp-foot');
+      if (_foot && _remaining > 0) {
+        _foot.textContent = `Enter your PIN  ·  ${_remaining}s`;
+      }
+      if (_attempts > 20) {
         clearInterval(_pollTimer);
         _cut(() => _setState('failed', opts));
         opts.onFailure?.({ reason: 'timeout' });
