@@ -8,6 +8,50 @@
       "has": [
         {
           "type": "host",
+          "value": "cabana.africa"
+        }
+      ],
+      "destination": "https://www.apatmento.space/$1",
+      "permanent": true
+    },
+    {
+      "source": "/(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.cabana.africa"
+        }
+      ],
+      "destination": "https://www.apatmento.space/$1",
+      "permanent": true
+    },
+    {
+      "source": "/(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "cabana.travel"
+        }
+      ],
+      "destination": "https://www.apatmento.space/$1",
+      "permanent": true
+    },
+    {
+      "source": "/(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.cabana.travel"
+        }
+      ],
+      "destination": "https://www.apatmento.space/$1",
+      "permanent": true
+    },
+    {
+      "source": "/(.*)",
+      "has": [
+        {
+          "type": "host",
           "value": "apatmento.space"
         }
       ],
@@ -41,6 +85,23 @@
         {
           "key": "Access-Control-Allow-Headers",
           "value": "Content-Type, Authorization"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)\\.html",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600, stale-while-revalidate=86400"
+        },
+        {
+          "key": "Vary",
+          "value": "Accept-Encoding"
+        },
+        {
+          "key": "X-Robots-Tag",
+          "value": "index, follow"
         }
       ]
     },
@@ -81,7 +142,7 @@
       ]
     },
     {
-      "source": "/(sitemap.xml|robots.txt|llms.txt)",
+      "source": "/(sitemap*.xml|sitemap-index.xml|robots.txt|llms.txt)",
       "headers": [
         {
           "key": "Cache-Control",

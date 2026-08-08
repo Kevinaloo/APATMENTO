@@ -247,6 +247,15 @@ async function handleWelcomeEmail(req, res) {
 const INDEXNOW_HOST = 'www.apatmento.space';
 const INDEXNOW_KEY  = 'cc18b1bc5dc43435c44f29f125a500f5';
 
+// All sitemaps to ping — updated to include all location, global, deep and blog sitemaps
+const ALL_SITEMAPS = [
+  '/sitemap.xml',
+  '/sitemap-locations.xml',
+  '/sitemap-global.xml',
+  '/sitemap-deep.xml',
+  '/sitemap-blog.xml',
+];
+
 async function handleIndexNow(req, res) {
   try {
     let urls;
@@ -256,13 +265,25 @@ async function handleIndexNow(req, res) {
       const path = single.startsWith('http') ? new URL(single).pathname : single;
       urls = ['https://' + INDEXNOW_HOST + (path.startsWith('/') ? path : '/' + path)];
     } else {
-      const sm = await fetch('https://' + INDEXNOW_HOST + '/sitemap.xml');
-      if (!sm.ok) throw new Error('sitemap fetch failed: ' + sm.status);
-      const xml = await sm.text();
-      urls = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m => m[1].trim());
-      if (!urls.length) throw new Error('no <loc> entries in sitemap');
+      // Fetch all sitemaps and collect every URL
+      const allUrls = new Set();
+      for (const sm_path of ALL_SITEMAPS) {
+        try {
+          const sm = await fetch('https://' + INDEXNOW_HOST + sm_path);
+          if (!sm.ok) continue;
+          const xml = await sm.text();
+          const found = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m => m[1].trim());
+          found.forEach(u => allUrls.add(u));
+        } catch(e) { /* skip failed sitemaps */ }
+      }
+      urls = [...allUrls];
+      if (!urls.length) throw new Error('no <loc> entries across all sitemaps');
     }
 
+    // IndexNow supports 10,000 URLs per batch max
+    const batch = urls.slice(0, 10000);
+
+    // Ping IndexNow (covers Google, Bing, Yandex simultaneously)
     const r = await fetch('https://api.indexnow.org/indexnow', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json; charset=utf-8' },
@@ -270,15 +291,22 @@ async function handleIndexNow(req, res) {
         host: INDEXNOW_HOST,
         key: INDEXNOW_KEY,
         keyLocation: 'https://' + INDEXNOW_HOST + '/' + INDEXNOW_KEY + '.txt',
-        urlList: urls,
+        urlList: batch,
       }),
     });
+
+    // Also ping Bing directly for faster indexing
+    const bing_ping = await fetch(
+      `https://www.bing.com/indexnow?url=https://${INDEXNOW_HOST}/sitemap-index.xml&key=${INDEXNOW_KEY}`
+    ).catch(() => ({ status: 0 }));
 
     res.status(200).json({
       ok: r.status === 200 || r.status === 202,
       indexnow_status: r.status,
-      submitted: urls.length,
-      urls,
+      bing_ping_status: bing_ping.status,
+      submitted: batch.length,
+      total_found: urls.length,
+      sitemaps_checked: ALL_SITEMAPS.length,
     });
   } catch (err) {
     res.status(500).json({ ok: false, error: String(err.message || err) });
