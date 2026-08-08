@@ -26,20 +26,28 @@
 const BASE = 'https://backend.payhero.co.ke/api/v2';
 
 /* {CK} = CheckoutRequestID, {REF} = our external_reference. */
+/* Ordered by likelihood. {REF} is the external_reference we sent with
+   the STK push, which is what PayHero indexes the transaction by, so
+   those come first. */
 const CANDIDATES = [
-  '/transaction-status?reference={CK}',
   '/transaction-status?reference={REF}',
-  '/payments/{CK}',
+  '/transaction-status?reference={CK}',
   '/transaction-status?checkout_request_id={CK}',
+  '/payments/{CK}',
   '/payments?reference={REF}',
-  '/payment-status?reference={CK}',
+  '/payment-status?reference={REF}',
 ];
 
 let LEARNED = null;   /* cached across warm invocations */
 
 const TERMINAL_OK   = ['SUCCESS', 'COMPLETED', 'COMPLETE', 'PAID'];
-const TERMINAL_FAIL = ['FAILED', 'CANCELLED', 'CANCELED', 'TIMEOUT',
-                       'INSUFFICIENT', 'REJECTED', 'DECLINED', 'ERROR'];
+/* Deliberately narrow. 'ERROR' and free-text matching were removed:
+   a not-found lookup or a transport hiccup must never be reported to a
+   guest as a failed payment when their money has actually left. When in
+   doubt we stay 'pending' — a slow success is recoverable, a false
+   failure tells someone their paid booking did not happen. */
+const TERMINAL_FAIL = ['FAILED', 'CANCELLED', 'CANCELED', 'DECLINED', 'REJECTED'];
+const PENDING_WORDS = ['QUEUED', 'PENDING', 'PROCESSING', 'INITIATED', 'SENT'];
 
 /* Pull a status + reason out of whatever shape PayHero returns. */
 function readStatus(body) {
@@ -60,10 +68,13 @@ function readStatus(body) {
   if (!raw && code == null) return null;
 
   let verdict = 'pending';
-  if (TERMINAL_OK.some(s => raw.includes(s)) || String(code) === '0') verdict = 'paid';
-  else if (TERMINAL_FAIL.some(s => raw.includes(s)))                  verdict = 'failed';
-  else if (String(desc).toUpperCase().match(/INSUFFICIENT|BALANCE|CANCEL|WRONG PIN|TIMEOUT|DECLINE/))
-    verdict = 'failed';
+  if (PENDING_WORDS.some(w => raw.includes(w)))                       verdict = 'pending';
+  else if (TERMINAL_OK.some(w => raw.includes(w)) || String(code) === '0') verdict = 'paid';
+  else if (TERMINAL_FAIL.some(w => raw.includes(w)))                  verdict = 'failed';
+
+  /* An M-Pesa receipt only exists once money has actually moved, so it
+     overrides any confusing status wording. */
+  if (receipt && verdict !== 'failed') verdict = 'paid';
 
   return { verdict, raw, desc: String(desc), receipt, code };
 }
@@ -125,7 +136,12 @@ export async function pollPayment(req, res) {
     let found = null;
     for (const tpl of order) {
       const path = tpl.replace('{CK}', encodeURIComponent(CK))
-                      .replace('{REF}', encodeURIComponent(ledger.booking_ref || ref));
+                      /* external_reference we sent to PayHero is the
+                         instalment ref (…-P1), NOT the booking ref.
+                         Querying the booking ref found no transaction,
+                         and a not-found was being read as a failure —
+                         which is why a paid KES 10 showed the facepalm. */
+                      .replace('{REF}', encodeURIComponent(ref));
       try {
         const r   = await fetch(BASE + path, {
           headers: { Authorization: auth, Accept: 'application/json' },
@@ -137,6 +153,18 @@ export async function pollPayment(req, res) {
           body: typeof body === 'string' ? body.slice(0, 400) : body });
 
         if (!r.ok) continue;
+
+        /* Guard against a generic/empty 200 that is not about this
+           transaction. Require the payload to echo one of our
+           identifiers, or to carry a receipt. */
+        const blob = JSON.stringify(body || '');
+        const mentionsUs = blob.includes(CK) || blob.includes(ref)
+                        || /MpesaReceipt|mpesa_receipt|ResultCode|provider_reference/i.test(blob);
+        if (!mentionsUs) {
+          if (debug) probes.push({ path, http: r.status, skipped: 'no identifier match' });
+          continue;
+        }
+
         const parsed = readStatus(body);
         if (parsed) { found = parsed; LEARNED = tpl; if (!debug) break; }
       } catch (e) {
