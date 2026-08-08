@@ -103,9 +103,134 @@ body{overflow-x:hidden;}
 .pay-secure{text-align:center;font-size:12px;color:var(--ink-faint);margin-top:14px;display:flex;align-items:center;justify-content:center;gap:6px;}
 .pay-secure svg{width:13px;height:13px;color:var(--mint-deep);}
 
-</script>
+</style>
+</head>
+<body>
+<body>
+<div class="aurora"><div class="ab ab-1"></div><div class="ab ab-2"></div></div>
+
+<div class="topbar">
+  <div class="tb-left">
+    <button class="tb-back" onclick="history.back()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    </button>
+    <img src="cabana-emblem.png" class="tb-icon-sm" alt=""/>
+    <img src="cabana-wordmark-color.png" class="tb-logo tb-cab-wm" alt="Cabana" onerror="this.style.display='none'"/>
+  </div>
+  <div class="nav-avatar" id="nav-avatar"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="page">
+  <span class="page-eyebrow">Almost there</span>
+  <h1 class="page-title">Confirm your <em>booking</em></h1>
+  <p class="page-sub">Review your stay and pay securely with M-Pesa. Your money is protected until check-in.</p>
+
+  <div class="layout">
+    <!-- LEFT: FORM -->
+    <div>
+      <div class="form-card">
+        <div class="form-card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18M8 2v4M16 2v4"/></svg>
+          Your stay
+        </div>
+        <div class="row-2">
+          <div class="field">
+            <label class="field-label">Check in</label>
+            <input class="field-input" type="date" id="checkin-date"/>
+          </div>
+          <div class="field">
+            <label class="field-label">Check out</label>
+            <input class="field-input" type="date" id="checkout-date"/>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field-label">Guests</label>
+          <div class="guest-stepper">
+            <button class="gs-btn" onclick="changeGuests(-1)">−</button>
+            <span class="gs-count" id="guest-count">2</span>
+            <button class="gs-btn" onclick="changeGuests(1)">+</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <div class="form-card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>
+          Your details
+        </div>
+        <div class="field">
+          <label class="field-label">Full name</label>
+          <input class="field-input" type="text" id="guest-name" placeholder="As it appears on M-Pesa"/>
+        </div>
+        <div class="field">
+          <label class="field-label">M-Pesa phone number</label>
+          <input class="field-input" type="tel" id="guest-phone" placeholder="07XX XXX XXX"/>
+          <div class="field-hint">You'll receive an STK push to this number to complete payment.</div>
+        </div>
+      </div>
+    </div>
+
+    
+    <div id="apa-location-map-wrap" style="margin:0 0 16px;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(10,10,20,.12);position:relative;"><div id="apa-location-map" style="width:100%;height:200px;background:#F1F2F8;display:flex;align-items:center;justify-content:center;"><div style="text-align:center;color:#8E90AD"><div style="font-size:28px">📍</div><div style="font-size:12px;margin-top:6px;font-weight:600">Loading area map…</div></div></div><div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.92);backdrop-filter:blur(8px);border-radius:100px;padding:4px 12px;font-size:11px;font-weight:700;color:#636480;white-space:nowrap;box-shadow:0 2px 10px rgba(0,0,0,.1)">🔒 Exact address provided after booking</div></div>
+    <!-- RIGHT: SUMMARY -->
+    <div class="summary">
+      <div class="sum-apt">
+        <div class="sum-apt-thumb" id="sum-apt-thumb">🏢</div>
+        <div>
+          <div class="sum-apt-name" id="sum-apt-name">Apartment</div>
+          <div class="sum-apt-loc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg><span id="sum-apt-loc">Nairobi</span></div>
+        </div>
+      </div>
+      <div class="sum-row"><span id="sum-nights-label">2 nights</span><span class="v" id="sum-subtotal">KES 0</span></div>
+      <div class="sum-row"><span>Apatmento fee <span style="font-size:11px;color:var(--ink-faint);">(fixed)</span></span><span class="v" id="sum-fee">KES 0</span></div>
+      <div class="sum-divider"></div>
+      <div class="sum-total-row"><span class="sum-total-label">Total</span><span class="sum-total-val" id="sum-total">KES 0</span></div>
+      <div class="sum-note" id="sum-note">100% of the stay price goes directly to the host. Our fee is fixed. Never a percentage.</div>
+
+      <div class="pay-mode">
+        <div class="pay-mode-lbl">How would you like to pay?</div>
+        <label class="pm-opt on" id="pm-full">
+          <input type="radio" name="paymode" value="full" checked onchange="setPayMode('full')"/>
+          <div>
+            <div class="pm-t">Pay in full now</div>
+            <div class="pm-s">Settled. Show your code at the door.</div>
+          </div>
+          <b id="pm-full-amt">KES 0</b>
+        </label>
+        <label class="pm-opt" id="pm-dep">
+          <input type="radio" name="paymode" value="deposit" onchange="setPayMode('deposit')"/>
+          <div>
+            <div class="pm-t">Deposit now, balance on arrival</div>
+            <div class="pm-s" id="pm-dep-sub">Hold the dates with a deposit. Pay the rest before you check in.</div>
+          </div>
+          <b id="pm-dep-amt">KES 0</b>
+        </label>
+        <div class="pm-warn" id="pm-warn" hidden>
+          ⚠ Your host's check-in code won't work until the balance is paid. Settle it in the app on arrival.
+        </div>
+      </div>
+
+      <button class="pay-btn" id="pay-btn" onclick="startPayment()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><path d="M2 10h20"/></svg>
+        Pay with M-Pesa
+      </button>
+      <div class="pay-secure">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Secured · Money protected until check-in
+      </div>
+    </div>
+  </div>
+</div>
 <script src="/cabana-pay.js"></script>
 <script>
+/* Per-transaction floor — M-Pesa charges a flat fee per push, so
+   smaller amounts cost more to collect than they bring in.
+   `var` (not const) so init paths that run before this point cannot
+   hit a temporal dead zone. Server re-validates in _payment-rules.js. */
+var MIN_TXN = 50;
+
 /* ══ SUPABASE ══ */
 const SUPABASE_URL      = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
@@ -207,7 +332,6 @@ function generateCode(prefix) {
    door for the first time is a guest we have failed.
    (PAY_MODE itself is declared earlier, before the first updateSummary.)
    ═══════════════════════════════════════════════════════════════ */
-const MIN_TXN = 50;   /* per-transaction floor — M-Pesa fees make smaller pushes lossmaking */
 function depositPct(nights) { return 0.25; }   /* 25% on every stay, any length */
 
 /* Guest-entered instalment. The server re-validates every one of these
@@ -516,7 +640,9 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove('show'), 8000);
 }
 </script>
-<script src="/payment.js" defer></script>
+<!-- payment.js intentionally NOT loaded here: it also defines
+     window.ApatmentoPay and, being deferred, would run after
+     cabana-pay.js and clobber the video payment experience. -->
 <script src="/pwa.js" defer></script>
 <script src="/apa-push.js" defer></script>
 <script defer>

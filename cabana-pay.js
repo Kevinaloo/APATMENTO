@@ -476,10 +476,14 @@
       }
       try {
         const r = await fetch(
-          `/api/check-payment-status?table=${opts.table}&reference=${encodeURIComponent(opts.reference)}`
+          `/api/check-payment-status?table=${opts.table}&reference=${encodeURIComponent(opts.pollRef || opts.reference)}`
         );
         const d = await r.json();
-        if (d.status === 'paid' || d.status === 'paid_pending_checkin') {
+        /* 'paid' = this instalment cleared. The booking may still be
+           part_paid or confirmed_balance_due overall; that is a state for
+           the receipt to explain, not a payment failure. */
+        if (d.status === 'paid' || d.status === 'paid_pending_checkin'
+            || d.status === 'confirmed_balance_due') {
           clearInterval(_pollTimer);
           _cut(() => _setState('success', opts));
           opts.onSuccess?.(d);
@@ -521,6 +525,10 @@
             opts.onFailure?.(d);
             return;
           }
+          /* stk-push returns the per-instalment reference (…-P1, -P2).
+             Poll that, not the booking reference. */
+          if (d.reference) opts.pollRef = d.reference;
+          if (d.amount)    opts.chargedAmount = d.amount;
           _cut(() => _setState('waiting', opts));
           _poll(opts);
         })
