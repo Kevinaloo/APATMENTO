@@ -55,7 +55,7 @@ create or replace function public.cab_km(
   lat1 double precision, lng1 double precision,
   lat2 double precision, lng2 double precision
 ) returns double precision
-language sql immutable parallel safe as $$
+language sql immutable parallel safe set search_path = public as $$
   select 6371 * 2 * asin(least(1, sqrt(
     power(sin(radians(lat2 - lat1) / 2), 2) +
     cos(radians(lat1)) * cos(radians(lat2)) *
@@ -640,12 +640,17 @@ create policy fixed_public on public.ride_fixed_routes
 create or replace function public.cab_guard_driver_insert()
 returns trigger language plpgsql security definer set search_path = public as $$
 begin
-  new.status  := 'applied';
-  new.classes := array['economy'];
-  new.rating  := 5.00;
-  new.trips_completed := 0;
-  new.approved_at := null;
-  new.user_id := coalesce(auth.uid(), new.user_id);
+  -- current_user, not auth.role(). auth.role() is NULL unless the JWT claim
+  -- is parsed, and NULL <> 'service_role' is NULL rather than TRUE, so the
+  -- old test silently skipped the whole guard and let a client self-approve.
+  if current_user in ('anon','authenticated') then
+    new.status  := 'applied';
+    new.classes := array['economy'];
+    new.rating  := 5.00;
+    new.trips_completed := 0;
+    new.approved_at := null;
+    new.user_id := coalesce(auth.uid(), new.user_id);
+  end if;
   return new;
 end $$;
 
@@ -658,12 +663,13 @@ create trigger cab_guard_driver_insert_t
 create or replace function public.cab_guard_driver_update()
 returns trigger language plpgsql security definer set search_path = public as $$
 begin
-  if auth.role() <> 'service_role' then
-    new.status  := old.status;
-    new.classes := old.classes;
-    new.rating  := old.rating;
+  if current_user in ('anon','authenticated') then
+    new.status          := old.status;
+    new.classes         := old.classes;
+    new.rating          := old.rating;
     new.trips_completed := old.trips_completed;
-    new.approved_at := old.approved_at;
+    new.approved_at     := old.approved_at;
+    new.user_id         := old.user_id;
   end if;
   new.updated_at := now();
   return new;
@@ -700,11 +706,28 @@ grant execute on function public.cab_nearby_drivers(double precision,double prec
 grant execute on function public.cab_broadcast(uuid,double precision) to anon, authenticated;
 grant execute on function public.cab_track(text) to anon, authenticated;
 grant execute on function public.cab_expire_search(uuid) to anon, authenticated;
+-- Postgres grants EXECUTE to PUBLIC by default, so granting to
+-- 'authenticated' does NOT keep anon out. Revoke, then grant deliberately.
+revoke all on function public.cab_nearby_drivers(double precision,double precision,text,double precision) from public, anon;
+revoke all on function public.cab_accept(uuid,uuid) from public, anon;
+revoke all on function public.cab_decline(uuid) from public, anon;
+revoke all on function public.cab_ping(double precision,double precision,boolean,boolean,text,numeric,numeric,int) from public, anon;
+revoke all on function public.cab_set_status(uuid,text) from public, anon;
+
 grant execute on function public.cab_accept(uuid,uuid) to authenticated;
 grant execute on function public.cab_decline(uuid) to authenticated;
 grant execute on function public.cab_ping(double precision,double precision,boolean,boolean,text,numeric,numeric,int) to authenticated;
 grant execute on function public.cab_set_status(uuid,text) to authenticated;
-grant select on public.v_live_drivers to anon, authenticated;
+
+-- Trigger functions must never be reachable over the REST API.
+revoke all on function public.cab_guard_driver_insert() from public, anon, authenticated;
+revoke all on function public.cab_guard_driver_update() from public, anon, authenticated;
+
+-- Views default to SECURITY DEFINER, which would expose every driver's live
+-- position through PostgREST. Riders reach this data only via cab_supply and
+-- cab_track, which are definer functions and keep working.
+alter view public.v_live_drivers set (security_invoker = true);
+revoke all on public.v_live_drivers from anon, authenticated;
 
 
 -- ── 15 · REVIEW QUEUE ─────────────────────────────────────────────────────
@@ -721,3 +744,6 @@ create or replace view public.v_driver_queue as
     left join public.driver_vehicles v on v.driver_id = d.id and v.is_primary
    where d.status in ('applied','under_review')
    order by d.applied_at;
+
+alter view public.v_driver_queue set (security_invoker = true);
+revoke all on public.v_driver_queue from anon, authenticated;
