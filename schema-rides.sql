@@ -304,6 +304,7 @@ create index if not exists ride_requests_status_idx  on public.ride_requests(sta
 create index if not exists ride_requests_driver_idx  on public.ride_requests(driver_id, created_at desc);
 create index if not exists ride_requests_rider_idx   on public.ride_requests(rider_id, created_at desc);
 create index if not exists ride_requests_ref_idx     on public.ride_requests(ref);
+create index if not exists ride_requests_vehicle_idx on public.ride_requests(vehicle_id);
 
 
 -- ── 8 · OFFERS, THE BROADCAST ─────────────────────────────────────────────
@@ -560,7 +561,10 @@ language sql stable security definer set search_path = public as $$
 $$;
 
 
--- ── 11 · ROW LEVEL SECURITY ───────────────────────────────────────────────
+-- ── 11 · ROW LEVEL SECURITY ─────────────────────────────────────────────
+-- Note: auth.uid() is wrapped in a scalar subquery throughout. Bare auth.uid()
+-- in a policy is re-evaluated once per row; (select auth.uid()) is computed
+-- once per statement. The driver console polls every 12 seconds, so it matters.──
 
 alter table public.drivers           enable row level security;
 alter table public.driver_vehicles   enable row level security;
@@ -588,21 +592,21 @@ end $$;
 create policy drivers_apply on public.drivers
   for insert to anon, authenticated with check (true);
 create policy drivers_read_own on public.drivers
-  for select to authenticated using (user_id = auth.uid());
+  for select to authenticated using (user_id = (select auth.uid()));
 create policy drivers_edit_own on public.drivers
-  for update to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
+  for update to authenticated using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));
 
 create policy vehicles_own on public.driver_vehicles
   for all to authenticated
-  using (driver_id in (select id from public.drivers where user_id = auth.uid()))
-  with check (driver_id in (select id from public.drivers where user_id = auth.uid()));
+  using (driver_id in (select id from public.drivers where user_id = (select auth.uid())))
+  with check (driver_id in (select id from public.drivers where user_id = (select auth.uid())));
 create policy vehicles_apply on public.driver_vehicles
   for insert to anon with check (true);
 
 create policy documents_own on public.driver_documents
   for all to authenticated
-  using (driver_id in (select id from public.drivers where user_id = auth.uid()))
-  with check (driver_id in (select id from public.drivers where user_id = auth.uid()));
+  using (driver_id in (select id from public.drivers where user_id = (select auth.uid())))
+  with check (driver_id in (select id from public.drivers where user_id = (select auth.uid())));
 create policy documents_apply on public.driver_documents
   for insert to anon with check (true);
 
@@ -610,7 +614,7 @@ create policy documents_apply on public.driver_documents
 -- driver could otherwise place themselves at the airport from their sofa.
 create policy locations_read_own on public.driver_locations
   for select to authenticated
-  using (driver_id in (select id from public.drivers where user_id = auth.uid()));
+  using (driver_id in (select id from public.drivers where user_id = (select auth.uid())));
 
 -- A rider may create a request and read their own. Guests read by reference
 -- through cab_track, which is security definer, so no anon select policy.
@@ -618,15 +622,15 @@ create policy requests_create on public.ride_requests
   for insert to anon, authenticated with check (true);
 create policy requests_read_own on public.ride_requests
   for select to authenticated
-  using (rider_id = auth.uid()
+  using (rider_id = (select auth.uid())
          or driver_id in (select id from public.drivers where user_id = auth.uid()));
 create policy requests_rider_cancel on public.ride_requests
   for update to authenticated
-  using (rider_id = auth.uid()) with check (rider_id = auth.uid());
+  using (rider_id = (select auth.uid())) with check (rider_id = (select auth.uid()));
 
 create policy offers_read_own on public.ride_offers
   for select to authenticated
-  using (driver_id in (select id from public.drivers where user_id = auth.uid()));
+  using (driver_id in (select id from public.drivers where user_id = (select auth.uid())));
 
 create policy tariffs_public on public.ride_tariffs
   for select to anon, authenticated using (active);
