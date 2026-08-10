@@ -1266,7 +1266,18 @@ async function goDashboard(user) {
     }
   } catch(e) {}
 
-  // If arriving with ?role=partner intent, skip DB check and go straight to partner dash
+  /* ── WHERE TO LAND AFTER SIGN-IN ──────────────────────────────────
+     Rule: after signing in, land on the GUEST dashboard unless the user
+     was interrupted mid-partner-task (handled above by auth_next), or
+     unless they explicitly clicked a "Partner sign-in" CTA (?role=partner).
+
+     Why: most users are travellers. Sending them to Partner Hub on every
+     sign-in confuses them and kills the booking flow. Hosts who want their
+     dashboard can tap "Switch to Host" — one tap from guest. localStorage
+     can hold a stale 'partner' value from a session months ago and must
+     never silently override where someone lands today.             ────── */
+
+  // Honour explicit partner-CTA intent (e.g. "Manage your listings" link)
   try {
     const _roleParam = new URLSearchParams(location.search).get('role');
     if (_roleParam === 'partner') {
@@ -1276,26 +1287,10 @@ async function goDashboard(user) {
     }
   } catch(e) {}
 
-  // Which mode do we resume in?
-  // RULE: owning a listing does NOT mean the user wants host mode. Only an
-  // explicit prior choice (last_role) does. Forcing partner on every sign-in
-  // stranded hosts in the Partner Hub with no obvious way back to guest.
-  try {
-    const profileRes = await sb.from('profiles').select('last_role').eq('id', user.id).single();
-    let lastRole = '';
-    try { lastRole = localStorage.getItem('apa-last-role') || ''; } catch(e) {}
-    const isPartner =
-      (profileRes.data && profileRes.data.last_role === 'partner') ||
-      lastRole === 'partner';
-    if (isPartner) {
-      try { localStorage.setItem('apa-last-role', 'partner'); } catch(e) {}
-      window.location.href = 'dashboard.html?role=partner&uid=' + user.id;
-      return;
-    }
-  } catch(e) {}
-
-  // New user or traveller-only — land on guest screen
-  window.location.href = 'dashboard.html?uid='+user.id;
+  // Default: guest dashboard. Clear any stale partner flag so the next
+  // sign-in doesn't accidentally inherit it either.
+  try { localStorage.removeItem('apa-last-role'); } catch(e) {}
+  window.location.href = 'dashboard.html?uid=' + user.id;
 }
 
 /* ══════════════════════════════════════════════════════════════
