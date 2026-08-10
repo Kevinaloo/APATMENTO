@@ -116,7 +116,7 @@ body{overflow-x:hidden;}
 .tb-cab-wm{height:26px;width:auto;display:block;}
 .tb-logo{height:26px;width:auto;}
 
-/* Custom amount input — must look like a field you type into. */
+/* Custom amount input. Must look like a field you type into. */
 .pm-custom-label{font-size:12.5px;font-weight:700;color:var(--ink-soft);margin-bottom:8px;
   display:flex;align-items:center;gap:7px;}
 .pm-custom-label::before{content:'KES';font-size:10px;font-weight:800;letter-spacing:.06em;
@@ -129,7 +129,7 @@ body{overflow-x:hidden;}
   font-size:18px;font-weight:800;color:var(--ink);font-family:var(--font-data);}
 .pm-custom-hint{font-size:11.5px;color:var(--ink-faint);margin-top:7px;line-height:1.5;}
 
-/* Pay mode — two selectable cards, not radio rows. */
+/* Pay mode. Two selectable cards, not radio rows. */
 .pay-mode{margin:20px 0 6px;}
 .pay-mode-lbl{font-size:11px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;
   color:var(--ink-faint);margin-bottom:11px;}
@@ -153,7 +153,7 @@ body{overflow-x:hidden;}
 .pm-warn{margin-top:12px;font-size:12.5px;line-height:1.6;color:var(--ink-soft);
   background:var(--glass-2);border:1px solid var(--line);border-radius:14px;padding:13px 14px;}
 
-/* Map — draggable, but never reveals the exact address. */
+/* Map. Draggable, but never reveals the exact address. */
 .map-wrap{position:relative;border-radius:var(--radius);overflow:hidden;
   border:1px solid var(--line);box-shadow:var(--shadow-glass);}
 .map-note{position:absolute;left:12px;bottom:12px;z-index:500;display:flex;align-items:center;
@@ -263,7 +263,7 @@ body{overflow-x:hidden;}
             <input type="radio" name="paymode" value="full" checked onchange="setPayMode('full')"/>
             <span class="pm-tick"></span>
             <div class="pm-t">Pay in full</div>
-            <div class="pm-s">Settled — code at the door.</div>
+            <div class="pm-s">Settled. Code at the door.</div>
             <div class="pm-amt" id="pm-full-amt">KES 0</div>
           </label>
           <label class="pm-opt" id="pm-dep">
@@ -290,7 +290,7 @@ body{overflow-x:hidden;}
 </div>
 <script src="/cabana-pay.js"></script>
 <script>
-/* Per-transaction floor — M-Pesa charges a flat fee per push, so
+/* Per-transaction floor. M-Pesa charges a flat fee per push, so
    smaller amounts cost more to collect than they bring in.
    `var` (not const) so init paths that run before this point cannot
    hit a temporal dead zone. Server re-validates in _payment-rules.js. */
@@ -331,7 +331,7 @@ function changeGuests(delta) {
   document.getElementById('guest-count').textContent = guestCount;
 }
 
-/* ══ FEE CALCULATION — tiered for apartments ══ */
+/* ══ FEE CALCULATION. Tiered for apartments ══ */
 function calculateFee(totalPrice) {
   return totalPrice < 5000 ? 300 : 800;
 }
@@ -339,7 +339,7 @@ function calculateFee(totalPrice) {
 /* ══ DEFAULT DATES ══ */
 const today = new Date();
 /* Local calendar date, never toISOString(). Kenya is UTC+3, so between
-   midnight and 03:00 toISOString() reports YESTERDAY — which silently
+   midnight and 03:00 toISOString() reports YESTERDAY, which silently
    shifted the default stay back a day and could offer a past date. */
 function isoLocal(d){
   return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0')
@@ -408,7 +408,7 @@ document.getElementById('checkout-date').addEventListener('change', () => {
   updateSummary();
 });
 
-/* PAY_MODE must exist before the first updateSummary() below —
+/* PAY_MODE must exist before the first updateSummary() below
    refreshPayModeAmounts() reads it, and a `let` further down would
    throw a TDZ ReferenceError and leave the whole summary blank. */
 let PAY_MODE = 'full';
@@ -426,15 +426,15 @@ function generateCode(prefix) {
 
 /* ═══════════════════════════════════════════════════════════════
    PAY MODE
-   A deposit buys the dates, not the keys. We say so twice — once
-   here, once at the door — because a guest discovering it at the
+   A deposit buys the dates, not the keys. We say so twice, once
+   here, once at the door, because a guest discovering it at the
    door for the first time is a guest we have failed.
    (PAY_MODE itself is declared earlier, before the first updateSummary.)
    ═══════════════════════════════════════════════════════════════ */
 function depositPct(nights) { return 0.25; }   /* 25% on every stay, any length */
 
 /* Guest-entered instalment. The server re-validates every one of these
-   in api/lib/_payment-rules.js — this is convenience, not enforcement. */
+   in api/lib/_payment-rules.js. This is convenience, not enforcement. */
 function customAmount() {
   const el = document.getElementById('pm-custom');
   if (!el || !el.value) return null;
@@ -472,7 +472,7 @@ function ensureCustomField() {
     + '  <input id="pm-custom" type="number" inputmode="numeric" min="' + MIN_TXN + '" step="1" '
     + '    placeholder="e.g. 200, 500, 1000" aria-label="Amount to pay"/>'
     + '</div>'
-    + '<div class="pm-custom-hint">Any amount from KES ' + MIN_TXN + ' upward — we\'ll track your balance. '
+    + '<div class="pm-custom-hint">Any amount from KES ' + MIN_TXN + ' upward. We\'ll track your balance. '
     + 'Leave empty to pay the 25% deposit.</div>'
     + '<div id="pm-shortfall" style="margin-top:10px;font-size:12.5px;line-height:1.55"></div>';
   warn.appendChild(wrap);
@@ -483,7 +483,7 @@ function ensureCustomField() {
   });
 }
 
-/* Tell the guest exactly what their number buys — before they pay. */
+/* Tell the guest exactly what their number buys, before they pay. */
 function renderShortfall() {
   const el = document.getElementById('pm-shortfall');
   if (!el) return;
@@ -504,10 +504,10 @@ function renderShortfall() {
       + ' minimum that secures these dates.';
   } else if (amt < total) {
     el.innerHTML = '<span style="color:#0D9467;font-weight:700">This confirms your booking.</span><br>'
-      + 'KES ' + (total - amt).toLocaleString() + ' will remain — your check-in code is released '
+      + 'KES ' + (total - amt).toLocaleString() + ' will remain. Your check-in code is released '
       + 'once the full amount is paid.';
   } else {
-    el.innerHTML = '<span style="color:#0D9467;font-weight:700">Paid in full — check-in code released '
+    el.innerHTML = '<span style="color:#0D9467;font-weight:700">Paid in full. Check-in code released '
       + 'immediately.</span>';
   }
 }
@@ -554,7 +554,7 @@ function showPartialResult(d) {
     + (confirmed ? 'Booking confirmed' : 'Payment received') + '</div>'
     + '<div style="font-size:13.5px;color:var(--ink-soft);line-height:1.65;margin-bottom:22px">'
     + (confirmed
-        ? 'Your dates are held. <b>KES ' + Math.round(total-paid).toLocaleString() + '</b> remains — '
+        ? 'Your dates are held. <b>KES ' + Math.round(total-paid).toLocaleString() + '</b> remains, '
           + 'your check-in code unlocks once the stay is paid in full.'
         : 'We received <b>KES ' + Math.round(paid).toLocaleString() + '</b>. Add <b>KES '
           + Math.round(deposit-paid).toLocaleString() + '</b> more to secure these dates. '
@@ -630,7 +630,7 @@ async function startPayment() {
     const hostCode  = generateCode('HOST');
 
     const isDeposit  = PAY_MODE === 'deposit';
-    /* Use the guest's typed amount if provided — payAmount() already
+    /* Use the guest's typed amount if provided. PayAmount() already
        validates it through the same MIN_TXN / total-cap logic shown
        in the shortfall panel, so what they see is what gets charged.
        Previously this always sent the 25% deposit regardless of what
@@ -695,8 +695,8 @@ async function startPayment() {
         guests:    guestCount,
       },
       description: isDeposit
-        ? `Deposit · ${apt.name} — ${nights} night${nights>1?'s':''}`
-        : `${apt.name} — ${nights} night${nights>1?'s':''}`,
+        ? `Deposit · ${apt.name}, ${nights} night${nights>1?'s':''}`
+        : `${apt.name}, ${nights} night${nights>1?'s':''}`,
       onSuccess: async (d) => {
         payBtn.disabled = false;
         /* The check-in code is released only when the stay is settled in
@@ -725,7 +725,7 @@ async function startPayment() {
           ? 'We did not hear back from M-Pesa in time. If you were charged, '
             + 'check My Bookings before paying again.'
           : d && d.reason === 'network'
-          ? 'Network problem — no payment was taken. Please try again.'
+          ? 'Network problem, no payment was taken. Please try again.'
           : 'The payment was not completed. No money has left your account.';
         showToast(why, 7000);
         showRetryPanel(why);
@@ -742,8 +742,8 @@ async function startPayment() {
 
 
 function showCheckinCodes() {
-  const guestCode    = sessionStorage.getItem('pending_guest_code')    || '—';
-  const hostCode     = sessionStorage.getItem('pending_host_code')     || '—';
+  const guestCode    = sessionStorage.getItem('pending_guest_code')    || ', ';
+  const hostCode     = sessionStorage.getItem('pending_host_code')     || ', ';
   const aptName      = sessionStorage.getItem('pending_apt_name')      || 'your stay';
   const hostWhatsApp = sessionStorage.getItem('pending_host_whatsapp') || '';
   const hostPhone    = sessionStorage.getItem('pending_host_phone')    || '';

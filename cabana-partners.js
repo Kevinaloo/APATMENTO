@@ -2,7 +2,7 @@
    CABANA · PARTNER PLATFORM  v1.0
    ─────────────────────────────────────────────────────────────────
    Cabana is the marketplace. Partners supply inventory.
-   This is the layer that makes that true for ANY partner —
+   This is the layer that makes that true for ANY partner
    GuruWalk, Wildbosses, or whoever signs next quarter.
 
    A partner registers once. Everything else is automatic:
@@ -98,7 +98,7 @@
     },
 
     /* ══════════════════════════════════════════
-       PRICING — Cabana's fee model, applied uniformly
+       PRICING. Cabana's fee model, applied uniformly
        ══════════════════════════════════════════ */
     price: function (tour, guests) {
       guests = guests || 1;
@@ -125,7 +125,7 @@
     },
 
     /* ══════════════════════════════════════════
-       BOOKING — native flow, stays inside Cabana
+       BOOKING. Native flow, stays inside Cabana
        ══════════════════════════════════════════ */
     book: function (tourId, details) {
       var tour = CabanaPartners.getAllTours().find(function (t) { return t.id === tourId; });
@@ -160,10 +160,10 @@
         created_at:     new Date().toISOString(),
       };
 
-      /* 1 — ledger it in Cabana's own DB */
+      /* 1. Ledger it in Cabana's own DB */
       CabanaPartners._ledger(booking);
 
-      /* 2 — tell the partner */
+      /* 2. Tell the partner */
       if (typeof p.notifyUrl === 'function') {
         try {
           var url = p.notifyUrl(booking);
@@ -217,7 +217,7 @@
     },
 
     /* ══════════════════════════════════════════
-       FINANCE — what we owe each partner
+       FINANCE. What we owe each partner
        ══════════════════════════════════════════ */
     payoutSummary: function (bookings) {
       var byPartner = {};
@@ -248,7 +248,7 @@
    Each block below is self-contained. Delete one to drop a partner.
    ═══════════════════════════════════════════════════════════════════ */
 
-/* ── WILDBOSSES — native booking, 10% Cabana fee ── */
+/* ── WILDBOSSES. Native booking, 10% Cabana fee ── */
 window.CabanaPartners.register({
   id:          'wildbosses',
   name:        'Wildbosses',
@@ -320,7 +320,7 @@ window.CabanaPartners.register({
   },
 });
 
-/* ── GURUWALK — external booking, no fee (legacy affiliate) ── */
+/* ── GURUWALK. External booking, no fee (legacy affiliate) ── */
 window.CabanaPartners.register({
   id:          'guruwalk',
   name:        'GuruWalk',

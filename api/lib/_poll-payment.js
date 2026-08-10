@@ -1,9 +1,9 @@
 /* ══════════════════════════════════════════════════════════════
-   APATMENTO — PayHero Transaction Status Poller (self-discovering)
+   APATMENTO. PayHero Transaction Status Poller (self-discovering)
 
    Imported by api/stk-push.js, which dispatches GET (or ?action=poll)
    here. Lives under api/lib/ so it is not routed as its own serverless
-   function — the Hobby plan caps deployments at 12.
+   function. The Hobby plan caps deployments at 12.
 
    Reached from the browser as:
      GET /api/poll-payment?ref=APT-xxx-P1
@@ -41,10 +41,10 @@ const BASE = 'https://backend.payhero.co.ke/api/v2';
 
    PayHero authenticates before it validates parameters, so the exact
    query-param name cannot be probed without credentials. We therefore
-   send every plausible spelling at once — unknown params are ignored,
+   send every plausible spelling at once. Unknown params are ignored,
    and both the instalment reference and the CheckoutRequestID are
    included so whichever PayHero indexes by is present. */
-/* {PH} = PayHero's own reference from the STK response — the only key
+/* {PH} = PayHero's own reference from the STK response. The only key
    /api/v2/transaction-status accepts. Confirmed by live probe: querying
    with our external_reference or the CheckoutRequestID both returned
    NOT_FOUND while authenticating successfully. */
@@ -60,7 +60,7 @@ const TERMINAL_OK   = ['SUCCESS', 'COMPLETED', 'COMPLETE', 'PAID'];
 /* Deliberately narrow. 'ERROR' and free-text matching were removed:
    a not-found lookup or a transport hiccup must never be reported to a
    guest as a failed payment when their money has actually left. When in
-   doubt we stay 'pending' — a slow success is recoverable, a false
+   doubt we stay 'pending'. A slow success is recoverable, a false
    failure tells someone their paid booking did not happen. */
 const TERMINAL_FAIL = ['FAILED', 'CANCELLED', 'CANCELED', 'DECLINED', 'REJECTED'];
 const PENDING_WORDS = ['QUEUED', 'PENDING', 'PROCESSING', 'INITIATED', 'SENT'];
@@ -158,7 +158,7 @@ export async function pollPayment(req, res) {
                       /* external_reference we sent to PayHero is the
                          instalment ref (…-P1), NOT the booking ref.
                          Querying the booking ref found no transaction,
-                         and a not-found was being read as a failure —
+                         and a not-found was being read as a failure
                          which is why a paid KES 10 showed the facepalm. */
                       .split('{REF}').join(encodeURIComponent(ref));
       try {
@@ -199,7 +199,7 @@ export async function pollPayment(req, res) {
     if (!found || found.verdict === 'pending')
       return res.json({ status: 'pending', payhero_raw: found?.raw || null });
 
-    // ── Terminal — record it ourselves ────────────────────────────
+    // ── Terminal. Record it ourselves ────────────────────────────
     const isPaid = found.verdict === 'paid';
 
     await fetch(`${supaUrl}/rest/v1/booking_payments?reference=eq.${encodeURIComponent(ref)}`, {

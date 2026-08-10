@@ -143,7 +143,7 @@ window.addEventListener('beforeunload', ()=>{
 });
 
 /* ─── Segment Computation ───────────────────────────────────────── */
-// The intelligence engine — turns behavioral signals into ad-relevant segments.
+// The intelligence engine. Turns behavioral signals into ad-relevant segments.
 // Runs client-side first for instant ad personalization, 
 // then writes to Supabase for cross-session persistence.
 

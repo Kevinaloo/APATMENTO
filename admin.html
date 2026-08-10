@@ -380,7 +380,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
     <div class="tb-live"><span class="pulse"></span><span id="tb-sync">Live</span></div>
     <button class="btn btn-g btn-sm" onclick="viewAsGuest()" title="Inspect the consumer site">Guest view</button>
     <div class="tb-who">
-      <span class="tb-em" id="tb-email">—</span>
+      <span class="tb-em" id="tb-email">-</span>
       <div class="tb-av" id="tb-av">?</div>
     </div>
     <button class="btn btn-g btn-sm" onclick="signOut()">Exit</button>
@@ -409,7 +409,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
         </div>
         <div class="nav-i" data-sec="audience" onclick="go('audience',this)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-          Audience <span class="nav-b calm" id="b-aud">—</span>
+          Audience <span class="nav-b calm" id="b-aud">-</span>
         </div>
         <div class="nav-i" data-sec="customers" onclick="go('customers',this)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/></svg>
@@ -429,7 +429,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
         <div class="nav-h">God mode</div>
         <div class="nav-i" data-sec="godmode" onclick="go('godmode',this)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.4 7.8 8 10 4.6-2.2 8-5 8-10V6z"/><path d="m9 12 2 2 4-4"/></svg>
-          Services & listings <span class="nav-b calm" id="b-god">—</span>
+          Services & listings <span class="nav-b calm" id="b-god">-</span>
         </div>
         <div class="nav-i" data-sec="lazy" onclick="go('lazy',this)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
@@ -1168,16 +1168,16 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 
         <!-- Stats row -->
         <div class="grid g4" id="cabana-stats" style="margin-bottom:20px;">
-          <div class="fn-card"><div class="fn-v" id="cs-opted-in">—</div><div class="fn-p">Opted-in listings</div></div>
-          <div class="fn-card"><div class="fn-v" id="cs-live-req">—</div><div class="fn-p">Live requests now</div></div>
-          <div class="fn-card"><div class="fn-v" id="cs-responses">—</div><div class="fn-p">Host responses (all time)</div></div>
-          <div class="fn-card"><div class="fn-v" id="cs-interest">—</div><div class="fn-p">Interest signups</div></div>
+          <div class="fn-card"><div class="fn-v" id="cs-opted-in">-</div><div class="fn-p">Opted-in listings</div></div>
+          <div class="fn-card"><div class="fn-v" id="cs-live-req">-</div><div class="fn-p">Live requests now</div></div>
+          <div class="fn-card"><div class="fn-v" id="cs-responses">-</div><div class="fn-p">Host responses (all time)</div></div>
+          <div class="fn-card"><div class="fn-v" id="cs-interest">-</div><div class="fn-p">Interest signups</div></div>
         </div>
 
         <!-- Opted-in hosts/listings -->
         <div class="card" style="margin-bottom:16px;">
           <div class="card-t">Opted-in Listings</div>
-          <div class="card-s">Hosts who have opted their listings into Cabana Match. Remove any listing here — changes reflect immediately.</div>
+          <div class="card-s">Hosts who have opted their listings into Cabana Match. Remove any listing here. Changes reflect immediately.</div>
           <div class="tabs">
             <button class="tab on" onclick="cabanaFilterOptins('all',this)">All</button>
             <button class="tab" onclick="cabanaFilterOptins('stay',this)">Stays</button>
@@ -1254,9 +1254,9 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 
         <!-- Stats row -->
         <div class="grid g3" id="push-stats-row">
-          <div class="card"><div class="card-t">Total subscribers</div><div class="card-s">Active push subscriptions</div><div id="push-stat-subs" style="font-size:28px;font-weight:700;color:#7C3AFF;margin-top:8px">—</div></div>
-          <div class="card"><div class="card-t">Sent today</div><div class="card-s">Pushes delivered in last 24h</div><div id="push-stat-sent" style="font-size:28px;font-weight:700;color:#14B8A6;margin-top:8px">—</div></div>
-          <div class="card"><div class="card-t">Scheduled</div><div class="card-s">Queued campaigns</div><div id="push-stat-sched" style="font-size:28px;font-weight:700;color:#F59E0B;margin-top:8px">—</div></div>
+          <div class="card"><div class="card-t">Total subscribers</div><div class="card-s">Active push subscriptions</div><div id="push-stat-subs" style="font-size:28px;font-weight:700;color:#7C3AFF;margin-top:8px">-</div></div>
+          <div class="card"><div class="card-t">Sent today</div><div class="card-s">Pushes delivered in last 24h</div><div id="push-stat-sent" style="font-size:28px;font-weight:700;color:#14B8A6;margin-top:8px">-</div></div>
+          <div class="card"><div class="card-t">Scheduled</div><div class="card-s">Queued campaigns</div><div id="push-stat-sched" style="font-size:28px;font-weight:700;color:#F59E0B;margin-top:8px">-</div></div>
         </div>
 
         <!-- Test push (send to yourself) -->
@@ -1865,7 +1865,7 @@ async function getRestHeaders() {
     return { 'Content-Type':'application/json','apikey':SB_ANON,'Authorization':'Bearer '+SB_ANON };
   }
 }
-// Sync H object — refreshed on each use via restH()
+// Sync H object. Refreshed on each use via restH()
 let H = { 'Content-Type':'application/json','apikey':SB_ANON,'Authorization':'Bearer '+SB_ANON };
 async function restH() {
   H = await getRestHeaders();
@@ -1899,7 +1899,7 @@ async function login(){
 
 async function signOut(){ try{ await sb.auth.signOut(); }catch(e){} location.href='/auth.html'; }
 /* ══════════════════════════════════════════════════════════════════
-   GUEST VIEW — Full-site preview with floating admin toolbar
+   GUEST VIEW. Full-site preview with floating admin toolbar
    Opens the live site in an iframe overlay with device switcher,
    page picker, and one-click exit. Lets the admin inspect every
    user-facing page without leaving the console or losing state.
@@ -2209,7 +2209,7 @@ function renderOverview(){
     return `<div class="fn-s ${leak?'leak':''}" style="--w:${Math.max(4,(s.value/top*100)).toFixed(1)}%">
       <div class="fn-l">${esc(s.label)}${leak?' &nbsp;<span class="pill p-bad">worst leak</span>':''}</div>
       <div class="fn-r"><span class="fn-v">${F.num(s.value)}</span>
-      <span class="fn-p">${s.drop?('−'+s.drop+'%'):'—'}</span></div></div>`;
+      <span class="fn-p">${s.drop?('−'+s.drop+'%'):', '}</span></div></div>`;
   }).join('');
 
   $('ov-growth').innerHTML = [
@@ -2234,7 +2234,7 @@ function renderOverview(){
     html += `<div class="heat-l">${days[d]}</div>`;
     row.forEach((v,h)=>{
       const a = v/hm.max;
-      html += `<div class="heat-c" style="background:${v?`rgba(124,58,255,${(0.14+a*0.86).toFixed(2)})`:'rgba(255,255,255,.04)'}" title="${days[d]} ${h}:00 — ${v}"></div>`;
+      html += `<div class="heat-c" style="background:${v?`rgba(124,58,255,${(0.14+a*0.86).toFixed(2)})`:'rgba(255,255,255,.04)'}" title="${days[d]} ${h}:00, ${v}"></div>`;
     });
   });
   $('ov-heat').innerHTML = html;
@@ -2288,7 +2288,7 @@ function renderIntel(){
 
   const mx = Math.max(...a.hourly, 1);
   $('in-hourly').innerHTML = a.hourly.map((v,h)=>
-    `<i style="height:${Math.max(3,v/mx*100)}%" title="${h}:00 — ${v} sessions"></i>`).join('');
+    `<i style="height:${Math.max(3,v/mx*100)}%" title="${h}:00, ${v} sessions"></i>`).join('');
 }
 
 /* ══ 4 · AUDIENCE ════════════════════════════════════════════════ */
@@ -2311,7 +2311,7 @@ function renderAudience(){
       <td class="num">${F.num(s.visitors)}</td>
       <td class="num">${s.reach}%</td>
       <td class="num">${s.avgIntent}</td>
-      <td class="num">${s.suppress ? '—' : s.cpmLift+'×'}</td>
+      <td class="num">${s.suppress ? ', ' : s.cpmLift+'×'}</td>
       <td>${s.suppress ? '<span class="pill p-bad">suppressed</span>' : '<span class="pill p-ok">buyable</span>'}</td>
     </tr>`).join('') : emptyRow(6,'No sessions captured yet');
 
@@ -2347,7 +2347,7 @@ function renderML(){
     stat('Training rows', F.num(ds.rows.length), 'one per session'),
     stat('Features', F.num(ds.columns.length-1), 'after encoding'),
     stat('Positive class', F.num(pos), `${(pos/ds.rows.length*100).toFixed(1)}% converted`, pos?'ok':'bad'),
-    stat('Top predictor', esc(imp[0]?.feature||'—'), `r = ${imp[0]?.r ?? 0}`, 'gold')
+    stat('Top predictor', esc(imp[0]?.feature||', '), `r = ${imp[0]?.r ?? 0}`, 'gold')
   ].join('');
 
   const mx = Math.max(...imp.slice(0,14).map(i=>i.abs), .01);
@@ -2432,8 +2432,8 @@ function renderModeration(){
       <td><div style="display:flex;gap:10px;align-items:center">
         <img class="thumb" src="${esc(Array.isArray(l.photos)&&l.photos[0]||l.image_url||l.cover_url||'')}" onerror="this.style.visibility='hidden'"/>
         <div><div class="t-main">${esc(l.title||'Untitled')}</div>
-        <div class="t-sub">${esc(l.location||l.city||l.area||'—')}</div></div></div></td>
-      <td class="t-sub">${esc(l.owner_email||l.owner_id||'—').slice(0,22)}</td>
+        <div class="t-sub">${esc(l.location||l.city||l.area||', ')}</div></div></div></td>
+      <td class="t-sub">${esc(l.owner_email||l.owner_id||', ').slice(0,22)}</td>
       <td class="num mono">${F.money(l.price_per_night||l.price_night||l.price||0)}</td>
       <td class="t-sub">${F.ago(l.created_at)}</td>
       <td><span class="pill p-warn">pending</span></td>
@@ -2481,7 +2481,7 @@ function renderUploads(){
   let u = SNAP.uploads;
   if(UP_FILTER!=='all') u = u.filter(x=>(x.status||'pending')===UP_FILTER);
   const pillOf = s => ({pending:'p-warn',approved:'p-ok',rejected:'p-bad'}[s]||'p-mute');
-  const kb = n => n ? (n>1048576 ? (n/1048576).toFixed(1)+' MB' : Math.round(n/1024)+' KB') : '—';
+  const kb = n => n ? (n>1048576 ? (n/1048576).toFixed(1)+' MB' : Math.round(n/1024)+' KB') : ', ';
 
   $('up-rows').innerHTML = u.length ? u.map(x=>{
     const s = x.status||'pending';
@@ -2490,8 +2490,8 @@ function renderUploads(){
       <td>${isImg && x.url ? `<img class="thumb" src="${esc(x.url)}" onerror="this.style.visibility='hidden'"/>`
         : `<div class="thumb" style="display:grid;place-items:center;font-size:9px;color:var(--ink-4)">${esc((x.mime_type||'FILE').split('/')[1]||'FILE').toUpperCase().slice(0,4)}</div>`}</td>
       <td><div class="t-main">${esc(x.filename||x.name||'asset')}</div>
-      <td class="t-sub">${esc(x.owner_email||x.owner_id||'—').slice(0,20)}</td>
-      <td class="t-sub">${esc(x.mime_type||x.type||'—')}</td>
+      <td class="t-sub">${esc(x.owner_email||x.owner_id||', ').slice(0,20)}</td>
+      <td class="t-sub">${esc(x.mime_type||x.type||', ')}</td>
       <td class="num mono">${kb(x.size)}</td>
       <td class="t-sub">${F.ago(x.created_at)}</td>
       <td><span class="pill ${pillOf(s)}">${esc(s)}</span></td>
@@ -2600,7 +2600,7 @@ function renderInventory(){
   $('inv-rows').innerHTML = items.length ? items.map(({l,age,reason})=>`
     <tr>
       <td><input type="checkbox" data-sel="inv" value="${esc(l.id)}" onchange="tick('inv','${esc(l.id)}',this.checked)" style="accent-color:var(--violet)"/></td>
-      <td><div class="t-main">${esc(l.title||'Untitled')}</div><div class="t-sub">${esc(l.location||l.city||l.area||'—')}</div></td>
+      <td><div class="t-main">${esc(l.title||'Untitled')}</div><div class="t-sub">${esc(l.location||l.city||l.area||', ')}</div></td>
       <td class="num mono">${F.num(l.views||0)}</td>
       <td class="num mono">${F.num(l.bookings_count||0)}</td>
       <td class="num mono">${age}d</td>
@@ -2616,7 +2616,7 @@ async function invAct(kind, id){
     const r = await AD.Moderate.unpublishListing(id);
     r.ok ? (toast('Listing unpublished','ok'), refresh()) : toast(r.error,'bad');
   } else {
-    confirmAct('Delete listing','Soft delete — the row is retained and recoverable.', false, async ()=>{
+    confirmAct('Delete listing','Soft delete. The row is retained and recoverable.', false, async ()=>{
       const r = await AD.Moderate.deleteListing(id, false);
       r.ok ? (toast('Listing deleted','ok'), refresh()) : toast(r.error,'bad');
     });
@@ -2679,16 +2679,16 @@ function renderTransport(){
     <td class="mono t-main">${esc(r.ref||String(r.id||'').slice(0,8))}</td>
     <td><span class="pill ${r.type==='carhire'?'p-calm':'p-mute'}">${r.type==='carhire'?'Car hire':'Ride'}</span></td>
     <td>
-      <div class="t-main">${esc(r.customer_name||'—')}</div>
+      <div class="t-main">${esc(r.customer_name||', ')}</div>
       <div class="t-sub">${esc(r.phone||'')}${r.email?` · ${esc(r.email)}`:''}
     </td>
     <td class="t-sub">
-      <div>${esc(r.ride_name||'—')}</div>
-      <div>${esc(r.pickup||'—')} → ${esc(r.dropoff||r.ride_date||'—')}</div>
+      <div>${esc(r.ride_name||', ')}</div>
+      <div>${esc(r.pickup||', ')} → ${esc(r.dropoff||r.ride_date||', ')}</div>
       <div>${esc(r.ride_date||'')}${r.ride_time?' '+esc(r.ride_time):''}</div>
     </td>
     <td class="t-sub">${F.ago(r.created_at)}</td>
-    <td class="num mono">${r.estimated_fare?F.money(r.estimated_fare):'—'}</td>
+    <td class="num mono">${r.estimated_fare?F.money(r.estimated_fare):', '}</td>
     <td><span class="pill ${pillOf(r.status||'pending')}">${esc(r.status||'pending')}</span></td>
     <td><div class="t-act">
       ${r.status!=='confirmed'?`<button class="btn btn-p btn-sm" onclick="confirmTransport('${esc(r.id)}')">Confirm</button>`:''}
@@ -2723,7 +2723,7 @@ function renderAudit(){
   const local = AD.localAudit();
   $('au-rows').innerHTML = local.length ? local.slice(0,120).map(a=>`
     <tr><td class="t-sub">${F.ago(a.created_at)}</td>
-    <td class="t-main">${esc(a.actor_email||'—')}</td>
+    <td class="t-main">${esc(a.actor_email||', ')}</td>
     <td><span class="pill ${/ban|purge|delete/.test(a.action)?'p-bad':/reject|suspend/.test(a.action)?'p-warn':'p-ok'}">${esc(a.action)}</span></td>
     <td class="mono t-sub">${esc(a.target_type)}:${esc(String(a.target_id||'').slice(0,10))}</td>
     <td class="t-sub">${esc(JSON.stringify(a.meta||{}).slice(0,60))}</td></tr>`).join('')
@@ -2781,7 +2781,7 @@ $('cf-ov').addEventListener('click', e => { if(e.target.id==='cf-ov') closeConfi
    AD MANAGER
    Slot targeting is grounded in the DOM: a campaign can only be sold
    into a surface where a matching [data-showcase] anchor exists. This
-   is the whole point — an ad targeted at a slot that isn't there
+   is the whole point. An ad targeted at a slot that isn't there
    silently never renders, and the advertiser is billed for nothing.
    ═══════════════════════════════════════════════════════════════════ */
 'use strict';
@@ -2844,9 +2844,9 @@ function renderAds(){
           <div class="thumb" style="width:74px;height:52px;background:${esc(x.theme_gradient||'linear-gradient(135deg,var(--violet),var(--electric))')}"></div>
           <div style="min-width:0">
             <div class="card-t">${esc(x.advertiser||'Untitled')} <span class="pill ${sp}" style="margin-left:6px">${esc(st)}</span></div>
-            <div class="card-s" style="margin-bottom:6px">${esc(x.headline||'—')}</div>
+            <div class="card-s" style="margin-bottom:6px">${esc(x.headline||', ')}</div>
             <div style="display:flex;gap:5px;flex-wrap:wrap">
-              <span class="pill p-info">${esc(x.format||'—')}</span>
+              <span class="pill p-info">${esc(x.format||', ')}</span>
               ${targets.slice(0,6).map(t=>`<span class="pill p-mute">${esc(t)}</span>`).join('')}
               ${targets.length>6?`<span class="pill p-mute">+${targets.length-6}</span>`:''}
             </div>
@@ -2964,7 +2964,7 @@ function openCampaign(id){
 
   const segs = (AUD?.segments||[]).filter(s=>!s.suppress);
   $('c-segs').innerHTML = segs.map(s=>
-    `<option value="${esc(s.id)}">${esc(s.name)} — ${F.num(s.visitors)} visitors (${s.cpmLift}× CPM)</option>`).join('')
+    `<option value="${esc(s.id)}">${esc(s.name)}, ${F.num(s.visitors)} visitors (${s.cpmLift}× CPM)</option>`).join('')
     || '<option disabled>Audience layer still loading</option>';
 
   if(id){
@@ -2996,11 +2996,11 @@ async function adsEnsureBucket(){
   // First check if bucket already exists
   const { data: buckets, error: listErr } = await sb.storage.listBuckets();
   if(!listErr && buckets && buckets.find(b => b.name === ADS_BUCKET)) return; // already exists
-  // Try to create it (requires service role — may fail on anon key, that's OK if bucket exists in Supabase)
+  // Try to create it (requires service role. May fail on anon key, that's OK if bucket exists in Supabase)
   const { error: createErr } = await sb.storage.createBucket(ADS_BUCKET, { public:true, fileSizeLimit:209715200 });
   if(createErr && !createErr.message?.includes('already exists')){
     console.warn('[adsEnsureBucket] Could not create bucket:', createErr.message,
-      '— Please create the "ads-media" public bucket manually in your Supabase dashboard (Storage → New bucket).');
+      ', Please create the "ads-media" public bucket manually in your Supabase dashboard (Storage → New bucket).');
   }
 }
 function adsPublicUrl(key){
@@ -3183,7 +3183,7 @@ function deleteCampaign(id){
 }
 
 /* ════════════════════════════════════════════════════════════════
-   SHADOW ADS — behavioural, non-invasive creatives
+   SHADOW ADS. Behavioural, non-invasive creatives
    ════════════════════════════════════════════════════════════════ */
 let SH_EDIT = null, SH_TAB = 'live';
 
@@ -3255,7 +3255,7 @@ function renderShadow(){
         </div>
         <div style="flex:1;min-width:0">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-            <strong style="font-size:14px">${esc(a.advertiser||'—')}</strong>
+            <strong style="font-size:14px">${esc(a.advertiser||', ')}</strong>
             <span class="pill ${a.status==='live'?'p-ok':'p-mute'}" style="font-size:10px">${esc(a.status||'draft')}</span>
             <span class="pill p-mute" style="font-size:10px;text-transform:capitalize">${esc(a.position||'auto')}</span>
           </div>
@@ -3344,7 +3344,7 @@ $('shadow-ov').addEventListener('click', e=>{ if(e.target.id==='shadow-ov') clos
 ['sh-adv','sh-head','sh-sub','sh-cta','sh-theme','sh-media','sh-accent','sh-apa-msg'].forEach(k=>
   $(k)?.addEventListener('input', previewShadow));
 
-// "All areas" toggle — selecting 'all' clears specific selections and vice versa
+// "All areas" toggle. Selecting 'all' clears specific selections and vice versa
 $('sh-areas')?.addEventListener('change', function(e){
   const opts = [...this.options];
   const allOpt = opts.find(o=>o.value==='all');
@@ -3466,7 +3466,7 @@ function previewShadowLive(){
 }
 
 /* ════════════════════════════════════════════════════════════════
-   CUSTOMER DATA — first-party visitors & the shadow ads they saw
+   CUSTOMER DATA. First-party visitors & the shadow ads they saw
    ════════════════════════════════════════════════════════════════ */
 function renderCustomers(){
   const sessions = (SNAP && SNAP.sessions) ? SNAP.sessions : [];
@@ -3474,7 +3474,7 @@ function renderCustomers(){
   const byVisitor = {};
   sessions.forEach(s=>{
     const v = s.visitor_id || s.visitorId || 'unknown';
-    if(!byVisitor[v]) byVisitor[v] = { id:v, sessions:0, intent:0, mode:'—', device:s.device||'—', adsSeen:0, clicks:0, last:s.captured_at||s.created_at };
+    if(!byVisitor[v]) byVisitor[v] = { id:v, sessions:0, intent:0, mode:', ', device:s.device||', ', adsSeen:0, clicks:0, last:s.captured_at||s.created_at };
     const o = byVisitor[v];
     o.sessions++;
     o.intent = Math.max(o.intent, +s.intent_score||0);
@@ -3507,7 +3507,7 @@ function renderCustomers(){
       <td style="text-transform:capitalize">${esc(v.mode)}</td>
       <td class="num">${F.num(v.adsSeen)}</td>
       <td class="num">${F.num(v.clicks)}</td>
-      <td style="font-size:11px;color:var(--ink-3,#8b8ba0)">${v.last?F.ago(v.last):'—'}</td>
+      <td style="font-size:11px;color:var(--ink-3,#8b8ba0)">${v.last?F.ago(v.last):', '}</td>
     </tr>`).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--ink-3,#8b8ba0);padding:20px">No visitor data yet. It populates as guests browse.</td></tr>';
 }
 
@@ -3661,7 +3661,7 @@ function agRow(a) {
 }
 
 /* The document lives in a private bucket. Mint a short-lived signed URL
-   rather than making anything public — an ID must never be one guessed
+   rather than making anything public. An ID must never be one guessed
    URL away from the open internet. */
 async function agDoc(agentId) {
   try {
@@ -3728,7 +3728,7 @@ async function agExtend(id) {
 /* ══ SPLASH / INTERSTITIAL ═══════════════════════════════════════
    Config + media live in a PUBLIC storage bucket. The homepage engine
    (apa-interstitial.js) reads splash.json from the same bucket. No
-   schema, no server function — just storage. */
+   schema, no server function, just storage. */
 const SPLASH_BUCKET = 'interstitial';
 const SPLASH_CONFIG = 'splash.json';
 let SP_PENDING = null;   // { file, type, objectUrl } for a freshly picked, not-yet-published file
@@ -3740,7 +3740,7 @@ function spPublicUrl(key){
 
 async function spEnsureBucket(){
   try { await sb.storage.createBucket(SPLASH_BUCKET, { public:true, fileSizeLimit: 209715200 }); }
-  catch(e){ /* already exists — fine */ }
+  catch(e){ /* already exists. Fine */ }
 }
 
 async function spFetchConfig(){
@@ -3766,7 +3766,7 @@ function spPickFile(input){
   const kind = spKindOf(file);
   if(!kind){ msg.textContent = 'Unsupported file. Choose a video or image.'; input.value=''; return; }
 
-  // Soft size guidance — big videos load slowly on mobile.
+  // Soft size guidance. Big videos load slowly on mobile.
   if(kind==='video' && file.size > 60*1024*1024){
     msg.style.color = 'var(--warn)';
     msg.textContent = 'Heads up: this video is ' + (file.size/1048576).toFixed(0) + ' MB. Under ~30 MB loads noticeably smoother on phones.';
@@ -3819,7 +3819,7 @@ async function loadSplash(){
     const freqTxt = { once:'once per device', daily:'once per day', always:'every visit' }[cfg.frequency] || cfg.frequency;
     status.className = 'note';
     status.innerHTML = '<b style="color:var(--ok)">Live now.</b> A '+esc(cfg.type)+' is playing for <b>'+esc(dur)
-      + '</b>, shown <b>'+esc(freqTxt)+'</b>. Campaign: <b>'+esc(cfg.campaign||'—')+'</b>.';
+      + '</b>, shown <b>'+esc(freqTxt)+'</b>. Campaign: <b>'+esc(cfg.campaign||', ')+'</b>.';
     // Populate the form to reflect current state (unless a new file is staged)
     if(!SP_PENDING){
       $('sp-freq').value = ['once','daily','always'].includes(cfg.frequency) ? cfg.frequency : 'once';
@@ -3937,13 +3937,13 @@ async function disableSplash(){
   }
 }
 
-/* Full-screen test on the operator's own screen — same feel as production. */
+/* Full-screen test on the operator's own screen. Same feel as production. */
 function spTestPlay(){
   let url, type, durMs;
   if(SP_PENDING){ url = SP_PENDING.objectUrl; type = SP_PENDING.type; durMs = spDurationMs(); }
   else {
     const img = $('sp-preview').querySelector('img,video');
-    if(!img){ toast('Nothing to test — pick or publish media first.'); return; }
+    if(!img){ toast('Nothing to test. Pick or publish media first.'); return; }
     url = img.getAttribute('src'); type = img.tagName==='VIDEO'?'video':'image'; durMs = spDurationMs();
   }
   const ms = type==='image' ? 3000 : Math.max(1000, durMs);
@@ -3966,7 +3966,7 @@ function spTestPlay(){
 
 /* ── GOD MODE ─────────────────────────────────────────────────── */
 
-// ─── GOD MODE — Services & Listings ───────────────────────────────────────────
+// ─── GOD MODE. Services & Listings ───────────────────────────────────────────
 
 (function injectGmStyles(){
   const s = document.createElement('style');
@@ -4097,16 +4097,16 @@ function gmRenderAll(){
 
   if(!rows.length){
     body.innerHTML = `<tr><td colspan="6" style="padding:24px;color:var(--ink-4);text-align:center">
-      ${GM_FILTER==='all'&&!GM_SEARCH ? 'No listings yet — add the first one.' : 'No listings match.'}
+      ${GM_FILTER==='all'&&!GM_SEARCH ? 'No listings yet. Add the first one.' : 'No listings match.'}
     </td></tr>`;
     return;
   }
 
   body.innerHTML = rows.map(l => {
-    const type = l.type||l.property_type||l.listing_type||'—';
+    const type = l.type||l.property_type||l.listing_type||', ';
     const price = l.price_night ? `KES ${F.num(l.price_night)}`
                 : l.price_month ? `KES ${F.num(l.price_month)}/mo`
-                : '—';
+                : ', ';
     const isActive = l.is_active!==false && l.status!=='inactive' && l.status!=='paused';
     const statusPill = l.status==='pending'
       ? '<span class="pill p-warn">Pending</span>'
@@ -4124,7 +4124,7 @@ function gmRenderAll(){
             : `<div style="width:36px;height:36px;border-radius:7px;background:var(--panel-2);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">${GM_SERVICES[type]?.icon||'📋'}</div>`}
           <div>
             <div class="t-main">${esc(l.title||'Untitled')}</div>
-            <div class="t-sub">${esc(l.location||l.city||l.area||'—')}</div>
+            <div class="t-sub">${esc(l.location||l.city||l.area||', ')}</div>
           </div>
         </div>
       </td>
@@ -4153,9 +4153,9 @@ function gmSearch(q){
 
 // ── Panel open/close ───────────────────────────────────────────────────────
 function gmOpenEdit(id){
-  if(!SNAP) { toast('Data still loading — try again','bad'); return; }
+  if(!SNAP) { toast('Data still loading. Try again','bad'); return; }
   const l = (SNAP.listings||[]).find(r=>String(r.id)===String(id));
-  if(!l){ toast('Listing not found — try refreshing','bad'); return; }
+  if(!l){ toast('Listing not found. Try refreshing','bad'); return; }
   GM_EDIT = l;
   GM_TYPE = l.type||l.property_type||l.listing_type||'apartment';
   $('gm-panel-title').textContent = 'Edit listing';
@@ -4366,11 +4366,11 @@ function gmBuildForm(l){
   html += `<div class="gm-sec">Visibility</div>
     <label class="gm-active-row">
       <input type="checkbox" id="gm-active-in" ${isActive?'checked':''}/>
-      <span>Active — visible on site</span>
+      <span>Active. Visible on site</span>
     </label>
     <label class="gm-featured-row">
       <input type="checkbox" id="gm-featured-in" ${l.featured?'checked':''}/>
-      <span>⭐ Featured — pinned at top of listings</span>
+      <span>⭐ Featured. Pinned at top of listings</span>
     </label>
   `;
 
@@ -4382,7 +4382,7 @@ function gmPlaceholderTitle(type){
     apartment:'2BR fully furnished apartment',tour:'Maasai Mara 3-day safari',
     food:'Java House Westlands',carhire:'Toyota Prado Self-Drive',
     shopping:'Fresh groceries delivery',event:'Blankets & Wine 2025',
-    room:'Private ensuite room in Kilimani',ride:'Economy city ride — Nairobi',
+    room:'Private ensuite room in Kilimani',ride:'Economy city ride. Nairobi',
   }[type]||'Listing title';
 }
 
@@ -4567,11 +4567,11 @@ function renderLazyRows(items) {
   if(!items||!items.length){ rows.innerHTML='<tr><td colspan="7" style="padding:20px;color:var(--ink-4)">No requests here yet.</td></tr>'; return; }
   rows.innerHTML = items.map(r => `
     <tr>
-      <td><strong>${esc(r.name||'—')}</strong></td>
-      <td><a href="https://wa.me/${esc(r.phone?.replace('+',''))}" target="_blank" style="color:var(--good);font-weight:600">${esc(r.phone||'—')}</a></td>
+      <td><strong>${esc(r.name||', ')}</strong></td>
+      <td><a href="https://wa.me/${esc(r.phone?.replace('+',''))}" target="_blank" style="color:var(--good);font-weight:600">${esc(r.phone||', ')}</a></td>
       <td>${esc(r.listing_type||'Not specified')}</td>
-      <td style="max-width:200px;white-space:normal;font-size:12px;color:var(--ink-3)">${esc(r.notes||'—')}</td>
-      <td style="font-size:12px;color:var(--ink-4)">${r.created_at?new Date(r.created_at).toLocaleDateString('en-KE',{day:'numeric',month:'short'}):'—'}</td>
+      <td style="max-width:200px;white-space:normal;font-size:12px;color:var(--ink-3)">${esc(r.notes||', ')}</td>
+      <td style="font-size:12px;color:var(--ink-4)">${r.created_at?new Date(r.created_at).toLocaleDateString('en-KE',{day:'numeric',month:'short'}):', '}</td>
       <td class="num"><span class="nav-b ${LAZY_STATUSES[r.status]||'calm'}" style="font-size:11px">${esc(r.status||'pending')}</span></td>
       <td class="num" style="white-space:nowrap">
         <button class="btn btn-g btn-sm" onclick="lazySetStatus('${r.id}','contacted')" title="Mark contacted">📞</button>
@@ -4614,7 +4614,7 @@ function lazyExport() {
 }
 
 // ─── ACCOUNT ACCESS / IMPERSONATE ───
-// ─── ACCOUNT ACCESS — Users & Profiles ────────────────────────────────────────
+// ─── ACCOUNT ACCESS. Users & Profiles ────────────────────────────────────────
 
 (function injectImpStyles(){
   const s = document.createElement('style');
@@ -4672,7 +4672,7 @@ async function impLoad(){
     if(Array.isArray(data)){ IMP_ALL = data; impRender(); }
     else throw new Error(data?.message||'Failed');
   } catch(e){
-    if(tbody) tbody.innerHTML = `<tr><td colspan="6" style="padding:20px;color:var(--bad);text-align:center">Could not load users — ${esc(e.message)}</td></tr>`;
+    if(tbody) tbody.innerHTML = `<tr><td colspan="6" style="padding:20px;color:var(--bad);text-align:center">Could not load users, ${esc(e.message)}</td></tr>`;
   }
 }
 
@@ -4714,13 +4714,13 @@ function impRender(){
 
   if(tbody) tbody.innerHTML = rows.slice(0,200).map(u=>{
     const name  = esc(u.full_name||((u.first_name||'')+(u.last_name?' '+u.last_name:'')).trim()||'Unknown');
-    const phone = esc(u.phone||'—');
+    const phone = esc(u.phone||', ');
     const role  = u.role||u.last_role||'guest';
     const isPartner = role==='partner'||u.is_partner;
     const isBanned  = u.banned||u.status==='banned';
     const isFlagged = Number(u.flags||0)>0||u.reported;
     const listCount = listingsByPartner[u.id]||0;
-    const joined = u.created_at ? new Date(u.created_at).toLocaleDateString('en-KE',{month:'short',year:'numeric'}) : '—';
+    const joined = u.created_at ? new Date(u.created_at).toLocaleDateString('en-KE',{month:'short',year:'numeric'}) : ', ';
 
     const rolePill = isPartner
       ? '<span class="pill p-ok">Partner</span>'
@@ -4746,7 +4746,7 @@ function impRender(){
         </div>
       </td>
       <td>${rolePill}</td>
-      <td class="num" style="font-size:13px;font-weight:600;color:${listCount?'var(--violet)':'var(--ink-4)'}">${listCount||'—'}</td>
+      <td class="num" style="font-size:13px;font-weight:600;color:${listCount?'var(--violet)':'var(--ink-4)'}">${listCount||', '}</td>
       <td style="font-size:12px;color:var(--ink-3)">${joined}</td>
       <td>${statusPill}</td>
       <td class="num">
@@ -4848,9 +4848,9 @@ function impOpenUser(uid){
 
     <div class="imp-sec">Account info</div>
     <div style="display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--ink-3)">
-      <div>User ID: <span style="font-family:monospace;color:var(--ink)">${esc(u.id||'—')}</span></div>
-      <div>Created: <span style="color:var(--ink)">${u.created_at?new Date(u.created_at).toLocaleString('en-KE',{dateStyle:'medium',timeStyle:'short'}):'—'}</span></div>
-      <div>Last updated: <span style="color:var(--ink)">${u.updated_at?new Date(u.updated_at).toLocaleString('en-KE',{dateStyle:'medium',timeStyle:'short'}):'—'}</span></div>
+      <div>User ID: <span style="font-family:monospace;color:var(--ink)">${esc(u.id||', ')}</span></div>
+      <div>Created: <span style="color:var(--ink)">${u.created_at?new Date(u.created_at).toLocaleString('en-KE',{dateStyle:'medium',timeStyle:'short'}):', '}</span></div>
+      <div>Last updated: <span style="color:var(--ink)">${u.updated_at?new Date(u.updated_at).toLocaleString('en-KE',{dateStyle:'medium',timeStyle:'short'}):', '}</span></div>
     </div>
   `;
 
@@ -5004,11 +5004,11 @@ function impAddForUser(){
     // Store the partner override so gmSave attaches it
     window._IMP_PARTNER_ID   = uid;
     window._IMP_PARTNER_NAME = name;
-    toast(`Adding listing on behalf of ${name} — fill in and save.`,'calm');
+    toast(`Adding listing on behalf of ${name}. Fill in and save.`,'calm');
   }, 350);
 }
 
-// (gmSave is defined in God Mode section above — partner_id injection happens there)
+// (gmSave is defined in God Mode section above. Partner_id injection happens there)
 
 // ── Load trigger ───────────────────────────────────────────────────────────
 function impLogLoad(){ impLoad(); } // keeps existing trigger in go() working
@@ -5061,9 +5061,9 @@ async function pushLoadStats() {
     sb.from('notifications').select('id,title,body,kind,created_at').order('created_at', { ascending: false }).limit(20),
   ]);
   const g = id => document.getElementById(id);
-  if (g('push-stat-subs'))  g('push-stat-subs').textContent  = subs.count  ?? '—';
-  if (g('push-stat-sent'))  g('push-stat-sent').textContent  = todayR.count ?? '—';
-  if (g('push-stat-sched')) g('push-stat-sched').textContent = camps.count  ?? '—';
+  if (g('push-stat-subs'))  g('push-stat-subs').textContent  = subs.count  ?? ', ';
+  if (g('push-stat-sent'))  g('push-stat-sent').textContent  = todayR.count ?? ', ';
+  if (g('push-stat-sched')) g('push-stat-sched').textContent = camps.count  ?? ', ';
   if (g('b-push')) g('b-push').textContent = subs.count > 0 ? subs.count : '0';
   renderPushLog(logs.data || []);
   await pushLoadCampaigns();
@@ -5105,7 +5105,7 @@ async function pushSendTest() {
     const d = await r.json();
     if (!r.ok) throw new Error(d.error || r.status);
     if (d.sent === 0 && d.total === 0) {
-      res_el.innerHTML = '<span style="color:#F59E0B">⚠ No push subscription on this device yet — open the main Apatmento site, accept the notification prompt, then try again.</span>';
+      res_el.innerHTML = '<span style="color:#F59E0B">⚠ No push subscription on this device yet. Open the main Apatmento site, accept the notification prompt, then try again.</span>';
     } else {
       res_el.innerHTML = '<span style="color:#0D9467">✓ Delivered to ' + d.sent + ' of ' + d.total + ' subscription(s)' + (d.persisted ? ' · also in notification feed' : '') + '.</span>';
     }
@@ -5141,7 +5141,7 @@ async function pushBroadcast() {
       results.forEach(r => { if (r.status === 'fulfilled' && r.value && r.value.sent > 0) sent++; else failed++; });
       res_el.textContent = 'Progress: ' + Math.min(i + BATCH, userIds.length) + ' / ' + userIds.length + '…';
     }
-    res_el.innerHTML = '<span style="color:#0D9467">✓ Broadcast complete — ' + sent + ' delivered, ' + failed + ' failed/no-sub.</span>';
+    res_el.innerHTML = '<span style="color:#0D9467">✓ Broadcast complete, ' + sent + ' delivered, ' + failed + ' failed/no-sub.</span>';
     setTimeout(pushLoadStats, 2000);
   } catch(e) { res_el.innerHTML = '<span style="color:#EF4444">✗ ' + esc(e.message) + '</span>'; }
 }
@@ -5280,7 +5280,7 @@ async function pushFireNow(id, title) {
 
 
 /* ════════════════════════════════════════════════════════
-   CABANA MATCH — Admin Panel JS
+   CABANA MATCH. Admin Panel JS
 ════════════════════════════════════════════════════════ */
 let cabanaOptin_all = [];
 
@@ -5302,10 +5302,10 @@ async function cabanaLoadStats() {
       sb.from("cabana_interest").select("id", { count:"exact", head:true })
     ]);
     const g = id => document.getElementById(id);
-    if(g("cs-opted-in")) g("cs-opted-in").textContent = optRes.count ?? "—";
-    if(g("cs-live-req")) g("cs-live-req").textContent = reqRes.count ?? "—";
-    if(g("cs-responses")) g("cs-responses").textContent = rspRes.count ?? "—";
-    if(g("cs-interest")) g("cs-interest").textContent = intRes.count ?? "—";
+    if(g("cs-opted-in")) g("cs-opted-in").textContent = optRes.count ?? ", ";
+    if(g("cs-live-req")) g("cs-live-req").textContent = reqRes.count ?? ", ";
+    if(g("cs-responses")) g("cs-responses").textContent = rspRes.count ?? ", ";
+    if(g("cs-interest")) g("cs-interest").textContent = intRes.count ?? ", ";
     // Update nav badge
     const badge = document.getElementById("b-cabana");
     if(badge) badge.textContent = (optRes.count||0);
@@ -5400,7 +5400,7 @@ async function cabanaLoadRequests() {
       const secsLeft = Math.max(0, Math.floor((new Date(r.expires_at) - new Date()) / 1000));
       const timerStr = r.status === "live"
         ? `<span style=color:#FF6B6B;font-weight:700;>${Math.floor(secsLeft/60)}:${String(secsLeft%60).padStart(2,"0")}</span>`
-        : "—";
+        : ", ";
       const statusBadge = {
         live:    "<span style=background:#7B2FF7;color:#fff;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700;>Live</span>",
         expired: "<span style=background:#6b7280;color:#fff;padding:2px 8px;border-radius:6px;font-size:11px;>Expired</span>",
@@ -5451,7 +5451,7 @@ async function cabanaLoadInterest() {
     tbody.innerHTML = data.map(r => `<tr>
       <td style=font-weight:600;>${esc(r.email)}</td>
       <td><span style=background:rgba(123,47,247,.12);color:#7B2FF7;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;>${esc(r.role||"guest")}</span></td>
-      <td style=font-size:11px;color:var(--ink-3);>${esc(r.user_id?.slice(0,10)||"—")}…</td>
+      <td style=font-size:11px;color:var(--ink-3);>${esc(r.user_id?.slice(0,10)||", ")}…</td>
       <td style=font-size:12px;>${F.ago(r.created_at)}</td>
     </tr>`).join("");
   } catch(e) { tbody.innerHTML = "<tr><td colspan=4><div class=empty><div class=empty-t>Error</div></div></td></tr>"; }

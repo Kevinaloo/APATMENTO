@@ -1,9 +1,9 @@
 /* ══════════════════════════════════════════════════════════════
-   APATMENTO — Trust Router  (api/trust.js)
+   APATMENTO. Trust Router  (api/trust.js)
    ──────────────────────────────────────────────────────────────
    Vercel counts files, not endpoints. Five handlers that each
    wake up, read a booking and go back to sleep do not need five
-   lambdas — they need one door and a hallway.
+   lambdas. They need one door and a hallway.
 
    The modules behind this router are prefixed with `_`, which
    Vercel treats as private. They are ordinary handlers with
@@ -43,7 +43,7 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   /* The rewrite supplies `action`. A direct caller may too. Anything
-     else is a 404 — we do not guess at intent. */
+     else is a 404. We do not guess at intent. */
   const action = req.query?.action;
   const route = ROUTES[action];
 

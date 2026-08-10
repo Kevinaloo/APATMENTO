@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════════════════════
-   APATMENTO — Shared PayHero STK Push Payment Popup
+   APATMENTO. Shared PayHero STK Push Payment Popup
    Include this script in any page that needs to collect payment
    (tours.html, events.html, apartment booking, etc.)
 
@@ -9,7 +9,7 @@
      phone: '0712345678',
      reference: 'TOUR-1-abc123',     // must be unique per transaction
      table: 'tour_bookings',          // which Supabase table to poll
-     description: 'Maasai Mara Safari — 2 people',
+     description: 'Maasai Mara Safari, 2 people',
      onSuccess: () => { ... },
      onFailure: () => { ... },
    });
@@ -193,7 +193,7 @@
         return;
       }
 
-      // STK push sent successfully — now poll for completion
+      // STK push sent successfully. Now poll for completion
       render('waiting', opts);
       startPolling(opts);
 
@@ -227,7 +227,7 @@
           render('failed', opts);
           if (opts.onFailure) opts.onFailure(data);
         }
-        // else still pending — keep polling
+        // else still pending. Keep polling
       } catch (err) {
         console.warn('Poll error:', err);
         // don't stop polling on a transient network error

@@ -2,7 +2,7 @@
    APATMENTO · INTERSTITIAL  v3
    ───────────────────────────────────────────────────────────────────
    Shows the World Cup (or any campaign) splash video ONLY on
-   dashboard.html — and ONLY when the user is arriving fresh, not
+   dashboard.html, and ONLY when the user is arriving fresh, not
    returning from a service page inside the app.
 
    Rules:
@@ -11,7 +11,7 @@
 
      2. BACK-NAVIGATION EXEMPT. Service pages stamp ?back=1 on the URL
         when they link back to dashboard. If that flag is present, we
-        skip the splash immediately — the user is bouncing around
+        skip the splash immediately. The user is bouncing around
         inside the app and blocking them with a video is disruptive.
 
      3. FREQUENCY CAP. The existing 'once' / 'daily' / 'always' logic
@@ -56,7 +56,7 @@
     return;
   }
 
-  /* ── All gates passed — run the splash engine ── */
+  /* ── All gates passed. Run the splash engine ── */
 
   var SUPA_URL   = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
   var BUCKET     = 'interstitial';
@@ -164,7 +164,7 @@
     mark.setAttribute('style', 'position:absolute;left:50%;bottom:22px;transform:translateX(-50%);font:600 11px/1 system-ui,sans-serif;letter-spacing:.18em;color:rgba(255,255,255,.55);text-transform:uppercase;z-index:2;pointer-events:none;user-select:none;');
     mark.textContent = 'APATMENTO';
 
-    /* Tap/click to skip — one tap is enough when you're inside the app */
+    /* Tap/click to skip. One tap is enough when you're inside the app */
     var skipBtn = doc.createElement('div');
     skipBtn.setAttribute('style', 'position:absolute;top:20px;right:20px;z-index:10;padding:8px 18px;border-radius:100px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.28);color:rgba(255,255,255,.8);font:600 12px/1 system-ui,sans-serif;letter-spacing:.08em;cursor:pointer;user-select:none;backdrop-filter:blur(8px);');
     skipBtn.textContent = 'Skip';

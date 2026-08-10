@@ -120,9 +120,9 @@
         '<div class="cpb-eye" style="color:' + c + '">' + (t.loc || '') + ' · ' + (t.area || '') + '</div>' +
         '<div class="cpb-title">' + t.name + '</div>' +
         '<div class="cpb-quick">' +
-          '<div class="cpb-q"><div class="cpb-ql">Duration</div><div class="cpb-qv">' + (t.dur || '—') + '</div></div>' +
-          '<div class="cpb-q"><div class="cpb-ql">Group</div><div class="cpb-qv">' + (t.group || '—') + '</div></div>' +
-          '<div class="cpb-q"><div class="cpb-ql">Rating</div><div class="cpb-qv" style="color:#F59E0B">★ ' + (t.rating || '—') + '</div></div>' +
+          '<div class="cpb-q"><div class="cpb-ql">Duration</div><div class="cpb-qv">' + (t.dur || ', ') + '</div></div>' +
+          '<div class="cpb-q"><div class="cpb-ql">Group</div><div class="cpb-qv">' + (t.group || ', ') + '</div></div>' +
+          '<div class="cpb-q"><div class="cpb-ql">Rating</div><div class="cpb-qv" style="color:#F59E0B">★ ' + (t.rating || ', ') + '</div></div>' +
         '</div>' +
         '<div class="cpb-desc">' + (t.desc || '') + '</div>' +
         '<div class="cpb-form">' +
@@ -200,12 +200,12 @@
         phone: phone.trim(),
         reference: ref,
         table: 'partner_bookings',
-        description: current.name + ' — ' + current.partnerName + ' via Cabana',
+        description: current.name + ', ' + current.partnerName + ' via Cabana',
         onSuccess: function () { finalise(ref, 'deposit'); },
         onFailure: function () { if (btn) { btn.disabled = false; btn.textContent = 'Try again'; } },
       });
     } else {
-      /* No payment module — still record, settle offline */
+      /* No payment module, still record, settle offline */
       finalise(ref, 'pending');
     }
   }

@@ -265,7 +265,7 @@ html.via-dash #tx{display:none!important;animation:none!important;}
           const w = reg.installing;
           if (w) w.onstatechange = () => {
             if (w.state === 'installed' && navigator.serviceWorker.controller) {
-              // New version available — reload silently
+              // New version available. Reload silently
               window.location.reload();
             }
           };
@@ -321,7 +321,7 @@ html.via-dash #tx{display:none!important;animation:none!important;}
 <section class="hero">
   <div class="eyebrow">Kenya's first roommate platform</div>
   <h1 class="hero-title">Find your <em>perfect flatmate</em><br/>across Kenya.</h1>
-  <p class="hero-sub">Browse verified rooms and shared spaces in Nairobi, Mombasa and beyond. Zero commission — always.</p>
+  <p class="hero-sub">Browse verified rooms and shared spaces in Nairobi, Mombasa and beyond. Zero commission, always.</p>
 
   <div class="search-bar">
     <div class="sb-field">
@@ -413,14 +413,14 @@ function dismissTx(){
 window.addEventListener('load',()=>setTimeout(dismissTx,2000));
 setTimeout(dismissTx,4000);
 
-/* Sample listings — no external API calls, instant load */
+/* Sample listings, no external API calls, instant load */
 const DATA = [
-  {id:1,title:"Bright en-suite in Kilimani flat",area:"Kilimani, Nairobi",price:28000,type:"En-suite",furnished:true,bills:true,gender:"Any",mates:2,occ:"Professional",vibe:"Quiet",floor:"4th floor",light:"Excellent",avail:"Now",min_stay:"3 months",deposit:28000,pets:false,smoking:false,wifi:true,parking:false,quiet_hrs:true,guests:true,clean:"Weekly rota",laundry:"In-unit",security:"Gated + watchman",landlord:false,mates_detail:"2 professionals (1M,1F)",desc:"Spacious 4th-floor en-suite in a quiet Kilimani apartment. Shared kitchen and living area. Excellent natural light. Looking for a working professional — quiet evenings preferred.",poster:"Wanjiku M.",since:"2024",badge:"v"},
-  {id:2,title:"Private room in Westlands house share",area:"Westlands, Nairobi",price:18000,type:"Private",furnished:true,bills:false,gender:"Female only",mates:3,occ:"Any",vibe:"Social",floor:"1st floor",light:"Good",avail:"1 Aug 2026",min_stay:"1 month",deposit:18000,pets:true,smoking:false,wifi:true,parking:true,quiet_hrs:false,guests:true,clean:"Shared rota",laundry:"Shared machine",security:"Electric fence + CCTV",landlord:false,mates_detail:"3 women, ages 24–29",desc:"Lovely house share in the heart of Westlands. Bills split separately. Very social house — we cook together on Sundays! Pet-friendly, parking for one car. Female tenants only.",poster:"Amina K.",since:"2025",badge:"n"},
+  {id:1,title:"Bright en-suite in Kilimani flat",area:"Kilimani, Nairobi",price:28000,type:"En-suite",furnished:true,bills:true,gender:"Any",mates:2,occ:"Professional",vibe:"Quiet",floor:"4th floor",light:"Excellent",avail:"Now",min_stay:"3 months",deposit:28000,pets:false,smoking:false,wifi:true,parking:false,quiet_hrs:true,guests:true,clean:"Weekly rota",laundry:"In-unit",security:"Gated + watchman",landlord:false,mates_detail:"2 professionals (1M,1F)",desc:"Spacious 4th-floor en-suite in a quiet Kilimani apartment. Shared kitchen and living area. Excellent natural light. Looking for a working professional. Quiet evenings preferred.",poster:"Wanjiku M.",since:"2024",badge:"v"},
+  {id:2,title:"Private room in Westlands house share",area:"Westlands, Nairobi",price:18000,type:"Private",furnished:true,bills:false,gender:"Female only",mates:3,occ:"Any",vibe:"Social",floor:"1st floor",light:"Good",avail:"1 Aug 2026",min_stay:"1 month",deposit:18000,pets:true,smoking:false,wifi:true,parking:true,quiet_hrs:false,guests:true,clean:"Shared rota",laundry:"Shared machine",security:"Electric fence + CCTV",landlord:false,mates_detail:"3 women, ages 24–29",desc:"Lovely house share in the heart of Westlands. Bills split separately. Very social house. We cook together on Sundays! Pet-friendly, parking for one car. Female tenants only.",poster:"Amina K.",since:"2025",badge:"n"},
   {id:3,title:"Master bedroom in Lavington apartment",area:"Lavington, Nairobi",price:35000,type:"Private",furnished:true,bills:true,gender:"Any",mates:1,occ:"Professional",vibe:"WFH",floor:"2nd floor",light:"Excellent",avail:"15 Jul 2026",min_stay:"6 months",deposit:35000,pets:false,smoking:false,wifi:true,parking:true,quiet_hrs:true,guests:false,clean:"Housekeeper weekly",laundry:"In-unit",security:"Gated + concierge",landlord:false,mates_detail:"1 male software engineer",desc:"Premium master bedroom with en-suite in a modern Lavington apartment. Fibre internet, fully furnished. Very quiet, professional environment only.",poster:"David O.",since:"2024",badge:"v"},
-  {id:4,title:"Affordable room near University",area:"Parklands, Nairobi",price:8500,type:"Shared",furnished:true,bills:true,gender:"Male only",mates:3,occ:"Student",vibe:"Early bird",floor:"Ground floor",light:"Moderate",avail:"Now",min_stay:"1 month",deposit:8500,pets:false,smoking:false,wifi:true,parking:false,quiet_hrs:true,guests:false,clean:"Daily shared",laundry:"Nearby",security:"Watchman",landlord:true,mates_detail:"3 male students",desc:"Budget room ideal for university students. All bills included, fast WiFi. Strict quiet hours 9pm–6am. Landlord on-site — very secure.",poster:"James N.",since:"2025",badge:"n"},
-  {id:5,title:"Sunny studio in Kileleshwa",area:"Kileleshwa, Nairobi",price:45000,type:"Studio",furnished:true,bills:false,gender:"Any",mates:0,occ:"Any",vibe:"Any",floor:"3rd floor",light:"Excellent",avail:"Now",min_stay:"3 months",deposit:45000,pets:true,smoking:false,wifi:false,parking:true,quiet_hrs:false,guests:true,clean:"Your own",laundry:"In-unit",security:"Gated + CCTV",landlord:false,mates_detail:"Solo unit — no flatmates",desc:"Rare find: fully furnished sunny studio in Kileleshwa. Large windows, private balcony, full kitchen. Bills paid separately. Pet-friendly.",poster:"Grace A.",since:"2023",badge:"v"},
-  {id:6,title:"Creative house share, Ngong Road",area:"Ngong Road, Nairobi",price:15000,type:"Private",furnished:false,bills:false,gender:"Any",mates:2,occ:"Creative",vibe:"Social",floor:"1st floor",light:"Good",avail:"1 Sep 2026",min_stay:"3 months",deposit:15000,pets:false,smoking:false,wifi:true,parking:true,quiet_hrs:false,guests:true,clean:"Weekly rota",laundry:"Shared machine",security:"Gated",landlord:false,mates_detail:"1 creative director, 1 startup founder",desc:"Join a house of creative professionals on Ngong Road. Unfurnished room — bring your own furniture. Great shared spaces. Creatives and entrepreneurs preferred.",poster:"Kendi L.",since:"2025",badge:"n"},
+  {id:4,title:"Affordable room near University",area:"Parklands, Nairobi",price:8500,type:"Shared",furnished:true,bills:true,gender:"Male only",mates:3,occ:"Student",vibe:"Early bird",floor:"Ground floor",light:"Moderate",avail:"Now",min_stay:"1 month",deposit:8500,pets:false,smoking:false,wifi:true,parking:false,quiet_hrs:true,guests:false,clean:"Daily shared",laundry:"Nearby",security:"Watchman",landlord:true,mates_detail:"3 male students",desc:"Budget room ideal for university students. All bills included, fast WiFi. Strict quiet hours 9pm–6am. Landlord on-site. Very secure.",poster:"James N.",since:"2025",badge:"n"},
+  {id:5,title:"Sunny studio in Kileleshwa",area:"Kileleshwa, Nairobi",price:45000,type:"Studio",furnished:true,bills:false,gender:"Any",mates:0,occ:"Any",vibe:"Any",floor:"3rd floor",light:"Excellent",avail:"Now",min_stay:"3 months",deposit:45000,pets:true,smoking:false,wifi:false,parking:true,quiet_hrs:false,guests:true,clean:"Your own",laundry:"In-unit",security:"Gated + CCTV",landlord:false,mates_detail:"Solo unit, no flatmates",desc:"Rare find: fully furnished sunny studio in Kileleshwa. Large windows, private balcony, full kitchen. Bills paid separately. Pet-friendly.",poster:"Grace A.",since:"2023",badge:"v"},
+  {id:6,title:"Creative house share, Ngong Road",area:"Ngong Road, Nairobi",price:15000,type:"Private",furnished:false,bills:false,gender:"Any",mates:2,occ:"Creative",vibe:"Social",floor:"1st floor",light:"Good",avail:"1 Sep 2026",min_stay:"3 months",deposit:15000,pets:false,smoking:false,wifi:true,parking:true,quiet_hrs:false,guests:true,clean:"Weekly rota",laundry:"Shared machine",security:"Gated",landlord:false,mates_detail:"1 creative director, 1 startup founder",desc:"Join a house of creative professionals on Ngong Road. Unfurnished room. Bring your own furniture. Great shared spaces. Creatives and entrepreneurs preferred.",poster:"Kendi L.",since:"2025",badge:"n"},
   {id:7,title:"Beachfront room in Nyali, Mombasa",area:"Nyali, Mombasa",price:22000,type:"Private",furnished:true,bills:true,gender:"Any",mates:2,occ:"Any",vibe:"Social",floor:"Ground",light:"Excellent",avail:"Now",min_stay:"1 month",deposit:22000,pets:false,smoking:false,wifi:true,parking:false,quiet_hrs:false,guests:true,clean:"Housekeeper 3x/wk",laundry:"In-unit",security:"Gated + ocean view",landlord:false,mates_detail:"2 hospitality professionals",desc:"Live by the beach in Nyali. Private room with direct ocean views from the shared balcony. Housekeeper three times a week. Perfect for remote workers escaping Nairobi.",poster:"Aisha M.",since:"2024",badge:"v"},
   {id:8,title:"Room in Karen gated estate",area:"Karen, Nairobi",price:32000,type:"Private",furnished:true,bills:false,gender:"Any",mates:1,occ:"Professional",vibe:"Quiet",floor:"Ground",light:"Good",avail:"Now",min_stay:"6 months",deposit:64000,pets:true,smoking:false,wifi:true,parking:true,quiet_hrs:true,guests:true,clean:"Gardener + housekeeper",laundry:"In-unit",security:"Estate 24/7",landlord:false,mates_detail:"1 senior manager (F)",desc:"Ground floor room in a beautiful Karen estate. Shared with one professional. Large garden, very quiet neighbourhood, ideal for someone who values privacy and peace. Pet-friendly.",poster:"Peter K.",since:"2023",badge:"v"},
 ];
@@ -588,7 +588,7 @@ function cycleCity(){ci=(ci+1)%cities.length;const e=document.getElementById('f-
 function cycleBudget(){bi=(bi+1)%budgets.length;const e=document.getElementById('f-budget');e.textContent=budgets[bi];e.className=bi?'sb-val':'sb-val ph';}
 function cycleType(){ti=(ti+1)%types.length;const e=document.getElementById('f-type');e.textContent=types[ti];e.className=ti?'sb-val':'sb-val ph';}
 
-/* List your space — auth-aware */
+/* List your space. Auth-aware */
 async function goListSpace(){
   try{
     const sb2=supabase.createClient(SUPA_URL,SUPA_KEY);
@@ -600,7 +600,7 @@ async function goListSpace(){
 /* Toast */
 function showToast(m,d=3200){const t=document.getElementById('toast');t.textContent=m;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),d);}
 
-/* Init — synchronous, no external calls */
+/* Init. Synchronous, no external calls */
 render();
 
 // ── Load admin-added room listings from listings table ──
@@ -656,7 +656,7 @@ function roommateChatRequest(r) {
     .then(({ data }) => {
       const status = data?.id_verification_status;
       if (status === 'approved') {
-        // Verified — open chat
+        // Verified. Open chat
         ApatmentoChat.open({
           listingId: r._dbId || r.id,
           listingType: 'roommate',
@@ -704,7 +704,7 @@ function openTenantVerify(pendingRoom) {
           <div style="display:flex;flex-direction:column;gap:10px;padding:16px;background:rgba(10,10,20,.03);border-radius:16px;margin-bottom:20px;">
             <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:#636480;">🔒 Your ID is stored securely and never shared publicly</div>
             <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:#636480;">⏱️ Verification usually takes under 24 hours</div>
-            <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:#636480;">✅ One-time process — applies to all roommate enquiries</div>
+            <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:#636480;">✅ One-time process. Applies to all roommate enquiries</div>
           </div>
           <button onclick="window.location.href='partner-listings.html'" style="width:100%;padding:15px;border-radius:100px;background:linear-gradient(135deg,#4361FF,#7B2FF7);color:#fff;border:none;font-family:var(--font-body);font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 20px rgba(67,97,255,.3);">
             Verify my identity →

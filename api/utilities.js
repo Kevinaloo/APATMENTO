@@ -9,7 +9,7 @@ export const config = { maxDuration: 15 };
    VERIFY CHECKIN
 ══════════════════════════════════════ */
 /* ══════════════════════════════════════════════════════════════
-   APATMENTO — Dual Check-In Code Verifier & Payout Release
+   APATMENTO. Dual Check-In Code Verifier & Payout Release
    Vercel Serverless Function (api/verify-checkin.js)
    Called at: /api/verify-checkin
 
@@ -107,7 +107,7 @@ async function handleVerifyCheckin(req, res) {
       return res.status(500).json({ error: 'Failed to update booking' });
     }
 
-    // ── IF BOTH VERIFIED — TRIGGER PAYOUT VIA PAYHERO ──
+    // ── IF BOTH VERIFIED. TRIGGER PAYOUT VIA PAYHERO ──
     if (bothVerified) {
       const netAmount = Number(booking.grand_total || 0) - Number(booking.service_fee || 0);
       const payoutPhone = booking.host_mpesa || booking.contact_phone;
@@ -185,14 +185,14 @@ async function handleWelcomeEmail(req, res) {
     <div style="background:linear-gradient(135deg,#4361FF,#7B2FF7);border-radius:20px;padding:40px 32px;text-align:center;margin-bottom:20px;">
       <div style="font-size:44px;margin-bottom:10px;">🎉</div>
       <h1 style="color:#fff;margin:0;font-size:28px;font-weight:800;letter-spacing:-0.5px;">Karibu, ${firstName}!</h1>
-      <p style="color:rgba(255,255,255,0.85);margin:10px 0 0;font-size:15px;line-height:1.6;">Welcome to Apatmento — Kenya's zero-commission travel super-app</p>
+      <p style="color:rgba(255,255,255,0.85);margin:10px 0 0;font-size:15px;line-height:1.6;">Welcome to Apatmento. Kenya's zero-commission travel super-app</p>
     </div>
     <div style="background:#fff;border-radius:16px;padding:24px;margin-bottom:16px;">
       <h2 style="margin:0 0 16px;font-size:17px;font-weight:700;color:#0A0A14;">Here's what you can do right now:</h2>
       <div style="display:flex;flex-direction:column;gap:14px;">
         <div style="display:flex;gap:12px;align-items:flex-start;">
           <div style="font-size:22px;">🏠</div>
-          <div><strong style="font-size:14px;color:#0A0A14;">Book stays</strong><br><span style="font-size:13px;color:#636480;">Short-stay apartments across Nairobi &amp; Kenya — pay only face value</span></div>
+          <div><strong style="font-size:14px;color:#0A0A14;">Book stays</strong><br><span style="font-size:13px;color:#636480;">Short-stay apartments across Nairobi &amp; Kenya. Pay only face value</span></div>
         </div>
         <div style="display:flex;gap:12px;align-items:flex-start;">
           <div style="font-size:22px;">🦁</div>
@@ -204,7 +204,7 @@ async function handleWelcomeEmail(req, res) {
         </div>
         <div style="display:flex;gap:12px;align-items:flex-start;">
           <div style="font-size:22px;">✦</div>
-          <div><strong style="font-size:14px;color:#0A0A14;">Meet APA</strong><br><span style="font-size:13px;color:#636480;">Your AI concierge — books anything in seconds, and cracks jokes while doing it</span></div>
+          <div><strong style="font-size:14px;color:#0A0A14;">Meet APA</strong><br><span style="font-size:13px;color:#636480;">Your AI concierge. Books anything in seconds, and cracks jokes while doing it</span></div>
         </div>
       </div>
     </div>
@@ -212,7 +212,7 @@ async function handleWelcomeEmail(req, res) {
       <a href="https://www.apatmento.space/dashboard.html" style="display:inline-block;background:linear-gradient(135deg,#4361FF,#7B2FF7);color:#fff;text-decoration:none;padding:14px 36px;border-radius:100px;font-weight:700;font-size:15px;">Start Exploring →</a>
     </div>
     <div style="text-align:center;padding-top:16px;border-top:1px solid #E8E9F0;">
-      <p style="font-size:12px;color:#8E90AD;margin:0;"><strong>Apatmento</strong> — Your World, One App</p>
+      <p style="font-size:12px;color:#8E90AD;margin:0;"><strong>Apatmento</strong>: Your World, One App</p>
     </div>
   </div>
 </body></html>`;
@@ -247,7 +247,7 @@ async function handleWelcomeEmail(req, res) {
 const INDEXNOW_HOST = 'www.apatmento.space';
 const INDEXNOW_KEY  = 'cc18b1bc5dc43435c44f29f125a500f5';
 
-// All sitemaps to ping — updated to include all location, global, deep and blog sitemaps
+// All sitemaps to ping. Updated to include all location, global, deep and blog sitemaps
 const ALL_SITEMAPS = [
   '/sitemap.xml',
   '/sitemap-locations.xml',

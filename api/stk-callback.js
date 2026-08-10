@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════════════════════
-   APATMENTO — PayHero Callback Receiver
+   APATMENTO. PayHero Callback Receiver
    Vercel Serverless Function (api/stk-callback.js)
    Called at: /api/stk-callback
    PayHero POSTs here when guest completes/fails M-Pesa payment
@@ -32,12 +32,12 @@ export default async function handler(req, res) {
   if (expectedToken) {
     const supplied = (req.query && req.query.t) || '';
     if (supplied !== expectedToken) {
-      console.error('[stk-callback] REJECTED — bad or missing token from',
+      console.error('[stk-callback] REJECTED. Bad or missing token from',
                     req.headers['x-forwarded-for'] || 'unknown');
       return res.status(401).json({ error: 'unauthorized' });
     }
   } else {
-    console.warn('[stk-callback] PAYHERO_CALLBACK_TOKEN unset — accepting UNAUTHENTICATED callbacks');
+    console.warn('[stk-callback] PAYHERO_CALLBACK_TOKEN unset. Accepting UNAUTHENTICATED callbacks');
   }
 
   try {
@@ -88,9 +88,9 @@ export default async function handler(req, res) {
     if (externalReference.startsWith('EVENT-'))  table = 'event_tickets';
     if (externalReference.startsWith('APT-'))    table = 'apartment_bookings';
 
-    // Payout callbacks — not a booking, nothing to update
+    // Payout callbacks, not a booking, nothing to update
     if (externalReference.startsWith('PAYOUT-')) {
-      console.log('[stk-callback] Payout callback received — ignoring');
+      console.log('[stk-callback] Payout callback received. Ignoring');
       return res.status(200).json({ received: true, type: 'payout' });
     }
 
@@ -293,7 +293,7 @@ export default async function handler(req, res) {
 
   } catch (err) {
     console.error('[stk-callback] Unhandled error:', err);
-    // Always 200 to PayHero — never trigger a retry on our error
+    // Always 200 to PayHero, never trigger a retry on our error
     return res.status(200).json({ received: true, error: err.message });
   }
 }
@@ -303,7 +303,7 @@ export default async function handler(req, res) {
 
    The ledger is the source of truth. amount_paid is always recomputed
    as the SUM of successful rows rather than incremented, so a duplicate
-   callback delivery cannot inflate it — PayHero retries until it gets a
+   callback delivery cannot inflate it. PayHero retries until it gets a
    200, and an increment would double-count.
 ══════════════════════════════════════════════════════════════ */
 async function creditInstalment({ supabaseUrl, serviceKey, reference, isSuccess, payload, origin }) {
@@ -384,7 +384,7 @@ async function creditInstalment({ supabaseUrl, serviceKey, reference, isSuccess,
       : status === 'confirmed_balance_due'
       ? { title: 'Booking confirmed 🎉',
           body: `Deposit received. KES ${Math.round(total - amountPaid).toLocaleString()} `
-              + `remains — your check-in code unlocks once it is paid.` }
+              + `remains. Your check-in code unlocks once it is paid.` }
       : { title: 'Payment received',
           body: `KES ${Math.round(amountPaid).toLocaleString()} received. Add KES `
               + `${shortfall.toLocaleString()} more to confirm this booking.` };

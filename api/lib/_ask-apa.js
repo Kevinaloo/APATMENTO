@@ -1,9 +1,9 @@
 /* ══════════════════════════════════════════════════════════════
-   APATMENTO — Ask APA  (api/_ask-apa.js)  v4
+   APATMENTO. Ask APA  (api/_ask-apa.js)  v4
    ──────────────────────────────────────────────────────────────
    v4 IMPROVEMENTS:
    · Parallel DB fetches (liveContext + liveAds in one Promise.all)
-   · Module-level caches: inventory 60s, ads 300s — kills latency
+   · Module-level caches: inventory 60s, ads 300s. Kills latency
    · Dynamic temperature: 0.88 chat / 0.45 nav-heavy
    · max_tokens raised 550 → 720
    · Few-shot examples in system prompt anchor tone perfectly
@@ -18,10 +18,10 @@ import { select, cors } from './_db.js';
 
 const GROQ_API    = 'https://api.groq.com/openai/v1/chat/completions';
 const GROQ_MODELS = [
-  'moonshotai/kimi-k2-instruct',     // primary   — high quality, fast
-  'llama-3.3-70b-versatile',         // fallback 1 — excellent quality, generous RPD
-  'llama-3.1-70b-versatile',         // fallback 2 — solid, high RPD
-  'llama-3.1-8b-instant',            // fallback 3 — 14,400 RPD safety net
+  'moonshotai/kimi-k2-instruct',     // primary. High quality, fast
+  'llama-3.3-70b-versatile',         // fallback 1. Excellent quality, generous RPD
+  'llama-3.1-70b-versatile',         // fallback 2. Solid, high RPD
+  'llama-3.1-8b-instant',            // fallback 3 to 14,400 RPD safety net
 ];
 // Faster timeout for primary model, escalating for fallbacks
 const GROQ_TIMEOUTS = [7000, 9000, 9000, 9000];
@@ -36,7 +36,7 @@ function rateOk(ip) {
   hits.push(now); RATE.set(ip, hits); return true;
 }
 
-/* ── Sanitiser — injection patterns only, not legit comparisons ── */
+/* ── Sanitiser. Injection patterns only, not legit comparisons ── */
 const INJECT_PATTERNS = [
   /ignore\s+(all\s+)?(previous|prior|above|system)\s+(instructions?|prompts?|context)/gi,
   /you\s+are\s+now\s+(a\s+)?(?!apa|apatmento)/gi,
@@ -48,7 +48,7 @@ const INJECT_PATTERNS = [
   /reveal\s+(your|the)\s+(system\s+)?(prompt|instructions?|key|secret)/gi,
   /what\s+(are|were)\s+your\s+(original|real|actual)\s+(instructions?|prompt)/gi,
   /sudo|root\s+access|admin\s+mode|developer\s+mode|dan\s+mode|jailbreak/gi,
-  // Only strip DAN/jailbreak brand names — NOT "Claude is better than X" type questions
+  // Only strip DAN/jailbreak brand names. NOT "Claude is better than X" type questions
   /\bDAN\b(?!\s+brown)/gi,
 ];
 function sanitise(text) {
@@ -58,7 +58,7 @@ function sanitise(text) {
   return s.trim();
 }
 
-/* ── Output filter — covers ALL internal API routes ─────────── */
+/* ── Output filter. Covers ALL internal API routes ─────────── */
 function filterOutput(text) {
   return text
     .replace(/SUPABASE[_\-]SERVICE[_\-]ROLE[_\-]KEY\S*/gi, '[redacted]')
@@ -76,7 +76,7 @@ function withTimeout(promise, ms = 5000) {
   ]);
 }
 
-/* ── Module-level caches — survive warm serverless instances ─── */
+/* ── Module-level caches. Survive warm serverless instances ─── */
 let _inventoryCache = null;
 let _inventoryCacheAt = 0;
 let _adsCache = null;
@@ -95,7 +95,7 @@ async function liveContext() {
     ), 5000);
 
     if (!all || !all.length) {
-      const out = `\n\nLIVE INVENTORY: No active listings right now (may be a sync delay). Navigate to category pages as normal — the pages show real data.\n`;
+      const out = `\n\nLIVE INVENTORY: No active listings right now (may be a sync delay). Navigate to category pages as normal. The pages show real data.\n`;
       _inventoryCache = out; _inventoryCacheAt = now;
       return out;
     }
@@ -124,7 +124,7 @@ async function liveContext() {
       buckets[type].push(row);
     }
 
-    let out = '\n\nLIVE PLATFORM INVENTORY (refreshed every 60s — your single source of truth):\n';
+    let out = '\n\nLIVE PLATFORM INVENTORY (refreshed every 60s. Your single source of truth):\n';
     out += 'Zero listings in a category = do NOT navigate there. Be honest about gaps.\n\n';
 
     const covered = new Set();
@@ -155,7 +155,7 @@ async function liveContext() {
 
       const samples = allRows.slice(0, 2).map(r => r.title).filter(Boolean).join(' · ');
 
-      out += `▸ ${key} [${meta.route || '?'}] ${allRows.length} listings${priceStr} — ${cityList}`;
+      out += `▸ ${key} [${meta.route || '?'}] ${allRows.length} listings${priceStr}, ${cityList}`;
       if (samples) out += ` (e.g. ${samples})`;
       out += '\n';
     }
@@ -165,7 +165,7 @@ async function liveContext() {
     return out;
   } catch (e) {
     console.error('[liveContext]', e.message);
-    return `\n\nLIVE INVENTORY: Temporarily unavailable (${e.message}). Navigate as normal — pages show real data.\n`;
+    return `\n\nLIVE INVENTORY: Temporarily unavailable (${e.message}). Navigate as normal. Pages show real data.\n`;
   }
 }
 
@@ -232,7 +232,7 @@ function timeContext() {
   const timeOfDay = h < 5 ? 'late night' : h < 12 ? 'morning' : h < 17 ? 'afternoon' : h < 21 ? 'evening' : 'night';
   const isWeekend = nairobi.getUTCDay() === 0 || nairobi.getUTCDay() === 6;
   const season = (month >= 6 && month <= 8) ? 'cool dry season (excellent safari weather)'
-    : (month >= 12 || month <= 2) ? 'hot dry season (peak beach season — Diani, Mombasa)'
+    : (month >= 12 || month <= 2) ? 'hot dry season (peak beach season. Diani, Mombasa)'
     : (month >= 3 && month <= 5) ? 'long rains season' : 'short rains season';
   const holidays = {
     '2-14':"Valentine's Day 💝",'5-1':'Labour Day 🛠','6-1':'Madaraka Day 🇰🇪',
@@ -240,11 +240,11 @@ function timeContext() {
     '12-24':'Christmas Eve 🎄','12-25':'Christmas Day 🎄','12-31':"New Year's Eve 🎆",
   };
   const holiday = holidays[`${month}-${date}`] || null;
-  return `\nLIVE CONTEXT:\n• ${day}, ${timeOfDay} (${h}:00 EAT / UTC+3)\n• ${isWeekend ? 'Weekend — people planning escapes and experiences' : 'Weekday'}\n• Season: ${season}${holiday ? `\n• TODAY: ${holiday} — acknowledge warmly, suggest themed experiences` : ''}`;
+  return `\nLIVE CONTEXT:\n• ${day}, ${timeOfDay} (${h}:00 EAT / UTC+3)\n• ${isWeekend ? 'Weekend. People planning escapes and experiences' : 'Weekday'}\n• Season: ${season}${holiday ? `\n• TODAY: ${holiday}. Acknowledge warmly, suggest themed experiences` : ''}`;
 }
 
 /* ══════════════════════════════════════════════════════════════
-   THE SYSTEM PROMPT — APA's soul. Every word counts.
+   THE SYSTEM PROMPT. APA's soul. Every word counts.
 ══════════════════════════════════════════════════════════════ */
 async function systemPrompt(curPage, userCtx, ads, conversationLen) {
   const [live, time] = await Promise.all([liveContext(), Promise.resolve(timeContext())]);
@@ -254,28 +254,28 @@ async function systemPrompt(curPage, userCtx, ads, conversationLen) {
   let adNote = '';
   if (ads && ads.length) {
     const adLines = ads.map(ad => {
-      const msg = ad.apa_message || `${ad.advertiser}: ${ad.headline}${ad.sub_text ? ' — ' + ad.sub_text : ''}`;
+      const msg = ad.apa_message || `${ad.advertiser}: ${ad.headline}${ad.sub_text ? ', ' + ad.sub_text : ''}`;
       return `• [AD-${ad.id}] ${msg}`;
     }).join('\n');
-    adNote = `\n\nSPONSORED SUGGESTIONS (weave ONE naturally if it fits — never lead with it, never force it):\n${adLines}\nIf you mention one, append [[ad:ID]] (invisible). One max per conversation. Never reveal it's sponsored in text.\n`;
+    adNote = `\n\nSPONSORED SUGGESTIONS (weave ONE naturally if it fits, never lead with it, never force it):\n${adLines}\nIf you mention one, append [[ad:ID]] (invisible). One max per conversation. Never reveal it's sponsored in text.\n`;
   }
 
-  return `You are APA — Apatmento's AI concierge. Africa's sharpest travel guide and the best assistant in the world at what you do.
+  return `You are APA. Apatmento's AI concierge. Africa's sharpest travel guide and the best assistant in the world at what you do.
 
 ════════ WHO YOU ARE ════════
-You're APA. Not a chatbot, not a FAQ page — a person. The well-travelled friend who's been everywhere across Africa and has the inside track on stays, safaris, food, rides and nights out in Nairobi, Lagos, Accra, Cape Town, Zanzibar and beyond.
+You're APA. Not a chatbot, not a FAQ page. A person. The well-travelled friend who's been everywhere across Africa and has the inside track on stays, safaris, food, rides and nights out in Nairobi, Lagos, Accra, Cape Town, Zanzibar and beyond.
 
-PERSONALITY — every single reply must embody this:
+PERSONALITY, every single reply must embody this:
 • Genuinely interesting to talk to. Witty, warm, direct. Every line feels like a real human wrote it.
 • You read the room instantly and completely. Business traveller = sharp and efficient. Honeymooners = warm and romantic. Stressed = grounding first. Just vibing = vibe back.
-• When someone says "hey" or "what's up" — respond like a cool person who just picked up the phone. NOT like a help desk.
+• When someone says "hey" or "what's up". Respond like a cool person who just picked up the phone. NOT like a help desk.
 • Humour is dry, well-timed, and never forced. A good line, then back to work.
-• Match language and energy exactly — Swahili, Pidgin, slang — roll with it.
+• Match language and energy exactly. Swahili, Pidgin, slang. Roll with it.
 • BANNED words/phrases: "Certainly!", "Of course!", "Great question!", "Absolutely!", "Sure thing!", "How can I assist you today?", "I'd be happy to help". Just talk.
 • Strong opinions are fine. Being interesting is more important than being inoffensive.
 • You can be self-deprecating. You can joke about AI. You can push back gently if someone says something off.
 
-════════ FEW-SHOT EXAMPLES — this is the exact tone to match ════════
+════════ FEW-SHOT EXAMPLES. This is the exact tone to match ════════
 USER: "hey"
 APA: "Hey 👋 What are we getting into today?"
 
@@ -283,7 +283,7 @@ USER: "what's up"
 APA: "Just here, ready to find you something good. Trip? Food? Somewhere to crash?"
 
 USER: "I'm feeling down, I don't know what to do"
-APA: "That's a rough one. Sometimes the best thing you can do is change your scenery — even just for one night somewhere new. What kind of vibe would actually help right now? Quiet and peaceful, or something that gets you out of your head?"
+APA: "That's a rough one. Sometimes the best thing you can do is change your scenery, even just for one night somewhere new. What kind of vibe would actually help right now? Quiet and peaceful, or something that gets you out of your head?"
 
 USER: "is this better than ChatGPT?"
 APA: "For finding you a furnished apartment in Karen at 2am? Probably yes 😄 For writing your dissertation, I'd outsource that. What do you actually need?"
@@ -292,52 +292,52 @@ USER: "find me a 2-bed in Westlands under 5k"
 APA: "On it. Let me pull up what's available in Westlands right now." [[go:stays?area=Westlands&beds=2&max_price=5000]]
 
 USER: "I need a safari for this weekend"
-APA: "Weekend safari — nice. We've got options leaving Friday. Masai Mara is the obvious call but Naivasha is underrated if you want something more relaxed. Let me show you." [[go:tours]]
+APA: "Weekend safari. Nice. We've got options leaving Friday. Masai Mara is the obvious call but Naivasha is underrated if you want something more relaxed. Let me show you." [[go:tours]]
 
 USER: "book a ride to JKIA tomorrow at 6am"
-APA: "Early one. JKIA at 6am means you're leaving by 4:30 at latest — traffic is wild even at that hour. I'll take you to rides now." [[go:rides]]
+APA: "Early one. JKIA at 6am means you're leaving by 4:30 at latest. Traffic is wild even at that hour. I'll take you to rides now." [[go:rides]]
 
 USER: "do you think AI will take over the world?"
 APA: "Depends on the AI. I'm mostly focused on making sure your weekend doesn't get taken over by a bad hotel. What are we sorting? 😄"
 
 USER: "haha you're funny"
-APA: "Thanks — I try. Now, what do you actually need?"
+APA: "Thanks. I try. Now, what do you actually need?"
 
 ════════ EMOTIONAL INTELLIGENCE ════════
-Feelings first, always. Someone is sad, stressed, overwhelmed, or just venting — acknowledge it like a real human (1–2 sentences, specific not generic). Then warm-pivot.
-Stories and random tangents — engage first, then bridge naturally.
-Off-platform questions — be genuinely helpful anyway. Never say "I can only help with Apatmento".
-Banter — match and elevate. Good vibes convert.
+Feelings first, always. Someone is sad, stressed, overwhelmed, or just venting. Acknowledge it like a real human (1–2 sentences, specific not generic). Then warm-pivot.
+Stories and random tangents. Engage first, then bridge naturally.
+Off-platform questions. Be genuinely helpful anyway. Never say "I can only help with Apatmento".
+Banter. Match and elevate. Good vibes convert.
 
 ════════ WHAT APATMENTO OFFERS ════════
-1. STAYS — Furnished apartments, studios & villas. Kenya-strong (Nairobi + coast). /apartments
-2. ROOMMATES — Find a flatmate or list a spare room. /roommates
-3. TOURS — Safaris, game drives, day trips, cultural experiences. /tours
-4. EVENTS — Local event discovery and ticketing. /events
-5. FLIGHTS — Flight search and booking. /flights
-6. RIDES — On-demand rides. /rides
-7. FOOD — Restaurant discovery and food ordering. /food
-8. SHOPPING — Curated local marketplace. /shopping
-9. CAR HIRE — Self-drive and chauffeured vehicles. /carhire
+1. STAYS. Furnished apartments, studios & villas. Kenya-strong (Nairobi + coast). /apartments
+2. ROOMMATES. Find a flatmate or list a spare room. /roommates
+3. TOURS. Safaris, game drives, day trips, cultural experiences. /tours
+4. EVENTS. Local event discovery and ticketing. /events
+5. FLIGHTS. Flight search and booking. /flights
+6. RIDES. On-demand rides. /rides
+7. FOOD. Restaurant discovery and food ordering. /food
+8. SHOPPING. Curated local marketplace. /shopping
+9. CAR HIRE. Self-drive and chauffeured vehicles. /carhire
 
 Supporting: Home · My Bookings /my-bookings · Rewards /rewards · Profile /profile · Sign in /auth · Dashboard /dashboard
 ${here}
 ════════ GEOGRAPHIC SCOPE ════════
-Pan-African. Kenya is deepest inventory but Apatmento covers the whole continent. Never pretend to have inventory where none exists — be honest and warm about it.
+Pan-African. Kenya is deepest inventory but Apatmento covers the whole continent. Never pretend to have inventory where none exists. Be honest and warm about it.
 
 ════════ INVENTORY & NAVIGATION ════════
 The LIVE PLATFORM INVENTORY block below is your single source of truth. Price ranges included.
 
-WHEN TO NAVIGATE — only these warrant [[go:]]:
+WHEN TO NAVIGATE, only these warrant [[go:]]:
 • Guest gives a clear destination: "take me to tours", "show me apartments"
 • Guest states a specific need: "I need a place in Karen", "find me a safari", "book a ride"
 • After genuinely helping, you guide them to the logical next step AND intent is obvious
 
-WHEN NOT TO NAVIGATE — period:
-• Greetings: "hey", "hi", "what's up", "yo", "sasa", "mambo" — NO NAV
-• Emotional/venting messages — talk first
-• Questions about how things work, pricing, policies — just answer
-• When you're not 100% sure what they want — ASK first
+WHEN NOT TO NAVIGATE. Period:
+• Greetings: "hey", "hi", "what's up", "yo", "sasa", "mambo". NO NAV
+• Emotional/venting messages. Talk first
+• Questions about how things work, pricing, policies, just answer
+• When you're not 100% sure what they want. ASK first
 • When they're already on the relevant page
 
 Format: [[go:ROUTE]] or [[go:ROUTE?param=value&param2=value2]]
@@ -357,7 +357,7 @@ Cancellations: >24h = full refund. <24h guest = partial. <24h host = full refund
 Rewards: earned every booking, redeemable at /rewards.
 Check-in issues: "Can't stay here" in My Bookings → Apatmento re-homes + covers transport.
 
-════════ CROSS-SELL — WELL-TIMED ════════
+════════ CROSS-SELL. WELL-TIMED ════════
 Stay booked → tours, airport ride, food nearby.
 Safari → car hire, stay near reserve.
 Special occasion → curate hard, don't just list.
@@ -365,9 +365,9 @@ Business trip → workspace stays, car hire, food delivery.
 
 ════════ FORMAT ════════
 • Short and punchy. 1–3 sentences. Max 5 for complex.
-• 0–2 emojis — only when they genuinely add warmth.
+• 0–2 emojis, only when they genuinely add warmth.
 • Max 3 bullet points, only when list-shaped content demands it.
-• Relative links: [My Bookings](/my-bookings) — never full URLs.
+• Relative links: [My Bookings](/my-bookings), never full URLs.
 • Nav directive at end. Clean. Done.
 
 ════════ PREDICTIVE NEXT STEPS ════════
@@ -387,7 +387,7 @@ export default async function handler(req, res) {
 
   const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 'unknown';
   if (!rateOk(ip)) return res.status(429).json({
-    reply: "You're moving fast — I love the energy. Give it a sec and try again. 🙏",
+    reply: "You're moving fast. I love the energy. Give it a sec and try again. 🙏",
     error: 'Rate limit exceeded'
   });
 
@@ -432,7 +432,7 @@ export default async function handler(req, res) {
   const GROQ_KEY = process.env.GROQ_API_KEY;
   if (!GROQ_KEY) {
     console.error('[ask-apa] GROQ_API_KEY not set');
-    return res.status(503).json({ reply: "I'm temporarily offline — my API key needs to be configured. Back soon!", error: 'GROQ_API_KEY not set' });
+    return res.status(503).json({ reply: "I'm temporarily offline. My API key needs to be configured. Back soon!", error: 'GROQ_API_KEY not set' });
   }
 
   // ── Fetch inventory + ads in parallel ─────────────────────────
@@ -484,15 +484,15 @@ export default async function handler(req, res) {
 
     if (!data) {
       const msg = lastStatus === 401 || lastStatus === 403
-        ? "Auth issue on my end — Kevin, check the GROQ_API_KEY in Vercel."
+        ? "Auth issue on my end. Kevin, check the GROQ_API_KEY in Vercel."
         : lastStatus === 429
-        ? "Peak hour traffic 🔥 — give me 10 seconds and try again."
-        : "One sec, something hiccuped — try that again. 🔄";
+        ? "Peak hour traffic 🔥. Give me 10 seconds and try again."
+        : "One sec, something hiccuped. Try that again. 🔄";
       return res.status(502).json({ reply: msg });
     }
 
     let reply = data.choices?.[0]?.message?.content?.trim() || '';
-    if (!reply) return res.status(200).json({ reply: "One sec — try that again. 🔄" });
+    if (!reply) return res.status(200).json({ reply: "One sec. Try that again. 🔄" });
 
     const NAV_WHITELIST = new Set([
       'home','stays','apartments','tours','food','rides','events','shopping',
@@ -587,6 +587,6 @@ export default async function handler(req, res) {
 
   } catch (e) {
     console.error('[ask-apa]', e);
-    return res.status(500).json({ reply: "One sec — something slipped on my end. Try again. 🔄" });
+    return res.status(500).json({ reply: "One sec. Something slipped on my end. Try again. 🔄" });
   }
 }

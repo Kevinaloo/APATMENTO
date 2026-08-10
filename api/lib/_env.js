@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════════════════════════════
-   APATMENTO — Environment Guard  (api/lib/_env.js)
+   APATMENTO. Environment Guard  (api/lib/_env.js)
    ──────────────────────────────────────────────────────────────────────
    Credentials used to carry hardcoded fallbacks. A fallback is a lie the
    code tells itself: the request proceeds, points at a baked-in project,
@@ -7,7 +7,7 @@
    rather than the cause.
 
    These helpers make a missing variable announce itself, by name, at the
-   moment it is needed — and never write a secret to a log.
+   moment it is needed, and never write a secret to a log.
 ══════════════════════════════════════════════════════════════════════ */
 
 /* Read a required variable, or throw naming exactly what is absent. */
@@ -51,7 +51,7 @@ export function requireAll(...names) {
 }
 
 /* ── Supabase, resolved once ─────────────────────────────────────────────
-   SERVICE role bypasses RLS — for trusted server work only.
+   SERVICE role bypasses RLS, for trusted server work only.
    ANON is the key to send when a real user's JWT rides in the
    Authorization header, so auth.uid() resolves to that user and the
    row-level policies actually apply. Falling back to the service key

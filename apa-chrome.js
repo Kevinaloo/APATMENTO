@@ -4,7 +4,7 @@
    Header controls (SOS · notifications · avatar · partner switch)
    and the guest/user nav swap.
 
-   SOS v3: Red text label "SOS" — no warning triangle (removed because
+   SOS v3: Red text label "SOS", no warning triangle (removed because
    the triangle icon looked like a site error). SOS now opens a smart
    emergency flow: pick category → location permission → closest help.
    ═══════════════════════════════════════════════════════════════════ */
@@ -32,7 +32,7 @@
     + '.apa-nav{display:flex;align-items:center;gap:8px;}'
     + '@media(max-width:640px){.apa-nav{gap:6px;}}'
 
-    /* --- SOS — now a clean red text button, NO triangle icon --- */
+    /* --- SOS. Now a clean red text button, NO triangle icon --- */
     + '.apa-sos{display:inline-flex;align-items:center;gap:0;flex-shrink:0;'
     + 'padding:7px 14px;border-radius:100px;border:none;cursor:pointer;'
     + 'background:linear-gradient(135deg,#FF1744,#D50000);color:#fff;'
@@ -208,7 +208,7 @@
 
   /* ═══ SVG ════════════════════════════════════════════════════════ */
   var SVG = {
-    /* SOS: no triangle — clean text via CSS, this SVG is unused now */
+    /* SOS: no triangle. Clean text via CSS, this SVG is unused now */
     sos: '',
     bell: '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/><path d="M3.3 16.6c-.6.7-.1 1.8.8 1.8h15.8c.9 0 1.4-1.1.8-1.8C19.5 15 18 13.2 18 8A6 6 0 0 0 6 8c0 5.2-1.5 7-2.7 8.6"/></svg>',
     heart: '<svg class="apa-fav-heart" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>',
@@ -287,7 +287,7 @@
     openFavorites(); /* refresh the sheet */
   }
 
-  /* ═══ SOS — smart emergency flow v3 ════════════════════════════
+  /* ═══ SOS. Smart emergency flow v3 ════════════════════════════
      Step 1: Pick emergency type
      Step 2: Get location
      Step 3: Show closest resources + call option                  */
@@ -412,10 +412,10 @@
     var locMsg = coords
       ? '<div class="apa-sos-loc" style="background:rgba(16,185,129,.08);border-color:rgba(16,185,129,.25);color:#059669;">'
         + '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
-        + '<span>Location found — showing nearest services</span></div>'
+        + '<span>Location found. Showing nearest services</span></div>'
       : '<div class="apa-sos-loc" style="background:rgba(245,158,11,.08);border-color:rgba(245,158,11,.25);color:#D97706;">'
         + '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
-        + '<span>Location unavailable — showing general Nairobi resources</span></div>';
+        + '<span>Location unavailable. Showing general Nairobi resources</span></div>';
 
     var rows = contacts.map(function(c, i) {
       var href = c.wa
@@ -499,7 +499,7 @@
       global.location.href = 'auth.html?next=partner';
       return;
     }
-    // Use URL param as ground truth — not localStorage
+    // Use URL param as ground truth, not localStorage
     var urlRole = '';
     try { urlRole = new URLSearchParams(global.location.search).get('role') || ''; } catch(e) {}
     var currentlyPartner = urlRole === 'partner';
@@ -512,7 +512,7 @@
   function render(st) {
     st = st || { status: 'guest', role: 'guest' };
     var isUser = st.status === 'user';
-    // Read role from URL param, not session — session.role reads localStorage which
+    // Read role from URL param, not session. Session.role reads localStorage which
     // can be stale. The URL is the ground truth for which screen you're on.
     var urlRole = '';
     try { urlRole = new URLSearchParams(global.location.search).get('role') || ''; } catch(e) {}
@@ -569,7 +569,7 @@
     render, openSOS, openNotifications, openFavorites,
     switchRole, closeSheet: close, SVG,
     toggleFavorite, isFavorited, getFavs, removeFavorite, updateFavBadge,
-    /* internal SOS steps — exposed for inline onclick */
+    /* internal SOS steps. Exposed for inline onclick */
     _sosSelectCat: sosSelectCat,
     _sosBack: openSOS,
     _sosGetLocation: sosGetLocation,

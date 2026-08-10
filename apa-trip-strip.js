@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════════════════════
-   APATMENTO — Upcoming Trip Strip
+   APATMENTO. Upcoming Trip Strip
    apa-trip-strip.js
 
    An inline card showing the guest's next confirmed stay, mounted
@@ -8,7 +8,7 @@
    DESIGN RULES
    ────────────
    · Renders ONLY when a paid booking exists. No booking, no DOM, no
-     layout change whatsoever — the pages look exactly as they do now
+     layout change whatsoever. The pages look exactly as they do now
      for everyone who has not paid.
    · It is a card in the normal document flow, not an overlay. It
      pushes the content below it down and, when dismissed, that content
@@ -140,7 +140,7 @@
       /* Gone the moment the stay is over. */
       if (endsIn !== null && endsIn < 0) return;
 
-      /* Respect a dismissal, except on the day it actually matters —
+      /* Respect a dismissal, except on the day it actually matters
          a cross tapped weeks ago must not hide today's check-in. */
       if (dis[b.id] && startIn > 0) return;
 
@@ -229,7 +229,7 @@
       var ses = await sb.auth.getSession();
       var uid = ses && ses.data && ses.data.session && ses.data.session.user
               ? ses.data.session.user.id : null;
-      if (!uid) return;                       // signed out — nothing to show
+      if (!uid) return;                       // signed out. Nothing to show
 
       /* SELECT * so a schema change can never blank this out. */
       var res = await sb.from('apartment_bookings').select('*').eq('guest_id', uid);

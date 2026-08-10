@@ -4,7 +4,7 @@
    POST /api/push-send?action=cron → fire due scheduled campaigns
 
    Implements Web Push end-to-end with zero dependencies:
-     · VAPID  (RFC 8292) — ES256 JWT, ieee-p1363 signature
+     · VAPID  (RFC 8292). ES256 JWT, ieee-p1363 signature
      · aes128gcm payload encryption (RFC 8291 + RFC 8188)
 
    Body:
@@ -131,7 +131,7 @@ async function sendOne(sub, payloadObj) {
     body,
   });
 
-  // 404/410 mean the subscription is dead — the browser revoked it.
+  // 404/410 mean the subscription is dead. The browser revoked it.
   // Prune it so we stop paying for the round trip on every send.
   if (res.status === 404 || res.status === 410) {
     await supa(`push_subscriptions?endpoint=eq.${encodeURIComponent(sub.endpoint)}`, {

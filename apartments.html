@@ -60,7 +60,7 @@
   <link rel="dns-prefetch" href="//cdn.jsdelivr.net"/>
   <link rel="dns-prefetch" href="//api.unsplash.com"/>
   <link rel="dns-prefetch" href="//maps.googleapis.com"/>
-  <!-- Google Maps Places — set GOOGLE_MAPS_KEY in your env or replace the placeholder -->
+  <!-- Google Maps Places. Set GOOGLE_MAPS_KEY in your env or replace the placeholder -->
   <script>
     (function(){
       const key = window.GOOGLE_MAPS_KEY || '';
@@ -113,7 +113,7 @@
 html{scroll-behavior:smooth;}
 body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webkit-font-smoothing:antialiased;overflow-x:hidden;}
 
-/* aurora — lilac-led */
+/* aurora. Lilac-led */
 .aurora{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;}
 .ab{position:absolute;border-radius:50%;filter:blur(85px);opacity:.42;mix-blend-mode:multiply;animation:drift 26s ease-in-out infinite;}
 .ab-1{width:580px;height:580px;background:radial-gradient(circle,var(--lilac),transparent 70%);top:-14%;left:-8%;}
@@ -182,10 +182,10 @@ body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webk
 
 
 /* ── CARD GRID ── */
-/* ══ STAY CARDS — compact horizontal rows ═══════════════════════════
+/* ══ STAY CARDS. Compact horizontal rows ═══════════════════════════
    Was: a 290px min grid of tall 200px-image cards. Two per screen on a
    phone, so finding a stay meant endless scrolling.
-   Now: one vertical column of short rows — photo left, details right.
+   Now: one vertical column of short rows. Photo left, details right.
    Roughly 4–5 stays per screen instead of 1½, and the eye scans a
    single column rather than zig-zagging. Widens to two columns only
    when there is genuinely room. */
@@ -265,7 +265,7 @@ body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webk
   background:var(--glass-2,rgba(67,97,255,.08));display:flex;align-items:center;
   justify-content:center;color:var(--lilac-deep,#7B2FF7);transition:all .3s;}
 .card:hover .card-go{background:var(--lilac-deep,#7B2FF7);color:#fff;transform:rotate(-45deg);}
-/* ══ LISTING MODAL — full-screen detail view ══════════════════════ */
+/* ══ LISTING MODAL. Full-screen detail view ══════════════════════ */
 .drawer-overlay{position:fixed;inset:0;z-index:200;background:rgba(10,10,20,.6);backdrop-filter:blur(6px);opacity:0;visibility:hidden;transition:opacity .35s,visibility .35s;}
 .drawer-overlay.open{opacity:1;visibility:visible;}
 
@@ -443,7 +443,7 @@ body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webk
 html.via-dash #enter-tx{display:none!important;animation:none!important;}
 
 /* ══════════════════════════════════════════════════════════════
-   FILTER & SORT MODAL — complete styles
+   FILTER & SORT MODAL. Complete styles
    ══════════════════════════════════════════════════════════════ */
 .filter-modal-overlay{
   position:fixed;inset:0;z-index:300;
@@ -562,7 +562,7 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
   gap:4px;
 }
 
-/* Individual search fields — each with its own visible box */
+/* Individual search fields, each with its own visible box */
 .sf{
   flex:1;min-width:0;padding:14px 18px;cursor:pointer;
   border-radius:16px;transition:background .18s,box-shadow .18s,border-color .18s;
@@ -599,14 +599,14 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
 .sf-loc-input.ph,.sf-loc-input::placeholder{color:rgba(10,10,20,.3);font-weight:400;font-size:13.5px;}
 .sf-loc-input:not(:placeholder-shown){color:var(--ink);font-weight:500;}
 
-/* Search actions — side by side on desktop */
+/* Search actions. Side by side on desktop */
 .search-actions-col{
   display:flex;flex-direction:column;gap:5px;
   flex-shrink:0;margin:0;
   align-items:stretch;min-width:148px;
 }
 
-/* ── Classic Search button — old-school bold label ── */
+/* ── Classic Search button. Old-school bold label ── */
 .search-go{
   flex-shrink:0;
   padding:0 22px;border-radius:16px;
@@ -625,7 +625,7 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
 .search-go-label{font-size:13px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;line-height:1;}
 .search-go-sub{font-size:9.5px;font-weight:500;letter-spacing:.02em;opacity:.75;text-transform:none;}
 
-/* Dropdown panels — fixed position relative to search-wrap, not sf */
+/* Dropdown panels. Fixed position relative to search-wrap, not sf */
 .sf-panel{
   display:none;
   position:absolute;
@@ -769,7 +769,7 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
 .ai-typing span:nth-child(3){animation-delay:.4s;}
 @keyframes typingDot{0%,80%,100%{transform:scale(.7);opacity:.4;}40%{transform:scale(1);opacity:1;}}
 
-/* ── Filter bar — clean, scrollable, minimal ── */
+/* ── Filter bar. Clean, scrollable, minimal ── */
 .filter-bar{
   display:flex;align-items:center;gap:8px;
   overflow-x:auto;padding:4px 0 8px;
@@ -1179,7 +1179,7 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
   display:flex;align-items:center;justify-content:center;
   margin-left:2px;
 }
-/* Hide fab-filter on desktop — it's in modal there */
+/* Hide fab-filter on desktop. It's in modal there */
 @media(min-width:900px){.fab-filter{display:none;}}
 
 /* ── Push content up from floating FAB ── */
@@ -1252,7 +1252,7 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
     border-radius:14px;
     z-index:1000;
   }
-  /* Position panels just below the search bar — use JS for exact top */
+  /* Position panels just below the search bar. Use JS for exact top */
   .sf-panel-dates{min-width:unset;width:calc(100vw - 32px);padding:14px;}
   .cal-months-wrap{flex-direction:column;gap:16px;}
   .cal-month{width:100%;}
@@ -1260,7 +1260,7 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
   .loc-autocomplete-panel{max-height:240px;}
 }
 
-  /* ── List CTA — top-right partner prompt ── */
+  /* ── List CTA. Top-right partner prompt ── */
   .svc-list-cta{
     display:inline-flex;align-items:center;gap:6px;
     padding:8px 16px;border-radius:100px;
@@ -1277,7 +1277,7 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
   @media(max-width:400px){.svc-list-cta{padding:7px 12px;font-size:12px;}}
 
 /* ════════════════════════════════════════════════════════
-   SEARCH ACTIONS COLUMN — Search + Get Matched stacked
+   SEARCH ACTIONS COLUMN. Search + Get Matched stacked
 ════════════════════════════════════════════════════════ */
 @media(max-width:640px){
   .search-actions-col{
@@ -1371,7 +1371,7 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
 .get-matched-btn:active{transform:scale(.97);}
 
 /* ════════════════════════════════════════════════════════
-   REQUEST SENT OVERLAY — fullscreen celebration
+   REQUEST SENT OVERLAY. Fullscreen celebration
 ════════════════════════════════════════════════════════ */
 .gm-sent-overlay{
   position:fixed;inset:0;z-index:2000;
@@ -1507,7 +1507,7 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
 }
 
 /* ════════════════════════════════════════════════════════
-   GHOST LIVE REQUEST TAB — stays page (below match card)
+   GHOST LIVE REQUEST TAB. Stays page (below match card)
 ════════════════════════════════════════════════════════ */
 #gm-live-tab{
   display:none;
@@ -1820,7 +1820,7 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
           const w = reg.installing;
           if (w) w.onstatechange = () => {
             if (w.state === 'installed' && navigator.serviceWorker.controller) {
-              // New version available — reload silently
+              // New version available. Reload silently
               window.location.reload();
             }
           };
@@ -1878,7 +1878,7 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
   </div>
 </div>
 
-<!-- HERO + SEARCH — redesigned: compact, premium, Cabana Match prominent -->
+<!-- HERO + SEARCH. Redesigned: compact, premium, Cabana Match prominent -->
 <div class="hero">
 
   <!-- Compact heading row -->
@@ -1943,7 +1943,7 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
           </div>
         </div>
       </div>
-      <!-- Check out — opens same calendar, auto-steps to checkout pick -->
+      <!-- Check out. Opens same calendar, auto-steps to checkout pick -->
       <div class="sf" id="sf-checkout" onclick="openCheckoutSF()">
         <div class="sf-label">Check out</div>
         <div class="sf-val ph" id="field-checkout">Add date</div>
@@ -2007,14 +2007,14 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
       </div>
       <!-- Search actions column: Search + Get Matched -->
       <div class="search-actions-col">
-        <button class="search-go" onclick="runSearch()" title="Traditional search — filter by your criteria">
+        <button class="search-go" onclick="runSearch()" title="Traditional search. Filter by your criteria">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
           <span class="search-go-text-wrap">
             <span class="search-go-label">Search</span>
             <span class="search-go-sub">Classic search</span>
           </span>
         </button>
-        <button class="get-matched-btn" id="get-matched-btn" onclick="handleGetMatched()" aria-label="Get Matched — let hosts come to you" title="Hosts come to you — world's first reverse marketplace">
+        <button class="get-matched-btn" id="get-matched-btn" onclick="handleGetMatched()" aria-label="Get Matched. Let hosts come to you" title="Hosts come to you. World's first reverse marketplace">
           <span class="gmb-shimmer"></span>
           <span class="gmb-inner">
             <span class="gmb-icon">
@@ -2051,7 +2051,7 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
       <input
         type="text"
         id="ai-search-input"
-        placeholder="Describe your ideal stay — e.g. quiet 2-bed near Westlands under 8k"
+        placeholder="Describe your ideal stay. E.g. quiet 2-bed near Westlands under 8k"
         onkeydown="if(event.key==='Enter')runAISearch()"
       />
       <button class="special-search-btn" onclick="runAISearch()" aria-label="Search">
@@ -2060,13 +2060,13 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
     </div>
   </div>
 
-  <!-- ── CABANA MATCH — world's first reverse short-stay marketplace ── -->
+  <!-- ── CABANA MATCH. World's first reverse short-stay marketplace ── -->
   <!-- Upcoming trip strip. Empty until a paid booking exists, so the stays layout is untouched otherwise. -->
   <div id="apa-trip-mount"></div>
 
   <div class="cabana-match-zone">
     <!-- The main button -->
-    <button class="cabana-match-btn" type="button" id="cabana-match-btn" aria-label="Match with Cabana — let hosts find you">
+    <button class="cabana-match-btn" type="button" id="cabana-match-btn" aria-label="Match with Cabana. Let hosts find you">
       <!-- Animated rainbow border -->
       <span class="cmb-ring"></span>
       <!-- Inner content -->
@@ -2100,7 +2100,7 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
   </div>
 </div>
 
-<!-- ── GET MATCHED GHOST TAB — hidden until active request ── -->
+<!-- ── GET MATCHED GHOST TAB. Hidden until active request ── -->
 <div id="gm-live-tab">
   <!-- Pill trigger -->
   <div class="gm-tab-pill" id="gm-tab-pill" onclick="toggleGmPanel()">
@@ -2223,7 +2223,7 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
         </div>
       </div>
       <h2 class="cm-hero-title">Stop searching. <em>Get found.</em></h2>
-      <p class="cm-hero-desc">Broadcast your travel request to available hosts in your destination. Eager hosts respond — you simply pick the best match. No scrolling. No guessing. Pure confidence.</p>
+      <p class="cm-hero-desc">Broadcast your travel request to available hosts in your destination. Eager hosts respond. You simply pick the best match. No scrolling. No guessing. Pure confidence.</p>
     </div>
 
     <!-- How it works steps -->
@@ -2232,7 +2232,7 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
         <div class="cm-step-num">1</div>
         <div class="cm-step-body">
           <div class="cm-step-title">You set your criteria</div>
-          <div class="cm-step-desc">Location, dates, guests, bedrooms — your request goes live instantly.</div>
+          <div class="cm-step-desc">Location, dates, guests, bedrooms. Your request goes live instantly.</div>
         </div>
       </div>
       <div class="cm-step">
@@ -2246,7 +2246,7 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
         <div class="cm-step-num">3</div>
         <div class="cm-step-body">
           <div class="cm-step-title">You engage, then book</div>
-          <div class="cm-step-desc">See who responded, open a conversation with whoever interests you, then book — all inside Cabana.</div>
+          <div class="cm-step-desc">See who responded, open a conversation with whoever interests you, then book, all inside Cabana.</div>
         </div>
       </div>
     </div>
@@ -2260,7 +2260,7 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
         <span class="cm-badge-ico">✓</span> Hosts are eager to welcome you
       </div>
       <div class="cm-badge-item">
-        <span class="cm-badge-ico">✓</span> Zero pressure — close anytime
+        <span class="cm-badge-ico">✓</span> Zero pressure. Close anytime
       </div>
     </div>
 
@@ -2289,7 +2289,7 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
 
     <!-- Optional note to hosts -->
     <div class="cm-section-label" style="margin-top:16px;">Add a note for hosts <span style="font-weight:400;color:var(--ink-faint);">(optional)</span></div>
-    <textarea class="cm-notes-input" id="cm-notes-input" placeholder="e.g. Couple celebrating an anniversary — looking for something romantic with a view…" rows="2" maxlength="280"></textarea>
+    <textarea class="cm-notes-input" id="cm-notes-input" placeholder="e.g. Couple celebrating an anniversary. Looking for something romantic with a view…" rows="2" maxlength="280"></textarea>
 
     <!-- Launch CTA -->
     <button class="cm-launch-btn" id="cm-launch-btn" onclick="cmLaunchMatch()">
@@ -2395,24 +2395,24 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
 <div class="drawer" id="drawer"></div>
 
 <script>
-// Real listings only — loaded from Supabase (demo array removed)
+// Real listings only. Loaded from Supabase (demo array removed)
 
 /* ════════════════════════════════════════════════════════════════
-   APATMENTO STAYS — unified data layer
+   APATMENTO STAYS. Unified data layer
    Priority: native (Supabase partner listings) > sample listings
    Photos: Unsplash API (free, no approval needed)
 ════════════════════════════════════════════════════════════════ */
 
 const SUPABASE_URL = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
-const UNSPLASH_KEY = 'YoImDCLHHDFQbvp_VJaFkC0oPMDuDiDp7zB0q8JQHXE'; // demo key — replace with your own at unsplash.com/developers
+const UNSPLASH_KEY = 'YoImDCLHHDFQbvp_VJaFkC0oPMDuDiDp7zB0q8JQHXE'; // demo key. Replace with your own at unsplash.com/developers
 
 let sb = null;
 try { const { createClient } = supabase; sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY); window.sb = sb; } catch(e) {}
 
 // Expose sb globally so chat.js can pick it up immediately
 window.sb = sb;
-// ApaSession will populate CURRENT_USER when ready — chat.js also resolves this itself
+// ApaSession will populate CURRENT_USER when ready. Chat.js also resolves this itself
 document.addEventListener("DOMContentLoaded", () => {
   window.sb = window.sb || sb;
   if (window.ApaSession) {
@@ -2440,7 +2440,7 @@ function calcScore(item) {
   const recencyScore  = bookings > 0 ? Math.max(0, 20 - (daysListed / 30)) : 0;
   const momentumScore = Math.min(10, bookings * 1.5);
   const base = ratingScore + reviewScore + recencyScore + momentumScore;
-  // Native listings get a significant boost — they appear first
+  // Native listings get a significant boost. They appear first
   return isNative ? base + 200 : base;
 }
 
@@ -2524,7 +2524,7 @@ async function loadNativeListings() {
   }
   if (!sb) { console.warn('[listings] Supabase not ready'); return []; }
   try {
-    /* SELECT * on purpose — never name columns here.
+    /* SELECT * on purpose, never name columns here.
        PostgREST fails the ENTIRE query with HTTP 400 if a single selected
        column is absent, which previously turned a schema drift into a
        silent "0 stays available". `*` is immune to that. Ordering and
@@ -2535,7 +2535,7 @@ async function loadNativeListings() {
       .limit(60);
 
     if (error) {
-      console.error('[listings] QUERY FAILED —', error.message, error);
+      console.error('[listings] QUERY FAILED, ', error.message, error);
       window.__listingsError = error.message || 'query failed';
       return [];
     }
@@ -2632,7 +2632,7 @@ function renderCards(list) {
 
     /* Real listing photos come straight from Supabase. The old code
        ignored apt.photos entirely and always went to Unsplash with a
-       rate-limited demo key — which is why no images ever appeared. */
+       rate-limited demo key, which is why no images ever appeared. */
     const photo = (apt.photos && apt.photos.length) ? apt.photos[0] : null;
     const imgHtml = photo
       ? `<img src="${photo}" alt="" loading="lazy" decoding="async" onerror="this.remove()">`
@@ -2678,7 +2678,7 @@ function renderCards(list) {
 
 /* ══ LISTING MODAL ══════════════════════════════════════════════════
    Full-screen detail view: photo gallery, all info, host card +
-   message button, amenities, house rules — sticky Book CTA at bottom.
+   message button, amenities, house rules. Sticky Book CTA at bottom.
    No public reviews (not in platform yet).
    ================================================================ */
 
@@ -2943,7 +2943,7 @@ function openInboxFromTopbar() {
   if (window.ApatmentoChat) ApatmentoChat.openInbox();
 }
 
-/* ── Message host — calls ApatmentoChat directly; auth handled inside chat.js ── */
+/* ── Message host. Calls ApatmentoChat directly; auth handled inside chat.js ── */
 function messageHost(id) {
   const apt = currentListings.find(a => a.id === id);
   if (!apt) return;
@@ -2972,7 +2972,7 @@ function bookNow(id) {
 }
 
 /* ════════════════════════════════════════════════
-   WISHLIST — localStorage-based save/unsave
+   WISHLIST. LocalStorage-based save/unsave
 ════════════════════════════════════════════════ */
 function _getWishlist() {
   try { return new Set(JSON.parse(localStorage.getItem('apa_wishlist') || '[]')); }
@@ -3030,7 +3030,7 @@ function showToast(msg) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SEARCH + FILTER + SORT + AI — world-class stays discovery
+   SEARCH + FILTER + SORT + AI. World-class stays discovery
    ═══════════════════════════════════════════════════════════════ */
 
 /* State */
@@ -3257,7 +3257,7 @@ function renderLocationSuggestions() {
   const panel = document.getElementById('sfp-where');
   if (!container || !panel) return;
   if (!_locSuggestions.length) {
-    container.innerHTML = `<div class="loc-no-result">No places found — try a different search</div>`;
+    container.innerHTML = `<div class="loc-no-result">No places found. Try a different search</div>`;
   } else {
     container.innerHTML = _locSuggestions.map((s, i) => `
       <div class="loc-suggestion" data-idx="${i}" onclick="commitLocation('${s.main.replace(/'/g,"\\'")}','${s.full.replace(/'/g,"\\'")}')">
@@ -3370,7 +3370,7 @@ function calRender(){
   const titleEl = document.getElementById('cal-title');
   const d0 = new Date(now.getFullYear(), now.getMonth() + _calOffset, 1);
   const d1 = new Date(now.getFullYear(), now.getMonth() + _calOffset + 1, 1);
-  if(titleEl) titleEl.textContent = d0.toLocaleDateString('en-KE',{month:'long',year:'numeric'}) + ' — ' + d1.toLocaleDateString('en-KE',{month:'long',year:'numeric'});
+  if(titleEl) titleEl.textContent = d0.toLocaleDateString('en-KE',{month:'long',year:'numeric'}) + ', ' + d1.toLocaleDateString('en-KE',{month:'long',year:'numeric'});
 }
 
 function buildCalMonth(monthDate){
@@ -3510,7 +3510,7 @@ async function runAISearch() {
       `ID:${l.id} | ${l.name} | ${l.location} | KES ${l.price}/night | ${l.beds} bed | ${l.maxGuests} guests max | amenities: ${(l.amenities||[]).join(', ')}`
     ).join('\n');
 
-    const systemPrompt = `You are Apa, a smart assistant for Apatmento — Kenya's #1 short-stay apartment platform. 
+    const systemPrompt = `You are Apa, a smart assistant for Apatmento. Kenya's #1 short-stay apartment platform. 
 Your job is to help guests find the perfect place to stay.
 Current listings available:
 ${listingSummary}
@@ -3584,7 +3584,7 @@ Always be warm, concise, and friendly. If you need clarification, ask one short 
     }
 
   } catch(e) {
-    text.innerHTML = "I couldn't connect right now. Showing all available stays — use the filters above to narrow down!";
+    text.innerHTML = "I couldn't connect right now. Showing all available stays. Use the filters above to narrow down!";
     applyAndRender();
   }
 }
@@ -3676,7 +3676,7 @@ function _requestLocation() {
     _searchState.userLng = pos.coords.longitude;
     applyAndRender();
   }, () => {
-    // Permission denied — fall back to general recommended sort
+    // Permission denied. Fall back to general recommended sort
     _searchState.smartMode = 'recommended';
     applyAndRender();
   });
@@ -3776,7 +3776,7 @@ function applyAndRender() {
     });
   }
 
-  // Guest filter — only show places that can fit the party
+  // Guest filter, only show places that can fit the party
   const totalGuests = (s.adults || 1) + (s.children || 0);
   if (totalGuests > 1) {
     list = list.filter(a => (a.maxGuests || 1) >= totalGuests);
@@ -3951,7 +3951,7 @@ setTimeout(dismissEnterTx,2800);
   }
 
   /* captureReferral() records the click, survives the sign-in round trip,
-     and returns null for a dead link — a guest never sees a broken page
+     and returns null for a dead link. A guest never sees a broken page
      because an agent's partnership lapsed. */
   ApaAgent.captureReferral().then(function (ref) {
     if (!ref || !ref.agent_name) return;
@@ -4067,7 +4067,7 @@ setTimeout(dismissEnterTx,2800);
 
 <script>
 /* ════════════════════════════════════════════════════════════
-   CABANA MATCH — Full System JS
+   CABANA MATCH. Full System JS
    Coming Soon UI + full backend plumbing ready for launch
 ════════════════════════════════════════════════════════════ */
 
@@ -4154,7 +4154,7 @@ async function registerCabanaInterest() {
         created_at: new Date().toISOString()
       }, { onConflict: 'user_id' });
     }
-  } catch(e) { /* silent — interest noted client-side */ }
+  } catch(e) { /* silent. Interest noted client-side */ }
 
   setTimeout(() => {
     btn.innerHTML = orig;
@@ -4293,7 +4293,7 @@ async function guestEngageResponse(response_id, request_id, host_id, listing_id,
   await sb.from('chat_messages').insert({
     conversation_id: conv.id,
     sender_id: user.id,
-    content: '👋 Hi! I found your listing through Cabana Match. I\'m interested in booking — can we discuss the details?',
+    content: '👋 Hi! I found your listing through Cabana Match. I\'m interested in booking. Can we discuss the details?',
     is_system: false
   });
 
@@ -4343,7 +4343,7 @@ function renderActiveCabanaRequestCard(request, responses) {
     </div>
     <div class="cmr-response-count">
       ${responseCount > 0
-        ? `<strong>${responseCount}</strong> host${responseCount > 1 ? 's' : ''} responded — <a onclick="viewCabanaResponses('${request.id}')">See who →</a>`
+        ? `<strong>${responseCount}</strong> host${responseCount > 1 ? 's' : ''} responded<a onclick="viewCabanaResponses('${request.id}')">See who →</a>`
         : `Waiting for hosts to respond…`
       }
     </div>
@@ -4362,7 +4362,7 @@ function updateFabFilterBadge(count) {
 }
 
 /* ════════════════════════════════════════════════════════════════
-   GET MATCHED — complete system
+   GET MATCHED. Complete system
    State lives in gmState. Survives hash navigation within session.
 ════════════════════════════════════════════════════════════════ */
 const gmState = {
@@ -4382,16 +4382,16 @@ let _cmBudgetMin = 0, _cmBudgetMax = 0;
 const CM_BUDGET_META = [
   { min: 1000, max: 2000,
     display: 'KES 1,000 – 2,000 / night',
-    hint: 'Expect a clean, no-frills space — great for short stays where comfort matters more than extras.' },
+    hint: 'Expect a clean, no-frills space. Great for short stays where comfort matters more than extras.' },
   { min: 2000, max: 3500,
     display: 'KES 2,000 – 3,500 / night',
-    hint: 'Solid, well-kept spaces with reliable essentials — the sweet spot for most travellers.' },
+    hint: 'Solid, well-kept spaces with reliable essentials. The sweet spot for most travellers.' },
   { min: 3500, max: 5000,
     display: 'KES 3,500 – 5,000 / night',
     hint: 'Thoughtfully furnished spaces with more amenities, often in good neighbourhoods.' },
   { min: 5000, max: 0,
     display: 'KES 5,000+ / night · Premium',
-    hint: 'Prime locations, full amenity sets, quality finishes — the best available on the platform.' },
+    hint: 'Prime locations, full amenity sets, quality finishes. The best available on the platform.' },
 ];
 
 function cmPickBudget(el) {
@@ -4521,13 +4521,13 @@ async function handleGetMatched() {
 
   if (!result.success) {
     if (result.error === 'duplicate') {
-      // Already have a live request — just show the tab
+      // Already have a live request, just show the tab
       gmState.requestId = result.existing_id;
       gmActivateTab(criteria);
       gmShowPanel();
       return;
     }
-    // Silent fail — open traditional match modal as fallback
+    // Silent fail. Open traditional match modal as fallback
     openCabanaMatch();
     return;
   }
@@ -4738,7 +4738,7 @@ function gmRenderResponses() {
 
   const stillWaiting = expired ? '' : `
     <div class="gm-still-waiting">
-      <div class="gm-sw-text">More hosts may still respond — your window is open for another <span class="gm-sw-timer${urgentClass}">${secsStr}</span></div>
+      <div class="gm-sw-text">More hosts may still respond. Your window is open for another <span class="gm-sw-timer${urgentClass}">${secsStr}</span></div>
     </div>`;
 
   listEl.innerHTML = cards + stillWaiting;
@@ -4767,7 +4767,7 @@ function gmRenderExpiredState() {
       </div>
       <div class="gm-expired-title">No takers. Rude, honestly.</div>
       <div class="gm-expired-sub">
-        We sent your request far and wide — apparently our hosts were busy living their best lives tonight.
+        We sent your request far and wide. Apparently our hosts were busy living their best lives tonight.
         <em>The audacity.</em> Don't worry though, the traditional search is very much awake and at your service.
       </div>
       <button class="gm-fallback-btn" onclick="gmFallbackToSearch()">
@@ -4791,7 +4791,7 @@ async function gmOpenListing(listingId, responseId) {
         .then(() => {});
     }
   }
-  // Navigate to listing — open drawer if possible, else navigate
+  // Navigate to listing. Open drawer if possible, else navigate
   if (typeof openDrawer === 'function') {
     openDrawer(listingId);
   } else {

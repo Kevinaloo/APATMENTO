@@ -12,7 +12,7 @@
 (function() {
 'use strict';
 
-/* ── EQUATOR LIGHT bootstrap — ensures the brand system on every page ── */
+/* ── EQUATOR LIGHT bootstrap. Ensures the brand system on every page ── */
 try {
   if (!document.querySelector('link[href="/brand.css"]')) {
     var __brandCss = document.createElement('link');
@@ -159,7 +159,7 @@ function showInstallBanner() {
     </div>
     <div class="pwa-install-text">
       <div class="pwa-install-title">Install Cabana</div>
-      <div class="pwa-install-sub">Add to your home screen — works offline, feels native</div>
+      <div class="pwa-install-sub">Add to your home screen. Works offline, feels native</div>
     </div>
     <div class="pwa-install-btns">
       <button class="pwa-install-cta" id="pwa-install-btn">Install</button>
@@ -306,12 +306,12 @@ function initOfflineBanner() {
   const bar = document.createElement('div');
   bar.className = 'pwa-offline-bar';
   bar.id = 'pwa-offline-bar';
-  bar.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55M5 12.55a10.94 10.94 0 0 1 5.17-2.39M10.71 5.05A16 16 0 0 1 22.56 9M1.42 9a15.91 15.91 0 0 1 4.7-2.88M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></svg> You're offline — browsing cached pages`;
+  bar.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55M5 12.55a10.94 10.94 0 0 1 5.17-2.39M10.71 5.05A16 16 0 0 1 22.56 9M1.42 9a15.91 15.91 0 0 1 4.7-2.88M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></svg> You're offline. Browsing cached pages`;
   document.body.appendChild(bar);
 
   window.addEventListener('offline', () => {
     bar.classList.remove('online');
-    bar.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/></svg> You're offline — browsing cached pages`;
+    bar.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/></svg> You're offline. Browsing cached pages`;
     bar.classList.add('show');
   });
   window.addEventListener('online', () => {
@@ -344,7 +344,7 @@ function init() {
   initOfflineBanner();
 
   // Notification permission is no longer nagged on a timer. It is
-  // required once the user is actually inside the app — see
+  // required once the user is actually inside the app. See
   // apa-push.js requireNotifications(), invoked from the dashboard.
 }
 

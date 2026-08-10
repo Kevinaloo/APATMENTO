@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
 <meta name="robots" content="noindex, nofollow"/>
 <title>Agent Portal · Apatmento</title>
-<meta name="description" content="Apatmento agent portal — manage referrals, listings and earnings on Kenya's zero-commission travel platform."/>
+<meta name="description" content="Apatmento agent portal. Manage referrals, listings and earnings on Kenya's zero-commission travel platform."/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/apa-session.js"></script>
 <script src="/apa-agent.js"></script>
@@ -206,7 +206,7 @@ textarea.inp{resize:vertical;min-height:62px;line-height:1.6;font-size:13.5px;}
   <div class="top">
     <div class="av" id="av">A</div>
     <div class="who">
-      <div class="who-n" id="name">—</div>
+      <div class="who-n" id="name">-</div>
       <div class="who-m" id="meta"></div>
     </div>
     <button class="btn-ghost" onclick="signOut()">Sign out</button>
@@ -256,7 +256,7 @@ textarea.inp{resize:vertical;min-height:62px;line-height:1.6;font-size:13.5px;}
 
     <div class="priv">
       <span>🔒</span>
-      <span>Stored privately. Hosts never see your document — only whether you are verified. Only Apatmento reviews it.</span>
+      <span>Stored privately. Hosts never see your document, only whether you are verified. Only Apatmento reviews it.</span>
     </div>
 
     <div class="acts" style="margin-top:20px;">
@@ -354,7 +354,7 @@ function clock() {
     el.className = 'clock calm';
     el.innerHTML = '<div class="clock-i">🔍</div><div>' +
       '<div class="clock-t">We\'re checking your document</div>' +
-      '<div class="clock-d">Usually within a day. Nothing is paused — keep working while we look.</div>' +
+      '<div class="clock-d">Usually within a day. Nothing is paused. Keep working while we look.</div>' +
       '</div>';
     return;
   }
@@ -367,7 +367,7 @@ function clock() {
 
   const copy = {
     calm:    ['⏳', c.label, 'Everything works right now. Upload a national ID or passport before the clock runs out and it keeps working.'],
-    warn:    ['⏳', c.label, 'Upload your ID soon. When the clock runs out your links stop earning — nothing is lost, just paused until you verify.'],
+    warn:    ['⏳', c.label, 'Upload your ID soon. When the clock runs out your links stop earning. Nothing is lost, just paused until you verify.'],
     urgent:  ['⚠️', c.label, 'Verify today. Tomorrow your referral links stop attributing bookings, and you cannot request new listings.'],
     expired: ['🔒', 'Verification overdue', 'Your links have stopped earning and you cannot request new partnerships. Existing listings are untouched. Upload your ID and everything resumes immediately.'],
   }[c.tone];
@@ -399,7 +399,7 @@ function render() {
 }
 
 function photo(p) {
-  // listings.photos is text[] in production — already an array, never JSON.
+  // listings.photos is text[] in production. Already an array, never JSON.
   // Guard for null/undefined and for the rare legacy row that stored JSON.
   if (!p) return '';
   if (Array.isArray(p)) return p[0] || '';
@@ -417,7 +417,7 @@ function renderListings(pane) {
       '<div class="empty">' +
       '<div class="empty-i">🗝️</div>' +
       '<div class="empty-t">You don\'t represent anything yet</div>' +
-      '<div class="empty-d">Find a listing whose host you know, propose your commission, and ask. Once they approve, you\'ll see its live calendar here — so you never promise a guest dates that are already sold.</div>' +
+      '<div class="empty-d">Find a listing whose host you know, propose your commission, and ask. Once they approve, you\'ll see its live calendar here, so you never promise a guest dates that are already sold.</div>' +
       '<button class="btn btn-primary" onclick="go(\'discover\')">Find listings</button>' +
       '</div>';
     return;
@@ -468,7 +468,7 @@ function renderListings(pane) {
         '<div class="cal-t"><span class="live"></span> Live availability</div>' +
         '<div class="cal-nav">' +
           '<button onclick="shift(\'' + E(p.listing_id) + '\',-1)" aria-label="Previous month">‹</button>' +
-          '<span class="cal-mon" id="mon-' + p.partnership_id + '">—</span>' +
+          '<span class="cal-mon" id="mon-' + p.partnership_id + '">-</span>' +
           '<button onclick="shift(\'' + E(p.listing_id) + '\',1)" aria-label="Next month">›</button>' +
         '</div>' +
       '</div>' +
@@ -554,7 +554,7 @@ function renderDiscover(pane) {
         '</div></div>'
       : '') +
     '<div class="search">' +
-      '<input class="inp" id="q" placeholder="Search by name, area, or city — e.g. Kilimani" oninput="hunt()"/>' +
+      '<input class="inp" id="q" placeholder="Search by name, area, or city. E.g. Kilimani" oninput="hunt()"/>' +
     '</div>' +
     '<div id="found"><div class="cal-load">Searching…</div></div>';
   hunt();
@@ -589,7 +589,7 @@ async function doHunt() {
     box.innerHTML = '<div class="empty">' +
       '<div class="empty-i">🔍</div>' +
       '<div class="empty-t">Nothing matched</div>' +
-      '<div class="empty-d">Try a different area, or check My listings — you may already represent it.</div>' +
+      '<div class="empty-d">Try a different area, or check My listings. You may already represent it.</div>' +
       '</div>';
     return;
   }
@@ -617,14 +617,14 @@ function openAsk(id) {
   const suggested = 10;
   box.innerHTML = '<div class="ask-box">' +
     '<div class="ask-h">Propose your commission</div>' +
-    '<div class="ask-s">The host decides the final number — they may counter with a percentage or a flat fee. On this listing, ' +
+    '<div class="ask-s">The host decides the final number. They may counter with a percentage or a flat fee. On this listing, ' +
       suggested + '% is about ' + MONEY(l.price_night * suggested / 100) + ' a night.</div>' +
     '<div class="ask-grid">' +
       '<div class="inp-wrap">' +
         '<input class="inp" id="pct-' + E(id) + '" type="number" min="0" max="100" step="0.5" value="' + suggested + '" style="padding-right:38px;"/>' +
         '<span class="inp-sfx">%</span>' +
       '</div>' +
-      '<input class="inp" id="msg-' + E(id) + '" placeholder="Say hello — do they know you? (optional)"/>' +
+      '<input class="inp" id="msg-' + E(id) + '" placeholder="Say hello. Do they know you? (optional)"/>' +
     '</div>' +
     '<div class="acts" style="margin-top:12px;">' +
       '<button class="btn btn-primary btn-sm" onclick="send(\'' + E(id) + '\')">Send request</button>' +
@@ -641,7 +641,7 @@ async function send(id) {
   try {
     await ApaAgent.request(id, pct, msg);
     ME = await ApaAgent.me(true);
-    toast('Sent. The host decides — you\'ll hear either way.');
+    toast('Sent. The host decides. You\'ll hear either way.');
     const card = document.getElementById('d-' + id);
     if (card) card.remove();
     paint();
@@ -667,7 +667,7 @@ function renderEarnings(pane) {
 
   const LABEL = {
     converted: 'Booked · commission agreed with the host',
-    clicked:   'Guest is browsing — not booked yet',
+    clicked:   'Guest is browsing, not booked yet',
     expired:   'The guest never booked',
     void:      'Partnership ended before they booked',
     booked:    'Booking in progress',
@@ -685,7 +685,7 @@ function renderEarnings(pane) {
       '</div>' +
       (r.status === 'converted'
         ? '<div class="e-v earn">' + MONEY(r.commission) + '</div>'
-        : '<div class="e-v pend">' + (r.status === 'clicked' ? 'Pending' : '—') + '</div>') +
+        : '<div class="e-v pend">' + (r.status === 'clicked' ? 'Pending' : ', ') + '</div>') +
     '</div>';
   }).join('');
 }

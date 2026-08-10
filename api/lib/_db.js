@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════════════════════
-   APATMENTO — Server-side Supabase helpers (api/_db.js)
+   APATMENTO. Server-side Supabase helpers (api/_db.js)
    Service-role. Never import into anything the browser can reach.
 ══════════════════════════════════════════════════════════════ */
 

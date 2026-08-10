@@ -1,12 +1,12 @@
 /* ══════════════════════════════════════════════════════════════
-   APATMENTO — PayHero STK Push Initiator
+   APATMENTO. PayHero STK Push Initiator
    Vercel Serverless Function (api/stk-push.js)
 
    Env vars:
      PAYHERO_USERNAME / PAYHERO_PASSWORD / PAYHERO_CHANNEL_ID
-     PAYHERO_CALLBACK_TOKEN     — proves a callback is genuine
+     PAYHERO_CALLBACK_TOKEN. Proves a callback is genuine
      SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY
-     MIN_TXN_KES                — optional, default 50
+     MIN_TXN_KES. Optional, default 50
 
    The guest may name any amount, but the SERVER decides whether it is
    allowed and what actually gets charged (see _payment-rules.js). The
@@ -156,7 +156,7 @@ export default async function handler(req, res) {
 
     const chargeAmount = verdict.amount;
 
-    /* Each instalment needs its own unique reference — PayHero and our
+    /* Each instalment needs its own unique reference. PayHero and our
        idempotency both key on it, so reusing the booking reference would
        make the second payment collide with the first. */
     let seq = 1;
@@ -225,7 +225,7 @@ export default async function handler(req, res) {
       const timedOut = e.name === 'AbortError';
       return res.status(504).json({
         error: timedOut
-          ? 'PayHero timed out. If an M-Pesa prompt arrived, do not pay twice — check My Bookings.'
+          ? 'PayHero timed out. If an M-Pesa prompt arrived, do not pay twice. Check My Bookings.'
           : 'Could not reach PayHero. Please try again.',
       });
     }
@@ -261,7 +261,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       success:          true,
-      message:          'STK push sent — check your phone',
+      message:          'STK push sent. Check your phone',
       reference:        payRef,
       booking_ref:      bookingRef,
       amount:           chargeAmount,

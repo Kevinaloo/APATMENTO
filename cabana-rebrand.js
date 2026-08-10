@@ -3,17 +3,17 @@
    ───────────────────────────────────────────────────────────────────
    The transition layer. Apatmento is becoming Cabana.
 
-   Strategy — "acquired brand" transition (50/50):
+   Strategy, "acquired brand" transition (50/50):
      • Apatmento stays the primary, ranked, trusted name (domain/email intact)
-     • Cabana is introduced everywhere as "what's next" — visible, not loud
+     • Cabana is introduced everywhere as "what's next". Visible, not loud
      • One-time announcement bar tells the story, then remembers dismissal
      • A co-brand pill rides beside the Apatmento wordmark in the header
      • The footer carries the lockup + the transition line
 
    Design rules (inherited from the house style):
      1. Never throw. A broken rebrand element must never take down a page.
-     2. No template literals in risky paths — defensive string concat.
-     3. Idempotent — safe to run twice; guards against double-injection.
+     2. No template literals in risky paths. Defensive string concat.
+     3. Idempotent. Safe to run twice; guards against double-injection.
      4. Respect prefers-reduced-motion.
      5. Zero hard dependencies. Pure vanilla, self-contained styles.
    ─────────────────────────────────────────────────────────────────── */
@@ -46,7 +46,7 @@
     var s = doc.createElement('style');
     s.id = 'cabana-rebrand-css';
     s.textContent = [
-      /* ── announcement bar — FIXED at top, own layer, never overlaps ── */
+      /* ── announcement bar. FIXED at top, own layer, never overlaps ── */
       '.cabana-announce{position:fixed;top:0;left:0;right:0;z-index:1300;width:100%;',
       'background:linear-gradient(100deg,#6D28FF 0%,#4F6DFF 34%,#FF6A3C 78%,#F5B12E 100%);',
       'background-size:200% 100%;color:#fff;overflow:hidden;',
@@ -112,7 +112,7 @@
      the --cabana-bar CSS variable on <html>. body.cabana-has-bar then
      reserves that much top padding (so nothing hides under the bar),
      and every fixed/sticky header is pushed down by the same variable.
-     This is deterministic — no per-element measuring races on mobile. */
+     This is deterministic, no per-element measuring races on mobile. */
   function syncBarHeight(bar) {
     safe(function () {
       var h = bar && bar.parentNode ? bar.offsetHeight : 0;
@@ -150,11 +150,11 @@
 
   /* ═══ ANNOUNCEMENT BAR ══════════════════════════════════════════
      Injected at the very top of <body>. Fixed-nav pages: the bar sits
-     above the fold and pushes nothing (nav is fixed) — so we only show
+     above the fold and pushes nothing (nav is fixed), so we only show
      it on the first paint and it scrolls away naturally. We keep it in
      normal flow so it never covers content.                          */
   function mountAnnounce() {
-    // DISABLED — announcement bar removed; rebrand story is now in-page
+    // DISABLED. Announcement bar removed; rebrand story is now in-page
     safe(function () {
       return; // no banner
       if (doc.getElementById('cabana-announce')) return;
@@ -170,7 +170,7 @@
       inner.className = 'cabana-announce-inner';
       inner.appendChild(el('span', '', '<span class="cabana-chip">New chapter</span>'));
       inner.appendChild(el('span', '',
-        '<b>Apatmento</b> is becoming <em>Cabana</em> — same zero-commission home, a fresh name. ' +
+        '<b>Apatmento</b> is becoming <em>Cabana</em>: same zero-commission home, a fresh name. ' +
         '<a href="/cabana.html">See what\'s changing &rarr;</a>'));
       bar.appendChild(inner);
 
@@ -212,18 +212,18 @@
     }, 'announce');
   }
 
-  /* ═══ CABANA WORDMARK — becomes the primary header identity ═══════
+  /* ═══ CABANA WORDMARK. Becomes the primary header identity ═══════
      Swaps the text "Apatmento" wordmark for the real Cabana wordmark
      asset, and removes the generic SOS + "zero added fees" chips that
      cluttered the top-right of service pages. Non-destructive & guarded. */
   function swapWordmark() {
-    // DISABLED — wordmarks now set directly in HTML
+    // DISABLED. Wordmarks now set directly in HTML
     safe(function () { return;
       var marks = doc.querySelectorAll('.tb-brand, .nav-brand, .tb-title');
       for (var i = 0; i < marks.length; i++) {
         var m = marks[i];
         if (m.getAttribute('data-cabana-wm') === '1') continue;
-        // Only swap wordmarks that live in a real page header — never in
+        // Only swap wordmarks that live in a real page header, never in
         // the side drawer or the footer (those keep their own treatment).
         var inHeader = m.closest && m.closest('.topbar, .nav, .tb-left, .nav-left');
         var inDrawer = m.closest && m.closest('.drawer, footer, .footer');
@@ -231,7 +231,7 @@
         var wrap = doc.createElement('a');
         wrap.className = 'cab-wordmark';
         wrap.href = '/cabana.html';
-        wrap.setAttribute('aria-label', 'Cabana — home');
+        wrap.setAttribute('aria-label', 'Cabana. Home');
         wrap.innerHTML = '<img src="/cabana-wordmark-color.png" alt="Cabana" ' +
           'onerror="this.style.display=\'none\'"/>';
         m.setAttribute('data-cabana-wm', '1');
@@ -257,7 +257,7 @@
         var inBar = sos[j].closest && sos[j].closest('.tb-right, .topbar, .nav, .apa-nav');
         if (inBar) sos[j].parentNode && sos[j].parentNode.removeChild(sos[j]);
       }
-      // Logo hiding DISABLED — icon+wordmark pair now set directly in HTML
+      // Logo hiding DISABLED. Icon+wordmark pair now set directly in HTML
       // var logos = doc.querySelectorAll('.tb-logo, .nav-logo');
     }, 'clean-chrome');
   }

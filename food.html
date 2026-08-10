@@ -228,7 +228,7 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--glass);c
 @media(max-width:380px){.r-grid{grid-template-columns:repeat(2,1fr);}}
 html.via-dash #tx{display:none!important;}
 
-  /* ── List CTA — top-right partner prompt ── */
+  /* ── List CTA. Top-right partner prompt ── */
   .svc-list-cta{
     display:inline-flex;align-items:center;gap:6px;
     padding:8px 16px;border-radius:100px;
@@ -251,6 +251,46 @@ html.via-dash #tx{display:none!important;}
 <link rel="stylesheet" href="/cabana-ds.css"/>
 <script type="application/ld+json">
 {"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.apatmento.space/"}, {"@type": "ListItem", "position": 2, "name": "Food Delivery", "item": "https://www.apatmento.space/food"}]}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How do I order food delivery?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Tap any restaurant above to open its live menu, add what you want, enter your address and pay. Delivery is tracked to your door."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Which restaurants deliver near me?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Top-rated restaurants across Nairobi, Mombasa and other towns deliver through Cabana. Use the search and filters above to see what is live in your area right now."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How much does food delivery cost?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Menu prices are set by the restaurant. Delivery fees depend on distance and are shown in Kenyan Shillings before you pay. We add no commission."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I pay for food delivery with M-Pesa?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. M-Pesa and card are both accepted at checkout."
+      }
+    }
+  ]
+}
 </script>
 </head>
 <body>
@@ -566,28 +606,33 @@ renderGrid();
 .seo-content .seo-links{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px;}
 .seo-content .seo-links a{font-size:13px;font-weight:500;color:var(--t1,#6D28FF);text-decoration:none;padding:8px 15px;border-radius:100px;background:rgba(0,0,0,.03);border:1px solid var(--line,rgba(10,10,20,.07));transition:all .2s;}
 .seo-content .seo-links a:hover{border-color:var(--t1,#6D28FF);}
+.seo-content .seo-cta{display:inline-flex;align-items:center;gap:9px;margin:4px 0 10px;padding:13px 26px;border-radius:100px;background:var(--theme-grad,linear-gradient(120deg,#6D28FF,#B14BFF));color:#fff;font-family:var(--font-display,'Geist','Inter',sans-serif);font-size:14.5px;font-weight:600;text-decoration:none;box-shadow:0 14px 32px rgba(10,10,20,.16);transition:transform .2s,box-shadow .2s;}
+.seo-content .seo-cta:hover{transform:translateY(-2px);box-shadow:0 20px 44px rgba(10,10,20,.22);}
+.seo-content .seo-trust{display:flex;flex-wrap:wrap;gap:8px 20px;margin:0 0 20px;padding:0;list-style:none;font-size:13.5px;font-weight:500;color:var(--ink-soft,#4A4C66);}
+.seo-content .seo-trust li{display:flex;align-items:center;gap:7px;}
+.seo-content .seo-trust li::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--t1,#6D28FF);flex-shrink:0;}
+
 </style>
 <section class="seo-content">
-  <h2>Food delivery, made simple</h2>
-  <p>Apatmento brings you food delivery from top restaurants across the country. Whether you're craving wood-fired pizza, authentic Swahili biryani, sizzling Indian curries, fresh sushi, or a loaded burger, you can browse real menus and order directly from your favourite spot. Every restaurant on this page is live with real ratings from thousands of diners.</p>
-  <p>Ordering food has never been easier. Choose your cuisine — Kenyan, Swahili, Indian, Italian, Japanese, Chinese or fast food — tap a restaurant, and you'll be taken straight to their live menu where you can build your order and pay. Delivery is tracked to your door. From a quick lunch to a family dinner, Apatmento is your gateway to great food near you.</p>
+  <h2>Food delivery from top restaurants near you</h2>
+  <p>Order pizza, nyama choma, Swahili biryani, Indian curry, sushi, ramen or a loaded burger from live restaurant menus. Pay the restaurant's own price and track your order to the door.</p>
+  <ul class="seo-trust">
+    <li>Zero commission, restaurants keep 100%</li>
+    <li>Live menus, real prices in KES</li>
+    <li>M-Pesa or card at checkout</li>
+  </ul>
+  <a class="seo-cta" href="#grid">Order food now <span aria-hidden="true">&rarr;</span></a>
 
-  <h3>Popular cuisines available for delivery</h3>
-  <p>Our restaurant partners cover everything from traditional Kenyan nyama choma and Swahili coastal dishes like pilau and coconut fish, to international favourites including pizza, gourmet burgers, Japanese ramen and sushi, North Indian tandoori, and Cantonese-style Chinese. Vegetarian, halal and healthy options are widely available, so there's something for every taste and dietary need.</p>
+  <h3>Cuisines you can order tonight</h3>
+  <p>Kenyan nyama choma and Swahili pilau, coconut fish, wood-fired pizza, gourmet burgers, Japanese ramen and sushi, North Indian tandoori and Cantonese Chinese. Vegetarian, halal and healthy options appear on most menus.</p>
 
   <h3>Frequently asked questions</h3>
-  <details class="faq-item"><summary>How do I order food delivery?</summary><p>Browse the restaurants on this page, tap the one you want, and you'll be taken to their live menu. Add items to your cart, enter your delivery address, and pay. Your food is prepared fresh and delivered to your door with live tracking.</p></details>
-  <details class="faq-item"><summary>Which restaurants deliver near me?</summary><p>Top-rated local restaurants across a wide range of cuisines offer delivery through our platform. Use the filters and search above to find what's available in your area.</p></details>
-  <details class="faq-item"><summary>How much does food delivery cost?</summary><p>Delivery fees vary by restaurant and distance, and are shown clearly at checkout. Many restaurants also run offers and promotions. Prices are quoted in Kenyan Shillings (KES).</p></details>
-  <details class="faq-item"><summary>What areas do you deliver to?</summary><p>Delivery is available across a growing number of towns and neighbourhoods, depending on each restaurant's delivery radius. We're continually expanding coverage.</p></details>
+  <details class="faq-item"><summary>How do I order food delivery?</summary><p>Tap any restaurant above to open its live menu, add what you want, enter your address and pay. Delivery is tracked to your door.</p></details>
+  <details class="faq-item"><summary>Which restaurants deliver near me?</summary><p>Top-rated restaurants across Nairobi, Mombasa and other towns deliver through Cabana. Use the search and filters above to see what is live in your area right now.</p></details>
+  <details class="faq-item"><summary>How much does food delivery cost?</summary><p>Menu prices are set by the restaurant. Delivery fees depend on distance and are shown in Kenyan Shillings before you pay. We add no commission.</p></details>
+  <details class="faq-item"><summary>Can I pay for food delivery with M-Pesa?</summary><p>Yes. M-Pesa and card are both accepted at checkout.</p></details>
 
-  <div class="seo-links">
-    <a href="/shopping.html">Grocery Delivery</a>
-    <a href="/tours.html">Tours</a>
-    <a href="/rides.html">Rides & Transfers</a>
-    <a href="/apartments.html">Stays</a>
-    <a href="/events.html">Events</a>
-  </div>
+  <div class="seo-links"><a href="/shopping.html">Grocery Delivery</a><a href="/tours.html">Tours</a><a href="/rides.html">Rides & Transfers</a><a href="/apartments.html">Stays</a><a href="/events.html">Events</a></div>
 </section>
 
 <div data-showcase="window"></div>

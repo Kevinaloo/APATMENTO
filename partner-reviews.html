@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Apatmento Partner — Reviews</title>
+<title>Apatmento Partner | Reviews</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/apa-session.js"></script>
 <script src="/apa-admin-guard.js"></script>
@@ -283,7 +283,7 @@ td strong{color:var(--ink);font-weight:600;}
     Settings
   </a>
 
-  <!-- Strategic Refer & Earn promo — non-popup, always visible -->
+  <!-- Strategic Refer & Earn promo. Non-popup, always visible -->
   <div class="sb-refer-promo">
     <div class="sbp-eyebrow">💰 Earn more</div>
     <div class="sbp-title">Invite a host.<br/><strong>Earn 10% for life.</strong></div>
@@ -317,8 +317,8 @@ td strong{color:var(--ink);font-weight:600;}
 <div class="invite-banner">
   <div class="invite-banner-icon">🤝</div>
   <div class="invite-banner-body">
-    <div class="invite-banner-pre">Referral programme — Partner exclusive</div>
-    <div class="invite-banner-title">Know another host or tour operator? <strong>Earn 10% of their revenue — for life.</strong></div>
+    <div class="invite-banner-pre">Referral programme. Partner exclusive</div>
+    <div class="invite-banner-title">Know another host or tour operator? <strong>Earn 10% of their revenue, for life.</strong></div>
     <div class="invite-banner-sub">Share your link. Every booking they complete earns you 10% of our platform fee, forever. No cap, no minimum.</div>
   </div>
   <a href="rewards.html" class="invite-banner-btn">
@@ -328,10 +328,10 @@ td strong{color:var(--ink);font-weight:600;}
 </div>
 
 <div class="stat-row">
-  <div class="stat-card"><span class="stat-icon">⭐</span><div class="stat-label">Avg rating</div><div class="stat-val" id="r-avg">—</div><div class="stat-meta">Across all listings</div></div>
-  <div class="stat-card"><span class="stat-icon">💬</span><div class="stat-label">Total reviews</div><div class="stat-val" id="r-total">—</div><div class="stat-meta">All time</div></div>
-  <div class="stat-card"><span class="stat-icon">🏆</span><div class="stat-label">5-star reviews</div><div class="stat-val" id="r-five">—</div><div class="stat-meta up">Your best ratings</div></div>
-  <div class="stat-card"><span class="stat-icon">📈</span><div class="stat-label">Response rate</div><div class="stat-val">—</div><div class="stat-meta">Reply to build trust</div></div>
+  <div class="stat-card"><span class="stat-icon">⭐</span><div class="stat-label">Avg rating</div><div class="stat-val" id="r-avg">-</div><div class="stat-meta">Across all listings</div></div>
+  <div class="stat-card"><span class="stat-icon">💬</span><div class="stat-label">Total reviews</div><div class="stat-val" id="r-total">-</div><div class="stat-meta">All time</div></div>
+  <div class="stat-card"><span class="stat-icon">🏆</span><div class="stat-label">5-star reviews</div><div class="stat-val" id="r-five">-</div><div class="stat-meta up">Your best ratings</div></div>
+  <div class="stat-card"><span class="stat-icon">📈</span><div class="stat-label">Response rate</div><div class="stat-val">-</div><div class="stat-meta">Reply to build trust</div></div>
 </div>
 <div class="card">
   <div class="card-hd"><div class="card-title">All reviews</div></div>
@@ -408,9 +408,9 @@ async function loadReviews() {
       .select('id,rating,comment,created_at,guest_name,listing_id,listings(title)')
       .eq('partner_id', uid).order('created_at',{ascending:false}).limit(50);
     const rv = reviews || [];
-    const avg = rv.length ? (rv.reduce((s,r)=>s+r.rating,0)/rv.length).toFixed(1) : '—';
+    const avg = rv.length ? (rv.reduce((s,r)=>s+r.rating,0)/rv.length).toFixed(1) : ', ';
     const five = rv.filter(r=>r.rating===5).length;
-    document.getElementById('r-avg').textContent = rv.length ? avg+'★' : '—';
+    document.getElementById('r-avg').textContent = rv.length ? avg+'★' : ', ';
     document.getElementById('r-total').textContent = fmt(rv.length);
     document.getElementById('r-five').textContent = fmt(five);
     if(!rv.length) return;

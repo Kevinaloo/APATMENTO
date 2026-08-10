@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   APA CONTACT — Global contact widget & footer injection
+   APA CONTACT. Global contact widget & footer injection
    +254 716 206 494 | connect@apatmento.space
    Injected on every page: floating FAB, footer contact strip,
    and contact bar in strategic page locations.
@@ -372,7 +372,7 @@
       <div class="apa-footer-contact-inner">
         <div class="apa-fc-left">
           <h3>Need help? We're here.</h3>
-          <p>Support is available 24/7 — reach us on WhatsApp for the fastest response.</p>
+          <p>Support is available 24/7. Reach us on WhatsApp for the fastest response.</p>
         </div>
         <div class="apa-fc-channels">
           <a href="${WA_URL}" class="apa-fc-btn apa-fc-btn-wa" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp Cabana support">
@@ -451,7 +451,7 @@
 
   /* ─── 7. Init ───────────────────────────────────────────────────── */
   function init() {
-    // FAB removed — floating WhatsApp button disabled site-wide
+    // FAB removed. Floating WhatsApp button disabled site-wide
 
     const footer = document.querySelector('footer.footer, footer');
     if (footer) {

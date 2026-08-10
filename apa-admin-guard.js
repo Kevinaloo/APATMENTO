@@ -6,7 +6,7 @@
    Drop this on EVERY page, before apa-chrome.js. If the signed-in
    email is on the admin roster, the guard performs a hard takeover:
    the consumer page never paints, and the operator lands in the
-   console. There is no "extra admin tab" — there is only the console.
+   console. There is no "extra admin tab". There is only the console.
 
    Escape hatch: ?asguest=1 lets an operator inspect the live consumer
    surface for QA. It is session-scoped, loud, and never sticky.
@@ -187,7 +187,7 @@
     takeover();
   }
 
-  /* Synchronous first pass — the whole point of the guard. */
+  /* Synchronous first pass. The whole point of the guard. */
   var early = cachedEmail();
   if (isAdminEmail(early) && !allowed() && !guestMode()) curtain();
   evaluate(early);

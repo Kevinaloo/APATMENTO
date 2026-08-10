@@ -1,9 +1,9 @@
 /* ════════════════════════════════════════════════════════════════════════════
-   CABANA MESSENGER  v5  —  chat.js
+   CABANA MESSENGER  v5. Chat.js
    ────────────────────────────────────────────────────────────────────────────
    Two-sided real-time messaging (guest ↔ host), premium design.
    • Guest messages: right side, violet-blue gradient
-   • Host messages:  left side, light card bg — like WhatsApp / iMessage
+   • Host messages:  left side, light card bg, like WhatsApp / iMessage
    • Day dividers (clean line, no em-dash)
    • Inter font throughout, loaded via Google Fonts
    • Fortress-level contact bypass detection (100+ patterns)
@@ -133,7 +133,7 @@ const CabanaChat = (() => {
   }
 
   /* ════════════════════════════════════════════════════════════════════════
-     FONT INJECTION — Inter from Google Fonts
+     FONT INJECTION. Inter from Google Fonts
   ════════════════════════════════════════════════════════════════════════ */
   function injectFont() {
     if (document.getElementById('cbm-font-link')) return;
@@ -198,7 +198,7 @@ const CabanaChat = (() => {
   }
 
   /* ════════════════════════════════════════════════════════════════════════
-     CSS — premium, Inter-first, two-sided bubbles, no em-dash dividers
+     CSS. Premium, Inter-first, two-sided bubbles, no em-dash dividers
   ════════════════════════════════════════════════════════════════════════ */
   function injectCSS() {
     if (document.getElementById('cbm-css')) return;
@@ -303,7 +303,7 @@ const CabanaChat = (() => {
 .cbm-msgs::-webkit-scrollbar{width:3px;}
 .cbm-msgs::-webkit-scrollbar-thumb{background:rgba(10,10,20,.1);border-radius:2px;}
 
-/* Day divider — clean line, no em-dash */
+/* Day divider. Clean line, no em-dash */
 .cbm-day{
   display:flex;align-items:center;gap:10px;
   margin:14px 0 10px;align-self:stretch;
@@ -315,7 +315,7 @@ const CabanaChat = (() => {
   white-space:nowrap;
 }
 
-/* Message row — wraps avatar + bubble */
+/* Message row. Wraps avatar + bubble */
 .cbm-row{display:flex;align-items:flex-end;gap:8px;margin-bottom:3px;}
 .cbm-row.me{flex-direction:row-reverse;}
 .cbm-row.sys{justify-content:center;}
@@ -349,13 +349,13 @@ const CabanaChat = (() => {
   word-break:break-word;
   letter-spacing:-.01em;
 }
-/* GUEST (me) — right, violet gradient */
+/* GUEST (me), right, violet gradient */
 .cbm-row.me .cbm-bubble{
   background:linear-gradient(135deg,#3D5BFF,#7B2FF7);
   color:#fff;
   border-radius:18px 18px 4px 18px;
 }
-/* HOST (them) — left, white card */
+/* HOST (them). Left, white card */
 .cbm-row.them .cbm-bubble{
   background:#fff;
   color:var(--cbm-ink);
@@ -649,7 +649,7 @@ const CabanaChat = (() => {
   }
 
   /* ════════════════════════════════════════════════════════════════════════
-     DOM — floating panel
+     DOM. Floating panel
   ════════════════════════════════════════════════════════════════════════ */
   function buildPanel() {
     if (document.getElementById('cbm-panel-wrap')) return;
@@ -689,7 +689,7 @@ const CabanaChat = (() => {
   }
 
   /* ════════════════════════════════════════════════════════════════════════
-     DOM — full inbox
+     DOM. Full inbox
   ════════════════════════════════════════════════════════════════════════ */
   function buildInbox() {
     if (document.getElementById('cbm-inbox')) return;
@@ -761,7 +761,7 @@ const CabanaChat = (() => {
   }
 
   /* ════════════════════════════════════════════════════════════════════════
-     RENDER MESSAGES — two-sided, grouped, no em-dash
+     RENDER MESSAGES. Two-sided, grouped, no em-dash
   ════════════════════════════════════════════════════════════════════════ */
   function esc(str) {
     return String(str)
@@ -775,7 +775,7 @@ const CabanaChat = (() => {
       el.innerHTML = `<div class="cbm-empty">
         <div class="cbm-empty-ico">👋</div>
         <div class="cbm-empty-ttl">Start the conversation</div>
-        <div class="cbm-empty-sub">Ask about availability, check-in, amenities — everything stays safely in-app.</div>
+        <div class="cbm-empty-sub">Ask about availability, check-in, amenities. Everything stays safely in-app.</div>
       </div>`;
       return;
     }
@@ -815,12 +815,12 @@ const CabanaChat = (() => {
 
       const rowCls = isMe ? 'me' : 'them';
 
-      // Sender avatar — host side only, visible on last in group
+      // Sender avatar. Host side only, visible on last in group
       const avaHtml = isThem
         ? `<div class="cbm-sender-ava${isLastInGroup ? '' : ' hidden'}">${getInitial(m)}</div>`
         : '';
 
-      // Sender name label — only first in group for host
+      // Sender name label, only first in group for host
       const nameHtml = (isThem && newSender)
         ? `<div class="cbm-sender-name">Host</div>`
         : '';
@@ -930,7 +930,7 @@ const CabanaChat = (() => {
       const el = document.getElementById(msgsId);
       if (el) {
         el.insertAdjacentHTML('beforeend',
-          `<div class="cbm-row warn"><div class="cbm-col"><div class="cbm-bubble">Your message was blocked — it contained only contact information, which is not allowed. Please use this chat to communicate everything.</div></div></div>`);
+          `<div class="cbm-row warn"><div class="cbm-col"><div class="cbm-bubble">Your message was blocked. It contained only contact information, which is not allowed. Please use this chat to communicate everything.</div></div></div>`);
         el.scrollTop = el.scrollHeight;
       }
       const inp = document.getElementById(inputId);
@@ -1408,7 +1408,7 @@ const CabanaChat = (() => {
 })();
 
 /* ════════════════════════════════════════════════════════════════════════════
-   CABANA NOTIFICATIONS ENGINE  — appended to chat.js
+   CABANA NOTIFICATIONS ENGINE. Appended to chat.js
    ────────────────────────────────────────────────────────────────────────────
    Powers:
      1. Dashboard "ring" card notification feed (replaces static bell sheet)
@@ -1591,7 +1591,7 @@ const CabanaNotif = (() => {
   line-height:1.45;
 }
 
-/* Bell dot — match chrome */
+/* Bell dot. Match chrome */
 .apa-ico[data-apa="notif"] .apa-ico-dot{
   display:none;
 }
@@ -1656,7 +1656,7 @@ const CabanaNotif = (() => {
     await syncBadges();
   }
 
-  /* ── Badge sync — messages + notifications combined ─────────────────── */
+  /* ── Badge sync. Messages + notifications combined ─────────────────── */
   async function syncBadges() {
     const [msgs, notifs] = await Promise.all([
       CabanaChat.getUnread ? CabanaChat.getUnread() : 0,

@@ -6,7 +6,7 @@
    What changed and why:
 
      Before, Apatmento decided who could be an agent and what they earned.
-     That put us between a host and the person selling their listing —
+     That put us between a host and the person selling their listing
      a position we have no information to occupy. A host in Kilimani knows
      whether they trust Kevin. We do not.
 
@@ -90,7 +90,7 @@ async function rpcAsUser(token, fn, args) {
   let json = null;
   try { json = text ? JSON.parse(text) : null; } catch { /* ignore */ }
   if (!r.ok) {
-    // Postgres RAISE EXCEPTION arrives as `message` — it is written for humans.
+    // Postgres RAISE EXCEPTION arrives as `message`. It is written for humans.
     throw Object.assign(new Error(json?.message || 'Could not complete that.'),
       { status: r.status === 404 ? 400 : r.status });
   }
@@ -178,7 +178,7 @@ const T = {
 
 <div style="background:linear-gradient(135deg,rgba(255,107,44,.07),rgba(255,181,158,.05));border:1.5px solid rgba(255,107,44,.28);border-radius:16px;padding:20px 22px;margin:0 0 20px;">
   <div style="font-size:13px;font-weight:800;color:#C2410C;margin-bottom:7px;">⏳ ${days} days to verify your identity</div>
-  <div style="font-size:13px;color:#7C2D12;line-height:1.65;">Everything works right now. Upload a national ID or passport before the clock runs out and it keeps working. Miss it and your links stop earning until you do — nothing is lost, just paused.</div>
+  <div style="font-size:13px;color:#7C2D12;line-height:1.65;">Everything works right now. Upload a national ID or passport before the clock runs out and it keeps working. Miss it and your links stop earning until you do. Nothing is lost, just paused.</div>
 </div>
 
 <p style="margin:0 0 10px;color:#1A1B2E;font-size:14px;font-weight:700;">How earning works</p>
@@ -198,12 +198,12 @@ const T = {
       emoji: '📩', title: 'An agent wants to represent your listing',
       sub: `${agent.full_name} is proposing ${pct}% per booking.`,
       body: `<p style="margin:0 0 18px;color:#4A4C66;font-size:14px;line-height:1.7;">
-<strong style="color:#1A1B2E;">${agent.full_name}</strong> asked to represent <strong style="color:#1A1B2E;">${listing}</strong>. If you approve, they get a referral link for this listing and can see its live availability — so they never send you a guest for dates you've already sold.</p>
+<strong style="color:#1A1B2E;">${agent.full_name}</strong> asked to represent <strong style="color:#1A1B2E;">${listing}</strong>. If you approve, they get a referral link for this listing and can see its live availability, so they never send you a guest for dates you've already sold.</p>
 
 <div style="background:#F4F5FB;border-radius:14px;padding:18px 20px;margin:0 0 18px;">
   <div style="font-size:11px;color:#8E90AD;text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:8px;">They proposed</div>
   <div style="font-size:32px;font-weight:800;color:#7B2FF7;letter-spacing:-1px;">${pct}%</div>
-  <div style="font-size:12.5px;color:#6B7280;margin-top:6px;">You decide the final number — percentage or a flat fee. Or decline.</div>
+  <div style="font-size:12.5px;color:#6B7280;margin-top:6px;">You decide the final number. Percentage or a flat fee. Or decline.</div>
 </div>
 
 ${msg ? `<div style="background:#fff;border-left:3px solid #B8A4F4;padding:14px 16px;margin:0 0 18px;border-radius:0 12px 12px 0;">
@@ -211,13 +211,13 @@ ${msg ? `<div style="background:#fff;border-left:3px solid #B8A4F4;padding:14px 
   <div style="font-size:13.5px;color:#4A4C66;line-height:1.6;">${esc(msg)}</div>
 </div>` : ''}
 
-<p style="margin:0;color:#8E90AD;font-size:12.5px;line-height:1.6;">Don't recognise them? Decline, or report them — reported agents are blocked from contacting you again.</p>`,
+<p style="margin:0;color:#8E90AD;font-size:12.5px;line-height:1.6;">Don't recognise them? Decline, or report them. Reported agents are blocked from contacting you again.</p>`,
       cta: 'Review the request', ctaUrl: `${SITE}/partner-agents.html`,
     }),
   }),
 
   approvedToAgent: (agent, listing, pct, flat, code) => ({
-    subject: `Approved — you now represent ${listing} 🎉`,
+    subject: `Approved. You now represent ${listing} 🎉`,
     html: shell({
       emoji: '🎉', title: 'A host approved you',
       sub: `You're earning ${rateLabel(pct, flat)} on ${listing}.`,
@@ -230,7 +230,7 @@ ${msg ? `<div style="background:#fff;border-left:3px solid #B8A4F4;padding:14px 
   <div style="font-size:13px;color:#6B7280;margin-top:8px;">${flat != null ? 'per booking' : 'of each booking you drive'}</div>
 </div>
 
-<p style="margin:0 0 14px;color:#4A4C66;font-size:14px;line-height:1.7;">Open your dashboard for this listing's <strong>live calendar</strong> and your referral link. Check the dates before you call a client — that is the whole point.</p>
+<p style="margin:0 0 14px;color:#4A4C66;font-size:14px;line-height:1.7;">Open your dashboard for this listing's <strong>live calendar</strong> and your referral link. Check the dates before you call a client, that is the whole point.</p>
 <p style="margin:0;color:#8E90AD;font-size:12.5px;line-height:1.6;">The host handles the booking and pays your commission directly. Apatmento records the agreement.</p>`,
       cta: 'See the calendar', ctaUrl: `${SITE}/agent-dashboard.html`,
     }),
@@ -253,7 +253,7 @@ ${reason ? `<div style="background:#F4F5FB;border-left:3px solid #CBD5E1;border-
   }),
 
   bookingToHost: (listing, agentName, gross, commission, ref) => ({
-    subject: `Booking on ${listing} — referred by ${agentName}`,
+    subject: `Booking on ${listing}. Referred by ${agentName}`,
     html: shell({
       emoji: '📅', title: 'New booking, via your agent',
       sub: `${agentName} sent this guest.`,
@@ -265,7 +265,7 @@ ${reason ? `<div style="background:#F4F5FB;border-left:3px solid #CBD5E1;border-
   <tr><td style="padding:9px 0;color:#8E90AD;border-bottom:1px solid #F0F1F9;">Referred by</td><td style="padding:9px 0;color:#1A1B2E;font-weight:600;border-bottom:1px solid #F0F1F9;">Agent ${agentName}</td></tr>
   <tr><td style="padding:12px 0;color:#8E90AD;">Agent commission</td><td style="padding:12px 0;color:#0E9384;font-weight:800;font-size:17px;">${money(commission)}</td></tr>
 </table>
-<p style="margin:18px 0 0;color:#8E90AD;font-size:12.5px;line-height:1.65;">You handle this booking as you always do. The commission above is what you agreed with this agent for this listing — settle it with them directly.</p>`,
+<p style="margin:18px 0 0;color:#8E90AD;font-size:12.5px;line-height:1.65;">You handle this booking as you always do. The commission above is what you agreed with this agent for this listing. Settle it with them directly.</p>`,
       cta: 'Open bookings', ctaUrl: `${SITE}/partner-bookings.html`,
     }),
   }),
@@ -288,12 +288,12 @@ ${reason ? `<div style="background:#F4F5FB;border-left:3px solid #CBD5E1;border-
   }),
 
   kycVerified: (name) => ({
-    subject: 'Identity verified — your badge is live ✅',
+    subject: 'Identity verified. Your badge is live ✅',
     html: shell({
       emoji: '✅', title: 'Verified',
       sub: 'Hosts can see you are who you say you are.',
       accent: '#2DD4BF,#0EA5E9',
-      body: `<p style="margin:0 0 18px;color:#4A4C66;font-size:14px;line-height:1.7;">Hi <strong>${name.split(' ')[0]}</strong> — we checked your document and your identity is confirmed. The countdown is gone for good.</p>
+      body: `<p style="margin:0 0 18px;color:#4A4C66;font-size:14px;line-height:1.7;">Hi <strong>${name.split(' ')[0]}</strong>: we checked your document and your identity is confirmed. The countdown is gone for good.</p>
 <p style="margin:0;color:#4A4C66;font-size:14px;line-height:1.7;">A verified badge now sits next to your name on every partnership request. Hosts approve verified agents far more readily, for the obvious reason.</p>`,
       cta: 'Back to dashboard', ctaUrl: `${SITE}/agent-dashboard.html`,
     }),
@@ -310,7 +310,7 @@ ${reason ? `<div style="background:#F4F5FB;border-left:3px solid #CBD5E1;border-
   <div style="font-size:12px;color:#C2410C;font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;">Why</div>
   <div style="font-size:14px;color:#7C2D12;line-height:1.6;">${esc(reason || 'The image was unclear or the details did not match your account.')}</div>
 </div>
-<p style="margin:0;color:#4A4C66;font-size:14px;line-height:1.7;">Upload a clearer photo whenever you're ready. ${days > 0 ? `You have <strong>${days} days</strong> left on the clock.` : 'Your account is paused until you do — nothing has been deleted.'}</p>`,
+<p style="margin:0;color:#4A4C66;font-size:14px;line-height:1.7;">Upload a clearer photo whenever you're ready. ${days > 0 ? `You have <strong>${days} days</strong> left on the clock.` : 'Your account is paused until you do. Nothing has been deleted.'}</p>`,
       cta: 'Upload again', ctaUrl: `${SITE}/agent-dashboard.html?tab=verify`,
     }),
   }),
@@ -334,7 +334,7 @@ async function listingTitle(id) {
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   SIGNUP — instant. The auth user already exists.
+   SIGNUP. Instant. The auth user already exists.
    ══════════════════════════════════════════════════════════════════════ */
 async function handleSignup(req, res) {
   const s = await session(req);
@@ -362,7 +362,7 @@ async function handleSignup(req, res) {
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   ME — profile, clock, portfolio
+   ME. Profile, clock, portfolio
    ══════════════════════════════════════════════════════════════════════ */
 async function handleMe(req, res) {
   const s = await session(req);
@@ -402,7 +402,7 @@ async function handleMe(req, res) {
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   UPLOAD-ID — the file is already in private storage. Record it.
+   UPLOAD-ID. The file is already in private storage. Record it.
    ══════════════════════════════════════════════════════════════════════ */
 async function handleUploadId(req, res) {
   const s = await session(req);
@@ -433,7 +433,7 @@ async function handleUploadId(req, res) {
 
   ADMINS.forEach((a) => mail({
     to: a,
-    subject: `Agent ID to review — ${s.email}`,
+    subject: `Agent ID to review, ${s.email}`,
     html: shell({
       emoji: '🪪', title: 'Identity document uploaded',
       sub: `${s.email} submitted a ${b.doc_type.replace('_', ' ')}.`,
@@ -446,7 +446,7 @@ async function handleUploadId(req, res) {
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   REQUEST — agent asks a host
+   REQUEST. Agent asks a host
    ══════════════════════════════════════════════════════════════════════ */
 async function handleRequest(req, res) {
   const s = await session(req);
@@ -462,7 +462,7 @@ async function handleRequest(req, res) {
     p_message:       b.message || null,
   });
 
-  // Tell the host. Fire and forget — the request is already recorded.
+  // Tell the host. Fire and forget. The request is already recorded.
   (async () => {
     try {
       const [agent] = await db(`agents?id=eq.${s.user.id}&select=full_name,email`);
@@ -479,7 +479,7 @@ async function handleRequest(req, res) {
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   AVAILABILITY — live calendar, approved listings only
+   AVAILABILITY. Live calendar, approved listings only
    ══════════════════════════════════════════════════════════════════════ */
 async function handleAvailability(req, res) {
   const s  = await session(req);
@@ -496,7 +496,7 @@ async function handleAvailability(req, res) {
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   RESPOND — host approves (naming the rate) or declines
+   RESPOND. Host approves (naming the rate) or declines
    ══════════════════════════════════════════════════════════════════════ */
 async function handleRespond(req, res) {
   const s = await session(req);
@@ -510,7 +510,7 @@ async function handleRespond(req, res) {
   const flat = b.commission_flat != null && b.commission_flat !== '' ? Number(b.commission_flat) : null;
 
   if (b.decision === 'approve' && (pct == null) === (flat == null))
-    return res.status(400).json({ error: 'Set a percentage or a flat fee — one, not both.' });
+    return res.status(400).json({ error: 'Set a percentage or a flat fee. One, not both.' });
 
   const part = await rpcAsUser(s.token, 'host_respond_partnership', {
     p_partnership_id: Number(b.partnership_id),
@@ -536,7 +536,7 @@ async function handleRespond(req, res) {
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   SET-STATE — pause / resume / revoke
+   SET-STATE. Pause / resume / revoke
    ══════════════════════════════════════════════════════════════════════ */
 async function handleSetState(req, res) {
   const s = await session(req);
@@ -551,7 +551,7 @@ async function handleSetState(req, res) {
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   REPORT — host's defence against spam
+   REPORT. Host's defence against spam
    ══════════════════════════════════════════════════════════════════════ */
 async function handleReport(req, res) {
   const s = await session(req);
@@ -572,7 +572,7 @@ async function handleReport(req, res) {
   if (agent?.suspended) {
     ADMINS.forEach((a) => mail({
       to: a,
-      subject: `Agent auto-suspended — ${agent.full_name}`,
+      subject: `Agent auto-suspended, ${agent.full_name}`,
       html: shell({
         emoji: '🚫', title: 'Agent suspended',
         sub: `${agent.full_name} hit 3 host reports.`, accent: '#FF4D6D,#FF6B2C',
@@ -586,7 +586,7 @@ async function handleReport(req, res) {
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   INBOX — host's pending requests + roster
+   INBOX. Host's pending requests + roster
    ══════════════════════════════════════════════════════════════════════ */
 async function handleInbox(req, res) {
   const s = await session(req);
@@ -600,7 +600,7 @@ async function handleInbox(req, res) {
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   TRACK — public. A guest landed on an agent link.
+   TRACK. Public. A guest landed on an agent link.
    ══════════════════════════════════════════════════════════════════════ */
 async function handleTrack(req, res) {
   const b = body(req);
@@ -624,7 +624,7 @@ async function handleTrack(req, res) {
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   ATTRIBUTE — internal only. Called at booking creation.
+   ATTRIBUTE. Internal only. Called at booking creation.
    ══════════════════════════════════════════════════════════════════════ */
 async function handleAttribute(req, res) {
   if (!INTERNAL || req.headers['x-internal-secret'] !== INTERNAL)
@@ -667,7 +667,7 @@ async function handleAttribute(req, res) {
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   KYC-REVIEW — admin. The one thing admin still decides.
+   KYC-REVIEW. Admin. The one thing admin still decides.
    ══════════════════════════════════════════════════════════════════════ */
 async function handleKycReview(req, res) {
   const s = await requireAdmin(req);

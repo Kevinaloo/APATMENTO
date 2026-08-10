@@ -1,5 +1,5 @@
 /* ════════════════════════════════════════════════════════════════
-   APATMENTO — /api/calendar-sync.js
+   APATMENTO, /api/calendar-sync.js
    Bidirectional iCal calendar sync.
    Imports blocked dates from Airbnb/Booking.com/VRBO iCal feeds.
    Exports Apatmento bookings as iCal for external platforms.

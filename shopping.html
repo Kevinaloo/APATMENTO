@@ -218,7 +218,7 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--glass);c
 @media(max-width:380px){.p-grid{grid-template-columns:repeat(2,1fr);}}
 html.via-dash #tx{display:none!important;}
 
-  /* ── List CTA — top-right partner prompt ── */
+  /* ── List CTA. Top-right partner prompt ── */
   .svc-list-cta{
     display:inline-flex;align-items:center;gap:6px;
     padding:8px 16px;border-radius:100px;
@@ -241,6 +241,46 @@ html.via-dash #tx{display:none!important;}
 <link rel="stylesheet" href="/cabana-ds.css"/>
 <script type="application/ld+json">
 {"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.apatmento.space/"}, {"@type": "ListItem", "position": 2, "name": "Shopping", "item": "https://www.apatmento.space/shopping"}]}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How do I order groceries online?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Pick a store or category above, tap a product to open that supermarket's live catalogue, add to basket, enter your address and pay with M-Pesa or card."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Which supermarkets deliver near me?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Naivas, Quickmart, Carrefour, Cleanshelf, Zucchini Greengrocers, City Grocery and Jaza deliver through Cabana, with live prices in KES. Coverage is expanding."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Are the grocery prices accurate?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Every price is pulled live from the supermarket's own catalogue. Items sold by weight can vary slightly and some stores add a small packaging fee."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I pay for groceries with M-Pesa?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. M-Pesa and card are both supported at checkout."
+      }
+    }
+  ]
+}
 </script>
 </head>
 <body>
@@ -289,7 +329,7 @@ html.via-dash #tx{display:none!important;}
 <div class="hero">
   <span class="hero-eyebrow">🛒 Grocery Delivery</span>
   <h1 class="hero-title">Groceries from your<br/><em>top supermarkets.</em></h1>
-  <p class="hero-sub">Real products, live prices in KES — from Naivas, Quickmart, Carrefour, Cleanshelf and more. Tap any product to order.</p>
+  <p class="hero-sub">Real products, live prices in KES, from Naivas, Quickmart, Carrefour, Cleanshelf and more. Tap any product to order.</p>
   <div class="powered">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00A082" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
     Live prices · Click any card to order
@@ -651,28 +691,33 @@ renderAll();
 .seo-content .seo-links{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px;}
 .seo-content .seo-links a{font-size:13px;font-weight:500;color:var(--t1,#6D28FF);text-decoration:none;padding:8px 15px;border-radius:100px;background:rgba(0,0,0,.03);border:1px solid var(--line,rgba(10,10,20,.07));transition:all .2s;}
 .seo-content .seo-links a:hover{border-color:var(--t1,#6D28FF);}
+.seo-content .seo-cta{display:inline-flex;align-items:center;gap:9px;margin:4px 0 10px;padding:13px 26px;border-radius:100px;background:var(--theme-grad,linear-gradient(120deg,#6D28FF,#B14BFF));color:#fff;font-family:var(--font-display,'Geist','Inter',sans-serif);font-size:14.5px;font-weight:600;text-decoration:none;box-shadow:0 14px 32px rgba(10,10,20,.16);transition:transform .2s,box-shadow .2s;}
+.seo-content .seo-cta:hover{transform:translateY(-2px);box-shadow:0 20px 44px rgba(10,10,20,.22);}
+.seo-content .seo-trust{display:flex;flex-wrap:wrap;gap:8px 20px;margin:0 0 20px;padding:0;list-style:none;font-size:13.5px;font-weight:500;color:var(--ink-soft,#4A4C66);}
+.seo-content .seo-trust li{display:flex;align-items:center;gap:7px;}
+.seo-content .seo-trust li::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--t1,#6D28FF);flex-shrink:0;}
+
 </style>
 <section class="seo-content">
-  <h2>Grocery delivery from top supermarkets</h2>
-  <p>Apatmento makes grocery shopping effortless. Order fresh produce, meat, dairy, flour, eggs, drinks and household essentials from leading supermarkets — Naivas, Quickmart, Carrefour, Cleanshelf, Zucchini Greengrocers, City Grocery and Jaza Supermarkets — all delivered to your door. Every product on this page shows a real, live price in Kenyan Shillings, so you always know exactly what you're paying before you order.</p>
-  <p>Whether you're doing a full weekly shop or just need a few items like bread, milk and eggs, you can browse by store or by category — fresh produce, meat and poultry, staples and flour, drinks, eggs and bakery. Tap any product to go straight to its supermarket, add it to your basket, and check out with M-Pesa or card. Grocery delivery has never been faster or more convenient.</p>
+  <h2>Grocery delivery from Naivas, Quickmart, Carrefour and more</h2>
+  <p>Order fresh produce, meat, dairy, flour, eggs, drinks and household essentials at live supermarket prices in Kenyan Shillings, delivered to your door.</p>
+  <ul class="seo-trust">
+    <li>Live prices, no markup from us</li>
+    <li>Seven supermarkets in one place</li>
+    <li>M-Pesa or card at checkout</li>
+  </ul>
+  <a class="seo-cta" href="#mainContent">Start shopping <span aria-hidden="true">&rarr;</span></a>
 
   <h3>Shop by supermarket</h3>
-  <p>Naivas is one of Kenya's largest supermarket chains, known for fresh produce and everyday value. Quickmart offers competitive prices and a wide range. Carrefour brings international brands and premium selections. Cleanshelf, City Grocery, Zucchini Greengrocers and Jaza round out the choice, so you can compare prices across stores and pick what suits your budget and your kitchen.</p>
+  <p>Naivas for fresh produce and everyday value. Quickmart for competitive prices. Carrefour for international brands. Cleanshelf, City Grocery, Zucchini Greengrocers and Jaza complete the choice, so you can compare before you add to basket.</p>
 
   <h3>Frequently asked questions</h3>
-  <details class="faq-item"><summary>How do I order groceries online?</summary><p>Choose a store or product category on this page, tap the item you want, and you'll be taken to that supermarket's live catalogue. Add products to your basket, enter your address, and pay via M-Pesa or card. Your groceries are picked and delivered to your door.</p></details>
-  <details class="faq-item"><summary>Which supermarkets deliver near me?</summary><p>Naivas, Quickmart, Carrefour, Cleanshelf, Zucchini Greengrocers, City Grocery and Jaza Supermarkets deliver through our platform, with live prices in KES. Coverage is expanding to more areas.</p></details>
-  <details class="faq-item"><summary>Are the grocery prices accurate?</summary><p>Yes — every price shown is pulled live from the supermarket's catalogue in Kenyan Shillings. Note that items sold by weight may vary slightly, and a small packaging fee may apply at some stores.</p></details>
-  <details class="faq-item"><summary>Can I pay with M-Pesa for grocery delivery?</summary><p>Yes, M-Pesa and card payments are both supported at checkout for a fast, secure and cashless grocery shopping experience.</p></details>
+  <details class="faq-item"><summary>How do I order groceries online?</summary><p>Pick a store or category above, tap a product to open that supermarket's live catalogue, add to basket, enter your address and pay with M-Pesa or card.</p></details>
+  <details class="faq-item"><summary>Which supermarkets deliver near me?</summary><p>Naivas, Quickmart, Carrefour, Cleanshelf, Zucchini Greengrocers, City Grocery and Jaza deliver through Cabana, with live prices in KES. Coverage is expanding.</p></details>
+  <details class="faq-item"><summary>Are the grocery prices accurate?</summary><p>Yes. Every price is pulled live from the supermarket's own catalogue. Items sold by weight can vary slightly and some stores add a small packaging fee.</p></details>
+  <details class="faq-item"><summary>Can I pay for groceries with M-Pesa?</summary><p>Yes. M-Pesa and card are both supported at checkout.</p></details>
 
-  <div class="seo-links">
-    <a href="/food.html">Food Delivery</a>
-    <a href="/tours.html">Tours</a>
-    <a href="/rides.html">Rides & Transfers</a>
-    <a href="/apartments.html">Stays</a>
-    <a href="/carhire.html">Car Hire</a>
-  </div>
+  <div class="seo-links"><a href="/food.html">Food Delivery</a><a href="/tours.html">Tours</a><a href="/rides.html">Rides & Transfers</a><a href="/apartments.html">Stays</a><a href="/carhire.html">Car Hire</a></div>
 </section>
 
 <div data-showcase="window"></div>

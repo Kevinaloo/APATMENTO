@@ -305,7 +305,7 @@ td strong{color:var(--ink);font-weight:600;}
     Settings
   </a>
 
-  <!-- Strategic Refer & Earn promo — non-popup, always visible -->
+  <!-- Strategic Refer & Earn promo. Non-popup, always visible -->
   <div class="sb-refer-promo">
     <div class="sbp-eyebrow">💰 Earn more</div>
     <div class="sbp-title">Invite a host.<br/><strong>Earn 10% for life.</strong></div>
@@ -336,10 +336,10 @@ td strong{color:var(--ink);font-weight:600;}
   <p class="page-sub">Every reservation across all your listings, in one view.</p>
 </div>
 <div class="stat-row">
-  <div class="stat-card"><span class="stat-icon">📋</span><div class="stat-label">Total bookings</div><div class="stat-val" id="b-total">—</div><div class="stat-meta">All time</div></div>
-  <div class="stat-card"><span class="stat-icon">✅</span><div class="stat-label">Confirmed</div><div class="stat-val" id="b-conf">—</div><div class="stat-meta up">Active reservations</div></div>
-  <div class="stat-card"><span class="stat-icon">🕐</span><div class="stat-label">Check-ins today</div><div class="stat-val" id="b-today">—</div><div class="stat-meta">Guests arriving</div></div>
-  <div class="stat-card"><span class="stat-icon">⭐</span><div class="stat-label">Avg rating</div><div class="stat-val" id="b-rating">—</div><div class="stat-meta">Guest satisfaction</div></div>
+  <div class="stat-card"><span class="stat-icon">📋</span><div class="stat-label">Total bookings</div><div class="stat-val" id="b-total">-</div><div class="stat-meta">All time</div></div>
+  <div class="stat-card"><span class="stat-icon">✅</span><div class="stat-label">Confirmed</div><div class="stat-val" id="b-conf">-</div><div class="stat-meta up">Active reservations</div></div>
+  <div class="stat-card"><span class="stat-icon">🕐</span><div class="stat-label">Check-ins today</div><div class="stat-val" id="b-today">-</div><div class="stat-meta">Guests arriving</div></div>
+  <div class="stat-card"><span class="stat-icon">⭐</span><div class="stat-label">Avg rating</div><div class="stat-val" id="b-rating">-</div><div class="stat-meta">Guest satisfaction</div></div>
 </div>
 <div class="stays-card" id="stays-panel" style="display:none;">
   <div class="card-hd">
@@ -446,7 +446,7 @@ async function loadBookings() {
     document.getElementById('b-conf').textContent = fmt(b.filter(x=>x.status==='confirmed').length);
     document.getElementById('b-today').textContent = fmt(b.filter(x=>x.check_in===today).length);
     const ratSum = b.reduce((s,x)=>s+(x.listings?.avg_rating||0),0);
-    document.getElementById('b-rating').textContent = b.length ? (ratSum/b.length).toFixed(1)+'★' : '—';
+    document.getElementById('b-rating').textContent = b.length ? (ratSum/b.length).toFixed(1)+'★' : ', ';
 
     const tbody = document.getElementById('book-tbody');
     if(!b.length) {
@@ -486,7 +486,7 @@ async function markComplete(id) {
    deadline. We make the deadline visible before it passes, because
    a button that greys out at midnight teaches nothing.
 
-   Inside 24 hours the button is gone. Not disabled with a shrug —
+   Inside 24 hours the button is gone. Not disabled with a shrug
    replaced with the consequence, in plain words.
    ═══════════════════════════════════════════════════════════════ */
 
@@ -536,14 +536,14 @@ function renderStays() {
     const when = h >= 48
       ? `<span class="stay-when when-safe">${days} days out</span>`
       : h >= 24
-        ? `<span class="stay-when when-tight">${Math.round(h)}h — closing soon</span>`
+        ? `<span class="stay-when when-tight">${Math.round(h)}h. Closing soon</span>`
         : `<span class="stay-when when-locked">Matching closed</span>`;
 
     const action = h >= 24
       ? `<button class="btn-match" onclick="matchGuest('${b.id}')">Match guest</button>`
       : `<button class="btn-match" disabled>Match guest</button>`;
 
-    const why = h >= 24 ? '' : `<div class="match-why">Check-in is very soon. Matching is no longer available. Please contact your guest directly — our team can assist if needed.</div>`;
+    const why = h >= 24 ? '' : `<div class="match-why">Check-in is very soon. Matching is no longer available. Please contact your guest directly. Our team can assist if needed.</div>`;
 
     return `<div class="stay-row" id="stay-${b.id}">
       <div class="stay-main">
@@ -583,7 +583,7 @@ async function matchGuest(bookingId) {
     const fee = Number(j.commission || 0);
     row.querySelector('.stay-main').insertAdjacentHTML('beforeend',
       `<div class="match-why" style="color:#0a6d4c;">Sent ${j.candidates.length} option${j.candidates.length===1?'':'s'} to your guest. ` +
-      `If they accept, you earn KES ${fmt(fee)} — 30% of our service fee — and take no card.</div>`);
+      `If they accept, you earn KES ${fmt(fee)}, 30% of our service fee, and take no card.</div>`);
     btn.textContent = 'Offer sent';
     toast(`Offer sent. ${j.candidates.length} comparable stay${j.candidates.length===1?'':'s'} shared with your guest.`);
 

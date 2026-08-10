@@ -252,7 +252,7 @@ html.via-dash #tx{display:none!important;animation:none!important;}
 /* ═══════════════════════════════════════════════════════════════
    COMPACT LISTING CARDS (mobile)
    Reflows the large vertical card into a tight horizontal tile so
-   more products fit on screen — matching the Stays layout.
+   more products fit on screen. Matching the Stays layout.
    Purely presentational: no markup or JS changes required.
    ═══════════════════════════════════════════════════════════════ */
 @media(max-width:700px){
@@ -268,7 +268,7 @@ html.via-dash #tx{display:none!important;animation:none!important;}
 @media(max-width:380px){.grid{grid-template-columns:repeat(2,1fr);}}
 
 
-  /* ── List CTA — top-right partner prompt ── */
+  /* ── List CTA. Top-right partner prompt ── */
   .svc-list-cta{
     display:inline-flex;align-items:center;gap:6px;
     padding:8px 16px;border-radius:100px;
@@ -300,7 +300,7 @@ html.via-dash #tx{display:none!important;animation:none!important;}
           const w = reg.installing;
           if (w) w.onstatechange = () => {
             if (w.state === 'installed' && navigator.serviceWorker.controller) {
-              // New version available — reload silently
+              // New version available. Reload silently
               window.location.reload();
             }
           };
@@ -315,6 +315,38 @@ html.via-dash #tx{display:none!important;animation:none!important;}
 <link rel="stylesheet" href="/cabana-ds.css"/>
 <script type="application/ld+json">
 {"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.apatmento.space/"}, {"@type": "ListItem", "position": 2, "name": "Events", "item": "https://www.apatmento.space/events"}]}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How do I buy event tickets?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Tap any event above to see the details and book through the official organiser. You pay face value with no booking levy from us."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What events are happening this weekend?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The list above refreshes as organisers publish new dates. Sort by soonest first to see everything happening in the next few days."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Are the ticket prices the final price?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. The price shown is the organiser's own price. We add nothing on top."
+      }
+    }
+  ]
+}
 </script>
 </head>
 <body>
@@ -375,7 +407,7 @@ html.via-dash #tx{display:none!important;animation:none!important;}
 <div class="hero">
   <span class="hero-eyebrow">Events & Tickets</span>
   <h1 class="hero-title">Face-value tickets.<br/><em>Nothing added.</em></h1>
-  <p class="hero-sub">Concerts, festivals, shows, sports. You pay exactly what the organiser charges — not a shilling more.</p>
+  <p class="hero-sub">Concerts, festivals, shows, sports. You pay exactly what the organiser charges, not a shilling more.</p>
   <div class="search-bar">
     <div class="sb-field"><div class="sb-label">City</div><div class="sb-val" id="f-city">All cities</div></div>
     <div class="sb-sep"></div>
@@ -404,7 +436,6 @@ html.via-dash #tx{display:none!important;animation:none!important;}
     </select>
   </div>
   
-  <div data-showcase="video" style="margin-bottom:20px;"></div>
   <div class="grid" id="grid"></div>
 </div>
 
@@ -419,7 +450,7 @@ const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 let sb=null;
 try{const{createClient}=supabase;sb=createClient(SUPABASE_URL,SUPABASE_ANON_KEY);}catch(e){}
 function showToast(m,d=3200){const t=document.getElementById('toast');if(!t)return;t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),d);}
-// Dismiss entry transition — CSS fades, JS sets display:none so it can't block touches
+// Dismiss entry transition. CSS fades, JS sets display:none so it can't block touches
 function dismissTx(){
   const el=document.getElementById('tx');
   if(!el)return;
@@ -431,7 +462,7 @@ function dismissTx(){
 document.getElementById('tx')?.addEventListener('animationend',dismissTx,{once:true});
 // Backup 1: window load
 window.addEventListener('load',()=>setTimeout(dismissTx,1800));
-// Backup 2: hard timeout — fires no matter what
+// Backup 2: hard timeout. Fires no matter what
 setTimeout(dismissTx,4000);
 
 
@@ -451,7 +482,7 @@ function renderEvents(list){
   list = list.filter(e => e.img && e.img.length > 10 && !e.img.includes('placeholder') && !e.img.includes('default'));
   document.getElementById('result-num').textContent=list.length;
   const g=document.getElementById('grid');
-  if(!list.length){g.innerHTML='<div class="empty"><div class="empty-title">'+(window.__evLoaded?'No events with photos yet — check back soon':'Loading live events…')+'</div></div>';return;}
+  if(!list.length){g.innerHTML='<div class="empty"><div class="empty-title">'+(window.__evLoaded?'No events with photos yet. Check back soon':'Loading live events…')+'</div></div>';return;}
   const typeColor={music:'#7B2FF7',festival:'#FF6B2C',sports:'#4361FF',comedy:'#FFB59E',art:'#2DD4BF'};
   g.innerHTML=list.map((e,i)=>`
   <div class="card" style="transition-delay:${i*45}ms" onclick="openEvent('${e.id}')">
@@ -491,7 +522,7 @@ function openEvent(id){
     <div class="dr-includes-grid">${e.includes.map(x=>`<div class="dr-include"><span style="color:var(--t1)">✓</span> ${x}</div>`).join('')}</div></div>
     <div class="dr-cta-box">
       <div class="dr-price"><span class="val">${e.price===0?(e.ticketUrl?'See site':'Free'):'KES '+e.price.toLocaleString()}</span>${e.price?'<span class="per"> / ticket</span>':''}<div class="note">${e.ticketUrl?'↗ Tickets sold on the organiser\'s official site':'✓ Face value. Zero booking fees added.'}</div></div>
-      <button class="dr-cta" onclick="${e.ticketUrl?`window.open('${e.ticketUrl}','_blank')`:(e.price===0?`showToast('Free event — just show up!')`:`window.location.href='booking-confirm.html?id=${e.id}&name=${encodeURIComponent(e.name)}&location=${encodeURIComponent(e.venue)}&price=${e.price}&back=1'`)}">${e.ticketUrl?'Get tickets ↗':(e.price===0?'It\'s free — save event →':'Get tickets →')}</button>
+      <button class="dr-cta" onclick="${e.ticketUrl?`window.open('${e.ticketUrl}','_blank')`:(e.price===0?`showToast('Free event, just show up!')`:`window.location.href='booking-confirm.html?id=${e.id}&name=${encodeURIComponent(e.name)}&location=${encodeURIComponent(e.venue)}&price=${e.price}&back=1'`)}">${e.ticketUrl?'Get tickets ↗':(e.price===0?'It\'s free. Save event →':'Get tickets →')}</button>
     </div>
   </div>`;
   document.getElementById('drawer').classList.add('open');
@@ -544,7 +575,7 @@ renderEvents(EVENTS);
     EVENTS.unshift(...fresh);
     if(typeof applyFilters==='function') applyFilters();
     else renderEvents(EVENTS);
-  } catch(err) { /* silent — demo events remain */ }
+  } catch(err) { /* silent. Demo events remain */ }
 })();
 
 // ── Load admin-added events from listings table ──
@@ -587,14 +618,31 @@ renderEvents(EVENTS);
 .seo-content .seo-links{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px;}
 .seo-content .seo-links a{font-size:13px;font-weight:500;color:var(--t1,#6D28FF);text-decoration:none;padding:8px 15px;border-radius:100px;background:rgba(0,0,0,.03);border:1px solid var(--line,rgba(10,10,20,.07));transition:all .2s;}
 .seo-content .seo-links a:hover{border-color:var(--t1,#6D28FF);}
+.seo-content .seo-cta{display:inline-flex;align-items:center;gap:9px;margin:4px 0 10px;padding:13px 26px;border-radius:100px;background:var(--theme-grad,linear-gradient(120deg,#6D28FF,#B14BFF));color:#fff;font-family:var(--font-display,'Geist','Inter',sans-serif);font-size:14.5px;font-weight:600;text-decoration:none;box-shadow:0 14px 32px rgba(10,10,20,.16);transition:transform .2s,box-shadow .2s;}
+.seo-content .seo-cta:hover{transform:translateY(-2px);box-shadow:0 20px 44px rgba(10,10,20,.22);}
+.seo-content .seo-trust{display:flex;flex-wrap:wrap;gap:8px 20px;margin:0 0 20px;padding:0;list-style:none;font-size:13.5px;font-weight:500;color:var(--ink-soft,#4A4C66);}
+.seo-content .seo-trust li{display:flex;align-items:center;gap:7px;}
+.seo-content .seo-trust li::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--t1,#6D28FF);flex-shrink:0;}
+
 </style>
 <section class="seo-content">
-  <h2>Events and tickets near you</h2>
-  <p>Never miss a moment. Apatmento brings you concerts, festivals, live music, comedy nights, sports and cultural events, with tickets you can book directly. From major festivals to intimate gigs, there's always something happening — and this is your front-row seat.</p>
-  <p>Browse upcoming events, discover what's on this weekend, and secure your tickets at face value with no inflated booking fees. Whether you love Afrobeats, gospel, jazz, stand-up comedy or a good festival, there's always something on.</p>
+  <h2>Event tickets in Kenya at face value</h2>
+  <p>Concerts, festivals, live music, comedy, sports and cultural events. You pay exactly what the organiser charges, with no booking levy added by us.</p>
+  <ul class="seo-trust">
+    <li>Face-value tickets, no inflated fees</li>
+    <li>Official organisers only</li>
+    <li>Book in seconds with M-Pesa</li>
+  </ul>
+  <a class="seo-cta" href="#grid">Get tickets <span aria-hidden="true">&rarr;</span></a>
+
+  <h3>What is on near you</h3>
+  <p>Afrobeats and gospel concerts, jazz nights, film and food festivals, stand-up comedy, league fixtures and gallery openings across Nairobi, Mombasa and beyond, updated as organisers release them.</p>
+
   <h3>Frequently asked questions</h3>
-  <details class="faq-item"><summary>How do I buy event tickets?</summary><p>Browse the events on this page and tap any event to see details and get tickets through the official organiser. You pay face value with no added booking levy from us.</p></details>
-  <details class="faq-item"><summary>What events are happening this weekend?</summary><p>The events listed on this page update regularly with concerts, festivals, comedy and cultural happenings. Check back often for the latest.</p></details>
+  <details class="faq-item"><summary>How do I buy event tickets?</summary><p>Tap any event above to see the details and book through the official organiser. You pay face value with no booking levy from us.</p></details>
+  <details class="faq-item"><summary>What events are happening this weekend?</summary><p>The list above refreshes as organisers publish new dates. Sort by soonest first to see everything happening in the next few days.</p></details>
+  <details class="faq-item"><summary>Are the ticket prices the final price?</summary><p>Yes. The price shown is the organiser's own price. We add nothing on top.</p></details>
+
   <div class="seo-links"><a href="/tours.html">Tours</a><a href="/food.html">Food Delivery</a><a href="/rides.html">Rides</a><a href="/apartments.html">Stays</a><a href="/flights.html">Flights</a></div>
 </section>
 

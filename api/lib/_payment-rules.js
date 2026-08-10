@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════════════════════
-   APATMENTO — Payment policy (single source of truth)
+   APATMENTO. Payment policy (single source of truth)
    api/lib/_payment-rules.js
 
    Both the STK initiator and the callback import this so the browser,
@@ -8,7 +8,7 @@
    THE MODEL
    ─────────
    A guest may pay ANY amount toward a booking, in as many instalments
-   as they like. Money is accepted below the deposit threshold — but the
+   as they like. Money is accepted below the deposit threshold, but the
    booking is NOT confirmed until the running total reaches 25% of the
    grand total, and the check-in code is NOT released until the total
    reaches 100%.
@@ -25,7 +25,7 @@
 /* 25% on every stay, regardless of nights. */
 export const DEPOSIT_PCT = 0.25;
 
-/* Minimum per TRANSACTION — unrelated to the deposit threshold.
+/* Minimum per TRANSACTION. Unrelated to the deposit threshold.
    PayHero and Safaricom charge a flat fee per transaction, so a KES 1
    push costs more to collect than it brings in. This floor lets a guest
    still pay far below the 25% deposit while keeping each individual
@@ -41,7 +41,7 @@ export function depositRequired(grandTotal) {
 }
 
 /* Derive booking status purely from money in. Never set status directly
-   anywhere else — this function owns the state machine. */
+   anywhere else. This function owns the state machine. */
 export function deriveStatus(amountPaid, grandTotal) {
   const paid  = Number(amountPaid || 0);
   const total = Number(grandTotal || 0);
@@ -63,7 +63,7 @@ export function isFullyPaid(amountPaid, grandTotal) {
 
 /**
  * Validate a requested instalment against the booking.
- * Returns { ok, amount, error, meta } — `amount` is authoritative.
+ * Returns { ok, amount, error, meta }, `amount` is authoritative.
  */
 export function validateInstalment({ requested, grandTotal, amountPaid, paymentMode }) {
   const total     = Number(grandTotal || 0);
@@ -87,7 +87,7 @@ export function validateInstalment({ requested, grandTotal, amountPaid, paymentM
     return { ok: false, error: 'Enter a valid amount' };
   }
 
-  /* Never let a guest overpay — cap at what is actually outstanding. */
+  /* Never let a guest overpay. Cap at what is actually outstanding. */
   if (amount > remaining) amount = remaining;
 
   if (amount < MIN_TXN && amount < remaining) {

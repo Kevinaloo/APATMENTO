@@ -204,7 +204,7 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--glass-2)
 <div class="page">
   <span class="page-eyebrow">Your account</span>
   <h1 class="page-title">My <em>bookings</em></h1>
-  <p class="page-sub">Your reservations, tickets and trips — all in one place.</p>
+  <p class="page-sub">Your reservations, tickets and trips, all in one place.</p>
 
   <div class="tabs" id="tabs">
     <button class="tab active" id="tab-all"    onclick="setTab('all',this)">All</button>
@@ -234,7 +234,7 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--glass-2)
    defined anywhere in this file. The try/catch swallowed the resulting
    ReferenceError, leaving sb null; the async IIFE below then threw on
    sb.auth with no catch, so loadAllBookings() never ran and the page sat
-   on its loading skeletons forever — even though the bookings existed
+   on its loading skeletons forever, even though the bookings existed
    and RLS allowed them.
 
    apa-session.js memoises createClient, so asking for a client here
@@ -333,7 +333,7 @@ function renderBookings() {
   container.innerHTML = list.map(b => buildBookingCard(b)).join('');
 }
 
-/* ── Partner contact — revealed only after payment ───────────────── */
+/* ── Partner contact. Revealed only after payment ───────────────── */
 function buildPartnerContact(b) {
   // Only show for paid / checked-in bookings
   const paidStatuses = ['paid_pending_checkin','deposit_paid','checked_in','completed'];
@@ -346,8 +346,7 @@ function buildPartnerContact(b) {
   // Nothing to show
   if (!wa && !phone && !email) return `
     <div style="margin:12px 0 6px;padding:14px 16px;border-radius:14px;background:rgba(255,149,0,.07);border:1px solid rgba(255,149,0,.2);font-size:12.5px;color:var(--ink-soft);">
-      <strong>Need to reach your host?</strong> Contact Cabana support —
-      <a href="https://wa.me/254716206494?text=Hi%2C%20I%20need%20my%20host%27s%20contact%20for%20booking%20${b.payment_reference||''}" target="_blank" rel="noopener" style="color:var(--theme);font-weight:600;text-decoration:none;">WhatsApp us</a>
+      <strong>Need to reach your host?</strong> Contact Cabana support<a href="https://wa.me/254716206494?text=Hi%2C%20I%20need%20my%20host%27s%20contact%20for%20booking%20${b.payment_reference||''}" target="_blank" rel="noopener" style="color:var(--theme);font-weight:600;text-decoration:none;">WhatsApp us</a>
       or call <a href="tel:+254716206494" style="color:var(--theme);font-weight:600;text-decoration:none;">+254 716 206 494</a>
     </div>`;
 
@@ -423,7 +422,7 @@ function buildBookingCard(b) {
     ciSection = `
     <div class="bal-gate">
       <div class="bal-gate-t">🔒 Balance outstanding</div>
-      <div class="bal-gate-s">You secured this stay with a deposit. Settle the remainder to unlock check-in — your host's code won't work until you do.</div>
+      <div class="bal-gate-s">You secured this stay with a deposit. Settle the remainder to unlock check-in. Your host's code won't work until you do.</div>
       <div class="bal-gate-row"><span>Deposit paid</span><b>KES ${Number(b.deposit_amount||0).toLocaleString()}</b></div>
       <div class="bal-gate-row"><span>Balance due</span><b>KES ${Number(b.balance_amount||0).toLocaleString()}</b></div>
       <button class="bal-gate-btn" onclick="payBalance('${b.id}')">Pay KES ${Number(b.balance_amount||0).toLocaleString()} now</button>
@@ -432,7 +431,7 @@ function buildBookingCard(b) {
       <div class="ci-title">Check-in codes</div>
       <div class="ci-sub">Unlocks once the balance is settled.</div>
       <div class="ci-your-code">
-        <div class="ci-code-label">Your code — show to host</div>
+        <div class="ci-code-label">Your code. Show to host</div>
         <div class="ci-code-val">${b.guest_code || '••••••'}</div>
       </div>
     </div>`;
@@ -444,7 +443,7 @@ function buildBookingCard(b) {
       <div class="ci-sub">At check-in: show your code to the host, then enter theirs below. Once both codes are exchanged your stay is confirmed.</div>
 
       <div class="ci-your-code">
-        <div class="ci-code-label">Your code — show to host</div>
+        <div class="ci-code-label">Your code. Show to host</div>
         <div class="ci-code-val">${b.guest_code}</div>
         <div class="ci-code-hint">Share this code with your host when you arrive</div>
       </div>
@@ -467,7 +466,7 @@ function buildBookingCard(b) {
     </div>`;
   }
 
-  /* The escape hatch. Available from booking to checkout — the wording
+  /* The escape hatch. Available from booking to checkout. The wording
      and the consequences change with the clock, not the button.      */
   if (b._type === 'apartment' && !b.cancelled_at &&
       ['paid_pending_checkin','deposit_paid','checked_in'].includes(b.status)) {
@@ -475,7 +474,7 @@ function buildBookingCard(b) {
     const label = h == null ? "Report a problem"
       : h >= 24 ? "Cancel this stay"
       : h >= 2  ? "Can't stay here?"
-      : "Can't stay here — there's an issue";
+      : "Can't stay here. There's an issue";
     ciSection += `<button class="issue-btn" onclick="openIssue('${b.id}')">${label}</button>`;
   }
 
@@ -504,7 +503,7 @@ function buildBookingCard(b) {
     </div>
     <div class="bk-body">
       <div class="bk-divider"></div>
-      <div class="bk-row"><span class="lbl">Reference</span><span class="val" style="font-family:var(--font-data);font-size:12px;">${b.payment_reference || '—'}</span></div>
+      <div class="bk-row"><span class="lbl">Reference</span><span class="val" style="font-family:var(--font-data);font-size:12px;">${b.payment_reference || ', '}</span></div>
       <div class="bk-row"><span class="lbl">Amount paid</span><span class="val">KES ${Number(b.grand_total||0).toLocaleString()}</span></div>
       <div class="bk-row"><span class="lbl">Guests</span><span class="val">${b.num_guests || b.tickets || 1}</span></div>
       ${buildPartnerContact(b)}
@@ -538,15 +537,15 @@ async function loadTrustState(uid) {
 /* ═══════════════════════════════════════════════════════════════
    MATCH OFFER PANEL
    The host couldn't host. We don't ask the guest to hunt for a
-   replacement — we hand them a ranked shortlist and a refund button
+   replacement. We hand them a ranked shortlist and a refund button
    of equal weight. Declining costs them nothing.
    ═══════════════════════════════════════════════════════════════ */
 function buildMatchPanel(b, offer) {
   const cands = offer.candidates || [];
   return `
   <div class="match-card" id="match-${b.id}">
-    <div class="match-t">Your host can't host — we found ${cands.length} alternative${cands.length===1?'':'s'}</div>
-    <div class="match-s">Same dates, same price to you. We've ranked these by how closely they match what you booked. Choose one, or take a full refund — no penalty either way.</div>
+    <div class="match-t">Your host can't host. We found ${cands.length} alternative${cands.length===1?'':'s'}</div>
+    <div class="match-s">Same dates, same price to you. We've ranked these by how closely they match what you booked. Choose one, or take a full refund, no penalty either way.</div>
     ${cands.map(c => `
       <div class="match-opt" data-listing="${c.listing_id}" onclick="pickMatch('${b.id}','${c.listing_id}')">
         <img class="match-thumb" src="${(Array.isArray(c.photos)?c.photos[0]:'')||'/cabana-emblem.png'}" alt=""/>
@@ -624,14 +623,14 @@ function payBalance(bookingId) {
 /* ═══════════════════════════════════════════════════════════════
    PRIVATE REVIEW
    Never published. The host sees it only once they've written
-   theirs — so neither is writing a reply. It still moves the
+   theirs, so neither is writing a reply. It still moves the
    listing up or down.
    ═══════════════════════════════════════════════════════════════ */
 function buildReviewPanel(b) {
   return `
   <div class="rev-prompt" id="rev-${b.id}">
     <div class="rev-t">How was ${b.apartment_name || 'your stay'}?</div>
-    <div class="rev-s">This stays between you, your host and us. It is never shown publicly — but it does decide where this listing ranks.</div>
+    <div class="rev-s">This stays between you, your host and us. It is never shown publicly, but it does decide where this listing ranks.</div>
     <div class="rev-stars" id="stars-${b.id}">
       ${[1,2,3,4,5].map(n => `<span class="rev-star" data-n="${n}" onclick="setStars('${b.id}',${n})">★</span>`).join('')}
     </div>
@@ -697,10 +696,10 @@ async function verifyHostCode(table, reference, bookingId) {
     const data = await res.json();
     if (btn) { btn.classList.remove('loading'); btn.textContent = 'Confirm check-in'; }
 
-    /* 402 — the code was right. The money wasn't. Say so plainly;
+    /* 402. The code was right. The money wasn't. Say so plainly;
        a guest at a door does not need to guess why nothing happened. */
     if (res.status === 402 && data.error === 'balance_due') {
-      showToast(`Correct code — but KES ${Number(data.balance_amount).toLocaleString()} is still outstanding.`, 5000);
+      showToast(`Correct code, but KES ${Number(data.balance_amount).toLocaleString()} is still outstanding.`, 5000);
       await loadAllBookings();
       setTimeout(() => payBalance(bookingId), 700);
       return;
@@ -710,14 +709,14 @@ async function verifyHostCode(table, reference, bookingId) {
       showToast('That code doesn\'t match. Check with your host.', 4000); return;
     }
     if (!res.ok) {
-      showToast('❌ ' + (data.message || data.error || 'Could not verify — try again'), 4000); return;
+      showToast('❌ ' + (data.message || data.error || 'Could not verify. Try again'), 4000); return;
     }
 
     showToast(data.already ? 'Already checked in.' : '🎉 Check-in confirmed. Enjoy your stay.', 5000);
     await loadAllBookings();
   } catch(err) {
     if (btn) { btn.classList.remove('loading'); btn.textContent = 'Confirm check-in'; }
-    showToast('Network error — please try again');
+    showToast('Network error. Please try again');
   }
 }
 

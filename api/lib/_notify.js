@@ -46,7 +46,7 @@ export async function notify({ user_id, endpoint, title, body, url, kind = 'gene
   }
 }
 
-/* Common presets — keeps copy consistent across the app. */
+/* Common presets. Keeps copy consistent across the app. */
 export const Notify = {
   bookingConfirmed: (user_id, listing) => notify({
     user_id, kind: 'booking',

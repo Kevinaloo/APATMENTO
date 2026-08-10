@@ -1,5 +1,5 @@
 /* ════════════════════════════════════════════════════════════════
-   APATMENTO SHOWCASE v3 — Premium Ad Engine
+   APATMENTO SHOWCASE v3. Premium Ad Engine
    Loads LIVE from Supabase. Falls back to demos only if DB empty.
    Page-targeted. GA4 tracked. Impression + click counters in DB.
 ════════════════════════════════════════════════════════════════ */
@@ -46,7 +46,7 @@ let CAMPS = {video:[], carousel:[], native:[], split:[], ticker:[], sticky:[]};
 
 async function loadFromDB(){
   try {
-    // 4s timeout — never block the page if Supabase is slow
+    // 4s timeout, never block the page if Supabase is slow
     const controller = new AbortController();
     const timer = setTimeout(()=>controller.abort(), 4000);
     let r;
@@ -105,20 +105,20 @@ const DEMO = {
     {id:'d_v2',advertiser:'Cabana Tours',tag:'Featured',headline:"Days you\'ll never forget",sub:'Maasai Mara · Mt Kenya · Diani Beach · Guides keep 100%',cta:'Explore tours',url:'tours.html',media:'',poster:'',grad:'linear-gradient(135deg,#2DD4BF,#4361FF)',accent:'#5EEAD4',price:'',icon:'<path d="m15 5.5-6-2-6 2.5v13l6-2.5 6 2 6-2.5v-13zM9 3.5v13M15 7.5v13"/>'},
   ],
   carousel:[
-    {id:'d_cab_c',advertiser:'Cabana',tag:'New chapter',headline:'Apatmento is becoming Cabana',sub:'Same home, same 100% to hosts — a brighter name built to travel',cta:'See the story',url:'cabana.html',media:'',poster:'',grad:'linear-gradient(135deg,#6D28FF,#4F6DFF,#FF6A3C)',accent:'#FF6A3C',price:'',icon:'<path d=\"M12 2 2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5\"/>'},
+    {id:'d_cab_c',advertiser:'Cabana',tag:'New chapter',headline:'Apatmento is becoming Cabana',sub:'Same home, same 100% to hosts. A brighter name built to travel',cta:'See the story',url:'cabana.html',media:'',poster:'',grad:'linear-gradient(135deg,#6D28FF,#4F6DFF,#FF6A3C)',accent:'#FF6A3C',price:'',icon:'<path d=\"M12 2 2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5\"/>'},
     {id:'d_c1',advertiser:'M-Pesa',tag:'Sponsored',headline:'Pay the smart way',sub:'Instant M-Pesa payments on every Cabananto booking',cta:'Learn more',url:'#',media:'',poster:'',grad:'linear-gradient(135deg,#2DD4BF,#5EEAD4)',accent:'#5EEAD4',price:'',icon:'<rect width="20" height="14" x="2" y="5" rx="2"/><path d="M2 10h20"/>'},
-    {id:'d_c2',advertiser:'Jambojet',tag:'Sponsored',headline:'Fly Kenya for less',sub:'Domestic flights from KES 2,800 — no added fees',cta:'Book flights',url:'flights.html',media:'',poster:'',grad:'linear-gradient(135deg,#4361FF,#B8A4F4)',accent:'#4361FF',price:'',icon:'<path d="M17.8 19.2 16 11l3.5-3.5C21 6 21 4 21 4s-2 0-3.5 1.5L14 9 5.8 6.2l-1.9 1.9 7.1 3.4L9.6 14H6l-1 1 3 1 1 3 1-1v-3.6l3.5-1.4 3.4 7.1z"/>'},
-    {id:'d_c3',advertiser:'Safaricom',tag:'Sponsored',headline:'Stay connected everywhere',sub:'Kenya\'s best network — fibre-verified Apatmento properties',cta:'See stays',url:'apartments.html',media:'',poster:'',grad:'linear-gradient(135deg,#7B2FF7,#B8A4F4)',accent:'#B8A4F4',price:'',icon:'<path d="M5 13a10 10 0 0 1 14 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/>'},
+    {id:'d_c2',advertiser:'Jambojet',tag:'Sponsored',headline:'Fly Kenya for less',sub:'Domestic flights from KES 2,800, no added fees',cta:'Book flights',url:'flights.html',media:'',poster:'',grad:'linear-gradient(135deg,#4361FF,#B8A4F4)',accent:'#4361FF',price:'',icon:'<path d="M17.8 19.2 16 11l3.5-3.5C21 6 21 4 21 4s-2 0-3.5 1.5L14 9 5.8 6.2l-1.9 1.9 7.1 3.4L9.6 14H6l-1 1 3 1 1 3 1-1v-3.6l3.5-1.4 3.4 7.1z"/>'},
+    {id:'d_c3',advertiser:'Safaricom',tag:'Sponsored',headline:'Stay connected everywhere',sub:'Kenya\'s best network. Fibre-verified Apatmento properties',cta:'See stays',url:'apartments.html',media:'',poster:'',grad:'linear-gradient(135deg,#7B2FF7,#B8A4F4)',accent:'#B8A4F4',price:'',icon:'<path d="M5 13a10 10 0 0 1 14 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/>'},
   ],
   native:[
     {id:'d_cabana',advertiser:'Cabana',tag:'New chapter',headline:'Apatmento is becoming Cabana',sub:'Same team. Same zero-commission promise. A brighter name, built to travel the world.',cta:'See what\'s changing',url:'cabana.html',media:'',poster:'',grad:'linear-gradient(135deg,#6D28FF 0%,#4F6DFF 45%,#FF6A3C 100%)',accent:'#FF6A3C',price:'',icon:'<path d=\"M12 2 2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5\"/>'},
-    {id:'d_n1',advertiser:'Sankara Nairobi',tag:'Promoted',headline:'Sankara Nairobi — Westlands',sub:'5-star · Rooftop pool · Sky bar',cta:'View hotel',url:'#',media:'',poster:'',grad:'linear-gradient(135deg,#B8A4F4,#7B2FF7)',accent:'#B8A4F4',price:'From KES 18,000',icon:'<path d="M3 21h18M5 21V7l7-4 7 4v14"/>'},
+    {id:'d_n1',advertiser:'Sankara Nairobi',tag:'Promoted',headline:'Sankara Nairobi. Westlands',sub:'5-star · Rooftop pool · Sky bar',cta:'View hotel',url:'#',media:'',poster:'',grad:'linear-gradient(135deg,#B8A4F4,#7B2FF7)',accent:'#B8A4F4',price:'From KES 18,000',icon:'<path d="M3 21h18M5 21V7l7-4 7 4v14"/>'},
   ],
   split:[
-    {id:'d_s1',advertiser:'Apatmento',tag:'Partner with us',headline:'List your property.\nKeep everything.',sub:'Zero commission. Zero percentage cuts. Guests pay face value plus a small fixed fee — you keep 100% of your rate. Always.',cta:'Start listing free',url:'add-listing.html',media:'',poster:'',grad:'linear-gradient(135deg,#2DD4BF,#4361FF)',accent:'#5EEAD4',price:'',icon:'<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>'},
+    {id:'d_s1',advertiser:'Apatmento',tag:'Partner with us',headline:'List your property.\nKeep everything.',sub:'Zero commission. Zero percentage cuts. Guests pay face value plus a small fixed fee. You keep 100% of your rate. Always.',cta:'Start listing free',url:'add-listing.html',media:'',poster:'',grad:'linear-gradient(135deg,#2DD4BF,#4361FF)',accent:'#5EEAD4',price:'',icon:'<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>'},
   ],
   ticker:[
-    {id:'d_t1',advertiser:'Apatmento',tag:'Live',headline:'🔥 20 stays available in Nairobi tonight · Diani White Sands — 3 rooms left · Maasai Mara Safari — booking now · Karen Ridgeline Villa — new listing · Westlands Skybox — instant book · Kilimani Penthouse — KES 12,500/night',sub:'',cta:'',url:'apartments.html',media:'',poster:'',grad:'linear-gradient(135deg,#0A0A14,#1A1A35)',accent:'#B8A4F4',price:'',icon:''},
+    {id:'d_t1',advertiser:'Apatmento',tag:'Live',headline:'🔥 20 stays available in Nairobi tonight · Diani White Sands, 3 rooms left · Maasai Mara Safari. Booking now · Karen Ridgeline Villa. New listing · Westlands Skybox. Instant book · Kilimani Penthouse. KES 12,500/night',sub:'',cta:'',url:'apartments.html',media:'',poster:'',grad:'linear-gradient(135deg,#0A0A14,#1A1A35)',accent:'#B8A4F4',price:'',icon:''},
   ],
   sticky:[
     {id:'d_st1',advertiser:'Apatmento',tag:'Earn',headline:'Your property could be earning',sub:'Zero commission · Keep 100%',cta:'List for free →',url:'add-listing.html',media:'',poster:'',grad:'linear-gradient(135deg,#2DD4BF,#4361FF)',accent:'#5EEAD4',price:'',icon:'<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>'},
@@ -127,14 +127,14 @@ const DEMO = {
 
 
 /* ════════════════════════════════════════════════════════════════
-   BRANDED FALLBACK — shown when a slot has no matching campaign
+   BRANDED FALLBACK. Shown when a slot has no matching campaign
    "APATMENTO FOR LIFE · TRAVEL IN STYLE"
 ════════════════════════════════════════════════════════════════ */
 const BRAND_FALLBACK = {
   video: {
     id:'brand_video', advertiser:'Apatmento', tag:'Apatmento',
     headline:'Travel in style.\nLive without limits.',
-    sub:'Kenya\'s first zero-commission travel super-app. Stays, flights, tours, events, rides, food and more — all in one place.',
+    sub:'Kenya\'s first zero-commission travel super-app. Stays, flights, tours, events, rides, food and more, all in one place.',
     cta:'Explore Apatmento', url:'index.html',
     media:'', poster:'',
     grad:'linear-gradient(135deg,#0A0A14 0%,#1A0A3E 40%,#0E1A4E 100%)',
@@ -144,25 +144,25 @@ const BRAND_FALLBACK = {
   carousel: [
     {id:'brand_c1', advertiser:'Cabana Stays', tag:'Featured', headline:'Find your perfect space', sub:'Apartments from KES 3,200 · Hosts keep 100%', cta:'Browse stays', url:'apartments.html', media:'', poster:'', grad:'linear-gradient(135deg,#B8A4F4,#7B2FF7)', accent:'#B8A4F4', price:'', icon:'<path d="M3 10.5 12 4l9 6.5M5 9.5V20h14V9.5"/>'},
     {id:'brand_c2', advertiser:'Cabana Tours', tag:'Featured', headline:"Days you\'ll never forget", sub:'Safaris, treks & experiences across Kenya', cta:'See tours', url:'tours.html', media:'', poster:'', grad:'linear-gradient(135deg,#2DD4BF,#4361FF)', accent:'#5EEAD4', price:'', icon:'<path d="m15 5.5-6-2-6 2.5v13l6-2.5 6 2 6-2.5v-13z"/>'},
-    {id:'brand_c3', advertiser:'Apatmento Events', tag:'Featured', headline:'Face-value tickets. Nothing added.', sub:'Concerts, festivals, sports — you pay exactly what the organiser charges', cta:'Get tickets', url:'events.html', media:'', poster:'', grad:'linear-gradient(135deg,#7B2FF7,#B8A4F4)', accent:'#B8A4F4', price:'', icon:'<path d="M3 9a2 2 0 0 0 0 6v2a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-2a2 2 0 0 0 0-6V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1z"/>'},
+    {id:'brand_c3', advertiser:'Apatmento Events', tag:'Featured', headline:'Face-value tickets. Nothing added.', sub:'Concerts, festivals, sports. You pay exactly what the organiser charges', cta:'Get tickets', url:'events.html', media:'', poster:'', grad:'linear-gradient(135deg,#7B2FF7,#B8A4F4)', accent:'#B8A4F4', price:'', icon:'<path d="M3 9a2 2 0 0 0 0 6v2a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-2a2 2 0 0 0 0-6V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1z"/>'},
   ],
   native: {
     id:'brand_n1', advertiser:'Apatmento', tag:'Apatmento',
-    headline:'Apatmento — Travel in style', sub:'Zero commission · Hosts keep 100%', cta:'Explore', url:'index.html',
+    headline:'Apatmento. Travel in style', sub:'Zero commission · Hosts keep 100%', cta:'Explore', url:'index.html',
     media:'', poster:'', grad:'linear-gradient(135deg,#B8A4F4,#7B2FF7)', accent:'#B8A4F4', price:'From KES 3,200/night',
     icon:'<path d="M3 10.5 12 4l9 6.5M5 9.5V20h14V9.5"/>',
   },
   split: {
     id:'brand_s1', advertiser:'Apatmento', tag:'Apatmento for Life',
     headline:'Travel in style.\nLive without limits.',
-    sub:'Kenya\'s only zero-commission travel super-app. Stays, flights, safaris, events, rides, food and shopping — all in one place. Hosts keep 100% of every booking.',
+    sub:'Kenya\'s only zero-commission travel super-app. Stays, flights, safaris, events, rides, food and shopping, all in one place. Hosts keep 100% of every booking.',
     cta:'Discover Apatmento', url:'index.html',
     media:'', poster:'', grad:'linear-gradient(135deg,#0A0A14,#1A0A3E,#0E1A4E)', accent:'#B8A4F4', price:'',
     icon:'<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
   },
   ticker: {
     id:'brand_t1', advertiser:'Apatmento', tag:'Live',
-    headline:'Apatmento for Life — Travel in Style · Stays from KES 3,200/night · Zero Commission · Hosts keep 100% · Book flights, safaris, events & more · Kenya\'s premium travel super-app · Apatmento for Life — Travel in Style ·',
+    headline:'Apatmento for Life. Travel in Style · Stays from KES 3,200/night · Zero Commission · Hosts keep 100% · Book flights, safaris, events & more · Kenya\'s premium travel super-app · Apatmento for Life. Travel in Style ·',
     sub:'', cta:'', url:'index.html', media:'', poster:'',
     grad:'linear-gradient(135deg,#0A0A14,#1A1A35)', accent:'#B8A4F4', price:'',
     icon:'',
@@ -170,7 +170,7 @@ const BRAND_FALLBACK = {
 };
 
 /* ════════════════════════════════════════════════════════════════
-   CSS — premium, cinematic
+   CSS. Premium, cinematic
 ════════════════════════════════════════════════════════════════ */
 const CSS = `
 /* ─ base ─ */
@@ -358,9 +358,9 @@ function injectCSS(){
    RENDERERS
 ════════════════════════════════════════════════════════════════ */
 
-/* ── VIDEO HERO — cycles ALL video campaigns in sequence ── */
+/* ── VIDEO HERO. Cycles ALL video campaigns in sequence ── */
 function renderVideo(slot, c){
-  // c is the first campaign — but we pass the full pool for cycling
+  // c is the first campaign, but we pass the full pool for cycling
   if(!c) return;
   const pool = slot._videoPool || [c];  // full list set before calling
   if(!pool.length) return;
@@ -372,21 +372,21 @@ function renderVideo(slot, c){
 
   slot.innerHTML = `
     <div class="sc-label">Sponsored content</div>
-    <div class="scv sc-el" id="scv-main" style="background:${camp().grad}">
-      <div class="scv-bg"><video id="scv-vid" muted playsinline preload="auto" style="width:100%;height:100%;object-fit:cover;"></video></div>
+    <div class="scv sc-el" style="background:${camp().grad}">
+      <div class="scv-bg"><video muted playsinline preload="auto" style="width:100%;height:100%;object-fit:cover;"></video></div>
       <div class="scv-grad" style="background:${camp().grad}"></div>
       <div class="scv-orb1" style="width:240px;height:240px;background:${camp().accent};top:-15%;left:5%;"></div>
       <div class="scv-orb2" style="width:190px;height:190px;bottom:-8%;right:10%;opacity:0;"></div>
       <div class="scv-shimmer"></div>
-      <div class="scv-tag" id="scv-tag">${camp().tag}</div>
+      <div class="scv-tag">${camp().tag}</div>
       <div class="scv-content">
-        <div class="scv-adv" id="scv-adv">
+        <div class="scv-adv">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg>
-          <span id="scv-adv-name">${camp().advertiser}</span>
+          <span class="scv-adv-name">${camp().advertiser}</span>
         </div>
-        <div class="scv-h" id="scv-h">${camp().headline}</div>
-        <div class="scv-sub" id="scv-sub">${camp().sub}</div>
-        <button class="scv-cta" id="scv-cta">${camp().cta}
+        <div class="scv-h">${camp().headline}</div>
+        <div class="scv-sub">${camp().sub}</div>
+        <button class="scv-cta">${camp().cta}
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
         </button>
       </div>
@@ -394,14 +394,14 @@ function renderVideo(slot, c){
       <div style="position:absolute;top:14px;right:16px;display:flex;gap:4px;z-index:3;">
         ${pool.map((_,i)=>`<div class="scv-pdot ${i===0?'scv-pdot-active':''}" data-i="${i}" style="width:${i===0?'20px':'5px'};height:5px;border-radius:3px;background:${i===0?'rgba(255,255,255,.9)':'rgba(255,255,255,.3)'};transition:all .4s;"></div>`).join('')}
       </div>` : ``}
-      <div class="scv-bar"><div class="scv-bar-fill" id="scv-bar"></div></div>
+      <div class="scv-bar"><div class="scv-bar-fill"></div></div>
     </div>`;
 
   const el   = slot.querySelector('.scv');
-  const vid  = slot.querySelector('#scv-vid');
-  const bar  = slot.querySelector('#scv-bar');
+  const vid  = slot.querySelector('.scv-bg video');
+  const bar  = slot.querySelector('.scv-bar-fill');
   const snd  = slot.querySelector('.sc-sound');
-  /* prev/next removed — unskippable */
+  /* prev/next removed. Unskippable */
   let muted  = true;
 
   /* ── update all UI elements for current campaign ── */
@@ -423,7 +423,7 @@ function renderVideo(slot, c){
         const oldPi = el.querySelector('.scv-photo-img');
         if(oldPi) oldPi.style.display = 'none';
       } else {
-        // Photo ad — show as img element above the video element
+        // Photo ad. Show as img element above the video element
         vid.src = ''; vid.poster = ''; vid.style.display = 'none';
         let pi = el.querySelector('.scv-photo-img');
         if(!pi){ pi=document.createElement('img'); pi.className='scv-photo-img'; pi.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;'; el.querySelector('.scv-bg').appendChild(pi); }
@@ -446,11 +446,11 @@ function renderVideo(slot, c){
     if(grad) grad.style.background = cp.grad;
 
     // copy
-    const h = slot.querySelector('#scv-h');
-    const s = slot.querySelector('#scv-sub');
-    const cta = slot.querySelector('#scv-cta');
-    const tag = slot.querySelector('#scv-tag');
-    const adv = slot.querySelector('#scv-adv-name');
+    const h = slot.querySelector('.scv-h');
+    const s = slot.querySelector('.scv-sub');
+    const cta = slot.querySelector('.scv-cta');
+    const tag = slot.querySelector('.scv-tag');
+    const adv = slot.querySelector('.scv-adv-name');
     if(h)   h.textContent   = cp.headline;
     if(s)   s.textContent   = cp.sub;
     if(tag) tag.textContent = cp.tag;
@@ -514,7 +514,7 @@ function renderVideo(slot, c){
     if(url && url !== '#') window.location.href = url;
   });
 
-  // Autoplay always — no pause on scroll out
+  // Autoplay always, no pause on scroll out
   el.classList.add('in');
   if(camp().media){ vid.play().catch(()=>{}); }
   else startGradTimer();
@@ -568,7 +568,7 @@ function renderCarousel(slot, cs){
     trackImpression(cs[cur].id,'carousel',cs[cur].advertiser);
   }
   function tick(ts){
-    // Stop RAF if page hidden or element not in DOM — prevents mobile freeze
+    // Stop RAF if page hidden or element not in DOM. Prevents mobile freeze
     if(document.hidden || !wrap.isConnected){ raf=null; return; }
     if(!paused){elapsed+=ts-last;prog.style.width=Math.min(elapsed/DUR*100,100)+'%';if(elapsed>=DUR)go(cur+1);}
     last=ts;raf=requestAnimationFrame(tick);
@@ -585,7 +585,7 @@ function renderCarousel(slot, cs){
   dots.forEach(d=>d.addEventListener('click',()=>go(+d.dataset.i)));
   wrap.querySelector('.scc-prev').addEventListener('click',()=>go(cur-1));
   wrap.querySelector('.scc-next').addEventListener('click',()=>go(cur+1));
-  // No mouseenter pause — carousel auto-advances always
+  // No mouseenter pause. Carousel auto-advances always
   let sx=0;
   wrap.addEventListener('touchstart',e=>sx=e.touches[0].clientX,{passive:true});
   wrap.addEventListener('touchend',e=>{const d=e.changedTouches[0].clientX-sx;if(Math.abs(d)>50)go(cur+(d<0?1:-1));},{passive:true});
@@ -725,7 +725,7 @@ function renderWindow(slot, c){
   const el   = slot.querySelector('.sc-window');
   const vid  = slot.querySelector('video');
   const cta  = slot.querySelector('.sc-window-cta');
-  /* sound removed — always muted */
+  /* sound removed, always muted */
   const bar  = slot.querySelector('.sc-window-bar-fill');
   let muted  = true;
 
@@ -762,58 +762,101 @@ function renderWindow(slot, c){
     el.classList.add('in');
     trackImpression(camp().id,'window',camp().advertiser);
     vid.play().catch(()=>{});
-  }); // no pause on scroll-out — plays always
+  }); // no pause on scroll-out. Plays always
 
   updateWindow();
 }
 
-/* ── SCROLL INTERSTITIAL (injected between listings) ── */
+/* ── IN-CONTENT UNITS (woven between listing cards) ──
+   Ad units live inside the results, never above them. Formats alternate so a
+   video unit is never stacked against another video unit, and the spacing
+   guard below keeps every unit clear of the ticker, split and window slots. */
 function injectScrollInterstitials(gridSelector, interval){
-  // interval = every N items, inject an ad
   if(!gridSelector) return;
   const grid = document.querySelector(gridSelector);
   if(!grid) return;
 
-  const pools = CAMPS.video?.length ? CAMPS.video : (CAMPS.carousel?.length ? null : DEMO.video);
   let adIdx = 0;
 
-  // Use MutationObserver — inject after items load
   const doInject = () => {
     const items = [...grid.children].filter(c=>!c.dataset.adInjected);
     items.forEach((item, i) => {
-      if((i + 1) % interval === 0) {
-        const adPool = CAMPS.video?.length ? CAMPS.video : DEMO.video;
-        const adCamp = adPool[adIdx % adPool.length];
-        adIdx++;
+      if((i + 1) % interval !== 0) return;
 
-        const wrapper = document.createElement('div');
-        wrapper.dataset.adInjected = '1';
-        wrapper.setAttribute('data-showcase-inline', '1');
-        // For grids, span full width
-        wrapper.style.cssText = 'grid-column:1/-1;margin:8px 0;';
+      const vPool = CAMPS.video?.length    ? CAMPS.video    : DEMO.video;
+      const cPool = CAMPS.carousel?.length ? CAMPS.carousel : DEMO.carousel;
 
-        const slot = document.createElement('div');
-        slot._videoPool = adPool;
-        wrapper.appendChild(slot);
-        grid.insertBefore(wrapper, items[i].nextSibling);
-        renderCarousel(slot, CAMPS.carousel?.length ? CAMPS.carousel : DEMO.carousel);
+      /* alternate: video, carousel, video, carousel … */
+      const useVideo = (adIdx % 2 === 0) && vPool?.length;
+      adIdx++;
+
+      const wrapper = document.createElement('div');
+      wrapper.dataset.adInjected = '1';
+      wrapper.setAttribute('data-showcase-inline', useVideo ? 'video' : 'carousel');
+      wrapper.style.cssText = 'grid-column:1/-1;margin:20px 0;';
+
+      const slot = document.createElement('div');
+      slot.style.position = 'relative';
+      wrapper.appendChild(slot);
+      grid.insertBefore(wrapper, items[i].nextSibling);
+
+      if(useVideo){
+        slot._videoPool = vPool;
+        renderVideo(slot, vPool[0]);
+      } else if(cPool?.length){
+        renderCarousel(slot, cPool);
+      } else {
+        wrapper.remove();
       }
     });
+    enforceSpacing();
   };
 
-  // Disconnect observer BEFORE injecting to prevent infinite loop
   let scInjected = false;
   const safeInject = () => {
     if(scInjected) return;
     const items = [...grid.children].filter(c=>!c.dataset.adInjected);
-    if(items.length < interval) return; // wait for enough items
+    if(items.length < interval) return;
     scInjected = true;
-    obs.disconnect(); // Stop watching BEFORE we touch the DOM
+    obs.disconnect();
     doInject();
   };
   const obs = new MutationObserver(safeInject);
   obs.observe(grid, { childList: true, subtree: false });
-  setTimeout(safeInject, 1200); // Initial check after items load
+  setTimeout(safeInject, 1200);
+}
+
+/* ── SPACING GUARD ──
+   No two ad units may sit within MIN_GAP of each other. Whichever unit is
+   higher up the page wins, so a video unit can never land on top of a
+   carousel, ticker or split unit. */
+const MIN_GAP = 700;
+
+/* Never take real page content with a removed unit: only a wrapper that
+   exists purely to hold the slot goes with it. */
+function dropUnit(el){
+  const p = el.parentElement;
+  const disposable = p && p !== document.body && p.children.length === 1 &&
+                     !p.className && p.tagName === 'DIV';
+  (disposable ? p : el).remove();
+}
+
+function enforceSpacing(){
+  const units = [...document.querySelectorAll('[data-showcase],[data-showcase-inline]')]
+    .filter(el => el.getAttribute('data-showcase') !== 'sticky')
+    .filter(el => el.offsetParent !== null && el.offsetHeight > 40)
+    .map(el => ({ el, top: el.getBoundingClientRect().top + window.scrollY,
+                  h: el.offsetHeight }))
+    .sort((a,b) => a.top - b.top);
+
+  let lastBottom = null;
+  units.forEach(u => {
+    if(lastBottom !== null && u.top - lastBottom < MIN_GAP){
+      dropUnit(u.el);
+      return;
+    }
+    lastBottom = u.top + u.h;
+  });
 }
 
 /* ── Intersection observer ── */
@@ -837,7 +880,7 @@ function pick(fmt,pool){
 }
 
 /* ════════════════════════════════════════════════════════════════
-   INIT — scan slots, load DB, render
+   INIT. Scan slots, load DB, render
 ════════════════════════════════════════════════════════════════ */
 async function init(){
   injectCSS();
@@ -865,9 +908,13 @@ async function init(){
     if(fmt==='ticker')   renderTicker(slot, pick('ticker', get('ticker')));
   });
 
-  /* Scroll interstitials — inject between listing cards */
+  /* Keep every unit clear of its neighbours once layout has settled */
+  setTimeout(enforceSpacing, 900);
+  window.addEventListener('load', () => setTimeout(enforceSpacing, 400));
+
+  /* In-content units. Woven between listing cards */
   // Scroll interstitials: only on pages with proper listing grids
-  // Rides, food, shopping excluded — they don't have grids, ads appear at top
+  // Rides, food, shopping excluded. They don't have grids, ads appear at top
   const interstitialPages = {
     'apartments': '#grid',
     'tours':      '#grid',
@@ -875,6 +922,7 @@ async function init(){
     'rides':      '#grid',
     'carhire':    '#grid',
     'roommates':  '#grid',
+    'food':       '#grid',
   };
   if(interstitialPages[PAGE]){
     // Wait for grid to have actual content before injecting

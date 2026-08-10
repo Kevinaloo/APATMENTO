@@ -1,11 +1,11 @@
 /* ═══════════════════════════════════════════════════════════════════
-   APATMENTO · Ask APA  — voice + text assistant  v3
+   APATMENTO · Ask APA. Voice + text assistant  v3
    ───────────────────────────────────────────────────────────────────
    WHAT'S NEW IN v3:
-     · AUTO-NAVIGATION: APA moves the guest IMMEDIATELY — no button to
+     · AUTO-NAVIGATION: APA moves the guest IMMEDIATELY, no button to
        click. When the model returns [[go:route]], the browser navigates
        in 1.4 seconds (enough for the guest to read APA's message).
-       Includes URL parameter passing — APA can deep-link into filtered
+       Includes URL parameter passing. APA can deep-link into filtered
        search results (area, beds, dates, etc.)
      · SMARTER GREET: context-aware opening line based on page + time.
      · RICHER PERSONA: charismatic, warm, genuinely funny.
@@ -22,13 +22,13 @@
 
   /* ── Config ──────────────────────────────────────────────────────── */
   var API_ENDPOINT  = '/api/ask-apa';
-  var MAX_HISTORY   = 12;  // keep more context — trimmed server-side too
+  var MAX_HISTORY   = 12;  // keep more context. Trimmed server-side too
   var FETCH_TIMEOUT = 30000; // 30s client fetch timeout
   var VOICE_RATE    = 1.04;
   var VOICE_PITCH   = 1.0;
   var NAV_DELAY_MS  = 1500; // ms to show APA's message before navigating
 
-  /* Route map — ONLY guest-accessible public routes */
+  /* Route map. ONLY guest-accessible public routes */
   var ROUTES = {
     home:'/index.html', stays:'/apartments.html', apartments:'/apartments.html',
     tours:'/tours.html', food:'/food.html', rides:'/rides.html', events:'/events.html',
@@ -52,7 +52,7 @@
     bookings:'📋', profile:'👤', rewards:'⭐', dashboard:'📊', signin:'🔐',
   };
 
-  /* Quick intent map — NAV VERB required + service keyword → instant route
+  /* Quick intent map. NAV VERB required + service keyword → instant route
      These only fire from detectQuickIntent() which already checks for question patterns */
   var QUICK_INTENT = [
     { re: /\b(show me|take me to|open|go to|browse|find me|i need|book)\b.{0,30}\b(apartments?|stays?|accommodation|flat|house|villa|bnb)\b/i, route: 'stays' },
@@ -241,7 +241,7 @@
   function build() {
     fab = document.createElement('button');
     fab.id = 'apa-fab';
-    fab.setAttribute('aria-label', 'Ask APA — open assistant');
+    fab.setAttribute('aria-label', 'Ask APA. Open assistant');
     fab.innerHTML =
       '<div class="apa-pulse"></div>' +
       '<img id="apa-fab-avatar" src="/cabana-avatar.png" alt="APA" />';
@@ -282,7 +282,7 @@
         '<button class="apa-send" id="apa-send" aria-label="Send" onclick="AskAPA.send()"><svg viewBox="0 0 24 24"><path d="m22 2-11 11M22 2 15 22l-4-9-9-4 20-7z"/></svg></button>' +
       '</div>' +
       (voiceOn && !secure ? '<div class="apa-note">Voice needs a secure (https) connection.</div>' :
-       (!voiceOn ? '<div class="apa-note">Voice isn\u2019t supported in this browser — text works great.</div>' : ''));
+       (!voiceOn ? '<div class="apa-note">Voice isn\u2019t supported in this browser. Text works great.</div>' : ''));
     document.body.appendChild(panel);
 
     var inp = document.getElementById('apa-input');
@@ -295,7 +295,7 @@
     });
 
     showChips(defaultChips());
-    // Edge TTS used for speech — no preload needed
+    // Edge TTS used for speech, no preload needed
     if (synthOn) { try { global.speechSynthesis.getVoices(); } catch (_) {} } // kept for fallback
   }
 
@@ -320,7 +320,7 @@
     }).join('');
   }
 
-  /* Predictive next-step chips from API — navigate directly, no round-trip */
+  /* Predictive next-step chips from API. Navigate directly, no round-trip */
   function showNextStepChips(steps) {
     var el = document.getElementById('apa-chips');
     if (!el || !steps || !steps.length) return;
@@ -358,7 +358,7 @@
     if (navPending) { clearTimeout(navPending); navPending = null; }
   }
 
-  /* ── Smart greeting — AI-powered, never the same twice ───────────── */
+  /* ── Smart greeting. AI-powered, never the same twice ───────────── */
   function greet() {
     var p = pageLabel();
     var h = new Date().getHours();
@@ -369,7 +369,7 @@
       (p ? ' They are currently on the ' + p + ' page.' : '') +
       ' It is ' + timeHint + ' local time.' +
       ' Write a single, short, punchy opening greeting (2-3 sentences max).' +
-      ' Be warm, confident, a little witty — like a well-travelled friend who just picked up the phone.' +
+      ' Be warm, confident, a little witty, like a well-travelled friend who just picked up the phone.' +
       ' Reference the time or page naturally if it adds flavour. Tell them your name is APA.' +
       ' End with one open question that invites them to share what they need.' +
       ' NO navigation directives. NO [[go:]]. NO bullet points. Just talk.';
@@ -470,7 +470,7 @@
 
     stopVoice(); stopSpeech();
 
-    // Build final URL — merge base URL's existing params with new params
+    // Build final URL. Merge base URL's existing params with new params
     var finalUrl = baseUrl;
     if (params && params.length > 1) {
       // params starts with '?' e.g. "?area=Westlands&guests=2"
@@ -513,7 +513,7 @@
   };
   function detectQuickIntent(text) {
     var trimmed = text.trim().toLowerCase().replace(/[!.?]+$/, '');
-    // Single-word or "take me to X" commands — instant nav
+    // Single-word or "take me to X" commands. Instant nav
     if (SINGLE_WORD_ROUTES[trimmed]) return SINGLE_WORD_ROUTES[trimmed];
     var takeMeMatch = trimmed.match(/^take me to ([a-z]+)$/);
     if (takeMeMatch && SINGLE_WORD_ROUTES[takeMeMatch[1]]) return SINGLE_WORD_ROUTES[takeMeMatch[1]];
@@ -561,8 +561,8 @@
     if (!isQuestion) {
       var quickRoute = detectQuickIntent(text);
       if (quickRoute && quickRoute !== pageKey().replace('-','')) {
-        // Instant nav — no API call needed
-        history.push({ role: 'assistant', content: 'On it — taking you there now.' });
+        // Instant nav, no API call needed
+        history.push({ role: 'assistant', content: 'On it. Taking you there now.' });
         showNavToast(quickRoute, null);
         showChips([]);
         return;
@@ -574,13 +574,13 @@
     var btn = document.getElementById('apa-send');
     if (btn) btn.disabled = true;
 
-    // ── Typing indicator timeout — never spin forever ───────────────
+    // ── Typing indicator timeout, never spin forever ───────────────
     var fetchTimeoutId = setTimeout(function () {
       if (!loading) return;
       if (typing) typing.remove();
       loading = false;
       if (btn) btn.disabled = false;
-      lastErrorMsg = "Taking longer than usual — please try again. 🔄";
+      lastErrorMsg = "Taking longer than usual. Please try again. 🔄";
       appendMsg('apa', lastErrorMsg);
       wasVoiceTurn = false;
     }, FETCH_TIMEOUT);
@@ -618,7 +618,7 @@
       return r.text().then(function (txt) {
         var d;
         try { d = JSON.parse(txt); } catch(e) {
-          d = { reply: r.status >= 500 ? 'My server had a hiccup — try again. 🔄' : 'Something slipped — try again.' };
+          d = { reply: r.status >= 500 ? 'My server had a hiccup. Try again. 🔄' : 'Something slipped. Try again.' };
         }
         return { ok: r.ok, status: r.status, d: d };
       });
@@ -631,7 +631,7 @@
       if (btn) btn.disabled = false;
 
       var data = res.d || {};
-      var reply = data.reply || data.error || 'One sec — something slipped. Try again. 🔄';
+      var reply = data.reply || data.error || 'One sec. Something slipped. Try again. 🔄';
       var navKey = data.navigate && ROUTES[String(data.navigate).toLowerCase()]
         ? String(data.navigate).toLowerCase() : null;
       var navParams = data.navigateParams || null;
@@ -639,7 +639,7 @@
       // Extract context from APA's reply too (name confirmation, etc.)
       extractSessionCtxFromReply(reply);
 
-      // Only push genuine AI replies to history — not error fallbacks
+      // Only push genuine AI replies to history, not error fallbacks
       lastErrorMsg = null;
       history.push({ role: 'assistant', content: reply });
       appendMsg('apa', reply);
@@ -654,7 +654,7 @@
         showChips(defaultChips());
       }
 
-      // Speak only conversational replies — skip if navigating (less jarring)
+      // Speak only conversational replies. Skip if navigating (less jarring)
       if (!navKey && (speaking || handsFree || wasVoiceTurn)) speak(reply);
       wasVoiceTurn = false;
     })
@@ -668,9 +668,9 @@
       console.error('[APA fetch error]', msg);
       var isNetwork = /NetworkError|Failed to fetch|Load failed|network/i.test(msg);
       var display = isNetwork
-        ? 'Connection dropped — check your signal and try again. 📶'
-        : 'One sec — hit a small bump. Try that again. 🔄';
-      // Don't push error messages to history — keeps context clean
+        ? 'Connection dropped. Check your signal and try again. 📶'
+        : 'One sec. Hit a small bump. Try that again. 🔄';
+      // Don't push error messages to history. Keeps context clean
       lastErrorMsg = display;
       appendMsg('apa', display);
       wasVoiceTurn = false;
@@ -708,20 +708,20 @@
     if (nameMatch && !sessionCtx.name) sessionCtx.name = nameMatch[1];
   }
 
-  /* ── TTS — client-side Web Speech API with smart neural voice picker ──
+  /* ── TTS. Client-side Web Speech API with smart neural voice picker ──
      Strategy: rank every voice the browser ships, pick the best neural one.
      Priority list (ordered best→acceptable):
-       Tier 1 — Microsoft Online Neural (Edge/Windows, very high quality)
-       Tier 2 — Google online neural (Chrome/Android, excellent)
-       Tier 3 — Microsoft Online (non-neural but good)
-       Tier 4 — Any online English voice
-       Tier 5 — Any local English voice (last resort)
+       Tier 1. Microsoft Online Neural (Edge/Windows, very high quality)
+       Tier 2. Google online neural (Chrome/Android, excellent)
+       Tier 3. Microsoft Online (non-neural but good)
+       Tier 4. Any online English voice
+       Tier 5. Any local English voice (last resort)
      No server call. Zero latency. 100% reliable.
   ─────────────────────────────────────────────────────────────────────── */
   var _pickedVoice  = null;   // cached SpeechSynthesisVoice
   var _voiceReady   = false;  // true once voices have been scanned
 
-  /* Score a SpeechSynthesisVoice — higher is better */
+  /* Score a SpeechSynthesisVoice. Higher is better */
   function _scoreVoice(v) {
     var n = (v.name || '').toLowerCase();
     var l = (v.lang || '').toLowerCase();
@@ -731,7 +731,7 @@
     // Microsoft neural (Edge / Windows built-in)
     if (n.includes('microsoft') && n.includes('neural')) score += 50;
     // Specific great voices
-    if (n.includes('aria'))   score += 30;       // Microsoft Aria — best
+    if (n.includes('aria'))   score += 30;       // Microsoft Aria. Best
     if (n.includes('jenny'))  score += 28;
     if (n.includes('guy'))    score += 26;
     if (n.includes('sonia'))  score += 25;       // UK neural
@@ -760,7 +760,7 @@
     return (bestScore >= 0) ? best : null;
   }
 
-  /* Warm up voice list — browsers load voices asynchronously */
+  /* Warm up voice list. Browsers load voices asynchronously */
   function _initVoices() {
     if (!synthOn || _voiceReady) return;
     var v = _pickVoice();
@@ -772,7 +772,7 @@
         _voiceReady = true;
       };
     } else {
-      // Firefox/Safari — poll briefly
+      // Firefox/Safari. Poll briefly
       var attempts = 0;
       var poll = setInterval(function () {
         var v2 = _pickVoice();
@@ -966,12 +966,12 @@
     document.body.appendChild(popup);
     avatarPopup = popup;
 
-    /* Only pop the avatar ONCE per browser session — not on every page visit.
+    /* Only pop the avatar ONCE per browser session, not on every page visit.
        We store a flag in sessionStorage so navigating to tours, stays etc.
        doesn't re-trigger the popup; only a fresh site entry (new tab / first load) shows it. */
     var APA_AVATAR_SHOWN_KEY = 'apa_avatar_shown';
     function maybeShow() {
-      /* Already shown once this session — stay quiet. */
+      /* Already shown once this session. Stay quiet. */
       try { if (global.sessionStorage.getItem(APA_AVATAR_SHOWN_KEY)) return; } catch(e){}
       if (global.ApaSession) {
         ApaSession.ready(function (state) {
@@ -1033,7 +1033,7 @@
         toast.style.textDecoration = 'line-through';
         setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 600);
       }
-      appendMsg('apa', 'No problem — what did you actually want to do?');
+      appendMsg('apa', 'No problem. What did you actually want to do?');
       showChips(defaultChips());
     },
     setContext: function(ctx) { if (ctx && typeof ctx === 'object') Object.assign(sessionCtx, ctx); },

@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════════════════════════════
-   CABANA — Cinematic Payment Experience  v2.0
+   CABANA. Cinematic Payment Experience  v2.0
    World-class. Drop-in replacement for ApatmentoPay.
    API: ApatmentoPay.start(opts), .cancel(), .close(), .retry()
 ══════════════════════════════════════════════════════════════════════ */
@@ -38,7 +38,7 @@
 
   /* ── Sarcastic failure lines ────────────────────────────────────── */
   const FAIL_LINES = [
-    "It's not you. The universe simply wasn't ready for how good you'd look at Cabana. Try again — destiny is patient, your suite is not.",
+    "It's not you. The universe simply wasn't ready for how good you'd look at Cabana. Try again. Destiny is patient, your suite is not.",
     "The payment gods clocked out early. Rude of them. One more try and they'll have no choice.",
     "M-Pesa blinked. Spiritually, this is a sign you should try again immediately.",
     "Your money wanted to arrive. It just took a wrong turn. Help it find home.",
@@ -82,7 +82,7 @@
 /*  Desktop letterbox  ────────────────────────────────────────────────
     Every payment video is shot portrait (602x1072 … 1168x1728). On a
     landscape viewport, object-fit:cover scales them to fill the width
-    and crops away almost the entire frame — the guest sees a sliver
+    and crops away almost the entire frame. The guest sees a sliver
     (an eye, a shoulder) instead of the scene. Mobile is portrait so it
     was never visible there.
 
@@ -111,7 +111,7 @@
   #cbp-vl { background-color: #0b0b10; }
 }
 
-/* Very tall/narrow desktop windows behave like mobile — keep cover. */
+/* Very tall/narrow desktop windows behave like mobile. Keep cover. */
 @media (min-aspect-ratio: 1/1) and (max-width: 720px) {
   #cbp-vl video { object-fit: cover; }
   #cbp-vl::before { display: none; }
@@ -219,7 +219,7 @@
     The copy sits directly on footage that ranges from a bright pavement
     to a dark field, so neither a light nor a dark text colour worked on
     its own. A soft radial wash anchored behind the panel lifts contrast
-    everywhere without hiding the video — the scene stays fully visible
+    everywhere without hiding the video. The scene stays fully visible
     around the edges.                                                   */
 .cbp-panel.on::before {
   content: '';
@@ -592,7 +592,7 @@
     const next = _nxt();
     const curr = _cur();
 
-    /* Show poster immediately — no black */
+    /* Show poster immediately, no black */
     const key = Object.keys(V).find(k => V[k] === src);
     if (key && vl) {
       vl.style.backgroundImage    = `url(${P[key]})`;
@@ -606,7 +606,7 @@
 
     const showNext = () => {
       next.classList.add('cbp-show');
-      /* Small delay then hide the old one — creates a beautiful cross-dissolve */
+      /* Small delay then hide the old one. Creates a beautiful cross-dissolve */
       setTimeout(() => { curr.classList.remove('cbp-show'); curr.src = ''; }, 1000);
       _active = _active === 'a' ? 'b' : 'a';
     };
@@ -733,7 +733,7 @@
       _loadVideo(V.facepalm, true);
       veil.classList.add('cbp-heavy');
       _panel('cbp-fail');
-      /* If PayHero told us WHY, say so plainly — "not enough M-Pesa
+      /* If PayHero told us WHY, say so plainly, "not enough M-Pesa
          balance" is far more useful than a witty line. The rotating
          copy is only for when we genuinely do not know. */
       if (opts && opts.failureReason) {
@@ -755,7 +755,7 @@
     _attempts = 0;
     _pollTimer = setInterval(async () => {
       _attempts++;
-      /* Show a live countdown in the footer — guests had no idea how long
+      /* Show a live countdown in the footer. Guests had no idea how long
          to wait. Timeout is 60 s (20 × 3 s polls) after which the
          facepalm video plays and they can retry. */
       const _remaining = Math.max(0, 23 - _attempts) * 2;
@@ -770,7 +770,7 @@
         return;
       }
       try {
-        /* Direct PayHero query — no callback dependency.
+        /* Direct PayHero query, no callback dependency.
            /api/poll-payment asks PayHero's own transaction status API
            using the CheckoutRequestID stored at push time, then writes
            the DB itself. Previously we waited for PayHero to call our
@@ -788,7 +788,7 @@
           _cut(() => _setState('success', opts));
           opts.onSuccess?.(d);
         } else if (d.status === 'failed') {
-          /* PayHero has told us the transaction is dead — insufficient
+          /* PayHero has told us the transaction is dead. Insufficient
              balance, wrong PIN, cancelled. Cut straight to the failure
              screen rather than letting the clock run out. */
           clearInterval(_pollTimer);
@@ -796,7 +796,7 @@
           _cut(() => _setState('failed', opts));
           opts.onFailure?.(d);
         }
-      } catch (_) { /* transient — keep polling */ }
+      } catch (_) { /* transient. Keep polling */ }
     }, 2000);
   }
 

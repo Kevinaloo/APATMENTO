@@ -1,12 +1,8 @@
 /* ═══════════════════════════════════════════════════════════════════
-   APATMENTO REFERRAL & REWARDS ENGINE  (client-side UI layer)
-   — Captures ?ref= codes and persists them through auth
-   — Generates/displays referral links for signed-in users
-   — All data mutations go through /api/rewards (service-role key)
-   — This file only uses the anon key for READ operations (stats)
+   APATMENTO REFERRAL & REWARDS ENGINE  (client-side UI layer). Captures ?ref= codes and persists them through auth. Generates/displays referral links for signed-in users. All data mutations go through /api/rewards (service-role key). This file only uses the anon key for READ operations (stats)
 
-   Rates:   20% commission — guest referrals (1 year)
-            10% commission — host referrals  (1 year)
+   Rates:   20% commission. Guest referrals (1 year)
+            10% commission. Host referrals  (1 year)
             10 pts per KES 1,000 spent · 1 pt = KES 1
             Min withdrawal: KES 50 · Flights excluded
 ═══════════════════════════════════════════════════════════════════ */
@@ -204,7 +200,7 @@ function buildPopup(myCode, myStats, isGuest) {
   <div class="ref-header">
     <div class="ref-badge"><span class="ref-badge-dot"></span>Cabana Referral Programme</div>
     <h2 class="ref-headline">Refer &amp; earn up to<br/><strong>20% for life.</strong></h2>
-    <p class="ref-sub">Bring a guest or a host to Cabana — earn up to 20% of our fee on every booking they make for a full 365 days. Simple. Unlimited.</p>
+    <p class="ref-sub">Bring a guest or a host to Cabana. Earn up to 20% of our fee on every booking they make for a full 365 days. Simple. Unlimited.</p>
   </div>
 
   ${!isGuest && myStats ? `
@@ -376,12 +372,12 @@ function copyLink() {
 }
 
 function shareWA() {
-  const msg = encodeURIComponent(`🚀 I'm using Cabana — Kenya's zero-commission travel app. Book stays, safaris, rides & more at face value. Use my link and we both earn: ${SITE_URL}?ref=${_myCode}`);
+  const msg = encodeURIComponent(`🚀 I'm using Cabana. Kenya's zero-commission travel app. Book stays, safaris, rides & more at face value. Use my link and we both earn: ${SITE_URL}?ref=${_myCode}`);
   window.open(`https://wa.me/?text=${msg}`, '_blank');
 }
 
 function shareTwitter() {
-  const msg = encodeURIComponent(`Discovered the best travel app in Kenya 🇰🇪 — @Cabana. Zero commission, hosts keep 100%. Sign up with my link: ${SITE_URL}?ref=${_myCode}`);
+  const msg = encodeURIComponent(`Discovered the best travel app in Kenya 🇰🇪, @Cabana. Zero commission, hosts keep 100%. Sign up with my link: ${SITE_URL}?ref=${_myCode}`);
   window.open(`https://twitter.com/intent/tweet?text=${msg}`, '_blank');
 }
 
@@ -391,7 +387,7 @@ window.AptReferral = {
   getMyStats:        () => _myStats,
   getUserId:         () => _userId,
   getToken:          () => _token,
-  /* Secure wrappers — pass token automatically */
+  /* Secure wrappers. Pass token automatically */
   recordReferral:    (type)                      => recordReferral(_userId, _token, type),
   redeemPoints:      (pts, svc, ref)             => redeemPoints(pts, svc, ref, _token),
   requestWithdrawal: (amt, mpesa)                => requestWithdrawal(amt, mpesa, _token),

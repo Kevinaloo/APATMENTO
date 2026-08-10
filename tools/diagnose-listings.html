@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>Listings Diagnostic — Cabana</title>
+<title>Listings Diagnostic | Cabana</title>
 <style>
   :root{--ink:#0F1117;--faint:#6B7280;--line:#E5E7EB;--ok:#0D9467;--bad:#DC2626;--warn:#B45309;--violet:#7B2FF7}
   *{box-sizing:border-box}
@@ -80,9 +80,9 @@ $('run').onclick = async () => {
   const uid = session?.user?.id || null;
   $('s-auth').hidden = false;
   $('auth').innerHTML = uid
-    ? `Signed in as <b>${esc(session.user.email||'—')}</b><br><span class="mono">user id: ${esc(uid)}</span>
+    ? `Signed in as <b>${esc(session.user.email||', ')}</b><br><span class="mono">user id: ${esc(uid)}</span>
        <div class="muted" style="margin-top:6px">Listings only appear under “listings I manage” if <code>partner_id</code> equals this id.</div>`
-    : `<span class="warn">Not signed in.</span> Sign in first, then re-run — otherwise section 4 can’t compare ownership.`;
+    : `<span class="warn">Not signed in.</span> Sign in first, then re-run. Otherwise section 4 can’t compare ownership.`;
 
   /* ── 2. Probe each column individually ───────────────────── */
   const missing = [], present = [];
@@ -95,7 +95,7 @@ $('run').onclick = async () => {
     (missing.length
       ? `<p class="bad">${missing.length} column(s) DO NOT exist on the table:</p>
          <pre>${esc(missing.join('\n'))}</pre>
-         <p class="muted">Any query selecting one of these returns HTTP 400 and the whole query fails — not just that field.</p>`
+         <p class="muted">Any query selecting one of these returns HTTP 400 and the whole query fails, not just that field.</p>`
       : `<p class="ok">All ${present.length} probed columns exist.</p>`)
     + `<div class="grid2" style="margin-top:12px">` +
       PROBE.map(c=>`<div class="col"><span class="mono">${esc(c)}</span>${
@@ -104,19 +104,19 @@ $('run').onclick = async () => {
 
   /* ── 3. Replay the three real app queries verbatim ────────── */
   const QUERIES = [
-    {name:'dashboard.html — “Book a Space” grid', where:'status=eq.active&is_active=eq.true',
+    {name:'dashboard.html, “Book a Space” grid', where:'status=eq.active&is_active=eq.true',
      sel:'id,title,location,area,city,price_night,price_per_night,photos,beds,max_guests,type,property_type'},
-    {name:'apartments.html — “Find your stay”', where:'is_active=eq.true',
+    {name:'apartments.html, “Find your stay”', where:'is_active=eq.true',
      sel:'id,title,location,city,price_night,beds,baths,max_guests,amenities,description,avg_rating,review_count,booking_count,days_listed,internal_score,status,photos,type,property_type,area,partner_id'},
-    {name:'partner-listings.html — “listings I manage”', where: uid?`partner_id=eq.${uid}`:'is_active=eq.true',
+    {name:'partner-listings.html, “listings I manage”', where: uid?`partner_id=eq.${uid}`:'is_active=eq.true',
      sel:'id,title,service,type,location,city,area,price_night,currency,status,avg_rating,review_count,booking_count,photos,is_active,created_at'},
-    {name:'dashboard.html — partner panel count', where: uid?`partner_id=eq.${uid}`:'is_active=eq.true',
+    {name:'dashboard.html. Partner panel count', where: uid?`partner_id=eq.${uid}`:'is_active=eq.true',
      sel:'id,title,name,status,price_night'},
   ];
   let qh = '<table><tr><th>Query</th><th>HTTP</th><th>Rows</th><th>Error</th></tr>';
   for (const q of QUERIES){
     const r = await rest(`${q.where}&select=${q.sel}&limit=50`);
-    const n = Array.isArray(r.body) ? r.body.length : '—';
+    const n = Array.isArray(r.body) ? r.body.length : ', ';
     qh += `<tr><td>${esc(q.name)}</td>
       <td class="${r.ok?'ok':'bad'}">${r.status}</td>
       <td>${r.ok?n:'0'}</td>
@@ -142,24 +142,24 @@ $('run').onclick = async () => {
         <b>${owners.length}</b> distinct owner id(s)</p>` +
       '<table><tr><th>Title</th><th>service / type</th><th>status</th><th>is_active</th><th>partner_id (owner)</th></tr>' +
       rows.map(r=>{
-        const own = r.partner_id ? (r.partner_id===uid?'<span class="ok">YOU</span>':'<span class="bad">other account</span>') : '<span class="bad">NULL — orphan</span>';
+        const own = r.partner_id ? (r.partner_id===uid?'<span class="ok">YOU</span>':'<span class="bad">other account</span>') : '<span class="bad">NULL. Orphan</span>';
         return `<tr><td><b>${esc(r.title||r.name||'(untitled)')}</b><br><span class="muted">${esc(r.area||r.location||'')}</span></td>
-          <td><span class="pill">${esc(r.service||'—')}</span> ${esc(r.type||'')}</td>
+          <td><span class="pill">${esc(r.service||', ')}</span> ${esc(r.type||'')}</td>
           <td>${esc(r.status)}</td><td>${String(r.is_active)}</td>
-          <td class="mono">${esc(r.partner_id||'—')}<br>${own}</td></tr>`;
+          <td class="mono">${esc(r.partner_id||', ')}<br>${own}</td></tr>`;
       }).join('') + '</table>';
   }
 
   /* ── 5. Verdict ──────────────────────────────────────────── */
   $('s-verdict').hidden = false;
   const bullets = [];
-  if (missing.length) bullets.push(`<li class="bad">Missing columns (<code>${esc(missing.join(', '))}</code>) are being selected by real queries — that is why pages show zero results.</li>`);
+  if (missing.length) bullets.push(`<li class="bad">Missing columns (<code>${esc(missing.join(', '))}</code>) are being selected by real queries, that is why pages show zero results.</li>`);
   if (all.ok){
     const rows = all.body||[];
     if (uid && rows.length && !rows.some(r=>r.partner_id===uid))
-      bullets.push('<li class="bad">None of the visible listings carry your user id in <code>partner_id</code> — they were published under a different account (or with none).</li>');
+      bullets.push('<li class="bad">None of the visible listings carry your user id in <code>partner_id</code>. They were published under a different account (or with none).</li>');
     if (rows.some(r=>!r.partner_id))
-      bullets.push('<li class="bad">Some listings have <code>partner_id = null</code> — published while signed out. They belong to nobody and can never appear in a partner dashboard.</li>');
+      bullets.push('<li class="bad">Some listings have <code>partner_id = null</code>. Published while signed out. They belong to nobody and can never appear in a partner dashboard.</li>');
   }
   if (!bullets.length) bullets.push('<li class="ok">No schema or ownership faults detected.</li>');
   $('verdict').innerHTML = '<ul>'+bullets.join('')+'</ul>';

@@ -72,12 +72,12 @@ body{display:flex;flex-direction:column;}
 .tb-ghost{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;border:1.5px solid var(--line2);background:var(--surface);color:var(--soft);font-family:var(--fb);font-weight:600;font-size:12px;text-decoration:none;cursor:pointer;transition:all .2s;}
 .tb-ghost:hover{border-color:var(--mint);color:var(--mint-d);}
 /* The escape hatch is NEVER hidden. Only the pill and the button's text
-   label collapse on small screens — the guest-switch control itself must
+   label collapse on small screens. The guest-switch control itself must
    survive every breakpoint, or hosts get stranded in the Partner Hub. */
 @media(max-width:600px){.tb-pill{display:none;}}
 @media(max-width:600px){
   .topbar{padding:0 14px;gap:8px;}
-  /* The wordmark yields first — controls must never be pushed off-screen. */
+  /* The wordmark yields first. Controls must never be pushed off-screen. */
   .tb-left{gap:9px;min-width:0;overflow:hidden;}
   .tb-wm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .tb-right{flex-shrink:0;}
@@ -406,7 +406,7 @@ body{display:flex;flex-direction:column;}
     </div>
     <div class="stat-card">
       <div class="sc-lbl">Avg rating</div>
-      <div class="sc-val" id="st-rating">—</div>
+      <div class="sc-val" id="st-rating">-</div>
       <div class="sc-meta">from guest reviews</div>
     </div>
   </div>
@@ -559,7 +559,7 @@ body{display:flex;flex-direction:column;}
         </div>
         <div id="imp-panel-paste">
           <p style="font-size:12px;color:var(--soft);margin-bottom:8px;line-height:1.6;">On Airbnb or Booking.com: open your listing, select all text (Ctrl+A), copy and paste it below.</p>
-          <textarea class="al-textarea" id="imp-paste" placeholder="Paste your listing text here. Include the title, description, amenities, location and price — whatever you can copy."></textarea>
+          <textarea class="al-textarea" id="imp-paste" placeholder="Paste your listing text here. Include the title, description, amenities, location and price. Whatever you can copy."></textarea>
         </div>
         <div id="imp-panel-desc" style="display:none;">
           <p style="font-size:12px;color:var(--soft);margin-bottom:8px;line-height:1.6;">Describe your property in your own words. The more detail the better.</p>
@@ -570,7 +570,7 @@ body{display:flex;flex-direction:column;}
 
     </div><!-- al-body -->
 
-    <!-- FOOTER — only shows when import panel open -->
+    <!-- FOOTER, only shows when import panel open -->
     <div class="al-footer" id="al-footer" style="display:none;">
       <button class="btn btn-ghost" onclick="closeImportPanel()" style="flex:none;">Cancel</button>
       <button class="btn btn-primary" id="imp-run-btn" onclick="runImport()" style="flex:1;justify-content:center;">
@@ -608,7 +608,7 @@ async function loadListings(){
     const av=document.getElementById('tb-av');
     if(av)av.textContent=(session.user.user_metadata?.first_name||session.user.email||'P')[0].toUpperCase();
 
-    /* SELECT * — naming columns here previously failed the whole query
+    /* SELECT *. Naming columns here previously failed the whole query
        with HTTP 400 whenever one was absent, which looked identical to
        "you have no listings". Sorting is client-side for the same reason. */
     const{data,error}=await sb.from('listings')
@@ -616,7 +616,7 @@ async function loadListings(){
       .eq('partner_id',uid);
 
     if(error){
-      console.error('[partner-listings] QUERY FAILED —',error.message,error);
+      console.error('[partner-listings] QUERY FAILED, ',error.message,error);
       const host=document.getElementById('list-wrap')||document.body;
       const warn=document.createElement('div');
       warn.style.cssText='margin:16px 0;padding:12px 14px;border-radius:10px;background:#FEF2F2;color:#B91C1C;font-size:13px;font-weight:600';
@@ -723,7 +723,7 @@ function openAddModal(ev){
   }
 }
 
-/* ACCOUNT MENU — the avatar was previously a dead <div>. */
+/* ACCOUNT MENU. The avatar was previously a dead <div>. */
 function toggleAcct(ev){
   if(ev){ev.preventDefault();ev.stopPropagation();}
   var m=document.getElementById('acct-menu'),b=document.getElementById('tb-av');
@@ -783,7 +783,7 @@ async function runImport(){
     :document.getElementById('imp-desc').value.trim();
   const err=document.getElementById('imp-err');
   err.classList.remove('show');
-  if(text.length<30){err.textContent='Provide more detail — at least a few sentences about the property.';err.classList.add('show');return;}
+  if(text.length<30){err.textContent='Provide more detail, at least a few sentences about the property.';err.classList.add('show');return;}
   const btn=document.getElementById('imp-run-btn');
   const txt=document.getElementById('imp-run-txt');
   btn.disabled=true;txt.textContent='AI is reading your listing...';

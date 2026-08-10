@@ -1,5 +1,5 @@
 /* ════════════════════════════════════════════════════════════════
-   APATMENTO PULSE — telemetry.js
+   APATMENTO PULSE. Telemetry.js
    First-party visitor analytics with rich context.
    Every visit, page view, click-through, and session recorded to
    Supabase for the admin dashboard. Privacy-sane: no fingerprinting

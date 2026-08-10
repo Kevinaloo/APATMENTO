@@ -208,7 +208,7 @@ body{font-family:var(--font-b);background:#07050F;color:#fff;-webkit-font-smooth
 <section class="hero">
   <div class="hero-eyebrow"><span class="hero-eyebrow-dot"></span>Referral &amp; Points Programme</div>
   <h1 class="hero-title">Refer &amp; earn up to<br/><strong>20% for life.</strong></h1>
-  <p class="hero-sub">Every person you bring earns you a commission for a full year. Keep referring — keep earning. No cap.</p>
+  <p class="hero-sub">Every person you bring earns you a commission for a full year. Keep referring. Keep earning. No cap.</p>
   <div class="stats-row">
     <div class="stat-card"><div class="stat-val" id="s-earned">KES 0</div><div class="stat-lbl">Total Earned</div></div>
     <div class="stat-card"><div class="stat-val" id="s-points">0</div><div class="stat-lbl">Points</div></div>
@@ -271,7 +271,7 @@ body{font-family:var(--font-b);background:#07050F;color:#fff;-webkit-font-smooth
         <div class="points-bar-bg"><div class="points-bar-fill" id="pts-bar" style="width:0%"></div></div>
         <div class="points-labels"><span>0</span><span id="pts-next-milestone">Next: 100 pts</span></div>
       </div>
-      <div style="font-size:12px;color:rgba(255,255,255,.35);margin-bottom:16px;line-height:1.6;">Earn 10 points per KES 1,000 spent on stays, tours, events, rides, food &amp; more. Redeem at checkout — flights excluded.</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.35);margin-bottom:16px;line-height:1.6;">Earn 10 points per KES 1,000 spent on stays, tours, events, rides, food &amp; more. Redeem at checkout. Flights excluded.</div>
       <button class="points-redeem-btn" onclick="showToast('Points can be redeemed at checkout on your next booking.')">Redeem at checkout</button>
     </div>
   </div>
@@ -355,7 +355,7 @@ body{font-family:var(--font-b);background:#07050F;color:#fff;-webkit-font-smooth
 
 <script>
 /* ══════════════════════════════════════════════════════════════
-   rewards.html — secure client JS
+   rewards.html. Secure client JS
    All mutations go through /api/rewards (service-role key).
    Reads use the user's own session token (RLS-gated).
 ══════════════════════════════════════════════════════════════ */
@@ -508,11 +508,11 @@ function copyLink() {
 }
 
 function shareWA() {
-  const msg = encodeURIComponent(`🚀 Join Cabana — Kenya's zero-commission travel app. Book stays, tours, rides & more. Use my link: ${SITE}?ref=${MY_CODE}`);
+  const msg = encodeURIComponent(`🚀 Join Cabana. Kenya's zero-commission travel app. Book stays, tours, rides & more. Use my link: ${SITE}?ref=${MY_CODE}`);
   window.open(`https://wa.me/?text=${msg}`, '_blank');
 }
 function shareTwitter() {
-  const msg = encodeURIComponent(`Discovered the best travel app in Kenya 🇰🇪 — @Cabana. Zero commission, hosts keep 100%. ${SITE}?ref=${MY_CODE}`);
+  const msg = encodeURIComponent(`Discovered the best travel app in Kenya 🇰🇪, @Cabana. Zero commission, hosts keep 100%. ${SITE}?ref=${MY_CODE}`);
   window.open(`https://twitter.com/intent/tweet?text=${msg}`, '_blank');
 }
 
@@ -526,7 +526,7 @@ async function requestWithdraw() {
   const btn = document.querySelector('.withdraw-btn');
   btn.disabled = true; btn.textContent = 'Submitting…';
 
-  /* Server validates amount against real net balance — no client-side bypass */
+  /* Server validates amount against real net balance, no client-side bypass */
   const result = await api('withdraw', { amount_kes: amount, mpesa_number: mpesa });
 
   btn.disabled = false; btn.textContent = 'Request withdrawal →';

@@ -1,7 +1,7 @@
-# Apatmento — Real-Time Push Notifications & PWA
+# Apatmento. Real-Time Push Notifications & PWA
 
 Apatmento now installs as a real app and delivers real-time notifications.
-No APK, no store review, no forced updates — you deploy, users get it instantly.
+No APK, no store review, no forced updates. You deploy, users get it instantly.
 
 ---
 
@@ -10,8 +10,8 @@ No APK, no store review, no forced updates — you deploy, users get it instantl
 In **Supabase → SQL Editor**, paste and run `schema-push.sql`.
 
 Creates:
-- `push_subscriptions` — one row per browser/device, keyed on endpoint
-- `notifications` — the in-app feed, published to Supabase Realtime
+- `push_subscriptions`. One row per browser/device, keyed on endpoint
+- `notifications`. The in-app feed, published to Supabase Realtime
 
 Then confirm Realtime is on for the table:
 **Database → Replication → `supabase_realtime`** → `notifications` should be checked.
@@ -87,7 +87,7 @@ pushed. That ordering is deliberate:
 - **Push blocked or subscription dead** → the row still exists, so the bell
   badge and dashboard feed are correct on next load.
 
-Nothing is silently lost, and the user never sees the same alert twice —
+Nothing is silently lost, and the user never sees the same alert twice
 `apa-push.js` suppresses the toast when the page is hidden, because the
 service worker is already handling it.
 
@@ -103,7 +103,7 @@ This was the right call for where the product is:
 - **Ship instantly.** Push a commit, every user has it on next load. No store
   review, no version fragmentation, no users stuck on a build from March.
 - **One codebase.** Android, iOS, and desktop from the same source.
-- **Installable.** Home-screen icon, splash screen, full-screen, offline —
+- **Installable.** Home-screen icon, splash screen, full-screen, offline
   users can't tell the difference in normal use.
 - **Real notifications.** Web Push works on Android/Chrome/Edge/Firefox, and
   on iOS 16.4+ **once the user adds it to the Home Screen**.
@@ -117,7 +117,7 @@ Android and desktop Chrome get the native one-tap install dialog.
 
 If you later need Play Store presence, the same PWA wraps into a
 [Trusted Web Activity](https://developer.chrome.com/docs/android/trusted-web-activity/)
-with no rewrite — the store listing becomes a thin shell over this code, and
+with no rewrite. The store listing becomes a thin shell over this code, and
 you keep instant updates.
 
 ---

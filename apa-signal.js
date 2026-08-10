@@ -7,12 +7,12 @@
 
    What separates this from analytics:
      · Attention, not time-on-page. Blurred tabs earn nothing.
-     · Intent scoring in real time — a 0-100 purchase probability
+     · Intent scoring in real time. A 0-100 purchase probability
        computed from behaviour, updated on every event.
-     · Journey graphs — the actual paths people take, not funnels
+     · Journey graphs. The actual paths people take, not funnels
        we invented in a meeting.
-     · Rage/dead click detection — where the product is failing.
-     · Scroll velocity + reading depth — did they read, or bounce?
+     · Rage/dead click detection, where the product is failing.
+     · Scroll velocity + reading depth. Did they read, or bounce?
      · Ad viewability to IAB standard (50% pixels, 1s / 2s video).
      · Feature vectors emitted per session, ready for training.
 
@@ -218,7 +218,7 @@
      A live 0-100 estimate of purchase intent. Not a vanity metric:
      this is the number that prices an ad slot and decides whether a
      visitor sees a discount. Weights are behavioural, additive, and
-     saturate — no single signal can dominate.                       */
+     saturate, no single signal can dominate.                       */
 
   var intentSignals = {
     searches: 0,
@@ -373,7 +373,7 @@
     });
   }
 
-  /* ═══ 7 · FEATURE VECTOR — the ML payload ═════════════════════════
+  /* ═══ 7 · FEATURE VECTOR. The ML payload ═════════════════════════
      A flat, numeric, model-ready representation of the session. This
      is the artifact that makes the data an asset rather than a log. */
 
@@ -502,7 +502,7 @@
     }, 'flush') || (flushing = false);
   }
 
-  /* Session summary — the row that actually feeds the models. */
+  /* Session summary. The row that actually feeds the models. */
   function sealSession(useBeacon) {
     if (OPTED_OUT) return;
     tick();

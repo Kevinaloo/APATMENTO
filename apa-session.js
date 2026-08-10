@@ -6,7 +6,7 @@
    Design rules (learned the hard way):
      1. ONE Supabase client per tab. Ever. Reused across scripts.
      2. Never rely on a single async callback firing. Poll + event + bfcache.
-     3. Every subscriber is idempotent — safe to call 100 times.
+     3. Every subscriber is idempotent. Safe to call 100 times.
      4. Nothing here may throw. A broken analytics call must never
         take down the header.
      5. State is resolved synchronously from localStorage when possible,
@@ -40,7 +40,7 @@
   /* ── SINGLETON GUARD ──────────────────────────────────────────
      26 pages each called supabase.createClient() on the same auth
      storage key. Concurrent GoTrue clients race on token refresh and
-     silently drop the session — the quiet half of the "signed out
+     silently drop the session. The quiet half of the "signed out
      after navigating" bug.
 
      Rather than editing every page, we memoize createClient at the
@@ -157,12 +157,12 @@
     safe(function () {
       r = new URLSearchParams(global.location.search).get('role');
     }, 'urlRole');
-    // Explicit URL param — trust it and persist so future loads remember
+    // Explicit URL param. Trust it and persist so future loads remember
     if (r === 'partner' || r === 'guest') {
       persistRole(r);
       return r;
     }
-    // No URL param — use whatever the partner last selected
+    // No URL param. Use whatever the partner last selected
     return cachedRole();
   }
 
@@ -287,7 +287,7 @@
     }, 'pageshow');
   });
 
-  /* Tab refocus after a long idle — token may have rotated. */
+  /* Tab refocus after a long idle. Token may have rotated. */
   global.addEventListener('visibilitychange', function () {
     if (global.document.visibilityState !== 'visible') return;
     if (!resolved) return;

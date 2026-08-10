@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Cabana Match — Partner Hub</title>
+<title>Cabana Match | Partner Hub</title>
 <meta name="robots" content="noindex, nofollow"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/apa-session.js"></script>
@@ -418,7 +418,7 @@ body{display:flex;flex-direction:column;overflow-x:hidden;}
   <div class="page-hd">
     <span class="page-eyebrow">Partner Hub · Cabana Match</span>
     <h1 class="page-title">World's first <em>reverse booking</em></h1>
-    <p class="page-sub">Guests broadcast what they need. You respond. They choose you. You earn more — with less effort.</p>
+    <p class="page-sub">Guests broadcast what they need. You respond. They choose you. You earn more, with less effort.</p>
   </div>
 
   <!-- Animated banner -->
@@ -427,14 +427,14 @@ body{display:flex;flex-direction:column;overflow-x:hidden;}
     <div class="cm-banner-inner">
       <div class="cm-banner-icon">🏠</div>
       <div class="cm-banner-body">
-        <div class="cm-banner-title">Cabana Match — Hosts Chase Guests</div>
+        <div class="cm-banner-title">Cabana Match. Hosts Chase Guests</div>
         <div class="cm-banner-sub">Stop waiting for guests to find you. Get notified of real travel requests in your area and respond directly.</div>
       </div>
       <span class="cm-banner-badge" style="background:linear-gradient(135deg,#6BCB77,#4D96FF);">LIVE</span>
     </div>
   </div>
 
-  <!-- Opt-in card — per listing -->
+  <!-- Opt-in card, per listing -->
   <div class="optin-card" id="optin-section">
     <div class="optin-title" style="margin-bottom:6px;">Opt your listings in to Cabana Match</div>
     <div class="optin-desc" style="margin-bottom:16px;">Select which of your stays you want to receive guest requests for. Guests broadcasting in your area will reach you only if that listing is opted in. You can add or remove listings at any time.</div>
@@ -462,7 +462,7 @@ body{display:flex;flex-direction:column;overflow-x:hidden;}
     <div class="earn-icon">💰</div>
     <div>
       <div class="earn-title">Cabana Match pays more</div>
-      <div class="earn-desc">Every booking that originates from a Cabana Match request earns you the full listing price. Cabana takes a small <span class="earn-highlight">5% referral fee</span> — far less than any other platform. Your regular service terms still apply, giving you more in your pocket on every matched booking.</div>
+      <div class="earn-desc">Every booking that originates from a Cabana Match request earns you the full listing price. Cabana takes a small <span class="earn-highlight">5% referral fee</span>: far less than any other platform. Your regular service terms still apply, giving you more in your pocket on every matched booking.</div>
     </div>
   </div>
 
@@ -489,7 +489,7 @@ body{display:flex;flex-direction:column;overflow-x:hidden;}
       <div class="how-item">
         <div class="how-num">3</div>
         <div class="how-title">Guest engages, you book</div>
-        <div class="how-desc">If the guest is interested, they engage — opening a conversation in Cabana messaging. If it clicks, they book.</div>
+        <div class="how-desc">If the guest is interested, they engage. Opening a conversation in Cabana messaging. If it clicks, they book.</div>
       </div>
     </div>
   </div>
@@ -705,7 +705,7 @@ async function saveOptIns() {
     if (status) {
       const count = pendingSelections.size;
       status.textContent = count > 0
-        ? `✓ ${count} listing${count > 1 ? 's' : ''} opted in — you will receive guest requests`
+        ? `✓ ${count} listing${count > 1 ? 's' : ''} opted in. You will receive guest requests`
         : 'No listings opted in';
       status.className = 'optin-status ' + (count > 0 ? 'on' : 'off');
     }
@@ -727,7 +727,7 @@ function updateOptinStatus() {
     status.textContent = `✓ ${count} listing${count > 1 ? 's' : ''} currently opted in`;
     status.className = 'optin-status on';
   } else {
-    status.textContent = 'No listings opted in yet — select listings above and save';
+    status.textContent = 'No listings opted in yet. Select listings above and save';
     status.className = 'optin-status off';
   }
 }
@@ -758,7 +758,7 @@ async function loadLiveRequests() {
     if (error) throw error;
 
     if (!requests?.length) {
-      zone.innerHTML = `<div class="empty-state"><div class="empty-ico">🎉</div><div class="empty-title">No live requests right now</div><div class="empty-sub">You're opted in and ready. Guest requests in your area appear here in real time — check back soon.</div></div>`;
+      zone.innerHTML = `<div class="empty-state"><div class="empty-ico">🎉</div><div class="empty-title">No live requests right now</div><div class="empty-sub">You're opted in and ready. Guest requests in your area appear here in real time. Check back soon.</div></div>`;
       if (label) label.textContent = 'No live requests right now';
       return;
     }
@@ -798,7 +798,7 @@ function buildReqCard(req) {
       <span class="req-tag">🌙 ${req.nights||''} nights</span>
       <span class="req-tag">👥 ${req.guests} guest${req.guests>1?'s':''}</span>
       ${req.bedrooms ? `<span class="req-tag">🛏 ${req.bedrooms} bed${req.bedrooms>1?'s':''}</span>` : ''}
-      <!-- Budget range intentionally hidden from hosts — used internally for routing only -->
+      <!-- Budget range intentionally hidden from hosts. Used internally for routing only -->
     </div>
     ${req.notes ? `<div style="font-size:12px;color:var(--ink-soft);margin-bottom:10px;font-style:italic;">"${req.notes}"</div>` : ''}
     <div class="req-card-footer">
@@ -873,7 +873,7 @@ function openRespondModal(requestId, guestName, checkin, checkout, guests) {
     return;
   }
   const listingOptions = availableListings.map(l =>
-    `<option value="${l.id}" data-price="${l.price_night||0}" data-title="${l.title||''}" data-img="${l.photos?.[0]||''}">${l.title} — KES ${Number(l.price_night||0).toLocaleString()}/night</option>`
+    `<option value="${l.id}" data-price="${l.price_night||0}" data-title="${l.title||''}" data-img="${l.photos?.[0]||''}">${l.title}. KES ${Number(l.price_night||0).toLocaleString()}/night</option>`
   ).join('');
 
   const modalHTML = `

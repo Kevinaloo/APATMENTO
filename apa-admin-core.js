@@ -4,7 +4,7 @@
    Everything the console needs that isn't a pixel.
 
      · A single Supabase client (reuses ApaSession's if present)
-     · A resilient query layer — a missing table degrades to [],
+     · A resilient query layer. A missing table degrades to [],
        it does not take down the dashboard
      · The Analytics Engine: derived intelligence, not row counts
      · Moderation: approve / reject / suspend / ban / purge
@@ -34,7 +34,7 @@
 
   /* ═══ 1 · RESILIENT QUERY LAYER ═══════════════════════════════════
      Every read returns a shape, never a rejection. A dropped table,
-     an RLS denial, a network blip — all collapse to an empty result
+     an RLS denial, a network blip, all collapse to an empty result
      plus a recorded fault. The console stays up. */
 
   var faults = [];
@@ -107,7 +107,7 @@
 
   /* ═══ 3 · THE ANALYTICS ENGINE ════════════════════════════════════
      Row counts are not analytics. These are the numbers an operator
-     acts on — leading indicators, concentration risk, decay, trust.  */
+     acts on. Leading indicators, concentration risk, decay, trust.  */
 
   var Engine = {
 
@@ -252,7 +252,7 @@
       if (listings > 0) s += Math.min(8, listings);
       if (bookings > 0) s += Math.min(14, Math.log2(bookings + 1) * 4);
 
-      // Cancellation ratio bites hard — it is the single best predictor.
+      // Cancellation ratio bites hard. It is the single best predictor.
       if (bookings > 3) {
         var cr = cancels / bookings;
         s -= Math.round(cr * 45);
@@ -563,7 +563,7 @@
     },
 
     /* Ban: terminal. Requires a reason. Listings are unpublished, not
-       purged — evidence must survive the ban.                         */
+       purged. Evidence must survive the ban.                         */
     banPartner: function (id, reason) {
       if (!reason) return Promise.resolve({ ok: false, error: 'A ban requires a written reason.' });
       return audit('partner.ban', { type: 'profile', id: id }, { reason: reason })
@@ -662,7 +662,7 @@
     }
   };
 
-  /* ═══ 6 · SNAPSHOT — one call, whole platform ════════════════════ */
+  /* ═══ 6 · SNAPSHOT. One call, whole platform ════════════════════ */
   function snapshot() {
     return Promise.all([
       rows('listings', function (q) { return q.order('created_at', { ascending: false }).limit(2000); }),
@@ -811,7 +811,7 @@
   function pct(n) { return (Number(n) || 0).toFixed(1) + '%'; }
   function ago(iso) {
     var s = (Date.now() - new Date(iso).getTime()) / 1000;
-    if (isNaN(s)) return '—';
+    if (isNaN(s)) return ', ';
     if (s < 60) return 'just now';
     if (s < 3600) return Math.floor(s / 60) + 'm ago';
     if (s < 86400) return Math.floor(s / 3600) + 'h ago';

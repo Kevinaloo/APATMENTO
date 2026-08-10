@@ -30,7 +30,7 @@ self.addEventListener('fetch', e => {
   if (request.method !== 'GET') return;
   // Skip browser extensions
   if (url.protocol !== 'https:' && url.protocol !== 'http:') return;
-  // Skip Supabase, Groq, external APIs — always network
+  // Skip Supabase, Groq, external APIs, always network
   if (url.hostname.includes('supabase.co')) return;
   if (url.hostname.includes('groq.com')) return;
   if (url.pathname.startsWith('/api/')) return;

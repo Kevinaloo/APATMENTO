@@ -1,10 +1,10 @@
 /* ══════════════════════════════════════════════════════════════
-   APATMENTO — Deposit Balance  (api/_deposit-balance.js)
+   APATMENTO. Deposit Balance  (api/_deposit-balance.js)
    ──────────────────────────────────────────────────────────────
    stk-callback.js writes its verdict directly onto the booking row
    (status = 'paid_pending_checkin' | 'failed'). There is no separate
    payments table. So we verify here by checking whether stk-callback
-   already flipped the balance booking to paid — not by reading a
+   already flipped the balance booking to paid, not by reading a
    third table that doesn't exist.
 
    Flow:
@@ -37,20 +37,20 @@ export default async function handler(req, res) {
     if (bk.cancelled_at)            return res.status(409).json({ error: 'booking_cancelled' });
     if (bk.balance_reference !== reference) return res.status(400).json({ error: 'reference_mismatch' });
 
-    // Already settled — stk-callback did its job
+    // Already settled. Stk-callback did its job
     if (bk.balance_paid && bk.status === 'paid_pending_checkin') {
       return res.status(200).json({ ok: true, already_settled: true, checkin_unlocked: true });
     }
 
-    // stk-callback hasn't fired yet — tell the guest to wait a beat
+    // stk-callback hasn't fired yet. Tell the guest to wait a beat
     if (!bk.balance_paid) {
       return res.status(202).json({
         ok: false, pending: true,
-        message: 'Payment is being confirmed — this usually takes a few seconds. Try again shortly.',
+        message: 'Payment is being confirmed. This usually takes a few seconds. Try again shortly.',
       });
     }
 
-    // balance_paid = true but status not yet updated (edge case — fix it)
+    // balance_paid = true but status not yet updated (edge case. Fix it)
     const updated = await update('apartment_bookings', `id=eq.${booking_id}`, {
       status: 'paid_pending_checkin',
       balance_paid_at: bk.balance_paid_at || new Date().toISOString(),

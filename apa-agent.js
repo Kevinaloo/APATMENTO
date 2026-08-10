@@ -123,7 +123,7 @@
   }
 
   /* Identity documents go straight to a PRIVATE bucket. The API only
-     ever sees the path — never the bytes, never a public URL.        */
+     ever sees the path, never the bytes, never a public URL.        */
   async function uploadId(file, docType) {
     var sb = global.ApaSession.client();
     var s  = await sb.auth.getUser();
@@ -239,7 +239,7 @@
 
   /* Reads ?ref=CODE&listing=ID, records the click, and remembers it
      across the sign-in round trip. Returns the agent's name so the page
-     can say "Referred by Agent Kevin" — the guest should always know.  */
+     can say "Referred by Agent Kevin". The guest should always know.  */
   async function captureReferral() {
     var q       = new URLSearchParams(location.search);
     var code    = q.get('ref');
@@ -297,7 +297,7 @@
   function rateLabel(pct, flat) {
     if (flat != null) return money(flat) + ' per booking';
     if (pct  != null) return pct + '% per booking';
-    return '—';
+    return ', ';
   }
 
   /* The verification clock. Colour carries the urgency so copy doesn't

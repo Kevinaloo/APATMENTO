@@ -258,7 +258,7 @@ html.via-dash #tx{display:none!important;animation:none!important;}
 /* ═══════════════════════════════════════════════════════════════
    COMPACT LISTING CARDS (mobile)
    Reflows the large vertical card into a tight horizontal tile so
-   more products fit on screen — matching the Stays layout.
+   more products fit on screen. Matching the Stays layout.
    Purely presentational: no markup or JS changes required.
    ═══════════════════════════════════════════════════════════════ */
 @media(max-width:700px){
@@ -275,7 +275,7 @@ html.via-dash #tx{display:none!important;animation:none!important;}
 @media(max-width:380px){.grid{grid-template-columns:repeat(2,1fr);}}
 
 
-  /* ── List CTA — top-right partner prompt ── */
+  /* ── List CTA. Top-right partner prompt ── */
   .svc-list-cta{
     display:inline-flex;align-items:center;gap:6px;
     padding:8px 16px;border-radius:100px;
@@ -307,7 +307,7 @@ html.via-dash #tx{display:none!important;animation:none!important;}
           const w = reg.installing;
           if (w) w.onstatechange = () => {
             if (w.state === 'installed' && navigator.serviceWorker.controller) {
-              // New version available — reload silently
+              // New version available. Reload silently
               window.location.reload();
             }
           };
@@ -322,6 +322,38 @@ html.via-dash #tx{display:none!important;animation:none!important;}
 <link rel="stylesheet" href="/cabana-ds.css"/>
 <script type="application/ld+json">
 {"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.apatmento.space/"}, {"@type": "ListItem", "position": 2, "name": "Car Hire", "item": "https://www.apatmento.space/carhire"}]}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What do I need to hire a car in Kenya?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A valid driving licence or international permit, a national ID or passport, and a booking deposit. Exact requirements are shown by each provider before you book."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I get a 4x4 for safari in Kenya?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. 4x4 SUVs and Land Cruisers suited to safari and upcountry roads are available self-drive or with a driver-guide."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can the car be delivered to the airport?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Most providers deliver to JKIA, Wilson Airport or your hotel. Choose delivery when you book and the fee, if any, is shown up front."
+      }
+    }
+  ]
+}
 </script>
 </head>
 <body>
@@ -378,7 +410,7 @@ html.via-dash #tx{display:none!important;animation:none!important;}
 <div class="hero">
   <span class="hero-eyebrow">Car Hire</span>
   <h1 class="hero-title">Drive on your<br/><em>own terms.</em></h1>
-  <p class="hero-sub">Self-drive and chauffeured options near you. Fixed prices, no commissions — hire companies keep 100%.</p>
+  <p class="hero-sub">Self-drive and chauffeured options near you. Fixed prices, no commissions. Hire companies keep 100%.</p>
   <div class="search-bar">
     <div class="sb-field">
       <div class="sb-label">Pick-up location</div>
@@ -432,7 +464,7 @@ const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 let sb=null;
 try{const{createClient}=supabase;sb=createClient(SUPABASE_URL,SUPABASE_ANON_KEY);}catch(e){}
 function showToast(m,d=3200){const t=document.getElementById('toast');if(!t)return;t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),d);}
-// Dismiss entry transition — CSS fades, JS sets display:none so it can't block touches
+// Dismiss entry transition. CSS fades, JS sets display:none so it can't block touches
 function dismissTx(){
   const el=document.getElementById('tx');
   if(!el)return;
@@ -511,14 +543,14 @@ function renderCars(){
 function openCar(id){
   const c=CARS.find(x=>String(x.id)===String(id));if(!c)return;
   const price=_withDriver?c.chauffeurPrice:c.selfPrice;
-  document.getElementById("drawer").innerHTML=`<div class="dr-img" style="background:${BG[c.type]||BG.economy};position:relative;overflow:hidden;">${(c.img||CAR_IMGS_MAP[c.type])?`<img src="${c.img||CAR_IMGS_MAP[c.type]}" alt="" decoding="async" onerror="this.remove()" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;"><div style="position:absolute;inset:0;z-index:1;background:linear-gradient(to top,rgba(10,10,20,.5) 0%,transparent 55%);pointer-events:none;"></div>`:''}<button class="dr-close" style="z-index:3;" onclick="closeDrawer()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>${(c.img||CAR_IMGS_MAP[c.type])?'':(CAR_ICONS[c.type]||CAR_ICONS.economy)}</div><div class="dr-body"><div class="dr-tag">${c.sub}${_withDriver?" · With Chauffeur":" · Self Drive"}</div><div class="dr-title">${c.name}</div><div class="dr-tags"><span class="card-tag">👥 ${c.seats} seats</span><span class="card-tag">⛽ ${c.fuel}</span><span class="card-tag">⚙️ ${c.trans}</span>${c.tags.map(t=>`<span class="card-tag">${t}</span>`).join("")}</div><div class="dr-includes"><div class="dr-includes-title">Included</div><div class="dr-includes-grid"><div class="dr-include"><span style="color:var(--t1)">✓</span> Comprehensive insurance</div><div class="dr-include"><span style="color:var(--t1)">✓</span> 24/7 roadside support</div><div class="dr-include"><span style="color:var(--t1)">✓</span> Unlimited mileage</div><div class="dr-include"><span style="color:var(--t1)">✓</span> Sanitised vehicle</div></div></div><div style="background:rgba(45,212,191,.06);border:1px solid rgba(45,212,191,.18);border-radius:12px;padding:14px;margin-bottom:20px;font-size:13px;color:var(--ink-soft);line-height:1.6;"><strong style="color:var(--mint-deep);">Self drive KES ${c.selfPrice.toLocaleString()}/day</strong> · <strong>With chauffeur KES ${c.chauffeurPrice.toLocaleString()}/day</strong><br/>Hire company keeps 100% — we charge only a small fixed booking fee.</div><div class="dr-cta-box"><div class="dr-price"><span class="val">KES ${price.toLocaleString()}</span><span class="per">/day</span><div class="note">✓ Fixed price. No hidden charges.</div></div><button class="dr-cta" onclick="openCarBooking(c)">Book this vehicle →</button></div></div>`;
+  document.getElementById("drawer").innerHTML=`<div class="dr-img" style="background:${BG[c.type]||BG.economy};position:relative;overflow:hidden;">${(c.img||CAR_IMGS_MAP[c.type])?`<img src="${c.img||CAR_IMGS_MAP[c.type]}" alt="" decoding="async" onerror="this.remove()" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;"><div style="position:absolute;inset:0;z-index:1;background:linear-gradient(to top,rgba(10,10,20,.5) 0%,transparent 55%);pointer-events:none;"></div>`:''}<button class="dr-close" style="z-index:3;" onclick="closeDrawer()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>${(c.img||CAR_IMGS_MAP[c.type])?'':(CAR_ICONS[c.type]||CAR_ICONS.economy)}</div><div class="dr-body"><div class="dr-tag">${c.sub}${_withDriver?" · With Chauffeur":" · Self Drive"}</div><div class="dr-title">${c.name}</div><div class="dr-tags"><span class="card-tag">👥 ${c.seats} seats</span><span class="card-tag">⛽ ${c.fuel}</span><span class="card-tag">⚙️ ${c.trans}</span>${c.tags.map(t=>`<span class="card-tag">${t}</span>`).join("")}</div><div class="dr-includes"><div class="dr-includes-title">Included</div><div class="dr-includes-grid"><div class="dr-include"><span style="color:var(--t1)">✓</span> Comprehensive insurance</div><div class="dr-include"><span style="color:var(--t1)">✓</span> 24/7 roadside support</div><div class="dr-include"><span style="color:var(--t1)">✓</span> Unlimited mileage</div><div class="dr-include"><span style="color:var(--t1)">✓</span> Sanitised vehicle</div></div></div><div style="background:rgba(45,212,191,.06);border:1px solid rgba(45,212,191,.18);border-radius:12px;padding:14px;margin-bottom:20px;font-size:13px;color:var(--ink-soft);line-height:1.6;"><strong style="color:var(--mint-deep);">Self drive KES ${c.selfPrice.toLocaleString()}/day</strong> · <strong>With chauffeur KES ${c.chauffeurPrice.toLocaleString()}/day</strong><br/>Hire company keeps 100%. We charge only a small fixed booking fee.</div><div class="dr-cta-box"><div class="dr-price"><span class="val">KES ${price.toLocaleString()}</span><span class="per">/day</span><div class="note">✓ Fixed price. No hidden charges.</div></div><button class="dr-cta" onclick="openCarBooking(c)">Book this vehicle →</button></div></div>`;
   document.getElementById("drawer").classList.add("open");
   document.getElementById("drawer-overlay").classList.add("open");
 }
 function closeDrawer(){document.getElementById("drawer").classList.remove("open");document.getElementById("drawer-overlay").classList.remove("open");}
 
 /* ══════════════════════════════════════════════════════════
-   CAR HIRE BOOKING — full modal flow
+   CAR HIRE BOOKING. Full modal flow
    Step 1: dates, pickup location, driver preference
    Step 2: contact details (name, phone, email)
    Step 3: confirmation + WhatsApp
@@ -692,7 +724,7 @@ function renderCarStep(){
       <input class="ch-inp" id="ch-name" placeholder="Full name"/>
       <label class="ch-label">Phone number (M-Pesa)</label>
       <input class="ch-inp" id="ch-phone" type="tel" placeholder="07XX XXX XXX"/>
-      <label class="ch-label">Email (optional — for receipt)</label>
+      <label class="ch-label">Email (optional, for receipt)</label>
       <input class="ch-inp" id="ch-email" type="email" placeholder="you@email.com"/>
       <div style="background:rgba(45,212,191,.06);border:1.5px solid rgba(45,212,191,.18);border-radius:12px;padding:13px 15px;margin-bottom:14px;font-size:13px;color:#4A4C66;line-height:1.65;">
         <strong style="color:#0A0A14">Payment: M-Pesa deposit on confirmation</strong><br/>
@@ -715,7 +747,7 @@ function renderCarStep(){
   }
 
   else if(_CAR_STEP===3){
-    const waMsg = `Hi! I just booked a car hire on Apatmento.\n\n🚗 ${_CAR_BOOK.name} · ${_CH_DRIVER==='chauffeur'?'With chauffeur':'Self drive'}\n📅 ${_CAR_DATA.start} → ${_CAR_DATA.end}\n📍 Pick-up: ${_CAR_DATA.pickup}\n👤 ${_CAR_DATA.name} · ${_CAR_DATA.phone}\n\nRef: ${_CAR_REF||'—'}`;
+    const waMsg = `Hi! I just booked a car hire on Apatmento.\n\n🚗 ${_CAR_BOOK.name} · ${_CH_DRIVER==='chauffeur'?'With chauffeur':'Self drive'}\n📅 ${_CAR_DATA.start} → ${_CAR_DATA.end}\n📍 Pick-up: ${_CAR_DATA.pickup}\n👤 ${_CAR_DATA.name} · ${_CAR_DATA.phone}\n\nRef: ${_CAR_REF||', '}`;
     const wa = `https://wa.me/254716206494?text=${encodeURIComponent(waMsg)}`;
     body.innerHTML = `
       <div class="ch-confirm-icon">✓</div>
@@ -725,7 +757,7 @@ function renderCarStep(){
         <strong>${_CAR_BOOK.name}</strong> · ${_CH_DRIVER==='chauffeur'?'Chauffeur driven':'Self drive'}<br/>
         📅 ${_CAR_DATA.start} → ${_CAR_DATA.end}<br/>
         📍 ${_CAR_DATA.pickup}<br/>
-        Reference: <strong style="color:#0EA5E9">${_CAR_REF||'—'}</strong>
+        Reference: <strong style="color:#0EA5E9">${_CAR_REF||', '}</strong>
       </div>
       <a class="ch-wa-btn" href="${wa}" target="_blank" rel="noopener">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
@@ -837,14 +869,31 @@ window.addEventListener("DOMContentLoaded", renderCars);
 .seo-content .seo-links{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px;}
 .seo-content .seo-links a{font-size:13px;font-weight:500;color:var(--t1,#6D28FF);text-decoration:none;padding:8px 15px;border-radius:100px;background:rgba(0,0,0,.03);border:1px solid var(--line,rgba(10,10,20,.07));transition:all .2s;}
 .seo-content .seo-links a:hover{border-color:var(--t1,#6D28FF);}
+.seo-content .seo-cta{display:inline-flex;align-items:center;gap:9px;margin:4px 0 10px;padding:13px 26px;border-radius:100px;background:var(--theme-grad,linear-gradient(120deg,#6D28FF,#B14BFF));color:#fff;font-family:var(--font-display,'Geist','Inter',sans-serif);font-size:14.5px;font-weight:600;text-decoration:none;box-shadow:0 14px 32px rgba(10,10,20,.16);transition:transform .2s,box-shadow .2s;}
+.seo-content .seo-cta:hover{transform:translateY(-2px);box-shadow:0 20px 44px rgba(10,10,20,.22);}
+.seo-content .seo-trust{display:flex;flex-wrap:wrap;gap:8px 20px;margin:0 0 20px;padding:0;list-style:none;font-size:13.5px;font-weight:500;color:var(--ink-soft,#4A4C66);}
+.seo-content .seo-trust li{display:flex;align-items:center;gap:7px;}
+.seo-content .seo-trust li::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--t1,#6D28FF);flex-shrink:0;}
+
 </style>
 <section class="seo-content">
-  <h2>Car hire — self-drive and chauffeur</h2>
-  <p>Hire a car on your terms with Apatmento. Choose self-drive freedom to explore at your own pace, or sit back with a professional chauffeur who knows the roads. From compact city cars and fuel-efficient sedans to spacious SUVs and 4x4s built for safari and upcountry travel, there's a vehicle for every trip and budget.</p>
-  <p>Car hire is ideal for business travellers, families, and anyone wanting the flexibility to move around without relying on taxis. Pick up in the city or arrange delivery to your hotel or the airport. With zero commission, more of what you pay goes to the vehicle owner and less to middlemen.</p>
+  <h2>Car hire in Kenya, self-drive or with a chauffeur</h2>
+  <p>Hire compact city cars, sedans, SUVs and safari-ready 4x4s. Collect in town, or have the car delivered to your hotel or to JKIA.</p>
+  <ul class="seo-trust">
+    <li>Zero commission, owners keep 100%</li>
+    <li>Fixed daily rates, no hidden extras</li>
+    <li>Airport and hotel delivery available</li>
+  </ul>
+  <a class="seo-cta" href="#grid">See available vehicles <span aria-hidden="true">&rarr;</span></a>
+
+  <h3>Vehicles for every trip</h3>
+  <p>Fuel-efficient city cars for Nairobi traffic, sedans for business travel, seven-seat vans for groups, and Land Cruisers and 4x4 SUVs built for safari and upcountry roads.</p>
+
   <h3>Frequently asked questions</h3>
-  <details class="faq-item"><summary>What do I need to hire a car in Kenya?</summary><p>Typically a valid driving licence (or international permit for visitors), a national ID or passport, and a booking deposit. Requirements vary by provider and are shown when you book.</p></details>
-  <details class="faq-item"><summary>Can I get a 4x4 for safari in Kenya?</summary><p>Yes — 4x4 SUVs and Land Cruisers suited to safari and upcountry roads are available for self-drive or with a driver-guide.</p></details>
+  <details class="faq-item"><summary>What do I need to hire a car in Kenya?</summary><p>A valid driving licence or international permit, a national ID or passport, and a booking deposit. Exact requirements are shown by each provider before you book.</p></details>
+  <details class="faq-item"><summary>Can I get a 4x4 for safari in Kenya?</summary><p>Yes. 4x4 SUVs and Land Cruisers suited to safari and upcountry roads are available self-drive or with a driver-guide.</p></details>
+  <details class="faq-item"><summary>Can the car be delivered to the airport?</summary><p>Most providers deliver to JKIA, Wilson Airport or your hotel. Choose delivery when you book and the fee, if any, is shown up front.</p></details>
+
   <div class="seo-links"><a href="/rides.html">Rides & Transfers</a><a href="/flights.html">Flights</a><a href="/tours.html">Tours</a><a href="/apartments.html">Stays</a><a href="/food.html">Food</a></div>
 </section>
 

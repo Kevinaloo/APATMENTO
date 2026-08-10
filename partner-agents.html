@@ -251,7 +251,7 @@ textarea.inp{padding-right:15px;font-weight:400;font-size:13.5px;resize:vertical
 <main class="main">
   <span class="page-eyebrow">Partner Hub</span>
   <h1 class="page-title">My <em>agents</em></h1>
-  <p class="page-sub">Agents bring you guests. You decide who represents your listings and exactly what they earn — per listing, in your own words. Nobody is assigned to you.</p>
+  <p class="page-sub">Agents bring you guests. You decide who represents your listings and exactly what they earn, per listing, in your own words. Nobody is assigned to you.</p>
 
   <div class="primer">
     <div class="primer-cell">
@@ -262,7 +262,7 @@ textarea.inp{padding-right:15px;font-weight:400;font-size:13.5px;resize:vertical
     <div class="primer-cell">
       <div class="pc-n">2</div>
       <div class="pc-t">They see your calendar</div>
-      <div class="pc-d">Approved agents see live availability — so they never promise a guest dates you've already sold.</div>
+      <div class="pc-d">Approved agents see live availability, so they never promise a guest dates you've already sold.</div>
     </div>
     <div class="primer-cell">
       <div class="pc-n">3</div>
@@ -327,7 +327,7 @@ textarea.inp{padding-right:15px;font-weight:400;font-size:13.5px;resize:vertical
 
     <textarea class="inp" id="rep-detail" placeholder="What happened? (optional, but it helps us act)" style="margin-top:6px;"></textarea>
 
-    <div class="warn">This is permanent for you — you cannot un-report an agent. They are never told who reported them.</div>
+    <div class="warn">This is permanent for you. You cannot un-report an agent. They are never told who reported them.</div>
 
     <div class="acts">
       <button class="btn btn-ghost" onclick="closeRep()">Cancel</button>
@@ -455,7 +455,7 @@ function emptyFor(t) {
   if (t === 'pending') return `<div class="empty">
     <div class="empty-i">📭</div>
     <div class="empty-t">No requests waiting</div>
-    <div class="empty-d">When an agent asks to represent one of your listings, it lands here. You'll see who they are, whether they're verified, and what they're proposing — before you decide anything.</div>
+    <div class="empty-d">When an agent asks to represent one of your listings, it lands here. You'll see who they are, whether they're verified, and what they're proposing, before you decide anything.</div>
   </div>`;
   if (t === 'active') return `<div class="empty">
     <div class="empty-i">🤝</div>
@@ -509,7 +509,7 @@ function pendingCard(r) {
 
     <div class="terms">
       <div class="terms-h">Set their commission</div>
-      <div class="terms-s">Taken from your payout when a guest they referred books. Apatmento never touches it — you settle with your agent.</div>
+      <div class="terms-s">Taken from your payout when a guest they referred books. Apatmento never touches it. You settle with your agent.</div>
 
       <div class="seg" role="group">
         <button class="seg-b on"  data-m="pct"  onclick="mode(${r.partnership_id},'pct')">Percentage</button>
@@ -524,7 +524,7 @@ function pendingCard(r) {
       <div class="calc" id="calc-${r.partnership_id}"></div>
 
       <textarea class="inp" id="m-${r.partnership_id}" style="margin-top:12px;"
-        placeholder="A note to them (optional) — e.g. &quot;Happy to work together. Call before you send anyone.&quot;"></textarea>
+        placeholder="A note to them (optional). E.g. &quot;Happy to work together. Call before you send anyone.&quot;"></textarea>
     </div>
 
     <div class="acts">
@@ -544,7 +544,7 @@ function pendingCard(r) {
 }
 
 /* percentage ⇄ flat. The calc line is the whole reason a host trusts
-   the number they are typing — show it against their own nightly rate. */
+   the number they are typing. Show it against their own nightly rate. */
 const MODES = {};
 function mode(id, m) {
   MODES[id] = m;
@@ -652,7 +652,7 @@ async function revoke(id, name) {
   if (!confirm(
     'End your partnership with ' + name + '?\n\n' +
     'Their link stops attributing new bookings immediately.\n\n' +
-    'Guests they already sent still count — you agreed to that when they sent them.'
+    'Guests they already sent still count. You agreed to that when they sent them.'
   )) return;
   try {
     await ApaAgent.setState(id, 'revoked');
@@ -700,7 +700,7 @@ async function doReport() {
     closeRep();
     toast(r.agent_suspended
       ? 'Reported. This agent is now suspended across Apatmento.'
-      : 'Reported and declined. Thank you — this protects other hosts too.');
+      : 'Reported and declined. Thank you. This protects other hosts too.');
     await load();
   } catch (e) { toast(e.message, true); }
   btn.disabled = false;

@@ -1,9 +1,9 @@
 /* ════════════════════════════════════════════════════════════════
-   APATMENTO — /api/import-listing.js  v2
+   APATMENTO, /api/import-listing.js  v2
    
    WHY URL SCRAPING DOESN'T WORK:
    Booking.com and Airbnb use Cloudflare Bot Management + JS rendering.
-   Any server-side fetch() gets a 403 or an empty JS shell — always.
+   Any server-side fetch() gets a 403 or an empty JS shell, always.
    Even paid scraper services fail 20-40% of the time on these two.
    
    WHAT WORKS 100%:
@@ -11,7 +11,7 @@
    their property in plain language → Groq AI structures + enhances it
    into a ready-to-publish listing in under 3 seconds.
    
-   This is also faster for the partner — no waiting for scrapes,
+   This is also faster for the partner, no waiting for scrapes,
    no broken imports, no "try again" frustration.
 ════════════════════════════════════════════════════════════════ */
 export const config = { maxDuration: 30 };
@@ -63,7 +63,7 @@ export default async function handler(req, res) {
 Extract or infer structured listing data from the text provided.
 Always respond with valid JSON matching the schema exactly. No markdown, no explanation.
 For missing fields use null. Infer sensibly from context (e.g. "2-bed" → bedrooms: 2).
-Prices should be in KES unless another currency is clear — convert roughly (1 USD ≈ 130 KES).
+Prices should be in KES unless another currency is clear. Convert roughly (1 USD ≈ 130 KES).
 amenities must be an array of short strings matching common ones: WiFi, Pool, Parking, Kitchen, AC, Gym, Security, Balcony, Generator, DSTV, Netflix, Washing Machine, Dishwasher, Hot Water, Smart TV, Workspace, Coffee, BBQ Grill, Garden, Elevator, Pet Friendly, Wheelchair Accessible.`;
 
   const SCHEMA = `{

@@ -1,9 +1,9 @@
 /* ══════════════════════════════════════════════════════════════
-   APATMENTO — Match Guest  (api/match-guest.js)
+   APATMENTO. Match Guest  (api/match-guest.js)
    ──────────────────────────────────────────────────────────────
    A host who cannot honour a booking may offer the guest a
    comparable stay. If the guest accepts, the original host keeps
-   30% of our service fee — payment for solving the problem they
+   30% of our service fee. Payment for solving the problem they
    created, and cheaper for us than a refund and a lost guest.
 
    The one law: a host inside 24 hours of check-in may not use
@@ -26,7 +26,7 @@ function hoursToCheckin(dateStr) {
   return (t - Date.now()) / 3600000;
 }
 
-/* Ranked comparables. Prefer the database — it can see availability
+/* Ranked comparables. Prefer the database. It can see availability
    and host standing. Fall back to a client-equivalent ranking so a
    missing migration degrades the feature rather than breaking it. */
 async function candidates(booking, limit = 6) {
@@ -134,7 +134,7 @@ export default async function handler(req, res) {
       await notify(bk.guest_id, 'match_offer',
         'Your host has proposed an alternative',
         `We found ${cands.length} comparable ${cands.length === 1 ? 'stay' : 'stays'} for your dates. ` +
-        `Choose one, or take a full refund — either way you decide.`,
+        `Choose one, or take a full refund, either way you decide.`,
         { booking_id, offer_id: offer.id });
 
       return res.status(200).json({ blocked: false, offer, candidates: cands, commission });
@@ -229,7 +229,7 @@ export default async function handler(req, res) {
 
       await notify(offer.origin_host_id, 'match_accepted',
         'Your guest accepted the alternative',
-        `You earn ${money(commission)} — 30% of our service fee — for finding them a home. ` +
+        `You earn ${money(commission)}, 30% of our service fee, for finding them a home. ` +
         `No card, no penalty.`,
         { offer_id, commission });
 

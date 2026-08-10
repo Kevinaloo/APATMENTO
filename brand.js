@@ -1,9 +1,9 @@
 /* ═══════════════════════════════════════════════════════════════════
-   APATMENTO · EQUATOR LIGHT — Brand Engine v1
+   APATMENTO · EQUATOR LIGHT. Brand Engine v1
    Safari Glyphs icon system · Meridian loader · Horizon route veil
    Scroll choreography · Interaction feel.
    Rules honoured: no template literals, defensive everywhere,
-   zero hard dependencies — the site must never break because of this.
+   zero hard dependencies. The site must never break because of this.
    ─────────────────────────────────────────────────────────────────── */
 (function(){
 'use strict';
@@ -17,7 +17,7 @@ function qs(s,r){ return (r||document).querySelector(s); }
 function qsa(s,r){ try { return Array.prototype.slice.call((r||document).querySelectorAll(s)); } catch(e){ return []; } }
 function safe(fn){ try { fn(); } catch(e){ if (window.console) console.warn('[brand]', e); } }
 
-/* ═══ 1 · SAFARI GLYPHS — the bespoke duotone icon set ═══════════════
+/* ═══ 1 · SAFARI GLYPHS. The bespoke duotone icon set ═══════════════
    24×24 grid · 1.7 stroke · every glyph carries the equator arc.     */
 var I = {};
 
@@ -194,7 +194,7 @@ function injectIcons(){
       else el.innerHTML = glyphSvg(key);
     });
   });
-  /* Legacy arrow/chevron sweep — instant sitewide consistency */
+  /* Legacy arrow/chevron sweep. Instant sitewide consistency */
   qsa('svg').forEach(function(svg){
     safe(function(){
       if (svg.classList && svg.classList.contains('apa-glyph')) return;
@@ -351,7 +351,7 @@ function choreograph(){
   });
 }
 
-/* ═══ 5 · FEEL — press, sheen, aurora gold ═══════════════════════════ */
+/* ═══ 5 · FEEL. Press, sheen, aurora gold ═══════════════════════════ */
 function feel(){
   qsa('button,[role="button"],.svc,.svc-hero,.btn,.card-cta').slice(0,160).forEach(function(el){
     el.classList.add('apa-press');

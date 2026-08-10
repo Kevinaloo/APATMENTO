@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Apatmento Partner — Earnings</title>
+<title>Apatmento Partner | Earnings</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/apa-session.js"></script>
 <script src="/apa-admin-guard.js"></script>
@@ -18,7 +18,7 @@
       window.location.href='auth.html?next='+encodeURIComponent(location.pathname);
       return;
     }
-    // On a partner page — persist the role so dashboard always knows
+    // On a partner page. Persist the role so dashboard always knows
     try{ localStorage.setItem('apa-last-role','partner'); }catch(e){}
   });
 })();
@@ -306,7 +306,7 @@ td strong{color:var(--ink);font-weight:600;}
     Settings
   </a>
 
-  <!-- Strategic Refer & Earn promo — non-popup, always visible -->
+  <!-- Strategic Refer & Earn promo. Non-popup, always visible -->
   <div class="sb-refer-promo">
     <div class="sbp-eyebrow">💰 Earn more</div>
     <div class="sbp-title">Invite a host.<br/><strong>Earn 10% for life.</strong></div>
@@ -342,8 +342,8 @@ td strong{color:var(--ink);font-weight:600;}
 <div class="invite-banner">
   <div class="invite-banner-icon">🤝</div>
   <div class="invite-banner-body">
-    <div class="invite-banner-pre">Referral programme — Partner exclusive</div>
-    <div class="invite-banner-title">Know another host or tour operator? <strong>Earn 10% of their revenue — for life.</strong></div>
+    <div class="invite-banner-pre">Referral programme. Partner exclusive</div>
+    <div class="invite-banner-title">Know another host or tour operator? <strong>Earn 10% of their revenue, for life.</strong></div>
     <div class="invite-banner-sub">Share your link. Every booking they complete earns you 10% of our platform fee, forever. No cap, no minimum.</div>
   </div>
   <a href="rewards.html" class="invite-banner-btn">
@@ -357,25 +357,25 @@ td strong{color:var(--ink);font-weight:600;}
   <div class="stat-card">
     <span class="stat-icon">💵</span>
     <div class="stat-label">Total earned</div>
-    <div class="stat-val" id="e-total">—</div>
+    <div class="stat-val" id="e-total">-</div>
     <div class="stat-meta">All time</div>
   </div>
   <div class="stat-card">
     <span class="stat-icon">📅</span>
     <div class="stat-label">This month</div>
-    <div class="stat-val" id="e-month">—</div>
+    <div class="stat-val" id="e-month">-</div>
     <div class="stat-meta up" id="e-month-meta">vs last month</div>
   </div>
   <div class="stat-card">
     <span class="stat-icon">⏳</span>
     <div class="stat-label">Pending payout</div>
-    <div class="stat-val" id="e-pending">—</div>
+    <div class="stat-val" id="e-pending">-</div>
     <div class="stat-meta">Arriving in 1–2 days</div>
   </div>
   <div class="stat-card">
     <span class="stat-icon">🏦</span>
     <div class="stat-label">Referral earned</div>
-    <div class="stat-val" id="e-referral">—</div>
+    <div class="stat-val" id="e-referral">-</div>
     <div class="stat-meta"><a href="rewards.html" style="color:var(--electric);text-decoration:none;">View rewards →</a></div>
   </div>
 </div>
@@ -536,7 +536,7 @@ async function requestPayout() {
   const num = document.getElementById('mpesa-num').value.trim();
   const amt = parseFloat(document.getElementById('mpesa-amt').value);
   if(!num || !amt || amt < 100) { toast('Enter a valid M-Pesa number and amount (min KES 100)', false); return; }
-  toast('Payout request submitted — you will receive it within 24 hours ✓');
+  toast('Payout request submitted. You will receive it within 24 hours ✓');
 }
 
 document.addEventListener('DOMContentLoaded', loadEarnings);

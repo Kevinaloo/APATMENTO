@@ -7,7 +7,7 @@
    person sees on the dashboard is what they'll find when they tap in.
 
    Only categories with a genuine catalogue are included. Flights and
-   rides are deliberately excluded — they are search/booking flows with
+   rides are deliberately excluded. They are search/booking flows with
    nothing meaningful to browse as thumbnails.
 
    Design rules:

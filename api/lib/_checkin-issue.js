@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════════════════════
-   APATMENTO — Check-in Issue Adjudicator  (api/checkin-issue.js)
+   APATMENTO. Check-in Issue Adjudicator  (api/checkin-issue.js)
    ──────────────────────────────────────────────────────────────
    A guest is standing at a door and something is wrong. This
    function decides, in one pass, who pays and what happens next.
@@ -65,7 +65,7 @@ async function historyPenalty(hostId, listingId) {
 }
 
 /* Find somewhere for them to go, right now. Availability and standing
-   matter more than price here — a stranded guest needs a bed, and we
+   matter more than price here. A stranded guest needs a bed, and we
    are the ones paying the difference. */
 async function findRefuge(bk) {
   try {
@@ -87,7 +87,7 @@ async function findRefuge(bk) {
   const free = pool.filter(l => !busy.has(l.id));
   if (!free.length) return null;
 
-  // Nearest first — every kilometre is one we pay for and they endure.
+  // Nearest first, every kilometre is one we pay for and they endure.
   free.forEach(l => { l.distance_km = haversineKm(src.lat, src.lng, l.lat, l.lng) ?? 99; });
   free.sort((a, b) => (a.distance_km - b.distance_km) || (b.internal_score - a.internal_score));
   return { ...free[0], listing_id: free[0].id };
@@ -122,7 +122,7 @@ export default async function handler(req, res) {
 
     /* ── Fault ────────────────────────────────────────────────────
        The taxonomy proposes. Evidence disposes. A serious accusation
-       with weak evidence becomes 'unclear' and reaches a human — it
+       with weak evidence becomes 'unclear' and reaches a human. It
        does not become a card.                                       */
     let fault = tax?.fault || 'unclear';
     const strength = evidenceStrength(issue, tax);
@@ -183,11 +183,11 @@ export default async function handler(req, res) {
         refund_amount: settle.refund_amount, host_payout: settle.host_payout,
         window_phase: phase, resolved_at: new Date().toISOString(),
       });
-      await notify(bk.guest_id, 'refund_partial', 'Cancelled — partial refund',
+      await notify(bk.guest_id, 'refund_partial', 'Cancelled. Partial refund',
         `${money(settle.refund_amount)} returns to you. ${money(settle.host_payout)} goes to your ` +
         `host, as half of one night. That's our policy inside 24 hours.`, { booking_id });
       await notify(bk.host_id, 'guest_cancelled', 'Guest cancelled late',
-        `You keep ${money(settle.host_payout)}. No card — this wasn't on you.`, { booking_id });
+        `You keep ${money(settle.host_payout)}. No card. This wasn't on you.`, { booking_id });
 
       result.refunded = true;
       return res.status(200).json(result);
@@ -205,7 +205,7 @@ export default async function handler(req, res) {
         resolved_at: new Date().toISOString(),
       });
       await notify(bk.guest_id, 'refund_issued', 'Refunded in full',
-        `${money(settle.refund_amount)} is on its way back. You cancelled more than 24 hours out — ` +
+        `${money(settle.refund_amount)} is on its way back. You cancelled more than 24 hours out, ` +
         `nothing withheld.`, { booking_id });
       result.refunded = true;
       return res.status(200).json(result);

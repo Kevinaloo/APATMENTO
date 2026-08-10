@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   APATMENTO · RAIL  v2  — horizontal carousels
+   APATMENTO · RAIL  v2. Horizontal carousels
    ───────────────────────────────────────────────────────────────────
    Native CSS scroll-snap does the heavy lifting: momentum, touch,
    accessibility and RTL come free from the browser. JS only adds
@@ -113,7 +113,7 @@
     var showDots = root.getAttribute('data-dots') !== 'off';
     var autoMs = parseInt(root.getAttribute('data-autoplay'), 10) || 0;
 
-    /* — arrows — */
+    /*. Arrows, */
     function mkNav(dir, html, label) {
       var b = doc.createElement('button');
       b.type = 'button';
@@ -127,7 +127,7 @@
     var prev = mkNav('prev', ARROW_L, 'Previous');
     var next = mkNav('next', ARROW_R, 'Next');
 
-    /* — dots — */
+    /*. Dots, */
     var dotsWrap = null;
     if (showDots) {
       dotsWrap = doc.createElement('div');
@@ -150,7 +150,7 @@
       return d > 0 ? d : s[0].offsetWidth;
     }
 
-    /* How many slides fit — so a "page" advances by a full viewport. */
+    /* How many slides fit, so a "page" advances by a full viewport. */
     function perView() {
       return Math.max(1, Math.round(track.clientWidth / step()));
     }
@@ -177,13 +177,13 @@
     function page(dir) {
       var m = maxIndex();
       var i = index() + dir * perView();
-      // Wrap around — a carousel that dead-ends feels broken.
+      // Wrap around. A carousel that dead-ends feels broken.
       if (i > m) i = 0;
       if (i < 0) i = m;
       goTo(i);
     }
 
-    /* — sync arrows + dots to scroll position — */
+    /*. Sync arrows + dots to scroll position, */
     var raf = 0;
     function sync() {
       if (raf) return;

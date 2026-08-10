@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════════════════════
-   APATMENTO — Payment Status Poller
+   APATMENTO. Payment Status Poller
    Vercel Serverless Function (api/check-payment-status.js)
    Called at: /api/check-payment-status?table=X&reference=Y
 ══════════════════════════════════════════════════════════════ */

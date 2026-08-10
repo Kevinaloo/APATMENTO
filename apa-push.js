@@ -15,7 +15,7 @@
   'use strict';
   if (global.ApaPush) return;
 
-  // Public VAPID key. Safe to ship — the private half never leaves the server.
+  // Public VAPID key. Safe to ship. The private half never leaves the server.
   var VAPID_PUBLIC = 'BIteWNc_QXpcPP2rj0BDVOzFZYUs7mFpys-QdUwwFbtqGANd2l59OOplmMKjQ8X5i2F0SsDn3v4F9S-8XSMSXT8';
 
   var _sub = null;      // PushSubscription
@@ -104,7 +104,7 @@
       '</div>' +
       '<button class="apa-toast-x" aria-label="Dismiss"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>';
 
-    // textContent, not innerHTML — notification bodies are user-influenced
+    // textContent, not innerHTML. Notification bodies are user-influenced
     // (host names, listing titles) and must never be parsed as markup.
     el.querySelector('.apa-toast-title').textContent = n.title || 'Cabana';
     el.querySelector('.apa-toast-text').textContent = n.body || '';
@@ -232,7 +232,7 @@
   }
 
   /* ── MANDATORY NOTIFICATION GATE ─────────────────────────────────
-     Once the user is inside the app, notifications are required — the
+     Once the user is inside the app, notifications are required. The
      product is bookings and payments, and silent failures there are
      worse than a permission prompt.
 
@@ -305,7 +305,7 @@
     document.body.appendChild(g);
     requestAnimationFrame(function () { g.classList.add('show'); });
 
-    // Dismiss paths — the gate must NEVER trap the user.
+    // Dismiss paths. The gate must NEVER trap the user.
     var xBtn = g.querySelector('#apa-gate-x');
     if (xBtn) xBtn.addEventListener('click', function () { dismissGate(g); });
     var later = g.querySelector('#apa-gate-later');
@@ -325,7 +325,7 @@
         toast({ title: 'Notifications on', body: 'You\u2019re all set. We\u2019ll keep you posted.', kind: 'general' });
       } else {
         // Denied at the OS level. Swap to instructions rather than
-        // leaving a dead button — still fully dismissible.
+        // leaving a dead button, still fully dismissible.
         g.remove();
         showGate(true);
       }
@@ -339,7 +339,7 @@
     if (p === 'granted') return;
     // If the user already dismissed the gate this session, don't nag.
     try { if (sessionStorage.getItem('apa_gate_dismissed') === '1') return; } catch (e) {}
-    // 'denied' means the browser has locked us out — showing a blocking
+    // 'denied' means the browser has locked us out. Showing a blocking
     // modal there just traps the user, so we skip the auto-prompt entirely
     // and only invite when the browser can still grant (default state).
     if (p === 'denied') return;
@@ -347,7 +347,7 @@
   }
 
   // Pages that count as "inside the app". Marketing and auth pages are
-  // deliberately excluded — gating a signed-out visitor is hostile.
+  // deliberately excluded. Gating a signed-out visitor is hostile.
   // Declared before boot() so it is initialised when boot runs.
   var IN_APP_PAGES = /(dashboard|my-bookings|profile|partner-|booking-confirm|apartments)/i;
 
@@ -366,7 +366,7 @@
     if (Notification.permission === 'granted') {
       safe(function () { subscribe(uid); }, 'subscribe');
     } else if (IN_APP_PAGES.test(location.pathname)) {
-      // Inside the app proper — notifications are mandatory here.
+      // Inside the app proper. Notifications are mandatory here.
       // Delay slightly so the page paints before we block it.
       setTimeout(function () { safe(requireNotifications, 'gate'); }, 1200);
     }

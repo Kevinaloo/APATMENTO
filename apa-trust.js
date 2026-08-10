@@ -3,10 +3,10 @@
    ───────────────────────────────────────────────────────────────────
    One module, four responsibilities:
 
-     ApaTrust.match      — host cannot host; find the guest a home
-     ApaTrust.deposit    — split payment; the check-in gate
-     ApaTrust.issue      — arrival problems; live evidence; triage
-     ApaTrust.review     — private two-way ratings
+     ApaTrust.match. Host cannot host; find the guest a home
+     ApaTrust.deposit. Split payment; the check-in gate
+     ApaTrust.issue. Arrival problems; live evidence; triage
+     ApaTrust.review. Private two-way ratings
 
    Rules, stated once, enforced everywhere:
      · Stays cancel free up to 24h before check-in.
@@ -81,7 +81,7 @@
      1 · ISSUE CLASSIFIER
      A guest types "the place is filthy and nobody is answering the
      door". That is two problems, one of them critical. We rank both.
-     Keyword scoring, not a black box — a host disputing a card is
+     Keyword scoring, not a black box. A host disputing a card is
      entitled to see exactly which words triggered it.
      ═══════════════════════════════════════════════════════════════ */
   var TAXONOMY = null;
@@ -145,7 +145,7 @@
 
   /* ═══════════════════════════════════════════════════════════════
      2 · LIVE CAMERA CAPTURE
-     An uploaded photo proves nothing — it may be six months old and
+     An uploaded photo proves nothing. It may be six months old and
      of another building. We open the rear camera, take the frame in
      the app, and stamp it with time and coordinates.
      ═══════════════════════════════════════════════════════════════ */
@@ -282,7 +282,7 @@
   }
 
   /* ═══════════════════════════════════════════════════════════════
-     4 · MATCH GUEST  — the host-facing rehoming flow
+     4 · MATCH GUEST. The host-facing rehoming flow
      ═══════════════════════════════════════════════════════════════ */
   var Match = {
 
@@ -297,7 +297,7 @@
       return { allowed:true, reason:'ok', hours:h };
     },
 
-    /* Ranked comparables. Server-side scoring when available — it can
+    /* Ranked comparables. Server-side scoring when available. It can
        see availability and every host's standing. Client fallback keeps
        the feature alive when the RPC is missing. */
     async candidates(bookingId, limit) {
@@ -339,7 +339,7 @@
       }).sort(function (a,b) { return b.score - a.score; }).slice(0, limit);
     },
 
-    /* Host presses Match Guest. We check the window server-side too —
+    /* Host presses Match Guest. We check the window server-side too
        a host with a doctored clock is still a host inside 24 hours. */
     async offer(bookingId) {
       var c = sb(); if (!c) throw new Error('offline');
@@ -381,7 +381,7 @@
       await notify(bk.guest_id, 'match_offer',
         'Your host has proposed an alternative',
         'We found ' + cands.length + ' comparable ' + (cands.length===1?'stay':'stays') +
-        ' for the same dates. Review and choose — or take a full refund.',
+        ' for the same dates. Review and choose, or take a full refund.',
         { booking_id: bookingId, offer_id: ins.data.id });
 
       return { blocked:false, offer: ins.data, candidates: cands, commission: commission };
@@ -396,7 +396,7 @@
       return j;
     },
 
-    /* Guest says no. Full refund, always — they did not create this. */
+    /* Guest says no. Full refund, always. They did not create this. */
     async decline(offerId) {
       var res = await post('/api/match-guest', { action:'decline', offer_id: offerId });
       var j = await res.json();
@@ -406,7 +406,7 @@
   };
 
   /* ═══════════════════════════════════════════════════════════════
-     5 · DEPOSIT  — pay part now, the rest before you hold the keys
+     5 · DEPOSIT. Pay part now, the rest before you hold the keys
      ═══════════════════════════════════════════════════════════════ */
   var Deposit = {
     /* Deposit rules:
@@ -463,7 +463,7 @@
   };
 
   /* ═══════════════════════════════════════════════════════════════
-     6 · ISSUE  — "Can't stay here"
+     6 · ISSUE, "Can't stay here"
      ═══════════════════════════════════════════════════════════════ */
   var Issue = {
     classify: classify,
@@ -542,7 +542,7 @@
 
         if (s.window === 'pre_24h') {
           lines.push(['Refund to you', money(s.refund_amount), 'good']);
-          lines.push(['Cancelling more than 24 hours out — nothing withheld.', '', 'note']);
+          lines.push(['Cancelling more than 24 hours out. Nothing withheld.', '', 'note']);
         } else if (picked.fault === 'host') {
           lines.push(['Refund to you', money(s.refund_amount), 'good']);
           if (picked.auto_redirect) lines.push(['We will arrange alternative accommodation for you immediately.', '', 'note']);
@@ -635,7 +635,7 @@
                ' from check-in. Cancel now and you\'re refunded in full.';
       if (phase === 'within_24h')
         return 'Check-in is in ' + Math.max(1, Math.round(h)) + ' hour' + (Math.round(h) === 1 ? '' : 's') +
-               '. What we do next depends on what\'s wrong — and whose fault it is.';
+               '. What we do next depends on what\'s wrong, and whose fault it is.';
       if (phase === 'at_checkin')
         return 'You should be arriving now. If the property isn\'t right, we\'ll move you.';
       return 'Your stay has begun. Tell us what happened.';
@@ -698,7 +698,7 @@
   /* ═══════════════════════════════════════════════════════════════
      7 · PRIVATE REVIEWS
      Both sides write blind. Both are revealed together, to each other
-     and to us — never to the public. The rating still moves the listing.
+     and to us, never to the public. The rating still moves the listing.
      ═══════════════════════════════════════════════════════════════ */
   var Review = {
     async submit(booking, direction, data) {

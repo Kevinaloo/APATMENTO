@@ -1,5 +1,5 @@
 /* ════════════════════════════════════════════════════════════════
-   APATMENTO — /api/enhance-listing.js
+   APATMENTO, /api/enhance-listing.js
    AI-powered listing optimiser using Groq.
    Rewrites titles, descriptions, suggests pricing, generates 
    highlights. Host must explicitly approve before saving.

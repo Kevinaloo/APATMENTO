@@ -3,10 +3,10 @@
    ───────────────────────────────────────────────────────────────────
    Turns the signal stream into three products:
 
-     1. SEGMENTS   — addressable audiences an advertiser can buy.
-     2. INVENTORY  — every real ad slot on the site, priced from
+     1. SEGMENTS. Addressable audiences an advertiser can buy.
+     2. INVENTORY, every real ad slot on the site, priced from
                      measured viewability and intent, not guesswork.
-     3. MEDIA KIT  — the artifact you send a brand. Generated, not
+     3. MEDIA KIT. The artifact you send a brand. Generated, not
                      designed by hand, and never out of date.
 
    Plus a training-set exporter, because the data is worthless if it
@@ -202,7 +202,7 @@
         byPage[e.page] = (byPage[e.page] || 0) + (e.event === 'page_view' ? 1 : 0);
       });
 
-      /* Intent distribution per page — the pricing signal */
+      /* Intent distribution per page. The pricing signal */
       var pageIntent = {};
       sessions.forEach(function (s) {
         var p = s.current_page || 'index';
@@ -255,7 +255,7 @@
       var engaged = sessions.filter(function (s) { return s.engaged === 1 || s.engaged === true; }).length;
       var bounce = sessions.filter(function (s) { return s.reading_mode === 'bounce'; }).length;
 
-      /* Device / hour distributions — the media-kit tables */
+      /* Device / hour distributions. The media-kit tables */
       function distro(field) {
         var d = {};
         sessions.forEach(function (s) { var k = s[field]; if (k != null) d[k] = (d[k] || 0) + 1; });
@@ -270,7 +270,7 @@
         if (h >= 0 && h < 24) hourly[h]++;
       });
 
-      /* Friction ledger — product debt, quantified */
+      /* Friction ledger. Product debt, quantified */
       var rage = sessions.reduce(function (a, s) { return a + (Number(s.rage_clicks) || 0); }, 0);
       var dead = sessions.reduce(function (a, s) { return a + (Number(s.dead_clicks) || 0); }, 0);
       var thrash = sessions.reduce(function (a, s) { return a + (Number(s.nav_thrash) || 0); }, 0);
@@ -342,7 +342,7 @@
     var buyable = a.segments.filter(function (s) { return !s.suppress; });
 
     var lines = [];
-    lines.push('APATMENTO — AUDIENCE & INVENTORY');
+    lines.push('APATMENTO. AUDIENCE & INVENTORY');
     lines.push('Generated ' + new Date().toLocaleString() + ' · trailing ' + a.window + ' days');
     lines.push('');
     lines.push('REACH');
@@ -386,11 +386,11 @@
 
   /* ═══ 5 · ML DATASET EXPORT ═══════════════════════════════════════
      Flat, numeric, labelled. Categorical columns one-hot encoded on
-     request. The label is `converted` — did the session end in a
+     request. The label is `converted`. Did the session end in a
      booking. That is the only target anyone actually wants.         */
 
   /* The label is `checkout_started`: did this session reach checkout.
-     That choice forces a discipline — any feature that is only known
+     That choice forces a discipline, any feature that is only known
      *because* checkout happened would leak the answer and produce a
      model with a perfect score and no predictive value.
 
@@ -456,7 +456,7 @@
       } else {
         CATEGORICAL.forEach(function (c) { row[c] = r[c] == null ? '' : r[c]; });
       }
-      // The label. Never a feature — see LEAKY above.
+      // The label. Never a feature. See LEAKY above.
       row.label_converted = Number(r.checkout_started) === 1 ? 1 : 0;
       return row;
     });
@@ -478,7 +478,7 @@
     return head + '\n' + body;
   }
 
-  /* JSONL — what most training pipelines actually ingest. */
+  /* JSONL. What most training pipelines actually ingest. */
   function datasetJSONL(sessions, opts) {
     var d = dataset(sessions, opts);
     return d.rows.map(function (r) { return JSON.stringify(r); }).join('\n');

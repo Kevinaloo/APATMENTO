@@ -2,13 +2,13 @@
    APATMENTO · SHADOW ADS  v2
    ───────────────────────────────────────────────────────────────────
    Non-invasive, behaviourally-targeted creatives that surface BEHIND
-   or BESIDE the content a guest is already engaging with — never
+   or BESIDE the content a guest is already engaging with, never
    obscuring it. Placement, timing and audience are decided live from
    real behaviour via ApaSignal.
 
    Philosophy:
      · An ad the user experiences as convenience, not interruption.
-     · We surface only when the moment is right — enough dwell, right
+     · We surface only when the moment is right. Enough dwell, right
        intent band, right context. We go quiet during checkout.
      · One dismissal silences us for the whole session.
      · Anti-annoyance is non-negotiable: frequency caps, global

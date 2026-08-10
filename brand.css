@@ -1,11 +1,11 @@
 /* ═══════════════════════════════════════════════════════════════════
-   APATMENTO · EQUATOR LIGHT — Global Design System v1
+   APATMENTO · EQUATOR LIGHT. Global Design System v1
    One motif: the Meridian. A horizon at 0° with an orbiting point.
    It draws in the loader, rides through the icons, underlines the
    headlines, and orbits the APA core. Loaded LAST on every page.
    ─────────────────────────────────────────────────────────────────── */
 
-/* ── 1 · TOKENS (refined in place — same names, richer values) ───── */
+/* ── 1 · TOKENS (refined in place. Same names, richer values) ───── */
 :root{
   /* Surfaces */
   --glass:#FCFCFE;
@@ -25,7 +25,7 @@
   --electric:#4F6DFF;
   --mint:#4EE0C8;            /* reef */
   --mint-deep:#14B8A6;
-  --gold:#F5B12E;            /* savanna — the earn colour */
+  --gold:#F5B12E;            /* savanna. The earn colour */
   --gold-deep:#D98E0B;
   --peach:#FFB08F;
   --ember:#FF6A3C;           /* sunset */
@@ -34,7 +34,7 @@
   --line-2:rgba(8,8,15,.13);
   --line-light:rgba(255,255,255,.12);
 
-  /* The signature sweep — hero moments only */
+  /* The signature sweep. Hero moments only */
   --grad-equator:linear-gradient(115deg,var(--violet) 0%,var(--electric) 32%,var(--mint) 62%,var(--gold) 100%);
   --grad-dusk:linear-gradient(135deg,var(--violet),var(--ember));
   --grad-reef:linear-gradient(135deg,var(--electric),var(--mint));
@@ -70,13 +70,13 @@ h1,h2,h3,.font-display{
   font-variation-settings:'SOFT' 42,'WONK' 0;
   letter-spacing:-.015em;
 }
-/* Accent italics get the WONK cut — the hand-drawn Apatmento charm */
+/* Accent italics get the WONK cut. The hand-drawn Apatmento charm */
 h1 em,h2 em,h3 em,.stmt-key,.loader-word em,.tb-brand em,.hero-title em,em.wonk{
   font-family:var(--font-display);
   font-style:italic;
   font-variation-settings:'SOFT' 70,'WONK' 1;
 }
-/* Numbers, prices, times — engineered digits */
+/* Numbers, prices, times. Engineered digits */
 .price,.stat,[data-num],.svc-price,.amount,time{
   font-family:var(--font-data);
   font-variant-numeric:tabular-nums;
@@ -91,7 +91,7 @@ h1 em,h2 em,h3 em,.stmt-key,.loader-word em,.tb-brand em,.hero-title em,em.wonk{
   border-radius:6px;
 }
 
-/* ── 3 · FILM GRAIN — the physical layer ─────────────────────────── */
+/* ── 3 · FILM GRAIN. The physical layer ─────────────────────────── */
 body::after{
   content:'';
   position:fixed; inset:-10%;
@@ -196,7 +196,7 @@ body::after{
 @keyframes apa-fill-dot{ to{ left:100%; } }
 @keyframes apa-rise{ from{opacity:0; transform:translateY(14px)} to{opacity:1; transform:none} }
 
-/* ── 6 · ROUTE VEIL — every navigation opens like a horizon ─────── */
+/* ── 6 · ROUTE VEIL, every navigation opens like a horizon ─────── */
 #apa-veil{ position:fixed; inset:0; z-index:2147482000; pointer-events:none; }
 #apa-veil .vp{
   position:absolute; left:0; right:0; height:50.5%;
@@ -224,7 +224,7 @@ body::after{
   transition:opacity .7s var(--ease-out),transform .7s var(--ease-out);
 }
 
-/* ── 8 · INTERACTIVE FEEL — press + sheen ────────────────────────── */
+/* ── 8 · INTERACTIVE FEEL. Press + sheen ────────────────────────── */
 .apa-press{ transition:transform var(--dur-1) var(--ease-spring), box-shadow var(--dur-1) var(--ease-out); }
 .apa-press:active{ transform:scale(.965); }
 .apa-sheen{ position:relative; overflow:hidden; isolation:isolate; }
@@ -236,7 +236,7 @@ body::after{
 }
 .apa-sheen:hover::after{ left:130%; }
 
-/* ── 9 · SAFARI GLYPHS — duotone icon system ─────────────────────── */
+/* ── 9 · SAFARI GLYPHS. Duotone icon system ─────────────────────── */
 .svc-ico,.svc-hero-icon svg,.svc-fly-ico svg,[data-apa-icon] svg{
   stroke-linecap:round; stroke-linejoin:round;
 }
@@ -244,7 +244,7 @@ body::after{
 .apa-glyph .df{ fill:var(--duo,currentColor); stroke:none; }
 .apa-glyph .wash{ fill:currentColor; opacity:.10; stroke:none; }
 
-/* Per-service colourways — primary tone + duo accent */
+/* Per-service colourways. Primary tone + duo accent */
 [data-svc="stays"],   .svc-hero-stays .svc-hero-icon { color:var(--violet);     --duo:var(--gold); }
 [data-svc="roommates"],.svc-hero-rooms .svc-hero-icon{ color:var(--mint-deep);  --duo:var(--violet); }
 [data-svc="flights"]  { color:var(--electric);  --duo:var(--mint); }
@@ -321,7 +321,7 @@ body::after{
 }
 .apa-underline.in::after,.in .apa-underline::after{ transform:scaleX(1); }
 
-/* ── 14 · APA ORB — the living core ─────────────────────────────── */
+/* ── 14 · APA ORB. The living core ─────────────────────────────── */
 #apa-btn{
   background:conic-gradient(from 210deg,var(--electric),var(--violet),var(--ember),var(--gold),var(--mint),var(--electric)) !important;
   box-shadow:0 8px 34px rgba(109,40,255,.5),0 0 0 1px rgba(255,255,255,.14) inset !important;
@@ -342,7 +342,7 @@ body::after{
 .prop-grid>*,.card,.listing-card{ transition:transform var(--dur-2) var(--ease-spring),box-shadow var(--dur-2) var(--ease-out); }
 .prop-grid>*:hover,.card:hover,.listing-card:hover{ transform:translateY(-4px); box-shadow:var(--shadow-lift); }
 
-/* ── 16 · REDUCED MOTION — respect, fully ────────────────────────── */
+/* ── 16 · REDUCED MOTION. Respect, fully ────────────────────────── */
 @media (prefers-reduced-motion:reduce){
   body::after{ animation:none; }
   #apa-btn::after{ animation:none; display:none; }

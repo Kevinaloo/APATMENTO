@@ -1,15 +1,15 @@
 /* ══════════════════════════════════════════════════════════════
-   APATMENTO — Server-side Rewards & Referral API
+   APATMENTO. Server-side Rewards & Referral API
    Vercel Serverless Function (api/rewards.js)
    All commission, points, withdrawal operations run here
-   with the service-role key — never in the browser.
+   with the service-role key, never in the browser.
 
    Routes (POST with JSON body { action, ...params }):
-     record-referral   — called at signup, idempotent
-     award             — called by stk-callback after payment
-     redeem-points     — called at checkout
-     withdraw          — request M-Pesa payout
-     stats             — dashboard totals for the authed user
+     record-referral. Called at signup, idempotent
+     award. Called by stk-callback after payment
+     redeem-points. Called at checkout
+     withdraw. Request M-Pesa payout
+     stats. Dashboard totals for the authed user
 ══════════════════════════════════════════════════════════════ */
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -18,13 +18,13 @@ const SERVICE_KEY  = process.env.SUPABASE_SERVICE_ROLE_KEY;
 /* Internal secret so only stk-callback can call award without a user token */
 const INTERNAL_SECRET = process.env.INTERNAL_API_SECRET || '';
 
-/* Platform fee rate — 10% of gross for stays/tours/events */
+/* Platform fee rate, 10% of gross for stays/tours/events */
 const PLATFORM_FEE_RATE = 0.10;
 
 /* Points: 10 pts per KES 1,000 spent */
 const POINTS_PER_KES = 10 / 1000;
 
-/* ── DB helpers (service-role — full trust) ── */
+/* ── DB helpers (service-role. Full trust) ── */
 async function dbSelect(table, query = '') {
   const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${query}`, {
     headers: {
@@ -75,7 +75,7 @@ async function dbPatch(table, query, patch) {
 }
 
 /* Atomic points increment via Supabase RPC.
-   Falls back to read-then-write if the RPC doesn't exist yet —
+   Falls back to read-then-write if the RPC doesn't exist yet
    the SQL migration creates it.  */
 async function atomicAddPoints(userId, delta, lifetime = false) {
   const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/add_user_points`, {
@@ -126,7 +126,7 @@ function cors(res) {
 ════════════════════════════════════════════════════════════════ */
 
 /* record-referral
-   Called client-side after signup — idempotent (safe to call twice).
+   Called client-side after signup. Idempotent (safe to call twice).
    Auth: user's own bearer token (we verify referredUserId matches token). */
 async function actionRecordReferral(body, user) {
   if (!user) return { error: 'Unauthorized', status: 401 };
@@ -208,7 +208,7 @@ async function actionAward(body, req) {
     /* Idempotency check */
     const earningsCheck = await dbSelect('referral_earnings', `booking_ref=eq.${encodeURIComponent(booking_ref)}&limit=1`);
     if (!earningsCheck.length) {
-      /* Calculate platform fee server-side — never trust client */
+      /* Calculate platform fee server-side, never trust client */
       const platform_fee = parseFloat((Number(gross_amount) * PLATFORM_FEE_RATE).toFixed(2));
       const rate         = ref.referral_type === 'host' ? 0.10 : 0.20;
       const commission   = parseFloat((platform_fee * rate).toFixed(2));
@@ -308,8 +308,8 @@ async function actionWithdraw(body, user) {
 }
 
 /* ensure-code
-   Idempotent — create a referral_code row for a user if none exists.
-   Auth: user's own bearer token. Ignores body.user_id — always uses token uid. */
+   Idempotent. Create a referral_code row for a user if none exists.
+   Auth: user's own bearer token. Ignores body.user_id, always uses token uid. */
 async function actionEnsureCode(body, user) {
   if (!user) return { error: 'Unauthorized', status: 401 };
   const userId = user.id;
@@ -328,7 +328,7 @@ async function actionEnsureCode(body, user) {
       return { ok: true, code: tryCode };
     } catch (e) {
       if (!e.message.includes('unique') && !e.message.includes('duplicate')) throw e;
-      /* collision — loop */
+      /* collision. Loop */
     }
   }
   return { error: 'Could not generate a unique code', status: 500 };
@@ -374,7 +374,7 @@ export default async function handler(req, res) {
     const action = body.action;
     if (!action) return res.status(400).json({ error: 'action required' });
 
-    /* award doesn't need a user token — it's internal-secret-gated */
+    /* award doesn't need a user token. It's internal-secret-gated */
     const user = action === 'award' ? null : await authedUser(req);
 
     let result;

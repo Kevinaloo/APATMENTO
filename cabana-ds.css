@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════════════════════
    CABANA · DESIGN SYSTEM OVERRIDE  v1
    ───────────────────────────────────────────────────────────────────
-   Loaded LAST on every page — after brand.css and page <style>.
+   Loaded LAST on every page, after brand.css and page <style>.
    One job: lift the whole product to a professional, premium standard.
 
      • Typography  → Geist (display) + Inter (body). No more serif.
@@ -16,8 +16,8 @@
    Geist is a modern, technical, premium grotesque (headings).
    Inter is the most trusted, versatile UI face on the web (body).
    Both are variable, open-source, and load fast from Google Fonts.
-   We re-point every existing font token so the entire codebase — which
-   references --font-display / --font-body / --font-d / --font-b — moves
+   We re-point every existing font token so the entire codebase, which
+   references --font-display / --font-body / --font-d / --font-b. Moves
    over with zero per-page markup changes.                              */
 :root{
   --font-display:'Geist','Inter',system-ui,-apple-system,sans-serif !important;
@@ -36,7 +36,7 @@ button, input, select, textarea{
 }
 
 /* Headings + any display-class element get Geist with a tight,
-   confident tracking. Serif italics are neutralised — Geist has no
+   confident tracking. Serif italics are neutralised. Geist has no
    italic personality to lean on, so emphasis comes from weight/colour. */
 h1, h2, h3, h4,
 .font-display, .hero-title, .section-headline, .promise-headline,
@@ -65,7 +65,7 @@ h1 em, h2 em, h3 em,
   font-weight:680;
 }
 
-/* Numbers / prices / stats — Geist tabular for an engineered feel */
+/* Numbers / prices / stats. Geist tabular for an engineered feel */
 .price, .stat, [data-num], .svc-price, .amount, time,
 .pstat-num, .hero-stat-num{
   font-family:'Geist','Inter',ui-monospace,monospace !important;
@@ -73,7 +73,7 @@ h1 em, h2 em, h3 em,
   letter-spacing:-0.02em;
 }
 
-/* ── 2 · EYEBROW LABELS — de-AI'd ────────────────────────────────────
+/* ── 2 · EYEBROW LABELS. De-AI'd ────────────────────────────────────
    Remove the ✦ sparkle prefix that made every label read "AI-generated".
    Replaced (via JS in cabana-rebrand) with clean labels; here we make
    sure the type treatment is premium: uppercase, wide tracking, no glyph. */
@@ -124,7 +124,7 @@ h1 em, h2 em, h3 em,
 
 /* ── 4 · CABANA HEADER WORDMARK ──────────────────────────────────────
    The Cabana wordmark now sits where the old SOS/chip clutter lived.
-   Clean, single brand asset — the professional identity, front & centre. */
+   Clean, single brand asset. The professional identity, front & centre. */
 .cab-wordmark{
   display:inline-flex;align-items:center;height:100%;
   text-decoration:none;flex-shrink:0;line-height:0;
@@ -180,11 +180,11 @@ h1 em, h2 em, h3 em,
   .tb-cab-wm,.rm-tb-logo{height:22px;}
 }
 
-/* ── 9 · SILK LAYER — feel, focus & motion discipline ────────────────
+/* ── 9 · SILK LAYER. Feel, focus & motion discipline ────────────────
    Appended polish pass. Interaction feel only: tap response, focus
    visibility, selection, scroll. No layout opinions.                  */
 
-/* Instant, clean taps on mobile — no gray flash, no double-tap zoom lag */
+/* Instant, clean taps on mobile, no gray flash, no double-tap zoom lag */
 a, button, [role="button"], input, select, textarea, label, summary{
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
@@ -217,7 +217,7 @@ p, li, .svc-tile-desc{ text-wrap: pretty; }
 }
 ::-webkit-scrollbar-thumb:hover{ background-color: rgba(109,40,255,.45); }
 
-/* In-page anchors glide — but only for people who want motion */
+/* In-page anchors glide, but only for people who want motion */
 @media (prefers-reduced-motion: no-preference){
   html{ scroll-behavior: smooth; }
 }

@@ -18,10 +18,10 @@ export const config = { maxDuration: 60 };
 /* ═══════════════════════════════════════════════════════════════════
    APATMENTO EVENT INGESTION v6  ·  Production-grade
    Sources:
-     ① NairobiEventsGuide — Tribe Events WP-JSON REST API (JSON, no CF block)
-     ② Tipsitickets       — Next.js SSR with realistic browser headers
-     ③ Ticketsasa         — PHP server-rendered, Kenyan KES events
-     ④ Eventbrite Nairobi — JSON-LD structured data
+     ① NairobiEventsGuide. Tribe Events WP-JSON REST API (JSON, no CF block)
+     ② Tipsitickets. Next.js SSR with realistic browser headers
+     ③ Ticketsasa. PHP server-rendered, Kenyan KES events
+     ④ Eventbrite Nairobi. JSON-LD structured data
    Cron: daily 3am UTC  ·  Manual: GET /api/scrape-events
 ═══════════════════════════════════════════════════════════════════ */
 
@@ -145,8 +145,8 @@ function dedup(rows) {
 }
 
 /* ════════════════════════════════════════════════════════════════
-   PARSER 1 — NairobiEventsGuide via Tribe Events REST API
-   Endpoint: /wp-json/tribe/events/v1/events — returns structured JSON
+   PARSER 1. NairobiEventsGuide via Tribe Events REST API
+   Endpoint: /wp-json/tribe/events/v1/events. Returns structured JSON
    No Cloudflare, no bot detection, clean data
 ════════════════════════════════════════════════════════════════ */
 async function parseNEG() {
@@ -191,7 +191,7 @@ async function parseNEG() {
 }
 
 /* ════════════════════════════════════════════════════════════════
-   PARSER 2 — Tipsitickets: HTML + __NEXT_DATA__ + precise patterns
+   PARSER 2. Tipsitickets: HTML + __NEXT_DATA__ + precise patterns
 ════════════════════════════════════════════════════════════════ */
 function parseTipsiHtml(html) {
   if (!html) return [];
@@ -234,7 +234,7 @@ function parseTipsiHtml(html) {
     } catch {}
   }
 
-  // Strategy B: HTML parsing — Featured events (clean structure at top)
+  // Strategy B: HTML parsing. Featured events (clean structure at top)
   // Pattern: <img ... src="https://media.tipsitickets.com/event_banners/variants/NAME.webp">
   //          <h3>TITLE</h3> ... <a href="/event/SLUG?eventId=UUID">
   const featRe = /src="(https:\/\/media\.tipsitickets\.com\/event_banners\/variants\/[^"]+\.webp)"[^>]*>([\s\S]{0,2000}?)<a[^>]+href="(\/event\/[^"]+)"/gi;
@@ -263,7 +263,7 @@ function parseTipsiHtml(html) {
     if (events.length >= 30) break;
   }
 
-  // Strategy C: All Events section — Next.js image proxy pattern
+  // Strategy C: All Events section. Next.js image proxy pattern
   // "Starting fromKES X,XXX" (no space before KES is Tipsitickets-specific)
   const allIdx = Math.max(0, html.lastIndexOf('All Events'));
   const allSection = html.slice(allIdx);
@@ -298,7 +298,7 @@ function parseTipsiHtml(html) {
 }
 
 /* ════════════════════════════════════════════════════════════════
-   PARSER 3 — Ticketsasa
+   PARSER 3. Ticketsasa
 ════════════════════════════════════════════════════════════════ */
 function parseTicketsasa(html) {
   if (!html) return [];
@@ -338,7 +338,7 @@ function parseTicketsasa(html) {
 }
 
 /* ════════════════════════════════════════════════════════════════
-   PARSER 4 — Eventbrite (JSON-LD)
+   PARSER 4. Eventbrite (JSON-LD)
 ════════════════════════════════════════════════════════════════ */
 const EV_TYPES=new Set(['Event','MusicEvent','TheaterEvent','Festival','ComedyEvent','SportsEvent','DanceEvent','ExhibitionEvent','FoodEvent','ScreeningEvent','SocialEvent','BusinessEvent','EducationEvent','ChildrensEvent']);
 function gatherEv(node,out){if(!node||typeof node!=='object')return;if(Array.isArray(node)){node.forEach(n=>gatherEv(n,out));return;}if([].concat(node['@type']||[]).some(x=>EV_TYPES.has(x)))out.push(node);if(node['@graph'])gatherEv(node['@graph'],out);}
@@ -430,7 +430,7 @@ async function runEvents(res) {
    TOURS SCRAPER
 ══════════════════════════════════════ */
 /* ═══════════════════════════════════════════════════════════════
-   APATMENTO TOURS SCRAPER v2 — GYG + Viator
+   APATMENTO TOURS SCRAPER v2. GYG + Viator
    Handles lazy-loaded images (data-src, data-lazy-src),
    JSON-LD TouristAttraction/Product, and Next.js __NEXT_DATA__
 ═══════════════════════════════════════════════════════════════ */
@@ -438,11 +438,11 @@ async function runEvents(res) {
 // SUPA_URL defined above
 // SUPA_KEY defined above
 
-// H defined above (line 30) — this second declaration threw at import time.
+// H defined above (line 30). This second declaration threw at import time.
 
 // db() defined above
 
-// fetchHtml() defined at line 76 — redeclaration removed.
+// fetchHtml() defined at line 76. Redeclaration removed.
 // The two bodies were equivalent: same browser headers, 14s vs 15s abort.
 // All five call sites pass only a url, so the arrow version's default applies.
 
@@ -543,7 +543,7 @@ function parseGYG(html) {
     } catch (e) { /* fall through to HTML parsing */ }
   }
 
-  // Strategy 2: HTML parsing — GYG tour cards
+  // Strategy 2: HTML parsing. GYG tour cards
   // Match links to tour pages (always /-tNNNNNN/ pattern)
   const tourUrlRe = /href="(https:\/\/www\.getyourguide\.com\/[^"]*-t\d{4,}\/[^"]*)"/g;
   const found = new Map();
@@ -636,7 +636,7 @@ function parseViator(html) {
     } catch {}
   }
 
-  // Strategy 2: HTML — Viator tour card links always /tours/ pattern
+  // Strategy 2: HTML. Viator tour card links always /tours/ pattern
   const re = /href="(https:\/\/www\.viator\.com\/tours\/[A-Za-z0-9\-\/]+)"/g;
   const found = new Map();
   let m;
@@ -667,7 +667,7 @@ function parseViator(html) {
   return tours;
 }
 
-// dedup() defined at line 142 — redeclaration removed (that copy dropped the null guard).
+// dedup() defined at line 142. Redeclaration removed (that copy dropped the null guard).
 
 async function runTours(res) {
   try {
@@ -705,7 +705,7 @@ async function runTours(res) {
 ══════════════════════════════════════ */
 /* =========================================================
    APATMENTO  -  Food Scraper v2 (OpenStreetMap Overpass API)
-   Uses GET request with URL-encoded query — fixes 406 error
+   Uses GET request with URL-encoded query. Fixes 406 error
    Runs daily 2am UTC via Vercel Cron.
    ========================================================= */
 // SUPA_URL defined above
@@ -783,7 +783,7 @@ async function runFood(res) {
    SHOPPING SCRAPER
 ══════════════════════════════════════ */
 /* ════════════════════════════════════════════════════════════════
-   APATMENTO  ·  Shopping Scraper — Jumia Kenya
+   APATMENTO  ·  Shopping Scraper. Jumia Kenya
    Fetches top-rated products from Jumia Kenya across 4 categories.
    Jumia is server-rendered PHP/hybrid: full product data including
    names, prices, discounts, ratings, images in the HTML source.
@@ -911,7 +911,7 @@ function parseJumia(html, cat) {
       city: 'Nairobi',
       price: price,
       description: oldPrice && discountPct
-        ? `Was KSh ${oldPrice.toLocaleString()} — now ${discountPct}% off on Jumia Kenya.${rating ? ' Rated ' + rating + '/5' : ''}`
+        ? `Was KSh ${oldPrice.toLocaleString()}. Now ${discountPct}% off on Jumia Kenya.${rating ? ' Rated ' + rating + '/5' : ''}`
         : `Available on Jumia Kenya.${rating ? ' Rated ' + rating + '/5' : ''}`,
       image_url: image,
       tags: tags,
@@ -928,7 +928,7 @@ function parseJumia(html, cat) {
   return products;
 }
 
-// dedup() defined at line 142 — redeclaration removed (identical implementation).
+// dedup() defined at line 142. Redeclaration removed (identical implementation).
 
 async function runShopping(res) {
   const t0 = Date.now();
@@ -963,7 +963,7 @@ async function runShopping(res) {
 
 
 /* ══════════════════════════════════════
-   ROUTER — dispatches to the right scraper
+   ROUTER. Dispatches to the right scraper
 ══════════════════════════════════════ */
 export default async function handler(req, res) {
   const service = (req.query?.service || new URL(req.url || '/', 'http://x').searchParams.get('service') || 'all').toLowerCase();

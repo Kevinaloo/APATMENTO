@@ -46,7 +46,7 @@ const BASE_WRAP = (content) => `<!DOCTYPE html>
 <div style="max-width:600px;margin:0 auto;padding:24px 16px;">
 ${content}
 <div style="text-align:center;padding-top:20px;border-top:1px solid #E8E9F0;margin-top:8px;">
-  <p style="font-size:12px;color:#8E90AD;margin:0;"><strong>Apatmento</strong> — Zero Commission. Always.</p>
+  <p style="font-size:12px;color:#8E90AD;margin:0;"><strong>Apatmento</strong>: Zero Commission. Always.</p>
   <p style="font-size:11px;color:#B0B3C8;margin:6px 0 0;">
     <a href="https://www.apatmento.space" style="color:#4361FF;text-decoration:none;">apatmento.space</a>
     &nbsp;·&nbsp; This is an automated message.
@@ -86,7 +86,7 @@ function buildMagicLink({ email, otp, name, expiresMin = 10 }) {
         <div style="font-size:42px;font-weight:800;color:#4361FF;letter-spacing:10px;font-family:monospace;">${otp}</div>
       </div>
       <p style="font-size:12px;color:#B0B3C8;text-align:center;margin:14px 0 0;">
-        Didn't request this? Ignore this email — your account is safe.
+        Didn't request this? Ignore this email. Your account is safe.
       </p>
     `)}
   `);
@@ -95,15 +95,15 @@ function buildMagicLink({ email, otp, name, expiresMin = 10 }) {
 function buildWelcome({ name, email }) {
   const first = (name || '').split(' ')[0] || 'there';
   return BASE_WRAP(`
-    ${HEADER('🎉', `Karibu, ${first}!`, "Welcome to Apatmento — Kenya's zero-commission travel super-app")}
+    ${HEADER('🎉', `Karibu, ${first}!`, "Welcome to Apatmento. Kenya's zero-commission travel super-app")}
     ${CARD(`
       <h2 style="margin:0 0 16px;font-size:16px;font-weight:700;color:#0A0A14;">Here's what you can do right now:</h2>
       <div style="display:flex;flex-direction:column;gap:14px;">
         ${[
-          ['🏠','Book stays','Short-stay apartments across Nairobi & Kenya — pay only face value'],
+          ['🏠','Book stays','Short-stay apartments across Nairobi & Kenya. Pay only face value'],
           ['🦁','Discover tours & safaris','From Nairobi National Park to the Mara'],
           ['💰','List & earn 100%','Hosts keep everything. Zero commission, forever.'],
-          ['✦','Meet APA','Your AI concierge — books anything in seconds'],
+          ['✦','Meet APA','Your AI concierge. Books anything in seconds'],
         ].map(([ico,bold,txt]) =>
           `<div style="display:flex;gap:12px;align-items:flex-start;">
             <div style="font-size:22px;flex-none;">${ico}</div>
@@ -162,7 +162,7 @@ function buildBookingReceipt({ booking, listing, user }) {
     `)}
     <div style="background:linear-gradient(135deg,rgba(67,97,255,0.06),rgba(123,47,247,0.04));border:1.5px solid rgba(67,97,255,0.2);border-radius:16px;padding:20px;margin-bottom:16px;">
       <h3 style="margin:0 0 12px;font-size:14px;font-weight:700;color:#0A0A14;">🔑 Your Access Codes</h3>
-      <p style="margin:0 0 14px;font-size:13px;color:#636480;line-height:1.55;">Share your <strong>Guest Code</strong> with the host at check-in. Keep the <strong>Host Code</strong> private — you'll need it to release payment.</p>
+      <p style="margin:0 0 14px;font-size:13px;color:#636480;line-height:1.55;">Share your <strong>Guest Code</strong> with the host at check-in. Keep the <strong>Host Code</strong> private. You'll need it to release payment.</p>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
         <div style="background:#fff;border-radius:12px;padding:14px;text-align:center;">
           <div style="font-size:10px;font-weight:700;color:#8E90AD;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">Guest Code</div>
@@ -346,7 +346,7 @@ export default async function handler(req, res) {
         const { booking, listing, user } = body;
         if (!booking || !listing || !user?.email) return res.status(400).json({ error: 'booking+listing+user required' });
         to = user.email; from = FROM_BOOKING;
-        subject = `✅ Booking Confirmed — ${listing.name} | Ref: ${booking.reference}`;
+        subject = `✅ Booking Confirmed, ${listing.name} | Ref: ${booking.reference}`;
         html = buildBookingReceipt({ booking, listing, user });
         break;
       }
@@ -355,7 +355,7 @@ export default async function handler(req, res) {
         const { booking, listing, host } = body;
         if (!booking || !listing || !host?.email) return res.status(400).json({ error: 'booking+listing+host required' });
         to = host.email; from = FROM_BOOKING;
-        subject = `💰 New booking for ${listing.name} — ${KES(booking.hostPayout || booking.subtotal)}`;
+        subject = `💰 New booking for ${listing.name}, ${KES(booking.hostPayout || booking.subtotal)}`;
         html = buildHostBookingAlert({ booking, listing, host });
         break;
       }
@@ -373,7 +373,7 @@ export default async function handler(req, res) {
         const { booking, listing, user } = body;
         if (!booking || !listing || !user?.email) return res.status(400).json({ error: 'booking+listing+user required' });
         to = user.email; from = FROM_BOOKING;
-        subject = `❌ Booking Cancelled — ${listing.name}`;
+        subject = `❌ Booking Cancelled, ${listing.name}`;
         html = buildCancellation({ booking, listing, user });
         break;
       }

@@ -289,7 +289,7 @@ html.via-dash #tx{display:none!important;animation:none!important;}
 /* ═══════════════════════════════════════════════════════════════
    COMPACT LISTING CARDS (mobile)
    Reflows the large vertical card into a tight horizontal tile so
-   more products fit on screen — matching the Stays layout.
+   more products fit on screen. Matching the Stays layout.
    Purely presentational: no markup or JS changes required.
    ═══════════════════════════════════════════════════════════════ */
 @media(max-width:600px){
@@ -326,7 +326,7 @@ html.via-dash #tx{display:none!important;animation:none!important;}
 
 </style>
 
-<!-- Travelpayouts Drive — Flight monetization -->
+<!-- Travelpayouts Drive. Flight monetization -->
 <script nowprocket data-noptimize="1" data-cfasync="false" data-wpfc-render="false" seraph-accel-crit="1" data-no-defer="1">
 (function () {
   var script = document.createElement("script");
@@ -342,6 +342,38 @@ html.via-dash #tx{display:none!important;animation:none!important;}
 <link rel="stylesheet" href="/cabana-ds.css"/>
 <script type="application/ld+json">
 {"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.apatmento.space/"}, {"@type": "ListItem", "position": 2, "name": "Flights", "item": "https://www.apatmento.space/flights"}]}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How do I find the cheapest flights from Nairobi?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Search above and stay flexible on dates. Midweek departures and booking a few weeks ahead usually return the lowest fares."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Which airlines can I compare?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Major international carriers, regional operators and budget airlines, all in one search."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does Cabana charge a booking fee for flights?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. We add no booking levy. You book at face value with the airline or travel partner."
+      }
+    }
+  ]
+}
 </script>
 </head>
 <body>
@@ -402,7 +434,7 @@ html.via-dash #tx{display:none!important;animation:none!important;}
 <div class="hero">
   <span class="hero-eyebrow">Book flights</span>
   <h1 class="hero-title">Fly further, <em>spend less.</em></h1>
-  <p class="hero-sub">Compare routes across Kenya and East Africa. Face-value fares — no booking levy added by us.</p>
+  <p class="hero-sub">Compare routes across Kenya and East Africa. Face-value fares, no booking levy added by us.</p>
   <div class="kes-rate-banner" id="kes-rate-banner">
     <span id="kes-rate-text">Loading live exchange rate…</span>
   </div>
@@ -414,7 +446,6 @@ html.via-dash #tx{display:none!important;animation:none!important;}
 
 <div style="max-width:1180px;margin:0 auto;padding:0 26px 0;"><div data-showcase="ticker"></div></div>
 
-<div style="max-width:1180px;margin:0 auto;padding:20px 26px 0;"><div data-showcase="video"></div></div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -426,7 +457,7 @@ try{const{createClient}=supabase;sb=createClient(SUPABASE_URL,SUPABASE_ANON_KEY)
 function showToast(m,d=3200){const t=document.getElementById('toast');if(!t)return;t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),d);}
 
 /* ── Live USD → KES rate banner ──
-   Independent of the Kiwi/Aviasales widget — fetches its own rate from a
+   Independent of the Kiwi/Aviasales widget. Fetches its own rate from a
    public, no-key exchange-rate API and shows it as a reference next to the
    widget (which only quotes in USD). Cached for 6 hours to limit requests.
    If the fetch fails for any reason, falls back to a fixed approximate
@@ -491,17 +522,33 @@ setTimeout(dismissTx,3500);
 .seo-content .seo-links{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px;}
 .seo-content .seo-links a{font-size:13px;font-weight:500;color:var(--t1,#6D28FF);text-decoration:none;padding:8px 15px;border-radius:100px;background:rgba(0,0,0,.03);border:1px solid var(--line,rgba(10,10,20,.07));transition:all .2s;}
 .seo-content .seo-links a:hover{border-color:var(--t1,#6D28FF);}
+.seo-content .seo-cta{display:inline-flex;align-items:center;gap:9px;margin:4px 0 10px;padding:13px 26px;border-radius:100px;background:var(--theme-grad,linear-gradient(120deg,#6D28FF,#B14BFF));color:#fff;font-family:var(--font-display,'Geist','Inter',sans-serif);font-size:14.5px;font-weight:600;text-decoration:none;box-shadow:0 14px 32px rgba(10,10,20,.16);transition:transform .2s,box-shadow .2s;}
+.seo-content .seo-cta:hover{transform:translateY(-2px);box-shadow:0 20px 44px rgba(10,10,20,.22);}
+.seo-content .seo-trust{display:flex;flex-wrap:wrap;gap:8px 20px;margin:0 0 20px;padding:0;list-style:none;font-size:13.5px;font-weight:500;color:var(--ink-soft,#4A4C66);}
+.seo-content .seo-trust li{display:flex;align-items:center;gap:7px;}
+.seo-content .seo-trust li::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--t1,#6D28FF);flex-shrink:0;}
+
 </style>
 <section class="seo-content">
-  <h2>Book flights from Nairobi to anywhere</h2>
-  <p>Search and compare flights from Nairobi (NBO) with Apatmento. Whether you're flying domestically to Mombasa, Kisumu or Diani, regionally to Zanzibar, Kigali or Cape Town, or internationally to Istanbul, London, Dubai, Mumbai and beyond, you can find the best fares in one place. Our flight search compares airlines and prices so you get real value, with no booking levy added by us.</p>
-  <p>Compare fares across major carriers and budget airlines in one place, from long-haul international routes to quick regional and domestic hops. Use the live search above to find dates and prices that fit your plans.</p>
-  <h3>Popular flight routes from Nairobi</h3>
-  <p>Nairobi's Jomo Kenyatta International Airport (JKIA) is East Africa's busiest hub. Popular international routes include Nairobi to Dubai, London, Istanbul, Amsterdam and Guangzhou, while regional favourites include Zanzibar, Kigali, Entebbe, Dar es Salaam and Johannesburg. Domestic connections to Mombasa and the coast are quick and frequent.</p>
+  <h2>Cheap flights from Nairobi (NBO)</h2>
+  <p>Compare fares to Mombasa, Kisumu, Diani, Zanzibar, Kigali, Cape Town, Dubai, London, Istanbul and Mumbai in one search. No booking levy added by us.</p>
+  <ul class="seo-trust">
+    <li>Face-value fares, no levy from us</li>
+    <li>Domestic, regional and long-haul in one search</li>
+    <li>Live USD to KES reference rate</li>
+  </ul>
+  <a class="seo-cta" href="#kiwi-search-widget">Search flights <span aria-hidden="true">&rarr;</span></a>
+
+  <h3>Popular routes from Nairobi</h3>
+  <p>Jomo Kenyatta International is East Africa's busiest hub. Top long-haul routes run to Dubai, London, Istanbul, Amsterdam and Guangzhou. Regional favourites are Zanzibar, Kigali, Entebbe, Dar es Salaam and Johannesburg, with domestic hops to Mombasa and the coast several times a day.</p>
+
+  <div data-showcase="video" style="margin:8px 0 30px;"></div>
+
   <h3>Frequently asked questions</h3>
-  <details class="faq-item"><summary>How do I find the cheapest flights from Nairobi?</summary><p>Use the flight search at the top of this page to compare fares across airlines and dates. Being flexible with your travel dates and booking in advance usually gets you the best prices.</p></details>
-  <details class="faq-item"><summary>Which airlines can I compare?</summary><p>The search compares a wide range of major international carriers, regional airlines and budget operators, so you can find the best fare for your route and dates.</p></details>
-  <details class="faq-item"><summary>Does Apatmento charge a booking fee for flights?</summary><p>No — we don't add any booking levy. You book directly with the airline or travel partner at face-value fares.</p></details>
+  <details class="faq-item"><summary>How do I find the cheapest flights from Nairobi?</summary><p>Search above and stay flexible on dates. Midweek departures and booking a few weeks ahead usually return the lowest fares.</p></details>
+  <details class="faq-item"><summary>Which airlines can I compare?</summary><p>Major international carriers, regional operators and budget airlines, all in one search.</p></details>
+  <details class="faq-item"><summary>Does Cabana charge a booking fee for flights?</summary><p>No. We add no booking levy. You book at face value with the airline or travel partner.</p></details>
+
   <div class="seo-links"><a href="/apartments.html">Stays in Kenya</a><a href="/tours.html">Nairobi Tours</a><a href="/carhire.html">Car Hire</a><a href="/rides.html">Airport Transfers</a><a href="/events.html">Events</a></div>
 </section>
 

@@ -26,7 +26,7 @@
 <!-- Session core: one Supabase client per tab. Multiple clients on the
      same storage key race each other and silently drop the session. -->
 <script>
-/* Capture beforeinstallprompt before the deferred pwa.js parses —
+/* Capture beforeinstallprompt before the deferred pwa.js parses
    otherwise a fast load loses the event and the signup install gate
    can never offer the native dialog. */
 (function(){
@@ -195,7 +195,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
 .install-perks{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:13px;}
 .install-perk{display:flex;align-items:center;gap:6px;background:rgba(123,47,247,.06);border:1px solid rgba(123,47,247,.1);border-radius:9px;padding:7px 10px;font-size:11.5px;font-weight:600;color:var(--ink);line-height:1.3;}
 .install-step.armed .install-perks{display:none;}
-/* Skip link — de-emphasised but always accessible */
+/* Skip link. De-emphasised but always accessible */
 .install-skip-btn{display:block;width:100%;margin-top:10px;padding:9px;border:none;background:none;color:var(--ink-faint);font-family:var(--font-body);font-size:12px;cursor:pointer;text-align:center;transition:color .2s;}
 .install-skip-btn:hover{color:var(--ink);}
 .install-step.armed .install-skip-btn{display:none;}
@@ -284,7 +284,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
 .ss-sub{font-size:14px;color:var(--ink-soft);line-height:1.6;margin-bottom:24px;}
 .ss-email{font-weight:600;color:var(--ink);}
 
-/* redirect screen — cinematic */
+/* redirect screen. Cinematic */
 #redirect-screen{position:fixed;inset:0;z-index:100;background:var(--ink);display:none;align-items:center;justify-content:center;flex-direction:column;}
 #redirect-screen.show{display:flex;}
 .redirect-aurora{position:absolute;inset:0;overflow:hidden;}
@@ -358,7 +358,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
           const w = reg.installing;
           if (w) w.onstatechange = () => {
             if (w.state === 'installed' && navigator.serviceWorker.controller) {
-              // New version available — reload silently
+              // New version available. Reload silently
               window.location.reload();
             }
           };
@@ -386,7 +386,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
     <div class="ember-field" id="ember-field"></div>
 
     <div class="bc-top">
-      <a href="/index.html" class="cab-wordmark" aria-label="Cabana — home" style="line-height:0;">
+      <a href="/index.html" class="cab-wordmark" aria-label="Cabana. Home" style="line-height:0;">
         <img src="cabana-wordmark-white.png" alt="Cabana" style="height:26px;width:auto;display:block;" onerror="this.src='cabana-wordmark-color.png'"/>
       </a>
     </div>
@@ -397,7 +397,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
         Everything for<br/>your next
         <span class="rotator" id="rotator">adventure.</span>
       </h1>
-      <p class="bc-sub">Stays, flights, tours, rides, food and more — beautifully unified. Hosts keep 100%, you pay only face value. No commissions, ever.</p>
+      <p class="bc-sub">Stays, flights, tours, rides, food and more. Beautifully unified. Hosts keep 100%, you pay only face value. No commissions, ever.</p>
     </div>
 
     <div class="bc-bottom">
@@ -505,7 +505,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
             <span>I agree to the <a href="terms.html" target="_blank">Terms of Service</a>, <a href="privacy.html" target="_blank">Privacy Policy</a> and <a href="cookies.html" target="_blank">Cookie Policy</a>.</span>
           </label>
 
-          <!-- ══ APP INSTALL STEP — recommended, not mandatory ══
+          <!-- ══ APP INSTALL STEP. Recommended, not mandatory ══
                Users are strongly nudged to download first (more benefits highlighted),
                but can skip and sign up without the app. -->
           <div class="install-step" id="install-step">
@@ -516,7 +516,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
               </div>
               <div class="install-step-txt">
                 <div class="install-step-title" id="install-step-title">Get the app for the best experience</div>
-                <div class="install-step-sub" id="install-step-sub">Recommended — unlock instant check-ins, offline access &amp; booking alerts.</div>
+                <div class="install-step-sub" id="install-step-sub">Recommended. Unlock instant check-ins, offline access &amp; booking alerts.</div>
               </div>
             </div>
 
@@ -533,7 +533,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
             <div class="field-err" id="install-step-err" style="text-align:center;"></div>
 
             <button class="install-skip-btn" id="install-skip-btn" type="button" onclick="skipInstall()">
-              Skip for now — continue without the app
+              Skip for now. Continue without the app
             </button>
           </div>
 
@@ -561,7 +561,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
           <div class="prog-ico" style="background:linear-gradient(135deg,#FF6B2C,#7B2FF7);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
           <div class="prog-txt">
             <div class="prog-title">Creator & Influencer</div>
-            <div class="prog-sub">Earn by sharing — post, earn commissions, unlock exclusive perks.</div>
+            <div class="prog-sub">Earn by sharing. Post, earn commissions, unlock exclusive perks.</div>
           </div>
           <svg class="prog-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
         </button>
@@ -587,7 +587,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
                 <input class="field-input" id="inf-login-pw" type="password" placeholder="Your password" autocomplete="current-password"/>
               </div>
               <button class="submit-btn" id="inf-login-btn" onclick="infLogin(event)" style="background:linear-gradient(135deg,#FF6B2C,#7B2FF7);">Sign in to creator portal</button>
-              <p class="p-note">New here? <strong>Join as creator</strong> — start earning from your first share.</p>
+              <p class="p-note">New here? <strong>Join as creator</strong>: start earning from your first share.</p>
             </div>
 
             <!-- ── INFLUENCER SIGN UP ── -->
@@ -667,7 +667,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
                 <input class="field-input" id="p-login-pw" type="password" placeholder="Your password" autocomplete="current-password"/>
               </div>
               <button class="submit-btn" id="p-login-btn" onclick="progLogin(event)">Sign in to portal</button>
-              <p class="p-note">New here? <strong>Become an agent</strong> — you're in immediately, no waiting.</p>
+              <p class="p-note">New here? <strong>Become an agent</strong>: you're in immediately, no waiting.</p>
             </div>
 
             <!-- ── SIGN UP · instant ── -->
@@ -710,7 +710,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
                 <span class="p-check-box" id="p-creator-box"></span>
                 <span>
                   <span class="p-check-t">I also promote to an audience</span>
-                  <span class="p-check-d">Optional. Tell hosts you have reach — it helps them say yes.</span>
+                  <span class="p-check-d">Optional. Tell hosts you have reach. It helps them say yes.</span>
                 </span>
               </label>
 
@@ -744,7 +744,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
               </div>
 
               <button class="submit-btn" id="p-apply-btn" onclick="agentSignup(event)">Create my agent account</button>
-              <p class="p-note">You'll have <strong>30 days</strong> to upload an ID. Everything works meanwhile — verification is a deadline, not a gate.</p>
+              <p class="p-note">You'll have <strong>30 days</strong> to upload an ID. Everything works meanwhile. Verification is a deadline, not a gate.</p>
             </div>
 
           </div>
@@ -771,7 +771,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
         <h2 class="ss-title">Check your inbox</h2>
         <p class="ss-sub">We sent a confirmation link to <span class="ss-email" id="verify-email-display"></span>. Click it to activate your account.</p>
         <div class="alert alert-error" id="verify-alert"></div>
-        <button class="submit-btn" id="confirmed-btn" onclick="checkConfirmationAndProceed()" style="margin-bottom:14px;">I've confirmed — continue</button>
+        <button class="submit-btn" id="confirmed-btn" onclick="checkConfirmationAndProceed()" style="margin-bottom:14px;">I've confirmed. Continue</button>
         <button class="link-btn" id="resend-btn" onclick="resendVerification()">Resend email</button>
       </div>
 
@@ -781,7 +781,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
         </div>
         <h2 class="ss-title">Choose a new password</h2>
-        <p class="ss-sub">Make it strong — at least 8 characters, ideally with a number and a symbol.</p>
+        <p class="ss-sub">Make it strong, at least 8 characters, ideally with a number and a symbol.</p>
         <div class="alert alert-error" id="newpw-alert-error"></div>
         <div class="alert alert-success" id="newpw-alert-success"></div>
 
@@ -864,7 +864,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
 </script>
 
 <script>
-/* ══ APATMENTO AUTH — Clean & simple ══
+/* ══ APATMENTO AUTH. Clean & simple ══
    Rule: after signIn/signUp success, navigate immediately.
    Session is in localStorage at that point. No races.
 ══════════════════════════════════════════════════════ */
@@ -876,7 +876,7 @@ const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 /* Guards the post-auth redirect: a recovery session is a real session,
    so goDashboard() would otherwise bounce the user away before they set
    a password. Declared here (not with `let` further down) because the
-   boot IIFE below reads it — a `let` at that point would be in the
+   boot IIFE below reads it. A `let` at that point would be in the
    temporal dead zone and throw. */
 var _inRecovery = false;
 
@@ -931,7 +931,7 @@ async function handleLogin(e) {
     else showErr(error.message);
     return;
   }
-  // Session is now in localStorage — navigate immediately
+  // Session is now in localStorage. Navigate immediately
   await goDashboard(data.user);
 }
 
@@ -958,7 +958,7 @@ function refreshInstallStep() {
   if (!step || !btn) return;
 
   if (installAlreadySatisfied()) {
-    // Already installed — no gate needed, unlock immediately.
+    // Already installed, no gate needed, unlock immediately.
     _installArmed = true;
     step.style.display = 'none';
     enableCreateBtn();
@@ -1052,12 +1052,12 @@ function showManualInstall(env) {
 
   if (title) title.textContent = heading;
   if (sub)   sub.textContent = steps;
-  if (lbl)   lbl.textContent = 'I\u2019ve installed it — continue';
+  if (lbl)   lbl.textContent = 'I\u2019ve installed it. Continue';
   if (dl)    dl.style.display = 'none';
   if (check) check.style.display = 'block';
   if (btn)   btn.classList.remove('loading');
 
-  // Hide perks + skip — instructions are now showing
+  // Hide perks + skip. Instructions are now showing
   const perks   = document.getElementById('install-perks');
   const skipBtn = document.getElementById('install-skip-btn');
   if (perks)   perks.style.display = 'none';
@@ -1074,14 +1074,14 @@ async function armInstall() {
   const env = detectInstallEnv();
   if (err) { err.textContent = ''; err.classList.remove('show'); }
 
-  // Already installed / running standalone — nothing to do.
+  // Already installed / running standalone. Nothing to do.
   if (installAlreadySatisfied()) { markStepArmed(); return; }
 
   // If manual instructions were already shown, the gate is armed and
-  // this tap just confirms — don't re-show the instructions.
+  // this tap just confirms. Don't re-show the instructions.
   if (_installArmed) { markStepArmed(); return; }
 
-  // If the browser has a native install prompt ready, ALWAYS prefer it —
+  // If the browser has a native install prompt ready, ALWAYS prefer it
   // this is the one-tap real install on Android/desktop Chromium.
   const hasNativePrompt = !!window.__APA_INSTALL_PROMPT__;
 
@@ -1095,7 +1095,7 @@ async function armInstall() {
       return;
     }
     if (outcome === 'dismissed') {
-      // They closed the native dialog. Let them retry — genuinely not armed.
+      // They closed the native dialog. Let them retry. Genuinely not armed.
       if (btn) btn.classList.remove('loading');
       if (err) { err.textContent = 'Install was cancelled. Tap to install and continue.'; err.classList.add('show'); }
       return;
@@ -1111,7 +1111,7 @@ async function armInstall() {
   showManualInstall(env);
 }
 
-/* ── Skip install — user chooses to continue without downloading now ── */
+/* ── Skip install. User chooses to continue without downloading now ── */
 function skipInstall() {
   _installArmed = true;  // gate satisfied by explicit user choice
 
@@ -1161,12 +1161,12 @@ async function handleSignup(e) {
   // If neither download nor skip has been chosen yet, nudge them to decide.
   if (!_installArmed) {
     const errEl = document.getElementById('install-step-err');
-    if (errEl) { errEl.textContent = 'Download the app for the best experience — or tap "Skip for now" below.'; errEl.classList.add('show'); }
+    if (errEl) { errEl.textContent = 'Download the app for the best experience, or tap "Skip for now" below.'; errEl.classList.add('show'); }
     document.getElementById('install-step')?.scrollIntoView({ behavior:'smooth', block:'center' });
     return;
   }
 
-  // Proceed — either app download triggered or user explicitly skipped.
+  // Proceed, either app download triggered or user explicitly skipped.
   _pendingSignup = { first, last, email, pw };
   doSignup();
 }
@@ -1248,7 +1248,7 @@ async function goDashboard(user) {
       if (q) dest = decodeURIComponent(q);
     }
     if (dest) {
-      /* Only ever return to our own site — never an attacker-supplied
+      /* Only ever return to our own site, never an attacker-supplied
          absolute URL. Reject protocol-relative and cross-origin targets. */
       let safe = null;
       if (/^\/(?!\/)/.test(dest)) safe = dest;
@@ -1273,7 +1273,7 @@ async function goDashboard(user) {
 
      Why: most users are travellers. Sending them to Partner Hub on every
      sign-in confuses them and kills the booking flow. Hosts who want their
-     dashboard can tap "Switch to Host" — one tap from guest. localStorage
+     dashboard can tap "Switch to Host". One tap from guest. localStorage
      can hold a stale 'partner' value from a session months ago and must
      never silently override where someone lands today.             ────── */
 
@@ -1294,7 +1294,7 @@ async function goDashboard(user) {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   GOOGLE OAUTH — One-click sign in / sign up via Supabase
+   GOOGLE OAUTH. One-click sign in / sign up via Supabase
    ══════════════════════════════════════════════════════════════ */
 
 /* OAUTH_FLAG is declared above the boot IIFE (see the note there). It marks
@@ -1320,7 +1320,7 @@ function clearOAuthFlag() {
 }
 
 /* Human wording for the codes Supabase/Google actually return. The old
-   code showed none of these — a misconfigured provider looked to the user
+   code showed none of these. A misconfigured provider looked to the user
    like the button simply did nothing. */
 function oauthErrorMessage(code, desc) {
   const c = (code || '').toLowerCase();
@@ -1417,7 +1417,7 @@ async function signInWithGoogle() {
   } catch (e) {}
 
   /* Must be an extensionless path. vercel.json sets "cleanUrls": true, so
-     /auth.html answers with a 308 to /auth — and the implicit-flow token
+     /auth.html answers with a 308 to /auth, and the implicit-flow token
      lives in the URL fragment, which Safari and the in-app browsers
      (Instagram, Facebook, TikTok) drop across that hop. The old
      '/auth.html?callback=google' target is why this worked on desktop
@@ -1512,7 +1512,7 @@ function escapeHtml(s){
    Supabase returns the recovery token in the URL fragment and fires a
    PASSWORD_RECOVERY event once detectSessionInUrl consumes it. Without
    this listener the user lands on a plain login page and can never
-   actually set a new password — which is what used to happen. */
+   actually set a new password, which is what used to happen. */
 function initRecovery() {
   sb.auth.onAuthStateChange((event) => {
     if (event === 'PASSWORD_RECOVERY') {
@@ -1536,7 +1536,7 @@ function initRecovery() {
      Google OAuth round trip returns the same shape:
        #error=access_denied&error_code=...&error_description=...
      This branch used to claim every one of them, so a provider error was
-     reported to the user as "that reset link has expired" — the real cause
+     reported to the user as "that reset link has expired". The real cause
      was never shown and the reset screen hijacked the page. Only claim the
      error when this load is genuinely a recovery attempt; oauthReturn()
      owns the OAuth case. */
@@ -1618,7 +1618,7 @@ async function resendVerification() {
 async function checkConfirmationAndProceed() {
   const { data:{ session } } = await sb.auth.getSession().catch(()=>({data:{session:null}}));
   if (session) await goDashboard(session.user);
-  else showErr('Email not confirmed yet — check your inbox.');
+  else showErr('Email not confirmed yet. Check your inbox.');
 }
 
 /* ══ CONTINUE BANNER ══ */
@@ -1719,7 +1719,7 @@ function pBusy(id, on) {
 
 /* ── SIGN UP ───────────────────────────────────────────────────────
    Two steps, in order: auth account, then agent profile. If the second
-   fails the user still has an account and can retry from the portal —
+   fails the user still has an account and can retry from the portal
    which is why agent_signup() is idempotent-ish and errors loudly.   */
 async function agentSignup(e) {
   e.preventDefault(); pClear();
@@ -1753,7 +1753,7 @@ async function agentSignup(e) {
   }
 
   /* Email confirmation on? Then there is no session yet and we cannot
-     create the agent row. Sign them in — the password is right here. */
+     create the agent row. Sign them in. The password is right here. */
   if (!data.session) {
     const retry = await sb.auth.signInWithPassword({ email, password: pw });
     if (retry.error) {
@@ -1787,7 +1787,7 @@ async function agentSignup(e) {
 
 /* ── AGENT LOGIN ───────────────────────────────────────────────────
    A traveller's credentials authenticate fine but must never open this
-   portal — so on failure we sign straight back out.                  */
+   portal, so on failure we sign straight back out.                  */
 async function progLogin(e) {
   e.preventDefault(); pClear();
 
@@ -1801,7 +1801,7 @@ async function progLogin(e) {
   if (error) {
     pBusy('p-login-btn', false);
     return pErr(/confirm/i.test(error.message)
-      ? 'Confirm your email first — check your inbox.'
+      ? 'Confirm your email first. Check your inbox.'
       : 'Wrong email or password.');
   }
 

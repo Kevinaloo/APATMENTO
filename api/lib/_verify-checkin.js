@@ -1,9 +1,9 @@
 /* ══════════════════════════════════════════════════════════════
-   APATMENTO — Verify Check-in  (api/verify-checkin.js)
+   APATMENTO. Verify Check-in  (api/verify-checkin.js)
    ──────────────────────────────────────────────────────────────
    Two codes are exchanged in person. The guest shows theirs; the
-   host says theirs aloud. Both must match, and — this is the new
-   part — the booking must be settled in full.
+   host says theirs aloud. Both must match, and. This is the new
+   part. The booking must be settled in full.
 
    A guest on a deposit cannot check in. Not because we distrust
    them, but because check-in releases the host's payout, and we

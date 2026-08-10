@@ -4,12 +4,12 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
 <title>List on Cabana: Earn with Zero Commission | Apatmento by Cabana</title>
-<meta name="description" content="List your apartment, safari, event, car or restaurant on Cabana — Africa's #1 zero-commission travel platform. Zero commission forever. Hosts keep 100% of every booking. Go live in 10 minutes. M-Pesa and card supported."/>
+<meta name="description" content="List your apartment, safari, event, car or restaurant on Cabana. Africa's #1 zero-commission travel platform. Zero commission forever. Hosts keep 100% of every booking. Go live in 10 minutes. M-Pesa and card supported."/>
 <meta name="keywords" content="list property Nairobi, become host Kenya, earn from apartment Kenya, zero commission host, Cabana partner, Apatmento host, list apartment Nairobi, earn from property Kenya, Airbnb alternative Kenya host, safari operator listing Kenya"/>
 <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large"/>
 <link rel="canonical" href="https://www.apatmento.space/become-partner"/>
 <meta property="og:site_name" content="Cabana"/>
-<meta property="og:title" content="List on Cabana — Zero Commission Forever | Hosts Keep 100% | Africa's #1 Platform"/>
+<meta property="og:title" content="List on Cabana | Zero Commission Forever | Hosts Keep 100% | Africa's #1 Platform"/>
 <meta property="og:description" content="List your apartment, safari, event or car hire on Cabana. Zero commission. Hosts keep every shilling. Kenya's #1 zero-commission travel platform."/>
 <meta property="og:url" content="https://www.apatmento.space/become-partner"/>
 <meta property="og:type" content="website"/>
@@ -198,7 +198,7 @@ body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webk
   </div>
 </nav>
 
-<!-- SIGNED-IN BACK BANNER — shown only to authenticated users -->
+<!-- SIGNED-IN BACK BANNER. Shown only to authenticated users -->
 <div id="signed-in-banner" style="display:none;position:fixed;top:64px;left:0;right:0;z-index:90;background:linear-gradient(90deg,#4361FF,#7B2FF7);color:#fff;padding:10px 24px;display:none;align-items:center;justify-content:space-between;gap:12px;font-size:13px;font-weight:600;">
   <span>✓ You already have a partner account.</span>
   <a href="dashboard.html?role=partner&back=1" style="display:inline-flex;align-items:center;gap:6px;color:#fff;text-decoration:none;background:rgba(255,255,255,.2);padding:7px 16px;border-radius:100px;font-size:13px;font-weight:700;border:1.5px solid rgba(255,255,255,.4);transition:background .2s;" onmouseover="this.style.background='rgba(255,255,255,.35)'" onmouseout="this.style.background='rgba(255,255,255,.2)'">
@@ -436,7 +436,7 @@ body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webk
           <span class="comp-platform">Cabana (Apatmento)</span>
           <span class="comp-val good">You keep KES 10,000 ✓</span>
         </div>
-        <p style="font-size:12px;color:var(--ink-faint);margin-top:12px;line-height:1.6;">*Competitors charge 8–15% host commission + additional guest fees. Cabana charges guests a small flat platform fee only — you are never deducted anything.</p>
+        <p style="font-size:12px;color:var(--ink-faint);margin-top:12px;line-height:1.6;">*Competitors charge 8–15% host commission + additional guest fees. Cabana charges guests a small flat platform fee only. You are never deducted anything.</p>
       </div>
       <div class="proof-text">
         <div class="proof-big">KES 0</div>
@@ -516,7 +516,7 @@ body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webk
           What happens if a guest cancels?
           <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
         </button>
-        <div class="faq-a"><div class="faq-a-inner">You choose your own cancellation policy when you list — flexible, moderate, or strict. Cabana enforces whatever policy you set. If a guest cancels inside your policy window, you retain the portion you specified. No disputes, no negotiation required from your side.</div></div>
+        <div class="faq-a"><div class="faq-a-inner">You choose your own cancellation policy when you list. Flexible, moderate, or strict. Cabana enforces whatever policy you set. If a guest cancels inside your policy window, you retain the portion you specified. No disputes, no negotiation required from your side.</div></div>
       </div>
       <div class="faq-item">
         <button class="faq-q" aria-expanded="false" onclick="toggleFaq(this)">
@@ -677,7 +677,7 @@ body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webk
     const userId = userData && userData.id;
     if (!userId) return showNavBackBtn(false);
 
-    // User is signed in — always show the back button
+    // User is signed in, always show the back button
     showNavBackBtn(true);
 
     // Check if they already have listings
@@ -697,7 +697,7 @@ body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webk
       window.location.replace('partner-listings.html?back=1');
     }
   } catch(e) {
-    showNavBackBtn(false); // Network error — show page normally
+    showNavBackBtn(false); // Network error. Show page normally
   }
 })();
 
