@@ -880,6 +880,12 @@ const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
    temporal dead zone and throw. */
 var _inRecovery = false;
 
+/* Same reasoning as _inRecovery: initRecovery() runs synchronously inside
+   the boot IIFE and calls isOAuthReturn(), which reads this. A `const`
+   down beside the OAuth helpers would still be in the temporal dead zone
+   at that moment and throw before the page ever finishes booting. */
+var OAUTH_FLAG = 'apa-oauth-pending';
+
 /* ── Check existing session on load ── */
 (async () => {
   // Recovery must be wired before anything reads the session. A
@@ -895,24 +901,9 @@ var _inRecovery = false;
 
   if (isRecovery) return;   // newpw-screen owns the page
 
-  // Google OAuth callback: Supabase has already set the session in localStorage
-  // via detectSessionInUrl. Just read it and go to dashboard.
   const qs = new URLSearchParams(location.search);
-  if (qs.get('callback') === 'google') {
-    // Give Supabase up to 2s to process the fragment token into a real session
-    let attempts = 0;
-    const waitForSession = async () => {
-      const { data:{ session: cbSess } } = await sb.auth.getSession().catch(()=>({data:{session:null}}));
-      if (cbSess) {
-        await goDashboard(cbSess.user);
-        return;
-      }
-      if (++attempts < 8) setTimeout(waitForSession, 250);
-      else showErr('Sign-in with Google succeeded but session could not be loaded. Please sign in again.');
-    };
-    await waitForSession();
-    return;
-  }
+
+  if (isOAuthReturn()) { await oauthReturn(); return; }
 
   const { data:{ session } } = await sb.auth.getSession().catch(()=>({data:{session:null}}));
   if (session) showContinueBanner(session.user);
@@ -1311,29 +1302,154 @@ async function goDashboard(user) {
    GOOGLE OAUTH — One-click sign in / sign up via Supabase
    ══════════════════════════════════════════════════════════════ */
 
+/* OAUTH_FLAG is declared above the boot IIFE (see the note there). It marks
+   "we are mid-OAuth" across the round trip to Google. Without it a returning
+   error fragment is indistinguishable from a dead recovery link, and the
+   recovery handler claims it. sessionStorage (not local) so the flag dies
+   with the tab and can never wedge a later visit. */
+
+function isOAuthReturn() {
+  try { if (sessionStorage.getItem(OAUTH_FLAG)) return true; } catch (e) {}
+  const q = new URLSearchParams(location.search);
+  if (q.get('callback') === 'google') return true;
+  // Supabase drops the token in the fragment on the implicit flow. If the
+  // ?callback marker was lost (Site-URL fallback, a stripped redirect) the
+  // token itself is still proof this is an OAuth landing.
+  const f = new URLSearchParams(location.hash.replace(/^#/, ''));
+  if (f.get('provider_token') || f.get('provider_refresh_token')) return true;
+  return false;
+}
+
+function clearOAuthFlag() {
+  try { sessionStorage.removeItem(OAUTH_FLAG); } catch (e) {}
+}
+
+/* Human wording for the codes Supabase/Google actually return. The old
+   code showed none of these — a misconfigured provider looked to the user
+   like the button simply did nothing. */
+function oauthErrorMessage(code, desc) {
+  const c = (code || '').toLowerCase();
+  const d = (desc || '').toLowerCase();
+  if (c === 'access_denied' || d.includes('cancel'))
+    return 'Google sign-in was cancelled. You can try again or use your email and password.';
+  if (d.includes('provider is not enabled') || d.includes('unsupported provider'))
+    return 'Google sign-in is not switched on for this site yet. Please use your email and password for now.';
+  if (d.includes('redirect') || d.includes('requested path is invalid'))
+    return 'Google sign-in is misconfigured for this address. Please use your email and password, and let us know.';
+  return desc || 'Google sign-in failed. Please try again, or use your email and password.';
+}
+
+/* Handles the landing after Google bounces the browser back. */
+async function oauthReturn() {
+  clearOAuthFlag();
+
+  const frag = new URLSearchParams(location.hash.replace(/^#/, ''));
+  const qs   = new URLSearchParams(location.search);
+  const err  = frag.get('error') || qs.get('error');
+  const desc = frag.get('error_description') || qs.get('error_description');
+  const code = frag.get('error_code') || qs.get('error_code');
+
+  if (err || desc) {
+    console.error('[google-oauth] provider returned:', { err, code, desc });
+    showErr(oauthErrorMessage(code || err, desc));
+    stripAuthHash();
+    return;
+  }
+
+  /* detectSessionInUrl consumes the fragment asynchronously, so the session
+     may not exist on the very first read. Resolve on whichever lands first:
+     the SIGNED_IN event or a successful poll. */
+  const session = await waitForSession(4000);
+
+  if (session) { await goDashboard(session.user); return; }
+
+  showErr('Google signed you in but the session could not be stored. If you are browsing privately or blocking cookies, try a normal browser window.');
+  stripAuthHash();
+}
+
+/* Resolves with a session, or null on timeout. */
+function waitForSession(timeoutMs) {
+  return new Promise(resolve => {
+    let settled = false;
+    const finish = (s) => {
+      if (settled) return;
+      settled = true;
+      try { sub && sub.subscription && sub.subscription.unsubscribe(); } catch (e) {}
+      clearInterval(poll);
+      clearTimeout(bail);
+      resolve(s);
+    };
+
+    let sub = null;
+    try {
+      const r = sb.auth.onAuthStateChange((event, s) => {
+        if (s && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION')) finish(s);
+      });
+      sub = r && r.data;
+    } catch (e) {}
+
+    const poll = setInterval(async () => {
+      const { data } = await sb.auth.getSession().catch(() => ({ data: { session: null } }));
+      if (data && data.session) finish(data.session);
+    }, 200);
+
+    const bail = setTimeout(() => finish(null), timeoutMs);
+  });
+}
+
+/* Leaves a clean address bar so a refresh does not replay a spent token. */
+function stripAuthHash() {
+  try {
+    history.replaceState(null, '', location.pathname + location.search.replace(/([?&])callback=google&?/, '$1').replace(/[?&]$/, ''));
+  } catch (e) {}
+}
+
 async function signInWithGoogle() {
   const btn = document.getElementById('google-oauth-btn');
-  btn.classList.add('loading');
+  if (btn) btn.classList.add('loading');
+  clearErr();
+
+  /* Carry the user's intent across the round trip. redirectTo replaces the
+     whole URL, so ?next= / ?role= / ?mode= on this page would otherwise be
+     lost and the user dumped on the default dashboard. */
+  try {
+    const q = new URLSearchParams(location.search);
+    if (!sessionStorage.getItem('auth_next')) {
+      const n = q.get('next');
+      if (n) sessionStorage.setItem('auth_next', decodeURIComponent(n));
+    }
+    sessionStorage.setItem(OAUTH_FLAG, '1');
+  } catch (e) {}
+
+  /* Must be an extensionless path. vercel.json sets "cleanUrls": true, so
+     /auth.html answers with a 308 to /auth — and the implicit-flow token
+     lives in the URL fragment, which Safari and the in-app browsers
+     (Instagram, Facebook, TikTok) drop across that hop. The old
+     '/auth.html?callback=google' target is why this worked on desktop
+     Chrome and failed on phones. */
+  const redirectTo = window.location.origin + '/auth?callback=google';
 
   try {
     const { error } = await sb.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: window.location.origin + '/auth.html?callback=google',
-        queryParams: {
-          access_type: 'offline',
-          prompt: 'consent',
-        },
+        redirectTo,
+        /* access_type:offline + prompt:consent forced the Google consent
+           screen on every single sign-in. The offline refresh token is only
+           useful for calling Google APIs on the user's behalf, which this
+           app never does. Dropping both gives returning users one tap. */
+        queryParams: { prompt: 'select_account' },
       },
     });
 
     if (error) throw error;
-    // Supabase will redirect the browser — no further action needed here
+    // Supabase now navigates the browser to Google.
 
   } catch (err) {
     console.error('[google-oauth] error:', err);
-    showErr(err.message || 'Google sign-in failed. Please try again.');
-    btn.classList.remove('loading');
+    clearOAuthFlag();
+    showErr(oauthErrorMessage(err && err.code, err && err.message));
+    if (btn) btn.classList.remove('loading');
   }
 }
 
@@ -1421,7 +1537,15 @@ function initRecovery() {
     }
   }
 
-  if (frag.get('error_description')) {
+  /* An error fragment is NOT automatically a dead recovery link. A failed
+     Google OAuth round trip returns the same shape:
+       #error=access_denied&error_code=...&error_description=...
+     This branch used to claim every one of them, so a provider error was
+     reported to the user as "that reset link has expired" — the real cause
+     was never shown and the reset screen hijacked the page. Only claim the
+     error when this load is genuinely a recovery attempt; oauthReturn()
+     owns the OAuth case. */
+  if (frag.get('error_description') && !isOAuthReturn()) {
     showSpecial('reset-screen');
     const errEl = document.getElementById('reset-alert-error');
     errEl.textContent = 'That reset link has expired or was already used. Request a new one.';
