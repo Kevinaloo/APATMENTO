@@ -6,21 +6,21 @@
 <link rel="apple-touch-icon" href="/cabana-apple-touch-icon.png"/>
 <meta name="apple-mobile-web-app-title" content="Cabana"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Sign in or Sign up: Apatmento (Cabana)</title>
-<meta name="description" content="Sign in or create your free Apatmento account to book stays, flights, tours, rides, food and more across Kenya: zero added commission."/>
+<title>Sign in or Sign up: Cabana</title>
+<meta name="description" content="Sign in or create your free Cabana account to book stays, flights, tours, rides, food and more across Kenya: zero added commission."/>
 <meta name="robots" content="noindex, nofollow"/>
 <link rel="canonical" href="https://cabana.africa/auth"/>
-<meta property="og:site_name" content="Apatmento"/>
-<meta property="og:title" content="Sign in or Sign up: Apatmento (Cabana)"/>
-<meta property="og:description" content="Sign in or create your free Apatmento account to book stays, flights, tours, rides, food and more across Kenya: zero added commission."/>
+<meta property="og:site_name" content="Cabana"/>
+<meta property="og:title" content="Sign in or Sign up: Cabana"/>
+<meta property="og:description" content="Sign in or create your free Cabana account to book stays, flights, tours, rides, food and more across Kenya: zero added commission."/>
 <meta property="og:url" content="https://cabana.africa/auth"/>
 <meta property="og:type" content="website"/>
 <meta property="og:image" content="https://cabana.africa/og-home.jpg"/>
 <meta property="og:image:width" content="1200"/>
 <meta property="og:image:height" content="630"/>
 <meta name="twitter:card" content="summary_large_image"/>
-<meta name="twitter:title" content="Sign in or Sign up: Apatmento (Cabana)"/>
-<meta name="twitter:description" content="Sign in or create your free Apatmento account to book stays, flights, tours, rides, food and more across Kenya: zero added commission."/>
+<meta name="twitter:title" content="Sign in or Sign up: Cabana"/>
+<meta name="twitter:description" content="Sign in or create your free Cabana account to book stays, flights, tours, rides, food and more across Kenya: zero added commission."/>
 <meta name="twitter:image" content="https://cabana.africa/og-home.jpg"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <!-- Session core: one Supabase client per tab. Multiple clients on the
@@ -42,7 +42,7 @@
 </script>
 <script src="/apa-session.js"></script>
 <!-- Needed by the install gate: captures beforeinstallprompt and
-     exposes ApatmentoPWA.install(). -->
+     exposes CabanaPWA.install(). -->
 <script src="/pwa.js" defer></script>
 <script src="/apa-agent.js"></script>
 <script src="/apa-admin-guard.js"></script>
@@ -387,7 +387,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
 
     <div class="bc-top">
       <a href="/index.html" class="cab-wordmark" aria-label="Cabana. Home" style="line-height:0;">
-        <img src="cabana-wordmark-white.png" alt="Cabana" style="height:26px;width:auto;display:block;" onerror="this.src='cabana-wordmark-color.png'"/>
+        <img src="cabana-wordmark-white.png" alt="Cabana" style="height:26px;width:auto;display:block;" onerror="this.src='cabana-wordmark-color.png'" fetchpriority="high" decoding="async" fetchpriority="high" fetchpriority="high" fetchpriority="high"/>
       </a>
     </div>
 
@@ -412,7 +412,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
     <div class="auth-panel-aurora"><div class="apa-blob apa-1"></div><div class="apa-blob apa-2"></div></div>
 
     <div class="auth-card">
-      <div class="mobile-logo"><img src="cabana-wordmark-color.png" alt="Cabana" style="height:24px;width:auto;" onerror="this.style.display='none'"/></div>
+      <div class="mobile-logo"><img src="cabana-wordmark-color.png" alt="Cabana" style="height:24px;width:auto;" onerror="this.style.display='none'" loading="lazy" decoding="async"/></div>
 
       <!-- MAIN AUTH -->
       <div id="main-auth">
@@ -594,7 +594,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
             <div id="inf-apply" style="display:none;">
               <div class="p-brief" style="background:linear-gradient(135deg,rgba(255,107,44,.06),rgba(123,47,247,.06));border:1px solid rgba(255,107,44,.15);">
                 <div class="p-brief-row"><span style="background:linear-gradient(135deg,#FF6B2C,#7B2FF7);">1</span> Sign up. Your creator account is live instantly.</div>
-                <div class="p-brief-row"><span style="background:linear-gradient(135deg,#FF6B2C,#7B2FF7);">2</span> Share your unique link to any Apatmento listing.</div>
+                <div class="p-brief-row"><span style="background:linear-gradient(135deg,#FF6B2C,#7B2FF7);">2</span> Share your unique link to any Cabana listing.</div>
                 <div class="p-brief-row"><span style="background:linear-gradient(135deg,#FF6B2C,#7B2FF7);">3</span> Earn commission every time someone books through your link.</div>
                 <div class="p-brief-row"><span style="background:linear-gradient(135deg,#FF6B2C,#7B2FF7);">4</span> Track clicks, earnings and payouts in your creator dashboard.</div>
               </div>
@@ -815,7 +815,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
 <div id="redirect-screen">
   <div class="redirect-aurora"><div class="ra ra-1"></div><div class="ra ra-2"></div></div>
   <div class="redirect-inner">
-    <div class="redirect-logo"><div class="redirect-ring"></div><img src="cabana-emblem.png" alt="Cabana" style="height:48px;width:48px;object-fit:contain;"/></div>
+    <div class="redirect-logo"><div class="redirect-ring"></div><img src="cabana-emblem.png" alt="Cabana" style="height:48px;width:48px;object-fit:contain;" loading="lazy" decoding="async"/></div>
     <div class="redirect-title">Welcome back</div>
     <div class="redirect-sub" id="redirect-sub">Taking you to your dashboard…</div>
   </div>
@@ -997,7 +997,7 @@ function markStepArmed() {
   if (dl)    dl.style.display = 'none';
   if (check) check.style.display = 'block';
   if (title) title.textContent = 'App installed \u2713';
-  if (sub)   sub.textContent = 'Apatmento has been added to your device. Finish creating your account below.';
+  if (sub)   sub.textContent = 'Cabana has been added to your device. Finish creating your account below.';
   if (btn)   { btn.disabled = true; btn.classList.remove('loading'); }
   if (btnLbl) btnLbl.textContent = 'Installed';
 
@@ -1034,19 +1034,19 @@ function showManualInstall(env) {
     heading = 'Open in your browser to install';
     steps = 'You\u2019re in an in-app browser that can\u2019t install apps. Tap the \u22ee menu \u2192 "Open in Chrome" (or Safari), then tap Install again.';
   } else if (env.isIOS) {
-    heading = 'Add Apatmento to your Home Screen';
+    heading = 'Add Cabana to your Home Screen';
     steps = 'Tap the Share button (the square with an arrow) \u2192 scroll down \u2192 "Add to Home Screen" \u2192 Add.';
   } else if (env.isFirefox) {
     heading = 'Install from the Firefox menu';
-    steps = 'Tap the \u22ee menu \u2192 "Install" (or "Add to Home screen") to add Apatmento to your device.';
+    steps = 'Tap the \u22ee menu \u2192 "Install" (or "Add to Home screen") to add Cabana to your device.';
   } else if (env.isSamsung) {
     heading = 'Install from the Samsung Internet menu';
-    steps = 'Tap the \u2261 menu \u2192 "Add page to" \u2192 "Home screen" to install Apatmento.';
+    steps = 'Tap the \u2261 menu \u2192 "Add page to" \u2192 "Home screen" to install Cabana.';
   } else if (env.isAndroid || env.isChromium) {
     heading = 'Install from your browser menu';
-    steps = 'Tap the \u22ee menu (top-right) \u2192 "Install app" (or "Add to Home screen"). Then Apatmento opens like a native app.';
+    steps = 'Tap the \u22ee menu (top-right) \u2192 "Install app" (or "Add to Home screen"). Then Cabana opens like a native app.';
   } else {
-    heading = 'Install Apatmento';
+    heading = 'Install Cabana';
     steps = 'Open your browser menu and choose "Install app" or "Add to Home screen".';
   }
 
@@ -1087,8 +1087,8 @@ async function armInstall() {
 
   if (hasNativePrompt) {
     if (btn) btn.classList.add('loading');
-    const outcome = await (window.ApatmentoPWA
-      ? window.ApatmentoPWA.install() : Promise.resolve('unavailable'));
+    const outcome = await (window.CabanaPWA
+      ? window.CabanaPWA.install() : Promise.resolve('unavailable'));
 
     if (outcome === 'accepted') {
       markStepArmed();                     // real install in progress

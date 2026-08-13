@@ -342,13 +342,13 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <!-- ══ SEO ══ -->
-  <meta name="description" content="Your Apatmento dashboard."/>
+  <meta name="description" content="Your Cabana dashboard."/>
   
   <meta name="robots" content="noindex, nofollow"/>
   <link rel="canonical" href="https://cabana.africa/dashboard"/>
   <link rel="alternate" hreflang="en-ke" href="https://cabana.africa/dashboard"/>
   <link rel="alternate" hreflang="en" href="https://cabana.africa/dashboard"/>
-  <meta name="author" content="Apatmento"/>
+  <meta name="author" content="Cabana"/>
   <meta name="geo.region" content="KE"/>
   <meta name="geo.placename" content="Nairobi, Kenya"/>
   <meta name="theme-color" content="#ffffff">
@@ -363,7 +363,7 @@
   <meta name="apple-mobile-web-app-title" content="Cabana"/>
 
   <!-- Open Graph -->
-  <meta property="og:site_name" content="Apatmento"/>
+  <meta property="og:site_name" content="Cabana"/>
   <meta property="og:title" content="Cabana: Africa's #1 Zero Commission Travel Platform"/>
   <meta property="og:description" content="Book stays, flights, tours, rides, food and more across Africa. Zero commission on every booking. Hosts set the price. You pay exactly that."/>
   <meta property="og:url" content="https://cabana.africa/dashboard"/>
@@ -388,7 +388,7 @@
   <link rel="dns-prefetch" href="//fonts.gstatic.com"/>
   <link rel="dns-prefetch" href="//cdn.jsdelivr.net"/>
   <link rel="dns-prefetch" href="//api.unsplash.com"/>
-  <title>Dashboard: Apatmento</title>
+  <title>Dashboard: Cabana</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <!-- apa-interstitial.js retired. Replaced by Cabana cinematic splash -->
 <!-- Session core: the single source of truth for auth. Must load
@@ -1870,7 +1870,7 @@ img,video,svg{max-width:100%;}
       <linearGradient id="apaLegGrad" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#6D28FF"/><stop offset="1" stop-color="#4F6DFF"/></linearGradient>
       <linearGradient id="apaEqGrad" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#6D28FF"/><stop offset="0.45" stop-color="#4EE0C8"/><stop offset="1" stop-color="#F5B12E"/></linearGradient>
     </defs></svg>
-    <img class="apa-load-emblem" src="cabana-emblem.png" alt="Cabana" onerror="this.style.display='none'"/>
+    <img class="apa-load-emblem" src="cabana-emblem.png" alt="Cabana" onerror="this.style.display='none'" fetchpriority="high" decoding="async" fetchpriority="high" fetchpriority="high" fetchpriority="high"/>
     <div class="apa-load-word">Welcome to <em>Cabana</em></div>
     <div class="apa-load-tag" id="dash-load-tag">You deserve fair prices.</div>
     <div class="apa-load-line"><i></i><b></b></div>
@@ -1886,7 +1886,7 @@ img,video,svg{max-width:100%;}
         <button class="tb-icon-btn" onclick="openDrawer()" aria-label="Menu">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
         </button>
-        <img src="cabana-emblem.png" class="tb-icon-sm" alt=""/>
+        <img src="cabana-emblem.png" class="tb-icon-sm" alt="" loading="lazy" decoding="async"/>
         <span class="tb-cab-anim" data-text="CABANA">CABANA</span>
       </div>
       <div class="tb-right" id="tb-right-guest">
@@ -1987,7 +1987,7 @@ img,video,svg{max-width:100%;}
         <!-- ── STAYS. Dominant flagship card ── -->
         <div class="svc-stays-mega" onclick="navigateToService('stays')">
           <div class="svc-stays-mega-glow"></div>
-          <div class="svc-stays-mega-icon"><img src="icon-stays.png" alt="Stays"/></div>
+          <div class="svc-stays-mega-icon"><img src="icon-stays.png" alt="Stays" loading="lazy" decoding="async"/></div>
           <div class="svc-stays-mega-body">
             <div class="svc-stays-mega-name">Stays</div>
             <div class="svc-stays-mega-sub">Apartments, villas &amp; unique stays across Kenya</div>
@@ -2000,35 +2000,35 @@ img,video,svg{max-width:100%;}
         <!-- Row 1: Tours · Events · Rides · Shopping | Row 2: Food · Flights · Roommates · Car Hire -->
         <div class="svc-icon-grid">
           <div class="svc-icon-tile" onclick="navigateToService('tours')">
-            <img class="svc-icon-tile-img" src="icon-tours.png" alt="Tours"/>
+            <img class="svc-icon-tile-img" src="icon-tours.png" alt="Tours" loading="lazy" decoding="async"/>
             <span class="svc-icon-tile-name">Tours</span>
           </div>
           <div class="svc-icon-tile" onclick="navigateToService('events')">
-            <img class="svc-icon-tile-img" src="icon-events.png" alt="Events"/>
+            <img class="svc-icon-tile-img" src="icon-events.png" alt="Events" loading="lazy" decoding="async"/>
             <span class="svc-icon-tile-name">Events</span>
           </div>
           <div class="svc-icon-tile" onclick="navigateToService('rides')">
-            <img class="svc-icon-tile-img" src="icon-rides.png" alt="Rides"/>
+            <img class="svc-icon-tile-img" src="icon-rides.png" alt="Rides" loading="lazy" decoding="async"/>
             <span class="svc-icon-tile-name">Rides</span>
           </div>
           <div class="svc-icon-tile" onclick="navigateToService('shopping')">
-            <img class="svc-icon-tile-img" src="icon-shopping.png" alt="Shopping"/>
+            <img class="svc-icon-tile-img" src="icon-shopping.png" alt="Shopping" loading="lazy" decoding="async"/>
             <span class="svc-icon-tile-name">Shopping</span>
           </div>
           <div class="svc-icon-tile" onclick="navigateToService('food')">
-            <img class="svc-icon-tile-img" src="icon-food.png" alt="Food"/>
+            <img class="svc-icon-tile-img" src="icon-food.png" alt="Food" loading="lazy" decoding="async"/>
             <span class="svc-icon-tile-name">Food</span>
           </div>
           <div class="svc-icon-tile" onclick="navigateToService('flights')">
-            <img class="svc-icon-tile-img" src="icon-flights.png" alt="Flights"/>
+            <img class="svc-icon-tile-img" src="icon-flights.png" alt="Flights" loading="lazy" decoding="async"/>
             <span class="svc-icon-tile-name">Flights</span>
           </div>
           <div class="svc-icon-tile" onclick="navigateToService('roommates')">
-            <img class="svc-icon-tile-img" src="icon-roommates.png" alt="Roommates"/>
+            <img class="svc-icon-tile-img" src="icon-roommates.png" alt="Roommates" loading="lazy" decoding="async"/>
             <span class="svc-icon-tile-name">Roommates</span>
           </div>
           <div class="svc-icon-tile" onclick="navigateToService('carhire')">
-            <img class="svc-icon-tile-img" src="icon-carhire.png" alt="Car Hire"/>
+            <img class="svc-icon-tile-img" src="icon-carhire.png" alt="Car Hire" loading="lazy" decoding="async"/>
             <span class="svc-icon-tile-name">Car Hire</span>
           </div>
         </div>
@@ -2039,11 +2039,11 @@ img,video,svg{max-width:100%;}
       <div class="hero-stage" id="hero-stage">
         <video class="hero-video" id="hero-video" autoplay muted playsinline></video>
         <div class="hero-body" id="hero-body">
-          <span class="hero-eyebrow" id="hero-eyebrow">Apatmento for Life</span>
+          <span class="hero-eyebrow" id="hero-eyebrow">Cabana for Life</span>
           <h2 class="hero-title" id="hero-title">Travel in <em>style.</em><br/>Live without limits.</h2>
           <p class="hero-sub" id="hero-sub">Kenya's zero-commission travel super-app. Stays, flights, safaris, events, rides, food and shopping, all in one place.</p>
           <button class="hero-cta" id="hero-cta" onclick="window.location.href='apartments.html'">
-            Explore Apatmento
+            Explore Cabana
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
           </button>
         </div>
@@ -2314,9 +2314,9 @@ img,video,svg{max-width:100%;}
       <!-- ── APATMENTO GIVES. Charity impact card (below all carousels) ── -->
       <div class="svc-charity-card" onclick="document.getElementById('charity-modal').style.display='flex'" style="margin-bottom:40px;">
         <div class="svc-charity-glow"></div>
-        <div class="svc-charity-icon"><img src="icon-charity.png" alt="Apatmento Gives"/></div>
+        <div class="svc-charity-icon"><img src="icon-charity.png" alt="Cabana Gives" loading="lazy" decoding="async"/></div>
         <div class="svc-charity-body">
-          <span class="svc-charity-eyebrow">Apatmento Gives</span>
+          <span class="svc-charity-eyebrow">Cabana Gives</span>
           <div class="svc-charity-name">Built to Give Back</div>
           <div class="svc-charity-stat">
             <span class="svc-charity-stat-num">10%</span>
@@ -2335,19 +2335,19 @@ img,video,svg{max-width:100%;}
       <div id="charity-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(10,10,20,.7);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:24px;" onclick="if(event.target===this)this.style.display='none'">
         <div style="background:#fff;border-radius:24px;max-width:480px;width:100%;padding:0;overflow:hidden;box-shadow:0 32px 80px rgba(10,10,20,.3);max-height:90vh;overflow-y:auto;">
           <div style="background:linear-gradient(135deg,#fffdf0,#f0fdfb);padding:28px 24px 20px;border-bottom:1px solid rgba(212,175,55,.15);display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:1;">
-            <img src="icon-charity.png" style="width:60px;height:60px;object-fit:contain;flex-shrink:0;" alt=""/>
+            <img src="icon-charity.png" style="width:60px;height:60px;object-fit:contain;flex-shrink:0;" alt="" loading="lazy" decoding="async"/>
             <div>
-              <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#B8860B;margin-bottom:4px;">Apatmento Gives</div>
+              <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#B8860B;margin-bottom:4px;">Cabana Gives</div>
               <div style="font-family:var(--font-display);font-size:22px;font-weight:500;background:linear-gradient(120deg,#B8860B,#0D9488);-webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:-.01em;line-height:1.1;">Permanent Solutions.<br>Not Band-Aids.</div>
             </div>
           </div>
           <div style="padding:24px;">
             <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(212,175,55,.1);border:1px solid rgba(212,175,55,.25);border-radius:20px;padding:6px 14px;margin-bottom:16px;">
               <span style="font-family:var(--font-display);font-size:20px;font-weight:600;color:#B8860B;">10%</span>
-              <span style="font-size:12px;font-weight:600;color:#92720A;">of all Apatmento revenue funds change in Africa</span>
+              <span style="font-size:12px;font-weight:600;color:#92720A;">of all Cabana revenue funds change in Africa</span>
             </div>
             <p style="font-size:14px;color:var(--ink);line-height:1.7;margin-bottom:14px;">Every stay booked, every ride taken, every meal ordered on this platform contributes directly to solving Africa's most persistent challenges, not through temporary relief, but through building permanent infrastructure, systems and opportunities.</p>
-            <p style="font-size:13px;color:var(--ink-soft);line-height:1.65;margin-bottom:20px;">Africa doesn't need more band-aids. It needs bold, structural change. That's exactly what we're building, and you're a part of it every time you use Apatmento.</p>
+            <p style="font-size:13px;color:var(--ink-soft);line-height:1.65;margin-bottom:20px;">Africa doesn't need more band-aids. It needs bold, structural change. That's exactly what we're building, and you're a part of it every time you use Cabana.</p>
             <div style="background:linear-gradient(135deg,rgba(212,175,55,.06),rgba(13,148,136,.06));border:1px solid rgba(212,175,55,.15);border-radius:16px;padding:16px;margin-bottom:20px;">
               <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#0D9488;margin-bottom:8px;">Apply for Support</div>
               <p style="font-size:12.5px;color:var(--ink-soft);line-height:1.6;margin:0;">We're building the framework for organisations, communities and individuals across Africa to apply for direct support. This will be open soon, and it will be unlike anything you've seen before.</p>
@@ -2376,7 +2376,7 @@ img,video,svg{max-width:100%;}
   <div class="sf-inner">
 
     <div class="sf-brand-col">
-      <img src="/cabana-wordmark-color.png" class="sf-logo" alt="Cabana" onerror="this.style.display='none'"/>
+      <img src="/cabana-wordmark-color.png" class="sf-logo" alt="Cabana" onerror="this.style.display='none'" loading="lazy" decoding="async"/>
       <p class="sf-tagline">Zero-commission travel across Kenya and East Africa. Stays, flights, safaris, events, rides, food and car hire. One account, one checkout.</p>
       <div class="sf-contact">
         <a href="https://wa.me/254716206494" target="_blank" rel="noopener" class="sf-contact-item sf-wa">
@@ -2396,7 +2396,7 @@ img,video,svg{max-width:100%;}
 
     <div class="sf-nav-col">
       <div class="sf-col-head">Services</div>
-      <a href="/apartments.html">Stays</a>
+      <a href="/destinations">Destinations</a><a href="/what-is-cabana">What is Cabana?</a><a href="/cabana-vs-booking-com">Cabana vs Booking.com</a><a href="/zero-commission-travel-africa">Zero commission explained</a><a href="/list-property-zero-commission-africa">List with 0% commission</a><a href="/rewards">Rewards</a><a href="/press">Press</a><a href="/apartments.html">Stays</a>
       <a href="/flights.html">Flights</a>
       <a href="/tours.html">Tours &amp; Safaris</a>
       <a href="/events.html">Events</a>
@@ -2431,7 +2431,7 @@ img,video,svg{max-width:100%;}
 
   <div class="sf-bottom">
     <div class="sf-bottom-left">
-      <span>© 2026 Apatmento Ltd, trading as Cabana.</span>
+      <span>© 2026 Cabana Ltd, trading as Cabana.</span>
       <span>Nairobi, Kenya.</span>
       <span>10% of net revenue allocated to African community development.</span>
     </div>
@@ -2491,8 +2491,8 @@ img,video,svg{max-width:100%;}
 <div class="drawer-scrim" id="drawer-scrim" onclick="closeDrawer()"></div>
 <nav class="drawer" id="drawer">
   <div class="drawer-head">
-    <img src="cabana-emblem.png" class="drawer-icon" alt=""/>
-    <img src="cabana-wordmark-color.png" class="drawer-logo drawer-logo-cab" alt="Cabana" onerror="this.style.display='none'"/>
+    <img src="cabana-emblem.png" class="drawer-icon" alt="" loading="lazy" decoding="async"/>
+    <img src="cabana-wordmark-color.png" class="drawer-logo drawer-logo-cab" alt="Cabana" onerror="this.style.display='none'" loading="lazy" decoding="async"/>
   </div>
   <a class="drawer-link" href="profile.html?back=1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg> Profile</a>
   <a class="drawer-link" href="my-bookings.html?back=1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg> My Bookings</a>
@@ -2834,7 +2834,7 @@ function paintGuestContent(){
   if(!_painted.chat){
     _painted.chat = true;
     setTimeout(function(){
-      if(typeof ApatmentoChat !== 'undefined') _try(ApatmentoChat.initFAB, 'chat');
+      if(typeof CabanaChat !== 'undefined') _try(CabanaChat.initFAB, 'chat');
     }, 800);
   }
 }
@@ -2973,7 +2973,7 @@ function cardHTML(name, loc, price, id, photo, beds, guests) {
 
 /* ── Listing detail modal (dashboard cards) ──────────────────────
    Shows a full-screen listing sheet before checkout.
-   Uses the same chat.js ApatmentoChat system for messaging.        */
+   Uses the same chat.js CabanaChat system for messaging.        */
 function openListingDetail(id, name, loc, price, photo, beds, guests) {
   /* Build a lightweight listing object matching apartments.html shape */
   const apt = { id, name, location: loc, price, beds: beds||1, baths: 1,
@@ -3059,7 +3059,7 @@ function openListingDetail(id, name, loc, price, photo, beds, guests) {
 
   const bedsLabel = apt.beds === 0 ? 'Studio' : `${apt.beds} Bed${apt.beds!==1?'s':''}`;
   const slideHTML = apt.photos.length
-    ? `<div class="dl-gallery-slide"><img src="${apt.photos[0]}" alt="${apt.name}" loading="eager"/></div>`
+    ? `<div class="dl-gallery-slide"><img src="${apt.photos[0]}" alt="${apt.name}" loading="eager" decoding="async"/></div>`
     : `<div class="dl-gallery-slide"><svg class="dl-gallery-placeholder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/><path d="M9 20v-5a3 3 0 0 1 6 0v5"/></svg></div>`;
 
   const knowItems = [
@@ -3082,7 +3082,7 @@ function openListingDetail(id, name, loc, price, photo, beds, guests) {
     <div class="dl-body2">
       <div class="dl-native-badge">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M9 12l2 2 4-4M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/></svg>
-        Listed on Apatmento
+        Listed on Cabana
       </div>
       <div class="dl-loc2">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
@@ -3098,7 +3098,7 @@ function openListingDetail(id, name, loc, price, photo, beds, guests) {
         <div class="dl-host-ava2">V</div>
         <div class="dl-host-info2">
           <div class="dl-host-name2">Hosted by Verified Partner</div>
-          <div class="dl-host-tag2">Verified Apatmento partner</div>
+          <div class="dl-host-tag2">Verified Cabana partner</div>
         </div>
         <div class="dl-host-100-2">Keeps 100%</div>
       </div>
@@ -3149,8 +3149,8 @@ function closeDlModal() {
 
 function dashMsgHost(listingId, listingTitle) {
   closeDlModal();
-  if (window.ApatmentoChat) {
-    ApatmentoChat.open({ listingId, listingType: 'apartment', listingTitle });
+  if (window.CabanaChat) {
+    CabanaChat.open({ listingId, listingType: 'apartment', listingTitle });
   } else {
     window.location.href = `apartments.html#listing-${listingId}`;
   }
@@ -3209,10 +3209,10 @@ async function loadDashboardHero() {
     const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
 
     const DEFAULTS = [
-      { campaign_id:'brand_dash_1', advertiser:'Apatmento', tag:'Apatmento for Life',
+      { campaign_id:'brand_dash_1', advertiser:'Cabana', tag:'Cabana for Life',
         headline:'Travel in <em>style.</em><br/>Live without limits.',
         sub:"Kenya's zero-commission travel super-app. Stays, flights, safaris, events, rides, food and shopping.",
-        cta_text:'Explore Apatmento', cta_url:'apartments.html', media_url:'',
+        cta_text:'Explore Cabana', cta_url:'apartments.html', media_url:'',
         theme_gradient:'linear-gradient(135deg,#0A0A14,#1A0A3E)' },
     ];
 
@@ -3266,7 +3266,7 @@ async function loadDashboardHero() {
       const sub     = document.getElementById('hero-sub');
       const cta     = document.getElementById('hero-cta');
       const tag     = document.getElementById('hero-ad-tag');
-      if(eyebrow) eyebrow.textContent=''+(ad.advertiser||'Apatmento');
+      if(eyebrow) eyebrow.textContent=''+(ad.advertiser||'Cabana');
       if(title)   title.innerHTML=ad.headline||'Travel in <em>style.</em>';
       if(sub)     sub.textContent=ad.sub||'';
       if(tag)     tag.style.display=ad.campaign_id?.startsWith('brand')?'none':'block';
@@ -3377,7 +3377,7 @@ async function renderServicePicker(listings){
   const active = Object.entries(groups).filter(([,a])=>a.length);
   c.innerHTML = `
     <div class="topbar">
-      <div class="tb-left"><img src="cabana-emblem.png" class="tb-icon-sm" alt=""/><span class="tb-cab-anim" data-text="CABANA">CABANA</span></div>
+      <div class="tb-left"><img src="cabana-emblem.png" class="tb-icon-sm" alt="" loading="lazy" decoding="async"/><span class="tb-cab-anim" data-text="CABANA">CABANA</span></div>
       <div class="tb-right"><button class="hero-cta" style="padding:9px 18px;font-size:13px;box-shadow:none;" onclick="showAddSheet()">+ Add service</button><button onclick="switchToGuest()" style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:100px;border:1.5px solid rgba(255,255,255,.35);background:rgba(255,255,255,.15);-webkit-color:#fff;font-family:var(--font-body);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .2s;">← Traveller dashboard</button></div>
     </div>
     <div class="content" style="max-width:760px;">
@@ -3422,7 +3422,7 @@ async function renderSingleDashboard(listing){
 
   c.innerHTML = `
     <div class="topbar">
-      <div class="tb-left"><button class="tb-icon-btn" onclick="openDrawer()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button><img src="cabana-emblem.png" class="tb-icon-sm" alt=""/><span class="tb-cab-anim" data-text="CABANA">CABANA</span></div>
+      <div class="tb-left"><button class="tb-icon-btn" onclick="openDrawer()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button><img src="cabana-emblem.png" class="tb-icon-sm" alt="" loading="lazy" decoding="async"/><span class="tb-cab-anim" data-text="CABANA">CABANA</span></div>
       <div class="tb-right">
         <a href="#" onclick="switchToGuest();return false;" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:11px;border:1.5px solid rgba(45,212,191,.3);background:rgba(45,212,191,.08);color:#0D9488;font-family:var(--font-body);font-weight:700;font-size:12px;text-decoration:none;transition:all .22s;white-space:nowrap;" title="Switch to Traveller view">
           ← Traveller dashboard
@@ -3431,7 +3431,7 @@ async function renderSingleDashboard(listing){
       </div>
     </div>
     <div class="content">
-      <div class="greeting"><span class="greeting-eyebrow">${s.ico.replace('class="svc-ico"','').replace('width="30" height="30"','width="14" height="14"')} ${s.name} · 0% commission</span><h1 class="greeting-title">Welcome back, <em>${USER.firstName}</em></h1><p class="greeting-sub">You keep 100% of every booking. Apatmento charges only a small fixed fee.</p></div>
+      <div class="greeting"><span class="greeting-eyebrow">${s.ico.replace('class="svc-ico"','').replace('width="30" height="30"','width="14" height="14"')} ${s.name} · 0% commission</span><h1 class="greeting-title">Welcome back, <em>${USER.firstName}</em></h1><p class="greeting-sub">You keep 100% of every booking. Cabana charges only a small fixed fee.</p></div>
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;margin-bottom:36px;">
         ${statCard('KES '+earned.toLocaleString(),'Total earned',count+' bookings')}
         ${statCard(listingCount,'Listings',(listings.filter(l=>l.status!=='inactive').length)+' active')}
@@ -3998,7 +3998,7 @@ function dashGmRenderBody(expired = false) {
   const cards = responses.slice(0, 3).map(r => {
     const price = r.price_per_night ? `KES ${Number(r.price_per_night).toLocaleString()} / night` : '';
     const img = r.listing_image
-      ? `<img class="dash-gm-resp-thumb" src="${r.listing_image}" alt="" onerror="this.style.display='none'"/>`
+      ? `<img class="dash-gm-resp-thumb" src="${r.listing_image}" alt="" onerror="this.style.display='none'" loading="lazy" decoding="async"/>`
       : `<div class="dash-gm-resp-thumb" style="background:rgba(123,47,247,.15);display:flex;align-items:center;justify-content:center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg></div>`;
     return `
       <div class="dash-gm-resp-card" onclick="window.location.href='apartments.html?listing=${r.listing_id}'">

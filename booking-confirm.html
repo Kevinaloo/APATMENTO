@@ -7,8 +7,8 @@
 <link rel="apple-touch-icon" href="/cabana-apple-touch-icon.png"/>
 <meta name="apple-mobile-web-app-title" content="Cabana"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Apatmento: Confirm booking</title>
-<meta name="description" content="Confirm your Apatmento booking securely. Zero commission, M-Pesa payments, instant confirmation for stays, tours and more in Kenya."/>
+<title>Cabana: Confirm booking</title>
+<meta name="description" content="Confirm your Cabana booking securely. Zero commission, M-Pesa payments, instant confirmation for stays, tours and more in Kenya."/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <!-- Session core: one Supabase client per tab. Multiple clients on the
      same storage key race each other and silently drop the session. -->
@@ -171,6 +171,14 @@ body{overflow-x:hidden;}
   box-shadow:0 18px 50px rgba(10,10,20,.3);max-width:88vw;text-align:center;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 </style>
+
+  <link rel="canonical" href="https://cabana.africa/booking-confirm"/>
+
+  <meta name="robots" content="noindex, nofollow"/>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="dns-prefetch" href="//www.googletagmanager.com"/>
 </head>
 <body>
 <body>
@@ -181,8 +189,8 @@ body{overflow-x:hidden;}
     <button class="tb-back" onclick="history.back()">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
     </button>
-    <img src="cabana-emblem.png" class="tb-icon-sm" alt=""/>
-    <img src="cabana-wordmark-color.png" class="tb-logo tb-cab-wm" alt="Cabana" onerror="this.style.display='none'"/>
+    <img src="cabana-emblem.png" class="tb-icon-sm" alt="" fetchpriority="high" decoding="async" fetchpriority="high" fetchpriority="high" fetchpriority="high"/>
+    <img src="cabana-wordmark-color.png" class="tb-logo tb-cab-wm" alt="Cabana" onerror="this.style.display='none'" loading="lazy" decoding="async"/>
   </div>
   <div class="nav-avatar" id="nav-avatar"></div>
 </div>
@@ -251,7 +259,7 @@ body{overflow-x:hidden;}
         </div>
       </div>
       <div class="sum-row"><span id="sum-nights-label">2 nights</span><span class="v" id="sum-subtotal">KES 0</span></div>
-      <div class="sum-row"><span>Apatmento fee <span style="font-size:11px;color:var(--ink-faint);">(fixed)</span></span><span class="v" id="sum-fee">KES 0</span></div>
+      <div class="sum-row"><span>Cabana fee <span style="font-size:11px;color:var(--ink-faint);">(fixed)</span></span><span class="v" id="sum-fee">KES 0</span></div>
       <div class="sum-divider"></div>
       <div class="sum-total-row"><span class="sum-total-label">Total</span><span class="sum-total-val" id="sum-total">KES 0</span></div>
       <div class="sum-note" id="sum-note">100% of the stay price goes directly to the host. Our fee is fixed. Never a percentage.</div>
@@ -677,7 +685,7 @@ async function startPayment() {
 
     if (error) throw error;
 
-    ApatmentoPay.start({
+    CabanaPay.start({
       amount:      depositAmt,
       phone:       phone,
       reference:   paymentReference,
@@ -827,7 +835,7 @@ function showToast(msg, ms) {
 }
 </script>
 <!-- payment.js intentionally NOT loaded here: it also defines
-     window.ApatmentoPay and, being deferred, would run after
+     window.CabanaPay and, being deferred, would run after
      cabana-pay.js and clobber the video payment experience. -->
 <script src="/pwa.js" defer></script>
 <script src="/apa-push.js" defer></script>
@@ -837,7 +845,7 @@ function showToast(msg, ms) {
   const mapEl=document.getElementById('apa-location-map');
   if(!mapEl)return;
   fetch('https://nominatim.openstreetmap.org/search?q='+encodeURIComponent(area+' Nairobi Kenya')+'&format=json&limit=1',
-    {headers:{'User-Agent':'Apatmento/1.0'}})
+    {headers:{'User-Agent':'Cabana/1.0'}})
   .then(r=>r.json()).then(res=>{
     if(!res[0])return;
     const lat=parseFloat(res[0].lat)+(Math.random()-.5)*.006;

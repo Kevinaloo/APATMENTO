@@ -6,8 +6,8 @@
 <link rel="apple-touch-icon" href="/cabana-apple-touch-icon.png"/>
 <meta name="apple-mobile-web-app-title" content="Cabana"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Apatmento: My Bookings</title>
-<meta name="description" content="View and manage all your Apatmento bookings in one place: stays, flights, tours, rides and events across Kenya."/>
+<title>Cabana: My Bookings</title>
+<meta name="description" content="View and manage all your Cabana bookings in one place: stays, flights, tours, rides and events across Kenya."/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <!-- Session core: one Supabase client per tab. Multiple clients on the
      same storage key race each other and silently drop the session. -->
@@ -187,6 +187,10 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--glass-2)
 <link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/><link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="/cabana-ds.css"/>
 <style>.tb-icon-sm{height:28px;width:28px;object-fit:contain;flex-shrink:0;border-radius:7px;}.tb-cab-wm{height:26px;width:auto;display:block;}</style>
+
+  <link rel="canonical" href="https://cabana.africa/my-bookings"/>
+
+  <meta name="robots" content="noindex, nofollow"/>
 </head>
 <body>
 <div class="aurora"><div class="ab ab-1"></div><div class="ab ab-2"></div></div>
@@ -196,8 +200,8 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--glass-2)
     <a href="dashboard.html?role=guest&back=1" class="tb-back">
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
     </a>
-    <img src="cabana-emblem.png" class="tb-icon-sm" alt=""/>
-    <img src="cabana-wordmark-color.png" class="tb-logo tb-cab-wm" alt="Cabana" onerror="this.style.display='none'"/>
+    <img src="cabana-emblem.png" class="tb-icon-sm" alt="" fetchpriority="high" decoding="async" fetchpriority="high" fetchpriority="high" fetchpriority="high"/>
+    <img src="cabana-wordmark-color.png" class="tb-logo tb-cab-wm" alt="Cabana" onerror="this.style.display='none'" loading="lazy" decoding="async"/>
   </div>
 </div>
 
@@ -548,7 +552,7 @@ function buildMatchPanel(b, offer) {
     <div class="match-s">Same dates, same price to you. We've ranked these by how closely they match what you booked. Choose one, or take a full refund, no penalty either way.</div>
     ${cands.map(c => `
       <div class="match-opt" data-listing="${c.listing_id}" onclick="pickMatch('${b.id}','${c.listing_id}')">
-        <img class="match-thumb" src="${(Array.isArray(c.photos)?c.photos[0]:'')||'/cabana-emblem.png'}" alt=""/>
+        <img class="match-thumb" src="${(Array.isArray(c.photos)?c.photos[0]:'')||'/cabana-emblem.png'}" alt="" loading="lazy" decoding="async"/>
         <div class="match-info">
           <div class="match-name">${c.title || 'Listing'}</div>
           <div class="match-meta">${c.location||''}${c.distance_km!=null?` · ${c.distance_km} km away`:''} · ${c.beds||'?'} bed${c.beds===1?'':'s'} · KES ${Number(c.price_night||0).toLocaleString()}/night</div>

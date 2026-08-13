@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
 <meta name="robots" content="noindex, nofollow"/>
-<title>My Agents · Apatmento Partner Hub</title>
+<title>My Agents · Cabana Partner Hub</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/apa-session.js"></script>
 <script src="/apa-agent.js"></script>
@@ -188,6 +188,8 @@ textarea.inp{padding-right:15px;font-weight:400;font-size:13.5px;resize:vertical
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/><link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="/cabana-ds.css"/>
+
+  <link rel="canonical" href="https://cabana.africa/partner-agents"/>
 </head>
 <body>
 
@@ -300,7 +302,7 @@ textarea.inp{padding-right:15px;font-weight:400;font-size:13.5px;resize:vertical
 <div class="veil" id="rep-veil">
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="rep-title">
     <div class="sheet-t" id="rep-title">Report this agent</div>
-    <div class="sheet-s">Their request is declined immediately. Three reports from three different hosts and they are suspended across Apatmento.</div>
+    <div class="sheet-s">Their request is declined immediately. Three reports from three different hosts and they are suspended across Cabana.</div>
 
     <div id="rep-opts">
       <label class="opt on" data-r="spam" onclick="pickReason(this)">
@@ -487,7 +489,7 @@ function pendingCard(r) {
     </div>
 
     <div class="lst">
-      ${img ? `<img class="lst-img" src="${E(img)}" alt="" loading="lazy"/>` : '<div class="lst-img"></div>'}
+      ${img ? `<img class="lst-img" src="${E(img)}" alt="" loading="lazy" decoding="async"/>` : '<div class="lst-img"></div>'}
       <div>
         <div class="lst-t">${E(r.listing_title)}</div>
         <div class="lst-s">They want to represent this listing only</div>
@@ -509,7 +511,7 @@ function pendingCard(r) {
 
     <div class="terms">
       <div class="terms-h">Set their commission</div>
-      <div class="terms-s">Taken from your payout when a guest they referred books. Apatmento never touches it. You settle with your agent.</div>
+      <div class="terms-s">Taken from your payout when a guest they referred books. Cabana never touches it. You settle with your agent.</div>
 
       <div class="seg" role="group">
         <button class="seg-b on"  data-m="pct"  onclick="mode(${r.partnership_id},'pct')">Percentage</button>
@@ -699,7 +701,7 @@ async function doReport() {
       document.getElementById('rep-detail').value.trim(), repCtx.partnershipId);
     closeRep();
     toast(r.agent_suspended
-      ? 'Reported. This agent is now suspended across Apatmento.'
+      ? 'Reported. This agent is now suspended across Cabana.'
       : 'Reported and declined. Thank you. This protects other hosts too.');
     await load();
   } catch (e) { toast(e.message, true); }

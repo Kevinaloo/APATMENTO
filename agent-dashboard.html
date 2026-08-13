@@ -4,8 +4,8 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
 <meta name="robots" content="noindex, nofollow"/>
-<title>Agent Portal · Apatmento</title>
-<meta name="description" content="Apatmento agent portal. Manage referrals, listings and earnings on Kenya's zero-commission travel platform."/>
+<title>Agent Portal · Cabana</title>
+<meta name="description" content="Cabana agent portal. Manage referrals, listings and earnings on Kenya&#x27;s zero-commission travel platform."/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/apa-session.js"></script>
 <script src="/apa-agent.js"></script>
@@ -196,6 +196,8 @@ textarea.inp{resize:vertical;min-height:62px;line-height:1.6;font-size:13.5px;}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/><link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="/cabana-ds.css"/>
+
+  <link rel="canonical" href="https://cabana.africa/agent-dashboard"/>
 </head>
 <body>
 
@@ -256,7 +258,7 @@ textarea.inp{resize:vertical;min-height:62px;line-height:1.6;font-size:13.5px;}
 
     <div class="priv">
       <span>🔒</span>
-      <span>Stored privately. Hosts never see your document, only whether you are verified. Only Apatmento reviews it.</span>
+      <span>Stored privately. Hosts never see your document, only whether you are verified. Only Cabana reviews it.</span>
     </div>
 
     <div class="acts" style="margin-top:20px;">
@@ -430,7 +432,7 @@ function renderListings(pane) {
 
     if (p.status === 'pending') {
       return '<article class="card pending"><div class="card-top">' +
-        (img ? '<img class="thumb" src="' + E(img) + '" alt="" loading="lazy"/>' : '<div class="thumb"></div>') +
+        (img ? '<img class="thumb" src="' + E(img) + '" alt="" loading="lazy" decoding="async"/>' : '<div class="thumb"></div>') +
         '<div class="c-id">' +
           '<div class="c-t">' + E(p.title) + '</div>' +
           '<div class="c-s">' + E(p.city || p.location || '') + ' · hosted by ' + E(p.host_name || 'the owner') + '</div>' +
@@ -445,7 +447,7 @@ function renderListings(pane) {
     const url = ApaAgent.link(ME.agent.referral_code, p.listing_id);
 
     return '<article class="card"><div class="card-top">' +
-      (img ? '<img class="thumb" src="' + E(img) + '" alt="" loading="lazy"/>' : '<div class="thumb"></div>') +
+      (img ? '<img class="thumb" src="' + E(img) + '" alt="" loading="lazy" decoding="async"/>' : '<div class="thumb"></div>') +
       '<div class="c-id">' +
         '<div class="c-t">' + E(p.title) +
           (paused ? ' <span class="badge" style="background:var(--glass-3);color:var(--ink-faint);">Paused</span>' : '') +
@@ -599,7 +601,7 @@ async function doHunt() {
   box.innerHTML = FOUND.map(function (l) {
     const img = photo(l.photos);
     return '<article class="card" id="d-' + E(l.id) + '"><div class="card-top">' +
-      (img ? '<img class="thumb" src="' + E(img) + '" alt="" loading="lazy"/>' : '<div class="thumb"></div>') +
+      (img ? '<img class="thumb" src="' + E(img) + '" alt="" loading="lazy" decoding="async"/>' : '<div class="thumb"></div>') +
       '<div class="c-id">' +
         '<div class="c-t">' + E(l.title) + '</div>' +
         '<div class="c-s">' + E(l.city || l.location || '') + ' · ' + MONEY(l.price_night) + ' / night</div>' +

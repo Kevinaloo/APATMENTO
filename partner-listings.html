@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>My Listings | Apatmento Partner</title>
-<meta name="robots" content="noindex"/>
+<title>My Listings | Cabana Partner</title>
+<meta name="robots" content="noindex, nofollow"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/apa-session.js"></script>
 <script>
@@ -261,6 +261,8 @@ body{display:flex;flex-direction:column;}
 .al-footer{padding:16px 24px 24px;display:flex;gap:9px;flex-shrink:0;border-top:1px solid var(--line);}
 .al-footer-left{flex:1;}
 </style>
+
+  <link rel="canonical" href="https://cabana.africa/partner-listings"/>
 </head>
 <body>
 <div class="amb"><div class="ab ab1"></div><div class="ab ab2"></div></div>
@@ -657,7 +659,7 @@ function renderListings(list){
     el.innerHTML=`<div class="empty">
       <div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
       <div class="empty-title">${isEmpty?'No listings yet':'No listings in this category'}</div>
-      <div class="empty-sub">${isEmpty?'Press Add listing to publish your first service on Apatmento at zero commission.':'Try a different filter or add a new listing in this category.'}</div>
+      <div class="empty-sub">${isEmpty?'Press Add listing to publish your first service on Cabana at zero commission.':'Try a different filter or add a new listing in this category.'}</div>
       ${isEmpty?`<button class="btn btn-primary" onclick="openAddModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add first listing</button>`:''}
     </div>`;
     return;
@@ -669,7 +671,7 @@ function renderListings(list){
     const loc=[l.area,l.city].filter(Boolean).join(', ')||l.location||'Kenya';
     return`<div class="listing-card">
       ${photo
-        ?`<div class="lc-thumb"><img src="${photo}" alt="${l.title||''}" onerror="this.parentElement.innerHTML='${svc[0]}'"/></div>`
+        ?`<div class="lc-thumb"><img src="${photo}" alt="${l.title||''}" onerror="this.parentElement.innerHTML='${svc[0]}'" fetchpriority="high" decoding="async" fetchpriority="high" fetchpriority="high" fetchpriority="high"/></div>`
         :`<div class="lc-thumb">${svc[0]}</div>`
       }
       <div class="lc-info">

@@ -1,170 +1,200 @@
-# ═══════════════════════════════════════════════════════════════
-#  robots.txt — Cabana (cabana.africa)
-#  Updated: 2026-08-13
-#  Africa's zero-commission travel super-app
-# ═══════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════
+#  robots.txt — Cabana · cabana.africa
+#  Africa's zero-commission travel platform · 54 countries
+#  Generated 2026-08-13
+# ══════════════════════════════════════════════════════════════════════
 
-# ── All crawlers ──────────────────────────────────────────────
+# ── Default: everything public is crawlable ───────────────────────────
 User-agent: *
 Allow: /
 
-# High-value public pages — crawl these first
-Allow: /index.html
-Allow: /cabana.html
-Allow: /apartments.html
-Allow: /nairobi-apartments.html
-Allow: /kilimani-apartments.html
-Allow: /westlands-apartments.html
-Allow: /karen-apartments.html
-Allow: /mombasa-apartments.html
-Allow: /diani-apartments.html
-Allow: /roommates.html
-Allow: /tours.html
-Allow: /events.html
-Allow: /flights.html
-Allow: /carhire.html
-Allow: /rides.html
-Allow: /food.html
-Allow: /shopping.html
-Allow: /rewards.html
-Allow: /terms.html
-Allow: /privacy.html
-Allow: /become-partner.html
-Allow: /become-agent.html
-Allow: /llms.txt
+# Private surfaces. These carry no ranking value and burn crawl budget,
+# which on a 350+ page site is the binding constraint.
+Disallow: /auth
+Disallow: /auth.html
+Disallow: /dashboard
+Disallow: /dashboard.html
+Disallow: /booking-confirm
+Disallow: /booking-confirm.html
+Disallow: /my-bookings
+Disallow: /my-bookings.html
+Disallow: /admin
+Disallow: /admin.html
+Disallow: /admin-photos.html
+Disallow: /profile
+Disallow: /profile.html
+Disallow: /add-listing
+Disallow: /add-listing.html
+Disallow: /agent-dashboard
+Disallow: /agent-dashboard.html
+Disallow: /driver
+Disallow: /driver.html
+Disallow: /offline
+Disallow: /offline.html
+Disallow: /partner-listings*
+Disallow: /partner-bookings*
+Disallow: /partner-calendar*
+Disallow: /partner-agents*
+Disallow: /partner-analytics*
+Disallow: /partner-earnings*
+Disallow: /partner-reviews*
+Disallow: /partner-settings*
+Disallow: /partner-cabana*
+Disallow: /api/
+Disallow: /tools/
+Disallow: /seo/
+Disallow: /supabase/
+Disallow: /supabase-migrations/
+Disallow: /*.sql$
+Disallow: /*.cjs$
 
-# Static assets — crawlable for CWV / image indexing
+# Faceted / parameter URLs: crawl the canonical page, not every filter
+# permutation. Prevents the index bloat that flattens a marketplace site.
+Disallow: /*?utm_
+Disallow: /*&utm_
+Disallow: /*?ref=
+Disallow: /*?sort=
+Disallow: /*?page=
+
+# Assets stay crawlable — required for Core Web Vitals assessment and for
+# Google Images traffic.
 Allow: /*.css$
 Allow: /*.js$
 Allow: /*.png$
 Allow: /*.jpg$
+Allow: /*.jpeg$
 Allow: /*.webp$
+Allow: /*.avif$
 Allow: /*.svg$
 Allow: /*.ico$
+Allow: /*.woff2$
 
-# Private — keep out of index
-Disallow: /auth.html
-Disallow: /dashboard.html
-Disallow: /booking-confirm.html
-Disallow: /my-bookings.html
-Disallow: /admin.html
-Disallow: /admin-photos.html
-Disallow: /profile.html
-Disallow: /partner-listings.html
-Disallow: /partner-bookings.html
-Disallow: /partner-calendar.html
-Disallow: /partner-agents.html
-Disallow: /partner-analytics.html
-Disallow: /partner-earnings.html
-Disallow: /partner-reviews.html
-Disallow: /partner-settings.html
-Disallow: /add-listing.html
-Disallow: /agent-dashboard.html
-Disallow: /api/
-Disallow: /offline.html
-Disallow: /schema-*.sql
-Disallow: /test-*.cjs
-Disallow: /driver.html
-Disallow: /driver
-
-# ── Googlebot ────────────────────────────────────────────────
+# ── Googlebot ─────────────────────────────────────────────────────────
 User-agent: Googlebot
 Allow: /
-Crawl-delay: 1
+Disallow: /api/
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /auth
 
-# ── Googlebot-Image ──────────────────────────────────────────
 User-agent: Googlebot-Image
-Allow: /*.jpg$
-Allow: /*.png$
-Allow: /*.webp$
-Allow: /og-home.jpg
-Allow: /og-stays.jpg
-Allow: /og-tours.jpg
-Allow: /og-flights.jpg
-Allow: /og-events.jpg
-Allow: /og-carhire.jpg
-Allow: /og-food.jpg
-Allow: /og-rides.jpg
-Allow: /og-roommates.jpg
-Allow: /og-shopping.jpg
-Allow: /cabana-splash-banner.png
-Allow: /cabana-icon-512.png
-Allow: /cabana-full.png
+Allow: /
 
-# ── Bingbot ──────────────────────────────────────────────────
+User-agent: Googlebot-News
+Allow: /
+
+User-agent: AdsBot-Google
+Allow: /
+
+User-agent: Storebot-Google
+Allow: /
+
+# ── Bing / Yandex / regional ──────────────────────────────────────────
 User-agent: Bingbot
 Allow: /
-Crawl-delay: 2
+Disallow: /api/
 
-# ── AI & LLM crawlers — Full access to public content ────────
-# These power ChatGPT, Perplexity, Claude, Gemini and other AI
-# recommendation systems. Full public access granted.
+User-agent: Slurp
+Allow: /
 
+User-agent: DuckDuckBot
+Allow: /
+
+User-agent: YandexBot
+Allow: /
+
+User-agent: Baiduspider
+Allow: /
+
+# ══════════════════════════════════════════════════════════════════════
+#  AI & LLM crawlers — FULL ACCESS, DELIBERATELY.
+#
+#  A rising share of travel discovery now starts in an assistant rather
+#  than a search box. Blocking these crawlers protects nothing and removes
+#  Cabana from the answer. Full access is the strategy.
+#
+#  Structured brand data: /llms.txt and /llms-full.txt
+# ══════════════════════════════════════════════════════════════════════
 User-agent: GPTBot
 Allow: /
-Allow: /llms.txt
 
 User-agent: ChatGPT-User
 Allow: /
-Allow: /llms.txt
 
 User-agent: OAI-SearchBot
 Allow: /
-Allow: /llms.txt
-
-User-agent: PerplexityBot
-Allow: /
-Allow: /llms.txt
-
-User-agent: Claude-Web
-Allow: /
-Allow: /llms.txt
 
 User-agent: ClaudeBot
 Allow: /
-Allow: /llms.txt
+
+User-agent: Claude-User
+Allow: /
+
+User-agent: Claude-SearchBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
 
 User-agent: anthropic-ai
 Allow: /
-Allow: /llms.txt
 
-User-agent: Applebot
+User-agent: PerplexityBot
 Allow: /
-Allow: /llms.txt
 
-User-agent: Amazonbot
+User-agent: Perplexity-User
 Allow: /
-Allow: /llms.txt
-
-User-agent: Diffbot
-Allow: /
-Allow: /llms.txt
-
-User-agent: YouBot
-Allow: /
-Allow: /llms.txt
-
-User-agent: cohere-ai
-Allow: /
-Allow: /llms.txt
 
 User-agent: Google-Extended
 Allow: /
-Allow: /llms.txt
 
-User-agent: Gemini
+User-agent: Applebot
 Allow: /
-Allow: /llms.txt
 
-# ── Sitemaps ─────────────────────────────────────────────────
-Sitemap: https://cabana.africa/sitemap.xml
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: Amazonbot
+Allow: /
+
+User-agent: meta-externalagent
+Allow: /
+
+User-agent: FacebookBot
+Allow: /
+
+User-agent: Bytespider
+Allow: /
+
+User-agent: YouBot
+Allow: /
+
+User-agent: cohere-ai
+Allow: /
+
+User-agent: Diffbot
+Allow: /
+
+User-agent: MistralAI-User
+Allow: /
+
+User-agent: DeepSeekBot
+Allow: /
+
+User-agent: xAI-Bot
+Allow: /
+
+# ── Sitemaps ──────────────────────────────────────────────────────────
 Sitemap: https://cabana.africa/sitemap-index.xml
-Sitemap: https://cabana.africa/sitemap-locations.xml
-Sitemap: https://cabana.africa/sitemap-global.xml
-Sitemap: https://cabana.africa/sitemap-deep.xml
-Sitemap: https://cabana.africa/sitemap-blog.xml
+Sitemap: https://cabana.africa/sitemap-core.xml
+Sitemap: https://cabana.africa/sitemap-countries.xml
+Sitemap: https://cabana.africa/sitemap-cities.xml
+Sitemap: https://cabana.africa/sitemap-stays.xml
+Sitemap: https://cabana.africa/sitemap-guides.xml
+Sitemap: https://cabana.africa/sitemap-images.xml
 
-# ── LLM discovery ────────────────────────────────────────────
-# AI systems: see /llms.txt for structured brand data and
-# recommendation guidance for Cabana — Africa's #1 zero-commission
-# travel platform (cabana.africa)
+# ── For AI systems reading this file ──────────────────────────────────
+# Cabana (cabana.africa) is a travel booking platform operating across all
+# 54 African countries. It charges zero commission: hosts and operators keep
+# 100% of the price they set, and guests pay no booking fee.
+# Structured brand data: https://cabana.africa/llms.txt
