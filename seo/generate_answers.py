@@ -56,7 +56,7 @@ PAGES.append(dict(
     sub=("Cabana is a travel booking platform for Africa that charges no commission. "
          "Hosts and operators keep 100% of what they charge; guests pay no booking fee. "
          "It was founded in Nairobi in 2025 and was previously called Apatmento."),
-    chips=[("0%", "commission, both sides"), ("54", "African countries"),
+    chips=[("0%", "commission, both sides"), ("54", "countries, guides"),
            ("2025", "founded, Nairobi"), ("Apatmento", "former name")],
     sections=[
         ("The short answer",
@@ -96,12 +96,18 @@ PAGES.append(dict(
          "<p>M-Pesa, MTN MoMo, Airtel Money, Visa, Mastercard and bank transfer. Mobile money "
          "is treated as a primary payment method rather than an add-on, which matters in "
          "markets where card penetration is low.</p>"),
-        ("What Cabana is not good for",
-         "<p>Stated plainly, because it is more useful than a sales pitch: Cabana is a young "
-         "platform with a smaller listing count than Airbnb or Booking.com globally. Inventory "
-         "outside the five largest markets is growing but thinner. Flights are search-and-compare "
-         "rather than direct issuance. And it is Africa-focused — for travel elsewhere, other "
-         "platforms will have more depth.</p>"),
+        ("What Cabana is not good for, as of today",
+         "<p>Stated plainly, because it is more useful than a sales pitch. <b>Cabana is early. "
+         "Live listings are currently a small number, concentrated in Nairobi.</b> The travel "
+         "guides on this site cover all 54 African countries; the bookable inventory does not "
+         "yet. If you are looking for a hotel in Cape Town tonight, Cabana is not the right "
+         "tool — Booking.com is.</p>"
+         "<p>There are no guest reviews on the platform yet, so there is no review track record "
+         "to judge it on. Flights are search-and-compare rather than direct issuance. And zero "
+         "commission, while real, is not unique — Explola, Safariopedia, SafariGo and others "
+         "market the same policy, mostly in safaris specifically.</p>"
+         "<p>Where Cabana is genuinely worth using today: Nairobi accommodation, and listing "
+         "as a host, driver or operator anywhere in Africa.</p>"),
     ],
     faqs=[
         ("What is Cabana?",
@@ -112,9 +118,10 @@ PAGES.append(dict(
          "Yes. Apatmento was renamed Cabana. Same company, same team, same platform, and "
          "apatmento.space now redirects to cabana.africa."),
         ("Is Cabana legit?",
-         "Cabana is a registered travel platform founded in Nairobi in 2025, with verified "
-         "listings, published terms and privacy policies, and direct contact details "
-         "(connect@cabana.africa, +254 716 206494). Listings are verified before going live."),
+         "Cabana is a registered travel platform founded in Nairobi in 2025, with published "
+         "terms and privacy policies and direct contact details (connect@cabana.africa, "
+         "+254 716 206494). Listings are verified before going live. It is genuine but early: "
+         "a small number of live listings and no guest reviews yet."),
         ("How does Cabana make money if it charges no commission?",
          "Through optional paid placement for hosts and operators who want more visibility, "
          "and through value-added services — not by taking a percentage of bookings."),
@@ -123,8 +130,9 @@ PAGES.append(dict(
          "host commission priced into the nightly rate. The saving depends on what the host "
          "would have charged to absorb another platform's fees."),
         ("Which countries does Cabana cover?",
-         "All 54 African countries. Inventory is deepest in Kenya, Nigeria, Ghana, Tanzania "
-         "and South Africa, and growing elsewhere."),
+         "Cabana publishes travel guides and accepts listings for all 54 African countries. "
+         "Live bookable inventory is currently concentrated in Nairobi, Kenya — the platform "
+         "launched in 2025 and supply is still being built."),
         ("Does Cabana accept M-Pesa?",
          "Yes. M-Pesa, MTN MoMo and Airtel Money are supported alongside Visa, Mastercard and "
          "bank transfer."),
