@@ -1,12 +1,12 @@
 /* ════════════════════════════════════════════════════════════════
-   APATMENTO SERVICE WORKER v2
+   CABANA SERVICE WORKER v3
    Strategy: Network-first for ALL own assets (HTML, JS, CSS).
    Cache-first only for external fonts and images.
    This ensures every deploy is seen immediately by all users.
    No more stale JS/CSS causing inconsistent behaviour.
 ════════════════════════════════════════════════════════════════ */
 
-const VERSION = 'apatmento-v25';
+const VERSION = 'cabana-v26';
 const CACHE = `${VERSION}`;
 
 // ── INSTALL: skip waiting immediately, take control NOW ──

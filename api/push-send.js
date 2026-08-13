@@ -180,7 +180,7 @@ async function handleCron(req, res) {
   const due = campaigns.filter(isDue);
   if (!due.length) return res.status(200).json({ fired: 0, checked: campaigns.length });
 
-  const SELF = process.env.PUSH_SEND_URL || 'https://www.apatmento.space/api/push-send';
+  const SELF = process.env.PUSH_SEND_URL || 'https://cabana.africa/api/push-send';
   const fired = [];
   for (const camp of due) {
     try {

@@ -79,6 +79,6 @@ export function serviceHeaders(extra = {}) {
    never advertise a preview deployment, so this is pinned rather than
    derived from the incoming request's Host header. */
 export function publicOrigin() {
-  const origin = optional('PUBLIC_BASE_URL', 'https://www.apatmento.space');
+  const origin = optional('PUBLIC_BASE_URL', 'https://cabana.africa');
   return origin.replace(/\/+$/, '');
 }

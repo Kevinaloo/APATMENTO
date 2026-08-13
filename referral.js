@@ -12,7 +12,7 @@
 
 const SUPA_URL = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
-const SITE_URL = 'https://www.apatmento.space';
+const SITE_URL = 'https://cabana.africa';
 
 /* ── Safe read-only DB helper (anon key, SELECT only) ── */
 async function dbRead(table, params = '') {

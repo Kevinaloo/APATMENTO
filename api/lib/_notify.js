@@ -17,7 +17,7 @@
    a successful payment or booking. Errors are logged, never thrown.
    ═══════════════════════════════════════════════════════════════════ */
 
-const BASE = process.env.PUBLIC_BASE_URL || 'https://www.apatmento.space';
+const BASE = process.env.PUBLIC_BASE_URL || 'https://cabana.africa';
 const SECRET = process.env.PUSH_ADMIN_SECRET || '';
 
 export async function notify({ user_id, endpoint, title, body, url, kind = 'general', persist = true }) {

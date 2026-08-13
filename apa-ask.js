@@ -908,7 +908,7 @@
       stopVoice();
       if (err === 'not-allowed' || err === 'service-not-allowed') {
         micDenied = true; handsFree = false; setTalkUI(false);
-        appendMsg('apa', 'Microphone is blocked. Go to Chrome \u2192 Settings \u2192 Site settings \u2192 Microphone \u2192 find apatmento.space and set it to Allow, then try again.');
+        appendMsg('apa', 'Microphone is blocked. Go to Chrome \u2192 Settings \u2192 Site settings \u2192 Microphone \u2192 find cabana.africa and set it to Allow, then try again.');
       } else if (err === 'no-speech') { maybeReopenMic(); }
       else if (err !== 'aborted') { maybeReopenMic(); }
     };

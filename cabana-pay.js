@@ -546,7 +546,7 @@
                 + '  \u00b7  ' + now.toLocaleTimeString('en-KE',
                     { hour:'2-digit', minute:'2-digit', hour12:false });
     centre(stamp, 1700, '600 23px Helvetica, Arial, sans-serif', 'rgba(255,255,255,.62)', 4);
-    centre('apatmento.space', 1790, '600 26px Helvetica, Arial, sans-serif', 'rgba(255,255,255,.80)', 3);
+    centre('cabana.africa', 1790, '600 26px Helvetica, Arial, sans-serif', 'rgba(255,255,255,.80)', 3);
 
     return new Promise(res => cv.toBlob(res, 'image/png', 0.95));
   }

@@ -54,7 +54,7 @@ function generateICal(listingId, bookings) {
       `DTSTART;VALUE=DATE:${checkin}`,
       `DTEND;VALUE=DATE:${checkout}`,
       `SUMMARY:Apatmento Booking - ${b.guest_code || 'Reserved'}`,
-      `UID:apatmento-${b.id}@apatmento.space`,
+      `UID:apatmento-${b.id}@cabana.africa`,
       `DESCRIPTION:Booking ref: ${b.payment_reference || b.id}`,
       'STATUS:CONFIRMED',
       `CREATED:${new Date().toISOString().replace(/[-:]/g,'').split('.')[0]}Z`,

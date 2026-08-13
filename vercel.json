@@ -8,10 +8,10 @@
       "has": [
         {
           "type": "host",
-          "value": "cabana.africa"
+          "value": "apatmento.space"
         }
       ],
-      "destination": "https://www.apatmento.space/$1",
+      "destination": "https://cabana.africa/$1",
       "permanent": true
     },
     {
@@ -19,10 +19,10 @@
       "has": [
         {
           "type": "host",
-          "value": "www.cabana.africa"
+          "value": "www.apatmento.space"
         }
       ],
-      "destination": "https://www.apatmento.space/$1",
+      "destination": "https://cabana.africa/$1",
       "permanent": true
     },
     {
@@ -33,7 +33,7 @@
           "value": "cabana.travel"
         }
       ],
-      "destination": "https://www.apatmento.space/$1",
+      "destination": "https://cabana.africa/$1",
       "permanent": true
     },
     {
@@ -44,7 +44,7 @@
           "value": "www.cabana.travel"
         }
       ],
-      "destination": "https://www.apatmento.space/$1",
+      "destination": "https://cabana.africa/$1",
       "permanent": true
     },
     {
@@ -52,10 +52,10 @@
       "has": [
         {
           "type": "host",
-          "value": "apatmento.space"
+          "value": "www.cabana.africa"
         }
       ],
-      "destination": "https://www.apatmento.space/$1",
+      "destination": "https://cabana.africa/$1",
       "permanent": true
     },
     {
@@ -66,7 +66,7 @@
           "value": "apatmento.vercel.app"
         }
       ],
-      "destination": "https://www.apatmento.space/$1",
+      "destination": "https://cabana.africa/$1",
       "permanent": true
     }
   ],
@@ -106,7 +106,7 @@
       ]
     },
     {
-      "source": "/(.*)\\.(png|jpg|jpeg|webp|avif|gif|svg|ico)",
+      "source": "/(.*)\\.(?:png|jpg|jpeg|webp|avif|gif|svg|ico)",
       "headers": [
         {
           "key": "Cache-Control",
@@ -115,7 +115,7 @@
       ]
     },
     {
-      "source": "/(.*)\\.(woff|woff2|ttf|otf)",
+      "source": "/(.*)\\.(?:woff|woff2|ttf|otf)",
       "headers": [
         {
           "key": "Cache-Control",
@@ -124,7 +124,7 @@
       ]
     },
     {
-      "source": "/(.*)\\.(css|js)",
+      "source": "/(.*)\\.(?:css|js)",
       "headers": [
         {
           "key": "Cache-Control",

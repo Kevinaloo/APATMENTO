@@ -209,7 +209,7 @@ async function handleWelcomeEmail(req, res) {
       </div>
     </div>
     <div style="text-align:center;margin-bottom:24px;">
-      <a href="https://www.apatmento.space/dashboard.html" style="display:inline-block;background:linear-gradient(135deg,#4361FF,#7B2FF7);color:#fff;text-decoration:none;padding:14px 36px;border-radius:100px;font-weight:700;font-size:15px;">Start Exploring →</a>
+      <a href="https://cabana.africa/dashboard.html" style="display:inline-block;background:linear-gradient(135deg,#4361FF,#7B2FF7);color:#fff;text-decoration:none;padding:14px 36px;border-radius:100px;font-weight:700;font-size:15px;">Start Exploring →</a>
     </div>
     <div style="text-align:center;padding-top:16px;border-top:1px solid #E8E9F0;">
       <p style="font-size:12px;color:#8E90AD;margin:0;"><strong>Apatmento</strong>: Your World, One App</p>
@@ -222,7 +222,7 @@ async function handleWelcomeEmail(req, res) {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${RESEND_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        from: 'Apatmento <welcome@apatmento.space>',
+        from: 'Apatmento <welcome@cabana.africa>',
         to: [email],
         subject: `🎉 Karibu ${firstName}! Welcome to Apatmento`,
         html,
@@ -244,7 +244,7 @@ async function handleWelcomeEmail(req, res) {
    INDEX NOW  (merged from api/indexnow.js to stay under
    Vercel Hobby plan's 12-function limit)
 ══════════════════════════════════════════════════════════════ */
-const INDEXNOW_HOST = 'www.apatmento.space';
+const INDEXNOW_HOST = 'cabana.africa';
 const INDEXNOW_KEY  = 'cc18b1bc5dc43435c44f29f125a500f5';
 
 // All sitemaps to ping. Updated to include all location, global, deep and blog sitemaps

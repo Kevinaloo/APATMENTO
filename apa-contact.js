@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════════════════════
    APA CONTACT. Global contact widget & footer injection
-   +254 716 206 494 | connect@apatmento.space
+   +254 716 206 494 | connect@cabana.africa
    Injected on every page: floating FAB, footer contact strip,
    and contact bar in strategic page locations.
 ═══════════════════════════════════════════════════════════════════ */
@@ -9,7 +9,7 @@
 
   const PHONE     = '+254716206494';
   const PHONE_RAW = '254716206494';
-  const EMAIL     = 'connect@apatmento.space';
+  const EMAIL     = 'connect@cabana.africa';
   const WA_MSG    = encodeURIComponent('Hi Cabana support! I need help with:');
   const WA_URL    = `https://wa.me/${PHONE_RAW}?text=${WA_MSG}`;
   const CALL_URL  = `tel:${PHONE}`;

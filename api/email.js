@@ -26,9 +26,9 @@ const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const AT_API_KEY       = process.env.AT_API_KEY;
 const AT_USERNAME      = process.env.AT_USERNAME || 'Cabana';
 const AT_SMS_URL       = 'https://api.africastalking.com/version1/messaging';
-const FROM_NOTIFY  = 'Apatmento <notify@apatmento.space>';
-const FROM_BOOKING = 'Apatmento Bookings <bookings@apatmento.space>';
-const FROM_MAGIC   = 'Apatmento <auth@apatmento.space>';
+const FROM_NOTIFY  = 'Apatmento <notify@cabana.africa>';
+const FROM_BOOKING = 'Apatmento Bookings <bookings@cabana.africa>';
+const FROM_MAGIC   = 'Apatmento <auth@cabana.africa>';
 
 function adminHeaders() {
   return {
@@ -48,7 +48,7 @@ ${content}
 <div style="text-align:center;padding-top:20px;border-top:1px solid #E8E9F0;margin-top:8px;">
   <p style="font-size:12px;color:#8E90AD;margin:0;"><strong>Apatmento</strong>: Zero Commission. Always.</p>
   <p style="font-size:11px;color:#B0B3C8;margin:6px 0 0;">
-    <a href="https://www.apatmento.space" style="color:#4361FF;text-decoration:none;">apatmento.space</a>
+    <a href="https://cabana.africa" style="color:#4361FF;text-decoration:none;">cabana.africa</a>
     &nbsp;·&nbsp; This is an automated message.
   </p>
 </div>
@@ -113,7 +113,7 @@ function buildWelcome({ name, email }) {
         ).join('')}
       </div>
     `)}
-    ${BTN('https://www.apatmento.space/dashboard.html','Start Exploring →')}
+    ${BTN('https://cabana.africa/dashboard.html','Start Exploring →')}
   `);
 }
 
@@ -174,7 +174,7 @@ function buildBookingReceipt({ booking, listing, user }) {
         </div>
       </div>
     </div>
-    ${BTN('https://www.apatmento.space/my-bookings.html','View My Booking →')}
+    ${BTN('https://cabana.africa/my-bookings.html','View My Booking →')}
   `);
 }
 
@@ -207,7 +207,7 @@ function buildHostBookingAlert({ booking, listing, host }) {
         Nights: <strong style="color:#0A0A14;">${booking.nights}</strong>
       </div>
     `)}
-    ${BTN('https://www.apatmento.space/partner-bookings.html','View in Dashboard →','135deg,#2DD4BF,#14B8A6')}
+    ${BTN('https://cabana.africa/partner-bookings.html','View in Dashboard →','135deg,#2DD4BF,#14B8A6')}
   `);
 }
 
@@ -225,7 +225,7 @@ function buildPayout({ host, amount, reference }) {
         <span style="font-size:14px;font-weight:700;color:#0A0A14;font-family:monospace;">${reference}</span>
       </div>` : ''}
     `)}
-    ${BTN('https://www.apatmento.space/partner-earnings.html','View Earnings →','135deg,#2DD4BF,#14B8A6')}
+    ${BTN('https://cabana.africa/partner-earnings.html','View Earnings →','135deg,#2DD4BF,#14B8A6')}
   `);
 }
 
@@ -240,7 +240,7 @@ function buildCancellation({ booking, listing, user }) {
         If you paid, a refund will be processed within 3–5 business days.
       </div>
     `)}
-    ${BTN('https://www.apatmento.space/apartments.html','Browse Other Stays →','135deg,#4361FF,#7B2FF7')}
+    ${BTN('https://cabana.africa/apartments.html','Browse Other Stays →','135deg,#4361FF,#7B2FF7')}
   `);
 }
 
@@ -421,7 +421,7 @@ export default async function handler(req, res) {
         if (!hPhone) return res.status(400).json({ error: 'phone required' });
         const smsResult = await sendSMS({
           to: hPhone,
-          message: `New booking on Apatmento! ${hGuest || 'A guest'} booked ${hProp}. Check-in: ${hIn}, Check-out: ${hOut}. Log in to apatmento.space to manage.`,
+          message: `New booking on Apatmento! ${hGuest || 'A guest'} booked ${hProp}. Check-in: ${hIn}, Check-out: ${hOut}. Log in to cabana.africa to manage.`,
         });
         return res.status(200).json({ ok: true, ...smsResult });
       }
@@ -458,7 +458,7 @@ export default async function handler(req, res) {
 ═══════════════════════════════════════════════════════════════════ */
 export async function sendReceipt({ booking, listing, user }) {
   const RESEND_KEY = process.env.RESEND_API_KEY;
-  const FROM_EMAIL = 'bookings@apatmento.space';
+  const FROM_EMAIL = 'bookings@cabana.africa';
   if (!RESEND_KEY) return { ok: false, error: 'No RESEND_KEY' };
   // Delegate to the existing email.js booking action
   return { ok: true, delegated: true };

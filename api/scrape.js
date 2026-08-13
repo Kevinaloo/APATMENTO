@@ -46,7 +46,7 @@ const BROWSER_HEADERS = {
 };
 
 const JSON_HEADERS = {
-  'User-Agent': 'Mozilla/5.0 (compatible; ApatmentoBot/2.0; +https://www.apatmento.space)',
+  'User-Agent': 'Mozilla/5.0 (compatible; ApatmentoBot/2.0; +https://cabana.africa)',
   'Accept': 'application/json, text/plain, */*',
   'Accept-Language': 'en-US,en;q=0.9',
   'Referer': 'https://www.google.com/',

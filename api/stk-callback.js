@@ -11,7 +11,7 @@
 function siteOrigin(req) {
   const host = req.headers['x-forwarded-host'] || req.headers.host;
   const proto = req.headers['x-forwarded-proto'] || 'https';
-  return host ? `${proto}://${host}` : 'https://www.apatmento.space';
+  return host ? `${proto}://${host}` : 'https://cabana.africa';
 }
 
 export default async function handler(req, res) {
