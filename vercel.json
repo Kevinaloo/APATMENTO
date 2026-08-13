@@ -89,7 +89,7 @@
       ]
     },
     {
-      "source": "/(.*)\\.html",
+      "source": "/:path*.html",
       "headers": [
         {
           "key": "Cache-Control",
@@ -106,7 +106,7 @@
       ]
     },
     {
-      "source": "/(.*)\\.(?:png|jpg|jpeg|webp|avif|gif|svg|ico)",
+      "source": "/:path*.(png|jpg|jpeg|webp|avif|gif|svg|ico)",
       "headers": [
         {
           "key": "Cache-Control",
@@ -115,7 +115,7 @@
       ]
     },
     {
-      "source": "/(.*)\\.(?:woff|woff2|ttf|otf)",
+      "source": "/:path*.(woff|woff2|ttf|otf)",
       "headers": [
         {
           "key": "Cache-Control",
@@ -124,7 +124,7 @@
       ]
     },
     {
-      "source": "/(.*)\\.(?:css|js)",
+      "source": "/:path*.(css|js)",
       "headers": [
         {
           "key": "Cache-Control",
@@ -142,7 +142,34 @@
       ]
     },
     {
-      "source": "/(sitemap*.xml|sitemap-index.xml|robots.txt|llms.txt)",
+      "source": "/robots.txt",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600, stale-while-revalidate=86400"
+        }
+      ]
+    },
+    {
+      "source": "/sitemap.xml",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600, stale-while-revalidate=86400"
+        }
+      ]
+    },
+    {
+      "source": "/sitemap-:name.xml",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600, stale-while-revalidate=86400"
+        }
+      ]
+    },
+    {
+      "source": "/llms.txt",
       "headers": [
         {
           "key": "Cache-Control",
