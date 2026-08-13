@@ -4,6 +4,49 @@
 
 ---
 
+## The finding that matters most
+
+I connected to your Supabase production database. Here is what is actually in it:
+
+| | Count |
+|---|---|
+| Active listings | **4** |
+| Reviews | **0** |
+| Cities with any inventory | **1** (Nairobi) |
+| Tour operators / vehicles / drivers listed | **0** |
+
+All four listings are Nairobi apartments (Syokimau ×2, Njiru, Obama Estate) at
+KES 1,750–3,000 a night.
+
+**This, not SEO, is the binding constraint.** A search engine can rank you
+first; it cannot make a booking happen when there is nothing to book. The
+platform is engineered like a marketplace and stocked like a pilot.
+
+It also meant part of my own first pass was wrong, and I have fixed it:
+
+> My initial build emitted `AggregateOffer` with `offerCount: 50` on 161 city
+> pages and `LodgingBusiness` nodes describing "verified apartments" in cities
+> with zero listings. That is fabricated inventory markup — the same category
+> of Google structured-data violation as a fabricated review rating, which I
+> had deliberately avoided. I caught it only by querying the database.
+>
+> **Now:** offer claims are wired to live Supabase inventory
+> (`seo/build_inventory.py`). Nairobi and Kenya carry a real `AggregateOffer`
+> with `offerCount: 4` and the real KES→USD price range. Every other page emits
+> a `TouristDestination` and a genuine travel guide, and makes **no offer
+> claim at all**. The page copy changed to match: Chad's page now says Cabana's
+> inventory there is still being built and invites hosts to list, rather than
+> implying stock.
+>
+> `seo/verify.py` now fails the build if offer or rating markup ever appears
+> without backing data. This cannot silently regress.
+
+The 350 pages are still worth having — they are real, useful destination guides
+that will rank and get cited. But they are a demand-generation layer sitting on
+top of four listings. **Fill the shelves.**
+
+---
+
 ## Read this part first
 
 You asked to rank #1 for **"cabana"**. I want to be straight with you about that
@@ -213,26 +256,30 @@ is a separate ranking system from the organic results the dictionaries own.
 
 ### Priority 3 — Entity establishment (weeks 1–4)
 
-The `sameAs` array in your Organization schema lists nine profiles. **Every one
-of those URLs must actually exist and must link back to cabana.africa.** A
-`sameAs` pointing at a 404 is a broken entity signal — worse than omitting it.
+My first pass asserted nine social profiles in the `sameAs` array. I have since
+**pruned it to the two that actually exist** (`twitter.com/apatmento`,
+`x.com/apatmento`), because a `sameAs` pointing at an unclaimed handle is a
+broken entity signal — measurably worse than omitting it.
 
-Create or claim, then verify each links back:
+The rest are staged in `seo/lib/schema.py` as `PENDING_SAME_AS`. Create each
+one, confirm it links back to cabana.africa, then move it into `SAME_AS` and
+re-run `python3 seo/run_all.py`. In descending order of entity value:
 
-- [ ] X / Twitter — @apatmento exists; **rename to @cabanaafrica** for consistency
+- [ ] **Wikidata item** — free, and the single strongest Knowledge Graph input
+      available to you. Properties: instance of (business), country (Kenya),
+      inception (2025), official website, industry (online travel agency).
+      Do this one first.
+- [ ] LinkedIn Company Page `cabana-africa`
 - [ ] Instagram `@cabana.africa`
 - [ ] Facebook Page `cabana.africa`
-- [ ] LinkedIn Company Page `cabana-africa`
+- [ ] Crunchbase organization profile
 - [ ] TikTok `@cabana.africa`
 - [ ] YouTube `@cabanaafrica`
-- [ ] Crunchbase organization profile
-- [ ] **Wikidata item** — free to create, and one of the strongest Knowledge
-      Graph inputs available. Properties: instance of (business), country
-      (Kenya), inception (2025), official website, industry (online travel
-      agency). This is the highest-leverage single item on this list.
 
-Then edit `seo/lib/schema.py` → `SAME_AS` to match reality and re-run
-`python3 seo/run_all.py`. Remove any you do not create.
+**On the X handle:** I left `twitter:site` as `@apatmento` rather than
+switching it to `@cabanaafrica`, because that account does not exist yet and a
+card tag pointing at a dead handle breaks attribution outright. Rename the
+account first, then change the tag in one pass.
 
 ### Priority 4 — Backlinks (ongoing, the real work)
 
@@ -259,12 +306,32 @@ travel startup, in rough order of ease:
 **Target: 50 referring domains in 6 months.** Quality over volume. Never buy
 links — it is the fastest way to lose everything built here.
 
-### Priority 5 — Reviews (unlocks the star ratings)
+### Priority 5 — Supply, then reviews
 
-Get to 5+ genuine reviews per city, then run `build_ratings.py`. Ask every
-completed booking by SMS or WhatsApp within 24 hours of checkout, when
-satisfaction is highest. Display the reviews on the city pages — schema ratings
-must correspond to reviews visible on the page.
+This is now the top priority in practice, ahead of everything technical.
+
+**Supply.** You have 4 listings in 1 city. Booking.com has millions. You do not
+need millions — you need enough depth in a few cities that a search result
+leads somewhere. Concrete target: **50 listings across Nairobi, Mombasa and
+Diani within 90 days.** The `/list-property-zero-commission-africa` page exists
+to convert hosts; point every host conversation at it. Zero commission is a
+genuinely strong pitch to a host paying Booking.com 18% — the page does that
+arithmetic for you.
+
+Also: you have **19 bookings but 0 reviews**. That is a broken loop, and it is
+free to fix. Every completed booking should trigger a review request by SMS or
+WhatsApp within 24 hours of checkout.
+
+**Then reviews unlock the stars.** Once you have 5+ genuine reviews for a city:
+
+```bash
+SUPABASE_URL=... SUPABASE_SERVICE_KEY=... python3 seo/build_ratings.py
+python3 seo/run_all.py
+```
+
+Star ratings are the highest-CTR rich result in travel. They switch on
+automatically, from real data, the moment the data exists. Display the reviews
+on the page too — schema ratings must correspond to visible reviews.
 
 ### Priority 6 — Brand search volume (the "cabana" play)
 
@@ -323,16 +390,48 @@ generated. Scaling to 500 or 5,000 pages is a data-file edit, not a build.
 
 ---
 
+## Automation now in place
+
+- **`seo/run_all.py`** — full rebuild: repair → generate → link → schema →
+  sitemaps → polish → verify. Idempotent.
+- **`seo/verify.py`** — fails on broken links, duplicate or over-length titles,
+  missing canonicals, stale sitemaps, and any rating or offer markup that is
+  not backed by real data.
+- **`.github/workflows/seo.yml`** — runs the build on every push and PR and
+  **fails the build if the committed output is stale**, so hand-edits can never
+  silently desync the schema, sitemaps or link graph. On merge to `main` it
+  pings IndexNow.
+- **`seo/indexnow.py`** — submits changed URLs to Bing, Yandex, Seznam and
+  Naver on every deploy. Bing feeds ChatGPT search, so this is AI visibility as
+  well as classic search. (Google does not use IndexNow; that is what the
+  sitemaps and Search Console are for.)
+- **`seo/build_inventory.py` / `seo/build_ratings.py`** — pull real stock and
+  real reviews from Supabase. Run them on a schedule; rich results turn
+  themselves on as the data arrives.
+
+---
+
 ## The honest summary
 
 The technical foundation is now genuinely stronger than most funded travel
-startups — the structured data in particular is more complete than what many
-mid-size OTAs ship. Everything that can be won by code has been.
+startups — the structured data is more complete than what many mid-size OTAs
+ship, and it is now provably honest, which most programmatic SEO is not.
+Everything that can be won by code has been won, and it is guarded by CI so it
+stays won.
 
-What decides whether you beat Booking.com in African search is not the code. It
-is **inventory depth, review volume and backlinks** — and those come from
-operating the business well over the next 12 months. The build makes sure that
-when you do have them, nothing technical is standing in the way of the ranking.
+But I would be doing you no favours by ending on that. **You have four
+listings and no reviews.** The 350 pages I built are a demand-generation
+machine pointed at an almost empty warehouse. Ranking for "apartments Nairobi"
+and landing a traveller on a page with four options loses that traveller.
 
-Start with the Google Business Profile and Search Console this week. Those two
-have the shortest path from action to visible result.
+So the order of work is:
+
+1. **Supply.** 50 listings across Nairobi, Mombasa and Diani in 90 days.
+2. **Reviews.** Trigger a request on every one of your 19 completed bookings,
+   and every one after. Then run `build_ratings.py` and the stars appear.
+3. **Google Business Profile + Search Console.** This week. Shortest path from
+   action to visible result.
+4. **Backlinks.** 50 referring domains in 6 months.
+
+Do those four and the technical work compounds. Skip them and it sits idle —
+correctly configured, and unused.

@@ -18,6 +18,8 @@ STEPS = [
     ("Internal link mesh ", "link_mesh.py"),
     ("Schema injection   ", "inject_schema.py"),
     ("Sitemaps           ", "sitemaps.py"),
+    ("Polish pass        ", "polish.py"),
+    ("Verify             ", "verify.py"),
 ]
 fail = 0
 for label, script in STEPS:

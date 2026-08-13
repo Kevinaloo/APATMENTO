@@ -14,11 +14,29 @@ pages get cited by both Google and LLMs.
 
 Usage: python3 seo/generate.py [--dry]
 """
-import os, sys, re, html
+import os, sys, re, html, json
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib import schema as S
 from data.africa import COUNTRIES, CITIES, CATEGORIES
+
+# Real inventory, built from Supabase by seo/build_inventory.py. Used to decide
+# whether a page may make an offer claim and whether it may say "book now"
+# rather than "be the first to list". Absent key = no inventory = say so.
+try:
+    _I = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                     "data", "inventory.json")))
+    INVENTORY = {k: v for k, v in _I.items() if not k.startswith("_")}
+except Exception:
+    INVENTORY = {}
+
+
+def stock(*keys, service="stays"):
+    for k in keys:
+        rec = INVENTORY.get(str(k).strip().lower().replace(" ", "-"), {}).get(service)
+        if rec and rec.get("count"):
+            return rec["count"], rec["lowUSD"], rec["highUSD"]
+    return (0, None, None)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DRY = "--dry" in sys.argv
@@ -143,18 +161,29 @@ def country_page(c):
     hi_list = c["highlights"]
     langs = ", ".join(c["langs"])
 
-    title = f"{name} Travel: Stays, Safaris & Tours | Cabana"[:62]
-    desc = (f"Plan {name}: where to stay, what a night costs, when to go and how to pay. "
-            f"Book {name} apartments, safaris and transport direct with zero commission.")[:158]
+    n_live, ilo, ihi = stock(c["slug"], name, *cities[:1])
+    live = n_live > 0
 
-    sub = (f"Everything you need to book {E(name)} yourself — accommodation, guided trips, "
-           f"transport and tickets — paid straight to the people providing them. "
-           f"Cabana adds no commission to any of it.")
+    title = f"{name} Travel Guide: Stays, Safaris & Costs"[:62]
+    desc = (f"Plan {name}: where to stay, what a night costs, when to go, how to pay and "
+            f"what to see. Book direct with zero commission on Cabana.")[:158]
 
-    chips = [(f"US${lo}–{hi}", "typical night, all budgets"),
-             (c["season"].split(";")[0].strip()[:22], "best window to travel"),
+    sub = ((f"Everything you need to plan {E(name)} — where to stay, what it costs, when to "
+            f"go and how to pay. Anything booked through Cabana is paid straight to the "
+            f"host or operator, with no commission taken.")
+           if live else
+           (f"A practical planning guide to {E(name)} — costs, seasons, payment and entry. "
+            f"Cabana's booking inventory here is still being built, so this page is the "
+            f"guide; if you run a property or tour in {E(name)}, listing is free."))
+
+    # Season label must not truncate mid-word.
+    season_short = c["season"].split(";")[0].split("(")[0].strip()
+
+    chips = [(f"US${lo}–{hi}", "typical night, market rate"),
+             (season_short, "best window to travel"),
              (c["currency"], "local currency"),
-             ("0%", "commission, always")]
+             ((f"{n_live} live", "listings on Cabana") if live
+              else ("0%", "commission to list"))]
 
     top = ", ".join(cities[:5])
     sections = [
@@ -164,13 +193,19 @@ def country_page(c):
          f"{'major hubs at ' + E(top) if len(cities) > 1 else ''}. "
          f"Flights route through {c['airport']}.</p>"),
         ("Where to stay and what it costs",
-         f"<p>Across {name}, a night on Cabana typically runs "
-         f"<b>US${lo}–{hi}</b>, from simple self-catering apartments at the lower end to "
-         f"lodges and beachfront villas at the top. That range is the host's own price. "
-         f"Cabana takes no commission from the host and adds no booking fee to the guest, "
-         f"so the number you see is the number you pay — a difference of roughly "
-         f"15–25% against the large international platforms on the same property.</p>"
-         f"<p>The strongest inventory sits in {E(top)}.</p>"),
+         f"<p>Across {name}, a night runs roughly <b>US${lo}–{hi}</b> at market rates, from "
+         f"simple self-catering apartments at the lower end to lodges and beachfront villas "
+         f"at the top. Those are guide figures for the country, not Cabana quotes.</p>"
+         + (f"<p>Cabana currently has <b>{n_live} live {'listing' if n_live == 1 else 'listings'}</b> "
+            f"in {name}, priced by the host. Cabana takes no commission from the host and adds "
+            f"no booking fee to the guest, so the number shown is the number paid — typically "
+            f"15–25% below the same property on a commission platform.</p>"
+            if live else
+            f"<p>Cabana does not yet have live listings in {name}. The platform is open to "
+            f"hosts here and listing is free with zero commission, so if you have a property, "
+            f"vehicle or tour in {name} you can be the first on it. Meanwhile the guidance "
+            f"below is genuine and independent of what Cabana has in stock.</p>")
+         + f"<p>The main demand centres are {E(top)}.</p>"),
         ("When to go",
          f"<p>The window most travellers want is <b>{E(c['season'])}</b>. Rates and "
          f"availability tighten inside it, so booking direct matters more — you are "
@@ -188,9 +223,9 @@ def country_page(c):
 
     faqs = [
         (f"How much does a night in {name} cost?",
-         f"On Cabana, most {name} stays fall between US${lo} and US${hi} per night. "
-         f"That is the host's own rate — Cabana charges no commission and adds no "
-         f"booking fee, so it is also the final amount you pay."),
+         f"Market rates in {name} run roughly US${lo}–US${hi} per night. Where Cabana has a "
+         f"listing, that price is the host's own rate: Cabana charges no commission and adds "
+         f"no booking fee, so it is also the final amount you pay."),
         (f"When is the best time to visit {name}?",
          f"{c['season']}. Outside that window you will find lower rates and fewer people, "
          f"which suits some trips better than others."),
@@ -198,9 +233,11 @@ def country_page(c):
          f"{c['pay']} Cabana accepts mobile money and cards, and settles the host directly."),
         (f"Do I need a visa for {name}?",
          f"{c['visa']} Requirements vary by nationality, so confirm before booking flights."),
-        (f"Which cities in {name} does Cabana cover?",
-         f"Cabana lists stays, transport and experiences across {', '.join(cities)} — "
-         f"and any host anywhere in {name} can list free."),
+        (f"Does Cabana have listings in {name}?",
+         (f"Yes — {n_live} live {'listing' if n_live == 1 else 'listings'} at the moment, and "
+          f"growing." if live else
+          f"Not yet. Cabana is open to hosts and operators in {name}, and listing is free "
+          f"with zero commission. Demand centres are {', '.join(cities)}.")),
         (f"Is Cabana cheaper than Airbnb or Booking.com in {name}?",
          f"On the same property, usually yes. Cabana takes 0% from the host and charges "
          f"the guest no service fee. Airbnb and Booking.com take a cut from one or both "
@@ -217,8 +254,10 @@ def country_page(c):
                             (c["region"], None), (name, None)]),
         S.tourist_destination(url, name, name, c["lat"], c["lng"], hi_list,
                               f"Travel guide and direct booking for {name}."),
-        S.lodging(url, name, name, c["lat"], c["lng"], lo, hi, "USD",
-                  amenities=["Wi-Fi", "Kitchen", "Secure parking", "Backup power"]),
+        S.lodging(url, name, name, c["lat"], c["lng"],
+                  ilo if live else lo, ihi if live else hi, "USD",
+                  amenities=["Wi-Fi", "Kitchen", "Secure parking", "Backup power"],
+                  offer_count=n_live or None),
         S.tourist_trip(url, f"{name} trips with Cabana",
                        f"Safaris, tours and guided trips across {name}, booked direct.",
                        hi_list[:4], lo, hi * 4),
@@ -231,10 +270,14 @@ def country_page(c):
         slug=slug, title=title, desc=desc,
         h1=f"{name}.", eyebrow=f"{c['region']} · {name}", sub=sub, chips=chips,
         sections=sections, faqs=faqs,
-        cta_title=f"Browse {name} on Cabana",
-        cta_text=f"Stays, safaris, transport and tickets across {name}. Zero commission on every one.",
-        cta_href=f"/apartments?q={name.replace(' ', '+')}",
-        cta_label=f"Browse {name}", xlinks=xlinks,
+        cta_title=(f"Browse {name} on Cabana" if live
+                   else f"List your {name} property or tour"),
+        cta_text=(f"Stays, safaris and transport in {name}. Zero commission on every booking."
+                  if live else
+                  f"Cabana has no listings in {name} yet. Listing is free, commission is zero, "
+                  f"and you keep 100% of what you charge."),
+        cta_href=(f"/apartments?q={name.replace(' ', '+')}" if live else "/become-partner"),
+        cta_label=(f"Browse {name}" if live else "List for free"), xlinks=xlinks,
         graph_json=_j.dumps(g, ensure_ascii=False, separators=(",", ":")))
 
 

@@ -18,19 +18,29 @@ ORG_ID = f"{SITE}/#organization"
 SITE_ID = f"{SITE}/#website"
 BRAND_ID = f"{SITE}/#brand"
 
-# Every profile Cabana controls. sameAs is the single strongest entity
-# disambiguation signal — it tells Google "cabana" here is a company,
-# not a poolside shelter.
+# sameAs is the strongest entity-disambiguation signal available: it tells
+# Google that "cabana" here is a company, not a poolside shelter.
+#
+# CRITICAL: every URL below must resolve AND link back to cabana.africa. A
+# sameAs pointing at a 404 or an unclaimed handle is a broken entity signal —
+# measurably worse than omitting it. So this list contains only profiles known
+# to exist. Add each of PENDING_SAME_AS to SAME_AS the day it goes live, then
+# re-run seo/run_all.py. Do not pre-register them here.
 SAME_AS = [
     "https://twitter.com/apatmento",
     "https://x.com/apatmento",
+]
+
+# Create these, then promote them into SAME_AS above. Highest entity value
+# first; the Wikidata item is the single strongest Knowledge Graph input.
+PENDING_SAME_AS = [
+    "https://www.wikidata.org/wiki/<Q-id>",
+    "https://www.linkedin.com/company/cabana-africa",
     "https://www.instagram.com/cabana.africa",
     "https://www.facebook.com/cabana.africa",
-    "https://www.linkedin.com/company/cabana-africa",
+    "https://www.crunchbase.com/organization/cabana-africa",
     "https://www.tiktok.com/@cabana.africa",
     "https://www.youtube.com/@cabanaafrica",
-    "https://www.crunchbase.com/organization/cabana-africa",
-    "https://github.com/kevinaloo",
 ]
 
 
@@ -150,10 +160,17 @@ def aggregate_rating(value=4.8, count=1240):
 
 
 def lodging(url, city, country, lat, lng, low, high, currency="USD",
-            rating=None, count=None, amenities=None, image=None):
+            rating=None, count=None, amenities=None, image=None,
+            offer_count=None):
     """
-    LodgingBusiness with AggregateOffer is what puts a price range and star
-    rating into the search result. This is the node Booking.com wins on.
+    LodgingBusiness. AggregateOffer puts a price range into the search result —
+    the node Booking.com wins on.
+
+    IMPORTANT: makesOffer is only attached when offer_count is a real, positive
+    number sourced from the database (see seo/build_inventory.py). An offer
+    claim for a place with no listings is fabricated markup and is treated here
+    exactly like a fabricated rating: omitted. Without inventory the node still
+    describes the service area and payment methods, which is accurate.
     """
     node = {
         "@type": "LodgingBusiness", "@id": url + "#lodging",
@@ -163,26 +180,29 @@ def lodging(url, city, country, lat, lng, low, high, currency="USD",
         "url": url,
         "parentOrganization": {"@id": ORG_ID},
         "brand": {"@id": BRAND_ID},
-        "priceRange": f"{currency} {low}–{high} per night",
         "currenciesAccepted": currency,
         "paymentAccepted": "M-Pesa, MTN MoMo, Airtel Money, Visa, Mastercard",
         "address": {"@type": "PostalAddress", "addressLocality": city,
                     "addressCountry": country},
         "geo": {"@type": "GeoCoordinates", "latitude": lat, "longitude": lng},
         "areaServed": {"@type": "City", "name": city},
-        "makesOffer": {
+    }
+    # Offer claims require real inventory. No listings -> no offer node.
+    if offer_count and offer_count > 0:
+        node["priceRange"] = f"{currency} {low}\u2013{high} per night"
+        node["makesOffer"] = {
             "@type": "AggregateOffer", "priceCurrency": currency,
             "lowPrice": str(low), "highPrice": str(high),
-            "offerCount": "50",
+            "offerCount": str(offer_count),
             "availability": "https://schema.org/InStock",
+            "seller": {"@id": ORG_ID},
             "priceSpecification": {
                 "@type": "UnitPriceSpecification", "priceCurrency": currency,
-                "minPrice": low, "maxPrice": high,
-                "unitCode": "DAY", "referenceQuantity": {
-                    "@type": "QuantitativeValue", "value": 1, "unitCode": "DAY"},
+                "minPrice": low, "maxPrice": high, "unitCode": "DAY",
+                "referenceQuantity": {"@type": "QuantitativeValue",
+                                      "value": 1, "unitCode": "DAY"},
             },
-        },
-    }
+        }
     if image:
         node["image"] = image
     if amenities:
@@ -211,7 +231,7 @@ def tourist_destination(url, name, country, lat, lng, attractions, description):
 
 
 def tourist_trip(url, name, description, dest_names, low, high, currency="USD",
-                 rating=None, count=None):
+                 rating=None, count=None, offer_count=None):
     return {
         "@type": "TouristTrip", "@id": url + "#trip",
         "name": name, "description": description, "url": url,
@@ -220,26 +240,28 @@ def tourist_trip(url, name, description, dest_names, low, high, currency="USD",
             {"@type": "ListItem", "position": i + 1,
              "item": {"@type": "TouristDestination", "name": d}}
             for i, d in enumerate(dest_names)]},
-        "offers": {"@type": "AggregateOffer", "priceCurrency": currency,
-                   "lowPrice": str(low), "highPrice": str(high),
-                   "availability": "https://schema.org/InStock",
-                   "seller": {"@id": ORG_ID}},
+        **({"offers": {"@type": "AggregateOffer", "priceCurrency": currency,
+                       "lowPrice": str(low), "highPrice": str(high),
+                       "offerCount": str(offer_count),
+                       "availability": "https://schema.org/InStock",
+                       "seller": {"@id": ORG_ID}}} if offer_count else {}),
         **({"aggregateRating": aggregate_rating(rating, count)} if rating else {}),
     }
 
 
 def product_service(url, name, description, low, high, currency="USD",
-                    category="Travel", rating=None, count=None):
+                    category="Travel", rating=None, count=None,
+                    offer_count=None):
     """Generic Product+Offer node — drives merchant-style rich results."""
     return {
         "@type": "Product", "@id": url + "#product",
         "name": name, "description": description, "url": url,
         "category": category, "brand": {"@id": BRAND_ID},
-        "offers": {"@type": "AggregateOffer", "priceCurrency": currency,
-                   "lowPrice": str(low), "highPrice": str(high),
-                   "offerCount": "50",
-                   "availability": "https://schema.org/InStock",
-                   "seller": {"@id": ORG_ID}},
+        **({"offers": {"@type": "AggregateOffer", "priceCurrency": currency,
+                       "lowPrice": str(low), "highPrice": str(high),
+                       "offerCount": str(offer_count),
+                       "availability": "https://schema.org/InStock",
+                       "seller": {"@id": ORG_ID}}} if offer_count else {}),
         **({"aggregateRating": aggregate_rating(rating, count)} if rating and count else {}),
     }
 

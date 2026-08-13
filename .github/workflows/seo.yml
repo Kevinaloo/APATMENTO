@@ -1,0 +1,48 @@
+name: SEO build & verify
+
+# The SEO layer is generated. If someone edits a page by hand and forgets to
+# re-run the build, sitemaps, schema and internal links silently drift out of
+# sync. This job fails the PR when that happens, and pings IndexNow on merge.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  seo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install
+        run: pip install beautifulsoup4 lxml
+
+      - name: Rebuild SEO layer
+        run: |
+          python3 seo/run_all.py
+          python3 seo/polish.py
+
+      - name: Verify the build is committed
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "::error::SEO output is stale. Run 'python3 seo/run_all.py && python3 seo/polish.py' and commit the result."
+            git status --short | head -40
+            exit 1
+          fi
+          echo "SEO output is in sync."
+
+      - name: Validate
+        run: python3 seo/verify.py
+
+      - name: Ping IndexNow
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: python3 seo/indexnow.py --changed
+        continue-on-error: true

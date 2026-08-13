@@ -17,7 +17,7 @@ import os, sys, json, html
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib import schema as S
 from data.africa import COUNTRIES, CITIES
-from generate import shell
+from generate import shell, stock
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DRY = "--dry" in sys.argv
@@ -48,6 +48,10 @@ def build(city, vert):
     name, cslug, lat, lng, (lo, hi), positioning, hoods = city
     ctry = C_BY_SLUG[cslug]
     v = VERTICALS[vert]
+    svc = {"safaris": "tours", "car-hire": "carhire",
+           "airport-transfers": "rides"}[vert]
+    n_live, _, _ = stock(name, cslug, service=svc)
+    live = n_live > 0
     slug = f"{name.lower().replace(' ', '-').replace('’', '')}-{vert}"
     url = f"{SITE}/{slug}"
     plo, phi = v["band"](lo, hi)
@@ -75,25 +79,35 @@ def build(city, vert):
              f"is priced into the rate you are quoted elsewhere — the same guide, the same "
              f"vehicle, a higher number.</p>"),
             ("Booking direct with the operator",
-             f"<p>Every {E(name)} operator on Cabana is contactable before you pay. You can "
-             f"ask about vehicle type, group size, pick-up point and what is included, and "
-             f"get an answer from the person who will actually run the trip rather than a "
-             f"call centre. Payment settles to them directly by "
-             f"{E(ctry['pay'].split(';')[0].split('.')[0].lower())}.</p>"),
+             (f"<p>Operators listed on Cabana are contactable before you pay. You can ask "
+              f"about vehicle type, group size, pick-up point and what is included, and get "
+              f"an answer from the person who will actually run the trip rather than a call "
+              f"centre. Payment settles to them directly by "
+              f"{E(ctry['pay'].split(';')[0].split('.')[0].lower())}.</p>")
+             if live else
+             (f"<p>Cabana has no {E(name)} tour operators listed yet. The model is direct "
+              f"booking with zero commission — an operator keeps 100% of what they charge — "
+              f"so if you run trips from {E(name)}, listing is free and takes a few minutes. "
+              f"The costs and seasons above are independent guidance either way.</p>")),
             ("When to go",
              f"<p>{E(ctry['season'])}. Wildlife density, road condition and price all move "
              f"with that window, so it is worth building the trip around it where you can.</p>"),
         ]
         faqs = [
             (f"How much is a safari from {name}?",
-             f"Most trips from {name} run US${plo}–{phi} per person, depending on duration, "
-             f"group size and whether park fees are included. Cabana adds no commission, so "
-             f"the operator's price is the final price."),
+             f"Most trips from {name} run US${plo}–{phi} per person at market rates, depending "
+             f"on duration, group size and whether park fees are included. Where Cabana lists "
+             f"an operator, no commission is added, so their price is the final price."),
             (f"Which parks can I reach from {name}?",
              "The practical destinations are " + ", ".join(hl[:4]) + "."),
             ("Do I book with Cabana or with the operator?",
              "With the operator. Cabana connects you to them, verifies the listing, and "
              "handles payment — but the trip, the price and the terms are theirs."),
+            (f"Does Cabana list safari operators in {name}?",
+             ("Yes." if live else
+              f"Not yet. Cabana is open to {name} operators and listing is free with zero "
+              f"commission. The pricing and season guidance on this page is independent of "
+              f"what is currently listed.")),
             (f"When is the best time to go on safari from {name}?",
              ctry["season"] + "."),
             ("Can I pay with mobile money?",
@@ -118,9 +132,11 @@ def build(city, vert):
             ("Rates and what is included",
              f"<p>Daily rates in {E(name)} typically run <b>US${plo}–{phi}</b>, with "
              f"chauffeur-driven options at the upper end. Confirm mileage caps, insurance "
-             f"excess and fuel policy with the operator before you commit. Cabana takes no "
-             f"commission from the operator, so there is no hidden margin to recover in the "
-             f"day rate or in the extras.</p>"),
+             f"excess and fuel policy with the operator before you commit.</p>"
+             + (f"<p>Cabana takes no commission from the operator, so there is no hidden "
+                f"margin to recover in the day rate or in the extras.</p>" if live else
+                f"<p>Cabana has no {E(name)} car hire operators listed yet. Listing is free "
+                f"and commission is zero, so operators keep 100% of the day rate.</p>")),
             ("Self-drive or a driver",
              f"<p>For {E(ctry['name'])}, a driver is often the better value once you price in "
              f"local road knowledge, parking and the time cost of navigating unfamiliar "
@@ -158,9 +174,12 @@ def build(city, vert):
              f"removes the negotiation entirely.</p>"),
             ("What a transfer costs",
              f"<p>Airport transfers in {E(name)} typically run <b>US${plo}–{phi}</b> depending "
-             f"on distance and vehicle. The figure is fixed at booking. There is no surge "
-             f"multiplier, and Cabana takes nothing from the driver, so the fare stays with "
-             f"the person driving.</p>"),
+             f"on distance and vehicle. Where a driver is booked through Cabana the figure is "
+             f"fixed at booking, there is no surge multiplier, and Cabana takes nothing from "
+             f"the driver, so the fare stays with the person driving.</p>"
+             + ("" if live else
+                f"<p>Cabana has no {E(name)} drivers listed yet. Driver sign-up is free and "
+                f"commission is zero.</p>")),
             ("Where drivers will take you",
              f"<p>City coverage includes {', '.join(E(h) for h in hoods)}, plus intercity "
              f"routes on request.</p>"),
@@ -189,7 +208,8 @@ def build(city, vert):
     ]
     if v["schema"] == "trip":
         nodes.insert(2, S.tourist_trip(url, f"Safaris and tours from {name}",
-                                       desc, hl[:4], plo, phi))
+                                       desc, hl[:4], plo, phi,
+                                       offer_count=n_live or None))
         nodes.insert(3, S.tourist_destination(url, name, ctry["name"], lat, lng, hl[:4],
                                               positioning))
     else:
@@ -198,16 +218,18 @@ def build(city, vert):
             "@type": stype, "@id": url + "#provider",
             "name": f"Cabana {v['label']} — {name}", "description": desc, "url": url,
             "parentOrganization": {"@id": S.ORG_ID}, "brand": {"@id": S.BRAND_ID},
-            "priceRange": f"US${plo}–{phi}",
             "areaServed": {"@type": "City", "name": name},
             "address": {"@type": "PostalAddress", "addressLocality": name,
                         "addressCountry": ctry["name"]},
             "geo": {"@type": "GeoCoordinates", "latitude": lat, "longitude": lng},
             "paymentAccepted": "M-Pesa, MTN MoMo, Airtel Money, Visa, Mastercard",
-            "makesOffer": {"@type": "AggregateOffer", "priceCurrency": "USD",
-                           "lowPrice": str(plo), "highPrice": str(phi),
-                           "availability": "https://schema.org/InStock",
-                           "seller": {"@id": S.ORG_ID}},
+            # Offer claim only where real operators are listed.
+            **({"priceRange": f"US${plo}\u2013{phi}",
+                "makesOffer": {"@type": "AggregateOffer", "priceCurrency": "USD",
+                               "lowPrice": str(plo), "highPrice": str(phi),
+                               "offerCount": str(n_live),
+                               "availability": "https://schema.org/InStock",
+                               "seller": {"@id": S.ORG_ID}}} if live else {}),
         })
 
     others = [k for k in VERTICALS if k != vert]

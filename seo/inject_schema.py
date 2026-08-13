@@ -48,6 +48,29 @@ except Exception:
 def rating_for(slug):
     r = RATINGS.get(slug)
     return (r["ratingValue"], r["reviewCount"]) if r else (None, None)
+
+
+# ── Inventory: REAL DATA ONLY ────────────────────────────────────────────
+# AggregateOffer asserts that N bookable offers exist. Claiming offers for a
+# place with no listings is fabricated markup. Built by seo/build_inventory.py
+# from Supabase; a place absent here simply gets no offer node.
+try:
+    _I = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                     "data", "inventory.json")))
+    INVENTORY = {k: v for k, v in _I.items() if not k.startswith("_")}
+except Exception:
+    INVENTORY = {}
+
+
+def inventory_for(*keys, service="stays"):
+    """Return (count, lowUSD, highUSD) for the first key with real stock."""
+    for k in keys:
+        if not k:
+            continue
+        rec = INVENTORY.get(str(k).strip().lower().replace(" ", "-"), {}).get(service)
+        if rec and rec.get("count"):
+            return rec["count"], rec["lowUSD"], rec["highUSD"]
+    return (None, None, None)
 DRY = "--dry" in sys.argv
 SITE = S.SITE
 
@@ -213,9 +236,11 @@ def build_graph(kind, info, fname, src):
         nodes.append(S.itemlist(url, "Cabana services",
                                 [(c["label"], SITE + c["hub"]) for c in CATEGORIES]))
         rv, rc = rating_for("index")
+        oc, olo, ohi = inventory_for("kenya")
         nodes.append(S.product_service(
-            url, "Cabana — Africa's zero-commission travel platform", d, 3, 900,
-            category="Travel booking", rating=rv, count=rc))
+            url, "Cabana — Africa's zero-commission travel platform", d,
+            olo or 3, ohi or 900, category="Travel booking",
+            rating=rv, count=rc, offer_count=oc))
 
     elif kind == "hub":
         label, stype, (lo, hi), blurb = info["cfg"]
@@ -224,8 +249,10 @@ def build_graph(kind, info, fname, src):
         nodes.append(S.breadcrumbs(url, crumbs))
         if lo or hi:
             rv, rc = rating_for(fname[:-5])
-            nodes.append(S.product_service(url, f"Cabana {label}", blurb, lo, hi,
-                                           category=label, rating=rv, count=rc))
+            oc, olo, ohi = inventory_for("kenya", "nairobi")
+            nodes.append(S.product_service(url, f"Cabana {label}", blurb,
+                                           olo or lo, ohi or hi, category=label,
+                                           rating=rv, count=rc, offer_count=oc))
         nodes.append({
             "@type": "Service", "@id": url + "#service", "name": f"Cabana {label}",
             "description": blurb, "serviceType": label, "provider": {"@id": S.ORG_ID},
@@ -248,9 +275,11 @@ def build_graph(kind, info, fname, src):
             nodes.append(S.webpage(url, t, d, url + "#breadcrumb", img))
             nodes.append(S.breadcrumbs(url, crumbs))
             rv, rc = rating_for(fname[:-5])
+            oc, olo, ohi = inventory_for(p["name"], p.get("parent"), p["country"])
             nodes.append(S.lodging(url, p["name"], p["country"], p["lat"], p["lng"],
-                                   p["low"], p["high"], "USD",
-                                   rating=rv, count=rc, amenities=AMENITIES, image=img))
+                                   olo if oc else p["low"], ohi if oc else p["high"],
+                                   "USD", rating=rv, count=rc,
+                                   amenities=AMENITIES, image=img, offer_count=oc))
             nodes.append(S.tourist_destination(
                 url, p["name"], p["country"], p["lat"], p["lng"], p["attractions"],
                 d or f"Where to stay in {p['name']}, {p['country']}."))
@@ -260,9 +289,11 @@ def build_graph(kind, info, fname, src):
             nodes.append(S.webpage(url, t, d, url + "#breadcrumb", img))
             nodes.append(S.breadcrumbs(url, crumbs))
             rv, rc = rating_for(fname[:-5])
+            oc, olo, ohi = inventory_for(name)
             nodes.append(S.product_service(url, f"Short-stay apartments in {name}",
-                                           d, 20, 200, category="Accommodation",
-                                           rating=rv, count=rc))
+                                           d, olo or 20, ohi or 200,
+                                           category="Accommodation",
+                                           rating=rv, count=rc, offer_count=oc))
 
     elif kind in ("guide", "comparison", "editorial", "supply"):
         crumbs += [("Guides", f"{SITE}/guides"), (h1[:60], None)]
