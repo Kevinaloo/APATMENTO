@@ -66,8 +66,6 @@
  {"@type":"ListItem","position":2,"name":"Rides","item":"https://cabana.africa/rides"}]}
 </script>
 
-<script src="/vendor-supabase-2.112.3.js"></script>
-<script src="/apa-session.js"></script>
 <script src="/cabana-fare.js"></script>
 
 <style>
@@ -928,6 +926,11 @@ h3{font-size:clamp(19px,2vw,23px);letter-spacing:-.024em;}
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+<!-- Supabase bootstrap. Kept synchronous because the inline script
+     immediately below calls createClient() during parse, but moved
+     out of <head> so everything above renders without waiting on it. -->
+<script src="/vendor-supabase-2.112.3.js"></script>
+<script src="/apa-session.js"></script>
 <script>
 (function(){
 'use strict';

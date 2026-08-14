@@ -5,8 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
 <meta name="robots" content="noindex, nofollow"/>
 <title>My Agents · Cabana Partner Hub</title>
-<script src="/vendor-supabase-2.112.3.js"></script>
-<script src="/apa-session.js"></script>
 <script src="/apa-agent.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -341,6 +339,11 @@ textarea.inp{padding-right:15px;font-weight:400;font-size:13.5px;resize:vertical
 
 <div class="toast" id="toast"></div>
 
+<!-- Supabase bootstrap. Kept synchronous because the inline script
+     immediately below calls createClient() during parse, but moved
+     out of <head> so everything above renders without waiting on it. -->
+<script src="/vendor-supabase-2.112.3.js"></script>
+<script src="/apa-session.js"></script>
 <script>
 'use strict';
 

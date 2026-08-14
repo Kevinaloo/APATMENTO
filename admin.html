@@ -5,8 +5,6 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <meta name="robots" content="noindex, nofollow"/>
 <title>Console · Cabana</title>
-<script src="/vendor-supabase-2.112.3.js"></script>
-<script src="/apa-session.js"></script>
 <style>
 /* ═══ CONSOLE · a dark instrument, not a website ═══════════════ */
 :root{
@@ -1768,6 +1766,11 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 
 <script src="/apa-admin-core.js"></script>
 <script src="/apa-audience.js"></script>
+<!-- Supabase bootstrap. Kept synchronous because the inline script
+     immediately below calls createClient() during parse, but moved
+     out of <head> so everything above renders without waiting on it. -->
+<script src="/vendor-supabase-2.112.3.js"></script>
+<script src="/apa-session.js"></script>
 <script>
 /* ═══════════════════════════════════════════════════════════════════
    APATMENTO CONSOLE · controller

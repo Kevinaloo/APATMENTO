@@ -8,13 +8,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>APATMENTO: My Profile</title>
 <meta name="description" content="Manage your Cabana profile, saved places, bookings and preferences. Kenya&#x27;s zero-commission travel and lifestyle super-app."/>
-<script src="/vendor-supabase-2.112.3.js"></script>
 <!-- Session core: one Supabase client per tab. Multiple clients on the
      same storage key race each other and silently drop the session. -->
-<script src="/apa-session.js"></script>
 <script src="/pwa.js" defer></script>
 <script src="/apa-push.js" defer></script>
-<script src="/apa-admin-guard.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
@@ -193,6 +190,12 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--bg);colo
 
 </div>
 
+<!-- Supabase bootstrap. Kept synchronous because the inline script
+     immediately below calls createClient() during parse, but moved
+     out of <head> so everything above renders without waiting on it. -->
+<script src="/vendor-supabase-2.112.3.js"></script>
+<script src="/apa-session.js"></script>
+<script src="/apa-admin-guard.js"></script>
 <script>
 const SUPABASE_URL      = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';

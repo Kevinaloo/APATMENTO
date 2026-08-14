@@ -9,11 +9,8 @@
 <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1"/>
 <title>My Rewards: Cabana</title>
 <meta name="description" content="Earn and redeem Cabana rewards on every booking: stays, flights, tours, food and rides across Kenya. Free to join."/>
-<script src="/vendor-supabase-2.112.3.js"></script>
 <!-- Session core: one Supabase client per tab. Multiple clients on the
      same storage key race each other and silently drop the session. -->
-<script src="/apa-session.js"></script>
-<script src="/apa-admin-guard.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
@@ -387,6 +384,12 @@ body{font-family:var(--font-b);background:#07050F;color:#fff;-webkit-font-smooth
 
 <div class="toast" id="toast"></div>
 
+<!-- Supabase bootstrap. Kept synchronous because the inline script
+     immediately below calls createClient() during parse, but moved
+     out of <head> so everything above renders without waiting on it. -->
+<script src="/vendor-supabase-2.112.3.js"></script>
+<script src="/apa-session.js"></script>
+<script src="/apa-admin-guard.js"></script>
 <script>
 /* ══════════════════════════════════════════════════════════════
    rewards.html. Secure client JS

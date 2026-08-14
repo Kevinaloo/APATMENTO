@@ -14,8 +14,6 @@
 <link rel="apple-touch-icon" href="/cabana-apple-touch-icon.png"/>
 <title>Driver console | Cabana</title>
 
-<script src="/vendor-supabase-2.112.3.js"></script>
-<script src="/apa-session.js"></script>
 <script src="/cabana-fare.js"></script>
 
 <style>
@@ -277,6 +275,11 @@ h1,h2,h3{font-family:var(--font-display);letter-spacing:-.03em;font-weight:620;l
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+<!-- Supabase bootstrap. Kept synchronous because the inline script
+     immediately below calls createClient() during parse, but moved
+     out of <head> so everything above renders without waiting on it. -->
+<script src="/vendor-supabase-2.112.3.js"></script>
+<script src="/apa-session.js"></script>
 <script>
 (function(){
 'use strict';

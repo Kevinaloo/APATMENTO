@@ -22,7 +22,6 @@
 <meta name="twitter:title" content="Sign in or Sign up: Cabana"/>
 <meta name="twitter:description" content="Sign in or create your free Cabana account to book stays, flights, tours, rides, food and more across Kenya: zero added commission."/>
 <meta name="twitter:image" content="https://cabana.africa/og-home.jpg"/>
-<script src="/vendor-supabase-2.112.3.js"></script>
 <!-- Session core: one Supabase client per tab. Multiple clients on the
      same storage key race each other and silently drop the session. -->
 <script>
@@ -40,12 +39,10 @@
   });
 })();
 </script>
-<script src="/apa-session.js"></script>
 <!-- Needed by the install gate: captures beforeinstallprompt and
      exposes CabanaPWA.install(). -->
 <script src="/pwa.js" defer></script>
 <script src="/apa-agent.js"></script>
-<script src="/apa-admin-guard.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
@@ -863,6 +860,12 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
 })();
 </script>
 
+<!-- Supabase bootstrap. Kept synchronous because the inline script
+     immediately below calls createClient() during parse, but moved
+     out of <head> so everything above renders without waiting on it. -->
+<script src="/vendor-supabase-2.112.3.js"></script>
+<script src="/apa-session.js"></script>
+<script src="/apa-admin-guard.js"></script>
 <script>
 /* ══ APATMENTO AUTH. Clean & simple ══
    Rule: after signIn/signUp success, navigate immediately.

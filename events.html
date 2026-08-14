@@ -73,11 +73,8 @@
   }
   </script>
 <title>Events &amp; Tickets in Nairobi, Kenya: Cabana</title>
-<script src="/vendor-supabase-2.112.3.js"></script>
 <!-- Session core: one Supabase client per tab. Multiple clients on the
      same storage key race each other and silently drop the session. -->
-<script src="/apa-session.js"></script>
-<script src="/apa-admin-guard.js"></script>
 <style>
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -446,6 +443,12 @@ html.via-dash #tx{display:none!important;animation:none!important;}
 <div class="drawer" id="drawer"></div>
 <div class="toast" id="toast"></div>
 
+<!-- Supabase bootstrap. Kept synchronous because the inline script
+     immediately below calls createClient() during parse, but moved
+     out of <head> so everything above renders without waiting on it. -->
+<script src="/vendor-supabase-2.112.3.js"></script>
+<script src="/apa-session.js"></script>
+<script src="/apa-admin-guard.js"></script>
 <script>
 
 const SUPABASE_URL='https://gfwgbgdvxtocwhilrtdw.supabase.co';

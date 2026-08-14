@@ -46,11 +46,8 @@
   <link rel="apple-touch-icon" href="/cabana-apple-touch-icon.png"/>
   <meta name="apple-mobile-web-app-title" content="Cabana"/>
 <title>Find Roommates in Nairobi, Kenya: Verified Listings | Cabana</title>
-<script src="/vendor-supabase-2.112.3.js"></script>
 <!-- Session core: one Supabase client per tab. Multiple clients on the
      same storage key race each other and silently drop the session. -->
-<script src="/apa-session.js"></script>
-<script src="/apa-admin-guard.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
@@ -401,6 +398,12 @@ html.via-dash #tx{display:none!important;animation:none!important;}
 
 <div class="toast" id="toast"></div>
 
+<!-- Supabase bootstrap. Kept synchronous because the inline script
+     immediately below calls createClient() during parse, but moved
+     out of <head> so everything above renders without waiting on it. -->
+<script src="/vendor-supabase-2.112.3.js"></script>
+<script src="/apa-session.js"></script>
+<script src="/apa-admin-guard.js"></script>
 <script>
 const SUPA_URL = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';

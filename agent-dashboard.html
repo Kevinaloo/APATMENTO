@@ -6,8 +6,6 @@
 <meta name="robots" content="noindex, nofollow"/>
 <title>Agent Portal · Cabana</title>
 <meta name="description" content="Cabana agent portal. Manage referrals, listings and earnings on Kenya&#x27;s zero-commission travel platform."/>
-<script src="/vendor-supabase-2.112.3.js"></script>
-<script src="/apa-session.js"></script>
 <script src="/apa-agent.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -271,6 +269,11 @@ textarea.inp{resize:vertical;min-height:62px;line-height:1.6;font-size:13.5px;}
 
 <div class="toast" id="toast"></div>
 
+<!-- Supabase bootstrap. Kept synchronous because the inline script
+     immediately below calls createClient() during parse, but moved
+     out of <head> so everything above renders without waiting on it. -->
+<script src="/vendor-supabase-2.112.3.js"></script>
+<script src="/apa-session.js"></script>
 <script>
 'use strict';
 

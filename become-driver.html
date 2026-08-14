@@ -38,8 +38,6 @@
  "qualifications":"Valid Kenyan driving licence, PSV badge, certificate of good conduct, roadworthy vehicle with valid insurance and inspection."}
 </script>
 
-<script src="/vendor-supabase-2.112.3.js"></script>
-<script src="/apa-session.js"></script>
 <script src="/cabana-fare.js"></script>
 
 <style>
@@ -703,6 +701,11 @@ select.fi{appearance:none;background-image:url("data:image/svg+xml;charset=UTF-8
   </div>
 </section>
 
+<!-- Supabase bootstrap. Kept synchronous because the inline script
+     immediately below calls createClient() during parse, but moved
+     out of <head> so everything above renders without waiting on it. -->
+<script src="/vendor-supabase-2.112.3.js"></script>
+<script src="/apa-session.js"></script>
 <script>
 (function(){
 'use strict';

@@ -5,13 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow"/>
 <title>Add a Service | Cabana Partner</title>
-<script src="/vendor-supabase-2.112.3.js"></script>
 <!-- apa-session.js memoises supabase.createClient. Without it this page
      built its own GoTrue client against the same auth storage key as every
      other page, and concurrent clients race on token refresh and silently
      drop the session. It must load after the library and before any inline
      createClient call below. -->
-<script src="/apa-session.js"></script>
 <link rel="icon" href="/favicon.ico" sizes="any"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
@@ -484,6 +482,11 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
     </div>
   </div>
 </div>
+<!-- Supabase bootstrap. Kept synchronous because the inline script
+     immediately below calls createClient() during parse, but moved
+     out of <head> so everything above renders without waiting on it. -->
+<script src="/vendor-supabase-2.112.3.js"></script>
+<script src="/apa-session.js"></script>
 <script>
 const SBU='https://gfwgbgdvxtocwhilrtdw.supabase.co';
 const SBK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';

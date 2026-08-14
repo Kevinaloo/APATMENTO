@@ -59,9 +59,6 @@
 }
 </script>
 <title>Online Shopping Kenya: Shop Local with Zero Commission</title>
-<script src="/vendor-supabase-2.112.3.js"></script>
-<script src="/apa-session.js"></script>
-<script src="/apa-admin-guard.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
@@ -392,6 +389,12 @@ html.via-dash #tx{display:none!important;}
 
 <div class="toast" id="toast"></div>
 
+<!-- Supabase bootstrap. Kept synchronous because the inline script
+     immediately below calls createClient() during parse, but moved
+     out of <head> so everything above renders without waiting on it. -->
+<script src="/vendor-supabase-2.112.3.js"></script>
+<script src="/apa-session.js"></script>
+<script src="/apa-admin-guard.js"></script>
 <script>
 // ── Dismiss entry transition
 function dismissTx(){const el=document.getElementById('tx');if(!el)return;el.style.pointerEvents='none';el.classList.add('done');setTimeout(()=>{el.style.display='none';},900);}
