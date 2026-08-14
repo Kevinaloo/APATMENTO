@@ -55,10 +55,21 @@ console.log('\n[3] TDZ → covered by test-boot.cjs (runtime, sound)');
 console.log('\n[4] Session core coverage');
 for (const p of pages) {
   const h = fs.readFileSync(p, 'utf8');
-  if (!h.includes('supabase-js@2')) continue;
-  if (!h.includes('apa-session.js')) { fail(p, 'uses supabase but lacks apa-session.js'); continue; }
-  const iLib = h.indexOf('supabase-js@2');
-  const iSes = h.indexOf('apa-session.js');
+  // Matches the old jsdelivr tag and the self-hosted, version-pinned
+  // bundle. Detecting only 'supabase-js@2' meant this whole check went
+  // silently blind the moment the library moved to a local file.
+  // Match real <script src> tags only. Searching the raw text meant a
+  // code comment mentioning a filename counted as a load, which produced
+  // a phantom ordering failure.
+  const tagRe = /<script\b[^>]*\bsrc=["']([^"']+)["'][^>]*>/gi;
+  let m, iLib = -1, iSes = -1;
+  while ((m = tagRe.exec(h)) !== null) {
+    const src = m[1];
+    if (iLib < 0 && /(?:supabase-js@2|\/vendor-supabase-[\d.]+\.js)/.test(src)) iLib = m.index;
+    if (iSes < 0 && /(?:^|\/)apa-session\.js(?:$|[?#])/.test(src)) iSes = m.index;
+  }
+  if (iLib < 0) continue;
+  if (iSes < 0) { fail(p, 'uses supabase but lacks apa-session.js'); continue; }
   if (iSes < iLib) fail(p, 'apa-session.js loads BEFORE supabase lib');
 }
 if (!fails.some(f => f.includes('session') || f.includes('supabase'))) ok('all supabase pages load session core, in order');
