@@ -432,7 +432,7 @@ function renderListings(pane) {
 
     if (p.status === 'pending') {
       return '<article class="card pending"><div class="card-top">' +
-        (img ? '<img class="thumb" src="' + E(img) + '" alt="" loading="lazy" decoding="async"/>' : '<div class="thumb"></div>') +
+        (img ? '<img class="thumb" src="' + E(img) + '" alt="" loading="lazy" decoding="async" fetchpriority="high"/>' : '<div class="thumb"></div>') +
         '<div class="c-id">' +
           '<div class="c-t">' + E(p.title) + '</div>' +
           '<div class="c-s">' + E(p.city || p.location || '') + ' · hosted by ' + E(p.host_name || 'the owner') + '</div>' +

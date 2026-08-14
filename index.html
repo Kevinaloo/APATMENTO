@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <link rel="preload" as="image" href="/cabana-appicon-master.png" fetchpriority="high"/>
-  <link rel="preload" as="image" href="/cabana-wordmark-white.png" fetchpriority="high"/>
-  <link rel="preload" as="image" href="/cabana-wordmark-color.png"/>
-  <link rel="preload" as="image" href="/cabana-emblem.png"/>
+  <!-- Critical path: only the emblem (27KB) is above the fold on every render.
+       The 249KB appicon and the wordmarks live inside the intro overlay and are
+       fetched lazily by the intro itself, so they no longer compete with CSS. -->
+  <link rel="preload" as="style" href="/brand.css"/>
+  <link rel="preload" as="image" href="/cabana-emblem.png" fetchpriority="high"/>
 <!-- ══ INTERSTITIAL: splash only runs on dashboard.html, not here ══ -->
 <style id="apa-splash-css">.apa-splash-lock{overflow:hidden !important;}</style>
 <!-- Google tag (gtag.js) -->
@@ -733,6 +734,34 @@ section[id],div[id^='services'],div[id^='how']{scroll-margin-top:84px;}
 #intro.lift{opacity:0;transform:scale(1.04);pointer-events:none;}
 body.intro-lock{overflow:hidden;height:100vh;}
 
+/* ══ FAIL-OPEN SAFETY NET ══════════════════════════════════════════
+   The overlay used to be dismissed only by JS. If any script above it
+   threw, or the network stalled mid-parse, #intro stayed at z-index
+   9999 over a body locked to overflow:hidden — a permanent white
+   screen. That was the "sometimes it just never loads" report.
+
+   This animation is owned by CSS alone. It runs off the compositor,
+   needs no JS, and hard-clears the overlay at 3.4s no matter what
+   else on the page is broken. JS still lifts it earlier on the happy
+   path; this is purely the floor.                                   */
+@keyframes apaIntroFailOpen{
+  0%,55%{opacity:1;visibility:visible;}
+  100%{opacity:0;visibility:hidden;}
+}
+#intro{animation:apaIntroFailOpen 3.4s cubic-bezier(.7,0,.3,1) forwards;}
+#intro.lift{animation:none;}
+
+/* Body lock is applied by JS, never by markup, so a dead script means
+   a scrollable page rather than a frozen one. Belt and braces: release
+   the lock on a timer in CSS too. */
+@keyframes apaUnlockScroll{to{overflow:visible;height:auto;}}
+body.intro-lock{animation:apaUnlockScroll 0s linear 3.6s forwards;}
+
+@media (prefers-reduced-motion: reduce){
+  #intro{animation-duration:.4s;}
+  body.intro-lock{animation-delay:.4s;}
+}
+
 .intro-sky{position:absolute;inset:0;z-index:0;background:transparent;transition:none;}
 .intro-sky.dawn{animation:dawnWarm 3.8s .3s cubic-bezier(.22,1,.36,1) forwards;}
 @keyframes dawnWarm{
@@ -1203,7 +1232,27 @@ body.intro-lock{overflow:hidden;height:100vh;}
 <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":["Organization","TravelAgency","OnlineBusiness"],"@id":"https://cabana.africa/#organization","name":"Cabana","alternateName":["Cabana Africa","Cabana Travel","Cabana App","cabana.africa","Apatmento","Apatmento by Cabana"],"legalName":"Cabana","url":"https://cabana.africa/","logo":{"@type":"ImageObject","@id":"https://cabana.africa/#logo","url":"https://cabana.africa/cabana-icon-512.png","contentUrl":"https://cabana.africa/cabana-icon-512.png","width":512,"height":512,"caption":"Cabana"},"image":{"@id":"https://cabana.africa/#logo"},"description":"Cabana is Africa's zero-commission travel platform. Book short-stay apartments, safaris, flights, events, car hire and rides across all 54 African countries, direct from the host or operator. Hosts keep 100% of what they charge and guests pay no booking fee.","slogan":"Zero commission. Africa's own travel platform.","foundingDate":"2025","foundingLocation":{"@type":"Place","name":"Nairobi, Kenya"},"brand":{"@id":"https://cabana.africa/#brand"},"knowsAbout":["Travel in Africa","Safari booking","Short-stay apartments","Zero-commission booking","M-Pesa payments","African tourism","Vacation rentals","Airport transfers","Car hire","Event ticketing"],"areaServed":[{"@type":"Continent","name":"Africa"},{"@type":"Place","name":"Worldwide"}],"currenciesAccepted":"KES, NGN, GHS, ZAR, TZS, UGX, RWF, USD, EUR, GBP","paymentAccepted":"M-Pesa, MTN MoMo, Airtel Money, Visa, Mastercard, Bank transfer","telephone":"+254716206494","email":"connect@cabana.africa","contactPoint":[{"@type":"ContactPoint","telephone":"+254716206494","email":"connect@cabana.africa","contactType":"customer support","availableLanguage":["English","Swahili","French","Arabic","Portuguese"],"areaServed":"Africa"},{"@type":"ContactPoint","email":"partners@cabana.africa","contactType":"sales","name":"Host & operator onboarding","availableLanguage":["English","Swahili","French"],"areaServed":"Africa"}],"sameAs":["https://twitter.com/apatmento","https://x.com/apatmento"]},{"@type":"Brand","@id":"https://cabana.africa/#brand","name":"Cabana","logo":"https://cabana.africa/cabana-icon-512.png","slogan":"Zero commission. Always."},{"@type":"WebSite","@id":"https://cabana.africa/#website","url":"https://cabana.africa/","name":"Cabana","alternateName":"Cabana Africa","description":"Africa's zero-commission travel platform.","publisher":{"@id":"https://cabana.africa/#organization"},"inLanguage":"en","potentialAction":[{"@type":"SearchAction","target":{"@type":"EntryPoint","urlTemplate":"https://cabana.africa/apartments.html?q={search_term_string}"},"query-input":"required name=search_term_string"}]},{"@type":"WebPage","@id":"https://cabana.africa/#webpage","url":"https://cabana.africa/","name":"Cabana: Africa's Zero-Commission Travel Super-App","description":"Cabana is Africa's #1 zero-commission travel platform. Book short-stay apartments, safaris, flights, events & car hire across Kenya, Nigeria, Ghana & beyond.","isPartOf":{"@id":"https://cabana.africa/#website"},"about":{"@id":"https://cabana.africa/#organization"},"publisher":{"@id":"https://cabana.africa/#organization"},"inLanguage":"en","dateModified":"2026-08-13","breadcrumb":{"@id":"https://cabana.africa/#breadcrumb"},"primaryImageOfPage":{"@type":"ImageObject","url":"https://cabana.africa/og-home.jpg"},"speakable":{"@type":"SpeakableSpecification","cssSelector":[".hero h1",".hero .sub",".sec p"]}},{"@type":"BreadcrumbList","@id":"https://cabana.africa/#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Home"}]},{"@type":"ItemList","@id":"https://cabana.africa/#itemlist","name":"Cabana services","numberOfItems":6,"itemListElement":[{"@type":"ListItem","position":1,"name":"Apartments & Stays","url":"https://cabana.africa/apartments.html"},{"@type":"ListItem","position":2,"name":"Safaris & Tours","url":"https://cabana.africa/tours.html"},{"@type":"ListItem","position":3,"name":"Car Hire","url":"https://cabana.africa/carhire.html"},{"@type":"ListItem","position":4,"name":"Events & Tickets","url":"https://cabana.africa/events.html"},{"@type":"ListItem","position":5,"name":"Flights","url":"https://cabana.africa/flights.html"},{"@type":"ListItem","position":6,"name":"Rides & Transfers","url":"https://cabana.africa/rides.html"}]},{"@type":"Product","@id":"https://cabana.africa/#product","name":"Cabana — Africa's zero-commission travel platform","description":"Cabana is Africa's #1 zero-commission travel platform. Book short-stay apartments, safaris, flights, events & car hire across Kenya, Nigeria, Ghana & beyond.","url":"https://cabana.africa/","category":"Travel booking","brand":{"@id":"https://cabana.africa/#brand"},"offers":{"@type":"AggregateOffer","priceCurrency":"USD","lowPrice":"13.48","highPrice":"23.1","offerCount":"4","availability":"https://schema.org/InStock","seller":{"@id":"https://cabana.africa/#organization"}}}]}</script>
 <!-- /CABANA-SEO-GRAPH -->
 </head>
-<body class="intro-lock">
+<body>
+<script>
+/* The scroll lock is applied here, by script, rather than being baked
+   into the body tag. If scripting is off or this file fails to parse,
+   the visitor gets a working page instead of a locked white screen.
+   Repeat visitors skip the overlay entirely and never pay for it. */
+(function(){
+  try{
+    if(localStorage.getItem('cabana_first_visit_done')){
+      document.documentElement.className += ' apa-intro-skip';
+      return;
+    }
+  }catch(e){}
+  document.body.className += ' intro-lock';
+})();
+</script>
+<style>
+/* Repeat visitors: kill the overlay before it can paint a single frame,
+   so there is no white flash between the HTML arriving and JS running. */
+.apa-intro-skip #intro{display:none !important;animation:none !important;}
+</style>
 <!-- ════════ THE OVERTURE · Cabana · Choose Better ════════ -->
 <div id="intro">
   <div class="intro-sky" id="intro-sky"></div>
@@ -1215,7 +1264,7 @@ body.intro-lock{overflow:hidden;height:100vh;}
       <!-- BEAT 1 · ICON RISE -->
       <div class="intro-icon-wrap">
         <div class="bloom"></div>
-        <img class="intro-icon" src="cabana-appicon-master.png" alt="Cabana" onerror="this.src='cabana-emblem.png'" fetchpriority="high" decoding="async" fetchpriority="high" fetchpriority="high" fetchpriority="high" fetchpriority="high" fetchpriority="high" fetchpriority="high"/>
+        <img class="intro-icon" src="cabana-appicon-master.png" alt="Cabana" onerror="this.src='cabana-emblem.png'" fetchpriority="high" decoding="async"/>
       </div>
       <!-- BEAT 2 · WORDMARK -->
       <img class="intro-wordmark" src="cabana-wordmark-color.png" alt="Cabana" onerror="this.style.display='none'" loading="lazy" decoding="async"/>
@@ -1273,23 +1322,70 @@ body.intro-lock{overflow:hidden;height:100vh;}
 <section class="hero" style="position:relative;overflow:hidden;">
   <!-- Cabana cinematic hero: randomly picks bedroom or sofa each visit, plays fully in loop -->
   <div id="cbp-hero-bg" style="position:absolute;inset:0;z-index:0;">
-    <video id="cbp-hero-vid" autoplay muted loop playsinline
-      style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;"></video>
+    <!-- No autoplay attribute and preload="none": the element must not
+         start a download during parse. Playback is started by script only
+         once the connection has been judged able to carry it. -->
+    <video id="cbp-hero-vid" muted loop playsinline preload="none" aria-hidden="true" tabindex="-1"
+      style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background-size:cover;background-position:center;"></video>
     <div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(10,10,20,.45) 0%,rgba(10,10,20,.10) 38%,rgba(10,10,20,.10) 62%,rgba(10,10,20,.68) 100%);z-index:1;"></div>
   </div>
   <div class="hero-aurora" style="position:relative;z-index:2;"><div class="ha-blob hab-1"></div><div class="ha-blob hab-2"></div><div class="ha-blob hab-3"></div><div class="ha-blob hab-4"></div></div>
   <script>
   (function(){
-    // Each visit randomly picks one of the two loading-screen videos
-    var opts = ['/cabana-vid-bedroom.mp4', '/cabana-vid-sofa.mp4'];
+    /* ══ CONNECTION-AWARE HERO ═══════════════════════════════════════
+       This block used to assign v.src unconditionally and call play()
+       during parse, pulling 6-9MB before the page had finished laying
+       out. On a metered African mobile connection that was the entire
+       page budget spent on decoration, and it competed directly with
+       the CSS and JS needed to make the page usable.
+
+       Now: the poster paints immediately (~50KB, already a still of the
+       first frame, so it is visually identical until motion starts),
+       and the video is only fetched when the connection can clearly
+       afford it — after the page is interactive.                     */
+    var opts = ['bedroom', 'sofa'];
     var pick = opts[Math.floor(Math.random() * opts.length)];
     var v = document.getElementById('cbp-hero-vid');
-    v.src = pick;
-    /* Feed the matching still to the blurred desktop backdrop. */
-    var poster = pick.replace('cabana-vid-','cabana-poster-').replace('.mp4','.jpg');
+    if(!v) return;
+
+    var poster = '/cabana-poster-' + pick + '.jpg';
     v.poster = poster;
+    v.preload = 'none';
     try{document.documentElement.style.setProperty('--cbp-hero-poster','url("'+poster+'")');}catch(e){}
-    v.play().catch(function(){});
+
+    function affordable(){
+      // Respect an explicit data-saver request above everything else.
+      var c = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+      if(c){
+        if(c.saveData) return false;
+        if(/(^|-)(2g|slow-2g)$/.test(c.effectiveType || '')) return false;
+        if(c.effectiveType === '3g') return false;
+      }
+      // Someone who asked for less motion should not be served a loop.
+      if(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return false;
+      return true;
+    }
+
+    function load(){
+      if(!affordable()) return;          // poster stays; nothing more is fetched
+      // Re-encoded from 11.7Mbps to ~660kbps H.264 with faststart, so the
+      // moov atom is up front and playback begins on the first chunk.
+      v.src = '/cabana-vid-' + pick + '.mp4';
+      v.preload = 'auto';
+      v.load();
+      // play() returns a Promise in modern browsers but undefined in some
+      // older engines. Calling .catch() on undefined would throw and take
+      // the rest of this block with it.
+      try{ var p = v.play(); if(p && p.catch) p.catch(function(){}); }catch(e){}
+    }
+
+    // Never contend with the critical render. Wait for idle, with a
+    // load-event fallback for browsers without requestIdleCallback.
+    if('requestIdleCallback' in window){
+      requestIdleCallback(load, { timeout: 2500 });
+    } else {
+      window.addEventListener('load', function(){ setTimeout(load, 400); }, { once:true });
+    }
   })();
   </script>
   <style>
@@ -1990,8 +2086,12 @@ body.intro-lock{overflow:hidden;height:100vh;}
     window._msgTimer = _msgTimer;
   }
 
-  // full sequence settles by ~4.2s, hold then lift
-  window._introTimer = setTimeout(endIntro, 7000);
+  /* Was 7000ms. Seven seconds of forced white screen on a first visit is
+     most of a bounce, and it landed hardest on exactly the mobile
+     connections this audience uses. 2200ms still reads as a deliberate
+     brand beat while staying under the threshold where people leave.
+     The CSS fail-open net sits just behind this at 3.4s. */
+  window._introTimer = setTimeout(endIntro, 2200);
 
   // allow skip via scroll / tap / key
   const skip = function(){ if(!intro.classList.contains('lift')) endIntro(); };
@@ -2058,10 +2158,15 @@ document.querySelectorAll('.svc-tile').forEach((t,i)=>{t.style.transitionDelay=(
 <!-- These were missing entirely: index.html referenced `supabase` but
      never loaded it, so the auth block silently no-opped and the landing
      page always looked signed-out. -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="/apa-interstitial.js"></script>
-<script src="/apa-session.js"></script>
-<script src="/apa-admin-guard.js"></script>
+<!-- Supabase is self-hosted and version-pinned: same-origin (no extra DNS +
+     TLS handshake to jsdelivr), immutably cacheable, and deferred. index.html
+     talks to Supabase over plain fetch(), so nothing above the fold needs the
+     SDK. apa-session.js polls for window.supabase, so load order stays safe.
+     Deferred scripts still execute in document order. -->
+<script src="/vendor-supabase-2.112.3.js" defer></script>
+<script src="/apa-interstitial.js" defer></script>
+<script src="/apa-session.js" defer></script>
+<script src="/apa-admin-guard.js" defer></script>
 <script src="/apa-chrome.js" defer></script>
 <script src="/apa-rail.js" defer></script>
 <script src="/apa-ask.js?v=2" defer></script>

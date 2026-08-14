@@ -1,2 +1,8 @@
 node_modules/
 *.bak
+
+# Python bytecode from the SEO build. These were tracked and mutate on
+# every run, so the CI "verify the build is committed" gate could never
+# pass on a clean tree.
+__pycache__/
+*.py[cod]

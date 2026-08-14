@@ -671,7 +671,7 @@ function renderListings(list){
     const loc=[l.area,l.city].filter(Boolean).join(', ')||l.location||'Kenya';
     return`<div class="listing-card">
       ${photo
-        ?`<div class="lc-thumb"><img src="${photo}" alt="${l.title||''}" onerror="this.parentElement.innerHTML='${svc[0]}'" fetchpriority="high" decoding="async" fetchpriority="high" fetchpriority="high" fetchpriority="high" fetchpriority="high" fetchpriority="high" fetchpriority="high"/></div>`
+        ?`<div class="lc-thumb"><img src="${photo}" alt="${l.title||''}" onerror="this.parentElement.innerHTML='${svc[0]}'" fetchpriority="high" decoding="async"/></div>`
         :`<div class="lc-thumb">${svc[0]}</div>`
       }
       <div class="lc-info">

@@ -197,9 +197,18 @@ def fix_images(src):
         first = not seen_first[0]
         seen_first[0] = True
         orig = tag
-        if "loading=" not in tag:
-            tag = tag[:-1].rstrip("/") + (' fetchpriority="high"/>' if first
-                                          else ' loading="lazy"/>')
+        if first:
+            # The LCP image is left eager and marked high priority. The guard
+            # has to test for the attribute this branch actually writes.
+            # It previously tested for loading=, which this branch never adds,
+            # so every build appended one more fetchpriority="high" to the same
+            # tag. index.html had accumulated seven of them, and the CI
+            # "verify the build is committed" gate could never pass because the
+            # build was not idempotent.
+            if "fetchpriority=" not in tag:
+                tag = tag[:-1].rstrip("/") + ' fetchpriority="high"/>'
+        elif "loading=" not in tag:
+            tag = tag[:-1].rstrip("/") + ' loading="lazy"/>'
         if "decoding=" not in tag:
             tag = tag[:-2].rstrip() + ' decoding="async"/>'
         if "alt=" not in tag:

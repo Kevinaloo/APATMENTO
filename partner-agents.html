@@ -489,7 +489,7 @@ function pendingCard(r) {
     </div>
 
     <div class="lst">
-      ${img ? `<img class="lst-img" src="${E(img)}" alt="" loading="lazy" decoding="async"/>` : '<div class="lst-img"></div>'}
+      ${img ? `<img class="lst-img" src="${E(img)}" alt="" loading="lazy" decoding="async" fetchpriority="high"/>` : '<div class="lst-img"></div>'}
       <div>
         <div class="lst-t">${E(r.listing_title)}</div>
         <div class="lst-s">They want to represent this listing only</div>

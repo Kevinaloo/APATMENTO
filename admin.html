@@ -2432,7 +2432,7 @@ function renderModeration(){
     <tr>
       <td><input type="checkbox" data-sel="mod" value="${esc(l.id)}" onchange="tick('mod','${esc(l.id)}',this.checked)" style="accent-color:var(--violet)"/></td>
       <td><div style="display:flex;gap:10px;align-items:center">
-        <img class="thumb" src="${esc(Array.isArray(l.photos)&&l.photos[0]||l.image_url||l.cover_url||'')}" onerror="this.style.visibility='hidden'" fetchpriority="high" decoding="async" alt="Cabana" fetchpriority="high" fetchpriority="high" fetchpriority="high" fetchpriority="high" fetchpriority="high" fetchpriority="high"/>
+        <img class="thumb" src="${esc(Array.isArray(l.photos)&&l.photos[0]||l.image_url||l.cover_url||'')}" onerror="this.style.visibility='hidden'" fetchpriority="high" decoding="async" alt="Cabana"/>
         <div><div class="t-main">${esc(l.title||'Untitled')}</div>
         <div class="t-sub">${esc(l.location||l.city||l.area||', ')}</div></div></div></td>
       <td class="t-sub">${esc(l.owner_email||l.owner_id||', ').slice(0,22)}</td>
