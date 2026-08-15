@@ -37,6 +37,96 @@
     catch (e) { if (global.console) console.warn('[session:' + (label || '?') + ']', e && e.message); }
   }
 
+  /* ══ OAUTH PAYLOAD SNAPSHOT ══════════════════════════════════════
+     THIS MUST RUN BEFORE ANY SUPABASE CLIENT EXISTS. Do not move it.
+
+     On the implicit flow Google hands the tokens back in the URL
+     fragment. GoTrue's detectSessionInUrl reads that fragment, then
+     does `window.location.hash = ''` the instant it succeeds — and on
+     failure _initialize() simply returns the error and never retries.
+     Either way the caller gets no second chance: by the time anything
+     downstream notices the session did not land, the only copy of the
+     tokens has been wiped off the URL.
+
+     So we take our own copy first, synchronously, at parse time. This
+     is the difference between "we can recover" and "the user has to
+     start the whole Google round trip again".                       */
+  var AUTH_KEYS = ['access_token','refresh_token','expires_in','expires_at','token_type',
+                   'provider_token','provider_refresh_token','type','code',
+                   'error','error_code','error_description'];
+  var authPayload = (function () {
+    var out = {};
+    try {
+      var take = function (src) {
+        if (!src) return;
+        new URLSearchParams(src).forEach(function (v, k) {
+          if (AUTH_KEYS.indexOf(k) > -1 && out[k] == null) out[k] = v;
+        });
+      };
+      take(global.location.hash.replace(/^#/, ''));
+      take(global.location.search.replace(/^\?/, ''));
+    } catch (e) {}
+    return out;
+  })();
+  global.__APA_AUTH_PAYLOAD__ = authPayload;
+
+  /* ══ STORAGE THAT CANNOT FAIL ════════════════════════════════════
+     GoTrue picks localStorage when it is writable and silently falls
+     back to a fresh in-memory object when it is not. In a Chrome
+     Custom Tab, an Instagram/Facebook webview, or private browsing,
+     that fallback is invisible to us and the user is told nothing
+     useful. Here the ladder is explicit and reportable:
+
+       localStorage   → survives tabs and restarts (the goal)
+       sessionStorage → survives the tab. Enough to finish a booking
+       memory         → survives the page. Still beats being signed out
+
+     storageMode() lets the UI say something TRUE about what happened
+     instead of guessing at cookies.                                 */
+  var memStore = {};
+  var storageMode = 'memory';
+
+  function probe(kind) {
+    try {
+      var s = global[kind];
+      if (!s) return false;
+      var k = '__apa_probe__';
+      s.setItem(k, '1');
+      s.removeItem(k);
+      return true;
+    } catch (e) { return false; }
+  }
+  if (probe('localStorage')) storageMode = 'local';
+  else if (probe('sessionStorage')) storageMode = 'session';
+
+  var apaStorage = {
+    getItem: function (k) {
+      try {
+        if (storageMode === 'local')   return global.localStorage.getItem(k);
+        if (storageMode === 'session') return global.sessionStorage.getItem(k);
+      } catch (e) {}
+      return Object.prototype.hasOwnProperty.call(memStore, k) ? memStore[k] : null;
+    },
+    setItem: function (k, v) {
+      memStore[k] = v;                       // always mirror, so a quota
+      try {                                  // error mid-write still leaves
+        if (storageMode === 'local')   { global.localStorage.setItem(k, v);   return; }
+        if (storageMode === 'session') { global.sessionStorage.setItem(k, v); return; }
+      } catch (e) {
+        /* Quota, or a policy change mid-session. Demote once, keep going.
+           A downgraded session beats a dropped one every time. */
+        storageMode = (storageMode === 'local' && probe('sessionStorage')) ? 'session' : 'memory';
+      }
+    },
+    removeItem: function (k) {
+      delete memStore[k];
+      try {
+        if (storageMode === 'local')   global.localStorage.removeItem(k);
+        if (storageMode === 'session') global.sessionStorage.removeItem(k);
+      } catch (e) {}
+    }
+  };
+
   /* ── SINGLETON GUARD ──────────────────────────────────────────
      26 pages each called supabase.createClient() on the same auth
      storage key. Concurrent GoTrue clients race on token refresh and
@@ -63,7 +153,10 @@
             persistSession: true,
             autoRefreshToken: true,
             detectSessionInUrl: true,
-            storageKey: 'apa-auth'
+            storageKey: 'apa-auth',
+            /* Never let GoTrue choose its own storage. Its private
+               fallback is unreportable; ours degrades in public. */
+            storage: apaStorage
           }, merged.auth || {})
         });
       }
@@ -316,7 +409,28 @@
     get: get,
     signOut: signOut,
     client: client,
-    _boot: boot
+    _boot: boot,
+
+    /* The tokens exactly as they arrived, before GoTrue wiped the URL.
+       auth.html uses this to finish a sign-in by hand when the library's
+       own attempt is still in flight or has failed outright. */
+    authPayload: function () { return authPayload; },
+
+    /* 'local' | 'session' | 'memory'. Lets the UI warn honestly when a
+       sign-in will not survive the tab closing. */
+    storageMode: function () { return storageMode; },
+
+    /* Read the persisted session without going through getSession(),
+       which queues behind the GoTrue lock. An independent signal, so a
+       single stuck lock cannot masquerade as a failed sign-in. */
+    peekSession: function () {
+      try {
+        var raw = apaStorage.getItem('apa-auth');
+        if (!raw) return null;
+        var s = JSON.parse(raw);
+        return (s && s.access_token && s.user) ? s : null;
+      } catch (e) { return null; }
+    }
   };
 
   // Boot as soon as the supabase lib exists. It's loaded sync above us,

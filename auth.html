@@ -266,6 +266,17 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
 .alert.show{display:block;animation:fadeUp .4s;}
 .alert-error{background:rgba(255,77,109,.08);color:#D62246;border:1px solid rgba(255,77,109,.2);}
 .alert-success{background:rgba(45,212,191,.08);color:#0E9384;border:1px solid rgba(45,212,191,.2);}
+.alert-progress{background:rgba(123,47,247,.06);color:#5B21B6;border:1px solid rgba(123,47,247,.18);}
+.alert-progress.show{display:flex;align-items:center;gap:10px;}
+.alert-spinner{width:14px;height:14px;flex-shrink:0;border-radius:50%;
+  border:2px solid rgba(123,47,247,.25);border-top-color:#7B2FF7;
+  animation:apaSpin .7s linear infinite;}
+@keyframes apaSpin{to{transform:rotate(360deg);}}
+@media(prefers-reduced-motion:reduce){.alert-spinner{animation-duration:2.4s;}}
+/* Inline retry inside an alert, so a dead end always offers a way forward. */
+.alert-retry{display:inline-block;margin-top:9px;padding:7px 15px;border-radius:100px;border:none;
+  background:linear-gradient(135deg,#7B2FF7,#4361FF);color:#fff;font-family:inherit;
+  font-size:12.5px;font-weight:600;cursor:pointer;}
 @keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
 
 .ac-foot{text-align:center;margin-top:22px;font-size:13px;color:var(--ink-soft);}
@@ -424,6 +435,14 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
         </div>
 
         <div class="alert alert-error" id="alert-error"></div>
+
+        <!-- Returning from Google can take a moment on a slow link: the
+             library must verify the token with the auth server before a
+             session exists. Silence there reads as a broken button, so
+             the wait is shown rather than hidden. -->
+        <div class="alert alert-progress" id="alert-progress" role="status" aria-live="polite">
+          <span class="alert-spinner" aria-hidden="true"></span><span id="alert-progress-text"></span>
+        </div>
 
         <!-- ── GOOGLE OAUTH BUTTON ── -->
         <button class="google-btn" onclick="signInWithGoogle()" id="google-oauth-btn">
@@ -1227,14 +1246,22 @@ async function goDashboard(user) {
     user = session?.user;
   }
   if (!user) return;
-  // Upsert profile
+  /* Upsert the profile row, but never let it hold the redirect hostage.
+     This is a courtesy write: the row is recreated on next load anyway,
+     and apa-session.js renders the header from JWT metadata without it.
+     Unbounded, it meant a user who had genuinely signed in sat looking at
+     the login form while a slow write crawled — the same symptom as the
+     OAuth timeout, arriving one step later in the flow. */
   try {
     const m = user.user_metadata||{};
-    await sb.from('profiles').upsert({
-      id:user.id, email:user.email,
-      first_name: m.first_name||m.given_name||m.name?.split(' ')[0]||'',
-      last_name:  m.last_name||m.family_name||m.name?.split(' ').slice(1).join(' ')||'',
-    },{ onConflict:'id' });
+    await Promise.race([
+      sb.from('profiles').upsert({
+        id:user.id, email:user.email,
+        first_name: m.first_name||m.given_name||m.name?.split(' ')[0]||'',
+        last_name:  m.last_name||m.family_name||m.name?.split(' ').slice(1).join(' ')||'',
+      },{ onConflict:'id' }),
+      new Promise(r => setTimeout(r, 2500))
+    ]);
   } catch(e){}
 
   /* Return the user to EXACTLY where they were interrupted.
@@ -1337,15 +1364,81 @@ function oauthErrorMessage(code, desc) {
   return desc || 'Google sign-in failed. Please try again, or use your email and password.';
 }
 
-/* Handles the landing after Google bounces the browser back. */
+/* Progress line shown while the handoff completes. */
+function showProgress(msg) {
+  const box = document.getElementById('alert-progress');
+  const txt = document.getElementById('alert-progress-text');
+  if (txt) txt.textContent = msg;
+  if (box) box.classList.add('show');
+}
+function clearProgress() {
+  const box = document.getElementById('alert-progress');
+  if (box) box.classList.remove('show');
+}
+
+/* An error the user can act on, rather than a dead end. */
+function showErrWithRetry(msg) {
+  const el = document.getElementById('alert-error');
+  if (!el) { showErr(msg); return; }
+  el.textContent = msg;
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'alert-retry';
+  btn.textContent = 'Try Google again';
+  btn.onclick = signInWithGoogle;
+  el.appendChild(document.createElement('br'));
+  el.appendChild(btn);
+  el.classList.add('show');
+}
+
+/* The tokens as they arrived, captured by apa-session.js before GoTrue
+   could wipe the URL. Falls back to reading the URL directly, in case
+   this page is ever loaded without the session core. */
+function oauthPayload() {
+  try {
+    if (window.ApaSession && window.ApaSession.authPayload) {
+      const p = window.ApaSession.authPayload();
+      if (p && Object.keys(p).length) return p;
+    }
+  } catch (e) {}
+  const out = {};
+  try {
+    const take = src => new URLSearchParams(src).forEach((v, k) => { if (out[k] == null) out[k] = v; });
+    take(location.hash.replace(/^#/, ''));
+    take(location.search.replace(/^\?/, ''));
+  } catch (e) {}
+  return out;
+}
+
+/* ══ Handles the landing after Google bounces the browser back ══════
+   WHAT WAS ACTUALLY BROKEN
+
+   On the implicit flow GoTrue does not simply trust the token in the
+   fragment. _getSessionFromURL() calls GET /auth/v1/user with it and
+   only writes the session to storage once that round trip returns. So
+   the session appears after a full network call, stacked on top of
+   however long the redirect chain already took.
+
+   The old code waited 4000ms and then declared the session "could not
+   be stored". On a congested mobile link that deadline is routinely
+   missed while the sign-in is in fact succeeding — which is why users
+   saw the failure banner and were signed in a second later. GoTrue's
+   own default lock timeout is 5000ms, so 4000ms could not even outlast
+   the library's worst case. Storage was never the problem; the message
+   blamed cookies for a timeout.
+
+   Three parts to the fix:
+     1. Wait long enough, and say so on screen instead of stalling mute.
+     2. If waiting still fails, finish the sign-in ourselves from the
+        snapshot rather than sending the user back through Google.
+     3. Keep listening after any error, so a late arrival still lands.  */
 async function oauthReturn() {
   clearOAuthFlag();
 
-  const frag = new URLSearchParams(location.hash.replace(/^#/, ''));
-  const qs   = new URLSearchParams(location.search);
-  const err  = frag.get('error') || qs.get('error');
-  const desc = frag.get('error_description') || qs.get('error_description');
-  const code = frag.get('error_code') || qs.get('error_code');
+  const p    = oauthPayload();
+  const err  = p.error;
+  const desc = p.error_description;
+  const code = p.error_code;
 
   if (err || desc) {
     console.error('[google-oauth] provider returned:', { err, code, desc });
@@ -1354,18 +1447,92 @@ async function oauthReturn() {
     return;
   }
 
-  /* detectSessionInUrl consumes the fragment asynchronously, so the session
-     may not exist on the very first read. Resolve on whichever lands first:
-     the SIGNED_IN event or a successful poll. */
-  const session = await waitForSession(4000);
+  showProgress('Finishing sign-in with Google…');
 
-  if (session) { await goDashboard(session.user); return; }
+  /* 12s, not 4s. Sized to clear the two real costs stacked here: the
+     /auth/v1/user verification and GoTrue's own 5s lock timeout. */
+  let session = await waitForSession(12000);
 
-  showErr('Google signed you in but the session could not be stored. If you are browsing privately or blocking cookies, try a normal browser window.');
+  /* Manual completion. The library has either not finished or has given
+     up, but we still hold the tokens it was handed. */
+  if (!session) session = await completeSignInManually(p);
+
+  if (session) {
+    clearProgress();
+    await goDashboard(session.user);
+    return;
+  }
+
+  /* Genuinely nothing worked. Keep the listener alive regardless: a very
+     slow verification can still land after this point, and when it does
+     the user should simply be moved on, not left reading an error about
+     something that has since succeeded. */
+  waitForSession(20000).then(late => {
+    if (late) { clearProgress(); goDashboard(late.user); }
+  });
+
+  clearProgress();
+  const mode = (window.ApaSession && window.ApaSession.storageMode)
+    ? window.ApaSession.storageMode() : 'local';
+
+  showErrWithRetry(
+    mode === 'memory'
+      ? 'Google signed you in, but this browser is blocking storage, so we cannot keep you signed in. Open cabana.africa in a normal browser window (not private mode) and try again.'
+      : 'Google signed you in but we could not finish on this connection. Your sign-in was not lost — please try once more.'
+  );
+  console.error('[google-oauth] handoff failed', {
+    storageMode: mode,
+    hadAccessToken: !!p.access_token,
+    hadCode: !!p.code
+  });
   stripAuthHash();
 }
 
-/* Resolves with a session, or null on timeout. */
+/* ══ Finish the sign-in by hand ══════════════════════════════════════
+   Uses the snapshot taken before GoTrue cleared the URL. setSession()
+   performs the same verify-then-store that detectSessionInUrl does, but
+   on our schedule and with a result we can actually inspect.
+
+   The code branch is dormant today (this project runs the implicit flow)
+   and exists so a future move to PKCE, or a Supabase-side default change,
+   degrades to a working sign-in instead of this same silent failure. */
+async function completeSignInManually(p) {
+  try {
+    if (p.access_token && p.refresh_token) {
+      showProgress('Almost there, verifying your account…');
+      const { data, error } = await sb.auth.setSession({
+        access_token:  p.access_token,
+        refresh_token: p.refresh_token
+      });
+      if (error) console.warn('[google-oauth] setSession failed:', error.message);
+      else if (data && data.session) {
+        console.info('[google-oauth] recovered via setSession');
+        return data.session;
+      }
+    }
+
+    if (p.code) {
+      showProgress('Almost there, verifying your account…');
+      const { data, error } = await sb.auth.exchangeCodeForSession(p.code);
+      if (error) console.warn('[google-oauth] exchangeCodeForSession failed:', error.message);
+      else if (data && data.session) {
+        console.info('[google-oauth] recovered via exchangeCodeForSession');
+        return data.session;
+      }
+    }
+  } catch (e) {
+    console.warn('[google-oauth] manual completion threw:', e && e.message);
+  }
+  return null;
+}
+
+/* Resolves with a session, or null on timeout.
+
+   Three independent signals, because any one of them can stall alone:
+   the auth event, a polled getSession(), and a direct read of the stored
+   session. That last one matters most — getSession() queues behind the
+   GoTrue lock, so if the lock is held the poll goes quiet even though
+   the session is sitting in storage, already written. */
 function waitForSession(timeoutMs) {
   return new Promise(resolve => {
     let settled = false;
@@ -1386,9 +1553,18 @@ function waitForSession(timeoutMs) {
       sub = r && r.data;
     } catch (e) {}
 
-    const poll = setInterval(async () => {
-      const { data } = await sb.auth.getSession().catch(() => ({ data: { session: null } }));
-      if (data && data.session) finish(data.session);
+    const poll = setInterval(() => {
+      // Lock-free read first: cheap, synchronous, cannot be blocked.
+      try {
+        if (window.ApaSession && window.ApaSession.peekSession) {
+          const stored = window.ApaSession.peekSession();
+          if (stored) { finish(stored); return; }
+        }
+      } catch (e) {}
+
+      sb.auth.getSession()
+        .then(r => { if (r && r.data && r.data.session) finish(r.data.session); })
+        .catch(() => {});
     }, 200);
 
     const bail = setTimeout(() => finish(null), timeoutMs);
@@ -1954,7 +2130,11 @@ function showLogin() {
 }
 function isEmail(e) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
 function setBusy(id,on) { document.getElementById(id)?.classList.toggle('loading',on); }
-function clearErr() { document.querySelectorAll('.alert-error,.field-err').forEach(el=>{el.textContent='';el.classList.remove('show');}); }
+function clearErr() {
+  document.querySelectorAll('.alert-error,.field-err').forEach(el=>{el.textContent='';el.classList.remove('show');});
+  const p = document.getElementById('alert-progress');
+  if (p) p.classList.remove('show');
+}
 function showErr(msg) {
   const el=document.getElementById('alert-error')||document.querySelector('.alert-error');
   if(el){ el.textContent=msg; el.classList.add('show'); }
