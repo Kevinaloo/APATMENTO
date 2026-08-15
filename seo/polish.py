@@ -43,7 +43,11 @@ def clean_urls(src):
         if stem not in PAGES:
             return m.group(0)
         n += 1
-        return f'href="/{stem}{tail}"'
+        # group(2) is optional, so it is None when the URL carries no
+        # ?query or #fragment. Interpolating that straight into the
+        # f-string emitted href="/toursNone" — 8,546 dead links across
+        # 358 pages before it was caught.
+        return f'href="/{stem}{tail or ""}"'
 
     src = re.sub(r'href="/([a-z0-9\-]+)\.html([?#][^"]*)?"',
                  lambda m: _r(re.match(r'href="/([a-z0-9\-]+)\.html([?#][^"]*)?"',
