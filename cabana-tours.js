@@ -292,7 +292,10 @@
       'Cabana takes no commission on the tour price. List a tour and it goes live once we have checked it over.</p>' +
       '<div class="ct-blank-acts">' +
         '<a class="ct-btn ct-btn-primary" href="/list-your-tour">' + ICON.plus + 'List a tour</a>' +
-        '<a class="ct-btn ct-btn-ghost" href="/contact">Talk to us first</a>' +
+        '<a class="ct-btn ct-btn-ghost" target="_blank" rel="noopener" ' +
+        'href="https://wa.me/254716206494?text=' +
+        encodeURIComponent('Hi Cabana, I run tours and I would like to list them.') +
+        '">Talk to us first</a>' +
       '</div></div>';
   }
 
@@ -450,7 +453,11 @@
       window.CabanaTourBook.open(t);
       return;
     }
-    window.location.href = '/contact?tour=' + encodeURIComponent(t.slug || t.id);
+    // Contact on this site is a WhatsApp widget, not a page, so the
+    // fallback goes to the number rather than a route that 404s.
+    window.open('https://wa.me/254716206494?text=' +
+      encodeURIComponent('Hi Cabana, I would like to book: ' + (t.title || '')),
+      '_blank', 'noopener');
   }
 
   /* ── wiring ──────────────────────────────────────────────────────── */
