@@ -18,7 +18,7 @@ export const config = { maxDuration: 30 };
 
 const GROQ_KEY = process.env.GROQ_API_KEY;
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const GROQ_MODELS = ['llama-3.3-70b-versatile', 'llama3-70b-8192', 'gemma2-9b-it'];
+const GROQ_MODELS = ['openai/gpt-oss-120b', 'qwen/qwen3.6-27b', 'openai/gpt-oss-20b'];
 
 async function groq(messages, json = true) {
   if (!GROQ_KEY) throw new Error('GROQ_API_KEY not configured');

@@ -18,13 +18,12 @@ import { select, cors } from './_db.js';
 
 const GROQ_API    = 'https://api.groq.com/openai/v1/chat/completions';
 const GROQ_MODELS = [
-  'moonshotai/kimi-k2-instruct',     // primary. High quality, fast
-  'llama-3.3-70b-versatile',         // fallback 1. Excellent quality, generous RPD
-  'llama-3.1-70b-versatile',         // fallback 2. Solid, high RPD
-  'llama-3.1-8b-instant',            // fallback 3 to 14,400 RPD safety net
+  'openai/gpt-oss-120b',             // primary. Groq's recommended flagship (Aug 2026)
+  'qwen/qwen3.6-27b',                // fallback 1. Strong multilingual, fast
+  'openai/gpt-oss-20b',              // fallback 2. Lighter, still high quality
 ];
 // Faster timeout for primary model, escalating for fallbacks
-const GROQ_TIMEOUTS = [7000, 9000, 9000, 9000];
+const GROQ_TIMEOUTS = [8000, 9000, 9000];
 
 /* ── Rate limiter (in-memory; best-effort on serverless) ─────── */
 const RATE = new Map();

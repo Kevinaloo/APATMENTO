@@ -48,7 +48,7 @@ Respond ONLY with valid JSON. No markdown, no explanation outside the JSON.`;
       method: 'POST',
       headers: { 'Authorization': `Bearer ${GROQ_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
+        model: 'openai/gpt-oss-120b',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.65,
         max_tokens: 700,
@@ -58,7 +58,7 @@ Respond ONLY with valid JSON. No markdown, no explanation outside the JSON.`;
     const data = await r.json();
     const raw = data.choices?.[0]?.message?.content || '{}';
     const enhanced = JSON.parse(raw.replace(/^```json|```$/g,'').trim());
-    return res.status(200).json({ ok: true, enhanced, model: 'llama-3.3-70b-versatile' });
+    return res.status(200).json({ ok: true, enhanced, model: 'openai/gpt-oss-120b' });
   } catch (e) {
     return res.status(500).json({ error: e.message });
   }
