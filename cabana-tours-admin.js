@@ -16,6 +16,7 @@
 
   var sb = null;
   var state = { tab: 'pending', tours: [], operators: [], editing: null };
+  var adminMedia = null;
 
   function client() {
     if (sb) return sb;
@@ -302,8 +303,8 @@
             field('Next departure', 'next_departure', t && t.next_departure, { type: 'date' }) +
             field('Spots left', 'spots_left', t && t.spots_left, { type: 'number' }) +
           '</div>' +
-          field('Cover image URL', 'cover_url', t && t.cover_url,
-                { hint: 'must be hosted by Cabana or the operator, not hotlinked' }) +
+          '<div class="fld"><label class="fld-l">Photos and video</label>' +
+            '<div id="tr-media"></div></div>' +
           '<div class="g2">' +
             field('Included — one per line', 'includes_list', arr(t && t.includes_list).join('\n'),
                   { textarea: true, rows: 4 }) +
@@ -323,7 +324,22 @@
         '</form>' +
       '</div>';
 
-    $('tr-cancel').addEventListener('click', function () { host.innerHTML = ''; });
+    // Existing media is left in place on edit; the uploader adds to it.
+    var mediaHost = $('tr-media');
+    if (mediaHost && window.CabanaUploader) {
+      adminMedia = window.CabanaUploader.mount(mediaHost, {
+        client: client(),
+        folder: 'cabana-' + (t ? t.id : Date.now().toString(36)),
+        maxPhotos: 12,
+        maxVideos: 3,
+        onChange: function (v) {
+          var btn = host.querySelector('button[type="submit"]');
+          if (btn) btn.disabled = !!v.busy;
+        }
+      });
+    } else { adminMedia = null; }
+
+    $('tr-cancel').addEventListener('click', function () { host.innerHTML = ''; adminMedia = null; });
     $('tr-f').addEventListener('submit', function (e) { e.preventDefault(); save(new FormData(e.target)); });
     var card = $('tr-card');
     if (card && card.scrollIntoView) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -356,13 +372,25 @@
       schedule_type: g('schedule_type') || 'on_request',
       next_departure: g('next_departure') || null,
       spots_left: num('spots_left'),
-      cover_url: g('cover_url') || null,
+      cover_url: null,   // replaced below by whatever was uploaded
       includes_list: arr(g('includes_list')),
       excludes_list: arr(g('excludes_list')),
       highlights: arr(g('highlights')),
       tags: arr(g('tags')),
       cancellation: g('cancellation') || null
     };
+
+    if (adminMedia && adminMedia.busy()) { toast('Photos are still uploading.'); return; }
+    if (adminMedia) {
+      var m = adminMedia.value();
+      var prev = state.editing
+        ? (state.tours.filter(function (x) { return String(x.id) === String(state.editing); })[0] || {})
+        : {};
+      // Keep anything already on the tour and append the new uploads.
+      row.photos = arr(prev.photos).concat(m.photos);
+      row.videos = arr(prev.videos).concat(m.videos);
+      row.cover_url = prev.cover_url || m.cover || null;
+    }
 
     var q;
     if (state.editing) {

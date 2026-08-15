@@ -290,11 +290,8 @@ html,body{min-height:100%;background:#FCFCFD;color:#0A0A14;
       </div>
 
       <div>
-        <label class="lt-l" for="t-cover">Photo URL <span>optional</span></label>
-        <input class="lt-i" id="t-cover" name="cover_url" type="url" placeholder="https://…"/>
-        <p class="lt-hint">Use your own photograph. Please don't link an image from another
-          booking site — we take it down, and it breaks the moment they change the address.
-          Leave it blank and we'll get in touch about uploading photos.</p>
+        <label class="lt-l">Photos and video <span>from your phone</span></label>
+        <div id="t-media"></div>
       </div>
 
       <div class="lt-note">
@@ -331,6 +328,7 @@ html,body{min-height:100%;background:#FCFCFD;color:#0A0A14;
 
 <script src="/vendor-supabase-2.112.3.js"></script>
 <script src="/apa-session.js"></script>
+<script src="/cabana-media-upload.js"></script>
 <script src="/cabana-list-tour.js"></script>
 </body>
 </html>

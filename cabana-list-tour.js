@@ -15,7 +15,7 @@
 (function () {
   'use strict';
 
-  var sb = null, user = null, operator = null;
+  var sb = null, user = null, operator = null, media = null;
 
   function $(id) { return document.getElementById(id); }
   function show(id) {
@@ -56,6 +56,7 @@
       if (!user) { show('p-gate'); return; }
       var em = $('o-email');
       if (em && !em.value && user.email) em.value = user.email;
+      mountUploader();
       findOperator();
     }, function () { show('p-gate'); });
   }
@@ -77,6 +78,26 @@
           show('p-op');
         }
       }, function () { show('p-op'); });
+  }
+
+  /* Media lives under <uid>/<folder>/, and the folder is a per-draft id
+     so two tours submitted in one sitting never share a directory. */
+  function mountUploader() {
+    var host = $('t-media');
+    if (!host || !window.CabanaUploader || media) return;
+    media = window.CabanaUploader.mount(host, {
+      client: sb,
+      folder: 'draft-' + Date.now().toString(36),
+      maxPhotos: 10,
+      maxVideos: 2,
+      onChange: function (v) {
+        var btn = $('t-submit');
+        if (!btn) return;
+        // Submitting mid-upload would save a tour with half its photos.
+        btn.disabled = !!v.busy;
+        btn.textContent = v.busy ? 'Uploading photos…' : 'Submit for review';
+      }
+    });
   }
 
   /* ── step 1 · operator ───────────────────────────────────────────── */
@@ -146,6 +167,9 @@
 
     if (bad) { say('Some details are missing.'); return; }
 
+    if (media && media.busy()) { say('Photos are still uploading.'); return; }
+    var m = media ? media.value() : { photos: [], videos: [], cover: null };
+
     var btn = $('t-submit');
     if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
 
@@ -169,7 +193,9 @@
       meeting_point: $('t-meeting').value.trim() || null,
       includes_list: lines($('t-inc').value),
       excludes_list: lines($('t-exc').value),
-      cover_url: $('t-cover').value.trim() || null,
+      cover_url: m.cover,
+      photos: m.photos,
+      videos: m.videos,
       status: 'pending'
     };
 
@@ -209,6 +235,10 @@
     if (again) again.addEventListener('click', function () {
       var ft2 = $('f-tour');
       if (ft2) ft2.reset();
+      if (media) {
+        media.clear();
+        media.setFolder('draft-' + Date.now().toString(36));
+      }
       show('p-tour');
     });
 

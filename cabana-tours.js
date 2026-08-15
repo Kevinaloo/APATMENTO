@@ -237,10 +237,19 @@
     if (t.group_max) facts.push('Max ' + t.group_max);
     arr(t.tags).slice(0, 2).forEach(function (x) { facts.push(x); });
 
+    var clip = arr(t.videos)[0] || '';
     var media = cover
       ? '<img src="' + esc(cover) + '" alt="' + esc(t.title) + '" loading="lazy" decoding="async"' +
         ' onerror="this.remove()"/>'
       : '<div class="ct-card-noimg">' + ICON.compass + '</div>';
+    // The clip sits over the still and fades in on hover. It is only
+    // fetched on intent (preload=none), so a grid of ten tours does not
+    // pull ten videos over someone's mobile data.
+    if (clip) {
+      media += '<video class="ct-card-clip" src="' + esc(clip) + '" muted loop playsinline ' +
+               'preload="none" tabindex="-1" aria-hidden="true"></video>' +
+               '<span class="ct-clip-dot" aria-hidden="true"></span>';
+    }
 
     var house = t.operator_kind === 'cabana';
     var badge = '<span class="ct-badge" data-kind="' + (house ? 'cabana' : 'partner') + '">' +
@@ -338,6 +347,15 @@
 
     Array.prototype.forEach.call(g.querySelectorAll('.ct-card'), function (c, i) {
       c.addEventListener('click', function () { openSheet(c.getAttribute('data-id')); });
+      var v = c.querySelector('.ct-card-clip');
+      if (v) {
+        var play = function () { try { v.play(); } catch (e) {} };
+        var stop = function () { try { v.pause(); v.currentTime = 0; } catch (e) {} };
+        c.addEventListener('mouseenter', play);
+        c.addEventListener('mouseleave', stop);
+        c.addEventListener('focus', play);
+        c.addEventListener('blur', stop);
+      }
       setTimeout(function () { c.classList.add('in'); }, Math.min(i, 12) * 45);
     });
   }
@@ -372,8 +390,11 @@
     var html =
       '<button class="ct-sheet-close" type="button" aria-label="Close">' + ICON.cross + '</button>' +
       '<div class="ct-sheet-media">' +
-        (cover ? '<img src="' + esc(cover) + '" alt="' + esc(t.title) + '" onerror="this.remove()"/>'
-               : '<div class="ct-card-noimg">' + ICON.compass + '</div>') +
+        (arr(t.videos)[0]
+          ? '<video src="' + esc(arr(t.videos)[0]) + '" controls playsinline preload="metadata"' +
+            (cover ? ' poster="' + esc(cover) + '"' : '') + '></video>'
+          : cover ? '<img src="' + esc(cover) + '" alt="' + esc(t.title) + '" onerror="this.remove()"/>'
+                  : '<div class="ct-card-noimg">' + ICON.compass + '</div>') +
       '</div>' +
       '<div class="ct-sheet-body">' +
         '<h2 class="ct-sheet-title">' + esc(t.title) + '</h2>' +
