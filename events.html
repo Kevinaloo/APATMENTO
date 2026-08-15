@@ -75,6 +75,7 @@
 <title>Events &amp; Tickets in Nairobi, Kenya: Cabana</title>
 <!-- Session core: one Supabase client per tab. Multiple clients on the
      same storage key race each other and silently drop the session. -->
+<link rel="stylesheet" href="/cabana-events.css"/>
 <style>
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -404,211 +405,94 @@ html.via-dash #tx{display:none!important;animation:none!important;}
   </div>
 </div>
 
-<div class="hero">
-  <span class="hero-eyebrow">Events & Tickets</span>
-  <h1 class="hero-title">Face-value tickets.<br/><em>Nothing added.</em></h1>
-  <p class="hero-sub">Concerts, festivals, shows, sports. You pay exactly what the organiser charges, not a shilling more.</p>
-  <div class="search-bar">
-    <div class="sb-field"><div class="sb-label">City</div><div class="sb-val" id="f-city">All cities</div></div>
-    <div class="sb-sep"></div>
-    <div class="sb-field"><div class="sb-label">Date</div><div class="sb-val ph" id="f-date">Any time</div></div>
-    <div class="sb-sep"></div>
-    <div class="sb-field"><div class="sb-label">Category</div><div class="sb-val ph" id="f-cat">All events</div></div>
-    <button class="sb-btn" onclick="filterEvents()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></button>
+<main class="ev">
+
+  <!-- Two slow beams and a grain plate. Pure CSS, behind everything. -->
+  <div class="ev-room" aria-hidden="true">
+    <div class="ev-beam"></div>
+    <div class="ev-beam b2"></div>
+    <div class="ev-grain"></div>
   </div>
-  <div class="filter-row">
-    <div class="fchip active" onclick="setEvFilter('all',this)">All events</div>
-    <div class="fchip" onclick="setEvFilter('music',this)">🎵 Music</div>
-    <div class="fchip" onclick="setEvFilter('festival',this)">🎪 Festival</div>
-    <div class="fchip" onclick="setEvFilter('sports',this)">⚽ Sports</div>
-    <div class="fchip" onclick="setEvFilter('comedy',this)">😂 Comedy</div>
-    <div class="fchip" onclick="setEvFilter('art',this)">🎨 Arts</div>
+
+  <header class="ev-head">
+    <span class="ev-eyebrow"><i></i>Events &amp; Tickets</span>
+    <h1 class="ev-title">Nairobi after dark. <em>Counting down.</em></h1>
+    <p class="ev-lede">Concerts, festivals, club nights, comedy and everything in between.
+      You pay the organiser's face value — Cabana adds nothing to the ticket price.</p>
+  </header>
+
+  <!-- Scrolling bill of what is coming. Pauses on hover. -->
+  <div class="ev-ticker" id="ev-ticker" aria-hidden="true"></div>
+
+  <!-- The next night, with the clock running. Built in cabana-events.js -->
+  <section class="ev-next" id="ev-next" aria-label="Next event"></section>
+
+  <div class="ev-rail">
+    <div class="ev-search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      <input id="ev-q" type="search" placeholder="Search events, venues, artists" aria-label="Search events"/>
+    </div>
+    <div class="ev-chips" id="ev-chips" role="group" aria-label="Filter events by category"></div>
   </div>
-</div>
-<div style="max-width:1180px;margin:0 auto;padding:0 26px 0;"><div data-showcase="ticker"></div></div>
-<div class="content">
-  <div class="content-head">
-    <div class="result-count"><strong id="result-num">0</strong> upcoming events</div>
-    <select style="padding:8px 28px 8px 12px;border-radius:11px;border:1px solid var(--line-2);background:rgba(255,255,255,.7);font-family:var(--font-body);font-size:13px;outline:none;cursor:pointer;" id="sort-ev" onchange="sortEvents()">
-      <option value="date">Soonest first</option>
+
+  <div class="ev-count">
+    <div class="ev-count-n" id="ev-count-n" aria-live="polite"></div>
+    <select class="ev-sort" id="ev-sort" aria-label="Sort events">
+      <option value="soonest">Soonest first</option>
       <option value="price-asc">Cheapest tickets</option>
       <option value="price-desc">Most premium</option>
     </select>
   </div>
-  
-  <div class="grid" id="grid"></div>
-</div>
 
-<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
-<div class="drawer" id="drawer"></div>
-<div class="toast" id="toast"></div>
+  <div class="ev-grid" id="ev-grid"></div>
 
-<!-- Supabase bootstrap. Kept synchronous because the inline script
-     immediately below calls createClient() during parse, but moved
-     out of <head> so everything above renders without waiting on it. -->
+  <section class="ev-invite">
+    <div class="ev-invite-in">
+      <div>
+        <h2>Throwing something? Put it on the bill.</h2>
+        <p>Cabana Events is a marketplace for organisers, promoters and venues.
+          List the night — we run the box office, you keep the door.</p>
+        <a class="ev-btn ev-btn-primary" href="/list-your-event">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          List an event
+        </a>
+      </div>
+      <ul class="ev-invite-pts">
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg><span>No cut of your face value</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg><span>Set your own tiers, prices and capacity</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg><span>Guests pay by M-Pesa, codes checked at the door</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg><span>Every listing checked before it goes live</span></li>
+      </ul>
+    </div>
+  </section>
+
+</main>
+
+<div class="ev-veil" id="ev-veil"></div>
+<aside class="ev-sheet" id="ev-sheet" aria-label="Event details"></aside>
+
 <script src="/vendor-supabase-2.112.3.js"></script>
 <script src="/apa-session.js"></script>
-<script src="/apa-admin-guard.js"></script>
+<script src="/cabana-pay.js" defer></script>
+<script src="/cabana-event-book.js" defer></script>
+<script src="/cabana-events.js" defer></script>
 <script>
-
-const SUPABASE_URL='https://gfwgbgdvxtocwhilrtdw.supabase.co';
-const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
-let sb=null;
-try{const{createClient}=supabase;sb=createClient(SUPABASE_URL,SUPABASE_ANON_KEY);}catch(e){}
-function showToast(m,d=3200){const t=document.getElementById('toast');if(!t)return;t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),d);}
-// Dismiss entry transition. CSS fades, JS sets display:none so it can't block touches
-function dismissTx(){
-  const el=document.getElementById('tx');
-  if(!el)return;
-  el.style.pointerEvents='none';
-  el.classList.add('done');
-  setTimeout(()=>{el.style.display='none';},1000);
-}
-// Primary: animationend (fires when CSS animation completes)
-document.getElementById('tx')?.addEventListener('animationend',dismissTx,{once:true});
-// Backup 1: window load
-window.addEventListener('load',()=>setTimeout(dismissTx,1800));
-// Backup 2: hard timeout. Fires no matter what
-setTimeout(dismissTx,4000);
-
-
-const EVENTS=[]; // live events load from Supabase (scraped_events)
-let _evFilter='all';
-function setEvFilter(k,el){_evFilter=k;document.querySelectorAll('.fchip').forEach(c=>c.classList.remove('active'));el.classList.add('active');sortEvents();}
-function filterEvents(){sortEvents();}
-function sortEvents(){
-  let list=_evFilter==='all'?[...EVENTS]:EVENTS.filter(e=>e.type===_evFilter);
-  const s=document.getElementById('sort-ev')?.value||'date';
-  if(s==='price-asc')list.sort((a,b)=>a.price-b.price);
-  if(s==='price-desc')list.sort((a,b)=>b.price-a.price);
-  renderEvents(list);
-}
-function renderEvents(list){
-  // Only show events with real display photos
-  list = list.filter(e => e.img && e.img.length > 10 && !e.img.includes('placeholder') && !e.img.includes('default'));
-  document.getElementById('result-num').textContent=list.length;
-  const g=document.getElementById('grid');
-  if(!list.length){g.innerHTML='<div class="empty"><div class="empty-title">'+(window.__evLoaded?'No events with photos yet. Check back soon':'Loading live events…')+'</div></div>';return;}
-  const typeColor={music:'#7B2FF7',festival:'#FF6B2C',sports:'#4361FF',comedy:'#FFB59E',art:'#2DD4BF'};
-  g.innerHTML=list.map((e,i)=>`
-  <div class="card" style="transition-delay:${i*45}ms" onclick="openEvent('${e.id}')">
-    <div class="card-img" style="background:linear-gradient(135deg,${typeColor[e.type]||'#7B2FF7'},#B8A4F4);">
-      ${e.img?`<img src="${e.img}" alt="" loading="lazy" decoding="async" onerror="this.remove()" style="position:absolute;top:0;left:0;right:0;bottom:0;width:100%;height:100%;object-fit:cover;display:block;border:none;z-index:0;">
-      <div style="position:absolute;top:0;left:0;right:0;bottom:0;z-index:1;background:linear-gradient(to top,rgba(10,10,20,.42) 0%,transparent 55%);pointer-events:none;"></div>`:''}
-      ${e.hot?'<div class="card-badge" style="z-index:2;">🔥 Hot</div>':''}
-      <button class="card-fav" style="z-index:2;" onclick="event.stopPropagation();this.textContent=this.textContent==='🤍'?'💜':'🤍'">🤍</button>
-      ${e.img?'':'<svg class="card-img-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9a2 2 0 0 0 0 6v2a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-2a2 2 0 0 0 0-6V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1z"/><path d="M14 6v12" stroke-dasharray="2 2.5"/></svg>'}
-    </div>
-    <div class="card-body">
-      <div class="card-meta-top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>${e.date} · ${e.venue}</div>
-      <div class="card-name">${e.name}</div>
-      <div class="card-foot">
-        <div class="card-price"><span class="val">${e.price===0?(e.ticketUrl?'Tickets ↗':'Free'):'KES '+e.price.toLocaleString()}</span>${e.price?'<span class="per"> / ticket</span>':''}</div>
-        <div class="card-go"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M7 7h10v10"/></svg></div>
-      </div>
-    </div>
-  </div>`).join('');
-  requestAnimationFrame(()=>{document.querySelectorAll('.card').forEach((c,i)=>setTimeout(()=>c.classList.add('in'),i*45));});
-}
-function openEvent(id){
-  const e=EVENTS.find(x=>String(x.id)===String(id));if(!e)return;
-  document.getElementById('drawer').innerHTML=`
-  <div class="dr-img" style="background:var(--theme-grad);position:relative;overflow:hidden;">
-    ${e.img?`<img src="${e.img}" alt="" decoding="async" onerror="this.remove()" style="position:absolute;top:0;left:0;right:0;bottom:0;width:100%;height:100%;object-fit:cover;display:block;border:none;z-index:0;" loading="lazy"/>
-    <div style="position:absolute;top:0;left:0;right:0;bottom:0;z-index:1;background:linear-gradient(to top,rgba(10,10,20,.5) 0%,transparent 60%);pointer-events:none;"></div>`:''}
-    <button class="dr-close" style="z-index:3;" onclick="closeDrawer()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
-    ${e.img?'':'<svg class="dr-img-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9a2 2 0 0 0 0 6v2a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-2a2 2 0 0 0 0-6V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1z"/><path d="M14 6v12" stroke-dasharray="2 2.5"/></svg>'}
-  </div>
-  <div class="dr-body">
-    <div class="dr-tag"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>${e.date} · ${e.venue} · ${e.city}</div>
-    <div class="dr-title">${e.name}</div>
-    <div class="dr-tags">${e.tags.map(x=>`<span class="card-tag">${x}</span>`).join('')}</div>
-    <p class="dr-desc">${e.desc}</p>
-    <div class="dr-includes"><div class="dr-includes-title">Ticket includes</div>
-    <div class="dr-includes-grid">${e.includes.map(x=>`<div class="dr-include"><span style="color:var(--t1)">✓</span> ${x}</div>`).join('')}</div></div>
-    <div class="dr-cta-box">
-      <div class="dr-price"><span class="val">${e.price===0?(e.ticketUrl?'See site':'Free'):'KES '+e.price.toLocaleString()}</span>${e.price?'<span class="per"> / ticket</span>':''}<div class="note">${e.ticketUrl?'↗ Tickets sold on the organiser\'s official site':'✓ Face value. Zero booking fees added.'}</div></div>
-      <button class="dr-cta" onclick="${e.ticketUrl?`window.open('${e.ticketUrl}','_blank')`:(e.price===0?`showToast('Free event, just show up!')`:`window.location.href='booking-confirm.html?id=${e.id}&name=${encodeURIComponent(e.name)}&location=${encodeURIComponent(e.venue)}&price=${e.price}&back=1'`)}">${e.ticketUrl?'Get tickets ↗':(e.price===0?'It\'s free. Save event →':'Get tickets →')}</button>
-    </div>
-  </div>`;
-  document.getElementById('drawer').classList.add('open');
-  document.getElementById('drawer-overlay').classList.add('open');
-}
-function closeDrawer(){document.getElementById('drawer').classList.remove('open');document.getElementById('drawer-overlay').classList.remove('open');}
-renderEvents(EVENTS);
-
-
-/* ── LIVE EVENTS from ingestion pipeline (scraped_events) ── */
-(async function loadLiveEvents(){
-  try {
-    const r = await fetch('https://gfwgbgdvxtocwhilrtdw.supabase.co/rest/v1/scraped_events'
-      + '?active=eq.true&start_date=gte.' + new Date().toISOString()
-      + '&order=start_date.asc&limit=40', {
-      headers: {
-        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw'
-      }
-    });
-    if(!r.ok) return;
-    const rows = await r.json();
-    window.__evLoaded = true;
-    if(!rows.length){ renderEvents(EVENTS); return; }
-
-    const mapped = rows.map((e,i)=>({
-      id: 'live_'+i,
-      name: e.title,
-      venue: e.venue || 'Venue TBA',
-      city: e.city || 'Kenya',
-      date: e.start_date ? new Date(e.start_date).toLocaleDateString('en-KE',{weekday:'short',month:'short',day:'numeric'}) : 'Soon',
-      type: (function(t){t=(t||'').toLowerCase();
-        if(/festival|fest\b/.test(t))return 'festival';
-        if(/comedy|stand.?up/.test(t))return 'comedy';
-        if(/run|marathon|match|league|golf|rugby|sport|fitness|trail/.test(t))return 'sports';
-        if(/expo|art|exhibition|summit|conference|tech|business|workshop|walk|mixer/.test(t))return 'art';
-        return 'music';})(e.title),
-      price: e.price_from ? Math.round(e.price_from) : 0,
-      hot: i < 2,
-      live: true,
-      ticketUrl: e.event_url,
-      tags: [e.venue?e.venue.slice(0,28):'Event', new Date(e.start_date).getFullYear()+''],
-      desc: e.description || ('Happening at ' + (e.venue||'a venue near you') + '. Tap through for full details and tickets.'),
-      includes: ['See ticket site for details'],
-      img: e.image_url || null
-    }));
-
-    // Prepend live events, dedupe by name against demo data
-    const names = new Set(EVENTS.map(e=>e.name.toLowerCase()));
-    const fresh = mapped.filter(e=>!names.has(e.name.toLowerCase()));
-    EVENTS.unshift(...fresh);
-    if(typeof applyFilters==='function') applyFilters();
-    else renderEvents(EVENTS);
-  } catch(err) { /* silent. Demo events remain */ }
+/* Entry transition, with three ways out so it can never strand the page. */
+(function(){
+  function dismiss(){
+    var el=document.getElementById('tx');
+    if(!el) return;
+    el.style.pointerEvents='none';
+    el.classList.add('done');
+    setTimeout(function(){ el.style.display='none'; },1000);
+  }
+  var tx=document.getElementById('tx');
+  if(tx) tx.addEventListener('animationend',dismiss,{once:true});
+  window.addEventListener('load',function(){ setTimeout(dismiss,1600); });
+  setTimeout(dismiss,4000);
 })();
-
-// ── Load admin-added events from listings table ──
-(async () => {
-  try {
-    const { createClient } = supabase;
-    const _sb = createClient('https://gfwgbgdvxtocwhilrtdw.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw');
-    const { data } = await _sb.from('listings').select('*').eq('type','event').eq('is_active',true);
-    if (data && data.length) {
-      const mapped = data.map(l => ({
-        id: String(l.id), name: l.title || 'Event',
-        type: 'Music', venue: l.location || l.city || 'Nairobi',
-        date: '', time: '', price: l.price_night ? `KES ${Number(l.price_night).toLocaleString()}` : 'Free',
-        tags: l.tags || [], desc: l.description || '',
-        img: Array.isArray(l.photos) ? l.photos[0] : null,
-        url: l.street || l.external_url || '#',
-      }));
-      const existing = new Set(EVENTS.map(e=>e.name.toLowerCase()));
-      const fresh = mapped.filter(e=>!existing.has(e.name.toLowerCase()));
-      EVENTS.unshift(...fresh);
-      if(typeof applyFilters==='function') applyFilters();
-      else renderEvents(EVENTS);
-    }
-  } catch(e) {}
-})();
-
 </script>
+
 
 <style>
 .seo-content{position:relative;z-index:2;max-width:1180px;margin:0 auto;padding:20px 24px 70px;}
