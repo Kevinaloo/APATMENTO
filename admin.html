@@ -463,6 +463,10 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M20 13c0 5-3.5 7.5-8 9-4.5-1.5-8-4-8-9V6l8-3 8 3z"/><circle cx="12" cy="11" r="2.4"/></svg>
           Trust centre <span class="nav-b" id="b-trust">0</span>
         </div>
+        <div class="nav-i" data-sec="tours" onclick="go('tours',this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5 5-2Z"/></svg>
+          Tours
+        </div>
         <div class="nav-i" data-sec="inventory" onclick="go('inventory',this)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 9l9-6 9 6v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>
           Inventory
@@ -565,6 +569,8 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
       </section>
 
       <!-- ─── TRIAGE ─── -->
+      <section class="sec" id="s-tours"></section>
+
       <section class="sec" id="s-triage">
         <div class="hd">
           <div><h1>Requires <em>attention</em></h1>
@@ -1840,6 +1846,7 @@ function go(sec, el){
   if(sec==='impersonate') impLogLoad();
   if(sec==='cabana') cabanaLoad();
   if(sec==='transport') renderTransport();
+  if(sec==='tours') window.toursLoad && window.toursLoad();
 }
 function setRange(d, el){
   RANGE = d;
@@ -1850,6 +1857,9 @@ function setRange(d, el){
 
 /* ── auth ─────────────────────────────────────────────────────── */
 const sb = AD.client();
+/* Exposed for side-loaded admin modules (cabana-tours-admin.js). This is a
+   classic script, so `const sb` is not reachable on window without this. */
+window.sb = sb;
 const ADMINS = ['apatmento@gmail.com','worlddossy@gmail.com'];
 
 /* ── REST helpers (used by lazy_requests, profiles, impersonate) ─ */
@@ -5466,5 +5476,6 @@ async function cabanaLoadInterest() {
 </script>
 <script src="/cabana-rebrand.js" defer></script>
 <script src="/apa-contact.js" defer></script>
+<script src="/cabana-tours-admin.js"></script>
 </body>
 </html>

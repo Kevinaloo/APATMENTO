@@ -1,0 +1,892 @@
+/* ═══════════════════════════════════════════════════════════════════
+   CABANA · TOURS
+   ───────────────────────────────────────────────────────────────────
+   One motif, carried through: THE MERIDIAN.
+   Kenya sits on the equator, so the horizon is not decoration here —
+   it is the page's spine. Tours are plotted along it by how far they
+   carry you from the city: a city walk sits near the origin, a
+   four-day expedition sits out at the end of the line.
+
+   Everything is scoped under .ct- so it cannot collide with the
+   shared Cabana shell (.topbar, .hero, .card) already on the page.
+
+   Colour discipline: the Equator sweep is spent in exactly one place,
+   the meridian itself. Everywhere else is ink on near-white with
+   mint to confirm, gold to price, ember to warn. This is what keeps
+   a five-colour palette from turning into soup.
+   ═══════════════════════════════════════════════════════════════════ */
+
+.ct{
+  /* Tours owns the reef end of the Equator palette. This was already
+     the service colour on this page; it is kept, not reinvented. */
+  --ct-reef:#2DD4BF;
+  --ct-reef-lt:#5EEAD4;
+  --ct-reef-dp:#0E9384;
+  --ct-deep:#062B31;
+
+  --ct-ink:#0A0A14;
+  --ct-soft:#4A4C66;
+  --ct-faint:#8E90AD;
+  --ct-hair:rgba(10,10,20,.08);
+  --ct-hair-2:rgba(10,10,20,.14);
+
+  --ct-gold:#B7791F;        /* price as type — dark enough to read on white */
+  --ct-gold-fill:#F5B12E;   /* price as fill */
+  --ct-ember:#E0522C;
+  --ct-violet:#6D28FF;
+
+  --ct-sweep:linear-gradient(90deg,
+      var(--ct-violet) 0%, #4F6DFF 26%, var(--ct-reef) 58%, #F5B12E 84%, var(--ct-ember) 100%);
+
+  --ct-ease:cubic-bezier(.22,1,.36,1);
+  --ct-spring:cubic-bezier(.34,1.32,.44,1);
+
+  position:relative;
+  z-index:2;
+}
+
+/* ═══ 1 · MASTHEAD ══════════════════════════════════════════════════ */
+
+.ct-head{
+  max-width:1180px;
+  margin:0 auto;
+  padding:52px 26px 0;
+}
+
+.ct-eyebrow{
+  display:inline-flex; align-items:center; gap:9px;
+  font-family:var(--font-display,'Geist',sans-serif);
+  font-size:10.5px; font-weight:600;
+  letter-spacing:.16em; text-transform:uppercase;
+  color:var(--ct-reef-dp);
+  padding:7px 15px 7px 11px;
+  border-radius:100px;
+  background:rgba(45,212,191,.09);
+  border:1px solid rgba(45,212,191,.24);
+}
+/* The orbiting point from the Cabana loader, reused at label scale */
+.ct-eyebrow i{
+  width:6px; height:6px; border-radius:50%;
+  background:var(--ct-reef-dp);
+  box-shadow:0 0 0 0 rgba(45,212,191,.6);
+  animation:ct-orbit-pulse 2.6s ease-out infinite;
+}
+@keyframes ct-orbit-pulse{
+  0%{box-shadow:0 0 0 0 rgba(45,212,191,.55);}
+  70%{box-shadow:0 0 0 9px rgba(45,212,191,0);}
+  100%{box-shadow:0 0 0 0 rgba(45,212,191,0);}
+}
+
+.ct-title{
+  font-family:var(--font-display,'Geist',sans-serif);
+  font-weight:640;
+  font-size:clamp(34px,6.2vw,64px);
+  line-height:1.02;
+  letter-spacing:-.038em;
+  color:var(--ct-ink);
+  margin:18px 0 0;
+  max-width:15ch;
+  text-wrap:balance;
+}
+.ct-title em{
+  font-style:normal;
+  background:var(--ct-sweep);
+  -webkit-background-clip:text; background-clip:text;
+  color:transparent;
+}
+
+.ct-lede{
+  margin-top:16px;
+  max-width:52ch;
+  font-size:clamp(15px,1.6vw,17px);
+  line-height:1.62;
+  color:var(--ct-soft);
+  text-wrap:pretty;
+}
+
+/* ═══ 2 · THE MERIDIAN — the signature ══════════════════════════════
+   A horizon line at 0°. Every published tour is a point on it,
+   placed by reach. The travelling light is the orbiting point from
+   the Cabana loader, promoted to page scale.                        */
+
+.ct-meridian{
+  position:relative;
+  max-width:1180px;
+  margin:38px auto 0;
+  padding:0 26px;
+}
+
+.ct-mrd-stage{
+  position:relative;
+  height:186px;
+  border-radius:24px;
+  background:
+    radial-gradient(120% 150% at 50% 118%, rgba(45,212,191,.10), transparent 62%),
+    linear-gradient(180deg, rgba(252,252,253,0) 0%, rgba(244,245,251,.7) 100%);
+  border:1px solid var(--ct-hair);
+  overflow:hidden;
+}
+
+/* the line itself */
+.ct-mrd-line{
+  position:absolute;
+  left:0; right:0; top:96px;
+  height:1.5px;
+  background:var(--ct-sweep);
+  opacity:.32;
+}
+.ct-mrd-line::after{
+  /* the glow under the horizon */
+  content:'';
+  position:absolute; left:0; right:0; top:-1px; height:3px;
+  background:var(--ct-sweep);
+  filter:blur(7px);
+  opacity:.5;
+}
+
+/* the travelling point */
+.ct-mrd-rider{
+  position:absolute;
+  top:96px; left:0;
+  width:9px; height:9px; margin:-4.5px 0 0 -4.5px;
+  border-radius:50%;
+  background:var(--ct-gold-fill);
+  box-shadow:0 0 12px 2px rgba(245,177,46,.75);
+  animation:ct-ride 9s cubic-bezier(.45,0,.55,1) infinite;
+  pointer-events:none;
+  z-index:1;
+}
+@keyframes ct-ride{
+  0%{left:0%; opacity:0;}
+  6%{opacity:1;}
+  94%{opacity:1;}
+  100%{left:100%; opacity:0;}
+}
+
+/* zone bands under the line */
+.ct-mrd-zones{
+  position:absolute;
+  left:0; right:0; top:112px; bottom:0;
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+}
+.ct-mrd-zone{
+  position:relative;
+  padding-top:16px;
+  text-align:center;
+}
+.ct-mrd-zone + .ct-mrd-zone::before{
+  content:'';
+  position:absolute; left:0; top:-16px; bottom:14px;
+  width:1px;
+  background:linear-gradient(180deg, var(--ct-hair-2), transparent);
+}
+.ct-mrd-zname{
+  font-family:var(--font-display,'Geist',sans-serif);
+  font-size:10.5px; font-weight:600;
+  letter-spacing:.13em; text-transform:uppercase;
+  color:var(--ct-faint);
+}
+.ct-mrd-zsub{
+  margin-top:3px;
+  font-size:11px;
+  color:var(--ct-faint);
+  opacity:.75;
+}
+
+/* a tour, sitting on the line */
+.ct-pin{
+  position:absolute;
+  top:96px;
+  transform:translate(-50%,-50%);
+  width:26px; height:26px;
+  display:flex; align-items:center; justify-content:center;
+  border:0; padding:0; margin:0;
+  background:none; cursor:pointer;
+  z-index:3;
+}
+.ct-pin::before{
+  content:'';
+  width:11px; height:11px; border-radius:50%;
+  background:#fff;
+  border:2.5px solid var(--ct-reef-dp);
+  box-shadow:0 2px 8px rgba(6,43,49,.22);
+  transition:transform .3s var(--ct-spring), border-color .25s, box-shadow .25s;
+}
+.ct-pin:hover::before,
+.ct-pin:focus-visible::before,
+.ct-pin.is-on::before{
+  transform:scale(1.55);
+  border-color:var(--ct-gold-fill);
+  box-shadow:0 4px 16px rgba(245,177,46,.5);
+}
+/* Cabana's own tours get a filled point — the house always shows */
+.ct-pin[data-house="1"]::before{
+  background:var(--ct-reef-dp);
+}
+
+.ct-pin-flag{
+  position:absolute;
+  bottom:calc(100% + 9px);
+  left:50%; transform:translateX(-50%) translateY(4px);
+  white-space:nowrap;
+  font-family:var(--font-display,'Geist',sans-serif);
+  font-size:11.5px; font-weight:600; letter-spacing:-.01em;
+  color:#fff;
+  background:rgba(6,43,49,.94);
+  padding:6px 11px; border-radius:8px;
+  opacity:0; pointer-events:none;
+  transition:opacity .22s, transform .22s var(--ct-ease);
+  box-shadow:0 8px 22px rgba(6,43,49,.28);
+}
+.ct-pin-flag::after{
+  content:'';
+  position:absolute; top:100%; left:50%; margin-left:-4px;
+  border:4px solid transparent;
+  border-top-color:rgba(6,43,49,.94);
+}
+.ct-pin:hover .ct-pin-flag,
+.ct-pin:focus-visible .ct-pin-flag,
+.ct-pin.is-on .ct-pin-flag{
+  opacity:1; transform:translateX(-50%) translateY(0);
+}
+.ct-pin-flag b{ color:var(--ct-reef-lt); font-weight:600; }
+
+/* the line when nothing is on it yet */
+.ct-mrd-empty{
+  position:absolute;
+  left:50%; top:52px; transform:translateX(-50%);
+  text-align:center;
+  width:min(420px,84%);
+}
+.ct-mrd-empty p{
+  font-family:var(--font-display,'Geist',sans-serif);
+  font-size:13.5px; font-weight:500;
+  color:var(--ct-faint);
+  letter-spacing:-.01em;
+}
+
+/* ═══ 3 · CONTROL RAIL ══════════════════════════════════════════════ */
+
+.ct-rail{
+  max-width:1180px;
+  margin:34px auto 0;
+  padding:0 26px;
+  display:flex; align-items:center; gap:14px;
+  flex-wrap:wrap;
+}
+
+.ct-search{
+  position:relative;
+  flex:1 1 260px;
+  min-width:0;
+}
+.ct-search svg{
+  position:absolute; left:15px; top:50%; transform:translateY(-50%);
+  width:16px; height:16px;
+  color:var(--ct-faint);
+  pointer-events:none;
+}
+.ct-search input{
+  width:100%;
+  height:46px;
+  padding:0 16px 0 42px;
+  border-radius:13px;
+  border:1px solid var(--ct-hair-2);
+  background:rgba(255,255,255,.78);
+  font-family:var(--font-body,'Inter',sans-serif);
+  font-size:14.5px;
+  color:var(--ct-ink);
+  outline:none;
+  transition:border-color .22s, box-shadow .22s, background .22s;
+}
+.ct-search input::placeholder{ color:var(--ct-faint); }
+.ct-search input:focus{
+  border-color:var(--ct-reef);
+  background:#fff;
+  box-shadow:0 0 0 4px rgba(45,212,191,.13);
+}
+
+.ct-chips{
+  display:flex; gap:8px;
+  flex-wrap:wrap;
+}
+.ct-chip{
+  position:relative;
+  font-family:var(--font-display,'Geist',sans-serif);
+  font-size:13px; font-weight:500;
+  letter-spacing:-.01em;
+  color:var(--ct-soft);
+  padding:10px 16px;
+  border-radius:11px;
+  border:1px solid var(--ct-hair-2);
+  background:rgba(255,255,255,.66);
+  cursor:pointer;
+  white-space:nowrap;
+  transition:color .2s, border-color .2s, background .2s, transform .2s var(--ct-ease);
+}
+.ct-chip:hover{ border-color:var(--ct-reef); color:var(--ct-reef-dp); }
+.ct-chip[aria-pressed="true"]{
+  color:#04312C;
+  border-color:transparent;
+  background:linear-gradient(135deg, var(--ct-reef-lt), var(--ct-reef));
+  box-shadow:0 6px 18px rgba(45,212,191,.32);
+  font-weight:600;
+}
+.ct-chip .n{
+  display:inline-block;
+  margin-left:7px;
+  font-family:var(--font-data,'Geist',monospace);
+  font-size:11px;
+  font-variant-numeric:tabular-nums;
+  opacity:.6;
+}
+
+.ct-count{
+  margin:26px auto 0;
+  max-width:1180px;
+  padding:0 26px;
+  display:flex; align-items:baseline; justify-content:space-between; gap:16px;
+  flex-wrap:wrap;
+}
+.ct-count-n{
+  font-family:var(--font-display,'Geist',sans-serif);
+  font-size:14px; font-weight:500;
+  color:var(--ct-soft);
+}
+.ct-count-n b{
+  font-family:var(--font-data,'Geist',monospace);
+  font-variant-numeric:tabular-nums;
+  color:var(--ct-ink); font-weight:600;
+}
+.ct-sort{
+  height:38px;
+  padding:0 34px 0 13px;
+  border-radius:10px;
+  border:1px solid var(--ct-hair-2);
+  background:rgba(255,255,255,.72)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238E90AD' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")
+    no-repeat right 12px center;
+  -webkit-appearance:none; appearance:none;
+  font-family:var(--font-body,'Inter',sans-serif);
+  font-size:13.5px; color:var(--ct-soft);
+  cursor:pointer; outline:none;
+}
+.ct-sort:focus{ border-color:var(--ct-reef); }
+
+/* ═══ 4 · THE GRID ══════════════════════════════════════════════════ */
+
+.ct-grid{
+  max-width:1180px;
+  margin:20px auto 0;
+  padding:0 26px 72px;
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(310px,1fr));
+  gap:22px;
+}
+
+.ct-card{
+  position:relative;
+  display:flex; flex-direction:column;
+  border-radius:20px;
+  background:#fff;
+  border:1px solid var(--ct-hair);
+  overflow:hidden;
+  cursor:pointer;
+  text-align:left;
+  padding:0;
+  font:inherit; color:inherit;
+  box-shadow:0 1px 2px rgba(10,10,20,.04);
+  transition:transform .38s var(--ct-ease), box-shadow .38s var(--ct-ease), border-color .3s;
+  opacity:0; transform:translateY(16px);
+}
+.ct-card.in{ opacity:1; transform:none; }
+.ct-card:hover,
+.ct-card:focus-visible{
+  transform:translateY(-5px);
+  box-shadow:0 22px 52px rgba(6,43,49,.15);
+  border-color:rgba(45,212,191,.4);
+}
+
+.ct-card-media{
+  position:relative;
+  aspect-ratio:4/3;
+  background:linear-gradient(140deg,#0E9384,#062B31);
+  overflow:hidden;
+}
+.ct-card-media img{
+  position:absolute; inset:0;
+  width:100%; height:100%;
+  object-fit:cover;
+  transition:transform .7s var(--ct-ease);
+}
+.ct-card:hover .ct-card-media img{ transform:scale(1.06); }
+.ct-card-media::after{
+  content:'';
+  position:absolute; inset:0;
+  background:linear-gradient(to top, rgba(6,43,49,.5) 0%, transparent 52%);
+}
+/* placeholder when an operator hasn't uploaded a photo yet */
+.ct-card-noimg{
+  position:absolute; inset:0;
+  display:flex; align-items:center; justify-content:center;
+  color:rgba(255,255,255,.34);
+}
+.ct-card-noimg svg{ width:44px; height:44px; }
+
+.ct-badge{
+  position:absolute; top:12px; left:12px; z-index:2;
+  display:inline-flex; align-items:center; gap:5px;
+  font-family:var(--font-display,'Geist',sans-serif);
+  font-size:10.5px; font-weight:600;
+  letter-spacing:.05em;
+  padding:5px 10px;
+  border-radius:100px;
+  background:rgba(255,255,255,.93);
+  color:var(--ct-deep);
+  box-shadow:0 2px 8px rgba(6,43,49,.18);
+}
+.ct-badge[data-kind="cabana"]{
+  background:linear-gradient(135deg,var(--ct-reef-lt),var(--ct-reef));
+  color:#04312C;
+}
+.ct-badge svg{ width:11px; height:11px; }
+
+.ct-spots{
+  position:absolute; top:12px; right:12px; z-index:2;
+  font-family:var(--font-data,'Geist',monospace);
+  font-size:10.5px; font-weight:600;
+  font-variant-numeric:tabular-nums;
+  padding:5px 10px; border-radius:100px;
+  background:rgba(224,82,44,.94);
+  color:#fff;
+}
+
+.ct-card-where{
+  position:absolute; left:14px; bottom:12px; z-index:2;
+  display:flex; align-items:center; gap:6px;
+  font-size:12px; font-weight:500;
+  color:rgba(255,255,255,.95);
+  text-shadow:0 1px 6px rgba(6,43,49,.5);
+}
+.ct-card-where svg{ width:12px; height:12px; flex-shrink:0; }
+
+.ct-card-body{
+  padding:16px 16px 18px;
+  display:flex; flex-direction:column;
+  flex:1;
+}
+
+.ct-card-title{
+  font-family:var(--font-display,'Geist',sans-serif);
+  font-size:16.5px; font-weight:600;
+  letter-spacing:-.022em;
+  line-height:1.28;
+  color:var(--ct-ink);
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
+  overflow:hidden;
+}
+
+.ct-card-op{
+  margin-top:6px;
+  display:flex; align-items:center; gap:6px;
+  font-size:12.5px;
+  color:var(--ct-faint);
+}
+.ct-card-op .v{
+  display:inline-flex; align-items:center;
+  color:var(--ct-reef-dp);
+}
+.ct-card-op .v svg{ width:12px; height:12px; }
+
+.ct-card-facts{
+  margin-top:12px;
+  display:flex; flex-wrap:wrap; gap:6px;
+}
+.ct-fact{
+  font-size:11.5px; font-weight:500;
+  color:var(--ct-soft);
+  padding:4px 9px;
+  border-radius:7px;
+  background:rgba(10,10,20,.045);
+}
+
+.ct-card-foot{
+  margin-top:auto;
+  padding-top:14px;
+  display:flex; align-items:flex-end; justify-content:space-between; gap:12px;
+  border-top:1px solid var(--ct-hair);
+}
+.ct-price{ line-height:1.2; }
+.ct-price .v{
+  font-family:var(--font-data,'Geist',monospace);
+  font-size:17px; font-weight:600;
+  font-variant-numeric:tabular-nums;
+  letter-spacing:-.02em;
+  color:var(--ct-ink);
+}
+.ct-price .u{
+  display:block;
+  font-size:11px;
+  color:var(--ct-faint);
+  margin-top:2px;
+}
+.ct-price[data-free="1"] .v{ color:var(--ct-reef-dp); }
+
+.ct-go{
+  width:34px; height:34px;
+  border-radius:10px;
+  display:flex; align-items:center; justify-content:center;
+  background:rgba(45,212,191,.11);
+  color:var(--ct-reef-dp);
+  flex-shrink:0;
+  transition:background .25s, color .25s, transform .3s var(--ct-spring);
+}
+.ct-card:hover .ct-go{
+  background:linear-gradient(135deg,var(--ct-reef-lt),var(--ct-reef));
+  color:#04312C;
+  transform:translateX(2px);
+}
+.ct-go svg{ width:15px; height:15px; }
+
+/* A brand-new listing has no reviews, and we do not invent them.
+   It says so plainly instead of borrowing someone else's stars. */
+.ct-new{
+  display:inline-flex; align-items:center; gap:5px;
+  font-size:11px; font-weight:600;
+  letter-spacing:.04em;
+  color:var(--ct-reef-dp);
+}
+.ct-new::before{
+  content:''; width:5px; height:5px; border-radius:50%;
+  background:var(--ct-reef);
+}
+
+/* ═══ 5 · THE EMPTY LINE ════════════════════════════════════════════
+   With no tours published this is the whole page, so it is built as
+   an invitation to act rather than a shrug.                         */
+
+.ct-blank{
+  grid-column:1/-1;
+  position:relative;
+  border-radius:24px;
+  border:1px dashed var(--ct-hair-2);
+  background:
+    radial-gradient(90% 120% at 50% 0%, rgba(45,212,191,.07), transparent 60%),
+    rgba(255,255,255,.5);
+  padding:clamp(38px,6vw,70px) 26px;
+  text-align:center;
+}
+.ct-blank-mark{
+  width:52px; height:52px;
+  margin:0 auto 20px;
+  border-radius:15px;
+  display:flex; align-items:center; justify-content:center;
+  background:linear-gradient(135deg,var(--ct-reef-lt),var(--ct-reef));
+  color:#04312C;
+  box-shadow:0 10px 26px rgba(45,212,191,.32);
+}
+.ct-blank-mark svg{ width:24px; height:24px; }
+.ct-blank h3{
+  font-family:var(--font-display,'Geist',sans-serif);
+  font-size:clamp(20px,3vw,27px);
+  font-weight:600; letter-spacing:-.03em;
+  color:var(--ct-ink);
+  margin-bottom:10px;
+}
+.ct-blank p{
+  max-width:46ch;
+  margin:0 auto;
+  font-size:14.5px; line-height:1.65;
+  color:var(--ct-soft);
+}
+.ct-blank-acts{
+  margin-top:24px;
+  display:flex; gap:11px; justify-content:center; flex-wrap:wrap;
+}
+
+.ct-btn{
+  display:inline-flex; align-items:center; gap:8px;
+  font-family:var(--font-display,'Geist',sans-serif);
+  font-size:14px; font-weight:600; letter-spacing:-.01em;
+  padding:12px 22px;
+  border-radius:100px;
+  border:1px solid transparent;
+  text-decoration:none;
+  cursor:pointer;
+  transition:transform .24s var(--ct-ease), box-shadow .24s, background .22s, border-color .22s;
+}
+.ct-btn svg{ width:15px; height:15px; }
+.ct-btn-primary{
+  background:linear-gradient(135deg,var(--ct-reef-lt),var(--ct-reef));
+  color:#04312C;
+  box-shadow:0 10px 26px rgba(45,212,191,.34);
+}
+.ct-btn-primary:hover{
+  transform:translateY(-2px);
+  box-shadow:0 16px 38px rgba(45,212,191,.44);
+}
+.ct-btn-ghost{
+  background:rgba(255,255,255,.8);
+  border-color:var(--ct-hair-2);
+  color:var(--ct-soft);
+}
+.ct-btn-ghost:hover{
+  border-color:var(--ct-reef);
+  color:var(--ct-reef-dp);
+  transform:translateY(-2px);
+}
+
+/* skeletons while the first read is in flight */
+.ct-skel{
+  border-radius:20px;
+  border:1px solid var(--ct-hair);
+  background:#fff;
+  overflow:hidden;
+}
+.ct-skel-media{ aspect-ratio:4/3; }
+.ct-skel-line{ height:11px; border-radius:6px; margin:14px 16px 0; }
+.ct-skel-media, .ct-skel-line{
+  background:linear-gradient(100deg, rgba(10,10,20,.05) 30%, rgba(10,10,20,.09) 50%, rgba(10,10,20,.05) 70%);
+  background-size:250% 100%;
+  animation:ct-shimmer 1.5s linear infinite;
+}
+.ct-skel-line.s{ width:52%; }
+.ct-skel-line.t{ width:74%; margin-bottom:20px; }
+@keyframes ct-shimmer{ to{ background-position:-250% 0; } }
+
+/* ═══ 6 · OPERATOR INVITATION ═══════════════════════════════════════ */
+
+.ct-invite{
+  position:relative;
+  max-width:1180px;
+  margin:0 auto 76px;
+  padding:0 26px;
+}
+.ct-invite-in{
+  position:relative;
+  border-radius:26px;
+  padding:clamp(30px,5vw,52px);
+  background:linear-gradient(135deg,var(--ct-deep) 0%, #0B4A44 62%, var(--ct-reef-dp) 100%);
+  color:#fff;
+  overflow:hidden;
+  display:grid;
+  grid-template-columns:1.5fr 1fr;
+  gap:32px; align-items:center;
+}
+/* the meridian, echoed once more at the close of the page */
+.ct-invite-in::after{
+  content:'';
+  position:absolute; left:0; right:0; bottom:0; height:2px;
+  background:var(--ct-sweep);
+  opacity:.85;
+}
+.ct-invite h2{
+  font-family:var(--font-display,'Geist',sans-serif);
+  font-size:clamp(23px,3.4vw,34px);
+  font-weight:640; letter-spacing:-.032em;
+  line-height:1.12;
+  margin-bottom:12px;
+  text-wrap:balance;
+}
+.ct-invite p{
+  font-size:14.5px; line-height:1.65;
+  color:rgba(255,255,255,.76);
+  max-width:46ch;
+}
+.ct-invite-pts{
+  list-style:none;
+  display:flex; flex-direction:column; gap:11px;
+}
+.ct-invite-pts li{
+  display:flex; align-items:flex-start; gap:10px;
+  font-size:13.5px;
+  color:rgba(255,255,255,.9);
+}
+.ct-invite-pts svg{
+  width:16px; height:16px; flex-shrink:0;
+  margin-top:1px;
+  color:var(--ct-reef-lt);
+}
+.ct-invite .ct-btn-primary{ margin-top:22px; }
+
+/* ═══ 7 · DETAIL SHEET ══════════════════════════════════════════════ */
+
+.ct-veil{
+  position:fixed; inset:0; z-index:800;
+  background:rgba(6,43,49,.5);
+  backdrop-filter:blur(4px);
+  opacity:0; pointer-events:none;
+  transition:opacity .34s var(--ct-ease);
+}
+.ct-veil.open{ opacity:1; pointer-events:auto; }
+
+.ct-sheet{
+  position:fixed; top:0; right:0; bottom:0; z-index:801;
+  width:min(540px,100%);
+  background:#fff;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  transform:translateX(102%);
+  transition:transform .44s var(--ct-ease);
+  box-shadow:-24px 0 70px rgba(6,43,49,.24);
+}
+.ct-sheet.open{ transform:none; }
+
+.ct-sheet-close{
+  position:absolute; top:16px; right:16px; z-index:4;
+  width:38px; height:38px;
+  border-radius:11px; border:0;
+  background:rgba(255,255,255,.92);
+  color:var(--ct-deep);
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer;
+  box-shadow:0 4px 16px rgba(6,43,49,.2);
+  transition:transform .22s var(--ct-spring);
+}
+.ct-sheet-close:hover{ transform:rotate(90deg); }
+.ct-sheet-close svg{ width:17px; height:17px; }
+
+.ct-sheet-media{
+  position:relative;
+  aspect-ratio:16/10;
+  background:linear-gradient(140deg,#0E9384,#062B31);
+  overflow:hidden;
+}
+.ct-sheet-media img{ width:100%; height:100%; object-fit:cover; }
+
+.ct-sheet-body{ padding:24px 26px 34px; }
+
+.ct-sheet-title{
+  font-family:var(--font-display,'Geist',sans-serif);
+  font-size:26px; font-weight:640;
+  letter-spacing:-.032em; line-height:1.14;
+  color:var(--ct-ink);
+  margin-bottom:10px;
+  text-wrap:balance;
+}
+.ct-sheet-meta{
+  display:flex; flex-wrap:wrap; gap:8px;
+  margin-bottom:18px;
+}
+.ct-sheet-desc{
+  font-size:14.5px; line-height:1.7;
+  color:var(--ct-soft);
+  margin-bottom:24px;
+  white-space:pre-wrap;
+}
+
+.ct-sec{ margin-bottom:26px; }
+.ct-sec-h{
+  font-family:var(--font-display,'Geist',sans-serif);
+  font-size:11px; font-weight:600;
+  letter-spacing:.14em; text-transform:uppercase;
+  color:var(--ct-faint);
+  padding-bottom:9px;
+  border-bottom:1px solid var(--ct-hair);
+  margin-bottom:13px;
+}
+.ct-inc{
+  display:grid; grid-template-columns:1fr 1fr; gap:9px;
+}
+.ct-inc div{
+  display:flex; align-items:flex-start; gap:7px;
+  font-size:13px; color:var(--ct-soft);
+}
+.ct-inc svg{ width:14px; height:14px; flex-shrink:0; margin-top:1.5px; }
+.ct-inc .yes svg{ color:var(--ct-reef-dp); }
+.ct-inc .no{ color:var(--ct-faint); }
+.ct-inc .no svg{ color:var(--ct-faint); }
+
+/* itinerary — a real sequence, so it is numbered */
+.ct-day{
+  display:flex; gap:13px;
+  padding-bottom:16px;
+  position:relative;
+}
+.ct-day:not(:last-child)::before{
+  content:'';
+  position:absolute; left:13px; top:30px; bottom:2px;
+  width:1.5px;
+  background:linear-gradient(180deg, rgba(45,212,191,.42), rgba(45,212,191,.06));
+}
+.ct-day-n{
+  flex-shrink:0;
+  width:27px; height:27px;
+  border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--font-data,'Geist',monospace);
+  font-size:11px; font-weight:600;
+  background:rgba(45,212,191,.13);
+  color:var(--ct-reef-dp);
+  z-index:1;
+}
+.ct-day-t{
+  font-family:var(--font-display,'Geist',sans-serif);
+  font-size:14px; font-weight:600; letter-spacing:-.015em;
+  color:var(--ct-ink);
+  margin-bottom:3px;
+}
+.ct-day-d{ font-size:13px; line-height:1.6; color:var(--ct-soft); }
+
+.ct-book{
+  position:sticky; bottom:0;
+  margin:0 -26px -34px;
+  padding:18px 26px 22px;
+  background:rgba(255,255,255,.94);
+  backdrop-filter:blur(16px);
+  border-top:1px solid var(--ct-hair);
+  display:flex; align-items:center; gap:14px;
+}
+.ct-book-price{ flex:1; min-width:0; }
+.ct-book-price .v{
+  font-family:var(--font-data,'Geist',monospace);
+  font-size:21px; font-weight:600;
+  font-variant-numeric:tabular-nums;
+  letter-spacing:-.025em;
+  color:var(--ct-ink);
+  display:block;
+}
+.ct-book-price .u{ font-size:11.5px; color:var(--ct-faint); }
+.ct-book .ct-btn{ flex-shrink:0; }
+
+/* ═══ 8 · RESPONSIVE ════════════════════════════════════════════════ */
+
+@media (max-width:900px){
+  .ct-invite-in{ grid-template-columns:1fr; gap:24px; }
+}
+
+@media (max-width:720px){
+  .ct-head{ padding-top:34px; }
+  .ct-meridian{ padding:0 16px; }
+  .ct-mrd-stage{ height:164px; }
+  .ct-mrd-zone:nth-child(2) .ct-mrd-zsub,
+  .ct-mrd-zone:nth-child(3) .ct-mrd-zsub,
+  .ct-mrd-zone:nth-child(4) .ct-mrd-zsub{ display:none; }
+  .ct-mrd-zname{ font-size:9px; letter-spacing:.08em; }
+  .ct-rail{ padding:0 16px; }
+  .ct-count, .ct-grid, .ct-invite{ padding-left:16px; padding-right:16px; }
+  .ct-grid{ grid-template-columns:1fr; gap:16px; }
+  .ct-inc{ grid-template-columns:1fr; }
+  .ct-sheet-body{ padding:20px 18px 30px; }
+  .ct-book{ margin:0 -18px -30px; padding:16px 18px 20px; }
+  /* the chip row scrolls rather than wrapping into three lines */
+  .ct-chips{
+    flex-wrap:nowrap;
+    overflow-x:auto;
+    scrollbar-width:none;
+    -webkit-overflow-scrolling:touch;
+    margin:0 -16px; padding:2px 16px;
+  }
+  .ct-chips::-webkit-scrollbar{ display:none; }
+}
+
+/* Motion is a courtesy, not a requirement. */
+@media (prefers-reduced-motion:reduce){
+  .ct-mrd-rider{ animation:none; left:50%; }
+  .ct-eyebrow i{ animation:none; }
+  .ct-skel-media, .ct-skel-line{ animation:none; }
+  .ct-card{ opacity:1; transform:none; transition:none; }
+  .ct-card:hover{ transform:none; }
+  .ct-sheet{ transition:none; }
+}

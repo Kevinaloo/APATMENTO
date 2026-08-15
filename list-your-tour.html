@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>List a tour on Cabana | Zero commission for operators</title>
+<meta name="description" content="Tour operators and guides in Kenya: list your safaris, day trips and city tours on Cabana. No commission on the tour price. You set the dates, group size and fare."/>
+<link rel="canonical" href="https://cabana.africa/list-your-tour"/>
+<meta name="robots" content="index, follow"/>
+<meta name="theme-color" content="#2DD4BF"/>
+<meta property="og:site_name" content="Cabana"/>
+<meta property="og:title" content="List a tour on Cabana"/>
+<meta property="og:description" content="No commission on the tour price. You set the dates, the group size and the fare."/>
+<meta property="og:url" content="https://cabana.africa/list-your-tour"/>
+<meta property="og:type" content="website"/>
+<link rel="icon" href="/favicon.ico" sizes="any"/>
+<link rel="apple-touch-icon" href="/cabana-apple-touch-icon.png"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..800&family=Inter:wght@300..700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/brand.css"/>
+<link rel="stylesheet" href="/cabana-tours.css"/>
+<link rel="stylesheet" href="/cabana-ds.css"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{min-height:100%;background:#FCFCFD;color:#0A0A14;
+  font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased;overflow-x:clip;}
+
+.lt-top{position:sticky;top:0;z-index:100;height:64px;display:flex;align-items:center;
+  justify-content:space-between;padding:0 22px;background:rgba(252,252,253,.82);
+  backdrop-filter:blur(20px) saturate(180%);border-bottom:1px solid rgba(10,10,20,.08);}
+.lt-top a.back{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;font-weight:500;
+  color:#4A4C66;text-decoration:none;}
+.lt-top a.back svg{width:16px;height:16px;}
+.lt-top a.back:hover{color:#0E9384;}
+.lt-top img{height:24px;width:auto;}
+
+.lt-wrap{max-width:760px;margin:0 auto;padding:44px 22px 90px;}
+
+.lt-steps{display:flex;gap:8px;margin:30px 0 26px;}
+.lt-step{flex:1;height:3px;border-radius:99px;background:rgba(10,10,20,.09);overflow:hidden;}
+.lt-step i{display:block;height:100%;width:0;border-radius:99px;
+  background:linear-gradient(90deg,#5EEAD4,#2DD4BF);transition:width .5s cubic-bezier(.22,1,.36,1);}
+.lt-step.done i,.lt-step.now i{width:100%;}
+.lt-step.now i{background:linear-gradient(90deg,#2DD4BF,#0E9384);}
+
+.lt-panel{display:none;}
+.lt-panel.on{display:block;animation:ltIn .45s cubic-bezier(.22,1,.36,1);}
+@keyframes ltIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+
+.lt-h{font-family:'Geist','Inter',sans-serif;font-weight:640;letter-spacing:-.032em;
+  font-size:clamp(23px,3.6vw,31px);line-height:1.14;margin-bottom:9px;text-wrap:balance;}
+.lt-p{font-size:14.5px;line-height:1.65;color:#4A4C66;margin-bottom:26px;max-width:56ch;}
+
+.lt-f{display:grid;gap:16px;}
+.lt-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.lt-row.three{grid-template-columns:1fr 1fr 1fr;}
+@media(max-width:620px){.lt-row,.lt-row.three{grid-template-columns:1fr;}}
+
+.lt-l{display:block;font-family:'Geist','Inter',sans-serif;font-size:12.5px;font-weight:600;
+  letter-spacing:-.01em;color:#0A0A14;margin-bottom:7px;}
+.lt-l span{font-weight:400;color:#8E90AD;margin-left:5px;}
+.lt-i,.lt-t,.lt-s{width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(10,10,20,.14);
+  background:#fff;font-family:'Inter',system-ui,sans-serif;font-size:14.5px;color:#0A0A14;
+  outline:none;transition:border-color .2s,box-shadow .2s;}
+.lt-t{resize:vertical;min-height:96px;line-height:1.6;}
+.lt-s{appearance:none;-webkit-appearance:none;cursor:pointer;
+  background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238E90AD' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 13px center;padding-right:36px;}
+.lt-i:focus,.lt-t:focus,.lt-s:focus{border-color:#2DD4BF;box-shadow:0 0 0 4px rgba(45,212,191,.14);}
+.lt-i[aria-invalid="true"],.lt-t[aria-invalid="true"]{border-color:#E0522C;box-shadow:0 0 0 4px rgba(224,82,44,.12);}
+.lt-err{font-size:12.5px;color:#C2410C;margin-top:6px;display:none;}
+.lt-err.on{display:block;}
+.lt-hint{font-size:12.5px;color:#8E90AD;margin-top:6px;line-height:1.5;}
+
+.lt-acts{display:flex;gap:10px;margin-top:30px;flex-wrap:wrap;}
+
+.lt-note{padding:15px 17px;border-radius:14px;background:rgba(45,212,191,.07);
+  border:1px solid rgba(45,212,191,.22);font-size:13.5px;line-height:1.6;color:#0B5F57;}
+.lt-note b{font-weight:600;}
+
+.lt-gate{text-align:center;padding:56px 22px;}
+.lt-gate .ct-blank-mark{margin-bottom:20px;}
+
+.lt-done{text-align:center;padding:40px 0;}
+.lt-done-mark{width:64px;height:64px;margin:0 auto 22px;border-radius:19px;display:flex;
+  align-items:center;justify-content:center;background:linear-gradient(135deg,#5EEAD4,#2DD4BF);
+  color:#04312C;box-shadow:0 14px 34px rgba(45,212,191,.36);}
+.lt-done-mark svg{width:30px;height:30px;}
+
+.lt-live{position:fixed;left:-9999px;}
+</style>
+</head>
+<body>
+
+<header class="lt-top">
+  <a class="back" href="/tours">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    Tours
+  </a>
+  <a href="/"><img src="/cabana-wordmark-color.png" alt="Cabana" onerror="this.style.display='none'"/></a>
+</header>
+
+<div class="ct">
+<div class="lt-wrap">
+
+  <span class="ct-eyebrow"><i></i>For operators</span>
+  <h1 class="ct-title" style="font-size:clamp(29px,5vw,46px);margin-top:16px;max-width:18ch;">
+    Put your tour <em>on the line.</em></h1>
+  <p class="ct-lede">Cabana takes no commission on the tour price. You set the dates, the group
+    size and the fare — we handle the shopfront. Every listing is checked by a person before it
+    goes live.</p>
+
+  <div class="lt-steps" id="lt-steps" aria-hidden="true">
+    <div class="lt-step now"><i></i></div>
+    <div class="lt-step"><i></i></div>
+    <div class="lt-step"><i></i></div>
+  </div>
+
+  <p class="lt-live" role="status" aria-live="polite" id="lt-live"></p>
+
+  <!-- 0 · not signed in -->
+  <section class="lt-panel" id="p-gate">
+    <div class="lt-gate">
+      <div class="ct-blank-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.4 9.4 8 10 4.6-.6 8-5 8-10V6l-8-4Z"/></svg>
+      </div>
+      <h2 class="lt-h">Sign in to list a tour</h2>
+      <p class="lt-p" style="margin-left:auto;margin-right:auto;">
+        Your listings are tied to your account so you can edit them, pause them and see
+        bookings later.</p>
+      <div class="lt-acts" style="justify-content:center;">
+        <a class="ct-btn ct-btn-primary" id="lt-signin" href="/auth?next=/list-your-tour">Sign in or create an account</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 1 · operator -->
+  <section class="lt-panel" id="p-op">
+    <h2 class="lt-h">First, who runs the tours?</h2>
+    <p class="lt-p">This is what travellers see on the listing. You only fill this in once —
+      after that you can add as many tours as you like.</p>
+
+    <form class="lt-f" id="f-op" novalidate>
+      <div>
+        <label class="lt-l" for="o-name">Operating name</label>
+        <input class="lt-i" id="o-name" name="name" required placeholder="Narok Safari Co"/>
+        <p class="lt-err" id="e-o-name">Tell us what your operation is called.</p>
+      </div>
+      <div>
+        <label class="lt-l" for="o-tagline">One line about you <span>optional</span></label>
+        <input class="lt-i" id="o-tagline" name="tagline" placeholder="Mara specialists since 2014"/>
+      </div>
+      <div class="lt-row">
+        <div>
+          <label class="lt-l" for="o-phone">Phone</label>
+          <input class="lt-i" id="o-phone" name="phone" type="tel" required placeholder="07xx xxx xxx"/>
+          <p class="lt-err" id="e-o-phone">We need a number to reach you about bookings.</p>
+        </div>
+        <div>
+          <label class="lt-l" for="o-whatsapp">WhatsApp <span>optional</span></label>
+          <input class="lt-i" id="o-whatsapp" name="whatsapp" type="tel" placeholder="If different"/>
+        </div>
+      </div>
+      <div class="lt-row">
+        <div>
+          <label class="lt-l" for="o-email">Email</label>
+          <input class="lt-i" id="o-email" name="email" type="email" required/>
+          <p class="lt-err" id="e-o-email">A valid email, so we can confirm your listing.</p>
+        </div>
+        <div>
+          <label class="lt-l" for="o-county">Based in</label>
+          <input class="lt-i" id="o-county" name="county" placeholder="Nairobi"/>
+        </div>
+      </div>
+      <div>
+        <label class="lt-l" for="o-bio">About your operation <span>optional</span></label>
+        <textarea class="lt-t" id="o-bio" name="bio" placeholder="How long you have been running, the guides you work with, what you are known for."></textarea>
+      </div>
+
+      <div class="lt-acts">
+        <button class="ct-btn ct-btn-primary" type="submit">Continue</button>
+      </div>
+    </form>
+  </section>
+
+  <!-- 2 · the tour -->
+  <section class="lt-panel" id="p-tour">
+    <h2 class="lt-h">Now the tour itself</h2>
+    <p class="lt-p">Describe it the way you would to someone on the phone. You can add more
+      tours later from your account.</p>
+
+    <form class="lt-f" id="f-tour" novalidate>
+      <div>
+        <label class="lt-l" for="t-title">Tour name</label>
+        <input class="lt-i" id="t-title" name="title" required placeholder="Maasai Mara, three days"/>
+        <p class="lt-err" id="e-t-title">Give the tour a name.</p>
+      </div>
+      <div>
+        <label class="lt-l" for="t-summary">One line for the card</label>
+        <input class="lt-i" id="t-summary" name="summary" required placeholder="Two nights under canvas, with dawn game drives."/>
+        <p class="lt-err" id="e-t-summary">One short line travellers will see first.</p>
+      </div>
+      <div>
+        <label class="lt-l" for="t-description">Full description</label>
+        <textarea class="lt-t" id="t-description" name="description" required rows="6" placeholder="What happens, where you go, what the days look like."></textarea>
+        <p class="lt-err" id="e-t-description">Please describe the tour.</p>
+      </div>
+
+      <div class="lt-row">
+        <div>
+          <label class="lt-l" for="t-destination">Where it goes</label>
+          <input class="lt-i" id="t-destination" name="destination" required placeholder="Maasai Mara"/>
+          <p class="lt-err" id="e-t-destination">Where does this tour go?</p>
+        </div>
+        <div>
+          <label class="lt-l" for="t-county">County</label>
+          <input class="lt-i" id="t-county" name="county" placeholder="Narok"/>
+        </div>
+      </div>
+
+      <div class="lt-row three">
+        <div>
+          <label class="lt-l" for="t-category">Type</label>
+          <select class="lt-s" id="t-category" name="category">
+            <option value="city-tour">City tour</option>
+            <option value="day-safari" selected>Day safari</option>
+            <option value="day-trip">Day trip</option>
+            <option value="big-safari">Multi-day safari</option>
+            <option value="adventure">Adventure</option>
+            <option value="culture">Culture</option>
+            <option value="beach">Beach</option>
+            <option value="expedition">Expedition</option>
+          </select>
+        </div>
+        <div>
+          <label class="lt-l" for="t-days">How many days</label>
+          <input class="lt-i" id="t-days" name="days" type="number" min="1" max="60" value="1"/>
+        </div>
+        <div>
+          <label class="lt-l" for="t-duration">Duration label</label>
+          <input class="lt-i" id="t-duration" name="duration_label" placeholder="3 days / 6 hours"/>
+        </div>
+      </div>
+
+      <div class="lt-row three">
+        <div>
+          <label class="lt-l" for="t-price">Price per person <span>KES</span></label>
+          <input class="lt-i" id="t-price" name="price_kes" type="number" min="0" required placeholder="48000"/>
+          <p class="lt-err" id="e-t-price">Enter a price, or 0 if the tour is free.</p>
+        </div>
+        <div>
+          <label class="lt-l" for="t-min">Min group</label>
+          <input class="lt-i" id="t-min" name="group_min" type="number" min="1" value="1"/>
+        </div>
+        <div>
+          <label class="lt-l" for="t-max">Max group</label>
+          <input class="lt-i" id="t-max" name="group_max" type="number" min="1" value="12"/>
+        </div>
+      </div>
+
+      <div class="lt-row">
+        <div>
+          <label class="lt-l" for="t-schedule">When it runs</label>
+          <select class="lt-s" id="t-schedule" name="schedule_type">
+            <option value="on_request">On request</option>
+            <option value="daily">Runs daily</option>
+            <option value="fixed">Fixed departure dates</option>
+          </select>
+        </div>
+        <div>
+          <label class="lt-l" for="t-next">Next departure <span>optional</span></label>
+          <input class="lt-i" id="t-next" name="next_departure" type="date"/>
+        </div>
+      </div>
+
+      <div>
+        <label class="lt-l" for="t-meeting">Meeting point</label>
+        <input class="lt-i" id="t-meeting" name="meeting_point" placeholder="Where guests meet you"/>
+      </div>
+
+      <div class="lt-row">
+        <div>
+          <label class="lt-l" for="t-inc">What's included <span>one per line</span></label>
+          <textarea class="lt-t" id="t-inc" name="includes_list" placeholder="Park fees&#10;Camp&#10;All meals"></textarea>
+        </div>
+        <div>
+          <label class="lt-l" for="t-exc">Not included <span>one per line</span></label>
+          <textarea class="lt-t" id="t-exc" name="excludes_list" placeholder="Flights&#10;Drinks"></textarea>
+        </div>
+      </div>
+
+      <div>
+        <label class="lt-l" for="t-cover">Photo URL <span>optional</span></label>
+        <input class="lt-i" id="t-cover" name="cover_url" type="url" placeholder="https://…"/>
+        <p class="lt-hint">Use your own photograph. Please don't link an image from another
+          booking site — we take it down, and it breaks the moment they change the address.
+          Leave it blank and we'll get in touch about uploading photos.</p>
+      </div>
+
+      <div class="lt-note">
+        <b>What happens next.</b> Your listing goes to us for review, not straight onto the site.
+        We check the details and get in touch if anything is unclear. Nothing is charged to you,
+        and we don't take a cut of the tour price.
+      </div>
+
+      <div class="lt-acts">
+        <button class="ct-btn ct-btn-ghost" type="button" id="t-back">Back</button>
+        <button class="ct-btn ct-btn-primary" type="submit" id="t-submit">Submit for review</button>
+      </div>
+    </form>
+  </section>
+
+  <!-- 3 · done -->
+  <section class="lt-panel" id="p-done">
+    <div class="lt-done">
+      <div class="lt-done-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg>
+      </div>
+      <h2 class="lt-h">Sent for review</h2>
+      <p class="lt-p" style="margin-left:auto;margin-right:auto;" id="lt-done-msg">
+        We'll look it over and be in touch. Once it's approved it appears on the tours page.</p>
+      <div class="lt-acts" style="justify-content:center;">
+        <button class="ct-btn ct-btn-primary" type="button" id="lt-another">List another tour</button>
+        <a class="ct-btn ct-btn-ghost" href="/tours">Back to tours</a>
+      </div>
+    </div>
+  </section>
+
+</div>
+</div>
+
+<script src="/vendor-supabase-2.112.3.js"></script>
+<script src="/apa-session.js"></script>
+<script src="/cabana-list-tour.js"></script>
+</body>
+</html>

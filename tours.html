@@ -63,12 +63,11 @@
   <link rel="dns-prefetch" href="//cdn.jsdelivr.net"/>
   <link rel="dns-prefetch" href="//api.unsplash.com"/>
   <title>Africa Safaris &amp; Tours: Book Direct with Local Operators | Cabana</title>
-<script src="https://wildbosses.com/wildbosses-api.js"></script>
 <!-- Session core: one Supabase client per tab. Multiple clients on the
      same storage key race each other and silently drop the session. -->
-<script src="https://wildbosses.vercel.app/wildbosses-api.js"></script>
 <script src="/cabana-partners.js"></script>
 <script src="/cabana-partner-book.js"></script>
+<link rel="stylesheet" href="/cabana-tours.css"/>
 <style>
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -490,317 +489,91 @@ html.via-dash #tx{display:none!important;animation:none!important;}
   </div>
 </div>
 
-<div class="hero">
-  <span class="hero-eyebrow">Tours & Safaris</span>
-  <h1 class="hero-title">Days you'll <em>never forget.</em></h1>
-  <p class="hero-sub">Safaris, city tours, day trips and experiences across Kenya. Guides keep 100%. You pay face value.</p>
-  <div class="search-input-wrap">
-    <input class="search-input" id="searchInput" type="text" placeholder="Search tours, guides, areas…" oninput="renderGrid()"/>
-    <button style="width:40px;height:40px;border-radius:11px;background:var(--theme-grad);border:none;display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;flex-shrink:0;" type="button">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-    </button>
+<main class="ct">
+
+  <header class="ct-head">
+    <span class="ct-eyebrow"><i></i>Tours &amp; Safaris</span>
+    <h1 class="ct-title">Kenya sits on the equator. <em>Start anywhere on the line.</em></h1>
+    <p class="ct-lede">City walks, day trips, overnight safaris and long expeditions, run by
+      operators on the ground. Cabana takes no commission on the tour price — what the guide
+      charges is what you pay.</p>
+  </header>
+
+  <!-- THE MERIDIAN. Every tour is a point, placed by how far it carries you
+       from the city. Built in cabana-tours.js from the live catalogue. -->
+  <section class="ct-meridian" aria-label="Tours plotted by how far they take you from the city">
+    <div class="ct-mrd-stage" id="ct-mrd"></div>
+  </section>
+
+  <div class="ct-rail">
+    <div class="ct-search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      <input id="ct-q" type="search" placeholder="Search tours, places or operators" aria-label="Search tours"/>
+    </div>
+    <div class="ct-chips" id="ct-chips" role="group" aria-label="Filter tours by distance"></div>
   </div>
-  <div class="search-bar">
-    <div class="sb-field"><div class="sb-label">Destination</div><div class="sb-val" id="f-dest">Nairobi & surrounds</div></div>
-    <div class="sb-sep"></div>
-    <div class="sb-field"><div class="sb-label">Date</div><div class="sb-val ph" id="f-date">Any date</div></div>
-    <div class="sb-sep"></div>
-    <div class="sb-field"><div class="sb-label">Group size</div><div class="sb-val ph" id="f-group">Any size</div></div>
-    <button class="sb-btn" onclick="filterTours()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></button>
-  </div>
-  <div class="filter-row">
-    <div class="fchip active" onclick="setFilter('all',this)">All Tours</div>
-    <div class="fchip" onclick="setFilter('city',this)">🏙️ City Walk</div>
-    <div class="fchip" onclick="setFilter('nature',this)">🌿 Nature</div>
-    <div class="fchip" onclick="setFilter('community',this)">🤝 Community</div>
-  </div>
-</div>
-<div style="max-width:1180px;margin:0 auto;padding:0 26px 0;"><div data-showcase="ticker"></div></div>
-<div class="content">
-  <div class="content-head">
-    <div class="result-count"><strong id="result-num">0</strong> tours available</div>
-    <select style="padding:8px 28px 8px 12px;border-radius:11px;border:1px solid var(--line-2);background:rgba(255,255,255,.7);font-family:var(--font-body);font-size:13px;outline:none;cursor:pointer;" id="sort-tours" onchange="sortTours()">
+
+  <div class="ct-count">
+    <div class="ct-count-n" id="ct-count-n" aria-live="polite"></div>
+    <select class="ct-sort" id="ct-sort" aria-label="Sort tours">
       <option value="recommended">Recommended</option>
-      <option value="price-asc">Price: Low to High</option>
-      <option value="price-desc">Price: High to Low</option>
-      <option value="duration">Duration</option>
+      <option value="soonest">Leaving soonest</option>
+      <option value="price-asc">Price: low to high</option>
+      <option value="price-desc">Price: high to low</option>
+      <option value="duration">Shortest first</option>
     </select>
   </div>
-  
-  <div class="grid" id="grid"></div>
-</div>
 
-<div style="max-width:1180px;margin:0 auto;padding:20px 26px 0;"><div data-showcase="split"></div></div>
-<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
-<div class="drawer" id="drawer"></div>
-<div class="toast" id="toast"></div>
+  <div class="ct-grid" id="ct-grid"></div>
 
-<!-- Supabase bootstrap. Kept synchronous because the inline script
-     immediately below calls createClient() during parse, but moved
-     out of <head> so everything above renders without waiting on it. -->
+  <section class="ct-invite">
+    <div class="ct-invite-in">
+      <div>
+        <h2>Run tours? Put them on the line.</h2>
+        <p>Cabana Tours is a marketplace for operators working in Kenya and across Africa.
+          List what you already run — we handle the shopfront, you keep the fare.</p>
+        <a class="ct-btn ct-btn-primary" href="/list-your-tour">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          List a tour
+        </a>
+      </div>
+      <ul class="ct-invite-pts">
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg><span>No commission on the tour price</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg><span>You set the dates, group size and price</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg><span>Guests pay by M-Pesa</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg><span>Every listing is checked before it goes live</span></li>
+      </ul>
+    </div>
+  </section>
+
+</main>
+
+<div class="ct-veil" id="ct-veil"></div>
+<aside class="ct-sheet" id="ct-sheet" aria-label="Tour details"></aside>
+
 <script src="/vendor-supabase-2.112.3.js"></script>
 <script src="/apa-session.js"></script>
-<script src="/apa-admin-guard.js"></script>
+<script src="/cabana-pay.js" defer></script>
+<script src="/cabana-tour-book.js" defer></script>
+<script src="/cabana-tours.js" defer></script>
 <script>
-
-const SUPABASE_URL='https://gfwgbgdvxtocwhilrtdw.supabase.co';
-const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
-let sb=null;
-try{const{createClient}=supabase;sb=createClient(SUPABASE_URL,SUPABASE_ANON_KEY);}catch(e){}
-function showToast(m,d=3200){const t=document.getElementById('toast');if(!t)return;t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),d);}
-// Dismiss entry transition. CSS fades, JS sets display:none so it can't block touches
-function dismissTx(){
-  const el=document.getElementById('tx');
-  if(!el)return;
-  el.style.pointerEvents='none';
-  el.classList.add('done');
-  setTimeout(()=>{el.style.display='none';},1000);
-}
-// Primary: animationend (fires when CSS animation completes)
-document.getElementById('tx')?.addEventListener('animationend',dismissTx,{once:true});
-// Backup 1: window load
-window.addEventListener('load',()=>setTimeout(dismissTx,1800));
-// Backup 2: hard timeout. Fires no matter what
-setTimeout(dismissTx,4000);
-
-
-// ── Tours are loaded live from Wildbosses via WildbossesAPI ──
-// WildbossesAPI is injected by the <script> tags at the bottom of the page.
-// We render the static fallback immediately, then swap in live DB data.
-
-let _filter = 'all';
-let _search = '';
-let _TOURS  = [];   // filled by initTours()
-
-function setFilter(k, el) {
-  _filter = k;
-  document.querySelectorAll('.fchip').forEach(c => c.classList.remove('active'));
-  el.classList.add('active');
-  renderGrid();
-}
-
-
-function renderPartnerStrip(){
-  var el=document.getElementById('partner-strip');
-  if(!el||!window.CabanaPartners)return;
-  var ps=window.CabanaPartners.list(); if(!ps.length){el.innerHTML='';return;}
-  var all=window.CabanaPartners.getAllTours();
-  el.innerHTML='<div style="display:flex;align-items:center;gap:8px;margin:0 0 12px;"><span style="font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#9499AD;">Our tour partners</span><span style="flex:1;height:1px;background:rgba(15,17,23,.08);"></span></div>'+
-  '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:11px;margin-bottom:22px;">'+
-  ps.map(function(p){
-    var n=all.filter(function(t){return t.partner===p.id;}).length, native=p.bookingMode==='native';
-    return '<div style="display:flex;align-items:center;gap:11px;padding:13px 15px;border-radius:15px;background:#fff;border:1px solid rgba(15,17,23,.07);">'+
-      '<div style="width:38px;height:38px;border-radius:11px;flex-shrink:0;background:linear-gradient(135deg,'+p.colour+','+p.accent+');display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:15px;">'+p.name.charAt(0)+'</div>'+
-      '<div style="flex:1;min-width:0;"><div style="font-size:13.5px;font-weight:800;color:#0F1117;letter-spacing:-.02em;">'+p.name+
-      (native?'<span style="margin-left:6px;font-size:9px;font-weight:800;padding:2px 7px;border-radius:100px;background:'+p.colour+'18;color:'+p.colour+';letter-spacing:.06em;">BOOK HERE</span>':'')+
-      '</div><div style="font-size:11.5px;color:#9499AD;margin-top:1px;">'+n+' tour'+(n===1?'':'s')+' · '+(p.tagline||'')+'</div></div></div>';
-  }).join('')+'</div>';
-}
-
-function renderGrid() {
-  _search = (document.getElementById('searchInput')?.value || '').toLowerCase();
-  const _P = (window.CabanaPartners ? window.CabanaPartners.getAllTours({fresh:true}) : []);
-  const _MERGED = _P.length ? _P.concat(_TOURS.filter(t=>!_P.some(p=>p.id===t.id))) : _TOURS;
-  let list = _MERGED.filter(t => {
-    const matchCat    = _filter === 'all' || t.category === _filter ||
-                        (_filter === 'city' && t.category === 'walking') ||
-                        (_filter === 'nature' && (t.category === 'adventure' || t.category === 'beach')) ||
-                        (_filter === 'community' && t.category === 'culture');
-    const matchSearch = !_search || t.name.toLowerCase().includes(_search) ||
-                        (t.destination||'').toLowerCase().includes(_search) ||
-                        (t.tags||[]).some(x => x.toLowerCase().includes(_search));
-    return matchCat && matchSearch;
-  });
-
-  document.getElementById('result-num').textContent = list.length;
-  const g = document.getElementById('grid');
-  if (!list.length) {
-    g.innerHTML = `<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="m15 5.5-6-2-6 2.5v13l6-2.5 6 2 6-2.5v-13z"/><path d="M9 3.5v13M15 7.5v13"/></svg><div class="empty-title">No tours match</div><div class="empty-sub">Try a different filter</div></div>`;
-    return;
+/* Entry transition. Three ways out so it can never strand the page:
+   the animation ending, window load, and a hard timeout. */
+(function(){
+  function dismiss(){
+    var el=document.getElementById('tx');
+    if(!el) return;
+    el.style.pointerEvents='none';
+    el.classList.add('done');
+    setTimeout(function(){ el.style.display='none'; },1000);
   }
-
-  g.innerHTML = list.map((t, i) => {
-    const stars       = t.rating ? `<span style="color:#F59E0B;">★</span> ${t.rating}` : 'New';
-    const reviewLabel = t.reviews ? `${Number(t.reviews).toLocaleString()} reviews` : '';
-    const priceColor  = t.price_kes === 0 ? '#00A082' : 'var(--ink)';
-    const priceLabel  = t.price_kes === 0
-      ? (t.tags?.includes('Free Tour') ? 'Free' : 'Pay what you want')
-      : `KES ${Number(t.price_kes).toLocaleString()}`;
-    const badge = t.urgency === 'critical' ? '🔥 Last spots' :
-                  t.urgency === 'high'     ? '⚡ Filling fast' : 'Wildbosses';
-    const badgeBg = t.urgency === 'critical' ? '#E11D48' :
-                    t.urgency === 'high'     ? '#F59E0B' : 'var(--t1)';
-    const img = t.image || t.image_thumb || '';
-    return `
-    <div class="card" style="transition-delay:${i*40}ms;cursor:pointer;"
-         onclick="${t.bookingMode==='native'?`CabanaPartnerBook.open('${t.id}')`:`openTourDrawer('${t.id}')`}" aria-label="${t.name}">
-      <div class="card-img" style="background:linear-gradient(135deg,#0F4C2A,#2D8A52);">
-        ${img ? `<img src="${img}" alt="${t.name}" loading="lazy" decoding="async"
-          onerror="this.style.display='none'"
-          style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;"/>` : ''}
-        <div style="position:absolute;inset:0;z-index:1;background:linear-gradient(to top,rgba(10,10,20,.45) 0%,transparent 55%);pointer-events:none;"></div>
-        <div class="card-badge" style="z-index:2;background:${t.partnerColour||badgeBg};color:#fff;">${t.partnerName||badge}</div>
-        ${(t.spotsLeft>0&&t.spotsLeft<=3)?`<div style="position:absolute;top:11px;right:11px;z-index:2;padding:4px 9px;border-radius:100px;background:rgba(225,29,72,.92);color:#fff;font-size:10px;font-weight:700;">${t.spotsLeft} left</div>`:''}
-        <div style="position:absolute;bottom:11px;right:11px;z-index:2;display:flex;align-items:center;gap:4px;padding:4px 9px;border-radius:100px;background:rgba(10,10,20,.72);color:#fff;font-size:11px;font-weight:600;">
-          ${stars}${reviewLabel ? ` · ${reviewLabel}` : ''}
-        </div>
-      </div>
-      <div class="card-body">
-        <div class="card-meta-top">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-          ${t.destination || t.country || 'Kenya'} · ${t.duration || ''}
-        </div>
-        <div class="card-name">${t.name}</div>
-        <div class="card-tags">${(t.tags||[]).slice(0,3).map(x => `<span class="card-tag">${x}</span>`).join('')}</div>
-        <div class="card-foot">
-          <div class="card-price">
-            <span class="val" style="color:${priceColor};">${priceLabel}</span>
-            <span class="per"> · ${t.guide || 'Expert guide'}</span>
-          </div>
-          <div class="card-go">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M7 7h10v10"/></svg>
-          </div>
-        </div>
-      </div>
-    </div>`;
-  }).join('');
-
-  requestAnimationFrame(() => {
-    document.querySelectorAll('.card').forEach((c, i) => setTimeout(() => c.classList.add('in'), i * 40));
-  });
-}
-
-/* open tour detail drawer */
-function openTourDrawer(tourId) {
-  const t = _TOURS.find(x => x.id === tourId);
-  if (!t) return;
-  const priceLabel = t.price_kes === 0
-    ? (t.tags?.includes('Free Tour') ? 'Free' : 'Pay what you want')
-    : `KES ${Number(t.price_kes).toLocaleString()}`;
-  const depositLabel = t.deposit_kes > 0
-    ? `<div class="dr-price"><span class="val" style="color:var(--t1);">KES ${Number(t.deposit_kes).toLocaleString()}</span><span class="per"> deposit to confirm</span><div class="note">30% deposit · balance before departure</div></div>`
-    : '';
-  const spotsLabel = t.spots_left && t.spots_left < 5
-    ? `<div style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:#E11D48;padding:5px 11px;border-radius:100px;background:rgba(225,29,72,.08);margin-bottom:12px;">🔥 Only ${t.spots_left} spot${t.spots_left===1?'':'s'} left</div>`
-    : '';
-
-  const drawer = document.getElementById('drawer');
-  drawer.innerHTML = `
-    <button class="dr-close" onclick="closeDrawer()">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-    </button>
-    <div class="dr-img" style="background:linear-gradient(135deg,#0F4C2A,#2D8A52);">
-      ${t.image ? `<img src="${t.image}" alt="${t.name}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'" loading="lazy" decoding="async"/>` : `<svg class="dr-img-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="m15 5.5-6-2-6 2.5v13l6-2.5 6 2 6-2.5v-13z"/><path d="M9 3.5v13M15 7.5v13"/></svg>`}
-      <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(10,10,20,.55),transparent 55%);z-index:1;"></div>
-    </div>
-    <div class="dr-body">
-      ${spotsLabel}
-      <div class="dr-tag">
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-        ${t.destination || t.country || 'Kenya'} · ${t.duration || ''} · Guide: ${t.guide || 'Expert guide'}
-      </div>
-      <div class="dr-title">${t.name}</div>
-      <div class="dr-tags">${(t.tags||[]).map(x=>`<span class="card-tag">${x}</span>`).join('')}</div>
-      <div class="dr-desc">${t.description || ''}</div>
-      ${t.includes && t.includes.length ? `
-      <div class="dr-includes">
-        <div class="dr-includes-title">What's included</div>
-        <div class="dr-includes-grid">${t.includes.map(i=>`<div class="dr-include"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00A082" stroke-width="2.5"><path d="m20 6-11 11-5-5"/></svg>${i}</div>`).join('')}</div>
-      </div>` : ''}
-      ${t.itinerary && t.itinerary.length ? `
-      <div style="margin-bottom:22px;">
-        <div style="font-family:var(--font-display);font-weight:500;font-size:15px;margin-bottom:10px;">Itinerary</div>
-        ${t.itinerary.map(s=>`<div style="display:flex;gap:10px;margin-bottom:10px;"><div style="flex-shrink:0;width:24px;height:24px;border-radius:50%;background:rgba(var(--t1-rgb),.12);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--t1);">D${s.day}</div><div><div style="font-weight:600;font-size:13px;">${s.title}</div><div style="font-size:12px;color:var(--ink-soft);">${s.desc}</div></div></div>`).join('')}
-      </div>` : ''}
-      <div class="dr-cta-box">
-        <div class="dr-price">
-          <span class="val">${priceLabel}</span>
-          <span class="per"> /person</span>
-          ${t.departure_date ? `<div class="note">Next departure: ${new Date(t.departure_date).toLocaleDateString('en-KE',{day:'numeric',month:'short',year:'numeric'})}</div>` : ''}
-        </div>
-        ${depositLabel}
-        <button class="dr-cta" onclick="openBookingModal('${t.id}')">
-          ${t.price_kes === 0 ? 'Reserve a spot. Free' : 'Book & pay with M-Pesa'}
-        </button>
-      </div>
-    </div>`;
-
-  document.getElementById('drawer-overlay').classList.add('open');
-  drawer.classList.add('open');
-}
-
-/* expose for booking modal */
-window._getWBTour = id => _TOURS.find(t => t.id === id) || null;
-
-function openBookingModal(tourId) {
-  const t = window._getWBTour(tourId);
-  if (!t || typeof window.WBIntegration === 'undefined') {
-    showToast('Opening booking…');
-    return;
-  }
-  window.WBIntegration.openBooking(tourId);
-}
-
-/* ── Bootstrap: render static data instantly, then refresh from DB ── */
-function initTours() {
-  const api = window.WildbossesAPI;
-  if (!api) return;
-
-  // Render static fallback immediately
-  _TOURS = api.getToursSync ? api.getToursSync() : [];
-  renderGrid();
-
-  // Then fetch live from DB and re-render
-  api.getTours().then(tours => {
-    _TOURS = tours;
-    renderGrid();
-  }).catch(() => {/* static already showing */});
-}
-
-// Try immediately; if WildbossesAPI not loaded yet, wait for it
-if (window.WildbossesAPI) {
-  initTours();
-} else {
-  window.addEventListener('wildbosses:ready', initTours);
-  // Fallback poll for 3s in case event missed
-  const _poll = setInterval(() => { if (window.WildbossesAPI){ clearInterval(_poll); initTours(); } }, 300);
-  setTimeout(() => clearInterval(_poll), 3000);
-}
-
-// ── Load admin-added tours from listings table (Cabana partner tours) ──
-(async () => {
-  try {
-    const { createClient } = supabase;
-    const _sb = createClient('https://gfwgbgdvxtocwhilrtdw.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw');
-    const { data } = await _sb.from('listings').select('*').eq('type','tour').eq('is_active',true);
-    if (data && data.length) {
-      const mapped = data.map(l => ({
-        id: l.id, category: l.category || 'safari',
-        name: l.title || 'Untitled Tour',
-        guide: 'Partner', destination: l.location || l.city || 'Nairobi',
-        country: 'Kenya', duration: '', group_max: 999, group_min: 1,
-        rating: l.rating || 0, reviews: l.review_count || 0,
-        price_kes: l.price_night || 0,
-        deposit_kes: Math.round((l.price_night||0) * 0.3),
-        tags: l.tags || [], description: l.description || '',
-        image: Array.isArray(l.photos) ? l.photos[0] : (l.cover_photo || ''),
-        status: 'open', urgency: 'normal', featured: false,
-        itinerary: [], includes: [],
-      }));
-      _TOURS = [...mapped, ..._TOURS];
-      renderGrid();
-    }
-  } catch(e) { /* silent */ }
+  var tx=document.getElementById('tx');
+  if(tx) tx.addEventListener('animationend',dismiss,{once:true});
+  window.addEventListener('load',function(){ setTimeout(dismiss,1600); });
+  setTimeout(dismiss,4000);
 })();
-
-
-renderGrid();
-
-
 </script>
 
-<!-- Wildbosses booking modal (handles openBookingModal calls from tour cards) -->
-<script src="https://wildbosses.com/cabana-wb-integration.js" defer></script>
 
 <style>
 .seo-content{position:relative;z-index:2;max-width:1180px;margin:0 auto;padding:20px 24px 70px;}
