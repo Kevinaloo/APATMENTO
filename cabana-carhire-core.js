@@ -389,102 +389,26 @@
      car_fleet table is empty or unreachable — not placeholder data.
      Every clearance figure is the manufacturer's published spec.
      ═══════════════════════════════════════════════════════════════ */
-  const OPERATORS = [
-    { id: 'op-rift',   name: 'Rift Valley Motors',   city: 'Nairobi', verified: true,
-      response_mins: 11, on_time_pct: 97.4, completed_hires: 412, rating: 4.8, fleet_size: 34 },
-    { id: 'op-savanna',name: 'Savanna Fleet Kenya',  city: 'Nairobi', verified: true,
-      response_mins: 18, on_time_pct: 95.1, completed_hires: 268, rating: 4.7, fleet_size: 22 },
-    { id: 'op-pwani',  name: 'Pwani Auto Hire',      city: 'Mombasa', verified: true,
-      response_mins: 24, on_time_pct: 93.8, completed_hires: 155, rating: 4.6, fleet_size: 17 },
-    { id: 'op-summit', name: 'Summit Safari Vehicles', city: 'Nanyuki', verified: true,
-      response_mins: 32, on_time_pct: 98.2, completed_hires: 96,  rating: 4.9, fleet_size: 11 }
-  ];
+  /* No seed catalogue. This marketplace shows real vehicles from real
+     verified operators or it shows nothing. Inventing demo cars would
+     mean quoting prices nobody agreed to honour. */
+  const OPERATORS = [];
+  const FLEET = [];
 
-  const FLEET = [
-    { id: 'v-vitz', operator_id: 'op-rift', make: 'Toyota', model: 'Vitz', year: 2019,
-      class: 'economy', body: 'hatchback', seats: 5, clearance_mm: 140, drive: '2wd',
-      transmission: 'automatic', fuel: 'petrol', tank_litres: 42, consumption_kmpl: 18.5,
-      day_rate: 3500, deposit: 15000, peak_uplift: 1500, min_hire_days: 1,
-      chauffeur_metro: 2500, chauffeur_upcountry: 5000, min_driver_age: 23, min_licence_years: 2,
-      fuel_policy: 'full_to_full', mileage_cap_km: null, cross_border_ok: false },
-
-    { id: 'v-fielder', operator_id: 'op-rift', make: 'Toyota', model: 'Fielder', year: 2020,
-      class: 'economy', body: 'wagon', seats: 5, clearance_mm: 150, drive: '2wd',
-      transmission: 'automatic', fuel: 'petrol', tank_litres: 50, consumption_kmpl: 16.0,
-      day_rate: 4500, deposit: 15000, peak_uplift: 1500, min_hire_days: 1,
-      chauffeur_metro: 2500, chauffeur_upcountry: 5000, min_driver_age: 23, min_licence_years: 2,
-      fuel_policy: 'full_to_full', mileage_cap_km: null, cross_border_ok: false },
-
-    { id: 'v-axio', operator_id: 'op-savanna', make: 'Toyota', model: 'Axio', year: 2021,
-      class: 'compact', body: 'sedan', seats: 5, clearance_mm: 145, drive: '2wd',
-      transmission: 'automatic', fuel: 'petrol', tank_litres: 50, consumption_kmpl: 17.2,
-      day_rate: 5000, deposit: 18000, peak_uplift: 1500, min_hire_days: 1,
-      chauffeur_metro: 2500, chauffeur_upcountry: 5000, min_driver_age: 23, min_licence_years: 2,
-      fuel_policy: 'full_to_full', mileage_cap_km: null, cross_border_ok: false },
-
-    { id: 'v-xtrail', operator_id: 'op-savanna', make: 'Nissan', model: 'X-Trail', year: 2020,
-      class: 'crossover', body: 'suv', seats: 5, clearance_mm: 190, drive: 'awd',
-      transmission: 'automatic', fuel: 'petrol', tank_litres: 60, consumption_kmpl: 12.5,
-      day_rate: 7500, deposit: 20000, peak_uplift: 2500, min_hire_days: 2,
-      chauffeur_metro: 2500, chauffeur_upcountry: 5000, min_driver_age: 25, min_licence_years: 2,
-      fuel_policy: 'full_to_full', mileage_cap_km: null, cross_border_ok: false },
-
-    { id: 'v-rav4', operator_id: 'op-rift', make: 'Toyota', model: 'RAV4', year: 2021,
-      class: 'crossover', body: 'suv', seats: 5, clearance_mm: 195, drive: 'awd',
-      transmission: 'automatic', fuel: 'petrol', tank_litres: 55, consumption_kmpl: 13.0,
-      day_rate: 8500, deposit: 22000, peak_uplift: 2500, min_hire_days: 2,
-      chauffeur_metro: 2500, chauffeur_upcountry: 5000, min_driver_age: 25, min_licence_years: 2,
-      fuel_policy: 'full_to_full', mileage_cap_km: null, cross_border_ok: false },
-
-    { id: 'v-prado', operator_id: 'op-summit', make: 'Toyota', model: 'Land Cruiser Prado', variant: 'TX',
-      year: 2020, class: 'suv4x4', body: 'suv', seats: 7, clearance_mm: 220, drive: '4wd_low',
-      transmission: 'automatic', fuel: 'diesel', tank_litres: 87, consumption_kmpl: 10.5,
-      day_rate: 13000, deposit: 28000, peak_uplift: 4000, min_hire_days: 2,
-      chauffeur_metro: 3000, chauffeur_upcountry: 5000, min_driver_age: 25, min_licence_years: 3,
-      fuel_policy: 'full_to_full', mileage_cap_km: null, cross_border_ok: true },
-
-    { id: 'v-hilux', operator_id: 'op-summit', make: 'Toyota', model: 'Hilux', variant: 'Double Cab',
-      year: 2021, class: 'pickup', body: 'pickup', seats: 5, clearance_mm: 217, drive: '4wd_low',
-      transmission: 'manual', fuel: 'diesel', tank_litres: 80, consumption_kmpl: 11.5,
-      day_rate: 11000, deposit: 25000, peak_uplift: 3000, min_hire_days: 2,
-      chauffeur_metro: 3000, chauffeur_upcountry: 5000, min_driver_age: 25, min_licence_years: 3,
-      fuel_policy: 'full_to_full', mileage_cap_km: null, cross_border_ok: true },
-
-    { id: 'v-lc76', operator_id: 'op-summit', make: 'Toyota', model: 'Land Cruiser 76', variant: 'Safari conversion',
-      year: 2019, class: 'safari', body: 'safari', seats: 7, clearance_mm: 235, drive: '4wd_low',
-      transmission: 'manual', fuel: 'diesel', tank_litres: 130, consumption_kmpl: 8.5,
-      day_rate: 18000, deposit: 30000, peak_uplift: 5000, min_hire_days: 3,
-      chauffeur_metro: 3500, chauffeur_upcountry: 5000, min_driver_age: 28, min_licence_years: 4,
-      fuel_policy: 'full_to_full', mileage_cap_km: null, cross_border_ok: true,
-      note: 'Pop-up roof hatch, long-range tank, dual spares.' },
-
-    { id: 'v-eclass', operator_id: 'op-savanna', make: 'Mercedes-Benz', model: 'E-Class', year: 2021,
-      class: 'luxury', body: 'sedan', seats: 4, clearance_mm: 130, drive: '2wd',
-      transmission: 'automatic', fuel: 'petrol', tank_litres: 66, consumption_kmpl: 11.0,
-      day_rate: 20000, deposit: 30000, peak_uplift: 2000, min_hire_days: 1,
-      chauffeur_metro: 4000, chauffeur_upcountry: 6000, min_driver_age: 30, min_licence_years: 4,
-      fuel_policy: 'full_to_full', mileage_cap_km: 200, cross_border_ok: false },
-
-    { id: 'v-hiace', operator_id: 'op-pwani', make: 'Toyota', model: 'HiAce', variant: '14-seater',
-      year: 2020, class: 'van', body: 'minivan', seats: 14, clearance_mm: 185, drive: '2wd',
-      transmission: 'manual', fuel: 'diesel', tank_litres: 70, consumption_kmpl: 11.0,
-      day_rate: 9500, deposit: 25000, peak_uplift: 2500, min_hire_days: 1,
-      chauffeur_metro: 3000, chauffeur_upcountry: 5000, min_driver_age: 28, min_licence_years: 3,
-      fuel_policy: 'full_to_full', mileage_cap_km: null, cross_border_ok: false },
-
-    { id: 'v-noah', operator_id: 'op-pwani', make: 'Toyota', model: 'Noah', year: 2019,
-      class: 'van', body: 'minivan', seats: 7, clearance_mm: 160, drive: '2wd',
-      transmission: 'automatic', fuel: 'petrol', tank_litres: 60, consumption_kmpl: 13.5,
-      day_rate: 6500, deposit: 18000, peak_uplift: 2000, min_hire_days: 1,
-      chauffeur_metro: 2500, chauffeur_upcountry: 5000, min_driver_age: 25, min_licence_years: 2,
-      fuel_policy: 'full_to_full', mileage_cap_km: null, cross_border_ok: false },
-
-    { id: 'v-pajero', operator_id: 'op-rift', make: 'Mitsubishi', model: 'Pajero', year: 2018,
-      class: 'suv4x4', body: 'suv', seats: 7, clearance_mm: 225, drive: '4wd_low',
-      transmission: 'automatic', fuel: 'diesel', tank_litres: 88, consumption_kmpl: 9.8,
-      day_rate: 12000, deposit: 25000, peak_uplift: 3500, min_hire_days: 2,
-      chauffeur_metro: 3000, chauffeur_upcountry: 5000, min_driver_age: 25, min_licence_years: 3,
-      fuel_policy: 'full_to_full', mileage_cap_km: null, cross_border_ok: true }
+  /* Cities people actually collect a car in. Nothing is preselected;
+     the list exists so a guest can say where they are, not so we can
+     guess for them. */
+  const CITIES = [
+    { key: 'nairobi',   label: 'Nairobi',            hint: 'JKIA, Wilson, city depots' },
+    { key: 'mombasa',   label: 'Mombasa',            hint: 'Moi International, Nyali' },
+    { key: 'diani',     label: 'Diani & South Coast', hint: 'Ukunda airstrip' },
+    { key: 'malindi',   label: 'Malindi & Watamu',   hint: 'Malindi airport' },
+    { key: 'kisumu',    label: 'Kisumu',             hint: 'Kisumu International' },
+    { key: 'nakuru',    label: 'Nakuru',             hint: 'Town depots' },
+    { key: 'naivasha',  label: 'Naivasha',           hint: 'Moi South Lake Road' },
+    { key: 'nanyuki',   label: 'Nanyuki',            hint: 'Gateway to Mount Kenya' },
+    { key: 'eldoret',   label: 'Eldoret',            hint: 'Eldoret International' },
+    { key: 'kilifi',    label: 'Kilifi',             hint: 'Town depots' }
   ];
 
   const CLASSES = [
@@ -505,20 +429,19 @@
      page is never empty, and say which one is on screen.
      ═══════════════════════════════════════════════════════════════ */
   async function loadFleet(sb) {
-    if (!sb) return { source: 'catalogue', fleet: FLEET, operators: OPERATORS };
+    if (!sb) return { source: 'empty', fleet: [], operators: [], error: 'offline' };
     try {
       const { data: veh, error: e1 } = await sb
         .from('car_fleet').select('*').eq('status', 'active').limit(200);
-      if (e1 || !veh || !veh.length) throw new Error('empty');
+      if (e1) throw e1;
       const { data: ops } = await sb.from('car_operators').select('*').eq('verified', true);
       return {
-        source: 'live',
-        fleet: veh.map(r => ({
+        source: (veh && veh.length) ? 'live' : 'empty',
+        fleet: (veh || []).map(r => ({
           ...r,
-          /* The column is ground_clearance_mm; the route engine grades on
-             clearance_mm. Without this the comparison is NaN and every
-             vehicle silently grades "cleared" — including a saloon on the
-             Mara. Drop any row that cannot be graded rather than sell it. */
+          /* Column is ground_clearance_mm; the route engine grades on
+             clearance_mm. Unmapped, every comparison is NaN and a saloon
+             grades clear for the Mara. */
           clearance_mm: r.ground_clearance_mm,
           day_rate: fromMinor(r.day_rate),
           deposit: fromMinor(r.deposit),
@@ -526,17 +449,17 @@
           chauffeur_metro: fromMinor(r.chauffeur_uplift_metro),
           chauffeur_upcountry: fromMinor(r.chauffeur_uplift_upcountry)
         })),
-        operators: ops || OPERATORS
+        operators: ops || []
       };
-    } catch (_) {
-      return { source: 'catalogue', fleet: FLEET, operators: OPERATORS };
+    } catch (err) {
+      return { source: 'error', fleet: [], operators: [], error: String(err.message || err) };
     }
   }
 
   /* ── EXPORT ──────────────────────────────────────────────────── */
   global.CabanaCarHire = {
     KES, toMinor, fromMinor,
-    ROUTES, ROUTE_BY_KEY, CLASSES, DRIVE_LABEL, INSURANCE, EXTRAS, DELIVERY,
+    ROUTES, ROUTE_BY_KEY, CLASSES, CITIES, DRIVE_LABEL, INSURANCE, EXTRAS, DELIVERY,
     FLEET, OPERATORS,
     seasonFor, grade, quote, durationDiscount, silhouette, loadFleet
   };

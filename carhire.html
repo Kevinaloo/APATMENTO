@@ -23,7 +23,7 @@
 <meta name="author" content="Cabana"/>
 <meta name="geo.region" content="KE"/>
 <meta name="geo.placename" content="Kenya"/>
-<meta name="theme-color" content="#0A0D11"/>
+<meta name="theme-color" content="#FAFAFC"/>
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
@@ -71,198 +71,144 @@
 <link rel="stylesheet" href="/cabana-carhire.css"/>
 
 <style>
-  /* Page-local chrome. The topbar is the only element shared with the
-     rest of the site, restyled here for the dark instrument surface. */
+  /* Page-local reset only. All colour now lives in cabana-carhire.css
+     so the light and dark themes can both own the page. */
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-  html,body{min-height:100%;background:#0A0D11;}
-  .ch-top{
-    position:sticky;top:0;z-index:50;display:flex;align-items:center;
-    justify-content:space-between;gap:12px;padding:12px 22px;
-    background:rgba(10,13,17,.86);backdrop-filter:blur(14px);
-    border-bottom:1px solid rgba(237,230,216,.09);
-  }
-  .ch-top-l{display:flex;align-items:center;gap:11px;min-width:0;}
-  .ch-back{
-    width:34px;height:34px;border-radius:9px;flex:0 0 auto;
-    display:flex;align-items:center;justify-content:center;
-    background:rgba(237,230,216,.05);border:1px solid rgba(237,230,216,.12);
-    color:#9BA4B0;text-decoration:none;transition:all .18s;
-  }
-  .ch-back:hover{color:#EDE6D8;border-color:rgba(237,230,216,.28);}
-  .ch-top img.mark{height:26px;width:auto;display:block;}
-  .ch-top img.word{height:17px;width:auto;display:block;filter:brightness(0) invert(1);opacity:.92;}
-  .ch-list{
-    display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:100px;
-    background:rgba(216,166,87,.12);border:1px solid rgba(216,166,87,.35);color:#D8A657;
-    font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:600;
-    letter-spacing:.1em;text-transform:uppercase;text-decoration:none;transition:all .18s;
-  }
-  .ch-list:hover{background:#D8A657;color:#0A0D11;}
-  @media(max-width:620px){
-    .ch-top{padding:10px 16px;}
-    .ch-top img.word{display:none;}
-    .ch-list span{display:none;}
-    .ch-list{padding:8px 10px;}
-  }
+  html{min-height:100%;-webkit-text-size-adjust:100%;}
+  body.ch-body{min-height:100%;font-family:var(--font-body,'Inter',system-ui,sans-serif);}
+  img{max-width:100%;}
+  summary::-webkit-details-marker{display:none;}
 </style>
 </head>
 <body class="ch-body">
 
 <div class="ch-wrap">
 
-  <!-- ── TOPBAR ─────────────────────────────────────────────── -->
-  <header class="ch-top">
-    <div class="ch-top-l">
-      <a href="dashboard.html?role=guest&back=1" class="ch-back" aria-label="Back to dashboard">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-          stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-      </a>
-      <img src="cabana-emblem.png" class="mark" alt="" fetchpriority="high" decoding="async"/>
-      <img src="cabana-wordmark-white.png" class="word" alt="Cabana"
-        onerror="this.style.display='none'" decoding="async"/>
-    </div>
-    <a href="partner-listings.html" class="ch-list">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-        stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-      <span>List your vehicle</span>
-    </a>
-  </header>
-
-  <!-- ── HERO · THE BRIEF ───────────────────────────────────── -->
+  <main>
+  <!-- ══ HERO + SEARCH ═══════════════════════════════════════════ -->
   <section class="ch-hero">
-    <p class="ch-eyebrow">Car hire · Kenya</p>
-    <h1 class="ch-h1">The road decides<br/>the car. <em>Not the brochure.</em></h1>
-    <p class="ch-sub">
-      Tell us where you are actually driving and when. Every vehicle is then graded
-      against that road — real ground clearance, real drivetrain, real fuel range,
-      in the season you are travelling. The price you see is the price you pay.
-    </p>
+    <div class="ch-shell">
+      <span class="ch-eyebrow">Car hire · Kenya</span>
+      <h1 class="ch-h1">Hire a car in Kenya.</h1>
+      <p class="ch-sub">
+        Tell us where you are collecting and for how long. You will see the full
+        price of the hire, from operators we have verified, with nothing added at the counter.
+      </p>
 
-    <div class="ch-brief">
-      <div class="ch-brief-sec">
-        <span class="ch-lbl" style="margin-bottom:10px">Where are you driving?</span>
-        <div class="ch-rail" id="ch-routes" role="group" aria-label="Choose your route"></div>
-      </div>
-
-      <div class="ch-brief-sec">
-        <div class="ch-dates">
-          <div class="ch-field">
-            <label class="ch-lbl" for="ch-start">Collect</label>
-            <input type="date" id="ch-start"/>
-          </div>
-          <div class="ch-field">
-            <label class="ch-lbl" for="ch-end">Return</label>
-            <input type="date" id="ch-end"/>
-          </div>
-          <div class="ch-days">
-            <span class="n" id="ch-days-n">4</span>
-            <span class="u" id="ch-days-u">days</span>
-          </div>
+      <form class="ch-search" id="ch-form">
+        <div class="ch-f ch-f-city">
+          <label for="ch-city">Collecting in</label>
+          <select id="ch-city" required></select>
         </div>
-      </div>
+        <div class="ch-f">
+          <label for="ch-from">Collect</label>
+          <input type="date" id="ch-from" required>
+        </div>
+        <div class="ch-f">
+          <label for="ch-to">Return</label>
+          <input type="date" id="ch-to" required>
+        </div>
+        <button type="submit" class="ch-go" id="ch-go" disabled>Find cars</button>
+      </form>
 
-      <div class="ch-demands" id="ch-demands" aria-live="polite"></div>
-      <p class="ch-note" id="ch-note"></p>
+      <div class="ch-meta" id="ch-meta"></div>
+
+      <!-- Optional. Closed until the guest asks for it. -->
+      <details class="ch-refine" id="ch-refine">
+        <summary class="ch-refine-t" style="list-style:none">
+          Check a vehicle against the road you are driving
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </summary>
+        <div class="ch-refine-body">
+          <div class="ch-rail-hold">
+            <div class="ch-rail" id="ch-routes" role="group" aria-label="Choose the road you are driving"></div>
+          </div>
+          <div id="ch-demands" style="margin-top:14px"></div>
+        </div>
+      </details>
     </div>
   </section>
 
-  <!-- ── FLEET + LEDGER ─────────────────────────────────────── -->
-  <main class="ch-main">
-    <div>
-      <div class="ch-rail" id="ch-classes" role="group"
-        aria-label="Filter by class" style="margin-bottom:16px"></div>
+  <!-- ══ RESULTS ═════════════════════════════════════════════════ -->
+  <section class="ch-results" id="ch-results" hidden>
+    <div class="ch-shell">
+      <div class="ch-rail-hold" style="margin-bottom:18px">
+        <div class="ch-rail" id="ch-classes" role="group" aria-label="Filter by vehicle type"></div>
+      </div>
 
-      <div class="ch-toolbar">
-        <p class="ch-count">
-          <b id="ch-count-n">0</b> vehicles<span id="ch-count-fit"></span>
-        </p>
+      <div class="ch-bar" id="ch-bar" hidden>
+        <div class="ch-count" id="ch-count"></div>
         <label class="ch-sr" for="ch-sort">Sort vehicles</label>
         <select class="ch-sort" id="ch-sort">
-          <option value="fit">Best fit for this route</option>
-          <option value="price">Total price, lowest first</option>
-          <option value="price_desc">Total price, highest first</option>
+          <option value="price">Lowest total first</option>
+          <option value="price_desc">Highest total first</option>
           <option value="seats">Most seats</option>
+          <option value="fit" hidden>Best fit for the road</option>
         </select>
       </div>
 
       <div class="ch-grid" id="ch-grid"></div>
-      <p class="ch-lbl" id="ch-src" style="margin-top:20px;text-align:center"></p>
-    </div>
-
-    <!-- The landed price ledger -->
-    <aside class="ch-ledger" aria-label="Price breakdown">
-      <div class="ch-ledger-head">
-        <p class="t">What it actually costs</p>
-        <p class="ch-lbl" style="margin-top:4px">Every line, before you commit</p>
-      </div>
-      <div class="ch-ledger-body" id="ch-ledger-body"></div>
-      <div id="ch-ledger-foot"></div>
-    </aside>
-  </main>
-
-  <!-- ── EDITORIAL · why this page works the way it does ────── -->
-  <section class="ch-hero" style="padding-bottom:80px">
-    <h2 class="ch-h1" style="font-size:clamp(22px,3.4vw,32px);max-width:22ch">
-      Three things that go wrong when you hire a car in Kenya.
-    </h2>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
-      gap:1px;background:var(--ch-hair);border:1px solid var(--ch-hair);
-      border-radius:var(--ch-r-lg);overflow:hidden;margin-top:22px">
-      <div style="background:var(--ch-panel);padding:22px">
-        <p class="ch-lbl" style="color:var(--ch-murram)">The wrong vehicle</p>
-        <p style="font-size:14px;line-height:1.7;color:var(--ch-read-2);margin-top:10px">
-          A saloon cannot safely handle most park roads, and the Mara's black cotton soil
-          turns to glue in the long rains. We grade every vehicle against the road and the
-          season, and refuse to sell you a pairing that will strand you.
-        </p>
-      </div>
-      <div style="background:var(--ch-panel);padding:22px">
-        <p class="ch-lbl" style="color:var(--ch-murram)">The price that moves</p>
-        <p style="font-size:14px;line-height:1.7;color:var(--ch-read-2);margin-top:10px">
-          The advertised day rate is rarely what you pay. Insurance excess, airport handover,
-          seasonal uplift and driver overtime all land at the counter. Here they land in the
-          ledger instead, before you decide.
-        </p>
-      </div>
-      <div style="background:var(--ch-panel);padding:22px">
-        <p class="ch-lbl" style="color:var(--ch-murram)">The deposit surprise</p>
-        <p style="font-size:14px;line-height:1.7;color:var(--ch-read-2);margin-top:10px">
-          Operators hold KES 15,000 to 30,000 on collection, and many travellers arrive
-          without the headroom. We show the deposit for every vehicle from the first screen,
-          and the zero-excess tier removes it entirely.
-        </p>
-      </div>
     </div>
   </section>
 
-  <!-- ── COMPARE TRAY ───────────────────────────────────────── -->
-  <div class="ch-tray" id="ch-tray">
-    <div class="ch-tray-in">
-      <div class="ch-tray-cars" id="ch-tray-cars"></div>
-      <button class="ch-sort" id="ch-tray-clear" type="button">Clear</button>
-      <button class="ch-cta" id="ch-tray-go" type="button"
-        style="width:auto;margin:0;padding:11px 18px">Compare</button>
+  <!-- ══ OPERATORS ═══════════════════════════════════════════════ -->
+  <section style="padding:0 0 90px">
+    <div class="ch-shell">
+      <div class="ch-listing">
+        <div>
+          <span class="ch-eyebrow">For car hire companies</span>
+          <h2>List your fleet and keep every shilling.</h2>
+          <p>
+            Cabana takes no commission on a hire. You set your rates, your deposit and your
+            terms, and the guest pays you directly. We handle the listing, the enquiry and
+            the calendar.
+          </p>
+          <div class="ch-state-acts" style="justify-content:flex-start">
+            <a class="ch-btn ch-btn-primary" href="/become-partner.html">List your fleet</a>
+            <a class="ch-btn ch-btn-ghost" href="/partner-listings.html">Manage listings</a>
+          </div>
+        </div>
+        <div class="ch-facts">
+          <div class="ch-fact">
+            <div class="ch-fact-n">0%</div>
+            <div class="ch-fact-t"><b>Commission</b>The rate you set is the rate you are paid.</div>
+          </div>
+          <div class="ch-fact">
+            <div class="ch-fact-n">1</div>
+            <div class="ch-fact-t"><b>Verification</b>We check your registration, insurance and licence once, then you are live.</div>
+          </div>
+          <div class="ch-fact">
+            <div class="ch-fact-n">24h</div>
+            <div class="ch-fact-t"><b>To go live</b>Add a vehicle with its specs and rates, and it appears in search.</div>
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
+  </section>
+  </main>
 </div>
 
-<!-- ── SHEET ────────────────────────────────────────────────── -->
+<!-- ══ THEME ═══════════════════════════════════════════════════ -->
+<button type="button" class="ch-theme" id="ch-theme" aria-label="Switch theme"></button>
+
+<!-- ══ SHEET ═══════════════════════════════════════════════════ -->
 <div class="ch-scrim" id="ch-scrim"></div>
 <div class="ch-sheet" id="ch-sheet" role="dialog" aria-modal="true" aria-labelledby="ch-sheet-title">
   <div class="ch-sheet-grab"></div>
   <div class="ch-sheet-head">
-    <div>
-      <h2 id="ch-sheet-title">Vehicle</h2>
-      <p class="ch-lbl" id="ch-sheet-meta"></p>
-    </div>
-    <button class="ch-x" id="ch-sheet-close" type="button" aria-label="Close">✕</button>
+    <h3 id="ch-sheet-title">Vehicle</h3>
+    <button type="button" class="ch-x" aria-label="Close">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="2.4" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
   </div>
   <div class="ch-sheet-body" id="ch-sheet-body"></div>
+  <div class="ch-sheet-foot" id="ch-sheet-foot"></div>
 </div>
 
 <div class="ch-toast" id="ch-toast" role="status" aria-live="polite"></div>
 
-<!-- ── SCRIPTS ──────────────────────────────────────────────── -->
 <script src="/vendor-supabase-2.112.3.js"></script>
 <script src="/apa-session.js"></script>
 <script>
