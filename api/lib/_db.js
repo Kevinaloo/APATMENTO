@@ -46,6 +46,23 @@ export async function update(table, query, patch) {
   return (await r.json())[0] || null;
 }
 
+/* Insert, or merge into the existing row when `conflict` already matches.
+   PostgREST needs both the resolution=merge-duplicates preference and the
+   on_conflict column named explicitly; without the latter it resolves
+   against the primary key only, which silently inserts a duplicate on any
+   table keyed by something else. */
+export async function upsert(table, row, conflict) {
+  const qs = conflict ? `?on_conflict=${encodeURIComponent(conflict)}` : '';
+  const r = await fetch(`${URL}/rest/v1/${table}${qs}`, {
+    method: 'POST',
+    headers: headers({ Prefer: 'resolution=merge-duplicates,return=representation' }),
+    body: JSON.stringify(row),
+  });
+  if (!r.ok) throw new Error(`upsert ${table}: ${await r.text()}`);
+  const txt = await r.text();
+  return txt ? (JSON.parse(txt)[0] || null) : null;
+}
+
 export async function rpc(fn, args = {}) {
   const r = await fetch(`${URL}/rest/v1/rpc/${fn}`, {
     method: 'POST', headers: headers(), body: JSON.stringify(args),

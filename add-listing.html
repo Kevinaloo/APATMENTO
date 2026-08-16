@@ -210,6 +210,29 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
 .rsm-no{width:100%;padding:12px;border:0;border-radius:13px;background:transparent;color:var(--ink-faint,#8b93a8);font-size:13.5px;font-weight:600;cursor:pointer;}
 .rsm-no:hover{color:var(--ink,#12162a);}
 #city-sugg .addr-sw{position:absolute;z-index:60;left:0;right:0;}
+
+/* --- verification prompt --- */
+.vfy-wrap{position:fixed;inset:0;z-index:9100;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(15,18,32,0.46);backdrop-filter:blur(7px);opacity:0;transition:opacity .24s ease;overflow-y:auto;}
+.vfy-wrap.in{opacity:1;}
+.vfy-card{background:var(--surface,#fff);border-radius:24px;max-width:452px;width:100%;padding:32px 30px;box-shadow:0 26px 76px rgba(15,18,32,0.3);transform:translateY(16px) scale(.98);transition:transform .3s cubic-bezier(.22,1,.36,1);}
+.vfy-wrap.in .vfy-card{transform:none;}
+.vfy-badge{width:52px;height:52px;border-radius:15px;background:var(--grad,linear-gradient(135deg,#4361ff,#7048e8));display:flex;align-items:center;justify-content:center;margin-bottom:17px;}
+.vfy-badge svg{width:25px;height:25px;color:#fff;}
+.vfy-eyebrow{font-size:11px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--electric,#4361ff);margin-bottom:8px;}
+.vfy-title{font-family:var(--font-head,inherit);font-size:22px;font-weight:800;line-height:1.28;color:var(--ink,#12162a);margin:0 0 10px;}
+.vfy-sub{font-size:14px;line-height:1.6;color:var(--ink-soft,#555d75);margin:0 0 16px;}
+.vfy-list{list-style:none;padding:0;margin:0 0 16px;}
+.vfy-list li{position:relative;padding-left:24px;font-size:13.5px;line-height:1.5;color:var(--ink-soft,#555d75);margin-bottom:8px;}
+.vfy-list li:before{content:'';position:absolute;left:6px;top:8px;width:6px;height:6px;border-radius:50%;background:var(--electric,#4361ff);}
+.vfy-priv{font-size:12.5px;line-height:1.5;color:var(--ink-faint,#8b93a8);background:var(--surface-2,#f5f6fa);border-radius:11px;padding:11px 13px;}
+.vfy-actions{display:flex;flex-direction:column;gap:9px;margin-top:20px;}
+.vfy-go{width:100%;padding:15px;border:0;border-radius:13px;background:var(--grad,linear-gradient(135deg,#4361ff,#7048e8));color:#fff;font-size:15px;font-weight:800;cursor:pointer;transition:transform .18s,box-shadow .18s;}
+.vfy-go:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 10px 26px rgba(67,97,255,.32);}
+.vfy-go:disabled{opacity:.65;cursor:default;}
+.vfy-later{width:100%;padding:12px;border:0;border-radius:13px;background:transparent;color:var(--ink-faint,#8b93a8);font-size:13.5px;font-weight:600;cursor:pointer;}
+.vfy-later:hover{color:var(--ink,#12162a);}
+.vfy-chip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;color:#0d7a4a;background:rgba(16,163,95,.11);border-radius:99px;padding:4px 10px;}
+.vfy-chip svg{width:11px;height:11px;}
 </style>
 
   <link rel="canonical" href="https://cabana.africa/add-listing"/>
@@ -503,6 +526,7 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
      out of <head> so everything above renders without waiting on it. -->
 <script src="/vendor-supabase-2.112.3.js"></script>
 <script src="/apa-africa.js"></script>
+<script src="/apa-verify.js"></script>
 <script src="/apa-listing-draft.js"></script>
 <script src="/apa-session.js"></script>
 <script>
@@ -526,6 +550,13 @@ const FROM=QP.has('from')||QP.has('edit')||QP.has('prefill')||document.referrer.
     /* Draft memory. Never offered mid-edit or mid-prefill: in those flows
        the host already has real content loaded and a resume prompt would
        be asking them to overwrite it. */
+    /* Coming back from the hosted check. Refresh status, then resume the
+       draft so the partner lands back on their listing rather than an
+       empty wizard. */
+    if(QP.has('verified')&&window.APA_VERIFY){
+      const vs=await APA_VERIFY.status(true);
+      if((vs.cleared_tier||0)>0)window._vfyCleared=true;
+    }
     if(window.APA_DRAFT){
       APA_DRAFT.init(CU.id);
       if(!QP.has('edit')&&!QP.has('prefill')&&!QP.has('service')){
@@ -876,6 +907,31 @@ function bldRv(){collect(6);const S=SVCS[F.svc];
 }
 
 async function publish(){
+  /* Verification gate. Deliberately here at publish and not at step 0:
+     the partner has already written the listing, so the ID request lands
+     as the last step of something nearly done rather than a toll booth at
+     the entrance. The draft is kept if they choose to verify later, so
+     nothing they typed is lost either way. */
+  if(window.APA_VERIFY&&!window._vfyCleared&&!window._eid){
+    try{
+      const g=await APA_VERIFY.required(F.svc);
+      if(g.required&&!g.ok){
+        if(window.APA_DRAFT)APA_DRAFT.saveNow(F,cur);   // survive the redirect to Didit
+        APA_VERIFY.prompt({
+          context:F.svc,
+          country:F.country,
+          need:g.need,
+          serviceLabel:((SVCS[F.svc]||{}).lbl||'listing').toLowerCase(),
+          onVerified:()=>{window._vfyCleared=true;publish();},
+          onLater:()=>{al('Saved. Your listing is waiting for you \u2014 verify whenever you are ready and it goes live.');}
+        });
+        return;
+      }
+    }catch(e){/* status unreachable: fall through rather than block a
+                 legitimate publish on a transient network failure. The
+                 database RLS remains the real gate. */}
+  }
+
   collect(6);const btn=document.getElementById('pub-btn');btn.classList.add('loading');
   try{
     const pu=[];const ord=[cov,...Array.from({length:F.photoFiles.length},(_,i)=>i).filter(i=>i!==cov)];

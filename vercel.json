@@ -304,9 +304,24 @@
     },
     "api/email.js": {
       "maxDuration": 15
+    },
+    "api/verify.js": {
+      "maxDuration": 20
     }
   },
   "rewrites": [
+    {
+      "source": "/api/didit-webhook",
+      "destination": "/api/verify?action=webhook"
+    },
+    {
+      "source": "/api/verify-status",
+      "destination": "/api/verify?action=status"
+    },
+    {
+      "source": "/api/verify-start",
+      "destination": "/api/verify?action=start"
+    },
     {
       "source": "/api/match-guest",
       "destination": "/api/trust?action=match-guest"
