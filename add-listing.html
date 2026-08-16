@@ -194,6 +194,22 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
 .sa-p:hover{transform:translateY(-2px);box-shadow:0 12px 36px rgba(67,97,255,0.38);}
 .sa-g{display:block;padding:12px;border-radius:11px;background:var(--surface);border:1.5px solid var(--line-2);color:var(--ink-soft);font-family:var(--font-head);font-weight:700;font-size:14px;text-decoration:none;transition:all .2s;}
 .sa-g:hover{border-color:var(--ink-soft);color:var(--ink);}
+
+/* --- resume-draft card --- */
+.rsm-wrap{position:fixed;inset:0;z-index:9000;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(15,18,32,0.42);backdrop-filter:blur(6px);opacity:0;transition:opacity .24s ease;}
+.rsm-wrap.in{opacity:1;}
+.rsm-card{background:var(--surface,#fff);border-radius:22px;max-width:430px;width:100%;padding:30px 28px;box-shadow:0 24px 70px rgba(15,18,32,0.28);transform:translateY(14px) scale(.98);transition:transform .28s cubic-bezier(.22,1,.36,1);}
+.rsm-wrap.in .rsm-card{transform:none;}
+.rsm-eyebrow{font-size:11px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--electric,#4361ff);margin-bottom:9px;}
+.rsm-title{font-family:var(--font-head,inherit);font-size:22px;font-weight:800;line-height:1.25;color:var(--ink,#12162a);margin:0 0 9px;}
+.rsm-sub{font-size:14px;line-height:1.55;color:var(--ink-soft,#555d75);margin:0 0 4px;}
+.rsm-note{font-size:12.5px;line-height:1.5;color:var(--ink-faint,#8b93a8);background:var(--surface-2,#f5f6fa);border-radius:11px;padding:10px 12px;margin-top:13px;}
+.rsm-actions{display:flex;flex-direction:column;gap:9px;margin-top:22px;}
+.rsm-go{width:100%;padding:14px;border:0;border-radius:13px;background:var(--grad,linear-gradient(135deg,#4361ff,#7048e8));color:#fff;font-size:14.5px;font-weight:800;cursor:pointer;transition:transform .18s,box-shadow .18s;}
+.rsm-go:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(67,97,255,.3);}
+.rsm-no{width:100%;padding:12px;border:0;border-radius:13px;background:transparent;color:var(--ink-faint,#8b93a8);font-size:13.5px;font-weight:600;cursor:pointer;}
+.rsm-no:hover{color:var(--ink,#12162a);}
+#city-sugg .addr-sw{position:absolute;z-index:60;left:0;right:0;}
 </style>
 
   <link rel="canonical" href="https://cabana.africa/add-listing"/>
@@ -302,8 +318,8 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
       <div class="fsec">
         <div class="fsec-title">Location</div>
         <div class="row2">
-          <div class="field"><label class="flbl">Country</label><select class="fsel" id="f-country"><option>Kenya</option><option>Tanzania</option><option>Uganda</option><option>Rwanda</option><option>Ethiopia</option></select></div>
-          <div class="field"><label class="flbl">City</label><input class="finput" id="f-city" placeholder="Nairobi"/></div>
+          <div class="field"><label class="flbl">Country</label><select class="fsel" id="f-country" onchange="onCountry()"></select></div>
+          <div class="field" style="position:relative"><label class="flbl">City</label><input class="finput" id="f-city" placeholder="Start typing any city in Africa..." autocomplete="off" oninput="cityIn(this)" onblur="setTimeout(()=>{const b=document.getElementById('city-sugg');if(b)b.innerHTML='';},180)"/><div id="city-sugg"></div></div>
         </div>
         <div class="row2">
           <div class="field"><label class="flbl">Area or neighbourhood</label><input class="finput" id="f-area" placeholder="Westlands"/></div>
@@ -374,7 +390,7 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
       <div class="fsec">
         <div class="fsec-title">Pricing</div>
         <div class="row2">
-          <div class="field"><label class="flbl">Currency</label><select class="fsel" id="f-cur"><option>KES</option><option>USD</option></select></div>
+          <div class="field"><label class="flbl">Currency</label><select class="fsel" id="f-cur"></select></div>
           <div class="field"><label class="flbl" id="s5rl">Rate</label><input class="finput" id="f-price" type="number" placeholder="4500"/></div>
         </div>
         <div class="row2" id="s5-extra" style="display:none;">
@@ -486,6 +502,8 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
      immediately below calls createClient() during parse, but moved
      out of <head> so everything above renders without waiting on it. -->
 <script src="/vendor-supabase-2.112.3.js"></script>
+<script src="/apa-africa.js"></script>
+<script src="/apa-listing-draft.js"></script>
 <script src="/apa-session.js"></script>
 <script>
 const SBU='https://gfwgbgdvxtocwhilrtdw.supabase.co';
@@ -504,8 +522,93 @@ const FROM=QP.has('from')||QP.has('edit')||QP.has('prefill')||document.referrer.
     if(QP.has('edit')){const{data:l}=await sb.from('listings').select('*').eq('id',QP.get('edit')).eq('partner_id',CU.id).single();if(l){window._eid=QP.get('edit');setTimeout(()=>loadEdit(l),200);}}
     if(QP.has('prefill')){try{const r=sessionStorage.getItem('apa-import-prefill');if(r){const p=JSON.parse(r);sessionStorage.removeItem('apa-import-prefill');setTimeout(()=>loadPrefill(p),200);}}catch(e){}}
     if(QP.has('service')){const s=QP.get('service');if(SVCS[s]){F.svc=s;document.querySelectorAll('.svc-card').forEach(c=>{if(c.dataset.svc===s)c.classList.add('sel');});go(1);}}
+
+    /* Draft memory. Never offered mid-edit or mid-prefill: in those flows
+       the host already has real content loaded and a resume prompt would
+       be asking them to overwrite it. */
+    if(window.APA_DRAFT){
+      APA_DRAFT.init(CU.id);
+      if(!QP.has('edit')&&!QP.has('prefill')&&!QP.has('service')){
+        const d=APA_DRAFT.load();
+        if(d&&d.form&&d.form.svc)setTimeout(()=>offerResume(d),260);
+      }
+    }
   }catch(e){}
 })();
+
+/* ---------- draft: resume, apply, discard ---------- */
+
+function offerResume(d){
+  const S=SVCS[d.form.svc];
+  const label=(S&&S.lbl)||d.form.svc;
+  const title=d.form.title?('\u201c'+d.form.title+'\u201d'):('an unfinished '+label.toLowerCase()+' listing');
+  const stepName=(APA_DRAFT.STEP_LABELS[d.step]||'the start');
+  const photoNote=d.photoCount?('<div class="rsm-note">'+d.photoCount+' photo'+(d.photoCount===1?'':'s')+' will need re-adding \u2014 images are not stored on your device between visits.</div>'):'';
+
+  const el=document.createElement('div');
+  el.className='rsm-wrap';
+  el.id='rsm-wrap';
+  el.innerHTML=
+    '<div class="rsm-card">'+
+      '<div class="rsm-eyebrow">Welcome back</div>'+
+      '<h2 class="rsm-title">You were listing '+title+'</h2>'+
+      '<p class="rsm-sub">You stopped at <strong>'+stepName+'</strong>, '+APA_DRAFT.ago(d.savedAt)+'. Everything you typed is still here.</p>'+
+      photoNote+
+      '<div class="rsm-actions">'+
+        '<button class="rsm-go" onclick="applyDraft()">Continue where I left off</button>'+
+        '<button class="rsm-no" onclick="discardDraft()">Start something new</button>'+
+      '</div>'+
+    '</div>';
+  document.body.appendChild(el);
+  window._draft=d;
+  requestAnimationFrame(()=>el.classList.add('in'));
+}
+
+function closeResume(){const el=document.getElementById('rsm-wrap');if(el){el.classList.remove('in');setTimeout(()=>el.remove(),240);}}
+
+function applyDraft(){
+  const d=window._draft;if(!d){closeResume();return;}
+  Object.keys(d.form).forEach(k=>{ if(k!=='photos'&&k!=='photoFiles') F[k]=d.form[k]; });
+  F.photos=[];F.photoFiles=[];
+  document.querySelectorAll('.svc-card').forEach(c=>c.classList.toggle('sel',c.dataset.svc===F.svc));
+  closeResume();
+  /* Photos were never persisted, so never drop the host back on the photo
+     step with an empty grid — that reads as data loss. Step back one. */
+  const target=Math.min(d.step===6?5:d.step,7);
+  go(target);
+  setTimeout(()=>{restAll();},60);
+}
+
+function discardDraft(){
+  if(window.APA_DRAFT)APA_DRAFT.discard(window._draft&&window._draft.form&&window._draft.form.svc);
+  window._draft=null;
+  closeResume();
+}
+
+/* Push saved values back into whichever inputs are currently mounted. */
+function restAll(){
+  const sv=(id,v)=>{const el=document.getElementById(id);if(el&&v!==undefined&&v!==null&&v!=='')el.value=v;};
+  sv('f-title',F.title);sv('f-country',F.country);sv('f-city',F.city);sv('f-area',F.area);
+  sv('f-street',F.street);sv('f-lat',F.lat);sv('f-lng',F.lng);sv('f-desc',F.desc);
+  sv('f-rules',F.rules);
+  if(typeof onCountry==='function'&&document.getElementById('f-country'))onCountry();
+  if(typeof restDet==='function')restDet();
+  if(typeof restPr==='function')restPr();
+}
+
+/* Autosave. Debounced inside APA_DRAFT, so wiring it to every input and
+   change event on the page is cheap. */
+function draftTouch(){
+  if(!window.APA_DRAFT||!F.svc)return;
+  if(window._eid)return;                    // editing a live listing, not a draft
+  try{ if(typeof collect==='function')collect(cur); }catch(e){}
+  APA_DRAFT.save(F,cur);
+}
+document.addEventListener('input',draftTouch,true);
+document.addEventListener('change',draftTouch,true);
+window.addEventListener('beforeunload',()=>{
+  if(window.APA_DRAFT&&F.svc&&!window._eid){try{collect(cur);}catch(e){}APA_DRAFT.saveNow(F,cur);}
+});
 
 const SVCS={
   stays:{lbl:'Stays',pp:'Per night',extra:true,sf:true,tog:true,
@@ -605,6 +708,7 @@ function go(n){
   document.getElementById('snum').textContent=cur;
   window.scrollTo({top:0,behavior:'smooth'});
   if(n>=1&&F.svc)bldStep(n);
+  if(window.APA_DRAFT&&F.svc&&!window._eid)APA_DRAFT.saveNow(F,cur);
 }
 
 function bldStep(n){
@@ -640,7 +744,72 @@ function togFt(el){el.classList.toggle('sel');const f=el.dataset.f;if(el.classLi
 
 let _gt=null;
 function addrIn(inp){clearTimeout(_gt);if(inp.value.trim().length<4){document.getElementById('addr-sugg').innerHTML='';return;}_gt=setTimeout(()=>geoS(inp.value.trim()),500);}
-async function geoS(q){try{const r=await fetch('https://nominatim.openstreetmap.org/search?q='+encodeURIComponent(q)+'&format=json&limit=5&countrycodes=ke,tz,ug,rw,et',{headers:{'Accept-Language':'en'}});const d=await r.json();const box=document.getElementById('addr-sugg');if(!d.length){box.innerHTML='';return;}box.innerHTML='<div class="addr-sw">'+d.map(x=>`<div class="addr-s" onclick="pinL(${x.lat},${x.lon},'${x.display_name.replace(/'/g,"&apos;")}')">${x.display_name}</div>`).join('')+'</div>';}catch(e){}}
+async function geoS(q){
+  try{
+    /* Scope the geocoder to the country the host picked when we have one,
+       otherwise to the whole continent. Previously this was pinned to
+       ke,tz,ug,rw,et which made 49 African countries unlistable. */
+    const cc = (window.APA_AFRICA && (APA_AFRICA.isoFor(F.country) || APA_AFRICA.allIso)) || '';
+    const r=await fetch('https://nominatim.openstreetmap.org/search?q='+encodeURIComponent(q)+'&format=json&limit=6'+(cc?'&countrycodes='+cc:''),{headers:{'Accept-Language':'en'}});
+    const d=await r.json();
+    const box=document.getElementById('addr-sugg');
+    if(!d.length){box.innerHTML='<div class="addr-sw"><div class="addr-s" style="color:var(--ink-faint)">No match. You can type the address manually and still continue.</div></div>';return;}
+    /* Build via DOM rather than an onclick string: display_name is remote
+       text and was being interpolated straight into an attribute. */
+    box.innerHTML='';
+    const w=document.createElement('div');w.className='addr-sw';
+    d.forEach(x=>{
+      const el=document.createElement('div');
+      el.className='addr-s';
+      el.textContent=x.display_name;
+      el.addEventListener('mousedown',ev=>{ev.preventDefault();pinL(x.lat,x.lon,x.display_name);});
+      w.appendChild(el);
+    });
+    box.appendChild(w);
+  }catch(e){}
+}
+
+/* City typeahead over the seed list, so a host in Lagos or Accra sees their
+   city immediately instead of guessing whether we cover them. */
+function cityIn(inp){
+  const box=document.getElementById('city-sugg');
+  if(!box)return;
+  const hits=(window.APA_AFRICA?APA_AFRICA.suggestCities(inp.value,F.country||null,7):[]);
+  if(!hits.length){box.innerHTML='';return;}
+  box.innerHTML='';
+  const w=document.createElement('div');w.className='addr-sw';
+  hits.forEach(h=>{
+    const el=document.createElement('div');
+    el.className='addr-s';
+    el.textContent=h.city+' \u00b7 '+h.country;
+    el.addEventListener('mousedown',ev=>{
+      ev.preventDefault();
+      document.getElementById('f-city').value=h.city;
+      const cs=document.getElementById('f-country');
+      if(cs&&cs.value!==h.country){cs.value=h.country;onCountry();}
+      box.innerHTML='';
+    });
+    w.appendChild(el);
+  });
+  box.appendChild(w);
+}
+
+/* Currency follows the country. A Lagos host should not have to hunt for
+   NGN in a list that only ever offered KES and USD. */
+function onCountry(){
+  const cs=document.getElementById('f-country');if(!cs)return;
+  F.country=cs.value;
+  const cur=document.getElementById('f-cur');
+  if(cur&&window.APA_AFRICA){
+    const local=APA_AFRICA.currencyFor(F.country);
+    const opts=[local,'USD','EUR'].filter((v,i,a)=>v&&a.indexOf(v)===i);
+    const keep=F.cur&&opts.includes(F.cur)?F.cur:local;
+    cur.innerHTML=opts.map(o=>'<option'+(o===keep?' selected':'')+'>'+o+'</option>').join('');
+    F.cur=keep;
+  }
+  const wa=document.getElementById('f-wa');
+  if(wa&&!wa.value&&window.APA_AFRICA)wa.placeholder=APA_AFRICA.dialFor(F.country)+' ...';
+}
 async function doGeo(){const q=document.getElementById('f-addr').value.trim();if(q)geoS(q);}
 function pinL(lat,lng,label){F.lat=lat;F.lng=lng;document.getElementById('f-lat').value=lat;document.getElementById('f-lng').value=lng;document.getElementById('f-addr').value=label;document.getElementById('addr-sugg').innerHTML='';const mf=document.getElementById('map-frame');mf.style.display='block';mf.src='https://www.openstreetmap.org/export/embed.html?bbox='+(lng-0.01)+','+(lat-0.01)+','+(+lng+0.01)+','+(+lat+0.01)+'&layer=mapnik&marker='+lat+','+lng;}
 
@@ -714,7 +883,8 @@ async function publish(){
     const SVC_TYPE_MAP={stays:"apartment",roommates:"room",tours:"tour",events:"event",food:"food",carhire:"carhire",rides:"ride",shopping:"shopping"};const svcType=SVC_TYPE_MAP[F.svc]||F.svc;const payload={partner_id:CU?.id,service:F.svc,type:svcType,listing_type:F.type,property_type:F.type,title:F.title,country:F.country,city:F.city,area:F.area,street:F.street||null,location:[F.area,F.city,F.country].filter(Boolean).join(', '),latitude:F.lat||null,longitude:F.lng||null,description:F.desc,amenities:F.feats,photos:pu.length?pu:F.photos,currency:F.cur,price_night:parseFloat(F.price)||null,price_week:parseFloat(F.pw)||null,price_month:parseFloat(F.pm)||null,deposit:parseFloat(F.dep)||null,min_nights:parseInt(F.mn)||1,max_guests:F.guests||null,beds:F.beds||null,baths:F.baths||null,bedrooms:parseInt(F.beds)||null,bathrooms:parseInt(F.baths)||null,floor:F.floor||null,sqm:F.sqm||null,checkin_time:F.ci,checkout_time:F.co,instant_book:F.inst,children:F.ch,pets:F.pets,smoking:F.smk,house_rules:F.rules||null,contact_whatsapp:F.wa||null,contact_phone:F.ph||F.wa||null,contact_email:F.em||null,status:'active',is_active:true,internal_score:50,cancel_policy:'flexible',extras:{dur:F.dur||null,meet:F.meet||null,lang:F.lang||null,edate:F.edate||null,venue:F.venue||null,age:F.age||null,cuisine:F.cuisine||null,deliv:F.deliv||null,lead:F.lead||null,make:F.make||null,model:F.model||null,yr:F.yr||null,fuel:F.fuel||null,trans:F.trans||null,areas:F.areas||null,veh:F.veh||null,adv:F.adv||null,stock:F.stock||null,cond:F.cond||null,brand:F.brand||null,da:F.da||null,avail:F.avail||null,bills:F.bills||null,furn:F.furn||null}};
     let err;
     if(window._eid){const{error}=await sb.from('listings').update(payload).eq('id',window._eid).eq('partner_id',CU?.id);err=error;}
-    else{const{error}=await sb.from('listings').insert(payload);err=error;}
+    else{const{error}=await sb.from('listings').insert(payload);err=error;
+      if(!error&&window.APA_DRAFT)APA_DRAFT.discard(F.svc);}
     if(err)throw err;
     btn.classList.remove('loading');
     document.getElementById('success-ov').classList.add('show');
@@ -734,6 +904,23 @@ function loadEdit(l){
 function loadPrefill(p){F.svc='stays';F.type=p.property_type||'Apartment';F.title=p.title||'';F.city=p.city||'';F.area=p.area||'';F.desc=p.description||'';F.beds=String(p.bedrooms||1);F.baths=String(p.bathrooms||1);F.guests=String(p.max_guests||2);F.sqm=p.sqm?String(p.sqm):'';F.feats=p.amenities||[];F.price=p.price_night?String(p.price_night):'';go(1);}
 
 buildNav();
+
+/* Populate the country select from APA_AFRICA. Done at boot rather than in
+   markup so the 54-country list lives in one file. Kenya stays the default
+   because it is where most existing hosts are, but every state is now
+   reachable. Falls back to a minimal inline list if the module fails to
+   load, so the field is never empty. */
+(function initCountries(){
+  const cs=document.getElementById('f-country');
+  if(!cs)return;
+  if(window.APA_AFRICA){
+    cs.innerHTML=APA_AFRICA.countryOptionsHTML(F.country||'Kenya');
+  }else{
+    cs.innerHTML=['Kenya','Nigeria','Ghana','South Africa','Egypt','Morocco','Tanzania','Uganda']
+      .map(c=>'<option'+(c===(F.country||'Kenya')?' selected':'')+'>'+c+'</option>').join('');
+  }
+  if(typeof onCountry==='function')onCountry();
+})();
 </script>
 </body>
 </html>
