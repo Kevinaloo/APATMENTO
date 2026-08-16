@@ -68,7 +68,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&family=Barlow+Condensed:wght@400;500;600;700&display=swap" media="print" onload="this.media='all';this.onload=null"/>
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&family=Barlow+Condensed:wght@400;500;600;700&display=swap"/></noscript>
 <link rel="stylesheet" href="/cabana-ds.css"/>
-<link rel="stylesheet" href="/cabana-carhire.css"/>
+<link rel="stylesheet" href="/cabana-carhire.css?v=2"/>
 
 <style>
   /* Page-local reset only. All colour now lives in cabana-carhire.css
@@ -83,6 +83,18 @@
 <body class="ch-body">
 
 <div class="ch-wrap">
+
+  <header class="ch-top">
+    <a class="ch-back" href="/" aria-label="Back to Cabana">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+    </a>
+    <a class="ch-brand" href="/">
+      <img src="/cabana-emblem.png" alt="" width="24" height="24">
+      <span>Cabana</span>
+    </a>
+    <a class="ch-top-cta" href="/become-partner.html">List your fleet</a>
+  </header>
 
   <main>
   <!-- ══ HERO + SEARCH ═══════════════════════════════════════════ -->
@@ -223,8 +235,8 @@
     );
   } catch (e) { /* the launch catalogue renders without it */ }
 </script>
-<script src="/cabana-carhire-core.js"></script>
-<script src="/cabana-carhire-ui.js"></script>
+<script src="/cabana-carhire-core.js?v=2"></script>
+<script src="/cabana-carhire-ui.js?v=2"></script>
 
 <script src="/analytics.js" defer></script>
 <script src="/telemetry.js" defer></script>
