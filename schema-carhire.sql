@@ -112,6 +112,11 @@ create table if not exists public.car_blackouts (
 create index if not exists car_blackouts_window
   on public.car_blackouts (vehicle_id, starts_on, ends_on);
 
+-- The trigger below needs a real conflict target, or a hire that moves
+-- pending -> confirmed -> active writes the same blackout three times.
+create unique index if not exists car_blackouts_unique
+  on public.car_blackouts (vehicle_id, starts_on, ends_on, reason);
+
 -- ── BOOKINGS ───────────────────────────────────────────────────────
 create table if not exists public.car_bookings (
   id                uuid primary key default gen_random_uuid(),
@@ -193,6 +198,17 @@ drop policy if exists car_bookings_insert on public.car_bookings;
 create policy car_bookings_insert on public.car_bookings
   for insert with check (true);
 
+-- Without an update policy an operator can never move a hire off 'pending'.
+drop policy if exists car_bookings_operator_update on public.car_bookings;
+create policy car_bookings_operator_update on public.car_bookings
+  for update using (
+    exists (select 1 from public.car_operators o
+            where o.id = car_bookings.operator_id and o.owner_id = auth.uid())
+  ) with check (
+    exists (select 1 from public.car_operators o
+            where o.id = car_bookings.operator_id and o.owner_id = auth.uid())
+  );
+
 drop policy if exists car_bookings_read on public.car_bookings;
 create policy car_bookings_read on public.car_bookings
   for select using (
@@ -207,7 +223,9 @@ create policy car_bookings_read on public.car_bookings
 -- Returns vehicle ids free across the whole requested window.
 create or replace function public.cars_available(p_start date, p_end date)
 returns table (vehicle_id uuid)
-language sql stable as $$
+language sql stable
+set search_path = public
+as $$
   select f.id
   from public.car_fleet f
   where f.status = 'active'
@@ -221,16 +239,27 @@ $$;
 
 -- Block the vehicle the moment a booking is confirmed, so the same car
 -- cannot be sold twice while an operator is still replying.
+-- security definer: the guest inserting the booking is anon, and anon has
+-- no insert policy on car_blackouts. Without this the double-booking guard
+-- silently does nothing and the same car can be sold twice.
 create or replace function public.car_booking_blackout()
-returns trigger language plpgsql as $$
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
 begin
-  if new.status in ('confirmed','active') then
+  if new.status in ('confirmed','active') and new.vehicle_id is not null then
     insert into public.car_blackouts (vehicle_id, starts_on, ends_on, reason)
     values (new.vehicle_id, new.starts_on, new.ends_on, 'booked')
-    on conflict do nothing;
+    on conflict (vehicle_id, starts_on, ends_on, reason) do nothing;
   end if;
   return new;
 end $$;
+
+-- Definer rights must not be reachable as a public RPC. The trigger still
+-- fires; Postgres does not check EXECUTE for trigger functions.
+revoke execute on function public.car_booking_blackout() from anon, authenticated, public;
 
 drop trigger if exists car_booking_blackout_t on public.car_bookings;
 create trigger car_booking_blackout_t

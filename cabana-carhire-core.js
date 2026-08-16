@@ -164,7 +164,17 @@
        blocked  do not sell this pairing
      ═══════════════════════════════════════════════════════════════ */
   function grade(vehicle, routeKey, date) {
-    const route = ROUTE_BY_KEY[routeKey] || ROUTE_BY_KEY.metro;
+    /* Fail closed. Defaulting an unknown key to metro grades the vehicle
+       against the easiest corridor on the map, which is the one mistake
+       this engine exists to prevent. */
+    const route = ROUTE_BY_KEY[routeKey];
+    if (!route) {
+      return {
+        verdict: 'blocked', score: 0, route: null, range: null,
+        season: seasonFor(date || new Date()), reasons: [],
+        blockers: ['Choose where you are driving so we can check this vehicle against that route.']
+      };
+    }
     const season = seasonFor(date || new Date());
     const reasons = [], blockers = [];
     let score = 100;
@@ -176,8 +186,18 @@
       ? Math.max(DRIVE_RANK[route.drive], DRIVE_RANK['4wd'])
       : DRIVE_RANK[route.drive];
 
-    /* — Ground clearance — */
-    const gap = vehicle.clearance_mm - needClearance;
+    /* — Ground clearance —
+       Fail closed. A missing or non-numeric clearance figure means we
+       cannot grade the vehicle, and an ungraded vehicle must never be
+       presented as safe for the route. */
+    const clearance = Number(vehicle.clearance_mm);
+    if (!Number.isFinite(clearance)) {
+      return {
+        verdict: 'blocked', score: 0, route, season, range: null, reasons: [],
+        blockers: ['We do not hold a verified ground clearance figure for this vehicle, so we cannot confirm it is safe on this route.']
+      };
+    }
+    const gap = clearance - needClearance;
     if (gap < -40) {
       blockers.push(`Only ${vehicle.clearance_mm}mm of clearance. ${route.label} needs about ${needClearance}mm — this will ground out.`);
       score -= 60;
@@ -495,6 +515,11 @@
         source: 'live',
         fleet: veh.map(r => ({
           ...r,
+          /* The column is ground_clearance_mm; the route engine grades on
+             clearance_mm. Without this the comparison is NaN and every
+             vehicle silently grades "cleared" — including a saloon on the
+             Mara. Drop any row that cannot be graded rather than sell it. */
+          clearance_mm: r.ground_clearance_mm,
           day_rate: fromMinor(r.day_rate),
           deposit: fromMinor(r.deposit),
           peak_uplift: fromMinor(r.peak_uplift),
