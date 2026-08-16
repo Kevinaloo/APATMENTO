@@ -3306,6 +3306,7 @@ const PARTNER_SERVICES = {
 };
 let partnerServices = [];
 let selectedServiceType = null;
+let partnerLoadFailed = false;
 
 async function initPartnerFlow(){
   document.getElementById('p-state-loading').style.display='flex';
@@ -3342,7 +3343,8 @@ async function initPartnerFlow(){
       const cat = _subToCategory[rawType] || 'apartment';
       return {...l, listing_type: cat, is_active:l.status!=='inactive', price_per_night:l.price_night||0};
     });
-  }catch(e){ partnerServices=[]; }
+    partnerLoadFailed = false;
+  }catch(e){ partnerServices=[]; partnerLoadFailed = true; console.warn('[partner] listings load failed:', e && e.message); }
 
   document.getElementById('p-state-loading').style.display='none';
 
@@ -3358,9 +3360,8 @@ async function initPartnerFlow(){
     return;
   }
   if(!partnerServices.length){
-    // Stay put and let the partner screen render its own empty state.
-    var _empty = document.getElementById('p-state-picker');
-    if(_empty) _empty.style.display='block';
+    // Stay put and render the onboarding / empty state in place.
+    renderPartnerEmpty(partnerLoadFailed);
     return;
   }
   else if(partnerServices.length===1) renderSingleDashboard(partnerServices[0]);
@@ -3369,12 +3370,54 @@ async function initPartnerFlow(){
 
 
 
+/* Partner screen with no listings yet. Previously this branch revealed an
+   empty <div> and rendered nothing, which produced a blank page for every
+   partner who arrived via the header switch (?back=1) without a listing. */
+function renderPartnerEmpty(failed){
+  const c = document.getElementById('p-state-picker');
+  if(!c) return;
+  c.style.display='block';
+  const order = ['apartment','tour','event','carhire','roommate'];
+  c.innerHTML = `
+    <div class="topbar">
+      <div class="tb-left"><img src="cabana-emblem.png" class="tb-icon-sm" alt="" loading="lazy" decoding="async"/><span class="tb-cab-anim" data-text="CABANA">CABANA</span></div>
+      <div class="tb-right"><button onclick="switchToGuest()" style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:100px;border:1.5px solid rgba(255,255,255,.35);background:rgba(255,255,255,.15);font-family:var(--font-body);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .2s;">← Traveller dashboard</button></div>
+    </div>
+    <div class="content" style="max-width:760px;">
+      <div class="greeting">
+        <h1 class="greeting-title">Start <em>earning</em></h1>
+        <p class="greeting-sub">${failed
+          ? 'We could not load your services just now. Retry, or add one below.'
+          : 'You have no services yet. Pick what you want to list and keep 100% of what you earn.'}</p>
+      </div>
+      ${failed ? `<button onclick="initPartnerFlow()" style="margin-bottom:18px;padding:11px 20px;border-radius:100px;border:1.5px solid var(--line-2);background:transparent;font-family:var(--font-body);font-size:13px;font-weight:700;cursor:pointer;">↻ Retry</button>` : ''}
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        ${order.map(t=>{const s=PARTNER_SERVICES[t];return `
+          <div class="prop-card" style="display:flex;align-items:center;gap:18px;padding:20px 22px;cursor:pointer;" onclick="window.location.href='add-listing.html?type=${t}'">
+            <div style="width:54px;height:54px;border-radius:16px;background:${s.grad};display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0;">${s.ico}</div>
+            <div style="flex:1;">
+              <div style="font-family:var(--font-display);font-weight:500;font-size:17px;">${s.name}</div>
+              <div style="font-size:12px;color:var(--ink-faint);">${s.sub}</div>
+            </div>
+            <div class="prop-go"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></div>
+          </div>`;}).join('')}
+      </div>
+      <div style="margin-top:26px;text-align:center;">
+        <a href="partner-listings.html" style="font-size:13px;font-weight:700;color:var(--violet);text-decoration:none;">Go to my listings →</a>
+      </div>
+    </div>`;
+}
+
 async function renderServicePicker(listings){
   const c = document.getElementById('p-state-picker');
   c.style.display='block';
   const groups = { apartment:[], tour:[], event:[] };
   listings.forEach(l=>{ const t=l.listing_type||'apartment'; (groups[t]=groups[t]||[]).push(l); });
-  const active = Object.entries(groups).filter(([,a])=>a.length);
+  // Only render categories we actually have a card definition for.
+  // A listing_type like 'food' has no PARTNER_SERVICES entry and would
+  // throw on s.name, taking the whole partner screen down with it.
+  const active = Object.entries(groups).filter(([t,a])=>a.length && PARTNER_SERVICES[t]);
+  if(!active.length){ renderPartnerEmpty(false); return; }
   c.innerHTML = `
     <div class="topbar">
       <div class="tb-left"><img src="cabana-emblem.png" class="tb-icon-sm" alt="" loading="lazy" decoding="async"/><span class="tb-cab-anim" data-text="CABANA">CABANA</span></div>
