@@ -463,6 +463,10 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M20 13c0 5-3.5 7.5-8 9-4.5-1.5-8-4-8-9V6l8-3 8 3z"/><circle cx="12" cy="11" r="2.4"/></svg>
           Trust centre <span class="nav-b" id="b-trust">0</span>
         </div>
+        <div class="nav-i" data-sec="events" onclick="go('events',this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9a2 2 0 0 0 0 6v2a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-2a2 2 0 0 0 0-6V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1z"/><path d="M14 6v12" stroke-dasharray="2 2.5"/></svg>
+          Events
+        </div>
         <div class="nav-i" data-sec="tours" onclick="go('tours',this)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5 5-2Z"/></svg>
           Tours
@@ -570,6 +574,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 
       <!-- ─── TRIAGE ─── -->
       <section class="sec" id="s-tours"></section>
+      <section class="sec" id="s-events"></section>
 
       <section class="sec" id="s-triage">
         <div class="hd">
@@ -1847,6 +1852,7 @@ function go(sec, el){
   if(sec==='cabana') cabanaLoad();
   if(sec==='transport') renderTransport();
   if(sec==='tours') window.toursLoad && window.toursLoad();
+  if(sec==='events') window.eventsLoad && window.eventsLoad();
 }
 function setRange(d, el){
   RANGE = d;
@@ -5478,5 +5484,6 @@ async function cabanaLoadInterest() {
 <script src="/apa-contact.js" defer></script>
 <script src="/cabana-media-upload.js"></script>
 <script src="/cabana-tours-admin.js"></script>
+<script src="/cabana-events-admin.js"></script>
 </body>
 </html>

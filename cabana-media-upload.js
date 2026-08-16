@@ -21,7 +21,7 @@
   'use strict';
 
   var SB_URL = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
-  var BUCKET = 'tours';
+  var DEFAULT_BUCKET = 'tours';
 
   var MAX_EDGE     = 1920;          // px on the long side
   var JPEG_Q       = 0.82;
@@ -135,10 +135,10 @@
 
   /* ── upload with progress ────────────────────────────────────────── */
 
-  function put(file, path, token, onProgress) {
+  function put(file, path, token, onProgress, bucket) {
     return new Promise(function (resolve, reject) {
       var xhr = new XMLHttpRequest();
-      xhr.open('POST', SB_URL + '/storage/v1/object/' + BUCKET + '/' + path, true);
+      xhr.open('POST', SB_URL + '/storage/v1/object/' + bucket + '/' + path, true);
       xhr.setRequestHeader('Authorization', 'Bearer ' + token);
       xhr.setRequestHeader('x-upsert', 'true');
       if (file.type) xhr.setRequestHeader('Content-Type', file.type);
@@ -148,7 +148,7 @@
       };
       xhr.onload = function () {
         if (xhr.status >= 200 && xhr.status < 300) {
-          resolve(SB_URL + '/storage/v1/object/public/' + BUCKET + '/' + path);
+          resolve(SB_URL + '/storage/v1/object/public/' + bucket + '/' + path);
         } else {
           var msg = 'Upload failed';
           try { msg = (JSON.parse(xhr.responseText).message) || msg; } catch (e) {}
@@ -169,6 +169,7 @@
     opts = opts || {};
     var sb = opts.client;
     var folder = opts.folder || 'draft';
+    var bucket = opts.bucket || DEFAULT_BUCKET;
     var maxPhotos = opts.maxPhotos || MAX_PHOTOS;
     var maxVideos = opts.maxVideos || MAX_VIDEOS;
     var onChange = opts.onChange || function () {};
@@ -260,8 +261,8 @@
       if (it && it.url && sb) {
         // Best effort: drop the object too, so an abandoned draft does
         // not leave orphans in the bucket.
-        var path = it.url.split('/public/' + BUCKET + '/')[1];
-        if (path) { try { sb.storage.from(BUCKET).remove([path]); } catch (e) {} }
+        var path = it.url.split('/public/' + bucket + '/')[1];
+        if (path) { try { sb.storage.from(bucket).remove([path]); } catch (e) {} }
       }
       if (it && it.preview) { try { URL.revokeObjectURL(it.preview); } catch (e) {} }
       items = items.filter(function (i) { return i.id !== id; });
@@ -305,7 +306,7 @@
           item.pct = p;
           var bar = grid.querySelector('[data-i="' + item.id + '"] .bar i');
           if (bar) bar.style.width = Math.round(p * 100) + '%';
-        });
+        }, bucket);
       }).then(function (url) {
         item.url = url; item.busy = false; item.pct = 1;
         paint();
@@ -362,5 +363,5 @@
     };
   }
 
-  window.CabanaUploader = { mount: mount, shrink: shrink, BUCKET: BUCKET };
+  window.CabanaUploader = { mount: mount, shrink: shrink, DEFAULT_BUCKET: DEFAULT_BUCKET };
 })();

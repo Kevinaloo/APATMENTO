@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>List an event on Cabana | No cut of your face value</title>
+<meta name="description" content="Promoters, venues and organisers in Kenya: list concerts, festivals, club nights and shows on Cabana. We take no cut of your ticket face value. Set your own tiers, prices and capacity."/>
+<link rel="canonical" href="https://cabana.africa/list-your-event"/>
+<meta name="robots" content="index, follow"/>
+<meta name="theme-color" content="#0B0918"/>
+<meta property="og:site_name" content="Cabana"/>
+<meta property="og:title" content="List an event on Cabana"/>
+<meta property="og:description" content="No cut of your face value. Set your own tiers, prices and capacity."/>
+<meta property="og:url" content="https://cabana.africa/list-your-event"/>
+<meta property="og:type" content="website"/>
+<link rel="icon" href="/favicon.ico" sizes="any"/>
+<link rel="apple-touch-icon" href="/cabana-apple-touch-icon.png"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..800&family=Inter:wght@300..700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/cabana-events.css"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{min-height:100%;background:#05040A;color:#F4F2FF;
+  font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased;overflow-x:clip;}
+
+.le-top{position:sticky;top:0;z-index:100;height:64px;display:flex;align-items:center;
+  justify-content:space-between;padding:0 22px;background:rgba(5,4,10,.8);
+  backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.09);}
+.le-top a.back{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600;
+  color:#A9A4C9;text-decoration:none;}
+.le-top a.back svg{width:16px;height:16px;}
+.le-top a.back:hover{color:#C6FF4D;}
+.le-top img{height:24px;width:auto;}
+
+.le-wrap{position:relative;z-index:2;max-width:780px;margin:0 auto;padding:46px 22px 96px;}
+
+.le-steps{display:flex;gap:8px;margin:30px 0 28px;}
+.le-step{flex:1;height:3px;border-radius:99px;background:rgba(255,255,255,.1);overflow:hidden;}
+.le-step i{display:block;height:100%;width:0;border-radius:99px;
+  background:linear-gradient(90deg,#8B5CFF,#FF2E93);transition:width .5s cubic-bezier(.22,1,.36,1);}
+.le-step.done i,.le-step.now i{width:100%;}
+
+.le-panel{display:none;}
+.le-panel.on{display:block;animation:leIn .45s cubic-bezier(.22,1,.36,1);}
+@keyframes leIn{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:none;}}
+
+.le-h{font-family:'Geist','Inter',sans-serif;font-weight:740;letter-spacing:-.035em;
+  font-size:clamp(23px,3.6vw,32px);line-height:1.12;margin-bottom:10px;text-wrap:balance;}
+.le-p{font-size:14.5px;line-height:1.65;color:#A9A4C9;margin-bottom:28px;max-width:56ch;}
+
+.le-f{display:grid;gap:17px;}
+.le-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.le-row.three{grid-template-columns:1fr 1fr 1fr;}
+@media(max-width:620px){.le-row,.le-row.three{grid-template-columns:1fr;}}
+
+.le-l{display:block;font-family:'Geist','Inter',sans-serif;font-size:12.5px;font-weight:700;
+  color:#F4F2FF;margin-bottom:7px;}
+.le-l span{font-weight:400;color:#6E688F;margin-left:5px;}
+.le-i,.le-t,.le-s{width:100%;padding:12px 14px;border-radius:12px;
+  border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);
+  font-family:'Inter',system-ui,sans-serif;font-size:14.5px;color:#F4F2FF;
+  outline:none;transition:border-color .2s,box-shadow .2s;}
+.le-t{resize:vertical;min-height:100px;line-height:1.6;}
+.le-s{appearance:none;-webkit-appearance:none;cursor:pointer;padding-right:36px;
+  background:rgba(255,255,255,.05) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236E688F' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 13px center;}
+.le-s option{background:#0B0918;color:#F4F2FF;}
+.le-i:focus,.le-t:focus,.le-s:focus{border-color:#8B5CFF;box-shadow:0 0 0 4px rgba(139,92,255,.18);}
+.le-i[aria-invalid="true"],.le-t[aria-invalid="true"]{border-color:#FF2E93;}
+.le-err{font-size:12.5px;color:#FF2E93;margin-top:6px;display:none;}
+.le-err.on{display:block;}
+.le-hint{font-size:12.5px;color:#6E688F;margin-top:6px;line-height:1.5;}
+
+/* ticket tiers — the organiser builds their own price list */
+.le-tier{display:grid;grid-template-columns:1.4fr .9fr .8fr auto;gap:9px;align-items:end;
+  padding:14px;border-radius:14px;border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.03);margin-bottom:9px;}
+@media(max-width:620px){.le-tier{grid-template-columns:1fr 1fr;}}
+.le-tier .rm{width:38px;height:42px;border-radius:11px;border:1px solid rgba(255,255,255,.14);
+  background:rgba(255,255,255,.05);color:#A9A4C9;cursor:pointer;font-size:17px;line-height:1;}
+.le-tier .rm:hover{border-color:#FF2E93;color:#FF2E93;}
+.le-addtier{margin-top:4px;}
+
+.le-acts{display:flex;gap:11px;margin-top:32px;flex-wrap:wrap;}
+
+.le-note{padding:16px 18px;border-radius:14px;background:rgba(139,92,255,.09);
+  border:1px solid rgba(139,92,255,.28);font-size:13.5px;line-height:1.6;color:#D9D2FF;}
+.le-note b{font-weight:700;}
+
+.le-gate,.le-done{text-align:center;padding:54px 22px;}
+.le-live{position:fixed;left:-9999px;}
+</style>
+</head>
+<body>
+
+<header class="le-top">
+  <a class="back" href="/events">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    Events
+  </a>
+  <a href="/"><img src="/cabana-wordmark-color.png" alt="Cabana" onerror="this.style.display='none'"/></a>
+</header>
+
+<div class="ev">
+  <div class="ev-room" aria-hidden="true">
+    <div class="ev-beam"></div><div class="ev-beam b2"></div><div class="ev-grain"></div>
+  </div>
+
+  <div class="le-wrap">
+    <span class="ev-eyebrow"><i></i>For organisers</span>
+    <h1 class="ev-title" style="font-size:clamp(30px,5.6vw,52px);margin-top:18px;max-width:16ch;">
+      Put your night <em>on the bill.</em></h1>
+    <p class="ev-lede">Cabana takes no cut of your face value. You set the tiers, the prices and
+      the capacity — we run the box office and the door codes.</p>
+
+    <div class="le-steps" id="le-steps" aria-hidden="true">
+      <div class="le-step now"><i></i></div><div class="le-step"><i></i></div><div class="le-step"><i></i></div>
+    </div>
+
+    <p class="le-live" role="status" aria-live="polite" id="le-live"></p>
+
+    <!-- 0 · gate -->
+    <section class="le-panel" id="p-gate">
+      <div class="le-gate">
+        <div class="ev-blank-mark" style="margin:0 auto 22px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9a2 2 0 0 0 0 6v2a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-2a2 2 0 0 0 0-6V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1z"/></svg>
+        </div>
+        <h2 class="le-h">Sign in to list an event</h2>
+        <p class="le-p" style="margin:0 auto 24px;">Your events are tied to your account so you can
+          edit them, pause sales and see who is coming.</p>
+        <a class="ev-btn ev-btn-primary" href="/auth?next=/list-your-event">Sign in or create an account</a>
+      </div>
+    </section>
+
+    <!-- 1 · organiser -->
+    <section class="le-panel" id="p-org">
+      <h2 class="le-h">First, who's putting this on?</h2>
+      <p class="le-p">This is what appears on the listing. You only fill this in once.</p>
+
+      <form class="le-f" id="f-org" novalidate>
+        <div>
+          <label class="le-l" for="o-name">Organiser or promoter name</label>
+          <input class="le-i" id="o-name" required placeholder="Blankets &amp; Wine"/>
+          <p class="le-err" id="e-o-name">Tell us what you're called.</p>
+        </div>
+        <div>
+          <label class="le-l" for="o-tagline">One line about you <span>optional</span></label>
+          <input class="le-i" id="o-tagline" placeholder="Nairobi's longest-running afro-fusion festival"/>
+        </div>
+        <div class="le-row">
+          <div>
+            <label class="le-l" for="o-phone">Phone</label>
+            <input class="le-i" id="o-phone" type="tel" required placeholder="07xx xxx xxx"/>
+            <p class="le-err" id="e-o-phone">We need a number to reach you.</p>
+          </div>
+          <div>
+            <label class="le-l" for="o-instagram">Instagram <span>optional</span></label>
+            <input class="le-i" id="o-instagram" placeholder="@yourhandle"/>
+          </div>
+        </div>
+        <div class="le-row">
+          <div>
+            <label class="le-l" for="o-email">Email</label>
+            <input class="le-i" id="o-email" type="email" required/>
+            <p class="le-err" id="e-o-email">A valid email, so we can confirm your listing.</p>
+          </div>
+          <div>
+            <label class="le-l" for="o-city">Based in</label>
+            <input class="le-i" id="o-city" placeholder="Nairobi"/>
+          </div>
+        </div>
+        <div class="le-acts">
+          <button class="ev-btn ev-btn-primary" type="submit">Continue</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- 2 · the event -->
+    <section class="le-panel" id="p-event">
+      <h2 class="le-h">Now the night itself</h2>
+      <p class="le-p">The date and time drive the countdown guests see, so get them right.</p>
+
+      <form class="le-f" id="f-event" novalidate>
+        <div>
+          <label class="le-l" for="e-title">Event name</label>
+          <input class="le-i" id="e-title" required placeholder="Blankets &amp; Wine October Edition"/>
+          <p class="le-err" id="e-e-title">Give the event a name.</p>
+        </div>
+        <div>
+          <label class="le-l" for="e-tagline">Tagline <span>optional</span></label>
+          <input class="le-i" id="e-tagline" placeholder="Twelve hours of live afro-fusion"/>
+        </div>
+        <div>
+          <label class="le-l" for="e-description">What's happening</label>
+          <textarea class="le-t" id="e-description" required rows="5" placeholder="The line-up, the format, what the night is like."></textarea>
+          <p class="le-err" id="e-e-description">Please describe the event.</p>
+        </div>
+
+        <div class="le-row">
+          <div>
+            <label class="le-l" for="e-start">Starts <span>date &amp; time</span></label>
+            <input class="le-i" id="e-start" type="datetime-local" required/>
+            <p class="le-err" id="e-e-start">When does it start? This drives the countdown.</p>
+          </div>
+          <div>
+            <label class="le-l" for="e-end">Ends <span>optional</span></label>
+            <input class="le-i" id="e-end" type="datetime-local"/>
+            <p class="le-err" id="e-e-end">The end has to be after the start.</p>
+          </div>
+        </div>
+        <p class="le-hint">Times are read in your device's timezone and stored as an exact moment,
+          so the countdown is correct wherever a guest is looking from.</p>
+
+        <div class="le-row three">
+          <div>
+            <label class="le-l" for="e-venue">Venue</label>
+            <input class="le-i" id="e-venue" required placeholder="Ngong Racecourse"/>
+            <p class="le-err" id="e-e-venue">Where is it?</p>
+          </div>
+          <div>
+            <label class="le-l" for="e-city">City</label>
+            <input class="le-i" id="e-city" value="Nairobi"/>
+          </div>
+          <div>
+            <label class="le-l" for="e-category">Type</label>
+            <select class="le-s" id="e-category">
+              <option value="music">Music</option>
+              <option value="festival">Festival</option>
+              <option value="nightlife">Nightlife</option>
+              <option value="comedy">Comedy</option>
+              <option value="sports">Sports</option>
+              <option value="art">Arts</option>
+              <option value="food">Food &amp; drink</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="le-l" for="e-address">Full address <span>optional</span></label>
+          <input class="le-i" id="e-address" placeholder="For guests finding their way"/>
+        </div>
+
+        <div>
+          <label class="le-l">Ticket tiers</label>
+          <div id="e-tiers"></div>
+          <button class="ev-btn ev-btn-ghost le-addtier" type="button" id="e-addtier">+ Add a tier</button>
+          <p class="le-hint">Leave the quantity blank for unlimited. The cheapest tier becomes the
+            "from" price on your card. Set a price of 0 for a free event.</p>
+        </div>
+
+        <div class="le-row three">
+          <div>
+            <label class="le-l" for="e-capacity">Capacity <span>optional</span></label>
+            <input class="le-i" id="e-capacity" type="number" min="1" placeholder="500"/>
+          </div>
+          <div>
+            <label class="le-l" for="e-age">Age limit <span>optional</span></label>
+            <input class="le-i" id="e-age" type="number" min="0" max="99" placeholder="18"/>
+          </div>
+          <div>
+            <label class="le-l" for="e-dress">Dress code <span>optional</span></label>
+            <input class="le-i" id="e-dress" placeholder="Smart casual"/>
+          </div>
+        </div>
+
+        <div>
+          <label class="le-l" for="e-lineup">Line-up <span>one act per line</span></label>
+          <textarea class="le-t" id="e-lineup" rows="3" placeholder="Sauti Sol&#10;Nviiri&#10;DJ Coco Em"></textarea>
+        </div>
+
+        <div>
+          <label class="le-l">Photos and video <span>from your phone</span></label>
+          <div id="e-media"></div>
+        </div>
+
+        <div>
+          <label class="le-l" for="e-refund">Refund policy <span>optional</span></label>
+          <textarea class="le-t" id="e-refund" rows="2" placeholder="What happens if a guest can't make it, or if the event is moved."></textarea>
+        </div>
+
+        <div class="le-note">
+          <b>What happens next.</b> Your event goes to us for review, not straight onto the site.
+          We check the details and get in touch if anything is unclear. Nothing is charged to you,
+          and we take no cut of your ticket price.
+        </div>
+
+        <div class="le-acts">
+          <button class="ev-btn ev-btn-ghost" type="button" id="e-back">Back</button>
+          <button class="ev-btn ev-btn-primary" type="submit" id="e-submit">Submit for review</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- 3 · done -->
+    <section class="le-panel" id="p-done">
+      <div class="le-done">
+        <div class="ev-blank-mark" style="margin:0 auto 22px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg>
+        </div>
+        <h2 class="le-h">Sent for review</h2>
+        <p class="le-p" style="margin:0 auto 26px;" id="le-done-msg">
+          We'll look it over and be in touch. Once it's approved it goes on the bill with the
+          countdown running.</p>
+        <div class="le-acts" style="justify-content:center;">
+          <button class="ev-btn ev-btn-primary" type="button" id="le-another">List another event</button>
+          <a class="ev-btn ev-btn-ghost" href="/events">Back to events</a>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<script src="/vendor-supabase-2.112.3.js"></script>
+<script src="/apa-session.js"></script>
+<script src="/cabana-media-upload.js"></script>
+<script src="/cabana-list-event.js"></script>
+</body>
+</html>
