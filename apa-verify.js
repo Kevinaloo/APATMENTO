@@ -17,7 +17,7 @@
 (function () {
   'use strict';
 
-  /* Mirrors required_tier() in the migration and CONTEXT_KIND in api/verify.js.
+  /* Mirrors required_tier() in the migration and CONTEXT_KIND in api/lib/_verify.js.
      All three must agree; the database is the one that actually enforces. */
   var TIERS = {
     rides: 3, carhire: 2, agent: 2, payout: 2,
@@ -47,7 +47,7 @@
     var t = await token();
     if (!t) return { cleared_tier: 0, identity_state: 'not_started' };
     try {
-      var r = await fetch('/api/verify?action=status', { headers: { Authorization: 'Bearer ' + t } });
+      var r = await fetch('/api/verify-status', { headers: { Authorization: 'Bearer ' + t } });
       if (!r.ok) return { cleared_tier: 0, identity_state: 'not_started' };
       _cache = await r.json();
       return _cache;
@@ -73,7 +73,7 @@
   async function start(context, country) {
     var t = await token();
     if (!t) { location.href = 'auth.html'; return null; }
-    var r = await fetch('/api/verify?action=start', {
+    var r = await fetch('/api/verify-start', {
       method: 'POST',
       headers: { Authorization: 'Bearer ' + t, 'Content-Type': 'application/json' },
       body: JSON.stringify({ context: context, country: country || null })

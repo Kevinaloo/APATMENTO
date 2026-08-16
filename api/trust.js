@@ -26,6 +26,7 @@ import depositBalance     from './lib/_deposit-balance.js';
 import verifyCheckin      from './lib/_verify-checkin.js';
 import checkPaymentStatus from './lib/_check-payment-status.js';
 import askApa           from './lib/_ask-apa.js';
+import verify           from './lib/_verify.js';
 
 const ROUTES = {
   'match-guest':          matchGuest,
@@ -34,6 +35,14 @@ const ROUTES = {
   'verify-checkin':       verifyCheckin,
   'check-payment-status': checkPaymentStatus,
   'ask-apa':              askApa,
+  /* Identity verification (Didit). Merged here to stay within the
+     Hobby plan's 12-function limit. Public paths via vercel.json:
+       /api/verify-start   → action=verify-start
+       /api/verify-status  → action=verify-status
+       /api/didit-webhook  → action=didit-webhook               */
+  'verify-start':         verify,
+  'verify-status':        verify,
+  'didit-webhook':        verify,
 };
 
 export default async function handler(req, res) {

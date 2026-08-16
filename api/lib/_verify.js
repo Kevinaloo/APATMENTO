@@ -19,8 +19,8 @@
 ══════════════════════════════════════════════════════════════════════ */
 
 import crypto from 'node:crypto';
-import { required, optional } from './lib/_env.js';
-import { one, insert, update, upsert } from './lib/_db.js';
+import { required, optional } from './_env.js';
+import { one, insert, update, upsert } from './_db.js';
 
 const DIDIT_BASE = 'https://verification.didit.me';
 
@@ -280,9 +280,9 @@ async function webhook(req, res) {
 export default async function handler(req, res) {
   const action = (req.query && req.query.action) || '';
   try {
-    if (action === 'start'   && req.method === 'POST') return await start(req, res);
-    if (action === 'status'  && req.method === 'GET')  return await status(req, res);
-    if (action === 'webhook' && req.method === 'POST') return await webhook(req, res);
+    if (action === 'verify-start'   && req.method === 'POST') return await start(req, res);
+    if (action === 'verify-status'  && req.method === 'GET')  return await status(req, res);
+    if (action === 'didit-webhook'  && req.method === 'POST') return await webhook(req, res);
     return json(res, 404, { error: 'unknown_action', action });
   } catch (e) {
     // Never echo e.detail to the caller: it can carry Didit request context.
