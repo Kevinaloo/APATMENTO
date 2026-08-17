@@ -17,8 +17,20 @@
      re-announces itself on the day it starts: missing your own check-in
      because you tapped a cross three weeks earlier would be a failure
      of the product, not a preference.
-   · States: counts down in days, then "Tomorrow", then "Happening
-     today", then it is gone the moment the stay ends.
+   · States: counts down in days, then "Tomorrow", then "Check in
+     today", then it tracks the stay, then it is gone.
+
+   WHAT THIS USED TO GET WRONG
+   ───────────────────────────
+   It treated 'part_paid' as a confirmed booking and rendered anything
+   at day-offset <= 0 as "Happening today". A KES 10 trial on a
+   KES 2,300 stay therefore announced itself on the homepage as a live
+   trip, and kept announcing it, because the only thing that removed a
+   booking was its checkout date passing. It also ignored cancelled_at
+   entirely, so a cancelled stay carried on counting down.
+
+   It now asks CabanaBooking, the same module my-bookings uses, so the
+   two can no longer disagree about the same row.
 ══════════════════════════════════════════════════════════════ */
 
 (function () {
@@ -27,32 +39,36 @@
   var SUPA_URL = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
   var SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
 
-  /* Statuses that mean money has actually moved. */
-  var PAID = ['part_paid', 'confirmed_balance_due', 'paid_pending_checkin',
-              'deposit_paid', 'checked_in', 'completed'];
-
   var DISMISS_KEY = 'apa_trip_strip_dismissed';
 
-  /* ── date helpers: local calendar days, never UTC ──────────────── */
-  function midnight(d) { var x = new Date(d); x.setHours(0, 0, 0, 0); return x; }
-  function parseDay(iso) {
-    if (!iso) return null;
-    var d = new Date(String(iso).slice(0, 10) + 'T00:00:00');
-    return isNaN(d) ? null : d;
+  /* The state module may not be on the page yet. Fetch it rather than
+     silently rendering nothing: a missing script tag on one page must
+     not quietly remove a guest's upcoming trip from view. */
+  function withState(fn) {
+    if (window.CabanaBooking) return fn(window.CabanaBooking);
+    var existing = document.querySelector('script[data-cabana-booking-state]');
+    if (!existing) {
+      existing = document.createElement('script');
+      existing.src = '/cabana-booking-state.js';
+      existing.setAttribute('data-cabana-booking-state', '1');
+      document.head.appendChild(existing);
+    }
+    var tries = 0;
+    var t = setInterval(function () {
+      if (window.CabanaBooking) { clearInterval(t); fn(window.CabanaBooking); }
+      else if (++tries > 60) clearInterval(t);      /* ~3s, then give up */
+    }, 50);
   }
-  function daysUntil(iso) {
-    var d = parseDay(iso); if (!d) return null;
-    return Math.round((midnight(d) - midnight(new Date())) / 86400000);
-  }
+
+  var CB = null;   /* set once withState resolves */
+
   function fmt(iso) {
-    var d = parseDay(iso); if (!d) return '';
-    return d.toLocaleDateString('en-KE', { weekday: 'short', day: 'numeric', month: 'short' });
+    if (!iso) return '';
+    var d = new Date(String(iso).slice(0, 10) + 'T00:00:00');
+    return isNaN(d) ? '' : d.toLocaleDateString('en-KE',
+      { weekday: 'short', day: 'numeric', month: 'short' });
   }
-  function esc(s) {
-    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
-    });
-  }
+  function esc(s) { return CB.esc(s); }
 
   function getDismissed() {
     try { return JSON.parse(localStorage.getItem(DISMISS_KEY) || '{}'); }
@@ -125,26 +141,37 @@
     document.head.appendChild(s);
   }
 
-  /* ── choose the single most relevant booking ───────────────────── */
+  /* ── choose the single most relevant booking ─────────────────────
+     Only a booking that is CONFIRMED, i.e. the deposit threshold has
+     actually been crossed, earns space above the fold. Money that has
+     arrived but has not confirmed anything is a payment, not a trip,
+     and belongs on the bookings page where the shortfall can be
+     explained rather than on the homepage where it cannot. */
   function pick(rows) {
-    var dis = getDismissed();
+    var dis  = getDismissed();
     var best = null;
 
     rows.forEach(function (b) {
-      if (PAID.indexOf(String(b.status)) === -1) return;
+      if (b.cancelled_at) return;                      /* was never checked */
 
-      var startIn = daysUntil(b.checkin_date);
-      var endsIn  = daysUntil(b.checkout_date || b.checkin_date);
+      var lc = CB.lifecycle(b);
+      if (lc.bucket !== 'upcoming') return;            /* over, or never began */
+      if (!lc.settlement.confirmed) return;            /* the KES 10 case */
+      if (lc.key === 'failed' || lc.key === 'unpaid') return;
+
+      var startIn = CB.daysUntilStart(b);
       if (startIn === null) return;
 
-      /* Gone the moment the stay is over. */
-      if (endsIn !== null && endsIn < 0) return;
-
-      /* Respect a dismissal, except on the day it actually matters
+      /* Respect a dismissal, except once the stay is actually running:
          a cross tapped weeks ago must not hide today's check-in. */
       if (dis[b.id] && startIn > 0) return;
 
-      if (!best || startIn < best._in) { b._in = startIn; b._ends = endsIn; best = b; }
+      if (!best || startIn < best._in) {
+        b._in   = startIn;
+        b._left = CB.nightsLeft(b);
+        b._lc   = lc;
+        best    = b;
+      }
     });
 
     return best;
@@ -153,24 +180,38 @@
   function render(b, mount) {
     injectCSS();
 
+    var lc    = b._lc;
     var today = b._in <= 0;
     var n, u, kick;
 
-    if (b._in > 1)       { n = b._in; u = 'days';  kick = 'Upcoming stay'; }
-    else if (b._in === 1){ n = 1;     u = 'day';   kick = 'Tomorrow'; }
-    else                 { n = 'NOW'; u = 'today'; kick = 'Happening today'; }
+    if (b._in > 1)        { n = b._in; u = 'days';  kick = 'Upcoming stay'; }
+    else if (b._in === 1) { n = 1;     u = 'day';   kick = 'Tomorrow'; }
+    else if (b._in === 0) { n = 'TODAY'; u = 'check in'; kick = 'Check in today'; }
+    else if (b._left > 0) {
+      /* Mid-stay. It counts down to checkout instead of insisting,
+         as it used to, that a stay begun three days ago is beginning
+         now. */
+      n = b._left; u = b._left === 1 ? 'night' : 'nights'; kick = 'Staying now';
+    } else {
+      n = 'TODAY'; u = 'check out'; kick = 'Checking out today';
+    }
 
     var el = document.createElement('div');
     el.className = 'apa-trip' + (today ? ' apa-trip-today' : '');
     el.setAttribute('role', 'link');
     el.setAttribute('tabindex', '0');
-    el.setAttribute('aria-label', 'View your booking at ' + (b.apartment_name || 'your stay'));
+    el.setAttribute('aria-label', 'View your booking at ' + CB.title(b));
 
     var meta = [
       fmt(b.checkin_date),
       b.checkout_date ? fmt(b.checkout_date) : null
     ].filter(Boolean).join('  \u2192  ');
     if (b.nights) meta += '  \u00b7  ' + b.nights + (b.nights > 1 ? ' nights' : ' night');
+    /* A confirmed booking with money still outstanding says so here
+       rather than letting the guest arrive and discover it. */
+    if (!lc.settlement.settled) {
+      meta += '  \u00b7  ' + CB.money(lc.settlement.outstanding) + ' to settle';
+    }
 
     el.innerHTML =
       '<button class="apa-trip-x" aria-label="Dismiss">\u00d7</button>'
@@ -181,7 +222,7 @@
       + '  </div>'
       + '  <div class="apa-trip-body">'
       + '    <div class="apa-trip-kick"><span class="apa-trip-dot"></span>' + kick + '</div>'
-      + '    <div class="apa-trip-name">' + esc(b.apartment_name || 'Your stay') + '</div>'
+      + '    <div class="apa-trip-name">' + esc(CB.title(b)) + '</div>'
       + '    <div class="apa-trip-meta">' + esc(meta) + '</div>'
       + '  </div>'
       + '  <div class="apa-trip-go">'
@@ -218,7 +259,10 @@
   async function boot() {
     var mount = document.getElementById('apa-trip-mount');
     if (!mount) return;
+    withState(function (state) { CB = state; run(mount); });
+  }
 
+  async function run(mount) {
     var sb = null;
     try {
       if (!window.supabase || !window.supabase.createClient) return;

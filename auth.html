@@ -139,6 +139,22 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
 
 .field{margin-bottom:16px;}
 .field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+/* ── welcome credit, restated on the signup form ─────────────── */
+.cc-promise{display:flex;align-items:center;gap:13px;margin-bottom:20px;padding:14px 16px;
+  border-radius:16px;color:#fff;
+  background:linear-gradient(140deg,#100D20,#1A1438 55%,#0C201F);
+  border:1px solid rgba(184,164,244,.24);
+  animation:ccPromiseIn .6s cubic-bezier(.16,1,.3,1) both;}
+@keyframes ccPromiseIn{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:none;}}
+.cc-promise-n{flex-shrink:0;font-family:'Geist','Inter',sans-serif;font-weight:700;font-size:28px;
+  line-height:1;letter-spacing:-.035em;font-variant-numeric:tabular-nums;
+  background:linear-gradient(115deg,#fff,#5EEAD4);-webkit-background-clip:text;
+  background-clip:text;color:transparent;}
+.cc-promise-t{font-size:13px;font-weight:600;line-height:1.45;}
+.cc-promise-t span{display:block;margin-top:3px;font-size:11.5px;font-weight:400;
+  color:rgba(255,255,255,.52);}
+@media(prefers-reduced-motion:reduce){.cc-promise{animation:none;}}
 .field-label{display:block;font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:7px;letter-spacing:.01em;}
 .field-input-wrap{position:relative;}
 .field-input{width:100%;padding:13px 15px;border:1.5px solid var(--line-2);border-radius:13px;background:var(--glass);font-family:var(--font-body);font-size:14px;color:var(--ink);outline:none;transition:all .25s;}
@@ -481,6 +497,18 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
 
         <!-- SIGNUP -->
         <div id="signup-section" style="display:none;">
+
+          <!-- The promise made on the homepage, restated at the exact
+               moment of commitment. A form is where offers are
+               abandoned; this is the one line that answers "why am I
+               filling this in". Static markup, not a component: the
+               signup form must never wait on a script to make sense. -->
+          <div class="cc-promise">
+            <span class="cc-promise-n">200</span>
+            <span class="cc-promise-t">credits land in this account the moment it exists.
+              <span>Worth KES 200 off your first booking. Not valid on flights.</span></span>
+          </div>
+
           <div class="field-row">
             <div class="field">
               <label class="field-label">First name</label>
@@ -1223,6 +1251,26 @@ async function doSignup() {
       method: 'POST', headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ email, name: first + ' ' + last })
     }).catch(()=>{});
+  } catch(e){}
+
+  /* The 200 welcome credits. Claimed here so the balance is already
+     real by the time they reach the dashboard, rather than appearing a
+     beat later. It is idempotent and enforced by a unique index, and
+     cabana-credit.js calls it again on load, so a failure here costs
+     nothing: it self-heals on the next page view. Deliberately not
+     awaited — nobody should watch a spinner for a gift. */
+  try {
+    if (data.session?.access_token) {
+      fetch('/api/rewards', {
+        method: 'POST',
+        headers: { 'Content-Type':'application/json',
+                   Authorization: 'Bearer ' + data.session.access_token },
+        body: JSON.stringify({ action: 'claim-welcome' })
+      }).catch(()=>{});
+    }
+    /* Let the reveal fire on the dashboard for this brand-new account. */
+    localStorage.removeItem('cabana_credit_revealed');
+    sessionStorage.removeItem('cabana_credit_stats');
   } catch(e){}
 
   _pendingSignup = null;

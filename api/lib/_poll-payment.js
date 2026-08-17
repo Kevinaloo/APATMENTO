@@ -23,6 +23,8 @@
    in a single request instead of another blind test cycle.
 ══════════════════════════════════════════════════════════════ */
 
+import { deriveStatus, depositRequired, settlementOf } from './_payment-rules.js';
+
 const BASE = 'https://backend.payhero.co.ke/api/v2';
 
 /* {CK} = CheckoutRequestID, {REF} = our external_reference. */
@@ -139,7 +141,15 @@ export async function pollPayment(req, res) {
     const ledger = lr.ok ? (await lr.json())[0] : null;
     if (!ledger) return res.status(404).json({ status: 'pending', error: 'unknown reference' });
 
-    if (ledger.status === 'paid')   return res.json({ status: 'paid',   settled: true });
+    /* An instalment that has already cleared still has to answer the
+       real question, which is not "did these ten shillings arrive" but
+       "is this booking paid for". Returning a bare status:'paid' here
+       is what let a KES 10 payment on a KES 2,300 stay show the guest a
+       check-in code: the browser had no way to tell the instalment
+       apart from the booking. */
+    if (ledger.status === 'paid') {
+      return res.json(await settleView(supaUrl, H, ledger, { instalment: 'paid' }));
+    }
     if (ledger.status === 'failed') return res.json({ status: 'failed', settled: true });
 
     const CK = ledger.checkout_request_id;
@@ -220,55 +230,76 @@ export async function pollPayment(req, res) {
       });
     }
 
-    const sr = await fetch(
-      `${supaUrl}/rest/v1/booking_payments`
-        + `?booking_ref=eq.${encodeURIComponent(ledger.booking_ref)}&status=eq.paid&select=amount`,
-      { headers: H() });
-    const amountPaid = (sr.ok ? await sr.json() : [])
-      .reduce((s, p) => s + Number(p.amount || 0), 0);
-
-    const br = await fetch(
-      `${supaUrl}/rest/v1/apartment_bookings`
-        + `?payment_reference=eq.${encodeURIComponent(ledger.booking_ref)}&select=*&limit=1`,
-      { headers: H() });
-    const booking = br.ok ? (await br.json())[0] : null;
-    const total   = Number(booking?.grand_total || 0);
-    const deposit = Math.round(total * 0.25);
-    const nowFull = total > 0 && amountPaid >= total;
-
-    const newStatus = amountPaid <= 0       ? 'pending_payment'
-                    : nowFull               ? 'paid_pending_checkin'
-                    : amountPaid >= deposit ? 'confirmed_balance_due'
-                    : 'part_paid';
-
-    await fetch(
-      `${supaUrl}/rest/v1/apartment_bookings`
-        + `?payment_reference=eq.${encodeURIComponent(ledger.booking_ref)}`,
-      {
-        method: 'PATCH',
-        headers: H({ 'Content-Type': 'application/json', Prefer: 'return=minimal' }),
-        body: JSON.stringify({
-          amount_paid:      amountPaid,
-          deposit_required: deposit,
-          status:           newStatus,
-          balance_amount:   Math.max(0, total - amountPaid),
-          balance_paid:     nowFull,
-          ...(nowFull ? { fully_paid_at: new Date().toISOString() } : {}),
-        }),
-      });
-
-    return res.json({
-      status:           newStatus,
-      amount_paid:      amountPaid,
-      grand_total:      total,
-      deposit_required: deposit,
-      mpesa_receipt:    found.receipt,
-      confirmed:        amountPaid >= deposit,
-      fully_paid:       nowFull,
-    });
+    return res.json(await settleView(supaUrl, H, ledger, {
+      instalment:    'paid',
+      mpesa_receipt: found.receipt,
+    }));
 
   } catch (err) {
     console.error('[poll-payment]', err);
     return res.status(500).json({ status: 'pending', error: err.message });
   }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Re-sum the ledger, write the derived state back to the booking,
+   and answer with the BOOKING's position, never the instalment's.
+
+   `fully_paid` is the only field a client should use to decide
+   whether a check-in code may be shown. Everything else here is for
+   display.
+══════════════════════════════════════════════════════════════ */
+async function settleView(supaUrl, H, ledger, extra = {}) {
+  /* The ledger row knows which table it belongs to. This used to be
+     hard-coded to apartment_bookings, so a paid tour or event
+     instalment updated nothing at all and the booking stayed
+     'pending_payment' however much the guest paid. */
+  const table = ledger.booking_table || 'apartment_bookings';
+  const ref   = encodeURIComponent(ledger.booking_ref);
+
+  const sr = await fetch(
+    `${supaUrl}/rest/v1/booking_payments`
+      + `?booking_ref=eq.${ref}&status=eq.paid&select=amount`,
+    { headers: H() });
+  const amountPaid = (sr.ok ? await sr.json() : [])
+    .reduce((s, p) => s + Number(p.amount || 0), 0);
+
+  const br = await fetch(
+    `${supaUrl}/rest/v1/${table}?payment_reference=eq.${ref}&select=*&limit=1`,
+    { headers: H() });
+  const booking = br.ok ? (await br.json())[0] : null;
+
+  const s         = settlementOf({ ...booking, amount_paid: amountPaid });
+  const newStatus = deriveStatus(amountPaid, s.total);
+
+  /* Only apartment_bookings carries the ledger mirror columns. */
+  const patch = { status: newStatus };
+  if (table === 'apartment_bookings') {
+    Object.assign(patch, {
+      amount_paid:      amountPaid,
+      deposit_required: depositRequired(s.total),
+      balance_amount:   s.outstanding,
+      balance_paid:     s.settled,
+      ...(s.settled && !booking?.fully_paid_at
+          ? { fully_paid_at: new Date().toISOString() } : {}),
+    });
+  }
+
+  await fetch(`${supaUrl}/rest/v1/${table}?payment_reference=eq.${ref}`, {
+    method: 'PATCH',
+    headers: H({ 'Content-Type': 'application/json', Prefer: 'return=minimal' }),
+    body: JSON.stringify(patch),
+  }).catch(e => console.warn('[poll-payment] status write:', e.message));
+
+  return {
+    status:           newStatus,
+    amount_paid:      amountPaid,
+    grand_total:      s.total,
+    outstanding:      s.outstanding,
+    deposit_required: s.deposit,
+    percent_paid:     s.pct,
+    confirmed:        s.confirmed,
+    fully_paid:       s.settled,   /* the only gate for a check-in code */
+    ...extra,
+  };
 }

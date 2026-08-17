@@ -861,4 +861,19 @@
     },
   };
 
+  /* ── The name the rebrand left behind ────────────────────────────
+     booking-confirm.html calls CabanaPay.start(). Nothing in the
+     repository has ever defined CabanaPay: this file and payment.js
+     both export ApatmentoPay, and a comment in booking-confirm even
+     claims payment.js "also defines window.CabanaPay", which it does
+     not. So every Pay button on the stays checkout threw
+     "CabanaPay is not defined", the surrounding try/catch turned it
+     into a toast, and the booking row that had already been inserted
+     was stranded at pending_payment. That is why the two most recent
+     bookings in the database are identical rows seven seconds apart:
+     someone pressed Pay, saw an error, and pressed it again.
+
+     Both names now point at the same object. */
+  window.CabanaPay = window.ApatmentoPay;
+
 })();

@@ -7,7 +7,9 @@
    Routes (POST with JSON body { action, ...params }):
      record-referral. Called at signup, idempotent
      award. Called by stk-callback after payment
-     redeem-points. Called at checkout
+     claim-welcome. 200 credits for a new account, idempotent
+     redeem-points. Called at checkout, idempotent per booking_ref
+     refund-credit. Returns credits when a booking does not complete
      withdraw. Request M-Pesa payout
      stats. Dashboard totals for the authed user
 ══════════════════════════════════════════════════════════════ */
@@ -23,6 +25,33 @@ const PLATFORM_FEE_RATE = 0.10;
 
 /* Points: 10 pts per KES 1,000 spent */
 const POINTS_PER_KES = 10 / 1000;
+
+/* ══════════════════════════════════════════════════════════════
+   WELCOME CREDIT
+   ──────────────────────────────────────────────────────────────
+   Every new account opens with 200 credits. One credit is one
+   shilling off the total, on anything except flights.
+
+   Two things make this safe to expose to the browser:
+
+   1. The amount is decided here, never sent by the client.
+   2. `WELCOME_FROM` bounds who is eligible by account age. Without
+      it, shipping this would hand 200 credits to every account that
+      has ever existed the moment each one next opened the site,
+      which is a real liability, not a marketing spend. Accounts
+      created before the promo launched are simply not eligible.
+
+   Move WELCOME_CREDIT_FROM in Vercel's env to re-open the offer to
+   an earlier cohort, or set WELCOME_CREDIT_POINTS to change the
+   amount. Neither needs a deploy.
+══════════════════════════════════════════════════════════════ */
+const WELCOME_POINTS = Number(process.env.WELCOME_CREDIT_POINTS || 200);
+const WELCOME_FROM   = process.env.WELCOME_CREDIT_FROM || '2026-08-17';
+
+/* Flights are excluded everywhere credits are involved. Airline fares
+   are sold at cost with no margin to discount against. */
+const CREDIT_EXCLUDED = ['flights'];
+const welcomeRef = uid => 'WELCOME-' + uid;
 
 /* ── DB helpers (service-role. Full trust) ── */
 async function dbSelect(table, query = '') {
@@ -233,23 +262,96 @@ async function actionAward(body, req) {
   return { ok: true, points, referred: refs.length > 0 };
 }
 
+/* claim-welcome
+   Auth: user's own bearer token. Idempotent, and idempotent at the
+   DB level rather than only in this function: point_transactions has
+   a unique index on (booking_ref, type) for type='earn', so two calls
+   racing each other produce one grant and one duplicate-key error, not
+   two grants. The client may therefore call this on every page load
+   without co-ordination.                                              */
+async function actionClaimWelcome(body, user) {
+  if (!user) return { error: 'Unauthorized', status: 401 };
+  const userId = user.id;
+  const ref    = welcomeRef(userId);
+
+  const balanceOf = async () => {
+    const rows = await dbSelect('user_points', `user_id=eq.${userId}&select=available_points`);
+    return rows[0]?.available_points || 0;
+  };
+
+  /* Already granted? Say so plainly, and hand back the balance so the
+     UI can render without a second round trip. */
+  const existing = await dbSelect('point_transactions',
+    `booking_ref=eq.${encodeURIComponent(ref)}&type=eq.earn&limit=1`);
+  if (existing.length) {
+    return { ok: true, already: true, points: WELCOME_POINTS, balance: await balanceOf() };
+  }
+
+  /* Eligibility is account age, taken from the auth record, never from
+     anything the caller sends. */
+  const createdAt = user.created_at || user.createdAt;
+  if (createdAt && new Date(createdAt) < new Date(WELCOME_FROM)) {
+    return { ok: false, eligible: false, reason: 'account_predates_offer',
+             balance: await balanceOf() };
+  }
+
+  try {
+    await atomicAddPoints(userId, WELCOME_POINTS, true);
+    await dbInsert('point_transactions', {
+      user_id:      userId,
+      type:         'earn',
+      points:       WELCOME_POINTS,
+      amount_kes:   WELCOME_POINTS,
+      service_type: 'welcome',
+      booking_ref:  ref,
+      description:  `Welcome credit · ${WELCOME_POINTS} credits`,
+    });
+  } catch (e) {
+    /* Lost the race against another tab. The other one granted it. */
+    if (/duplicate|unique/i.test(e.message)) {
+      return { ok: true, already: true, points: WELCOME_POINTS, balance: await balanceOf() };
+    }
+    throw e;
+  }
+
+  return { ok: true, granted: true, points: WELCOME_POINTS, balance: await balanceOf() };
+}
+
 /* redeem-points
    Auth: user's own bearer token. Atomic deduction via RPC.
-   Returns valueKes (how much KES the points are worth) on success.       */
+   Returns value_kes (how much KES the points are worth) on success.     */
 async function actionRedeemPoints(body, user) {
   if (!user) return { error: 'Unauthorized', status: 401 };
   const userId = user.id;
   const service_type = body.service_type || '';
-  if (service_type === 'flights') return { error: 'Points cannot be used on flights', status: 400 };
+  if (CREDIT_EXCLUDED.includes(service_type)) {
+    return { error: 'Credits cannot be used on flights', status: 400 };
+  }
 
   const pointsToRedeem = Math.floor(Number(body.points_to_redeem));
   const booking_ref    = body.booking_ref || '';
   if (!pointsToRedeem || pointsToRedeem <= 0) return { error: 'Invalid points amount', status: 400 };
 
+  /* Idempotent per booking. Checkout can retry a failed insert, and a
+     guest can double-tap Pay; neither must spend the credit twice. The
+     earlier version deducted again on every call. */
+  if (booking_ref) {
+    const prior = await dbSelect('point_transactions',
+      `booking_ref=eq.${encodeURIComponent(booking_ref)}&type=eq.redeem&limit=1`);
+    if (prior.length) {
+      const already = Math.abs(Number(prior[0].points || 0));
+      const rows = await dbSelect('user_points', `user_id=eq.${userId}&select=available_points`);
+      return { ok: true, already: true, value_kes: already,
+               new_balance: rows[0]?.available_points || 0 };
+    }
+  }
+
   /* Check balance server-side */
   const rows = await dbSelect('user_points', `user_id=eq.${userId}&select=available_points`);
   const available = rows[0]?.available_points || 0;
-  if (available < pointsToRedeem) return { error: 'Insufficient points', status: 400 };
+  if (available < pointsToRedeem) {
+    return { error: 'Insufficient credits', status: 400, available };
+  }
 
   /* Atomic deduct */
   await atomicAddPoints(userId, -pointsToRedeem, false);
@@ -261,10 +363,50 @@ async function actionRedeemPoints(body, user) {
     amount_kes:   pointsToRedeem,
     service_type,
     booking_ref,
-    description:  `Redeemed ${pointsToRedeem} pts = KES ${pointsToRedeem}`,
+    description:  `Redeemed ${pointsToRedeem} credits = KES ${pointsToRedeem}`,
   });
 
   return { ok: true, value_kes: pointsToRedeem, new_balance: available - pointsToRedeem };
+}
+
+/* refund-credit
+   Auth: user's own bearer token. Returns credits spent against a
+   booking that never happened. Without this, a guest whose booking
+   insert failed, or who was refunded, silently loses the credit they
+   applied. Idempotent on booking_ref.                                  */
+async function actionRefundCredit(body, user) {
+  if (!user) return { error: 'Unauthorized', status: 401 };
+  const userId      = user.id;
+  const booking_ref = body.booking_ref || '';
+  if (!booking_ref) return { error: 'booking_ref required', status: 400 };
+
+  const spent = await dbSelect('point_transactions',
+    `booking_ref=eq.${encodeURIComponent(booking_ref)}&type=eq.redeem`
+    + `&user_id=eq.${userId}&limit=1`);
+  if (!spent.length) return { ok: true, nothing_to_refund: true };
+
+  /* Already given back? The reversal is written as its own row with a
+     distinct ref, so its presence is the idempotency key. */
+  const reversalRef = 'REFUND-' + booking_ref;
+  const prior = await dbSelect('point_transactions',
+    `booking_ref=eq.${encodeURIComponent(reversalRef)}&limit=1`);
+  if (prior.length) return { ok: true, already: true };
+
+  const points = Math.abs(Number(spent[0].points || 0));
+  if (points <= 0) return { ok: true, nothing_to_refund: true };
+
+  await atomicAddPoints(userId, points, false);
+  await dbInsert('point_transactions', {
+    user_id:      userId,
+    type:         'earn',
+    points,
+    amount_kes:   points,
+    service_type: spent[0].service_type || null,
+    booking_ref:  reversalRef,
+    description:  `Credits returned · booking ${booking_ref} did not complete`,
+  });
+
+  return { ok: true, refunded: points };
 }
 
 /* withdraw
@@ -358,6 +500,10 @@ async function actionStats(body, user) {
     available_points: points[0]?.available_points  || 0,
     lifetime_points:  points[0]?.lifetime_points   || 0,
     referral_count:   referralCount.length,
+    /* One credit is one shilling. Named explicitly so the UI never has
+       to hard-code the conversion. */
+    credit_kes:       points[0]?.available_points  || 0,
+    welcome_points:   WELCOME_POINTS,
   };
 }
 
@@ -381,7 +527,9 @@ export default async function handler(req, res) {
     switch (action) {
       case 'record-referral': result = await actionRecordReferral(body, user); break;
       case 'award':           result = await actionAward(body, req);           break;
+      case 'claim-welcome':   result = await actionClaimWelcome(body, user);   break;
       case 'redeem-points':   result = await actionRedeemPoints(body, user);   break;
+      case 'refund-credit':   result = await actionRefundCredit(body, user);   break;
       case 'withdraw':        result = await actionWithdraw(body, user);       break;
       case 'stats':           result = await actionStats(body, user);          break;
       case 'ensure-code':     result = await actionEnsureCode(body, user);     break;

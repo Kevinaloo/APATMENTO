@@ -2059,8 +2059,13 @@ img,video,svg{max-width:100%;}
       <div id="cbn-ring-slot" style="margin-bottom:4px;"></div>
 
       <!-- ── CABANA MATCH ENTRY CARD ── -->
-      <!-- Upcoming trip strip. Empty until a paid booking exists, so the layout is unchanged for everyone else. -->
+      <!-- Upcoming trip strip. Empty until a confirmed booking exists, so the layout is unchanged for everyone else. -->
       <div id="apa-trip-mount"></div>
+
+      <!-- Welcome credit. Reveals the 200 once, then states the
+           balance, then disappears when it is spent. See
+           cabana-credit.js. -->
+      <div data-cabana-credit></div>
 
       <div class="dash-cabana-entry" onclick="window.location.href='apartments.html#cabana-match'" id="dash-cabana-entry">
         <span class="dash-cabana-ring"></span>
@@ -3537,6 +3542,7 @@ function hideAddSheet(){
 <script src="/pwa.js" defer></script>
 <script src="/apa-push.js" defer></script>
 <script src="/referral.js" defer></script>
+<script src="/cabana-credit.js" defer></script>
 <script src="/showcase.js" defer></script>
 
 <!-- Admin surface removed: apa-admin-guard.js redirects operators to the console. -->
@@ -4097,6 +4103,7 @@ async function dashGmCloseRequest() {
 }
 </script>
 <script src="/cabana-pay.js"></script>
+<script src="/cabana-booking-state.js" defer></script>
 <script src="/apa-trip-strip.js" defer></script>
 </body>
 </html>

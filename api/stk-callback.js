@@ -8,6 +8,8 @@
    so BAL- handler can use them without a TDZ ReferenceError.
 ══════════════════════════════════════════════════════════════ */
 
+import { deriveStatus, depositRequired } from './lib/_payment-rules.js';
+
 function siteOrigin(req) {
   const host = req.headers['x-forwarded-host'] || req.headers.host;
   const proto = req.headers['x-forwarded-proto'] || 'https';
@@ -143,17 +145,59 @@ export default async function handler(req, res) {
       return res.status(200).json({ received: true });
     }
 
-    const newStatus = isSuccess ? 'paid_pending_checkin' : 'failed';
+    /* ── How much did this callback actually carry? ──────────────────
+       This path used to set 'paid_pending_checkin' on ANY success,
+       whatever the amount. A KES 10 push against a KES 2,300 stay came
+       back SUCCESS and the booking was marked paid in full, which
+       released the check-in code and, at check-in, the host's entire
+       payout. The amount is right there in the payload; we read it and
+       let the shared rules module decide the status. */
+    const bookingRes = await fetch(
+      `${supabaseUrl}/rest/v1/${table}`
+        + `?payment_reference=eq.${encodeURIComponent(externalReference)}&select=*&limit=1`,
+      { headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` } }
+    );
+    const existing = bookingRes.ok ? (await bookingRes.json())[0] : null;
+
+    const paidNow = Number(
+      payload.amount ?? payload.Amount ?? payload.response?.Amount ?? 0
+    ) || 0;
+    const grandTotal = Number(existing?.grand_total || 0);
+    /* No amount in the payload is not permission to assume the full
+       total. Credit what we can prove and no more; if that leaves the
+       booking short, the guest is shown a balance rather than a code. */
+    const amountPaid = Math.max(Number(existing?.amount_paid || 0), paidNow);
+
+    const newStatus = isSuccess
+      ? deriveStatus(amountPaid, grandTotal)
+      : 'failed';
+    const fullySettled = isSuccess && newStatus === 'paid_pending_checkin';
+
+    if (isSuccess && !paidNow) {
+      console.warn('[stk-callback] no amount in payload for', externalReference,
+                   '- crediting', amountPaid, 'of', grandTotal);
+    }
 
     // ── Update booking status ────────────────────────────────────────
-    /* `status=neq.paid_pending_checkin` makes this idempotent: PayHero
-       retries a callback until it gets a 200, and without this filter a
-       second delivery would re-return the row and re-fire the rewards
-       award, referral commission and agent attribution below. A repeat
-       now updates 0 rows, so those side effects run exactly once. */
+    /* `status=neq.<newStatus>` makes this idempotent: PayHero retries a
+       callback until it gets a 200, and without this filter a second
+       delivery would re-return the row and re-fire the rewards award,
+       referral commission and agent attribution below. A repeat now
+       updates 0 rows, so those side effects run exactly once. */
+    const patch = { status: newStatus };
+    if (isSuccess && table === 'apartment_bookings') {
+      patch.amount_paid      = amountPaid;
+      patch.deposit_required = depositRequired(grandTotal);
+      patch.balance_amount   = Math.max(0, Math.round(grandTotal - amountPaid));
+      patch.balance_paid     = fullySettled;
+      if (fullySettled && !existing?.fully_paid_at) {
+        patch.fully_paid_at = new Date().toISOString();
+      }
+    }
+
     const updateRes = await fetch(
       `${supabaseUrl}/rest/v1/${table}?payment_reference=eq.${encodeURIComponent(externalReference)}`
-        + `&status=neq.paid_pending_checkin`,
+        + `&status=neq.${encodeURIComponent(newStatus)}`,
       {
         method:  'PATCH',
         headers: {
@@ -162,7 +206,7 @@ export default async function handler(req, res) {
           'Content-Type': 'application/json',
           Prefer:         'return=representation',
         },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify(patch),
       }
     );
 
@@ -183,12 +227,22 @@ export default async function handler(req, res) {
                          : table === 'tour_bookings'      ? 'tour'
                          : 'ticket';
 
-      const notifPayload = isSuccess ? {
+      const outstanding = Math.max(0, Math.round(grandTotal - amountPaid));
+
+      const notifPayload = isSuccess ? (fullySettled ? {
         title: 'Booking confirmed! 🎉',
         body:  `Your ${serviceLabel} is locked in. Your check-in code is ready.`,
         url:   '/my-bookings.html',
         kind:  'booking',
       } : {
+        /* Promising a code we have not released is how a guest ends up
+           at a door with nothing to show. Say what is still owed. */
+        title: 'Payment received',
+        body:  `KES ${amountPaid.toLocaleString()} received on your ${serviceLabel}. `
+             + `KES ${outstanding.toLocaleString()} left to unlock your check-in code.`,
+        url:   '/my-bookings.html',
+        kind:  'booking',
+      }) : {
         title: 'Payment failed',
         body:  'Your M-Pesa payment was not completed. Please try again.',
         url:   '/my-bookings.html',
@@ -205,8 +259,13 @@ export default async function handler(req, res) {
       }).catch(e => console.warn('[notif] push failed (non-fatal):', e.message));
     }
 
-    // ── Rewards: points + referral commission ────────────────────────
-    if (isSuccess && rows[0]?.guest_id) {
+    /* ── Rewards: points + referral commission ───────────────────────
+       Only on a booking that is actually paid for, and against the
+       amount collected rather than the amount quoted. Awarding a
+       referrer 20% of a KES 2,300 stay because KES 10 arrived is real
+       money leaving on a booking that may never complete. This matches
+       the instalment path, which has always waited for `nowFull`. */
+    if (fullySettled && rows[0]?.guest_id) {
       const b           = rows[0];
       const serviceType = table === 'apartment_bookings' ? 'stays'
                         : table === 'tour_bookings'      ? 'tours'
@@ -232,7 +291,7 @@ export default async function handler(req, res) {
     }
 
     // ── Agent attribution (apartments only) ─────────────────────────
-    if (isSuccess && table === 'apartment_bookings' && rows[0]) {
+    if (fullySettled && table === 'apartment_bookings' && rows[0]) {
       const b = rows[0];
       try {
         const r = await fetch(`${siteOrigin(req)}/api/agents?action=attribute`, {

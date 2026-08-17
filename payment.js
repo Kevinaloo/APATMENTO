@@ -251,4 +251,10 @@
 
   window.ApatmentoPay = { start, cancel, close, retry };
 
+  /* Same alias as cabana-pay.js, so a page that loads either file
+     answers to both names. Only set if cabana-pay.js has not already
+     claimed it: that file is the richer implementation and, where
+     both are present, must win. */
+  if (!window.CabanaPay) window.CabanaPay = window.ApatmentoPay;
+
 })();

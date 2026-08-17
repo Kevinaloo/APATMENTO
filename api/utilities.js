@@ -1,169 +1,156 @@
 /* ════════════════════════════════════════════════════════════════
    APATMENTO  ·  Utilities  /api/utilities.js
-   Routes: ?action=verify-checkin | ...
+   Routes: ?action=close-bookings | welcome-email | indexnow
    Consolidates small utility handlers into 1 function
 ════════════════════════════════════════════════════════════════ */
 export const config = { maxDuration: 15 };
 
-/* ══════════════════════════════════════
-   VERIFY CHECKIN
-══════════════════════════════════════ */
 /* ══════════════════════════════════════════════════════════════
-   APATMENTO. Dual Check-In Code Verifier & Payout Release
-   Vercel Serverless Function (api/verify-checkin.js)
-   Called at: /api/verify-checkin
+   CLOSE BOOKINGS  ·  the sweeper
+   ──────────────────────────────────────────────────────────────
+   Nothing in this system ever ended a booking. A stay whose dates
+   had passed sat at 'paid_pending_checkin' forever, so the trip
+   strip kept announcing it as "Happening today" weeks later and its
+   check-in code stayed live indefinitely.
 
-   POST body: { table, reference, role, code }
-   role: 'guest' (submitting host's code) | 'host' (submitting guest's code)
-   Once BOTH codes verified → status 'checked_in' → payout to host.
+   Bookings do not end when someone looks at them. They end because
+   the calendar moved. This runs nightly and moves each one to where
+   the clock says it already is:
+
+     checked_in            + checkout passed  ->  completed
+     paid / part_paid      + checkout passed  ->  expired
+     pending_payment       + checkout passed  ->  expired
+     part_paid (unconfirmed, older than TTL)  ->  refund_due
+
+   'expired' and 'refund_due' both mean money may be owed back, so
+   they are recorded rather than silently deleted. A human settles
+   them; this job only stops them pretending to be live.
+
+   NOTE ON api/utilities?action=verify-checkin
+   ──────────────────────────────────────────
+   A second, older copy of the check-in verifier used to live here.
+   It took no auth token, never checked that the caller was party to
+   the booking, and never checked that the booking was paid: a POST
+   with any known payment reference plus the host code marked a stay
+   checked in and fired the M-Pesa payout. The real verifier
+   (api/lib/_verify-checkin.js, routed via /api/verify-checkin) does
+   all three. The copy is gone rather than patched: two implementations
+   of the same money gate is how one of them ends up stale.
 ══════════════════════════════════════════════════════════════ */
 
-async function handleVerifyCheckin(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+import { settlementOf, endDayOf, todayNumber, PART_PAYMENT_TTL_HOURS }
+  from './lib/_payment-rules.js';
 
-  if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+const SWEEPABLE = {
+  apartment_bookings: 'checkin_date',
+  tour_bookings:      'tour_date',
+  event_tickets:      null,          /* no date column; skipped */
+};
 
-  try {
-    const { table, reference, role, code } = req.body;
+async function handleCloseBookings(req, res) {
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const serviceKey  = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !serviceKey) {
+    return res.status(500).json({ error: 'supabase_not_configured' });
+  }
 
-    const allowedTables = ['apartment_bookings', 'tour_bookings', 'event_tickets'];
-    if (!allowedTables.includes(table)) {
-      return res.status(400).json({ error: 'Invalid table' });
-    }
+  /* Vercel signs its own cron calls. Anything else needs the secret,
+     so this cannot be used to mass-mutate bookings from outside. */
+  const isVercelCron = Boolean(req.headers['x-vercel-cron']);
+  const secret = req.headers['x-internal-secret'] || req.query?.secret || '';
+  if (!isVercelCron && (!process.env.INTERNAL_API_SECRET
+      || secret !== process.env.INTERNAL_API_SECRET)) {
+    return res.status(403).json({ error: 'forbidden' });
+  }
 
-    const supabaseUrl = process.env.SUPABASE_URL;
-    const serviceKey  = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const H = extra => ({ apikey: serviceKey,
+                        Authorization: `Bearer ${serviceKey}`, ...extra });
+  const today = todayNumber();
+  const out   = {};
 
-    // Fetch the booking
-    const fetchRes = await fetch(
-      `${supabaseUrl}/rest/v1/${table}?payment_reference=eq.${encodeURIComponent(reference)}&select=*`,
-      { headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` } }
-    );
-    const rows = await fetchRes.json();
-    const booking = rows?.[0];
+  for (const [table, dateCol] of Object.entries(SWEEPABLE)) {
+    if (!dateCol) { out[table] = { skipped: 'no date column' }; continue; }
 
-    if (!booking) return res.status(404).json({ error: 'Booking not found' });
+    /* Only rows that could still be open. A window of a year back
+       keeps this cheap once the backlog is cleared. */
+    const r = await fetch(
+      `${supabaseUrl}/rest/v1/${table}`
+        + `?status=in.(pending_payment,part_paid,confirmed_balance_due,`
+        + `paid_pending_checkin,deposit_paid,checked_in)`
+        + `&${dateCol}=not.is.null&select=*&limit=1000`,
+      { headers: H() });
 
-    if (booking.status === 'checked_in') {
-      return res.status(200).json({ success: true, status: 'already_checked_in' });
-    }
-    if (booking.status !== 'paid_pending_checkin') {
-      return res.status(400).json({ error: 'Booking not in pending check-in state', status: booking.status });
-    }
+    if (!r.ok) { out[table] = { error: await r.text() }; continue; }
 
-    // ── VERIFY CODE ──
-    let updatePayload = {};
-    let errorMsg = null;
+    const rows    = await r.json();
+    const closed  = [];
+    const refunds = [];
 
-    if (role === 'guest') {
-      if (code.trim().toUpperCase() !== (booking.host_code || '').trim().toUpperCase()) {
-        errorMsg = 'Incorrect host code. Please ask your host for their HOST-XXXXXX code.';
-      } else {
-        updatePayload.guest_verified = true;
+    for (const b of rows) {
+      if (b.cancelled_at) continue;
+      const end = endDayOf(b);
+      if (end == null) continue;
+
+      const s = settlementOf(b);
+
+      if (today > end) {
+        /* The dates are gone. Where it lands depends on whether the
+           guest ever actually arrived. */
+        const next = b.status === 'checked_in' ? 'completed' : 'expired';
+        closed.push({ ref: b.payment_reference, from: b.status, to: next,
+                      paid: s.paid, total: s.total });
+        await patch(table, b, {
+          status: next,
+          closed_at: new Date().toISOString(),
+          ...(next === 'expired' && s.paid > 0
+              ? { refund_due: s.paid, refund_reason: 'stay_dates_passed_unsettled' }
+              : {}),
+        }, supabaseUrl, H);
+        continue;
       }
-    } else if (role === 'host') {
-      if (code.trim().toUpperCase() !== (booking.guest_code || '').trim().toUpperCase()) {
-        errorMsg = 'Incorrect guest code. Please ask your guest for their GUEST-XXXXXX code.';
-      } else {
-        updatePayload.host_verified = true;
-      }
-    } else {
-      return res.status(400).json({ error: 'Invalid role' });
-    }
 
-    if (errorMsg) return res.status(400).json({ error: errorMsg });
-
-    // ── CHECK IF BOTH NOW VERIFIED ──
-    const guestNowVerified = role === 'guest' ? true : booking.guest_verified;
-    const hostNowVerified  = role === 'host'  ? true : booking.host_verified;
-    const bothVerified = guestNowVerified && hostNowVerified;
-
-    if (bothVerified) {
-      updatePayload.status        = 'checked_in';
-      updatePayload.checked_in_at = new Date().toISOString();
-    }
-
-    // ── UPDATE SUPABASE ──
-    const updateRes = await fetch(
-      `${supabaseUrl}/rest/v1/${table}?payment_reference=eq.${encodeURIComponent(reference)}`,
-      {
-        method:  'PATCH',
-        headers: {
-          apikey:         serviceKey,
-          Authorization:  `Bearer ${serviceKey}`,
-          'Content-Type': 'application/json',
-          Prefer:         'return=minimal',
-        },
-        body: JSON.stringify(updatePayload),
-      }
-    );
-
-    if (!updateRes.ok) {
-      const err = await updateRes.text();
-      console.error('Supabase update error:', err);
-      return res.status(500).json({ error: 'Failed to update booking' });
-    }
-
-    // ── IF BOTH VERIFIED. TRIGGER PAYOUT VIA PAYHERO ──
-    if (bothVerified) {
-      const netAmount = Number(booking.grand_total || 0) - Number(booking.service_fee || 0);
-      const payoutPhone = booking.host_mpesa || booking.contact_phone;
-
-      if (payoutPhone && netAmount > 0 && process.env.PAYHERO_USERNAME) {
-        const authToken = Buffer.from(
-          `${process.env.PAYHERO_USERNAME}:${process.env.PAYHERO_PASSWORD}`
-        ).toString('base64');
-
-        try {
-          const payoutRes = await fetch(
-            'https://backend.payhero.co.ke/api/v2/payments',
-            {
-              method:  'POST',
-              headers: { Authorization: `Basic ${authToken}`, 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                amount:             Math.round(netAmount),
-                phone_number:       payoutPhone.replace(/^\+/, '').replace(/^0/, '254'),
-                channel_id:         String(process.env.PAYHERO_CHANNEL_ID).trim(),
-                provider:           'm-pesa',
-                external_reference: `PAYOUT-${reference}`,
-                callback_url:       `https://${req.headers.host}/api/stk-callback`,
-              }),
-            }
-          );
-          const payoutData = await payoutRes.json();
-          console.log('Payout initiated:', JSON.stringify(payoutData));
-        } catch (payoutErr) {
-          console.error('Payout error (booking still checked in):', payoutErr.message);
+      /* Money is being held against a booking that was never
+         confirmed. That is a refund liability, not a booking. */
+      if (s.paid > 0 && !s.confirmed) {
+        const ageH = (Date.now() - Date.parse(b.created_at)) / 3600000;
+        if (ageH > PART_PAYMENT_TTL_HOURS) {
+          refunds.push({ ref: b.payment_reference, held: s.paid });
+          await patch(table, b, {
+            refund_due: s.paid,
+            refund_reason: 'part_payment_never_confirmed',
+          }, supabaseUrl, H);
         }
       }
-
-      return res.status(200).json({
-        success: true,
-        status: 'checked_in',
-        message: 'Both codes verified. Check-in confirmed. Payout released to host.',
-        net_payout: netAmount,
-      });
     }
 
-    return res.status(200).json({
-      success: true,
-      status: role === 'guest' ? 'guest_verified' : 'host_verified',
-      message: role === 'guest'
-        ? 'Your code accepted. Waiting for host to enter your guest code.'
-        : 'Guest code accepted. Waiting for guest to enter your host code.',
-      waiting_for: role === 'guest' ? 'host_to_verify' : 'guest_to_verify',
-    });
-
-  } catch (err) {
-    console.error('verify-checkin error:', err);
-    return res.status(500).json({ error: err.message });
+    out[table] = { scanned: rows.length, closed, refunds_flagged: refunds };
   }
+
+  return res.status(200).json({ ok: true, ran_at: new Date().toISOString(), ...out });
 }
 
+/* Columns added by schema-bookings-lifecycle.sql. If that migration
+   has not been run yet the write is retried without them, so the
+   sweeper still closes bookings on an un-migrated database instead
+   of failing outright every night. */
+async function patch(table, row, body, supabaseUrl, H) {
+  const url = `${supabaseUrl}/rest/v1/${table}?id=eq.${row.id}`;
+  const send = payload => fetch(url, {
+    method: 'PATCH',
+    headers: H({ 'Content-Type': 'application/json', Prefer: 'return=minimal' }),
+    body: JSON.stringify(payload),
+  });
 
+  let r = await send(body);
+  if (r.ok) return;
+
+  const { closed_at, refund_due, refund_reason, ...core } = body;
+  if (Object.keys(core).length) {
+    r = await send(core);
+    if (r.ok) return;
+  }
+  console.warn(`[close-bookings] ${table} ${row.id}:`, await r.text());
+}
 
 /* ══════════════════════════════════════
    WELCOME EMAIL (on registration)
@@ -319,8 +306,18 @@ export default async function handler(req, res) {
     || new URL(req.url || '/', 'http://x').searchParams.get('action')
     || '';
 
+  /* Deliberately gone. /api/verify-checkin (→ api/lib/_verify-checkin.js)
+     is the only check-in verifier; see the note above handleCloseBookings.
+     A 410 rather than a 404 so any stale caller is told it moved. */
   if (action === 'verify-checkin') {
-    return handleVerifyCheckin(req, res);
+    return res.status(410).json({
+      error: 'moved',
+      use: 'POST /api/verify-checkin with an Authorization bearer token',
+    });
+  }
+
+  if (action === 'close-bookings') {
+    return handleCloseBookings(req, res);
   }
 
   if (action === 'welcome-email') {
@@ -331,5 +328,7 @@ export default async function handler(req, res) {
     return handleIndexNow(req, res);
   }
 
-  return res.status(400).json({ error: 'Unknown action. Available: verify-checkin, welcome-email, indexnow' });
+  return res.status(400).json({
+    error: 'Unknown action. Available: close-bookings, welcome-email, indexnow',
+  });
 }

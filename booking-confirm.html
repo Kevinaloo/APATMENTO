@@ -100,6 +100,13 @@ body{overflow-x:hidden;}
 .sum-total-label{font-size:15px;font-weight:600;}
 .sum-total-val{font-family:var(--font-display);font-weight:600;font-size:26px;color:var(--ink);}
 .sum-note{font-size:12px;line-height:1.6;color:var(--mint-deep);background:rgba(45,212,191,.08);border:1px solid rgba(45,212,191,.16);border-radius:12px;padding:12px;margin:16px 0;}
+/* Credits are money coming off. They read as a gain, not as another
+   line item, and they arrive rather than appear. */
+.sum-credit{color:var(--mint-deep);font-weight:600;
+  animation:creditIn .5s cubic-bezier(.16,1,.3,1) both;}
+.sum-credit .v{color:var(--mint-deep) !important;}
+@keyframes creditIn{from{opacity:0;transform:translateX(8px);}to{opacity:1;transform:none;}}
+@media(prefers-reduced-motion:reduce){.sum-credit{animation:none;}}
 .pay-btn{width:100%;padding:16px;border-radius:14px;background:var(--theme-grad);color:#fff;border:none;font-family:var(--font-body);font-weight:600;font-size:15px;cursor:pointer;transition:all .3s;box-shadow:0 10px 30px rgba(123,47,247,.3);display:flex;align-items:center;justify-content:center;gap:9px;}
 .pay-btn:hover{transform:translateY(-2px);box-shadow:0 14px 40px rgba(123,47,247,.42);}
 .pay-btn:disabled{opacity:.6;cursor:not-allowed;transform:none;}
@@ -260,6 +267,12 @@ body{overflow-x:hidden;}
       </div>
       <div class="sum-row"><span id="sum-nights-label">2 nights</span><span class="v" id="sum-subtotal">KES 0</span></div>
       <div class="sum-row"><span>Cabana fee <span style="font-size:11px;color:var(--ink-faint);">(fixed)</span></span><span class="v" id="sum-fee">KES 0</span></div>
+      <!-- Welcome credits, applied automatically. Hidden when the
+           guest has none. Populated by refreshCredit(). -->
+      <div class="sum-row sum-credit" id="sum-credit-row" hidden>
+        <span>Cabana credits <span style="font-size:11px;color:var(--ink-faint);">(applied)</span></span>
+        <span class="v" id="sum-credit">−KES 0</span>
+      </div>
       <div class="sum-divider"></div>
       <div class="sum-total-row"><span class="sum-total-label">Total</span><span class="sum-total-val" id="sum-total">KES 0</span></div>
       <div class="sum-note" id="sum-note">100% of the stay price goes directly to the host. Our fee is fixed. Never a percentage.</div>
@@ -296,6 +309,7 @@ body{overflow-x:hidden;}
     </div>
   </div>
 </div>
+<script src="/cabana-credit.js"></script>
 <script src="/cabana-pay.js"></script>
 <script>
 /* Per-transaction floor. M-Pesa charges a flat fee per push, so
@@ -313,6 +327,11 @@ let CURRENT_USER = null;
 (async () => {
   if (!sb) return;
   try { const { data: { session } } = await sb.auth.getSession(); if (session) CURRENT_USER = session.user; } catch(e){}
+  /* Pull the credit balance and re-price. Deliberately after the
+     summary has already rendered at full price: the total ticking
+     DOWN as the credits land is the moment worth showing, and it
+     means a slow request never delays a visible price. */
+  try { await refreshCredit(); } catch(e){}
 })();
 
 /* ══ READ APARTMENT FROM URL PARAMS ══
@@ -342,6 +361,53 @@ function changeGuests(delta) {
 }
 
 /* ══ FEE CALCULATION. Tiered for apartments ══ */
+/* ══════════════════════════════════════════════════════════════
+   CABANA CREDITS AT CHECKOUT
+
+   The 200 welcome credits are worthless if there is nowhere to spend
+   them, so they come off here, automatically, with no code to enter.
+
+   Two rules keep this honest:
+
+   · Credits never take the total below MIN_TXN. M-Pesa charges a flat
+     fee per transaction, so a KES 0 or KES 3 push costs more to
+     collect than it brings in. There is always a real payment.
+   · The number below is a display figure. The actual deduction is
+     performed by /api/rewards, which re-reads the balance server-side
+     and writes a point_transactions row. A guest editing this variable
+     changes what they SEE, not what they get: the booking's
+     grand_total is set from the value the server confirms it spent.
+══════════════════════════════════════════════════════════════ */
+let CREDIT_AVAILABLE = 0;   /* what the server says they hold */
+let CREDIT_APPLIED   = 0;   /* what this booking will actually use */
+
+function grossTotal() {
+  const nights = getNights();
+  const subtotal = nights * apt.price;
+  return subtotal + calculateFee(subtotal);
+}
+
+/* Never spend more than the guest holds, more than the booking is
+   worth, or so much that no real payment remains. */
+function creditFor(total) {
+  if (!CREDIT_AVAILABLE || CREDIT_AVAILABLE <= 0) return 0;
+  return Math.max(0, Math.min(CREDIT_AVAILABLE, total - MIN_TXN));
+}
+
+/* What the guest actually owes, after credits. */
+function netTotal() {
+  const total = grossTotal();
+  return Math.max(0, total - creditFor(total));
+}
+
+async function refreshCredit() {
+  try {
+    if (!window.CabanaCredit) return;
+    CREDIT_AVAILABLE = await CabanaCredit.balance();
+  } catch (e) { CREDIT_AVAILABLE = 0; }
+  updateSummary();
+}
+
 function calculateFee(totalPrice) {
   return totalPrice < 5000 ? 300 : 800;
 }
@@ -381,10 +447,24 @@ function updateSummary() {
   const fee = calculateFee(subtotal);
   const total = subtotal + fee;
 
+  /* Credits recomputed on every summary refresh: the applicable
+     amount depends on the total, and the total changes with dates. */
+  CREDIT_APPLIED = creditFor(total);
+  const due = total - CREDIT_APPLIED;
+
+  const creditRow = document.getElementById('sum-credit-row');
+  if (creditRow) {
+    creditRow.hidden = CREDIT_APPLIED <= 0;
+    if (CREDIT_APPLIED > 0) {
+      document.getElementById('sum-credit').textContent =
+        `−KES ${CREDIT_APPLIED.toLocaleString()}`;
+    }
+  }
+
   document.getElementById('sum-nights-label').textContent = `${nights} night${nights>1?'s':''} × KES ${apt.price.toLocaleString()}`;
   document.getElementById('sum-subtotal').textContent = `KES ${subtotal.toLocaleString()}`;
   document.getElementById('sum-fee').textContent = `KES ${fee.toLocaleString()}`;
-  document.getElementById('sum-total').textContent = `KES ${total.toLocaleString()}`;
+  document.getElementById('sum-total').textContent = `KES ${due.toLocaleString()}`;
   document.getElementById('sum-note').textContent =
     `100% of the stay price (KES ${subtotal.toLocaleString()}) goes directly to the host. Our fee is fixed. Never a percentage.`;
   refreshPayModeAmounts();
@@ -500,7 +580,7 @@ function renderShortfall() {
   if (PAY_MODE !== 'deposit') { el.textContent = ''; return; }
 
   const nights = getNights();
-  const total  = nights * apt.price + calculateFee(nights * apt.price);
+  const total  = netTotal();
   const dep    = Math.round(total * depositPct(nights));
   const amt    = payAmount();
 
@@ -524,7 +604,7 @@ function renderShortfall() {
 
 function payAmount() {
   const nights = getNights();
-  const total = nights * apt.price + calculateFee(nights * apt.price);
+  const total = netTotal();
   if (PAY_MODE !== 'deposit') return total;          // full is binding
   const custom = customAmount();
   const dep    = Math.round(total * depositPct(nights));
@@ -533,7 +613,7 @@ function payAmount() {
 
 function refreshPayModeAmounts() {
   const nights = getNights();
-  const total = nights * apt.price + calculateFee(nights * apt.price);
+  const total = netTotal();
   const dep = Math.round(total * depositPct(nights));
   const f = document.getElementById('pm-full-amt');
   const d = document.getElementById('pm-dep-amt');
@@ -603,13 +683,49 @@ async function startPayment() {
   const nights = getNights();
   const subtotal = nights * apt.price;
   const fee = calculateFee(subtotal);
-  const total = subtotal + fee;
+  const gross = subtotal + fee;
 
   const payBtn = document.getElementById('pay-btn');
   payBtn.disabled = true;
 
+  /* Declared out here so the catch block can hand the credits back. */
+  let creditSpent = 0;
+  let paymentReference = null;
+
   try {
-    const paymentReference = `APT-${apt.id}-${Date.now()}`;
+    paymentReference = `APT-${apt.id}-${Date.now()}`;
+
+    /* ── Spend the welcome credits ──────────────────────────────
+       Before the row is written, so the booking's grand_total is
+       correct from the first instant and every downstream reader
+       (the ledger, the STK validator, the check-in gate) agrees on
+       what this stay costs.
+
+       The server decides the amount, not us: it re-reads the balance
+       and returns what it actually deducted. If it deducts less than
+       we displayed, the smaller figure is the one that counts. */
+    const wanted = creditFor(gross);
+    if (wanted > 0 && window.CabanaCredit) {
+      try {
+        const { data: ses } = await sb.auth.getSession();
+        const r = await fetch('/api/rewards', {
+          method: 'POST',
+          headers: { 'Content-Type':'application/json',
+                     Authorization: 'Bearer ' + (ses.session?.access_token || '') },
+          body: JSON.stringify({ action: 'redeem-points', points_to_redeem: wanted,
+                                 service_type: 'stays', booking_ref: paymentReference }),
+        });
+        const j = await r.json().catch(() => ({}));
+        if (j && j.ok) creditSpent = Number(j.value_kes) || 0;
+        CabanaCredit.clearCache();
+      } catch (e) {
+        /* Credits are a bonus, never a blocker. If the call fails the
+           guest simply pays the full amount and keeps the credits. */
+        console.warn('[credit] not applied:', e.message);
+      }
+    }
+
+    const total = Math.max(0, gross - creditSpent);
 
     /* Run this SQL once to create the table:
 
@@ -648,14 +764,25 @@ async function startPayment() {
     const depositAmt = payAmount();
     const balanceAmt = Math.max(0, total - depositAmt);
 
-    const { error } = await sb.from('apartment_bookings').insert({
+    /* `contact_phone` used to be set twice in this object literal:
+       once to the guest's M-Pesa number, then again to the host's.
+       The second won silently, so the guest's own number was thrown
+       away at the moment it was collected — which is why nothing
+       downstream could ever re-charge them for a balance without
+       asking again. The host's details keep the contact_* names that
+       every reader already expects; the guest's number gets its own. */
+    const row = {
       guest_id:          CURRENT_USER?.id || null,
       host_id:           apt.host_id || null,
       payment_mode:      isDeposit ? 'deposit' : 'full',
       deposit_amount:    depositAmt,
       deposit_required:  Math.round(total * 0.25),
       balance_amount:    balanceAmt,
-      balance_paid:      !isDeposit,
+      /* Truthfully zero-paid at creation. This used to be set to
+         `!isDeposit`, which told every later reader that a pay-in-full
+         booking was already settled before a shilling had arrived. */
+      balance_paid:      false,
+      amount_paid:       0,
       apartment_id:      apt.id,
       apartment_name:    apt.name,
       location:          apt.location,
@@ -664,10 +791,11 @@ async function startPayment() {
       nights:            nights,
       num_guests:        guestCount,
       guest_name:        name,
-      contact_phone:     phone,
+      guest_phone:       phone,
       stay_total:        subtotal,
       service_fee:       fee,
       grand_total:       total,
+      credit_applied:    creditSpent,
       payment_reference: paymentReference,
       guest_code:        guestCode,
       host_code:         hostCode,
@@ -675,7 +803,17 @@ async function startPayment() {
       contact_phone:     apt.contact_phone    || apt.phone    || null,
       contact_email:     apt.contact_email    || null,
       status:            'pending_payment',
-    });
+    };
+
+    /* schema-bookings-lifecycle.sql adds credit_applied and
+       guest_phone. Until it is run, drop them and insert anyway: a
+       pending migration must not stop anyone booking. */
+    let { error } = await sb.from('apartment_bookings').insert(row);
+    if (error && /column .*(credit_applied|guest_phone|amount_paid)/i.test(error.message || '')) {
+      console.warn('[booking] schema-bookings-lifecycle.sql not applied yet:', error.message);
+      delete row.credit_applied; delete row.guest_phone; delete row.amount_paid;
+      ({ error } = await sb.from('apartment_bookings').insert(row));
+    }
 
     // Store codes and partner contact in session storage to show after payment
     sessionStorage.setItem('pending_guest_code', guestCode);
@@ -709,10 +847,22 @@ async function startPayment() {
         : `${apt.name}, ${nights} night${nights>1?'s':''}`,
       onSuccess: async (d) => {
         payBtn.disabled = false;
-        /* The check-in code is released only when the stay is settled in
-           full. A deposit confirms the dates; it does not open the door. */
-        const st = d && d.status;
-        if (st === 'paid' || st === 'paid_pending_checkin' || !isDeposit) {
+        /* The check-in code is released only when the stay is settled
+           in full. A deposit confirms the dates; it does not open the
+           door.
+
+           This used to read `st === 'paid'`, which is the status of the
+           INSTALMENT, not of the booking: /api/poll-payment answered
+           'paid' as soon as ten shillings cleared, and the guest was
+           handed a check-in code for a KES 2,300 stay. `!isDeposit` was
+           the second hole. It showed the code to anyone who had merely
+           *chosen* pay-in-full, whether or not the money arrived.
+
+           `fully_paid` is computed server-side by re-summing the
+           booking_payments ledger, and is the single fact that decides
+           this. The server refuses the code again at check-in, so a
+           stale client cannot talk its way past the door. */
+        if (d && d.fully_paid === true) {
           showCheckinCodes();
         } else {
           showPartialResult(d);
@@ -745,6 +895,23 @@ async function startPayment() {
 
   } catch (err) {
     console.error(err);
+
+    /* The booking did not get made, so the credits were never spent
+       on anything. Give them back rather than letting them evaporate
+       into a failed insert. Idempotent server-side. */
+    if (creditSpent > 0 && paymentReference) {
+      try {
+        const { data: ses } = await sb.auth.getSession();
+        await fetch('/api/rewards', {
+          method: 'POST',
+          headers: { 'Content-Type':'application/json',
+                     Authorization: 'Bearer ' + (ses.session?.access_token || '') },
+          body: JSON.stringify({ action: 'refund-credit', booking_ref: paymentReference }),
+        });
+        window.CabanaCredit && CabanaCredit.clearCache();
+      } catch (e) { console.warn('[credit] refund failed:', e.message); }
+    }
+
     showToast('Error: ' + (err.message || err.error_description || JSON.stringify(err)));
     payBtn.disabled = false;
   }
@@ -836,9 +1003,9 @@ function showToast(msg, ms) {
   t._h = setTimeout(() => t.classList.remove('show'), ms || 5000);
 }
 </script>
-<!-- payment.js intentionally NOT loaded here: it also defines
-     window.CabanaPay and, being deferred, would run after
-     cabana-pay.js and clobber the video payment experience. -->
+<!-- payment.js intentionally NOT loaded here: it exports the same
+     ApatmentoPay / CabanaPay names and, being deferred, would run
+     after cabana-pay.js and clobber the video payment experience. -->
 <script src="/pwa.js" defer></script>
 <script src="/apa-push.js" defer></script>
 <script src="/apa-map.js" defer></script>

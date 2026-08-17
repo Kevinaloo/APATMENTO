@@ -266,6 +266,10 @@
     {
       "path": "/api/scrape?service=tours",
       "schedule": "0 4 * * *"
+    },
+    {
+      "path": "/api/utilities?action=close-bookings",
+      "schedule": "10 21 * * *"
     }
   ],
   "functions": {

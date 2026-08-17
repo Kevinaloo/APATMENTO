@@ -15,19 +15,13 @@
 <script src="/apa-admin-guard.js"></script>
 <script src="/payment.js"></script>
 <script src="/apa-trust.js"></script>
-<script>
-(function(){
-  var sb2=null;
-  try{var C=supabase.createClient('https://gfwgbgdvxtocwhilrtdw.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw');sb2=C;}catch(e){}
-  if(!sb2)return;
-  sb2.auth.getSession().then(function(res){
-    if(!res.data.session){
-      sessionStorage.setItem('auth_next', location.href);
-      window.location.href='auth.html?next='+encodeURIComponent(location.pathname);
-    }
-  });
-})();
-</script>
+<script src="/cabana-booking-state.js"></script>
+<!-- The auth bounce used to live here as a second, independent
+     Supabase client racing the one below it on the same storage key,
+     and it duplicated a check the page body already performs. One
+     client, one check, one redirect: see boot() at the foot of the
+     page. -->
+
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
@@ -183,6 +177,60 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--glass-2)
 .rev-send:disabled{background:#dfe2e8;color:#a3a8b2;cursor:not-allowed;}
 .rev-priv{font-size:11.5px;color:#9aa0ab;margin-top:9px;text-align:center;}
 .card-warn{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:#b3541e;background:#fdf3e8;padding:4px 8px;border-radius:6px;margin-left:6px;}
+
+/* ── tab counts ─────────────────────────────────────────────── */
+.tab-n{display:inline-block;min-width:18px;margin-left:5px;padding:1px 6px;border-radius:100px;
+  font-size:10.5px;font-weight:700;background:var(--glass-3);color:var(--ink-faint);}
+.tab.active .tab-n{background:rgba(139,111,232,.14);color:var(--theme);}
+.tab-n:empty{display:none;}
+
+/* ── type chips ─────────────────────────────────────────────── */
+.chips{display:flex;gap:7px;flex-wrap:wrap;margin:-10px 0 22px;}
+.chip{padding:7px 14px;border-radius:100px;border:1px solid var(--line);background:rgba(255,255,255,.55);
+  font-family:var(--font-body);font-size:12.5px;font-weight:600;color:var(--ink-faint);cursor:pointer;
+  transition:color .2s,border-color .2s,background .2s;}
+.chip:hover{color:var(--ink-soft);border-color:var(--line-2);}
+.chip.on{background:var(--ink);border-color:var(--ink);color:#fff;}
+
+/* ── settlement meter ────────────────────────────────────────
+   A booking part-way paid is the one state the old page could not
+   describe at all. It gets a number, a bar and the exact shortfall. */
+.pay-panel{margin-top:4px;padding:16px 17px;border-radius:16px;
+  background:linear-gradient(180deg,rgba(255,181,158,.10),rgba(255,181,158,.04));
+  border:1px solid rgba(255,149,0,.22);}
+.pay-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:9px;}
+.pay-title{font-family:var(--font-display);font-weight:500;font-size:14.5px;color:var(--ink);}
+.pay-pct{font-family:var(--font-data);font-size:12px;font-weight:700;color:var(--ember);}
+.meter{height:6px;border-radius:100px;background:rgba(10,10,20,.07);overflow:hidden;margin-bottom:10px;}
+.meter-fill{height:100%;border-radius:100px;background:linear-gradient(90deg,#FFB59E,#FF6B2C);
+  width:0;transition:width .9s cubic-bezier(.16,1,.3,1);}
+.pay-note{font-size:12.5px;line-height:1.55;color:var(--ink-soft);margin-bottom:12px;}
+.pay-note b{color:var(--ink);font-weight:650;}
+.pay-btn{width:100%;padding:13px;border:none;border-radius:12px;background:var(--ink);color:#fff;
+  font-family:var(--font-body);font-weight:650;font-size:14px;cursor:pointer;transition:transform .2s,box-shadow .2s;}
+.pay-btn:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(10,10,20,.18);}
+.pay-btn:disabled{opacity:.55;cursor:not-allowed;transform:none;box-shadow:none;}
+
+/* ── closed bookings ─────────────────────────────────────────
+   Past bookings are history, not offers. They read quieter, and
+   they carry no live code. */
+.booking-card.is-past{background:rgba(255,255,255,.42);box-shadow:none;}
+.booking-card.is-past .bk-icon{filter:grayscale(.85);opacity:.6;}
+.booking-card.is-past:hover{box-shadow:0 8px 24px rgba(10,10,20,.05);}
+.badge-done{background:rgba(45,212,191,.10);color:var(--mint-deep);}
+.badge-closed{background:var(--glass-3);color:var(--ink-faint);}
+.badge-live{background:linear-gradient(135deg,#B8A4F4,#7B2FF7);color:#fff;}
+.badge-live .live-dot{width:5px;height:5px;border-radius:50%;background:#fff;
+  animation:livePulse 1.9s ease-in-out infinite;}
+@keyframes livePulse{0%,100%{opacity:1;}50%{opacity:.35;}}
+
+.bk-sub{font-size:12px;color:var(--ink-soft);margin-top:6px;line-height:1.5;}
+
+/* ── empty state icon ────────────────────────────────────────── */
+.empty-ico{font-size:40px;line-height:1;margin-bottom:14px;opacity:.5;}
+
+/* Stagger the cards in. Enough to feel composed, not enough to wait for. */
+.booking-card{animation-delay:calc(var(--i,0) * 55ms);}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/><link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="/cabana-ds.css"/>
@@ -210,12 +258,15 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--glass-2)
   <h1 class="page-title">My <em>bookings</em></h1>
   <p class="page-sub">Your reservations, tickets and trips, all in one place.</p>
 
+  <!-- When: the only split that matters. A booking is either still
+       ahead of you or behind you. -->
   <div class="tabs" id="tabs">
-    <button class="tab active" id="tab-all"    onclick="setTab('all',this)">All</button>
-    <button class="tab"        id="tab-stays"  onclick="setTab('stays',this)">Stays</button>
-    <button class="tab"        id="tab-tours"  onclick="setTab('tours',this)">Tours</button>
-    <button class="tab"        id="tab-events" onclick="setTab('events',this)">Events</button>
+    <button class="tab active" data-when="upcoming" type="button">Upcoming <span class="tab-n" id="n-upcoming"></span></button>
+    <button class="tab"        data-when="past"     type="button">Past <span class="tab-n" id="n-past"></span></button>
   </div>
+
+  <!-- What: shown only once a guest actually has more than one kind. -->
+  <div class="chips" id="chips" hidden></div>
 
   <!-- loading skeleton -->
   <div id="loading-state">
@@ -224,7 +275,7 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--glass-2)
     <div style="height:120px;border-radius:var(--radius);" class="skeleton"></div>
   </div>
 
-  <div id="bookings-container" style="display:none;"></div>
+  <div id="bookings-container" hidden></div>
 </div>
 
 <div style="max-width:780px;margin:0 auto;padding:0 22px 40px;">
@@ -234,294 +285,535 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--glass-2)
 <div class="toast" id="toast"></div>
 
 <script>
-/* SUPABASE_URL / SUPABASE_ANON_KEY were referenced here but never
-   defined anywhere in this file. The try/catch swallowed the resulting
-   ReferenceError, leaving sb null; the async IIFE below then threw on
-   sb.auth with no catch, so loadAllBookings() never ran and the page sat
-   on its loading skeletons forever, even though the bookings existed
-   and RLS allowed them.
+/* ══════════════════════════════════════════════════════════════
+   MY BOOKINGS
+   ──────────────────────────────────────────────────────────────
+   WHY THIS WAS REWRITTEN
 
-   apa-session.js memoises createClient, so asking for a client here
-   returns the same one the rest of the app uses rather than starting a
-   competing client on the same storage key. */
+   1. The page never displayed. Bookings were rendered into
+      #bookings-container, which ships with `hidden`, and nothing
+      ever unhid it or removed the three loading skeletons above it.
+      The data loaded, the cards were built, and the guest saw
+      shimmering grey boxes forever.
+
+   2. The tabs did nothing. The buttons emitted 'stays' / 'tours' /
+      'events'; the filter compared against 'pending_checkin' /
+      'checked_in' / 'past'. No tab ever matched, so every tab showed
+      everything.
+
+   3. Every stay was called "Booking". The card read b.listing_name,
+      a column that is almost always null on apartment_bookings; the
+      name lives in apartment_name.
+
+   4. "Amount paid" showed grand_total, the amount OWED, on a booking
+      where KES 10 of KES 2,300 had actually arrived.
+
+   5. Nothing ever ended. A stay whose dates had passed still offered
+      a live check-in code.
+
+   The page now derives everything from CabanaBooking, so it and the
+   trip strip cannot disagree, and the server enforces the same rules
+   again at /api/verify-checkin.
+══════════════════════════════════════════════════════════════ */
+
+/* If cabana-booking-state.js failed to arrive, say so instead of
+   throwing on every helper and leaving the skeletons up, which is
+   exactly the failure mode this rewrite exists to remove. */
+const CB = window.CabanaBooking;
+if (!CB) {
+  const l = document.getElementById('loading-state'); if (l) l.remove();
+  const c = document.getElementById('bookings-container');
+  if (c) {
+    c.hidden = false;
+    c.innerHTML = '<div class="empty"><div class="empty-ico">⚠️</div>'
+      + '<div class="empty-title">Something didn\'t load</div>'
+      + '<div class="empty-sub">Part of the page failed to download. '
+      + 'Your bookings are safe.</div>'
+      + '<button class="btn-primary" onclick="location.reload()">Reload</button></div>';
+  }
+  throw new Error('CabanaBooking unavailable');
+}
+
+/* One client for the tab. apa-session.js memoises createClient, so
+   this returns the same instance the rest of the app uses instead of
+   starting a competitor on the same storage key. */
 const SUPABASE_URL      = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
 
-let sb=null;
-try{
-  const{createClient}=supabase;
-  sb=createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
-}catch(e){
-  console.error('[my-bookings] Supabase client failed to initialise:',e);
+let sb = null;
+try {
+  sb = (window.ApaSession && ApaSession.client())
+    || supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+} catch (e) {
+  console.error('[my-bookings] Supabase client failed to initialise:', e);
 }
 
-let CURRENT_USER = null;
-let allBookings  = [];
-let currentTab   = 'all';
+let CURRENT_USER  = null;
+let allBookings   = [];
+let currentWhen   = 'upcoming';
+let currentType   = 'all';
+let PENDING_OFFERS = {};
+let REVIEWED       = new Set();
 
-(async () => {
+const $ = id => document.getElementById(id);
+const esc = s => CB.esc(s);
+
+/* ═══════════════════════════════════════════════════════════════
+   BOOT
+   ═══════════════════════════════════════════════════════════════ */
+(async function boot() {
   try {
     if (!sb) throw new Error('Supabase client unavailable');
+
     const { data: { session } } = await sb.auth.getSession();
     if (!session) {
-      try{sessionStorage.setItem('auth_next', location.pathname+location.search);}catch(_){}
+      try { sessionStorage.setItem('auth_next', location.pathname + location.search); } catch (_) {}
       window.location.href = 'auth.html?next=' + encodeURIComponent(location.pathname);
       return;
     }
     CURRENT_USER = session.user;
     await loadAllBookings();
   } catch (e) {
-    /* Show the problem rather than leaving skeletons spinning. */
     console.error('[my-bookings] init failed:', e);
-    const c = document.getElementById('bookings-container');
-    if (c) c.innerHTML =
-      '<div class="empty"><div class="empty-title">Could not load your bookings</div>'
-      + '<div class="empty-sub">' + String(e.message || e) + '</div>'
-      + '<button onclick="location.reload()" style="margin-top:16px;padding:11px 22px;'
-      + 'border:none;border-radius:12px;background:var(--theme-grad);color:#fff;'
-      + 'font-weight:700;cursor:pointer">Try again</button></div>';
+    showError(e);
   }
 })();
 
-let PENDING_OFFERS = {};   // booking_id → offer
-let REVIEWED = new Set();  // booking_ids this user has already reviewed
+/* Whatever happens, the skeletons come down. They are a promise that
+   something is coming; leaving them up is a lie. */
+function reveal() {
+  const l = $('loading-state');
+  if (l) l.remove();
+  const c = $('bookings-container');
+  if (c) c.hidden = false;
+}
 
+function showError(e) {
+  reveal();
+  const c = $('bookings-container');
+  if (!c) return;
+  c.innerHTML =
+    '<div class="empty"><div class="empty-ico">⚠️</div>'
+    + '<div class="empty-title">Could not load your bookings</div>'
+    + '<div class="empty-sub">' + esc(e && e.message || e) + '</div>'
+    + '<button class="btn-primary" onclick="location.reload()">Try again</button></div>';
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   LOAD
+   ═══════════════════════════════════════════════════════════════ */
 async function loadAllBookings() {
   const uid = CURRENT_USER.id;
-  await loadTrustState(uid);
+
   const [aptRes, tourRes, evRes] = await Promise.all([
-    sb.from('apartment_bookings').select('*').eq('guest_id', uid).order('created_at',{ascending:false}),
-    sb.from('tour_bookings').select('*').eq('guest_id', uid).order('created_at',{ascending:false}),
-    sb.from('event_tickets').select('*').eq('guest_id', uid).order('created_at',{ascending:false}),
+    sb.from('apartment_bookings').select('*').eq('guest_id', uid).order('created_at', { ascending: false }),
+    sb.from('tour_bookings').select('*').eq('guest_id', uid).order('created_at', { ascending: false }),
+    sb.from('event_tickets').select('*').eq('guest_id', uid).order('created_at', { ascending: false }),
   ]);
 
-  [['apartment',aptRes],['tour',tourRes],['event',evRes]].forEach(([n,r])=>{
-    if (r && r.error) console.error('[my-bookings] '+n+' query failed:', r.error.message);
+  /* One table failing must not blank the other two. */
+  const failed = [];
+  [['stays', aptRes], ['tours', tourRes], ['events', evRes]].forEach(([n, r]) => {
+    if (r && r.error) { console.error('[my-bookings] ' + n + ':', r.error.message); failed.push(n); }
+  });
+  if (failed.length === 3) throw new Error('Could not reach the booking service.');
+
+  const tag = (rows, type, table) => (rows || []).map(b => ({
+    ...b, _type: type, _table: table,
+  }));
+
+  allBookings = [
+    ...tag(aptRes.data,  'apartment', 'apartment_bookings'),
+    ...tag(tourRes.data, 'tour',      'tour_bookings'),
+    ...tag(evRes.data,   'event',     'event_tickets'),
+  ];
+
+  /* Sort by when the trip happens, not when the row was written. A
+     guest opening this page wants the next thing they are doing. */
+  allBookings.forEach(b => { b._lc = CB.lifecycle(b); b._start = CB.startDay(b); });
+  allBookings.sort((a, b) => {
+    if (a._lc.bucket !== b._lc.bucket) return a._lc.bucket === 'upcoming' ? -1 : 1;
+    const dir = a._lc.bucket === 'upcoming' ? 1 : -1;   /* soonest first, then most recent first */
+    if (a._start != null && b._start != null && a._start !== b._start) return (a._start - b._start) * dir;
+    return new Date(b.created_at) - new Date(a.created_at);
   });
 
-  const apts  = (aptRes.data||[]).map(b=>({...b,_type:'apartment',_table:'apartment_bookings',_name:b.apartment_name,_detail:`${b.checkin_date} → ${b.checkout_date} · ${b.nights} night${b.nights!==1?'s':''}`,_icon:'🏠',_iconBg:'linear-gradient(135deg,#0a1628,#1a3a5a)'}));
-  const tours = (tourRes.data||[]).map(b=>({...b,_type:'tour',_table:'tour_bookings',_name:b.tour_name,_detail:`${b.tour_date} · ${b.num_people} person${b.num_people!==1?'s':''}`,_icon:'🗺️',_iconBg:'linear-gradient(135deg,#1a1206,#3d2810)'}));
-  const evs   = (evRes.data||[]).map(b=>({...b,_type:'event',_table:'event_tickets',_name:b.event_name,_detail:`${b.tier_name} · ${b.quantity} ticket${b.quantity!==1?'s':''}`,_icon:'🎟️',_iconBg:'linear-gradient(135deg,#0d0618,#241040)'}));
-
-  allBookings = [...apts,...tours,...evs].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+  await loadTrustState(uid);
   renderBookings();
 }
 
-function setTab(tab, el) {
-  currentTab = tab;
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  el.classList.add('active');
-  renderBookings();
+/* ═══════════════════════════════════════════════════════════════
+   FILTERS
+   ═══════════════════════════════════════════════════════════════ */
+const TYPE_LABEL = { apartment: 'Stays', tour: 'Tours', event: 'Events' };
+
+function visible() {
+  return allBookings.filter(b =>
+    b._lc.bucket === currentWhen &&
+    (currentType === 'all' || b._type === currentType));
 }
 
-function renderBookings() {
-  const now = new Date();
-  let list = allBookings;
-  if (currentTab === 'pending_checkin') list = allBookings.filter(b=>b.status==='paid_pending_checkin');
-  else if (currentTab === 'checked_in')  list = allBookings.filter(b=>b.status==='checked_in');
-  else if (currentTab === 'past') list = allBookings.filter(b=>{
-    if (!['checked_in','paid_pending_checkin'].includes(b.status)) return false;
-    const endDate = b.checkout_date || b.tour_date;
-    return endDate && new Date(endDate) < now;
+function bindTabs() {
+  document.querySelectorAll('#tabs .tab').forEach(t => {
+    t.onclick = () => {
+      currentWhen = t.dataset.when;
+      document.querySelectorAll('#tabs .tab').forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+      renderBookings();
+    };
   });
+}
 
-  const container = document.getElementById('bookings-container');
-  if (!list.length) {
-    container.innerHTML = `<div class="empty">
-      <div class="empty-ico">${currentTab==='pending_checkin'?'⏳':currentTab==='checked_in'?'✅':'📋'}</div>
-      <div class="empty-title">${currentTab==='all'?'No bookings yet':'No bookings here'}</div>
-      <div class="empty-sub">${currentTab==='all'?'When you book apartments, tours or events they\'ll all appear here.':'Check a different tab to find your bookings.'}</div>
-    </div>`;
+function renderChips() {
+  const box = $('chips');
+  if (!box) return;
+
+  /* Only the types this guest actually has, and only when there is a
+     genuine choice to make. A filter with one option is furniture. */
+  const inBucket = allBookings.filter(b => b._lc.bucket === currentWhen);
+  const types = [...new Set(inBucket.map(b => b._type))];
+
+  if (types.length < 2) {
+    box.hidden = true;
+    if (currentType !== 'all' && !types.includes(currentType)) currentType = 'all';
     return;
   }
-  container.innerHTML = list.map(b => buildBookingCard(b)).join('');
+
+  box.hidden = false;
+  box.innerHTML = ['all', ...types].map(t =>
+    '<button type="button" class="chip' + (currentType === t ? ' on' : '') + '" data-type="' + t + '">'
+    + (t === 'all' ? 'All' : TYPE_LABEL[t] || t) + '</button>').join('');
+
+  box.querySelectorAll('.chip').forEach(c => {
+    c.onclick = () => { currentType = c.dataset.type; renderBookings(); };
+  });
 }
 
-/* ── Partner contact. Revealed only after payment ───────────────── */
+/* ═══════════════════════════════════════════════════════════════
+   RENDER
+   ═══════════════════════════════════════════════════════════════ */
+function renderBookings() {
+  reveal();
+
+  const upcoming = allBookings.filter(b => b._lc.bucket === 'upcoming').length;
+  const past     = allBookings.length - upcoming;
+  if ($('n-upcoming')) $('n-upcoming').textContent = upcoming || '';
+  if ($('n-past'))     $('n-past').textContent     = past || '';
+
+  renderChips();
+
+  const list = visible();
+  const c = $('bookings-container');
+  if (!c) return;
+
+  if (!list.length) { c.innerHTML = emptyState(); return; }
+
+  c.innerHTML = list.map((b, i) => buildBookingCard(b, i)).join('');
+
+  /* Animate the meters after paint so they sweep rather than appear.
+     Wrapped, because a decoration must never be able to take the page
+     down with it: this threw once and the whole render unwound into
+     the error state, cards and all. */
+  try {
+    const sweep = () => document.querySelectorAll('.meter-fill').forEach(el => {
+      el.style.width = (el.dataset.pct || 0) + '%';
+    });
+    if (typeof requestAnimationFrame === 'function') requestAnimationFrame(sweep);
+    else sweep();
+  } catch (e) { /* the bar just starts full-width; the number is still right */ }
+}
+
+function emptyState() {
+  if (currentWhen === 'past') {
+    return '<div class="empty"><div class="empty-ico">🧾</div>'
+      + '<div class="empty-title">Nothing behind you yet</div>'
+      + '<div class="empty-sub">Completed stays, tours and tickets are kept here '
+      + 'so you always have the receipt.</div></div>';
+  }
+  const filtered = currentType !== 'all';
+  return '<div class="empty"><div class="empty-ico">🌍</div>'
+    + '<div class="empty-title">' + (filtered ? 'Nothing here' : 'No trips booked') + '</div>'
+    + '<div class="empty-sub">' + (filtered
+        ? 'Try another filter, or check the Past tab.'
+        : 'Your next stay, tour or ticket will appear here the moment it is booked.')
+    + '</div>'
+    + (filtered ? '' : '<a class="btn-primary" href="apartments.html">Find a place to stay →</a>')
+    + '</div>';
+}
+
+/* ── the card ──────────────────────────────────────────────────── */
+const TYPE_ICON = {
+  apartment: '<div class="bk-icon stays"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5M5 9.5V20h14V9.5M9 20v-5a3 3 0 0 1 6 0v5"/></svg></div>',
+  tour:      '<div class="bk-icon tours"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 5.5-6-2-6 2.5v13l6-2.5 6 2 6-2.5v-13zM9 3.5v13M15 7.5v13"/></svg></div>',
+  event:     '<div class="bk-icon events"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9a2 2 0 0 0 0 6v2a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-2a2 2 0 0 0 0-6V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1z"/><path d="M14 6v12" stroke-dasharray="2 2.5"/></svg></div>',
+};
+
+const TONE_CLASS = { good:'badge-done', live:'badge-live', warn:'badge-pending',
+                     bad:'badge-failed', muted:'badge-closed' };
+
+function whenLine(b) {
+  if (b._type === 'apartment') {
+    const r = CB.fmtRange(b.checkin_date, b.checkout_date);
+    const n = b.nights ? b.nights + (b.nights !== 1 ? ' nights' : ' night') : '';
+    return [r, n].filter(Boolean).join(' · ');
+  }
+  if (b._type === 'tour') {
+    const p = b.num_people ? b.num_people + (b.num_people !== 1 ? ' people' : ' person') : '';
+    return [CB.fmtDay(b.tour_date), p].filter(Boolean).join(' · ');
+  }
+  const q = b.quantity ? b.quantity + (b.quantity !== 1 ? ' tickets' : ' ticket') : '';
+  return [b.tier_name, q].filter(Boolean).join(' · ');
+}
+
+function buildBookingCard(b, i) {
+  const lc   = b._lc;
+  const s    = lc.settlement;
+  const past = lc.bucket === 'past';
+
+  const badge = '<span class="badge ' + (TONE_CLASS[lc.tone] || 'badge-awaiting') + '">'
+    + (lc.tone === 'live' ? '<span class="live-dot"></span>' : '')
+    + esc(lc.label) + '</span>';
+
+  const place = b.location || b.venue || b.operator_name || '';
+  const when  = whenLine(b);
+
+  /* Sections, in the order a guest needs them. */
+  let body = '';
+
+  if (!past && !s.settled && lc.key !== 'failed' && lc.key !== 'cancelled') {
+    body += buildPayPanel(b, s, lc);
+  }
+
+  body += buildPartnerContact(b);
+
+  if (b._type === 'apartment' && PENDING_OFFERS[b.id]) {
+    body += buildMatchPanel(b, PENDING_OFFERS[b.id]);
+  } else {
+    body += buildCheckinPanel(b, lc);
+  }
+
+  /* The escape hatch, only while there is still something to escape. */
+  if (b._type === 'apartment' && !b.cancelled_at && !past && s.paid > 0) {
+    const h = (window.ApaTrust && ApaTrust.hoursTo) ? ApaTrust.hoursTo(b.checkin_date) : null;
+    const label = h == null ? 'Report a problem'
+      : h >= 24 ? 'Cancel this stay'
+      : h >= 2  ? "Can't stay here?"
+      : "Can't stay here. There's an issue";
+    body += '<button class="issue-btn" onclick="openIssue(\'' + b.id + '\')">' + label + '</button>';
+  }
+
+  if (b._type === 'apartment' && b.status === 'checked_in' && !REVIEWED.has(b.id)) {
+    body += buildReviewPanel(b);
+  }
+
+  return '<div class="booking-card' + (past ? ' is-past' : '') + '" id="card-' + b.id + '" style="--i:' + i + '">'
+    + '<div class="bk-header">'
+    +   (TYPE_ICON[b._type] || TYPE_ICON.apartment)
+    +   '<div class="bk-info">'
+    +     '<div class="bk-name">' + esc(CB.title(b)) + '</div>'
+    +     '<div class="bk-meta">'
+    +       (place ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>' + esc(place) : '')
+    +       (when ? '<span>' + (place ? '· ' : '') + esc(when) + '</span>' : '')
+    +     '</div>'
+    +   '</div>'
+    +   '<div class="bk-status">' + badge + '</div>'
+    + '</div>'
+    + '<div class="bk-body">'
+    +   '<div class="bk-divider"></div>'
+    +   (lc.note ? '<div class="bk-sub">' + esc(lc.note) + '</div>' : '')
+    +   '<div class="bk-row" style="margin-top:12px"><span class="lbl">Reference</span>'
+    +     '<span class="val" style="font-family:var(--font-data);font-size:12px;">'
+    +     esc(b.payment_reference || '—') + '</span></div>'
+    /* Paid, then owed. Showing grand_total under the label "Amount
+       paid" was the single most misleading line on the old page. */
+    +   '<div class="bk-row"><span class="lbl">Paid</span><span class="val">' + CB.money(s.paid)
+    +     (s.settled ? '' : ' <span style="color:var(--ink-faint);font-weight:400">of '
+        + CB.money(s.total) + '</span>') + '</span></div>'
+    +   body
+    + '</div>'
+    + '</div>';
+}
+
+/* ── outstanding balance ───────────────────────────────────────── */
+function buildPayPanel(b, s, lc) {
+  if (s.total <= 0) return '';
+
+  const toConfirm = Math.max(0, s.deposit - s.paid);
+  const note = !s.confirmed
+    ? 'These dates are <b>not held yet</b>. ' + CB.money(toConfirm)
+      + ' more confirms the booking, and ' + CB.money(s.outstanding)
+      + ' in total unlocks your check-in code.'
+    : 'Your dates are held. <b>' + CB.money(s.outstanding)
+      + '</b> remains before your check-in code unlocks.';
+
+  return '<div class="pay-panel">'
+    + '<div class="pay-head"><span class="pay-title">'
+    +   (s.paid > 0 ? 'Balance outstanding' : 'Payment due') + '</span>'
+    +   '<span class="pay-pct">' + s.pct + '% paid</span></div>'
+    + '<div class="meter"><div class="meter-fill" data-pct="' + s.pct + '"></div></div>'
+    + '<div class="pay-note">' + note + '</div>'
+    + '<button class="pay-btn" onclick="payRest(\'' + b.id + '\')">Pay '
+    +   CB.money(s.outstanding) + ' now</button>'
+    + '</div>';
+}
+
+/* ── check-in ──────────────────────────────────────────────────── */
+function buildCheckinPanel(b, lc) {
+  const cs = CB.codeState(b);
+
+  if (b.status === 'checked_in' || lc.key === 'completed') {
+    return '<div class="ci-confirmed">'
+      + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>'
+      + '<div><div class="ci-confirmed-title">Check-in confirmed</div>'
+      + '<div class="ci-confirmed-sub">Payout released to host'
+      + (b.checked_in_at ? ' on ' + new Date(b.checked_in_at).toLocaleDateString('en-GB') : '')
+      + '</div></div></div>';
+  }
+
+  /* The code is shown only when the stay is paid for in full and the
+     dates have not passed. Every other case says why, plainly, rather
+     than showing a code that would be refused at the door. */
+  if (!cs.show) {
+    if (cs.reason === 'balance_due' || cs.reason === 'unpaid') {
+      return '<div class="ci-section ci-locked">'
+        + '<div class="ci-title">Check-in code</div>'
+        + '<div class="ci-sub">Unlocks the moment this booking is paid in full.</div>'
+        + '<div class="ci-your-code"><div class="ci-code-label">Your code · show to host</div>'
+        + '<div class="ci-code-val">••••••</div></div></div>';
+    }
+    return '';
+  }
+
+  return '<div class="ci-section">'
+    + '<div class="ci-title">Check-in codes</div>'
+    + '<div class="ci-sub">At check-in: show your code to the host, then enter theirs below. '
+    +   'Once both are exchanged your stay is confirmed and the host is paid.</div>'
+    + '<div class="ci-your-code">'
+    +   '<div class="ci-code-label">Your code · show to host</div>'
+    +   '<div class="ci-code-val">' + esc(cs.code) + '</div>'
+    +   '<div class="ci-code-hint">Share this with your host when you arrive</div>'
+    + '</div>'
+    + '<div style="font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:8px;">Enter host\'s code</div>'
+    + '<div class="ci-enter">'
+    +   '<input class="ci-input" id="host-code-' + b.id + '" placeholder="HOST-XXXXXX" maxlength="12"/>'
+    +   '<button class="ci-submit" onclick="verifyHostCode(\'' + b._table + '\',\''
+    +     esc(b.payment_reference) + '\',\'' + b.id + '\')">Confirm check-in</button>'
+    + '</div></div>';
+}
+
+/* ── partner contact, revealed once the booking is confirmed ────── */
 function buildPartnerContact(b) {
-  // Only show for paid / checked-in bookings
-  const paidStatuses = ['paid_pending_checkin','deposit_paid','checked_in','completed'];
-  if (!paidStatuses.includes(b.status)) return '';
+  /* Contact details are the thing a guest paid for, so they follow the
+     money: the deposit threshold, not a status string. */
+  const s = b._lc.settlement;
+  if (!s.confirmed || b.cancelled_at) return '';
+  if (b._lc.bucket === 'past') return '';
 
   const wa    = b.contact_whatsapp || b.host_whatsapp || '';
   const phone = b.contact_phone    || b.host_phone    || wa;
   const email = b.contact_email    || b.host_email    || '';
+  const ref   = b.payment_reference || '';
 
-  // Nothing to show
-  if (!wa && !phone && !email) return `
-    <div style="margin:12px 0 6px;padding:14px 16px;border-radius:14px;background:rgba(255,149,0,.07);border:1px solid rgba(255,149,0,.2);font-size:12.5px;color:var(--ink-soft);">
-      <strong>Need to reach your host?</strong> Contact Cabana support<a href="https://wa.me/254716206494?text=Hi%2C%20I%20need%20my%20host%27s%20contact%20for%20booking%20${b.payment_reference||''}" target="_blank" rel="noopener" style="color:var(--theme);font-weight:600;text-decoration:none;">WhatsApp us</a>
-      or call <a href="tel:+254716206494" style="color:var(--theme);font-weight:600;text-decoration:none;">+254 716 206 494</a>
-    </div>`;
+  if (!wa && !phone && !email) {
+    return '<div style="margin:12px 0 6px;padding:14px 16px;border-radius:14px;'
+      + 'background:rgba(255,149,0,.07);border:1px solid rgba(255,149,0,.2);'
+      + 'font-size:12.5px;color:var(--ink-soft);line-height:1.6;">'
+      + '<strong>Need to reach your host?</strong> '
+      + '<a href="https://wa.me/254716206494?text='
+      + encodeURIComponent('Hi, I need my host\'s contact for booking ' + ref)
+      + '" target="_blank" rel="noopener" style="color:var(--theme);font-weight:600;text-decoration:none;">WhatsApp us</a>'
+      + ' or call <a href="tel:+254716206494" style="color:var(--theme);font-weight:600;text-decoration:none;">+254 716 206 494</a>'
+      + '</div>';
+  }
 
-  const waMsg = encodeURIComponent(`Hi, I have a confirmed Cabana booking (ref: ${b.payment_reference || ''}) for ${b.apartment_name || b.listing_name || 'my stay'}. I'd like to coordinate check-in.`);
+  const waMsg = encodeURIComponent(
+    'Hi, I have a confirmed Cabana booking (ref: ' + ref + ') for '
+    + CB.title(b) + '. I\'d like to coordinate check-in.');
 
   let channels = '';
-  if (wa) channels += `
-    <a href="https://wa.me/${wa.replace(/[^0-9]/g,'')}?text=${waMsg}" target="_blank" rel="noopener noreferrer"
-       style="display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:100px;background:#25D366;color:#fff;font-size:13px;font-weight:600;text-decoration:none;white-space:nowrap;">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-      WhatsApp host
-    </a>`;
-  if (phone) channels += `
-    <a href="tel:${phone.replace(/\s/g,'')}"
-       style="display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:100px;background:linear-gradient(135deg,#4F6DFF,#6D28FF);color:#fff;font-size:13px;font-weight:600;text-decoration:none;white-space:nowrap;">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4 2 2 0 0 1 3.6 1.21h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.37a16 16 0 0 0 7.72 7.72l1.72-.86a2 2 0 0 1 2.11.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 24 18.18v2.74"/></svg>
-      Call host
-    </a>
-    <a href="sms:${phone.replace(/\s/g,'')}"
-       style="display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:100px;background:rgba(8,8,15,.06);color:var(--ink);border:1px solid var(--line);font-size:13px;font-weight:600;text-decoration:none;white-space:nowrap;">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-      SMS host
-    </a>`;
-  if (email) channels += `
-    <a href="mailto:${email}"
-       style="display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:100px;background:rgba(8,8,15,.06);color:var(--ink);border:1px solid var(--line);font-size:13px;font-weight:600;text-decoration:none;white-space:nowrap;">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-      Email host
-    </a>`;
+  if (wa) channels +=
+    '<a href="https://wa.me/' + wa.replace(/[^0-9]/g, '') + '?text=' + waMsg + '" target="_blank" rel="noopener noreferrer" '
+    + 'style="display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:100px;background:#25D366;color:#fff;font-size:13px;font-weight:600;text-decoration:none;white-space:nowrap;">'
+    + '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>'
+    + 'WhatsApp host</a>';
+  if (phone) channels +=
+    '<a href="tel:' + phone.replace(/\s/g, '') + '" '
+    + 'style="display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:100px;background:linear-gradient(135deg,#4F6DFF,#6D28FF);color:#fff;font-size:13px;font-weight:600;text-decoration:none;white-space:nowrap;">'
+    + '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4 2 2 0 0 1 3.6 1.21h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.37a16 16 0 0 0 7.72 7.72l1.72-.86a2 2 0 0 1 2.11.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 24 18.18v2.74"/></svg>'
+    + 'Call host</a>';
+  if (email) channels +=
+    '<a href="mailto:' + esc(email) + '" '
+    + 'style="display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:100px;background:rgba(8,8,15,.06);color:var(--ink);border:1px solid var(--line);font-size:13px;font-weight:600;text-decoration:none;white-space:nowrap;">'
+    + '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>'
+    + 'Email host</a>';
 
-  return `
-    <div style="margin:14px 0 6px;padding:16px 18px;border-radius:16px;background:linear-gradient(135deg,rgba(45,212,191,.07),rgba(109,40,255,.05));border:1px solid rgba(45,212,191,.18);">
-      <div style="display:flex;align-items:center;gap:7px;margin-bottom:10px;">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--mint-deep,#1ca88a)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4 2 2 0 0 1 3.6 1.21h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.37a16 16 0 0 0 7.72 7.72l1.72-.86a2 2 0 0 1 2.11.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 24 18.18v2.74"/></svg>
-        <span style="font-size:12px;font-weight:700;color:var(--mint-deep,#1ca88a);letter-spacing:.04em;text-transform:uppercase;">Host contact details</span>
-        <span style="margin-left:auto;font-size:11px;color:var(--ink-faint);background:rgba(45,212,191,.1);padding:2px 8px;border-radius:100px;">🔓 Unlocked</span>
-      </div>
-      <div style="display:flex;flex-wrap:wrap;gap:8px;">
-        ${channels}
-      </div>
-      ${(wa||phone) ? `<div style="margin-top:8px;font-size:11.5px;color:var(--ink-faint);">Direct line to your host · mention booking ref <strong>${b.payment_reference||''}</strong></div>` : ''}
-    </div>`;
+  return '<div style="margin:14px 0 6px;padding:16px 18px;border-radius:16px;'
+    + 'background:linear-gradient(135deg,rgba(45,212,191,.07),rgba(109,40,255,.05));'
+    + 'border:1px solid rgba(45,212,191,.18);">'
+    + '<div style="display:flex;align-items:center;gap:7px;margin-bottom:10px;">'
+    + '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--mint-deep,#1ca88a)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4 2 2 0 0 1 3.6 1.21h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.37a16 16 0 0 0 7.72 7.72l1.72-.86a2 2 0 0 1 2.11.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 24 18.18v2.74"/></svg>'
+    + '<span style="font-size:12px;font-weight:700;color:var(--mint-deep,#1ca88a);letter-spacing:.04em;text-transform:uppercase;">Host contact details</span>'
+    + '<span style="margin-left:auto;font-size:11px;color:var(--ink-faint);background:rgba(45,212,191,.1);padding:2px 8px;border-radius:100px;">Unlocked</span>'
+    + '</div>'
+    + '<div style="display:flex;flex-wrap:wrap;gap:8px;">' + channels + '</div>'
+    + (ref ? '<div style="margin-top:8px;font-size:11.5px;color:var(--ink-faint);">Mention booking ref <strong>'
+        + esc(ref) + '</strong></div>' : '')
+    + '</div>';
 }
 
-function buildBookingCard(b) {
-  const statusBadge = {
-    paid_pending_checkin: '<span class="badge badge-pending">Pending check-in</span>',
-    checked_in:           '<span class="badge badge-checkedin">✓ Checked in</span>',
-    failed:               '<span class="badge badge-failed">Payment failed</span>',
-    pending_payment:      '<span class="badge badge-awaiting">Awaiting payment</span>',
-  }[b.status] || `<span class="badge badge-awaiting">${b.status}</span>`;
+/* ═══════════════════════════════════════════════════════════════
+   PAY THE REMAINDER
 
-  const typeIcon = {
-    apartment: `<div class="bk-icon stays"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5M5 9.5V20h14V9.5M9 20v-5a3 3 0 0 1 6 0v5"/></svg></div>`,
-    tour:      `<div class="bk-icon tours"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 5.5-6-2-6 2.5v13l6-2.5 6 2 6-2.5v-13zM9 3.5v13M15 7.5v13"/></svg></div>`,
-    event:     `<div class="bk-icon events"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9a2 2 0 0 0 0 6v2a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-2a2 2 0 0 0 0-6V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1z"/><path d="M14 6v12" stroke-dasharray="2 2.5"/></svg></div>`,
-  }[b._type] || `<div class="bk-icon stays"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 10.5 12 4l9 6.5M5 9.5V20h14V9.5"/></svg></div>`;
+   Routed through the ordinary instalment flow: same reference, same
+   /api/stk-push validation, same ledger. The old path minted a BAL-
+   reference that api/stk-push rejects outright ("Unrecognised payment
+   reference"), so settling a balance from this page could not work.
+   ═══════════════════════════════════════════════════════════════ */
+async function payRest(bookingId) {
+  const b = allBookings.find(x => x.id === bookingId);
+  if (!b) return;
 
-  /* ── Check-in panel ────────────────────────────────────────────
-     Three states, in strict order of precedence:
-       1. A match offer is waiting        → nothing else matters
-       2. A balance is outstanding        → the code is inert
-       3. Settled                         → exchange codes
-     Below all of them, always, sits the escape hatch.            */
-  let ciSection = '';
-  const gate = (b._type === 'apartment' && window.ApaTrust)
-    ? ApaTrust.deposit.canCheckIn(b) : { ok: true };
+  const s = CB.settlement(b);
+  if (s.outstanding <= 0) return showToast('This booking is already paid in full.');
 
-  if (b._type === 'apartment' && PENDING_OFFERS[b.id]) {
-    ciSection = buildMatchPanel(b, PENDING_OFFERS[b.id]);
+  const Pay = window.CabanaPay || window.ApatmentoPay;
+  if (!Pay) return showToast('Payment is unavailable right now. Please refresh.');
 
-  } else if (!gate.ok && gate.reason === 'balance_due') {
-    ciSection = `
-    <div class="bal-gate">
-      <div class="bal-gate-t">🔒 Balance outstanding</div>
-      <div class="bal-gate-s">You secured this stay with a deposit. Settle the remainder to unlock check-in. Your host's code won't work until you do.</div>
-      <div class="bal-gate-row"><span>Deposit paid</span><b>KES ${Number(b.deposit_amount||0).toLocaleString()}</b></div>
-      <div class="bal-gate-row"><span>Balance due</span><b>KES ${Number(b.balance_amount||0).toLocaleString()}</b></div>
-      <button class="bal-gate-btn" onclick="payBalance('${b.id}')">Pay KES ${Number(b.balance_amount||0).toLocaleString()} now</button>
-    </div>
-    <div class="ci-section ci-locked">
-      <div class="ci-title">Check-in codes</div>
-      <div class="ci-sub">Unlocks once the balance is settled.</div>
-      <div class="ci-your-code">
-        <div class="ci-code-label">Your code. Show to host</div>
-        <div class="ci-code-val">${b.guest_code || '••••••'}</div>
-      </div>
-    </div>`;
+  const btn = document.querySelector('#card-' + bookingId + ' .pay-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Opening M-Pesa…'; }
 
-  } else if (['paid_pending_checkin','deposit_paid'].includes(b.status) && b.guest_code) {
-    ciSection = `
-    <div class="ci-section">
-      <div class="ci-title">Check-in codes</div>
-      <div class="ci-sub">At check-in: show your code to the host, then enter theirs below. Once both codes are exchanged your stay is confirmed.</div>
-
-      <div class="ci-your-code">
-        <div class="ci-code-label">Your code. Show to host</div>
-        <div class="ci-code-val">${b.guest_code}</div>
-        <div class="ci-code-hint">Share this code with your host when you arrive</div>
-      </div>
-
-      <div style="font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:8px;">Enter host's code</div>
-      <div class="ci-enter">
-        <input class="ci-input" id="host-code-${b.id}" placeholder="HOST-XXXXXX" maxlength="12"/>
-        <button class="ci-submit" onclick="verifyHostCode('${b._table}','${b.payment_reference}','${b.id}')">Confirm check-in</button>
-      </div>
-    </div>`;
-
-  } else if (b.status === 'checked_in') {
-    ciSection = `
-    <div class="ci-confirmed">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-      <div>
-        <div class="ci-confirmed-title">Check-in confirmed</div>
-        <div class="ci-confirmed-sub">Stay completed · Payout released to host${b.checked_in_at ? ' on ' + new Date(b.checked_in_at).toLocaleDateString('en-GB') : ''}</div>
-      </div>
-    </div>`;
+  /* The guest's own number, never contact_phone: that column holds
+     the HOST's details, and pushing an M-Pesa prompt to the host to
+     settle the guest's balance would be a memorable kind of wrong. */
+  let phone = b.guest_phone || CURRENT_USER?.phone
+    || CURRENT_USER?.user_metadata?.phone || '';
+  if (!/^(?:\+?254|0)\d{9}$/.test(String(phone).replace(/[\s-]/g, ''))) {
+    phone = prompt('Which M-Pesa number should we send the prompt to?', phone || '07');
+    if (!phone) { if (btn) { btn.disabled = false; btn.textContent = 'Pay ' + CB.money(s.outstanding) + ' now'; } return; }
   }
 
-  /* The escape hatch. Available from booking to checkout. The wording
-     and the consequences change with the clock, not the button.      */
-  if (b._type === 'apartment' && !b.cancelled_at &&
-      ['paid_pending_checkin','deposit_paid','checked_in'].includes(b.status)) {
-    const h = ApaTrust ? ApaTrust.hoursTo(b.checkin_date) : null;
-    const label = h == null ? "Report a problem"
-      : h >= 24 ? "Cancel this stay"
-      : h >= 2  ? "Can't stay here?"
-      : "Can't stay here. There's an issue";
-    ciSection += `<button class="issue-btn" onclick="openIssue('${b.id}')">${label}</button>`;
-  }
-
-  /* Review prompt: once checked in, and only until they've written one. */
-  if (b._type === 'apartment' && b.status === 'checked_in' && !REVIEWED.has(b.id)) {
-    ciSection += buildReviewPanel(b);
-  }
-
-  const nights = b.nights ? `${b.nights} night${b.nights!==1?'s':''}` : '';
-  const dateStr = b.checkin_date ? `${b.checkin_date}${b.checkout_date?' → '+b.checkout_date:''}` : '';
-
-  return `
-  <div class="booking-card" id="card-${b.id}">
-    <div class="bk-header">
-      ${typeIcon}
-      <div class="bk-info">
-        <div class="bk-name">${b.listing_name || b.event_name || b.tour_name || 'Booking'}</div>
-        <div class="bk-meta">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-          ${b.location || b.venue || ''}
-          ${dateStr ? `<span>· ${dateStr}</span>` : ''}
-          ${nights ? `<span>· ${nights}</span>` : ''}
-        </div>
-      </div>
-      <div class="bk-status">${statusBadge}</div>
-    </div>
-    <div class="bk-body">
-      <div class="bk-divider"></div>
-      <div class="bk-row"><span class="lbl">Reference</span><span class="val" style="font-family:var(--font-data);font-size:12px;">${b.payment_reference || ', '}</span></div>
-      <div class="bk-row"><span class="lbl">Amount paid</span><span class="val">KES ${Number(b.grand_total||0).toLocaleString()}</span></div>
-      <div class="bk-row"><span class="lbl">Guests</span><span class="val">${b.num_guests || b.tickets || 1}</span></div>
-      ${buildPartnerContact(b)}
-      ${ciSection}
-    </div>
-  </div>`;
+  Pay.start({
+    amount:      s.outstanding,
+    phone:       phone,
+    reference:   b.payment_reference,
+    table:       b._table,
+    description: 'Balance · ' + CB.title(b),
+    onSuccess: async () => { showToast('Payment received. Updating your booking…'); await refresh(); },
+    onFailure: async () => {
+      if (btn) { btn.disabled = false; btn.textContent = 'Pay ' + CB.money(s.outstanding) + ' now'; }
+      showToast('That payment did not complete. Nothing was charged.');
+      await refresh();
+    },
+  });
 }
 
-
-
+async function refresh() {
+  try { await loadAllBookings(); }
+  catch (e) { console.error('[my-bookings] refresh:', e); }
+}
 
 /* ═══════════════════════════════════════════════════════════════
    TRUST STATE
-   Two extra reads, both cheap, both cached for the render pass.
    RLS means an offer we can see is an offer meant for us.
    ═══════════════════════════════════════════════════════════════ */
 async function loadTrustState(uid) {
@@ -529,65 +821,68 @@ async function loadTrustState(uid) {
   try {
     const [offers, reviews] = await Promise.all([
       sb.from('match_offers').select('*')
-        .eq('guest_id', uid).eq('status','offered')
+        .eq('guest_id', uid).eq('status', 'offered')
         .gt('expires_at', new Date().toISOString()),
       sb.from('private_reviews').select('booking_id').eq('author_id', uid),
     ]);
-    (offers.data || []).forEach(o => { PENDING_OFFERS[o.booking_id] = o; });
+    (offers.data  || []).forEach(o => { PENDING_OFFERS[o.booking_id] = o; });
     (reviews.data || []).forEach(r => REVIEWED.add(r.booking_id));
   } catch (e) { console.warn('[trust state]', e.message); }
 }
 
 /* ═══════════════════════════════════════════════════════════════
    MATCH OFFER PANEL
-   The host couldn't host. We don't ask the guest to hunt for a
-   replacement. We hand them a ranked shortlist and a refund button
-   of equal weight. Declining costs them nothing.
+   The host couldn't host. We hand the guest a ranked shortlist and a
+   refund button of equal weight. Declining costs them nothing.
    ═══════════════════════════════════════════════════════════════ */
 function buildMatchPanel(b, offer) {
   const cands = offer.candidates || [];
-  return `
-  <div class="match-card" id="match-${b.id}">
-    <div class="match-t">Your host can't host. We found ${cands.length} alternative${cands.length===1?'':'s'}</div>
-    <div class="match-s">Same dates, same price to you. We've ranked these by how closely they match what you booked. Choose one, or take a full refund, no penalty either way.</div>
-    ${cands.map(c => `
-      <div class="match-opt" data-listing="${c.listing_id}" onclick="pickMatch('${b.id}','${c.listing_id}')">
-        <img class="match-thumb" src="${(Array.isArray(c.photos)?c.photos[0]:'')||'/cabana-emblem.png'}" alt="" loading="lazy" decoding="async"/>
-        <div class="match-info">
-          <div class="match-name">${c.title || 'Listing'}</div>
-          <div class="match-meta">${c.location||''}${c.distance_km!=null?` · ${c.distance_km} km away`:''} · ${c.beds||'?'} bed${c.beds===1?'':'s'} · KES ${Number(c.price_night||0).toLocaleString()}/night</div>
-        </div>
-        <span class="match-score">${Math.round(c.score||0)}%</span>
-      </div>`).join('')}
-    <div class="match-acts">
-      <button class="match-decline" onclick="declineMatch('${offer.id}')">Refund me instead</button>
-      <button class="match-accept" id="accept-${b.id}" disabled onclick="acceptMatch('${offer.id}','${b.id}')">Accept</button>
-    </div>
-  </div>`;
+  return '<div class="match-card" id="match-' + b.id + '">'
+    + '<div class="match-t">Your host can\'t host. We found ' + cands.length
+    +   ' alternative' + (cands.length === 1 ? '' : 's') + '</div>'
+    + '<div class="match-s">Same dates, same price to you. Ranked by how closely they match what '
+    +   'you booked. Choose one, or take a full refund. No penalty either way.</div>'
+    + cands.map(c =>
+        '<div class="match-opt" data-listing="' + esc(c.listing_id) + '" '
+        + 'onclick="pickMatch(\'' + b.id + '\',\'' + esc(c.listing_id) + '\')">'
+        + '<img class="match-thumb" src="' + esc((Array.isArray(c.photos) ? c.photos[0] : '') || '/cabana-emblem.png')
+        +   '" alt="" loading="lazy" decoding="async"/>'
+        + '<div class="match-info"><div class="match-name">' + esc(c.title || 'Listing') + '</div>'
+        + '<div class="match-meta">' + esc(c.location || '')
+        +   (c.distance_km != null ? ' · ' + c.distance_km + ' km away' : '')
+        +   ' · ' + esc(c.beds || '?') + ' bed' + (c.beds === 1 ? '' : 's')
+        +   ' · ' + CB.money(c.price_night) + '/night</div></div>'
+        + '<span class="match-score">' + Math.round(c.score || 0) + '%</span></div>').join('')
+    + '<div class="match-acts">'
+    +   '<button class="match-decline" onclick="declineMatch(\'' + offer.id + '\')">Refund me instead</button>'
+    +   '<button class="match-accept" id="accept-' + b.id + '" disabled '
+    +     'onclick="acceptMatch(\'' + offer.id + '\',\'' + b.id + '\')">Accept</button>'
+    + '</div></div>';
 }
 
 let MATCH_PICK = {};
 function pickMatch(bookingId, listingId) {
   MATCH_PICK[bookingId] = listingId;
-  document.querySelectorAll(`#match-${bookingId} .match-opt`).forEach(el => {
+  document.querySelectorAll('#match-' + bookingId + ' .match-opt').forEach(el => {
     el.classList.toggle('on', el.dataset.listing === listingId);
   });
-  document.getElementById(`accept-${bookingId}`).disabled = false;
+  const btn = $('accept-' + bookingId);
+  if (btn) btn.disabled = false;
 }
 
 async function acceptMatch(offerId, bookingId) {
   const listingId = MATCH_PICK[bookingId];
   if (!listingId) return showToast('Pick a stay first');
-  const btn = document.getElementById(`accept-${bookingId}`);
-  btn.disabled = true; btn.textContent = 'Moving you…';
+  const btn = $('accept-' + bookingId);
+  if (btn) { btn.disabled = true; btn.textContent = 'Moving you…'; }
   try {
     const r = await ApaTrust.match.accept(offerId, listingId);
     showToast(r.refund_due
-      ? `You're moved. KES ${Number(r.refund_due).toLocaleString()} is coming back to you.`
-      : "You're moved. Same dates, same price.");
-    await loadAllBookings();
+      ? 'You\'re moved. ' + CB.money(r.refund_due) + ' is coming back to you.'
+      : 'You\'re moved. Same dates, same price.');
+    await refresh();
   } catch (e) {
-    btn.disabled = false; btn.textContent = 'Accept';
+    if (btn) { btn.disabled = false; btn.textContent = 'Accept'; }
     showToast(e.message === 'listing_unavailable'
       ? 'That one just got booked. Pick another.' : 'Something went wrong. Try again.');
   }
@@ -596,8 +891,8 @@ async function acceptMatch(offerId, bookingId) {
 async function declineMatch(offerId) {
   try {
     const r = await ApaTrust.match.decline(offerId);
-    showToast(`Refunded KES ${Number(r.refund_amount).toLocaleString()} in full.`);
-    await loadAllBookings();
+    showToast('Refunded ' + CB.money(r.refund_amount) + ' in full.');
+    await refresh();
   } catch (e) { showToast('Could not process the refund. We\'ve flagged it.'); }
 }
 
@@ -607,72 +902,71 @@ async function declineMatch(offerId) {
 async function openIssue(bookingId) {
   const b = allBookings.find(x => x.id === bookingId);
   if (!b) return;
+  if (!window.ApaTrust) return showToast('Support tools are still loading. One moment.');
   await ApaTrust.issue.open(b, async (result) => {
-    if (result.redirect && result.refuge) {
-      setTimeout(() => showToast(`Moved to ${result.refuge.title}. Your ride is booked.`), 900);
+    if (result && result.redirect && result.refuge) {
+      setTimeout(() => showToast('Moved to ' + result.refuge.title + '. Your ride is booked.'), 900);
     }
-    await loadAllBookings();
+    await refresh();
   });
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   BALANCE
-   ═══════════════════════════════════════════════════════════════ */
-function payBalance(bookingId) {
-  const b = allBookings.find(x => x.id === bookingId);
-  if (!b) return;
-  ApaTrust.deposit.payBalance(b, () => loadAllBookings());
-}
-
-/* ═══════════════════════════════════════════════════════════════
    PRIVATE REVIEW
-   Never published. The host sees it only once they've written
-   theirs, so neither is writing a reply. It still moves the
-   listing up or down.
+   Never published. The host sees it only once they've written theirs,
+   so neither is writing a reply. It still moves the listing's rank.
    ═══════════════════════════════════════════════════════════════ */
 function buildReviewPanel(b) {
-  return `
-  <div class="rev-prompt" id="rev-${b.id}">
-    <div class="rev-t">How was ${b.apartment_name || 'your stay'}?</div>
-    <div class="rev-s">This stays between you, your host and us. It is never shown publicly, but it does decide where this listing ranks.</div>
-    <div class="rev-stars" id="stars-${b.id}">
-      ${[1,2,3,4,5].map(n => `<span class="rev-star" data-n="${n}" onclick="setStars('${b.id}',${n})">★</span>`).join('')}
-    </div>
-    <textarea class="rev-body" id="revbody-${b.id}" rows="3" placeholder="What should the next guest know? What should the host know?"></textarea>
-    <button class="rev-send" id="revsend-${b.id}" disabled onclick="sendReview('${b.id}')">Submit privately</button>
-    <div class="rev-priv">🔒 Private · only revealed to each other once you have both submitted your reviews</div>
-  </div>`;
+  return '<div class="rev-prompt" id="rev-' + b.id + '">'
+    + '<div class="rev-t">How was ' + esc(CB.title(b)) + '?</div>'
+    + '<div class="rev-s">This stays between you, your host and us. It is never shown publicly, '
+    +   'but it does decide where this listing ranks.</div>'
+    + '<div class="rev-stars" id="stars-' + b.id + '">'
+    + [1,2,3,4,5].map(n => '<span class="rev-star" data-n="' + n + '" onclick="setStars(\''
+        + b.id + '\',' + n + ')">★</span>').join('')
+    + '</div>'
+    + '<textarea class="rev-body" id="revbody-' + b.id + '" rows="3" '
+    +   'placeholder="What should the next guest know? What should the host know?"></textarea>'
+    + '<button class="rev-send" id="revsend-' + b.id + '" disabled '
+    +   'onclick="sendReview(\'' + b.id + '\')">Submit privately</button>'
+    + '<div class="rev-priv">Private · revealed to each other only once you have both submitted</div>'
+    + '</div>';
 }
 
 let REV_RATING = {};
 function setStars(id, n) {
   REV_RATING[id] = n;
-  document.querySelectorAll(`#stars-${id} .rev-star`).forEach(s => {
+  document.querySelectorAll('#stars-' + id + ' .rev-star').forEach(s => {
     s.classList.toggle('on', Number(s.dataset.n) <= n);
   });
-  document.getElementById(`revsend-${id}`).disabled = false;
+  const btn = $('revsend-' + id);
+  if (btn) btn.disabled = false;
 }
 
 async function sendReview(bookingId) {
-  const b = allBookings.find(x => x.id === bookingId);
-  const btn = document.getElementById(`revsend-${bookingId}`);
-  btn.disabled = true; btn.textContent = 'Sending…';
+  const b   = allBookings.find(x => x.id === bookingId);
+  const btn = $('revsend-' + bookingId);
+  if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
   try {
     await ApaTrust.review.submit(b, 'guest_to_host', {
       rating: REV_RATING[bookingId],
-      body: document.getElementById(`revbody-${bookingId}`).value.trim(),
+      body:   $('revbody-' + bookingId).value.trim(),
     });
-    document.getElementById(`rev-${bookingId}`).innerHTML =
-      '<div class="rev-t">Thank you</div><div class="rev-s">Your host will see it once they\'ve written theirs.</div>';
+    $('rev-' + bookingId).innerHTML =
+      '<div class="rev-t">Thank you</div>'
+      + '<div class="rev-s">Your host will see it once they\'ve written theirs.</div>';
     REVIEWED.add(bookingId);
   } catch (e) {
-    btn.disabled = false; btn.textContent = 'Submit privately';
+    if (btn) { btn.disabled = false; btn.textContent = 'Submit privately'; }
     showToast('Could not send. Try again.');
   }
 }
 
-/* Every write to the server carries the caller's token. The body
-   is a claim; the header is the identity. */
+/* ═══════════════════════════════════════════════════════════════
+   CHECK-IN
+   Every write carries the caller's token. The body is a claim; the
+   header is the identity.
+   ═══════════════════════════════════════════════════════════════ */
 async function authFetch(url, body) {
   const { data } = await sb.auth.getSession();
   return fetch(url, {
@@ -686,51 +980,59 @@ async function authFetch(url, body) {
 }
 
 async function verifyHostCode(table, reference, bookingId) {
-  const input = document.getElementById(`host-code-${bookingId}`);
-  const btn   = document.querySelector(`#card-${bookingId} .ci-submit`);
+  const input = $('host-code-' + bookingId);
+  const btn   = document.querySelector('#card-' + bookingId + ' .ci-submit');
   const code  = input?.value?.trim().toUpperCase();
 
   if (!code || !code.startsWith('HOST')) {
-    showToast('Enter the HOST-XXXXXX code your host gives you'); return;
+    return showToast('Enter the HOST-XXXXXX code your host gives you');
   }
   if (btn) { btn.classList.add('loading'); btn.textContent = 'Verifying…'; }
+  const done = () => { if (btn) { btn.classList.remove('loading'); btn.textContent = 'Confirm check-in'; } };
 
   try {
-    const res  = await authFetch('/api/verify-checkin', { table, reference, role:'guest', code });
-    const data = await res.json();
-    if (btn) { btn.classList.remove('loading'); btn.textContent = 'Confirm check-in'; }
+    const res  = await authFetch('/api/verify-checkin', { table, reference, role: 'guest', code });
+    const data = await res.json().catch(() => ({}));
+    done();
 
-    /* 402. The code was right. The money wasn't. Say so plainly;
-       a guest at a door does not need to guess why nothing happened. */
+    /* 402: the code was right, the money wasn't. Say so plainly. A
+       guest standing at a door should not have to guess. */
     if (res.status === 402 && data.error === 'balance_due') {
-      showToast(`Correct code, but KES ${Number(data.balance_amount).toLocaleString()} is still outstanding.`, 5000);
-      await loadAllBookings();
-      setTimeout(() => payBalance(bookingId), 700);
+      showToast('Correct code, but ' + CB.money(data.balance_amount) + ' is still outstanding.', 5500);
+      await refresh();
+      setTimeout(() => payRest(bookingId), 800);
       return;
     }
-
+    if (res.status === 409 && data.error === 'stay_ended') {
+      showToast('These dates have already passed.', 5000);
+      await refresh();
+      return;
+    }
     if (res.status === 401 && data.error === 'code_mismatch') {
-      showToast('That code doesn\'t match. Check with your host.', 4000); return;
+      return showToast('That code doesn\'t match. Check with your host.', 4000);
     }
     if (!res.ok) {
-      showToast('❌ ' + (data.message || data.error || 'Could not verify. Try again'), 4000); return;
+      return showToast(data.message || data.error || 'Could not verify. Try again', 4000);
     }
 
-    showToast(data.already ? 'Already checked in.' : '🎉 Check-in confirmed. Enjoy your stay.', 5000);
-    await loadAllBookings();
-  } catch(err) {
-    if (btn) { btn.classList.remove('loading'); btn.textContent = 'Confirm check-in'; }
+    showToast(data.already ? 'Already checked in.' : 'Check-in confirmed. Enjoy your stay.', 5000);
+    await refresh();
+  } catch (err) {
+    done();
     showToast('Network error. Please try again');
   }
 }
 
-function showToast(msg, dur=3200) {
-  const t = document.getElementById('toast');
+function showToast(msg, dur = 3200) {
+  const t = $('toast');
   if (!t) return;
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), dur);
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._h);
+  t._h = setTimeout(() => t.classList.remove('show'), dur);
 }
 
+bindTabs();
 </script>
 <script src="/pwa.js" defer></script>
 <script src="/apa-push.js" defer></script>
