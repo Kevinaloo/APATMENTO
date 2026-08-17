@@ -42,7 +42,8 @@
     { key: 'food',      label: 'Food & drink' }
   ];
 
-  var state = { events: [], filter: 'all', q: '', sort: 'soonest', loaded: false, lastSec: -1 };
+  var state = { events: [], filter: 'all', q: '', sort: 'soonest', loaded: false, lastSec: -1,
+               locPlace: null };
 
   /* ── helpers ─────────────────────────────────────────────────────── */
 
@@ -197,13 +198,27 @@
 
   function visible() {
     var q = state.q.trim().toLowerCase();
-    return upcoming().filter(function (e) {
+    var list = upcoming().filter(function (e) {
       if (state.filter !== 'all' && (e.category || '') !== state.filter) return false;
       if (!q) return true;
       var hay = [e.title, e.tagline, e.venue, e.city, e.organiser_name]
         .concat(arr(e.tags)).concat(arr(e.lineup)).join(' ').toLowerCase();
       return hay.indexOf(q) !== -1;
     });
+
+    /* Upgrade to radius search when a place was picked from the typeahead */
+    if (state.locPlace && window.ApaGeo) {
+      var near = ApaGeo.nearby(list, state.locPlace, {
+        radiusKm: ApaGeo.radiusFor(state.locPlace, 50),
+        latKey: 'latitude', lngKey: 'longitude', min: 1
+      });
+      var unpinned = list.filter(function (e) {
+        return !(isFinite(e.latitude) && isFinite(e.longitude)) &&
+               ApaGeo.match(e, state.locPlace, { fields: ['venue', 'city'] });
+      });
+      list = near.items.concat(unpinned);
+    }
+    return list;
   }
 
   function sorted(list) {
@@ -534,8 +549,29 @@
       var deb;
       q.addEventListener('input', function () {
         clearTimeout(deb);
+        state.locPlace = null;
+        var latEl = el('ev-loc-lat'), lngEl = el('ev-loc-lng');
+        if (latEl) latEl.value = '';
+        if (lngEl) lngEl.value = '';
         deb = setTimeout(function () { state.q = q.value; renderGrid(); }, 140);
       });
+
+      function wireGeo() {
+        if (!window.ApaGeo) return;
+        ApaGeo.attach('ev-q', {
+          limit: 6,
+          onPick: function (p) {
+            state.locPlace = p;
+            state.q = q.value;
+            var latEl = el('ev-loc-lat'), lngEl = el('ev-loc-lng');
+            if (latEl) latEl.value = isFinite(p.lat) ? p.lat : '';
+            if (lngEl) lngEl.value = isFinite(p.lng) ? p.lng : '';
+            renderGrid();
+          }
+        });
+      }
+      if (window.ApaGeo) wireGeo();
+      else window.addEventListener('load', wireGeo);
     }
     var s = el('ev-sort');
     if (s) s.addEventListener('change', function () { state.sort = s.value; renderGrid(); });

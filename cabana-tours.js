@@ -63,7 +63,8 @@
     { key: 'expedition', label: 'Expeditions' }
   ];
 
-  var state = { tours: [], filter: 'all', q: '', sort: 'recommended', loaded: false };
+  var state = { tours: [], filter: 'all', q: '', sort: 'recommended', loaded: false,
+               locPlace: null /* resolved place from apa-geo typeahead */ };
 
   /* ── helpers ─────────────────────────────────────────────────────── */
 
@@ -116,13 +117,35 @@
 
   function visible() {
     var q = state.q.trim().toLowerCase();
-    return state.tours.filter(function (t) {
+    var list = state.tours.filter(function (t) {
       if (state.filter !== 'all' && ZONES[reachOf(t)].key !== state.filter) return false;
       if (!q) return true;
       var hay = [t.title, t.summary, t.destination, t.county, t.operator_name]
         .concat(arr(t.tags)).join(' ').toLowerCase();
       return hay.indexOf(q) !== -1;
     });
+
+    /* When the guest picked a real place from the typeahead, upgrade
+       text match to geometry. Tours with coordinates get radius sorting;
+       tours without coordinates fall back to ApaGeo.match() text check
+       so pre-coordinates inventory is never silently hidden. */
+    if (state.locPlace && window.ApaGeo) {
+      var near = ApaGeo.nearby(list, state.locPlace, {
+        radiusKm: ApaGeo.radiusFor(state.locPlace, 80),
+        latKey: 'latitude', lngKey: 'longitude', min: 1
+      });
+      var unpinned = list.filter(function (t) {
+        return !(isFinite(t.latitude) && isFinite(t.longitude)) &&
+               ApaGeo.match(t, state.locPlace, { fields: ['destination','county'] });
+      });
+      list = near.items.concat(unpinned);
+      state.locRadiusKm = near.radiusKm;
+      state.locExpanded = near.expanded;
+    } else {
+      state.locRadiusKm = null;
+      state.locExpanded = false;
+    }
+    return list;
   }
 
   function sorted(list) {
@@ -491,8 +514,44 @@
       var deb;
       q.addEventListener('input', function () {
         clearTimeout(deb);
+        /* If the user edits the text after picking a place, drop the pin —
+           the same guarantee apa-geo.js makes everywhere else on the platform.
+           A typed partial string is not a picked coordinate. */
+        state.locPlace = null;
+        var latEl = el('ct-loc-lat'), lngEl = el('ct-loc-lng');
+        if (latEl) latEl.value = '';
+        if (lngEl) lngEl.value = '';
         deb = setTimeout(function () { state.q = q.value; renderGrid(); }, 140);
       });
+
+      /* Wire up the location-aware typeahead when ApaGeo is available.
+         A picked place replaces the text search with radius geometry. */
+      if (window.ApaGeo) {
+        ApaGeo.attach('ct-q', {
+          limit: 6,
+          onPick: function (p) {
+            state.locPlace = p;
+            state.q = q.value;
+            var latEl = el('ct-loc-lat'), lngEl = el('ct-loc-lng');
+            if (latEl) latEl.value = isFinite(p.lat) ? p.lat : '';
+            if (lngEl) lngEl.value = isFinite(p.lng) ? p.lng : '';
+            renderGrid();
+          }
+        });
+      } else {
+        /* ApaGeo deferred — attach once it loads */
+        window.addEventListener('load', function () {
+          if (!window.ApaGeo) return;
+          ApaGeo.attach('ct-q', {
+            limit: 6,
+            onPick: function (p) {
+              state.locPlace = p;
+              state.q = q.value;
+              renderGrid();
+            }
+          });
+        });
+      }
     }
     var s = el('ct-sort');
     if (s) s.addEventListener('change', function () { state.sort = s.value; renderGrid(); });

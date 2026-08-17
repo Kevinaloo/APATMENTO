@@ -383,6 +383,8 @@ html.via-dash #tx{display:none!important;animation:none!important;}
     <div class="ev-search">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
       <input id="ev-q" type="search" placeholder="Search events, venues, artists" aria-label="Search events"/>
+      <input type="hidden" id="ev-loc-lat"/>
+      <input type="hidden" id="ev-loc-lng"/>
     </div>
     <div class="ev-chips" id="ev-chips" role="group" aria-label="Filter events by category"></div>
   </div>
@@ -425,6 +427,7 @@ html.via-dash #tx{display:none!important;animation:none!important;}
 
 <script src="/vendor-supabase-2.112.3.js"></script>
 <script src="/apa-session.js"></script>
+<script src="/apa-geo.js" defer></script>
 <script src="/cabana-pay.js" defer></script>
 <script src="/cabana-event-book.js" defer></script>
 <script src="/cabana-events.js" defer></script>

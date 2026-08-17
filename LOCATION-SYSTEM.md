@@ -142,10 +142,17 @@ for something that does not exist:
 - `become-driver.html` `#a-area` — Nairobi dispatch zones
 - `add-listing.html` service-area fields tied to fleet coverage
 
-## Known gap
+## Status
 
-`list-your-tour.html` and `list-your-event.html` get the resolved place for
-autocomplete, spelling consistency and auto-filled city/county — but their
-tables have no `latitude`/`longitude` columns, so the coordinates are not
-persisted. Adding those columns would let tours and events join the same radius
-search stays already use. Nothing else is blocking it.
+All surfaces are fully wired. The known gap documented here — tours and events
+tables missing `latitude`/`longitude` columns — was resolved in commit `a091d04`:
+
+- `schema-location-coords.sql` applied to Supabase: both tables now carry the
+  columns with sparse indexes for bounding-box queries
+- `list-your-tour.html` / `cabana-list-tour.js`: destination `onPick` writes
+  lat/lng; the `INSERT` row now includes `latitude` and `longitude`
+- `list-your-event.html` / `cabana-list-event.js`: venue `onPick` writes
+  lat/lng; the `INSERT` row now includes `latitude` and `longitude`
+
+Tours and events from this point forward are searchable by radius the same
+way stays are. Existing rows carry `NULL` until re-submitted or backfilled.
