@@ -12,7 +12,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="description" content="Shop online from Kenyan sellers on Cabana. Zero commission for sellers. Secure M-Pesa payments. Support local businesses."/>
-<meta name="keywords" content="grocery delivery Kenya, supermarket delivery, Naivas delivery, Quickmart delivery, Carrefour delivery, online groceries, food shopping, fresh produce delivery, online grocery shopping Kenya, Cleanshelf delivery, order eggs milk bread"/>
+<meta name="keywords" content="online shopping Kenya, buy Kenyan crafts, Maasai beadwork, kitenge fabric, kikoy, Kenyan coffee, Kenyan tea, made in Kenya, shop local Kenya, Kenyan artisans, zero commission marketplace, buy direct from sellers Kenya"/>
 <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1"/>
   <link rel="canonical" href="https://cabana.africa/shopping"/>
 <link rel="alternate" hreflang="en-ke" href="https://cabana.africa/shopping"/>
@@ -44,18 +44,13 @@
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
-  "@type": "GroceryStore",
-  "name": "Cabana Grocery Delivery",
+  "@type": "OnlineStore",
+  "name": "Cabana Shopping",
   "url": "https://cabana.africa/shopping",
-  "description": "Order groceries from Naivas, Quickmart, Carrefour, Cleanshelf and more, delivered to your door.",
+  "description": "Buy crafts, textiles, food, electronics and gifts direct from Kenyan sellers and makers. Sellers keep 100% of what they charge.",
   "areaServed": {"@type": "Country", "name": "Kenya"},
   "currenciesAccepted": "KES",
-  "paymentAccepted": "M-Pesa, Card",
-  "department": [
-    {"@type": "GroceryStore", "name": "Naivas", "url": "https://glovoapp.com/ke/en/nairobi/naivas-nrb/"},
-    {"@type": "GroceryStore", "name": "Quickmart", "url": "https://glovoapp.com/ke/en/nairobi/quickmart-nrb/"},
-    {"@type": "GroceryStore", "name": "Carrefour", "url": "https://glovoapp.com/ke/en/nairobi/carrefour-nrb/"}
-  ]
+  "paymentAccepted": "M-Pesa, Card"
 }
 </script>
 <title>Online Shopping Kenya: Shop Local with Zero Commission</title>
@@ -123,14 +118,6 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--glass);c
 .powered{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--ink-faint);margin-bottom:22px;}
 .powered strong{color:#00A082;font-weight:700;}
 
-/* ── STORE PILLS ── */
-.store-row{display:flex;gap:9px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;margin-bottom:24px;scrollbar-width:none;}
-.store-row::-webkit-scrollbar{display:none;}
-.store-pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:8px 15px;border-radius:100px;background:#fff;border:1.5px solid var(--line);cursor:pointer;transition:all .22s;white-space:nowrap;flex-shrink:0;color:var(--ink-soft);}
-.store-pill:hover{border-color:var(--t1);color:var(--t1);}
-.store-pill.active{background:var(--theme-grad);color:#fff;border-color:transparent;box-shadow:0 4px 14px rgba(109,40,255,.3);}
-.store-pill .store-dot{width:7px;height:7px;border-radius:50%;background:currentColor;opacity:.5;}
-
 /* ── SEARCH BAR ── */
 .search-wrap{max-width:680px;margin-bottom:16px;}
 .search-bar{display:flex;align-items:center;gap:0;background:rgba(255,255,255,.88);border:1px solid var(--line-2,rgba(10,10,20,.13));border-radius:16px;padding:5px;box-shadow:var(--shadow-glass);}
@@ -157,7 +144,7 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--glass);c
 .section-title{font-family:var(--font-display);font-weight:500;font-size:19px;}
 .section-subtitle{font-size:12px;color:var(--ink-faint);margin-top:1px;}
 .section-rating{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:3px 9px;border-radius:100px;background:rgba(0,160,130,.1);color:#00A082;}
-.see-all{font-size:12px;font-weight:600;color:var(--t1);text-decoration:none;display:flex;align-items:center;gap:4px;transition:gap .2s;}
+.see-all{font-size:12px;font-weight:600;color:var(--t1);text-decoration:none;display:flex;align-items:center;gap:4px;transition:gap .2s;background:none;border:none;padding:0;cursor:pointer;font-family:inherit;}
 .see-all:hover{gap:8px;}
 .see-all svg{width:12px;height:12px;}
 
@@ -171,8 +158,21 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--glass);c
 .p-card-img{height:150px;position:relative;overflow:hidden;background:var(--glass-2);display:flex;align-items:center;justify-content:center;}
 .p-card-img img{width:100%;height:100%;object-fit:cover;transition:transform .5s cubic-bezier(.22,1,.36,1);}
 .p-card:hover .p-card-img img{transform:scale(1.07);}
-.p-card-img-fallback{display:flex;align-items:center;justify-content:center;width:100%;height:100%;background:linear-gradient(135deg,var(--glass-2),var(--glass-3));font-size:40px;}
-.p-card-store-tag{position:absolute;top:8px;left:8px;font-size:9.5px;font-weight:700;padding:3px 7px;border-radius:100px;color:#fff;}
+/* Product tile. Shown whenever a seller has supplied no usable photo, in
+   place of a stock picture of something the shopper would not receive.
+   The monogram varies per product so a grid of tiles reads as a designed
+   set rather than a wall of identical missing images. */
+.p-card-img.is-tile{background:linear-gradient(var(--ang,140deg),var(--tint,var(--glass-2)) 0%,#fff 100%);}
+.p-card-img.is-tile::after{content:attr(data-mono);font-family:var(--font-display);font-weight:500;font-style:italic;font-size:56px;line-height:1;color:var(--cat,var(--ink-faint));opacity:.28;}
+.p-card-img.is-tile::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 28% 22%,rgba(255,255,255,.7),transparent 62%);}
+.p-card-img.is-tile .tile-glyph{position:absolute;right:9px;bottom:8px;font-size:15px;opacity:.8;line-height:1;}
+.p-card-img:not(.is-tile) .tile-glyph{display:none;}
+@media(max-width:700px){.p-card-img.is-tile::after{font-size:44px;}}
+.p-card-store-tag{position:absolute;top:8px;left:8px;font-size:9.5px;font-weight:700;padding:3px 7px;border-radius:100px;color:#fff;z-index:1;}
+.p-card-hot{position:absolute;top:8px;right:8px;font-size:9px;font-weight:700;padding:3px 7px;border-radius:100px;background:rgba(10,10,20,.72);color:#fff;letter-spacing:.03em;z-index:1;}
+.p-skel{height:230px;border-radius:16px;background:linear-gradient(100deg,var(--glass-2) 30%,var(--glass-3) 50%,var(--glass-2) 70%);background-size:220% 100%;animation:skel 1.3s ease-in-out infinite;}
+@keyframes skel{0%{background-position:120% 0;}100%{background-position:-120% 0;}}
+@media(max-width:700px){.p-skel{height:190px;}}
 .p-card-body{padding:11px 12px 13px;}
 .p-card-name{font-size:13px;font-weight:600;color:var(--ink);line-height:1.3;margin-bottom:5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:34px;}
 .p-card-store{font-size:10.5px;color:var(--ink-faint);margin-bottom:8px;}
@@ -210,6 +210,8 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--glass);c
   .hero,.content{padding-left:14px;padding-right:14px;}
   .ab{filter:blur(40px)!important;opacity:.10!important;}
   .glovo-banner-cta{display:none;}
+  /* Topbar runs out of room once the back button, wordmark and list CTA are in */
+  .glovo-badge{display:none;}
   .supermarket-section{margin-bottom:28px;}
 }
 @media(max-width:380px){.p-grid{grid-template-columns:repeat(2,1fr);}}
@@ -237,7 +239,7 @@ html.via-dash #tx{display:none!important;}
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"/></noscript>
 <link rel="stylesheet" href="/cabana-ds.css"/>
 <!-- CABANA-SEO-GRAPH -->
-<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":["Organization","TravelAgency","OnlineBusiness"],"@id":"https://cabana.africa/#organization","name":"Cabana","alternateName":["Cabana Africa","Cabana Travel","Cabana App","cabana.africa","Apatmento","Apatmento by Cabana"],"legalName":"Cabana","url":"https://cabana.africa/","logo":{"@type":"ImageObject","@id":"https://cabana.africa/#logo","url":"https://cabana.africa/cabana-icon-512.png","contentUrl":"https://cabana.africa/cabana-icon-512.png","width":512,"height":512,"caption":"Cabana"},"image":{"@id":"https://cabana.africa/#logo"},"description":"Cabana is Africa's zero-commission travel platform. Book short-stay apartments, safaris, flights, events, car hire and rides across all 54 African countries, direct from the host or operator. Hosts keep 100% of what they charge and guests pay no booking fee.","slogan":"Zero commission. Africa's own travel platform.","foundingDate":"2025","foundingLocation":{"@type":"Place","name":"Nairobi, Kenya"},"brand":{"@id":"https://cabana.africa/#brand"},"knowsAbout":["Travel in Africa","Safari booking","Short-stay apartments","Zero-commission booking","M-Pesa payments","African tourism","Vacation rentals","Airport transfers","Car hire","Event ticketing"],"areaServed":[{"@type":"Continent","name":"Africa"},{"@type":"Place","name":"Worldwide"}],"currenciesAccepted":"KES, NGN, GHS, ZAR, TZS, UGX, RWF, USD, EUR, GBP","paymentAccepted":"M-Pesa, MTN MoMo, Airtel Money, Visa, Mastercard, Bank transfer","telephone":"+254716206494","email":"connect@cabana.africa","contactPoint":[{"@type":"ContactPoint","telephone":"+254716206494","email":"connect@cabana.africa","contactType":"customer support","availableLanguage":["English","Swahili","French","Arabic","Portuguese"],"areaServed":"Africa"},{"@type":"ContactPoint","email":"partners@cabana.africa","contactType":"sales","name":"Host & operator onboarding","availableLanguage":["English","Swahili","French"],"areaServed":"Africa"}],"sameAs":["https://twitter.com/apatmento","https://x.com/apatmento"]},{"@type":"Brand","@id":"https://cabana.africa/#brand","name":"Cabana","logo":"https://cabana.africa/cabana-icon-512.png","slogan":"Zero commission. Always."},{"@type":"WebSite","@id":"https://cabana.africa/#website","url":"https://cabana.africa/","name":"Cabana","alternateName":"Cabana Africa","description":"Africa's zero-commission travel platform.","publisher":{"@id":"https://cabana.africa/#organization"},"inLanguage":"en","potentialAction":[{"@type":"SearchAction","target":{"@type":"EntryPoint","urlTemplate":"https://cabana.africa/apartments?q={search_term_string}"},"query-input":"required name=search_term_string"}]},{"@type":"CollectionPage","@id":"https://cabana.africa/shopping#webpage","url":"https://cabana.africa/shopping","name":"Online Shopping Kenya: Shop Local with Zero Commission","description":"Shop online from Kenyan sellers on Cabana. Zero commission for sellers. Secure M-Pesa payments. Support local businesses.","isPartOf":{"@id":"https://cabana.africa/#website"},"about":{"@id":"https://cabana.africa/#organization"},"publisher":{"@id":"https://cabana.africa/#organization"},"inLanguage":"en","dateModified":"2026-08-13","breadcrumb":{"@id":"https://cabana.africa/shopping#breadcrumb"},"primaryImageOfPage":{"@type":"ImageObject","url":"https://cabana.africa/og-shopping.jpg"},"speakable":{"@type":"SpeakableSpecification","cssSelector":[".hero h1",".hero .sub",".sec p"]}},{"@type":"BreadcrumbList","@id":"https://cabana.africa/shopping#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://cabana.africa/"},{"@type":"ListItem","position":2,"name":"Shopping"}]},{"@type":"Product","@id":"https://cabana.africa/shopping#product","name":"Cabana Shopping","description":"Buy direct from African sellers and makers with zero seller commission.","url":"https://cabana.africa/shopping","category":"Shopping","brand":{"@id":"https://cabana.africa/#brand"},"offers":{"@type":"AggregateOffer","priceCurrency":"USD","lowPrice":"13.48","highPrice":"23.1","offerCount":"4","availability":"https://schema.org/InStock","seller":{"@id":"https://cabana.africa/#organization"}}},{"@type":"Service","@id":"https://cabana.africa/shopping#service","name":"Cabana Shopping","description":"Buy direct from African sellers and makers with zero seller commission.","serviceType":"Shopping","provider":{"@id":"https://cabana.africa/#organization"},"areaServed":{"@type":"Continent","name":"Africa"},"audience":{"@type":"Audience","audienceType":"Travellers to Africa"},"offers":{"@type":"Offer","priceCurrency":"USD","availability":"https://schema.org/InStock","seller":{"@id":"https://cabana.africa/#organization"}}},{"@type":"ItemList","@id":"https://cabana.africa/shopping#itemlist","name":"Shopping by country","numberOfItems":24,"itemListElement":[{"@type":"ListItem","position":1,"name":"Kenya","url":"https://cabana.africa/kenya-travel"},{"@type":"ListItem","position":2,"name":"Tanzania","url":"https://cabana.africa/tanzania-travel"},{"@type":"ListItem","position":3,"name":"Uganda","url":"https://cabana.africa/uganda-travel"},{"@type":"ListItem","position":4,"name":"Rwanda","url":"https://cabana.africa/rwanda-travel"},{"@type":"ListItem","position":5,"name":"Ethiopia","url":"https://cabana.africa/ethiopia-travel"},{"@type":"ListItem","position":6,"name":"Seychelles","url":"https://cabana.africa/seychelles-travel"},{"@type":"ListItem","position":7,"name":"Mauritius","url":"https://cabana.africa/mauritius-travel"},{"@type":"ListItem","position":8,"name":"Madagascar","url":"https://cabana.africa/madagascar-travel"},{"@type":"ListItem","position":9,"name":"Nigeria","url":"https://cabana.africa/nigeria-travel"},{"@type":"ListItem","position":10,"name":"Ghana","url":"https://cabana.africa/ghana-travel"},{"@type":"ListItem","position":11,"name":"Senegal","url":"https://cabana.africa/senegal-travel"},{"@type":"ListItem","position":12,"name":"Côte d'Ivoire","url":"https://cabana.africa/cote-divoire-travel"},{"@type":"ListItem","position":13,"name":"Benin","url":"https://cabana.africa/benin-travel"},{"@type":"ListItem","position":14,"name":"Sierra Leone","url":"https://cabana.africa/sierra-leone-travel"},{"@type":"ListItem","position":15,"name":"Gambia","url":"https://cabana.africa/gambia-travel"},{"@type":"ListItem","position":16,"name":"Cape Verde","url":"https://cabana.africa/cape-verde-travel"},{"@type":"ListItem","position":17,"name":"South Africa","url":"https://cabana.africa/south-africa-travel"},{"@type":"ListItem","position":18,"name":"Namibia","url":"https://cabana.africa/namibia-travel"},{"@type":"ListItem","position":19,"name":"Botswana","url":"https://cabana.africa/botswana-travel"},{"@type":"ListItem","position":20,"name":"Zimbabwe","url":"https://cabana.africa/zimbabwe-travel"},{"@type":"ListItem","position":21,"name":"Zambia","url":"https://cabana.africa/zambia-travel"},{"@type":"ListItem","position":22,"name":"Mozambique","url":"https://cabana.africa/mozambique-travel"},{"@type":"ListItem","position":23,"name":"Malawi","url":"https://cabana.africa/malawi-travel"},{"@type":"ListItem","position":24,"name":"Angola","url":"https://cabana.africa/angola-travel"}]},{"@type":"FAQPage","@id":"https://cabana.africa/shopping#faq","mainEntity":[{"@type":"Question","name":"How do I order groceries online?","acceptedAnswer":{"@type":"Answer","text":"Pick a store or category above, tap a product to open that supermarket's live catalogue, add to basket, enter your address and pay with M-Pesa or card."}},{"@type":"Question","name":"Which supermarkets deliver near me?","acceptedAnswer":{"@type":"Answer","text":"Naivas, Quickmart, Carrefour, Cleanshelf, Zucchini Greengrocers, City Grocery and Jaza deliver through Cabana, with live prices in KES. Coverage is expanding."}},{"@type":"Question","name":"Are the grocery prices accurate?","acceptedAnswer":{"@type":"Answer","text":"Yes. Every price is pulled live from the supermarket's own catalogue. Items sold by weight can vary slightly and some stores add a small packaging fee."}},{"@type":"Question","name":"Can I pay for groceries with M-Pesa?","acceptedAnswer":{"@type":"Answer","text":"Yes. M-Pesa and card are both supported at checkout."}}]}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":["Organization","TravelAgency","OnlineBusiness"],"@id":"https://cabana.africa/#organization","name":"Cabana","alternateName":["Cabana Africa","Cabana Travel","Cabana App","cabana.africa","Apatmento","Apatmento by Cabana"],"legalName":"Cabana","url":"https://cabana.africa/","logo":{"@type":"ImageObject","@id":"https://cabana.africa/#logo","url":"https://cabana.africa/cabana-icon-512.png","contentUrl":"https://cabana.africa/cabana-icon-512.png","width":512,"height":512,"caption":"Cabana"},"image":{"@id":"https://cabana.africa/#logo"},"description":"Cabana is Africa's zero-commission travel platform. Book short-stay apartments, safaris, flights, events, car hire and rides across all 54 African countries, direct from the host or operator. Hosts keep 100% of what they charge and guests pay no booking fee.","slogan":"Zero commission. Africa's own travel platform.","foundingDate":"2025","foundingLocation":{"@type":"Place","name":"Nairobi, Kenya"},"brand":{"@id":"https://cabana.africa/#brand"},"knowsAbout":["Travel in Africa","Safari booking","Short-stay apartments","Zero-commission booking","M-Pesa payments","African tourism","Vacation rentals","Airport transfers","Car hire","Event ticketing"],"areaServed":[{"@type":"Continent","name":"Africa"},{"@type":"Place","name":"Worldwide"}],"currenciesAccepted":"KES, NGN, GHS, ZAR, TZS, UGX, RWF, USD, EUR, GBP","paymentAccepted":"M-Pesa, MTN MoMo, Airtel Money, Visa, Mastercard, Bank transfer","telephone":"+254716206494","email":"connect@cabana.africa","contactPoint":[{"@type":"ContactPoint","telephone":"+254716206494","email":"connect@cabana.africa","contactType":"customer support","availableLanguage":["English","Swahili","French","Arabic","Portuguese"],"areaServed":"Africa"},{"@type":"ContactPoint","email":"partners@cabana.africa","contactType":"sales","name":"Host & operator onboarding","availableLanguage":["English","Swahili","French"],"areaServed":"Africa"}],"sameAs":["https://twitter.com/apatmento","https://x.com/apatmento"]},{"@type":"Brand","@id":"https://cabana.africa/#brand","name":"Cabana","logo":"https://cabana.africa/cabana-icon-512.png","slogan":"Zero commission. Always."},{"@type":"WebSite","@id":"https://cabana.africa/#website","url":"https://cabana.africa/","name":"Cabana","alternateName":"Cabana Africa","description":"Africa's zero-commission travel platform.","publisher":{"@id":"https://cabana.africa/#organization"},"inLanguage":"en","potentialAction":[{"@type":"SearchAction","target":{"@type":"EntryPoint","urlTemplate":"https://cabana.africa/apartments?q={search_term_string}"},"query-input":"required name=search_term_string"}]},{"@type":"CollectionPage","@id":"https://cabana.africa/shopping#webpage","url":"https://cabana.africa/shopping","name":"Online Shopping Kenya: Shop Local with Zero Commission","description":"Shop online from Kenyan sellers on Cabana. Zero commission for sellers. Secure M-Pesa payments. Support local businesses.","isPartOf":{"@id":"https://cabana.africa/#website"},"about":{"@id":"https://cabana.africa/#organization"},"publisher":{"@id":"https://cabana.africa/#organization"},"inLanguage":"en","dateModified":"2026-08-13","breadcrumb":{"@id":"https://cabana.africa/shopping#breadcrumb"},"primaryImageOfPage":{"@type":"ImageObject","url":"https://cabana.africa/og-shopping.jpg"},"speakable":{"@type":"SpeakableSpecification","cssSelector":[".hero h1",".hero .sub",".sec p"]}},{"@type":"BreadcrumbList","@id":"https://cabana.africa/shopping#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://cabana.africa/"},{"@type":"ListItem","position":2,"name":"Shopping"}]},{"@type":"Product","@id":"https://cabana.africa/shopping#product","name":"Cabana Shopping","description":"Buy direct from African sellers and makers with zero seller commission.","url":"https://cabana.africa/shopping","category":"Shopping","brand":{"@id":"https://cabana.africa/#brand"},"offers":{"@type":"AggregateOffer","priceCurrency":"KES","lowPrice":"500","highPrice":"58000","availability":"https://schema.org/InStock","seller":{"@id":"https://cabana.africa/#organization"}}},{"@type":"Service","@id":"https://cabana.africa/shopping#service","name":"Cabana Shopping","description":"Buy direct from African sellers and makers with zero seller commission.","serviceType":"Shopping","provider":{"@id":"https://cabana.africa/#organization"},"areaServed":{"@type":"Continent","name":"Africa"},"audience":{"@type":"Audience","audienceType":"Travellers to Africa"},"offers":{"@type":"Offer","priceCurrency":"USD","availability":"https://schema.org/InStock","seller":{"@id":"https://cabana.africa/#organization"}}},{"@type":"ItemList","@id":"https://cabana.africa/shopping#itemlist","name":"Shopping by country","numberOfItems":24,"itemListElement":[{"@type":"ListItem","position":1,"name":"Kenya","url":"https://cabana.africa/kenya-travel"},{"@type":"ListItem","position":2,"name":"Tanzania","url":"https://cabana.africa/tanzania-travel"},{"@type":"ListItem","position":3,"name":"Uganda","url":"https://cabana.africa/uganda-travel"},{"@type":"ListItem","position":4,"name":"Rwanda","url":"https://cabana.africa/rwanda-travel"},{"@type":"ListItem","position":5,"name":"Ethiopia","url":"https://cabana.africa/ethiopia-travel"},{"@type":"ListItem","position":6,"name":"Seychelles","url":"https://cabana.africa/seychelles-travel"},{"@type":"ListItem","position":7,"name":"Mauritius","url":"https://cabana.africa/mauritius-travel"},{"@type":"ListItem","position":8,"name":"Madagascar","url":"https://cabana.africa/madagascar-travel"},{"@type":"ListItem","position":9,"name":"Nigeria","url":"https://cabana.africa/nigeria-travel"},{"@type":"ListItem","position":10,"name":"Ghana","url":"https://cabana.africa/ghana-travel"},{"@type":"ListItem","position":11,"name":"Senegal","url":"https://cabana.africa/senegal-travel"},{"@type":"ListItem","position":12,"name":"Côte d'Ivoire","url":"https://cabana.africa/cote-divoire-travel"},{"@type":"ListItem","position":13,"name":"Benin","url":"https://cabana.africa/benin-travel"},{"@type":"ListItem","position":14,"name":"Sierra Leone","url":"https://cabana.africa/sierra-leone-travel"},{"@type":"ListItem","position":15,"name":"Gambia","url":"https://cabana.africa/gambia-travel"},{"@type":"ListItem","position":16,"name":"Cape Verde","url":"https://cabana.africa/cape-verde-travel"},{"@type":"ListItem","position":17,"name":"South Africa","url":"https://cabana.africa/south-africa-travel"},{"@type":"ListItem","position":18,"name":"Namibia","url":"https://cabana.africa/namibia-travel"},{"@type":"ListItem","position":19,"name":"Botswana","url":"https://cabana.africa/botswana-travel"},{"@type":"ListItem","position":20,"name":"Zimbabwe","url":"https://cabana.africa/zimbabwe-travel"},{"@type":"ListItem","position":21,"name":"Zambia","url":"https://cabana.africa/zambia-travel"},{"@type":"ListItem","position":22,"name":"Mozambique","url":"https://cabana.africa/mozambique-travel"},{"@type":"ListItem","position":23,"name":"Malawi","url":"https://cabana.africa/malawi-travel"},{"@type":"ListItem","position":24,"name":"Angola","url":"https://cabana.africa/angola-travel"}]},{"@type":"FAQPage","@id":"https://cabana.africa/shopping#faq","mainEntity":[{"@type":"Question","name":"How do I order from a seller?","acceptedAnswer":{"@type":"Answer","text":"Pick a category or search above, then tap any item. That opens a WhatsApp message to Cabana with the product and seller already filled in, so you can confirm stock, price and delivery."}},{"@type":"Question","name":"What can I buy on Cabana Shopping?","acceptedAnswer":{"@type":"Answer","text":"Fashion and textiles, art and crafts, food and drink, electronics, books and gifts, sourced from Kenyan makers, artisan collectives and independent shops. The catalogue grows as sellers join."}},{"@type":"Question","name":"How much commission do sellers pay?","acceptedAnswer":{"@type":"Answer","text":"None. Sellers keep 100% of what they charge. Cabana does not add a booking fee or a markup on the seller's price."}},{"@type":"Question","name":"Can I pay with M-Pesa?","acceptedAnswer":{"@type":"Answer","text":"Yes. M-Pesa and card are both supported."}}]}]}</script>
 <!-- /CABANA-SEO-GRAPH -->
 </head>
 <body>
@@ -258,8 +260,8 @@ html.via-dash #tx{display:none!important;}
         <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>
       </svg>
     </div>
-    <div class="tx-label">Fresh to your door</div>
-    <div class="tx-sub">Cabana · Grocery Delivery</div>
+    <div class="tx-label">Made in Kenya</div>
+    <div class="tx-sub">Cabana · Shop Local</div>
   </div>
 </div>
 
@@ -278,50 +280,31 @@ html.via-dash #tx{display:none!important;}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       List your shop
     </a>
-    <span class="glovo-badge">Live prices</span>
+    <span class="glovo-badge">0% commission</span>
   </div>
 </div>
 
 <!-- HERO -->
 <div class="hero">
-  <span class="hero-eyebrow">🛒 Grocery Delivery</span>
-  <h1 class="hero-title">Groceries from your<br/><em>top supermarkets.</em></h1>
-  <p class="hero-sub">Real products, live prices in KES, from Naivas, Quickmart, Carrefour, Cleanshelf and more. Tap any product to order.</p>
+  <span class="hero-eyebrow">🛍️ Shop Local</span>
+  <h1 class="hero-title">Buy direct from<br/><em>Kenyan sellers.</em></h1>
+  <p class="hero-sub">Crafts, textiles, food, electronics and gifts from makers and shops across Kenya. Sellers keep 100% of what they charge.</p>
   <div class="powered">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00A082" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-    Live prices · Click any card to order
-  </div>
-
-  <!-- Store filter pills -->
-  <div class="store-row" id="storeRow">
-    <div class="store-pill active" onclick="setStore('all',this)"><span class="store-dot"></span>All Stores</div>
-    <div class="store-pill" onclick="setStore('Naivas',this)" style="--dot:#006EAE;">🔵 Naivas</div>
-    <div class="store-pill" onclick="setStore('Quickmart',this)" style="--dot:#E10000;">🔴 Quickmart</div>
-    <div class="store-pill" onclick="setStore('Carrefour',this)" style="--dot:#003F7D;">🔷 Carrefour</div>
-    <div class="store-pill" onclick="setStore('Cleanshelf',this)" style="--dot:#F5A623;">🟡 Cleanshelf</div>
-    <div class="store-pill" onclick="setStore('Zucchini Greengrocers',this)">🥦 Zucchini</div>
-    <div class="store-pill" onclick="setStore('City Grocery',this)">🏪 City Grocery</div>
-    <div class="store-pill" onclick="setStore('Jaza Supermarkets',this)">🟢 Jaza</div>
+    Zero seller commission · Tap any item to enquire
   </div>
 
   <!-- Search + Category filter -->
   <div class="search-wrap">
     <div class="search-bar">
-      <input class="sb-input" id="searchInput" type="text" placeholder="Search products…" oninput="renderAll()"/>
+      <input class="sb-input" id="searchInput" type="text" placeholder="Search products or sellers…" oninput="renderAll()"/>
       <button class="sb-btn" type="button">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
       </button>
     </div>
   </div>
-  <div class="filter-row" id="catRow">
-    <div class="fchip active" onclick="setCat('all',this)">All Categories</div>
-    <div class="fchip" onclick="setCat('produce',this)">🥦 Fresh Produce</div>
-    <div class="fchip" onclick="setCat('meat',this)">🥩 Meat & Poultry</div>
-    <div class="fchip" onclick="setCat('staples',this)">🌾 Staples & Flour</div>
-    <div class="fchip" onclick="setCat('drinks',this)">🥤 Drinks</div>
-    <div class="fchip" onclick="setCat('eggs',this)">🥚 Eggs</div>
-    <div class="fchip" onclick="setCat('bakery',this)">🍞 Bakery</div>
-  </div>
+  <!-- Category chips are built from the catalogue at runtime -->
+  <div class="filter-row" id="catRow"></div>
 </div>
 
 <!-- CONTENT -->
@@ -335,10 +318,10 @@ html.via-dash #tx{display:none!important;}
       </svg>
     </div>
     <div class="glovo-banner-text">
-      <h3>Delivered to your door</h3>
-      <p>All products below are from real supermarkets with live prices in KES. Click any card to order.</p>
+      <h3>Zero commission for sellers</h3>
+      <p>Every item below comes from a Kenyan seller or maker. Tap a card to message them on WhatsApp and arrange payment and delivery.</p>
     </div>
-    <a href="https://glovoapp.com/ke/en/" target="_blank" rel="noopener" class="glovo-banner-cta">Shop All →</a>
+    <a href="partner-listings.html" class="glovo-banner-cta">List your shop →</a>
   </div>
 
   <div id="mainContent"></div>
@@ -361,282 +344,244 @@ setTimeout(dismissTx,4000);
 
 function showToast(m,d=3500){const t=document.getElementById('toast');if(!t)return;t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),d);}
 
-// ── Store colours
-const STORE_COLORS = {
-  'Naivas':'#006EAE','Quickmart':'#E10000','Carrefour':'#003F7D',
-  'Cleanshelf':'#F5A623','Zucchini Greengrocers':'#2D8B4E',
-  'City Grocery':'#7B2FF7','Jaza Supermarkets':'#00A082',
-  'Beyond Fruits':'#F59E0B','Chandarana Foodplus':'#E11D48',
+// ── Supabase
+const SB_URL = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
+const WA_NUMBER = '254716206494';
+
+// ── Categories. Drive colour, glyph, tile tint and section order.
+const CATS = {
+  fashion:     {label:'Fashion & Textiles', short:'Fashion',    glyph:'👗', color:'#E11D48', tint:'#FCE7EC'},
+  art:         {label:'Art & Crafts',       short:'Craft',      glyph:'🎨', color:'#7B2FF7', tint:'#F0E8FE'},
+  food:        {label:'Food & Drink',       short:'Food',       glyph:'🫖', color:'#00A082', tint:'#DFF5F0'},
+  electronics: {label:'Electronics',        short:'Tech',       glyph:'📱', color:'#4361FF', tint:'#E4E9FF'},
+  gifts:       {label:'Books & Gifts',      short:'Gifts',      glyph:'🎁', color:'#D97706', tint:'#FDEEDA'},
+  experience:  {label:'Experiences',        short:'Experience', glyph:'🎟️', color:'#6D28FF', tint:'#EDE6FF'},
+  other:       {label:'More from sellers',  short:'More',       glyph:'🛍️', color:'#5B5D78', tint:'#ECEDF3'},
 };
+const CAT_ORDER = ['fashion','art','food','electronics','gifts','experience','other'];
+const catOf = c => Object.prototype.hasOwnProperty.call(CATS, c) ? c : 'other';
 
-// ── Real Glovo product data, all sourced from live Glovo searches ──
-const PRODUCTS = [
-  // FRESH PRODUCE
-  {id:'4611686018477412743',name:'Yellow Sweet Bananas 1kg',store:'Quickmart',price:259,cat:'produce',emoji:'🍌',
-   img:'https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=400&q=80&fit=crop',
-   glovoUrl:'https://glovoapp.com/ke/en/nairobi/quickmart-nrb/'},
-  {id:'4611686018470133937',name:'Cut Sweet Melon',store:'Zucchini Greengrocers',price:299,cat:'produce',emoji:'🍈',
-   img:'https://images.unsplash.com/photo-1571115765094-e6e24b6d9f57?w=400&q=80&fit=crop',
-   glovoUrl:'https://glovoapp.com/ke/en/nairobi/zucchini-greengrocers-nrb/'},
-  {id:'4611686018448441335',name:'Cut Watermelon 1kg',store:'Carrefour',price:83,cat:'produce',emoji:'🍉',
-   img:'https://images.unsplash.com/photo-1563114773-84221bd62daa?w=400&q=80&fit=crop',
-   glovoUrl:'https://glovoapp.com/ke/en/nairobi/carrefour-nrb/'},
-  {id:'4611686018443373243',name:'Banana Long 1kg',store:'Beyond Fruits',price:109,cat:'produce',emoji:'🍌',
-   img:'https://images.unsplash.com/photo-1528825871115-3581a5387919?w=400&q=80&fit=crop',
-   glovoUrl:'https://glovoapp.com/ke/en/nairobi/'},
-  {id:'4611686018450855332',name:'Sweet Melon 1kg',store:'City Grocery',price:170,cat:'produce',emoji:'🍈',
-   img:'https://images.unsplash.com/photo-1571115765094-e6e24b6d9f57?w=400&q=80&fit=crop',
-   glovoUrl:'https://glovoapp.com/ke/en/nairobi/'},
-  {id:'4611686018443373298',name:'Fruit Salad 400g',store:'Beyond Fruits',price:200,cat:'produce',emoji:'🥗',
-   img:'https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=400&q=80&fit=crop',
-   glovoUrl:'https://glovoapp.com/ke/en/nairobi/'},
+// Everything below renders seller-supplied text, so escape at the boundary.
+const ESC_MAP = {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'};
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, m => ESC_MAP[m]);
+const money = n => 'KES ' + Number(n || 0).toLocaleString('en-KE');
 
-  // MEAT & POULTRY
-  {id:'4611686018465950252',name:'Quality Boneless Chicken Breast 1kg',store:'Naivas',price:1175,cat:'meat',emoji:'🍗',
-   img:'https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=400&q=80&fit=crop',
-   glovoUrl:'https://glovoapp.com/ke/en/nairobi/naivas-nrb/'},
-  {id:'4611686018465962851',name:'Naivas Beef Top Rump 500g',store:'Naivas',price:605,cat:'meat',emoji:'🥩',
-   img:'https://images.unsplash.com/photo-1544025162-d76694265947?w=400&q=80&fit=crop',
-   glovoUrl:'https://glovoapp.com/ke/en/nairobi/naivas-nrb/'},
-  {id:'4611686018448442166',name:'Chicken Breast Quarter 500g',store:'Carrefour',price:399,cat:'meat',emoji:'🍗',
-   img:'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400&q=80&fit=crop',
-   glovoUrl:'https://glovoapp.com/ke/en/nairobi/carrefour-nrb/'},
-  {id:'4611686018428913922',name:'Fresh Beef Stew per kg',store:'Quickmart',price:1000,cat:'meat',emoji:'🥩',
-   img:'https://images.unsplash.com/photo-1551135049-8a33b5883817?w=400&q=80&fit=crop',
-   glovoUrl:'https://glovoapp.com/ke/en/nairobi/quickmart-nrb/'},
-  {id:'4611686018463743560',name:'Broiler Chicken per 500g',store:'City Grocery',price:460,cat:'meat',emoji:'🍗',
-   img:'https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=400&q=80&fit=crop',
-   glovoUrl:'https://glovoapp.com/ke/en/nairobi/'},
-  {id:'4611686018448441905',name:'Boran Beef Sirloin 500g',store:'Carrefour',price:874,cat:'meat',emoji:'🥩',
-   img:'https://images.unsplash.com/photo-1558030006-450675393462?w=400&q=80&fit=crop',
-   glovoUrl:'https://glovoapp.com/ke/en/nairobi/carrefour-nrb/'},
+// ── Live inventory. Curated Kenyan sellers (scraped_shopping) plus
+//    anything partners have added themselves (listings, type=shopping).
+//    Nothing here is hardcoded: the grid is whatever the catalogue holds.
+let PRODUCTS = [];
+let _cat = 'all', _search = '', _loaded = false;
 
-  // STAPLES & FLOUR
-  {id:'4611686018428536350',name:'Unga Jogoo Maize Flour 2kg',store:'Quickmart',price:163,cat:'staples',emoji:'🌾',
-   img:'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=400&q=80&fit=crop',
-   glovoUrl:'https://glovoapp.com/ke/en/nairobi/quickmart-nrb/'},
-  {id:'4611686018465950688',name:"Nature's Equatorial Ugali Afya 2kg",store:'Naivas',price:299,cat:'staples',emoji:'🌽',
-   img:'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=400&q=80&fit=crop',
-   glovoUrl:'https://glovoapp.com/ke/en/nairobi/naivas-nrb/'},
-  {id:'4611686018428535531',name:'EXE Chapati Flour 2kg',store:'Quickmart',price:176,cat:'staples',emoji:'🫓',
-   img:'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400&q=80&fit=crop',
-   glovoUrl:'https://glovoapp.com/ke/en/nairobi/quickmart-nrb/'},
-  {id:'4611686018477526716',name:'Ajab All-Purpose Baking Flour 2kg',store:'Cleanshelf',price:172,cat:'staples',emoji:'🧁',
-   img:'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=400&q=80&fit=crop',
-   glovoUrl:'https://glovoapp.com/ke/en/nairobi/cleanshelf-nrb/'},
-  {id:'4611686018448373139',name:'Jogoo Maize Meal 5kg',store:'Carrefour',price:430,cat:'staples',emoji:'🌾',
-   img:'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=400&q=80&fit=crop',
-   glovoUrl:'https://glovoapp.com/ke/en/nairobi/carrefour-nrb/'},
-  {id:'4611686018465950662',name:'Pembe All Purpose Flour 1kg',store:'Naivas',price:91,cat:'staples',emoji:'🌾',
-   img:'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&q=80&fit=crop',
-   glovoUrl:'https://glovoapp.com/ke/en/nairobi/naivas-nrb/'},
-
-  // DRINKS
-  {id:'4611686018465954935',name:'Keringet Sparkling Water 1L',store:'Naivas',price:110,cat:'drinks',emoji:'💧',
-   img:'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400&q=80&fit=crop',
-   glovoUrl:'https://glovoapp.com/ke/en/nairobi/naivas-nrb/'},
-  {id:'4611686018465955041',name:'Club Blackcurrant 1.25L',store:'Naivas',price:115,cat:'drinks',emoji:'🥤',
-   img:'https://images.unsplash.com/photo-1603833665858-e61d17a86224?w=400&q=80&fit=crop',
-   glovoUrl:'https://glovoapp.com/ke/en/nairobi/naivas-nrb/'},
-  {id:'4611686018441604851',name:'Club Orange Soda 1.25L',store:'Quickmart',price:115,cat:'drinks',emoji:'🍊',
-   img:'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=400&q=80&fit=crop',
-   glovoUrl:'https://glovoapp.com/ke/en/nairobi/quickmart-nrb/'},
-  {id:'4611686018448449856',name:'Aquamist Sparkling Water 1L',store:'Carrefour',price:110,cat:'drinks',emoji:'💧',
-   img:'https://images.unsplash.com/photo-1564419320461-6870880221ad?w=400&q=80&fit=crop',
-   glovoUrl:'https://glovoapp.com/ke/en/nairobi/carrefour-nrb/'},
-  {id:'4611686018449856612',name:'Sprite Soda 2L',store:'Jaza Supermarkets',price:189,cat:'drinks',emoji:'🍋',
-   img:'https://images.unsplash.com/photo-1625772299848-391b6a87d7b3?w=400&q=80&fit=crop',
-   glovoUrl:'https://glovoapp.com/ke/en/nairobi/'},
-  {id:'4611686018465955013',name:'Schweppes Soda Water 500ml',store:'Naivas',price:80,cat:'drinks',emoji:'🫧',
-   img:'https://images.unsplash.com/photo-1544145945-f90425340c7e?w=400&q=80&fit=crop',
-   glovoUrl:'https://glovoapp.com/ke/en/nairobi/naivas-nrb/'},
-
-  // EGGS
-  {id:'4611686018465953076',name:'Jupiters Yellow Yolk Eggs 15 Pack',store:'Naivas',price:335,cat:'eggs',emoji:'🥚',
-   img:'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=400&q=80&fit=crop',
-   glovoUrl:'https://glovoapp.com/ke/en/nairobi/naivas-nrb/'},
-  {id:'4611686018465953081',name:'Jandee Eggs 6-Pack',store:'Naivas',price:140,cat:'eggs',emoji:'🥚',
-   img:'https://images.unsplash.com/photo-1564948985070-f7d9568fbe38?w=400&q=80&fit=crop',
-   glovoUrl:'https://glovoapp.com/ke/en/nairobi/naivas-nrb/'},
-  {id:'4611686018448406106',name:'Isinya Eggs 6 Pieces',store:'Carrefour',price:141,cat:'eggs',emoji:'🥚',
-   img:'https://images.unsplash.com/photo-1587486913049-53fc88980cfc?w=400&q=80&fit=crop',
-   glovoUrl:'https://glovoapp.com/ke/en/nairobi/carrefour-nrb/'},
-  {id:'4611686018470133958',name:'Ithanji Free-Range Eggs 6 Pack',store:'Zucchini Greengrocers',price:250,cat:'eggs',emoji:'🥚',
-   img:'https://images.unsplash.com/photo-1471193945509-9ad0617afabf?w=400&q=80&fit=crop',
-   glovoUrl:'https://glovoapp.com/ke/en/nairobi/zucchini-greengrocers-nrb/'},
-  {id:'4611686018482906870',name:'New Yolk Mayai Tamu Eggs 30 Count',store:'Quickmart',price:605,cat:'eggs',emoji:'🥚',
-   img:'https://images.unsplash.com/photo-1510130387422-82bed34b37e9?w=400&q=80&fit=crop',
-   glovoUrl:'https://glovoapp.com/ke/en/nairobi/quickmart-nrb/'},
-  {id:'4611686018465953082',name:'Kenegg Golden York Eggs 30 Pcs',store:'Naivas',price:620,cat:'eggs',emoji:'🥚',
-   img:'https://images.unsplash.com/photo-1515702461614-4aa82467a3ea?w=400&q=80&fit=crop',
-   glovoUrl:'https://glovoapp.com/ke/en/nairobi/naivas-nrb/'},
-
-  // BAKERY / BREAD
-  {id:'4611686018474624397',name:'Kingsmill Milky White Bread 600g',store:'Quickmart',price:100,cat:'bakery',emoji:'🍞',
-   img:'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400&q=80&fit=crop',
-   glovoUrl:'https://glovoapp.com/ke/en/nairobi/quickmart-nrb/'},
-  {id:'4611686018428536230',name:'Festive Milky Loaf 400g',store:'Quickmart',price:65,cat:'bakery',emoji:'🍞',
-   img:'https://images.unsplash.com/photo-1563636619-e9143da7973b?w=400&q=80&fit=crop',
-   glovoUrl:'https://glovoapp.com/ke/en/nairobi/quickmart-nrb/'},
-  {id:'4611686018474661625',name:'Carrefour White Bread 800g',store:'Carrefour',price:117,cat:'bakery',emoji:'🍞',
-   img:'https://images.unsplash.com/photo-1535268647677-300dbf3d78d1?w=400&q=80&fit=crop',
-   glovoUrl:'https://glovoapp.com/ke/en/nairobi/carrefour-nrb/'},
-  {id:'4611686018448406447',name:'Festive Milky White Bread 800g',store:'Carrefour',price:130,cat:'bakery',emoji:'🍞',
-   img:'https://images.unsplash.com/photo-1548769652-3d4973656c99?w=400&q=80&fit=crop',
-   glovoUrl:'https://glovoapp.com/ke/en/nairobi/carrefour-nrb/'},
-  {id:'4611686018477527547',name:'Festive Milky White Bread 400g',store:'Cleanshelf',price:65,cat:'bakery',emoji:'🍞',
-   img:'https://images.unsplash.com/photo-1486887396153-fa416526c108?w=400&q=80&fit=crop',
-   glovoUrl:'https://glovoapp.com/ke/en/nairobi/cleanshelf-nrb/'},
-];
-
-// Store-level Glovo links for "See all" buttons
-const STORE_LINKS = {
-  'Naivas':'https://glovoapp.com/ke/en/nairobi/naivas-nrb/',
-  'Quickmart':'https://glovoapp.com/ke/en/nairobi/quickmart-nrb/',
-  'Carrefour':'https://glovoapp.com/ke/en/nairobi/carrefour-nrb/',
-  'Cleanshelf':'https://glovoapp.com/ke/en/nairobi/cleanshelf-nrb/',
-  'Zucchini Greengrocers':'https://glovoapp.com/ke/en/nairobi/zucchini-greengrocers-nrb/',
-  'City Grocery':'https://glovoapp.com/ke/en/nairobi/',
-  'Jaza Supermarkets':'https://glovoapp.com/ke/en/nairobi/',
-};
-const STORE_RATINGS = {
-  'Naivas':'97% · Excellent','Quickmart':'96% · Very Good','Carrefour':'94% · Very Good',
-  'Cleanshelf':'88%','Zucchini Greengrocers':'94% · Very Good',
-  'City Grocery':'97% · Excellent','Jaza Supermarkets':'94% · Very Good',
-};
-
-let _store = 'all', _cat = 'all', _search = '';
-
-function setStore(s, el){
-  _store = s;
-  document.querySelectorAll('.store-pill').forEach(p=>p.classList.remove('active'));
-  el.classList.add('active');
-  renderAll();
+function normaliseScraped(r){
+  return {
+    id: 's' + r.id,
+    name: r.name || 'Product',
+    seller: r.seller || r.market || 'Local seller',
+    place: [r.market, r.city].filter(Boolean).join(' · '),
+    price: Number(r.price) || 0,
+    cat: catOf(r.category),
+    img: r.image_url || '',
+    tags: Array.isArray(r.tags) ? r.tags : [],
+    hot: !!r.hot,
+    url: '',
+  };
 }
-function setCat(c, el){
+
+function normaliseListing(l){
+  const photos = Array.isArray(l.photos) ? l.photos.filter(Boolean) : [];
+  return {
+    id: 'l' + l.id,
+    name: l.title || 'Product',
+    seller: l.seller || l.location || l.city || 'Nairobi',
+    place: [l.location, l.city].filter(Boolean).join(' · '),
+    price: Number(l.price_night) || 0,
+    cat: catOf(l.category),
+    img: photos[0] || '',
+    tags: Array.isArray(l.tags) ? l.tags : [],
+    hot: false,
+    url: l.external_url || l.street || '',
+  };
+}
+
+async function loadProducts(){
+  const { createClient } = supabase;
+  const sb = createClient(SB_URL, SB_KEY);
+
+  const [shop, listed] = await Promise.all([
+    sb.from('scraped_shopping').select('*').eq('active', true).eq('in_stock', true),
+    sb.from('listings').select('*').eq('type', 'shopping').eq('is_active', true),
+  ]);
+
+  PRODUCTS = []
+    .concat((listed.data || []).map(normaliseListing))
+    .concat((shop.data  || []).map(normaliseScraped))
+    .sort((a, b) => (Number(b.hot) - Number(a.hot)) || a.name.localeCompare(b.name));
+
+  return (shop.error && listed.error) ? shop.error : null;
+}
+
+// ── Category chips, built from what the catalogue actually contains
+function renderChips(){
+  const row = document.getElementById('catRow');
+  if(!row) return;
+  const counts = {};
+  PRODUCTS.forEach(p => { counts[p.cat] = (counts[p.cat] || 0) + 1; });
+
+  let html = `<div class="fchip${_cat === 'all' ? ' active' : ''}" data-cat="all">All Categories</div>`;
+  CAT_ORDER.filter(k => counts[k]).forEach(k => {
+    html += `<div class="fchip${_cat === k ? ' active' : ''}" data-cat="${k}">${CATS[k].glyph} ${esc(CATS[k].label)}</div>`;
+  });
+  row.innerHTML = html;
+}
+
+function setCat(c){
   _cat = c;
-  document.querySelectorAll('.fchip').forEach(f=>f.classList.remove('active'));
-  el.classList.add('active');
+  renderChips();
   renderAll();
 }
 
-function renderAll(){
-  _search = document.getElementById('searchInput').value.toLowerCase().trim();
+document.getElementById('catRow')?.addEventListener('click', e => {
+  const chip = e.target.closest('.fchip');
+  if(chip) setCat(chip.dataset.cat);
+});
 
-  let filtered = PRODUCTS.filter(p => {
-    const matchStore = _store === 'all' || p.store === _store;
-    const matchCat = _cat === 'all' || p.cat === _cat;
-    const matchSearch = !_search || p.name.toLowerCase().includes(_search) || p.store.toLowerCase().includes(_search);
-    return matchStore && matchCat && matchSearch;
-  });
-
-  const container = document.getElementById('mainContent');
-
-  if(!filtered.length){
-    container.innerHTML = `<div style="text-align:center;padding:60px 20px;color:var(--ink-faint);">
-      <div style="font-size:40px;margin-bottom:12px;">🔍</div>
-      <div style="font-family:var(--font-display);font-size:20px;color:var(--ink);margin-bottom:6px;">No products match</div>
-      <div style="font-size:13px;">Try a different store, category or search term</div>
-    </div>`;
-    return;
-  }
-
-  // Group by store when showing all stores and no specific search
-  if(_store === 'all' && !_search){
-    const byStore = {};
-    filtered.forEach(p => {
-      if(!byStore[p.store]) byStore[p.store] = [];
-      byStore[p.store].push(p);
-    });
-
-    // Sort stores: most products first
-    const storeOrder = Object.entries(byStore).sort((a,b)=>b[1].length-a[1].length);
-
-    let html = '';
-    storeOrder.forEach(([store, products]) => {
-      const color = STORE_COLORS[store] || '#6D28FF';
-      const rating = STORE_RATINGS[store] || '';
-      const link = STORE_LINKS[store] || 'https://glovoapp.com/ke/en/nairobi/';
-      const initials = store.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
-
-      html += `
-      <div class="supermarket-section">
-        <div class="section-header">
-          <div class="section-header-left">
-            <div class="store-logo" style="background:${color};">${initials}</div>
-            <div>
-              <div class="section-title">${store}</div>
-              <div class="section-subtitle">${products.length} products available · ${rating}</div>
-            </div>
-          </div>
-          <a href="${link}" target="_blank" rel="noopener" class="see-all">
-            Shop all <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M7 7h10v10"/></svg>
-          </a>
-        </div>
-        <div class="p-grid">${products.map((p,i)=>productCardHTML(p,i)).join('')}</div>
-      </div>`;
-    });
-    container.innerHTML = html;
-  } else {
-    // Flat grid for filtered view
-    const totalLabel = filtered.length === 1 ? '1 product' : `${filtered.length} products`;
-    container.innerHTML = `
-      <div class="content-head">
-        <div class="result-count"><strong>${filtered.length}</strong> products found</div>
-      </div>
-      <div class="p-grid">${filtered.map((p,i)=>productCardHTML(p,i)).join('')}</div>`;
-  }
-
-  // Animate in
-  requestAnimationFrame(()=>{
-    document.querySelectorAll('.p-card').forEach((c,i)=>setTimeout(()=>c.classList.add('in'),i*22));
-  });
+// ── Tile helpers. Deterministic, so a product looks the same on every load.
+const hashOf = s => { let h = 0; for(let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h; };
+const tileAngle = name => 105 + (hashOf(name) % 5) * 18;   // 105–177deg
+function monogram(name){
+  const words = String(name).replace(/[^\p{L}\p{N} ]/gu, ' ').trim().split(/\s+/).filter(Boolean);
+  if(!words.length) return '·';
+  return (words.length > 1 ? words[0][0] + words[1][0] : words[0].slice(0, 2)).toUpperCase();
 }
 
+// ── Card
 function productCardHTML(p, i){
-  const color = STORE_COLORS[p.store] || '#6D28FF';
+  const c = CATS[p.cat];
+  const href = p.url || `https://wa.me/${WA_NUMBER}?text=` + encodeURIComponent(
+    `Hi Cabana, I'd like to order: ${p.name} (${p.price > 0 ? money(p.price) : 'price on request'}) from ${p.seller}.`
+  );
+  // A photo is shown only when the seller actually supplied one. Anything
+  // missing, or that fails to load, falls back to the category tile rather
+  // than to a stand-in picture of some other product.
+  const media = p.img
+    ? `<img src="${esc(p.img)}" alt="${esc(p.name)}" loading="lazy" decoding="async"
+         onerror="this.closest('.p-card-img').classList.add('is-tile');this.remove();"/>`
+    : '';
+
   return `
-  <a class="p-card" href="${p.glovoUrl}" target="_blank" rel="noopener" style="transition-delay:${i*22}ms" aria-label="${p.name} - KES ${p.price} from ${p.store}">
-    <div class="p-card-img">
-      <img src="${p.img}" alt="${p.name}" loading="lazy" decoding="async"
-        onerror="this.parentElement.innerHTML='<div class=p-card-img-fallback style=font-size:${window.innerWidth<=600?'32':'42'}px>${p.emoji}</div>'"/>
-      <div class="p-card-store-tag" style="background:${color};">${p.store.split(' ')[0]}</div>
+  <a class="p-card" href="${esc(href)}" target="_blank" rel="noopener" style="transition-delay:${i * 22}ms"
+     aria-label="${esc(p.name)} — ${p.price > 0 ? money(p.price) : 'price on request'} from ${esc(p.seller)}">
+    <div class="p-card-img${p.img ? '' : ' is-tile'}" style="--cat:${c.color};--tint:${c.tint};--ang:${tileAngle(p.name)}deg;" data-mono="${esc(monogram(p.name))}">
+      ${media}
+      <span class="tile-glyph" aria-hidden="true">${c.glyph}</span>
+      <div class="p-card-store-tag" style="background:${c.color};">${esc(c.short)}</div>
+      ${p.hot ? '<div class="p-card-hot">Popular</div>' : ''}
     </div>
     <div class="p-card-body">
-      <div class="p-card-name">${p.name}</div>
-      <div class="p-card-store">${p.store}</div>
+      <div class="p-card-name">${esc(p.name)}</div>
+      <div class="p-card-store">${esc(p.seller)}</div>
       <div class="p-card-foot">
-        <div class="p-card-price">KES ${p.price.toLocaleString()}</div>
-        <button class="p-card-btn" onclick="event.preventDefault();event.stopPropagation();window.open('${p.glovoUrl}','_blank');" aria-label="Order ${p.name}">
+        <div class="p-card-price">${p.price > 0 ? money(p.price) : '<span>Price on request</span>'}</div>
+        <span class="p-card-btn" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M7 7h10v10"/></svg>
-        </button>
+        </span>
       </div>
     </div>
   </a>`;
 }
 
-renderAll();
+function stateHTML(glyph, title, sub){
+  return `<div style="text-align:center;padding:60px 20px;color:var(--ink-faint);">
+    <div style="font-size:40px;margin-bottom:12px;">${glyph}</div>
+    <div style="font-family:var(--font-display);font-size:20px;color:var(--ink);margin-bottom:6px;">${esc(title)}</div>
+    <div style="font-size:13px;">${esc(sub)}</div>
+  </div>`;
+}
 
-// ── Load admin-added shopping listings from listings table ──
+function renderAll(){
+  _search = (document.getElementById('searchInput')?.value || '').toLowerCase().trim();
+  const container = document.getElementById('mainContent');
+  if(!container) return;
+
+  if(!_loaded){
+    container.innerHTML = `<div class="p-grid">${'<div class="p-skel"></div>'.repeat(8)}</div>`;
+    return;
+  }
+
+  const filtered = PRODUCTS.filter(p => {
+    const matchCat = _cat === 'all' || p.cat === _cat;
+    const matchSearch = !_search
+      || p.name.toLowerCase().includes(_search)
+      || p.seller.toLowerCase().includes(_search)
+      || p.tags.join(' ').toLowerCase().includes(_search);
+    return matchCat && matchSearch;
+  });
+
+  if(!PRODUCTS.length){
+    container.innerHTML = stateHTML('🛍️', 'No products listed yet',
+      'Sellers are being onboarded. Check back shortly, or list your own shop.');
+    return;
+  }
+  if(!filtered.length){
+    container.innerHTML = stateHTML('🔍', 'No products match',
+      'Try a different category or search term');
+    return;
+  }
+
+  if(_cat === 'all' && !_search){
+    // Grouped by category, in a fixed order so the page is stable between loads
+    const byCat = {};
+    filtered.forEach(p => { (byCat[p.cat] = byCat[p.cat] || []).push(p); });
+
+    let html = '';
+    CAT_ORDER.filter(k => byCat[k]).forEach(k => {
+      const items = byCat[k], c = CATS[k];
+      html += `
+      <div class="supermarket-section">
+        <div class="section-header">
+          <div class="section-header-left">
+            <div class="store-logo" style="background:${c.color};">${c.glyph}</div>
+            <div>
+              <div class="section-title">${esc(c.label)}</div>
+              <div class="section-subtitle">${items.length} ${items.length === 1 ? 'item' : 'items'} from ${new Set(items.map(p => p.seller)).size} ${new Set(items.map(p => p.seller)).size === 1 ? 'seller' : 'sellers'}</div>
+            </div>
+          </div>
+          <button type="button" class="see-all" data-cat="${k}" onclick="setCat('${k}')">
+            See all <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </button>
+        </div>
+        <div class="p-grid">${items.map((p, i) => productCardHTML(p, i)).join('')}</div>
+      </div>`;
+    });
+    container.innerHTML = html;
+  } else {
+    container.innerHTML = `
+      <div class="content-head">
+        <div class="result-count"><strong>${filtered.length}</strong> ${filtered.length === 1 ? 'product' : 'products'} found</div>
+      </div>
+      <div class="p-grid">${filtered.map((p, i) => productCardHTML(p, i)).join('')}</div>`;
+  }
+
+  requestAnimationFrame(() => {
+    document.querySelectorAll('.p-card').forEach((c, i) => setTimeout(() => c.classList.add('in'), i * 22));
+  });
+}
+
+renderAll(); // skeleton first paint
+
 (async () => {
   try {
-    const { createClient } = supabase;
-    const _sb = createClient('https://gfwgbgdvxtocwhilrtdw.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw');
-    const { data } = await _sb.from('listings').select('*').eq('type','shopping').eq('is_active',true);
-    if (data && data.length) {
-      const mapped = data.map(l => ({
-        id: String(l.id), name: l.title || 'Product',
-        category: 'other', tags: l.tags || [],
-        area: l.location || l.city || 'Nairobi',
-        desc: l.description || '',
-        price: l.price_night || 0,
-        img: Array.isArray(l.photos) ? l.photos[0] : '',
-        url: l.street || l.external_url || '#',
-      }));
-      PRODUCTS.unshift(...mapped);
-      renderAll();
-    }
-  } catch(e) {}
+    await loadProducts();
+  } catch(e) {
+    _loaded = true;
+    document.getElementById('mainContent').innerHTML = stateHTML('⚠️', "Couldn't load the catalogue",
+      'Check your connection and refresh.');
+    return;
+  }
+  _loaded = true;
+  renderChips();
+  renderAll();
 })();
 </script>
 
@@ -662,23 +607,23 @@ renderAll();
 
 </style>
 <section class="seo-content">
-  <h2>Grocery delivery from Naivas, Quickmart, Carrefour and more</h2>
-  <p>Order fresh produce, meat, dairy, flour, eggs, drinks and household essentials at live supermarket prices in Kenyan Shillings, delivered to your door.</p>
+  <h2>Buy direct from Kenyan sellers and makers</h2>
+  <p>Handwoven kikoys and kangas from the coast, Maasai beadwork, Kisii soapstone, Kenyan AA coffee and purple tea, electronics and gifts. Every item is listed by the seller who makes or stocks it, and they keep 100% of what they charge.</p>
   <ul class="seo-trust">
-    <li>Live prices, no markup from us</li>
-    <li>Seven supermarkets in one place</li>
-    <li>M-Pesa or card at checkout</li>
+    <li>Zero seller commission, no markup from us</li>
+    <li>Makers, collectives and independent shops</li>
+    <li>M-Pesa or card</li>
   </ul>
   <a class="seo-cta" href="#mainContent">Start shopping <span aria-hidden="true">&rarr;</span></a>
 
-  <h3>Shop by supermarket</h3>
-  <p>Naivas for fresh produce and everyday value. Quickmart for competitive prices. Carrefour for international brands. Cleanshelf, City Grocery, Zucchini Greengrocers and Jaza complete the choice, so you can compare before you add to basket.</p>
+  <h3>Shop by category</h3>
+  <p>Fashion and textiles for kitenge, kikoy and kanga. Art and crafts for beadwork, wood carving and soapstone. Food and drink for coffee, tea, honey, spices and wine. Plus electronics, books and gifts. Categories appear as sellers list into them, so what you see is real stock rather than a fixed menu.</p>
 
   <h3>Frequently asked questions</h3>
-  <details class="faq-item"><summary>How do I order groceries online?</summary><p>Pick a store or category above, tap a product to open that supermarket's live catalogue, add to basket, enter your address and pay with M-Pesa or card.</p></details>
-  <details class="faq-item"><summary>Which supermarkets deliver near me?</summary><p>Naivas, Quickmart, Carrefour, Cleanshelf, Zucchini Greengrocers, City Grocery and Jaza deliver through Cabana, with live prices in KES. Coverage is expanding.</p></details>
-  <details class="faq-item"><summary>Are the grocery prices accurate?</summary><p>Yes. Every price is pulled live from the supermarket's own catalogue. Items sold by weight can vary slightly and some stores add a small packaging fee.</p></details>
-  <details class="faq-item"><summary>Can I pay for groceries with M-Pesa?</summary><p>Yes. M-Pesa and card are both supported at checkout.</p></details>
+  <details class="faq-item"><summary>How do I order from a seller?</summary><p>Pick a category or search above, then tap any item. That opens a WhatsApp message to Cabana with the product and seller already filled in, so you can confirm stock, price and delivery.</p></details>
+  <details class="faq-item"><summary>What can I buy on Cabana Shopping?</summary><p>Fashion and textiles, art and crafts, food and drink, electronics, books and gifts, sourced from Kenyan makers, artisan collectives and independent shops. The catalogue grows as sellers join.</p></details>
+  <details class="faq-item"><summary>How much commission do sellers pay?</summary><p>None. Sellers keep 100% of what they charge. Cabana does not add a booking fee or a markup on the seller's price.</p></details>
+  <details class="faq-item"><summary>Can I pay with M-Pesa?</summary><p>Yes. M-Pesa and card are both supported.</p></details>
 
   <div class="seo-links"><a href="/food">Food Delivery</a><a href="/tours">Tours</a><a href="/rides">Rides & Transfers</a><a href="/destinations">Destinations</a><a href="/what-is-cabana">What is Cabana?</a><a href="/cabana-vs-booking-com">Cabana vs Booking.com</a><a href="/zero-commission-travel-africa">Zero commission explained</a><a href="/list-property-zero-commission-africa">List with 0% commission</a><a href="/rewards">Rewards</a><a href="/press">Press</a><a href="/apartments">Stays</a><a href="/carhire">Car Hire</a></div>
 </section>
