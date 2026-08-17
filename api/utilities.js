@@ -38,6 +38,7 @@ export const config = { maxDuration: 15 };
    of the same money gate is how one of them ends up stale.
 ══════════════════════════════════════════════════════════════ */
 
+import geocodeHandler from './lib/_geocode.js';
 import { settlementOf, endDayOf, todayNumber, PART_PAYMENT_TTL_HOURS }
   from './lib/_payment-rules.js';
 
@@ -316,6 +317,13 @@ export default async function handler(req, res) {
     });
   }
 
+  /* Geocoder — reads req.query directly (q=, lat=, lng=, health=) so
+     it is passed the live req/res unchanged. The ?action=geocode wrapper
+     is consumed here before the handler sees the query string. */
+  if (action === 'geocode') {
+    return geocodeHandler(req, res);
+  }
+
   if (action === 'close-bookings') {
     return handleCloseBookings(req, res);
   }
@@ -329,6 +337,6 @@ export default async function handler(req, res) {
   }
 
   return res.status(400).json({
-    error: 'Unknown action. Available: close-bookings, welcome-email, indexnow',
+    error: 'Unknown action. Available: geocode, close-bookings, welcome-email, indexnow',
   });
 }

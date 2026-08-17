@@ -273,9 +273,6 @@
     }
   ],
   "functions": {
-    "api/geocode.js": {
-      "maxDuration": 10
-    },
     "api/rewards.js": {
       "maxDuration": 15
     },
@@ -292,7 +289,7 @@
       "maxDuration": 60
     },
     "api/utilities.js": {
-      "maxDuration": 15
+      "maxDuration": 20
     },
     "api/agents.js": {
       "maxDuration": 30
@@ -337,6 +334,10 @@
     {
       "source": "/api/ask-apa",
       "destination": "/api/trust?action=ask-apa"
+    },
+    {
+      "source": "/api/geocode",
+      "destination": "/api/utilities?action=geocode"
     },
     {
       "source": "/api/indexnow",
