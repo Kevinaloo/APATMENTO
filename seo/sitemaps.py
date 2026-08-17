@@ -75,6 +75,16 @@ def write(name, body, head=HEAD):
     return p
 
 
+def is_noindex(path):
+    """The page's own robots meta is the single source of truth for
+    indexability, so a page gated by seo/index_gate.py (no live inventory
+    behind an offer-implying URL) leaves the sitemaps on the next build with
+    no second list to keep in sync. seo/indexnow.py reads the same signal."""
+    with open(path, encoding="utf-8") as fh:
+        return bool(re.search(r'name="robots"\s+content="[^"]*noindex',
+                              fh.read(), re.I))
+
+
 def classify(stem):
     if stem in NOINDEX:
         return None
@@ -96,7 +106,7 @@ def main():
     for f in sorted(glob.glob(os.path.join(ROOT, "*.html"))):
         stem = os.path.basename(f)[:-5]
         b = classify(stem)
-        if not b:
+        if not b or is_noindex(f):
             continue
         src = open(f, encoding="utf-8").read()
         if re.search(r'name="robots"\s+content="[^"]*noindex', src):

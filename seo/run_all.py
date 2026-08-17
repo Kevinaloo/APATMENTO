@@ -4,9 +4,11 @@ Cabana — full SEO build. Run after any content change, then commit.
 
     python3 seo/run_all.py
 
-Order matters: repair -> generate -> link -> schema -> sitemaps.
-Schema runs after generation so newly created pages get the entity graph;
-sitemaps run last so they reflect exactly what exists on disk.
+Order matters: repair -> generate -> link -> schema -> gate -> sitemaps.
+Schema runs after generation so newly created pages get the entity graph; the
+index gate runs after schema so indexability reflects the inventory the schema
+step just read; sitemaps run last so they reflect exactly what is on disk and
+still indexable.
 """
 import subprocess, sys, os
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -17,13 +19,15 @@ STEPS = [
     ("Answer pages       ", "generate_answers.py"),
     ("Internal link mesh ", "link_mesh.py"),
     ("Schema injection   ", "inject_schema.py"),
+    ("Index gate         ", "index_gate.py --apply"),
     ("Sitemaps           ", "sitemaps.py"),
     ("Polish pass        ", "polish.py"),
     ("Verify             ", "verify.py"),
 ]
 fail = 0
 for label, script in STEPS:
-    r = subprocess.run([sys.executable, os.path.join(HERE, script)],
+    name, *args = script.split()
+    r = subprocess.run([sys.executable, os.path.join(HERE, name), *args],
                        capture_output=True, text=True)
     ok = r.returncode == 0
     fail += not ok
