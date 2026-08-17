@@ -5,7 +5,7 @@
   "start_url": "/?utm_source=pwa",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#ffffff",
+  "theme_color": "#6D28FF",
   "orientation": "portrait-primary",
   "lang": "en-KE",
   "categories": [
@@ -78,5 +78,30 @@
     }
   ],
   "related_applications": [],
-  "prefer_related_applications": false
+  "prefer_related_applications": false,
+  "id": "/?utm_source=pwa",
+  "scope": "/",
+  "display_override": [
+    "window-controls-overlay",
+    "standalone",
+    "minimal-ui",
+    "browser"
+  ],
+  "screenshots": [
+    {
+      "src": "/og-stays.jpg",
+      "sizes": "1200x630",
+      "type": "image/jpeg",
+      "form_factor": "wide",
+      "label": "Cabana \u2014 Book apartments across Africa"
+    },
+    {
+      "src": "/og-home.jpg",
+      "sizes": "1200x630",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "Cabana \u2014 Zero-commission travel"
+    }
+  ],
+  "dir": "ltr"
 }
