@@ -154,6 +154,24 @@
     q = String(q || '').trim();
     if (q.length < 3) return Promise.resolve([]);
 
+    /* apa-geo.js is the platform's location layer: it proxies through
+       /api/geocode (which can identify itself to OSM and hold provider
+       keys), ranks by proximity, and caches across pages. When it is on
+       the page, defer to it — two geocoders with two answers for the
+       same address is exactly the drift this module exists to prevent.
+       The direct path below stays for pages that load only the map. */
+    if (window.ApaGeo) {
+      return window.ApaGeo.search(q, { limit: opts.limit || 5, country: opts.country })
+        .then(function (rows) {
+          return rows.map(function (r) {
+            return {
+              lat: r.lat, lng: r.lng, label: r.label, short: r.short,
+              type: r.kind, country: r.countryCode || null
+            };
+          });
+        });
+    }
+
     var key = 'apa_gc:' + q.toLowerCase() + '|' + (opts.country || '*');
     var hit = cacheGet(key);
     if (hit) return Promise.resolve(hit);
@@ -187,6 +205,18 @@
   }
 
   function reverse(lat, lng) {
+    if (window.ApaGeo) {
+      return window.ApaGeo.reverse(lat, lng).then(function (r) {
+        if (!r) return null;
+        return {
+          lat: lat, lng: lng, label: r.label, short: r.short,
+          address: { road: r.street, suburb: r.area, city: r.city,
+                     state: r.state, country: r.country, postcode: r.postcode },
+          country: r.countryCode || null
+        };
+      });
+    }
+
     var key = 'apa_rgc:' + lat.toFixed(5) + ',' + lng.toFixed(5);
     var hit = cacheGet(key);
     if (hit) return Promise.resolve(hit);

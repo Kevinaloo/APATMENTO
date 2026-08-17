@@ -4396,7 +4396,22 @@ function gmBuildForm(l){
   `;
 
   $('gm-panel-body').innerHTML = html;
+
+  /* Everything admin creates here used to be a location string and
+     nothing more — no coordinates, so nothing admin published could be
+     plotted on a map or found by a radius search. It went into the same
+     table as host listings and behaved worse. */
+  if(window.ApaGeo){
+    GM_PLACE = null;
+    ApaGeo.attach('gm-loc-in', {
+      limit: 6,
+      onPick: p => { GM_PLACE = p; }
+    });
+  }
 }
+
+/* The resolved place behind the location box, when one was picked. */
+let GM_PLACE = null;
 
 function gmPlaceholderTitle(type){
   return {
@@ -4439,14 +4454,21 @@ function gmCollect(){
 
   const loc = get('gm-loc-in');
 
+  /* Only trust the pin if the text still describes it — an admin who
+     picked a place and then retyped the box means the text. */
+  const place = (GM_PLACE && ApaGeo.normalize(loc).indexOf(ApaGeo.normalize(GM_PLACE.name)) > -1)
+    ? GM_PLACE : null;
+
   const payload = {
     title:      get('gm-title-in'),
     type:       GM_TYPE,
     property_type: GM_TYPE,
     listing_type:  GM_TYPE,
     location:   loc||null,
-    city:       loc||null,
-    area:       loc||null,
+    /* City and area used to be the same undivided string in all three
+       columns. The geocoder knows the difference, so record it. */
+    city:       (place && place.city) || loc || null,
+    area:       (place && (place.area || place.name)) || loc || null,
     description: get('gm-desc-in')||null,
     photos:     photos.length ? photos : (GM_EDIT?.photos||[]),
     street:     get('gm-url-in')||null,
@@ -4474,6 +4496,15 @@ function gmCollect(){
   if($('gm-rules-in'))   payload.house_rules = get('gm-rules-in')||null;
   if($('gm-edate-in'))   payload.event_date  = get('gm-edate-in')||null;
   if($('gm-etime-in'))   payload.event_time  = get('gm-etime-in')||null;
+
+  /* Written only when a place was actually picked. On an edit, an admin
+     who did not touch the location box must not have the listing's
+     existing pin blanked out by this save. */
+  if(place){
+    payload.country   = place.country || null;
+    payload.latitude  = place.lat;
+    payload.longitude = place.lng;
+  }
 
   return payload;
 }
@@ -5481,6 +5512,7 @@ async function cabanaLoadInterest() {
 
 </script>
 <script src="/cabana-rebrand.js" defer></script>
+<script src="/apa-geo.js" defer></script>
 <script src="/apa-contact.js" defer></script>
 <script src="/cabana-media-upload.js"></script>
 <script src="/cabana-tours-admin.js"></script>

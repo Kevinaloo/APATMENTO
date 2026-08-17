@@ -22,6 +22,12 @@ STEPS = [
     ("Index gate         ", "index_gate.py --apply"),
     ("Sitemaps           ", "sitemaps.py"),
     ("Polish pass        ", "polish.py"),
+    # Recompiles the search box's offline gazetteer from the same place
+    # graph the pages above were built from, so a city that just gained a
+    # landing page is a city guests can search for. Offline: it reads the
+    # committed coordinate cache. Run `build_gazetteer.py --resolve`
+    # by hand after adding places to seo/data/africa.py.
+    ("Search gazetteer   ", "build_gazetteer.py"),
     ("Verify             ", "verify.py"),
 ]
 fail = 0

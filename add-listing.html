@@ -315,7 +315,7 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
       <div class="fsec">
         <div class="fsec-title">Location</div>
         <div class="row2">
-          <div class="field"><label class="flbl">Country</label><select class="fsel" id="f-country"><option>Kenya</option><option>Tanzania</option><option>Uganda</option><option>Rwanda</option><option>Ethiopia</option></select></div>
+          <div class="field"><label class="flbl">Country</label><select class="fsel" id="f-country" data-value="Kenya"><option>Kenya</option></select></div>
           <div class="field"><label class="flbl">City</label><input class="finput" id="f-city" placeholder="Nairobi"/></div>
         </div>
         <div class="row2">
@@ -693,14 +693,22 @@ function cityHint(){
   if(CITY_HINT[city])return CITY_HINT[city];
   const area=(gv('f-area')||'').toLowerCase().trim();
   if(CITY_HINT[area])return CITY_HINT[area];
+  /* Beyond the two dozen cities above, ask the shared gazetteer — it
+     knows every place Cabana has a page for, which is why a host in
+     Lisbon no longer opens the map over Nairobi. */
+  if(window.ApaGeo){
+    const p=ApaGeo.parse(city||area||gv('f-country'));
+    if(p)return [p.lat,p.lng];
+  }
   return [-1.2921,36.8219];
 }
 
 async function initPin(tries){
   if(_pinInit)return;
-  /* apa-map.js is deferred; a host who reaches this step unusually
-     fast can beat it. Wait rather than silently skipping the map. */
-  if(!window.ApaMap){
+  /* apa-map.js and apa-geo.js are deferred; a host who reaches this
+     step unusually fast can beat them. Wait rather than silently
+     skipping the map or the address search. */
+  if(!window.ApaMap||!window.ApaGeo){
     if((tries||0)<20)setTimeout(()=>initPin((tries||0)+1),150);
     return;
   }
@@ -716,12 +724,42 @@ async function initPin(tries){
     onChange:setPin
   });
 
-  /* Type-ahead on the address box. Choosing a result moves the pin
-     but does not end the job — the host still drags it home. */
-  _pinSearch=ApaMap.autocomplete('f-addr',r=>{
-    if(_pin)_pin.set(r.lat,r.lng,17);
-    setPin({lat:r.lat,lng:r.lng,label:r.short});
+  /* Type-ahead on the address box, worldwide, through the shared
+     location layer. Choosing a result moves the pin but does not end
+     the job — the host still drags it onto their own gate. */
+  _pinSearch=ApaGeo.attach('f-addr',{
+    limit:7,
+    onPick:r=>{
+      if(_pin)_pin.set(r.lat,r.lng,17);
+      setPin({lat:r.lat,lng:r.lng,label:r.short});
+      fillAddressFrom(r);
+    }
   });
+}
+
+/* A geocoder that just told us the country, city, area and street has
+   already answered four fields the host was about to type by hand.
+   Only blanks are filled: a host who wrote "Westie" for their area
+   meant it, and having the form overwrite them is worse than useless. */
+function fillAddressFrom(p){
+  const set=(id,val)=>{
+    if(!val)return;
+    const el=document.getElementById(id);
+    if(!el||el.value.trim())return;
+    el.value=val;
+    el.dispatchEvent(new Event('input',{bubbles:true}));
+  };
+  set('f-city',p.city);
+  set('f-area',p.area);
+  set('f-street',p.street);
+
+  if(p.country){
+    const sel=document.getElementById('f-country');
+    if(sel&&!sel.value){
+      const opt=[...sel.options].find(o=>o.value.toLowerCase()===p.country.toLowerCase());
+      if(opt){sel.value=opt.value;sel.dispatchEvent(new Event('change',{bubbles:true}));}
+    }
+  }
 }
 
 /* Single place where a chosen point lands in the form. */
@@ -796,7 +834,14 @@ function restDet(){const sv=(id,v)=>{const el=document.getElementById(id);if(el&
    wrote those blanks over the real values. Title, city and the pin all
    went with it. */
 function restLoc(){const sv=(id,v)=>{const el=document.getElementById(id);if(el&&v!=null&&v!=='')el.value=v;};
-  sv('f-title',F.title);sv('f-country',F.country);sv('f-city',F.city);sv('f-area',F.area);sv('f-street',F.street);
+  sv('f-title',F.title);
+  /* Restoring a select is only setting `.value` if the option exists.
+     Rebuilding the list around the saved country guarantees it does,
+     which matters most for the hosts the old five-option list left
+     with nothing to select. */
+  if(window.ApaGeo)ApaGeo.fillCountrySelect('f-country',F.country);
+  else sv('f-country',F.country);
+  sv('f-city',F.city);sv('f-area',F.area);sv('f-street',F.street);
   sv('f-lat',F.lat);sv('f-lng',F.lng);
   if(isFinite(F.lat)&&isFinite(F.lng)){
     setPin({lat:parseFloat(F.lat),lng:parseFloat(F.lng),pending:false});
@@ -857,7 +902,19 @@ function loadEdit(l){
 function loadPrefill(p){F.svc='stays';F.type=p.property_type||'Apartment';F.title=p.title||'';F.city=p.city||'';F.area=p.area||'';F.desc=p.description||'';F.beds=String(p.bedrooms||1);F.baths=String(p.bathrooms||1);F.guests=String(p.max_guests||2);F.sqm=p.sqm?String(p.sqm):'';F.feats=p.amenities||[];F.price=p.price_night?String(p.price_night):'';go(1);}
 
 buildNav();
+
+/* Every country on earth, named in the visitor's own language, as soon
+   as the location layer lands. The list used to be five East African
+   options, which is why a host in Lisbon could not finish this form. */
+(function fillCountries(tries){
+  if(!window.ApaGeo){
+    if((tries||0)<25)setTimeout(()=>fillCountries((tries||0)+1),150);
+    return;
+  }
+  ApaGeo.fillCountrySelect('f-country',F.country||'Kenya');
+})();
 </script>
+<script src="/apa-geo.js" defer></script>
 <script src="/apa-map.js" defer></script>
 </body>
 </html>
