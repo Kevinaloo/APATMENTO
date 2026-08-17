@@ -248,7 +248,7 @@ body{overflow-x:hidden;}
     </div>
 
     
-    <div id="apa-location-map-wrap" style="margin:0 0 16px;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(10,10,20,.12);position:relative;"><div id="apa-location-map" style="width:100%;height:200px;background:#F1F2F8;display:flex;align-items:center;justify-content:center;"><div style="text-align:center;color:#8E90AD"><div style="font-size:28px">📍</div><div style="font-size:12px;margin-top:6px;font-weight:600">Loading area map…</div></div></div><div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.92);backdrop-filter:blur(8px);border-radius:100px;padding:4px 12px;font-size:11px;font-weight:700;color:#636480;white-space:nowrap;box-shadow:0 2px 10px rgba(0,0,0,.1)">🔒 Exact address provided after booking</div></div>
+    <div id="apa-location-map-wrap" style="margin:0 0 16px;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(10,10,20,.12);position:relative;"><div id="apa-location-map" style="width:100%;height:200px;background:#F1F2F8;display:flex;align-items:center;justify-content:center;"><div style="text-align:center;color:#8E90AD"><div style="font-size:28px">📍</div><div style="font-size:12px;margin-top:6px;font-weight:600">Loading area map…</div></div></div></div>
     <!-- RIGHT: SUMMARY -->
     <div class="summary">
       <div class="sum-apt">
@@ -327,6 +327,8 @@ const apt = {
   price:    parseFloat(params.get('price')) || 4200,
   icon:     params.get('icon')     || '🏢',
   maxGuests: parseInt(params.get('maxGuests')) || 6,
+  lat:      parseFloat(params.get('lat')),
+  lng:      parseFloat(params.get('lng')),
 };
 
 document.getElementById('sum-apt-name').textContent = apt.name;
@@ -839,38 +841,38 @@ function showToast(msg, ms) {
      cabana-pay.js and clobber the video payment experience. -->
 <script src="/pwa.js" defer></script>
 <script src="/apa-push.js" defer></script>
-<script defer>
-(function(){
-  const area=(apt.location||'Nairobi').split(',')[0].trim();
-  const mapEl=document.getElementById('apa-location-map');
-  if(!mapEl)return;
-  fetch('https://nominatim.openstreetmap.org/search?q='+encodeURIComponent(area+' Nairobi Kenya')+'&format=json&limit=1',
-    {headers:{'User-Agent':'Cabana/1.0'}})
-  .then(r=>r.json()).then(res=>{
-    if(!res[0])return;
-    const lat=parseFloat(res[0].lat)+(Math.random()-.5)*.006;
-    const lon=parseFloat(res[0].lon)+(Math.random()-.5)*.006;
-    const lcss=document.createElement('link');
-    lcss.rel='stylesheet';lcss.href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-    document.head.appendChild(lcss);
-    const ljs=document.createElement('script');
-    ljs.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-    ljs.onload=()=>{
-      mapEl.innerHTML='';
-      const map=L.map('apa-location-map',{center:[lat,lon],zoom:14,zoomControl:true,
-        scrollWheelZoom:false,dragging:true,minZoom:12,maxZoom:16,
-        maxBounds:L.latLng(lat,lon).toBounds(4000),maxBoundsViscosity:0.9});
-      map.on('dblclick',function(e){e.originalEvent.preventDefault();});
-      window.__apaResetMap=function(){map.setView([lat,lon],14);};
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{subdomains:'abcd',maxZoom:19}).addTo(map);
-      setTimeout(()=>map.flyTo([lat,lon],15,{animate:true,duration:2.2}),500);
-      L.circle([lat,lon],{color:'#4361FF',fillColor:'#4361FF',fillOpacity:.12,weight:2,radius:320}).addTo(map);
-      const ico=L.divIcon({html:'<div style="background:linear-gradient(135deg,#4361FF,#7B2FF7);width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 4px 14px rgba(67,97,255,.5);border:3px solid #fff">🏠</div>',iconSize:[34,34],iconAnchor:[17,17],className:''});
-      L.marker([lat,lon],{icon:ico}).addTo(map);
-    };
-    document.body.appendChild(ljs);
-  }).catch(()=>{});
-})();
+<script src="/apa-map.js" defer></script>
+<script>
+/* The area map, now built by the shared map layer.
+
+   Two things this replaces are worth naming. The old code appended
+   "Nairobi Kenya" to every geocode, so a flat in Accra or Abidjan
+   landed a thousand miles from itself. And it offset the pin with
+   Math.random() on each load, which looks private but isn't: reload
+   the page enough times and the average of those centres is the real
+   address. ApaMap derives the offset from the listing id instead —
+   fixed per listing, revealing nothing however often it is drawn.
+
+   The DOMContentLoaded wrap is load-bearing: `defer` does nothing on
+   an inline script, so this used to run before apa-map.js had
+   executed, find no window.ApaMap, and return — leaving the
+   placeholder on screen for good. */
+document.addEventListener('DOMContentLoaded', function(){
+  const el = document.getElementById('apa-location-map');
+  if (!el || !window.ApaMap) return;
+
+  ApaMap.approx(el, {
+    lat: apt.lat, lng: apt.lng,
+    id: apt.id,
+    location: apt.location,
+    query: apt.location,
+    radius: 450,
+    height: '200px',
+    note: '🔒 Approximate area'
+  }).then(function (m) {
+    if (m) window.__apaResetMap = function () { m.map.setView(m.center, 14); };
+  });
+});
 </script>
 <script src="/brand.js" defer></script>
 <script src="/cabana-rebrand.js" defer></script>

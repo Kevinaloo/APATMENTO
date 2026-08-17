@@ -274,8 +274,13 @@ body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webk
   transform:translateY(100%);
   transition:transform .46s cubic-bezier(.22,1,.36,1);
   -webkit-overflow-scrolling:touch;
+  /* A closed drawer must not catch clicks. On desktop it is hidden
+     with opacity alone, which leaves an invisible 700px-wide panel
+     sitting over the middle of the results grid — every card behind
+     it was unclickable. */
+  pointer-events:none;
 }
-.drawer.open{transform:none;}
+.drawer.open{transform:none;pointer-events:auto;}
 @media(min-width:760px){
   .drawer{
     top:5vh;bottom:5vh;left:50%;
@@ -364,6 +369,42 @@ body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webk
 .dl-know-item{display:flex;align-items:flex-start;gap:12px;font-size:13px;color:var(--ink-soft);line-height:1.5;}
 .dl-know-ico{width:34px;height:34px;border-radius:10px;background:var(--glass-2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
 .dl-know-label{font-weight:600;color:var(--ink);font-size:13px;}
+
+/* ── "Where you'll be" ── */
+.dl-map-loc{font-size:13px;font-weight:600;color:var(--ink-soft);margin:-4px 0 10px;}
+.dl-map{height:230px;border-radius:16px;overflow:hidden;border:1px solid var(--line);
+  box-shadow:var(--shadow-glass);}
+.dl-map-legal{margin-top:10px;font-size:11.5px;line-height:1.6;color:var(--ink-faint);}
+
+/* ── Split view: results list beside a live map ── */
+.map-toggle{display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:100px;
+  border:1.5px solid var(--line-2);background:var(--glass);color:var(--ink);cursor:pointer;
+  font-family:var(--font-body);font-size:13px;font-weight:650;transition:all .2s ease;}
+.map-toggle:hover{border-color:var(--theme-2);color:var(--theme-2);}
+.map-toggle.on{background:var(--ink);border-color:var(--ink);color:#fff;}
+.map-toggle svg{width:15px;height:15px;}
+
+.split{display:grid;gap:16px;}
+body.map-open .split{grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);align-items:start;}
+body.map-open .split-list{max-height:calc(100vh - 190px);overflow-y:auto;
+  scrollbar-width:thin;padding-right:4px;}
+/* One column at a time on a phone. A 45%-wide map is not a map. */
+body.map-open .split-list .grid{grid-template-columns:1fr;}
+
+.split-map{display:none;position:sticky;top:96px;height:calc(100vh - 190px);
+  border-radius:20px;overflow:hidden;border:1px solid var(--line);box-shadow:var(--shadow-glass);}
+body.map-open .split-map{display:block;}
+.card.map-lit{outline:2px solid var(--theme-2);outline-offset:2px;}
+
+@media(max-width:900px){
+  body.map-open .split{grid-template-columns:1fr;}
+  body.map-open .split-list{max-height:none;overflow:visible;}
+  body.map-open .split-list .grid{grid-template-columns:repeat(auto-fill,minmax(250px,1fr));}
+  .split-map{position:relative;top:0;height:65vh;}
+  body.map-open .split-list{display:none;}
+  body.map-list .split-map{display:none;}
+  body.map-list.map-open .split-list{display:block;}
+}
 
 /* ── Sticky bottom CTA ── */
 .dl-cta{
@@ -2381,10 +2422,18 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
 <div class="content">
   <div class="content-head">
     <div class="results-count"><strong id="result-num">0</strong> <span id="result-label">stays available</span></div>
+    <button class="map-toggle" id="map-toggle" onclick="toggleMap()" aria-pressed="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 20 3 17V4l6 3m0 13 6-3m-6 3V7m6 10 6 3V7l-6-3m0 13V4m0 0L9 7"/></svg>
+      <span id="map-toggle-label">Map</span>
+    </button>
   </div>
 
-
-  <div class="grid" id="grid"></div>
+  <div class="split">
+    <div class="split-list">
+      <div class="grid" id="grid"></div>
+    </div>
+    <div class="split-map" id="split-map"></div>
+  </div>
 </div>
 
 <!-- DRAWER -->
@@ -2586,6 +2635,12 @@ async function loadNativeListings() {
       grad: 'linear-gradient(135deg,#B8A4F4,#7B2FF7)',
       source: 'native',
       photos: l.photos || [],
+      /* Coordinates ride along with the listing now. They were being
+         fetched and thrown away, which is why every map on the site
+         had to re-geocode a place name it already had the answer for. */
+      lat: l.latitude != null ? parseFloat(l.latitude) : null,
+      lng: l.longitude != null ? parseFloat(l.longitude) : null,
+      country: l.country || '',
     }));
   } catch(e) { console.warn('[listings] Exception:', e.message); return []; }
 }
@@ -2677,7 +2732,81 @@ function renderCards(list) {
 
   // Load photos lazily
   loadPhotos(list);
+
+  // Keep the map showing the same set of stays as the cards
+  _mapSync(list);
 }
+
+/* ══ RESULTS MAP ════════════════════════════════════════════════════
+   The list answers "what is available". The map answers "where", which
+   is the question that actually decides most bookings. They are two
+   views of one result set, so filtering, hovering and clicking are
+   wired to move both.
+   ================================================================ */
+
+let _map = null;          // live ApaMap results handle
+let _mapWanted = false;   // has the guest asked for the map?
+let _mapBuilding = false; // one build at a time
+
+function toggleMap() {
+  _mapWanted = !_mapWanted;
+  document.body.classList.toggle('map-open', _mapWanted);
+  document.getElementById('map-toggle').classList.toggle('on', _mapWanted);
+  document.getElementById('map-toggle').setAttribute('aria-pressed', String(_mapWanted));
+  document.getElementById('map-toggle-label').textContent = _mapWanted ? 'Hide map' : 'Map';
+
+  if (_mapWanted) _mapSync(currentListings);
+  try { localStorage.setItem('apa_map_open', _mapWanted ? '1' : '0'); } catch(e) {}
+}
+
+/* Rebuild the pins for `list`. Cheap to call — it no-ops while the map
+   is hidden, so every filter change can fire it without cost. */
+async function _mapSync(list) {
+  if (!_mapWanted || !window.ApaMap || _mapBuilding) return;
+  _mapBuilding = true;
+
+  try {
+    if (_map) { _map.destroy(); _map = null; }
+
+    _map = await ApaMap.results('split-map', list, {
+      format: v => 'KES ' + Number(v || 0).toLocaleString(),
+      onSelect: item => openDrawer(item.id),
+      onHover: (item, on) => {
+        const card = document.querySelector(`[data-card-id="${item.id}"]`);
+        if (card) card.classList.toggle('map-lit', on);
+      },
+      /* Panning the map is a search. Re-centring the list on what the
+         guest is actually looking at is the whole point of the pairing. */
+      searchArea: box => {
+        const inBox = currentListings.filter(a =>
+          isFinite(a.lat) && isFinite(a.lng) &&
+          a.lat <= box.north && a.lat >= box.south &&
+          a.lng <= box.east && a.lng >= box.west
+        );
+        if (!inBox.length) { showToast('No stays pinned in this area yet'); return; }
+        document.getElementById('result-num').textContent = inBox.length;
+        _mapWanted = false;            // avoid a rebuild loop from renderCards
+        renderCards(inBox);
+        _mapWanted = true;
+      }
+    });
+  } catch (e) {
+    console.warn('[map] build failed:', e.message);
+  } finally {
+    _mapBuilding = false;
+  }
+}
+
+/* Hovering a card lights its pin, so a guest scanning the list can see
+   the geography move with them. */
+document.addEventListener('mouseover', e => {
+  const card = e.target.closest?.('[data-card-id]');
+  if (card && _map?.highlight) _map.highlight(card.dataset.cardId, true);
+});
+document.addEventListener('mouseout', e => {
+  const card = e.target.closest?.('[data-card-id]');
+  if (card && _map?.highlight) _map.highlight(card.dataset.cardId, false);
+});
 
 /* ══ LISTING MODAL ══════════════════════════════════════════════════
    Full-screen detail view: photo gallery, all info, host card +
@@ -2789,6 +2918,19 @@ function openDrawer(id) {
       <div class="dl-section-title">Good to know</div>
       <div class="dl-know">${knowHTML}</div>
 
+      <div class="dl-divider"></div>
+
+      <!-- Where you'll be. Shown here, on the listing, not held back
+           until the payment page — a guest deciding between four flats
+           needs to know which one is near the office. -->
+      <div class="dl-section-title">Where you'll be</div>
+      <div class="dl-map-loc">${apt.neighbourhood || apt.location}</div>
+      <div class="dl-map" id="dl-map"></div>
+      <div class="dl-map-legal">
+        Cabana shows the general area while you browse. The exact address and
+        the host's contact details are sent to you the moment your booking is paid.
+      </div>
+
     </div><!-- /dl-body -->
 
     <!-- Sticky CTA -->
@@ -2810,6 +2952,20 @@ function openDrawer(id) {
   document.getElementById('drawer').classList.add('open');
   document.getElementById('drawer-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
+
+  /* Draw the area map. Built after the drawer is on screen so Leaflet
+     measures a container that has a real width — inside a closed
+     drawer it measures zero and renders a grey sliver. */
+  if (window.ApaMap) {
+    ApaMap.approx('dl-map', {
+      lat: apt.lat, lng: apt.lng,
+      id: apt._dbId || apt.id,
+      location: apt.location,
+      query: [apt.neighbourhood || apt.area, apt.city, apt.country].filter(Boolean).join(', ') || apt.location,
+      radius: 500,
+      note: '🔒 Approximate area'
+    });
+  }
 
   /* if no real photos yet, try fetching one */
   if (!_galPhotos.length) {
@@ -2971,6 +3127,9 @@ function bookNow(id) {
   if (!apt) return;
   const dbId = apt._dbId || apt.id;
   const params = new URLSearchParams({ id: dbId, name: apt.name, location: apt.location, price: apt.price, maxGuests: apt.maxGuests });
+  /* Hand the coordinates over rather than making the payment page
+     geocode a place name we already resolved. */
+  if (isFinite(apt.lat) && isFinite(apt.lng)) { params.set('lat', apt.lat); params.set('lng', apt.lng); }
   window.location.href = `booking-confirm.html?${params.toString()}`;
 }
 
@@ -3904,6 +4063,7 @@ setTimeout(dismissEnterTx,2800);
 <div data-showcase="window"></div>
 <script src="/analytics.js" defer></script>
 <script src="/chat.js" defer></script>
+<script src="/apa-map.js" defer></script>
 <script src="/apa-ask.js?v=2" defer></script>
 <script src="/telemetry.js" defer></script>
 <script src="/pwa.js" defer></script>
