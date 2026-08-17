@@ -248,6 +248,8 @@ html,body{min-height:100%;background:#FCFCFD;color:#0A0A14;
         <div>
           <label class="lt-l" for="t-destination">Where it goes</label>
           <input class="lt-i" id="t-destination" name="destination" required placeholder="Maasai Mara"/>
+          <input type="hidden" id="t-dest-lat"/>
+          <input type="hidden" id="t-dest-lng"/>
           <p class="lt-err" id="e-t-destination">Where does this tour go?</p>
         </div>
         <div>
@@ -384,6 +386,14 @@ window.addEventListener('load', function () {
          said what it is. Only fill it if it is still empty. */
       var county = document.getElementById('t-county');
       if (county && !county.value.trim()) county.value = p.state || p.city || '';
+      /* Persist the pin — this is what closes the known gap: once the
+         coordinates land in the DB, tours join the same radius search
+         stays already use. Picking a new place clears any previous pin,
+         and clearing the text field clears it again (ApaGeo guarantee). */
+      var latEl = document.getElementById('t-dest-lat');
+      var lngEl = document.getElementById('t-dest-lng');
+      if (latEl) latEl.value = isFinite(p.lat) ? p.lat : '';
+      if (lngEl) lngEl.value = isFinite(p.lng) ? p.lng : '';
     }
   });
 

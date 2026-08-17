@@ -240,6 +240,8 @@
       starts_at: new Date(f.start.value).toISOString(),
       ends_at: endMs ? new Date(f.end.value).toISOString() : null,
       venue: f.venue.value.trim(),
+      latitude: parseFloat(document.getElementById('e-venue-lat')?.value) || null,
+      longitude: parseFloat(document.getElementById('e-venue-lng')?.value) || null,
       city: $('e-city').value.trim() || 'Nairobi',
       address: $('e-address').value.trim() || null,
       tiers: cleanTiers(),

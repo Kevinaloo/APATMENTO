@@ -181,6 +181,8 @@
       summary: f.summary.value.trim(),
       description: f.description.value.trim(),
       destination: f.destination.value.trim(),
+      latitude: parseFloat(document.getElementById('t-dest-lat')?.value) || null,
+      longitude: parseFloat(document.getElementById('t-dest-lng')?.value) || null,
       county: $('t-county').value.trim() || null,
       category: $('t-category').value,
       days: days,

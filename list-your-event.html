@@ -253,6 +253,8 @@ html,body{min-height:100%;background:#05040A;color:#F4F2FF;
           <div>
             <label class="le-l" for="e-venue">Venue</label>
             <input class="le-i" id="e-venue" required placeholder="Ngong Racecourse"/>
+            <input type="hidden" id="e-venue-lat"/>
+            <input type="hidden" id="e-venue-lng"/>
             <p class="le-err" id="e-e-venue">Where is it?</p>
           </div>
           <div>
@@ -375,6 +377,11 @@ window.addEventListener('load', function () {
         city.value = p.city || p.area || city.value;
       }
       if (addr && !addr.value.trim() && p.label) addr.value = p.label;
+      /* Persist the venue pin so events can join radius search. */
+      var latEl = document.getElementById('e-venue-lat');
+      var lngEl = document.getElementById('e-venue-lng');
+      if (latEl) latEl.value = isFinite(p.lat) ? p.lat : '';
+      if (lngEl) lngEl.value = isFinite(p.lng) ? p.lng : '';
     }
   });
 
