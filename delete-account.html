@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<link rel="icon" href="/favicon.ico" sizes="any"/>
+<link rel="apple-touch-icon" href="/cabana-apple-touch-icon.png"/>
+<meta name="apple-mobile-web-app-title" content="Cabana"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>Delete Your Account — Cabana</title>
+<meta name="description" content="Request deletion of your Cabana account and all associated personal data."/>
+<link rel="canonical" href="https://cabana.africa/delete-account"/>
+<link rel="stylesheet" href="/brand.css"/>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--font-body);background:var(--glass);color:var(--ink);min-height:100vh;display:flex;flex-direction:column}
+
+  /* NAV */
+  .nav{display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:60px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:100}
+  .nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+  .nav-logo img{height:28px;width:auto}
+  .nav-back{display:flex;align-items:center;gap:6px;color:var(--violet);font-size:14px;font-weight:500;text-decoration:none;padding:8px 14px;border-radius:8px;transition:background .15s}
+  .nav-back:hover{background:var(--glass-2)}
+  .nav-back svg{width:16px;height:16px}
+
+  /* HERO */
+  .hero{background:linear-gradient(135deg,var(--violet) 0%,var(--electric) 60%,var(--mint) 100%);padding:60px 24px 48px;text-align:center;color:#fff}
+  .hero-icon{width:64px;height:64px;background:rgba(255,255,255,.15);border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;backdrop-filter:blur(8px)}
+  .hero-icon svg{width:32px;height:32px;color:#fff}
+  .hero h1{font-family:var(--font-display);font-size:clamp(26px,5vw,40px);font-weight:500;letter-spacing:-.02em;margin-bottom:12px}
+  .hero p{font-size:16px;opacity:.85;max-width:480px;margin:0 auto;line-height:1.6}
+
+  /* MAIN */
+  .main{flex:1;max-width:680px;margin:0 auto;width:100%;padding:40px 24px 80px}
+
+  /* CARDS */
+  .card{background:#fff;border-radius:16px;border:1px solid var(--line);overflow:hidden;margin-bottom:20px}
+  .card-head{padding:20px 24px 16px;border-bottom:1px solid var(--line)}
+  .card-head h2{font-family:var(--font-display);font-size:17px;font-weight:600;color:var(--ink);margin-bottom:4px}
+  .card-head p{font-size:14px;color:var(--ink-soft);line-height:1.5}
+  .card-body{padding:20px 24px}
+
+  /* STEPS */
+  .steps{display:flex;flex-direction:column;gap:16px}
+  .step{display:flex;gap:14px;align-items:flex-start}
+  .step-num{width:28px;height:28px;border-radius:50%;background:var(--violet);color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+  .step-content h3{font-size:15px;font-weight:600;color:var(--ink);margin-bottom:3px}
+  .step-content p{font-size:14px;color:var(--ink-soft);line-height:1.5}
+  .step-content a{color:var(--violet);text-decoration:none;font-weight:500}
+  .step-content a:hover{text-decoration:underline}
+
+  /* EMAIL BUTTON */
+  .email-btn{display:inline-flex;align-items:center;gap:8px;background:var(--violet);color:#fff;font-size:15px;font-weight:600;padding:14px 24px;border-radius:12px;text-decoration:none;transition:background .15s;margin-top:8px}
+  .email-btn:hover{background:var(--violet-deep)}
+  .email-btn svg{width:18px;height:18px}
+
+  /* WHAT GETS DELETED */
+  .data-list{display:flex;flex-direction:column;gap:10px}
+  .data-item{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--ink-soft)}
+  .data-item svg{width:16px;height:16px;color:var(--ember);flex-shrink:0}
+
+  /* KEPT */
+  .kept-item svg{color:var(--gold-deep)}
+
+  /* WARNING BOX */
+  .warning{background:#FFF8F0;border:1px solid #FFD9B3;border-radius:12px;padding:16px 18px;display:flex;gap:12px;align-items:flex-start;margin-top:4px}
+  .warning svg{width:20px;height:20px;color:var(--ember);flex-shrink:0;margin-top:1px}
+  .warning p{font-size:13px;color:#8B4513;line-height:1.5}
+
+  /* FOOTER */
+  .footer{text-align:center;padding:24px;font-size:13px;color:var(--ink-faint);border-top:1px solid var(--line);background:#fff}
+  .footer a{color:var(--violet);text-decoration:none}
+
+  @media(max-width:480px){
+    .main{padding:24px 16px 60px}
+    .card-body,.card-head{padding:16px}
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <a href="/" class="nav-logo">
+    <img src="/cabana-wordmark-color.png" alt="Cabana"/>
+  </a>
+  <a href="/profile.html" class="nav-back">
+    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+    Back to profile
+  </a>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-icon">
+    <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+  </div>
+  <h1>Delete Your Account</h1>
+  <p>We're sorry to see you go. Your data belongs to you — here's how to request full deletion.</p>
+</div>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- HOW TO DELETE -->
+  <div class="card">
+    <div class="card-head">
+      <h2>How to request account deletion</h2>
+      <p>Choose the method that works best for you</p>
+    </div>
+    <div class="card-body">
+      <div class="steps">
+
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h3>Via the app (fastest)</h3>
+            <p>Go to <strong>Profile → Settings → Delete Account</strong>. You'll be asked to confirm. Your account will be scheduled for deletion within 24 hours.</p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h3>Via email</h3>
+            <p>Send a deletion request from your registered email address to our support team. Include your full name and the email on your account.</p>
+            <a class="email-btn" href="mailto:support@cabana.africa?subject=Account%20Deletion%20Request&body=Hi%20Cabana%20team%2C%0A%0APlease%20delete%20my%20account%20and%20all%20associated%20data.%0A%0AFull%20name%3A%20%0ARegistered%20email%3A%20%0A%0AThank%20you.">
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg>
+              Email support@cabana.africa
+            </a>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h3>Processing time</h3>
+            <p>We will process your request within <strong>30 days</strong> and send a confirmation to your email once complete.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- WHAT GETS DELETED -->
+  <div class="card">
+    <div class="card-head">
+      <h2>What gets deleted</h2>
+      <p>Upon confirmed deletion, the following data is permanently removed</p>
+    </div>
+    <div class="card-body">
+      <div class="data-list">
+        <div class="data-item">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
+          Your profile (name, email, phone, photo)
+        </div>
+        <div class="data-item">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
+          Saved listings, wishlists and preferences
+        </div>
+        <div class="data-item">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
+          Messages and chat history
+        </div>
+        <div class="data-item">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
+          Reviews you have written
+        </div>
+        <div class="data-item">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
+          Push notification tokens and device data
+        </div>
+      </div>
+
+      <div class="warning" style="margin-top:20px">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+        <p><strong>This action is permanent and cannot be undone.</strong> If you are a host with active listings, those listings will also be removed. Any outstanding payments will be processed before deletion is finalised.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- WHAT IS KEPT -->
+  <div class="card">
+    <div class="card-head">
+      <h2>What we are required to keep</h2>
+      <p>Some data must be retained for legal and financial compliance</p>
+    </div>
+    <div class="card-body">
+      <div class="data-list">
+        <div class="data-item kept-item">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          Transaction and payment records (7 years, per tax law)
+        </div>
+        <div class="data-item kept-item">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          Booking records for completed stays (anonymised after 2 years)
+        </div>
+        <div class="data-item kept-item">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          Fraud prevention logs (anonymised)
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTACT -->
+  <div class="card">
+    <div class="card-head">
+      <h2>Questions about your data?</h2>
+      <p>Our team is here to help</p>
+    </div>
+    <div class="card-body">
+      <div class="steps">
+        <div class="step">
+          <div class="step-num" style="background:var(--electric)">✉</div>
+          <div class="step-content">
+            <h3>Email us</h3>
+            <p><a href="mailto:support@cabana.africa">support@cabana.africa</a> — we respond within 48 hours</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num" style="background:var(--mint-deep)">📄</div>
+          <div class="step-content">
+            <h3>Privacy Policy</h3>
+            <p>Read our full <a href="/privacy.html">Privacy Policy</a> to understand how your data is used and protected.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <p>© 2026 Cabana Africa Ltd &nbsp;·&nbsp; <a href="/privacy.html">Privacy Policy</a> &nbsp;·&nbsp; <a href="/terms.html">Terms</a> &nbsp;·&nbsp; <a href="mailto:support@cabana.africa">support@cabana.africa</a></p>
+</footer>
+
+</body>
+</html>
