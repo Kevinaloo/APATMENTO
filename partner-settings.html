@@ -332,9 +332,10 @@ td strong{color:var(--ink);font-weight:600;}
   <div class="field"><label class="field-label">Bio / About your services</label><textarea class="field-textarea" id="s-bio" placeholder="Tell guests what makes your place special…"></textarea></div>
   <div class="row-2">
     <div class="field"><label class="field-label">City</label>
-      <select class="field-select" id="s-city">
-        <option>Nairobi</option><option>Mombasa</option><option>Kisumu</option><option>Nakuru</option><option>Diani</option><option>Naivasha</option><option>Other</option>
-      </select>
+      <!-- Six Kenyan cities and "Other" was the whole world to a partner
+           based anywhere else. Any place now, through the shared layer. -->
+      <input class="field-input" id="s-city" type="text" placeholder="Where you are based"
+             data-apa-geo data-geo-limit="6"/>
     </div>
     <div class="field"><label class="field-label">M-Pesa payout number</label><input class="field-input" id="s-mpesa" type="tel" placeholder="0700 000 000"/><div class="field-hint">Earnings are sent here automatically</div></div>
   </div>
@@ -452,5 +453,6 @@ function switchToGuest(){
   window.location.href='dashboard.html?role=guest&back=1';
 }
 </script>
+<script src="/apa-geo.js" defer></script>
 <script src="/apa-contact.js" defer></script>
 </body></html>

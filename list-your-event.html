@@ -352,6 +352,36 @@ html,body{min-height:100%;background:#05040A;color:#F4F2FF;
 <script src="/vendor-supabase-2.112.3.js"></script>
 <script src="/apa-session.js"></script>
 <script src="/cabana-media-upload.js"></script>
+<script src="/apa-geo.js" defer></script>
 <script src="/cabana-list-event.js"></script>
+<script>
+/* An event has one address and thousands of people trying to find it on
+   a Friday night. Resolving the venue against a real map — and filling
+   the city and the full address from what it returns — is the
+   difference between a guest arriving and a guest giving up. */
+window.addEventListener('load', function () {
+  if (!window.ApaGeo) return;
+
+  ApaGeo.attach('e-venue', {
+    limit: 6,
+    onPick: function (p) {
+      var city = document.getElementById('e-city');
+      var addr = document.getElementById('e-address');
+      /* The city box ships pre-filled with "Nairobi". Treating that
+         placeholder as the organiser's answer is how an event in Kisumu
+         ends up listed in Nairobi, so it is overwritten — anything the
+         organiser actually typed is not. */
+      if (city && (!city.value.trim() || city.value.trim() === 'Nairobi')) {
+        city.value = p.city || p.area || city.value;
+      }
+      if (addr && !addr.value.trim() && p.label) addr.value = p.label;
+    }
+  });
+
+  ApaGeo.attach('e-city', { limit: 6 });
+  ApaGeo.attach('e-address', { limit: 6 });
+  ApaGeo.attach('o-city', { limit: 6 });
+});
+</script>
 </body>
 </html>

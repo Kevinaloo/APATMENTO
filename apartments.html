@@ -59,18 +59,10 @@
   <link rel="dns-prefetch" href="//fonts.gstatic.com"/>
   <link rel="dns-prefetch" href="//cdn.jsdelivr.net"/>
   <link rel="dns-prefetch" href="//api.unsplash.com"/>
-  <link rel="dns-prefetch" href="//maps.googleapis.com"/>
-  <!-- Google Maps Places. Set GOOGLE_MAPS_KEY in your env or replace the placeholder -->
-  <script>
-    (function(){
-      const key = window.GOOGLE_MAPS_KEY || '';
-      if (!key) return; // Falls back to built-in city list when no key set
-      const s = document.createElement('script');
-      s.src = 'https://maps.googleapis.com/maps/api/js?key=' + key + '&libraries=places&callback=gMapsReady';
-      s.async = true; s.defer = true;
-      document.head.appendChild(s);
-    })();
-  </script>
+  <!-- Location search runs through /api/geocode (see apa-geo.js), which
+       keeps provider keys on the server instead of in this page. The old
+       loader here read a window.GOOGLE_MAPS_KEY that was never set, so
+       every search silently fell back to a list of thirty-six cities. -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -3223,10 +3215,11 @@ let _searchState = {
   _searchState.loc = q.trim().toLowerCase();
   const inp = document.getElementById('location-input');
   if (inp) { inp.value = q.trim(); inp.classList.remove('ph'); }
+  /* A deep link is text, not a point. Resolve it so ?q=diani gets the
+     same radius search a typed pick would — apa-geo.js is deferred, so
+     this waits for it rather than racing it. */
+  window.addEventListener('load', () => resolveLocText(q.trim()));
 })();
-
-/* Google Maps Places init callback */
-function gMapsReady() { initGooglePlaces(); }
 
 /* ── Search field dropdowns ── */
 let _activeSF = null;
@@ -3260,18 +3253,20 @@ document.addEventListener('click', e => {
   }
 });
 
-/* ── Location autocomplete ── */
+/* ── Location search ─────────────────────────────────────────────────
+   Driven by ApaGeo (apa-geo.js), the platform's shared location layer,
+   so this box resolves any address on earth rather than the thirty-six
+   cities that used to be hardcoded here — and, crucially, comes back
+   with coordinates. A picked place is a point, and once the search has
+   a point the filter below stops guessing at substrings and starts
+   measuring distance.
+
+   The dropdown markup stays the page's own: ApaGeo supplies the
+   answers, the search ring keeps its design. */
 let _locDebounce = null;
 let _locFocusIdx = -1;
 let _locSuggestions = [];
-let _googleAutocompleteService = null;
-
-// Initialize Google Maps Places if API key available
-function initGooglePlaces() {
-  if (window.google && window.google.maps && window.google.maps.places) {
-    _googleAutocompleteService = new google.maps.places.AutocompleteService();
-  }
-}
+let _locSeq = 0;
 
 function focusLocationInput(e) {
   const inp = document.getElementById('location-input');
@@ -3280,17 +3275,13 @@ function focusLocationInput(e) {
 
 function onLocationFocus() {
   const inp = document.getElementById('location-input');
-  // Show panel if we have suggestions or input
   if (_locSuggestions.length || (inp && inp.value.trim())) {
-    const panel = document.getElementById('sfp-where');
-    if (panel) {
-      panel.classList.add('open');
-      if (window.innerWidth <= 640) {
-        const ring = document.querySelector('.search-ring');
-        if (ring) panel.style.top = (ring.getBoundingClientRect().bottom + 8) + 'px';
-      }
-    }
-    _activeSF = 'sfp-where';
+    openLocPanel();
+  } else {
+    /* Empty box: offer where they are and where they looked last,
+       which beats an empty panel for someone who has not decided. */
+    const idle = idleLocRows();
+    if (idle.length) { _locSuggestions = idle; renderLocationSuggestions(); }
   }
   inp?.select();
 }
@@ -3317,9 +3308,14 @@ function onLocKeydown(e) {
   } else if (e.key === 'Enter') {
     if (_locFocusIdx >= 0 && items[_locFocusIdx]) {
       items[_locFocusIdx].click();
+    } else if (_locSuggestions.length && !_locSuggestions[0]._action) {
+      /* Enter on a typed query takes the best suggestion rather than
+         searching for raw text — the point is what makes the search
+         work, and the top row is the point we are most confident in. */
+      pickLocSuggestion(0);
     } else {
       const val = document.getElementById('location-input')?.value.trim();
-      if (val) commitLocation(val, val);
+      if (val) commitLocation(val, val, null);
       panel?.classList.remove('open');
     }
   } else if (e.key === 'Escape') {
@@ -3331,87 +3327,68 @@ function onLocationInput(inp) {
   const q = inp.value.trim();
   _locFocusIdx = -1;
   clearTimeout(_locDebounce);
+
+  /* Text no longer describes the pin that was chosen. Drop the pin —
+     searching Mombasa with Westlands' coordinates is the classic bug
+     this clears. */
+  _searchState.locPlace = null;
+
   if (!q) {
     _searchState.loc = '';
-    const panel = document.getElementById('sfp-where');
-    panel?.classList.remove('open');
+    document.getElementById('sfp-where')?.classList.remove('open');
     inp.classList.add('ph');
     applyAndRender();
     return;
   }
   inp.classList.remove('ph');
-  _locDebounce = setTimeout(() => fetchLocationSuggestions(q), 280);
+  _locDebounce = setTimeout(() => fetchLocationSuggestions(q), 240);
+}
+
+function idleLocRows() {
+  if (!window.ApaGeo) return [];
+  const rows = [];
+  if (navigator.geolocation) rows.push({ _action: 'locate', main: 'Use my current location', secondary: '', icon: '🎯' });
+  ApaGeo.recents().slice(0, 4).forEach(p => rows.push(toLocRow(p)));
+  return rows;
+}
+
+const _LOC_ICONS = {
+  airport: '✈️', transport: '🚉', poi: '📌', address: '🏠', street: '🛣️',
+  neighbourhood: '🏘️', city: '🏙️', region: '🗺️', country: '🌍', place: '📍'
+};
+
+function toLocRow(p) {
+  const bits = [];
+  const seen = new Set();
+  [p.area, p.city, p.state, p.country].forEach(v => {
+    if (!v) return;
+    const k = String(v).toLowerCase();
+    if (seen.has(k) || k === String(p.name || '').toLowerCase()) return;
+    seen.add(k); bits.push(v);
+  });
+  return {
+    main: p.name || p.short,
+    secondary: bits.slice(0, 3).join(', '),
+    full: p.short || p.label,
+    icon: _LOC_ICONS[p.kind] || '📍',
+    place: p
+  };
 }
 
 function fetchLocationSuggestions(q) {
-  if (_googleAutocompleteService) {
-    _googleAutocompleteService.getPlacePredictions(
-      { input: q, types: ['(regions)'] },
-      (predictions, status) => {
-        if (status === 'OK' && predictions) {
-          _locSuggestions = predictions.map(p => ({
-            main: p.structured_formatting.main_text,
-            secondary: p.structured_formatting.secondary_text || '',
-            full: p.description,
-            placeId: p.place_id,
-          }));
-        } else {
-          _locSuggestions = buildFallbackSuggestions(q);
-        }
-        renderLocationSuggestions();
-      }
-    );
-  } else {
-    _locSuggestions = buildFallbackSuggestions(q);
-    renderLocationSuggestions();
-  }
-}
+  if (!window.ApaGeo) return;   // still loading; the next keystroke retries
+  const mine = ++_locSeq;
 
-function buildFallbackSuggestions(q) {
-  // Broad list of world cities + African cities; filter by query
-  const all = [
-    { main:'Nairobi', secondary:'Kenya', icon:'📍' },
-    { main:'Mombasa', secondary:'Kenya', icon:'🏖' },
-    { main:'Diani Beach', secondary:'Kwale, Kenya', icon:'🌴' },
-    { main:'Naivasha', secondary:'Nakuru County, Kenya', icon:'🏞' },
-    { main:'Nakuru', secondary:'Kenya', icon:'🦒' },
-    { main:'Kisumu', secondary:'Kenya', icon:'🌊' },
-    { main:'Nanyuki', secondary:'Laikipia, Kenya', icon:'⛰' },
-    { main:'Kampala', secondary:'Uganda', icon:'📍' },
-    { main:'Dar es Salaam', secondary:'Tanzania', icon:'📍' },
-    { main:'Accra', secondary:'Ghana', icon:'📍' },
-    { main:'Lagos', secondary:'Nigeria', icon:'📍' },
-    { main:'Kigali', secondary:'Rwanda', icon:'📍' },
-    { main:'Addis Ababa', secondary:'Ethiopia', icon:'📍' },
-    { main:'Cape Town', secondary:'South Africa', icon:'📍' },
-    { main:'Johannesburg', secondary:'South Africa', icon:'📍' },
-    { main:'Casablanca', secondary:'Morocco', icon:'📍' },
-    { main:'Dubai', secondary:'UAE', icon:'📍' },
-    { main:'London', secondary:'United Kingdom', icon:'📍' },
-    { main:'New York', secondary:'USA', icon:'📍' },
-    { main:'Paris', secondary:'France', icon:'📍' },
-    { main:'Barcelona', secondary:'Spain', icon:'📍' },
-    { main:'Amsterdam', secondary:'Netherlands', icon:'📍' },
-    { main:'Zanzibar', secondary:'Tanzania', icon:'🏝' },
-    { main:'Zanzibar City', secondary:'Tanzania', icon:'🏝' },
-    { main:'Arusha', secondary:'Tanzania', icon:'📍' },
-    { main:'Abuja', secondary:'Nigeria', icon:'📍' },
-    { main:'Maputo', secondary:'Mozambique', icon:'📍' },
-    { main:'Lusaka', secondary:'Zambia', icon:'📍' },
-    { main:'Harare', secondary:'Zimbabwe', icon:'📍' },
-    { main:'Windhoek', secondary:'Namibia', icon:'📍' },
-    { main:'Westlands', secondary:'Nairobi, Kenya', icon:'📍' },
-    { main:'Karen', secondary:'Nairobi, Kenya', icon:'📍' },
-    { main:'Kilimani', secondary:'Nairobi, Kenya', icon:'📍' },
-    { main:'Lavington', secondary:'Nairobi, Kenya', icon:'📍' },
-    { main:'Syokimau', secondary:'Nairobi, Kenya', icon:'📍' },
-    { main:'Nyali', secondary:'Mombasa, Kenya', icon:'📍' },
-  ];
-  const lq = q.toLowerCase();
-  return all
-    .filter(c => c.main.toLowerCase().includes(lq) || c.secondary.toLowerCase().includes(lq))
-    .slice(0, 7)
-    .map(c => ({ main: c.main, secondary: c.secondary, full: `${c.main}, ${c.secondary}`, icon: c.icon || '📍' }));
+  /* Cabana's own place graph answers immediately, offline, so the panel
+     is never blank while the network thinks. */
+  const instant = ApaGeo.seed(q, 5).map(toLocRow);
+  if (instant.length) { _locSuggestions = instant; renderLocationSuggestions(); }
+
+  ApaGeo.search(q, { limit: 7 }).then(list => {
+    if (mine !== _locSeq) return;          // a later keystroke already won
+    _locSuggestions = list.map(toLocRow);
+    renderLocationSuggestions();
+  }).catch(() => {});
 }
 
 function renderLocationSuggestions() {
@@ -3419,18 +3396,30 @@ function renderLocationSuggestions() {
   const panel = document.getElementById('sfp-where');
   if (!container || !panel) return;
   if (!_locSuggestions.length) {
-    container.innerHTML = `<div class="loc-no-result">No places found. Try a different search</div>`;
+    container.innerHTML = `<div class="loc-no-result">No place found. Try a nearby town or a landmark</div>`;
   } else {
     container.innerHTML = _locSuggestions.map((s, i) => `
-      <div class="loc-suggestion" data-idx="${i}" onclick="commitLocation('${s.main.replace(/'/g,"\\'")}','${s.full.replace(/'/g,"\\'")}')">
+      <div class="loc-suggestion" data-idx="${i}" onclick="pickLocSuggestion(${i})">
         <div class="loc-suggestion-ico">${s.icon || '📍'}</div>
         <div class="loc-suggestion-main">
-          <div class="loc-suggestion-name">${s.main}</div>
-          ${s.secondary ? `<div class="loc-suggestion-sub">${s.secondary}</div>` : ''}
+          <div class="loc-suggestion-name">${_esc(s.main)}</div>
+          ${s.secondary ? `<div class="loc-suggestion-sub">${_esc(s.secondary)}</div>` : ''}
         </div>
       </div>
     `).join('');
   }
+  openLocPanel();
+}
+
+function _esc(v) {
+  return String(v == null ? '' : v)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function openLocPanel() {
+  const panel = document.getElementById('sfp-where');
+  if (!panel) return;
   panel.classList.add('open');
   if (window.innerWidth <= 640) {
     const ring = document.querySelector('.search-ring');
@@ -3439,8 +3428,33 @@ function renderLocationSuggestions() {
   _activeSF = 'sfp-where';
 }
 
-function commitLocation(name, full) {
-  _searchState.loc = name.toLowerCase();
+function pickLocSuggestion(i) {
+  const row = _locSuggestions[i];
+  if (!row) return;
+
+  if (row._action === 'locate') {
+    _locSuggestions = [{ main: 'Finding you…', secondary: '', icon: '🎯' }];
+    renderLocationSuggestions();
+    ApaGeo.locate().then(p => {
+      commitLocation(p.name || 'Nearby', p.short || p.label, p);
+    }).catch(err => {
+      _locSuggestions = [{ main: err.message, secondary: '', icon: '⚠️' }];
+      renderLocationSuggestions();
+    });
+    return;
+  }
+
+  commitLocation(row.main, row.full, row.place || null);
+}
+
+/* `place` is the resolved point, when there is one. Everything the
+   filter does well depends on it being carried through rather than
+   thrown away in favour of the label. */
+function commitLocation(name, full, place) {
+  _searchState.loc = String(name || '').toLowerCase();
+  _searchState.locPlace = place || null;
+  if (place && window.ApaGeo) ApaGeo.remember(place);
+
   const inp = document.getElementById('location-input');
   if (inp) { inp.value = full || name; inp.classList.remove('ph'); }
   document.getElementById('sfp-where')?.classList.remove('open');
@@ -3449,7 +3463,21 @@ function commitLocation(name, full) {
 }
 
 /* Legacy pickLoc kept for any deep links */
-function pickLoc(city) { commitLocation(city, city); }
+function pickLoc(city) { commitLocation(city, city, null); }
+
+/* Deep links and the AI search box arrive as text with no point behind
+   them. Resolve it in the background and re-run the search once it
+   lands, so ?q=diani gets the same radius treatment as a typed pick. */
+function resolveLocText(text) {
+  if (!window.ApaGeo || !text) return;
+  const mine = ++_locSeq;
+  ApaGeo.search(text, { limit: 1 }).then(list => {
+    if (mine !== _locSeq || !list.length) return;
+    if (_searchState.loc !== String(text).trim().toLowerCase()) return;
+    _searchState.locPlace = list[0];
+    applyAndRender();
+  }).catch(() => {});
+}
 
 /* ── Bedrooms picker ── */
 function pickRooms(n, isStudio) {
@@ -3725,7 +3753,7 @@ Always be warm, concise, and friendly. If you need clarification, ask one short 
     // Apply AI filters
     if (aiResult?.filter) {
       const f = aiResult.filter;
-      if (f.loc) { _searchState.loc = f.loc.toLowerCase(); }
+      if (f.loc) { _searchState.loc = f.loc.toLowerCase(); resolveLocText(f.loc); }
       if (f.minBeds) _searchState.minBeds = f.minBeds;
       if (f.maxPrice) _searchState.maxPrice = f.maxPrice;
       if (f.amenities?.length) f.amenities.forEach(a => _searchState.amenities.add(a));
@@ -3920,8 +3948,42 @@ function applyAndRender() {
   let list = [...currentListings];
   const s = _searchState;
 
-  // Location filter
-  if (s.loc) {
+  /* Location filter.
+
+     With a resolved point, this is geometry: everything inside a radius
+     that suits what was searched — a few kilometres for a street, thirty
+     for a city — nearest first. A listing that was never pinned still
+     qualifies on its text, because inventory predates the pin.
+
+     And if nothing is inside the circle, the circle grows. A guest who
+     searches Nanyuki and gets "no results" leaves; a guest who gets
+     "nothing in Nanyuki, here are 7 places within 60km" books one of
+     them. That is the whole reason for the expansion. */
+  s.locRadiusKm = null;
+  s.locExpanded = false;
+
+  if (s.locPlace && window.ApaGeo) {
+    const near = ApaGeo.nearby(list, s.locPlace, {
+      radiusKm: ApaGeo.radiusFor(s.locPlace, 30),
+      min: 1
+    });
+    /* Listings with no coordinates cannot be measured, so they are
+       judged the old way rather than silently dropped. */
+    const unpinned = list.filter(a =>
+      !(isFinite(a.lat) && isFinite(a.lng)) && ApaGeo.match(a, s.locPlace)
+    );
+    list = near.items.concat(unpinned);
+    s.locRadiusKm = near.radiusKm;
+    s.locExpanded = near.expanded;
+
+    /* Nothing anywhere near it: fall back to the five closest with
+       coordinates rather than an empty page. */
+    if (!list.length && near.all && near.all.length) {
+      list = near.all.slice(0, 5);
+      s.locExpanded = true;
+      s.locRadiusKm = Math.round(near.all[4] ? near.all[4].distanceKm : near.all[0].distanceKm);
+    }
+  } else if (s.loc) {
     list = list.filter(a =>
       ((a.location||'') + ' ' + (a.city||'') + ' ' + (a.name||'')).toLowerCase().includes(s.loc)
     );
@@ -3988,6 +4050,11 @@ function applyAndRender() {
       return dA - dB;
     });
     updateResultLabel('nearest');
+  } else if (s.locExpanded && !s.sortMode) {
+    /* The circle had to be widened, so "how far is it" is now the most
+       useful thing about each result and the ranking says so. */
+    list = [...list].sort((a, b) => (a.distanceKm ?? 1e9) - (b.distanceKm ?? 1e9));
+    updateResultLabel();
   } else {
     // Standard smart sort
     list = smartSort(list, s.sortMode || 'recommended');
@@ -4021,10 +4088,23 @@ function updateResultLabel(mode) {
   const num = document.getElementById('result-num');
   const label = document.getElementById('result-label');
   if (!label) return;
-  const loc = _searchState.loc ? (' in ' + _searchState.loc.charAt(0).toUpperCase() + _searchState.loc.slice(1)) : '';
+  const s = _searchState;
+  /* Prefer the resolved place's own name over the raw typed text —
+     "Diani Beach" rather than "diani beach kwale". */
+  const place = s.locPlace ? (s.locPlace.name || s.locPlace.short) : '';
+  const typed = s.loc ? (s.loc.charAt(0).toUpperCase() + s.loc.slice(1)) : '';
+  const where = place || typed;
+  const loc = where ? ' in ' + where : '';
+
   if (mode === 'affordable') label.textContent = `most affordable stays${loc}`;
   else if (mode === 'bestvalue') label.textContent = `best value stays${loc}`;
   else if (mode === 'nearest') label.textContent = `stays nearest to you${loc}`;
+  else if (s.locExpanded && where) {
+    /* Say plainly that these are not in the place searched. A guest who
+       thinks a result is in Nanyuki when it is 40km away is a complaint
+       at check-in, not a booking. */
+    label.textContent = `stays within ${ApaGeo.formatKm(s.locRadiusKm)} of ${where}`;
+  }
   else label.textContent = `stays available${loc}`;
 }
 
@@ -4063,6 +4143,7 @@ setTimeout(dismissEnterTx,2800);
 <div data-showcase="window"></div>
 <script src="/analytics.js" defer></script>
 <script src="/chat.js" defer></script>
+<script src="/apa-geo.js" defer></script>
 <script src="/apa-map.js" defer></script>
 <script src="/apa-ask.js?v=2" defer></script>
 <script src="/telemetry.js" defer></script>

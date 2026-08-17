@@ -367,6 +367,30 @@ html,body{min-height:100%;background:#FCFCFD;color:#0A0A14;
 <script src="/vendor-supabase-2.112.3.js"></script>
 <script src="/apa-session.js"></script>
 <script src="/cabana-media-upload.js"></script>
+<script src="/apa-geo.js" defer></script>
 <script src="/cabana-list-tour.js"></script>
+<script>
+/* Destination and meeting point resolve against the real world rather
+   than whatever the operator types. Two operators who both run the same
+   Mara trip used to file it as "Maasai Mara", "Masai Mara Reserve" and
+   "the mara" — three destinations as far as search was concerned. */
+window.addEventListener('load', function () {
+  if (!window.ApaGeo) return;
+
+  ApaGeo.attach('t-destination', {
+    limit: 6,
+    onPick: function (p) {
+      /* County is the field guests filter on, and the geocoder just
+         said what it is. Only fill it if it is still empty. */
+      var county = document.getElementById('t-county');
+      if (county && !county.value.trim()) county.value = p.state || p.city || '';
+    }
+  });
+
+  /* A meeting point is a doorway, not a region — the guest has to stand
+     on it at 6am. Hotels, gates and landmarks are what to offer. */
+  ApaGeo.attach('t-meeting', { limit: 6 });
+});
+</script>
 </body>
 </html>

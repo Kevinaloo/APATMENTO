@@ -323,22 +323,11 @@ html.via-dash #tx{display:none!important;animation:none!important;}
   <div class="search-bar">
     <div class="sb-field">
       <div class="sb-label">Location</div>
-      <select id="f-city" class="sb-select" onchange="applySearch()">
-        <option value="">All Kenya</option>
-        <option value="nairobi" selected>Nairobi</option>
-        <option value="westlands">Westlands</option>
-        <option value="kilimani">Kilimani</option>
-        <option value="lavington">Lavington</option>
-        <option value="karen">Karen</option>
-        <option value="parklands">Parklands</option>
-        <option value="ngong">Ngong Road</option>
-        <option value="kileleshwa">Kileleshwa</option>
-        <option value="mombasa">Mombasa</option>
-        <option value="nyali">Nyali</option>
-        <option value="diani">Diani</option>
-        <option value="kisumu">Kisumu</option>
-        <option value="nakuru">Nakuru</option>
-      </select>
+      <!-- Was a fixed list of fourteen Nairobi-and-coast options, which
+           meant a room in Eldoret or Thika could be listed but never
+           found. Now any place on earth, through the shared layer. -->
+      <input id="f-city" class="sb-input" type="text" placeholder="Anywhere"
+             data-apa-geo data-geo-limit="6" onchange="applySearch()"/>
     </div>
     <div class="sb-sep"></div>
     <div class="sb-field">
@@ -438,9 +427,16 @@ function render(){
   const budgetVal  = parseInt(document.getElementById('f-budget')?.value)||0;
   const typeVal    = (document.getElementById('f-type')?.value||'').toLowerCase();
 
+  /* The box now holds a resolved place, so "Westlands, Nairobi, Kenya"
+     has to still match a room whose area reads "Westlands". ApaGeo.match
+     compares against the place's parts rather than the whole label. */
+  const cityEl = document.getElementById('f-city');
+  const cityPlace = (cityEl && cityEl._apaGeo) ? cityEl._apaGeo.get() : null;
+
   let d = DATA.filter(l=>{
     // Search bar filters
-    if(cityVal && !l.area.toLowerCase().includes(cityVal)) return false;
+    if(cityPlace && window.ApaGeo){ if(!ApaGeo.match(l, cityPlace)) return false; }
+    else if(cityVal && !l.area.toLowerCase().includes(cityVal)) return false;
     if(budgetVal > 0 && l.price > budgetVal) return false;
     if(typeVal==='private' && !(l.type==='Private'||l.type==='En-suite')) return false;
     if(typeVal==='ensuite' && l.type!=='En-suite') return false;
@@ -729,6 +725,7 @@ function openTenantVerify(pendingRoom) {
 <script src="/cabana-rebrand.js" defer></script>
   <script src="/apa-signal.js" defer></script>
   <script src="/apa-shadow.js" defer></script>
+<script src="/apa-geo.js" defer></script>
 <script src="/apa-contact.js" defer></script>
 <footer class="site-footer">
   <div class="sf-inner">
