@@ -317,7 +317,7 @@
 
       var lo = src.price_night * 0.75, hi = src.price_night * 1.25;
       var pool = (await c.from('listings').select('*')
-        .eq('status','active').neq('id', src.id)
+        .eq('status','active').neq('id', src.id).neq('type','room')
         .gte('price_night', lo).lte('price_night', hi)
         .gte('max_guests', bk.num_guests || 1).limit(60)).data || [];
 

@@ -2931,7 +2931,7 @@ async function loadStays(){
     const SUPA_URL = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
     const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
     const r = await fetch(
-      SUPA_URL+'/rest/v1/listings?status=eq.active&is_active=eq.true&select=id,title,location,area,city,price_night,price_per_night,photos,beds,max_guests,type,property_type&order=internal_score.desc.nullslast&limit=6',
+      SUPA_URL+'/rest/v1/listings?status=eq.active&is_active=eq.true&type=neq.room&select=id,title,location,area,city,price_night,price_per_night,photos,beds,max_guests,type,property_type&order=internal_score.desc.nullslast&limit=6',
       {headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}}
     );
     const listings = r.ok ? (await r.json()) : [];
@@ -3324,7 +3324,7 @@ async function initPartnerFlow(){
   }
   try{
     const { data:listings } = await sb.from('listings')
-      .select('id,title,name,status,listing_type,price_night,created_at')
+      .select('id,title,name,status,listing_type,type,service,price_night,price_month,created_at')
       .eq('partner_id', CURRENT_USER.id);
     // Map any sub-type (e.g. "Apartment", "Studio", "Safari") back to a service category key
     const _subToCategory = {
@@ -3346,7 +3346,8 @@ async function initPartnerFlow(){
     partnerServices = (listings||[]).map(l=>{
       const rawType = (l.listing_type||'').toLowerCase();
       const cat = _subToCategory[rawType] || 'apartment';
-      return {...l, listing_type: cat, is_active:l.status!=='inactive', price_per_night:l.price_night||0};
+      const _room=(l.service==='roommates'||l.type==='room');
+      return {...l, listing_type: cat, is_active:l.status!=='inactive', price_per_night:(_room?(l.price_month||0):(l.price_night||0)), price_unit:_room?'month':'night'};
     });
     partnerLoadFailed = false;
   }catch(e){ partnerServices=[]; partnerLoadFailed = true; console.warn('[partner] listings load failed:', e && e.message); }

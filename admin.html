@@ -4459,9 +4459,16 @@ function gmCollect(){
   const place = (GM_PLACE && ApaGeo.normalize(loc).indexOf(ApaGeo.normalize(GM_PLACE.name)) > -1)
     ? GM_PLACE : null;
 
+  /* Every board filters on `service`. Admin rows never carried one, so a
+     room created here satisfied the stays fallback and appeared on both
+     boards at a nightly rate it did not have. */
+  const GM_SERVICE = {room:'roommates', apartment:'stays', tour:'tours', event:'events',
+                      food:'food', carhire:'carhire', ride:'rides', shopping:'shopping'};
+
   const payload = {
     title:      get('gm-title-in'),
     type:       GM_TYPE,
+    service:    GM_SERVICE[GM_TYPE] || GM_TYPE,
     property_type: GM_TYPE,
     listing_type:  GM_TYPE,
     location:   loc||null,
