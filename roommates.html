@@ -590,7 +590,8 @@ html.via-dash #intro{display:none!important;}
 {"@type":"Question","name":"Should I pay a deposit before viewing the room?","acceptedAnswer":{"@type":"Answer","text":"No. View the room in person or on a live video call first, meet the people already living there, and confirm the host controls the property. Pay only once you have seen the room and have a written agreement. Never send money to anyone who refuses a viewing."}},
 {"@type":"Question","name":"Can I list a spare room on Cabana?","acceptedAnswer":{"@type":"Answer","text":"Yes. Listing a room is free and takes a few minutes. Add photos, rent, deposit, house rules and the kind of flatmate you are looking for, and enquiries arrive in your Cabana inbox. You keep 100% of the rent."}},
 {"@type":"Question","name":"Which cities can I find rooms in?","acceptedAnswer":{"@type":"Answer","text":"Rooms can be listed anywhere Cabana operates, which is every African country. Nairobi, Mombasa, Kisumu, Nakuru and Eldoret are the most active in Kenya, and search accepts any place name worldwide."}},
-{"@type":"Question","name":"What is the difference between Cabana Rooms and Cabana Stays?","acceptedAnswer":{"@type":"Answer","text":"Rooms is flatshares: you rent a bedroom in a home where other people already live and share the kitchen, living room or bathroom with them. Stays is self-contained accommodation with nobody else in it, such as a studio, bedsitter or entire flat. A listing with no existing occupants belongs on Stays, not on Rooms."}}]}
+{"@type":"Question","name":"What is the difference between Cabana Rooms and Cabana Stays?","acceptedAnswer":{"@type":"Answer","text":"Rooms is flatshares: you rent a bedroom in a home where other people already live and share the kitchen, living room or bathroom with them. Stays is self-contained accommodation with nobody else in it, such as a studio, bedsitter or entire flat. A listing with no existing occupants belongs on Stays, not on Rooms."}},
+{"@type":"Question","name":"What is the shortest time I can rent a room for?","acceptedAnswer":{"@type":"Answer","text":"One week is the shortest let on Cabana Rooms. Each listing sets its own minimum stay between one week and one year and shows it before you enquire. Three months is the most common in Nairobi because it matches how deposits and notice periods work. Anything shorter than a week is a nightly booking and is listed under Cabana Stays instead."}}]}
 ]}
 </script>
 </head>
@@ -646,7 +647,7 @@ html.via-dash #intro{display:none!important;}
   <div class="eyebrow"><span class="dot"></span>Shared homes only, zero commission</div>
   <h1 class="h1">Find the room. <b>Meet the household.</b></h1>
   <p class="h1-sub">Rooms in shared homes, posted by the people already living in them. You get your own room and share the kitchen and living space. Every enquiry runs through an ID check, and nothing you pay goes to a middleman.</p>
-  <p class="h1-note">Want a whole place to yourself? Studios, bedsitters and entire flats live on <a href="/apartments">Cabana Stays</a>.</p>
+  <p class="h1-note">Rooms are let by the week or longer. Want a whole place to yourself, or just a few nights? Studios, bedsitters and entire flats live on <a href="/apartments">Cabana Stays</a>.</p>
   <div class="stats" id="stats"></div>
 
   <form class="console" id="console" role="search" onsubmit="event.preventDefault();applySearch();">
@@ -792,7 +793,8 @@ html.via-dash #intro{display:none!important;}
     <details class="q"><summary>Do I have to verify my identity to message a host?</summary><div class="q-a">Yes. Room hosts are sharing their home, so Cabana asks prospective flatmates to complete a one-time ID check before messaging opens. Your document is stored securely, is never shown publicly, and the check applies to every room enquiry you make afterwards.</div></details>
     <details class="q"><summary>Should I pay a deposit before viewing the room?</summary><div class="q-a">No. View the room in person or on a live video call first, meet the people already living there, and confirm the host controls the property. Pay only once you have seen it and have a written agreement. Anyone who refuses a viewing but wants a deposit is running a scam, without exception.</div></details>
     <details class="q"><summary>Can I list a spare room?</summary><div class="q-a">Yes, and it is free. Add photos, rent, deposit, house rules and the kind of flatmate you want. Enquiries arrive in your Cabana inbox from ID-verified people only, and you keep 100% of the rent.</div></details>
-    <details class="q"><summary>What is the difference between Rooms and Stays?</summary><div class="q-a">Rooms is flatshares: you rent a bedroom in a home where other people already live, and you share the kitchen, living room or bathroom with them. Listings show who is already there and what the house rules are. Stays is the opposite, a self-contained place with nobody else in it, whether that is a studio, a bedsitter or an entire flat, booked by the night or the month. If a listing has no existing occupants to share with, it belongs on Stays and you will not find it here.</div></details>
+    <details class="q"><summary>What is the difference between Rooms and Stays?</summary><div class="q-a">Rooms is flatshares: you rent a bedroom in a home where other people already live, and you share the kitchen, living room or bathroom with them. Listings show who is already there and what the house rules are. Stays is the opposite, a self-contained place with nobody else in it, whether that is a studio, a bedsitter or an entire flat, booked by the night. If a listing has no existing occupants to share with, it belongs on Stays and you will not find it here.</div></details>
+    <details class="q"><summary>What is the shortest I can rent a room for?</summary><div class="q-a">One week. Every room here sets its own minimum stay, from one week up to a year, and the figure is shown on the listing before you enquire. Most Nairobi hosts ask for three months because that is how the deposit and notice period usually work, but rooms taking a week or a month exist and you can filter for them with the short minimum stay chip. If you need somewhere for a night or a weekend, that is a nightly booking and it lives on Stays instead.</div></details>
     <details class="q"><summary>Which cities have rooms?</summary><div class="q-a">Rooms can be listed anywhere Cabana operates, which is every African country. Nairobi, Mombasa, Kisumu, Nakuru and Eldoret are the most active in Kenya. Search accepts any place name, so a room in Thika or Naivasha is findable the moment it is posted.</div></details>
   </div>
 </section>
@@ -891,6 +893,18 @@ function fmtDate(d){
   if(isNaN(t)) return null;
   return t.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
 }
+/* A room is let by the week at the shortest: anything under seven nights
+   is a nightly booking and belongs on Stays, so the floor is applied on
+   read as well as on write. */
+var MIN_LET_DAYS = 7;
+function stayLabel(days){
+  var d = Math.max(MIN_LET_DAYS, parseInt(days, 10) || 0);
+  if(!d) return null;
+  if(d % 365 === 0) { var y = d/365; return y + ' ' + (y===1?'year':'years'); }
+  if(d >= 30 && d % 30 === 0) { var m = d/30; return m + ' ' + (m===1?'month':'months'); }
+  if(d % 7 === 0) { var w = d/7; return w + ' ' + (w===1?'week':'weeks'); }
+  return d + ' nights';
+}
 function availLabel(iso){
   if(!iso) return 'Ask the host';
   var t = new Date(iso);
@@ -959,6 +973,7 @@ var FACETS = [
   {k:'nosmoke',   label:'Non-smoking',    ic:'smoke',  test:function(r){ return !r.smoking; }},
   {k:'now',       label:'Available now',  ic:'key',    test:function(r){ return r.availNow; }},
   {k:'ownbath',   label:'Own bathroom',   ic:'shower', test:function(r){ return r.bathPrivate; }},
+  {k:'shortmin',  label:'Short minimum stay',ic:'clock', test:function(r){ return r.minDays && r.minDays <= 30; }},
   {k:'women',     label:'Women only',     ic:'users',  test:function(r){ return r.suits === 'women'; }},
   {k:'men',       label:'Men only',       ic:'users',  test:function(r){ return r.suits === 'men'; }},
   {k:'students',  label:'Student friendly',ic:'home',  test:function(r){ return r.suits === 'students'; }},
@@ -1038,7 +1053,11 @@ function norm(l){
     shared: SHARED_KEYS.indexOf(tk) > -1,
     suits: suits,
     bathPrivate: bathPrivate,
-    minMonths: parseInt(ex.minmonths, 10) || null,
+    minDays: (function(){
+      var d = parseInt(l.min_nights, 10) || parseInt(ex.minstay_days, 10)
+              || (parseInt(ex.minmonths, 10) ? parseInt(ex.minmonths, 10) * 30 : 0);
+      return d ? Math.max(MIN_LET_DAYS, d) : null;
+    })(),
     notice: ex.notice || '',
     area: l.area || '', city: l.city || '', country: l.country || '',
     location: l.location || [l.area, l.city, l.country].filter(Boolean).join(', ') || 'Location on request',
@@ -1050,7 +1069,6 @@ function norm(l){
     bills: bills, furnished: furnished,
     flatmates: mates,
     availISO: availISO, availNow: availNow,
-    minStay: parseInt(l.min_nights, 10) || null,
     floor: l.floor || '', sqm: l.sqm || l.size_sqm || '',
     beds: l.beds || l.bedrooms || '', baths: l.baths || l.bathrooms || '',
     pets: !!l.pets, smoking: !!l.smoking, children: !!l.children,
@@ -1526,7 +1544,7 @@ function openCompare(){
     + row('Already living here','users',function(r){ return r.flatmates ? r.flatmates + ' ' + (r.flatmates===1?'flatmate':'flatmates') : 'Not stated'; })
     + row('Bathroom','shower',function(r){ return r.bathPrivate ? '<span style="color:#177346">Private to the room</span>' : 'Shared with flatmates'; })
     + row('Room suits','shield',function(r){ return esc(SUITS_LABEL[r.suits] || 'Anyone'); })
-    + row('Minimum stay','clock',function(r){ return r.minMonths ? r.minMonths + ' ' + (r.minMonths===1?'month':'months') : 'Not stated'; })
+    + row('Minimum stay','clock',function(r){ return r.minDays ? esc(stayLabel(r.minDays)) : 'Not stated'; })
     + row('Available','cal',function(r){ return esc(availLabel(r.availISO)); })
     + row('WiFi','wifi',function(r){ return yn(r.wifi); })
     + row('Parking','car',function(r){ return yn(r.parking); })
@@ -1624,7 +1642,7 @@ function openRoom(id, push){
     r.flatmates ? item('Already living here','users', r.flatmates + ' ' + (r.flatmates===1?'flatmate':'flatmates')) : '',
     item('Bathroom','shower', r.bathPrivate ? 'Private to this room' : 'Shared with flatmates'),
     item('Room suits','shield', SUITS_LABEL[r.suits] || 'Anyone'),
-    r.minMonths ? item('Minimum stay','clock', r.minMonths + ' ' + (r.minMonths===1?'month':'months')) : '',
+    r.minDays ? item('Minimum stay','clock', stayLabel(r.minDays)) : '',
     r.notice ? item('Notice period','flag', r.notice) : '',
     r.floor ? item('Floor','stairs', r.floor) : '',
     r.sqm ? item('Room size','ruler', r.sqm + ' sqm') : '',
