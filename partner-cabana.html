@@ -574,9 +574,10 @@ async function loadListingsAndOptins() {
     // 1. Get host's listings
     const { data: listings } = await sb
       .from('listings')
-      .select('id,title,type,photos,city,location,status,price_night')
+      .select('id,title,type,service,photos,city,location,status,price_night')
       .eq('partner_id', currentUser.id)
       .eq('status', 'active')
+      .neq('type', 'room')
       .order('created_at', { ascending: false });
 
     hostListings = listings || [];

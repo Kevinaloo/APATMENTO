@@ -578,6 +578,7 @@ async function doHunt() {
 
   let query = sb.from('listings')
     .select('id,title,city,location,price_night,photos,partner_id')
+    .neq('type', 'room')
     .eq('status', 'active')
     .limit(24);
 

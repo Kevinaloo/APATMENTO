@@ -2590,8 +2590,15 @@ async function loadNativeListings() {
        type for legacy/admin-imported rows. Unknown → keep, so a new
        property type can never silently empty the page. */
     const STAY_TYPES = ['apartment','house','villa','studio','cottage','bungalow',
-                        'room','hotel','guesthouse','maisonette','penthouse','bnb'];
+                        'hotel','guesthouse','maisonette','penthouse','bnb'];
+    /* A flatshare is a different product with a different price unit, so
+       it must never fall through into Stays. `room` used to sit in
+       STAY_TYPES, which meant any room row written without a service tag
+       showed up on both boards at a nightly rate it never had. */
+    const isRoom = l => String(l.service || '').toLowerCase().trim() === 'roommates'
+                     || String(l.type || '').toLowerCase().trim() === 'room';
     const isStay = l => {
+      if (isRoom(l)) return false;
       const svc = String(l.service || '').toLowerCase().trim();
       if (svc) return svc === 'stays';
       const t = String(l.type || l.property_type || l.listing_type || '').toLowerCase();

@@ -677,7 +677,9 @@ function renderListings(list){
       <div class="lc-info">
         <div class="lc-name">${l.title||'Untitled listing'}</div>
         <div class="lc-meta">${svc} &middot; ${loc} &middot; ${l.booking_count||0} booking${l.booking_count!==1?'s':''}</div>
-        <div class="lc-price">${l.currency||'KES'} ${fmt(l.price_night)} / night</div>
+        <div class="lc-price">${(l.service==='roommates'||l.type==='room')
+          ? `${l.currency||'KES'} ${fmt(l.price_month||l.price_night)} / month`
+          : `${l.currency||'KES'} ${fmt(l.price_night)} / night`}</div>
       </div>
       <div class="lc-right">
         <span class="badge ${isActive?'b-green':'b-amber'}">${isActive?'Active':'Paused'}</span>
