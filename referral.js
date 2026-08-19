@@ -1,8 +1,17 @@
 /* ═══════════════════════════════════════════════════════════════════
    APATMENTO REFERRAL & REWARDS ENGINE  (client-side UI layer). Captures ?ref= codes and persists them through auth. Generates/displays referral links for signed-in users. All data mutations go through /api/rewards (service-role key). This file only uses the anon key for READ operations (stats)
 
-   Rates:   20% commission. Guest referrals (1 year)
-            10% commission. Host referrals  (1 year)
+   Rates:   10% commission. Traveller referrals (1 year)
+             5% commission. Host / service-provider referrals (1 year)
+
+            Ambassadors earn 15% and 10% on the same terms. Their
+            rate is stamped onto the referral at creation by
+            api/rewards.js and is never recomputed here — this file
+            reads and displays, it does not decide money.
+
+            Commission is a share of CABANA'S FEE (itself 10% of
+            gross), not of the booking. Every number shown to a
+            user below is labelled that way on purpose.
             10 pts per KES 1,000 spent · 1 pt = KES 1
             Min withdrawal: KES 50 · Flights excluded
 ═══════════════════════════════════════════════════════════════════ */
@@ -199,8 +208,8 @@ function buildPopup(myCode, myStats, isGuest) {
 
   <div class="ref-header">
     <div class="ref-badge"><span class="ref-badge-dot"></span>Cabana Referral Programme</div>
-    <h2 class="ref-headline">Refer &amp; earn up to<br/><strong>20% for life.</strong></h2>
-    <p class="ref-sub">Bring a guest or a host to Cabana. Earn up to 20% of our fee on every booking they make for a full 365 days. Simple. Unlimited.</p>
+    <h2 class="ref-headline">Refer &amp; earn up to<br/><strong>10% for life.</strong></h2>
+    <p class="ref-sub">Bring a traveller or a host to Cabana. Earn up to 10% of our service fee on every booking they make, for 365 days from the day they join. Simple. Unlimited.</p>
   </div>
 
   ${!isGuest && myStats ? `
@@ -217,15 +226,15 @@ function buildPopup(myCode, myStats, isGuest) {
       <span class="ref-card-badge">Guest referral</span>
       <div class="ref-card-icon">🧳</div>
       <div class="ref-card-title">Refer a traveller</div>
-      <div class="ref-card-stat">20%</div>
-      <div class="ref-card-desc">commission on every booking they make for a full 365 days.</div>
+      <div class="ref-card-stat">10%</div>
+      <div class="ref-card-desc">of our service fee on every booking they make, for a full 365 days.</div>
     </div>
     <div class="ref-card ref-card-b">
       <span class="ref-card-badge">Host referral</span>
       <div class="ref-card-icon">🏠</div>
       <div class="ref-card-title">Refer a host</div>
-      <div class="ref-card-stat">10%</div>
-      <div class="ref-card-desc">commission on every completed service they list for 365 days.</div>
+      <div class="ref-card-stat">5%</div>
+      <div class="ref-card-desc">of our service fee on every booking they take, for a full 365 days.</div>
     </div>
   </div>
 

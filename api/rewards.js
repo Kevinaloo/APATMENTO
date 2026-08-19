@@ -23,6 +23,48 @@ const INTERNAL_SECRET = process.env.INTERNAL_API_SECRET || '';
 /* Platform fee rate, 10% of gross for stays/tours/events */
 const PLATFORM_FEE_RATE = 0.10;
 
+/* ══════════════════════════════════════════════════════════════
+   THE RATE CARD
+   ──────────────────────────────────────────────────────────────
+   Commission is a share of CABANA'S FEE, not of the booking. The
+   fee is 10% of gross, so an ambassador on a traveller earns 15%
+   of that 10% — 1.5% of booking value. Say that plainly wherever
+   it is displayed. A programme that lets people believe they earn
+   15% of a booking will be accused of lying, and correctly.
+
+                      │ traveller │ host / service provider
+     ─────────────────┼───────────┼────────────────────────
+      ambassador      │    15%    │          10%
+      ordinary user   │    10%    │           5%
+
+   Both tiers earn for 365 days from the day the referral lands.
+
+   This mirrors public.referral_rate() in schema-ambassadors.sql,
+   which is the authority. The mirror exists so the payout path
+   does not need a round trip; tests/ambassadors.test.sql pins the
+   SQL side, and RATE_CARD below is asserted against the same six
+   numbers. If you change one, change both.
+
+   Unknown tiers fall to the ordinary card deliberately. A typo in
+   a tier string should cost someone a complaint, not cost Cabana
+   money on every booking until a human notices.                */
+const RATE_CARD = {
+  ambassador: { user: 0.15, host: 0.10, service_provider: 0.10 },
+  user:       { user: 0.10, host: 0.05, service_provider: 0.05 },
+};
+
+function rateFor(tier, referralType) {
+  const row = RATE_CARD[tier] || RATE_CARD.user;
+  return row[referralType] ?? row.user;
+}
+
+/* Commission is booked on payment but not withdrawable immediately.
+   A booking can still be cancelled or refunded after the money
+   lands, and a programme that pays out before the cancellation
+   window closes is a programme with a book-refund-repeat loop in
+   it. Fourteen days covers the stay plus the dispute window. */
+const COMMISSION_HOLD_DAYS = Number(process.env.COMMISSION_HOLD_DAYS || 14);
+
 /* Points: 10 pts per KES 1,000 spent */
 const POINTS_PER_KES = 10 / 1000;
 
@@ -177,18 +219,38 @@ async function actionRecordReferral(body, user) {
   const expires = new Date();
   expires.setFullYear(expires.getFullYear() + 1);
 
-  /* Determine type from body (default user) */
-  const referral_type = body.referral_type === 'host' ? 'host' : 'user';
+  /* What was referred: a traveller, a host, or a service provider. */
+  const REF_TYPES = ['user', 'host', 'service_provider'];
+  const referral_type = REF_TYPES.includes(body.referral_type) ? body.referral_type : 'user';
+
+  /* Who did the referring — resolved from OUR tables, never from the
+     body. The client asking to be treated as an ambassador is exactly
+     the request we must not honour. */
+  const ambRows = await dbSelect('ambassadors',
+    `id=eq.${referrerId}&status=neq.suspended&select=id`);
+  const referrer_tier = ambRows.length ? 'ambassador' : 'user';
+
+  /* Stamp the rate now. Never recompute it at payout.
+
+     Two reasons, both about money. A rate promised at 15% stays 15%
+     even if the person later leaves the programme, which is simple
+     honesty. And nobody can farm referrals as an ordinary user, get
+     added to the roster, and have their whole back catalogue silently
+     reprice upward — a rate that floats is a rate you can game by
+     waiting. */
+  const commission_rate = rateFor(referrer_tier, referral_type);
 
   await dbInsert('referrals', {
     referrer_id:   referrerId,
     referred_id:   referredUserId,
     referral_type,
+    referrer_tier,
+    commission_rate,
     code_used:     code,
     expires_at:    expires.toISOString(),
   });
 
-  return { ok: true };
+  return { ok: true, tier: referrer_tier, rate: commission_rate };
 }
 
 /* award
@@ -239,8 +301,17 @@ async function actionAward(body, req) {
     if (!earningsCheck.length) {
       /* Calculate platform fee server-side, never trust client */
       const platform_fee = parseFloat((Number(gross_amount) * PLATFORM_FEE_RATE).toFixed(2));
-      const rate         = ref.referral_type === 'host' ? 0.10 : 0.20;
-      const commission   = parseFloat((platform_fee * rate).toFixed(2));
+
+      /* Honour the rate stamped when the referral was created. The
+         fallback covers rows written before tiers existed, and reads
+         the same card rather than reintroducing a magic number. */
+      const tier = ref.referrer_tier || 'user';
+      const rate = ref.commission_rate != null
+        ? Number(ref.commission_rate)
+        : rateFor(tier, ref.referral_type || 'user');
+      const commission = parseFloat((platform_fee * rate).toFixed(2));
+
+      const availableAt = new Date(Date.now() + COMMISSION_HOLD_DAYS * 86400000);
 
       await dbInsert('referral_earnings', {
         referrer_id:     ref.referrer_id,
@@ -250,6 +321,9 @@ async function actionAward(body, req) {
         platform_fee,
         commission_rate: rate,
         commission_kes:  commission,
+        referrer_tier:   tier,
+        referral_type:   ref.referral_type || 'user',
+        available_at:    availableAt.toISOString(),
         status:          'confirmed',
         booking_ref,
       });
@@ -426,9 +500,22 @@ async function actionWithdraw(body, user) {
     return { error: 'Invalid M-Pesa number format', status: 400 };
   }
 
-  /* Compute real available balance: confirmed earnings minus pending/paid withdrawals */
+  /* Compute real available balance: MATURED confirmed earnings, minus
+     pending or paid withdrawals.
+
+     `available_at` is the load-bearing filter. Commission is booked the
+     moment payment confirms, but a booking can still be cancelled or
+     refunded afterwards. Paying out before that window closes leaves a
+     book-refund-repeat loop wide open, and the money is gone by the time
+     the reversal lands. Rows written before the hold existed have a null
+     available_at and are treated as matured, which is correct: they are
+     long past any window. */
+  const nowIso = new Date().toISOString();
   const [earnings, withdrawals] = await Promise.all([
-    dbSelect('referral_earnings', `referrer_id=eq.${userId}&status=eq.confirmed&select=commission_kes`),
+    dbSelect('referral_earnings',
+      `referrer_id=eq.${userId}&status=eq.confirmed` +
+      `&or=(available_at.is.null,available_at.lte.${nowIso})` +
+      `&select=commission_kes`),
     dbSelect('referral_withdrawals', `user_id=eq.${userId}&status=in.(pending,paid)&select=amount_kes`),
   ]);
   const totalEarned    = earnings.reduce((s, e) => s + parseFloat(e.commission_kes || 0), 0);
