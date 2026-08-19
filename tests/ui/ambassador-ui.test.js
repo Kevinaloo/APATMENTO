@@ -247,6 +247,64 @@ async function behaviourPass(browser) {
   await ctx.close();
 }
 
+
+async function attributionPass(browser) {
+  console.log('\n── REFERRAL ATTRIBUTION ──');
+
+  /* The bug this guards: ?ref= codes were captured to localStorage for a long
+     time and nothing ever converted them into a referrals row, so the whole
+     commission ledger was wired up and switched off at the last connector.
+     `referrals` sat empty and nobody was ever paid. */
+
+  // 1 · A signed-in arrival on a ref link is attributed.
+  {
+    const ctx = await makeCtx(browser, { signedIn: true });
+    const p = await ctx.newPage();
+    await p.goto(BASE + '/ambassadors.html?ref=AMB-7K2P9X', { waitUntil: 'domcontentloaded' });
+    await p.waitForTimeout(1600);
+    const calls = await (await ctx.request.get(BASE + '/__calls')).json();
+    const rec = calls.filter(c => c.action === 'record-referral');
+    ok(rec.length >= 1, 'a ?ref= arrival records the referral');
+    ok(rec.length && rec[0].code === 'AMB-7K2P9X', 'the captured code is sent verbatim');
+    ok(rec.length && ['user','host','service_provider'].includes(rec[0].referral_type),
+       `a referral type is sent (${rec.length ? rec[0].referral_type : '—'})`);
+    await ctx.close();
+  }
+
+  // 2 · It does not fire again on every subsequent page load.
+  {
+    const ctx = await makeCtx(browser, { signedIn: true });
+    const p = await ctx.newPage();
+    await p.goto(BASE + '/ambassadors.html?ref=DUPE-TEST', { waitUntil: 'domcontentloaded' });
+    await p.waitForTimeout(1500);
+    const first = ((await (await ctx.request.get(BASE + '/__calls')).json()))
+      .filter(c => c.code === 'DUPE-TEST').length;
+    await p.goto(BASE + '/ambassadors.html', { waitUntil: 'domcontentloaded' });
+    await p.waitForTimeout(1400);
+    await p.goto(BASE + '/ambassador-dashboard.html', { waitUntil: 'domcontentloaded' });
+    await p.waitForTimeout(1400);
+    const total = ((await (await ctx.request.get(BASE + '/__calls')).json()))
+      .filter(c => c.code === 'DUPE-TEST').length;
+    ok(first >= 1 && total === first,
+       `attribution fires once, not on every page load (${first} → ${total} after 2 more loads)`);
+    await ctx.close();
+  }
+
+  // 3 · A guest is not attributed. There is no account to attribute to yet;
+  //     the code waits in storage until they actually sign up.
+  {
+    const ctx = await makeCtx(browser, { signedIn: false });
+    const p = await ctx.newPage();
+    await p.goto(BASE + '/ambassadors.html?ref=GUEST-TEST', { waitUntil: 'domcontentloaded' });
+    await p.waitForTimeout(1500);
+    const calls = await (await ctx.request.get(BASE + '/__calls')).json();
+    ok(!calls.some(c => c.code === 'GUEST-TEST'), 'a signed-out visitor is not attributed');
+    const held = await p.evaluate(() => localStorage.getItem('apt_ref_pending'));
+    ok(held === 'GUEST-TEST', 'but the code is held for when they do sign up');
+    await ctx.close();
+  }
+}
+
 const browser = await chromium.launch({
     args: ['--no-sandbox'],
   executablePath: process.env.PW_CHROMIUM || undefined,
@@ -256,6 +314,7 @@ await renderPass(browser);
 await alignmentPass(browser);
 await revealPass(browser);
 await behaviourPass(browser);
+await attributionPass(browser);
 await browser.close();
 
 console.log(fails ? `\n${fails} failure(s)` : '\nAll UI checks passed');

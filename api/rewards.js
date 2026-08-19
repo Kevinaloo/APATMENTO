@@ -65,6 +65,10 @@ function rateFor(tier, referralType) {
    it. Fourteen days covers the stay plus the dispute window. */
 const COMMISSION_HOLD_DAYS = Number(process.env.COMMISSION_HOLD_DAYS || 14);
 
+/* How long after account creation a referral code may still be attributed.
+   See actionRecordReferral for why this bound has to exist at all. */
+const REFERRAL_ATTRIBUTION_HOURS = Number(process.env.REFERRAL_ATTRIBUTION_HOURS || 48);
+
 /* Points: 10 pts per KES 1,000 spent */
 const POINTS_PER_KES = 10 / 1000;
 
@@ -209,6 +213,26 @@ async function actionRecordReferral(body, user) {
   /* Idempotency: already recorded? */
   const existing = await dbSelect('referrals', `referred_id=eq.${referredUserId}&limit=1`);
   if (existing.length) return { ok: true, skipped: true };
+
+  /* Attribution belongs to a SIGNUP, not to a click.
+
+     Without this, anyone could send a referral link to the existing user
+     base and collect a year of commission on people the platform already
+     had — the cheapest possible way to farm a referral programme, and the
+     one that costs the most, because those users were already booking.
+
+     The window is generous on purpose: email confirmation, an OAuth
+     round-trip, or simply finishing signup on a laptop after starting on a
+     phone can all put real distance between account creation and the first
+     page load that carries a token. Two days covers all of it and still
+     excludes anybody who has been here a while. */
+  const createdAt = user.created_at || user.createdAt;
+  if (createdAt) {
+    const ageHours = (Date.now() - new Date(createdAt).getTime()) / 3_600_000;
+    if (ageHours > REFERRAL_ATTRIBUTION_HOURS) {
+      return { ok: true, skipped: 'account_too_old' };
+    }
+  }
 
   /* Find referrer */
   const codeRows = await dbSelect('referral_codes', `code=eq.${encodeURIComponent(code)}&select=user_id`);

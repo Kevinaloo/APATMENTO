@@ -74,8 +74,29 @@ function gateFor(sc){
 
 const PORT = Number(process.env.UI_TEST_PORT || 8899);
 
+/* Everything /api/rewards was asked to do, so a test can assert that
+   attribution actually fired rather than merely that nothing crashed. */
+const REWARDS_CALLS = [];
+
 http.createServer((req,res)=>{
   const u = url.parse(req.url,true);
+
+  if (u.pathname === '/api/rewards'){
+    let raw = '';
+    req.on('data', c => raw += c);
+    return req.on('end', () => {
+      let body = {}; try { body = JSON.parse(raw||'{}'); } catch {}
+      REWARDS_CALLS.push({ action: body.action, code: body.code, referral_type: body.referral_type });
+      res.writeHead(200,{'Content-Type':'application/json'});
+      res.end(JSON.stringify({ ok:true, tier:'ambassador', rate:0.15 }));
+    });
+  }
+
+  // Test-only introspection. Never mounted anywhere but this stub.
+  if (u.pathname === '/__calls'){
+    res.writeHead(200,{'Content-Type':'application/json'});
+    return res.end(JSON.stringify(REWARDS_CALLS));
+  }
   if (u.pathname === '/api/ambassadors'){
     const sc = (req.headers.cookie||'').match(/scenario=([a-z]+)/);
     const scenario = sc?sc[1]:'ok';
