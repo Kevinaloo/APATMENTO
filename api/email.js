@@ -19,6 +19,8 @@
 ═══════════════════════════════════════════════════════════════════ */
 export const config = { maxDuration: 15 };
 
+import { hasInternalSecret, requireUser, setCors } from './lib/_security.js';
+
 const RESEND_KEY       = process.env.RESEND_API_KEY;
 const ADMIN_SECRET     = process.env.PUSH_ADMIN_SECRET || '';
 const SUPABASE_URL     = process.env.SUPABASE_URL;
@@ -307,20 +309,26 @@ function rateOk(ip, action, limit = 5, windowMs = 60_000) {
 
 /* ── handler ────────────────────────────────────────────────────── */
 export default async function handler(req, res) {
+  setCors(req, res, 'POST, OPTIONS');
+  if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
 
   let body;
   try { body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body; }
   catch { return res.status(400).json({ error: 'Invalid JSON' }); }
 
-  const { action } = body || {};
+  const action = body?.action || req.query?.action;
   const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 'unknown';
-  const secret = req.headers['x-admin-secret'];
 
-  // magic-link + magic-auth are public but rate-limited. All others require admin secret.
+  // SMS OTP is the sole public action and is rate-limited below. Transactional
+  // mail requires either an internal secret or a real Supabase session.
   const publicActions = ['sms-otp'];
-  if (!publicActions.includes(action) && secret !== ADMIN_SECRET && ADMIN_SECRET) {
-    return res.status(403).json({ error: 'Forbidden' });
+  const isInternal = hasInternalSecret(req, 'PUSH_ADMIN_SECRET')
+    || hasInternalSecret(req);
+  let caller = null;
+  if (!publicActions.includes(action) && !isInternal) {
+    caller = await requireUser(req, res);
+    if (!caller) return;
   }
 
   try {
@@ -440,6 +448,14 @@ export default async function handler(req, res) {
           error: 'Unknown action',
           available: ['magic-link','magic-auth','sms-otp','sms-booking','sms-host','sms-custom','welcome','booking','host-booking','payout','booking-cancel','reset'],
         });
+    }
+
+    // A signed-in browser may only send to its own verified account. Messages
+    // for another guest or host must originate from an authenticated server.
+    const recipients = (Array.isArray(to) ? to : [to])
+      .map(value => String(value || '').toLowerCase().trim());
+    if (caller && !recipients.every(value => value === String(caller.email || '').toLowerCase())) {
+      return res.status(403).json({ error: 'recipient_not_authorized' });
     }
 
     const result = await sendEmail({ from, to, subject, html });

@@ -119,18 +119,32 @@ def fix_brand(src, fname):
 
 
 def fix_title(src):
-    m = re.search(r"<title>(.*?)</title>", src, re.S)
+    changed = 0
+    matches = list(re.finditer(r"<title\b[^>]*>.*?</title>", src, re.S | re.I))
+    # Keep the first title in document order. Browsers tolerate duplicates,
+    # but search engines can choose the wrong one and the old verifier missed it.
+    for extra in reversed(matches[1:]):
+        src = src[:extra.start()] + src[extra.end():]
+        changed += 1
+    m = re.search(r"<title\b[^>]*>(.*?)</title>", src, re.S | re.I)
     if not m:
-        return src, 0
+        return src, changed
     old = html.unescape(m.group(1)).strip()
     new = trim_title(old)
     if new == old:
-        return src, 0
-    return src[:m.start(1)] + html.escape(new, quote=False) + src[m.end(1):], 1
+        return src, changed
+    return (src[:m.start(1)] + html.escape(new, quote=False) + src[m.end(1):],
+            changed + 1)
 
 
 def fix_desc(src):
     changed = 0
+    matches = list(re.finditer(
+        r'<meta\b(?=[^>]*\bname=["\']description["\'])[^>]*>',
+        src, re.S | re.I))
+    for extra in reversed(matches[1:]):
+        src = src[:extra.start()] + src[extra.end():]
+        changed += 1
     for pat in (r'(<meta\s+name="description"\s+content=")(.*?)(")',
                 r'(<meta\s+property="og:description"\s+content=")(.*?)(")',
                 r'(<meta\s+name="twitter:description"\s+content=")(.*?)(")'):

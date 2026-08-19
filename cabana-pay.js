@@ -750,6 +750,17 @@
   }
 
   /* ── Polling ────────────────────────────────────────────────────── */
+  async function _accessToken() {
+    const cached = window.ApaSession?.peekSession?.();
+    if (cached?.access_token) return cached.access_token;
+    const client = window.ApaSession?.client?.() || window.sb || window.__chSb;
+    if (!client?.auth?.getSession) return '';
+    try {
+      const { data } = await client.auth.getSession();
+      return data?.session?.access_token || '';
+    } catch (_) { return ''; }
+  }
+
   function _poll(opts) {
     if (_pollTimer) clearInterval(_pollTimer);
     _attempts = 0;
@@ -778,7 +789,9 @@
            or Vercel env vars missing), leaving every payment at 'pending'
            regardless of whether the guest had paid. */
         const pollRef = opts.pollRef || opts.reference;
-        const r = await fetch(`/api/poll-payment?ref=${encodeURIComponent(pollRef)}`);
+        const r = await fetch(`/api/poll-payment?ref=${encodeURIComponent(pollRef)}`, {
+          headers: { Authorization: `Bearer ${opts.accessToken || ''}` },
+        });
         let d = await r.json().catch(() => ({}));
         /* Any non-pending, non-failed status = money cleared. */
         if (d.status === 'paid' || d.status === 'paid_pending_checkin'
@@ -802,7 +815,7 @@
 
   /* ── Public API ─────────────────────────────────────────────────── */
   window.ApatmentoPay = {
-    start(opts) {
+    async start(opts) {
       _build();
       _lastOpts = opts;
       _attempts = 0;
@@ -810,9 +823,21 @@
       document.getElementById('cbp-root').classList.add('cbp-open');
       _cut(() => _setState('sending', opts));
 
+      opts.accessToken = opts.accessToken || await _accessToken();
+      if (!opts.accessToken) {
+        _cut(() => _setState('error', {
+          ...opts, errorMsg: 'Please sign in again before starting payment.'
+        }));
+        opts.onFailure?.({ error: 'authentication_required' });
+        return;
+      }
+
       fetch('/api/stk-push', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${opts.accessToken}`,
+        },
         body: JSON.stringify({
           amount:      opts.amount,
           phone:       opts.phone,

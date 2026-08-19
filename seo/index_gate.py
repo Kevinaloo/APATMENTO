@@ -58,8 +58,10 @@ NOINDEX_META = '<meta name="robots" content="noindex, follow"/>'
 # the report below prints what each family actually resolved to.
 GATED = {
     "-apartments": "stays",
+    "-stays": "stays",
+    "-cottages": "stays",
     "-safaris": "tours",
-    "-car-hire": "cars",
+    "-car-hire": "carhire",
     "-airport-transfers": "rides",
 }
 
@@ -72,6 +74,11 @@ def load_inventory():
         sys.exit("inventory.json missing. Run seo/build_inventory.py first.")
     return {k: v for k, v in json.load(open(INVENTORY, encoding="utf-8")).items()
             if not k.startswith("_")}
+
+
+def inventory_generated():
+    """Use the source snapshot timestamp so identical builds stay identical."""
+    return json.load(open(INVENTORY, encoding="utf-8")).get("_generated", "unknown")
 
 
 def supply(inv, place, service):
@@ -147,8 +154,7 @@ def main():
     print(f"  already correct  : {len(hold)}")
 
     if APPLY:
-        json.dump({"_generated": __import__("datetime").datetime.utcnow()
-                   .strftime("%Y-%m-%dT%H:%M:%SZ"),
+        json.dump({"_generated": inventory_generated(),
                    "_note": "Written by seo/index_gate.py. Indexability is derived "
                             "from real inventory, never hand-edited.",
                    "threshold": THRESHOLD,

@@ -12,6 +12,8 @@
 ════════════════════════════════════════════════════════════════ */
 export const config = { maxDuration: 60 };
 
+import { hasInternalSecret, isCronAuthorized, setCors } from './lib/_security.js';
+
 /* ══════════════════════════════════════
    EVENTS SCRAPER
 ══════════════════════════════════════ */
@@ -966,6 +968,13 @@ async function runShopping(res) {
    ROUTER. Dispatches to the right scraper
 ══════════════════════════════════════ */
 export default async function handler(req, res) {
+  setCors(req, res, 'GET, OPTIONS');
+  if (req.method === 'OPTIONS') return res.status(204).end();
+  if (req.method !== 'GET') return res.status(405).json({ error: 'GET only' });
+  if (!isCronAuthorized(req) && !hasInternalSecret(req)) {
+    return res.status(401).json({ error: 'unauthorized' });
+  }
+
   const service = (req.query?.service || new URL(req.url || '/', 'http://x').searchParams.get('service') || 'all').toLowerCase();
   
   const t0 = Date.now();

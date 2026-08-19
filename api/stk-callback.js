@@ -9,6 +9,7 @@
 ══════════════════════════════════════════════════════════════ */
 
 import { deriveStatus, depositRequired } from './lib/_payment-rules.js';
+import { constantTimeEqual, setCors } from './lib/_security.js';
 
 function siteOrigin(req) {
   const host = req.headers['x-forwarded-host'] || req.headers.host;
@@ -17,9 +18,7 @@ function siteOrigin(req) {
 }
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  setCors(req, res, 'POST, OPTIONS');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -31,15 +30,15 @@ export default async function handler(req, res) {
      registered in stk-push, so a genuine callback carries this token
      and a forged one cannot.                                          */
   const expectedToken = process.env.PAYHERO_CALLBACK_TOKEN;
-  if (expectedToken) {
-    const supplied = (req.query && req.query.t) || '';
-    if (supplied !== expectedToken) {
-      console.error('[stk-callback] REJECTED. Bad or missing token from',
-                    req.headers['x-forwarded-for'] || 'unknown');
-      return res.status(401).json({ error: 'unauthorized' });
-    }
-  } else {
-    console.warn('[stk-callback] PAYHERO_CALLBACK_TOKEN unset. Accepting UNAUTHENTICATED callbacks');
+  if (!expectedToken) {
+    console.error('[stk-callback] PAYHERO_CALLBACK_TOKEN unset. Refusing callbacks');
+    return res.status(503).json({ error: 'callback_verification_unavailable' });
+  }
+  const supplied = (req.query && req.query.t) || req.headers['x-payhero-token'] || '';
+  if (!constantTimeEqual(supplied, expectedToken)) {
+    console.error('[stk-callback] REJECTED. Bad or missing token from',
+                  req.headers['x-forwarded-for'] || 'unknown');
+    return res.status(401).json({ error: 'unauthorized' });
   }
 
   try {
@@ -58,6 +57,13 @@ export default async function handler(req, res) {
     if (!externalReference) {
       console.warn('No external_reference in callback payload:', JSON.stringify(payload));
       return res.status(200).json({ received: true });
+    }
+
+    /* The old BAL-* path patched bookings directly and bypassed the
+       server-authoritative instalment ledger. Keep acknowledging legacy
+       provider retries, but never let them change booking state. */
+    if (externalReference.startsWith('BAL-')) {
+      return res.status(200).json({ received: true, type: 'retired_balance' });
     }
 
     // ── Declare Supabase creds at top of try{} ──────────────────────
@@ -94,50 +100,6 @@ export default async function handler(req, res) {
     if (externalReference.startsWith('PAYOUT-')) {
       console.log('[stk-callback] Payout callback received. Ignoring');
       return res.status(200).json({ received: true, type: 'payout' });
-    }
-
-    // ── Balance payment (BAL- prefix) ───────────────────────────────
-    // Guest is paying the remaining balance on an existing booking
-    if (externalReference.startsWith('BAL-')) {
-      if (isSuccess) {
-        const balRes = await fetch(
-          `${supabaseUrl}/rest/v1/apartment_bookings?balance_reference=eq.${encodeURIComponent(externalReference)}`
-            + `&balance_paid=is.false`,
-          {
-            method: 'PATCH',
-            headers: {
-              apikey:         serviceKey,
-              Authorization:  `Bearer ${serviceKey}`,
-              'Content-Type': 'application/json',
-              Prefer:         'return=representation',
-            },
-            body: JSON.stringify({
-              balance_paid:    true,
-              balance_paid_at: new Date().toISOString(),
-              status:          'paid_pending_checkin',
-            }),
-          }
-        );
-        const balRows = balRes.ok ? (await balRes.json().catch(() => [])) : [];
-        if (balRows[0]?.guest_id) {
-          fetch(`${siteOrigin(req)}/api/push-send`, {
-            method:  'POST',
-            headers: {
-              'Content-Type':   'application/json',
-              'x-admin-secret': process.env.PUSH_ADMIN_SECRET || '',
-            },
-            body: JSON.stringify({
-              user_id: balRows[0].guest_id,
-              persist: true,
-              title:   'Balance paid! ✅',
-              body:    'Your balance payment is confirmed. You\'re all set for check-in.',
-              url:     '/my-bookings.html',
-              kind:    'booking',
-            }),
-          }).catch(e => console.warn('[notif] balance push failed (non-fatal):', e.message));
-        }
-      }
-      return res.status(200).json({ received: true, type: 'balance', success: isSuccess });
     }
 
     if (!table) {

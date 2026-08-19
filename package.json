@@ -1,5 +1,11 @@
 {
   "type": "module",
+  "scripts": {
+    "check:syntax": "node scripts/check-syntax.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "seo:build": "python3 seo/run_all.py",
+    "seo:verify": "python3 seo/verify.py"
+  },
   "dependencies": {
     "bcryptjs": "^3.0.3",
     "ws": "^8.18.0"

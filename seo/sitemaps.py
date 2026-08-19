@@ -131,9 +131,12 @@ def main():
 
     files = []
     for b, items in buckets.items():
+        path = os.path.join(ROOT, f"sitemap-{b}.xml")
         if items:
             files.append((f"sitemap-{b}.xml", len(items)))
             write(f"sitemap-{b}.xml", "\n".join(items))
+        elif os.path.exists(path):
+            os.remove(path)
     write("sitemap-images.xml", "\n".join(img_entries), HEAD_IMG)
     files.append(("sitemap-images.xml", len(img_entries)))
 

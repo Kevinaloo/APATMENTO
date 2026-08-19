@@ -110,6 +110,21 @@ SERVICE_HUBS = {
                      "Earn and redeem rewards on every Cabana booking."),
 }
 
+# Must match the `service` values written by build_inventory.py. A hub may
+# describe a service without stock, but it must not claim an in-stock offer.
+HUB_SERVICES = {
+    "apartments.html": "stays",
+    "tours.html": "tours",
+    "flights.html": "flights",
+    "events.html": "events",
+    "carhire.html": "carhire",
+    "rides.html": "rides",
+    "food.html": "food",
+    "shopping.html": "shopping",
+    "roommates.html": "roommates",
+    "rewards.html": "rewards",
+}
+
 AMENITIES = ["Wi-Fi", "Backup power", "Secure parking", "Kitchen", "Air conditioning",
              "Washing machine", "24/7 security", "Workspace"]
 
@@ -131,12 +146,16 @@ def text_of(frag):
 def extract_faq(src):
     """Pull Q/A straight from the visible <details> blocks."""
     out = []
-    for m in re.finditer(r"<details\b[^>]*>(.*?)</details>", src, re.S | re.I):
-        block = m.group(1)
+    for m in re.finditer(r"<details\b([^>]*)>(.*?)</details>", src, re.S | re.I):
+        attrs, block = m.group(1), m.group(2)
         qm = re.search(r"<summary\b[^>]*>(.*?)</summary>", block, re.S | re.I)
         if not qm:
             continue
         q = text_of(qm.group(1))
+        # Many pages use <details> for filters and controls. Only visible FAQ
+        # components, or a summary that is plainly a question, become FAQPage.
+        if "faq" not in attrs.lower() and not q.endswith("?"):
+            continue
         a = text_of(block[qm.end():])
         if q and a and len(a) > 15:
             out.append((q, a))
@@ -225,6 +244,8 @@ def build_graph(kind, info, fname, src):
     t, d = title_of(src), meta(src, name="description")
     h1 = h1_of(src) or t
     img = og_image(src)
+    published = (meta(src, prop="article:published_time") or "2026-02-01")[:10]
+    modified = (meta(src, prop="article:modified_time") or "2026-08-19")[:10]
     faqs = extract_faq(src)
     nodes = []
 
@@ -247,21 +268,28 @@ def build_graph(kind, info, fname, src):
         crumbs += [(label, None)]
         nodes.append(S.webpage(url, t, d, url + "#breadcrumb", img, page_type="CollectionPage"))
         nodes.append(S.breadcrumbs(url, crumbs))
+        service = HUB_SERVICES[fname]
+        oc, olo, ohi = inventory_for("kenya", "nairobi", service=service)
         if lo or hi:
             rv, rc = rating_for(fname[:-5])
-            oc, olo, ohi = inventory_for("kenya", "nairobi")
             nodes.append(S.product_service(url, f"Cabana {label}", blurb,
                                            olo or lo, ohi or hi, category=label,
                                            rating=rv, count=rc, offer_count=oc))
-        nodes.append({
+        service_node = {
             "@type": "Service", "@id": url + "#service", "name": f"Cabana {label}",
             "description": blurb, "serviceType": label, "provider": {"@id": S.ORG_ID},
             "areaServed": {"@type": "Continent", "name": "Africa"},
             "audience": {"@type": "Audience", "audienceType": "Travellers to Africa"},
-            "offers": {"@type": "Offer", "priceCurrency": "USD",
-                       "availability": "https://schema.org/InStock",
-                       "seller": {"@id": S.ORG_ID}},
-        })
+        }
+        if oc:
+            service_node["offers"] = {
+                "@type": "AggregateOffer", "priceCurrency": "USD",
+                "lowPrice": str(olo), "highPrice": str(ohi),
+                "offerCount": str(oc),
+                "availability": "https://schema.org/InStock",
+                "seller": {"@id": S.ORG_ID},
+            }
+        nodes.append(service_node)
         # Continental coverage list — feeds sitelink/carousel eligibility.
         nodes.append(S.itemlist(url, f"{label} by country",
                                 [(c["name"], f"{SITE}/{c['slug']}-travel")
@@ -297,7 +325,8 @@ def build_graph(kind, info, fname, src):
 
     elif kind in ("guide", "comparison", "editorial", "supply"):
         crumbs += [("Guides", f"{SITE}/guides"), (h1[:60], None)]
-        nodes.append(S.webpage(url, t, d, url + "#breadcrumb", img))
+        nodes.append(S.webpage(url, t, d, url + "#breadcrumb", img,
+                               date_modified=modified))
         nodes.append(S.breadcrumbs(url, crumbs))
         nodes.append({
             "@type": "Article", "@id": url + "#article",
@@ -305,7 +334,7 @@ def build_graph(kind, info, fname, src):
             "image": [img], "author": {"@id": S.ORG_ID},
             "publisher": {"@id": S.ORG_ID}, "isPartOf": {"@id": S.SITE_ID},
             "mainEntityOfPage": {"@id": url + "#webpage"},
-            "datePublished": "2026-02-01", "dateModified": "2026-08-13",
+            "datePublished": published, "dateModified": modified,
             "inLanguage": "en", "articleSection": "Africa travel",
             "speakable": {"@type": "SpeakableSpecification",
                           "cssSelector": [".hero h1", ".hero .sub", ".sec p"]},
@@ -344,6 +373,25 @@ MARK_CLOSE = "<!-- /CABANA-SEO-GRAPH -->"
 
 
 def inject(src, g):
+    # Older builds wrote the generated entity graph without ownership markers,
+    # and car hire kept a separate FAQ block that duplicated the graph. Remove
+    # only those known legacy blocks before writing one source of truth.
+    def _drop_legacy(m):
+        raw = m.group(1)
+        compact = re.sub(r"\s+", "", raw)
+        if '"@graph"' in compact and '"https://cabana.africa/#organization"' in compact:
+            return ""
+        if '"@id":"https://cabana.africa/carhire#faq2"' in compact:
+            return ""
+        try:
+            if json.loads(raw).get("@type") == "Article":
+                return ""
+        except (ValueError, AttributeError):
+            pass
+        return m.group(0)
+
+    src = re.sub(r'<script\s+type="application/ld\+json"[^>]*>(.*?)</script>',
+                 _drop_legacy, src, flags=re.S | re.I)
     payload = (MARK_OPEN + '\n<script type="application/ld+json">'
                + json.dumps(g, ensure_ascii=False, separators=(",", ":"))
                + "</script>\n" + MARK_CLOSE)

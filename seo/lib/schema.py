@@ -107,7 +107,7 @@ def website():
         "potentialAction": [{
             "@type": "SearchAction",
             "target": {"@type": "EntryPoint",
-                       "urlTemplate": f"{SITE}/apartments.html?q={{search_term_string}}"},
+                       "urlTemplate": f"{SITE}/apartments?q={{search_term_string}}"},
             "query-input": "required name=search_term_string",
         }],
     }

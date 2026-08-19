@@ -17,6 +17,7 @@
 
 import { validateInstalment, depositRequired } from './lib/_payment-rules.js';
 import { pollPayment } from './lib/_poll-payment.js';
+import { requireUser, setCors } from './lib/_security.js';
 
 const PAYHERO_URL   = 'https://backend.payhero.co.ke/api/v2/payments';
 const FETCH_TIMEOUT = 12000;
@@ -44,11 +45,12 @@ function sbHeaders(key, extra = {}) {
 }
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  setCors(req, res, 'GET, POST, OPTIONS');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
+
+  const user = await requireUser(req, res);
+  if (!user) return;
 
   /* Payment status polling lives here rather than in its own file: the
      Hobby plan caps a deployment at 12 Serverless Functions and this
@@ -120,6 +122,10 @@ export default async function handler(req, res) {
     }
     if (!booking) {
       return res.status(404).json({ error: 'No booking matches this reference' });
+    }
+    const bookingOwner = booking.guest_id || booking.user_id;
+    if (!bookingOwner || bookingOwner !== user.id) {
+      return res.status(403).json({ error: 'not_your_booking' });
     }
 
     // ── Authoritative running total, summed from the ledger ─────────

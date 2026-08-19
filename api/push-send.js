@@ -21,6 +21,7 @@
    ═══════════════════════════════════════════════════════════════════ */
 
 import crypto from 'node:crypto';
+import { hasInternalSecret, isCronAuthorized, setCors } from './lib/_security.js';
 
 const VAPID_PUBLIC  = process.env.VAPID_PUBLIC_KEY;
 const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY;
@@ -214,8 +215,19 @@ async function handleCron(req, res) {
 
 /* ── handler ─────────────────────────────────────────────────────── */
 export default async function handler(req, res) {
+  setCors(req, res, 'POST, OPTIONS');
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
+
+  const action = req.query?.action || (req.body && req.body.action);
+  // Authenticate before reporting configuration state. Otherwise an
+  // anonymous caller can probe secrets and, when the shared secret is
+  // missing, the old condition silently opened a bulk-notification API.
+  const authorized = hasInternalSecret(req, 'PUSH_ADMIN_SECRET')
+    || (action === 'cron' && isCronAuthorized(req));
+  if (!authorized) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
 
   if (!VAPID_PUBLIC || !VAPID_PRIVATE || !SERVICE_KEY) {
     return res.status(500).json({
@@ -228,14 +240,7 @@ export default async function handler(req, res) {
     });
   }
 
-  // This endpoint can push to any user. It must never be callable
-  // from the browser, so gate it on a shared secret.
-  if (ADMIN_SECRET && req.headers['x-admin-secret'] !== ADMIN_SECRET) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
-
   // action=cron → fire scheduled campaigns
-  const action = req.query?.action || (req.body && req.body.action);
   if (action === 'cron') return handleCron(req, res);
 
   try {

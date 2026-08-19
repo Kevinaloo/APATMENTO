@@ -32,6 +32,14 @@ def load(name):
 
 RATINGS, INVENTORY = load("ratings.json"), load("inventory.json")
 
+HUB_SERVICES = {
+    "apartments.html": "stays", "tours.html": "tours",
+    "flights.html": "flights", "events.html": "events",
+    "carhire.html": "carhire", "rides.html": "rides",
+    "food.html": "food", "shopping.html": "shopping",
+    "roommates.html": "roommates", "rewards.html": "rewards",
+}
+
 
 def main():
     pages = sorted(glob.glob(os.path.join(ROOT, "*.html")))
@@ -65,25 +73,39 @@ def main():
         if "AggregateOffer" in src and not INVENTORY:
             fails.append(f"{name}: AggregateOffer emitted but inventory.json is empty. "
                          "Fabricated stock — run seo/build_inventory.py.")
+        hub_service = HUB_SERVICES.get(name)
+        if "AggregateOffer" in src and hub_service:
+            available = sum(int((services.get(hub_service) or {}).get("count") or 0)
+                            for services in INVENTORY.values())
+            if available == 0:
+                fails.append(f"{name}: AggregateOffer emitted with no {hub_service} inventory")
 
         if noindex:
             continue
         indexable += 1
 
         # ── on-page basics ──
-        t = re.search(r"<title>(.*?)</title>", src, re.S)
-        d = re.search(r'<meta name="description" content="(.*?)"', src, re.S)
+        title_tags = re.findall(r"<title\b[^>]*>(.*?)</title>", src, re.S | re.I)
+        desc_tags = re.findall(
+            r'<meta\b(?=[^>]*\bname=["\']description["\'])[^>]*\bcontent=["\'](.*?)["\'][^>]*>',
+            src, re.S | re.I)
+        if len(title_tags) != 1:
+            fails.append(f"{name}: {len(title_tags)} <title> tags (must be exactly 1)")
+        if len(desc_tags) != 1:
+            fails.append(f"{name}: {len(desc_tags)} meta descriptions (must be exactly 1)")
+        t = title_tags[0] if title_tags else None
+        d = desc_tags[0] if desc_tags else None
         if not t:
             fails.append(f"{name}: no <title>")
         else:
-            tt = html.unescape(t.group(1)).strip()
+            tt = html.unescape(t).strip()
             titles[tt] += 1
             if len(tt) > 62:
                 fails.append(f"{name}: title {len(tt)} chars (max 62)")
         if not d:
             fails.append(f"{name}: no meta description")
         else:
-            dd = html.unescape(d.group(1)).strip()
+            dd = html.unescape(d).strip()
             descs[dd] += 1
             if len(dd) > 165:
                 fails.append(f"{name}: description {len(dd)} chars (max 165)")

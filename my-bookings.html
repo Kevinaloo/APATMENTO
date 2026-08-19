@@ -776,7 +776,7 @@ async function payRest(bookingId) {
   const s = CB.settlement(b);
   if (s.outstanding <= 0) return showToast('This booking is already paid in full.');
 
-  const Pay = window.CabanaPay || window.ApatmentoPay;
+  const Pay = window.CabanaPay || window.CabanaPay;
   if (!Pay) return showToast('Payment is unavailable right now. Please refresh.');
 
   const btn = document.querySelector('#card-' + bookingId + ' .pay-btn');

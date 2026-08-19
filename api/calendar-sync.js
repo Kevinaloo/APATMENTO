@@ -7,6 +7,8 @@
 ════════════════════════════════════════════════════════════════ */
 export const config = { maxDuration: 30 };
 
+import { requireUser, setCors } from './lib/_security.js';
+
 const SUPA_URL = process.env.SUPABASE_URL;
 const SUPA_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -78,7 +80,70 @@ async function db(method, path, body) {
   return method === 'GET' ? r.json() : null;
 }
 
+function trustedCalendarUrl(value) {
+  let url;
+  try { url = new URL(value); } catch { return null; }
+  if (url.protocol !== 'https:' || url.username || url.password) return null;
+  const host = url.hostname.toLowerCase();
+  const allowed = [
+    'airbnb.com', 'booking.com', 'vrbo.com', 'homeaway.com', 'expedia.com',
+    'calendar.google.com',
+  ];
+  return allowed.some(domain => host === domain || host.endsWith(`.${domain}`)) ? url : null;
+}
+
+async function fetchCalendar(value) {
+  let url = trustedCalendarUrl(value);
+  if (!url) throw Object.assign(new Error('Unsupported calendar source'), { status: 400 });
+
+  for (let hop = 0; hop < 4; hop += 1) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 20000);
+    let response;
+    try {
+      response = await fetch(url, {
+        signal: ctrl.signal,
+        redirect: 'manual',
+        headers: { 'User-Agent': 'Cabana Calendar Sync/1.0' },
+      });
+    } finally {
+      clearTimeout(timer);
+    }
+
+    if (response.status >= 300 && response.status < 400) {
+      const next = trustedCalendarUrl(new URL(response.headers.get('location') || '', url).href);
+      if (!next) throw Object.assign(new Error('Calendar redirected to an unsupported source'), { status: 400 });
+      url = next;
+      continue;
+    }
+    return response;
+  }
+  throw Object.assign(new Error('Too many calendar redirects'), { status: 400 });
+}
+
+async function requireListingOwner(res, listingId, user) {
+  const rows = await db('GET', `listings?id=eq.${encodeURIComponent(listingId)}&select=*&limit=1`);
+  const listing = rows?.[0];
+  if (!listing) {
+    res.status(404).json({ error: 'listing_not_found' });
+    return null;
+  }
+  const ownerId = listing.partner_id || listing.host_id || listing.user_id || listing.owner_id;
+  if (!ownerId || ownerId !== user.id) {
+    res.status(403).json({ error: 'not_your_listing' });
+    return null;
+  }
+  return listing;
+}
+
 export default async function handler(req, res) {
+  setCors(req, res, 'GET, POST, OPTIONS');
+  if (req.method === 'OPTIONS') return res.status(204).end();
+  if (!['GET', 'POST'].includes(req.method)) return res.status(405).json({ error: 'Method not allowed' });
+
+  const user = await requireUser(req, res);
+  if (!user) return;
+
   const { action, listingId, calendarUrl, source } = 
     req.method === 'GET' 
       ? Object.fromEntries(new URL(req.url, 'http://x').searchParams)
@@ -88,6 +153,7 @@ export default async function handler(req, res) {
   if (action === 'export') {
     if (!listingId) return res.status(400).json({ error: 'listingId required' });
     try {
+      if (!(await requireListingOwner(res, listingId, user))) return;
       const bookings = await db('GET', `apartment_bookings?listing_id=eq.${listingId}&status=eq.confirmed&select=id,checkin_date,checkout_date,guest_code,payment_reference`);
       const ical = generateICal(listingId, bookings || []);
       res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
@@ -101,19 +167,13 @@ export default async function handler(req, res) {
   // ── IMPORT: sync external calendar feed ──
   if (action === 'import') {
     if (!listingId || !calendarUrl) return res.status(400).json({ error: 'listingId and calendarUrl required' });
-    
-    const allowed = ['airbnb.com', 'booking.com', 'vrbo.com', 'homeaway.com', 'expedia.com', 'google.com/calendar'];
-    if (!allowed.some(d => calendarUrl.includes(d))) {
+    if (!trustedCalendarUrl(calendarUrl)) {
       return res.status(400).json({ error: 'Unsupported calendar source' });
     }
 
     try {
-      const ctrl = new AbortController();
-      setTimeout(() => ctrl.abort(), 20000);
-      const r = await fetch(calendarUrl, { 
-        signal: ctrl.signal,
-        headers: { 'User-Agent': 'Apatmento Calendar Sync/1.0' }
-      });
+      if (!(await requireListingOwner(res, listingId, user))) return;
+      const r = await fetchCalendar(calendarUrl);
       if (!r.ok) throw new Error(`Calendar fetch failed: ${r.status}`);
       const icalText = await r.text();
       const events = parseICal(icalText);
@@ -135,7 +195,7 @@ export default async function handler(req, res) {
 
       return res.status(200).json({ ok: true, imported: rows.length, events });
     } catch (e) {
-      return res.status(500).json({ error: e.message });
+      return res.status(e.status || 500).json({ error: e.message });
     }
   }
 

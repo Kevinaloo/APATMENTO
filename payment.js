@@ -168,6 +168,17 @@
 
   let lastOpts = null;
 
+  async function accessToken() {
+    const cached = window.ApaSession?.peekSession?.();
+    if (cached?.access_token) return cached.access_token;
+    const client = window.ApaSession?.client?.() || window.sb;
+    if (!client?.auth?.getSession) return '';
+    try {
+      const { data } = await client.auth.getSession();
+      return data?.session?.access_token || '';
+    } catch (_) { return ''; }
+  }
+
   async function start(opts) {
     lastOpts = opts;
     pollAttempts = 0;
@@ -175,9 +186,19 @@
     render('sending', opts);
 
     try {
+      const token = await accessToken();
+      if (!token) {
+        const error = { error: 'authentication_required' };
+        render('error', { ...opts, errorMsg: 'Please sign in again before starting payment.' });
+        if (opts.onFailure) opts.onFailure(error);
+        return;
+      }
       const res = await fetch('/api/stk-push', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({
           amount: opts.amount,
           phone: opts.phone,
