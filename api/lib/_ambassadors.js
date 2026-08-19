@@ -650,17 +650,17 @@ function welcomeEmail(a) {
 }
 
 /* ════════════════════════════════════════════════════════════════════════ */
-export default async function handler(req, res) {
+
+/* Exported for use by api/rewards.js — keeps the ambassador routes within
+   the 12-function limit on Vercel Hobby without any client-side URL changes.
+   The public /api/ambassadors path is rewritten to /api/rewards by vercel.json. */
+export async function ambassadorHandler(req, res) {
   setCors(req, res, 'GET, POST, OPTIONS');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (!SERVICE_KEY)             return res.status(500).json({ error: 'Server not configured.' });
 
   const a = req.query.action;
 
-  /* Coarse per-IP limit in front of everything. The per-ambassador claim
-     velocity limit in Postgres is the one that shapes behaviour; this one
-     just stops a stranger hammering the gate. consumeRateLimit writes the
-     429 itself and returns false, so there is nothing to send here. */
   if (!consumeRateLimit(req, res, 'ambassadors', 120, 60_000)) return;
 
   try {
