@@ -127,7 +127,26 @@ async function handleCloseBookings(req, res) {
     out[table] = { scanned: rows.length, closed, refunds_flagged: refunds };
   }
 
-  return res.status(200).json({ ok: true, ran_at: new Date().toISOString(), ...out });
+  /* Give the calendar back. A hold whose stay has ended still satisfies
+     the exclusion constraint, so without this every sold night would
+     block that listing forever and the property would quietly go dark
+     after its first booking. Cancellations release instantly via
+     trigger; this catches the ones the clock closed. */
+  let holdsReleased = null;
+  try {
+    const hr = await fetch(`${supabaseUrl}/rest/v1/rpc/cabana_release_expired_holds`, {
+      method: 'POST',
+      headers: H({ 'Content-Type': 'application/json' }),
+      body: '{}',
+    });
+    holdsReleased = hr.ok ? await hr.json() : `http_${hr.status}`;
+  } catch (e) {
+    holdsReleased = `error: ${e.message}`;
+  }
+
+  return res.status(200).json({
+    ok: true, ran_at: new Date().toISOString(), holds_released: holdsReleased, ...out,
+  });
 }
 
 /* Columns added by schema-bookings-lifecycle.sql. If that migration

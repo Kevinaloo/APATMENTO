@@ -14,9 +14,26 @@
    reaches 100%.
 
      paid = 0                      → pending_payment      (nothing yet)
-     0 < paid < deposit_required   → part_paid            (money held, NOT confirmed)
-     deposit_required <= paid < total → confirmed_balance_due (confirmed, no code)
+     0 < paid < deposit_required   → part_paid            (money held, NO dates held)
+     deposit_required <= paid < total → confirmed_balance_due (DATES HELD, no code)
      paid >= total                 → paid_pending_checkin (code released)
+     deposit cleared too late      → dates_unavailable    (money → credit)
+
+   DATES ARE NOT STATUS
+   ────────────────────
+   Reaching the deposit is what claims the calendar, and the claim lives
+   in public.listing_holds behind a daterange exclusion constraint — not
+   in this string. Below the deposit NOTHING is reserved: the money is
+   credit toward the stay and the nights stay on sale to everyone else.
+
+   That is a real consequence of accepting small amounts, so it is stated
+   plainly rather than papered over. A guest sitting at part_paid can lose
+   the dates to whoever reaches 25% first. M-Pesa money cannot be refused
+   mid-flight, so that payment becomes non-expiring wallet credit and the
+   booking lands on 'dates_unavailable'.
+
+   Only the database may write 'dates_unavailable' (cabana_settle_booking),
+   because only the database can know whether the claim succeeded.
 
    If the guest chose "pay in full" that choice is binding: each push
    must clear the entire outstanding balance.
@@ -167,6 +184,15 @@ export function hasEnded(booking, now = new Date()) {
 export function canReleaseCode(booking, now = new Date()) {
   if (!booking)            return { ok: false, reason: 'no_booking' };
   if (booking.cancelled_at) return { ok: false, reason: 'cancelled' };
+
+  /* Paid in full is not the same as holding the room. A booking can be
+     fully settled and still have lost its nights to a guest who reached
+     the deposit first; the money is already credit. Releasing a code here
+     would send someone to a door that is not theirs and fire the host
+     payout for a stay that cannot happen. */
+  if (booking.status === 'dates_unavailable') {
+    return { ok: false, reason: 'dates_unavailable' };
+  }
 
   const s = settlementOf(booking);
   if (!s.settled) {

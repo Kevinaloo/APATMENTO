@@ -702,30 +702,75 @@
       };
 
       if (tEl && mEl) {
-        const who   = trip.guestName ? trip.guestName + ', you\u2019re in.' : 'You\u2019re in.';
+        /* `holds_dates` comes straight from the inventory table: it is
+           true only when a row in listing_holds actually exists for this
+           booking. It is never inferred from the status string and never
+           from the amount, because those are what lied before. A KES 10
+           instalment on a KES 2,300 stay used to print "Dates held" while
+           holding nothing at all, and the guest had no way to know the
+           room was still on sale behind them. */
+        const r     = (opts && opts.result) || {};
+        const held  = r.holds_dates === true;
+        const lost  = r.dates_lost  === true;
+        const short = Math.max(0, Number(r.shortfall_to_confirm || 0));
+        const due   = Math.max(0, Number(r.outstanding || 0));
+        const cred  = Math.max(0, Number(r.credited || 0));
+        const kes   = n => 'KES\u2009' + Math.round(n).toLocaleString('en-KE');
+
+        const name  = trip.guestName ? trip.guestName + ', ' : '';
         const where = trip.property || 'Your stay';
         const when  = trip.checkin && trip.checkout
           ? fmtDay(trip.checkin) + ' \u2192 ' + fmtDay(trip.checkout)
           : '';
         const nn = trip.nights ? trip.nights + (trip.nights > 1 ? ' nights' : ' night') : '';
 
-        tEl.textContent = who;
+        /* The headline follows the calendar, not the transaction. Only a
+           guest who actually holds their nights is told they are in. */
+        let headline, note, tone;
+
+        if (lost) {
+          headline = name + 'these dates just went.';
+          note = cred > 0
+            ? 'Someone completed their deposit first \u00b7 your ' + kes(cred)
+              + ' is now credit and never expires'
+            : 'Someone completed their deposit first \u00b7 nothing was charged';
+          tone = 'lost';
+
+        } else if (r.fully_paid === true || st === 'paid_pending_checkin') {
+          headline = name + 'you\u2019re in.';
+          note = 'Paid in full \u00b7 your check-in code is ready';
+          tone = 'settled';
+
+        } else if (held) {
+          headline = name + 'you\u2019re in.';
+          note = 'Dates held \u00b7 ' + kes(due) + ' before your code unlocks';
+          tone = 'held';
+
+        } else {
+          /* Below the deposit. The money is real and it counts toward the
+             stay, but it has not bought the calendar, and saying it has is
+             how a guest arrives to find the room gone. */
+          headline = name + 'that\u2019s a start.';
+          note = short > 0
+            ? kes(short) + ' more secures these dates \u00b7 not held yet'
+            : 'These dates are not held yet \u00b7 finish up inside';
+          tone = 'open';
+        }
+
+        tEl.textContent = headline.charAt(0).toUpperCase() + headline.slice(1);
         mEl.innerHTML =
             '<span class="cbp-trip-prop">' + _esc(where) + '</span>'
           + (trip.location ? '<span class="cbp-trip-loc">' + _esc(trip.location) + '</span>' : '')
-          + (when ? '<span class="cbp-trip-when">' + when + (nn ? '  \u00b7  ' + nn : '') + '</span>' : '');
-
-        /* Only the wholly-unpaid edge case needs a nudge, and even then
-           it stays warm rather than corrective. */
-        if (st === 'part_paid') {
-          mEl.innerHTML += '<span class="cbp-trip-note">Dates held \u00b7 finish up inside</span>';
-        }
+          + (when ? '<span class="cbp-trip-when">' + when + (nn ? '  \u00b7  ' + nn : '') + '</span>' : '')
+          + '<span class="cbp-trip-note cbp-note-' + tone + '">' + _esc(note) + '</span>';
       }
 
       _loadVideo(V.suitcase, true); /* loop so it never freezes on last frame */
       veil.classList.remove('cbp-heavy');
       _panel('cbp-success');
-      foot.textContent = 'Confirmation sent to your phone';
+      foot.textContent = (opts && opts.result && opts.result.dates_lost)
+        ? 'Your credit is in your account \u00b7 pick new dates any time'
+        : 'Confirmation sent to your phone';
       try { navigator.vibrate && navigator.vibrate([30, 60, 30]); } catch(_){}
     }
 
@@ -794,8 +839,13 @@
         });
         let d = await r.json().catch(() => ({}));
         /* Any non-pending, non-failed status = money cleared. */
+        /* 'dates_unavailable' is terminal too. The money cleared; the
+           calendar did not. Without it here the poller ran to timeout and
+           showed the facepalm video for a payment that actually succeeded
+           and has already been converted to credit. */
         if (d.status === 'paid' || d.status === 'paid_pending_checkin'
-            || d.status === 'confirmed_balance_due' || d.status === 'part_paid') {
+            || d.status === 'confirmed_balance_due' || d.status === 'part_paid'
+            || d.status === 'dates_unavailable') {
           clearInterval(_pollTimer);
           opts.result = d;
           _cut(() => _setState('success', opts));

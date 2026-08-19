@@ -181,16 +181,30 @@
     if (st === 'failed')
       return made('failed', 'Payment failed', 'No money was taken', 'bad', 'upcoming');
 
+    /* The dates went to someone who reached their deposit first. Only
+       cabana_settle_booking writes this, and it has already turned the
+       money into credit by the time we read it, so this is never a
+       request for payment — it is a receipt with an apology. */
+    if (st === 'dates_unavailable')
+      return made('dates_unavailable', 'Dates no longer available',
+        s.paid > 0
+          ? 'KES ' + s.paid.toLocaleString() + ' returned as credit \u00b7 never expires'
+          : 'These dates were taken before your deposit cleared',
+        'warn', 'past');
+
     /* Money states, cheapest first. */
     if (s.paid <= 0)
       return made('unpaid', 'Awaiting payment',
         'Nothing has been paid yet', 'warn', 'upcoming');
 
+    /* "Held" used to be the word here and it was doing damage: the money
+       is held, the dates are not, and a guest reading quickly took it to
+       mean the room was theirs. Say which is which. */
     if (!s.confirmed)
-      return made('part_paid', 'Not confirmed',
-        'KES ' + s.paid.toLocaleString() + ' held · KES '
+      return made('part_paid', 'Dates not held',
+        'KES ' + s.paid.toLocaleString() + ' paid · KES '
         + Math.max(0, s.deposit - s.paid).toLocaleString()
-        + ' more confirms these dates', 'warn', 'upcoming');
+        + ' more secures these dates', 'warn', 'upcoming');
 
     if (!s.settled)
       return made('balance_due', 'Dates held',

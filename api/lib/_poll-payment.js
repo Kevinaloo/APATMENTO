@@ -257,6 +257,40 @@ async function settleView(supaUrl, H, ledger, extra = {}) {
   const table = ledger.booking_table || 'apartment_bookings';
   const ref   = encodeURIComponent(ledger.booking_ref);
 
+  /* ── STAYS: settle inside the database ────────────────────────────
+     Re-summing the ledger over PostgREST and then PATCHing the booking
+     is a read-modify-write across two round trips, which is exactly the
+     shape that loses a race. Two M-Pesa payments clearing at the same
+     moment for the same nights both read "no hold yet" and both wrote a
+     confirmation, and nothing anywhere refused the second one.
+
+     cabana_settle_booking does the whole thing under a row lock, and the
+     claim itself is an INSERT against an exclusion constraint, so the
+     database decides the winner rather than whichever lambda was
+     scheduled first. It returns the booking's position, not the
+     instalment's. */
+  if (table === 'apartment_bookings') {
+    try {
+      const rr = await fetch(`${supaUrl}/rest/v1/rpc/cabana_settle_booking`, {
+        method: 'POST',
+        headers: H({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ p_booking_ref: ledger.booking_ref }),
+      });
+      if (rr.ok) {
+        const s = await rr.json();
+        if (s && s.ok) return { ...s, ...extra };
+        console.warn('[poll-payment] settle rejected:', s && s.error);
+      } else {
+        console.warn('[poll-payment] settle http', rr.status, await rr.text());
+      }
+    } catch (e) {
+      console.warn('[poll-payment] settle rpc:', e.message);
+    }
+    /* Fall through to the legacy path below only if the RPC is missing
+       or unreachable, so a stale deploy still settles money correctly —
+       it just cannot claim dates. */
+  }
+
   const sr = await fetch(
     `${supaUrl}/rest/v1/booking_payments`
       + `?booking_ref=eq.${ref}&status=eq.paid&select=amount`,
