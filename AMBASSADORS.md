@@ -1,0 +1,195 @@
+# The Ambassador Programme
+
+A small, hand-picked field team who bring hosts, service providers and
+travellers onto Cabana, and earn a share of what those people go on to do for
+a full year.
+
+This is not the agent network. `/api/agents.js` is deliberately self-serve,
+because a host is the right judge of whether to trust an agent. An ambassador
+speaks *for Cabana*, so Cabana picks them — one email at a time, typed in by
+an admin.
+
+---
+
+## The rate card
+
+Commission is a share of **Cabana's service fee**, not of the booking. The fee
+is 10% of booking value, so an ambassador on a traveller earns 15% of that 10%
+— 1.5% of the booking. Say that plainly wherever it is displayed.
+
+| | traveller | host / service provider |
+|---|---|---|
+| **ambassador** | **15%** | **10%** |
+| ordinary user | 10% | 5% |
+
+Both tiers earn for **365 days** from the day the referral lands. Ordinary
+users were previously on 20% / 10%; halving them is what makes the ambassador
+tier worth being picked for.
+
+Worked example: a traveller an ambassador brought books a KES 10,000 stay.
+Cabana's fee is KES 1,000. The ambassador earns KES 150. Every booking that
+person makes, for a year.
+
+### Where the numbers live
+
+Four copies, because each is needed at a different moment:
+
+| Where | What it does |
+|---|---|
+| `schema-ambassadors.sql` → `public.referral_rate()` | **the authority** |
+| `api/rewards.js` → `RATE_CARD` | stamps the rate onto the referral |
+| `api/ambassadors.js` → `RATE_CARD` | echoed to the dashboard for display |
+| `ambassadors.html`, `ambassador-dashboard.html` | shown to a human |
+
+`tests/rate-card.test.mjs` fails if any of them drift. **Change a rate in the
+SQL first, then run that test and follow it.**
+
+---
+
+## How access works
+
+Three conditions, all checked in Postgres by `public.ambassador_gate()`:
+
+1. The signed-in email is on `ambassador_allowlist` with `revoked_at IS NULL`.
+2. `auth.users.email_confirmed_at` is set.
+3. The ambassador is not suspended.
+
+**Condition 2 is the load-bearing one.** Supabase will hold an unconfirmed
+address on a fresh account, so without it, knowing an ambassador's email would
+be the same as being one: sign up as them, never confirm, walk in.
+
+The dashboard's own check is a courtesy that saves a redirect. It is not the
+lock. Every route re-derives the caller from `auth.uid()` and re-runs the gate.
+
+### Inviting someone
+
+Sign in as an admin (`apatmento@gmail.com`, `worlddossy@gmail.com`) and open
+`/ambassadors.html` — the roster console is on that page. Add the email, and
+they are sent an invitation.
+
+They must then sign in with **that exact address** and confirm it.
+
+### Revoking
+
+Revocation is a timestamp, never a delete, and it never touches earnings
+already accrued. You want to be able to answer "who had access on the day that
+booking was attributed" a year later, and someone who did the work before
+leaving is still owed for it.
+
+---
+
+## The anti-fraud model
+
+The single most important property: **nothing pays for a signup. It pays when
+the person you brought actually earns.** A fake host is worth exactly nothing,
+so there is no reason to invent one, and the most common way these programmes
+rot never starts.
+
+On top of that:
+
+| Vector | What stops it |
+|---|---|
+| Claiming hosts already on the platform | `ambassador_claim_lead` refuses a contact matching an existing account or listing |
+| Poaching a teammate's prospect | One live claim per normalised contact, enforced by a partial unique index |
+| Sitting on a phone book | Claims lapse after 45 days; 8/hour and 25/day velocity caps |
+| Farming the existing user base with a ref link | Attribution refused for accounts older than 48 hours |
+| Self-referral | DB check constraint plus an API check |
+| Book-now-refund-later loops | Commission is held `COMMISSION_HOLD_DAYS` (default 14) before it is withdrawable |
+| Retroactive repricing | The rate is stamped at referral creation and never recomputed |
+
+Velocity breaches raise a weighted row in `ambassador_fraud_signals`, which
+drives `ambassadors.risk_score` (a 45-day decayed sum). Crossing a threshold is
+a prompt for a human, not an automatic ban. An automated system that can
+destroy someone's earnings on a heuristic will eventually do it to your best
+ambassador on a Friday night.
+
+---
+
+## Onboarding a host on their behalf
+
+A host who has never used Cabana will not finish a seven-step form on a phone
+in a matatu. The ambassador sitting next to them will.
+
+`draft-listing` writes to `ambassador_listing_drafts`, never to `listings`. The
+draft is not live and is not owned by the ambassador — `partner_id` stays null
+until the real host has an account and accepts it. So `listings` remains the
+set of things a real host has stood behind, and a fabricated draft is worth
+nothing to anybody.
+
+---
+
+## Deploying
+
+### 1 · Database
+
+```bash
+psql "$DATABASE_URL" -f schema-ambassadors.sql
+```
+
+Idempotent and additive — safe to re-run. It creates six tables and widens
+`referrals` / `referral_earnings` with a tier, a stamped rate and a hold
+timestamp.
+
+One behaviour change to be aware of: it **drops the `DEFAULT 0.20` on
+`referral_earnings.commission_rate`**. That default was the retired top rate,
+and any insert omitting the column was silently paying it. After this, an
+omission fails loudly instead of expensively.
+
+### 2 · Environment
+
+Everything already used by `/api/rewards.js`, plus two optional tunables:
+
+| Variable | Default | What it does |
+|---|---|---|
+| `COMMISSION_HOLD_DAYS` | `14` | Days before commission is withdrawable |
+| `REFERRAL_ATTRIBUTION_HOURS` | `48` | How long after signup a ref code still attributes |
+
+`RESEND_API_KEY` is what sends invitations. Without it, invites are created
+silently and you have to tell people yourself.
+
+### 3 · Files
+
+Static, so a normal deploy picks them up:
+
+```
+ambassadors.html              gateway + admin roster console
+ambassador-dashboard.html     the dashboard
+ambassadors-page.js           gateway logic
+ambassador-dashboard.js       dashboard logic
+apa-ambassador.css            shared design system (light/dark/system)
+apa-ambassador.js             shared runtime (API, theme, motion)
+apa-referral-capture.js       referral attribution
+api/ambassadors.js            the API
+```
+
+---
+
+## Tests
+
+```bash
+./tests/run-ambassador-tests.sh     # 47 · SQL gate, claims, velocity, RLS
+node --test tests/rate-card.test.mjs #  6 · the six numbers agree everywhere
+./tests/ui/run-ambassador-ui.sh     # 42 · real Chromium, both themes, phone
+```
+
+The SQL suite spins a throwaway Postgres, applies the migration twice to prove
+idempotency, and tears it down. The UI suite installs Playwright into a scratch
+directory rather than the repo, because this is a static site with no
+`package.json` dependencies and adding one would change how it deploys.
+
+---
+
+## Things worth not undoing
+
+- **The confirmed-email check in `ambassador_gate()`.** Remove it and the
+  allowlist becomes decorative.
+- **No `UPDATE` policy on `ambassadors`.** Grant one and a suspended
+  ambassador can set their own status back to active.
+- **No `INSERT` policy on `ambassador_leads`.** Writes go through
+  `ambassador_claim_lead()`, which is where dedupe, velocity and the
+  already-on-platform check live. A direct insert skips all three.
+- **The stamped rate.** If payout ever looks the rate up again instead of
+  reading `referrals.commission_rate`, a rate change silently reprices
+  history.
+- **`rpcAsUser` passing the user's JWT.** Using the service key there makes
+  `auth.uid()` null and disarms every ownership check in the schema at once.
