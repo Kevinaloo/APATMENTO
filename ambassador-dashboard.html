@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<meta name="robots" content="noindex, nofollow"/>
+<meta name="theme-color" content="#F2F3FA"/>
+<title>Ambassador Dashboard · Cabana</title>
+<meta name="description" content="Cabana ambassador dashboard."/>
+
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&display=swap"/>
+<link rel="stylesheet" href="/apa-ambassador.css"/>
+
+<script>(function(){try{var t=localStorage.getItem('apa-amb-theme');if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t);}catch(e){}document.documentElement.classList.remove('no-js');})();</script>
+
+<style>
+/* ── Dashboard chrome ── */
+.bar{
+  position:sticky;top:0;z-index:60;
+  background:var(--surface-glass);backdrop-filter:blur(20px) saturate(180%);
+  -webkit-backdrop-filter:blur(20px) saturate(180%);
+  border-bottom:1px solid var(--line);
+}
+.bar-in{display:flex;align-items:center;gap:14px;padding:13px 0;}
+.bar-id{flex:1;min-width:0;}
+.bar-name{font-family:var(--font-d);font-weight:700;font-size:1.05rem;letter-spacing:-.02em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bar-sub{font-size:.76rem;color:var(--ink-faint);margin-top:2px;display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+
+main{padding:clamp(22px,4vh,38px) 0 clamp(72px,12vh,120px);}
+.sec{margin-top:clamp(28px,5vh,46px);}
+.sec-head{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;margin-bottom:16px;flex-wrap:wrap;}
+.sec-head p{margin-top:5px;}
+
+/* ── Earnings hero ── */
+.earn{display:flex;gap:clamp(20px,4vw,44px);align-items:center;flex-wrap:wrap;}
+.earn-main{flex:1;min-width:230px;}
+.earn-val{
+  font-family:var(--font-d);font-weight:800;letter-spacing:-.045em;line-height:.95;
+  font-size:clamp(2.5rem,7.5vw,4rem);font-variant-numeric:tabular-nums;
+}
+.earn-split{display:flex;gap:26px;margin-top:20px;flex-wrap:wrap;}
+.earn-part{min-width:104px;}
+.earn-part-v{font-family:var(--font-d);font-weight:700;font-size:1.28rem;letter-spacing:-.025em;font-variant-numeric:tabular-nums;}
+.earn-part-l{font-size:.73rem;font-weight:640;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-faint);margin-top:4px;}
+.earn-part-l .dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:5px;vertical-align:middle;}
+
+/* ── Funnel ── */
+.funnel{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:10px;}
+.fn{
+  padding:16px 15px;border-radius:var(--r);background:var(--surface-2);
+  border:1px solid var(--line);
+  transition:transform var(--t) var(--ease),border-color var(--t) var(--ease);
+}
+.fn:hover{transform:translateY(-2px);border-color:var(--line-2);}
+.fn-v{font-family:var(--font-d);font-weight:750;font-size:1.7rem;letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums;}
+.fn-l{font-size:.74rem;font-weight:620;color:var(--ink-faint);margin-top:6px;letter-spacing:.03em;}
+.fn-bar{height:3px;border-radius:2px;margin-top:11px;background:var(--surface-3);overflow:hidden;}
+.fn-bar span{display:block;height:100%;border-radius:2px;width:0;
+  transition:width 1.1s var(--ease);}
+
+/* ── Empty states ──
+   An empty dashboard is the first thing a new ambassador sees. It should
+   tell them what to do, not apologise for having no data. */
+.empty{text-align:center;padding:34px 20px;}
+.empty-icon{
+  width:52px;height:52px;margin:0 auto 14px;border-radius:17px;display:grid;place-items:center;
+  background:var(--surface-3);color:var(--ink-faint);
+}
+.empty-icon svg{width:24px;height:24px;stroke-width:1.8;}
+.empty h3{font-family:var(--font-d);font-weight:650;font-size:1.02rem;margin-bottom:7px;}
+.empty p{font-size:.88rem;color:var(--ink-faint);max-width:38ch;margin:0 auto 18px;line-height:1.6;}
+
+.leads-list{display:flex;flex-direction:column;gap:9px;}
+.lb-list{display:flex;flex-direction:column;gap:2px;}
+
+/* ── Tabs ── */
+.tabs{display:flex;gap:4px;padding:4px;background:var(--surface-2);border:1px solid var(--line);
+  border-radius:var(--r);margin-bottom:16px;overflow-x:auto;}
+.tabs button{
+  flex:1;min-width:88px;padding:9px 13px;border:none;background:transparent;border-radius:var(--r-sm);
+  font-size:.84rem;font-weight:640;color:var(--ink-faint);cursor:pointer;white-space:nowrap;
+  transition:color var(--t-fast) var(--ease),background var(--t-fast) var(--ease);
+}
+.tabs button[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--lift-1);}
+
+/* ── Rate reminder strip ── */
+.rate-strip{display:flex;gap:12px;flex-wrap:wrap;}
+.rs{
+  flex:1;min-width:150px;padding:14px 16px;border-radius:var(--r);
+  background:linear-gradient(135deg,color-mix(in srgb,var(--violet) 9%,transparent),color-mix(in srgb,var(--electric) 6%,transparent));
+  border:1px solid color-mix(in srgb,var(--violet) 20%,transparent);
+}
+.rs-v{font-family:var(--font-d);font-weight:800;font-size:1.5rem;letter-spacing:-.03em;line-height:1;}
+.rs-l{font-size:.78rem;color:var(--ink-soft);margin-top:6px;line-height:1.45;}
+
+@media (max-width:720px){
+  .earn{gap:22px;}
+  .bar-in{padding:11px 0;}
+}
+</style>
+</head>
+
+<body>
+<div class="aurora" aria-hidden="true"><i></i></div>
+
+<div class="boot" id="boot">
+  <div class="boot-inner">
+    <div class="boot-mark"></div>
+    <p>Opening your dashboard…</p>
+  </div>
+</div>
+
+<div class="page" id="app" hidden>
+
+  <!-- ══ BAR ══ -->
+  <header class="bar">
+    <div class="wrap bar-in">
+      <div class="av" id="av">A</div>
+      <div class="bar-id">
+        <div class="bar-name" id="name">Ambassador</div>
+        <div class="bar-sub" id="sub"></div>
+      </div>
+      <button class="theme-btn" id="theme" type="button" aria-label="Change theme" title="Change theme">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="theme-icon"></svg>
+      </button>
+      <button class="btn btn-ghost btn-sm" id="signout" type="button">Sign out</button>
+    </div>
+  </header>
+
+  <main class="wrap">
+
+    <!-- ══ EARNINGS ══ -->
+    <section class="card card-crest reveal">
+      <div class="earn">
+        <div class="earn-main">
+          <span class="eyebrow">Your earnings</span>
+          <div class="earn-val grad" id="earn-total" style="margin-top:12px">KES 0</div>
+          <div class="earn-split">
+            <div class="earn-part">
+              <div class="earn-part-v" id="earn-avail">KES 0</div>
+              <div class="earn-part-l"><span class="dot" style="background:var(--mint-deep)"></span>Ready</div>
+            </div>
+            <div class="earn-part">
+              <div class="earn-part-v" id="earn-hold">KES 0</div>
+              <div class="earn-part-l"><span class="dot" style="background:var(--gold)"></span>On hold</div>
+            </div>
+            <div class="earn-part">
+              <div class="earn-part-v" id="earn-count">0</div>
+              <div class="earn-part-l"><span class="dot" style="background:var(--electric)"></span>Bookings</div>
+            </div>
+          </div>
+          <p class="small" style="margin-top:16px;max-width:52ch">
+            Commission is released once each booking is past its cancellation window.
+            Withdraw to M-Pesa from KES 50 on the
+            <a href="/rewards.html" style="color:var(--violet);font-weight:600;text-decoration:none">rewards page</a>.
+          </p>
+        </div>
+
+        <!-- Progress toward the month's target. A ring rather than a bar
+             because it reads at a glance on a phone held one-handed. -->
+        <div class="ring" id="ring" role="img" aria-label="Progress toward your monthly target">
+          <svg viewBox="0 0 132 132" aria-hidden="true">
+            <defs>
+              <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%"   stop-color="var(--violet)"/>
+                <stop offset="55%"  stop-color="var(--electric)"/>
+                <stop offset="100%" stop-color="var(--mint-deep)"/>
+              </linearGradient>
+            </defs>
+            <circle class="track" cx="66" cy="66" r="56"/>
+            <circle class="bar"   cx="66" cy="66" r="56"/>
+          </svg>
+          <div class="ring-mid">
+            <div class="ring-num">0</div>
+            <div class="ring-sub" id="ring-sub">of 10</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ LINK ══ -->
+    <section class="sec reveal" data-delay="60">
+      <div class="card">
+        <div class="spread" style="margin-bottom:14px">
+          <div>
+            <h2 class="h3">Your ambassador link</h2>
+            <p class="small" style="margin-top:4px">Everyone who joins Cabana through this is yours for 365 days.</p>
+          </div>
+        </div>
+        <div class="linkbox">
+          <code id="link">—</code>
+          <button class="btn btn-primary btn-sm" id="copy" type="button">Copy</button>
+        </div>
+        <div class="row" style="margin-top:12px;gap:9px">
+          <button class="btn btn-ghost btn-sm" id="share-wa" type="button">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+            WhatsApp
+          </button>
+          <button class="btn btn-ghost btn-sm" id="share-sys" type="button">Share…</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ PIPELINE ══ -->
+    <section class="sec reveal" data-delay="90">
+      <div class="sec-head">
+        <div>
+          <h2 class="h1">Your pipeline</h2>
+          <p class="body">Claim someone before you go and talk to them. The claim reserves them as yours.</p>
+        </div>
+        <button class="btn btn-primary" id="claim-open" type="button">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+          Claim a lead
+        </button>
+      </div>
+
+      <div class="card" style="margin-bottom:16px">
+        <div class="funnel" id="funnel"></div>
+      </div>
+
+      <div class="card">
+        <div class="tabs" role="tablist" id="tabs">
+          <button role="tab" aria-selected="true"  data-filter="all">All</button>
+          <button role="tab" aria-selected="false" data-filter="claimed">Claimed</button>
+          <button role="tab" aria-selected="false" data-filter="signed_up">Signed up</button>
+          <button role="tab" aria-selected="false" data-filter="listed">Listed</button>
+          <button role="tab" aria-selected="false" data-filter="earning">Earning</button>
+        </div>
+        <div id="leads"></div>
+      </div>
+    </section>
+
+    <!-- ══ RATE REMINDER ══ -->
+    <section class="sec reveal" data-delay="120">
+      <div class="card">
+        <h2 class="h3" style="margin-bottom:13px">What you earn</h2>
+        <div class="rate-strip">
+          <div class="rs">
+            <div class="rs-v grad">15%</div>
+            <div class="rs-l">of our service fee, on every booking a traveller you brought makes</div>
+          </div>
+          <div class="rs">
+            <div class="rs-v grad">10%</div>
+            <div class="rs-l">of our service fee, on every booking a host or provider you brought takes</div>
+          </div>
+        </div>
+        <p class="small" style="margin-top:13px">
+          Our service fee is 10% of the booking value, so 15% on a KES 10,000 booking is
+          KES 150. For 365 days from the day they join, with no cap on how many you bring.
+        </p>
+      </div>
+    </section>
+
+    <!-- ══ LEADERBOARD ══ -->
+    <section class="sec reveal" data-delay="150">
+      <div class="sec-head">
+        <div>
+          <h2 class="h1">The team</h2>
+          <p class="body">Ranked by people onboarded. First names only.</p>
+        </div>
+      </div>
+      <div class="card"><div class="lb-list" id="board"></div></div>
+    </section>
+
+  </main>
+
+  <footer class="wrap center" style="padding-bottom:44px">
+    <p class="small">Cabana Ambassador Programme</p>
+    <p class="small" style="margin-top:6px">
+      Questions: <a href="mailto:connect@cabana.africa" style="color:var(--violet);text-decoration:none;font-weight:600">connect@cabana.africa</a>
+    </p>
+  </footer>
+</div>
+
+<!-- ══ CLAIM MODAL ══ -->
+<div class="modal" id="claim-modal" hidden role="dialog" aria-modal="true" aria-labelledby="claim-title">
+  <div class="modal-scrim" data-close></div>
+  <div class="modal-body">
+    <h2 class="h2" id="claim-title">Claim a lead</h2>
+    <p class="small" style="margin:7px 0 20px">
+      Claims are first come, first served across the whole team, and they lapse after
+      45 days if nothing comes of them.
+    </p>
+    <form id="claim-form" class="stack" style="gap:15px">
+      <div class="field">
+        <label class="label" for="c-name">Their name</label>
+        <input class="input" id="c-name" type="text" required maxlength="120" placeholder="Wanjiru Kamau"/>
+      </div>
+
+      <div class="field">
+        <label class="label">How you reach them</label>
+        <div class="seg" id="c-kind" role="group" style="margin-bottom:9px">
+          <button type="button" data-kind="phone" aria-pressed="true">Phone</button>
+          <button type="button" data-kind="email" aria-pressed="false">Email</button>
+        </div>
+        <input class="input" id="c-contact" type="text" required maxlength="160" placeholder="0712 345 678"/>
+        <span class="hint" id="c-hint">We match on the number, so +254, 254 and 0 all count as the same person.</span>
+      </div>
+
+      <div class="grid g2" style="gap:14px">
+        <div class="field">
+          <label class="label" for="c-type">What they are</label>
+          <select class="select" id="c-type">
+            <option value="host">Host</option>
+            <option value="service_provider">Service provider</option>
+            <option value="traveller">Traveller</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="label" for="c-cat">Category</label>
+          <select class="select" id="c-cat">
+            <option value="stays">Stays</option>
+            <option value="roommates">Rooms</option>
+            <option value="tours">Tours &amp; safaris</option>
+            <option value="carhire">Car hire</option>
+            <option value="rides">Rides</option>
+            <option value="food">Food</option>
+            <option value="events">Events</option>
+            <option value="shopping">Shopping</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid g2" style="gap:14px">
+        <div class="field">
+          <label class="label" for="c-city">City</label>
+          <input class="input" id="c-city" type="text" maxlength="80" placeholder="Nairobi"/>
+        </div>
+        <div class="field">
+          <label class="label" for="c-country">Country</label>
+          <input class="input" id="c-country" type="text" maxlength="80" value="Kenya"/>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="label" for="c-notes">Notes <span class="muted">(optional)</span></label>
+        <textarea class="textarea" id="c-notes" maxlength="1000" placeholder="Two-bedroom in Kilimani. Wants to start next month. Met through her cousin."></textarea>
+      </div>
+
+      <div class="row" style="margin-top:6px;gap:10px">
+        <button class="btn btn-primary" type="submit" id="c-submit">Claim this lead</button>
+        <button class="btn btn-ghost" type="button" data-close>Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="toasts" role="status" aria-live="polite"></div>
+
+<script src="/vendor-supabase-2.112.3.js"></script>
+<script src="/apa-session.js"></script>
+<script src="/apa-ambassador.js"></script>
+<script src="/ambassador-dashboard.js"></script>
+</body>
+</html>

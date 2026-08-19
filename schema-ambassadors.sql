@@ -826,3 +826,77 @@ from public.ambassadors a
 where a.id = auth.uid();
 
 grant select on public.v_ambassador_me to authenticated;
+
+
+-- ── 14 · LISTINGS DRAFTED ON A PARTNER'S BEHALF ───────────────────────────
+-- The reason this table exists rather than writing straight to `listings`:
+--
+-- A host who has never used Cabana will not finish a seven-step form on a
+-- phone in a matatu. The ambassador sitting next to them will. So the
+-- ambassador fills it in — and the result must not be a live listing owned
+-- by the ambassador, because they do not own the property.
+--
+-- A draft sits here until the real host has an account and accepts it. Then
+-- it is copied into `listings` with partner_id set to the host. Until that
+-- moment nothing is bookable, so a fabricated draft earns nobody anything
+-- and there is no reason to fabricate one.
+--
+-- This is also what keeps the funnel honest. `listings` stays the set of
+-- things a real host has stood behind. Ambassador activity is measured here,
+-- separately, where over-counting costs nothing.
+
+create table if not exists public.ambassador_listing_drafts (
+  id             uuid primary key default gen_random_uuid(),
+  lead_id        uuid        not null references public.ambassador_leads (id) on delete cascade,
+  ambassador_id  uuid        not null references public.ambassadors (id) on delete cascade,
+
+  service        text        not null default 'stays',
+  listing_type   text,
+  title          text        not null,
+  description    text,
+  country        text,
+  city           text,
+  area           text,
+  currency       text        not null default 'KES',
+  price_night    numeric(12,2),
+  price_month    numeric(12,2),
+  bedrooms       integer,
+  bathrooms      integer,
+  max_guests     integer,
+  amenities      text[]      not null default '{}',
+  photos         text[]      not null default '{}',
+
+  -- who this is actually for, carried from the lead so a reviewer can check
+  -- the draft against a real person without joining anything
+  contact_name   text,
+  contact_raw    text,
+
+  -- awaiting_host → drafted, host has not accepted
+  -- accepted      → host claimed it; published_listing_id is set
+  -- declined      → host said no. Kept, so a pattern of declines is visible
+  -- withdrawn     → ambassador pulled it
+  status         text        not null default 'awaiting_host'
+                 check (status in ('awaiting_host','accepted','declined','withdrawn')),
+  published_listing_id uuid,
+  accepted_at    timestamptz,
+  declined_at    timestamptz,
+  decline_reason text,
+
+  created_at     timestamptz not null default now(),
+  updated_at     timestamptz not null default now()
+);
+
+create index if not exists idx_amb_drafts_owner on public.ambassador_listing_drafts (ambassador_id, status);
+create index if not exists idx_amb_drafts_lead  on public.ambassador_listing_drafts (lead_id);
+
+alter table public.ambassador_listing_drafts enable row level security;
+
+-- Read your own. Writes go through the API, which re-checks that the lead
+-- belongs to the caller — a direct INSERT policy would let an ambassador
+-- draft listings against someone else's pipeline.
+drop policy if exists amb_drafts_read on public.ambassador_listing_drafts;
+create policy amb_drafts_read on public.ambassador_listing_drafts
+  for select to authenticated using (ambassador_id = auth.uid());
+
+comment on table public.ambassador_listing_drafts is
+  'Listings prepared by an ambassador for a prospective host. Never live, never owned by the ambassador. Copied into listings only when the real host accepts.';

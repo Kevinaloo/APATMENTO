@@ -22,7 +22,12 @@
   var ADMINS = ['apatmento@gmail.com', 'worlddossy@gmail.com'];
 
   /* Pages an admin is allowed to load without redirect. */
-  var ALLOW = ['/admin.html', '/auth.html', '/offline.html'];
+  /* Pages an admin may load without being bounced to the console.
+     The ambassador surfaces are on this list because they are operator
+     pages, not consumer ones — the roster console lives on the gateway, so
+     bouncing an admin away from it would make the roster unmanageable. */
+  var ALLOW = ['/admin.html', '/auth.html', '/offline.html',
+               '/ambassadors.html', '/ambassador-dashboard.html'];
 
   var doc = global.document;
 
