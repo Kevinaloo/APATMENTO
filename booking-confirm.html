@@ -13,7 +13,6 @@
 <!-- Session core: one Supabase client per tab. Multiple clients on the
      same storage key race each other and silently drop the session. -->
 <script src="/apa-session.js"></script>
-<script src="/apa-referral-capture.js" defer></script>
 <script src="/apa-admin-guard.js"></script>
 <script>
 (function(){
@@ -108,19 +107,6 @@ body{overflow-x:hidden;}
 .sum-credit .v{color:var(--mint-deep) !important;}
 @keyframes creditIn{from{opacity:0;transform:translateX(8px);}to{opacity:1;transform:none;}}
 @media(prefers-reduced-motion:reduce){.sum-credit{animation:none;}}
-/* Credit opt-in banner — shown when guest has credits but hasn't applied them yet */
-.credit-banner{display:flex;align-items:center;justify-content:space-between;gap:10px;
-  background:rgba(45,212,191,.08);border:1px solid rgba(45,212,191,.22);border-radius:12px;
-  padding:12px 14px;margin:8px 0;font-size:13px;color:var(--ink-soft);}
-.credit-banner strong{color:var(--mint-deep);}
-.credit-apply-btn{flex-shrink:0;padding:7px 14px;border:none;border-radius:9px;
-  background:var(--mint-deep);color:#fff;font-size:12.5px;font-weight:700;cursor:pointer;
-  white-space:nowrap;transition:opacity .2s;}
-.credit-apply-btn:hover{opacity:.85;}
-.credit-remove-btn{flex-shrink:0;padding:7px 14px;border:none;border-radius:9px;
-  background:transparent;border:1px solid rgba(45,212,191,.4);color:var(--mint-deep);
-  font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;transition:opacity .2s;}
-.credit-remove-btn:hover{opacity:.7;}
 .pay-btn{width:100%;padding:16px;border-radius:14px;background:var(--theme-grad);color:#fff;border:none;font-family:var(--font-body);font-weight:600;font-size:15px;cursor:pointer;transition:all .3s;box-shadow:0 10px 30px rgba(123,47,247,.3);display:flex;align-items:center;justify-content:center;gap:9px;}
 .pay-btn:hover{transform:translateY(-2px);box-shadow:0 14px 40px rgba(123,47,247,.42);}
 .pay-btn:disabled{opacity:.6;cursor:not-allowed;transform:none;}
@@ -174,6 +160,19 @@ body{overflow-x:hidden;}
 .pm-warn{margin-top:12px;font-size:12.5px;line-height:1.6;color:var(--ink-soft);
   background:var(--glass-2);border:1px solid var(--line);border-radius:14px;padding:13px 14px;}
 
+/* Payment gateway tabs */
+.pgt-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:20px 0 14px;}
+.pgt-tab{padding:11px 6px 10px;border:1.5px solid var(--line-2);border-radius:14px;
+  background:#fff;cursor:pointer;font-size:12.5px;font-weight:700;color:var(--ink-faint);
+  text-align:center;transition:all .18s ease;font-family:var(--font-body);line-height:1.3;}
+.pgt-tab:hover{border-color:var(--lilac-deep);color:var(--ink);transform:translateY(-1px);}
+.pgt-tab.active{border-color:var(--violet);color:var(--violet);
+  background:rgba(123,47,247,.06);box-shadow:0 0 0 3px rgba(123,47,247,.1);}
+.pgt-icon{font-size:17px;display:block;margin-bottom:4px;}
+.pgt-note{font-size:11px;color:var(--ink-faint);margin-bottom:12px;line-height:1.5;
+  background:var(--glass-2);border-radius:10px;padding:9px 12px;}
+#paypal-button-container,.pp-card-wrap{min-height:44px;}
+
 /* Map. Draggable, but never reveals the exact address. */
 .map-wrap{position:relative;border-radius:var(--radius);overflow:hidden;
   border:1px solid var(--line);box-shadow:var(--shadow-glass);}
@@ -221,7 +220,7 @@ body{overflow-x:hidden;}
 <div class="page">
   <span class="page-eyebrow">Almost there</span>
   <h1 class="page-title">Confirm your <em>booking</em></h1>
-  <p class="page-sub">Review your stay and pay securely with M-Pesa. Your money is protected until check-in.</p>
+  <p class="page-sub">Review your stay and pay with M-Pesa, PayPal, or card. Your money is protected until check-in.</p>
 
   <div class="layout">
     <!-- LEFT: FORM -->
@@ -260,7 +259,7 @@ body{overflow-x:hidden;}
           <label class="field-label">Full name</label>
           <input class="field-input" type="text" id="guest-name" placeholder="As it appears on M-Pesa"/>
         </div>
-        <div class="field">
+        <div class="field" id="mpesa-phone-wrap">
           <label class="field-label">M-Pesa phone number</label>
           <input class="field-input" type="tel" id="guest-phone" placeholder="07XX XXX XXX"/>
           <div class="field-hint">You'll receive an STK push to this number to complete payment.</div>
@@ -281,16 +280,10 @@ body{overflow-x:hidden;}
       </div>
       <div class="sum-row"><span id="sum-nights-label">2 nights</span><span class="v" id="sum-subtotal">KES 0</span></div>
       <div class="sum-row"><span>Cabana fee <span style="font-size:11px;color:var(--ink-faint);">(fixed)</span></span><span class="v" id="sum-fee">KES 0</span></div>
-      <!-- Credit opt-in banner: shown when guest has credits but hasn't applied them -->
-      <div class="credit-banner" id="credit-offer-row" hidden>
-        <span>You have <strong id="credit-offer-amt"></strong> in Cabana credits</span>
-        <button class="credit-apply-btn" id="credit-apply-btn" onclick="applyCredit()">Apply</button>
-      </div>
-      <!-- Applied-credit line item: shown only after guest clicks Apply -->
+      <!-- Welcome credits, applied automatically. Hidden when the
+           guest has none. Populated by refreshCredit(). -->
       <div class="sum-row sum-credit" id="sum-credit-row" hidden>
-        <span>Cabana credits <span style="font-size:11px;color:var(--ink-faint);">(applied)</span>
-          <button class="credit-remove-btn" style="margin-left:8px;font-size:11px;padding:4px 9px;" onclick="removeCredit()">Remove</button>
-        </span>
+        <span>Cabana credits <span style="font-size:11px;color:var(--ink-faint);">(applied)</span></span>
         <span class="v" id="sum-credit">−KES 0</span>
       </div>
       <div class="sum-divider"></div>
@@ -318,10 +311,39 @@ body{overflow-x:hidden;}
         <div class="pm-warn" id="pm-warn" hidden></div>
       </div>
 
-      <button class="pay-btn" id="pay-btn" onclick="startPayment()">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><path d="M2 10h20"/></svg>
-        Pay with M-Pesa
-      </button>
+      <!-- Payment gateway selector -->
+      <div class="pgt-tabs">
+        <button class="pgt-tab active" id="pgt-mpesa" onclick="selectPayGateway('mpesa')">
+          <span class="pgt-icon">📱</span>M-Pesa
+        </button>
+        <button class="pgt-tab" id="pgt-paypal" onclick="selectPayGateway('paypal')">
+          <span class="pgt-icon">🅿️</span>PayPal
+        </button>
+        <button class="pgt-tab" id="pgt-card" onclick="selectPayGateway('card')">
+          <span class="pgt-icon">💳</span>Card
+        </button>
+      </div>
+
+      <!-- M-Pesa -->
+      <div id="pay-section-mpesa">
+        <button class="pay-btn" id="pay-btn" onclick="startPayment()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><path d="M2 10h20"/></svg>
+          Pay with M-Pesa
+        </button>
+      </div>
+
+      <!-- PayPal -->
+      <div id="pay-section-paypal" style="display:none">
+        <p class="pgt-note">You'll be redirected to PayPal to complete payment. Charges in USD — KES shown is an estimate at today's rate.</p>
+        <div id="paypal-button-container"></div>
+      </div>
+
+      <!-- Card via PayPal -->
+      <div id="pay-section-card" style="display:none">
+        <p class="pgt-note">Pay with Visa, Mastercard, or Amex. Processed securely via PayPal. Charges in USD — KES shown is an estimate.</p>
+        <div id="card-button-container" class="pp-card-wrap"></div>
+      </div>
+
       <div class="pay-secure">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
         Secured · Money protected until check-in
@@ -384,9 +406,8 @@ function changeGuests(delta) {
 /* ══════════════════════════════════════════════════════════════
    CABANA CREDITS AT CHECKOUT
 
-   Credits are opt-in: the guest sees a banner offering to apply
-   their balance and must click "Apply" before they are used.
-   This prevents silent deductions the guest never chose.
+   The 200 welcome credits are worthless if there is nowhere to spend
+   them, so they come off here, automatically, with no code to enter.
 
    Two rules keep this honest:
 
@@ -398,12 +419,9 @@ function changeGuests(delta) {
      and writes a point_transactions row. A guest editing this variable
      changes what they SEE, not what they get: the booking's
      grand_total is set from the value the server confirms it spent.
-   · Credits are only deducted after the booking row exists AND payment
-     succeeds. On failure, any deducted credits are refunded.
 ══════════════════════════════════════════════════════════════ */
 let CREDIT_AVAILABLE = 0;   /* what the server says they hold */
 let CREDIT_APPLIED   = 0;   /* what this booking will actually use */
-let CREDIT_OPT_IN    = false; /* guest must explicitly click Apply */
 
 function grossTotal() {
   const nights = getNights();
@@ -412,10 +430,9 @@ function grossTotal() {
 }
 
 /* Never spend more than the guest holds, more than the booking is
-   worth, or so much that no real payment remains.
-   Returns 0 unless the guest has opted in. */
+   worth, or so much that no real payment remains. */
 function creditFor(total) {
-  if (!CREDIT_OPT_IN || !CREDIT_AVAILABLE || CREDIT_AVAILABLE <= 0) return 0;
+  if (!CREDIT_AVAILABLE || CREDIT_AVAILABLE <= 0) return 0;
   return Math.max(0, Math.min(CREDIT_AVAILABLE, total - MIN_TXN));
 }
 
@@ -423,16 +440,6 @@ function creditFor(total) {
 function netTotal() {
   const total = grossTotal();
   return Math.max(0, total - creditFor(total));
-}
-
-function applyCredit() {
-  CREDIT_OPT_IN = true;
-  updateSummary();
-}
-
-function removeCredit() {
-  CREDIT_OPT_IN = false;
-  updateSummary();
 }
 
 async function refreshCredit() {
@@ -482,26 +489,11 @@ function updateSummary() {
   const fee = calculateFee(subtotal);
   const total = subtotal + fee;
 
-  /* Credits only applied when guest has opted in. */
+  /* Credits recomputed on every summary refresh: the applicable
+     amount depends on the total, and the total changes with dates. */
   CREDIT_APPLIED = creditFor(total);
   const due = total - CREDIT_APPLIED;
 
-  /* How much the guest COULD save (for the offer banner). */
-  const creditPotential = (!CREDIT_OPT_IN && CREDIT_AVAILABLE > 0)
-    ? Math.max(0, Math.min(CREDIT_AVAILABLE, total - MIN_TXN))
-    : 0;
-
-  /* Offer banner: shown when guest has credits but hasn't applied them. */
-  const offerRow = document.getElementById('credit-offer-row');
-  if (offerRow) {
-    offerRow.hidden = creditPotential <= 0;
-    const offerAmt = document.getElementById('credit-offer-amt');
-    if (offerAmt && creditPotential > 0) {
-      offerAmt.textContent = `KES ${creditPotential.toLocaleString()}`;
-    }
-  }
-
-  /* Applied-credit line item: shown only after guest clicks Apply. */
   const creditRow = document.getElementById('sum-credit-row');
   if (creditRow) {
     creditRow.hidden = CREDIT_APPLIED <= 0;
@@ -738,27 +730,9 @@ async function startPayment() {
   const payBtn = document.getElementById('pay-btn');
   payBtn.disabled = true;
 
-  /* Declared out here so both onFailure and the catch block can hand credits back. */
+  /* Declared out here so the catch block can hand the credits back. */
   let creditSpent = 0;
   let paymentReference = null;
-
-  /* Reusable helper — call any time a deduction must be reversed. Idempotent server-side. */
-  async function doRefundCredit() {
-    if (creditSpent <= 0 || !paymentReference) return;
-    try {
-      const { data: ses } = await sb.auth.getSession();
-      await fetch('/api/rewards', {
-        method: 'POST',
-        headers: { 'Content-Type':'application/json',
-                   Authorization: 'Bearer ' + (ses.session?.access_token || '') },
-        body: JSON.stringify({ action: 'refund-credit', booking_ref: paymentReference }),
-      });
-      creditSpent = 0;
-      window.CabanaCredit && CabanaCredit.clearCache();
-      CREDIT_OPT_IN = false;
-      updateSummary();
-    } catch (e) { console.warn('[credit] refund failed:', e.message); }
-  }
 
   try {
     paymentReference = `APT-${apt.id}-${Date.now()}`;
@@ -948,10 +922,7 @@ async function startPayment() {
           });
         } catch(e){ console.warn('Receipt:',e.message); }
       },
-      onFailure: async (d) => {
-        /* Payment did not complete — refund any credits that were deducted
-           before the STK push, then let the guest retry. */
-        await doRefundCredit();
+      onFailure: (d) => {
         const why = d && d.reason === 'timeout'
           ? 'We did not hear back from M-Pesa in time. If you were charged, '
             + 'check My Bookings before paying again.'
@@ -967,9 +938,21 @@ async function startPayment() {
   } catch (err) {
     console.error(err);
 
-    /* Booking insert failed — credits were deducted but never used.
-       The helper is idempotent server-side. */
-    await doRefundCredit();
+    /* The booking did not get made, so the credits were never spent
+       on anything. Give them back rather than letting them evaporate
+       into a failed insert. Idempotent server-side. */
+    if (creditSpent > 0 && paymentReference) {
+      try {
+        const { data: ses } = await sb.auth.getSession();
+        await fetch('/api/rewards', {
+          method: 'POST',
+          headers: { 'Content-Type':'application/json',
+                     Authorization: 'Bearer ' + (ses.session?.access_token || '') },
+          body: JSON.stringify({ action: 'refund-credit', booking_ref: paymentReference }),
+        });
+        window.CabanaCredit && CabanaCredit.clearCache();
+      } catch (e) { console.warn('[credit] refund failed:', e.message); }
+    }
 
     showToast('Error: ' + (err.message || err.error_description || JSON.stringify(err)));
     payBtn.disabled = false;
@@ -1084,6 +1067,200 @@ function showToast(msg, ms) {
    an inline script, so this used to run before apa-map.js had
    executed, find no window.ApaMap, and return — leaving the
    placeholder on screen for good. */
+/* ── Payment gateway switching ──────────────────────────────── */
+var _payGateway     = 'mpesa';
+var _ppSdkLoaded    = false;
+var _ppBooking      = null;
+
+function selectPayGateway(g) {
+  _payGateway = g;
+  ['mpesa','paypal','card'].forEach(function(id) {
+    var t = document.getElementById('pgt-' + id);
+    if (t) t.classList.toggle('active', id === g);
+    var s = document.getElementById('pay-section-' + id);
+    if (s) s.style.display = id === g ? '' : 'none';
+  });
+  var pw = document.getElementById('mpesa-phone-wrap');
+  if (pw) pw.style.display = g === 'mpesa' ? '' : 'none';
+  if (g !== 'mpesa' && !_ppSdkLoaded) _loadPaypalSdk();
+}
+
+function _loadPaypalSdk() {
+  if (document.getElementById('pp-sdk')) return;
+  var s = document.createElement('script');
+  s.id  = 'pp-sdk';
+  s.src = 'https://www.paypal.com/sdk/js?client-id=BAAt-JGR0Pnqpk6EID29AOuYZ_xpfJMy25g8m2v304oivDqGzazfnckP1ii1M2LYIiaYg9BuGRo0MnQY6M&currency=USD&intent=capture&components=buttons';
+  s.onload = function() { _ppSdkLoaded = true; _renderPaypalButtons(); _renderCardButton(); };
+  s.onerror = function() { showToast('Could not load PayPal. Check your connection.'); };
+  document.head.appendChild(s);
+}
+
+/* Build and insert the booking row for PayPal/Card payments. */
+async function _preparePaypalBooking() {
+  var name     = document.getElementById('guest-name').value.trim();
+  var checkin  = document.getElementById('checkin-date').value;
+  var checkout = document.getElementById('checkout-date').value;
+  if (!name)               { showToast('Please enter your full name'); return null; }
+  if (!checkin || !checkout) { showToast('Please select your dates'); return null; }
+  if (!sb)                 { showToast('Please refresh the page and try again'); return null; }
+
+  var nights   = getNights();
+  var subtotal = nights * apt.price;
+  var fee      = calculateFee(subtotal);
+  var gross    = subtotal + fee;
+
+  var sesRes   = await sb.auth.getSession();
+  var accessToken = (sesRes.data && sesRes.data.session && sesRes.data.session.access_token) || '';
+
+  var creditSpent      = 0;
+  var paymentReference = 'APT-' + apt.id + '-' + Date.now();
+
+  var wanted = (typeof creditFor === 'function') ? creditFor(gross) : 0;
+  if (wanted > 0 && window.CabanaCredit) {
+    try {
+      var cr = await fetch('/api/rewards', {
+        method: 'POST',
+        headers: { 'Content-Type':'application/json', Authorization: 'Bearer ' + accessToken },
+        body: JSON.stringify({ action:'redeem-points', points_to_redeem:wanted,
+                               service_type:'stays', booking_ref:paymentReference }),
+      });
+      var cj = await cr.json().catch(function(){ return {}; });
+      if (cj && cj.ok) creditSpent = Number(cj.value_kes) || 0;
+      CabanaCredit.clearCache();
+    } catch(e) { console.warn('[credit]', e.message); }
+  }
+
+  var total      = Math.max(0, gross - creditSpent);
+  var isDeposit  = PAY_MODE === 'deposit';
+  var depositAmt = payAmount();
+  var balanceAmt = Math.max(0, total - depositAmt);
+  var guestCode  = generateCode('GUEST');
+  var hostCode   = generateCode('HOST');
+
+  var row = {
+    guest_id: CURRENT_USER ? CURRENT_USER.id : null,
+    host_id:  apt.host_id || null,
+    payment_mode:     isDeposit ? 'deposit' : 'full',
+    deposit_amount:   depositAmt, deposit_required: Math.round(total * 0.25),
+    balance_amount:   balanceAmt, balance_paid: false, amount_paid: 0,
+    apartment_id:  apt.id, apartment_name: apt.name, location: apt.location,
+    checkin_date:  checkin, checkout_date: checkout, nights: nights,
+    num_guests:    guestCount, guest_name: name, guest_phone: '',
+    stay_total:    subtotal, service_fee: fee, grand_total: total,
+    credit_applied: creditSpent, payment_reference: paymentReference,
+    guest_code: guestCode, host_code: hostCode,
+    contact_whatsapp: apt.contact_whatsapp || apt.whatsapp || null,
+    contact_phone:    apt.contact_phone    || apt.phone    || null,
+    contact_email:    apt.contact_email    || null,
+    status: 'pending_payment',
+  };
+
+  var insRes = await sb.from('apartment_bookings').insert(row);
+  if (insRes.error && /column .*(credit_applied|guest_phone|amount_paid)/i.test(insRes.error.message || '')) {
+    delete row.credit_applied; delete row.guest_phone; delete row.amount_paid;
+    insRes = await sb.from('apartment_bookings').insert(row);
+  }
+  if (insRes.error) {
+    if (creditSpent > 0) {
+      fetch('/api/rewards', {
+        method:'POST', headers:{'Content-Type':'application/json', Authorization:'Bearer '+accessToken},
+        body: JSON.stringify({ action:'refund-credit', booking_ref:paymentReference }),
+      }).catch(function(){});
+    }
+    throw insRes.error;
+  }
+
+  sessionStorage.setItem('pending_guest_code', guestCode);
+  sessionStorage.setItem('pending_host_code',  hostCode);
+  sessionStorage.setItem('pending_apt_name',   apt.name);
+  sessionStorage.setItem('pending_host_whatsapp', apt.contact_whatsapp || apt.whatsapp || '');
+  sessionStorage.setItem('pending_host_phone',    apt.contact_phone    || apt.phone    || '');
+  sessionStorage.setItem('pending_host_email',    apt.contact_email    || '');
+
+  return { paymentReference, depositAmt, accessToken,
+           checkin, checkout, nights, subtotal, fee, total, name };
+}
+
+async function _onPaypalApprove(data, booking) {
+  if (!booking) return;
+  try {
+    var res = await fetch('/api/paypal-capture', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', Authorization:'Bearer '+booking.accessToken },
+      body: JSON.stringify({ order_id: data.orderID, reference: booking.ppReference }),
+    });
+    var result = await res.json();
+    if (result.ok || result.fully_paid != null) {
+      result.fully_paid === true ? showCheckinCodes() : showPartialResult(result);
+      fetch('/api/send-receipt', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          booking:{ reference:booking.paymentReference, checkin:booking.checkin,
+            checkout:booking.checkout, nights:booking.nights, subtotal:booking.subtotal,
+            fee:booking.fee, total:booking.total,
+            guestCode:sessionStorage.getItem('pending_guest_code')||'',
+            hostCode: sessionStorage.getItem('pending_host_code')||'' },
+          listing:{ name:apt.name, location:apt.location, pricePerNight:apt.price, type:'Stay' },
+          user:{ email:(CURRENT_USER&&CURRENT_USER.email)||'', phone:'', name:booking.name },
+          sendWhatsApp: false }),
+      }).catch(function(){});
+    } else {
+      showToast('Payment not confirmed. Check My Bookings.');
+    }
+  } catch(e) {
+    showToast('Capture error: ' + e.message);
+  }
+}
+
+function _ppCreateOrder(container) {
+  return async function() {
+    var booking;
+    try { booking = await _preparePaypalBooking(); }
+    catch(e) { showToast('Booking error: '+(e.message||e)); throw e; }
+    if (!booking) throw new Error('Validation failed');
+
+    var res = await fetch('/api/paypal-create-order', {
+      method:'POST',
+      headers:{'Content-Type':'application/json', Authorization:'Bearer '+booking.accessToken},
+      body: JSON.stringify({ booking_ref:booking.paymentReference, amount:booking.depositAmt }),
+    });
+    var d = await res.json();
+    if (!res.ok) { showToast(d.error||'PayPal error'); throw new Error(d.error); }
+    booking.ppReference = d.reference;
+    _ppBooking = booking;
+    return d.order_id;
+  };
+}
+
+function _renderPaypalButtons() {
+  var c = document.getElementById('paypal-button-container');
+  if (!c || !window.paypal) return;
+  c.innerHTML = '';
+  paypal.Buttons({
+    style:{ layout:'vertical', color:'gold', shape:'rect', label:'pay', height:48 },
+    createOrder: _ppCreateOrder('#paypal-button-container'),
+    onApprove: function(data) { return _onPaypalApprove(data, _ppBooking); },
+    onError:   function(e)    { console.error('PayPal:', e); showToast('PayPal payment failed. Please try again.'); },
+    onCancel:  function()     { showToast('Payment cancelled.', 3000); },
+  }).render('#paypal-button-container');
+}
+
+function _renderCardButton() {
+  var c = document.getElementById('card-button-container');
+  if (!c || !window.paypal || !paypal.isFundingEligible(paypal.FUNDING.CARD)) {
+    if (c) c.innerHTML = '<p style="font-size:13px;color:var(--ink-faint);text-align:center;padding:12px 0">Card payment unavailable in your region. Please use M-Pesa or PayPal.</p>';
+    return;
+  }
+  c.innerHTML = '';
+  paypal.Buttons({
+    fundingSource: paypal.FUNDING.CARD,
+    style:{ layout:'vertical', shape:'rect', height:48 },
+    createOrder: _ppCreateOrder('#card-button-container'),
+    onApprove: function(data) { return _onPaypalApprove(data, _ppBooking); },
+    onError:   function(e)    { console.error('Card:', e); showToast('Card payment failed. Try M-Pesa or PayPal.'); },
+  }).render('#card-button-container');
+}
+
 document.addEventListener('DOMContentLoaded', function(){
   const el = document.getElementById('apa-location-map');
   if (!el || !window.ApaMap) return;
