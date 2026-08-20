@@ -1071,6 +1071,7 @@ function showToast(msg, ms) {
 var _payGateway     = 'mpesa';
 var _ppSdkLoaded    = false;
 var _ppBooking      = null;
+var _ppHandled      = false;   /* true when createOrder already showed an error toast */
 
 function selectPayGateway(g) {
   _payGateway = g;
@@ -1089,7 +1090,7 @@ function _loadPaypalSdk() {
   if (document.getElementById('pp-sdk')) return;
   var s = document.createElement('script');
   s.id  = 'pp-sdk';
-  s.src = 'https://www.paypal.com/sdk/js?client-id=BAAt-JGR0Pnqpk6EID29AOuYZ_xpfJMy25g8m2v304oivDqGzazfnckP1ii1M2LYIiaYg9BuGRo0MnQY6M&currency=USD&intent=capture&components=buttons';
+  s.src = 'https://www.paypal.com/sdk/js?client-id=BAAt-JGR0Pnqpk6EID29AOuYZ_xpfJMy25g8m2v304oivDqGzazfnckP1ii1M2LYIiaYg9BuGRo0MnQY6M&currency=USD&intent=capture&components=buttons&enable-funding=card,venmo&disable-funding=paylater,credit';
   s.onload = function() { _ppSdkLoaded = true; _renderPaypalButtons(); _renderCardButton(); };
   s.onerror = function() { showToast('Could not load PayPal. Check your connection.'); };
   document.head.appendChild(s);
@@ -1109,8 +1110,22 @@ async function _preparePaypalBooking() {
   var fee      = calculateFee(subtotal);
   var gross    = subtotal + fee;
 
-  var sesRes   = await sb.auth.getSession();
-  var accessToken = (sesRes.data && sesRes.data.session && sesRes.data.session.access_token) || '';
+  /* Always get a fresh session so we have the current user ID and a
+     non-expired access token. If the session has silently expired, try
+     refreshing once before giving up. */
+  var sesRes = await sb.auth.getSession();
+  var session = sesRes.data && sesRes.data.session;
+  if (!session) {
+    try { var rr = await sb.auth.refreshSession(); session = rr.data && rr.data.session; } catch(_) {}
+  }
+  var accessToken = session ? session.access_token : '';
+  var userId      = session ? session.user.id      : null;
+
+  /* Fail early — before inserting anything — if the user is not signed in. */
+  if (!accessToken || !userId) {
+    showToast('Please sign in to complete your booking');
+    return null;
+  }
 
   var creditSpent      = 0;
   var paymentReference = 'APT-' + apt.id + '-' + Date.now();
@@ -1138,7 +1153,7 @@ async function _preparePaypalBooking() {
   var hostCode   = generateCode('HOST');
 
   var row = {
-    guest_id: CURRENT_USER ? CURRENT_USER.id : null,
+    guest_id: userId,   /* always from fresh session — never from the possibly-stale CURRENT_USER */
     host_id:  apt.host_id || null,
     payment_mode:     isDeposit ? 'deposit' : 'full',
     deposit_amount:   depositAmt, deposit_required: Math.round(total * 0.25),
@@ -1183,13 +1198,23 @@ async function _preparePaypalBooking() {
 
 async function _onPaypalApprove(data, booking) {
   if (!booking) return;
+  showToast('Confirming your payment…', 10000);
   try {
+    /* Refresh the access token in case the PayPal approval popup was open long
+       enough for the original token to expire (typically 1 hour). */
+    var token = booking.accessToken;
+    try {
+      var rr = await sb.auth.refreshSession();
+      var fresh = rr.data && rr.data.session && rr.data.session.access_token;
+      if (fresh) token = fresh;
+    } catch(_) {}
+
     var res = await fetch('/api/paypal-capture', {
       method: 'POST',
-      headers: { 'Content-Type':'application/json', Authorization:'Bearer '+booking.accessToken },
+      headers: { 'Content-Type':'application/json', Authorization:'Bearer '+token },
       body: JSON.stringify({ order_id: data.orderID, reference: booking.ppReference }),
     });
-    var result = await res.json();
+    var result = await res.json().catch(function(){ return {}; });
     if (result.ok || result.fully_paid != null) {
       result.fully_paid === true ? showCheckinCodes() : showPartialResult(result);
       fetch('/api/send-receipt', {
@@ -1205,27 +1230,61 @@ async function _onPaypalApprove(data, booking) {
           sendWhatsApp: false }),
       }).catch(function(){});
     } else {
-      showToast('Payment not confirmed. Check My Bookings.');
+      var errMsg = result.error
+        ? 'Payment capture failed: ' + result.error + '. Check My Bookings.'
+        : 'Payment not confirmed. Please check My Bookings or contact support.';
+      showToast(errMsg, 7000);
     }
   } catch(e) {
-    showToast('Capture error: ' + e.message);
+    showToast('Capture error: ' + (e.message || e) + '. Please check My Bookings.', 7000);
   }
 }
 
 function _ppCreateOrder(container) {
   return async function() {
+    _ppHandled = false;
     var booking;
     try { booking = await _preparePaypalBooking(); }
-    catch(e) { showToast('Booking error: '+(e.message||e)); throw e; }
-    if (!booking) throw new Error('Validation failed');
+    catch(e) {
+      _ppHandled = true;
+      showToast('Booking error: ' + (e.message || e));
+      throw e;
+    }
+    /* _preparePaypalBooking returns null for validation / auth failures
+       and already shows the appropriate toast. */
+    if (!booking) { _ppHandled = true; throw new Error('Validation failed'); }
 
-    var res = await fetch('/api/paypal-create-order', {
-      method:'POST',
-      headers:{'Content-Type':'application/json', Authorization:'Bearer '+booking.accessToken},
-      body: JSON.stringify({ booking_ref:booking.paymentReference, amount:booking.depositAmt }),
-    });
-    var d = await res.json();
-    if (!res.ok) { showToast(d.error||'PayPal error'); throw new Error(d.error); }
+    var res, d;
+    try {
+      res = await fetch('/api/paypal-create-order', {
+        method:'POST',
+        headers:{'Content-Type':'application/json', Authorization:'Bearer '+booking.accessToken},
+        body: JSON.stringify({ booking_ref:booking.paymentReference, amount:booking.depositAmt }),
+      });
+      d = await res.json().catch(function(){ return {}; });
+    } catch(e) {
+      /* Network failure — clean up the orphaned booking row then bail. */
+      _ppHandled = true;
+      sb.from('apartment_bookings').delete().eq('payment_reference', booking.paymentReference).catch(function(){});
+      showToast('Network error. Please check your connection and try again.');
+      throw e;
+    }
+
+    if (!res.ok) {
+      /* Server returned an error — clean up then show a human-readable message. */
+      _ppHandled = true;
+      sb.from('apartment_bookings').delete().eq('payment_reference', booking.paymentReference).catch(function(){});
+      var msg = d.error === 'paypal_not_configured'
+        ? 'PayPal is not configured. Please use M-Pesa.'
+        : d.error === 'authentication_required'
+          ? 'Your session has expired. Please sign in again.'
+          : d.error === 'not_your_booking'
+            ? 'Booking mismatch. Please refresh and try again.'
+            : (d.error || 'PayPal payment failed. Please try again.');
+      showToast(msg);
+      throw new Error(d.error || 'paypal_order_failed');
+    }
+
     booking.ppReference = d.reference;
     _ppBooking = booking;
     return d.order_id;
@@ -1240,25 +1299,42 @@ function _renderPaypalButtons() {
     style:{ layout:'vertical', color:'gold', shape:'rect', label:'pay', height:48 },
     createOrder: _ppCreateOrder('#paypal-button-container'),
     onApprove: function(data) { return _onPaypalApprove(data, _ppBooking); },
-    onError:   function(e)    { console.error('PayPal:', e); showToast('PayPal payment failed. Please try again.'); },
-    onCancel:  function()     { showToast('Payment cancelled.', 3000); },
+    onError: function(e) {
+      console.error('PayPal:', e);
+      /* Only show the generic fallback if _ppCreateOrder did not already
+         show a more specific message (it sets _ppHandled = true). */
+      if (!_ppHandled) showToast('PayPal payment failed. Please try again.');
+      _ppHandled = false;
+    },
+    onCancel: function() { showToast('Payment cancelled.', 3000); },
   }).render('#paypal-button-container');
 }
 
 function _renderCardButton() {
   var c = document.getElementById('card-button-container');
-  if (!c || !window.paypal || !paypal.isFundingEligible(paypal.FUNDING.CARD)) {
-    if (c) c.innerHTML = '<p style="font-size:13px;color:var(--ink-faint);text-align:center;padding:12px 0">Card payment unavailable in your region. Please use M-Pesa or PayPal.</p>';
-    return;
-  }
-  c.innerHTML = '';
-  paypal.Buttons({
+  if (!c || !window.paypal) return;
+
+  /* Use btn.isEligible() rather than the static isFundingEligible() check.
+     isFundingEligible() can return false for card even when it would render
+     fine; isEligible() is evaluated after the SDK has fully initialised. */
+  var btn = paypal.Buttons({
     fundingSource: paypal.FUNDING.CARD,
     style:{ layout:'vertical', shape:'rect', height:48 },
     createOrder: _ppCreateOrder('#card-button-container'),
     onApprove: function(data) { return _onPaypalApprove(data, _ppBooking); },
-    onError:   function(e)    { console.error('Card:', e); showToast('Card payment failed. Try M-Pesa or PayPal.'); },
-  }).render('#card-button-container');
+    onError: function(e) {
+      console.error('Card:', e);
+      if (!_ppHandled) showToast('Card payment failed. Try M-Pesa or PayPal.');
+      _ppHandled = false;
+    },
+  });
+
+  if (btn.isEligible()) {
+    c.innerHTML = '';
+    btn.render('#card-button-container');
+  } else {
+    c.innerHTML = '<p style="font-size:13px;color:var(--ink-faint);text-align:center;padding:12px 0">Card payment unavailable in your region. Please use M-Pesa or PayPal.</p>';
+  }
 }
 
 document.addEventListener('DOMContentLoaded', function(){
