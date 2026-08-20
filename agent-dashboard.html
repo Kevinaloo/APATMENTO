@@ -45,6 +45,9 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 .badge svg{width:11px;height:11px;}
 .b-verified{background:rgba(20,184,166,.12);color:var(--mint-deep);}
 .b-creator{background:rgba(255,106,60,.11);color:var(--ember);}
+.mode-note{margin:0 0 18px;padding:12px 15px;border-radius:14px;font-size:12.5px;line-height:1.6;
+  background:rgba(255,106,60,.08);border:1px solid rgba(255,106,60,.22);color:var(--ink,inherit);}
+.mode-note[hidden]{display:none;}
 
 /* ── Verification clock ── */
 .clock{border-radius:20px;padding:20px 22px;margin-bottom:20px;display:flex;gap:16px;align-items:flex-start;border:1.5px solid transparent;}
@@ -197,7 +200,7 @@ textarea.inp{resize:vertical;min-height:62px;line-height:1.6;font-size:13.5px;}
 
   <link rel="canonical" href="https://cabana.africa/agent-dashboard"/>
 </head>
-<body>
+<body data-apa-role="agent">
 
 <div id="gate"><div class="spin"></div><p>Opening your portal…</p></div>
 
@@ -209,8 +212,14 @@ textarea.inp{resize:vertical;min-height:62px;line-height:1.6;font-size:13.5px;}
       <div class="who-n" id="name">-</div>
       <div class="who-m" id="meta"></div>
     </div>
+    <!-- The rest of Cabana. An agent is also a traveller, usually a partner,
+         and sometimes an influencer — this dashboard offered none of that
+         until now, not even a way back to the traveller view. -->
+    <div data-apa-roles style="margin-left:auto"></div>
     <button class="btn-ghost" onclick="signOut()">Sign out</button>
   </div>
+
+  <div class="mode-note" id="mode-note" hidden></div>
 
   <div class="clock" id="clock"></div>
 
@@ -274,6 +283,7 @@ textarea.inp{resize:vertical;min-height:62px;line-height:1.6;font-size:13.5px;}
      out of <head> so everything above renders without waiting on it. -->
 <script src="/vendor-supabase-2.112.3.js"></script>
 <script src="/apa-session.js"></script>
+<script src="/apa-roles.js" defer></script>
 <script src="/apa-referral-capture.js" defer></script>
 <script>
 'use strict';
@@ -321,6 +331,12 @@ function initials(n) {
   return String(n || '?').trim().split(/\s+/).slice(0,2).map(w => w[0]).join('').toUpperCase();
 }
 
+/* ?mode=influencer — set by the role switcher. Honoured only for an agent
+   who actually declared themselves a creator; for anybody else this is the
+   ordinary agent portal, because renaming the page does not give somebody
+   an audience. */
+const INFLUENCER_MODE = new URLSearchParams(location.search).get('mode') === 'influencer';
+
 function paint() {
   const a = ME.agent, t = ME.totals;
 
@@ -331,6 +347,23 @@ function paint() {
   if (a.kyc_status === 'verified') meta += '<span class="badge b-verified"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>Verified</span>';
   if (a.is_creator) meta += '<span class="badge b-creator">Creator</span>';
   document.getElementById('meta').innerHTML = meta;
+
+  /* Influencer mode is this same portal under the name the person came here
+     looking for. An influencer IS an agent with an audience — one row, one
+     `is_creator` flag — so building a second dashboard would mean two places
+     to fix every bug. What changes is what the page calls itself, which is
+     the part that was actually missing. */
+  if (INFLUENCER_MODE && a.is_creator) {
+    document.documentElement.setAttribute('data-apa-role', 'influencer');
+    document.title = 'Influencer portal · Cabana';
+    const h = document.getElementById('mode-note');
+    if (h) {
+      h.hidden = false;
+      h.innerHTML = 'You are in <b>influencer</b> view. Same portal, same links, '
+        + 'same earnings &mdash; post your listing links anywhere and any booking '
+        + 'within 30 days of a click is yours.';
+    }
+  }
 
   document.getElementById('s-listings').textContent = t.approved;
   document.getElementById('s-leads').textContent    = t.live_leads;

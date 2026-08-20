@@ -6,6 +6,7 @@
 <title>Cabana Partner | Earnings</title>
 <script src="/vendor-supabase-2.112.3.js"></script>
 <script src="/apa-session.js"></script>
+<script src="/apa-roles.js" defer></script>
 <script src="/apa-referral-capture.js" defer></script>
 <script src="/apa-admin-guard.js"></script>
 <script>
@@ -239,7 +240,7 @@ td strong{color:var(--ink);font-weight:600;}
 
   <meta name="robots" content="noindex, nofollow"/>
 </head>
-<body>
+<body data-apa-role="partner">
 <div class="aurora"><div class="ab ab-1"></div><div class="ab ab-2"></div><div class="ab ab-3"></div></div>
 
 <div class="topbar">
@@ -261,6 +262,13 @@ td strong{color:var(--ink);font-weight:600;}
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 5-7 7 7 7"/></svg>
       <span class="tb-switch-txt">Traveller</span>
     </a>
+    <!-- Every other side of Cabana. The "Traveller" button beside this is
+         the fast path people already know; this is the full set, from the
+         one model in apa-roles.js. -->
+    <button type="button" onclick="window.ApaRoles&&ApaRoles.open()" class="tb-switch-btn" title="Switch how you use Cabana" aria-haspopup="dialog">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"/></svg>
+      <span class="tb-switch-txt">Switch role</span>
+    </button>
     <a href="add-listing.html" class="tb-add-btn">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       Add listing
@@ -324,9 +332,11 @@ td strong{color:var(--ink);font-weight:600;}
   </div>
 
   <div class="sb-foot">
-    <a class="sb-link" href="#" onclick="switchToGuest();return false;">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4M4 7h16M16 21l4-4-4-4M20 17H4"/></svg>
-      Switch to Guest
+    <!-- The full set of roles, not just the traveller view. The topbar
+         keeps the one-tap Traveller path; this is everything else. -->
+    <a class="sb-link" href="#" onclick="window.ApaRoles&&ApaRoles.open();return false;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"/></svg>
+      Switch role
     </a>
     <a class="sb-link danger" onclick="signOut()" style="cursor:pointer;">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>

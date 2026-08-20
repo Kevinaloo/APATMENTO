@@ -143,7 +143,7 @@ main{padding:clamp(22px,4vh,38px) 0 clamp(72px,12vh,120px);}
 </style>
 </head>
 
-<body>
+<body data-apa-role="ambassador">
 <div class="aurora" aria-hidden="true"><i></i></div>
 
 <div class="boot" id="boot">
@@ -167,6 +167,9 @@ main{padding:clamp(22px,4vh,38px) 0 clamp(72px,12vh,120px);}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="theme-icon"></svg>
       </button>
       <button class="btn btn-ghost btn-sm" id="to-guest" type="button" title="Browse and book as a traveller">Traveller view</button>
+      <!-- An ambassador is also a traveller, often a partner, sometimes an
+           agent. This dashboard offered exactly one of those. -->
+      <button class="btn btn-ghost btn-sm" type="button" onclick="window.ApaRoles&&ApaRoles.open()" title="Switch how you use Cabana" aria-haspopup="dialog">Switch role</button>
       <button class="btn btn-ghost btn-sm" id="signout" type="button">Sign out</button>
     </div>
   </header>
@@ -484,6 +487,7 @@ main{padding:clamp(22px,4vh,38px) 0 clamp(72px,12vh,120px);}
 <script src="/apa-session.js"></script>
 <script src="/apa-referral-capture.js" defer></script>
 <script src="/apa-fees.js"></script>
+<script src="/apa-roles.js" defer></script>
 <script src="/apa-ambassador.js"></script>
 <script src="/ambassador-dashboard.js"></script>
 </body>

@@ -366,6 +366,10 @@ function wireViewSwitch() {
   const b = $('to-guest');
   if (!b) return;
   b.addEventListener('click', function () {
+    /* Through ApaRoles where it is loaded, so the view preference is written
+       in one place rather than by each dashboard's own idea of it. The
+       fallback is the same two lines it always was. */
+    if (window.ApaRoles) { window.ApaRoles.go('traveller'); return; }
     try { localStorage.setItem('apa-amb-view', 'guest'); } catch (e) {}
     location.href = '/dashboard.html';
   });
