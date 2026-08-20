@@ -661,6 +661,10 @@ export async function ambassadorHandler(req, res) {
 
   const a = req.query.action;
 
+  /* Coarse per-IP limit in front of everything. The per-ambassador claim
+     velocity limit in Postgres is the one that shapes behaviour; this one
+     just stops a stranger hammering the gate. consumeRateLimit writes the
+     429 itself and returns false, so there is nothing to send here. */
   if (!consumeRateLimit(req, res, 'ambassadors', 120, 60_000)) return;
 
   try {

@@ -286,9 +286,6 @@
     }
   ],
   "functions": {
-    "api/ambassadors.js": {
-      "maxDuration": 30
-    },
     "api/rewards.js": {
       "maxDuration": 30
     },
@@ -327,6 +324,10 @@
     }
   },
   "rewrites": [
+    {
+      "source": "/api/ambassadors",
+      "destination": "/api/rewards?_route=ambassadors"
+    },
     {
       "source": "/api/match-guest",
       "destination": "/api/trust?action=match-guest"
