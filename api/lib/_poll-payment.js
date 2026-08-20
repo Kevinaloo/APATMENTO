@@ -113,6 +113,69 @@ function friendlyReason(desc, raw) {
   return desc || 'The payment did not go through.';
 }
 
+/* ══════════════════════════════════════════════════════════════
+   Ask PayHero what became of one transaction.
+
+   Split out of pollPayment so the nightly reconciler can reuse the
+   exact same classifier. Two implementations of a money verdict is
+   how one of them goes stale — the same reason the duplicate
+   check-in verifier was deleted rather than patched.
+
+   Returns { found, probes }. `found` is null when nothing readable
+   came back, which callers MUST treat as "still unknown", never as
+   a failure.
+══════════════════════════════════════════════════════════════ */
+export async function probeStatus(auth, ref, ledger, debug = false) {
+  const CK     = ledger.checkout_request_id || '';
+  const probes = [];
+  const order  = LEARNED ? [LEARNED, ...CANDIDATES.filter(c => c !== LEARNED)] : CANDIDATES;
+
+  let found = null;
+  for (const tpl of order) {
+    const PH = ledger.payhero_reference || '';
+    if (tpl.includes('{PH}') && !PH) continue;   // nothing to query with yet
+    if (tpl.includes('{CK}') && !CK) continue;
+    const path = tpl.split('{PH}').join(encodeURIComponent(PH))
+                    .split('{CK}').join(encodeURIComponent(CK))
+                    /* external_reference we sent to PayHero is the
+                       instalment ref (…-P1), NOT the booking ref.
+                       Querying the booking ref found no transaction,
+                       and a not-found was being read as a failure
+                       which is why a paid KES 10 showed the facepalm. */
+                    .split('{REF}').join(encodeURIComponent(ref));
+    try {
+      const r   = await fetch(BASE + path, {
+        headers: { Authorization: auth, Accept: 'application/json' },
+      });
+      const txt = await r.text();
+      let body; try { body = JSON.parse(txt); } catch { body = txt; }
+
+      if (debug) probes.push({ path, http: r.status,
+        body: typeof body === 'string' ? body.slice(0, 400) : body });
+
+      if (!r.ok) continue;
+
+      /* Guard against a generic/empty 200 that is not about this
+         transaction. Require the payload to echo one of our
+         identifiers, or to carry a receipt. */
+      const blob = JSON.stringify(body || '');
+      const mentionsUs = (CK && blob.includes(CK)) || blob.includes(ref)
+                      || /MpesaReceipt|mpesa_receipt|ResultCode|provider_reference/i.test(blob);
+      if (!mentionsUs) {
+        if (debug) probes.push({ path, http: r.status, skipped: 'no identifier match' });
+        continue;
+      }
+
+      const parsed = readStatus(body);
+      if (parsed) { found = parsed; LEARNED = tpl; if (!debug) break; }
+    } catch (e) {
+      if (debug) probes.push({ path, error: e.message });
+    }
+  }
+
+  return { found, probes };
+}
+
 export async function pollPayment(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cache-Control', 'no-store');
@@ -150,56 +213,17 @@ export async function pollPayment(req, res) {
     if (ledger.status === 'paid') {
       return res.json(await settleView(supaUrl, H, ledger, { instalment: 'paid' }));
     }
-    if (ledger.status === 'failed') return res.json({ status: 'failed', settled: true });
+    /* 'expired' is the reconciler's verdict on a prompt that died at
+       Safaricom before anyone entered a PIN. Terminal, exactly like
+       'failed', so a late poll can never resurrect it into a charge. */
+    if (ledger.status === 'failed' || ledger.status === 'expired') {
+      return res.json({ status: ledger.status, settled: true });
+    }
 
     const CK = ledger.checkout_request_id;
     if (!CK) return res.json({ status: 'pending', reason: 'awaiting_checkout_id' });
 
-    // ── Probe PayHero ─────────────────────────────────────────────
-    const probes = [];
-    const order  = LEARNED ? [LEARNED, ...CANDIDATES.filter(c => c !== LEARNED)] : CANDIDATES;
-
-    let found = null;
-    for (const tpl of order) {
-      const PH = ledger.payhero_reference || '';
-      if (tpl.includes('{PH}') && !PH) continue;   // nothing to query with yet
-      const path = tpl.split('{PH}').join(encodeURIComponent(PH))
-                      .split('{CK}').join(encodeURIComponent(CK))
-                      /* external_reference we sent to PayHero is the
-                         instalment ref (…-P1), NOT the booking ref.
-                         Querying the booking ref found no transaction,
-                         and a not-found was being read as a failure
-                         which is why a paid KES 10 showed the facepalm. */
-                      .split('{REF}').join(encodeURIComponent(ref));
-      try {
-        const r   = await fetch(BASE + path, {
-          headers: { Authorization: auth, Accept: 'application/json' },
-        });
-        const txt = await r.text();
-        let body; try { body = JSON.parse(txt); } catch { body = txt; }
-
-        if (debug) probes.push({ path, http: r.status,
-          body: typeof body === 'string' ? body.slice(0, 400) : body });
-
-        if (!r.ok) continue;
-
-        /* Guard against a generic/empty 200 that is not about this
-           transaction. Require the payload to echo one of our
-           identifiers, or to carry a receipt. */
-        const blob = JSON.stringify(body || '');
-        const mentionsUs = blob.includes(CK) || blob.includes(ref)
-                        || /MpesaReceipt|mpesa_receipt|ResultCode|provider_reference/i.test(blob);
-        if (!mentionsUs) {
-          if (debug) probes.push({ path, http: r.status, skipped: 'no identifier match' });
-          continue;
-        }
-
-        const parsed = readStatus(body);
-        if (parsed) { found = parsed; LEARNED = tpl; if (!debug) break; }
-      } catch (e) {
-        if (debug) probes.push({ path, error: e.message });
-      }
-    }
+    const { found, probes } = await probeStatus(auth, ref, ledger, debug);
 
     if (debug) return res.json({ ref, checkout_request_id: CK, learned: LEARNED, found, probes });
 
@@ -249,47 +273,13 @@ export async function pollPayment(req, res) {
    whether a check-in code may be shown. Everything else here is for
    display.
 ══════════════════════════════════════════════════════════════ */
-async function settleView(supaUrl, H, ledger, extra = {}) {
+export async function settleView(supaUrl, H, ledger, extra = {}) {
   /* The ledger row knows which table it belongs to. This used to be
      hard-coded to apartment_bookings, so a paid tour or event
      instalment updated nothing at all and the booking stayed
      'pending_payment' however much the guest paid. */
   const table = ledger.booking_table || 'apartment_bookings';
   const ref   = encodeURIComponent(ledger.booking_ref);
-
-  /* ── STAYS: settle inside the database ────────────────────────────
-     Re-summing the ledger over PostgREST and then PATCHing the booking
-     is a read-modify-write across two round trips, which is exactly the
-     shape that loses a race. Two M-Pesa payments clearing at the same
-     moment for the same nights both read "no hold yet" and both wrote a
-     confirmation, and nothing anywhere refused the second one.
-
-     cabana_settle_booking does the whole thing under a row lock, and the
-     claim itself is an INSERT against an exclusion constraint, so the
-     database decides the winner rather than whichever lambda was
-     scheduled first. It returns the booking's position, not the
-     instalment's. */
-  if (table === 'apartment_bookings') {
-    try {
-      const rr = await fetch(`${supaUrl}/rest/v1/rpc/cabana_settle_booking`, {
-        method: 'POST',
-        headers: H({ 'Content-Type': 'application/json' }),
-        body: JSON.stringify({ p_booking_ref: ledger.booking_ref }),
-      });
-      if (rr.ok) {
-        const s = await rr.json();
-        if (s && s.ok) return { ...s, ...extra };
-        console.warn('[poll-payment] settle rejected:', s && s.error);
-      } else {
-        console.warn('[poll-payment] settle http', rr.status, await rr.text());
-      }
-    } catch (e) {
-      console.warn('[poll-payment] settle rpc:', e.message);
-    }
-    /* Fall through to the legacy path below only if the RPC is missing
-       or unreachable, so a stale deploy still settles money correctly —
-       it just cannot claim dates. */
-  }
 
   const sr = await fetch(
     `${supaUrl}/rest/v1/booking_payments`

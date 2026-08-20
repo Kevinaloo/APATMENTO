@@ -1,6 +1,7 @@
 /* ════════════════════════════════════════════════════════════════
    APATMENTO  ·  Utilities  /api/utilities.js
    Routes: ?action=close-bookings | welcome-email | indexnow
+           | reconcile-payments
    Consolidates small utility handlers into 1 function
 ════════════════════════════════════════════════════════════════ */
 export const config = { maxDuration: 15 };
@@ -39,8 +40,14 @@ export const config = { maxDuration: 15 };
 ══════════════════════════════════════════════════════════════ */
 
 import geocodeHandler from './lib/_geocode.js';
-import { settlementOf, endDayOf, todayNumber, PART_PAYMENT_TTL_HOURS }
+import { reconcilePayments } from './lib/_reconcile-payments.js';
+import { settlementOf, endDayOf, todayNumber, PART_PAYMENT_TTL_HOURS,
+         validateInstalment, depositRequired }
   from './lib/_payment-rules.js';
+import { requireUser } from './lib/_security.js';
+import { settleView }  from './lib/_poll-payment.js';
+import { createOrder, captureOrder, fetchOrder, kesToUsd }
+  from './lib/_paypal.js';
 
 const SWEEPABLE = {
   apartment_bookings: 'checkin_date',
@@ -127,26 +134,7 @@ async function handleCloseBookings(req, res) {
     out[table] = { scanned: rows.length, closed, refunds_flagged: refunds };
   }
 
-  /* Give the calendar back. A hold whose stay has ended still satisfies
-     the exclusion constraint, so without this every sold night would
-     block that listing forever and the property would quietly go dark
-     after its first booking. Cancellations release instantly via
-     trigger; this catches the ones the clock closed. */
-  let holdsReleased = null;
-  try {
-    const hr = await fetch(`${supabaseUrl}/rest/v1/rpc/cabana_release_expired_holds`, {
-      method: 'POST',
-      headers: H({ 'Content-Type': 'application/json' }),
-      body: '{}',
-    });
-    holdsReleased = hr.ok ? await hr.json() : `http_${hr.status}`;
-  } catch (e) {
-    holdsReleased = `error: ${e.message}`;
-  }
-
-  return res.status(200).json({
-    ok: true, ran_at: new Date().toISOString(), holds_released: holdsReleased, ...out,
-  });
+  return res.status(200).json({ ok: true, ran_at: new Date().toISOString(), ...out });
 }
 
 /* Columns added by schema-bookings-lifecycle.sql. If that migration
@@ -243,6 +231,295 @@ async function handleWelcomeEmail(req, res) {
   }
 }
 
+/* ══════════════════════════════════════════════════════════════
+   PAYPAL  ·  create-order, capture, webhook
+   ──────────────────────────────────────────────────────────────
+   PayPal does not support KES. All amounts are converted to USD
+   (PAYPAL_KES_TO_USD_RATE env var, default 130) with a 1 % buffer.
+
+   Webhook events are verified by retrieval — we call
+   GET /v2/checkout/orders/{id} to confirm the order is COMPLETED
+   before marking anything paid. This avoids raw-body signature
+   parsing which Vercel's pre-parsed JSON body makes impossible.
+══════════════════════════════════════════════════════════════ */
+
+const PP_REF_MAP = {
+  'APT-':   { table: 'apartment_bookings', col: 'payment_reference' },
+  'TOUR-':  { table: 'tour_bookings',      col: 'payment_reference' },
+  'EVENT-': { table: 'event_tickets',      col: 'payment_reference' },
+};
+
+function ppResolveRef(ref) {
+  const k = Object.keys(PP_REF_MAP).find(p => ref.startsWith(p));
+  return k ? PP_REF_MAP[k] : null;
+}
+
+function ppHeaders(key, extra = {}) {
+  return { apikey: key, Authorization: `Bearer ${key}`, ...extra };
+}
+
+async function handlePaypalCreateOrder(req, res) {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'POST required' });
+
+  const user = await requireUser(req, res);
+  if (!user) return;
+
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const serviceKey  = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !serviceKey)
+    return res.status(500).json({ error: 'supabase_not_configured' });
+  if (!process.env.PAYPAL_CLIENT_ID || !process.env.PAYPAL_CLIENT_SECRET)
+    return res.status(500).json({ error: 'paypal_not_configured' });
+
+  let body;
+  try { body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body; }
+  catch { return res.status(400).json({ error: 'Invalid JSON' }); }
+
+  const { booking_ref, amount: requested } = body || {};
+  if (!booking_ref) return res.status(400).json({ error: 'booking_ref required' });
+
+  const bookingRef = String(booking_ref);
+  const map = ppResolveRef(bookingRef);
+  if (!map) return res.status(400).json({ error: 'Unrecognised booking reference prefix' });
+
+  const H = extra => ppHeaders(serviceKey, extra);
+
+  /* Load booking */
+  const br = await fetch(
+    `${supabaseUrl}/rest/v1/${map.table}?${map.col}=eq.${encodeURIComponent(bookingRef)}&select=*&limit=1`,
+    { headers: H() });
+  const booking = br.ok ? (await br.json())[0] : null;
+  if (!booking) return res.status(404).json({ error: 'No booking matches this reference' });
+
+  const owner = booking.guest_id || booking.user_id;
+  if (!owner || owner !== user.id)
+    return res.status(403).json({ error: 'not_your_booking' });
+
+  /* Sum paid instalments */
+  const lr = await fetch(
+    `${supabaseUrl}/rest/v1/booking_payments?booking_ref=eq.${encodeURIComponent(bookingRef)}&status=eq.paid&select=amount`,
+    { headers: H() });
+  const amountPaid = lr.ok
+    ? (await lr.json()).reduce((s, p) => s + Number(p.amount || 0), 0)
+    : 0;
+
+  const verdict = validateInstalment({
+    requested,
+    grandTotal:  Number(booking.grand_total || 0),
+    amountPaid,
+    paymentMode: booking.payment_mode,
+  });
+  if (!verdict.ok) {
+    return res.status(422).json({
+      error:            verdict.error,
+      amount_paid:      amountPaid,
+      grand_total:      Number(booking.grand_total || 0),
+      deposit_required: depositRequired(Number(booking.grand_total || 0)),
+    });
+  }
+
+  const chargeKes = verdict.amount;
+
+  /* Create the PayPal order */
+  let orderId, amountUsd;
+  try {
+    ({ orderId, amountUsd } = await createOrder({
+      amountKes:   chargeKes,
+      bookingRef,
+      description: `Cabana Africa – ${bookingRef}`,
+    }));
+  } catch (e) {
+    console.error('[paypal-create-order]', e.message);
+    return res.status(502).json({ error: 'PayPal order creation failed', detail: e.message });
+  }
+
+  /* Record as pending in booking_payments */
+  const payRef = `${bookingRef}-pp-${Date.now()}`;
+  const ins = await fetch(`${supabaseUrl}/rest/v1/booking_payments`, {
+    method:  'POST',
+    headers: H({ 'Content-Type': 'application/json', Prefer: 'return=minimal' }),
+    body: JSON.stringify({
+      booking_table:   map.table,
+      booking_ref:     bookingRef,
+      reference:       payRef,
+      amount:          chargeKes,
+      status:          'pending',
+      payment_method:  'paypal',
+      paypal_order_id: orderId,
+    }),
+  });
+  if (!ins.ok) {
+    const err = await ins.text();
+    console.error('[paypal-create-order] ledger insert failed:', err);
+    return res.status(500).json({ error: 'Could not record payment attempt' });
+  }
+
+  return res.status(200).json({
+    ok:         true,
+    order_id:   orderId,
+    reference:  payRef,
+    amount_kes: chargeKes,
+    amount_usd: amountUsd,
+    rate:       parseFloat(process.env.PAYPAL_KES_TO_USD_RATE || '130'),
+  });
+}
+
+async function handlePaypalCapture(req, res) {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'POST required' });
+
+  const user = await requireUser(req, res);
+  if (!user) return;
+
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const serviceKey  = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !serviceKey)
+    return res.status(500).json({ error: 'supabase_not_configured' });
+
+  let body;
+  try { body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body; }
+  catch { return res.status(400).json({ error: 'Invalid JSON' }); }
+
+  const { order_id, reference } = body || {};
+  if (!order_id || !reference)
+    return res.status(400).json({ error: 'order_id and reference required' });
+
+  const H = extra => ppHeaders(serviceKey, extra);
+
+  /* Load ledger row */
+  const lr = await fetch(
+    `${supabaseUrl}/rest/v1/booking_payments?reference=eq.${encodeURIComponent(reference)}&select=*&limit=1`,
+    { headers: H() });
+  const ledger = lr.ok ? (await lr.json())[0] : null;
+  if (!ledger) return res.status(404).json({ error: 'Unknown payment reference' });
+
+  if (ledger.paypal_order_id !== order_id)
+    return res.status(400).json({ error: 'order_id does not match this reference' });
+
+  if (ledger.status === 'paid')
+    return res.status(200).json({ ok: true, already_paid: true });
+
+  if (ledger.status !== 'pending')
+    return res.status(409).json({ error: `Payment is in terminal state: ${ledger.status}` });
+
+  /* Capture the PayPal order */
+  let captureData;
+  try { captureData = await captureOrder(order_id); }
+  catch (e) {
+    console.error('[paypal-capture]', e.message);
+    return res.status(502).json({ error: 'PayPal capture failed', detail: e.message });
+  }
+
+  const captureStatus = captureData.status;
+  if (captureStatus !== 'COMPLETED') {
+    console.warn('[paypal-capture] unexpected status:', captureStatus, order_id);
+    return res.status(402).json({ error: 'Payment not completed', paypal_status: captureStatus });
+  }
+
+  const captureId = captureData.purchase_units?.[0]?.payments?.captures?.[0]?.id || null;
+
+  /* Mark as paid, guarded with status=eq.pending so concurrent writes are safe */
+  await fetch(
+    `${supabaseUrl}/rest/v1/booking_payments?reference=eq.${encodeURIComponent(reference)}&status=eq.pending`,
+    {
+      method:  'PATCH',
+      headers: H({ 'Content-Type': 'application/json', Prefer: 'return=minimal' }),
+      body: JSON.stringify({
+        status:            'paid',
+        paypal_capture_id: captureId,
+        paid_at:           new Date().toISOString(),
+      }),
+    });
+
+  /* Update booking status (amount_paid mirrors, derived status, etc.) */
+  const view = await settleView(supabaseUrl, H, ledger, { instalment: 'paid' });
+
+  return res.status(200).json({ ok: true, capture_id: captureId, ...view });
+}
+
+async function handlePaypalWebhook(req, res) {
+  /* Always 200 — PayPal retries on any other status. */
+  if (req.method !== 'POST') return res.status(200).end();
+
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const serviceKey  = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !serviceKey) return res.status(200).end();
+
+  let event;
+  try { event = typeof req.body === 'string' ? JSON.parse(req.body) : req.body; }
+  catch { return res.status(200).end(); }
+
+  const eventType = event?.event_type || '';
+  const resource  = event?.resource   || {};
+
+  /* The order ID lives at different paths depending on event type. */
+  const orderId =
+    resource?.supplementary_data?.related_ids?.order_id ||
+    resource?.id ||
+    null;
+
+  if (!orderId) return res.status(200).json({ ignored: 'no_order_id' });
+
+  const H = extra => ppHeaders(serviceKey, extra);
+
+  /* Find the ledger row for this PayPal order */
+  const lr = await fetch(
+    `${supabaseUrl}/rest/v1/booking_payments?paypal_order_id=eq.${encodeURIComponent(orderId)}&select=*&limit=1`,
+    { headers: H() });
+  const ledger = lr.ok ? (await lr.json())[0] : null;
+  if (!ledger) return res.status(200).json({ ignored: 'unknown_order' });
+
+  if (eventType === 'PAYMENT.CAPTURE.DENIED' || eventType === 'CHECKOUT.ORDER.DECLINED') {
+    if (ledger.status === 'pending') {
+      await fetch(
+        `${supabaseUrl}/rest/v1/booking_payments?reference=eq.${encodeURIComponent(ledger.reference)}&status=eq.pending`,
+        {
+          method:  'PATCH',
+          headers: H({ 'Content-Type': 'application/json', Prefer: 'return=minimal' }),
+          body: JSON.stringify({ status: 'failed' }),
+        });
+    }
+    return res.status(200).json({ ok: true, action: 'marked_failed' });
+  }
+
+  if (eventType !== 'PAYMENT.CAPTURE.COMPLETED' && eventType !== 'CHECKOUT.ORDER.APPROVED') {
+    return res.status(200).json({ ignored: 'unhandled_event', event_type: eventType });
+  }
+
+  /* Already settled — idempotent */
+  if (ledger.status === 'paid') return res.status(200).json({ ok: true, already_paid: true });
+
+  /* Verify by retrieval — fetch the order from PayPal and confirm COMPLETED */
+  let order;
+  try { order = await fetchOrder(orderId); }
+  catch (e) {
+    console.error('[paypal-webhook] fetchOrder failed:', e.message);
+    return res.status(200).json({ ok: false, error: 'could_not_verify' });
+  }
+
+  if (order.status !== 'COMPLETED') {
+    return res.status(200).json({ ignored: 'order_not_completed', order_status: order.status });
+  }
+
+  const captureId = order.purchase_units?.[0]?.payments?.captures?.[0]?.id || null;
+
+  await fetch(
+    `${supabaseUrl}/rest/v1/booking_payments?reference=eq.${encodeURIComponent(ledger.reference)}&status=eq.pending`,
+    {
+      method:  'PATCH',
+      headers: H({ 'Content-Type': 'application/json', Prefer: 'return=minimal' }),
+      body: JSON.stringify({
+        status:            'paid',
+        paypal_capture_id: captureId,
+        paid_at:           new Date().toISOString(),
+      }),
+    });
+
+  await settleView(supabaseUrl, H, ledger, {}).catch(e =>
+    console.warn('[paypal-webhook] settleView:', e.message));
+
+  return res.status(200).json({ ok: true, capture_id: captureId });
+}
+
 /* ══════════════════════════════════════
    ROUTER
 ══════════════════════════════════════ */
@@ -320,6 +597,43 @@ async function handleIndexNow(req, res) {
   }
 }
 
+/* ══════════════════════════════════════════════════════════════
+   RECONCILE PAYMENTS
+   ──────────────────────────────────────────────────────────────
+   Closes payment attempts nobody ever closed. See
+   lib/_reconcile-payments.js for the rules and the reasoning about
+   why a retired prompt cannot come back to life.
+
+   ?dry=1 reports what it would do and writes nothing — run that
+   first against the stranded backlog.
+══════════════════════════════════════════════════════════════ */
+async function handleReconcilePayments(req, res) {
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const serviceKey  = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !serviceKey) {
+    return res.status(500).json({ error: 'supabase_not_configured' });
+  }
+
+  /* Same gate as close-bookings: Vercel signs its own cron calls,
+     anything else needs the secret. This moves money state. */
+  const isVercelCron = Boolean(req.headers['x-vercel-cron']);
+  const secret = req.headers['x-internal-secret'] || req.query?.secret || '';
+  if (!isVercelCron && (!process.env.INTERNAL_API_SECRET
+      || secret !== process.env.INTERNAL_API_SECRET)) {
+    return res.status(403).json({ error: 'forbidden' });
+  }
+
+  const dryRun = req.query?.dry === '1' || req.query?.dry === 'true';
+
+  try {
+    const result = await reconcilePayments({ supabaseUrl, serviceKey, dryRun });
+    return res.status(result.error ? 500 : 200).json(result);
+  } catch (err) {
+    console.error('[reconcile-payments]', err);
+    return res.status(500).json({ error: 'reconcile_failed', detail: String(err.message || err) });
+  }
+}
+
 export default async function handler(req, res) {
   const action = req.query?.action 
     || (typeof req.body === 'object' ? req.body?.action : null)
@@ -355,7 +669,24 @@ export default async function handler(req, res) {
     return handleIndexNow(req, res);
   }
 
+  if (action === 'reconcile-payments') {
+    return handleReconcilePayments(req, res);
+  }
+
+  if (action === 'paypal-create-order') {
+    return handlePaypalCreateOrder(req, res);
+  }
+
+  if (action === 'paypal-capture') {
+    return handlePaypalCapture(req, res);
+  }
+
+  if (action === 'paypal-webhook') {
+    return handlePaypalWebhook(req, res);
+  }
+
   return res.status(400).json({
-    error: 'Unknown action. Available: geocode, close-bookings, welcome-email, indexnow',
+    error: 'Unknown action. Available: geocode, close-bookings, welcome-email, '
+         + 'indexnow, reconcile-payments, paypal-create-order, paypal-capture, paypal-webhook',
   });
 }

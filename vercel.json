@@ -283,11 +283,15 @@
     {
       "path": "/api/utilities?action=close-bookings",
       "schedule": "10 21 * * *"
+    },
+    {
+      "path": "/api/utilities?action=reconcile-payments",
+      "schedule": "0 5 * * *"
     }
   ],
   "functions": {
     "api/rewards.js": {
-      "maxDuration": 30
+      "maxDuration": 15
     },
     "api/import-listing.js": {
       "maxDuration": 45
@@ -324,10 +328,6 @@
     }
   },
   "rewrites": [
-    {
-      "source": "/api/ambassadors",
-      "destination": "/api/rewards?_route=ambassadors"
-    },
     {
       "source": "/api/match-guest",
       "destination": "/api/trust?action=match-guest"
@@ -371,6 +371,22 @@
     {
       "source": "/api/poll-payment",
       "destination": "/api/stk-push?action=poll"
+    },
+    {
+      "source": "/api/reconcile-payments",
+      "destination": "/api/utilities?action=reconcile-payments"
+    },
+    {
+      "source": "/api/paypal-create-order",
+      "destination": "/api/utilities?action=paypal-create-order"
+    },
+    {
+      "source": "/api/paypal-capture",
+      "destination": "/api/utilities?action=paypal-capture"
+    },
+    {
+      "source": "/api/paypal-webhook",
+      "destination": "/api/utilities?action=paypal-webhook"
     }
   ],
   "buildCommand": null,

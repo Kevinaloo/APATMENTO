@@ -18,6 +18,7 @@
 import { validateInstalment, depositRequired } from './lib/_payment-rules.js';
 import { pollPayment } from './lib/_poll-payment.js';
 import { requireUser, setCors } from './lib/_security.js';
+import { walletBalance } from './lib/_payhero-account.js';
 
 const PAYHERO_URL   = 'https://backend.payhero.co.ke/api/v2/payments';
 const FETCH_TIMEOUT = 12000;
@@ -247,11 +248,47 @@ export default async function handler(req, res) {
     /* 201 Created on success; can also return 2xx with success:false. */
     if (!phRes.ok || data.success === false) {
       await markLedger(supabaseUrl, serviceKey, payRef, 'failed');
-      const errMsg = data.message || data.error
+
+      /* PayHero puts the human-readable reason in `error_message`. Reading
+         only `message`/`error` collapsed every rejection into the useless
+         "PayHero request failed (HTTP 400)", which is why an unfunded
+         wallet looked like a generic outage in the logs for ten days. */
+      const rawMsg = data.error_message || data.message || data.error
         || (Array.isArray(data.errors) ? data.errors.join('; ') : null)
         || ('PayHero request failed (HTTP ' + phRes.status + ')');
-      console.error('[stk-push] PayHero error:', errMsg, data);
-      return res.status(phRes.ok ? 502 : phRes.status).json({ error: errMsg, details: data });
+
+      /* PayHero reports merchant-side faults through the same BAD_REQUEST
+         it uses for a malformed phone number, and those messages are
+         addressed to US, not to the guest. Relaying "merchant has
+         insufficient balance ... kindly reach out to them" into a checkout
+         modal asks a paying customer to chase our supplier about an
+         account only we can fix. Classify first; tell the guest only what
+         concerns the guest, and shout about the rest in the logs. */
+      if (isMerchantFault(rawMsg)) {
+        /* Read the float and put the number in the log line. Ten days
+           were lost to "HTTP 400" because nothing ever said how much
+           was actually in the wallet. Best-effort by construction:
+           walletBalance never throws, and we are already on the error
+           path, so this cannot cost a working payment. */
+        const wallet = await walletBalance();
+        console.error('[stk-push] MERCHANT FAULT — PayHero refused the charge.',
+                      'Our account, not the guest:', rawMsg,
+                      '| ref', payRef, '| amount', chargeAmount,
+                      '| float', wallet.ok
+                        ? (wallet.balance === null ? 'unreadable' : wallet.balance)
+                        : 'unreadable (' + wallet.error + ')');
+        return res.status(503).json({
+          error: 'M-Pesa payments are temporarily unavailable. Nothing has been '
+               + 'charged and your booking is held — please try again shortly.',
+          merchant_fault: true,
+          retryable:      true,
+        });
+      }
+
+      console.error('[stk-push] PayHero error:', rawMsg, data);
+      /* No `details` passthrough: it echoed PayHero's raw merchant text
+         over the wire to the browser. */
+      return res.status(phRes.ok ? 502 : phRes.status).json({ error: rawMsg });
     }
 
     /* PayHero returns its OWN reference alongside CheckoutRequestID:
@@ -282,6 +319,20 @@ export default async function handler(req, res) {
     console.error('[stk-push] Unhandled error:', err);
     return res.status(500).json({ error: 'Internal server error', details: err.message });
   }
+}
+
+/* Rejections that belong to our PayHero account rather than to the guest's
+   phone or their M-Pesa balance. Matched on message text because PayHero
+   returns BAD_REQUEST for both classes. A balance complaint at push time is
+   always ours: PayHero cannot see the guest's wallet until they enter a PIN,
+   so anything it knows this early is about the merchant float. */
+function isMerchantFault(message) {
+  const m = String(message || '').toLowerCase();
+  return m.includes('merchant')
+      || m.includes('service wallet')
+      || m.includes('insufficient balance')
+      || m.includes('channel_id')
+      || m.includes('invalid channel');
 }
 
 async function markLedger(url, key, reference, status, checkoutId, payheroRef) {
