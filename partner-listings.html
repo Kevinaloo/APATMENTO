@@ -8,6 +8,7 @@
 <script src="/vendor-supabase-2.112.3.js"></script>
 <script src="/apa-session.js"></script>
 <script src="/apa-referral-capture.js" defer></script>
+<script src="/apa-ownership.js"></script>
 <script>
 (function(){
   var sb2=null;
@@ -160,6 +161,60 @@ body{display:flex;flex-direction:column;}
 .lc-info{flex:1;min-width:0;}
 .lc-name{font-family:var(--fh);font-size:14px;font-weight:800;color:var(--ink);margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .lc-meta{font-size:12px;color:var(--soft);line-height:1.5;}
+
+/* Ownership badge on a listing card. Quiet by default; amber when the
+   listing is on its way to somebody else, because that is a state a
+   partner must not discover by surprise. */
+.lc-own{display:inline-flex;align-items:center;gap:5px;margin-top:6px;font-size:11.5px;
+  font-weight:600;color:var(--soft);}
+.lc-own svg{width:12px;height:12px;flex:none;}
+.lc-own-warn{color:#B45309;}
+
+/* Ownership sheet */
+.own-scrim{position:fixed;inset:0;background:rgba(9,10,20,.42);backdrop-filter:blur(3px);
+  opacity:0;pointer-events:none;transition:opacity .24s;z-index:220;}
+.own-scrim.open{opacity:1;pointer-events:auto;}
+.own-sheet{position:fixed;z-index:221;right:0;top:0;bottom:0;width:min(440px,100%);
+  background:var(--card,#fff);box-shadow:-20px 0 60px rgba(9,10,20,.16);
+  transform:translateX(102%);transition:transform .3s cubic-bezier(.22,1,.36,1);
+  display:flex;flex-direction:column;}
+.own-sheet.open{transform:none;}
+@media(max-width:560px){
+  .own-sheet{right:0;left:0;top:auto;width:auto;max-height:92vh;border-radius:22px 22px 0 0;
+    transform:translateY(102%);}
+}
+.os-head{display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:18px 20px;border-bottom:1px solid var(--line,rgba(9,10,20,.08));}
+.os-head h2{font-size:15px;font-weight:800;margin:0;}
+.os-x{width:32px;height:32px;border-radius:9px;border:1.5px solid var(--line,rgba(9,10,20,.12));
+  background:transparent;cursor:pointer;color:var(--soft);display:grid;place-items:center;}
+.os-body{padding:20px;overflow-y:auto;flex:1;}
+.os-title{font-size:16px;font-weight:800;margin-bottom:16px;line-height:1.3;}
+.os-sec{padding:16px 0;border-top:1px solid var(--line,rgba(9,10,20,.08));}
+.os-sec:first-of-type{border-top:0;padding-top:0;}
+.os-h{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--soft);margin-bottom:11px;}
+.os-row{display:flex;justify-content:space-between;gap:12px;align-items:baseline;
+  padding:9px 0;border-bottom:1px solid var(--line,rgba(9,10,20,.06));font-size:13.5px;}
+.os-row b{font-variant-numeric:tabular-nums;}
+.os-row em{font-style:normal;color:var(--soft);font-size:12px;}
+.os-tag{display:inline-block;padding:2px 7px;border-radius:100px;font-size:10px;font-weight:700;
+  background:rgba(245,158,11,.12);color:#B45309;}
+.os-note{font-size:12.5px;line-height:1.65;color:var(--soft);margin-top:10px;}
+.os-note a{color:var(--electric,#4361FF);font-weight:600;}
+.os-l{display:block;font-size:12px;font-weight:700;margin:14px 0 6px;}
+.os-opt{font-weight:500;color:var(--soft);}
+.os-i{width:100%;padding:11px 13px;border-radius:11px;border:1.5px solid var(--line,rgba(9,10,20,.12));
+  font-family:inherit;font-size:14px;outline:none;background:transparent;color:inherit;}
+.os-i:focus{border-color:var(--electric,#4361FF);}
+.os-warn{margin:16px 0;padding:13px 15px;border-radius:13px;
+  background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.24);font-size:12.5px;line-height:1.6;}
+.os-warn strong{display:block;margin-bottom:4px;color:#92400E;}
+.os-warn p{margin:0 0 8px;color:#92400E;}
+.os-warn-hard{background:rgba(255,61,90,.07);border-color:rgba(255,61,90,.22);}
+.os-warn-hard strong,.os-warn-hard p{color:#9F1239;}
+.os-err{margin-top:14px;padding:11px 13px;border-radius:11px;background:rgba(255,61,90,.08);
+  color:#9F1239;font-size:12.5px;font-weight:600;line-height:1.55;}
 .lc-price{font-family:var(--fh);font-size:13px;font-weight:800;color:var(--mint-d);margin-top:4px;}
 .lc-right{flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:8px;}
 .lc-acts{display:flex;gap:6px;}
@@ -414,6 +469,10 @@ body{display:flex;flex-direction:column;}
     </div>
   </div>
 
+  <!-- Listings other people have handed to you. Renders nothing when there
+       is nothing waiting; ApaOwnership mounts itself into it. -->
+  <div id="ownership-inbox"></div>
+
   <!-- FILTER BAR -->
   <div class="filter-bar">
     <button class="filter-chip active" data-filter="all" onclick="setFilter(this)">All</button>
@@ -631,6 +690,17 @@ async function loadListings(){
       new Date(b.created_at||0)-new Date(a.created_at||0));
     updateStats(allListings);
     renderListings(allListings);
+
+    /* Ownership loads after the board is already on screen and its failure
+       is silent. A badge saying who co-owns a flat is worth having; it is
+       not worth an empty listings page if the view is missing. */
+    if(window.ApaOwnership&&allListings.length){
+      ApaOwnership.forListings(allListings.map(l=>l.id)).then(by=>{
+        OWN=by||{};
+        renderListings(activeFilter==='all'?allListings
+          :allListings.filter(l=>(l.service||l.type||'').toLowerCase()===activeFilter));
+      });
+    }
   }catch(e){console.warn(e);}
 }
 
@@ -644,6 +714,140 @@ function updateStats(list){
 }
 
 const SVC_LABELS={stays:'Stays',roommates:'Roommates',tours:'Tours',events:'Events',food:'Food',carhire:'Car Hire',rides:'Rides',shopping:'Shopping'};
+
+/* Ownership, keyed by listing id. Loaded after the board paints, so an
+   absent view degrades to no badge rather than to no listings. */
+let OWN={};
+
+function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+/* A listing that belongs to more than one person, or to somebody else
+   entirely, says so on the board. A partner who cannot see that a flat is
+   held for a third party will treat it as theirs, and be wrong. */
+function ownBadge(l){
+  const row=OWN[l.id];
+  if(!row||!window.ApaOwnership)return '';
+  if(row.pending_transfer_id){
+    return '<div class="lc-own lc-own-warn">'
+      + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8l4 4-4 4M3 12h18"/></svg>'
+      + esc(row.ownership_type==='on_behalf'
+            ? 'Held for '+(row.held_for_name||'someone')+' \u00b7 waiting to be claimed'
+            : 'Transfer to '+(row.pending_transfer_to||'someone')+' waiting')
+      + '</div>';
+  }
+  if(row.ownership_type==='partnership'){
+    const mine=(row.partners||[]).find(p=>p.role==='operator');
+    return '<div class="lc-own">'
+      + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>'
+      + esc(ApaOwnership.describe(row)) + (mine?' \u00b7 your share '+mine.equity_pct+'%':'')
+      + '</div>';
+  }
+  return '';
+}
+
+/* ── The ownership sheet ──────────────────────────────────────────────
+   One place to see who a listing belongs to and to hand it over. The
+   transfer is deliberately blunt about what it does: people undersell
+   this to themselves and then ring support in a fortnight. */
+let OWN_SHEET_ID=null;
+
+function openOwnership(id){
+  OWN_SHEET_ID=id;
+  const l=allListings.find(x=>String(x.id)===String(id));
+  const row=OWN[id];
+  const body=document.getElementById('own-sheet-body');
+  const sheet=document.getElementById('own-sheet');
+  if(!body||!sheet)return;
+
+  let html='<div class="os-title">'+esc(l&&l.title||'This listing')+'</div>';
+
+  if(row&&row.pending_transfer_id){
+    html+='<div class="os-warn">'
+      + '<strong>'+esc(row.ownership_type==='on_behalf'
+          ? 'Held for '+(row.held_for_name||'someone else')
+          : 'Transfer to '+(row.pending_transfer_to||'someone')+' is waiting')+'</strong>'
+      + '<p>It becomes theirs the moment they sign in with the email address or phone '
+      + 'number you gave and accept it. Until then it is still yours to manage.</p>'
+      + '<button class="btn btn-ghost btn-sm" onclick="cancelTransfer()">Cancel the transfer</button>'
+      + '</div>';
+  } else if(row&&row.ownership_type==='partnership'){
+    html+='<div class="os-sec"><div class="os-h">Co-owners</div>'
+      + (row.partners||[]).map(p=>
+          '<div class="os-row"><span>'+esc(p.name)+(p.role==='operator'?' <em>(you)</em>':'')
+          + (p.status==='invited'?' <span class="os-tag">not joined yet</span>':'')
+          + '</span><b>'+p.equity_pct+'%</b></div>').join('')
+      + '<p class="os-note">Change the split from <a href="add-listing.html?from=dashboard&edit='
+      + encodeURIComponent(id)+'">Edit listing</a>.</p></div>';
+  } else {
+    html+='<div class="os-sec"><div class="os-h">Ownership</div>'
+      + '<p class="os-note">You operate and manage this listing on your own. '
+      + 'To record co-owners or change that, open <a href="add-listing.html?from=dashboard&edit='
+      + encodeURIComponent(id)+'">Edit listing</a>.</p></div>';
+  }
+
+  if(!row||!row.pending_transfer_id){
+    html+='<div class="os-sec"><div class="os-h">Transfer ownership</div>'
+      + '<p class="os-note">Hand this listing to somebody else — its reviews, its ranking '
+      + 'and its calendar go with it. They claim it by signing in with the email address '
+      + 'or phone number you give here.</p>'
+      + '<label class="os-l">Their full name</label>'
+      + '<input class="os-i" id="os-name" placeholder="e.g. Joseph Otieno" maxlength="120"/>'
+      + '<label class="os-l">Their email or phone</label>'
+      + '<input class="os-i" id="os-contact" placeholder="owner@example.com or 0712 345 678" maxlength="160"/>'
+      + '<label class="os-l">A note for them <span class="os-opt">(optional)</span></label>'
+      + '<input class="os-i" id="os-note" placeholder="Handing the Kilimani flat over as agreed." maxlength="200"/>'
+      + '<div class="os-warn os-warn-hard"><strong>This cannot be undone once they accept.</strong>'
+      + '<p>You will lose access to this listing, its bookings and its payouts.</p></div>'
+      + '<button class="btn btn-danger" id="os-go" onclick="startTransfer()" style="width:100%">Send the transfer</button>'
+      + '</div>';
+  }
+
+  html+='<div class="os-err" id="os-err" hidden></div>';
+  body.innerHTML=html;
+  sheet.classList.add('open');
+  document.getElementById('own-scrim').classList.add('open');
+}
+
+function closeOwnership(){
+  document.getElementById('own-sheet').classList.remove('open');
+  document.getElementById('own-scrim').classList.remove('open');
+  OWN_SHEET_ID=null;
+}
+
+function osErr(msg){
+  const el=document.getElementById('os-err');
+  if(!el)return;el.textContent=msg;el.hidden=!msg;
+}
+
+async function startTransfer(){
+  if(!window.ApaOwnership||!OWN_SHEET_ID)return;
+  const btn=document.getElementById('os-go');
+  const g=id=>{const el=document.getElementById(id);return el?el.value.trim():'';};
+  osErr('');
+  if(btn){btn.disabled=true;btn.textContent='Sending…';}
+  const r=await ApaOwnership.transfer(OWN_SHEET_ID,{name:g('os-name'),contact:g('os-contact'),note:g('os-note')});
+  if(btn){btn.disabled=false;btn.textContent='Send the transfer';}
+  if(!r||!r.ok){osErr(r&&r.error||'Could not send that transfer.');return;}
+  await refreshOwnership();
+  openOwnership(OWN_SHEET_ID);
+}
+
+async function cancelTransfer(){
+  if(!window.ApaOwnership||!OWN_SHEET_ID)return;
+  const row=OWN[OWN_SHEET_ID];
+  if(!row||!row.pending_transfer_id)return;
+  const r=await ApaOwnership.cancelTransfer(row.pending_transfer_id);
+  if(!r||!r.ok){osErr(r&&r.error||'Could not cancel that transfer.');return;}
+  await refreshOwnership();
+  openOwnership(OWN_SHEET_ID);
+}
+
+async function refreshOwnership(){
+  if(!window.ApaOwnership||!allListings.length)return;
+  OWN=await ApaOwnership.forListings(allListings.map(l=>l.id))||{};
+  renderListings(activeFilter==='all'?allListings
+    :allListings.filter(l=>(l.service||l.type||'').toLowerCase()===activeFilter));
+}
 
 function setFilter(btn){
   document.querySelectorAll('.filter-chip').forEach(b=>b.classList.remove('active'));
@@ -678,6 +882,7 @@ function renderListings(list){
       <div class="lc-info">
         <div class="lc-name">${l.title||'Untitled listing'}</div>
         <div class="lc-meta">${svc} &middot; ${loc} &middot; ${l.booking_count||0} booking${l.booking_count!==1?'s':''}</div>
+        ${ownBadge(l)}
         <div class="lc-price">${(l.service==='roommates'||l.type==='room')
           ? `${l.currency||'KES'} ${fmt(l.price_month||l.price_night)} / month`
           : `${l.currency||'KES'} ${fmt(l.price_night)} / night`}</div>
@@ -689,6 +894,10 @@ function renderListings(list){
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="12" height="12"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             Edit
           </a>
+          <button class="btn btn-ghost btn-sm" onclick="openOwnership('${l.id}')" title="Ownership and transfer">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="12" height="12"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Ownership
+          </button>
           <button class="btn btn-danger btn-sm" onclick="toggleStatus('${l.id}','${l.status||'active'}','${l.is_active}')">
             ${isActive?'Pause':'Activate'}
           </button>
@@ -810,6 +1019,21 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAddModal();});
 
 document.addEventListener('DOMContentLoaded',loadListings);
 </script>
+<!-- OWNERSHIP SHEET
+     Who a listing belongs to, and how to hand it over. Deliberately blunt
+     about what a transfer does: people undersell it to themselves and then
+     ring support a fortnight later. -->
+<div class="own-scrim" id="own-scrim" onclick="closeOwnership()"></div>
+<aside class="own-sheet" id="own-sheet" role="dialog" aria-modal="true" aria-labelledby="own-sheet-h">
+  <div class="os-head">
+    <h2 id="own-sheet-h">Ownership</h2>
+    <button class="os-x" onclick="closeOwnership()" aria-label="Close">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+  <div class="os-body" id="own-sheet-body"></div>
+</aside>
+
 <script src="/cabana-rebrand.js" defer></script>
 <script src="/apa-contact.js" defer></script>
 </body>

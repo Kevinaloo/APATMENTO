@@ -1932,6 +1932,13 @@ img,video,svg{max-width:100%;}
     </div>
 
     <div class="content">
+      <!-- Listings somebody has handed to you. The person receiving one is
+           usually NOT looking at a partner dashboard — they are a traveller
+           who has just been given a building — so it has to appear here.
+           ApaOwnership mounts itself into this div and renders nothing at
+           all when there is nothing waiting. -->
+      <div id="ownership-inbox"></div>
+
       <div class="greeting">
         <div id="dancer-stage" aria-hidden="true">
           <div class="ds-troupe">
@@ -3578,6 +3585,7 @@ function hideAddSheet(){
 <script src="/apa-push.js" defer></script>
 <script src="/referral.js" defer></script>
 <script src="/apa-referral-capture.js" defer></script>
+<script src="/apa-ownership.js" defer></script>
 <script src="/cabana-credit.js" defer></script>
 <script src="/showcase.js" defer></script>
 

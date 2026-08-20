@@ -159,6 +159,66 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
 .rv-photos{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;padding:13px 18px;}
 .rv-photos img{aspect-ratio:1;object-fit:cover;border-radius:8px;width:100%;}
 .step-nav{display:flex;gap:10px;margin-top:32px;padding-top:20px;border-top:1px solid var(--line);}
+
+/* ── Ownership step ───────────────────────────────────────────────────
+   Three big targets, because this is a decision and not a preference,
+   and because the person answering it is often standing in a doorway
+   holding somebody else's phone. */
+.own-choices{display:grid;gap:12px;}
+.own-card{display:flex;gap:14px;align-items:flex-start;padding:17px 18px;border-radius:16px;
+  border:1.5px solid var(--line-2);background:var(--surface);cursor:pointer;text-align:left;
+  width:100%;font-family:var(--font-body);transition:border-color .2s,box-shadow .2s,background .2s;}
+.own-card:hover{border-color:var(--mint);}
+.own-card.sel{border-color:var(--electric);background:var(--grad-soft);box-shadow:var(--shadow-md);}
+.own-card:focus-visible{outline:2px solid var(--electric);outline-offset:2px;}
+.own-ico{width:40px;height:40px;flex:none;border-radius:12px;display:grid;place-items:center;
+  background:var(--surface-2);color:var(--ink-soft);transition:all .2s;}
+.own-card.sel .own-ico{background:var(--grad);color:#fff;}
+.own-ico svg{width:20px;height:20px;}
+.own-t{font-family:var(--font-head);font-weight:700;font-size:15px;color:var(--ink-2);margin-bottom:4px;}
+.own-d{font-size:12.5px;line-height:1.6;color:var(--ink-soft);}
+
+.own-panel{margin-top:22px;padding-top:22px;border-top:1px solid var(--line);}
+.own-panel[hidden]{display:none;}
+
+.split-toggle{display:inline-flex;padding:3px;gap:3px;border-radius:100px;background:var(--surface-2);
+  border:1px solid var(--line);margin-bottom:16px;}
+.split-opt{border:none;background:transparent;padding:7px 15px;border-radius:100px;cursor:pointer;
+  font-family:var(--font-body);font-size:12.5px;font-weight:650;color:var(--ink-soft);transition:all .2s;}
+.split-opt.on{background:var(--surface);color:var(--ink-2);box-shadow:var(--shadow-sm);}
+
+.own-row{display:grid;grid-template-columns:1fr 1fr auto auto;gap:9px;align-items:center;margin-bottom:9px;}
+.own-row .finput{margin:0;}
+.own-pct{width:92px;position:relative;}
+.own-pct[hidden]{display:none;}
+.own-del{width:34px;height:34px;flex:none;border-radius:10px;border:1.5px solid var(--line-2);
+  background:transparent;color:var(--ink-faint);cursor:pointer;display:grid;place-items:center;transition:all .2s;}
+.own-del:hover{border-color:#E11D48;color:#E11D48;}
+.own-del svg{width:15px;height:15px;}
+@media(max-width:640px){
+  .own-row{grid-template-columns:1fr auto;grid-template-areas:'name del' 'contact contact' 'pct pct';}
+  .own-row .own-n{grid-area:name;} .own-row .own-c{grid-area:contact;}
+  .own-row .own-pct{grid-area:pct;width:100%;} .own-row .own-del{grid-area:del;}
+}
+
+.own-add{display:inline-flex;align-items:center;gap:7px;margin-top:4px;padding:9px 15px;border-radius:11px;
+  border:1.5px dashed var(--line-2);background:transparent;color:var(--ink-soft);cursor:pointer;
+  font-family:var(--font-body);font-size:13px;font-weight:650;transition:all .2s;}
+.own-add:hover{border-color:var(--mint);color:var(--mint-dark);}
+.own-add svg{width:14px;height:14px;}
+
+/* The running total. It says what YOUR share works out to, because the
+   number people get wrong is their own. */
+.own-total{margin-top:16px;padding:13px 16px;border-radius:13px;background:var(--surface-2);
+  border:1px solid var(--line);font-size:13px;line-height:1.6;color:var(--ink-soft);}
+.own-total strong{color:var(--ink-2);font-weight:700;}
+.own-total.bad{background:rgba(225,29,72,.06);border-color:rgba(225,29,72,.25);color:#9F1239;}
+.own-total.bad strong{color:#9F1239;}
+
+.own-warn{display:flex;gap:11px;margin-top:16px;padding:13px 15px;border-radius:13px;
+  background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.25);
+  font-size:12.5px;line-height:1.6;color:#92400E;}
+.own-warn svg{width:17px;height:17px;flex:none;margin-top:1px;}
 .btn-back{padding:12px 20px;border-radius:11px;border:1.5px solid var(--line-2);background:var(--surface);color:var(--ink-soft);font-family:var(--font-body);font-weight:600;font-size:14px;cursor:pointer;transition:all .18s;}
 .btn-back:hover{border-color:var(--ink-soft);color:var(--ink);}
 .btn-cont{flex:1;padding:13px 20px;border-radius:11px;border:none;background:var(--grad);color:#fff;font-family:var(--font-head);font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 8px 24px rgba(67,97,255,0.24);transition:all .28s;position:relative;}
@@ -219,7 +279,7 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
     <span class="tb-wordmark">Apat<span>mento</span></span>
     <span class="tb-ctx" id="ctx">Partner Hub</span>
   </div>
-  <span class="tb-ctr"><span id="snum">0</span> / 7</span>
+  <span class="tb-ctr"><span id="snum">0</span> / 8</span>
 </header>
 <div class="prog-rail"><div class="prog-fill" id="prog"></div></div>
 <div class="layout">
@@ -291,7 +351,7 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
     <!-- STEP 1 -->
     <div class="step-card" id="step-1">
       <div class="step-header">
-        <span class="step-eyebrow" id="s1ey">Step 1 of 7</span>
+        <span class="step-eyebrow" id="s1ey">Step 1 of 8</span>
         <h1 class="step-title" id="s1ti">What <em>type</em>?</h1>
         <p class="step-sub" id="s1su">Select the specific category.</p>
       </div>
@@ -304,7 +364,7 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
     <!-- STEP 2 -->
     <div class="step-card" id="step-2">
       <div class="step-header">
-        <span class="step-eyebrow">Step 2 of 7</span>
+        <span class="step-eyebrow">Step 2 of 8</span>
         <h1 class="step-title">Title and <em>location</em></h1>
         <p class="step-sub" id="s2su">Name your listing and tell guests where to find it.</p>
       </div>
@@ -345,7 +405,7 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
     <!-- STEP 3 -->
     <div class="step-card" id="step-3">
       <div class="step-header">
-        <span class="step-eyebrow" id="s3ey">Step 3 of 7</span>
+        <span class="step-eyebrow" id="s3ey">Step 3 of 8</span>
         <h1 class="step-title" id="s3ti">Service <em>details</em></h1>
         <p class="step-sub" id="s3su">The specifics that help people decide to book.</p>
       </div>
@@ -362,7 +422,7 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
     <!-- STEP 4 -->
     <div class="step-card" id="step-4">
       <div class="step-header">
-        <span class="step-eyebrow" id="s4ey">Step 4 of 7</span>
+        <span class="step-eyebrow" id="s4ey">Step 4 of 8</span>
         <h1 class="step-title" id="s4ti">Features and <em>inclusions</em></h1>
         <p class="step-sub" id="s4su">Select everything on offer. Guests filter by these.</p>
       </div>
@@ -375,7 +435,7 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
     <!-- STEP 5 -->
     <div class="step-card" id="step-5">
       <div class="step-header">
-        <span class="step-eyebrow">Step 5 of 7</span>
+        <span class="step-eyebrow">Step 5 of 8</span>
         <h1 class="step-title">Pricing and <em>contact</em></h1>
         <p class="step-sub">Set your rate. You keep 100%. Cabana adds a small fixed fee on top for guests.</p>
       </div>
@@ -415,7 +475,7 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
     <!-- STEP 6 -->
     <div class="step-card" id="step-6">
       <div class="step-header">
-        <span class="step-eyebrow">Step 6 of 7</span>
+        <span class="step-eyebrow">Step 6 of 8</span>
         <h1 class="step-title">Photos and <em>settings</em></h1>
         <p class="step-sub">Strong photos drive more bookings. Add at least 3 for best results.</p>
       </div>
@@ -453,13 +513,82 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
       </div>
       <div class="step-nav">
         <button class="btn-back" onclick="go(5)">Back</button>
-        <button class="btn-cont" onclick="nxt(6)">Review listing <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+        <button class="btn-cont" onclick="nxt(6)">Continue <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
       </div>
     </div>
-    <!-- STEP 7 -->
+    <!-- STEP 7 · OWNERSHIP
+         A listing has to belong to somebody, and until this step the only
+         answer the system could give was "whoever filled the form in". That
+         was wrong for the two brothers who run a block together, wrong for
+         the manager listing on behalf of an owner who will never open the
+         app, and wrong for every field onboarding an ambassador has ever
+         done. So the form asks, once, in plain words.
+
+         Nothing here is optional and nothing is pre-selected: a default of
+         "sole operator" is a default that quietly assigns a building. -->
     <div class="step-card" id="step-7">
       <div class="step-header">
-        <span class="step-eyebrow">Step 7 of 7</span>
+        <span class="step-eyebrow">Step 7 of 8</span>
+        <h1 class="step-title">Who <em>owns</em> this listing?</h1>
+        <p class="step-sub">This decides who gets the bookings, the payouts and the
+          guest messages. It is on the record from day one, and you can change it
+          later from your listings board.</p>
+      </div>
+
+      <div class="own-choices" id="own-choices"></div>
+
+      <!-- Partnership -->
+      <div class="own-panel" id="own-partnership" hidden>
+        <div class="fsec-title">The other partners</div>
+        <p class="fhint" style="margin:-6px 0 14px">
+          You are already in this partnership as the operator, so add everyone
+          <strong>else</strong>. A partner without a Cabana account is still a partner —
+          they will be linked automatically when they join.
+        </p>
+
+        <div class="split-toggle" role="radiogroup" aria-label="How the ownership is split">
+          <button type="button" class="split-opt on" data-split="equal"  onclick="ownSplit('equal')"  role="radio" aria-checked="true">Split it equally</button>
+          <button type="button" class="split-opt"    data-split="custom" onclick="ownSplit('custom')" role="radio" aria-checked="false">Set each share</button>
+        </div>
+
+        <div id="own-rows"></div>
+        <button type="button" class="own-add" onclick="ownAddRow()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+          Add another partner
+        </button>
+
+        <div class="own-total" id="own-total"></div>
+      </div>
+
+      <!-- On behalf of someone -->
+      <div class="own-panel" id="own-behalf" hidden>
+        <div class="fsec-title">Whose listing is this?</div>
+        <p class="fhint" style="margin:-6px 0 14px">
+          They will be sent a claim. Until they accept it you can manage the listing
+          for them; the moment they accept, it becomes theirs and leaves your account.
+        </p>
+        <div class="row2">
+          <div class="field"><label class="flbl">Their full name</label><input class="finput" id="own-hn" placeholder="e.g. Mama Zawadi Juma" maxlength="120"/></div>
+          <div class="field"><label class="flbl">Their email or phone</label><input class="finput" id="own-hc" placeholder="owner@example.com or 0712 345 678" maxlength="160"/><div class="fhint">They claim the listing by signing in with this exact address or number.</div></div>
+        </div>
+        <div class="field"><label class="flbl">A note for them <span class="opt">(optional)</span></label><input class="finput" id="own-note" placeholder="Set this up for you at the property on Tuesday." maxlength="200"/></div>
+        <div class="own-warn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+          <span>Once they claim it, this listing is no longer yours. You will not be able
+            to edit it, see its bookings, or take its payouts.</span>
+        </div>
+      </div>
+
+      <div class="step-nav">
+        <button class="btn-back" onclick="go(6)">Back</button>
+        <button class="btn-cont" onclick="nxt(7)">Review listing <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+      </div>
+    </div>
+
+    <!-- STEP 8 -->
+    <div class="step-card" id="step-8">
+      <div class="step-header">
+        <span class="step-eyebrow">Step 8 of 8</span>
         <h1 class="step-title">Review and <em>publish</em></h1>
         <p class="step-sub">Everything below will be visible to guests. You can edit anytime from your dashboard.</p>
       </div>
@@ -483,8 +612,12 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
         <div class="rv-head"><span class="rv-ht">Photos</span><button class="rv-edit" onclick="go(6)">Edit</button></div>
         <div class="rv-photos" id="rv-photos"></div>
       </div>
+      <div class="rv-block">
+        <div class="rv-head"><span class="rv-ht">Ownership</span><button class="rv-edit" onclick="go(7)">Edit</button></div>
+        <div id="rv-own"></div>
+      </div>
       <div class="step-nav">
-        <button class="btn-back" onclick="go(6)">Back</button>
+        <button class="btn-back" onclick="go(7)">Back</button>
         <button class="btn-cont" id="pub-btn" onclick="publish()">Publish listing <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
       </div>
     </div>
@@ -508,6 +641,7 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
 <script src="/vendor-supabase-2.112.3.js"></script>
 <script src="/apa-session.js"></script>
 <script src="/apa-referral-capture.js" defer></script>
+<script src="/apa-ownership.js"></script>
 <script>
 const SBU='https://gfwgbgdvxtocwhilrtdw.supabase.co';
 const SBK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
@@ -612,8 +746,11 @@ const SVCS={
 };
 
 let cur=0,cov=0;
-const LABS=['Service','Type','Location','Details','Features','Pricing','Photos','Review'];
-const F={svc:null,type:null,title:'',country:'Kenya',city:'',area:'',street:'',lat:null,lng:null,desc:'',feats:[],photos:[],photoFiles:[],cur:'KES',price:'',pw:'',pm:'',dep:'',mn:'1',wa:'',ph:'',em:'',ci:'14:00',co:'11:00',inst:true,ch:true,pets:false,smk:false,rules:'',beds:'1',baths:'1',guests:'2',floor:'',sqm:'',avail:'',bills:'',furn:'',mates:'2',bath:'shared',suits:'anyone',dur:'',meet:'',lang:'',edate:'',venue:'',age:'',cuisine:'',deliv:'',lead:'',make:'',model:'',yr:'',fuel:'',trans:'',areas:'',veh:'',adv:'',stock:'',cond:'',brand:'',da:''};
+const LABS=['Service','Type','Location','Details','Features','Pricing','Photos','Ownership','Review'];
+const F={svc:null,type:null,title:'',country:'Kenya',city:'',area:'',street:'',lat:null,lng:null,desc:'',feats:[],photos:[],photoFiles:[],cur:'KES',price:'',pw:'',pm:'',dep:'',mn:'1',wa:'',ph:'',em:'',ci:'14:00',co:'11:00',inst:true,ch:true,pets:false,smk:false,rules:'',beds:'1',baths:'1',guests:'2',floor:'',sqm:'',avail:'',bills:'',furn:'',mates:'2',bath:'shared',suits:'anyone',dur:'',meet:'',lang:'',edate:'',venue:'',age:'',cuisine:'',deliv:'',lead:'',make:'',model:'',yr:'',fuel:'',trans:'',areas:'',veh:'',adv:'',stock:'',cond:'',brand:'',da:'',
+  /* Ownership. `own` is deliberately null until the host chooses: a
+     default of 'sole' is a default that quietly assigns a building. */
+  own:null,ownTouched:false,ownSplit:'equal',ownPartners:[],ownHolderName:'',ownHolderContact:'',ownNote:''};
 
 function buildNav(){document.getElementById('snav').innerHTML=LABS.map((l,i)=>`<div class="sni${i===cur?' active':i<cur?' done':''}" id="sni-${i}"><div class="sni-n">${i<cur?'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>':i+1}</div><span class="sni-l">${l}</span></div>`).join('');}
 function upNav(){LABS.forEach((_,i)=>{const el=document.getElementById('sni-'+i);if(!el)return;el.className='sni'+(i===cur?' active':i<cur?' done':'');const n=el.querySelector('.sni-n');n.innerHTML=i<cur?'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>':String(i+1);});}
@@ -622,7 +759,7 @@ function go(n){
   document.getElementById('step-'+cur)?.classList.remove('active');
   cur=n;document.getElementById('step-'+cur)?.classList.add('active');
   upNav();
-  document.getElementById('prog').style.width=Math.round((cur/7)*100)+'%';
+  document.getElementById('prog').style.width=Math.round((cur/8)*100)+'%';
   document.getElementById('snum').textContent=cur;
   window.scrollTo({top:0,behavior:'smooth'});
   if(n>=1&&F.svc)bldStep(n);
@@ -635,7 +772,7 @@ function go(n){
 function bldStep(n){
   const S=SVCS[F.svc];if(!S)return;
   if(n===1){
-    document.getElementById('s1ey').textContent='Step 1 of 7';
+    document.getElementById('s1ey').textContent='Step 1 of 8';
     document.getElementById('s1ti').textContent=S.s1t;
     document.getElementById('s1su').textContent=S.s1s;
     document.getElementById('type-grid').innerHTML=S.types.map(t=>`<div class="type-card${F.type===t.n?' sel':''}" data-t="${t.n}" onclick="selType(this)"><div class="tc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${t.i}</svg></div><div class="tc-name">${t.n}</div></div>`).join('');
@@ -644,7 +781,7 @@ function bldStep(n){
     document.getElementById('badge-t').textContent=F.type||S.s1s;
   }
   if(n===3){
-    document.getElementById('s3ey').textContent='Step 3 of 7, '+S.s3e;
+    document.getElementById('s3ey').textContent='Step 3 of 8, '+S.s3e;
     document.getElementById('s3ti').textContent=S.s3t;
     document.getElementById('s3su').textContent=S.s3s;
     document.getElementById('s3desc-l').textContent=S.dl;
@@ -669,6 +806,7 @@ function bldStep(n){
     const deph=document.getElementById('s5deph');if(deph)deph.style.display=F.svc==='roommates'?'':'none';
     restPr();}
   if(n===6){document.getElementById('s6il').textContent=S.il||'Start time';document.getElementById('s6ol').textContent=S.ol||'End time';document.getElementById('s6rl').textContent=S.rl||'Additional rules';const tg=document.getElementById('tog-group');if(tg)tg.style.display=S.tog?'':'none';}
+  if(n===7)bldOwn();
   if(n===2)restLoc();
   if(n===1&&F.type)document.getElementById('badge-t').textContent=F.type;
 }
@@ -875,9 +1013,116 @@ function valid(n){
   if(n===3&&F.svc==='roommates'&&!document.getElementById('f-avail').value){al('Set the date the room is free from. Flatmates search by move-in date.');return false;}
   if(n===5){if(!document.getElementById('f-wa').value.trim()){al('Add your WhatsApp number. Guests need this after payment.');return false;}
     if(!document.getElementById('f-price').value){al(F.svc==='roommates'?'Set the monthly rent.':'Set a price.');return false;}}
+  if(n===7){
+    collectOwn();
+    if(!F.own){al('Say who owns this listing. It is the one thing we cannot guess for you.');return false;}
+    /* The same validator the listings board and the ambassador dashboard
+       use, so every screen refuses the same things in the same words. And
+       Postgres checks it again — this is for the person typing, not for
+       the database. */
+    const problem=window.ApaOwnership&&ApaOwnership.validate(ownSpec());
+    if(problem){al(problem);return false;}
+  }
   return true;
 }
-function nxt(n){if(!valid(n))return;collect(n);if(n===6)bldRv();go(n+1);}
+
+/* ══ OWNERSHIP STEP ═══════════════════════════════════════════════════
+   The choice, the partner rows, and a running total that tells the
+   operator what their OWN share works out to — because the number
+   people get wrong is always their own. ApaOwnership owns the copy and
+   the arithmetic; this file only draws it. */
+function ownSpec(){
+  return {type:F.own,split:F.ownSplit,partners:F.ownPartners,
+          holder_name:F.ownHolderName,holder_contact:F.ownHolderContact,note:F.ownNote};
+}
+
+function bldOwn(){
+  const box=document.getElementById('own-choices');
+  if(!box||!window.ApaOwnership)return;
+  box.innerHTML=ApaOwnership.TYPES.map(t=>
+    '<button type="button" class="own-card'+(F.own===t.key?' sel':'')+'" data-own="'+t.key+'" '
+    + 'onclick="ownPick(\''+t.key+'\')" aria-pressed="'+(F.own===t.key)+'">'
+    +   '<span class="own-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">'+t.icon+'</svg></span>'
+    +   '<span><span class="own-t">'+t.label+'</span><span class="own-d">'+t.blurb+'</span></span>'
+    + '</button>').join('');
+  if(!F.ownPartners.length)F.ownPartners=[{name:'',contact:'',equity_pct:''}];
+  ownPanels();ownRows();
+}
+
+function ownPick(key){
+  F.own=key;F.ownTouched=true;
+  document.querySelectorAll('.own-card').forEach(c=>{
+    const on=c.dataset.own===key;c.classList.toggle('sel',on);c.setAttribute('aria-pressed',String(on));
+  });
+  ownPanels();
+}
+
+function ownPanels(){
+  const p=document.getElementById('own-partnership'),b=document.getElementById('own-behalf');
+  if(p)p.hidden=F.own!=='partnership';
+  if(b)b.hidden=F.own!=='on_behalf';
+  if(F.own==='partnership')ownTotal();
+}
+
+function ownSplit(mode){
+  F.ownSplit=mode;F.ownTouched=true;
+  document.querySelectorAll('.split-opt').forEach(o=>{
+    const on=o.dataset.split===mode;o.classList.toggle('on',on);o.setAttribute('aria-checked',String(on));
+  });
+  ownRows();
+}
+
+function ownRows(){
+  const box=document.getElementById('own-rows');if(!box)return;
+  const custom=F.ownSplit==='custom';
+  box.innerHTML=F.ownPartners.map((p,i)=>
+    '<div class="own-row">'
+    + '<input class="finput own-n" placeholder="Partner\'s full name" maxlength="120" value="'+esc(p.name)+'" oninput="ownEdit('+i+',\'name\',this.value)"/>'
+    + '<input class="finput own-c" placeholder="Email or phone" maxlength="160" value="'+esc(p.contact)+'" oninput="ownEdit('+i+',\'contact\',this.value)"/>'
+    + '<input class="finput own-pct" type="number" min="0.01" max="99.99" step="0.01" placeholder="%" value="'+esc(p.equity_pct)+'" oninput="ownEdit('+i+',\'equity_pct\',this.value)"'+(custom?'':' hidden')+'/>'
+    + '<button type="button" class="own-del" onclick="ownDelRow('+i+')" aria-label="Remove this partner"'+(F.ownPartners.length<2?' disabled style="opacity:.35;cursor:default"':'')+'>'
+    +   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>'
+    + '</button>'
+    + '</div>').join('');
+  ownTotal();
+}
+
+function ownEdit(i,key,val){if(F.ownPartners[i]){F.ownPartners[i][key]=val;F.ownTouched=true;ownTotal();}}
+function ownAddRow(){F.ownPartners.push({name:'',contact:'',equity_pct:''});ownRows();}
+function ownDelRow(i){if(F.ownPartners.length<2)return;F.ownPartners.splice(i,1);ownRows();}
+
+function ownTotal(){
+  const el=document.getElementById('own-total');
+  if(!el||!window.ApaOwnership)return;
+  const named=F.ownPartners.filter(p=>ApaOwnership.looksLikeContact(p.contact));
+  if(!named.length){
+    el.className='own-total';
+    el.innerHTML='Add the other partners above and your own share will be worked out here.';
+    return;
+  }
+  const mine=ApaOwnership.operatorShare(ownSpec());
+  const problem=ApaOwnership.validate(ownSpec());
+  if(problem&&F.ownSplit==='custom'){
+    el.className='own-total bad';el.textContent=problem;return;
+  }
+  el.className='own-total';
+  el.innerHTML=(F.ownSplit==='equal'
+      ? '<strong>'+(named.length+1)+' partners, split equally.</strong> '
+      : '<strong>'+named.length+' other partner'+(named.length===1?'':'s')+'.</strong> ')
+    + 'Your share works out to <strong>'+mine+'%</strong>.'
+    + (F.ownSplit==='equal'&&mine!==Math.round(mine)
+        ? ' The odd fraction goes to you, so the shares total exactly 100%.' : '');
+}
+
+function collectOwn(){
+  const g=id=>{const el=document.getElementById(id);return el?el.value.trim():'';};
+  if(F.own==='on_behalf'){
+    const n=g('own-hn'),c=g('own-hc');
+    if(n!==F.ownHolderName||c!==F.ownHolderContact)F.ownTouched=true;
+    F.ownHolderName=n;F.ownHolderContact=c;F.ownNote=g('own-note');
+  }
+}
+function nxt(n){if(!valid(n))return;collect(n);if(n===7)bldRv();go(n+1);}
 
 function bldRv(){collect(6);const S=SVCS[F.svc];
   document.getElementById('rv-svc').textContent=S?.lbl||F.svc;
@@ -887,24 +1132,81 @@ function bldRv(){collect(6);const S=SVCS[F.svc];
   document.getElementById('rv-price').textContent=F.price?F.cur+' '+Number(F.price).toLocaleString()+(S?.pf==='month'?' per month'+(F.dep?', deposit '+F.cur+' '+Number(F.dep).toLocaleString():''):' / '+(S?.pp||'unit').toLowerCase()):'Not set';
   document.getElementById('rv-contact').textContent=F.wa||'Not set';
   if(S)document.getElementById('rv-details').innerHTML=S.rv(F).map(([k,v])=>'<div class="rv-row"><span class="rv-k">'+k+'</span><span class="rv-v">'+v+'</span></div>').join('');
+  const ow=document.getElementById('rv-own');
+  if(ow&&window.ApaOwnership){
+    const t=ApaOwnership.typeFor(F.own);
+    let rows='<div class="rv-row"><span class="rv-k">Owned as</span><span class="rv-v">'+esc(t.short)+'</span></div>';
+    if(F.own==='partnership'){
+      rows+='<div class="rv-row"><span class="rv-k">Your share</span><span class="rv-v">'+ApaOwnership.operatorShare(ownSpec())+'%</span></div>';
+      F.ownPartners.filter(p=>ApaOwnership.looksLikeContact(p.contact)).forEach(p=>{
+        const pctText=F.ownSplit==='custom'?(Number(p.equity_pct)||0)+'%':'equal share';
+        rows+='<div class="rv-row"><span class="rv-k">'+esc(p.name||'Partner')+'</span><span class="rv-v">'+esc(p.contact)+' &middot; '+pctText+'</span></div>';
+      });
+    }
+    if(F.own==='on_behalf'){
+      rows+='<div class="rv-row"><span class="rv-k">Held for</span><span class="rv-v">'+esc(F.ownHolderName)+'</span></div>'
+          + '<div class="rv-row"><span class="rv-k">They claim it with</span><span class="rv-v">'+esc(F.ownHolderContact)+'</span></div>';
+    }
+    ow.innerHTML=rows;
+  }
   const pb=document.getElementById('rv-phblock');
   if(F.photos.length){pb.style.display='';const ord=[cov,...Array.from({length:F.photos.length},(_,i)=>i).filter(i=>i!==cov)];document.getElementById('rv-photos').innerHTML=ord.slice(0,5).map(i=>'<img src="'+F.photos[i]+'" alt="Photo" loading="lazy" decoding="async"/>').join('');}
   else pb.style.display='none';
 }
 
 async function publish(){
-  collect(6);const btn=document.getElementById('pub-btn');btn.classList.add('loading');
+  collect(6);collectOwn();const btn=document.getElementById('pub-btn');btn.classList.add('loading');
   try{
     const pu=[];const ord=(F.photoFiles.length?[cov,...Array.from({length:F.photoFiles.length},(_,i)=>i).filter(i=>i!==cov)]:[]).filter(i=>F.photoFiles[i]);
     for(let i=0;i<ord.length;i++){const file=F.photoFiles[ord[i]];const ext=file.name.split('.').pop();if(!CU?.id) throw new Error('Please sign in again before uploading photos.');const path=CU.id+'/'+Date.now()+'-'+i+'.'+ext;const{error}=await sb.storage.from('listings').upload(path,file,{cacheControl:'3600',upsert:false});if(error)throw error;const{data:{publicUrl}}=sb.storage.from('listings').getPublicUrl(path);pu.push(publicUrl);}
     const _S=SVCS[F.svc]||{};const _monthly=_S.pf==='month';const _rate=parseFloat(F.price)||null;const SVC_TYPE_MAP={stays:"apartment",roommates:"room",tours:"tour",events:"event",food:"food",carhire:"carhire",rides:"ride",shopping:"shopping"};const svcType=SVC_TYPE_MAP[F.svc]||F.svc;const payload={partner_id:CU?.id,host_id:CU?.id,service:F.svc,type:svcType,listing_type:F.type,property_type:F.type,title:F.title,country:F.country,city:F.city,area:F.area,street:F.street||null,location:[F.area,F.city,F.country].filter(Boolean).join(', '),latitude:F.lat||null,longitude:F.lng||null,description:F.desc,amenities:F.feats,photos:pu.length?pu:F.photos,currency:F.cur,price_night:_monthly?null:_rate,price_week:_monthly?null:(parseFloat(F.pw)||null),price_month:_monthly?_rate:(parseFloat(F.pm)||null),deposit:parseFloat(F.dep)||null,min_nights:_monthly?Math.max(7,parseInt(F.mn)||90):(parseInt(F.mn)||1),max_guests:F.guests||null,beds:F.beds||null,baths:F.baths||null,bedrooms:parseInt(F.beds)||null,bathrooms:parseInt(F.baths)||null,floor:F.floor||null,sqm:F.sqm||null,checkin_time:F.ci,checkout_time:F.co,instant_book:F.inst,children:F.ch,pets:F.pets,smoking:F.smk,house_rules:F.rules||null,contact_whatsapp:F.wa||null,contact_phone:F.ph||F.wa||null,contact_email:F.em||null,status:'active',is_active:true,internal_score:50,cancel_policy:'flexible',extras:{dur:F.dur||null,meet:F.meet||null,lang:F.lang||null,edate:F.edate||null,venue:F.venue||null,age:F.age||null,cuisine:F.cuisine||null,deliv:F.deliv||null,lead:F.lead||null,make:F.make||null,model:F.model||null,yr:F.yr||null,fuel:F.fuel||null,trans:F.trans||null,areas:F.areas||null,veh:F.veh||null,adv:F.adv||null,stock:F.stock||null,cond:F.cond||null,brand:F.brand||null,da:F.da||null,avail:F.avail||null,bills:F.bills||null,furn:F.furn||null,mates:F.mates||null,bath:F.bath||null,suits:F.suits||null,notice:F.co||null}};
-    let err;
+    /* Who filled the form in, kept separately from who owns the result.
+       Never read for permissions — that is exactly the distinction the
+       ownership model exists to draw — but an on-behalf listing that has
+       been handed over should still be creditable to whoever built it. */
+    payload.created_by=CU?.id||null;
+    payload.created_by_role=(new URLSearchParams(location.search).get('as')||'partner');
+
+    let err,listingId=window._eid||null;
     if(window._eid){const{error}=await sb.from('listings').update(payload).eq('id',window._eid).eq('partner_id',CU?.id);err=error;}
-    else{const{error}=await sb.from('listings').insert(payload);err=error;}
+    else{
+      const{data,error}=await sb.from('listings').insert(payload).select('id').single();
+      err=error;listingId=data?.id||null;
+    }
     if(err)throw err;
+
+    /* Declare the ownership as a second, separate call, on purpose.
+
+       It is an RPC into a security-definer function that re-derives the
+       caller and re-checks the equity — it cannot be folded into the
+       insert payload, and it should not be: a listing row anyone can
+       write is not the place to record who owns a building.
+
+       If it fails, the listing still exists and is still the caller's.
+       That is the safe way round: an undeclared listing is a sole
+       listing, which is the truthful default for a row that was just
+       inserted under this account. Say so rather than pretending. */
+    let ownProblem=null;
+    /* Only declare when the host actually answered. On an edit that never
+       reached step 7, F.own is whatever the listing already says, and
+       re-declaring it would pointlessly retire and rewrite the co-owner
+       rows — losing every partner's confirmed status for no reason. */
+    if(listingId&&F.own&&(!window._eid||F.ownTouched)&&window.ApaOwnership){
+      const r=await ApaOwnership.declare(listingId,ownSpec());
+      if(!r||!r.ok)ownProblem=r&&r.error;
+    }
+
     btn.classList.remove('loading');
     document.getElementById('success-ov').classList.add('show');
-    document.getElementById('ssub').textContent=window._eid?'"'+F.title+'" has been updated.':'"'+F.title+'" is now live on Cabana.';
+    document.getElementById('ssub').textContent=
+      ownProblem
+        ? 'Your listing is live, but we could not record the ownership: '+ownProblem
+          +' It is yours for now — set it from your listings board.'
+        : F.own==='on_behalf'
+          ? '"'+F.title+'" is live and held for '+F.ownHolderName+'. They become the owner the moment they claim it.'
+          : window._eid
+            ? '"'+F.title+'" has been updated.'
+            : '"'+F.title+'" is now live on Cabana.';
     document.getElementById('spv').textContent=F.cur+' '+Number(F.price).toLocaleString();
   }catch(err){btn.classList.remove('loading');al('Something went wrong: '+(err.message||'Please try again.'));console.error(err);}
 }
@@ -914,8 +1216,27 @@ function loadEdit(l){
   F.svc=l.service||sm[l.type]||'stays';F.type=l.type||'';F.title=l.title||'';F.country=l.country||'Kenya';F.city=l.city||'';F.area=l.area||'';F.street=l.street||'';F.lat=l.latitude||null;F.lng=l.longitude||null;F.desc=l.description||'';F.feats=l.amenities||[];F.photos=l.photos||[];F.cur=l.currency||'KES';F.price=(l.service==='roommates'||l.type==='room')?(l.price_month?String(l.price_month):(l.price_night?String(l.price_night):'')):(l.price_night?String(l.price_night):'');F.pw=l.price_week?String(l.price_week):'';F.pm=l.price_month?String(l.price_month):'';F.dep=l.deposit?String(l.deposit):'';F.mn=String(((l.service==='roommates'||l.type==='room')?(l.min_nights||((l.extras&&l.extras.minmonths)*30)||90):(l.min_nights||1)));F.guests=l.max_guests||'2';F.mates=(l.extras&&l.extras.mates)||l.max_guests||'2';F.bath=(l.extras&&l.extras.bath)||'shared';F.suits=(l.extras&&l.extras.suits)||'anyone';F.avail=(l.extras&&l.extras.avail)||'';F.bills=(l.extras&&l.extras.bills)||'included';F.furn=(l.extras&&l.extras.furn)||'Fully furnished';F.beds=l.beds||'1';F.baths=l.baths||'1';F.floor=l.floor||'';F.sqm=l.sqm||'';F.wa=l.contact_whatsapp||'';F.ph=l.contact_phone||'';F.em=l.contact_email||'';F.ci=l.checkin_time||'14:00';F.co=l.checkout_time||'11:00';F.inst=l.instant_book!==false;F.ch=l.children!==false;F.pets=!!l.pets;F.smk=!!l.smoking;F.rules=l.house_rules||'';
   if(l.extras){const e=l.extras;Object.assign(F,{dur:e.dur||'',meet:e.meet||'',lang:e.lang||'',edate:e.edate||'',venue:e.venue||'',age:e.age||'',cuisine:e.cuisine||'',deliv:e.deliv||'',lead:e.lead||'',make:e.make||'',model:e.model||'',yr:e.yr||'',fuel:e.fuel||'',trans:e.trans||'',areas:e.areas||'',veh:e.veh||'',adv:e.adv||'',stock:e.stock||'',cond:e.cond||'',brand:e.brand||'',da:e.da||'',avail:e.avail||'',bills:e.bills||'',furn:e.furn||''});}
   document.getElementById('ctx').textContent='Edit listing';
+
+  /* Load the ownership this listing already has. Without this, opening an
+     edit and pressing save would show "Sole operator" on the review screen
+     for a listing that is in fact a three-way partnership — and reassure
+     the host about something untrue. */
+  F.own=l.ownership_type||'sole';
+  F.ownSplit=l.equity_split||'equal';
+  F.ownHolderName=l.held_for_name||'';
+  F.ownHolderContact=l.held_for_contact||'';
+  if(window.ApaOwnership&&F.own==='partnership'){
+    ApaOwnership.forListing(l.id).then(row=>{
+      if(!row)return;
+      F.ownPartners=(row.partners||[])
+        .filter(p=>p.role!=='operator')
+        .map(p=>({name:p.name||'',contact:p.contact||'',equity_pct:p.equity_pct}));
+      if(!F.ownPartners.length)F.ownPartners=[{name:'',contact:'',equity_pct:''}];
+      bldRv();
+    });
+  }
   document.getElementById('pub-btn').innerHTML='Save changes <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
-  bldRv();go(7);
+  bldRv();go(8);
 }
 function loadPrefill(p){F.svc='stays';F.type=p.property_type||'Apartment';F.title=p.title||'';F.city=p.city||'';F.area=p.area||'';F.desc=p.description||'';F.beds=String(p.bedrooms||1);F.baths=String(p.bathrooms||1);F.guests=String(p.max_guests||2);F.sqm=p.sqm?String(p.sqm):'';F.feats=p.amenities||[];F.price=p.price_night?String(p.price_night):'';go(1);}
 
