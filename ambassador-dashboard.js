@@ -369,19 +369,38 @@ function paintBuilt() {
   var host = $('built'), sec = $('built-sec');
   if (!host || !sec) return;
 
-  var sb = window.ApaSession && window.ApaSession.client && window.ApaSession.client();
-  if (!sb) return;
+  /* Wrapped whole. This runs inside the boot chain, and the boot chain's
+     catch() replaces the entire page with a refusal screen — so a throw
+     from a decorative section would blank a working dashboard. It has done
+     exactly that once already, which is why the try is here and not a
+     tidier guard. */
+  try { paintBuiltInner(host, sec); } catch (e) {
+    if (window.console) console.warn('[built]', e && e.message);
+  }
+}
 
-  sb.from('listings')
+function paintBuiltInner(host, sec) {
+  var sb = window.ApaSession && window.ApaSession.client && window.ApaSession.client();
+  if (!sb || !sb.from) return;
+
+  var q = sb.from('listings')
     .select('id,title,city,service,is_active,status,held_for_name,held_for_contact,ownership_type,created_at')
     .eq('ownership_type', 'on_behalf')
     .order('created_at', { ascending: false })
-    .limit(40)
-    .then(function (r) {
+    .limit(40);
+  if (!q || !q.then) return;
+
+  q.then(function (r) {
       var rows = (r && r.data) || [];
       if (!rows.length) return;
 
+      /* `reveal in` rather than `reveal`: the section was hidden while the
+         IntersectionObserver ran, so it will never be observed. Adding
+         both classes gives it the settled state directly — a reveal that
+         never fires leaves a section permanently invisible, and the page
+         still "works", which is exactly the bug the UI suite watches for. */
       sec.removeAttribute('hidden');
+      sec.classList.add('reveal', 'in');
       host.innerHTML = '<div class="leads-list">' + rows.map(function (l) {
         var waiting = l.is_active === false;
         var where = [l.city, l.service].filter(Boolean).join(' · ');
