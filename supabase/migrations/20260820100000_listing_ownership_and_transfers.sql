@@ -107,6 +107,24 @@ comment on column public.listings.created_by is
 comment on column public.listings.held_for_name is
   'Set while an on_behalf listing is waiting to be claimed. Cleared by listing_transfer_accept().';
 
+-- Whether this listing goes live the moment its owner claims it.
+--
+-- An ambassador or an agent sitting with a host does all the work of a
+-- listing: photos, price, description, the lot. Publishing that before the
+-- host has agreed would put somebody's property, address and phone number on
+-- a public website because a third party filled in a form. So an on-behalf
+-- listing built in the field is created INACTIVE and activated by the
+-- handover — the ambassador does the work, the owner does the publishing.
+--
+-- This is a listing-level flag rather than a transfer-level one because it
+-- describes the listing's state, and because a second transfer of the same
+-- listing (the owner later sells the building) must not re-run it.
+alter table public.listings
+  add column if not exists activate_on_claim boolean not null default false;
+
+comment on column public.listings.activate_on_claim is
+  'Set on a listing built for somebody who has not agreed to publish it yet. listing_transfer_accept() clears it and switches the listing on.';
+
 create index if not exists idx_listings_ownership
   on public.listings (ownership_type) where ownership_type <> 'sole';
 create index if not exists idx_listings_created_by
@@ -708,7 +726,13 @@ begin
                                else ownership_type end,
          held_for_name = null,
          held_for_contact = null,
-         ownership_declared_at = now()
+         ownership_declared_at = now(),
+         -- A listing built for somebody in the field publishes here, at the
+         -- moment they accept it, and not one second earlier. See the note
+         -- on listings.activate_on_claim.
+         is_active = case when activate_on_claim then true else is_active end,
+         status    = case when activate_on_claim then 'active' else status end,
+         activate_on_claim = false
    where id = v_t.listing_id;
 
   -- `owner_id` is the older of the three owner columns and is not present on

@@ -148,15 +148,69 @@ function paintLeads() {
       }
     }
 
+    /* The whole job of this programme is onboarding, so the button that
+       DOES the onboarding belongs on the lead, not three screens away.
+
+       It opens the ordinary listing form — the same seven steps every host
+       sees — with the ownership step locked to "on behalf of" and filled in
+       from the claim. The listing is built complete and stays unpublished
+       until this person accepts it, so an ambassador can do all the work
+       without putting somebody's property on a public website before they
+       have agreed to it.
+
+       Only for a lead that is actually still in play. Offering to build a
+       listing for a rejected lead is offering to waste an afternoon. */
+    var canList = l.status === 'claimed' || l.status === 'signed_up';
+    var act = canList
+      ? '<button class="btn btn-ghost btn-sm lead-act" type="button" ' +
+          'data-onboard="' + esc(l.id) + '" ' +
+          'title="Build their listing with them, on their behalf">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" ' +
+          'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+          '<path d="M12 5v14M5 12h14"/></svg>Build their listing</button>'
+      : '';
+
     return '<div class="lead">' +
       '<span class="lead-dot" style="background:' + s.colour + '"></span>' +
       '<div class="lead-main">' +
         '<div class="lead-name">' + esc(l.full_name) + '</div>' +
         '<div class="lead-meta">' + meta.join(' · ') + '</div>' + warn +
       '</div>' +
+      act +
       '<span class="badge ' + s.badge + '">' + s.label + '</span>' +
     '</div>';
   }).join('') + '</div>';
+
+  host.querySelectorAll('[data-onboard]').forEach(function (b) {
+    b.addEventListener('click', function () { onboard(b.getAttribute('data-onboard')); });
+  });
+}
+
+/* ── Onboarding somebody ──────────────────────────────────────────────────
+   Hand the lead to the ordinary listing form rather than building a second
+   one here. The parallel draft form this replaces meant every field added to
+   listings had to be added twice, and the second copy was always behind.
+
+   Everything the form needs travels in the URL, and none of it is trusted:
+   `as=ambassador` and the holder's details only prefill inputs. What the
+   listing ACTUALLY becomes is decided by listing_declare_ownership(), which
+   re-derives the caller and re-checks their claim on this lead. */
+function onboard(leadId) {
+  var lead = null;
+  for (var i = 0; i < STATE.leads.length; i++) {
+    if (String(STATE.leads[i].id) === String(leadId)) { lead = STATE.leads[i]; break; }
+  }
+  if (!lead) return;
+
+  var q = new URLSearchParams({
+    from: 'ambassador',
+    as: 'ambassador',
+    lead: lead.id,
+    behalf_name: lead.full_name || '',
+    behalf_contact: lead.contact_raw || ''
+  });
+  if (lead.city) q.set('city', lead.city);
+  location.href = 'add-listing.html?' + q.toString();
 }
 
 function emptyPipeline() {
@@ -302,6 +356,57 @@ function wireClaim() {
   });
 }
 
+/* ── Listings this ambassador has built for other people ─────────────────
+   Read straight from `listings` rather than through /api/ambassadors,
+   because the answer is "rows RLS already lets you see": a listing you
+   built is yours until the person you built it for accepts it, and the
+   moment they do, it stops being yours and correctly disappears from here.
+
+   Failure is silent and the section stays hidden. Nobody's earnings depend
+   on seeing this, and an error box where a list should be is worse than
+   nothing. */
+function paintBuilt() {
+  var host = $('built'), sec = $('built-sec');
+  if (!host || !sec) return;
+
+  var sb = window.ApaSession && window.ApaSession.client && window.ApaSession.client();
+  if (!sb) return;
+
+  sb.from('listings')
+    .select('id,title,city,service,is_active,status,held_for_name,held_for_contact,ownership_type,created_at')
+    .eq('ownership_type', 'on_behalf')
+    .order('created_at', { ascending: false })
+    .limit(40)
+    .then(function (r) {
+      var rows = (r && r.data) || [];
+      if (!rows.length) return;
+
+      sec.removeAttribute('hidden');
+      host.innerHTML = '<div class="leads-list">' + rows.map(function (l) {
+        var waiting = l.is_active === false;
+        var where = [l.city, l.service].filter(Boolean).join(' · ');
+        return '<div class="lead">' +
+          '<span class="lead-dot" style="background:' +
+            (waiting ? 'var(--ember)' : 'var(--mint-deep)') + '"></span>' +
+          '<div class="lead-main">' +
+            '<div class="lead-name">' + esc(l.title || 'Untitled listing') + '</div>' +
+            '<div class="lead-meta">' +
+              'For ' + esc(l.held_for_name || 'someone') +
+              (where ? ' · ' + esc(where) : '') + ' · ' + ago(l.created_at) +
+            '</div>' +
+            (waiting
+              ? '<div class="small" style="color:var(--ember);font-weight:600;margin-top:4px">' +
+                'Waiting for them to sign in with ' + esc(l.held_for_contact || 'their contact') +
+                ' and accept it</div>'
+              : '') +
+          '</div>' +
+          '<span class="badge ' + (waiting ? 'b-mute' : 'b-ok') + '">' +
+            (waiting ? 'Not yet claimed' : 'Live') + '</span>' +
+        '</div>';
+      }).join('') + '</div>';
+    }, function () { /* silent: see the note above */ });
+}
+
 /* ── The fee ladder ───────────────────────────────────────────────────────
    Every screen that explains the commission has to explain the fee it is a
    share of, and this is the only screen allowed to show the rate. So the
@@ -407,6 +512,7 @@ A.api.me().then(function (r) {
   STATE.earnings = r.earnings || [];
 
   paintHeader(STATE.me);
+  paintBuilt();
   paintFeeLadder(r.rates);
   paintEarnings(STATE.me, STATE.earnings);
   paintFunnel(STATE.leads);

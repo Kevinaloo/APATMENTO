@@ -419,6 +419,17 @@ a{color:inherit;}
 .lead-name{font-weight:650;font-size:.94rem;letter-spacing:-.008em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .lead-meta{font-size:.78rem;color:var(--ink-faint);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
+/* The onboarding action, on the lead itself. The whole job of this
+   programme is onboarding, so the button that does it belongs here and
+   not three screens away. It hides its label on a narrow phone rather
+   than wrapping the row, because this list is read one-handed. */
+.lead-act{flex:none;gap:5px;white-space:nowrap;}
+.lead-act svg{width:13px;height:13px;flex:none;}
+@media (max-width:560px){
+  .lead-act{font-size:0;padding-left:10px;padding-right:10px;}
+  .lead-act svg{width:15px;height:15px;}
+}
+
 /* ── LEADERBOARD ─────────────────────────────────────────────────────── */
 .lb-row{
   display:flex;align-items:center;gap:14px;padding:12px 14px;border-radius:var(--r);

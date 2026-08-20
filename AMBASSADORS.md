@@ -166,14 +166,45 @@ ambassador on a Friday night.
 
 ## Onboarding a host on their behalf
 
-A host who has never used Cabana will not finish a seven-step form on a phone
+A host who has never used Cabana will not finish an eight-step form on a phone
 in a matatu. The ambassador sitting next to them will.
 
-`draft-listing` writes to `ambassador_listing_drafts`, never to `listings`. The
-draft is not live and is not owned by the ambassador — `partner_id` stays null
-until the real host has an account and accepts it. So `listings` remains the
-set of things a real host has stood behind, and a fabricated draft is worth
-nothing to anybody.
+**Build their listing** on any claimed or signed-up lead opens the ordinary
+listing form — the same one every host sees — with the ownership step locked
+to *on behalf of* and filled in from the claim. There is no separate
+ambassador form. There used to be, and it meant every field added to a listing
+had to be added twice; the second copy was always behind.
+
+Two properties hold it together, and both are easy to lose in a refactor:
+
+- **The listing is never the ambassador's.** `listing_declare_ownership()`
+  marks it `on_behalf` and opens a `listing_transfers` row addressed to the
+  lead's own contact in the same statement. When they sign in with that
+  address or number and accept, `partner_id`, `host_id` and `owner_id` move
+  to them atomically and the ambassador loses access.
+
+- **It does not publish until they say yes.** The listing is created with
+  `is_active = false`, `status = 'pending_owner'` and `activate_on_claim`, and
+  `listing_transfer_accept()` switches it on. Putting somebody's property,
+  address and phone number on a public website because a third party filled in
+  a form is not a thing to get wrong once.
+
+`created_by` and `created_by_role` record who built it, and survive the
+handover, so an onboarding stays creditable after the listing stops being
+theirs. Neither column is ever read for permissions — that is precisely the
+distinction this model exists to draw.
+
+**Listings you have built** on the dashboard shows what is still waiting to be
+claimed, and against whose contact. An ambassador who fills in a form on a
+Tuesday needs to know on Friday whether it landed; without that the work
+vanishes at submit and the only way to chase it is to remember.
+
+### The older draft table
+
+`ambassador_listing_drafts` and the `draft-listing` API route predate this and
+still exist, read-only, for drafts written before the handover model. Nothing
+new should be written there: a draft that can never become a listing is a
+promise to a host that we cannot keep.
 
 ---
 

@@ -257,6 +257,61 @@ begin
 end $$;
 
 
+-- ── 7b · A LISTING BUILT IN THE FIELD PUBLISHES ON ACCEPTANCE ─────────────
+-- An ambassador does all the work of a listing while sitting with the host.
+-- Publishing that before the host agrees would put somebody's property and
+-- phone number on a public website because a third party filled in a form.
+do $$
+declare v_l uuid; v_t uuid;
+begin
+  perform be(current_setting('test.kevin')::uuid);
+  insert into public.listings (partner_id, host_id, title, city, is_active, status,
+                               activate_on_claim, created_by, created_by_role)
+  values (current_setting('test.kevin')::uuid, current_setting('test.kevin')::uuid,
+          'Watamu cottage', 'Watamu', false, 'pending_owner', true,
+          current_setting('test.kevin')::uuid, 'ambassador')
+  returning id into v_l;
+
+  perform public.listing_declare_ownership(v_l, 'on_behalf', null, '[]'::jsonb,
+                                           'Joseph Otieno', 'joseph@example.com');
+  select id into v_t from public.listing_transfers where listing_id = v_l and status = 'pending';
+
+  perform t_ok('a listing built in the field is not live before it is claimed',
+    (select is_active from public.listings where id = v_l) = false);
+
+  perform be(current_setting('test.joseph')::uuid);
+  perform public.listing_transfer_accept(v_t);
+
+  perform t_ok('accepting publishes it',
+    (select is_active from public.listings where id = v_l) = true);
+  perform t_ok('accepting gives it a live status',
+    (select status from public.listings where id = v_l) = 'active');
+  perform t_ok('and the publish-on-claim flag is spent, not left armed',
+    (select activate_on_claim from public.listings where id = v_l) = false);
+  perform t_ok('the ambassador who built it is still on the record',
+    (select created_by_role from public.listings where id = v_l) = 'ambassador');
+end $$;
+
+do $$
+declare v_l uuid; v_t uuid;
+begin
+  -- A paused listing that is transferred normally must NOT be switched on by
+  -- the handover. Only a listing that was built pending publishes this way.
+  perform be(current_setting('test.kevin')::uuid);
+  insert into public.listings (partner_id, host_id, title, is_active, status)
+  values (current_setting('test.kevin')::uuid, current_setting('test.kevin')::uuid,
+          'Paused unit', false, 'paused')
+  returning id into v_l;
+  perform public.listing_transfer_start(v_l, 'Joseph Otieno', 'joseph@example.com');
+  select id into v_t from public.listing_transfers where listing_id = v_l and status = 'pending';
+
+  perform be(current_setting('test.joseph')::uuid);
+  perform public.listing_transfer_accept(v_t);
+  perform t_ok('an ordinary transfer does not switch a paused listing on',
+    (select is_active from public.listings where id = v_l) = false);
+end $$;
+
+
 -- ── 8 · HANDING A LIVE LISTING ON ─────────────────────────────────────────
 do $$
 declare v_l uuid; v_t uuid;

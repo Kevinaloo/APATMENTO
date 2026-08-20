@@ -648,6 +648,29 @@ const SBK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6
 let sb=null;try{sb=supabase.createClient(SBU,SBK);}catch(e){}
 let CU=null;
 const QP=new URLSearchParams(location.search);
+
+/* ══ ONBOARDING SOMEBODY ELSE ═══════════════════════════════════════════
+   An ambassador or agent arrives here from a claimed lead with that
+   person's details in the URL. The form is the same form — building a
+   second one meant every field added to a listing had to be added twice,
+   and the second copy was always behind — but three things change:
+
+     · the ownership step is locked to "on behalf of" and pre-filled
+     · the listing is created UNPUBLISHED, and publishes the moment the
+       named owner accepts it
+     · the topbar says whose listing this is, on every step
+
+   None of the URL is trusted. It prefills inputs and nothing else. What
+   the listing actually becomes is decided by listing_declare_ownership(),
+   which re-derives the caller from auth.uid(). */
+const ON_BEHALF_OF = (function(){
+  const as = (QP.get('as')||'').toLowerCase();
+  if(as!=='ambassador'&&as!=='agent')return null;
+  const name=(QP.get('behalf_name')||'').trim();
+  const contact=(QP.get('behalf_contact')||'').trim();
+  if(!name||!contact)return null;
+  return {role:as,name:name,contact:contact,lead:QP.get('lead')||null};
+})();
 const FROM=QP.has('from')||QP.has('edit')||QP.has('prefill')||document.referrer.includes('partner');
 (async()=>{
   if(!sb)return;
@@ -1039,6 +1062,31 @@ function ownSpec(){
 function bldOwn(){
   const box=document.getElementById('own-choices');
   if(!box||!window.ApaOwnership)return;
+
+  /* Onboarding somebody: the answer is already known, so the step
+     confirms it rather than asking again. Locking it is the point —
+     an ambassador who picks "sole operator" here has just taken
+     ownership of a stranger's building by pressing the wrong card. */
+  if(ON_BEHALF_OF){
+    F.own='on_behalf';F.ownTouched=true;
+    F.ownHolderName=F.ownHolderName||ON_BEHALF_OF.name;
+    F.ownHolderContact=F.ownHolderContact||ON_BEHALF_OF.contact;
+    const t=ApaOwnership.typeFor('on_behalf');
+    box.innerHTML=
+      '<div class="own-card sel" aria-current="true">'
+      + '<span class="own-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">'+t.icon+'</svg></span>'
+      + '<span><span class="own-t">'+esc(t.label)+'</span>'
+      + '<span class="own-d">You are onboarding <strong>'+esc(ON_BEHALF_OF.name)+'</strong>, so this listing '
+      + 'is theirs, not yours. It stays unpublished until they accept it &mdash; then it goes live on '
+      + 'their account with everything you have filled in.</span></span></div>';
+    document.getElementById('own-partnership').hidden=true;
+    document.getElementById('own-behalf').hidden=false;
+    const hn=document.getElementById('own-hn'),hc=document.getElementById('own-hc');
+    if(hn){hn.value=F.ownHolderName;}
+    if(hc){hc.value=F.ownHolderContact;}
+    return;
+  }
+
   box.innerHTML=ApaOwnership.TYPES.map(t=>
     '<button type="button" class="own-card'+(F.own===t.key?' sel':'')+'" data-own="'+t.key+'" '
     + 'onclick="ownPick(\''+t.key+'\')" aria-pressed="'+(F.own===t.key)+'">'
@@ -1165,7 +1213,18 @@ async function publish(){
        ownership model exists to draw — but an on-behalf listing that has
        been handed over should still be creditable to whoever built it. */
     payload.created_by=CU?.id||null;
-    payload.created_by_role=(new URLSearchParams(location.search).get('as')||'partner');
+    payload.created_by_role=ON_BEHALF_OF?ON_BEHALF_OF.role:'partner';
+
+    /* Built for somebody who has not agreed to publish it yet. It exists,
+       it is complete, and it is invisible until they accept the handover —
+       at which point listing_transfer_accept() switches it on. Putting a
+       stranger's property, address and phone number on a public website
+       because a third party filled in a form is not a thing to get wrong. */
+    if(ON_BEHALF_OF&&!window._eid){
+      payload.is_active=false;
+      payload.status='pending_owner';
+      payload.activate_on_claim=true;
+    }
 
     let err,listingId=window._eid||null;
     if(window._eid){const{error}=await sb.from('listings').update(payload).eq('id',window._eid).eq('partner_id',CU?.id);err=error;}
@@ -1202,6 +1261,8 @@ async function publish(){
       ownProblem
         ? 'Your listing is live, but we could not record the ownership: '+ownProblem
           +' It is yours for now — set it from your listings board.'
+        : ON_BEHALF_OF
+          ? '"'+F.title+'" is ready and waiting for '+ON_BEHALF_OF.name+'. It goes live on their account the moment they sign in with '+ON_BEHALF_OF.contact+' and accept it. Nothing is public until then.'
         : F.own==='on_behalf'
           ? '"'+F.title+'" is live and held for '+F.ownHolderName+'. They become the owner the moment they claim it.'
           : window._eid
@@ -1239,6 +1300,22 @@ function loadEdit(l){
   bldRv();go(8);
 }
 function loadPrefill(p){F.svc='stays';F.type=p.property_type||'Apartment';F.title=p.title||'';F.city=p.city||'';F.area=p.area||'';F.desc=p.description||'';F.beds=String(p.bedrooms||1);F.baths=String(p.bathrooms||1);F.guests=String(p.max_guests||2);F.sqm=p.sqm?String(p.sqm):'';F.feats=p.amenities||[];F.price=p.price_night?String(p.price_night):'';go(1);}
+
+/* Whose listing this is, on every step, in the one place that never
+   scrolls away. An ambassador filling in seven steps for somebody should
+   never have to remember which somebody. */
+if(ON_BEHALF_OF){
+  const ctx=document.getElementById('ctx');
+  if(ctx){
+    ctx.textContent='For '+ON_BEHALF_OF.name;
+    ctx.style.background='rgba(109,40,255,.09)';
+    ctx.style.borderColor='rgba(109,40,255,.2)';
+    ctx.style.color='#6D28FF';
+  }
+  document.title='Listing for '+ON_BEHALF_OF.name+' | Cabana';
+  const city=QP.get('city');
+  if(city)F.city=city;
+}
 
 buildNav();
 
