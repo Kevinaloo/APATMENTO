@@ -12,7 +12,14 @@
      refund-credit. Returns credits when a booking does not complete
      withdraw. Request M-Pesa payout
      stats. Dashboard totals for the authed user
+
+   Also serves /api/ambassadors (via vercel.json rewrite ?_route=ambassadors)
+   to stay within the 12-serverless-function limit on Vercel Hobby.
+   All ambassador logic lives in api/lib/_ambassadors.js; this file
+   is a transparent proxy for those routes — no ambassador logic here.
 ══════════════════════════════════════════════════════════════ */
+
+import { ambassadorHandler } from './lib/_ambassadors.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SERVICE_KEY  = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -624,6 +631,11 @@ async function actionStats(body, user) {
 export default async function handler(req, res) {
   cors(res);
   if (req.method === 'OPTIONS') return res.status(200).end();
+
+  /* Transparent proxy for /api/ambassadors (vercel.json rewrite adds _route=ambassadors).
+     The ambassador handler speaks the same GET/POST + ?action= protocol as the admin console. */
+  if (req.query._route === 'ambassadors') return ambassadorHandler(req, res);
+
   if (req.method !== 'POST')   return res.status(405).json({ error: 'POST only' });
 
   try {
