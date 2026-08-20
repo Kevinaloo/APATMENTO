@@ -166,20 +166,17 @@ footer{padding:clamp(48px,9vh,90px) 0 44px;}
     </div>
   </section>
 
-  <!-- ══ ADMIN ROSTER ══ -->
+  <!-- ══ ADMIN POINTER ══
+       The roster lives in the admin console, with every other operator
+       control. It was briefly duplicated here, which is one implementation
+       too many for something that decides who gets paid. -->
   <section class="wrap" id="admin-wrap" hidden>
-    <div class="card reveal" style="margin-top:26px">
-      <div class="spread" style="margin-bottom:18px">
-        <div>
-          <h2 class="h2">The roster</h2>
-          <p class="small" style="margin-top:5px">Every email authorised to enter. Adding one is the entire access grant.</p>
-        </div>
-        <button class="btn btn-primary btn-sm" id="invite-open" type="button">
-          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-          Invite
-        </button>
+    <div class="card reveal" style="margin-top:26px;display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+      <div style="flex:1;min-width:240px">
+        <h2 class="h3">You are signed in as an admin</h2>
+        <p class="small" style="margin-top:5px">Invite, revoke and review ambassadors from the console, under <strong>Revenue → Ambassadors</strong>.</p>
       </div>
-      <div id="roster"><p class="small muted">Loading…</p></div>
+      <a class="btn btn-primary" href="/admin.html">Open the console</a>
     </div>
   </section>
 
@@ -264,45 +261,6 @@ footer{padding:clamp(48px,9vh,90px) 0 44px;}
       <a href="mailto:connect@cabana.africa" style="color:var(--violet);text-decoration:none;font-weight:600">connect@cabana.africa</a>
     </p>
   </footer>
-</div>
-
-<!-- ══ INVITE MODAL (admin) ══ -->
-<div class="modal" id="invite-modal" hidden role="dialog" aria-modal="true" aria-labelledby="invite-title">
-  <div class="modal-scrim" data-close></div>
-  <div class="modal-body">
-    <h2 class="h2" id="invite-title">Add to the roster</h2>
-    <p class="small" style="margin:7px 0 20px">They will be emailed an invitation. Access is tied to this exact address.</p>
-    <form id="invite-form" class="stack" style="gap:15px">
-      <div class="field">
-        <label class="label" for="i-email">Email address</label>
-        <input class="input" id="i-email" type="email" required autocomplete="off" placeholder="name@example.com"/>
-        <span class="hint">They must sign in with this address and confirm it before they can enter.</span>
-      </div>
-      <div class="grid g2" style="gap:14px">
-        <div class="field">
-          <label class="label" for="i-name">Full name</label>
-          <input class="input" id="i-name" type="text" placeholder="Amara Otieno"/>
-        </div>
-        <div class="field">
-          <label class="label" for="i-region">Region</label>
-          <input class="input" id="i-region" type="text" placeholder="Nairobi"/>
-        </div>
-      </div>
-      <div class="field">
-        <label class="label" for="i-target">Monthly target</label>
-        <input class="input" id="i-target" type="number" min="0" max="1000" value="10"/>
-        <span class="hint">People onboarded per month. Shown to them as progress, not as a threat.</span>
-      </div>
-      <div class="field">
-        <label class="label" for="i-note">Note <span class="muted">(optional)</span></label>
-        <input class="input" id="i-note" type="text" placeholder="Referred by Kevin, covers Westlands"/>
-      </div>
-      <div class="row" style="margin-top:6px;gap:10px">
-        <button class="btn btn-primary" type="submit" id="i-submit">Send invitation</button>
-        <button class="btn btn-ghost" type="button" data-close>Cancel</button>
-      </div>
-    </form>
-  </div>
 </div>
 
 <div class="toasts" role="status" aria-live="polite"></div>

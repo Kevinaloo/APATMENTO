@@ -63,11 +63,14 @@ lock. Every route re-derives the caller from `auth.uid()` and re-runs the gate.
 
 ### Inviting someone
 
-Sign in as an admin (`apatmento@gmail.com`, `worlddossy@gmail.com`) and open
-`/ambassadors.html` — the roster console is on that page. Add the email, and
-they are sent an invitation.
+Open the admin console → **Revenue → Ambassadors**. Add the email; they are
+sent an invitation.
 
 They must then sign in with **that exact address** and confirm it.
+
+That screen is also where you suspend, reinstate, revoke, re-invite, and
+resolve fraud signals. Suspension and revocation are both reversible and
+neither touches commission already earned.
 
 ### Revoking
 
@@ -152,7 +155,8 @@ silently and you have to tell people yourself.
 Static, so a normal deploy picks them up:
 
 ```
-ambassadors.html              gateway + admin roster console
+admin.html                    roster console (Revenue → Ambassadors)
+ambassadors.html              the gateway
 ambassador-dashboard.html     the dashboard
 ambassadors-page.js           gateway logic
 ambassador-dashboard.js       dashboard logic
@@ -169,7 +173,8 @@ api/ambassadors.js            the API
 ```bash
 ./tests/run-ambassador-tests.sh     # 47 · SQL gate, claims, velocity, RLS
 node --test tests/rate-card.test.mjs #  6 · the six numbers agree everywhere
-./tests/ui/run-ambassador-ui.sh     # 42 · real Chromium, both themes, phone
+./tests/ui/run-ambassador-ui.sh     # 55 · real Chromium, both themes, phone,
+                                    #      plus the admin roster console
 ```
 
 The SQL suite spins a throwaway Postgres, applies the migration twice to prove

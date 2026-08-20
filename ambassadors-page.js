@@ -195,95 +195,14 @@ function stateEnrol(v) {
   });
 }
 
-/* ── Admin roster ─────────────────────────────────────────────────────── */
-function loadRoster() {
-  var wrap = document.getElementById('admin-wrap');
-  var host = document.getElementById('roster');
-  if (!wrap || !host) return;
-  wrap.removeAttribute('hidden');
-
-  A.api.roster().then(function (r) {
-    if (!r || !r.ok) { host.innerHTML = '<p class="small muted">Could not load the roster.</p>'; return; }
-    var rows = r.roster || [];
-    if (!rows.length) { host.innerHTML = '<p class="small muted">Nobody on the roster yet. Invite the first ambassador.</p>'; return; }
-
-    host.innerHTML = rows.map(function (x) {
-      var revoked = !!x.revoked_at;
-      var amb = x.ambassador;
-      var badge = revoked
-        ? '<span class="badge b-err">Revoked</span>'
-        : amb
-          ? (amb.status === 'suspended'
-              ? '<span class="badge b-warn">Suspended</span>'
-              : '<span class="badge b-ok">Active</span>')
-          : '<span class="badge b-mute">Invited</span>';
-
-      var meta = [];
-      if (x.full_name) meta.push(esc(x.full_name));
-      if (x.region)    meta.push(esc(x.region));
-      meta.push(amb ? 'joined ' + A.fmt.ago(amb.enrolled_at) : 'not signed in yet');
-      if (amb && amb.risk_score >= 40) meta.push('<strong style="color:var(--err)">risk ' + amb.risk_score + '</strong>');
-
-      return '<div class="roster-row">' +
-        '<div class="av av-sm">' + esc(A.fmt.initials(x.full_name || x.email)) + '</div>' +
-        '<div class="roster-main">' +
-          '<div class="roster-email">' + esc(x.email) + '</div>' +
-          '<div class="roster-meta">' + meta.join(' · ') + '</div>' +
-        '</div>' + badge +
-        (revoked ? '' :
-          '<button class="btn btn-ghost btn-sm" data-revoke="' + esc(x.email) + '" type="button">Revoke</button>') +
-      '</div>';
-    }).join('');
-
-    host.querySelectorAll('[data-revoke]').forEach(function (b) {
-      b.addEventListener('click', function () { revoke(b, b.getAttribute('data-revoke')); });
-    });
-  });
-}
-
-/* Revocation closes the door and keeps the record. Earnings already accrued
-   are untouched — someone who did the work before leaving is still owed. */
-function revoke(btn, email) {
-  var reason = prompt('Revoke access for ' + email + '?\n\nThey lose the dashboard immediately. ' +
-                      'Earnings already recorded are not affected.\n\nReason (optional):');
-  if (reason === null) return;
-  UI.busy(btn, true);
-  A.api.revoke({ email: email, reason: reason }).then(function (r) {
-    UI.busy(btn, false);
-    if (!r || !r.ok) { UI.toast((r && (r.message || r.error)) || 'Could not revoke.', 'err'); return; }
-    UI.toast('Access revoked for ' + email, 'ok');
-    loadRoster();
-  });
-}
-
-function wireInvite() {
-  var open = document.getElementById('invite-open');
-  var form = document.getElementById('invite-form');
-  if (open) open.addEventListener('click', function () { UI.modal('invite-modal', true); });
-  document.querySelectorAll('#invite-modal [data-close]').forEach(function (el) {
-    el.addEventListener('click', function () { UI.modal('invite-modal', false); });
-  });
-  if (!form) return;
-  form.addEventListener('submit', function (ev) {
-    ev.preventDefault();
-    var btn = document.getElementById('i-submit');
-    UI.busy(btn, true);
-    A.api.invite({
-      email:          document.getElementById('i-email').value,
-      full_name:      document.getElementById('i-name').value,
-      region:         document.getElementById('i-region').value,
-      monthly_target: document.getElementById('i-target').value,
-      note:           document.getElementById('i-note').value,
-    }).then(function (r) {
-      UI.busy(btn, false);
-      if (!r || !r.ok) { UI.toast((r && (r.message || r.error)) || 'Could not invite.', 'err'); return; }
-      UI.toast('Invitation sent to ' + r.email, 'ok');
-      form.reset();
-      document.getElementById('i-target').value = '10';
-      UI.modal('invite-modal', false);
-      loadRoster();
-    });
-  });
+/* ── Admin ────────────────────────────────────────────────────────────
+   Roster management lives in the admin console, next to every other
+   operator control. This page only says so — keeping a second copy of
+   invite/revoke here would be two implementations of the decision about
+   who gets paid, and they would drift. */
+function showAdminPointer() {
+  var el = document.getElementById('admin-wrap');
+  if (el) el.removeAttribute('hidden');
 }
 
 /* ── Boot ─────────────────────────────────────────────────────────────── */
@@ -293,10 +212,9 @@ A.session().then(function (s) {
   var signedIn = s && s.status === 'user';
   var email = signedIn && s.user ? String(s.user.email || '').toLowerCase() : '';
 
-  /* An admin gets the roster console on this page. The admin guard sends
-     operators to /admin.html everywhere else, so this surface has to carry
-     its own management UI or the roster would be unreachable. */
-  if (email && ADMINS.indexOf(email) !== -1) { wireInvite(); loadRoster(); }
+  /* Admins are allowed onto this page by the guard so they can check the
+     gateway actually works. The roster itself is managed in the console. */
+  if (email && ADMINS.indexOf(email) !== -1) showAdminPointer();
 
   if (!signedIn) { UI.boot(true); stateSignedOut(); UI.reveals(); return; }
 

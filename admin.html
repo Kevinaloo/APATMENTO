@@ -503,6 +503,10 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M20 8v6M23 11h-6"/></svg>
           Agent identity <span class="nav-b calm" id="b-agents">0</span>
         </div>
+        <div class="nav-i" data-sec="ambassadors" onclick="go('ambassadors',this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 9.6 7.3 4 8.1l4.1 4-1 5.7 4.9-2.7 4.9 2.7-1-5.7 4.1-4-5.6-.8z"/></svg>
+          Ambassadors <span class="nav-b calm" id="b-amb">0</span>
+        </div>
       </div>
 
 
@@ -997,6 +1001,36 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
         <div id="ag-list"></div>
       </section>
 
+      <!-- ─── AMBASSADORS ───────────────────────────────────────────────
+           The roster IS the access grant. There is no approval queue and
+           no application form: an email on this list, once its owner has
+           confirmed it, can open the ambassador dashboard. Adding a line
+           here is the whole decision.                                    -->
+      <section class="sec" id="s-ambassadors">
+        <div class="hd">
+          <div><h1>Ambassador <em>roster</em></h1>
+          <p>Everyone authorised to enter the ambassador gateway. Adding an email here is the entire access grant — there is nothing else to approve. They must sign in with that exact address and confirm it before the door opens.</p></div>
+          <div class="hd-act"><button class="btn btn-p btn-sm" onclick="ambOpenInvite()">Invite ambassador</button></div>
+        </div>
+
+        <div class="grid g4" id="amb-stats"></div>
+
+        <div class="tabs" style="margin-top:20px">
+          <button class="tab on" onclick="ambFilter('all',this)">Everyone</button>
+          <button class="tab" onclick="ambFilter('active',this)">Active</button>
+          <button class="tab" onclick="ambFilter('pending',this)">Not joined</button>
+          <button class="tab" onclick="ambFilter('flagged',this)">Flagged</button>
+          <button class="tab" onclick="ambFilter('revoked',this)">Revoked</button>
+        </div>
+        <div id="amb-list"></div>
+
+        <div class="hd" style="margin-top:34px">
+          <div><h2 style="font-size:19px">Open fraud <em>signals</em></h2>
+          <p>Weighted observations that have not been resolved. These freeze accrual for review; they never delete a lead or reverse a commission.</p></div>
+        </div>
+        <div id="amb-signals"></div>
+      </section>
+
       <section class="sec" id="s-ads">
         <div class="hd">
           <div><h1>Ad <em>manager</em></h1><p>Create a campaign, pick the exact surfaces it runs on, and watch viewability in real time.</p></div>
@@ -1445,6 +1479,39 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 </div>
 
 <!-- ══════════ CAMPAIGN MODAL ══════════ -->
+<!-- ─── INVITE AN AMBASSADOR ───
+     Deliberately short. The only field that carries authority is the email;
+     everything else is context so the roster reads as people rather than
+     addresses. -->
+<div class="ov" id="amb-ov">
+  <div class="mdl">
+    <div class="mdl-t">Invite an ambassador</div>
+    <div class="mdl-s">They are emailed an invitation and can enter as soon as they sign in with this address and confirm it. Nothing else gates them.</div>
+
+    <div class="fld"><label class="fld-l">Email address</label>
+      <input class="inp" id="amb-i-email" type="email" placeholder="name@example.com" autocomplete="off"/></div>
+
+    <div class="row2">
+      <div class="fld"><label class="fld-l">Full name</label>
+        <input class="inp" id="amb-i-name" placeholder="Amara Otieno"/></div>
+      <div class="fld"><label class="fld-l">Region</label>
+        <input class="inp" id="amb-i-region" placeholder="Nairobi"/></div>
+    </div>
+
+    <div class="row2">
+      <div class="fld"><label class="fld-l">Monthly target</label>
+        <input class="inp" id="amb-i-target" type="number" min="0" max="1000" value="10"/></div>
+      <div class="fld"><label class="fld-l">Note</label>
+        <input class="inp" id="amb-i-note" placeholder="Covers Westlands, referred by Kevin"/></div>
+    </div>
+
+    <div class="mdl-f">
+      <button class="btn btn-g" onclick="ambCloseInvite()">Cancel</button>
+      <button class="btn btn-p" id="amb-i-go" onclick="ambInvite()">Send invitation</button>
+    </div>
+  </div>
+</div>
+
 <div class="ov" id="camp-ov">
   <div class="mdl wide">
     <div class="mdl-t" id="camp-title">New campaign</div>
@@ -1845,6 +1912,7 @@ function go(sec, el){
   window.scrollTo({top:0, behavior:'instant'});
   if(sec==='audience'||sec==='ml'||sec==='slots') ensureAudience();
   if(sec==='agents') loadAgents();
+  if(sec==='ambassadors') ambLoad();
   if(sec==='splash') loadSplash();
   if(sec==='push') pushLoadStats();
   if(sec==='godmode') gmRenderAll();
@@ -3118,6 +3186,7 @@ async function shUploadMedia(){
   }
 }
 $('camp-ov').addEventListener('click', e=>{ if(e.target.id==='camp-ov') closeCampaign(); });
+$('amb-ov')?.addEventListener('click', e=>{ if(e.target.id==='amb-ov') ambCloseInvite(); });
 
 ['c-adv','c-head','c-sub','c-cta','c-price','c-theme','c-media'].forEach(k=>
   $(k).addEventListener('input', previewCampaign));
@@ -3591,6 +3660,272 @@ function exportInventory(){
    The queue is small by design. Most agents verify in the first week
    because their links stop earning if they don't.
    ══════════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════════════
+   AMBASSADOR ROSTER
+   ─────────────────────────────────────────────────────────────────────
+   The roster is the access grant. There is no approval queue here on
+   purpose — an ambassador is an email an admin typed in, and everything
+   downstream (the gateway, the dashboard, commission) keys off that one
+   row plus a confirmed address.
+
+   Reads and writes go through /api/ambassadors, which re-checks that the
+   caller is an admin. RLS blocks the allowlist from every client session
+   outright, so this console cannot reach it any other way — which is the
+   point: there is no path to the roster that does not pass an admin check.
+   ═══════════════════════════════════════════════════════════════════════ */
+let AMB_FILTER = 'all';
+let AMB_ROWS   = [];
+let AMB_SIGS   = [];
+
+async function ambApi(action, body) {
+  const r = await fetch('/api/ambassadors?action=' + action, {
+    method: body ? 'POST' : 'GET',
+    headers: Object.assign(
+      { Authorization: 'Bearer ' + await agToken() },
+      body ? { 'Content-Type': 'application/json' } : {}),
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || 'Request failed');
+  return j;
+}
+
+async function ambLoad() {
+  const box = $('amb-list');
+  if (!box) return;
+  box.innerHTML = '<div class="t-sub" style="padding:32px;text-align:center;">Loading…</div>';
+
+  try {
+    const j = await ambApi('roster');
+    AMB_ROWS = j.roster || [];
+  } catch (e) {
+    box.innerHTML = '<div class="t-sub" style="padding:32px;text-align:center;">Could not load: ' + e.message + '</div>';
+    return;
+  }
+
+  /* Signals are secondary. A failure to load them must not blank the
+     roster, which is the thing this screen exists for. */
+  try { AMB_SIGS = (await ambApi('review', { op: 'signals' })).signals || []; }
+  catch (e) { AMB_SIGS = []; }
+
+  ambStats();
+  ambRender();
+  ambRenderSignals();
+}
+
+function ambStats() {
+  const live    = AMB_ROWS.filter(r => !r.revoked_at);
+  const joined  = live.filter(r => r.ambassador);
+  const flagged = joined.filter(r => r.ambassador.status === 'suspended' || r.ambassador.risk_score >= 40);
+
+  /* The badge counts what needs a human, not how many ambassadors exist.
+     A number that only ever grows stops being read. */
+  const b = $('b-amb');
+  if (b) {
+    b.textContent = flagged.length;
+    b.classList.toggle('calm', flagged.length === 0);
+    b.classList.toggle('warn', flagged.length > 0);
+  }
+
+  $('amb-stats').innerHTML = [
+    stat('On the roster',  live.length,                     'authorised emails'),
+    stat('Joined',         joined.length,                   'signed in and enrolled', 'ok'),
+    stat('Not joined yet', live.length - joined.length,     'invited, never entered'),
+    stat('Need a look',    flagged.length,                  'suspended or high risk',
+         flagged.length ? 'gold' : ''),
+  ].join('');
+}
+
+function ambMatch(r) {
+  const a = r.ambassador;
+  switch (AMB_FILTER) {
+    case 'active':  return !r.revoked_at && a && a.status === 'active';
+    case 'pending': return !r.revoked_at && !a;
+    case 'flagged': return !r.revoked_at && a && (a.status === 'suspended' || a.risk_score >= 40);
+    case 'revoked': return !!r.revoked_at;
+    default:        return true;
+  }
+}
+
+function ambFilter(f, el) {
+  AMB_FILTER = f;
+  el.parentNode.querySelectorAll('button').forEach(b => b.classList.remove('on'));
+  el.classList.add('on');
+  ambRender();
+}
+
+function ambRender() {
+  const box  = $('amb-list');
+  const rows = AMB_ROWS.filter(ambMatch);
+  if (!rows.length) {
+    box.innerHTML = '<div class="t-sub" style="padding:44px;text-align:center;">Nothing here.</div>';
+    return;
+  }
+  box.innerHTML = rows.map(ambRow).join('');
+}
+
+function ambRow(r) {
+  const esc = x => String(x ?? '').replace(/[&<>"']/g, c =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const a = r.ambassador;
+
+  let pill;
+  if (r.revoked_at)                    pill = '<span class="pill p-bad">Revoked</span>';
+  else if (!a)                         pill = '<span class="pill">Invited</span>';
+  else if (a.status === 'suspended')   pill = '<span class="pill p-bad">Suspended</span>';
+  else if (a.risk_score >= 40)         pill = '<span class="pill p-warn">Risk ' + a.risk_score + '</span>';
+  else                                 pill = '<span class="pill p-ok">Active</span>';
+
+  const meta = [];
+  if (r.region) meta.push(esc(r.region));
+  meta.push(a ? 'joined ' + ambAgo(a.enrolled_at) : 'never signed in');
+  if (r.monthly_target) meta.push('target ' + r.monthly_target + '/mo');
+  if (r.revoked_at && r.revoke_reason) meta.push('&ldquo;' + esc(r.revoke_reason) + '&rdquo;');
+
+  const acts = [];
+  if (r.revoked_at) {
+    /* Re-inviting clears the revocation rather than creating a second row,
+       so the history of why they left survives. */
+    acts.push('<button class="btn btn-ok btn-sm" onclick="ambReinvite(\'' + esc(r.email) + '\')">Re-invite</button>');
+  } else {
+    if (a && a.status === 'suspended')
+      acts.push('<button class="btn btn-ok btn-sm" onclick="ambSuspend(\'' + a.id + '\',false)">Reinstate</button>');
+    else if (a)
+      acts.push('<button class="btn btn-d btn-sm" onclick="ambSuspend(\'' + a.id + '\',true)">Suspend</button>');
+    acts.push('<button class="btn btn-d btn-sm" onclick="ambRevoke(\'' + esc(r.email) + '\')">Revoke</button>');
+  }
+
+  return '<div class="card" style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">' +
+    '<div style="flex:1;min-width:210px;">' +
+      '<div style="font-weight:700;font-size:14.5px;">' + esc(r.full_name || r.email.split('@')[0]) + '</div>' +
+      '<div class="t-sub" style="font-size:12px;margin-top:3px;">' + esc(r.email) + '</div>' +
+      '<div class="t-sub" style="font-size:11.5px;margin-top:3px;opacity:.8">' + meta.join(' &middot; ') + '</div>' +
+    '</div>' + pill +
+    '<div style="display:flex;gap:7px;flex-wrap:wrap;">' + acts.join('') + '</div>' +
+  '</div>';
+}
+
+function ambAgo(iso) {
+  if (!iso) return 'recently';
+  const d = Math.floor((Date.now() - new Date(iso)) / 864e5);
+  if (d < 1)   return 'today';
+  if (d === 1) return 'yesterday';
+  if (d < 30)  return d + ' days ago';
+  const m = Math.floor(d / 30);
+  return m + (m === 1 ? ' month ago' : ' months ago');
+}
+
+function ambRenderSignals() {
+  const box = $('amb-signals');
+  if (!box) return;
+  if (!AMB_SIGS.length) {
+    box.innerHTML = '<div class="t-sub" style="padding:28px;text-align:center;">Nothing flagged.</div>';
+    return;
+  }
+  const esc = x => String(x ?? '').replace(/[&<>"']/g, c =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  const NAMES = {
+    claim_velocity: 'Claiming faster than anyone meets people',
+  };
+
+  box.innerHTML = AMB_SIGS.map(g => {
+    const who = AMB_ROWS.find(r => r.ambassador && r.ambassador.id === g.ambassador_id);
+    return '<div class="card" style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">' +
+      '<div style="flex:1;min-width:220px;">' +
+        '<div style="font-weight:650;font-size:13.5px;">' + esc(NAMES[g.signal] || g.signal) + '</div>' +
+        '<div class="t-sub" style="font-size:12px;margin-top:3px;">' +
+          esc(who ? (who.full_name || who.email) : g.ambassador_id) +
+          ' &middot; weight ' + g.weight + ' &middot; ' + ambAgo(g.created_at) +
+        '</div>' +
+      '</div>' +
+      '<button class="btn btn-g btn-sm" onclick="ambResolve(\'' + g.id + '\')">Resolve</button>' +
+    '</div>';
+  }).join('');
+}
+
+/* ── Actions ────────────────────────────────────────────────────────── */
+function ambOpenInvite()  { $('amb-ov').classList.add('on'); setTimeout(() => $('amb-i-email').focus(), 80); }
+function ambCloseInvite() { $('amb-ov').classList.remove('on'); }
+
+async function ambInvite() {
+  const email = ($('amb-i-email').value || '').trim().toLowerCase();
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return toast('That is not a valid email address.', 'bad');
+
+  const btn = $('amb-i-go');
+  btn.disabled = true;
+  try {
+    await ambApi('invite', {
+      email,
+      full_name:      $('amb-i-name').value,
+      region:         $('amb-i-region').value,
+      monthly_target: $('amb-i-target').value,
+      note:           $('amb-i-note').value,
+    });
+    toast('Invitation sent to ' + email, 'ok');
+    ['amb-i-email','amb-i-name','amb-i-region','amb-i-note'].forEach(id => $(id).value = '');
+    $('amb-i-target').value = '10';
+    ambCloseInvite();
+    ambLoad();
+  } catch (e) {
+    toast(e.message || 'Could not invite.', 'bad');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+/* Revocation is a timestamp, never a delete, and it never touches earnings
+   already accrued. You want to be able to answer "who had access on the day
+   that booking was attributed" a year from now, and someone who did the work
+   before leaving is still owed for it. */
+async function ambRevoke(email) {
+  const reason = prompt('Revoke ambassador access for ' + email + '?\n\n' +
+    'They lose the dashboard immediately and their links stop attributing.\n' +
+    'Commission already recorded is not affected.\n\nReason (optional):');
+  if (reason === null) return;
+  try {
+    await ambApi('revoke', { email, reason });
+    toast('Access revoked for ' + email, 'ok');
+    ambLoad();
+  } catch (e) { toast(e.message || 'Could not revoke.', 'bad'); }
+}
+
+async function ambReinvite(email) {
+  try {
+    await ambApi('invite', { email });
+    toast('Access restored for ' + email, 'ok');
+    ambLoad();
+  } catch (e) { toast(e.message || 'Could not re-invite.', 'bad'); }
+}
+
+/* Suspension freezes accrual and stops links attributing. It does not delete
+   leads or reverse commission — a reversible pause, so that acting on a
+   suspicion early costs nothing if the suspicion is wrong. */
+async function ambSuspend(id, on) {
+  let reason = null;
+  if (on) {
+    reason = prompt('Suspend this ambassador?\n\n' +
+      'Their dashboard closes and their links stop attributing. Leads and\n' +
+      'commission already recorded are untouched, and this is reversible.\n\nReason:');
+    if (reason === null) return;
+  }
+  try {
+    await ambApi('review', { op: on ? 'suspend' : 'reinstate', ambassador_id: id, reason });
+    toast(on ? 'Suspended.' : 'Reinstated.', 'ok');
+    ambLoad();
+  } catch (e) { toast(e.message || 'Could not update.', 'bad'); }
+}
+
+async function ambResolve(signalId) {
+  const note = prompt('Resolve this signal?\n\nIt stops counting toward their risk score.\n\nNote (optional):');
+  if (note === null) return;
+  try {
+    await ambApi('review', { op: 'resolve-signal', signal_id: signalId, note });
+    toast('Signal resolved.', 'ok');
+    ambLoad();
+  } catch (e) { toast(e.message || 'Could not resolve.', 'bad'); }
+}
+
 let AG_STATUS = 'submitted';
 let AG_ROWS   = [];
 
