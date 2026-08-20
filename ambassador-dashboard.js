@@ -305,8 +305,26 @@ function wireClaim() {
 /* ── Sign out ─────────────────────────────────────────────────────────── */
 function wireSignOut() {
   $('signout').addEventListener('click', function () {
+    /* Leaving entirely clears the view preference. Otherwise a stint in the
+       traveller view would outlive the session and quietly change where the
+       NEXT sign-in lands, which is not what "switch view" promised. */
+    try { localStorage.removeItem('apa-amb-view'); } catch (e) {}
     if (window.ApaSession && window.ApaSession.signOut) window.ApaSession.signOut();
     setTimeout(function () { location.href = '/'; }, 240);
+  });
+}
+
+/* ── Switch to the traveller view ─────────────────────────────────────────
+   An ambassador is also a customer — they book stays, they take rides. The
+   flag makes the choice stick across sign-ins, so someone who prefers to
+   land on the traveller side is not re-routed here every time. Coming back
+   is one tap from the traveller dashboard, which clears the same flag. */
+function wireViewSwitch() {
+  const b = $('to-guest');
+  if (!b) return;
+  b.addEventListener('click', function () {
+    try { localStorage.setItem('apa-amb-view', 'guest'); } catch (e) {}
+    location.href = '/dashboard.html';
   });
 }
 
@@ -350,6 +368,7 @@ A.api.me().then(function (r) {
   wireTabs();
   wireClaim();
   wireSignOut();
+  wireViewSwitch();
 
   $('app').removeAttribute('hidden');
   UI.boot(true);

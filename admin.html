@@ -274,6 +274,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .toast.on{transform:translate(-50%,0)}
 .toast.ok{border-color:rgba(45,224,192,.42)}
 .toast.bad{border-color:rgba(255,77,109,.42)}
+.toast.warn{border-color:rgba(255,176,32,.52)}
 
 /* ── SEG CONTROL ───────────────────────────────────────────────── */
 .seg{display:inline-flex;background:var(--bg-2);border:1px solid var(--line);border-radius:9px;padding:2.5px;gap:2px}
@@ -3855,14 +3856,25 @@ async function ambInvite() {
   const btn = $('amb-i-go');
   btn.disabled = true;
   try {
-    await ambApi('invite', {
+    const r = await ambApi('invite', {
       email,
       full_name:      $('amb-i-name').value,
       region:         $('amb-i-region').value,
       monthly_target: $('amb-i-target').value,
       note:           $('amb-i-note').value,
     });
-    toast('Invitation sent to ' + email, 'ok');
+    /* They are on the roster either way. Say which of the two things
+       happened, because "sent" when nothing was sent means someone waits
+       for an email that does not exist. */
+    if (r && r.emailed === false) {
+      toast(email + ' added to the roster, but no email went out ('
+            + (r.email_reason === 'email_not_configured'
+                 ? 'email sending is not configured'
+                 : (r.email_reason || 'send failed'))
+            + '). Tell them to sign in at cabana.africa/ambassadors with this address.', 'warn', 9000);
+    } else {
+      toast('Invitation sent to ' + email, 'ok');
+    }
     ['amb-i-email','amb-i-name','amb-i-region','amb-i-note'].forEach(id => $(id).value = '');
     $('amb-i-target').value = '10';
     ambCloseInvite();

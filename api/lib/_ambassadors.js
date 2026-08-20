@@ -152,18 +152,78 @@ function gateMessage(v) {
 }
 
 /* ── Email ───────────────────────────────────────────────────────────── */
+/* Returns { sent, reason }. A failed email must never fail the request that
+   triggered it — the ambassador is already on the roster either way. But the
+   caller has to be TOLD, because an admin who sees "Invitation sent" when no
+   email left the building will wait for a reply that is never coming. Silence
+   here was the whole bug: no key, no send, no error, cheerful success. */
 async function mail({ to, subject, html }) {
-  if (!RESEND_KEY || !to) return;
+  if (!to)         return { sent: false, reason: 'no_recipient' };
+  if (!RESEND_KEY) {
+    console.warn('[ambassadors] RESEND_API_KEY unset — invitation not emailed');
+    return { sent: false, reason: 'email_not_configured' };
+  }
   try {
-    await fetch('https://api.resend.com/emails', {
+    const r = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { Authorization: `Bearer ${RESEND_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ from: FROM, to: [to], subject, html }),
     });
+    if (!r.ok) {
+      /* Resend's own words are the useful part here — an unverified sending
+         domain and a malformed address fail identically without them. */
+      const detail = await r.text().catch(() => '');
+      console.warn('[ambassadors] resend', r.status, detail.slice(0, 400));
+      return { sent: false, reason: 'provider_rejected', detail: detail.slice(0, 300) };
+    }
+    return { sent: true };
   } catch (e) {
-    /* A failed email must never fail the request that triggered it. The
-       ambassador is already invited; the notification is a convenience. */
     console.warn('[ambassadors] mail', e.message);
+    return { sent: false, reason: 'network', detail: e.message };
+  }
+}
+
+/* ── ONE-CLICK SIGN-IN ─────────────────────────────────────────────────────
+   The gate demands a CONFIRMED email (schema-ambassadors.sql §8, principle 2).
+   The old invitation just linked to /ambassadors.html and told the reader to
+   "confirm your email first" — but nothing on the platform had ever sent them
+   a confirmation, so that instruction had no action behind it. An invited
+   ambassador could click through and be refused by the very gate that invited
+   them.
+
+   Supabase can mint a link that signs them in AND stamps email_confirmed_at in
+   the same click, which is exactly the two things the gate wants. Generated
+   server-side with the service key so nothing is emailed by Supabase itself —
+   we put the link in our own branded invitation.
+
+   magiclink is for an address that already has an account; invite is for one
+   that does not. Rather than query first, try the common case and fall back:
+   one round trip when the guess is right, two when it isn't, and no window
+   between the check and the use. */
+async function authLinkFor(email, redirectTo) {
+  if (!SUPA_URL || !SERVICE_KEY) return null;
+
+  const mint = async (type) => {
+    const r = await fetch(`${SUPA_URL}/auth/v1/admin/generate_link`, {
+      method: 'POST',
+      headers: {
+        apikey: SERVICE_KEY,
+        Authorization: `Bearer ${SERVICE_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ type, email, options: { redirect_to: redirectTo } }),
+    });
+    if (!r.ok) return null;
+    const j = await r.json().catch(() => ({}));
+    /* GoTrue has moved this field between versions. Accept either shape. */
+    return j?.properties?.action_link || j?.action_link || null;
+  };
+
+  try {
+    return (await mint('magiclink')) || (await mint('invite'));
+  } catch (e) {
+    console.warn('[ambassadors] generate_link', e.message);
+    return null;
   }
 }
 
@@ -532,16 +592,29 @@ async function handleInvite(req, res) {
     prefer: 'resolution=merge-duplicates,return=representation',
   });
 
-  await logEvent(req, { actor_id: s.user.id, kind: 'roster_invite', subject: email,
-                        meta: { region: row.region, target: row.monthly_target } });
+  const link = await authLinkFor(email, `${SITE}/ambassadors.html`);
 
-  await mail({
+  const post = await mail({
     to: email,
     subject: 'You have been invited to the Cabana Ambassador programme',
-    html: inviteEmail(row),
+    html: inviteEmail(row, link),
   });
 
-  return res.status(200).json({ ok: true, email });
+  await logEvent(req, { actor_id: s.user.id, kind: 'roster_invite', subject: email,
+                        meta: { region: row.region, target: row.monthly_target,
+                                emailed: post.sent, email_reason: post.reason || null,
+                                one_click: !!link } });
+
+  /* The roster write succeeded, so this is a 200 either way — but `emailed`
+     tells the console whether a human will actually hear about it, and the
+     admin has to pass the link on by hand when nothing was sent. */
+  return res.status(200).json({
+    ok: true,
+    email,
+    emailed: post.sent,
+    email_reason: post.reason || null,
+    email_detail: post.detail || null,
+  });
 }
 
 /* revoke · close the door, keep the record.
@@ -628,14 +701,21 @@ ${inner}
 </div>`;
 }
 
-function inviteEmail(row) {
+function inviteEmail(row, actionLink) {
+  /* actionLink signs them in and confirms the address in one click. Without it
+     (no service key, or Supabase refused) fall back to the plain gateway URL,
+     which still works for anyone with a confirmed account already. */
+  const href = actionLink || `${SITE}/ambassadors.html`;
+
   return shell(`
 <p style="font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:#6D28FF;font-weight:700;margin:0 0 12px">Cabana Ambassadors</p>
 <h1 style="font-size:26px;letter-spacing:-.6px;margin:0 0 16px">You have been invited${row.full_name ? ', ' + row.full_name : ''}.</h1>
 <p style="margin:0 0 16px">You have been added to the Cabana Ambassador programme — a small team helping bring hosts, service providers and travellers onto Africa's zero-commission travel platform.</p>
 <p style="margin:0 0 16px"><strong>What you earn.</strong> 15% of our service fee on every booking a traveller you bring makes, and 10% on every booking a host or service provider you bring takes. For 365 days from the day they join, on every booking, with no cap on how many people you bring.</p>
-<p style="margin:0 0 24px">Sign in with <strong>this exact email address</strong> — access is tied to it. If you have not confirmed your email yet, do that first.</p>
-<p style="margin:0 0 28px"><a href="${SITE}/ambassadors.html" style="display:inline-block;background:linear-gradient(135deg,#6D28FF,#4F6DFF);color:#fff;text-decoration:none;padding:14px 28px;border-radius:14px;font-weight:700">Open your dashboard</a></p>
+<p style="margin:0 0 28px"><a href="${href}" style="display:inline-block;background:linear-gradient(135deg,#6D28FF,#4F6DFF);color:#fff;text-decoration:none;padding:14px 28px;border-radius:14px;font-weight:700">Open your dashboard</a></p>
+<p style="margin:0 0 16px;font-size:14px;color:#474A66">${actionLink
+  ? 'That button signs you straight in — no password needed. It is tied to <strong>' + row.email + '</strong> and works once, for 24 hours. Ask for a fresh invitation if it expires.'
+  : 'Sign in with <strong>' + row.email + '</strong> — access is tied to that exact address.'}</p>
 <p style="font-size:13px;color:#474A66;margin:0">Your monthly target to start: <strong>${row.monthly_target} onboarded</strong>${row.region ? ` in ${row.region}` : ''}.</p>`);
 }
 

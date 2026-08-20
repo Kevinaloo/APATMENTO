@@ -1366,6 +1366,39 @@ async function goDashboard(user) {
     }
   } catch(e) {}
 
+  /* ── AMBASSADORS LAND ON THEIR OWN DASHBOARD ──────────────────────
+     An ambassador signing in is nearly always here to work the pipeline,
+     so send them there rather than making them find it. They can switch
+     to the traveller view in one tap from the header, and that choice is
+     remembered — so this only overrides the default landing, it never
+     traps anyone in a view they have already opted out of.
+
+     ambassador_gate() is the authority (confirmed email + live roster +
+     not suspended), the same function the dashboard itself re-checks on
+     arrival. This call is a routing hint, not a permission: being wrong
+     here costs a redirect, and the page re-verifies regardless.
+
+     Raced against a short timeout, and non-ambassadors simply get `ok:
+     false`. A slow or failed gate must never hold a traveller's sign-in
+     hostage — that is the same failure mode the profile upsert above was
+     already bounded to avoid. */
+  try {
+    let stayedGuest = null;
+    try { stayedGuest = localStorage.getItem('apa-amb-view'); } catch(e) {}
+
+    if (stayedGuest !== 'guest') {
+      const verdict = await Promise.race([
+        sb.rpc('ambassador_gate').then(r => r.data).catch(() => null),
+        new Promise(r => setTimeout(() => r(null), 2500)),
+      ]);
+      if (verdict && verdict.ok) {
+        try { localStorage.removeItem('apa-last-role'); } catch(e) {}
+        window.location.href = 'ambassador-dashboard.html?uid=' + user.id;
+        return;
+      }
+    }
+  } catch(e) {}
+
   // Default: guest dashboard. Clear any stale partner flag so the next
   // sign-in doesn't accidentally inherit it either.
   try { localStorage.removeItem('apa-last-role'); } catch(e) {}
