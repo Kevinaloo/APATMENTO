@@ -246,6 +246,11 @@ export default async function handler(req, res) {
           guest_id:     b.guest_id,
           service_type: serviceType,
           gross_amount: grossAmount,
+          /* The fee Postgres stamped on this booking. Referral commission is
+             a share of it, and it is a fixed amount, not a percentage of the
+             stay — so it has to travel with the award rather than be guessed
+             at the other end. Tours and events legitimately carry 0. */
+          service_fee:  b.service_fee == null ? null : Number(b.service_fee),
         }),
       }).then(r => r.json())
         .then(j => console.log('[rewards] award:', j))
@@ -428,7 +433,11 @@ async function creditInstalment({ supabaseUrl, serviceKey, reference, isSuccess,
                  'x-internal-secret': process.env.INTERNAL_API_SECRET || '' },
       body: JSON.stringify({ action: 'award', booking_ref: ledger.booking_ref,
                              guest_id: booking.guest_id, service_type: 'stays',
-                             gross_amount: total }),
+                             gross_amount: total,
+                             /* see the note on the other award call: the fee is
+                                fixed and stamped, so it travels with the award */
+                             service_fee: booking.service_fee == null
+                                            ? null : Number(booking.service_fee) }),
     }).catch(e => console.warn('[rewards] non-fatal:', e.message));
 
     fetch(`${origin}/api/agents?action=attribute`, {

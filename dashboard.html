@@ -1932,6 +1932,13 @@ img,video,svg{max-width:100%;}
     </div>
 
     <div class="content">
+      <!-- Listings somebody has handed to you. The person receiving one is
+           usually NOT looking at a partner dashboard — they are a traveller
+           who has just been given a building — so it has to appear here.
+           ApaOwnership mounts itself into this div and renders nothing at
+           all when there is nothing waiting. -->
+      <div id="ownership-inbox"></div>
+
       <div class="greeting">
         <div id="dancer-stage" aria-hidden="true">
           <div class="ds-troupe">
@@ -2511,10 +2518,13 @@ img,video,svg{max-width:100%;}
   <a class="drawer-link" onclick="closeDrawer();navigateToService('shopping')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/></svg> Shopping</a>
   <a class="drawer-link" onclick="closeDrawer();navigateToService('carhire')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13h14l-1.5-5a2 2 0 0 0-2-1.5h-7a2 2 0 0 0-2 1.5z"/><path d="M4 13h16v4H4z"/><circle cx="7.5" cy="17.5" r="1.5"/><circle cx="16.5" cy="17.5" r="1.5"/></svg> Car Hire</a>
   <div class="drawer-foot">
-    <a class="drawer-link" onclick="switchRole()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4M4 7h16M16 21l4-4-4-4M20 17H4"/></svg> Switch to Partner</a>
-    <!-- Revealed only once ambassador_gate() confirms. Absent for everyone
-         else, so the programme is not advertised by the markup. -->
-    <a class="drawer-link" id="amb-switch" hidden onclick="switchToAmbassador()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.4 9.4 8 10 4.6-.6 8-5 8-10V6z"/><path d="m9 12 2 2 4-4"/></svg> Switch to Ambassador</a>
+    <!-- Every other side of Cabana, from one model. This used to be two
+         hand-written links (partner, and ambassador if the gate said so),
+         which is why "switch to agent" did not exist anywhere on the site.
+         ApaRoles fills this in: roles you have say "switch", roles you do
+         not say "become", and the invitation-only one is absent entirely
+         rather than advertised as a door that opens for almost nobody. -->
+    <div data-apa-roles="menu"></div>
     <a class="drawer-link" onclick="signOut()" style="color:#E11D48;"><svg viewBox="0 0 24 24" fill="none" stroke="#E11D48" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg> Sign out</a>
   </div>
 </nav>
@@ -2932,30 +2942,17 @@ function switchToGuest(){
    sign-ins land on the ambassador view again. The two switches are exact
    inverses of one another. */
 function switchToAmbassador(){
+  if(window.ApaRoles){ ApaRoles.go('ambassador'); return; }
   try{ localStorage.removeItem('apa-amb-view'); }catch(e){}
   window.location.href='ambassador-dashboard.html';
 }
 
-/* Reveal the switch only for a confirmed, live, unsuspended ambassador.
-   ambassador_gate() is the same authority the dashboard enforces on
-   arrival, so a stale or spoofed reveal here buys nothing — the page
-   itself still refuses. Failure is silent: a missing link is a far better
-   outcome than a broken one, and non-ambassadors should see nothing. */
-async function revealAmbassadorSwitch(){
-  const el = document.getElementById('amb-switch');
-  if(!el) return;
-  try{
-    const client = sb || window.sb || (window.ApaSession && window.ApaSession.client());
-    if(!client || !client.rpc) return;
-    /* Anonymous visitors have no session, so the RPC returns
-       {ok:false, reason:'not_signed_in'} rather than erroring. */
-    const { data } = await client.rpc('ambassador_gate');
-    if(data && data.ok) el.removeAttribute('hidden');
-  }catch(e){}
-}
-document.addEventListener('DOMContentLoaded', function(){
-  setTimeout(revealAmbassadorSwitch, 1200);
-});
+/* The ambassador reveal used to live here, as a one-off ambassador_gate()
+   call that toggled a single hidden link. It now lives in apa-roles.js
+   alongside every other role, so one model decides what a person can
+   switch to and every dashboard shows the same answer. The gate is still
+   the authority and the destination still re-runs it on arrival — this
+   was never the lock, only the courtesy that saves a redirect. */
 
 /* ── LOAD STAYS ── */
 async function loadStays(){
@@ -3421,7 +3418,7 @@ function renderPartnerEmpty(failed){
   c.innerHTML = `
     <div class="topbar">
       <div class="tb-left"><img src="cabana-emblem.png" class="tb-icon-sm" alt="" loading="lazy" decoding="async"/><span class="tb-cab-anim" data-text="CABANA">CABANA</span></div>
-      <div class="tb-right"><button onclick="switchToGuest()" style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:100px;border:1.5px solid rgba(255,255,255,.35);background:rgba(255,255,255,.15);font-family:var(--font-body);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .2s;">← Traveller dashboard</button></div>
+      <div class="tb-right"><button onclick="switchToGuest()" style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:100px;border:1.5px solid rgba(255,255,255,.35);background:rgba(255,255,255,.15);font-family:var(--font-body);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .2s;">← Traveller dashboard</button><button onclick="ApaRoles&&ApaRoles.open()" style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:100px;border:1.5px solid rgba(255,255,255,.35);background:rgba(255,255,255,.15);color:#fff;font-family:var(--font-body);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .2s;" title="Switch how you use Cabana">Switch role</button></div>
     </div>
     <div class="content" style="max-width:760px;">
       <div class="greeting">
@@ -3461,7 +3458,7 @@ async function renderServicePicker(listings){
   c.innerHTML = `
     <div class="topbar">
       <div class="tb-left"><img src="cabana-emblem.png" class="tb-icon-sm" alt="" loading="lazy" decoding="async"/><span class="tb-cab-anim" data-text="CABANA">CABANA</span></div>
-      <div class="tb-right"><button class="hero-cta" style="padding:9px 18px;font-size:13px;box-shadow:none;" onclick="showAddSheet()">+ Add service</button><button onclick="switchToGuest()" style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:100px;border:1.5px solid rgba(255,255,255,.35);background:rgba(255,255,255,.15);-webkit-color:#fff;font-family:var(--font-body);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .2s;">← Traveller dashboard</button></div>
+      <div class="tb-right"><button class="hero-cta" style="padding:9px 18px;font-size:13px;box-shadow:none;" onclick="showAddSheet()">+ Add service</button><button onclick="switchToGuest()" style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:100px;border:1.5px solid rgba(255,255,255,.35);background:rgba(255,255,255,.15);-webkit-color:#fff;font-family:var(--font-body);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .2s;">← Traveller dashboard</button><button onclick="ApaRoles&&ApaRoles.open()" style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:100px;border:1.5px solid rgba(255,255,255,.35);background:rgba(255,255,255,.15);color:#fff;font-family:var(--font-body);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .2s;" title="Switch how you use Cabana">Switch role</button></div>
     </div>
     <div class="content" style="max-width:760px;">
       <div class="greeting"><h1 class="greeting-title">Your <em>services</em></h1><p class="greeting-sub">${active.length} active service${active.length!==1?'s':''}. Select one to manage.</p></div>
@@ -3510,6 +3507,9 @@ async function renderSingleDashboard(listing){
         <a href="#" onclick="switchToGuest();return false;" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:11px;border:1.5px solid rgba(45,212,191,.3);background:rgba(45,212,191,.08);color:#0D9488;font-family:var(--font-body);font-weight:700;font-size:12px;text-decoration:none;transition:all .22s;white-space:nowrap;" title="Switch to Traveller view">
           ← Traveller dashboard
         </a>
+        <button onclick="ApaRoles&&ApaRoles.open()" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:11px;border:1.5px solid rgba(124,58,237,.3);background:rgba(124,58,237,.07);color:#6D28D9;font-family:var(--font-body);font-weight:700;font-size:12px;cursor:pointer;transition:all .22s;white-space:nowrap;" title="Switch how you use Cabana">
+          Switch role
+        </button>
         <div class="tb-avatar">${(USER.firstName||'P')[0].toUpperCase()}</div>
       </div>
     </div>
@@ -3578,6 +3578,8 @@ function hideAddSheet(){
 <script src="/apa-push.js" defer></script>
 <script src="/referral.js" defer></script>
 <script src="/apa-referral-capture.js" defer></script>
+<script src="/apa-ownership.js" defer></script>
+<script src="/apa-roles.js" defer></script>
 <script src="/cabana-credit.js" defer></script>
 <script src="/showcase.js" defer></script>
 

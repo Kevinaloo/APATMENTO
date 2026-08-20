@@ -9,9 +9,11 @@
             api/rewards.js and is never recomputed here — this file
             reads and displays, it does not decide money.
 
-            Commission is a share of CABANA'S FEE (itself 10% of
-            gross), not of the booking. Every number shown to a
-            user below is labelled that way on purpose.
+            Commission is a share of CABANA'S FEE, not of the
+            booking, and that fee is a FIXED amount banded by
+            booking value (KES 300 / KES 800 on a stay, KES 0 on a
+            tour or an event), never a percentage. Every number
+            shown to a user below is labelled that way on purpose.
             10 pts per KES 1,000 spent · 1 pt = KES 1
             Min withdrawal: KES 50 · Flights excluded
 ═══════════════════════════════════════════════════════════════════ */
@@ -165,6 +167,8 @@ function buildPopup(myCode, myStats, isGuest) {
 .ref-card-stat{font-size:26px;font-weight:800;background:linear-gradient(120deg,#A78BFA,#7C3AED);-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1;margin-bottom:4px;}
 .ref-card-b .ref-card-stat{background:linear-gradient(120deg,#FCD34D,#F59E0B);-webkit-background-clip:text;background-clip:text;color:transparent;}
 .ref-card-desc{font-size:11px;color:rgba(255,255,255,.5);line-height:1.5;}
+.ref-basis{margin-top:14px;padding:13px 15px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);font-size:11.5px;line-height:1.65;color:rgba(255,255,255,.62);}
+.ref-basis strong{color:rgba(255,255,255,.9);font-weight:700;}
 .ref-card-badge{position:absolute;top:12px;right:12px;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:100px;}
 .ref-card-a .ref-card-badge{background:rgba(123,47,247,.2);color:#A78BFA;border:1px solid rgba(123,47,247,.3);}
 .ref-card-b .ref-card-badge{background:rgba(252,211,77,.15);color:#FCD34D;border:1px solid rgba(252,211,77,.25);}
@@ -208,8 +212,8 @@ function buildPopup(myCode, myStats, isGuest) {
 
   <div class="ref-header">
     <div class="ref-badge"><span class="ref-badge-dot"></span>Cabana Referral Programme</div>
-    <h2 class="ref-headline">Refer &amp; earn up to<br/><strong>10% for life.</strong></h2>
-    <p class="ref-sub">Bring a traveller or a host to Cabana. Earn up to 10% of our service fee on every booking they make, for 365 days from the day they join. Simple. Unlimited.</p>
+    <h2 class="ref-headline">Refer once.<br/><strong>Earn for a year.</strong></h2>
+    <p class="ref-sub">Bring a traveller or a host to Cabana. Earn a share of our service fee on every booking they make, for 365 days from the day they join. Our fee is a small fixed amount per booking, not a percentage &mdash; so is your cut of it. Simple. Unlimited.</p>
   </div>
 
   ${!isGuest && myStats ? `
@@ -236,6 +240,17 @@ function buildPopup(myCode, myStats, isGuest) {
       <div class="ref-card-stat">5%</div>
       <div class="ref-card-desc">of our service fee on every booking they take, for a full 365 days.</div>
     </div>
+  </div>
+
+  <!-- Said plainly, because the alternative is being accused of hiding it.
+       Our fee is fixed per booking, so a share of it is fixed too — it does
+       not scale with the price of the stay, and nobody should read "10%" and
+       think it does. -->
+  <div class="ref-basis">
+    <strong>What the percentage is of.</strong> Cabana's service fee is a small
+    fixed amount per booking, not a percentage of it &mdash; KES 300 on a stay
+    under KES 5,000, KES 800 above that, and nothing at all on tours and events.
+    Your commission is a share of that fee.
   </div>
 
   <div class="ref-share">

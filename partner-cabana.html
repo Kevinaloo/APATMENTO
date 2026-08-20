@@ -7,6 +7,7 @@
 <meta name="robots" content="noindex, nofollow"/>
 <script src="/vendor-supabase-2.112.3.js"></script>
 <script src="/apa-session.js"></script>
+<script src="/apa-roles.js" defer></script>
 <script src="/apa-referral-capture.js" defer></script>
 <script src="/apa-admin-guard.js"></script>
 <script>
@@ -354,7 +355,7 @@ body{display:flex;flex-direction:column;overflow-x:hidden;}
 
   <link rel="canonical" href="https://cabana.africa/partner-cabana"/>
 </head>
-<body>
+<body data-apa-role="partner">
 <div class="aurora"><div class="ab ab-1"></div><div class="ab ab-2"></div><div class="ab ab-3"></div></div>
 
 <!-- TOPBAR -->
@@ -409,6 +410,11 @@ body{display:flex;flex-direction:column;overflow-x:hidden;}
     Settings
   </a>
   <div class="sb-foot">
+    <!-- Every other side of Cabana, from the one model in apa-roles.js. -->
+    <a class="sb-link" href="#" onclick="window.ApaRoles&&ApaRoles.open();return false;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"/></svg>
+      Switch role
+    </a>
     <a class="sb-link danger" onclick="signOut()" style="cursor:pointer;">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
       Sign out

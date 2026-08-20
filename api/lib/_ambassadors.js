@@ -328,7 +328,8 @@ const RATE_CARD = {
   host: 0.10,
   service_provider: 0.10,
   days: 365,
-  basis: 'Share of the Cabana service fee, which is 10% of the booking value.',
+  basis: 'Share of the Cabana service fee. That fee is a fixed amount banded by booking value — KES 300 on a stay under KES 5,000, KES 800 at or above it, nothing on a tour or an event — never a percentage of the booking.',
+  fee_bands: [{ under: 5000, fee: 300 }, { under: null, fee: 800 }],
 };
 
 /* Read a table as the caller, so RLS applies. Used wherever the answer

@@ -110,6 +110,8 @@ body{font-family:var(--font-b);background:#07050F;color:#fff;-webkit-font-smooth
 .rate-pct{font-family:var(--font-d);font-size:28px;font-weight:700;line-height:1;margin-bottom:4px;}
 .rate-card-a .rate-pct{background:linear-gradient(120deg,#A78BFA,#7C3AED);-webkit-background-clip:text;background-clip:text;color:transparent;}
 .rate-card-b .rate-pct{background:linear-gradient(120deg,#FCD34D,#F59E0B);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.rate-basis{margin-top:14px;padding:14px 16px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);font-size:12.5px;line-height:1.7;color:rgba(255,255,255,.66);}
+.rate-basis strong{color:rgba(255,255,255,.92);font-weight:700;}
 .rate-lbl{font-size:11px;font-weight:600;color:rgba(255,255,255,.7);margin-bottom:2px;}
 .rate-sub{font-size:10px;color:rgba(255,255,255,.4);}
 
@@ -254,7 +256,7 @@ body{font-family:var(--font-b);background:#07050F;color:#fff;-webkit-font-smooth
 <section class="hero">
   <div class="hero-eyebrow"><span class="hero-eyebrow-dot"></span>Referral &amp; Points Programme</div>
   <h1 class="hero-title">Refer &amp; earn up to<br/><strong>10% for life.</strong></h1>
-  <p class="hero-sub">Every person you bring earns you up to 10% of our service fee on their bookings, for 365 days from the day they join. Keep referring. Keep earning. No cap on how many.</p>
+  <p class="hero-sub">Every person you bring earns you a share of our service fee on their bookings, for 365 days from the day they join. Keep referring. Keep earning. No cap on how many.</p>
   <div class="stats-row">
     <div class="stat-card"><div class="stat-val" id="s-earned">KES 0</div><div class="stat-lbl">Total Earned</div></div>
     <div class="stat-card"><div class="stat-val" id="s-points">0</div><div class="stat-lbl">Points</div></div>
@@ -298,6 +300,16 @@ body{font-family:var(--font-b);background:#07050F;color:#fff;-webkit-font-smooth
           <div class="rate-lbl">Host / provider</div>
           <div class="rate-sub">Of our service fee, on every booking they take for 365 days</div>
         </div>
+      </div>
+      <!-- Said plainly. Our fee is fixed per booking, so a share of it is
+           fixed too. Anyone who reads "10%" as ten percent of their friend's
+           safari has been misled, and by us. -->
+      <div class="rate-basis">
+        <strong>What the percentage is of.</strong> Cabana's service fee is a small
+        fixed amount per booking, never a percentage of it &mdash; KES 300 on a stay
+        under KES 5,000, KES 800 from KES 5,000, and nothing at all on tours and
+        events. Your commission is a share of that fee, so it does not grow with the
+        price of the booking.
       </div>
     </div>
   </div>

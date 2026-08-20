@@ -180,33 +180,52 @@ footer{padding:clamp(48px,9vh,90px) 0 44px;}
     </div>
   </section>
 
-  <!-- ══ RATES ══ -->
+  <!-- ══ WHAT THE ROLE PAYS ══
+       No numbers on this page, deliberately.
+
+       This is a gateway. Anyone can open it — a competitor pricing their own
+       field team, a host about to negotiate, an ordinary user on the public
+       10%/5% referral card wondering why theirs is lower. What an ambassador
+       earns is between Cabana and that ambassador, and the moment it is
+       printed on a public URL it stops being that.
+
+       So this section is honest about the SHAPE of the package and silent on
+       its size. The rate card, the milestone schedule and everything else
+       lives one gate away, in ambassador-dashboard.html, behind
+       ambassador_gate(). tests/rate-card.test.mjs asserts the numbers are
+       there and that they are not here. -->
   <section class="wrap rates">
-    <span class="eyebrow reveal">What you earn</span>
-    <h2 class="h1 reveal" data-delay="60" style="margin:14px 0 26px">The ambassador rate.</h2>
+    <span class="eyebrow reveal">What the role pays</span>
+    <h2 class="h1 reveal" data-delay="60" style="margin:14px 0 12px">Paid work, not a lanyard.</h2>
+    <p class="body reveal" data-delay="90" style="max-width:60ch;margin-bottom:26px">
+      Ambassadors are paid for what they build, and paid for a full year after they
+      build it. The figures are set out in your dashboard the day you are invited —
+      they are not published here, because what you earn is between you and Cabana.
+    </p>
 
     <div class="grid g2">
       <div class="card card-crest card-hover rate reveal" data-delay="100">
-        <span class="badge b-tier">Travellers</span>
-        <div class="rate-pct grad">15%</div>
-        <div class="rate-for">On every booking they make</div>
-        <p class="rate-note">For 365 days from the day they join. No cap on how many you bring.</p>
+        <span class="badge b-tier">Commission</span>
+        <div class="rate-for" style="margin-top:14px">A share of our service fee, for 365 days</div>
+        <p class="rate-note">On every booking made by every traveller, host and operator you
+          bring — for a full year from the day they join, with no cap on how many you bring.
+          The ambassador rate is higher than the public one.</p>
       </div>
       <div class="card card-crest card-hover rate reveal" data-delay="170">
-        <span class="badge b-tier">Hosts &amp; service providers</span>
-        <div class="rate-pct grad">10%</div>
-        <div class="rate-for">On every booking they take</div>
-        <p class="rate-note">For 365 days from the day they join. Stays, tours, car hire, food, events.</p>
+        <span class="badge b-tier">And beyond commission</span>
+        <div class="rate-for" style="margin-top:14px">Incentives, allowances, and a way in</div>
+        <p class="rate-note">Milestone incentives for hitting onboarding targets. Airtime,
+          transport and data allowances for field work. Equipment where the work needs it.
+          And first consideration for salaried roles — this team is where we hire from.</p>
       </div>
     </div>
 
-    <!-- Said plainly, on purpose. A programme that lets people believe they
-         earn 15% of a booking will be accused of lying, and correctly. -->
     <div class="basis reveal" data-delay="230">
-      <strong>What the percentage is of.</strong> Cabana charges a service fee of 10% of
-      the booking value. Your commission is a share of that fee — so 15% on a
-      KES 10,000 booking is 15% of KES 1,000, which is KES 150. Every booking,
-      every time, for a year. Ordinary users earn 10% and 5% on the same terms.
+      <strong>One thing said plainly, since the numbers are not here.</strong>
+      Cabana's service fee is a small <em>fixed</em> amount per booking, not a percentage of
+      it. Commission is a share of that fee, so it does not grow with the price of a stay —
+      a big villa pays what a small room pays. This programme rewards how many people you
+      bring, not how expensive their holidays are, and everything above is built around that.
     </div>
   </section>
 
