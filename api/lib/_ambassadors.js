@@ -41,7 +41,7 @@
        by /api/rewards.js. This file reads them.
 ════════════════════════════════════════════════════════════════════════ */
 
-import { setCors, requestIp, consumeRateLimit } from './lib/_security.js';
+import { setCors, requestIp, consumeRateLimit } from './_security.js';
 
 export const config = { maxDuration: 30 };
 
