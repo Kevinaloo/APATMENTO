@@ -334,10 +334,7 @@ td strong{color:var(--ink);font-weight:600;}
   <div class="sb-foot">
     <!-- The full set of roles, not just the traveller view. The topbar
          keeps the one-tap Traveller path; this is everything else. -->
-    <a class="sb-link" href="#" onclick="window.ApaRoles&&ApaRoles.open();return false;">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"/></svg>
-      Switch role
-    </a>
+    <div data-apa-roles="menu"></div>
     <a class="sb-link danger" onclick="signOut()" style="cursor:pointer;">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
       Sign out
