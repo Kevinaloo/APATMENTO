@@ -80,16 +80,67 @@ test('rewards.js never falls back to a hard-coded rate', () => {
     'payout should prefer the rate stamped on the referral');
 });
 
-test('the ambassador rate is displayed with its basis', () => {
-  // 15% of a 10% fee is 1.5% of a booking. A page that shows "15%" without
-  // saying what it is 15% OF is a page that will be accused of lying.
-  for (const page of ['ambassadors.html', 'ambassador-dashboard.html']) {
-    const html = read(page);
-    assert.match(html, /15%/, `${page} should show the ambassador traveller rate`);
-    assert.match(html, /10%/, `${page} should show the ambassador host rate`);
-    assert.match(html, /service fee/i,
-      `${page} must state that the percentage is of the service fee`);
-    assert.match(html, /365/, `${page} should state the 365-day term`);
+test('the ambassador rate is displayed to an ambassador, with its basis', () => {
+  // A page that shows "15%" without saying what it is 15% OF is a page that
+  // will be accused of lying. The dashboard is the one screen allowed to
+  // show the number, so it is the one screen that must also show the basis.
+  const html = read('ambassador-dashboard.html');
+  assert.match(html, /15%/, 'the dashboard should show the ambassador traveller rate');
+  assert.match(html, /10%/, 'the dashboard should show the ambassador host rate');
+  assert.match(html, /service fee/i,
+    'the dashboard must state that the percentage is of the service fee');
+  assert.match(html, /fixed amount per booking/i,
+    'the dashboard must say the fee is fixed, not a percentage of the booking');
+  assert.match(html, /365/, 'the dashboard should state the 365-day term');
+  assert.match(html, /apa-fees\.js/,
+    'the worked example must be rendered from the fee schedule, not typed');
+});
+
+test('the public gateway does not publish what an ambassador earns', () => {
+  // ambassadors.html is open to anyone: competitors, hosts about to
+  // negotiate, ordinary users on the lower public card. The rate belongs
+  // behind ambassador_gate(), not on a URL that Google can index.
+  // Only what a reader actually sees: source comments explaining the policy
+  // are fine, and a `width:62%` on a loading skeleton is not a rate card.
+  const visibleText = src => src
+    .slice(src.indexOf('<body'))
+    .replace(/<!--[\s\S]*?-->/g, '')
+    .replace(/<(script|style)\b[\s\S]*?<\/\1>/gi, '')
+    .replace(/<[^>]*>/g, ' ');
+
+  for (const page of ['ambassadors.html', 'ambassadors-page.js']) {
+    const text = page.endsWith('.js')
+      ? read(page).replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '')
+      : visibleText(read(page));
+    assert.ok(!/\b\d{1,2}(\.\d+)?\s*%/.test(text),
+      `${page} must not print any commission percentage to the public`);
+  }
+
+  const gateway = visibleText(read('ambassadors.html'));
+  assert.match(gateway, /365/, 'the gateway may still say the term is a year');
+  assert.match(gateway, /incentive|allowance|salaried|employment/i,
+    'the gateway should say commission is not the whole package');
+});
+
+test('commission is computed from the fee that was charged, not a percentage', () => {
+  // The bug this pins: platform_fee = gross * 0.10. Nobody was ever charged
+  // that. On a KES 60,000 stay it invented a KES 6,000 fee where KES 800 was
+  // collected and paid commission on the difference.
+  const src = read('api/rewards.js');
+  assert.ok(!/^\s*(const|let|var)\s+PLATFORM_FEE_RATE/m.test(src),
+    'there must be no percentage fee rate declared on the payout path');
+  assert.ok(!/gross_amount\s*\)?\s*\*\s*PLATFORM_FEE/.test(src),
+    'the fee must never be a multiple of gross');
+  assert.match(src, /feeBasis\(/,
+    'the fee must come from feeBasis(), which prefers the stamped service_fee');
+
+  // And the callers have to actually send the stamped fee along.
+  const cb = read('api/stk-callback.js');
+  const awards = cb.split(/action:\s*'award'/).slice(1);
+  assert.equal(awards.length, 2, 'stk-callback should award on both payment paths');
+  for (const [i, chunk] of awards.entries()) {
+    assert.match(chunk.slice(0, 900), /service_fee/,
+      `award call ${i + 1} must pass the booking's stamped service_fee`);
   }
 });
 

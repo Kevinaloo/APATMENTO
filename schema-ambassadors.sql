@@ -48,11 +48,22 @@
 -- it for speed but this is the authority, and the mirror is asserted against
 -- it in tests. When these numbers change, they change once, in this block.
 --
---   Commission is a share of CABANA'S FEE, not of the booking. Cabana's fee
---   is 10% of gross, so an ambassador on a traveller earns 15% of that 10%
---   = 1.5% of the booking value. Say that out loud to anyone who asks, and
---   put it in the UI. A programme that lets people believe they earn 15% of
---   a booking is a programme that will be accused of lying, correctly.
+--   Commission is a share of CABANA'S FEE, not of the booking, and that fee
+--   is a FIXED AMOUNT banded by booking value, not a percentage:
+--
+--       stays   KES 300 below KES 5,000 · KES 800 from KES 5,000
+--       tours, events, everything else   KES 0
+--
+--   So an ambassador on a traveller earns 15% of KES 300 or of KES 800 —
+--   KES 45 or KES 120 — whether the stay cost KES 4,000 or KES 400,000.
+--   The ladder is stamped onto every booking by
+--   cabana_secure_apartment_booking(); this rate is applied to that stamp
+--   and to nothing else.
+--
+--   Say that out loud to anyone who asks, and put it in the UI. A programme
+--   that lets people believe they earn 15% of a booking is a programme that
+--   will be accused of lying, correctly — and one that implies the fee grows
+--   with the booking will be accused of it twice.
 --
 --                        │ traveller  │ host / service provider
 --   ─────────────────────┼────────────┼────────────────────────
@@ -81,7 +92,7 @@ as $$
 $$;
 
 comment on function public.referral_rate(text, text) is
-  'Authoritative commission rate card. Share of the Cabana platform fee (itself 10% of gross), not of the booking. ambassador: 15% traveller / 10% host. user: 10% traveller / 5% host.';
+  'Authoritative commission rate card. Share of the Cabana service fee (a fixed amount banded by booking value: KES 300 under KES 5,000, KES 800 above, KES 0 on tours and events), never of the booking. ambassador: 15% traveller / 10% host. user: 10% traveller / 5% host.';
 
 
 -- ── 1 · WIDEN THE REFERRAL LEDGER ─────────────────────────────────────────

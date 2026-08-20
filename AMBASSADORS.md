@@ -13,9 +13,16 @@ an admin.
 
 ## The rate card
 
-Commission is a share of **Cabana's service fee**, not of the booking. The fee
-is 10% of booking value, so an ambassador on a traveller earns 15% of that 10%
-— 1.5% of the booking. Say that plainly wherever it is displayed.
+Commission is a share of **Cabana's service fee**, not of the booking — and
+that fee is a **fixed amount banded by booking value**, not a percentage:
+
+| Booking | Cabana's fee |
+|---|---|
+| stay under KES 5,000 | **KES 300** |
+| stay from KES 5,000 | **KES 800** |
+| tours, events, everything else | **KES 0** |
+
+So the rate card is a share of KES 300 or KES 800:
 
 | | traveller | host / service provider |
 |---|---|---|
@@ -27,22 +34,71 @@ users were previously on 20% / 10%; halving them is what makes the ambassador
 tier worth being picked for.
 
 Worked example: a traveller an ambassador brought books a KES 10,000 stay.
-Cabana's fee is KES 1,000. The ambassador earns KES 150. Every booking that
-person makes, for a year.
+Cabana's fee is KES 800. The ambassador earns **KES 120**. The same traveller
+books a KES 4,000 stay: the fee is KES 300 and the ambassador earns KES 45.
+Every booking that person makes, for a year.
+
+**The fee does not scale with the booking, so neither does the commission.**
+A KES 400,000 villa pays the same KES 120 as a KES 5,000 room. This was
+previously written down everywhere as "the fee is 10% of booking value", which
+was never true on the money path and made a large booking look seven times
+more valuable to an ambassador than it is. It is corrected in the code, in the
+SQL and in every screen; do not let it drift back.
+
+Volume is what pays here, which is the whole point of the programme — an
+ambassador is measured on how many people they bring, not on how expensive
+those people's holidays are. That is also why commission is only one part of
+what an ambassador earns; see **What an ambassador actually earns** below.
 
 ### Where the numbers live
 
-Four copies, because each is needed at a different moment:
+The rate card, in four copies, because each is needed at a different moment:
 
 | Where | What it does |
 |---|---|
 | `schema-ambassadors.sql` → `public.referral_rate()` | **the authority** |
 | `api/rewards.js` → `RATE_CARD` | stamps the rate onto the referral |
 | `api/ambassadors.js` → `RATE_CARD` | echoed to the dashboard for display |
-| `ambassadors.html`, `ambassador-dashboard.html` | shown to a human |
+| `ambassador-dashboard.html` | shown to a signed-in ambassador |
+
+The fee ladder, in three:
+
+| Where | What it does |
+|---|---|
+| `cabana_secure_apartment_booking()` in `supabase/migrations/20260818170000_…sql` | **the authority** — stamps `service_fee` on the booking |
+| `api/lib/_fees.js` | the fallback and the basis used by the payout path |
+| `apa-fees.js` | the browser mirror, so every screen explains one ladder |
 
 `tests/rate-card.test.mjs` fails if any of them drift. **Change a rate in the
 SQL first, then run that test and follow it.**
+
+### What an ambassador actually earns
+
+Commission is the part that runs automatically, so it is the part with a rate
+card. It is not the whole package, and the dashboard says so:
+
+- **Commission** — the rate card above, for 365 days per person brought.
+- **Milestone incentives** — paid for hitting onboarding targets.
+- **Allowances** — airtime, transport and data for field work.
+- **Equipment and materials** — whatever the work needs.
+- **A route to employment** — the field team is where we hire from, on a
+  salary, and ambassadors are the first people considered.
+
+Only the commission rate is mechanical. The rest is set case by case with the
+programme lead, which is exactly why the dashboard describes them without
+inventing numbers for them. **Never publish a figure for any of them that has
+not been agreed.**
+
+### What the public may see
+
+The rate card is **not public**. `ambassadors.html` is a gateway anyone can
+open — a competitor, a prospective host, an ordinary user on the 10%/5% card
+— and what an ambassador earns is between Cabana and that ambassador.
+
+So the public page states that the programme is paid, that commission runs for
+365 days, and that there is more to it than commission. The numbers appear
+only after `ambassador_gate()` has said yes. `tests/rate-card.test.mjs` asserts
+both halves of that: the dashboard must show the numbers, the gateway must not.
 
 ---
 

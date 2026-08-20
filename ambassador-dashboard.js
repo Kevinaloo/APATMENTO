@@ -302,6 +302,49 @@ function wireClaim() {
   });
 }
 
+/* ── The fee ladder ───────────────────────────────────────────────────────
+   Every screen that explains the commission has to explain the fee it is a
+   share of, and this is the only screen allowed to show the rate. So the
+   ladder is rendered from ApaFees — the same table the rest of the site
+   reads — with the ambassador's own cut worked out beside each band.
+
+   Typed sums are how "our fee is 10% of the booking" survived on four
+   screens for months after it stopped being true. A rendered sum cannot
+   outlive the number it was computed from. */
+function paintFeeLadder(rates) {
+  const box = $('fee-ladder');
+  if (!box) return;
+
+  const travellerRate = (rates && rates.traveller) || 0.15;
+  const fees = (window.ApaFees && window.ApaFees.bands('stays')) || [];
+  const money = (window.ApaFees && window.ApaFees.money)
+    || function (n) { return 'KES ' + Math.round(Number(n) || 0).toLocaleString(); };
+
+  if (!fees.length) { box.remove(); return; }
+
+  const rows = fees.map(function (band, i) {
+    const label = band.under != null
+      ? 'A stay under ' + money(band.under)
+      : 'A stay from ' + money(fees[i - 1].under);
+    /* Rounded down: never quote someone a shilling they will not receive. */
+    const cut = Math.floor(band.fee * travellerRate);
+    return '<div class="fl-row">'
+         +   '<span class="fl-k">' + esc(label) + '</span>'
+         +   '<span class="fl-v">' + esc(money(band.fee)) + ' fee '
+         +     '<em>&rarr; ' + esc(money(cut)) + ' to you</em></span>'
+         + '</div>';
+  });
+
+  rows.push(
+    '<div class="fl-row">'
+    + '<span class="fl-k">A tour or an event, at any price</span>'
+    + '<span class="fl-v">no fee <em>&rarr; ' + esc(money(0)) + '</em></span>'
+    + '</div>'
+  );
+
+  box.innerHTML = rows.join('');
+}
+
 /* ── Sign out ─────────────────────────────────────────────────────────── */
 function wireSignOut() {
   $('signout').addEventListener('click', function () {
@@ -360,6 +403,7 @@ A.api.me().then(function (r) {
   STATE.earnings = r.earnings || [];
 
   paintHeader(STATE.me);
+  paintFeeLadder(r.rates);
   paintEarnings(STATE.me, STATE.earnings);
   paintFunnel(STATE.leads);
   paintRing(STATE.me);

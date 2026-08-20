@@ -20,6 +20,7 @@
 ══════════════════════════════════════════════════════════════ */
 
 import { ambassadorHandler } from './lib/_ambassadors.js';
+import { feeBasis, feeLabel } from './lib/_fees.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SERVICE_KEY  = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -27,17 +28,31 @@ const SERVICE_KEY  = process.env.SUPABASE_SERVICE_ROLE_KEY;
 /* Internal secret so only stk-callback can call award without a user token */
 const INTERNAL_SECRET = process.env.INTERNAL_API_SECRET || '';
 
-/* Platform fee rate, 10% of gross for stays/tours/events */
-const PLATFORM_FEE_RATE = 0.10;
+/* Cabana's fee is a FIXED amount banded by booking value — KES 300 on a
+   stay under KES 5,000, KES 800 at or above it, nothing at all on a tour or
+   an event. It is never a percentage. The ladder lives in api/lib/_fees.js
+   and the authority is the Postgres trigger that stamps `service_fee` onto
+   the booking before it is written.
+
+   This used to read `PLATFORM_FEE_RATE = 0.10` and multiply it by gross. No
+   guest has ever been charged that. On a KES 60,000 stay it invented a
+   KES 6,000 fee where KES 800 was collected, and paid commission on the
+   difference. Commission is a share of a fee we actually took, so it is now
+   computed from the fee we actually took. */
 
 /* ══════════════════════════════════════════════════════════════
    THE RATE CARD
    ──────────────────────────────────────────────────────────────
-   Commission is a share of CABANA'S FEE, not of the booking. The
-   fee is 10% of gross, so an ambassador on a traveller earns 15%
-   of that 10% — 1.5% of booking value. Say that plainly wherever
-   it is displayed. A programme that lets people believe they earn
-   15% of a booking will be accused of lying, and correctly.
+   Commission is a share of CABANA'S FEE, not of the booking, and
+   that fee is a fixed amount — KES 300 or KES 800 on a stay, zero
+   on a tour or an event. So an ambassador on a traveller earns 15%
+   of KES 300 or of KES 800: KES 45 or KES 120 per booking, whether
+   the stay cost KES 4,000 or KES 400,000.
+
+   Say that plainly wherever it is displayed. A programme that lets
+   people believe they earn 15% of a booking will be accused of
+   lying, and correctly — and one that implies the fee scales with
+   the booking will be accused of it twice.
 
                       │ traveller │ host / service provider
      ─────────────────┼───────────┼────────────────────────
@@ -298,6 +313,17 @@ async function actionAward(body, req) {
   if (!booking_ref || !guest_id || !service_type || !gross_amount) {
     return { error: 'Missing required fields', status: 400 };
   }
+
+  /* The fee this booking actually carried. The caller reads it off the
+     booking row, where Postgres stamped it; `service_fee` may legitimately
+     be 0 (tours, events) which is why the check below is for a finite
+     number rather than a truthy one. Absent, we fall back to the published
+     ladder — never to a percentage. */
+  const platform_fee_basis = feeBasis({
+    stamped:  body.service_fee,
+    service:  service_type,
+    subtotal: Number(gross_amount),
+  });
   if (service_type === 'flights') return { ok: true, skipped: 'flights excluded' };
 
   /* ── 1. Award points to booker (10 pts per KES 1,000) ── */
@@ -330,8 +356,12 @@ async function actionAward(body, req) {
     /* Idempotency check */
     const earningsCheck = await dbSelect('referral_earnings', `booking_ref=eq.${encodeURIComponent(booking_ref)}&limit=1`);
     if (!earningsCheck.length) {
-      /* Calculate platform fee server-side, never trust client */
-      const platform_fee = parseFloat((Number(gross_amount) * PLATFORM_FEE_RATE).toFixed(2));
+      /* The fee, server-side, from the booking rather than from the body's
+         idea of it. A zero-fee booking books a zero commission and no row
+         is skipped: the referral still shows up in the ledger at KES 0,
+         because "you earned nothing on this one" is information and a
+         missing row is a support ticket. */
+      const platform_fee = parseFloat(Number(platform_fee_basis).toFixed(2));
 
       /* Honour the rate stamped when the referral was created. The
          fallback covers rows written before tiers existed, and reads

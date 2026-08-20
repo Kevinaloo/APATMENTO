@@ -96,6 +96,46 @@ main{padding:clamp(22px,4vh,38px) 0 clamp(72px,12vh,120px);}
 .rs-v{font-family:var(--font-d);font-weight:800;font-size:1.5rem;letter-spacing:-.03em;line-height:1;}
 .rs-l{font-size:.78rem;color:var(--ink-soft);margin-top:6px;line-height:1.45;}
 
+/* "Private to you" — a small, unglamorous label. It is doing real work:
+   an ambassador who does not know these numbers are confidential will
+   screenshot them into a WhatsApp group. */
+.private-tag{
+  display:inline-flex;align-items:center;gap:6px;margin-bottom:11px;
+  padding:4px 10px;border-radius:100px;font-size:.7rem;font-weight:700;
+  letter-spacing:.05em;text-transform:uppercase;
+  color:var(--ink-soft);background:var(--surface-2);border:1px solid var(--line);
+}
+.private-tag svg{width:12px;height:12px;}
+
+.basis-box{
+  margin-top:14px;padding:15px 17px;border-radius:var(--r);
+  background:var(--surface-2);border:1px solid var(--line);
+}
+.basis-h{font-weight:750;font-size:.86rem;color:var(--ink);margin-bottom:7px;}
+.basis-p{font-size:.83rem;line-height:1.65;color:var(--ink-soft);}
+.basis-p strong{color:var(--ink);font-weight:700;}
+
+/* The fee ladder, rendered from apa-fees.js rather than typed, so the
+   worked example on screen cannot outlive the fee it describes. */
+.fee-ladder{display:flex;flex-direction:column;gap:1px;margin-top:12px;
+  border-radius:12px;overflow:hidden;border:1px solid var(--line);}
+.fl-row{display:flex;align-items:baseline;justify-content:space-between;gap:12px;
+  padding:9px 13px;background:var(--surface);font-size:.81rem;color:var(--ink-soft);}
+.fl-row + .fl-row{border-top:1px solid var(--line);}
+.fl-k{min-width:0;}
+.fl-v{font-family:var(--font-d);font-weight:750;font-size:.88rem;color:var(--ink);
+  white-space:nowrap;font-variant-numeric:tabular-nums;}
+.fl-v em{font-style:normal;color:var(--violet);}
+
+.perks{display:grid;gap:2px;border-radius:14px;overflow:hidden;border:1px solid var(--line);}
+@media (min-width:760px){.perks{grid-template-columns:1fr 1fr;}}
+.perk{display:flex;gap:13px;padding:15px 16px;background:var(--surface);}
+.perk-i{width:34px;height:34px;flex:none;border-radius:11px;display:grid;place-items:center;
+  background:color-mix(in srgb,var(--violet) 10%,transparent);color:var(--violet);}
+.perk-i svg{width:17px;height:17px;}
+.perk-t{font-weight:700;font-size:.88rem;color:var(--ink);margin-bottom:4px;}
+.perk-d{font-size:.79rem;line-height:1.6;color:var(--ink-soft);}
+
 @media (max-width:720px){
   .earn{gap:22px;}
   .bar-in{padding:11px 0;}
@@ -234,10 +274,27 @@ main{padding:clamp(22px,4vh,38px) 0 clamp(72px,12vh,120px);}
       </div>
     </section>
 
-    <!-- ══ RATE REMINDER ══ -->
+    <!-- ══ WHAT YOU EARN ══
+         These numbers live behind ambassador_gate() and nowhere else. The
+         public gateway (ambassadors.html) describes the shape of the package
+         and prints none of its figures; this is the screen where an
+         ambassador sees the actual card. Keep it that way.
+
+         The fee ladder here is stamped by Postgres onto every booking
+         (cabana_secure_apartment_booking) and mirrored in apa-fees.js. The
+         worked examples below are rendered from that mirror rather than
+         typed, so a change to the ladder cannot leave a stale sum on screen. -->
     <section class="sec reveal" data-delay="120">
       <div class="card">
-        <h2 class="h3" style="margin-bottom:13px">What you earn</h2>
+        <div class="private-tag" title="Only you and Cabana see this">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Private to you
+        </div>
+        <h2 class="h3" style="margin-bottom:5px">What you earn</h2>
+        <p class="small" style="margin-bottom:15px">
+          Your commission rate. It is not published anywhere public, and it is higher
+          than the rate an ordinary user gets for the same referral.
+        </p>
         <div class="rate-strip">
           <div class="rs">
             <div class="rs-v grad">15%</div>
@@ -248,9 +305,81 @@ main{padding:clamp(22px,4vh,38px) 0 clamp(72px,12vh,120px);}
             <div class="rs-l">of our service fee, on every booking a host or provider you brought takes</div>
           </div>
         </div>
-        <p class="small" style="margin-top:13px">
-          Our service fee is 10% of the booking value, so 15% on a KES 10,000 booking is
-          KES 150. For 365 days from the day they join, with no cap on how many you bring.
+
+        <!-- The one thing an ambassador must not misunderstand about their own
+             pay, so it gets its own block rather than a footnote. -->
+        <div class="basis-box">
+          <div class="basis-h">What the percentage is of</div>
+          <p class="basis-p">
+            Our service fee is a <strong>fixed amount per booking</strong>, never a
+            percentage of it. So your commission is fixed too — it does not grow with the
+            price of the stay.
+          </p>
+          <div class="fee-ladder" id="fee-ladder"></div>
+          <p class="basis-p" style="margin-top:11px">
+            For <strong>365 days</strong> from the day each person joins, with no cap on how
+            many you bring. Which is the point: this programme pays for <em>how many people
+            you onboard</em>, not for how expensive their holidays are.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ BEYOND COMMISSION ══
+         Commission is the part that runs on rails, so it is the part with a
+         rate card. It is not the whole job and it is not the whole pay, and an
+         ambassador who thinks it is will undervalue the role and leave.
+
+         Deliberately no figures here. Milestones, allowances and salaries are
+         agreed case by case with the programme lead, and a number invented by
+         a web page is a number somebody will hold us to. Describe the thing,
+         name who decides it, and let the conversation set the amount. -->
+    <section class="sec reveal" data-delay="140">
+      <div class="card">
+        <h2 class="h3" style="margin-bottom:5px">Beyond commission</h2>
+        <p class="small" style="margin-bottom:16px">
+          Commission is the automatic part. It is not the whole of what this role pays.
+        </p>
+        <div class="perks">
+          <div class="perk">
+            <div class="perk-i" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.4 9.4 8 10 4.6-.6 8-5 8-10V6z"/><path d="m9 12 2 2 4-4"/></svg></div>
+            <div>
+              <div class="perk-t">Milestone incentives</div>
+              <div class="perk-d">Paid on top of commission when you hit onboarding targets.
+                Your current target and what it pays are agreed with your programme lead.</div>
+            </div>
+          </div>
+          <div class="perk">
+            <div class="perk-i" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg></div>
+            <div>
+              <div class="perk-t">Field allowances</div>
+              <div class="perk-d">Airtime, transport and data for work in the field. Onboarding
+                someone properly means going to them, and that costs money you should not be
+                spending yourself.</div>
+            </div>
+          </div>
+          <div class="perk">
+            <div class="perk-i" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></div>
+            <div>
+              <div class="perk-t">Equipment and materials</div>
+              <div class="perk-d">Whatever the work actually needs — printed material, a
+                device, a stand at an event. Ask your programme lead.</div>
+            </div>
+          </div>
+          <div class="perk">
+            <div class="perk-i" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/></svg></div>
+            <div>
+              <div class="perk-t">A route to employment</div>
+              <div class="perk-d">This team is where Cabana hires from. Ambassadors who
+                build something real are the first people considered for salaried roles,
+                and the record in this dashboard is the evidence.</div>
+            </div>
+          </div>
+        </div>
+        <p class="small" style="margin-top:15px">
+          Only the commission rate above is mechanical. Everything on this card is agreed
+          person by person, which is why no amounts are printed on it. Talk to your
+          programme lead: <a href="mailto:connect@cabana.africa" style="color:var(--violet);text-decoration:none;font-weight:600">connect@cabana.africa</a>.
         </p>
       </div>
     </section>
@@ -354,6 +483,7 @@ main{padding:clamp(22px,4vh,38px) 0 clamp(72px,12vh,120px);}
 <script src="/vendor-supabase-2.112.3.js"></script>
 <script src="/apa-session.js"></script>
 <script src="/apa-referral-capture.js" defer></script>
+<script src="/apa-fees.js"></script>
 <script src="/apa-ambassador.js"></script>
 <script src="/ambassador-dashboard.js"></script>
 </body>
