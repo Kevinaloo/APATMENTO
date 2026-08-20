@@ -58,7 +58,7 @@
    came from Google's `locality` or OSM's `place=city`.
 ══════════════════════════════════════════════════════════════════════ */
 
-import { optional } from './lib/_env.js';
+import { optional } from './_env.js';
 
 /* ── Tunables ─────────────────────────────────────────────────────── */
 
