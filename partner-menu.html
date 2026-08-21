@@ -399,10 +399,10 @@ SB.auth.getUser().then(function(u){
   ME=u.data&&u.data.user; if(!ME) return;
   return SB.from('listings')
     .select('id,title,photos,area,city,service,type,currency,contact_whatsapp,contact_phone,is_active,held_for_name,description')
-    .eq('service','food').or('partner_id.eq.'+ME.id+',host_id.eq.'+ME.id)
+    .eq('service','food').is('deleted_at',null).or('partner_id.eq.'+ME.id+',host_id.eq.'+ME.id)
     .order('created_at',{ascending:false})
     .then(function(r){
-      KITCHENS=(r.data||[]).filter(function(l){return !l.deleted_at;});
+      KITCHENS=r.data||[];
       if(!KITCHENS.length){ noKitchen(); return; }
       if(!ID || !KITCHENS.some(function(k){return k.id===ID;})) ID=KITCHENS[0].id;
       return loadKitchen();
@@ -730,15 +730,15 @@ function starter(){
 function moveSection(id,d){
   var i=SECS.findIndex(function(s){return String(s.id)===String(id);});
   var j=i+d; if(i<0||j<0||j>=SECS.length) return;
-  var a=SECS[i], b=SECS[j];
-  var ao=a.sort_order, bo=b.sort_order;
-  if(ao===bo){ ao=i; bo=j; }
-  SECS[i]=b; SECS[j]=a; a.sort_order=bo; b.sort_order=ao;
+  var moved=SECS.splice(i,1)[0]; SECS.splice(j,0,moved);
+  SECS.forEach(function(s,n){ s.sort_order=n; });
   paint();
-  Promise.all([
-    SB.from('menu_sections').update({sort_order:a.sort_order}).eq('id',a.id),
-    SB.from('menu_sections').update({sort_order:b.sort_order}).eq('id',b.id)
-  ]).then(function(){});
+  Promise.all(SECS.map(function(s){
+    return SB.from('menu_sections').update({sort_order:s.sort_order}).eq('id',s.id);
+  })).then(function(r){
+    var bad=(r||[]).filter(function(x){return x&&x.error;})[0];
+    if(bad) toast('The new order did not save: '+bad.error.message,true);
+  });
 }
 function dropSection(id){
   var s=SECS.filter(function(x){return String(x.id)===String(id);})[0]; if(!s)return;

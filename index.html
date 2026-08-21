@@ -2043,7 +2043,7 @@ document.querySelectorAll('.svc-tile').forEach((t,i)=>{t.style.transitionDelay=(
   async function loadStays() {
     try {
       const r = await fetch(
-        `${SUPA}/rest/v1/listings?is_active=eq.true&select=title,photos,price_night,location&order=created_at.desc&limit=8`,
+        `${SUPA}/rest/v1/listings?is_active=eq.true&service=eq.stays&select=title,photos,price_night,location&order=created_at.desc&limit=8`,
         { headers: H }
       );
       if (!r.ok) return;
@@ -2051,7 +2051,7 @@ document.querySelectorAll('.svc-tile').forEach((t,i)=>{t.style.transitionDelay=(
       const items = rows.filter(l => l.photos?.length).map(l => ({
         img:   l.photos[0],
         title: l.title,
-        sub:   `KES ${(l.price_night||0).toLocaleString()}/night · ${l.location||'Nairobi'}`
+        sub:   `${l.price_night ? `KES ${Number(l.price_night).toLocaleString()}/night · ` : ''}${l.location||'Nairobi'}`
       }));
       buildStrip(
         document.getElementById('svl-stays-track'),

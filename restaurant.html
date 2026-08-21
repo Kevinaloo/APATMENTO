@@ -71,7 +71,6 @@ img{max-width:100%;}
 .hero-scrim{position:absolute;inset:0;
   background:linear-gradient(to top,var(--night) 1%,rgba(20,10,5,.86) 22%,rgba(20,10,5,.24) 62%,rgba(20,10,5,.5));}
 .hero-in{position:absolute;left:0;right:0;bottom:0;padding:0 22px 22px;max-width:1120px;margin:0 auto;}
-@media(min-width:1164px){.hero-in{left:50%;transform:translateX(-50%);width:100%;}}
 .hero-line{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:10px;}
 .st{display:inline-flex;align-items:center;gap:7px;padding:6px 13px;border-radius:100px;font-size:11px;font-weight:800;
   letter-spacing:.05em;background:rgba(20,10,5,.66);backdrop-filter:blur(8px);}
@@ -138,7 +137,7 @@ h1{font-family:var(--fd);font-weight:600;font-variation-settings:'SOFT' 50,'WONK
 .mlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:14px;}
 @media(max-width:640px){.mlist{grid-template-columns:1fr;}}
 
-.it{display:flex;gap:14px;padding:14px;border-radius:var(--r);cursor:pointer;text-align:left;width:100%;
+.it{display:flex;gap:14px;padding:14px;border-radius:var(--r);cursor:pointer;text-align:left;width:100%;scroll-margin-top:150px;
   background:var(--night-2);border:1px solid var(--edge);font-family:var(--fb);color:inherit;
   transition:transform .34s cubic-bezier(.22,1,.36,1),border-color .3s,box-shadow .34s,background .3s;}
 .it:hover{transform:translateY(-4px);border-color:var(--edge-2);box-shadow:var(--lift);background:var(--char);}
@@ -427,10 +426,69 @@ function fail(t,s){
     +'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div></div>';
 }
 
+/* The link people paste into a group chat should say which kitchen it is
+   and what it costs, not "Menu | Cabana" for every restaurant on Cabana. */
+function head(){
+  var where=[R.area,R.city].filter(Boolean).join(', ')||R.location||'Kenya';
+  var cuis=(P.cuisines||[]).filter(Boolean).join(', ');
+  var from=ITEMS.length?Math.min.apply(null,ITEMS.map(priceOf)):null;
+  var desc=[P.tagline||R.description||'',
+            (cuis?cuis+' in '+where:where)+'.',
+            from!=null?'Dishes from '+money(from)+'.':'',
+            'Order straight from the kitchen, no commission added.'
+           ].filter(Boolean).join(' ').slice(0,300);
+  var url='https://cabana.africa/restaurant?id='+encodeURIComponent(ID);
+  var img=P.hero_photo||(R.photos&&R.photos[0])||'https://cabana.africa/og-food.jpg';
+  function meta(sel,attr,val){
+    var el=document.head.querySelector(sel);
+    if(!el){ el=document.createElement('meta');
+      var m=/\[(\w+)="([^"]+)"\]/.exec(sel); if(m)el.setAttribute(m[1],m[2]);
+      document.head.appendChild(el); }
+    el.setAttribute(attr,val);
+  }
+  meta('meta[name="description"]','content',desc);
+  meta('meta[property="og:title"]','content',(R.title||'Menu')+' | Cabana');
+  meta('meta[property="og:description"]','content',desc);
+  meta('meta[property="og:image"]','content',img);
+  meta('meta[property="og:url"]','content',url);
+  meta('meta[name="twitter:card"]','content','summary_large_image');
+  meta('meta[name="twitter:title"]','content',(R.title||'Menu')+' | Cabana');
+  meta('meta[name="twitter:description"]','content',desc);
+  meta('meta[name="twitter:image"]','content',img);
+  var link=document.head.querySelector('link[rel="canonical"]');
+  if(!link){ link=document.createElement('link'); link.rel='canonical'; document.head.appendChild(link); }
+  link.href=url;
+
+  /* Structured data for the menu, so a search result can show the dishes
+     and the prices the kitchen actually set. */
+  var ld={'@context':'https://schema.org','@type':'Restaurant',name:R.title||'Restaurant',
+    url:url,image:img,
+    address:{'@type':'PostalAddress',streetAddress:R.street||undefined,
+      addressLocality:R.city||undefined,addressRegion:R.area||undefined,
+      addressCountry:R.country||'KE'},
+    priceRange:from!=null?money(from)+'+':undefined,
+    telephone:P.order_phone||R.contact_phone||undefined,
+    servesCuisine:(P.cuisines||[]).filter(Boolean)};
+  if(ITEMS.length){
+    ld.hasMenu={'@type':'Menu',name:'Menu',hasMenuSection:SECS.map(function(sec){
+      var its=ITEMS.filter(function(i){return i.section_id===sec.id;});
+      if(!its.length) return null;
+      return {'@type':'MenuSection',name:sec.name,hasMenuItem:its.map(function(i){
+        return {'@type':'MenuItem',name:i.name,description:i.description||undefined,
+          offers:{'@type':'Offer',price:String(priceOf(i)),priceCurrency:CUR}};
+      })};
+    }).filter(Boolean)};
+  }
+  var tag=document.getElementById('ldjson');
+  if(!tag){ tag=document.createElement('script'); tag.type='application/ld+json'; tag.id='ldjson'; document.head.appendChild(tag); }
+  tag.textContent=JSON.stringify(ld);
+}
+
 /* ═══════ RENDER ═══════ */
 function render(){
   document.title=(R.title||'Menu')+' | Cabana';
   document.getElementById('topName').textContent=R.title||'';
+  head();
   var back=new URLSearchParams(location.search).get('from');
   if(back==='dash') document.getElementById('backBtn').href='partner-listings.html';
 

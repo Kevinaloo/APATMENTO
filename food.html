@@ -157,6 +157,11 @@ h1.big em{font-style:italic;font-weight:600;
 .tally-n{font-family:var(--fd);font-weight:600;font-size:clamp(24px,3.6vw,34px);letter-spacing:-.03em;line-height:1;
   background:var(--heat);-webkit-background-clip:text;background-clip:text;color:transparent;}
 .tally-l{font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--cream-3);}
+@media(max-width:560px){
+  .tally{display:grid;grid-template-columns:1fr 1fr;gap:16px 14px;}
+  .tally-l{font-size:9.5px;letter-spacing:.1em;}
+  .dish{width:190px;}
+}
 
 /* ── SEARCH ── */
 .hunt{display:flex;align-items:center;gap:0;max-width:660px;margin-bottom:26px;
@@ -635,14 +640,18 @@ function plateOf(text){
 }
 /* Everything searchable about one kitchen, flattened once. */
 function haystack(k){
-  return [k.title,k.area,k.city,k.location,k.description,(k.p.cuisines||[]).join(' '),
+  if(k._hay!=null) return k._hay;
+  k._hay=[k.title,k.area,k.city,k.location,k.description,(k.p.cuisines||[]).join(' '),
     k.p.signature_dish,k.p.tagline,(k.amenities||[]).join(' '),
     k.dishes.map(function(d){return d.name+' '+(d.description||'')+' '+(d.tags||[]).join(' ');}).join(' ')
   ].filter(Boolean).join(' ');
+  return k._hay;
 }
 function plates(k){
+  if(k._plates) return k._plates;
   var out={}, hay=haystack(k);
   PLATE.forEach(function(p){ if(p[0].test(hay)) out[p[1]]=p[2]; });
+  k._plates=out;
   return out;
 }
 
@@ -839,7 +848,7 @@ function redraw(){
     if(TOGGLES.open&&cooking(k)!==true) return false;
     if(TOGGLES.deals&&!dealOn(k)) return false;
     if(TOGGLES.delivers&&k.p.serves_delivery===false) return false;
-    if(q&&haystack(k).toLowerCase().indexOf(q)===-1) return false;
+    if(q){ if(k._hayLow==null)k._hayLow=haystack(k).toLowerCase(); if(k._hayLow.indexOf(q)===-1) return false; }
     return true;
   });
 
@@ -955,7 +964,13 @@ document.getElementById('hunt').addEventListener('input',function(){
   clearTimeout(window._h); window._h=setTimeout(redraw,180);
 });
 boot();
-setInterval(function(){ if(K.length) paint(); }, 300000);  // the clock moves, so does the page
+var _slot=slot().key;
+setInterval(function(){
+  if(!K.length) return;
+  var now=slot().key;
+  if(now!==_slot){ _slot=now; paint(); return; }   // breakfast became lunch
+  redraw();                                        // open lights, closing times
+}, 300000);
 </script>
 <section class="prose">
   <h2>Restaurants, menus and prices across Kenya</h2>
