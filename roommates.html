@@ -1453,7 +1453,7 @@ function isSaved(id){
 }
 function toggleSave(id){
   var r = byId(id); if(!r) return false;
-  var item = {id:r.id, name:r.title, location:r.location, price:r.price, type:'Room',
+  var item = {id:r.id, name:r.title, location:r.location, price:r.price, unit:'month', type:'Room',
               url:'roommates.html?room=' + encodeURIComponent(r.id), emoji:'🔑'};
   var added;
   if(window.ApaChrome && ApaChrome.toggleFavorite){ added = ApaChrome.toggleFavorite(item); }

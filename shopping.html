@@ -107,7 +107,7 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--glass);c
 .tb-brand{font-family:var(--font-display);font-weight:500;font-size:18px;}
 .tb-brand em{font-style:italic;background:var(--theme-grad);-webkit-background-clip:text;background-clip:text;color:transparent;}
 .tb-right{display:flex;align-items:center;gap:10px;}
-.glovo-badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;padding:5px 12px;border-radius:100px;background:#00A082;color:#fff;}
+.seller-badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;padding:5px 12px;border-radius:100px;background:#00A082;color:#fff;}
 
 /* ── HERO ── */
 .hero{position:relative;z-index:2;padding:32px 24px 0;max-width:1280px;margin:0 auto;}
@@ -183,14 +183,14 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--glass);c
 .p-card-btn:hover{transform:scale(1.1);}
 .p-card-btn svg{width:14px;height:14px;}
 
-/* ── GLOVO BANNER ── */
-.glovo-banner{background:linear-gradient(135deg,#00A082,#00C49A);border-radius:16px;padding:20px 24px;margin-bottom:28px;display:flex;align-items:center;gap:16px;color:#fff;}
-.glovo-banner-ico{width:46px;height:46px;background:rgba(255,255,255,.2);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-.glovo-banner-ico svg{width:24px;height:24px;}
-.glovo-banner-text h3{font-family:var(--font-display);font-size:16px;font-weight:500;margin-bottom:2px;}
-.glovo-banner-text p{font-size:12.5px;opacity:.85;}
-.glovo-banner-cta{margin-left:auto;flex-shrink:0;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);color:#fff;padding:8px 16px;border-radius:100px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;text-decoration:none;transition:background .2s;}
-.glovo-banner-cta:hover{background:rgba(255,255,255,.3);}
+/* ── SELLER BANNER ── */
+.seller-banner{background:linear-gradient(135deg,#00A082,#00C49A);border-radius:16px;padding:20px 24px;margin-bottom:28px;display:flex;align-items:center;gap:16px;color:#fff;}
+.seller-banner-ico{width:46px;height:46px;background:rgba(255,255,255,.2);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.seller-banner-ico svg{width:24px;height:24px;}
+.seller-banner-text h3{font-family:var(--font-display);font-size:16px;font-weight:500;margin-bottom:2px;}
+.seller-banner-text p{font-size:12.5px;opacity:.85;}
+.seller-banner-cta{margin-left:auto;flex-shrink:0;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);color:#fff;padding:8px 16px;border-radius:100px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;text-decoration:none;transition:background .2s;}
+.seller-banner-cta:hover{background:rgba(255,255,255,.3);}
 
 /* ── CONTENT HEAD ── */
 .content-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:10px;}
@@ -203,15 +203,15 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--glass);c
 
 /* ── MOBILE ── */
 @media(max-width:700px){
-  .topbar,.search-bar,.p-card,.glovo-banner{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;}
+  .topbar,.search-bar,.p-card,.seller-banner{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;}
   .p-card{background:#fff!important;opacity:1!important;transform:none!important;}
   .p-grid{grid-template-columns:repeat(2,1fr);gap:10px;}
   .p-card-img{height:120px;}
   .hero,.content{padding-left:14px;padding-right:14px;}
   .ab{filter:blur(40px)!important;opacity:.10!important;}
-  .glovo-banner-cta{display:none;}
+  .seller-banner-cta{display:none;}
   /* Topbar runs out of room once the back button, wordmark and list CTA are in */
-  .glovo-badge{display:none;}
+  .seller-badge{display:none;}
   .supermarket-section{margin-bottom:28px;}
 }
 @media(max-width:380px){.p-grid{grid-template-columns:repeat(2,1fr);}}
@@ -280,7 +280,7 @@ html.via-dash #tx{display:none!important;}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       List your shop
     </a>
-    <span class="glovo-badge">0% commission</span>
+    <span class="seller-badge">0% commission</span>
   </div>
 </div>
 
@@ -310,18 +310,18 @@ html.via-dash #tx{display:none!important;}
 <!-- CONTENT -->
 <div class="content">
 
-  <!-- Glovo banner -->
-  <div class="glovo-banner">
-    <div class="glovo-banner-ico">
+  <!-- Seller banner -->
+  <div class="seller-banner">
+    <div class="seller-banner-ico">
       <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
         <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>
       </svg>
     </div>
-    <div class="glovo-banner-text">
+    <div class="seller-banner-text">
       <h3>Zero commission for sellers</h3>
       <p>Every item below comes from a Kenyan seller or maker. Tap a card to message them on WhatsApp and arrange payment and delivery.</p>
     </div>
-    <a href="partner-listings.html" class="glovo-banner-cta">List your shop →</a>
+    <a href="partner-listings.html" class="seller-banner-cta">List your shop →</a>
   </div>
 
   <div id="mainContent"></div>

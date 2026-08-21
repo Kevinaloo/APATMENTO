@@ -691,6 +691,18 @@ async function loadListings(){
     updateStats(allListings);
     renderListings(allListings);
 
+    /* Dish counts, after the board is on screen. Same rule as ownership
+       below: a card that says how big a menu is beats a card that says
+       nothing, but neither is worth an empty board if the query fails. */
+    const foodIds=allListings
+      .filter(l=>(l.service||l.type)==='food').map(l=>l.id);
+    if(foodIds.length){
+      loadMenuCounts(foodIds).then(()=>{
+        renderListings(activeFilter==='all'?allListings
+          :allListings.filter(l=>(l.service||l.type||'').toLowerCase()===activeFilter));
+      }).catch(()=>{});
+    }
+
     /* Ownership loads after the board is already on screen and its failure
        is silent. A badge saying who co-owns a flat is worth having; it is
        not worth an empty listings page if the view is missing. */
@@ -857,6 +869,36 @@ function setFilter(btn){
   renderListings(filtered);
 }
 
+/* What a listing costs, said in the unit that service actually uses.
+   A restaurant is the one with no single number: its prices are on its
+   dishes, so the card points at the menu instead of inventing a rate. */
+const PRICE_UNIT={stays:'night',tours:'person',events:'ticket',carhire:'day',
+  rides:'trip',shopping:'item'};
+function priceLine(l){
+  const svc=(l.service||'').toLowerCase(), cur=l.currency||'KES';
+  if(svc==='food'||l.type==='food'){
+    const n=MENU_COUNT[l.id];
+    if(n===undefined) return 'Menu';
+    return n ? `${n} dish${n===1?'':'es'} on the menu` : 'No dishes yet';
+  }
+  if(svc==='roommates'||l.type==='room') return `${cur} ${fmt(l.price_month||l.price_night)} / month`;
+  const unit=PRICE_UNIT[svc];
+  const rate=l.price_night||l.price_per_night;
+  if(!rate) return 'Price not set';
+  return `${cur} ${fmt(rate)}${unit?' / '+unit:''}`;
+}
+
+/* Dish counts for the food listings on this board, so the card can say
+   something true about a restaurant instead of a nightly rate. */
+let MENU_COUNT={};
+async function loadMenuCounts(ids){
+  if(!sb||!ids.length){MENU_COUNT={};return;}
+  ids.forEach(id=>{MENU_COUNT[id]=0;});
+  const{data,error}=await sb.from('menu_items').select('listing_id').in('listing_id',ids);
+  if(error){MENU_COUNT={};return;}
+  (data||[]).forEach(r=>{MENU_COUNT[r.listing_id]=(MENU_COUNT[r.listing_id]||0)+1;});
+}
+
 function renderListings(list){
   const el=document.getElementById('listings-list');
   if(!list.length){
@@ -883,13 +925,15 @@ function renderListings(list){
         <div class="lc-name">${l.title||'Untitled listing'}</div>
         <div class="lc-meta">${svc} &middot; ${loc} &middot; ${l.booking_count||0} booking${l.booking_count!==1?'s':''}</div>
         ${ownBadge(l)}
-        <div class="lc-price">${(l.service==='roommates'||l.type==='room')
-          ? `${l.currency||'KES'} ${fmt(l.price_month||l.price_night)} / month`
-          : `${l.currency||'KES'} ${fmt(l.price_night)} / night`}</div>
+        <div class="lc-price">${priceLine(l)}</div>
       </div>
       <div class="lc-right">
         <span class="badge ${isActive?'b-green':'b-amber'}">${isActive?'Active':'Paused'}</span>
         <div class="lc-acts">
+          ${(l.service==='food'||l.type==='food')?`<a href="partner-menu.html?id=${l.id}" class="btn btn-primary btn-sm" title="Add dishes, prices and offers">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="12" height="12"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2M7 2v20M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/></svg>
+            Menu
+          </a>`:''}
           <a href="add-listing.html?from=dashboard&edit=${l.id}" class="btn btn-ghost btn-sm">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="12" height="12"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             Edit

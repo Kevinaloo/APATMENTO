@@ -437,7 +437,7 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
       <div class="step-header">
         <span class="step-eyebrow">Step 5 of 8</span>
         <h1 class="step-title">Pricing and <em>contact</em></h1>
-        <p class="step-sub">Set your rate. You keep 100%. Cabana adds a small fixed fee on top for guests.</p>
+        <p class="step-sub" id="s5su">Set your rate. You keep 100%. Cabana adds a small fixed fee on top for guests.</p>
       </div>
       <div class="cbox">
         <div class="cbox-lbl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Contact details released after payment</div>
@@ -461,11 +461,17 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
           <div class="field"><label class="flbl">Per week <span class="opt">(optional)</span></label><input class="finput" id="f-pw" type="number" placeholder="28000"/></div>
           <div class="field"><label class="flbl">Per month <span class="opt">(optional)</span></label><input class="finput" id="f-pm" type="number" placeholder="95000"/></div>
         </div>
+        <div class="row3" id="s5-food" style="display:none;">
+          <div class="field"><label class="flbl">Minimum delivery order <span class="opt">(optional)</span></label><input class="finput" id="f-minorder" type="number" min="0" placeholder="400"/><div class="fhint">Leave empty if you have no minimum.</div></div>
+          <div class="field"><label class="flbl">Delivery fee <span class="opt">(optional)</span></label><input class="finput" id="f-delfee" type="number" min="0" placeholder="150"/><div class="fhint">Type 0 if you deliver free.</div></div>
+          <div class="field"><label class="flbl">Minutes to the door <span class="opt">(optional)</span></label><input class="finput" id="f-delmins" type="number" min="0" placeholder="35"/><div class="fhint">Once it is cooked. Diners sort by this.</div></div>
+        </div>
         <div class="row2" id="s5-stays" style="display:none;">
           <div class="field"><label class="flbl" id="s5depl">Security deposit <span class="opt">(optional)</span></label><input class="finput" id="f-dep" type="number" placeholder="5000"/><div class="fhint" id="s5deph" style="display:none;">Flatmates budget for rent plus deposit together. Listings that state it get far more enquiries.</div></div>
           <div class="field"><label class="flbl" id="s5mnl">Minimum nights</label><input class="finput" id="f-mn" type="number" value="1" min="1"/><select class="fsel" id="f-mnr" style="display:none;"><option value="7">1 week</option><option value="14">2 weeks</option><option value="30">1 month</option><option value="60">2 months</option><option value="90" selected>3 months</option><option value="180">6 months</option><option value="365">1 year</option></select><div class="fhint" id="s5mnh" style="display:none;">A week is the shortest let allowed here. Anything shorter is a nightly booking, which belongs under Stays.</div></div>
         </div>
-        <div class="ibox mint"><div class="ibox-lbl">Zero commission</div><div class="ibox-txt">You keep <strong>100% of your listed rate</strong>. Cabana charges guests a small fixed platform fee, never a percentage of your earnings.</div></div>
+        <div class="ibox mint" id="s5-comm"><div class="ibox-lbl">Zero commission</div><div class="ibox-txt">You keep <strong>100% of your listed rate</strong>. Cabana charges guests a small fixed platform fee, never a percentage of your earnings.</div></div>
+        <div class="ibox mint" id="s5-foodnote" style="display:none;"><div class="ibox-lbl">This is not your menu</div><div class="ibox-txt">One rough number so a diner can see roughly what a plate costs before they open you. <strong>Your real prices are the ones on your dishes</strong>, and you type those into the menu builder in a minute. Leave this empty if you would rather it waited for the menu.</div></div>
       </div>
       <div class="step-nav">
         <button class="btn-back" onclick="go(4)">Back</button>
@@ -671,7 +677,7 @@ const ON_BEHALF_OF = (function(){
   if(!name||!contact)return null;
   return {role:as,name:name,contact:contact,lead:QP.get('lead')||null};
 })();
-const FROM=QP.has('from')||QP.has('edit')||QP.has('prefill')||document.referrer.includes('partner');
+const FROM=QP.has('from')||QP.has('edit')||QP.has('prefill')||QP.has('svc')||QP.has('service')||document.referrer.includes('partner');
 (async()=>{
   if(!sb)return;
   try{
@@ -681,12 +687,12 @@ const FROM=QP.has('from')||QP.has('edit')||QP.has('prefill')||document.referrer.
     if(!FROM){location.replace('partner-listings.html');return;}
     if(QP.has('edit')){const{data:l}=await sb.from('listings').select('*').eq('id',QP.get('edit')).eq('partner_id',CU.id).single();if(l){window._eid=QP.get('edit');setTimeout(()=>loadEdit(l),200);}}
     if(QP.has('prefill')){try{const r=sessionStorage.getItem('apa-import-prefill');if(r){const p=JSON.parse(r);sessionStorage.removeItem('apa-import-prefill');setTimeout(()=>loadPrefill(p),200);}}catch(e){}}
-    if(QP.has('service')){const s=QP.get('service');if(SVCS[s]){F.svc=s;document.querySelectorAll('.svc-card').forEach(c=>{if(c.dataset.svc===s)c.classList.add('sel');});go(1);}}
+    const _svcQ=QP.get('service')||QP.get('svc');if(_svcQ&&SVCS[_svcQ]&&!QP.has('edit')){F.svc=_svcQ;document.querySelectorAll('.svc-card').forEach(c=>{if(c.dataset.svc===_svcQ)c.classList.add('sel');});go(1);}
   }catch(e){}
 })();
 
 const SVCS={
-  stays:{lbl:'Stays',pp:'Per night',extra:true,sf:true,tog:true,
+  stays:{lbl:'Stays',pp:'Per night',extra:true,sf:true,tog:true,s6t:'Check-in and check-out',
     s1t:'What type of stay?',s1s:'Choose the category that best describes your property.',
     s3t:'Space details',s3s:'The specifics that help guests picture staying here.',s3e:'Property specifics',
     dl:'Describe the space',dp:'Describe the views, the layout, what is nearby and the little things that make this space worth booking.',
@@ -696,7 +702,7 @@ const SVCS={
     feats:['WiFi','Air conditioning','Kitchen','Parking','Smart TV','Washer','Pool','Gym','Coffee maker','Heating','Elevator','Security guard','Garden','Dishwasher','Hot water','Bathtub','Shower','Balcony','Generator backup','Borehole water'],
     rv:f=>[['Bedrooms',f.beds==='0'?'Studio':f.beds+' bed(s)'],['Bathrooms',f.baths+' bath(s)'],['Max guests',f.guests+' guest(s)'],['Size',f.sqm?f.sqm+'m2':'Not specified'],['Amenities',f.feats.length?f.feats.join(', '):'None selected']]
   },
-  roommates:{lbl:'Roommates',pp:'Monthly rent',extra:false,sf:true,tog:false,pf:'month',ml:'Minimum stay',mv:'90',dl2:'Refundable deposit',
+  roommates:{lbl:'Roommates',pp:'Monthly rent',ph:'28000',extra:false,sf:true,tog:false,pf:'month',ml:'Minimum stay',mv:'90',dl2:'Refundable deposit',s6t:'Move-in and notice',
     s1t:'What kind of room are you offering?',s1s:'Every room on Cabana sits inside a shared home. Pick the arrangement the tenant gets.',
     s3t:'Room details',s3s:'Help a potential flatmate picture living here.',s3e:'Room specifics',
     dl:'About the room and the household',dp:'Describe the room, the shared areas, who already lives here and the kind of flatmate who would fit. Be specific about water, power and how bills get split.',
@@ -706,7 +712,7 @@ const SVCS={
     feats:['WiFi','Shared kitchen','Shared living room','Washing machine','Parking','Hot water','Backup power','Borehole water','Security guard','Gated compound','CCTV','Balcony','Garden','Study desk','Wardrobe','Pet friendly','Near matatu stage','Near CBD','Lift','Cleaner included'],
     rv:f=>[['Sharing with',(f.mates||'1')+' flatmate(s) already living there'],['Bathroom',f.bath==='private'?'Private to this room':'Shared with flatmates'],['Room suits',{anyone:'Anyone',women:'Women only',men:'Men only',students:'Students',professionals:'Working professionals'}[f.suits]||'Anyone'],['Bills',{included:'All bills included',excluded:'Bills paid separately',partial:'Some bills included'}[f.bills]||'Not specified'],['Furnishing',f.furn||'Not specified'],['Available from',f.avail||'Not specified'],['Minimum stay',{7:'1 week',14:'2 weeks',30:'1 month',60:'2 months',90:'3 months',180:'6 months',365:'1 year'}[parseInt(f.mn)]||((parseInt(f.mn)||90)+' days')],['Shared facilities',f.feats.length?f.feats.join(', '):'None selected']]
   },
-  tours:{lbl:'Tours',pp:'Per person',extra:false,sf:false,tog:false,
+  tours:{lbl:'Tours',pp:'Per person',ph:'7500',extra:false,sf:false,tog:false,s6t:'Departure and return',
     s1t:'What type of tour?',s1s:'Select the experience category.',
     s3t:'Experience details',s3s:'Help guests know exactly what to expect.',s3e:'Experience specifics',
     dl:'Tour description',dp:'Describe the itinerary, what is included, what guests will see and do, and what makes this experience stand out.',
@@ -716,7 +722,7 @@ const SVCS={
     feats:['Transport included','Meals included','Drinks provided','Accommodation','Photos included','Equipment provided','Gear rental','Binoculars','Certified guide','Entry fees included','Safety gear','Insurance','Camping','Snorkel gear','Torch','First aid kit'],
     rv:f=>[['Duration',f.dur||'Not specified'],['Group size','Up to '+f.guests+' person(s)'],['Meeting point',f.meet||'Not specified'],['Languages',f.lang||'Not specified'],['Inclusions',f.feats.length?f.feats.join(', '):'None selected']]
   },
-  events:{lbl:'Events',pp:'Per ticket',extra:false,sf:false,tog:false,
+  events:{lbl:'Events',pp:'Per ticket',ph:'2000',extra:false,sf:false,tog:false,s6t:'Doors and finish',
     s1t:'What type of event?',s1s:'Choose the event category.',
     s3t:'Event details',s3s:'Help ticket buyers know what to expect.',s3e:'Event specifics',
     dl:'Event description',dp:'Describe the event, the vibe, the lineup, the venue, and everything a potential attendee needs to make a decision.',
@@ -726,17 +732,17 @@ const SVCS={
     feats:['General admission','VIP access','Open bar','Catering provided','Live music','DJ set','Meet and greet','Photographer on site','Parking available','Accessible venue','18+ only','Family friendly','Goodie bag','Seating provided','Stage performers','Live streaming'],
     rv:f=>[['Event date',f.edate||'Not specified'],['Venue',f.venue||'Not specified'],['Tickets',f.guests+' available'],['Min age',f.age||'None'],['Inclusions',f.feats.length?f.feats.join(', '):'None selected']]
   },
-  food:{lbl:'Food',pp:'Min spend or cover charge',extra:false,sf:false,tog:false,
-    s1t:'What type of venue?',s1s:'Choose the food and dining category.',
-    s3t:'Venue details',s3s:'Help diners know what to expect before they book.',s3e:'Venue specifics',
-    dl:'About the venue',dp:'Describe the cuisine, the atmosphere, signature dishes, opening hours, and what makes dining here worthwhile.',
-    il:'Opening time',ol:'Closing time',rl:'Reservation and cancellation policy',
+  food:{lbl:'Food',pp:'Typical price of one main',food:true,ph:'850',extra:false,sf:false,tog:false,s6t:'Opening hours',
+    s1t:'What kind of kitchen is it?',s1s:'Pick the one a diner would use to describe you.',
+    s3t:'About the kitchen',s3s:'The things a diner weighs before deciding where to eat.',s3e:'Kitchen details',
+    dl:'What is it like to eat here',dp:'The room, the smell, what comes out of the kitchen best. Write it the way you would tell a friend, not the way a brochure would. Dishes and prices come next, in your menu builder.',
+    il:'Opens at',ol:'Closes at',rl:'Anything a diner should know',
     types:[{n:'Restaurant',i:'<path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2M7 2v20M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/>'},{n:'Cafe',i:'<path d="M17 8h1a4 4 0 0 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4z"/><path d="M6 2v2M10 2v2M14 2v2"/>'},{n:'Bar and grill',i:'<path d="M8 22h8M12 11v11M12 11a5 5 0 0 0 5-5c0-2-2-4-2-4H9s-2 2-2 4a5 5 0 0 0 5 5z"/>'},{n:'Fast food',i:'<path d="M3 11l19-9-9 19-2-8-8-2z"/>'},{n:'Catering',i:'<path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/>'},{n:'Food truck',i:'<path d="M5 13h14l-1.5-5a2 2 0 0 0-2-1.5h-7a2 2 0 0 0-2 1.5z"/><path d="M4 13h16v4H4z"/><circle cx="7.5" cy="17.5" r="1.5"/><circle cx="16.5" cy="17.5" r="1.5"/>'},{n:'Bakery',i:'<path d="M2 8h20M2 16h20M12 2v20M2 12h20"/>'},{n:'Rooftop bar',i:'<path d="M3 9.5L12 3l9 6.5"/><path d="M5 9.5V20h14V9.5"/>'},{n:'Buffet',i:'<path d="M3 11l19-9-9 19-2-8-8-2z"/>'},{n:'Fine dining',i:'<circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/>'},{n:'Pop-up',i:'<path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/>'},{n:'Cloud kitchen',i:'<path d="M3 11l19-9-9 19-2-8-8-2z"/>'}],
-    df:`<div class="fsec"><div class="fsec-title">Venue specifics</div><div class="row2"><div class="field"><label class="flbl">Cuisine type</label><input class="finput" id="f-cuisine" placeholder="Kenyan, Italian, Pan-African, Fusion..."/></div><div class="field"><label class="flbl">Seating capacity</label><input class="finput" id="f-guests" type="number" placeholder="40"/></div></div><div class="row2"><div class="field"><label class="flbl">Delivery radius <span class="opt">(optional)</span></label><input class="finput" id="f-deliv" placeholder="e.g. 5km, CBD area..."/></div><div class="field"><label class="flbl">Booking lead time</label><select class="fsel" id="f-lead"><option>Walk-in welcome</option><option>1 day ahead</option><option>2 days ahead</option><option>1 week ahead</option></select></div></div></div>`,
+    df:`<div class="fsec"><div class="fsec-title">Kitchen details</div><div class="row2"><div class="field"><label class="flbl">Cuisines <span class="opt">(comma separated)</span></label><input class="finput" id="f-cuisine" placeholder="Nyama choma, Grill"/><div class="fhint">Diners filter the food page by these words, so use the ones they would type.</div></div><div class="field"><label class="flbl">The dish to ask for <span class="opt">(optional)</span></label><input class="finput" id="f-sig" placeholder="half kilo of goat ribs"/><div class="fhint">Shown on your page as "Ask for the ...".</div></div></div><div class="row2"><div class="field"><label class="flbl">How people can eat</label><select class="fsel" id="f-eat"><option value="all">Delivery, collection and eating in</option><option value="delivery_pickup">Delivery and collection only</option><option value="dine_pickup">Eating in and collection only</option><option value="delivery">Delivery only</option><option value="dine">Eating in only</option></select></div><div class="field"><label class="flbl">Seats inside <span class="opt">(optional)</span></label><input class="finput" id="f-seats" type="number" min="0" placeholder="40"/></div></div><div class="row2"><div class="field"><label class="flbl">Where you deliver <span class="opt">(optional)</span></label><input class="finput" id="f-deliv" placeholder="Kilimani, Kileleshwa, Hurlingham"/></div><div class="field"><label class="flbl">Kitchen</label><select class="fsel" id="f-lead"><option value="">No special note</option><option value="halal">Halal</option><option value="bar">We have a bar</option><option value="halal_bar">Halal, and we have a bar</option></select></div></div><div class="ibox mint"><div class="ibox-lbl">Dishes come next</div><div class="ibox-txt">This step is about the place. The moment it is live you go straight to your menu builder, where a dish is a name, a price and one key. Photographs, offers and labels like <strong>People's favourite</strong> are edits you make later, when the counter is quiet.</div></div></div>`,
     feats:['Parking','WiFi','Alcohol served','Live music','Outdoor seating','Air conditioned','Pet friendly','Accessible','Kids menu','Card payment','Birthday setup','Karaoke','Entertainment','Fast delivery','Takeaway available','Corporate events'],
-    rv:f=>[['Cuisine',f.cuisine||'Not specified'],['Seating',f.guests+' seats'],['Delivery',f.deliv||'None'],['Booking',f.lead||'Not specified'],['Features',f.feats.length?f.feats.join(', '):'None selected']]
+    rv:f=>[['Cuisines',f.cuisine||'Not specified'],['Ask for',f.sig||'Not specified'],['How people eat',{all:'Delivery, collection and eating in',delivery_pickup:'Delivery and collection',dine_pickup:'Eating in and collection',delivery:'Delivery only',dine:'Eating in only'}[f.eat]||'Delivery, collection and eating in'],['Seats',f.seats?f.seats+' inside':'Not stated'],['Delivers to',f.deliv||'Not stated'],['Delivery',f.delfee===''||f.delfee==null?'Not stated':(Number(f.delfee)===0?'Free':f.cur+' '+Number(f.delfee).toLocaleString())+(f.delmins?', about '+f.delmins+' min':'')],['Features',f.feats.length?f.feats.join(', '):'None selected']]
   },
-  carhire:{lbl:'Car Hire',pp:'Per day',extra:false,sf:false,tog:false,
+  carhire:{lbl:'Car Hire',pp:'Per day',ph:'6500',extra:false,sf:false,tog:false,s6t:'Pickup and return',
     s1t:'What type of vehicle?',s1s:'Choose the vehicle category.',
     s3t:'Vehicle details',s3s:'The specification guests need to make a booking decision.',s3e:'Vehicle specifics',
     dl:'Vehicle description',dp:'Year, model, condition, special features, what routes and terrain it handles. Anything that helps a guest choose this vehicle.',
@@ -746,7 +752,7 @@ const SVCS={
     feats:['Air conditioning','GPS navigation','WiFi hotspot','4WD','Keyless entry','Bluetooth audio','USB charging','Leather seats','Sunroof','Pet friendly','Baby seat','Accessible','Camping setup','Roof rack','Full-size spare','Full tank on pickup'],
     rv:f=>[['Vehicle',[f.make,f.model,f.yr].filter(Boolean).join(' ')||'Not specified'],['Seats',f.guests+' seats'],['Fuel',f.fuel||'Not specified'],['Transmission',f.trans||'Not specified'],['Features',f.feats.length?f.feats.join(', '):'None selected']]
   },
-  rides:{lbl:'Rides',pp:'Starting fare',extra:false,sf:false,tog:false,
+  rides:{lbl:'Rides',pp:'Starting fare',ph:'400',extra:false,sf:false,tog:false,s6t:'Hours you drive',
     s1t:'What type of ride service?',s1s:'Choose the transport category.',
     s3t:'Service details',s3s:'Help riders know what to expect.',s3e:'Ride specifics',
     dl:'About your service',dp:'Describe your service area, vehicle, reliability, and why riders should choose you.',
@@ -756,7 +762,7 @@ const SVCS={
     feats:['Air conditioning','WiFi hotspot','USB charging','Baby seat','Pet friendly','Luggage space','Night service','24/7 available','M-Pesa accepted','Fixed route','On demand','Ride tracking','Female drivers available','Cashless payment'],
     rv:f=>[['Service area',f.areas||'Not specified'],['Capacity',f.guests+' passenger(s)'],['Vehicle',f.veh||'Not specified'],['Advance booking',f.adv||'Not specified'],['Features',f.feats.length?f.feats.join(', '):'None selected']]
   },
-  shopping:{lbl:'Shopping',pp:'Price per unit',extra:false,sf:false,tog:false,
+  shopping:{lbl:'Shopping',pp:'Price per unit',ph:'1200',extra:false,sf:false,tog:false,s6t:'Processing and dispatch',
     s1t:'What type of product?',s1s:'Select the product category.',
     s3t:'Product details',s3s:'Help buyers know exactly what they are getting.',s3e:'Product specifics',
     dl:'Product description',dp:'Describe the product in detail: materials, dimensions, condition, what is included, and what makes it worth buying.',
@@ -770,7 +776,7 @@ const SVCS={
 
 let cur=0,cov=0;
 const LABS=['Service','Type','Location','Details','Features','Pricing','Photos','Ownership','Review'];
-const F={svc:null,type:null,title:'',country:'Kenya',city:'',area:'',street:'',lat:null,lng:null,desc:'',feats:[],photos:[],photoFiles:[],cur:'KES',price:'',pw:'',pm:'',dep:'',mn:'1',wa:'',ph:'',em:'',ci:'14:00',co:'11:00',inst:true,ch:true,pets:false,smk:false,rules:'',beds:'1',baths:'1',guests:'2',floor:'',sqm:'',avail:'',bills:'',furn:'',mates:'2',bath:'shared',suits:'anyone',dur:'',meet:'',lang:'',edate:'',venue:'',age:'',cuisine:'',deliv:'',lead:'',make:'',model:'',yr:'',fuel:'',trans:'',areas:'',veh:'',adv:'',stock:'',cond:'',brand:'',da:'',
+const F={svc:null,type:null,title:'',country:'Kenya',city:'',area:'',street:'',lat:null,lng:null,desc:'',feats:[],photos:[],photoFiles:[],cur:'KES',price:'',pw:'',pm:'',dep:'',mn:'1',wa:'',ph:'',em:'',ci:'14:00',co:'11:00',inst:true,ch:true,pets:false,smk:false,rules:'',beds:'1',baths:'1',guests:'2',floor:'',sqm:'',avail:'',bills:'',furn:'',mates:'2',bath:'shared',suits:'anyone',dur:'',meet:'',lang:'',edate:'',venue:'',age:'',cuisine:'',sig:'',eat:'all',seats:'',deliv:'',lead:'',minorder:'',delfee:'',delmins:'',make:'',model:'',yr:'',fuel:'',trans:'',areas:'',veh:'',adv:'',stock:'',cond:'',brand:'',da:'',
   /* Ownership. `own` is deliberately null until the host chooses: a
      default of 'sole' is a default that quietly assigns a building. */
   own:null,ownTouched:false,ownSplit:'equal',ownPartners:[],ownHolderName:'',ownHolderContact:'',ownNote:''};
@@ -813,7 +819,21 @@ function bldStep(n){
     restDet();
   }
   if(n===4){document.getElementById('feat-grid').innerHTML=S.feats.map(f=>`<div class="feat-tag${F.feats.includes(f)?' sel':''}" data-f="${f}" onclick="togFt(this)"><div class="fdot"></div>${f}</div>`).join('');}
-  if(n===5){document.getElementById('s5rl').textContent=S.pp;document.getElementById('s5-extra').style.display=S.extra?'':'none';document.getElementById('s5-stays').style.display=S.sf?'':'none';
+  if(n===5){document.getElementById('s5rl').innerHTML=S.pp+(S.food?' <span class="opt">(optional)</span>':'');document.getElementById('s5-extra').style.display=S.extra?'':'none';document.getElementById('s5-stays').style.display=S.sf?'':'none';
+    const s5f=document.getElementById('s5-food');if(s5f)s5f.style.display=S.food?'':'none';
+    const s5fn=document.getElementById('s5-foodnote');if(s5fn)s5fn.style.display=S.food?'':'none';
+    const s5c=document.getElementById('s5-comm');if(s5c)s5c.style.display=S.food?'none':'';
+    const s5s=document.getElementById('s5su');
+    if(s5s)s5s.textContent=S.food
+      ? 'Your number, so a diner can send you their order. Then one rough price, so they know what to expect.'
+      : 'Set your rate. You keep 100%. Cabana adds a small fixed fee on top for guests.';
+    const s5cb=document.querySelector('#step-5 .cbox-txt');
+    if(s5cb)s5cb.textContent=S.food
+      ? 'Diners send their order straight to this number, itemised and totalled, and pay you for the food. Nothing goes through us, so nothing is taken out.'
+      : 'Your WhatsApp, phone and email stay private until a guest completes payment. After payment, guests receive your contact to coordinate directly.';
+    const s5cl=document.querySelector('#step-5 .cbox-lbl');
+    if(s5cl)s5cl.lastChild.nodeValue=S.food?'Diners order on this number':'Contact details released after payment';
+    const pIn=document.getElementById('f-price');if(pIn)pIn.placeholder=S.ph||'4500';
     /* A room is let by the month, a stay by the night. The same two
        inputs serve both, so they are relabelled per service instead of
        silently meaning nights on a monthly listing. */
@@ -828,7 +848,7 @@ function bldStep(n){
     const depl=document.getElementById('s5depl');if(depl)depl.innerHTML=(S.dl2||'Security deposit')+(F.svc==='roommates'?'':' <span class="opt">(optional)</span>');
     const deph=document.getElementById('s5deph');if(deph)deph.style.display=F.svc==='roommates'?'':'none';
     restPr();}
-  if(n===6){document.getElementById('s6il').textContent=S.il||'Start time';document.getElementById('s6ol').textContent=S.ol||'End time';document.getElementById('s6rl').textContent=S.rl||'Additional rules';const tg=document.getElementById('tog-group');if(tg)tg.style.display=S.tog?'':'none';}
+  if(n===6){const s6t=document.getElementById('s6ti');if(s6t)s6t.textContent=S.s6t||'Check-in and check-out';document.getElementById('s6il').textContent=S.il||'Start time';document.getElementById('s6ol').textContent=S.ol||'End time';document.getElementById('s6rl').textContent=S.rl||'Additional rules';const tg=document.getElementById('tog-group');if(tg)tg.style.display=S.tog?'':'none';}
   if(n===7)bldOwn();
   if(n===2)restLoc();
   if(n===1&&F.type)document.getElementById('badge-t').textContent=F.type;
@@ -985,12 +1005,12 @@ function collect(n){
     if(F.svc==='roommates'){F.avail=gv('f-avail');F.bills=gv('f-bills');F.mates=gv('f-mates');F.guests=F.mates;F.furn=gv('f-furn');F.bath=gv('f-bath');F.suits=gv('f-suits');}
     if(F.svc==='tours'){F.dur=gv('f-dur');F.guests=gv('f-guests');F.meet=gv('f-meet');F.lang=gv('f-lang');}
     if(F.svc==='events'){F.edate=gv('f-edate');F.venue=gv('f-venue');F.guests=gv('f-guests');F.age=gv('f-age');}
-    if(F.svc==='food'){F.cuisine=gv('f-cuisine');F.guests=gv('f-guests');F.deliv=gv('f-deliv');F.lead=gv('f-lead');}
+    if(F.svc==='food'){F.cuisine=gv('f-cuisine');F.sig=gv('f-sig');F.eat=gv('f-eat');F.seats=gv('f-seats');F.deliv=gv('f-deliv');F.lead=gv('f-lead');}
     if(F.svc==='carhire'){F.make=gv('f-make');F.model=gv('f-model');F.yr=gv('f-yr');F.guests=gv('f-guests');F.fuel=gv('f-fuel');F.trans=gv('f-trans');}
     if(F.svc==='rides'){F.areas=gv('f-areas');F.guests=gv('f-guests');F.veh=gv('f-veh');F.adv=gv('f-adv');}
     if(F.svc==='shopping'){F.stock=gv('f-stock');F.cond=gv('f-cond');F.brand=gv('f-brand');F.da=gv('f-da');}
   }
-  if(n===5){F.cur=gv('f-cur');F.price=gv('f-price');F.pw=gv('f-pw');F.pm=gv('f-pm');F.dep=gv('f-dep');F.mn=(F.svc==='roommates'?gv('f-mnr'):gv('f-mn'))||(F.svc==='roommates'?'90':'1');F.wa=gv('f-wa').trim();F.ph=gv('f-ph').trim();F.em=gv('f-em').trim();}
+  if(n===5){F.cur=gv('f-cur');F.price=gv('f-price');F.minorder=gv('f-minorder');F.delfee=gv('f-delfee');F.delmins=gv('f-delmins');F.pw=gv('f-pw');F.pm=gv('f-pm');F.dep=gv('f-dep');F.mn=(F.svc==='roommates'?gv('f-mnr'):gv('f-mn'))||(F.svc==='roommates'?'90':'1');F.wa=gv('f-wa').trim();F.ph=gv('f-ph').trim();F.em=gv('f-em').trim();}
   if(n===6){F.ci=gv('f-in')||'14:00';F.co=gv('f-out')||'11:00';F.inst=document.getElementById('tog-inst')?.classList.contains('on')??true;F.ch=document.getElementById('tog-ch')?.classList.contains('on')??true;F.pets=document.getElementById('tog-pets')?.classList.contains('on')??false;F.smk=document.getElementById('tog-smk')?.classList.contains('on')??false;F.rules=gv('f-rules').trim();}
 }
 function restDet(){const sv=(id,v)=>{const el=document.getElementById(id);if(el&&v)el.value=v;};
@@ -998,7 +1018,7 @@ function restDet(){const sv=(id,v)=>{const el=document.getElementById(id);if(el&
   if(F.svc==='roommates'){sv('f-avail',F.avail);sv('f-bills',F.bills);sv('f-mates',F.mates||F.guests);sv('f-furn',F.furn);sv('f-bath',F.bath);sv('f-suits',F.suits);}
   if(F.svc==='tours'){sv('f-dur',F.dur);sv('f-guests',F.guests);sv('f-meet',F.meet);sv('f-lang',F.lang);}
   if(F.svc==='events'){sv('f-edate',F.edate);sv('f-venue',F.venue);sv('f-guests',F.guests);sv('f-age',F.age);}
-  if(F.svc==='food'){sv('f-cuisine',F.cuisine);sv('f-guests',F.guests);sv('f-deliv',F.deliv);sv('f-lead',F.lead);}
+  if(F.svc==='food'){sv('f-cuisine',F.cuisine);sv('f-sig',F.sig);sv('f-eat',F.eat);sv('f-seats',F.seats);sv('f-deliv',F.deliv);sv('f-lead',F.lead);}
   if(F.svc==='carhire'){sv('f-make',F.make);sv('f-model',F.model);sv('f-yr',F.yr);sv('f-guests',F.guests);sv('f-fuel',F.fuel);sv('f-trans',F.trans);}
   if(F.svc==='rides'){sv('f-areas',F.areas);sv('f-guests',F.guests);sv('f-veh',F.veh);sv('f-adv',F.adv);}
   if(F.svc==='shopping'){sv('f-stock',F.stock);sv('f-cond',F.cond);sv('f-brand',F.brand);sv('f-da',F.da);}
@@ -1025,7 +1045,7 @@ function restLoc(){const sv=(id,v)=>{const el=document.getElementById(id);if(el&
   }
 }
 
-function restPr(){const sv=(id,v)=>{const el=document.getElementById(id);if(el&&v)el.value=v;};sv('f-cur',F.cur);sv('f-price',F.price);sv('f-pw',F.pw);sv('f-pm',F.pm);sv('f-dep',F.dep);sv(F.svc==='roommates'?'f-mnr':'f-mn',F.mn);sv('f-wa',F.wa);sv('f-ph',F.ph);sv('f-em',F.em);}
+function restPr(){const sv=(id,v)=>{const el=document.getElementById(id);if(el&&v)el.value=v;};sv('f-cur',F.cur);sv('f-price',F.price);sv('f-minorder',F.minorder);sv('f-delfee',F.delfee);sv('f-delmins',F.delmins);sv('f-pw',F.pw);sv('f-pm',F.pm);sv('f-dep',F.dep);sv(F.svc==='roommates'?'f-mnr':'f-mn',F.mn);sv('f-wa',F.wa);sv('f-ph',F.ph);sv('f-em',F.em);}
 
 function al(m){const el=document.getElementById('falert');el.textContent=m;el.classList.add('show');el.scrollIntoView({behavior:'smooth',block:'nearest'});setTimeout(()=>el.classList.remove('show'),5000);}
 function valid(n){
@@ -1035,7 +1055,7 @@ function valid(n){
   if(n===4&&F.svc==='roommates'&&!F.photos.length){al('Add at least one photo of the room. Rooms without photos are almost never enquired about.');return false;}
   if(n===3&&F.svc==='roommates'&&!document.getElementById('f-avail').value){al('Set the date the room is free from. Flatmates search by move-in date.');return false;}
   if(n===5){if(!document.getElementById('f-wa').value.trim()){al('Add your WhatsApp number. Guests need this after payment.');return false;}
-    if(!document.getElementById('f-price').value){al(F.svc==='roommates'?'Set the monthly rent.':'Set a price.');return false;}}
+    if(!document.getElementById('f-price').value&&F.svc!=='food'){al(F.svc==='roommates'?'Set the monthly rent.':'Set a price.');return false;}}
   if(n===7){
     collectOwn();
     if(!F.own){al('Say who owns this listing. It is the one thing we cannot guess for you.');return false;}
@@ -1177,7 +1197,10 @@ function bldRv(){collect(6);const S=SVCS[F.svc];
   document.getElementById('rv-type').textContent=F.type||'Not selected';
   document.getElementById('rv-title').textContent=F.title||'Not set';
   document.getElementById('rv-loc').textContent=[F.area,F.city,F.country].filter(Boolean).join(', ')||'Not set';
-  document.getElementById('rv-price').textContent=F.price?F.cur+' '+Number(F.price).toLocaleString()+(S?.pf==='month'?' per month'+(F.dep?', deposit '+F.cur+' '+Number(F.dep).toLocaleString():''):' / '+(S?.pp||'unit').toLowerCase()):'Not set';
+  document.getElementById('rv-price').textContent=
+    S?.food
+      ? (F.price?'About '+F.cur+' '+Number(F.price).toLocaleString()+' a plate, real prices on your menu':'Set on each dish, in your menu')
+      : F.price?F.cur+' '+Number(F.price).toLocaleString()+(S?.pf==='month'?' per month'+(F.dep?', deposit '+F.cur+' '+Number(F.dep).toLocaleString():''):' / '+(S?.pp||'unit').toLowerCase()):'Not set';
   document.getElementById('rv-contact').textContent=F.wa||'Not set';
   if(S)document.getElementById('rv-details').innerHTML=S.rv(F).map(([k,v])=>'<div class="rv-row"><span class="rv-k">'+k+'</span><span class="rv-v">'+v+'</span></div>').join('');
   const ow=document.getElementById('rv-own');
@@ -1202,12 +1225,21 @@ function bldRv(){collect(6);const S=SVCS[F.svc];
   else pb.style.display='none';
 }
 
+/* The first sentence of the description doubles as the line under the
+   name on the restaurant's page. Written without a lookbehind so it
+   parses on every browser a kitchen might be holding. */
+function firstSentence(t){
+  var str=String(t||'').trim(); if(!str)return null;
+  var m=/[.!?]/.exec(str);
+  var out=(m?str.slice(0,m.index+1):str).trim();
+  return out.slice(0,140)||null;
+}
 async function publish(){
   collect(6);collectOwn();const btn=document.getElementById('pub-btn');btn.classList.add('loading');
   try{
     const pu=[];const ord=(F.photoFiles.length?[cov,...Array.from({length:F.photoFiles.length},(_,i)=>i).filter(i=>i!==cov)]:[]).filter(i=>F.photoFiles[i]);
     for(let i=0;i<ord.length;i++){const file=F.photoFiles[ord[i]];const ext=file.name.split('.').pop();if(!CU?.id) throw new Error('Please sign in again before uploading photos.');const path=CU.id+'/'+Date.now()+'-'+i+'.'+ext;const{error}=await sb.storage.from('listings').upload(path,file,{cacheControl:'3600',upsert:false});if(error)throw error;const{data:{publicUrl}}=sb.storage.from('listings').getPublicUrl(path);pu.push(publicUrl);}
-    const _S=SVCS[F.svc]||{};const _monthly=_S.pf==='month';const _rate=parseFloat(F.price)||null;const SVC_TYPE_MAP={stays:"apartment",roommates:"room",tours:"tour",events:"event",food:"food",carhire:"carhire",rides:"ride",shopping:"shopping"};const svcType=SVC_TYPE_MAP[F.svc]||F.svc;const payload={partner_id:CU?.id,host_id:CU?.id,service:F.svc,type:svcType,listing_type:F.type,property_type:F.type,title:F.title,country:F.country,city:F.city,area:F.area,street:F.street||null,location:[F.area,F.city,F.country].filter(Boolean).join(', '),latitude:F.lat||null,longitude:F.lng||null,description:F.desc,amenities:F.feats,photos:pu.length?pu:F.photos,currency:F.cur,price_night:_monthly?null:_rate,price_week:_monthly?null:(parseFloat(F.pw)||null),price_month:_monthly?_rate:(parseFloat(F.pm)||null),deposit:parseFloat(F.dep)||null,min_nights:_monthly?Math.max(7,parseInt(F.mn)||90):(parseInt(F.mn)||1),max_guests:F.guests||null,beds:F.beds||null,baths:F.baths||null,bedrooms:parseInt(F.beds)||null,bathrooms:parseInt(F.baths)||null,floor:F.floor||null,sqm:F.sqm||null,checkin_time:F.ci,checkout_time:F.co,instant_book:F.inst,children:F.ch,pets:F.pets,smoking:F.smk,house_rules:F.rules||null,contact_whatsapp:F.wa||null,contact_phone:F.ph||F.wa||null,contact_email:F.em||null,status:'active',is_active:true,internal_score:50,cancel_policy:'flexible',extras:{dur:F.dur||null,meet:F.meet||null,lang:F.lang||null,edate:F.edate||null,venue:F.venue||null,age:F.age||null,cuisine:F.cuisine||null,deliv:F.deliv||null,lead:F.lead||null,make:F.make||null,model:F.model||null,yr:F.yr||null,fuel:F.fuel||null,trans:F.trans||null,areas:F.areas||null,veh:F.veh||null,adv:F.adv||null,stock:F.stock||null,cond:F.cond||null,brand:F.brand||null,da:F.da||null,avail:F.avail||null,bills:F.bills||null,furn:F.furn||null,mates:F.mates||null,bath:F.bath||null,suits:F.suits||null,notice:F.co||null}};
+    const _S=SVCS[F.svc]||{};const _monthly=_S.pf==='month';const _rate=parseFloat(F.price)||null;const SVC_TYPE_MAP={stays:"apartment",roommates:"room",tours:"tour",events:"event",food:"food",carhire:"carhire",rides:"ride",shopping:"shopping"};const svcType=SVC_TYPE_MAP[F.svc]||F.svc;const payload={partner_id:CU?.id,host_id:CU?.id,service:F.svc,type:svcType,listing_type:F.type,property_type:F.type,title:F.title,country:F.country,city:F.city,area:F.area,street:F.street||null,location:[F.area,F.city,F.country].filter(Boolean).join(', '),latitude:F.lat||null,longitude:F.lng||null,description:F.desc,amenities:F.feats,photos:pu.length?pu:F.photos,currency:F.cur,price_night:_monthly?null:_rate,price_week:_monthly?null:(parseFloat(F.pw)||null),price_month:_monthly?_rate:(parseFloat(F.pm)||null),deposit:parseFloat(F.dep)||null,min_nights:_monthly?Math.max(7,parseInt(F.mn)||90):(parseInt(F.mn)||1),max_guests:(F.svc==='food'?(F.seats||null):(F.guests||null)),beds:F.beds||null,baths:F.baths||null,bedrooms:parseInt(F.beds)||null,bathrooms:parseInt(F.baths)||null,floor:F.floor||null,sqm:F.sqm||null,checkin_time:F.ci,checkout_time:F.co,instant_book:F.inst,children:F.ch,pets:F.pets,smoking:F.smk,house_rules:F.rules||null,contact_whatsapp:F.wa||null,contact_phone:F.ph||F.wa||null,contact_email:F.em||null,status:'active',is_active:true,internal_score:50,cancel_policy:'flexible',extras:{dur:F.dur||null,meet:F.meet||null,lang:F.lang||null,edate:F.edate||null,venue:F.venue||null,age:F.age||null,cuisine:F.cuisine||null,deliv:F.deliv||null,lead:F.lead||null,make:F.make||null,model:F.model||null,yr:F.yr||null,fuel:F.fuel||null,trans:F.trans||null,areas:F.areas||null,veh:F.veh||null,adv:F.adv||null,stock:F.stock||null,cond:F.cond||null,brand:F.brand||null,da:F.da||null,avail:F.avail||null,bills:F.bills||null,furn:F.furn||null,mates:F.mates||null,bath:F.bath||null,suits:F.suits||null,notice:F.co||null}};
     /* Who filled the form in, kept separately from who owns the result.
        Never read for permissions — that is exactly the distinction the
        ownership model exists to draw — but an on-behalf listing that has
@@ -1233,6 +1265,44 @@ async function publish(){
       err=error;listingId=data?.id||null;
     }
     if(err)throw err;
+
+    /* A restaurant's commerce facts do not fit on a listings row, which
+       is why one used to end up in price_night and read back as "/ night".
+       They live on restaurant_profiles, written here as a second call for
+       the same reason ownership is: a listing row anyone can write is not
+       the place to keep what a kitchen charges. If it fails the listing
+       is still live and still theirs; the menu builder will make the row
+       the moment they open it. */
+    if(F.svc==='food'&&listingId){
+      const eat=F.eat||'all';
+      const note=F.lead||'';
+      const cuisines=(F.cuisine||'').split(',').map(x=>x.trim()).filter(Boolean);
+      const numOrNull=v=>{const n=parseFloat(v);return isFinite(n)?n:null;};
+      const intOrNull=v=>{const n=parseInt(v,10);return isFinite(n)?n:null;};
+      const prof={
+        listing_id:listingId,
+        tagline:firstSentence(F.desc),
+        cuisines:cuisines,
+        signature_dish:F.sig||null,
+        currency:F.cur||'KES',
+        avg_price:numOrNull(F.price),
+        min_order:numOrNull(F.minorder),
+        delivery_fee:numOrNull(F.delfee),
+        delivery_mins:intOrNull(F.delmins),
+        serves_delivery:eat==='all'||eat==='delivery_pickup'||eat==='delivery',
+        serves_pickup:eat==='all'||eat==='delivery_pickup'||eat==='dine_pickup',
+        serves_dine_in:eat==='all'||eat==='dine_pickup'||eat==='dine',
+        halal:note.indexOf('halal')===0,
+        serves_alcohol:note.indexOf('bar')>-1,
+        opens_at:F.ci||null,
+        closes_at:F.co||null,
+        order_whatsapp:F.wa||null,
+        order_phone:F.ph||F.wa||null,
+        hero_photo:(pu.length?pu:F.photos)[0]||null
+      };
+      const{error:pErr}=await sb.from('restaurant_profiles').upsert(prof,{onConflict:'listing_id'});
+      if(pErr)console.warn('[add-listing] restaurant profile',pErr.message);
+    }
 
     /* Declare the ownership as a second, separate call, on purpose.
 
@@ -1268,14 +1338,56 @@ async function publish(){
           : window._eid
             ? '"'+F.title+'" has been updated.'
             : '"'+F.title+'" is now live on Cabana.';
-    document.getElementById('spv').textContent=F.cur+' '+Number(F.price).toLocaleString();
+    const spv=document.getElementById('spv'), spl=document.querySelector('.sp-l');
+    if(F.svc==='food'){
+      if(spl)spl.textContent='Next';
+      spv.textContent=F.price?('Menu, from '+F.cur+' '+Number(F.price).toLocaleString()):'Your menu';
+      const sa=document.querySelector('.sacts');
+      if(sa&&listingId){
+        sa.innerHTML='<a href="partner-menu.html?id='+encodeURIComponent(listingId)+'" class="sa-p">Build my menu</a>'
+          +'<a href="restaurant.html?id='+encodeURIComponent(listingId)+'" class="sa-g">See my page</a>';
+      }
+      const ss=document.getElementById('ssub');
+      if(ss&&!ownProblem&&!ON_BEHALF_OF&&F.own!=='on_behalf'&&!window._eid){
+        ss.textContent='"'+F.title+'" is live. It has no dishes on it yet, so the next five minutes are the ones that matter: name, price, Enter, one line per dish.';
+      }
+    } else {
+      spv.textContent=F.cur+' '+Number(F.price||0).toLocaleString();
+    }
   }catch(err){btn.classList.remove('loading');al('Something went wrong: '+(err.message||'Please try again.'));console.error(err);}
 }
 
 function loadEdit(l){
   const sm={'Apartment':'stays','House':'stays','Studio':'stays','Penthouse':'stays','Villa':'stays','Cottage':'stays','Serviced unit':'stays','Guesthouse':'stays','Lodge':'stays','Hostel':'stays','Airbnb unit':'stays','Beach house':'stays','room':'roommates','apartment':'stays','tour':'tours','event':'events','carhire':'carhire','ride':'rides','shopping':'shopping','Private room':'roommates','Shared room':'roommates','En-suite':'roommates','En-suite room':'roommates','Master bedroom':'roommates','Studio unit':'stays','Bedsitter':'stays','1-bed flat':'stays','Entire flat':'stays','Safari':'tours','Day trip':'tours','City tour':'tours','Cultural':'tours','Adventure':'tours','Hiking':'tours','Water sports':'tours','Photography':'tours','Night safari':'tours','Multi-day':'tours','Bird watching':'tours','Custom tour':'tours','Concert':'events','Festival':'events','Sports event':'events','Comedy show':'events','Conference':'events','Wedding':'events','Exhibition':'events','Theatre':'events','Networking':'events','Party':'events','Food festival':'events','Art showcase':'events','Restaurant':'food','Cafe':'food','Bar and grill':'food','Fast food':'food','Catering':'food','Food truck':'food','Bakery':'food','Rooftop bar':'food','Buffet':'food','Fine dining':'food','Pop-up':'food','Cloud kitchen':'food','Self-drive':'carhire','Chauffeur':'carhire','4x4 safari':'carhire','Minibus':'carhire','Luxury sedan':'carhire','Airport transfer':'carhire','Bus hire':'carhire','Motorcycle':'carhire','Tuk tuk':'carhire','Van or MPV':'carhire','Boda boda':'carhire','Coach':'carhire','Ride hailing':'rides','Shuttle':'rides','Corporate transfer':'rides','Long-distance':'rides','Handcraft':'shopping','Clothing':'shopping','Jewellery':'shopping','Art':'shopping','Electronics':'shopping','Food products':'shopping','Home decor':'shopping','Souvenirs':'shopping','Furniture':'shopping','Beauty':'shopping','Books':'shopping','Sport and outdoor':'shopping'};
-  F.svc=l.service||sm[l.type]||'stays';F.type=l.type||'';F.title=l.title||'';F.country=l.country||'Kenya';F.city=l.city||'';F.area=l.area||'';F.street=l.street||'';F.lat=l.latitude||null;F.lng=l.longitude||null;F.desc=l.description||'';F.feats=l.amenities||[];F.photos=l.photos||[];F.cur=l.currency||'KES';F.price=(l.service==='roommates'||l.type==='room')?(l.price_month?String(l.price_month):(l.price_night?String(l.price_night):'')):(l.price_night?String(l.price_night):'');F.pw=l.price_week?String(l.price_week):'';F.pm=l.price_month?String(l.price_month):'';F.dep=l.deposit?String(l.deposit):'';F.mn=String(((l.service==='roommates'||l.type==='room')?(l.min_nights||((l.extras&&l.extras.minmonths)*30)||90):(l.min_nights||1)));F.guests=l.max_guests||'2';F.mates=(l.extras&&l.extras.mates)||l.max_guests||'2';F.bath=(l.extras&&l.extras.bath)||'shared';F.suits=(l.extras&&l.extras.suits)||'anyone';F.avail=(l.extras&&l.extras.avail)||'';F.bills=(l.extras&&l.extras.bills)||'included';F.furn=(l.extras&&l.extras.furn)||'Fully furnished';F.beds=l.beds||'1';F.baths=l.baths||'1';F.floor=l.floor||'';F.sqm=l.sqm||'';F.wa=l.contact_whatsapp||'';F.ph=l.contact_phone||'';F.em=l.contact_email||'';F.ci=l.checkin_time||'14:00';F.co=l.checkout_time||'11:00';F.inst=l.instant_book!==false;F.ch=l.children!==false;F.pets=!!l.pets;F.smk=!!l.smoking;F.rules=l.house_rules||'';
+  F.svc=l.service||sm[l.type]||'stays';F.type=l.type||'';F.title=l.title||'';F.country=l.country||'Kenya';F.city=l.city||'';F.area=l.area||'';F.street=l.street||'';F.lat=l.latitude||null;F.lng=l.longitude||null;F.desc=l.description||'';F.feats=l.amenities||[];F.photos=l.photos||[];F.cur=l.currency||'KES';F.price=(l.service==='roommates'||l.type==='room')?(l.price_month?String(l.price_month):(l.price_night?String(l.price_night):'')):(l.price_night?String(l.price_night):'');F.pw=l.price_week?String(l.price_week):'';F.pm=l.price_month?String(l.price_month):'';F.dep=l.deposit?String(l.deposit):'';F.mn=String(((l.service==='roommates'||l.type==='room')?(l.min_nights||((l.extras&&l.extras.minmonths)*30)||90):(l.min_nights||1)));F.guests=l.max_guests||'2';F.seats=(l.service==='food'||l.type==='food')?(l.max_guests?String(l.max_guests):''):'';F.mates=(l.extras&&l.extras.mates)||l.max_guests||'2';F.bath=(l.extras&&l.extras.bath)||'shared';F.suits=(l.extras&&l.extras.suits)||'anyone';F.avail=(l.extras&&l.extras.avail)||'';F.bills=(l.extras&&l.extras.bills)||'included';F.furn=(l.extras&&l.extras.furn)||'Fully furnished';F.beds=l.beds||'1';F.baths=l.baths||'1';F.floor=l.floor||'';F.sqm=l.sqm||'';F.wa=l.contact_whatsapp||'';F.ph=l.contact_phone||'';F.em=l.contact_email||'';F.ci=l.checkin_time||'14:00';F.co=l.checkout_time||'11:00';F.inst=l.instant_book!==false;F.ch=l.children!==false;F.pets=!!l.pets;F.smk=!!l.smoking;F.rules=l.house_rules||'';
   if(l.extras){const e=l.extras;Object.assign(F,{dur:e.dur||'',meet:e.meet||'',lang:e.lang||'',edate:e.edate||'',venue:e.venue||'',age:e.age||'',cuisine:e.cuisine||'',deliv:e.deliv||'',lead:e.lead||'',make:e.make||'',model:e.model||'',yr:e.yr||'',fuel:e.fuel||'',trans:e.trans||'',areas:e.areas||'',veh:e.veh||'',adv:e.adv||'',stock:e.stock||'',cond:e.cond||'',brand:e.brand||'',da:e.da||'',avail:e.avail||'',bills:e.bills||'',furn:e.furn||''});}
+  /* A restaurant's numbers moved off the listings row, so an edit has to
+     go and get them. Without this, opening a live restaurant and pressing
+     save would quietly wipe its delivery fee and its hours back to blank. */
+  if(F.svc==='food'&&sb){
+    sb.from('restaurant_profiles').select('*').eq('listing_id',l.id).maybeSingle().then(({data:pr})=>{
+      if(!pr)return;
+      F.cuisine=(pr.cuisines||[]).join(', ')||F.cuisine;
+      F.sig=pr.signature_dish||'';
+      F.price=pr.avg_price!=null?String(pr.avg_price):'';
+      F.minorder=pr.min_order!=null?String(pr.min_order):'';
+      F.delfee=pr.delivery_fee!=null?String(pr.delivery_fee):'';
+      F.delmins=pr.delivery_mins!=null?String(pr.delivery_mins):'';
+      F.cur=pr.currency||F.cur;
+      F.ci=pr.opens_at||F.ci; F.co=pr.closes_at||F.co;
+      F.wa=pr.order_whatsapp||F.wa; F.ph=pr.order_phone||F.ph;
+      F.eat = pr.serves_delivery&&pr.serves_pickup&&pr.serves_dine_in ? 'all'
+            : pr.serves_delivery&&pr.serves_pickup ? 'delivery_pickup'
+            : pr.serves_dine_in&&pr.serves_pickup ? 'dine_pickup'
+            : pr.serves_delivery ? 'delivery' : 'dine';
+      F.lead = pr.halal&&pr.serves_alcohol ? 'halal_bar' : pr.halal ? 'halal'
+             : pr.serves_alcohol ? 'bar' : '';
+      restDet(); restPr();
+      const ci=document.getElementById('f-in'),co=document.getElementById('f-out');
+      if(ci&&F.ci)ci.value=F.ci; if(co&&F.co)co.value=F.co;
+    });
+  }
+
   document.getElementById('ctx').textContent='Edit listing';
 
   /* Load the ownership this listing already has. Without this, opening an

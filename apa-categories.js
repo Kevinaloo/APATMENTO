@@ -92,19 +92,27 @@
       }
     },
     {
+      /* Real kitchens with real menus, not a scraped directory. The rail
+         shows the dish, not the restaurant: a photographed plate with a
+         price is the only thing on a home screen that makes anyone hungry. */
       key: 'food',
       title: 'Food & restaurants',
       dest: 'food',
       fetch: function () {
-        return get('scraped_restaurants?active=eq.true&order=rating.desc.nullslast&limit=12');
+        /* Photographed plates first: a rail of unphotographed names is a
+           list, and a list has never made anybody hungry. */
+        return get('menu_items?is_available=eq.true'
+                 + '&select=id,name,price,promo_price,currency,photo,badge,listing_id,listings(title)'
+                 + '&order=photo.desc.nullslast,created_at.desc&limit=14');
       },
-      map: function (r) {
-        var mins = r.delivery_mins ? r.delivery_mins + ' min' : '';
+      map: function (d) {
+        var p = d.promo_price != null ? d.promo_price : d.price;
         return {
-          img: r.image_url,
-          title: r.name,
-          sub: [r.cuisine, r.area].filter(Boolean).join(' · '),
-          price: mins
+          img: d.photo,
+          title: d.name,
+          sub: (d.listings && d.listings.title) || 'On the menu',
+          price: money(p, d.currency),
+          to: 'restaurant.html?id=' + encodeURIComponent(d.listing_id)
         };
       }
     },
@@ -200,13 +208,16 @@
     (doc.head || doc.documentElement).appendChild(s);
   }
 
-  var PH = { events: '🎫', tours: '🦁', food: '🍽️', shopping: '🛍️', carhire: '🚗', roommates: '🏡' };
+  var PH = { events: '🎫', tours: '🦁', food: '🍲', shopping: '🛍️', carhire: '🚗', roommates: '🏡' };
 
   function cardHTML(cat, p) {
     var img = p.img
       ? '<img src="' + esc(p.img) + '" alt="" loading="lazy" decoding="async" onerror="this.remove()">'
       : '<span class="pc-ph">' + (PH[cat.key] || cat.name.charAt(0)) + '</span>';
-    return '<button type="button" class="pc" onclick="navigateToService(\'' + cat.dest + '\')">'
+    var go = p.to
+      ? 'location.href=\'' + esc(p.to).replace(/'/g, '%27') + '\''
+      : 'navigateToService(\'' + cat.dest + '\')';
+    return '<button type="button" class="pc" onclick="' + go + '">'
       + '<span class="pc-img">' + img + '</span>'
       + '<span class="pc-b">'
       + '<span class="pc-t">' + esc(p.title) + '</span>'

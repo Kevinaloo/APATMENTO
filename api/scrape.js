@@ -765,7 +765,12 @@ async function runFood(res) {
         website: tags.website || tags['contact:website'] || null,
         latitude: el.lat || (el.center && el.center.lat) || null,
         longitude: el.lon || (el.center && el.center.lon) || null,
-        hot: false, active: true,
+        /* Dormant on arrival. These are OpenStreetMap map pins, not Cabana
+           partners: nobody here has agreed to be listed, set a price or
+           typed a menu. They are a lead list for outreach, and showing
+           them to diners as if they were live kitchens is what put a
+           borrowed directory on the food page in the first place. */
+        hot: false, active: false,
         source: 'openstreetmap',
         scraped_at: new Date().toISOString(),
       };
