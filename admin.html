@@ -4404,7 +4404,7 @@ const GM_SERVICES = {
     amenities:['Guide included','Transport included','Meals included','Accommodation included','Group tours','Private tours','Child friendly'],
     tags:['Safari','Day trip','Hiking','Cultural','Beach','Bush walk','City tour','Night tour','Photographic'],
   },
-  food:{label:'Food & Dining',icon:'🍽️',priceLabel:'Avg order (KES)',priceKey:'price_night',
+  food:{label:'Food & Dining',icon:'🍽️',priceLabel:'Typical price of one main (KES)',priceKey:'price_night',profileTable:'restaurant_profiles',
     extraFields:['contact_whatsapp','contact_phone'],
     amenities:['Dine-in','Takeaway','Delivery','WiFi','Alcohol','Outdoor seating','AC','Kids menu','Parking','Card payment','Karaoke','Live music'],
     tags:['African','Fast food','Pizza','Burgers','Grill','Indian','Chinese','Italian','Vegan','Seafood','Breakfast','Rooftop'],
@@ -4899,10 +4899,32 @@ async function gmSave(){
         payload.is_active = true;
         payload.status = 'active';
       }
-      res = await sb.from('listings').insert(payload);
+      res = await sb.from('listings').insert(payload).select('id');
     }
 
     if(res.error) throw res.error;
+
+    /* A restaurant's money lives on restaurant_profiles, because a food row
+       carries no nightly rate and the database clears price_night for one.
+       Written here as a second call; if it fails the listing still saved,
+       and the partner's own menu builder will create the row. */
+    if(GM_TYPE==='food'){
+      const rid = GM_EDIT ? GM_EDIT.id : (res.data && res.data[0] && res.data[0].id);
+      const avg = parseFloat(payload.price_night);
+      if(rid){
+        const prof = {
+          listing_id: rid,
+          currency: payload.currency || 'KES',
+          order_whatsapp: payload.contact_whatsapp || null,
+          order_phone: payload.contact_phone || null,
+          hero_photo: (payload.photos||[])[0] || null
+        };
+        if(isFinite(avg) && avg > 0) prof.avg_price = avg;
+        const pr = await sb.from('restaurant_profiles')
+          .upsert(prof, { onConflict:'listing_id' });
+        if(pr.error) console.warn('[admin] restaurant profile', pr.error.message);
+      }
+    }
 
     gmMsg('✓ Saved successfully','ok');
     toast('Listing saved','ok');

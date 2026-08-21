@@ -268,7 +268,10 @@
           + '<div style="flex:1;min-width:0;">'
           + '<div class="apa-fav-name">' + (f.name || 'Saved place') + '</div>'
           + '<div class="apa-fav-meta">' + (f.location || '') + (f.type ? ' · ' + f.type : '') + '</div>'
-          + (f.price ? '<div class="apa-fav-price">KES ' + Number(f.price).toLocaleString() + ' / night</div>' : '')
+          /* The unit travels with the item. Hardcoding "/ night" here priced
+             a room by the night and would price a restaurant by it too. */
+          + (f.price ? '<div class="apa-fav-price">KES ' + Number(f.price).toLocaleString()
+              + (f.unit ? ' / ' + f.unit : '') + '</div>' : '')
           + '</div>'
           + '<button class="apa-fav-rm" onclick="event.preventDefault();event.stopPropagation();window.ApaChrome.removeFavorite(\'' + f.id + '\');return false;" aria-label="Remove">×</button>'
           + '</a>';
