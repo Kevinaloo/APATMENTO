@@ -316,7 +316,7 @@ window.CabanaPartners.register({
       '✅ ' + b.payment_type + ' · ' + b.payment_ref,
       b.notes ? '📝 ' + b.notes : '',
     ].filter(Boolean).join('\n');
-    return 'https://wa.me/254796818671?text=' + encodeURIComponent(msg);
+    return '/help.html?text=' + encodeURIComponent(msg);
   },
 });
 

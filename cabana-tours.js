@@ -324,10 +324,8 @@
       'Cabana takes no commission on the tour price. List a tour and it goes live once we have checked it over.</p>' +
       '<div class="ct-blank-acts">' +
         '<a class="ct-btn ct-btn-primary" href="/list-your-tour">' + ICON.plus + 'List a tour</a>' +
-        '<a class="ct-btn ct-btn-ghost" target="_blank" rel="noopener" ' +
-        'href="https://wa.me/254716206494?text=' +
-        encodeURIComponent('Hi Cabana, I run tours and I would like to list them.') +
-        '">Talk to us first</a>' +
+        '<a href="/help.html" data-cbn-support class="ct-btn ct-btn-ghost" ' +
+        '><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.7-.8L3 21l1.9-5.1A8.4 8.4 0 0 1 4 11.5 8.4 8.4 0 0 1 12.5 3 8.4 8.4 0 0 1 21 11.5z"/></svg> Talk to us first</a>' +
       '</div></div>';
   }
 
@@ -497,11 +495,14 @@
       window.CabanaTourBook.open(t);
       return;
     }
-    // Contact on this site is a WhatsApp widget, not a page, so the
-    // fallback goes to the number rather than a route that 404s.
-    window.open('https://wa.me/254716206494?text=' +
-      encodeURIComponent('Hi Cabana, I would like to book: ' + (t.title || '')),
-      '_blank', 'noopener');
+    /* No booking module on this page. Rather than drop the guest, open
+       support with the tour already named, so the request reaches a
+       person with its context attached. */
+    if (window.CabanaSupport) {
+      window.CabanaSupport.ask('I would like to book this tour: ' + (t.title || ''));
+      return;
+    }
+    window.location.href = '/help.html';
   }
 
   /* ── wiring ──────────────────────────────────────────────────────── */

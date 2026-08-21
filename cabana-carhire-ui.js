@@ -402,14 +402,10 @@
       <p style="color:var(--c-ink-2);font-size:15px;line-height:1.6;max-width:38ch;margin:0 auto">
         Your reference is <b style="font-family:var(--font-data)">${esc(ref)}</b>.
         ${saved ? 'The operator has it and will confirm shortly.'
-                : 'Save this reference and send it to us on WhatsApp so we can confirm.'}
+                : 'Save this reference and send it to us in the support chat so we can confirm.'}
       </p></div>`;
     $('ch-sheet-foot').innerHTML =
-      `<a class="ch-btn ch-btn-primary" style="flex:1;justify-content:center"
-          href="https://wa.me/254716206494?text=${encodeURIComponent(
-            `Cabana car hire ${ref}\n${v.make} ${v.model} ${v.year}\n${S.start} to ${S.end} (${d} days)\n` +
-            `${S.chauffeur ? 'With driver' : 'Self drive'}\nTotal ${E.KES(q ? q.total : 0)}\nName: ${name}`)}"
-          target="_blank" rel="noopener">Confirm on WhatsApp</a>`;
+      `<a href="/help.html" data-cbn-support data-cbn-prefill="${esc('Car hire reference ' + ref + '. Please confirm this booking.')}" class="ch-btn ch-btn-primary" style="flex:1;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.7-.8L3 21l1.9-5.1A8.4 8.4 0 0 1 4 11.5 8.4 8.4 0 0 1 12.5 3 8.4 8.4 0 0 1 21 11.5z"/></svg> Confirm in support chat</a>`;
   }
 
   /* ── Toast ─────────────────────────────────────────────────────── */

@@ -45,7 +45,7 @@ const CabanaChat = (() => {
     // Generic international
     { re:/(?:\+\d{1,3}[\s\-.]?)?\(?\d{3}\)?[\s\-.]?\d{3}[\s\-.]?\d{4}/g, tag:'phone' },
     // Raw 10+ digit strings
-    { re:/\b\d{10,}\b/g, tag:'phone' },
+    { re:/\b\d{10}\b/g, tag:'phone' },
     // Digits separated by punctuation / spaces (e.g. 07 16 206 494)
     { re:/\b0[\s._\-]*[17][\s._\-]*\d[\s._\-]*\d[\s._\-]*\d[\s._\-]*\d[\s._\-]*\d[\s._\-]*\d[\s._\-]*\d\b/g, tag:'phone' },
     // Digit groups spaced out (e.g. 07 16 206)
@@ -53,12 +53,12 @@ const CabanaChat = (() => {
 
     /* ── Word-coded numbers (bypass: "zero seven one six…") ────────────── */
     {
-      re:/\b(?:zero|oh|one|two|three|four|five|six|seven|eight|nine)(?:[\s\-_,]+(?:zero|oh|one|two|three|four|five|six|seven|eight|nine)){4,}\b/gi,
+      re:/\b(?:zero|oh|one|two|three|four|five|six|seven|eight|nine)(?:[\s\-_,]+(?:zero|oh|one|two|three|four|five|six|seven|eight|nine)){4}\b/gi,
       tag:'phone'
     },
     // Mixed word+digit bypass ("07 one six 206")
     {
-      re:/\b(?:\d+|zero|oh|one|two|three|four|five|six|seven|eight|nine)(?:[\s\-_,]+(?:\d+|zero|oh|one|two|three|four|five|six|seven|eight|nine)){4,}\b/gi,
+      re:/\b(?:\d+|zero|oh|one|two|three|four|five|six|seven|eight|nine)(?:[\s\-_,]+(?:\d+|zero|oh|one|two|three|four|five|six|seven|eight|nine)){4}\b/gi,
       tag:'phone'
     },
     // Ordinal / coded ("first digit is 0, second is 7…")
@@ -69,11 +69,11 @@ const CabanaChat = (() => {
     { re:/\b[0oOiIlL][7tT][1iIlL][6bB][zZ2][0oO][6bB]\b/g, tag:'phone' },
 
     /* ── Email ─────────────────────────────────────────────────────────── */
-    { re:/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g, tag:'email' },
+    { re:/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2}/g, tag:'email' },
     // Obfuscated: "name [at] domain [dot] com"
-    { re:/[a-zA-Z0-9._%+\-]+\s*[\[({]?\s*at\s*[\])}]?\s*[a-zA-Z0-9.\-]+\s*[\[({]?\s*dot\s*[\])}]?\s*[a-zA-Z]{2,}/gi, tag:'email' },
+    { re:/[a-zA-Z0-9._%+\-]+\s*[\[({]?\s*at\s*[\])}]?\s*[a-zA-Z0-9.\-]+\s*[\[({]?\s*dot\s*[\])}]?\s*[a-zA-Z]{2}/gi, tag:'email' },
     // "name at domain"
-    { re:/\b\w[\w.+\-]*\s+at\s+\w[\w.\-]*\.[a-zA-Z]{2,}\b/gi, tag:'email' },
+    { re:/\b\w[\w.+\-]*\s+at\s+\w[\w.\-]*\.[a-zA-Z]{2}\b/gi, tag:'email' },
 
     /* ── WhatsApp ───────────────────────────────────────────────────────── */
     { re:/wh?a?ts?[\s._\-]*a?pp?/gi, tag:'WhatsApp' },
@@ -105,8 +105,8 @@ const CabanaChat = (() => {
 
     /* ── URLs & websites ────────────────────────────────────────────────── */
     { re:/https?:\/\/[^\s]+/gi, tag:'link' },
-    { re:/(?:www\.)[a-zA-Z0-9\-]+\.[a-zA-Z]{2,}(?:\/\S*)?/gi, tag:'website' },
-    { re:/\b[a-zA-Z0-9\-]{3,}\.(?:com|co\.ke|ke|org|net|me|io|app|mobi|info|biz|tv|ng|tz|ug|rw)\b/gi, tag:'website' },
+    { re:/(?:www\.)[a-zA-Z0-9\-]+\.[a-zA-Z]{2}(?:\/\S*)?/gi, tag:'website' },
+    { re:/\b[a-zA-Z0-9\-]{3}\.(?:com|co\.ke|ke|org|net|me|io|app|mobi|info|biz|tv|ng|tz|ug|rw)\b/gi, tag:'website' },
 
     /* ── Referral to offline ────────────────────────────────────────────── */
     { re:/\b(?:meet|see|come|visit)\s+(?:me|us)\s+(?:at|in|near|around|by)\b/gi, tag:'offline meet' },
@@ -123,7 +123,7 @@ const CabanaChat = (() => {
       if (next !== text) { dirty = true; text = next; }
     }
     // Collapse consecutive removed-tags
-    text = text.replace(/(\[[\w\s]+ removed\][\s,;]*){2,}/g, m => m.split(']')[0] + ' removed]');
+    text = text.replace(/(\[[\w\s]+ removed\][\s,;]*){2}/g, m => m.split(']')[0] + ' removed]');
     return { text, scrubbed: dirty };
   }
 

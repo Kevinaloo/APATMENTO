@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<link rel="icon" href="/favicon.ico" sizes="any"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>Support desk — Cabana</title>
+<meta name="robots" content="noindex,nofollow"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"/>
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   CABANA · SUPPORT DESK
+   The operator side of the same conversation the guest is looking at.
+
+   Three columns, because an agent needs three things at once: what is
+   waiting, what is being said, and who is saying it. The right-hand
+   column is the whole point — a reply written while looking at the
+   guest's actual bookings is a different reply.
+
+   Everything here goes through /api/support with op: 'agent.*', which
+   checks admin_users on every single request. Nothing is trusted from
+   this page; it is a view, not an authority.
+══════════════════════════════════════════════════════════════════════ */
+:root{
+  --bg:#0A0A16; --panel:#12132A; --panel-2:#171938; --line:rgba(255,255,255,.075);
+  --line-2:rgba(255,255,255,.14); --ink:#F4F4FB; --soft:#A5A8C6; --faint:#6F7396;
+  --violet:#8B5CF6; --electric:#6D86FF; --mint:#4EE0C8; --gold:#F5B12E;
+  --ember:#FF6A3C; --rose:#FF3B5C;
+  --grad:linear-gradient(135deg,#6D28FF,#4F6DFF 58%,#4EE0C8);
+  --ease:cubic-bezier(.22,1,.36,1); --spring:cubic-bezier(.34,1.42,.44,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--ink);
+  -webkit-font-smoothing:antialiased;overflow:hidden}
+
+/* ── Shell ── */
+.top{height:56px;display:flex;align-items:center;gap:16px;padding:0 18px;
+  border-bottom:1px solid var(--line);background:var(--panel)}
+.top img{height:20px;width:auto}
+.top .tt{font:800 13px/1 'Geist','Inter',sans-serif;letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+.stats{display:flex;gap:7px;margin-left:auto;flex-wrap:wrap}
+.stat{padding:6px 12px;border-radius:100px;background:var(--panel-2);border:1px solid var(--line);
+  font:600 11.5px/1 'Inter',sans-serif;color:var(--soft);white-space:nowrap}
+.stat b{color:var(--ink);font-weight:800}
+.stat[data-hot="1"]{border-color:rgba(255,59,92,.42);background:rgba(255,59,92,.12);color:#FFB3C0}
+.top a.exit{font:600 12px/1 'Inter',sans-serif;color:var(--faint);text-decoration:none;
+  padding:8px 14px;border-radius:100px;border:1px solid var(--line)}
+.top a.exit:hover{color:var(--ink);border-color:var(--line-2)}
+
+.grid{display:grid;grid-template-columns:308px 1fr 300px;height:calc(100vh - 56px)}
+@media(max-width:1180px){.grid{grid-template-columns:280px 1fr}.ctx{display:none}}
+@media(max-width:820px){
+  .grid{grid-template-columns:1fr}
+  .queue{display:none}
+  body[data-view="queue"] .queue{display:flex}
+  body[data-view="queue"] .thread{display:none}
+}
+
+/* ── Queue ── */
+.queue{border-right:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;min-height:0}
+.qtabs{display:flex;gap:4px;padding:11px 11px 9px;border-bottom:1px solid var(--line)}
+.qtab{flex:1;padding:8px 6px;border:0;border-radius:10px;background:transparent;cursor:pointer;
+  font:700 11.5px/1 'Inter',sans-serif;color:var(--faint);transition:background .2s,color .2s}
+.qtab:hover{color:var(--soft);background:rgba(255,255,255,.04)}
+.qtab[aria-selected="true"]{background:rgba(109,40,255,.2);color:#C9B6FF}
+.qlist{flex:1;overflow-y:auto;padding:8px;scrollbar-width:thin;scrollbar-color:var(--line-2) transparent}
+.qlist::-webkit-scrollbar{width:7px}
+.qlist::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:100px}
+
+.q{padding:12px 13px;border-radius:14px;cursor:pointer;margin-bottom:6px;
+  border:1px solid transparent;transition:background .18s,border-color .18s,transform .18s var(--spring);
+  animation:fade .34s var(--ease) both}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.q:hover{background:var(--panel-2);transform:translateX(2px)}
+.q[data-on="1"]{background:rgba(109,40,255,.15);border-color:rgba(109,40,255,.4)}
+.q-h{display:flex;align-items:center;gap:7px;margin-bottom:5px}
+.q-n{font:700 13px/1.3 'Inter',sans-serif;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.q-t{font:500 10.5px/1 'Inter',sans-serif;color:var(--faint);flex:none}
+.q-p{font:400 12px/1.5 'Inter',sans-serif;color:var(--soft);
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.q-f{display:flex;gap:5px;margin-top:7px;flex-wrap:wrap}
+.pill{padding:3px 8px;border-radius:100px;font:700 9.5px/1.35 'Inter',sans-serif;
+  letter-spacing:.06em;text-transform:uppercase}
+.pill[data-k="urgent"]{background:rgba(255,59,92,.19);color:#FF8FA3}
+.pill[data-k="high"]{background:rgba(255,106,60,.17);color:#FFAE8C}
+.pill[data-k="normal"]{background:rgba(255,255,255,.07);color:var(--faint)}
+.pill[data-k="low"]{background:rgba(255,255,255,.05);color:var(--faint)}
+.pill[data-k="cat"]{background:rgba(109,134,255,.16);color:#A9B9FF}
+.pill[data-k="queued"]{background:rgba(245,177,46,.17);color:#FFD489}
+.pill[data-k="assigned"]{background:rgba(78,224,200,.15);color:#8CF0DF}
+.pill[data-k="waiting"]{background:rgba(255,255,255,.07);color:var(--soft)}
+.pill[data-k="frustrated"],.pill[data-k="angry"]{background:rgba(255,59,92,.16);color:#FF8FA3}
+.q-unread{min-width:19px;height:19px;padding:0 6px;border-radius:100px;background:var(--rose);
+  color:#fff;font:800 10.5px/19px 'Inter',sans-serif;text-align:center;flex:none}
+
+/* ── Thread ── */
+.thread{display:flex;flex-direction:column;min-height:0;background:var(--bg)}
+.th-top{padding:13px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;background:var(--panel)}
+.th-back{display:none;border:0;background:none;color:var(--soft);cursor:pointer;font-size:19px;padding:0 4px}
+@media(max-width:820px){.th-back{display:block}}
+.th-who{flex:1;min-width:0}
+.th-name{font:700 15px/1.25 'Geist','Inter',sans-serif;letter-spacing:-.2px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.th-meta{font:500 11.5px/1.4 'Inter',sans-serif;color:var(--faint);margin-top:3px;
+  display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+.th-acts{display:flex;gap:6px;flex:none}
+.ib{padding:8px 13px;border-radius:11px;border:1px solid var(--line-2);background:rgba(255,255,255,.05);
+  color:var(--ink);cursor:pointer;font:600 12px/1 'Inter',sans-serif;
+  transition:background .2s,transform .2s var(--spring),border-color .2s;display:inline-flex;align-items:center;gap:6px}
+.ib:hover{background:rgba(255,255,255,.12);transform:translateY(-1px)}
+.ib:disabled{opacity:.4;cursor:default;transform:none}
+.ib svg{width:14px;height:14px}
+.ib.call{background:var(--grad);border-color:transparent}
+.ib.done{background:rgba(78,224,200,.15);border-color:rgba(78,224,200,.35);color:#8CF0DF}
+
+.th-body{flex:1;overflow-y:auto;padding:20px 18px 10px;scrollbar-width:thin;scrollbar-color:var(--line-2) transparent}
+.th-body::-webkit-scrollbar{width:8px}
+.th-body::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:100px}
+
+.m{display:flex;margin-bottom:12px;animation:fade .34s var(--ease) both}
+.m-b{max-width:70%;padding:11px 15px;border-radius:17px;font:400 14px/1.6 'Inter',sans-serif;
+  white-space:pre-wrap;overflow-wrap:anywhere}
+.m-f{font:700 10px/1 'Inter',sans-serif;letter-spacing:.11em;text-transform:uppercase;
+  color:var(--faint);margin:0 0 6px 3px}
+.m-t{font:500 10.5px/1 'Inter',sans-serif;color:var(--faint);margin-top:5px;padding:0 3px}
+.m[data-r="user"] .m-b{background:var(--panel-2);border:1px solid var(--line);border-bottom-left-radius:6px}
+.m[data-r="apa"]{justify-content:flex-end}
+.m[data-r="apa"] .m-b{background:rgba(109,40,255,.17);border:1px solid rgba(109,40,255,.3);
+  color:#DED2FF;border-bottom-right-radius:6px}
+.m[data-r="apa"] .m-t,.m[data-r="apa"] .m-f{text-align:right}
+.m[data-r="agent"]{justify-content:flex-end}
+.m[data-r="agent"] .m-b{background:var(--grad);color:#fff;border-bottom-right-radius:6px;
+  box-shadow:0 4px 18px rgba(109,40,255,.28)}
+.m[data-r="agent"] .m-t,.m[data-r="agent"] .m-f{text-align:right}
+.m[data-r="system"]{justify-content:center}
+.m[data-r="system"] .m-b{max-width:88%;background:rgba(255,255,255,.035);border:1px dashed var(--line-2);
+  color:var(--faint);font-size:12px;text-align:center;border-radius:12px;padding:8px 13px}
+
+.th-foot{flex:none;padding:11px 14px calc(11px + env(safe-area-inset-bottom,0px));
+  border-top:1px solid var(--line);background:var(--panel)}
+.canned{display:flex;gap:6px;overflow-x:auto;padding-bottom:9px;scrollbar-width:none}
+.canned::-webkit-scrollbar{display:none}
+.cn{flex:none;padding:6px 12px;border-radius:100px;border:1px solid var(--line-2);
+  background:rgba(255,255,255,.04);color:var(--soft);cursor:pointer;
+  font:600 11.5px/1 'Inter',sans-serif;white-space:nowrap;transition:background .18s,color .18s}
+.cn:hover{background:rgba(109,40,255,.2);color:#C9B6FF;border-color:rgba(109,40,255,.4)}
+.rform{display:flex;align-items:flex-end;gap:8px;background:var(--panel-2);
+  border:1.5px solid var(--line);border-radius:18px;padding:6px 6px 6px 14px;transition:border-color .2s}
+.rform:focus-within{border-color:rgba(109,40,255,.55)}
+#reply{flex:1;border:0;background:none;outline:none;resize:none;color:var(--ink);
+  font:400 14px/1.55 'Inter',sans-serif;max-height:132px;min-height:24px;padding:6px 0}
+#reply::placeholder{color:var(--faint)}
+.sendb{width:38px;height:38px;flex:none;border:0;border-radius:12px;background:var(--grad);
+  color:#fff;cursor:pointer;display:grid;place-items:center;transition:transform .18s var(--spring),opacity .18s}
+.sendb:hover:not(:disabled){transform:scale(1.06)}
+.sendb:disabled{opacity:.35;cursor:default}
+.sendb svg{width:17px;height:17px}
+
+/* ── Context ── */
+.ctx{border-left:1px solid var(--line);background:var(--panel);overflow-y:auto;padding:16px 15px;
+  scrollbar-width:thin;scrollbar-color:var(--line-2) transparent}
+.ctx::-webkit-scrollbar{width:7px}
+.ctx::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:100px}
+.ctx h4{font:700 10.5px/1 'Inter',sans-serif;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--faint);margin:18px 0 9px}
+.ctx h4:first-child{margin-top:0}
+.cx{background:var(--panel-2);border:1px solid var(--line);border-radius:13px;padding:12px 13px;margin-bottom:8px}
+.cx-r{display:flex;justify-content:space-between;gap:10px;font:500 12px/1.6 'Inter',sans-serif;color:var(--soft)}
+.cx-r b{color:var(--ink);font-weight:600;text-align:right}
+.cx-t{font:700 12.5px/1.35 'Inter',sans-serif;margin-bottom:7px;color:var(--ink)}
+.sel{width:100%;padding:9px 11px;border-radius:11px;background:var(--panel-2);
+  border:1px solid var(--line-2);color:var(--ink);font:600 12.5px/1 'Inter',sans-serif;cursor:pointer;margin-bottom:7px}
+
+/* ── Call overlay ── */
+.callui{position:fixed;inset:0;z-index:200;display:none;place-items:center;
+  background:rgba(6,6,16,.9);backdrop-filter:blur(14px)}
+.callui[data-on="1"]{display:grid}
+.callcard{width:min(360px,calc(100vw - 40px));padding:34px 28px;border-radius:26px;text-align:center;
+  background:linear-gradient(165deg,#171938,#100B2E);border:1px solid var(--line-2);
+  box-shadow:0 34px 90px rgba(0,0,0,.6);animation:pop .4s var(--spring) both}
+@keyframes pop{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:none}}
+.callav{width:82px;height:82px;border-radius:50%;background:var(--grad);margin:0 auto 18px;
+  display:grid;place-items:center;font-size:32px;box-shadow:0 14px 44px rgba(109,40,255,.5);position:relative}
+.callav::after{content:'';position:absolute;inset:-6px;border-radius:50%;
+  border:2px solid rgba(109,40,255,.5);animation:ring 2.4s var(--ease) infinite}
+@keyframes ring{0%{transform:scale(1);opacity:.8}70%,100%{transform:scale(1.35);opacity:0}}
+.callui[data-phase="active"] .callav::after{animation:none;opacity:0}
+.callname{font:700 18px/1.25 'Geist','Inter',sans-serif;margin-bottom:6px}
+.callsub{font:500 13px/1.5 'Inter',sans-serif;color:var(--soft);min-height:20px}
+.calltime{font:700 15px/1 ui-monospace,Menlo,monospace;color:var(--mint);margin-top:10px;min-height:16px}
+.callbtns{display:flex;gap:13px;justify-content:center;margin-top:24px}
+.cb{width:54px;height:54px;border-radius:50%;border:1px solid var(--line-2);
+  background:rgba(255,255,255,.08);color:#fff;cursor:pointer;display:grid;place-items:center;
+  transition:transform .2s var(--spring),background .2s}
+.cb:hover{transform:translateY(-2px) scale(1.06);background:rgba(255,255,255,.16)}
+.cb svg{width:21px;height:21px}
+.cb[data-kind="end"]{background:var(--rose);border-color:transparent}
+.cb[data-on="1"]{background:#fff;color:#111}
+
+/* ── Incoming call banner ── */
+.ring{position:fixed;top:14px;right:14px;z-index:210;width:min(320px,calc(100vw - 28px));
+  padding:15px 17px;border-radius:20px;background:linear-gradient(135deg,#6D28FF,#4F6DFF);
+  box-shadow:0 22px 60px rgba(109,40,255,.5);display:none;animation:slidein .42s var(--spring) both}
+.ring[data-on="1"]{display:block}
+@keyframes slidein{from{opacity:0;transform:translateX(22px)}to{opacity:1;transform:none}}
+.ring .rt{font:800 14px/1.3 'Geist','Inter',sans-serif;margin-bottom:3px}
+.ring .rs{font:500 12px/1.45 'Inter',sans-serif;color:rgba(255,255,255,.78);margin-bottom:12px}
+.ring .rb{display:flex;gap:8px}
+.ring button{flex:1;padding:9px;border:0;border-radius:11px;cursor:pointer;font:700 12.5px/1 'Inter',sans-serif}
+.ring .acc{background:#fff;color:#3B1E9E}
+.ring .dec{background:rgba(255,255,255,.16);color:#fff}
+
+.empty{display:grid;place-items:center;height:100%;text-align:center;padding:40px;color:var(--faint)}
+.empty div{font-size:36px;margin-bottom:12px;opacity:.5}
+.empty p{font:500 13.5px/1.6 'Inter',sans-serif;max-width:280px}
+.gate{display:grid;place-items:center;height:100vh;text-align:center;padding:40px}
+.gate h1{font:700 22px/1.3 'Geist','Inter',sans-serif;margin-bottom:8px}
+.gate p{font:500 14px/1.6 'Inter',sans-serif;color:var(--soft);max-width:380px;margin-bottom:20px}
+.gate a{padding:12px 24px;border-radius:100px;background:var(--grad);color:#fff;
+  text-decoration:none;font:700 14px/1 'Inter',sans-serif}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body data-view="queue">
+
+<div id="gate" class="gate" style="display:none">
+  <div>
+    <h1>Support desk</h1>
+    <p id="gate-msg">Sign in with a Cabana team account to open the desk.</p>
+    <a href="/auth.html">Sign in</a>
+  </div>
+</div>
+
+<div id="app" style="display:none">
+
+  <header class="top">
+    <img src="/cabana-wordmark-white.png" alt="Cabana" onerror="this.remove()"/>
+    <span class="tt">Support desk</span>
+    <div class="stats" id="stats"></div>
+    <a class="exit" href="/admin.html">Admin →</a>
+  </header>
+
+  <div class="grid">
+
+    <aside class="queue">
+      <div class="qtabs" role="tablist">
+        <button class="qtab" role="tab" data-filter="open" aria-selected="true">Open</button>
+        <button class="qtab" role="tab" data-filter="mine" aria-selected="false">Mine</button>
+        <button class="qtab" role="tab" data-filter="resolved" aria-selected="false">Closed</button>
+      </div>
+      <div class="qlist" id="qlist"></div>
+    </aside>
+
+    <section class="thread">
+      <div class="th-top">
+        <button class="th-back" id="back" aria-label="Back to queue">←</button>
+        <div class="th-who">
+          <div class="th-name" id="th-name">Nothing selected</div>
+          <div class="th-meta" id="th-meta">Pick a conversation from the queue</div>
+        </div>
+        <div class="th-acts">
+          <button class="ib call" id="btn-call" disabled title="Call this guest in the app">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1A19.5 19.5 0 0 1 4.7 12a19.8 19.8 0 0 1-3.1-8.6A2 2 0 0 1 3.6 1.2h3a2 2 0 0 1 2 1.7 12.8 12.8 0 0 0 .7 2.8 2 2 0 0 1-.5 2.1L7.9 8.4a16 16 0 0 0 7.7 7.7l1.7-.9a2 2 0 0 1 2.1.5 12.8 12.8 0 0 0 2.8.7 2 2 0 0 1 1.8 2z"/></svg>
+            Call
+          </button>
+          <button class="ib" id="btn-claim" disabled>Claim</button>
+          <button class="ib done" id="btn-resolve" disabled>Resolve</button>
+        </div>
+      </div>
+
+      <div class="th-body" id="th-body">
+        <div class="empty"><div>✦</div><p>Choose a conversation. Everything the guest has said — including to APA — is right here.</p></div>
+      </div>
+
+      <div class="th-foot">
+        <div class="canned" id="canned"></div>
+        <form class="rform" id="rform">
+          <textarea id="reply" rows="1" placeholder="Reply as Cabana…" maxlength="4000" disabled></textarea>
+          <button class="sendb" id="send" type="submit" disabled aria-label="Send">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4 20-7z"/></svg>
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <aside class="ctx" id="ctx">
+      <div class="empty" style="height:auto;padding:20px 0"><p>Guest context appears here.</p></div>
+    </aside>
+  </div>
+</div>
+
+<div class="ring" id="ring" role="alert">
+  <div class="rt">📞 Incoming call</div>
+  <div class="rs" id="ring-who">Someone is calling from the app</div>
+  <div class="rb">
+    <button class="acc" id="ring-accept" type="button">Answer</button>
+    <button class="dec" id="ring-decline" type="button">Decline</button>
+  </div>
+</div>
+
+<div class="callui" id="callui" data-phase="idle">
+  <div class="callcard">
+    <div class="callav">✦</div>
+    <div class="callname" id="call-name">Cabana call</div>
+    <div class="callsub" id="call-sub">Connecting…</div>
+    <div class="calltime" id="call-time"></div>
+    <div class="callbtns">
+      <button class="cb" id="call-mute" type="button" aria-label="Mute">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 19v3"/></svg>
+      </button>
+      <button class="cb" data-kind="end" id="call-end" type="button" aria-label="End call">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 9c-1.9 0-3.7.3-5.4.9v3.6c0 .5-.3.9-.7 1.1-1.2.6-2.3 1.4-3.3 2.3-.2.2-.5.3-.8.3s-.6-.1-.8-.3l-1.6-1.6a1 1 0 0 1 0-1.5C2.9 10.7 7.2 9 12 9s9.1 1.7 12.6 4.8a1 1 0 0 1 0 1.5L23 16.9c-.2.2-.5.3-.8.3s-.6-.1-.8-.3c-1-.9-2.1-1.7-3.3-2.3a1.2 1.2 0 0 1-.7-1.1V9.9C15.7 9.3 13.9 9 12 9z"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script src="/vendor-supabase-2.112.3.js"></script>
+<script src="/apa-session.js"></script>
+<script src="/cabana-call.js"></script>
+<script src="/support-console.js"></script>
+</body>
+</html>

@@ -27,7 +27,11 @@
      pages, not consumer ones — the roster console lives on the gateway, so
      bouncing an admin away from it would make the roster unmanageable. */
   var ALLOW = ['/admin.html', '/auth.html', '/offline.html',
-               '/ambassadors.html', '/ambassador-dashboard.html'];
+               '/ambassadors.html', '/ambassador-dashboard.html',
+               /* The support desk is an operator surface. Bouncing an
+                  agent off it to the console would mean nobody could
+                  ever answer a guest. */
+               '/support-console.html'];
 
   var doc = global.document;
 

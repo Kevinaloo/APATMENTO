@@ -22,6 +22,7 @@
 
 import crypto from 'node:crypto';
 import { hasInternalSecret, isCronAuthorized, setCors } from './lib/_security.js';
+import { sendTemplateAsync } from './lib/_mail.js';
 
 const VAPID_PUBLIC  = process.env.VAPID_PUBLIC_KEY;
 const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY;
@@ -145,6 +146,46 @@ async function sendOne(sub, payloadObj) {
 }
 
 /* ── thin Supabase REST helper (service role) ────────────────────── */
+/* ── Email mirror ────────────────────────────────────────────────────
+   Kinds that are genuinely worth an inbox. A "someone viewed your
+   listing" nudge is not; a booking, a payment, a support reply or an
+   incoming call is. Consent and deduplication are handled inside
+   sendTemplate, so this only has to decide relevance. */
+const EMAIL_WORTHY = new Set(['booking', 'payment', 'support', 'call', 'security', 'payout', 'urgent']);
+
+async function mirrorToEmail({ user_id, title, body, url, kind, email, force }) {
+  if (!force && !EMAIL_WORTHY.has(kind)) return false;
+  let to = email;
+  let firstName = null;
+  if (!to && user_id) {
+    try {
+      const rows = await supa(`profiles?id=eq.${user_id}&select=email,first_name`);
+      to = rows && rows[0] && rows[0].email;
+      firstName = (rows && rows[0] && rows[0].first_name) || null;
+    } catch (e) { return false; }
+  }
+  if (!to) return false;
+
+  const res = await sendTemplateAsync({
+    template: 'notification',
+    to,
+    userId: user_id || null,
+    /* One email per notification, even if the caller retries. The
+       minute-level stamp lets a genuinely repeated alert through while
+       stopping a retry storm. */
+    dedupeKey: `notify:${user_id || to}:${kind}:${title}`.slice(0, 200) + ':' + new Date().toISOString().slice(0, 16),
+    data: {
+      name: firstName,
+      email: to, title, body, url,
+      label: kind === 'call' ? 'Open the call' : kind === 'support' ? 'Open the conversation' : 'Open Cabana',
+      emoji: kind === 'booking' ? '🗓️' : kind === 'payment' ? '💳'
+           : kind === 'support' ? '💬' : kind === 'call' ? '📞'
+           : kind === 'payout' ? '💸' : '🔔',
+    },
+  });
+  return !!(res && res.ok && !res.skipped);
+}
+
 async function supa(path, opts = {}) {
   const res = await fetch(`${SUPA_URL}/rest/v1/${path}`, {
     ...opts,
@@ -271,7 +312,8 @@ export default async function handler(req, res) {
     }
 
     if (!subs.length) {
-      return res.status(200).json({ sent: 0, persisted: !!(persist && user_id) });
+      const mailed = await mirrorToEmail({ user_id, title, body, url, kind, email: b.email, force: b.email_always });
+      return res.status(200).json({ sent: 0, persisted: !!(persist && user_id), emailed: mailed });
     }
 
     const payload = { title, body, url, kind, icon: '/logo-mark.png', tag: kind };
@@ -281,11 +323,22 @@ export default async function handler(req, res) {
       })))
     );
 
+    /* Push is best-effort by design: a revoked endpoint, a phone that has
+       not woken since Tuesday, a browser that never granted permission.
+       When nothing landed, the notification still has to reach the person,
+       so it goes out as email. That is what makes a notification a
+       notification rather than a hope. */
+    const delivered = results.filter(r => r.ok).length;
+    const mailed = (delivered === 0 || b.email_always)
+      ? await mirrorToEmail({ user_id, title, body, url, kind, email: b.email, force: b.email_always })
+      : false;
+
     return res.status(200).json({
-      sent: results.filter(r => r.ok).length,
+      sent: delivered,
       pruned: results.filter(r => r.pruned).length,
       total: results.length,
       persisted: !!(persist && user_id),
+      emailed: mailed,
       results,
     });
   } catch (err) {

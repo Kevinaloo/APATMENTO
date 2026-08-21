@@ -76,14 +76,18 @@ def org():
                        {"@type": "Place", "name": "Worldwide"}],
         "currenciesAccepted": "KES, NGN, GHS, ZAR, TZS, UGX, RWF, USD, EUR, GBP",
         "paymentAccepted": "M-Pesa, MTN MoMo, Airtel Money, Visa, Mastercard, Bank transfer",
-        "telephone": "+254716206494",
+        # No "telephone". Cabana does not run a public phone line: support
+        # is in-app chat and an in-app voice call. Publishing a number in
+        # structured data would put one into a knowledge panel that
+        # nobody answers, which is worse than publishing none.
         "email": "connect@cabana.africa",
         "contactPoint": [
-            {"@type": "ContactPoint", "telephone": "+254716206494",
+            {"@type": "ContactPoint",
              "email": "connect@cabana.africa", "contactType": "customer support",
+             "url": f"{SITE}/help.html",
              "availableLanguage": ["English", "Swahili", "French", "Arabic", "Portuguese"],
              "areaServed": "Africa"},
-            {"@type": "ContactPoint", "email": "partners@cabana.africa",
+            {"@type": "ContactPoint", "email": "partnership@cabana.africa",
              "contactType": "sales", "name": "Host & operator onboarding",
              "availableLanguage": ["English", "Swahili", "French"], "areaServed": "Africa"},
         ],

@@ -720,10 +720,8 @@ function buildPartnerContact(b) {
       + 'background:rgba(255,149,0,.07);border:1px solid rgba(255,149,0,.2);'
       + 'font-size:12.5px;color:var(--ink-soft);line-height:1.6;">'
       + '<strong>Need to reach your host?</strong> '
-      + '<a href="https://wa.me/254716206494?text='
-      + encodeURIComponent('Hi, I need my host\'s contact for booking ' + ref)
-      + '" target="_blank" rel="noopener" style="color:var(--theme);font-weight:600;text-decoration:none;">WhatsApp us</a>'
-      + ' or call <a href="tel:+254716206494" style="color:var(--theme);font-weight:600;text-decoration:none;">+254 716 206 494</a>'
+      + '<a href="/help.html" data-cbn-support style="color:var(--theme);font-weight:600;text-decoration:none;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.7-.8L3 21l1.9-5.1A8.4 8.4 0 0 1 4 11.5 8.4 8.4 0 0 1 12.5 3 8.4 8.4 0 0 1 21 11.5z"/></svg> In-app chat us</a>'
+      + ' or call <a href="/help.html" data-cbn-call  style="color:var(--theme);font-weight:600;text-decoration:none;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1A19.5 19.5 0 0 1 4.7 12a19.8 19.8 0 0 1-3.1-8.6A2 2 0 0 1 3.6 1.2h3a2 2 0 0 1 2 1.7 12.8 12.8 0 0 0 .7 2.8 2 2 0 0 1-.5 2.1L7.9 8.4a16 16 0 0 0 7.7 7.7l1.7-.9a2 2 0 0 1 2.1.5 12.8 12.8 0 0 0 2.8.7 2 2 0 0 1 1.8 2z"/></svg> Call us in the app</a>'
       + '</div>';
   }
 
@@ -1043,6 +1041,9 @@ bindTabs();
   <script src="/apa-signal.js" defer></script>
 <script src="/apa-ask.js?v=2" defer></script>
 <script src="/apa-contact.js" defer></script>
+<script src="/cabana-call.js" defer></script>
+<script src="/cabana-support.js" defer></script>
+<script src="/cabana-lifecycle.js" defer></script>
 </body>
 </html>
   <div style="display:flex;align-items:center;gap:8px;"><button class="apa-ico" id="apa-fav-btn" data-apa="fav" type="button" aria-label="Saved places" title="Saved places" style="display:none;" data-when="user">

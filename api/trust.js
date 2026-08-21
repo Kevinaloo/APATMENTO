@@ -18,6 +18,9 @@
      /api/deposit-balance      → /api/trust?action=deposit-balance
      /api/verify-checkin       → /api/trust?action=verify-checkin
      /api/check-payment-status → /api/trust?action=check-payment-status
+     /api/ask-apa              → /api/trust?action=ask-apa
+     /api/support              → /api/trust?action=support
+     /api/call                 → /api/trust?action=call
 ══════════════════════════════════════════════════════════════ */
 
 import matchGuest         from './lib/_match-guest.js';
@@ -25,7 +28,9 @@ import checkinIssue       from './lib/_checkin-issue.js';
 import depositBalance     from './lib/_deposit-balance.js';
 import verifyCheckin      from './lib/_verify-checkin.js';
 import checkPaymentStatus from './lib/_check-payment-status.js';
-import askApa           from './lib/_ask-apa.js';
+import askApa             from './lib/_ask-apa.js';
+import support            from './lib/_support.js';
+import call               from './lib/_call.js';
 
 const ROUTES = {
   'match-guest':          matchGuest,
@@ -34,26 +39,38 @@ const ROUTES = {
   'verify-checkin':       verifyCheckin,
   'check-payment-status': checkPaymentStatus,
   'ask-apa':              askApa,
+  'support':              support,
+  'call':                 call,
 };
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  if (req.method === 'OPTIONS') return res.status(200).end();
-
   /* The rewrite supplies `action`. A direct caller may too. Anything
      else is a 404. We do not guess at intent. */
   const action = req.query?.action;
   const route = ROUTES[action];
 
   if (!route) {
+    /* Only the unknown-action path gets its CORS from the router,
+       because there is no handler to ask. */
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    if (req.method === 'OPTIONS') return res.status(200).end();
     return res.status(404).json({
       error: 'unknown_action',
       action: action || null,
       available: Object.keys(ROUTES),
     });
   }
+
+  /* CORS, including the preflight, belongs to the handler.
+
+     The router used to set `Access-Control-Allow-Origin: *` here and
+     answer OPTIONS itself. That was fine while every module behind it
+     wanted `*` — but support and call deliberately restrict themselves
+     to Cabana's own origins, and a blanket header set first would have
+     been the one the browser saw for a preflight. A door cannot be
+     narrower than the hallway in front of it. */
 
   try {
     return await route(req, res);

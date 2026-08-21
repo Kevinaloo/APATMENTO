@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<link rel="icon" href="/favicon.ico" sizes="any"/>
+<link rel="apple-touch-icon" href="/cabana-apple-touch-icon.png"/>
+<meta name="apple-mobile-web-app-title" content="Cabana"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>Help &amp; Support — Cabana</title>
+<meta name="description" content="Get help with a Cabana booking. Chat with APA for an instant answer from live data, or reach a real person — by message or an in-app voice call. connect@cabana.africa for guests, partnership@cabana.africa for hosts and operators."/>
+<link rel="canonical" href="https://cabana.africa/help"/>
+<meta property="og:site_name" content="Cabana"/>
+<meta property="og:title" content="Help &amp; Support — Cabana"/>
+<meta property="og:description" content="Chat with APA for an instant answer, or reach a real person by message or in-app call."/>
+<meta property="og:url" content="https://cabana.africa/help"/>
+<meta property="og:type" content="website"/>
+<meta property="og:image" content="https://cabana.africa/og-home.jpg"/>
+<meta name="twitter:card" content="summary_large_image"/>
+
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" media="print" onload="this.media='all';this.onload=null"/>
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"/></noscript>
+<link rel="stylesheet" href="/brand.css"/>
+<link rel="stylesheet" href="/cabana-support.css"/>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-body,Inter,system-ui,sans-serif);background:var(--glass-2,#F5F5FC);color:var(--ink,#08080F);line-height:1.65;-webkit-font-smoothing:antialiased}
+
+.hnav{height:64px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 26px;background:rgba(255,255,255,.82);backdrop-filter:blur(18px);
+  border-bottom:1px solid var(--line,rgba(8,8,15,.07));position:sticky;top:0;z-index:60}
+.hnav img{height:24px;width:auto;display:block}
+.hnav a.back{font:600 13px/1 var(--font-body);color:var(--ink-soft,#474A66);text-decoration:none;
+  padding:9px 16px;border-radius:100px;border:1px solid var(--line,rgba(8,8,15,.08));transition:background .2s,transform .2s}
+.hnav a.back:hover{background:#fff;transform:translateY(-1px)}
+
+/* ── Hero ── */
+.hero{position:relative;overflow:hidden;padding:76px 26px 64px;text-align:center;
+  background:linear-gradient(165deg,#100B2E 0%,#1B1046 46%,#0A0A18 100%);color:#fff}
+.hero::after{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(900px 420px at 50% -10%,rgba(109,40,255,.42),transparent 65%),
+             radial-gradient(600px 300px at 88% 110%,rgba(78,224,200,.18),transparent 60%)}
+.hero-in{position:relative;z-index:1;max-width:720px;margin:0 auto}
+.hero .badge{display:inline-flex;align-items:center;gap:8px;padding:7px 16px;border-radius:100px;
+  background:rgba(78,224,200,.1);border:1px solid rgba(78,224,200,.22);
+  font:700 11px/1 var(--font-body);letter-spacing:.15em;text-transform:uppercase;color:#4EE0C8;margin-bottom:22px}
+.hero .badge i{width:6px;height:6px;border-radius:50%;background:#4EE0C8;box-shadow:0 0 9px #4EE0C8;
+  animation:hpulse 2.4s ease-in-out infinite;font-style:normal}
+@keyframes hpulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(.8)}}
+.hero h1{font-family:var(--font-display,Geist,Inter,sans-serif);font-size:clamp(32px,5.4vw,52px);
+  font-weight:300;letter-spacing:-.03em;line-height:1.08;margin-bottom:16px}
+.hero h1 em{font-style:italic;font-weight:500;
+  background:linear-gradient(120deg,#C3AEFA,#4EE0C8);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{font-size:16px;color:rgba(255,255,255,.6);max-width:540px;margin:0 auto 32px;line-height:1.65}
+
+.hero-acts{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.hbtn{display:inline-flex;align-items:center;gap:9px;padding:15px 28px;border:0;border-radius:100px;
+  font:700 15px/1 var(--font-body);cursor:pointer;text-decoration:none;
+  transition:transform .24s cubic-bezier(.34,1.4,.44,1),box-shadow .24s,background .24s}
+.hbtn svg{width:18px;height:18px}
+.hbtn.primary{background:linear-gradient(135deg,#6D28FF,#4F6DFF 58%,#4EE0C8);color:#fff;
+  box-shadow:0 12px 34px rgba(109,40,255,.42)}
+.hbtn.primary:hover{transform:translateY(-3px) scale(1.02);box-shadow:0 18px 46px rgba(109,40,255,.55)}
+.hbtn.ghost{background:rgba(255,255,255,.07);color:#fff;border:1px solid rgba(255,255,255,.18)}
+.hbtn.ghost:hover{transform:translateY(-3px);background:rgba(255,255,255,.14)}
+
+/* ── Body ── */
+.wrap{max-width:940px;margin:0 auto;padding:56px 26px 90px}
+.lead{text-align:center;margin-bottom:40px}
+.lead h2{font-family:var(--font-display,Geist,Inter,sans-serif);font-size:28px;font-weight:600;
+  letter-spacing:-.5px;margin-bottom:8px}
+.lead p{font-size:15px;color:var(--ink-soft,#474A66);max-width:560px;margin:0 auto}
+
+.kb{display:grid;gap:12px;margin-bottom:52px}
+.kb-item{background:#fff;border:1px solid var(--line,rgba(8,8,15,.07));border-radius:18px;overflow:hidden;
+  transition:border-color .22s,box-shadow .22s,transform .22s}
+.kb-item:hover{border-color:rgba(109,40,255,.3);box-shadow:0 10px 30px rgba(109,40,255,.09);transform:translateY(-1px)}
+.kb-item summary{cursor:pointer;list-style:none;padding:19px 22px;display:flex;align-items:center;
+  justify-content:space-between;gap:14px;font:600 15.5px/1.45 var(--font-body);color:var(--ink,#08080F)}
+.kb-item summary::-webkit-details-marker{display:none}
+.kb-chev{width:26px;height:26px;flex:none;border-radius:9px;background:var(--glass-2,#F5F5FC);
+  display:grid;place-items:center;transition:transform .3s cubic-bezier(.22,1,.36,1),background .22s}
+.kb-item[open] .kb-chev{transform:rotate(180deg);background:rgba(109,40,255,.12)}
+.kb-chev svg{width:13px;height:13px;color:var(--ink-soft,#474A66)}
+.kb-a{padding:0 22px 20px;font-size:14.5px;color:var(--ink-soft,#474A66);line-height:1.72}
+.kb-a a{color:var(--electric,#4F6DFF);font-weight:600;text-decoration:none}
+.kb-a a:hover{text-decoration:underline}
+.kb-ask{margin-top:14px;display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:100px;
+  border:1px solid rgba(109,40,255,.28);background:rgba(109,40,255,.06);color:var(--violet,#6D28FF);
+  font:600 12.5px/1 var(--font-body);cursor:pointer;transition:background .2s,transform .2s}
+.kb-ask:hover{background:rgba(109,40,255,.13);transform:translateY(-1px)}
+
+.chan{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.chan-c{background:#fff;border:1px solid var(--line,rgba(8,8,15,.07));border-radius:20px;padding:24px;
+  text-decoration:none;color:inherit;display:block;width:100%;text-align:left;font:inherit;cursor:pointer;transition:transform .24s cubic-bezier(.22,1,.36,1),box-shadow .24s,border-color .24s}
+.chan-c:hover{transform:translateY(-4px);box-shadow:0 18px 46px rgba(8,8,15,.1);border-color:rgba(109,40,255,.28)}
+.chan-ico{width:46px;height:46px;border-radius:15px;display:grid;place-items:center;margin-bottom:14px}
+.chan-ico svg{width:22px;height:22px;color:#fff}
+.chan-c h3{font:700 16px/1.3 var(--font-display,var(--font-body));margin-bottom:5px;letter-spacing:-.2px}
+.chan-c p{font-size:13.5px;color:var(--ink-soft,#474A66);line-height:1.6}
+.chan-c b{color:var(--violet,#6D28FF)}
+
+.note{margin-top:44px;padding:24px 26px;border-radius:20px;background:rgba(109,40,255,.05);
+  border:1px solid rgba(109,40,255,.16);font-size:14px;color:var(--ink-soft,#474A66);line-height:1.75}
+.note strong{color:var(--ink,#08080F)}
+
+footer.hfoot{padding:34px 26px 46px;text-align:center;border-top:1px solid var(--line,rgba(8,8,15,.07))}
+footer.hfoot img{height:30px;width:auto;opacity:.85;margin-bottom:12px}
+footer.hfoot p{font-size:12.5px;color:var(--ink-faint,#8B8EAC)}
+footer.hfoot a{color:var(--electric,#4F6DFF);text-decoration:none;font-weight:600}
+
+@media (prefers-color-scheme:dark){
+  body{background:#0B0B18;color:#F4F4FB}
+  .hnav{background:rgba(15,16,34,.82);border-bottom-color:rgba(255,255,255,.08)}
+  .hnav a.back{color:#A9ACC8;border-color:rgba(255,255,255,.1)}
+  .kb-item,.chan-c{background:#14152B;border-color:rgba(255,255,255,.08)}
+  .kb-item summary{color:#F4F4FB}
+  .kb-a,.chan-c p,.lead p,.note{color:#A9ACC8}
+  .kb-chev{background:#0F1022}
+  footer.hfoot{border-top-color:rgba(255,255,255,.08)}
+}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<nav class="hnav">
+  <a href="/index.html" aria-label="Cabana home"><img src="/cabana-wordmark-color.png" alt="Cabana" onerror="this.outerHTML='<strong>CABANA</strong>'"/></a>
+  <a class="back" href="/index.html">← Back to Cabana</a>
+</nav>
+
+<header class="hero">
+  <div class="hero-in">
+    <div class="badge"><i></i> Support · always open</div>
+    <h1>Talk to us the<br/><em>way you'd talk to a friend.</em></h1>
+    <p>
+      APA answers instantly, from live prices, real availability and your own bookings — not from a help article.
+      When you need a person, she hands the whole conversation over, and you never explain it twice.
+    </p>
+    <div class="hero-acts">
+      <button class="hbtn primary" type="button" data-cbn-support>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.7-.8L3 21l1.9-5.1A8.4 8.4 0 0 1 4 11.5 8.4 8.4 0 0 1 12.5 3 8.4 8.4 0 0 1 21 11.5z"/></svg>
+        Start a conversation
+      </button>
+      <button class="hbtn ghost" type="button" data-cbn-call>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1A19.5 19.5 0 0 1 4.7 12a19.8 19.8 0 0 1-3.1-8.6A2 2 0 0 1 3.6 1.2h3a2 2 0 0 1 2 1.7 12.8 12.8 0 0 0 .7 2.8 2 2 0 0 1-.5 2.1L7.9 8.4a16 16 0 0 0 7.7 7.7l1.7-.9a2 2 0 0 1 2.1.5 12.8 12.8 0 0 0 2.8.7 2 2 0 0 1 1.8 2z"/></svg>
+        Call us in the app
+      </button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <div class="lead">
+    <h2>The things people ask most</h2>
+    <p>Every answer here is the same one APA works from, and it changes the moment the policy does.</p>
+  </div>
+
+  <!-- The knowledge base renders here from support_kb, so this page and
+       APA can never quote different answers to the same question. The
+       markup below is the fallback for a first paint or an outage. -->
+  <div class="kb" id="kb">
+    <details class="kb-item" open>
+      <summary>What does Cabana charge?
+        <span class="kb-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>
+      </summary>
+      <div class="kb-a">
+        A fixed platform fee per booking, never a percentage. Stays and rooms: KES 300 under KES 5,000, KES 800 at KES 5,000 and above.
+        Tours, events, car hire, rides, food, shopping and flights carry no platform fee at all. The host or operator keeps 100% of the listing price.
+        <button class="kb-ask" type="button" data-cbn-support data-cbn-prefill="What does Cabana charge on my booking?">Ask APA about my booking →</button>
+      </div>
+    </details>
+  </div>
+
+  <div class="lead">
+    <h2>Ways to reach us</h2>
+    <p>All of them are inside Cabana. That is deliberate: whoever answers can already see your booking.</p>
+  </div>
+
+  <div class="chan">
+    <button class="chan-c" type="button" data-cbn-support>
+      <div class="chan-ico" style="background:linear-gradient(135deg,#6D28FF,#4F6DFF)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.7-.8L3 21l1.9-5.1A8.4 8.4 0 0 1 4 11.5 8.4 8.4 0 0 1 12.5 3 8.4 8.4 0 0 1 21 11.5z"/></svg>
+      </div>
+      <h3>Support chat</h3>
+      <p>APA first, a person the moment you need one. <b>Fastest route, day or night.</b></p>
+    </button>
+
+    <button class="chan-c" type="button" data-cbn-call>
+      <div class="chan-ico" style="background:linear-gradient(135deg,#4F6DFF,#4EE0C8)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1A19.5 19.5 0 0 1 4.7 12a19.8 19.8 0 0 1-3.1-8.6A2 2 0 0 1 3.6 1.2h3a2 2 0 0 1 2 1.7 12.8 12.8 0 0 0 .7 2.8 2 2 0 0 1-.5 2.1L7.9 8.4a16 16 0 0 0 7.7 7.7l1.7-.9a2 2 0 0 1 2.1.5 12.8 12.8 0 0 0 2.8.7 2 2 0 0 1 1.8 2z"/></svg>
+      </div>
+      <h3>Voice call, in the app</h3>
+      <p>Runs over the internet. <b>No phone numbers, on either side.</b></p>
+    </button>
+
+    <a class="chan-c" href="mailto:connect@cabana.africa">
+      <div class="chan-ico" style="background:linear-gradient(135deg,#4EE0C8,#14B8A6)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+      </div>
+      <h3>connect@cabana.africa</h3>
+      <p>Guests, bookings, refunds, accounts. <b>We reply within 24 hours.</b></p>
+    </a>
+
+    <a class="chan-c" href="mailto:partnership@cabana.africa">
+      <div class="chan-ico" style="background:linear-gradient(135deg,#F5B12E,#FF6A3C)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </div>
+      <h3>partnership@cabana.africa</h3>
+      <p>Hosts, tour operators, drivers, kitchens. <b>The partnerships team.</b></p>
+    </a>
+  </div>
+
+  <div class="note">
+    <strong>Why there is no phone number or WhatsApp.</strong>
+    A number reaches somebody who has no idea who you are. Support inside Cabana reaches somebody who can already see your booking,
+    your payment and everything you have already said — including to APA. That is the whole reason your conversation follows you
+    from page to page instead of starting over, and why an urgent problem gets flagged to a real person the second it is one.
+  </div>
+</main>
+
+<footer class="hfoot">
+  <img src="/cabana-wordmark-color.png" alt="Cabana" onerror="this.remove()"/>
+  <p>Zero commission. Always. &nbsp;·&nbsp; <a href="/terms.html">Terms</a> &nbsp;·&nbsp; <a href="/privacy.html">Privacy</a></p>
+</footer>
+
+<script src="/vendor-supabase-2.112.3.js" defer></script>
+<script src="/apa-session.js" defer></script>
+<script src="/cabana-call.js" defer></script>
+<script src="/cabana-support.js" defer></script>
+<script src="/apa-contact.js" defer></script>
+<script src="/cabana-lifecycle.js" defer></script>
+
+<script>
+/* ── The knowledge base, from the same table APA reads ───────────────
+   A help page that has its own copy of the answers is a help page that
+   will one day contradict the assistant. So it reads support_kb, and an
+   edit there changes both at once. If the fetch fails, the fallback
+   markup above stays exactly where it is. */
+(function () {
+  'use strict';
+  var CHEV = '<span class="kb-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>';
+
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  function paint(rows) {
+    if (!rows || !rows.length) return;
+    document.getElementById('kb').innerHTML = rows.map(function (r, i) {
+      return '<details class="kb-item"' + (i === 0 ? ' open' : '') + '>'
+        + '<summary>' + esc(r.question) + CHEV + '</summary>'
+        + '<div class="kb-a">' + esc(r.answer)
+        + (r.route ? ' <a href="' + esc(r.route) + '">Take me there →</a>' : '')
+        + '<button class="kb-ask" type="button" data-cbn-support data-cbn-prefill="' + esc(r.question) + '">Ask APA about mine →</button>'
+        + '</div></details>';
+    }).join('');
+  }
+
+  function load(tries) {
+    var sb = window.sb || (window.ApaSession && window.ApaSession.client && window.ApaSession.client());
+    if (!sb) { if ((tries || 0) < 40) setTimeout(function () { load((tries || 0) + 1); }, 250); return; }
+    sb.from('support_kb')
+      .select('slug,question,answer,route,priority')
+      .eq('active', true)
+      .order('priority', { ascending: false })
+      .limit(20)
+      .then(function (r) { if (r && r.data) paint(r.data); },
+            function () { /* the fallback markup is already correct */ });
+  }
+  load(0);
+
+  /* A link from an email carries the thread; the console opens it. With
+     no parameter at all, land on the page and let the reader read. */
+  var q = new URLSearchParams(location.search);
+  if (!q.get('thread') && !q.get('call') && !q.get('csat')) return;
+})();
+</script>
+</body>
+</html>
