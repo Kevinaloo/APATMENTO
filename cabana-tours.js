@@ -107,11 +107,30 @@
         state.tours = (res && res.data) ? res.data : [];
         state.loaded = true;
         renderAll();
+        openFromQuery();
       }, function () {
         state.loaded = true;
         renderAll();
       });
   }
+
+  /* ── arriving on one tour ────────────────────────────────────────
+     A dashboard rail card links here as tours.html?back=1&open=<id>.
+     The catalogue has to be in memory before the sheet can be built,
+     so this runs off the back of the load rather than at start(). An
+     id that no longer matches anything opens nothing and leaves the
+     guest on a working grid, which is the right failure. */
+  var _deepLinked = false;
+  function openFromQuery() {
+    if (_deepLinked) return;
+    safeRun(function () {
+      var id = new URLSearchParams(location.search).get('open');
+      if (!id) return;
+      _deepLinked = true;
+      openSheet(id);
+    });
+  }
+  function safeRun(fn) { try { fn(); } catch (e) { /* never block the grid */ } }
 
   /* ── filtering ───────────────────────────────────────────────────── */
 

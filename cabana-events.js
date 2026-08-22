@@ -185,7 +185,25 @@
         state.loaded = true;
         renderAll();
         startClock();
+        openFromQuery();
       }, function () { state.loaded = true; renderAll(); });
+  }
+
+  /* ── arriving on one event ───────────────────────────────────────
+     A dashboard rail card links here as events.html?back=1&open=<id>.
+     The catalogue must be in memory before a sheet can be built, so
+     this hangs off the load. An event that has since finished is no
+     longer in `state.events`, so the sheet simply does not open and
+     the guest lands on a live grid instead of an expired listing. */
+  var _deepLinked = false;
+  function openFromQuery() {
+    if (_deepLinked) return;
+    try {
+      var id = new URLSearchParams(location.search).get('open');
+      if (!id) return;
+      _deepLinked = true;
+      openSheet(id);
+    } catch (e) { /* never block the grid */ }
   }
 
   function upcoming() {

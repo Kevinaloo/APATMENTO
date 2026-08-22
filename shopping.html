@@ -153,6 +153,10 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--glass);c
 
 /* ── PRODUCT CARD ── */
 .p-card{border-radius:16px;overflow:hidden;background:#fff;border:1px solid var(--line);cursor:pointer;transition:all .38s cubic-bezier(.22,1,.36,1);opacity:0;transform:translateY(14px);text-decoration:none;display:block;color:inherit;position:relative;}
+/* The ring a deep link leaves on the product it was aimed at. It fades
+   itself out, so nothing in the catalogue stays marked. */
+.p-card-found{box-shadow:0 0 0 3px var(--violet,#7B2FF7),0 18px 44px rgba(123,47,247,.22);border-color:transparent;transform:translateY(0) scale(1.015);}
+@media(prefers-reduced-motion:reduce){.p-card-found{transform:none;}}
 .p-card.in{opacity:1;transform:none;}
 .p-card:hover{transform:translateY(-5px);box-shadow:var(--shadow-lift);border-color:transparent;}
 .p-card-img{height:150px;position:relative;overflow:hidden;background:var(--glass-2);display:flex;align-items:center;justify-content:center;}
@@ -471,7 +475,7 @@ function productCardHTML(p, i){
     : '';
 
   return `
-  <a class="p-card" href="${esc(href)}"${p.url ? ' target="_blank" rel="noopener"' : ` data-cbn-support data-cbn-prefill="${esc(orderText)}"`} style="transition-delay:${i * 22}ms"
+  <a class="p-card" data-pid="${esc(p.id)}" href="${esc(href)}"${p.url ? ' target="_blank" rel="noopener"' : ` data-cbn-support data-cbn-prefill="${esc(orderText)}"`} style="transition-delay:${i * 22}ms"
      aria-label="${esc(p.name)} — ${p.price > 0 ? money(p.price) : 'price on request'} from ${esc(p.seller)}">
     <div class="p-card-img${p.img ? '' : ' is-tile'}" style="--cat:${c.color};--tint:${c.tint};--ang:${tileAngle(p.name)}deg;" data-mono="${esc(monogram(p.name))}">
       ${media}
@@ -583,7 +587,40 @@ renderAll(); // skeleton first paint
   _loaded = true;
   renderChips();
   renderAll();
+  openFromQuery();
 })();
+
+/* ── Arriving on one product ──────────────────────────────────────
+   A dashboard rail card links here as shopping.html?back=1&open=<id>,
+   where <id> is the prefixed id this page already assigns: "s…" for a
+   curated seller row, "l…" for a partner listing. There is no product
+   sheet to open on this page, so the honest equivalent is to put the
+   product in front of the guest: clear any category filter that would
+   hide it, scroll it into the middle of the screen and ring it once.
+   An id that no longer exists leaves the catalogue exactly as it was. */
+function openFromQuery(){
+  let pid = null;
+  try { pid = new URLSearchParams(location.search).get('open'); } catch(_) {}
+  if(!pid) return;
+  const target = PRODUCTS.find(p => p.id === pid);
+  if(!target) return;
+
+  if(_cat !== 'all' && _cat !== target.cat) setCat('all');
+
+  requestAnimationFrame(() => {
+    /* Matched by walking the rendered cards rather than by building a
+       selector: a product id comes from the database and CSS.escape is
+       not something to rely on for correctness here. */
+    const card = Array.from(document.querySelectorAll('.p-card'))
+      .find(el => el.dataset.pid === pid);
+    if(!card) return;
+    card.scrollIntoView({ behavior:'smooth', block:'center' });
+    card.classList.add('p-card-found');
+    /* The ring is a pointer, not a permanent state. It clears itself so
+       the catalogue does not stay marked up for the rest of the visit. */
+    setTimeout(() => card.classList.remove('p-card-found'), 2600);
+  });
+}
 </script>
 
 <style>
