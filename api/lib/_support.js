@@ -124,6 +124,10 @@ function scrub(text) {
 function guardOutput(text) {
   let s = String(text || '');
 
+  /* Strip chain-of-thought blocks emitted by reasoning models (Qwen3,
+     GPT-o* etc.). These must never reach a guest. */
+  s = s.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+
   s = s
     /* wa.me / api.whatsapp links, whole */
     .replace(/https?:\/\/(?:api\.)?wa(?:\.me|tsapp\.com)\/\S*/gi, 'the support chat')
@@ -810,7 +814,7 @@ async function runTool(name, args, caller) {
     }
 
     if (name === 'search_stays') {
-      const parts = ['is_active=eq.true', 'select=title,service,type,city,area,price_night,beds', 'limit=8'];
+      const parts = ['is_active=eq.true', 'select=id,title,service,type,city,area,price_night,beds', 'limit=8'];
       const area = clamp(args?.area, 40).replace(/[^A-Za-z0-9 ,'-]/g, '');
       if (area) parts.push(`or=(area.ilike.*${encodeURIComponent(area)}*,city.ilike.*${encodeURIComponent(area)}*)`);
       const svc = clamp(args?.service, 20).replace(/[^a-z]/gi, '');
@@ -823,7 +827,7 @@ async function runTool(name, args, caller) {
       return {
         count: rows?.length || 0,
         listings: (rows || []).map(r => ({
-          title: r.title, where: r.area || r.city, beds: r.beds,
+          id: r.id, title: r.title, where: r.area || r.city, beds: r.beds,
           price: r.price_night ? money(r.price_night) + ' / night' : null,
           service: r.service || r.type,
         })),
