@@ -195,7 +195,7 @@
     }
 
     var empty = list.length ? '' :
-      '<div class="ct-mrd-empty"><p>The line is open. No tours on it yet.</p></div>';
+      '<div class="ct-mrd-empty"><p>No tours listed yet. Operators are being added daily.</p></div>';
 
     stage.innerHTML =
       '<div class="ct-mrd-line"></div>' +
