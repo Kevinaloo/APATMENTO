@@ -521,10 +521,13 @@
        not shared across tables — listings say 'live', tours say
        'published' — so the caller passes the literal value the target
        table actually uses. */
-    setStatus: function (table, id, status, extra, entity) {
+    setStatus: function (table, id, status, extra, entity, stampApproved) {
       var values = { status: status };
-      var stamp = new Date().toISOString();
-      if (status === 'live' || status === 'published' || status === 'active') values.approved_at = stamp;
+      /* approved_at exists on listings and nowhere else, so it is opt-in
+         per service rather than inferred from the status word. */
+      if (stampApproved && (status === 'live' || status === 'published' || status === 'active')) {
+        values.approved_at = new Date().toISOString();
+      }
       if (extra) for (var k in extra) if (Object.prototype.hasOwnProperty.call(extra, k)) values[k] = extra[k];
       return audit(table + '.status.' + status, { type: entity || table, id: id }, { status: status })
         .then(function () {
@@ -556,13 +559,19 @@
        Not every table carries a status/deleted_at pair. When a soft
        delete cannot land, the caller is told plainly rather than shown
        a success toast over an unchanged row. */
-    remove: function (table, id, hard, reason, entity, extra) {
+    remove: function (table, id, hard, reason, entity, extra, opts) {
       var noun = entity || table;
+      opts = opts || {};
       return audit(hard ? noun + '.purge' : noun + '.delete',
                    { type: noun, id: id }, { reason: reason || '' })
         .then(function () {
           if (hard) return write(table, function (t) { return t.delete().eq('id', id); });
-          var values = { status: 'deleted', deleted_at: new Date().toISOString() };
+          /* The terminal status is not universal. tours and events carry a
+             CHECK constraint that permits 'archived' but not 'deleted', so
+             writing the wrong word is rejected outright rather than
+             degrading. Each service names its own. */
+          var values = { status: opts.deletedStatus || 'deleted' };
+          if (opts.hasDeletedAt !== false) values.deleted_at = new Date().toISOString();
           /* A soft delete has to clear the visibility flag too. Marking
              the status alone leaves the row live on any page that
              filters on is_active, which is most of them. */
@@ -836,7 +845,11 @@
     {
       key: 'stay', label: 'Stays', icon: '🏠', entity: 'listing',
       shared: true, table: 'listings', editable: true,
-      liveStatus: 'live', pauseStatus: 'paused',
+      /* Verified against the live table: every listing row uses
+         status='active', and the category rails query status=eq.active.
+         Publishing to 'live' would have hidden the row from them. */
+      liveStatus: 'active', pauseStatus: 'paused', deletedStatus: 'deleted',
+      hasDeletedAt: true, hasApprovedAt: true, canFeature: true,
       /* The public pages filter on is_active, not on status, so the
          flag has to move with the word or a paused listing stays up. */
       publishExtra: { is_active: true }, pauseExtra: { is_active: false },
@@ -850,7 +863,11 @@
     {
       key: 'room', label: 'Rooms', icon: '🛏️', entity: 'listing',
       shared: true, table: 'listings', editable: true,
-      liveStatus: 'live', pauseStatus: 'paused',
+      /* Verified against the live table: every listing row uses
+         status='active', and the category rails query status=eq.active.
+         Publishing to 'live' would have hidden the row from them. */
+      liveStatus: 'active', pauseStatus: 'paused', deletedStatus: 'deleted',
+      hasDeletedAt: true, hasApprovedAt: true, canFeature: true,
       /* The public pages filter on is_active, not on status, so the
          flag has to move with the word or a paused listing stays up. */
       publishExtra: { is_active: true }, pauseExtra: { is_active: false },
@@ -864,13 +881,17 @@
     {
       key: 'food', label: 'Food', icon: '🍽️', entity: 'listing',
       shared: true, table: 'listings', editable: true,
-      liveStatus: 'live', pauseStatus: 'paused',
+      /* Verified against the live table: every listing row uses
+         status='active', and the category rails query status=eq.active.
+         Publishing to 'live' would have hidden the row from them. */
+      liveStatus: 'active', pauseStatus: 'paused', deletedStatus: 'deleted',
+      hasDeletedAt: true, hasApprovedAt: true, canFeature: true,
       /* The public pages filter on is_active, not on status, so the
          flag has to move with the word or a paused listing stays up. */
       publishExtra: { is_active: true }, pauseExtra: { is_active: false },
       norm: function (l) {
         return {
-          title: l.title, sub: join([l.area || l.city, l.cuisine]),
+          title: l.title, sub: join([l.area || l.city, l.property_type]),
           price: Number(l.price_night || 0), unit: ' a main'
         };
       }
@@ -878,7 +899,11 @@
     {
       key: 'shopping', label: 'Shopping', icon: '🛍️', entity: 'listing',
       shared: true, table: 'listings', editable: true,
-      liveStatus: 'live', pauseStatus: 'paused',
+      /* Verified against the live table: every listing row uses
+         status='active', and the category rails query status=eq.active.
+         Publishing to 'live' would have hidden the row from them. */
+      liveStatus: 'active', pauseStatus: 'paused', deletedStatus: 'deleted',
+      hasDeletedAt: true, hasApprovedAt: true, canFeature: true,
       /* The public pages filter on is_active, not on status, so the
          flag has to move with the word or a paused listing stays up. */
       publishExtra: { is_active: true }, pauseExtra: { is_active: false },
@@ -889,7 +914,11 @@
     {
       key: 'ride', label: 'Rides', icon: '🛺', entity: 'listing',
       shared: true, table: 'listings', editable: true,
-      liveStatus: 'live', pauseStatus: 'paused',
+      /* Verified against the live table: every listing row uses
+         status='active', and the category rails query status=eq.active.
+         Publishing to 'live' would have hidden the row from them. */
+      liveStatus: 'active', pauseStatus: 'paused', deletedStatus: 'deleted',
+      hasDeletedAt: true, hasApprovedAt: true, canFeature: true,
       /* The public pages filter on is_active, not on status, so the
          flag has to move with the word or a paused listing stays up. */
       publishExtra: { is_active: true }, pauseExtra: { is_active: false },
@@ -902,7 +931,11 @@
     {
       key: 'tour', label: 'Tours', icon: '🗺️', entity: 'tour',
       table: 'tours', source: 'partner', editable: false,
-      liveStatus: 'published', pauseStatus: 'paused',
+      /* tours_status_check permits draft|pending|published|rejected|
+         paused|archived. 'deleted' is rejected by the database, and the
+         table has neither deleted_at nor approved_at. */
+      liveStatus: 'published', pauseStatus: 'paused', deletedStatus: 'archived',
+      hasDeletedAt: false, hasApprovedAt: false, canFeature: true,
       fetch: function () { return rows('tours', function (q) { return q.order('created_at', { ascending: false }).limit(1000); }); },
       norm: function (t) {
         return {
@@ -915,7 +948,9 @@
     {
       key: 'event', label: 'Events', icon: '🎟️', entity: 'event',
       table: 'events', source: 'partner', editable: false,
-      liveStatus: 'published', pauseStatus: 'paused',
+      /* Same constraint shape as tours, plus 'cancelled'. */
+      liveStatus: 'published', pauseStatus: 'paused', deletedStatus: 'archived',
+      hasDeletedAt: false, hasApprovedAt: false, canFeature: true,
       fetch: function () { return rows('events', function (q) { return q.order('starts_at', { ascending: false }).limit(1000); }); },
       norm: function (e) {
         var when = e.starts_at ? new Date(e.starts_at) : null;
@@ -938,7 +973,9 @@
     {
       key: 'carhire', label: 'Car hire', icon: '🚗', entity: 'vehicle',
       table: 'car_fleet', source: 'operator', editable: false,
-      liveStatus: 'active', pauseStatus: 'service',
+      /* No featured, deleted_at or approved_at column on this table. */
+      liveStatus: 'active', pauseStatus: 'service', deletedStatus: 'retired',
+      hasDeletedAt: false, hasApprovedAt: false, canFeature: false,
       fetch: function () { return rows('car_fleet', function (q) { return q.order('created_at', { ascending: false }).limit(1000); }); },
       norm: function (v) {
         return {
@@ -952,7 +989,9 @@
     {
       key: 'menu', label: 'Menu items', icon: '🍲', entity: 'menu_item',
       table: 'menu_items', source: 'partner', editable: false,
-      liveStatus: null, pauseStatus: null, availabilityFlag: 'is_available',
+      /* No status and no featured column: availability is the only lever. */
+      liveStatus: null, pauseStatus: null, canFeature: false,
+      availabilityFlag: 'is_available',
       fetch: function () {
         return rows('menu_items', function (q) {
           return q.select('*,listings(title)').order('created_at', { ascending: false }).limit(1500);
@@ -973,17 +1012,17 @@
     {
       key: 'tour', label: 'Tours', icon: '🗺️', entity: 'scraped_tour',
       table: 'scraped_tours', source: 'scraped', editable: false,
-      availabilityFlag: 'active',
+      availabilityFlag: 'active', canFeature: false, createdField: 'scraped_at',
       fetch: function () { return rows('scraped_tours', function (q) { return q.limit(1000); }); },
       norm: function (t) {
-        return { title: t.title || t.name, sub: join([t.location, t.duration, t.operator]),
+        return { title: t.title || t.name, sub: join([t.location, t.duration, t.category]),
                  price: Number(t.price_from || 0), unit: ' from' };
       }
     },
     {
       key: 'event', label: 'Events', icon: '🎟️', entity: 'scraped_event',
       table: 'scraped_events', source: 'scraped', editable: false,
-      availabilityFlag: 'active',
+      availabilityFlag: 'active', canFeature: false, createdField: 'scraped_at',
       fetch: function () { return rows('scraped_events', function (q) { return q.limit(1000); }); },
       norm: function (e) {
         var d = e.start_date ? new Date(e.start_date) : null;
@@ -995,18 +1034,18 @@
     {
       key: 'carhire', label: 'Car hire', icon: '🚗', entity: 'scraped_car',
       table: 'scraped_carhire', source: 'scraped', editable: false,
-      availabilityFlag: 'active',
+      availabilityFlag: 'active', canFeature: false, createdField: 'scraped_at',
       fetch: function () { return rows('scraped_carhire', function (q) { return q.limit(1000); }); },
       norm: function (c) {
         return { title: c.name || c.title,
-                 sub: join([c.vehicle_type, c.seats ? c.seats + ' seats' : null, c.supplier]),
+                 sub: join([c.vehicle_type, c.seats ? c.seats + ' seats' : null, c.company]),
                  price: Number(c.price_self || 0), unit: '/day' };
       }
     },
     {
       key: 'shopping', label: 'Shopping', icon: '🛍️', entity: 'scraped_product',
       table: 'scraped_shopping', source: 'scraped', editable: false,
-      availabilityFlag: 'active',
+      availabilityFlag: 'active', canFeature: false, createdField: 'scraped_at',
       fetch: function () { return rows('scraped_shopping', function (q) { return q.limit(1500); }); },
       norm: function (p) {
         return { title: p.name || p.title, sub: join([p.category, p.seller]),
@@ -1049,6 +1088,12 @@
       editable: !!svc.editable,
       liveStatus: svc.liveStatus,
       pauseStatus: svc.pauseStatus,
+      deletedStatus: svc.deletedStatus || null,
+      hasDeletedAt: svc.hasDeletedAt !== false,
+      hasApprovedAt: !!svc.hasApprovedAt,
+      /* Not every table has a featured column. Offering the button where
+         it does not exist just produces a failed write. */
+      canFeature: svc.canFeature !== false,
       publishExtra: svc.publishExtra || null,
       pauseExtra: svc.pauseExtra || null,
       availabilityFlag: svc.availabilityFlag || null,
@@ -1067,8 +1112,9 @@
 
       views: Number(row.views || 0),
       bookings: Number(row.booking_count || row.bookings_count || row.order_count || 0),
-      createdAt: row.created_at || null,
-      updatedAt: row.updated_at || row.created_at || null,
+      /* The scraped tables timestamp with scraped_at, not created_at. */
+      createdAt: row[svc.createdField || 'created_at'] || row.created_at || null,
+      updatedAt: row.updated_at || row[svc.createdField || 'created_at'] || row.created_at || null,
 
       /* Health is only meaningful where we track views and bookings,
          which today means `listings`. Everything else reports null
@@ -1119,7 +1165,11 @@
             key: key, label: (SERVICE_META[key] && SERVICE_META[key].label) || key,
             icon: (SERVICE_META[key] && SERVICE_META[key].icon) || '📋',
             entity: 'listing', table: 'listings', editable: true,
-            liveStatus: 'live', pauseStatus: 'paused',
+            /* Verified against the live table: every listing row uses
+         status='active', and the category rails query status=eq.active.
+         Publishing to 'live' would have hidden the row from them. */
+      liveStatus: 'active', pauseStatus: 'paused', deletedStatus: 'deleted',
+      hasDeletedAt: true, hasApprovedAt: true, canFeature: true,
       /* The public pages filter on is_active, not on status, so the
          flag has to move with the word or a paused listing stays up. */
       publishExtra: { is_active: true }, pauseExtra: { is_active: false },
@@ -1150,7 +1200,7 @@
 
     /* ── Writes, dispatched by the item's own table ──────────────── */
     publish: function (item) {
-      if (item.liveStatus) return Moderate.setStatus(item.table, item.id, item.liveStatus, item.publishExtra, item.entity);
+      if (item.liveStatus) return Moderate.setStatus(item.table, item.id, item.liveStatus, item.publishExtra, item.entity, item.hasApprovedAt);
       if (item.availabilityFlag) {
         var v = {}; v[item.availabilityFlag] = true;
         return Moderate.patch(item.table, item.id, v, item.entity + '.publish', item.entity);
@@ -1159,7 +1209,7 @@
     },
 
     pause: function (item) {
-      if (item.pauseStatus) return Moderate.setStatus(item.table, item.id, item.pauseStatus, item.pauseExtra, item.entity);
+      if (item.pauseStatus) return Moderate.setStatus(item.table, item.id, item.pauseStatus, item.pauseExtra, item.entity, false);
       if (item.availabilityFlag) {
         var v = {}; v[item.availabilityFlag] = false;
         return Moderate.patch(item.table, item.id, v, item.entity + '.pause', item.entity);
@@ -1168,6 +1218,9 @@
     },
 
     feature: function (item, on) {
+      if (!item.canFeature) {
+        return Promise.resolve({ ok: false, error: item.serviceLabel + ' cannot be featured' });
+      }
       return Moderate.feature(item.table, item.id, on, item.entity);
     },
 
@@ -1175,11 +1228,19 @@
        not. A menu item or a scraped product has no deleted state to
        move to, so pretending otherwise would leave it on the site. */
     remove: function (item, hard, reason) {
-      var soft = !hard && !!item.liveStatus;
-      return Moderate.remove(item.table, item.id, !soft, reason, item.entity, item.pauseExtra);
+      var soft = !hard && !!item.deletedStatus;
+      return Moderate.remove(item.table, item.id, !soft, reason, item.entity, item.pauseExtra, {
+        deletedStatus: item.deletedStatus,
+        hasDeletedAt: item.hasDeletedAt
+      });
     },
 
-    softDeletable: function (item) { return !!item.liveStatus; }
+    /* What a soft delete actually leaves behind, so the confirm dialog
+       can name it instead of saying 'deleted' for a row that ends up
+       archived or retired. */
+    deletedLabel: function (item) { return item.deletedStatus || 'deleted'; },
+
+    softDeletable: function (item) { return !!item.deletedStatus; }
   };
 
   /* ═══ 6 · SNAPSHOT. One call, whole platform ════════════════════ */

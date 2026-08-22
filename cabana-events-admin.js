@@ -123,17 +123,19 @@
   function remove(id) {
     var e = state.events.filter(function (x) { return String(x.id) === String(id); })[0];
     var name = (e && e.title) || 'this event';
-    if (!window.confirm('Delete ' + name + '?\n\nIt comes off the site immediately. The row is retained and recoverable.')) return;
+    if (!window.confirm('Delete ' + name + '?\n\nIt comes off the site immediately and is archived, so it stays recoverable.')) return;
 
     var M = window.ApaAdmin && window.ApaAdmin.Moderate;
     var done = function (r) {
       if (r && r.ok === false) { toast('Could not delete: ' + r.error); return; }
       toast('Deleted'); load();
     };
-    if (M) return M.remove('events', id, false, 'Deleted from the events panel', 'event').then(done, function () { toast('Could not delete'); });
+    if (M) return M.remove('events', id, false, 'Deleted from the events panel', 'event', null,
+                           { deletedStatus: 'archived', hasDeletedAt: false })
+             .then(done, function () { toast('Could not delete'); });
 
     var c = client(); if (!c) return;
-    c.from('events').update({ status: 'deleted', deleted_at: new Date().toISOString() }).eq('id', id)
+    c.from('events').update({ status: 'archived' }).eq('id', id)
       .then(function (r) { done(r && r.error ? { ok: false, error: r.error.message } : { ok: true }); },
             function () { toast('Could not delete'); });
   }

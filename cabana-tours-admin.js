@@ -93,17 +93,19 @@
   function remove(id) {
     var t = state.tours.filter(function (x) { return String(x.id) === String(id); })[0];
     var name = (t && t.title) || 'this tour';
-    if (!window.confirm('Delete ' + name + '?\n\nIt comes off the site immediately. The row is retained and recoverable.')) return;
+    if (!window.confirm('Delete ' + name + '?\n\nIt comes off the site immediately and is archived, so it stays recoverable.')) return;
 
     var M = window.ApaAdmin && window.ApaAdmin.Moderate;
     var done = function (r) {
       if (r && r.ok === false) { toast('Could not delete: ' + r.error); return; }
       toast('Deleted'); load();
     };
-    if (M) return M.remove('tours', id, false, 'Deleted from the tours panel', 'tour').then(done, function () { toast('Could not delete'); });
+    if (M) return M.remove('tours', id, false, 'Deleted from the tours panel', 'tour', null,
+                           { deletedStatus: 'archived', hasDeletedAt: false })
+             .then(done, function () { toast('Could not delete'); });
 
     var c = client(); if (!c) return;
-    c.from('tours').update({ status: 'deleted', deleted_at: new Date().toISOString() }).eq('id', id)
+    c.from('tours').update({ status: 'archived' }).eq('id', id)
       .then(function (r) { done(r && r.error ? { ok: false, error: r.error.message } : { ok: true }); },
             function () { toast('Could not delete'); });
   }

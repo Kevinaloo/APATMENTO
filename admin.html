@@ -2834,7 +2834,7 @@ function renderInventory(){
         ${i.state==='live'
           ? `<button class="btn btn-g btn-sm" onclick="invAct('pause','${esc(i.uid)}')">Pause</button>`
           : `<button class="btn btn-ok btn-sm" onclick="invAct('publish','${esc(i.uid)}')">Publish</button>`}
-        <button class="btn btn-g btn-sm" onclick="invAct('feature','${esc(i.uid)}')">${i.featured?'Unfeature':'Feature'}</button>
+        ${i.canFeature?`<button class="btn btn-g btn-sm" onclick="invAct('feature','${esc(i.uid)}')">${i.featured?'Unfeature':'Feature'}</button>`:''}
         <button class="btn btn-d btn-sm" onclick="invAct('delete','${esc(i.uid)}')">Delete</button>
       </div></td>
     </tr>`;
@@ -2889,7 +2889,7 @@ async function invAct(kind, uid){
     confirmAct(
       `Delete ${i.title}`,
       soft
-        ? 'Soft delete. The row is retained and recoverable, and it stops appearing on the site immediately.'
+        ? `Recoverable. The row is marked ${C.deletedLabel(i)} and stops appearing on the site immediately.`
         : 'This service has no recoverable deleted state, so the row is removed permanently. The audit log keeps the record.',
       !soft,
       async reason => {
@@ -4763,11 +4763,11 @@ async function gmAct(kind, id){
   if(!l) return toast('Listing not found','bad');
 
   if(kind==='publish'){
-    const r = await AD.Moderate.setStatus('listings', id, 'live', { is_active: true }, 'listing');
+    const r = await AD.Moderate.setStatus('listings', id, 'active', { is_active: true }, 'listing', true);
     return r.ok ? (toast('Published','ok'), refresh()) : toast(r.error,'bad');
   }
   if(kind==='pause'){
-    const r = await AD.Moderate.setStatus('listings', id, 'paused', { is_active: false }, 'listing');
+    const r = await AD.Moderate.setStatus('listings', id, 'paused', { is_active: false }, 'listing', false);
     return r.ok ? (toast('Paused. Hidden from the site','ok'), refresh()) : toast(r.error,'bad');
   }
   if(kind==='feature'){
