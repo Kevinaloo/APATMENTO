@@ -59,10 +59,29 @@
 
   function token() {
     try {
+      /* peekSession() reads directly from apa-auth storage — reliable
+         synchronously, even on first load before getSession() resolves. */
+      var peek = global.ApaSession && global.ApaSession.peekSession && global.ApaSession.peekSession();
+      if (peek && peek.access_token) return peek.access_token;
+      /* Legacy fallback: private Supabase property (may be null on load). */
       var sb = global.sb || (global.ApaSession && global.ApaSession.client && global.ApaSession.client());
       var s = sb && sb.auth && sb.auth._currentSession;
       return (s && s.access_token) || null;
     } catch (e) { return null; }
+  }
+
+  function tokenAsync() {
+    var t = token();
+    if (t) return Promise.resolve(t);
+    try {
+      var sb = global.sb || (global.ApaSession && global.ApaSession.client && global.ApaSession.client());
+      if (sb && sb.auth && sb.auth.getSession) {
+        return sb.auth.getSession().then(function (res) {
+          return (res && res.data && res.data.session && res.data.session.access_token) || null;
+        }).catch(function () { return null; });
+      }
+    } catch (e) {}
+    return Promise.resolve(null);
   }
 
   function api(url, op, payload) {
@@ -698,7 +717,15 @@
 
   function waitForSession(tries) {
     if (token()) return boot();
-    if ((tries || 0) > 60) return gate(401);
+    if ((tries || 0) > 20) {
+      /* Sync peek failed — the session may have restored async. Ask Supabase
+         directly once before giving up; covers the "already signed in but
+         _currentSession hasn't populated yet" case. */
+      return tokenAsync().then(function (t) {
+        if (t) return boot();
+        gate(401);
+      });
+    }
     setTimeout(function () { waitForSession((tries || 0) + 1); }, 250);
   }
 
