@@ -160,20 +160,23 @@ test('navigation with parameters survives parsing', () => {
 
 /* ── The client is one console ──────────────────────────────────────── */
 
-test('the console dictates into the same thread rather than forking a voice mode', () => {
+test('the console speaks into the same thread rather than forking a voice mode', () => {
   const s = read('cabana-support.js');
-  assert.match(s, /SpeechRecognition/, 'dictation must live in the one console');
+  assert.match(s, /SpeechRecognition/, 'listening must live in the one console');
   assert.match(s, /speechSynthesis/, 'spoken replies must live in the one console');
-  /* Dictation must end in submit() — the same path typing uses — so a
-     spoken message lands in the transcript a human later inherits. */
-  assert.match(s, /spokeLast\s*=\s*true;\s*submit\(/,
-    'a dictated line must go through the normal send path');
+  /* Speech must end in submit() — the same path typing uses — so a
+     spoken message lands in the transcript a human later inherits, and
+     a voice booking is the same booking as a typed one. */
+  assert.match(s, /spokeLast = true;[\s\S]{0,120}submit\(said\)/,
+    'a spoken line must go through the normal send path');
 });
 
-test('APA only speaks when she was spoken to', () => {
+test('APA speaks when spoken to, or when hands-free is running — never at a silent typist', () => {
   const s = read('cabana-support.js');
-  assert.match(s, /if \(!VOICE_OUT \|\| !spokeLast\) return;/,
-    'replies must not be read aloud to someone who typed');
+  assert.match(s, /var wanted = spokeLast \|\| handsFree;/,
+    'audio is volunteered only to someone who chose voice');
+  assert.match(s, /if \(!VOICE_OUT \|\| !wanted\)/,
+    'someone who typed, outside hands-free, must not be read aloud to');
 });
 
 test('closing the panel stops the microphone and the voice', () => {

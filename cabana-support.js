@@ -192,22 +192,64 @@
   var recog = null;
   var listening = false;
   var spokeLast = false;   // only read a reply aloud if the ask was spoken
+  var handsFree = false;   // the continuous loop: listen → send → speak → listen
+  var speaking  = false;
+  var restartTimer = null;
 
   function speechLang() {
     try { return (global.navigator.language || 'en-KE'); } catch (e) { return 'en-KE'; }
   }
 
-  function stopListening() {
-    listening = false;
-    if (el.mic) el.mic.setAttribute('data-on', '0');
-    if (recog) { try { recog.stop(); } catch (e) { /* already stopped */ } }
+  function micState() {
+    if (!el.mic) return;
+    el.mic.setAttribute('data-on', listening ? '1' : '0');
+    el.mic.setAttribute('data-hf', handsFree ? '1' : '0');
+    el.mic.setAttribute('aria-pressed', handsFree ? 'true' : 'false');
+    el.mic.setAttribute('title', handsFree
+      ? 'Hands-free is on — tap to stop'
+      : 'Tap to speak · hold, or double-tap, for hands-free');
   }
 
-  function toggleListen() {
-    if (!VOICE_IN) return;
-    if (listening) { stopListening(); return; }
+  function stopListening() {
+    listening = false;
+    micState();
+    if (recog) { try { recog.abort ? recog.abort() : recog.stop(); } catch (e) { /* already stopped */ } }
+  }
 
+  /* ── Hands-free ─────────────────────────────────────────────────
+     The loop is: listen until they stop talking, send, speak the reply,
+     then listen again. Two things make it survivable rather than
+     maddening:
+
+       · APA never listens while she is talking. Recognition is stopped
+         for the duration of the utterance and resumed after, so she
+         does not hear herself and answer her own sentence.
+       · Barge-in. Speaking or typing while she talks cuts her off
+         immediately, because waiting politely for a wrong answer to
+         finish is the worst part of every voice assistant ever built.
+  ── */
+  function startHandsFree() {
+    if (!VOICE_IN) { toast('This browser cannot listen. Type instead.', '🎙'); return; }
+    handsFree = true;
+    micState();
+    toast('Hands-free on. Just talk — tap the mic to stop.', '🎧');
+    listen();
+  }
+
+  function stopHandsFree(quiet) {
+    handsFree = false;
+    clearTimeout(restartTimer);
+    stopListening();
+    try { if (VOICE_OUT) global.speechSynthesis.cancel(); } catch (e) { /* nothing playing */ }
+    speaking = false;
+    micState();
+    if (!quiet) toast('Hands-free off.', '🎙');
+  }
+
+  function listen() {
+    if (!VOICE_IN || listening || speaking || sending) return;
     try { recog = new SR(); } catch (e) { toast('Dictation is not available here.', '🎙'); return; }
+
     recog.lang = speechLang();
     recog.interimResults = true;
     recog.continuous = false;
@@ -222,8 +264,8 @@
         if (r.isFinal) finalText += r[0].transcript;
         else interim += r[0].transcript;
       }
-      /* Show it landing in the composer as they speak, so they can see
-         what was heard and fix it before it is sent. */
+      /* Show it landing as they speak, so they can see what was heard
+         and correct it before it goes. */
       if (el.input) {
         el.input.value = (finalText + interim).replace(/^\s+/, '');
         autosize();
@@ -232,55 +274,114 @@
     };
 
     recog.onerror = function (ev) {
-      stopListening();
-      if (ev && ev.error === 'not-allowed') {
-        toast('Microphone blocked. Type instead, or allow it in the address bar.', '🎙');
-      } else if (ev && ev.error !== 'aborted' && ev.error !== 'no-speech') {
-        toast('Did not catch that. Try again or type it.', '🎙');
+      var why = ev && ev.error;
+      listening = false;
+      micState();
+      if (why === 'not-allowed' || why === 'service-not-allowed') {
+        stopHandsFree(true);
+        toast('Microphone blocked. Allow it in the address bar, or type.', '🎙');
+        return;
       }
+      /* Silence is not a failure in hands-free — it is a pause. Go
+         round again rather than dropping them out of the mode. */
+      if (handsFree && why !== 'aborted') restartTimer = setTimeout(listen, 700);
     };
 
     recog.onend = function () {
-      stopListening();
-      var said = String(finalText || (el.input ? el.input.value : '')).trim();
-      /* A spoken sentence is meant to be sent. Nobody dictates and then
-         reaches for the send button. */
-      if (said) { spokeLast = true; submit(said); }
+      listening = false;
+      micState();
+      var said = String(finalText || '').trim();
+      if (said) {
+        spokeLast = true;
+        if (el.input) { el.input.value = ''; autosize(); }
+        submit(said);
+        return;   /* the reply handler resumes listening once she has spoken */
+      }
+      if (handsFree) restartTimer = setTimeout(listen, 600);
     };
 
     try {
       recog.start();
       listening = true;
-      if (el.mic) el.mic.setAttribute('data-on', '1');
+      micState();
       if (el.input) { el.input.value = ''; autosize(); }
-    } catch (e) { stopListening(); }
+    } catch (e) {
+      listening = false;
+      micState();
+      if (handsFree) restartTimer = setTimeout(listen, 900);
+    }
   }
 
-  /* Read a reply aloud only when the guest spoke to us. Volunteering
-     audio to someone typing quietly in an office is a bug. */
-  function say(text) {
-    if (!VOICE_OUT || !spokeLast) return;
+  function toggleListen() {
+    if (!VOICE_IN) return;
+    if (handsFree) { stopHandsFree(); return; }
+    if (listening) { stopListening(); return; }
+    listen();
+  }
+
+  /* Read a reply aloud when the guest spoke to us, or whenever
+     hands-free is running. Volunteering audio to someone typing quietly
+     in an office is a bug; withholding it in hands-free is a broken
+     feature. */
+  function say(text, onDone) {
+    var wanted = spokeLast || handsFree;
     spokeLast = false;
+    if (!VOICE_OUT || !wanted) { if (onDone) onDone(); return; }
+
     var clean = String(text || '')
       .replace(/\[([^\]]{1,80})\]\([^)]*\)/g, '$1')   // link text only
       .replace(/[*_`#>]/g, '')
       .replace(/\s+/g, ' ')
       .trim()
-      .slice(0, 420);
-    if (!clean) return;
+      .slice(0, 600);
+    if (!clean) { if (onDone) onDone(); return; }
+
     try {
       global.speechSynthesis.cancel();
       var u = new global.SpeechSynthesisUtterance(clean);
       u.lang = speechLang();
       u.rate = 1.04;
       u.pitch = 1.0;
+      speaking = true;
+      if (el.root) el.root.classList.add('cbn-sup--speaking');
+      var finish = function () {
+        if (!speaking) return;
+        speaking = false;
+        if (el.root) el.root.classList.remove('cbn-sup--speaking');
+        if (onDone) onDone();
+      };
+      u.onend = finish;
+      u.onerror = finish;
       global.speechSynthesis.speak(u);
-    } catch (e) { /* silence is an acceptable failure for speech */ }
+      /* Some mobile engines never fire onend. A ceiling derived from
+         the text length keeps the loop alive rather than stranding it
+         mid-conversation. */
+      setTimeout(finish, Math.min(30000, 2500 + clean.length * 70));
+    } catch (e) {
+      speaking = false;
+      if (el.root) el.root.classList.remove('cbn-sup--speaking');
+      if (onDone) onDone();
+    }
+  }
+
+  /* Cut her off. Called when the guest starts typing or talking over
+     her — their input always outranks her sentence. */
+  function bargeIn() {
+    if (!speaking) return;
+    try { if (VOICE_OUT) global.speechSynthesis.cancel(); } catch (e) { /* nothing playing */ }
+    speaking = false;
+    if (el.root) el.root.classList.remove('cbn-sup--speaking');
+  }
+
+  /* After she has finished a reply: keep the loop turning. */
+  function afterReply(text) {
+    say(text, function () {
+      if (handsFree && !sending) restartTimer = setTimeout(listen, 350);
+    });
   }
 
   function hushVoice() {
-    try { if (VOICE_OUT) global.speechSynthesis.cancel(); } catch (e) { /* nothing to cancel */ }
-    stopListening();
+    stopHandsFree(true);
   }
 
   /* Markdown, deliberately tiny: bold, inline code, and links that must
@@ -489,7 +590,14 @@
       html += '<button class="cbn-sug" type="button" data-q="' + esc(s.question) + '">'
         + '<span>' + esc(s.question) + '</span>' + SVG.arrow + '</button>';
     });
-    html += '</div></div>';
+    html += '</div>';
+    /* Offered, not imposed. Someone who wants to talk should not have to
+       discover a long-press on a microphone to find out they can. */
+    if (VOICE_IN) {
+      html += '<button class="cbn-sup-talkcta" type="button" data-cbn-talk-inline>'
+        + SVG.mic + '<span>Or just talk to me — hands-free</span></button>';
+    }
+    html += '</div>';
     el.body.innerHTML = html;
   }
 
@@ -605,9 +713,38 @@
     el.input.addEventListener('input', function () {
       el.send.disabled = !el.input.value.trim();
       autosize();
+      /* Typing outranks whatever she is saying. */
+      bargeIn();
     });
 
-    if (el.mic) el.mic.addEventListener('click', toggleListen);
+    if (el.mic) {
+      /* One tap dictates. A long press or a double tap turns on the
+         continuous loop — discoverable by trying, and reversible by
+         the same button, so nobody gets stuck in a mode. */
+      var held = null;
+      el.mic.addEventListener('click', function (e) {
+        if (el.mic.getAttribute('data-longpress') === '1') {
+          el.mic.removeAttribute('data-longpress');
+          return;                     /* the press already acted */
+        }
+        if (e.detail >= 2) { bargeIn(); startHandsFree(); return; }
+        bargeIn();
+        toggleListen();
+      });
+      var beginHold = function () {
+        clearTimeout(held);
+        held = setTimeout(function () {
+          el.mic.setAttribute('data-longpress', '1');
+          bargeIn();
+          if (handsFree) stopHandsFree(); else startHandsFree();
+        }, 550);
+      };
+      var endHold = function () { clearTimeout(held); };
+      el.mic.addEventListener('pointerdown', beginHold);
+      el.mic.addEventListener('pointerup', endHold);
+      el.mic.addEventListener('pointerleave', endHold);
+      el.mic.addEventListener('pointercancel', endHold);
+    }
 
     el.input.addEventListener('keydown', function (e) {
       if (e.key === 'Enter' && !e.shiftKey) {
@@ -617,8 +754,10 @@
     });
 
     el.body.addEventListener('click', function (e) {
-      var sug = e.target.closest && e.target.closest('.cbn-sug');
-      if (sug) submit(sug.getAttribute('data-q'));
+      if (!e.target.closest) return;
+      var sug = e.target.closest('.cbn-sug');
+      if (sug) { submit(sug.getAttribute('data-q')); return; }
+      if (e.target.closest('[data-cbn-talk-inline]')) startHandsFree();
     });
 
     el.human.addEventListener('click', requestHuman);
@@ -745,11 +884,12 @@
   /* ══════════════════════════════════════════════════════════════════
      SENDING
   ══════════════════════════════════════════════════════════════════ */
-  function submit(text) {
+  function submit(text, clientData) {
     text = String(text || '').trim();
     if (!text || sending) return;
     if (!open) openPanel(false);
     if (navTimer) { clearTimeout(navTimer); navTimer = null; }
+    bargeIn();
 
     var local = { role: 'user', body: text, at: new Date().toISOString(), meta: {} };
     appendLocal(local);
@@ -763,6 +903,10 @@
       text: queued.length ? queued.concat([text]).join('\n\n') : text,
       threadId: thread && thread.id,
       page: pageKey(),
+      /* Photos and coordinates the page gathered. Validated server-side
+         before it reaches a row — the browser proposes, the server
+         decides, same as everywhere else. */
+      clientData: clientData || undefined,
     };
 
     api('send', payload)
@@ -790,9 +934,15 @@
         if (d.chips && d.chips.length) meta.chips = d.chips;
         if (d.reply) {
           appendLocal({ role: 'apa', name: 'APA', body: d.reply, at: new Date().toISOString(), meta: meta });
-          say(d.reply);
+          afterReply(d.reply);
         }
         if (meta.chips) paintChips(meta.chips);
+
+        /* Something only the browser can do — raise the M-Pesa prompt,
+           open the picker, ask for GPS. It comes from a server tool, not
+           from the model's text, so there is no sentence a guest can
+           write that conjures one. */
+        if (d.action) runAction(d.action);
 
         if (d.escalated) {
           if (thread) thread.status = 'queued';
@@ -822,6 +972,10 @@
         });
         setStatus('Reconnecting…', 'queue');
         console.warn('[support:send]', e && e.message);
+        /* A dropped send must not silently end hands-free: the guest is
+           still sitting there talking to a microphone that stopped
+           listening. Say it, then keep the loop turning. */
+        afterReply('That did not reach us. Your connection dropped — say it again when you are ready.');
       });
   }
 
@@ -936,6 +1090,179 @@
         if (e && e.status === 404) { thread = null; return; }
         schedulePoll(false);
       });
+  }
+
+  /* ══════════════════════════════════════════════════════════════════
+     ACTIONS
+     The three things a conversation cannot do by itself. Each one is
+     issued by a server tool, arrives as structured data, and is
+     performed here with the guest's own hardware and their own consent.
+
+     None of them completes anything on its own: the payment prompt is
+     approved on the handset, the picker is chosen from by hand, the
+     location dialog is the browser's. APA sets them in motion and then
+     waits, like anyone else would.
+  ══════════════════════════════════════════════════════════════════ */
+  function runAction(action) {
+    if (!action || typeof action !== 'object') return;
+    if (action.type === 'payment_prompt')  return payViaMpesa(action);
+    if (action.type === 'collect_photos')  return collectPhotos(action);
+    if (action.type === 'collect_location') return collectLocation(action);
+  }
+
+  function payViaMpesa(a) {
+    var ref = String(a.reference || '');
+    var amount = Number(a.amount || 0);
+    if (!ref || !(amount > 0)) return;
+
+    systemLine('Sending an M-Pesa request for ' + kes(amount) + '…');
+
+    authToken().then(function (token) {
+      if (!token) { systemLine('You need to be signed in to pay. Sign in and say "pay now".'); return; }
+      return fetch('/api/stk-push', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify({ reference: ref, phone: a.phone, amount: amount, description: a.label || 'Cabana booking' }),
+      }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+        .then(function (res) {
+          if (!res.ok || res.j.error) {
+            /* The server refused. Its reason is the true one — never
+               paper over it, and never retry a refused amount. */
+            systemLine('That payment request did not go through: ' + (res.j.error || 'unknown reason') + '. Tell me and I will sort it.');
+            return;
+          }
+          systemLine('Check your phone — approve the M-Pesa prompt for ' + kes(amount) + '. I will tell you the moment it lands.');
+          watchPayment(ref);
+        });
+    }).catch(function () {
+      systemLine('I could not raise the payment prompt just now. Say "try again" and I will retry.');
+    });
+  }
+
+  /* Poll until the money is seen, then say so. Bounded, because a guest
+     who walked away should not leave a timer running forever. */
+  function watchPayment(ref) {
+    var tries = 0;
+    (function tick() {
+      if (++tries > 40) return;                        /* ~3 minutes */
+      setTimeout(function () {
+        authToken().then(function (token) {
+          if (!token) return;
+          return fetch('/api/poll-payment?reference=' + encodeURIComponent(ref), {
+            headers: { Authorization: 'Bearer ' + token },
+          }).then(function (r) { return r.json(); }).then(function (j) {
+            if (j && (j.paid || j.status === 'success' || j.settled)) {
+              var line = 'Payment received. You are confirmed.';
+              systemLine(line);
+              afterReply(line);
+              return;
+            }
+            if (j && (j.status === 'failed' || j.status === 'cancelled')) {
+              systemLine('That prompt was declined or timed out. Want me to send it again?');
+              return;
+            }
+            tick();
+          });
+        }).catch(tick);
+      }, 4500);
+    })();
+  }
+
+  function collectPhotos(a) {
+    var input = doc.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.multiple = true;
+    input.style.cssText = 'position:fixed;left:-9999px;width:1px;height:1px;';
+    doc.body.appendChild(input);
+
+    input.addEventListener('change', function () {
+      var files = Array.prototype.slice.call(input.files || []).slice(0, Number(a.max) || 12);
+      input.remove();
+      if (!files.length) { systemLine('No photos picked — say "photos" when you are ready.'); return; }
+      systemLine('Uploading ' + files.length + ' photo' + (files.length === 1 ? '' : 's') + '…');
+      uploadPhotos(files).then(function (urls) {
+        if (!urls.length) { systemLine('Those did not upload. Try smaller images, or a different set.'); return; }
+        /* The URLs go back through the normal send path as clientData,
+           so the server validates them and APA's next sentence already
+           knows they arrived. */
+        submit('Here are the photos.', { photos: urls });
+      });
+    });
+
+    /* A picker the guest never interacted with leaves an orphan input.
+       Clean it up when they come back to the page. */
+    global.addEventListener('focus', function once() {
+      global.removeEventListener('focus', once);
+      setTimeout(function () { if (input.isConnected && !(input.files || []).length) input.remove(); }, 1500);
+    });
+
+    try { input.click(); } catch (e) { input.remove(); systemLine('I could not open the picker here.'); }
+  }
+
+  function uploadPhotos(files) {
+    var sb = supa();
+    if (!sb) return Promise.resolve([]);
+    var bucket = 'listings';
+    return Promise.all(files.map(function (f) {
+      var ext = (f.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
+      var path = 'apa/' + Date.now() + '-' + Math.random().toString(36).slice(2, 10) + '.' + ext;
+      return sb.storage.from(bucket).upload(path, f, { cacheControl: '3600', upsert: false })
+        .then(function (r) {
+          if (r.error) return null;
+          var pub = sb.storage.from(bucket).getPublicUrl(path);
+          return (pub && pub.data && pub.data.publicUrl) || null;
+        })
+        .catch(function () { return null; });
+    })).then(function (urls) { return urls.filter(Boolean); });
+  }
+
+  function collectLocation() {
+    if (!global.navigator || !global.navigator.geolocation) {
+      systemLine('This browser will not share a location. Just tell me the area and street instead.');
+      return;
+    }
+    systemLine('Asking your browser for the location…');
+    global.navigator.geolocation.getCurrentPosition(function (pos) {
+      submit('That is the spot.', {
+        location: { lat: pos.coords.latitude, lng: pos.coords.longitude },
+      });
+    }, function () {
+      systemLine('Location was declined — no problem. Tell me the area and street and I will use that.');
+    }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 });
+  }
+
+  /* A line from the console itself, not from APA and not from the
+     guest. Local only: the server transcript records the real events. */
+  function systemLine(body) {
+    appendLocal({ role: 'system', body: body, at: new Date().toISOString(), meta: {} });
+  }
+
+  function kes(n) {
+    try { return 'KES ' + Number(n).toLocaleString('en-KE'); }
+    catch (e) { return 'KES ' + n; }
+  }
+
+  function supa() {
+    try {
+      if (global.ApaSession && global.ApaSession.client) return global.ApaSession.client();
+      if (global.supabaseClient) return global.supabaseClient;
+      if (global.sb) return global.sb;
+    } catch (e) { /* no client on this page */ }
+    return null;
+  }
+
+  function authToken() {
+    try {
+      if (global.ApaSession && global.ApaSession.token) return Promise.resolve(global.ApaSession.token());
+      var sb = supa();
+      if (sb && sb.auth && sb.auth.getSession) {
+        return sb.auth.getSession().then(function (r) {
+          return (r && r.data && r.data.session && r.data.session.access_token) || null;
+        });
+      }
+    } catch (e) { /* fall through */ }
+    return Promise.resolve(null);
   }
 
   function offerIncoming(callId) {
@@ -1059,19 +1386,21 @@
        data-cbn-support                     open the console
        data-cbn-support + data-cbn-prefill  open it and send that message
        data-cbn-call                        start an in-app voice call
+       data-cbn-talk                        open it in hands-free voice
 
      Every such element also carries a real href to /help.html, so the
      link works with JavaScript off, in a new tab, and for a crawler. ── */
   function delegate() {
     doc.addEventListener('click', function (e) {
       var t = e.target && e.target.closest
-        ? e.target.closest('[data-cbn-support],[data-cbn-call]')
+        ? e.target.closest('[data-cbn-support],[data-cbn-call],[data-cbn-talk]')
         : null;
       if (!t) return;
       if (e.defaultPrevented) return;
       if (e.metaKey || e.ctrlKey || e.shiftKey || e.button > 0) return;  // let a new tab be a new tab
       e.preventDefault();
       if (t.hasAttribute('data-cbn-call')) { startCall(); return; }
+      if (t.hasAttribute('data-cbn-talk')) { openPanel(false); startHandsFree(); return; }
       var prefill = t.getAttribute('data-cbn-prefill');
       openPanel(!prefill);
       if (prefill) setTimeout(function () { submit(prefill); }, 360);
@@ -1134,6 +1463,14 @@
     human: function () { openPanel(false); requestHuman(); },
     call: startCall,
     guestKey: guestKey,
+
+    /* Hands-free, for a page that wants to offer it directly — a "talk
+       to APA" button on a listing, say. */
+    talk: function () { openPanel(false); startHandsFree(); },
+    stopTalking: function () { stopHandsFree(true); },
+    get handsFree() { return handsFree; },
+    get voiceSupported() { return VOICE_IN; },
+
     get thread() { return thread; },
     get isOpen() { return open; },
   };
