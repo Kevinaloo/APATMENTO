@@ -158,6 +158,7 @@ select.inp[multiple]{height:auto;padding:8px}
 .stat.gold::after{background:linear-gradient(90deg,var(--gold),var(--ember))}
 .stat.bad::after{background:linear-gradient(90deg,var(--rose),var(--ember))}
 .stat.ok::after{background:linear-gradient(90deg,var(--mint),var(--electric))}
+.stat.warn::after{background:linear-gradient(90deg,var(--gold),var(--warn))}
 .stat-k{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-4);margin-bottom:9px}
 .stat-v{font-family:var(--f-d);font-size:28px;font-weight:600;letter-spacing:-.03em;line-height:1;margin-bottom:7px;
   font-variant-numeric:tabular-nums}
@@ -196,6 +197,29 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .t-sub{font-size:11px;color:var(--ink-4);margin-top:1px}
 .t-act{display:flex;gap:5px;justify-content:flex-end;flex-wrap:wrap}
 
+/* ── SERVICE CATALOGUE TABLE ───────────────────────────────────────
+   Eleven columns across every service. Squeezing them into the shared
+   660px min-width wrapped every title onto three lines and stacked the
+   action buttons vertically, so a screenful showed four rows. Give the
+   table the width it needs and let .tw scroll it. */
+#s-inventory table{min-width:1180px}
+#s-inventory tbody td{padding:10px 14px}
+#s-inventory th:nth-child(2),#s-inventory td:nth-child(2){min-width:250px}
+#s-inventory td:nth-child(2) .t-main{white-space:normal;line-height:1.3}
+#s-inventory .t-act{flex-wrap:nowrap;white-space:nowrap}
+#s-inventory .t-act .btn{flex:none}
+
+/* The whole point of this panel is being able to act on a row, so the
+   action cell is pinned to the right edge rather than left to scroll
+   out of reach on a narrow screen. */
+#s-inventory th:last-child,#s-inventory td:last-child{
+  position:sticky;right:0;background:var(--panel);
+  box-shadow:-10px 0 14px -8px rgba(0,0,0,.6)}
+#s-inventory thead th:last-child{background:var(--bg-2);z-index:3}
+#s-inventory tbody tr:hover td:last-child{
+  background:linear-gradient(var(--panel),var(--panel)) padding-box,
+             rgba(255,255,255,.026)}
+
 /* ── PILL / BADGE ──────────────────────────────────────────────── */
 .pill{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;letter-spacing:.05em;
   text-transform:uppercase;padding:3.5px 8px;border-radius:6px;white-space:nowrap;line-height:1.35}
@@ -205,6 +229,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .p-info{background:rgba(79,109,255,.14);color:#93A8FF}
 .p-mute{background:rgba(255,255,255,.06);color:var(--ink-3)}
 .p-hot{background:linear-gradient(135deg,rgba(255,94,58,.2),rgba(245,177,46,.2));color:var(--gold)}
+.p-calm{background:rgba(123,47,247,.16);color:#C7A4FF}
 
 /* ── TRUST METER ───────────────────────────────────────────────── */
 .meter{width:64px;height:5px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden;flex:none}
@@ -478,7 +503,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
         </div>
         <div class="nav-i" data-sec="inventory" onclick="go('inventory',this)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 9l9-6 9 6v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>
-          Inventory
+          Catalogue <span class="nav-b warn" id="b-cat">0</span>
         </div>
         <div class="nav-i" data-sec="bookings" onclick="go('bookings',this)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
@@ -772,23 +797,44 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
       <!-- ─── INVENTORY ─── -->
       <section class="sec" id="s-inventory">
         <div class="hd">
-          <div><h1>Listing <em>inventory</em></h1><p>Supply health. Zombies and stale listings quietly poison search results.</p></div>
+          <div><h1>Service <em>catalogue</em></h1><p>Every individual thing on sale, across every service. Publish, pause, feature or delete any of it.</p></div>
           <div class="hd-act">
-            <div class="seg" id="inv-filter">
-              <button class="on" onclick="filterInv('all',this)">All</button>
-              <button onclick="filterInv('zombie',this)">Zombies</button>
-              <button onclick="filterInv('stale',this)">Stale</button>
-              <button onclick="filterInv('no-convert',this)">No convert</button>
-            </div>
-            <button class="btn btn-g btn-sm" onclick="exportListings()">Export</button>
+            <button class="btn btn-g btn-sm" onclick="exportCatalogue()">Export</button>
+            <button class="btn btn-g btn-sm" onclick="refresh()">Refresh</button>
           </div>
         </div>
         <div class="grid g4" id="inv-stats"></div>
-        <div class="tw" style="margin-top:16px"><table>
+
+        <!-- Service tabs. Counts come from the data, so a tab never
+             claims supply that isn't there. -->
+        <div id="inv-svc" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:16px"></div>
+
+        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px">
+          <div class="seg" id="inv-filter">
+            <button class="on" onclick="filterInv('all',this)">All</button>
+            <button onclick="filterInv('live',this)">Live</button>
+            <button onclick="filterInv('pending',this)">Pending</button>
+            <button onclick="filterInv('hidden',this)">Hidden</button>
+            <button onclick="filterInv('stale',this)">Stale</button>
+            <button onclick="filterInv('zombie',this)">Zombies</button>
+            <button onclick="filterInv('no-convert',this)">No convert</button>
+          </div>
+          <input id="inv-search" class="inp" placeholder="Search everything…" oninput="invSearch(this.value)" style="width:220px;max-width:100%"/>
+          <div style="flex:1"></div>
+          <div id="inv-bulk" style="display:none;gap:6px;align-items:center">
+            <span class="t-sub" id="inv-bulk-n"></span>
+            <button class="btn btn-ok btn-sm" onclick="bulkInv('publish')">Publish</button>
+            <button class="btn btn-g btn-sm" onclick="bulkInv('pause')">Pause</button>
+            <button class="btn btn-d btn-sm" onclick="bulkInv('delete')">Delete</button>
+          </div>
+        </div>
+
+        <div class="tw" style="margin-top:14px"><table>
           <thead><tr><th style="width:36px"><input type="checkbox" onclick="selectAll(this,'inv')" style="accent-color:var(--violet)"/></th>
-          <th>Listing</th><th class="num">Views</th><th class="num">Bookings</th><th class="num">Age</th><th>Diagnosis</th><th class="num">Actions</th></tr></thead>
+          <th>Item</th><th>Service</th><th>Source</th><th class="num">Price</th><th class="num">Views</th><th class="num">Bookings</th><th class="num">Age</th><th>Health</th><th>Status</th><th class="num">Actions</th></tr></thead>
           <tbody id="inv-rows"></tbody>
         </table></div>
+        <div id="inv-count" style="font-size:12px;color:var(--ink-4);margin-top:8px;text-align:right"></div>
       </section>
 
       <!-- ─── GOD MODE ─── -->
@@ -1921,6 +1967,7 @@ function go(sec, el){
   if(sec==='splash') loadSplash();
   if(sec==='push') pushLoadStats();
   if(sec==='godmode') gmRenderAll();
+  if(sec==='inventory') renderInventory();
   if(sec==='lazy') lazyLoad('pending');
   if(sec==='impersonate') impLogLoad();
   if(sec==='cabana') cabanaLoad();
@@ -2282,6 +2329,7 @@ function badges(){
   b('b-ads', SNAP.campaigns.length || '', 'calm');
   b('b-shadow', (SNAP.shadowAds||[]).filter(a=>a.status==='live').length || '', 'calm');
   b('b-cust', (SNAP.sessions||[]).length || '', 'calm');
+  b('b-cat', (SNAP.catalogue||[]).filter(i=>i.state==='pending'||i.state==='draft').length || '', 'warn');
   b('b-sys', SNAP.faults.length || '', 'calm');
 }
 
@@ -2539,7 +2587,10 @@ function renderModeration(){
       </div></td>
     </tr>`).join('') : emptyRow(7,'Queue is clear');
 }
-function tick(kind,id,on){ on ? SEL[kind].add(id) : SEL[kind].delete(id); }
+function tick(kind,id,on){
+  on ? SEL[kind].add(id) : SEL[kind].delete(id);
+  if(kind==='inv' && typeof invBulkBar === 'function') invBulkBar();
+}
 function selectAll(box,kind){
   document.querySelectorAll(`[data-sel="${kind}"]`).forEach(c=>{
     c.checked = box.checked; tick(kind, c.value, box.checked);
@@ -2672,53 +2723,225 @@ function exportPartners(){
   toast('Partners exported','ok');
 }
 
-/* ══ 10 · INVENTORY ══════════════════════════════════════════════ */
+/* ══ 10 · SERVICE CATALOGUE ══════════════════════════════════════
+   Every item on the platform, individually, whatever table it lives
+   in. The previous version of this panel rendered only the decayed
+   listings, which is why a healthy platform showed "5 fresh" above an
+   empty table. It now renders the whole catalogue and treats decay as
+   one column among several.                                        */
+let INV_SVC = 'all';      // service tab
+let INV_SEARCH = '';      // search string
+let INV_INDEX = {};       // uid → catalogue item, for the row actions
+
+function invItems(){
+  return (SNAP && SNAP.catalogue) || [];
+}
+
+/* One place decides what a filter means, so the tabs, the counts and
+   the bulk selection can never disagree with the table. */
+function invMatch(i){
+  if(INV_SVC !== 'all' && i.service !== INV_SVC) return false;
+
+  if(INV_FILTER === 'live'    && i.state !== 'live') return false;
+  if(INV_FILTER === 'pending' && !(i.state === 'pending' || i.state === 'draft')) return false;
+  if(INV_FILTER === 'hidden'  && !(i.state === 'hidden' || i.state === 'rejected' || i.state === 'deleted')) return false;
+  if(['stale','zombie','no-convert'].includes(INV_FILTER) && i.health !== INV_FILTER) return false;
+
+  if(INV_SEARCH){
+    const q = INV_SEARCH.toLowerCase();
+    if(!(`${i.title} ${i.sub} ${i.status} ${i.serviceLabel}`.toLowerCase().includes(q))) return false;
+  }
+  return true;
+}
+
 function filterInv(f, el){
   INV_FILTER = f;
   el.parentNode.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
   el.classList.add('on'); renderInventory();
 }
+function invSvc(k, el){
+  INV_SVC = k;
+  document.querySelectorAll('#inv-svc .gm-svc-tab').forEach(t=>t.classList.remove('on'));
+  el?.classList.add('on'); renderInventory();
+}
+function invSearch(q){ INV_SEARCH = q.trim(); renderInventory(); }
+
+const INV_HEALTH_PILL = { zombie:'p-bad', stale:'p-warn', 'no-convert':'p-info', fresh:'p-ok', unknown:'p-mute' };
+const INV_STATE_PILL  = { live:'p-ok', pending:'p-warn', draft:'p-mute', hidden:'p-mute',
+                          rejected:'p-bad', deleted:'p-bad' };
+const INV_SOURCE_PILL = { 'first-party':'p-calm', partner:'p-info', operator:'p-info', scraped:'p-mute' };
+
 function renderInventory(){
   if(!SNAP) return;
+  const all = invItems();
   const d = SNAP.engine.decay;
+
+  /* Health is measured on stays and rooms, the only supply where we
+     record views and bookings. Total counts everything. */
   $('inv-stats').innerHTML = [
-    stat('Health score', d.healthScore+'%', 'fresh supply share', d.healthScore<60?'bad':'ok'),
-    stat('Fresh', F.num(d.fresh), 'touched inside 45d', 'ok'),
-    stat('Stale', F.num(d.staleCount), 'needs a nudge'),
-    stat('Zombies', F.num(d.zombie), '90d+ live, zero bookings', d.zombie?'bad':'')
+    stat('Catalogue', F.num(all.length), 'individual items, all services'),
+    stat('Live', F.num(all.filter(i=>i.state==='live').length), 'visible on the site', 'ok'),
+    stat('Needs action', F.num(all.filter(i=>i.state==='pending'||i.state==='draft').length),
+      'pending or draft', all.some(i=>i.state==='pending') ? 'warn' : ''),
+    stat('Listing health', d.healthScore+'%',
+      `${F.num(d.stale)} stale · ${F.num(d.zombie)} zombie`, d.healthScore<60?'bad':'ok')
   ].join('');
 
-  let items = d.items;
-  if(INV_FILTER!=='all') items = items.filter(i=>i.reason===INV_FILTER);
-  const rp = { zombie:'p-bad', stale:'p-warn', 'no-convert':'p-info' };
-  const rl = { zombie:'zombie', stale:'stale', 'no-convert':'no convert' };
+  // ── service tabs
+  const counts = SNAP.catalogueCounts || AD.Catalogue.counts(all);
+  const meta = AD.Catalogue.meta;
+  const tabs = ['all'].concat(AD.Catalogue.order.filter(k => counts[k]));
+  $('inv-svc').innerHTML = tabs.map(k=>{
+    const label = k==='all' ? 'All' : `${meta[k]?.icon||''} ${meta[k]?.label||k}`;
+    const n = k==='all' ? all.length : counts[k];
+    return `<button class="gm-svc-tab${INV_SVC===k?' on':''}" onclick="invSvc('${k}',this)">${esc(label)} <span style="opacity:.55">${n}</span></button>`;
+  }).join('');
 
-  $('inv-rows').innerHTML = items.length ? items.map(({l,age,reason})=>`
-    <tr>
-      <td><input type="checkbox" data-sel="inv" value="${esc(l.id)}" onchange="tick('inv','${esc(l.id)}',this.checked)" style="accent-color:var(--violet)"/></td>
-      <td><div class="t-main">${esc(l.title||'Untitled')}</div><div class="t-sub">${esc(l.location||l.city||l.area||', ')}</div></td>
-      <td class="num mono">${F.num(l.views||0)}</td>
-      <td class="num mono">${F.num(l.bookings_count||0)}</td>
-      <td class="num mono">${age}d</td>
-      <td><span class="pill ${rp[reason]}">${rl[reason]}</span></td>
+  // ── rows
+  const rows = all.filter(invMatch);
+  INV_INDEX = {};
+  rows.forEach(i => { INV_INDEX[i.uid] = i; });
+
+  const cnt = $('inv-count');
+  if(cnt) cnt.textContent = rows.length
+    ? `${F.num(rows.length)} of ${F.num(all.length)} item${all.length===1?'':'s'}` : '';
+
+  $('inv-rows').innerHTML = rows.length ? rows.map(i=>{
+    const price = i.price ? `${F.money(i.price)}<span style="color:var(--ink-4)">${esc(i.unit)}</span>`
+                : i.freeLabel ? esc(i.freeLabel) : '—';
+    const thumb = i.image
+      ? `<img src="${esc(i.image)}" style="width:34px;height:34px;border-radius:7px;object-fit:cover;flex-shrink:0" onerror="this.style.display='none'" loading="lazy" decoding="async" alt=""/>`
+      : `<div style="width:34px;height:34px;border-radius:7px;background:var(--panel-2);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0">${i.icon}</div>`;
+    const health = i.health
+      ? `<span class="pill ${INV_HEALTH_PILL[i.health]||'p-mute'}">${esc(i.health)}</span>`
+      : '<span class="t-sub">—</span>';
+    const statusLabel = i.status || i.state;
+    return `<tr>
+      <td><input type="checkbox" data-sel="inv" value="${esc(i.uid)}" onchange="tick('inv','${esc(i.uid)}',this.checked)" style="accent-color:var(--violet)"/></td>
+      <td><div style="display:flex;align-items:center;gap:10px">${thumb}
+        <div><div class="t-main">${esc(i.title)}${i.featured?' <span class="pill p-hot">featured</span>':''}</div>
+        <div class="t-sub">${esc(i.sub||'—')}</div></div></div></td>
+      <td style="font-size:12px">${i.icon} ${esc(i.serviceLabel)}</td>
+      <td><span class="pill ${INV_SOURCE_PILL[i.source]||'p-mute'}">${esc(i.source)}</span></td>
+      <td class="num mono">${price}</td>
+      <td class="num mono">${i.views?F.num(i.views):'—'}</td>
+      <td class="num mono">${i.bookings?F.num(i.bookings):'—'}</td>
+      <td class="num mono">${i.age==null?'—':i.age+'d'}</td>
+      <td>${health}</td>
+      <td><span class="pill ${INV_STATE_PILL[i.state]||'p-mute'}">${esc(statusLabel)}</span></td>
       <td><div class="t-act">
-        <button class="btn btn-g btn-sm" onclick="invAct('unpublish','${esc(l.id)}')">Unpublish</button>
-        <button class="btn btn-d btn-sm" onclick="invAct('delete','${esc(l.id)}')">Delete</button>
+        ${i.editable?`<button class="btn btn-g btn-sm" onclick="invEdit('${esc(i.uid)}')">Edit</button>`:''}
+        ${i.state==='live'
+          ? `<button class="btn btn-g btn-sm" onclick="invAct('pause','${esc(i.uid)}')">Pause</button>`
+          : `<button class="btn btn-ok btn-sm" onclick="invAct('publish','${esc(i.uid)}')">Publish</button>`}
+        ${i.canFeature?`<button class="btn btn-g btn-sm" onclick="invAct('feature','${esc(i.uid)}')">${i.featured?'Unfeature':'Feature'}</button>`:''}
+        <button class="btn btn-d btn-sm" onclick="invAct('delete','${esc(i.uid)}')">Delete</button>
       </div></td>
-    </tr>`).join('') : emptyRow(7, INV_FILTER==='all' ? 'All supply is fresh' : `No ${rl[INV_FILTER]||INV_FILTER} listings`);
+    </tr>`;
+  }).join('') : emptyRow(11,
+      all.length ? 'Nothing matches these filters' : 'No supply yet across any service');
+
+  invBulkBar();
 }
-async function invAct(kind, id){
-  if(kind==='unpublish'){
-    const r = await AD.Moderate.unpublishListing(id);
-    r.ok ? (toast('Listing unpublished','ok'), refresh()) : toast(r.error,'bad');
-  } else {
-    confirmAct('Delete listing','Soft delete. The row is retained and recoverable.', false, async ()=>{
-      const r = await AD.Moderate.deleteListing(id, false);
-      r.ok ? (toast('Listing deleted','ok'), refresh()) : toast(r.error,'bad');
-    });
+
+/* The selection survives a re-render, so it is recounted from what is
+   actually on screen rather than trusted blind. */
+function invBulkBar(){
+  const bar = $('inv-bulk'); if(!bar) return;
+  const live = [...SEL.inv].filter(uid => INV_INDEX[uid]);
+  SEL.inv = new Set(live);
+  bar.style.display = live.length ? 'flex' : 'none';
+  const n = $('inv-bulk-n');
+  if(n) n.textContent = `${live.length} selected`;
+}
+
+function invEdit(uid){
+  const i = INV_INDEX[uid];
+  if(!i) return;
+  if(!i.editable){ toast(`${i.serviceLabel} are edited in their own panel`,'bad'); return; }
+  go('godmode', document.querySelector('[data-sec="godmode"]'));
+  gmOpenEdit(i.id);
+}
+
+async function invAct(kind, uid){
+  const i = INV_INDEX[uid];
+  if(!i) return toast('Item not on screen any more','bad');
+  const C = AD.Catalogue;
+
+  if(kind==='publish'){
+    const r = await C.publish(i);
+    return r.ok ? (toast('Published','ok'), refresh()) : toast(r.error,'bad');
+  }
+  if(kind==='pause'){
+    const r = await C.pause(i);
+    return r.ok ? (toast('Paused. Hidden from the site','ok'), refresh()) : toast(r.error,'bad');
+  }
+  if(kind==='feature'){
+    const r = await C.feature(i, !i.featured);
+    return r.ok ? (toast(i.featured?'Unfeatured':'Featured','ok'), refresh()) : toast(r.error,'bad');
+  }
+  if(kind==='delete'){
+    /* Tables that model a deleted state get a recoverable soft delete.
+       The rest have nowhere to soft-delete to, so the row goes for
+       real — and the operator is told which of the two this is before
+       they confirm, not after. */
+    const soft = C.softDeletable(i);
+    confirmAct(
+      `Delete ${i.title}`,
+      soft
+        ? `Recoverable. The row is marked ${C.deletedLabel(i)} and stops appearing on the site immediately.`
+        : 'This service has no recoverable deleted state, so the row is removed permanently. The audit log keeps the record.',
+      !soft,
+      async reason => {
+        const r = await C.remove(i, !soft, reason);
+        r.ok ? (toast(soft?'Deleted':'Permanently deleted','ok'), refresh()) : toast(r.error,'bad');
+      });
   }
 }
-function exportListings(){ if(!SNAP) return toast('Data loading','bad'); AD.download('listings.csv', AD.toCSV(SNAP.listings), 'text/csv'); toast('Exported','ok'); }
+
+async function bulkInv(kind){
+  const items = [...SEL.inv].map(uid=>INV_INDEX[uid]).filter(Boolean);
+  if(!items.length) return toast('Nothing selected','bad');
+  const C = AD.Catalogue;
+
+  const run = async (fn, verb) => {
+    let ok = 0; const failed = [];
+    for(const i of items){
+      const r = await fn(i);
+      r && r.ok ? ok++ : failed.push(i.title);
+    }
+    SEL.inv.clear();
+    toast(`${verb} ${ok}/${items.length}${failed.length?' · '+failed.length+' failed':''}`,
+          failed.length ? 'bad' : 'ok');
+    refresh();
+  };
+
+  if(kind==='publish') return run(i=>C.publish(i), 'Published');
+  if(kind==='pause')   return run(i=>C.pause(i),   'Paused');
+  if(kind==='delete'){
+    const hard = items.filter(i=>!C.softDeletable(i)).length;
+    confirmAct(`Delete ${items.length} item${items.length===1?'':'s'}`,
+      hard ? `${hard} of these have no recoverable deleted state and will be removed permanently.`
+           : 'Soft delete. Every row is retained and recoverable.',
+      true,
+      reason => run(i=>C.remove(i, !C.softDeletable(i), reason), 'Deleted'));
+  }
+}
+
+function exportCatalogue(){
+  if(!SNAP) return toast('Data loading','bad');
+  const rows = invItems().filter(invMatch).map(i=>({
+    id:i.id, service:i.serviceLabel, source:i.source, table:i.table,
+    title:i.title, detail:i.sub, price:i.price, unit:i.unit,
+    status:i.status||i.state, state:i.state, featured:i.featured,
+    views:i.views, bookings:i.bookings, age_days:i.age, health:i.health||'',
+    partner_id:i.partnerId||'', created_at:i.createdAt||'', updated_at:i.updatedAt||''
+  }));
+  if(!rows.length) return toast('Nothing to export','bad');
+  AD.download('cabana-catalogue.csv', AD.toCSV(rows), 'text/csv');
+  toast(`Exported ${rows.length} items`,'ok');
+}
+
 
 /* ══ 11 · BOOKINGS ═══════════════════════════════════════════════ */
 function renderBookings(){
@@ -4506,16 +4729,23 @@ function gmRenderAll(){
       <td>${partner}</td>
       <td class="num" style="font-size:12px">${price}</td>
       <td>${statusPill}</td>
-      <td class="num">
+      <td class="num"><div class="t-act">
         <button class="btn btn-g btn-sm" onclick="gmOpenEdit('${esc(l.id)}')">Edit</button>
-      </td>
+        ${isActive
+          ? `<button class="btn btn-g btn-sm" onclick="gmAct('pause','${esc(l.id)}')">Pause</button>`
+          : `<button class="btn btn-ok btn-sm" onclick="gmAct('publish','${esc(l.id)}')">Publish</button>`}
+        <button class="btn btn-g btn-sm" onclick="gmAct('feature','${esc(l.id)}')">${l.featured?'Unfeature':'Feature'}</button>
+        <button class="btn btn-d btn-sm" onclick="gmAct('delete','${esc(l.id)}')">Delete</button>
+      </div></td>
     </tr>`;
   }).join('');
 }
 
 function gmFilterSvc(svc, el){
   GM_FILTER = svc;
-  document.querySelectorAll('.gm-svc-tab').forEach(t=>t.classList.remove('on'));
+  /* Scoped: the service catalogue reuses this tab style, and an
+     unscoped query would deselect its tabs from here. */
+  document.querySelectorAll('#s-godmode .gm-svc-tab').forEach(t=>t.classList.remove('on'));
   if(el) el.classList.add('on');
   gmRenderAll();
 }
@@ -4523,6 +4753,50 @@ function gmFilterSvc(svc, el){
 function gmSearch(q){
   GM_SEARCH = q.trim();
   gmRenderAll();
+}
+
+/* Full access from the table itself. Editing was the only thing you
+   could do to a listing from here, which meant taking anything off the
+   site was a trip through another panel. */
+async function gmAct(kind, id){
+  const l = (SNAP?.listings || []).find(x => String(x.id) === String(id));
+  if(!l) return toast('Listing not found','bad');
+
+  if(kind==='publish'){
+    const r = await AD.Moderate.setStatus('listings', id, 'active', { is_active: true }, 'listing', true);
+    return r.ok ? (toast('Published','ok'), refresh()) : toast(r.error,'bad');
+  }
+  if(kind==='pause'){
+    const r = await AD.Moderate.setStatus('listings', id, 'paused', { is_active: false }, 'listing', false);
+    return r.ok ? (toast('Paused. Hidden from the site','ok'), refresh()) : toast(r.error,'bad');
+  }
+  if(kind==='feature'){
+    const r = await AD.Moderate.feature('listings', id, !l.featured, 'listing');
+    return r.ok ? (toast(l.featured?'Unfeatured':'Featured','ok'), refresh()) : toast(r.error,'bad');
+  }
+  if(kind==='delete'){
+    /* Two steps on purpose. The soft delete is the ordinary act and is
+       reversible; the purge is offered only afterwards, so a permanent
+       delete can never be one mis-click. */
+    confirmAct(`Delete ${l.title || 'listing'}`,
+      'Soft delete. It stops appearing on the site immediately and the row stays recoverable.',
+      true, async reason => {
+        const r = await AD.Moderate.remove('listings', id, false, reason, 'listing', { is_active: false });
+        if(!r.ok) return toast(r.error,'bad');
+        toast('Deleted. Recoverable','ok');
+        refresh();
+        setTimeout(()=>gmOfferPurge(id, l.title, reason), 400);
+      });
+  }
+}
+
+function gmOfferPurge(id, title, reason){
+  confirmAct(`Purge ${title || 'listing'} permanently?`,
+    'The soft delete is already done and the listing is off the site. Purging destroys the row for good. Only the audit entry survives. Close this to keep it recoverable.',
+    false, async () => {
+      const r = await AD.Moderate.remove('listings', id, true, reason, 'listing');
+      r.ok ? (toast('Purged','ok'), refresh()) : toast(r.error,'bad');
+    });
 }
 
 // ── Panel open/close ───────────────────────────────────────────────────────

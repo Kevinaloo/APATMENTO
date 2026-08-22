@@ -203,33 +203,56 @@
     },
 
     /* ── Listing decay: supply that has gone stale and is quietly
-       poisoning search results. Nobody tracks this. Everyone should. */
+       poisoning search results. Nobody tracks this. Everyone should.
+
+       Every listing is classified exactly once and every listing is
+       returned. An earlier version pushed only the unhealthy rows, so
+       a console rendering `items` showed an empty table on a healthy
+       platform while the counters above it read five. The counters
+       were right; the table was reading the wrong collection.
+
+       Order matters. A listing is judged by its worst symptom:
+       zombie beats no-convert beats stale beats fresh.              */
     decay: function (listings) {
       var now = Date.now();
-      var stale = [], fresh = 0, zombie = 0;
+      var items = [];
+      var fresh = 0, stale = 0, zombie = 0, noConvert = 0, unknown = 0;
+
       listings.forEach(function (l) {
-        var touched = new Date(l.updated_at || l.created_at).getTime();
-        if (isNaN(touched)) return;
-        var age = (now - touched) / DAY;
+        var touchedRaw = l.updated_at || l.created_at;
+        var touched = new Date(touchedRaw).getTime();
+        var known = !isNaN(touched);
+        var age = known ? Math.round((now - touched) / DAY) : 0;
         var views = Number(l.views || 0);
         var books = Number(l.booking_count || l.bookings_count || 0);
+        var reason;
 
-        if (age > 90 && books === 0) { zombie++; stale.push({ l: l, age: Math.round(age), reason: 'zombie' }); }
-        else if (age > 45) { stale.push({ l: l, age: Math.round(age), reason: 'stale' }); }
-        else fresh++;
+        if (!known) { reason = 'unknown'; unknown++; }
+        else if (age > 90 && books === 0) { reason = 'zombie'; zombie++; }
+        // High views, zero bookings → mispriced or misleading.
+        else if (views > 200 && books === 0 && age > 14) { reason = 'no-convert'; noConvert++; }
+        else if (age > 45) { reason = 'stale'; stale++; }
+        else { reason = 'fresh'; fresh++; }
 
-        // High views, zero bookings → mispriced or misleading
-        if (views > 200 && books === 0 && age > 14) {
-          stale.push({ l: l, age: Math.round(age), reason: 'no-convert' });
-        }
+        items.push({ l: l, age: age, reason: reason, views: views, bookings: books });
       });
+
       var total = listings.length || 1;
+      var problems = items.filter(function (it) { return it.reason !== 'fresh'; });
+
       return {
         fresh: fresh,
+        stale: stale,
         zombie: zombie,
-        staleCount: stale.length,
+        noConvert: noConvert,
+        unknown: unknown,
+        staleCount: stale,
+        problemCount: problems.length,
         healthScore: Math.round((fresh / total) * 100),
-        items: stale.slice(0, 40)
+        /* Everything, classified. The console filters this itself. */
+        items: items,
+        /* Only what needs a human. Triage and digests read this. */
+        problems: problems.slice(0, 200)
       };
     },
 
@@ -477,6 +500,86 @@
   /* ═══ 5 · MODERATION ══════════════════════════════════════════════ */
   var Moderate = {
 
+    /* ── Generic writes ───────────────────────────────────────────
+       The console manages eight service surfaces living in different
+       tables. Rather than eight near-identical helpers, these take the
+       table as an argument and audit under a name derived from it, so
+       a new service becomes a row in the Catalogue registry rather
+       than a new block of moderation code.
+
+       `entity` is the audit noun ('tour', 'vehicle'), which is not
+       always derivable from the table name.                        */
+
+    patch: function (table, id, values, action, entity) {
+      return audit(action || (table + '.patch'), { type: entity || table, id: id }, values)
+        .then(function () {
+          return write(table, function (t) { return t.update(values).eq('id', id); });
+        });
+    },
+
+    /* Publish / pause / reject in one call. The status vocabulary is
+       not shared across tables — listings say 'live', tours say
+       'published' — so the caller passes the literal value the target
+       table actually uses. */
+    setStatus: function (table, id, status, extra, entity, stampApproved) {
+      var values = { status: status };
+      /* approved_at exists on listings and nowhere else, so it is opt-in
+         per service rather than inferred from the status word. */
+      if (stampApproved && (status === 'live' || status === 'published' || status === 'active')) {
+        values.approved_at = new Date().toISOString();
+      }
+      if (extra) for (var k in extra) if (Object.prototype.hasOwnProperty.call(extra, k)) values[k] = extra[k];
+      return audit(table + '.status.' + status, { type: entity || table, id: id }, { status: status })
+        .then(function () {
+          return write(table, function (t) { return t.update(values).eq('id', id); });
+        }).then(function (r) {
+          /* Some tables have no approved_at column. Rather than fail the
+             whole action on a column that was only ever cosmetic, retry
+             without it — but keep `extra`, which carries the visibility
+             flags the public site actually filters on. */
+          if (r.ok || !/column|schema cache/i.test(String(r.error || ''))) return r;
+          var bare = { status: status };
+          if (extra) for (var k2 in extra) if (Object.prototype.hasOwnProperty.call(extra, k2)) bare[k2] = extra[k2];
+          return write(table, function (t) { return t.update(bare).eq('id', id); });
+        });
+    },
+
+    feature: function (table, id, on, entity) {
+      return audit(table + '.feature', { type: entity || table, id: id }, { on: !!on })
+        .then(function () {
+          return write(table, function (t) { return t.update({ featured: !!on }).eq('id', id); });
+        });
+    },
+
+    /* Soft delete marks the row and leaves it recoverable. Hard delete
+       removes it. Both are audited before the write, so a purge that
+       succeeds is still explicable afterwards — the audit row is the
+       only surviving evidence that the listing ever existed.
+
+       Not every table carries a status/deleted_at pair. When a soft
+       delete cannot land, the caller is told plainly rather than shown
+       a success toast over an unchanged row. */
+    remove: function (table, id, hard, reason, entity, extra, opts) {
+      var noun = entity || table;
+      opts = opts || {};
+      return audit(hard ? noun + '.purge' : noun + '.delete',
+                   { type: noun, id: id }, { reason: reason || '' })
+        .then(function () {
+          if (hard) return write(table, function (t) { return t.delete().eq('id', id); });
+          /* The terminal status is not universal. tours and events carry a
+             CHECK constraint that permits 'archived' but not 'deleted', so
+             writing the wrong word is rejected outright rather than
+             degrading. Each service names its own. */
+          var values = { status: opts.deletedStatus || 'deleted' };
+          if (opts.hasDeletedAt !== false) values.deleted_at = new Date().toISOString();
+          /* A soft delete has to clear the visibility flag too. Marking
+             the status alone leaves the row live on any page that
+             filters on is_active, which is most of them. */
+          if (extra) for (var k in extra) if (Object.prototype.hasOwnProperty.call(extra, k)) values[k] = extra[k];
+          return write(table, function (t) { return t.update(values).eq('id', id); });
+        });
+    },
+
     approveListing: function (id) {
       return audit('listing.approve', { type: 'listing', id: id })
         .then(function () {
@@ -662,8 +765,440 @@
     }
   };
 
+  /* ═══ 5b · THE SERVICE CATALOGUE ═══════════════════════════════════
+     The console used to know about exactly one table, `listings`, and
+     so the Inventory panel could only ever show stays. Every other
+     service — the tours partners submit, the events organisers submit,
+     the hire fleet, restaurant menus — existed on the public site and
+     nowhere in admin. You could see a category but never the individual
+     things inside it.
+
+     This registry is the fix. Each service declares where its rows
+     live and how to read one, and everything downstream (the table,
+     the filters, the counts, delete) is generic over that. Adding a
+     service is a row here, not a new panel.
+
+     Two kinds of source:
+       · shared  — rows already in the snapshot's `listings`, split by
+                   their `type` column. No second fetch.
+       · table   — its own table, fetched alongside the snapshot.
+
+     A missing table degrades to [] like every other read, so a service
+     that hasn't shipped yet simply shows an empty tab.              */
+
+  /* Legacy rows predate the `type` column. `listings` began life as the
+     apartments table, so an untyped row is a stay. */
+  function typeOf(l) {
+    return String(l.type || l.property_type || l.listing_type || 'apartment').toLowerCase();
+  }
+
+  var LISTING_TYPE_SERVICE = {
+    apartment: 'stay', apartments: 'stay', stay: 'stay', stays: 'stay',
+    house: 'stay', villa: 'stay', airbnb: 'stay',
+    share: 'room', room: 'room', rooms: 'room', roommate: 'room', roommates: 'room',
+    tour: 'tour', tours: 'tour', safari: 'tour',
+    event: 'event', events: 'event',
+    carhire: 'carhire', car: 'carhire', car_hire: 'carhire', cars: 'carhire',
+    food: 'food', restaurant: 'food', restaurants: 'food', dining: 'food',
+    shopping: 'shopping', shop: 'shopping', product: 'shopping',
+    ride: 'ride', rides: 'ride', transport: 'ride'
+  };
+
+  /* Status vocabulary is not shared across tables — listings say
+     'live', tours say 'published', the fleet says 'active' — so the
+     raw value is collapsed to one of six states the UI can reason
+     about. Booleans are consulted only after the words, because a
+     pending row is pending whatever its is_active default happens
+     to be. */
+  function stateOf(row, status) {
+    var s = String(status == null ? '' : status).toLowerCase().trim();
+    if (s === 'deleted' || s === 'removed' || row.deleted_at) return 'deleted';
+    if (s === 'pending' || s === 'review' || s === 'submitted') return 'pending';
+    if (s === 'draft') return 'draft';
+    if (s === 'rejected') return 'rejected';
+    if (s === 'paused' || s === 'inactive' || s === 'hidden' || s === 'archived' ||
+        s === 'retired' || s === 'service' || s === 'suspended' || s === 'sold_out') return 'hidden';
+    if (row.is_active === false || row.active === false ||
+        row.is_available === false || row.in_stock === false) return 'hidden';
+    return 'live';
+  }
+
+  function firstPhoto(row) {
+    var p = row.cover_url || row.image_url || row.photo || row.image;
+    if (p) return p;
+    var a = row.photos;
+    if (typeof a === 'string') { try { a = JSON.parse(a); } catch (e) { a = null; } }
+    if (Array.isArray(a) && a.length) return typeof a[0] === 'string' ? a[0] : (a[0] && a[0].url) || null;
+    return null;
+  }
+
+  function join(parts) {
+    return parts.filter(function (x) { return x != null && String(x).trim() !== ''; }).join(' · ');
+  }
+
+  /* Money arrives in three conventions across these tables: whole
+     shillings, minor units (the hire fleet), and null. Each service
+     says which it uses; nothing guesses. */
+  function minor(n) { var v = Number(n); return isFinite(v) ? Math.round(v / 100) : 0; }
+
+  var SERVICES = [
+    {
+      key: 'stay', label: 'Stays', icon: '🏠', entity: 'listing',
+      shared: true, table: 'listings', editable: true,
+      /* Verified against the live table: every listing row uses
+         status='active', and the category rails query status=eq.active.
+         Publishing to 'live' would have hidden the row from them. */
+      liveStatus: 'active', pauseStatus: 'paused', deletedStatus: 'deleted',
+      hasDeletedAt: true, hasApprovedAt: true, canFeature: true,
+      /* The public pages filter on is_active, not on status, so the
+         flag has to move with the word or a paused listing stays up. */
+      publishExtra: { is_active: true }, pauseExtra: { is_active: false },
+      norm: function (l) {
+        return {
+          title: l.title, sub: join([l.area || l.city, l.location]),
+          price: Number(l.price_night || l.price_per_night || 0), unit: '/night'
+        };
+      }
+    },
+    {
+      key: 'room', label: 'Rooms', icon: '🛏️', entity: 'listing',
+      shared: true, table: 'listings', editable: true,
+      /* Verified against the live table: every listing row uses
+         status='active', and the category rails query status=eq.active.
+         Publishing to 'live' would have hidden the row from them. */
+      liveStatus: 'active', pauseStatus: 'paused', deletedStatus: 'deleted',
+      hasDeletedAt: true, hasApprovedAt: true, canFeature: true,
+      /* The public pages filter on is_active, not on status, so the
+         flag has to move with the word or a paused listing stays up. */
+      publishExtra: { is_active: true }, pauseExtra: { is_active: false },
+      norm: function (l) {
+        return {
+          title: l.title, sub: join([l.area || l.city, l.location]),
+          price: Number(l.price_month || l.price_night || 0), unit: l.price_month ? '/month' : '/night'
+        };
+      }
+    },
+    {
+      key: 'food', label: 'Food', icon: '🍽️', entity: 'listing',
+      shared: true, table: 'listings', editable: true,
+      /* Verified against the live table: every listing row uses
+         status='active', and the category rails query status=eq.active.
+         Publishing to 'live' would have hidden the row from them. */
+      liveStatus: 'active', pauseStatus: 'paused', deletedStatus: 'deleted',
+      hasDeletedAt: true, hasApprovedAt: true, canFeature: true,
+      /* The public pages filter on is_active, not on status, so the
+         flag has to move with the word or a paused listing stays up. */
+      publishExtra: { is_active: true }, pauseExtra: { is_active: false },
+      norm: function (l) {
+        return {
+          title: l.title, sub: join([l.area || l.city, l.property_type]),
+          price: Number(l.price_night || 0), unit: ' a main'
+        };
+      }
+    },
+    {
+      key: 'shopping', label: 'Shopping', icon: '🛍️', entity: 'listing',
+      shared: true, table: 'listings', editable: true,
+      /* Verified against the live table: every listing row uses
+         status='active', and the category rails query status=eq.active.
+         Publishing to 'live' would have hidden the row from them. */
+      liveStatus: 'active', pauseStatus: 'paused', deletedStatus: 'deleted',
+      hasDeletedAt: true, hasApprovedAt: true, canFeature: true,
+      /* The public pages filter on is_active, not on status, so the
+         flag has to move with the word or a paused listing stays up. */
+      publishExtra: { is_active: true }, pauseExtra: { is_active: false },
+      norm: function (l) {
+        return { title: l.title, sub: join([l.area || l.city]), price: Number(l.price_night || 0), unit: '' };
+      }
+    },
+    {
+      key: 'ride', label: 'Rides', icon: '🛺', entity: 'listing',
+      shared: true, table: 'listings', editable: true,
+      /* Verified against the live table: every listing row uses
+         status='active', and the category rails query status=eq.active.
+         Publishing to 'live' would have hidden the row from them. */
+      liveStatus: 'active', pauseStatus: 'paused', deletedStatus: 'deleted',
+      hasDeletedAt: true, hasApprovedAt: true, canFeature: true,
+      /* The public pages filter on is_active, not on status, so the
+         flag has to move with the word or a paused listing stays up. */
+      publishExtra: { is_active: true }, pauseExtra: { is_active: false },
+      norm: function (l) {
+        return { title: l.title, sub: join([l.area || l.city]), price: Number(l.price_night || 0), unit: ' from' };
+      }
+    },
+
+    /* ── first-party catalogues with their own tables ─────────────── */
+    {
+      key: 'tour', label: 'Tours', icon: '🗺️', entity: 'tour',
+      table: 'tours', source: 'partner', editable: false,
+      /* tours_status_check permits draft|pending|published|rejected|
+         paused|archived. 'deleted' is rejected by the database, and the
+         table has neither deleted_at nor approved_at. */
+      liveStatus: 'published', pauseStatus: 'paused', deletedStatus: 'archived',
+      hasDeletedAt: false, hasApprovedAt: false, canFeature: true,
+      fetch: function () { return rows('tours', function (q) { return q.order('created_at', { ascending: false }).limit(1000); }); },
+      norm: function (t) {
+        return {
+          title: t.title,
+          sub: join([t.destination || t.county, t.duration_label, t.category]),
+          price: Number(t.price_kes || 0), unit: ' pp'
+        };
+      }
+    },
+    {
+      key: 'event', label: 'Events', icon: '🎟️', entity: 'event',
+      table: 'events', source: 'partner', editable: false,
+      /* Same constraint shape as tours, plus 'cancelled'. */
+      liveStatus: 'published', pauseStatus: 'paused', deletedStatus: 'archived',
+      hasDeletedAt: false, hasApprovedAt: false, canFeature: true,
+      fetch: function () { return rows('events', function (q) { return q.order('starts_at', { ascending: false }).limit(1000); }); },
+      norm: function (e) {
+        var when = e.starts_at ? new Date(e.starts_at) : null;
+        var tiers = e.tiers;
+        if (typeof tiers === 'string') { try { tiers = JSON.parse(tiers); } catch (x) { tiers = null; } }
+        var from = 0;
+        if (Array.isArray(tiers) && tiers.length) {
+          from = tiers.reduce(function (m, t) {
+            var v = Number(t && t.price_kes) || 0;
+            return m == null || v < m ? v : m;
+          }, null) || 0;
+        }
+        return {
+          title: e.title,
+          sub: join([e.venue, e.city, when && !isNaN(when.getTime()) ? when.toLocaleDateString() : null]),
+          price: from, unit: from ? ' from' : '', freeLabel: 'Free'
+        };
+      }
+    },
+    {
+      key: 'carhire', label: 'Car hire', icon: '🚗', entity: 'vehicle',
+      table: 'car_fleet', source: 'operator', editable: false,
+      /* No featured, deleted_at or approved_at column on this table. */
+      liveStatus: 'active', pauseStatus: 'service', deletedStatus: 'retired',
+      hasDeletedAt: false, hasApprovedAt: false, canFeature: false,
+      fetch: function () { return rows('car_fleet', function (q) { return q.order('created_at', { ascending: false }).limit(1000); }); },
+      norm: function (v) {
+        return {
+          title: join([v.make, v.model, v.variant]) || 'Vehicle',
+          sub: join([v.year, v.class, v.seats ? v.seats + ' seats' : null, v.transmission]),
+          /* car_fleet rates are minor units by design, to avoid float drift. */
+          price: minor(v.day_rate), unit: '/day'
+        };
+      }
+    },
+    {
+      key: 'menu', label: 'Menu items', icon: '🍲', entity: 'menu_item',
+      table: 'menu_items', source: 'partner', editable: false,
+      /* No status and no featured column: availability is the only lever. */
+      liveStatus: null, pauseStatus: null, canFeature: false,
+      availabilityFlag: 'is_available',
+      fetch: function () {
+        return rows('menu_items', function (q) {
+          return q.select('*,listings(title)').order('created_at', { ascending: false }).limit(1500);
+        });
+      },
+      norm: function (d) {
+        return {
+          title: d.name,
+          sub: join([(d.listings && d.listings.title) || 'On a menu', d.badge, d.serves]),
+          price: Number(d.promo_price != null ? d.promo_price : d.price || 0), unit: ''
+        };
+      }
+    },
+
+  ];
+
+  /* Tab order and labels, independent of how many tables feed a tab. */
+  var SERVICE_ORDER = ['stay', 'room', 'tour', 'event', 'carhire', 'food', 'menu', 'shopping', 'ride'];
+  var SERVICE_META = {};
+  SERVICES.forEach(function (s) {
+    if (!SERVICE_META[s.key]) SERVICE_META[s.key] = { key: s.key, label: s.label, icon: s.icon };
+  });
+
+  function normalise(svc, row, decayByItem) {
+    var n = {};
+    try { n = svc.norm(row) || {}; } catch (e) { n = {}; }
+
+    var status = row.status;
+    var state = stateOf(row, status);
+    /* Tables with no status column at all — menu_items is the one that
+       remains — carry a boolean instead. Report that as the status so the
+       UI is not showing a blank pill on a row it can still publish. */
+    if (status == null && svc.availabilityFlag) {
+      status = row[svc.availabilityFlag] === false ? 'hidden' : 'live';
+    }
+
+    var d = decayByItem && row.id ? decayByItem[row.id] : null;
+
+    return {
+      uid: svc.table + ':' + row.id,
+      id: row.id,
+      service: svc.key,
+      serviceLabel: svc.label,
+      icon: svc.icon,
+      table: svc.table,
+      entity: svc.entity,
+      source: svc.source || 'first-party',
+      editable: !!svc.editable,
+      liveStatus: svc.liveStatus,
+      pauseStatus: svc.pauseStatus,
+      deletedStatus: svc.deletedStatus || null,
+      hasDeletedAt: svc.hasDeletedAt !== false,
+      hasApprovedAt: !!svc.hasApprovedAt,
+      /* Not every table has a featured column. Offering the button where
+         it does not exist just produces a failed write. */
+      canFeature: svc.canFeature !== false,
+      publishExtra: svc.publishExtra || null,
+      pauseExtra: svc.pauseExtra || null,
+      availabilityFlag: svc.availabilityFlag || null,
+
+      title: n.title || row.title || row.name || 'Untitled',
+      sub: n.sub || '',
+      image: firstPhoto(row),
+      price: Number(n.price || 0),
+      unit: n.unit || '',
+      freeLabel: n.freeLabel || null,
+
+      status: status == null ? '' : String(status),
+      state: state,
+      featured: !!row.featured,
+      partnerId: row.partner_id || row.owner_id || row.operator_id || row.organiser_id || row.user_id || null,
+
+      views: Number(row.views || 0),
+      bookings: Number(row.booking_count || row.bookings_count || row.order_count || 0),
+      /* createdField lets a table name its own timestamp column. */
+      createdAt: row[svc.createdField || 'created_at'] || row.created_at || null,
+      updatedAt: row.updated_at || row[svc.createdField || 'created_at'] || row.created_at || null,
+
+      /* Health is only meaningful where we track views and bookings,
+         which today means `listings`. Everything else reports null
+         rather than a fabricated diagnosis. */
+      health: d ? d.reason : null,
+      age: d ? d.age : null,
+
+      raw: row
+    };
+  }
+
+  var Catalogue = {
+    services: SERVICES,
+    order: SERVICE_ORDER,
+    meta: SERVICE_META,
+    typeOf: typeOf,
+    stateOf: stateOf,
+
+    /* Fetch only the services that own a table. Shared services are
+       split out of the snapshot's listings, which is already loaded. */
+    extras: function () {
+      var own = SERVICES.filter(function (s) { return !s.shared; });
+      return Promise.all(own.map(function (s) {
+        return (s.fetch ? s.fetch() : rows(s.table)).then(function (r) {
+          return { svc: s, rows: r || [] };
+        });
+      }));
+    },
+
+    build: function (listings, extras, decay) {
+      var out = [];
+      var byItem = {};
+      if (decay && decay.items) {
+        decay.items.forEach(function (it) { if (it.l && it.l.id) byItem[it.l.id] = it; });
+      }
+
+      var sharedByKey = {};
+      SERVICES.forEach(function (s) { if (s.shared) sharedByKey[s.key] = s; });
+
+      (listings || []).forEach(function (l) {
+        var key = LISTING_TYPE_SERVICE[typeOf(l)] || 'stay';
+        /* A listing typed as a tour or an event still belongs in that
+           tab, sitting next to the rows from the dedicated table. The
+           source column is what tells them apart. */
+        var svc = sharedByKey[key];
+        if (!svc) {
+          svc = {
+            key: key, label: (SERVICE_META[key] && SERVICE_META[key].label) || key,
+            icon: (SERVICE_META[key] && SERVICE_META[key].icon) || '📋',
+            entity: 'listing', table: 'listings', editable: true,
+            /* Verified against the live table: every listing row uses
+         status='active', and the category rails query status=eq.active.
+         Publishing to 'live' would have hidden the row from them. */
+      liveStatus: 'active', pauseStatus: 'paused', deletedStatus: 'deleted',
+      hasDeletedAt: true, hasApprovedAt: true, canFeature: true,
+      /* The public pages filter on is_active, not on status, so the
+         flag has to move with the word or a paused listing stays up. */
+      publishExtra: { is_active: true }, pauseExtra: { is_active: false },
+            norm: function (x) {
+              return { title: x.title, sub: join([x.area || x.city, x.location]),
+                       price: Number(x.price_night || x.price_month || 0), unit: '' };
+            }
+          };
+        }
+        out.push(normalise(svc, l, byItem));
+      });
+
+      (extras || []).forEach(function (bundle) {
+        bundle.rows.forEach(function (row) { out.push(normalise(bundle.svc, row, null)); });
+      });
+
+      return out.sort(function (a, b) {
+        return String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
+      });
+    },
+
+    /* Counts per tab, so the UI can label a tab it has not rendered. */
+    counts: function (items) {
+      var c = { all: items.length };
+      items.forEach(function (i) { c[i.service] = (c[i.service] || 0) + 1; });
+      return c;
+    },
+
+    /* ── Writes, dispatched by the item's own table ──────────────── */
+    publish: function (item) {
+      if (item.liveStatus) return Moderate.setStatus(item.table, item.id, item.liveStatus, item.publishExtra, item.entity, item.hasApprovedAt);
+      if (item.availabilityFlag) {
+        var v = {}; v[item.availabilityFlag] = true;
+        return Moderate.patch(item.table, item.id, v, item.entity + '.publish', item.entity);
+      }
+      return Promise.resolve({ ok: false, error: 'This service has no publish state' });
+    },
+
+    pause: function (item) {
+      if (item.pauseStatus) return Moderate.setStatus(item.table, item.id, item.pauseStatus, item.pauseExtra, item.entity, false);
+      if (item.availabilityFlag) {
+        var v = {}; v[item.availabilityFlag] = false;
+        return Moderate.patch(item.table, item.id, v, item.entity + '.pause', item.entity);
+      }
+      return Promise.resolve({ ok: false, error: 'This service has no paused state' });
+    },
+
+    feature: function (item, on) {
+      if (!item.canFeature) {
+        return Promise.resolve({ ok: false, error: item.serviceLabel + ' cannot be featured' });
+      }
+      return Moderate.feature(item.table, item.id, on, item.entity);
+    },
+
+    /* Soft delete where the table models it, hard delete where it does
+       not. A menu item has no deleted state to move to, so pretending
+       otherwise would leave it on the site. */
+    remove: function (item, hard, reason) {
+      var soft = !hard && !!item.deletedStatus;
+      return Moderate.remove(item.table, item.id, !soft, reason, item.entity, item.pauseExtra, {
+        deletedStatus: item.deletedStatus,
+        hasDeletedAt: item.hasDeletedAt
+      });
+    },
+
+    /* What a soft delete actually leaves behind, so the confirm dialog
+       can name it instead of saying 'deleted' for a row that ends up
+       archived or retired. */
+    deletedLabel: function (item) { return item.deletedStatus || 'deleted'; },
+
+    softDeletable: function (item) { return !!item.deletedStatus; }
+  };
+
   /* ═══ 6 · SNAPSHOT. One call, whole platform ════════════════════ */
-  function snapshot() {
+  function coreSnapshot() {
     return Promise.all([
       rows('listings', function (q) { return q.order('created_at', { ascending: false }).limit(2000); }),
       rows('profiles', function (q) { return q.order('created_at', { ascending: false }).limit(3000); }),
@@ -803,6 +1338,20 @@
     });
   }
 
+  /* The catalogue tables load alongside the core snapshot rather than
+     after it, so adding eight services costs one round trip, not
+     eight sequential ones. Any of them can fail to [] without taking
+     the console down. */
+  function snapshot() {
+    return Promise.all([coreSnapshot(), Catalogue.extras()]).then(function (r) {
+      var base = r[0];
+      base.catalogue = Catalogue.build(base.listings, r[1], base.engine && base.engine.decay);
+      base.catalogueCounts = Catalogue.counts(base.catalogue);
+      base.faults = faults.slice();
+      return base;
+    });
+  }
+
   /* ═══ 7 · FORMAT HELPERS ══════════════════════════════════════════ */
   function money(n) {
     n = Number(n) || 0;
@@ -857,6 +1406,7 @@
     snapshot: snapshot,
     Engine: Engine,
     Moderate: Moderate,
+    Catalogue: Catalogue,
     audit: audit,
     localAudit: localAudit,
     faults: function () { return faults.slice(); },

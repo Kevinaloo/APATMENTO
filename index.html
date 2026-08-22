@@ -2062,20 +2062,22 @@ document.querySelectorAll('.svc-tile').forEach((t,i)=>{t.style.transitionDelay=(
     );
   }
 
-  /* Events. Live from scraped_events */
+  /* Events. Live from events_public, the same view the events page reads. */
   async function loadEvents() {
     try {
       const now = new Date().toISOString();
       const r = await fetch(
-        `${SUPA}/rest/v1/scraped_events?active=eq.true&start_date=gte.${now}&select=title,image_url,venue,city,start_date&order=start_date.asc&limit=8`,
+        `${SUPA}/rest/v1/events_public?starts_at=gte.${now}&select=title,cover_url,photos,venue,city,starts_at&order=starts_at.asc&limit=8`,
         { headers: H }
       );
       if (!r.ok) throw new Error();
       const rows = await r.json();
-      const items = rows.filter(e => e.image_url).map(e => ({
-        img:   e.image_url,
+      const cover = e => e.cover_url || (Array.isArray(e.photos) && e.photos.length
+        ? (typeof e.photos[0] === 'string' ? e.photos[0] : e.photos[0]?.url) : null);
+      const items = rows.map(e => ({ ...e, _img: cover(e) })).filter(e => e._img).map(e => ({
+        img:   e._img,
         title: e.title,
-        sub:   `${e.venue||e.city||'Kenya'} · ${e.start_date ? new Date(e.start_date).toLocaleDateString('en-KE',{month:'short',day:'numeric'}) : 'Soon'}`
+        sub:   `${e.venue||e.city||'Kenya'} · ${e.starts_at ? new Date(e.starts_at).toLocaleDateString('en-KE',{month:'short',day:'numeric'}) : 'Soon'}`
       }));
       if (!items.length) throw new Error();
       buildStrip(

@@ -265,22 +265,6 @@
   ],
   "crons": [
     {
-      "path": "/api/scrape?service=shopping",
-      "schedule": "0 1 * * *"
-    },
-    {
-      "path": "/api/scrape?service=food",
-      "schedule": "0 2 * * *"
-    },
-    {
-      "path": "/api/scrape?service=events",
-      "schedule": "0 3 * * *"
-    },
-    {
-      "path": "/api/scrape?service=tours",
-      "schedule": "0 4 * * *"
-    },
-    {
       "path": "/api/utilities?action=close-bookings",
       "schedule": "10 21 * * *"
     },
@@ -301,9 +285,6 @@
     },
     "api/calendar-sync.js": {
       "maxDuration": 30
-    },
-    "api/scrape.js": {
-      "maxDuration": 60
     },
     "api/utilities.js": {
       "maxDuration": 20
