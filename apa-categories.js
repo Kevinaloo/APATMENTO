@@ -38,6 +38,15 @@
     });
   }
 
+  /* photos is text[] on listings and jsonb on the first-party catalogues.
+     Both arrive as a JS array over PostgREST; a stringified column is
+     parsed rather than rendered as "[object Object]". */
+  function firstOf(a) {
+    if (typeof a === 'string') { try { a = JSON.parse(a); } catch (e) { return null; } }
+    if (!Array.isArray(a) || !a.length) return null;
+    return typeof a[0] === 'string' ? a[0] : (a[0] && a[0].url) || null;
+  }
+
   function money(n, cur) {
     var v = Number(n);
     if (!isFinite(v) || v <= 0) return '';
@@ -60,15 +69,15 @@
       title: 'Events near you',
       dest: 'events',
       fetch: function () {
-        return get('scraped_events?active=eq.true&start_date=gte.' +
-          new Date().toISOString() + '&order=start_date.asc&limit=12');
+        return get('events_public?starts_at=gte.' +
+          new Date().toISOString() + '&order=starts_at.asc&limit=12');
       },
       map: function (e) {
-        var d = e.start_date
-          ? new Date(e.start_date).toLocaleDateString('en-KE', { month: 'short', day: 'numeric' })
+        var d = e.starts_at
+          ? new Date(e.starts_at).toLocaleDateString('en-KE', { month: 'short', day: 'numeric' })
           : '';
         return {
-          img: e.image_url,
+          img: e.cover_url || firstOf(e.photos),
           title: e.title,
           sub: [d, e.venue || e.city].filter(Boolean).join(' · '),
           price: money(e.price_from, e.currency)
@@ -80,14 +89,14 @@
       title: 'Tours & safaris',
       dest: 'tours',
       fetch: function () {
-        return get('scraped_tours?active=eq.true&order=rating.desc.nullslast&limit=12');
+        return get('tours_public?order=featured.desc,sort_weight.desc&limit=12');
       },
       map: function (t) {
         return {
-          img: t.image_url,
+          img: t.cover_url || firstOf(t.photos),
           title: t.title,
-          sub: [t.location, t.duration].filter(Boolean).join(' · '),
-          price: money(t.price_from, t.currency)
+          sub: [t.destination || t.county, t.duration_label].filter(Boolean).join(' · '),
+          price: money(t.price_kes)
         };
       }
     },
@@ -121,14 +130,15 @@
       title: 'Shopping',
       dest: 'shopping',
       fetch: function () {
-        return get('scraped_shopping?active=eq.true&in_stock=eq.true&order=hot.desc&limit=12');
+        return get('listings?type=eq.shopping&status=eq.active&is_active=eq.true' +
+          '&select=id,title,area,city,price_night,photos&limit=12');
       },
       map: function (p) {
         return {
-          img: p.image_url,
-          title: p.name,
-          sub: [p.category, p.seller].filter(Boolean).join(' · '),
-          price: money(p.price)
+          img: firstOf(p.photos),
+          title: p.title,
+          sub: [p.area || p.city].filter(Boolean).join(' · '),
+          price: money(p.price_night)
         };
       }
     },
@@ -137,15 +147,19 @@
       title: 'Car hire',
       dest: 'carhire',
       fetch: function () {
-        return get('scraped_carhire?active=eq.true&order=price_self.asc&limit=12');
+        /* RLS exposes only active vehicles from verified operators, which
+           is exactly what belongs on a home screen. */
+        return get('car_fleet?status=eq.active&order=day_rate.asc&limit=12');
       },
       map: function (c) {
         var seats = c.seats ? c.seats + ' seats' : '';
+        /* day_rate is stored in minor units to avoid float drift. */
+        var perDay = Number(c.day_rate) > 0 ? Math.round(Number(c.day_rate) / 100) : 0;
         return {
-          img: c.image_url,
-          title: c.name,
-          sub: [c.vehicle_type, seats].filter(Boolean).join(' · '),
-          price: c.price_self ? money(c.price_self) + '/day' : ''
+          img: firstOf(c.photos),
+          title: [c.make, c.model].filter(Boolean).join(' '),
+          sub: [c.class, seats].filter(Boolean).join(' · '),
+          price: perDay ? money(perDay) + '/day' : ''
         };
       }
     },

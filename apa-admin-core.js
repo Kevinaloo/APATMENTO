@@ -769,9 +769,9 @@
      The console used to know about exactly one table, `listings`, and
      so the Inventory panel could only ever show stays. Every other
      service — the tours partners submit, the events organisers submit,
-     the hire fleet, restaurant menus, the scraped catalogues — existed
-     on the public site and nowhere in admin. You could see a category
-     but never the individual things inside it.
+     the hire fleet, restaurant menus — existed on the public site and
+     nowhere in admin. You could see a category but never the individual
+     things inside it.
 
      This registry is the fix. Each service declares where its rows
      live and how to read one, and everything downstream (the table,
@@ -1006,52 +1006,6 @@
       }
     },
 
-    /* ── scraped catalogues. Read-only supply we did not author, but
-         which an operator must still be able to pull down instantly
-         when it goes wrong. Delete here is a real delete.          */
-    {
-      key: 'tour', label: 'Tours', icon: '🗺️', entity: 'scraped_tour',
-      table: 'scraped_tours', source: 'scraped', editable: false,
-      availabilityFlag: 'active', canFeature: false, createdField: 'scraped_at',
-      fetch: function () { return rows('scraped_tours', function (q) { return q.limit(1000); }); },
-      norm: function (t) {
-        return { title: t.title || t.name, sub: join([t.location, t.duration, t.category]),
-                 price: Number(t.price_from || 0), unit: ' from' };
-      }
-    },
-    {
-      key: 'event', label: 'Events', icon: '🎟️', entity: 'scraped_event',
-      table: 'scraped_events', source: 'scraped', editable: false,
-      availabilityFlag: 'active', canFeature: false, createdField: 'scraped_at',
-      fetch: function () { return rows('scraped_events', function (q) { return q.limit(1000); }); },
-      norm: function (e) {
-        var d = e.start_date ? new Date(e.start_date) : null;
-        return { title: e.title || e.name,
-                 sub: join([e.venue, e.city, d && !isNaN(d.getTime()) ? d.toLocaleDateString() : null]),
-                 price: Number(e.price_from || 0), unit: ' from' };
-      }
-    },
-    {
-      key: 'carhire', label: 'Car hire', icon: '🚗', entity: 'scraped_car',
-      table: 'scraped_carhire', source: 'scraped', editable: false,
-      availabilityFlag: 'active', canFeature: false, createdField: 'scraped_at',
-      fetch: function () { return rows('scraped_carhire', function (q) { return q.limit(1000); }); },
-      norm: function (c) {
-        return { title: c.name || c.title,
-                 sub: join([c.vehicle_type, c.seats ? c.seats + ' seats' : null, c.company]),
-                 price: Number(c.price_self || 0), unit: '/day' };
-      }
-    },
-    {
-      key: 'shopping', label: 'Shopping', icon: '🛍️', entity: 'scraped_product',
-      table: 'scraped_shopping', source: 'scraped', editable: false,
-      availabilityFlag: 'active', canFeature: false, createdField: 'scraped_at',
-      fetch: function () { return rows('scraped_shopping', function (q) { return q.limit(1500); }); },
-      norm: function (p) {
-        return { title: p.name || p.title, sub: join([p.category, p.seller]),
-                 price: Number(p.price || 0), unit: '' };
-      }
-    }
   ];
 
   /* Tab order and labels, independent of how many tables feed a tab. */
@@ -1067,9 +1021,9 @@
 
     var status = row.status;
     var state = stateOf(row, status);
-    /* Tables with no status column at all (menus, scraped supply) carry
-       a boolean instead. Report that as the status so the UI is not
-       showing a blank pill on a row it can still publish and pause. */
+    /* Tables with no status column at all — menu_items is the one that
+       remains — carry a boolean instead. Report that as the status so the
+       UI is not showing a blank pill on a row it can still publish. */
     if (status == null && svc.availabilityFlag) {
       status = row[svc.availabilityFlag] === false ? 'hidden' : 'live';
     }
@@ -1112,7 +1066,7 @@
 
       views: Number(row.views || 0),
       bookings: Number(row.booking_count || row.bookings_count || row.order_count || 0),
-      /* The scraped tables timestamp with scraped_at, not created_at. */
+      /* createdField lets a table name its own timestamp column. */
       createdAt: row[svc.createdField || 'created_at'] || row.created_at || null,
       updatedAt: row.updated_at || row[svc.createdField || 'created_at'] || row.created_at || null,
 
@@ -1225,8 +1179,8 @@
     },
 
     /* Soft delete where the table models it, hard delete where it does
-       not. A menu item or a scraped product has no deleted state to
-       move to, so pretending otherwise would leave it on the site. */
+       not. A menu item has no deleted state to move to, so pretending
+       otherwise would leave it on the site. */
     remove: function (item, hard, reason) {
       var soft = !hard && !!item.deletedStatus;
       return Moderate.remove(item.table, item.id, !soft, reason, item.entity, item.pauseExtra, {

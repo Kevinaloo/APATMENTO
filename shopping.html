@@ -366,26 +366,11 @@ const ESC_MAP = {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'};
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, m => ESC_MAP[m]);
 const money = n => 'KES ' + Number(n || 0).toLocaleString('en-KE');
 
-// ── Live inventory. Curated Kenyan sellers (scraped_shopping) plus
-//    anything partners have added themselves (listings, type=shopping).
-//    Nothing here is hardcoded: the grid is whatever the catalogue holds.
+// ── Live inventory. Everything partners have listed themselves
+//    (listings, type=shopping). Nothing here is hardcoded, and nothing
+//    is scraped: the grid is whatever the first-party catalogue holds.
 let PRODUCTS = [];
 let _cat = 'all', _search = '', _loaded = false;
-
-function normaliseScraped(r){
-  return {
-    id: 's' + r.id,
-    name: r.name || 'Product',
-    seller: r.seller || r.market || 'Local seller',
-    place: [r.market, r.city].filter(Boolean).join(' · '),
-    price: Number(r.price) || 0,
-    cat: catOf(r.category),
-    img: r.image_url || '',
-    tags: Array.isArray(r.tags) ? r.tags : [],
-    hot: !!r.hot,
-    url: '',
-  };
-}
 
 function normaliseListing(l){
   const photos = Array.isArray(l.photos) ? l.photos.filter(Boolean) : [];
@@ -407,17 +392,14 @@ async function loadProducts(){
   const { createClient } = supabase;
   const sb = createClient(SB_URL, SB_KEY);
 
-  const [shop, listed] = await Promise.all([
-    sb.from('scraped_shopping').select('*').eq('active', true).eq('in_stock', true),
-    sb.from('listings').select('*').eq('type', 'shopping').eq('is_active', true),
-  ]);
+  const listed = await sb.from('listings').select('*')
+    .eq('type', 'shopping').eq('is_active', true);
 
-  PRODUCTS = []
-    .concat((listed.data || []).map(normaliseListing))
-    .concat((shop.data  || []).map(normaliseScraped))
+  PRODUCTS = (listed.data || [])
+    .map(normaliseListing)
     .sort((a, b) => (Number(b.hot) - Number(a.hot)) || a.name.localeCompare(b.name));
 
-  return (shop.error && listed.error) ? shop.error : null;
+  return listed.error || null;
 }
 
 // ── Category chips, built from what the catalogue actually contains
