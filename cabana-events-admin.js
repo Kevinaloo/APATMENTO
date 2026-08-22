@@ -117,6 +117,27 @@
     }, function (e) { toast('Could not update: ' + (e && e.message || 'unknown')); });
   }
 
+  /* Delete is a soft delete: the row keeps its evidence and stops being
+     served. Purging for good is done from the service catalogue, which
+     is the one place that asks for a written reason first. */
+  function remove(id) {
+    var e = state.events.filter(function (x) { return String(x.id) === String(id); })[0];
+    var name = (e && e.title) || 'this event';
+    if (!window.confirm('Delete ' + name + '?\n\nIt comes off the site immediately. The row is retained and recoverable.')) return;
+
+    var M = window.ApaAdmin && window.ApaAdmin.Moderate;
+    var done = function (r) {
+      if (r && r.ok === false) { toast('Could not delete: ' + r.error); return; }
+      toast('Deleted'); load();
+    };
+    if (M) return M.remove('events', id, false, 'Deleted from the events panel', 'event').then(done, function () { toast('Could not delete'); });
+
+    var c = client(); if (!c) return;
+    c.from('events').update({ status: 'deleted', deleted_at: new Date().toISOString() }).eq('id', id)
+      .then(function (r) { done(r && r.error ? { ok: false, error: r.error.message } : { ok: true }); },
+            function () { toast('Could not delete'); });
+  }
+
   function toggleFeatured(id, on) {
     var c = client(); if (!c) return;
     c.from('events').update({ featured: !!on }).eq('id', id).then(function () {
@@ -159,6 +180,7 @@
       acts += '<button class="btn btn-ok btn-sm" data-act="publish" data-id="' + t.id + '">Publish</button>';
     }
     acts += '<button class="btn btn-g btn-sm" data-act="edit" data-id="' + t.id + '">Edit</button>';
+    acts += '<button class="btn btn-d btn-sm" data-act="delete" data-id="' + t.id + '">Delete</button>';
 
     return '<tr>' +
       '<td><div class="t-main">' + esc(t.title) + (t.featured ? ' <span class="pill p-info">Featured</span>' : '') + '</div>' +
@@ -232,6 +254,7 @@
           toggleFeatured(id, !(t && t.featured));
         }
         if (act === 'edit') openForm(id);
+        if (act === 'delete') remove(id);
       });
     });
     var nb = $('ev-adm-new');
