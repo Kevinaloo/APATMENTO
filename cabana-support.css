@@ -461,6 +461,40 @@
 .cbn-sup-send:disabled { opacity: .38; cursor: default; }
 .cbn-sup-send svg { width: 18px; height: 18px; }
 
+/* ── Dictation ─────────────────────────────────────────────────────
+   Quiet until it is listening, then unmistakable: nobody should ever
+   wonder whether the microphone is live. ── */
+.cbn-sup-mic {
+  width: 38px; height: 38px; flex: none;
+  border: 0; border-radius: 13px;
+  background: var(--sup-chip, rgba(127, 127, 150, .12));
+  color: var(--sup-ink-soft, #6b6b80);
+  cursor: pointer; position: relative;
+  display: grid; place-items: center;
+  transition: transform .2s var(--sup-spring), background .2s, color .2s;
+}
+.cbn-sup-mic:hover { transform: translateY(-1px); color: var(--sup-ink, #16161d); }
+.cbn-sup-mic:active { transform: scale(.93); }
+.cbn-sup-mic svg { width: 17px; height: 17px; }
+
+.cbn-sup-mic[data-on="1"] {
+  background: linear-gradient(135deg, #FF1744, #D50000);
+  color: #fff;
+}
+.cbn-sup-mic[data-on="1"]::after {
+  content: ''; position: absolute; inset: -3px;
+  border-radius: 15px; border: 2px solid rgba(213, 0, 0, .55);
+  animation: cbnMicPulse 1.35s ease-out infinite;
+  pointer-events: none;
+}
+@keyframes cbnMicPulse {
+  0%   { transform: scale(1);    opacity: .9; }
+  100% { transform: scale(1.28); opacity: 0;  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cbn-sup-mic[data-on="1"]::after { animation: none; opacity: .6; }
+}
+
 .cbn-sup-legal {
   margin: 8px 2px 0;
   font: 500 10.8px/1.5 var(--font-body, 'Inter', sans-serif);

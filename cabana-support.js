@@ -173,6 +173,116 @@
       .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
 
+  /* ══════════════════════════════════════════════════════════════════
+     VOICE
+     Dictation, not a separate voice assistant. What you say becomes a
+     message in the same thread, so speaking and typing are the same
+     conversation — and the transcript a human inherits on escalation
+     reads identically either way.
+
+     Speech recognition needs a secure context to be offered at all;
+     browsers that do not have it simply never see the button.
+  ══════════════════════════════════════════════════════════════════ */
+  var SR = global.SpeechRecognition || global.webkitSpeechRecognition || null;
+  var SECURE = (global.isSecureContext !== false) &&
+               (global.location.protocol === 'https:' || global.location.hostname === 'localhost');
+  var VOICE_IN  = !!SR && SECURE;
+  var VOICE_OUT = 'speechSynthesis' in global;
+
+  var recog = null;
+  var listening = false;
+  var spokeLast = false;   // only read a reply aloud if the ask was spoken
+
+  function speechLang() {
+    try { return (global.navigator.language || 'en-KE'); } catch (e) { return 'en-KE'; }
+  }
+
+  function stopListening() {
+    listening = false;
+    if (el.mic) el.mic.setAttribute('data-on', '0');
+    if (recog) { try { recog.stop(); } catch (e) { /* already stopped */ } }
+  }
+
+  function toggleListen() {
+    if (!VOICE_IN) return;
+    if (listening) { stopListening(); return; }
+
+    try { recog = new SR(); } catch (e) { toast('Dictation is not available here.', '🎙'); return; }
+    recog.lang = speechLang();
+    recog.interimResults = true;
+    recog.continuous = false;
+    recog.maxAlternatives = 1;
+
+    var finalText = '';
+
+    recog.onresult = function (ev) {
+      var interim = '';
+      for (var i = ev.resultIndex; i < ev.results.length; i++) {
+        var r = ev.results[i];
+        if (r.isFinal) finalText += r[0].transcript;
+        else interim += r[0].transcript;
+      }
+      /* Show it landing in the composer as they speak, so they can see
+         what was heard and fix it before it is sent. */
+      if (el.input) {
+        el.input.value = (finalText + interim).replace(/^\s+/, '');
+        autosize();
+        if (el.send) el.send.disabled = !el.input.value.trim();
+      }
+    };
+
+    recog.onerror = function (ev) {
+      stopListening();
+      if (ev && ev.error === 'not-allowed') {
+        toast('Microphone blocked. Type instead, or allow it in the address bar.', '🎙');
+      } else if (ev && ev.error !== 'aborted' && ev.error !== 'no-speech') {
+        toast('Did not catch that. Try again or type it.', '🎙');
+      }
+    };
+
+    recog.onend = function () {
+      stopListening();
+      var said = String(finalText || (el.input ? el.input.value : '')).trim();
+      /* A spoken sentence is meant to be sent. Nobody dictates and then
+         reaches for the send button. */
+      if (said) { spokeLast = true; submit(said); }
+    };
+
+    try {
+      recog.start();
+      listening = true;
+      if (el.mic) el.mic.setAttribute('data-on', '1');
+      if (el.input) { el.input.value = ''; autosize(); }
+    } catch (e) { stopListening(); }
+  }
+
+  /* Read a reply aloud only when the guest spoke to us. Volunteering
+     audio to someone typing quietly in an office is a bug. */
+  function say(text) {
+    if (!VOICE_OUT || !spokeLast) return;
+    spokeLast = false;
+    var clean = String(text || '')
+      .replace(/\[([^\]]{1,80})\]\([^)]*\)/g, '$1')   // link text only
+      .replace(/[*_`#>]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 420);
+    if (!clean) return;
+    try {
+      global.speechSynthesis.cancel();
+      var u = new global.SpeechSynthesisUtterance(clean);
+      u.lang = speechLang();
+      u.rate = 1.04;
+      u.pitch = 1.0;
+      global.speechSynthesis.speak(u);
+    } catch (e) { /* silence is an acceptable failure for speech */ }
+  }
+
+  function hushVoice() {
+    try { if (VOICE_OUT) global.speechSynthesis.cancel(); } catch (e) { /* nothing to cancel */ }
+    stopListening();
+  }
+
   /* Markdown, deliberately tiny: bold, inline code, and links that must
      be relative or https. Anything else stays literal text. */
   function render(text) {
@@ -229,6 +339,7 @@
       +   '<footer class="cbn-sup-foot">'
       +     '<form class="cbn-sup-form" id="cbn-sup-form">'
       +       '<textarea id="cbn-sup-input" rows="1" placeholder="Ask anything, or tell us what went wrong…" aria-label="Message Cabana support" maxlength="3000"></textarea>'
+      +       (VOICE_IN ? '<button class="cbn-sup-mic" id="cbn-sup-mic" type="button" aria-label="Dictate a message" title="Speak instead of typing">' + SVG.mic + '</button>' : '')
       +       '<button class="cbn-sup-send" id="cbn-sup-send" type="submit" aria-label="Send" disabled>' + SVG.send + '</button>'
       +     '</form>'
       +     '<div class="cbn-sup-legal">APA answers instantly · <button type="button" id="cbn-sup-human">talk to a person</button></div>'
@@ -273,6 +384,7 @@
     el.callLevel = doc.getElementById('cbn-call-level');
     el.callMute = doc.getElementById('cbn-call-mute');
     el.callEnd  = doc.getElementById('cbn-call-end');
+    el.mic      = doc.getElementById('cbn-sup-mic');
 
     wire();
   }
@@ -340,11 +452,38 @@
       + '</div></div>';
   }
 
+  /* The opening line reads the clock and the page, because "Good evening"
+     on the tours page at 8pm is a different conversation from "Hi there"
+     on the booking-confirm page at noon — and APA is one assistant who
+     notices where you are, not a widget with a fixed greeting. */
+  function greeting() {
+    var h = new Date().getHours();
+    var part = h < 5 ? 'Up late' : h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : h < 22 ? 'Good evening' : 'Up late';
+    var who = signedIn && callerName ? ', ' + callerName.split(' ')[0] : '';
+    return part + who + '.';
+  }
+
+  var PAGE_OPENER = {
+    tours:            'Looking at tours — want me to find one that fits your dates?',
+    apartments:       'Browsing stays. Tell me the area and budget and I’ll narrow it down.',
+    stays:            'Browsing stays. Tell me the area and budget and I’ll narrow it down.',
+    events:           'Events. Say the night you’re free and I’ll tell you what’s on.',
+    food:             'Hungry? Tell me the area and what you’re after.',
+    rides:            'Need a ride? Tell me where and when.',
+    carhire:          'Car hire — self-drive or with a driver?',
+    flights:          'Flights. Where from, where to, and roughly when?',
+    roommates:        'Looking for a roommate or listing a room?',
+    'my-bookings':    'This is your bookings page — ask me anything about any of them.',
+    'booking-confirm':'Something up with this booking? I can see it.',
+    rewards:          'Your points, and what they’re actually worth. Ask away.',
+    dashboard:        'What are we sorting today?',
+  };
+
   function paintIntro() {
-    var hi = signedIn && callerName ? 'Hi ' + callerName.split(' ')[0] + '.' : 'Hi there.';
+    var opener = PAGE_OPENER[pageKey()] || 'What do you need?';
     var html = '<div class="cbn-sup-intro">'
-      + '<h3>' + esc(hi) + ' What do you need?</h3>'
-      + '<p>I’m APA. I can see live prices, your bookings and what’s actually available — so you get the real answer, not a help article. If it needs a person, I hand you over without you starting again.</p>'
+      + '<h3>' + esc(greeting()) + ' ' + esc(opener) + '</h3>'
+      + '<p>I’m APA — the same one that plans your trip and the one that fixes it when something breaks. I can see live prices, your bookings and what’s actually available, so you get the real answer, not a help article. If it needs a person, I hand you over without you starting again.</p>'
       + '<div class="cbn-sup-sugs">';
     suggestions.forEach(function (s) {
       html += '<button class="cbn-sug" type="button" data-q="' + esc(s.question) + '">'
@@ -428,6 +567,7 @@
   function closePanel() {
     if (!open) return;
     open = false;
+    hushVoice();   /* nothing should still be talking to a closed panel */
     ss(SS_OPEN, null);
     el.root.classList.remove('cbn-sup--open');
     el.launch.setAttribute('aria-expanded', 'false');
@@ -436,6 +576,12 @@
        to a closed panel should light the badge, not vanish. */
     if (thread && ['queued', 'assigned', 'waiting'].indexOf(thread.status) >= 0) schedulePoll(false);
     try { el.launch.focus(); } catch (e) {}
+  }
+
+  function autosize() {
+    if (!el.input) return;
+    el.input.style.height = 'auto';
+    el.input.style.height = Math.min(108, el.input.scrollHeight) + 'px';
   }
 
   function wire() {
@@ -458,9 +604,10 @@
 
     el.input.addEventListener('input', function () {
       el.send.disabled = !el.input.value.trim();
-      el.input.style.height = 'auto';
-      el.input.style.height = Math.min(108, el.input.scrollHeight) + 'px';
+      autosize();
     });
+
+    if (el.mic) el.mic.addEventListener('click', toggleListen);
 
     el.input.addEventListener('keydown', function (e) {
       if (e.key === 'Enter' && !e.shiftKey) {
@@ -641,7 +788,10 @@
 
         var meta = {};
         if (d.chips && d.chips.length) meta.chips = d.chips;
-        if (d.reply) appendLocal({ role: 'apa', name: 'APA', body: d.reply, at: new Date().toISOString(), meta: meta });
+        if (d.reply) {
+          appendLocal({ role: 'apa', name: 'APA', body: d.reply, at: new Date().toISOString(), meta: meta });
+          say(d.reply);
+        }
         if (meta.chips) paintChips(meta.chips);
 
         if (d.escalated) {
