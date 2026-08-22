@@ -755,12 +755,15 @@
 
         fresh.forEach(function (m) {
           lastAt = m.at;
-          /* Our own echo is already on screen. */
-          if (m.role === 'user') {
-            var dupe = messages.some(function (x) { return !x.id && x.role === 'user' && x.body === m.body; });
+          /* Our own echo is already on screen (user sends) or was appended
+             optimistically from the send response (apa/agent replies). */
+          var echoRole = m.role === 'user' || m.role === 'apa' || m.role === 'agent' || m.role === 'system';
+          if (echoRole) {
+            var dupe = messages.some(function (x) { return !x.id && x.role === m.role && x.body === m.body; });
             if (dupe) {
+              /* Stamp the id onto the local copy so future polls won't re-add it. */
               for (var i = messages.length - 1; i >= 0; i--) {
-                if (!messages[i].id && messages[i].role === 'user' && messages[i].body === m.body) { messages[i].id = m.id; break; }
+                if (!messages[i].id && messages[i].role === m.role && messages[i].body === m.body) { messages[i].id = m.id; break; }
               }
               return;
             }
