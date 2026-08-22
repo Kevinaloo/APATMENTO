@@ -57,15 +57,19 @@
       .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
 
+  /* Cached token set once ApaSession.ready() fires. Cleared on sign-out. */
+  var _cachedToken = null;
+
   function token() {
+    /* Use the token we cached when ApaSession confirmed the user, which
+       is guaranteed fresh (GoTrue refreshed it before calling .ready()).   */
+    if (_cachedToken) return _cachedToken;
     try {
-      /* peekSession() reads directly from apa-auth storage — reliable
-         synchronously, even on first load before getSession() resolves. */
+      /* Still check peekSession in case we're mid-polling after a refresh. */
       var peek = global.ApaSession && global.ApaSession.peekSession && global.ApaSession.peekSession();
       if (peek && peek.access_token) return peek.access_token;
-      /* Legacy fallback: private Supabase property (may be null on load). */
-      var sb = global.sb || (global.ApaSession && global.ApaSession.client && global.ApaSession.client());
-      var s = sb && sb.auth && sb.auth._currentSession;
+      var sbcl = global.sb || (global.ApaSession && global.ApaSession.client && global.ApaSession.client());
+      var s = sbcl && sbcl.auth && sbcl.auth._currentSession;
       return (s && s.access_token) || null;
     } catch (e) { return null; }
   }
@@ -74,10 +78,12 @@
     var t = token();
     if (t) return Promise.resolve(t);
     try {
-      var sb = global.sb || (global.ApaSession && global.ApaSession.client && global.ApaSession.client());
-      if (sb && sb.auth && sb.auth.getSession) {
-        return sb.auth.getSession().then(function (res) {
-          return (res && res.data && res.data.session && res.data.session.access_token) || null;
+      var sbcl = global.sb || (global.ApaSession && global.ApaSession.client && global.ApaSession.client());
+      if (sbcl && sbcl.auth && sbcl.auth.getSession) {
+        return sbcl.auth.getSession().then(function (res) {
+          var tok = res && res.data && res.data.session && res.data.session.access_token;
+          if (tok) _cachedToken = tok;
+          return tok || null;
         }).catch(function () { return null; });
       }
     } catch (e) {}
@@ -85,16 +91,17 @@
   }
 
   function api(url, op, payload) {
-    var t = token();
-    if (!t) return Promise.reject(new Error('no_session'));
-    return fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + t },
-      body: JSON.stringify(Object.assign({ op: op }, payload || {})),
-    }).then(function (r) {
-      return r.json().catch(function () { return {}; }).then(function (d) {
-        if (!r.ok) { var e = new Error(d.error || ('http_' + r.status)); e.status = r.status; e.data = d; throw e; }
-        return d;
+    return tokenAsync().then(function (t) {
+      if (!t) { var e2 = new Error('no_session'); e2.status = 401; throw e2; }
+      return fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + t },
+        body: JSON.stringify(Object.assign({ op: op }, payload || {})),
+      }).then(function (r) {
+        return r.json().catch(function () { return {}; }).then(function (d) {
+          if (!r.ok) { var e = new Error(d.error || ('http_' + r.status)); e.status = r.status; e.data = d; throw e; }
+          return d;
+        });
       });
     });
   }
@@ -715,20 +722,32 @@
       .catch(function (e) { gate(e.status || 401); });
   }
 
-  function waitForSession(tries) {
-    if (token()) return boot();
-    if ((tries || 0) > 20) {
-      /* Sync peek failed — the session may have restored async. Ask Supabase
-         directly once before giving up; covers the "already signed in but
-         _currentSession hasn't populated yet" case. */
-      return tokenAsync().then(function (t) {
-        if (t) return boot();
-        gate(401);
+  function waitForSession() {
+    /* ApaSession.ready() fires after apa-session.js has fully resolved the
+       auth state via getSession() — including any automatic token refresh.
+       That guarantees the token in localStorage is fresh before we use it.
+       Polling peekSession() too early was the root cause of the gate showing
+       when the user was already signed in (expired token, not yet refreshed). */
+    if (global.ApaSession && global.ApaSession.ready) {
+      global.ApaSession.ready(function (state) {
+        if (state && state.status === 'user') {
+          /* Cache the token now that we know it's fresh. */
+          tokenAsync().then(function (t) { if (t) _cachedToken = t; });
+          boot();
+        } else {
+          gate(401);
+        }
       });
+      /* Also subscribe so sign-out clears the cached token. */
+      global.ApaSession.subscribe(function (state) {
+        if (!state || state.status !== 'user') _cachedToken = null;
+      });
+      return;
     }
-    setTimeout(function () { waitForSession((tries || 0) + 1); }, 250);
+    /* ApaSession not yet defined — tiny race on slow devices. */
+    setTimeout(waitForSession, 50);
   }
 
-  if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', function () { waitForSession(0); });
-  else waitForSession(0);
+  if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', waitForSession);
+  else waitForSession();
 })(window);
