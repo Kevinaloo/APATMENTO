@@ -95,10 +95,20 @@
 `;
   document.head.appendChild(style);
 
+  /* Included in <head> on some pages, so document.body may not exist
+     yet. Appending to it threw and took the whole payment module down
+     with it — on my-bookings, the page where paying a balance is the
+     entire point. Mount when the body is actually there. */
   const overlay = document.createElement('div');
   overlay.className = 'apt-pay-overlay';
   overlay.id = 'apt-pay-overlay';
-  document.body.appendChild(overlay);
+
+  function mountOverlay() {
+    if (overlay.isConnected) return;
+    (document.body || document.documentElement).appendChild(overlay);
+  }
+  if (document.body) mountOverlay();
+  else document.addEventListener('DOMContentLoaded', mountOverlay);
 
   let pollInterval = null;
   let pollAttempts = 0;
@@ -163,6 +173,7 @@
         </div>
       `;
     }
+    mountOverlay();   /* in case render lands before DOMContentLoaded */
     overlay.innerHTML = `<div class="apt-pay-card">${html}</div>`;
   }
 

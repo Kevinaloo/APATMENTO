@@ -292,7 +292,7 @@ const CSS = `
 .sct-item .sct-sep{color:rgba(255,255,255,.2);}
 
 /* ══ STICKY ══ */
-.sc-sticky{position:fixed;bottom:24px;right:24px;z-index:9990;width:300px;max-width:calc(100vw - 32px);border-radius:22px;overflow:hidden;box-shadow:0 28px 70px rgba(10,10,20,.25);transform:translateY(160%);transition:transform .65s cubic-bezier(.34,1.56,.64,1);}
+.sc-sticky{position:fixed;bottom:calc(24px + var(--cbn-corner-claim, 0px));right:24px;z-index:9990;width:300px;max-width:calc(100vw - 32px);border-radius:22px;overflow:hidden;box-shadow:0 28px 70px rgba(10,10,20,.25);transform:translateY(160%);transition:transform .65s cubic-bezier(.34,1.56,.64,1);}
 .sc-sticky.show{transform:none;}
 .sc-sticky-inner{padding:18px;display:flex;align-items:flex-start;gap:12px;position:relative;}
 .sc-sticky-ico{width:44px;height:44px;border-radius:13px;background:rgba(255,255,255,.2);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0;border:1px solid rgba(255,255,255,.2);}

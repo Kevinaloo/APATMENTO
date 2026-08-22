@@ -13,6 +13,25 @@
    opacity change and nothing moves.
    ══════════════════════════════════════════════════════════════════════ */
 
+/* ── The corner is claimed, not merely occupied ──────────────────────
+   The launcher lives bottom-right, and it is not the only thing that
+   wants to. A sticky promo landing in the same 24px corner does not
+   look like two features — it looks like two assistants, because the
+   guest reads any pair of floating circles down there as "which one is
+   the real one?".
+
+   So the claim is published as a variable on :root rather than kept as
+   a private number. Anything else that wants the corner stacks above
+   the claim instead of on top of it, and if this stylesheet is somehow
+   absent the fallback of 0px leaves those elements exactly where they
+   were. One line each, no coordination needed. ── */
+:root {
+  --cbn-corner-claim: 84px;   /* launcher height + the gap under it */
+}
+@media (max-width: 640px) {
+  :root { --cbn-corner-claim: 78px; }
+}
+
 .cbn-sup {
   --sup-violet: var(--violet, #6D28FF);
   --sup-electric: var(--electric, #4F6DFF);
@@ -461,6 +480,26 @@
 .cbn-sup-send:disabled { opacity: .38; cursor: default; }
 .cbn-sup-send svg { width: 18px; height: 18px; }
 
+/* The hands-free offer in the empty state. Understated on purpose: it
+   is an alternative way in, not the headline. */
+.cbn-sup-talkcta {
+  display: flex; align-items: center; gap: 9px;
+  width: 100%; margin-top: 12px; padding: 12px 14px;
+  border: 1px dashed var(--sup-line, rgba(127,127,150,.28));
+  border-radius: 14px; background: transparent; cursor: pointer;
+  color: var(--sup-soft, #474A66);
+  font: 500 13px/1.3 var(--font-body, Inter, system-ui, sans-serif);
+  text-align: left;
+  transition: border-color .2s, color .2s, background .2s, transform .2s var(--sup-spring);
+}
+.cbn-sup-talkcta:hover {
+  border-color: var(--sup-electric, #4F6DFF);
+  color: var(--sup-ink, #08080F);
+  background: rgba(79, 109, 255, .06);
+  transform: translateY(-1px);
+}
+.cbn-sup-talkcta svg { width: 16px; height: 16px; flex: none; }
+
 /* ── Dictation ─────────────────────────────────────────────────────
    Quiet until it is listening, then unmistakable: nobody should ever
    wonder whether the microphone is live. ── */
@@ -491,8 +530,35 @@
   0%   { transform: scale(1);    opacity: .9; }
   100% { transform: scale(1.28); opacity: 0;  }
 }
+
+/* Hands-free is a mode, not a moment, so it reads differently from a
+   single dictation: the button stays lit in brand colour between turns
+   rather than going quiet, because a guest who cannot tell whether the
+   loop is still running will not trust it enough to keep talking. */
+.cbn-sup-mic[data-hf="1"] {
+  background: var(--sup-grad);
+  color: #fff;
+}
+.cbn-sup-mic[data-hf="1"][data-on="0"]::after {
+  content: ''; position: absolute; inset: -3px;
+  border-radius: 15px; border: 2px solid var(--sup-electric, #4F6DFF);
+  opacity: .5;
+}
+
+/* While APA is talking, the whole panel breathes very slightly. It is
+   the only cue that distinguishes "she is speaking" from "nothing is
+   happening" when the guest is not looking at the screen. */
+.cbn-sup--speaking .cbn-sup-ava {
+  animation: cbnSpeak 1.5s ease-in-out infinite;
+}
+@keyframes cbnSpeak {
+  0%, 100% { transform: scale(1);    box-shadow: 0 0 0 0 rgba(79, 109, 255, .38); }
+  50%      { transform: scale(1.05); box-shadow: 0 0 0 8px rgba(79, 109, 255, 0); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .cbn-sup-mic[data-on="1"]::after { animation: none; opacity: .6; }
+  .cbn-sup--speaking .cbn-sup-ava  { animation: none; }
 }
 
 .cbn-sup-legal {

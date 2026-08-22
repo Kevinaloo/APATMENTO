@@ -59,13 +59,24 @@
   ].join('\n');
   D.head.appendChild(css);
 
-  /* ── DOM ── */
+  /* ── DOM ──
+     This file is included in <head> without defer on several pages, so
+     document.body does not exist yet when it runs. Appending to it threw
+     on every one of those pages, which took the rest of this module down
+     with it — the booking sheet simply never worked there. Wait for the
+     body instead of assuming it. */
   var ov = D.createElement('div');
   ov.id = 'cpb-ov';
   ov.innerHTML = '<div id="cpb-box"></div>';
-  D.body.appendChild(ov);
   ov.addEventListener('click', function (e) { if (e.target === ov) close(); });
   D.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+
+  function mount() {
+    if (ov.isConnected) return;
+    (D.body || D.documentElement).appendChild(ov);
+  }
+  if (D.body) mount();
+  else D.addEventListener('DOMContentLoaded', mount);
 
   var current = null;
 
@@ -107,8 +118,13 @@
       guestOpts += '<option value="' + i + '">' + (i === 1 ? '1 person' : i + ' people') + '</option>';
     }
 
-    D.getElementById('cpb-box').style.setProperty('--cpb-c', c);
-    D.getElementById('cpb-box').innerHTML =
+    /* Opening before the body existed would have left the overlay
+       unmounted; mount on demand so a click always finds its box. */
+    mount();
+    var box = D.getElementById('cpb-box');
+    if (!box) return;
+    box.style.setProperty('--cpb-c', c);
+    box.innerHTML =
       '<div class="cpb-img">' +
         '<img src="' + t.img + '" alt="' + t.name + '" loading="eager" onerror="this.style.display=\'none\'"/>' +
         '<div class="cpb-img-g"></div>' +
