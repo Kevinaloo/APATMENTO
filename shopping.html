@@ -153,6 +153,10 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--glass);c
 
 /* ── PRODUCT CARD ── */
 .p-card{border-radius:16px;overflow:hidden;background:#fff;border:1px solid var(--line);cursor:pointer;transition:all .38s cubic-bezier(.22,1,.36,1);opacity:0;transform:translateY(14px);text-decoration:none;display:block;color:inherit;position:relative;}
+/* The ring a deep link leaves on the product it was aimed at. It fades
+   itself out, so nothing in the catalogue stays marked. */
+.p-card-found{box-shadow:0 0 0 3px var(--violet,#7B2FF7),0 18px 44px rgba(123,47,247,.22);border-color:transparent;transform:translateY(0) scale(1.015);}
+@media(prefers-reduced-motion:reduce){.p-card-found{transform:none;}}
 .p-card.in{opacity:1;transform:none;}
 .p-card:hover{transform:translateY(-5px);box-shadow:var(--shadow-lift);border-color:transparent;}
 .p-card-img{height:150px;position:relative;overflow:hidden;background:var(--glass-2);display:flex;align-items:center;justify-content:center;}
@@ -366,11 +370,26 @@ const ESC_MAP = {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'};
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, m => ESC_MAP[m]);
 const money = n => 'KES ' + Number(n || 0).toLocaleString('en-KE');
 
-// ── Live inventory. Everything partners have listed themselves
-//    (listings, type=shopping). Nothing here is hardcoded, and nothing
-//    is scraped: the grid is whatever the first-party catalogue holds.
+// ── Live inventory. Curated Kenyan sellers (scraped_shopping) plus
+//    anything partners have added themselves (listings, type=shopping).
+//    Nothing here is hardcoded: the grid is whatever the catalogue holds.
 let PRODUCTS = [];
 let _cat = 'all', _search = '', _loaded = false;
+
+function normaliseScraped(r){
+  return {
+    id: 's' + r.id,
+    name: r.name || 'Product',
+    seller: r.seller || r.market || 'Local seller',
+    place: [r.market, r.city].filter(Boolean).join(' · '),
+    price: Number(r.price) || 0,
+    cat: catOf(r.category),
+    img: r.image_url || '',
+    tags: Array.isArray(r.tags) ? r.tags : [],
+    hot: !!r.hot,
+    url: '',
+  };
+}
 
 function normaliseListing(l){
   const photos = Array.isArray(l.photos) ? l.photos.filter(Boolean) : [];
@@ -392,14 +411,17 @@ async function loadProducts(){
   const { createClient } = supabase;
   const sb = createClient(SB_URL, SB_KEY);
 
-  const listed = await sb.from('listings').select('*')
-    .eq('type', 'shopping').eq('is_active', true);
+  const [shop, listed] = await Promise.all([
+    sb.from('scraped_shopping').select('*').eq('active', true).eq('in_stock', true),
+    sb.from('listings').select('*').eq('type', 'shopping').eq('is_active', true),
+  ]);
 
-  PRODUCTS = (listed.data || [])
-    .map(normaliseListing)
+  PRODUCTS = []
+    .concat((listed.data || []).map(normaliseListing))
+    .concat((shop.data  || []).map(normaliseScraped))
     .sort((a, b) => (Number(b.hot) - Number(a.hot)) || a.name.localeCompare(b.name));
 
-  return listed.error || null;
+  return (shop.error && listed.error) ? shop.error : null;
 }
 
 // ── Category chips, built from what the catalogue actually contains
@@ -453,7 +475,7 @@ function productCardHTML(p, i){
     : '';
 
   return `
-  <a class="p-card" href="${esc(href)}"${p.url ? ' target="_blank" rel="noopener"' : ` data-cbn-support data-cbn-prefill="${esc(orderText)}"`} style="transition-delay:${i * 22}ms"
+  <a class="p-card" data-pid="${esc(p.id)}" href="${esc(href)}"${p.url ? ' target="_blank" rel="noopener"' : ` data-cbn-support data-cbn-prefill="${esc(orderText)}"`} style="transition-delay:${i * 22}ms"
      aria-label="${esc(p.name)} — ${p.price > 0 ? money(p.price) : 'price on request'} from ${esc(p.seller)}">
     <div class="p-card-img${p.img ? '' : ' is-tile'}" style="--cat:${c.color};--tint:${c.tint};--ang:${tileAngle(p.name)}deg;" data-mono="${esc(monogram(p.name))}">
       ${media}
@@ -565,7 +587,40 @@ renderAll(); // skeleton first paint
   _loaded = true;
   renderChips();
   renderAll();
+  openFromQuery();
 })();
+
+/* ── Arriving on one product ──────────────────────────────────────
+   A dashboard rail card links here as shopping.html?back=1&open=<id>,
+   where <id> is the prefixed id this page already assigns: "s…" for a
+   curated seller row, "l…" for a partner listing. There is no product
+   sheet to open on this page, so the honest equivalent is to put the
+   product in front of the guest: clear any category filter that would
+   hide it, scroll it into the middle of the screen and ring it once.
+   An id that no longer exists leaves the catalogue exactly as it was. */
+function openFromQuery(){
+  let pid = null;
+  try { pid = new URLSearchParams(location.search).get('open'); } catch(_) {}
+  if(!pid) return;
+  const target = PRODUCTS.find(p => p.id === pid);
+  if(!target) return;
+
+  if(_cat !== 'all' && _cat !== target.cat) setCat('all');
+
+  requestAnimationFrame(() => {
+    /* Matched by walking the rendered cards rather than by building a
+       selector: a product id comes from the database and CSS.escape is
+       not something to rely on for correctness here. */
+    const card = Array.from(document.querySelectorAll('.p-card'))
+      .find(el => el.dataset.pid === pid);
+    if(!card) return;
+    card.scrollIntoView({ behavior:'smooth', block:'center' });
+    card.classList.add('p-card-found');
+    /* The ring is a pointer, not a permanent state. It clears itself so
+       the catalogue does not stay marked up for the rest of the visit. */
+    setTimeout(() => card.classList.remove('p-card-found'), 2600);
+  });
+}
 </script>
 
 <style>

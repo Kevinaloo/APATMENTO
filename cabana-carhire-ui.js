@@ -415,6 +415,23 @@
     clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 3600);
   }
 
+  /* ── Arriving on one vehicle ───────────────────────────────────
+     A dashboard rail card links here as carhire.html?back=1&open=<id>.
+     The grid normally waits for the guest to say where and when, but a
+     guest who tapped a specific car has already said what they want to
+     see, so the fleet is loaded straight away and that car's sheet is
+     opened on top of it. Rule 1 still holds: no city, date or route is
+     invented on their behalf, so the sheet quotes a day rate and the
+     search bar above is still empty and waiting. A stale id lands on
+     the full grid rather than a dead end. */
+  async function openFromQuery() {
+    let id = null;
+    try { id = new URLSearchParams(location.search).get('open'); } catch (_) {}
+    if (!id) return;
+    await search();
+    openSheet(id);
+  }
+
   /* ── Boot ──────────────────────────────────────────────────────── */
   function init() {
     initTheme();
@@ -427,6 +444,7 @@
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape' && sheet().classList.contains('on')) closeSheet();
     });
+    openFromQuery();
   }
 
   if (document.readyState === 'loading')

@@ -2662,20 +2662,26 @@ const SCENES = {
 };
 SCENES.stays && (SCENES.apartments = SCENES.stays);
 
-function navigateToService(key){
+function navigateToService(key, deepLink){
   const cfg = SVC[key];
+  /* `deepLink` is an already-encoded query fragment such as
+     "open=abc-123". It is what turns a dashboard rail card from a
+     signpost into a door: the same transition plays, but the service
+     page opens on the exact listing that was tapped. */
+  const extra = deepLink ? ('&' + String(deepLink).replace(/^[?&]+/, '')) : '';
   // Unknown key should still do something sensible rather than dying
   // silently. Fall back to a direct page guess so a click always lands.
   if(!cfg){
     const guess = (key||'').replace(/\.html$/,'');
-    if(guess) window.location.href = guess + '.html?back=1';
+    if(guess) window.location.href = guess + '.html?back=1'
+      + (deepLink ? ('&' + String(deepLink).replace(/^[?&]+/, '')) : '');
     return;
   }
 
   // Guaranteed redirect: fire it even if the transition animation
   // elements are missing or a style step throws. The animation is a
   // nicety; the navigation is the contract.
-  const go = ()=>{ window.location.href = cfg.dest + '?back=1'; };
+  const go = ()=>{ window.location.href = cfg.dest + '?back=1' + extra; };
   let navigated = false;
   const safeGo = ()=>{ if(navigated) return; navigated = true; go(); };
 
@@ -2954,19 +2960,49 @@ function switchToAmbassador(){
    the authority and the destination still re-runs it on arrival — this
    was never the lock, only the courtesy that saves a redirect. */
 
-/* ── LOAD STAYS ── */
+/* ── LOAD STAYS ──────────────────────────────────────────────────
+   "Book a Space" is the Stays rail. It must show stays and nothing
+   else. The old query filtered `type=neq.room`, which excluded rooms
+   and let every other product through: a restaurant, a car and a
+   shopping item all carry a `type` that is not "room", so a samosa
+   counter rendered as a STAY at KES 0 a night.
+
+   The gate below is the same one apartments.html uses, so the rail and
+   the page it opens can never disagree about what a stay is. */
+const STAY_TYPES = ['apartment','house','villa','studio','cottage','bungalow',
+                    'hotel','guesthouse','maisonette','penthouse','bnb'];
+
+function isStayRow(l){
+  const svc = String(l.service || '').toLowerCase().trim();
+  const typ = String(l.type || '').toLowerCase().trim();
+  /* A flatshare is a different product on a different price unit. It has
+     its own rail and must never fall through into Stays. */
+  if(svc === 'roommates' || typ === 'room') return false;
+  /* An explicit service tag is the authority whenever one is present. */
+  if(svc) return svc === 'stays';
+  /* Legacy and admin-imported rows carry no service tag, so fall back to
+     the property type. Unknown stays out: an untagged restaurant row is
+     exactly the bug this replaces. */
+  const t = String(l.type || l.property_type || l.listing_type || '').toLowerCase();
+  return !!t && STAY_TYPES.some(k => t.includes(k));
+}
+
 async function loadStays(){
   const grid = document.getElementById('stay-grid');
   if(!grid) return;
   try{
     const SUPA_URL = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
     const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
+    /* Fetch wide, filter narrow. A server-side product filter would have
+       to encode the same fallback logic in a URL, and one drifted column
+       there empties the rail silently. */
     const r = await fetch(
-      SUPA_URL+'/rest/v1/listings?status=eq.active&is_active=eq.true&type=neq.room&select=id,title,location,area,city,price_night,price_per_night,photos,beds,max_guests,type,property_type&order=internal_score.desc.nullslast&limit=6',
+      SUPA_URL+'/rest/v1/listings?status=eq.active&is_active=eq.true&select=id,title,location,area,city,price_night,price_per_night,photos,beds,max_guests,type,service,property_type,listing_type&order=internal_score.desc.nullslast&limit=48',
       {headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}}
     );
-    const listings = r.ok ? (await r.json()) : [];
-    if(listings && listings.length){
+    const rows = r.ok ? (await r.json()) : [];
+    const listings = (rows||[]).filter(isStayRow).slice(0,12);
+    if(listings.length){
       grid.innerHTML = listings.map(l=>cardHTML(
         l.title||'Apartment',
         l.area||(l.location?l.location.split(',')[0]:'')||l.city||'Nairobi',
@@ -2976,11 +3012,16 @@ async function loadStays(){
         l.beds||1,
         l.max_guests||2
       )).join('');
+      if(window.ApaRail) ApaRail.scan();
       return;
     }
   }catch(e){ console.warn('loadStays:',e.message); }
-  // Empty state. Invite to list, not fake demos
-  grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:32px 16px;color:var(--ink-faint)"><div style="font-size:36px;margin-bottom:10px">🏠</div><div style="font-weight:700;margin-bottom:6px">Be the first to list here</div><a href="add-listing.html?type=apartment" style="font-size:13px;color:var(--violet);font-weight:700;text-decoration:none">+ List your space →</a></div>';
+  /* No stays yet. The rail keeps its place here rather than vanishing,
+     because "Book a Space" is the dashboard's headline shelf and an
+     invitation to list converts better than a hole in the page. */
+  /* The track is a flex rail, not a grid, so the empty state has to
+     claim the full width itself or it renders as a lone 300px card. */
+  grid.innerHTML = '<div style="flex:1 1 100%;width:100%;text-align:center;padding:32px 16px;color:var(--ink-faint)"><div style="font-size:36px;margin-bottom:10px">🏠</div><div style="font-weight:700;margin-bottom:6px">Be the first to list here</div><a href="add-listing.html?type=apartment" style="font-size:13px;color:var(--violet);font-weight:700;text-decoration:none">+ List your space →</a></div>';
 }
 
 function cardHTML(name, loc, price, id, photo, beds, guests) {
