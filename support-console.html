@@ -230,7 +230,7 @@ body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg)
   <div>
     <h1>Support desk</h1>
     <p id="gate-msg">Sign in with a Cabana team account to open the desk.</p>
-    <a href="/auth.html">Sign in</a>
+    <a href="/auth.html?next=/support-console.html" onclick="try{sessionStorage.setItem('auth_next','/support-console.html')}catch(e){}">Sign in</a>
   </div>
 </div>
 
