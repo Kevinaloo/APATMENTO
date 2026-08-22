@@ -353,6 +353,14 @@
       "destination": "/api/trust?action=ask-apa"
     },
     {
+      "source": "/api/support",
+      "destination": "/api/trust?action=support"
+    },
+    {
+      "source": "/api/call",
+      "destination": "/api/trust?action=call"
+    },
+    {
       "source": "/api/geocode",
       "destination": "/api/utilities?action=geocode"
     },

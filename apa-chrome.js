@@ -325,7 +325,7 @@
     security: [
       { n: 'Kenya Police',               d: 'Safety threat response',     tel: '999' },
       { n: 'Emergency (All Networks)',   d: 'Works on any network',       tel: '112' },
-      { n: 'Apatmento Safety Line',      d: '24/7 guest safety support',  tel: '+254745802200' }
+      { n: 'Cabana Safety',              d: '24/7 guest safety support',  app: 'urgent' }
     ],
     roadside: [
       { n: 'Kenya AA (Breakdown)',        d: 'Automobile Association',     tel: '0800723232' },
@@ -333,8 +333,8 @@
       { n: 'Emergency (All Networks)',   d: 'Police · Fire · Ambulance',  tel: '112' }
     ],
     support:  [
-      { n: 'Apatmento Support',          d: '24/7 booking & host issues', tel: '+254745802200' },
-      { n: 'WhatsApp Support',           d: 'Chat with our team',         tel: '+254745802200', wa: true }
+      { n: 'Cabana Support',             d: '24/7 booking & host issues', app: 'high' },
+      { n: 'Call Cabana in the app',     d: 'Voice, over the internet',   app: 'call' }
     ]
   };
 
@@ -421,18 +421,22 @@
         + '<span>Location unavailable. Showing general Nairobi resources</span></div>';
 
     var rows = contacts.map(function(c, i) {
-      var href = c.wa
-        ? 'https://wa.me/' + c.tel.replace(/\D/g, '')
-        : 'tel:' + c.tel;
-      var isLink = c.wa;
+      /* A public emergency number is dialled, because it rings. A Cabana
+         row opens the in-app console instead: Cabana has no phone line,
+         and a button that dials nothing is worse than no button. */
+      var inApp = !!c.app;
+      var href  = inApp ? '/help.html' : 'tel:' + c.tel;
+      var flag  = inApp ? (c.app === 'call' ? ' data-cbn-call' : ' data-cbn-support') : '';
+      var label = inApp ? (c.app === 'call' ? '📞 Call in app' : '💬 Open chat')
+                        : (i === 0 ? '📞 Call now' : 'Call');
       return '<div class="apa-sos-result">'
-        + '<span style="font-size:22px;">' + (i === 0 ? '⚡' : '📞') + '</span>'
+        + '<span style="font-size:22px;">' + (i === 0 ? '⚡' : (inApp ? '✦' : '📞')) + '</span>'
         + '<div style="flex:1;min-width:0;">'
         + '<div class="apa-sos-result-name">' + c.n + '</div>'
         + '<div class="apa-sos-result-meta">' + c.d + (i === 0 ? ' · <strong style=color:#FF1744>Closest match</strong>' : '') + '</div>'
         + '</div>'
-        + '<a href="' + href + '" ' + (isLink ? 'target="_blank"' : '') + ' style="flex-shrink:0;padding:8px 14px;border-radius:10px;background:' + (i===0?'#FF1744':'#4361FF') + ';color:#fff;font:700 12px/1 system-ui;text-decoration:none;white-space:nowrap;">'
-        + (c.wa ? '💬 Chat' : (i===0 ? '📞 Call now' : 'Call')) + '</a>'
+        + '<a href="' + href + '"' + flag + ' style="flex-shrink:0;padding:8px 14px;border-radius:10px;background:' + (i===0?'#FF1744':'#4361FF') + ';color:#fff;font:700 12px/1 system-ui;text-decoration:none;white-space:nowrap;">'
+        + label + '</a>'
         + '</div>';
     }).join('');
 

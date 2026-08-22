@@ -369,8 +369,7 @@
       'Cabana takes no cut of the face value. List a night and it goes live once we have checked it.</p>' +
       '<div class="ev-blank-acts">' +
         '<a class="ev-btn ev-btn-primary" href="/list-your-event">' + ICON.plus + 'List an event</a>' +
-        '<a class="ev-btn ev-btn-ghost" target="_blank" rel="noopener" href="https://wa.me/254716206494?text=' +
-          encodeURIComponent('Hi Cabana, I run events and I would like to list them.') + '">Talk to us first</a>' +
+        '<a href="/help.html" data-cbn-support class="ev-btn ev-btn-ghost"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.7-.8L3 21l1.9-5.1A8.4 8.4 0 0 1 4 11.5 8.4 8.4 0 0 1 12.5 3 8.4 8.4 0 0 1 21 11.5z"/></svg> Talk to us first</a>' +
       '</div></div>';
   }
 
@@ -534,9 +533,13 @@
       window.CabanaEventBook.open(e);
       return;
     }
-    window.open('https://wa.me/254716206494?text=' +
-      encodeURIComponent('Hi Cabana, I would like tickets for: ' + (e.title || '')),
-      '_blank', 'noopener');
+    /* Same reasoning as tours: hand it to support with the event named
+       instead of dead-ending on a page that cannot take the booking. */
+    if (window.CabanaSupport) {
+      window.CabanaSupport.ask('I would like tickets for: ' + (e.title || ''));
+      return;
+    }
+    window.location.href = '/help.html';
   }
 
   /* ── wiring ──────────────────────────────────────────────────────── */

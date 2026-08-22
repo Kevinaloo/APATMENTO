@@ -795,7 +795,7 @@
       .replace(/https?:\/\/\S+/g, '')
       .replace(/\/[-a-z.]+\.html/g, '')
       .replace(/[*_#`>~|]/g, '')
-      .replace(/\s{2,}/g, ' ').trim()
+      .replace(/\s{2}/g, ' ').trim()
       .slice(0, 600);
     if (!clean) { maybeReopenMic(); return; }
 

@@ -119,8 +119,9 @@ PAGES.append(dict(
          "apatmento.space now redirects to cabana.africa."),
         ("Is Cabana legit?",
          "Cabana is a registered travel platform founded in Nairobi in 2025, with published "
-         "terms and privacy policies and direct contact details (connect@cabana.africa, "
-         "+254 716 206494). Listings are verified before going live. It is genuine but early: "
+         "terms and privacy policies and direct contact details (connect@cabana.africa for "
+         "guests, partnership@cabana.africa for hosts, plus in-app support chat and voice "
+         "calling). Listings are verified before going live. It is genuine but early: "
          "a small number of live listings and no guest reviews yet."),
         ("How does Cabana make money if it charges no commission?",
          "Through optional paid placement for hosts and operators who want more visibility, "

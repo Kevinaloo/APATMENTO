@@ -910,15 +910,25 @@ async function startPayment() {
           showPartialResult(d);
         }
         try {
+          /* The receipt endpoint only mails a signed-in guest's own
+             address, so it needs the session token. Without it the call
+             is a silent 401 and the guest simply never gets a receipt. */
+          const { data: rses } = await sb.auth.getSession();
           await fetch('/api/send-receipt', {
-            method:'POST', headers:{'Content-Type':'application/json'},
+            method:'POST',
+            headers:{ 'Content-Type':'application/json',
+                      Authorization:'Bearer ' + (rses.session?.access_token || '') },
             body: JSON.stringify({
-              booking:{ reference:paymentReference, checkin, checkout, nights, subtotal, fee, total,
+              booking:{ reference:paymentReference, checkIn:checkin, checkOut:checkout,
+                nights, subtotal, fee, total,
+                /* What has actually been paid, not the grand total: a
+                   deposit receipt that claims "paid in full" is how a
+                   guest arrives without a check-in code. */
+                amountPaid: (d && d.amount_paid != null) ? d.amount_paid : total,
                 guestCode:sessionStorage.getItem('pending_guest_code')||'',
                 hostCode:sessionStorage.getItem('pending_host_code')||'' },
               listing:{ name:apt.name, location:apt.location, pricePerNight:apt.price, type:'Stay' },
-              user:{ email:CURRENT_USER?.email||'', phone:phone||'', name:name||'' },
-              sendWhatsApp:true }),
+              user:{ email:CURRENT_USER?.email||'', phone:phone||'', name:name||'' } }),
           });
         } catch(e){ console.warn('Receipt:',e.message); }
       },
@@ -1218,16 +1228,17 @@ async function _onPaypalApprove(data, booking) {
     if (result.ok || result.fully_paid != null) {
       result.fully_paid === true ? showCheckinCodes() : showPartialResult(result);
       fetch('/api/send-receipt', {
-        method:'POST', headers:{'Content-Type':'application/json'},
+        method:'POST',
+        headers:{ 'Content-Type':'application/json', Authorization:'Bearer ' + token },
         body: JSON.stringify({
-          booking:{ reference:booking.paymentReference, checkin:booking.checkin,
-            checkout:booking.checkout, nights:booking.nights, subtotal:booking.subtotal,
+          booking:{ reference:booking.paymentReference, checkIn:booking.checkin,
+            checkOut:booking.checkout, nights:booking.nights, subtotal:booking.subtotal,
             fee:booking.fee, total:booking.total,
+            amountPaid: (result.amount_paid != null) ? result.amount_paid : booking.total,
             guestCode:sessionStorage.getItem('pending_guest_code')||'',
             hostCode: sessionStorage.getItem('pending_host_code')||'' },
           listing:{ name:apt.name, location:apt.location, pricePerNight:apt.price, type:'Stay' },
-          user:{ email:(CURRENT_USER&&CURRENT_USER.email)||'', phone:'', name:booking.name },
-          sendWhatsApp: false }),
+          user:{ email:(CURRENT_USER&&CURRENT_USER.email)||'', phone:'', name:booking.name } }),
       }).catch(function(){});
     } else {
       var errMsg = result.error
@@ -1359,5 +1370,8 @@ document.addEventListener('DOMContentLoaded', function(){
   <script src="/apa-signal.js" defer></script>
 <script src="/apa-ask.js?v=2" defer></script>
 <script src="/apa-contact.js" defer></script>
+<script src="/cabana-call.js" defer></script>
+<script src="/cabana-support.js" defer></script>
+<script src="/cabana-lifecycle.js" defer></script>
 </body>
 </html>
