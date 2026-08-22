@@ -16,6 +16,7 @@
      ApaSession.ready(fn)        → fn(state) once, when first resolved
      ApaSession.subscribe(fn)    → fn(state) now + on every change
      ApaSession.get()            → current state (sync)
+     ApaSession.token()          → current access token or null (async)
      ApaSession.signOut()
      ApaSession.client()         → raw supabase client (may be null)
 
@@ -403,10 +404,25 @@
     safe(function () { c.auth.signOut().then(done, done); }, 'signOut');
   }
 
+  /* Public token access for Cabana's own API clients. Consumers used to
+     reach into supabase.auth._currentSession, an undocumented internal
+     field that disappeared between supabase-js releases. The dashboard
+     could therefore be signed in while APA sent an anonymous request.
+     Keep the refresh/read in the session owner and expose only the token
+     that the server will validate again. */
+  function token() {
+    var c = client();
+    if (!c || !c.auth || !c.auth.getSession) return Promise.resolve(null);
+    return c.auth.getSession().then(function (res) {
+      return (res && res.data && res.data.session && res.data.session.access_token) || null;
+    }, function () { return null; });
+  }
+
   global.ApaSession = {
     ready: ready,
     subscribe: subscribe,
     get: get,
+    token: token,
     signOut: signOut,
     client: client,
     _boot: boot,

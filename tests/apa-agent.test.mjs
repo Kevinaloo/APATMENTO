@@ -16,6 +16,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { normaliseListingService } from '../api/lib/_apa-agent.js';
+import { __test as supportTest } from '../api/lib/_support.js';
 
 const ROOT = new URL('..', import.meta.url).pathname;
 const read = (f) => readFileSync(join(ROOT, f), 'utf8');
@@ -23,6 +25,54 @@ const read = (f) => readFileSync(join(ROOT, f), 'utf8');
 const AGENT  = read('api/lib/_apa-agent.js');
 const BRAIN  = read('api/lib/_support.js');
 const CLIENT = read('cabana-support.js');
+
+/* ── Authentication continuity ─────────────────────────────────────── */
+
+test('APA authenticates through the public session API', () => {
+  for (const file of ['cabana-support.js', 'cabana-call.js', 'cabana-lifecycle.js', 'support-console.js']) {
+    assert.ok(!/auth\._currentSession/.test(read(file)),
+      `${file} must not decide identity from a private Supabase field`);
+  }
+  assert.match(CLIENT, /global\.ApaSession\.token\(\)/,
+    'the widget should ask the shared session owner for a fresh token');
+  assert.match(read('apa-session.js'), /auth\.getSession\(\)/,
+    'the session owner should use the supported Supabase API');
+});
+
+test('support transcript cache is scoped to the current identity', () => {
+  assert.match(CLIENT, /owner:\s*identityHint\(\)/);
+  assert.match(CLIENT, /d\.owner\s*!==\s*identityHint\(\)/,
+    'an account switch must not reveal the previous account transcript');
+});
+
+/* ── Service-aware assistance ──────────────────────────────────────── */
+
+test('natural service names resolve without asking the user again', () => {
+  for (const value of ['tour', 'a tour', 'safari', 'the tours']) {
+    assert.equal(normaliseListingService(value), 'tours');
+    assert.equal(supportTest.normaliseService(value), 'tours');
+  }
+  assert.equal(normaliseListingService('car hire'), 'carhire');
+});
+
+test('tour drafts publish to the tour catalogue, not apartment listings', () => {
+  const publish = AGENT.slice(AGENT.indexOf('async function publishTour'),
+    AGENT.indexOf('export async function listingPublish'));
+  assert.match(publish, /insert\('tour_operators'/);
+  assert.match(publish, /insert\('tours'/);
+  assert.match(publish, /status:\s*'pending'/);
+  assert.ok(!/insert\('listings'/.test(publish));
+});
+
+test('APA grounds answers in tours, events and the real booking columns', () => {
+  assert.match(BRAIN, /select\('tours'/);
+  assert.match(BRAIN, /select\('events'/);
+  assert.match(BRAIN, /select\('tour_bookings'/);
+  assert.match(BRAIN, /select\('event_tickets'/);
+  assert.match(BRAIN, /b\.grand_total/);
+  assert.match(BRAIN, /b\.payment_reference/);
+  assert.match(BRAIN, /b\.checkin_date/);
+});
 
 /* ── Money is never the model's to decide ───────────────────────────── */
 

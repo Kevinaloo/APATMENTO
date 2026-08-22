@@ -577,14 +577,43 @@ export async function bookingConfirm(caller, { agreed }) {
 ══════════════════════════════════════════════════════════════════════ */
 
 const LISTING_REQUIRED = ['title', 'service', 'city', 'area', 'price_night', 'photos', 'description'];
+const TOUR_REQUIRED = [
+  'title', 'service', 'summary', 'description', 'destination', 'price_kes',
+  'days', 'group_min', 'group_max', 'schedule_type', 'photos',
+];
 
 const LISTING_SERVICES = new Set(['stays', 'roommates', 'tours', 'events', 'carhire', 'food', 'shopping']);
 
+export function normaliseListingService(value) {
+  const raw = String(value || '').trim().toLowerCase()
+    .replace(/[_-]+/g, ' ').replace(/\s+/g, ' ')
+    .replace(/^(?:a|an|the)\s+/, '');
+  const aliases = {
+    stay: 'stays', stays: 'stays', apartment: 'stays', apartments: 'stays', accommodation: 'stays',
+    room: 'roommates', rooms: 'roommates', roommate: 'roommates', roommates: 'roommates',
+    tour: 'tours', tours: 'tours', safari: 'tours', safaris: 'tours',
+    event: 'events', events: 'events', ticket: 'events', tickets: 'events',
+    'car hire': 'carhire', carhire: 'carhire', vehicle: 'carhire',
+    food: 'food', restaurant: 'food',
+    shop: 'shopping', shopping: 'shopping', product: 'shopping',
+  };
+  return aliases[raw] || raw.replace(/\s/g, '');
+}
+
 function missingListingSlots(slots) {
-  return LISTING_REQUIRED.filter(k => {
+  const required = slots && normaliseListingService(slots.service) === 'tours'
+    ? TOUR_REQUIRED
+    : LISTING_REQUIRED;
+  const missing = required.filter(k => {
     if (k === 'photos') return !(Array.isArray(slots.photos) && slots.photos.length >= 1);
     return slots[k] == null || slots[k] === '';
   });
+  if (slots && normaliseListingService(slots.service) === 'tours' && !slots.operator_id) {
+    for (const k of ['operator_name', 'operator_phone', 'operator_email']) {
+      if (slots[k] == null || slots[k] === '') missing.push(k);
+    }
+  }
+  return missing;
 }
 
 export async function listingStart(caller, { service, threadId }) {
@@ -597,8 +626,37 @@ export async function listingStart(caller, { service, threadId }) {
   }
   const task = await openTask(caller, 'listing', threadId);
   const slots = { ...(task.slots || {}) };
-  if (service && LISTING_SERVICES.has(String(service).toLowerCase())) {
-    slots.service = String(service).toLowerCase();
+  const normalised = normaliseListingService(service || slots.service);
+  if (normalised && LISTING_SERVICES.has(normalised)) {
+    slots.service = normalised;
+  }
+
+  /* A tour is not a stay with a different label. Resolve the operator now
+     so a returning operator is never asked to introduce their business
+     again, and initialise only real tour defaults. */
+  if (slots.service === 'tours') {
+    slots.days = slots.days || 1;
+    slots.group_min = slots.group_min || 1;
+    slots.group_max = slots.group_max || 12;
+    slots.schedule_type = slots.schedule_type || 'on_request';
+    slots.price_basis = slots.price_basis || 'per_person';
+    slots.category = slots.category || 'day-safari';
+    slots.country = slots.country || 'Kenya';
+    if (!slots.operator_id) {
+      const operator = await one('tour_operators',
+        `owner_id=eq.${caller.userId}&select=id,name,status,email,phone,county`).catch(() => null);
+      if (operator) {
+        slots.operator_id = operator.id;
+        slots.operator_name = operator.name;
+        slots.operator_status = operator.status;
+        slots.operator_email = operator.email || caller.email || null;
+        slots.operator_phone = operator.phone || caller.phone || null;
+        slots.operator_county = operator.county || null;
+      } else {
+        if (!slots.operator_email && caller.email) slots.operator_email = caller.email;
+        if (!slots.operator_phone && caller.phone) slots.operator_phone = caller.phone;
+      }
+    }
   }
   const saved = await saveSlots(task, slots);
   return {
@@ -619,7 +677,7 @@ export async function listingSet(caller, args) {
   const rejected = {};
 
   if (args.service != null) {
-    const s = String(args.service).toLowerCase();
+    const s = normaliseListingService(args.service);
     if (!LISTING_SERVICES.has(s)) rejected.service = `one of: ${[...LISTING_SERVICES].join(', ')}`;
     else slots.service = s;
   }
@@ -637,7 +695,7 @@ export async function listingSet(caller, args) {
   if (args.area != null)  slots.area  = clamp(args.area, 60).trim();
   if (args.street != null) slots.street = clamp(args.street, 120).trim();
 
-  if (args.price_night != null) {
+  if (args.price_night != null && normaliseListingService(slots.service) !== 'tours') {
     const n = Number(args.price_night);
     /* An upper bound is not pedantry: a mistyped price is the most
        common way a host lists their flat at 350,000 a night. */
@@ -669,6 +727,92 @@ export async function listingSet(caller, args) {
       rejected.cancel_policy = 'flexible, moderate, strict or non-refundable';
     } else slots.cancel_policy = p;
   }
+
+  /* ── Tour vocabulary and validation ─────────────────────────────── */
+  if (args.summary != null) {
+    const s = clamp(args.summary, 180).trim();
+    if (s.length < 8) rejected.summary = 'a useful one-line summary'; else slots.summary = s;
+  }
+  if (args.destination != null) {
+    const d = clamp(args.destination, 100).trim();
+    if (!d) rejected.destination = 'where the tour goes'; else slots.destination = d;
+  }
+  if (args.county != null)  slots.county  = clamp(args.county, 60).trim();
+  if (args.country != null) slots.country = clamp(args.country, 60).trim() || 'Kenya';
+
+  if (args.category != null) {
+    const aliases = {
+      safari: 'day-safari', 'day safari': 'day-safari', city: 'city-tour',
+      'city tour': 'city-tour', trip: 'day-trip', 'day trip': 'day-trip',
+      'multi day safari': 'big-safari', 'multi-day safari': 'big-safari',
+    };
+    const raw = String(args.category).toLowerCase().trim();
+    const c = aliases[raw] || raw.replace(/\s+/g, '-');
+    const allowed = ['city-tour','day-safari','day-trip','big-safari','adventure','culture','beach','expedition'];
+    if (!allowed.includes(c)) rejected.category = allowed.join(', '); else slots.category = c;
+  }
+  if (args.days != null) {
+    const n = parseInt_(args.days, { min: 1, max: 60 });
+    if (n == null) rejected.days = 'between 1 and 60'; else slots.days = n;
+  }
+  if (args.duration_label != null) slots.duration_label = clamp(args.duration_label, 80).trim();
+
+  const tourPrice = args.price_kes != null
+    ? args.price_kes
+    : (normaliseListingService(slots.service) === 'tours' ? args.price_night : null);
+  if (tourPrice != null) {
+    const n = Number(tourPrice);
+    if (!Number.isFinite(n) || n < 0 || n > 20_000_000) rejected.price_kes = 'a tour price in KES from 0 to 20,000,000';
+    else slots.price_kes = Math.round(n);
+  }
+  if (args.price_basis != null) {
+    const p = String(args.price_basis).toLowerCase().replace(/[\s-]+/g, '_');
+    if (!['per_person', 'per_group'].includes(p)) rejected.price_basis = 'per person or per group';
+    else slots.price_basis = p;
+  }
+  if (args.group_min != null) {
+    const n = parseInt_(args.group_min, { min: 1, max: 500 });
+    if (n == null) rejected.group_min = 'between 1 and 500'; else slots.group_min = n;
+  }
+  if (args.group_max != null) {
+    const n = parseInt_(args.group_max, { min: 1, max: 500 });
+    if (n == null) rejected.group_max = 'between 1 and 500'; else slots.group_max = n;
+  }
+  if (slots.group_min && slots.group_max && slots.group_max < slots.group_min) {
+    rejected.group_max = 'at least the minimum group size';
+    delete slots.group_max;
+  }
+  if (args.schedule_type != null) {
+    const s = String(args.schedule_type).toLowerCase().replace(/[\s-]+/g, '_');
+    if (!['on_request', 'daily', 'fixed'].includes(s)) rejected.schedule_type = 'on request, daily or fixed';
+    else slots.schedule_type = s;
+  }
+  if (args.next_departure != null) {
+    const d = parseDate(args.next_departure);
+    if (!d) rejected.next_departure = 'a real date as YYYY-MM-DD';
+    else if (d < todayIso()) rejected.next_departure = 'a date that has not passed';
+    else slots.next_departure = d;
+  }
+  if (args.meeting_point != null) slots.meeting_point = clamp(args.meeting_point, 180).trim();
+  if (Array.isArray(args.includes_list)) slots.includes_list = args.includes_list.slice(0, 40).map(v => clamp(v, 120).trim()).filter(Boolean);
+  if (Array.isArray(args.excludes_list)) slots.excludes_list = args.excludes_list.slice(0, 40).map(v => clamp(v, 120).trim()).filter(Boolean);
+
+  if (args.operator_name != null) {
+    const n = clamp(args.operator_name, 100).trim();
+    if (n.length < 2) rejected.operator_name = 'the operating or business name'; else slots.operator_name = n;
+  }
+  if (args.operator_phone != null) {
+    const p = parsePhone(args.operator_phone);
+    if (!p) rejected.operator_phone = 'a Kenyan mobile like 07XX XXX XXX'; else slots.operator_phone = p;
+  }
+  if (args.operator_email != null) {
+    const e = clamp(args.operator_email, 180).trim().toLowerCase();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)) rejected.operator_email = 'a valid email address';
+    else slots.operator_email = e;
+  }
+  if (args.operator_tagline != null) slots.operator_tagline = clamp(args.operator_tagline, 160).trim();
+  if (args.operator_bio != null) slots.operator_bio = clamp(args.operator_bio, 1600).trim();
+  if (args.operator_county != null) slots.operator_county = clamp(args.operator_county, 60).trim();
 
   delete slots.confirmed_publish;
 
@@ -712,6 +856,78 @@ export async function requestUpload(caller, { what }) {
   };
 }
 
+async function publishTour(caller, task, slots) {
+  let operator = null;
+  if (slots.operator_id) {
+    operator = await one('tour_operators',
+      `id=eq.${slots.operator_id}&owner_id=eq.${caller.userId}&select=id,name,status,email`).catch(() => null);
+  }
+  if (!operator) {
+    operator = await one('tour_operators',
+      `owner_id=eq.${caller.userId}&select=id,name,status,email`).catch(() => null);
+  }
+  if (!operator) {
+    operator = await insert('tour_operators', {
+      owner_id: caller.userId,
+      name: slots.operator_name,
+      tagline: slots.operator_tagline || null,
+      phone: slots.operator_phone || null,
+      email: slots.operator_email || caller.email || null,
+      county: slots.operator_county || slots.county || null,
+      bio: slots.operator_bio || null,
+      kind: 'partner',
+      status: 'pending',
+      verified: false,
+    }).catch(() => null);
+  }
+  if (!operator) return { error: 'operator_not_saved', message: 'The operator profile did not save. Do not pretend the tour was submitted.' };
+
+  const row = {
+    owner_id: caller.userId,
+    operator_id: operator.id,
+    title: slots.title,
+    summary: slots.summary,
+    description: slots.description,
+    destination: slots.destination,
+    county: slots.county || slots.operator_county || null,
+    country: slots.country || 'Kenya',
+    category: slots.category || 'day-safari',
+    days: Number(slots.days || 1),
+    duration_label: slots.duration_label || (Number(slots.days || 1) + (Number(slots.days || 1) === 1 ? ' day' : ' days')),
+    price_kes: Number(slots.price_kes || 0),
+    price_basis: slots.price_basis || 'per_person',
+    group_min: Number(slots.group_min || 1),
+    group_max: Number(slots.group_max || 12),
+    schedule_type: slots.schedule_type || 'on_request',
+    next_departure: slots.next_departure || null,
+    meeting_point: slots.meeting_point || null,
+    includes_list: slots.includes_list || [],
+    excludes_list: slots.excludes_list || [],
+    cover_url: slots.photos[0] || null,
+    photos: slots.photos,
+    videos: [],
+    latitude: slots.lat ?? null,
+    longitude: slots.lng ?? null,
+    status: 'pending',
+  };
+
+  const made = await insert('tours', row).catch(() => null);
+  if (!made) return { error: 'could_not_create', message: 'The tour did not save. Do not claim it is under review.' };
+
+  const created = Array.isArray(made) ? made[0] : made;
+  const complete = { ...slots, operator_id: operator.id, published_tour_id: String(created.id) };
+  await saveSlots(task, complete, { status: 'done', step: 'published', reference: `tour:${created.id}` });
+  const reviewSubject = operator.status === 'approved'
+    ? `"${slots.title}" is in for review.`
+    : `"${slots.title}" and the operator profile are in for review.`;
+  return {
+    ok: true,
+    listing_id: created.id,
+    listing_kind: 'tour',
+    say: `Saved. ${reviewSubject} Nothing goes live until Cabana completes the review, and the result goes to ${slots.operator_email || caller.email || 'the account email'}.`,
+  };
+}
+
 export async function listingPublish(caller, { agreed }) {
   if (caller.kind !== 'user') return { error: 'sign_in_required', route: 'signin' };
   if (agreed !== true) return { error: 'not_agreed', message: 'Read the listing back and get a clear yes first.' };
@@ -722,6 +938,10 @@ export async function listingPublish(caller, { agreed }) {
   const slots = task.slots || {};
   const still = missingListingSlots(slots);
   if (still.length) return { error: 'incomplete', still_needed: still };
+
+  if (normaliseListingService(slots.service) === 'tours') {
+    return publishTour(caller, task, slots);
+  }
 
   const row = {
     host_id: caller.userId,

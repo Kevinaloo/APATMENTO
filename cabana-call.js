@@ -95,27 +95,45 @@
     return null;
   }
 
+  function supa() {
+    try {
+      return (global.ApaSession && global.ApaSession.client && global.ApaSession.client())
+        || global.__APA_SB__ || global.sb || null;
+    } catch (e) { return global.sb || null; }
+  }
+
   function authHeader() {
     try {
-      var sb = global.sb;
-      var t = sb && sb.auth && sb.auth._currentSession && sb.auth._currentSession.access_token;
-      if (t) return { Authorization: 'Bearer ' + t };
+      if (global.ApaSession && global.ApaSession.token) {
+        return Promise.resolve(global.ApaSession.token()).then(function (t) {
+          return t ? { Authorization: 'Bearer ' + t } : {};
+        }, function () { return {}; });
+      }
+      var sb = supa();
+      if (sb && sb.auth && sb.auth.getSession) {
+        return sb.auth.getSession().then(function (r) {
+          var t = r && r.data && r.data.session && r.data.session.access_token;
+          return t ? { Authorization: 'Bearer ' + t } : {};
+        }, function () { return {}; });
+      }
     } catch (e) { /* not signed in; the guest key carries identity */ }
-    return {};
+    return Promise.resolve({});
   }
 
   function api(op, payload) {
     var body = Object.assign({ op: op }, payload || {});
     var gk = guestKey();
     if (gk) body.guestKey = gk;
-    return fetch(API, {
-      method: 'POST',
-      headers: Object.assign({ 'Content-Type': 'application/json' }, authHeader()),
-      body: JSON.stringify(body),
-    }).then(function (r) {
-      return r.json().catch(function () { return {}; }).then(function (d) {
-        if (!r.ok) { var e = new Error(d.error || ('http_' + r.status)); e.data = d; e.status = r.status; throw e; }
-        return d;
+    return authHeader().then(function (auth) {
+      return fetch(API, {
+        method: 'POST',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, auth),
+        body: JSON.stringify(body),
+      }).then(function (r) {
+        return r.json().catch(function () { return {}; }).then(function (d) {
+          if (!r.ok) { var e = new Error(d.error || ('http_' + r.status)); e.data = d; e.status = r.status; throw e; }
+          return d;
+        });
       });
     });
   }
@@ -124,7 +142,7 @@
      capability, because the relay carries the same signals. ── */
   function openRealtime() {
     try {
-      var sb = global.sb;
+      var sb = supa();
       if (!sb || !sb.channel || !call) return;
       rtChannel = sb.channel('cbn-call-' + call.channel, {
         config: { broadcast: { self: false, ack: false } },

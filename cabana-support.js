@@ -101,9 +101,27 @@
     return k;
   }
 
+  /* Cache ownership is part of the cache key. A shared browser must never
+     flash one account's support transcript after sign-out or an account
+     switch while the server is still reconciling. peekSession() is a
+     synchronous hint only; every API request is still authenticated and
+     authorised by the server. */
+  function identityHint() {
+    try {
+      if (global.ApaSession) {
+        var st = global.ApaSession.get && global.ApaSession.get();
+        if (st && st.user && st.user.id) return 'user:' + st.user.id;
+        var persisted = global.ApaSession.peekSession && global.ApaSession.peekSession();
+        if (persisted && persisted.user && persisted.user.id) return 'user:' + persisted.user.id;
+      }
+    } catch (e) { /* guest identity remains safe */ }
+    return 'guest:' + guestKey();
+  }
+
   function cacheWrite() {
     try {
       ls(LS_CACHE, JSON.stringify({
+        owner: identityHint(),
         threadId: thread && thread.id,
         status: thread && thread.status,
         messages: messages.slice(-CACHE_MAX),
@@ -116,9 +134,15 @@
       var raw = ls(LS_CACHE);
       if (!raw) return null;
       var d = JSON.parse(raw);
+      /* Legacy entries had no owner. Treat them as unsafe rather than
+         guessing whose conversation they contain. */
+      if (!d || !d.owner || d.owner !== identityHint()) {
+        ls(LS_CACHE, null);
+        return null;
+      }
       /* A day-old transcript is history, not context. Let the server
          speak for anything older. */
-      if (!d || Date.now() - (d.at || 0) > 86400000) return null;
+      if (Date.now() - (d.at || 0) > 86400000) return null;
       return d;
     } catch (e) { return null; }
   }
@@ -127,29 +151,28 @@
      TRANSPORT
   ══════════════════════════════════════════════════════════════════ */
   function authHeader() {
-    try {
-      var sb = global.sb;
-      var t = sb && sb.auth && sb.auth._currentSession && sb.auth._currentSession.access_token;
-      if (t) return { Authorization: 'Bearer ' + t };
-    } catch (e) { /* anonymous is a valid state */ }
-    return {};
+    return authToken().then(function (t) {
+      return t ? { Authorization: 'Bearer ' + t } : {};
+    });
   }
 
   function api(op, payload) {
     var ctrl = global.AbortController ? new AbortController() : null;
-    var timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, FETCH_TIMEOUT);
-    return fetch(API, {
-      method: 'POST',
-      headers: Object.assign({ 'Content-Type': 'application/json' }, authHeader()),
-      body: JSON.stringify(Object.assign({ op: op, guestKey: guestKey() }, payload || {})),
-      signal: ctrl ? ctrl.signal : undefined,
-    }).then(function (r) {
-      clearTimeout(timer);
-      return r.json().catch(function () { return {}; }).then(function (d) {
-        if (!r.ok) { var e = new Error(d.error || ('http_' + r.status)); e.data = d; e.status = r.status; throw e; }
-        return d;
-      });
-    }, function (e) { clearTimeout(timer); throw e; });
+    return authHeader().then(function (auth) {
+      var timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, FETCH_TIMEOUT);
+      return fetch(API, {
+        method: 'POST',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, auth),
+        body: JSON.stringify(Object.assign({ op: op, guestKey: guestKey() }, payload || {})),
+        signal: ctrl ? ctrl.signal : undefined,
+      }).then(function (r) {
+        clearTimeout(timer);
+        return r.json().catch(function () { return {}; }).then(function (d) {
+          if (!r.ok) { var e = new Error(d.error || ('http_' + r.status)); e.data = d; e.status = r.status; throw e; }
+          return d;
+        });
+      }, function (e) { clearTimeout(timer); throw e; });
+    });
   }
 
   /* ══════════════════════════════════════════════════════════════════
@@ -1253,16 +1276,38 @@
   }
 
   function authToken() {
+    var fallback = null;
     try {
-      if (global.ApaSession && global.ApaSession.token) return Promise.resolve(global.ApaSession.token());
+      if (global.ApaSession && global.ApaSession.peekSession) {
+        var persisted = global.ApaSession.peekSession();
+        fallback = persisted && persisted.access_token || null;
+      }
+      if (global.ApaSession && global.ApaSession.token) {
+        return new Promise(function (resolve) {
+          var settled = false;
+          var finish = function (v) { if (!settled) { settled = true; resolve(v || fallback || null); } };
+          var timer = setTimeout(function () { finish(fallback); }, 3500);
+          Promise.resolve(global.ApaSession.token()).then(function (v) {
+            clearTimeout(timer); finish(v);
+          }, function () { clearTimeout(timer); finish(fallback); });
+        });
+      }
       var sb = supa();
       if (sb && sb.auth && sb.auth.getSession) {
-        return sb.auth.getSession().then(function (r) {
-          return (r && r.data && r.data.session && r.data.session.access_token) || null;
+        return new Promise(function (resolve) {
+          var settled = false;
+          var finish = function (v) { if (!settled) { settled = true; resolve(v || fallback || null); } };
+          var timer = setTimeout(function () { finish(fallback); }, 3500);
+          sb.auth.getSession().then(function (r) {
+            clearTimeout(timer);
+            finish((r && r.data && r.data.session && r.data.session.access_token) || null);
+          }, function () {
+            clearTimeout(timer); finish(fallback);
+          });
         });
       }
     } catch (e) { /* fall through */ }
-    return Promise.resolve(null);
+    return Promise.resolve(fallback);
   }
 
   function offerIncoming(callId) {
@@ -1361,18 +1406,56 @@
      Signing in mid-conversation must not cost the conversation.
   ══════════════════════════════════════════════════════════════════ */
   function watchAuth() {
+    /* Prefer the shared session core. It already combines storage restore,
+       auth events and bfcache recovery, so APA follows the exact identity
+       the rest of the page is rendering. */
+    if (global.ApaSession && global.ApaSession.subscribe) {
+      var previous = null;
+      global.ApaSession.subscribe(function (st) {
+        var next = st && st.user && st.user.id ? 'user:' + st.user.id : 'guest';
+        if (previous === null) { previous = next; return; }
+        if (next === previous) {
+          if (st && st.status === 'user' && st.name) callerName = st.name;
+          return;
+        }
+        previous = next;
+
+        /* Authentication changed underneath an already-painted widget.
+           Discard identity-bound state, then bootstrap again. A guest
+           conversation is adopted by the server during that bootstrap. */
+        clearTimeout(pollTimer);
+        booted = false;
+        thread = null;
+        messages = [];
+        suggestions = [];
+        lastAt = null;
+        outbox = [];
+        signedIn = !!(st && st.status === 'user');
+        callerName = st && st.name || null;
+        ls(LS_CACHE, null);
+        setUnread(0);
+        if (open) { paintIntro(); setTimeout(boot, 0); }
+      });
+      return;
+    }
+
+    /* Compatibility path for an old cached page without ApaSession. */
     var tries = 0;
     (function attach() {
-      var sb = global.sb;
+      var sb = supa();
       if (!sb || !sb.auth || !sb.auth.onAuthStateChange) {
         if (tries++ < 40) return setTimeout(attach, 250);
         return;
       }
       sb.auth.onAuthStateChange(function (event) {
-        if (event !== 'SIGNED_IN' && event !== 'TOKEN_REFRESHED') return;
-        api('adopt', { guestKey: guestKey() })
-          .then(function () { booted = false; if (open) boot(); })
-          .catch(function () { /* the next bootstrap adopts anyway */ });
+        if (event !== 'SIGNED_IN' && event !== 'SIGNED_OUT') return;
+        setTimeout(function () {
+          booted = false;
+          thread = null;
+          messages = [];
+          ls(LS_CACHE, null);
+          if (open) boot();
+        }, 0);
       });
     })();
   }

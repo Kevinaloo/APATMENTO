@@ -38,6 +38,7 @@
   };
   var timers = {};
   var el = {};
+  var cachedToken = null;
 
   var CANNED = [
     ['On it', 'Looking at this now — one moment.'],
@@ -62,39 +63,43 @@
       /* peekSession() reads directly from apa-auth storage — reliable
          synchronously, even on first load before getSession() resolves. */
       var peek = global.ApaSession && global.ApaSession.peekSession && global.ApaSession.peekSession();
-      if (peek && peek.access_token) return peek.access_token;
-      /* Legacy fallback: private Supabase property (may be null on load). */
-      var sb = global.sb || (global.ApaSession && global.ApaSession.client && global.ApaSession.client());
-      var s = sb && sb.auth && sb.auth._currentSession;
-      return (s && s.access_token) || null;
+      if (peek && peek.access_token) cachedToken = peek.access_token;
+      return cachedToken;
     } catch (e) { return null; }
   }
 
   function tokenAsync() {
-    var t = token();
-    if (t) return Promise.resolve(t);
+    var fallback = token();
     try {
+      if (global.ApaSession && global.ApaSession.token) {
+        return Promise.resolve(global.ApaSession.token()).then(function (fresh) {
+          cachedToken = fresh || fallback || null;
+          return cachedToken;
+        }, function () { return fallback || null; });
+      }
       var sb = global.sb || (global.ApaSession && global.ApaSession.client && global.ApaSession.client());
       if (sb && sb.auth && sb.auth.getSession) {
         return sb.auth.getSession().then(function (res) {
-          return (res && res.data && res.data.session && res.data.session.access_token) || null;
-        }).catch(function () { return null; });
+          cachedToken = (res && res.data && res.data.session && res.data.session.access_token) || fallback || null;
+          return cachedToken;
+        }).catch(function () { return fallback || null; });
       }
     } catch (e) {}
-    return Promise.resolve(null);
+    return Promise.resolve(fallback || null);
   }
 
   function api(url, op, payload) {
-    var t = token();
-    if (!t) return Promise.reject(new Error('no_session'));
-    return fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + t },
-      body: JSON.stringify(Object.assign({ op: op }, payload || {})),
-    }).then(function (r) {
-      return r.json().catch(function () { return {}; }).then(function (d) {
-        if (!r.ok) { var e = new Error(d.error || ('http_' + r.status)); e.status = r.status; e.data = d; throw e; }
-        return d;
+    return tokenAsync().then(function (t) {
+      if (!t) throw new Error('no_session');
+      return fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + t },
+        body: JSON.stringify(Object.assign({ op: op }, payload || {})),
+      }).then(function (r) {
+        return r.json().catch(function () { return {}; }).then(function (d) {
+          if (!r.ok) { var e = new Error(d.error || ('http_' + r.status)); e.status = r.status; e.data = d; throw e; }
+          return d;
+        });
       });
     });
   }
@@ -719,8 +724,8 @@
     if (token()) return boot();
     if ((tries || 0) > 20) {
       /* Sync peek failed — the session may have restored async. Ask Supabase
-         directly once before giving up; covers the "already signed in but
-         _currentSession hasn't populated yet" case. */
+         directly once before giving up; covers an already signed-in user
+         whose stored token needed an asynchronous refresh. */
       return tokenAsync().then(function (t) {
         if (t) return boot();
         gate(401);

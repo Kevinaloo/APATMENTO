@@ -93,6 +93,27 @@ const nowIso = () => new Date().toISOString();
 const clamp  = (s, n) => String(s == null ? '' : s).slice(0, n);
 const uuidish = (v) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(v || ''));
 
+/* People speak in singulars, spaces and synonyms; database service keys do
+   not. Normalising at the boundary stops "a tour" becoming an untyped
+   listing or "car hire" silently dropping its service filter. */
+function normaliseService(value) {
+  const raw = String(value || '').trim().toLowerCase()
+    .replace(/[_-]+/g, ' ').replace(/\s+/g, ' ')
+    .replace(/^(?:a|an|the)\s+/, '');
+  const aliases = {
+    stay: 'stays', stays: 'stays', apartment: 'stays', apartments: 'stays', accommodation: 'stays',
+    room: 'roommates', rooms: 'roommates', roommate: 'roommates', roommates: 'roommates',
+    tour: 'tours', tours: 'tours', safari: 'tours', safaris: 'tours',
+    event: 'events', events: 'events', ticket: 'events', tickets: 'events',
+    'car hire': 'carhire', carhire: 'carhire', vehicle: 'carhire', vehicles: 'carhire',
+    ride: 'rides', rides: 'rides', taxi: 'rides',
+    food: 'food', restaurant: 'food', restaurants: 'food',
+    shop: 'shopping', shopping: 'shopping', product: 'shopping', products: 'shopping',
+    flight: 'flights', flights: 'flights',
+  };
+  return aliases[raw] || raw.replace(/\s/g, '');
+}
+
 function withTimeout(promise, ms, label = 'timeout') {
   return Promise.race([
     promise,
@@ -170,11 +191,14 @@ async function resolveCaller(req, body) {
         `id=eq.${user.id}&select=id,first_name,last_name,email,last_role,phone,verified`);
     } catch { /* a missing profile row is not an auth failure */ }
     const name = [profile?.first_name, profile?.last_name].filter(Boolean).join(' ').trim();
+    const meta = user.user_metadata || {};
+    const metadataName = meta.full_name || meta.name ||
+      [meta.first_name || meta.given_name, meta.last_name || meta.family_name].filter(Boolean).join(' ').trim();
     return {
       kind: 'user',
       userId: user.id,
       email: (profile?.email || user.email || '').toLowerCase() || null,
-      name: name || user.user_metadata?.full_name || null,
+      name: name || metadataName || null,
       role: profile?.last_role || 'guest',
       verified: !!profile?.verified,
     };
@@ -259,8 +283,28 @@ const INV_TTL = 60_000;
 async function liveInventory() {
   if (_invCache && Date.now() - _invAt < INV_TTL) return _invCache;
   try {
-    const rows = await withTimeout(select('listings',
-      'is_active=eq.true&select=title,type,service,city,area,price_night&order=created_at.desc&limit=200'), 5000);
+    const [listingRows, tourRows, eventRows] = await withTimeout(Promise.all([
+      select('listings',
+        'is_active=eq.true&select=title,type,service,city,area,price_night&order=created_at.desc&limit=200')
+        .catch(() => []),
+      select('tours',
+        'status=eq.published&select=id,title,destination,county,country,price_kes,next_departure&order=published_at.desc&limit=120')
+        .catch(() => []),
+      select('events',
+        'status=eq.published&select=id,title,city,venue,country,price_from,starts_at&order=starts_at.asc&limit=120')
+        .catch(() => []),
+    ]), 6000);
+    const rows = [
+      ...(listingRows || []),
+      ...(tourRows || []).map(r => ({
+        ...r, service: 'tours', city: r.destination || r.county || r.country,
+        area: r.destination || r.county, price_night: r.price_kes,
+      })),
+      ...(eventRows || []).map(r => ({
+        ...r, service: 'events', area: r.venue || r.city,
+        price_night: r.price_from,
+      })),
+    ];
     const buckets = {};
     for (const r of rows || []) {
       const t = String(r.service || r.type || 'other').toLowerCase();
@@ -306,11 +350,17 @@ async function accountFacts(caller) {
      APA told every signed-in guest they had no bookings. A wrong column
      name here is not a cosmetic bug: it is APA confidently denying a
      booking the guest is looking at. */
-  const [bookings, points, listings] = await Promise.all([
+  const [stayBookings, tourBookings, eventTickets, points, listings] = await Promise.all([
     select('apartment_bookings',
       `guest_id=eq.${caller.userId}&select=id,payment_reference,status,checkin_date,checkout_date,nights,num_guests,` +
       `grand_total,amount_paid,service_fee,deposit_required,balance_amount,listing_id,listing_name,apartment_name,` +
       `location,guest_code,created_at&order=created_at.desc&limit=6`)
+      .catch(() => []),
+    select('tour_bookings',
+      `guest_id=eq.${caller.userId}&select=id,payment_reference,status,tour_date,num_people,grand_total,amount_paid,tour_name,operator_name,guest_code,created_at&order=created_at.desc&limit=6`)
+      .catch(() => []),
+    select('event_tickets',
+      `guest_id=eq.${caller.userId}&select=id,payment_reference,status,event_name,tier_name,quantity,grand_total,amount_paid,confirmation_code,guest_code,created_at&order=created_at.desc&limit=6`)
       .catch(() => []),
     one('user_points', `user_id=eq.${caller.userId}&select=points,lifetime_points`).catch(() => null),
     select('listings', `host_id=eq.${caller.userId}&select=id,title,is_active,status,service,type&limit=10`).catch(() => []),
@@ -319,33 +369,52 @@ async function accountFacts(caller) {
   const lines = [];
   lines.push(`CALLER: signed in${caller.name ? ` as ${caller.name}` : ''}${caller.email ? ` (${caller.email})` : ''}.`);
 
-  if (bookings?.length) {
-    lines.push('THEIR BOOKINGS (real rows, most recent first):');
+  const bookings = [
+    ...(stayBookings || []).map(b => ({ ...b, booking_kind: 'stay' })),
+    ...(tourBookings || []).map(b => ({ ...b, booking_kind: 'tour' })),
+    ...(eventTickets || []).map(b => ({ ...b, booking_kind: 'event' })),
+  ].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0)).slice(0, 12);
+
+  if (bookings.length) {
+    lines.push('THEIR BOOKINGS AND TICKETS (real rows, most recent first):');
     for (const b of bookings) {
       const total = Number(b.grand_total || 0);
       const paid  = Number(b.amount_paid || 0);
       const due   = Math.max(0, total - paid);
-      const deposit = Number(b.deposit_required || Math.round(total * DEPOSIT_PCT));
-      const name = b.listing_name || b.apartment_name || 'stay';
-      lines.push(
-        `  · ${b.payment_reference || b.id?.slice(0, 8)} — ${name} — status ${b.status}` +
-        `${b.checkin_date ? ` — ${b.checkin_date} to ${b.checkout_date}` : ''}` +
-        `${b.num_guests ? ` — ${b.num_guests} guest(s)` : ''}` +
-        ` — total ${money(total)}, paid ${money(paid)}, outstanding ${money(due)}` +
-        (due > 0
-          ? ` (deposit threshold ${money(deposit)}; check-in code releases at ${money(total)})`
-          : ` (paid in full${b.guest_code ? ` — their check-in code is ${b.guest_code}` : ' — the check-in code is on this booking in My Bookings'})`)
-      );
+      const ref = b.payment_reference || b.id?.slice(0, 8);
+      if (b.booking_kind === 'stay') {
+        const deposit = Number(b.deposit_required || Math.round(total * DEPOSIT_PCT));
+        const name = b.listing_name || b.apartment_name || 'stay';
+        lines.push(
+          `  · STAY ${ref} — ${name} — status ${b.status}` +
+          `${b.checkin_date ? ` — ${b.checkin_date} to ${b.checkout_date}` : ''}` +
+          `${b.num_guests ? ` — ${b.num_guests} guest(s)` : ''}` +
+          ` — total ${money(total)}, paid ${money(paid)}, outstanding ${money(due)}` +
+          (due > 0
+            ? ` (deposit threshold ${money(deposit)}; check-in code releases at ${money(total)})`
+            : ` (paid in full${b.guest_code ? ` — check-in code ${b.guest_code}` : ' — code is in My Bookings'})`)
+        );
+      } else if (b.booking_kind === 'tour') {
+        lines.push(`  · TOUR ${ref} — ${b.tour_name || 'tour'} — status ${b.status}` +
+          `${b.tour_date ? ` — ${b.tour_date}` : ''}${b.num_people ? ` — ${b.num_people} people` : ''}` +
+          ` — total ${money(total)}, paid ${money(paid)}, outstanding ${money(due)}` +
+          (b.guest_code ? ` — code ${b.guest_code}` : ''));
+      } else {
+        lines.push(`  · EVENT ${ref} — ${b.event_name || 'event'}${b.tier_name ? ` (${b.tier_name})` : ''} — status ${b.status}` +
+          `${b.quantity ? ` — ${b.quantity} ticket(s)` : ''}` +
+          ` — total ${money(total)}, paid ${money(paid)}, outstanding ${money(due)}` +
+          (b.confirmation_code || b.guest_code ? ` — code ${b.confirmation_code || b.guest_code}` : ''));
+      }
     }
   } else {
-    lines.push('THEIR BOOKINGS: none on this account. Do not imply otherwise.');
+    lines.push('THEIR BOOKINGS AND TICKETS: none on this account. Do not imply otherwise.');
   }
 
   if (points) lines.push(`THEIR POINTS: ${points.points ?? 0} available (${points.lifetime_points ?? 0} lifetime).`);
   if (listings?.length) {
     lines.push(`THEY ARE A HOST: ${listings.length} listing(s) — ${listings.map(l => `${l.title}${l.is_active ? '' : ' (not live)'}`).join('; ')}.`);
   }
-  return { text: lines.join('\n'), bookings: bookings || [] };
+  return { text: lines.join('\n'), bookings };
 }
 
 /* ── Where and when the guest actually is. A concierge who does not know
@@ -357,6 +426,9 @@ function timeContext() {
   const day   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][nairobi.getUTCDay()];
   const month = nairobi.getUTCMonth() + 1;
   const date  = nairobi.getUTCDate();
+  const year  = nairobi.getUTCFullYear();
+  const minute = String(nairobi.getUTCMinutes()).padStart(2, '0');
+  const isoDate = `${year}-${String(month).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
   const timeOfDay = h < 5 ? 'late night' : h < 12 ? 'morning' : h < 17 ? 'afternoon' : h < 21 ? 'evening' : 'night';
   const weekend   = nairobi.getUTCDay() === 0 || nairobi.getUTCDay() === 6;
   const season =
@@ -370,7 +442,7 @@ function timeContext() {
     '12-24': 'Christmas Eve', '12-25': 'Christmas Day', '12-31': "New Year's Eve",
   };
   const holiday = HOLIDAYS[`${month}-${date}`];
-  return `RIGHT NOW: ${day} ${timeOfDay}, ${h}:00 EAT (UTC+3). ${weekend ? 'Weekend.' : 'Weekday.'} Season: ${season}.` +
+  return `RIGHT NOW: ${day}, ${isoDate}, ${String(h).padStart(2, '0')}:${minute} EAT (UTC+3), ${timeOfDay}. ${weekend ? 'Weekend.' : 'Weekday.'} Season: ${season}.` +
     (holiday ? ` TODAY IS ${holiday} — acknowledge it if it fits, do not force it.` : '');
 }
 
@@ -465,7 +537,7 @@ The well-travelled friend who has been everywhere across Africa and happens to b
 · You read the room instantly. Business traveller → sharp and efficient. Honeymooners → warm. Stressed or angry → grounded and fast. Just vibing → vibe back.
 · Humour is dry and well-timed, never forced, and never anywhere near someone's lost money.
 · Match their language and energy exactly — English, Swahili, Sheng, Pidgin, French. Roll with it.
-· Strong opinions are fine. "Naivasha over the Mara this weekend, the Mara is packed" is worth more than a list.
+· Strong opinions are fine when the reason is grounded. "For a quiet lake weekend, Naivasha fits better; for game drives, choose the Mara" is worth more than a list.
 · You can joke about being an AI. You can push back gently. You can say you do not know.
 · BANNED, always: "Certainly", "Of course", "Great question", "Absolutely", "Sure thing", "I'd be happy to help", "How can I assist you today", "I apologise for the inconvenience". Just talk.
 
@@ -520,8 +592,9 @@ BOOKING — the moment they say they want something, call start_booking. Then se
 · confirm_booking raises the M-Pesa prompt on their phone. Say that it is coming and that they need to approve it. You are not charging them; their handset asks them.
 · If a tool comes back rejected, say what is wrong in one plain sentence and ask again. Never work around it, never guess the value, never call the tool again with the same bad value.
 
-LISTING — start_listing, then set_listing_detail as they describe the place.
-· Write the title and description YOURSELF from what they tell you, in their voice, and read it back. Never ask a host to compose a description — that is the work you are here to do.
+LISTING — call start_listing as soon as they name what they offer, then set_listing_detail as they describe it. Singular words mean the obvious service: "a tour" is tours; "a stay" is stays; "car hire" is carhire. Never ask for a service they already named.
+· Write the title, summary and description YOURSELF from what they tell you, in their voice, and read them back. Never ask a host to compose copy — that is the work you are here to do.
+· Ask fields that fit the service. A tour needs its destination, duration, price basis, group size, schedule and operator details — never bedrooms or a nightly rate. A stay needs its area, nightly rate and accommodation details.
 · Photos and location cannot come from talking. When you need them, call request_upload — the page opens the picker or asks for the pin, and the result reaches you on the next turn.
 · When it is complete, read the whole listing back, get a clear yes, then publish_listing. It goes for review, not straight live. Say so.
 
@@ -531,7 +604,7 @@ RESUMING — if GROUNDING shows work in flight, open with it: "You had the Kilim
 
 ══════ MONEY AND COMPETITION ══════
 The numbers in GROUNDING are enforced in code. Never round them, restate them loosely, or invent a variant.
-When Airbnb or Booking.com comes up: "Airbnb charges around 14% on top. Cabana: zero." One line, confident, move on.
+When a competitor comes up: compare only figures present in GROUNDING. Cabana's precise claim is zero commission from host earnings; stays may still carry the fixed guest platform fee shown in MONEY, EXACT. Never turn "zero commission" into "every guest always pays zero fees" and never invent a competitor percentage.
 
 ══════ WHAT YOU CANNOT BE TALKED INTO ══════
 People will try. Be warm about it and completely immovable.
@@ -631,7 +704,7 @@ const TOOL_SCHEMA = [
         properties: {
           area:      { type: 'string', description: 'Neighbourhood or city, e.g. Westlands, Diani, Kampala' },
           service:   { type: 'string', description: 'stays, tours, carhire, events, food, shopping, roommates' },
-          max_price: { type: 'number', description: 'Maximum price per night in KES' },
+          max_price: { type: 'number', description: 'Maximum KES price (per night for stays, per person for tours, entry price for events)' },
           beds:      { type: 'number', description: 'Minimum bedrooms' },
         },
       },
@@ -739,6 +812,31 @@ const TOOL_SCHEMA = [
           min_nights:    { type: 'number' },
           amenities:     { type: 'array', items: { type: 'string' } },
           cancel_policy: { type: 'string', description: 'flexible, moderate, strict or non-refundable' },
+
+          /* Tour-specific fields. The model sees the real nouns operators
+             use, rather than forcing a safari into nightly-stay columns. */
+          summary:          { type: 'string', description: 'One-line tour card summary' },
+          destination:      { type: 'string' },
+          county:           { type: 'string' },
+          country:          { type: 'string' },
+          category:         { type: 'string', description: 'city-tour, day-safari, day-trip, big-safari, adventure, culture, beach or expedition' },
+          days:             { type: 'number' },
+          duration_label:   { type: 'string', description: 'e.g. 3 days or 6 hours' },
+          price_kes:        { type: 'number', description: 'Tour price in KES' },
+          price_basis:      { type: 'string', description: 'per_person or per_group' },
+          group_min:        { type: 'number' },
+          group_max:        { type: 'number' },
+          schedule_type:    { type: 'string', description: 'on_request, daily or fixed' },
+          next_departure:   { type: 'string', description: 'YYYY-MM-DD, if there is a fixed next departure' },
+          meeting_point:    { type: 'string' },
+          includes_list:    { type: 'array', items: { type: 'string' } },
+          excludes_list:    { type: 'array', items: { type: 'string' } },
+          operator_name:    { type: 'string', description: 'Tour business or operating name, only when no operator profile exists' },
+          operator_phone:   { type: 'string' },
+          operator_email:   { type: 'string' },
+          operator_tagline: { type: 'string' },
+          operator_bio:     { type: 'string' },
+          operator_county:  { type: 'string' },
         },
       },
     },
@@ -793,21 +891,44 @@ async function runTool(name, args, caller) {
       const ref = clamp(args?.reference, 40).replace(/[^A-Za-z0-9-_]/g, '');
       if (!ref) return { error: 'no_reference' };
       /* Scoped to their own rows at the query level, so a reference
-         belonging to someone else simply is not found. */
-      const rows = await select('apartment_bookings',
-        `guest_id=eq.${caller.userId}&payment_reference=ilike.*${ref}*&select=payment_reference,status,checkin_date,checkout_date,` +
-        `num_guests,grand_total,amount_paid,deposit_required,listing_name,apartment_name,guest_code,created_at&limit=3`);
-      if (!rows?.length) return { found: false, message: 'No booking with that reference on this account.' };
+         belonging to someone else simply is not found. Search every
+         booking ledger; My Bookings is not stays-only. */
+      const [stayRows, tourRows, eventRows] = await Promise.all([
+        select('apartment_bookings',
+          `guest_id=eq.${caller.userId}&payment_reference=ilike.*${ref}*&select=payment_reference,status,checkin_date,checkout_date,` +
+          `num_guests,grand_total,amount_paid,deposit_required,listing_name,apartment_name,guest_code,created_at&limit=3`).catch(() => []),
+        select('tour_bookings',
+          `guest_id=eq.${caller.userId}&payment_reference=ilike.*${ref}*&select=payment_reference,status,tour_date,num_people,` +
+          `grand_total,amount_paid,tour_name,operator_name,guest_code,created_at&limit=3`).catch(() => []),
+        select('event_tickets',
+          `guest_id=eq.${caller.userId}&payment_reference=ilike.*${ref}*&select=payment_reference,status,event_name,tier_name,quantity,` +
+          `grand_total,amount_paid,confirmation_code,guest_code,created_at&limit=3`).catch(() => []),
+      ]);
+      const rows = [
+        ...(stayRows || []).map(b => ({ ...b, kind: 'stay' })),
+        ...(tourRows || []).map(b => ({ ...b, kind: 'tour' })),
+        ...(eventRows || []).map(b => ({ ...b, kind: 'event' })),
+      ];
+      if (!rows.length) return { found: false, message: 'No booking with that reference on this account.' };
       return {
         found: true,
         bookings: rows.map(b => {
-          const total = Number(b.total || 0), paid = Number(b.amount_paid || 0);
+          const total = Number(b.grand_total || 0), paid = Number(b.amount_paid || 0);
           return {
-            reference: b.reference, status: b.status, listing: b.listing_title,
-            check_in: b.check_in, check_out: b.check_out, guests: b.guests,
+            kind: b.kind,
+            reference: b.payment_reference,
+            status: b.status,
+            listing: b.listing_name || b.apartment_name || b.tour_name || b.event_name,
+            detail: b.tier_name || b.operator_name || null,
+            check_in: b.checkin_date || b.tour_date || null,
+            check_out: b.checkout_date || null,
+            guests: b.num_guests || b.num_people || b.quantity || null,
             total: money(total), paid: money(paid),
             outstanding: money(Math.max(0, total - paid)),
-            deposit_threshold: money(Math.round(total * DEPOSIT_PCT)),
+            deposit_threshold: b.kind === 'stay'
+              ? money(Number(b.deposit_required || Math.round(total * DEPOSIT_PCT)))
+              : null,
+            code: b.confirmation_code || b.guest_code || null,
             checkin_code_released: paid >= total && total > 0,
           };
         }),
@@ -815,29 +936,54 @@ async function runTool(name, args, caller) {
     }
 
     if (name === 'search_stays') {
-      const parts = ['is_active=eq.true', 'select=id,title,service,type,city,area,price_night,beds', 'limit=8'];
       const area = clamp(args?.area, 40).replace(/[^A-Za-z0-9 ,'-]/g, '');
-      if (area) parts.push(`or=(area.ilike.*${encodeURIComponent(area)}*,city.ilike.*${encodeURIComponent(area)}*)`);
-      const svc = clamp(args?.service, 20).replace(/[^a-z]/gi, '');
-      if (svc) parts.push(`service=eq.${svc}`);
+      const svc = normaliseService(clamp(args?.service, 30));
       const max = Number(args?.max_price);
-      if (max > 0) parts.push(`price_night=lte.${Math.round(max)}`);
       const beds = Number(args?.beds);
-      if (beds > 0) parts.push(`beds=gte.${Math.round(beds)}`);
-      const rows = await select('listings', parts.join('&'));
-      return {
-        count: rows?.length || 0,
-        listings: (rows || []).map(r => ({
+      let rows = [];
+
+      if (svc === 'tours') {
+        const parts = ['status=eq.published', 'select=id,title,destination,county,country,price_kes,days,group_max,next_departure', 'limit=8'];
+        if (area) parts.push(`or=(destination.ilike.*${encodeURIComponent(area)}*,county.ilike.*${encodeURIComponent(area)}*,country.ilike.*${encodeURIComponent(area)}*)`);
+        if (max > 0) parts.push(`price_kes=lte.${Math.round(max)}`);
+        const found = await select('tours', parts.join('&'));
+        rows = (found || []).map(r => ({
+          id: r.id, title: r.title, where: r.destination || r.county || r.country,
+          price: money(r.price_kes) + ' / person', service: 'tours',
+          days: r.days, group_max: r.group_max, next_departure: r.next_departure,
+        }));
+      } else if (svc === 'events') {
+        const parts = ['status=eq.published', 'select=id,title,city,venue,country,price_from,starts_at', 'limit=8'];
+        if (area) parts.push(`or=(city.ilike.*${encodeURIComponent(area)}*,venue.ilike.*${encodeURIComponent(area)}*,country.ilike.*${encodeURIComponent(area)}*)`);
+        if (max > 0) parts.push(`price_from=lte.${Math.round(max)}`);
+        const found = await select('events', parts.join('&'));
+        rows = (found || []).map(r => ({
+          id: r.id, title: r.title, where: r.venue || r.city || r.country,
+          price: r.price_from != null ? 'from ' + money(r.price_from) : null,
+          service: 'events', starts_at: r.starts_at,
+        }));
+      } else {
+        const parts = ['is_active=eq.true', 'select=id,title,service,type,city,area,price_night,beds', 'limit=8'];
+        if (area) parts.push(`or=(area.ilike.*${encodeURIComponent(area)}*,city.ilike.*${encodeURIComponent(area)}*)`);
+        if (svc) parts.push(`service=eq.${svc}`);
+        if (max > 0) parts.push(`price_night=lte.${Math.round(max)}`);
+        if (beds > 0) parts.push(`beds=gte.${Math.round(beds)}`);
+        const found = await select('listings', parts.join('&'));
+        rows = (found || []).map(r => ({
           id: r.id, title: r.title, where: r.area || r.city, beds: r.beds,
           price: r.price_night ? money(r.price_night) + ' / night' : null,
           service: r.service || r.type,
-        })),
-        note: rows?.length ? null : 'Nothing matches. Say so plainly rather than suggesting something else is available.',
+        }));
+      }
+      return {
+        count: rows.length,
+        listings: rows,
+        note: rows.length ? null : 'Nothing matches. Say so plainly rather than suggesting something else is available.',
       };
     }
 
     if (name === 'quote_fee') {
-      const svc = clamp(args?.service, 20).toLowerCase();
+      const svc = normaliseService(clamp(args?.service, 30));
       const sub = Number(args?.subtotal) || 0;
       const fee = serviceFee(svc, sub);
       return {
@@ -856,8 +1002,11 @@ async function runTool(name, args, caller) {
     if (name === 'review_booking')     return await bookingReview(caller);
     if (name === 'confirm_booking')    return await bookingConfirm(caller, { agreed: args?.agreed === true });
 
-    if (name === 'start_listing')      return await listingStart(caller, { service: args?.service, threadId: caller.threadId });
-    if (name === 'set_listing_detail') return await listingSet(caller, args || {});
+    if (name === 'start_listing')      return await listingStart(caller, { service: normaliseService(args?.service), threadId: caller.threadId });
+    if (name === 'set_listing_detail') return await listingSet(caller, {
+      ...(args || {}),
+      ...(args?.service ? { service: normaliseService(args.service) } : {}),
+    });
     if (name === 'request_upload')     return await requestUpload(caller, { what: args?.what });
     if (name === 'publish_listing')    return await listingPublish(caller, { agreed: args?.agreed === true });
 
@@ -1810,5 +1959,5 @@ async function agentOps(req, res, body, op) {
 export const __test = {
   guardOutput, parseDirectives, hardEscalation, retrieveKb,
   readSentiment, categorise, scrub, commerceFacts,
-  readMode, areaFrom, timeContext, systemPrompt,
+  readMode, areaFrom, timeContext, systemPrompt, normaliseService,
 };

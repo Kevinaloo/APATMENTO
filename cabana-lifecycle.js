@@ -67,72 +67,82 @@
 
   function token() {
     try {
+      if (global.ApaSession && global.ApaSession.token) {
+        return Promise.resolve(global.ApaSession.token()).catch(function () { return null; });
+      }
       var sb = global.sb || (global.ApaSession && global.ApaSession.client && global.ApaSession.client());
-      var s = sb && sb.auth && sb.auth._currentSession;
-      return (s && s.access_token) || null;
-    } catch (e) { return null; }
+      if (sb && sb.auth && sb.auth.getSession) {
+        return sb.auth.getSession().then(function (r) {
+          return (r && r.data && r.data.session && r.data.session.access_token) || null;
+        }, function () { return null; });
+      }
+    } catch (e) { /* fall through */ }
+    return Promise.resolve(null);
   }
 
   function onSignedIn(user, profile) {
     if (!user || !user.email) return;
-    var t = token();
-    if (!t) return;
+    token().then(function (t) {
+      if (!t) return;
 
-    var createdAt = user.created_at ? new Date(user.created_at).getTime() : 0;
-    var isNew = createdAt && (Date.now() - createdAt) < NEW_ACCOUNT_WINDOW_MS;
-    var name = [profile && profile.first_name, profile && profile.last_name]
-      .filter(Boolean).join(' ').trim()
-      || (user.user_metadata && user.user_metadata.full_name) || '';
+      var createdAt = user.created_at ? new Date(user.created_at).getTime() : 0;
+      var isNew = createdAt && (Date.now() - createdAt) < NEW_ACCOUNT_WINDOW_MS;
+      var name = [profile && profile.first_name, profile && profile.last_name]
+        .filter(Boolean).join(' ').trim()
+        || (user.user_metadata && user.user_metadata.full_name) || '';
 
-    var sent = jsonLs(LS_SENT);
+      var sent = jsonLs(LS_SENT);
 
-    /* ── Welcome. The server refuses a second one on the same account,
-       so the local flag is only there to save a pointless request. ── */
-    if (isNew && !sent['welcome:' + user.id]) {
-      sent['welcome:' + user.id] = 1;
-      ls(LS_SENT, JSON.stringify(sent));
-      post('welcome', { email: user.email, name: name, userId: user.id }, t);
-      return;   // one email on the way in. Not two.
-    }
+      /* ── Welcome. The server refuses a second one on the same account,
+         so the local flag is only there to save a pointless request. ── */
+      if (isNew && !sent['welcome:' + user.id]) {
+        sent['welcome:' + user.id] = 1;
+        ls(LS_SENT, JSON.stringify(sent));
+        post('welcome', { email: user.email, name: name, userId: user.id }, t);
+        return;   // one email on the way in. Not two.
+      }
 
-    /* ── New device. A returning account on a device this browser has
-       not recorded before. Not a substitute for real device tracking —
-       it is the honest, local half: it can miss, it cannot cry wolf at
-       somebody who has been here all along. ── */
-    var devices = jsonLs(LS_DEVICES);
-    var label = deviceLabel();
-    var key = user.id + '|' + label;
-    if (!devices[key]) {
-      devices[key] = Date.now();
-      ls(LS_DEVICES, JSON.stringify(devices));
-      /* First ever record for this account in this browser is not news
+      /* ── New device. A returning account on a device this browser has
+         not recorded before. Not a substitute for real device tracking —
+         it is the honest, local half: it can miss, it cannot cry wolf at
+         somebody who has been here all along. ── */
+      var devices = jsonLs(LS_DEVICES);
+      var label = deviceLabel();
+      var key = user.id + '|' + label;
+      if (!devices[key]) {
+        devices[key] = Date.now();
+        ls(LS_DEVICES, JSON.stringify(devices));
+        /* First ever record for this account in this browser is not news
          — it is just the first time we looked. Only tell them about a
          device that appears AFTER we already knew of another. */
-      var known = Object.keys(devices).filter(function (k) { return k.indexOf(user.id + '|') === 0; });
-      if (known.length > 1) {
-        post('signin-alert', {
-          email: user.email, name: name, userId: user.id,
-          device: label, when: new Date().toISOString(),
-          sessionId: user.id + ':' + Math.floor(Date.now() / 60000),
-        }, t);
+        var known = Object.keys(devices).filter(function (k) { return k.indexOf(user.id + '|') === 0; });
+        if (known.length > 1) {
+          post('signin-alert', {
+            email: user.email, name: name, userId: user.id,
+            device: label, when: new Date().toISOString(),
+            sessionId: user.id + ':' + Math.floor(Date.now() / 60000),
+          }, t);
+        }
       }
-    }
+    });
   }
 
   /* ── Partner welcome. Fired by whatever publishes a listing, so the
      onboarding email is tied to the act rather than to a page. ── */
   global.CabanaLifecycle = {
     partnerWelcome: function (info) {
-      var t = token();
-      if (!t || !info || !info.email) return;
-      var sent = jsonLs(LS_SENT);
-      var k = 'partner-welcome:' + (info.userId || info.email);
-      if (sent[k]) return;
-      sent[k] = 1; ls(LS_SENT, JSON.stringify(sent));
-      post('partner-welcome', {
-        email: info.email, name: info.name || '',
-        businessName: info.businessName || '', userId: info.userId || null,
-      }, t);
+      if (!info || !info.email) return;
+      token().then(function (t) {
+        if (!t) return;
+        var sent = jsonLs(LS_SENT);
+        var k = 'partner-welcome:' + (info.userId || info.email);
+        if (sent[k]) return;
+        sent[k] = 1; ls(LS_SENT, JSON.stringify(sent));
+        post('partner-welcome', {
+          email: info.email, name: info.name || '',
+          businessName: info.businessName || '', userId: info.userId || null,
+        }, t);
+      });
     },
   };
 

@@ -83,14 +83,20 @@ test('rewards.js never falls back to a hard-coded rate', () => {
 test('the ambassador rate is displayed with its basis', () => {
   // 15% of a 10% fee is 1.5% of a booking. A page that shows "15%" without
   // saying what it is 15% OF is a page that will be accused of lying.
-  for (const page of ['ambassadors.html', 'ambassador-dashboard.html']) {
-    const html = read(page);
-    assert.match(html, /15%/, `${page} should show the ambassador traveller rate`);
-    assert.match(html, /10%/, `${page} should show the ambassador host rate`);
-    assert.match(html, /service fee/i,
-      `${page} must state that the percentage is of the service fee`);
-    assert.match(html, /365/, `${page} should state the 365-day term`);
-  }
+  const dashboard = read('ambassador-dashboard.html');
+  assert.match(dashboard, /15%/, 'dashboard should show the ambassador traveller rate');
+  assert.match(dashboard, /10%/, 'dashboard should show the ambassador host rate');
+  assert.match(dashboard, /service fee/i, 'dashboard must state the percentage basis');
+  assert.match(dashboard, /365/, 'dashboard should state the 365-day term');
+
+  // The public recruitment page deliberately withholds contractual
+  // figures until sign-in, where the current account-specific card is
+  // authoritative. Keep that choice pinned instead of publishing stale
+  // rates merely to satisfy this consistency test.
+  const publicPage = read('ambassadors.html');
+  assert.match(publicPage, /figures are set out in your dashboard/i);
+  assert.ok(!/rate-pct">(?:15|10)%/.test(publicPage),
+    'the public page must not present account terms as a public rate card');
 });
 
 test('public referral copy shows the reduced ordinary rates', () => {
