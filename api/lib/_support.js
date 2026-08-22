@@ -501,6 +501,7 @@ IMMEDIATELY, without another attempt:
 · you have answered twice on the same problem and it is still not solved → normal
 Say what you already established, so the person starts where you stopped. Never "please hold", never invent a wait time.
 Do NOT escalate what you can simply answer from GROUNDING. Escalating what you know is as much a failure as guessing what you do not.
+Do NOT escalate questions about your own behaviour, technical glitches, duplicate messages, or how the chat works. Those are questions about a product, not a complaint that needs a human — answer them yourself in one sentence and move on.
 
 ══════ MOVING THEM ══════
 [[go:route]] or [[go:route?area=Westlands&beds=2&max_price=5000]] — LAST thing in the reply, one per message. Their conversation travels WITH them and does not restart, so moving them is cheap and safe when the page is genuinely where the answer lives.
@@ -1717,6 +1718,77 @@ async function agentOps(req, res, body, op) {
       case 'agent.kb': {
         const kb = await select('support_kb', 'select=*&order=priority.desc&limit=200').catch(() => []);
         return res.status(200).json({ ok: true, kb: kb || [] });
+      }
+
+      /* ── Platform chat: read-only access to guest↔host conversations ─ */
+      case 'agent.chat_queue': {
+        const chatFilter = String(body.filter || 'all');
+        const chatQ = [
+          'select=id,listing_id,listing_title,listing_type,host_id,guest_id,status,last_message,last_message_at,host_unread,guest_unread,created_at,contact_released,locked_reason',
+          'order=last_message_at.desc',
+          'limit=80',
+        ];
+        if (chatFilter === 'locked') chatQ.push('status=eq.locked');
+        else if (chatFilter === 'open')   chatQ.push('status=eq.open');
+
+        const [convs, guestProfiles, hostProfiles] = await Promise.all([
+          select('chat_conversations', chatQ.join('&')).catch(() => []),
+          /* We need display names for both sides. Fetch once per batch. */
+          Promise.resolve([]),
+          Promise.resolve([]),
+        ]);
+
+        /* Resolve display names in a second pass so the first fetch stays fast. */
+        const userIds = new Set();
+        (convs || []).forEach(c => { userIds.add(c.guest_id); userIds.add(c.host_id); });
+        const names = {};
+        if (userIds.size) {
+          const ids = [...userIds].slice(0, 80).map(id => `"${id}"`).join(',');
+          const profiles = await select('profiles', `id=in.(${ids})&select=id,first_name,last_name,email`).catch(() => []);
+          (profiles || []).forEach(p => {
+            names[p.id] = [p.first_name, p.last_name].filter(Boolean).join(' ') || p.email || p.id.slice(0, 8);
+          });
+        }
+
+        const enriched = (convs || []).map(c => ({
+          ...c,
+          guest_name: names[c.guest_id] || 'Guest',
+          host_name: names[c.host_id] || 'Host',
+        }));
+
+        return res.status(200).json({ ok: true, convs: enriched });
+      }
+
+      case 'agent.chat_thread': {
+        const convId = String(body.convId || '');
+        if (!uuidish(convId)) return res.status(400).json({ error: 'bad_conv_id' });
+
+        const [conv, messages] = await Promise.all([
+          one('chat_conversations', `id=eq.${convId}&select=*`).catch(() => null),
+          select('chat_messages', `conversation_id=eq.${convId}&select=id,sender_id,content,is_system,created_at&order=created_at.asc&limit=400`).catch(() => []),
+        ]);
+        if (!conv) return res.status(404).json({ error: 'conv_not_found' });
+
+        /* Resolve names for both participants. */
+        const ids = [conv.guest_id, conv.host_id].filter(Boolean);
+        const profiles = await select('profiles', `id=in.(${ids.map(i => `"${i}"`).join(',')})&select=id,first_name,last_name,email,phone`).catch(() => []);
+        const byId = {};
+        profiles.forEach(p => { byId[p.id] = p; });
+
+        const guest = byId[conv.guest_id] || {};
+        const host  = byId[conv.host_id]  || {};
+
+        return res.status(200).json({
+          ok: true, conv,
+          guest: { id: conv.guest_id, name: [guest.first_name, guest.last_name].filter(Boolean).join(' ') || guest.email || '—', email: guest.email, phone: guest.phone },
+          host:  { id: conv.host_id,  name: [host.first_name,  host.last_name].filter(Boolean).join(' ')  || host.email  || '—', email: host.email,  phone: host.phone  },
+          messages: (messages || []).map(m => ({
+            id: m.id,
+            sender: m.is_system ? 'system' : (m.sender_id === conv.guest_id ? 'guest' : 'host'),
+            body: m.content,
+            at: m.created_at,
+          })),
+        });
       }
 
       default:

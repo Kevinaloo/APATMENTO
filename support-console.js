@@ -101,6 +101,16 @@
      QUEUE
   ══════════════════════════════════════════════════════════════════ */
   function loadQueue() {
+    if (state.filter === 'platform') {
+      return support('agent.chat_queue', { filter: state.chatFilter || 'all' })
+        .then(function (d) {
+          state.platformConvs = d.convs || [];
+          paintPlatformQueue();
+        })
+        .catch(function (e) {
+          if (e.status === 401 || e.status === 403) return gate(e.status);
+        });
+    }
     return support('agent.queue', { filter: state.filter })
       .then(function (d) {
         state.threads = d.threads || [];
@@ -109,8 +119,6 @@
       })
       .catch(function (e) {
         if (e.status === 401 || e.status === 403) return gate(e.status);
-        /* A dropped poll is a dropped poll. The next one is in six
-           seconds and the screen still shows the last good state. */
       });
   }
 
@@ -159,6 +167,102 @@
         + '<div class="q-f">' + pills.join('') + '</div>'
         + '</div>';
     }).join('');
+  }
+
+  /* ══════════════════════════════════════════════════════════════════
+     PLATFORM CHATS  (guest ↔ host/provider, read-only)
+  ══════════════════════════════════════════════════════════════════ */
+  function paintPlatformQueue() {
+    var convs = state.platformConvs || [];
+    if (!convs.length) {
+      el.qlist.innerHTML = '<div class="empty" style="height:auto;padding:40px 16px"><div>✓</div><p>No platform conversations yet.</p></div>';
+      return;
+    }
+    el.qlist.innerHTML = convs.map(function (c) {
+      var locked = c.status === 'locked';
+      var pills = [
+        '<span class="pill" data-k="' + esc(c.status) + '">' + esc(c.status) + '</span>',
+        '<span class="pill" data-k="cat">' + esc(c.listing_type || 'apt') + '</span>',
+      ];
+      if (locked && c.locked_reason) pills.push('<span class="pill" data-k="low">' + esc(c.locked_reason) + '</span>');
+      if (c.contact_released) pills.push('<span class="pill" data-k="resolved">contact shared</span>');
+      return '<div class="q" data-cid="' + esc(c.id) + '">'
+        + '<div class="q-h"><span class="q-n">' + esc(c.guest_name) + ' → ' + esc(c.host_name) + '</span>'
+        + (c.host_unread || c.guest_unread ? '<span class="q-unread">' + esc((c.host_unread || 0) + (c.guest_unread || 0)) + '</span>' : '')
+        + '<span class="q-t">' + esc(ago(c.last_message_at)) + '</span></div>'
+        + '<div class="q-p">' + esc(c.listing_title || c.listing_id) + '</div>'
+        + '<div class="q-p" style="color:var(--soft);font-size:11px">' + esc(c.last_message || '') + '</div>'
+        + '<div class="q-f">' + pills.join('') + '</div>'
+        + '</div>';
+    }).join('');
+  }
+
+  function openPlatformChat(id) {
+    if (!id) return;
+    doc.body.setAttribute('data-view', 'thread');
+    support('agent.chat_thread', { convId: id })
+      .then(function (d) {
+        state.activePlatformChat = d;
+        paintPlatformThread(d);
+      })
+      .catch(function (e) {
+        if (e.status === 401 || e.status === 403) gate(e.status);
+      });
+  }
+
+  function paintPlatformThread(d) {
+    if (!d || !d.conv) return;
+    var conv  = d.conv;
+    var guest = d.guest;
+    var host  = d.host;
+
+    el.name.textContent = guest.name + ' ↔ ' + host.name;
+
+    var bits = [
+      '<span class="pill" data-k="' + esc(conv.status) + '">' + esc(conv.status) + '</span>',
+      '<span class="pill" data-k="cat">' + esc(conv.listing_type || 'apartment') + '</span>',
+    ];
+    if (conv.contact_released) bits.push('<span class="pill" data-k="resolved">contact released</span>');
+    if (conv.locked_reason) bits.push('<span>' + esc(conv.locked_reason) + '</span>');
+    el.meta.innerHTML = bits.join('');
+
+    el.body.innerHTML = (d.messages || []).map(function (m) {
+      var label = m.sender === 'system' ? null
+                : m.sender === 'guest'  ? guest.name
+                : host.name;
+      return '<div class="m" data-r="' + esc(m.sender) + '"><div>'
+        + (label ? '<div class="m-f">' + esc(label) + '</div>' : '')
+        + '<div class="m-b">' + esc(m.body) + '</div>'
+        + (m.sender !== 'system' ? '<div class="m-t">' + esc(clockOf(m.at)) + '</div>' : '')
+        + '</div></div>';
+    }).join('');
+    el.body.scrollTop = el.body.scrollHeight;
+
+    /* Context panel */
+    var ctxHtml = '<div style="padding:16px 14px;font:400 12px/1.7 Inter,sans-serif;color:var(--soft)">';
+    ctxHtml += '<div style="font-weight:700;color:var(--ink);margin-bottom:10px">Conversation</div>';
+    ctxHtml += row('Listing', esc(conv.listing_title || conv.listing_id));
+    ctxHtml += row('Type', esc(conv.listing_type || '—'));
+    ctxHtml += row('Status', esc(conv.status));
+    ctxHtml += row('Contact released', conv.contact_released ? 'Yes' : 'No');
+    if (conv.locked_reason) ctxHtml += row('Locked reason', esc(conv.locked_reason));
+    ctxHtml += '<div style="margin-top:14px;font-weight:700;color:var(--ink)">Guest</div>';
+    ctxHtml += row('Name',  esc(guest.name));
+    ctxHtml += row('Email', esc(guest.email || '—'));
+    ctxHtml += row('Phone', esc(guest.phone || '—'));
+    ctxHtml += '<div style="margin-top:14px;font-weight:700;color:var(--ink)">Host / Provider</div>';
+    ctxHtml += row('Name',  esc(host.name));
+    ctxHtml += row('Email', esc(host.email || '—'));
+    ctxHtml += row('Phone', esc(host.phone || '—'));
+    ctxHtml += '<div style="margin-top:14px;padding:10px;background:rgba(255,255,255,.04);border-radius:8px;font-size:11px;color:var(--soft)">Read-only view. Intervening in platform chats is done through the admin panel.</div>';
+    ctxHtml += '</div>';
+    el.ctx.innerHTML = ctxHtml;
+
+    /* Disable reply — platform chats are observation-only */
+    el.reply.disabled = true;
+    el.reply.placeholder = 'Platform chats are read-only. Use Admin to intervene.';
+    doc.getElementById('send').disabled = true;
+    el.resolve.disabled = true;
   }
 
   /* ══════════════════════════════════════════════════════════════════
@@ -480,14 +584,23 @@
         Array.prototype.forEach.call(doc.querySelectorAll('.qtab'), function (t) {
           t.setAttribute('aria-selected', String(t === tab));
         });
-        state.filter = tab.getAttribute('data-filter');
+        var f = tab.getAttribute('data-filter');
+        state.filter = f;
+        if (f === 'platform') state.chatFilter = 'all';
         loadQueue();
       });
     });
 
     el.qlist.addEventListener('click', function (e) {
       var q = e.target.closest && e.target.closest('.q');
-      if (q) openThread(q.getAttribute('data-id'));
+      if (!q) return;
+      var cid = q.getAttribute('data-cid');
+      if (cid) {
+        /* Platform chat row */
+        openPlatformChat(cid);
+      } else {
+        openThread(q.getAttribute('data-id'));
+      }
     });
 
     doc.getElementById('back').addEventListener('click', function () {
