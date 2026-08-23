@@ -8,7 +8,7 @@ Runs over every existing .html page and fixes, in order:
   2. Title length             trimmed to <= 60 chars without losing the keyword head.
   3. Meta description length  trimmed to <= 158 chars at a clause boundary.
   4. Canonical                added where missing.
-  5. hreflang cluster         added to every indexable page.
+  5. hreflang cleanup         removes locale tags that point multiple markets to one URL.
   6. Indexation control       noindex,nofollow on private/app pages so crawl
                               budget goes to money pages.
   7. Image performance        loading=lazy + decoding=async + fetchpriority on
@@ -36,13 +36,6 @@ NOINDEX = {
 
 # Pages where the legacy name is load-bearing and must survive.
 KEEP_LEGACY = {"terms.html", "privacy.html", "cookies.html", "cabana.html", "press.html"}
-
-HREFLANG_MARKETS = [
-    "en-ke", "en-ng", "en-gh", "en-tz", "en-ug", "en-rw", "en-za", "en-et",
-    "en-sn", "en-eg", "en-ma", "en-zm", "en-zw", "en-na", "en-bw", "en-mw",
-    "en-mz", "en-ci", "en-cm", "en-gb", "en-us", "en-ca", "en-au", "en-ae",
-    "en-in", "en",
-]
 
 BRAND_MAP = [
     (r"Apatmento by Cabana", "Cabana"),
@@ -168,14 +161,12 @@ def ensure_canonical(src, fname):
 
 
 def ensure_hreflang(src, fname):
-    if fname in NOINDEX or 'hreflang=' in src:
-        return src, 0
-    u = canonical_url(fname)
-    tags = "\n  <!-- hreflang: one canonical URL served to every English market -->"
-    for m in HREFLANG_MARKETS:
-        tags += f'\n  <link rel="alternate" hreflang="{m}" href="{u}"/>'
-    tags += f'\n  <link rel="alternate" hreflang="x-default" href="{u}"/>'
-    return src.replace("</head>", tags + "\n</head>", 1), 1
+    """Remove misleading locale alternates until distinct localized URLs exist."""
+    pattern = (r'\s*<link\b(?=[^>]*\brel=["\']alternate["\'])'
+               r'(?=[^>]*\bhreflang=["\'][^"\']+["\'])[^>]*>\s*')
+    src, changed = re.subn(pattern, "\n", src, flags=re.I)
+    src = re.sub(r'\n\s*<!-- hreflang:[\s\S]*?-->\s*\n', "\n", src, flags=re.I)
+    return src, changed
 
 
 def ensure_robots_meta(src, fname):

@@ -66,7 +66,7 @@ def shell(*, slug, title, desc, h1, eyebrow, sub, chips, sections, faqs,
           cta_title, cta_text, cta_href, cta_label, xlinks, graph_json,
           back_href="/apartments", back_label="All stays", og="og-stays.jpg"):
     url = f"{SITE}/{slug}"
-    hl = "\n  ".join(f'<link rel="alternate" hreflang="{m}" href="{url}"/>' for m in HREFLANG)
+    hl = ""  # Add only when distinct reciprocal localized URLs exist.
     chip_html = "".join(f'<div class="chip"><b>{E(a)}</b><span>{E(b)}</span></div>' for a, b in chips)
     sec_html = "".join(f'<section class="sec"><h2>{E(t)}</h2>{b}</section>' for t, b in sections)
     faq_html = "".join(
@@ -84,7 +84,6 @@ def shell(*, slug, title, desc, h1, eyebrow, sub, chips, sections, faqs,
 <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1"/>
 <link rel="canonical" href="{url}"/>
   {hl}
-<link rel="alternate" hreflang="x-default" href="{url}"/>
 <meta property="og:site_name" content="Cabana"/>
 <meta property="og:title" content="{E(title)}"/>
 <meta property="og:description" content="{E(desc)}"/>

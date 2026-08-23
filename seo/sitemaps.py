@@ -16,8 +16,7 @@ Emits:
   sitemap-guides.xml  editorial, comparisons, answers
   sitemap-images.xml  image sitemap for Google Images traffic
 
-Every URL carries xhtml:link hreflang annotations, which is the sitemap-level
-equivalent of the on-page tags and the more reliable of the two at scale.
+Hreflang is intentionally omitted until distinct localized URL versions exist.
 
 Usage: python3 seo/sitemaps.py
 """
@@ -35,9 +34,6 @@ NOINDEX = {
     "partner-cabana",
 }
 
-MARKETS = ["en-ke", "en-ng", "en-gh", "en-za", "en-tz", "en-ug", "en-rw",
-           "en-gb", "en-us", "en"]
-
 CORE = {"index": 1.0, "apartments": 0.95, "tours": 0.95, "flights": 0.9, "events": 0.9,
         "carhire": 0.9, "rides": 0.9, "food": 0.85, "shopping": 0.85, "roommates": 0.85,
         "destinations": 0.95, "become-partner": 0.9, "become-agent": 0.85,
@@ -49,21 +45,15 @@ def url_for(stem):
     return SITE + "/" if stem == "index" else f"{SITE}/{stem}"
 
 
-def entry(stem, priority, changefreq, alts=True):
+def entry(stem, priority, changefreq):
     u = url_for(stem)
-    x = ""
-    if alts:
-        x = "".join(f'\n    <xhtml:link rel="alternate" hreflang="{m}" href="{u}"/>'
-                    for m in MARKETS)
-        x += f'\n    <xhtml:link rel="alternate" hreflang="x-default" href="{u}"/>'
     return (f"  <url>\n    <loc>{u}</loc>\n    <lastmod>{TODAY}</lastmod>\n"
             f"    <changefreq>{changefreq}</changefreq>\n"
-            f"    <priority>{priority}</priority>{x}\n  </url>")
+            f"    <priority>{priority}</priority>\n  </url>")
 
 
 HEAD = ('<?xml version="1.0" encoding="UTF-8"?>\n'
-        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"\n'
-        '        xmlns:xhtml="http://www.w3.org/1999/xhtml">')
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">')
 HEAD_IMG = ('<?xml version="1.0" encoding="UTF-8"?>\n'
             '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"\n'
             '        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">')
