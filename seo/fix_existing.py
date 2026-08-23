@@ -32,6 +32,7 @@ NOINDEX = {
     "partner-listings.html", "partner-bookings.html", "partner-calendar.html",
     "partner-agents.html", "partner-analytics.html", "partner-earnings.html",
     "partner-reviews.html", "partner-settings.html", "partner-cabana.html",
+    "partner-menu.html", "restaurant.html", "support-console.html",
 }
 
 # Pages where the legacy name is load-bearing and must survive.
