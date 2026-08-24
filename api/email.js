@@ -29,6 +29,7 @@ export const config = { maxDuration: 15 };
 
 import { hasInternalSecret, requireUser, setCors, consumeRateLimit } from './lib/_security.js';
 import { sendTemplate, TEMPLATES } from './lib/_mail.js';
+import { one } from './lib/_db.js';
 
 const AT_API_KEY  = process.env.AT_API_KEY;
 const AT_USERNAME = process.env.AT_USERNAME || 'Cabana';
@@ -68,6 +69,7 @@ const ACTIONS = {
   'support-resolved': { template: 'supportResolved',  to: b => b.email,        dedupe: b => b.threadId ? `support-resolved:${b.threadId}` : null },
   'missed-call':      { template: 'missedCall',       to: b => b.email,        dedupe: b => b.callId ? `missed-call:${b.callId}` : null },
   'notification':     { template: 'notification',     to: b => b.email,        dedupe: b => b.key ? `notify:${b.key}` : null },
+  'listing-claim':    { template: 'listingClaim',     to: b => b.email,        dedupe: b => b.transferId ? `listing-claim:${b.transferId}` : null },
   'offer':            { template: 'offer',            to: b => b.email,        dedupe: b => b.campaign ? `offer:${b.campaign}:${String(b.email).toLowerCase()}` : null },
 
   /* Partner · partnership@ */
@@ -154,6 +156,50 @@ export default async function handler(req, res) {
     /* ── Retired auth paths, still answered honestly ──────────────── */
     if (action === 'magic-link' || action === 'magic-auth') {
       return res.status(410).json({ error: 'Magic-link auth is no longer supported. Use email + password or Google.' });
+    }
+
+    /* ── Ownership claim ───────────────────────────────────────────
+       The caller supplies only an opaque transfer id. Recipient, listing
+       and sender are re-read server-side and the transfer must belong to
+       the authenticated caller. The deep link is navigation, not auth. */
+    if (action === 'listing-claim') {
+      if (!caller) return res.status(403).json({ error: 'signed_in_sender_required' });
+      const id = String(body.transferId || '');
+      if (!/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(id)) {
+        return res.status(400).json({ error: 'invalid_transfer' });
+      }
+      const transfer = await one('listing_transfers',
+        `id=eq.${encodeURIComponent(id)}&select=id,listing_id,from_user,to_name,to_contact,status,expires_at`);
+      if (!transfer || transfer.from_user !== caller.id) {
+        return res.status(404).json({ error: 'transfer_not_found' });
+      }
+      if (transfer.status !== 'pending' || new Date(transfer.expires_at).getTime() <= Date.now()) {
+        return res.status(409).json({ error: 'transfer_not_pending' });
+      }
+      const listing = await one('listings',
+        `id=eq.${encodeURIComponent(transfer.listing_id)}&select=id,title,city,status,is_active`);
+      if (!listing) return res.status(404).json({ error: 'listing_not_found' });
+
+      const claimUrl = `https://cabana.africa/dashboard.html?claim=${encodeURIComponent(transfer.id)}`;
+      const email = String(transfer.to_contact || '').trim().toLowerCase();
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+        return res.status(200).json({ ok: true, emailed: false, claim_url: claimUrl, reason: 'recipient_uses_phone' });
+      }
+      const result = await sendTemplate({
+        template: 'listingClaim', to: email,
+        data: {
+          recipientName: transfer.to_name,
+          listingTitle: listing.title,
+          city: listing.city,
+          fromName: caller.user_metadata?.full_name || caller.email || 'A Cabana partner',
+          claimUrl,
+          expiresAt: transfer.expires_at,
+        },
+        dedupeKey: `listing-claim:${transfer.id}`,
+        userId: caller.id,
+      });
+      if (!result.ok) return res.status(502).json({ ok: false, error: result.error, claim_url: claimUrl });
+      return res.status(200).json({ ok: true, emailed: true, claim_url: claimUrl, skipped: result.skipped || false });
     }
 
     /* ── Templated mail ──────────────────────────────────────────── */

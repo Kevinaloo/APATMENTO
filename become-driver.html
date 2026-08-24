@@ -713,7 +713,7 @@ select.fi{appearance:none;background-image:url("data:image/svg+xml;charset=UTF-8
 var F = window.CabFare;
 var SUPA_URL='https://gfwgbgdvxtocwhilrtdw.supabase.co';
 var SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
-var sb=null;
+var sb=null, signedUser=null;
 try{ sb=(window.ApaSession&&ApaSession.client&&ApaSession.client())||window.supabase.createClient(SUPA_URL,SUPA_KEY); }catch(e){}
 function $(i){return document.getElementById(i);}
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
@@ -859,6 +859,12 @@ $('b-next').addEventListener('click', function(){
 function submit(){
   var btn = $('b-next'); btn.disabled = true; btn.textContent = 'Sending your application';
 
+  if(!signedUser){
+    try{ sessionStorage.setItem('auth_next', location.pathname + location.search); }catch(e){}
+    location.href='auth.html?next='+encodeURIComponent(location.pathname+location.search);
+    return;
+  }
+
   var name = val('a-name');
   var phone = val('a-phone').replace(/\s/g,'');
   var plate = val('a-plate').toUpperCase().replace(/\s+/g,' ').trim();
@@ -903,25 +909,31 @@ function submit(){
     try{ localStorage.setItem('cab_driver_ref', ref); }catch(e){}
   }
 
-  if(!sb){ finish(null); return; }
+  if(!sb){ btn.disabled=false; btn.textContent='Submit application'; return fail('Cabana could not connect. Check your connection and try again.'); }
 
-  sb.from('drivers').insert(driver).select('id').single().then(function(res){
-    if(res.error){ console.warn('[driver] save failed', res.error.message); return finish(null); }
-    var id = res.data.id;
-    var vehicle = {
-      driver_id: id, make: val('a-make'), model: val('a-model'),
-      year: parseInt(val('a-year'),10), plate: plate,
-      colour: val('a-colour') || null,
-      seats: parseInt(val('a-seats'),10) || 4,
-      class: cls, is_primary: true
-    };
-    var docRows = docs.map(function(k){ return { driver_id:id, kind:k, status:'pending' }; });
-    var jobs = [ sb.from('driver_vehicles').insert(vehicle) ];
-    if(docRows.length) jobs.push(sb.from('driver_documents').insert(docRows));
-    Promise.all(jobs.map(function(p){ return p.then(null, function(){ return null; }); }))
-      .then(function(){ finish(id); });
+  var vehicle = {
+    make: val('a-make'), model: val('a-model'),
+    year: parseInt(val('a-year'),10), plate: plate,
+    colour: val('a-colour') || null,
+    seats: parseInt(val('a-seats'),10) || 4,
+    class: cls
+  };
+  sb.rpc('driver_application_submit', {
+    p_driver: driver,
+    p_vehicle: vehicle,
+    p_documents: docs
+  }).then(function(res){
+    if(res.error || !res.data || res.data.ok!==true){
+      var message=(res.error&&res.error.message)||'The application was not saved.';
+      console.warn('[driver] atomic save failed',message);
+      btn.disabled=false;btn.textContent='Submit application';
+      return fail(message);
+    }
+    finish(res.data.driver_id);
   }).catch(function(e){
-    console.warn('[driver] save failed', e); finish(null);
+    console.warn('[driver] atomic save failed',e);
+    btn.disabled=false;btn.textContent='Submit application';
+    fail('The application was not saved. Check your connection and try again.');
   });
 }
 
@@ -929,6 +941,7 @@ function submit(){
 renderEstClasses();
 calcEst();
 try{ ApaSession.ready(function(st){
+  signedUser=st&&st.user||null;
   if(st && st.profile){
     if(st.profile.full_name && !$('a-name').value) $('a-name').value = st.profile.full_name;
     if(st.profile.phone && !$('a-phone').value) $('a-phone').value = st.profile.phone;

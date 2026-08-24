@@ -577,6 +577,34 @@ export const TEMPLATES = {
     };
   },
 
+  /* ── Ownership · a private listing is waiting to be claimed ────── */
+  listingClaim({ recipientName, listingTitle, city, fromName, claimUrl, expiresAt }) {
+    const title = listingTitle || 'A Cabana listing';
+    return {
+      audience: 'partner', category: 'transactional',
+      subject: `${fromName || 'Someone'} created a Cabana listing for you`,
+      preview: `${title} is private until you review and accept it.`,
+      html: shell({
+        title: 'Claim your Cabana listing', preview: `${title} is waiting for your review.`,
+        body: header({ eyebrow: 'Ownership invitation', title: 'A listing is waiting for you',
+          subtitle: `${recipientName || 'Hi'} — ${fromName || 'someone'} prepared this on your behalf.`,
+          gradient: B.gradDusk, emoji: '🏡' })
+        + card(h2(title) + rows([
+            city ? ['Location', city] : null,
+            ['Prepared by', fromName || 'A Cabana partner'],
+            expiresAt ? ['Invitation expires', prettyDate(expiresAt)] : null,
+            ['Public now?', 'No — it stays private until you accept', true],
+          ])
+          + button(claimUrl || '/dashboard.html', 'Review and claim', { gradient: B.gradDusk, solid: B.violet })
+          + p('The link identifies the invitation but never grants ownership by itself. Sign in or create Cabana using the exact email address this message reached; Cabana verifies that identity again before accepting.', { small: true }))
+        + card(h2('Not yours?')
+          + p('Open the invitation and choose Decline. It will remain private and return to the person who prepared it. Ignoring this email will never publish it.'), { delay: 2, quiet: true }),
+        audience: 'partner',
+        reason: 'You received this transactional email because a private Cabana listing was prepared for this address.',
+      }),
+    };
+  },
+
   /* ── Guest · an offer. Consent-gated, always unsubscribable. ────── */
   offer({ name, email, headline, body, code, expires, url, label, stat, statLabel }) {
     const who = firstName(name, email);
