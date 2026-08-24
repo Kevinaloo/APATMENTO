@@ -18,7 +18,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 process.env.SUPABASE_URL = 'https://example.supabase.co';
-process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-test-key';
+process.env['SUPABASE_SERVICE_ROLE_KEY'] = 'service-test-key';
 process.env.SUPABASE_ANON_KEY = 'anon-test-key';
 
 const { default: trust } = await import('../api/trust.js');

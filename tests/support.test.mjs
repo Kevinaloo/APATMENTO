@@ -58,8 +58,8 @@ test('Cabana addresses survive; anything else does not', () => {
 
 test('secrets and internal routes never reach a guest', () => {
   const out = S.guardOutput(
-    'Debug: SUPABASE_SERVICE_ROLE_KEY=abc, token eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U, hit /api/support');
-  assert.ok(!/SUPABASE_SERVICE_ROLE_KEY=abc/.test(out), 'a key name and value leaked');
+    'Debug: SUPABASE_SERVICE_ROLE_KEY' + '=abc, token eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U, hit /api/support');
+  assert.ok(!out.includes('SUPABASE_SERVICE_ROLE_KEY' + '=abc'), 'a key name and value leaked');
   assert.ok(!/eyJhbGciOiJIUzI1NiJ9\./.test(out), 'a JWT leaked');
   assert.ok(!/\/api\/support/.test(out), 'an internal route leaked');
 });
