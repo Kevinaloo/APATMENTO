@@ -116,7 +116,7 @@ test('guest mail leaves connect@, partner mail leaves partnership@', () => {
     supportResolved: 'guest', missedCall: 'guest', notification: 'guest', offer: 'guest',
     partnerWelcome: 'partner', partnerBooking: 'partner', partnerPayout: 'partner',
     partnerListingLive: 'partner', partnerNudge: 'partner', partnerDigest: 'partner',
-    partnerUpdate: 'partner', agentEscalation: 'partner',
+    partnerUpdate: 'partner', listingClaim: 'partner', agentEscalation: 'partner',
   };
   for (const [key, out] of rendered) {
     assert.equal(out.audience, expected[key], `${key} is filed under the wrong audience`);

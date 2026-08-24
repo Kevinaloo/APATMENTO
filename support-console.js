@@ -64,20 +64,19 @@
     /* Use the token we cached when ApaSession confirmed the user, which
        is guaranteed fresh (GoTrue refreshed it before calling .ready()).   */
     if (_cachedToken) return _cachedToken;
-    try {
-      /* Still check peekSession in case we're mid-polling after a refresh. */
-      var peek = global.ApaSession && global.ApaSession.peekSession && global.ApaSession.peekSession();
-      if (peek && peek.access_token) return peek.access_token;
-      var sbcl = global.sb || (global.ApaSession && global.ApaSession.client && global.ApaSession.client());
-      var s = sbcl && sbcl.auth && sbcl.auth._currentSession;
-      return (s && s.access_token) || null;
-    } catch (e) { return null; }
+    return null;
   }
 
   function tokenAsync() {
     var t = token();
     if (t) return Promise.resolve(t);
     try {
+      if (global.ApaSession && global.ApaSession.token) {
+        return global.ApaSession.token().then(function (tok) {
+          if (tok) _cachedToken = tok;
+          return tok || null;
+        }).catch(function () { return null; });
+      }
       var sbcl = global.sb || (global.ApaSession && global.ApaSession.client && global.ApaSession.client());
       if (sbcl && sbcl.auth && sbcl.auth.getSession) {
         return sbcl.auth.getSession().then(function (res) {

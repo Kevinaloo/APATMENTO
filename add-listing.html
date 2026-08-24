@@ -654,6 +654,22 @@ const SBK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6
 let sb=null;try{sb=supabase.createClient(SBU,SBK);}catch(e){}
 let CU=null;
 const QP=new URLSearchParams(location.search);
+const DEDICATED_PIPELINES={
+  tours:'/list-your-tour.html',
+  events:'/list-your-event.html',
+  carhire:'/list-your-fleet.html',
+  rides:'/become-driver.html'
+};
+
+function dedicatedPipeline(service){
+  const target=DEDICATED_PIPELINES[service];
+  if(!target)return false;
+  const q=new URLSearchParams();
+  if(QP.get('from'))q.set('from',QP.get('from'));
+  if(QP.get('lead'))q.set('lead',QP.get('lead'));
+  location.replace(target+(q.toString()?'?'+q.toString():''));
+  return true;
+}
 
 /* ══ ONBOARDING SOMEBODY ELSE ═══════════════════════════════════════════
    An ambassador or agent arrives here from a claimed lead with that
@@ -687,7 +703,7 @@ const FROM=QP.has('from')||QP.has('edit')||QP.has('prefill')||QP.has('svc')||QP.
     if(!FROM){location.replace('partner-listings.html');return;}
     if(QP.has('edit')){const{data:l}=await sb.from('listings').select('*').eq('id',QP.get('edit')).eq('partner_id',CU.id).single();if(l){window._eid=QP.get('edit');setTimeout(()=>loadEdit(l),200);}}
     if(QP.has('prefill')){try{const r=sessionStorage.getItem('apa-import-prefill');if(r){const p=JSON.parse(r);sessionStorage.removeItem('apa-import-prefill');setTimeout(()=>loadPrefill(p),200);}}catch(e){}}
-    const _svcQ=QP.get('service')||QP.get('svc');if(_svcQ&&SVCS[_svcQ]&&!QP.has('edit')){F.svc=_svcQ;document.querySelectorAll('.svc-card').forEach(c=>{if(c.dataset.svc===_svcQ)c.classList.add('sel');});go(1);}
+    const _svcQ=QP.get('service')||QP.get('svc');if(_svcQ&&SVCS[_svcQ]&&!QP.has('edit')){if(dedicatedPipeline(_svcQ))return;F.svc=_svcQ;document.querySelectorAll('.svc-card').forEach(c=>{if(c.dataset.svc===_svcQ)c.classList.add('sel');});go(1);}
   }catch(e){}
 })();
 
@@ -855,7 +871,7 @@ function bldStep(n){
 }
 
 function selSvc(el){document.querySelectorAll('.svc-card').forEach(c=>c.classList.remove('sel'));el.classList.add('sel');F.svc=el.dataset.svc;F.type=null;F.feats=[];}
-function goFromSvc(){if(!F.svc){al('Select a service type to continue.');return;}go(1);}
+function goFromSvc(){if(!F.svc){al('Select a service type to continue.');return;}if(dedicatedPipeline(F.svc))return;go(1);}
 function selType(el){document.querySelectorAll('.type-card').forEach(c=>c.classList.remove('sel'));el.classList.add('sel');F.type=el.dataset.t;const bt=document.getElementById('badge-t');if(bt)bt.textContent=F.type;}
 function togFt(el){el.classList.toggle('sel');const f=el.dataset.f;if(el.classList.contains('sel')){if(!F.feats.includes(f))F.feats.push(f);}else F.feats=F.feats.filter(x=>x!==f);}
 
@@ -1235,6 +1251,11 @@ function firstSentence(t){
   return out.slice(0,140)||null;
 }
 async function publish(){
+  /* These services have moderated or regulated catalogues of their own.
+     Refuse a hand-edited generic form as well as routing the visible UI;
+     otherwise a caller could still manufacture a lookalike row by invoking
+     publish() from DevTools. */
+  if(!window._eid&&DEDICATED_PIPELINES[F.svc]){dedicatedPipeline(F.svc);return;}
   collect(6);collectOwn();const btn=document.getElementById('pub-btn');btn.classList.add('loading');
   try{
     const pu=[];const ord=(F.photoFiles.length?[cov,...Array.from({length:F.photoFiles.length},(_,i)=>i).filter(i=>i!==cov)]:[]).filter(i=>F.photoFiles[i]);
@@ -1252,7 +1273,7 @@ async function publish(){
        at which point listing_transfer_accept() switches it on. Putting a
        stranger's property, address and phone number on a public website
        because a third party filled in a form is not a thing to get wrong. */
-    if(ON_BEHALF_OF&&!window._eid){
+    if(F.own==='on_behalf'&&!window._eid){
       payload.is_active=false;
       payload.status='pending_owner';
       payload.activate_on_claim=true;
@@ -1315,7 +1336,7 @@ async function publish(){
        That is the safe way round: an undeclared listing is a sole
        listing, which is the truthful default for a row that was just
        inserted under this account. Say so rather than pretending. */
-    let ownProblem=null;
+    let ownProblem=null,claimResult=null;
     /* Only declare when the host actually answered. On an edit that never
        reached step 7, F.own is whatever the listing already says, and
        re-declaring it would pointlessly retire and rewrite the co-owner
@@ -1323,18 +1344,22 @@ async function publish(){
     if(listingId&&F.own&&(!window._eid||F.ownTouched)&&window.ApaOwnership){
       const r=await ApaOwnership.declare(listingId,ownSpec());
       if(!r||!r.ok)ownProblem=r&&r.error;
+      else if(F.own==='on_behalf'&&r.transfer_id){
+        claimResult=await ApaOwnership.sendInvite(r.transfer_id);
+      }
     }
 
     btn.classList.remove('loading');
     document.getElementById('success-ov').classList.add('show');
     document.getElementById('ssub').textContent=
       ownProblem
-        ? 'Your listing is live, but we could not record the ownership: '+ownProblem
-          +' It is yours for now — set it from your listings board.'
+        ? (F.own==='on_behalf'
+          ? 'Your listing was saved privately, but the ownership invitation could not be completed: '+ownProblem+' Nothing is public. Open your listings board to finish it.'
+          : 'Your listing is live, but we could not record the ownership: '+ownProblem+' It is yours for now — set it from your listings board.')
         : ON_BEHALF_OF
           ? '"'+F.title+'" is ready and waiting for '+ON_BEHALF_OF.name+'. It goes live on their account the moment they sign in with '+ON_BEHALF_OF.contact+' and accept it. Nothing is public until then.'
         : F.own==='on_behalf'
-          ? '"'+F.title+'" is live and held for '+F.ownHolderName+'. They become the owner the moment they claim it.'
+          ? '"'+F.title+'" is saved privately for '+F.ownHolderName+'. '+(claimResult&&claimResult.emailed?'We emailed them a secure claim link. ':'Copy the claim link below and send it to them. ')+'It becomes visible only after they review and accept it.'
           : window._eid
             ? '"'+F.title+'" has been updated.'
             : '"'+F.title+'" is now live on Cabana.';
@@ -1353,6 +1378,18 @@ async function publish(){
       }
     } else {
       spv.textContent=F.cur+' '+Number(F.price||0).toLocaleString();
+    }
+    if(F.own==='on_behalf'&&claimResult&&claimResult.claim_url){
+      const sa=document.querySelector('.sacts');
+      if(sa){
+        const url=claimResult.claim_url;
+        sa.innerHTML='<button type="button" class="sa-p" id="copy-claim-link">Copy claim link</button>'
+          +'<a href="partner-listings.html" class="sa-g">View private listing</a>';
+        document.getElementById('copy-claim-link').onclick=()=>{
+          if(navigator.clipboard)navigator.clipboard.writeText(url).then(()=>al('Claim link copied'));
+          else prompt('Copy this claim link',url);
+        };
+      }
     }
   }catch(err){btn.classList.remove('loading');al('Something went wrong: '+(err.message||'Please try again.'));console.error(err);}
 }

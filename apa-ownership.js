@@ -36,6 +36,7 @@
      ApaOwnership.mountInbox(el?)             renders that into #ownership-inbox
      ApaOwnership.accept(transferId)
      ApaOwnership.decline(transferId)
+     ApaOwnership.sendInvite(transferId)         emails + returns share link
      ApaOwnership.confirmSeat(partnerId)
 
      ApaOwnership.splitEqually(n)             → [33.34, 33.33, 33.33]
@@ -274,6 +275,35 @@
   function cancelTransfer(id) { return rpc('listing_transfer_cancel', { p_transfer_id: id }); }
   function confirmSeat(id)    { return rpc('listing_partner_confirm', { p_partner_id: id }); }
 
+  /* The browser sends only the transfer id. The API re-reads the transfer
+     with service credentials, checks that auth.uid() is its sender, and
+     derives the recipient and listing itself. A caller cannot turn this
+     into a send-email-to-anyone endpoint. */
+  function sendInvite(id) {
+    var fallbackUrl = global.location && global.location.origin
+      ? global.location.origin + '/dashboard.html?claim=' + encodeURIComponent(id || '')
+      : null;
+    if (!id || !global.fetch || !global.ApaSession || !global.ApaSession.token) {
+      return Promise.resolve({ ok: false, error: 'The invitation could not be sent.', claim_url: fallbackUrl });
+    }
+    return global.ApaSession.token().then(function (token) {
+      if (!token) return { ok: false, error: 'Sign in again to send the invitation.' };
+      return global.fetch('/api/email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify({ action: 'listing-claim', transferId: id })
+      }).then(function (r) {
+        return r.json().catch(function () { return {}; }).then(function (d) {
+          if (!r.ok) return { ok: false, error: d.error || 'The invitation could not be sent.', claim_url: d.claim_url || fallbackUrl };
+          return d;
+        });
+      });
+    }).catch(function (e) {
+      warn('sendInvite', e);
+      return { ok: false, error: 'The invitation could not be sent.', claim_url: fallbackUrl };
+    });
+  }
+
   /* ── Reads ────────────────────────────────────────────────────────── */
 
   /* Listings waiting for the signed-in person to claim. The caller never
@@ -359,7 +389,22 @@
     + '.apa-oi-yes{background:linear-gradient(135deg,#2DD4BF,#4361FF);color:#fff}'
     + '.apa-oi-no{background:transparent;color:inherit;opacity:.6;'
     +   'border:1.5px solid currentColor}'
-    + '.apa-oi-e{margin-top:9px;font-size:12px;font-weight:600;color:#E11D48}';
+    + '.apa-oi-e{margin-top:9px;font-size:12px;font-weight:600;color:#E11D48}'
+    + '.apa-claim{border:0;padding:0;width:min(540px,calc(100vw - 28px));border-radius:26px;'
+    +   'background:#fff;color:#151528;box-shadow:0 28px 90px rgba(13,13,34,.32);font-family:inherit;overflow:hidden}'
+    + '.apa-claim::backdrop{background:rgba(10,10,25,.62);backdrop-filter:blur(8px)}'
+    + '.apa-claim-h{height:122px;padding:26px;background:linear-gradient(135deg,#2DD4BF,#4361FF 58%,#7C3AED);color:#fff;display:flex;align-items:flex-end}'
+    + '.apa-claim-h span{font-size:12px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;opacity:.8}'
+    + '.apa-claim-b{padding:26px}'
+    + '.apa-claim-b h2{font-size:25px;line-height:1.15;letter-spacing:-.5px;margin:0 0 10px}'
+    + '.apa-claim-b p{font-size:14px;line-height:1.65;margin:0;color:#66677d}'
+    + '.apa-claim-meta{margin:18px 0;padding:14px 16px;border-radius:15px;background:#f5f6ff;font-size:13px;line-height:1.55}'
+    + '.apa-claim-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:20px}'
+    + '.apa-claim-actions button,.apa-claim-actions a{appearance:none;border:0;border-radius:12px;padding:12px 18px;font:750 13px/1 inherit;cursor:pointer;text-decoration:none;text-align:center}'
+    + '.apa-claim-primary{background:linear-gradient(135deg,#2DD4BF,#4361FF);color:#fff;flex:1}'
+    + '.apa-claim-later{background:#f1f2f7;color:#414258}'
+    + '.apa-claim-decline{background:transparent;color:#a23850}'
+    + '@media(max-width:520px){.apa-claim-actions>*{width:100%;flex:auto}.apa-claim-b{padding:22px}}';
 
   function injectCSS() {
     try {
@@ -374,6 +419,71 @@
     return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) {
       return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
     });
+  }
+
+  function claimIdFromUrl() {
+    try {
+      var id = new URLSearchParams(global.location.search).get('claim') || '';
+      return /^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(id) ? id : null;
+    } catch (e) { return null; }
+  }
+
+  function clearClaimUrl() {
+    try {
+      var u = new URL(global.location.href);
+      u.searchParams.delete('claim');
+      global.history.replaceState({}, '', u.pathname + (u.search ? u.search : '') + u.hash);
+    } catch (e) {}
+  }
+
+  function claimDialog(item, mismatch) {
+    injectCSS();
+    var old = document.getElementById('apa-claim-dialog');
+    if (old) old.remove();
+    var d = document.createElement('dialog');
+    d.id = 'apa-claim-dialog'; d.className = 'apa-claim';
+    if (mismatch) {
+      d.innerHTML = '<div class="apa-claim-h"><span>Listing invitation</span></div>'
+        + '<div class="apa-claim-b"><h2>This invitation belongs to another account</h2>'
+        + '<p>Sign in with the exact email address or phone number the invitation was sent to. The link itself never grants ownership.</p>'
+        + '<div class="apa-claim-actions"><a class="apa-claim-primary" href="auth.html?next='
+        + encodeURIComponent(global.location.pathname + global.location.search) + '">Use another account</a>'
+        + '<button class="apa-claim-later" data-close>Close</button></div></div>';
+    } else {
+      d.innerHTML = '<div class="apa-claim-h"><span>Ready for your review</span></div>'
+        + '<div class="apa-claim-b"><h2>' + esc(item.title || 'A listing was created for you') + '</h2>'
+        + '<p>Review the handover before it goes public. Accepting makes you the owner and activates the listing. Declining keeps it private and returns it to the person who prepared it.</p>'
+        + '<div class="apa-claim-meta"><strong>' + esc(item.title || 'Listing') + '</strong>'
+        + (item.city ? '<br>' + esc(item.city) : '') + '<br>Prepared by ' + esc(item.from_name || 'a Cabana partner') + '</div>'
+        + '<div class="apa-claim-actions"><button class="apa-claim-primary" data-claim-act="accept">Accept and claim</button>'
+        + '<button class="apa-claim-later" data-close>Decide later</button>'
+        + '<button class="apa-claim-decline" data-claim-act="decline">Decline</button></div>'
+        + '<div class="apa-oi-e" data-modal-error hidden></div></div>';
+    }
+    document.body.appendChild(d);
+    d.querySelectorAll('[data-close]').forEach(function (b) {
+      b.addEventListener('click', function () { d.close(); clearClaimUrl(); });
+    });
+    d.querySelectorAll('[data-claim-act]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var act = b.getAttribute('data-claim-act');
+        var err = d.querySelector('[data-modal-error]');
+        d.querySelectorAll('button').forEach(function (x) { x.disabled = true; });
+        b.textContent = act === 'accept' ? 'Claiming…' : 'Declining…';
+        (act === 'accept' ? accept(item.id) : decline(item.id)).then(function (r) {
+          if (r && r.ok) {
+            clearClaimUrl();
+            if (act === 'accept') global.location.href = 'partner-listings.html?claimed=' + encodeURIComponent(r.listing_id || item.listing_id || '1');
+            else { d.close(); mountInbox(); }
+            return;
+          }
+          d.querySelectorAll('button').forEach(function (x) { x.disabled = false; });
+          b.textContent = act === 'accept' ? 'Accept and claim' : 'Decline';
+          if (err) { err.textContent = (r && r.error) || 'That did not work. Try again.'; err.hidden = false; }
+        });
+      });
+    });
+    if (d.showModal) d.showModal(); else d.setAttribute('open', '');
   }
 
   function renderInbox(host, items) {
@@ -444,6 +554,11 @@
     if (!host) return Promise.resolve([]);
     return inbox().then(function (items) {
       renderInbox(host, items);
+      var wanted = claimIdFromUrl();
+      if (wanted) {
+        var match = items.filter(function (x) { return String(x.id) === wanted; })[0];
+        claimDialog(match || null, !match);
+      }
       return items;
     });
   }
@@ -455,7 +570,16 @@
       /* After ApaSession has settled, so the first call carries a token
          rather than failing and leaving the div empty. */
       if (global.ApaSession && global.ApaSession.ready) {
-        global.ApaSession.ready(function () { mountInbox(); });
+        global.ApaSession.ready(function (state) {
+          var wanted = claimIdFromUrl();
+          if (wanted && (!state || state.status !== 'user')) {
+            var next = global.location.pathname + global.location.search;
+            try { global.sessionStorage.setItem('auth_next', next); } catch (e) {}
+            global.location.replace('auth.html?next=' + encodeURIComponent(next));
+            return;
+          }
+          mountInbox();
+        });
       } else {
         setTimeout(function () { mountInbox(); }, 900);
       }
@@ -475,6 +599,7 @@
     accept: accept,
     decline: decline,
     confirmSeat: confirmSeat,
+    sendInvite: sendInvite,
 
     inbox: inbox,
     forListing: forListing,

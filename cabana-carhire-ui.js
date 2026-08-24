@@ -254,7 +254,7 @@
       <div class="ch-state-acts">
         ${anyFleet
           ? `<button type="button" class="ch-btn ch-btn-ghost" id="ch-clear">Clear filters</button>`
-          : `<a class="ch-btn ch-btn-primary" href="/become-partner.html">List your fleet</a>
+          : `<a class="ch-btn ch-btn-primary" href="/list-your-fleet.html">List your fleet</a>
              <a class="ch-btn ch-btn-ghost" href="/rides.html">Book a ride instead</a>`}
       </div>
     </div>`;
