@@ -11,7 +11,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#160B05"/>
-<meta name="robots" content="index, follow, max-image-preview:large"/>
+<meta name="robots" content="noindex, nofollow"/>
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
@@ -290,6 +290,11 @@ h1{font-family:var(--fd);font-weight:600;font-variation-settings:'SOFT' 50,'WONK
 .toast.up{opacity:1;transform:translateX(-50%) translateY(0);}
 .pad{height:40px;}
 </style>
+
+  <link rel="canonical" href="https://cabana.africa/restaurant"/>
+<!-- CABANA-SEO-GRAPH -->
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":["Organization","TravelAgency","OnlineBusiness"],"@id":"https://cabana.africa/#organization","name":"Cabana","alternateName":["Cabana Africa","Cabana Travel","Cabana App","cabana.africa","Apatmento","Apatmento by Cabana"],"legalName":"Cabana","url":"https://cabana.africa/","logo":{"@type":"ImageObject","@id":"https://cabana.africa/#logo","url":"https://cabana.africa/cabana-icon-512.png","contentUrl":"https://cabana.africa/cabana-icon-512.png","width":512,"height":512,"caption":"Cabana"},"image":{"@id":"https://cabana.africa/#logo"},"description":"Cabana is Africa's zero-commission travel platform. Book short-stay apartments, safaris, flights, events, car hire and rides across all 54 African countries, direct from the host or operator. Hosts keep 100% of what they charge and guests pay no booking fee.","slogan":"Zero commission. Africa's own travel platform.","foundingDate":"2025","foundingLocation":{"@type":"Place","name":"Nairobi, Kenya"},"brand":{"@id":"https://cabana.africa/#brand"},"knowsAbout":["Travel in Africa","Safari booking","Short-stay apartments","Zero-commission booking","M-Pesa payments","African tourism","Vacation rentals","Airport transfers","Car hire","Event ticketing"],"areaServed":[{"@type":"Continent","name":"Africa"},{"@type":"Place","name":"Worldwide"}],"currenciesAccepted":"KES, NGN, GHS, ZAR, TZS, UGX, RWF, USD, EUR, GBP","paymentAccepted":"M-Pesa, MTN MoMo, Airtel Money, Visa, Mastercard, Bank transfer","email":"connect@cabana.africa","contactPoint":[{"@type":"ContactPoint","email":"connect@cabana.africa","contactType":"customer support","url":"https://cabana.africa/help.html","availableLanguage":["English","Swahili","French","Arabic","Portuguese"],"areaServed":"Africa"},{"@type":"ContactPoint","email":"partnership@cabana.africa","contactType":"sales","name":"Host & operator onboarding","availableLanguage":["English","Swahili","French"],"areaServed":"Africa"}],"sameAs":["https://twitter.com/apatmento","https://x.com/apatmento"]},{"@type":"Brand","@id":"https://cabana.africa/#brand","name":"Cabana","logo":"https://cabana.africa/cabana-icon-512.png","slogan":"Zero commission. Always."},{"@type":"WebSite","@id":"https://cabana.africa/#website","url":"https://cabana.africa/","name":"Cabana","alternateName":"Cabana Africa","description":"Africa's zero-commission travel platform.","publisher":{"@id":"https://cabana.africa/#organization"},"inLanguage":"en","potentialAction":[{"@type":"SearchAction","target":{"@type":"EntryPoint","urlTemplate":"https://cabana.africa/apartments?q={search_term_string}"},"query-input":"required name=search_term_string"}]},{"@type":"WebPage","@id":"https://cabana.africa/restaurant#webpage","url":"https://cabana.africa/restaurant","name":"Menu | Cabana","description":"","isPartOf":{"@id":"https://cabana.africa/#website"},"about":{"@id":"https://cabana.africa/#organization"},"publisher":{"@id":"https://cabana.africa/#organization"},"inLanguage":"en","dateModified":"2026-08-19","breadcrumb":{"@id":"https://cabana.africa/restaurant#breadcrumb"},"primaryImageOfPage":{"@type":"ImageObject","url":"https://cabana.africa/og-home.jpg"},"speakable":{"@type":"SpeakableSpecification","cssSelector":[".hero h1",".hero .sub",".sec p"]}},{"@type":"BreadcrumbList","@id":"https://cabana.africa/restaurant#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://cabana.africa/"},{"@type":"ListItem","position":2,"name":"Guides","item":"https://cabana.africa/guides"},{"@type":"ListItem","position":3,"name":"'+esc(R.title||'Kitchen')+'"}]},{"@type":"Article","@id":"https://cabana.africa/restaurant#article","headline":"Menu | Cabana","description":"","url":"https://cabana.africa/restaurant","image":["https://cabana.africa/og-home.jpg"],"author":{"@id":"https://cabana.africa/#organization"},"publisher":{"@id":"https://cabana.africa/#organization"},"isPartOf":{"@id":"https://cabana.africa/#website"},"mainEntityOfPage":{"@id":"https://cabana.africa/restaurant#webpage"},"datePublished":"2026-02-01","dateModified":"2026-08-19","inLanguage":"en","articleSection":"Africa travel","speakable":{"@type":"SpeakableSpecification","cssSelector":[".hero h1",".hero .sub",".sec p"]}}]}</script>
+<!-- /CABANA-SEO-GRAPH -->
 </head>
 <body>
 
@@ -735,7 +740,7 @@ function openDish(id){
   (it.tags||[]).forEach(function(t){ meta.push(t); });
 
   openSheet('<div class="sh-p">'
-    +(it.photo?'<img src="'+esc(it.photo)+'" alt="'+esc(it.name)+'" onerror="this.replaceWith(Object.assign(document.createElement(\'div\'),{className:\'sh-none\',textContent:\'🍲\'}))"/>'
+    +(it.photo?'<img src="'+esc(it.photo)+'" alt="'+esc(it.name)+'" onerror="this.replaceWith(Object.assign(document.createElement(\'div\'),{className:\'sh-none\',textContent:\'🍲\'}))" loading="lazy" decoding="async"/>'
               :'<div class="sh-none">🍲</div>')
     +'<button class="sh-x" onclick="closeSheet()" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>'
     +'<div class="sh-b">'
@@ -808,7 +813,7 @@ function waLink(num,t){
 }
 
 function zoom(url){
-  openSheet('<div class="sh-p" style="aspect-ratio:auto"><img src="'+esc(url)+'" alt="" style="max-height:80vh"/>'
+  openSheet('<div class="sh-p" style="aspect-ratio:auto"><img src="'+esc(url)+'" alt="" style="max-height:80vh" loading="lazy" decoding="async"/>'
     +'<button class="sh-x" onclick="closeSheet()" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>');
 }
 function share(){
