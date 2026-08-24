@@ -153,6 +153,9 @@ def destinations_page():
 <main class="wrap">
 {''.join(body)}
 </main>
+<script src="/cabana-call.js" defer></script>
+<script src="/cabana-support.js" defer></script>
+<script src="/cabana-lifecycle.js" defer></script>
 </body>
 </html>"""
 
