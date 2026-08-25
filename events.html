@@ -61,6 +61,7 @@
 <!-- Session core: one Supabase client per tab. Multiple clients on the
      same storage key race each other and silently drop the session. -->
 <link rel="stylesheet" href="/cabana-events.css"/>
+<link rel="stylesheet" href="/cabana-pulse.css"/>
 <style>
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -377,6 +378,23 @@ html.via-dash #tx{display:none!important;animation:none!important;}
   <!-- The next night, with the clock running. Built in cabana-events.js -->
   <section class="ev-next" id="ev-next" aria-label="Next event"></section>
 
+  <!-- Cabana Pulse turns the chart into a useful part of going out: the
+       soundtrack is live, but video and audio only start after a tap. -->
+  <section class="cbp" id="cabana-pulse" aria-labelledby="cbp-title">
+    <div class="cbp-head">
+      <div>
+        <div class="cbp-kicker"><i></i>Cabana Pulse <span>Live · Kenya</span></div>
+        <h2 id="cbp-title">Hear the night <em>before you live it.</em></h2>
+        <p>What Kenya is playing on YouTube right now. Tap a track to listen, then find the night where it belongs.</p>
+      </div>
+      <div class="cbp-fresh" id="cbp-fresh" aria-live="polite">Connecting to the chart…</div>
+    </div>
+    <div class="cbp-filters" id="cbp-filters" role="group" aria-label="Filter the live music chart"></div>
+    <div class="cbp-feature" id="cbp-feature"></div>
+    <div class="cbp-trackrail" id="cbp-trackrail" aria-live="polite"></div>
+    <div class="cbp-source" id="cbp-source">YouTube music · Region KE <span>Cabana adds context, not invented numbers.</span></div>
+  </section>
+
   <div class="ev-rail">
     <div class="ev-search">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
@@ -428,6 +446,7 @@ html.via-dash #tx{display:none!important;animation:none!important;}
 <script src="/apa-geo.js" defer></script>
 <script src="/cabana-pay.js" defer></script>
 <script src="/cabana-event-book.js" defer></script>
+<script src="/cabana-pulse.js" defer></script>
 <script src="/cabana-events.js" defer></script>
 <script>
 /* Entry transition, with three ways out so it can never strand the page. */
@@ -603,5 +622,3 @@ html.via-dash #tx{display:none!important;animation:none!important;}
 <script src="/cabana-lifecycle.js" defer></script>
 </body>
 </html>
-
-

@@ -43,7 +43,8 @@
   ];
 
   var state = { events: [], filter: 'all', q: '', sort: 'soonest', loaded: false, lastSec: -1,
-               locPlace: null };
+               locPlace: null, liveChannel: null, reloadTimer: null };
+  var clockTimer = null;
 
   /* ── helpers ─────────────────────────────────────────────────────── */
 
@@ -107,7 +108,7 @@
   /* One interval for the entire page. */
   function startClock() {
     tick();
-    setInterval(tick, 1000);
+    if (!clockTimer) clockTimer = setInterval(tick, 1000);
   }
 
   function tick() {
@@ -125,29 +126,28 @@
       if (out && out.textContent !== t.label) out.textContent = t.label;
     });
 
-    // the hero clock
-    var hero = el('ev-hero-clock');
-    if (hero) {
-      var ev = byId(hero.getAttribute('data-id'));
-      if (ev) {
-        var t = timeTo(ev, now);
-        if (t.live || t.over) {
-          hero.innerHTML = '<div class="ev-unit" style="min-width:auto">' +
-            '<span class="ev-unit-v" style="font-size:clamp(26px,4.4vw,44px)">' +
-            (t.live ? 'DOORS OPEN' : 'FINISHED') + '</span></div>';
-        } else {
-          setUnit(hero, 'd', t.d); setUnit(hero, 'h', t.h);
-          setUnit(hero, 'm', t.m); setUnit(hero, 's', t.s);
-          var sec = hero.querySelector('.ev-unit.sec');
-          if (sec && t.s !== state.lastSec) {
-            sec.classList.remove('tick');
-            void sec.offsetWidth;          // restart the animation
-            sec.classList.add('tick');
-            state.lastSec = t.s;
-          }
-        }
+    // Hero and detail-sheet clocks can be visible at the same time.  The old
+    // markup gave both the same id, so only the first clock ever moved.
+    Array.prototype.forEach.call(document.querySelectorAll('.ev-clock[data-id]'), function (clock) {
+      var ev = byId(clock.getAttribute('data-id'));
+      if (!ev) return;
+      var t = timeTo(ev, now);
+      if (t.live || t.over) {
+        clock.innerHTML = '<div class="ev-unit" style="min-width:auto">' +
+          '<span class="ev-unit-v" style="font-size:clamp(26px,4.4vw,44px)">' +
+          (t.live ? 'DOORS OPEN' : 'FINISHED') + '</span></div>';
+        return;
       }
-    }
+      setUnit(clock, 'd', t.d); setUnit(clock, 'h', t.h);
+      setUnit(clock, 'm', t.m); setUnit(clock, 's', t.s);
+      var sec = clock.querySelector('.ev-unit.sec');
+      if (sec && t.s !== state.lastSec) {
+        sec.classList.remove('tick');
+        void sec.offsetWidth;          // restart the animation
+        sec.classList.add('tick');
+      }
+      state.lastSec = t.s;
+    });
   }
 
   function setUnit(host, key, val) {
@@ -187,6 +187,20 @@
         startClock();
         openFromQuery();
       }, function () { state.loaded = true; renderAll(); });
+  }
+
+  /* Published events can be approved, paused or sell down while this page is
+     open.  Listen to the protected base table, then re-read the public view so
+     the UI always reflects the same RLS-filtered catalogue as a fresh visit. */
+  function subscribeLive() {
+    if (!sb || !sb.channel || state.liveChannel) return;
+    try {
+      state.liveChannel = sb.channel('cabana-events-live')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, function () {
+          clearTimeout(state.reloadTimer);
+          state.reloadTimer = setTimeout(load, 500);
+        }).subscribe();
+    } catch (e) { state.liveChannel = null; }
   }
 
   /* ── arriving on one event ───────────────────────────────────────
@@ -272,7 +286,7 @@
           '<button class="ev-btn ev-btn-primary" type="button" data-open="' + esc(ev.id) + '" style="margin-top:20px;">' +
             ICON.ticket + 'Get tickets</button>' +
         '</div>' +
-        '<div class="ev-clock" id="ev-hero-clock" data-id="' + esc(ev.id) + '">' +
+        '<div class="ev-clock" data-id="' + esc(ev.id) + '">' +
           unitHTML('d', 'Days') + unitHTML('h', 'Hrs') + unitHTML('m', 'Min') + unitHTML('s', 'Sec', true) +
         '</div>' +
       '</div>';
@@ -490,7 +504,7 @@
           esc([e.venue, e.city].filter(Boolean).join(', ')) + '</div>' +
         '<div style="color:var(--ev-soft);font-size:13.5px;">' + esc(whenLabel(e)) + '</div>' +
 
-        '<div class="ev-clock ev-sheet-clock" id="ev-hero-clock" data-id="' + esc(e.id) + '">' +
+        '<div class="ev-clock ev-sheet-clock" data-id="' + esc(e.id) + '">' +
           unitHTML('d', 'Days') + unitHTML('h', 'Hrs') + unitHTML('m', 'Min') + unitHTML('s', 'Sec', true) +
         '</div>' +
 
@@ -503,6 +517,9 @@
           '<div class="ev-lineup">' + lineup.map(function (a) {
             return '<span class="ev-act">' + esc(typeof a === 'string' ? a : (a.name || '')) + '</span>';
           }).join('') + '</div></div>' : '') +
+
+        ((lineup.length || ['music','festival','nightlife'].indexOf(e.category) !== -1)
+          ? '<div id="ev-pulse-mix"></div>' : '') +
 
         (tiers.length ? '<div class="ev-sec"><div class="ev-sec-h">Tickets</div>' +
           tiers.map(function (t, i) {
@@ -535,6 +552,10 @@
     sheet.querySelector('.ev-sheet-close').addEventListener('click', closeSheet);
     var bk = sheet.querySelector('[data-book]');
     if (bk) bk.addEventListener('click', function () { book(e); });
+    var mix = sheet.querySelector('#ev-pulse-mix');
+    if (mix && window.CabanaPulse && typeof window.CabanaPulse.renderEventMix === 'function') {
+      window.CabanaPulse.renderEventMix(mix, lineup, { category: e.category });
+    }
     sheet.scrollTop = 0;
     tick();
   }
@@ -602,6 +623,7 @@
 
     renderGrid();
     load();
+    subscribeLive();
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
