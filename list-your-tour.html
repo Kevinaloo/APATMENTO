@@ -318,6 +318,17 @@ html,body{min-height:100%;background:#FCFCFD;color:#0A0A14;
       <div>
         <label class="lt-l" for="t-meeting">Meeting point</label>
         <input class="lt-i" id="t-meeting" name="meeting_point" placeholder="Where guests meet you"/>
+        <!-- Until now the meeting point was a sentence and nothing else.
+             A guest standing outside the wrong hotel at 6am cannot read
+             a sentence into a location, so it gets a real pin: satellite
+             imagery to find the doorway, and a Plus Code they can paste
+             into any navigation app the night before. -->
+        <div id="t-meet-map" style="height:300px;margin-top:10px"></div>
+        <input type="hidden" id="t-meet-lat"/>
+        <input type="hidden" id="t-meet-lng"/>
+        <input type="hidden" id="t-meet-plus"/>
+        <p class="lt-hint">Move the map so the crosshair sits exactly where guests should stand.
+          They get the Plus Code with their booking.</p>
       </div>
 
       <div class="lt-row">
@@ -373,6 +384,7 @@ html,body{min-height:100%;background:#FCFCFD;color:#0A0A14;
 <script src="/apa-referral-capture.js" defer></script>
 <script src="/cabana-media-upload.js"></script>
 <script src="/apa-geo.js" defer></script>
+<script src="/apa-map.js" defer></script>
 <script src="/cabana-list-tour.js"></script>
 <script>
 /* Destination and meeting point resolve against the real world rather
@@ -402,7 +414,28 @@ window.addEventListener('load', function () {
 
   /* A meeting point is a doorway, not a region — the guest has to stand
      on it at 6am. Hotels, gates and landmarks are what to offer. */
-  ApaGeo.attach('t-meeting', { limit: 6 });
+  ApaGeo.attach('t-meeting', {
+    limit: 6,
+    onPick: function (p) {
+      if (window._meetPin && isFinite(p.lat)) window._meetPin.set(p.lat, p.lng, 18);
+    }
+  });
+
+  if (window.ApaMap) {
+    ApaMap.picker('t-meet-map', {
+      height: '300px',
+      fallback: [-1.2921, 36.8219],
+      searchPlaceholder: 'Find the hotel, gate or landmark',
+      onChange: function (p) {
+        var lat = document.getElementById('t-meet-lat');
+        var lng = document.getElementById('t-meet-lng');
+        var plus = document.getElementById('t-meet-plus');
+        if (lat) lat.value = isFinite(p.lat) ? p.lat : '';
+        if (lng) lng.value = isFinite(p.lng) ? p.lng : '';
+        if (plus && p.plusCode) plus.value = p.plusCode;
+      }
+    }).then(function (h) { window._meetPin = h; });
+  }
 });
 </script>
 <script src="/cabana-call.js" defer></script>

@@ -37,6 +37,7 @@ Idempotent. Output: cabana-world-atlas.json
 
 import datetime
 import html
+import unicodedata
 import json
 import os
 import re
@@ -124,8 +125,23 @@ META_DESC = re.compile(
 
 
 def slug(s):
-    """Page-slug form of a display name. Mirrors seo/generate.py exactly."""
+    """Page-slug form of a display name.
+
+    Accents are FOLDED to their ASCII base rather than dropped. This
+    looks like a detail and is not: "Cote d'Ivoire" has a circumflex,
+    and stripping it produced "c-te-divoire" while the country's real
+    page — and africa.py's own hand-written slug — is "cote-divoire".
+    Every derived key for an accented place therefore pointed at a
+    place that does not exist, so live inventory in Abidjan could never
+    match the map. Turkiye had the same hole ("t-rkiye"), as did Sao
+    Tome and Principe.
+
+    api/lib/_atlas.js folds identically. The two functions key the same
+    map, and a test asserts they agree.
+    """
     s = (s or "").strip().lower()
+    s = unicodedata.normalize("NFKD", s)
+    s = "".join(c for c in s if not unicodedata.combining(c))
     s = s.replace("'", "").replace("’", "")
     s = re.sub(r"[^a-z0-9]+", "-", s)
     return s.strip("-")
@@ -323,6 +339,34 @@ def build():
         else:
             band = None
 
+        # ── Aliases ─────────────────────────────────────────────────
+        #
+        # A place's id comes from its FILENAME, and a listing row
+        # carries its DISPLAY NAME. Those are usually the same slug and
+        # sometimes are not: the Nairobi CBD page is "cbd", Upper Hill's
+        # is "upperhill", Ongata Rongai's is "rongai", and Accra's
+        # Airport Residential is "airport-residential-accra".
+        #
+        # A live count keyed on the display name therefore lands on a
+        # key the map has never heard of. It does not error — it simply
+        # never appears, which is the worst kind of bug: a host
+        # publishes in Upper Hill and the map keeps saying nothing is
+        # there.
+        #
+        # So every other name this place might be keyed under is
+        # recorded here, generated rather than hand-listed, and the
+        # client resolves through them.
+        aliases = {slug(name)}
+        if city_rec:
+            aliases.add(slug(city_rec["name"]))
+        if supplement:
+            aliases.add(slug(supplement[0]))
+            aliases.add(slug(key))
+        if country_rec:
+            aliases.add(slug(country_rec["name"]))
+        aliases.discard(place_slug)
+        aliases.discard("")
+
         record = {
             "id": place_slug,
             "name": name,
@@ -341,6 +385,8 @@ def build():
             record["band"] = band
         if page["blurb"]:
             record["blurb"] = page["blurb"]
+        if aliases:
+            record["aliases"] = sorted(aliases)
 
         # ── Africa's deep metadata ──────────────────────────────────────
         if country_rec:
@@ -393,6 +439,25 @@ def build():
     # built. Anything unresolvable falls back to its continent, which
     # always exists and is always the honest answer to "what is this
     # inside?".
+    # An alias claimed by two places would silently hand one of them the
+    # other's inventory, so a collision is a build failure rather than a
+    # warning nobody reads.
+    claimed = {}
+    for record in places:
+        for alias in record.get("aliases", []):
+            if alias in claimed and claimed[alias] != record["id"]:
+                raise SystemExit(
+                    f"alias {alias!r} is claimed by both {claimed[alias]!r} "
+                    f"and {record['id']!r} — one of them must lose it")
+            claimed[alias] = record["id"]
+
+    ids = {p["id"] for p in places}
+    for record in places:
+        # An alias that IS another place's id would shadow it.
+        record["aliases"] = [a for a in record.get("aliases", []) if a not in ids]
+        if not record["aliases"]:
+            record.pop("aliases", None)
+
     known = {p["id"] for p in places}
     repaired = 0
     for record in places:

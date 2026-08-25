@@ -228,6 +228,24 @@
     var cap = $('e-capacity').value;
     var age = $('e-age').value;
 
+    /* The address, with the venue's Plus Code appended.
+       ------------------------------------------------------------------
+       Latitude and longitude already have columns and are saved as
+       numbers; this is for the human. "Gate C, Ngong Racecourse ·
+       6GCRPQ5M+587" is what a guest can paste into a navigation app on
+       the night, and it arrives on the ticket. Kept in the existing
+       `address` TEXT column rather than a new one, so this insert cannot
+       be rejected whole by a database that has not been migrated —
+       which would stop organisers listing anything at all.  */
+    function venueAddress() {
+      var text = $('e-address').value.trim();
+      var plus = (document.getElementById('e-venue-plus') || {}).value || '';
+      if (!text && !plus) return null;
+      if (!plus) return text || null;
+      if (text.indexOf(plus) !== -1) return text;
+      return text ? text + ' \u00b7 ' + plus : plus;
+    }
+
     sb.from('events').insert({
       owner_id: user.id,
       organiser_id: organiser ? organiser.id : null,
@@ -243,7 +261,7 @@
       latitude: parseFloat(document.getElementById('e-venue-lat')?.value) || null,
       longitude: parseFloat(document.getElementById('e-venue-lng')?.value) || null,
       city: $('e-city').value.trim() || 'Nairobi',
-      address: $('e-address').value.trim() || null,
+      address: venueAddress(),
       tiers: cleanTiers(),
       capacity: cap === '' ? null : Number(cap),
       age_limit: age === '' ? null : Number(age),

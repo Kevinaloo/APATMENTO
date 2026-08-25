@@ -21,6 +21,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { JSDOM } from 'jsdom';
+import { __test as atlasTest } from '../api/lib/_atlas.js';
 
 const ROOT = new URL('..', import.meta.url).pathname;
 const read = (f) => readFileSync(join(ROOT, f), 'utf8');
@@ -574,4 +575,216 @@ test('the animation loops stand down when nobody is looking', () => {
     'and rebase its clock on resume, so returning looks like a resume');
   assert.match(GLOBE, /this\._io\.disconnect\(\)/,
     'the observer must be released on destroy');
+});
+
+/* ── Live inventory ────────────────────────────────────────────────
+   The generated atlas is as old as the last deploy. /api/atlas is what
+   makes the map current without one — and it inherits the pipeline's
+   rule exactly: a count on screen is a count of rows a guest could
+   book right now, and a place with nothing bookable is ABSENT rather
+   than present with a zero. */
+
+const { slug: liveSlug, rollUp } = atlasTest;
+
+test('only rows a guest could actually book are counted', () => {
+  const inv = rollUp([
+    { city: 'Nairobi', country: 'Kenya', service: 'stays',
+      price_night: 2000, currency: 'KES', status: 'active', is_active: true },
+    /* Each of these is unbookable for a different reason, and every one
+       of them has at some point been counted by something. */
+    { city: 'Nairobi', country: 'Kenya', service: 'stays',
+      price_night: 2000, currency: 'KES', status: 'draft', is_active: true },
+    { city: 'Nairobi', country: 'Kenya', service: 'stays',
+      price_night: 2000, currency: 'KES', status: 'active', is_active: false },
+    { city: 'Nairobi', country: 'Kenya', service: 'stays', price_night: 2000,
+      currency: 'KES', status: 'active', is_active: true, deleted_at: '2026-01-01' },
+    { city: 'Nairobi', country: 'Kenya', service: 'stays',
+      price_night: 0, currency: 'KES', status: 'active', is_active: true },
+    { city: 'Nairobi', country: 'Kenya', service: 'stays',
+      price_night: null, currency: 'KES', status: 'active', is_active: true },
+  ]);
+
+  assert.equal(inv.nairobi.stays.count, 1);
+  assert.equal(inv.kenya.stays.count, 1);
+});
+
+test('a place with nothing bookable is absent, never a zero', () => {
+  const inv = rollUp([
+    { city: 'Lagos', country: 'Nigeria', service: 'stays',
+      price_night: 0, currency: 'NGN', status: 'active', is_active: true },
+  ]);
+  assert.equal(inv.lagos, undefined,
+    'a zero count would be an availability claim about an empty city');
+  assert.deepEqual(Object.keys(inv), []);
+});
+
+test('one listing counts for its area, its city and its country', () => {
+  /* All three have pages, and a guest on any of them is asking a fair
+     question. The same row in three buckets is a rollup, not double
+     counting. */
+  const inv = rollUp([
+    { area: 'Kilimani', city: 'Nairobi', country: 'Kenya', service: 'stays',
+      price_night: 2600, currency: 'KES', status: 'active', is_active: true },
+  ]);
+  assert.equal(inv.kilimani.stays.count, 1);
+  assert.equal(inv.nairobi.stays.count, 1);
+  assert.equal(inv.kenya.stays.count, 1);
+});
+
+test('prices are converted so one band spans every currency', () => {
+  const inv = rollUp([
+    { city: 'Nairobi', country: 'Kenya', service: 'stays',
+      price_night: 2600, currency: 'KES', status: 'active', is_active: true },
+    { city: 'Nairobi', country: 'Kenya', service: 'stays',
+      price_night: 90, currency: 'USD', status: 'active', is_active: true },
+  ]);
+  const s = inv.nairobi.stays;
+  assert.equal(s.count, 2);
+  assert.ok(s.lowUSD > 19 && s.lowUSD < 21, `2600 KES came out at $${s.lowUSD}`);
+  assert.equal(s.highUSD, 90);
+  assert.ok(s.lowUSD <= s.highUSD);
+});
+
+test('an unknown currency is passed through rather than dropped', () => {
+  /* Losing the listing entirely would be worse than an imprecise band:
+     the guest would be told a real, bookable place does not exist. */
+  const inv = rollUp([
+    { city: 'Accra', country: 'Ghana', service: 'stays',
+      price_night: 55, currency: 'ZZZ', status: 'active', is_active: true },
+  ]);
+  assert.equal(inv.accra.stays.count, 1);
+  assert.equal(inv.accra.stays.lowUSD, 55);
+});
+
+test('the live route and the build pipeline slug places identically', () => {
+  /* They key the same map. If they disagreed about "Cote d Ivoire" the
+     live counts would land on places the atlas has never heard of, and
+     silently do nothing. */
+  assert.equal(liveSlug("Côte d'Ivoire"), 'cote-divoire');
+  assert.equal(liveSlug('São Tomé and Príncipe'), 'sao-tome-and-principe');
+  assert.equal(liveSlug('Türkiye'), 'turkiye');
+  assert.equal(liveSlug('  Dar es Salaam '), 'dar-es-salaam');
+  assert.equal(liveSlug('Ongata Rongai'), 'ongata-rongai');
+  assert.equal(liveSlug(''), '');
+  assert.equal(liveSlug(null), '');
+});
+
+test('the live keys line up with real atlas places', () => {
+  const ids = new Set(ATLAS.places.map((p) => p.id));
+  for (const [city, country] of [['Nairobi', 'Kenya'], ['Kilimani', 'Kenya'],
+                                 ['Lagos', 'Nigeria'], ['Accra', 'Ghana'],
+                                 ['Diani', 'Kenya'], ['Zanzibar', 'Tanzania']]) {
+    assert.ok(ids.has(liveSlug(city)),
+      `${city} rolls up to "${liveSlug(city)}", which is not on the map`);
+    assert.ok(ids.has(liveSlug(country)), `${country} likewise`);
+  }
+});
+
+test('the globe patches live counts in and removes ones that went away', () => {
+  /* A place that sold out since the build must LOSE its count. Keeping
+     a stale one is the exact failure asking the database was meant to
+     fix. */
+  assert.match(GLOBE, /if \(next\) p\.live = next; else delete p\.live;/);
+  assert.match(GLOBE, /rec\.priority = basePriority\(rec\.place\)/,
+    'new counts change what is worth showing, so ranking must be rebuilt');
+});
+
+test('a failed live read leaves the map working on generated counts', () => {
+  assert.match(GLOBE, /source: 'unavailable'/,
+    'the failure must be recorded, not swallowed');
+  const body = GLOBE.slice(GLOBE.indexOf('function refreshLive'),
+                           GLOBE.indexOf('CAMERA DIRECTOR'));
+  assert.match(body, /\.catch\(function \(err\) \{/,
+    'refreshLive must never reject — the caller already has a usable atlas');
+  assert.ok(body.lastIndexOf('.catch(') > body.lastIndexOf('.then('),
+    'the catch must terminate the chain, not sit mid-way through it');
+  assert.match(GLOBE, /Counts from the last site build/,
+    'and the readout must say which numbers it is showing');
+});
+
+test('the live route is public, cacheable and read-only', () => {
+  const atlas = read('api/lib/_atlas.js');
+  assert.match(atlas, /s-maxage=60/, 'one database read a minute, not one a visitor');
+  assert.match(atlas, /stale-while-revalidate/);
+  assert.match(atlas, /method not allowed/, 'GET only');
+  assert.ok(!/\b(insert|update|delete|upsert)\b/i.test(atlas),
+    'this route must never write');
+  assert.ok(!/SUPABASE_ANON/.test(atlas));
+  assert.match(atlas, /AbortSignal\.timeout/,
+    'a slow database must not hold the map open');
+});
+
+test('the live route is reachable at a clean URL', () => {
+  const vercel = JSON.parse(read('vercel.json'));
+  const route = vercel.rewrites.find((r) => r.source === '/api/atlas');
+  assert.ok(route, '/api/atlas must be routed');
+  assert.equal(route.destination, '/api/utilities?action=atlas');
+  assert.match(read('api/utilities.js'), /action === 'atlas'/,
+    'and dispatched');
+});
+
+test('every country in the atlas keys identically on both sides', () => {
+  /* The failure this prevents is silent: a live count keyed
+     "c-te-divoire" against a map that calls the place "cote-divoire"
+     does not error, it simply never appears. Abidjan would have shown
+     nothing forever. */
+  const ids = new Set(ATLAS.places.map((p) => p.id));
+  /* Resolution is by id OR alias, exactly as the client does it —
+     "Republic of the Congo" slugs to republic-of-the-congo and reaches
+     the republic-of-congo page through the alias the builder emitted. */
+  const reach = new Map();
+  for (const p of ATLAS.places) {
+    reach.set(p.id, p.id);
+    for (const a of p.aliases || []) reach.set(a, p.id);
+  }
+  const missed = [];
+
+  for (const p of ATLAS.places) {
+    if (!p.country) continue;
+    const key = liveSlug(p.country);
+    /* Only countries that are themselves places on the map can be
+       checked — Japan has cities on Cabana but no page of its own. */
+    if (ids.has(p.countrySlug) && reach.get(key) !== p.countrySlug) {
+      missed.push(`${p.country}: live="${key}" reaches ` +
+        `"${reach.get(key) || 'nothing'}" not "${p.countrySlug}"`);
+    }
+  }
+  assert.deepEqual([...new Set(missed)], []);
+
+  /* Where a display name does not slug to its own page id — Nairobi
+     CBD's page is "cbd", Upper Hill's is "upperhill" — the atlas must
+     carry the alias, or a host publishing there stays invisible. */
+  const keyed = new Map();
+  for (const p of ATLAS.places) {
+    keyed.set(p.id, p.id);
+    for (const a of p.aliases || []) keyed.set(a, p.id);
+  }
+  for (const p of ATLAS.places) {
+    assert.equal(keyed.get(liveSlug(p.name)), p.id,
+      `${p.name} rolls up to "${liveSlug(p.name)}", which reaches ` +
+      `${keyed.get(liveSlug(p.name)) || 'nothing'} rather than ${p.id}`);
+  }
+});
+
+test('no alias is claimed by two places, or shadows a real one', () => {
+  const ids = new Set(ATLAS.places.map((p) => p.id));
+  const claimed = new Map();
+  for (const p of ATLAS.places) {
+    for (const a of p.aliases || []) {
+      assert.ok(!ids.has(a),
+        `${p.id} claims "${a}", which is another place's id`);
+      assert.ok(!claimed.has(a),
+        `"${a}" is claimed by both ${claimed.get(a)} and ${p.id}`);
+      claimed.set(a, p.id);
+    }
+  }
+});
+
+test('live counts land on a place, or are reported as unmatched', () => {
+  assert.match(GLOBE, /atlas\.resolve\(key\)/,
+    'incoming keys must resolve through the alias index');
+  assert.match(GLOBE, /unmatched \+= 1/,
+    'and a key that reaches nothing must be counted, not dropped silently');
+  /* Two keys folding onto one place must ADD UP rather than overwrite. */
+  assert.match(GLOBE, /a\.count \+= b\.count/);
 });

@@ -111,8 +111,9 @@ def main():
                 fails.append(f"{name}: description {len(dd)} chars (max 165)")
         if 'rel="canonical"' not in src:
             fails.append(f"{name}: no canonical")
-        if len(re.findall(r"<h1\b", src)) != 1:
-            warns.append(f"{name}: {len(re.findall(r'<h1\b', src))} h1 tags")
+        h1s = len(re.findall(r"<h1\b", src))
+        if h1s != 1:
+            warns.append(f"{name}: {h1s} h1 tags")
 
         # ── links: no 404s, no redirect chains ──
         for target in set(re.findall(r'href="/([a-z0-9\-]+)(?:\.html)?"', src)):

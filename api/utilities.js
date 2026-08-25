@@ -1,7 +1,7 @@
 /* ════════════════════════════════════════════════════════════════
    APATMENTO  ·  Utilities  /api/utilities.js
    Routes: ?action=close-bookings | welcome-email | indexnow
-           | reconcile-payments
+           | reconcile-payments | geocode | atlas
    Consolidates small utility handlers into 1 function
 ════════════════════════════════════════════════════════════════ */
 export const config = { maxDuration: 15 };
@@ -40,6 +40,7 @@ export const config = { maxDuration: 15 };
 ══════════════════════════════════════════════════════════════ */
 
 import geocodeHandler from './lib/_geocode.js';
+import atlasHandler from './lib/_atlas.js';
 import { reconcilePayments } from './lib/_reconcile-payments.js';
 import { settlementOf, endDayOf, todayNumber, PART_PAYMENT_TTL_HOURS,
          validateInstalment, depositRequired }
@@ -657,6 +658,12 @@ export default async function handler(req, res) {
     return geocodeHandler(req, res);
   }
 
+  /* Live map inventory. Public, cacheable, no auth — it says only what
+     is already for sale on the site. */
+  if (action === 'atlas') {
+    return atlasHandler(req, res);
+  }
+
   if (action === 'close-bookings') {
     return handleCloseBookings(req, res);
   }
@@ -686,7 +693,7 @@ export default async function handler(req, res) {
   }
 
   return res.status(400).json({
-    error: 'Unknown action. Available: geocode, close-bookings, welcome-email, '
+    error: 'Unknown action. Available: geocode, atlas, close-bookings, welcome-email, '
          + 'indexnow, reconcile-payments, paypal-create-order, paypal-capture, paypal-webhook',
   });
 }

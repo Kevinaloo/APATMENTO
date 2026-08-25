@@ -554,144 +554,94 @@
      the flats in Nairobi geocode to the middle of the nearest main
      road. This one lets the host drag the pin onto the actual gate,
      drop it with a click, or take the phone's own fix. */
+  /* ── Picker ───────────────────────────────────────────────────────
+
+     This used to draw its own street map and ask the host to drag a
+     pin onto their house. In Nairobi, Lagos or Accra that is a request
+     nobody can answer: half the residential streets are unnamed on
+     OSM, newer estates are not drawn at all, and there is no landmark
+     on a street map to aim at. Hosts did their best and the pins were
+     wrong, which is how a listing ends up advertising a flat in the
+     middle of a roundabout.
+
+     cabana-pinpoint.js fixes the cause rather than the symptom —
+     satellite imagery so the host can see their own roof, a crosshair
+     so their thumb is never covering the target, Plus Codes for
+     addresses that do not exist on paper, and a readout that refuses
+     to overstate how good the pin is.
+
+     This function stays because forty call sites use it. It now loads
+     that module and hands back the same {set, get, locate, destroy}
+     handle, so every host surface on Cabana was upgraded without
+     touching a line of its own code.
+     ──────────────────────────────────────────────────────────────── */
   function picker(target, o) {
     o = o || {};
     var el = resolve(target);
     if (!el) return Promise.resolve(null);
 
-    var onChange = o.onChange || function () {};
-
-    return load().then(function (L) {
-      var start = [
-        isFinite(o.lat) ? o.lat : (o.fallback ? o.fallback[0] : -1.2921),
-        isFinite(o.lng) ? o.lng : (o.fallback ? o.fallback[1] : 36.8219)
-      ];
-      var placed = isFinite(o.lat) && isFinite(o.lng);
-
-      var parts = prep(el, o.height || '280px');
-      var map = L.map(parts.host, {
-        center: start,
-        zoom: placed ? 17 : 12,
-        zoomControl: true,
-        scrollWheelZoom: true,
-        maxZoom: 19
-      });
-
-      tileLayer(L, o.style).addTo(map);
-
-      var marker = L.marker(start, {
-        draggable: true,
-        autoPan: true,
-        icon: L.divIcon({
-          html: '<div class="apa-pin apa-pin-drag">📍</div>',
-          iconSize: [34, 34],
-          iconAnchor: [17, 17],
-          className: ''
-        })
-      }).addTo(map);
-
-      if (!placed) marker.setOpacity(.45);
-
-      ready(parts.skel);
-      watchSize(map, el);
-
-      chip(el, '✋ Drag the pin, or tap the map', 'tl');
-
-      var accuracy = null;
-
-      function commit(lat, lng, opts) {
-        opts = opts || {};
-        placed = true;
-        marker.setOpacity(1);
-        marker.setLatLng([lat, lng]);
-        if (opts.pan !== false) map.setView([lat, lng], Math.max(map.getZoom(), 16));
-
-        /* Reverse geocoding is a courtesy, not a gate. The coordinates
-           are already good; the label just catches up when it can. */
-        onChange({ lat: lat, lng: lng, label: null, pending: true });
-        reverse(lat, lng).then(function (r) {
-          onChange({ lat: lat, lng: lng, label: r ? r.short : null, full: r ? r.label : null, address: r ? r.address : null, pending: false });
+    return loadPinpoint()
+      .then(function (CabanaPin) {
+        return CabanaPin.mount(el, {
+          lat: o.lat,
+          lng: o.lng,
+          fallback: o.fallback,
+          height: o.height || '280px',
+          view: o.view,
+          crosshair: o.crosshair,
+          searchPlaceholder: o.searchPlaceholder,
+          /* The old picker emitted {lat, lng, label, full, address,
+             pending}. Pinpoint emits those plus plusCode, precision,
+             precisionMetres, zoom and source. Callers that ignore the
+             new fields behave exactly as before; callers that want
+             them — the listing form does — simply read them. */
+          onChange: o.onChange || function () {}
         });
-      }
-
-      marker.on('dragend', function () {
-        var p = marker.getLatLng();
-        if (accuracy) { map.removeLayer(accuracy); accuracy = null; }
-        commit(p.lat, p.lng, { pan: false });
+      })
+      .then(function (pin) {
+        if (!pin) return null;
+        return {
+          set: function (lat, lng, zoom) { pin.set(lat, lng, zoom); },
+          get: function () { return pin.get(); },
+          locate: function () { return pin.locate(); },
+          isPrecise: function (min) { return pin.isPrecise(min); },
+          destroy: function () { pin.destroy(); },
+          /* The raw picker, for callers that want the parts the old
+             contract had no room for. */
+          pin: pin
+        };
+      })
+      .catch(function (e) {
+        fail(el, 'Map unavailable — you can still save the listing');
+        console.warn('[apa-map] picker failed:', e.message);
+        return null;
       });
-
-      map.on('click', function (e) {
-        if (accuracy) { map.removeLayer(accuracy); accuracy = null; }
-        commit(e.latlng.lat, e.latlng.lng, { pan: false });
-      });
-
-      var api = {
-        map: map,
-        marker: marker,
-        L: L,
-
-        set: function (lat, lng, zoom) {
-          if (!isFinite(lat) || !isFinite(lng)) return;
-          placed = true;
-          marker.setOpacity(1);
-          marker.setLatLng([lat, lng]);
-          map.setView([lat, lng], zoom || 17);
-        },
-
-        get: function () {
-          if (!placed) return null;
-          var p = marker.getLatLng();
-          return { lat: p.lat, lng: p.lng };
-        },
-
-        /* The phone knows where it is, and a host standing in the
-           doorway is the most accurate geocoder ever built. */
-        locate: function () {
-          return new Promise(function (res, rej) {
-            if (!navigator.geolocation) return rej(new Error('Location is not available on this device'));
-            navigator.geolocation.getCurrentPosition(function (pos) {
-              var lat = pos.coords.latitude, lng = pos.coords.longitude;
-              if (accuracy) map.removeLayer(accuracy);
-              accuracy = L.circle([lat, lng], {
-                radius: Math.max(pos.coords.accuracy || 40, 20),
-                color: '#4361FF', weight: 1, opacity: .5,
-                fillColor: '#4361FF', fillOpacity: .1
-              }).addTo(map);
-              commit(lat, lng);
-              res({ lat: lat, lng: lng, accuracy: pos.coords.accuracy });
-            }, function (err) {
-              rej(new Error(
-                err.code === 1 ? 'Location permission was declined. Drag the pin instead.'
-                               : 'Could not read your location. Drag the pin instead.'
-              ));
-            }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 });
-          });
-        },
-
-        destroy: function () {
-          if (map._apaRO) map._apaRO.disconnect();
-          map.remove();
-        }
-      };
-
-      if (placed) {
-        /* An edit session re-opening a saved listing: tell the host
-           what the stored pin resolves to, without making them wait. */
-        reverse(start[0], start[1]).then(function (r) {
-          if (r) onChange({ lat: start[0], lng: start[1], label: r.short, full: r.label, address: r.address, pending: false, initial: true });
-        });
-      }
-
-      return api;
-    }).catch(function (e) {
-      fail(el, 'Map unavailable — you can still save the listing');
-      console.warn('[apa-map] picker failed:', e.message);
-      return null;
-    });
   }
 
-  /* Attach a type-ahead address search to an input, feeding a picker.
-     Kept separate from picker() so a page can style its own input. */
+  /* cabana-pinpoint.js is loaded on demand rather than on every page
+     that happens to include apa-map.js. Most pages that draw a map are
+     showing one, not asking for one. */
+  var _pinpoint = null;
+
+  function loadPinpoint() {
+    if (window.CabanaPin) return Promise.resolve(window.CabanaPin);
+    if (_pinpoint) return _pinpoint;
+
+    _pinpoint = new Promise(function (resolve, reject) {
+      var s = document.createElement('script');
+      s.src = '/cabana-pinpoint.js';
+      s.async = true;
+      s.onload = function () {
+        window.CabanaPin ? resolve(window.CabanaPin)
+                         : reject(new Error('pinpoint loaded but CabanaPin is missing'));
+      };
+      s.onerror = function () { reject(new Error('cabana-pinpoint.js failed to load')); };
+      document.head.appendChild(s);
+    });
+    _pinpoint.catch(function () { _pinpoint = null; });
+    return _pinpoint;
+  }
+
   function autocomplete(input, pick, o) {
     o = o || {};
     input = resolve(input);

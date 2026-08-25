@@ -975,19 +975,47 @@ function fillAddressFrom(p){
 }
 
 /* Single place where a chosen point lands in the form. */
+/* How good a pin is, in words a host can act on. A pin dropped from a
+   city-name geocode and a pin placed on a roof at zoom 20 are not the
+   same fact, and the form used to store both as "lat, lng" and treat
+   them alike — which is how a listing ends up in the middle of a
+   roundabout. cabana-pinpoint grades every pin; this shows the grade. */
+const PIN_GRADE={
+  rooftop :{icon:'🎯',text:'Exact — on the building',      tone:'#14B8A6'},
+  parcel  :{icon:'📍',text:'Very good — inside the compound',tone:'#14B8A6'},
+  street  :{icon:'📍',text:'Good — on the right street',   tone:'#D98E0B'},
+  district:{icon:'⚠️',text:'Approximate — zoom in and place it on your building',tone:'#FF6A3C'},
+  city    :{icon:'⚠️',text:'Too rough — this is just the city centre',tone:'#FF6A3C'}
+};
+
 function setPin(p){
   if(!p||!isFinite(p.lat)||!isFinite(p.lng))return;
   F.lat=p.lat; F.lng=p.lng;
   document.getElementById('f-lat').value=p.lat;
   document.getElementById('f-lng').value=p.lng;
 
+  /* A Plus Code is the part of this a guest can actually use: it pastes
+     straight into Google Maps or Organic Maps and lands on the door,
+     which matters most in exactly the places where the street has no
+     name. Carried in extras, so no schema change is needed. */
+  if(p.plusCode)F.plusCode=p.plusCode;
+  if(p.precision){F.precision=p.precision;F.precisionMetres=p.precisionMetres||null;}
+
   const st=document.getElementById('pin-state');
   if(!st)return;
   st.classList.add('set');
-  st.innerHTML=p.pending
-    ? '📍 Pin set · reading address…'
-    : '📍 '+(p.label?esc(p.label):(p.lat.toFixed(5)+', '+p.lng.toFixed(5)))+
-      '<br><span style="color:var(--ink-faint);font-weight:400">'+p.lat.toFixed(5)+', '+p.lng.toFixed(5)+'</span>';
+
+  if(p.pending){st.innerHTML='📍 Pin set · reading address…';return;}
+
+  const g=PIN_GRADE[F.precision]||null;
+  const where=p.label?esc(p.label):(p.lat.toFixed(5)+', '+p.lng.toFixed(5));
+  st.innerHTML=
+    (g?'<span style="color:'+g.tone+'">'+g.icon+' '+esc(g.text)+'</span><br>':'📍 ')+
+    where+
+    '<br><span style="color:var(--ink-faint);font-weight:400">'+
+      p.lat.toFixed(6)+', '+p.lng.toFixed(6)+
+      (F.plusCode?' · <b style="font-weight:600">'+esc(F.plusCode)+'</b>':'')+
+    '</span>';
 }
 
 function doGeo(){ if(_pinSearch)_pinSearch.search(); }
@@ -1057,7 +1085,7 @@ function restLoc(){const sv=(id,v)=>{const el=document.getElementById(id);if(el&
   sv('f-lat',F.lat);sv('f-lng',F.lng);
   if(isFinite(F.lat)&&isFinite(F.lng)){
     setPin({lat:parseFloat(F.lat),lng:parseFloat(F.lng),pending:false});
-    if(_pin)_pin.set(parseFloat(F.lat),parseFloat(F.lng),17);
+    if(_pin)_pin.set(parseFloat(F.lat),parseFloat(F.lng),F.precision==='rooftop'?19:F.precision==='parcel'?18:17);
   }
 }
 
@@ -1260,7 +1288,7 @@ async function publish(){
   try{
     const pu=[];const ord=(F.photoFiles.length?[cov,...Array.from({length:F.photoFiles.length},(_,i)=>i).filter(i=>i!==cov)]:[]).filter(i=>F.photoFiles[i]);
     for(let i=0;i<ord.length;i++){const file=F.photoFiles[ord[i]];const ext=file.name.split('.').pop();if(!CU?.id) throw new Error('Please sign in again before uploading photos.');const path=CU.id+'/'+Date.now()+'-'+i+'.'+ext;const{error}=await sb.storage.from('listings').upload(path,file,{cacheControl:'3600',upsert:false});if(error)throw error;const{data:{publicUrl}}=sb.storage.from('listings').getPublicUrl(path);pu.push(publicUrl);}
-    const _S=SVCS[F.svc]||{};const _monthly=_S.pf==='month';const _rate=parseFloat(F.price)||null;const SVC_TYPE_MAP={stays:"apartment",roommates:"room",tours:"tour",events:"event",food:"food",carhire:"carhire",rides:"ride",shopping:"shopping"};const svcType=SVC_TYPE_MAP[F.svc]||F.svc;const payload={partner_id:CU?.id,host_id:CU?.id,service:F.svc,type:svcType,listing_type:F.type,property_type:F.type,title:F.title,country:F.country,city:F.city,area:F.area,street:F.street||null,location:[F.area,F.city,F.country].filter(Boolean).join(', '),latitude:F.lat||null,longitude:F.lng||null,description:F.desc,amenities:F.feats,photos:pu.length?pu:F.photos,currency:F.cur,price_night:_monthly?null:_rate,price_week:_monthly?null:(parseFloat(F.pw)||null),price_month:_monthly?_rate:(parseFloat(F.pm)||null),deposit:parseFloat(F.dep)||null,min_nights:_monthly?Math.max(7,parseInt(F.mn)||90):(parseInt(F.mn)||1),max_guests:(F.svc==='food'?(F.seats||null):(F.guests||null)),beds:F.beds||null,baths:F.baths||null,bedrooms:parseInt(F.beds)||null,bathrooms:parseInt(F.baths)||null,floor:F.floor||null,sqm:F.sqm||null,checkin_time:F.ci,checkout_time:F.co,instant_book:F.inst,children:F.ch,pets:F.pets,smoking:F.smk,house_rules:F.rules||null,contact_whatsapp:F.wa||null,contact_phone:F.ph||F.wa||null,contact_email:F.em||null,status:'active',is_active:true,internal_score:50,cancel_policy:'flexible',extras:{dur:F.dur||null,meet:F.meet||null,lang:F.lang||null,edate:F.edate||null,venue:F.venue||null,age:F.age||null,cuisine:F.cuisine||null,deliv:F.deliv||null,lead:F.lead||null,make:F.make||null,model:F.model||null,yr:F.yr||null,fuel:F.fuel||null,trans:F.trans||null,areas:F.areas||null,veh:F.veh||null,adv:F.adv||null,stock:F.stock||null,cond:F.cond||null,brand:F.brand||null,da:F.da||null,avail:F.avail||null,bills:F.bills||null,furn:F.furn||null,mates:F.mates||null,bath:F.bath||null,suits:F.suits||null,notice:F.co||null}};
+    const _S=SVCS[F.svc]||{};const _monthly=_S.pf==='month';const _rate=parseFloat(F.price)||null;const SVC_TYPE_MAP={stays:"apartment",roommates:"room",tours:"tour",events:"event",food:"food",carhire:"carhire",rides:"ride",shopping:"shopping"};const svcType=SVC_TYPE_MAP[F.svc]||F.svc;const payload={partner_id:CU?.id,host_id:CU?.id,service:F.svc,type:svcType,listing_type:F.type,property_type:F.type,title:F.title,country:F.country,city:F.city,area:F.area,street:F.street||null,location:[F.area,F.city,F.country].filter(Boolean).join(', '),latitude:F.lat||null,longitude:F.lng||null,description:F.desc,amenities:F.feats,photos:pu.length?pu:F.photos,currency:F.cur,price_night:_monthly?null:_rate,price_week:_monthly?null:(parseFloat(F.pw)||null),price_month:_monthly?_rate:(parseFloat(F.pm)||null),deposit:parseFloat(F.dep)||null,min_nights:_monthly?Math.max(7,parseInt(F.mn)||90):(parseInt(F.mn)||1),max_guests:(F.svc==='food'?(F.seats||null):(F.guests||null)),beds:F.beds||null,baths:F.baths||null,bedrooms:parseInt(F.beds)||null,bathrooms:parseInt(F.baths)||null,floor:F.floor||null,sqm:F.sqm||null,checkin_time:F.ci,checkout_time:F.co,instant_book:F.inst,children:F.ch,pets:F.pets,smoking:F.smk,house_rules:F.rules||null,contact_whatsapp:F.wa||null,contact_phone:F.ph||F.wa||null,contact_email:F.em||null,status:'active',is_active:true,internal_score:50,cancel_policy:'flexible',extras:{plus:F.plusCode||null,pinq:F.precision||null,pinm:F.precisionMetres||null,dur:F.dur||null,meet:F.meet||null,lang:F.lang||null,edate:F.edate||null,venue:F.venue||null,age:F.age||null,cuisine:F.cuisine||null,deliv:F.deliv||null,lead:F.lead||null,make:F.make||null,model:F.model||null,yr:F.yr||null,fuel:F.fuel||null,trans:F.trans||null,areas:F.areas||null,veh:F.veh||null,adv:F.adv||null,stock:F.stock||null,cond:F.cond||null,brand:F.brand||null,da:F.da||null,avail:F.avail||null,bills:F.bills||null,furn:F.furn||null,mates:F.mates||null,bath:F.bath||null,suits:F.suits||null,notice:F.co||null}};
     /* Who filled the form in, kept separately from who owns the result.
        Never read for permissions — that is exactly the distinction the
        ownership model exists to draw — but an on-behalf listing that has
@@ -1396,7 +1424,7 @@ async function publish(){
 
 function loadEdit(l){
   const sm={'Apartment':'stays','House':'stays','Studio':'stays','Penthouse':'stays','Villa':'stays','Cottage':'stays','Serviced unit':'stays','Guesthouse':'stays','Lodge':'stays','Hostel':'stays','Airbnb unit':'stays','Beach house':'stays','room':'roommates','apartment':'stays','tour':'tours','event':'events','carhire':'carhire','ride':'rides','shopping':'shopping','Private room':'roommates','Shared room':'roommates','En-suite':'roommates','En-suite room':'roommates','Master bedroom':'roommates','Studio unit':'stays','Bedsitter':'stays','1-bed flat':'stays','Entire flat':'stays','Safari':'tours','Day trip':'tours','City tour':'tours','Cultural':'tours','Adventure':'tours','Hiking':'tours','Water sports':'tours','Photography':'tours','Night safari':'tours','Multi-day':'tours','Bird watching':'tours','Custom tour':'tours','Concert':'events','Festival':'events','Sports event':'events','Comedy show':'events','Conference':'events','Wedding':'events','Exhibition':'events','Theatre':'events','Networking':'events','Party':'events','Food festival':'events','Art showcase':'events','Restaurant':'food','Cafe':'food','Bar and grill':'food','Fast food':'food','Catering':'food','Food truck':'food','Bakery':'food','Rooftop bar':'food','Buffet':'food','Fine dining':'food','Pop-up':'food','Cloud kitchen':'food','Self-drive':'carhire','Chauffeur':'carhire','4x4 safari':'carhire','Minibus':'carhire','Luxury sedan':'carhire','Airport transfer':'carhire','Bus hire':'carhire','Motorcycle':'carhire','Tuk tuk':'carhire','Van or MPV':'carhire','Boda boda':'carhire','Coach':'carhire','Ride hailing':'rides','Shuttle':'rides','Corporate transfer':'rides','Long-distance':'rides','Handcraft':'shopping','Clothing':'shopping','Jewellery':'shopping','Art':'shopping','Electronics':'shopping','Food products':'shopping','Home decor':'shopping','Souvenirs':'shopping','Furniture':'shopping','Beauty':'shopping','Books':'shopping','Sport and outdoor':'shopping'};
-  F.svc=l.service||sm[l.type]||'stays';F.type=l.type||'';F.title=l.title||'';F.country=l.country||'Kenya';F.city=l.city||'';F.area=l.area||'';F.street=l.street||'';F.lat=l.latitude||null;F.lng=l.longitude||null;F.desc=l.description||'';F.feats=l.amenities||[];F.photos=l.photos||[];F.cur=l.currency||'KES';F.price=(l.service==='roommates'||l.type==='room')?(l.price_month?String(l.price_month):(l.price_night?String(l.price_night):'')):(l.price_night?String(l.price_night):'');F.pw=l.price_week?String(l.price_week):'';F.pm=l.price_month?String(l.price_month):'';F.dep=l.deposit?String(l.deposit):'';F.mn=String(((l.service==='roommates'||l.type==='room')?(l.min_nights||((l.extras&&l.extras.minmonths)*30)||90):(l.min_nights||1)));F.guests=l.max_guests||'2';F.seats=(l.service==='food'||l.type==='food')?(l.max_guests?String(l.max_guests):''):'';F.mates=(l.extras&&l.extras.mates)||l.max_guests||'2';F.bath=(l.extras&&l.extras.bath)||'shared';F.suits=(l.extras&&l.extras.suits)||'anyone';F.avail=(l.extras&&l.extras.avail)||'';F.bills=(l.extras&&l.extras.bills)||'included';F.furn=(l.extras&&l.extras.furn)||'Fully furnished';F.beds=l.beds||'1';F.baths=l.baths||'1';F.floor=l.floor||'';F.sqm=l.sqm||'';F.wa=l.contact_whatsapp||'';F.ph=l.contact_phone||'';F.em=l.contact_email||'';F.ci=l.checkin_time||'14:00';F.co=l.checkout_time||'11:00';F.inst=l.instant_book!==false;F.ch=l.children!==false;F.pets=!!l.pets;F.smk=!!l.smoking;F.rules=l.house_rules||'';
+  F.svc=l.service||sm[l.type]||'stays';F.type=l.type||'';F.title=l.title||'';F.country=l.country||'Kenya';F.city=l.city||'';F.area=l.area||'';F.street=l.street||'';F.lat=l.latitude||null;F.lng=l.longitude||null;F.plusCode=(l.extras&&l.extras.plus)||null;F.precision=(l.extras&&l.extras.pinq)||null;F.precisionMetres=(l.extras&&l.extras.pinm)||null;F.desc=l.description||'';F.feats=l.amenities||[];F.photos=l.photos||[];F.cur=l.currency||'KES';F.price=(l.service==='roommates'||l.type==='room')?(l.price_month?String(l.price_month):(l.price_night?String(l.price_night):'')):(l.price_night?String(l.price_night):'');F.pw=l.price_week?String(l.price_week):'';F.pm=l.price_month?String(l.price_month):'';F.dep=l.deposit?String(l.deposit):'';F.mn=String(((l.service==='roommates'||l.type==='room')?(l.min_nights||((l.extras&&l.extras.minmonths)*30)||90):(l.min_nights||1)));F.guests=l.max_guests||'2';F.seats=(l.service==='food'||l.type==='food')?(l.max_guests?String(l.max_guests):''):'';F.mates=(l.extras&&l.extras.mates)||l.max_guests||'2';F.bath=(l.extras&&l.extras.bath)||'shared';F.suits=(l.extras&&l.extras.suits)||'anyone';F.avail=(l.extras&&l.extras.avail)||'';F.bills=(l.extras&&l.extras.bills)||'included';F.furn=(l.extras&&l.extras.furn)||'Fully furnished';F.beds=l.beds||'1';F.baths=l.baths||'1';F.floor=l.floor||'';F.sqm=l.sqm||'';F.wa=l.contact_whatsapp||'';F.ph=l.contact_phone||'';F.em=l.contact_email||'';F.ci=l.checkin_time||'14:00';F.co=l.checkout_time||'11:00';F.inst=l.instant_book!==false;F.ch=l.children!==false;F.pets=!!l.pets;F.smk=!!l.smoking;F.rules=l.house_rules||'';
   if(l.extras){const e=l.extras;Object.assign(F,{dur:e.dur||'',meet:e.meet||'',lang:e.lang||'',edate:e.edate||'',venue:e.venue||'',age:e.age||'',cuisine:e.cuisine||'',deliv:e.deliv||'',lead:e.lead||'',make:e.make||'',model:e.model||'',yr:e.yr||'',fuel:e.fuel||'',trans:e.trans||'',areas:e.areas||'',veh:e.veh||'',adv:e.adv||'',stock:e.stock||'',cond:e.cond||'',brand:e.brand||'',da:e.da||'',avail:e.avail||'',bills:e.bills||'',furn:e.furn||''});}
   /* A restaurant's numbers moved off the listings row, so an edit has to
      go and get them. Without this, opening a live restaurant and pressing

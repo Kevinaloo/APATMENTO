@@ -54,6 +54,7 @@
   var LEAFLET_CSS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
   var LEAFLET_JS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
   var ATLAS_URL = '/cabana-world-atlas.json';
+  var LIVE_URL = '/api/atlas';
 
   /* Carto's basemaps carry an attribution requirement. It is not
      decoration — dropping it is a licence breach — so it is baked into
@@ -291,9 +292,19 @@
       })
       .then(function (raw) {
         var byId = {};
+        /* A place's id comes from its filename; a listing row carries
+           its display name. Those usually slug the same and sometimes
+           do not — the Nairobi CBD page is "cbd", Upper Hill's is
+           "upperhill". The builder records every other name a place
+           answers to, and this is the index that resolves them, so a
+           live count can never land on a key the map has never heard
+           of and vanish. */
+        var byKey = {};
         raw.places.forEach(function (p) {
           p.children = [];
           byId[p.id] = p;
+          byKey[p.id] = p;
+          (p.aliases || []).forEach(function (a) { byKey[a] = p; });
         });
         raw.places.forEach(function (p) {
           var parent = byId[p.parent];
@@ -301,7 +312,10 @@
         });
 
         raw.byId = byId;
+        raw.byKey = byKey;
         raw.get = function (id) { return byId[id] || null; };
+        /* Resolve any name a place might be keyed under. */
+        raw.resolve = function (key) { return byKey[key] || null; };
         raw.routeLines = (raw.routes || []).map(function (r) {
           var a = byId[r.from], b = byId[r.to];
           return a && b ? { from: a, to: b, kind: r.kind } : null;
@@ -311,6 +325,96 @@
 
     _atlas.catch(function () { _atlas = null; });
     return _atlas;
+  }
+
+  /**
+   * Patch the atlas with what is bookable right now.
+   *
+   * The generated atlas is built when the site is built, so its counts
+   * are as old as the last deploy. That is fine for where Diani is and
+   * wrong for how many stays are free there tonight — a host who
+   * published this morning should be on the map by lunchtime, without
+   * anybody redeploying.
+   *
+   * So the map loads in two beats: the static file first, because it is
+   * on the CDN and arrives instantly, then this. The counts are patched
+   * in place and the map re-ranks itself. A guest on a slow connection,
+   * or on a deploy with no database attached, simply keeps the
+   * generated numbers — which is why this is a refinement and never a
+   * dependency.
+   *
+   * God's Eye View's rule applies unchanged: the layer says where its
+   * data came from and how fresh it is. `atlas.liveState` carries that,
+   * and the HUD prints it.
+   *
+   * @returns {Promise<Object>} the freshness record, never rejected
+   */
+  function refreshLive(atlas) {
+    return fetch(LIVE_URL, { credentials: 'same-origin' })
+      .then(function (r) {
+        if (!r.ok) throw new Error('atlas ' + r.status);
+        return r.json();
+      })
+      .then(function (data) {
+        var inv = data.inventory || {};
+        var changed = 0;
+        var unmatched = 0;
+
+        /* Fold the incoming keys onto real places first. A row filed
+           under "upper-hill" and one under "upperhill" are the same
+           neighbourhood and their counts must add up, not overwrite
+           each other. */
+        var merged = {};
+        Object.keys(inv).forEach(function (key) {
+          var place = atlas.resolve(key);
+          if (!place) { unmatched += 1; return; }
+          var into = merged[place.id];
+          if (!into) { merged[place.id] = JSON.parse(JSON.stringify(inv[key])); return; }
+          Object.keys(inv[key]).forEach(function (svc) {
+            var a = into[svc], b = inv[key][svc];
+            if (!a) { into[svc] = b; return; }
+            a.count += b.count;
+            a.lowUSD = Math.min(a.lowUSD, b.lowUSD);
+            a.highUSD = Math.max(a.highUSD, b.highUSD);
+          });
+        });
+
+        atlas.places.forEach(function (p) {
+          var next = merged[p.id] || null;
+          var before = JSON.stringify(p.live || null);
+          var after = JSON.stringify(next);
+          if (before === after) return;
+          /* Absent means absent. A place that has sold out since the
+             build must LOSE its count, not keep a stale one — the
+             whole point of asking. */
+          if (next) p.live = next; else delete p.live;
+          changed += 1;
+        });
+
+        atlas.liveState = {
+          source: data.source || 'database',
+          at: data.at || null,
+          places: data.places || 0,
+          changed: changed,
+          /* Counts for places Cabana has no page for. Not an error —
+             a host may list somewhere the SEO build has not reached —
+             but worth surfacing, because a rising number here is the
+             signal that the atlas is behind the product. */
+          unmatched: unmatched
+        };
+        return atlas.liveState;
+      })
+      .catch(function (err) {
+        /* Never rejected: the caller has a complete, usable atlas
+           already and a failed refresh is a missing improvement, not a
+           broken map. */
+        atlas.liveState = {
+          source: 'unavailable',
+          error: String((err && err.message) || err),
+          at: null, places: 0, changed: 0
+        };
+        return atlas.liveState;
+      });
   }
 
   /* ══ CAMERA DIRECTOR ═══════════════════════════════════════════════
@@ -1329,6 +1433,42 @@
     this._buildKeyboard();
     this._refresh();
     this._applyState(ShareLink.read());
+    this._goLive();
+  };
+
+  /**
+   * Ask what is bookable right now, and re-rank the map on the answer.
+   *
+   * Deferred rather than raced with the opening shot: the first second
+   * belongs to the camera, and a fetch that lands mid-descent would
+   * re-rank the markers under a moving frame.
+   */
+  Globe.prototype._goLive = function () {
+    var self = this;
+    if (this.opts.live === false) return;
+
+    window.setTimeout(function () {
+      refreshLive(self.atlas).then(function (state) {
+        /* Live counts change what a place is worth showing, so the
+           allocator's ranking has to be rebuilt rather than reused. */
+        Object.keys(self.markers).forEach(function (id) {
+          var rec = self.markers[id];
+          rec.priority = basePriority(rec.place);
+        });
+        self._refresh();
+
+        /* A card left open on a place whose count just moved would sit
+           there contradicting the map behind it. */
+        if (self.selected && !self.cardEl.hidden) {
+          var place = self.atlas.get(self.selected);
+          if (place) self._openCard(place);
+        }
+
+        self.host.dispatchEvent(new CustomEvent('cabana-globe:live', {
+          detail: state, bubbles: true
+        }));
+      });
+    }, 1200);
   };
 
   function atlasRoutes(atlas) {
@@ -1638,6 +1778,19 @@
     var bits = [shown + ' in view'];
     if (live) bits.push(live + ' bookable now');
     this.hudStat.textContent = bits.join(' · ');
+
+    /* Freshness, the way every God's Eye View layer reports it: the
+       readout says whether these counts came from the database a moment
+       ago or from the last build. Guessing which is not the guest's
+       job. */
+    var state = this.atlas.liveState;
+    this.hudStat.title = !state
+      ? 'Counts from the last site build'
+      : state.source === 'database'
+        ? 'Live from the database' + (state.at ? ' at ' +
+            new Date(state.at).toLocaleTimeString() : '')
+        : 'Live inventory unavailable — showing counts from the last build';
+    this.hudEl.setAttribute('data-live', state ? state.source : 'static');
   };
 
   /* ── Skin rail ─────────────────────────────────────────────────── */
@@ -2232,6 +2385,7 @@
       easeOutCubic: easeOutCubic,
       lodFor: lodFor,
       ShareLink: ShareLink,
+      refreshLive: refreshLive,
       SKINS: SKINS,
       SKIN_ORDER: SKIN_ORDER,
       JOURNEYS: JOURNEYS,

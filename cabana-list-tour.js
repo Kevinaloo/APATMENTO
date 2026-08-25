@@ -174,6 +174,32 @@
     if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
 
     var days = Math.max(1, Number($('t-days').value) || 1);
+    /* The meeting point, with its Plus Code appended.
+       ------------------------------------------------------------------
+       Operators pin the meeting point on a map now, and those coordinates
+       have to survive the submit. They go into the existing `meeting_point`
+       TEXT column rather than three new ones, because this insert has no
+       way to know whether the `tours` table has been migrated — and a
+       payload naming a column that does not exist is rejected whole, which
+       would stop every operator from listing anything at all. A broken
+       submit is a far worse bug than a coordinate stored as text.
+
+       The text form is not a fallback, either. "Serena Hotel main gate ·
+       6GCRPR78+CVW" is what a guest actually wants at 6am: the Plus Code
+       pastes straight into any navigation app and lands on the doorway.
+
+       supabase-migrations/add-tour-meeting-point.sql adds the structured
+       columns when you are ready for them; nothing here depends on it
+       having been run.  */
+    function meetingPoint() {
+      var text = $('t-meeting').value.trim();
+      var plus = (document.getElementById('t-meet-plus') || {}).value || '';
+      if (!text && !plus) return null;
+      if (!plus) return text;
+      if (text.indexOf(plus) !== -1) return text;
+      return text ? text + ' \u00b7 ' + plus : plus;
+    }
+
     var row = {
       owner_id: user.id,
       operator_id: operator ? operator.id : null,
@@ -192,7 +218,7 @@
       group_max: Math.max(1, Number($('t-max').value) || 12),
       schedule_type: $('t-schedule').value,
       next_departure: $('t-next').value || null,
-      meeting_point: $('t-meeting').value.trim() || null,
+      meeting_point: meetingPoint(),
       includes_list: lines($('t-inc').value),
       excludes_list: lines($('t-exc').value),
       cover_url: m.cover,

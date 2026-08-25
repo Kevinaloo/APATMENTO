@@ -283,6 +283,18 @@ html,body{min-height:100%;background:#05040A;color:#F4F2FF;
         </div>
 
         <div>
+          <label class="le-l">Drop the pin on the entrance</label>
+          <!-- A geocoded venue name lands somewhere in the right grounds.
+               A guest arriving at night needs the gate. Satellite imagery
+               and a crosshair get them there; the Plus Code goes in their
+               phone. -->
+          <div id="e-venue-map" style="height:300px"></div>
+          <input type="hidden" id="e-venue-plus"/>
+          <p class="le-hint">Search the venue above, then move the map so the crosshair sits on the
+            gate guests should walk through. The Plus Code works in any navigation app.</p>
+        </div>
+
+        <div>
           <label class="le-l">Ticket tiers</label>
           <div id="e-tiers"></div>
           <button class="ev-btn ev-btn-ghost le-addtier" type="button" id="e-addtier">+ Add a tier</button>
@@ -385,14 +397,38 @@ window.addEventListener('load', function () {
       var lngEl = document.getElementById('e-venue-lng');
       if (latEl) latEl.value = isFinite(p.lat) ? p.lat : '';
       if (lngEl) lngEl.value = isFinite(p.lng) ? p.lng : '';
+      /* Take the map with it, so the organiser is looking at the venue
+         they just picked rather than wherever the map was left. */
+      if (window._venuePin && isFinite(p.lat)) window._venuePin.set(p.lat, p.lng, 18);
     }
   });
+
+  /* The picker and the venue search write the same two hidden fields,
+     so whichever the organiser used last is the one that counts —
+     which is right: a pin they placed by hand beats a geocode, and a
+     fresh search means they changed their mind about the venue. */
+  if (window.ApaMap) {
+    ApaMap.picker('e-venue-map', {
+      height: '300px',
+      fallback: [-1.2921, 36.8219],
+      searchPlaceholder: 'Find the venue',
+      onChange: function (p) {
+        var lat = document.getElementById('e-venue-lat');
+        var lng = document.getElementById('e-venue-lng');
+        var plus = document.getElementById('e-venue-plus');
+        if (lat) lat.value = isFinite(p.lat) ? p.lat : '';
+        if (lng) lng.value = isFinite(p.lng) ? p.lng : '';
+        if (plus && p.plusCode) plus.value = p.plusCode;
+      }
+    }).then(function (h) { window._venuePin = h; });
+  }
 
   ApaGeo.attach('e-city', { limit: 6 });
   ApaGeo.attach('e-address', { limit: 6 });
   ApaGeo.attach('o-city', { limit: 6 });
 });
 </script>
+<script src="/apa-map.js" defer></script>
 <script src="/cabana-call.js" defer></script>
 <script src="/cabana-support.js" defer></script>
 <script src="/cabana-lifecycle.js" defer></script>
