@@ -356,3 +356,54 @@ test('the picker needs no API key and bills nobody per request', () => {
   assert.match(PINPOINT, /window\.ApaGeo/,
     'geocoding goes through the shared layer, which holds the keys server-side');
 });
+
+/* ── Search bias ───────────────────────────────────────────────────
+   Found while investigating a report that the picker's search missed
+   an actual Nairobi landmark ("The Obama Mansion") and returned
+   unrelated results (Playboy Mansion, a museum in Guangzhou). Root
+   cause: the free OSM-backed geocoder (Photon/Nominatim) has no record
+   of that specific business at all — confirmed live against
+   cabana.africa/api/geocode, whose health check reports only
+   ["photon","nominatim"] configured, with GOOGLE_MAPS_API_KEY unset.
+   Closing that coverage gap needs a paid provider key, which is a
+   deployment decision, not a code fix.
+
+   What WAS a real, independent bug: the picker never told ApaGeo where
+   "here" was, so a global text-relevance ranking is all any provider —
+   including a paid one — had to go on. A host in Nairobi searching for
+   anything nearby should get Nairobi results ranked first. */
+
+test('the picker biases search toward where the map actually is', () => {
+  assert.match(PINPOINT, /near:\s*this\.opts\.near\s*\|\|\s*bias/,
+    'without a bias point every provider ranks by text relevance alone');
+  assert.match(PINPOINT, /country:\s*this\.opts\.country/,
+    'and a caller that knows the country should be able to restrict to it');
+  assert.match(PINPOINT, /var bias = \{ lat: this\.map\.getCenter\(\)\.lat, lng: this\.map\.getCenter\(\)\.lng \};/,
+    'the bias point must be where the picker is actually open, not a hardcoded default');
+});
+
+test('a thin geocoder index is disclosed before it is hit, not after', () => {
+  /* The free index has excellent road/estate coverage and close to none
+     for informally-named local businesses. Naming the real workaround
+     (search the estate, then move the map) up front is cheaper and more
+     honest than a guest discovering it only after picking a wrong
+     result. */
+  assert.match(PINPOINT, /cpin-tip/);
+  assert.match(PINPOINT, /nearest road instead/);
+});
+
+test('the coverage hint gets out of the way once a pin exists', () => {
+  assert.match(PINPOINT, /if \(this\.tipEl\) this\.tipEl\.hidden = !!p;/,
+    'a hint that stays up after the job is done is clutter, not help');
+});
+
+test('the coverage hint never outranks live search suggestions', () => {
+  /* Both occupy the same rectangle below the search box. The dropdown
+     must always win that stacking fight, or a suggestion list would
+     render underneath static help text. */
+  const geo = read('apa-geo.js');
+  const popZ = Number((geo.match(/\.apa-geo-pop\{[^}]*z-index:(\d+)/) || [])[1]);
+  const tipZ = Number((PINPOINT_CSS.match(/\.cpin-tip\{[^}]*z-index:(\d+)/) || [])[1]);
+  assert.ok(popZ > 0 && tipZ > 0, 'both z-indexes must be found to compare them');
+  assert.ok(popZ > tipZ, `suggestion dropdown (z=${popZ}) must sit above the hint (z=${tipZ})`);
+});

@@ -675,6 +675,24 @@
     this.searchEl = search;
     this.searchInput = search.querySelector('.cpin-search-in');
 
+    /* The free geocoder this runs on (OpenStreetMap) has excellent
+       coverage of roads, estates and neighbourhoods and close to none
+       of informally-named local businesses — "Blue Gate Apartments" is
+       on it maybe, "Obama Mansion" almost certainly is not, because
+       nobody has drawn it in. A guest searching a business name that
+       misses gets back whatever ELSE has similar words in it, which
+       reads as the picker being wrong rather than the index being thin.
+       This hint names the actual working pattern up front, once,
+       rather than after a bad pick — search the estate or the nearest
+       road, which OSM almost always has, then walk the last few metres
+       on the imagery, which is what the picker is FOR. */
+    var tip = document.createElement('div');
+    tip.className = 'cpin-tip';
+    tip.textContent = "Business name not found? Search the estate or nearest road instead, "
+      + 'then move the map onto the building.';
+    host.appendChild(tip);
+    this.tipEl = tip;
+
     /* View rail */
     var rail = document.createElement('div');
     rail.className = 'cpin-views';
@@ -782,6 +800,7 @@
 
   Pin.prototype._paintReadout = function () {
     var p = this.pin;
+    if (this.tipEl) this.tipEl.hidden = !!p;
     if (!p) {
       this.gradeEl.dataset.grade = 'none';
       this.gradeText.textContent = this.crosshair
@@ -935,8 +954,32 @@
       return;
     }
 
+    /* Bias the search to where the picker is actually open, and pin it
+       to a country when the caller knows one.
+       ------------------------------------------------------------------
+       Without `near`, ApaGeo falls back to whatever the LAST search on
+       the page biased toward (or nothing at all), and every provider —
+       including free OSM data — ranks a global text match by relevance
+       score, not by distance. "The Obama Mansion" is not on OSM at all,
+       so a global, unbiased query returns whatever else has the word
+       "mansion" in its name: Playboy Mansion, a museum in Guangzhou, the
+       White House. None of those are wrong matches for the QUERY — they
+       are the best the free index has, ranked with no idea the host is
+       standing in Nairobi.
+       This does not fix the coverage gap — OSM still has never heard of
+       the place, and closing that gap needs a paid provider (Google
+       Places, Mapbox) configured via a real API key in
+       api/lib/_geocode.js, which already implements the Google path and
+       simply has no key deployed. What this DOES fix, at zero cost: a
+       host in Nairobi searching for ANYTHING nearby now gets Nairobi
+       results ranked first, which is most of what "near me" search
+       needs most of the time. */
+    var bias = { lat: this.map.getCenter().lat, lng: this.map.getCenter().lng };
+
     this._search = window.ApaGeo.attach(this.searchInput, {
       limit: 7,
+      near: this.opts.near || bias,
+      country: this.opts.country,
       onPick: function (r) {
         /* A geocoded result is a starting frame, not an answer. The
            zoom is chosen so the host arrives close enough to recognise
