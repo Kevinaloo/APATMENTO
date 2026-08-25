@@ -63,8 +63,15 @@
 }
 /* The readout owns the bottom edge, so Leaflet's credit line is lifted
    clear of it. Attribution that is half-covered by a panel is not
-   attribution, and both Esri and CARTO require it to be legible. */
-.cpin .leaflet-bottom.leaflet-right{bottom:62px;}
+   attribution, and both Esri and CARTO require it to be legible.
+
+   Sized for the readout's TALLEST state — main row plus the
+   OpenStreetMap contribution row plus its border — rather than its
+   resting height, because the contribution row appears and disappears
+   as a pin is placed and the credit line does not get to move when it
+   does. Extra clearance in the shorter state is invisible; a
+   collision in the taller one is a licence problem. */
+.cpin .leaflet-bottom.leaflet-right{bottom:112px;}
 .cpin-stage .leaflet-control-attribution{
   font-size:9px;line-height:1.5;max-width:min(62%,420px);
   background:rgba(252,252,253,.86);color:#4A4C66;
@@ -250,7 +257,7 @@
    grade, so precision is legible before a word is read.               */
 .cpin-out{
   position:absolute;left:10px;right:10px;bottom:10px;z-index:650;
-  display:flex;align-items:center;gap:12px;
+  display:flex;flex-direction:column;gap:8px;
   padding:11px 13px;
   border-radius:14px;
   background:var(--cp-glass);
@@ -259,6 +266,7 @@
   border:1px solid var(--cp-line);
   box-shadow:var(--cp-shadow);
 }
+.cpin-out-row{display:flex;align-items:center;gap:12px;}
 .cpin-out-main{min-width:0;flex:1;}
 .cpin-grade{display:flex;align-items:center;gap:7px;}
 .cpin-grade-dot{
@@ -319,6 +327,23 @@
 .cpin-code-v svg{flex:0 0 auto;opacity:.5;}
 .cpin-code-v:hover svg{opacity:1;}
 
+/* ── Contribute to OpenStreetMap ──────────────────────────────────
+   A thin, unobtrusive line under the readout rather than a button: it
+   is offered, never pushed, and it must never look like a step the
+   host has to complete to save their listing — the pin above it is
+   already enough on its own.                                          */
+.cpin-osm{
+  display:flex;align-items:center;gap:6px;
+  padding-top:8px;margin-top:1px;
+  border-top:1px solid var(--cp-line);
+  font-size:10.5px;font-weight:550;line-height:1.5;
+  color:var(--cp-ink-faint);text-decoration:none;
+  transition:color .18s var(--cp-ease);
+}
+.cpin-osm:hover{color:var(--cp-violet);}
+.cpin-osm svg{flex:0 0 auto;opacity:.7;}
+.cpin-osm:hover svg{opacity:1;}
+
 /* ── Warning strip ─────────────────────────────────────────────────
    Advice, not state — so it sits above the readout and reads as amber
    rather than adopting the panel's neutral chrome.                    */
@@ -340,11 +365,14 @@
    Plus Code is worse than useless — it cannot be transcribed.         */
 @media (max-width:560px){
   .cpin{min-height:340px;}
-  .cpin-out{flex-direction:column;align-items:stretch;gap:8px;padding:10px 12px;}
+  .cpin-out{padding:10px 12px;}
+  .cpin-out-row{flex-direction:column;align-items:stretch;gap:8px;}
   .cpin-code{text-align:left;max-width:none;
     border-top:1px solid var(--cp-line);padding-top:8px;}
   .cpin-warn{bottom:110px;}
-  .cpin .leaflet-bottom.leaflet-right{bottom:98px;}
+  /* Narrower still: main row, Plus Code row and the OpenStreetMap row
+     all stack, so the readout is taller here than anywhere else. */
+  .cpin .leaflet-bottom.leaflet-right{bottom:180px;}
   .cpin-stage .leaflet-control-attribution{max-width:calc(100% - 20px);}
   .cpin-tip{top:56px;font-size:10.5px;max-width:none;}
   .cpin-views{top:98px;}

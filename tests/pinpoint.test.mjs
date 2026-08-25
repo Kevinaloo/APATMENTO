@@ -407,3 +407,56 @@ test('the coverage hint never outranks live search suggestions', () => {
   assert.ok(popZ > 0 && tipZ > 0, 'both z-indexes must be found to compare them');
   assert.ok(popZ > tipZ, `suggestion dropdown (z=${popZ}) must sit above the hint (z=${tipZ})`);
 });
+
+/* ── OpenStreetMap contribution ────────────────────────────────────
+   The only DURABLE free fix for the coverage gap: unlike a paid
+   provider swap, which just rents a better index, adding the place to
+   OSM directly makes every future search — Photon, Nominatim,
+   LocationIQ, this picker, and anything else built on the same open
+   map — find it, forever, for zero dollars. */
+
+test('the contribution URL points at the exact pin, on the real editor', () => {
+  const url = P.osmContributeUrl(-1.2527761, 36.9218624, 19);
+  assert.match(url, /^https:\/\/www\.openstreetmap\.org\/edit\?editor=id#map=/,
+    'must open the real iD editor, not a third-party clone');
+  assert.match(url, /19\/-1\.252776\/36\.921862/,
+    'zoom and coordinates must survive round-trip to 6 decimal places');
+});
+
+test('the contribution link is never offered before a pin is confirmed', () => {
+  /* An unconfirmed guess going into a PUBLIC map is a different risk
+     than a wrong guess in Cabana's own database — it would need a
+     second host, somewhere else, to notice and fix it. The link may
+     only appear once the host has looked at the roof and said yes. */
+  assert.match(PINPOINT, /this\.osmEl\.hidden = true;/);
+  assert.match(PINPOINT, /this\._paintOsmLink\(p\);/);
+});
+
+test('the contribution link always points at the CURRENT pin, not a stale one', () => {
+  /* Rebuilt on every commit. A link left pointing at a since-corrected
+     pin would send the wrong location into a public map, which is
+     worse than not offering the link. */
+  assert.match(PINPOINT, /Pin\.prototype\._paintOsmLink = function \(p\) \{/);
+  assert.match(PINPOINT, /osmContributeUrl\(p\.lat, p\.lng,/);
+});
+
+test('the contribution link cannot hijack the picker tab', () => {
+  assert.match(PINPOINT, /target="_blank" rel="noopener"/,
+    'opening OSM must not hand it a reference back to window.opener');
+});
+
+test('lifting the credit line accounts for the taller, three-row readout', () => {
+  /* Found in review: the OSM row made .cpin-out taller, and the
+     attribution lift (tuned for the old two-element row) started
+     overlapping it — confirmed by direct measurement in a real
+     browser at both desktop and mobile widths before this was fixed. */
+  const desktop = Number((PINPOINT_CSS.match(
+    /\.cpin \.leaflet-bottom\.leaflet-right\{bottom:(\d+)px/) || [])[1]);
+  const mobileBlock = PINPOINT_CSS.slice(PINPOINT_CSS.indexOf('max-width:560px'));
+  const mobile = Number((mobileBlock.match(
+    /\.cpin \.leaflet-bottom\.leaflet-right\{bottom:(\d+)px/) || [])[1]);
+
+  assert.ok(desktop >= 100, `desktop lift is only ${desktop}px — too short to clear two rows`);
+  assert.ok(mobile >= 160, `mobile lift is only ${mobile}px — too short to clear three stacked rows`);
+  assert.ok(mobile > desktop, 'the stacked mobile layout is taller and needs more clearance');
+});

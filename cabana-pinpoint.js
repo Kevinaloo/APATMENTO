@@ -275,6 +275,39 @@
     return { key: k, label: p.label, note: p.note, metres: p.m };
   }
 
+  /**
+   * A link into OpenStreetMap's own editor, centred on a pin.
+   *
+   * This is the actual free fix for the coverage gap Plus Codes and
+   * satellite imagery cannot touch: search-by-name. Photon, Nominatim
+   * and LocationIQ all read the same underlying map, and that map does
+   * not know about "Obama Mansion" for the same reason a paper atlas
+   * would not — nobody has drawn it in. Unlike Google's index, which
+   * is closed and bought, OpenStreetMap is the one geocoding source on
+   * earth any host can personally fix, for free, in about two minutes:
+   * open this link, drop a point on the building, name it, save. From
+   * that moment on, EVERY app reading OSM data finds it — Photon,
+   * Nominatim, LocationIQ, this picker, and every other product built
+   * on the same open map. It is the only fix here that is permanent
+   * and gets better over time instead of staying a workaround.
+   *
+   * iD (the editor this opens) takes a map position in the URL
+   * fragment and nothing else — there is no supported way to prefill a
+   * name or a tag from the query string, so the copy around this link
+   * has to say what to do next rather than promise it is done already.
+   *
+   * @param {number} lat
+   * @param {number} lng
+   * @param {number} [zoom=19] close enough to see the building, not so
+   *   close the host has to pan to find it
+   * @returns {string}
+   */
+  function osmContributeUrl(lat, lng, zoom) {
+    zoom = zoom || 19;
+    return 'https://www.openstreetmap.org/edit?editor=id#map='
+      + zoom + '/' + lat.toFixed(6) + '/' + lng.toFixed(6);
+  }
+
   /* Metres between two points. Used to tell a host when their pin has
      wandered a long way from the address they typed — the single most
      common way a listing ends up in the wrong place. */
@@ -754,20 +787,34 @@
     var out = document.createElement('div');
     out.className = 'cpin-out';
     out.innerHTML =
-      '<div class="cpin-out-main">' +
-        '<div class="cpin-grade"><span class="cpin-grade-dot"></span>' +
-        '<span class="cpin-grade-t">Move the map onto your building</span></div>' +
-        '<div class="cpin-addr">Nothing selected yet</div>' +
+      '<div class="cpin-out-row">' +
+        '<div class="cpin-out-main">' +
+          '<div class="cpin-grade"><span class="cpin-grade-dot"></span>' +
+          '<span class="cpin-grade-t">Move the map onto your building</span></div>' +
+          '<div class="cpin-addr">Nothing selected yet</div>' +
+        '</div>' +
+        '<div class="cpin-code" hidden>' +
+          '<div class="cpin-code-h">Plus Code</div>' +
+          '<button type="button" class="cpin-code-v" ' +
+          'title="Copy — this opens in Google Maps, Organic Maps and most navigation apps">' +
+          '<span></span>' +
+          '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" ' +
+          'stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="11" height="11" rx="2"/>' +
+          '<path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></button>' +
+        '</div>' +
       '</div>' +
-      '<div class="cpin-code" hidden>' +
-        '<div class="cpin-code-h">Plus Code</div>' +
-        '<button type="button" class="cpin-code-v" ' +
-        'title="Copy — this opens in Google Maps, Organic Maps and most navigation apps">' +
-        '<span></span>' +
+      /* Shown only once a pin exists, because it needs real coordinates
+         and because this is the moment the host has just confirmed —
+         by looking at the roof — that this is genuinely the right
+         spot. Asking before that would send an unconfirmed guess into
+         a public map. */
+      '<a class="cpin-osm" href="#" target="_blank" rel="noopener" hidden>' +
         '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" ' +
-        'stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="11" height="11" rx="2"/>' +
-        '<path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></button>' +
-      '</div>';
+        'stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">' +
+        '<path d="M12 21c-4-4.5-7-8.2-7-11.5A7 7 0 0 1 19 9.5C19 12.8 16 16.5 12 21z"/>' +
+        '<circle cx="12" cy="9.5" r="2.3"/></svg>' +
+        '<span>Not searchable yet? Add it to OpenStreetMap — free, permanent, ' +
+        'helps every future guest</span></a>';
     host.appendChild(out);
     this.outEl = out;
     this.gradeEl = out.querySelector('.cpin-grade');
@@ -777,6 +824,7 @@
     this.codeBtn = out.querySelector('.cpin-code-v');
     this.codeVal = this.codeBtn.querySelector('span');
     this.codeBtn.addEventListener('click', function () { self._copyCode(); });
+    this.osmEl = out.querySelector('.cpin-osm');
 
     /* Drift warning — its own strip, because it is advice rather than
        state and must not be mistaken for the readout. */
@@ -808,6 +856,7 @@
         : 'Tap the map, or drag the pin';
       this.addrEl.textContent = 'Nothing selected yet';
       this.codeEl.hidden = true;
+      if (this.osmEl) this.osmEl.hidden = true;
       return;
     }
     this._paintGrade(p);
@@ -816,6 +865,22 @@
     this.addrEl.textContent = this.label ||
       (p.lat.toFixed(6) + ', ' + p.lng.toFixed(6));
     this._paintWarning();
+    this._paintOsmLink(p);
+  };
+
+  /**
+   * Point the contribution link at the pin that exists right now.
+   *
+   * Rebuilt on every commit rather than once, because the whole reason
+   * it exists is to always point at wherever the host most recently
+   * confirmed — a stale link pointing at an earlier, since-corrected
+   * pin would send the wrong location into a public map, which is
+   * worse than not offering the link at all.
+   */
+  Pin.prototype._paintOsmLink = function (p) {
+    if (!this.osmEl) return;
+    this.osmEl.href = osmContributeUrl(p.lat, p.lng, Math.max(p.zoom || 19, 18));
+    this.osmEl.hidden = false;
   };
 
   Pin.prototype._paintGrade = function (p) {
@@ -1102,6 +1167,7 @@
     shortPlusCode: shortPlusCode,
     precisionOf: precisionOf,
     metresBetween: metresBetween,
+    osmContributeUrl: osmContributeUrl,
 
     _internals: {
       VIEWS: VIEWS, VIEW_ORDER: VIEW_ORDER, PRECISION: PRECISION,
