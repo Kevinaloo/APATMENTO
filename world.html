@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>The Cabana World Map | Every Destination, One Globe</title>
+<meta name="description" content="Fly the Cabana world map. 175 destinations across six continents — apartments, safaris, car hire and airport transfers — on one live globe. Zero commission everywhere."/>
+<meta name="keywords" content="cabana world map, travel map africa, interactive travel globe, book apartments map, safari map africa, car hire map, airport transfers map, zero commission travel, cabana destinations, africa travel map"/>
+<link rel="canonical" href="https://cabana.africa/world"/>
+
+<meta name="geo.region" content="GLOBAL"/>
+<meta name="geo.placename" content="Global, Worldwide"/>
+<meta name="geo.position" content="0.0,0.0"/>
+<meta name="ICBM" content="0.0,0.0"/>
+<meta name="theme-color" content="#6D28FF"/>
+<link rel="icon" href="/favicon.ico" sizes="any"/>
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png"/>
+<link rel="apple-touch-icon" href="/cabana-apple-touch-icon.png"/>
+<link rel="manifest" href="/manifest.json"/>
+<meta property="og:site_name" content="Cabana"/>
+<meta property="og:title" content="The Cabana World Map | Every Destination, One Globe"/>
+<meta property="og:description" content="Fly the Cabana world map. 175 destinations across six continents — apartments, safaris, car hire and airport transfers — on one live globe. Zero commission everywhere."/>
+<meta property="og:url" content="https://cabana.africa/world"/>
+<meta property="og:type" content="website"/>
+<meta property="og:image" content="https://cabana.africa/og-stays.jpg"/>
+<meta property="og:image:width" content="1200"/>
+<meta property="og:image:height" content="630"/>
+<meta property="og:image:alt" content="The Cabana world map — every destination on one globe"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:title" content="The Cabana World Map | Every Destination, One Globe"/>
+<meta name="twitter:description" content="175 destinations across six continents on one live globe. Zero commission everywhere."/>
+<meta name="twitter:image" content="https://cabana.africa/og-stays.jpg"/>
+
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<!-- The map's tiles and library are the page's critical path once the
+     globe mounts, so the connections are opened while the HTML parses
+     rather than at first fetch. -->
+<link rel="preconnect" href="https://unpkg.com" crossorigin/>
+<link rel="preconnect" href="https://a.basemaps.cartocdn.com" crossorigin/>
+<link rel="preload" as="fetch" href="/cabana-world-atlas.json" crossorigin/>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" media="print" onload="this.media='all';this.onload=null"/>
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"/></noscript>
+<link rel="stylesheet" href="/cabana-globe.css"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{--glass:#FCFCFE;--glass-2:#F5F5FC;--ink:#08080F;--ink-soft:#474A66;--ink-faint:#8B8EAC;
+--violet:#6D28FF;--electric:#4F6DFF;--mint:#4EE0C8;--gold:#F5B12E;--ember:#FF6A3C;
+--line:rgba(8,8,15,.08);--line-2:rgba(8,8,15,.14);
+--ease-out:cubic-bezier(.22,1,.36,1);
+--font-display:'Geist','Inter',sans-serif;--font-body:'Inter',system-ui,-apple-system,sans-serif;}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important;}}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;}
+body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webkit-font-smoothing:antialiased;}
+a{text-decoration:none;color:inherit;}
+:focus-visible{outline:2px solid var(--violet);outline-offset:2px;border-radius:6px;}
+
+.gnav{display:flex;align-items:center;justify-content:space-between;padding:14px clamp(16px,4vw,32px);border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(252,252,254,.88);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);z-index:60;}
+.gnav-back{display:flex;align-items:center;gap:7px;font-size:13.5px;font-weight:600;color:var(--ink-soft);transition:color .2s;}
+.gnav-back:hover{color:var(--ink);}
+.gnav-logo{height:22px;width:auto;}
+.gnav-cta{font-size:13.5px;font-weight:700;color:#fff;background:linear-gradient(135deg,var(--violet),var(--electric));padding:9px 18px;border-radius:100px;box-shadow:0 8px 22px rgba(109,40,255,.22);transition:transform .25s var(--ease-out),box-shadow .25s;}
+.gnav-cta:hover{transform:translateY(-1px);box-shadow:0 12px 30px rgba(109,40,255,.3);}
+
+/* ── Hero ─────────────────────────────────────────────────────────
+   Type first, then the globe. The headline has to be readable before
+   Leaflet, the atlas and 175 pins have arrived — a hero that is blank
+   until a map loads is a hero that fails on a slow connection.      */
+.whero{max-width:1000px;margin:0 auto;padding:clamp(40px,7vw,72px) 24px clamp(20px,3vw,30px);text-align:center;}
+.eyebrow{font-size:11.5px;font-weight:700;letter-spacing:.17em;text-transform:uppercase;color:var(--violet);margin-bottom:15px;}
+h1{font-family:var(--font-display);font-weight:600;font-size:clamp(32px,5.6vw,58px);line-height:1.05;letter-spacing:-.035em;margin-bottom:17px;}
+h1 em{font-style:normal;font-weight:680;background:linear-gradient(115deg,var(--violet),var(--electric) 45%,var(--mint));-webkit-background-clip:text;background-clip:text;color:transparent;}
+.sub{font-size:clamp(15px,1.9vw,17.5px);line-height:1.68;color:var(--ink-soft);max-width:660px;margin:0 auto;}
+
+/* ── The globe ────────────────────────────────────────────────────
+   Full-bleed and tall. A world map in a small box is a thumbnail;
+   the whole point of this page is that the guest can fly it.       */
+.wstage{padding:0 clamp(12px,2.6vw,26px) clamp(14px,2.4vw,22px);}
+#cabana-world{height:min(74vh,760px);min-height:480px;box-shadow:0 26px 80px rgba(109,40,255,.13),0 8px 26px rgba(8,8,15,.07);}
+@media(max-width:860px){#cabana-world{height:min(72vh,640px);}}
+
+.wkeys{max-width:1000px;margin:0 auto;padding:0 24px clamp(30px,5vw,52px);display:flex;flex-wrap:wrap;gap:7px;justify-content:center;align-items:center;font-size:11.5px;color:var(--ink-faint);}
+.wkeys b{font-weight:650;color:var(--ink-soft);}
+.wkey{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border:1px solid var(--line-2);border-radius:100px;font-weight:600;}
+.wkey kbd{font-family:var(--font-display);font-size:10px;font-weight:750;background:var(--ink);color:#fff;border-radius:4px;padding:1.5px 5px;line-height:1.4;}
+
+/* ── Stats ────────────────────────────────────────────────────────── */
+.wstats{max-width:1140px;margin:0 auto clamp(34px,5vw,58px);padding:0 24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:11px;}
+.wstat{background:var(--glass-2);border:1px solid var(--line);border-radius:16px;padding:20px 18px;}
+.wstat b{display:block;font-family:var(--font-display);font-size:30px;font-weight:660;letter-spacing:-.04em;line-height:1;font-feature-settings:'tnum' 1;background:linear-gradient(135deg,var(--violet),var(--electric));-webkit-background-clip:text;background-clip:text;color:transparent;}
+.wstat span{display:block;font-size:12px;font-weight:600;color:var(--ink-faint);margin-top:7px;line-height:1.45;}
+
+.wrap{max-width:1140px;margin:0 auto;padding:0 24px clamp(48px,7vw,84px);}
+.sec{margin-bottom:clamp(34px,5vw,54px);}
+.sec h2{font-family:var(--font-display);font-size:clamp(21px,3vw,29px);font-weight:640;letter-spacing:-.032em;line-height:1.16;margin-bottom:15px;}
+.sec p{font-size:14.5px;line-height:1.72;color:var(--ink-soft);margin-bottom:13px;max-width:74ch;}
+.sec p b{color:var(--ink);font-weight:650;}
+
+/* ── The crawlable index ──────────────────────────────────────────
+   The globe is JavaScript, and a crawler that runs none of it must
+   still be able to reach all 175 destinations. This block is those
+   destinations as plain links, generated from the same atlas the map
+   reads, by seo/build_world_atlas.py. It is not a fallback bolted on
+   afterwards — it is the map's contents, written out.               */
+.watlas{margin-top:clamp(30px,4.5vw,48px);}
+.wcont{margin-bottom:30px;border-top:1px solid var(--line);padding-top:20px;}
+.wcont-h{display:flex;align-items:baseline;gap:11px;flex-wrap:wrap;margin-bottom:14px;}
+.wcont-h h3{font-family:var(--font-display);font-size:18.5px;font-weight:660;letter-spacing:-.028em;}
+.wcont-h span{font-size:11.5px;font-weight:650;color:var(--ink-faint);letter-spacing:.02em;}
+.wcont-h a{font-size:12px;font-weight:650;color:var(--violet);margin-left:auto;}
+.wgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(216px,1fr));gap:9px;}
+.wcard{display:block;padding:13px 15px;border:1px solid var(--line);border-radius:13px;background:var(--glass);transition:border-color .2s var(--ease-out),transform .2s var(--ease-out),box-shadow .2s var(--ease-out);}
+.wcard:hover{border-color:var(--violet);transform:translateY(-2px);box-shadow:0 10px 28px rgba(109,40,255,.12);}
+.wcard b{display:block;font-family:var(--font-display);font-size:14px;font-weight:640;letter-spacing:-.022em;}
+.wcard em{display:block;font-style:normal;font-size:11.5px;font-weight:550;color:var(--ink-faint);margin-top:2px;}
+.wcard u{display:flex;flex-wrap:wrap;gap:4px;margin-top:9px;text-decoration:none;}
+.wcard u i{font-style:normal;font-size:10px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;padding:2.5px 7px;border-radius:100px;background:rgba(109,40,255,.08);color:var(--violet);}
+.wcard u i.live{background:rgba(20,184,166,.13);color:#0F9A8C;}
+
+.faq{margin-top:clamp(30px,4.5vw,48px);}
+.fitem{border:1px solid var(--line);border-radius:14px;margin-bottom:8px;background:var(--glass);overflow:hidden;}
+.fitem summary{cursor:pointer;list-style:none;padding:15px 18px;font-size:14.5px;font-weight:620;display:flex;justify-content:space-between;align-items:center;gap:14px;}
+.fitem summary::-webkit-details-marker{display:none;}
+.fchev{transition:transform .25s var(--ease-out);color:var(--ink-faint);flex:0 0 auto;}
+.fitem[open] .fchev{transform:rotate(180deg);}
+.fa{padding:0 18px 16px;font-size:13.8px;line-height:1.68;color:var(--ink-soft);}
+
+.cta{margin-top:clamp(34px,5vw,56px);padding:clamp(30px,4.5vw,46px) clamp(24px,4vw,40px);border-radius:24px;background:linear-gradient(135deg,rgba(109,40,255,.07),rgba(79,109,255,.05));border:1px solid rgba(109,40,255,.16);text-align:center;}
+.cta h2{font-family:var(--font-display);font-size:clamp(21px,3vw,30px);font-weight:640;letter-spacing:-.032em;margin-bottom:11px;}
+.cta p{font-size:14.5px;line-height:1.68;color:var(--ink-soft);max-width:56ch;margin:0 auto 21px;}
+.cta-btn{display:inline-flex;align-items:center;gap:9px;background:linear-gradient(135deg,var(--violet),var(--electric));color:#fff;font-size:14.5px;font-weight:700;padding:14px 27px;border-radius:100px;box-shadow:0 12px 32px rgba(109,40,255,.26);transition:transform .25s var(--ease-out),box-shadow .25s;}
+.cta-btn:hover{transform:translateY(-2px);box-shadow:0 18px 44px rgba(109,40,255,.34);}
+
+.xlinks{margin-top:30px;display:flex;flex-wrap:wrap;gap:8px;}
+.xlink{font-size:12.5px;font-weight:620;color:var(--ink-soft);border:1px solid var(--line-2);border-radius:100px;padding:8px 15px;transition:border-color .2s,color .2s;}
+.xlink:hover{border-color:var(--violet);color:var(--violet);}
+
+.site-footer{background:#0A0A14;color:rgba(255,255,255,.55);padding:64px 0 0;margin-top:80px;font-size:13.5px;line-height:1.6;}
+.sf-inner{max-width:1200px;margin:0 auto;padding:0 40px 48px;display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:48px;}
+@media(max-width:1024px){.sf-inner{grid-template-columns:1fr 1fr 1fr;}}
+@media(max-width:680px){.sf-inner{grid-template-columns:1fr 1fr;padding:0 24px 40px;gap:32px;}}
+@media(max-width:440px){.sf-inner{grid-template-columns:1fr;}}
+.sf-logo{height:24px;width:auto;margin-bottom:16px;display:block;filter:brightness(0) invert(1);opacity:.9;}
+.sf-tagline{font-size:13px;line-height:1.7;color:rgba(255,255,255,.38);max-width:280px;margin-bottom:24px;}
+.sf-contact{display:flex;flex-direction:column;gap:10px;}
+.sf-contact-item{display:inline-flex;align-items:center;gap:8px;color:rgba(255,255,255,.5);text-decoration:none;font-size:12.5px;font-weight:500;transition:color .2s;}
+.sf-contact-item:hover{color:#fff;}
+.sf-chat{color:#8B5CF6!important;font-weight:600!important;}
+.sf-col-head{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.25);margin-bottom:14px;}
+.sf-nav-col{display:flex;flex-direction:column;gap:0;}
+.sf-nav-col a{color:rgba(255,255,255,.5);text-decoration:none;font-size:13.5px;padding:4px 0;transition:color .2s;}
+.sf-nav-col a:hover{color:#fff;}
+.sf-bottom{max-width:1200px;margin:0 auto;padding:20px 40px;border-top:1px solid rgba(255,255,255,.07);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+@media(max-width:680px){.sf-bottom{padding:20px 24px;flex-direction:column;align-items:flex-start;}}
+.sf-bottom-left{display:flex;align-items:center;gap:16px;flex-wrap:wrap;font-size:12px;color:rgba(255,255,255,.25);}
+@media(max-width:680px){.sf-bottom-left{flex-direction:column;align-items:flex-start;gap:4px;}}
+.sf-bottom-right{display:flex;gap:16px;}
+.sf-bottom-right a{font-size:12px;color:rgba(255,255,255,.25);text-decoration:none;transition:color .2s;}
+.sf-bottom-right a:hover{color:rgba(255,255,255,.6);}
+
+</style>
+<!-- SCHEMA:BEGIN --><script type="application/ld+json">{"@context":"https://schema.org","@type":"CollectionPage","@id":"https://cabana.africa/world#page","url":"https://cabana.africa/world","name":"The Cabana World Map","description":"Every Cabana destination on one interactive globe — 175 places across 54 countries, with apartments, safaris, car hire and airport transfers.","isPartOf":{"@type":"WebSite","@id":"https://cabana.africa/#website","name":"Cabana","url":"https://cabana.africa/"},"inLanguage":"en","primaryImageOfPage":{"@type":"ImageObject","url":"https://cabana.africa/og-stays.jpg"}}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Cabana","item":"https://cabana.africa/"},{"@type":"ListItem","position":2,"name":"World map","item":"https://cabana.africa/world"}]}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"ItemList","name":"Cabana destination hubs","numberOfItems":6,"itemListElement":[{"@type":"ListItem","position":1,"name":"Africa","url":"https://cabana.africa/africa-apartments"},{"@type":"ListItem","position":2,"name":"Europe","url":"https://cabana.africa/europe-apartments"},{"@type":"ListItem","position":3,"name":"Asia","url":"https://cabana.africa/asia-apartments"},{"@type":"ListItem","position":4,"name":"The Americas","url":"https://cabana.africa/americas-apartments"},{"@type":"ListItem","position":5,"name":"Oceania","url":"https://cabana.africa/oceania-apartments"},{"@type":"ListItem","position":6,"name":"Worldwide","url":"https://cabana.africa/global-apartments"}]}</script><!-- SCHEMA:END -->
+</head>
+<body>
+
+<nav class="gnav">
+  <a href="/apartments" class="gnav-back">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+    All stays
+  </a>
+  <a href="/" aria-label="Cabana home">
+    <img class="gnav-logo" src="/cabana-wordmark-color.png" alt="Cabana" onerror="this.style.display='none'" fetchpriority="high" decoding="async"/>
+  </a>
+  <a href="/apartments" class="gnav-cta">Browse stays</a>
+</nav>
+
+<header class="whero">
+  <div class="eyebrow">Cabana · The World Map</div>
+  <h1>Every destination we serve, <em>on one globe</em>.</h1>
+  <p class="sub">Apartments, safaris, car hire and airport transfers across six continents — each one a real page with a real price, none of it commission. Fly it yourself, or press a tour and let the camera take you.</p>
+</header>
+
+<div class="wstage">
+  <!-- The globe mounts here. Everything below this element works with
+       JavaScript off, which is deliberate: the map is the best way to
+       browse Cabana, not the only way. -->
+  <div id="cabana-world" role="region" aria-label="Interactive Cabana world map"></div>
+</div>
+
+<div class="wkeys">
+  <b>Shortcuts</b>
+  <span class="wkey"><kbd>1</kbd>–<kbd>6</kbd> optics</span>
+  <span class="wkey"><kbd>T</kbd> tour</span>
+  <span class="wkey"><kbd>A</kbd> corridors</span>
+  <span class="wkey"><kbd>L</kbd> names</span>
+  <span class="wkey"><kbd>H</kbd> readout</span>
+  <span class="wkey"><kbd>Esc</kbd> back to the globe</span>
+</div>
+
+<!-- STATS:BEGIN --><div class="wstats"><div class="wstat"><b>175</b><span>destinations on the map</span></div><div class="wstat"><b>54</b><span>countries covered</span></div><div class="wstat"><b>115</b><span>cities and neighbourhoods</span></div><div class="wstat"><b>3</b><span>with live inventory today</span></div><div class="wstat"><b>311</b><span>destination pages behind them</span></div><div class="wstat"><b>0%</b><span>commission, everywhere</span></div></div><!-- STATS:END -->
+
+<main class="wrap">
+
+  <section class="sec">
+    <h2>One map, the whole product</h2>
+    <p>Most travel sites give you a map of search results. This is a map of <b>Cabana itself</b> — every country, city and neighbourhood the platform reaches, with the categories that are live in each one. Click a pin and you get that place's real nightly range, its season, its currency, how people pay there, what a visitor needs to enter, and a direct link to every bookable page behind it.</p>
+    <p>Nothing on the map is decorative. Every pin is generated from a page that exists, so the globe cannot advertise a destination that goes nowhere. Where a place has <b>live, bookable inventory</b> in our database, the card says so and shows the real price range. Where it does not, it shows the typical range and says that is what it is. A travel map that guesses is worse than no map at all.</p>
+  </section>
+
+  <section class="sec">
+    <h2>Fly it like a camera, not a scroll wheel</h2>
+    <p>The camera pulls up, crosses the world at altitude, then descends onto its target — so a jump from London to Lagos reads as a journey rather than a cut. Arrivals end with a short focus beat, the same way a lens settles. Longer distances take longer, but only somewhat: the whole point is that the world feels big without the wait feeling long.</p>
+    <p><b>Six optics.</b> Aurora for daylight, Ivory to read, Midnight for the globe after dark, Savannah for warm African light, and two ported straight from the open-source God's Eye View project — Noir and Nightglass. Press <kbd>1</kbd> through <kbd>6</kbd>, or use the rail at the top of the map. The whole planet re-renders through the optic you chose, chrome included.</p>
+    <p><b>Six tours.</b> The Grand Tour crosses every continent in half a minute. The East African Circuit runs Nairobi to Kilimani to Nakuru to the coast, the way guests actually travel it. The Diaspora Run flies the routes home — London, Paris and New York into West Africa. Press one and the camera takes over until you touch the map, at which point it hands control straight back.</p>
+    <p><b>The corridors are real.</b> The animated arcs are great-circle paths between places Cabana serves at both ends — diaspora routes, trade corridors, safari circuits, domestic hops. They are the shape of how the world moves through this platform.</p>
+  </section>
+
+  <section class="sec">
+    <h2>Share the exact view you are looking at</h2>
+    <p>The camera position, the optic, the filters and the place you have selected all serialise into the address bar. Press the share control and you get a link that opens on <b>your</b> view — same place, same optics, same filters. Send someone Diani at dusk in Savannah, or the whole Southern Sweep, and that is what they open.</p>
+  </section>
+
+  <!-- ATLAS:BEGIN --><section class="sec watlas"><h2>Every destination on the map</h2><p>The full contents of the globe, as plain links. This list is generated from the same inventory the map reads, so the two can never drift apart. A <b>Live</b> tag means real bookable stays in that place today.</p><div class="wcont"><div class="wcont-h"><h3>Africa</h3><span>129 destinations · Home. 54 countries, coast to coast.</span><a href="/africa-apartments">All of Africa →</a></div><div class="wgrid"><a class="wcard" href="/algeria-travel"><b>Algeria</b><em>North Africa</em><u></u></a><a class="wcard" href="/angola-travel"><b>Angola</b><em>Southern Africa</em><u></u></a><a class="wcard" href="/benin-travel"><b>Benin</b><em>West Africa</em><u></u></a><a class="wcard" href="/botswana-travel"><b>Botswana</b><em>Southern Africa</em><u></u></a><a class="wcard" href="/burkina-faso-travel"><b>Burkina Faso</b><em>West Africa</em><u></u></a><a class="wcard" href="/burundi-travel"><b>Burundi</b><em>East Africa</em><u></u></a><a class="wcard" href="/cameroon-travel"><b>Cameroon</b><em>Central Africa</em><u></u></a><a class="wcard" href="/cape-verde-travel"><b>Cape Verde</b><em>West Africa</em><u></u></a><a class="wcard" href="/central-african-republic-travel"><b>Central African Republic</b><em>Central Africa</em><u></u></a><a class="wcard" href="/chad-travel"><b>Chad</b><em>Central Africa</em><u></u></a><a class="wcard" href="/comoros-travel"><b>Comoros</b><em>East Africa</em><u></u></a><a class="wcard" href="/cote-divoire-travel"><b>Côte d&#39;Ivoire</b><em>West Africa</em><u></u></a><a class="wcard" href="/dr-congo-travel"><b>DR Congo</b><em>Central Africa</em><u></u></a><a class="wcard" href="/djibouti-travel"><b>Djibouti</b><em>East Africa</em><u></u></a><a class="wcard" href="/egypt-travel"><b>Egypt</b><em>North Africa</em><u></u></a><a class="wcard" href="/equatorial-guinea-travel"><b>Equatorial Guinea</b><em>Central Africa</em><u></u></a><a class="wcard" href="/eritrea-travel"><b>Eritrea</b><em>East Africa</em><u></u></a><a class="wcard" href="/eswatini-travel"><b>Eswatini</b><em>Southern Africa</em><u></u></a><a class="wcard" href="/ethiopia-travel"><b>Ethiopia</b><em>East Africa</em><u></u></a><a class="wcard" href="/gabon-travel"><b>Gabon</b><em>Central Africa</em><u></u></a><a class="wcard" href="/gambia-travel"><b>Gambia</b><em>West Africa</em><u></u></a><a class="wcard" href="/ghana-apartments"><b>Ghana</b><em>West Africa</em><u><i>Stays</i></u></a><a class="wcard" href="/guinea-travel"><b>Guinea</b><em>West Africa</em><u></u></a><a class="wcard" href="/guinea-bissau-travel"><b>Guinea-Bissau</b><em>West Africa</em><u></u></a><a class="wcard" href="/kenya-apartments"><b>Kenya</b><em>East Africa</em><u><i class="live">Live</i><i>Stays</i><i>Safaris</i></u></a><a class="wcard" href="/lesotho-travel"><b>Lesotho</b><em>Southern Africa</em><u></u></a><a class="wcard" href="/liberia-travel"><b>Liberia</b><em>West Africa</em><u></u></a><a class="wcard" href="/libya-travel"><b>Libya</b><em>North Africa</em><u></u></a><a class="wcard" href="/madagascar-travel"><b>Madagascar</b><em>East Africa</em><u></u></a><a class="wcard" href="/malawi-travel"><b>Malawi</b><em>Southern Africa</em><u></u></a><a class="wcard" href="/mali-travel"><b>Mali</b><em>West Africa</em><u></u></a><a class="wcard" href="/mauritania-travel"><b>Mauritania</b><em>West Africa</em><u></u></a><a class="wcard" href="/mauritius-travel"><b>Mauritius</b><em>East Africa</em><u></u></a><a class="wcard" href="/morocco-apartments"><b>Morocco</b><em>North Africa</em><u><i>Stays</i></u></a><a class="wcard" href="/mozambique-travel"><b>Mozambique</b><em>Southern Africa</em><u></u></a><a class="wcard" href="/namibia-travel"><b>Namibia</b><em>Southern Africa</em><u></u></a><a class="wcard" href="/niger-travel"><b>Niger</b><em>West Africa</em><u></u></a><a class="wcard" href="/nigeria-apartments"><b>Nigeria</b><em>West Africa</em><u><i>Stays</i></u></a><a class="wcard" href="/republic-of-congo-travel"><b>Republic of the Congo</b><em>Central Africa</em><u></u></a><a class="wcard" href="/rwanda-travel"><b>Rwanda</b><em>East Africa</em><u></u></a><a class="wcard" href="/senegal-travel"><b>Senegal</b><em>West Africa</em><u></u></a><a class="wcard" href="/seychelles-travel"><b>Seychelles</b><em>East Africa</em><u></u></a><a class="wcard" href="/sierra-leone-travel"><b>Sierra Leone</b><em>West Africa</em><u></u></a><a class="wcard" href="/somalia-travel"><b>Somalia</b><em>East Africa</em><u></u></a><a class="wcard" href="/south-africa-apartments"><b>South Africa</b><em>Southern Africa</em><u><i>Stays</i></u></a><a class="wcard" href="/south-sudan-travel"><b>South Sudan</b><em>East Africa</em><u></u></a><a class="wcard" href="/sudan-travel"><b>Sudan</b><em>North Africa</em><u></u></a><a class="wcard" href="/sao-tome-and-principe-travel"><b>São Tomé and Príncipe</b><em>Central Africa</em><u></u></a><a class="wcard" href="/tanzania-apartments"><b>Tanzania</b><em>East Africa</em><u><i>Stays</i></u></a><a class="wcard" href="/togo-travel"><b>Togo</b><em>West Africa</em><u></u></a><a class="wcard" href="/tunisia-travel"><b>Tunisia</b><em>North Africa</em><u></u></a><a class="wcard" href="/uganda-travel"><b>Uganda</b><em>East Africa</em><u></u></a><a class="wcard" href="/zambia-travel"><b>Zambia</b><em>Southern Africa</em><u></u></a><a class="wcard" href="/zimbabwe-travel"><b>Zimbabwe</b><em>Southern Africa</em><u></u></a><a class="wcard" href="/abidjan-apartments"><b>Abidjan</b><em>Côte d&#39;Ivoire</em><u><i>Stays</i><i>Car hire</i><i>Transfers</i><i>Safaris</i></u></a><a class="wcard" href="/abuja-apartments"><b>Abuja</b><em>Nigeria</em><u><i>Stays</i><i>Car hire</i><i>Transfers</i><i>Safaris</i></u></a><a class="wcard" href="/accra-apartments"><b>Accra</b><em>Ghana</em><u><i>Stays</i><i>Car hire</i><i>Transfers</i><i>Safaris</i></u></a><a class="wcard" href="/addis-ababa-apartments"><b>Addis Ababa</b><em>Ethiopia</em><u><i>Stays</i><i>Car hire</i><i>Transfers</i><i>Safaris</i></u></a><a class="wcard" href="/algiers-safaris"><b>Algiers</b><em>Algeria</em><u><i>Car hire</i><i>Transfers</i><i>Safaris</i></u></a><a class="wcard" href="/antananarivo-safaris"><b>Antananarivo</b><em>Madagascar</em><u><i>Car hire</i><i>Transfers</i><i>Safaris</i></u></a><a class="wcard" href="/arusha-apartments"><b>Arusha</b><em>Tanzania</em><u><i>Stays</i><i>Car hire</i><i>Transfers</i><i>Safaris</i></u></a><a class="wcard" href="/cairo-apartments"><b>Cairo</b><em>Egypt</em><u><i>Stays</i><i>Car hire</i><i>Transfers</i><i>Safaris</i></u></a><a class="wcard" href="/cape-coast-apartments"><b>Cape Coast</b><em>Ghana</em><u><i>Stays</i><i>Car hire</i><i>Transfers</i><i>Safaris</i></u></a><a class="wcard" href="/cape-town-apartments"><b>Cape Town</b><em>South Africa</em><u><i>Stays</i><i>Car hire</i><i>Transfers</i><i>Safaris</i></u></a><a class="wcard" href="/casablanca-safaris"><b>Casablanca</b><em>Morocco</em><u><i>Car hire</i><i>Transfers</i><i>Safaris</i></u></a><a class="wcard" href="/dakar-apartments"><b>Dakar</b><em>Senegal</em><u><i>Stays</i><i>Car hire</i><i>Transfers</i><i>Safaris</i></u></a><a class="wcard" href="/dar-es-salaam-apartments"><b>Dar es Salaam</b><em>Tanzania</em><u><i>Stays</i><i>Car hire</i><i>Transfers</i><i>Safaris</i></u></a><a class="wcard" href="/diani-apartments"><b>Diani</b><em>Kenya</em><u><i>Stays</i><i>Car hire</i><i>Transfers</i><i>Safaris</i></u></a><a class="wcard" href="/douala-safaris"><b>Douala</b><em>Cameroon</em><u><i>Car hire</i><i>Transfers</i><i>Safaris</i></u></a><a class="wcard" href="/durban-safaris"><b>Durban</b><em>South Africa</em><u><i>Car hire</i><i>Transfers</i><i>Safaris</i></u></a><a class="wcard" href="/entebbe-safaris"><b>Entebbe</b><em>Uganda</em><u><i>Car hire</i><i>Transfers</i><i>Safaris</i></u></a><a class="wcard" href="/freetown-safaris"><b>Freetown</b><em>Sierra Leone</em><u><i>Car hire</i><i>Transfers</i><i>Safaris</i></u></a><a class="wcard" href="/gaborone-safaris"><b>Gaborone</b><em>Botswana</em><u><i>Car hire</i><i>Transfers</i><i>Safaris</i></u></a><a class="wcard" href="/harare-safaris"><b>Harare</b><em>Zimbabwe</em><u><i>Car hire</i><i>Transfers</i><i>Safaris</i></u></a><a class="wcard" href="/ibadan-safaris"><b>Ibadan</b><em>Nigeria</em><u><i>Car hire</i><i>Transfers</i><i>Safaris</i></u></a><a class="wcard" href="/johannesburg-apartments"><b>Johannesburg</b><em>South Africa</em><u><i>Stays</i><i>Car hire</i><i>Transfers</i><i>Safaris</i></u></a><a class="wcard" href="/kampala-apartments"><b>Kampala</b><em>Uganda</em><u><i>Stays</i><i>Car hire</i><i>Transfers</i><i>Safaris</i></u></a><a class="wcard" href="/kigali-apartments"><b>Kigali</b><em>Rwanda</em><u><i>Stays</i><i>Car hire</i><i>Transfers</i><i>Safaris</i></u></a><a class="wcard" href="/kinshasa-safaris"><b>Kinshasa</b><em>DR Congo</em><u><i>Car hire</i><i>Transfers</i><i>Safaris</i></u></a><a class="wcard" href="/kisumu-safaris"><b>Kisumu</b><em>Kenya</em><u><i>Car hire</i><i>Transfers</i><i>Safaris</i></u></a><a class="wcard" href="/kumasi-apartments"><b>Kumasi</b><em>Ghana</em><u><i>Stays</i><i>Car hire</i><i>Transfers</i><i>Safaris</i></u></a><a class="wcard" href="/lagos-apartments"><b>Lagos</b><em>Nigeria</em><u><i>Stays</i><i>Car hire</i><i>Transfers</i><i>Safaris</i></u></a><a class="wcard" href="/lamu-apartments"><b>Lamu</b><em>Kenya</em><u><i>Stays</i><i>Car hire</i><i>Transfers</i><i>Safaris</i></u></a><a class="wcard" href="/lilongwe-safaris"><b>Lilongwe</b><em>Malawi</em><u><i>Car hire</i><i>Transfers</i><i>Safaris</i></u></a><a class="wcard" href="/livingstone-safaris"><b>Livingstone</b><em>Zambia</em><u><i>Car hire</i><i>Transfers</i><i>Safaris</i></u></a><a class="wcard" href="/luanda-safaris"><b>Luanda</b><em>Angola</em><u><i>Car hire</i><i>Transfers</i><i>Safaris</i></u></a><a class="wcard" href="/lusaka-safaris"><b>Lusaka</b><em>Zambia</em><u><i>Car hire</i><i>Transfers</i><i>Safaris</i></u></a><a class="wcard" href="/malindi-apartments"><b>Malindi</b><em>Kenya</em><u><i>Stays</i><i>Car hire</i><i>Transfers</i><i>Safaris</i></u></a><a class="wcard" href="/maputo-safaris"><b>Maputo</b><em>Mozambique</em><u><i>Car hire</i><i>Transfers</i><i>Safaris</i></u></a><a class="wcard" href="/marrakech-apartments"><b>Marrakech</b><em>Morocco</em><u><i>Stays</i><i>Car hire</i><i>Transfers</i><i>Safaris</i></u></a><a class="wcard" href="/maun-safaris"><b>Maun</b><em>Botswana</em><u><i>Car hire</i><i>Transfers</i><i>Safaris</i></u></a><a class="wcard" href="/mombasa-apartments"><b>Mombasa</b><em>Kenya</em><u><i>Stays</i><i>Car hire</i><i>Transfers</i><i>Safaris</i></u></a><a class="wcard" href="/nairobi-apartments"><b>Nairobi</b><em>Kenya</em><u><i class="live">Live</i><i>Stays</i><i>Car hire</i><i>Transfers</i><i>Safaris</i></u></a><a class="wcard" href="/naivasha-apartments"><b>Naivasha</b><em>Kenya</em><u><i>Stays</i><i>Car hire</i><i>Transfers</i><i>Safaris</i></u></a><a class="wcard" href="/nakuru-apartments"><b>Nakuru</b><em>Kenya</em><u><i>Stays</i><i>Car hire</i><i>Transfers</i><i>Safaris</i></u></a><a class="wcard" href="/nanyuki-apartments"><b>Nanyuki</b><em>Kenya</em><u><i>Stays</i><i>Car hire</i><i>Transfers</i><i>Safaris</i></u></a><a class="wcard" href="/port-harcourt-apartments"><b>Port Harcourt</b><em>Nigeria</em><u><i>Stays</i><i>Car hire</i><i>Transfers</i><i>Safaris</i></u></a><a class="wcard" href="/port-louis-safaris"><b>Port Louis</b><em>Mauritius</em><u><i>Car hire</i><i>Transfers</i><i>Safaris</i></u></a><a class="wcard" href="/tunis-safaris"><b>Tunis</b><em>Tunisia</em><u><i>Car hire</i><i>Transfers</i><i>Safaris</i></u></a><a class="wcard" href="/victoria-safaris"><b>Victoria</b><em>Seychelles</em><u><i>Car hire</i><i>Transfers</i><i>Safaris</i></u></a><a class="wcard" href="/victoria-falls-safaris"><b>Victoria Falls</b><em>Zimbabwe</em><u><i>Car hire</i><i>Transfers</i><i>Safaris</i></u></a><a class="wcard" href="/watamu-apartments"><b>Watamu</b><em>Kenya</em><u><i>Stays</i><i>Car hire</i><i>Transfers</i><i>Safaris</i></u></a><a class="wcard" href="/windhoek-safaris"><b>Windhoek</b><em>Namibia</em><u><i>Car hire</i><i>Transfers</i><i>Safaris</i></u></a><a class="wcard" href="/zanzibar-apartments"><b>Zanzibar</b><em>Tanzania</em><u><i>Stays</i></u></a><a class="wcard" href="/zanzibar-city-safaris"><b>Zanzibar City</b><em>Tanzania</em><u><i>Car hire</i><i>Transfers</i><i>Safaris</i></u></a><a class="wcard" href="/airport-residential-accra-apartments"><b>Airport Residential</b><em>Accra, Ghana</em><u><i>Stays</i></u></a><a class="wcard" href="/bamburi-apartments"><b>Bamburi</b><em>Mombasa, Kenya</em><u><i>Stays</i></u></a><a class="wcard" href="/east-legon-apartments"><b>East Legon</b><em>Accra, Ghana</em><u><i>Stays</i></u></a><a class="wcard" href="/gigiri-apartments"><b>Gigiri</b><em>Nairobi, Kenya</em><u><i>Stays</i></u></a><a class="wcard" href="/ikeja-apartments"><b>Ikeja</b><em>Lagos, Nigeria</em><u><i>Stays</i></u></a><a class="wcard" href="/ikoyi-apartments"><b>Ikoyi</b><em>Lagos, Nigeria</em><u><i>Stays</i></u></a><a class="wcard" href="/karen-apartments"><b>Karen</b><em>Nairobi, Kenya</em><u><i>Stays</i></u></a><a class="wcard" href="/kileleshwa-apartments"><b>Kileleshwa</b><em>Nairobi, Kenya</em><u><i>Stays</i></u></a><a class="wcard" href="/kilimani-apartments"><b>Kilimani</b><em>Nairobi, Kenya</em><u><i>Stays</i></u></a><a class="wcard" href="/lavington-apartments"><b>Lavington</b><em>Nairobi, Kenya</em><u><i>Stays</i></u></a><a class="wcard" href="/lekki-apartments"><b>Lekki</b><em>Lagos, Nigeria</em><u><i>Stays</i></u></a><a class="wcard" href="/muthaiga-apartments"><b>Muthaiga</b><em>Nairobi, Kenya</em><u><i>Stays</i></u></a><a class="wcard" href="/cbd-apartments"><b>Nairobi CBD</b><em>Nairobi, Kenya</em><u><i>Stays</i></u></a><a class="wcard" href="/ngong-road-apartments"><b>Ngong Road</b><em>Nairobi, Kenya</em><u><i>Stays</i></u></a><a class="wcard" href="/nyali-apartments"><b>Nyali</b><em>Mombasa, Kenya</em><u><i>Stays</i></u></a><a class="wcard" href="/rongai-apartments"><b>Ongata Rongai</b><em>Nairobi, Kenya</em><u><i>Stays</i></u></a><a class="wcard" href="/parklands-apartments"><b>Parklands</b><em>Nairobi, Kenya</em><u><i>Stays</i></u></a><a class="wcard" href="/runda-apartments"><b>Runda</b><em>Nairobi, Kenya</em><u><i>Stays</i></u></a><a class="wcard" href="/south-c-apartments"><b>South C</b><em>Nairobi, Kenya</em><u><i>Stays</i></u></a><a class="wcard" href="/syokimau-apartments"><b>Syokimau</b><em>Nairobi, Kenya</em><u><i class="live">Live</i><i>Stays</i></u></a><a class="wcard" href="/thika-road-apartments"><b>Thika Road</b><em>Nairobi, Kenya</em><u><i>Stays</i></u></a><a class="wcard" href="/upperhill-apartments"><b>Upper Hill</b><em>Nairobi, Kenya</em><u><i>Stays</i></u></a><a class="wcard" href="/victoria-island-apartments"><b>Victoria Island</b><em>Lagos, Nigeria</em><u><i>Stays</i></u></a><a class="wcard" href="/westlands-apartments"><b>Westlands</b><em>Nairobi, Kenya</em><u><i>Stays</i></u></a></div></div><div class="wcont"><div class="wcont-h"><h3>Europe</h3><span>20 destinations · City stays from Lisbon to Istanbul.</span><a href="/europe-apartments">All of Europe →</a></div><div class="wgrid"><a class="wcard" href="/amsterdam-apartments"><b>Amsterdam</b><em>Netherlands</em><u><i>Stays</i></u></a><a class="wcard" href="/athens-apartments"><b>Athens</b><em>Greece</em><u><i>Stays</i></u></a><a class="wcard" href="/barcelona-apartments"><b>Barcelona</b><em>Spain</em><u><i>Stays</i></u></a><a class="wcard" href="/berlin-apartments"><b>Berlin</b><em>Germany</em><u><i>Stays</i></u></a><a class="wcard" href="/budapest-apartments"><b>Budapest</b><em>Hungary</em><u><i>Stays</i></u></a><a class="wcard" href="/copenhagen-apartments"><b>Copenhagen</b><em>Denmark</em><u><i>Stays</i></u></a><a class="wcard" href="/dubrovnik-apartments"><b>Dubrovnik</b><em>Croatia</em><u><i>Stays</i></u></a><a class="wcard" href="/edinburgh-apartments"><b>Edinburgh</b><em>United Kingdom</em><u><i>Stays</i></u></a><a class="wcard" href="/florence-apartments"><b>Florence</b><em>Italy</em><u><i>Stays</i></u></a><a class="wcard" href="/istanbul-apartments"><b>Istanbul</b><em>Türkiye</em><u><i>Stays</i></u></a><a class="wcard" href="/lisbon-apartments"><b>Lisbon</b><em>Portugal</em><u><i>Stays</i></u></a><a class="wcard" href="/lisbon-porto-apartments"><b>Lisbon &amp; Porto</b><em>Portugal</em><u><i>Stays</i></u></a><a class="wcard" href="/london-apartments"><b>London</b><em>United Kingdom</em><u><i>Stays</i></u></a><a class="wcard" href="/madrid-apartments"><b>Madrid</b><em>Spain</em><u><i>Stays</i></u></a><a class="wcard" href="/milan-apartments"><b>Milan</b><em>Italy</em><u><i>Stays</i></u></a><a class="wcard" href="/paris-apartments"><b>Paris</b><em>France</em><u><i>Stays</i></u></a><a class="wcard" href="/prague-apartments"><b>Prague</b><em>Czechia</em><u><i>Stays</i></u></a><a class="wcard" href="/rome-apartments"><b>Rome</b><em>Italy</em><u><i>Stays</i></u></a><a class="wcard" href="/santorini-apartments"><b>Santorini</b><em>Greece</em><u><i>Stays</i></u></a><a class="wcard" href="/vienna-apartments"><b>Vienna</b><em>Austria</em><u><i>Stays</i></u></a></div></div><div class="wcont"><div class="wcont-h"><h3>Asia</h3><span>10 destinations · Tokyo to Bali, plus the Gulf.</span><a href="/asia-apartments">All of Asia →</a></div><div class="wgrid"><a class="wcard" href="/bali-apartments"><b>Bali</b><em>Indonesia</em><u><i>Stays</i></u></a><a class="wcard" href="/bangkok-apartments"><b>Bangkok</b><em>Thailand</em><u><i>Stays</i></u></a><a class="wcard" href="/chiang-mai-apartments"><b>Chiang Mai</b><em>Thailand</em><u><i>Stays</i></u></a><a class="wcard" href="/dubai-apartments"><b>Dubai</b><em>United Arab Emirates</em><u><i>Stays</i></u></a><a class="wcard" href="/kuala-lumpur-apartments"><b>Kuala Lumpur</b><em>Malaysia</em><u><i>Stays</i></u></a><a class="wcard" href="/kyoto-apartments"><b>Kyoto</b><em>Japan</em><u><i>Stays</i></u></a><a class="wcard" href="/phuket-apartments"><b>Phuket</b><em>Thailand</em><u><i>Stays</i></u></a><a class="wcard" href="/seoul-apartments"><b>Seoul</b><em>South Korea</em><u><i>Stays</i></u></a><a class="wcard" href="/singapore-apartments"><b>Singapore</b><em>Singapore</em><u><i>Stays</i></u></a><a class="wcard" href="/tokyo-apartments"><b>Tokyo</b><em>Japan</em><u><i>Stays</i></u></a></div></div><div class="wcont"><div class="wcont-h"><h3>The Americas</h3><span>8 destinations · North, Central and South.</span><a href="/americas-apartments">All of The Americas →</a></div><div class="wgrid"><a class="wcard" href="/buenos-aires-apartments"><b>Buenos Aires</b><em>Argentina</em><u><i>Stays</i></u></a><a class="wcard" href="/cartagena-apartments"><b>Cartagena</b><em>Colombia</em><u><i>Stays</i></u></a><a class="wcard" href="/los-angeles-apartments"><b>Los Angeles</b><em>United States</em><u><i>Stays</i></u></a><a class="wcard" href="/medellin-apartments"><b>Medellín</b><em>Colombia</em><u><i>Stays</i></u></a><a class="wcard" href="/mexico-city-apartments"><b>Mexico City</b><em>Mexico</em><u><i>Stays</i></u></a><a class="wcard" href="/miami-apartments"><b>Miami</b><em>United States</em><u><i>Stays</i></u></a><a class="wcard" href="/new-york-apartments"><b>New York</b><em>United States</em><u><i>Stays</i></u></a><a class="wcard" href="/rio-de-janeiro-apartments"><b>Rio de Janeiro</b><em>Brazil</em><u><i>Stays</i></u></a></div></div><div class="wcont"><div class="wcont-h"><h3>Oceania</h3><span>2 destinations · Australia and the Pacific.</span><a href="/oceania-apartments">All of Oceania →</a></div><div class="wgrid"><a class="wcard" href="/melbourne-apartments"><b>Melbourne</b><em>Australia</em><u><i>Stays</i></u></a><a class="wcard" href="/sydney-apartments"><b>Sydney</b><em>Australia</em><u><i>Stays</i></u></a></div></div></section><!-- ATLAS:END -->
+
+  <section class="faq" aria-label="Frequently asked questions">
+    <h2 style="font-family:var(--font-display);font-size:clamp(21px,3vw,29px);font-weight:640;letter-spacing:-.032em;margin-bottom:15px;">The world map: frequently asked</h2>
+
+    <details class="fitem" open><summary>How many places does Cabana cover?<span class="fchev" aria-hidden="true"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span></summary><div class="fa">The map carries every destination that has a real page on Cabana — all 54 African countries, cities across Africa, Europe, Asia, the Americas and Oceania, and neighbourhood-level coverage in Nairobi, Lagos, Accra and Mombasa. The exact count is generated from the site itself, so the figure above the map is always current.</div></details>
+
+    <details class="fitem"><summary>Does a pin mean I can book there right now?<span class="fchev" aria-hidden="true"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span></summary><div class="fa">A pin means Cabana covers that place and has a page for it. Where there is live, bookable inventory in our database, the place card says <b>live stays</b> with the real count and real price range, and the pin carries a green marker in the lists below. Everywhere else the card shows the typical nightly range for that market and labels it as typical. We never dress a catalogue entry up as availability.</div></details>
+
+    <details class="fitem"><summary>What are the animated lines between cities?<span class="fchev" aria-hidden="true"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span></summary><div class="fa">Travel corridors — great-circle paths between two places Cabana serves at both ends. Purple is a diaspora route, blue a trade corridor, gold a safari circuit, teal a domestic hop. They fade out as you descend, because at city altitude a line across the screen no longer describes anything you can see. Press <kbd>A</kbd> to turn them off.</div></details>
+
+    <details class="fitem"><summary>Why do some place names disappear as I zoom?<span class="fchev" aria-hidden="true"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span></summary><div class="fa">Because 175 labels at world zoom is a smear. The map runs a label allocator on every move: it ranks places by how much of Cabana sits in them — live inventory first, then how many categories they serve, then market size — and gives the top ones a slot that does not collide with any other. A place that loses its label keeps its dot and stays fully clickable. Press <kbd>L</kbd> to turn names off entirely.</div></details>
+
+    <details class="fitem"><summary>Does the map work on a phone?<span class="fchev" aria-hidden="true"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span></summary><div class="fa">Yes, with everything intact. The tours become a horizontal shelf, the place card becomes a bottom sheet and the optics rail scrolls — nothing is removed. If you have reduced motion turned on, the camera stops animating and jumps directly instead, and the ambient movement stops.</div></details>
+
+    <details class="fitem"><summary>What if the map does not load?<span class="fchev" aria-hidden="true"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span></summary><div class="fa">Every destination on the globe is also listed as a plain link further down this page, grouped by continent, and that list is generated from the same source the map reads. On a slow connection, with JavaScript off, or in a reader, the whole of Cabana is still one scroll away.</div></details>
+  </section>
+
+  <div class="cta">
+    <h2>Found somewhere?</h2>
+    <p>Every stay on Cabana is priced by the host. Zero commission, no service fee bolted on at checkout, M-Pesa and card both accepted.</p>
+    <a class="cta-btn" href="/apartments">
+      Browse every stay
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+    </a>
+  </div>
+
+  <nav class="xlinks" aria-label="Related destination hubs">
+    <a class="xlink" href="/africa-apartments">Africa <span aria-hidden="true">→</span></a><a class="xlink" href="/europe-apartments">Europe <span aria-hidden="true">→</span></a><a class="xlink" href="/asia-apartments">Asia <span aria-hidden="true">→</span></a><a class="xlink" href="/americas-apartments">Americas <span aria-hidden="true">→</span></a><a class="xlink" href="/oceania-apartments">Oceania <span aria-hidden="true">→</span></a><a class="xlink" href="/global-apartments">Worldwide <span aria-hidden="true">→</span></a><a class="xlink" href="/tours">Safaris &amp; tours <span aria-hidden="true">→</span></a><a class="xlink" href="/carhire">Car hire <span aria-hidden="true">→</span></a><a class="xlink" href="/rides">Rides &amp; transfers <span aria-hidden="true">→</span></a>
+  </nav>
+</main>
+
+<footer class="site-footer">
+  <div class="sf-inner">
+    <div class="sf-brand-col">
+      <img src="/cabana-wordmark-color.png" class="sf-logo" alt="Cabana" onerror="this.style.display='none'" loading="lazy" decoding="async"/>
+      <p class="sf-tagline">Zero-commission travel across Africa. Stays, safaris, flights, events, rides, food and car hire. One account, one checkout.</p>
+      <div class="sf-contact">
+        <a href="/help" data-cbn-support class="sf-contact-item sf-chat">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.7-.8L3 21l1.9-5.1A8.4 8.4 0 0 1 4 11.5 8.4 8.4 0 0 1 12.5 3 8.4 8.4 0 0 1 21 11.5z"/></svg>
+          Chat with us
+        </a>
+        <a href="mailto:connect@cabana.africa" class="sf-contact-item">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+          connect@cabana.africa
+        </a>
+      </div>
+    </div>
+    <div class="sf-nav-col">
+      <div class="sf-col-head">Services</div>
+      <a href="/destinations">Destinations</a><a href="/what-is-cabana">What is Cabana?</a><a href="/cabana-vs-booking-com">Cabana vs Booking.com</a><a href="/zero-commission-travel-africa">Zero commission explained</a><a href="/list-property-zero-commission-africa">List with 0% commission</a><a href="/rewards">Rewards</a><a href="/press">Press</a><a href="/apartments">Stays</a>
+      <a href="/flights">Flights</a>
+      <a href="/tours">Tours &amp; Safaris</a>
+      <a href="/events">Events</a>
+      <a href="/rides">Rides</a>
+      <a href="/food">Food delivery</a>
+      <a href="/carhire">Car hire</a>
+      <a href="/roommates">Roommates</a>
+    </div>
+    <div class="sf-nav-col">
+      <div class="sf-col-head">Destinations</div>
+      <a href="/africa-apartments">All Africa</a>
+      <a href="/kenya-apartments">Kenya</a>
+      <a href="/nigeria-apartments">Nigeria</a>
+      <a href="/ghana-apartments">Ghana</a>
+      <a href="/tanzania-apartments">Tanzania</a>
+      <a href="/south-africa-apartments">South Africa</a>
+      <a href="/morocco-apartments">Morocco</a>
+    </div>
+    <div class="sf-nav-col">
+      <div class="sf-col-head">Company</div>
+      <a href="/cabana">About Cabana</a>
+      <a href="/become-partner">List your property</a>
+      <a href="/become-agent">Become an agent</a>
+      <a href="/terms">Terms</a>
+      <a href="/privacy">Privacy</a>
+    </div>
+  </div>
+  <div class="sf-bottom">
+    <div class="sf-bottom-left">
+      <span>© 2026 Cabana Ltd, trading as Cabana.</span>
+      <span>Nairobi, Kenya.</span>
+      <span>10% of net revenue allocated to African community development.</span>
+    </div>
+    <div class="sf-bottom-right">
+      <a href="/terms">Terms</a>
+      <a href="/privacy">Privacy</a>
+      <a href="/cookies">Cookies</a>
+    </div>
+  </div>
+</footer>
+
+<script src="/cabana-globe.js" defer></script>
+<script>
+/* The globe is mounted on idle rather than on DOMContentLoaded.
+   Leaflet, the atlas and the first tiles are a real payload, and the
+   headline, the stats and the full destination index above are all
+   readable without any of it — so the map waits until the browser has
+   nothing more urgent to do. On a fast connection that is a few
+   milliseconds; on a slow one the page was never blocked. */
+(function () {
+  var host = document.getElementById('cabana-world');
+  if (!host) return;
+
+  function mount() {
+    if (!window.CabanaGlobe) { window.setTimeout(mount, 120); return; }
+    window.CabanaGlobe.mount(host).catch(function () {
+      /* mount() has already painted its own failure state, which
+         points at the destination index below. Nothing more to do
+         here than not throw. */
+    });
+  }
+
+  var start = function () {
+    if (window.requestIdleCallback) window.requestIdleCallback(mount, { timeout: 1800 });
+    else window.setTimeout(mount, 260);
+  };
+
+  if (document.readyState === 'complete') start();
+  else window.addEventListener('load', start, { once: true });
+})();
+</script>
+<script src="/apa-contact.js" defer></script>
+<script src="/cabana-call.js" defer></script>
+<script src="/cabana-support.js" defer></script>
+<script src="/cabana-lifecycle.js" defer></script>
+</body>
+</html>
