@@ -6,7 +6,7 @@
    No more stale JS/CSS causing inconsistent behaviour.
 ════════════════════════════════════════════════════════════════ */
 
-const VERSION = 'cabana-v30';
+const VERSION = 'cabana-v31';
 const CACHE = `${VERSION}`;
 
 /* How long we will wait on the network before falling back to a cached
@@ -16,6 +16,12 @@ const CACHE = `${VERSION}`;
    though a perfectly good copy of the page sat in the cache. That was
    the "sometimes it doesn't even load" failure. */
 const NET_TIMEOUT_MS = 3500;
+
+/* The same idea for JS and CSS, but tighter. A navigation has nothing to
+   show until it resolves, so it is worth waiting 3.5s. A subresource has
+   a known-good cached copy sitting right there, and they are fetched in
+   parallel, so the whole page pays this once rather than once per file. */
+const ASSET_TIMEOUT_MS = 2000;
 
 // ── INSTALL: skip waiting immediately, take control NOW ──
 self.addEventListener('install', () => self.skipWaiting());
@@ -69,10 +75,22 @@ self.addEventListener('fetch', e => {
   // URL, so they are pure cache-first. No revalidation, no network.
   if (isVendor || isMedia) { e.respondWith(cacheFirst(request)); return; }
 
-  // Our JS and CSS: serve from cache instantly, refresh in the background.
-  // Previously these were network-first, so every navigation blocked on
-  // ~17 sequential revalidations before the page could run.
-  if (isOurJS || isOurCSS) { e.respondWith(staleWhileRevalidate(request)); return; }
+  /* Our JS and CSS: network-first, bounded.
+
+     These were stale-while-revalidate, which is wrong for un-versioned
+     filenames. SWR hands back the CACHED copy and only refreshes for
+     NEXT time, so every deploy was invisible for at least one full page
+     load — and if the visitor did not happen to reload a second time,
+     indefinitely. That is how a shipped, live, READY deployment kept
+     rendering the previous build's UI.
+
+     The original reason for SWR was that network-first blocked the page
+     on a queue of revalidations. That is fixed by the bound, not by
+     serving stale code: browsers fetch subresources in parallel, so the
+     worst case here is one timeout, not one per file. Below the bound we
+     are correct AND fast; above it we fall back to cache exactly as
+     before, so the offline and slow-connection stories are unchanged. */
+  if (isOurJS || isOurCSS) { e.respondWith(networkFirstAsset(request)); return; }
 
   // Our images: same deal, instant from cache.
   if (isOurImg) { e.respondWith(staleWhileRevalidate(request)); return; }
@@ -112,6 +130,27 @@ async function staleWhileRevalidate(request) {
   if (cached) return cached;                 // instant, revalidate detached
   const r = await fresh;
   return r || Response.error();
+}
+
+/* Network-first for subresources. Unlike the navigation version there is
+   no preload response to consider and no offline page to fall back to —
+   if the network fails and we hold nothing, the request simply fails, as
+   it would without a worker at all. */
+async function networkFirstAsset(request) {
+  const cached = await caches.match(request);
+
+  const network = fetch(request)
+    .then(r => { putSafe(request, r.clone()); return r; })
+    .catch(() => null);
+
+  if (!cached) return (await network) || Response.error();
+
+  let timer;
+  const timeout = new Promise(res => { timer = setTimeout(() => res(null), ASSET_TIMEOUT_MS); });
+  try {
+    const winner = await Promise.race([network, timeout]);
+    return winner || cached;
+  } finally { clearTimeout(timer); }
 }
 
 async function networkFirstWithTimeout(event, request) {
