@@ -370,8 +370,18 @@ async function init() {
   }
 }
 
+/* One overlay at a time. The welcome-credit card (cabana-credit.js)
+   is transient — it clears itself within seconds — so if it happens to
+   be up when our minute is done, we wait for it rather than stacking a
+   modal that has to be dismissed by hand on top of one that does not. */
+let _deferred = 0;
 function openPopup() {
   if (_popup) return;
+  if (window.__cabanaOverlay && _deferred < 4) {
+    _deferred++;
+    setTimeout(openPopup, 8_000);
+    return;
+  }
   _popup = buildPopup(_myCode, _myStats, !_userId);
   document.body.appendChild(_popup);
   document.body.style.overflow = 'hidden';
