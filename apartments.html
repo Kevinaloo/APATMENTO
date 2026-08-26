@@ -450,10 +450,18 @@ body.map-open .split-map{display:block;}
 .amenities-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px;}
 
 /* empty state */
-.empty{text-align:center;padding:70px 20px;}
+.empty{display:flex;flex-direction:column;align-items:center;text-align:center;padding:64px 20px;}
 .empty-ico{width:64px;height:64px;margin:0 auto 20px;color:var(--ink-faint);opacity:.4;}
 .empty-title{font-family:var(--font-display);font-size:22px;margin-bottom:8px;}
-.empty-sub{font-size:14px;color:var(--ink-soft);}
+.empty-sub{font-size:14px;color:var(--ink-soft);line-height:1.65;max-width:340px;margin:10px auto 0;}
+.empty-cta{
+  display:inline-flex;align-items:center;gap:7px;margin-top:22px;
+  padding:12px 24px;border-radius:100px;border:none;cursor:pointer;
+  background:var(--theme-grad);color:#fff;text-decoration:none;
+  font-family:var(--font-ui);font-size:13.5px;font-weight:700;
+  box-shadow:0 6px 20px rgba(123,47,247,.3);transition:transform .24s var(--ease),box-shadow .24s var(--ease);
+}
+.empty-cta:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(123,47,247,.42);}
 
 @media(max-width:600px){.search-bar{flex-wrap:wrap;}.drawer{width:100%;}.hero,.content{padding-left:18px;padding-right:18px;}}
 
@@ -1002,20 +1010,8 @@ body.sc-sheet #agent-ref{opacity:0!important;pointer-events:none!important;trans
 }
 .loc-no-result{padding:16px 10px;font-size:12.5px;color:var(--ink-faint);text-align:center;line-height:1.6;}
 
-/* ── Cabana Match extras. Only the two things the broadcast needs
-      that the capsule does not already hold. ── */
-.sc-match{
-  display:grid;grid-template-rows:0fr;opacity:0;
-  transition:grid-template-rows .5s var(--ease),opacity .35s var(--ease),margin .5s var(--ease);
-  margin-top:0;
-}
-.search-wrap[data-mode="match"] .sc-match{grid-template-rows:1fr;opacity:1;margin-top:9px;}
-.sc-match-inner{overflow:hidden;min-height:0;}
-.sc-match-card{
-  border-radius:20px;padding:18px 20px 19px;
-  background:linear-gradient(150deg,rgba(123,47,247,.05),rgba(77,150,255,.04) 55%,rgba(45,212,191,.045));
-  border:1px solid rgba(123,47,247,.15);
-}
+/* Shared by the Get Matched sheet: the steps, the budget cards, the
+   optional note and the reassurance row. */
 /* Three steps, one line. The card that used to explain this took a
    whole band of the page to say the same thing. */
 .sc-steps{
@@ -1091,6 +1087,7 @@ body.sc-sheet #agent-ref{opacity:0!important;pointer-events:none!important;trans
   min-height:18px;flex-wrap:wrap;
 }
 .sc-status > svg{width:13px;height:13px;flex-shrink:0;opacity:.7;}
+.sc-status > span{flex:1 1 200px;min-width:0;}
 .sc-status b{color:var(--ink-soft);font-weight:700;}
 .sc-cross{
   display:inline-flex;align-items:center;gap:7px;margin-left:auto;
@@ -1379,19 +1376,19 @@ body.sc-sheet #agent-ref{opacity:0!important;pointer-events:none!important;trans
 
 .inv-rail-band{
   position:relative;display:flex;align-items:stretch;
-  height:96px;overflow:hidden;
-  border-radius:20px;
+  height:112px;overflow:hidden;
+  border-radius:22px;
   background:linear-gradient(90deg,rgba(184,164,244,.09),rgba(123,47,247,.05) 48%,rgba(45,212,191,.08));
   border:1px solid rgba(10,10,20,.05);
 }
 .inv-lane{position:relative;flex:1 1 50%;min-width:0;overflow:hidden;display:flex;align-items:center;}
 .inv-lane-a{
-  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 7%,#000 72%,transparent 100%);
-          mask-image:linear-gradient(90deg,transparent 0,#000 7%,#000 72%,transparent 100%);
+  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 6%,#000 82%,transparent 100%);
+          mask-image:linear-gradient(90deg,transparent 0,#000 6%,#000 82%,transparent 100%);
 }
 .inv-lane-b{
-  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 28%,#000 93%,transparent 100%);
-          mask-image:linear-gradient(90deg,transparent 0,#000 28%,#000 93%,transparent 100%);
+  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 18%,#000 94%,transparent 100%);
+          mask-image:linear-gradient(90deg,transparent 0,#000 18%,#000 94%,transparent 100%);
 }
 .inv-track{display:flex;align-items:center;width:max-content;will-change:transform;}
 .inv-lane-a .inv-track{animation:invDriftRight var(--dur,30s) linear infinite;}
@@ -1414,9 +1411,9 @@ body.sc-sheet #agent-ref{opacity:0!important;pointer-events:none!important;trans
 @keyframes invSeamBreathe{0%,100%{opacity:.35;transform:translateX(-.5px) scaleY(.78);}50%{opacity:1;transform:translateX(-.5px) scaleY(1);}}
 
 .inv-tile{
-  display:flex;align-items:center;gap:11px;flex-shrink:0;
-  width:252px;margin-right:14px;padding:9px 13px 9px 9px;
-  border-radius:16px;text-align:left;cursor:pointer;
+  display:flex;align-items:center;gap:13px;flex-shrink:0;
+  width:300px;margin-right:16px;padding:11px 16px 11px 11px;
+  border-radius:18px;text-align:left;cursor:pointer;
   background:rgba(255,255,255,.86);border:1px solid rgba(10,10,20,.06);
   box-shadow:0 1px 2px rgba(10,10,20,.04),0 8px 22px rgba(10,10,20,.055);
   -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
@@ -1425,41 +1422,85 @@ body.sc-sheet #agent-ref{opacity:0!important;pointer-events:none!important;trans
 }
 .inv-tile:hover{transform:translateY(-3px);border-color:rgba(123,47,247,.26);box-shadow:0 4px 10px rgba(10,10,20,.06),0 18px 40px rgba(123,47,247,.16);}
 .inv-tile-img{
-  position:relative;width:52px;height:52px;flex:0 0 52px;border-radius:12px;overflow:hidden;
+  position:relative;width:64px;height:64px;flex:0 0 64px;border-radius:14px;overflow:hidden;
   background:linear-gradient(135deg,#B8A4F4,#7B2FF7);display:block;
 }
 .inv-tile-img img{width:100%;height:100%;object-fit:cover;display:block;}
 .inv-tile-body{flex:1;min-width:0;display:block;}
 .inv-tile-name{
-  display:block;font-size:13px;font-weight:700;color:var(--ink);letter-spacing:-.012em;
+  display:block;font-size:14.5px;font-weight:700;color:var(--ink);letter-spacing:-.015em;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 .inv-tile-sub{
-  display:block;font-size:11px;font-weight:500;color:var(--ink-faint);margin-top:2px;
+  display:block;font-size:11.5px;font-weight:500;color:var(--ink-faint);margin-top:3px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 .inv-tile-price{
   flex-shrink:0;text-align:right;font-variant-numeric:tabular-nums;
-  font-size:13px;font-weight:750;color:var(--ink);letter-spacing:-.02em;line-height:1.1;
+  font-size:15px;font-weight:750;color:var(--ink);letter-spacing:-.022em;line-height:1.1;
 }
-.inv-tile-price em{display:block;font-style:normal;font-size:9px;font-weight:700;letter-spacing:.11em;color:var(--ink-faint);margin-top:2px;}
+.inv-tile-price em{display:block;font-style:normal;font-size:9.5px;font-weight:700;letter-spacing:.11em;color:var(--ink-faint);margin-top:3px;}
 
+/* One label per lane, centred under the lane it names, because the two
+   lanes are two different products and always will be. */
 .inv-legend{
-  display:flex;align-items:center;justify-content:space-between;gap:12px;
-  margin-top:9px;padding:0 4px;
-  font-family:var(--font-ui);font-size:10.5px;font-weight:700;letter-spacing:.13em;
-  text-transform:uppercase;color:rgba(10,10,20,.34);
+  display:grid;grid-template-columns:1fr 1fr;gap:12px;
+  margin-top:10px;padding:0 4px;
+  font-family:var(--font-ui);font-size:10.5px;font-weight:750;letter-spacing:.14em;
+  text-transform:uppercase;color:rgba(10,10,20,.36);
 }
-.inv-legend.is-single{justify-content:center;}
-.inv-legend span{display:inline-flex;align-items:center;gap:7px;}
-.inv-legend svg{width:13px;height:13px;opacity:.6;}
+.inv-legend > span{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-width:0;}
+.inv-legend svg{width:13px;height:13px;opacity:.55;flex-shrink:0;}
+.inv-legend .inv-legend-soon{
+  font-size:9px;letter-spacing:.1em;color:var(--violet);
+  background:rgba(123,47,247,.09);padding:3px 7px;border-radius:5px;
+}
+
+/* Hotels have a lane whether or not any are listed yet. Saying so
+   plainly beats an empty half that reads as a bug. */
+.inv-await{
+  position:absolute;left:0;top:0;bottom:0;width:50%;z-index:2;
+  display:flex;align-items:center;justify-content:center;gap:12px;
+  padding:0 26px;pointer-events:none;
+}
+.inv-await[hidden]{display:none;}
+/* A slow sweep across the reserved lane. It is the difference between
+   "waiting" and "failed to load". */
+.inv-await::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(100deg,transparent 32%,rgba(255,255,255,.55) 50%,transparent 68%);
+  transform:translateX(-100%);
+  animation:invAwaitSweep 4.6s var(--ease) infinite;
+}
+@keyframes invAwaitSweep{0%,55%{transform:translateX(-100%);}92%,100%{transform:translateX(100%);}}
+@media (prefers-reduced-motion: reduce){.inv-await::before{display:none;}}
+.inv-await-ico{
+  width:42px;height:42px;border-radius:14px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--lilac-deep);background:rgba(255,255,255,.72);
+  border:1px dashed rgba(123,47,247,.28);
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+}
+.inv-await-ico svg{width:20px;height:20px;}
+.inv-await-txt{display:flex;flex-direction:column;gap:2px;min-width:0;}
+.inv-await-txt b{font-family:var(--font-ui);font-size:12.5px;font-weight:700;color:var(--ink-soft);letter-spacing:-.01em;}
+.inv-await-txt span{font-size:11px;font-weight:500;color:var(--ink-faint);}
 
 @media(max-width:760px){
   .inv-rail{padding:12px 18px 0;}
-  .inv-rail-band{height:86px;border-radius:18px;}
-  .inv-tile{width:212px;margin-right:11px;}
-  .inv-seam{width:96px;}
-  .inv-legend{font-size:9.5px;letter-spacing:.1em;}
+  .inv-rail-band{height:100px;border-radius:20px;}
+  .inv-tile{width:246px;margin-right:12px;padding:9px 13px 9px 9px;gap:11px;}
+  .inv-tile-img{width:56px;height:56px;flex-basis:56px;border-radius:13px;}
+  .inv-tile-name{font-size:13px;}
+  .inv-tile-price{font-size:13.5px;}
+  .inv-seam{width:80px;}
+  .inv-legend{font-size:9px;letter-spacing:.09em;gap:8px;}
+  .inv-legend > span{gap:6px;}
+  .inv-await{width:62%;padding:0 12px;gap:10px;justify-content:flex-start;}
+  .inv-await-ico{width:34px;height:34px;border-radius:11px;}
+  .inv-await-ico svg{width:16px;height:16px;}
+  .inv-await-txt b{font-size:11.5px;}
+  .inv-await-txt span{font-size:10px;}
 }
 @media(max-width:520px){
   .inv-rail-note{display:none;}
@@ -1478,6 +1519,171 @@ body.sc-sheet #agent-ref{opacity:0!important;pointer-events:none!important;trans
 .sf.sf-error{background:rgba(255,77,109,.07);box-shadow:0 0 0 2px rgba(255,77,109,.35) inset;animation:sfNudge .5s var(--ease);}
 .sf.sf-error .sf-label{color:#E11D48;}
 @keyframes sfNudge{0%,100%{transform:translateX(0);}20%{transform:translateX(-5px);}45%{transform:translateX(4px);}70%{transform:translateX(-2px);}}
+
+/* ════════════════════════════════════════════════════════════════
+   GET MATCHED SHEET
+   ────────────────────────────────────────────────────────────────
+   The explanation and the two extra inputs a broadcast needs used to
+   sit open on the page under the search bar. It made the board look
+   like a form. They live behind the button now: a centred sheet on a
+   desktop, a bottom sheet on a phone, and nothing at all until the
+   guest asks for it.
+   ════════════════════════════════════════════════════════════════ */
+.gs-scrim{
+  position:fixed;inset:0;z-index:2147482600;
+  background:rgba(10,8,24,.5);
+  -webkit-backdrop-filter:blur(6px) saturate(120%);backdrop-filter:blur(6px) saturate(120%);
+  opacity:0;visibility:hidden;transition:opacity .34s var(--ease),visibility .34s;
+}
+body.gs-open .gs-scrim{opacity:1;visibility:visible;}
+
+.gs-sheet{
+  position:fixed;z-index:2147482700;
+  left:50%;top:50%;transform:translate(-50%,-46%) scale(.97);
+  width:min(624px,calc(100vw - 40px));max-height:min(880px,calc(100vh - 56px));
+  display:flex;flex-direction:column;
+  background:linear-gradient(180deg,#FFFFFF 0%,#FCFCFE 100%);
+  border-radius:26px;
+  border:1px solid rgba(10,10,20,.07);
+  box-shadow:0 8px 24px rgba(10,10,20,.1),0 40px 110px rgba(20,10,60,.3);
+  opacity:0;visibility:hidden;pointer-events:none;
+  transition:opacity .34s var(--ease),transform .42s var(--ease-snap),visibility .34s;
+}
+body.gs-open .gs-sheet{opacity:1;visibility:visible;pointer-events:auto;transform:translate(-50%,-50%) scale(1);}
+
+/* The spectrum edge the flagship carries everywhere else. */
+.gs-sheet::before{
+  content:'';position:absolute;inset:0;border-radius:26px;padding:2px;pointer-events:none;
+  background:conic-gradient(from var(--sc-ring,0deg),#7B2FF7,#4D96FF,#2DD4BF,#E0A100,#FF6B2C,#7B2FF7);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+          mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;
+  opacity:.55;animation:scRingSpin 7s linear infinite;
+}
+@supports not (mask-composite:exclude){.gs-sheet::before{display:none;}}
+
+.gs-grab{display:none;}
+.gs-close{
+  position:absolute;top:16px;right:16px;z-index:2;
+  width:32px;height:32px;border-radius:50%;border:none;padding:0;
+  background:rgba(10,10,20,.05);color:var(--ink-soft);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;transition:all .2s var(--ease);
+}
+.gs-close svg{width:14px;height:14px;}
+.gs-close:hover{background:rgba(10,10,20,.1);color:var(--ink);transform:rotate(90deg);}
+
+.gs-head{
+  display:flex;align-items:center;gap:13px;flex-shrink:0;
+  padding:24px 26px 18px;border-bottom:1px solid rgba(10,10,20,.06);
+}
+.gs-mark{
+  width:42px;height:42px;border-radius:14px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;color:#fff;
+  background:linear-gradient(135deg,#7B2FF7,#4D96FF 55%,#2DD4BF);
+  box-shadow:0 6px 18px rgba(123,47,247,.32);
+}
+.gs-mark svg{width:20px;height:20px;}
+.gs-head-txt{display:flex;flex-direction:column;gap:3px;min-width:0;}
+.gs-title{
+  font-family:var(--font-display);font-size:19px;font-weight:700;letter-spacing:-.028em;
+  background:linear-gradient(96deg,#5B21D6,#7B2FF7 26%,#4D96FF 56%,#2DD4BF 88%);
+  background-size:200% auto;-webkit-background-clip:text;background-clip:text;color:transparent;
+  animation:scNameDrift 7s ease-in-out infinite alternate;
+}
+.gs-cred{
+  display:inline-flex;align-items:center;gap:6px;
+  font-family:var(--font-ui);font-size:11.5px;font-weight:600;color:var(--ink-faint);
+}
+.gs-cred-dot{
+  width:6px;height:6px;border-radius:50%;flex-shrink:0;
+  background:conic-gradient(from 210deg,#7B2FF7,#4D96FF,#2DD4BF,#E0A100,#FF6B2C,#7B2FF7);
+}
+
+.gs-body{
+  flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;
+  padding:18px 26px 22px;
+}
+
+/* What is about to go out, in the guest's own words, each part still
+   editable without losing the sheet's place. */
+.gs-recap{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:18px;}
+.gs-chip{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:8px 13px;border-radius:100px;cursor:pointer;
+  background:rgba(10,10,20,.04);border:1px solid rgba(10,10,20,.06);
+  font-family:var(--font-ui);font-size:12.5px;font-weight:650;color:var(--ink);
+  transition:all .2s var(--ease);
+}
+.gs-chip svg{width:13px;height:13px;opacity:.5;flex-shrink:0;}
+.gs-chip:hover{border-color:rgba(123,47,247,.32);background:rgba(123,47,247,.05);color:var(--violet);}
+.gs-chip:hover svg{opacity:.9;}
+.gs-chip em{font-style:normal;font-weight:500;color:var(--ink-faint);}
+
+.gs-foot{
+  flex-shrink:0;padding:16px 26px calc(20px + env(safe-area-inset-bottom,0px));
+  border-top:1px solid rgba(10,10,20,.06);
+  background:rgba(252,252,254,.9);
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+  border-radius:0 0 26px 26px;
+}
+.gs-send{
+  position:relative;overflow:hidden;width:100%;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  min-height:54px;padding:0 22px;border:none;border-radius:17px;cursor:pointer;color:#fff;
+  font-family:var(--font-ui);font-size:14.5px;font-weight:750;letter-spacing:-.01em;
+  background:linear-gradient(120deg,#5B21D6 0%,#7B2FF7 28%,#4D96FF 62%,#2DD4BF 100%);
+  background-size:190% 100%;
+  animation:scGoDrift 7s ease-in-out infinite alternate;
+  box-shadow:0 3px 10px rgba(91,33,214,.26),0 14px 36px rgba(77,150,255,.3);
+  transition:transform .28s var(--ease),box-shadow .28s var(--ease);
+}
+.gs-send svg{width:17px;height:17px;flex-shrink:0;}
+.gs-send:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(91,33,214,.3),0 20px 46px rgba(77,150,255,.4);}
+.gs-send:active{transform:translateY(0) scale(.99);}
+.gs-send:disabled{opacity:.6;cursor:default;transform:none;}
+.gs-foot-note{
+  display:block;margin-top:10px;text-align:center;
+  font-family:var(--font-ui);font-size:11px;font-weight:550;color:var(--ink-faint);
+}
+
+/* Inside the sheet the two lists get their own rhythm: a numbered
+   sequence reads down, and four budgets sit two by two. */
+.gs-body .sc-steps{
+  flex-direction:column;gap:13px;
+  margin:0 0 18px;padding:0 0 17px;
+}
+.gs-body .sc-budget-chip{flex:1 1 calc(50% - 5px);min-width:0;}
+.gs-body .sc-budget{gap:10px;}
+.gs-body .sc-budget-hint{margin-top:9px;margin-bottom:0;min-height:0;}
+.gs-body .sc-match-foot{
+  margin-top:18px;padding-top:16px;
+  border-top:1px solid rgba(10,10,20,.06);
+  gap:9px 18px;
+}
+.gs-body .sc-note-wrap{margin-top:12px;}
+
+/* On a phone it rises from the edge the thumb is already at. */
+@media(max-width:760px){
+  .gs-sheet{
+    left:0;right:0;top:auto;bottom:0;width:auto;
+    transform:translateY(24px);max-height:92vh;
+    border-radius:26px 26px 0 0;
+  }
+  body.gs-open .gs-sheet{transform:translateY(0);}
+  .gs-sheet::before{border-radius:26px 26px 0 0;}
+  .gs-grab{
+    display:block;position:absolute;top:9px;left:50%;transform:translateX(-50%);
+    width:38px;height:4px;border-radius:100px;background:rgba(10,10,20,.14);z-index:2;
+  }
+  .gs-head{padding:24px 20px 16px;}
+  .gs-body{padding:16px 20px 20px;}
+  .gs-foot{padding:14px 20px calc(18px + env(safe-area-inset-bottom,0px));border-radius:0;}
+  .gs-close{top:14px;right:14px;}
+  .gs-title{font-size:17px;}
+}
+@media (prefers-reduced-motion: reduce){
+  .gs-sheet::before,.gs-title,.gs-send{animation:none!important;}
+}
 
 /* ── Console on small screens ──────────────────────────────────────
    The capsule becomes a stacked card: Where takes a full row, the
@@ -2284,55 +2490,8 @@ body.sc-sheet #agent-ref{opacity:0!important;pointer-events:none!important;trans
 
     <!-- ── Cabana Match: the two things a broadcast needs that the
          capsule does not already hold ── -->
-    <div class="sc-match" id="sc-match" aria-hidden="true">
-      <div class="sc-match-inner">
-        <div class="sc-match-card">
-          <ol class="sc-steps">
-            <li class="sc-step">
-              <span class="sc-step-n">1</span>
-              <span class="sc-step-t"><b>You set where and when</b><span>Above, in the same bar</span></span>
-            </li>
-            <li class="sc-step">
-              <span class="sc-step-n">2</span>
-              <span class="sc-step-t"><b>Hosts with space respond</b><span>Only ones who can take you</span></span>
-            </li>
-            <li class="sc-step">
-              <span class="sc-step-n">3</span>
-              <span class="sc-step-t"><b>You pick who to talk to</b><span>Nothing committed until you do</span></span>
-            </li>
-          </ol>
-
-          <div class="sc-field-label">Nightly budget <em>KES per night</em></div>
-          <div class="sc-budget" id="sc-budget"></div>
-          <div class="sc-budget-hint" id="sc-budget-hint">Pick a range so only the right hosts see your request.</div>
-
-          <button type="button" class="sc-note-toggle" id="sc-note-toggle" onclick="scToggleNote()" aria-expanded="false" aria-controls="sc-note-wrap">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-            Add a note for hosts <em>optional</em>
-          </button>
-          <div class="sc-note-wrap" id="sc-note-wrap" hidden>
-            <textarea class="sc-note" id="sc-note" rows="2" maxlength="280" oninput="scNoteCount()"
-              placeholder="Anything that helps a host say yes. Late arrival, quiet street, a workspace, parking for one car."></textarea>
-            <span class="sc-note-count" id="sc-note-count">0/280</span>
-          </div>
-
-          <div class="sc-match-foot">
-            <span class="sc-match-fact">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-              Live for 20 minutes
-            </span>
-            <span class="sc-match-fact">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-              Real availability only
-            </span>
-            <span class="sc-match-fact">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-              Close it any time, no obligation
-            </span>
-          </div>
-        </div>
-      </div>
-    </div>
+    <!-- The Match explainer and its inputs now live in the Get Matched
+         sheet, behind the button, so the board below stays a board. -->
 
     <div class="sc-status" id="sc-status" role="status" aria-live="polite"></div>
 
@@ -2374,11 +2533,11 @@ body.sc-sheet #agent-ref{opacity:0!important;pointer-events:none!important;trans
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg>
         All stays
       </div>
-      <div class="fchip" id="fc-hotels" onclick="toggleFilter(this,'hotel')" hidden>
+      <div class="fchip" id="fc-hotels" onclick="toggleFilter(this,'hotel')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V6a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v15M17 10h3a2 2 0 0 1 2 2v9M2 21h20M8 8h2M8 12h2M8 16h2"/></svg>
         Hotels
       </div>
-      <div class="fchip" onclick="toggleFilter(this,'apartment')">
+      <div class="fchip" id="fc-furnished" onclick="toggleFilter(this,'apartment')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/><path d="M10 20v-4.5h4V20"/></svg>
         Fully furnished stays
       </div>
@@ -2408,6 +2567,84 @@ body.sc-sheet #agent-ref{opacity:0!important;pointer-events:none!important;trans
       <div class="fchip fchip-budget" data-min="3500" data-max="5000" onclick="toggleBudgetFilter(this,3500,5000)">3.5K to 5K</div>
       <div class="fchip fchip-budget" data-min="5000" data-max="0" onclick="toggleBudgetFilter(this,5000,0)">5K and up</div>
     </div>
+  </div>
+</div>
+
+<!-- ── GET MATCHED SHEET ────────────────────────────────────────────
+     Everything the broadcast needs, and the whole explanation of what
+     a broadcast is, lives behind the button rather than on the board.
+     The stays page stays a stays page. -->
+<div class="gs-scrim" id="gs-scrim" onclick="closeMatchSheet()" aria-hidden="true"></div>
+<div class="gs-sheet" id="gs-sheet" role="dialog" aria-modal="true" aria-labelledby="gs-title" aria-hidden="true">
+  <span class="gs-grab" aria-hidden="true"></span>
+  <button type="button" class="gs-close" onclick="closeMatchSheet()" aria-label="Close">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+  </button>
+
+  <div class="gs-head">
+    <span class="gs-mark" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.9 4.9a10 10 0 0 0 0 14.2M19.1 4.9a10 10 0 0 1 0 14.2M7.8 7.8a6 6 0 0 0 0 8.4M16.2 7.8a6 6 0 0 1 0 8.4"/><circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/></svg>
+    </span>
+    <span class="gs-head-txt">
+      <span class="gs-title" id="gs-title">Get Matched with Cabana</span>
+      <span class="gs-cred"><span class="gs-cred-dot"></span>World's first reverse marketplace for stays</span>
+    </span>
+  </div>
+
+  <div class="gs-body">
+    <div class="gs-recap" id="gs-recap"></div>
+
+    <ol class="sc-steps">
+      <li class="sc-step">
+        <span class="sc-step-n">1</span>
+        <span class="sc-step-t"><b>Your request goes out</b><span>To hosts in your destination</span></span>
+      </li>
+      <li class="sc-step">
+        <span class="sc-step-n">2</span>
+        <span class="sc-step-t"><b>Hosts with space respond</b><span>Only ones who can take you</span></span>
+      </li>
+      <li class="sc-step">
+        <span class="sc-step-n">3</span>
+        <span class="sc-step-t"><b>You pick who to talk to</b><span>Nothing committed until you do</span></span>
+      </li>
+    </ol>
+
+    <div class="sc-field-label">Nightly budget <em>KES per night</em></div>
+    <div class="sc-budget" id="sc-budget"></div>
+    <div class="sc-budget-hint" id="sc-budget-hint">Pick a range so only the right hosts see your request.</div>
+
+    <button type="button" class="sc-note-toggle" id="sc-note-toggle" onclick="scToggleNote()" aria-expanded="false" aria-controls="sc-note-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+      Add a note for hosts <em>optional</em>
+    </button>
+    <div class="sc-note-wrap" id="sc-note-wrap" hidden>
+      <textarea class="sc-note" id="sc-note" rows="3" maxlength="280" oninput="scNoteCount()"
+        placeholder="Anything that helps a host say yes. Late arrival, quiet street, a workspace, parking for one car."></textarea>
+      <span class="sc-note-count" id="sc-note-count">0/280</span>
+    </div>
+
+    <div class="sc-match-foot">
+      <span class="sc-match-fact">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        Live for 20 minutes
+      </span>
+      <span class="sc-match-fact">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        Real availability only
+      </span>
+      <span class="sc-match-fact">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        Close it any time, no obligation
+      </span>
+    </div>
+  </div>
+
+  <div class="gs-foot">
+    <button type="button" class="gs-send" id="gs-send" onclick="launchMatchRequest()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.9 4.9a10 10 0 0 0 0 14.2M19.1 4.9a10 10 0 0 1 0 14.2M7.8 7.8a6 6 0 0 0 0 8.4M16.2 7.8a6 6 0 0 1 0 8.4"/><circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/></svg>
+      <span id="gs-send-label">Send my request to hosts</span>
+    </button>
+    <span class="gs-foot-note">Zero obligation. You choose who to reply to, or nobody at all.</span>
   </div>
 </div>
 
@@ -2589,8 +2826,17 @@ body.sc-sheet #agent-ref{opacity:0!important;pointer-events:none!important;trans
     <div class="inv-lane inv-lane-a"><div class="inv-track" id="inv-track-a"></div></div>
     <div class="inv-lane inv-lane-b"><div class="inv-track" id="inv-track-b"></div></div>
     <span class="inv-seam"></span>
+    <div class="inv-await" id="inv-await" hidden>
+      <span class="inv-await-ico">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V6a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v15M17 10h3a2 2 0 0 1 2 2v9M2 21h20M8 8h2M8 12h2M8 16h2"/></svg>
+      </span>
+      <span class="inv-await-txt"><b>Hotels land here</b><span>The first ones, soon</span></span>
+    </div>
   </div>
-  <div class="inv-legend" id="inv-legend"></div>
+  <div class="inv-legend" id="inv-legend">
+    <span class="inv-legend-a" id="inv-legend-a"></span>
+    <span class="inv-legend-b" id="inv-legend-b"></span>
+  </div>
 </section>
 
 <!-- CONTENT -->
@@ -2878,16 +3124,24 @@ function renderCards(list) {
   const grid = document.getElementById('grid');
 
   if (!list.length) {
+    /* "No listings" is three different situations. Say which one. */
+    const hotelsWanted = _searchState.typeFilter === 'hotel';
+    const title = hotelsWanted ? 'No hotels on Cabana yet'
+                : _searchState.loc ? 'Nothing listed there yet'
+                : 'Nothing matches those filters';
+    const body = hotelsWanted
+      ? 'Hotels have a lane on this page and none are live yet. Get Matched can still ask hosts in your destination directly.'
+      : _searchState.loc ? 'Be the first to list a space here. Partners keep 100% of every booking.'
+      : 'Try widening the price, the dates or the number of bedrooms.';
+    const cta = hotelsWanted
+      ? `<button type="button" class="empty-cta" onclick="toggleFilter(document.getElementById('fc-hotels'),'all');document.getElementById('fc-hotels').classList.remove('active');document.querySelector('.filter-bar .fchip').classList.add('active');">Show every stay</button>`
+      : `<a href="partner-listings.html" class="empty-cta">List your space</a>`;
     grid.innerHTML = `<div class="empty">
       <svg class="empty-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/><path d="M9 20v-5a3 3 0 0 1 6 0v5"/></svg>
-      <div class="empty-title">No listings yet in this area</div>
-      <p class="empty-sub" style="font-size:14px;color:var(--ink-faint);margin:10px 0 20px;max-width:280px;text-align:center;line-height:1.6;">
-        Be the first to list your space here.<br/>Partners keep 100% of every booking.
-      </p>
-      <a href="partner-listings.html" style="display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border-radius:100px;background:linear-gradient(135deg,var(--violet),var(--electric));color:#fff;font-weight:700;font-size:13px;text-decoration:none;">
-        + List your space
-      </a>
-    </div><div class="empty-sub">Try removing a filter.</div></div>`;
+      <div class="empty-title">${title}</div>
+      <p class="empty-sub">${body}</p>
+      ${cta}
+    </div>`;
     return;
   }
 
@@ -2951,7 +3205,7 @@ function renderCards(list) {
    into the left stream and the legend says so, with no code change.
    ================================================================ */
 const INV_HOTEL_RE = /hotel|lodge|guest\s?house|guesthouse|hostel|resort|\binn\b|\bbnb\b/i;
-const INV_TILE_PITCH = () => (window.innerWidth <= 760 ? 223 : 266); // tile width + margin, matches CSS
+const INV_TILE_PITCH = () => (window.innerWidth <= 760 ? 258 : 316); // tile width + margin, matches CSS
 const INV_SPEED = 34;  // pixels a second. Calm enough to read a name.
 
 function invIsHotel(l){ return INV_HOTEL_RE.test(String(l.type || '')); }
@@ -2995,27 +3249,22 @@ function buildInventoryRail(){
   if (!rail) return;
   const stock = (currentListings || []).filter(l => Number(l.price) > 0);
 
-  if (!stock.length) { rail.hidden = true; return; }
+  if (!stock.length) { rail.hidden = true; return; }   // nothing at all, no ribbon
   rail.hidden = false;
 
+  /* Left lane is hotels. Right lane is everything else. That split is
+     fixed, so the pipeline is already correct on the day the first
+     hotel is listed and nothing here has to change. */
   const hotels = stock.filter(invIsHotel);
   const homes  = stock.filter(l => !invIsHotel(l));
 
-  let laneA, laneB;
-  if (hotels.length && homes.length) {
-    laneA = hotels; laneB = homes;
-  } else {
-    /* Only one kind on the platform. Split it so the two streams are
-       never the same tiles in the same order. */
-    const one = hotels.length ? hotels : homes;
-    if (one.length > 1) {
-      laneA = one.filter((_, i) => i % 2 === 0);
-      laneB = one.filter((_, i) => i % 2 === 1);
-    } else { laneA = one; laneB = one; }
-  }
+  invFillTrack('inv-track-a', hotels);
+  invFillTrack('inv-track-b', homes);
 
-  invFillTrack('inv-track-a', laneA);
-  invFillTrack('inv-track-b', laneB);
+  /* An empty lane says what it is for rather than looking broken. */
+  const await_ = document.getElementById('inv-await');
+  if (await_) await_.hidden = hotels.length > 0;
+  document.getElementById('inv-track-a')?.style.setProperty('visibility', hotels.length ? 'visible' : 'hidden');
 
   /* Count what is there, in the words of what is there. */
   const cities = [...new Set(stock.map(l => (l.city || '').trim()).filter(Boolean))];
@@ -3025,22 +3274,12 @@ function buildInventoryRail(){
     note.textContent = stock.length + (stock.length === 1 ? ' stay' : ' stays') + (where ? ' in ' + where : '');
   }
 
-  const legend = document.getElementById('inv-legend');
-  if (legend) {
-    if (hotels.length && homes.length) {
-      legend.classList.remove('is-single');
-      legend.innerHTML = '<span>Hotels and lodges ' + INV_ARROW_R + '</span>' +
-                         '<span>' + INV_ARROW_L + ' Fully furnished stays</span>';
-    } else {
-      legend.classList.add('is-single');
-      legend.innerHTML = '<span>' + INV_ARROW_R + ' Fully furnished stays ' + INV_ARROW_L + '</span>';
-    }
-  }
-
-  /* A filter for a category we hold nothing in is a dead end, so it
-     only exists while there is something behind it. */
-  const hotelChip = document.getElementById('fc-hotels');
-  if (hotelChip) hotelChip.hidden = !hotels.length;
+  /* One label per lane, under the lane, naming the product it carries. */
+  const la = document.getElementById('inv-legend-a');
+  const lb = document.getElementById('inv-legend-b');
+  if (la) la.innerHTML = 'Hotels' +
+    (hotels.length ? ' ' + INV_ARROW_R : ' <span class="inv-legend-soon">Soon</span>');
+  if (lb) lb.innerHTML = (homes.length ? INV_ARROW_L + ' ' : '') + 'Fully furnished stays';
 }
 
 /* The fade at the end of the filter rail is a promise that there is
@@ -3817,7 +4056,7 @@ function scStatus() {
 /* ── The primary button ─────────────────────────────────────────── */
 function runPrimaryAction() {
   closeAllPanels(false);
-  if (_searchMode === 'match') { launchMatchRequest(); return; }
+  if (_searchMode === 'match') { openMatchSheet(); return; }
   applyAndRender();
   scStatus();
   document.querySelector('.content')?.scrollIntoView({ behavior:'smooth', block:'start' });
@@ -5168,6 +5407,7 @@ setTimeout(dismissEnterTx,2800);
 function openCabanaMatch() {
   setSearchMode('match');
   document.getElementById('search-console')?.scrollIntoView({ behavior:'smooth', block:'center' });
+  setTimeout(openMatchSheet, 400);
 }
 function closeCabanaMatch() {
   if (location.hash === '#cabana-match') history.replaceState(null, '', location.pathname + location.search);
@@ -5433,13 +5673,73 @@ function scFlagField(fieldId, panel) {
 }
 
 function scGoBusy(on, text) {
-  const btn = document.getElementById('sc-go');
-  const label = document.getElementById('sc-go-label');
-  if (!btn || !label) return;
-  btn.disabled = !!on;
-  if (on) { btn.dataset.prev = label.textContent; label.textContent = text || 'Working'; }
-  else if (btn.dataset.prev) { label.textContent = btn.dataset.prev; delete btn.dataset.prev; }
+  [['sc-go','sc-go-label'], ['gs-send','gs-send-label']].forEach(([bid, lid]) => {
+    const btn = document.getElementById(bid), label = document.getElementById(lid);
+    if (!btn || !label) return;
+    btn.disabled = !!on;
+    if (on) { btn.dataset.prev = btn.dataset.prev || label.textContent; label.textContent = text || 'Working'; }
+    else if (btn.dataset.prev) { label.textContent = btn.dataset.prev; delete btn.dataset.prev; }
+  });
 }
+
+/* ── The Get Matched sheet ────────────────────────────────────────
+   Opens only once the two things a host needs are on the table. Asking
+   for a budget before we know where or when is a form, not a request. */
+function openMatchSheet() {
+  const c = gmGetCriteria();
+  if (!c.location) { scFlagField('sf-where'); scStatus(); return; }
+  if (!c.checkin_date || !c.checkout_date) { scFlagField('sf-checkin', 'checkin'); scStatus(); return; }
+
+  scRenderBudget();
+  gsRenderRecap(c);
+  document.body.classList.add('gs-open');
+  document.getElementById('gs-sheet')?.setAttribute('aria-hidden', 'false');
+  document.getElementById('gs-scrim')?.setAttribute('aria-hidden', 'false');
+  _gsLastFocus = document.activeElement;
+  setTimeout(() => document.getElementById('gs-send')?.focus({ preventScroll:true }), 220);
+}
+
+let _gsLastFocus = null;
+function closeMatchSheet() {
+  document.body.classList.remove('gs-open');
+  document.getElementById('gs-sheet')?.setAttribute('aria-hidden', 'true');
+  document.getElementById('gs-scrim')?.setAttribute('aria-hidden', 'true');
+  if (_gsLastFocus && document.contains(_gsLastFocus)) _gsLastFocus.focus({ preventScroll:true });
+  _gsLastFocus = null;
+}
+
+/* What is about to go out, each part a tap away from being changed. */
+function gsRenderRecap(c) {
+  const host = document.getElementById('gs-recap');
+  if (!host) return;
+  const pen = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17z"/></svg>';
+  const nights = calNights();
+  const guests = c.guests;
+  const rows = [
+    { txt: c.location, field: 'where' },
+    { txt: fmtDateShort(c.checkin_date) + ' to ' + fmtDateShort(c.checkout_date) +
+           ' <em>' + nights + (nights === 1 ? ' night' : ' nights') + '</em>', field: 'checkin', raw: true },
+    { txt: guests + (guests === 1 ? ' guest' : ' guests'), field: 'guests' },
+  ];
+  if (c.bedrooms) rows.push({ txt: c.bedrooms + (c.bedrooms === 1 ? ' bedroom' : ' bedrooms'), field: 'rooms' });
+  host.innerHTML = rows.map(r =>
+    `<button type="button" class="gs-chip" onclick="gsEdit('${r.field}')">${r.raw ? r.txt : _esc(r.txt)}${pen}</button>`
+  ).join('');
+}
+
+/* Change one thing without losing the request. */
+function gsEdit(field) {
+  closeMatchSheet();
+  setTimeout(() => {
+    document.getElementById('search-console')?.scrollIntoView({ behavior:'smooth', block:'center' });
+    if (field === 'where') document.getElementById('location-input')?.focus();
+    else openSF(field);
+  }, 260);
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && document.body.classList.contains('gs-open')) closeMatchSheet();
+});
 
 /* Who is signed in, with a deadline. A hung session probe used to mean
    a button that silently did nothing. */
@@ -5481,9 +5781,10 @@ async function launchMatchRequest() {
   const user = await scResolveUser();
   if (!user) { scGoBusy(false); toAuth(); return; }
 
-  scGoBusy(true, 'Going live');
+  scGoBusy(true, 'Sending to hosts');
   const result = await submitCabanaMatchRequest(criteria);
   scGoBusy(false);
+  closeMatchSheet();
 
   if (!result.success) {
     if (result.error === 'not_logged_in') { toAuth(); return; }
@@ -5544,8 +5845,10 @@ async function cmLaunchMatch()    { return launchMatchRequest(); }
     }
     syncFieldStates();
     applyAndRender();
+    updateHeroTitle();
     scStatus();
     document.getElementById('search-console')?.scrollIntoView({ behavior:'smooth', block:'center' });
+    setTimeout(openMatchSheet, 700);
   }, 400));
 })();
 
