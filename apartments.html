@@ -1376,8 +1376,8 @@ body.sc-sheet #agent-ref{opacity:0!important;pointer-events:none!important;trans
 
 .inv-rail-band{
   position:relative;display:flex;align-items:stretch;
-  height:112px;overflow:hidden;
-  border-radius:22px;
+  height:158px;overflow:hidden;
+  border-radius:24px;
   background:linear-gradient(90deg,rgba(184,164,244,.09),rgba(123,47,247,.05) 48%,rgba(45,212,191,.08));
   border:1px solid rgba(10,10,20,.05);
 }
@@ -1411,35 +1411,59 @@ body.sc-sheet #agent-ref{opacity:0!important;pointer-events:none!important;trans
 @keyframes invSeamBreathe{0%,100%{opacity:.35;transform:translateX(-.5px) scaleY(.78);}50%{opacity:1;transform:translateX(-.5px) scaleY(1);}}
 
 .inv-tile{
-  display:flex;align-items:center;gap:13px;flex-shrink:0;
-  width:300px;margin-right:16px;padding:11px 16px 11px 11px;
-  border-radius:18px;text-align:left;cursor:pointer;
-  background:rgba(255,255,255,.86);border:1px solid rgba(10,10,20,.06);
+  display:flex;align-items:stretch;flex-shrink:0;
+  width:364px;height:134px;margin-right:16px;padding:0;
+  border-radius:16px;overflow:hidden;text-align:left;cursor:pointer;
+  background:rgba(255,255,255,.86);border:1px solid var(--line);
   box-shadow:0 1px 2px rgba(10,10,20,.04),0 8px 22px rgba(10,10,20,.055);
-  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
   transition:transform .3s var(--ease),box-shadow .3s var(--ease),border-color .3s;
-  font-family:var(--font-ui);
+  font-family:var(--font-body);
 }
 .inv-tile:hover{transform:translateY(-3px);border-color:rgba(123,47,247,.26);box-shadow:0 4px 10px rgba(10,10,20,.06),0 18px 40px rgba(123,47,247,.16);}
+
 .inv-tile-img{
-  position:relative;width:64px;height:64px;flex:0 0 64px;border-radius:14px;overflow:hidden;
-  background:linear-gradient(135deg,#B8A4F4,#7B2FF7);display:block;
+  position:relative;flex:0 0 130px;width:130px;height:100%;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,#B8A4F4,#7B2FF7);
 }
-.inv-tile-img img{width:100%;height:100%;object-fit:cover;display:block;}
-.inv-tile-body{flex:1;min-width:0;display:block;}
+.inv-tile-img img{width:100%;height:100%;object-fit:cover;display:block;
+  transition:transform .6s cubic-bezier(.22,1,.36,1);}
+.inv-tile:hover .inv-tile-img img{transform:scale(1.06);}
+.inv-tile-img > svg{width:36px;height:36px;color:rgba(255,255,255,.9);}
+
+.inv-tile-body{
+  flex:1;min-width:0;display:flex;flex-direction:column;
+  padding:11px 13px 11px 14px;gap:2px;
+}
+.inv-tile-loc{
+  display:flex;align-items:center;gap:4px;min-width:0;
+  font-size:11px;color:var(--ink-faint);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.inv-tile-loc svg{width:11px;height:11px;flex-shrink:0;}
 .inv-tile-name{
-  display:block;font-size:14.5px;font-weight:700;color:var(--ink);letter-spacing:-.015em;
+  display:block;font-family:var(--font-display);font-weight:500;font-size:16.5px;
+  color:var(--ink);line-height:1.25;margin:1px 0 5px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
-.inv-tile-sub{
-  display:block;font-size:11.5px;font-weight:500;color:var(--ink-faint);margin-top:3px;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+.inv-tile-meta{
+  display:flex;flex-wrap:wrap;gap:9px;font-size:11px;color:var(--ink-soft);
+  margin-bottom:auto;overflow:hidden;
 }
-.inv-tile-price{
-  flex-shrink:0;text-align:right;font-variant-numeric:tabular-nums;
-  font-size:15px;font-weight:750;color:var(--ink);letter-spacing:-.022em;line-height:1.1;
+.inv-tile-meta span{display:inline-flex;align-items:center;gap:4px;white-space:nowrap;}
+.inv-tile-meta svg{width:12px;height:12px;color:var(--theme);opacity:.7;flex-shrink:0;}
+.inv-tile-foot{display:flex;align-items:flex-end;justify-content:space-between;gap:8px;margin-top:8px;}
+.inv-tile-price{font-family:var(--font-display);font-weight:500;line-height:1;min-width:0;}
+.inv-tile-price .val{font-size:17px;color:var(--ink);font-variant-numeric:tabular-nums;letter-spacing:-.02em;}
+.inv-tile-price .per{font-size:10.5px;color:var(--ink-faint);font-family:var(--font-body);}
+.inv-tile-go{
+  flex-shrink:0;width:28px;height:28px;border-radius:50%;
+  background:var(--glass-2,rgba(67,97,255,.08));display:flex;align-items:center;
+  justify-content:center;color:var(--lilac-deep,#7B2FF7);transition:all .3s;
 }
-.inv-tile-price em{display:block;font-style:normal;font-size:9.5px;font-weight:700;letter-spacing:.11em;color:var(--ink-faint);margin-top:3px;}
+.inv-tile-go svg{width:14px;height:14px;}
+.inv-tile:hover .inv-tile-go{background:var(--lilac-deep,#7B2FF7);color:#fff;transform:rotate(-45deg);}
 
 /* One label per lane, centred under the lane it names, because the two
    lanes are two different products and always will be. */
@@ -1459,10 +1483,13 @@ body.sc-sheet #agent-ref{opacity:0!important;pointer-events:none!important;trans
 /* Hotels have a lane whether or not any are listed yet. Saying so
    plainly beats an empty half that reads as a bug. */
 .inv-await{
-  position:absolute;left:0;top:0;bottom:0;width:50%;z-index:2;
+  position:absolute;inset:0;z-index:2;
   display:flex;align-items:center;justify-content:center;gap:12px;
   padding:0 26px;pointer-events:none;
 }
+/* Only shown when the band stacks, where a label under each lane is the
+   only way to say which lane is which. */
+.inv-lane-tag{display:none;}
 .inv-await[hidden]{display:none;}
 /* A slow sweep across the reserved lane. It is the difference between
    "waiting" and "failed to load". */
@@ -1488,11 +1515,40 @@ body.sc-sheet #agent-ref{opacity:0!important;pointer-events:none!important;trans
 
 @media(max-width:760px){
   .inv-rail{padding:12px 18px 0;}
-  .inv-rail-band{height:100px;border-radius:20px;}
-  .inv-tile{width:246px;margin-right:12px;padding:9px 13px 9px 9px;gap:11px;}
-  .inv-tile-img{width:56px;height:56px;flex-basis:56px;border-radius:13px;}
-  .inv-tile-name{font-size:13px;}
-  .inv-tile-price{font-size:13.5px;}
+  .inv-rail-band{
+    flex-direction:column;height:auto;gap:7px;
+    background:none;border:none;overflow:visible;border-radius:0;
+  }
+  .inv-lane{
+    flex:none;width:100%;height:142px;border-radius:20px;
+    background:linear-gradient(90deg,rgba(184,164,244,.09),rgba(123,47,247,.05) 48%,rgba(45,212,191,.08));
+    border:1px solid rgba(10,10,20,.05);
+  }
+  .inv-lane-a,.inv-lane-b{
+    -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 6%,#000 94%,transparent 100%);
+            mask-image:linear-gradient(90deg,transparent 0,#000 6%,#000 94%,transparent 100%);
+  }
+  .inv-seam{display:none;}
+  .inv-legend{display:none;}
+  .inv-lane-tag{
+    display:flex;align-items:center;gap:7px;padding:0 4px;margin:-3px 0 0;
+    font-family:var(--font-ui);font-size:9.5px;font-weight:750;letter-spacing:.13em;
+    text-transform:uppercase;color:rgba(10,10,20,.36);
+  }
+  .inv-lane-tag svg{width:12px;height:12px;opacity:.55;flex-shrink:0;}
+  .inv-lane-tag .inv-legend-soon{
+    font-size:9px;letter-spacing:.1em;color:var(--violet);
+    background:rgba(123,47,247,.09);padding:3px 7px;border-radius:5px;
+  }
+  .inv-rail.no-hotels .inv-lane-a{height:54px;}
+  .inv-rail.no-hotels .inv-await{padding:0 16px;gap:10px;justify-content:flex-start;}
+  .inv-tile{width:290px;height:132px;margin-right:12px;}
+  .inv-tile-img{flex-basis:106px;width:106px;}
+  .inv-tile-img > svg{width:30px;height:30px;}
+  .inv-tile-body{padding:10px 12px;}
+  .inv-tile-name{font-size:15px;margin-bottom:4px;}
+  .inv-tile-price .val{font-size:15.5px;}
+  .inv-tile-meta{flex-wrap:nowrap;gap:8px;}
   .inv-seam{width:80px;}
   .inv-legend{font-size:9px;letter-spacing:.09em;gap:8px;}
   .inv-legend > span{gap:6px;}
@@ -2823,15 +2879,19 @@ body.gs-open .gs-sheet{opacity:1;visibility:visible;pointer-events:auto;transfor
     <span class="inv-rail-note" id="inv-rail-note"></span>
   </div>
   <div class="inv-rail-band" id="inv-rail-band" aria-hidden="true">
-    <div class="inv-lane inv-lane-a"><div class="inv-track" id="inv-track-a"></div></div>
-    <div class="inv-lane inv-lane-b"><div class="inv-track" id="inv-track-b"></div></div>
-    <span class="inv-seam"></span>
-    <div class="inv-await" id="inv-await" hidden>
-      <span class="inv-await-ico">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V6a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v15M17 10h3a2 2 0 0 1 2 2v9M2 21h20M8 8h2M8 12h2M8 16h2"/></svg>
-      </span>
-      <span class="inv-await-txt"><b>Hotels land here</b><span>The first ones, soon</span></span>
+    <div class="inv-lane inv-lane-a">
+      <div class="inv-track" id="inv-track-a"></div>
+      <div class="inv-await" id="inv-await" hidden>
+        <span class="inv-await-ico">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V6a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v15M17 10h3a2 2 0 0 1 2 2v9M2 21h20M8 8h2M8 12h2M8 16h2"/></svg>
+        </span>
+        <span class="inv-await-txt"><b>Hotels land here</b><span>The first ones, soon</span></span>
+      </div>
     </div>
+    <span class="inv-lane-tag" id="inv-tag-a"></span>
+    <div class="inv-lane inv-lane-b"><div class="inv-track" id="inv-track-b"></div></div>
+    <span class="inv-lane-tag" id="inv-tag-b"></span>
+    <span class="inv-seam"></span>
   </div>
   <div class="inv-legend" id="inv-legend">
     <span class="inv-legend-a" id="inv-legend-a"></span>
@@ -3205,7 +3265,7 @@ function renderCards(list) {
    into the left stream and the legend says so, with no code change.
    ================================================================ */
 const INV_HOTEL_RE = /hotel|lodge|guest\s?house|guesthouse|hostel|resort|\binn\b|\bbnb\b/i;
-const INV_TILE_PITCH = () => (window.innerWidth <= 760 ? 258 : 316); // tile width + margin, matches CSS
+const INV_TILE_PITCH = () => (window.innerWidth <= 760 ? 302 : 380); // tile width + margin, matches CSS
 const INV_SPEED = 34;  // pixels a second. Calm enough to read a name.
 
 function invIsHotel(l){ return INV_HOTEL_RE.test(String(l.type || '')); }
@@ -3213,18 +3273,33 @@ function invIsHotel(l){ return INV_HOTEL_RE.test(String(l.type || '')); }
 function invTile(l){
   const photo = (l.photos && l.photos.length)
     ? `<img src="${_esc(l.photos[0])}" alt="" loading="lazy" decoding="async" onerror="this.remove()">`
-    : '';
-  const where = l.neighbourhood || l.city || '';
-  const kind = l.beds === 0 ? 'Studio' : (l.type || 'Stay');
+    : HOUSE_SVG;
+  const where = l.location || [l.neighbourhood, l.city].filter(Boolean).join(', ') || l.city || '';
+  const beds = l.beds === 0 ? 'Studio' : `${l.beds} bed${l.beds !== 1 ? 's' : ''}`;
   return `<button type="button" class="inv-tile" tabindex="-1" onclick="openDrawer('${_esc(l.id)}')">
-    <span class="inv-tile-img">${photo}</span>
+    <span class="inv-tile-img" style="background:${l.grad || 'linear-gradient(135deg,#B8A4F4,#7B2FF7)'};">${photo}</span>
     <span class="inv-tile-body">
+      <span class="inv-tile-loc">${INV_ICO_PIN}${_esc(where)}</span>
       <span class="inv-tile-name">${_esc(l.name)}</span>
-      <span class="inv-tile-sub">${_esc(kind)}${where ? ' &middot; ' + _esc(where) : ''}</span>
+      <span class="inv-tile-meta">
+        <span>${INV_ICO_BED}${_esc(beds)}</span>
+        <span>${INV_ICO_BATH}${l.baths || 1} bath</span>
+        <span>${INV_ICO_GUEST}${l.maxGuests || 1}</span>
+      </span>
+      <span class="inv-tile-foot">
+        <span class="inv-tile-price"><span class="val">KES ${Number(l.price).toLocaleString()}</span><span class="per">/night</span></span>
+        <span class="inv-tile-go">${INV_ICO_GO}</span>
+      </span>
     </span>
-    <span class="inv-tile-price">${Number(l.price).toLocaleString()}<em>KES</em></span>
   </button>`;
 }
+
+/* The same three marks the stay cards use, so the two read as one set. */
+const INV_ICO_PIN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>';
+const INV_ICO_BED = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 9V5a1 1 0 0 1 1-1h18a1 1 0 0 1 1 1v4M2 11h20v7M4 18v2M20 18v2M2 14h20"/></svg>';
+const INV_ICO_BATH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 12V5a2 2 0 0 1 4 0v.5M2 12h20v3a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4z"/></svg>';
+const INV_ICO_GUEST = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="7" r="3"/><path d="M3 21a6 6 0 0 1 12 0"/><path d="M16 11a3 3 0 1 0 0-5.2M21 21a6 6 0 0 0-5-5.9"/></svg>';
+const INV_ICO_GO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M7 7h10v10"/></svg>';
 
 function invFillTrack(trackId, items){
   const track = document.getElementById(trackId);
@@ -3264,6 +3339,9 @@ function buildInventoryRail(){
   /* An empty lane says what it is for rather than looking broken. */
   const await_ = document.getElementById('inv-await');
   if (await_) await_.hidden = hotels.length > 0;
+  /* Stacked on a phone, an empty lane at full height is 90 pixels of
+     nothing between the guest and the stays. It becomes a strip. */
+  rail.classList.toggle('no-hotels', hotels.length === 0);
   document.getElementById('inv-track-a')?.style.setProperty('visibility', hotels.length ? 'visible' : 'hidden');
 
   /* Count what is there, in the words of what is there. */
@@ -3275,11 +3353,10 @@ function buildInventoryRail(){
   }
 
   /* One label per lane, under the lane, naming the product it carries. */
-  const la = document.getElementById('inv-legend-a');
-  const lb = document.getElementById('inv-legend-b');
-  if (la) la.innerHTML = 'Hotels' +
-    (hotels.length ? ' ' + INV_ARROW_R : ' <span class="inv-legend-soon">Soon</span>');
-  if (lb) lb.innerHTML = (homes.length ? INV_ARROW_L + ' ' : '') + 'Fully furnished stays';
+  const labelA = 'Hotels' + (hotels.length ? ' ' + INV_ARROW_R : ' <span class="inv-legend-soon">Soon</span>');
+  const labelB = (homes.length ? INV_ARROW_L + ' ' : '') + 'Fully furnished stays';
+  ['inv-legend-a','inv-tag-a'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = labelA; });
+  ['inv-legend-b','inv-tag-b'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = labelB; });
 }
 
 /* The fade at the end of the filter rail is a promise that there is
