@@ -138,7 +138,7 @@ body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webk
 .tb-chip svg{width:13px;height:13px;}
 
 /* ── HERO SEARCH ── */
-.hero{position:relative;z-index:6;padding:26px 28px 10px;max-width:1180px;margin:0 auto;}
+.hero{position:relative;z-index:6;padding:22px 28px 8px;max-width:1180px;margin:0 auto;}
 .hero-eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--theme);margin-bottom:14px;padding:6px 14px;border-radius:100px;background:rgba(139,111,232,.1);border:1px solid rgba(139,111,232,.2);}
 .hero-title{font-family:var(--font-display);font-weight:400;font-size:clamp(30px,4.6vw,48px);line-height:1.04;letter-spacing:-.02em;color:var(--ink);margin-bottom:10px;}
 .hero-title em{font-style:italic;font-weight:500;background:var(--theme-grad);-webkit-background-clip:text;background-clip:text;color:transparent;}
@@ -613,42 +613,85 @@ html.via-dash #enter-tx{display:none!important;animation:none!important;}
    ════════════════════════════════════════════════════════════════ */
 .search-wrap{position:relative;max-width:980px;margin-bottom:18px;z-index:60;}
 
-/* ── Mode switch ── */
+/* ── Mode switch ──────────────────────────────────────────────────
+   Get Matched is the flagship, so it leads, it lands first, and it is
+   the one carrying the spectrum. Classic search sits beside it as the
+   quieter alternative rather than the default everything defers to. */
 .sc-modes{
-  position:relative;display:inline-flex;align-items:center;
-  padding:4px;margin-bottom:13px;border-radius:100px;
-  background:rgba(10,10,20,.05);border:1px solid rgba(10,10,20,.06);
+  position:relative;display:inline-flex;align-items:stretch;
+  padding:5px;margin-bottom:10px;border-radius:20px;
+  background:rgba(10,10,20,.045);border:1px solid rgba(10,10,20,.055);
 }
 .sc-mode-glider{
-  position:absolute;top:4px;bottom:4px;left:0;width:0;z-index:0;
-  border-radius:100px;background:#fff;
+  position:absolute;top:5px;bottom:5px;left:0;width:0;z-index:0;
+  border-radius:16px;background:#fff;background-clip:padding-box;
+  border:2px solid transparent;
   box-shadow:0 1px 2px rgba(10,10,20,.07),0 4px 14px rgba(10,10,20,.07);
-  transition:transform .46s var(--ease),width .46s var(--ease),box-shadow .3s;
+  transition:transform .5s var(--ease),width .5s var(--ease),box-shadow .4s;
 }
+/* The lit state of the flagship gets a spectrum edge that the classic
+   tab never does. It is the one visual promise the page repeats. */
+@property --sc-ring{syntax:'<angle>';inherits:false;initial-value:0deg;}
+@keyframes scRingSpin{to{--sc-ring:360deg;}}
 .sc-modes[data-mode="match"] .sc-mode-glider{
-  box-shadow:0 1px 2px rgba(10,10,20,.07),0 6px 20px rgba(123,47,247,.22),0 0 0 1px rgba(123,47,247,.18) inset;
+  background:linear-gradient(#fff,#fff) padding-box,
+             conic-gradient(from var(--sc-ring,0deg),#7B2FF7,#4D96FF,#2DD4BF,#E0A100,#FF6B2C,#7B2FF7) border-box;
+  border-color:transparent;
+  box-shadow:0 2px 6px rgba(123,47,247,.16),0 10px 28px rgba(123,47,247,.2);
+  animation:scRingSpin 6s linear infinite;
 }
+@supports not (background:conic-gradient(from 1turn,red,red)){
+  .sc-modes[data-mode="match"] .sc-mode-glider{
+    background:linear-gradient(#fff,#fff) padding-box,
+               linear-gradient(96deg,#7B2FF7,#4D96FF,#2DD4BF,#E0A100,#FF6B2C) border-box;
+    animation:none;
+  }
+}
+
 .sc-mode{
-  position:relative;z-index:1;display:inline-flex;align-items:center;gap:8px;
+  position:relative;z-index:1;display:inline-flex;align-items:center;gap:10px;
   border:none;background:none;cursor:pointer;
-  padding:10px 19px;border-radius:100px;
-  font-family:var(--font-ui);font-size:13px;font-weight:650;letter-spacing:-.005em;
-  color:var(--ink-faint);transition:color .34s var(--ease);white-space:nowrap;
+  padding:9px 18px;border-radius:16px;text-align:left;
+  font-family:var(--font-ui);color:var(--ink-faint);
+  transition:color .34s var(--ease);white-space:nowrap;
 }
 .sc-mode:hover{color:var(--ink-soft);}
 .sc-mode.is-on{color:var(--ink);}
-.sc-mode svg{width:14px;height:14px;flex-shrink:0;opacity:.85;}
+.sc-mode svg{width:15px;height:15px;flex-shrink:0;opacity:.8;}
+.sc-mode-txt{display:flex;flex-direction:column;gap:2px;min-width:0;}
+.sc-mode-name{font-size:13.5px;font-weight:700;letter-spacing:-.015em;line-height:1.15;}
+.sc-mode-hero .sc-mode-name{font-size:14.5px;}
+.sc-mode-cred{
+  font-size:10px;font-weight:600;letter-spacing:.02em;line-height:1.15;
+  color:var(--ink-faint);opacity:.85;
+}
+.sc-mode-hero .sc-mode-name{
+  background:linear-gradient(96deg,#5B21D6,#7B2FF7 26%,#4D96FF 54%,#2DD4BF 84%);
+  background-size:210% auto;-webkit-background-clip:text;background-clip:text;color:transparent;
+  animation:scNameDrift 7s ease-in-out infinite alternate;
+  opacity:.62;transition:opacity .34s var(--ease);
+}
+.sc-mode-hero:hover .sc-mode-name{opacity:.85;}
+.sc-mode-hero.is-on .sc-mode-name{opacity:1;}
+@keyframes scNameDrift{from{background-position:0% 50%;}to{background-position:100% 50%;}}
+.sc-mode-hero .sc-mode-cred{color:var(--violet);opacity:.5;}
+.sc-mode-hero.is-on .sc-mode-cred{opacity:.75;}
+/* Only the flagship keeps a live mark whether or not it is selected. */
 .sc-mode-dot{
-  width:8px;height:8px;border-radius:50%;flex-shrink:0;
+  width:9px;height:9px;border-radius:50%;flex-shrink:0;
   background:conic-gradient(from 210deg,#7B2FF7,#4D96FF,#2DD4BF,#E0A100,#FF6B2C,#7B2FF7);
   box-shadow:0 0 0 0 rgba(123,47,247,.5);
+  animation:scDotPing 2.8s var(--ease) infinite;
 }
-.sc-mode.is-on .sc-mode-dot{animation:scDotPing 2.6s var(--ease) infinite;}
-@keyframes scDotPing{0%,70%,100%{box-shadow:0 0 0 0 rgba(123,47,247,.45);}35%{box-shadow:0 0 0 5px rgba(123,47,247,0);}}
-.sc-mode-new{
-  font-family:var(--font-ui);font-size:8.5px;font-weight:800;letter-spacing:.12em;
-  text-transform:uppercase;color:var(--violet);
-  padding:3px 6px;border-radius:5px;background:rgba(123,47,247,.1);
+@keyframes scDotPing{0%,70%,100%{box-shadow:0 0 0 0 rgba(123,47,247,.4);}35%{box-shadow:0 0 0 6px rgba(123,47,247,0);}}
+@media(max-width:760px){
+  .sc-mode{white-space:normal;min-width:0;padding:9px 13px;gap:8px;}
+  .sc-mode-name{white-space:normal;}
+}
+@media(max-width:520px){
+  .sc-mode-cred{display:none;}
+  .sc-mode-hero .sc-mode-name{font-size:12.5px;}
+  .sc-mode-name{font-size:12.5px;}
 }
 
 /* ── The capsule ── */
@@ -966,25 +1009,47 @@ body.sc-sheet #agent-ref{opacity:0!important;pointer-events:none!important;trans
   transition:grid-template-rows .5s var(--ease),opacity .35s var(--ease),margin .5s var(--ease);
   margin-top:0;
 }
-.search-wrap[data-mode="match"] .sc-match{grid-template-rows:1fr;opacity:1;margin-top:11px;}
+.search-wrap[data-mode="match"] .sc-match{grid-template-rows:1fr;opacity:1;margin-top:9px;}
 .sc-match-inner{overflow:hidden;min-height:0;}
 .sc-match-card{
   border-radius:20px;padding:18px 20px 19px;
   background:linear-gradient(150deg,rgba(123,47,247,.05),rgba(77,150,255,.04) 55%,rgba(45,212,191,.045));
   border:1px solid rgba(123,47,247,.15);
 }
-.sc-match-lead{
-  display:flex;align-items:center;gap:9px;
-  font-family:var(--font-ui);font-size:12.5px;font-weight:600;color:var(--ink-soft);
-  margin-bottom:16px;line-height:1.55;max-width:660px;
+/* Three steps, one line. The card that used to explain this took a
+   whole band of the page to say the same thing. */
+.sc-steps{
+  display:flex;flex-wrap:wrap;gap:10px 26px;list-style:none;
+  margin:0 0 14px;padding:0 0 13px;
+  border-bottom:1px solid rgba(123,47,247,.12);
 }
-.sc-match-lead b{color:var(--ink);font-weight:750;}
-.sc-match-lead-ico{
-  width:26px;height:26px;border-radius:9px;flex-shrink:0;
-  display:flex;align-items:center;justify-content:center;color:#fff;
+.sc-step{display:flex;align-items:center;gap:10px;min-width:0;}
+.sc-step-n{
+  width:22px;height:22px;border-radius:8px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-num);font-size:11px;font-weight:800;color:#fff;
   background:linear-gradient(135deg,#7B2FF7,#4D96FF);
+  box-shadow:0 3px 10px rgba(123,47,247,.28);
 }
-.sc-match-lead-ico svg{width:13px;height:13px;}
+.sc-step:nth-child(2) .sc-step-n{background:linear-gradient(135deg,#4D96FF,#2DD4BF);box-shadow:0 3px 10px rgba(77,150,255,.28);}
+.sc-step:nth-child(3) .sc-step-n{background:linear-gradient(135deg,#2DD4BF,#E0A100);box-shadow:0 3px 10px rgba(45,212,191,.28);}
+.sc-step-t{display:flex;flex-direction:column;gap:1px;min-width:0;}
+.sc-step-t b{font-family:var(--font-ui);font-size:12.5px;font-weight:700;color:var(--ink);letter-spacing:-.012em;}
+.sc-step-t span{font-size:11px;font-weight:500;color:var(--ink-faint);}
+
+.sc-note-toggle{
+  display:inline-flex;align-items:center;gap:7px;
+  margin-top:12px;padding:8px 13px;border-radius:100px;
+  border:1px dashed rgba(10,10,20,.16);background:transparent;cursor:pointer;
+  font-family:var(--font-ui);font-size:12px;font-weight:650;color:var(--ink-soft);
+  transition:all .22s var(--ease);
+}
+.sc-note-toggle svg{width:12px;height:12px;transition:transform .3s var(--ease);}
+.sc-note-toggle em{font-style:normal;font-weight:500;color:var(--ink-faint);}
+.sc-note-toggle:hover{border-color:rgba(123,47,247,.4);color:var(--violet);background:rgba(123,47,247,.04);}
+.sc-note-toggle[aria-expanded="true"]{border-style:solid;border-color:rgba(123,47,247,.3);color:var(--violet);}
+.sc-note-toggle[aria-expanded="true"] svg{transform:rotate(45deg);}
+.sc-note-wrap[hidden]{display:none;}
 .sc-field-label{
   font-family:var(--font-ui);font-size:9.5px;font-weight:750;letter-spacing:.15em;text-transform:uppercase;
   color:var(--ink-faint);margin-bottom:9px;
@@ -992,8 +1057,8 @@ body.sc-sheet #agent-ref{opacity:0!important;pointer-events:none!important;trans
 .sc-field-label em{font-style:normal;font-weight:600;letter-spacing:.02em;text-transform:none;font-size:11px;color:rgba(10,10,20,.3);}
 .sc-budget{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px;}
 .sc-budget-chip{
-  position:relative;text-align:left;cursor:pointer;
-  padding:10px 15px;border-radius:14px;
+  position:relative;flex:1 1 0;min-width:158px;text-align:left;cursor:pointer;
+  padding:11px 16px;border-radius:14px;
   background:rgba(255,255,255,.85);border:1.5px solid rgba(10,10,20,.08);
   transition:all .24s var(--ease);
 }
@@ -1003,8 +1068,8 @@ body.sc-sheet #agent-ref{opacity:0!important;pointer-events:none!important;trans
 .sc-bc-label{display:block;font-size:10.5px;font-weight:500;color:var(--ink-faint);margin-top:2px;}
 .sc-budget-chip.selected .sc-bc-range{color:#fff;}
 .sc-budget-chip.selected .sc-bc-label{color:rgba(255,255,255,.6);}
-.sc-budget-hint{font-size:11.5px;line-height:1.55;color:var(--ink-faint);min-height:17px;margin-bottom:14px;}
-.sc-note-wrap{position:relative;}
+.sc-budget-hint{font-size:11.5px;line-height:1.55;color:var(--ink-faint);min-height:17px;margin-bottom:2px;}
+.sc-note-wrap{position:relative;margin-top:11px;animation:panelIn .3s var(--ease);}
 .sc-note{
   width:100%;resize:none;border-radius:14px;padding:12px 14px;
   border:1.5px solid rgba(10,10,20,.08);background:rgba(255,255,255,.85);
@@ -1014,18 +1079,35 @@ body.sc-sheet #agent-ref{opacity:0!important;pointer-events:none!important;trans
 .sc-note:focus{outline:none;border-color:rgba(123,47,247,.4);box-shadow:0 0 0 3px rgba(123,47,247,.08);}
 .sc-note::placeholder{color:rgba(10,10,20,.3);}
 .sc-note-count{position:absolute;right:12px;bottom:9px;font-family:var(--font-num);font-size:10.5px;color:rgba(10,10,20,.26);font-variant-numeric:tabular-nums;}
-.sc-match-foot{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:14px;}
+.sc-match-foot{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:13px;}
 .sc-match-fact{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:var(--ink-soft);}
 .sc-match-fact svg{width:13px;height:13px;color:var(--mint-deep);flex-shrink:0;}
 
-/* A one-line status under the capsule: what the button will do next. */
+/* A one-line status under the capsule: what the button will do next,
+   and in classic search, the one-line door back to the flagship. */
 .sc-status{
   display:flex;align-items:center;gap:8px;margin-top:10px;padding:0 4px;
   font-family:var(--font-ui);font-size:11.5px;font-weight:550;color:var(--ink-faint);
-  min-height:16px;
+  min-height:18px;flex-wrap:wrap;
 }
-.sc-status svg{width:13px;height:13px;flex-shrink:0;opacity:.7;}
+.sc-status > svg{width:13px;height:13px;flex-shrink:0;opacity:.7;}
 .sc-status b{color:var(--ink-soft);font-weight:700;}
+.sc-cross{
+  display:inline-flex;align-items:center;gap:7px;margin-left:auto;
+  padding:5px 12px 5px 10px;border-radius:100px;cursor:pointer;
+  border:1px solid rgba(123,47,247,.2);background:rgba(123,47,247,.05);
+  font-family:var(--font-ui);font-size:11.5px;font-weight:700;color:var(--violet);
+  letter-spacing:-.005em;white-space:nowrap;
+  transition:all .24s var(--ease);
+}
+.sc-cross svg{width:12px;height:12px;transition:transform .28s var(--ease);}
+.sc-cross:hover{background:rgba(123,47,247,.1);border-color:rgba(123,47,247,.38);transform:translateY(-1px);}
+.sc-cross:hover svg{transform:translateX(3px);}
+.sc-cross-dot{
+  width:6px;height:6px;border-radius:50%;flex-shrink:0;
+  background:conic-gradient(from 210deg,#7B2FF7,#4D96FF,#2DD4BF,#E0A100,#FF6B2C,#7B2FF7);
+}
+@media(max-width:620px){.sc-cross{margin-left:0;width:100%;justify-content:center;margin-top:4px;}}
 /* ── Special Search pill (AI natural language) ── */
 .special-search-bar{
   display:flex;align-items:center;gap:10px;
@@ -1280,7 +1362,7 @@ body.sc-sheet #agent-ref{opacity:0!important;pointer-events:none!important;trans
    than the track carrying a gap, so one copy is an exact multiple
    of the tile pitch and the seam never drifts.
    ════════════════════════════════════════════════════════════════ */
-.inv-rail{position:relative;z-index:2;max-width:1180px;margin:2px auto 0;padding:14px 28px 0;}
+.inv-rail{position:relative;z-index:2;max-width:1180px;margin:2px auto 0;padding:10px 28px 0;}
 .inv-rail[hidden]{display:none;}
 .inv-rail-top{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:11px;flex-wrap:wrap;}
 .inv-rail-lead{
@@ -1462,7 +1544,18 @@ body.sc-sheet #agent-ref{opacity:0!important;pointer-events:none!important;trans
   .loc-autocomplete-panel{min-width:0;max-width:none;max-height:60vh;}
   .sf-panel-guests{min-width:0;}
   .rooms-options{max-width:none;}
-  .sc-budget-chip{flex:1 1 calc(50% - 4px);}
+  /* Two up, not four stacked: the min-width that balances the desktop
+     row would otherwise put every budget on its own line. */
+  .sc-budget-chip{flex:1 1 calc(50% - 4px);min-width:0;padding:10px 12px;}
+  .sc-bc-range{font-size:12.5px;}
+  .sc-bc-label{font-size:10px;}
+  .sc-steps{gap:9px 18px;margin-bottom:14px;padding-bottom:13px;}
+  .sc-step-n{width:20px;height:20px;border-radius:7px;font-size:10px;}
+  .sc-step-t b{font-size:12px;}
+  .sc-step-t span{font-size:10.5px;}
+  .sc-match-card{padding:15px 15px 16px;}
+  .sc-match-foot{gap:6px 14px;}
+  .sc-match-fact{font-size:11px;}
 }
 @media(max-width:400px){
   .sf-label{font-size:9px;letter-spacing:.12em;}
@@ -1999,26 +2092,28 @@ body.sc-sheet #agent-ref{opacity:0!important;pointer-events:none!important;trans
 
   <!-- Compact heading row -->
   <div class="hero-compact-row">
-    <h1 class="hero-title-compact">Short-stay apartments in <em>Nairobi</em></h1>
-    <div class="hero-sub-compact">Verified stays · Book direct with local hosts</div>
+    <h1 class="hero-title-compact" id="hero-title">Short-stays across <em>Africa</em></h1>
+    <div class="hero-sub-compact">Verified stays &middot; Book direct with local hosts &middot; Zero commission</div>
   </div>
 
   <!-- ── SEARCH CONSOLE ──────────────────────────────────────────────
        Two modes over one set of fields. Nothing you type is lost when
        you switch, and every dropdown is anchored to the capsule so it
        can never be covered by the page beneath it. -->
-  <div class="search-wrap" id="search-console" data-mode="search">
+  <div class="search-wrap" id="search-console" data-mode="match">
 
-    <div class="sc-modes" id="sc-modes" data-mode="search" role="tablist" aria-label="How you want to search">
+    <div class="sc-modes" id="sc-modes" data-mode="match" role="tablist" aria-label="How you want to find a stay">
       <span class="sc-mode-glider" id="sc-mode-glider" aria-hidden="true"></span>
-      <button type="button" class="sc-mode is-on" id="sc-mode-search" role="tab" aria-selected="true" aria-controls="search-console" onclick="setSearchMode('search')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20.5 20.5-4.2-4.2"/></svg>
-        Search stays
-      </button>
-      <button type="button" class="sc-mode" id="sc-mode-match" role="tab" aria-selected="false" aria-controls="search-console" onclick="setSearchMode('match')">
+      <button type="button" class="sc-mode sc-mode-hero is-on" id="sc-mode-match" role="tab" aria-selected="true" aria-controls="search-console" onclick="setSearchMode('match')">
         <span class="sc-mode-dot" aria-hidden="true"></span>
-        Cabana Match
-        <span class="sc-mode-new">New</span>
+        <span class="sc-mode-txt">
+          <span class="sc-mode-name">Get Matched with Cabana</span>
+          <span class="sc-mode-cred">Hosts come to you &middot; World's first</span>
+        </span>
+      </button>
+      <button type="button" class="sc-mode" id="sc-mode-search" role="tab" aria-selected="false" aria-controls="search-console" onclick="setSearchMode('search')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20.5 20.5-4.2-4.2"/></svg>
+        <span class="sc-mode-txt"><span class="sc-mode-name">Classic search</span></span>
       </button>
     </div>
 
@@ -2192,19 +2287,30 @@ body.sc-sheet #agent-ref{opacity:0!important;pointer-events:none!important;trans
     <div class="sc-match" id="sc-match" aria-hidden="true">
       <div class="sc-match-inner">
         <div class="sc-match-card">
-          <div class="sc-match-lead">
-            <span class="sc-match-lead-ico" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.9 4.9a10 10 0 0 0 0 14.2M19.1 4.9a10 10 0 0 1 0 14.2M7.8 7.8a6 6 0 0 0 0 8.4M16.2 7.8a6 6 0 0 1 0 8.4"/><circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/></svg>
-            </span>
-            <span>Your request goes out to hosts with real availability. <b>They come to you</b>, you pick who to talk to, and nothing is committed until you say so.</span>
-          </div>
+          <ol class="sc-steps">
+            <li class="sc-step">
+              <span class="sc-step-n">1</span>
+              <span class="sc-step-t"><b>You set where and when</b><span>Above, in the same bar</span></span>
+            </li>
+            <li class="sc-step">
+              <span class="sc-step-n">2</span>
+              <span class="sc-step-t"><b>Hosts with space respond</b><span>Only ones who can take you</span></span>
+            </li>
+            <li class="sc-step">
+              <span class="sc-step-n">3</span>
+              <span class="sc-step-t"><b>You pick who to talk to</b><span>Nothing committed until you do</span></span>
+            </li>
+          </ol>
 
           <div class="sc-field-label">Nightly budget <em>KES per night</em></div>
           <div class="sc-budget" id="sc-budget"></div>
           <div class="sc-budget-hint" id="sc-budget-hint">Pick a range so only the right hosts see your request.</div>
 
-          <div class="sc-field-label">A note for hosts <em>optional</em></div>
-          <div class="sc-note-wrap">
+          <button type="button" class="sc-note-toggle" id="sc-note-toggle" onclick="scToggleNote()" aria-expanded="false" aria-controls="sc-note-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            Add a note for hosts <em>optional</em>
+          </button>
+          <div class="sc-note-wrap" id="sc-note-wrap" hidden>
             <textarea class="sc-note" id="sc-note" rows="2" maxlength="280" oninput="scNoteCount()"
               placeholder="Anything that helps a host say yes. Late arrival, quiet street, a workspace, parking for one car."></textarea>
             <span class="sc-note-count" id="sc-note-count">0/280</span>
@@ -2217,7 +2323,7 @@ body.sc-sheet #agent-ref{opacity:0!important;pointer-events:none!important;trans
             </span>
             <span class="sc-match-fact">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-              Only hosts who can actually take you
+              Real availability only
             </span>
             <span class="sc-match-fact">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
@@ -2274,7 +2380,7 @@ body.sc-sheet #agent-ref{opacity:0!important;pointer-events:none!important;trans
       </div>
       <div class="fchip" onclick="toggleFilter(this,'apartment')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/><path d="M10 20v-4.5h4V20"/></svg>
-        Self-catering
+        Fully furnished stays
       </div>
       <div class="fchip" id="fc-nearest" onclick="toggleFilter(this,'nearest')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="7"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="2.2" fill="currentColor" stroke="none"/></svg>
@@ -2311,8 +2417,8 @@ body.sc-sheet #agent-ref{opacity:0!important;pointer-events:none!important;trans
   <div class="gm-tab-pill" id="gm-tab-pill" onclick="toggleGmPanel()">
     <span class="gm-tab-live-dot"></span>
     <span class="gm-tab-text">
-      <span class="gm-tab-label" id="gm-tab-label">Match Live · Hosts responding</span>
-      <span class="gm-tab-sub" id="gm-tab-sub">Tap to see who's ready for you</span>
+      <span class="gm-tab-label" id="gm-tab-label">You are matched &middot; hosts responding</span>
+      <span class="gm-tab-sub" id="gm-tab-sub">Tap to see who is ready for you</span>
     </span>
     <span class="gm-tab-timer" id="gm-tab-timer">20:00</span>
     <svg class="gm-tab-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
@@ -2321,7 +2427,7 @@ body.sc-sheet #agent-ref{opacity:0!important;pointer-events:none!important;trans
   <div class="gm-panel" id="gm-panel">
     <!-- Panel header -->
     <div class="gm-panel-head">
-      <span class="gm-panel-title">Your Match Request</span>
+      <span class="gm-panel-title">Your match request</span>
       <button class="gm-panel-close" onclick="closeGmTab()" title="Close request">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
       </button>
@@ -2924,10 +3030,10 @@ function buildInventoryRail(){
     if (hotels.length && homes.length) {
       legend.classList.remove('is-single');
       legend.innerHTML = '<span>Hotels and lodges ' + INV_ARROW_R + '</span>' +
-                         '<span>' + INV_ARROW_L + ' Furnished apartments</span>';
+                         '<span>' + INV_ARROW_L + ' Fully furnished stays</span>';
     } else {
       legend.classList.add('is-single');
-      legend.innerHTML = '<span>' + INV_ARROW_R + ' Furnished apartments ' + INV_ARROW_L + '</span>';
+      legend.innerHTML = '<span>' + INV_ARROW_R + ' Fully furnished stays ' + INV_ARROW_L + '</span>';
     }
   }
 
@@ -3539,7 +3645,7 @@ window.addEventListener('resize', () => {
 });
 
 /* ── Mode switch ────────────────────────────────────────────────── */
-let _searchMode = 'search';
+let _searchMode = 'match';
 
 function setSearchMode(mode) {
   _searchMode = mode === 'match' ? 'match' : 'search';
@@ -3560,7 +3666,7 @@ function setSearchMode(mode) {
 
   const label = document.getElementById('sc-go-label');
   const ico = document.getElementById('sc-go-ico');
-  if (label) label.textContent = isMatch ? 'Go live' : 'Search';
+  if (label) label.textContent = isMatch ? 'Get matched' : 'Search';
   if (ico) ico.innerHTML = isMatch
     ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.9 4.9a10 10 0 0 0 0 14.2M19.1 4.9a10 10 0 0 1 0 14.2M7.8 7.8a6 6 0 0 0 0 8.4M16.2 7.8a6 6 0 0 1 0 8.4"/><circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/></svg>'
     : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20.5 20.5-4.2-4.2"/></svg>';
@@ -3568,6 +3674,20 @@ function setSearchMode(mode) {
   if (isMatch) scRenderBudget();
   moveModeGlider();
   scStatus();
+}
+
+/* The heading used to say Nairobi whatever you searched. It says where
+   you are actually looking now, and Africa until you have said. */
+function updateHeroTitle() {
+  const el = document.getElementById('hero-title');
+  if (!el) return;
+  const s = _searchState;
+  const place = s.locPlace ? (s.locPlace.name || s.locPlace.short) : '';
+  const typed = s.loc ? s.loc.replace(/\b\w/g, c => c.toUpperCase()) : '';
+  const where = place || typed;
+  el.innerHTML = where
+    ? 'Short-stays in <em>' + _esc(where) + '</em>'
+    : 'Short-stays across <em>Africa</em>';
 }
 
 function moveModeGlider() {
@@ -3637,6 +3757,16 @@ function setBudget(min, max) {
   scStatus();
 }
 
+function scToggleNote() {
+  const btn = document.getElementById('sc-note-toggle');
+  const wrap = document.getElementById('sc-note-wrap');
+  if (!btn || !wrap) return;
+  const open = btn.getAttribute('aria-expanded') === 'true';
+  btn.setAttribute('aria-expanded', String(!open));
+  wrap.hidden = open;
+  if (!open) setTimeout(() => document.getElementById('sc-note')?.focus(), 120);
+}
+
 function scNoteCount() {
   const ta = document.getElementById('sc-note');
   const out = document.getElementById('sc-note-count');
@@ -3659,13 +3789,13 @@ function scStatus() {
 
   if (_searchMode === 'match') {
     const missing = [];
-    if (!where) missing.push('a destination');
-    if (!s.dateIn || !s.dateOut) missing.push('your dates');
+    if (!where) missing.push('where');
+    if (!s.dateIn || !s.dateOut) missing.push('when');
     el.innerHTML = missing.length
-      ? SC_ICO_WAVE + '<span>Add ' + _esc(missing.join(' and ')) + ' and hosts can respond to you.</span>'
-      : SC_ICO_WAVE + '<span>Ready. <b>' + _esc(where) + '</b>, ' + nights + ' night' + (nights === 1 ? '' : 's') +
-        (_cmBudgetMin ? ', ' + _esc(CM_BUDGET_META.find(m => m.min === _cmBudgetMin)?.range || '') + ' a night' : '') +
-        '. Hosts have 20 minutes to answer.</span>';
+      ? SC_ICO_WAVE + '<span>Tell us <b>' + _esc(missing.join(' and ')) + '</b> and hosts start coming to you.</span>'
+      : SC_ICO_WAVE + '<span>Ready to go out to hosts in <b>' + _esc(where) + '</b> for ' + nights + ' night' + (nights === 1 ? '' : 's') +
+        (_cmBudgetMin ? ' at ' + _esc(CM_BUDGET_META.find(m => m.min === _cmBudgetMin)?.range || '') + ' a night' : '') +
+        '. They have 20 minutes to answer.</span>';
     return;
   }
 
@@ -3674,9 +3804,14 @@ function scStatus() {
   if (nights) bits.push(nights + ' night' + (nights === 1 ? '' : 's'));
   const guests = (s.adults || 1) + (s.children || 0);
   if (guests > 1) bits.push(guests + ' guests');
-  el.innerHTML = bits.length
+  /* Classic search always keeps a door open to the flagship. One line,
+     not a card: the card is what we took out. */
+  const cross = '<button type="button" class="sc-cross" onclick="setSearchMode(\'match\')">' +
+    '<span class="sc-cross-dot"></span>Skip the scrolling, let hosts come to you' +
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M12 6l6 6-6 6"/></svg></button>';
+  el.innerHTML = (bits.length
     ? SC_ICO_PIN + '<span>' + bits.join(' &middot; ') + '</span>'
-    : SC_ICO_PIN + '<span>Search anywhere in Africa, or let hosts come to you with Cabana Match.</span>';
+    : SC_ICO_PIN + '<span>Search every stay we hold across Africa.</span>') + cross;
 }
 
 /* ── The primary button ─────────────────────────────────────────── */
@@ -3697,6 +3832,7 @@ function clearField(e, which) {
     _searchState.loc = ''; _searchState.locPlace = null;
     _locSuggestions = [];
     closeAllPanels(false);
+    updateHeroTitle();
   } else if (which === 'dates') {
     calClear();
   }
@@ -3806,6 +3942,7 @@ function onLocationInput(inp) {
     else closeAllPanels(false);
     syncFieldStates();
     applyAndRender();
+    updateHeroTitle();
     scStatus();
     return;
   }
@@ -3983,6 +4120,7 @@ function commitLocation(name, full, place) {
   closeAllPanels(false);
   syncFieldStates();
   applyAndRender();
+  updateHeroTitle();
   scStatus();
 }
 
@@ -4000,6 +4138,8 @@ function resolveLocText(text) {
     if (_searchState.loc !== String(text).trim().toLowerCase()) return;
     _searchState.locPlace = list[0];
     applyAndRender();
+    updateHeroTitle();
+    scStatus();
   }).catch(() => {});
 }
 
@@ -4330,7 +4470,7 @@ function guestCapacityNote() {
     const most = Math.max(...stock.map(l => l.maxGuests || 1));
     el.textContent = 'Stays here sleep up to ' + most + '. Infants never count towards the limit.';
   } else if (fits === 0) {
-    el.textContent = 'No stay currently listed sleeps ' + total + '. Cabana Match can ask hosts directly.';
+    el.textContent = 'No stay currently listed sleeps ' + total + '. Get Matched can ask hosts directly.';
   } else {
     el.textContent = fits + ' of ' + stock.length + ' stays sleep ' + total + ' or more.';
   }
@@ -4423,7 +4563,7 @@ Always be warm, concise, and friendly. If you need clarification, ask one short 
     // Apply AI filters
     if (aiResult?.filter) {
       const f = aiResult.filter;
-      if (f.loc) { _searchState.loc = f.loc.toLowerCase(); resolveLocText(f.loc); }
+      if (f.loc) { _searchState.loc = f.loc.toLowerCase(); resolveLocText(f.loc); updateHeroTitle(); }
       if (f.minBeds) _searchState.minBeds = f.minBeds;
       if (f.maxPrice) _searchState.maxPrice = f.maxPrice;
       if (f.amenities?.length) f.amenities.forEach(a => _searchState.amenities.add(a));
@@ -4799,7 +4939,8 @@ loadListings().then(() => {
 (function bootConsole(){
   const start = () => {
     calRenderQuick();
-    setSearchMode('search');
+    updateHeroTitle();
+    setSearchMode('match');
     syncFieldStates();
     guestCapacityNote();
     scStatus();
@@ -5169,7 +5310,7 @@ async function guestEngageResponse(response_id, request_id, host_id, listing_id,
   await sb.from('chat_messages').insert({
     conversation_id: conv.id,
     sender_id: user.id,
-    content: 'Hello, I found your place through Cabana Match and I am interested in booking. Could we go through the details?',
+    content: 'Hello, I found your place through Get Matched with Cabana and I am interested in booking. Could we go through the details?',
     is_system: false
   });
 
@@ -5208,7 +5349,7 @@ function renderActiveCabanaRequestCard(request, responses) {
     <div class="cmr-card-header">
       <div class="cmr-card-title">
         <span class="cmr-card-dot"></span>
-        Your Cabana Match request is live
+        You are matched &middot; hosts are responding
       </div>
       <div class="cmr-card-timer" id="cmr-timer-${request.id}">${timerStr}</div>
     </div>
@@ -5392,6 +5533,7 @@ async function cmLaunchMatch()    { return launchMatchRequest(); }
       if (inp) { inp.value = c.location; inp.classList.remove('ph'); }
       _searchState.loc = c.location.toLowerCase();
       resolveLocText(c.location);
+      updateHeroTitle();
     }
     if (c.checkin_date)  pickDate('in',  c.checkin_date);
     if (c.checkout_date) pickDate('out', c.checkout_date);
