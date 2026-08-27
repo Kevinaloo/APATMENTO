@@ -61,13 +61,56 @@ img{max-width:100%;}
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .top-r{display:flex;gap:8px;flex-shrink:0;}
 
-/* ═══════ HERO ═══════ */
-.hero{position:relative;height:clamp(340px,52vh,480px);overflow:hidden;background:var(--char);}
+/* ═══════ HERO ═══════
+   The restaurant's own photographs, cross-faded rather than slid,
+   so the room never appears to be on rails. Each frame drifts very
+   slowly while it is up — the way a camera breathes — and the next
+   one is already fading in before the last has finished moving, so
+   there is no moment where nothing is happening.
+   ═══════════════════════════════════════════════════════════════ */
+.hero{position:relative;height:clamp(360px,56vh,540px);overflow:hidden;background:var(--char);}
 .hero-img{position:absolute;inset:0;}
-.hero-img img{width:100%;height:100%;object-fit:cover;animation:drift 26s ease-in-out infinite alternate;}
-@keyframes drift{from{transform:scale(1.04);}to{transform:scale(1.14) translate(-1.5%,-1%);}}
+.hero-fr{position:absolute;inset:0;opacity:0;transition:opacity 1.5s ease;will-change:opacity;}
+.hero-fr.on{opacity:1;}
+.hero-fr img{width:100%;height:100%;object-fit:cover;}
+/* only the frame on screen spends anything on animation */
+.hero-fr.on img{animation:drift 20s ease-out forwards;}
+@keyframes drift{from{transform:scale(1.03);}to{transform:scale(1.13) translate(-1.4%,-1%);}}
+@media(prefers-reduced-motion:reduce){
+  .hero-fr.on img{animation:none;transform:scale(1.03);}
+  .hero-fr{transition-duration:.01ms;}
+}
 .hero-none{position:absolute;inset:0;display:grid;place-items:center;font-size:76px;
   background:linear-gradient(140deg,var(--ash),var(--char));}
+
+/* the frames, counted along the bottom edge of the photograph */
+.hero-dots{position:absolute;right:22px;bottom:20px;z-index:4;display:flex;gap:7px;align-items:center;}
+@media(max-width:600px){.hero-dots{right:15px;bottom:16px;}}
+.hero-dot{width:7px;height:7px;border-radius:100px;cursor:pointer;padding:0;
+  border:none;background:rgba(255,243,227,.34);
+  transition:width .5s cubic-bezier(.22,1,.36,1),background .35s;}
+.hero-dot:hover{background:rgba(255,243,227,.62);}
+.hero-dot.on{width:22px;background:var(--saffron);}
+.hero-count{position:absolute;left:22px;top:calc(env(safe-area-inset-top) + 64px);z-index:4;
+  display:inline-flex;align-items:center;gap:7px;padding:6px 11px;border-radius:100px;
+  background:rgba(20,10,5,.6);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border:1px solid rgba(255,243,227,.14);
+  font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--cream-2);
+  font-variant-numeric:tabular-nums;}
+.hero-count svg{width:12px;height:12px;}
+@media(max-width:600px){.hero-count{left:15px;}}
+
+/* ═══════ CART BUTTON ═══════ */
+.cart-btn{position:relative;width:40px;height:40px;border-radius:13px;flex-shrink:0;
+  display:grid;place-items:center;cursor:pointer;
+  border:1px solid rgba(255,243,227,.16);background:rgba(20,10,5,.55);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  color:var(--cream);transition:.22s;}
+.cart-btn:hover{border-color:var(--saffron);color:var(--saffron);}
+.cart-btn svg{width:17px;height:17px;}
+.cart-n{position:absolute;top:-5px;right:-5px;min-width:19px;height:19px;padding:0 5px;
+  border-radius:100px;place-items:center;background:var(--heat);color:#1A0A03;
+  font-size:10.5px;font-weight:800;line-height:1;box-shadow:0 3px 10px rgba(255,90,31,.5);}
 .hero-scrim{position:absolute;inset:0;
   background:linear-gradient(to top,var(--night) 1%,rgba(20,10,5,.86) 22%,rgba(20,10,5,.24) 62%,rgba(20,10,5,.5));}
 .hero-in{position:absolute;left:0;right:0;bottom:0;padding:0 22px 22px;max-width:1120px;margin:0 auto;}
@@ -137,9 +180,13 @@ h1{font-family:var(--fd);font-weight:600;font-variation-settings:'SOFT' 50,'WONK
 .mlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:14px;}
 @media(max-width:640px){.mlist{grid-template-columns:1fr;}}
 
-.it{display:flex;gap:14px;padding:14px;border-radius:var(--r);cursor:pointer;text-align:left;width:100%;scroll-margin-top:150px;
+.it{position:relative;display:flex;gap:14px;padding:14px;border-radius:var(--r);cursor:pointer;text-align:left;width:100%;scroll-margin-top:150px;
   background:var(--night-2);border:1px solid var(--edge);font-family:var(--fb);color:inherit;
   transition:transform .34s cubic-bezier(.22,1,.36,1),border-color .3s,box-shadow .34s,background .3s;}
+/* the whole card, as one target, under everything else on it */
+.it-hit{position:absolute;inset:0;z-index:1;border:none;background:none;cursor:pointer;
+  padding:0;border-radius:inherit;font:inherit;color:inherit;}
+.it-hit:focus-visible{outline:2px solid var(--saffron);outline-offset:2px;}
 .it:hover{transform:translateY(-4px);border-color:var(--edge-2);box-shadow:var(--lift);background:var(--char);}
 .it-p{width:104px;height:104px;flex-shrink:0;border-radius:13px;overflow:hidden;position:relative;background:var(--char);}
 .it-p img{width:100%;height:100%;object-fit:cover;transition:transform .6s cubic-bezier(.22,1,.36,1);}
@@ -162,21 +209,48 @@ h1{font-family:var(--fd);font-weight:600;font-variation-settings:'SOFT' 50,'WONK
 .it-f{display:flex;align-items:center;justify-content:space-between;gap:9px;margin-top:auto;}
 .it-pr{font-family:var(--fd);font-weight:700;font-size:17px;letter-spacing:-.03em;color:var(--saffron);white-space:nowrap;}
 .it-pr s{color:var(--cream-3);font-size:12.5px;font-weight:400;margin-right:6px;}
-.it-add{width:33px;height:33px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;
+.it-add{width:33px;height:33px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;padding:0;
+  cursor:pointer;font-family:inherit;
   background:rgba(255,176,32,.12);border:1px solid var(--edge-2);color:var(--saffron);transition:.26s;}
 .it:hover .it-add{background:var(--heat);color:#1A0A03;border-color:transparent;transform:scale(1.12);}
+.it-add:hover{background:var(--heat)!important;color:#1A0A03!important;border-color:transparent!important;
+  transform:scale(1.22)!important;}
+.it-add:focus-visible{outline:2px solid var(--saffron);outline-offset:2px;}
 .it-add svg{width:15px;height:15px;}
 .it-qty{position:absolute;top:-6px;right:-6px;min-width:21px;height:21px;border-radius:100px;padding:0 6px;
   display:grid;place-items:center;font-size:11px;font-weight:800;background:var(--heat);color:#1A0A03;
   box-shadow:0 3px 10px rgba(255,90,31,.5);}
-.it-addwrap{position:relative;flex-shrink:0;}
+.it-addwrap{position:relative;z-index:2;flex-shrink:0;}
 
-/* ═══════ GALLERY ═══════ */
-.gal{display:flex;gap:10px;overflow-x:auto;padding:4px 0 10px;scrollbar-width:none;}
+/* ═══════ GALLERY ═══════
+   The room again at the foot of the menu, after the food rather
+   than before it, because by now you have decided what to eat and
+   the only question left is what the place is like. It carries
+   itself along slowly and stops the moment a finger touches it.
+   ═══════════════════════════════════════════════════════════════ */
+.gal-wrap{position:relative;}
+.gal{display:flex;gap:10px;overflow-x:auto;padding:4px 0 10px;scrollbar-width:none;
+  scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;}
 .gal::-webkit-scrollbar{display:none;}
-.gal img{flex-shrink:0;width:min(70vw,258px);aspect-ratio:4/3;object-fit:cover;border-radius:var(--r);
-  border:1px solid var(--edge);cursor:pointer;transition:transform .4s;}
-.gal img:hover{transform:scale(1.02);}
+.gal img{flex-shrink:0;width:min(70vw,300px);aspect-ratio:4/3;object-fit:cover;border-radius:var(--r);
+  border:1px solid var(--edge);cursor:pointer;scroll-snap-align:center;
+  transition:transform .5s cubic-bezier(.22,1,.36,1),border-color .35s;}
+.gal img:hover{transform:scale(1.02);border-color:var(--edge-2);}
+.gal-nav{position:absolute;top:50%;transform:translateY(-50%);z-index:3;width:38px;height:38px;
+  border-radius:50%;display:none;place-items:center;cursor:pointer;
+  border:1px solid var(--edge-2);background:rgba(20,10,5,.82);backdrop-filter:blur(10px);
+  color:var(--cream);transition:.22s;}
+.gal-nav:hover{border-color:var(--saffron);color:var(--saffron);}
+.gal-nav svg{width:16px;height:16px;}
+.gal-nav.prev{left:-6px;}
+.gal-nav.next{right:-6px;}
+@media(hover:hover) and (min-width:760px){.gal-wrap:hover .gal-nav{display:grid;}}
+.gal-rule{display:flex;align-items:center;gap:12px;margin-top:12px;}
+.gal-bar{flex:1;height:2px;border-radius:100px;background:rgba(255,243,227,.09);overflow:hidden;}
+.gal-bar i{display:block;height:100%;width:0;border-radius:100px;background:var(--heat);
+  transition:width .45s cubic-bezier(.22,1,.36,1);}
+.gal-c{font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--cream-3);
+  font-variant-numeric:tabular-nums;flex-shrink:0;}
 
 /* ═══════ INFO ═══════ */
 .info{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:18px;}
@@ -199,6 +273,11 @@ h1{font-family:var(--fd);font-weight:600;font-variation-settings:'SOFT' 50,'WONK
 .tray-sum{flex:1;min-width:0;}
 .tray-n{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--cream-3);margin-bottom:2px;}
 .tray-v{font-family:var(--fd);font-weight:700;font-size:21px;letter-spacing:-.03em;color:var(--cream);}
+/* When there is food from somewhere else in the order too, the tray
+   says so rather than letting it be discovered at the checkout. */
+.tray-else{display:block;font-size:11px;font-weight:600;color:var(--saffron);margin-top:3px;
+  letter-spacing:0;text-transform:none;}
+.tray-else a{color:inherit;text-decoration:underline;text-underline-offset:2px;}
 .tray-b{display:inline-flex;align-items:center;gap:8px;padding:14px 24px;border-radius:100px;border:none;cursor:pointer;
   background:var(--heat);color:#1A0A03;font-family:var(--fb);font-weight:800;font-size:14.5px;flex-shrink:0;
   box-shadow:0 8px 26px rgba(255,90,31,.4);transition:transform .22s,box-shadow .22s;}
@@ -307,6 +386,10 @@ h1{font-family:var(--fd);font-weight:600;font-variation-settings:'SOFT' 50,'WONK
     <button class="tbtn" onclick="share()" aria-label="Share this restaurant">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>
     </button>
+    <button class="cart-btn" type="button" data-cart-open aria-label="Your order">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.6 7.8h14.8l-1.2 12.2a1.2 1.2 0 0 1-1.2 1H7a1.2 1.2 0 0 1-1.2-1Z"/><path d="M8.8 7.8V6a3.2 3.2 0 0 1 6.4 0v1.8"/></svg>
+      <span class="cart-n" data-cart-count>0</span>
+    </button>
   </div>
 </header>
 
@@ -322,6 +405,7 @@ h1{font-family:var(--fd);font-weight:600;font-variation-settings:'SOFT' 50,'WONK
     <div class="tray-sum">
       <div class="tray-n" id="trayN">0 items</div>
       <div class="tray-v" id="trayV">KES 0</div>
+      <span class="tray-else" id="trayElse" hidden></span>
     </div>
     <button class="tray-b" onclick="openOrder()">
       Review order
@@ -338,14 +422,24 @@ h1{font-family:var(--fd);font-weight:600;font-variation-settings:'SOFT' 50,'WONK
 
 <script src="/vendor-supabase-2.112.3.js"></script>
 <script src="/apa-session.js"></script>
+<script src="/cabana-cart.js"></script>
+<script src="/cabana-cart-ui.js"></script>
 <script>
 /* ═══════════════════════════════════════════════════════════════
    CABANA · ONE RESTAURANT
-   The menu, exactly as the kitchen typed it. The basket is a local
-   note-to-self: it builds a message the diner sends to the kitchen
-   themselves, on WhatsApp or by phone. Cabana never sits between
-   the two, never marks a price up and never takes a cut, so there
-   is no checkout here pretending otherwise.
+   The menu, exactly as the kitchen typed it.
+
+   The order lives above this page, in CabanaCart, so a diner can
+   take this kitchen's biryani and somebody else's cake without
+   choosing between them or losing one on the way. This page shows
+   its own kitchen's part of that order in the tray, and says
+   plainly when there is food from elsewhere in it too.
+
+   What the order is not is a payment. Cabana never sits between
+   the diner and the counter, never marks a price up and never
+   takes a cut, so nothing here charges anybody: the checkout's job
+   is to hand each kitchen a complete ticket the diner sends
+   themselves.
    ═══════════════════════════════════════════════════════════════ */
 'use strict';
 
@@ -356,7 +450,8 @@ var SB = supabase.createClient(
 
 var ID = new URLSearchParams(location.search).get('id') || '';
 var R = null, P = {}, SECS = [], ITEMS = [], PROMOS = [];
-var ORDER = {};                      // item id -> qty
+var SHOTS = [];                      // every photograph of this restaurant
+var ORDER = {};                      // item id -> qty, mirrored from the basket
 var CUR = 'KES';
 
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){
@@ -498,7 +593,17 @@ function render(){
   if(back==='dash') document.getElementById('backBtn').href='partner-listings.html';
 
   var open=cooking();
-  var hero=P.hero_photo||(R.photos&&R.photos[0])||'';
+  /* Every photograph the restaurant has, hero first, then the room,
+     then whatever a dish was shot against if the room was never
+     photographed. Deduplicated, because a hero that is also the
+     first gallery shot would otherwise fade to itself. */
+  SHOTS=[];
+  [P.hero_photo].concat(R.photos||[]).forEach(function(u){
+    if(u&&SHOTS.indexOf(u)===-1) SHOTS.push(u);
+  });
+  if(SHOTS.length<2){
+    ITEMS.forEach(function(i){ if(i.photo&&SHOTS.indexOf(i.photo)===-1&&SHOTS.length<6) SHOTS.push(i.photo); });
+  }
   var cuis=(P.cuisines||[]).filter(Boolean).join(' · ');
   var where=[R.area,R.city].filter(Boolean).join(', ')||R.location||'Kenya';
 
@@ -516,10 +621,26 @@ function render(){
 
   var html='';
   /* hero */
-  html+='<section class="hero"><div class="hero-img">'
-    +(hero?'<img src="'+esc(hero)+'" alt="'+esc(R.title)+'" fetchpriority="high" decoding="async" onerror="this.replaceWith(Object.assign(document.createElement(\'div\'),{className:\'hero-none\',textContent:\'🍽️\'}))"/>'
-          :'<div class="hero-none">🍽️</div>')
-    +'</div><div class="hero-scrim"></div><div class="hero-in">'
+  html+='<section class="hero"><div class="hero-img" id="heroImg">'
+    +(SHOTS.length
+      ? SHOTS.map(function(u,i){
+          return '<div class="hero-fr'+(i?'':' on')+'" data-fr="'+i+'">'
+            +'<img src="'+esc(u)+'" alt="'+esc(R.title)+(i?' ':' ')+'" '
+            +(i?'loading="lazy"':'fetchpriority="high"')+' decoding="async" '
+            +'onerror="dropFrame(this)"/></div>';
+        }).join('')
+      : '<div class="hero-none">🍽️</div>')
+    +'</div><div class="hero-scrim"></div>'
+    +(SHOTS.length>1
+      ? '<div class="hero-count">'
+        +'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.6" y="5.4" width="18.8" height="14.2" rx="2.4"/><circle cx="12" cy="12.5" r="3.4"/><path d="M8.4 5.4 9.8 2.9h4.4l1.4 2.5"/></svg>'
+        +'<span id="heroC">1 / '+SHOTS.length+'</span></div>'
+        +'<div class="hero-dots" id="heroDots">'+SHOTS.map(function(u,i){
+          return '<button class="hero-dot'+(i?'':' on')+'" type="button" data-go="'+i+'" '
+            +'aria-label="Photograph '+(i+1)+' of '+SHOTS.length+'"></button>';
+        }).join('')+'</div>'
+      : '')
+    +'<div class="hero-in">'
     +'<div class="hero-line">'
     +(open===true?'<span class="st open"><span class="pip"></span>Cooking now</span>'
       :open===false?'<span class="st shut">Closed right now</span>':'')
@@ -601,11 +722,29 @@ function render(){
     });
   }
 
-  /* gallery */
-  var shots=(R.photos||[]).filter(Boolean);
+  /* ── the room, at the foot of the menu ──────────────────────────
+        Everything the restaurant has photographed, including the
+        plates, so a kitchen that only ever shot its food still has
+        something to show. It carries itself along on its own and
+        stops the moment anybody touches it. */
+  var shots=[];
+  (R.photos||[]).forEach(function(u){ if(u&&shots.indexOf(u)===-1) shots.push(u); });
+  if(P.hero_photo&&shots.indexOf(P.hero_photo)===-1) shots.unshift(P.hero_photo);
+  ITEMS.forEach(function(i){ if(i.photo&&shots.indexOf(i.photo)===-1) shots.push(i.photo); });
+
   if(shots.length>1){
-    html+='<section class="msec"><div class="mhead"><h2>Inside</h2></div><div class="gal">'
+    html+='<section class="msec"><div class="mhead"><h2>Inside '+esc(R.title||'the place')+'</h2>'
+      +'<p>'+shots.length+' photographs, all taken by the restaurant itself.</p></div>'
+      +'<div class="gal-wrap">'
+      +'<button class="gal-nav prev" type="button" onclick="galNudge(-1)" aria-label="Previous photograph">'
+      +'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5.6 8.4 12l6.6 6.4"/></svg></button>'
+      +'<div class="gal" id="gal">'
       +shots.map(function(u){return '<img src="'+esc(u)+'" alt="'+esc(R.title)+'" loading="lazy" decoding="async" onclick="zoom('+js(u)+')" onerror="this.remove()"/>';}).join('')
+      +'</div>'
+      +'<button class="gal-nav next" type="button" onclick="galNudge(1)" aria-label="Next photograph">'
+      +'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5.6 15.6 12 9 18.4"/></svg></button>'
+      +'<div class="gal-rule"><div class="gal-bar"><i id="galBar"></i></div>'
+      +'<span class="gal-c" id="galC">1 / '+shots.length+'</span></div>'
       +'</div></section>';
   }
 
@@ -635,16 +774,144 @@ function render(){
   html+='<div class="pad"></div></div>';
   document.getElementById('app').innerHTML=html;
   wireScroll();
+  initHero();
+  initGallery();
   paintOrder();
 }
 
+/* ═══════ THE HERO SLIDESHOW ═══════
+   Cross-faded, never slid. It pauses while the tab is in the
+   background so a page left open all afternoon is not still
+   quietly cycling photographs, and it steps aside entirely for
+   anyone who has asked for less motion. ═══════════════════════ */
+var _hero={i:0,t:null,frames:[],dots:[]};
+function initHero(){
+  clearInterval(_hero.t);
+  var box=document.getElementById('heroImg');
+  if(!box) return;
+  _hero.frames=[].slice.call(box.querySelectorAll('.hero-fr'));
+  _hero.dots=[].slice.call(document.querySelectorAll('.hero-dot'));
+  _hero.i=0;
+  if(_hero.frames.length<2) return;
+
+  _hero.dots.forEach(function(d){
+    d.addEventListener('click',function(){ goHero(Number(d.dataset.go),true); });
+  });
+
+  var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(!reduce) runHero();
+
+  /* a hidden tab is not being watched */
+  document.addEventListener('visibilitychange',function(){
+    if(document.hidden) clearInterval(_hero.t);
+    else if(!reduce) runHero();
+  });
+}
+function runHero(){
+  clearInterval(_hero.t);
+  _hero.t=setInterval(function(){ goHero(_hero.i+1); },5200);
+}
+function goHero(n,manual){
+  var f=_hero.frames; if(f.length<2) return;
+  n=((n%f.length)+f.length)%f.length;
+  f.forEach(function(el,i){ el.classList.toggle('on',i===n); });
+  _hero.dots.forEach(function(d,i){ d.classList.toggle('on',i===n); });
+  var c=document.getElementById('heroC');
+  if(c) c.textContent=(n+1)+' / '+f.length;
+  _hero.i=n;
+  if(manual) runHero();     /* a tap restarts the clock rather than fighting it */
+}
+/* a photograph that will not load leaves the slideshow rather than
+   sitting in it as a blank frame */
+function dropFrame(img){
+  var fr=img.closest('.hero-fr'); if(!fr) return;
+  var was=fr.classList.contains('on');
+  fr.remove();
+  _hero.frames=[].slice.call(document.querySelectorAll('.hero-fr'));
+  var dot=document.querySelector('.hero-dot:last-child');
+  if(dot) dot.remove();
+  _hero.dots=[].slice.call(document.querySelectorAll('.hero-dot'));
+  if(!_hero.frames.length){
+    var box=document.getElementById('heroImg');
+    if(box) box.innerHTML='<div class="hero-none">🍽️</div>';
+    clearInterval(_hero.t);
+    return;
+  }
+  if(was) goHero(0);
+  if(_hero.frames.length<2){
+    clearInterval(_hero.t);
+    var c=document.querySelector('.hero-count'), d=document.getElementById('heroDots');
+    if(c) c.remove(); if(d) d.remove();
+  }
+}
+
+/* ═══════ THE GALLERY ═══════ */
+var _gal={t:null};
+function initGallery(){
+  clearInterval(_gal.t);
+  var el=document.getElementById('gal');
+  if(!el) return;
+
+  function paint(){
+    var max=el.scrollWidth-el.clientWidth;
+    var p=max>0?el.scrollLeft/max:0;
+    var bar=document.getElementById('galBar');
+    if(bar) bar.style.width=Math.max(6,p*100)+'%';
+    var n=el.children.length;
+    var w=el.children[0]?el.children[0].getBoundingClientRect().width+10:1;
+    var at=Math.min(n,Math.round(el.scrollLeft/w)+1);
+    var c=document.getElementById('galC');
+    if(c) c.textContent=at+' / '+n;
+  }
+  el.addEventListener('scroll',function(){
+    clearTimeout(el._p); el._p=setTimeout(paint,60);
+  },{passive:true});
+  paint();
+
+  var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(reduce) return;
+
+  function run(){
+    clearInterval(_gal.t);
+    _gal.t=setInterval(function(){
+      if(document.hidden) return;
+      var max=el.scrollWidth-el.clientWidth;
+      if(max<=0) return;
+      /* at the end it walks back to the start rather than jumping */
+      if(el.scrollLeft>=max-4) el.scrollTo({left:0,behavior:'smooth'});
+      else galNudge(1);
+    },4200);
+  }
+  ['pointerenter','touchstart','focusin'].forEach(function(ev){
+    el.addEventListener(ev,function(){ clearInterval(_gal.t); },{passive:true});
+  });
+  ['pointerleave','touchend','focusout'].forEach(function(ev){
+    el.addEventListener(ev,run,{passive:true});
+  });
+  run();
+}
+function galNudge(dir){
+  var el=document.getElementById('gal'); if(!el) return;
+  var w=el.children[0]?el.children[0].getBoundingClientRect().width+10:280;
+  el.scrollBy({left:dir*w,behavior:'smooth'});
+}
+
+/* The card opens the dish; the button on it adds one straight to
+   the order without opening anything. Two intentions, two targets,
+   so nobody has to open a sheet to buy a second chapati. */
 function itemCard(it){
   var deal=it.promo_price!=null;
   var badges=[];
   if(deal) badges.push(['b-deal','Offer']);
   if(it.badge&&BADGE[it.badge]) badges.push(BADGE[it.badge]);
   var q=ORDER[it.id]||0;
-  return '<button class="it" id="dish-'+esc(it.id)+'" onclick="openDish('+js(it.id)+')">'
+  /* The card is a plain container with a button laid over it, rather
+     than a button with another button inside it. Tapping the card
+     opens the dish; tapping the plus adds one and stops there. */
+  return '<div class="it" id="dish-'+esc(it.id)+'">'
+    +'<button class="it-hit" type="button" onclick="openDish('+js(it.id)+')" '
+    +'aria-label="'+esc(it.name)+', '+esc(deal?money(it.promo_price):money(it.price))
+    +'. See this dish"></button>'
     +'<span class="it-p">'
     +(it.photo?'<img src="'+esc(it.photo)+'" alt="'+esc(it.name)+'" loading="lazy" decoding="async" onerror="this.replaceWith(Object.assign(document.createElement(\'span\'),{className:\'it-none\',textContent:\'🍲\'}))"/>'
               :'<span class="it-none">🍲</span>')
@@ -654,9 +921,18 @@ function itemCard(it){
     +(it.description?'<span class="it-d">'+esc(it.description)+'</span>':'')
     +'<span class="it-f"><span class="it-pr">'
     +(deal?'<s>'+money(it.price)+'</s>'+money(it.promo_price):money(it.price))
-    +'</span><span class="it-addwrap"><span class="it-add">'
+    +'</span><span class="it-addwrap">'
+    +'<button class="it-add" type="button" onclick="quickAdd(event,'+js(it.id)+')" '
+    +'aria-label="Add one '+esc(it.name)+' to your order">'
     +'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>'
-    +'</span>'+(q?'<span class="it-qty">'+q+'</span>':'')+'</span></span></span></button>';
+    +'</button>'+(q?'<span class="it-qty">'+q+'</span>':'')+'</span></span></span></div>';
+}
+/* one more of this, right now, without leaving the menu */
+function quickAdd(e,id){
+  e.preventDefault(); e.stopPropagation();
+  var it=ITEMS.filter(function(i){return String(i.id)===String(id);})[0];
+  if(!it) return;
+  window.CabanaCartUI.add(kitchenCard(),itemCardData(it),1);
 }
 
 /* ═══════ SECTION NAV ═══════ */
@@ -680,18 +956,58 @@ function wireScroll(){
   window.addEventListener('scroll',on,{passive:true}); on();
 }
 
-/* ═══════ THE ORDER ═══════ */
-function key(){ return 'cabana-order-'+ID; }
-function restoreOrder(){
-  try{ var raw=localStorage.getItem(key()); if(raw){ var o=JSON.parse(raw);
-    if(o&&o.t&&Date.now()-o.t<12*3600e3) ORDER=o.items||{}; } }catch(e){}
+/* ═══════ THE ORDER ═══════
+   ORDER is a mirror of this kitchen's slice of the global basket,
+   kept only so the existing rendering code can stay simple. The
+   basket itself is the single source of truth. ═════════════════ */
+var CART=window.CabanaCart;
+
+/* everything the basket needs to describe this kitchen on a page
+   that has never queried it */
+function kitchenCard(){
+  return {
+    id:ID, name:R&&R.title, currency:CUR,
+    wa:P.order_whatsapp||(R&&R.contact_whatsapp),
+    ph:P.order_phone||(R&&R.contact_phone),
+    photo:P.hero_photo||(R&&R.photos&&R.photos[0])||'',
+    where:[R&&R.area,R&&R.city].filter(Boolean).join(', ')||(R&&R.location)||'',
+    delivery_fee:P.delivery_fee, min_order:P.min_order,
+    delivery_mins:P.delivery_mins, prep_mins:P.prep_mins,
+    serves_delivery:P.serves_delivery, serves_pickup:P.serves_pickup,
+    serves_dine_in:P.serves_dine_in,
+    opens_at:P.opens_at, closes_at:P.closes_at, open_days:P.open_days
+  };
 }
-function saveOrder(){
-  try{ localStorage.setItem(key(),JSON.stringify({t:Date.now(),items:ORDER})); }catch(e){}
+function itemCardData(it){
+  return { id:it.id, name:it.name, price:it.price, promo_price:it.promo_price,
+           photo:it.photo, section:sectionName(it.section_id) };
+}
+function sectionName(sid){
+  for(var i=0;i<SECS.length;i++){ if(String(SECS[i].id)===String(sid)) return SECS[i].name||''; }
+  return '';
+}
+
+/* pull this kitchen's lines out of the basket into ORDER */
+function restoreOrder(){
+  ORDER={};
+  var g=CART.group(ID);
+  if(!g) return;
+  g.items.forEach(function(i){ ORDER[i.id]=i.qty; });
+  /* a line adopted from the old per-restaurant basket has no name
+     or price on it. Now that the menu is loaded, repair it. */
+  g.items.forEach(function(i){
+    if(!i.thin) return;
+    var it=ITEMS.filter(function(m){return String(m.id)===String(i.id);})[0];
+    if(it) CART.add(kitchenCard(),itemCardData(it),0);
+  });
 }
 function setQty(id,q){
-  if(q<=0) delete ORDER[id]; else ORDER[id]=q;
-  saveOrder(); paintOrder(); repaintCard(id);
+  var it=ITEMS.filter(function(i){return String(i.id)===String(id);})[0];
+  if(!it) return;
+  if(q<=0){ CART.remove(ID,id); }
+  else if(CART.qty(ID,id)){ CART.setQty(ID,id,q); }
+  else { CART.add(kitchenCard(),itemCardData(it),q); }
+  /* CART.onChange repaints the tray and the cards */
 }
 function repaintCard(id){
   var it=ITEMS.filter(function(i){return String(i.id)===String(id);})[0]; if(!it)return;
@@ -700,21 +1016,44 @@ function repaintCard(id){
   el.replaceWith(tmp.firstChild);
 }
 function totals(){
-  var n=0,v=0;
-  Object.keys(ORDER).forEach(function(id){
-    var it=ITEMS.filter(function(i){return String(i.id)===String(id);})[0]; if(!it)return;
-    n+=ORDER[id]; v+=priceOf(it)*ORDER[id];
-  });
-  return {n:n,v:v};
+  var g=CART.group(ID);
+  return g?{n:g.count,v:g.subtotal}:{n:0,v:0};
 }
 function paintOrder(){
   var t=totals(), tray=document.getElementById('tray');
   tray.classList.toggle('up',t.n>0);
   document.getElementById('trayN').textContent=t.n+(t.n===1?' item':' items');
   document.getElementById('trayV').textContent=money(t.v);
+
+  /* food from other kitchens is never a surprise at the checkout */
+  var all=CART.totals(), other=all.count-t.n, el=document.getElementById('trayElse');
+  if(other>0){
+    el.hidden=false;
+    el.innerHTML='+ '+other+(other===1?' item':' items')+' from '+(all.kitchens-1)
+      +(all.kitchens-1===1?' other kitchen':' other kitchens')
+      +' · <a href="/checkout?from='+encodeURIComponent(ID)+'">see all</a>';
+  } else el.hidden=true;
 }
-function emptyOrder(){ ORDER={}; saveOrder(); paintOrder();
-  ITEMS.forEach(function(i){ repaintCard(i.id); }); toast('Order cleared'); }
+function emptyOrder(){
+  if(!totals().n) return;
+  CART.clearKitchen(ID);
+  toast('Cleared what you had from this kitchen');
+}
+
+/* one subscription keeps the tray, the cards and the badge honest,
+   including when another tab changes the order */
+CART.onChange(function(){
+  if(!ITEMS.length) return;
+  var was=ORDER; ORDER={};
+  var g=CART.group(ID);
+  if(g) g.items.forEach(function(i){ ORDER[i.id]=i.qty; });
+  paintOrder();
+  /* repaint only the cards whose quantity actually moved */
+  var seen={};
+  Object.keys(ORDER).forEach(function(id){ if(was[id]!==ORDER[id]) seen[id]=1; });
+  Object.keys(was).forEach(function(id){ if(ORDER[id]==null) seen[id]=1; });
+  Object.keys(seen).forEach(repaintCard);
+});
 
 /* ═══════ SHEETS ═══════ */
 function closeSheet(){ document.getElementById('ov').classList.remove('on'); document.body.style.overflow=''; }
@@ -756,9 +1095,10 @@ function openDish(id){
 }
 function bump(d){ _dishQ=Math.max(1,Math.min(50,_dishQ+d)); document.getElementById('dq').textContent=_dishQ; }
 function addDish(){
-  setQty(_dishId,_dishQ); closeSheet();
   var it=ITEMS.filter(function(i){return String(i.id)===String(_dishId);})[0];
-  toast(_dishQ+' × '+(it?it.name:'dish')+' added');
+  setQty(_dishId,_dishQ);
+  closeSheet();
+  if(it) window.CabanaCartUI.toast(itemCardData(it),_dishQ);
 }
 
 function openOrder(){
@@ -776,6 +1116,7 @@ function openOrder(){
   var under = P.min_order && t.v < Number(P.min_order);
   var wa=P.order_whatsapp||R.contact_whatsapp, ph=P.order_phone||R.contact_phone;
   var open=cooking();
+  var all=CART.totals(), other=all.count-t.n;
 
   openSheet('<div class="ord">'
     +'<h3>Your order</h3>'
@@ -788,7 +1129,20 @@ function openOrder(){
       :open===true?'The kitchen is cooking right now. ':'')
     +(under?'Their minimum order is '+money(P.min_order)+', so add '+money(Number(P.min_order)-t.v)+' more before you send this. ':'')
     +'You pay the kitchen directly. Cabana takes no commission and adds nothing to these prices.</div>'
+    /* ordering from more than one kitchen is normal, and the way
+       through it is a checkout that knows about all of them */
+    +(other>0
+      ?'<div class="note" style="background:rgba(255,90,31,.08);border-color:var(--edge-2)">'
+       +'You also have <b>'+other+(other===1?' item':' items')+'</b> from '
+       +(all.kitchens-1)+(all.kitchens-1===1?' other kitchen':' other kitchens')
+       +'. The checkout keeps them separate and gives each kitchen its own ticket.</div>'
+      :'')
     +'<div class="ord-acts">'
+    +(other>0
+      ?'<a class="oa" style="background:var(--heat);color:#1A0A03" href="/checkout?from='+encodeURIComponent(ID)+'">'
+       +'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.6 7.8h14.8l-1.2 12.2a1.2 1.2 0 0 1-1.2 1H7a1.2 1.2 0 0 1-1.2-1Z"/><path d="M8.8 7.8V6a3.2 3.2 0 0 1 6.4 0v1.8"/></svg>'
+       +'Go to checkout · all '+all.count+' items</a>'
+      :'')
     +(wa?'<a class="oa oa-wa" href="'+waLink(wa,t)+'" target="_blank" rel="noopener" onclick="setTimeout(closeSheet,300)">'
       +'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.1-1.8-.9-2-1-.3-.1-.5-.1-.7.1-.2.3-.8 1-.9 1.2-.2.2-.4.2-.6.1-.3-.2-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.5.1-.6l.5-.5c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5s-.7-1.6-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.2.2 2.1 3.2 5.1 4.5.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.8-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.1-.3-.2-.6-.3M12 21.8h-.1c-1.8 0-3.5-.5-5-1.4l-.4-.2-3.7 1 1-3.6-.2-.4A9.9 9.9 0 0 1 2.2 12C2.2 6.6 6.6 2.1 12 2.1c2.6 0 5.1 1 7 2.9a9.8 9.8 0 0 1 2.9 7c0 5.5-4.4 9.9-9.9 9.9m8.4-18.3A11.8 11.8 0 0 0 12 0C5.5 0 .2 5.3.2 11.9c0 2.1.5 4.1 1.6 5.9L0 24l6.3-1.7c1.8 1 3.7 1.4 5.7 1.4 6.6 0 11.9-5.3 11.9-11.9 0-3.2-1.2-6.2-3.5-8.4z"/></svg>'
       +'Send this to the kitchen on WhatsApp</a>':'')
@@ -796,20 +1150,22 @@ function openOrder(){
       +'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1A19.5 19.5 0 0 1 4.7 12 19.8 19.8 0 0 1 1.6 3.4 2 2 0 0 1 3.6 1.2h3a2 2 0 0 1 2 1.7 12.8 12.8 0 0 0 .7 2.8 2 2 0 0 1-.5 2.1L7.9 8.4a16 16 0 0 0 7.7 7.7l1.7-.9a2 2 0 0 1 2.1.5 12.8 12.8 0 0 0 2.8.7 2 2 0 0 1 1.8 2"/></svg>'
       +'Call '+esc(ph)+'</a>':'')
     +(!wa&&!ph?'<div class="note">This kitchen has not left a number yet. Try again shortly.</div>':'')
+    +(other>0?'':'<a class="oa oa-call" href="/checkout?from='+encodeURIComponent(ID)+'">'
+      +'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.6 12h14.8M13 5.6 19.4 12 13 18.4"/></svg>'
+      +'Checkout with your details</a>')
     +'<button class="oa oa-call" onclick="closeSheet()">Keep looking at the menu</button>'
     +'</div></div>');
 }
 function nudge(id,d){ setQty(id,(ORDER[id]||0)+d); if(totals().n) openOrder(); else closeSheet(); }
 
+/* The ticket is built by the basket, so the message this kitchen
+   gets is word for word the one the checkout would send it. */
 function waLink(num,t){
-  var lines=Object.keys(ORDER).map(function(id){
-    var it=ITEMS.filter(function(i){return String(i.id)===String(id);})[0];
-    return it?(ORDER[id]+' x '+it.name+'  '+money(priceOf(it)*ORDER[id])):'';
-  }).filter(Boolean);
-  var msg='Hello '+(R.title||'')+', I would like to order:\n\n'+lines.join('\n')
-    +'\n\nTotal: '+money(t.v)
-    +'\n\nFound you on Cabana: '+location.origin+'/restaurant?id='+ID;
-  return 'https://wa.me/'+String(num).replace(/\D/g,'')+'?text='+encodeURIComponent(msg);
+  var link=CART.waLink(ID,{url:location.origin+'/restaurant?id='+ID});
+  if(link) return link;
+  /* the basket has no number for this kitchen but the page does */
+  return 'https://wa.me/'+String(num).replace(/\D/g,'')+'?text='
+    +encodeURIComponent(CART.ticket(ID,{url:location.origin+'/restaurant?id='+ID}));
 }
 
 function zoom(url){
