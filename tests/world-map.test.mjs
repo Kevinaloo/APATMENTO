@@ -419,12 +419,40 @@ test('the ported work is attributed where it is used', () => {
 });
 
 test('the basemap attribution cannot be dropped', () => {
-  /* Carto and OSM both require it, and it is a licence breach to
-     remove. It lives in the layer factory rather than in each caller
-     for exactly that reason — and apa-map.js must agree. */
+  /* OpenStreetMap and Esri both require it, and it is a licence breach
+     to remove. It lives in the layer factory rather than in each
+     caller for exactly that reason — and apa-map.js must agree. */
   assert.match(GLOBE, /openstreetmap\.org\/copyright/);
-  assert.match(GLOBE, /carto\.com\/attributions/);
-  assert.match(read('apa-map.js'), /carto\.com\/attributions/);
+  assert.match(GLOBE, /esri\.com/);
+  assert.match(read('apa-map.js'), /openstreetmap\.org\/copyright/);
+  assert.match(read('apa-map.js'), /esri\.com/);
+});
+
+test('no basemap is requested from a source that now demands a key', () => {
+  /* CARTO began stamping API KEY REQUIRED across anonymous tiles.
+     Every map on the platform wore it — the results map, the listing
+     map, the globe and the host's own pin picker — because they all
+     drew from the same two URLs. Nothing may quietly reintroduce it. */
+  for (const file of ['apa-map.js', 'cabana-globe.js', 'cabana-pinpoint.js',
+                      'world.html', 'global-apartments.html']) {
+    assert.ok(!/cartocdn\.com/.test(read(file)),
+      `${file} must not request a keyed basemap`);
+  }
+});
+
+test('every skin declares the source it is crediting', () => {
+  /* Two providers now, not one. A skin that carried the wrong credit
+     would be a licence breach that no test could see from the URL
+     alone, so the pairing is asserted here. */
+  for (const key of I.SKIN_ORDER) {
+    const s = I.SKINS[key];
+    assert.ok(s.attrib, `${key} must name its basemap's source`);
+    if (/openstreetmap\.org/.test(s.tiles)) {
+      assert.match(s.attrib, /OpenStreetMap/, `${key} draws OSM and must say so`);
+    } else if (/arcgisonline\.com/.test(s.tiles)) {
+      assert.match(s.attrib, /Esri/, `${key} draws Esri imagery and must say so`);
+    }
+  }
 });
 
 test('no non-commercial upstream dataset came across', () => {
@@ -533,15 +561,26 @@ test('the default optic is painted, not just recorded', () => {
 });
 
 test('optics that share a basemap do not re-request its tiles', () => {
-  /* Four of the six optics sit on Voyager. setUrl tears the tile grid
-     down and refetches it, so swapping between them must be a
-     repaint. */
+  /* Four of the six optics sit on the same OpenStreetMap raster.
+     Rebuilding the layer tears the tile grid down and refetches it, so
+     swapping between those four must be a repaint. */
   assert.match(GLOBE, /if \(this\._tileUrl !== skin\.tiles\)/,
-    'the tile URL must be compared before it is set');
+    'the tile URL must be compared before the layer is rebuilt');
 
-  const voyager = I.SKIN_ORDER.filter((k) => I.SKINS[k].tiles === I.SKINS.aurora.tiles);
-  assert.ok(voyager.length >= 3,
+  const shared = I.SKIN_ORDER.filter((k) => I.SKINS[k].tiles === I.SKINS.aurora.tiles);
+  assert.ok(shared.length >= 3,
     'this guard only earns its place while optics really do share a basemap');
+});
+
+test('a basemap swap replaces the layer rather than re-pointing it', () => {
+  /* Leaflet's credit line follows layer add and remove events, not a
+     layer's current URL. setUrl would leave the globe crediting
+     OpenStreetMap over Esri's imagery — the same licence bug
+     cabana-pinpoint.js already had to fix once. */
+  assert.ok(!/this\.tiles\.setUrl\(/.test(GLOBE),
+    'setUrl on the basemap is what breaks attribution');
+  assert.match(GLOBE, /this\.map\.removeLayer\(this\.tiles\)/,
+    'the outgoing layer must be removed so its credit goes with it');
 });
 
 test('the keyboard is claimed by dominance, not by proximity to an edge', () => {

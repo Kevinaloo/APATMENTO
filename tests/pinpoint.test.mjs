@@ -255,7 +255,9 @@ test('every imagery source is credited, over TLS', () => {
   }
   assert.match(I.VIEWS.hybrid.baseAttrib, /Esri/);
   assert.match(I.VIEWS.map.baseAttrib, /OpenStreetMap/);
-  assert.match(I.VIEWS.map.baseAttrib, /CARTO/);
+  assert.match(I.VIEWS.hybrid.overlayAttrib, /Esri/);
+  assert.ok(!/cartocdn\.com/.test(PINPOINT),
+    'CARTO now stamps anonymous tiles API KEY REQUIRED — nothing may draw from it');
 });
 
 test('changing the view re-registers attribution rather than re-pointing tiles', () => {

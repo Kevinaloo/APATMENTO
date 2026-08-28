@@ -56,13 +56,31 @@
   var ATLAS_URL = '/cabana-world-atlas.json';
   var LIVE_URL = '/api/atlas';
 
-  /* Carto's basemaps carry an attribution requirement. It is not
+  /* Every basemap here carries an attribution requirement. It is not
      decoration — dropping it is a licence breach — so it is baked into
-     the skin table rather than left to each caller. Same rule apa-map.js
-     already follows; the two files must never disagree about this. */
-  var ATTRIB =
-    '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> ' +
-    '&copy; <a href="https://carto.com/attributions">CARTO</a>';
+     the skin table rather than left to each caller. Same rule
+     apa-map.js already follows; the two files must never disagree.
+
+     CARTO used to serve four of these six optics. It stopped serving
+     anonymously, and the tiles started coming back stamped API KEY
+     REQUIRED across the whole globe, so the daylight optics moved to
+     OpenStreetMap's own raster and the two dark ones moved onto Esri
+     imagery. The second move is an improvement rather than a
+     compromise: Midnight over a real night-side photograph of the
+     earth is what the optic was always describing, and Nightglass is
+     low-light gear pointed at ground truth, which is exactly what the
+     upstream project was doing with it. */
+  var OSM_TILES = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+  var IMAGERY_TILES =
+    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+
+  var OSM_ATTRIB =
+    '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+  var IMAGERY_ATTRIB =
+    'Imagery &copy; <a href="https://www.esri.com/">Esri</a>, Maxar, Earthstar Geographics';
+
+  /* Kept as the default credit for the layer at build time. */
+  var ATTRIB = OSM_ATTRIB;
 
   /* ══ SKINS ═════════════════════════════════════════════════════════
 
@@ -89,8 +107,9 @@
     aurora: {
       label: 'Aurora',
       hint: 'Cabana daylight',
-      tiles: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-      filter: 'saturate(1.06) contrast(1.02)',
+      tiles: OSM_TILES,
+      attrib: OSM_ATTRIB,
+      filter: 'saturate(.94) contrast(1.04) brightness(1.03)',
       dark: false,
       ink: '#08080F',
       paper: '#EEF0F7',
@@ -100,8 +119,9 @@
     ivory: {
       label: 'Ivory',
       hint: 'Quiet, for reading',
-      tiles: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-      filter: 'saturate(.72) brightness(1.03)',
+      tiles: OSM_TILES,
+      attrib: OSM_ATTRIB,
+      filter: 'saturate(.3) brightness(1.07) contrast(.97)',
       dark: false,
       ink: '#08080F',
       paper: '#F5F5FC',
@@ -111,8 +131,9 @@
     midnight: {
       label: 'Midnight',
       hint: 'The globe after dark',
-      tiles: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-      filter: 'saturate(1.1) contrast(1.08) brightness(1.04) hue-rotate(-8deg)',
+      tiles: IMAGERY_TILES,
+      attrib: IMAGERY_ATTRIB,
+      filter: 'saturate(.5) brightness(.6) contrast(1.18) hue-rotate(-10deg)',
       dark: true,
       ink: '#FCFCFE',
       paper: '#08080F',
@@ -122,8 +143,9 @@
     savannah: {
       label: 'Savannah',
       hint: 'Warm, African light',
-      tiles: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-      filter: 'sepia(.32) saturate(1.28) hue-rotate(-12deg) contrast(1.05) brightness(1.02)',
+      tiles: OSM_TILES,
+      attrib: OSM_ATTRIB,
+      filter: 'sepia(.34) saturate(1.3) hue-rotate(-12deg) contrast(1.05) brightness(1.02)',
       dark: false,
       ink: '#2A1B08',
       paper: '#F6EFE2',
@@ -137,7 +159,8 @@
     noir: {
       label: 'Noir',
       hint: 'Ported from God’s Eye View',
-      tiles: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+      tiles: OSM_TILES,
+      attrib: OSM_ATTRIB,
       filter: 'grayscale(1) contrast(1.2) sepia(.15) brightness(.94)',
       dark: false,
       ink: '#0B0B0B',
@@ -151,8 +174,9 @@
     nightglass: {
       label: 'Nightglass',
       hint: 'Low-light optics',
-      tiles: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-      filter: 'grayscale(1) brightness(1.5) contrast(1.32) sepia(1) hue-rotate(120deg) saturate(2.4)',
+      tiles: IMAGERY_TILES,
+      attrib: IMAGERY_ATTRIB,
+      filter: 'grayscale(1) brightness(1.28) contrast(1.34) sepia(1) hue-rotate(122deg) saturate(2.3)',
       dark: true,
       ink: '#CFFFF3',
       paper: '#01110D',
@@ -1380,12 +1404,8 @@
     this.map = map;
     map.attributionControl.setPrefix('');
 
-    this.tiles = L.tileLayer(SKINS.aurora.tiles, {
-      subdomains: 'abcd', maxZoom: 19, attribution: ATTRIB,
-      /* Keeping a couple of levels of stale tiles alive is what stops
-         a long transit from flashing grey mid-flight. */
-      keepBuffer: 3, updateWhenZooming: false
-    }).addTo(map);
+    this.tiles = this._makeTiles(SKINS.aurora);
+    this.tiles.addTo(map);
     this._tileUrl = SKINS.aurora.tiles;
 
     map.setView([12, 14], 2.6);
@@ -1829,15 +1849,41 @@
    * data-skin attribute, and the map would open looking like an
    * unstyled basemap.
    */
+  /* One factory so the layer's zoom ceiling and its credit can never
+     drift apart from the skin that asked for it. */
+  Globe.prototype._makeTiles = function (skin) {
+    return window.L.tileLayer(skin.tiles, {
+      maxZoom: 19,
+      /* Imagery stops being resurveyed around 19 in most of Africa;
+         without a native cap the globe goes blank on the last zoom. */
+      maxNativeZoom: 19,
+      attribution: skin.attrib || ATTRIB,
+      /* Keeping a couple of levels of stale tiles alive is what stops
+         a long transit from flashing grey mid-flight. */
+      keepBuffer: 3, updateWhenZooming: false
+    });
+  };
+
   Globe.prototype._paintSkin = function (key) {
     var skin = SKINS[key];
 
-    /* setUrl tears the tile grid down and re-requests it, so it is
-       called only when the pixels really differ. Four of the six
-       optics share the Voyager basemap and are pure filter changes —
-       swapping between them should be a repaint, not a reload. */
+    /* Rebuilding the layer tears the tile grid down and re-requests
+       it, so it happens only when the pixels really differ. Four of
+       the six optics share the OpenStreetMap basemap and are pure
+       filter changes — swapping between those is a repaint, not a
+       reload.
+
+       When the basemap does change, the layer is replaced rather than
+       re-pointed. Leaflet's credit line is driven by layer add and
+       remove events, not by a layer's current URL, so setUrl would
+       leave the globe crediting OpenStreetMap over Esri's imagery.
+       That is the same licence bug cabana-pinpoint.js already had to
+       fix once, and it is not being reintroduced here. */
     if (this._tileUrl !== skin.tiles) {
-      this.tiles.setUrl(skin.tiles);
+      var fresh = this._makeTiles(skin);
+      this.map.removeLayer(this.tiles);
+      fresh.addTo(this.map);
+      this.tiles = fresh;
       this._tileUrl = skin.tiles;
     }
 

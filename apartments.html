@@ -435,6 +435,89 @@ body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webk
 /* photo count badge */
 .dl-gal-count{position:absolute;bottom:14px;right:14px;background:rgba(10,10,20,.6);color:#fff;font-size:11px;font-weight:600;padding:5px 10px;border-radius:100px;backdrop-filter:blur(6px);z-index:4;}
 /* close btn */
+/* ══ LIGHTBOX ═══════════════════════════════════════════════════════
+   Tapping a photo in a listing used to do nothing at all: the gallery
+   was a 300px strip and that was the whole of it. A guest deciding
+   whether to spend real money on a room they cannot visit is doing it
+   on these twelve photographs, so they get the screen.
+
+   It sits above the drawer rather than inside it, because the drawer
+   scrolls and clips and a photograph should do neither.             */
+.lb{position:fixed;inset:0;z-index:400;background:rgba(8,8,16,.97);
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+  display:flex;flex-direction:column;opacity:0;visibility:hidden;
+  transition:opacity .28s ease,visibility .28s ease;}
+.lb.open{opacity:1;visibility:visible;}
+body.lb-open{overflow:hidden;}
+
+.lb-top{display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:max(14px,env(safe-area-inset-top)) 16px 12px;flex:none;color:#fff;}
+.lb-count{font-size:13px;font-weight:700;letter-spacing:.02em;
+  font-variant-numeric:tabular-nums;color:rgba(255,255,255,.86);}
+.lb-actions{display:flex;gap:8px;}
+.lb-btn{width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,.18);
+  background:rgba(255,255,255,.1);color:#fff;display:flex;align-items:center;
+  justify-content:center;cursor:pointer;padding:0;
+  transition:background .18s ease,transform .18s cubic-bezier(.22,1,.36,1);}
+.lb-btn:hover{background:rgba(255,255,255,.2);}
+.lb-btn:active{transform:scale(.93);}
+.lb-btn svg{width:18px;height:18px;}
+
+/* The stage. Photos live in a scroll-snap rail so the platform owns
+   the momentum and the rubber-banding — a transform loop stutters on
+   the cheap Androids most of this traffic arrives on. */
+.lb-rail{flex:1;min-height:0;display:flex;overflow-x:auto;overflow-y:hidden;
+  scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;
+  scrollbar-width:none;overscroll-behavior:contain;}
+.lb-rail::-webkit-scrollbar{display:none;}
+.lb-slide{flex:0 0 100%;scroll-snap-align:center;display:flex;align-items:center;
+  justify-content:center;padding:0 12px;}
+.lb-slide img{max-width:100%;max-height:100%;width:auto;height:auto;
+  object-fit:contain;border-radius:10px;opacity:0;transition:opacity .3s ease;
+  -webkit-user-select:none;user-select:none;}
+.lb-slide img.ready{opacity:1;}
+.lb-slide .lb-ph{width:64px;height:64px;color:rgba(255,255,255,.3);}
+
+.lb-arr{position:absolute;top:50%;transform:translateY(-50%);width:46px;height:46px;
+  border-radius:50%;border:1px solid rgba(255,255,255,.18);background:rgba(20,20,32,.6);
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+  color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;
+  z-index:3;padding:0;transition:background .18s ease,transform .18s cubic-bezier(.22,1,.36,1);}
+.lb-arr:hover{background:rgba(40,40,60,.85);transform:translateY(-50%) scale(1.06);}
+.lb-arr[disabled]{opacity:0;pointer-events:none;}
+.lb-prev{left:16px;} .lb-next{right:16px;}
+.lb-arr svg{width:20px;height:20px;}
+@media(max-width:760px){.lb-arr{display:none;}}
+
+/* Thumbnails. Twelve photos is a lot to swipe through one at a time
+   when the guest only wants to see the bathroom again. */
+.lb-strip{flex:none;display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;
+  padding:12px 16px max(14px,env(safe-area-inset-bottom));}
+.lb-strip::-webkit-scrollbar{display:none;}
+.lb-thumb{flex:0 0 auto;width:62px;height:46px;border-radius:8px;overflow:hidden;
+  border:2px solid transparent;cursor:pointer;padding:0;background:rgba(255,255,255,.08);
+  opacity:.5;transition:opacity .2s ease,border-color .2s ease,transform .2s ease;}
+.lb-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+.lb-thumb:hover{opacity:.85;}
+.lb-thumb.on{opacity:1;border-color:#fff;transform:translateY(-2px);}
+@media(max-width:760px){.lb-thumb{width:52px;height:40px;}}
+
+/* The way in, from the gallery. */
+.dl-gallery-slide{cursor:zoom-in;}
+.dl-gal-all{position:absolute;right:14px;bottom:46px;z-index:4;display:inline-flex;
+  align-items:center;gap:7px;padding:8px 13px;border-radius:100px;border:none;
+  background:rgba(252,252,253,.94);-webkit-backdrop-filter:blur(10px);
+  backdrop-filter:blur(10px);color:var(--ink);font:inherit;font-size:12px;
+  font-weight:700;cursor:pointer;box-shadow:0 3px 14px rgba(10,10,20,.18);
+  transition:transform .18s cubic-bezier(.22,1,.36,1),box-shadow .18s ease;}
+.dl-gal-all:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(10,10,20,.24);}
+.dl-gal-all:active{transform:scale(.96);}
+.dl-gal-all svg{width:13px;height:13px;}
+
+@media(prefers-reduced-motion:reduce){
+  .lb,.lb-slide img,.lb-thumb,.lb-arr{transition-duration:.01ms!important;}
+}
+
 .drawer-close{position:absolute;top:16px;left:16px;width:40px;height:40px;border-radius:50%;background:rgba(252,252,253,.92);backdrop-filter:blur(8px);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink);z-index:10;transition:transform .2s,box-shadow .2s;box-shadow:0 2px 10px rgba(10,10,20,.1);}
 .drawer-close:hover{transform:scale(1.08);}
 
@@ -533,16 +616,50 @@ body.map-open .split-list .grid{grid-template-columns:1fr;}
 .split-map{display:none;position:sticky;top:96px;height:calc(100vh - 190px);
   border-radius:20px;overflow:hidden;border:1px solid var(--line);box-shadow:var(--shadow-glass);}
 body.map-open .split-map{display:block;}
-.card.map-lit{outline:2px solid var(--theme-2);outline-offset:2px;}
+.card.map-lit{outline:2px solid var(--theme-2);outline-offset:2px;
+  box-shadow:0 10px 30px rgba(123,47,247,.18);}
+
+/* The map's own bar. A desktop never sees it — the page chrome is
+   right there above the map. A phone does, because the map takes the
+   whole screen there and has to carry its own way back. */
+.map-bar{display:none;}
 
 @media(max-width:900px){
   body.map-open .split{grid-template-columns:1fr;}
-  body.map-open .split-list{max-height:none;overflow:visible;}
-  body.map-open .split-list .grid{grid-template-columns:repeat(auto-fill,minmax(250px,1fr));}
-  .split-map{position:relative;top:0;height:65vh;}
   body.map-open .split-list{display:none;}
-  body.map-list .split-map{display:none;}
-  body.map-list.map-open .split-list{display:block;}
+
+  /* A map you can see 40% of is a thumbnail, not a map, and this one
+     was worse than that: `height:100%` was being written inline over
+     a grid row that had nothing left in it to be 100% of, so the
+     container measured zero and the map rendered into nothing at all.
+     On a phone it now takes the screen or it is not worth the tap. */
+  body.map-open .split-map{
+    display:block;position:fixed;left:0;right:0;top:56px;bottom:0;
+    height:auto;border-radius:0;border:none;box-shadow:none;z-index:150;
+  }
+  body.map-open{overflow:hidden;}
+
+  body.map-open .map-bar{
+    display:flex;position:fixed;top:0;left:0;right:0;height:56px;z-index:151;
+    align-items:center;gap:10px;padding:0 12px;
+    background:rgba(252,252,253,.88);
+    backdrop-filter:blur(22px) saturate(180%);
+    -webkit-backdrop-filter:blur(22px) saturate(180%);
+    border-bottom:1px solid var(--line);
+  }
+  .map-bar-back{
+    display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 15px 0 12px;
+    border-radius:100px;border:1px solid var(--line);background:#fff;
+    font:inherit;font-size:13px;font-weight:700;color:var(--ink);cursor:pointer;
+    box-shadow:0 2px 10px rgba(10,10,20,.07);
+    transition:transform .18s cubic-bezier(.22,1,.36,1),box-shadow .18s ease;
+  }
+  .map-bar-back:active{transform:scale(.96);}
+  .map-bar-back svg{width:16px;height:16px;}
+  .map-bar-count{
+    margin-left:auto;font-size:12px;font-weight:700;color:var(--ink-soft);
+    white-space:nowrap;padding-right:4px;
+  }
 }
 
 /* ── Sticky bottom CTA ── */
@@ -3051,6 +3168,13 @@ body.gs-open .gs-sheet{opacity:1;visibility:visible;pointer-events:auto;transfor
     <div class="split-list">
       <div class="grid" id="grid"></div>
     </div>
+    <div class="map-bar" id="map-bar">
+      <button type="button" class="map-bar-back" onclick="toggleMap()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        Stays
+      </button>
+      <span class="map-bar-count" id="map-bar-count"></span>
+    </div>
     <div class="split-map" id="split-map"></div>
   </div>
 </div>
@@ -3058,6 +3182,26 @@ body.gs-open .gs-sheet{opacity:1;visibility:visible;pointer-events:auto;transfor
 <!-- DRAWER -->
 <div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
 <div class="drawer" id="drawer"></div>
+
+<!-- LIGHTBOX — full photo gallery, above the drawer -->
+<div class="lb" id="lightbox" role="dialog" aria-modal="true" aria-label="Photo gallery" hidden>
+  <div class="lb-top">
+    <span class="lb-count" id="lb-count"></span>
+    <div class="lb-actions">
+      <button type="button" class="lb-btn" id="lb-close" onclick="closeLightbox()" aria-label="Close gallery">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="lb-rail" id="lb-rail"></div>
+  <button type="button" class="lb-arr lb-prev" id="lb-prev" onclick="lbStep(-1)" aria-label="Previous photo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+  </button>
+  <button type="button" class="lb-arr lb-next" id="lb-next" onclick="lbStep(1)" aria-label="Next photo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+  </button>
+  <div class="lb-strip" id="lb-strip"></div>
+</div>
 
 <!-- Supabase bootstrap. Kept synchronous because the inline script
      immediately below calls createClient() during parse, but moved
@@ -3578,7 +3722,11 @@ function wireCards() {
     _syncRail(media);
     clearTimeout(scrollEnd.get(rail));
     scrollEnd.set(rail, setTimeout(() => media.classList.remove('scrubbing'), 850));
-    rail.dataset.movedAt = Date.now();
+    /* Only a real gesture counts as movement. The slideshow drives
+       this same rail, and without the exemption every auto-advance
+       would arm the 350ms tap guard below — so a guest tapping a card
+       at the wrong moment would have the tap silently eaten. */
+    if (rail.dataset.auto !== '1') rail.dataset.movedAt = Date.now();
   }, true);   // capture: scroll does not bubble
 
   grid.addEventListener('click', e => {
@@ -3597,6 +3745,7 @@ function wireCards() {
       const media = arr.closest('.card-media');
       const rail  = media.querySelector('.card-rail');
       const to    = _railIndex(rail) + Number(arr.getAttribute('data-step'));
+      _cardShowHold(media);
       _hydrateSlides(media, to, 2);
       rail.scrollTo({ left: to * rail.clientWidth, behavior: 'smooth' });
       return;
@@ -3651,9 +3800,146 @@ function _observeCards() {
   document.querySelectorAll('#grid .card-slide img').forEach(img => {
     if (img.complete && img.naturalWidth) img.classList.add('ready');
   });
-  if (!_cardObserver) return;
-  document.querySelectorAll('#grid .card-media').forEach(m => _cardObserver.observe(m));
+  if (_cardObserver) {
+    document.querySelectorAll('#grid .card-media').forEach(m => _cardObserver.observe(m));
+  }
+  _cardShowsWatch();
 }
+
+/* ══ CARD SLIDESHOW ═══════════════════════════════════════════════
+   A stay is sold on the second and third photograph — the bathroom,
+   the view, whether the "kitchen" is a worktop in the corridor. A rail
+   that only moves when swiped means most guests only ever see the
+   first one, so the cards play themselves.
+
+   Three rules keep it from becoming an irritation:
+
+   1. Only cards actually on screen advance. Thirty rails ticking
+      behind the fold is thirty scroll handlers, thirty repaints and a
+      flat battery, for photographs nobody is looking at.
+   2. Touching a card stops it. Hovering, swiping, pressing an arrow —
+      any of these hands control back, and it does not take it again
+      for nine seconds. Fighting a guest for the rail is the fastest
+      way to make a good feature hated.
+   3. It walks to the end and back rather than looping. Rewinding
+      through nine slides to return to the first is a long ugly blur;
+      turning round at the end is neither.
+
+   Each card keeps its own clock, staggered on entry, so a grid of
+   twelve does not flip in unison like a departures board.
+   ================================================================ */
+const CARD_SHOW_MS   = 4400;   // dwell per photo
+const CARD_RESUME_MS = 9000;   // quiet period after a guest intervenes
+const CARD_TICK_MS   = 500;
+
+let _showTimer = null;
+let _showSeen  = null;
+
+function _cardShowsAllowed() {
+  return !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+}
+
+/* Hand the rail back to the guest for a while. */
+function _cardShowHold(media, ms) {
+  if (media) media.dataset.hold = String(Date.now() + (ms || CARD_RESUME_MS));
+}
+
+function _cardShowsWatch() {
+  if (!_cardShowsAllowed()) return;
+
+  if (!_showSeen && 'IntersectionObserver' in window) {
+    _showSeen = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        const media = e.target;
+        if (e.isIntersecting) {
+          media.dataset.inview = '1';
+          /* Stagger on entry, so a screenful does not turn as one. */
+          if (!media.dataset.next) {
+            const n = [...document.querySelectorAll('#grid .card-media.has-many')].indexOf(media);
+            media.dataset.next = String(Date.now() + CARD_SHOW_MS + Math.max(0, n % 6) * 620);
+          }
+        } else {
+          delete media.dataset.inview;
+        }
+      });
+    }, { threshold: 0.35 });
+  }
+
+  if (_showSeen) {
+    document.querySelectorAll('#grid .card-media.has-many').forEach(m => _showSeen.observe(m));
+  }
+
+  if (!_showTimer) _showTimer = setInterval(_cardShowsTick, CARD_TICK_MS);
+}
+
+function _cardShowsTick() {
+  if (document.hidden) return;
+
+  document.querySelectorAll('#grid .card-media.has-many[data-inview]').forEach(media => {
+    const now = Date.now();
+    if (media.dataset.hover === '1') return;
+    if (Number(media.dataset.hold || 0) > now) return;
+    if (Number(media.dataset.next || 0) > now) return;
+
+    const rail  = media.querySelector('.card-rail');
+    if (!rail || !rail.clientWidth) return;
+    const total = media.querySelectorAll('.card-slide').length;
+    if (total < 2) return;
+
+    let dir = Number(media.dataset.dir || 1);
+    let to  = _railIndex(rail) + dir;
+    if (to >= total) { dir = -1; to = total - 2; }
+    else if (to < 0) { dir = 1;  to = 1; }
+    media.dataset.dir = String(dir);
+
+    _hydrateSlides(media, to, 2);
+    rail.dataset.auto = '1';
+    rail.scrollTo({ left: to * rail.clientWidth, behavior: 'smooth' });
+    setTimeout(() => { delete rail.dataset.auto; }, 700);
+
+    media.dataset.next = String(now + CARD_SHOW_MS);
+  });
+}
+
+/* A guest whose pointer or thumb is on the card is reading it. */
+(function wireCardShowPauses() {
+  const attach = () => {
+    const grid = document.getElementById('grid');
+    if (!grid || grid.dataset.showsWired) return;
+    grid.dataset.showsWired = '1';
+
+    grid.addEventListener('pointerenter', e => {
+      const media = e.target.closest?.('.card-media');
+      if (media) media.dataset.hover = '1';
+    }, true);
+
+    grid.addEventListener('pointerleave', e => {
+      const media = e.target.closest?.('.card-media');
+      if (!media) return;
+      delete media.dataset.hover;
+      _cardShowHold(media, 2600);
+    }, true);
+
+    /* A swipe is the clearest possible statement that the guest is
+       driving. Touch only — a pointerdown from a mouse is already
+       covered by the hover rule above. */
+    grid.addEventListener('touchstart', e => {
+      const media = e.target.closest?.('.card-media');
+      if (media) _cardShowHold(media);
+    }, { passive: true, capture: true });
+
+    /* Nothing should be moving on a tab nobody is looking at. */
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) return;
+      document.querySelectorAll('#grid .card-media.has-many').forEach(m => {
+        m.dataset.next = String(Date.now() + CARD_SHOW_MS);
+      });
+    });
+  };
+  document.readyState === 'loading'
+    ? document.addEventListener('DOMContentLoaded', attach)
+    : attach();
+})();
 
 /* ══ LIVE INVENTORY RIBBON ═══════════════════════════════════════
    Real stock only. One stream runs right, one runs left, and both
@@ -3795,9 +4081,31 @@ function toggleMap() {
   document.getElementById('map-toggle').setAttribute('aria-pressed', String(_mapWanted));
   document.getElementById('map-toggle-label').textContent = _mapWanted ? 'Hide map' : 'Map';
 
-  if (_mapWanted) _mapSync(currentListings);
+  const count = document.getElementById('map-bar-count');
+  if (count) {
+    const n = currentListings.length;
+    count.textContent = `${n} stay${n === 1 ? '' : 's'}`;
+  }
+
+  if (_mapWanted) {
+    _mapSync(currentListings);
+    /* The map goes fixed and full-screen on a phone, so the container
+       it was measured against a frame ago is not the one it now
+       occupies. Two invalidations: one after the class lands, one
+       after the transition finishes. */
+    setTimeout(() => _map && _map.resize(), 80);
+    setTimeout(() => _map && _map.resize(), 420);
+  }
   try { localStorage.setItem('apa_map_open', _mapWanted ? '1' : '0'); } catch(e) {}
 }
+
+/* Escape closes the map on a phone, where it is covering the page. */
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && _mapWanted && window.innerWidth <= 900
+      && !document.getElementById('drawer')?.classList.contains('open')) {
+    toggleMap();
+  }
+});
 
 /* Rebuild the pins for `list`. Cheap to call — it no-ops while the map
    is hidden, so every filter change can fire it without cost. */
@@ -3810,10 +4118,40 @@ async function _mapSync(list) {
 
     _map = await ApaMap.results('split-map', list, {
       format: v => 'KES ' + Number(v || 0).toLocaleString(),
+      /* Selecting a pin raises the card, not the drawer. Opening the
+         listing is a second, deliberate tap — the guest came to the
+         map to compare, and slamming a full-screen drawer over it on
+         the first touch threw away the thing they were reading. */
       onSelect: item => openDrawer(item.id),
       onHover: (item, on) => {
         const card = document.querySelector(`[data-card-id="${item.id}"]`);
         if (card) card.classList.toggle('map-lit', on);
+      },
+      /* Choosing a pin scrolls the matching card into view in the
+         list beside it, so the two panes never disagree about what
+         the guest is looking at. */
+      onChoose: item => {
+        if (!item) return;
+        const card = document.querySelector(`[data-card-id="${item.id}"]`);
+        if (card && window.innerWidth > 900) {
+          card.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        }
+      },
+      /* The peek card is built from the same fields as a grid card, so
+         a stay looks like itself wherever a guest meets it. */
+      card: item => {
+        const photo = (item.photos && item.photos[0]) || '';
+        const beds  = item.beds === 0 ? 'Studio' : `${item.beds} bed${item.beds !== 1 ? 's' : ''}`;
+        const meta  = [beds, `${item.baths} bath`, `${item.maxGuests} guest${item.maxGuests !== 1 ? 's' : ''}`].join(' · ');
+        return `${photo
+            ? `<img class="apa-peek-img" src="${_esc(photo)}" alt="" loading="lazy" decoding="async">`
+            : `<span class="apa-peek-img" style="background:${item.grad || 'linear-gradient(135deg,#B8A4F4,#7B2FF7)'}"></span>`}
+          <span class="apa-peek-body">
+            <span class="apa-peek-where">${_esc(item.location || item.city || '')}</span>
+            <span class="apa-peek-name">${_esc(item.name)}</span>
+            <span class="apa-peek-meta">${_esc(meta)}</span>
+            <span class="apa-peek-price">KES ${Number(item.price).toLocaleString()} <span>night</span></span>
+          </span>`;
       },
       /* Panning the map is a search. Re-centring the list on what the
          guest is actually looking at is the whole point of the pairing. */
@@ -4031,7 +4369,8 @@ function _buildGallery(photos, grad) {
   const bg = grad || 'linear-gradient(135deg,#B8A4F4,#7B2FF7)';
   const slidesHTML = photos.length
     ? photos.map((p,i) =>
-        `<div class="dl-gallery-slide"><img src="${p}" alt="Photo ${i+1}" loading="${i===0?'eager':'lazy'}" decoding="async"/></div>`
+        `<div class="dl-gallery-slide" onclick="openLightbox(${i})" role="button" tabindex="0"
+           aria-label="Open photo ${i+1} full screen"><img src="${p}" alt="Photo ${i+1}" loading="${i===0?'eager':'lazy'}" decoding="async"/></div>`
       ).join('')
     : `<div class="dl-gallery-slide" style="background:${bg}">
          <svg class="dl-gallery-placeholder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
@@ -4063,8 +4402,174 @@ function _buildGallery(photos, grad) {
       ` : ''}
       ${dotsHTML}
       ${countBadge}
+      ${photos.length > 1 ? `
+        <button type="button" class="dl-gal-all" onclick="event.stopPropagation();openLightbox(_galIdx)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+          Show all ${photos.length} photos
+        </button>` : ''}
     </div>`;
 }
+
+/* ══ LIGHTBOX ═══════════════════════════════════════════════════════
+   The gallery inside the drawer is a 300px strip. It is enough to
+   decide whether to keep reading and nowhere near enough to decide
+   whether to spend money, which is what the guest is actually doing.
+   This gives them the screen.
+
+   The rail is scroll-snap rather than a transform loop: momentum,
+   rubber-banding and mid-fling interruption are the platform's job,
+   and it does them better on a cheap Android than we ever would.
+   ================================================================ */
+let _lbIdx = 0;
+let _lbSettle = null;
+
+function openLightbox(start) {
+  if (!_galPhotos.length) return;
+  _clearAutoScroll();                       // the strip stops while the guest looks properly
+
+  const lb    = document.getElementById('lightbox');
+  const rail  = document.getElementById('lb-rail');
+  const strip = document.getElementById('lb-strip');
+  if (!lb || !rail) return;
+
+  _lbIdx = Math.max(0, Math.min(Number(start) || 0, _galPhotos.length - 1));
+
+  /* Only the photo being opened and its two neighbours are fetched.
+     A twelve-photo listing must not cost twelve downloads to look at
+     one of them. */
+  rail.innerHTML = _galPhotos.map((p, i) => `
+    <div class="lb-slide" data-lb-slide="${i}">
+      ${Math.abs(i - _lbIdx) <= 1
+        ? `<img src="${_esc(p)}" alt="Photo ${i+1} of ${_galPhotos.length}" decoding="async">`
+        : ''}
+    </div>`).join('');
+
+  strip.innerHTML = _galPhotos.map((p, i) =>
+    `<button type="button" class="lb-thumb${i === _lbIdx ? ' on' : ''}" data-lb-thumb="${i}"
+       onclick="lbGoTo(${i})" aria-label="Photo ${i+1}">
+       <img src="${_esc(p)}" alt="" loading="lazy" decoding="async">
+     </button>`).join('');
+
+  lb.hidden = false;
+  document.body.classList.add('lb-open');
+  requestAnimationFrame(() => {
+    lb.classList.add('open');
+    /* Jump, do not glide: the guest asked for photo seven, not for a
+       tour of photos one through six. */
+    rail.scrollTo({ left: _lbIdx * rail.clientWidth, behavior: 'auto' });
+    _lbPaint();
+    document.getElementById('lb-close')?.focus();
+  });
+}
+
+function closeLightbox() {
+  const lb = document.getElementById('lightbox');
+  if (!lb || lb.hidden) return;
+  lb.classList.remove('open');
+  document.body.classList.remove('lb-open');
+  setTimeout(() => { lb.hidden = true; }, 300);
+
+  /* Put the drawer's own strip on the photo the guest ended on, so
+     closing the lightbox does not feel like losing their place. */
+  _galIdx = _lbIdx;
+  _updateGalleryUI();
+  _startAutoScroll();
+}
+
+function lbGoTo(i) {
+  const rail = document.getElementById('lb-rail');
+  if (!rail) return;
+  _lbIdx = Math.max(0, Math.min(i, _galPhotos.length - 1));
+  _lbHydrate(_lbIdx);
+  rail.scrollTo({ left: _lbIdx * rail.clientWidth, behavior: 'smooth' });
+  _lbPaint();
+}
+
+function lbStep(dir) { lbGoTo(_lbIdx + dir); }
+
+/* Fetch a slide and its neighbours on demand. */
+function _lbHydrate(at) {
+  const rail = document.getElementById('lb-rail');
+  if (!rail) return;
+  for (let i = at - 1; i <= at + 1; i++) {
+    if (i < 0 || i >= _galPhotos.length) continue;
+    const slide = rail.querySelector(`[data-lb-slide="${i}"]`);
+    if (!slide || slide.firstElementChild) continue;
+    slide.innerHTML =
+      `<img src="${_esc(_galPhotos[i])}" alt="Photo ${i+1} of ${_galPhotos.length}" decoding="async">`;
+  }
+}
+
+function _lbPaint() {
+  const count = document.getElementById('lb-count');
+  if (count) count.textContent = `${_lbIdx + 1} / ${_galPhotos.length}`;
+
+  document.querySelectorAll('#lb-strip .lb-thumb').forEach(t => {
+    const on = Number(t.dataset.lbThumb) === _lbIdx;
+    t.classList.toggle('on', on);
+    if (on) t.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
+  });
+
+  const prev = document.getElementById('lb-prev');
+  const next = document.getElementById('lb-next');
+  if (prev) prev.disabled = _lbIdx === 0;
+  if (next) next.disabled = _lbIdx === _galPhotos.length - 1;
+}
+
+/* Swiping the rail is the primary gesture on a phone, so the rail is
+   the source of truth for which photo is showing — the arrows and the
+   thumbnails just drive it. */
+(function wireLightbox() {
+  const ready = () => {
+    const rail = document.getElementById('lb-rail');
+    const lb   = document.getElementById('lightbox');
+    if (!rail || !lb) return;
+
+    rail.addEventListener('scroll', () => {
+      clearTimeout(_lbSettle);
+      _lbSettle = setTimeout(() => {
+        const at = rail.clientWidth ? Math.round(rail.scrollLeft / rail.clientWidth) : 0;
+        if (at === _lbIdx) return;
+        _lbIdx = Math.max(0, Math.min(at, _galPhotos.length - 1));
+        _lbHydrate(_lbIdx);
+        _lbPaint();
+      }, 110);
+    }, { passive: true });
+
+    rail.addEventListener('load', e => {
+      if (e.target.tagName === 'IMG') e.target.classList.add('ready');
+    }, true);
+
+    /* A photo that fails leaves a caption rather than a black hole. */
+    rail.addEventListener('error', e => {
+      const img = e.target;
+      if (img.tagName !== 'IMG') return;
+      img.closest('.lb-slide').innerHTML =
+        `<svg class="lb-ph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>`;
+    }, true);
+
+    /* Clicking the surround closes. Clicking the photograph does not —
+       that is where someone rests their thumb while reading it. */
+    rail.addEventListener('click', e => {
+      if (e.target.tagName !== 'IMG') closeLightbox();
+    });
+
+    document.addEventListener('keydown', e => {
+      if (lb.hidden) return;
+      if (e.key === 'Escape')     { e.preventDefault(); closeLightbox(); }
+      if (e.key === 'ArrowRight') { e.preventDefault(); lbStep(1); }
+      if (e.key === 'ArrowLeft')  { e.preventDefault(); lbStep(-1); }
+    });
+
+    window.addEventListener('resize', () => {
+      if (lb.hidden) return;
+      rail.scrollTo({ left: _lbIdx * rail.clientWidth, behavior: 'auto' });
+    });
+  };
+  document.readyState === 'loading'
+    ? document.addEventListener('DOMContentLoaded', ready)
+    : ready();
+})();
 
 /* ── gallery controls ── */
 function galStep(dir) {
@@ -4158,9 +4663,15 @@ function messageHost(id) {
 
 function closeDrawer() {
   _clearAutoScroll();
+  /* The lightbox is stacked above the drawer, so closing the drawer
+     underneath it would leave a full-screen gallery floating over
+     nothing. It goes first. */
+  const lb = document.getElementById('lightbox');
+  if (lb && !lb.hidden) closeLightbox();
   document.getElementById('drawer').classList.remove('open');
   document.getElementById('drawer-overlay').classList.remove('open');
   document.body.style.overflow = '';
+  document.body.classList.remove('lb-open');
 }
 
 function bookNow(id) {

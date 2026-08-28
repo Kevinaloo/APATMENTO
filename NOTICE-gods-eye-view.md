@@ -51,9 +51,13 @@ aircraft/vessel/satellite tracking layers, CCTV projection, the OpenAI
 realtime voice agent, the GLSL post-process stages, and the 3D models
 under `public/models/` (separately licensed).
 
-Cabana's map draws on OpenStreetMap and CARTO basemaps, attributed in
-`cabana-globe.js` (`ATTRIB`) and rendered on every map, as those licences
-require.
+Cabana's maps draw on OpenStreetMap's own raster tiles and on Esri's
+world imagery and reference layers. Both are attributed in
+`cabana-globe.js` (`OSM_ATTRIB`, `IMAGERY_ATTRIB`), in `apa-map.js`
+(`BASEMAPS`) and in `cabana-pinpoint.js` (`VIEWS`), and the credit is
+rendered on every map, as those licences require. CARTO's basemaps were
+used until they stopped serving anonymously; no CARTO tile is requested
+any more and its attribution was removed with the last of them.
 
 ---
 

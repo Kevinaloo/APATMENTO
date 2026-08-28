@@ -79,9 +79,15 @@
   var ESRI_ATTRIB =
     'Imagery &copy; <a href="https://www.esri.com/">Esri</a>, Maxar, Earthstar Geographics, ' +
     'and the GIS User Community';
+  /* CARTO stopped serving its raster basemaps without a key — every
+     tile came back stamped API KEY REQUIRED — so the street view now
+     draws OpenStreetMap's own raster and the hybrid labels come from
+     Esri's reference layer. Neither takes a key, and in Nairobi,
+     Accra and Lagos the OSM rendering carries estates and access
+     roads the commercial sets flatten away, which is precisely the
+     detail a host is looking for when they place their own gate. */
   var OSM_ATTRIB =
-    '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> ' +
-    '&copy; <a href="https://carto.com/attributions">CARTO</a>';
+    '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
   var VIEWS = {
     hybrid: {
@@ -89,8 +95,8 @@
       hint: 'Satellite with street names',
       base: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
       baseAttrib: ESRI_ATTRIB,
-      overlay: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png',
-      overlayAttrib: OSM_ATTRIB,
+      overlay: 'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
+      overlayAttrib: ESRI_ATTRIB,
       maxNativeZoom: 19,
       dark: true
     },
@@ -106,7 +112,7 @@
     map: {
       label: 'Map',
       hint: 'Streets and landmarks',
-      base: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+      base: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
       baseAttrib: OSM_ATTRIB,
       overlay: null,
       maxNativeZoom: 19,
