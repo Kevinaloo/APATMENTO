@@ -161,100 +161,226 @@ body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webk
 /* ── LAYOUT ── */
 .content{position:relative;z-index:2;max-width:1180px;margin:0 auto;padding:18px 28px 70px;}
 .content-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:12px;}
-.results-count{font-size:14px;color:var(--ink-soft);font-family:var(--font-ui);font-weight:500;letter-spacing:.01em;}
-.results-count strong{color:var(--ink);font-weight:700;font-size:15px;}
+.results-count{font-family:var(--font-display);font-size:19px;font-weight:500;
+  color:var(--ink);letter-spacing:-.02em;line-height:1.25;margin:0;}
+#result-num[hidden]{display:none;}
+@media(min-width:620px){.results-count{font-size:21px;}}
 .sort-wrap{display:flex;align-items:center;gap:10px;}
 
 
 /* ── CARD GRID ── */
-/* ══ STAY CARDS. Compact horizontal rows ═══════════════════════════
-   Was: a 290px min grid of tall 200px-image cards. Two per screen on a
-   phone, so finding a stay meant endless scrolling.
-   Now: one vertical column of short rows. Photo left, details right.
-   Roughly 4–5 stays per screen instead of 1½, and the eye scans a
-   single column rather than zig-zagging. Widens to two columns only
-   when there is genuinely room. */
-.grid{display:grid;grid-template-columns:1fr;gap:12px;}
-@media(min-width:900px){.grid{grid-template-columns:repeat(2,1fr);gap:14px;}}
-@media(min-width:1400px){.grid{grid-template-columns:repeat(3,1fr);}}
+/* ══ STAY CARDS v4. Photo-first, swipeable ═════════════════════════
+   The photo is the product. Previous versions gave it a 118px thumbnail
+   rail and let the text lead, which reads as a directory listing rather
+   than a place someone wants to sleep in.
+
+   Now: a full-bleed 4:3 photo that a guest can swipe through without
+   opening the listing, the way every serious marketplace works. The
+   carousel is a native scroll-snap container, not a JS transform loop,
+   so momentum, rubber-banding and interruption all come from the
+   platform and stay smooth on a low-end Android.
+
+   The one loud element is the price. Everything else is quiet. That is
+   deliberate: zero commission means the number on the card is the
+   number the guest pays, and that claim deserves the emphasis. */
+.grid{display:grid;grid-template-columns:1fr;gap:26px 18px;}
+@media(min-width:620px){.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:30px 20px;}}
+@media(min-width:1040px){.grid{grid-template-columns:repeat(3,minmax(0,1fr));}}
+@media(min-width:1500px){.grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:34px 22px;}}
 
 .card{
-  position:relative;display:flex;align-items:stretch;gap:0;
-  border-radius:16px;overflow:hidden;
-  background:rgba(255,255,255,.72);
-  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
-  border:1px solid var(--line);cursor:pointer;
-  transition:transform .3s cubic-bezier(.22,1,.36,1),box-shadow .3s,border-color .3s,opacity .4s;
-  opacity:0;transform:translateY(14px);
-  min-height:118px;
+  position:relative;display:flex;flex-direction:column;
+  background:none;border:none;padding:0;cursor:pointer;
+  opacity:0;transform:translateY(12px);
+  transition:opacity .45s var(--ease),transform .45s var(--ease);
+  -webkit-tap-highlight-color:transparent;
 }
 .card.in{opacity:1;transform:none;}
-.card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lift);border-color:rgba(67,97,255,.28);}
-.card.is-native{border-color:rgba(45,212,191,.34);box-shadow:0 0 0 1px rgba(45,212,191,.12);}
+.card-link{color:inherit;text-decoration:none;}
+.card-link:focus-visible{outline:2px solid var(--theme-2);outline-offset:3px;border-radius:5px;}
+.card:has(.card-link:focus-visible) .card-media{box-shadow:0 0 0 2px var(--theme-2),var(--lift-2);}
+.card.map-lit .card-media{box-shadow:0 0 0 2px var(--theme-2),var(--lift-2);}
 
-/* Image: fixed square-ish rail on the left. Never grows. */
-.card-img{
-  position:relative;flex:0 0 118px;width:118px;
-  overflow:hidden;display:flex;align-items:center;justify-content:center;
+/* ── Media: the swipeable rail ── */
+.card-media{
+  position:relative;border-radius:18px;overflow:hidden;
+  aspect-ratio:4/3;                 /* reserves space: zero layout shift */
+  background:var(--glass-3);
+  box-shadow:0 1px 2px rgba(10,10,20,.05);
+  transition:box-shadow .35s var(--ease);
+  isolation:isolate;
 }
-@media(min-width:560px){.card-img{flex-basis:150px;width:150px;}}
-.card-img img{width:100%;height:100%;object-fit:cover;display:block;
-  transition:transform .6s cubic-bezier(.22,1,.36,1);}
-.card:hover .card-img img{transform:scale(1.06);}
-.card-img svg{width:38px;height:38px;color:rgba(255,255,255,.9);}
+.card:hover .card-media{box-shadow:var(--lift-2);}
 
-/* Tag sits on the photo, small enough not to swallow it. */
-.card-tag{position:absolute;top:8px;left:8px;z-index:2;
-  padding:4px 8px;border-radius:100px;font-size:9px;font-weight:700;
-  letter-spacing:.03em;white-space:nowrap;}
-.card-tag-native{background:linear-gradient(135deg,#2DD4BF,#4361FF);color:#fff;}
-.card-tag-hot{display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,.92);color:var(--ember);
-  border:1px solid rgba(255,107,44,.2);box-shadow:0 2px 8px rgba(10,10,20,.1);
-  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);}
-.card-tag-hot svg{width:10px;height:10px;}
-
-/* Body: everything stacked tight on the right. */
-.card-body{
-  flex:1;min-width:0;display:flex;flex-direction:column;
-  padding:11px 13px 11px 14px;gap:2px;
+.card-rail{
+  display:flex;height:100%;width:100%;
+  overflow-x:auto;overflow-y:hidden;
+  scroll-snap-type:x mandatory;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;overscroll-behavior-x:contain;
 }
-.card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;}
-.card-loc{display:flex;align-items:center;gap:4px;min-width:0;
-  font-size:11px;color:var(--ink-faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.card-loc svg{width:11px;height:11px;flex-shrink:0;}
+.card-rail::-webkit-scrollbar{display:none;}
+.card-slide{
+  flex:0 0 100%;width:100%;height:100%;
+  scroll-snap-align:center;scroll-snap-stop:always;
+  position:relative;display:flex;align-items:center;justify-content:center;
+}
+.card-slide img{
+  width:100%;height:100%;object-fit:cover;display:block;
+  opacity:0;transition:opacity .5s ease;
+}
+.card-slide img.ready{opacity:1;}
+.card-img-ico{width:40px;height:40px;color:rgba(255,255,255,.9);}
 
-.card-heart{flex-shrink:0;width:28px;height:28px;border-radius:50%;border:none;
-  background:rgba(10,10,20,.05);display:flex;align-items:center;justify-content:center;
-  cursor:pointer;color:var(--ink-faint);transition:transform .24s var(--ease-snap),background .2s,color .2s;padding:0;}
-.card-heart svg{width:14px;height:14px;}
-.card-heart:hover{transform:scale(1.14);background:rgba(255,59,92,.12);color:#FF3B5C;}
-.card-heart.on{color:#FF3B5C;background:rgba(255,59,92,.12);}
-.card-heart.on svg{fill:#FF3B5C;}
+/* A slide that has not been asked for yet holds a soft tint rather than
+   a spinner. Spinners on a card grid read as breakage. */
+.card-slide[data-pending]{background:linear-gradient(180deg,var(--glass-3),var(--glass-2));}
+
+/* ── Progress rail. Reads at 2 photos and at 40 ───────────────────
+   Dots stop being legible past about six. This is one hairline track
+   with a travelling fill whose width is 1/n, so it says both "where am
+   I" and "how much is left" at any photo count. */
+.card-prog{
+  position:absolute;left:14px;right:14px;bottom:11px;height:3px;z-index:3;
+  border-radius:99px;background:rgba(255,255,255,.34);
+  -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
+  opacity:0;transition:opacity .3s;pointer-events:none;
+  box-shadow:0 1px 6px rgba(10,10,20,.22);
+}
+.card-media.has-many .card-prog{opacity:1;}
+.card-prog-fill{
+  position:absolute;top:0;bottom:0;left:0;border-radius:99px;background:#fff;
+  transition:transform .32s var(--ease);transform-origin:left center;
+  will-change:transform;
+}
+
+/* Count reads only while the guest is actually moving through photos. */
+.card-count{
+  position:absolute;right:12px;bottom:20px;z-index:3;
+  padding:3px 8px;border-radius:99px;
+  background:rgba(10,10,20,.58);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+  color:#fff;font-family:var(--font-num);font-size:10.5px;font-weight:600;
+  letter-spacing:.02em;font-variant-numeric:tabular-nums;
+  opacity:0;transform:translateY(3px);transition:opacity .25s,transform .25s;pointer-events:none;
+}
+.card-media.scrubbing .card-count{opacity:1;transform:none;}
+
+/* ── Arrows. Pointer devices only; a thumb has the whole photo ── */
+.card-arr{
+  position:absolute;top:50%;z-index:4;width:30px;height:30px;margin-top:-15px;
+  border-radius:50%;border:1px solid rgba(10,10,20,.08);
+  background:rgba(255,255,255,.94);color:var(--ink);
+  display:none;align-items:center;justify-content:center;cursor:pointer;padding:0;
+  box-shadow:0 2px 10px rgba(10,10,20,.18);
+  opacity:0;transition:opacity .22s,transform .22s var(--ease-snap),background .2s;
+}
+.card-arr svg{width:14px;height:14px;}
+.card-arr-prev{left:10px;}
+.card-arr-next{right:10px;}
+.card-arr:hover{transform:scale(1.1);}
+.card-arr[disabled]{opacity:0!important;pointer-events:none;}
+@media(hover:hover) and (pointer:fine){
+  .card-media.has-many .card-arr{display:flex;}
+  .card-media.has-many:hover .card-arr:not([disabled]),
+  .card-arr:focus-visible{opacity:1;}
+}
+
+/* ── Overlays on the photo ── */
+.card-tag{
+  position:absolute;top:11px;left:11px;z-index:3;
+  display:inline-flex;align-items:center;gap:4px;
+  padding:5px 9px;border-radius:99px;font-size:10px;font-weight:700;
+  letter-spacing:.02em;white-space:nowrap;
+  background:rgba(255,255,255,.95);color:var(--ink);
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+  box-shadow:0 2px 8px rgba(10,10,20,.14);
+}
+.card-tag-hot{color:var(--ember);}
+.card-tag svg{width:10px;height:10px;}
+
+.card-heart{
+  position:absolute;top:8px;right:8px;z-index:4;
+  width:34px;height:34px;border-radius:50%;border:none;padding:0;
+  background:none;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;color:#fff;
+  transition:transform .28s var(--ease-snap);
+}
+.card-heart svg{
+  width:21px;height:21px;
+  fill:rgba(10,10,20,.32);stroke:#fff;stroke-width:2;
+  transition:fill .22s,stroke .22s;
+}
+.card-heart:hover{transform:scale(1.12);}
+.card-heart:active{transform:scale(.92);}
+.card-heart.on svg{fill:#FF3B5C;stroke:#fff;}
+.card-heart:focus-visible{outline:2px solid #fff;outline-offset:1px;}
+
+/* ── Body ── */
+.card-body{padding:11px 2px 0;display:flex;flex-direction:column;gap:2px;}
+.card-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px;}
+.card-loc{
+  display:flex;align-items:center;gap:4px;min-width:0;
+  font-size:11.5px;font-weight:500;letter-spacing:.01em;color:var(--ink-faint);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.card-loc svg{width:11px;height:11px;flex-shrink:0;opacity:.75;}
+
+.card-rating{
+  display:inline-flex;align-items:center;gap:3px;flex-shrink:0;
+  font-size:12px;font-weight:600;color:var(--ink);
+  font-variant-numeric:tabular-nums;
+}
+.card-rating svg{width:11px;height:11px;fill:var(--ink);}
+.card-rating .n{color:var(--ink-faint);font-weight:500;}
+.card-new{
+  flex-shrink:0;font-size:10.5px;font-weight:700;letter-spacing:.05em;
+  text-transform:uppercase;color:var(--theme);
+}
 
 .card-name{
-  font-family:var(--font-display);font-weight:500;font-size:15px;
-  color:var(--ink);line-height:1.25;margin:1px 0 5px;
-  display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;
-  overflow:hidden;
+  font-family:var(--font-display);font-weight:500;font-size:16px;
+  color:var(--ink);line-height:1.3;letter-spacing:-.01em;margin:1px 0 0;
+  display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;
 }
-@media(min-width:560px){.card-name{font-size:16.5px;}}
+@media(min-width:620px){.card-name{font-size:16.5px;}}
 
-.card-meta{display:flex;flex-wrap:wrap;gap:9px;font-size:11px;color:var(--ink-soft);
-  margin-bottom:auto;}
-.card-meta span{display:inline-flex;align-items:center;gap:4px;white-space:nowrap;}
-.card-meta svg{width:12px;height:12px;color:var(--theme);opacity:.7;flex-shrink:0;}
+.card-meta{
+  font-size:12px;color:var(--ink-soft);line-height:1.45;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.card-meta i{font-style:normal;color:var(--ink-faint);padding:0 5px;}
 
-.card-foot{display:flex;align-items:flex-end;justify-content:space-between;
-  gap:8px;margin-top:8px;}
-.card-price{font-family:var(--font-display);font-weight:500;line-height:1;min-width:0;}
-.card-price .val{font-size:15.5px;color:var(--ink);font-variant-numeric:tabular-nums;letter-spacing:-.02em;}
-.card-price .per{font-size:10.5px;color:var(--ink-faint);font-family:var(--font-body);}
-@media(min-width:560px){.card-price .val{font-size:17px;}}
+/* The price is the signature. Zero commission means this number is the
+   whole number, so it is set larger than the name and never hedged. */
+.card-price{
+  display:flex;align-items:baseline;gap:6px;margin-top:5px;flex-wrap:wrap;
+}
+.card-price .val{
+  font-family:var(--font-display);font-weight:600;font-size:17px;
+  color:var(--ink);letter-spacing:-.025em;font-variant-numeric:tabular-nums;
+}
+.card-price .per{font-size:12.5px;color:var(--ink-soft);font-weight:400;}
+.card-price .free{
+  font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+  color:var(--mint-deep);border:1px solid rgba(45,212,191,.3);
+  background:rgba(45,212,191,.07);border-radius:99px;padding:2.5px 7px;
+  margin-left:2px;
+}
+@media(min-width:620px){.card-price .val{font-size:18px;}}
 
-.card-go{flex-shrink:0;width:28px;height:28px;border-radius:50%;
-  background:var(--glass-2,rgba(67,97,255,.08));display:flex;align-items:center;
-  justify-content:center;color:var(--lilac-deep,#7B2FF7);transition:all .3s;}
-.card:hover .card-go{background:var(--lilac-deep,#7B2FF7);color:#fff;transform:rotate(-45deg);}
+/* ── Skeletons. An empty grid reads as a broken page ── */
+.sk{opacity:1;transform:none;pointer-events:none;}
+.sk .card-media,.sk-line{
+  background:linear-gradient(100deg,var(--glass-2) 30%,var(--glass-3) 50%,var(--glass-2) 70%);
+  background-size:220% 100%;animation:skShimmer 1.5s linear infinite;
+}
+.sk-line{height:11px;border-radius:99px;margin-top:9px;}
+.sk-line.w60{width:60%;}
+.sk-line.w85{width:85%;height:14px;}
+.sk-line.w40{width:40%;}
+@keyframes skShimmer{from{background-position:100% 0;}to{background-position:-120% 0;}}
+@media (prefers-reduced-motion:reduce){.sk .card-media,.sk-line{animation:none;}}
+
 /* ══ LISTING MODAL. Full-screen detail view ══════════════════════ */
 .drawer-overlay{position:fixed;inset:0;z-index:200;background:rgba(10,10,20,.6);backdrop-filter:blur(6px);opacity:0;visibility:hidden;transition:opacity .35s,visibility .35s;}
 .drawer-overlay.open{opacity:1;visibility:visible;}
@@ -2902,7 +3028,12 @@ body.gs-open .gs-sheet{opacity:1;visibility:visible;pointer-events:auto;transfor
 <!-- CONTENT -->
 <div class="content">
   <div class="content-head">
-    <div class="results-count"><strong id="result-num">0</strong> <span id="result-label">stays available</span></div>
+    <!-- The number of live listings is deliberately not shown. It is a
+         fact about our inventory, not about the guest's search, and a
+         small one reads as a small platform. The element stays in the
+         DOM because the map's "search this area" writes to it. -->
+    <h2 class="results-count"><span id="result-label">Stays available</span></h2>
+    <span id="result-num" hidden>0</span>
     <div class="content-head-tools">
       <button class="ch-tool" id="ch-filters" onclick="openFilterModal()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M8 12h8M11 18h2"/></svg>
@@ -3039,15 +3170,15 @@ async function loadPhotos(listings) {
 }
 
 function injectPhoto(id, url) {
-  const thumb = document.querySelector(`[data-card-id="${id}"] .card-img`);
-  if (!thumb || thumb.querySelector('img')) return;   // never clobber a real photo
+  const slide = document.querySelector(`[data-card-id="${id}"] .card-slide`);
+  if (!slide || slide.querySelector('img')) return;   // never clobber a real photo
   const img = new Image();
   img.onload = () => {
-    const svg = thumb.querySelector('svg');
+    const svg = slide.querySelector('svg');
     if (svg) svg.remove();
-    thumb.style.background = 'none';
-    thumb.insertAdjacentHTML('afterbegin',
-      `<img src="${url}" alt="" style="width:100%;height:100%;object-fit:cover;" loading="lazy" decoding="async"/>`);
+    slide.style.background = 'none';
+    slide.insertAdjacentHTML('afterbegin',
+      `<img src="${url}" alt="" loading="lazy" decoding="async" onload="this.classList.add('ready')"/>`);
   };
   img.src = url;
 }
@@ -3146,10 +3277,19 @@ async function loadNativeListings() {
 async function loadListings() {
   updateBanner('loading');
 
+  /* Hold the shape of the grid while Supabase answers. A blank column
+     for two seconds is indistinguishable from a page that failed. */
+  renderSkeletons(6);
+
   // Fetch real listings from Supabase only
   const native = await loadNativeListings();
   nativeCount = native.length;
   currentListings = [...native];
+
+  /* Decide once whether photos can be served resized, before anything
+     paints, so no card has to swap its images mid-scroll. Capped so a
+     slow probe can never delay the listings themselves. */
+  await _probeImgCdn();
 
   applyAndRender();
   /* Everything that describes the inventory rather than filtering it
@@ -3168,7 +3308,11 @@ const HOUSE_SVG = `<svg class="card-img-ico" viewBox="0 0 24 24" fill="none" str
 /* Line icons, drawn on the same grid as everything else on the page.
    Emoji were rendering as a different typeface at a different weight
    on every operating system. */
-const SVG_HEART = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 5.6a5.2 5.2 0 0 0-7.4 0L12 7l-1.4-1.4a5.2 5.2 0 1 0-7.4 7.4L12 21.4l8.8-8.4a5.2 5.2 0 0 0 0-7.4z"/></svg>`;
+const SVG_HEART = `<svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 5.6a5.2 5.2 0 0 0-7.4 0L12 7l-1.4-1.4a5.2 5.2 0 1 0-7.4 7.4L12 21.4l8.8-8.4a5.2 5.2 0 0 0 0-7.4z"/></svg>`;
+const SVG_PIN   = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>`;
+const SVG_STAR  = `<svg viewBox="0 0 24 24"><path d="m12 2.6 2.9 5.9 6.5.9-4.7 4.6 1.1 6.4-5.8-3-5.8 3 1.1-6.4L2.6 9.4l6.5-.9z"/></svg>`;
+const SVG_CHEV_L = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18 9 12l6-6"/></svg>`;
+const SVG_CHEV_R = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>`;
 const DL_ICO = {
   bed:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9V5a1 1 0 0 1 1-1h18a1 1 0 0 1 1 1v4M2 11h20v7M4 18v2M20 18v2M2 14h20"/></svg>`,
   bath:   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12V5a2 2 0 0 1 4 0v.5M2 12h20v3a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4z"/></svg>`,
@@ -3179,9 +3323,87 @@ const DL_ICO = {
 };
 const SVG_FLAME = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 2c.6 3-1 4.6-2.4 6C9.4 9.6 8 11.2 8 14a4 4 0 0 0 8 0c0-1.3-.5-2.3-1.1-3.2 1.9.7 3.1 2.6 3.1 5a6 6 0 1 1-12 0c0-4.4 3-6.2 5-8.4C12.6 5.7 13.6 4 13.5 2z"/></svg>`;
 
+/* ══ PHOTO DELIVERY ═══════════════════════════════════════════════
+   Listing photos are host uploads straight off a phone: often 3–4 MB
+   each, and a card can hold fourteen of them. Shipping the originals
+   to a guest on Kenyan mobile data is the single most expensive thing
+   this page could do.
+
+   Supabase can resize on the fly, but only on plans where the image
+   transformer is enabled, so we ask it once with a 16px probe and
+   remember the answer. If it is not available nothing breaks: we serve
+   the originals exactly as before. */
+const _SB_OBJECT = '/storage/v1/object/public/';
+const _SB_RENDER = '/storage/v1/render/image/public/';
+let   _imgCdn    = false;
+let   _imgProbe  = null;
+
+function _cdnUrl(src, w) {
+  if (!_imgCdn || typeof src !== 'string' || src.indexOf(_SB_OBJECT) === -1) return src;
+  return src.replace(_SB_OBJECT, _SB_RENDER) + `?width=${w}&quality=72&resize=cover`;
+}
+/* Two candidates per slot. A 3x phone and a 1x laptop should not be
+   sent the same file. */
+function _imgAttrs(src, base) {
+  const primary = _cdnUrl(src, base);
+  if (!_imgCdn || primary === src) {
+    return `src="${_esc(src)}" onload="this.classList.add('ready')"`;
+  }
+  return `src="${_esc(primary)}" srcset="${_esc(_cdnUrl(src, base))} ${base}w, ${_esc(_cdnUrl(src, base * 2))} ${base * 2}w" `
+       + `sizes="(min-width:1500px) 22vw, (min-width:1040px) 30vw, (min-width:620px) 46vw, 94vw" `
+       + `data-fallback="${_esc(src)}" onload="this.classList.add('ready')"`;
+}
+
+function _probeImgCdn() {
+  if (_imgProbe) return _imgProbe;
+  _imgProbe = new Promise(resolve => {
+    let cached = null;
+    try { cached = sessionStorage.getItem('cbn_imgcdn'); } catch (e) {}
+    if (cached !== null) { _imgCdn = cached === '1'; return resolve(_imgCdn); }
+
+    const sample = (currentListings || []).map(a => (a.photos || [])[0])
+      .find(u => typeof u === 'string' && u.indexOf(_SB_OBJECT) > -1);
+    if (!sample) return resolve(false);
+
+    let settled = false;
+    const done = ok => {
+      if (settled) return;
+      settled = true;
+      _imgCdn = ok;
+      try { sessionStorage.setItem('cbn_imgcdn', ok ? '1' : '0'); } catch (e) {}
+      resolve(ok);
+    };
+    const probe = new Image();
+    probe.onload  = () => done(probe.naturalWidth > 0);
+    probe.onerror = () => done(false);
+    probe.src = sample.replace(_SB_OBJECT, _SB_RENDER) + '?width=16&quality=20';
+    setTimeout(() => done(false), 1500);   // never hold the first paint
+  });
+  return _imgProbe;
+}
+
+/* ── Skeletons ─────────────────────────────────────────────────────
+   An empty grid while Supabase answers reads as a page that failed.
+   These hold the exact shape the cards will take, so nothing jumps. */
+function renderSkeletons(n) {
+  const grid = document.getElementById('grid');
+  if (!grid || grid.children.length) return;
+  grid.innerHTML = Array.from({ length: n }, () => `
+    <div class="card sk" aria-hidden="true">
+      <div class="card-media"></div>
+      <div class="card-body">
+        <div class="sk-line w60"></div>
+        <div class="sk-line w85"></div>
+        <div class="sk-line w40"></div>
+      </div>
+    </div>`).join('');
+}
+
 function renderCards(list) {
   document.getElementById('result-num').textContent = list.length;
   const grid = document.getElementById('grid');
+
+  _cardObserver && _cardObserver.disconnect();
 
   if (!list.length) {
     /* "No listings" is three different situations. Say which one. */
@@ -3206,43 +3428,62 @@ function renderCards(list) {
   }
 
   grid.innerHTML = list.map((apt, i) => {
-    const isNative = apt.source === 'native';
-    const bedsLabel = apt.beds === 0 ? 'Studio' : `${apt.beds} bed${apt.beds!==1?'s':''}`;
+    const isNative   = apt.source === 'native';
+    const bedsLabel  = apt.beds === 0 ? 'Studio' : `${apt.beds} bed${apt.beds !== 1 ? 's' : ''}`;
+    const photos     = Array.isArray(apt.photos) ? apt.photos.filter(Boolean) : [];
+    const many       = photos.length > 1;
+    const grad       = apt.grad || 'linear-gradient(135deg,#B8A4F4,#7B2FF7)';
 
-    /* Real listing photos come straight from Supabase. The old code
-       ignored apt.photos entirely and always went to Unsplash with a
-       rate-limited demo key, which is why no images ever appeared. */
-    const photo = (apt.photos && apt.photos.length) ? apt.photos[0] : null;
-    const imgHtml = photo
-      ? `<img src="${photo}" alt="" loading="lazy" decoding="async" onerror="this.remove()">`
-      : HOUSE_SVG;
+    /* The first photo is fetched now. The rest are placeholders that
+       hydrate when the card comes near the viewport, and then one
+       ahead of wherever the guest has swiped to. Fourteen photos on a
+       card must not cost fourteen downloads nobody asked for. */
+    const slides = photos.length
+      ? photos.map((p, n) => n === 0
+          ? `<div class="card-slide"><img ${_imgAttrs(p, 640)} alt="${_esc(apt.name)}" ${i < 3 ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async"></div>`
+          : `<div class="card-slide" data-pending data-src="${_esc(p)}"></div>`
+        ).join('')
+      : `<div class="card-slide" style="background:${grad}">${HOUSE_SVG}</div>`;
 
-    const badge = apt.hot ? `<span class="card-tag card-tag-hot">${SVG_FLAME} In demand</span>` : '';
+    const rating = Number(apt.rating) > 0
+      ? `<span class="card-rating">${SVG_STAR}${Number(apt.rating).toFixed(1)}${apt.reviews ? `<span class="n">(${apt.reviews})</span>` : ''}</span>`
+      : `<span class="card-new">New</span>`;
 
-    return `<article class="card${isNative?' is-native':''}" style="transition-delay:${Math.min(i,8) * 40}ms"
-        data-card-id="${apt.id}" onclick="openDrawer('${apt.id}')">
-      <div class="card-img" style="background:${apt.grad||'linear-gradient(135deg,#B8A4F4,#7B2FF7)'};">
-        ${imgHtml}
-        ${badge}
+    const href  = `/apartments?open=${encodeURIComponent(apt._dbId || apt.id)}`;
+    const label = `${apt.name}, ${apt.location || apt.city || ''}, KES ${Number(apt.price).toLocaleString()} a night`;
+
+    return `<article class="card${isNative ? ' is-native' : ''}" style="transition-delay:${Math.min(i, 8) * 45}ms"
+        data-card-id="${apt.id}" data-photos="${photos.length}">
+      <div class="card-media${many ? ' has-many' : ''}">
+        <div class="card-rail">${slides}</div>
+        ${apt.hot ? `<span class="card-tag card-tag-hot">${SVG_FLAME} In demand</span>` : ''}
+        <button type="button" class="card-heart${isWishlisted(apt.id) ? ' on' : ''}" data-heart="${apt.id}"
+          aria-label="Save this stay" aria-pressed="${isWishlisted(apt.id)}">${SVG_HEART}</button>
+        ${many ? `
+          <button type="button" class="card-arr card-arr-prev" data-step="-1" aria-label="Previous photo" disabled>${SVG_CHEV_L}</button>
+          <button type="button" class="card-arr card-arr-next" data-step="1" aria-label="Next photo">${SVG_CHEV_R}</button>
+          <div class="card-count" aria-hidden="true">1 / ${photos.length}</div>
+          <div class="card-prog" aria-hidden="true"><div class="card-prog-fill" style="width:${(100 / photos.length).toFixed(4)}%"></div></div>
+        ` : ''}
       </div>
       <div class="card-body">
         <div class="card-top">
-          <div class="card-loc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>${apt.location}</div>
-          <button class="card-heart${isWishlisted(apt.id)?' on':''}" onclick="event.stopPropagation();toggleWishlist('${apt.id}',null);this.classList.toggle('on');" aria-label="Save this stay" aria-pressed="${isWishlisted(apt.id)}">${SVG_HEART}</button>
+          <span class="card-loc">${SVG_PIN}${_esc(apt.location || apt.city || '')}</span>
+          ${rating}
         </div>
-        <h3 class="card-name">${apt.name}</h3>
-        <div class="card-meta">
-          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 9V5a1 1 0 0 1 1-1h18a1 1 0 0 1 1 1v4M2 11h20v7M4 18v2M20 18v2M2 14h20"/></svg>${bedsLabel}</span>
-          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 12V5a2 2 0 0 1 4 0v.5M2 12h20v3a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4z"/></svg>${apt.baths} bath</span>
-          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="7" r="3"/><path d="M3 21a6 6 0 0 1 12 0"/><path d="M16 11a3 3 0 1 0 0-5.2M21 21a6 6 0 0 0-5-5.9"/></svg>${apt.maxGuests}</span>
-        </div>
-        <div class="card-foot">
-          <div class="card-price"><span class="val">KES ${Number(apt.price).toLocaleString()}</span><span class="per">/night</span></div>
-          <span class="card-go"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M7 7h10v10"/></svg></span>
+        <h3 class="card-name"><a class="card-link" href="${href}" aria-label="${_esc(label)}">${_esc(apt.name)}</a></h3>
+        <div class="card-meta">${bedsLabel}<i>·</i>${apt.baths} bath<i>·</i>${apt.maxGuests} guest${apt.maxGuests !== 1 ? 's' : ''}</div>
+        <div class="card-price">
+          <span class="val">KES ${Number(apt.price).toLocaleString()}</span>
+          <span class="per">night</span>
+          <span class="free">No fees</span>
         </div>
       </div>
     </article>`;
   }).join('');
+
+  wireCards();
+  _observeCards();
 
   // Animate in
   requestAnimationFrame(() => {
@@ -3254,6 +3495,164 @@ function renderCards(list) {
 
   // Keep the map showing the same set of stays as the cards
   _mapSync(list);
+}
+
+/* ══ IN-CARD PHOTO RAIL ═══════════════════════════════════════════
+   A guest should be able to see the bedroom, the bathroom and the view
+   without opening anything. The rail is a plain scroll-snap container:
+   momentum, rubber-banding and mid-fling interruption are the platform's
+   job, not ours, which is why it stays smooth on cheap hardware where a
+   requestAnimationFrame transform loop stutters.
+
+   All of it is delegated from the grid: one set of listeners no matter
+   how many cards are on screen. */
+let _cardObserver = null;
+
+function _railIndex(rail) {
+  return rail.clientWidth ? Math.round(rail.scrollLeft / rail.clientWidth) : 0;
+}
+
+/* Fetch a slide's photo, and the one after it, so the next swipe has
+   something to land on. */
+function _hydrateSlides(media, from, count) {
+  const slides = media.querySelectorAll('.card-slide[data-pending]');
+  if (!slides.length) return;
+  const all = [...media.querySelectorAll('.card-slide')];
+  for (let n = from; n < Math.min(from + count, all.length); n++) {
+    const slide = all[n];
+    if (!slide || !slide.hasAttribute('data-pending')) continue;
+    slide.removeAttribute('data-pending');
+    const src = slide.getAttribute('data-src');
+    if (!src) continue;
+    slide.insertAdjacentHTML('beforeend',
+      `<img ${_imgAttrs(src, 640)} alt="" loading="lazy" decoding="async">`);
+    const fresh = slide.querySelector('img');
+    if (fresh && fresh.complete && fresh.naturalWidth) fresh.classList.add('ready');
+  }
+}
+
+function _syncRail(media) {
+  const rail = media.querySelector('.card-rail');
+  if (!rail || !rail.clientWidth) return;
+  const total = media.querySelectorAll('.card-slide').length;
+  const exact = rail.scrollLeft / rail.clientWidth;
+  const idx   = Math.round(exact);
+
+  const fill = media.querySelector('.card-prog-fill');
+  if (fill) fill.style.transform = `translateX(${(Math.max(0, Math.min(exact, total - 1)) * 100).toFixed(2)}%)`;
+
+  const count = media.querySelector('.card-count');
+  if (count) count.textContent = `${idx + 1} / ${total}`;
+
+  const prev = media.querySelector('.card-arr-prev');
+  const next = media.querySelector('.card-arr-next');
+  if (prev) prev.disabled = idx <= 0;
+  if (next) next.disabled = idx >= total - 1;
+
+  _hydrateSlides(media, idx + 1, 2);
+}
+
+function wireCards() {
+  const grid = document.getElementById('grid');
+  if (!grid || grid.dataset.wired) return;
+  grid.dataset.wired = '1';
+
+  /* Hydrate photos 2 and 3 only once a card is nearly on screen. */
+  if ('IntersectionObserver' in window) {
+    _cardObserver = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (!e.isIntersecting) return;
+        _hydrateSlides(e.target, 1, 2);
+        _cardObserver.unobserve(e.target);
+      });
+    }, { rootMargin: '400px 0px' });
+  }
+
+  const scrollEnd = new WeakMap();
+
+  grid.addEventListener('scroll', e => {
+    const rail = e.target;
+    if (!rail.classList || !rail.classList.contains('card-rail')) return;
+    const media = rail.parentElement;
+    media.classList.add('scrubbing');
+    _syncRail(media);
+    clearTimeout(scrollEnd.get(rail));
+    scrollEnd.set(rail, setTimeout(() => media.classList.remove('scrubbing'), 850));
+    rail.dataset.movedAt = Date.now();
+  }, true);   // capture: scroll does not bubble
+
+  grid.addEventListener('click', e => {
+    const heart = e.target.closest('[data-heart]');
+    if (heart) {
+      e.stopPropagation();
+      toggleWishlist(heart.getAttribute('data-heart'), null);
+      const on = heart.classList.toggle('on');
+      heart.setAttribute('aria-pressed', String(on));
+      return;
+    }
+
+    const arr = e.target.closest('.card-arr');
+    if (arr) {
+      e.stopPropagation();
+      const media = arr.closest('.card-media');
+      const rail  = media.querySelector('.card-rail');
+      const to    = _railIndex(rail) + Number(arr.getAttribute('data-step'));
+      _hydrateSlides(media, to, 2);
+      rail.scrollTo({ left: to * rail.clientWidth, behavior: 'smooth' });
+      return;
+    }
+
+    /* Cmd/ctrl/middle click is someone opening the listing in a new tab.
+       That is a real URL, so let the browser have it. */
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+
+    const card = e.target.closest('.card');
+    if (!card || card.classList.contains('sk')) return;
+    /* A swipe that ends on the photo must not count as a tap on the
+       listing. Browsers are inconsistent about firing click after a
+       scroll gesture, so we check whether this rail just moved. */
+    const rail = card.querySelector('.card-rail');
+    if (rail && Date.now() - Number(rail.dataset.movedAt || 0) < 350) return;
+    e.preventDefault();
+    openDrawer(card.dataset.cardId);
+  });
+
+  grid.addEventListener('keydown', e => {
+    const card = e.target.closest?.('.card');
+    if (!card) return;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+      const media = card.querySelector('.card-media');
+      const rail  = media && media.querySelector('.card-rail');
+      if (!rail || Number(card.dataset.photos || 0) < 2) return;
+      e.preventDefault();
+      const to = _railIndex(rail) + (e.key === 'ArrowRight' ? 1 : -1);
+      _hydrateSlides(media, to, 2);
+      rail.scrollTo({ left: to * rail.clientWidth, behavior: 'smooth' });
+    }
+  });
+
+  /* A photo that fails on the resizing CDN falls back to the original
+     upload rather than leaving a hole in the card. */
+  grid.addEventListener('error', e => {
+    const img = e.target;
+    if (img.tagName !== 'IMG') return;
+    const fb = img.getAttribute('data-fallback');
+    if (fb && img.src !== fb) { img.removeAttribute('srcset'); img.src = fb; return; }
+    img.remove();
+  }, true);
+
+  grid.addEventListener('load', e => {
+    if (e.target.tagName === 'IMG') e.target.classList.add('ready');
+  }, true);
+}
+
+/* Cards are replaced wholesale on every filter change, so re-observe. */
+function _observeCards() {
+  document.querySelectorAll('#grid .card-slide img').forEach(img => {
+    if (img.complete && img.naturalWidth) img.classList.add('ready');
+  });
+  if (!_cardObserver) return;
+  document.querySelectorAll('#grid .card-media').forEach(m => _cardObserver.observe(m));
 }
 
 /* ══ LIVE INVENTORY RIBBON ═══════════════════════════════════════
@@ -5218,16 +5617,18 @@ function updateResultLabel(mode) {
   const where = place || typed;
   const loc = where ? ' in ' + where : '';
 
-  if (mode === 'affordable') label.textContent = `most affordable stays${loc}`;
-  else if (mode === 'bestvalue') label.textContent = `best value stays${loc}`;
-  else if (mode === 'nearest') label.textContent = `stays nearest to you${loc}`;
+  /* This line is the page heading now that the listing count is gone,
+     so it is set as a sentence rather than a fragment after a number. */
+  if (mode === 'affordable') label.textContent = `Most affordable stays${loc}`;
+  else if (mode === 'bestvalue') label.textContent = `Best value stays${loc}`;
+  else if (mode === 'nearest') label.textContent = `Stays nearest to you${loc}`;
   else if (s.locExpanded && where) {
     /* Say plainly that these are not in the place searched. A guest who
        thinks a result is in Nanyuki when it is 40km away is a complaint
        at check-in, not a booking. */
-    label.textContent = `stays within ${ApaGeo.formatKm(s.locRadiusKm)} of ${where}`;
+    label.textContent = `Stays within ${ApaGeo.formatKm(s.locRadiusKm)} of ${where}`;
   }
-  else label.textContent = `stays available${loc}`;
+  else label.textContent = where ? `Stays in ${where}` : 'Stays available';
 }
 
 function toggleHeart(e, el) { e.stopPropagation(); el.classList.toggle('on'); }

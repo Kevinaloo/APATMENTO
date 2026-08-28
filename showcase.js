@@ -101,7 +101,7 @@ function mapCamp(c){
 ════════════════════════════════════════════════════════════════ */
 const DEMO = {
   video:[
-    {id:'d_v1',advertiser:'Cabana Stays',tag:'Featured',headline:'Find your perfect space in Kenya',sub:'Hand-picked apartments from KES 3,200/night · Hosts keep 100%',cta:'Browse stays',url:'apartments.html',media:'',poster:'',grad:'linear-gradient(135deg,#B8A4F4,#7B2FF7)',accent:'#B8A4F4',price:'',icon:'<path d="M3 10.5 12 4l9 6.5M5 9.5V20h14V9.5M9 20v-5a3 3 0 0 1 6 0v5"/>'},
+    {id:'d_v1',advertiser:'Cabana Stays',tag:'Featured',headline:'Find your perfect space in Kenya',sub:'Apartments, villas and studios across Kenya · Hosts keep 100%',cta:'Browse stays',url:'apartments.html',media:'',poster:'',grad:'linear-gradient(135deg,#B8A4F4,#7B2FF7)',accent:'#B8A4F4',price:'',icon:'<path d="M3 10.5 12 4l9 6.5M5 9.5V20h14V9.5M9 20v-5a3 3 0 0 1 6 0v5"/>'},
     {id:'d_v2',advertiser:'Cabana Tours',tag:'Featured',headline:"Days you\'ll never forget",sub:'Maasai Mara · Mt Kenya · Diani Beach · Guides keep 100%',cta:'Explore tours',url:'tours.html',media:'',poster:'',grad:'linear-gradient(135deg,#2DD4BF,#4361FF)',accent:'#5EEAD4',price:'',icon:'<path d="m15 5.5-6-2-6 2.5v13l6-2.5 6 2 6-2.5v-13zM9 3.5v13M15 7.5v13"/>'},
   ],
   carousel:[
@@ -112,13 +112,13 @@ const DEMO = {
   ],
   native:[
     {id:'d_cabana',advertiser:'Cabana',tag:'New chapter',headline:'Apatmento is becoming Cabana',sub:'Same team. Same zero-commission promise. A brighter name, built to travel the world.',cta:'See what\'s changing',url:'cabana.html',media:'',poster:'',grad:'linear-gradient(135deg,#6D28FF 0%,#4F6DFF 45%,#FF6A3C 100%)',accent:'#FF6A3C',price:'',icon:'<path d=\"M12 2 2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5\"/>'},
-    {id:'d_n1',advertiser:'Sankara Nairobi',tag:'Promoted',headline:'Sankara Nairobi. Westlands',sub:'5-star · Rooftop pool · Sky bar',cta:'View hotel',url:'#',media:'',poster:'',grad:'linear-gradient(135deg,#B8A4F4,#7B2FF7)',accent:'#B8A4F4',price:'From KES 18,000',icon:'<path d="M3 21h18M5 21V7l7-4 7 4v14"/>'},
+    {id:'d_n1',advertiser:'Cabana',tag:'Hosts',headline:'Your place, your price',sub:'List in minutes and keep every shilling you charge',cta:'Start listing',url:'add-listing.html',media:'',poster:'',grad:'linear-gradient(135deg,#B8A4F4,#7B2FF7)',accent:'#B8A4F4',price:'',icon:'<path d="M3 21h18M5 21V7l7-4 7 4v14"/>'},
   ],
   split:[
     {id:'d_s1',advertiser:'Apatmento',tag:'Partner with us',headline:'List your property.\nKeep everything.',sub:'Zero commission. Zero percentage cuts. Guests pay face value plus a small fixed fee. You keep 100% of your rate. Always.',cta:'Start listing free',url:'add-listing.html',media:'',poster:'',grad:'linear-gradient(135deg,#2DD4BF,#4361FF)',accent:'#5EEAD4',price:'',icon:'<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>'},
   ],
   ticker:[
-    {id:'d_t1',advertiser:'Apatmento',tag:'Live',headline:'🔥 20 stays available in Nairobi tonight · Diani White Sands, 3 rooms left · Maasai Mara Safari. Booking now · Karen Ridgeline Villa. New listing · Westlands Skybox. Instant book · Kilimani Penthouse. KES 12,500/night',sub:'',cta:'',url:'apartments.html',media:'',poster:'',grad:'linear-gradient(135deg,#0A0A14,#1A1A35)',accent:'#B8A4F4',price:'',icon:''},
+    {id:'d_t1',advertiser:'Apatmento',tag:'Live',headline:'Zero commission, always · Hosts keep 100% of their rate · Pay with M-Pesa · Book direct with the host, no middleman · Stays, safaris, flights, rides and events in one place · Zero commission, always',sub:'',cta:'',url:'apartments.html',media:'',poster:'',grad:'linear-gradient(135deg,#0A0A14,#1A1A35)',accent:'#B8A4F4',price:'',icon:''},
   ],
   sticky:[
     {id:'d_st1',advertiser:'Apatmento',tag:'Earn',headline:'Your property could be earning',sub:'Zero commission · Keep 100%',cta:'List for free →',url:'add-listing.html',media:'',poster:'',grad:'linear-gradient(135deg,#2DD4BF,#4361FF)',accent:'#5EEAD4',price:'',icon:'<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>'},
@@ -142,14 +142,14 @@ const BRAND_FALLBACK = {
     price:'', icon:'<path d="M3 10.5 12 4l9 6.5M5 9.5V20h14V9.5M9 20v-5a3 3 0 0 1 6 0v5"/>',
   },
   carousel: [
-    {id:'brand_c1', advertiser:'Cabana Stays', tag:'Featured', headline:'Find your perfect space', sub:'Apartments from KES 3,200 · Hosts keep 100%', cta:'Browse stays', url:'apartments.html', media:'', poster:'', grad:'linear-gradient(135deg,#B8A4F4,#7B2FF7)', accent:'#B8A4F4', price:'', icon:'<path d="M3 10.5 12 4l9 6.5M5 9.5V20h14V9.5"/>'},
+    {id:'brand_c1', advertiser:'Cabana Stays', tag:'Featured', headline:'Find your perfect space', sub:'Apartments, villas and studios · Hosts keep 100%', cta:'Browse stays', url:'apartments.html', media:'', poster:'', grad:'linear-gradient(135deg,#B8A4F4,#7B2FF7)', accent:'#B8A4F4', price:'', icon:'<path d="M3 10.5 12 4l9 6.5M5 9.5V20h14V9.5"/>'},
     {id:'brand_c2', advertiser:'Cabana Tours', tag:'Featured', headline:"Days you\'ll never forget", sub:'Safaris, treks & experiences across Kenya', cta:'See tours', url:'tours.html', media:'', poster:'', grad:'linear-gradient(135deg,#2DD4BF,#4361FF)', accent:'#5EEAD4', price:'', icon:'<path d="m15 5.5-6-2-6 2.5v13l6-2.5 6 2 6-2.5v-13z"/>'},
     {id:'brand_c3', advertiser:'Apatmento Events', tag:'Featured', headline:'Face-value tickets. Nothing added.', sub:'Concerts, festivals, sports. You pay exactly what the organiser charges', cta:'Get tickets', url:'events.html', media:'', poster:'', grad:'linear-gradient(135deg,#7B2FF7,#B8A4F4)', accent:'#B8A4F4', price:'', icon:'<path d="M3 9a2 2 0 0 0 0 6v2a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-2a2 2 0 0 0 0-6V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1z"/>'},
   ],
   native: {
     id:'brand_n1', advertiser:'Apatmento', tag:'Apatmento',
     headline:'Apatmento. Travel in style', sub:'Zero commission · Hosts keep 100%', cta:'Explore', url:'index.html',
-    media:'', poster:'', grad:'linear-gradient(135deg,#B8A4F4,#7B2FF7)', accent:'#B8A4F4', price:'From KES 3,200/night',
+    media:'', poster:'', grad:'linear-gradient(135deg,#B8A4F4,#7B2FF7)', accent:'#B8A4F4', price:'',
     icon:'<path d="M3 10.5 12 4l9 6.5M5 9.5V20h14V9.5"/>',
   },
   split: {
@@ -162,7 +162,7 @@ const BRAND_FALLBACK = {
   },
   ticker: {
     id:'brand_t1', advertiser:'Apatmento', tag:'Live',
-    headline:'Apatmento for Life. Travel in Style · Stays from KES 3,200/night · Zero Commission · Hosts keep 100% · Book flights, safaris, events & more · Kenya\'s premium travel super-app · Apatmento for Life. Travel in Style ·',
+    headline:'Cabana. Travel in style · Zero commission · Hosts keep 100% · Pay with M-Pesa · Stays, safaris, flights, rides and events in one place · Cabana. Travel in style ·',
     sub:'', cta:'', url:'index.html', media:'', poster:'',
     grad:'linear-gradient(135deg,#0A0A14,#1A1A35)', accent:'#B8A4F4', price:'',
     icon:'',

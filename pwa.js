@@ -336,12 +336,197 @@ function showUpdateBar(newSW) {
   });
 }
 
+/* ── 6. OPEN IN THE NATIVE APP ─────────────────────────────────────
+   Symptom: a guest with the Cabana app installed taps a cabana.africa
+   link and lands in a browser instead of the app.
+
+   Three separate causes, and they need different answers:
+
+   1. WhatsApp, Instagram, Facebook and TikTok do not hand links to the
+      operating system. They open them inside their own browser, so
+      Android App Link verification never gets a chance to run. This is
+      how most of our links are shared, so it is the common case.
+   2. The manifest never listed the Android app under
+      related_applications, so getInstalledRelatedApps() always came
+      back empty and the site could not tell whether the app was there.
+      Fixed in manifest.json.
+   3. "Open supported links" can be switched off per app on Android.
+      Nothing the web can do about that one except offer a way through.
+
+   So: when we can see the app is installed and we are not already
+   inside it, offer one tap that hands the current URL to the app via an
+   Android intent. If the app does not answer, browser_fallback_url puts
+   the guest back on the page they were already reading, which also
+   gets them out of the in-app browser. Nobody is ever stranded. */
+
+const ANDROID_PKG   = 'africa.cabana.app';
+const OPEN_SNOOZE_D = 7;            // days a dismissal is respected
+
+const OPEN_CSS = `
+.cbn-openapp{position:fixed;left:50%;bottom:24px;z-index:99996;
+  transform:translateX(-50%) translateY(140px);opacity:0;pointer-events:none;
+  width:calc(100% - 28px);max-width:440px;display:flex;align-items:center;gap:12px;
+  padding:12px 12px 12px 14px;border-radius:20px;
+  background:#FCFCFD;border:1px solid rgba(10,10,20,.09);
+  box-shadow:0 20px 56px rgba(123,47,247,.18),0 6px 20px rgba(10,10,20,.09);
+  transition:transform .5s cubic-bezier(.34,1.4,.5,1),opacity .35s;}
+.cbn-openapp.show{transform:translateX(-50%) translateY(0);opacity:1;pointer-events:auto;}
+.cbn-openapp-ico{width:42px;height:42px;border-radius:12px;flex-shrink:0;display:block;
+  object-fit:cover;box-shadow:0 2px 8px rgba(10,10,20,.14);}
+.cbn-openapp-txt{flex:1;min-width:0;}
+.cbn-openapp-title{font-family:'Geist','Inter',sans-serif;font-weight:600;font-size:14.5px;
+  color:#0A0A14;letter-spacing:-.01em;line-height:1.25;}
+.cbn-openapp-sub{font-size:11.5px;color:#8E90AD;line-height:1.35;margin-top:2px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cbn-openapp-cta{flex-shrink:0;padding:10px 17px;border-radius:100px;border:none;cursor:pointer;
+  background:linear-gradient(135deg,#B8A4F4,#7B2FF7);color:#fff;
+  font-size:13px;font-weight:600;white-space:nowrap;text-decoration:none;
+  box-shadow:0 4px 14px rgba(123,47,247,.3);transition:transform .2s;}
+.cbn-openapp-cta:hover{transform:scale(1.04);}
+.cbn-openapp-x{flex-shrink:0;width:28px;height:28px;border-radius:50%;border:none;cursor:pointer;
+  background:rgba(10,10,20,.05);color:#8E90AD;display:flex;align-items:center;justify-content:center;
+  padding:0;transition:background .2s;}
+.cbn-openapp-x:hover{background:rgba(10,10,20,.1);}
+@media(max-width:480px){.cbn-openapp{bottom:82px;}}
+@media (prefers-reduced-motion:reduce){.cbn-openapp{transition:opacity .2s;}}
+`;
+
+/* Are we already running inside the Android app or an installed PWA?
+   A Trusted Web Activity reports its own package as the referrer, and
+   an installed app of either kind is never in browser display mode. */
+function runningStandalone() {
+  try {
+    if (document.referrer.indexOf('android-app://' + ANDROID_PKG) === 0) return true;
+    if (window.navigator.standalone === true) return true;
+    return ['standalone', 'fullscreen', 'minimal-ui', 'window-controls-overlay']
+      .some(m => window.matchMedia('(display-mode: ' + m + ')').matches);
+  } catch (e) { return false; }
+}
+
+/* The in-app browsers that never consult the OS about app links.
+   WhatsApp is absent on purpose: it uses a Chrome Custom Tab, which is
+   real Chrome, so getInstalledRelatedApps() works there and covers it. */
+function inHostedBrowser() {
+  const ua = navigator.userAgent || '';
+  return /\b(FBAN|FBAV|FB_IAB|FBIOS|Instagram|Line\/|Twitter|TikTok|musical_ly|Snapchat|Pinterest)\b/i.test(ua)
+      || (/Android/.test(ua) && /\bwv\b/.test(ua));
+}
+
+async function nativeAppInstalled() {
+  if (!navigator.getInstalledRelatedApps) return false;
+  try {
+    const apps = await navigator.getInstalledRelatedApps();
+    return apps.some(a => a.id === ANDROID_PKG);
+  } catch (e) { return false; }
+}
+
+/* Hand the current URL to the app. The fragment is dropped from the
+   intent's data section because the intent syntax uses "#" as its own
+   delimiter; the fallback URL keeps it, so nothing is lost. */
+function androidIntentUrl(href) {
+  let u;
+  try { u = new URL(href || window.location.href); } catch (e) { return href; }
+  const data = u.host + u.pathname + u.search;
+  return 'intent://' + data
+       + '#Intent;scheme=https;package=' + ANDROID_PKG
+       + ';S.browser_fallback_url=' + encodeURIComponent(u.href)
+       + ';end';
+}
+
+function openInApp() {
+  try { sessionStorage.setItem('cbn_openapp_tried', '1'); } catch (e) {}
+  window.location.href = androidIntentUrl();
+}
+
+function openAppSnoozed() {
+  try {
+    const until = Number(localStorage.getItem('cbn_openapp_snooze') || 0);
+    return until > Date.now();
+  } catch (e) { return false; }
+}
+
+function snoozeOpenApp() {
+  try {
+    localStorage.setItem('cbn_openapp_snooze',
+      String(Date.now() + OPEN_SNOOZE_D * 86400000));
+  } catch (e) {}
+}
+
+function showOpenAppBar(opts) {
+  if (document.getElementById('cbn-openapp')) return;
+  pwaInjectCSS();
+  if (!document.getElementById('cbn-openapp-styles')) {
+    const st = document.createElement('style');
+    st.id = 'cbn-openapp-styles';
+    st.textContent = OPEN_CSS;
+    document.head.appendChild(st);
+  }
+
+  const escaped = inHostedBrowser();
+  const el = document.createElement('div');
+  el.className = 'cbn-openapp';
+  el.id = 'cbn-openapp';
+  el.setAttribute('role', 'region');
+  el.setAttribute('aria-label', 'Open this page in the Cabana app');
+  el.innerHTML =
+    '<img class="cbn-openapp-ico" src="/cabana-icon-192-v2.png" alt="" width="42" height="42" decoding="async">'
+    + '<div class="cbn-openapp-txt">'
+    + '<div class="cbn-openapp-title">Open in the Cabana app</div>'
+    + '<div class="cbn-openapp-sub">'
+    + (escaped ? 'Faster, and you keep your bookings and messages'
+               : 'Picks up right where you are on this page')
+    + '</div></div>'
+    + '<button class="cbn-openapp-cta" id="cbn-openapp-go" type="button">Open</button>'
+    + '<button class="cbn-openapp-x" id="cbn-openapp-x" type="button" aria-label="Not now">'
+    + '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>'
+    + '</button>';
+  document.body.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('show'));
+
+  document.getElementById('cbn-openapp-go').addEventListener('click', () => {
+    if (window.gtag) { try { gtag('event', 'open_in_app', { source: escaped ? 'in_app_browser' : 'browser' }); } catch (e) {} }
+    openInApp();
+  });
+  document.getElementById('cbn-openapp-x').addEventListener('click', () => {
+    snoozeOpenApp();
+    el.classList.remove('show');
+    setTimeout(() => el.remove(), 450);
+  });
+
+  if (opts && opts.autoHide) {
+    setTimeout(() => {
+      if (!document.body.contains(el)) return;
+      el.classList.remove('show');
+      setTimeout(() => el.remove(), 450);
+    }, 14000);
+  }
+}
+
+async function initOpenInApp() {
+  if (!/Android/i.test(navigator.userAgent)) return;   // no iOS app to open
+  if (runningStandalone()) return;                     // already in it
+
+  const forced = /[?&]app=1(&|$)/.test(window.location.search);
+  if (!forced) {
+    if (openAppSnoozed()) return;
+    // One bounce attempt per tab. If the intent did not take, the app is
+    // either absent or set not to handle links; do not loop on it.
+    try { if (sessionStorage.getItem('cbn_openapp_tried')) return; } catch (e) {}
+  }
+
+  const installed = await nativeAppInstalled();
+  if (!installed && !inHostedBrowser() && !forced) return;
+
+  showOpenAppBar({ autoHide: !installed });
+}
+
 /* ── INIT ── */
 function init() {
   pwaInjectCSS();
   registerSW();
   initInstallPrompt();
   initOfflineBanner();
+  initOpenInApp();
 
   // Notification permission is no longer nagged on a timer. It is
   // required once the user is actually inside the app. See
@@ -362,6 +547,14 @@ window.ApatmentoPWA = {
   canInstall: () => !!(deferredInstallPrompt || window.__APA_INSTALL_PROMPT__),
   isInstalled: () => window.matchMedia('(display-mode: standalone)').matches
     || window.navigator.standalone === true,
+  /* Native Android app handoff. openInApp() is safe to call from any
+     "Open in app" affordance the UI wants to add later. */
+  openInApp: openInApp,
+  intentUrl: androidIntentUrl,
+  hasNativeApp: nativeAppInstalled,
+  inNativeApp: runningStandalone,
+  showOpenAppBar: showOpenAppBar,
 };
+window.CabanaApp = window.ApatmentoPWA;
 
 })();

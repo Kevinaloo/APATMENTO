@@ -1,5 +1,5 @@
 {
-  "name": "Cabana \u2014 Stays, Flights & More in Kenya",
+  "name": "Cabana — Stays, Flights & More in Kenya",
   "short_name": "Cabana",
   "description": "Kenya's zero-commission travel super-app (formerly Apatmento). Book short-stay apartments, flights, tours, rides, food and more. Hosts keep 100%.",
   "start_url": "/?utm_source=pwa",
@@ -77,12 +77,17 @@
       ]
     }
   ],
-  "related_applications": [],
+  "related_applications": [
+    {
+      "platform": "play",
+      "id": "africa.cabana.app",
+      "url": "https://play.google.com/store/apps/details?id=africa.cabana.app"
+    }
+  ],
   "prefer_related_applications": false,
   "id": "/?utm_source=pwa",
   "scope": "/",
   "display_override": [
-    "window-controls-overlay",
     "standalone",
     "minimal-ui",
     "browser"
@@ -93,14 +98,14 @@
       "sizes": "1200x630",
       "type": "image/jpeg",
       "form_factor": "wide",
-      "label": "Cabana \u2014 Book apartments across Africa"
+      "label": "Cabana — Book apartments across Africa"
     },
     {
       "src": "/og-home.jpg",
       "sizes": "1200x630",
       "type": "image/jpeg",
       "form_factor": "narrow",
-      "label": "Cabana \u2014 Zero-commission travel"
+      "label": "Cabana — Zero-commission travel"
     }
   ],
   "dir": "ltr"
