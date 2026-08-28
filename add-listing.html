@@ -1319,6 +1319,31 @@ function firstSentence(t){
   var out=(m?str.slice(0,m.index+1):str).trim();
   return out.slice(0,140)||null;
 }
+/* ── Client-side photo compression ────────────────────────────────
+   Decode, downscale to MAX_EDGE on the long side, re-encode as JPEG.
+   Falls back to the original file on any failure, because a listing
+   published with heavy photos beats a listing that will not publish. */
+const UPLOAD_MAX_EDGE=1920, UPLOAD_QUALITY=0.82;
+async function compressForUpload(file){
+  try{
+    if(!/^image\//i.test(file.type||'')) return file;
+    const bmp=await createImageBitmap(file);
+    const scale=Math.min(1,UPLOAD_MAX_EDGE/Math.max(bmp.width,bmp.height));
+    const w=Math.max(1,Math.round(bmp.width*scale));
+    const h=Math.max(1,Math.round(bmp.height*scale));
+    const c=document.createElement('canvas');c.width=w;c.height=h;
+    const ctx=c.getContext('2d');
+    ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
+    ctx.drawImage(bmp,0,0,w,h);
+    bmp.close?.();
+    const blob=await new Promise(res=>c.toBlob(res,'image/jpeg',UPLOAD_QUALITY));
+    /* Only take the re-encode if it actually helped. A small, already
+       optimised JPEG can come back bigger after a round trip. */
+    if(blob&&(blob.size<file.size||!/jpe?g$/i.test(file.type||''))) return blob;
+    return file;
+  }catch(e){ console.warn('[upload] compression skipped:',e&&e.message); return file; }
+}
+
 async function publish(){
   /* These services have moderated or regulated catalogues of their own.
      Refuse a hand-edited generic form as well as routing the visible UI;
@@ -1328,7 +1353,17 @@ async function publish(){
   collect(6);collectOwn();const btn=document.getElementById('pub-btn');btn.classList.add('loading');
   try{
     const pu=[];const ord=(F.photoFiles.length?[cov,...Array.from({length:F.photoFiles.length},(_,i)=>i).filter(i=>i!==cov)]:[]).filter(i=>F.photoFiles[i]);
-    for(let i=0;i<ord.length;i++){const file=F.photoFiles[ord[i]];const ext=file.name.split('.').pop();if(!CU?.id) throw new Error('Please sign in again before uploading photos.');const path=CU.id+'/'+Date.now()+'-'+i+'.'+ext;const{error}=await sb.storage.from('listings').upload(path,file,{cacheControl:'3600',upsert:false});if(error)throw error;const{data:{publicUrl}}=sb.storage.from('listings').getPublicUrl(path);pu.push(publicUrl);}
+    for(let i=0;i<ord.length;i++){const file=F.photoFiles[ord[i]];if(!CU?.id) throw new Error('Please sign in again before uploading photos.');
+      /* Re-encode before upload. A modern phone camera produces 2–5 MB per
+         frame; ten of those is a 30 MB gallery that nobody on mobile data
+         will ever wait for. Downscaling to 1920px long edge and re-encoding
+         as JPEG lands the same photo at roughly 200–400 KB with no visible
+         loss at the sizes we actually display. Always .jpg on the way out,
+         so an iPhone HEIC upload cannot land a file browsers refuse to
+         render — which previously showed up as a listing with blank photos. */
+      const blob=await compressForUpload(file);
+      const path=CU.id+'/'+Date.now()+'-'+i+'.jpg';
+      const{error}=await sb.storage.from('listings').upload(path,blob,{cacheControl:'31536000',contentType:'image/jpeg',upsert:false});if(error)throw error;const{data:{publicUrl}}=sb.storage.from('listings').getPublicUrl(path);pu.push(publicUrl);}
     const _S=SVCS[F.svc]||{};const _monthly=_S.pf==='month';const _rate=parseFloat(F.price)||null;const SVC_TYPE_MAP={stays:"apartment",roommates:"room",tours:"tour",events:"event",food:"food",carhire:"carhire",rides:"ride",shopping:"shopping"};const svcType=SVC_TYPE_MAP[F.svc]||F.svc;const payload={partner_id:CU?.id,host_id:CU?.id,service:F.svc,type:svcType,listing_type:F.type,property_type:F.type,title:F.title,country:F.country,city:F.city,area:F.area,street:F.street||null,location:[F.area,F.city,F.country].filter(Boolean).join(', '),latitude:F.lat||null,longitude:F.lng||null,description:F.desc,amenities:F.feats,photos:pu.length?pu:F.photos,currency:F.cur,price_night:_monthly?null:_rate,price_week:_monthly?null:(parseFloat(F.pw)||null),price_month:_monthly?_rate:(parseFloat(F.pm)||null),deposit:parseFloat(F.dep)||null,min_nights:_monthly?Math.max(7,parseInt(F.mn)||90):(parseInt(F.mn)||1),max_guests:(F.svc==='food'?(F.seats||null):(F.guests||null)),beds:F.beds||null,baths:F.baths||null,bedrooms:parseInt(F.beds)||null,bathrooms:parseInt(F.baths)||null,floor:F.floor||null,sqm:F.sqm||null,checkin_time:F.ci,checkout_time:F.co,instant_book:F.inst,children:F.ch,pets:F.pets,smoking:F.smk,house_rules:F.rules||null,contact_whatsapp:F.wa||null,contact_phone:F.ph||F.wa||null,contact_email:F.em||null,status:'active',is_active:true,internal_score:50,cancel_policy:'flexible',extras:{plus:F.plusCode||null,pinq:F.precision||null,pinm:F.precisionMetres||null,dur:F.dur||null,meet:F.meet||null,lang:F.lang||null,edate:F.edate||null,venue:F.venue||null,age:F.age||null,cuisine:F.cuisine||null,deliv:F.deliv||null,lead:F.lead||null,make:F.make||null,model:F.model||null,yr:F.yr||null,fuel:F.fuel||null,trans:F.trans||null,areas:F.areas||null,veh:F.veh||null,adv:F.adv||null,stock:F.stock||null,cond:F.cond||null,brand:F.brand||null,da:F.da||null,avail:F.avail||null,bills:F.bills||null,furn:F.furn||null,mates:F.mates||null,bath:F.bath||null,suits:F.suits||null,notice:F.co||null}};
     /* Who filled the form in, kept separately from who owns the result.
        Never read for permissions — that is exactly the distinction the

@@ -2565,6 +2565,45 @@ body.gs-open .gs-sheet{opacity:1;visibility:visible;pointer-events:auto;transfor
     <div class="tx-sub">Cabana · Stays</div>
   </div>
 </div>
+<script>
+/* ── Entry transition dismiss ──────────────────────────────────────
+   Deliberately its own <script>, immediately after the markup it owns.
+   Nothing else may share this block. A curtain that fails to lift is
+   an unusable site, so its removal must not depend on 3,000 lines of
+   unrelated page code having executed without throwing. */
+(function(){
+  var el=document.getElementById('enter-tx');
+  if(!el)return;
+  var gone=false;
+  function dismissEnterTx(){
+    if(gone)return; gone=true;
+    el.style.pointerEvents='none';
+    el.classList.add('done');
+    setTimeout(function(){ el.style.display='none'; },900);
+  }
+  window.dismissEnterTx=dismissEnterTx;
+
+  /* animationend bubbles. The blobs, the house and the label all finish
+     their own animations about a second in, and a bare {once:true}
+     listener was being spent on the first of those — cutting the splash
+     short. Only txLift, fired by the curtain itself, means "done". */
+  el.addEventListener('animationend',function(e){
+    if(e.target===el&&e.animationName==='txLift') dismissEnterTx();
+  });
+
+  window.addEventListener('load',function(){ setTimeout(dismissEnterTx,800); });
+  setTimeout(dismissEnterTx,2800);
+
+  /* Last line of defence. If the curtain is somehow still painted well
+     after the page settled — a missed animationend under reduced motion,
+     a throw in an earlier bundle, a restored bfcache page — tear it out
+     rather than leave the guest staring at a blurred dark screen. */
+  setTimeout(function(){
+    if(el.isConnected&&getComputedStyle(el).display!=='none'){ el.remove(); }
+  },6000);
+  window.addEventListener('pageshow',function(e){ if(e.persisted) dismissEnterTx(); });
+})();
+</script>
 
 <!-- TOP BAR -->
 <div class="topbar">
@@ -4517,11 +4556,20 @@ function _lbHydrate(at) {
     const img = document.createElement('img');
     img.alt = `Photo ${i+1} of ${_galPhotos.length}`;
     img.decoding = 'async';
+    const show = () => img.classList.add('ready');
+    img.addEventListener('load', show, { once: true });
     img.src = _esc(_galPhotos[i]);
-    /* Cached images fire `load` before the listener is attached.
-       Mark them ready immediately so they don't stay invisible.    */
-    if (img.complete && img.naturalWidth) img.classList.add('ready');
-    else img.addEventListener('load', () => img.classList.add('ready'), { once: true });
+    /* A slide only becomes visible once it earns the .ready class, so
+       every path that ends with a decoded image must set it. Cached
+       images can complete before the listener attaches; decode() can
+       resolve without a load event firing in some engines. And if both
+       miss, a photo that has painted but never got the class is a black
+       screen the guest cannot recover from, so time out into visible. */
+    if (img.complete && img.naturalWidth) show();
+    else {
+      img.decode?.().then(show).catch(() => {});
+      setTimeout(() => { if (img.naturalWidth) show(); }, 4000);
+    }
     slide.appendChild(img);
   }
 }
@@ -6205,17 +6253,10 @@ loadListings().then(() => {
   window.addEventListener('load', () => setTimeout(moveModeGlider, 120));
 })();
 
-/* ── Entry transition dismiss ── */
-function dismissEnterTx(){
-  const el=document.getElementById('enter-tx');
-  if(!el)return;
-  el.style.pointerEvents='none';
-  el.classList.add('done');
-  setTimeout(()=>{el.style.display='none';},900);
-}
-document.getElementById('enter-tx')?.addEventListener('animationend',dismissEnterTx,{once:true});
-window.addEventListener('load',()=>setTimeout(dismissEnterTx,800));
-setTimeout(dismissEnterTx,2800);
+/* Entry transition dismiss now lives in its own script directly after
+   the #enter-tx markup. It used to sit here, at the end of a 3,000-line
+   block: any top-level throw above it meant the listeners never bound
+   and a full-screen z-9999 curtain stayed over the site for good. */
 
 </script>
 <div data-showcase="window"></div>
