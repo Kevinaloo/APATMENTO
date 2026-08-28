@@ -88,16 +88,20 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
 .svc-tick{position:absolute;top:10px;right:10px;width:20px;height:20px;border-radius:50%;background:var(--electric);display:none;align-items:center;justify-content:center;}
 .svc-tick svg{width:11px;height:11px;color:#fff;}
 .svc-card.sel .svc-tick{display:flex;}
-.type-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:22px;}
-@media(max-width:560px){.type-grid{grid-template-columns:1fr 1fr;}}
-.type-card{padding:14px 10px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);cursor:pointer;text-align:center;transition:all .22s;}
-.type-card:hover{border-color:rgba(67,97,255,0.28);box-shadow:var(--shadow-sm);}
-.type-card.sel{border-color:var(--electric);background:rgba(67,97,255,0.03);}
-.tc-icon{width:37px;height:37px;margin:0 auto 8px;border-radius:10px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;transition:all .22s;}
+.type-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;margin-bottom:22px;}
+.type-card{position:relative;display:grid;grid-template-columns:42px 1fr;grid-template-rows:auto auto;column-gap:11px;align-items:center;width:100%;min-height:88px;padding:14px 32px 14px 13px;border-radius:14px;border:1.5px solid var(--line);background:var(--surface);cursor:pointer;text-align:left;font:inherit;color:inherit;appearance:none;transition:border-color .22s,box-shadow .22s,background .22s,transform .22s;}
+.type-card:hover{border-color:rgba(67,97,255,0.28);box-shadow:var(--shadow-sm);transform:translateY(-1px);}
+.type-card:focus-visible{outline:3px solid rgba(67,97,255,0.18);outline-offset:2px;border-color:var(--electric);}
+.type-card.sel{border-color:var(--electric);background:rgba(67,97,255,0.035);box-shadow:0 0 0 3px rgba(67,97,255,0.07);}
+.type-card.sel::after{content:'✓';position:absolute;top:10px;right:10px;width:18px;height:18px;border-radius:50%;display:grid;place-items:center;background:var(--electric);color:#fff;font-size:11px;font-weight:800;}
+.tc-icon{grid-row:1 / 3;width:42px;height:42px;margin:0;border-radius:11px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;transition:all .22s;}
 .tc-icon svg{width:18px;height:18px;color:var(--ink-soft);transition:color .22s;}
 .type-card.sel .tc-icon{background:var(--grad);}
 .type-card.sel .tc-icon svg{color:#fff;}
-.tc-name{font-size:11px;font-weight:700;color:var(--ink);line-height:1.3;}
+.tc-name{align-self:end;font-size:12px;font-weight:800;color:var(--ink);line-height:1.3;}
+.tc-desc{align-self:start;margin-top:3px;font-size:10.5px;color:var(--ink-faint);line-height:1.45;}
+@media(max-width:760px){.type-grid{grid-template-columns:1fr 1fr;}}
+@media(max-width:560px){.type-grid{grid-template-columns:1fr;gap:9px}.type-card{min-height:78px;padding-top:12px;padding-bottom:12px}.tc-desc{font-size:11px;}}
 .fsec{margin-bottom:24px;}
 .fsec-title{font-family:var(--font-head);font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:13px;padding-bottom:9px;border-bottom:1px solid var(--line);}
 .field{margin-bottom:14px;}
@@ -709,11 +713,21 @@ const FROM=QP.has('from')||QP.has('edit')||QP.has('prefill')||QP.has('svc')||QP.
 
 const SVCS={
   stays:{lbl:'Stays',pp:'Per night',extra:true,sf:true,tog:true,s6t:'Check-in and check-out',
-    s1t:'What type of stay?',s1s:'Choose the category that best describes your property.',
+    s1t:'Which best describes your property?',s1s:'Choose the closest match. Details such as studio, penthouse, serviced or beachfront are added in the next steps.',
     s3t:'Space details',s3s:'The specifics that help guests picture staying here.',s3e:'Property specifics',
     dl:'Describe the space',dp:'Describe the views, the layout, what is nearby and the little things that make this space worth booking.',
     il:'Check-in time',ol:'Check-out time',rl:'House rules',
-    types:[{n:'Apartment',i:'<path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h.01M9 13h.01M9 17h.01M15 9h.01M15 13h.01M15 17h.01"/>'},{n:'House',i:'<path d="M3 9.5L12 3l9 6.5V21H3z"/><path d="M9 21V12h6v9"/>'},{n:'Studio',i:'<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>'},{n:'Penthouse',i:'<path d="M3 21h18M5 21V5h14v16"/><path d="M9 13h6M9 9h6M9 17h6"/>'},{n:'Villa',i:'<path d="M2 20h20M4 20V8l8-6 8 6v12"/><path d="M10 20v-6h4v6"/>'},{n:'Cottage',i:'<path d="M3 10.5L12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/><path d="M9 20v-5a3 3 0 0 1 6 0v5"/>'},{n:'Serviced unit',i:'<path d="M3 21h18M4 21V9h16v12"/><path d="M9 21v-4h6v4"/>'},{n:'Guesthouse',i:'<path d="M3 21h18M5 21V7l7-4 7 4v14"/><circle cx="12" cy="11" r="2"/>'},{n:'Lodge',i:'<path d="M4 20V10l8-7 8 7v10H4z"/><path d="M10 20v-5h4v5"/>'},{n:'Hostel',i:'<path d="M3 21h18M3 7h18M5 21V7M19 21V7"/><path d="M9 21v-5h6v5"/>'},{n:'Airbnb unit',i:'<path d="M12 22s-8-5-8-11a8 8 0 0 1 16 0c0 6-8 11-8 11z"/><circle cx="12" cy="11" r="3"/>'},{n:'Beach house',i:'<path d="M2 20h20M5 20V9l7-6 7 6v11"/>'}],
+    types:[
+      {n:'Apartment',d:'A flat, studio, penthouse or serviced apartment in a shared building.',i:'<path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h.01M9 13h.01M9 17h.01M15 9h.01M15 13h.01M15 17h.01"/>'},
+      {n:'House',d:'An entire standalone home, townhouse, maisonette or beach house.',i:'<path d="M3 9.5L12 3l9 6.5V21H3z"/><path d="M9 21V12h6v9"/>'},
+      {n:'Villa',d:'A private upscale home, often with a pool, garden, grounds or staff.',i:'<path d="M2 20h20M4 20V8l8-6 8 6v12"/><path d="M10 20v-6h4v6"/>'},
+      {n:'Cottage or Cabin',d:'A smaller standalone cottage, cabin, chalet or bungalow.',i:'<path d="M3 10.5L12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/><path d="M9 20v-5a3 3 0 0 1 6 0v5"/>'},
+      {n:'Guesthouse or B&B',d:'A small hosted property with private guest rooms and shared facilities.',i:'<path d="M3 21h18M5 21V7l7-4 7 4v14"/><path d="M8 16h8M9 13h.01M15 13h.01"/>'},
+      {n:'Hotel or Resort',d:'A professionally managed property with multiple rooms and guest services.',i:'<path d="M3 21h18M5 21V4h14v17M8 8h2M14 8h2M8 12h2M14 12h2M10 21v-5h4v5"/>'},
+      {n:'Lodge or Safari Camp',d:'Nature-based lodging such as a lodge, eco-camp or tented safari camp.',i:'<path d="M3 20 12 4l9 16H3z"/><path d="M12 4v16M8 20l4-6 4 6"/>'},
+      {n:'Hostel',d:'Budget accommodation with dorm beds or simple private rooms.',i:'<path d="M3 21h18M3 7h18M5 21V7M19 21V7"/><path d="M8 11h8M8 16h8"/>'},
+      {n:'Unique Stay',d:'A distinctive space such as a treehouse, boat, dome or farm stay.',i:'<path d="m12 3 1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6L12 3z"/><path d="m18.5 15 .8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8.8-2.2z"/>'}
+    ],
     df:`<div class="fsec"><div class="fsec-title">Property specifics</div><div class="row3"><div class="field"><label class="flbl">Bedrooms</label><select class="fsel" id="f-beds"><option value="0">Studio</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5+</option></select></div><div class="field"><label class="flbl">Bathrooms</label><select class="fsel" id="f-baths"><option>1</option><option>2</option><option>3</option><option>4+</option></select></div><div class="field"><label class="flbl">Max guests</label><select class="fsel" id="f-guests"><option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>8</option><option>10</option><option>12</option></select></div></div><div class="row2"><div class="field"><label class="flbl">Floor <span class="opt">(optional)</span></label><input class="finput" id="f-floor" type="number" placeholder="4"/></div><div class="field"><label class="flbl">Size m2 <span class="opt">(optional)</span></label><input class="finput" id="f-sqm" type="number" placeholder="65"/></div></div></div>`,
     feats:['WiFi','Air conditioning','Kitchen','Parking','Smart TV','Washer','Pool','Gym','Coffee maker','Heating','Elevator','Security guard','Garden','Dishwasher','Hot water','Bathtub','Shower','Balcony','Generator backup','Borehole water'],
     rv:f=>[['Bedrooms',f.beds==='0'?'Studio':f.beds+' bed(s)'],['Bathrooms',f.baths+' bath(s)'],['Max guests',f.guests+' guest(s)'],['Size',f.sqm?f.sqm+'m2':'Not specified'],['Amenities',f.feats.length?f.feats.join(', '):'None selected']]
@@ -790,6 +804,33 @@ const SVCS={
   }
 };
 
+/* Keep the choice mutually exclusive without breaking listings created by
+   older forms or imports. Layout words (studio, penthouse), service models
+   (serviced) and location words (beach house) resolve to the real property
+   family. New saves use only the nine clear categories shown above. */
+const STAY_TYPE_ALIASES={
+  'apartment':'Apartment','flat':'Apartment','studio':'Apartment','penthouse':'Apartment',
+  'serviced':'Apartment','serviced unit':'Apartment','serviced apartment':'Apartment',
+  'airbnb unit':'Apartment','entire flat':'Apartment','1-bed flat':'Apartment',
+  'studio unit':'Apartment','bedsitter':'Apartment',
+  'house':'House','townhouse':'House','maisonette':'House','beach house':'House',
+  'villa':'Villa',
+  'cottage':'Cottage or Cabin','cottage or cabin':'Cottage or Cabin','cabin':'Cottage or Cabin',
+  'chalet':'Cottage or Cabin','bungalow':'Cottage or Cabin',
+  'guesthouse':'Guesthouse or B&B','guest house':'Guesthouse or B&B',
+  'guesthouse or b&b':'Guesthouse or B&B','b&b':'Guesthouse or B&B',
+  'bnb':'Guesthouse or B&B','bed and breakfast':'Guesthouse or B&B',
+  'hotel':'Hotel or Resort','resort':'Hotel or Resort','hotel or resort':'Hotel or Resort',
+  'lodge':'Lodge or Safari Camp','safari camp':'Lodge or Safari Camp',
+  'lodge or safari camp':'Lodge or Safari Camp','eco-lodge':'Lodge or Safari Camp',
+  'hostel':'Hostel','unique stay':'Unique Stay','treehouse':'Unique Stay',
+  'boat':'Unique Stay','farm stay':'Unique Stay'
+};
+function canonicalStayType(value){
+  const raw=String(value||'').trim();
+  return STAY_TYPE_ALIASES[raw.toLowerCase()]||raw;
+}
+
 let cur=0,cov=0;
 const LABS=['Service','Type','Location','Details','Features','Pricing','Photos','Ownership','Review'];
 const F={svc:null,type:null,title:'',country:'Kenya',city:'',area:'',street:'',lat:null,lng:null,desc:'',feats:[],photos:[],photoFiles:[],cur:'KES',price:'',pw:'',pm:'',dep:'',mn:'1',wa:'',ph:'',em:'',ci:'14:00',co:'11:00',inst:true,ch:true,pets:false,smk:false,rules:'',beds:'1',baths:'1',guests:'2',floor:'',sqm:'',avail:'',bills:'',furn:'',mates:'2',bath:'shared',suits:'anyone',dur:'',meet:'',lang:'',edate:'',venue:'',age:'',cuisine:'',sig:'',eat:'all',seats:'',deliv:'',lead:'',minorder:'',delfee:'',delmins:'',make:'',model:'',yr:'',fuel:'',trans:'',areas:'',veh:'',adv:'',stock:'',cond:'',brand:'',da:'',
@@ -820,7 +861,7 @@ function bldStep(n){
     document.getElementById('s1ey').textContent='Step 1 of 8';
     document.getElementById('s1ti').textContent=S.s1t;
     document.getElementById('s1su').textContent=S.s1s;
-    document.getElementById('type-grid').innerHTML=S.types.map(t=>`<div class="type-card${F.type===t.n?' sel':''}" data-t="${t.n}" onclick="selType(this)"><div class="tc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${t.i}</svg></div><div class="tc-name">${t.n}</div></div>`).join('');
+    document.getElementById('type-grid').innerHTML=S.types.map(t=>`<button type="button" class="type-card${F.type===t.n?' sel':''}" data-t="${esc(t.n)}" aria-pressed="${F.type===t.n?'true':'false'}" onclick="selType(this)"><span class="tc-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${t.i}</svg></span><span class="tc-name">${esc(t.n)}</span>${t.d?`<span class="tc-desc">${esc(t.d)}</span>`:''}</button>`).join('');
     const b=document.getElementById('badge');b.style.display='';
     document.getElementById('badge-n').textContent=S.lbl;
     document.getElementById('badge-t').textContent=F.type||S.s1s;
@@ -872,7 +913,7 @@ function bldStep(n){
 
 function selSvc(el){document.querySelectorAll('.svc-card').forEach(c=>c.classList.remove('sel'));el.classList.add('sel');F.svc=el.dataset.svc;F.type=null;F.feats=[];}
 function goFromSvc(){if(!F.svc){al('Select a service type to continue.');return;}if(dedicatedPipeline(F.svc))return;go(1);}
-function selType(el){document.querySelectorAll('.type-card').forEach(c=>c.classList.remove('sel'));el.classList.add('sel');F.type=el.dataset.t;const bt=document.getElementById('badge-t');if(bt)bt.textContent=F.type;}
+function selType(el){document.querySelectorAll('.type-card').forEach(c=>{c.classList.remove('sel');c.setAttribute('aria-pressed','false');});el.classList.add('sel');el.setAttribute('aria-pressed','true');F.type=el.dataset.t;const bt=document.getElementById('badge-t');if(bt)bt.textContent=F.type;}
 function togFt(el){el.classList.toggle('sel');const f=el.dataset.f;if(el.classList.contains('sel')){if(!F.feats.includes(f))F.feats.push(f);}else F.feats=F.feats.filter(x=>x!==f);}
 
 /* ══ PIN PICKER ═══════════════════════════════════════════════════
@@ -1424,7 +1465,7 @@ async function publish(){
 
 function loadEdit(l){
   const sm={'Apartment':'stays','House':'stays','Studio':'stays','Penthouse':'stays','Villa':'stays','Cottage':'stays','Serviced unit':'stays','Guesthouse':'stays','Lodge':'stays','Hostel':'stays','Airbnb unit':'stays','Beach house':'stays','room':'roommates','apartment':'stays','tour':'tours','event':'events','carhire':'carhire','ride':'rides','shopping':'shopping','Private room':'roommates','Shared room':'roommates','En-suite':'roommates','En-suite room':'roommates','Master bedroom':'roommates','Studio unit':'stays','Bedsitter':'stays','1-bed flat':'stays','Entire flat':'stays','Safari':'tours','Day trip':'tours','City tour':'tours','Cultural':'tours','Adventure':'tours','Hiking':'tours','Water sports':'tours','Photography':'tours','Night safari':'tours','Multi-day':'tours','Bird watching':'tours','Custom tour':'tours','Concert':'events','Festival':'events','Sports event':'events','Comedy show':'events','Conference':'events','Wedding':'events','Exhibition':'events','Theatre':'events','Networking':'events','Party':'events','Food festival':'events','Art showcase':'events','Restaurant':'food','Cafe':'food','Bar and grill':'food','Fast food':'food','Catering':'food','Food truck':'food','Bakery':'food','Rooftop bar':'food','Buffet':'food','Fine dining':'food','Pop-up':'food','Cloud kitchen':'food','Self-drive':'carhire','Chauffeur':'carhire','4x4 safari':'carhire','Minibus':'carhire','Luxury sedan':'carhire','Airport transfer':'carhire','Bus hire':'carhire','Motorcycle':'carhire','Tuk tuk':'carhire','Van or MPV':'carhire','Boda boda':'carhire','Coach':'carhire','Ride hailing':'rides','Shuttle':'rides','Corporate transfer':'rides','Long-distance':'rides','Handcraft':'shopping','Clothing':'shopping','Jewellery':'shopping','Art':'shopping','Electronics':'shopping','Food products':'shopping','Home decor':'shopping','Souvenirs':'shopping','Furniture':'shopping','Beauty':'shopping','Books':'shopping','Sport and outdoor':'shopping'};
-  F.svc=l.service||sm[l.type]||'stays';F.type=l.type||'';F.title=l.title||'';F.country=l.country||'Kenya';F.city=l.city||'';F.area=l.area||'';F.street=l.street||'';F.lat=l.latitude||null;F.lng=l.longitude||null;F.plusCode=(l.extras&&l.extras.plus)||null;F.precision=(l.extras&&l.extras.pinq)||null;F.precisionMetres=(l.extras&&l.extras.pinm)||null;F.desc=l.description||'';F.feats=l.amenities||[];F.photos=l.photos||[];F.cur=l.currency||'KES';F.price=(l.service==='roommates'||l.type==='room')?(l.price_month?String(l.price_month):(l.price_night?String(l.price_night):'')):(l.price_night?String(l.price_night):'');F.pw=l.price_week?String(l.price_week):'';F.pm=l.price_month?String(l.price_month):'';F.dep=l.deposit?String(l.deposit):'';F.mn=String(((l.service==='roommates'||l.type==='room')?(l.min_nights||((l.extras&&l.extras.minmonths)*30)||90):(l.min_nights||1)));F.guests=l.max_guests||'2';F.seats=(l.service==='food'||l.type==='food')?(l.max_guests?String(l.max_guests):''):'';F.mates=(l.extras&&l.extras.mates)||l.max_guests||'2';F.bath=(l.extras&&l.extras.bath)||'shared';F.suits=(l.extras&&l.extras.suits)||'anyone';F.avail=(l.extras&&l.extras.avail)||'';F.bills=(l.extras&&l.extras.bills)||'included';F.furn=(l.extras&&l.extras.furn)||'Fully furnished';F.beds=l.beds||'1';F.baths=l.baths||'1';F.floor=l.floor||'';F.sqm=l.sqm||'';F.wa=l.contact_whatsapp||'';F.ph=l.contact_phone||'';F.em=l.contact_email||'';F.ci=l.checkin_time||'14:00';F.co=l.checkout_time||'11:00';F.inst=l.instant_book!==false;F.ch=l.children!==false;F.pets=!!l.pets;F.smk=!!l.smoking;F.rules=l.house_rules||'';
+  F.svc=l.service||sm[l.type]||sm[l.property_type]||sm[l.listing_type]||'stays';const rawListingType=l.listing_type||l.property_type||l.type||'';F.type=F.svc==='stays'?canonicalStayType(rawListingType):rawListingType;F.title=l.title||'';F.country=l.country||'Kenya';F.city=l.city||'';F.area=l.area||'';F.street=l.street||'';F.lat=l.latitude||null;F.lng=l.longitude||null;F.plusCode=(l.extras&&l.extras.plus)||null;F.precision=(l.extras&&l.extras.pinq)||null;F.precisionMetres=(l.extras&&l.extras.pinm)||null;F.desc=l.description||'';F.feats=l.amenities||[];F.photos=l.photos||[];F.cur=l.currency||'KES';F.price=(l.service==='roommates'||l.type==='room')?(l.price_month?String(l.price_month):(l.price_night?String(l.price_night):'')):(l.price_night?String(l.price_night):'');F.pw=l.price_week?String(l.price_week):'';F.pm=l.price_month?String(l.price_month):'';F.dep=l.deposit?String(l.deposit):'';F.mn=String(((l.service==='roommates'||l.type==='room')?(l.min_nights||((l.extras&&l.extras.minmonths)*30)||90):(l.min_nights||1)));F.guests=l.max_guests||'2';F.seats=(l.service==='food'||l.type==='food')?(l.max_guests?String(l.max_guests):''):'';F.mates=(l.extras&&l.extras.mates)||l.max_guests||'2';F.bath=(l.extras&&l.extras.bath)||'shared';F.suits=(l.extras&&l.extras.suits)||'anyone';F.avail=(l.extras&&l.extras.avail)||'';F.bills=(l.extras&&l.extras.bills)||'included';F.furn=(l.extras&&l.extras.furn)||'Fully furnished';F.beds=l.beds||'1';F.baths=l.baths||'1';F.floor=l.floor||'';F.sqm=l.sqm||'';F.wa=l.contact_whatsapp||'';F.ph=l.contact_phone||'';F.em=l.contact_email||'';F.ci=l.checkin_time||'14:00';F.co=l.checkout_time||'11:00';F.inst=l.instant_book!==false;F.ch=l.children!==false;F.pets=!!l.pets;F.smk=!!l.smoking;F.rules=l.house_rules||'';
   if(l.extras){const e=l.extras;Object.assign(F,{dur:e.dur||'',meet:e.meet||'',lang:e.lang||'',edate:e.edate||'',venue:e.venue||'',age:e.age||'',cuisine:e.cuisine||'',deliv:e.deliv||'',lead:e.lead||'',make:e.make||'',model:e.model||'',yr:e.yr||'',fuel:e.fuel||'',trans:e.trans||'',areas:e.areas||'',veh:e.veh||'',adv:e.adv||'',stock:e.stock||'',cond:e.cond||'',brand:e.brand||'',da:e.da||'',avail:e.avail||'',bills:e.bills||'',furn:e.furn||''});}
   /* A restaurant's numbers moved off the listings row, so an edit has to
      go and get them. Without this, opening a live restaurant and pressing
@@ -1476,7 +1517,7 @@ function loadEdit(l){
   document.getElementById('pub-btn').innerHTML='Save changes <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
   bldRv();go(8);
 }
-function loadPrefill(p){F.svc='stays';F.type=p.property_type||'Apartment';F.title=p.title||'';F.city=p.city||'';F.area=p.area||'';F.desc=p.description||'';F.beds=String(p.bedrooms||1);F.baths=String(p.bathrooms||1);F.guests=String(p.max_guests||2);F.sqm=p.sqm?String(p.sqm):'';F.feats=p.amenities||[];F.price=p.price_night?String(p.price_night):'';go(1);}
+function loadPrefill(p){F.svc='stays';F.type=canonicalStayType(p.property_type||'Apartment');F.title=p.title||'';F.city=p.city||'';F.area=p.area||'';F.desc=p.description||'';F.beds=String(p.bedrooms||1);F.baths=String(p.bathrooms||1);F.guests=String(p.max_guests||2);F.sqm=p.sqm?String(p.sqm):'';F.feats=p.amenities||[];F.price=p.price_night?String(p.price_night):'';go(1);}
 
 /* Whose listing this is, on every step, in the one place that never
    scrolls away. An ambassador filling in seven steps for somebody should

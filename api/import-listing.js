@@ -68,7 +68,7 @@ amenities must be an array of short strings matching common ones: WiFi, Pool, Pa
 
   const SCHEMA = `{
   "title": "compelling listing title (8-12 words, include location + best feature)",
-  "property_type": "Apartment|House|Studio|Penthouse|Villa|Cottage|Serviced|Guesthouse|Lodge|Hostel",
+  "property_type": "Apartment|House|Villa|Cottage or Cabin|Guesthouse or B&B|Hotel or Resort|Lodge or Safari Camp|Hostel|Unique Stay",
   "city": "city name",
   "area": "neighbourhood or area",
   "country": "Kenya|Tanzania|Uganda|Rwanda (default Kenya)",
