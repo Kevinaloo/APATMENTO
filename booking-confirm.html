@@ -369,6 +369,32 @@ let CURRENT_USER = null;
 (async () => {
   if (!sb) return;
   try { const { data: { session } } = await sb.auth.getSession(); if (session) CURRENT_USER = session.user; } catch(e){}
+
+  /* Verify the listing still exists and is active before allowing booking.
+     A guest who bookmarked or was linked to a deleted/paused listing should
+     be redirected back rather than completing payment for a space that no
+     longer exists. */
+  const listingId = new URLSearchParams(location.search).get('id');
+  if (listingId && listingId !== '0' && sb) {
+    try {
+      const { data: listing, error } = await sb
+        .from('listings')
+        .select('id, is_active, deleted_at, status')
+        .eq('id', listingId)
+        .single();
+      if (error || !listing || !listing.is_active || listing.deleted_at || listing.status === 'deleted' || listing.status === 'paused') {
+        /* Show a clear message then redirect to the listings page */
+        document.body.innerHTML = `<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:system-ui,sans-serif;padding:32px;text-align:center;background:#FCFCFD">
+          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#8B6FE8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:20px"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/><path d="M9 20v-5a3 3 0 0 1 6 0v5"/></svg>
+          <h2 style="font-size:22px;font-weight:700;color:#0A0A14;margin-bottom:10px">This listing is no longer available</h2>
+          <p style="color:#4A4C66;font-size:15px;max-width:360px;line-height:1.65;margin-bottom:24px">The host may have paused or removed this listing. Browse other available stays on Cabana.</p>
+          <a href="apartments.html" style="display:inline-flex;align-items:center;gap:8px;padding:13px 28px;border-radius:100px;background:linear-gradient(135deg,#B8A4F4,#7B2FF7);color:#fff;font-weight:700;font-size:15px;text-decoration:none">Browse stays →</a>
+        </div>`;
+        return;
+      }
+    } catch(e) { /* If check fails, allow booking to proceed */ }
+  }
+
   /* Pull the credit balance and re-price. Deliberately after the
      summary has already rendered at full price: the total ticking
      DOWN as the credits land is the moment worth showing, and it

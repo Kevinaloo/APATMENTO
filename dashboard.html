@@ -2996,7 +2996,7 @@ async function loadStays(){
        to encode the same fallback logic in a URL, and one drifted column
        there empties the rail silently. */
     const r = await fetch(
-      SUPA_URL+'/rest/v1/listings?status=eq.active&is_active=eq.true&select=id,title,location,area,city,price_night,price_per_night,photos,beds,max_guests,type,service,property_type,listing_type&order=internal_score.desc.nullslast&limit=48',
+      SUPA_URL+'/rest/v1/listings?status=eq.active&is_active=eq.true&deleted_at=is.null&select=id,title,location,area,city,price_night,price_per_night,photos,beds,max_guests,type,service,property_type,listing_type&order=internal_score.desc.nullslast&limit=48',
       {headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}}
     );
     const rows = r.ok ? (await r.json()) : [];

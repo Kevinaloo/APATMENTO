@@ -3347,6 +3347,7 @@ async function loadNativeListings() {
     const { data, error } = await sb.from('listings')
       .select('*')
       .eq('is_active', true)
+      .is('deleted_at', null)
       .limit(60);
 
     if (error) {
@@ -3550,18 +3551,33 @@ function renderCards(list) {
   _cardObserver && _cardObserver.disconnect();
 
   if (!list.length) {
-    /* "No listings" is three different situations. Say which one. */
+    /* "No listings" is four different situations. Say which one. */
     const hotelsWanted = _searchState.typeFilter === 'hotel';
-    const title = hotelsWanted ? 'No hotels on Cabana yet'
-                : _searchState.loc ? 'Nothing listed there yet'
-                : 'Nothing matches those filters';
-    const body = hotelsWanted
-      ? 'Hotels have a lane on this page and none are live yet. Get Matched can still ask hosts in your destination directly.'
-      : _searchState.loc ? 'Be the first to list a space here. Partners keep 100% of every booking.'
-      : 'Try widening the price, the dates or the number of bedrooms.';
-    const cta = hotelsWanted
-      ? `<button type="button" class="empty-cta" onclick="toggleFilter(document.getElementById('fc-hotels'),'all');document.getElementById('fc-hotels').classList.remove('active');document.querySelector('.filter-bar .fchip').classList.add('active');">Show every stay</button>`
-      : `<a href="partner-listings.html" class="empty-cta">List your space</a>`;
+    const noListingsAtAll = nativeCount === 0;
+    const hasFilters = _searchState.loc || _searchState.typeFilter !== 'all';
+
+    let title, body, cta;
+    if (hotelsWanted) {
+      title = 'No hotels on Cabana yet';
+      body  = 'Hotels are coming soon. Get Matched can ask hosts in your destination directly right now.';
+      cta   = `<button type="button" class="empty-cta" onclick="toggleFilter(document.getElementById('fc-hotels'),'all');document.getElementById('fc-hotels').classList.remove('active');document.querySelector('.filter-bar .fchip').classList.add('active');">Show every stay</button>`;
+    } else if (noListingsAtAll) {
+      title = 'First listings dropping soon';
+      body  = 'Cabana launches with zero commission — hosts keep 100% of every booking. Be first to list your space and get early visibility with every guest who visits.';
+      cta   = `<div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:22px">
+        <a href="add-listing.html" class="empty-cta">List your space free</a>
+        <button type="button" class="empty-cta" style="background:rgba(123,47,247,.12);color:var(--violet);box-shadow:none;border:1.5px solid rgba(123,47,247,.25);" onclick="document.getElementById('gs-sheet')?.classList.add('open');document.body.classList.add('gs-open');">Get Matched</button>
+      </div>`;
+    } else if (_searchState.loc) {
+      title = 'Nothing listed there yet';
+      body  = 'Be the first to list a space here. Partners keep 100% of every booking — no commission, ever.';
+      cta   = `<a href="add-listing.html" class="empty-cta">List your space</a>`;
+    } else {
+      title = 'Nothing matches those filters';
+      body  = 'Try widening the price, the dates or the number of bedrooms. Or use Get Matched to ask hosts directly.';
+      cta   = `<button type="button" class="empty-cta" onclick="resetFilters()">Clear all filters</button>`;
+    }
+
     grid.innerHTML = `<div class="empty">
       <svg class="empty-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/><path d="M9 20v-5a3 3 0 0 1 6 0v5"/></svg>
       <div class="empty-title">${title}</div>
@@ -4434,15 +4450,14 @@ function openLightbox(start) {
 
   _lbIdx = Math.max(0, Math.min(Number(start) || 0, _galPhotos.length - 1));
 
-  /* Only the photo being opened and its two neighbours are fetched.
-     A twelve-photo listing must not cost twelve downloads to look at
-     one of them. */
-  rail.innerHTML = _galPhotos.map((p, i) => `
-    <div class="lb-slide" data-lb-slide="${i}">
-      ${Math.abs(i - _lbIdx) <= 1
-        ? `<img src="${_esc(p)}" alt="Photo ${i+1} of ${_galPhotos.length}" decoding="async">`
-        : ''}
-    </div>`).join('');
+  /* Build slide shells first. _lbHydrate() then injects the opening
+     photo and its neighbours using createElement so cached images get
+     the .ready class synchronously — innerHTML-created imgs fire their
+     load event before the listener is attached, leaving them invisible. */
+  rail.innerHTML = _galPhotos.map((_, i) =>
+    `<div class="lb-slide" data-lb-slide="${i}"></div>`
+  ).join('');
+  _lbHydrate(_lbIdx);
 
   strip.innerHTML = _galPhotos.map((p, i) =>
     `<button type="button" class="lb-thumb${i === _lbIdx ? ' on' : ''}" data-lb-thumb="${i}"
@@ -4452,14 +4467,18 @@ function openLightbox(start) {
 
   lb.hidden = false;
   document.body.classList.add('lb-open');
-  requestAnimationFrame(() => {
+  /* Double-rAF: first frame lets the browser remove `hidden` and
+     compute layout; second frame triggers the CSS opacity/visibility
+     transition. A single rAF is not enough on Chrome/Safari — the
+     transition fires before the element has a paint rect.            */
+  requestAnimationFrame(() => requestAnimationFrame(() => {
     lb.classList.add('open');
     /* Jump, do not glide: the guest asked for photo seven, not for a
        tour of photos one through six. */
     rail.scrollTo({ left: _lbIdx * rail.clientWidth, behavior: 'auto' });
     _lbPaint();
     document.getElementById('lb-close')?.focus();
-  });
+  }));
 }
 
 function closeLightbox() {
@@ -4495,8 +4514,15 @@ function _lbHydrate(at) {
     if (i < 0 || i >= _galPhotos.length) continue;
     const slide = rail.querySelector(`[data-lb-slide="${i}"]`);
     if (!slide || slide.firstElementChild) continue;
-    slide.innerHTML =
-      `<img src="${_esc(_galPhotos[i])}" alt="Photo ${i+1} of ${_galPhotos.length}" decoding="async">`;
+    const img = document.createElement('img');
+    img.alt = `Photo ${i+1} of ${_galPhotos.length}`;
+    img.decoding = 'async';
+    img.src = _esc(_galPhotos[i]);
+    /* Cached images fire `load` before the listener is attached.
+       Mark them ready immediately so they don't stay invisible.    */
+    if (img.complete && img.naturalWidth) img.classList.add('ready');
+    else img.addEventListener('load', () => img.classList.add('ready'), { once: true });
+    slide.appendChild(img);
   }
 }
 
@@ -7126,6 +7152,18 @@ function closeGmTab() {
   if (panel) panel.classList.remove('open');
   document.getElementById('gm-tab-pill')?.classList.remove('open');
   gmState.panelOpen = false;
+}
+
+/* ── viewCabanaResponses — called from active-request card "See who →" ──
+   Opens the GM panel so the guest can see which hosts responded.        */
+function viewCabanaResponses(requestId) {
+  /* If we already have this request loaded in gmState, just open the
+     panel. Otherwise set the requestId and open — gmRenderResponses
+     will pull from the already-loaded gmState.responses array.          */
+  if (requestId && gmState.requestId !== requestId) {
+    gmState.requestId = requestId;
+  }
+  gmShowPanel();
 }
 
 /* ── Realtime subscription for new host responses ── */
