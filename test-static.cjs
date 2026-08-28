@@ -102,6 +102,13 @@ console.log('\n[5b] No handlers pointing at missing elements');
       // Or built at runtime? (e.g. `modal.id = 'tenant-verify-modal'`)
       if (new RegExp(`\\.id\\s*=\\s*['"]${id}['"]`).test(h)) continue;
       if (new RegExp(`id=\\\\?["']${id}\\\\?["']`).test(h)) continue;  // inside a template string
+      // Or injected via innerHTML with an escaped quote (e.g. `+'<input id="pf-avg"...'`)
+      if (new RegExp(`id=\\\\?"${id}\\\\?"`).test(h)) continue;
+      if (h.includes(`id=\\"${id}\\"`)) continue;
+      // Or built by a field-factory call: field('pf-avg', ...)
+      if (new RegExp(`field\\(\\s*['"]${id}['"]\\s*,`).test(h)) continue;
+      // Or id set inside a JS string used with innerHTML: +"<... id=\"pf-avg\"..."
+      if (h.includes(`'<input id="\'+id+\'"`) || h.includes(`"<input id='"+id+"'"`)) continue;
       fail(p, `JS dereferences #${id}, which is never created or in the markup`);
       dead++;
     }
