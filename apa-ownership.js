@@ -267,11 +267,60 @@
       p_to_name:    String(to.name).trim(),
       p_to_contact: String(to.contact).trim(),
       p_note:       to.note ? String(to.note).slice(0, 500) : null
+    }).then(function (r) {
+      if (!r || !r.ok || !r.transfer_id) return r;
+      return sendInvite(r.transfer_id).then(function (mail) {
+        return Object.assign({}, r, {
+          email_ok: !!(mail && mail.ok),
+          emailed: !!(mail && mail.emailed),
+          sender_emailed: !!(mail && mail.sender_emailed),
+          claim_url: mail && mail.claim_url,
+          email_error: mail && !mail.ok ? mail.error : null
+        });
+      });
     });
   }
 
-  function accept(id)  { return rpc('listing_transfer_accept',  { p_transfer_id: id }); }
-  function decline(id) { return rpc('listing_transfer_decline', { p_transfer_id: id }); }
+  function notifyDecision(id) {
+    if (!id || !global.fetch || !global.ApaSession || !global.ApaSession.token) {
+      return Promise.resolve({ ok: false, error: 'The email update is delayed.' });
+    }
+    return global.ApaSession.token().then(function (token) {
+      if (!token) return { ok: false, error: 'The email update is delayed.' };
+      function attempt() {
+        return global.fetch('/api/email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+          body: JSON.stringify({ action: 'listing-transfer-decision', transferId: id })
+        }).then(function (r) {
+          return r.json().catch(function () { return {}; }).then(function (d) {
+            return r.ok ? d : { ok: false, error: d.error || 'The email update is delayed.' };
+          });
+        }, function () { return { ok: false, error: 'The email update is delayed.' }; });
+      }
+      return attempt().then(function (out) {
+        if (out && out.ok) return out;
+        return new Promise(function (resolve) { setTimeout(function () { attempt().then(resolve); }, 900); });
+      });
+    }).catch(function () { return { ok: false, error: 'The email update is delayed.' }; });
+  }
+
+  function accept(id)  {
+    return rpc('listing_transfer_accept', { p_transfer_id: id }).then(function (r) {
+      if (!r || !r.ok) return r;
+      return notifyDecision(id).then(function (mail) {
+        return Object.assign({}, r, { email_ok: !!(mail && mail.ok) });
+      });
+    });
+  }
+  function decline(id) {
+    return rpc('listing_transfer_decline', { p_transfer_id: id }).then(function (r) {
+      if (!r || !r.ok) return r;
+      return notifyDecision(id).then(function (mail) {
+        return Object.assign({}, r, { email_ok: !!(mail && mail.ok) });
+      });
+    });
+  }
   function cancelTransfer(id) { return rpc('listing_transfer_cancel', { p_transfer_id: id }); }
   function confirmSeat(id)    { return rpc('listing_partner_confirm', { p_partner_id: id }); }
 
@@ -288,15 +337,23 @@
     }
     return global.ApaSession.token().then(function (token) {
       if (!token) return { ok: false, error: 'Sign in again to send the invitation.' };
-      return global.fetch('/api/email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-        body: JSON.stringify({ action: 'listing-claim', transferId: id })
-      }).then(function (r) {
-        return r.json().catch(function () { return {}; }).then(function (d) {
-          if (!r.ok) return { ok: false, error: d.error || 'The invitation could not be sent.', claim_url: d.claim_url || fallbackUrl };
-          return d;
+      function attempt() {
+        return global.fetch('/api/email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+          body: JSON.stringify({ action: 'listing-claim', transferId: id })
+        }).then(function (r) {
+          return r.json().catch(function () { return {}; }).then(function (d) {
+            if (!r.ok) return { ok: false, error: d.error || 'The invitation could not be sent.', claim_url: d.claim_url || fallbackUrl };
+            return d;
+          });
+        }, function () {
+          return { ok: false, error: 'The invitation could not be sent.', claim_url: fallbackUrl };
         });
+      }
+      return attempt().then(function (out) {
+        if (out && out.ok) return out;
+        return new Promise(function (resolve) { setTimeout(function () { attempt().then(resolve); }, 900); });
       });
     }).catch(function (e) {
       warn('sendInvite', e);

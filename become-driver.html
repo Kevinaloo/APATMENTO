@@ -892,12 +892,15 @@ function submit(){
     p_driver: driver,
     p_vehicle: vehicle,
     p_documents: docs
-  }).then(function(res){
+  }).then(async function(res){
     if(res.error || !res.data || res.data.ok!==true){
       var message=(res.error&&res.error.message)||'The application was not saved.';
       console.warn('[driver] atomic save failed',message);
       btn.disabled=false;btn.textContent='Submit application';
       return fail(message);
+    }
+    if(res.data.driver_id&&window.CabanaLifecycle&&CabanaLifecycle.listingSubmitted){
+      await CabanaLifecycle.listingSubmitted('driver',res.data.driver_id);
     }
     finish(res.data.driver_id);
   }).catch(function(e){

@@ -605,6 +605,72 @@ export const TEMPLATES = {
     };
   },
 
+  /* ── Ownership · the current holder has sent a transfer ────────── */
+  listingTransferSent({ host, listing, recipient, claimUrl, expiresAt }) {
+    const who = firstName(host?.name, host?.email);
+    const title = listing?.title || listing?.name || 'Your Cabana listing';
+    return {
+      audience: 'partner', category: 'transactional',
+      subject: `Ownership transfer sent · ${title}`,
+      preview: `${recipient?.name || 'The new owner'} has been invited to review the handover.`,
+      html: shell({
+        title: 'Ownership transfer sent', preview: 'Your handover is safely waiting for their decision.',
+        body: header({ eyebrow: 'Ownership transfer', title: 'The handover is on its way',
+          subtitle: `${who}, ${title} is still yours until ${recipient?.name || 'the recipient'} accepts.`,
+          gradient: B.gradDusk, emoji: '🔑' })
+        + card(h2('What happens next') + rows([
+            ['Listing', title],
+            recipient?.name ? ['Sent to', recipient.name] : null,
+            recipient?.contact ? ['Contact', recipient.contact] : null,
+            expiresAt ? ['Invitation expires', prettyDate(expiresAt)] : null,
+            ['Ownership now', 'Still yours', true],
+          ])
+          + p('Cabana will verify the recipient’s signed-in email or phone before the handover can complete. Reviews, ranking, calendar and listing history move only after they accept.', { small: true })
+          + button('/partner-listings.html', 'Track the transfer', { gradient: B.gradDusk, solid: B.violet })
+          + (claimUrl ? ghostButton(claimUrl, 'Open the invitation') : '')),
+        audience: 'partner',
+        reason: 'This is a transactional record of an ownership transfer you started on Cabana.',
+      }),
+    };
+  },
+
+  /* ── Ownership · accepted or declined, sent to both sides ──────── */
+  listingTransferDecision({ name, listingTitle, status, perspective, otherName }) {
+    const who = firstName(name);
+    const accepted = status === 'accepted';
+    const incoming = perspective === 'recipient';
+    const title = listingTitle || 'the Cabana listing';
+    const heading = accepted
+      ? (incoming ? 'It’s officially yours' : 'The handover is complete')
+      : (incoming ? 'Your decision is recorded' : 'The transfer was declined');
+    const subtitle = accepted
+      ? (incoming
+          ? `${who}, you now manage ${title} on Cabana.`
+          : `${who}, ${otherName || 'the new owner'} now manages ${title}.`)
+      : (incoming
+          ? `${who}, ${title} has not been transferred to you.`
+          : `${who}, ${otherName || 'the recipient'} chose not to take over ${title}.`);
+    return {
+      audience: 'partner', category: 'transactional',
+      subject: accepted ? `Ownership transferred · ${title}` : `Ownership transfer declined · ${title}`,
+      preview: subtitle,
+      html: shell({
+        title: heading, preview: subtitle,
+        body: header({ eyebrow: 'Ownership update', title: heading, subtitle,
+          gradient: accepted ? B.gradReef : B.gradDusk, emoji: accepted ? '✅' : '↩️' })
+        + card(h2(accepted ? 'Everything moved together' : 'Nothing was moved')
+          + p(accepted
+              ? 'The listing’s reviews, ranking, calendar and history stay intact. Cabana changed the managing account without creating a duplicate listing.'
+              : 'The listing, reviews, calendar and history remain with the current owner. No public details were changed.')
+          + button(incoming && accepted ? '/dashboard.html' : '/partner-listings.html',
+              incoming && accepted ? 'Manage the listing' : 'Open your listings',
+              { gradient: accepted ? B.gradReef : B.gradDusk, solid: accepted ? B.electric : B.violet })),
+        audience: 'partner',
+        reason: 'This is a transactional update about a Cabana ownership transfer involving your account.',
+      }),
+    };
+  },
+
   /* ── Guest · an offer. Consent-gated, always unsubscribable. ────── */
   offer({ name, email, headline, body, code, expires, url, label, stat, statLabel }) {
     const who = firstName(name, email);
@@ -724,6 +790,54 @@ export const TEMPLATES = {
             ['📅', 'Keep the calendar true', 'A blocked date you forgot to unblock is a booking you never see.'],
           ]) + button('/dashboard.html', 'Open your dashboard', { gradient: B.gradDusk, solid: B.violet })),
         audience: 'partner',
+      }),
+    };
+  },
+
+  /* ── Partner · a listing or service application was received ───── */
+  partnerListingSubmitted({ host, submission }) {
+    const who = firstName(host?.name, host?.email);
+    const title = submission?.title || 'Your new Cabana listing';
+    const live = submission?.state === 'live';
+    const service = submission?.serviceLabel || 'Listing';
+    return {
+      audience: 'partner', category: 'transactional',
+      subject: live ? `${title} is now on Cabana` : `Received for review · ${title}`,
+      preview: live
+        ? `${service} published successfully. Here is what to do next.`
+        : `${service} submitted successfully. Cabana’s team will review it next.`,
+      html: shell({
+        title: live ? 'Your listing is on Cabana' : 'Your submission is safely in',
+        preview: live ? 'Published successfully.' : 'Received and queued for review.',
+        body: header({
+          eyebrow: live ? 'Published' : 'Submission received',
+          title: live ? `You’re live, ${who}` : `Beautiful work, ${who}`,
+          subtitle: live
+            ? `${title} is ready to be discovered.`
+            : `${title} is now with Cabana’s review team. Nothing else is needed right now.`,
+          gradient: live ? B.gradReef : B.gradDusk,
+          emoji: live ? '✨' : '📝',
+        })
+        + card(h2('Your submission at a glance') + rows([
+            ['Name', title],
+            ['Service', service],
+            submission?.location ? ['Location', submission.location] : null,
+            ['Status', live ? 'Published' : 'In review', true],
+          ])
+          + button(submission?.manageUrl || '/partner-listings.html',
+              live ? 'View and manage it' : 'Open partner dashboard',
+              { gradient: live ? B.gradReef : B.gradDusk, solid: live ? B.electric : B.violet }))
+        + card(h2(live ? 'A strong first week' : 'What happens now') + features(live ? [
+            ['📸', 'Keep the first photo honest', 'The strongest cover image is the one guests recognise when they arrive.'],
+            ['💬', 'Reply while interest is warm', 'Fast, thoughtful answers turn views into real conversations.'],
+            ['📅', 'Keep availability current', 'Accurate dates and stock protect trust and prevent missed bookings.'],
+          ] : [
+            ['🔍', 'A human review', 'We check clarity, trust details and whether guests have everything they need.'],
+            ['✉️', 'A clear outcome', 'We will email you when it is approved or if one detail needs your attention.'],
+            ['🤝', 'A direct partner line', `Questions about this submission belong at ${CONTACT.partnership}.`],
+          ]), { delay: 2, quiet: true }),
+        audience: 'partner',
+        reason: 'You received this transactional confirmation because you submitted a listing or service to Cabana.',
       }),
     };
   },
@@ -853,6 +967,17 @@ async function restPost(path, body, prefer = 'return=minimal') {
   } catch (e) { return { ok: false, error: e.message }; }
 }
 
+async function restPatch(path, body, prefer = 'return=minimal') {
+  if (!SUPA_URL || !SERVICE_KEY) return { ok: false };
+  try {
+    const r = await fetch(`${SUPA_URL}/rest/v1/${path}`, {
+      method: 'PATCH', headers: svcHeaders({ Prefer: prefer }), body: JSON.stringify(body),
+    });
+    const text = await r.text();
+    return { ok: r.ok, status: r.status, body: text };
+  } catch (e) { return { ok: false, error: e.message }; }
+}
+
 /* Consent, plus the token that lets someone withdraw it. A row is
    created on first contact so the unsubscribe link in the very first
    promotional email already resolves. */
@@ -941,7 +1066,19 @@ export async function sendTemplate({ template, to, data = {}, dedupeKey = null, 
       subject: built.subject, dedupe_key: dedupeKey, status: 'sent',
       meta: { category, claimed_at: new Date().toISOString() },
     });
-    if (claim.duplicate) return { ok: true, skipped: true, reason: 'already_sent' };
+    if (claim.duplicate) {
+      const prior = await restGet(`email_log?dedupe_key=eq.${encodeURIComponent(dedupeKey)}&select=status&limit=1`);
+      if (!prior || prior[0]?.status !== 'failed') {
+        return { ok: true, skipped: true, reason: 'already_sent' };
+      }
+      /* Failed provider requests are retryable. Resend receives the same
+         idempotency key below, so two recovery attempts still produce one
+         message at most. */
+      await restPatch(`email_log?dedupe_key=eq.${encodeURIComponent(dedupeKey)}`, {
+        status: 'sent', error: null,
+        meta: { category, retried_at: new Date().toISOString() },
+      });
+    }
   }
 
   /* ── Unsubscribe. Promotional and product mail must carry a working
@@ -966,8 +1103,7 @@ export async function sendTemplate({ template, to, data = {}, dedupeKey = null, 
   }
 
   if (!RESEND_KEY) {
-    if (dedupeKey) await restPost('email_log', {
-      recipient: addr, template, sender: from, subject: built.subject,
+    if (dedupeKey) await restPatch(`email_log?dedupe_key=eq.${encodeURIComponent(dedupeKey)}`, {
       status: 'failed', error: 'RESEND_API_KEY not set', meta: { category },
     });
     return { ok: false, error: 'RESEND_API_KEY not set' };
@@ -976,7 +1112,11 @@ export async function sendTemplate({ template, to, data = {}, dedupeKey = null, 
   try {
     const r = await fetch('https://api.resend.com/emails', {
       method: 'POST',
-      headers: { Authorization: `Bearer ${RESEND_KEY}`, 'Content-Type': 'application/json' },
+      headers: {
+        Authorization: `Bearer ${RESEND_KEY}`,
+        'Content-Type': 'application/json',
+        ...(dedupeKey ? { 'Idempotency-Key': String(dedupeKey).slice(0, 256) } : {}),
+      },
       body: JSON.stringify({
         from, to: [addr], subject: built.subject, html,
         reply_to: replyTo, ...(headers ? { headers } : {}),
@@ -985,18 +1125,24 @@ export async function sendTemplate({ template, to, data = {}, dedupeKey = null, 
     const out = await r.json().catch(() => ({}));
     if (!r.ok) {
       console.error('[mail] resend', r.status, JSON.stringify(out).slice(0, 300));
-      await restPost('email_log', {
-        user_id: userId, recipient: addr, template, sender: from, subject: built.subject,
-        status: 'failed', error: String(out?.message || r.status).slice(0, 300), meta: { category },
-      });
+      if (dedupeKey) {
+        await restPatch(`email_log?dedupe_key=eq.${encodeURIComponent(dedupeKey)}`, {
+          status: 'failed', error: String(out?.message || r.status).slice(0, 300), meta: { category },
+        });
+      } else {
+        await restPost('email_log', {
+          user_id: userId, recipient: addr, template, sender: from, subject: built.subject,
+          status: 'failed', error: String(out?.message || r.status).slice(0, 300), meta: { category },
+        });
+      }
       return { ok: false, error: out?.message || `resend_${r.status}` };
     }
 
     if (dedupeKey) {
       /* Attach the provider id to the row we already claimed. */
-      await fetch(`${SUPA_URL}/rest/v1/email_log?dedupe_key=eq.${encodeURIComponent(dedupeKey)}`, {
-        method: 'PATCH', headers: svcHeaders(), body: JSON.stringify({ provider_id: out.id }),
-      }).catch(() => {});
+      await restPatch(`email_log?dedupe_key=eq.${encodeURIComponent(dedupeKey)}`, {
+        provider_id: out.id, status: 'sent', error: null,
+      });
     } else {
       await restPost('email_log', {
         user_id: userId, recipient: addr, template, sender: from,
@@ -1006,6 +1152,11 @@ export async function sendTemplate({ template, to, data = {}, dedupeKey = null, 
     return { ok: true, id: out.id };
   } catch (e) {
     console.error('[mail]', e.message);
+    if (dedupeKey) {
+      await restPatch(`email_log?dedupe_key=eq.${encodeURIComponent(dedupeKey)}`, {
+        status: 'failed', error: String(e.message || 'network_error').slice(0, 300), meta: { category },
+      });
+    }
     return { ok: false, error: e.message };
   }
 }

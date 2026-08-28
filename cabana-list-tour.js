@@ -227,9 +227,12 @@
       status: 'pending'
     };
 
-    sb.from('tours').insert(row).then(function (r) {
+    sb.from('tours').insert(row).select('id').single().then(async function (r) {
       if (btn) { btn.disabled = false; btn.textContent = 'Submit for review'; }
       if (r && r.error) { say('Could not send.'); alert('Could not send: ' + r.error.message); return; }
+      if (r.data && r.data.id && window.CabanaLifecycle && window.CabanaLifecycle.listingSubmitted) {
+        await window.CabanaLifecycle.listingSubmitted('tour', r.data.id);
+      }
       var msg = $('lt-done-msg');
       if (msg && operator && operator.status !== 'approved') {
         msg.textContent = 'We\u2019ll review the tour and your operator details together, then be in ' +

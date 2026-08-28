@@ -49,6 +49,12 @@ const SAMPLE = {
   category: 'billing', priority: 'high', reason: 'Refund needs a human',
   guest: 'Amina Otieno', lastMessage: 'I want my money back.', apaSummary: 'Paid 6000 of 24000.',
   consoleUrl: '/support-console.html',
+  submission: { id: 's-1', title: 'Riverside Studio', serviceLabel: 'Stay',
+                location: 'Westlands, Nairobi, Kenya', state: 'live', manageUrl: '/partner-listings.html' },
+  recipient: { name: 'Njeri Kamau', contact: 'njeri@example.com' },
+  recipientName: 'Njeri Kamau', listingTitle: 'Riverside Studio', fromName: 'Joseph Kamau',
+  claimUrl: '/dashboard.html?claim=abc', expiresAt: '2026-09-04',
+  status: 'accepted', perspective: 'recipient', otherName: 'Joseph Kamau',
 };
 
 const rendered = Object.entries(TEMPLATES).map(([key, build]) => [key, build(SAMPLE)]);
@@ -116,7 +122,9 @@ test('guest mail leaves connect@, partner mail leaves partnership@', () => {
     supportResolved: 'guest', missedCall: 'guest', notification: 'guest', offer: 'guest',
     partnerWelcome: 'partner', partnerBooking: 'partner', partnerPayout: 'partner',
     partnerListingLive: 'partner', partnerNudge: 'partner', partnerDigest: 'partner',
-    partnerUpdate: 'partner', listingClaim: 'partner', agentEscalation: 'partner',
+    partnerUpdate: 'partner', listingClaim: 'partner', listingTransferSent: 'partner',
+    listingTransferDecision: 'partner', partnerListingSubmitted: 'partner',
+    agentEscalation: 'partner',
   };
   for (const [key, out] of rendered) {
     assert.equal(out.audience, expected[key], `${key} is filed under the wrong audience`);
@@ -166,4 +174,14 @@ test('dedupe keys make the once-only emails once-only', () => {
   /* A password reset must be repeatable: a guest who did not receive the
      first one has to be able to ask again. */
   assert.equal(ACTIONS.reset.dedupe(SAMPLE), null);
+});
+
+test('listing and ownership emails are attractive transactional partner mail', () => {
+  for (const key of ['partnerListingSubmitted', 'listingClaim', 'listingTransferSent', 'listingTransferDecision']) {
+    const out = TEMPLATES[key](SAMPLE);
+    assert.equal(out.audience, 'partner');
+    assert.equal(out.category, 'transactional');
+    assert.match(out.html, /Cabana/i);
+    assert.match(out.html, /dashboard|listing/i);
+  }
 });

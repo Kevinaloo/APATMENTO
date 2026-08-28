@@ -34,8 +34,66 @@ import { one } from './lib/_db.js';
 const AT_API_KEY  = process.env.AT_API_KEY;
 const AT_USERNAME = process.env.AT_USERNAME || 'Cabana';
 const AT_SMS_URL  = 'https://api.africastalking.com/version1/messaging';
+const SUPA_URL    = process.env.SUPABASE_URL;
+const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 const KES = (n) => `KES ${Number(n || 0).toLocaleString('en-KE')}`;
+const UUID = /^[0-9a-f]{8}-[0-9a-f-]{27,}$/i;
+
+const SUBMISSIONS = {
+  listing: {
+    table: 'listings', owner: r => [r.partner_id, r.host_id, r.created_by],
+    select: 'id,title,city,country,area,service,status,is_active,partner_id,host_id,created_by',
+    label: r => ({ stays: 'Stay', roommates: 'Roommate listing', food: 'Restaurant', shopping: 'Shop' }[r.service] || 'Listing'),
+    location: r => [r.area, r.city, r.country].filter(Boolean).join(', '),
+    live: r => r.status === 'active' && r.is_active === true,
+    manageUrl: '/partner-listings.html',
+  },
+  tour: {
+    table: 'tours', owner: r => [r.owner_id],
+    select: 'id,title,destination,county,country,status,owner_id', label: () => 'Tour',
+    location: r => [r.destination, r.county, r.country].filter(Boolean).join(', '),
+    live: r => r.status === 'published', manageUrl: '/dashboard.html',
+  },
+  event: {
+    table: 'events', owner: r => [r.owner_id],
+    select: 'id,title,venue,city,country,status,owner_id', label: () => 'Event',
+    location: r => [r.venue, r.city, r.country].filter(Boolean).join(', '),
+    live: r => r.status === 'published', manageUrl: '/dashboard.html',
+  },
+  fleet: {
+    table: 'car_operators', owner: r => [r.owner_id],
+    select: 'id,name,city,country_code,verified,owner_id', label: () => 'Fleet application',
+    title: r => r.name, location: r => [r.city, r.country_code].filter(Boolean).join(', '),
+    live: r => r.verified === true, manageUrl: '/dashboard.html',
+  },
+  driver: {
+    table: 'drivers', owner: r => [r.user_id],
+    select: 'id,full_name,city,status,user_id', label: () => 'Driver application',
+    title: r => `${r.full_name || 'Driver'} · Cabana Rides`, location: r => r.city || '',
+    live: r => r.status === 'approved', manageUrl: '/driver.html',
+  },
+};
+
+function displayName(user) {
+  return user?.user_metadata?.full_name
+    || [user?.user_metadata?.first_name, user?.user_metadata?.last_name].filter(Boolean).join(' ')
+    || user?.email || '';
+}
+
+function normContact(value) {
+  const text = String(value || '').trim().toLowerCase();
+  if (text.includes('@')) return text;
+  return text.replace(/\D/g, '').slice(-9);
+}
+
+async function authUser(id) {
+  if (!id || !SUPA_URL || !SERVICE_KEY) return null;
+  const r = await fetch(`${SUPA_URL}/auth/v1/admin/users/${encodeURIComponent(id)}`, {
+    headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` },
+  });
+  return r.ok ? r.json() : null;
+}
 
 /* ── SMS via Africa's Talking ───────────────────────────────────── */
 async function sendSMS({ to, message, from = 'CABANA' }) {
@@ -158,6 +216,42 @@ export default async function handler(req, res) {
       return res.status(410).json({ error: 'Magic-link auth is no longer supported. Use email + password or Google.' });
     }
 
+    /* ── Listing and service submission confirmation ───────────────
+       The browser supplies only the source and new row id. Everything
+       shown in the email is re-read server-side, and the row must belong
+       to the authenticated account. This covers the generic listing form
+       plus the dedicated tour, event, fleet and driver pipelines. */
+    if (action === 'listing-submitted') {
+      if (!caller?.email) return res.status(403).json({ error: 'verified_email_required' });
+      const source = String(body.source || '').toLowerCase();
+      const id = String(body.id || '');
+      const spec = SUBMISSIONS[source];
+      if (!spec || !UUID.test(id)) return res.status(400).json({ error: 'invalid_submission' });
+
+      const row = await one(spec.table,
+        `id=eq.${encodeURIComponent(id)}&select=${encodeURIComponent(spec.select)}`);
+      if (!row || !spec.owner(row).includes(caller.id)) {
+        return res.status(404).json({ error: 'submission_not_found' });
+      }
+
+      const submission = {
+        id: row.id,
+        title: spec.title ? spec.title(row) : row.title,
+        serviceLabel: spec.label(row),
+        location: spec.location(row),
+        state: spec.live(row) ? 'live' : 'review',
+        manageUrl: spec.manageUrl,
+      };
+      const result = await sendTemplate({
+        template: 'partnerListingSubmitted', to: caller.email,
+        data: { host: { email: caller.email, name: displayName(caller) }, submission },
+        dedupeKey: `listing-submitted:${source}:${row.id}`,
+        userId: caller.id,
+      });
+      if (!result.ok) return res.status(502).json({ ok: false, error: result.error });
+      return res.status(200).json({ ok: true, emailed: true, skipped: result.skipped || false });
+    }
+
     /* ── Ownership claim ───────────────────────────────────────────
        The caller supplies only an opaque transfer id. Recipient, listing
        and sender are re-read server-side and the transfer must belong to
@@ -165,7 +259,7 @@ export default async function handler(req, res) {
     if (action === 'listing-claim') {
       if (!caller) return res.status(403).json({ error: 'signed_in_sender_required' });
       const id = String(body.transferId || '');
-      if (!/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(id)) {
+      if (!UUID.test(id)) {
         return res.status(400).json({ error: 'invalid_transfer' });
       }
       const transfer = await one('listing_transfers',
@@ -182,24 +276,83 @@ export default async function handler(req, res) {
 
       const claimUrl = `https://cabana.africa/dashboard.html?claim=${encodeURIComponent(transfer.id)}`;
       const email = String(transfer.to_contact || '').trim().toLowerCase();
-      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
-        return res.status(200).json({ ok: true, emailed: false, claim_url: claimUrl, reason: 'recipient_uses_phone' });
+      const recipientHasEmail = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
+      const fromName = displayName(caller) || 'A Cabana partner';
+      const recipientSend = recipientHasEmail
+        ? sendTemplate({
+            template: 'listingClaim', to: email,
+            data: {
+              recipientName: transfer.to_name, listingTitle: listing.title,
+              city: listing.city, fromName, claimUrl, expiresAt: transfer.expires_at,
+            },
+            dedupeKey: `listing-claim:${transfer.id}`, userId: caller.id,
+          })
+        : Promise.resolve({ ok: true, skipped: true, reason: 'recipient_uses_phone' });
+      const senderSend = caller.email
+        ? sendTemplate({
+            template: 'listingTransferSent', to: caller.email,
+            data: {
+              host: { email: caller.email, name: fromName }, listing,
+              recipient: { name: transfer.to_name, contact: transfer.to_contact },
+              claimUrl, expiresAt: transfer.expires_at,
+            },
+            dedupeKey: `listing-transfer-sent:${transfer.id}`, userId: caller.id,
+          })
+        : Promise.resolve({ ok: true, skipped: true, reason: 'sender_has_no_email' });
+      const [recipientResult, senderResult] = await Promise.all([recipientSend, senderSend]);
+      if (!recipientResult.ok || !senderResult.ok) {
+        return res.status(502).json({ ok: false, error: recipientResult.error || senderResult.error, claim_url: claimUrl });
       }
-      const result = await sendTemplate({
-        template: 'listingClaim', to: email,
-        data: {
-          recipientName: transfer.to_name,
-          listingTitle: listing.title,
-          city: listing.city,
-          fromName: caller.user_metadata?.full_name || caller.email || 'A Cabana partner',
-          claimUrl,
-          expiresAt: transfer.expires_at,
-        },
-        dedupeKey: `listing-claim:${transfer.id}`,
-        userId: caller.id,
+      return res.status(200).json({
+        ok: true, emailed: recipientHasEmail, sender_emailed: !!caller.email,
+        claim_url: claimUrl, skipped: !!(recipientResult.skipped && senderResult.skipped),
+        ...(recipientHasEmail ? {} : { reason: 'recipient_uses_phone' }),
       });
-      if (!result.ok) return res.status(502).json({ ok: false, error: result.error, claim_url: claimUrl });
-      return res.status(200).json({ ok: true, emailed: true, claim_url: claimUrl, skipped: result.skipped || false });
+    }
+
+    /* ── Ownership decision ─────────────────────────────────────────
+       Called only after accept/decline succeeds. The resulting transfer
+       row is the authority: accepted rows name the authenticated to_user;
+       declined rows must still match the caller's verified Auth contact. */
+    if (action === 'listing-transfer-decision') {
+      if (!caller) return res.status(403).json({ error: 'signed_in_recipient_required' });
+      const id = String(body.transferId || '');
+      if (!UUID.test(id)) return res.status(400).json({ error: 'invalid_transfer' });
+      const transfer = await one('listing_transfers',
+        `id=eq.${encodeURIComponent(id)}&select=id,listing_id,from_user,to_user,to_name,to_contact,to_contact_norm,status`);
+      if (!transfer || !['accepted', 'declined'].includes(transfer.status)) {
+        return res.status(409).json({ error: 'transfer_not_decided' });
+      }
+      const callerContacts = [caller.email, caller.phone].filter(Boolean).map(normContact);
+      const isRecipient = transfer.status === 'accepted'
+        ? transfer.to_user === caller.id
+        : callerContacts.includes(normContact(transfer.to_contact_norm));
+      if (!isRecipient) return res.status(404).json({ error: 'transfer_not_found' });
+
+      const [listing, previousOwner] = await Promise.all([
+        one('listings', `id=eq.${encodeURIComponent(transfer.listing_id)}&select=id,title,city`),
+        authUser(transfer.from_user),
+      ]);
+      if (!listing) return res.status(404).json({ error: 'listing_not_found' });
+      const recipientName = displayName(caller) || transfer.to_name;
+      const previousName = displayName(previousOwner) || 'the previous owner';
+      const sends = [];
+      if (caller.email) sends.push(sendTemplate({
+        template: 'listingTransferDecision', to: caller.email,
+        data: { name: recipientName, listingTitle: listing.title, status: transfer.status,
+                perspective: 'recipient', otherName: previousName },
+        dedupeKey: `listing-transfer-decision:${id}:${transfer.status}:recipient`, userId: caller.id,
+      }));
+      if (previousOwner?.email) sends.push(sendTemplate({
+        template: 'listingTransferDecision', to: previousOwner.email,
+        data: { name: previousName, listingTitle: listing.title, status: transfer.status,
+                perspective: 'sender', otherName: recipientName },
+        dedupeKey: `listing-transfer-decision:${id}:${transfer.status}:sender`, userId: transfer.from_user,
+      }));
+      const results = await Promise.all(sends);
+      const failed = results.find(r => !r.ok);
+      if (failed) return res.status(502).json({ ok: false, error: failed.error });
+      return res.status(200).json({ ok: true, emailed: results.length });
     }
 
     /* ── Templated mail ──────────────────────────────────────────── */

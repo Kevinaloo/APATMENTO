@@ -144,6 +144,29 @@
         }, t);
       });
     },
+
+    /* Confirmation for every inventory pipeline. The row id is opaque;
+       /api/email re-reads it and proves it belongs to the signed-in user
+       before sending to that account's verified address. One retry covers
+       a transient provider/network failure, while the server + Resend
+       idempotency keys prevent duplicates. */
+    listingSubmitted: function (source, id) {
+      if (!source || !id) return Promise.resolve({ ok: false, error: 'missing_submission' });
+      return token().then(function (t) {
+        if (!t) return { ok: false, error: 'signed_out' };
+        function attempt() { return post('listing-submitted', { source: source, id: id }, t); }
+        return attempt().then(function (ok) {
+          if (ok) return { ok: true };
+          return new Promise(function (resolve) {
+            setTimeout(function () {
+              attempt().then(function (again) {
+                resolve(again ? { ok: true, retried: true } : { ok: false, error: 'email_delayed' });
+              });
+            }, 900);
+          });
+        });
+      }).catch(function () { return { ok: false, error: 'email_delayed' }; });
+    },
   };
 
   /* ── Attach. ApaSession is the site's source of truth for auth; if it

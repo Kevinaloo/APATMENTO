@@ -272,9 +272,12 @@
       photos: m.photos,
       videos: m.videos,
       status: 'pending'
-    }).then(function (r) {
+    }).select('id').single().then(async function (r) {
       if (btn) { btn.disabled = false; btn.textContent = 'Submit for review'; }
       if (r && r.error) { say('Could not send.'); alert('Could not send: ' + r.error.message); return; }
+      if (r.data && r.data.id && window.CabanaLifecycle && window.CabanaLifecycle.listingSubmitted) {
+        await window.CabanaLifecycle.listingSubmitted('event', r.data.id);
+      }
       var msg = $('le-done-msg');
       if (msg && organiser && organiser.status !== 'approved') {
         msg.textContent = 'We\u2019ll review the event and your organiser details together, then be in ' +

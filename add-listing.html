@@ -1418,6 +1418,13 @@ async function publish(){
       }
     }
 
+    /* The listing is already safely saved; now ask the authenticated mail
+       endpoint to confirm it to this partner. The API re-reads the row and
+       verifies ownership, so none of the email's facts come from this form. */
+    if(!window._eid&&listingId&&window.CabanaLifecycle&&CabanaLifecycle.listingSubmitted){
+      await CabanaLifecycle.listingSubmitted('listing',listingId);
+    }
+
     btn.classList.remove('loading');
     document.getElementById('success-ov').classList.add('show');
     document.getElementById('ssub').textContent=

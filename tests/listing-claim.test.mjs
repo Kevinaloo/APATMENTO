@@ -8,6 +8,7 @@ const read = file => readFileSync(join(ROOT, file), 'utf8');
 
 const FORM = read('add-listing.html');
 const OWNERSHIP = read('apa-ownership.js');
+const LIFECYCLE = read('cabana-lifecycle.js');
 const EMAIL = read('api/email.js');
 const CLAIM_SQL = read('supabase/migrations/20260824090000_secure_listing_claim_pipeline.sql');
 const PIPE_SQL = read('supabase/migrations/20260824091000_atomic_driver_and_fleet_applications.sql');
@@ -25,6 +26,33 @@ test('claim email derives its recipient and listing behind authenticated ownersh
   assert.match(EMAIL, /String\(transfer\.to_contact/);
   assert.match(EMAIL, /listing-claim:\$\{transfer\.id\}/);
   assert.ok(!/const email\s*=\s*String\(body\.email/.test(EMAIL));
+});
+
+test('a transfer emails both sides and decisions notify both accounts', () => {
+  assert.match(EMAIL, /template: 'listingClaim'/);
+  assert.match(EMAIL, /template: 'listingTransferSent'/);
+  assert.match(EMAIL, /Promise\.all\(\[recipientSend, senderSend\]\)/);
+  assert.match(EMAIL, /action === 'listing-transfer-decision'/);
+  assert.match(EMAIL, /template: 'listingTransferDecision'/);
+  assert.match(OWNERSHIP, /return sendInvite\(r\.transfer_id\)/);
+  assert.match(OWNERSHIP, /notifyDecision\(id\)/);
+});
+
+test('every public listing pipeline requests one authenticated confirmation', () => {
+  assert.match(EMAIL, /action === 'listing-submitted'/);
+  assert.match(EMAIL, /submission_not_found/);
+  assert.match(LIFECYCLE, /listingSubmitted: function \(source, id\)/);
+  for (const [file, source] of Object.entries({
+    'add-listing.html': 'listing', 'cabana-list-tour.js': 'tour',
+    'cabana-list-event.js': 'event', 'list-your-fleet.html': 'fleet',
+    'become-driver.html': 'driver'
+  })) {
+    assert.match(read(file), new RegExp(`listingSubmitted\\('${source}'`), `${file} does not request its confirmation`);
+  }
+  for (const page of ['add-listing.html', 'list-your-tour.html', 'list-your-event.html',
+                      'list-your-fleet.html', 'become-driver.html']) {
+    assert.match(read(page), /cabana-lifecycle\.js/, `${page} does not load the shared email lifecycle`);
+  }
 });
 
 test('claim deep links preserve sign-in return and still verify the inbox identity', () => {
