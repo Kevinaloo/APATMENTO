@@ -204,7 +204,7 @@ body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webk
 /* ── Media: the swipeable rail ── */
 .card-media{
   position:relative;border-radius:18px;overflow:hidden;
-  aspect-ratio:4/3;                 /* reserves space: zero layout shift */
+  aspect-ratio:16/10;               /* wider ratio: better photo presentation, less zoom */
   background:var(--glass-3);
   box-shadow:0 1px 2px rgba(10,10,20,.05);
   transition:box-shadow .35s var(--ease);
@@ -226,7 +226,7 @@ body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webk
   position:relative;display:flex;align-items:center;justify-content:center;
 }
 .card-slide img{
-  width:100%;height:100%;object-fit:cover;display:block;
+  width:100%;height:100%;object-fit:cover;object-position:center 35%;display:block;
   opacity:0;transition:opacity .5s ease;
 }
 .card-slide img.ready{opacity:1;}
@@ -755,11 +755,16 @@ body.map-open .split-map{display:block;}
   .ab{filter:blur(40px)!important;opacity:.15!important;}
 }
 
-/* ══ APARTMENTS MOBILE: instant card visibility ══ */
+/* ══ APARTMENTS MOBILE: instant card visibility + photo fix ══ */
 @media(max-width:700px){
   .card{opacity:1!important;transform:none!important;animation:none!important;}
   .card.in{opacity:1!important;transform:none!important;}
   .card-img{background:#E8E6F0;}
+  /* On single-column mobile, cap image height so photos don't feel zoomed/cropped */
+  .card-media{aspect-ratio:16/9;max-height:220px;}
+  .card-media .card-slide img{object-position:center 25%;}
+  /* Tighten border-radius on narrow screens */
+  .card-media{border-radius:14px;}
 }
 
 html.via-dash #enter-tx{display:none!important;animation:none!important;}
@@ -1690,7 +1695,7 @@ body.sc-sheet #agent-ref{opacity:0!important;pointer-events:none!important;trans
   display:flex;align-items:center;justify-content:center;
   background:linear-gradient(135deg,#B8A4F4,#7B2FF7);
 }
-.inv-tile-img img{width:100%;height:100%;object-fit:cover;display:block;
+.inv-tile-img img{width:100%;height:100%;object-fit:cover;object-position:center 30%;display:block;
   transition:transform .6s cubic-bezier(.22,1,.36,1);}
 .inv-tile:hover .inv-tile-img img{transform:scale(1.06);}
 .inv-tile-img > svg{width:36px;height:36px;color:rgba(255,255,255,.9);}
