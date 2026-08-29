@@ -36,20 +36,20 @@ as $$
   select array_agg(distinct c) filter (where c is not null)
   from (
     -- Verified email (the primary auth identity)
-    select public.cabana_norm_contact(u.email) as c
+    select public.cabana_norm_contact(u.email::text) as c
       from auth.users u where u.id = p_uid
     union all
     -- Verified phone (if they authenticated via phone OTP)
-    select public.cabana_norm_contact(u.phone) as c
+    select public.cabana_norm_contact(u.phone::text) as c
       from auth.users u where u.id = p_uid and u.phone is not null
     union all
     -- Phone from signup metadata (the field in the registration form)
-    select public.cabana_norm_contact(u.raw_user_meta_data ->> 'phone') as c
+    select public.cabana_norm_contact((u.raw_user_meta_data ->> 'phone')::text) as c
       from auth.users u where u.id = p_uid
         and u.raw_user_meta_data ->> 'phone' is not null
     union all
     -- Phone stored in the profiles table
-    select public.cabana_norm_contact(p.contact_phone) as c
+    select public.cabana_norm_contact(p.contact_phone::text) as c
       from public.profiles p where p.id = p_uid
         and p.contact_phone is not null
   ) contacts;
