@@ -443,12 +443,32 @@ body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webk
 
    It sits above the drawer rather than inside it, because the drawer
    scrolls and clips and a photograph should do neither.             */
-.lb{position:fixed;inset:0;z-index:400;background:rgba(8,8,16,.97);
-  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+/* The class is `photo-lb`, not `lb`. A two-letter class on a page that
+   loads three shared stylesheets is a collision waiting to happen, and
+   it happened: brand.css blurred every `.lb` on the site by 72px with
+   an !important for the sake of a loader blob on the dashboard, which
+   turned this gallery into the fog guests were reporting. The name is
+   now specific to what it is, and the guard below means no future
+   blanket rule can put the fog back. */
+.photo-lb{position:fixed;inset:0;z-index:400;background:rgba(8,8,16,.97);
   display:flex;flex-direction:column;opacity:0;visibility:hidden;
+  filter:none!important;
   transition:opacity .28s ease,visibility .28s ease;}
-.lb.open{opacity:1;visibility:visible;}
+.photo-lb.open{opacity:1;visibility:visible;}
+/* `display:flex` above outranks the UA's [hidden] rule, so the closed
+   gallery would otherwise sit over the page as an invisible full-screen
+   layer for the rest of the session. */
+.photo-lb[hidden]{display:none!important;}
 body.lb-open{overflow:hidden;}
+/* A photograph the guest asked to see full-screen gets the screen. The
+   support bubble, the "list your property" promo and the agent ribbon
+   float above everything by design and were landing on top of it; they
+   step aside for as long as the gallery is open and come straight back
+   when it closes. */
+body.lb-open #cbn-sup-launcher,
+body.lb-open #cbn-sup-toast,
+body.lb-open .sc-sticky,
+body.lb-open #agent-ref{display:none!important;}
 
 .lb-top{display:flex;align-items:center;justify-content:space-between;gap:12px;
   padding:max(14px,env(safe-area-inset-top)) 16px 12px;flex:none;color:#fff;}
@@ -515,7 +535,7 @@ body.lb-open{overflow:hidden;}
 .dl-gal-all svg{width:13px;height:13px;}
 
 @media(prefers-reduced-motion:reduce){
-  .lb,.lb-slide img,.lb-thumb,.lb-arr{transition-duration:.01ms!important;}
+  .photo-lb,.lb-slide img,.lb-thumb,.lb-arr{transition-duration:.01ms!important;}
 }
 
 .drawer-close{position:absolute;top:16px;left:16px;width:40px;height:40px;border-radius:50%;background:rgba(252,252,253,.92);backdrop-filter:blur(8px);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink);z-index:10;transition:transform .2s,box-shadow .2s;box-shadow:0 2px 10px rgba(10,10,20,.1);}
@@ -3223,7 +3243,7 @@ body.gs-open .gs-sheet{opacity:1;visibility:visible;pointer-events:auto;transfor
 <div class="drawer" id="drawer"></div>
 
 <!-- LIGHTBOX — full photo gallery, above the drawer -->
-<div class="lb" id="lightbox" role="dialog" aria-modal="true" aria-label="Photo gallery" hidden>
+<div class="photo-lb" id="lightbox" role="dialog" aria-modal="true" aria-label="Photo gallery" hidden>
   <div class="lb-top">
     <span class="lb-count" id="lb-count"></span>
     <div class="lb-actions">
@@ -3777,11 +3797,9 @@ function wireCards() {
     _syncRail(media);
     clearTimeout(scrollEnd.get(rail));
     scrollEnd.set(rail, setTimeout(() => media.classList.remove('scrubbing'), 850));
-    /* Only a real gesture counts as movement. The slideshow drives
-       this same rail, and without the exemption every auto-advance
-       would arm the 350ms tap guard below — so a guest tapping a card
-       at the wrong moment would have the tap silently eaten. */
-    if (rail.dataset.auto !== '1') rail.dataset.movedAt = Date.now();
+    /* Every movement of this rail is now a gesture, so every one of
+       them arms the 350ms tap guard below. */
+    rail.dataset.movedAt = Date.now();
   }, true);   // capture: scroll does not bubble
 
   grid.addEventListener('click', e => {
@@ -3800,7 +3818,6 @@ function wireCards() {
       const media = arr.closest('.card-media');
       const rail  = media.querySelector('.card-rail');
       const to    = _railIndex(rail) + Number(arr.getAttribute('data-step'));
-      _cardShowHold(media);
       _hydrateSlides(media, to, 2);
       rail.scrollTo({ left: to * rail.clientWidth, behavior: 'smooth' });
       return;
@@ -3858,143 +3875,16 @@ function _observeCards() {
   if (_cardObserver) {
     document.querySelectorAll('#grid .card-media').forEach(m => _cardObserver.observe(m));
   }
-  _cardShowsWatch();
 }
 
-/* ══ CARD SLIDESHOW ═══════════════════════════════════════════════
-   A stay is sold on the second and third photograph — the bathroom,
-   the view, whether the "kitchen" is a worktop in the corridor. A rail
-   that only moves when swiped means most guests only ever see the
-   first one, so the cards play themselves.
-
-   Three rules keep it from becoming an irritation:
-
-   1. Only cards actually on screen advance. Thirty rails ticking
-      behind the fold is thirty scroll handlers, thirty repaints and a
-      flat battery, for photographs nobody is looking at.
-   2. Touching a card stops it. Hovering, swiping, pressing an arrow —
-      any of these hands control back, and it does not take it again
-      for nine seconds. Fighting a guest for the rail is the fastest
-      way to make a good feature hated.
-   3. It walks to the end and back rather than looping. Rewinding
-      through nine slides to return to the first is a long ugly blur;
-      turning round at the end is neither.
-
-   Each card keeps its own clock, staggered on entry, so a grid of
-   twelve does not flip in unison like a departures board.
+/* ══ CARD PHOTOS: THE GUEST DRIVES ═══════════════════════════════
+   The cards used to play themselves, advancing a photo every few
+   seconds. It read as a page that would not sit still: rails sliding
+   under a thumb mid-scroll, a photo swapping just as someone reached
+   for the card. The rail is now moved only by a swipe, an arrow or an
+   arrow key — every one of those still works exactly as it did, and
+   nothing moves that the guest did not move.
    ================================================================ */
-const CARD_SHOW_MS   = 4400;   // dwell per photo
-const CARD_RESUME_MS = 9000;   // quiet period after a guest intervenes
-const CARD_TICK_MS   = 500;
-
-let _showTimer = null;
-let _showSeen  = null;
-
-function _cardShowsAllowed() {
-  return !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-}
-
-/* Hand the rail back to the guest for a while. */
-function _cardShowHold(media, ms) {
-  if (media) media.dataset.hold = String(Date.now() + (ms || CARD_RESUME_MS));
-}
-
-function _cardShowsWatch() {
-  if (!_cardShowsAllowed()) return;
-
-  if (!_showSeen && 'IntersectionObserver' in window) {
-    _showSeen = new IntersectionObserver(entries => {
-      entries.forEach(e => {
-        const media = e.target;
-        if (e.isIntersecting) {
-          media.dataset.inview = '1';
-          /* Stagger on entry, so a screenful does not turn as one. */
-          if (!media.dataset.next) {
-            const n = [...document.querySelectorAll('#grid .card-media.has-many')].indexOf(media);
-            media.dataset.next = String(Date.now() + CARD_SHOW_MS + Math.max(0, n % 6) * 620);
-          }
-        } else {
-          delete media.dataset.inview;
-        }
-      });
-    }, { threshold: 0.35 });
-  }
-
-  if (_showSeen) {
-    document.querySelectorAll('#grid .card-media.has-many').forEach(m => _showSeen.observe(m));
-  }
-
-  if (!_showTimer) _showTimer = setInterval(_cardShowsTick, CARD_TICK_MS);
-}
-
-function _cardShowsTick() {
-  if (document.hidden) return;
-
-  document.querySelectorAll('#grid .card-media.has-many[data-inview]').forEach(media => {
-    const now = Date.now();
-    if (media.dataset.hover === '1') return;
-    if (Number(media.dataset.hold || 0) > now) return;
-    if (Number(media.dataset.next || 0) > now) return;
-
-    const rail  = media.querySelector('.card-rail');
-    if (!rail || !rail.clientWidth) return;
-    const total = media.querySelectorAll('.card-slide').length;
-    if (total < 2) return;
-
-    let dir = Number(media.dataset.dir || 1);
-    let to  = _railIndex(rail) + dir;
-    if (to >= total) { dir = -1; to = total - 2; }
-    else if (to < 0) { dir = 1;  to = 1; }
-    media.dataset.dir = String(dir);
-
-    _hydrateSlides(media, to, 2);
-    rail.dataset.auto = '1';
-    rail.scrollTo({ left: to * rail.clientWidth, behavior: 'smooth' });
-    setTimeout(() => { delete rail.dataset.auto; }, 700);
-
-    media.dataset.next = String(now + CARD_SHOW_MS);
-  });
-}
-
-/* A guest whose pointer or thumb is on the card is reading it. */
-(function wireCardShowPauses() {
-  const attach = () => {
-    const grid = document.getElementById('grid');
-    if (!grid || grid.dataset.showsWired) return;
-    grid.dataset.showsWired = '1';
-
-    grid.addEventListener('pointerenter', e => {
-      const media = e.target.closest?.('.card-media');
-      if (media) media.dataset.hover = '1';
-    }, true);
-
-    grid.addEventListener('pointerleave', e => {
-      const media = e.target.closest?.('.card-media');
-      if (!media) return;
-      delete media.dataset.hover;
-      _cardShowHold(media, 2600);
-    }, true);
-
-    /* A swipe is the clearest possible statement that the guest is
-       driving. Touch only — a pointerdown from a mouse is already
-       covered by the hover rule above. */
-    grid.addEventListener('touchstart', e => {
-      const media = e.target.closest?.('.card-media');
-      if (media) _cardShowHold(media);
-    }, { passive: true, capture: true });
-
-    /* Nothing should be moving on a tab nobody is looking at. */
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden) return;
-      document.querySelectorAll('#grid .card-media.has-many').forEach(m => {
-        m.dataset.next = String(Date.now() + CARD_SHOW_MS);
-      });
-    });
-  };
-  document.readyState === 'loading'
-    ? document.addEventListener('DOMContentLoaded', attach)
-    : attach();
-})();
 
 /* ══ LIVE INVENTORY RIBBON ═══════════════════════════════════════
    Real stock only. One stream runs right, one runs left, and both
@@ -4480,7 +4370,6 @@ let _lbSettle = null;
 
 function openLightbox(start) {
   if (!_galPhotos.length) return;
-  _clearAutoScroll();                       // the strip stops while the guest looks properly
 
   const lb    = document.getElementById('lightbox');
   const rail  = document.getElementById('lb-rail');
@@ -4531,7 +4420,6 @@ function closeLightbox() {
      closing the lightbox does not feel like losing their place. */
   _galIdx = _lbIdx;
   _updateGalleryUI();
-  _startAutoScroll();
 }
 
 function lbGoTo(i) {
@@ -4671,40 +4559,20 @@ function _updateGalleryUI() {
   if (next) next.classList.toggle('hidden', _galIdx === _galPhotos.length - 1);
 }
 
-/* ── touch/swipe on gallery ── */
-let _galAutoTimer = null;
-
-function _clearAutoScroll() {
-  if (_galAutoTimer) { clearInterval(_galAutoTimer); _galAutoTimer = null; }
-}
-
-function _startAutoScroll() {
-  _clearAutoScroll();
-  if (_galPhotos.length < 2) return;
-  _galAutoTimer = setInterval(() => {
-    // Loop back to 0 after last photo
-    _galIdx = (_galIdx + 1) % _galPhotos.length;
-    _updateGalleryUI();
-  }, 3800);
-}
-
+/* ── touch/swipe on gallery ──
+   The strip inside the drawer used to advance itself every 3.8s, the
+   same reflex the cards had. Both are gone: photographs move when the
+   guest moves them, by swipe, arrow or dot, and not otherwise. */
 function _attachGallerySwipe() {
   const gal = document.querySelector('.dl-gallery');
   if (!gal) return;
-  // Touch swipe
-  gal.addEventListener('touchstart', e => { _galTouchX = e.touches[0].clientX; _clearAutoScroll(); }, { passive:true });
+  gal.addEventListener('touchstart', e => { _galTouchX = e.touches[0].clientX; }, { passive:true });
   gal.addEventListener('touchend', e => {
     if (_galTouchX === null) return;
     const dx = e.changedTouches[0].clientX - _galTouchX;
     if (Math.abs(dx) > 40) galStep(dx < 0 ? 1 : -1);
     _galTouchX = null;
-    _startAutoScroll();
   }, { passive:true });
-  // Pause on hover (desktop)
-  gal.addEventListener('mouseenter', _clearAutoScroll);
-  gal.addEventListener('mouseleave', _startAutoScroll);
-  // Start
-  _startAutoScroll();
 }
 
 /* ── description expand ── */
@@ -4736,7 +4604,6 @@ function messageHost(id) {
 }
 
 function closeDrawer() {
-  _clearAutoScroll();
   /* The lightbox is stacked above the drawer, so closing the drawer
      underneath it would leave a full-screen gallery floating over
      nothing. It goes first. */

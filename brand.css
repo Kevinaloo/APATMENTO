@@ -288,7 +288,13 @@ body::after{
 .svc-fly-ico svg{ color:#fff; --duo:rgba(255,255,255,.85); }
 
 /* ── 11 · AURORA REFINEMENT (both themes) ────────────────────────── */
-.aurora-blob,.ia-blob,.lb{ filter:blur(72px) !important; will-change:transform; transform:translateZ(0); }
+/* `.lb` here is a loader aurora blob, and only ever that. It used to be
+   matched globally, which meant every element anywhere on the site that
+   happened to carry the class — the stays photo lightbox among them —
+   was blurred by 72px behind an !important nobody could see in devtools
+   without hunting. Scoped to its own container it can no longer reach
+   past the loader it belongs to. */
+.aurora-blob,.ia-blob,.loader-aurora .lb{ filter:blur(72px) !important; will-change:transform; transform:translateZ(0); }
 .ab-gold{
   position:absolute; width:460px; height:460px; border-radius:50%;
   background:radial-gradient(circle,rgba(245,177,46,.55),transparent 70%);
