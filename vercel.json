@@ -382,8 +382,8 @@
       "destination": "/api/utilities?action=paypal-webhook"
     }
   ],
-  "buildCommand": null,
-  "outputDirectory": null,
+  "buildCommand": "node scripts/check-syntax.mjs",
+  "outputDirectory": ".",
   "installCommand": null,
   "framework": null,
   "build": {
