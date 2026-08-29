@@ -502,7 +502,12 @@
     if (mismatch) {
       d.innerHTML = '<div class="apa-claim-h"><span>Listing invitation</span></div>'
         + '<div class="apa-claim-b"><h2>This invitation belongs to another account</h2>'
-        + '<p>Sign in with the exact email address or phone number the invitation was sent to. The link itself never grants ownership.</p>'
+        + '<p>The invitation was sent to a specific email or phone number. To claim it:</p>'
+        + '<ul style="font-size:13px;line-height:1.7;color:#66677d;padding-left:18px;margin:10px 0 14px">'
+        + '<li><strong>If sent to an email</strong> \u2014 sign in with that exact email address.</li>'
+        + '<li><strong>If sent to a phone number</strong> \u2014 make sure your account has that phone number. '
+        + 'You can add it during sign-up or update it in your profile.</li></ul>'
+        + '<p style="font-size:12px;color:#888">The link itself never grants ownership \u2014 your identity has to match.</p>'
         + '<div class="apa-claim-actions"><a class="apa-claim-primary" href="auth.html?next='
         + encodeURIComponent(global.location.pathname + global.location.search) + '">Use another account</a>'
         + '<button class="apa-claim-later" data-close>Close</button></div></div>';

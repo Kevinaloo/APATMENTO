@@ -214,6 +214,8 @@ body{display:flex;flex-direction:column;}
 .os-warn p{margin:0 0 8px;color:#92400E;}
 .os-warn-hard{background:rgba(255,61,90,.07);border-color:rgba(255,61,90,.22);}
 .os-warn-hard strong,.os-warn-hard p{color:#9F1239;}
+.os-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
+.os-actions .btn{font-size:12px;padding:8px 14px;}
 .os-err{margin-top:14px;padding:11px 13px;border-radius:11px;background:rgba(255,61,90,.08);
   color:#9F1239;font-size:12.5px;font-weight:600;line-height:1.55;}
 .lc-price{font-family:var(--fh);font-size:13px;font-weight:800;color:var(--mint-d);margin-top:4px;}
@@ -775,14 +777,32 @@ function openOwnership(id){
   let html='<div class="os-title">'+esc(l&&l.title||'This listing')+'</div>';
 
   if(row&&row.pending_transfer_id){
+    const contact=row.pending_transfer_contact||'';
+    const isPhone=contact&&contact.indexOf('@')===-1;
+    const claimUrl=location.origin+'/dashboard.html?claim='+encodeURIComponent(row.pending_transfer_id);
+
     html+='<div class="os-warn">'
       + '<strong>'+esc(row.ownership_type==='on_behalf'
           ? 'Held for '+(row.held_for_name||'someone else')
           : 'Transfer to '+(row.pending_transfer_to||'someone')+' is waiting')+'</strong>'
-      + '<p>It becomes theirs the moment they sign in with the email address or phone '
-      + 'number you gave and accept it. Until then it is still yours to manage.</p>'
-      + '<button class="btn btn-ghost btn-sm" onclick="cancelTransfer()">Cancel the transfer</button>'
-      + '</div>';
+      + '<p>It becomes theirs the moment they sign in'
+      + (isPhone?' with an account linked to <strong>'+esc(contact)+'</strong>':' with <strong>'+esc(contact)+'</strong>')
+      + ' and accept it. Until then it is still yours to manage.</p>';
+
+    if(isPhone){
+      html+='<p class="os-note" style="margin:8px 0 0;font-size:12px;color:#5a3e1a">'
+        + '\u2139\ufe0f They can sign up with any email and enter this phone number, or sign in '
+        + 'with Google and add it to their profile. Either way works.</p>';
+    }
+
+    html+='<div class="os-actions">'
+      + '<button class="btn btn-sm" onclick="shareClaimLink()" id="os-share">'
+      + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:-2px;margin-right:4px">'
+      + '<path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13"/></svg>'
+      + 'Share claim link</button>'
+      + '<button class="btn btn-ghost btn-sm" onclick="resendInvite()" id="os-resend">Resend invitation</button>'
+      + '<button class="btn btn-ghost btn-sm" style="color:#a23850" onclick="cancelTransfer()">Cancel transfer</button>'
+      + '</div></div>';
   } else if(row&&row.ownership_type==='partnership'){
     html+='<div class="os-sec"><div class="os-h">Co-owners</div>'
       + (row.partners||[]).map(p=>
@@ -836,13 +856,30 @@ async function startTransfer(){
   if(!window.ApaOwnership||!OWN_SHEET_ID)return;
   const btn=document.getElementById('os-go');
   const g=id=>{const el=document.getElementById(id);return el?el.value.trim():'';};
+  const contactVal=g('os-contact');
   osErr('');
   if(btn){btn.disabled=true;btn.textContent='Sending…';}
-  const r=await ApaOwnership.transfer(OWN_SHEET_ID,{name:g('os-name'),contact:g('os-contact'),note:g('os-note')});
+  const r=await ApaOwnership.transfer(OWN_SHEET_ID,{name:g('os-name'),contact:contactVal,note:g('os-note')});
   if(btn){btn.disabled=false;btn.textContent='Send the transfer';}
   if(!r||!r.ok){osErr(r&&r.error||'Could not send that transfer.');return;}
+
   await refreshOwnership();
   openOwnership(OWN_SHEET_ID);
+
+  // After re-opening the sheet with the new "waiting" state, show contextual guidance
+  const isPhone=contactVal&&contactVal.indexOf('@')===-1;
+  if(isPhone&&r.claim_url){
+    osErr('');
+    // Show a success toast instead of error, reusing the error element with a different style
+    const el=document.getElementById('os-err');
+    if(el){
+      el.style.background='rgba(45,212,191,.1)';
+      el.style.color='#065F46';
+      el.textContent='Transfer sent! Since you used a phone number, share the claim link with them directly \u2014 tap "Share claim link" above.';
+      el.hidden=false;
+      setTimeout(()=>{el.style.background='';el.style.color='';},8000);
+    }
+  }
 }
 
 async function cancelTransfer(){
@@ -853,6 +890,70 @@ async function cancelTransfer(){
   if(!r||!r.ok){osErr(r&&r.error||'Could not cancel that transfer.');return;}
   await refreshOwnership();
   openOwnership(OWN_SHEET_ID);
+}
+
+async function shareClaimLink(){
+  const row=OWN[OWN_SHEET_ID];
+  if(!row||!row.pending_transfer_id)return;
+  const claimUrl=location.origin+'/dashboard.html?claim='+encodeURIComponent(row.pending_transfer_id);
+  const recipientName=row.pending_transfer_to||'there';
+  const listingTitle=row.title||'a listing';
+  const msg='Hi '+recipientName+', I\'ve transferred "'+listingTitle+'" to you on Cabana. '
+    +'Open this link to claim it:\n'+claimUrl;
+
+  const btn=document.getElementById('os-share');
+
+  // Try native share first (works great on mobile)
+  if(navigator.share){
+    try{
+      await navigator.share({title:'Claim your listing on Cabana',text:msg,url:claimUrl});
+      return;
+    }catch(e){/* user cancelled or not supported, fall through */}
+  }
+
+  // Fallback: copy to clipboard
+  try{
+    await navigator.clipboard.writeText(msg);
+    if(btn){const orig=btn.innerHTML;btn.textContent='Copied!';setTimeout(()=>{btn.innerHTML=orig;},2000);}
+  }catch(e){
+    // Final fallback: open WhatsApp with the message
+    const contact=row.pending_transfer_contact||'';
+    const isPhone=contact&&contact.indexOf('@')===-1;
+    if(isPhone){
+      const digits=contact.replace(/[^0-9+]/g,'');
+      window.open('https://wa.me/'+encodeURIComponent(digits)+'?text='+encodeURIComponent(msg),'_blank');
+    }else{
+      window.open('mailto:'+encodeURIComponent(contact)+'?subject='+encodeURIComponent('Claim your listing on Cabana')+'&body='+encodeURIComponent(msg),'_blank');
+    }
+  }
+}
+
+async function resendInvite(){
+  const row=OWN[OWN_SHEET_ID];
+  if(!row||!row.pending_transfer_id||!window.ApaOwnership)return;
+  const btn=document.getElementById('os-resend');
+  osErr('');
+  if(btn){btn.disabled=true;btn.textContent='Sending…';}
+  const r=await ApaOwnership.sendInvite(row.pending_transfer_id);
+  if(btn){btn.disabled=false;btn.textContent='Resend invitation';}
+  if(!r||!r.ok){
+    // Even if the email failed, the claim URL is still valid
+    const claimUrl=r&&r.claim_url;
+    if(claimUrl){
+      osErr('The email could not be sent, but you can share the claim link directly.');
+    }else{
+      osErr(r&&r.error||'Could not resend the invitation.');
+    }
+    return;
+  }
+  if(r.emailed){
+    if(btn){btn.textContent='Sent!';setTimeout(()=>{btn.textContent='Resend invitation';},2500);}
+  }else{
+    // Recipient uses phone — no email sent, guide the sender
+    const contact=row.pending_transfer_contact||'';
+    const claimUrl=r&&r.claim_url||location.origin+'/dashboard.html?claim='+encodeURIComponent(row.pending_transfer_id);
+    osErr('No email was sent because you used a phone number. Share the claim link with them directly — via WhatsApp, SMS, or in person.');
+  }
 }
 
 async function refreshOwnership(){
