@@ -60,21 +60,50 @@
   }
 
   /* Every call returns a shape, never a rejection. A dashboard that throws
-     because an ownership badge failed to load is a dashboard nobody can use. */
+     because an ownership badge failed to load is a dashboard nobody can use.
+
+     IMPORTANT: We always pass the JWT explicitly so the RPC never runs as
+     anon due to a race where Supabase has not yet restored the persisted
+     session. Without this, inbox() returns [] before the session is ready,
+     claim ID in the URL finds no match, and the mismatch dialog fires for
+     the correct account holder. */
   function rpc(fn, args) {
     var c = client();
     if (!c || !c.rpc) {
       return Promise.resolve({ ok: false, error: 'Not connected. Try again in a moment.' });
     }
-    return c.rpc(fn, args || {}).then(function (r) {
-      if (r.error) return { ok: false, error: friendly(r.error) };
-      var d = r.data;
-      if (d && typeof d === 'object' && 'ok' in d) return d;
-      return { ok: true, data: d };
-    }).catch(function (e) {
-      warn(fn, e);
-      return { ok: false, error: 'Something went wrong. Try again.' };
-    });
+    function doRpc() {
+      return c.rpc(fn, args || {}).then(function (r) {
+        if (r.error) return { ok: false, error: friendly(r.error) };
+        var d = r.data;
+        if (d && typeof d === 'object' && 'ok' in d) return d;
+        return { ok: true, data: d };
+      }).catch(function (e) {
+        warn(fn, e);
+        return { ok: false, error: 'Something went wrong. Try again.' };
+      });
+    }
+    /* If ApaSession can give us a token, set it on the client auth header
+       before the call. This guarantees the RPC sees the authenticated user
+       even if the client has not yet restored the session from storage. */
+    if (global.ApaSession && global.ApaSession.token) {
+      return global.ApaSession.token().then(function (tok) {
+        if (tok && c.auth && c.auth.setSession) {
+          /* setSession is heavy — just override the header for this call */
+          try {
+            var headers = { Authorization: 'Bearer ' + tok };
+            return c.rpc(fn, args || {}, { headers: headers }).then(function (r) {
+              if (r.error) return { ok: false, error: friendly(r.error) };
+              var d = r.data;
+              if (d && typeof d === 'object' && 'ok' in d) return d;
+              return { ok: true, data: d };
+            }).catch(function () { return doRpc(); });
+          } catch (e) { return doRpc(); }
+        }
+        return doRpc();
+      }).catch(function () { return doRpc(); });
+    }
+    return doRpc();
   }
 
   /* Postgres raises with a sentence written for a human, so show it. The
@@ -437,11 +466,11 @@
   var CSS = ''
     + '.apa-oi{margin:0 0 18px;display:grid;gap:10px}'
     + '.apa-oi-c{display:flex;gap:14px;align-items:flex-start;padding:15px 17px;border-radius:16px;'
-    +   'background:linear-gradient(135deg,rgba(45,212,191,.09),rgba(67,97,255,.07));'
-    +   'border:1px solid rgba(67,97,255,.2);font-family:inherit}'
-    + '.apa-oi-i{width:38px;height:38px;flex:none;border-radius:12px;display:grid;place-items:center;'
-    +   'background:linear-gradient(135deg,#2DD4BF,#4361FF);color:#fff}'
-    + '.apa-oi-i svg{width:18px;height:18px}'
+    +   'background:linear-gradient(135deg,rgba(45,212,191,.11),rgba(67,97,255,.09));'
+    +   'border:1.5px solid rgba(67,97,255,.25);font-family:inherit}'
+    + '.apa-oi-i{width:52px;height:52px;flex:none;border-radius:14px;display:grid;place-items:center;'
+    +   'background:linear-gradient(135deg,#2DD4BF,#4361FF);color:#fff;overflow:hidden}'
+    + '.apa-oi-i svg{width:22px;height:22px}'
     + '.apa-oi-b{flex:1;min-width:0}'
     + '.apa-oi-t{font-weight:800;font-size:14px;line-height:1.35;margin-bottom:3px}'
     + '.apa-oi-d{font-size:12.5px;line-height:1.6;opacity:.72}'
@@ -506,13 +535,22 @@
     var d = document.createElement('dialog');
     d.id = 'apa-claim-dialog'; d.className = 'apa-claim';
     if (mismatch) {
+      /* Build the auth redirect URL preserving the claim param */
+      var nextUrl = global.location.pathname + global.location.search;
+      var authUrl = 'auth.html?next=' + encodeURIComponent(nextUrl);
       d.innerHTML = '<div class="apa-claim-h"><span>Listing invitation</span></div>'
         + '<div class="apa-claim-b"><h2>This invitation belongs to another account</h2>'
-        + '<p>This listing was sent to a specific email address. Sign in with that exact '
-        + 'address to claim it \u2014 the link itself never grants ownership on its own.</p>'
-        + '<div class="apa-claim-actions"><a class="apa-claim-primary" href="auth.html?next='
-        + encodeURIComponent(global.location.pathname + global.location.search) + '">Use another account</a>'
-        + '<button class="apa-claim-later" data-close>Close</button></div></div>';
+        + '<p>The invitation was sent to a specific email or phone number. To claim it:</p>'
+        + '<ul style="margin:10px 0 0 0;padding-left:20px;font-size:13.5px;line-height:1.8;color:#66677d">'
+        + '<li><strong>If sent to an email</strong> \u2014 sign in with that exact email address.</li>'
+        + '<li><strong>If sent to a phone number</strong> \u2014 make sure your account has that phone number. '
+        + 'You can add it during sign-up or update it in your profile.</li>'
+        + '</ul>'
+        + '<p style="margin-top:12px;font-size:12px;color:#9ca3af">The link itself never grants ownership \u2014 your identity has to match.</p>'
+        + '<div class="apa-claim-actions">'
+        + '<a class="apa-claim-primary" href="' + authUrl + '">Use another account</a>'
+        + '<button class="apa-claim-later" data-close>Close</button>'
+        + '</div></div>';
     } else {
       d.innerHTML = '<div class="apa-claim-h"><span>Ready for your review</span></div>'
         + '<div class="apa-claim-b"><h2>' + esc(item.title || 'A listing was created for you') + '</h2>'
@@ -557,24 +595,27 @@
 
     host.innerHTML = '<div class="apa-oi">' + items.map(function (t) {
       var onBehalf = t.kind === 'on_behalf';
+      var photo = t.photo ? 'style="background-image:url(' + esc(t.photo) + ');background-size:cover;background-position:center"' : '';
       return '<div class="apa-oi-c" data-t="' + esc(t.id) + '">'
-        + '<span class="apa-oi-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+        + '<span class="apa-oi-i" ' + photo + '>'
+        + (t.photo ? '' : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" '
         +   'stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">'
         +   '<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>'
-        +   '</svg></span>'
+        +   '</svg>')
+        + '</span>'
         + '<span class="apa-oi-b">'
         +   '<span class="apa-oi-t">'
-        +     (onBehalf ? 'A listing was set up for you' : 'Someone wants to hand you a listing')
+        +     (onBehalf ? '\uD83C\uDFE0 A listing was set up for you' : '\uD83D\uDCEC A listing is waiting for you')
         +   '</span>'
         +   '<span class="apa-oi-d">'
         +     '<strong>' + esc(t.title || 'A listing') + '</strong>'
-        +     (t.city ? ' in ' + esc(t.city) : '') + ' \u00b7 from ' + esc(t.from_name || 'a Cabana partner') + '. '
+        +     (t.city ? ' \u00b7 ' + esc(t.city) : '') + ' \u00b7 from ' + esc(t.from_name || 'a Cabana partner') + '. '
         +     (t.note ? '\u201c' + esc(t.note) + '\u201d ' : '')
-        +     'Accept it and the listing becomes yours \u2014 its bookings, its payouts and its calendar.'
+        +     'Accept it and the listing becomes yours \u2014 its bookings, payouts and calendar.'
         +   '</span>'
         +   '<span class="apa-oi-a">'
-        +     '<button class="apa-oi-btn apa-oi-yes" data-act="accept">Accept the listing</button>'
-        +     '<button class="apa-oi-btn apa-oi-no" data-act="decline">Not mine</button>'
+        +     '<button class="apa-oi-btn apa-oi-yes" data-act="review">Review &amp; claim \u2192</button>'
+        +     '<button class="apa-oi-btn apa-oi-no" data-act="decline">Decline</button>'
         +   '</span>'
         +   '<span class="apa-oi-e" data-err hidden></span>'
         + '</span>'
@@ -589,24 +630,25 @@
         var act  = btn.getAttribute('data-act');
         if (!id) return;
 
+        /* "review" opens the full claim dialog for the item — same UX as
+           clicking the link in the email but works without the URL param. */
+        if (act === 'review') {
+          var item = items.filter(function (x) { return String(x.id) === id; })[0];
+          if (item) claimDialog(item, false);
+          return;
+        }
+
         card.querySelectorAll('button').forEach(function (b) { b.disabled = true; });
         if (err) { err.hidden = true; }
-        btn.textContent = act === 'accept' ? 'Accepting…' : 'Declining…';
+        btn.textContent = 'Declining…';
 
-        (act === 'accept' ? accept(id) : decline(id)).then(function (r) {
+        decline(id).then(function (r) {
           if (r && r.ok) {
-            /* Reload rather than patch the DOM. Accepting a listing changes
-               what half the page is allowed to show, and a dashboard that
-               half-updates is worse than one that blinks. */
-            if (act === 'accept' && r.listing_id) {
-              global.location.href = 'partner-listings.html';
-            } else {
-              mountInbox(host);
-            }
+            mountInbox(host);
             return;
           }
           card.querySelectorAll('button').forEach(function (b) { b.disabled = false; });
-          btn.textContent = act === 'accept' ? 'Accept the listing' : 'Not mine';
+          btn.textContent = 'Decline';
           if (err) { err.textContent = (r && r.error) || 'That did not work. Try again.'; err.hidden = false; }
         });
       });
@@ -616,15 +658,36 @@
   function mountInbox(host) {
     host = host || document.getElementById('ownership-inbox');
     if (!host) return Promise.resolve([]);
-    return inbox().then(function (items) {
-      renderInbox(host, items);
-      var wanted = claimIdFromUrl();
-      if (wanted) {
+
+    var wanted = claimIdFromUrl();
+
+    function tryMount(attempts) {
+      return inbox().then(function (items) {
+        renderInbox(host, items);
+
+        if (!wanted) return items;
+
         var match = items.filter(function (x) { return String(x.id) === wanted; })[0];
+
+        /* If we have a claim ID but no match AND we haven't exhausted
+           retries, wait briefly and try again. This handles the race
+           where inbox() fires before Supabase restores the session and
+           the RPC runs as anon, returning an empty array for the correct
+           account holder. Two retries with 800ms gap covers cold starts. */
+        if (!match && attempts > 0) {
+          return new Promise(function (resolve) {
+            setTimeout(function () {
+              tryMount(attempts - 1).then(resolve);
+            }, 800);
+          });
+        }
+
         claimDialog(match || null, !match);
-      }
-      return items;
-    });
+        return items;
+      });
+    }
+
+    return tryMount(2);
   }
 
   /* Self-mount. A page opts in with `<div id="ownership-inbox"></div>` and
