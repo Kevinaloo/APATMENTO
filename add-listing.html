@@ -579,7 +579,7 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
         </p>
         <div class="row2">
           <div class="field"><label class="flbl">Their full name</label><input class="finput" id="own-hn" placeholder="e.g. Mama Zawadi Juma" maxlength="120"/></div>
-          <div class="field"><label class="flbl">Their email or phone</label><input class="finput" id="own-hc" placeholder="owner@example.com or 0712 345 678" maxlength="160"/><div class="fhint">They claim the listing by signing in with this exact address or number.</div></div>
+          <div class="field"><label class="flbl">Their email address</label><input class="finput" id="own-hc" type="email" inputmode="email" autocomplete="email" placeholder="owner@example.com" maxlength="160"/><div class="fhint">They claim the listing by signing in with this exact email address.</div></div>
         </div>
         <div class="field"><label class="flbl">A note for them <span class="opt">(optional)</span></label><input class="finput" id="own-note" placeholder="Set this up for you at the property on Tuesday." maxlength="200"/></div>
         <div class="own-warn">
@@ -1231,7 +1231,7 @@ function ownRows(){
   box.innerHTML=F.ownPartners.map((p,i)=>
     '<div class="own-row">'
     + '<input class="finput own-n" placeholder="Partner\'s full name" maxlength="120" value="'+esc(p.name)+'" oninput="ownEdit('+i+',\'name\',this.value)"/>'
-    + '<input class="finput own-c" placeholder="Email or phone" maxlength="160" value="'+esc(p.contact)+'" oninput="ownEdit('+i+',\'contact\',this.value)"/>'
+    + '<input class="finput own-c" type="email" inputmode="email" autocomplete="email" placeholder="Email address" maxlength="160" value="'+esc(p.contact)+'" oninput="ownEdit('+i+',\'contact\',this.value)"/>'
     + '<input class="finput own-pct" type="number" min="0.01" max="99.99" step="0.01" placeholder="%" value="'+esc(p.equity_pct)+'" oninput="ownEdit('+i+',\'equity_pct\',this.value)"'+(custom?'':' hidden')+'/>'
     + '<button type="button" class="own-del" onclick="ownDelRow('+i+')" aria-label="Remove this partner"'+(F.ownPartners.length<2?' disabled style="opacity:.35;cursor:default"':'')+'>'
     +   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>'
@@ -1247,7 +1247,7 @@ function ownDelRow(i){if(F.ownPartners.length<2)return;F.ownPartners.splice(i,1)
 function ownTotal(){
   const el=document.getElementById('own-total');
   if(!el||!window.ApaOwnership)return;
-  const named=F.ownPartners.filter(p=>ApaOwnership.looksLikeContact(p.contact));
+  const named=F.ownPartners.filter(p=>ApaOwnership.looksLikeEmail(p.contact));
   if(!named.length){
     el.className='own-total';
     el.innerHTML='Add the other partners above and your own share will be worked out here.';
@@ -1294,7 +1294,7 @@ function bldRv(){collect(6);const S=SVCS[F.svc];
     let rows='<div class="rv-row"><span class="rv-k">Owned as</span><span class="rv-v">'+esc(t.short)+'</span></div>';
     if(F.own==='partnership'){
       rows+='<div class="rv-row"><span class="rv-k">Your share</span><span class="rv-v">'+ApaOwnership.operatorShare(ownSpec())+'%</span></div>';
-      F.ownPartners.filter(p=>ApaOwnership.looksLikeContact(p.contact)).forEach(p=>{
+      F.ownPartners.filter(p=>ApaOwnership.looksLikeEmail(p.contact)).forEach(p=>{
         const pctText=F.ownSplit==='custom'?(Number(p.equity_pct)||0)+'%':'equal share';
         rows+='<div class="rv-row"><span class="rv-k">'+esc(p.name||'Partner')+'</span><span class="rv-v">'+esc(p.contact)+' &middot; '+pctText+'</span></div>';
       });

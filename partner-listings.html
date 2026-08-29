@@ -218,6 +218,23 @@ body{display:flex;flex-direction:column;}
 .os-actions .btn{font-size:12px;padding:8px 14px;}
 .os-err{margin-top:14px;padding:11px 13px;border-radius:11px;background:rgba(255,61,90,.08);
   color:#9F1239;font-size:12.5px;font-weight:600;line-height:1.55;}
+
+/* Pending-claims banner: every outgoing transfer waiting on somebody,
+   surfaced once at the top of the board instead of buried per-row. */
+.pcb{margin:0 0 20px;padding:16px 18px;border-radius:var(--r);
+  background:linear-gradient(135deg,rgba(45,212,191,.09),rgba(67,97,255,.07));
+  border:1px solid rgba(67,97,255,.2);}
+.pcb-head{display:flex;align-items:center;gap:9px;font-weight:800;font-size:13.5px;
+  color:var(--ink2);margin-bottom:10px;}
+.pcb-head svg{width:17px;height:17px;flex:none;color:var(--electric,#4361FF);}
+.pcb-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:9px 0;
+  border-top:1px solid rgba(9,10,20,.06);}
+.pcb-row:first-of-type{border-top:0;padding-top:0;}
+.pcb-title{font-weight:700;font-size:13px;color:var(--ink2);}
+.pcb-to{font-size:12px;color:var(--soft);flex:1;min-width:120px;}
+.pcb-row .btn{font-size:11.5px;padding:6px 12px;flex-shrink:0;}
+@media(max-width:520px){.pcb-row{flex-direction:column;align-items:flex-start;}
+  .pcb-row .btn{width:100%;}}
 .lc-price{font-family:var(--fh);font-size:13px;font-weight:800;color:var(--mint-d);margin-top:4px;}
 .lc-right{flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:8px;}
 .lc-acts{display:flex;gap:6px;}
@@ -446,6 +463,11 @@ body{display:flex;flex-direction:column;}
       Add listing
     </button>
   </div>
+
+  <!-- Listings THIS partner has sent out that are still waiting to be
+       claimed. Renders nothing (and takes no space) when nothing is
+       pending; see renderPendingClaimsBanner(). -->
+  <div id="pending-claims-banner" hidden></div>
 
   <!-- STATS -->
   <div class="stat-row" id="stat-row">
@@ -712,6 +734,7 @@ async function loadListings(){
     if(window.ApaOwnership&&allListings.length){
       ApaOwnership.forListings(allListings.map(l=>l.id)).then(by=>{
         OWN=by||{};
+        renderPendingClaimsBanner();
         renderListings(activeFilter==='all'?allListings
           :allListings.filter(l=>(l.service||l.type||'').toLowerCase()===activeFilter));
       });
@@ -778,24 +801,14 @@ function openOwnership(id){
 
   if(row&&row.pending_transfer_id){
     const contact=row.pending_transfer_contact||'';
-    const isPhone=contact&&contact.indexOf('@')===-1;
-    const claimUrl=location.origin+'/dashboard.html?claim='+encodeURIComponent(row.pending_transfer_id);
 
     html+='<div class="os-warn">'
       + '<strong>'+esc(row.ownership_type==='on_behalf'
           ? 'Held for '+(row.held_for_name||'someone else')
           : 'Transfer to '+(row.pending_transfer_to||'someone')+' is waiting')+'</strong>'
-      + '<p>It becomes theirs the moment they sign in'
-      + (isPhone?' with an account linked to <strong>'+esc(contact)+'</strong>':' with <strong>'+esc(contact)+'</strong>')
-      + ' and accept it. Until then it is still yours to manage.</p>';
-
-    if(isPhone){
-      html+='<p class="os-note" style="margin:8px 0 0;font-size:12px;color:#5a3e1a">'
-        + '\u2139\ufe0f They can sign up with any email and enter this phone number, or sign in '
-        + 'with Google and add it to their profile. Either way works.</p>';
-    }
-
-    html+='<div class="os-actions">'
+      + '<p>It becomes theirs the moment they sign in with <strong>'+esc(contact)+'</strong> '
+      + 'and accept it. Until then it is still yours to manage.</p>'
+      + '<div class="os-actions">'
       + '<button class="btn btn-sm" onclick="shareClaimLink()" id="os-share">'
       + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:-2px;margin-right:4px">'
       + '<path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13"/></svg>'
@@ -821,12 +834,12 @@ function openOwnership(id){
   if(!row||!row.pending_transfer_id){
     html+='<div class="os-sec"><div class="os-h">Transfer ownership</div>'
       + '<p class="os-note">Hand this listing to somebody else — its reviews, its ranking '
-      + 'and its calendar go with it. They claim it by signing in with the email address '
-      + 'or phone number you give here.</p>'
+      + 'and its calendar go with it. They claim it by signing in with the exact email '
+      + 'address you give here.</p>'
       + '<label class="os-l">Their full name</label>'
       + '<input class="os-i" id="os-name" placeholder="e.g. Joseph Otieno" maxlength="120"/>'
-      + '<label class="os-l">Their email or phone</label>'
-      + '<input class="os-i" id="os-contact" placeholder="owner@example.com or 0712 345 678" maxlength="160"/>'
+      + '<label class="os-l">Their email address</label>'
+      + '<input class="os-i" id="os-contact" type="email" inputmode="email" autocomplete="email" placeholder="owner@example.com" maxlength="160"/>'
       + '<label class="os-l">A note for them <span class="os-opt">(optional)</span></label>'
       + '<input class="os-i" id="os-note" placeholder="Handing the Kilimani flat over as agreed." maxlength="200"/>'
       + '<div class="os-warn os-warn-hard"><strong>This cannot be undone once they accept.</strong>'
@@ -858,6 +871,10 @@ async function startTransfer(){
   const g=id=>{const el=document.getElementById(id);return el?el.value.trim():'';};
   const contactVal=g('os-contact');
   osErr('');
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactVal)){
+    osErr('Give a valid email address. Claims are verified by email, so a phone number cannot be used here.');
+    return;
+  }
   if(btn){btn.disabled=true;btn.textContent='Sending…';}
   const r=await ApaOwnership.transfer(OWN_SHEET_ID,{name:g('os-name'),contact:contactVal,note:g('os-note')});
   if(btn){btn.disabled=false;btn.textContent='Send the transfer';}
@@ -866,19 +883,15 @@ async function startTransfer(){
   await refreshOwnership();
   openOwnership(OWN_SHEET_ID);
 
-  // After re-opening the sheet with the new "waiting" state, show contextual guidance
-  const isPhone=contactVal&&contactVal.indexOf('@')===-1;
-  if(isPhone&&r.claim_url){
-    osErr('');
-    // Show a success toast instead of error, reusing the error element with a different style
-    const el=document.getElementById('os-err');
-    if(el){
-      el.style.background='rgba(45,212,191,.1)';
-      el.style.color='#065F46';
-      el.textContent='Transfer sent! Since you used a phone number, share the claim link with them directly \u2014 tap "Share claim link" above.';
-      el.hidden=false;
-      setTimeout(()=>{el.style.background='';el.style.color='';},8000);
-    }
+  const el=document.getElementById('os-err');
+  if(el){
+    el.style.background='rgba(45,212,191,.1)';
+    el.style.color='#065F46';
+    el.textContent=r.emailed
+      ? 'Transfer sent! An email invitation has gone out to '+contactVal+'.'
+      : 'Transfer created. The email could not be sent automatically \u2014 use "Share claim link" above to send it yourself.';
+    el.hidden=false;
+    setTimeout(()=>{el.style.background='';el.style.color='';},8000);
   }
 }
 
@@ -892,14 +905,15 @@ async function cancelTransfer(){
   openOwnership(OWN_SHEET_ID);
 }
 
-async function shareClaimLink(){
-  const row=OWN[OWN_SHEET_ID];
+async function shareClaimLink(listingIdOverride){
+  const targetId=listingIdOverride||OWN_SHEET_ID;
+  const row=OWN[targetId];
   if(!row||!row.pending_transfer_id)return;
   const claimUrl=location.origin+'/dashboard.html?claim='+encodeURIComponent(row.pending_transfer_id);
   const recipientName=row.pending_transfer_to||'there';
   const listingTitle=row.title||'a listing';
   const msg='Hi '+recipientName+', I\'ve transferred "'+listingTitle+'" to you on Cabana. '
-    +'Open this link to claim it:\n'+claimUrl;
+    +'Sign in with '+(row.pending_transfer_contact||'your email')+' and open this link to claim it:\n'+claimUrl;
 
   const btn=document.getElementById('os-share');
 
@@ -916,15 +930,9 @@ async function shareClaimLink(){
     await navigator.clipboard.writeText(msg);
     if(btn){const orig=btn.innerHTML;btn.textContent='Copied!';setTimeout(()=>{btn.innerHTML=orig;},2000);}
   }catch(e){
-    // Final fallback: open WhatsApp with the message
+    // Final fallback: open the mail client addressed to the recipient
     const contact=row.pending_transfer_contact||'';
-    const isPhone=contact&&contact.indexOf('@')===-1;
-    if(isPhone){
-      const digits=contact.replace(/[^0-9+]/g,'');
-      window.open('https://wa.me/'+encodeURIComponent(digits)+'?text='+encodeURIComponent(msg),'_blank');
-    }else{
-      window.open('mailto:'+encodeURIComponent(contact)+'?subject='+encodeURIComponent('Claim your listing on Cabana')+'&body='+encodeURIComponent(msg),'_blank');
-    }
+    window.open('mailto:'+encodeURIComponent(contact)+'?subject='+encodeURIComponent('Claim your listing on Cabana')+'&body='+encodeURIComponent(msg),'_blank');
   }
 }
 
@@ -937,30 +945,49 @@ async function resendInvite(){
   const r=await ApaOwnership.sendInvite(row.pending_transfer_id);
   if(btn){btn.disabled=false;btn.textContent='Resend invitation';}
   if(!r||!r.ok){
-    // Even if the email failed, the claim URL is still valid
-    const claimUrl=r&&r.claim_url;
-    if(claimUrl){
-      osErr('The email could not be sent, but you can share the claim link directly.');
-    }else{
-      osErr(r&&r.error||'Could not resend the invitation.');
-    }
+    osErr(r&&r.claim_url
+      ? 'The email could not be sent, but you can share the claim link directly.'
+      : (r&&r.error||'Could not resend the invitation.'));
     return;
   }
-  if(r.emailed){
-    if(btn){btn.textContent='Sent!';setTimeout(()=>{btn.textContent='Resend invitation';},2500);}
-  }else{
-    // Recipient uses phone — no email sent, guide the sender
-    const contact=row.pending_transfer_contact||'';
-    const claimUrl=r&&r.claim_url||location.origin+'/dashboard.html?claim='+encodeURIComponent(row.pending_transfer_id);
-    osErr('No email was sent because you used a phone number. Share the claim link with them directly — via WhatsApp, SMS, or in person.');
-  }
+  if(btn){btn.textContent='Sent!';setTimeout(()=>{btn.textContent='Resend invitation';},2500);}
 }
 
 async function refreshOwnership(){
   if(!window.ApaOwnership||!allListings.length)return;
   OWN=await ApaOwnership.forListings(allListings.map(l=>l.id))||{};
+  renderPendingClaimsBanner();
   renderListings(activeFilter==='all'?allListings
     :allListings.filter(l=>(l.service||l.type||'').toLowerCase()===activeFilter));
+}
+
+/* ── Pending-claims banner ──────────────────────────────────────────────
+   A per-row badge on each listing is easy to miss when you have several
+   listings. This puts every outgoing transfer waiting on somebody in one
+   place, right above the stats, so a partner never has to go hunting for
+   it. Renders nothing — and takes up no space — when nothing is pending. */
+function renderPendingClaimsBanner(){
+  const host=document.getElementById('pending-claims-banner');
+  if(!host)return;
+  const pending=allListings
+    .map(l=>({listing:l,row:OWN[l.id]}))
+    .filter(x=>x.row&&x.row.pending_transfer_id&&x.row.ownership_type!=='on_behalf');
+  if(!pending.length){host.innerHTML='';host.hidden=true;return;}
+
+  host.hidden=false;
+  host.innerHTML='<div class="pcb">'
+    + '<div class="pcb-head">'
+    + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8l4 4-4 4M3 12h18"/></svg>'
+    + '<span>'+pending.length+' listing'+(pending.length===1?'':'s')+' pending claim</span>'
+    + '</div>'
+    + pending.map(x=>
+        '<div class="pcb-row">'
+        + '<span class="pcb-title">'+esc(x.listing.title||'Listing')+'</span>'
+        + '<span class="pcb-to">waiting on '+esc(x.row.pending_transfer_contact||x.row.pending_transfer_to||'someone')+'</span>'
+        + '<button class="btn btn-sm" onclick="openOwnership(\''+esc(String(x.listing.id))+'\')">Manage</button>'
+        + '</div>'
+      ).join('')
+    + '</div>';
 }
 
 function setFilter(btn){

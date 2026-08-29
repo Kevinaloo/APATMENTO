@@ -132,10 +132,9 @@
   }
 
   /* ── Contact normalisation ────────────────────────────────────────────
-     THE SAME RULE AS public.cabana_norm_contact(). If these two ever
-     diverge, the browser will tell someone their partner is already on the
-     listing when the database disagrees, or accept a transfer address that
-     can never be claimed. Change one, change both. */
+     THE SAME RULE AS public.cabana_norm_contact(). Still reads phone-shaped
+     text for legacy rows saved before ownership claims went email-only —
+     see cabana_is_email() on the database side for why new ones cannot. */
   function normContact(text) {
     var s = String(text == null ? '' : text).trim();
     if (!s) return null;
@@ -145,7 +144,14 @@
     return digits.slice(-9);
   }
 
-  function looksLikeContact(text) { return normContact(text) != null; }
+  /* Strict email check, used everywhere a NEW contact is collected. Every
+     Cabana signup path — password, magic link, Google — reliably fills in
+     an email address; none of them reliably fill in a phone number, so a
+     transfer, an on_behalf hold or a partnership seat can only be built on
+     an email from here on. Matches public.cabana_is_email() on purpose. */
+  function looksLikeEmail(text) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(text == null ? '' : text).trim());
+  }
 
   /* ── Equity ───────────────────────────────────────────────────────────
      An equal split of 100 between three people is not 33.33 three times.
@@ -175,8 +181,8 @@
 
     if (spec.type === 'on_behalf') {
       if (!String(spec.holder_name || '').trim()) return 'Who is this listing for? Give their name.';
-      if (!looksLikeContact(spec.holder_contact)) {
-        return 'Give their email address or phone number, so they can claim the listing.';
+      if (!looksLikeEmail(spec.holder_contact)) {
+        return 'Give their email address, so they can claim the listing.';
       }
       return null;
     }
@@ -192,8 +198,8 @@
       for (var i = 0; i < ps.length; i++) {
         var p = ps[i];
         if (!String(p.name || '').trim()) return 'Every partner needs a name.';
+        if (!looksLikeEmail(p.contact)) return 'Every partner needs an email address.';
         var norm = normContact(p.contact);
-        if (!norm) return 'Every partner needs an email address or a phone number.';
         if (seen[norm]) return 'You have added the same person twice.';
         seen[norm] = 1;
       }
@@ -233,11 +239,11 @@
     var partners = [];
     if (spec.type === 'partnership') {
       partners = (spec.partners || [])
-        .filter(function (p) { return normContact(p.contact); })
+        .filter(function (p) { return looksLikeEmail(p.contact); })
         .map(function (p) {
           return {
             name:    String(p.name || '').trim(),
-            contact: String(p.contact || '').trim(),
+            contact: String(p.contact || '').trim().toLowerCase(),
             equity_pct: spec.split === 'custom' ? round2(p.equity_pct) : null
           };
         });
@@ -249,7 +255,7 @@
       p_split:          spec.type === 'partnership' ? (spec.split || 'equal') : null,
       p_partners:       partners,
       p_holder_name:    spec.type === 'on_behalf' ? String(spec.holder_name || '').trim() : null,
-      p_holder_contact: spec.type === 'on_behalf' ? String(spec.holder_contact || '').trim() : null,
+      p_holder_contact: spec.type === 'on_behalf' ? String(spec.holder_contact || '').trim().toLowerCase() : null,
       p_note:           spec.note ? String(spec.note).slice(0, 500) : null
     });
   }
@@ -259,13 +265,13 @@
     if (!String(to.name || '').trim()) {
       return Promise.resolve({ ok: false, error: 'Who are you transferring it to?' });
     }
-    if (!looksLikeContact(to.contact)) {
-      return Promise.resolve({ ok: false, error: 'Give their email address or phone number.' });
+    if (!looksLikeEmail(to.contact)) {
+      return Promise.resolve({ ok: false, error: 'Give their email address. Claims are verified by email, so a phone number cannot be used here.' });
     }
     return rpc('listing_transfer_start', {
       p_listing_id: listingId,
       p_to_name:    String(to.name).trim(),
-      p_to_contact: String(to.contact).trim(),
+      p_to_contact: String(to.contact).trim().toLowerCase(),
       p_note:       to.note ? String(to.note).slice(0, 500) : null
     }).then(function (r) {
       if (!r || !r.ok || !r.transfer_id) return r;
@@ -502,12 +508,8 @@
     if (mismatch) {
       d.innerHTML = '<div class="apa-claim-h"><span>Listing invitation</span></div>'
         + '<div class="apa-claim-b"><h2>This invitation belongs to another account</h2>'
-        + '<p>The invitation was sent to a specific email or phone number. To claim it:</p>'
-        + '<ul style="font-size:13px;line-height:1.7;color:#66677d;padding-left:18px;margin:10px 0 14px">'
-        + '<li><strong>If sent to an email</strong> \u2014 sign in with that exact email address.</li>'
-        + '<li><strong>If sent to a phone number</strong> \u2014 make sure your account has that phone number. '
-        + 'You can add it during sign-up or update it in your profile.</li></ul>'
-        + '<p style="font-size:12px;color:#888">The link itself never grants ownership \u2014 your identity has to match.</p>'
+        + '<p>This listing was sent to a specific email address. Sign in with that exact '
+        + 'address to claim it \u2014 the link itself never grants ownership on its own.</p>'
         + '<div class="apa-claim-actions"><a class="apa-claim-primary" href="auth.html?next='
         + encodeURIComponent(global.location.pathname + global.location.search) + '">Use another account</a>'
         + '<button class="apa-claim-later" data-close>Close</button></div></div>';
@@ -672,7 +674,7 @@
     operatorShare: operatorShare,
     sumPct: sumPct,
     normContact: normContact,
-    looksLikeContact: looksLikeContact,
+    looksLikeEmail: looksLikeEmail,
     describe: describe,
 
     mountInbox: mountInbox,
