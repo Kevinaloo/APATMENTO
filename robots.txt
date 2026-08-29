@@ -1,15 +1,30 @@
 # ══════════════════════════════════════════════════════════════════════
-#  robots.txt — Cabana · cabana.africa
-#  Africa's zero-commission travel platform · 54 countries
-#  Generated 2026-08-13
+#  robots.txt — Cabana · https://cabana.africa/
+#  Africa's Zero-Commission Travel Super-App · 54 African Countries
 # ══════════════════════════════════════════════════════════════════════
 
-# ── Default: everything public is crawlable ───────────────────────────
+# ── General Crawlers (Googlebot, Bingbot, Applebot, DuckDuckGo, etc.) ─
 User-agent: *
 Allow: /
 
-# Private surfaces. These carry no ranking value and burn crawl budget,
-# which on a 350+ page site is the binding constraint.
+# Allow crawling and indexing of public assets and resources
+Allow: /*.css*
+Allow: /*.js*
+Allow: /*.png*
+Allow: /*.jpg*
+Allow: /*.jpeg*
+Allow: /*.webp*
+Allow: /*.avif*
+Allow: /*.svg*
+Allow: /*.ico*
+Allow: /*.woff*
+Allow: /*.woff2*
+Allow: /*.json*
+Allow: /llms.txt
+Allow: /robots.txt
+Allow: /sitemap*.xml
+
+# Private surfaces and internal applications
 Disallow: /auth
 Disallow: /auth.html
 Disallow: /dashboard
@@ -40,6 +55,7 @@ Disallow: /partner-earnings*
 Disallow: /partner-reviews*
 Disallow: /partner-settings*
 Disallow: /partner-cabana*
+Disallow: /partner-menu*
 Disallow: /api/
 Disallow: /tools/
 Disallow: /seo/
@@ -48,37 +64,52 @@ Disallow: /supabase-migrations/
 Disallow: /*.sql$
 Disallow: /*.cjs$
 
-# Faceted / parameter URLs: crawl the canonical page, not every filter
-# permutation. Prevents the index bloat that flattens a marketplace site.
-Disallow: /*?utm_
-Disallow: /*&utm_
-Disallow: /*?ref=
-Disallow: /*?sort=
-Disallow: /*?page=
-
-# Assets stay crawlable — required for Core Web Vitals assessment and for
-# Google Images traffic.
-Allow: /*.css$
-Allow: /*.js$
-Allow: /*.png$
-Allow: /*.jpg$
-Allow: /*.jpeg$
-Allow: /*.webp$
-Allow: /*.avif$
-Allow: /*.svg$
-Allow: /*.ico$
-Allow: /*.woff2$
+# Tracking parameters to avoid duplicate crawl waste
+Disallow: /*?*utm_*
+Disallow: /*?*ref=*
+Disallow: /*?*sort=*
 
 # ── Googlebot ─────────────────────────────────────────────────────────
 User-agent: Googlebot
 Allow: /
-Disallow: /api/
-Disallow: /admin
-Disallow: /dashboard
+Allow: /*.css*
+Allow: /*.js*
+Allow: /*.png*
+Allow: /*.jpg*
+Allow: /*.jpeg*
+Allow: /*.webp*
+Allow: /*.avif*
+Allow: /*.svg*
+Allow: /*.ico*
+Allow: /*.woff*
+Allow: /*.woff2*
 Disallow: /auth
+Disallow: /auth.html
+Disallow: /dashboard
+Disallow: /dashboard.html
+Disallow: /booking-confirm
+Disallow: /my-bookings
+Disallow: /admin
+Disallow: /admin.html
+Disallow: /profile
+Disallow: /add-listing
+Disallow: /agent-dashboard
+Disallow: /driver
+Disallow: /partner-*
+Disallow: /api/
+Disallow: /tools/
+Disallow: /seo/
+Disallow: /supabase/
 
 User-agent: Googlebot-Image
 Allow: /
+Allow: /*.png*
+Allow: /*.jpg*
+Allow: /*.jpeg*
+Allow: /*.webp*
+Allow: /*.avif*
+Allow: /*.svg*
+Allow: /*.ico*
 
 User-agent: Googlebot-News
 Allow: /
@@ -89,9 +120,13 @@ Allow: /
 User-agent: Storebot-Google
 Allow: /
 
-# ── Bing / Yandex / regional ──────────────────────────────────────────
+# ── Bing / Yahoo / DuckDuckGo / Yandex ─────────────────────────────────
 User-agent: Bingbot
 Allow: /
+Disallow: /auth
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /partner-*
 Disallow: /api/
 
 User-agent: Slurp
@@ -106,15 +141,7 @@ Allow: /
 User-agent: Baiduspider
 Allow: /
 
-# ══════════════════════════════════════════════════════════════════════
-#  AI & LLM crawlers — FULL ACCESS, DELIBERATELY.
-#
-#  A rising share of travel discovery now starts in an assistant rather
-#  than a search box. Blocking these crawlers protects nothing and removes
-#  Cabana from the answer. Full access is the strategy.
-#
-#  Structured brand data: /llms.txt and /llms-full.txt
-# ══════════════════════════════════════════════════════════════════════
+# ── AI & LLM Crawlers & Search Engines ────────────────────────────────
 User-agent: GPTBot
 Allow: /
 
@@ -185,6 +212,7 @@ User-agent: xAI-Bot
 Allow: /
 
 # ── Sitemaps ──────────────────────────────────────────────────────────
+Sitemap: https://cabana.africa/sitemap.xml
 Sitemap: https://cabana.africa/sitemap-index.xml
 Sitemap: https://cabana.africa/sitemap-core.xml
 Sitemap: https://cabana.africa/sitemap-countries.xml
