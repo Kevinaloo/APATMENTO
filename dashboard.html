@@ -2573,7 +2573,7 @@ const USER = { firstName: 'friend', lastName: '' };
 const SVC = {
   roommates:{ name:'Roommates', sub:'Find your flatmate',       dest:'roommates.html',   color:'#0D9488', bg:'linear-gradient(135deg,#2DD4BF,#0D9488)', craft:'people', motion:'rise' },
   stays:    { name:'Stays',    sub:'Find your stay',        dest:'apartments.html',  color:'#8B6FE8', bg:'linear-gradient(135deg,#B8A4F4,#7B2FF7)', craft:'house',  motion:'rise' },
-  flights:  { name:'Flights',  sub:'Take to the sky',        dest:'flights.html',     color:'#4361FF', bg:'linear-gradient(135deg,#4361FF,#B8A4F4)', craft:'plane',  motion:'plane' },
+  flights:  { name:'Flights',  sub:'Tell us where',        dest:'flights.html',     color:'#4361FF', bg:'linear-gradient(135deg,#4361FF,#B8A4F4)', craft:'plane',  motion:'plane' },
   tours:    { name:'Tours',    sub:'Discover the wild',      dest:'tours.html',       color:'#2DD4BF', bg:'linear-gradient(135deg,#5EEAD4,#4361FF)', craft:'map',    motion:'spin' },
   events:   { name:'Events',   sub:'Be there live',          dest:'events.html',      color:'#7B2FF7', bg:'linear-gradient(135deg,#7B2FF7,#B8A4F4)', craft:'ticket', motion:'spin' },
   rides:    { name:'Rides',    sub:'Move with ease',         dest:'rides.html',       color:'#FF6B2C', bg:'linear-gradient(135deg,#FFB59E,#FF6B2C)', craft:'car',    motion:'left' },
@@ -2683,6 +2683,15 @@ function navigateToService(key, deepLink){
   const go = ()=>{ window.location.href = cfg.dest + '?back=1' + extra; };
   let navigated = false;
   const safeGo = ()=>{ if(navigated) return; navigated = true; go(); };
+
+  /* Flights owns its own arrival.
+
+     The generic scene below is a holding pattern: a coloured gradient
+     while the next page loads. The flight desk opens with a full night
+     take-off that is the transition, so playing a second one in front of
+     it means the traveller waits through two and only ever sees the
+     weaker. Hand straight over. */
+  if (key === 'flights') { safeGo(); return; }
 
   try {
     const overlay = document.getElementById('svc-transition');

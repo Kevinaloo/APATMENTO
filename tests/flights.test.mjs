@@ -154,6 +154,7 @@ async function boot(search = '') {
   window.sb = stub;
 
   window.eval(read('fd-atlas.js'));
+  window.eval(read('fd-dialcodes.js'));
   window.eval(read('cabana-flights.js'));
 
   // let the deferred boot and the desk-status promise settle
@@ -515,6 +516,122 @@ test('legsToText: marks overnight legs with +1', async () => {
   const legs = parse('EK722 NBO 2330 DXB 0415 +1', '2026-09-20');
   const text = toText(legs);
   assert.ok(text.includes('+1'), 'overnight marker preserved in round-trip');
+});
+
+
+/* ══════════════════════════════════════════════════════════════════
+   INTERNATIONAL PHONE
+   A hardcoded +254 excludes every traveller who is not Kenyan. The
+   dial code must be selectable, searchable, and the stored number must
+   be E.164 regardless of how it was typed.
+══════════════════════════════════════════════════════════════════════ */
+
+test('phone field offers a country selector, not a baked-in code', async () => {
+  const { doc } = await boot();
+  const btn = doc.getElementById('fd-cc-btn');
+  assert.ok(btn, 'country code control exists');
+  assert.ok(doc.getElementById('fd-cc-sheet'), 'country picker sheet exists');
+  // The old build hardcoded "+254 7…" as the placeholder.
+  const num = doc.getElementById('fd-phone');
+  assert.ok(!/\+254/.test(num.getAttribute('placeholder') || ''),
+    'placeholder is a national number shape, not a fixed country code');
+});
+
+test('country picker searches by name, ISO and dial code', async () => {
+  const { window, doc } = await boot();
+  doc.getElementById('fd-cc-btn').dispatchEvent(new window.Event('click'));
+  const input = doc.getElementById('fd-cc-in');
+
+  input.value = 'nigeria';
+  input.dispatchEvent(new window.Event('input'));
+  let isos = [...doc.querySelectorAll('#fd-cc-list .fd-opt')].map((o) => o.dataset.iso);
+  assert.ok(isos.includes('NG'), 'found by country name');
+
+  input.value = '971';
+  input.dispatchEvent(new window.Event('input'));
+  isos = [...doc.querySelectorAll('#fd-cc-list .fd-opt')].map((o) => o.dataset.iso);
+  assert.ok(isos.includes('AE'), 'found by dial code');
+
+  input.value = 'gb';
+  input.dispatchEvent(new window.Event('input'));
+  isos = [...doc.querySelectorAll('#fd-cc-list .fd-opt')].map((o) => o.dataset.iso);
+  assert.ok(isos.includes('GB'), 'found by ISO code');
+});
+
+test('choosing a country updates the code and the example format', async () => {
+  const { window, doc } = await boot();
+  doc.getElementById('fd-cc-btn').dispatchEvent(new window.Event('click'));
+  const input = doc.getElementById('fd-cc-in');
+  input.value = 'nigeria';
+  input.dispatchEvent(new window.Event('input'));
+  doc.querySelector('#fd-cc-list .fd-opt[data-iso="NG"]')
+     .dispatchEvent(new window.Event('click', { bubbles: true }));
+
+  assert.equal(doc.getElementById('fd-cc-dial').textContent, '+234');
+  assert.match(doc.getElementById('fd-phone').getAttribute('placeholder'), /802/,
+    'placeholder now shows a Nigerian number shape');
+});
+
+test('phone is stored as E.164 whatever the traveller types', async () => {
+  const { window, doc } = await boot();
+  const num = doc.getElementById('fd-phone');
+  const full = () => window.CabanaFlights.fullPhone();
+
+  // default country (Kenya in the test locale chain)
+  num.value = '712345678';
+  assert.match(full(), /^\+\d{6,}$/, 'assembled into E.164');
+
+  // a leading trunk zero must not survive
+  num.value = '0712 345678';
+  assert.ok(!/\+\d+0712/.test(full()), 'trunk zero stripped, not doubled');
+
+  // someone pasting a full international number keeps their own code
+  num.value = '+44 7400 123456';
+  assert.equal(full(), '+447400123456', 'existing country code respected');
+
+  // punctuation and spaces are noise
+  num.value = '(071) 234-5678';
+  assert.ok(/^\+\d+$/.test(full()), 'only digits and one leading plus');
+});
+
+test('a phone number alone is enough to submit', async () => {
+  const { window, doc } = await boot();
+  doc.getElementById('fd-d-btn').dispatchEvent(new window.Event('click'));
+  const ai = doc.getElementById('fd-sheet-in');
+  ai.value = 'DXB'; ai.dispatchEvent(new window.Event('input'));
+  doc.querySelector('#fd-sheet-list .fd-opt[data-iata="DXB"]')
+     .dispatchEvent(new window.Event('click', { bubbles: true }));
+
+  const dep = doc.getElementById('fd-depart');
+  dep.value = '2026-09-20'; dep.dispatchEvent(new window.Event('change'));
+  const ret = doc.getElementById('fd-return');
+  ret.value = '2026-09-27'; ret.dispatchEvent(new window.Event('change'));
+  doc.getElementById('fd-name').value = 'Test Traveller';
+  doc.getElementById('fd-name').dispatchEvent(new window.Event('input'));
+
+  const num = doc.getElementById('fd-phone');
+  num.value = '712345678';
+  num.dispatchEvent(new window.Event('input'));
+
+  assert.equal(doc.getElementById('fd-submit').disabled, false,
+    'phone alone satisfies the contact requirement');
+});
+
+test('the page does not lecture: hero copy stays short', async () => {
+  const { doc } = await boot();
+  const lede = doc.querySelector('.fd-lede');
+  assert.ok(lede, 'lede exists');
+  const words = lede.textContent.trim().split(/\s+/).length;
+  assert.ok(words <= 20, `hero lede should be a line, not a paragraph (was ${words} words)`);
+});
+
+test('the take-off is never suppressed by arriving from the dashboard', async () => {
+  const html = read('flights.html');
+  assert.ok(!html.includes('via-dash'),
+    'the dashboard hands straight over; there is no second transition to dodge');
+  const dash = read('dashboard.html');
+  assert.ok(dash.includes("if (key === 'flights') { safeGo(); return; }"),
+    'dashboard skips its own scene for flights');
 });
 
 test('teardown: every jsdom window is closed', () => {

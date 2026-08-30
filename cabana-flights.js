@@ -145,6 +145,8 @@
     budgetMax: '',
     notes: '',
     name: '', email: '', phone: '', channel: 'whatsapp',
+    dial: null,        // chosen country calling code
+    ccPicking: false,
     picking: null,      // 'origin' | 'dest'
     view: 'form',
     req: null,          // loaded status payload
@@ -270,6 +272,107 @@
   }
 
   /* ══════════════════════════════════════════════════════════════════════
+     INTERNATIONAL PHONE
+
+     The dial code is a control, not a hint baked into a placeholder.
+     It defaults from locale and timezone, and the number is stored in
+     E.164 so the desk can dial or WhatsApp it from anywhere without
+     guessing what country a bare "0712..." belongs to.
+  ══════════════════════════════════════════════════════════════════════ */
+
+  var ccIndex = 0, ccResults = [];
+
+  function dialData() { return window.FDDial || null; }
+
+  function initDial() {
+    var D = dialData();
+    if (!D) return;
+    S.dial = D.guess() || D.byIso('KE');
+    paintDial();
+  }
+
+  function paintDial() {
+    if (!S.dial) return;
+    var f = $('fd-cc-flag'), d = $('fd-cc-dial'), n = $('fd-phone');
+    if (f) f.textContent = S.dial.flag;
+    if (d) d.textContent = '+' + S.dial.dial;
+    /* The placeholder shows this country's real number shape, so nobody
+       has to be told the format in prose. */
+    if (n) n.placeholder = S.dial.example || '';
+  }
+
+  function openCC() {
+    var D = dialData();
+    if (!D) return;
+    S.ccPicking = true;
+    var sheet = $('fd-cc-sheet'), input = $('fd-cc-in');
+    input.value = '';
+    renderCC(D.find('', 14));
+    sheet.classList.add('is-open');
+    document.body.style.overflow = 'hidden';
+    setTimeout(function () { input.focus(); }, 60);
+  }
+
+  function closeCC() {
+    $('fd-cc-sheet').classList.remove('is-open');
+    document.body.style.overflow = '';
+    S.ccPicking = false;
+  }
+
+  function renderCC(list) {
+    ccResults = list;
+    ccIndex = 0;
+    var box = $('fd-cc-list');
+    if (!list.length) {
+      box.innerHTML = '<div class="fd-sheet-empty">No country matches that.</div>';
+      return;
+    }
+    box.innerHTML = list.map(function (c, i) {
+      return '<button type="button" class="fd-opt' + (i === 0 ? ' is-active' : '') +
+        '" data-iso="' + esc(c.iso) + '" role="option">' +
+        '<span class="fd-opt-flag">' + c.flag + '</span>' +
+        '<span class="fd-opt-main"><span class="fd-opt-city">' + esc(c.name) + '</span></span>' +
+        '<span class="fd-opt-dial">+' + esc(c.dial) + '</span>' +
+      '</button>';
+    }).join('');
+  }
+
+  function highlightCC(i) {
+    var opts = $$('.fd-opt', $('fd-cc-list'));
+    if (!opts.length) return;
+    ccIndex = Math.max(0, Math.min(opts.length - 1, i));
+    opts.forEach(function (o, n) { o.classList.toggle('is-active', n === ccIndex); });
+    opts[ccIndex].scrollIntoView({ block: 'nearest' });
+  }
+
+  function chooseCC(iso) {
+    var D = dialData();
+    if (!D) return;
+    var c = D.byIso(iso);
+    if (!c) return;
+    S.dial = c;
+    paintDial();
+    closeCC();
+    var n = $('fd-phone');
+    if (n) n.focus();
+    validate();
+  }
+
+  /* Assemble E.164: +<dial><national>, with the national part stripped
+     of spaces, punctuation and any trunk zero. "0712 345678" in Kenya
+     and "712345678" both become +254712345678. */
+  function fullPhone() {
+    var raw = ($('fd-phone') ? $('fd-phone').value : '').trim();
+    if (!raw) return '';
+    /* Someone who pasted a full international number already knows their
+       code; respect it rather than prefixing a second one. */
+    if (raw.charAt(0) === '+') return raw.replace(/[^\d+]/g, '');
+    var nat = raw.replace(/\D/g, '').replace(/^0+/, '');
+    if (!nat) return '';
+    return '+' + (S.dial ? S.dial.dial : '254') + nat;
+  }
+
+  /* ══════════════════════════════════════════════════════════════════════
      ROUTE HEADER + THE ARC
   ══════════════════════════════════════════════════════════════════════ */
 
@@ -365,7 +468,7 @@
 
   function validate() {
     var ok = !!(S.origin && S.dest && S.depart && S.name.trim() &&
-                (S.email.trim() || S.phone.trim()));
+                (S.email.trim() || fullPhone()));
     if (S.tripType === 'return' && !S.ret) ok = false;
     $('fd-submit').disabled = !ok || S.busy;
     return ok;
@@ -374,7 +477,7 @@
   function readContact() {
     S.name  = $('fd-name').value;
     S.email = $('fd-email').value;
-    S.phone = $('fd-phone').value;
+    S.phone = fullPhone();
     S.notes = $('fd-notes').value;
     S.budgetMax = $('fd-budget').value;
     S.maxStops  = $('fd-stops').value;
@@ -418,7 +521,7 @@
       notes: S.notes,
       contact_name: S.name.trim(),
       contact_email: S.email.trim() || null,
-      contact_phone: S.phone.trim() || null,
+      contact_phone: fullPhone() || null,
       contact_channel: S.channel,
       source: 'web',
       referrer: document.referrer || null,
@@ -1012,6 +1115,31 @@
     $('fd-submit').addEventListener('click', submit);
 
     /* picker */
+    /* country calling code */
+    $('fd-cc-btn').addEventListener('click', openCC);
+    $('fd-cc-close').addEventListener('click', closeCC);
+    $('fd-cc-sheet').addEventListener('click', function (e) {
+      if (e.target === $('fd-cc-sheet')) closeCC();
+    });
+    var cci = $('fd-cc-in');
+    cci.addEventListener('input', function () {
+      var D = dialData();
+      if (D) renderCC(D.find(cci.value, 14));
+    });
+    cci.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowDown') { e.preventDefault(); highlightCC(ccIndex + 1); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); highlightCC(ccIndex - 1); }
+      else if (e.key === 'Enter') {
+        e.preventDefault();
+        var a = $$('.fd-opt', $('fd-cc-list'))[ccIndex];
+        if (a) chooseCC(a.dataset.iso);
+      } else if (e.key === 'Escape') { closeCC(); }
+    });
+    $('fd-cc-list').addEventListener('click', function (e) {
+      var b = e.target.closest('.fd-opt');
+      if (b) chooseCC(b.dataset.iso);
+    });
+
     var si = $('fd-sheet-in');
     si.addEventListener('input', function () {
       var q = si.value.trim();
@@ -1042,6 +1170,7 @@
     if (!atlas) { console.warn('[flight-desk] atlas missing'); return; }
 
     bindForm();
+    initDial();
     renderRoute();
     renderPax();
     renderPopular();
@@ -1070,5 +1199,6 @@
     boot();
   }
 
-  window.CabanaFlights = { showStatus: showStatus, showForm: showForm, state: S };
+  window.CabanaFlights = { showStatus: showStatus, showForm: showForm, state: S,
+                           fullPhone: fullPhone };
 })();

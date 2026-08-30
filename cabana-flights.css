@@ -919,3 +919,48 @@ html.fd-page .seo-content .seo-trust li::before{ background:var(--fd-mint); }
   position:absolute; width:1px; height:1px; padding:0; margin:-1px;
   overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   INTERNATIONAL PHONE INPUT
+
+   A hardcoded +254 tells everyone who is not Kenyan that the form was
+   not built for them. The dial code is a control, defaulted by locale
+   and timezone, searchable by country name or by the code itself.
+
+   The two controls read as one field: the button and the input share a
+   border and light up together on focus.
+══════════════════════════════════════════════════════════════════════ */
+.fd-tel{ display:flex; align-items:stretch; gap:0; }
+
+.fd-tel-cc{
+  display:flex; align-items:center; gap:7px; flex-shrink:0; cursor:pointer;
+  font-family:inherit; font-size:14.5px; font-weight:500; color:#fff;
+  padding:13px 12px; border:1px solid var(--fd-line); border-right:0;
+  border-radius:13px 0 0 13px; background:rgba(255,255,255,.06);
+  transition:border-color .2s, background .2s;
+}
+.fd-tel-cc:hover{ background:rgba(255,255,255,.10); }
+.fd-tel-cc svg{ color:var(--fd-faint); flex-shrink:0; }
+.fd-tel-flag{ font-size:17px; line-height:1; }
+.fd-tel-dial{ font-family:'Geist',monospace; letter-spacing:.01em; }
+
+.fd-tel-num{ border-radius:0 13px 13px 0!important; flex:1; min-width:0; }
+
+/* Focus belongs to the pair, not to whichever half has the caret. */
+.fd-tel:focus-within .fd-tel-cc{
+  border-color:var(--fd-electric); background:rgba(79,109,255,.12);
+}
+.fd-tel:focus-within .fd-tel-num{ border-color:var(--fd-electric); }
+.fd-tel-cc:focus-visible{ outline:2px solid var(--fd-mint); outline-offset:-2px; z-index:1; }
+
+/* Country rows in the picker */
+.fd-opt-flag{ font-size:19px; line-height:1; width:26px; flex-shrink:0; }
+.fd-opt-dial{
+  font-family:'Geist',monospace; font-size:13px; color:var(--fd-gold);
+  flex-shrink:0; letter-spacing:.02em;
+}
+
+@media (max-width:640px){
+  /* The dial control keeps its width; the number field takes the rest. */
+  .fd-tel-cc{ padding:13px 10px; font-size:14px; }
+}
