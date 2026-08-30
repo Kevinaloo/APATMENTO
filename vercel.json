@@ -306,12 +306,13 @@
     },
     "api/email.js": {
       "maxDuration": 15
-    },
-    "api/flight-desk.js": {
-      "maxDuration": 20
     }
   },
   "rewrites": [
+    {
+      "source": "/api/flight-desk",
+      "destination": "/api/trust"
+    },
     {
       "source": "/api/match-guest",
       "destination": "/api/trust?action=match-guest"

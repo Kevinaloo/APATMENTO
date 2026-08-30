@@ -31,6 +31,7 @@ import checkPaymentStatus from './lib/_check-payment-status.js';
 import askApa             from './lib/_ask-apa.js';
 import support            from './lib/_support.js';
 import call               from './lib/_call.js';
+import flightDesk         from './lib/_flight-desk.js';
 
 const ROUTES = {
   'match-guest':          matchGuest,
@@ -41,6 +42,12 @@ const ROUTES = {
   'ask-apa':              askApa,
   'support':              support,
   'call':                 call,
+  // Flight desk — bare action names (frontend calls /api/flight-desk?action=notify-*)
+  // routed here via the /api/flight-desk rewrite in vercel.json
+  'notify-new':           flightDesk,
+  'notify-quoted':        flightDesk,
+  'notify-selected':      flightDesk,
+  'notify-ticketed':      flightDesk,
 };
 
 export default async function handler(req, res) {

@@ -405,9 +405,13 @@ export default async function handler(req, res) {
   if (!validRef(ref))
     return res.status(400).json({ ok: false, error: 'bad_ref' });
 
+  // Strip optional "fd-" prefix so this works both when called via
+  // trust.js (?action=fd-notify-new) and via the old direct URL.
+  const baseAction = action.replace(/^fd-/, '');
+
   try {
     let out;
-    switch (action) {
+    switch (baseAction) {
       case 'notify-new':      out = await notifyNew(ref);      break;
       case 'notify-quoted':   out = await notifyQuoted(ref);   break;
       case 'notify-selected': out = await notifySelected(ref); break;
