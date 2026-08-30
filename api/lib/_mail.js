@@ -934,6 +934,145 @@ export const TEMPLATES = {
       }),
     };
   },
+
+  /* ── Flight desk · we have your request ─────────────────────────── */
+  flightRequested({ name, email, ref, route, dates, pax, cabin, trackUrl, dueBy }) {
+    const who = firstName(name, email);
+    return {
+      audience: 'guest', category: 'transactional',
+      subject: `We have your flight request (${ref})`,
+      preview: `${route} — someone is pricing it now.`,
+      html: shell({
+        title: 'Your flight request', preview: `${route} — someone is pricing it now.`,
+        body: header({ eyebrow: 'Flight desk', title: `We have it, ${who}.`,
+          subtitle: 'Someone is pricing your trip now. You do not need to do anything.',
+          gradient: B.gradDusk, emoji: '\u2708\uFE0F' })
+        + card(rows([
+            ['Reference', ref],
+            ['Route', route],
+            ['Dates', dates],
+            ['Travellers', pax],
+            ['Cabin', cabin],
+            dueBy ? ['Options by', dueBy] : null,
+          ])
+          + p('Keep your reference. The link below opens this request from any device \u2014 no account, no password.', { small: true })
+          + button(trackUrl, 'Track this request')),
+        audience: 'guest',
+      }),
+    };
+  },
+
+  /* ── Flight desk · options are ready ────────────────────────────── */
+  flightQuoted({ name, email, ref, route, optionsHtml, fromPrice, trackUrl, count }) {
+    const who = firstName(name, email);
+    return {
+      audience: 'guest', category: 'transactional',
+      subject: `Your ${route} options are ready (from ${fromPrice})`,
+      preview: `${count} option${count === 1 ? '' : 's'} priced and held for you.`,
+      html: shell({
+        title: 'Your flight options', preview: `${count} option${count === 1 ? '' : 's'} priced and held.`,
+        body: header({ eyebrow: 'Flight desk', title: `Ready when you are, ${who}.`,
+          subtitle: `We priced ${route} and found ${count} option${count === 1 ? '' : 's'} worth your time.`,
+          gradient: B.gradDusk, emoji: '\u2708\uFE0F' })
+        + card(optionsHtml
+          + p('Every price is the total for your whole party with taxes included. Nothing is added at checkout.', { small: true })
+          + button(trackUrl, 'Choose your flight'))
+        + card(p('Fares move, so these are held for a limited time. If a hold lapses before you decide, tell us and we will price it again.')
+          + p(`Your reference is ${esc(ref)}.`, { small: true }), { delay: 2, quiet: true }),
+        audience: 'guest',
+      }),
+    };
+  },
+
+  /* ── Flight desk · ticketed ─────────────────────────────────────── */
+  flightTicketed({ name, email, ref, pnr, airline, route, departDate, etickets, ticketUrl, trackUrl }) {
+    const who = firstName(name, email);
+    return {
+      audience: 'guest', category: 'transactional',
+      subject: `Ticketed: ${route} (${pnr})`,
+      preview: `Booking reference ${pnr}. You are confirmed.`,
+      html: shell({
+        title: 'You are ticketed', preview: `Booking reference ${pnr}.`,
+        body: header({ eyebrow: 'Flight desk', title: `You are ticketed, ${who}.`,
+          subtitle: 'Your flight is booked and the ticket is issued.',
+          gradient: B.gradReef, emoji: '\uD83C\uDFAB' })
+        + card(rows([
+            ['Airline', airline || ''],
+            ['Booking reference', pnr || ''],
+            ['Route', route],
+            ['Departing', departDate || ''],
+            etickets ? ['E-ticket', etickets] : null,
+            ['Request', ref],
+          ])
+          + p('Check in with the airline using the booking reference above.', { small: true })
+          + button(ticketUrl || trackUrl, ticketUrl ? 'Download your e-ticket' : 'View your booking',
+                   { gradient: B.gradReef, solid: B.electric }))
+        + card(p('If anything changes before you fly, reply to this email. A person picks it up, and they already have your booking in front of them.'),
+               { delay: 2, quiet: true }),
+        audience: 'guest',
+      }),
+    };
+  },
+
+  /* ── Flight desk · internal, a request landed ───────────────────── */
+  flightDeskAlert({ ref, route, dates, pax, cabin, flex, contactName, contactPhone,
+                    contactEmail, channel, notes, ceiling, dueBy, consoleUrl }) {
+    return {
+      audience: 'partner', category: 'transactional',
+      subject: `Flight request ${ref}: ${route}`,
+      preview: `${contactName} \u00B7 ${dates} \u00B7 ${pax}`,
+      html: shell({
+        title: `Flight request ${ref}`, preview: `${contactName} \u00B7 ${dates}`,
+        body: header({ eyebrow: 'Flight desk', title: `New request: ${route}`,
+          subtitle: dueBy ? `Due back by ${dueBy}.` : 'Waiting to be priced.',
+          gradient: B.gradDusk, emoji: '\u2708\uFE0F' })
+        + card(rows([
+            ['Reference', ref],
+            ['Route', route],
+            ['Dates', dates],
+            ['Travellers', pax],
+            ['Cabin', cabin],
+            ['Flexibility', flex],
+            ceiling ? ['Ceiling', ceiling] : null,
+          ]))
+        + card(rows([
+            ['Name', contactName],
+            contactPhone ? ['Phone', contactPhone] : null,
+            contactEmail ? ['Email', contactEmail] : null,
+            ['Prefers', channel],
+          ])
+          + (notes ? '<div style="height:12px"></div>' + quote(notes, 'What they told us') : '')
+          + button(consoleUrl, 'Open in the console', { gradient: B.gradDusk, solid: B.violet }),
+          { delay: 2 }),
+        audience: 'partner',
+      }),
+    };
+  },
+
+  /* ── Flight desk · internal, the traveller chose ────────────────── */
+  flightChosen({ ref, route, contactName, airline, price, netLine, consoleUrl }) {
+    return {
+      audience: 'partner', category: 'transactional',
+      subject: `${ref} chose ${airline} \u2014 ready to ticket`,
+      preview: `${contactName} picked ${airline} at ${price}.`,
+      html: shell({
+        title: `${ref} chose an option`, preview: `${contactName} picked ${airline}.`,
+        body: header({ eyebrow: 'Flight desk', title: 'A traveller has chosen',
+          subtitle: 'Collect documents, take payment, issue.',
+          gradient: B.gradReef, emoji: '\u2705' })
+        + card(rows([
+            ['Reference', ref],
+            ['Route', route],
+            ['Traveller', contactName],
+            ['Chose', airline],
+            ['Price', price],
+            netLine ? ['Commercial', netLine] : null,
+          ])
+          + button(consoleUrl, 'Open in the console', { gradient: B.gradReef, solid: B.electric })),
+        audience: 'partner',
+      }),
+    };
+  },
 };
 
 /* ══════════════════════════════════════════════════════════════════════

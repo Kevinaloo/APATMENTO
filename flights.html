@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="fd-page">
 <head>
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-5NQGLLEE02"></script>
@@ -11,17 +11,17 @@
 </script>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
   <!-- ══ SEO ══ -->
-  <meta name="description" content="Search and book flights from Nairobi, Mombasa and across Kenya on Cabana. Zero commission travel super-app: Cabana, now Cabana."/>
-  <meta name="keywords" content="book flights Kenya, cheap flights Nairobi, Jambojet booking, Kenya Airways tickets, domestic flights Kenya, Nairobi to Mombasa flights, East Africa flights"/>
+  <meta name="description" content="Tell the Cabana flight desk where you are going and we come back with real fares, priced all-in. Nairobi, Mombasa, East Africa and worldwide. No booking fee."/>
+  <meta name="keywords" content="book flights Kenya, cheap flights Nairobi, flight booking desk Nairobi, Kenya Airways tickets, Jambojet booking, domestic flights Kenya, Nairobi to Mombasa flights, East Africa flights"/>
   <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1"/>
   <link rel="canonical" href="https://cabana.africa/flights"/>
 
-
-<meta name="author" content="Cabana"/>
+  <meta name="author" content="Cabana"/>
   <meta name="geo.region" content="KE"/>
   <meta name="geo.placename" content="Nairobi, Kenya"/>
-  <meta name="theme-color" content="#6D28FF"/>
+  <meta name="theme-color" content="#070B18"/>
   <meta name="mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
@@ -34,449 +34,507 @@
 
   <!-- Open Graph -->
   <meta property="og:site_name" content="Cabana"/>
-  <meta property="og:title" content="Cheap Flights Kenya: Search &amp; Book | Cabana"/>
-  <meta property="og:description" content="Search and book flights from Nairobi, Mombasa and across Kenya on Cabana. Zero commission travel super-app: Cabana, now Cabana."/>
+  <meta property="og:title" content="Cabana Flight Desk: tell us where, we find the fare"/>
+  <meta property="og:description" content="A real person prices your route across every carrier that flies it, then sends you a short list. All-in prices, no booking fee."/>
   <meta property="og:url" content="https://cabana.africa/flights"/>
   <meta property="og:type" content="website"/>
   <meta property="og:image" content="https://cabana.africa/og-flights.jpg"/>
   <meta property="og:image:width" content="1200"/>
   <meta property="og:image:height" content="630"/>
-  <meta property="og:image:alt" content="Book Flights in Kenya: Domestic & East Africa | Cabana"/>
+  <meta property="og:image:alt" content="Cabana Flight Desk: flights from Nairobi and across Africa"/>
   <meta property="og:locale" content="en_KE"/>
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image"/>
-  <meta name="twitter:title" content="Cheap Flights Kenya: Search &amp; Book | Cabana"/>
-  <meta name="twitter:description" content="Search and book flights from Nairobi, Mombasa and across Kenya on Cabana. Zero commission travel super-app: Cabana, now Cabana."/>
+  <meta name="twitter:title" content="Cabana Flight Desk: tell us where, we find the fare"/>
+  <meta name="twitter:description" content="A real person prices your route across every carrier that flies it, then sends you a short list. All-in prices, no booking fee."/>
   <meta name="twitter:image" content="https://cabana.africa/og-flights.jpg"/>
-  <meta name="twitter:image:alt" content="Book Flights in Kenya: Domestic & East Africa | Cabana"/>
+  <meta name="twitter:image:alt" content="Cabana Flight Desk"/>
 
-  <!-- DNS prefetch for performance (also helps SEO via speed) -->
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link rel="dns-prefetch" href="//fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="dns-prefetch" href="//fonts.googleapis.com"/>
   <link rel="dns-prefetch" href="//fonts.gstatic.com"/>
-  <link rel="dns-prefetch" href="//cdn.jsdelivr.net"/>
-  <link rel="dns-prefetch" href="//api.unsplash.com"/>
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "Service",
-    "name": "Flight Booking Kenya",
-    "serviceType": "Flight Booking",
-    "url": "https://cabana.africa/flights",
-    "description": "Compare and book domestic Kenya flights, East Africa routes and international travel. Kenya Airways, Jambojet and more.",
-    "areaServed": { "@type": "Country", "name": "Kenya" },
-    "provider": { "@type": "Organization", "name": "Cabana" }
-  }
-  </script>
-<title>Cheap Flights Kenya: Search &amp; Book | Cabana</title>
-<!-- Session core: one Supabase client per tab. Multiple clients on the
-     same storage key race each other and silently drop the session. -->
-<style>
 
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-:root{
-  --glass:#FCFCFD;--glass-2:#F4F5FB;--glass-3:#EBEDF7;
-  --ink:#0A0A14;--ink-soft:#4A4C66;--ink-faint:#8E90AD;
-  --lilac:#B8A4F4;--lilac-deep:#8B6FE8;--mint:#5EEAD4;--mint-deep:#2DD4BF;
-  --peach:#FFB59E;--electric:#4361FF;--violet:#7B2FF7;--ember:#FF6B2C;
-  --line:rgba(10,10,20,0.07);--line-2:rgba(10,10,20,0.13);
-  --font-display:'Geist','Inter',sans-serif;--font-body:'Inter',system-ui,sans-serif;
-  --font-data:'Geist',monospace;
-  --shadow-glass:0 8px 32px rgba(0,0,0,0.06);
-  --shadow-lift:0 24px 64px rgba(0,0,0,0.12);
-  --radius:20px;
-}
-html,body{min-height:100%;font-family:var(--font-body);background:var(--glass);color:var(--ink);-webkit-font-smoothing:antialiased;overflow-x:hidden;}
+<title>Flight Desk: book flights from Nairobi and across Africa | Cabana</title>
 
-/* aurora */
-.aurora{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;}
-.ab{position:absolute;border-radius:50%;filter:blur(90px);opacity:.38;mix-blend-mode:multiply;animation:drift 26s ease-in-out infinite;}
-.ab-1{width:560px;height:560px;top:-12%;left:-8%;background:radial-gradient(circle,var(--t1),transparent 68%);}
-.ab-2{width:460px;height:460px;bottom:-10%;right:-6%;animation-delay:-10s;opacity:.26;background:radial-gradient(circle,var(--t2),transparent 70%);}
-.ab-3{width:380px;height:380px;top:40%;left:40%;animation-delay:-18s;opacity:.2;background:radial-gradient(circle,var(--t3),transparent 72%);}
-@keyframes drift{0%,100%{transform:translate(0,0) scale(1);}33%{transform:translate(50px,-36px) scale(1.1);}66%{transform:translate(-36px,46px) scale(.94);}}
-
-/* ── ENTRY TRANSITION ── */
-#tx{position:fixed;inset:0;z-index:9999;background:#05060F;display:flex;align-items:center;justify-content:center;overflow:hidden;}
-#tx.done{animation:txOut .9s cubic-bezier(.7,0,.2,1) forwards;}
-@keyframes txOut{to{opacity:0;transform:scale(1.1);visibility:hidden;pointer-events:none;}}
-.tx-aurora{position:absolute;inset:0;}
-.tx-ab{position:absolute;border-radius:50%;filter:blur(80px);opacity:0;animation:txBloom 1.1s cubic-bezier(.4,0,.2,1) forwards;}
-.tx-ab-1{width:420px;height:420px;top:30%;left:28%;background:radial-gradient(circle,var(--t1),transparent 68%);}
-.tx-ab-2{width:360px;height:360px;bottom:26%;right:24%;animation-delay:.12s;background:radial-gradient(circle,var(--t2),transparent 70%);}
-@keyframes txBloom{to{opacity:.55;}}
-.tx-craft{position:relative;z-index:2;text-align:center;}
-.tx-ico{margin:0 auto 18px;opacity:0;animation:txRise 1s .15s cubic-bezier(.34,1.56,.64,1) forwards;filter:drop-shadow(0 8px 30px var(--t1));}
-@keyframes txRise{0%{opacity:0;transform:var(--rise-from);}100%{opacity:1;transform:none;}}
-.tx-label{font-family:var(--font-display);font-style:italic;font-weight:500;font-size:38px;color:#fff;opacity:0;animation:fadeUp .7s .5s forwards;background:linear-gradient(120deg,var(--t1-light),#fff);-webkit-background-clip:text;background-clip:text;color:transparent;}
-.tx-sub{font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:rgba(255,255,255,.45);margin-top:8px;opacity:0;animation:fadeUp .6s .65s forwards;}
-@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
-
-/* ── TOPBAR ── */
-.topbar{position:sticky;top:0;z-index:100;height:66px;display:flex;align-items:center;justify-content:space-between;padding:0 26px;background:rgba(252,252,253,.74);backdrop-filter:blur(22px) saturate(180%);border-bottom:1px solid var(--line);}
-.tb-left{display:flex;align-items:center;gap:12px;}
-.tb-back{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink-soft);transition:all .25s;text-decoration:none;}
-.tb-back:hover{border-color:var(--t1);color:var(--t1);}
-.tb-logo{height:48px;width:auto;}
-.tb-cab-wm{height:26px;width:auto;display:block;}
-.tb-icon-sm{height:28px;width:28px;object-fit:contain;flex-shrink:0;border-radius:7px;}
-.tb-brand{font-family:var(--font-display);font-weight:500;font-size:18px;}
-.tb-brand em{font-style:italic;background:var(--theme-grad);-webkit-background-clip:text;background-clip:text;color:transparent;}
-.tb-right{display:flex;align-items:center;gap:10px;}
-.tb-chip{font-size:11px;font-weight:600;padding:6px 13px;border-radius:100px;color:var(--t1);background:rgba(var(--t1-rgb),.08);border:1px solid rgba(var(--t1-rgb),.2);}
-
-/* ── HERO STRIP ── */
-.hero{position:relative;z-index:2;padding:36px 26px 0;max-width:1180px;margin:0 auto;}
-.hero-eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--t1);margin-bottom:12px;padding:6px 14px;border-radius:100px;background:rgba(var(--t1-rgb),.09);border:1px solid rgba(var(--t1-rgb),.2);}
-.hero-title{font-family:var(--font-display);font-weight:400;font-size:clamp(28px,4.4vw,46px);letter-spacing:-.02em;line-height:1.06;margin-bottom:10px;}
-.hero-title em{font-style:italic;font-weight:500;background:var(--theme-grad);-webkit-background-clip:text;background-clip:text;color:transparent;}
-.hero-sub{font-size:15px;color:var(--ink-soft);margin-bottom:28px;max-width:500px;line-height:1.6;}
-
-/* live exchange-rate banner */
-.kes-rate-banner{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:var(--ink-soft);padding:7px 14px;border-radius:100px;background:rgba(255,255,255,.6);border:1px solid var(--line);margin-bottom:14px;}
-.kes-rate-banner strong{color:var(--violet);font-weight:600;}
-.kes-rate-banner.stale{color:var(--ink-faint);}
-
-/* search / filter bar */
-.search-bar{display:flex;align-items:stretch;gap:0;background:rgba(255,255,255,.68);backdrop-filter:blur(14px);border:1px solid var(--line-2);border-radius:16px;padding:5px;box-shadow:var(--shadow-glass);max-width:720px;margin-bottom:18px;}
-.sb-field{flex:1;padding:10px 16px;cursor:pointer;border-radius:12px;transition:background .2s;min-width:0;}
-.sb-field:hover{background:var(--glass-2);}
-.sb-label{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:2px;}
-.sb-val{font-size:13px;font-weight:500;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.sb-val.ph{color:var(--ink-faint);font-weight:400;}
-.sb-sep{width:1px;background:var(--line);margin:8px 0;}
-.sb-btn{width:48px;border-radius:12px;background:var(--theme-grad);border:none;display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;margin-left:4px;flex-shrink:0;transition:filter .2s;}
-.sb-btn:hover{filter:brightness(1.1);}
-
-/* filter chips */
-.filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
-.fchip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:var(--ink-soft);padding:8px 14px;border-radius:100px;background:rgba(255,255,255,.6);border:1px solid var(--line);cursor:pointer;transition:all .22s;white-space:nowrap;}
-.fchip:hover{border-color:var(--t1);}
-.fchip.active{background:var(--theme-grad);color:#fff;border-color:transparent;}
-
-/* content area */
-.content{position:relative;z-index:2;max-width:1180px;margin:0 auto;padding:16px 26px 70px;}
-.content-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;}
-.result-count{font-size:14px;color:var(--ink-soft);}
-.result-count strong{color:var(--ink);}
-
-/* CARD GRID */
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;}
-.card{border-radius:var(--radius);overflow:hidden;background:rgba(255,255,255,.64);backdrop-filter:blur(10px);border:1px solid var(--line);cursor:pointer;transition:all .4s cubic-bezier(.22,1,.36,1);opacity:0;transform:translateY(20px);}
-.card.in{opacity:1;transform:none;}
-.card:hover{transform:translateY(-7px);box-shadow:var(--shadow-lift);border-color:transparent;}
-.card-img{height:190px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;}
-.card-img img{width:100%;height:100%;object-fit:cover;transition:transform .6s cubic-bezier(.22,1,.36,1);}
-.card:hover .card-img img{transform:scale(1.06);}
-.card-img-ico{width:52px;height:52px;color:rgba(255,255,255,.9);}
-.card-badge{position:absolute;top:12px;left:12px;padding:5px 11px;border-radius:100px;font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;background:rgba(252,252,253,.9);backdrop-filter:blur(8px);color:var(--t1);}
-.card-fav{position:absolute;top:12px;right:12px;width:34px;height:34px;border-radius:50%;background:rgba(252,252,253,.85);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;font-size:14px;transition:transform .2s;}
-.card-fav:hover{transform:scale(1.12);}
-.card-body{padding:16px 18px 18px;}
-.card-meta-top{font-size:11px;color:var(--ink-faint);margin-bottom:5px;display:flex;align-items:center;gap:4px;}
-.card-meta-top svg{width:11px;height:11px;}
-.card-name{font-family:var(--font-display);font-weight:500;font-size:17px;color:var(--ink);margin-bottom:10px;line-height:1.25;}
-.card-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:13px;}
-.card-tag{font-size:11px;color:var(--ink-soft);padding:4px 9px;border-radius:100px;background:var(--glass-2);border:1px solid var(--line);}
-.card-foot{display:flex;align-items:flex-end;justify-content:space-between;}
-.card-price .val{font-family:var(--font-display);font-weight:500;font-size:20px;color:var(--ink);}
-.card-price .per{font-size:12px;color:var(--ink-faint);}
-.card-go{width:36px;height:36px;border-radius:50%;background:var(--glass-2);display:flex;align-items:center;justify-content:center;color:var(--t1);transition:all .3s;}
-.card:hover .card-go{background:var(--theme-grad);color:#fff;transform:rotate(-45deg);}
-
-/* DRAWER */
-.drawer-overlay{position:fixed;inset:0;z-index:200;background:rgba(10,10,20,.45);backdrop-filter:blur(4px);opacity:0;visibility:hidden;transition:all .38s;}
-.drawer-overlay.open{opacity:1;visibility:visible;}
-.drawer{position:fixed;top:0;right:0;bottom:0;width:460px;max-width:94vw;z-index:201;background:var(--glass);box-shadow:-16px 0 50px rgba(10,10,20,.12);transform:translateX(105%);transition:transform .5s cubic-bezier(.22,1,.36,1);overflow-y:auto;}
-.drawer.open{transform:none;}
-.dr-img{height:240px;position:relative;display:flex;align-items:center;justify-content:center;}
-.dr-img-ico{width:60px;height:60px;color:rgba(255,255,255,.9);}
-.dr-close{position:absolute;top:16px;left:16px;width:38px;height:38px;border-radius:50%;background:rgba(252,252,253,.88);backdrop-filter:blur(8px);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink);z-index:2;}
-.dr-body{padding:24px 26px 36px;}
-.dr-tag{font-size:12px;color:var(--ink-faint);margin-bottom:6px;display:flex;align-items:center;gap:5px;}
-.dr-title{font-family:var(--font-display);font-weight:500;font-size:24px;margin-bottom:14px;line-height:1.2;}
-.dr-tags{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:16px;}
-.dr-desc{font-size:14px;color:var(--ink-soft);line-height:1.7;margin-bottom:20px;}
-.dr-includes{margin-bottom:22px;}
-.dr-includes-title{font-family:var(--font-display);font-weight:500;font-size:15px;margin-bottom:10px;}
-.dr-includes-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-.dr-include{font-size:13px;color:var(--ink-soft);display:flex;align-items:center;gap:7px;}
-.dr-cta-box{position:sticky;bottom:0;background:var(--glass);border-top:1px solid var(--line);padding:16px 0 0;}
-.dr-price .val{font-family:var(--font-display);font-weight:600;font-size:26px;color:var(--ink);}
-.dr-price .per{font-size:14px;color:var(--ink-faint);}
-.dr-price .note{font-size:12px;color:var(--t1);font-weight:500;margin-top:3px;}
-.dr-cta{width:100%;padding:15px;border-radius:14px;background:var(--theme-grad);color:#fff;font-family:var(--font-body);font-weight:600;font-size:15px;border:none;cursor:pointer;transition:all .28s;margin-top:12px;box-shadow:0 10px 28px rgba(0,0,0,.15);}
-.dr-cta:hover{transform:translateY(-2px);box-shadow:0 14px 36px rgba(0,0,0,.2);}
-
-/* empty */
-.empty{text-align:center;padding:60px 20px;grid-column:1/-1;}
-.empty svg{width:52px;height:52px;color:var(--ink-faint);opacity:.3;margin:0 auto 16px;display:block;}
-.empty-title{font-family:var(--font-display);font-size:20px;margin-bottom:8px;}
-.empty-sub{font-size:13px;color:var(--ink-soft);}
-
-/* toast */
-.toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(16px);z-index:9999;padding:12px 20px;border-radius:100px;background:var(--ink);color:#fff;font-size:13px;font-weight:500;box-shadow:var(--shadow-lift);opacity:0;transition:all .35s;pointer-events:none;}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-
-@media(max-width:600px){.grid{grid-template-columns:1fr;}.hero,.content{padding-left:16px;padding-right:16px;}.drawer{width:100%;}}
-
-
-/* Flight card specifics */
-.flight-card{background:rgba(255,255,255,.68);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:var(--radius);padding:20px;display:flex;align-items:center;gap:20px;cursor:pointer;transition:all .35s cubic-bezier(.22,1,.36,1);opacity:0;transform:translateY(16px);}
-.flight-card.in{opacity:1;transform:none;}
-.flight-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lift);border-color:transparent;}
-.flight-airline{width:50px;height:50px;border-radius:14px;background:var(--theme-grad);display:flex;align-items:center;justify-content:center;color:#fff;font-family:var(--font-display);font-weight:600;font-size:13px;flex-shrink:0;letter-spacing:.02em;}
-.flight-route{flex:1;}
-.flight-times{display:flex;align-items:center;gap:12px;margin-bottom:4px;}
-.flight-time{font-family:var(--font-data);font-weight:600;font-size:20px;color:var(--ink);}
-.flight-arrow{flex:1;display:flex;align-items:center;gap:6px;color:var(--ink-faint);}
-.flight-arrow-line{flex:1;height:1px;background:var(--line-2);position:relative;}
-.flight-arrow-plane{position:absolute;top:50%;left:50%;transform:translate(-50%,-60%);color:var(--t1);}
-.flight-meta{font-size:12px;color:var(--ink-faint);display:flex;gap:12px;}
-.flight-stops{color:var(--t1);font-weight:600;}
-.flight-price-block{text-align:right;flex-shrink:0;}
-.flight-price{font-family:var(--font-display);font-weight:600;font-size:22px;color:var(--ink);}
-.flight-price-sub{font-size:11px;color:var(--ink-faint);}
-.flight-book-btn{display:block;margin-top:6px;padding:8px 16px;border-radius:10px;background:var(--theme-grad);color:#fff;font-size:12px;font-weight:600;border:none;cursor:pointer;transition:filter .2s;}
-.flight-book-btn:hover{filter:brightness(1.08);}
-
-:root{
-  --t1:#4361FF;--t2:#B8A4F4;--t3:#5EEAD4;
-  --t1-rgb:67,97,255;
-  --theme-grad:linear-gradient(135deg,#4361FF,#B8A4F4);
-  --t1-light:#a5b4fc;
-  --rise-from:translateX(-120px) translateY(20px) rotate(-12deg) scale(.7);
-}
-
-/* ══ MOBILE PERF: no backdrop-filter (GPU killer on mobile) ══ */
-@media(max-width:700px){
-  .card,.topbar,.search-bar,.drawer,.fchip,.card-badge,.card-fav,
-  .tb-back,.sb-btn,.dr-close,.dr-cta-box,.toast{
-    backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
-  }
-  .card{background:rgba(255,255,255,.96)!important;}
-  .topbar{background:rgba(252,252,253,.98)!important;}
-  .search-bar{background:rgba(255,255,255,.96)!important;}
-  .drawer{background:#FCFCFD!important;}
-  /* Reduce aurora opacity - expensive blur */
-  .ab{filter:blur(40px)!important;opacity:.15!important;}
-  /* Skip stagger animations - causes jank on mobile */
-  .card{opacity:1!important;transform:none!important;animation:none!important;}
-  .card.in{opacity:1!important;transform:none!important;}
-}
-
-@media(max-width:700px){
-  .card,.topbar,.search-bar,.drawer,.fchip{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;}
-  .card{background:rgba(255,255,255,.96)!important;opacity:1!important;transform:none!important;}
-  .topbar{background:rgba(252,252,253,.98)!important;}
-  .content{padding-left:12px!important;padding-right:12px!important;}
-  .hero{padding-left:14px!important;padding-right:14px!important;}
-  /* Flight card specific - prevent overflow */
-  .card-body{overflow:hidden;}
-  .card-price .val{font-size:16px!important;}
-  .card-foot{flex-wrap:wrap!important;gap:6px!important;}
-  .ab{filter:blur(40px)!important;opacity:.15!important;}
-}
-
-html.via-dash #tx{display:none!important;animation:none!important;}
-
-/* ═══════════════════════════════════════════════════════════════
-   COMPACT LISTING CARDS (mobile)
-   Reflows the large vertical card into a tight horizontal tile so
-   more products fit on screen. Matching the Stays layout.
-   Purely presentational: no markup or JS changes required.
-   ═══════════════════════════════════════════════════════════════ */
-@media(max-width:600px){
-  .grid{grid-template-columns:1fr;gap:12px;}
-  .card{
-    display:flex;align-items:stretch;flex-direction:row;
-    border-radius:16px;min-height:120px;
-  }
-  .card-img{
-    flex:0 0 120px;width:120px;height:auto;min-height:120px;
-    border-radius:0;
-  }
-  .card-img-ico{width:34px;height:34px;}
-  .card-badge{top:8px;left:8px;padding:4px 8px;font-size:9px;}
-  .card-fav{top:8px;right:8px;width:28px;height:28px;font-size:12px;}
-  .card-body{
-    flex:1;min-width:0;display:flex;flex-direction:column;
-    padding:10px 13px;gap:3px;justify-content:center;
-  }
-  .card-meta-top{margin-bottom:0;font-size:10.5px;}
-  .card-name{
-    font-size:15px;margin-bottom:0;line-height:1.25;
-    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
-    overflow:hidden;
-  }
-  /* Tags eat vertical room; hide on the compact tile to keep it short. */
-  .card-tags{display:none;}
-  .card-foot{margin-top:auto;padding-top:4px;align-items:center;}
-  .card-price .val{font-size:16px;}
-  .card-price .per{font-size:11px;}
-  .card-go{width:30px;height:30px;}
-  .card-go svg{width:13px;height:13px;}
-}
-
-</style>
-
-<!-- Travelpayouts Drive. Flight monetization -->
-<script nowprocket data-noptimize="1" data-cfasync="false" data-wpfc-render="false" seraph-accel-crit="1" data-no-defer="1">
-(function () {
-  var script = document.createElement("script");
-  script.async = 1;
-  script.src = 'https://emrldtp.com/NTQOMTQ1.js?t=544145';
-  document.head.appendChild(script);
-})();
-</script>
 <link rel="stylesheet" href="/brand.css"/>
 <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"/>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" media="print" onload="this.media='all';this.onload=null"/>
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"/></noscript>
 <link rel="stylesheet" href="/cabana-ds.css"/>
+<link rel="stylesheet" href="/cabana-flights.css"/>
+
+<style>
+/* Base reset and the shared chrome this page still borrows from the
+   original layout. Everything else lives in cabana-flights.css. */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{min-height:100%;font-family:'Inter',system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;}
+
+.topbar{position:sticky;top:0;z-index:100;height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;}
+.tb-left{display:flex;align-items:center;gap:12px;}
+.tb-back{width:38px;height:38px;border-radius:11px;border:1px solid;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .25s;text-decoration:none;flex-shrink:0;}
+.tb-logo{height:44px;width:auto;}
+.tb-cab-wm{height:24px;width:auto;display:block;}
+.tb-icon-sm{height:26px;width:26px;object-fit:contain;flex-shrink:0;border-radius:7px;}
+.tb-right{display:flex;align-items:center;gap:10px;}
+
+/* A visitor arriving from the dashboard has already seen a transition;
+   showing them a second one is theatre, not craft. */
+html.via-dash #fd-tx{display:none!important;}
+</style>
 <!-- CABANA-SEO-GRAPH -->
-<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":["Organization","TravelAgency","OnlineBusiness"],"@id":"https://cabana.africa/#organization","name":"Cabana","alternateName":["Cabana Africa","Cabana Travel","Cabana App","cabana.africa","Apatmento","Apatmento by Cabana"],"legalName":"Cabana","url":"https://cabana.africa/","logo":{"@type":"ImageObject","@id":"https://cabana.africa/#logo","url":"https://cabana.africa/cabana-icon-512.png","contentUrl":"https://cabana.africa/cabana-icon-512.png","width":512,"height":512,"caption":"Cabana"},"image":{"@id":"https://cabana.africa/#logo"},"description":"Cabana is Africa's zero-commission travel platform. Book short-stay apartments, safaris, flights, events, car hire and rides across all 54 African countries, direct from the host or operator. Hosts keep 100% of what they charge and guests pay no booking fee.","slogan":"Zero commission. Africa's own travel platform.","foundingDate":"2025","foundingLocation":{"@type":"Place","name":"Nairobi, Kenya"},"brand":{"@id":"https://cabana.africa/#brand"},"knowsAbout":["Travel in Africa","Safari booking","Short-stay apartments","Zero-commission booking","M-Pesa payments","African tourism","Vacation rentals","Airport transfers","Car hire","Event ticketing"],"areaServed":[{"@type":"Continent","name":"Africa"},{"@type":"Place","name":"Worldwide"}],"currenciesAccepted":"KES, NGN, GHS, ZAR, TZS, UGX, RWF, USD, EUR, GBP","paymentAccepted":"M-Pesa, MTN MoMo, Airtel Money, Visa, Mastercard, Bank transfer","email":"connect@cabana.africa","contactPoint":[{"@type":"ContactPoint","email":"connect@cabana.africa","contactType":"customer support","url":"https://cabana.africa/help.html","availableLanguage":["English","Swahili","French","Arabic","Portuguese"],"areaServed":"Africa"},{"@type":"ContactPoint","email":"partnership@cabana.africa","contactType":"sales","name":"Host & operator onboarding","availableLanguage":["English","Swahili","French"],"areaServed":"Africa"}],"sameAs":["https://twitter.com/apatmento","https://x.com/apatmento"]},{"@type":"Brand","@id":"https://cabana.africa/#brand","name":"Cabana","logo":"https://cabana.africa/cabana-icon-512.png","slogan":"Zero commission. Always."},{"@type":"WebSite","@id":"https://cabana.africa/#website","url":"https://cabana.africa/","name":"Cabana","alternateName":"Cabana Africa","description":"Africa's zero-commission travel platform.","publisher":{"@id":"https://cabana.africa/#organization"},"inLanguage":"en","potentialAction":[{"@type":"SearchAction","target":{"@type":"EntryPoint","urlTemplate":"https://cabana.africa/apartments?q={search_term_string}"},"query-input":"required name=search_term_string"}]},{"@type":"CollectionPage","@id":"https://cabana.africa/flights#webpage","url":"https://cabana.africa/flights","name":"Cheap Flights Kenya: Search & Book | Cabana","description":"Search and book flights from Nairobi, Mombasa and across Kenya on Cabana. Zero commission travel super-app: Cabana, now Cabana.","isPartOf":{"@id":"https://cabana.africa/#website"},"about":{"@id":"https://cabana.africa/#organization"},"publisher":{"@id":"https://cabana.africa/#organization"},"inLanguage":"en","dateModified":"2026-08-13","breadcrumb":{"@id":"https://cabana.africa/flights#breadcrumb"},"primaryImageOfPage":{"@type":"ImageObject","url":"https://cabana.africa/og-flights.jpg"},"speakable":{"@type":"SpeakableSpecification","cssSelector":[".hero h1",".hero .sub",".sec p"]}},{"@type":"BreadcrumbList","@id":"https://cabana.africa/flights#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://cabana.africa/"},{"@type":"ListItem","position":2,"name":"Flights"}]},{"@type":"Product","@id":"https://cabana.africa/flights#product","name":"Cabana Flights","description":"Search and compare flights into and across Africa.","url":"https://cabana.africa/flights","category":"Flights","brand":{"@id":"https://cabana.africa/#brand"}},{"@type":"Service","@id":"https://cabana.africa/flights#service","name":"Cabana Flights","description":"Search and compare flights into and across Africa.","serviceType":"Flights","provider":{"@id":"https://cabana.africa/#organization"},"areaServed":{"@type":"Continent","name":"Africa"},"audience":{"@type":"Audience","audienceType":"Travellers to Africa"}},{"@type":"ItemList","@id":"https://cabana.africa/flights#itemlist","name":"Flights by country","numberOfItems":24,"itemListElement":[{"@type":"ListItem","position":1,"name":"Kenya","url":"https://cabana.africa/kenya-travel"},{"@type":"ListItem","position":2,"name":"Tanzania","url":"https://cabana.africa/tanzania-travel"},{"@type":"ListItem","position":3,"name":"Uganda","url":"https://cabana.africa/uganda-travel"},{"@type":"ListItem","position":4,"name":"Rwanda","url":"https://cabana.africa/rwanda-travel"},{"@type":"ListItem","position":5,"name":"Ethiopia","url":"https://cabana.africa/ethiopia-travel"},{"@type":"ListItem","position":6,"name":"Seychelles","url":"https://cabana.africa/seychelles-travel"},{"@type":"ListItem","position":7,"name":"Mauritius","url":"https://cabana.africa/mauritius-travel"},{"@type":"ListItem","position":8,"name":"Madagascar","url":"https://cabana.africa/madagascar-travel"},{"@type":"ListItem","position":9,"name":"Nigeria","url":"https://cabana.africa/nigeria-travel"},{"@type":"ListItem","position":10,"name":"Ghana","url":"https://cabana.africa/ghana-travel"},{"@type":"ListItem","position":11,"name":"Senegal","url":"https://cabana.africa/senegal-travel"},{"@type":"ListItem","position":12,"name":"Côte d'Ivoire","url":"https://cabana.africa/cote-divoire-travel"},{"@type":"ListItem","position":13,"name":"Benin","url":"https://cabana.africa/benin-travel"},{"@type":"ListItem","position":14,"name":"Sierra Leone","url":"https://cabana.africa/sierra-leone-travel"},{"@type":"ListItem","position":15,"name":"Gambia","url":"https://cabana.africa/gambia-travel"},{"@type":"ListItem","position":16,"name":"Cape Verde","url":"https://cabana.africa/cape-verde-travel"},{"@type":"ListItem","position":17,"name":"South Africa","url":"https://cabana.africa/south-africa-travel"},{"@type":"ListItem","position":18,"name":"Namibia","url":"https://cabana.africa/namibia-travel"},{"@type":"ListItem","position":19,"name":"Botswana","url":"https://cabana.africa/botswana-travel"},{"@type":"ListItem","position":20,"name":"Zimbabwe","url":"https://cabana.africa/zimbabwe-travel"},{"@type":"ListItem","position":21,"name":"Zambia","url":"https://cabana.africa/zambia-travel"},{"@type":"ListItem","position":22,"name":"Mozambique","url":"https://cabana.africa/mozambique-travel"},{"@type":"ListItem","position":23,"name":"Malawi","url":"https://cabana.africa/malawi-travel"},{"@type":"ListItem","position":24,"name":"Angola","url":"https://cabana.africa/angola-travel"}]},{"@type":"FAQPage","@id":"https://cabana.africa/flights#faq","mainEntity":[{"@type":"Question","name":"How do I find the cheapest flights from Nairobi?","acceptedAnswer":{"@type":"Answer","text":"Search above and stay flexible on dates. Midweek departures and booking a few weeks ahead usually return the lowest fares."}},{"@type":"Question","name":"Which airlines can I compare?","acceptedAnswer":{"@type":"Answer","text":"Major international carriers, regional operators and budget airlines, all in one search."}},{"@type":"Question","name":"Does Cabana charge a booking fee for flights?","acceptedAnswer":{"@type":"Answer","text":"No. We add no booking levy. You book at face value with the airline or travel partner."}}]}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":["Organization","TravelAgency","OnlineBusiness"],"@id":"https://cabana.africa/#organization","name":"Cabana","alternateName":["Cabana Africa","Cabana Travel","Cabana App","cabana.africa","Apatmento","Apatmento by Cabana"],"legalName":"Cabana","url":"https://cabana.africa/","logo":{"@type":"ImageObject","@id":"https://cabana.africa/#logo","url":"https://cabana.africa/cabana-icon-512.png","contentUrl":"https://cabana.africa/cabana-icon-512.png","width":512,"height":512,"caption":"Cabana"},"image":{"@id":"https://cabana.africa/#logo"},"description":"Cabana is Africa's zero-commission travel platform. Book short-stay apartments, safaris, flights, events, car hire and rides across all 54 African countries, direct from the host or operator. Hosts keep 100% of what they charge and guests pay no booking fee.","slogan":"Zero commission. Africa's own travel platform.","foundingDate":"2025","foundingLocation":{"@type":"Place","name":"Nairobi, Kenya"},"brand":{"@id":"https://cabana.africa/#brand"},"knowsAbout":["Travel in Africa","Safari booking","Short-stay apartments","Zero-commission booking","M-Pesa payments","African tourism","Vacation rentals","Airport transfers","Car hire","Event ticketing"],"areaServed":[{"@type":"Continent","name":"Africa"},{"@type":"Place","name":"Worldwide"}],"currenciesAccepted":"KES, NGN, GHS, ZAR, TZS, UGX, RWF, USD, EUR, GBP","paymentAccepted":"M-Pesa, MTN MoMo, Airtel Money, Visa, Mastercard, Bank transfer","email":"connect@cabana.africa","contactPoint":[{"@type":"ContactPoint","email":"connect@cabana.africa","contactType":"customer support","url":"https://cabana.africa/help.html","availableLanguage":["English","Swahili","French","Arabic","Portuguese"],"areaServed":"Africa"},{"@type":"ContactPoint","email":"partnership@cabana.africa","contactType":"sales","name":"Host & operator onboarding","availableLanguage":["English","Swahili","French"],"areaServed":"Africa"}],"sameAs":["https://twitter.com/apatmento","https://x.com/apatmento"]},{"@type":"Brand","@id":"https://cabana.africa/#brand","name":"Cabana","logo":"https://cabana.africa/cabana-icon-512.png","slogan":"Zero commission. Always."},{"@type":"WebSite","@id":"https://cabana.africa/#website","url":"https://cabana.africa/","name":"Cabana","alternateName":"Cabana Africa","description":"Africa's zero-commission travel platform.","publisher":{"@id":"https://cabana.africa/#organization"},"inLanguage":"en","potentialAction":[{"@type":"SearchAction","target":{"@type":"EntryPoint","urlTemplate":"https://cabana.africa/apartments?q={search_term_string}"},"query-input":"required name=search_term_string"}]},{"@type":"CollectionPage","@id":"https://cabana.africa/flights#webpage","url":"https://cabana.africa/flights","name":"Flight Desk: book flights from Nairobi and across Africa | Cabana","description":"Tell the Cabana flight desk where you are going and a person prices the route across every carrier that flies it, then sends a short list of real fares.","isPartOf":{"@id":"https://cabana.africa/#website"},"about":{"@id":"https://cabana.africa/#organization"},"publisher":{"@id":"https://cabana.africa/#organization"},"inLanguage":"en","dateModified":"2026-08-30","breadcrumb":{"@id":"https://cabana.africa/flights#breadcrumb"},"primaryImageOfPage":{"@type":"ImageObject","url":"https://cabana.africa/og-flights.jpg"},"speakable":{"@type":"SpeakableSpecification","cssSelector":[".hero h1",".hero .sub",".sec p"]}},{"@type":"BreadcrumbList","@id":"https://cabana.africa/flights#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://cabana.africa/"},{"@type":"ListItem","position":2,"name":"Flights"}]},{"@type":"Product","@id":"https://cabana.africa/flights#product","name":"Cabana Flights","description":"A managed flight booking desk for Africa. Describe your trip, receive priced options, choose one, we ticket it.","url":"https://cabana.africa/flights","category":"Flights","brand":{"@id":"https://cabana.africa/#brand"}},{"@type":"Service","@id":"https://cabana.africa/flights#service","name":"Cabana Flights","description":"A managed flight booking desk for Africa. Describe your trip, receive priced options, choose one, we ticket it.","serviceType":"Flights","provider":{"@id":"https://cabana.africa/#organization"},"areaServed":{"@type":"Continent","name":"Africa"},"audience":{"@type":"Audience","audienceType":"Travellers to Africa"}},{"@type":"ItemList","@id":"https://cabana.africa/flights#itemlist","name":"Flights by country","numberOfItems":24,"itemListElement":[{"@type":"ListItem","position":1,"name":"Kenya","url":"https://cabana.africa/kenya-travel"},{"@type":"ListItem","position":2,"name":"Tanzania","url":"https://cabana.africa/tanzania-travel"},{"@type":"ListItem","position":3,"name":"Uganda","url":"https://cabana.africa/uganda-travel"},{"@type":"ListItem","position":4,"name":"Rwanda","url":"https://cabana.africa/rwanda-travel"},{"@type":"ListItem","position":5,"name":"Ethiopia","url":"https://cabana.africa/ethiopia-travel"},{"@type":"ListItem","position":6,"name":"Seychelles","url":"https://cabana.africa/seychelles-travel"},{"@type":"ListItem","position":7,"name":"Mauritius","url":"https://cabana.africa/mauritius-travel"},{"@type":"ListItem","position":8,"name":"Madagascar","url":"https://cabana.africa/madagascar-travel"},{"@type":"ListItem","position":9,"name":"Nigeria","url":"https://cabana.africa/nigeria-travel"},{"@type":"ListItem","position":10,"name":"Ghana","url":"https://cabana.africa/ghana-travel"},{"@type":"ListItem","position":11,"name":"Senegal","url":"https://cabana.africa/senegal-travel"},{"@type":"ListItem","position":12,"name":"Côte d'Ivoire","url":"https://cabana.africa/cote-divoire-travel"},{"@type":"ListItem","position":13,"name":"Benin","url":"https://cabana.africa/benin-travel"},{"@type":"ListItem","position":14,"name":"Sierra Leone","url":"https://cabana.africa/sierra-leone-travel"},{"@type":"ListItem","position":15,"name":"Gambia","url":"https://cabana.africa/gambia-travel"},{"@type":"ListItem","position":16,"name":"Cape Verde","url":"https://cabana.africa/cape-verde-travel"},{"@type":"ListItem","position":17,"name":"South Africa","url":"https://cabana.africa/south-africa-travel"},{"@type":"ListItem","position":18,"name":"Namibia","url":"https://cabana.africa/namibia-travel"},{"@type":"ListItem","position":19,"name":"Botswana","url":"https://cabana.africa/botswana-travel"},{"@type":"ListItem","position":20,"name":"Zimbabwe","url":"https://cabana.africa/zimbabwe-travel"},{"@type":"ListItem","position":21,"name":"Zambia","url":"https://cabana.africa/zambia-travel"},{"@type":"ListItem","position":22,"name":"Mozambique","url":"https://cabana.africa/mozambique-travel"},{"@type":"ListItem","position":23,"name":"Malawi","url":"https://cabana.africa/malawi-travel"},{"@type":"ListItem","position":24,"name":"Angola","url":"https://cabana.africa/angola-travel"}]},{"@type":"FAQPage","@id":"https://cabana.africa/flights#faq","mainEntity":[{"@type":"Question","name":"How does the Cabana flight desk work?","acceptedAnswer":{"@type":"Answer","text":"You describe your trip: two airports, your dates and who is travelling. A person on our desk prices the route across the carriers that fly it and sends you a short list of options with one all-in price each. You choose one and we issue the ticket."}},{"@type":"Question","name":"How long does it take to get flight options?","acceptedAnswer":{"@type":"Answer","text":"Most requests are answered within about 45 minutes while the desk is staffed. You get a live countdown and a reference number as soon as you submit, and we message you the moment your options are ready."}},{"@type":"Question","name":"Do I need an account to request a flight?","acceptedAnswer":{"@type":"Answer","text":"No. You need a name and either an email address or a phone number. You receive a reference such as CBF-K7M2QX that opens your request from any device."}},{"@type":"Question","name":"Does Cabana charge a booking fee for flights?","acceptedAnswer":{"@type":"Answer","text":"There is no separate booking fee and nothing is added at checkout. Every option is quoted as one all-in price for your whole party, taxes included, so the number you see is the number you pay."}},{"@type":"Question","name":"What if you cannot find a good fare?","acceptedAnswer":{"@type":"Answer","text":"We tell you plainly and you pay nothing. Asking the desk costs nothing and commits you to nothing."}}]}]}</script>
 <!-- /CABANA-SEO-GRAPH -->
 </head>
 <body>
 <script>if(new URLSearchParams(location.search).get('back')==='1')document.documentElement.classList.add('via-dash');</script>
-<div class="aurora">
-  <div class="ab ab-1"></div><div class="ab ab-2"></div><div class="ab ab-3"></div>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     ENTRY · THE DEPARTURE
+     A night take-off in three acts: ground roll, rotation, cruise.
+     Runway lights race at the viewer, the gear folds away once the
+     wheels are off, the fans spool, the nav lights blink to the real
+     cadence (port red, starboard green, white double-strobe), and the
+     wordmark lands like a departure board turning over.
+
+     Pure CSS and SVG, transform and opacity only. Tap to skip. Anyone
+     who has asked for reduced motion gets a still frame instead.
+     ══════════════════════════════════════════════════════════════════ -->
+<div id="fd-tx" role="status" aria-label="Loading the flight desk">
+  <div class="fd-tx-horizon"></div>
+
+  <div class="fd-runway" id="fd-runway" aria-hidden="true"></div>
+
+  <div class="fd-cloud fd-cloud-1"></div>
+  <div class="fd-cloud fd-cloud-2"></div>
+  <div class="fd-cloud fd-cloud-3"></div>
+
+  <div class="fd-craft">
+    <div class="fd-trail"></div>
+    <div class="fd-trail fd-trail-2"></div>
+
+    <!-- Side profile: swept wing, two underslung turbofans with visible
+         fan blades, winglets, main gear on a retracting hinge, and the
+         three lights that make an aircraft legible at night. -->
+    <svg width="272" height="126" viewBox="0 0 272 126" fill="none" aria-hidden="true">
+      <defs>
+        <linearGradient id="fdBody" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#FFFFFF"/>
+          <stop offset="0.55" stop-color="#E4E9F8"/>
+          <stop offset="1" stop-color="#A9B4D6"/>
+        </linearGradient>
+        <linearGradient id="fdWing" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#C9D2EE"/>
+          <stop offset="1" stop-color="#8892B8"/>
+        </linearGradient>
+        <linearGradient id="fdTail" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#6D28FF"/>
+          <stop offset="1" stop-color="#4F6DFF"/>
+        </linearGradient>
+        <radialGradient id="fdGlowG"><stop offset="0" stop-color="#4EE0C8"/><stop offset="1" stop-color="#4EE0C8" stop-opacity="0"/></radialGradient>
+        <radialGradient id="fdGlowR"><stop offset="0" stop-color="#FF4D6D"/><stop offset="1" stop-color="#FF4D6D" stop-opacity="0"/></radialGradient>
+      </defs>
+
+      <!-- horizontal stabiliser -->
+      <path d="M34 56 L8 40 L4 42 L18 60 Z" fill="url(#fdWing)" opacity=".85"/>
+      <!-- vertical fin, carrying the brand -->
+      <path d="M40 54 L20 12 L30 10 L58 50 Z" fill="url(#fdTail)"/>
+      <path d="M34 34 L28 20 L32 19 L40 32 Z" fill="#fff" opacity=".28"/>
+
+      <!-- fuselage -->
+      <path d="M30 58 C30 51 44 47 70 45 L196 40 C224 39 246 44 258 52
+               C264 56 264 62 258 66 C246 74 224 79 196 78 L70 73
+               C44 71 30 67 30 60 Z" fill="url(#fdBody)"/>
+      <!-- cockpit glass -->
+      <path d="M238 50 C246 52 252 55 255 58 C252 61 246 63 240 63 C238 58 238 53 238 50 Z"
+            fill="#1B2547" opacity=".9"/>
+      <!-- cabin windows -->
+      <g fill="#8FA0CC" opacity=".65">
+        <rect x="76" y="54" width="6" height="4" rx="2"/><rect x="90" y="54" width="6" height="4" rx="2"/>
+        <rect x="104" y="53" width="6" height="4" rx="2"/><rect x="118" y="53" width="6" height="4" rx="2"/>
+        <rect x="132" y="53" width="6" height="4" rx="2"/><rect x="146" y="52" width="6" height="4" rx="2"/>
+        <rect x="160" y="52" width="6" height="4" rx="2"/><rect x="174" y="52" width="6" height="4" rx="2"/>
+        <rect x="188" y="51" width="6" height="4" rx="2"/><rect x="202" y="51" width="6" height="4" rx="2"/>
+      </g>
+      <!-- cheat line -->
+      <path d="M52 64 L232 60" stroke="#6D28FF" stroke-width="2" opacity=".5" stroke-linecap="round"/>
+
+      <!-- main wing, swept back -->
+      <path d="M112 62 L58 96 L74 100 L146 70 Z" fill="url(#fdWing)"/>
+      <path d="M58 96 L52 99 L56 102 L74 100 Z" fill="#6D28FF" opacity=".8"/>
+      <!-- far wing, dimmer for depth -->
+      <path d="M126 56 L92 30 L104 28 L156 52 Z" fill="url(#fdWing)" opacity=".45"/>
+
+      <!-- engine, with a spinning fan -->
+      <g>
+        <ellipse cx="124" cy="74" rx="21" ry="11" fill="#B7C1E2"/>
+        <ellipse cx="124" cy="74" rx="21" ry="11" fill="none" stroke="#7C87AE" stroke-width="1"/>
+        <ellipse cx="105" cy="74" rx="4.5" ry="9.5" fill="#151C36"/>
+        <g class="fd-fan" style="transform-origin:105px 74px">
+          <path d="M105 66 L105 82 M99 69 L111 79 M99 79 L111 69"
+                stroke="#8FA0CC" stroke-width="1.4" stroke-linecap="round"/>
+        </g>
+        <path d="M118 66 L134 64" stroke="#F5B12E" stroke-width="1.6" opacity=".55" stroke-linecap="round"/>
+      </g>
+
+      <!-- landing gear: folds away once the wheels are off -->
+      <g class="fd-gear">
+        <rect x="205" y="76" width="3" height="15" rx="1.5" fill="#7C87AE"/>
+        <circle cx="206.5" cy="94" r="5" fill="#1B2547"/>
+        <circle cx="206.5" cy="94" r="2" fill="#4A5578"/>
+        <rect x="112" y="80" width="3" height="17" rx="1.5" fill="#7C87AE"/>
+        <circle cx="113.5" cy="100" r="5.5" fill="#1B2547"/>
+        <circle cx="113.5" cy="100" r="2.2" fill="#4A5578"/>
+        <rect x="126" y="80" width="3" height="17" rx="1.5" fill="#7C87AE"/>
+        <circle cx="127.5" cy="100" r="5.5" fill="#1B2547"/>
+        <circle cx="127.5" cy="100" r="2.2" fill="#4A5578"/>
+      </g>
+
+      <!-- navigation lights -->
+      <circle class="fd-nav-port" cx="54" cy="99" r="9" fill="url(#fdGlowR)"/>
+      <circle class="fd-nav-port" cx="54" cy="99" r="2.6" fill="#FF4D6D"/>
+      <circle class="fd-nav-stbd" cx="98" cy="29" r="9" fill="url(#fdGlowG)"/>
+      <circle class="fd-nav-stbd" cx="98" cy="29" r="2.6" fill="#4EE0C8"/>
+      <circle class="fd-strobe" cx="26" cy="12" r="3" fill="#FFFFFF"/>
+      <circle class="fd-strobe" cx="26" cy="12" r="8" fill="#FFFFFF" opacity=".22"/>
+    </svg>
+  </div>
+
+  <div class="fd-tx-text">
+    <div class="fd-tx-title" id="fd-tx-title" aria-hidden="true"></div>
+    <div class="fd-tx-rule"></div>
+    <div class="fd-tx-sub">Nairobi &middot; Flight Desk</div>
+  </div>
+  <div class="fd-tx-skip">Tap to skip</div>
 </div>
 
-<!-- ENTRY TRANSITION -->
-<div id="tx">
-  <div class="tx-aurora">
-    <div class="tx-ab tx-ab-1"></div><div class="tx-ab tx-ab-2"></div>
-  </div>
-  <div class="tx-craft">
-    <div class="tx-ico" style="--rise-from:translateX(-120px) translateY(20px) rotate(-12deg) scale(.7);">
-  <svg width="88" height="88" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M17.8 19.2 16 11l3.5-3.5C21 6 21 4 21 4s-2 0-3.5 1.5L14 9 5.8 6.2l-1.9 1.9 7.1 3.4L9.6 14H6l-1 1 3 1 1 3 1-1v-3.6l3.5-1.4 3.4 7.1z"/>
-  </svg>
-  <!-- vapor trail -->
-  <div style="position:absolute;top:50%;left:-40px;width:0;height:2px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.6));border-radius:2px;animation:vapor .9s .3s ease-out forwards;"></div>
-</div>
-<style>@keyframes vapor{to{width:160px;opacity:0;}}
-/* ══ FLIGHTS MOBILE CARD FIX ══ */
-@media(max-width:600px){
-  .flight-card{flex-wrap:wrap;gap:12px;padding:14px;}
-  .flight-price-block{width:100%;display:flex;align-items:center;justify-content:space-between;text-align:left;border-top:1px solid var(--line);padding-top:10px;margin-top:2px;}
-  .flight-price{font-size:18px!important;}
-  .book-btn{margin-left:auto;}
-  .content{padding-left:12px!important;padding-right:12px!important;}
-  .hero{padding-left:14px!important;padding-right:14px!important;}
-}
-</style>
-    <div class="tx-label">Into the sky</div>
-    <div class="tx-sub">Cabana · Flights</div>
-  </div>
+<!-- ambient night sky behind the whole page -->
+<div class="fd-sky" aria-hidden="true">
+  <div class="fd-bloom fd-bloom-1"></div>
+  <div class="fd-bloom fd-bloom-2"></div>
+  <div class="fd-stars" id="fd-stars"></div>
 </div>
 
 <!-- TOPBAR -->
 <div class="topbar">
   <div class="tb-left">
-    <a href="dashboard.html?role=guest&back=1" class="tb-back">
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    <a href="dashboard.html?role=guest&back=1" class="tb-back" aria-label="Back to dashboard">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
     </a>
-    <img src="cabana-emblem.png" class="tb-icon-sm" alt="" fetchpriority="high" decoding="async"/><img src="cabana-wordmark-color.png" class="tb-logo tb-cab-wm" alt="Cabana" onerror="this.style.display='none'" loading="lazy" decoding="async"/>
-    
+    <img src="cabana-emblem.png" class="tb-icon-sm" alt="" fetchpriority="high" decoding="async"/>
+    <img src="cabana-wordmark-color.png" class="tb-logo tb-cab-wm" alt="Cabana" onerror="this.style.display='none'" loading="lazy" decoding="async"/>
   </div>
   <div class="tb-right">
-    
     <button class="apa-ico" id="apa-fav-btn" data-apa="fav" type="button" aria-label="Saved places" title="Saved places" style="display:none;" data-when="user">
-            <svg class="apa-fav-heart" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-            <span class="apa-fav-badge"></span>
+      <svg class="apa-fav-heart" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      <span class="apa-fav-badge"></span>
+    </button>
+  </div>
+</div>
+
+<main class="fd-wrap">
+
+  <!-- ═══ FORM VIEW ═══ -->
+  <div id="fd-form-wrap" class="fd-form-wrap">
+
+    <header class="fd-hero">
+      <span class="fd-eyebrow" id="fd-desk-pill">
+        <span class="fd-dot"></span>
+        <span id="fd-desk-text">Flight desk open</span>
+      </span>
+
+      <h1 class="fd-h1">Tell us where.<br><em>We find the fare.</em></h1>
+
+      <p class="fd-lede">
+        You describe the trip. A person on our desk prices it across every carrier
+        that flies the route, then sends you a short list with the real numbers on it.
+        You pick one. That is the whole thing.
+      </p>
+
+      <ul class="fd-promise">
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          One price, all in
+        </li>
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          No account needed
+        </li>
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          Nothing to pay to ask
+        </li>
+      </ul>
+
+      <div id="fd-recent" style="display:none;margin-bottom:22px"></div>
+    </header>
+
+    <!-- ═══ THE BOARDING PASS ═══ -->
+    <section class="fd-pass" id="fd-pass" aria-labelledby="fd-pass-h">
+      <h2 id="fd-pass-h" class="fd-sr">Your trip</h2>
+
+      <div class="fd-pass-head">
+        <div class="fd-pass-tag">
+          <span>Cabana &middot; Flight Desk</span>
+          <span class="fd-ref">REQUEST</span>
+        </div>
+
+        <div class="fd-seg" id="fd-trip" role="group" aria-label="Trip type">
+          <button type="button" data-trip="return"     aria-pressed="true">Return</button>
+          <button type="button" data-trip="one_way"    aria-pressed="false">One way</button>
+          <button type="button" data-trip="multi_city" aria-pressed="false">Multi-city</button>
+        </div>
+
+        <div class="fd-route">
+          <button type="button" class="fd-port" id="fd-o-btn" aria-haspopup="dialog">
+            <span class="fd-port-label">From</span>
+            <span class="fd-port-code is-empty" id="fd-o-code">···</span>
+            <span class="fd-port-city" id="fd-o-city">Choose an airport</span>
           </button>
 
+          <svg class="fd-arc" id="fd-arc" viewBox="0 0 96 56" aria-hidden="true">
+            <defs>
+              <linearGradient id="fdArcGrad" x1="0" y1="1" x2="1" y2="0">
+                <stop offset="0" stop-color="#6D28FF"/>
+                <stop offset="0.5" stop-color="#4F6DFF"/>
+                <stop offset="1" stop-color="#4EE0C8"/>
+              </linearGradient>
+            </defs>
+            <path d="M6 42 Q48 2 90 42"/>
+            <circle cx="6" cy="42" r="3"/>
+            <circle cx="90" cy="42" r="3"/>
+            <g class="fd-arc-plane" transform="translate(42,12)">
+              <path d="M12 6 L0 10 L0 8 L9 4 L0 2 L0 0 Z" fill="#4EE0C8"/>
+            </g>
+          </svg>
+
+          <button type="button" class="fd-port" id="fd-d-btn" aria-haspopup="dialog">
+            <span class="fd-port-label">To</span>
+            <span class="fd-port-code is-empty" id="fd-d-code">···</span>
+            <span class="fd-port-city" id="fd-d-city">Choose an airport</span>
+          </button>
+        </div>
+
+        <button type="button" class="fd-swap" id="fd-swap" aria-label="Swap origin and destination">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16H3m0 0 4-4m-4 4 4 4M17 8h4m0 0-4-4m4 4-4 4"/></svg>
+        </button>
+
+        <div class="fd-legline" id="fd-legline">Pick both ends and we will take it from there</div>
+      </div>
+
+      <div class="fd-perf" aria-hidden="true"></div>
+
+      <div class="fd-pass-body">
+
+        <div class="fd-grid fd-grid-2" style="margin-bottom:18px">
+          <div class="fd-field" id="fd-f-depart">
+            <label for="fd-depart">Departing</label>
+            <input type="date" class="fd-in" id="fd-depart" required>
+          </div>
+          <div class="fd-field" id="fd-f-return">
+            <label for="fd-return">Returning</label>
+            <input type="date" class="fd-in" id="fd-return">
+          </div>
+        </div>
+
+        <div class="fd-lab">Dates</div>
+        <div class="fd-chips" id="fd-flex" role="group" aria-label="Date flexibility" style="margin-bottom:20px">
+          <button type="button" class="fd-chip" data-val="exact" aria-pressed="true">These exact days</button>
+          <button type="button" class="fd-chip" data-val="3"     aria-pressed="false">Give or take 3 days</button>
+          <button type="button" class="fd-chip" data-val="7"     aria-pressed="false">Give or take a week</button>
+          <button type="button" class="fd-chip" data-val="month" aria-pressed="false">Anywhere that month</button>
+        </div>
+        <p class="fd-hint" style="margin:-12px 0 20px">
+          Flexibility is usually worth more than any discount code. Tell us and we will look either side.
+        </p>
+
+        <div class="fd-lab">Who is travelling <span id="fd-pax-sum" style="float:right;text-transform:none;letter-spacing:0;font-weight:500">1 traveller</span></div>
+        <div class="fd-grid fd-grid-3" style="margin-bottom:20px">
+          <div class="fd-step">
+            <div><div class="fd-step-t">Adults</div><div class="fd-step-s">12 and over</div></div>
+            <div class="fd-step-c">
+              <button type="button" class="fd-step-b" id="fd-dec-adults" aria-label="Fewer adults">&minus;</button>
+              <span class="fd-step-n" id="fd-n-adults">1</span>
+              <button type="button" class="fd-step-b" id="fd-inc-adults" aria-label="More adults">+</button>
+            </div>
+          </div>
+          <div class="fd-step">
+            <div><div class="fd-step-t">Children</div><div class="fd-step-s">2 to 11</div></div>
+            <div class="fd-step-c">
+              <button type="button" class="fd-step-b" id="fd-dec-children" aria-label="Fewer children">&minus;</button>
+              <span class="fd-step-n" id="fd-n-children">0</span>
+              <button type="button" class="fd-step-b" id="fd-inc-children" aria-label="More children">+</button>
+            </div>
+          </div>
+          <div class="fd-step">
+            <div><div class="fd-step-t">Infants</div><div class="fd-step-s">Under 2, on a lap</div></div>
+            <div class="fd-step-c">
+              <button type="button" class="fd-step-b" id="fd-dec-infants" aria-label="Fewer infants">&minus;</button>
+              <span class="fd-step-n" id="fd-n-infants">0</span>
+              <button type="button" class="fd-step-b" id="fd-inc-infants" aria-label="More infants">+</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="fd-lab">Cabin</div>
+        <div class="fd-chips" id="fd-cabin" role="group" aria-label="Cabin class">
+          <button type="button" class="fd-chip" data-val="economy"         aria-pressed="true">Economy</button>
+          <button type="button" class="fd-chip" data-val="premium_economy" aria-pressed="false">Premium economy</button>
+          <button type="button" class="fd-chip" data-val="business"        aria-pressed="false">Business</button>
+          <button type="button" class="fd-chip" data-val="first"           aria-pressed="false">First</button>
+        </div>
+
+        <button type="button" class="fd-more" id="fd-more" aria-expanded="false" aria-controls="fd-fold">
+          <span id="fd-more-label">More options</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+
+        <div class="fd-fold" id="fd-fold">
+          <div class="fd-grid fd-grid-2" style="margin-bottom:16px">
+            <div class="fd-field">
+              <label for="fd-bags">Checked bags each</label>
+              <select class="fd-sel" id="fd-bags">
+                <option value="0">Cabin bag only</option>
+                <option value="1" selected>1 checked bag</option>
+                <option value="2">2 checked bags</option>
+                <option value="3">3 or more</option>
+              </select>
+            </div>
+            <div class="fd-field">
+              <label for="fd-stops">Stops</label>
+              <select class="fd-sel" id="fd-stops">
+                <option value="">However it works out cheapest</option>
+                <option value="0">Non-stop only</option>
+                <option value="1">One stop at most</option>
+              </select>
+            </div>
+          </div>
+          <div class="fd-field" style="margin-bottom:16px">
+            <label for="fd-budget">Budget ceiling, total in KES</label>
+            <input type="number" class="fd-in" id="fd-budget" placeholder="Leave blank and we will show the range" min="0" step="1000" inputmode="numeric">
+            <p class="fd-hint">If nothing lands under your ceiling we will say so rather than quietly quoting over it.</p>
+          </div>
+          <div class="fd-field">
+            <label for="fd-notes">Anything else we should know</label>
+            <textarea class="fd-in" id="fd-notes" placeholder="Preferred airline, morning departures, wheelchair assistance, travelling with an instrument, a connection you need to protect…"></textarea>
+          </div>
+        </div>
+
+        <div class="fd-divider">Where to reach you</div>
+
+        <div class="fd-grid fd-grid-2" style="margin-bottom:14px">
+          <div class="fd-field" id="fd-f-name">
+            <label for="fd-name">Your name</label>
+            <input type="text" class="fd-in" id="fd-name" autocomplete="name" placeholder="As it appears on your passport" required>
+          </div>
+          <div class="fd-field" id="fd-f-phone">
+            <label for="fd-phone">Phone or WhatsApp</label>
+            <input type="tel" class="fd-in" id="fd-phone" autocomplete="tel" placeholder="+254 7…" inputmode="tel">
+          </div>
+        </div>
+
+        <div class="fd-field" style="margin-bottom:16px" id="fd-f-email">
+          <label for="fd-email">Email</label>
+          <input type="email" class="fd-in" id="fd-email" autocomplete="email" placeholder="you@example.com" inputmode="email">
+          <p class="fd-hint">One of the two is enough. We use it to send your options and nothing else.</p>
+        </div>
+
+        <div class="fd-lab">Reply to me on</div>
+        <div class="fd-chips" id="fd-channel" role="group" aria-label="Preferred contact channel">
+          <button type="button" class="fd-chip" data-val="whatsapp" aria-pressed="true">WhatsApp</button>
+          <button type="button" class="fd-chip" data-val="email"    aria-pressed="false">Email</button>
+          <button type="button" class="fd-chip" data-val="sms"      aria-pressed="false">SMS</button>
+          <button type="button" class="fd-chip" data-val="call"     aria-pressed="false">A call</button>
+        </div>
+
+        <button type="button" class="fd-submit" id="fd-submit" disabled>
+          <span class="fd-spin"></span>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/></svg>
+          <span id="fd-submit-label">Send to the flight desk</span>
+        </button>
+
+        <p class="fd-note">
+          Asking costs nothing and commits you to nothing. You will get a reference
+          on the next screen &mdash; keep it, and you can come back to this trip from any device.
+        </p>
+      </div>
+    </section>
+
+    <!-- ═══ HOW IT WORKS ═══ -->
+    <section class="fd-sec">
+      <h2 class="fd-sec-h">How a request becomes a ticket</h2>
+      <p class="fd-sec-s">Four steps, and you are only involved in two of them.</p>
+      <div class="fd-steps">
+        <div class="fd-stepcard">
+          <div class="fd-stepcard-n">STEP 01</div>
+          <div class="fd-stepcard-t">You describe the trip</div>
+          <div class="fd-stepcard-d">Two airports, your dates, who is coming. Thirty seconds, no account, no card.</div>
+        </div>
+        <div class="fd-stepcard">
+          <div class="fd-stepcard-n">STEP 02</div>
+          <div class="fd-stepcard-t">We price it properly</div>
+          <div class="fd-stepcard-d">A person works the route across the carriers that fly it, including the ones that never surface in a generic search, and checks the fare rules before quoting.</div>
+        </div>
+        <div class="fd-stepcard">
+          <div class="fd-stepcard-n">STEP 03</div>
+          <div class="fd-stepcard-t">You choose</div>
+          <div class="fd-stepcard-d">A short list, not four hundred rows. Times, stops, baggage and one all-in price per option. Pick the one that suits you.</div>
+        </div>
+      </div>
+      <div class="fd-steps" style="margin-top:14px;grid-template-columns:1fr">
+        <div class="fd-stepcard">
+          <div class="fd-stepcard-n">STEP 04</div>
+          <div class="fd-stepcard-t">We issue the ticket</div>
+          <div class="fd-stepcard-d">You pay, we ticket, your e-ticket and booking reference land in your inbox. If anything changes before you fly, you have a person to call rather than a queue to join.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ POPULAR ROUTES ═══ -->
+    <section class="fd-sec">
+      <h2 class="fd-sec-h">Routes we work every day</h2>
+      <p class="fd-sec-s">Tap one to fill in the trip above.</p>
+      <div class="fd-routes" id="fd-popular"></div>
+    </section>
+
+    <!-- ═══ SEARCH IT YOURSELF ═══
+         The affiliate search stays, one rung down. Someone who would
+         rather browse should be able to, without it competing with the
+         desk for attention. -->
+    <section class="fd-self" id="fd-self">
+      <div class="fd-self-h">Would rather look yourself?</div>
+      <div class="fd-self-d">
+        Search live schedules and fares here and book direct. You will get a fast answer
+        and a machine's opinion. Use the desk above when the trip has a wrinkle in it &mdash;
+        a tight connection, a visa run, a group, an infant, a date you can move.
+      </div>
+      <div class="fd-self-w" id="fd-self-widget"></div>
+    </section>
+  </div>
+
+  <!-- ═══ STATUS VIEW ═══ -->
+  <section id="fd-status" class="fd-status" style="padding-top:36px" aria-live="polite"></section>
+
+</main>
+
+<!-- AIRPORT PICKER -->
+<div class="fd-sheet" id="fd-sheet" role="dialog" aria-modal="true" aria-labelledby="fd-sheet-title">
+  <div class="fd-sheet-panel">
+    <div class="fd-sheet-head">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+        <div class="fd-sheet-title" id="fd-sheet-title">Flying from</div>
+        <button type="button" class="fd-chip" id="fd-sheet-close" style="padding:5px 12px">Close</button>
+      </div>
+      <input type="text" class="fd-in" id="fd-sheet-in" placeholder="City, airport or code"
+             autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false"
+             role="combobox" aria-expanded="true" aria-controls="fd-sheet-list">
+    </div>
+    <div class="fd-sheet-list" id="fd-sheet-list" role="listbox" aria-label="Airports"></div>
   </div>
 </div>
 
-
-<div class="hero">
-  <span class="hero-eyebrow">Book flights</span>
-  <h1 class="hero-title">Fly further, <em>spend less.</em></h1>
-  <p class="hero-sub">Compare routes across Kenya and East Africa. Face-value fares, no booking levy added by us.</p>
-  <div class="kes-rate-banner" id="kes-rate-banner">
-    <span id="kes-rate-text">Loading live exchange rate…</span>
-  </div>
-  <div id="kiwi-search-widget" style="margin-bottom:18px;">
-    <script async src="https://tpwidg.com/content?currency=usd&trs=544145&shmarker=744334.Flights_page&locale=en&default_origin=NBO&stops=any&show_hotels=false&powered_by=false&border_radius=12&plain=true&color_button=%237B2FF7&color_button_text=%23ffffff&promo_id=3414&campaign_id=111" charset="utf-8"></script>
-  </div>
-
-</div>
-
-<div style="max-width:1180px;margin:0 auto;padding:0 26px 0;"><div data-showcase="ticker"></div></div>
-
-<div class="toast" id="toast"></div>
-
-<!-- Supabase bootstrap. Kept synchronous because the inline script
-     immediately below calls createClient() during parse, but moved
-     out of <head> so everything above renders without waiting on it. -->
-<script src="/vendor-supabase-2.112.3.js"></script>
-<script src="/apa-session.js"></script>
-<script src="/apa-admin-guard.js"></script>
-<script>
-
-const SUPABASE_URL='https://gfwgbgdvxtocwhilrtdw.supabase.co';
-const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
-let sb=null;
-try{const{createClient}=supabase;sb=createClient(SUPABASE_URL,SUPABASE_ANON_KEY);}catch(e){}
-function showToast(m,d=3200){const t=document.getElementById('toast');if(!t)return;t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),d);}
-
-/* ── Live USD → KES rate banner ──
-   Independent of the Kiwi/Aviasales widget. Fetches its own rate from a
-   public, no-key exchange-rate API and shows it as a reference next to the
-   widget (which only quotes in USD). Cached for 6 hours to limit requests.
-   If the fetch fails for any reason, falls back to a fixed approximate
-   rate so the banner never breaks or shows an error to visitors. */
-(function(){
-  const FALLBACK_RATE = 129.5; // approx USD→KES, update occasionally
-  const CACHE_KEY = 'apatmento_usd_kes_rate';
-  const CACHE_MS = 6 * 60 * 60 * 1000; // 6 hours
-  const el = document.getElementById('kes-rate-text');
-  const banner = document.getElementById('kes-rate-banner');
-  if(!el) return;
-
-  function render(rate, isLive){
-    el.innerHTML = `💱 1 USD ≈ <strong>KES ${Math.round(rate).toLocaleString()}</strong> ${isLive?'· live rate':'· approx. rate'}`;
-    if(!isLive) banner?.classList.add('stale');
-  }
-
-  let cached = null;
-  try{ cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null'); }catch(e){}
-  if(cached && cached.rate && (Date.now() - cached.time) < CACHE_MS){
-    render(cached.rate, true);
-    return;
-  }
-
-  fetch('https://open.er-api.com/v6/latest/USD')
-    .then(r => r.ok ? r.json() : Promise.reject())
-    .then(data => {
-      const rate = data?.rates?.KES;
-      if(!rate) throw new Error('no rate');
-      render(rate, true);
-      try{ localStorage.setItem(CACHE_KEY, JSON.stringify({rate, time: Date.now()})); }catch(e){}
-    })
-    .catch(() => render(FALLBACK_RATE, false));
-})();
-
-function dismissTx(){
-  const el=document.getElementById('tx');
-  if(!el)return;
-  el.style.pointerEvents='none';
-  el.classList.add('done');
-  setTimeout(()=>{el.style.display='none';},950);
-}
-document.getElementById('tx')?.addEventListener('animationend',dismissTx,{once:true});
-window.addEventListener('load',()=>setTimeout(dismissTx,1800));
-setTimeout(dismissTx,3500);
-
-
-
-</script>
+<div class="fd-toast" id="fd-toast" role="status" aria-live="polite"></div>
 
 <style>
 .seo-content{position:relative;z-index:2;max-width:1180px;margin:0 auto;padding:20px 24px 70px;}
@@ -500,39 +558,172 @@ setTimeout(dismissTx,3500);
 
 </style>
 <section class="seo-content">
-  <h2>Cheap flights from Nairobi (NBO)</h2>
-  <p>Compare fares to Mombasa, Kisumu, Diani, Zanzibar, Kigali, Cape Town, Dubai, London, Istanbul and Mumbai in one search. No booking levy added by us.</p>
+  <h2>Booking flights from Nairobi, with a person on the other end</h2>
+  <p>Most flight search returns four hundred rows and leaves the hard part to you. Which fare actually allows a bag. Whether a fifty-minute connection at a given hub is realistic. What happens to the rest of the itinerary if the first leg slips. The Cabana flight desk answers those questions before quoting, because a person works the route rather than a filter.</p>
   <ul class="seo-trust">
-    <li>Face-value fares, no levy from us</li>
-    <li>Domestic, regional and long-haul in one search</li>
-    <li>Live USD to KES reference rate</li>
+    <li>One all-in price per option, taxes included</li>
+    <li>No booking fee and nothing added at checkout</li>
+    <li>Domestic, regional and long-haul on the same request</li>
+    <li>A named contact if anything changes before you fly</li>
   </ul>
-  <a class="seo-cta" href="#kiwi-search-widget">Search flights <span aria-hidden="true">&rarr;</span></a>
+  <a class="seo-cta" href="#fd-pass">Start a request <span aria-hidden="true">&rarr;</span></a>
 
-  <h3>Popular routes from Nairobi</h3>
-  <p>Jomo Kenyatta International is East Africa's busiest hub. Top long-haul routes run to Dubai, London, Istanbul, Amsterdam and Guangzhou. Regional favourites are Zanzibar, Kigali, Entebbe, Dar es Salaam and Johannesburg, with domestic hops to Mombasa and the coast several times a day.</p>
+  <h3>Routes out of Jomo Kenyatta</h3>
+  <p>Nairobi is East Africa's busiest hub, which is a mixed blessing: plenty of capacity, and plenty of ways to book the wrong thing. Long-haul demand runs to Dubai, London, Istanbul, Amsterdam, Mumbai and Guangzhou. Regionally the desk works Zanzibar, Kigali, Entebbe, Dar es Salaam, Addis Ababa and Johannesburg constantly, along with the domestic coast hops to Mombasa, Diani, Malindi and Lamu that often price better as part of a through fare than booked separately.</p>
+
+  <h3>When the desk is worth using</h3>
+  <p>A straightforward return on a route you know well is quick to book yourself, and the search below will do it. The desk earns its place when the trip has a wrinkle: a group moving together, an infant on a lap, a visa run with a fixed return, a connection you cannot afford to miss, checked baggage that costs more than the fare on a low-cost carrier, or dates you can move by a few days if it saves real money.</p>
 
   <div data-showcase="video" style="margin:8px 0 30px;"></div>
 
-  <h3>Frequently asked questions</h3>
-  <details class="faq-item"><summary>How do I find the cheapest flights from Nairobi?</summary><p>Search above and stay flexible on dates. Midweek departures and booking a few weeks ahead usually return the lowest fares.</p></details>
-  <details class="faq-item"><summary>Which airlines can I compare?</summary><p>Major international carriers, regional operators and budget airlines, all in one search.</p></details>
-  <details class="faq-item"><summary>Does Cabana charge a booking fee for flights?</summary><p>No. We add no booking levy. You book at face value with the airline or travel partner.</p></details>
+  <h3>Common questions</h3>
+  <details class="faq-item"><summary>How does the flight desk work?</summary><p>You describe the trip. A person prices it across the carriers that fly the route and sends back a short list, each option with one all-in price. You pick one and we issue the ticket.</p></details>
+  <details class="faq-item"><summary>How quickly will I hear back?</summary><p>Usually within about 45 minutes while the desk is staffed. You get a reference and a live countdown the moment you submit, and a message as soon as your options are ready.</p></details>
+  <details class="faq-item"><summary>Do I need an account?</summary><p>No. A name plus an email or phone number is enough. Your reference opens the request from any device.</p></details>
+  <details class="faq-item"><summary>Is there a booking fee?</summary><p>No separate fee, and nothing is added at checkout. Each option is quoted as one all-in price for your whole party.</p></details>
+  <details class="faq-item"><summary>What if nothing good comes up?</summary><p>We say so and you pay nothing. Asking costs nothing and commits you to nothing.</p></details>
 
   <div class="seo-links"><a href="/apartments">Stays in Kenya</a><a href="/tours">Nairobi Tours</a><a href="/carhire">Car Hire</a><a href="/rides">Airport Transfers</a><a href="/events">Events</a></div>
 </section>
 
+
 <div data-showcase="window"></div>
+
+<!-- Supabase must exist before cabana-flights.js runs. -->
+<script src="/vendor-supabase-2.112.3.js"></script>
+<script src="/apa-session.js"></script>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════════
+   BOOT
+   Three small jobs, all of which must survive the rest of the page
+   failing to load: the client, the sky, and the take-off sequence.
+══════════════════════════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+
+  /* ── Supabase, one client per tab ─────────────────────────────────── */
+  var SUPABASE_URL = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
+  var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
+  try {
+    if (!window.sb && window.supabase) {
+      window.sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    }
+  } catch (e) { /* the page still renders; the desk just cannot be reached */ }
+
+  /* ── starfield ────────────────────────────────────────────────────── */
+  var stars = document.getElementById('fd-stars');
+  if (stars && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    var n = window.innerWidth < 700 ? 26 : 54, out = '';
+    for (var i = 0; i < n; i++) {
+      out += '<i style="left:' + (Math.random() * 100).toFixed(2) + '%;top:' +
+             (Math.random() * 70).toFixed(2) + '%;animation-delay:' +
+             (Math.random() * 4).toFixed(2) + 's;opacity:' +
+             (0.2 + Math.random() * 0.5).toFixed(2) + '"></i>';
+    }
+    stars.innerHTML = out;
+  }
+
+  /* ── runway lights ────────────────────────────────────────────────── */
+  var rw = document.getElementById('fd-runway');
+  if (rw) {
+    var html = '';
+    /* centreline: staggered so the lights appear to stream continuously */
+    for (var c = 0; c < 9; c++) {
+      html += '<i style="animation-delay:' + (-c * 0.117).toFixed(3) + 's"></i>';
+    }
+    /* edge lights either side */
+    for (var e = 0; e < 7; e++) {
+      var d = (-e * 0.178).toFixed(3);
+      html += '<b style="left:24%;animation-delay:' + d + 's"></b>';
+      html += '<b style="left:76%;animation-delay:' + d + 's"></b>';
+    }
+    rw.innerHTML = html;
+  }
+
+  /* ── split-flap wordmark ──────────────────────────────────────────── */
+  var title = document.getElementById('fd-tx-title');
+  if (title) {
+    var word = 'CABANA';
+    title.innerHTML = word.split('').map(function (ch, i) {
+      return '<span style="animation-delay:' + (0.95 + i * 0.075).toFixed(3) + 's">' + ch + '</span>';
+    }).join('');
+  }
+
+  /* ── the sequence ─────────────────────────────────────────────────── */
+  var tx = document.getElementById('fd-tx');
+  var gone = false;
+
+  function dismiss() {
+    if (gone || !tx) return;
+    gone = true;
+    tx.style.pointerEvents = 'none';
+    tx.classList.add('fd-out');
+    setTimeout(function () { tx.style.display = 'none'; }, 900);
+  }
+
+  if (tx) {
+    var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    /* Skipping is not a hidden gesture: the label says so. */
+    tx.addEventListener('click', dismiss);
+    tx.addEventListener('touchstart', dismiss, { passive: true });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' || e.key === ' ') dismiss();
+    });
+
+    if (reduced) {
+      setTimeout(dismiss, 650);
+    } else {
+      /* The full arc is 2.7s. Hold the cruise frame briefly so it reads
+         as an arrival rather than a cut. */
+      setTimeout(dismiss, 3150);
+    }
+    /* Belt and braces: never trap someone behind the animation. */
+    setTimeout(dismiss, 5200);
+    window.addEventListener('load', function () { setTimeout(dismiss, 2600); });
+  }
+
+  /* ── affiliate search, loaded late and on demand ───────────────────
+     This is the secondary path. It should never compete with the desk
+     for bandwidth on first paint, so it only mounts once the section is
+     actually approaching the viewport. */
+  var slot = document.getElementById('fd-self-widget');
+  if (slot && 'IntersectionObserver' in window) {
+    var mounted = false;
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (!en.isIntersecting || mounted) return;
+        mounted = true;
+        io.disconnect();
+        var s = document.createElement('script');
+        s.async = true;
+        s.charset = 'utf-8';
+        s.src = 'https://tpwidg.com/content?currency=kes&trs=544145&shmarker=744334.Flights_page' +
+                '&locale=en&default_origin=NBO&stops=any&show_hotels=false&powered_by=false' +
+                '&border_radius=12&plain=true&color_button=%234F6DFF&color_button_text=%23ffffff' +
+                '&promo_id=3414&campaign_id=111';
+        slot.appendChild(s);
+      });
+    }, { rootMargin: '400px' });
+    io.observe(slot);
+  }
+})();
+</script>
+
+<script src="/fd-atlas.js" defer></script>
+<script src="/cabana-flights.js" defer></script>
+
 <script src="/analytics.js" defer></script>
 <script src="/pwa.js" defer></script>
 <script src="/referral.js" defer></script>
 <script src="/apa-referral-capture.js" defer></script>
-<script src="/showcase.js" defer></script>
 <script src="/brand.js" defer></script>
 <script src="/cabana-rebrand.js" defer></script>
-  <script src="/apa-signal.js" defer></script>
-  <script src="/apa-shadow.js" defer></script>
+<script src="/apa-signal.js" defer></script>
 <script src="/apa-contact.js" defer></script>
+<script src="/showcase.js" defer></script>
+<script src="/apa-shadow.js" defer></script>
+
 <!-- CABANA-LINKMESH --><style>.cbm{max-width:1100px;margin:56px auto 0;padding:0 24px 8px;}.cbm h2{font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(10,10,20,.4);padding-bottom:12px;border-bottom:1px solid rgba(10,10,20,.09);margin-bottom:16px;font-family:inherit;}.cbm-l{display:flex;flex-wrap:wrap;gap:7px;}.cbm-l a{font-size:12.5px;font-weight:600;text-decoration:none;color:rgba(10,10,20,.66);border:1px solid rgba(10,10,20,.11);border-radius:999px;padding:6px 12px;transition:.18s;}.cbm-l a:hover{color:#0A0A14;border-color:#0A0A14;}.cbm-more{display:inline-block;margin-top:14px;font-size:13px;font-weight:700;color:#0A0A14;text-decoration:none;border-bottom:2px solid #92720A;padding-bottom:1px;}</style><nav class="cbm" aria-label="Explore Africa by country"><h2>Explore Africa by country</h2><div class="cbm-l"><a href="/kenya-travel">Kenya</a><a href="/tanzania-travel">Tanzania</a><a href="/uganda-travel">Uganda</a><a href="/rwanda-travel">Rwanda</a><a href="/ethiopia-travel">Ethiopia</a><a href="/nigeria-travel">Nigeria</a><a href="/ghana-travel">Ghana</a><a href="/senegal-travel">Senegal</a><a href="/south-africa-travel">South Africa</a><a href="/namibia-travel">Namibia</a><a href="/botswana-travel">Botswana</a><a href="/zimbabwe-travel">Zimbabwe</a><a href="/zambia-travel">Zambia</a><a href="/morocco-travel">Morocco</a><a href="/egypt-travel">Egypt</a></div><a class="cbm-more" href="/destinations">All 54 destinations →</a></nav><!-- /CABANA-LINKMESH -->
 <footer class="site-footer">
   <div class="sf-inner">

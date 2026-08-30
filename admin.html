@@ -509,6 +509,10 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
           Bookings
         </div>
+        <div class="nav-i" data-sec="flights" onclick="go('flights',this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21 4 21 4s-2 0-3.5 1.5L14 9 5.8 6.2l-1.9 1.9 7.1 3.4L9.6 14H6l-1 1 3 1 1 3 1-1v-3.6l3.5-1.4 3.4 7.1z"/></svg>
+          Flight desk <span class="nav-b warn" id="b-flights">0</span>
+        </div>
         <div class="nav-i" data-sec="transport" onclick="go('transport',this)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13h14l-1.5-5a2 2 0 0 0-2-1.5h-7a2 2 0 0 0-2 1.5z"/><path d="M4 13h16v4a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1v-1H7v1a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z"/></svg>
           Transport <span class="nav-b warn" id="b-transport"></span>
@@ -607,6 +611,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
       </section>
 
       <!-- ─── TRIAGE ─── -->
+      <section class="sec" id="s-flights"></section>
       <section class="sec" id="s-tours"></section>
       <section class="sec" id="s-events"></section>
 
@@ -1972,6 +1977,7 @@ function go(sec, el){
   if(sec==='impersonate') impLogLoad();
   if(sec==='cabana') cabanaLoad();
   if(sec==='transport') renderTransport();
+  if(sec==='flights') window.flightsLoad && window.flightsLoad();
   if(sec==='tours') window.toursLoad && window.toursLoad();
   if(sec==='events') window.eventsLoad && window.eventsLoad();
 }
@@ -6173,5 +6179,7 @@ async function cabanaLoadInterest() {
 <script src="/cabana-media-upload.js"></script>
 <script src="/cabana-tours-admin.js"></script>
 <script src="/cabana-events-admin.js"></script>
+<script src="/fd-atlas.js"></script>
+<script src="/cabana-flights-admin.js"></script>
 </body>
 </html>

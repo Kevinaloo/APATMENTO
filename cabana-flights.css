@@ -1,0 +1,921 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   CABANA · FLIGHT DESK
+   cabana-flights.css
+
+   DIRECTION
+   ─────────
+   Every other surface on Cabana is daylight — pale glass, soft lilac. The
+   flight desk is the one room that is dark, because the thing it is about
+   is a night departure out of Nairobi: the runway edge lights, the amber
+   of the approach bar, the red and green on the wingtips, the instrument
+   glow. That is where the palette comes from, not from a theme picker.
+
+   It also means this page runs straight into the site footer, which is
+   already #0A0A14. The dark is not a costume; it is the same room.
+
+   THE SIGNATURE
+   ─────────────
+   One element carries the page: the boarding pass. A real perforation, a
+   real stub, IATA codes set large enough to read across a departure hall,
+   and a great-circle arc that draws itself the moment both ends are
+   known. Everything else stays quiet so that one thing lands.
+
+   PERFORMANCE
+   ───────────
+   backdrop-filter is a GPU tax on mid-range Android, which is most of
+   this audience. It appears exactly twice, both above the fold, and is
+   dropped entirely under 700px. Animation is transform and opacity only.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── TOKENS ────────────────────────────────────────────────────────── */
+:root{
+  /* night */
+  --fd-void:#04060E;
+  --fd-ink:#070B18;
+  --fd-deep:#0C1226;
+  --fd-panel:#121A33;
+  --fd-panel-2:#18213E;
+  --fd-line:rgba(255,255,255,.09);
+  --fd-line-2:rgba(255,255,255,.16);
+
+  /* type on night */
+  --fd-white:#F4F6FF;
+  --fd-soft:#A8B0CE;
+  --fd-faint:#6B7396;
+
+  /* the instrument palette */
+  --fd-violet:#6D28FF;      /* brand jacaranda */
+  --fd-electric:#4F6DFF;    /* taxiway blue */
+  --fd-mint:#4EE0C8;        /* starboard nav light. live, confirmed, go */
+  --fd-gold:#F5B12E;        /* runway edge + approach bar. value, price */
+  --fd-ember:#FF6A3C;       /* port nav light. warnings, expiry */
+  --fd-rose:#FF4D6D;
+
+  --fd-grad:linear-gradient(120deg,#6D28FF,#4F6DFF 55%,#4EE0C8);
+  --fd-grad-warm:linear-gradient(120deg,#F5B12E,#FF6A3C);
+
+  --fd-r:18px;
+  --fd-r-lg:24px;
+  --fd-shadow:0 24px 60px rgba(0,0,0,.5);
+  --fd-glow:0 0 0 1px rgba(79,109,255,.25), 0 20px 50px rgba(79,109,255,.16);
+}
+
+html.fd-page, html.fd-page body{
+  background:var(--fd-ink);
+  color:var(--fd-white);
+}
+html.fd-page body{ overflow-x:hidden; }
+
+/* The shared chrome assumes a light page. Re-point it for this one. */
+html.fd-page .topbar{
+  background:rgba(7,11,24,.82)!important;
+  border-bottom:1px solid var(--fd-line)!important;
+}
+html.fd-page .tb-back{
+  border-color:var(--fd-line-2)!important;
+  background:rgba(255,255,255,.05)!important;
+  color:var(--fd-soft)!important;
+}
+html.fd-page .tb-back:hover{ border-color:var(--fd-electric)!important; color:var(--fd-white)!important; }
+html.fd-page .tb-cab-wm{ filter:brightness(0) invert(1); opacity:.92; }
+html.fd-page .apa-ico{ color:var(--fd-soft)!important; }
+html.fd-page .site-footer{ margin-top:0; border-top:1px solid var(--fd-line); }
+html.fd-page .cbm h2{ color:rgba(255,255,255,.4); border-bottom-color:var(--fd-line); }
+html.fd-page .cbm-l a{ color:var(--fd-soft); border-color:var(--fd-line-2); }
+html.fd-page .cbm-l a:hover{ color:#fff; border-color:var(--fd-white); }
+html.fd-page .cbm-more{ color:var(--fd-white); border-bottom-color:var(--fd-gold); }
+
+/* ══════════════════════════════════════════════════════════════════════
+   AMBIENT SKY
+   Two slow drifting blooms and a star field. Cheap: no blur filter on
+   the stars, one blur on each bloom, both paused when the tab is hidden.
+══════════════════════════════════════════════════════════════════════ */
+.fd-sky{ position:fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none; }
+.fd-sky::after{
+  content:''; position:absolute; inset:0;
+  background:radial-gradient(ellipse 120% 70% at 50% -10%, rgba(109,40,255,.22), transparent 60%),
+             radial-gradient(ellipse 90% 50% at 80% 105%, rgba(78,224,200,.10), transparent 60%);
+}
+.fd-bloom{
+  position:absolute; border-radius:50%; filter:blur(90px); opacity:.30;
+  animation:fdDrift 34s ease-in-out infinite;
+}
+.fd-bloom-1{ width:620px; height:620px; top:-18%; left:-12%;
+  background:radial-gradient(circle,#6D28FF,transparent 68%); }
+.fd-bloom-2{ width:520px; height:520px; bottom:-14%; right:-10%; animation-delay:-14s; opacity:.20;
+  background:radial-gradient(circle,#4F6DFF,transparent 70%); }
+@keyframes fdDrift{
+  0%,100%{ transform:translate3d(0,0,0) scale(1); }
+  50%    { transform:translate3d(60px,-40px,0) scale(1.12); }
+}
+.fd-stars{ position:absolute; inset:0; opacity:.5; }
+.fd-stars i{
+  position:absolute; width:2px; height:2px; border-radius:50%;
+  background:#fff; opacity:.5; animation:fdTwinkle 4s ease-in-out infinite;
+}
+@keyframes fdTwinkle{ 0%,100%{opacity:.15;} 50%{opacity:.85;} }
+
+/* ══════════════════════════════════════════════════════════════════════
+   ENTRY: THE DEPARTURE
+   A night take-off in three acts. Runway, rotation, cruise. Everything
+   is transform/opacity so it holds 60fps on a mid-range phone.
+══════════════════════════════════════════════════════════════════════ */
+#fd-tx{
+  position:fixed; inset:0; z-index:9999; overflow:hidden;
+  background:radial-gradient(ellipse 140% 90% at 50% 100%, #131C3D 0%, #070B18 45%, #04060E 100%);
+  display:flex; align-items:center; justify-content:center;
+  touch-action:manipulation; cursor:pointer;
+}
+#fd-tx.fd-out{ animation:fdTxOut .85s cubic-bezier(.7,0,.2,1) forwards; }
+@keyframes fdTxOut{
+  to{ opacity:0; transform:scale(1.06); visibility:hidden; pointer-events:none; }
+}
+
+/* horizon glow that warms as the aircraft climbs */
+.fd-tx-horizon{
+  position:absolute; left:-10%; right:-10%; bottom:0; height:52%;
+  background:linear-gradient(to top, rgba(245,177,46,.20), rgba(109,40,255,.10) 45%, transparent 80%);
+  transform:translateY(0); animation:fdHorizonFall 2.6s cubic-bezier(.5,0,.3,1) forwards;
+}
+@keyframes fdHorizonFall{
+  0%  { transform:translateY(0) scaleY(1); opacity:1; }
+  55% { opacity:.8; }
+  100%{ transform:translateY(60%) scaleY(.6); opacity:0; }
+}
+
+/* RUNWAY. Centreline lights racing at the viewer in false perspective. */
+.fd-runway{
+  position:absolute; left:50%; bottom:-6%; width:190%; height:56%;
+  transform:translateX(-50%) perspective(340px) rotateX(70deg);
+  transform-origin:50% 100%;
+  animation:fdRunwayGo 2.6s cubic-bezier(.45,0,.25,1) forwards;
+}
+@keyframes fdRunwayGo{
+  0%  { opacity:0; transform:translateX(-50%) perspective(340px) rotateX(70deg) translateY(20px); }
+  12% { opacity:1; }
+  62% { opacity:1; transform:translateX(-50%) perspective(340px) rotateX(70deg) translateY(0); }
+  100%{ opacity:0; transform:translateX(-50%) perspective(340px) rotateX(78deg) translateY(180px); }
+}
+.fd-runway i{
+  position:absolute; left:50%; width:5px; height:34px; margin-left:-2.5px;
+  border-radius:3px; background:var(--fd-gold);
+  box-shadow:0 0 14px rgba(245,177,46,.9);
+  animation:fdLightRush 1.05s linear infinite;
+}
+@keyframes fdLightRush{
+  0%  { top:-8%;  opacity:0;   transform:scaleY(.5); }
+  14% { opacity:1; }
+  100%{ top:104%; opacity:.1;  transform:scaleY(2.4); }
+}
+/* edge lights, further out and dimmer */
+.fd-runway b{
+  position:absolute; width:4px; height:26px; border-radius:3px;
+  background:#8FB4FF; box-shadow:0 0 12px rgba(143,180,255,.8);
+  animation:fdLightRush 1.25s linear infinite;
+}
+
+/* THE AIRCRAFT. Rolls, rotates, climbs, then settles into the cruise. */
+.fd-craft{
+  position:relative; z-index:4;
+  animation:fdTakeoff 2.7s cubic-bezier(.42,0,.28,1) forwards;
+  transform-origin:60% 60%;
+  will-change:transform;
+}
+@keyframes fdTakeoff{
+  0%   { transform:translate3d(-46vw, 20vh, 0) rotate(0deg)   scale(.62); opacity:0; }
+  10%  { opacity:1; }
+  /* ground roll */
+  34%  { transform:translate3d(-14vw, 20vh, 0) rotate(0deg)   scale(.72); }
+  /* rotation: nose comes up */
+  46%  { transform:translate3d(-2vw,  15vh, 0) rotate(-11deg) scale(.78); }
+  /* climb out */
+  70%  { transform:translate3d(6vw,  -4vh, 0) rotate(-8deg)  scale(.92); }
+  /* level off at cruise */
+  100% { transform:translate3d(0,     0,   0) rotate(-2deg)  scale(1); }
+}
+.fd-craft svg{ display:block; filter:drop-shadow(0 18px 40px rgba(79,109,255,.45)); }
+
+/* landing gear retracts once the wheels are off */
+.fd-gear{ transform-origin:50% 0%; animation:fdGearUp .5s 1.25s cubic-bezier(.5,0,.2,1) forwards; }
+@keyframes fdGearUp{
+  0%  { transform:scaleY(1) rotate(0deg); opacity:1; }
+  100%{ transform:scaleY(.05) rotate(-16deg); opacity:0; }
+}
+
+/* turbofan spool */
+.fd-fan{ transform-origin:center; animation:fdSpin .28s linear infinite; }
+@keyframes fdSpin{ to{ transform:rotate(360deg); } }
+
+/* wingtip nav lights: port red, starboard green, plus a white strobe.
+   Real timing — the strobe is a double flash, not a fade. */
+.fd-nav-port  { animation:fdNav 1.6s ease-in-out infinite; }
+.fd-nav-stbd  { animation:fdNav 1.6s ease-in-out .1s infinite; }
+@keyframes fdNav{ 0%,100%{opacity:.45;} 50%{opacity:1;} }
+.fd-strobe{ animation:fdStrobe 1.9s linear infinite; }
+@keyframes fdStrobe{
+  0%,4%   { opacity:1; }
+  6%,10%  { opacity:0; }
+  12%,16% { opacity:1; }
+  18%,100%{ opacity:0; }
+}
+
+/* contrails, drawn only once the engines are loaded up */
+.fd-trail{
+  position:absolute; top:52%; right:100%; height:3px; width:0; border-radius:3px;
+  background:linear-gradient(90deg,transparent,rgba(200,214,255,.75));
+  animation:fdTrail 1.5s 1.05s cubic-bezier(.3,0,.2,1) forwards;
+}
+.fd-trail-2{ top:60%; animation-delay:1.15s; opacity:.6; }
+@keyframes fdTrail{
+  0%  { width:0; opacity:0; }
+  35% { opacity:.9; }
+  100%{ width:min(46vw,420px); opacity:0; }
+}
+
+/* cloud deck punched through on the way up */
+.fd-cloud{
+  position:absolute; border-radius:100px; background:rgba(190,205,255,.10);
+  filter:blur(14px); animation:fdCloudPass 2.7s cubic-bezier(.4,0,.3,1) forwards;
+}
+.fd-cloud-1{ width:280px; height:70px; top:62%; left:-30%; animation-delay:.5s; }
+.fd-cloud-2{ width:200px; height:52px; top:44%; left:-25%; animation-delay:.95s; }
+.fd-cloud-3{ width:340px; height:86px; top:74%; left:-40%; animation-delay:.2s; }
+@keyframes fdCloudPass{
+  0%  { transform:translate3d(0,0,0) scale(.7); opacity:0; }
+  25% { opacity:.9; }
+  100%{ transform:translate3d(150vw,42vh,0) scale(1.9); opacity:0; }
+}
+
+/* WORDMARK. Split-flap: each character drops in as if the board turned. */
+.fd-tx-text{
+  position:absolute; left:0; right:0; bottom:16%;
+  text-align:center; z-index:5; padding:0 20px;
+}
+.fd-tx-title{
+  font-family:'Geist','Inter',sans-serif; font-weight:600;
+  font-size:clamp(26px,7vw,44px); letter-spacing:.14em; text-transform:uppercase;
+  color:#fff; display:flex; justify-content:center; flex-wrap:wrap; gap:.02em;
+}
+.fd-tx-title span{
+  display:inline-block; opacity:0;
+  animation:fdFlap .42s cubic-bezier(.3,1.4,.5,1) forwards;
+}
+@keyframes fdFlap{
+  0%  { opacity:0; transform:rotateX(-90deg) translateY(-6px); }
+  100%{ opacity:1; transform:none; }
+}
+.fd-tx-sub{
+  margin-top:14px; font-size:11.5px; letter-spacing:.34em; text-transform:uppercase;
+  color:rgba(255,255,255,.42); opacity:0;
+  animation:fdRise .6s 1.5s forwards;
+}
+.fd-tx-rule{
+  width:0; height:1px; margin:18px auto 0;
+  background:linear-gradient(90deg,transparent,var(--fd-gold),transparent);
+  animation:fdRule .9s 1.35s cubic-bezier(.3,0,.2,1) forwards;
+}
+@keyframes fdRule{ to{ width:min(220px,50vw); } }
+@keyframes fdRise{ from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:none;} }
+
+.fd-tx-skip{
+  position:absolute; bottom:26px; left:50%; transform:translateX(-50%);
+  font-size:11px; letter-spacing:.2em; text-transform:uppercase;
+  color:rgba(255,255,255,.28); opacity:0; animation:fdRise .5s 1.9s forwards;
+  z-index:6;
+}
+
+/* Someone who has asked for less motion gets the destination, not the
+   journey: one still frame, one short fade. */
+@media (prefers-reduced-motion: reduce){
+  .fd-craft{ animation:none; transform:none; opacity:1; }
+  .fd-runway, .fd-cloud, .fd-trail, .fd-tx-horizon{ display:none; }
+  .fd-gear, .fd-fan, .fd-nav-port, .fd-nav-stbd, .fd-strobe{ animation:none; }
+  .fd-tx-title span{ animation:none; opacity:1; }
+  .fd-tx-sub, .fd-tx-skip{ animation:none; opacity:1; }
+  .fd-tx-rule{ animation:none; width:min(220px,50vw); }
+  .fd-bloom, .fd-stars i{ animation:none; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   SHELL
+══════════════════════════════════════════════════════════════════════ */
+.fd-wrap{ position:relative; z-index:2; max-width:1080px; margin:0 auto; padding:0 20px; }
+.fd-hero{ padding:44px 0 8px; }
+
+.fd-eyebrow{
+  display:inline-flex; align-items:center; gap:9px;
+  font-size:10.5px; font-weight:700; letter-spacing:.22em; text-transform:uppercase;
+  color:var(--fd-mint); padding:7px 15px; border-radius:100px;
+  background:rgba(78,224,200,.08); border:1px solid rgba(78,224,200,.22);
+}
+.fd-eyebrow .fd-dot{
+  width:6px; height:6px; border-radius:50%; background:var(--fd-mint);
+  box-shadow:0 0 0 0 rgba(78,224,200,.6); animation:fdPulse 2.2s ease-out infinite;
+}
+.fd-eyebrow.is-closed{ color:var(--fd-gold); background:rgba(245,177,46,.08); border-color:rgba(245,177,46,.24); }
+.fd-eyebrow.is-closed .fd-dot{ background:var(--fd-gold); }
+@keyframes fdPulse{
+  0%{ box-shadow:0 0 0 0 rgba(78,224,200,.55); }
+  70%{ box-shadow:0 0 0 9px rgba(78,224,200,0); }
+  100%{ box-shadow:0 0 0 0 rgba(78,224,200,0); }
+}
+
+.fd-h1{
+  font-family:'Geist','Inter',sans-serif; font-weight:600;
+  font-size:clamp(31px,6.4vw,54px); line-height:1.04; letter-spacing:-.035em;
+  margin:18px 0 14px; color:#fff; max-width:15ch;
+}
+.fd-h1 em{
+  font-style:normal;
+  background:var(--fd-grad); -webkit-background-clip:text; background-clip:text; color:transparent;
+}
+.fd-lede{
+  font-size:16px; line-height:1.62; color:var(--fd-soft); max-width:50ch; margin-bottom:22px;
+}
+
+/* the promise strip: three facts, no adjectives */
+.fd-promise{
+  display:flex; flex-wrap:wrap; gap:8px; margin-bottom:26px; padding:0; list-style:none;
+}
+.fd-promise li{
+  display:inline-flex; align-items:center; gap:8px;
+  font-size:12.5px; font-weight:500; color:var(--fd-soft);
+  padding:8px 14px; border-radius:100px;
+  background:rgba(255,255,255,.04); border:1px solid var(--fd-line);
+}
+.fd-promise svg{ width:14px; height:14px; color:var(--fd-mint); flex-shrink:0; }
+
+/* ══════════════════════════════════════════════════════════════════════
+   THE BOARDING PASS — signature element
+══════════════════════════════════════════════════════════════════════ */
+.fd-pass{
+  position:relative; border-radius:var(--fd-r-lg);
+  background:linear-gradient(165deg, rgba(24,33,62,.94), rgba(12,18,38,.97));
+  border:1px solid var(--fd-line-2);
+  box-shadow:var(--fd-shadow);
+  overflow:hidden;
+}
+/* the amber approach bar down the top edge */
+.fd-pass::before{
+  content:''; position:absolute; top:0; left:0; right:0; height:2px;
+  background:linear-gradient(90deg,transparent,var(--fd-gold) 20%,var(--fd-electric) 55%,var(--fd-mint) 80%,transparent);
+  opacity:.7;
+}
+
+.fd-pass-head{ padding:22px 24px 6px; }
+.fd-pass-tag{
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  font-size:10px; font-weight:700; letter-spacing:.2em; text-transform:uppercase;
+  color:var(--fd-faint); margin-bottom:18px;
+}
+.fd-pass-tag .fd-ref{ color:var(--fd-gold); font-family:'Geist',monospace; letter-spacing:.12em; }
+
+/* trip type toggle */
+.fd-seg{
+  display:inline-flex; padding:3px; border-radius:100px;
+  background:rgba(255,255,255,.05); border:1px solid var(--fd-line); margin-bottom:20px;
+}
+.fd-seg button{
+  appearance:none; border:0; background:none; cursor:pointer;
+  font-family:inherit; font-size:12.5px; font-weight:600; color:var(--fd-faint);
+  padding:8px 16px; border-radius:100px; transition:color .2s, background .2s;
+  white-space:nowrap;
+}
+.fd-seg button[aria-pressed="true"]{ background:var(--fd-electric); color:#fff; }
+
+/* ROUTE: the two IATA codes and the arc between them */
+.fd-route{
+  display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:8px;
+  margin-bottom:6px;
+}
+.fd-port{
+  background:none; border:0; padding:10px 4px; text-align:left; cursor:pointer;
+  font-family:inherit; color:inherit; width:100%; border-radius:12px;
+  transition:background .2s;
+}
+.fd-port:last-child{ text-align:right; }
+.fd-port:hover{ background:rgba(255,255,255,.04); }
+.fd-port:focus-visible{ outline:2px solid var(--fd-electric); outline-offset:2px; }
+.fd-port-label{
+  font-size:10px; font-weight:700; letter-spacing:.18em; text-transform:uppercase;
+  color:var(--fd-faint); margin-bottom:5px;
+}
+.fd-port-code{
+  font-family:'Geist','Inter',sans-serif; font-weight:600;
+  font-size:clamp(30px,8vw,42px); line-height:1; letter-spacing:-.02em; color:#fff;
+}
+.fd-port-code.is-empty{ color:var(--fd-faint); }
+.fd-port-city{
+  font-size:12.5px; color:var(--fd-soft); margin-top:6px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+
+/* the arc. Stroke length is animated so it draws when both ends land. */
+.fd-arc{ width:96px; height:56px; flex-shrink:0; overflow:visible; }
+.fd-arc path{
+  fill:none; stroke:url(#fdArcGrad); stroke-width:1.6; stroke-linecap:round;
+  stroke-dasharray:120; stroke-dashoffset:120;
+  transition:stroke-dashoffset .9s cubic-bezier(.3,0,.2,1);
+}
+.fd-arc.is-drawn path{ stroke-dashoffset:0; }
+.fd-arc .fd-arc-plane{ opacity:0; transition:opacity .4s .5s; }
+.fd-arc.is-drawn .fd-arc-plane{ opacity:1; }
+.fd-arc circle{ fill:var(--fd-soft); }
+
+.fd-swap{
+  position:absolute; left:50%; transform:translateX(-50%);
+  margin-top:-2px; width:32px; height:32px; border-radius:50%;
+  background:var(--fd-panel-2); border:1px solid var(--fd-line-2);
+  color:var(--fd-soft); cursor:pointer; display:none;
+  align-items:center; justify-content:center; transition:all .2s;
+}
+.fd-swap:hover{ color:#fff; border-color:var(--fd-electric); transform:translateX(-50%) rotate(180deg); }
+
+.fd-legline{
+  text-align:center; font-size:11.5px; color:var(--fd-faint);
+  margin:2px 0 18px; min-height:16px; letter-spacing:.04em;
+}
+.fd-legline b{ color:var(--fd-soft); font-weight:600; }
+
+/* PERFORATION. The stub below is where the trip becomes a request. */
+.fd-perf{
+  position:relative; height:1px; margin:4px 0 0;
+  background:repeating-linear-gradient(90deg,
+    var(--fd-line-2) 0 7px, transparent 7px 15px);
+}
+.fd-perf::before, .fd-perf::after{
+  content:''; position:absolute; top:50%; width:22px; height:22px; border-radius:50%;
+  background:var(--fd-ink); transform:translateY(-50%);
+  border:1px solid var(--fd-line-2);
+}
+.fd-perf::before{ left:-12px; }
+.fd-perf::after { right:-12px; }
+
+.fd-pass-body{ padding:24px; }
+
+/* FIELD GRID */
+.fd-grid{ display:grid; gap:12px; }
+.fd-grid-2{ grid-template-columns:1fr 1fr; }
+.fd-grid-3{ grid-template-columns:repeat(3,1fr); }
+
+.fd-field{ position:relative; }
+.fd-field > label, .fd-lab{
+  display:block; font-size:10px; font-weight:700; letter-spacing:.18em;
+  text-transform:uppercase; color:var(--fd-faint); margin-bottom:7px;
+}
+.fd-in, .fd-sel{
+  width:100%; appearance:none; font-family:inherit; font-size:14.5px; font-weight:500;
+  color:#fff; background:rgba(255,255,255,.045);
+  border:1px solid var(--fd-line); border-radius:13px;
+  padding:13px 14px; transition:border-color .2s, background .2s;
+  -webkit-appearance:none;
+}
+.fd-in::placeholder{ color:var(--fd-faint); font-weight:400; }
+.fd-in:focus, .fd-sel:focus{
+  outline:none; border-color:var(--fd-electric); background:rgba(79,109,255,.09);
+}
+.fd-in:disabled{ opacity:.4; cursor:not-allowed; }
+textarea.fd-in{ resize:vertical; min-height:86px; line-height:1.55; }
+.fd-sel{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1.5 6 6.5l5-5' stroke='%23A8B0CE' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 14px center; padding-right:36px;
+}
+.fd-sel option{ background:var(--fd-panel); color:#fff; }
+/* the native date picker icon is invisible on a dark field */
+.fd-in[type="date"]::-webkit-calendar-picker-indicator{
+  filter:invert(1) opacity(.5); cursor:pointer;
+}
+
+.fd-hint{ font-size:11.5px; color:var(--fd-faint); margin-top:7px; line-height:1.5; }
+.fd-err{ font-size:12px; color:var(--fd-ember); margin-top:7px; display:none; }
+.fd-field.has-err .fd-in, .fd-field.has-err .fd-sel{ border-color:var(--fd-ember); }
+.fd-field.has-err .fd-err{ display:block; }
+
+/* chip rows: cabin, flexibility, bags */
+.fd-chips{ display:flex; flex-wrap:wrap; gap:7px; }
+.fd-chip{
+  appearance:none; font-family:inherit; cursor:pointer;
+  font-size:12.5px; font-weight:500; color:var(--fd-soft);
+  padding:9px 14px; border-radius:100px;
+  background:rgba(255,255,255,.04); border:1px solid var(--fd-line);
+  transition:all .2s; white-space:nowrap;
+}
+.fd-chip:hover{ border-color:var(--fd-line-2); color:#fff; }
+.fd-chip[aria-pressed="true"]{
+  background:rgba(109,40,255,.18); border-color:var(--fd-violet); color:#fff;
+}
+
+/* stepper for passenger counts */
+.fd-step{
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  padding:11px 12px 11px 14px; border-radius:13px;
+  background:rgba(255,255,255,.045); border:1px solid var(--fd-line);
+}
+.fd-step-t{ font-size:13.5px; font-weight:500; color:#fff; }
+.fd-step-s{ font-size:11px; color:var(--fd-faint); margin-top:2px; }
+.fd-step-c{ display:flex; align-items:center; gap:4px; }
+.fd-step-b{
+  width:30px; height:30px; border-radius:9px; cursor:pointer;
+  background:rgba(255,255,255,.06); border:1px solid var(--fd-line-2);
+  color:#fff; font-size:17px; line-height:1; display:flex; align-items:center; justify-content:center;
+  transition:all .18s; font-family:inherit;
+}
+.fd-step-b:hover:not(:disabled){ background:var(--fd-electric); border-color:var(--fd-electric); }
+.fd-step-b:disabled{ opacity:.28; cursor:not-allowed; }
+.fd-step-n{
+  min-width:26px; text-align:center; font-family:'Geist',monospace;
+  font-size:15px; font-weight:600; color:#fff;
+}
+
+/* the fold: advanced options stay out of the way until asked for */
+.fd-more{
+  appearance:none; width:100%; cursor:pointer; font-family:inherit;
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  font-size:12.5px; font-weight:600; color:var(--fd-soft);
+  background:none; border:0; border-top:1px solid var(--fd-line);
+  padding:16px 0 4px; margin-top:20px; transition:color .2s;
+}
+.fd-more:hover{ color:#fff; }
+.fd-more svg{ transition:transform .3s; }
+.fd-more[aria-expanded="true"] svg{ transform:rotate(180deg); }
+.fd-fold{ display:none; padding-top:18px; }
+.fd-fold.is-open{ display:block; animation:fdFold .35s ease; }
+@keyframes fdFold{ from{ opacity:0; transform:translateY(-6px); } to{ opacity:1; transform:none; } }
+
+.fd-divider{
+  display:flex; align-items:center; gap:12px; margin:24px 0 18px;
+  font-size:10px; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--fd-faint);
+}
+.fd-divider::before, .fd-divider::after{
+  content:''; flex:1; height:1px; background:var(--fd-line);
+}
+
+/* SUBMIT */
+.fd-submit{
+  width:100%; appearance:none; cursor:pointer; font-family:inherit;
+  margin-top:22px; padding:17px 24px; border:0; border-radius:15px;
+  background:var(--fd-grad); color:#fff; font-size:15.5px; font-weight:600;
+  letter-spacing:-.01em; position:relative; overflow:hidden;
+  box-shadow:0 14px 40px rgba(79,109,255,.32);
+  transition:transform .22s, box-shadow .22s, filter .22s;
+  display:flex; align-items:center; justify-content:center; gap:10px;
+}
+.fd-submit:hover:not(:disabled){ transform:translateY(-2px); box-shadow:0 20px 52px rgba(79,109,255,.42); }
+.fd-submit:active:not(:disabled){ transform:translateY(0); }
+.fd-submit:disabled{ opacity:.55; cursor:not-allowed; box-shadow:none; }
+.fd-submit .fd-spin{
+  width:16px; height:16px; border-radius:50%; display:none;
+  border:2px solid rgba(255,255,255,.3); border-top-color:#fff;
+  animation:fdSpin .7s linear infinite;
+}
+.fd-submit.is-busy .fd-spin{ display:block; }
+.fd-submit.is-busy svg{ display:none; }
+
+.fd-note{
+  text-align:center; font-size:12px; color:var(--fd-faint);
+  margin-top:14px; line-height:1.6;
+}
+.fd-note a{ color:var(--fd-soft); }
+
+/* ══════════════════════════════════════════════════════════════════════
+   AIRPORT PICKER
+══════════════════════════════════════════════════════════════════════ */
+.fd-sheet{
+  position:fixed; inset:0; z-index:300; display:none;
+  background:rgba(4,6,14,.72);
+}
+.fd-sheet.is-open{ display:block; animation:fdFade .22s ease; }
+@keyframes fdFade{ from{opacity:0;} to{opacity:1;} }
+.fd-sheet-panel{
+  position:absolute; left:50%; top:8vh; transform:translateX(-50%);
+  width:min(520px,94vw); max-height:84vh; display:flex; flex-direction:column;
+  background:var(--fd-deep); border:1px solid var(--fd-line-2);
+  border-radius:var(--fd-r-lg); overflow:hidden; box-shadow:var(--fd-shadow);
+  animation:fdSheetIn .3s cubic-bezier(.2,1,.3,1);
+}
+@keyframes fdSheetIn{ from{ opacity:0; transform:translateX(-50%) translateY(14px); } to{ opacity:1; } }
+.fd-sheet-head{ padding:16px 16px 12px; border-bottom:1px solid var(--fd-line); }
+.fd-sheet-title{
+  font-size:10px; font-weight:700; letter-spacing:.2em; text-transform:uppercase;
+  color:var(--fd-faint); margin-bottom:12px;
+}
+.fd-sheet-list{ overflow-y:auto; padding:6px; -webkit-overflow-scrolling:touch; }
+.fd-opt{
+  display:flex; align-items:center; gap:13px; width:100%; text-align:left;
+  padding:11px 12px; border-radius:12px; cursor:pointer;
+  background:none; border:0; font-family:inherit; color:inherit; transition:background .15s;
+}
+.fd-opt:hover, .fd-opt.is-active{ background:rgba(79,109,255,.14); }
+.fd-opt-code{
+  font-family:'Geist',monospace; font-size:13px; font-weight:600; color:var(--fd-gold);
+  width:38px; flex-shrink:0; letter-spacing:.04em;
+}
+.fd-opt-main{ min-width:0; flex:1; }
+.fd-opt-city{ font-size:14px; font-weight:500; color:#fff; }
+.fd-opt-name{
+  font-size:11.5px; color:var(--fd-faint); margin-top:2px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.fd-opt-cc{ font-size:11px; color:var(--fd-faint); flex-shrink:0; }
+.fd-sheet-empty{ padding:34px 20px; text-align:center; color:var(--fd-faint); font-size:13.5px; }
+
+/* ══════════════════════════════════════════════════════════════════════
+   HOW IT WORKS — a real sequence, so numbering is honest here
+══════════════════════════════════════════════════════════════════════ */
+.fd-sec{ padding:56px 0 0; }
+.fd-sec-h{
+  font-family:'Geist','Inter',sans-serif; font-weight:600;
+  font-size:clamp(22px,4vw,32px); letter-spacing:-.03em; color:#fff; margin-bottom:10px;
+}
+.fd-sec-s{ font-size:14.5px; color:var(--fd-soft); margin-bottom:26px; max-width:56ch; line-height:1.6; }
+
+.fd-steps{ display:grid; gap:14px; grid-template-columns:repeat(3,1fr); }
+.fd-stepcard{
+  position:relative; padding:22px 20px; border-radius:var(--fd-r);
+  background:rgba(255,255,255,.035); border:1px solid var(--fd-line);
+  transition:border-color .3s, transform .3s;
+}
+.fd-stepcard:hover{ border-color:var(--fd-line-2); transform:translateY(-3px); }
+.fd-stepcard-n{
+  font-family:'Geist',monospace; font-size:11px; font-weight:700; letter-spacing:.16em;
+  color:var(--fd-gold); margin-bottom:14px;
+}
+.fd-stepcard-t{ font-size:16px; font-weight:600; color:#fff; margin-bottom:8px; letter-spacing:-.01em; }
+.fd-stepcard-d{ font-size:13.5px; line-height:1.62; color:var(--fd-soft); }
+
+/* popular routes: tap to prefill */
+.fd-routes{ display:grid; gap:10px; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); }
+.fd-routecard{
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  padding:15px 17px; border-radius:14px; cursor:pointer; text-align:left;
+  background:rgba(255,255,255,.035); border:1px solid var(--fd-line);
+  font-family:inherit; color:inherit; transition:all .22s;
+}
+.fd-routecard:hover{ border-color:var(--fd-electric); background:rgba(79,109,255,.09); transform:translateY(-2px); }
+.fd-routecard-r{
+  font-family:'Geist',monospace; font-size:14px; font-weight:600; color:#fff; letter-spacing:.04em;
+}
+.fd-routecard-c{ font-size:11.5px; color:var(--fd-faint); margin-top:4px; }
+.fd-routecard svg{ color:var(--fd-faint); flex-shrink:0; transition:transform .22s, color .22s; }
+.fd-routecard:hover svg{ color:var(--fd-mint); transform:translateX(3px); }
+
+/* ══════════════════════════════════════════════════════════════════════
+   STATUS VIEW — what the traveller sees after they have asked
+══════════════════════════════════════════════════════════════════════ */
+.fd-status{ display:none; }
+.fd-status.is-on{ display:block; }
+.fd-form-wrap.is-off{ display:none; }
+
+.fd-ticket{
+  border-radius:var(--fd-r-lg); overflow:hidden; margin-bottom:20px;
+  background:linear-gradient(165deg, rgba(24,33,62,.94), rgba(12,18,38,.97));
+  border:1px solid var(--fd-line-2); box-shadow:var(--fd-shadow);
+}
+.fd-ticket-top{
+  padding:22px 24px; display:flex; align-items:flex-start; justify-content:space-between;
+  gap:16px; flex-wrap:wrap; border-bottom:1px dashed var(--fd-line-2);
+}
+.fd-ticket-ref{
+  font-family:'Geist',monospace; font-size:22px; font-weight:600;
+  color:var(--fd-gold); letter-spacing:.1em;
+}
+.fd-ticket-route{ font-size:14px; color:var(--fd-soft); margin-top:8px; }
+.fd-ticket-route b{ color:#fff; font-weight:600; }
+
+.fd-pill{
+  display:inline-flex; align-items:center; gap:7px; padding:7px 14px; border-radius:100px;
+  font-size:11.5px; font-weight:600; letter-spacing:.02em; white-space:nowrap;
+}
+.fd-pill-live{ background:rgba(78,224,200,.12); color:var(--fd-mint); border:1px solid rgba(78,224,200,.28); }
+.fd-pill-work{ background:rgba(245,177,46,.12); color:var(--fd-gold); border:1px solid rgba(245,177,46,.28); }
+.fd-pill-done{ background:rgba(109,40,255,.16); color:#C3AEFA; border:1px solid rgba(109,40,255,.32); }
+.fd-pill-off { background:rgba(255,255,255,.06); color:var(--fd-faint); border:1px solid var(--fd-line); }
+.fd-pill-bad { background:rgba(255,77,109,.12); color:var(--fd-rose); border:1px solid rgba(255,77,109,.28); }
+
+/* SLA countdown */
+.fd-eta{ padding:20px 24px; border-bottom:1px solid var(--fd-line); }
+.fd-eta-lab{
+  font-size:10px; font-weight:700; letter-spacing:.2em; text-transform:uppercase;
+  color:var(--fd-faint); margin-bottom:10px;
+}
+.fd-eta-val{
+  font-family:'Geist',monospace; font-size:30px; font-weight:600; color:#fff; letter-spacing:-.01em;
+}
+.fd-eta-bar{
+  height:4px; border-radius:4px; background:rgba(255,255,255,.07);
+  margin-top:14px; overflow:hidden;
+}
+.fd-eta-bar i{
+  display:block; height:100%; border-radius:4px;
+  background:var(--fd-grad); transition:width 1s linear;
+}
+.fd-eta-bar.is-late i{ background:var(--fd-grad-warm); }
+
+/* timeline */
+.fd-time{ padding:20px 24px 24px; }
+.fd-tl{ position:relative; padding-left:26px; }
+.fd-tl::before{
+  content:''; position:absolute; left:5px; top:6px; bottom:10px; width:1px;
+  background:linear-gradient(to bottom,var(--fd-electric),var(--fd-line));
+}
+.fd-tl-i{ position:relative; padding-bottom:20px; }
+.fd-tl-i:last-child{ padding-bottom:0; }
+.fd-tl-i::before{
+  content:''; position:absolute; left:-25px; top:4px; width:11px; height:11px;
+  border-radius:50%; background:var(--fd-deep); border:2px solid var(--fd-line-2);
+}
+.fd-tl-i.is-now::before{
+  background:var(--fd-mint); border-color:var(--fd-mint);
+  box-shadow:0 0 0 4px rgba(78,224,200,.18);
+}
+.fd-tl-t{ font-size:14px; font-weight:600; color:#fff; }
+.fd-tl-d{ font-size:12.5px; color:var(--fd-soft); margin-top:4px; line-height:1.55; }
+.fd-tl-at{ font-size:11px; color:var(--fd-faint); margin-top:5px; }
+
+/* ══════════════════════════════════════════════════════════════════════
+   QUOTE CARDS — the moment the desk comes back
+══════════════════════════════════════════════════════════════════════ */
+.fd-quotes{ display:grid; gap:14px; }
+.fd-quote{
+  position:relative; border-radius:var(--fd-r); overflow:hidden;
+  background:rgba(255,255,255,.035); border:1px solid var(--fd-line);
+  transition:border-color .28s, transform .28s, box-shadow .28s;
+}
+.fd-quote:hover{ border-color:var(--fd-line-2); transform:translateY(-2px); }
+.fd-quote.is-chosen{
+  border-color:var(--fd-mint); background:rgba(78,224,200,.055);
+  box-shadow:0 0 0 1px rgba(78,224,200,.25), 0 18px 44px rgba(78,224,200,.10);
+}
+.fd-quote-badge{
+  position:absolute; top:0; right:0; padding:6px 14px;
+  border-radius:0 var(--fd-r) 0 12px;
+  font-size:10px; font-weight:700; letter-spacing:.14em; text-transform:uppercase;
+  background:var(--fd-grad-warm); color:#1A1206;
+}
+.fd-quote-badge.is-rec{ background:var(--fd-grad); color:#fff; }
+.fd-quote-body{ padding:20px; }
+
+.fd-q-air{ display:flex; align-items:center; gap:11px; margin-bottom:16px; }
+.fd-q-logo{
+  width:38px; height:38px; border-radius:11px; flex-shrink:0;
+  background:rgba(255,255,255,.07); border:1px solid var(--fd-line-2);
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Geist',monospace; font-size:12.5px; font-weight:700; color:#fff; letter-spacing:.02em;
+}
+.fd-q-name{ font-size:14.5px; font-weight:600; color:#fff; }
+.fd-q-sub{ font-size:11.5px; color:var(--fd-faint); margin-top:2px; }
+
+/* a leg, drawn like a strip timetable */
+.fd-leg{ margin-bottom:14px; }
+.fd-leg-lab{
+  font-size:10px; font-weight:700; letter-spacing:.18em; text-transform:uppercase;
+  color:var(--fd-faint); margin-bottom:9px;
+}
+.fd-leg-row{ display:flex; align-items:center; gap:12px; }
+.fd-leg-end{ text-align:center; flex-shrink:0; min-width:52px; }
+.fd-leg-time{ font-family:'Geist',monospace; font-size:17px; font-weight:600; color:#fff; }
+.fd-leg-port{ font-size:11px; color:var(--fd-faint); margin-top:3px; letter-spacing:.06em; }
+.fd-leg-mid{ flex:1; text-align:center; min-width:0; }
+.fd-leg-dur{ font-size:11px; color:var(--fd-soft); margin-bottom:5px; }
+.fd-leg-line{ position:relative; height:1px; background:var(--fd-line-2); }
+.fd-leg-line::after{
+  content:''; position:absolute; right:0; top:-2.5px;
+  border-left:5px solid var(--fd-line-2);
+  border-top:3px solid transparent; border-bottom:3px solid transparent;
+}
+.fd-leg-line i{
+  position:absolute; top:-2.5px; width:6px; height:6px; border-radius:50%;
+  background:var(--fd-gold); transform:translateX(-50%);
+}
+.fd-leg-stops{ font-size:11px; color:var(--fd-gold); margin-top:5px; }
+.fd-leg-stops.is-direct{ color:var(--fd-mint); }
+
+.fd-q-meta{ display:flex; flex-wrap:wrap; gap:6px; margin:14px 0 16px; }
+.fd-q-tag{
+  font-size:11px; color:var(--fd-soft); padding:5px 10px; border-radius:100px;
+  background:rgba(255,255,255,.05); border:1px solid var(--fd-line);
+}
+.fd-q-tag.is-good{ color:var(--fd-mint); border-color:rgba(78,224,200,.24); background:rgba(78,224,200,.07); }
+
+.fd-q-foot{
+  display:flex; align-items:flex-end; justify-content:space-between; gap:14px;
+  flex-wrap:wrap; padding-top:16px; border-top:1px solid var(--fd-line);
+}
+.fd-q-price{
+  font-family:'Geist','Inter',sans-serif; font-size:26px; font-weight:600;
+  color:#fff; letter-spacing:-.02em; line-height:1;
+}
+.fd-q-price small{ font-size:13px; font-weight:500; color:var(--fd-soft); margin-right:4px; }
+.fd-q-per{ font-size:11.5px; color:var(--fd-faint); margin-top:6px; }
+.fd-q-pick{
+  appearance:none; cursor:pointer; font-family:inherit;
+  padding:13px 24px; border-radius:12px; border:0;
+  background:var(--fd-grad); color:#fff; font-size:14px; font-weight:600;
+  transition:transform .2s, box-shadow .2s; box-shadow:0 10px 26px rgba(79,109,255,.28);
+}
+.fd-q-pick:hover:not(:disabled){ transform:translateY(-2px); box-shadow:0 14px 34px rgba(79,109,255,.38); }
+.fd-q-pick:disabled{ opacity:.5; cursor:not-allowed; box-shadow:none; }
+.fd-q-pick.is-chosen{ background:rgba(78,224,200,.16); color:var(--fd-mint); box-shadow:none; cursor:default; }
+
+/* hold countdown. Fares move; the page says so rather than pretending. */
+.fd-hold{
+  display:flex; align-items:center; gap:7px; font-size:11.5px;
+  color:var(--fd-gold); margin-top:10px;
+}
+.fd-hold.is-gone{ color:var(--fd-rose); }
+.fd-hold svg{ width:13px; height:13px; flex-shrink:0; }
+
+/* waiting state while the desk works */
+.fd-wait{
+  padding:44px 24px; text-align:center;
+  border-radius:var(--fd-r); border:1px dashed var(--fd-line-2);
+  background:rgba(255,255,255,.02);
+}
+.fd-wait-r{
+  width:56px; height:56px; margin:0 auto 20px; border-radius:50%;
+  border:2px solid rgba(255,255,255,.08); border-top-color:var(--fd-electric);
+  animation:fdSpin 1.1s linear infinite;
+}
+.fd-wait-t{ font-size:17px; font-weight:600; color:#fff; margin-bottom:8px; }
+.fd-wait-d{ font-size:13.5px; color:var(--fd-soft); line-height:1.6; max-width:42ch; margin:0 auto; }
+
+/* ══════════════════════════════════════════════════════════════════════
+   AFFILIATE — kept, demoted. Someone who would rather do it themselves
+   should be able to, without it competing with the desk.
+══════════════════════════════════════════════════════════════════════ */
+.fd-self{
+  margin-top:56px; padding:26px 24px; border-radius:var(--fd-r);
+  background:rgba(255,255,255,.025); border:1px solid var(--fd-line);
+}
+.fd-self-h{
+  font-size:16px; font-weight:600; color:#fff; margin-bottom:6px; letter-spacing:-.01em;
+}
+.fd-self-d{ font-size:13.5px; color:var(--fd-soft); line-height:1.6; margin-bottom:18px; max-width:56ch; }
+.fd-self-w{ border-radius:12px; overflow:hidden; min-height:60px; }
+
+/* ══════════════════════════════════════════════════════════════════════
+   SEO BLOCK on night
+══════════════════════════════════════════════════════════════════════ */
+html.fd-page .seo-content h2, html.fd-page .seo-content h3{ color:#fff; }
+html.fd-page .seo-content p{ color:var(--fd-soft); }
+html.fd-page .seo-content .faq-item{ border-top-color:var(--fd-line); }
+html.fd-page .seo-content .faq-item summary{ color:#fff; }
+html.fd-page .seo-content .faq-item summary::after{ color:var(--fd-faint); }
+html.fd-page .seo-content .seo-links a{
+  color:var(--fd-soft); background:rgba(255,255,255,.04); border-color:var(--fd-line);
+}
+html.fd-page .seo-content .seo-links a:hover{ color:#fff; border-color:var(--fd-electric); }
+html.fd-page .seo-content .seo-trust{ color:var(--fd-soft); }
+html.fd-page .seo-content .seo-trust li::before{ background:var(--fd-mint); }
+
+/* ══════════════════════════════════════════════════════════════════════
+   TOAST
+══════════════════════════════════════════════════════════════════════ */
+.fd-toast{
+  position:fixed; left:50%; bottom:26px; z-index:9998;
+  transform:translateX(-50%) translateY(18px); opacity:0; pointer-events:none;
+  padding:13px 22px; border-radius:100px; max-width:calc(100vw - 32px);
+  background:var(--fd-panel-2); border:1px solid var(--fd-line-2); color:#fff;
+  font-size:13.5px; font-weight:500; box-shadow:var(--fd-shadow);
+  transition:opacity .3s, transform .3s;
+}
+.fd-toast.is-on{ opacity:1; transform:translateX(-50%) translateY(0); }
+.fd-toast.is-bad{ border-color:rgba(255,77,109,.4); }
+
+/* ══════════════════════════════════════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════════════════════════════════════ */
+@media (max-width:820px){
+  .fd-steps{ grid-template-columns:1fr; }
+}
+@media (max-width:640px){
+  .fd-wrap{ padding:0 14px; }
+  .fd-hero{ padding:30px 0 8px; }
+  .fd-pass-head{ padding:18px 18px 4px; }
+  .fd-pass-body{ padding:18px; }
+  .fd-grid-2, .fd-grid-3{ grid-template-columns:1fr; }
+  .fd-arc{ width:60px; height:44px; }
+  .fd-route{ gap:4px; }
+  .fd-ticket-top, .fd-eta, .fd-time{ padding-left:18px; padding-right:18px; }
+  .fd-q-foot{ flex-direction:column; align-items:stretch; }
+  .fd-q-pick{ width:100%; }
+  .fd-sheet-panel{ top:0; left:0; transform:none; width:100vw; max-height:100vh; height:100%; border-radius:0; }
+  .fd-quote-badge{ border-radius:0 0 0 12px; }
+  /* backdrop-filter is the single biggest cause of jank on mid-range
+     Android. Nothing on this page depends on it for legibility. */
+  .fd-pass, .fd-ticket, .fd-sheet-panel, .fd-toast{
+    backdrop-filter:none!important; -webkit-backdrop-filter:none!important;
+  }
+  .fd-bloom{ filter:blur(50px); opacity:.22; }
+}
+
+/* Keyboard users must always be able to see where they are. */
+.fd-chip:focus-visible, .fd-seg button:focus-visible, .fd-step-b:focus-visible,
+.fd-submit:focus-visible, .fd-q-pick:focus-visible, .fd-opt:focus-visible,
+.fd-routecard:focus-visible, .fd-more:focus-visible, .fd-swap:focus-visible{
+  outline:2px solid var(--fd-mint); outline-offset:2px;
+}
+.fd-sr{
+  position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+  overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;
+}
