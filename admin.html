@@ -2347,7 +2347,7 @@ function renderOverview(){
     stat('Listings', F.num(SNAP.listings.length), deltaEl(e.listingVelocity.delta) + ' vs prior'),
     stat('Bookings', F.num(SNAP.bookings.length), deltaEl(e.bookingVelocity.delta) + ' vs prior', 'ok'),
     stat('GMV', F.money(e.revenue.gmv), `${e.revenue.collectionRate}% collected`, 'gold'),
-    stat('Net revenue', F.money(e.revenue.revenue), `12% take · ${deltaEl(e.revenue.growth)}`, 'gold'),
+    stat('Net revenue', F.money(e.revenue.revenue), `${e.revenue.takeLabel} · ${deltaEl(e.revenue.growth)}`, 'gold'),
     stat('Inventory health', e.decay.healthScore + '%',
       `${e.decay.zombie} zombies`, e.decay.healthScore < 60 ? 'bad' : 'ok')
   ].join('');
@@ -2537,7 +2537,7 @@ function renderFinance(){
   const e = SNAP.engine, r = e.revenue, c = e.concentration;
   $('fi-stats').innerHTML = [
     stat('GMV (all time)', F.money(r.gmv), `${F.money(r.gmv30)} last 30d`, 'gold'),
-    stat('Net revenue', F.money(r.revenue), '12% take rate', 'gold'),
+    stat('Net revenue', F.money(r.revenue), r.takeLabel + ' · fee per booking', 'gold'),
     stat('Collection rate', r.collectionRate+'%', 'booked → captured', r.collectionRate<70?'bad':'ok'),
     stat('90d projection', F.money(r.projected90), deltaEl(r.growth)+' trend')
   ].join('');

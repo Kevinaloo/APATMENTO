@@ -374,31 +374,45 @@
       return { stages: out, worstLeak: worst };
     },
 
-    /* ── GMV & take-rate projection with a naive-but-honest trend. */
-    revenue: function (bookings, takeRate) {
-      takeRate = takeRate || 0.12;
+    /* ── GMV & net revenue using the REAL banded service fee.
+       Cabana's fee is KES 300 on a stay under KES 5,000, KES 800 at or
+       above — never a percentage of GMV. The `service_fee` column on
+       apartment_bookings is stamped by the Postgres trigger at booking
+       time and is the authoritative figure. We read it directly here
+       rather than multiplying GMV by an imaginary take rate, which was
+       producing net-revenue figures 6-10x larger than what was actually
+       collected.                                                        */
+    revenue: function (bookings) {
       var now = Date.now();
       var gmv = 0, gmv30 = 0, gmv60 = 0, paid = 0;
+      var netRevenue = 0, netRevenue30 = 0;
       bookings.forEach(function (b) {
         var amt = Number(b.grand_total || b.stay_total || b.total_amount || b.amount || 0) || 0;
+        var fee = Number(b.service_fee || 0) || 0;
         var t = new Date(b.created_at).getTime();
         gmv += amt;
+        netRevenue += fee;
         var st = String(b.status || b.payment_status || '').toLowerCase();
         if (st === 'paid' || st === 'confirmed' || st === 'completed' || st === 'checked_in') paid += amt;
         var age = now - t;
-        if (age <= 30 * DAY) gmv30 += amt;
-        else if (age <= 60 * DAY) gmv60 += amt;
+        if (age <= 30 * DAY) { gmv30 += amt; netRevenue30 += fee; }
+        else if (age <= 60 * DAY) { gmv60 += amt; }
       });
       var growth = gmv60 ? ((gmv30 - gmv60) / gmv60) : 0;
+      /* takeLabel is what the overview card shows beside the net-revenue figure.
+         Avoid "12% take" which implies a percentage model; state what was actually
+         collected and how many bookings generated it. */
+      var bookedCount = bookings.filter(function (b) { return Number(b.service_fee || 0) > 0; }).length;
       return {
         gmv: gmv,
         gmv30: gmv30,
         paid: paid,
         collectionRate: gmv ? Math.round((paid / gmv) * 1000) / 10 : 0,
-        revenue: Math.round(gmv * takeRate),
-        revenue30: Math.round(gmv30 * takeRate),
+        revenue: netRevenue,
+        revenue30: netRevenue30,
         growth: Math.round(growth * 1000) / 10,
-        projected90: Math.round(gmv30 * takeRate * 3 * (1 + growth))
+        projected90: Math.round(netRevenue30 * 3 * (1 + growth)),
+        takeLabel: bookedCount + ' booking' + (bookedCount === 1 ? '' : 's'),
       };
     },
 
