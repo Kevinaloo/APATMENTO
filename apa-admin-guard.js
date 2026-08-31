@@ -18,20 +18,28 @@
 
   if (global.ApaAdminGuard) return;
 
-  var CONSOLE_PAGE = '/admin.html';
+  /* cleanUrls is on, so '/admin.html' would 308 to '/admin' on every
+     takeover. Point straight at the canonical URL. */
+  var CONSOLE_PAGE = '/admin';
   var ADMINS = ['apatmento@gmail.com', 'worlddossy@gmail.com'];
 
-  /* Pages an admin is allowed to load without redirect. */
   /* Pages an admin may load without being bounced to the console.
      The ambassador surfaces are on this list because they are operator
      pages, not consumer ones — the roster console lives on the gateway, so
-     bouncing an admin away from it would make the roster unmanageable. */
-  var ALLOW = ['/admin.html', '/auth.html', '/offline.html',
-               '/ambassadors.html', '/ambassador-dashboard.html',
+     bouncing an admin away from it would make the roster unmanageable.
+
+     Written WITHOUT the .html extension on purpose. vercel.json sets
+     "cleanUrls": true, so the browser is at /auth, never /auth.html, and a
+     list of .html paths matched nothing in production. That turned every
+     operator page into a redirect back to the console — the support desk
+     sign-in loop. path() strips the extension so both spellings match and
+     this list cannot drift out of sync with the routing config again. */
+  var ALLOW = ['/admin', '/auth', '/offline',
+               '/ambassadors', '/ambassador-dashboard',
                /* The support desk is an operator surface. Bouncing an
                   agent off it to the console would mean nobody could
                   ever answer a guest. */
-               '/support-console.html'];
+               '/support-console'];
 
   var doc = global.document;
 
@@ -40,11 +48,15 @@
     catch (e) { if (global.console) console.warn('[guard:' + (label || '?') + ']', e && e.message); }
   }
 
+  /* Canonical, extension-free, lower-case path. '/auth', '/auth.html' and
+     '/auth/' all collapse to '/auth', so the guard behaves identically
+     whether or not cleanUrls is on. */
   function path() {
-    var p = global.location.pathname || '/';
-    if (p === '/' || p === '') p = '/index.html';
-    if (p.charAt(p.length - 1) === '/') p += 'index.html';
-    return p.toLowerCase();
+    var p = String(global.location.pathname || '/').toLowerCase();
+    if (p === '' || p === '/') return '/index';
+    if (p.charAt(p.length - 1) === '/') p = p.slice(0, -1);
+    p = p.replace(/\.html$/, '');
+    return p || '/index';
   }
 
   function allowed() {

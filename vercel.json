@@ -310,6 +310,10 @@
   },
   "rewrites": [
     {
+      "source": "/api/ambassadors",
+      "destination": "/api/rewards?_route=ambassadors"
+    },
+    {
       "source": "/api/flight-desk",
       "destination": "/api/trust"
     },

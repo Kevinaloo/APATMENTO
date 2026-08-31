@@ -22,9 +22,9 @@
    is an annoyance; one that throws and breaks a booking is worse.
 ══════════════════════════════════════════════════════════════════════ */
 
-import { sendTemplate, esc } from './lib/_mail.js';
-import { notify }            from './lib/_notify.js';
-import { setCors }           from './lib/_security.js';
+import { sendTemplate, esc } from './_mail.js';
+import { notify }            from './_notify.js';
+import { setCors }           from './_security.js';
 
 const SUPA_URL    = process.env.SUPABASE_URL
                  || 'https://gfwgbgdvxtocwhilrtdw.supabase.co';

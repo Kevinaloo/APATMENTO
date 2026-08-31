@@ -740,7 +740,14 @@ export async function ambassadorHandler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (!SERVICE_KEY)             return res.status(500).json({ error: 'Server not configured.' });
 
-  const a = req.query.action;
+  /* Normally req.query.action, set by Vercel. Parsed off the raw URL as a
+     fallback because this handler is reached through a rewrite, and a
+     rewrite that fails to merge the caller's query would otherwise turn
+     every single route into "Unknown action" with no clue why. */
+  const a = req.query?.action || (() => {
+    try { return new URL(req.url, 'http://x').searchParams.get('action'); }
+    catch { return null; }
+  })();
 
   /* Coarse per-IP limit in front of everything. The per-ambassador claim
      velocity limit in Postgres is the one that shapes behaviour; this one
