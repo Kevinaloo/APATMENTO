@@ -255,24 +255,13 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
 .cbox-lbl{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--electric);margin-bottom:4px;display:flex;align-items:center;gap:5px;}
 .cbox-lbl svg{width:12px;height:12px;}
 .cbox-txt{font-size:12px;color:var(--ink-soft);line-height:1.65;}
-/* ── Stay access & sharing cards ───────────────────────────────────────── */
-.stay-access-card{
-  background:rgba(67,97,255,0.04);border:1.5px solid rgba(67,97,255,0.14);
-  border-radius:14px;padding:16px 18px;margin-bottom:4px;
-}
-.sac-header{display:flex;gap:13px;align-items:flex-start;}
-.sac-header svg{width:26px;height:26px;flex:none;color:var(--electric);margin-top:2px;}
-.sac-title{font-family:var(--font-head);font-size:14px;font-weight:800;color:var(--ink-2);margin-bottom:4px;}
-.sac-sub{font-size:12.5px;color:var(--ink-soft);line-height:1.55;}
-
-/* ── Space mode (entire/private/shared) ────────────────────────────────── */
-.space-mode-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin:8px 0 0;}
-@media(max-width:600px){.space-mode-grid{grid-template-columns:1fr;}}
+/* ── Space mode (entire/private/shared) ──────────────────────────────── */
+.space-mode-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin:10px 0 0;}
+@media(max-width:600px){.space-mode-grid{grid-template-columns:1fr;gap:7px;}}
 .space-mode-card{
-  display:flex;flex-direction:column;align-items:flex-start;gap:8px;
-  padding:14px 14px;border-radius:14px;border:1.5px solid var(--line);
-  background:var(--surface);cursor:pointer;text-align:left;font:inherit;
-  color:inherit;appearance:none;transition:all .22s;
+  display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:14px;
+  border-radius:14px;border:1.5px solid var(--line);background:var(--surface);
+  cursor:pointer;text-align:left;font:inherit;color:inherit;appearance:none;transition:all .22s;
 }
 .space-mode-card:hover{border-color:rgba(67,97,255,0.28);transform:translateY(-1px);}
 .space-mode-card.sel{border-color:var(--electric);background:rgba(67,97,255,0.04);}
@@ -284,13 +273,107 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
 .smc-t{font-size:13px;font-weight:800;color:var(--ink);font-family:var(--font-head);}
 .smc-d{font-size:11px;color:var(--ink-faint);line-height:1.45;}
 
-/* ── Per-guest pricing preview ─────────────────────────────────────────── */
-.pgp{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;
-  padding:13px 15px;font-size:12.5px;color:var(--ink-soft);line-height:1.7;}
-.pgp strong{color:var(--ink-2);font-weight:700;}
-.pgp-row{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px dashed var(--line);}
-.pgp-row:last-child{border-bottom:none;font-weight:700;color:var(--ink);}
-.pgp-row span:last-child{font-family:var(--font-head);font-weight:700;color:var(--electric);}
+/* ── Tier mode badge ──────────────────────────────────────────────────── */
+.tier-mode-badge{
+  font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+  padding:3px 10px;border-radius:100px;background:var(--surface-3);color:var(--ink-faint);
+  border:1px solid var(--line);transition:all .3s;
+}
+.tier-mode-badge--multi{
+  background:rgba(67,97,255,0.08);color:var(--electric);border-color:rgba(67,97,255,0.2);
+}
+
+/* ── Tier explain strip ───────────────────────────────────────────────── */
+.tier-explain{
+  display:flex;gap:13px;align-items:flex-start;
+  background:rgba(67,97,255,0.04);border:1.5px solid rgba(67,97,255,0.13);
+  border-radius:14px;padding:15px 16px;margin-bottom:16px;
+}
+.te-icon{width:34px;height:34px;border-radius:10px;background:rgba(67,97,255,0.1);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--electric);margin-top:1px;}
+.te-icon svg{width:17px;height:17px;}
+.te-t{font-family:var(--font-head);font-size:13px;font-weight:800;color:var(--ink-2);margin-bottom:4px;}
+.te-d{font-size:12px;color:var(--ink-soft);line-height:1.6;}
+
+/* ── Individual tier row ──────────────────────────────────────────────── */
+.tier-row{
+  background:var(--surface);border:1.5px solid var(--line);border-radius:16px;
+  margin-bottom:10px;overflow:hidden;transition:border-color .2s;
+}
+.tier-row:hover{border-color:rgba(67,97,255,0.22);}
+.tier-row-head{display:flex;gap:0;align-items:stretch;}
+.tier-num{
+  width:42px;min-width:42px;display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-head);font-size:18px;font-weight:800;color:var(--ink-faint);
+  background:var(--surface-2);border-right:1px solid var(--line);
+}
+.tier-row-main{flex:1;padding:15px 16px;}
+.tier-row-top{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:12px;}
+.tier-row-bottom{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;}
+.tier-field-sm{min-width:108px;flex-shrink:0;}
+.tier-field-grow{flex:1;min-width:160px;}
+.tier-field-price{flex:0 0 auto;min-width:148px;}
+.tier-field-pg{flex:1;min-width:148px;}
+.tier-lbl{display:block;font-size:11px;font-weight:700;color:var(--ink-faint);margin-bottom:5px;letter-spacing:.03em;}
+.tier-price-wrap{position:relative;}
+.tier-cur{
+  position:absolute;left:12px;top:50%;transform:translateY(-50%);
+  font-size:11px;font-weight:700;color:var(--ink-faint);pointer-events:none;z-index:1;
+}
+.tier-del-btn{
+  width:34px;height:34px;flex-shrink:0;border-radius:10px;border:1.5px solid var(--line);
+  background:transparent;color:var(--ink-faint);cursor:pointer;display:flex;
+  align-items:center;justify-content:center;margin-bottom:1px;transition:all .2s;align-self:flex-end;
+}
+.tier-del-btn:hover{border-color:#E11D48;color:#E11D48;background:rgba(225,29,72,0.05);}
+.tier-del-btn svg{width:14px;height:14px;}
+.tier-calc{margin-top:6px;width:100%;}
+.tier-calc-pill{
+  display:inline-flex;font-size:11px;font-weight:600;color:var(--ok);
+  background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);
+  border-radius:100px;padding:3px 10px;
+}
+
+/* ── Add tier button ──────────────────────────────────────────────────── */
+.tier-add-btn{
+  display:inline-flex;align-items:center;gap:8px;padding:10px 18px;
+  border-radius:12px;border:1.5px dashed var(--line-2);background:transparent;
+  color:var(--ink-soft);cursor:pointer;font-family:var(--font-body);
+  font-size:13px;font-weight:650;transition:all .2s;margin-bottom:20px;
+}
+.tier-add-btn:hover{border-color:var(--mint);color:var(--mint-dark);}
+.tier-add-btn svg{width:15px;height:15px;}
+
+/* ── Guest-facing preview ─────────────────────────────────────────────── */
+.tier-preview-label{
+  font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-faint);margin-bottom:11px;
+}
+#tier-preview{display:flex;gap:10px;flex-wrap:wrap;}
+.tp-card{
+  flex:1;min-width:160px;max-width:240px;
+  background:var(--surface);border:1.5px solid var(--line);border-radius:16px;
+  padding:16px;position:relative;transition:border-color .2s,box-shadow .2s;
+}
+.tp-card:hover{border-color:rgba(67,97,255,0.3);box-shadow:0 4px 20px rgba(67,97,255,0.08);}
+.tp-best{border-color:var(--electric);background:rgba(67,97,255,0.03);}
+.tp-best-badge{
+  position:absolute;top:-10px;left:14px;font-size:10px;font-weight:800;
+  letter-spacing:.06em;text-transform:uppercase;padding:3px 10px;
+  border-radius:100px;background:var(--grad);color:#fff;
+  box-shadow:0 2px 8px rgba(67,97,255,0.28);
+}
+.tp-top{display:flex;align-items:center;gap:9px;margin-bottom:8px;}
+.tp-beds-icon{display:flex;gap:3px;align-items:center;color:var(--electric);}
+.tp-label{font-family:var(--font-head);font-size:13px;font-weight:800;color:var(--ink-2);}
+.tp-detail{font-size:11px;color:var(--ink-faint);margin-bottom:11px;display:flex;align-items:center;gap:5px;}
+.tp-mode{background:var(--surface-2);padding:2px 8px;border-radius:100px;}
+.tp-sep{color:var(--line-2);}
+.tp-price-row{display:flex;align-items:baseline;gap:4px;flex-wrap:wrap;}
+.tp-price{font-family:var(--font-head);font-size:20px;font-weight:800;color:var(--ink-2);letter-spacing:-.03em;}
+.tp-per{font-size:12px;color:var(--ink-faint);}
+.tp-pg{font-size:10.5px;color:var(--mint-dark);font-weight:700;background:rgba(45,212,191,0.1);
+  padding:2px 7px;border-radius:100px;margin-top:4px;width:100%;}
 
 .success-ov{display:none;position:fixed;inset:0;z-index:999;background:var(--bg);align-items:center;justify-content:center;padding:24px;}
 .success-ov.show{display:flex;animation:fadeUp .5s;}
@@ -766,126 +849,113 @@ const SVCS={
       {n:'Unique Stay',d:'A distinctive space such as a treehouse, boat, dome or farm stay.',i:'<path d="m12 3 1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6L12 3z"/><path d="m18.5 15 .8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8.8-2.2z"/>'}
     ],
     df:`<div class="fsec">
-<div class="fsec-title">Property &amp; bedroom details</div>
+<div class="fsec-title">Property basics</div>
 <div class="row3">
-  <div class="field"><label class="flbl">Total bedrooms in the property</label><select class="fsel" id="f-beds" onchange="onBedsChange()"><option value="0">Studio</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6+</option></select></div>
-  <div class="field"><label class="flbl">Bathrooms</label><select class="fsel" id="f-baths"><option>1</option><option>2</option><option>3</option><option>4+</option></select></div>
-  <div class="field"><label class="flbl">Max guests per booking</label><select class="fsel" id="f-guests"><option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>8</option><option>10</option><option>12</option></select></div>
-</div>
-
-<!-- ══ BEDROOM ACCESS — only shown when total bedrooms > 1 ══ -->
-<div id="bedroom-access-section" style="display:none">
-  <div class="stay-access-card">
-    <div class="sac-header">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2 10h20v10H2z"/><path d="M6 10V6h12v4"/><path d="M2 20v2M22 20v2"/></svg>
-      <div>
-        <div class="sac-title">How many bedrooms does the guest get access to?</div>
-        <div class="sac-sub">Your listing has <strong id="beds-total-label">—</strong> bedrooms. Set the price based on how many the guest can actually use.</div>
-      </div>
-    </div>
-    <div class="field" style="margin-top:14px">
-      <label class="flbl">Bedrooms available to the guest</label>
-      <select class="fsel" id="f-beds-access" onchange="onBedsAccessChange()">
-        <option value="all">All bedrooms (entire property)</option>
-      </select>
-      <div class="fhint" id="beds-access-hint">Guests see clearly how many bedrooms they are getting out of the total property.</div>
-    </div>
-  </div>
-</div>
-
-<!-- ══ SPACE ARRANGEMENT — shared vs private ══ -->
-<div class="field" style="margin-top:6px">
-  <label class="flbl">Who has the space?</label>
-  <div class="space-mode-grid" id="space-mode-grid">
-    <button type="button" class="space-mode-card sel" data-mode="entire" onclick="selSpaceMode(this)">
-      <span class="smc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5V21H3z"/><path d="M9 21V12h6v9"/></svg></span>
-      <span class="smc-t">Entire place</span>
-      <span class="smc-d">Guests have the whole property to themselves — no host or other guests during the stay</span>
-    </button>
-    <button type="button" class="space-mode-card" data-mode="private_room" onclick="selSpaceMode(this)">
-      <span class="smc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V4h11v17"/><path d="M2 21h20"/><circle cx="12" cy="12.5" r="1"/></svg></span>
-      <span class="smc-t">Private room(s)</span>
-      <span class="smc-d">Guest gets private bedroom(s), but shares common areas — kitchen, living room, or bathrooms — with others</span>
-    </button>
-    <button type="button" class="space-mode-card" data-mode="shared_room" onclick="selSpaceMode(this)">
-      <span class="smc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2 11h20v9H2z"/><path d="M6 11V7h5v4M13 11V7h5v4"/></svg></span>
-      <span class="smc-t">Shared room</span>
-      <span class="smc-d">Guest shares the bedroom itself with other guests or the host — dorm-style or flatshare</span>
-    </button>
-  </div>
-  <input type="hidden" id="f-space-mode" value="entire"/>
-</div>
-
-<!-- ══ SHARING CONTEXT — who else is there ══ -->
-<div id="sharing-context" style="display:none;margin-top:4px">
   <div class="field">
-    <label class="flbl">Who else will be at the property?</label>
-    <select class="fsel" id="f-sharing-context">
-      <option value="host_present">Host lives here and will be present during the stay</option>
-      <option value="other_guests">Other guests may also be staying at the same time</option>
-      <option value="host_and_guests">Both the host and other guests may be present</option>
-      <option value="caretaker">A caretaker or manager is on site, not the owner</option>
+    <label class="flbl">Total bedrooms in the property</label>
+    <select class="fsel" id="f-beds" onchange="onTotalBedsChange()">
+      <option value="0">Studio</option><option value="1">1</option><option value="2">2</option>
+      <option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6+</option>
     </select>
-    <div class="fhint">This is shown clearly to guests before they book. Transparency here builds trust and reduces cancellations.</div>
   </div>
-</div>
-</div>
-
-<!-- ══ PER-GUEST PRICING — shown for all stays ══ -->
-<div class="fsec" style="margin-top:4px">
-<div class="fsec-title">Per-guest pricing <span class="opt" style="font-weight:400;text-transform:none;letter-spacing:0">(optional but powerful)</span></div>
-<div class="ibox" style="margin-bottom:14px">
-  <div class="ibox-lbl" style="color:var(--electric)">Why set per-guest pricing?</div>
-  <div class="ibox-txt">If a single person books a 2-bed unit, they pay the base rate. When four people book the same unit, they each contribute — you earn more, and big groups don't get a free ride. Major platforms don't show this clearly; you can.</div>
+  <div class="field"><label class="flbl">Bathrooms</label><select class="fsel" id="f-baths"><option>1</option><option>2</option><option>3</option><option>4+</option></select></div>
+  <div class="field"><label class="flbl">Property size m² <span class="opt">(optional)</span></label><input class="finput" id="f-sqm" type="number" placeholder="95"/></div>
 </div>
 <div class="row2">
-  <div class="field">
-    <label class="flbl">Base rate covers how many guests?</label>
-    <select class="fsel" id="f-base-guests">
-      <option value="1">1 guest (base)</option>
-      <option value="2" selected>2 guests (base)</option>
-      <option value="3">3 guests (base)</option>
-      <option value="4">4 guests (base)</option>
-      <option value="all">All guests — no per-guest charge</option>
-    </select>
-    <div class="fhint">Guests up to this number pay the single nightly rate. Each additional guest pays the extra fee below.</div>
-  </div>
-  <div class="field">
-    <label class="flbl">Extra fee per additional guest / night <span class="opt">(optional)</span></label>
-    <input class="finput" id="f-per-guest" type="number" min="0" placeholder="e.g. 500"/>
-    <div class="fhint">Leave empty if price covers all guests regardless of group size.</div>
-  </div>
+  <div class="field"><label class="flbl">Floor <span class="opt">(optional)</span></label><input class="finput" id="f-floor" type="number" placeholder="4"/></div>
+  <div class="field"><label class="flbl">Max guests (whole property)</label><select class="fsel" id="f-guests"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option selected>6</option><option>8</option><option>10</option><option>12</option></select></div>
 </div>
-<div id="per-guest-preview" style="display:none;margin-top:2px"></div>
 </div>
 
-<div class="row2" style="margin-top:4px">
-  <div class="field"><label class="flbl">Floor <span class="opt">(optional)</span></label><input class="finput" id="f-floor" type="number" placeholder="4"/></div>
-  <div class="field"><label class="flbl">Size m² <span class="opt">(optional)</span></label><input class="finput" id="f-sqm" type="number" placeholder="65"/></div>
+<!-- ══ WHO HAS THE SPACE ══ -->
+<div class="fsec">
+<div class="fsec-title">Space arrangement</div>
+<div class="space-mode-grid">
+  <button type="button" class="space-mode-card sel" data-mode="entire" onclick="selSpaceMode(this)">
+    <span class="smc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5V21H3z"/><path d="M9 21V12h6v9"/></svg></span>
+    <span class="smc-t">Entire place</span>
+    <span class="smc-d">Guests have the whole property to themselves — no host or other guests</span>
+  </button>
+  <button type="button" class="space-mode-card" data-mode="private_room" onclick="selSpaceMode(this)">
+    <span class="smc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V4h11v17"/><path d="M2 21h20"/><circle cx="12" cy="12.5" r="1"/></svg></span>
+    <span class="smc-t">Private room(s)</span>
+    <span class="smc-d">Private bedrooms, but kitchen/living room or bathrooms are shared with others on site</span>
+  </button>
+  <button type="button" class="space-mode-card" data-mode="shared_room" onclick="selSpaceMode(this)">
+    <span class="smc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2 11h20v9H2z"/><path d="M6 11V7h5v4M13 11V7h5v4"/></svg></span>
+    <span class="smc-t">Shared room</span>
+    <span class="smc-d">The bedroom itself is shared — dorm-style or flatshare</span>
+  </button>
+</div>
+<input type="hidden" id="f-space-mode" value="entire"/>
+<div id="sharing-context" style="display:none;margin-top:12px">
+  <label class="flbl">Who else will be at the property?</label>
+  <select class="fsel" id="f-sharing-context">
+    <option value="host_present">The host lives here and will be present</option>
+    <option value="other_guests">Other guests may also be staying at the same time</option>
+    <option value="host_and_guests">Both the host and other guests may be present</option>
+    <option value="caretaker">A caretaker or manager is on site, not the owner</option>
+  </select>
+  <div class="fhint">Shown clearly to guests before they book — transparency here reduces disputes and cancellations.</div>
+</div>
+</div>
+
+<!-- ══ ROOM TIERS ══════════════════════════════════════════════════════
+     The heart of flexible pricing. A host with a 3-bed can offer:
+     · 1 bedroom · max 2 guests · KES 2,500/night
+     · 2 bedrooms · max 4 guests · KES 3,500/night
+     · Whole house · max 6 guests · KES 9,000/night
+     Guests choose their tier at booking time, seeing exactly what
+     they get and what they pay. The host never loses a booking. -->
+<div class="fsec">
+<div class="fsec-title" style="display:flex;align-items:center;justify-content:space-between">
+  <span>Pricing tiers</span>
+  <span id="tier-mode-badge" class="tier-mode-badge">Single price</span>
+</div>
+
+<div class="tier-explain">
+  <div class="te-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
+  <div>
+    <div class="te-t">One listing, multiple price points</div>
+    <div class="te-d">Add up to one tier per bedroom count. A couple books 1 bed at KES 2,500. A family of 5 selects 3 beds at KES 9,000. Same listing, zero confusion, no lost bookings. Guests pick their tier before paying.</div>
+  </div>
+</div>
+
+<div id="tier-list"></div>
+
+<button type="button" class="tier-add-btn" id="tier-add-btn" onclick="tierAdd()">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+  Add another tier
+</button>
+
+<div id="tier-preview-wrap" style="display:none">
+  <div class="tier-preview-label">How guests will choose at booking</div>
+  <div id="tier-preview"></div>
+</div>
 </div>`,
     feats:['WiFi','Air conditioning','Kitchen','Parking','Smart TV','Washer','Pool','Gym','Coffee maker','Heating','Elevator','Security guard','Garden','Dishwasher','Hot water','Bathtub','Shower','Balcony','Generator backup','Borehole water'],
     rv:f=>{
-      const bedsLabel=f.beds==='0'?'Studio':f.beds+' bedroom'+(f.beds==='1'?'':'s')+' total';
-      const accessLabel=(()=>{
-        if(!f.bedsAccess||f.bedsAccess==='all')return 'All bedrooms (entire property)';
-        if(f.bedsAccess==='1')return '1 bedroom (out of '+f.beds+')';
-        return f.bedsAccess+' bedrooms (out of '+f.beds+')';
-      })();
-      const modeLabel={entire:'Entire place — guests only, no host/others',private_room:'Private room(s) — shared common areas',shared_room:'Shared room — dorm or flatshare style'}[f.spaceMode]||'Entire place';
-      const pgLabel=(()=>{
-        if(!f.perGuest||!Number(f.perGuest))return 'Flat rate — all guests included';
-        const base=f.baseGuests==='all'?'all':f.baseGuests;
-        return (f.cur||'KES')+' '+Number(f.price||0).toLocaleString()+' covers '+base+' guest'+(base==='1'?'':'s')+'; + '+(f.cur||'KES')+' '+Number(f.perGuest).toLocaleString()+'/extra guest/night';
-      })();
+      const totalBeds=f.beds==='0'?'Studio':f.beds+' bedroom'+(f.beds==='1'?'':'s')+' total';
+      const modeLabel={entire:'Entire place',private_room:'Private room(s)',shared_room:'Shared room'}[f.spaceMode]||'Entire place';
+      const sharingLabel=f.spaceMode!=='entire'?({host_present:'Host present',other_guests:'Other guests may be present',host_and_guests:'Host & other guests on site',caretaker:'Caretaker on site'}[f.sharingContext]||'Not specified'):null;
+      const tiers=f.roomTiers&&f.roomTiers.length?f.roomTiers:[];
+      const tierRows=tiers.length
+        ? tiers.map((t,i)=>{
+            const lbl=t.label||(t.beds===0?'Studio':t.beds+' Bedroom'+(t.beds>1?'s':''));
+            const price=parseFloat(t.price)||0;
+            const pg=parseFloat(t.perGuest)||0;
+            const mg=parseInt(t.maxGuests)||2;
+            const priceStr=price?(f.cur||'KES')+' '+price.toLocaleString()+'/night'+(pg?' + '+(f.cur||'KES')+' '+pg.toLocaleString()+'/extra guest':''):'Price not set';
+            return ['Tier '+(i+1)+': '+lbl,'Up to '+mg+' guests · '+priceStr];
+          })
+        : [['Pricing tiers','Not configured']];
       return [
-        ['Property',bedsLabel],
-        ['Guest access',accessLabel],
-        ['Space type',modeLabel],
-        ...(f.spaceMode!=='entire'?[['Sharing with',{host_present:'Host lives here',other_guests:'Other guests may be present',host_and_guests:'Host & other guests',caretaker:'On-site caretaker'}[f.sharingContext]||'—']]:[]),
+        ['Property',totalBeds],
         ['Bathrooms',f.baths+' bath(s)'],
-        ['Max guests',f.guests+' guest(s)'],
-        ['Per-guest pricing',pgLabel],
-        ['Size',f.sqm?f.sqm+'m²':'Not specified'],
+        ['Space type',modeLabel],
+        ...(sharingLabel?[['On site',sharingLabel]]:[]),
+        ...(f.sqm?[['Size',f.sqm+'m²']]:[]),
+        ...tierRows,
         ['Amenities',f.feats.length?f.feats.join(', '):'None selected']
       ];
     }
@@ -992,8 +1062,8 @@ function canonicalStayType(value){
 let cur=0,cov=0;
 const LABS=['Service','Type','Location','Details','Features','Pricing','Photos','Ownership','Review'];
 const F={svc:null,type:null,title:'',country:'Kenya',city:'',area:'',street:'',lat:null,lng:null,desc:'',feats:[],photos:[],photoFiles:[],cur:'KES',price:'',pw:'',pm:'',dep:'',mn:'1',wa:'',ph:'',em:'',ci:'14:00',co:'11:00',inst:true,ch:true,pets:false,smk:false,rules:'',beds:'1',baths:'1',guests:'2',floor:'',sqm:'',avail:'',bills:'',furn:'',mates:'2',bath:'shared',suits:'anyone',dur:'',meet:'',lang:'',edate:'',venue:'',age:'',cuisine:'',sig:'',eat:'all',seats:'',deliv:'',lead:'',minorder:'',delfee:'',delmins:'',make:'',model:'',yr:'',fuel:'',trans:'',areas:'',veh:'',adv:'',stock:'',cond:'',brand:'',da:'',
-  /* Stays — bedroom access & pricing */
-  bedsAccess:'all',spaceMode:'entire',sharingContext:'',baseGuests:'2',perGuest:'',
+  /* Stays — room tiers & space mode */
+  roomTiers:[],spaceMode:'entire',sharingContext:'',
   /* Ownership. `own` is deliberately null until the host chooses: a
      default of 'sole' is a default that quietly assigns a building. */
   own:null,ownTouched:false,ownSplit:'equal',ownPartners:[],ownHolderName:'',ownHolderContact:'',ownNote:''};
@@ -1034,6 +1104,11 @@ function bldStep(n){
     document.getElementById('f-desc').placeholder=S.dp;
     document.getElementById('s3-dyn').innerHTML=S.df;
     restDet();
+    /* For stays: seed tiers from bed count if not already set, then render */
+    if(F.svc==='stays'){
+      if(!F.roomTiers||!F.roomTiers.length) tierSeed(parseInt(F.beds)||1);
+      setTimeout(renderTiers, 60);
+    }
   }
   if(n===4){document.getElementById('feat-grid').innerHTML=S.feats.map(f=>`<div class="feat-tag${F.feats.includes(f)?' sel':''}" data-f="${f}" onclick="togFt(this)"><div class="fdot"></div>${f}</div>`).join('');}
   if(n===5){document.getElementById('s5rl').innerHTML=S.pp+(S.food?' <span class="opt">(optional)</span>':'');document.getElementById('s5-extra').style.display=S.extra?'':'none';document.getElementById('s5-stays').style.display=S.sf?'':'none';
@@ -1050,7 +1125,27 @@ function bldStep(n){
       : 'Your WhatsApp, phone and email stay private until a guest completes payment. After payment, guests receive your contact to coordinate directly.';
     const s5cl=document.querySelector('#step-5 .cbox-lbl');
     if(s5cl)s5cl.lastChild.nodeValue=S.food?'Diners order on this number':'Contact details released after payment';
-    const pIn=document.getElementById('f-price');if(pIn)pIn.placeholder=S.ph||'4500';
+    /* Stays: price is set via tiers on Step 3, not manually here.
+       Hide the rate field and replace with a summary callout. */
+    const priceRow=document.getElementById('f-price')?.closest('.field');
+    const priceRowParent=document.getElementById('f-price')?.closest('.row2');
+    const staysTierNote=document.getElementById('s5-stays-tier-note');
+    if(F.svc==='stays'){
+      if(priceRowParent)priceRowParent.style.display='none';
+      if(!staysTierNote){
+        const note=document.createElement('div');
+        note.id='s5-stays-tier-note';
+        note.className='ibox mint';
+        note.style.marginBottom='13px';
+        note.innerHTML='<div class="ibox-lbl">Prices set in Step 3</div><div class="ibox-txt">Your nightly rates are defined by your pricing tiers — you set them in the Details step. The lowest tier price is your starting-from rate on search.</div>';
+        const staysSection=document.getElementById('s5-stays');
+        if(staysSection)staysSection.insertAdjacentElement('beforebegin',note);
+      }
+    } else {
+      if(priceRowParent)priceRowParent.style.display='';
+      const n=document.getElementById('s5-stays-tier-note');if(n)n.remove();
+      const pIn=document.getElementById('f-price');if(pIn)pIn.placeholder=S.ph||'4500';
+    }
     /* A room is let by the month, a stay by the night. The same two
        inputs serve both, so they are relabelled per service instead of
        silently meaning nights on a monthly listing. */
@@ -1233,90 +1328,282 @@ async function useMyLoc(btn){
 
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 
-/* ══ STAYS: BEDROOM ACCESS ════════════════════════════════════════════
-   When the host has more bedrooms than the guest is getting, we need
-   to show that clearly. This builds the access select dynamically
-   based on the total bed count. */
-function onBedsChange(bedsVal, restoreAccess){
-  const beds=bedsVal||gv('f-beds');
-  const sec=document.getElementById('bedroom-access-section');
-  if(!sec)return;
-  const n=parseInt(beds)||0;
-  if(n<=1){sec.style.display='none';F.bedsAccess='all';return;}
-  sec.style.display='';
-  const lbl=document.getElementById('beds-total-label');
-  if(lbl)lbl.textContent=n+' bedroom'+(n===1?'':'s');
-  const sel=document.getElementById('f-beds-access');
-  if(!sel)return;
-  const prev=restoreAccess||sel.value||F.bedsAccess||'all';
-  sel.innerHTML='<option value="all">All '+n+' bedrooms (entire property)</option>';
-  for(let i=1;i<n;i++){
-    sel.innerHTML+='<option value="'+i+'">'+i+' bedroom'+(i===1?'':'s')+' (of the '+n+' total)</option>';
-  }
-  if(prev&&prev!=='all'){const opt=[...sel.options].find(o=>o.value===String(prev));if(opt)sel.value=opt.value;}
-  onBedsAccessChange();
+/* ══════════════════════════════════════════════════════════════════════
+   ROOM TIER SYSTEM
+   ─────────────────
+   A single listing can have multiple pricing tiers, each with its own
+   bedroom count, guest limit, and nightly rate. The host defines them
+   once; guests choose the tier that fits their group at booking time.
+
+   Data model: F.roomTiers = [
+     { beds: 1, label: '1 Bedroom', maxGuests: 2, price: 2500, perGuest: 0 },
+     { beds: 2, label: '2 Bedrooms', maxGuests: 4, price: 3500, perGuest: 0 },
+     { beds: 3, label: 'Whole house', maxGuests: 6, price: 9000, perGuest: 500 },
+   ]
+
+   The "base" listing price (F.price) is always the lowest tier's price,
+   so search results show the starting-from rate correctly.
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* Called when host changes total bedroom count — rebuild tiers to match */
+function onTotalBedsChange(){
+  const totalBeds = parseInt(gv('f-beds')) || 0;
+  /* Trim any tiers that now exceed the total bedroom count */
+  F.roomTiers = F.roomTiers.filter(t => t.beds === 0 || t.beds <= totalBeds);
+  /* If no tiers exist yet, seed with a sensible default */
+  if(!F.roomTiers.length) tierSeed(totalBeds);
+  renderTiers();
 }
 
-function onBedsAccessChange(){
-  const beds=parseInt(gv('f-beds'))||0;
-  const access=gv('f-beds-access');
-  const hint=document.getElementById('beds-access-hint');
-  if(!hint)return;
-  if(!access||access==='all'){
-    hint.textContent='Guests can use every bedroom — the whole property is theirs.';
+/* Seed initial tiers based on bedroom count */
+function tierSeed(totalBeds){
+  F.roomTiers = [];
+  if(totalBeds === 0){
+    F.roomTiers.push({beds:0, label:'Studio', maxGuests:2, price:'', perGuest:''});
+  } else if(totalBeds === 1){
+    F.roomTiers.push({beds:1, label:'1 Bedroom', maxGuests:2, price:'', perGuest:''});
   } else {
-    const n=parseInt(access)||1;
-    hint.innerHTML='Guests pay for and get access to <strong>'+n+' bedroom'+(n===1?'':'s')+'</strong> in this '+beds+
-      '-bedroom property. The remaining '+(beds-n)+' bedroom'+(beds-n===1?' is':' rooms are')+
-      ' clearly shown as off-limits. <span style="color:var(--ink-faint)">Guests see this before booking.</span>';
+    /* Multi-bedroom: seed one tier per possible access level */
+    for(let b = 1; b <= totalBeds; b++){
+      const isAll = b === totalBeds;
+      F.roomTiers.push({
+        beds: b,
+        label: isAll ? 'Whole '+totalBeds+'-bedroom house' : b+' Bedroom'+(b>1?'s':''),
+        maxGuests: b * 2,
+        price: '',
+        perGuest: ''
+      });
+    }
   }
-  F.bedsAccess=access||'all';
 }
 
-/* ══ STAYS: SPACE MODE (entire/private/shared) ════════════════════════ */
+/* Add an empty tier row */
+function tierAdd(){
+  const totalBeds = parseInt(gv('f-beds')) || 1;
+  /* Suggest the next bedroom count not yet used */
+  const used = new Set(F.roomTiers.map(t => t.beds));
+  let nextBeds = 1;
+  for(let b = 1; b <= totalBeds; b++){ if(!used.has(b)){nextBeds=b;break;} }
+  F.roomTiers.push({beds: nextBeds, label:'', maxGuests: nextBeds*2, price:'', perGuest:''});
+  renderTiers();
+  /* Focus the new label input */
+  setTimeout(()=>{
+    const inputs = document.querySelectorAll('.tier-row .tier-label-in');
+    const last = inputs[inputs.length-1];
+    if(last) last.focus();
+  }, 60);
+}
+
+/* Remove tier at index */
+function tierRemove(i){
+  F.roomTiers.splice(i,1);
+  renderTiers();
+}
+
+/* Collect live values from DOM into F.roomTiers */
+function tierCollect(){
+  document.querySelectorAll('.tier-row').forEach((row,i)=>{
+    if(!F.roomTiers[i]) return;
+    F.roomTiers[i].beds      = parseInt(row.querySelector('.tier-beds-sel')?.value)||0;
+    F.roomTiers[i].label     = row.querySelector('.tier-label-in')?.value.trim()||'';
+    F.roomTiers[i].maxGuests = parseInt(row.querySelector('.tier-mg-sel')?.value)||2;
+    F.roomTiers[i].price     = row.querySelector('.tier-price-in')?.value||'';
+    F.roomTiers[i].perGuest  = row.querySelector('.tier-pg-in')?.value||'';
+  });
+  /* Keep F.price = lowest defined tier price (the "from" price) */
+  const prices = F.roomTiers.map(t=>parseFloat(t.price)).filter(p=>p>0);
+  if(prices.length) F.price = String(Math.min(...prices));
+  /* Keep F.guests = highest tier maxGuests */
+  const mgs = F.roomTiers.map(t=>parseInt(t.maxGuests)||0).filter(Boolean);
+  if(mgs.length) F.guests = String(Math.max(...mgs));
+  renderTierPreview();
+  updateTierModeBadge();
+}
+
+/* Render the full tier builder UI */
+function renderTiers(){
+  const totalBeds = parseInt(gv('f-beds')) || 1;
+  const cur = gv('f-cur') || F.cur || 'KES';
+  const list = document.getElementById('tier-list');
+  if(!list) return;
+
+  /* If no tiers, seed */
+  if(!F.roomTiers.length) tierSeed(totalBeds);
+
+  /* Sort tiers by bedroom count */
+  F.roomTiers.sort((a,b)=>(a.beds||0)-(b.beds||0));
+
+  /* Bedroom options for tier selects (0=studio through totalBeds) */
+  const bedOpts = (selected)=>{
+    let s = '';
+    if(totalBeds===0){
+      s='<option value="0"'+(selected===0?' selected':'')+'>Studio</option>';
+    } else {
+      for(let b=1;b<=totalBeds;b++){
+        const lbl=b===totalBeds&&totalBeds>1?b+' (whole house)':String(b);
+        s+=`<option value="${b}"${selected===b?' selected':''}>${lbl}</option>`;
+      }
+    }
+    return s;
+  };
+
+  /* Guest count options up to 12 */
+  const mgOpts = (selected)=>{
+    const vals=[1,2,3,4,5,6,7,8,9,10,12];
+    return vals.map(v=>`<option value="${v}"${selected===v?' selected':''}>${v} guest${v>1?'s':''}</option>`).join('');
+  };
+
+  list.innerHTML = F.roomTiers.map((t,i)=>{
+    const isOnly = F.roomTiers.length === 1;
+    const tierLabel = t.label || (t.beds===0?'Studio':t.beds+' Bedroom'+(t.beds>1?'s':''));
+    const priceVal = t.price || '';
+    const pgVal = t.perGuest || '';
+
+    return `<div class="tier-row" data-i="${i}">
+  <div class="tier-row-head">
+    <div class="tier-num">${i+1}</div>
+    <div class="tier-row-main">
+      <div class="tier-row-top">
+        <div class="tier-field-sm">
+          <label class="tier-lbl">Bedrooms</label>
+          <select class="fsel tier-beds-sel" onchange="tierCollect()" style="height:38px;font-size:13px">${bedOpts(t.beds)}</select>
+        </div>
+        <div class="tier-field-sm">
+          <label class="tier-lbl">Max guests</label>
+          <select class="fsel tier-mg-sel" onchange="tierCollect()" style="height:38px;font-size:13px">${mgOpts(t.maxGuests||2)}</select>
+        </div>
+        <div class="tier-field-grow">
+          <label class="tier-lbl">Tier name <span class="opt">(shown to guests)</span></label>
+          <input class="finput tier-label-in" value="${esc(tierLabel)}" placeholder="e.g. 1 Bedroom Suite" oninput="tierCollect()" style="height:38px;font-size:13px"/>
+        </div>
+        ${isOnly?'':`<button type="button" class="tier-del-btn" onclick="tierRemove(${i})" aria-label="Remove tier">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>`}
+      </div>
+      <div class="tier-row-bottom">
+        <div class="tier-field-price">
+          <label class="tier-lbl">Price / night</label>
+          <div class="tier-price-wrap">
+            <span class="tier-cur">${cur}</span>
+            <input class="finput tier-price-in" type="number" min="0" value="${esc(priceVal)}" placeholder="e.g. 2500" oninput="tierCollect()" style="height:38px;font-size:14px;font-weight:700;padding-left:44px"/>
+          </div>
+        </div>
+        <div class="tier-field-pg">
+          <label class="tier-lbl">+ per extra guest <span class="opt">/night</span></label>
+          <div class="tier-price-wrap">
+            <span class="tier-cur">${cur}</span>
+            <input class="finput tier-pg-in" type="number" min="0" value="${esc(pgVal)}" placeholder="0" oninput="tierCollect()" style="height:38px;font-size:13px;padding-left:44px"/>
+          </div>
+          <div class="fhint" style="margin-top:3px">Charged per guest above 2. Leave 0 for flat rate.</div>
+        </div>
+        ${priceVal?`<div class="tier-calc" id="tier-calc-${i}"></div>`:''}
+      </div>
+    </div>
+  </div>
+</div>`;
+  }).join('');
+
+  renderTierPreview();
+  updateTierModeBadge();
+  renderTierCalcs();
+
+  /* Show/hide Add button: max one tier per possible bedroom count */
+  const addBtn = document.getElementById('tier-add-btn');
+  if(addBtn){
+    const maxTiers = Math.max(1, totalBeds);
+    addBtn.style.display = F.roomTiers.length >= maxTiers ? 'none' : '';
+  }
+}
+
+/* Inline "what guests pay" calc next to each tier price */
+function renderTierCalcs(){
+  F.roomTiers.forEach((t,i)=>{
+    const el = document.getElementById('tier-calc-'+i);
+    if(!el) return;
+    const price = parseFloat(t.price)||0;
+    const pg = parseFloat(t.perGuest)||0;
+    const mg = parseInt(t.maxGuests)||2;
+    const cur = gv('f-cur')||F.cur||'KES';
+    if(!price){el.innerHTML='';return;}
+    if(!pg){
+      el.innerHTML=`<div class="tier-calc-pill">Flat ${cur} ${price.toLocaleString()} regardless of group size</div>`;
+      return;
+    }
+    /* Show 2-person and max-guest totals */
+    const t2 = price; /* 2 guests = base */
+    const tmax = price + Math.max(0, mg-2)*pg;
+    el.innerHTML=`<div class="tier-calc-pill">2 guests → ${cur} ${t2.toLocaleString()} &nbsp;·&nbsp; ${mg} guests → ${cur} ${tmax.toLocaleString()}</div>`;
+  });
+}
+
+/* Guest-facing preview cards — exactly what a guest sees at booking */
+function renderTierPreview(){
+  const wrap = document.getElementById('tier-preview-wrap');
+  const preview = document.getElementById('tier-preview');
+  if(!wrap||!preview) return;
+  const tiers = F.roomTiers.filter(t=>t.price&&parseFloat(t.price)>0);
+  if(tiers.length < 1){wrap.style.display='none';return;}
+  wrap.style.display = '';
+  const cur = gv('f-cur')||F.cur||'KES';
+  const modeLabel = {entire:'Entire place',private_room:'Private room(s)',shared_room:'Shared room'}[F.spaceMode||'entire'];
+
+  preview.innerHTML = tiers.map((t,i)=>{
+    const price = parseFloat(t.price)||0;
+    const pg = parseFloat(t.perGuest)||0;
+    const mg = parseInt(t.maxGuests)||2;
+    const label = t.label || (t.beds===0?'Studio':t.beds+' Bedroom'+(t.beds>1?'s':''));
+    const fromStr = cur+' '+price.toLocaleString();
+    const pgStr = pg ? `+${cur} ${pg.toLocaleString()}/extra guest` : 'Flat rate';
+    const isLowest = i===0;
+
+    return `<div class="tp-card${isLowest?' tp-best':''}">
+  ${isLowest?'<div class="tp-best-badge">Best value</div>':''}
+  <div class="tp-top">
+    <div class="tp-beds-icon">
+      ${[...Array(Math.min(t.beds||1,4))].map(()=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M2 10h20v10H2z"/><path d="M6 10V6h12v4"/></svg>`).join('')}
+    </div>
+    <div class="tp-label">${esc(label)}</div>
+  </div>
+  <div class="tp-detail">
+    <span class="tp-mode">${modeLabel}</span>
+    <span class="tp-sep">·</span>
+    <span class="tp-guests">Up to ${mg} guest${mg>1?'s':''}</span>
+  </div>
+  <div class="tp-price-row">
+    <span class="tp-price">${fromStr}</span>
+    <span class="tp-per">/night</span>
+    ${pg?`<span class="tp-pg">${pgStr}</span>`:''}
+  </div>
+</div>`;
+  }).join('');
+}
+
+function updateTierModeBadge(){
+  const badge = document.getElementById('tier-mode-badge');
+  if(!badge) return;
+  const n = F.roomTiers.filter(t=>t.price&&parseFloat(t.price)>0).length;
+  if(n <= 1){ badge.textContent='Single price'; badge.className='tier-mode-badge'; }
+  else { badge.textContent=n+' tiers active'; badge.className='tier-mode-badge tier-mode-badge--multi'; }
+}
+
+/* ══ SPACE MODE ══ */
 function selSpaceMode(el, silent){
-  document.querySelectorAll('.space-mode-card').forEach(c=>{c.classList.remove('sel');});
+  document.querySelectorAll('.space-mode-card').forEach(c=>c.classList.remove('sel'));
   el.classList.add('sel');
-  const mode=el.dataset.mode;
-  const hidden=document.getElementById('f-space-mode');
-  if(hidden)hidden.value=mode;
-  F.spaceMode=mode;
-  const sc=document.getElementById('sharing-context');
-  if(sc)sc.style.display=(mode==='entire'?'none':'');
+  const mode = el.dataset.mode;
+  const hidden = document.getElementById('f-space-mode');
+  if(hidden) hidden.value = mode;
+  F.spaceMode = mode;
+  const sc = document.getElementById('sharing-context');
+  if(sc) sc.style.display = (mode==='entire'?'none':'');
+  renderTierPreview(); /* Mode label updates in guest preview */
 }
 
-/* ══ STAYS: PER-GUEST PRICING PREVIEW ════════════════════════════════ */
-function updPerGuestPreview(){
-  const container=document.getElementById('per-guest-preview');
-  if(!container)return;
-  const baseRate=parseFloat(gv('f-price'))||0;
-  const perGuest=parseFloat(gv('f-per-guest'))||0;
-  const baseGuests=gv('f-base-guests')||'2';
-  const maxGuests=parseInt(gv('f-guests'))||4;
-  const cur=gv('f-cur')||F.cur||'KES';
-  if(!baseRate||baseGuests==='all'||!perGuest){container.style.display='none';return;}
-  const base=parseInt(baseGuests)||2;
-  container.style.display='';
-  let rows='<div class="pgp"><div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:8px">How guests will see pricing per night</div>';
-  for(let g=1;g<=Math.min(maxGuests,6);g++){
-    const extra=Math.max(0,g-base)*perGuest;
-    const total=baseRate+extra;
-    const extraNote=extra?(' <small style="color:var(--ink-faint);font-size:10px">('+cur+' '+baseRate.toLocaleString()+' base + '+cur+' '+extra.toLocaleString()+' extra)</small>'):'<small style="color:var(--ok);font-size:10px"> ✓ base rate</small>';
-    rows+='<div class="pgp-row"><span>'+g+' guest'+(g===1?'':'s')+'</span><span>'+cur+' '+total.toLocaleString()+'/night'+extraNote+'</span></div>';
-  }
-  rows+='</div>';
-  container.innerHTML=rows;
-}
-
-/* Wire up live updates on price/per-guest/guests changes */
-document.addEventListener('input',function(e){
-  if(e.target&&(e.target.id==='f-price'||e.target.id==='f-per-guest'||e.target.id==='f-base-guests'||e.target.id==='f-guests'||e.target.id==='f-cur'))updPerGuestPreview();
-});
+/* Delegated change listener for currency selector updating tier UI */
 document.addEventListener('change',function(e){
-  if(!e.target)return;
-  if(e.target.id==='f-beds')onBedsChange();
-  if(e.target.id==='f-beds-access')onBedsAccessChange();
-  if(e.target.id==='f-base-guests'||e.target.id==='f-cur')updPerGuestPreview();
+  if(!e.target) return;
+  if(e.target.id==='f-beds') onTotalBedsChange();
+  if(e.target.id==='f-cur') renderTiers();
 });
 
 function dov(e){e.preventDefault();document.getElementById('ul-area').classList.add('drag');}
@@ -1332,7 +1619,12 @@ function gv(id){return(document.getElementById(id)?.value||'');}
 function collect(n){
   if(n===2){F.title=gv('f-title').trim();F.country=gv('f-country');F.city=gv('f-city').trim();F.area=gv('f-area').trim();F.street=gv('f-street').trim();F.lat=parseFloat(gv('f-lat'))||null;F.lng=parseFloat(gv('f-lng'))||null;}
   if(n===3){F.desc=gv('f-desc').trim();
-    if(F.svc==='stays'){F.beds=gv('f-beds');F.baths=gv('f-baths');F.guests=gv('f-guests');F.floor=gv('f-floor');F.sqm=gv('f-sqm');F.bedsAccess=gv('f-beds-access')||'all';F.spaceMode=gv('f-space-mode')||'entire';F.sharingContext=gv('f-sharing-context')||'';F.baseGuests=gv('f-base-guests')||'2';F.perGuest=gv('f-per-guest')||'';}
+    if(F.svc==='stays'){
+      tierCollect(); /* syncs F.roomTiers, F.price, F.guests from DOM */
+      F.beds=gv('f-beds');F.baths=gv('f-baths');F.floor=gv('f-floor');F.sqm=gv('f-sqm');
+      F.spaceMode=gv('f-space-mode')||'entire';
+      F.sharingContext=gv('f-sharing-context')||'';
+    }
     if(F.svc==='roommates'){F.avail=gv('f-avail');F.bills=gv('f-bills');F.mates=gv('f-mates');F.guests=F.mates;F.furn=gv('f-furn');F.bath=gv('f-bath');F.suits=gv('f-suits');}
     if(F.svc==='tours'){F.dur=gv('f-dur');F.guests=gv('f-guests');F.meet=gv('f-meet');F.lang=gv('f-lang');}
     if(F.svc==='events'){F.edate=gv('f-edate');F.venue=gv('f-venue');F.guests=gv('f-guests');F.age=gv('f-age');}
@@ -1345,9 +1637,16 @@ function collect(n){
   if(n===6){F.ci=gv('f-in')||'14:00';F.co=gv('f-out')||'11:00';F.inst=document.getElementById('tog-inst')?.classList.contains('on')??true;F.ch=document.getElementById('tog-ch')?.classList.contains('on')??true;F.pets=document.getElementById('tog-pets')?.classList.contains('on')??false;F.smk=document.getElementById('tog-smk')?.classList.contains('on')??false;F.rules=gv('f-rules').trim();}
 }
 function restDet(){const sv=(id,v)=>{const el=document.getElementById(id);if(el&&v)el.value=v;};
-  if(F.svc==='stays'){sv('f-beds',F.beds);sv('f-baths',F.baths);sv('f-guests',F.guests);sv('f-floor',F.floor);sv('f-sqm',F.sqm);sv('f-space-mode',F.spaceMode);sv('f-sharing-context',F.sharingContext);sv('f-base-guests',F.baseGuests);sv('f-per-guest',F.perGuest);
-    /* Restore bedroom-access select and space mode cards */
-    setTimeout(()=>{onBedsChange(F.beds,F.bedsAccess);if(F.spaceMode){const el=document.querySelector('.space-mode-card[data-mode="'+F.spaceMode+'"]');if(el)selSpaceMode(el,true);}},50);
+  if(F.svc==='stays'){
+    sv('f-beds',F.beds);sv('f-baths',F.baths);sv('f-floor',F.floor);sv('f-sqm',F.sqm);
+    sv('f-sharing-context',F.sharingContext);
+    setTimeout(()=>{
+      /* Restore space mode card selection */
+      if(F.spaceMode){const el=document.querySelector('.space-mode-card[data-mode="'+F.spaceMode+'"]');if(el)selSpaceMode(el,true);}
+      /* Restore tier UI — seed from saved data if tiers exist, else seed from bed count */
+      if(!F.roomTiers||!F.roomTiers.length) tierSeed(parseInt(F.beds)||1);
+      renderTiers();
+    },50);
   }
   if(F.svc==='roommates'){sv('f-avail',F.avail);sv('f-bills',F.bills);sv('f-mates',F.mates||F.guests);sv('f-furn',F.furn);sv('f-bath',F.bath);sv('f-suits',F.suits);}
   if(F.svc==='tours'){sv('f-dur',F.dur);sv('f-guests',F.guests);sv('f-meet',F.meet);sv('f-lang',F.lang);}
@@ -1386,10 +1685,20 @@ function valid(n){
   if(n===1&&!F.type){al('Select a type to continue.');return false;}
   if(n===2){if(!document.getElementById('f-title').value.trim()){al('Add a title for your listing.');return false;}if(!document.getElementById('f-city').value.trim()){al('Enter the city.');return false;}if(!document.getElementById('f-area').value.trim()){al('Enter the area or neighbourhood.');return false;}}
   if(n===3&&!document.getElementById('f-desc').value.trim()){al('Write a description.');return false;}
+  if(n===3&&F.svc==='stays'){
+    /* Collect tier data before validating */
+    tierCollect();
+    const priced=F.roomTiers.filter(t=>t.price&&parseFloat(t.price)>0);
+    if(!priced.length){al('Set at least one nightly price in your pricing tiers.');return false;}
+    /* Warn if a tier has no guest limit sensibly above 0 */
+    const badTier=F.roomTiers.find(t=>t.price&&parseFloat(t.price)>0&&(!t.maxGuests||parseInt(t.maxGuests)<1));
+    if(badTier){al('Set a guest limit for each priced tier.');return false;}
+  }
   if(n===4&&F.svc==='roommates'&&!F.photos.length){al('Add at least one photo of the room. Rooms without photos are almost never enquired about.');return false;}
   if(n===3&&F.svc==='roommates'&&!document.getElementById('f-avail').value){al('Set the date the room is free from. Flatmates search by move-in date.');return false;}
   if(n===5){if(!document.getElementById('f-wa').value.trim()){al('Add your WhatsApp number. Guests need this after payment.');return false;}
-    if(!document.getElementById('f-price').value&&F.svc!=='food'){al(F.svc==='roommates'?'Set the monthly rent.':'Set a price.');return false;}}
+    /* For stays, price is auto-set from tiers; only non-stays, non-food need manual price */
+    if(!document.getElementById('f-price').value&&F.svc!=='food'&&F.svc!=='stays'){al(F.svc==='roommates'?'Set the monthly rent.':'Set a price.');return false;}}
   if(n===7){
     collectOwn();
     if(!F.own){al('Say who owns this listing. It is the one thing we cannot guess for you.');return false;}
@@ -1614,12 +1923,10 @@ async function publish(){
       const path=CU.id+'/'+Date.now()+'-'+i+'.jpg';
       const{error}=await sb.storage.from('listings').upload(path,blob,{cacheControl:'31536000',contentType:'image/jpeg',upsert:false});if(error)throw error;const{data:{publicUrl}}=sb.storage.from('listings').getPublicUrl(path);pu.push(publicUrl);}
     const _S=SVCS[F.svc]||{};const _monthly=_S.pf==='month';const _rate=parseFloat(F.price)||null;const SVC_TYPE_MAP={stays:"apartment",roommates:"room",tours:"tour",events:"event",food:"food",carhire:"carhire",rides:"ride",shopping:"shopping"};const svcType=SVC_TYPE_MAP[F.svc]||F.svc;const payload={partner_id:CU?.id,host_id:CU?.id,service:F.svc,type:svcType,listing_type:F.type,property_type:F.type,title:F.title,country:F.country,city:F.city,area:F.area,street:F.street||null,location:[F.area,F.city,F.country].filter(Boolean).join(', '),latitude:F.lat||null,longitude:F.lng||null,description:F.desc,amenities:F.feats,photos:pu.length?pu:F.photos,currency:F.cur,price_night:_monthly?null:_rate,price_week:_monthly?null:(parseFloat(F.pw)||null),price_month:_monthly?_rate:(parseFloat(F.pm)||null),deposit:parseFloat(F.dep)||null,min_nights:_monthly?Math.max(7,parseInt(F.mn)||90):(parseInt(F.mn)||1),max_guests:(F.svc==='food'?(F.seats||null):(F.guests||null)),beds:F.beds||null,baths:F.baths||null,bedrooms:parseInt(F.beds)||null,bathrooms:parseInt(F.baths)||null,floor:F.floor||null,sqm:F.sqm||null,checkin_time:F.ci,checkout_time:F.co,instant_book:F.inst,children:F.ch,pets:F.pets,smoking:F.smk,house_rules:F.rules||null,contact_whatsapp:F.wa||null,contact_phone:F.ph||F.wa||null,contact_email:F.em||null,status:'active',is_active:true,internal_score:50,cancel_policy:'flexible',extras:{plus:F.plusCode||null,pinq:F.precision||null,pinm:F.precisionMetres||null,dur:F.dur||null,meet:F.meet||null,lang:F.lang||null,edate:F.edate||null,venue:F.venue||null,age:F.age||null,cuisine:F.cuisine||null,deliv:F.deliv||null,lead:F.lead||null,make:F.make||null,model:F.model||null,yr:F.yr||null,fuel:F.fuel||null,trans:F.trans||null,areas:F.areas||null,veh:F.veh||null,adv:F.adv||null,stock:F.stock||null,cond:F.cond||null,brand:F.brand||null,da:F.da||null,avail:F.avail||null,bills:F.bills||null,furn:F.furn||null,mates:F.mates||null,bath:F.bath||null,suits:F.suits||null,notice:F.co||null,
-      /* Stays: bedroom access, sharing, per-guest pricing */
-      beds_access:F.svc==='stays'?(F.bedsAccess||'all'):null,
+      /* Stays: room tiers + space arrangement */
+      room_tiers:F.svc==='stays'?(F.roomTiers&&F.roomTiers.length?F.roomTiers:null):null,
       space_mode:F.svc==='stays'?(F.spaceMode||'entire'):null,
-      sharing_context:F.svc==='stays'&&F.spaceMode!=='entire'?(F.sharingContext||null):null,
-      base_guests:F.svc==='stays'?(F.baseGuests||'2'):null,
-      per_guest_fee:F.svc==='stays'?(parseFloat(F.perGuest)||null):null}};
+      sharing_context:F.svc==='stays'&&F.spaceMode!=='entire'?(F.sharingContext||null):null}};
     /* Who filled the form in, kept separately from who owns the result.
        Never read for permissions — that is exactly the distinction the
        ownership model exists to draw — but an on-behalf listing that has
@@ -1764,7 +2071,8 @@ function loadEdit(l){
   const sm={'Apartment':'stays','House':'stays','Studio':'stays','Penthouse':'stays','Villa':'stays','Cottage':'stays','Serviced unit':'stays','Guesthouse':'stays','Lodge':'stays','Hostel':'stays','Airbnb unit':'stays','Beach house':'stays','room':'roommates','apartment':'stays','tour':'tours','event':'events','carhire':'carhire','ride':'rides','shopping':'shopping','Private room':'roommates','Shared room':'roommates','En-suite':'roommates','En-suite room':'roommates','Master bedroom':'roommates','Studio unit':'stays','Bedsitter':'stays','1-bed flat':'stays','Entire flat':'stays','Safari':'tours','Day trip':'tours','City tour':'tours','Cultural':'tours','Adventure':'tours','Hiking':'tours','Water sports':'tours','Photography':'tours','Night safari':'tours','Multi-day':'tours','Bird watching':'tours','Custom tour':'tours','Concert':'events','Festival':'events','Sports event':'events','Comedy show':'events','Conference':'events','Wedding':'events','Exhibition':'events','Theatre':'events','Networking':'events','Party':'events','Food festival':'events','Art showcase':'events','Restaurant':'food','Cafe':'food','Bar and grill':'food','Fast food':'food','Catering':'food','Food truck':'food','Bakery':'food','Rooftop bar':'food','Buffet':'food','Fine dining':'food','Pop-up':'food','Cloud kitchen':'food','Self-drive':'carhire','Chauffeur':'carhire','4x4 safari':'carhire','Minibus':'carhire','Luxury sedan':'carhire','Airport transfer':'carhire','Bus hire':'carhire','Motorcycle':'carhire','Tuk tuk':'carhire','Van or MPV':'carhire','Boda boda':'carhire','Coach':'carhire','Ride hailing':'rides','Shuttle':'rides','Corporate transfer':'rides','Long-distance':'rides','Handcraft':'shopping','Clothing':'shopping','Jewellery':'shopping','Art':'shopping','Electronics':'shopping','Food products':'shopping','Home decor':'shopping','Souvenirs':'shopping','Furniture':'shopping','Beauty':'shopping','Books':'shopping','Sport and outdoor':'shopping'};
   F.svc=l.service||sm[l.type]||sm[l.property_type]||sm[l.listing_type]||'stays';const rawListingType=l.listing_type||l.property_type||l.type||'';F.type=F.svc==='stays'?canonicalStayType(rawListingType):rawListingType;F.title=l.title||'';F.country=l.country||'Kenya';F.city=l.city||'';F.area=l.area||'';F.street=l.street||'';F.lat=l.latitude||null;F.lng=l.longitude||null;F.plusCode=(l.extras&&l.extras.plus)||null;F.precision=(l.extras&&l.extras.pinq)||null;F.precisionMetres=(l.extras&&l.extras.pinm)||null;F.desc=l.description||'';F.feats=l.amenities||[];F.photos=l.photos||[];F.cur=l.currency||'KES';F.price=(l.service==='roommates'||l.type==='room')?(l.price_month?String(l.price_month):(l.price_night?String(l.price_night):'')):(l.price_night?String(l.price_night):'');F.pw=l.price_week?String(l.price_week):'';F.pm=l.price_month?String(l.price_month):'';F.dep=l.deposit?String(l.deposit):'';F.mn=String(((l.service==='roommates'||l.type==='room')?(l.min_nights||((l.extras&&l.extras.minmonths)*30)||90):(l.min_nights||1)));F.guests=l.max_guests||'2';F.seats=(l.service==='food'||l.type==='food')?(l.max_guests?String(l.max_guests):''):'';F.mates=(l.extras&&l.extras.mates)||l.max_guests||'2';F.bath=(l.extras&&l.extras.bath)||'shared';F.suits=(l.extras&&l.extras.suits)||'anyone';F.avail=(l.extras&&l.extras.avail)||'';F.bills=(l.extras&&l.extras.bills)||'included';F.furn=(l.extras&&l.extras.furn)||'Fully furnished';F.beds=l.beds||'1';F.baths=l.baths||'1';F.floor=l.floor||'';F.sqm=l.sqm||'';F.wa=l.contact_whatsapp||'';F.ph=l.contact_phone||'';F.em=l.contact_email||'';F.ci=l.checkin_time||'14:00';F.co=l.checkout_time||'11:00';F.inst=l.instant_book!==false;F.ch=l.children!==false;F.pets=!!l.pets;F.smk=!!l.smoking;F.rules=l.house_rules||'';
   if(l.extras){const e=l.extras;Object.assign(F,{dur:e.dur||'',meet:e.meet||'',lang:e.lang||'',edate:e.edate||'',venue:e.venue||'',age:e.age||'',cuisine:e.cuisine||'',deliv:e.deliv||'',lead:e.lead||'',make:e.make||'',model:e.model||'',yr:e.yr||'',fuel:e.fuel||'',trans:e.trans||'',areas:e.areas||'',veh:e.veh||'',adv:e.adv||'',stock:e.stock||'',cond:e.cond||'',brand:e.brand||'',da:e.da||'',avail:e.avail||'',bills:e.bills||'',furn:e.furn||'',
-    bedsAccess:e.beds_access||'all',spaceMode:e.space_mode||'entire',sharingContext:e.sharing_context||'',baseGuests:e.base_guests||'2',perGuest:e.per_guest_fee!=null?String(e.per_guest_fee):'',});}
+    roomTiers:Array.isArray(e.room_tiers)&&e.room_tiers.length?e.room_tiers:[],
+    spaceMode:e.space_mode||'entire',sharingContext:e.sharing_context||'',});}
   /* A restaurant's numbers moved off the listings row, so an edit has to
      go and get them. Without this, opening a live restaurant and pressing
      save would quietly wipe its delivery fee and its hours back to blank. */

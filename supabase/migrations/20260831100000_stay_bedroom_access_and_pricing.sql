@@ -1,84 +1,98 @@
 -- ══════════════════════════════════════════════════════════════════════
--- CABANA · Stay bedroom access, space mode, and per-guest pricing
+-- CABANA · Stay room tiers: flexible bedroom-level pricing
 --
 -- THE PROBLEM
 -- ──────────
--- A 3-bedroom house listed on Cabana could be priced and described as
--- though the guest gets all 3 bedrooms, even when the host intended to
--- rent only 1 and keep the others. Guests had no way to know what they
--- were actually getting.
+-- A host with a 3-bedroom property had exactly one price. A solo traveller
+-- and a family of 6 paid the same rate — or the host had to create
+-- multiple listings for the same property, leading to calendar conflicts,
+-- duplicated management and confused search results.
 --
--- Additionally there was no clear signal to a guest about whether they
--- would share the property with the host or other guests, or have it to
--- themselves — a material fact that affects booking decisions.
+-- When a guest saw "3 bedrooms" and booked as a couple expecting one room,
+-- then arrived to find two other rooms they weren't supposed to use, that
+-- was a dispute. When a group of 4 saw the same property listed at a
+-- 2-person rate and assumed it included all rooms, that was also a dispute.
 --
--- Per-guest pricing (a charge per additional guest above a base count)
--- was impossible to express; a large group booking a 2-bed always paid
--- the same as a solo traveller.
+-- THE MODEL: ROOM TIERS
+-- ─────────────────────
+-- One listing, multiple price points. The host defines up to N tiers
+-- (one per bedroom count). Each tier specifies:
 --
--- THE MODEL
--- ─────────
--- Five new fields on the listings row, all stored in the extras jsonb
--- column rather than as top-level columns, so no schema migration is
--- needed for existing data and the API endpoint does not change.
+--   beds        integer    how many bedrooms the guest gets access to
+--   label       text       human name shown to guests ("1 Bedroom Suite")
+--   maxGuests   integer    maximum occupants for this tier
+--   price       numeric    nightly rate for this tier
+--   perGuest    numeric    optional: extra charge per guest above 2
 --
--- beds_access    : 'all' or an integer string ('1','2',...) — how many
---                  of the total bedrooms the guest actually accesses.
+-- Example:
+--   [
+--     { beds:1, label:"1 Bedroom",       maxGuests:2, price:2500, perGuest:0   },
+--     { beds:2, label:"2 Bedrooms",      maxGuests:4, price:3500, perGuest:500 },
+--     { beds:3, label:"Whole house",     maxGuests:6, price:9000, perGuest:0   }
+--   ]
 --
+-- GUEST EXPERIENCE
+-- ────────────────
+-- On the listing detail page, guests see a "Choose your option" section
+-- before the date picker. Each tier shows as a card:
+--
+--   ┌─────────────────────────────────────────┐
+--   │  🛏  1 Bedroom          Entire place    │
+--   │  Up to 2 guests                         │
+--   │  KES 2,500 /night                       │
+--   └─────────────────────────────────────────┘
+--
+-- They select a tier, then pick dates. The calendar respects the
+-- selected tier's booking (a 1-bed booking doesn't block the 3-bed tier).
+--
+-- SPACE ARRANGEMENT
+-- ─────────────────
 -- space_mode     : 'entire' | 'private_room' | 'shared_room'
---                  Tells the guest whether they have the whole place.
+-- sharing_context: 'host_present' | 'other_guests' | 'host_and_guests' | 'caretaker'
 --
--- sharing_context: 'host_present' | 'other_guests' | 'host_and_guests'
---                  | 'caretaker' — shown when space_mode != 'entire'.
+-- Both live in extras jsonb. No DDL needed.
 --
--- base_guests    : integer — how many guests the nightly price covers.
---                  'all' means no per-guest charge.
---
--- per_guest_fee  : numeric — charge per additional guest per night above
---                  base_guests. null if no per-guest pricing.
---
--- All five are optional additive fields that live inside the extras
--- jsonb column already on every listings row. No schema change needed.
---
--- GUEST-FACING DISPLAY
--- ───────────────────
--- The listing detail page (stay.html / apartment.html) reads these
--- fields and shows:
---   · A clear badge: "1 of 3 bedrooms" when beds_access is set
---   · A space-type pill: "Entire place" / "Private room(s)" / "Shared"
---   · A sharing note: "Host will be present" etc.
---   · A dynamic pricing table when per_guest_fee is set
---
--- This migration is a no-op DDL change (comment only) because the data
--- lives in extras jsonb. The real work is in the application layer.
--- We document the shape here so support and future engineers know what
--- these keys mean and why they exist.
+-- Idempotent. Additive. Safe to re-run.
 -- ══════════════════════════════════════════════════════════════════════
 
--- Idempotent: adding a comment costs nothing and is safe to re-run.
 comment on column public.listings.extras is
-  'Freeform JSONB bag for service-specific fields. Known keys for stays:
-   beds_access     text    "all" or "1","2",... (bedrooms guest accesses)
-   space_mode      text    entire|private_room|shared_room
-   sharing_context text    host_present|other_guests|host_and_guests|caretaker
-   base_guests     text    integer — guests covered by base nightly rate
-   per_guest_fee   numeric extra charge per additional guest per night
-   plus            text    OpenLocationCode / Plus Code for the pin
-   pinq            text    pin precision grade (rooftop|parcel|street|district|city)
-   pinm            numeric pin precision in metres
-   (other service-specific keys documented inline in their respective forms)';
+  'Freeform JSONB bag for service-specific fields.
 
--- ── Index for stay/space-mode filtering ──────────────────────────────
--- Guests can filter "Entire place only" — an index on the extracted
--- text value lets that filter scan fast even across millions of rows.
+   STAYS — room tier pricing (key: room_tiers):
+     Array of tier objects:
+       beds        integer   bedrooms the guest accesses
+       label       text      display name ("1 Bedroom Suite")
+       maxGuests   integer   max occupants
+       price       numeric   nightly rate
+       perGuest    numeric   extra charge per guest above 2 (0 = flat rate)
+     The listing price_night is always set to min(tier.price) for search ranking.
+
+   STAYS — space arrangement:
+     space_mode      text   entire|private_room|shared_room
+     sharing_context text   host_present|other_guests|host_and_guests|caretaker
+
+   GENERAL PIN FIELDS:
+     plus   text      OpenLocationCode / Plus Code
+     pinq   text      pin precision (rooftop|parcel|street|district|city)
+     pinm   numeric   pin precision in metres
+
+   Other service-specific keys documented inline in each listing form.';
+
+-- ── Index: space_mode filter on stays ─────────────────────────────────
 create index if not exists listings_stay_space_mode
   on public.listings ((extras->>'space_mode'))
   where service = 'stays' and is_active = true;
 
--- ── Index for per-guest pricing queries ──────────────────────────────
--- The pricing calculator on the search page needs to know which
--- listings have per-guest fees so it can show accurate totals.
-create index if not exists listings_stay_per_guest
-  on public.listings ((extras->>'per_guest_fee'))
-  where service = 'stays' and is_active = true
-    and extras->>'per_guest_fee' is not null;
+-- ── Index: listings with room tiers ───────────────────────────────────
+-- Lets the search and listing-detail pages quickly find multi-tier stays.
+create index if not exists listings_stay_has_room_tiers
+  on public.listings ((extras->'room_tiers' is not null))
+  where service = 'stays' and is_active = true;
+
+-- ── Index: per-tier guest max (used by availability/capacity filter) ──
+-- When a guest searches for "4 guests", the search layer reads the tiers
+-- to find listings that have ANY tier accommodating 4+, not just listings
+-- whose overall max_guests >= 4. This index supports that filter.
+create index if not exists listings_stay_room_tiers_gin
+  on public.listings using gin ((extras->'room_tiers'))
+  where service = 'stays' and is_active = true;
