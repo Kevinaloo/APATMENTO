@@ -14,7 +14,6 @@
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
-import url from 'node:url';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -79,7 +78,7 @@ const PORT = Number(process.env.UI_TEST_PORT || 8899);
 const REWARDS_CALLS = [];
 
 http.createServer((req,res)=>{
-  const u = url.parse(req.url,true);
+  const u = new URL(req.url, 'http://localhost');
 
   if (u.pathname === '/api/rewards'){
     let raw = '';
@@ -100,7 +99,7 @@ http.createServer((req,res)=>{
   if (u.pathname === '/api/ambassadors'){
     const sc = (req.headers.cookie||'').match(/scenario=([a-z]+)/);
     const scenario = sc?sc[1]:'ok';
-    const a = u.query.action;
+    const a = u.searchParams.get('action');
     let body = {ok:false,error:'unknown'};
     if (a==='gate')        body = gateFor(scenario);
     else if (a==='me')     body = scenario==='ok' ? ME : {ok:false,reason:'not_authorised'};
