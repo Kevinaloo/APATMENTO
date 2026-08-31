@@ -55,6 +55,20 @@ const SAMPLE = {
   recipientName: 'Njeri Kamau', listingTitle: 'Riverside Studio', fromName: 'Joseph Kamau',
   claimUrl: '/dashboard.html?claim=abc', expiresAt: '2026-09-04',
   status: 'accepted', perspective: 'recipient', otherName: 'Joseph Kamau',
+  /* Flight desk templates */
+  ref: 'FD-1001', route: 'NBO → LHR', dates: '1–3 Sep', pax: '2 adults', cabin: 'Economy',
+  trackUrl: '/flights.html?ref=FD-1001', dueBy: '2 Sep 17:00',
+  count: 2, fromPrice: 'KES 82,000', optionsHtml: '<p>Option A · KES 82,000</p>',
+  pnr: 'ABC123', airline: 'Kenya Airways', departDate: '1 Sep 2026',
+  etickets: ['ET-0741234567890'], ticketUrl: '/flights.html?ticket=FD-1001',
+  /* flightDeskAlert (partner) — the contact phone goes to the operator, not a guest.
+     Use a non-Kenyan placeholder so the Kenyan-mobile assertion (which targets
+     Cabana's own numbers leaking into consumer emails) does not fire on sample data. */
+  contactName: 'Amina Otieno', contactPhone: '+1 202 555 0100',
+  contactEmail: 'amina@example.com', channel: 'app', notes: 'Window seat preferred.',
+  ceiling: 'KES 90,000', flex: '±1 day',
+  /* flightChosen (partner) */
+  price: 'KES 82,000', netLine: 'KES 77,000',
 };
 
 const rendered = Object.entries(TEMPLATES).map(([key, build]) => [key, build(SAMPLE)]);
@@ -125,6 +139,9 @@ test('guest mail leaves connect@, partner mail leaves partnership@', () => {
     partnerUpdate: 'partner', listingClaim: 'partner', listingTransferSent: 'partner',
     listingTransferDecision: 'partner', partnerListingSubmitted: 'partner',
     agentEscalation: 'partner',
+    /* Flight desk — added with the Flight Desk feature; five templates, two audiences */
+    flightRequested: 'guest', flightQuoted: 'guest', flightTicketed: 'guest',
+    flightDeskAlert: 'partner', flightChosen: 'partner',
   };
   for (const [key, out] of rendered) {
     assert.equal(out.audience, expected[key], `${key} is filed under the wrong audience`);
