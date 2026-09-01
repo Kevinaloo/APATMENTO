@@ -3,23 +3,21 @@
 #  Africa's Zero-Commission Travel Super-App · 54 African Countries
 # ══════════════════════════════════════════════════════════════════════
 
-# ── General Crawlers (Googlebot, Bingbot, Applebot, DuckDuckGo, etc.) ─
+# ── General Crawlers ──────────────────────────────────────────────────
 User-agent: *
 Allow: /
-
-# Allow crawling and indexing of public assets and resources
-Allow: /*.css*
-Allow: /*.js*
-Allow: /*.png*
-Allow: /*.jpg*
-Allow: /*.jpeg*
-Allow: /*.webp*
-Allow: /*.avif*
-Allow: /*.svg*
-Allow: /*.ico*
-Allow: /*.woff*
-Allow: /*.woff2*
-Allow: /*.json*
+Allow: /*.css$
+Allow: /*.js$
+Allow: /*.png$
+Allow: /*.jpg$
+Allow: /*.jpeg$
+Allow: /*.webp$
+Allow: /*.avif$
+Allow: /*.svg$
+Allow: /*.ico$
+Allow: /*.woff$
+Allow: /*.woff2$
+Allow: /*.json$
 Allow: /llms.txt
 Allow: /robots.txt
 Allow: /sitemap*.xml
@@ -72,34 +70,50 @@ Disallow: /*?*sort=*
 # ── Googlebot ─────────────────────────────────────────────────────────
 User-agent: Googlebot
 Allow: /
-Allow: /*.css*
-Allow: /*.js*
-Allow: /*.png*
-Allow: /*.jpg*
-Allow: /*.jpeg*
-Allow: /*.webp*
-Allow: /*.avif*
-Allow: /*.svg*
-Allow: /*.ico*
-Allow: /*.woff*
-Allow: /*.woff2*
+Allow: /*.css$
+Allow: /*.js$
+Allow: /*.png$
+Allow: /*.jpg$
+Allow: /*.jpeg$
+Allow: /*.webp$
+Allow: /*.avif$
+Allow: /*.svg$
+Allow: /*.ico$
+Allow: /*.woff$
+Allow: /*.woff2$
+Allow: /*.json$
+Allow: /llms.txt
+Allow: /robots.txt
+Allow: /sitemap*.xml
 Disallow: /auth
 Disallow: /auth.html
 Disallow: /dashboard
 Disallow: /dashboard.html
 Disallow: /booking-confirm
+Disallow: /booking-confirm.html
 Disallow: /my-bookings
+Disallow: /my-bookings.html
 Disallow: /admin
 Disallow: /admin.html
 Disallow: /profile
+Disallow: /profile.html
 Disallow: /add-listing
+Disallow: /add-listing.html
 Disallow: /agent-dashboard
+Disallow: /agent-dashboard.html
 Disallow: /driver
+Disallow: /driver.html
 Disallow: /partner-*
 Disallow: /api/
 Disallow: /tools/
 Disallow: /seo/
 Disallow: /supabase/
+Disallow: /supabase-migrations/
+Disallow: /*.sql$
+Disallow: /*.cjs$
+Disallow: /*?*utm_*
+Disallow: /*?*ref=*
+Disallow: /*?*sort=*
 
 User-agent: Googlebot-Image
 Allow: /
