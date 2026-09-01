@@ -4971,7 +4971,7 @@ function gmBuildForm(l){
     </label>`;
   }
   html += `<label class="gm-lbl">Booking / order URL (optional)
-    <input class="inp" id="gm-url-in" value="${v('street', l.external_url||'')}" placeholder="https://… link to book or order"/>
+    <input class="inp" id="gm-url-in" value="${v('external_url', l.external_url || l.street || '')}" placeholder="https://… link to book or order"/>
   </label>`;
 
   if(extras.includes('house_rules')){
@@ -5149,11 +5149,55 @@ function gmCollect(){
   return payload;
 }
 
+// ── Known listings columns (keep in sync with DB schema) ──────────────────
+// This whitelist prevents "column not found in schema cache" errors. Any key
+// not in this set is silently dropped before the write reaches Supabase.
+// When you add a column to the `listings` table, add it here too.
+const LISTINGS_KNOWN_COLUMNS = new Set([
+  'id','partner_id','host_id','created_by','type','title',
+  'country','city','area','street','location',
+  'beds','baths','max_guests','floor','sqm','size_sqm',
+  'description','amenities','photos','photo_hashes',
+  'currency','price_night','price_per_night','price_week','price_month',
+  'deposit','min_nights','checkin_time','checkout_time',
+  'smoking','pets','events','children','instant_book',
+  'cancel_policy','house_rules','status','created_at','updated_at',
+  'is_active','listing_type','property_type','service',
+  'bedrooms','bathrooms','bathroomstext','avg_rating','review_count',
+  'internal_score','booking_count','days_listed',
+  'approved_at','rejection_reason','deleted_at','featured','views',
+  'lat','lng','latitude','longitude',
+  'contact_whatsapp','contact_phone','contact_email',
+  'extras','source',
+  'ownership_type','ownership_declared_at','equity_split',
+  'created_by_role','held_for_name','held_for_contact','activate_on_claim',
+  'plus_code','pin_precision','pin_metres',
+  // Columns added 2026-09-01 to fix admin edit schema cache error:
+  'external_url','tags','event_date','event_time',
+]);
+
+/** Strip any key that isn't in the listings schema. Logs unknown keys so we
+    catch drift early in the console, but never throws. */
+function gmSanitizePayload(payload) {
+  const clean = {};
+  for (const [k, v] of Object.entries(payload)) {
+    if (LISTINGS_KNOWN_COLUMNS.has(k)) {
+      clean[k] = v;
+    } else {
+      console.warn(`[admin] gmSave: dropping unknown listings column "${k}" — add it to LISTINGS_KNOWN_COLUMNS and the DB migration if intentional`);
+    }
+  }
+  return clean;
+}
+
 // ── Save ───────────────────────────────────────────────────────────────────
 async function gmSave(){
   if(!GM_TYPE){ gmMsg('Please select a service type','bad'); return; }
 
-  const payload = gmCollect();
+  const rawPayload = gmCollect();
+  // Sanitize: drop any field not present in the listings schema to prevent
+  // PostgREST "column not found in schema cache" errors on save.
+  const payload = gmSanitizePayload(rawPayload);
 
   if(!payload.title){ $('gm-title-in')?.focus(); gmMsg('Title is required','bad'); return; }
   if(!payload.location){ $('gm-loc-in')?.focus(); gmMsg('Location is required','bad'); return; }
