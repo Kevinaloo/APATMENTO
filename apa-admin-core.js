@@ -708,6 +708,30 @@
         });
     },
 
+    /* Transfer ownership of any row (listing, tour, event, etc.) from
+       one partner/user to another. Works across any table that carries
+       a partner_id or owner_id column. The audit entry records both
+       the old and new owner so the transfer is fully traceable.
+
+       tableKey  – the service table name, e.g. 'listings'
+       ownerCol  – the FK column name, e.g. 'partner_id'
+       id        – the row UUID
+       newOwnerId – the target user's UUID
+       reason    – optional admin note                               */
+    transferOwnership: function (tableKey, ownerCol, id, currentOwnerId, newOwnerId, reason) {
+      if (!newOwnerId) return Promise.resolve({ ok: false, error: 'New owner ID is required.' });
+      if (newOwnerId === currentOwnerId) return Promise.resolve({ ok: false, error: 'New owner is the same as the current owner.' });
+      return audit('listing.transfer_ownership', { type: tableKey, id: id }, {
+        from: currentOwnerId, to: newOwnerId, reason: reason || ''
+      }).then(function () {
+        var patch = {};
+        patch[ownerCol] = newOwnerId;
+        /* Also update the secondary owner column if the table has one */
+        if (ownerCol === 'partner_id') patch.host_id = newOwnerId;
+        return write(tableKey, function (t) { return t.update(patch).eq('id', id); });
+      });
+    },
+
     deleteMedia: function (id, bucketPath) {
       return audit('media.delete', { type: 'media', id: id }, { path: bucketPath })
         .then(function () {
@@ -1122,7 +1146,21 @@
       var sharedByKey = {};
       SERVICES.forEach(function (s) { if (s.shared) sharedByKey[s.key] = s; });
 
-      (listings || []).forEach(function (l) {
+      /* Filter out soft-deleted listings so they vanish from the
+         catalogue immediately after a delete action. The hidden filter
+         tab can still surface them via the state column if needed, but
+         the default view must not show rows the operator just deleted. */
+      var activeListings = (listings || []).filter(function (l) {
+        var st = String(l.status || '').toLowerCase().trim();
+        /* Keep deleted rows out of the catalogue build entirely.
+           They were soft-deleted; the DB still has them but the
+           admin UI should treat them as gone. */
+        if (st === 'deleted' || st === 'removed') return false;
+        if (l.deleted_at) return false;
+        return true;
+      });
+
+      activeListings.forEach(function (l) {
         var key = LISTING_TYPE_SERVICE[typeOf(l)] || 'stay';
         /* A listing typed as a tour or an event still belongs in that
            tab, sitting next to the rows from the dedicated table. The
@@ -1208,13 +1246,46 @@
        archived or retired. */
     deletedLabel: function (item) { return item.deletedStatus || 'deleted'; },
 
-    softDeletable: function (item) { return !!item.deletedStatus; }
+    softDeletable: function (item) { return !!item.deletedStatus; },
+
+    /* Return the FK column that holds the owning partner/user on the
+       item's table. The owner column differs across tables; this map
+       keeps the UI generic. */
+    ownerCol: function (item) {
+      var cols = {
+        listings: 'partner_id',
+        tours: 'organiser_id',
+        events: 'organiser_id',
+        food_items: 'partner_id',
+        car_hire_vehicles: 'operator_id',
+      };
+      return cols[item.table] || 'partner_id';
+    },
+
+    /* Transfer ownership of a catalogue item to a new partner/user.
+       newOwnerId must be a valid profile UUID.                       */
+    transferOwnership: function (item, newOwnerId, reason) {
+      var col = Catalogue.ownerCol(item);
+      return Moderate.transferOwnership(item.table, col, item.id, item.partnerId, newOwnerId, reason);
+    }
   };
 
   /* ═══ 6 · SNAPSHOT. One call, whole platform ════════════════════ */
   function coreSnapshot() {
     return Promise.all([
-      rows('listings', function (q) { return q.order('created_at', { ascending: false }).limit(2000); }),
+      rows('listings', function (q) {
+        /* Exclude hard-deleted and soft-deleted rows. The admin UI can
+           surface them via a separate "deleted" query if needed, but the
+           default catalogue view must not show them after a delete action.
+           neq alone is insufficient because some rows land on 'removed';
+           filter each known terminal status. */
+        return q
+          .neq('status', 'deleted')
+          .neq('status', 'removed')
+          .is('deleted_at', null)
+          .order('created_at', { ascending: false })
+          .limit(2000);
+      }),
       rows('profiles', function (q) { return q.order('created_at', { ascending: false }).limit(3000); }),
       rows('apartment_bookings', function (q) { return q.select('*').order('created_at', { ascending: false }).limit(3000); }),
       rows('reviews', function (q) { return q.limit(2000); }),
