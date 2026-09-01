@@ -8,6 +8,7 @@
  */
 import { createHash } from 'node:crypto';
 import { GoogleGenAI, Type } from '@google/genai';
+import { getVercelOidcToken } from '@vercel/oidc';
 
 const OPENAI_API = 'https://api.openai.com/v1/responses';
 const VERCEL_AI_GATEWAY_API = 'https://ai-gateway.vercel.sh/v1/responses';
@@ -76,15 +77,27 @@ function getGemini() {
 }
 
 function providerIsConfigured(provider) {
-  if (provider === 'gateway') return Boolean(process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN);
+  if (provider === 'gateway') {
+    return Boolean(
+      process.env.AI_GATEWAY_API_KEY ||
+      process.env.VERCEL_OIDC_TOKEN ||
+      process.env.VERCEL === '1'
+    );
+  }
   if (provider === 'openai') return Boolean(process.env.OPENAI_API_KEY);
   if (provider === 'gemini') return Boolean(process.env.GEMINI_API_KEY);
   if (provider === 'groq') return Boolean(process.env.GROQ_API_KEY);
   return false;
 }
 
-function gatewayToken() {
-  return process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN || '';
+async function gatewayToken() {
+  if (process.env.AI_GATEWAY_API_KEY) return process.env.AI_GATEWAY_API_KEY;
+  if (process.env.VERCEL_OIDC_TOKEN) return process.env.VERCEL_OIDC_TOKEN;
+  try {
+    return await getVercelOidcToken() || '';
+  } catch {
+    return '';
+  }
 }
 
 function providerOrder(value = process.env.AI_PROVIDER_ORDER) {
@@ -382,7 +395,7 @@ async function callOpenAi(messages, options = {}) {
 }
 
 async function callVercelGateway(messages, options = {}) {
-  const token = gatewayToken();
+  const token = await gatewayToken();
   if (!token) throw new Error('gateway_not_configured');
   const models = configuredModels('AI_GATEWAY_MODEL', DEFAULT_GATEWAY_MODELS);
   const [primary, ...fallbacks] = models;
