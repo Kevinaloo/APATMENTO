@@ -5,6 +5,9 @@ import { callAi, generateStructuredJson, __test } from '../api/lib/_ai-gateway.j
 
 const AI_ENV = [
   'AI_PROVIDER_ORDER',
+  'AI_GATEWAY_API_KEY',
+  'AI_GATEWAY_MODEL',
+  'VERCEL_OIDC_TOKEN',
   'OPENAI_API_KEY',
   'OPENAI_MODEL',
   'OPENAI_REASONING_EFFORT',
@@ -80,8 +83,13 @@ test('OpenAI Responses requests are private, bounded, and privacy identified', a
 });
 
 test('defaults stay operational without premium OpenAI or Gemini models', () => {
-  assert.deepEqual(__test.providerOrder(), ['gemini', 'groq', 'openai']);
-  assert.deepEqual(__test.defaultProviderOrder, ['gemini', 'groq', 'openai']);
+  assert.deepEqual(__test.providerOrder(), ['gateway', 'groq', 'gemini', 'openai']);
+  assert.deepEqual(__test.defaultProviderOrder, ['gateway', 'groq', 'gemini', 'openai']);
+  assert.deepEqual(__test.defaultModels.gateway, [
+    'google/gemini-3.5-flash-lite',
+    'openai/gpt-5.6-luna',
+    'google/gemini-3.1-flash-lite',
+  ]);
   assert.deepEqual(__test.defaultModels.openai, ['gpt-5.6-luna', 'gpt-5-mini', 'gpt-5-nano']);
   assert.deepEqual(__test.defaultModels.gemini, [
     'gemini-3.5-flash-lite',
@@ -91,6 +99,39 @@ test('defaults stay operational without premium OpenAI or Gemini models', () => 
   assert.ok(!__test.defaultModels.openai.includes('gpt-5.6'));
   assert.ok(__test.defaultModels.gemini.every(model => !model.includes('pro')));
   assert.deepEqual(__test.defaultModels.groq, ['openai/gpt-oss-120b', 'openai/gpt-oss-20b']);
+});
+
+test('Vercel OIDC reaches Gemini and OpenAI fallbacks without provider keys', async (t) => {
+  useAiEnv(t, { VERCEL_OIDC_TOKEN: 'short-lived-vercel-token' });
+  let request;
+  useFetch(t, async (url, init) => {
+    request = { url, init, body: JSON.parse(init.body) };
+    return jsonResponse({
+      model: 'google/gemini-3.5-flash-lite',
+      output: [{
+        type: 'message',
+        role: 'assistant',
+        content: [{ type: 'output_text', text: 'APA stayed online through OIDC.' }],
+      }],
+    });
+  });
+
+  const result = await callAi(
+    [{ role: 'user', content: 'Hello' }],
+    { safetyIdentifier: 'guest:private-id', profile: 'fast' }
+  );
+
+  assert.equal(request.url, 'https://ai-gateway.vercel.sh/v1/responses');
+  assert.equal(initHeader(request.init, 'Authorization'), 'Bearer short-lived-vercel-token');
+  assert.equal(request.body.model, 'google/gemini-3.5-flash-lite');
+  assert.deepEqual(request.body.providerOptions.gateway.models, [
+    'openai/gpt-5.6-luna',
+    'google/gemini-3.1-flash-lite',
+  ]);
+  assert.match(request.body.providerOptions.gateway.user, /^[a-f0-9]{64}$/);
+  assert.equal(request.body.store, false);
+  assert.equal(result.provider, 'gateway');
+  assert.equal(result.choices[0].message.content, 'APA stayed online through OIDC.');
 });
 
 function initHeader(init, name) {

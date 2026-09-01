@@ -10,7 +10,14 @@ import { createHash } from 'node:crypto';
 import { GoogleGenAI, Type } from '@google/genai';
 
 const OPENAI_API = 'https://api.openai.com/v1/responses';
+const VERCEL_AI_GATEWAY_API = 'https://ai-gateway.vercel.sh/v1/responses';
 const GROQ_API = 'https://api.groq.com/openai/v1/chat/completions';
+
+const DEFAULT_GATEWAY_MODELS = [
+  { id: 'google/gemini-3.5-flash-lite', timeout: 12_000 },
+  { id: 'openai/gpt-5.6-luna',         timeout: 15_000 },
+  { id: 'google/gemini-3.1-flash-lite', timeout: 12_000 },
+];
 
 const DEFAULT_OPENAI_MODELS = [
   { id: 'gpt-5.6-luna', timeout: 12_000 },
@@ -29,8 +36,8 @@ const DEFAULT_GROQ_MODELS = [
   { id: 'openai/gpt-oss-20b',  timeout: 6_000 },
 ];
 
-const PROVIDERS = ['openai', 'gemini', 'groq'];
-const DEFAULT_PROVIDER_ORDER = ['gemini', 'groq', 'openai'];
+const PROVIDERS = ['gateway', 'openai', 'gemini', 'groq'];
+const DEFAULT_PROVIDER_ORDER = ['gateway', 'groq', 'gemini', 'openai'];
 const REASONING_EFFORTS = new Set(['none', 'low', 'medium', 'high', 'xhigh', 'max']);
 const MAX_TOOL_CALLS = 3;
 const MAX_TOOL_ARGUMENT_BYTES = 12_000;
@@ -69,10 +76,15 @@ function getGemini() {
 }
 
 function providerIsConfigured(provider) {
+  if (provider === 'gateway') return Boolean(process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN);
   if (provider === 'openai') return Boolean(process.env.OPENAI_API_KEY);
   if (provider === 'gemini') return Boolean(process.env.GEMINI_API_KEY);
   if (provider === 'groq') return Boolean(process.env.GROQ_API_KEY);
   return false;
+}
+
+function gatewayToken() {
+  return process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN || '';
 }
 
 function providerOrder(value = process.env.AI_PROVIDER_ORDER) {
@@ -369,6 +381,57 @@ async function callOpenAi(messages, options = {}) {
   throw new Error(lastError);
 }
 
+async function callVercelGateway(messages, options = {}) {
+  const token = gatewayToken();
+  if (!token) throw new Error('gateway_not_configured');
+  const models = configuredModels('AI_GATEWAY_MODEL', DEFAULT_GATEWAY_MODELS);
+  const [primary, ...fallbacks] = models;
+  const { instructions, input } = convertMessagesToOpenAi(messages);
+  const tools = toOpenAiTools(options.tools);
+  const user = privacySafeIdentifier(options.safetyIdentifier);
+  const body = {
+    model: primary.id,
+    input,
+    store: false,
+    max_output_tokens: clampNumber(
+      options.maxTokens,
+      options.profile === 'fast' ? 700 : 1400,
+      64,
+      8000
+    ),
+    ...(instructions ? { instructions } : {}),
+    ...(tools?.length ? {
+      tools,
+      tool_choice: 'auto',
+      parallel_tool_calls: false,
+    } : {}),
+    providerOptions: {
+      gateway: {
+        ...(fallbacks.length ? { models: fallbacks.map(model => model.id) } : {}),
+        ...(user ? { user } : {}),
+        tags: ['app:cabana', 'feature:apa', `profile:${options.profile || 'quality'}`],
+      },
+    },
+  };
+
+  const { response, data } = await fetchJson(VERCEL_AI_GATEWAY_API, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(body),
+  }, Math.max(...models.map(model => model.timeout)));
+
+  if (!response.ok) throw new Error(`gateway_${response.status}`);
+  return {
+    provider: 'gateway',
+    model: data?.model || primary.id,
+    usage: data?.usage || null,
+    choices: [{ message: openAiResponseMessage(data) }],
+  };
+}
+
 function convertParameters(parameters) {
   if (!parameters) return undefined;
   const type = Array.isArray(parameters.type)
@@ -573,10 +636,9 @@ function finalizeResponse(data, tools, attempts, startedAt) {
 }
 
 /*
- * The default path deliberately starts with free/low-cost Gemini Flash-Lite,
- * then Groq, then OpenAI's low-cost cascade. Premium models remain opt-in via
- * environment variables. AI_PROVIDER_ORDER can change the order without a
- * deployment, and missing/expired credentials simply remove that provider.
+ * Vercel's OIDC-authenticated gateway supplies low-cost Gemini and OpenAI
+ * models without personal provider keys. Direct Groq is independent of that
+ * budget and remains the first fallback. Premium models remain opt-in.
  */
 export async function callAi(messages, options = {}) {
   const startedAt = Date.now();
@@ -585,7 +647,7 @@ export async function callAi(messages, options = {}) {
   const available = order.filter(providerIsConfigured);
   if (!available.length) throw new Error('ai_gateway_unconfigured');
 
-  const callers = { openai: callOpenAi, gemini: callGemini, groq: callGroq };
+  const callers = { gateway: callVercelGateway, openai: callOpenAi, gemini: callGemini, groq: callGroq };
   for (const provider of available) {
     const attemptStarted = Date.now();
     try {
@@ -618,6 +680,14 @@ function parseStructuredJson(raw) {
 
 async function structuredWithOpenAi(systemInstruction, userPrompt) {
   const data = await callOpenAi([
+    { role: 'system', content: `${systemInstruction}\nReturn exactly one valid JSON object and no markdown.` },
+    { role: 'user', content: userPrompt },
+  ], { maxTokens: 1600, profile: 'quality' });
+  return parseStructuredJson(data.choices?.[0]?.message?.content);
+}
+
+async function structuredWithGateway(systemInstruction, userPrompt) {
+  const data = await callVercelGateway([
     { role: 'system', content: `${systemInstruction}\nReturn exactly one valid JSON object and no markdown.` },
     { role: 'user', content: userPrompt },
   ], { maxTokens: 1600, profile: 'quality' });
@@ -680,6 +750,7 @@ async function structuredWithGroq(systemInstruction, userPrompt) {
 export async function generateStructuredJson(systemInstruction, userPrompt) {
   const order = providerOrder();
   const callers = {
+    gateway: structuredWithGateway,
     openai: structuredWithOpenAi,
     gemini: structuredWithGemini,
     groq: structuredWithGroq,
@@ -709,6 +780,7 @@ export const __test = {
   parseStructuredJson,
   defaultProviderOrder: [...DEFAULT_PROVIDER_ORDER],
   defaultModels: {
+    gateway: DEFAULT_GATEWAY_MODELS.map(model => model.id),
     openai: DEFAULT_OPENAI_MODELS.map(model => model.id),
     gemini: DEFAULT_GEMINI_MODELS.map(model => model.id),
     groq: DEFAULT_GROQ_MODELS.map(model => model.id),
