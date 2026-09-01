@@ -825,6 +825,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
             <button onclick="filterInv('stale',this)">Stale</button>
             <button onclick="filterInv('zombie',this)">Zombies</button>
             <button onclick="filterInv('no-convert',this)">No convert</button>
+            <button onclick="filterInv('deleted',this)" style="color:var(--bad)">Deleted</button>
           </div>
           <input id="inv-search" class="inp" placeholder="Search everything…" oninput="invSearch(this.value)" style="width:220px;max-width:100%"/>
           <div style="flex:1"></div>
@@ -832,6 +833,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
             <span class="t-sub" id="inv-bulk-n"></span>
             <button class="btn btn-ok btn-sm" onclick="bulkInv('publish')">Publish</button>
             <button class="btn btn-g btn-sm" onclick="bulkInv('pause')">Pause</button>
+            <button id="inv-bulk-restore" class="btn btn-v btn-sm" onclick="bulkInv('restore')" style="display:none">Restore</button>
             <button class="btn btn-d btn-sm" onclick="bulkInv('delete')">Delete</button>
           </div>
         </div>
@@ -2791,7 +2793,8 @@ function invMatch(i){
 
   if(INV_FILTER === 'live'    && i.state !== 'live') return false;
   if(INV_FILTER === 'pending' && !(i.state === 'pending' || i.state === 'draft')) return false;
-  if(INV_FILTER === 'hidden'  && !(i.state === 'hidden' || i.state === 'rejected' || i.state === 'deleted')) return false;
+  if(INV_FILTER === 'hidden'  && !(i.state === 'hidden' || i.state === 'rejected')) return false;
+  if(INV_FILTER === 'deleted' && i.state !== 'deleted') return false;
   if(['stale','zombie','no-convert'].includes(INV_FILTER) && i.health !== INV_FILTER) return false;
 
   if(INV_SEARCH){
@@ -2804,7 +2807,11 @@ function invMatch(i){
 function filterInv(f, el){
   INV_FILTER = f;
   el.parentNode.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
-  el.classList.add('on'); renderInventory();
+  el.classList.add('on');
+  /* The deleted tab needs a separate DB query — deleted rows are
+     excluded from the normal coreSnapshot to prevent the bug where
+     they reappear after a soft-delete. Load them lazily. */
+  if(f === 'deleted') { loadDeletedListings(); } else { renderInventory(); }
 }
 function invSvc(k, el){
   INV_SVC = k;
@@ -2892,6 +2899,104 @@ function renderInventory(){
   invBulkBar();
 }
 
+/* ── DELETED LISTINGS ────────────────────────────────────────────
+   Deleted rows are excluded from the main snapshot query. This
+   loader fetches them on demand when the Deleted tab is selected.
+   Restoring a listing unsets status=deleted/deleted_at and makes
+   it paused (hidden from public but recoverable).               */
+let DELETED_LISTINGS = [];
+
+async function loadDeletedListings(){
+  $('inv-rows').innerHTML = `<tr><td colspan="12" style="text-align:center;padding:20px;color:var(--ink-4)">Loading deleted listings…</td></tr>`;
+  try {
+    const { data, error } = await sb.from('listings')
+      .select('*')
+      .or('status.eq.deleted,status.eq.removed')
+      .order('deleted_at', { ascending: false })
+      .limit(500);
+    if(error) throw error;
+    DELETED_LISTINGS = data || [];
+    /* Merge into a temporary catalogue to get the normalised shape */
+    const C = AD.Catalogue;
+    const deletedCat = C.build(DELETED_LISTINGS, [], SNAP?.engine?.decay);
+    /* Force state=deleted on all of them since build() now filters them */
+    const withState = DELETED_LISTINGS.map(l => {
+      const item = deletedCat.find(i => String(i.id) === String(l.id));
+      return item ? { ...item, state: 'deleted', status: 'deleted' } : null;
+    }).filter(Boolean);
+    /* Temporarily inject into SNAP so renderInventory can show them */
+    SNAP._deletedCatalogue = withState;
+    renderInventoryDeleted(withState);
+  } catch(e) {
+    $('inv-rows').innerHTML = `<tr><td colspan="12" style="text-align:center;padding:20px;color:var(--bad)">Failed to load deleted listings: ${esc(e.message||'unknown error')}</td></tr>`;
+  }
+}
+
+function renderInventoryDeleted(items){
+  const C = AD.Catalogue;
+  INV_INDEX = {};
+  items.forEach(i => { INV_INDEX[i.uid] = i; });
+
+  const cnt = $('inv-count');
+  if(cnt) cnt.textContent = items.length ? `${items.length} deleted listing${items.length===1?'':'s'}` : '';
+
+  $('inv-rows').innerHTML = items.length ? items.map(i=>{
+    const thumb = i.image
+      ? `<img src="${esc(i.image)}" style="width:34px;height:34px;border-radius:7px;object-fit:cover;flex-shrink:0;opacity:.6" onerror="this.style.display='none'" loading="lazy" alt=""/>`
+      : `<div style="width:34px;height:34px;border-radius:7px;background:var(--panel-2);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;opacity:.6">${i.icon}</div>`;
+    const deletedAt = i.raw?.deleted_at ? new Date(i.raw.deleted_at).toLocaleDateString() : '—';
+    return `<tr style="opacity:.75">
+      <td><input type="checkbox" data-sel="inv" value="${esc(i.uid)}" onchange="tick('inv','${esc(i.uid)}',this.checked)" style="accent-color:var(--violet)"/></td>
+      <td><div style="display:flex;align-items:center;gap:10px">${thumb}
+        <div><div class="t-main" style="text-decoration:line-through;opacity:.7">${esc(i.title)}</div>
+        <div class="t-sub">${esc(i.sub||'—')}</div></div></div></td>
+      <td style="font-size:12px">${i.icon} ${esc(i.serviceLabel)}</td>
+      <td><span class="pill p-mute">${esc(i.source)}</span></td>
+      <td class="num mono" style="opacity:.5">—</td>
+      <td class="num mono" style="opacity:.5">—</td>
+      <td class="num mono" style="opacity:.5">—</td>
+      <td class="num mono" style="color:var(--ink-4)">${esc(deletedAt)}</td>
+      <td style="opacity:.5">—</td>
+      <td><span class="pill p-bad">deleted</span></td>
+      <td><div class="t-act">
+        <button class="btn btn-v btn-sm" onclick="restoreListing('${esc(i.uid)}')">Restore</button>
+        <button class="btn btn-d btn-sm" onclick="purgeListing('${esc(i.uid)}')">Purge</button>
+      </div></td>
+    </tr>`;
+  }).join('') : `<tr><td colspan="12">${emptyRow(12,'No deleted listings — nothing has been soft-deleted').replace(/<tr>.*?<\/tr>/s,'')}</td></tr>`;
+
+  invBulkBar();
+}
+
+async function restoreListing(uid){
+  const i = INV_INDEX[uid];
+  if(!i) return toast('Not found','bad');
+  confirmAct(`Restore "${i.title}"`,
+    'The listing will be set to paused — hidden from guests but recoverable by the partner. They can re-publish it from their dashboard.',
+    false,
+    async () => {
+      const { error } = await sb.from('listings')
+        .update({ status: 'paused', deleted_at: null, is_active: false })
+        .eq('id', i.id);
+      if(error){ toast('Restore failed: '+error.message,'bad'); return; }
+      AD.Moderate.audit('listing.restore', { type:'listing', id: i.id }, { reason:'Admin restore' }).catch(()=>{});
+      toast(`"${i.title}" restored to paused state`,'ok');
+      loadDeletedListings();
+    });
+}
+
+async function purgeListing(uid){
+  const i = INV_INDEX[uid];
+  if(!i) return toast('Not found','bad');
+  confirmAct(`Permanently purge "${i.title}"`,
+    'This row will be destroyed forever. The audit log entry is the only thing that survives. This cannot be undone.',
+    true,
+    async reason => {
+      const r = await AD.Moderate.remove('listings', i.id, true, reason, 'listing', null, {});
+      r.ok ? (toast('Purged permanently','ok'), loadDeletedListings()) : toast(r.error,'bad');
+    });
+}
+
 /* The selection survives a re-render, so it is recounted from what is
    actually on screen rather than trusted blind. */
 function invBulkBar(){
@@ -2901,6 +3006,9 @@ function invBulkBar(){
   bar.style.display = live.length ? 'flex' : 'none';
   const n = $('inv-bulk-n');
   if(n) n.textContent = `${live.length} selected`;
+  /* Show restore button only in deleted mode */
+  const restoreBtn = $('inv-bulk-restore');
+  if(restoreBtn) restoreBtn.style.display = INV_FILTER === 'deleted' ? '' : 'none';
 }
 
 function invEdit(uid){
@@ -3098,6 +3206,25 @@ async function bulkInv(kind){
 
   if(kind==='publish') return run(i=>C.publish(i), 'Published');
   if(kind==='pause')   return run(i=>C.pause(i),   'Paused');
+  if(kind==='restore'){
+    confirmAct(`Restore ${items.length} deleted listing${items.length===1?'':'s'}`,
+      'Each listing will be set to paused — hidden from guests but immediately recoverable by the partner.',
+      false,
+      async () => {
+        let ok = 0; const failed = [];
+        for(const i of items){
+          const { error } = await sb.from('listings')
+            .update({ status: 'paused', deleted_at: null, is_active: false })
+            .eq('id', i.id);
+          error ? failed.push(i.title) : ok++;
+        }
+        SEL.inv.clear();
+        toast(`Restored ${ok}/${items.length}${failed.length?' · '+failed.length+' failed':''}`,
+              failed.length ? 'bad' : 'ok');
+        loadDeletedListings();
+      });
+    return;
+  }
   if(kind==='delete'){
     const hard = items.filter(i=>!C.softDeletable(i)).length;
     confirmAct(`Delete ${items.length} item${items.length===1?'':'s'}`,
