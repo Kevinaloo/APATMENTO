@@ -6,8 +6,10 @@ import { callAi, generateStructuredJson, __test } from '../api/lib/_ai-gateway.j
 const AI_ENV = [
   'AI_PROVIDER_ORDER',
   'AI_GATEWAY_API_KEY',
+  'AI_GATEWAY_ENABLED',
   'AI_GATEWAY_MODEL',
   'VERCEL_OIDC_TOKEN',
+  'VERCEL',
   'OPENAI_API_KEY',
   'OPENAI_MODEL',
   'OPENAI_REASONING_EFFORT',
@@ -101,8 +103,11 @@ test('defaults stay operational without premium OpenAI or Gemini models', () => 
   assert.deepEqual(__test.defaultModels.groq, ['openai/gpt-oss-120b', 'openai/gpt-oss-20b']);
 });
 
-test('Vercel OIDC reaches Gemini and OpenAI fallbacks without provider keys', async (t) => {
-  useAiEnv(t, { VERCEL_OIDC_TOKEN: 'short-lived-vercel-token' });
+test('authorized Vercel OIDC reaches Gemini and OpenAI fallbacks without provider keys', async (t) => {
+  useAiEnv(t, {
+    AI_GATEWAY_ENABLED: 'true',
+    VERCEL_OIDC_TOKEN: 'short-lived-vercel-token',
+  });
   let request;
   useFetch(t, async (url, init) => {
     request = { url, init, body: JSON.parse(init.body) };
@@ -132,6 +137,26 @@ test('Vercel OIDC reaches Gemini and OpenAI fallbacks without provider keys', as
   assert.equal(request.body.store, false);
   assert.equal(result.provider, 'gateway');
   assert.equal(result.choices[0].message.content, 'APA stayed online through OIDC.');
+});
+
+test('an unauthorized Gateway is skipped without delaying Groq', async (t) => {
+  useAiEnv(t, {
+    VERCEL: '1',
+    GROQ_API_KEY: 'groq-test-key',
+    GROQ_MODEL: 'openai/gpt-oss-120b',
+  });
+  const urls = [];
+  useFetch(t, async (url) => {
+    urls.push(url);
+    return jsonResponse({
+      model: 'openai/gpt-oss-120b',
+      choices: [{ message: { role: 'assistant', content: 'Fast fallback.' } }],
+    });
+  });
+
+  const result = await callAi([{ role: 'user', content: 'Hello' }]);
+  assert.deepEqual(urls, ['https://api.groq.com/openai/v1/chat/completions']);
+  assert.equal(result.provider, 'groq');
 });
 
 function initHeader(init, name) {

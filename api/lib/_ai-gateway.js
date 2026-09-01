@@ -78,8 +78,9 @@ function getGemini() {
 
 function providerIsConfigured(provider) {
   if (provider === 'gateway') {
+    if (process.env.AI_GATEWAY_API_KEY) return true;
+    if (String(process.env.AI_GATEWAY_ENABLED || '').toLowerCase() !== 'true') return false;
     return Boolean(
-      process.env.AI_GATEWAY_API_KEY ||
       process.env.VERCEL_OIDC_TOKEN ||
       process.env.VERCEL === '1'
     );
@@ -649,9 +650,9 @@ function finalizeResponse(data, tools, attempts, startedAt) {
 }
 
 /*
- * Vercel's OIDC-authenticated gateway supplies low-cost Gemini and OpenAI
- * models without personal provider keys. Direct Groq is independent of that
- * budget and remains the first fallback. Premium models remain opt-in.
+ * Once AI Gateway is authorized for the Vercel team, AI_GATEWAY_ENABLED=true
+ * activates its low-cost Gemini/OpenAI cascade. Direct Groq is independent of
+ * that budget and remains the first fallback. Premium models remain opt-in.
  */
 export async function callAi(messages, options = {}) {
   const startedAt = Date.now();
