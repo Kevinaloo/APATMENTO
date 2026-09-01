@@ -129,6 +129,7 @@ body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webk
 section[id],div[id^='services'],div[id^='how']{scroll-margin-top:84px;}
 .nav{position:fixed;top:0;left:0;right:0;z-index:100;height:72px;display:flex;align-items:center;justify-content:space-between;padding:0 40px;background:rgba(252,252,253,0);backdrop-filter:blur(0px);transition:all .4s;}
 .nav.scrolled{background:rgba(252,252,253,.8);backdrop-filter:blur(24px) saturate(180%);border-bottom:1px solid var(--line);}
+.nav-progress-bar{position:absolute;bottom:0;left:0;height:2.5px;width:0%;background:linear-gradient(90deg,var(--ember) 0%,var(--violet) 50%,var(--mint) 100%);pointer-events:none;z-index:10;transition:width .05s linear;box-shadow:0 0 6px rgba(123,47,247,.45);}
 .nav-left{display:flex;align-items:center;gap:12px;}
 .nav-brand-link{display:flex;align-items:center;gap:9px;text-decoration:none;}
 .nav-icon{height:34px;width:34px;object-fit:contain;flex-shrink:0;transition:filter .4s;filter:drop-shadow(0 2px 10px rgba(255,120,0,.45)) drop-shadow(0 1px 6px rgba(0,100,255,.25));}
@@ -426,6 +427,26 @@ section[id],div[id^='services'],div[id^='how']{scroll-margin-top:84px;}
 .how-num{font-family:var(--font-display);font-style:italic;font-weight:500;font-size:18px;width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--violet),var(--electric));color:#fff;display:flex;align-items:center;justify-content:center;margin-bottom:20px;}
 .how-step-title{font-family:var(--font-display);font-weight:500;font-size:20px;margin-bottom:10px;color:var(--ink);}
 .how-step-desc{font-size:14px;color:var(--ink-soft);line-height:1.6;}
+
+/* ══════════ FAQ SECTION ══════════ */
+.faq-section{padding:90px 40px;background:var(--glass);position:relative;border-top:1px solid var(--line);}
+.faq-inner{max-width:880px;margin:0 auto;}
+.faq-header{text-align:center;margin-bottom:44px;}
+.faq-list{display:flex;flex-direction:column;gap:14px;}
+.faq-item{border-radius:18px;background:#ffffff;border:1px solid var(--line);transition:border-color .25s,box-shadow .25s;overflow:hidden;}
+.faq-item[open]{border-color:rgba(123,47,247,.32);box-shadow:0 10px 28px rgba(10,10,20,.05);}
+.faq-question{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:22px 26px;font-family:var(--font-display);font-weight:600;font-size:17.5px;color:var(--ink);user-select:none;transition:color .2s;}
+.faq-question::-webkit-details-marker{display:none;}
+.faq-question:hover{color:var(--violet);}
+.faq-icon-pill{width:32px;height:32px;border-radius:50%;background:var(--glass-2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--ink-soft);flex-shrink:0;transition:transform .3s cubic-bezier(.22,1,.36,1),background-color .2s,color .2s;}
+.faq-item[open] .faq-icon-pill{transform:rotate(180deg);background:rgba(123,47,247,.08);color:var(--violet);}
+.faq-answer{padding:0 26px 24px 26px;font-size:15px;color:var(--ink-soft);line-height:1.65;}
+.faq-answer p+p{margin-top:10px;}
+@media(max-width:640px){
+  .faq-section{padding:64px 20px;}
+  .faq-question{padding:18px 20px;font-size:16px;}
+  .faq-answer{padding:0 20px 20px 20px;font-size:14.5px;}
+}
 
 /* ══════════ FINAL CTA ══════════ */
 .final{position:relative;padding:110px 40px;background:#05060F;overflow:hidden;text-align:center;}
@@ -792,6 +813,7 @@ body.intro-lock{animation:apaUnlockScroll 0s linear 3.6s forwards;}
   <div class="nav-links">
     <a href="#services">Services</a>
     <a href="#how">How it works</a>
+    <a href="#faq">FAQ</a>
     <a href="#promise">Our promise</a>
     <a href="#rebrand-story" style="color:var(--mint-deep);font-weight:600;">Cabana → Cabana</a>
   </div>
@@ -816,6 +838,7 @@ body.intro-lock{animation:apaUnlockScroll 0s linear 3.6s forwards;}
       <div id="nav-avatar" style="width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--violet),var(--electric));display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:600;font-size:15px;color:#fff;cursor:pointer;" onclick="window.location.href='dashboard.html'">?</div>
     </div>
   </div>
+  <div class="nav-progress-bar" id="nav-progress-bar" aria-hidden="true"></div>
 </nav>
 
 <!-- HERO -->
@@ -1107,7 +1130,92 @@ body.intro-lock{animation:apaUnlockScroll 0s linear 3.6s forwards;}
   </div>
 </section>
 
-<!-- FINAL CTA -->
+<!-- FAQ SECTION -->
+<section class="faq-section" id="faq">
+  <div class="faq-inner">
+    <div class="faq-header">
+      <div class="section-eyebrow reveal">Guest clarity</div>
+      <h2 class="section-headline reveal">Frequently asked <em>questions.</em></h2>
+      <p class="section-sub reveal" style="margin-bottom:0;">Everything you need to know about credits, escrow protection, cancellations, and guest policies on Cabana.</p>
+    </div>
+    <div class="faq-list">
+      <details class="faq-item reveal" id="faq-credits" open>
+        <summary class="faq-question" id="faq-q-credits">
+          <span>How do I use my Cabana credits?</span>
+          <span class="faq-icon-pill" aria-hidden="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          </span>
+        </summary>
+        <div class="faq-answer" id="faq-a-credits">
+          <p>Your Cabana credits are automatically linked to your account wallet and displayed at checkout. When booking any stay, tour, flight, or experience, you can apply your available credits with a single tap to offset part or all of the booking total.</p>
+          <p>Cabana credits never expire, carry no hidden transaction fees, and apply instantly alongside M-Pesa or card payments.</p>
+        </div>
+      </details>
+
+      <details class="faq-item reveal" id="faq-cancellation">
+        <summary class="faq-question" id="faq-q-cancellation">
+          <span>What happens if my booking is cancelled?</span>
+          <span class="faq-icon-pill" aria-hidden="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          </span>
+        </summary>
+        <div class="faq-answer" id="faq-a-cancellation">
+          <p>If a host cancels your booking, Cabana Trust guarantees an immediate 100% refund back to your original payment method (M-Pesa, card, or wallet) plus priority rebooking assistance from our support team.</p>
+          <p>If you choose to cancel within the listing's specified free cancellation window, your refund is processed automatically without penalty fees or deductions.</p>
+        </div>
+      </details>
+
+      <details class="faq-item reveal" id="faq-escrow">
+        <summary class="faq-question" id="faq-q-escrow">
+          <span>How does the check-in code and escrow payment work?</span>
+          <span class="faq-icon-pill" aria-hidden="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          </span>
+        </summary>
+        <div class="faq-answer" id="faq-a-escrow">
+          <p>When you book, your payment is held securely in escrow. You receive a unique 6-character check-in code on your booking receipt and in-app trip view.</p>
+          <p>Funds are only released to the host after you arrive and verify the property meets expectations. If there is any discrepancy or issue upon arrival, our team can re-home you or process an instant refund.</p>
+        </div>
+      </details>
+
+      <details class="faq-item reveal" id="faq-deposits">
+        <summary class="faq-question" id="faq-q-deposits">
+          <span>Can I pay in instalments or reserve with a deposit?</span>
+          <span class="faq-icon-pill" aria-hidden="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          </span>
+        </summary>
+        <div class="faq-answer" id="faq-a-deposits">
+          <p>Yes. Selected apartments, safari lodges, and multi-day tours offer a flexible deposit option. You can pay an initial deposit (typically 25%–50%) via M-Pesa or card to confirm your reservation, and settle the remaining balance before or at check-in.</p>
+        </div>
+      </details>
+
+      <details class="faq-item reveal" id="faq-payments">
+        <summary class="faq-question" id="faq-q-payments">
+          <span>What payment methods are accepted?</span>
+          <span class="faq-icon-pill" aria-hidden="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          </span>
+        </summary>
+        <div class="faq-answer" id="faq-a-payments">
+          <p>Cabana supports direct M-Pesa STK Push with immediate on-screen verification, major international credit and debit cards (Visa, Mastercard, American Express), and Cabana wallet credits with zero host commission and transparent guest pricing.</p>
+        </div>
+      </details>
+
+      <details class="faq-item reveal" id="faq-support">
+        <summary class="faq-question" id="faq-q-support">
+          <span>How do I contact support or get help during my stay?</span>
+          <span class="faq-icon-pill" aria-hidden="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          </span>
+        </summary>
+        <div class="faq-answer" id="faq-a-support">
+          <p>Support is available 24/7 directly inside the Cabana app. You can live chat with APA, our smart concierge who has instant visibility into your reservation, or request a seamless handoff to a human specialist. You can also start an in-app internet voice call without sharing your personal phone number.</p>
+        </div>
+      </details>
+    </div>
+  </div>
+</section>
 <section class="final">
   <div class="final-aurora"><div class="fa-blob fa-1"></div><div class="fa-blob fa-2"></div><div class="fa-blob fa-3"></div></div>
   <div class="final-inner">
@@ -1606,14 +1714,29 @@ function endIntro(){
   setTimeout(()=>{ intro.style.display='none'; }, 950);
 }
 
-/* ── NAV scroll state ── */
+/* ── NAV scroll state & progress bar ── */
 const nav=document.getElementById('nav');
 const hero=document.querySelector('.hero');
+const navProgressBar=document.getElementById('nav-progress-bar');
+
+function updateNavProgress(){
+  const scrollTop = window.scrollY || document.documentElement.scrollTop || 0;
+  const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+  const progress = docHeight > 0 ? Math.min(100, Math.max(0, (scrollTop / docHeight) * 100)) : 0;
+  if(navProgressBar){
+    navProgressBar.style.width = progress + '%';
+  }
+}
+
 window.addEventListener('scroll',()=>{
   const past=window.scrollY>hero.offsetHeight-100;
   nav.classList.toggle('scrolled',window.scrollY>40);
   nav.classList.toggle('on-dark',!past && window.scrollY<hero.offsetHeight-100);
-});
+  updateNavProgress();
+}, { passive: true });
+
+window.addEventListener('resize', updateNavProgress, { passive: true });
+updateNavProgress();
 
 /* ── STARS + GLYPHS ── */
 (function(){

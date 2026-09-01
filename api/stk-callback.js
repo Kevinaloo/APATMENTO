@@ -10,6 +10,7 @@
 
 import { deriveStatus, depositRequired } from './lib/_payment-rules.js';
 import { constantTimeEqual, setCors } from './lib/_security.js';
+import { sendBookingReceipt } from './lib/_mail.js';
 
 function siteOrigin(req) {
   const host = req.headers['x-forwarded-host'] || req.headers.host;
@@ -221,6 +222,18 @@ export default async function handler(req, res) {
       }).catch(e => console.warn('[notif] push failed (non-fatal):', e.message));
     }
 
+    // ── Email confirmation receipt via Resend ────────────────────────
+    if (isSuccess && (rows[0] || existing)) {
+      sendBookingReceipt({
+        booking: rows[0] || existing,
+        supabaseUrl,
+        serviceKey,
+      }).then(r => {
+        if (r.ok) console.log('[mail] Booking confirmation receipt sent:', externalReference);
+        else console.warn('[mail] Booking receipt skipped/failed:', r.reason || r.error);
+      }).catch(e => console.warn('[mail] booking receipt error (non-fatal):', e.message));
+    }
+
     /* ── Rewards: points + referral commission ───────────────────────
        Only on a booking that is actually paid for, and against the
        amount collected rather than the amount quoted. Awarding a
@@ -423,6 +436,16 @@ async function creditInstalment({ supabaseUrl, serviceKey, reference, isSuccess,
                              url: '/my-bookings.html', kind: 'booking', ...notif }),
     }).catch(e => console.warn('[notif] non-fatal:', e.message));
   }
+
+  // ── Email confirmation receipt via Resend ──────────────────────────
+  sendBookingReceipt({
+    booking: { ...booking, amount_paid: amountPaid, payment_reference: ledger.booking_ref },
+    supabaseUrl,
+    serviceKey,
+  }).then(r => {
+    if (r.ok) console.log('[mail] Instalment booking receipt sent:', ledger.booking_ref);
+    else console.warn('[mail] Instalment receipt skipped/failed:', r.reason || r.error);
+  }).catch(e => console.warn('[mail] instalment receipt error (non-fatal):', e.message));
 
   /* Rewards, referral commission and agent attribution fire ONCE, only
      when the booking becomes fully paid. */

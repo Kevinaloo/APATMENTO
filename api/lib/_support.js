@@ -72,15 +72,7 @@ import {
   listingStart, listingSet, listingPublish, requestUpload,
   ingestClientData, agentGrounding, adoptTasks, recall, remember,
 } from './_apa-agent.js';
-
-/* ── Model ladder. Same shape as Ask APA so one Groq outage does not
-   take two products down in different ways. ── */
-const GROQ_API = 'https://api.groq.com/openai/v1/chat/completions';
-const MODELS = [
-  { id: 'openai/gpt-oss-120b', timeout: 11000 },
-  { id: 'qwen/qwen3.6-27b',    timeout: 10000 },
-  { id: 'openai/gpt-oss-20b',  timeout: 9000  },
-];
+import { callAi } from './_ai-gateway.js';
 
 const MAX_TOOL_ROUNDS = 2;
 const HISTORY_TURNS   = 14;
@@ -228,17 +220,72 @@ async function ownedThread(caller, threadId) {
 let _kbCache = null, _kbAt = 0;
 const KB_TTL = 120_000;
 
+const DEFAULT_KB_SEEDS = [
+  {
+    slug: 'cabana-credits',
+    topic: 'credits',
+    audience: 'all',
+    question: 'How do I use my Cabana credits?',
+    answer: 'Cabana credits are automatically applied at checkout towards stays, experiences, car hire, or rides. You can view your balance anytime in your Profile under Rewards & Credits. When booking, check the "Apply Cabana Credits" toggle to deduct from your total balance.',
+    keywords: ['credit', 'credits', 'cabana credits', 'wallet', 'rewards', 'balance', 'redeem', 'discount', 'points'],
+    route: 'account',
+    priority: 95,
+  },
+  {
+    slug: 'booking-cancellations',
+    topic: 'cancellation',
+    audience: 'all',
+    question: 'What happens if my booking is cancelled?',
+    answer: 'If you cancel within the free cancellation window stated on your reservation, you will receive a full instant refund back to your original payment method (M-Pesa or card) or Cabana credits. If a host cancels, you are 100% refunded immediately with an additional 10% rebooking credit voucher.',
+    keywords: ['cancel', 'cancellation', 'cancelled', 'refund', 'refunds', 'rebook', 'money back'],
+    route: 'trips',
+    priority: 90,
+  },
+  {
+    slug: 'pricing-and-commission',
+    topic: 'pricing',
+    audience: 'all',
+    question: 'How do Cabana fees and zero commission work?',
+    answer: 'Cabana operates on a 0% commission model for hosts, meaning hosts keep 100% of their set listing price. For guests, we charge a low, transparent flat fee at checkout: KES 300 for bookings under KES 5,000, and KES 800 for bookings of KES 5,000 and above. Flights, car hire, and tours carry zero guest fees.',
+    keywords: ['fee', 'fees', 'commission', 'zero commission', 'pricing', 'host cut', 'charges', 'service fee'],
+    route: 'host',
+    priority: 92,
+  },
+  {
+    slug: 'payment-mpesa',
+    topic: 'payment',
+    audience: 'all',
+    question: 'How do I pay with M-Pesa?',
+    answer: 'At checkout, select M-Pesa and enter your phone number. You will receive an instant STK push prompt on your mobile device to enter your PIN. Once entered, your booking confirmation and receipt are issued within seconds.',
+    keywords: ['mpesa', 'm-pesa', 'pay', 'payment', 'stk', 'pin', 'paybill', 'till', 'airtel', 'card', 'checkout'],
+    route: 'stays',
+    priority: 88,
+  },
+  {
+    slug: 'host-payouts',
+    topic: 'hosting',
+    audience: 'host',
+    question: 'How and when do hosts get paid?',
+    answer: 'Host payouts are released automatically 24 hours after guest check-in directly to your registered M-Pesa number or bank account. There are zero platform deductions or delays.',
+    keywords: ['payout', 'payouts', 'host paid', 'earnings', 'receive money', 'withdraw', 'disbursement'],
+    route: 'host',
+    priority: 85,
+  }
+];
+
 async function knowledgeBase() {
   if (_kbCache && Date.now() - _kbAt < KB_TTL) return _kbCache;
   try {
     const rows = await withTimeout(
       select('support_kb', 'active=eq.true&select=slug,topic,audience,question,answer,keywords,route,priority&order=priority.desc&limit=120'),
       4000);
-    _kbCache = rows || []; _kbAt = Date.now();
+    _kbCache = (rows && rows.length > 0) ? rows : DEFAULT_KB_SEEDS;
+    _kbAt = Date.now();
     return _kbCache;
   } catch (e) {
     console.warn('[support:kb]', e.message);
-    return _kbCache || [];
+    _kbCache = DEFAULT_KB_SEEDS;
+    return _kbCache;
   }
 }
 
@@ -1019,33 +1066,10 @@ async function runTool(name, args, caller) {
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   THE MODEL CALL
+   THE MODEL CALL (via Unified AI Gateway: Gemini + Groq)
 ══════════════════════════════════════════════════════════════════════ */
 async function callGroq(messages, { tools = null, temperature = 0.4, maxTokens = 700 } = {}) {
-  const key = process.env.GROQ_API_KEY;
-  if (!key) throw new Error('no_api_key');
-
-  let lastErr = 'unknown';
-  for (const m of MODELS) {
-    try {
-      const r = await withTimeout(fetch(GROQ_API, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
-        body: JSON.stringify({
-          model: m.id, messages, temperature, max_tokens: maxTokens,
-          ...(tools ? { tools, tool_choice: 'auto' } : {}),
-        }),
-      }), m.timeout);
-
-      if (r.ok) return await r.json();
-      lastErr = `${m.id}:${r.status}`;
-      /* A key problem is a key problem on every model. Stop. */
-      if (r.status === 401 || r.status === 403) break;
-    } catch (e) {
-      lastErr = `${m.id}:${e.message}`;
-    }
-  }
-  throw new Error(lastErr);
+  return await callAi(messages, { tools, temperature, maxTokens });
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -1301,6 +1325,7 @@ async function answer({ thread, caller, text, page, history }) {
       role: 'assistant',
       content: msg.content || '',
       tool_calls: calls,
+      _geminiContent: msg._geminiContent,
     });
 
     for (const call of calls.slice(0, 3)) {

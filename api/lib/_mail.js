@@ -1078,27 +1078,37 @@ export const TEMPLATES = {
 /* ══════════════════════════════════════════════════════════════════════
    SUPABASE HELPERS. Service role. Never reachable from a browser.
 ══════════════════════════════════════════════════════════════════════ */
-function svcHeaders(extra = {}) {
+function getSupaConfig() {
   return {
-    apikey: SERVICE_KEY,
-    Authorization: `Bearer ${SERVICE_KEY}`,
+    url: process.env.SUPABASE_URL || SUPA_URL,
+    key: process.env.SUPABASE_SERVICE_ROLE_KEY || SERVICE_KEY,
+  };
+}
+
+function svcHeaders(extra = {}) {
+  const { key } = getSupaConfig();
+  return {
+    apikey: key,
+    Authorization: `Bearer ${key}`,
     'Content-Type': 'application/json',
     ...extra,
   };
 }
 
 async function restGet(path) {
-  if (!SUPA_URL || !SERVICE_KEY) return null;
+  const { url, key } = getSupaConfig();
+  if (!url || !key) return null;
   try {
-    const r = await fetch(`${SUPA_URL}/rest/v1/${path}`, { headers: svcHeaders() });
+    const r = await fetch(`${url}/rest/v1/${path}`, { headers: svcHeaders() });
     return r.ok ? r.json() : null;
   } catch { return null; }
 }
 
 async function restPost(path, body, prefer = 'return=minimal') {
-  if (!SUPA_URL || !SERVICE_KEY) return { ok: false };
+  const { url, key } = getSupaConfig();
+  if (!url || !key) return { ok: false };
   try {
-    const r = await fetch(`${SUPA_URL}/rest/v1/${path}`, {
+    const r = await fetch(`${url}/rest/v1/${path}`, {
       method: 'POST', headers: svcHeaders({ Prefer: prefer }), body: JSON.stringify(body),
     });
     const text = await r.text();
@@ -1107,9 +1117,10 @@ async function restPost(path, body, prefer = 'return=minimal') {
 }
 
 async function restPatch(path, body, prefer = 'return=minimal') {
-  if (!SUPA_URL || !SERVICE_KEY) return { ok: false };
+  const { url, key } = getSupaConfig();
+  if (!url || !key) return { ok: false };
   try {
-    const r = await fetch(`${SUPA_URL}/rest/v1/${path}`, {
+    const r = await fetch(`${url}/rest/v1/${path}`, {
       method: 'PATCH', headers: svcHeaders({ Prefer: prefer }), body: JSON.stringify(body),
     });
     const text = await r.text();
@@ -1241,7 +1252,8 @@ export async function sendTemplate({ template, to, data = {}, dedupeKey = null, 
     }
   }
 
-  if (!RESEND_KEY) {
+  const resendKey = process.env.RESEND_API_KEY || RESEND_KEY;
+  if (!resendKey) {
     if (dedupeKey) await restPatch(`email_log?dedupe_key=eq.${encodeURIComponent(dedupeKey)}`, {
       status: 'failed', error: 'RESEND_API_KEY not set', meta: { category },
     });
@@ -1252,7 +1264,7 @@ export async function sendTemplate({ template, to, data = {}, dedupeKey = null, 
     const r = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${RESEND_KEY}`,
+        Authorization: `Bearer ${resendKey}`,
         'Content-Type': 'application/json',
         ...(dedupeKey ? { 'Idempotency-Key': String(dedupeKey).slice(0, 256) } : {}),
       },
@@ -1305,6 +1317,116 @@ export function sendTemplateAsync(args) {
   return sendTemplate(args).catch(e => {
     console.warn('[mail:async]', e?.message);
     return { ok: false, error: e?.message };
+  });
+}
+
+/**
+ * Automatically sends a confirmation email receipt to the user's registered address
+ * immediately after a successful booking transaction using the Resend API.
+ *
+ * Safe and non-fatal: handles missing profiles or network issues without throwing.
+ * Idempotent: deduplicated by booking reference and amount paid.
+ */
+export async function sendBookingReceipt({
+  booking,
+  listing = null,
+  user = null,
+  supabaseUrl = process.env.SUPABASE_URL,
+  serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY,
+} = {}) {
+  if (!booking) return { ok: false, error: 'booking_required' };
+
+  const ref = booking.reference || booking.payment_reference || booking.booking_ref || '';
+  const total = Number(booking.total ?? booking.grand_total ?? booking.total_amount ?? booking.amount ?? booking.stay_total ?? 0);
+  const amountPaid = Number(booking.amountPaid ?? booking.amount_paid ?? booking.amount ?? total);
+  const checkIn = booking.checkIn || booking.checkin_date || booking.check_in || null;
+  const checkOut = booking.checkOut || booking.checkout_date || booking.check_out || null;
+  const guests = booking.guests || booking.num_guests || booking.guests_count || 1;
+
+  const bookingData = {
+    reference: ref,
+    total,
+    amountPaid,
+    checkIn,
+    checkOut,
+    guests,
+    guestName: booking.guest_name || user?.name || null,
+  };
+
+  let userEmail = user?.email || booking.guest_email || null;
+  let userName = user?.name || user?.first_name || booking.guest_name || null;
+  const guestId = booking.guest_id || user?.id || null;
+
+  // Resolve user profile if email is not provided on the booking row
+  if (!userEmail && guestId && supabaseUrl && serviceKey) {
+    try {
+      const res = await fetch(
+        `${supabaseUrl}/rest/v1/profiles?id=eq.${encodeURIComponent(guestId)}&select=email,first_name,last_name`,
+        { headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` } }
+      );
+      if (res.ok) {
+        const rows = await res.json();
+        if (rows[0]?.email) {
+          userEmail = rows[0].email;
+          if (!userName) {
+            userName = [rows[0].first_name, rows[0].last_name].filter(Boolean).join(' ') || rows[0].first_name || null;
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('[mail:receipt] profile lookup error (non-fatal):', e.message);
+    }
+  }
+
+  if (!userEmail) {
+    console.warn('[mail:receipt] No user email available for booking:', ref);
+    return { ok: false, error: 'missing_user_email' };
+  }
+
+  // Resolve listing details if needed
+  let listingTitle = listing?.title || listing?.name || booking.apartment_name || booking.listing_title || null;
+  const listingId = listing?.id || booking.apartment_id || booking.listing_id || null;
+
+  if (!listingTitle && listingId && supabaseUrl && serviceKey) {
+    try {
+      const res = await fetch(
+        `${supabaseUrl}/rest/v1/listings?id=eq.${encodeURIComponent(listingId)}&select=title,name`,
+        { headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` } }
+      );
+      if (res.ok) {
+        const rows = await res.json();
+        listingTitle = rows[0]?.title || rows[0]?.name || null;
+      }
+    } catch (e) {
+      console.warn('[mail:receipt] listing lookup error (non-fatal):', e.message);
+    }
+  }
+
+  const listingData = {
+    id: listingId,
+    name: listingTitle || 'your booking',
+    title: listingTitle || 'your booking',
+  };
+
+  const userData = {
+    email: userEmail,
+    name: userName || 'Guest',
+    first_name: userName || 'Guest',
+  };
+
+  const dedupeKey = ref ? `receipt:${ref}:${Math.round(amountPaid)}` : null;
+
+  return sendTemplate({
+    template: 'bookingReceipt',
+    to: userEmail,
+    data: {
+      booking: bookingData,
+      listing: listingData,
+      user: userData,
+    },
+    dedupeKey,
+    userId: guestId,
+    force: true,
   });
 }
 

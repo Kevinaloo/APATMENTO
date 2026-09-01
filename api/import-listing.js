@@ -1,49 +1,10 @@
 /* ════════════════════════════════════════════════════════════════
-   APATMENTO, /api/import-listing.js  v2
-   
-   WHY URL SCRAPING DOESN'T WORK:
-   Booking.com and Airbnb use Cloudflare Bot Management + JS rendering.
-   Any server-side fetch() gets a 403 or an empty JS shell, always.
-   Even paid scraper services fail 20-40% of the time on these two.
-   
-   WHAT WORKS 100%:
-   User pastes their listing text (copy from browser) or describes
-   their property in plain language → Groq AI structures + enhances it
-   into a ready-to-publish listing in under 3 seconds.
-   
-   This is also faster for the partner, no waiting for scrapes,
-   no broken imports, no "try again" frustration.
+   CABANA, /api/import-listing.js
+   AI property importer using unified Gemini + Groq AI Gateway.
 ════════════════════════════════════════════════════════════════ */
+import { generateStructuredJson } from './lib/_ai-gateway.js';
+
 export const config = { maxDuration: 30 };
-
-const GROQ_KEY = process.env.GROQ_API_KEY;
-const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const GROQ_MODELS = ['openai/gpt-oss-120b', 'qwen/qwen3.6-27b', 'openai/gpt-oss-20b'];
-
-async function groq(messages, json = true) {
-  if (!GROQ_KEY) throw new Error('GROQ_API_KEY not configured');
-  let lastErr;
-  for (const model of GROQ_MODELS) {
-    try {
-      const r = await fetch(GROQ_URL, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${GROQ_KEY}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model,
-          messages,
-          temperature: 0.5,
-          max_tokens: 1200,
-          ...(json ? { response_format: { type: 'json_object' } } : {}),
-        }),
-      });
-      if (!r.ok) { lastErr = `${model}: HTTP ${r.status}`; continue; }
-      const d = await r.json();
-      const text = d.choices?.[0]?.message?.content || '';
-      return json ? JSON.parse(text) : text;
-    } catch (e) { lastErr = e.message; }
-  }
-  throw new Error(lastErr || 'All Groq models failed');
-}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
@@ -59,9 +20,9 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Please provide at least a brief description of the property.' });
   }
 
-  const SYSTEM = `You are an expert property listing assistant for Apatmento, Kenya's top short-stay platform.
+  const SYSTEM = `You are an expert property listing assistant for Cabana, Africa's top short-stay and travel super-app.
 Extract or infer structured listing data from the text provided.
-Always respond with valid JSON matching the schema exactly. No markdown, no explanation.
+Always respond with valid JSON matching the schema exactly. No markdown, no explanation outside JSON.
 For missing fields use null. Infer sensibly from context (e.g. "2-bed" → bedrooms: 2).
 Prices should be in KES unless another currency is clear. Convert roughly (1 USD ≈ 130 KES).
 amenities must be an array of short strings matching common ones: WiFi, Pool, Parking, Kitchen, AC, Gym, Security, Balcony, Generator, DSTV, Netflix, Washing Machine, Dishwasher, Hot Water, Smart TV, Workspace, Coffee, BBQ Grill, Garden, Elevator, Pet Friendly, Wheelchair Accessible.`;
@@ -93,10 +54,7 @@ amenities must be an array of short strings matching common ones: WiFi, Pool, Pa
     : `The partner described their property in their own words:\n\n${text.slice(0, 2000)}\n\nBuild a complete, professional listing from this description using this JSON schema:\n${SCHEMA}`;
 
   try {
-    const result = await groq([
-      { role: 'system', content: SYSTEM },
-      { role: 'user',   content: userPrompt },
-    ]);
+    const result = await generateStructuredJson(SYSTEM, userPrompt);
 
     // Sanitise / enforce types
     result.price_night  = result.price_night  ? Math.round(result.price_night)  : null;

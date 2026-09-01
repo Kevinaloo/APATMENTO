@@ -24,6 +24,7 @@
 ══════════════════════════════════════════════════════════════ */
 
 import { deriveStatus, depositRequired, settlementOf } from './_payment-rules.js';
+import { sendBookingReceipt } from './_mail.js';
 
 const BASE = 'https://backend.payhero.co.ke/api/v2';
 
@@ -314,6 +315,14 @@ export async function settleView(supaUrl, H, ledger, extra = {}) {
     headers: H({ 'Content-Type': 'application/json', Prefer: 'return=minimal' }),
     body: JSON.stringify(patch),
   }).catch(e => console.warn('[poll-payment] status write:', e.message));
+
+  if (extra.instalment === 'paid' && booking) {
+    sendBookingReceipt({
+      booking: { ...booking, amount_paid: amountPaid, payment_reference: ledger.booking_ref },
+      supabaseUrl: supaUrl,
+      serviceKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+    }).catch(e => console.warn('[poll-payment] receipt email error (non-fatal):', e.message));
+  }
 
   return {
     status:           newStatus,
