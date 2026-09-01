@@ -33,7 +33,8 @@ const REWRITES = [
   { match: /^\/api\/reconcile-payments\/?$/, target: 'utilities', query: { action: 'reconcile-payments' } },
   { match: /^\/api\/paypal-create-order\/?$/, target: 'utilities', query: { action: 'paypal-create-order' } },
   { match: /^\/api\/paypal-capture\/?$/, target: 'utilities', query: { action: 'paypal-capture' } },
-  { match: /^\/api\/paypal-webhook\/?$/, target: 'utilities', query: { action: 'paypal-webhook' } }
+  { match: /^\/api\/paypal-webhook\/?$/, target: 'utilities', query: { action: 'paypal-webhook' } },
+  { match: /^\/api\/subscribe\/?$/, target: 'utilities', query: { action: 'subscribe' } }
 ];
 
 // Helper to handle API requests

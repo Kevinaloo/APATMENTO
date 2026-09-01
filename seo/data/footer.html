@@ -1,4 +1,117 @@
 <footer class="site-footer">
+  <div class="sf-search-section" id="footer-search-section">
+    <div class="sf-search-inner">
+      <div class="sf-search-header">
+        <div class="sf-search-badge">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          Live Search
+        </div>
+        <h3 class="sf-search-title">Explore stays, flights &amp; safaris across Africa</h3>
+        <p class="sf-search-sub">Filter verified listings, zero-commission tour bookings, and direct airline routes by destination.</p>
+      </div>
+      <div class="sf-search-tabs" role="tablist" aria-label="Service category selection">
+        <button type="button" class="sf-search-tab is-active" data-service="stays" role="tab" aria-selected="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          <span>Stays</span>
+        </button>
+        <button type="button" class="sf-search-tab" data-service="flights" role="tab" aria-selected="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></svg>
+          <span>Flights</span>
+        </button>
+        <button type="button" class="sf-search-tab" data-service="tours" role="tab" aria-selected="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+          <span>Tours &amp; Safaris</span>
+        </button>
+      </div>
+      <div class="sf-search-bar-wrap">
+        <form class="sf-search-form" id="sf-search-form" action="#" novalidate>
+          <div class="sf-search-input-group">
+            <div class="sf-search-icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            </div>
+            <input
+              type="text"
+              id="sf-destination-input"
+              class="sf-search-input"
+              placeholder="Search by city or destination (e.g. Nairobi, Mombasa, Diani, Masai Mara)..."
+              autocomplete="off"
+              spellcheck="false"
+              aria-label="Search destination or property name"
+              aria-autocomplete="list"
+              aria-expanded="false"
+              aria-controls="sf-search-dropdown"
+            />
+            <button type="button" class="sf-search-clear" id="sf-search-clear" aria-label="Clear destination text">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+            <button type="submit" class="sf-search-submit" id="sf-search-submit" aria-label="Search listings">
+              <span>Search</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </button>
+          </div>
+          <div class="sf-search-chips-wrap">
+            <span class="sf-search-chips-label">Popular:</span>
+            <button type="button" class="sf-search-chip" data-dest="Nairobi">Nairobi</button>
+            <button type="button" class="sf-search-chip" data-dest="Mombasa">Mombasa</button>
+            <button type="button" class="sf-search-chip" data-dest="Diani Beach">Diani Beach</button>
+            <button type="button" class="sf-search-chip" data-dest="Masai Mara">Masai Mara</button>
+            <button type="button" class="sf-search-chip" data-dest="Zanzibar">Zanzibar</button>
+            <button type="button" class="sf-search-chip" data-dest="Cape Town">Cape Town</button>
+            <button type="button" class="sf-search-chip" data-dest="Kigali">Kigali</button>
+            <button type="button" class="sf-search-chip" data-dest="Serengeti">Serengeti</button>
+          </div>
+          <div class="sf-search-dropdown" id="sf-search-dropdown" role="region" aria-live="polite">
+            <div class="sf-search-results-list" id="sf-search-results-list"></div>
+            <div class="sf-search-dropdown-footer">
+              <span>Press <kbd style="background:rgba(255,255,255,.1);padding:1px 5px;border-radius:4px;font-family:inherit">Enter</kbd> to search or pick a destination</span>
+              <a href="/apartments" id="sf-search-view-all">Browse all stays &rarr;</a>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="sf-newsletter" id="footer-newsletter-section">
+    <div class="sf-newsletter-inner">
+      <div class="sf-newsletter-info">
+        <div class="sf-newsletter-badge">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+          Cabana Insider
+        </div>
+        <h3 class="sf-newsletter-title">Subscribe to travel updates &amp; deals</h3>
+        <p class="sf-newsletter-sub">Get curated stay drops, zero-commission safari alerts, and insider travel deals across Africa.</p>
+      </div>
+      <div class="sf-newsletter-form-wrap">
+        <form class="sf-newsletter-form" id="footer-newsletter-form" data-source="footer_seo" novalidate>
+          <div class="sf-newsletter-input-group">
+            <div class="sf-newsletter-icon" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+            </div>
+            <input
+              type="email"
+              id="footer-newsletter-email"
+              name="email"
+              class="sf-newsletter-input"
+              placeholder="Enter your email address"
+              autocomplete="email"
+              inputmode="email"
+              spellcheck="false"
+              aria-label="Email address for travel updates"
+              required
+            />
+            <button type="submit" id="footer-newsletter-btn" class="sf-newsletter-btn" aria-label="Subscribe to newsletter">
+              <span>Subscribe</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </button>
+          </div>
+          <div id="footer-newsletter-feedback" class="sf-newsletter-feedback" role="status" aria-live="polite"></div>
+        </form>
+        <div class="sf-newsletter-privacy-note">Zero spam. Unsubscribe at any time.</div>
+      </div>
+    </div>
+  </div>
+
   <div class="sf-inner">
 
     <div class="sf-brand-col">

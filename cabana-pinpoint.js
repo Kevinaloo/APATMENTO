@@ -458,7 +458,8 @@
     this.base = L.tileLayer(view.base, {
       maxZoom: 21, maxNativeZoom: view.maxNativeZoom,
       subdomains: 'abcd', attribution: view.baseAttrib,
-      keepBuffer: 2
+      keepBuffer: 2,
+      detectRetina: true
     }).addTo(this.map);
     this._baseUrl = view.base;
     this._baseAttrib = view.baseAttrib;
@@ -473,7 +474,8 @@
     this.overlay = L.tileLayer(view.overlay, {
       maxZoom: 21, maxNativeZoom: view.maxNativeZoom,
       subdomains: 'abcd', attribution: view.overlayAttrib,
-      pane: 'overlayPane', keepBuffer: 2
+      pane: 'overlayPane', keepBuffer: 2,
+      detectRetina: true
     }).addTo(this.map);
   };
 

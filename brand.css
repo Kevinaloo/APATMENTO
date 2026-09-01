@@ -1,3 +1,5 @@
+@import url('/cabana-footer-search.css');
+
 /* ═══════════════════════════════════════════════════════════════════
    APATMENTO · EQUATOR LIGHT. Global Design System v1
    One motif: the Meridian. A horizon at 0° with an orbiting point.
@@ -367,3 +369,34 @@ body::after{
   .apa-load-line{ width:172px; }
   :root{ --radius:19px; --radius-lg:24px; }
 }
+
+/* ── 18 · FAQ ACCORDION INTERACTION ─────────────────────────────── */
+details.faq-item, details.cfaq-item, details.fitem, details {
+  interpolate-size: allow-keywords;
+}
+
+details summary:focus-visible {
+  outline: 2px solid var(--violet, #7B2FF7);
+  outline-offset: -2px;
+  border-radius: 16px;
+}
+
+@keyframes cbnFaqFadeSlide {
+  0% {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.faq-item[open] .faq-answer,
+.cfaq-item[open] .cfaq-a,
+.fitem[open] .fa,
+details[open] > :not(summary) {
+  animation: cbnFaqFadeSlide 0.32s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  will-change: opacity, transform;
+}
+

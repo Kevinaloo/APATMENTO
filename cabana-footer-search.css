@@ -1,0 +1,578 @@
+/* ═══════════════════════════════════════════════════════════════════
+   CABANA · FOOTER SEARCH BAR ENGINE
+   Real-time search filtering across Stays, Flights, and Tours
+   using live Supabase listings data.
+   ═══════════════════════════════════════════════════════════════════ */
+
+.sf-search-section {
+  max-width: 1200px;
+  margin: 0 auto 36px;
+  padding: 0 40px 36px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  position: relative;
+  box-sizing: border-box;
+}
+
+.sf-search-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.sf-search-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sf-search-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 100px;
+  background: linear-gradient(135deg, rgba(109, 40, 255, 0.18), rgba(78, 224, 200, 0.12));
+  border: 1px solid rgba(123, 47, 247, 0.35);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #C3AEFA;
+  width: fit-content;
+}
+
+.sf-search-badge svg {
+  color: #4EE0C8;
+  flex-shrink: 0;
+}
+
+.sf-search-title {
+  font-size: 21px;
+  font-weight: 600;
+  color: #FFFFFF;
+  letter-spacing: -0.02em;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.sf-search-sub {
+  font-size: 13px;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.55);
+  margin: 0;
+  max-width: 680px;
+}
+
+/* Service Type Switcher Tabs */
+.sf-search-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 4px;
+  border-radius: 100px;
+  width: fit-content;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.sf-search-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.sf-search-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 16px;
+  border-radius: 100px;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.65);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  outline: none;
+}
+
+.sf-search-tab svg {
+  width: 14px;
+  height: 14px;
+  opacity: 0.75;
+  transition: transform 0.2s, opacity 0.2s;
+}
+
+.sf-search-tab:hover {
+  color: #FFFFFF;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.sf-search-tab:focus-visible {
+  box-shadow: 0 0 0 2px #7B2FF7;
+}
+
+.sf-search-tab.is-active {
+  background: linear-gradient(135deg, #6D28FF, #4F6DFF);
+  color: #FFFFFF;
+  box-shadow: 0 4px 16px rgba(109, 40, 255, 0.4);
+}
+
+.sf-search-tab.is-active svg {
+  opacity: 1;
+  transform: scale(1.05);
+}
+
+/* Search Input Bar */
+.sf-search-bar-wrap {
+  position: relative;
+  max-width: 820px;
+  width: 100%;
+}
+
+.sf-search-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+}
+
+.sf-search-input-group {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 100px;
+  padding: 4px 4px 4px 16px;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+}
+
+.sf-search-input-group:focus-within {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: #7B2FF7;
+  box-shadow: 0 0 0 3px rgba(123, 47, 247, 0.25), 0 8px 32px rgba(10, 10, 20, 0.4);
+}
+
+.sf-search-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.45);
+  margin-right: 10px;
+  flex-shrink: 0;
+}
+
+.sf-search-input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  color: #FFFFFF;
+  font-family: inherit;
+  padding: 8px 0;
+}
+
+.sf-search-input::placeholder {
+  color: rgba(255, 255, 255, 0.38);
+}
+
+.sf-search-clear {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.4);
+  padding: 6px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  margin-right: 6px;
+  transition: color 0.18s, background 0.18s;
+}
+
+.sf-search-clear.is-visible {
+  display: flex;
+}
+
+.sf-search-clear:hover {
+  color: #FFFFFF;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.sf-search-submit {
+  flex-shrink: 0;
+  border: none;
+  border-radius: 100px;
+  background: linear-gradient(135deg, #7B2FF7, #4361FF);
+  color: #FFFFFF;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  padding: 10px 22px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: transform 0.2s, box-shadow 0.2s, filter 0.2s;
+  box-shadow: 0 4px 14px rgba(123, 47, 247, 0.35);
+  outline: none;
+}
+
+.sf-search-submit:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(123, 47, 247, 0.45);
+  filter: brightness(1.05);
+}
+
+.sf-search-submit:active {
+  transform: translateY(0);
+}
+
+.sf-search-submit:focus-visible {
+  box-shadow: 0 0 0 3px #4EE0C8, 0 4px 14px rgba(123, 47, 247, 0.35);
+}
+
+/* Quick Destination Chips */
+.sf-search-chips-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.sf-search-chips-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-right: 2px;
+}
+
+.sf-search-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 100px;
+  padding: 4px 11px;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  transition: all 0.18s;
+  text-decoration: none;
+  font-family: inherit;
+}
+
+.sf-search-chip:hover {
+  background: rgba(255, 255, 255, 0.09);
+  color: #FFFFFF;
+  border-color: rgba(123, 47, 247, 0.5);
+  transform: translateY(-1px);
+}
+
+.sf-search-chip:focus-visible {
+  outline: 2px solid #7B2FF7;
+  outline-offset: 1px;
+}
+
+/* Live Suggestions Dropdown */
+.sf-search-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: #0E1020;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 18px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(109, 40, 255, 0.2);
+  z-index: 250;
+  overflow: hidden;
+  max-height: 440px;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-6px);
+  transition: opacity 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+              visibility 0.2s;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.sf-search-dropdown.is-open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.sf-search-results-list {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 8px 0;
+  max-height: 380px;
+}
+
+.sf-search-results-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sf-search-results-list::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.sf-search-results-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+}
+
+.sf-search-group-header {
+  padding: 8px 18px 4px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: rgba(255, 255, 255, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sf-search-group-count {
+  font-size: 10.5px;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 1px 7px;
+  border-radius: 100px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.sf-search-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 18px;
+  color: #FFFFFF;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s;
+  outline: none;
+}
+
+.sf-search-item:hover,
+.sf-search-item:focus,
+.sf-search-item.is-selected {
+  background: rgba(109, 40, 255, 0.18);
+}
+
+.sf-search-item-thumb {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.5);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sf-search-item-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sf-search-item-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.sf-search-item-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #FFFFFF;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 2px;
+}
+
+.sf-search-item-meta {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sf-search-item-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.sf-search-item-tag.stays {
+  background: rgba(109, 40, 255, 0.25);
+  color: #C3AEFA;
+}
+
+.sf-search-item-tag.tours {
+  background: rgba(78, 224, 200, 0.2);
+  color: #4EE0C8;
+}
+
+.sf-search-item-tag.flights {
+  background: rgba(79, 109, 255, 0.25);
+  color: #9BB1FF;
+}
+
+.sf-search-item-price {
+  font-size: 13px;
+  font-weight: 700;
+  color: #5EEAD4;
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.sf-search-empty {
+  padding: 28px 20px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.sf-search-empty-icon {
+  width: 36px;
+  height: 36px;
+  margin: 0 auto 10px;
+  color: rgba(255, 255, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sf-search-empty-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #FFFFFF;
+  margin-bottom: 4px;
+}
+
+.sf-search-empty-text {
+  font-size: 12.5px;
+  margin-bottom: 12px;
+}
+
+.sf-search-dropdown-footer {
+  padding: 10px 18px;
+  background: rgba(0, 0, 0, 0.25);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11.5px;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.sf-search-dropdown-footer a {
+  color: #C3AEFA;
+  text-decoration: none;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.18s;
+}
+
+.sf-search-dropdown-footer a:hover {
+  color: #FFFFFF;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .sf-search-section {
+    padding: 0 24px 32px;
+    margin-bottom: 28px;
+  }
+
+  .sf-search-title {
+    font-size: 18px;
+  }
+
+  .sf-search-chips-wrap {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+
+  .sf-search-chips-wrap::-webkit-scrollbar {
+    display: none;
+  }
+
+  .sf-search-chips-label {
+    flex-shrink: 0;
+  }
+
+  .sf-search-chip {
+    flex-shrink: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .sf-search-input-group {
+    flex-direction: column;
+    border-radius: 18px;
+    padding: 10px;
+    gap: 8px;
+    align-items: stretch;
+  }
+
+  .sf-search-icon {
+    display: none;
+  }
+
+  .sf-search-input {
+    padding: 4px 6px;
+    width: 100%;
+  }
+
+  .sf-search-submit {
+    width: 100%;
+    justify-content: center;
+    padding: 10px;
+  }
+
+  .sf-search-tabs {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .sf-search-tab {
+    flex: 1;
+    justify-content: center;
+    padding: 7px 8px;
+    font-size: 12px;
+  }
+}

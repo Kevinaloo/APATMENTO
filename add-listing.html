@@ -251,6 +251,172 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
 .addr-s{padding:10px 13px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--line);color:var(--ink-soft);transition:background .13s;}
 .addr-s:last-child{border-bottom:none;}
 .addr-s:hover{background:var(--surface-2);color:var(--ink);}
+
+/* ── Smart Location Auto-Detect Card ────────────────────────────────── */
+.loc-autodetect-card{
+  background:linear-gradient(145deg, rgba(67,97,255,0.06), rgba(142,68,234,0.04));
+  border:1.5px solid rgba(67,97,255,0.22);
+  border-radius:14px;
+  padding:16px;
+  margin-bottom:18px;
+  box-shadow:0 4px 18px rgba(67,97,255,0.05);
+}
+.loc-autodetect-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  flex-wrap:wrap;
+  margin-bottom:12px;
+}
+.loc-autodetect-info{
+  flex:1;
+  min-width:240px;
+}
+.loc-autodetect-title{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  font-family:var(--font-head);
+  font-weight:800;
+  font-size:14px;
+  color:var(--ink);
+  margin-bottom:3px;
+}
+.loc-autodetect-sub{
+  font-size:12px;
+  color:var(--ink-soft);
+  line-height:1.45;
+  margin:0;
+}
+.btn-gps-detect{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:10px 16px;
+  border-radius:10px;
+  border:none;
+  background:var(--grad);
+  color:#fff;
+  font-family:var(--font-head);
+  font-size:13px;
+  font-weight:750;
+  cursor:pointer;
+  box-shadow:0 4px 14px rgba(67,97,255,0.25);
+  transition:all .22s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink:0;
+}
+.btn-gps-detect:hover{
+  transform:translateY(-1px);
+  box-shadow:0 6px 20px rgba(67,97,255,0.38);
+}
+.btn-gps-detect:active{
+  transform:translateY(0);
+}
+.btn-gps-detect.locating{
+  background:var(--electric);
+  opacity:0.85;
+  pointer-events:none;
+}
+.btn-gps-detect.locating .gps-icon{
+  animation:spin 1s linear infinite;
+}
+.btn-gps-detect.success{
+  background:linear-gradient(135deg, #10B981, #059669);
+  box-shadow:0 4px 14px rgba(16,185,129,0.3);
+}
+.gps-icon{
+  width:16px;
+  height:16px;
+}
+.loc-search-box{
+  position:relative;
+  display:flex;
+  gap:8px;
+}
+.btn-loc-search{
+  position:absolute;
+  right:6px;
+  top:50%;
+  transform:translateY(-50%);
+  background:var(--surface-2);
+  border:1px solid var(--line);
+  border-radius:8px;
+  padding:6px 14px;
+  cursor:pointer;
+  color:var(--ink);
+  font-size:12px;
+  font-weight:700;
+  font-family:var(--font-body);
+  transition:all .18s;
+}
+.btn-loc-search:hover{
+  background:var(--electric);
+  border-color:var(--electric);
+  color:#fff;
+}
+.loc-detected-badge{
+  margin-top:12px;
+  padding:12px 14px;
+  border-radius:11px;
+  background:rgba(16,185,129,0.08);
+  border:1px solid rgba(16,185,129,0.28);
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+}
+.loc-detected-badge.pulse-in{
+  animation:fadeUp .3s ease-out;
+}
+.ldb-head{
+  display:flex;
+  align-items:center;
+  gap:7px;
+}
+.ldb-acc-dot{
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:#10B981;
+  box-shadow:0 0 0 3px rgba(16,185,129,0.25);
+  animation:gpsPulse 2s infinite;
+}
+@keyframes gpsPulse{
+  0%{box-shadow:0 0 0 0 rgba(16,185,129,0.6);}
+  70%{box-shadow:0 0 0 6px rgba(16,185,129,0);}
+  100%{box-shadow:0 0 0 0 rgba(16,185,129,0);}
+}
+.ldb-acc-text{
+  font-size:12px;
+  font-weight:800;
+  color:#065F46;
+  font-family:var(--font-head);
+}
+.ldb-acc-meter{
+  font-size:11px;
+  font-weight:700;
+  color:#047857;
+  background:rgba(16,185,129,0.16);
+  padding:1px 7px;
+  border-radius:100px;
+  margin-left:auto;
+}
+.ldb-place{
+  font-size:13px;
+  font-weight:700;
+  color:var(--ink);
+}
+.ldb-coords{
+  font-size:11.5px;
+  color:var(--ink-soft);
+  font-family:monospace;
+}
+.field-highlight{
+  border-color:var(--electric) !important;
+  box-shadow:0 0 0 3px rgba(67,97,255,0.2) !important;
+  transition:all .3s ease;
+}
+
 .cbox{padding:13px 15px;border-radius:12px;background:rgba(67,97,255,0.05);border:1px solid rgba(67,97,255,0.13);margin-bottom:17px;}
 .cbox-lbl{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--electric);margin-bottom:4px;display:flex;align-items:center;gap:5px;}
 .cbox-lbl svg{width:12px;height:12px;}
@@ -497,7 +663,48 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
         <div class="field"><label class="flbl" id="s2tl">Title</label><input class="finput" id="f-title" placeholder="e.g. Skyline Loft with City Views" maxlength="80"/><div class="fhint">Be descriptive and specific. Strong titles improve search visibility.</div></div>
       </div>
       <div class="fsec">
-        <div class="fsec-title">Location</div>
+        <div class="fsec-title" style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+          <span>Location</span>
+          <span style="font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--electric);background:rgba(67,97,255,0.08);padding:3px 9px;border-radius:100px;border:1px solid rgba(67,97,255,0.18);">High Precision GPS &amp; Satellite</span>
+        </div>
+
+        <!-- SMART LOCATION AUTO-DETECT & QUICK SEARCH PANEL -->
+        <div class="loc-autodetect-card" id="loc-autodetect-card">
+          <div class="loc-autodetect-top">
+            <div class="loc-autodetect-info">
+              <div class="loc-autodetect-title">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--electric);"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8"/></svg>
+                <span>Auto-Detect Property Location</span>
+              </div>
+              <p class="loc-autodetect-sub">Auto-detect your exact property building, street, neighbourhood, and city with one tap, or search below.</p>
+            </div>
+            <button type="button" class="btn-gps-detect" id="btn-gps-detect" onclick="autoDetectLocation(this)">
+              <svg class="gps-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8"/></svg>
+              <span>Auto-Detect My Location (GPS)</span>
+            </button>
+          </div>
+          
+          <div class="loc-search-box">
+            <div style="position:relative;flex:1;">
+              <input class="finput" id="f-smart-loc" placeholder="Type property address, landmark, estate or building name..." autocomplete="off" style="padding-left:38px;padding-right:90px;font-size:13.5px;"/>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--ink-faint);pointer-events:none;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              <button type="button" onclick="doSmartGeo()" class="btn-loc-search">Find</button>
+            </div>
+          </div>
+          
+          <div class="loc-detected-badge" id="loc-detected-badge" style="display:none;">
+            <div class="ldb-head">
+              <span class="ldb-acc-dot"></span>
+              <span class="ldb-acc-text" id="ldb-acc-text">High-Precision GPS Detected</span>
+              <span class="ldb-acc-meter" id="ldb-acc-meter">±4m Accuracy</span>
+            </div>
+            <div class="ldb-body" id="ldb-body">
+              <div class="ldb-place" id="ldb-place">Westlands, Nairobi, Kenya</div>
+              <div class="ldb-coords" id="ldb-coords">Coordinates: -1.2684, 36.8051 · Plus Code: 6GCRPR78+CVW</div>
+            </div>
+          </div>
+        </div>
+
         <div class="row2">
           <div class="field"><label class="flbl">Country</label><select class="fsel" id="f-country" data-value="Kenya"><option>Kenya</option></select></div>
           <div class="field"><label class="flbl">City</label><input class="finput" id="f-city" placeholder="Nairobi"/></div>
@@ -507,14 +714,17 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
           <div class="field"><label class="flbl">Street <span class="opt">(optional)</span></label><input class="finput" id="f-street" placeholder="Waiyaki Way"/></div>
         </div>
         <div class="field">
-          <label class="flbl">Pin exact location <span class="opt">(recommended)</span></label>
-          <div class="pin-help">Search for the address, then <strong>drag the pin onto your gate</strong>. Geocoders usually land on the nearest main road, so the drag is what makes it exact.</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+            <label class="flbl" style="margin-bottom:0;">Pin exact location on Satellite <span class="opt">(drag pin onto your gate)</span></label>
+            <span style="font-size:11.5px;color:var(--ink-soft);font-weight:600;">High-Res Hybrid Imagery</span>
+          </div>
+          <div class="pin-help">Our high-resolution satellite imagery lets you see exact compounds and rooftops. <strong>Drag the pin onto your entrance or gate</strong>.</div>
           <div style="position:relative;"><input class="finput" id="f-addr" placeholder="Search address, building or landmark..." autocomplete="off" style="padding-right:92px;"/><button type="button" onclick="doGeo()" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:var(--grad);border:none;border-radius:8px;padding:6px 12px;cursor:pointer;color:#fff;font-size:12px;font-weight:700;font-family:var(--font-body);">Search</button></div>
           <div id="pin-map"></div>
           <div class="pin-bar">
             <button type="button" class="pin-btn" onclick="useMyLoc(this)">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8"/></svg>
-              Use my current location
+              Re-center on My GPS
             </button>
             <div class="pin-state" id="pin-state">No pin set yet</div>
           </div>
@@ -1211,6 +1421,8 @@ function cityHint(){
   return [-1.2921,36.8219];
 }
 
+let _pinSmartSearch = null;
+
 async function initPin(tries){
   if(_pinInit)return;
   /* apa-map.js and apa-geo.js are deferred; a host who reaches this
@@ -1228,54 +1440,185 @@ async function initPin(tries){
     lat:isFinite(lat)?lat:undefined,
     lng:isFinite(lng)?lng:undefined,
     fallback:cityHint(),
-    height:'270px',
+    height:'280px',
     onChange:setPin
   });
 
-  /* Type-ahead on the address box, worldwide, through the shared
-     location layer. Choosing a result moves the pin but does not end
-     the job — the host still drags it onto their own gate. */
+  /* Type-ahead on the smart location box and the address box, worldwide */
+  _pinSmartSearch=ApaGeo.attach('f-smart-loc',{
+    limit:7,
+    onPick:r=>{
+      if(_pin)_pin.set(r.lat,r.lng,18);
+      setPin({lat:r.lat,lng:r.lng,label:r.short||r.name,precision:r.kind==='address'||r.kind==='street'?'rooftop':'parcel',address:r});
+      fillAddressFrom(r, true);
+      showDetectedBadge(r, 'Search Match');
+    }
+  });
+
   _pinSearch=ApaGeo.attach('f-addr',{
     limit:7,
     onPick:r=>{
-      if(_pin)_pin.set(r.lat,r.lng,17);
-      setPin({lat:r.lat,lng:r.lng,label:r.short});
-      fillAddressFrom(r);
+      if(_pin)_pin.set(r.lat,r.lng,18);
+      setPin({lat:r.lat,lng:r.lng,label:r.short||r.name,precision:r.kind==='address'||r.kind==='street'?'rooftop':'parcel',address:r});
+      fillAddressFrom(r, true);
+      showDetectedBadge(r, 'Search Match');
     }
   });
 }
 
-/* A geocoder that just told us the country, city, area and street has
-   already answered four fields the host was about to type by hand.
-   Only blanks are filled: a host who wrote "Westie" for their area
-   meant it, and having the form overwrite them is worse than useless. */
-function fillAddressFrom(p){
+function showDetectedBadge(p, sourceLabel, accuracyM){
+  const badge = document.getElementById('loc-detected-badge');
+  const accText = document.getElementById('ldb-acc-text');
+  const accMeter = document.getElementById('ldb-acc-meter');
+  const placeText = document.getElementById('ldb-place');
+  const coordsText = document.getElementById('ldb-coords');
+  if(!badge) return;
+
+  badge.style.display = 'flex';
+  badge.classList.remove('pulse-in');
+  void badge.offsetWidth; // trigger reflow
+  badge.classList.add('pulse-in');
+
+  if(accText) accText.textContent = sourceLabel || 'Location Detected';
+  if(accMeter) accMeter.textContent = accuracyM ? `±${accuracyM}m Accuracy` : (p.precision ? 'Rooftop level' : 'Verified');
+  
+  const placeStr = [p.street, p.area, p.city, p.country].filter(Boolean).join(', ') || p.short || p.name || p.label || 'Detected Address';
+  if(placeText) placeText.textContent = placeStr;
+  
+  const pCode = p.plusCode || (window.ApaGeo && isFinite(p.lat) && isFinite(p.lng) ? window.ApaGeo.plusCode(p.lat, p.lng, 11) : '');
+  if(coordsText && isFinite(p.lat) && isFinite(p.lng)){
+    coordsText.textContent = `Coordinates: ${p.lat.toFixed(6)}, ${p.lng.toFixed(6)}${pCode ? ' · Plus Code: ' + pCode : ''}`;
+  }
+}
+
+/* Auto-detect user's high-precision GPS location */
+async function autoDetectLocation(btn){
+  const btnEl = btn || document.getElementById('btn-gps-detect');
+  const wasText = btnEl ? btnEl.querySelector('span').textContent : '';
+  if(btnEl){
+    btnEl.disabled = true;
+    btnEl.classList.add('locating');
+    btnEl.querySelector('span').textContent = 'Acquiring high-precision GPS…';
+  }
+
+  try {
+    if(!navigator.geolocation){
+      throw new Error('Geolocation is not supported by your browser. Please type your address in the search box.');
+    }
+
+    let fix = null;
+    if(window.ApaGeo && window.ApaGeo.locate){
+      fix = await window.ApaGeo.locate({ highAccuracy: true, timeout: 15000, maximumAge: 0 });
+    } else {
+      fix = await new Promise((res, rej) => {
+        navigator.geolocation.getCurrentPosition(
+          pos => res({
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+            accuracy: pos.coords.accuracy || null,
+            source: 'device'
+          }),
+          err => rej(new Error(err.code === 1 ? 'Location permission was declined. Please allow location access or type your address.' : 'Could not read GPS location. Please type your address.')),
+          { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+        );
+      });
+      if(window.ApaGeo && window.ApaGeo.reverse && fix){
+        const rev = await window.ApaGeo.reverse(fix.lat, fix.lng);
+        if(rev) Object.assign(fix, rev);
+      }
+    }
+
+    if(!fix || !isFinite(fix.lat) || !isFinite(fix.lng)){
+      throw new Error('Could not resolve your coordinates. Please search for your property address.');
+    }
+
+    // Move map pin and zoom to building
+    if(_pin){
+      const z = fix.accuracy && fix.accuracy <= 25 ? 20 : 18;
+      _pin.set(fix.lat, fix.lng, z);
+    }
+
+    // Auto-fill all address fields with overwrite=true
+    fillAddressFrom(fix, true);
+    setPin(Object.assign({
+      lat: fix.lat,
+      lng: fix.lng,
+      accuracy: fix.accuracy,
+      source: 'device',
+      label: fix.short || fix.name || fix.label,
+      address: fix
+    }, fix));
+
+    const accM = fix.accuracy ? Math.round(fix.accuracy) : 4;
+    showDetectedBadge(fix, 'High-Precision GPS Detected', accM);
+
+    const smartInput = document.getElementById('f-smart-loc');
+    if(smartInput){
+      smartInput.value = [fix.street, fix.area, fix.city].filter(Boolean).join(', ') || fix.name || '';
+    }
+
+    if(btnEl){
+      btnEl.classList.remove('locating');
+      btnEl.classList.add('success');
+      btnEl.querySelector('span').textContent = 'Location Detected (GPS)';
+      setTimeout(() => {
+        btnEl.classList.remove('success');
+        btnEl.querySelector('span').textContent = 'Re-Detect My Location (GPS)';
+      }, 3500);
+    }
+  } catch(err){
+    if(btnEl){
+      btnEl.classList.remove('locating');
+      btnEl.querySelector('span').textContent = wasText || 'Auto-Detect My Location (GPS)';
+    }
+    al(err && err.message ? err.message : 'Could not detect your location. Please type your address.');
+  } finally {
+    if(btnEl) btnEl.disabled = false;
+  }
+}
+
+function doSmartGeo(){
+  if(_pinSmartSearch) _pinSmartSearch.search();
+  else if(_pinSearch) _pinSearch.search();
+}
+
+/* Auto-fill address fields with smooth highlights */
+function fillAddressFrom(p, overwrite = false){
+  if(!p) return;
   const set=(id,val)=>{
     if(!val)return;
     const el=document.getElementById(id);
-    if(!el||el.value.trim())return;
+    if(!el)return;
+    if(!overwrite && el.value.trim())return;
     el.value=val;
     el.dispatchEvent(new Event('input',{bubbles:true}));
+    el.classList.add('field-highlight');
+    setTimeout(()=>el.classList.remove('field-highlight'), 1800);
   };
   set('f-city',p.city);
-  set('f-area',p.area);
+  set('f-area',p.area || p.district);
   set('f-street',p.street);
 
   if(p.country){
     const sel=document.getElementById('f-country');
-    if(sel&&!sel.value){
-      const opt=[...sel.options].find(o=>o.value.toLowerCase()===p.country.toLowerCase());
-      if(opt){sel.value=opt.value;sel.dispatchEvent(new Event('change',{bubbles:true}));}
+    if(sel){
+      const opt=[...sel.options].find(o=>o.value.toLowerCase()===p.country.toLowerCase() || (p.countryCode && o.value.toLowerCase().includes(p.countryCode.toLowerCase())));
+      if(opt){
+        sel.value=opt.value;
+        sel.dispatchEvent(new Event('change',{bubbles:true}));
+      } else if(overwrite || !sel.value){
+        const newOpt = document.createElement('option');
+        newOpt.value = p.country;
+        newOpt.textContent = p.country;
+        sel.appendChild(newOpt);
+        sel.value = p.country;
+        sel.dispatchEvent(new Event('change',{bubbles:true}));
+      }
     }
   }
 }
 
 /* Single place where a chosen point lands in the form. */
-/* How good a pin is, in words a host can act on. A pin dropped from a
-   city-name geocode and a pin placed on a roof at zoom 20 are not the
-   same fact, and the form used to store both as "lat, lng" and treat
-   them alike — which is how a listing ends up in the middle of a
-   roundabout. cabana-pinpoint grades every pin; this shows the grade. */
 const PIN_GRADE={
   rooftop :{icon:'🎯',text:'Exact — on the building',      tone:'#14B8A6'},
   parcel  :{icon:'📍',text:'Very good — inside the compound',tone:'#14B8A6'},
@@ -1290,12 +1633,13 @@ function setPin(p){
   document.getElementById('f-lat').value=p.lat;
   document.getElementById('f-lng').value=p.lng;
 
-  /* A Plus Code is the part of this a guest can actually use: it pastes
-     straight into Google Maps or Organic Maps and lands on the door,
-     which matters most in exactly the places where the street has no
-     name. Carried in extras, so no schema change is needed. */
   if(p.plusCode)F.plusCode=p.plusCode;
   if(p.precision){F.precision=p.precision;F.precisionMetres=p.precisionMetres||null;}
+
+  // If address components came back and fields are empty, fill them
+  if(p.address){
+    fillAddressFrom(p.address, false);
+  }
 
   const st=document.getElementById('pin-state');
   if(!st)return;
@@ -1317,13 +1661,7 @@ function setPin(p){
 function doGeo(){ if(_pinSearch)_pinSearch.search(); }
 
 async function useMyLoc(btn){
-  if(!_pin){al('The map is still loading. Try again in a moment.');return;}
-  btn.disabled=true;
-  const was=btn.innerHTML;
-  btn.innerHTML='Locating…';
-  try{ await _pin.locate(); }
-  catch(e){ al(e.message); }
-  finally{ btn.disabled=false; btn.innerHTML=was; }
+  await autoDetectLocation(btn);
 }
 
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}

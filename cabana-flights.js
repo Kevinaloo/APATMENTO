@@ -1180,8 +1180,22 @@
     /* Sensible starting point for this market, still fully editable. */
     if (!S.origin) { S.origin = atlas.airport('NBO'); renderRoute(); }
 
-    /* Deep link into an existing request. */
+    /* Deep link destination support (?to=MBA, ?dest=Mombasa, ?q=Dubai). */
     var p = new URLSearchParams(location.search);
+    var dParam = p.get('to') || p.get('dest') || p.get('d') || p.get('q');
+    if (dParam && atlas) {
+      var matchApt = atlas.airport(dParam.toUpperCase());
+      if (!matchApt && atlas.search) {
+        var results = atlas.search(dParam, 1);
+        if (results && results.length) matchApt = results[0];
+      }
+      if (matchApt) {
+        S.dest = matchApt;
+        renderRoute();
+      }
+    }
+
+    /* Deep link into an existing request. */
     var ref = p.get('ref');
     if (ref) {
       showStatus(ref.toUpperCase(), p.get('t') || tokenFor(ref.toUpperCase()));

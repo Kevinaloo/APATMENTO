@@ -245,6 +245,7 @@
         attribution: attrib,
         updateWhenIdle: false,
         keepBuffer: 3,
+        detectRetina: true,
         className: 'apa-tile'
       });
     }

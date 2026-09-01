@@ -349,6 +349,8 @@ const locationiq = {
     u.searchParams.set('lon', String(lng));
     u.searchParams.set('format', 'json');
     u.searchParams.set('normalizecity', '1');
+    u.searchParams.set('addressdetails', '1');
+    u.searchParams.set('zoom', '18');
     const r = await fetchJSON(u);
     const p = fromOSM(r, 'locationiq');
     return p ? [p] : [];
@@ -445,6 +447,7 @@ const nominatim = {
       u.searchParams.set('lon', String(lng));
       u.searchParams.set('format', 'jsonv2');
       u.searchParams.set('addressdetails', '1');
+      u.searchParams.set('zoom', '18');
       const r = await fetchJSON(u, {
         headers: { 'User-Agent': userAgent(), 'Accept-Language': lang || 'en' },
       });
@@ -460,9 +463,10 @@ function fromOSM(r, source) {
   const lat = num(r.lat), lng = num(r.lon);
   if (lat == null || lng == null) return null;
   const a = r.address || {};
-  const street = clean(a.road || a.pedestrian || a.footway);
-  const name = clean(r.name) || clean(a.amenity || a.building) || street ||
-               clean(a.suburb || a.neighbourhood) ||
+  const street = clean(a.road || a.pedestrian || a.footway || a.street || a.path || a.avenue || a.highway);
+  const building = clean(a.building || a.house_name || a.amenity || a.tourism || a.hotel || a.commercial);
+  const name = clean(r.name) || building || (a.house_number && street ? `${a.house_number} ${street}` : street) ||
+               clean(a.suburb || a.neighbourhood || a.residential) ||
                clean(a.city || a.town || a.village) ||
                clean(String(r.display_name || '').split(',')[0]);
   return place({
@@ -471,10 +475,10 @@ function fromOSM(r, source) {
     label: clean(r.display_name) || name,
     lat, lng,
     kind: normalKind(r.type, r.class, a.amenity),
-    street: a.house_number && street ? `${a.house_number} ${street}` : street,
-    area: clean(a.suburb || a.neighbourhood || a.city_district || a.quarter),
+    street: a.house_number && street ? `${a.house_number} ${street}` : (building && street ? `${building}, ${street}` : (street || building)),
+    area: clean(a.suburb || a.neighbourhood || a.residential || a.city_district || a.quarter || a.subdistrict),
     city: clean(a.city || a.town || a.village || a.municipality || a.county),
-    state: clean(a.state || a.region),
+    state: clean(a.state || a.region || a.state_district),
     country: clean(a.country),
     countryCode: String(a.country_code || '').toLowerCase(),
     postcode: clean(a.postcode),

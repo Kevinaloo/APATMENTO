@@ -388,6 +388,10 @@
     {
       "source": "/api/paypal-webhook",
       "destination": "/api/utilities?action=paypal-webhook"
+    },
+    {
+      "source": "/api/subscribe",
+      "destination": "/api/utilities?action=subscribe"
     }
   ],
   "buildCommand": "node scripts/check-syntax.mjs",

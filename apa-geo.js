@@ -788,16 +788,21 @@
     var lat = Number(r.lat), lng = Number(r.lon);
     if (!isFinite(lat) || !isFinite(lng)) return null;
     var a = r.address || {};
-    var street = a.road || a.pedestrian || '';
+    var street = a.road || a.pedestrian || a.street || a.path || a.footway || a.avenue || '';
+    var building = a.building || a.house_name || a.amenity || a.tourism || a.hotel || '';
+    var houseNum = a.house_number ? a.house_number + ' ' : '';
+    var fullStreet = houseNum + street;
+    if (!fullStreet && building) fullStreet = building;
     return place({
       id: 'osm:' + (r.osm_id || lat + ',' + lng),
-      name: str(r.name) || street || a.suburb || a.city || String(r.display_name || '').split(',')[0],
+      name: str(r.name) || building || fullStreet || a.suburb || a.city || String(r.display_name || '').split(',')[0],
       label: r.display_name,
       lat: lat, lng: lng,
       kind: kindOf(r.type, r.class),
-      street: street, area: a.suburb || a.neighbourhood,
-      city: a.city || a.town || a.village || a.county,
-      state: a.state, country: a.country, countryCode: a.country_code,
+      street: fullStreet || street || building,
+      area: a.suburb || a.neighbourhood || a.residential || a.city_district || a.quarter,
+      city: a.city || a.town || a.village || a.county || a.municipality,
+      state: a.state || a.region, country: a.country, countryCode: a.country_code,
       postcode: a.postcode, source: 'nominatim'
     });
   }
@@ -831,7 +836,7 @@
 
     var u = apiAlive
       ? API + '?lat=' + lat + '&lng=' + lng + '&lang=' + docLang()
-      : 'https://photon.komoot.io/reverse?lat=' + lat + '&lon=' + lng + '&lang=en';
+      : NOMINATIM + '?lat=' + lat + '&lon=' + lng + '&format=jsonv2&zoom=18&addressdetails=1';
 
     return fetch(u)
       .then(function (r) {
@@ -840,16 +845,26 @@
       })
       .then(function (d) {
         if (!d) return null;
-        var row = d.results ? d.results[0] : (d.features || [])[0];
+        var row = d.results ? d.results[0] : (d.features ? d.features[0] : d);
         if (!row) return null;
-        var p = d.results ? place(row) : fromPhoton(row);
+        var p = d.results ? place(row) : (d.features ? fromPhoton(row) : fromOSM(row));
         if (p) { mem[key] = p; ssSet(key, p); }
         return p;
       })
       .catch(function () {
-        /* A pin without a label is still a pin. Callers treat the label
-           as decoration precisely so this can fail quietly. */
-        return null;
+        /* If primary reverse fails, fallback to direct Nominatim or Photon */
+        var fbUrl = NOMINATIM + '?lat=' + lat + '&lon=' + lng + '&format=jsonv2&zoom=18&addressdetails=1';
+        return fetch(fbUrl)
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (d) {
+            if (!d) return null;
+            var p = fromOSM(d);
+            if (p) { mem[key] = p; ssSet(key, p); }
+            return p;
+          })
+          .catch(function () {
+            return null;
+          });
       });
   }
 
@@ -878,8 +893,8 @@
         ));
       }, {
         enableHighAccuracy: o.highAccuracy !== false,
-        timeout: o.timeout || 12000,
-        maximumAge: o.maximumAge != null ? o.maximumAge : 60000
+        timeout: o.timeout || 15000,
+        maximumAge: o.maximumAge != null ? o.maximumAge : 0
       });
     });
   }

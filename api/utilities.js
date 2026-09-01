@@ -635,11 +635,76 @@ async function handleReconcilePayments(req, res) {
   }
 }
 
+/* ══════════════════════════════════════════════════════════════
+   NEWSLETTER SIGNUP
+   Public subscription endpoint for Cabana travel updates and deals
+══════════════════════════════════════════════════════════════ */
+async function handleSubscribe(req, res) {
+  if (req.method !== 'POST' && req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  let body = {};
+  if (req.method === 'POST') {
+    try {
+      body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
+    } catch {
+      return res.status(400).json({ ok: false, error: 'invalid_json' });
+    }
+  }
+
+  const emailRaw = body.email || req.query?.email || '';
+  const email = String(emailRaw).trim().toLowerCase();
+
+  const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
+
+  if (!email || !emailRegex.test(email) || email.length > 254) {
+    return res.status(400).json({
+      ok: false,
+      error: 'invalid_email',
+      message: 'Please provide a valid email address.'
+    });
+  }
+
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const serviceKey  = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (supabaseUrl && serviceKey) {
+    try {
+      await fetch(`${supabaseUrl}/rest/v1/newsletter_subscribers`, {
+        method: 'POST',
+        headers: {
+          apikey: serviceKey,
+          Authorization: `Bearer ${serviceKey}`,
+          'Content-Type': 'application/json',
+          Prefer: 'resolution=merge-duplicates'
+        },
+        body: JSON.stringify({
+          email,
+          source: body.source || 'footer',
+          subscribed_at: new Date().toISOString()
+        })
+      }).catch(() => {});
+    } catch {
+      /* non-blocking */
+    }
+  }
+
+  return res.status(200).json({
+    ok: true,
+    email,
+    message: "You're subscribed! We'll keep you posted on the latest travel updates and deals."
+  });
+}
+
 export default async function handler(req, res) {
   const action = req.query?.action 
     || (typeof req.body === 'object' ? req.body?.action : null)
     || new URL(req.url || '/', 'http://x').searchParams.get('action')
     || '';
+
+  if (action === 'subscribe' || action === 'newsletter') {
+    return handleSubscribe(req, res);
+  }
 
   /* Deliberately gone. /api/verify-checkin (→ api/lib/_verify-checkin.js)
      is the only check-in verifier; see the note above handleCloseBookings.
@@ -693,7 +758,7 @@ export default async function handler(req, res) {
   }
 
   return res.status(400).json({
-    error: 'Unknown action. Available: geocode, atlas, close-bookings, welcome-email, '
+    error: 'Unknown action. Available: subscribe, geocode, atlas, close-bookings, welcome-email, '
          + 'indexnow, reconcile-payments, paypal-create-order, paypal-capture, paypal-webhook',
   });
 }

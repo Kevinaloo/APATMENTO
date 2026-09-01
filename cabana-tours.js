@@ -124,10 +124,19 @@
   function openFromQuery() {
     if (_deepLinked) return;
     safeRun(function () {
-      var id = new URLSearchParams(location.search).get('open');
-      if (!id) return;
-      _deepLinked = true;
-      openSheet(id);
+      var p = new URLSearchParams(location.search);
+      var id = p.get('open');
+      if (id) {
+        _deepLinked = true;
+        openSheet(id);
+      }
+      var qVal = p.get('q') || p.get('dest') || p.get('destination');
+      if (qVal) {
+        state.q = qVal.trim();
+        var qInput = el('ct-q');
+        if (qInput) qInput.value = state.q;
+        renderGrid();
+      }
     });
   }
   function safeRun(fn) { try { fn(); } catch (e) { /* never block the grid */ } }
