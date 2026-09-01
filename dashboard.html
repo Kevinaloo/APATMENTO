@@ -2866,7 +2866,7 @@ function paintGuestContent(){
   if(!_painted.chat){
     _painted.chat = true;
     setTimeout(function(){
-      if(typeof CabanaChat !== 'undefined') _try(CabanaChat.initFAB, 'chat');
+      if(typeof CabanaChat !== 'undefined') _try(CabanaChat.initBell, 'chat');
     }, 800);
   }
 }

@@ -62,7 +62,15 @@ app.use('/api', async (req, res, next) => {
   // Check rewrites first
   for (const r of REWRITES) {
     if (r.match.test(urlPath)) {
-      req.query = { ...r.query, ...req.query };
+      /* Express 5 exposes req.query as a getter. Rewrite the request URL so
+         handlers receive the same destination query Vercel provides. Route
+         parameters win over caller input; /api/subscribe?action=paypal-
+         webhook must remain a newsletter request. */
+      const rewritten = new URL(req.url, 'http://cabana.local');
+      for (const [key, value] of Object.entries(r.query)) {
+        rewritten.searchParams.set(key, value);
+      }
+      req.url = `${rewritten.pathname}${rewritten.search}`;
       return handleApi(r.target, req, res);
     }
   }

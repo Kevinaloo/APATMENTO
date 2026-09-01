@@ -104,9 +104,9 @@ img{max-width:100%;}
 .head-k{display:flex;align-items:center;gap:10px;color:var(--brass);margin-bottom:16px;}
 .head-k svg{width:16px;height:16px;}
 .head-rule{width:clamp(24px,4vw,56px);height:1px;background:var(--rule-brass);}
-h1{font-family:var(--fd);font-weight:400;font-size:clamp(32px,5vw,58px);line-height:1;
+.order-title{font-family:var(--fd);font-weight:400;font-size:clamp(32px,5vw,58px);line-height:1;
   letter-spacing:-.038em;margin-bottom:16px;max-width:16ch;text-wrap:balance;}
-h1 em{font-style:italic;font-weight:500;color:var(--ember-lit);}
+.order-title em{font-style:italic;font-weight:500;color:var(--ember-lit);}
 .head-say{font-size:clamp(14.5px,1.2vw,16.5px);line-height:1.7;color:var(--bone-72);max-width:56ch;}
 .head-say b{color:var(--bone);font-weight:600;}
 
@@ -346,6 +346,7 @@ a.tick-n:hover{color:var(--brass-lit);}
   </span>
 </header>
 
+<h1 style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0">Review your Cabana food order</h1>
 <div id="app">
   <div class="boot"><div class="boot-r"></div><div class="boot-t">Reading your order</div></div>
 </div>
@@ -441,7 +442,7 @@ function render(){
     app.innerHTML=
       '<section class="head shell"><div class="head-k">'+mk('bag',1.5)
       +'<span class="mono">Your order</span><span class="head-rule"></span></div>'
-      +'<h1>Nothing on the <em>pass</em> yet.</h1></section>'
+      +'<h2 class="order-title">Nothing on the <em>pass</em> yet.</h2></section>'
       +'<div class="shell"><div class="void">'
       +'<div class="void-i">'+mk('cloche',.9)+'</div>'
       +'<h2>Your order is empty</h2>'
@@ -462,11 +463,11 @@ function render(){
   h+='<section class="head shell">'
     +'<div class="head-k">'+mk('bag',1.5)+'<span class="mono">'
     +(allSent?'Orders sent':'Checkout')+'</span><span class="head-rule"></span></div>'
-    +'<h1>'+(allSent
+    +'<h2 class="order-title">'+(allSent
         ? 'Sent. Now the <em>kitchens</em> cook.'
         : groups.length===1
           ? 'One kitchen. <em>One ticket.</em>'
-          : groups.length+' kitchens. <em>'+groups.length+' tickets.</em>')+'</h1>'
+          : groups.length+' kitchens. <em>'+groups.length+' tickets.</em>')+'</h2>'
     +'<p class="head-say">'+(groups.length===1
         ? 'Check it reads right, tell them who you are, and send it straight to the counter. <b>You pay the kitchen their own price</b> — Cabana adds nothing and takes nothing.'
         : 'Each kitchen cooks its own food, so each gets its own ticket with its own total. Send them one at a time. <b>You pay each kitchen their own price</b> — Cabana adds nothing and takes nothing.')

@@ -127,9 +127,14 @@
         }, 1200);
       };
 
-      var reqFailed = function () {
-        // Fallback reassurance
-        done("You're subscribed! We'll keep you posted on the latest travel updates and deals.");
+      var reqFailed = function (message) {
+        if (group) group.classList.add('has-error');
+        if (feedback) {
+          feedback.className = 'sf-newsletter-feedback error';
+          feedback.textContent = message || 'We could not save your subscription. Please try again.';
+        }
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = origBtnHtml;
       };
 
       if (typeof global.fetch === 'function') {
@@ -138,27 +143,16 @@
           headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
           body: JSON.stringify(payload)
         }).then(function (res) {
-          if (!res.ok) {
-            return res.json().then(function (data) {
-              if (data && data.error === 'invalid_email') {
-                if (group) group.classList.add('has-error');
-                if (feedback) {
-                  feedback.className = 'sf-newsletter-feedback error';
-                  feedback.textContent = data.message || 'Please provide a valid email address.';
-                }
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = origBtnHtml;
-                return;
-              }
-              done();
-            }).catch(reqFailed);
-          }
-          return res.json().then(function (data) {
-            done(data && data.message);
-          }).catch(function () { done(); });
-        }).catch(reqFailed);
+          return res.json().catch(function () { return {}; }).then(function (data) {
+            if (!res.ok || !data || data.ok !== true) {
+              reqFailed(data && data.message);
+              return;
+            }
+            done(data.message);
+          });
+        }).catch(function () { reqFailed(); });
       } else {
-        done();
+        reqFailed('Subscriptions need an internet connection. Please reconnect and try again.');
       }
     });
   }

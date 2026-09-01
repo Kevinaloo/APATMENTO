@@ -14,7 +14,10 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { __test } from '../api/lib/_support.js';
-const { readMode, areaFrom, parseDirectives, systemPrompt, timeContext } = __test;
+const {
+  readMode, resolveTurnMode, areaFrom, parseDirectives,
+  systemPrompt, timeContext, selectApaTools,
+} = __test;
 
 const ROOT = new URL('..', import.meta.url).pathname;
 const read = (f) => readFileSync(join(ROOT, f), 'utf8');
@@ -80,6 +83,48 @@ test('a problem wins over a greeting in the same sentence', () => {
   /* "hi, you charged me twice" is not a greeting, and a joke in reply
      to it would be the single worst thing APA could do. */
   assert.equal(readMode('hi there, you charged me twice'), 'problem');
+});
+
+test('APA receives only the tools relevant to this turn', () => {
+  const names = input => selectApaTools(input).map(tool => tool.function.name);
+  const base = { history: [], agent: '' };
+
+  assert.deepEqual(names({ ...base, mode: 'social', text: 'hey APA' }), []);
+
+  const search = names({ ...base, mode: 'task', text: 'find me a two bed in Westlands' });
+  assert.ok(search.includes('search_stays'));
+  assert.ok(!search.includes('publish_listing'));
+
+  const booking = names({ ...base, mode: 'task', text: 'book that stay for me' });
+  assert.ok(booking.includes('start_booking'));
+  assert.ok(booking.includes('confirm_booking'));
+  assert.ok(!booking.includes('publish_listing'));
+
+  const listing = names({ ...base, mode: 'task', text: 'list my safari tour on Cabana' });
+  assert.ok(listing.includes('start_listing'));
+  assert.ok(listing.includes('publish_listing'));
+  assert.ok(!listing.includes('confirm_booking'));
+
+  const resumed = names({
+    ...base,
+    mode: 'task',
+    text: 'yes, carry on',
+    agent: 'WORK ALREADY IN FLIGHT:\n  · A BOOKING in progress: Diani stay',
+  });
+  assert.ok(resumed.includes('review_booking'));
+  assert.ok(resumed.includes('confirm_booking'));
+});
+
+test('a short acknowledgement resumes active work but cannot create it', () => {
+  assert.equal(resolveTurnMode('okay', 'social', ''), 'social');
+  assert.equal(
+    resolveTurnMode('okay', 'social', 'A BOOKING in progress: Diani stay'),
+    'task'
+  );
+  assert.equal(
+    resolveTurnMode('thanks', 'social', 'A LISTING in progress: safari'),
+    'social'
+  );
 });
 
 /* ── The concierge half survived the merge ──────────────────────────── */

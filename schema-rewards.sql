@@ -191,6 +191,7 @@ CREATE OR REPLACE FUNCTION add_user_points(
 RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER  -- runs as owner (service role), bypasses RLS
+SET search_path = pg_catalog, public, extensions
 AS $$
 BEGIN
   INSERT INTO user_points (user_id, available_points, lifetime_points, updated_at)
@@ -210,4 +211,3 @@ $$;
 -- Revoke public execute — only service role (backend) can call it
 REVOKE EXECUTE ON FUNCTION add_user_points FROM PUBLIC, anon, authenticated;
 GRANT  EXECUTE ON FUNCTION add_user_points TO service_role;
-

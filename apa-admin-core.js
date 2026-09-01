@@ -1296,7 +1296,7 @@
       rows('event_tickets', function (q) { return q.limit(1000); }),
       rows('shadow_ads', function (q) { return q.order('priority', { ascending: false }).limit(300); }),
       rows('session_features', function (q) { return q.order('captured_at', { ascending: false }).limit(2000); }),
-      rows('transport_requests', function (q) { return q.order('created_at', { ascending: false }).limit(500); }),
+      rows('ride_requests', function (q) { return q.order('created_at', { ascending: false }).limit(500); }),
       rows('support_threads', function (q) { return q.select('id,status,unread_agent,escalated_at').eq('status', 'queued').limit(200); })
     ]).then(function (r) {
       var listings = r[0], profiles = r[1], bookings = r[2], reviews = r[3];

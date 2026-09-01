@@ -635,8 +635,10 @@
       var dep = dateISO + 'T' + depT;
       var arrDate = dateISO;
       if (plus) {
-        var d = new Date(dateISO + 'T00:00:00');
-        d.setDate(d.getDate() + plus);
+        /* Date-only values must be moved in UTC. Using local midnight and
+           then toISOString() loses the added day in UTC+ time zones. */
+        var d = new Date(dateISO + 'T00:00:00Z');
+        d.setUTCDate(d.getUTCDate() + plus);
         arrDate = d.toISOString().slice(0, 10);
       }
       var arr = arrDate + 'T' + arrT;
@@ -657,7 +659,11 @@
     return legs.map(function (l) {
       var d = (l.dep || '').slice(11, 16).replace(':', '');
       var a = (l.arr || '').slice(11, 16).replace(':', '');
-      var plus = (l.dep || '').slice(0, 10) !== (l.arr || '').slice(0, 10) ? ' +1' : '';
+      var depDay = Date.parse((l.dep || '').slice(0, 10) + 'T00:00:00Z');
+      var arrDay = Date.parse((l.arr || '').slice(0, 10) + 'T00:00:00Z');
+      var dayDelta = Number.isFinite(depDay) && Number.isFinite(arrDay)
+        ? Math.round((arrDay - depDay) / 86400000) : 0;
+      var plus = dayDelta > 0 ? ' +' + dayDelta : '';
       return [l.flight_no, l.from, d, l.to, a].join(' ') + plus;
     }).join('\n');
   }

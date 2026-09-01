@@ -71,6 +71,7 @@ create or replace function public.referral_rate(
 ) returns numeric
 language sql
 immutable
+set search_path = pg_catalog, public, extensions
 as $$
   select case
     when coalesce(p_tier,'user') = 'ambassador' then
@@ -369,6 +370,7 @@ create or replace function public.normalise_contact(p_raw text, p_kind text)
 returns text
 language sql
 immutable
+set search_path = pg_catalog, public, extensions
 as $$
   select case
     when p_kind = 'email' then lower(btrim(p_raw))
@@ -734,6 +736,10 @@ drop trigger if exists ambassador_risk_sync on public.ambassador_fraud_signals;
 create trigger ambassador_risk_sync
   after insert or update or delete on public.ambassador_fraud_signals
   for each row execute function public.trg_ambassador_risk();
+
+revoke execute on function public.trg_ambassador_risk() from public, anon, authenticated;
+revoke execute on function public.ambassador_recompute_risk(uuid) from public, anon, authenticated;
+grant execute on function public.ambassador_recompute_risk(uuid) to service_role;
 
 
 -- ── 12 · ROW LEVEL SECURITY ───────────────────────────────────────────────

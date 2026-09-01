@@ -1,5 +1,5 @@
 -- ══════════════════════════════════════════════════════════════════════════════
--- Migration: 20260901000000_add_missing_listing_columns
+-- Migration: 20260901010518_add_missing_listing_columns
 -- Author:    Cabana platform fix, 2026-09-01
 -- Purpose:   The admin "Edit listing" panel sends four fields that were never
 --            present in the listings table, causing:

@@ -3290,51 +3290,46 @@ function renderTransport(){
   const all = SNAP.transportRequests || [];
   const list = all.filter(r => {
     if(_trFilter === 'all') return true;
-    if(_trFilter === 'ride') return r.type === 'ride';
-    if(_trFilter === 'carhire') return r.type === 'carhire';
-    if(_trFilter === 'pending') return r.status === 'pending';
-    if(_trFilter === 'confirmed') return r.status === 'confirmed';
+    if(_trFilter === 'ride') return r.service === 'ride';
+    if(_trFilter === 'carhire') return false; // Car Hire has its own verified fleet surface.
+    if(_trFilter === 'pending') return ['searching','scheduled'].includes(r.status);
+    if(_trFilter === 'confirmed') return ['assigned','arriving','in_progress','completed'].includes(r.status);
     return true;
   });
-  const pillOf = s => s==='confirmed'?'p-ok':s==='cancelled'?'p-bad':'p-warn';
+  const pillOf = s => ['assigned','arriving','in_progress','completed'].includes(s)?'p-ok':s==='cancelled'?'p-bad':'p-warn';
   const waLink = r => {
-    const msg = encodeURIComponent(`Hi ${r.customer_name||''}! Your ${r.ride_name||'transport'} request (ref: ${r.ref||r.id}) has been confirmed. Please contact us with any questions.`);
-    return `https://wa.me/${(r.phone||'').replace(/\D/g,'')}?text=${msg}`;
+    const msg = encodeURIComponent(`Hi ${r.rider_name||''}! Your Cabana ride request (ref: ${r.ref||r.id}) is being reviewed. Please contact us with any questions.`);
+    return `https://wa.me/${(r.rider_phone||'').replace(/\D/g,'')}?text=${msg}`;
   };
   $('tr-rows').innerHTML = list.length ? list.map(r=>`<tr>
     <td class="mono t-main">${esc(r.ref||String(r.id||'').slice(0,8))}</td>
-    <td><span class="pill ${r.type==='carhire'?'p-calm':'p-mute'}">${r.type==='carhire'?'Car hire':'Ride'}</span></td>
+    <td><span class="pill p-mute">${esc(r.service||'Ride')}</span></td>
     <td>
-      <div class="t-main">${esc(r.customer_name||', ')}</div>
-      <div class="t-sub">${esc(r.phone||'')}${r.email?` · ${esc(r.email)}`:''}
+      <div class="t-main">${esc(r.rider_name||', ')}</div>
+      <div class="t-sub">${esc(r.rider_phone||'')}${r.rider_email?` · ${esc(r.rider_email)}`:''}
     </td>
     <td class="t-sub">
-      <div>${esc(r.ride_name||', ')}</div>
-      <div>${esc(r.pickup||', ')} → ${esc(r.dropoff||r.ride_date||', ')}</div>
-      <div>${esc(r.ride_date||'')}${r.ride_time?' '+esc(r.ride_time):''}</div>
+      <div>${esc(r.class||'Ride')}</div>
+      <div>${esc(r.pickup_label||', ')} → ${esc(r.dropoff_label||', ')}</div>
+      <div>${r.scheduled_for?esc(new Date(r.scheduled_for).toLocaleString()):'On demand'}</div>
     </td>
     <td class="t-sub">${F.ago(r.created_at)}</td>
-    <td class="num mono">${r.estimated_fare?F.money(r.estimated_fare):', '}</td>
+    <td class="num mono">${r.quote_total?F.money(r.quote_total):', '}</td>
     <td><span class="pill ${pillOf(r.status||'pending')}">${esc(r.status||'pending')}</span></td>
     <td><div class="t-act">
-      ${r.status!=='confirmed'?`<button class="btn btn-p btn-sm" onclick="confirmTransport('${esc(r.id)}')">Confirm</button>`:''}
-      ${r.phone?`<a class="btn btn-g btn-sm" href="${waLink(r)}" target="_blank" rel="noopener" style="text-decoration:none">WhatsApp</a>`:''}
+      ${r.rider_phone?`<a class="btn btn-g btn-sm" href="${waLink(r)}" target="_blank" rel="noopener" style="text-decoration:none">WhatsApp</a>`:''}
       <button class="btn btn-d btn-sm" onclick="cancelTransport('${esc(r.id)}')">Cancel</button>
     </div></td>
   </tr>`).join('') : emptyRow(8,'No transport requests yet');
 
   // Badge
-  const pending = all.filter(r=>r.status==='pending').length;
+  const pending = all.filter(r=>['searching','scheduled'].includes(r.status)).length;
   const btEl = $('b-transport');
   if(btEl){ btEl.textContent = pending||''; btEl.className = 'nav-b ' + (pending?'warn':''); btEl.style.display = pending ? 'grid' : 'none'; }
 }
-async function confirmTransport(id){
-  const r = await AD.write('transport_requests', t=>t.update({status:'confirmed',confirmed_at:new Date().toISOString()}).eq('id',id));
-  r.ok ? (toast('Request confirmed','ok'), refresh()) : toast(r.error,'bad');
-}
 async function cancelTransport(id){
   confirmAct('Cancel transport request','This will mark the request as cancelled.', false, async ()=>{
-    const r = await AD.write('transport_requests', t=>t.update({status:'cancelled'}).eq('id',id));
+    const r = await AD.write('ride_requests', t=>t.update({status:'cancelled',cancelled_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq('id',id));
     r.ok ? (toast('Cancelled','ok'), refresh()) : toast(r.error,'bad');
   });
 }

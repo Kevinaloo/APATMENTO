@@ -383,7 +383,8 @@ insert into public.flight_desk_settings (id) values (1) on conflict (id) do noth
 ══════════════════════════════════════════════════════════════════════ */
 
 create or replace function public.fd_touch()
-returns trigger language plpgsql as $$
+returns trigger language plpgsql
+set search_path = pg_catalog, public, extensions as $$
 begin new.updated_at := now(); return new; end;
 $$;
 
@@ -398,6 +399,8 @@ create trigger fq_touch before update on public.flight_quotes
 drop trigger if exists fb_touch on public.flight_bookings;
 create trigger fb_touch before update on public.flight_bookings
   for each row execute function public.fd_touch();
+
+revoke execute on function public.fd_touch() from public, anon, authenticated;
 
 
 /* A status change is a fact worth keeping. Written here rather than in

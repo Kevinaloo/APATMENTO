@@ -274,6 +274,7 @@ create or replace function public.agent_status(a public.agents)
 returns text
 language sql
 immutable
+set search_path = pg_catalog, public, extensions
 as $$
   select case
     when a.suspended                                        then 'suspended'
@@ -302,6 +303,7 @@ create or replace function public.agent_days_left(a public.agents)
 returns integer
 language sql
 immutable
+set search_path = pg_catalog, public, extensions
 as $$
   select case
     when a.kyc_status = 'verified' then null
@@ -915,7 +917,8 @@ create policy arf_select on public.agent_referrals
 -- ── 17 · VIEWS ────────────────────────────────────────────────────────────
 
 -- An agent's book: every listing they may sell, with live terms and earnings.
-create or replace view public.v_agent_portfolio as
+create or replace view public.v_agent_portfolio
+with (security_invoker = true) as
 select
   p.id                                     as partnership_id,
   p.agent_id,
@@ -944,7 +947,8 @@ group by p.id, l.id, l.title, l.city, l.location, l.price_night,
          l.photos, l.status, h.id, h.full_name, h.email;
 
 -- A host's roster: who represents me, on what, for how much.
-create or replace view public.v_host_agents as
+create or replace view public.v_host_agents
+with (security_invoker = true) as
 select
   p.id                    as partnership_id,
   p.host_id,
@@ -987,7 +991,8 @@ grant select on public.v_host_agents     to authenticated;
 -- Referrals that were never converted die at 30 days. Run nightly.
 
 create or replace function public.expire_agent_referrals()
-returns void language sql security definer as $$
+returns void language sql security definer
+set search_path = pg_catalog, public, extensions as $$
   update public.agent_referrals
      set status = 'expired'
    where status = 'clicked' and expires_at < now();
@@ -1023,9 +1028,12 @@ grant  execute on function public.expire_agent_referrals() to service_role;
 
 -- ── 20 · updated_at ───────────────────────────────────────────────────────
 create or replace function public.touch_updated_at()
-returns trigger language plpgsql as $$
+returns trigger language plpgsql
+set search_path = pg_catalog, public, extensions as $$
 begin new.updated_at := now(); return new; end; $$;
 
 drop trigger if exists trg_agents_touch on public.agents;
 create trigger trg_agents_touch before update on public.agents
   for each row execute function public.touch_updated_at();
+
+revoke execute on function public.touch_updated_at() from public, anon, authenticated;

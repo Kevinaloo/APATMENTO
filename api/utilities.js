@@ -530,7 +530,6 @@ async function handlePaypalWebhook(req, res) {
    Vercel Hobby plan's 12-function limit)
 ══════════════════════════════════════════════════════════════ */
 const INDEXNOW_HOST = 'cabana.africa';
-const INDEXNOW_KEY  = 'cc18b1bc5dc43435c44f29f125a500f5';
 
 // All sitemaps to ping. Updated to include all location, global, deep and blog sitemaps
 const ALL_SITEMAPS = [
@@ -543,6 +542,11 @@ const ALL_SITEMAPS = [
 
 async function handleIndexNow(req, res) {
   try {
+    const indexNowKey = String(process.env.INDEXNOW_KEY || '').trim();
+    if (!/^[A-Za-z0-9_-]{8,128}$/.test(indexNowKey)) {
+      return res.status(503).json({ ok: false, error: 'indexnow_not_configured' });
+    }
+
     let urls;
     const single = req.query?.url ? String(req.query.url) : null;
 
@@ -568,21 +572,21 @@ async function handleIndexNow(req, res) {
     // IndexNow supports 10,000 URLs per batch max
     const batch = urls.slice(0, 10000);
 
-    // Ping IndexNow (covers Google, Bing, Yandex simultaneously)
+    // IndexNow notifies participating search engines such as Bing and Yandex.
     const r = await fetch('https://api.indexnow.org/indexnow', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json; charset=utf-8' },
       body: JSON.stringify({
         host: INDEXNOW_HOST,
-        key: INDEXNOW_KEY,
-        keyLocation: 'https://' + INDEXNOW_HOST + '/' + INDEXNOW_KEY + '.txt',
+        key: indexNowKey,
+        keyLocation: 'https://' + INDEXNOW_HOST + '/' + indexNowKey + '.txt',
         urlList: batch,
       }),
     });
 
     // Also ping Bing directly for faster indexing
     const bing_ping = await fetch(
-      `https://www.bing.com/indexnow?url=https://${INDEXNOW_HOST}/sitemap-index.xml&key=${INDEXNOW_KEY}`
+      `https://www.bing.com/indexnow?url=https://${INDEXNOW_HOST}/sitemap-index.xml&key=${indexNowKey}`
     ).catch(() => ({ status: 0 }));
 
     res.status(200).json({
@@ -640,20 +644,18 @@ async function handleReconcilePayments(req, res) {
    Public subscription endpoint for Cabana travel updates and deals
 ══════════════════════════════════════════════════════════════ */
 async function handleSubscribe(req, res) {
-  if (req.method !== 'POST' && req.method !== 'GET') {
+  if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   let body = {};
-  if (req.method === 'POST') {
-    try {
-      body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
-    } catch {
-      return res.status(400).json({ ok: false, error: 'invalid_json' });
-    }
+  try {
+    body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
+  } catch {
+    return res.status(400).json({ ok: false, error: 'invalid_json' });
   }
 
-  const emailRaw = body.email || req.query?.email || '';
+  const emailRaw = body.email || '';
   const email = String(emailRaw).trim().toLowerCase();
 
   const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
@@ -668,25 +670,56 @@ async function handleSubscribe(req, res) {
 
   const supabaseUrl = process.env.SUPABASE_URL;
   const serviceKey  = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (supabaseUrl && serviceKey) {
-    try {
-      await fetch(`${supabaseUrl}/rest/v1/newsletter_subscribers`, {
+  if (!supabaseUrl || !serviceKey) {
+    console.error('[newsletter] Supabase server credentials are not configured');
+    return res.status(503).json({
+      ok: false,
+      error: 'subscription_unavailable',
+      message: 'Subscriptions are temporarily unavailable. Please try again shortly.'
+    });
+  }
+
+  const source = String(body.source || 'footer')
+    .trim().toLowerCase().replace(/[^a-z0-9_-]/g, '_').slice(0, 80) || 'footer';
+  const now = new Date().toISOString();
+
+  try {
+    const dbResponse = await fetch(
+      `${supabaseUrl}/rest/v1/newsletter_subscribers?on_conflict=email`,
+      {
         method: 'POST',
         headers: {
           apikey: serviceKey,
           Authorization: `Bearer ${serviceKey}`,
           'Content-Type': 'application/json',
-          Prefer: 'resolution=merge-duplicates'
+          Prefer: 'resolution=merge-duplicates,return=representation'
         },
         body: JSON.stringify({
           email,
-          source: body.source || 'footer',
-          subscribed_at: new Date().toISOString()
+          source,
+          subscribed_at: now,
+          updated_at: now,
+          unsubscribed_at: null
         })
-      }).catch(() => {});
-    } catch {
-      /* non-blocking */
+      }
+    );
+
+    if (!dbResponse.ok) {
+      const detail = await dbResponse.text().catch(() => '');
+      console.error('[newsletter] Supabase rejected subscription', dbResponse.status, detail.slice(0, 300));
+      return res.status(503).json({
+        ok: false,
+        error: 'subscription_not_saved',
+        message: 'We could not save your subscription. Please try again.'
+      });
     }
+  } catch (err) {
+    console.error('[newsletter] Supabase request failed', err?.message || err);
+    return res.status(503).json({
+      ok: false,
+      error: 'subscription_not_saved',
+      message: 'We could not save your subscription. Please try again.'
+    });
   }
 
   return res.status(200).json({

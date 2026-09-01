@@ -1402,7 +1402,7 @@ const CabanaChat = (() => {
 
   return {
     open, openInbox, closeInbox, close,
-    getUnread, initBell, updateBell, scrub,
+    getUnread, initBell, initFAB: initBell, updateBell, scrub,
     _pSend, _tSend, _thrBack, _openThr, _filter, _grow, _goStays,
   };
 })();

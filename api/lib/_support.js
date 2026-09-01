@@ -156,7 +156,7 @@ function guardOutput(text) {
        and a filter that only catches the long ones catches nothing that
        matters. */
     .replace(/eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}/g, '[redacted]')
-    .replace(/\b(?:SUPABASE|GROQ|RESEND|PAYHERO|VAPID)[_A-Z]*(?:KEY|SECRET|TOKEN|PASSWORD)\S*/gi, '[redacted]')
+    .replace(/\b(?:SUPABASE|OPENAI|GEMINI|GROQ|AI_GATEWAY|RESEND|PAYHERO|VAPID)[_A-Z]*(?:KEY|SECRET|TOKEN|PASSWORD)\S*/gi, '[redacted]')
     .replace(/\/api\/[_a-z0-9-]+/gi, 'the app');
 
   /* An email address that is not one of ours is either a hallucination
@@ -711,6 +711,13 @@ function readMode(text) {
   return 'task';
 }
 
+function resolveTurnMode(text, mode, agent) {
+  if (mode !== 'social' || !/A (?:BOOKING|LISTING) in progress/i.test(String(agent || ''))) return mode;
+  return /^\s*(?:ok(?:ay)?|yes|yeah|yep|looks? good|go ahead|do it|continue|carry on|confirm)(?:[\s!.]+)?$/i.test(String(text || ''))
+    ? 'task'
+    : mode;
+}
+
 /* What an action looks like once it is written into the transcript.
    The live response carries the payer's number because the browser
    needs it to raise the prompt; the stored message does not, because a
@@ -929,6 +936,44 @@ const TOOL_SCHEMA = [
   },
 ];
 
+const TOOL_BY_NAME = new Map(TOOL_SCHEMA.map(tool => [tool.function.name, tool]));
+const BOOKING_TOOLS = ['start_booking', 'set_booking_detail', 'review_booking', 'confirm_booking'];
+const LISTING_TOOLS = ['start_listing', 'set_listing_detail', 'request_upload', 'publish_listing'];
+
+/* Give the model only the controls this turn can reasonably need. This
+   reduces tool-selection noise and means a social reply cannot accidentally
+   propose a write action. Work already in flight keeps its controls even when
+   the latest line is only "yes" or "carry on". */
+function selectApaTools({ mode, text, history, agent }) {
+  if (mode === 'social') return [];
+  const recent = [
+    ...(history || []).map(message => message.content || ''),
+    text || '',
+  ].join(' ').toLowerCase();
+  const work = String(agent || '');
+  const names = new Set();
+
+  const bookingInFlight = /A BOOKING in progress/i.test(work);
+  const listingInFlight = /A LISTING in progress/i.test(work);
+  const bookingIntent = bookingInFlight || /\b(book|booking|reserve|reservation|check[ -]?in|check[ -]?out|m-?pesa|pay(?:ment)?|guest code|confirmation code)\b/i.test(recent);
+  const listingIntent = listingInFlight ||
+    /\b(?:list|publish|host|rent out|offer|upload|add)\b.{0,40}\b(?:stay|room|home|apartment|property|tour|safari|event|car|vehicle|restaurant|product)\b/i.test(recent) ||
+    /\b(?:become|as)\s+(?:a\s+)?(?:host|operator|partner)\b/i.test(recent);
+  const searchIntent = /\b(find|search|show|recommend|available|stay|roommate|tour|safari|event|car hire|ride|restaurant|food|shop|flight|trip|travel|visit|what to do|where to)\b/i.test(recent);
+  const accountIntent = /\b(my booking|my reservation|booking ref|reference|status|check[ -]?in code|confirmation code|paid|payment)\b/i.test(recent);
+  const feeIntent = /\b(fee|fees|price|pricing|cost|charge|commission|subtotal|total)\b/i.test(recent);
+  const memoryIntent = /\b(remember|i (?:always|usually|prefer)|my usual|from now on)\b/i.test(recent);
+
+  if (searchIntent || bookingIntent) names.add('search_stays');
+  if (accountIntent || mode === 'problem') names.add('lookup_booking');
+  if (feeIntent || bookingIntent) names.add('quote_fee');
+  if (bookingIntent) BOOKING_TOOLS.forEach(name => names.add(name));
+  if (listingIntent) LISTING_TOOLS.forEach(name => names.add(name));
+  if (memoryIntent) names.add('remember_about_caller');
+
+  return [...names].map(name => TOOL_BY_NAME.get(name)).filter(Boolean);
+}
+
 async function runTool(name, args, caller) {
   try {
     if (name === 'lookup_booking') {
@@ -1066,10 +1111,10 @@ async function runTool(name, args, caller) {
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   THE MODEL CALL (via Unified AI Gateway: Gemini + Groq)
+   THE MODEL CALL (via Unified AI Gateway: OpenAI + Gemini + Groq)
 ══════════════════════════════════════════════════════════════════════ */
-async function callGroq(messages, { tools = null, temperature = 0.4, maxTokens = 700 } = {}) {
-  return await callAi(messages, { tools, temperature, maxTokens });
+async function callApaModel(messages, options = {}) {
+  return await callAi(messages, options);
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -1261,7 +1306,7 @@ async function escalate(thread, { reason, priority = 'normal', category, caller,
 ══════════════════════════════════════════════════════════════════════ */
 async function answer({ thread, caller, text, page, history }) {
   const audience = caller.role === 'host' || caller.role === 'partner' ? 'host' : 'guest';
-  const mode = readMode(text);
+  const initialMode = readMode(text);
 
   /* Area is read across the whole conversation, not just this line — the
      guest who said "Diani" four messages ago still means Diani. */
@@ -1272,9 +1317,12 @@ async function answer({ thread, caller, text, page, history }) {
     liveInventory(),
     accountFacts(caller),
     /* No advertising into a complaint. Ever. */
-    mode === 'problem' ? Promise.resolve([]) : liveAds(area).catch(() => []),
+    initialMode === 'problem' ? Promise.resolve([]) : liveAds(area).catch(() => []),
     agentGrounding(caller).catch(() => ''),
   ]);
+
+  const mode = resolveTurnMode(text, initialMode, agent);
+  const activeWork = /A (?:BOOKING|LISTING) in progress/i.test(agent);
 
   const hits = retrieveKb(kb, text, audience);
   const kbText = hits.length
@@ -1300,13 +1348,45 @@ async function answer({ thread, caller, text, page, history }) {
   })();
 
   const messages = [
-    { role: 'system', content: systemPrompt({ grounding, page, caller, threadAge, apaTurns: thread.apa_turns || 0, ads, mode }) },
+    { role: 'system', content: systemPrompt({
+      grounding,
+      page,
+      caller,
+      threadAge,
+      apaTurns: thread.apa_turns || 0,
+      ads: activeWork ? [] : ads,
+      mode,
+    }) },
     ...history,
     { role: 'user', content: text },
   ];
 
-  const grounded = { kb: hits.map(h => h.slug), bookings: account.bookings.length, inventory: inventory.total, tools: [], mode, area };
+  const grounded = {
+    kb: hits.map(h => h.slug),
+    bookings: account.bookings.length,
+    inventory: inventory.total,
+    tools: [],
+    ai: [],
+    mode,
+    area,
+  };
   let clientAction = null;
+  const selectedTools = selectApaTools({ mode, text, history, agent });
+  grounded.toolset = selectedTools.map(tool => tool.function.name);
+
+  const noteModel = (data) => {
+    grounded.ai.push({
+      provider: data?.provider || 'unknown',
+      model: data?.model || 'unknown',
+      latency_ms: data?.gateway?.totalLatencyMs ?? null,
+      attempts: (data?.gateway?.attempts || []).map(attempt => ({
+        provider: attempt.provider,
+        status: attempt.status,
+        model: attempt.model || null,
+        latency_ms: attempt.latencyMs,
+      })),
+    });
+  };
 
   /* Personality needs room to breathe; a disputed payment does not.
      Same model, different licence to improvise. */
@@ -1314,7 +1394,14 @@ async function answer({ thread, caller, text, page, history }) {
 
   /* ── Tool rounds. Bounded, so a model that loves calling tools cannot
      turn one support reply into a bill. ── */
-  let data = await callGroq(messages, { tools: TOOL_SCHEMA, temperature });
+  const modelOptions = {
+    tools: selectedTools,
+    temperature,
+    profile: mode === 'social' ? 'fast' : 'quality',
+    safetyIdentifier: `${caller.kind}:${caller.userId || caller.guestKey}`,
+  };
+  let data = await callApaModel(messages, modelOptions);
+  noteModel(data);
 
   for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
     const msg = data?.choices?.[0]?.message;
@@ -1326,6 +1413,7 @@ async function answer({ thread, caller, text, page, history }) {
       content: msg.content || '',
       tool_calls: calls,
       _geminiContent: msg._geminiContent,
+      _openaiOutput: msg._openaiOutput,
     });
 
     for (const call of calls.slice(0, 3)) {
@@ -1350,10 +1438,11 @@ async function answer({ thread, caller, text, page, history }) {
       });
     }
 
-    data = await callGroq(messages, {
-      tools: round + 1 < MAX_TOOL_ROUNDS ? TOOL_SCHEMA : null,
-      temperature,
+    data = await callApaModel(messages, {
+      ...modelOptions,
+      tools: round + 1 < MAX_TOOL_ROUNDS ? selectedTools : null,
     });
+    noteModel(data);
   }
 
   const raw = data?.choices?.[0]?.message?.content || '';
@@ -1984,5 +2073,5 @@ async function agentOps(req, res, body, op) {
 export const __test = {
   guardOutput, parseDirectives, hardEscalation, retrieveKb,
   readSentiment, categorise, scrub, commerceFacts,
-  readMode, areaFrom, timeContext, systemPrompt, normaliseService,
+  readMode, resolveTurnMode, areaFrom, timeContext, systemPrompt, normaliseService, selectApaTools,
 };
