@@ -41,29 +41,182 @@
 
   var ID = 'stay-gate';
   var SS_KEY = 'cbn-stay-gate-seen';
-  var SS_LAST = 'cbn-stay-gate-last';
 
-  /* Markets with real listings behind them. Neighbourhood first where
-     the neighbourhood is what people say ("Kilimani", not "Nairobi"),
-     city where it is not. */
-  var PLACES = [
-    'Kilimani', 'Westlands', 'Lavington', 'Karen', 'Kileleshwa', 'Runda',
-    'Gigiri', 'Parklands', 'Upperhill', 'Nyali', 'Bamburi', 'Diani',
-    'Watamu', 'Malindi', 'Lamu', 'Nanyuki', 'Naivasha',
-    'Lekki', 'Ikoyi', 'Victoria Island', 'Ikeja',
-    'East Legon', 'Osu', 'Airport Residential',
-    'Kigali', 'Kampala', 'Dar es Salaam', 'Zanzibar', 'Arusha',
-    'Addis Ababa', 'Cape Town', 'Sea Point', 'Johannesburg', 'Dakar',
-    'Marrakech', 'Zamalek', 'Abidjan'
-  ];
+  /* ═══ WHERE ═══════════════════════════════════════════════════════
+     The line under the block names a place, and it must never name the
+     wrong one. A guest who arrived from a Lagos search and is told
+     "Tonight in Kigali" has learned, forty milliseconds in, that the
+     site does not know what it is showing them.
 
-  function pickPlace() {
-    var last = null;
-    try { last = global.sessionStorage.getItem(SS_LAST); } catch (e) {}
-    var pool = PLACES.filter(function (p) { return p !== last; });
-    var p = pool[Math.floor(Math.random() * pool.length)] || PLACES[0];
-    try { global.sessionStorage.setItem(SS_LAST, p); } catch (e) {}
-    return p;
+     So: name the place only when the page tells us what it is, and be
+     honest rather than specific when it does not. Landing pages hand
+     off as /apartments?q=Kilimani, which is the route most search
+     traffic takes, so the specific case is also the common one.
+
+     Every candidate is checked against the map below, which is built
+     from the landing pages that actually exist. An unrecognised value
+     never renders; it falls back. Guessing is the thing that would
+     let us down. */
+
+  var PLACES = {
+    'abidjan':'Abidjan',
+    'abuja':'Abuja',
+    'accra':'Accra',
+    'addis-ababa':'Addis Ababa',
+    'africa':'Africa',
+    'airport-residential-accra':'Airport Residential',
+    'americas':'the Americas',
+    'amsterdam':'Amsterdam',
+    'arusha':'Arusha',
+    'asia':'Asia',
+    'athens':'Athens',
+    'bali':'Bali',
+    'bamburi':'Bamburi',
+    'bangkok':'Bangkok',
+    'barcelona':'Barcelona',
+    'berlin':'Berlin',
+    'best-lagos':'Best Lagos',
+    'budapest':'Budapest',
+    'buenos-aires':'Buenos Aires',
+    'cairo':'Cairo',
+    'cape-coast':'Cape Coast',
+    'cape-town':'Cape Town',
+    'cartagena':'Cartagena',
+    'chiang-mai':'Chiang Mai',
+    'copenhagen':'Copenhagen',
+    'dakar':'Dakar',
+    'dar-es-salaam':'Dar es Salaam',
+    'diani':'Diani',
+    'dubai':'Dubai',
+    'dubrovnik':'Dubrovnik',
+    'east-legon':'East Legon',
+    'edinburgh':'Edinburgh',
+    'europe':'Europe',
+    'florence':'Florence',
+    'ghana':'Ghana',
+    'gigiri':'Gigiri',
+    'ikeja':'Ikeja',
+    'ikoyi':'Ikoyi',
+    'istanbul':'Istanbul',
+    'johannesburg':'Johannesburg',
+    'kampala':'Kampala',
+    'karen':'Karen',
+    'kenya':'Kenya',
+    'kigali':'Kigali',
+    'kileleshwa':'Kileleshwa',
+    'kilimani':'Kilimani',
+    'kuala-lumpur':'Kuala Lumpur',
+    'kumasi':'Kumasi',
+    'kyoto':'Kyoto',
+    'lagos':'Lagos',
+    'lamu':'Lamu',
+    'lavington':'Lavington',
+    'lekki':'Lekki',
+    'lisbon':'Lisbon',
+    'lisbon-porto':'Lisbon',
+    'london':'London',
+    'los-angeles':'Los Angeles',
+    'madrid':'Madrid',
+    'malindi':'Malindi',
+    'marrakech':'Marrakech',
+    'masai-mara':'the Masai Mara',
+    'medellin':'Medellín',
+    'melbourne':'Melbourne',
+    'mexico-city':'Mexico City',
+    'miami':'Miami',
+    'milan':'Milan',
+    'mombasa':'Mombasa',
+    'morocco':'Morocco',
+    'muthaiga':'Muthaiga',
+    'nairobi':'Nairobi',
+    'naivasha':'Naivasha',
+    'nakuru':'Nakuru',
+    'nanyuki':'Nanyuki',
+    'new-york':'New York',
+    'ngong-road':'Ngong Road',
+    'ngorongoro':'Ngorongoro',
+    'nigeria':'Nigeria',
+    'nyali':'Nyali',
+    'oceania':'Oceania',
+    'paris':'Paris',
+    'parklands':'Parklands',
+    'phuket':'Phuket',
+    'port-harcourt':'Port Harcourt',
+    'prague':'Prague',
+    'rio-de-janeiro':'Rio de Janeiro',
+    'rome':'Rome',
+    'rongai':'Rongai',
+    'runda':'Runda',
+    'santorini':'Santorini',
+    'seoul':'Seoul',
+    'serengeti':'the Serengeti',
+    'singapore':'Singapore',
+    'south-africa':'South Africa',
+    'south-c':'South C',
+    'sydney':'Sydney',
+    'syokimau':'Syokimau',
+    'tanzania':'Tanzania',
+    'thika-road':'Thika Road',
+    'tokyo':'Tokyo',
+    'upperhill':'Upper Hill',
+    'victoria-island':'Victoria Island',
+    'vienna':'Vienna',
+    'watamu':'Watamu',
+    'westlands':'Westlands',
+    'zanzibar':'Zanzibar'
+  };
+
+  /* "cbd" (whose central business district?) and "global" (not a
+     place) are deliberately absent from the map above. */
+
+  function tidy(v) {
+    var t = String(v || '');
+    /* Someone typing "Medellín" should land on the same entry as the
+       slug medellin. Strip the marks, keep the letter. */
+    try { t = t.normalize('NFD').replace(/[\u0300-\u036f]/g, ''); } catch (e) {}
+    return t
+      .toLowerCase()
+      .replace(/\+/g, ' ')
+      .replace(/[^a-z0-9\s-]/g, ' ')       /* commas, quotes, punctuation */
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-');
+  }
+
+  function lookup(v) {
+    var k = tidy(v);
+    if (!k) return null;
+    if (PLACES[k]) return PLACES[k];
+    /* "Kilimani, Nairobi" and "kilimani apartments" should both land. */
+    k = k.replace(/-(apartments|apartment|stays|stay|kenya|nigeria|ghana|tanzania)$/, '');
+    if (PLACES[k]) return PLACES[k];
+    var head = k.split('-')[0];
+    if (head.length > 3 && PLACES[head]) return PLACES[head];
+    return null;
+  }
+
+  /* Ordered by how much the page actually knows, most certain first. */
+  function resolvePlace(explicit) {
+    if (explicit) return lookup(explicit);
+    var hit = null;
+    try {
+      hit = lookup(doc.documentElement.getAttribute('data-cabana-place'));
+      if (hit) return hit;
+
+      var m = doc.querySelector('meta[name="cabana-place"]');
+      if (m && (hit = lookup(m.getAttribute('content')))) return hit;
+
+      var q = new URLSearchParams(global.location.search);
+      var keys = ['place', 'city', 'location', 'q', 'where'];
+      for (var i = 0; i < keys.length; i++) {
+        if ((hit = lookup(q.get(keys[i])))) return hit;
+      }
+
+      /* The slug of a landing page, for when the gate is put on one. */
+      var seg = (global.location.pathname || '').split('/').filter(Boolean).pop() || '';
+      if ((hit = lookup(seg.replace(/\.html$/, '')))) return hit;
+    } catch (e) {}
+    return null;
   }
 
   function rnd(a, b) { return a + Math.random() * (b - a); }
@@ -253,7 +406,7 @@
   }
 
   function build(opts) {
-    var place = opts.place || pickPlace();
+    var place = resolvePlace(opts.place);
 
     /* The hero block. Off-centre, because a building centred in frame
        is a diagram and a building slightly off it is a photograph. */
@@ -280,8 +433,15 @@
 
     var h = mid.hero || { x: 52, y: 46 };
 
-    /* Split the place name so each word can arrive on its own beat. */
-    var words = String(place).split(' ').map(function (wd, i) {
+    /* Two grammars. Naming a place is a claim, so it is only made when
+       the page has told us the place. Otherwise the line says the one
+       thing that is true on every load and can never be contradicted —
+       and a facade full of lit windows is, if anything, a better
+       picture of "somewhere" than of anywhere in particular. */
+    var lead = place ? 'Tonight in ' : 'Tonight, somewhere in ';
+    var name = place || (opts.fallback || 'Africa');
+
+    var words = String(name).split(' ').map(function (wd, i) {
       return '<span style="--d:' + (0.18 + i * 0.09) + 's">' + esc(wd) + '</span>';
     }).join(' ');
 
@@ -300,7 +460,7 @@
         '<div class="sg-scrim"></div>' +
         '<div class="sg-word">' +
           '<div class="sg-kicker">Cabana &middot; Stays</div>' +
-          '<div class="sg-place">Tonight in <b>' + words + '</b></div>' +
+          '<div class="sg-place">' + lead + '<b>' + words + '</b></div>' +
           '<div class="sg-note">Booked direct. The host keeps all of it.</div>' +
         '</div>' +
         '<div class="sg-focus"></div>' +
@@ -406,7 +566,10 @@
 
   global.CabanaStayGate = {
     play: play,
-    places: PLACES.slice(),
+    /* Exposed so tests can assert that nothing outside the map is
+       ever rendered, and so a page can check what it would resolve to. */
+    places: PLACES,
+    resolve: resolvePlace,
     skip: function () { if (live) live.skip(); },
     curtain: function (o) {
       o = o || {};

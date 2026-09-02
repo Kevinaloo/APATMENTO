@@ -10,11 +10,13 @@
                dark rectangle on the page the business runs on. Blocking
                the gate script entirely must still leave a usable page.
 
-     PLACE     The name is real and it moves. A gate that showed the same
-               neighbourhood every time would be a decoration; the whole
-               reason this one is worth watching twice is that it is not.
-               Also guards the obvious regression: a name that renders
-               empty, or as the literal string "undefined".
+     PLACE     The name is never wrong. It is taken from what the page
+               actually knows — landing pages hand off as
+               /apartments?q=Kilimani — and anything unrecognised falls
+               back to "Tonight, somewhere in Africa" rather than being
+               guessed at. The rendered string always comes from the
+               map, never from the query string, so a hostile value
+               cannot reach the DOM.
 
      GEOMETRY  The camera goes through the hero window, not through the
                middle of the screen and approximately near it. --hx/--hy
@@ -104,37 +106,51 @@ const settled = page => page.evaluate(() => ({
   await ctx.close();
 }
 
-// ── PLACE ──────────────────────────────────────────────────────────────────
+// ── PLACE ────────────────────────────────────────────────────────────────
 {
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
   const page = await ctx.newPage();
-  await page.goto(`${BASE}/apartments.html`, { waitUntil: 'load' });
-  await page.waitForTimeout(400);
 
-  const seen = new Set();
-  let blank = 0, bad = 0;
-  for (let i = 0; i < 24; i++) {
-    const name = await page.evaluate(() => {
-      document.getElementById('stay-gate')?.remove();
-      document.documentElement.classList.remove('sg-lock');
-      window.CabanaStayGate.curtain({});
-      const el = document.querySelector('#stay-gate .sg-place b');
-      const t = el ? el.textContent.trim() : '';
-      document.getElementById('stay-gate')?.remove();
-      document.documentElement.classList.remove('sg-lock');
-      return t;
+  async function lineFor(query) {
+    await page.goto(`${BASE}/apartments.html${query}`, { waitUntil: 'load' });
+    await page.waitForTimeout(500);
+    return page.evaluate(() => {
+      const el = document.querySelector('#stay-gate .sg-place');
+      return el ? el.textContent.replace(/\s+/g, ' ').trim() : null;
     });
-    if (!name) blank++;
-    if (/undefined|null|NaN/.test(name)) bad++;
-    seen.add(name);
   }
-  check('place name is never blank', blank === 0, blank + ' blank');
-  check('place name is never a broken value', bad === 0, bad + ' bad');
-  check('place name varies across loads', seen.size >= 6, seen.size + ' distinct in 24');
 
-  const known = await page.evaluate(() => window.CabanaStayGate.places);
-  const strays = [...seen].filter(n => !known.includes(n));
-  check('every name is a real Cabana market', strays.length === 0, strays.join(','));
+  check('a known neighbourhood is named',
+    (await lineFor('?q=Kilimani')) === 'Tonight in Kilimani');
+  check('case and punctuation still resolve',
+    (await lineFor('?q=KILIMANI,%20Nairobi')) === 'Tonight in Kilimani');
+  check('a multi-word place resolves',
+    (await lineFor('?q=dar%20es%20salaam')) === 'Tonight in Dar es Salaam');
+  check('an accented spelling resolves',
+    (await lineFor('?q=Medell%C3%ADn')) === 'Tonight in Medellín');
+  check('city= is honoured as well as q=',
+    (await lineFor('?city=Lekki')) === 'Tonight in Lekki');
+
+  const bare = await lineFor('');
+  check('no place given falls back, never guesses',
+    bare === 'Tonight, somewhere in Africa', bare);
+  const junk = await lineFor('?q=asdfghjkl');
+  check('an unrecognised place falls back',
+    junk === 'Tonight, somewhere in Africa', junk);
+  const amb = await lineFor('?q=cbd');
+  check('an ambiguous place falls back',
+    amb === 'Tonight, somewhere in Africa', amb);
+
+  /* The rendered name is looked up, never echoed, so nothing from the
+     query string can reach the DOM. */
+  const hostile = await lineFor('?q=%3Cimg%20src%3Dx%20onerror%3Dalert(1)%3E');
+  check('a hostile value never renders',
+    hostile === 'Tonight, somewhere in Africa', hostile);
+  const injected = await page.evaluate(() =>
+    document.querySelector('#stay-gate') ? document.querySelector('#stay-gate').innerHTML : '');
+  check('and injects nothing into the gate',
+    !/onerror|<img|<script/i.test(injected));
+
   await ctx.close();
 }
 
