@@ -34,7 +34,9 @@ const REWRITES = [
   { match: /^\/api\/paypal-create-order\/?$/, target: 'utilities', query: { action: 'paypal-create-order' } },
   { match: /^\/api\/paypal-capture\/?$/, target: 'utilities', query: { action: 'paypal-capture' } },
   { match: /^\/api\/paypal-webhook\/?$/, target: 'utilities', query: { action: 'paypal-webhook' } },
-  { match: /^\/api\/subscribe\/?$/, target: 'utilities', query: { action: 'subscribe' } }
+  { match: /^\/api\/subscribe\/?$/, target: 'utilities', query: { action: 'subscribe' } },
+  { match: /^\/api\/ical\/?$/, target: 'calendar-sync', query: { action: 'feed' } },
+  { match: /^\/api\/calendar-cron\/?$/, target: 'calendar-sync', query: { action: 'cron' } }
 ];
 
 // Helper to handle API requests
@@ -86,6 +88,14 @@ app.use('/api', async (req, res, next) => {
   }
 
   return res.status(404).json({ error: 'API route not found' });
+});
+
+/* The public calendar feed. Mirrors the vercel.json rewrite
+   `/calendar/:token.ics` so a local run and production agree about the
+   one URL hosts paste into Airbnb. */
+app.get(/^\/calendar\/([A-Za-z0-9_-]+)\.ics$/, (req, res) => {
+  req.url = `/api/calendar-sync?action=feed&token=${req.params[0]}`;
+  return handleApi('calendar-sync', req, res);
 });
 
 // Clean URLs and Static files

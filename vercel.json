@@ -284,7 +284,7 @@
       "maxDuration": 20
     },
     "api/calendar-sync.js": {
-      "maxDuration": 30
+      "maxDuration": 60
     },
     "api/utilities.js": {
       "maxDuration": 20
@@ -309,6 +309,18 @@
     }
   },
   "rewrites": [
+    {
+      "source": "/calendar/:token([A-Za-z0-9_-]+).ics",
+      "destination": "/api/calendar-sync?action=feed&token=:token"
+    },
+    {
+      "source": "/api/ical",
+      "destination": "/api/calendar-sync?action=feed"
+    },
+    {
+      "source": "/api/calendar-cron",
+      "destination": "/api/calendar-sync?action=cron"
+    },
     {
       "source": "/api/ambassadors",
       "destination": "/api/rewards?_route=ambassadors"
