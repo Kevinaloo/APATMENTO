@@ -110,6 +110,47 @@
             function () { toast('Could not delete'); });
   }
 
+  function setShowcase(id, on) {
+    var c = client(); if (!c) return;
+    var t = state.tours.filter(function (x) { return String(x.id) === String(id); })[0];
+    if (on && !(t && (t.showcase_video || arr(t.videos).length))) {
+      toast('That tour has no video to play.');
+      return;
+    }
+    c.from('tours').update({ showcase: !!on }).eq('id', id).then(function (r) {
+      if (r && r.error) { toast('Could not update: ' + r.error.message); return; }
+      toast(on ? 'Added to the reel' : 'Removed from the reel');
+      load();
+    }, function () { toast('Could not update'); });
+  }
+
+  /* Reordering swaps ranks with the neighbour rather than renumbering
+     the whole list, so two admins working at once cannot silently
+     reshuffle each other's ordering. */
+  function nudge(id, dir) {
+    var c = client(); if (!c) return;
+    var list = reelOrder();
+    var i = list.findIndex(function (x) { return String(x.id) === String(id); });
+    var j = i + dir;
+    if (i < 0 || j < 0 || j >= list.length) return;
+    var a = list[i], b = list[j];
+    var ra = Number(a.showcase_rank) || 0, rb = Number(b.showcase_rank) || 0;
+    if (ra === rb) { ra = rb + (dir < 0 ? 1 : -1); }
+    Promise.all([
+      c.from('tours').update({ showcase_rank: rb }).eq('id', a.id),
+      c.from('tours').update({ showcase_rank: ra }).eq('id', b.id)
+    ]).then(function () { load(); }, function () { toast('Could not reorder'); });
+  }
+
+  function reelOrder() {
+    return state.tours
+      .filter(function (t) { return t.showcase && t.status === 'published'; })
+      .sort(function (a, b) {
+        return (Number(b.showcase_rank) || 0) - (Number(a.showcase_rank) || 0) ||
+               (Number(b.sort_weight) || 0) - (Number(a.sort_weight) || 0);
+      });
+  }
+
   function toggleFeatured(id, on) {
     var c = client(); if (!c) return;
     c.from('tours').update({ featured: !!on }).eq('id', id).then(function () {
@@ -155,7 +196,9 @@
     acts += '<button class="btn btn-d btn-sm" data-act="delete" data-id="' + t.id + '">Delete</button>';
 
     return '<tr>' +
-      '<td><div class="t-main">' + esc(t.title) + (t.featured ? ' <span class="pill p-info">Featured</span>' : '') + '</div>' +
+      '<td><div class="t-main">' + esc(t.title) +
+        (t.featured ? ' <span class="pill p-info">Featured</span>' : '') +
+        (t.showcase ? ' <span class="pill p-ok">Reel</span>' : '') + '</div>' +
         '<div class="t-sub">' + esc(t.destination || t.county || '—') + ' · ' +
         esc(t.duration_label || (t.days + ' day' + (t.days === 1 ? '' : 's'))) + '</div></td>' +
       '<td>' + (house ? '<span class="pill p-ok">Cabana</span>' :
@@ -171,6 +214,8 @@
     if (!host) return;
     var c = counts();
 
+    if (state.tab === 'reel') { renderReelTab(); return; }
+
     var list = state.tours.filter(function (t) {
       return state.tab === 'all' ? true : t.status === state.tab;
     });
@@ -182,8 +227,10 @@
       '</div>' +
 
       '<div class="tabs" id="tr-tabs">' +
-        ['pending','published','paused','draft','rejected','all'].map(function (k) {
-          var n = k === 'all' ? state.tours.length : (c[k] || 0);
+        ['pending','published','paused','draft','rejected','reel','all'].map(function (k) {
+          var n = k === 'all' ? state.tours.length
+                : k === 'reel' ? reelOrder().length
+                : (c[k] || 0);
           return '<button class="tab' + (state.tab === k ? ' on' : '') + '" data-tab="' + k + '">' +
                  k.charAt(0).toUpperCase() + k.slice(1) +
                  ' <span class="mono">' + n + '</span></button>';
@@ -229,6 +276,107 @@
     var nb = $('tr-new');
     if (nb) nb.addEventListener('click', function () { openForm(null); });
 
+    renderOps();
+  }
+
+  function renderReelTab() {
+    var host = $('s-tours');
+    if (!host) return;
+    var list = reelOrder();
+    var candidates = state.tours.filter(function (t) {
+      return t.status === 'published' && !t.showcase &&
+             (t.showcase_video || arr(t.videos).length);
+    });
+
+    host.innerHTML =
+      '<div class="hd"><div><div class="card-t">The reel</div>' +
+        '<div class="card-s">The band of playing video above the listings on ' +
+        'cabana.africa/tours. Runs top to bottom, loops, and pauses the moment a ' +
+        'guest touches it.</div></div>' +
+        '<div class="hd-act"><button class="btn btn-p" id="tr-new">+ New Cabana tour</button></div>' +
+      '</div>' +
+
+      '<div class="tabs" id="tr-tabs">' +
+        ['pending','published','paused','draft','rejected','reel','all'].map(function (k) {
+          var n = k === 'all' ? state.tours.length
+                : k === 'reel' ? list.length
+                : (counts()[k] || 0);
+          return '<button class="tab' + (state.tab === k ? ' on' : '') + '" data-tab="' + k + '">' +
+                 k.charAt(0).toUpperCase() + k.slice(1) + ' <span class="mono">' + n + '</span></button>';
+        }).join('') +
+      '</div>' +
+
+      (list.length < 2
+        ? '<div class="card" style="border-color:rgba(245,177,46,.4);background:rgba(245,177,46,.06);">' +
+          '<div class="t-main">The reel is not running</div>' +
+          '<div class="t-sub">It needs at least two tours. One card cannot loop, so the band ' +
+          'stays hidden and the listings move up. ' + (list.length ? 'One is in it now.' : 'None are in it yet.') +
+          '</div></div>'
+        : '') +
+
+      '<div class="card"><table class="tbl"><thead><tr>' +
+        '<th style="width:64px;">Order</th><th>Tour</th><th>Clip</th><th>Headline</th><th></th>' +
+      '</tr></thead><tbody>' +
+      (list.length ? list.map(function (t, i) {
+        var clip = t.showcase_video || arr(t.videos)[0] || '';
+        var name = String(clip).split('/').pop();
+        return '<tr>' +
+          '<td class="mono">' +
+            '<button class="btn btn-g btn-sm" data-mv="-1" data-id="' + t.id + '"' +
+              (i === 0 ? ' disabled' : '') + ' aria-label="Move up">\u2191</button> ' +
+            '<button class="btn btn-g btn-sm" data-mv="1" data-id="' + t.id + '"' +
+              (i === list.length - 1 ? ' disabled' : '') + ' aria-label="Move down">\u2193</button>' +
+          '</td>' +
+          '<td><div class="t-main">' + esc(t.title) + '</div>' +
+            '<div class="t-sub">' + esc(t.destination || t.county || '—') + '</div></td>' +
+          '<td class="mono" style="font-size:11px;">' +
+            (clip ? esc(name.length > 24 ? name.slice(0, 24) + '…' : name)
+                  : '<span class="pill p-bad">missing</span>') + '</td>' +
+          '<td class="t-sub">' + esc(t.showcase_headline || t.title) + '</td>' +
+          '<td class="t-act">' +
+            '<button class="btn btn-g btn-sm" data-act="edit" data-id="' + t.id + '">Edit</button>' +
+            '<button class="btn btn-d btn-sm" data-sc="0" data-id="' + t.id + '">Remove</button>' +
+          '</td></tr>';
+      }).join('')
+        : '<tr><td colspan="5"><div class="empty"><div class="empty-t">Nothing in the reel</div>' +
+          '<div class="empty-s">Add a published tour that has a video.</div></div></td></tr>') +
+      '</tbody></table></div>' +
+
+      (candidates.length
+        ? '<div class="card" style="margin-top:18px;">' +
+          '<div class="card-t">Ready for the reel</div>' +
+          '<div class="card-s">Published tours that already have a video but are not in it.</div>' +
+          '<table class="tbl"><tbody>' +
+          candidates.map(function (t) {
+            return '<tr><td><div class="t-main">' + esc(t.title) + '</div>' +
+              '<div class="t-sub">' + esc(t.destination || t.county || '—') + ' · ' +
+              arr(t.videos).length + ' video' + (arr(t.videos).length === 1 ? '' : 's') + '</div></td>' +
+              '<td class="t-act"><button class="btn btn-ok btn-sm" data-sc="1" data-id="' + t.id +
+              '">Add to reel</button></td></tr>';
+          }).join('') +
+          '</tbody></table></div>'
+        : '') +
+
+      '<div id="tr-ops"></div><div id="tr-form"></div>';
+
+    host.querySelectorAll('[data-tab]').forEach(function (b) {
+      b.addEventListener('click', function () { state.tab = b.getAttribute('data-tab'); render(); });
+    });
+    host.querySelectorAll('[data-mv]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        nudge(b.getAttribute('data-id'), Number(b.getAttribute('data-mv')));
+      });
+    });
+    host.querySelectorAll('[data-sc]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        setShowcase(b.getAttribute('data-id'), b.getAttribute('data-sc') === '1');
+      });
+    });
+    host.querySelectorAll('[data-act="edit"]').forEach(function (b) {
+      b.addEventListener('click', function () { openForm(b.getAttribute('data-id')); });
+    });
+    var nb = $('tr-new');
+    if (nb) nb.addEventListener('click', function () { openForm(null); });
     renderOps();
   }
 
@@ -280,11 +428,35 @@
            '</label>' + input + '</div>';
   }
 
+  function check(label, name, on, hint) {
+    return '<div class="fld"><label class="fld-l" style="display:flex;align-items:center;gap:9px;cursor:pointer;">' +
+      '<input type="checkbox" name="' + name + '" value="1"' + (on ? ' checked' : '') +
+      ' style="width:16px;height:16px;accent-color:#0E9384;"/>' + esc(label) +
+      (hint ? ' <span class="note">' + esc(hint) + '</span>' : '') +
+      '</label></div>';
+  }
+  /* A picker over media the tour already has, rather than a URL box.
+     Asking an admin to paste a storage URL is asking for a typo that
+     silently breaks the reel. */
+  function pick(label, name, options, val, hint) {
+    var opts = [['', '— none —']].concat(options.map(function (u, i) {
+      var short = String(u).split('/').pop();
+      return [u, (i + 1) + ' · ' + (short.length > 30 ? short.slice(0, 30) + '…' : short)];
+    }));
+    return field(label, name, val, { select: opts, hint: hint });
+  }
+
   function openForm(id) {
     var t = id ? state.tours.filter(function (x) { return String(x.id) === String(id); })[0] : null;
     state.editing = t ? t.id : null;
     var host = $('tr-form');
     if (!host) return;
+
+    /* Media already on the tour, so the reel pickers offer real files
+       rather than a URL box to paste into. */
+    var vids = arr(t && t.videos);
+    var pics = arr(t && t.photos);
+    if (t && t.cover_url && pics.indexOf(t.cover_url) === -1) pics = [t.cover_url].concat(pics);
 
     var opOpts = [['', '— choose —']].concat(state.operators
       .filter(function (o) { return o.status === 'approved'; })
@@ -318,9 +490,16 @@
           '</div>' +
           '<div class="g4">' +
             field('Price (KES)', 'price_kes', (t && t.price_kes) || 0, { type: 'number' }) +
+            field('Charged', 'price_basis', (t && t.price_basis) || 'per_person', {
+              select: [['per_person', 'Per person'], ['per_group', 'Per group']] }) +
+            field('Child price (KES)', 'child_price_kes', t && t.child_price_kes, { type: 'number' }) +
             field('Deposit %', 'deposit_pct', (t && t.deposit_pct) != null ? t.deposit_pct : 30, { type: 'number' }) +
+          '</div>' +
+          '<div class="g4">' +
             field('Min group', 'group_min', (t && t.group_min) || 1, { type: 'number' }) +
             field('Max group', 'group_max', (t && t.group_max) || 12, { type: 'number' }) +
+            field('Latitude', 'latitude', t && t.latitude, { type: 'number', hint: 'for map + radius search' }) +
+            field('Longitude', 'longitude', t && t.longitude, { type: 'number' }) +
           '</div>' +
           '<div class="g3">' +
             field('Schedule', 'schedule_type', t && t.schedule_type, {
@@ -330,6 +509,31 @@
           '</div>' +
           '<div class="fld"><label class="fld-l">Photos and video</label>' +
             '<div id="tr-media"></div></div>' +
+
+          /* ── The reel ──────────────────────────────────────────────
+             Which tours appear in the moving band on /tours is an
+             editorial call, not "whatever happens to have a video
+             attached". So it is set here, per tour, with the clip and
+             the running order chosen explicitly. */
+          '<div class="card" style="margin:18px 0;padding:16px;background:rgba(45,212,191,.05);' +
+            'border:1px solid rgba(45,212,191,.22);">' +
+            '<div class="card-t" style="font-size:14px;">The reel</div>' +
+            '<div class="card-s" style="margin-bottom:12px;">Tours shown as playing video above the ' +
+              'listings on cabana.africa/tours. Needs a video on the tour. The band only runs once ' +
+              'two tours are in it.</div>' +
+            check('Show this tour in the reel', 'showcase', !!(t && t.showcase),
+                  vids.length ? '' : 'upload a video first') +
+            '<div class="g3">' +
+              pick('Clip to play', 'showcase_video', vids, t && t.showcase_video,
+                   'defaults to the first video') +
+              pick('Poster frame', 'video_poster', pics, t && t.video_poster,
+                   'shown before it plays') +
+              field('Order', 'showcase_rank', (t && t.showcase_rank) || 0,
+                    { type: 'number', hint: 'higher runs first' }) +
+            '</div>' +
+            field('Headline over the clip', 'showcase_headline', t && t.showcase_headline,
+                  { ph: 'Falls back to the tour title' }) +
+          '</div>' +
           '<div class="g2">' +
             field('Included — one per line', 'includes_list', arr(t && t.includes_list).join('\n'),
                   { textarea: true, rows: 4 }) +
@@ -397,15 +601,43 @@
       schedule_type: g('schedule_type') || 'on_request',
       next_departure: g('next_departure') || null,
       spots_left: num('spots_left'),
+      price_basis: g('price_basis') || 'per_person',
+      child_price_kes: num('child_price_kes'),
+      latitude: num('latitude'),
+      longitude: num('longitude'),
       cover_url: null,   // replaced below by whatever was uploaded
       includes_list: arr(g('includes_list')),
       excludes_list: arr(g('excludes_list')),
       highlights: arr(g('highlights')),
       tags: arr(g('tags')),
-      cancellation: g('cancellation') || null
+      cancellation: g('cancellation') || null,
+
+      /* Reel. showcase_video null is meaningful: it tells the page to
+         fall back to the first video rather than to show nothing. */
+      showcase: fd.get('showcase') === '1',
+      showcase_video: g('showcase_video') || null,
+      video_poster: g('video_poster') || null,
+      showcase_rank: num('showcase_rank', 0),
+      showcase_headline: g('showcase_headline') || null
     };
 
     if (adminMedia && adminMedia.busy()) { toast('Photos are still uploading.'); return; }
+
+    /* A tour in the reel with no clip is an empty black rectangle on
+       the busiest part of the page. Catch it here, where someone can
+       still do something about it, rather than at render time. */
+    if (row.showcase) {
+      var prevT = state.editing
+        ? (state.tours.filter(function (x) { return String(x.id) === String(state.editing); })[0] || {})
+        : {};
+      var haveClip = row.showcase_video ||
+                     arr(prevT.videos).length ||
+                     (adminMedia && adminMedia.value().videos.length);
+      if (!haveClip) {
+        toast('Add a video before putting this tour in the reel.');
+        return;
+      }
+    }
     if (adminMedia) {
       var m = adminMedia.value();
       var prev = state.editing

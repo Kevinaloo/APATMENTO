@@ -288,19 +288,17 @@
     if (t.group_max) facts.push('Max ' + t.group_max);
     arr(t.tags).slice(0, 2).forEach(function (x) { facts.push(x); });
 
-    var clip = arr(t.videos)[0] || '';
+    /* Listings are stills. Film lives in the reel above.
+
+       These cards used to carry a clip that faded in on hover, which
+       meant the grid behaved one way on a desktop with a mouse and
+       another on the phone most guests book from, and gave ten tours
+       ten reasons to start pulling video over a mobile bundle. A
+       listing's job is to be scanned. */
     var media = cover
       ? '<img src="' + esc(cover) + '" alt="' + esc(t.title) + '" loading="lazy" decoding="async"' +
         ' onerror="this.remove()"/>'
       : '<div class="ct-card-noimg">' + ICON.compass + '</div>';
-    // The clip sits over the still and fades in on hover. It is only
-    // fetched on intent (preload=none), so a grid of ten tours does not
-    // pull ten videos over someone's mobile data.
-    if (clip) {
-      media += '<video class="ct-card-clip" src="' + esc(clip) + '" muted loop playsinline ' +
-               'preload="none" tabindex="-1" aria-hidden="true"></video>' +
-               '<span class="ct-clip-dot" aria-hidden="true"></span>';
-    }
 
     var house = t.operator_kind === 'cabana';
     var badge = '<span class="ct-badge" data-kind="' + (house ? 'cabana' : 'partner') + '">' +
@@ -396,16 +394,156 @@
 
     Array.prototype.forEach.call(g.querySelectorAll('.ct-card'), function (c, i) {
       c.addEventListener('click', function () { openSheet(c.getAttribute('data-id')); });
-      var v = c.querySelector('.ct-card-clip');
-      if (v) {
-        var play = function () { try { v.play(); } catch (e) {} };
-        var stop = function () { try { v.pause(); v.currentTime = 0; } catch (e) {} };
-        c.addEventListener('mouseenter', play);
-        c.addEventListener('mouseleave', stop);
-        c.addEventListener('focus', play);
-        c.addEventListener('blur', stop);
-      }
       setTimeout(function () { c.classList.add('in'); }, Math.min(i, 12) * 45);
+    });
+  }
+
+  /* ── the reel ─────────────────────────────────────────────────────
+     A band of film above the listings.
+
+     Three things it has to get right, none of them about looks:
+
+       · Only clips that are on screen may play. A duplicated track of
+         eight cards is sixteen <video> elements, and a phone will
+         happily try to decode all of them at once and then stop being
+         a phone.
+       · Anyone who touches it stops it. Motion you cannot arrest reads
+         as an advert.
+       · Save-Data and reduced-motion get the same cards holding still
+         on their poster frames. Nothing is hidden; it just stops
+         moving and stops downloading.                                */
+
+  function reelClip(t) {
+    return t.showcase_video || arr(t.videos)[0] || '';
+  }
+  function reelList() {
+    return state.tours
+      .filter(function (t) { return t.showcase === true && reelClip(t); })
+      .sort(function (a, b) {
+        return (Number(b.showcase_rank) || 0) - (Number(a.showcase_rank) || 0) ||
+               (Number(b.sort_weight) || 0) - (Number(a.sort_weight) || 0);
+      });
+  }
+
+  function thrifty() {
+    var save = false, slow = false, reduce = false;
+    try {
+      var c = navigator.connection;
+      save = !!(c && c.saveData);
+      slow = !!(c && /^(slow-)?2g$/.test(c.effectiveType || ''));
+    } catch (e) {}
+    try { reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+    return { still: save || slow || reduce, noVideo: save || slow };
+  }
+
+  function reelCardHTML(t, dup) {
+    var clip = reelClip(t);
+    var poster = t.video_poster || t.cover_url || (arr(t.photos)[0] || '');
+    var where = t.destination || t.county || t.country || '';
+    var free = Number(t.price_kes) === 0;
+    var head = t.showcase_headline || t.title;
+    var by = t.operator_kind === 'cabana' ? 'Cabana' : (t.operator_name || 'Local operator');
+    var mode = thrifty();
+
+    /* preload="none" everywhere: nothing is fetched until the card is
+       actually on screen and the observer asks for it. */
+    var media = mode.noVideo
+      ? (poster ? '<img src="' + esc(poster) + '" alt="" loading="lazy" decoding="async"/>' : '')
+      : '<video data-clip="' + esc(clip) + '"' +
+        (poster ? ' poster="' + esc(poster) + '"' : '') +
+        ' muted loop playsinline preload="none" tabindex="-1" aria-hidden="true"></video>';
+
+    return '<button class="ct-reel-card" type="button" data-id="' + esc(t.id) + '"' +
+      (dup ? ' tabindex="-1" aria-hidden="true"' : '') + '>' +
+      media +
+      '<span class="ct-reel-by">' + esc(by) + '</span>' +
+      '<span class="ct-reel-body">' +
+        '<span class="ct-reel-title">' + esc(head) + '</span>' +
+        (where ? '<span class="ct-reel-meta">' + ICON.pin + esc(where) + '</span>' : '') +
+        '<span class="ct-reel-price"><b>' + (free ? 'Free' : money(t.price_kes)) + '</b>' +
+          '<span>' + (t.price_basis === 'per_group' ? 'per group' : 'per person') + '</span>' +
+        '</span>' +
+      '</span>' +
+    '</button>';
+  }
+
+  var reelObserver = null;
+
+  function renderReel() {
+    var host = el('ct-reel');
+    if (!host) return;
+
+    var list = reelList();
+    /* One card cannot loop and does not read as a reel. */
+    if (list.length < 2) { host.hidden = true; host.innerHTML = ''; return; }
+
+    var mode = thrifty();
+    var run = list.map(function (t) { return reelCardHTML(t, false); }).join('');
+    var dup = list.map(function (t) { return reelCardHTML(t, true); }).join('');
+
+    host.hidden = false;
+    host.className = 'ct-reel' + (mode.still ? ' is-still' : '');
+    host.innerHTML =
+      '<div class="ct-reel-head">' +
+        '<h2>Watch before you book</h2>' +
+        '<p>Clips from the operators, filmed on the route they actually run.</p>' +
+      '</div>' +
+      '<div class="ct-reel-vp">' +
+        '<div class="ct-reel-track" style="--reel-dur:' + (list.length * 7.5) + 's">' +
+          '<div class="ct-reel-run">' + run + '</div>' +
+          '<div class="ct-reel-run">' + dup + '</div>' +
+        '</div>' +
+      '</div>';
+
+    Array.prototype.forEach.call(host.querySelectorAll('.ct-reel-card'), function (c) {
+      c.addEventListener('click', function () { openSheet(c.getAttribute('data-id')); });
+    });
+
+    /* Held while a finger is down, released a moment after it lifts, so
+       a scroll gesture across the band does not fight the marquee. */
+    var release;
+    function hold() { clearTimeout(release); host.classList.add('is-held'); }
+    function letGo() { clearTimeout(release); release = setTimeout(function () {
+      host.classList.remove('is-held');
+    }, 2600); }
+    host.addEventListener('touchstart', hold, { passive: true });
+    host.addEventListener('touchend', letGo, { passive: true });
+    host.addEventListener('touchcancel', letGo, { passive: true });
+
+    if (mode.noVideo) return;
+    wireReelVideos(host);
+  }
+
+  function wireReelVideos(host) {
+    if (reelObserver) { try { reelObserver.disconnect(); } catch (e) {} reelObserver = null; }
+    var vids = Array.prototype.slice.call(host.querySelectorAll('video[data-clip]'));
+    if (!vids.length) return;
+
+    function start(v) {
+      if (!v.src) v.src = v.getAttribute('data-clip');
+      var p = v.play();
+      /* Autoplay can still be refused. A refused clip keeps its poster,
+         which is a perfectly good card, so there is nothing to report. */
+      if (p && typeof p.catch === 'function') p.catch(function () {});
+    }
+    function stop(v) { try { v.pause(); } catch (e) {} }
+
+    if (!('IntersectionObserver' in window)) {
+      /* No observer: play the first two and leave the rest as posters
+         rather than starting every decoder on the page. */
+      vids.slice(0, 2).forEach(start);
+      return;
+    }
+    reelObserver = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) start(e.target); else stop(e.target);
+      });
+    }, { threshold: 0.35 });
+    vids.forEach(function (v) { reelObserver.observe(v); });
+
+    /* A backgrounded tab should not be decoding video. */
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) vids.forEach(stop);
     });
   }
 
@@ -535,7 +673,7 @@
 
   /* ── wiring ──────────────────────────────────────────────────────── */
 
-  function renderAll() { renderMeridian(); renderChips(); renderGrid(); }
+  function renderAll() { renderMeridian(); renderReel(); renderChips(); renderGrid(); }
 
   function start() {
     var q = el('ct-q');
@@ -599,6 +737,7 @@
 
   window.CabanaTours = {
     reload: load,
-    get: function () { return state.tours.slice(); }
+    get: function () { return state.tours.slice(); },
+    reel: function () { return reelList().slice(); }
   };
 })();

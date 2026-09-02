@@ -564,38 +564,12 @@
 
 
 /* ── video on a card ────────────────────────────────────────────────
-   The clip lies over the still and fades in on hover. preload="none"
-   in the markup means nothing is fetched until someone shows intent,
-   which keeps a full grid cheap on mobile data. */
-.ct-card-clip{
-  position:absolute; inset:0;
-  width:100%; height:100%;
-  object-fit:cover;
-  opacity:0;
-  transition:opacity .45s var(--ct-ease);
-  pointer-events:none;
-}
-.ct-card:hover .ct-card-clip,
-.ct-card:focus-visible .ct-card-clip{ opacity:1; }
-
-/* a small mark so the clip is discoverable before you hover */
-.ct-clip-dot{
-  position:absolute; top:12px; right:12px; z-index:2;
-  width:22px; height:22px; border-radius:50%;
-  background:rgba(6,43,49,.72);
-  backdrop-filter:blur(4px);
-  display:flex; align-items:center; justify-content:center;
-  transition:opacity .3s;
-}
-.ct-clip-dot::after{
-  content:'';
-  border:5px solid transparent;
-  border-left-color:#fff;
-  margin-left:3px;
-}
-.ct-card:hover .ct-clip-dot{ opacity:0; }
-/* the spots-left tag owns the top-right corner when both are present */
-.ct-spots ~ .ct-clip-dot{ top:auto; bottom:12px; }
+   Removed. Clips used to fade in over the still on hover, which meant
+   the listings behaved differently on a desktop with a mouse than on
+   the phone most guests actually book from, and gave a grid of ten
+   tours ten reasons to start fetching video. Moving film to the reel
+   above lets the listings do the one job a listing does: be scanned.
+   Every major tour platform makes the same split.                    */
 
 .ct-sheet-media video{
   width:100%; height:100%;
@@ -604,9 +578,163 @@
   background:#062B31;
 }
 
-@media (prefers-reduced-motion:reduce){
-  .ct-card-clip{ transition:none; }
+/* ═══ 4b · THE REEL ═════════════════════════════════════════════════
+   A band of film between the meridian and the listings. It runs on its
+   own rather than waiting to be dragged, because its job is to show
+   what these tours look like to someone who has not decided to look
+   yet. It stops the moment anyone touches, hovers or tabs into it —
+   motion you cannot arrest is motion that reads as an advert.        */
+
+.ct-reel{
+  position:relative;
+  margin:34px 0 0;
+  padding:0;
 }
+.ct-reel-head{
+  max-width:1180px;
+  margin:0 auto;
+  padding:0 26px 16px;
+}
+.ct-reel-head h2{
+  font-family:var(--font-display,'Geist',sans-serif);
+  font-weight:500;
+  font-size:clamp(19px,2.4vw,25px);
+  letter-spacing:-.01em;
+  color:var(--ct-ink);
+}
+.ct-reel-head p{
+  margin-top:6px;
+  font-size:14px;
+  line-height:1.6;
+  color:var(--ct-soft);
+  max-width:52ch;
+}
+
+/* Full-bleed: the band should run off both edges so it reads as a
+   strip passing through, not a carousel sitting in a box. */
+.ct-reel-vp{
+  position:relative;
+  overflow:hidden;
+  padding:4px 0 10px;
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent);
+  mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent);
+}
+.ct-reel-track{
+  display:flex;
+  width:max-content;
+  animation:ct-reel-run var(--reel-dur,56s) linear infinite;
+  will-change:transform;
+}
+.ct-reel-run{ display:flex; gap:14px; padding-right:14px; }
+@keyframes ct-reel-run{ to{ transform:translate3d(-50%,0,0); } }
+
+.ct-reel:hover .ct-reel-track,
+.ct-reel:focus-within .ct-reel-track,
+.ct-reel.is-held .ct-reel-track{ animation-play-state:paused; }
+
+.ct-reel-card{
+  position:relative;
+  flex:0 0 auto;
+  width:210px; height:302px;
+  border-radius:18px;
+  overflow:hidden;
+  border:1px solid var(--ct-hair);
+  background:#062B31;
+  cursor:pointer;
+  padding:0;
+  text-align:left;
+  font:inherit;
+  color:#fff;
+  transition:transform .4s var(--ct-ease), box-shadow .4s var(--ct-ease);
+}
+.ct-reel-card:hover{ transform:translateY(-4px); box-shadow:0 18px 40px rgba(6,43,49,.28); }
+.ct-reel-card:focus-visible{ outline:2px solid var(--ct-reef); outline-offset:3px; }
+
+.ct-reel-card video,
+.ct-reel-card img{
+  position:absolute; inset:0;
+  width:100%; height:100%;
+  object-fit:cover;
+  display:block;
+}
+/* The scrim is what keeps type legible over footage nobody has graded. */
+.ct-reel-card::after{
+  content:'';
+  position:absolute; inset:0;
+  background:linear-gradient(180deg,
+    rgba(6,43,49,.05) 0%,
+    rgba(6,43,49,0) 34%,
+    rgba(6,43,49,.62) 72%,
+    rgba(4,26,30,.9) 100%);
+  pointer-events:none;
+}
+.ct-reel-body{
+  position:absolute; left:0; right:0; bottom:0;
+  z-index:2;
+  padding:14px 14px 13px;
+  pointer-events:none;
+}
+.ct-reel-title{
+  font-family:var(--font-display,'Geist',sans-serif);
+  font-weight:600;
+  font-size:14.5px;
+  line-height:1.3;
+  letter-spacing:-.005em;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
+  overflow:hidden;
+  text-shadow:0 1px 12px rgba(4,26,30,.7);
+}
+.ct-reel-meta{
+  margin-top:5px;
+  font-size:11.5px;
+  color:rgba(255,255,255,.78);
+  display:flex; align-items:center; gap:5px;
+}
+.ct-reel-meta svg{ width:11px; height:11px; flex-shrink:0; }
+.ct-reel-price{
+  margin-top:9px;
+  display:inline-flex; align-items:baseline; gap:5px;
+  padding:5px 10px;
+  border-radius:100px;
+  background:rgba(255,255,255,.15);
+  backdrop-filter:blur(6px);
+  -webkit-backdrop-filter:blur(6px);
+  border:1px solid rgba(255,255,255,.2);
+}
+.ct-reel-price b{ font-size:12.5px; font-weight:650; }
+.ct-reel-price span{ font-size:10.5px; color:rgba(255,255,255,.72); }
+
+/* Operator mark, top-left, so credit sits with the footage. */
+.ct-reel-by{
+  position:absolute; top:11px; left:11px; z-index:2;
+  max-width:calc(100% - 22px);
+  padding:4px 9px;
+  border-radius:100px;
+  font-size:10px; font-weight:600;
+  letter-spacing:.01em;
+  background:rgba(4,26,30,.55);
+  backdrop-filter:blur(6px);
+  -webkit-backdrop-filter:blur(6px);
+  color:rgba(255,255,255,.9);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+
+@media (min-width:820px){
+  .ct-reel-card{ width:248px; height:352px; }
+}
+
+/* Data saver and reduced motion both get the same thing: the same
+   cards, holding still, showing their poster frame. Nothing is
+   hidden — it just stops moving and stops downloading. */
+@media (prefers-reduced-motion:reduce){
+  .ct-reel-track{ animation:none; }
+  .ct-reel-vp{ overflow-x:auto; scroll-snap-type:x mandatory; }
+  .ct-reel-card{ scroll-snap-align:center; transition:none; }
+  .ct-reel-card:hover{ transform:none; }
+}
+.ct-reel.is-still .ct-reel-track{ animation:none; }
+.ct-reel.is-still .ct-reel-vp{ overflow-x:auto; scroll-snap-type:x mandatory; }
+.ct-reel.is-still .ct-reel-card{ scroll-snap-align:center; }
 
 /* ═══ 5 · THE EMPTY LINE ════════════════════════════════════════════
    With no tours published this is the whole page, so it is built as
