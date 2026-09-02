@@ -1,0 +1,544 @@
+/* ═══════════════════════════════════════════════════════════════════
+   CABANA · THE FACADE
+   ───────────────────────────────────────────────────────────────────
+   The arrival animation for /apartments.
+
+   A block at night. Windows wake one at a time. One of them is yours,
+   and the camera goes through it.
+
+   Four decisions worth stating.
+
+   · Built from divs, not SVG. The tours gate is a forest, and a leaf
+     fights a vector because a leaf is organic. A facade is rectangles.
+     Using the medium that matches the subject means crisper edges,
+     cheaper paint, and no path authoring at all.
+
+   · Light does the work, exactly as it does in the forest. The block
+     itself is nearly black. Everything you read is window light, its
+     bloom, and the spill it throws down the wall beneath it.
+
+   · The place is real and it changes. Every load names a market
+     Cabana actually operates in. That is not decoration — it is the
+     one thing on this screen a competitor could not copy without the
+     inventory behind it.
+
+   · Nothing animates inside a filtered subtree. That mistake cost the
+     tours gate 18x its frame rate, and the structure here is built to
+     make it impossible: filters sit on .sg-blur, which never moves.
+
+   Scoped under .sg- so it cannot reach the page it opens onto.
+   ═══════════════════════════════════════════════════════════════════ */
+
+#stay-gate{
+  /* ── the night, in seven values ── */
+  --sg-void:#05040C;      /* the sky at the top of frame            */
+  --sg-night:#0A0A14;     /* the page's own ink, reused as shadow   */
+  --sg-wall:#12102A;      /* concrete with violet in it             */
+  --sg-wall-2:#1A1636;    /* the lit side of a wall                 */
+  --sg-violet:#7B2FF7;    /* Cabana violet — the city glow          */
+  --sg-lilac:#B8A4F4;     /* the pale end of it                     */
+  --sg-warm:#FFB65C;      /* a lamp behind a curtain                */
+  --sg-cream:#FFE4B8;     /* a kitchen with the big light on        */
+
+  --sg-ease:cubic-bezier(.72,0,.16,1);       /* the push through     */
+  --sg-ease-soft:cubic-bezier(.22,1,.36,1);  /* everything else      */
+
+  position:fixed;
+  inset:0;
+  z-index:2147483000;
+  overflow:hidden;
+  background:var(--sg-void);
+  contain:strict;
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
+
+html.sg-lock,
+html.sg-lock body{ overflow:hidden !important; }
+
+/* ═══ 1 · SKY ═══════════════════════════════════════════════════════
+   A city throws light up into its own sky. Without that glow the
+   block reads as a shape on black rather than a building at night. */
+
+.sg-stage{
+  position:absolute; inset:0;
+  overflow:hidden;
+}
+.sg-sky{
+  position:absolute; inset:-6%;
+  background:
+    radial-gradient(78% 46% at 50% 96%, rgba(123,47,247,.34), transparent 66%),
+    radial-gradient(52% 30% at 22% 88%, rgba(255,154,60,.16), transparent 70%),
+    radial-gradient(46% 28% at 82% 84%, rgba(184,164,244,.13), transparent 72%),
+    linear-gradient(178deg, #05040C 0%, #0A0819 44%, #140F2E 78%, #1C1440 100%);
+}
+/* Haze low down, where the streetlights are. Depth, cheaply. */
+.sg-haze{
+  position:absolute; left:-10%; right:-10%; bottom:-6%; height:56%;
+  background:linear-gradient(0deg, rgba(123,47,247,.2) 0%, rgba(123,47,247,.06) 40%, transparent 78%);
+  opacity:0;
+}
+
+/* ═══ 2 · DEPTH ═════════════════════════════════════════════════════
+   Three planes. Filters live here and only here, on elements that
+   never move, so each is rasterised once and then merely transformed.
+   ═══════════════════════════════════════════════════════════════════ */
+
+.sg-plane{
+  position:absolute; inset:0;
+  will-change:transform;
+  transform:translateZ(0);
+  backface-visibility:hidden;
+}
+.sg-blur{ position:absolute; inset:0; }
+
+.sg-far  .sg-blur{ filter:blur(2.5px) brightness(.5) saturate(.8); opacity:.8; }
+.sg-near .sg-blur{ filter:blur(5px) brightness(.24); }
+
+/* ═══ 3 · THE BLOCK ═════════════════════════════════════════════════ */
+
+.sg-block{
+  position:absolute;
+  bottom:0;
+  background:linear-gradient(96deg, var(--sg-wall) 0%, var(--sg-wall-2) 62%, #0D0B20 100%);
+  border-radius:2px 2px 0 0;
+  box-shadow:inset 0 1px 0 rgba(184,164,244,.14);
+}
+/* The parapet. One line, and the roof stops looking like a cut. */
+.sg-face{
+  position:absolute; inset:0;
+  overflow:hidden;
+  border-radius:inherit;
+}
+.sg-block::before{
+  content:'';
+  position:absolute; left:-1.5%; right:-1.5%; top:-7px; height:7px;
+  background:linear-gradient(96deg,#171338,#221B47);
+  border-radius:2px;
+}
+
+/* Roof clutter. Water tanks, dishes and a mast: the things that make
+   a block in Nairobi or Lagos look like itself rather than like
+   Anywhere, Skyline. These are silhouettes, never lit. */
+.sg-tank{
+  position:absolute; bottom:100%;
+  width:var(--tw,26px); height:var(--th,17px);
+  background:#181340;
+  border-radius:3px 3px 1px 1px;
+  margin-bottom:7px;
+}
+.sg-tank::after{
+  content:''; position:absolute; left:22%; right:22%; top:-4px; height:4px;
+  background:#181340; border-radius:2px 2px 0 0;
+}
+.sg-dish{
+  position:absolute; bottom:100%;
+  width:var(--dw,17px); height:var(--dw,17px);
+  margin-bottom:7px;
+  border-radius:50%;
+  background:#181340;
+  clip-path:polygon(0 0,100% 0,100% 62%,0 62%);
+}
+.sg-mast{
+  position:absolute; bottom:100%;
+  width:2px; height:var(--mh,34px);
+  margin-bottom:7px;
+  background:linear-gradient(180deg,#221B47,#181340);
+}
+/* The red light on top of a mast. The only non-window light in frame,
+   and the thing that says "this is a real building at night". */
+.sg-mast::after{
+  content:'';
+  position:absolute; top:-3px; left:-2px;
+  width:6px; height:6px; border-radius:50%;
+  background:#FF4D4D;
+  box-shadow:0 0 9px 2px rgba(255,77,77,.7);
+  animation:sg-beacon 2.6s ease-in-out infinite;
+}
+@keyframes sg-beacon{ 0%,72%{opacity:.28;} 84%{opacity:1;} 100%{opacity:.28;} }
+
+/* ── balconies ──────────────────────────────────────────────────────
+   Drawn as a slab plus a railing. Most stays on this platform have
+   one, and it is the single most recognisable feature of the
+   buildings they are actually in. */
+.sg-balc{
+  position:absolute;
+  height:3px;
+  background:#0B0920;
+  box-shadow:0 1px 0 rgba(184,164,244,.1);
+}
+.sg-rail{
+  position:absolute;
+  height:9px;
+  border:1px solid rgba(184,164,244,.16);
+  border-bottom:none;
+  background:repeating-linear-gradient(90deg,
+    rgba(184,164,244,.15) 0 1px, transparent 1px 5px);
+}
+
+/* ── laundry ────────────────────────────────────────────────────────
+   Two lines with clothes on them. Nobody puts this in a loading
+   screen, which is exactly why it belongs here: it is the detail that
+   turns a building into somewhere people live. */
+.sg-line{
+  position:absolute; height:1px;
+  background:rgba(184,164,244,.2);
+}
+.sg-cloth{
+  position:absolute; top:0;
+  width:var(--cw,7px); height:var(--ch,11px);
+  background:rgba(184,164,244,.22);
+  border-radius:1px;
+  transform-origin:50% 0;
+  animation:sg-sway var(--cd,4s) ease-in-out var(--cdl,0s) infinite alternate;
+}
+@keyframes sg-sway{ from{ transform:rotate(-3deg); } to{ transform:rotate(3.5deg); } }
+
+/* ═══ 4 · WINDOWS ═══════════════════════════════════════════════════
+   The whole animation is these coming on.
+
+   Each is one element with a warm gradient, a bloom via box-shadow,
+   and a spill down the wall below it as a pseudo-element. Only
+   opacity animates, so the bloom is rasterised once and the cascade
+   costs almost nothing.                                            */
+
+.sg-win{
+  position:absolute;
+  border-radius:1.5px;
+  background:#0C0A1E;                    /* a dark window is still a window */
+  box-shadow:inset 0 0 0 1px rgba(184,164,244,.09);
+}
+/* Panes. A lit rectangle is a sign; a lit rectangle divided into four
+   is a window. One pseudo-element, drawn over the light, and the whole
+   facade stops looking like a switchboard. */
+.sg-win::after{
+  content:'';
+  position:absolute; inset:0; z-index:3;
+  border-radius:inherit;
+  background:
+    linear-gradient(90deg, transparent calc(50% - .6px),
+      rgba(8,6,20,.62) calc(50% - .6px), rgba(8,6,20,.62) calc(50% + .6px),
+      transparent calc(50% + .6px)),
+    linear-gradient(180deg, transparent calc(58% - .6px),
+      rgba(8,6,20,.62) calc(58% - .6px), rgba(8,6,20,.62) calc(58% + .6px),
+      transparent calc(58% + .6px));
+  box-shadow:inset 0 0 0 1.2px rgba(8,6,20,.5);
+  pointer-events:none;
+}
+/* A balcony door is one tall pane with a single upright, not a grid. */
+.sg-win.is-door::after{
+  background:linear-gradient(90deg, transparent calc(50% - .6px),
+    rgba(8,6,20,.62) calc(50% - .6px), rgba(8,6,20,.62) calc(50% + .6px),
+    transparent calc(50% + .6px));
+}
+
+.sg-win-l{                                /* the lit layer */
+  position:absolute; inset:0;
+  border-radius:inherit;
+  background:linear-gradient(168deg, var(--tone,#FFB65C), var(--tone-2,#FF9A3C));
+  box-shadow:
+    0 0 14px 2px color-mix(in srgb, var(--tone,#FFB65C) 62%, transparent),
+    0 0 34px 8px  color-mix(in srgb, var(--tone,#FFB65C) 30%, transparent),
+    0 0 78px 22px color-mix(in srgb, var(--tone,#FFB65C) 11%, transparent);
+  opacity:0;
+}
+/* Light does not stop at the frame. This is the spill on the wall
+   below the sill, and it is most of why the block reads as three
+   dimensional rather than as a pattern. */
+.sg-win-s{
+  position:absolute;
+  left:-42%; right:-42%; top:96%;
+  height:170%;
+  background:linear-gradient(180deg,
+    color-mix(in srgb, var(--tone,#FFB65C) 26%, transparent), transparent 74%);
+  opacity:0;
+  pointer-events:none;
+  filter:blur(3px);
+}
+
+#stay-gate.sg-lit .sg-win-l{ animation:sg-on .55s var(--sg-ease-soft) var(--on,0s) forwards; }
+#stay-gate.sg-lit .sg-win-s{ animation:sg-on-s .8s var(--sg-ease-soft) var(--on,0s) forwards; }
+@keyframes sg-on  { 0%{opacity:0;} 55%{opacity:1;} 72%{opacity:.82;} 100%{opacity:1;} }
+@keyframes sg-on-s{ to{ opacity:1; } }
+
+/* A few windows have a television in them. Cooler, and it flickers. */
+.sg-win-l.is-tv{ animation-name:sg-on, sg-tv; animation-duration:.55s, 3.4s;
+  animation-delay:var(--on,0s), calc(var(--on,0s) + .55s);
+  animation-iteration-count:1, infinite; animation-fill-mode:forwards, none; }
+@keyframes sg-tv{
+  0%,100%{ opacity:1; } 42%{ opacity:.82; } 46%{ opacity:1; }
+  70%{ opacity:.88; } 74%{ opacity:1; }
+}
+
+/* ── who is inside ──────────────────────────────────────────────────
+   Silhouettes in a handful of windows. Kept to the fewest shapes that
+   still read: a head and shoulders, a plant, a pendant lamp, a pair
+   of curtains. They are what make the block feel occupied rather
+   than switched on. */
+.sg-fig{ position:absolute; z-index:2; background:rgba(6,5,16,.82); }
+
+.sg-fig-person{
+  bottom:0; left:var(--fx,30%);
+  width:26%; height:56%;
+  border-radius:44% 44% 0 0 / 30% 30% 0 0;
+}
+.sg-fig-person::after{        /* head */
+  content:''; position:absolute; left:50%; top:-38%;
+  width:52%; aspect-ratio:1; transform:translateX(-50%);
+  border-radius:50%; background:inherit;
+}
+.sg-fig-plant{
+  bottom:0; left:var(--fx,66%);
+  width:16%; height:26%;
+  border-radius:1px;
+}
+.sg-fig-plant::after{         /* foliage */
+  content:''; position:absolute; left:50%; bottom:80%;
+  width:230%; height:150%; transform:translateX(-50%);
+  background:inherit;
+  border-radius:50% 50% 42% 42%;
+  clip-path:polygon(50% 0,72% 26%,100% 44%,78% 58%,88% 100%,50% 76%,12% 100%,22% 58%,0 44%,28% 26%);
+}
+.sg-fig-lamp{
+  top:0; left:var(--fx,50%);
+  width:2px; height:26%;
+  transform:translateX(-50%);
+}
+.sg-fig-lamp::after{          /* shade */
+  content:''; position:absolute; left:50%; top:100%;
+  width:16px; height:9px; transform:translateX(-50%);
+  background:inherit;
+  clip-path:polygon(22% 0,78% 0,100% 100%,0 100%);
+}
+.sg-fig-curtain{ top:0; bottom:0; width:22%; }
+.sg-fig-curtain.l{ left:0;  border-radius:0 0 3px 0; }
+.sg-fig-curtain.r{ right:0; border-radius:0 0 0 3px; }
+
+/* ═══ 5 · THE ONE THAT IS YOURS ═════════════════════════════════════
+   The window the camera goes through. It lights last, alone, after a
+   beat of silence — which is the only bit of timing in this whole
+   sequence that anyone will consciously notice.                    */
+
+.sg-hero .sg-win-l{
+  box-shadow:
+    0 0 22px 4px rgba(255,240,212,.8),
+    0 0 60px 14px rgba(255,200,120,.45),
+    0 0 120px 34px rgba(255,170,80,.22),
+    0 0 200px 70px rgba(123,47,247,.18);
+}
+/* It is empty, and warm, and waiting. That is the whole idea of the
+   page it opens onto, so nobody is standing in it. */
+.sg-hero .sg-win-s{ height:230%; filter:blur(5px); }
+
+/* The blooms are what make the cascade, and they are also what makes
+   the push expensive: three shadow layers on seventy-five elements,
+   re-rasterised at every scale step. They are dropped at the moment
+   the camera starts moving, when the flood has taken over anyway. */
+#stay-gate.sg-go .sg-win-l{ box-shadow:none !important; }
+#stay-gate.sg-go .sg-hero .sg-win-l{
+  box-shadow:0 0 80px 30px rgba(255,228,184,.55) !important;
+}
+/* The spill keeps its shape but loses its blur: a full-screen blur
+   re-rasterising at every scale step is the same trap as the shadows. */
+#stay-gate.sg-go .sg-win-s{ filter:none; opacity:.55; }
+#stay-gate.sg-go .sg-cloth{ animation:none; }
+
+/* ═══ 6 · THE PUSH ══════════════════════════════════════════════════
+   Origin is the hero window, set from the generator as a percentage,
+   so the camera goes through that window rather than at the middle
+   of the screen and approximately near it.                         */
+
+.sg-city{
+  position:absolute; inset:0;
+  transform-origin:var(--hx,52%) var(--hy,46%);
+  will-change:transform;
+}
+#stay-gate.sg-go .sg-city{ animation:sg-push 1.7s var(--sg-ease) forwards; }
+@keyframes sg-push{
+  0%  { transform:scale(1); }
+  100%{ transform:scale(4.2); }
+}
+/* The planes behind travel less, which is the parallax. */
+#stay-gate.sg-go .sg-far  { animation:sg-push-far 1.7s var(--sg-ease) forwards; }
+#stay-gate.sg-go .sg-near { animation:sg-push-near 1.35s var(--sg-ease) forwards; }
+@keyframes sg-push-far { to{ transform:scale(1.7); } }
+@keyframes sg-push-near{ to{ transform:scale(3) translateY(14%); opacity:0; } }
+
+/* Everything that is not the window you are entering goes dark.
+
+   Without this the push reads as "moving toward a wall of windows"
+   rather than "going through that one". It is the cheapest possible
+   way to say which one is yours: one radial gradient, centred on the
+   same point the camera is aimed at. */
+.sg-focus{
+  position:absolute; inset:-20%;
+  z-index:6;
+  background:radial-gradient(46% 30% at var(--hx,52%) var(--hy,46%),
+    transparent 0%, rgba(5,4,12,.28) 42%, rgba(5,4,12,.82) 72%, rgba(5,4,12,.97) 100%);
+  opacity:0;
+  pointer-events:none;
+  will-change:opacity;
+}
+#stay-gate.sg-go .sg-focus{ animation:sg-focus 1.05s var(--sg-ease-soft) forwards; }
+@keyframes sg-focus{ 0%{opacity:0;} 70%{opacity:1;} 100%{opacity:1;} }
+
+/* The window becomes the room becomes the screen. */
+.sg-flood{
+  position:absolute; inset:0; z-index:7;
+  background:radial-gradient(78% 52% at var(--hx,52%) var(--hy,46%),
+    rgba(255,247,232,.96) 0%,
+    rgba(255,228,184,.62) 26%,
+    rgba(184,164,244,.2) 54%,
+    transparent 74%);
+  opacity:0;
+  transform:scale(.3);
+  pointer-events:none;
+  will-change:transform,opacity;
+}
+#stay-gate.sg-go .sg-flood{ animation:sg-flood 1.35s .25s cubic-bezier(.38,.02,.4,1) forwards; }
+@keyframes sg-flood{
+  0%  { opacity:0;   transform:scale(.3); }
+  30% { opacity:.34; }
+  62% { opacity:.72; }
+  100%{ opacity:1;   transform:scale(2.3); }
+}
+
+/* ═══ 7 · THE PLACE ═════════════════════════════════════════════════ */
+
+/* The name sits over a lit facade, so it needs its own ground. A scrim
+   rather than a panel: the building should still be visible through it. */
+.sg-scrim{
+  position:absolute; left:0; right:0; bottom:0; height:52%;
+  z-index:5;
+  background:linear-gradient(0deg,
+    rgba(5,4,12,.94) 0%, rgba(5,4,12,.82) 26%,
+    rgba(7,5,20,.5) 56%, transparent 100%);
+  pointer-events:none;
+}
+#stay-gate.sg-go .sg-scrim{ animation:sg-word-out .5s var(--sg-ease-soft) forwards; }
+
+.sg-word{
+  position:absolute;
+  left:0; right:0; bottom:11%;
+  z-index:6;
+  text-align:center;
+  padding:0 26px;
+  pointer-events:none;
+  will-change:transform,opacity;
+}
+.sg-kicker{
+  font-family:'Geist','Inter',system-ui,sans-serif;
+  font-size:11px; font-weight:600;
+  letter-spacing:.16em; text-transform:uppercase;
+  color:rgba(184,164,244,.72);
+  opacity:0; transform:translateY(8px);
+}
+.sg-place{
+  margin-top:10px;
+  font-family:'Geist','Inter',system-ui,sans-serif;
+  font-weight:500;
+  font-size:clamp(30px,9vw,54px);
+  line-height:1.04;
+  letter-spacing:-.03em;
+  color:#fff;
+  text-shadow:0 4px 40px rgba(5,4,12,.8), 0 0 80px rgba(123,47,247,.4);
+}
+/* The city name is the part that changes, so it is the part that is
+   emphasised. Everything else is a frame around it. */
+.sg-place b{ font-weight:600; font-style:italic; }
+.sg-place span{ display:inline-block; opacity:0; transform:translateY(14px); }
+.sg-note{
+  margin-top:12px;
+  font-family:'Geist','Inter',system-ui,sans-serif;
+  font-size:12.5px; font-weight:450;
+  color:rgba(255,255,255,.5);
+  opacity:0; transform:translateY(8px);
+}
+
+#stay-gate.sg-say .sg-kicker{ animation:sg-rise .7s var(--sg-ease-soft) forwards; }
+#stay-gate.sg-say .sg-place span{ animation:sg-rise .8s var(--sg-ease-soft) var(--d,0s) forwards; }
+#stay-gate.sg-say .sg-note{ animation:sg-rise .7s .5s var(--sg-ease-soft) forwards; }
+@keyframes sg-rise{ to{ opacity:1; transform:translateY(0); } }
+
+#stay-gate.sg-go .sg-word{ animation:sg-word-out .5s var(--sg-ease-soft) forwards; }
+@keyframes sg-word-out{
+  0%  { opacity:1; transform:translateY(0) scale(1); filter:blur(0); }
+  100%{ opacity:0; transform:translateY(-14px) scale(1.06); filter:blur(5px); }
+}
+
+/* ═══ 8 · SKIP ══════════════════════════════════════════════════════ */
+
+.sg-skip{
+  position:absolute;
+  top:max(18px,env(safe-area-inset-top,0px));
+  right:16px;
+  z-index:9;
+  display:inline-flex; align-items:center; gap:7px;
+  padding:9px 15px;
+  border-radius:100px;
+  border:1px solid rgba(184,164,244,.28);
+  background:rgba(10,10,20,.56);
+  color:rgba(235,231,255,.88);
+  font-family:'Geist','Inter',system-ui,sans-serif;
+  font-size:12.5px; font-weight:500;
+  cursor:pointer;
+  opacity:0;
+  transition:opacity .4s ease, border-color .2s ease, color .2s ease;
+}
+.sg-skip:hover,
+.sg-skip:focus-visible{ border-color:var(--sg-lilac); color:#fff; }
+.sg-skip:focus-visible{ outline:2px solid var(--sg-lilac); outline-offset:3px; }
+.sg-skip svg{ width:12px; height:12px; }
+#stay-gate.sg-lit .sg-skip{ opacity:1; }
+#stay-gate.sg-go  .sg-skip{ opacity:0; }
+
+/* ═══ 9 · ENTRANCE AND EXIT ═════════════════════════════════════════ */
+
+#stay-gate.sg-lit .sg-haze{ animation:sg-fade 1.4s .2s ease forwards; }
+@keyframes sg-fade{ to{ opacity:1; } }
+
+#stay-gate.sg-gone{ animation:sg-gone .5s ease forwards; pointer-events:none; }
+@keyframes sg-gone{ to{ opacity:0; } }
+
+/* ═══════════════════════════════════════════════════════════════════
+   ABBREVIATED · after the first arrival in a session
+   ═══════════════════════════════════════════════════════════════════ */
+#stay-gate.sg-brief .sg-word,
+#stay-gate.sg-brief .sg-skip{ display:none; }
+#stay-gate.sg-brief .sg-win-l{ animation-duration:.3s; }
+#stay-gate.sg-brief.sg-go .sg-city{ animation-duration:.85s; }
+#stay-gate.sg-brief.sg-go .sg-far,
+#stay-gate.sg-brief.sg-go .sg-near{ animation-duration:.85s; }
+#stay-gate.sg-brief.sg-go .sg-flood{ animation-duration:.7s; animation-delay:.15s; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   REDUCED MOTION
+   The same block on the same night, lit and held still. Nothing
+   scales, travels or flickers.
+   ═══════════════════════════════════════════════════════════════════ */
+@media (prefers-reduced-motion:reduce){
+  #stay-gate .sg-win-l,
+  #stay-gate .sg-win-s{ opacity:1; animation:none !important; }
+  #stay-gate .sg-haze { opacity:1; animation:none !important; }
+  #stay-gate .sg-cloth,
+  #stay-gate .sg-mast::after{ animation:none !important; }
+  #stay-gate .sg-kicker,
+  #stay-gate .sg-note,
+  #stay-gate .sg-place span{ opacity:1; transform:none; animation:none !important; }
+  #stay-gate.sg-go .sg-city,
+  #stay-gate.sg-go .sg-far,
+  #stay-gate.sg-go .sg-near,
+  #stay-gate.sg-go .sg-word,
+  #stay-gate.sg-go .sg-flood{ animation:none !important; transform:none; }
+  #stay-gate.sg-go{ animation:sg-gone .45s ease forwards; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   VIEWPORT
+   Authored portrait first. On a wide screen the block is not
+   stretched — the far plane simply shows more of the city beside it.
+   ═══════════════════════════════════════════════════════════════════ */
+@media (min-width:820px){
+  .sg-place{ font-size:clamp(40px,4.6vw,62px); }
+  .sg-word { bottom:16%; }
+}
