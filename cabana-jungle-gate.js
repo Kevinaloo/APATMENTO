@@ -585,8 +585,8 @@
     /* ── timeline ──────────────────────────────────────────────────
        Named so the numbers are arguable rather than magic.           */
     var T = brief
-      ? { lit: 0,  say: -1,  open: 200,  done: 1000 }
-      : { lit: 40, say: 620, open: 1750, done: 3400 };
+      ? { lit: 0,  say: -1,  open: 320,  done: 1400 }
+      : { lit: 40, say: 700, open: 2400, done: 4800 };
     if (reduce) T = { lit: 0, say: 0, open: 520, done: 1000 };
 
     at(T.lit, function () { node.classList.add('jg-lit'); });
@@ -596,7 +596,7 @@
 
     /* Hard ceiling. Nothing above this line is allowed to be the only
        thing standing between a visitor and the page. */
-    at(T.done + 2600, finish);
+    at(T.done + 2800, finish);
 
     live = { promise: promise, skip: skip, finish: finish };
     return promise;

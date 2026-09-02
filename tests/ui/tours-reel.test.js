@@ -97,7 +97,7 @@ async function visit(browser, tours, opts = {}) {
 
   await page.goto(`${BASE}/tours.html`, { waitUntil: 'load' });
   /* Deliberately never click or skip: the gate has to clear by itself. */
-  await page.waitForTimeout(opts.wait || 6500);
+  await page.waitForTimeout(opts.wait || 7200);
   return { page, ctx, errors };
 }
 
@@ -137,7 +137,7 @@ const state = page => page.evaluate(() => {
     await ctx.close();
   }
   {
-    const { page, ctx } = await visit(browser, two, { blockGate: true, wait: 9800 });
+    const { page, ctx } = await visit(browser, two, { blockGate: true, wait: 10500 });
     const s = await state(page);
     check('gate script blocked still yields a page', !s.gate && !s.locked && s.pageUsable);
     await ctx.close();
