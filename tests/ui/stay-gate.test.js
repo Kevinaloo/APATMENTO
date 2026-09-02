@@ -154,6 +154,61 @@ const settled = page => page.evaluate(() => ({
   await ctx.close();
 }
 
+// ── GEO ──────────────────────────────────────────────────────────────────
+// The one guess this file makes: /api/geocode?whoami=1, attempted only
+// when nothing more certain answered, matched through the same validated
+// map, and bounded so it can never outrun the reveal it is racing.
+{
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const page = await ctx.newPage();
+
+  async function withGeo(mock, query = '') {
+    let hit = 0;
+    await page.route('**/api/geocode?whoami=1', route => {
+      hit++;
+      if (mock === null) return route.abort('failed');
+      if (mock === 'slow') {
+        return new Promise(r => setTimeout(() =>
+          r(route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, city: 'Nairobi' }) })), 4000));
+      }
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(mock) });
+    });
+    await page.goto(`${BASE}/apartments.html${query}`, { waitUntil: 'load' });
+    await page.waitForTimeout(1700);   // past T.say (1050ms) with margin
+    const line = await page.evaluate(() =>
+      document.querySelector('#stay-gate .sg-place')?.textContent.replace(/\s+/g, ' ').trim());
+    await page.unrouteAll?.({ behavior: 'ignoreErrors' }).catch(() => {});
+    return { line, hit };
+  }
+
+  const fast = await withGeo({ ok: true, city: 'Nairobi', region: 'Nairobi County', country: 'KE' });
+  check('a fast, known geo answer upgrades the word', fast.line === 'Tonight in Nairobi', fast.line);
+
+  const slow = await withGeo('slow');
+  check('a slow geo answer never arrives in time to swap the word',
+    slow.line === 'Tonight, somewhere in Africa', slow.line);
+
+  const unknown = await withGeo({ ok: true, city: 'Nowheresville', country: 'XX' });
+  check('an unmapped geo answer falls back rather than guessing',
+    unknown.line === 'Tonight, somewhere in Africa', unknown.line);
+
+  const failed = await withGeo(null);
+  check('a failed geo request falls back cleanly, no crash',
+    failed.line === 'Tonight, somewhere in Africa', failed.line);
+
+  const noSignal = await withGeo({ ok: false });
+  check('ok:false from the API falls back',
+    noSignal.line === 'Tonight, somewhere in Africa', noSignal.line);
+
+  const overridden = await withGeo(
+    { ok: true, city: 'Nairobi' }, '?q=Kilimani');
+  check('an explicit place always wins over geo, and geo is never even called',
+    overridden.line === 'Tonight in Kilimani' && overridden.hit === 0,
+    overridden.line + ' hits=' + overridden.hit);
+
+  await ctx.close();
+}
+
 // ── GEOMETRY ───────────────────────────────────────────────────────────────
 {
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });

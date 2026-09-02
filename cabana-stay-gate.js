@@ -219,6 +219,55 @@
     return null;
   }
 
+  /* ═══ THE ONE GUESS THIS FILE MAKES ══════════════════════════════
+     Everything above resolves what the PAGE was explicitly told. This
+     is different: an attempt at what the platform itself believes
+     about where the request came from, read from /api/geocode?whoami=1
+     — which, on Vercel, is answering from a header the platform
+     already computed before the function ran, not a network call this
+     file makes. It is genuinely fast, but it is still a guess, and the
+     one rule that matters more than speed is that a guess must never
+     outrank something the page actually said.
+
+     So: only attempted when nothing more certain was found, matched
+     through the exact same validated map as everything else (never
+     rendered from the response directly), and given a hard, short
+     deadline. If it is not back — confidently, and pointing at a
+     place on the map — before the word is due to reveal, the honest
+     fallback stands and nothing is ever swapped in after the fact.
+     A city correcting itself mid-reveal would read as a bug, not as
+     precision. */
+  function tryGeo(deadlineMs) {
+    return new Promise(function (resolve) {
+      var settled = false;
+      function done(v) { if (!settled) { settled = true; resolve(v); } }
+
+      var ac = null;
+      try { ac = new global.AbortController(); } catch (e) {}
+      var timer = global.setTimeout(function () {
+        if (ac) try { ac.abort(); } catch (e) {}
+        done(null);
+      }, deadlineMs);
+
+      var opts = ac ? { signal: ac.signal } : {};
+      global.fetch('/api/geocode?whoami=1', opts).then(function (r) {
+        return r && r.ok ? r.json() : null;
+      }).then(function (d) {
+        global.clearTimeout(timer);
+        if (!d || !d.ok) return done(null);
+        /* City first, then the wider region, then the country — the
+           first of those that is actually on the map. Most IP geo
+           resolves to a metro area, so city is the common case; region
+           and country are what is left for it to be honest about
+           when city does not land anywhere on the map. */
+        done(lookup(d.city) || lookup(d.region) || lookup(d.country) || null);
+      }).catch(function () {
+        global.clearTimeout(timer);
+        done(null);
+      });
+    });
+  }
+
   function rnd(a, b) { return a + Math.random() * (b - a); }
   function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
   function r1(n) { return Math.round(n * 10) / 10; }
@@ -405,8 +454,30 @@
     return out;
   }
 
+  /* Two grammars. Naming a place is a claim, so it is only made when
+     something — an explicit param, a landing page, or a confident geo
+     read — has told us the place. Otherwise the line says the one
+     thing that is true on every load and can never be contradicted,
+     and a facade full of lit windows is, if anything, a better
+     picture of "somewhere" than of anywhere in particular.
+
+     Its own function because it is rendered twice: once synchronously
+     at build time (so the gate never waits on anything), and again if
+     a geo lookup resolves to something more specific before the word
+     is due to reveal — see upgradeWord() below. */
+  function placeLine(place, fallback) {
+    var lead = place ? 'Tonight in ' : 'Tonight, somewhere in ';
+    var name = place || (fallback || 'Africa');
+    var words = String(name).split(' ').map(function (wd, i) {
+      return '<span style="--d:' + (0.18 + i * 0.09) + 's">' + esc(wd) + '</span>';
+    }).join(' ');
+    return lead + '<b>' + words + '</b>';
+  }
+
   function build(opts) {
-    var place = resolvePlace(opts.place);
+    /* Resolution happens once, in the caller, not here — build() only
+       ever renders what it is told. See resolvePlace() and tryGeo(). */
+    var place = opts.place || null;
 
     /* The hero block. Off-centre, because a building centred in frame
        is a diagram and a building slightly off it is a photograph. */
@@ -433,17 +504,7 @@
 
     var h = mid.hero || { x: 52, y: 46 };
 
-    /* Two grammars. Naming a place is a claim, so it is only made when
-       the page has told us the place. Otherwise the line says the one
-       thing that is true on every load and can never be contradicted —
-       and a facade full of lit windows is, if anything, a better
-       picture of "somewhere" than of anywhere in particular. */
-    var lead = place ? 'Tonight in ' : 'Tonight, somewhere in ';
-    var name = place || (opts.fallback || 'Africa');
-
-    var words = String(name).split(' ').map(function (wd, i) {
-      return '<span style="--d:' + (0.18 + i * 0.09) + 's">' + esc(wd) + '</span>';
-    }).join(' ');
+    var line = placeLine(place, opts.fallback);
 
     var g = doc.createElement('div');
     g.id = ID;
@@ -460,7 +521,7 @@
         '<div class="sg-scrim"></div>' +
         '<div class="sg-word">' +
           '<div class="sg-kicker">Cabana &middot; Stays</div>' +
-          '<div class="sg-place">' + lead + '<b>' + words + '</b></div>' +
+          '<div class="sg-place">' + line + '</div>' +
           '<div class="sg-note">Booked direct. The host keeps all of it.</div>' +
         '</div>' +
         '<div class="sg-focus"></div>' +
@@ -492,14 +553,20 @@
     var brief = opts.brief != null ? !!opts.brief : seen;
     if (opts.force) brief = false;
 
+    /* Resolved once, here, rather than inside build() — play() needs
+       to know whether something explicit already answered before it
+       decides whether a geo guess is even worth attempting. */
+    var explicitPlace = resolvePlace(opts.place);
+    var buildOpts = { place: explicitPlace, fallback: opts.fallback };
+
     var node = opts.node || doc.getElementById(ID);
     if (!node) {
-      node = build(opts);
+      node = build(buildOpts);
       (doc.body || doc.documentElement).appendChild(node);
     } else if (!node.querySelector('.sg-stage')) {
       /* A placeholder the page painted before this script arrived.
          Fill it rather than stacking a second gate on top of it. */
-      var built = build(opts);
+      var built = build(buildOpts);
       node.innerHTML = built.innerHTML;
       node.style.setProperty('--hx', built.style.getPropertyValue('--hx'));
       node.style.setProperty('--hy', built.style.getPropertyValue('--hy'));
@@ -547,18 +614,39 @@
     doc.addEventListener('keydown', onKey, true);
     doc.addEventListener('visibilitychange', onHide);
 
-    /* Matches the flights desk and the tours canopy: about 4.8s, so
-       the three arrivals on this platform feel like one system. */
+    /* Starts at first script parse rather than waiting for
+       DOMContentLoaded — see the note beside this script's tag in
+       apartments.html. Held a beat longer here too, in step with
+       flights and tours: three arrivals, one pace. */
     var T = brief
       ? { lit: 0,  say: -1,  go: 420,  done: 1500 }
-      : { lit: 40, say: 900, go: 2900, done: 4800 };
+      : { lit: 40, say: 1050, go: 3450, done: 5900 };
     if (reduce) T = { lit: 0, say: 0, go: 620, done: 1150 };
 
     at(T.lit, function () { node.classList.add('sg-lit'); });
-    if (T.say >= 0) at(T.say, function () { node.classList.add('sg-say'); });
+
+    /* The one guess this file makes, attempted only when nothing more
+       certain answered and only when the word will actually be shown
+       (brief mode hides it entirely — no point asking). Bounded well
+       inside the gap before T.say, and it only ever writes to the DOM
+       if that reveal has not happened yet: a city correcting itself
+       mid-animation would read as a bug, not as precision. */
+    if (!explicitPlace && !brief && T.say > 0) {
+      var wordShown = false;
+      var geoBudget = Math.max(120, T.say - 150);
+      tryGeo(geoBudget).then(function (guess) {
+        if (!guess || wordShown || settled) return;
+        var el = node.querySelector('.sg-place');
+        if (el) el.innerHTML = placeLine(guess, opts.fallback);
+      });
+      at(T.say, function () { wordShown = true; node.classList.add('sg-say'); });
+    } else if (T.say >= 0) {
+      at(T.say, function () { node.classList.add('sg-say'); });
+    }
+
     at(T.go, function () { node.classList.add('sg-go'); });
     at(T.done, finish);
-    at(T.done + 2800, finish);   /* hard ceiling */
+    at(T.done + 3000, finish);   /* hard ceiling */
 
     live = { promise: promise, skip: skip, finish: finish };
     return promise;
@@ -574,7 +662,7 @@
     curtain: function (o) {
       o = o || {};
       if (doc.getElementById(ID)) return;
-      var n = build(o);
+      var n = build({ place: resolvePlace(o.place), fallback: o.fallback });
       n.classList.add('sg-lit');
       (doc.body || doc.documentElement).appendChild(n);
       try { doc.documentElement.classList.add('sg-lock'); } catch (e) {}

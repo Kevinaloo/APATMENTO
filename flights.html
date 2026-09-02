@@ -67,6 +67,17 @@
 <link rel="stylesheet" href="/cabana-flights.css"/>
 
 <style>
+/* Critical paint for the take-off screen, duplicated from #fd-tx in
+   cabana-flights.css. That file is one of four render-blocking
+   stylesheets ahead of it in this document, and a script does not run
+   until every preceding synchronous stylesheet has loaded — so without
+   this, first paint (and the take-off script right after the markup)
+   both wait on a network round trip that has nothing to do with
+   either. This rule is intentionally the bare minimum: enough to
+   cover the page in the right colour immediately, with the real rule
+   in cabana-flights.css taking over the instant it arrives. */
+#fd-tx{position:fixed;inset:0;z-index:9999;overflow:hidden;
+  background:radial-gradient(ellipse 140% 90% at 50% 100%,#131C3D 0%,#070B18 45%,#04060E 100%);}
 /* Base reset and the shared chrome this page still borrows from the
    original layout. Everything else lives in cabana-flights.css. */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -208,6 +219,97 @@ html,body{min-height:100%;font-family:'Inter',system-ui,-apple-system,sans-serif
   </div>
   <div class="fd-tx-skip">Tap to skip</div>
 </div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     TAKE-OFF SEQUENCE — deliberately its own script, immediately after
+     the markup it drives and BEFORE vendor-supabase.js below.
+
+     That ordering used to be reversed: this logic sat inside the BOOT
+     block after two blocking script tags, so on a real connection the
+     whole animation waited for a Supabase bundle to finish downloading
+     before its first frame even began. Measured under a throttled
+     mobile profile, DOMContentLoaded didn't fire until ~5.4s in, so the
+     dismiss timer's first tick landed around 8.4s — the guest stared at
+     a static dark screen for most of that, then whatever animation was
+     left played in a rush before the safety-net timeout cut it. Splash
+     screens exist to cover load time; one that is gated behind load
+     time cannot do that job.
+
+     Nothing here touches window.sb or anything the later BOOT script
+     sets up — it only reads and writes inside #fd-tx. ─────────────────────────────────────────────────────────────────── -->
+<script>
+(function () {
+  'use strict';
+
+  var stars = document.getElementById('fd-stars');
+  if (stars && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    var n = window.innerWidth < 700 ? 26 : 54, out = '';
+    for (var i = 0; i < n; i++) {
+      out += '<i style="left:' + (Math.random() * 100).toFixed(2) + '%;top:' +
+             (Math.random() * 70).toFixed(2) + '%;animation-delay:' +
+             (Math.random() * 4).toFixed(2) + 's;opacity:' +
+             (0.2 + Math.random() * 0.5).toFixed(2) + '"></i>';
+    }
+    stars.innerHTML = out;
+  }
+
+  var rw = document.getElementById('fd-runway');
+  if (rw) {
+    var html = '';
+    for (var c = 0; c < 9; c++) {
+      html += '<i style="animation-delay:' + (-c * 0.117).toFixed(3) + 's"></i>';
+    }
+    for (var e = 0; e < 7; e++) {
+      var d = (-e * 0.178).toFixed(3);
+      html += '<b style="left:24%;animation-delay:' + d + 's"></b>';
+      html += '<b style="left:76%;animation-delay:' + d + 's"></b>';
+    }
+    rw.innerHTML = html;
+  }
+
+  var title = document.getElementById('fd-tx-title');
+  if (title) {
+    var word = 'CABANA';
+    title.innerHTML = word.split('').map(function (ch, i) {
+      return '<span style="animation-delay:' + (0.95 + i * 0.075).toFixed(3) + 's">' + ch + '</span>';
+    }).join('');
+  }
+
+  var tx = document.getElementById('fd-tx');
+  var gone = false;
+  function dismiss() {
+    if (gone || !tx) return;
+    gone = true;
+    tx.style.pointerEvents = 'none';
+    tx.classList.add('fd-out');
+    setTimeout(function () { tx.style.display = 'none'; }, 900);
+  }
+  window.dismissFdTx = dismiss;   /* exposed for the console / other pages, matches
+                                      window.dismissEnterTx and window.CabanaJungleGate.skip */
+
+  if (tx) {
+    var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    tx.addEventListener('click', dismiss);
+    tx.addEventListener('touchstart', dismiss, { passive: true });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' || e.key === ' ') dismiss();
+    });
+
+    if (reduced) {
+      setTimeout(dismiss, 650);
+    } else {
+      /* The full arc is 2.7s. Held a beat longer than before — this is
+         the arrival flights, tours and stays now share, so a guest
+         going between them meets the same pace on all three. */
+      setTimeout(dismiss, 4100);
+    }
+    /* Belt and braces: never trap someone behind the animation. Now
+       purely a safety net for this script's own failure modes, not a
+       clock racing page load — the sequence starts at first parse. */
+    setTimeout(dismiss, 6800);
+  }
+})();
+</script>
 
 <!-- ambient night sky behind the whole page -->
 <div class="fd-sky" aria-hidden="true">
@@ -601,8 +703,10 @@ html,body{min-height:100%;font-family:'Inter',system-ui,-apple-system,sans-serif
 <script>
 /* ══════════════════════════════════════════════════════════════════════
    BOOT
-   Three small jobs, all of which must survive the rest of the page
-   failing to load: the client, the sky, and the take-off sequence.
+   What is left once the take-off sequence moved to its own early
+   script (see the note above vendor-supabase.js): the client, which
+   needs window.supabase to exist and so must wait for it, and the
+   affiliate widget, which is deliberately lazy.
 ══════════════════════════════════════════════════════════════════════ */
 (function () {
   'use strict';
@@ -615,78 +719,6 @@ html,body{min-height:100%;font-family:'Inter',system-ui,-apple-system,sans-serif
       window.sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     }
   } catch (e) { /* the page still renders; the desk just cannot be reached */ }
-
-  /* ── starfield ────────────────────────────────────────────────────── */
-  var stars = document.getElementById('fd-stars');
-  if (stars && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    var n = window.innerWidth < 700 ? 26 : 54, out = '';
-    for (var i = 0; i < n; i++) {
-      out += '<i style="left:' + (Math.random() * 100).toFixed(2) + '%;top:' +
-             (Math.random() * 70).toFixed(2) + '%;animation-delay:' +
-             (Math.random() * 4).toFixed(2) + 's;opacity:' +
-             (0.2 + Math.random() * 0.5).toFixed(2) + '"></i>';
-    }
-    stars.innerHTML = out;
-  }
-
-  /* ── runway lights ────────────────────────────────────────────────── */
-  var rw = document.getElementById('fd-runway');
-  if (rw) {
-    var html = '';
-    /* centreline: staggered so the lights appear to stream continuously */
-    for (var c = 0; c < 9; c++) {
-      html += '<i style="animation-delay:' + (-c * 0.117).toFixed(3) + 's"></i>';
-    }
-    /* edge lights either side */
-    for (var e = 0; e < 7; e++) {
-      var d = (-e * 0.178).toFixed(3);
-      html += '<b style="left:24%;animation-delay:' + d + 's"></b>';
-      html += '<b style="left:76%;animation-delay:' + d + 's"></b>';
-    }
-    rw.innerHTML = html;
-  }
-
-  /* ── split-flap wordmark ──────────────────────────────────────────── */
-  var title = document.getElementById('fd-tx-title');
-  if (title) {
-    var word = 'CABANA';
-    title.innerHTML = word.split('').map(function (ch, i) {
-      return '<span style="animation-delay:' + (0.95 + i * 0.075).toFixed(3) + 's">' + ch + '</span>';
-    }).join('');
-  }
-
-  /* ── the sequence ─────────────────────────────────────────────────── */
-  var tx = document.getElementById('fd-tx');
-  var gone = false;
-
-  function dismiss() {
-    if (gone || !tx) return;
-    gone = true;
-    tx.style.pointerEvents = 'none';
-    tx.classList.add('fd-out');
-    setTimeout(function () { tx.style.display = 'none'; }, 900);
-  }
-
-  if (tx) {
-    var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    /* Skipping is not a hidden gesture: the label says so. */
-    tx.addEventListener('click', dismiss);
-    tx.addEventListener('touchstart', dismiss, { passive: true });
-    document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' || e.key === ' ') dismiss();
-    });
-
-    if (reduced) {
-      setTimeout(dismiss, 650);
-    } else {
-      /* The full arc is 2.7s. Hold the cruise frame briefly so it reads
-         as an arrival rather than a cut. */
-      setTimeout(dismiss, 3150);
-    }
-    /* Belt and braces: never trap someone behind the animation. */
-    setTimeout(dismiss, 5200);
-    window.addEventListener('load', function () { setTimeout(dismiss, 2600); });
-  }
 
   /* ── affiliate search, loaded late and on demand ───────────────────
      This is the secondary path. It should never compete with the desk

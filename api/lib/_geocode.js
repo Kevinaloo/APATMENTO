@@ -639,12 +639,61 @@ function overLimit(ip) {
 
 /* ── Handler ──────────────────────────────────────────────────────── */
 
+/* ── Whoami ───────────────────────────────────────────────────────────
+   GET /api/geocode?whoami=1
+
+   "Where is this request probably coming from", read off the platform
+   it is running on rather than looked up. Vercel resolves every request
+   to a city/region/country before it reaches a function and hands the
+   answer over as headers — computed upstream, already paid for, so this
+   costs nothing beyond reading req.headers. No provider chain, no
+   network call, no cache, and deliberately none of the ~750 lines above
+   it: those answer "where is Westlands", this answers "where even are
+   you", and the two should not share a code path just because they are
+   both geo.
+
+   What the caller does with the answer is not this file's business. It
+   is used today by the stays arrival screen to decide whether it can
+   honestly say a neighbourhood, but it says nothing about honesty
+   itself — it returns what the platform believes, or ok:false, and the
+   caller is the one that gets to decide a guess is not good enough.
+
+   Deliberately quiet about precision: IP geolocation resolves to a
+   metro area, not a street, and returning latitude/longitude at all
+   invites a caller to treat this as more precise than it is. Only
+   city/region/country are exposed. */
+function whoamiHandler(req, res) {
+  res.setHeader('Cache-Control', 'private, max-age=0, no-store');
+
+  var city    = req.headers['x-vercel-ip-city'];
+  var region  = req.headers['x-vercel-ip-country-region'];
+  var country = req.headers['x-vercel-ip-country'];
+
+  if (!city && !region && !country) {
+    return res.status(200).json({ ok: false });
+  }
+
+  var decode = function (v) {
+    if (!v) return null;
+    try { return decodeURIComponent(v); } catch (e) { return v; }
+  };
+
+  return res.status(200).json({
+    ok: true,
+    city: decode(city),
+    region: decode(region),
+    country: decode(country),
+  });
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET') return res.status(405).json({ ok: false, error: 'method_not_allowed' });
+
+  if (req.query.whoami != null) return whoamiHandler(req, res);
 
   const providers = activeProviders();
 

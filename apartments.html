@@ -2599,13 +2599,21 @@ html.sg-lock,html.sg-lock body{overflow:hidden!important;}
 <div id="stay-gate"></div>
 <script>document.documentElement.classList.add('sg-lock');</script>
 
-<script src="/cabana-stay-gate.js" defer></script>
+<script src="/cabana-stay-gate.js"></script>
 <script>
-/* Its own <script>, immediately after the markup it owns. A curtain
-   that fails to lift is an unusable site, so its removal must never
-   depend on 3,000 lines of unrelated page code having run without
-   throwing. The gate covers the page's own load, so the time it takes
-   is time this page was going to spend regardless. */
+/* Its own <script>, immediately after the markup it owns and BEFORE
+   vendor-supabase.js further down. That ordering matters: it used to
+   run deferred, which meant its execution — and so the whole
+   animation's first frame — waited for everything ahead of it in the
+   document to finish parsing. Measured under a throttled mobile
+   profile, DOMContentLoaded didn't fire until ~4.5s in, so the guest
+   stared at a static dark screen for most of that, then whatever was
+   left of the sequence played in a rush. A splash exists to cover
+   load time; one gated behind load time cannot do that job.
+
+   A curtain that fails to lift is an unusable site on the platform's
+   flagship page, so its removal must never depend on 3,000 lines of
+   unrelated page code having run without throwing. */
 (function () {
   function strip() {
     var n = document.getElementById('stay-gate');
@@ -2617,12 +2625,10 @@ html.sg-lock,html.sg-lock body{overflow:hidden!important;}
     if (!window.CabanaStayGate) { strip(); return; }
     window.CabanaStayGate.play({ node: document.getElementById('stay-gate') });
   }
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function () { setTimeout(go, 0); });
-  } else { setTimeout(go, 0); }
-  /* Last line of defence: a guest staring at a dark rectangle is the
-     worst outcome this file can produce. */
-  setTimeout(function () { if (document.getElementById('stay-gate')) strip(); }, 9000);
+  go();
+  /* Last line of defence: purely a failure-mode safety net now, not a
+     clock racing page load — the sequence starts at first parse. */
+  setTimeout(function () { if (document.getElementById('stay-gate')) strip(); }, 9500);
   window.addEventListener('pageshow', function (e) { if (e.persisted) strip(); });
 })();
 </script>

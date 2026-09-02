@@ -398,6 +398,40 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--glass);c
      exists before any JS has run. -->
 <div id="jungle-gate"></div>
 <script>document.documentElement.classList.add('jg-lock');</script>
+<script src="/cabana-jungle-gate.js"></script>
+<script>
+/* Its own <script>, immediately after the markup it owns and BEFORE
+   vendor-supabase.js further down. That ordering used to be reversed:
+   this ran deferred, after a blocking Supabase bundle, so on a real
+   connection the whole animation waited for that bundle to finish
+   downloading before its first frame began. Measured under a
+   throttled mobile profile, DOMContentLoaded didn't fire until ~5.8s
+   in — the guest stared at a static dark screen for most of that, then
+   whatever was left of the sequence played in a rush. A splash exists
+   to cover load time; one gated behind load time cannot do that job. */
+(function () {
+  function strip() {
+    var n = document.getElementById('jungle-gate');
+    if (n && n.parentNode) n.parentNode.removeChild(n);
+    document.documentElement.classList.remove('jg-lock');
+  }
+  window.dismissEnterTx = strip;
+  function go() {
+    if (!window.CabanaJungleGate) { strip(); return; }
+    window.CabanaJungleGate.play({
+      node: document.getElementById('jungle-gate'),
+      title: 'Tours',
+      sub: 'Run by guides who live here'
+    });
+  }
+  go();
+  /* Last resort: if nothing has removed the cover by now, something is
+     wrong and a visitor staring at a dark rectangle is the worst
+     possible outcome. Purely a failure-mode safety net now — not a
+     clock racing page load, since the sequence starts at first parse. */
+  setTimeout(function () { if (document.getElementById('jungle-gate')) strip(); }, 9500);
+})();
+</script>
 
 <!-- TOPBAR -->
 <div class="topbar">
@@ -497,34 +531,6 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--glass);c
 <script src="/cabana-pay.js" defer></script>
 <script src="/cabana-tour-book.js" defer></script>
 <script src="/cabana-tours.js" defer></script>
-<script src="/cabana-jungle-gate.js" defer></script>
-<script>
-/* The gate covers the page's own load, so it costs nothing it was not
-   already going to spend. If the script fails to arrive at all, the
-   fallback strips the cover rather than leaving a dark screen. */
-(function () {
-  function strip() {
-    var n = document.getElementById('jungle-gate');
-    if (n && n.parentNode) n.parentNode.removeChild(n);
-    document.documentElement.classList.remove('jg-lock');
-  }
-  function go() {
-    if (!window.CabanaJungleGate) { strip(); return; }
-    window.CabanaJungleGate.play({
-      node: document.getElementById('jungle-gate'),
-      title: 'Tours',
-      sub: 'Run by guides who live here'
-    });
-  }
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function () { setTimeout(go, 0); });
-  } else { setTimeout(go, 0); }
-  /* Last resort: if nothing has removed the cover by now, something is
-     wrong and a visitor staring at a dark rectangle is the worst
-     possible outcome. */
-  setTimeout(function () { if (document.getElementById('jungle-gate')) strip(); }, 9000);
-})();
-</script>
 
 
 <style>
