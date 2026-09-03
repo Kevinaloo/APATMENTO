@@ -1,48 +1,77 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   CABANA · LISTING OWNERSHIP
+   CABANA · LISTING OWNERSHIP  (v2)
    apa-ownership.js
 
-   The one place the browser knows how a listing belongs to somebody. Loaded
-   by the listing form, the partner listings board, the traveller dashboard
-   (for the claim inbox) and the ambassador dashboard.
+   The one place the browser knows how a listing belongs to somebody.
 
-   A listing is one of three things, and it says which:
+   A listing is one of three SHAPES:
 
      sole         one person operates and manages it
      partnership  several people co-own it, with shares that must total 100%
-     on_behalf    somebody filled the form in for a named owner, and the
-                  listing hands over the moment that owner claims it
+     on_behalf    somebody filled the form in for a named owner; the listing
+                  transfers the moment that owner claims it
+
+   Within a partnership (and on any listing), there are now four ROLES:
+
+     operator     the primary account holder (one per listing, always)
+     partner      co-owner with a declared equity share
+     manager      operational access only — zero equity. For property
+                  management companies, Airbnb co-hosts, caretakers, anyone
+                  who runs the listing day-to-day but does not own it.
+                  A manager may hold manages_payouts, delegating payout
+                  approval from the operator to that manager.
+     viewer       read-only access — zero equity. For accountants, investors,
+                  silent supervisors who need visibility but must change nothing.
+
+   Payout routing (partnerships only):
+
+     consolidated  every booking payout goes to one nominated account
+                   (the operator by default, or any other partner nominated
+                   explicitly). They split it offline however they like.
+     split         the platform credits each partner's wallet at settlement,
+                   in the ratio of their equity_bps. The money never passes
+                   through anyone else's hands.
 
    WHAT THIS FILE DOES NOT DO
    ──────────────────────────
    It does not decide anything. Every write is an RPC into a security-definer
-   function that re-derives the caller from auth.uid() and re-checks the
-   ownership itself. The equity arithmetic below exists to give someone a
-   live total as they type — Postgres does it again, and Postgres is right.
-   That duplication is deliberate: a share validated only in a browser is a
-   share validated by the one participant an interested party controls.
-
-   Design rules, inherited from apa-session.js:
-     1. Nothing throws. A failed ownership call must never take a page down.
-     2. The token comes from ApaSession. We never hold our own.
+   function that re-derives the caller from auth.uid() and re-checks ownership.
+   The equity arithmetic below gives someone a live total as they type —
+   Postgres does it again, and Postgres is right. That duplication is
+   deliberate: a share validated only in a browser is a share validated by
+   the one participant an interested party controls.
 
    Public API:
-     ApaOwnership.TYPES                       the three shapes, with copy
-     ApaOwnership.declare(listingId, spec)    → { ok, ownership_type, … }
-     ApaOwnership.forListing(listingId)       → ownership row, or null
-     ApaOwnership.transfer(listingId, to)     → { ok, transfer_id }
+     ApaOwnership.TYPES                          the three shapes, with copy
+     ApaOwnership.ROLES                          all four roles, with copy
+     ApaOwnership.PAYOUT_ROUTINGS               'consolidated' | 'split', with copy
+
+     ApaOwnership.declare(listingId, spec)       → { ok, ownership_type, … }
+     ApaOwnership.addSeat(listingId, seat)       → { ok, seat_id, … }
+     ApaOwnership.removeSeat(seatId)             → { ok }
+     ApaOwnership.setPayoutRouting(listingId, routing, toId?)
+                                                 → { ok, routing, to_name }
+
+     ApaOwnership.forListing(listingId)          → ownership row, or null
+     ApaOwnership.forListings(ids)               → { id → row }
+     ApaOwnership.myPayoutSplits(listingId?)     → [ split rows ]
+
+     ApaOwnership.transfer(listingId, to)        → { ok, transfer_id }
      ApaOwnership.cancelTransfer(id)
-     ApaOwnership.inbox()                     → [ listings waiting for you ]
-     ApaOwnership.mountInbox(el?)             renders that into #ownership-inbox
+     ApaOwnership.inbox()                        → [ listings waiting for you ]
+     ApaOwnership.mountInbox(el?)
      ApaOwnership.accept(transferId)
      ApaOwnership.decline(transferId)
-     ApaOwnership.sendInvite(transferId)         emails + returns share link
+     ApaOwnership.sendInvite(transferId)
      ApaOwnership.confirmSeat(partnerId)
 
-     ApaOwnership.splitEqually(n)             → [33.34, 33.33, 33.33]
-     ApaOwnership.validate(spec)              → null, or a sentence to show
-     ApaOwnership.describe(row)               → 'Partnership · 3 co-owners'
-     ApaOwnership.normContact(text)           → the same rule Postgres uses
+     ApaOwnership.splitEqually(n)                → [33.34, 33.33, 33.33]
+     ApaOwnership.validate(spec)                 → null, or a sentence to show
+     ApaOwnership.validateSeat(seat)             → null, or a sentence to show
+     ApaOwnership.describe(row)                  → 'Partnership · 3 co-owners'
+     ApaOwnership.describePayoutRouting(row)     → human sentence about routing
+     ApaOwnership.normContact(text)
+     ApaOwnership.looksLikeEmail(text)
    ═══════════════════════════════════════════════════════════════════════════ */
 (function (global) {
   'use strict';
@@ -59,14 +88,6 @@
     return global.sb || null;
   }
 
-  /* Every call returns a shape, never a rejection. A dashboard that throws
-     because an ownership badge failed to load is a dashboard nobody can use.
-
-     IMPORTANT: We always pass the JWT explicitly so the RPC never runs as
-     anon due to a race where Supabase has not yet restored the persisted
-     session. Without this, inbox() returns [] before the session is ready,
-     claim ID in the URL finds no match, and the mismatch dialog fires for
-     the correct account holder. */
   function rpc(fn, args) {
     var c = client();
     if (!c || !c.rpc) {
@@ -83,13 +104,9 @@
         return { ok: false, error: 'Something went wrong. Try again.' };
       });
     }
-    /* If ApaSession can give us a token, set it on the client auth header
-       before the call. This guarantees the RPC sees the authenticated user
-       even if the client has not yet restored the session from storage. */
     if (global.ApaSession && global.ApaSession.token) {
       return global.ApaSession.token().then(function (tok) {
         if (tok && c.auth && c.auth.setSession) {
-          /* setSession is heavy — just override the header for this call */
           try {
             var headers = { Authorization: 'Bearer ' + tok };
             return c.rpc(fn, args || {}, { headers: headers }).then(function (r) {
@@ -106,8 +123,6 @@
     return doRpc();
   }
 
-  /* Postgres raises with a sentence written for a human, so show it. The
-     fallback is for the classes of error that are not written for anyone. */
   function friendly(err) {
     var m = (err && (err.message || err.hint)) || '';
     if (!m) return 'Something went wrong. Try again.';
@@ -120,50 +135,116 @@
     return m.replace(/^ERROR:\s*/i, '');
   }
 
-  /* ── The three shapes, with the copy that describes them ─────────────
-     Kept here rather than in each page's markup so the listing form, the
-     listings board and the ambassador dashboard cannot describe the same
-     choice three different ways. */
+  /* ── The three ownership shapes ────────────────────────────────────── */
   var TYPES = [
     {
-      key: 'sole',
+      key:   'sole',
       label: 'I operate and manage it myself',
       short: 'Sole operator',
       blurb: 'You own or manage this listing on your own. Bookings, payouts and '
-           + 'guest messages all come to you. This is the usual answer.',
+           + 'guest messages all come to you. You can still add a manager or viewer '
+           + 'later if you need someone to help run it.',
       icon: '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>'
     },
     {
-      key: 'partnership',
+      key:   'partnership',
       label: 'We own it together',
       short: 'Partnership',
       blurb: 'Several of you co-own this listing. Add the other partners and how '
-           + 'the ownership is split. They can see the listing and its earnings '
-           + 'once they join, and the split is on the record from day one.',
+           + 'the ownership is split. Choose whether the platform pays out to one '
+           + 'nominated account or splits directly to each partner\'s wallet.',
       icon: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>'
           + '<path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>'
     },
     {
-      key: 'on_behalf',
+      key:   'on_behalf',
       label: 'I am listing it for someone else',
       short: 'On behalf of someone',
-      blurb: 'The property is not yours. Give the owner’s name and contact and '
-           + 'the listing is held for them — the moment they claim it, it becomes '
-           + 'theirs and leaves your account entirely.',
+      blurb: 'The property is not yours. Give the owner\'s name and email and the '
+           + 'listing is held for them — the moment they claim it, it becomes theirs '
+           + 'and leaves your account entirely.',
       icon: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>'
           + '<path d="m17 11 2 2 4-4"/>'
     }
   ];
 
-  function typeFor(key) {
-    for (var i = 0; i < TYPES.length; i++) if (TYPES[i].key === key) return TYPES[i];
-    return TYPES[0];
-  }
+  /* ── The four seat roles ─────────────────────────────────────────────── */
+  var ROLES = [
+    {
+      key:         'partner',
+      label:       'Co-owner (partner)',
+      short:       'Partner',
+      hasEquity:   true,
+      blurb:       'Owns a share of this listing. Gets paid according to their equity '
+                 + 'when payouts are split, or shares the payout offline under '
+                 + 'consolidated routing. They can see earnings, bookings and reviews.',
+      icon: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>'
+    },
+    {
+      key:         'manager',
+      label:       'Manager / Co-host',
+      short:       'Manager',
+      hasEquity:   false,
+      blurb:       'Runs the listing operationally — updates prices, manages the '
+                 + 'calendar, handles guests — but does not own any part of it. '
+                 + 'Right for a property management company, a caretaker, or a '
+                 + 'full-time co-host who is paid a fee rather than a share. '
+                 + 'A manager can optionally be granted payout-approval rights so '
+                 + 'they can release payouts without the owner stepping in.',
+      icon: '<rect x="2" y="7" width="20" height="14" rx="2"/>'
+          + '<path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>'
+    },
+    {
+      key:         'viewer',
+      label:       'Viewer (read-only)',
+      short:       'Viewer',
+      hasEquity:   false,
+      blurb:       'Can see the listing\'s bookings, earnings and calendar but cannot '
+                 + 'change anything. Right for a silent investor, an accountant, or a '
+                 + 'supervisor who needs visibility but should not operate the listing.',
+      icon: '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>'
+          + '<circle cx="12" cy="12" r="3"/>'
+    }
+  ];
 
-  /* ── Contact normalisation ────────────────────────────────────────────
-     THE SAME RULE AS public.cabana_norm_contact(). Still reads phone-shaped
-     text for legacy rows saved before ownership claims went email-only —
-     see cabana_is_email() on the database side for why new ones cannot. */
+  /* ── Payout routing options ──────────────────────────────────────────── */
+  var PAYOUT_ROUTINGS = [
+    {
+      key:    'consolidated',
+      label:  'Pay one account',
+      short:  'Consolidated',
+      blurb:  'Every booking payout goes to one nominated account — the operator '
+            + 'by default, or any other partner you choose. That person is responsible '
+            + 'for dividing the money with their partners however they have agreed. '
+            + 'Simple, and the right choice when partners trust each other and prefer '
+            + 'to handle splits themselves.',
+      icon: '<circle cx="12" cy="12" r="10"/>'
+          + '<path d="M12 6v6l4 2"/>'
+    },
+    {
+      key:    'split',
+      label:  'Split to each partner automatically',
+      short:  'Automatic split',
+      blurb:  'The platform divides every payout the moment a booking settles, '
+            + 'crediting each partner\'s wallet in proportion to their equity share. '
+            + 'No money passes through any partner\'s hands on the way to another. '
+            + 'Every partner sees their own cut, dated, with the booking it came from. '
+            + 'The right choice when partners want transparency and certainty without '
+            + 'having to trust anyone to forward their share.',
+      icon: '<line x1="8" y1="6" x2="21" y2="6"/>'
+          + '<line x1="8" y1="12" x2="21" y2="12"/>'
+          + '<line x1="8" y1="18" x2="21" y2="18"/>'
+          + '<line x1="3" y1="6" x2="3.01" y2="6"/>'
+          + '<line x1="3" y1="12" x2="3.01" y2="12"/>'
+          + '<line x1="3" y1="18" x2="3.01" y2="18"/>'
+    }
+  ];
+
+  function typeFor(key)    { return TYPES.filter(function(t){ return t.key===key; })[0] || TYPES[0]; }
+  function roleFor(key)    { return ROLES.filter(function(r){ return r.key===key; })[0] || ROLES[0]; }
+  function routingFor(key) { return PAYOUT_ROUTINGS.filter(function(r){ return r.key===key; })[0] || PAYOUT_ROUTINGS[0]; }
+
+  /* ── Contact helpers ─────────────────────────────────────────────────── */
   function normContact(text) {
     var s = String(text == null ? '' : text).trim();
     if (!s) return null;
@@ -173,23 +254,15 @@
     return digits.slice(-9);
   }
 
-  /* Strict email check, used everywhere a NEW contact is collected. Every
-     Cabana signup path — password, magic link, Google — reliably fills in
-     an email address; none of them reliably fill in a phone number, so a
-     transfer, an on_behalf hold or a partnership seat can only be built on
-     an email from here on. Matches public.cabana_is_email() on purpose. */
   function looksLikeEmail(text) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(text == null ? '' : text).trim());
   }
 
-  /* ── Equity ───────────────────────────────────────────────────────────
-     An equal split of 100 between three people is not 33.33 three times.
-     Postgres works in basis points and gives the remainder to the operator;
-     this mirrors that exactly so the preview and the saved result agree. */
+  /* ── Equity helpers ──────────────────────────────────────────────────── */
   function splitEqually(seats) {
     var n = Math.max(1, Math.round(Number(seats) || 1));
     var each = Math.floor(10000 / n);
-    var out = [];
+    var out  = [];
     for (var i = 0; i < n; i++) out.push(each / 100);
     out[0] = (each + (10000 - each * n)) / 100;
     return out;
@@ -201,9 +274,16 @@
     }, 0);
   }
 
-  /* One validator, used by every screen that collects this, so the listing
-     form and the listings board refuse the same things for the same reasons
-     and in the same words. Returns null when the spec is fine. */
+  function round2(n) { return Math.round((Number(n) || 0) * 100) / 100; }
+
+  function operatorShare(spec) {
+    if (!spec || spec.type !== 'partnership') return 100;
+    var ps = (spec.partners || []).filter(function (p) { return normContact(p.contact); });
+    if (spec.split === 'equal') return splitEqually(ps.length + 1)[0];
+    return round2(100 - sumPct(ps));
+  }
+
+  /* ── Validation ─────────────────────────────────────────────────────── */
   function validate(spec) {
     spec = spec || {};
     if (spec.type === 'sole') return null;
@@ -235,9 +315,6 @@
       if (spec.split === 'custom') {
         var total = sumPct(ps);
         if (total <= 0) return 'Give each partner a share.';
-        /* Under 100 on purpose: what is left over is the operator's own
-           share, and a partnership where the operator holds nothing is a
-           giveaway nobody meant to sign. */
         if (total >= 100) {
           return 'Those shares come to ' + round2(total) + '%, leaving nothing for you. '
                + 'They must total less than 100%.';
@@ -248,18 +325,57 @@
     return 'Choose how this listing is owned.';
   }
 
-  function round2(n) { return Math.round((Number(n) || 0) * 100) / 100; }
-
-  /* What the operator's own share works out to, for the live preview. */
-  function operatorShare(spec) {
-    if (!spec || spec.type !== 'partnership') return 100;
-    var ps = (spec.partners || []).filter(function (p) { return normContact(p.contact); });
-    if (spec.split === 'equal') return splitEqually(ps.length + 1)[0];
-    return round2(100 - sumPct(ps));
+  /* Validate a single non-owner seat before adding it. */
+  function validateSeat(seat) {
+    seat = seat || {};
+    if (!String(seat.name || '').trim()) return 'Give this person\'s name.';
+    if (!looksLikeEmail(seat.contact)) return 'Give their email address.';
+    if (!seat.role || ['manager', 'viewer', 'partner'].indexOf(seat.role) === -1) {
+      return 'Choose a role for this person.';
+    }
+    if (seat.role === 'manager' && seat.manages_payouts) {
+      /* Valid — no extra validation needed; the DB enforces one per listing. */
+    }
+    if ((seat.role === 'manager' || seat.role === 'viewer') && Number(seat.equity_pct) > 0) {
+      return 'Managers and viewers do not hold an equity share. '
+           + 'Use the "partner" role if they co-own the listing.';
+    }
+    if (seat.role === 'partner') {
+      var pct = Number(seat.equity_pct) || 0;
+      if (pct < 0 || pct >= 100) return 'Equity must be between 0% and 99.99%.';
+    }
+    return null;
   }
 
-  /* ── Writes ───────────────────────────────────────────────────────── */
+  /* ── Descriptions ───────────────────────────────────────────────────── */
+  function describe(row) {
+    if (!row) return '';
+    if (row.pending_transfer_id && row.ownership_type !== 'on_behalf') {
+      return 'Transfer to ' + (row.pending_transfer_to || 'someone') + ' pending';
+    }
+    if (row.ownership_type === 'on_behalf') {
+      return 'Held for ' + (row.held_for_name || 'someone else');
+    }
+    if (row.ownership_type === 'partnership') {
+      var n = Number(row.partner_count || 0);
+      var m = Number(row.manager_count || 0);
+      var base = 'Partnership \u00b7 ' + n + ' co-owner' + (n === 1 ? '' : 's');
+      if (m > 0) base += ' \u00b7 ' + m + ' manager' + (m === 1 ? '' : 's');
+      return base;
+    }
+    return 'You operate this listing';
+  }
 
+  function describePayoutRouting(row) {
+    if (!row || row.ownership_type !== 'partnership') return '';
+    if (row.payout_routing === 'split') {
+      return 'Payouts split automatically to each partner\'s wallet';
+    }
+    var name = row.payout_to_name || 'the operator';
+    return 'Payouts consolidated to ' + name;
+  }
+
+  /* ── Writes: ownership declaration ────────────────────────────────── */
   function declare(listingId, spec) {
     spec = spec || {};
     var problem = validate(spec);
@@ -271,8 +387,8 @@
         .filter(function (p) { return looksLikeEmail(p.contact); })
         .map(function (p) {
           return {
-            name:    String(p.name || '').trim(),
-            contact: String(p.contact || '').trim().toLowerCase(),
+            name:       String(p.name || '').trim(),
+            contact:    String(p.contact || '').trim().toLowerCase(),
             equity_pct: spec.split === 'custom' ? round2(p.equity_pct) : null
           };
         });
@@ -289,6 +405,40 @@
     });
   }
 
+  /* ── Writes: add a single seat (manager / viewer / extra partner) ── */
+  function addSeat(listingId, seat) {
+    seat = seat || {};
+    var problem = validateSeat(seat);
+    if (problem) return Promise.resolve({ ok: false, error: problem });
+
+    return rpc('listing_add_seat', {
+      p_listing_id:      listingId,
+      p_name:            String(seat.name || '').trim(),
+      p_contact:         String(seat.contact || '').trim().toLowerCase(),
+      p_role:            seat.role,
+      p_equity_pct:      seat.role === 'partner' ? round2(seat.equity_pct) : 0,
+      p_manages_payouts: !!(seat.role === 'manager' && seat.manages_payouts),
+      p_note:            seat.note ? String(seat.note).slice(0, 500) : null
+    });
+  }
+
+  function removeSeat(seatId) {
+    return rpc('listing_partner_remove', { p_partner_id: seatId });
+  }
+
+  /* ── Writes: payout routing ─────────────────────────────────────── */
+  function setPayoutRouting(listingId, routing, toId) {
+    if (routing !== 'consolidated' && routing !== 'split') {
+      return Promise.resolve({ ok: false, error: 'Routing must be "consolidated" or "split".' });
+    }
+    return rpc('listing_set_payout_routing', {
+      p_listing_id: listingId,
+      p_routing:    routing,
+      p_to_id:      routing === 'consolidated' ? (toId || null) : null
+    });
+  }
+
+  /* ── Writes: transfers ──────────────────────────────────────────── */
   function transfer(listingId, to) {
     to = to || {};
     if (!String(to.name || '').trim()) {
@@ -306,11 +456,11 @@
       if (!r || !r.ok || !r.transfer_id) return r;
       return sendInvite(r.transfer_id).then(function (mail) {
         return Object.assign({}, r, {
-          email_ok: !!(mail && mail.ok),
-          emailed: !!(mail && mail.emailed),
+          email_ok:       !!(mail && mail.ok),
+          emailed:        !!(mail && mail.emailed),
           sender_emailed: !!(mail && mail.sender_emailed),
-          claim_url: mail && mail.claim_url,
-          email_error: mail && !mail.ok ? mail.error : null
+          claim_url:      mail && mail.claim_url,
+          email_error:    mail && !mail.ok ? mail.error : null
         });
       });
     });
@@ -340,7 +490,7 @@
     }).catch(function () { return { ok: false, error: 'The email update is delayed.' }; });
   }
 
-  function accept(id)  {
+  function accept(id) {
     return rpc('listing_transfer_accept', { p_transfer_id: id }).then(function (r) {
       if (!r || !r.ok) return r;
       return notifyDecision(id).then(function (mail) {
@@ -348,6 +498,7 @@
       });
     });
   }
+
   function decline(id) {
     return rpc('listing_transfer_decline', { p_transfer_id: id }).then(function (r) {
       if (!r || !r.ok) return r;
@@ -356,13 +507,10 @@
       });
     });
   }
+
   function cancelTransfer(id) { return rpc('listing_transfer_cancel', { p_transfer_id: id }); }
   function confirmSeat(id)    { return rpc('listing_partner_confirm', { p_partner_id: id }); }
 
-  /* The browser sends only the transfer id. The API re-reads the transfer
-     with service credentials, checks that auth.uid() is its sender, and
-     derives the recipient and listing itself. A caller cannot turn this
-     into a send-email-to-anyone endpoint. */
   function sendInvite(id) {
     var fallbackUrl = global.location && global.location.origin
       ? global.location.origin + '/dashboard.html?claim=' + encodeURIComponent(id || '')
@@ -396,11 +544,7 @@
     });
   }
 
-  /* ── Reads ────────────────────────────────────────────────────────── */
-
-  /* Listings waiting for the signed-in person to claim. The caller never
-     says who they are — the function reads their own email and phone — so
-     this cannot be used to enumerate anybody else's inbox. */
+  /* ── Reads ──────────────────────────────────────────────────────── */
   function inbox() {
     return rpc('listing_transfers_for_me').then(function (r) {
       if (!r || !r.ok) return [];
@@ -430,12 +574,18 @@
       .catch(function (e) { warn('forListings', e); return {}; });
   }
 
-  /* ── Copy ─────────────────────────────────────────────────────────── */
+  /* Per-partner payout split rows for the signed-in user. */
+  function myPayoutSplits(listingId) {
+    var c = client();
+    if (!c) return Promise.resolve([]);
+    var q = c.from('listing_payout_splits').select('*').order('created_at', { ascending: false });
+    if (listingId) q = q.eq('listing_id', listingId);
+    return q.then(function (r) { return (r && r.data) || []; })
+            .catch(function (e) { warn('myPayoutSplits', e); return []; });
+  }
 
-  /* One sentence describing a listing's ownership, for a badge or a row.
-     Kept here so "Held for Mama Zawadi" is worded identically everywhere it
-     appears rather than being re-invented per screen. */
-  function describe(row) {
+  /* ── Copy helpers ───────────────────────────────────────────────── */
+  function describe2(row) {
     if (!row) return '';
     if (row.pending_transfer_id && row.ownership_type !== 'on_behalf') {
       return 'Transfer to ' + (row.pending_transfer_to || 'someone') + ' pending';
@@ -445,23 +595,15 @@
     }
     if (row.ownership_type === 'partnership') {
       var n = Number(row.partner_count || 0);
-      return 'Partnership · ' + n + ' co-owner' + (n === 1 ? '' : 's');
+      var m = Number(row.manager_count || 0);
+      var base = 'Partnership \u00b7 ' + n + ' co-owner' + (n === 1 ? '' : 's');
+      if (m > 0) base += ' \u00b7 ' + m + ' manager' + (m === 1 ? '' : 's');
+      return base;
     }
     return 'You operate this listing';
   }
 
-  /* ── The claim inbox, as a component ──────────────────────────────────
-     A listing transferred to somebody is worth nothing until they see it,
-     and the person receiving one is usually NOT looking at a partner
-     dashboard — they are a traveller who has just been handed a building.
-
-     So this mounts itself into any `#ownership-inbox` on the page and
-     renders nothing at all when there is nothing waiting. A page opts in
-     with one empty div and one script tag, which is the only way this ends
-     up on every surface that needs it rather than the two we remembered.
-
-     It brings its own styles for the same reason: a banner that inherits a
-     dashboard's CSS is a banner that looks broken on the next dashboard. */
+  /* ── Inbox UI (unchanged logic, updated for new roles) ──────────── */
   var CSS_ID = 'apa-ownership-css';
   var CSS = ''
     + '.apa-oi{margin:0 0 18px;display:grid;gap:10px}'
@@ -535,18 +677,12 @@
     var d = document.createElement('dialog');
     d.id = 'apa-claim-dialog'; d.className = 'apa-claim';
     if (mismatch) {
-      /* Build the auth redirect URL preserving the claim param */
       var nextUrl = global.location.pathname + global.location.search;
       var authUrl = 'auth.html?next=' + encodeURIComponent(nextUrl);
       d.innerHTML = '<div class="apa-claim-h"><span>Listing invitation</span></div>'
         + '<div class="apa-claim-b"><h2>This invitation belongs to another account</h2>'
-        + '<p>The invitation was sent to a specific email or phone number. To claim it:</p>'
-        + '<ul style="margin:10px 0 0 0;padding-left:20px;font-size:13.5px;line-height:1.8;color:#66677d">'
-        + '<li><strong>If sent to an email</strong> \u2014 sign in with that exact email address.</li>'
-        + '<li><strong>If sent to a phone number</strong> \u2014 make sure your account has that phone number. '
-        + 'You can add it during sign-up or update it in your profile.</li>'
-        + '</ul>'
-        + '<p style="margin-top:12px;font-size:12px;color:#9ca3af">The link itself never grants ownership \u2014 your identity has to match.</p>'
+        + '<p>The invitation was sent to a specific email address. Sign in with that exact email to claim it.</p>'
+        + '<p style="margin-top:12px;font-size:12px;color:#9ca3af">The link itself never grants ownership — your identity has to match.</p>'
         + '<div class="apa-claim-actions">'
         + '<a class="apa-claim-primary" href="' + authUrl + '">Use another account</a>'
         + '<button class="apa-claim-later" data-close>Close</button>'
@@ -571,7 +707,7 @@
         var act = b.getAttribute('data-claim-act');
         var err = d.querySelector('[data-modal-error]');
         d.querySelectorAll('button').forEach(function (x) { x.disabled = true; });
-        b.textContent = act === 'accept' ? 'Claiming…' : 'Declining…';
+        b.textContent = act === 'accept' ? 'Claiming\u2026' : 'Declining\u2026';
         (act === 'accept' ? accept(item.id) : decline(item.id)).then(function (r) {
           if (r && r.ok) {
             clearClaimUrl();
@@ -630,8 +766,6 @@
         var act  = btn.getAttribute('data-act');
         if (!id) return;
 
-        /* "review" opens the full claim dialog for the item — same UX as
-           clicking the link in the email but works without the URL param. */
         if (act === 'review') {
           var item = items.filter(function (x) { return String(x.id) === id; })[0];
           if (item) claimDialog(item, false);
@@ -640,7 +774,7 @@
 
         card.querySelectorAll('button').forEach(function (b) { b.disabled = true; });
         if (err) { err.hidden = true; }
-        btn.textContent = 'Declining…';
+        btn.textContent = 'Declining\u2026';
 
         decline(id).then(function (r) {
           if (r && r.ok) {
@@ -669,11 +803,6 @@
 
         var match = items.filter(function (x) { return String(x.id) === wanted; })[0];
 
-        /* If we have a claim ID but no match AND we haven't exhausted
-           retries, wait briefly and try again. This handles the race
-           where inbox() fires before Supabase restores the session and
-           the RPC runs as anon, returning an empty array for the correct
-           account holder. Two retries with 800ms gap covers cold starts. */
         if (!match && attempts > 0) {
           return new Promise(function (resolve) {
             setTimeout(function () {
@@ -690,12 +819,8 @@
     return tryMount(2);
   }
 
-  /* Self-mount. A page opts in with `<div id="ownership-inbox"></div>` and
-     nothing else; with no such div this costs one getElementById. */
   function autoMount() {
     if (document.getElementById('ownership-inbox')) {
-      /* After ApaSession has settled, so the first call carries a token
-         rather than failing and leaving the div empty. */
       if (global.ApaSession && global.ApaSession.ready) {
         global.ApaSession.ready(function (state) {
           var wanted = claimIdFromUrl();
@@ -717,30 +842,49 @@
   } else { autoMount(); }
 
   global.ApaOwnership = {
-    TYPES: TYPES,
-    typeFor: typeFor,
+    /* Constants */
+    TYPES:           TYPES,
+    ROLES:           ROLES,
+    PAYOUT_ROUTINGS: PAYOUT_ROUTINGS,
+    typeFor:         typeFor,
+    roleFor:         roleFor,
+    routingFor:      routingFor,
 
-    declare: declare,
-    transfer: transfer,
-    cancelTransfer: cancelTransfer,
-    accept: accept,
-    decline: decline,
-    confirmSeat: confirmSeat,
-    sendInvite: sendInvite,
+    /* Ownership declaration */
+    declare:         declare,
 
-    inbox: inbox,
-    forListing: forListing,
-    forListings: forListings,
+    /* Seat management */
+    addSeat:         addSeat,
+    removeSeat:      removeSeat,
+    confirmSeat:     confirmSeat,
 
-    validate: validate,
-    splitEqually: splitEqually,
-    operatorShare: operatorShare,
-    sumPct: sumPct,
-    normContact: normContact,
-    looksLikeEmail: looksLikeEmail,
-    describe: describe,
+    /* Payout routing */
+    setPayoutRouting:        setPayoutRouting,
+    describePayoutRouting:   describePayoutRouting,
 
-    mountInbox: mountInbox,
-    renderInbox: renderInbox
+    /* Transfers / inbox */
+    transfer:        transfer,
+    cancelTransfer:  cancelTransfer,
+    accept:          accept,
+    decline:         decline,
+    sendInvite:      sendInvite,
+    inbox:           inbox,
+    mountInbox:      mountInbox,
+    renderInbox:     renderInbox,
+
+    /* Data reads */
+    forListing:      forListing,
+    forListings:     forListings,
+    myPayoutSplits:  myPayoutSplits,
+
+    /* Validation & formatting */
+    validate:        validate,
+    validateSeat:    validateSeat,
+    splitEqually:    splitEqually,
+    operatorShare:   operatorShare,
+    sumPct:          sumPct,
+    describe:        describe2,
+    normContact:     normContact,
+    looksLikeEmail:  looksLikeEmail
   };
 })(window);
