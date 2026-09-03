@@ -353,11 +353,21 @@ section[id],div[id^='services'],div[id^='how']{scroll-margin-top:84px;}
 .svc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;}
 @media(max-width:980px){.svc-grid{grid-template-columns:repeat(2,1fr);}}
 @media(max-width:520px){.svc-grid{grid-template-columns:1fr;}}
-.svc-tile{position:relative;display:block;padding:28px;border-radius:24px;background:rgba(255,255,255,.65);backdrop-filter:blur(12px);border:1px solid var(--line);text-decoration:none;overflow:hidden;transition:all .42s cubic-bezier(.22,1,.36,1);opacity:0;transform:translateY(30px);}
-.svc-tile.in{opacity:1;transform:none;}
+.svc-tile{position:relative;display:block;padding:28px;border-radius:24px;background:rgba(255,255,255,.65);backdrop-filter:blur(12px);border:1px solid var(--line);text-decoration:none;overflow:hidden;transition:all .42s cubic-bezier(.22,1,.36,1);opacity:0;}
+.svc-tile.in{animation:tileFadeIn .6s cubic-bezier(.22,1,.36,1) forwards;}
+.svc-tile:nth-child(1).in{animation-delay:.05s;}
+.svc-tile:nth-child(2).in{animation-delay:.1s;}
+.svc-tile:nth-child(3).in{animation-delay:.15s;}
+.svc-tile:nth-child(4).in{animation-delay:.2s;}
+.svc-tile:nth-child(5).in{animation-delay:.25s;}
+.svc-tile:nth-child(6).in{animation-delay:.3s;}
+.svc-tile:nth-child(7).in{animation-delay:.35s;}
+.svc-tile:nth-child(8).in{animation-delay:.4s;}
+@keyframes tileFadeIn{from{opacity:0;transform:translateY(30px);}to{opacity:1;transform:translateY(0);}}
 .svc-tile::before{content:'';position:absolute;inset:0;background:var(--tile-grad);opacity:0;transition:opacity .42s;z-index:0;}
 .svc-tile:hover{transform:translateY(-8px);box-shadow:var(--shadow-lift);border-color:transparent;}
 .svc-tile:hover::before{opacity:.1;}
+.svc-tile:active{transform:scale(0.96) translateY(-2px);transition:transform .1s cubic-bezier(.4,0,.2,1);box-shadow:none;}
 .svc-tile>*{position:relative;z-index:1;}
 .svc-tile-ico{width:54px;height:54px;border-radius:16px;background:var(--tile-grad);display:flex;align-items:center;justify-content:center;color:#fff;margin-bottom:20px;transition:transform .42s cubic-bezier(.34,1.56,.64,1);}
 .svc-tile:hover .svc-tile-ico{transform:scale(1.1) rotate(-4deg);}
