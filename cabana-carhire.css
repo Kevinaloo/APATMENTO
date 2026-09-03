@@ -88,7 +88,8 @@
 .ch-shell{width:100%;max-width:1140px;margin:0 auto;padding:0 20px;}
 
 /* ═══ HERO ═════════════════════════════════════════════════════════ */
-.ch-hero{padding:56px 0 8px;position:relative;}
+.ch-hero{padding:32px 0 8px;position:relative;}
+@media (max-width:760px){ .ch-hero{padding:16px 0 8px;} }
 .ch-hero::before{
   content:'';position:absolute;inset:-10% -20% 40% -20%;z-index:0;pointer-events:none;
   background:radial-gradient(60% 60% at 50% 0%,var(--c-brand-wash),transparent 70%);
