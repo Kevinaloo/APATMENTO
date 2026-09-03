@@ -20,7 +20,7 @@
   /* ── State. Everything null until the guest chooses it. ───────── */
   const S = {
     city:null, start:null, end:null,
-    route:null, cls:'all', sort:'price',
+    route:null, routeProfile:null, cls:'all', sort:'price',
     searched:false, loading:false,
     fleet:[], operators:[], source:null,
     vehicle:null, chauffeur:false, insurance:'basic', extras:[]
@@ -102,35 +102,164 @@
     }
   }
 
-  /* ── Optional route refinement ─────────────────────────────────── */
-  function buildRefine() {
-    const rail = $('ch-routes');
-    rail.innerHTML = `<button type="button" class="ch-chip" data-r="" aria-pressed="true">Any road</button>` +
-      E.ROUTES.map(r => `<button type="button" class="ch-chip" data-r="${r.key}" aria-pressed="false">${esc(r.label)}</button>`).join('');
-    rail.addEventListener('click', ev => {
-      const b = ev.target.closest('.ch-chip'); if (!b) return;
-      S.route = b.dataset.r || null;
-      rail.querySelectorAll('.ch-chip').forEach(x =>
-        x.setAttribute('aria-pressed', String(x === b)));
-      renderDemands(); if (S.searched) renderGrid();
+  /* ── Destination-aware terrain check ───────────────────────────────
+     Replaces a fixed rail of 11 hand-picked Kenyan corridors with a
+     worldwide destination box. Type anywhere Cabana operates — a
+     national park gate, a town, a specific address — and the route's
+     driving demands are derived rather than looked up.
+
+     Three tiers, in order of preference:
+       1. One of our own 11 surveyed corridors, if the typed place is
+          close enough to one that we would rather use real measurements
+          than a guess. This is the honest floor: known beats derived.
+       2. AI-reasoned terrain for anywhere else, via /api/carhire-terrain.
+          Always carries a confidence band and a note on what it leaned
+          on, shown to the guest — never presented as equal to a
+          surveyed route.
+       3. If reasoning fails outright, the server itself falls back to
+          the nearest known corridor and says so; nothing here invents
+          numbers if that response is also unreachable.                */
+  const KNOWN_ROUTE_POINTS = [
+    { key: 'metro', lat: -1.2921, lng: 36.8219 }, { key: 'highway', lat: -2.7, lng: 38.6 },
+    { key: 'riftvalley', lat: -0.6, lng: 36.2 }, { key: 'coast', lat: -4.28, lng: 39.59 },
+    { key: 'amboseli', lat: -2.65, lng: 37.26 }, { key: 'mara', lat: -1.5, lng: 35.15 },
+    { key: 'tsavo', lat: -3.0, lng: 38.6 }, { key: 'mtkenya', lat: 0.01, lng: 37.07 },
+    { key: 'samburu', lat: 0.6, lng: 37.5 }, { key: 'turkana', lat: 3.5, lng: 36.0 }
+  ];
+  /* A typed place within this radius of a surveyed corridor's anchor
+     point is treated as that corridor — measured data over a guess. */
+  const KNOWN_ROUTE_RADIUS_KM = 40;
+
+  function haversineKm(a, b) {
+    const R = 6371, toRad = d => d * Math.PI / 180;
+    const dLat = toRad(b.lat - a.lat), dLng = toRad(b.lng - a.lng);
+    const s = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLng / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1 - s));
+  }
+
+  function nearestKnownRoute(lat, lng) {
+    let best = null, bestKm = Infinity;
+    KNOWN_ROUTE_POINTS.forEach(p => {
+      const d = haversineKm({ lat, lng }, p);
+      if (d < bestKm) { bestKm = d; best = p.key; }
     });
+    return bestKm <= KNOWN_ROUTE_RADIUS_KM ? best : null;
+  }
+
+  let _terrainSeq = 0;
+
+  function buildRefine() {
+    const box = $('ch-demands');
+    const wrap = $('ch-dest-wrap');
+    if (!wrap || !box) return;
+
+    wrap.innerHTML = `<label class="cf-l" for="ch-dest" style="margin-bottom:6px;display:block">Where are you driving to?</label>
+      <div style="position:relative">
+        <input id="ch-dest" class="cf-in" type="text" autocomplete="off"
+          placeholder="A park gate, a town, an address — anywhere" data-geo-limit="7"/>
+      </div>`;
+
+    const input = $('ch-dest');
     renderDemands();
+
+    if (!window.ApaGeo || !window.ApaGeo.attach) {
+      /* The worldwide geocoder isn't loaded on this page. Degrade to a
+         plain text field rather than a broken widget — checkRoute()
+         still fires on Enter using whatever ApaGeo.search resolves, or
+         we simply skip the terrain check and let pricing work alone. */
+      input.addEventListener('keydown', ev => {
+        if (ev.key === 'Enter') { ev.preventDefault(); }
+      });
+      return;
+    }
+
+    ApaGeo.attach(input, {
+      limit: 7,
+      placeholder: 'A park gate, a town, an address — anywhere',
+      myLocation: false,
+      onPick: place => checkRoute(place),
+      onClear: () => { S.route = null; renderDemands(); if (S.searched) renderGrid(); }
+    });
+  }
+
+  function terrainLoadingCard(label) {
+    return `<div class="ch-facts" aria-busy="true">
+      <div class="ch-fact"><div class="ch-fact-t"><b>Reading the road to ${esc(label)}…</b>
+        Checking clearance, drivetrain and fuel range for this route.</div></div>
+    </div>`;
+  }
+
+  function confidenceBadge(profile) {
+    /* This is the line that keeps a reasoned guess from ever looking
+       like a surveyed fact. It renders on every derived route, with no
+       way to suppress it — a guest deciding whether a saloon survives a
+       given road must see how sure we actually are. */
+    if (profile.basis !== 'ai_reasoning') {
+      return `<span class="ch-src ch-src-known">Measured · one of our surveyed Kenyan corridors</span>`;
+    }
+    const tone = profile.confidence === 'high' ? 'high' : profile.confidence === 'low' ? 'low' : 'med';
+    const word = profile.confidence === 'high' ? 'High confidence'
+      : profile.confidence === 'low' ? 'Low confidence — verify locally' : 'Medium confidence';
+    return `<span class="ch-src ch-src-ai ch-src-${tone}">AI-reasoned route · ${esc(word)}</span>`;
+  }
+
+  async function checkRoute(place) {
+    const seq = ++_terrainSeq;
+    const box = $('ch-demands');
+    box.innerHTML = terrainLoadingCard(place.short || place.name || place.label);
+
+    /* Tier 1: close enough to a corridor we have actually measured. */
+    const known = nearestKnownRoute(place.lat, place.lng);
+    if (known) {
+      S.route = known;
+      S.routeProfile = { ...E.ROUTE_BY_KEY[known], basis: 'known', confidence: null };
+      renderDemands();
+      if (S.searched) renderGrid();
+      return;
+    }
+
+    /* Tier 2: derive it. */
+    try {
+      const url = `/api/carhire-terrain?lat=${encodeURIComponent(place.lat)}&lng=${encodeURIComponent(place.lng)}`
+        + `&label=${encodeURIComponent(place.label || place.name || '')}`
+        + (S.start ? `&date=${encodeURIComponent(S.start)}` : '');
+      const r = await fetch(url);
+      const profile = await r.json();
+      if (seq !== _terrainSeq) return; // a newer destination was typed while this was in flight
+      if (!r.ok || !profile || profile.error) throw new Error(profile && profile.error || 'terrain_unavailable');
+
+      S.route = profile;          // grade() now accepts a full route object
+      S.routeProfile = profile;
+      renderDemands();
+      if (S.searched) renderGrid();
+    } catch (e) {
+      if (seq !== _terrainSeq) return;
+      box.innerHTML = `<div class="ch-facts"><div class="ch-fact-t">
+        <b>Could not read this route.</b> Pricing still works — we just can't confirm a vehicle
+        against this specific road right now. Try again, or ask the operator directly.</div></div>`;
+      S.route = null; S.routeProfile = null;
+      if (S.searched) renderGrid();
+    }
   }
 
   function renderDemands() {
     const box = $('ch-demands');
-    if (!S.route) {
-      box.innerHTML = `<p class="ch-fact-t">Pick the road you are actually driving and we will check
-        each vehicle's ground clearance, drivetrain and fuel range against it, in the season you travel.</p>`;
+    if (!S.route || !S.routeProfile) {
+      box.innerHTML = `<p class="ch-fact-t">Type where you are driving to and we will check each
+        vehicle's ground clearance, drivetrain and fuel range against that specific road, for the
+        season you travel — anywhere Cabana operates, not only the routes we have on file.</p>`;
       return;
     }
-    const r = E.ROUTE_BY_KEY[S.route], season = E.seasonFor(startDate());
+    const r = S.routeProfile, season = E.seasonFor(startDate());
     box.innerHTML = `<div class="ch-facts">
       <div class="ch-fact"><div class="ch-fact-n">${r.clearance_mm}<span style="font-size:11px">mm</span></div>
-        <div class="ch-fact-t"><b>Clearance needed</b>${esc(r.note)}</div></div>
-      <div class="ch-fact"><div class="ch-fact-n">${r.km}<span style="font-size:11px">km</span></div>
+        <div class="ch-fact-t"><b>Clearance needed</b>${esc(r.note || r.surface || '')}</div></div>
+      <div class="ch-fact"><div class="ch-fact-n">${r.km || '—'}<span style="font-size:11px">km</span></div>
         <div class="ch-fact-t"><b>${esc(E.DRIVE_LABEL[r.drive] || r.drive)} minimum</b>Longest fuel gap ${r.range_km}km · ${esc(season.label)}</div></div>
-    </div>`;
+    </div>
+    ${confidenceBadge(r)}
+    ${r.basis === 'ai_reasoning' && Array.isArray(r.sources) && r.sources.length
+      ? `<p class="ch-src-note">Based on: ${r.sources.map(esc).join(', ')}. Not a substitute for a local road report — conditions change with the season and recent weather.</p>` : ''}`;
   }
 
   /* ── Class filter + sort ───────────────────────────────────────── */

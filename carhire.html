@@ -126,14 +126,12 @@
       <!-- Optional. Closed until the guest asks for it. -->
       <details class="ch-refine" id="ch-refine">
         <summary class="ch-refine-t" style="list-style:none">
-          Check a vehicle against the road you are driving
+          Check a vehicle against your exact route
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
             stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
         </summary>
         <div class="ch-refine-body">
-          <div class="ch-rail-hold">
-            <div class="ch-rail" id="ch-routes" role="group" aria-label="Choose the road you are driving"></div>
-          </div>
+          <div id="ch-dest-wrap"></div>
           <div id="ch-demands" style="margin-top:14px"></div>
         </div>
       </details>
@@ -257,8 +255,9 @@
     );
   } catch (e) { /* the launch catalogue renders without it */ }
 </script>
-<script src="/cabana-carhire-core.js?v=2"></script>
-<script src="/cabana-carhire-ui.js?v=2"></script>
+<script src="/apa-geo.js" defer></script>
+<script src="/cabana-carhire-core.js?v=3"></script>
+<script src="/cabana-carhire-ui.js?v=3"></script>
 
 <script src="/analytics.js" defer></script>
 <script src="/telemetry.js" defer></script>

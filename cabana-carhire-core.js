@@ -164,10 +164,19 @@
        blocked  do not sell this pairing
      ═══════════════════════════════════════════════════════════════ */
   function grade(vehicle, routeKey, date) {
+    /* routeKey is usually a lookup into ROUTE_BY_KEY, but an AI-derived
+       route (see api/lib/_carhire-terrain.js) is not in that table — it
+       is a full route object already shaped identically to one of ours.
+       Accepting both means the grading logic, the verdict thresholds and
+       the reasons/blockers copy are exactly the same whichever source
+       the route came from. A guest must never be able to tell, from the
+       verdict alone, that a route was reasoned about rather than
+       surveyed — that distinction belongs in the UI's confidence badge,
+       not in a second, looser grading path. */
+    const route = (routeKey && typeof routeKey === 'object') ? routeKey : ROUTE_BY_KEY[routeKey];
     /* Fail closed. Defaulting an unknown key to metro grades the vehicle
        against the easiest corridor on the map, which is the one mistake
        this engine exists to prevent. */
-    const route = ROUTE_BY_KEY[routeKey];
     if (!route) {
       return {
         verdict: 'blocked', score: 0, route: null, range: null,
@@ -297,7 +306,18 @@
     const v = opts.vehicle;
     const days = Math.max(1, opts.days || 1);
     const season = seasonFor(opts.date || new Date());
-    const route = ROUTE_BY_KEY[opts.routeKey] || ROUTE_BY_KEY.metro;
+    /* Accepts a known route key, an AI-derived route object (see
+       api/lib/_carhire-terrain.js and grade() above), or nothing.
+       opts.route is what the UI actually passes; opts.routeKey is kept
+       so any other caller of this function is unaffected. Previously
+       only routeKey was read, so a route chosen in the UI (via `route`)
+       silently priced every hire against Nairobi metro regardless of
+       what the guest selected — the chauffeur upcountry rate never
+       applied. Fixed here rather than papered over in the UI, since any
+       future caller would hit the same bug. */
+    const routeArg = opts.route != null ? opts.route : opts.routeKey;
+    const route = (routeArg && typeof routeArg === 'object') ? routeArg
+      : (ROUTE_BY_KEY[routeArg] || ROUTE_BY_KEY.metro);
     const lines = [];
 
     /* Base */

@@ -287,7 +287,7 @@
       "maxDuration": 60
     },
     "api/utilities.js": {
-      "maxDuration": 20
+      "maxDuration": 30
     },
     "api/agents.js": {
       "maxDuration": 30
@@ -368,6 +368,10 @@
     {
       "source": "/api/sos-alert",
       "destination": "/api/utilities?action=sos-alert"
+    },
+    {
+      "source": "/api/carhire-terrain",
+      "destination": "/api/utilities?action=carhire-terrain"
     },
     {
       "source": "/api/atlas",

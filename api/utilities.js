@@ -1,7 +1,7 @@
 /* ════════════════════════════════════════════════════════════════
    APATMENTO  ·  Utilities  /api/utilities.js
    Routes: ?action=close-bookings | welcome-email | indexnow
-           | reconcile-payments | geocode | atlas | sos-alert
+           | reconcile-payments | geocode | atlas | sos-alert | carhire-terrain
    Consolidates small utility handlers into 1 function
 ════════════════════════════════════════════════════════════════ */
 export const config = { maxDuration: 15 };
@@ -42,6 +42,7 @@ export const config = { maxDuration: 15 };
 import geocodeHandler from './lib/_geocode.js';
 import atlasHandler from './lib/_atlas.js';
 import sosHandler from './lib/_sos.js';
+import terrainHandler from './lib/_carhire-terrain.js';
 import { reconcilePayments } from './lib/_reconcile-payments.js';
 import { settlementOf, endDayOf, todayNumber, PART_PAYMENT_TTL_HOURS,
          validateInstalment, depositRequired }
@@ -770,6 +771,12 @@ export default async function handler(req, res) {
     return sosHandler(req, res);
   }
 
+  /* Car hire terrain reasoning. Reads req.query directly (lat=, lng=,
+     label=, date=), same convention as the geocoder above. */
+  if (action === 'carhire-terrain') {
+    return terrainHandler(req, res);
+  }
+
   if (action === 'close-bookings') {
     return handleCloseBookings(req, res);
   }
@@ -799,8 +806,8 @@ export default async function handler(req, res) {
   }
 
   return res.status(400).json({
-    error: 'Unknown action. Available: subscribe, geocode, atlas, sos-alert, close-bookings, '
-         + 'welcome-email, indexnow, reconcile-payments, paypal-create-order, paypal-capture, '
-         + 'paypal-webhook',
+    error: 'Unknown action. Available: subscribe, geocode, atlas, sos-alert, carhire-terrain, '
+         + 'close-bookings, welcome-email, indexnow, reconcile-payments, paypal-create-order, '
+         + 'paypal-capture, paypal-webhook',
   });
 }
