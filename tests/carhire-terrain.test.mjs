@@ -5,19 +5,15 @@
    Two systems meet here and both must hold under the same tests:
 
      cabana-carhire-core.js   grade() and quote() — previously took only
-                              a route KEY looked up in a fixed 11-entry
+                              a route KEY looked up in a fixed reference
                               table.
      api/lib/_carhire-terrain.js
-                              derives a route PROFILE, in the same
-                              shape, for anywhere on earth via AI
-                              reasoning — with a mandatory confidence
-                              band and a fail-closed fallback to the
-                              nearest surveyed corridor when reasoning
-                              is unavailable or answers something
-                              implausible.
+                              derives a route PROFILE between exact
+                              pickup and destination points anywhere in
+                              Africa, with an honest geometry fallback
+                              when model enrichment is unavailable.
 
-   The risk being guarded against is not "does the AI call work" — that
-   is Anthropic's and the provider's problem, not this repo's. It is:
+   The risk being guarded against is not "does the model call work". It is:
    does an AI-derived route grade a vehicle with the SAME rigour as a
    surveyed one, does a wrong or missing answer ever get treated as
    ground truth, and does the object shape stay wire-compatible with
@@ -103,7 +99,27 @@ test('grade() rejects a vehicle with no verified clearance figure, on a derived 
   const noSpec = { drive: '4wd' }; // clearance_mm missing
   const g = E.grade(noSpec, DERIVED_MARA_LIKE, LONG_RAINS);
   assert.equal(g.verdict, 'blocked');
-  assert.match(g.blockers[0], /do not hold a verified ground clearance/i);
+  assert.match(g.blockers[0], /no verified ground-clearance/i);
+});
+
+test('country catalogue contains all 54 African sovereign states with local currencies', () => {
+  const E = boot();
+  assert.equal(E.AFRICA_COUNTRIES.length, 54);
+  assert.equal(E.COUNTRY_BY_CODE.GH.currency, 'GHS');
+  assert.equal(E.COUNTRY_BY_CODE.ZA.currency, 'ZAR');
+  assert.equal(E.COUNTRY_BY_CODE.MA.currency, 'MAD');
+});
+
+test('efficiency() exposes every requested unit without confusing US and UK gallons', () => {
+  const E = boot();
+  const fuel = E.efficiency({ tank_litres: 50, consumption_kmpl: 10 }, { km: 200, fuel_multiplier: 1.1 });
+  assert.equal(fuel.kmpl, 10);
+  assert.equal(fuel.litresPer100Km, 10);
+  assert.equal(fuel.litresPerKm, 0.1);
+  assert.equal(fuel.mpgUS, 23.5);
+  assert.equal(fuel.mpgUK, 28.2);
+  assert.equal(fuel.litresOneWay, 22);
+  assert.equal(fuel.litresReturn, 44);
 });
 
 /* ── quote(): the routing-name bug ──────────────────────────────────
@@ -195,19 +211,41 @@ test('terrain: an empty or malformed AI response is rejected, never silently def
   assert.throws(() => coerceProfile(null, 'x'), /empty_response/);
 });
 
-test('terrain: nearestKnown() resolves a coordinate to the closest of our 11 surveyed corridors', async () => {
+test('terrain: nearestKnown() resolves a coordinate to the closest Cabana reference corridor', async () => {
   const { nearestKnown } = await import('../api/lib/_carhire-terrain.js').then(m => m.__test);
   const near = nearestKnown(-1.5, 35.2); // a point genuinely close to the Mara anchor
   assert.equal(near.route.key, 'mara');
   assert.ok(near.distanceKm < 40, 'must be within the known-route radius used by the client tier check');
 });
 
-test('terrain: the fallback profile is honestly labelled low-confidence, never presented as measured', async () => {
+test('terrain: a legacy fallback near a reference is honestly labelled low-confidence', async () => {
   const { fallbackProfile } = await import('../api/lib/_carhire-terrain.js').then(m => m.__test);
   const fb = fallbackProfile(-1.5, 35.2, 'Somewhere off-grid');
-  assert.equal(fb.basis, 'nearest_known_corridor');
+  assert.equal(fb.basis, 'nearby_reference_corridor');
   assert.equal(fb.confidence, 'low');
-  assert.match(fb.note, /closest of our surveyed corridors/i);
+  assert.match(fb.note, /nearby .* reference/i);
+});
+
+test('terrain: an Africa-wide fallback never borrows an unrelated Kenyan corridor', async () => {
+  const { estimateProfile } = await import('../api/lib/_carhire-terrain.js').then(m => m.__test);
+  const profile = estimateProfile({
+    from:{ lat:5.6037, lng:-0.1870 }, to:{ lat:6.6885, lng:-1.6244 },
+    fromLabel:'Accra', toLabel:'Kumasi', fromCountry:'GH', toCountry:'GH', month:8,
+  });
+  assert.equal(profile.basis, 'geometry_estimate');
+  assert.match(profile.label, /Accra.*Kumasi/);
+  assert.ok(profile.km > profile.direct_km);
+  assert.ok(!/Nairobi|Mara|Kenya/i.test(profile.note + profile.surface));
+});
+
+test('terrain: cross-border estimates surface document requirements', async () => {
+  const { estimateProfile } = await import('../api/lib/_carhire-terrain.js').then(m => m.__test);
+  const profile = estimateProfile({
+    from:{ lat:-1.9441, lng:30.0619 }, to:{ lat:-1.2921, lng:36.8219 },
+    fromLabel:'Kigali', toLabel:'Nairobi', fromCountry:'RW', toCountry:'KE', month:7,
+  });
+  assert.equal(profile.border_crossings.length, 1);
+  assert.ok(profile.hazards.some(item => /cross-border permission/i.test(item)));
 });
 
 test('terrain HTTP: rejects requests with no coordinates', async () => {
@@ -224,12 +262,15 @@ test('terrain HTTP: rejects non-GET methods', async () => {
   assert.equal(res.code, 405);
 });
 
-test('terrain HTTP: with no AI provider configured, degrades cleanly to the nearest known corridor rather than 500ing', async () => {
+test('terrain HTTP: an exact Africa-wide request degrades to a transparent geometry estimate rather than 500ing', async () => {
   const mod = await import('../api/lib/_carhire-terrain.js');
   const res = fakeRes();
-  await mod.default({ method: 'GET', query: { lat: '-1.5', lng: '35.2', label: 'Somewhere near the Mara' } }, res);
+  await mod.default({ method: 'GET', query: {
+    fromLat:'5.6037', fromLng:'-0.1870', toLat:'6.6885', toLng:'-1.6244',
+    fromLabel:'Accra', toLabel:'Kumasi', fromCountry:'GH', toCountry:'GH'
+  } }, res);
   assert.equal(res.code, 200);
-  assert.equal(res.body.basis, 'nearest_known_corridor');
+  assert.equal(res.body.basis, 'geometry_estimate');
   assert.equal(res.body.confidence, 'low');
   assert.ok(res.headers['Cache-Control'], 'must set a cache header so identical lookups are not re-derived');
 });
@@ -237,9 +278,10 @@ test('terrain HTTP: with no AI provider configured, degrades cleanly to the near
 test('terrain HTTP: an identical follow-up request hits the in-memory cache', async () => {
   const mod = await import('../api/lib/_carhire-terrain.js');
   const first = fakeRes();
-  await mod.default({ method: 'GET', query: { lat: '-1.51', lng: '35.21', label: 'Cache probe' } }, first);
+  const query = { fromLat:'5.6037', fromLng:'-0.1870', toLat:'6.6885', toLng:'-1.6244', fromLabel:'Accra', toLabel:'Kumasi', fromCountry:'GH', toCountry:'GH' };
+  await mod.default({ method: 'GET', query }, first);
   const second = fakeRes();
-  await mod.default({ method: 'GET', query: { lat: '-1.51', lng: '35.21', label: 'Cache probe' } }, second);
+  await mod.default({ method: 'GET', query }, second);
   assert.equal(second.body.cache, 'hit');
 });
 

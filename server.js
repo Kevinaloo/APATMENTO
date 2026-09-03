@@ -25,6 +25,7 @@ const REWRITES = [
   { match: /^\/api\/support\/?$/, target: 'trust', query: { action: 'support' } },
   { match: /^\/api\/call\/?$/, target: 'trust', query: { action: 'call' } },
   { match: /^\/api\/geocode\/?$/, target: 'utilities', query: { action: 'geocode' } },
+  { match: /^\/api\/carhire-terrain\/?$/, target: 'utilities', query: { action: 'carhire-terrain' } },
   { match: /^\/api\/atlas\/?$/, target: 'utilities', query: { action: 'atlas' } },
   { match: /^\/api\/indexnow\/?$/, target: 'utilities', query: { action: 'indexnow' } },
   { match: /^\/api\/push-cron\/?$/, target: 'push-send', query: { action: 'cron' } },

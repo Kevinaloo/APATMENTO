@@ -1,269 +1,327 @@
-/* ═══════════════════════════════════════════════════════════════════
-   CABANA · CAR HIRE · TERRAIN REASONING
-   ───────────────────────────────────────────────────────────────────
-   GET /api/carhire-terrain?lat=..&lng=..&label=..&date=..
-   GET /api/carhire-terrain?from=lat,lng&to=lat,lng&label=..&date=..
-
-   The problem this solves
-   ────────────────────────
-   cabana-carhire-core.js grades a vehicle against a route with real
-   engineering judgement — ground clearance, drivetrain, fuel range, wet
-   season penalties — but only for 11 hand-written Kenyan corridors. Ask
-   it about a route to Kilimanjaro's Machame gate, or a delivery run
-   into Kampala's outskirts, or literally anywhere outside that list,
-   and it has nothing to say. The dropdown constrains the destination to
-   what a person on our team already thought to type in.
-
-   This route lets a guest name ANY destination — reached through the
-   worldwide geocoder already in the product — and derives a route
-   profile in the *same shape* the grading engine already consumes:
-
-     { key, label, km, clearance_mm, drive, range_km,
-       surface, wet_penalty, note, confidence, sources }
-
-   That last field is the honest part. A model reasoning about a road
-   it has never driven is not a surveyor. Every profile ships with a
-   confidence band and a one-line account of what the reasoning leaned
-   on, and the UI is required to show both — see cabana-carhire-ui.js.
-   An "AI-derived, treat with care" route and a "measured, from our own
-   11-corridor table" route must never look identical to a guest making
-   a safety decision about black cotton soil in the rains.
-
-   Fail-closed, same as grade() itself: if the model cannot answer, or
-   answers with something out of range, this hands back the nearest of
-   our 11 known corridors by great-circle distance rather than a made-up
-   number — a slightly-wrong known route beats a confident invention.
-   ═══════════════════════════════════════════════════════════════════ */
-
+/* Cabana Drive Africa · route intelligence endpoint.
+   It accepts exact pickup and destination coordinates. AI enriches a route
+   when available; the deterministic fallback is continent-wide, transparent
+   and never substitutes an unrelated Kenyan corridor. */
 import { generateStructuredJson } from './_ai-gateway.js';
 
-/* The 11 corridors CabanaCarHire.ROUTES already ships, duplicated here
-   in plain data form. api/ cannot import cabana-carhire-core.js — that
-   file is written for the browser and reaches for `window` — so this is
-   the server's own copy of the same table, kept in the same order and
-   used only as (a) few-shot grounding for the model and (b) the
-   fallback when reasoning fails. If that file's ROUTES array changes,
-   mirror it here; the sync test at the bottom of this comment block
-   exists so drift is at least visible in review. */
+const DRIVE_VALUES = ['2wd', 'awd', '4wd', '4wd_low'];
 const KNOWN_ROUTES = [
-  { key: 'metro',      label: 'Nairobi & suburbs',        lat: -1.2921, lng: 36.8219, km: 60,  clearance_mm: 115, drive: '2wd',     range_km: 120, surface: 'Tarmac throughout', wet_penalty: 0 },
-  { key: 'highway',    label: 'Nairobi → Mombasa',        lat: -2.7,    lng: 38.6,    km: 485, clearance_mm: 120, drive: '2wd',     range_km: 190, surface: 'A109 tarmac, heavy truck traffic', wet_penalty: 0 },
-  { key: 'riftvalley', label: "Naivasha, Nakuru & the Rift", lat: -0.6, lng: 36.2,    km: 210, clearance_mm: 140, drive: '2wd',     range_km: 150, surface: 'A104 tarmac with rough park approaches', wet_penalty: 1 },
-  { key: 'coast',      label: 'Diani & the South Coast',  lat: -4.28,   lng: 39.59,   km: 520, clearance_mm: 125, drive: '2wd',     range_km: 190, surface: 'Tarmac plus the Likoni ferry', wet_penalty: 0 },
-  { key: 'amboseli',   label: 'Amboseli & Kilimanjaro side', lat: -2.65, lng: 37.26,  km: 240, clearance_mm: 165, drive: '2wd',     range_km: 220, surface: 'Tarmac then corrugated volcanic dust', wet_penalty: 2 },
-  { key: 'mara',       label: 'Masai Mara',               lat: -1.5,    lng: 35.15,   km: 285, clearance_mm: 180, drive: 'awd',     range_km: 260, surface: 'Murram, then black cotton soil inside the reserve', wet_penalty: 3 },
-  { key: 'tsavo',      label: 'Tsavo East & West',        lat: -3.0,    lng: 38.6,    km: 330, clearance_mm: 180, drive: 'awd',     range_km: 280, surface: 'Red laterite, rock shelves, sand river beds', wet_penalty: 2 },
-  { key: 'mtkenya',    label: 'Nanyuki & Mount Kenya',    lat: 0.01,    lng: 37.07,   km: 200, clearance_mm: 160, drive: 'awd',     range_km: 180, surface: 'Tarmac to town, steep rutted forest tracks above', wet_penalty: 2 },
-  { key: 'samburu',    label: 'Samburu & the north',      lat: 0.6,     lng: 37.5,    km: 350, clearance_mm: 195, drive: '4wd',     range_km: 320, surface: 'Rough gravel beyond Isiolo, long fuel gaps', wet_penalty: 3 },
-  { key: 'turkana',    label: 'Turkana & Marsabit expedition', lat: 3.5, lng: 36.0,   km: 780, clearance_mm: 205, drive: '4wd_low', range_km: 420, surface: 'Lava desert, sand, corrugation for hundreds of km', wet_penalty: 3 },
+  { key:'metro', label:'Nairobi & suburbs', from:{lat:-1.2921,lng:36.8219}, to:{lat:-1.2921,lng:36.8219}, km:60, duration_minutes:150, clearance_mm:115, drive:'2wd', range_km:120, surface:'Tarmac throughout', surface_mix:{paved:98,gravel:2,unsealed:0}, wet_penalty:0, fuel_multiplier:1.08, note:'City tarmac with speed bumps and occasional flooded underpasses.' },
+  { key:'highway', label:'Nairobi → Mombasa', from:{lat:-1.2921,lng:36.8219}, to:{lat:-4.0435,lng:39.6682}, km:485, duration_minutes:570, clearance_mm:120, drive:'2wd', range_km:190, surface:'A109 tarmac with heavy truck traffic', surface_mix:{paved:98,gravel:2,unsealed:0}, wet_penalty:0, fuel_multiplier:1.08, note:'A long paved run where comfort, fatigue management and cruising range matter.' },
+  { key:'riftvalley', label:'Nairobi → Naivasha / Nakuru', from:{lat:-1.2921,lng:36.8219}, to:{lat:-0.3031,lng:36.0800}, km:110, duration_minutes:150, clearance_mm:140, drive:'2wd', range_km:150, surface:'Paved highway with rough park approaches', surface_mix:{paved:88,gravel:10,unsealed:2}, wet_penalty:1, fuel_multiplier:1.10, note:'The highway is paved; lake and park approaches can be broken gravel.' },
+  { key:'coast', label:'Mombasa → Diani', from:{lat:-4.0435,lng:39.6682}, to:{lat:-4.2796,lng:39.5947}, km:45, duration_minutes:105, clearance_mm:125, drive:'2wd', range_km:120, surface:'Paved road plus ferry and beach approaches', surface_mix:{paved:92,gravel:6,unsealed:2}, wet_penalty:0, fuel_multiplier:1.10, note:'Allow for ferry queues and avoid soft beach sand unless the operator permits it.' },
+  { key:'amboseli', label:'Nairobi → Amboseli', from:{lat:-1.2921,lng:36.8219}, to:{lat:-2.6527,lng:37.2606}, km:240, duration_minutes:300, clearance_mm:165, drive:'2wd', range_km:220, surface:'Paved road then corrugated volcanic dust', surface_mix:{paved:72,gravel:20,unsealed:8}, wet_penalty:2, fuel_multiplier:1.17, note:'Washboard park roads punish low-clearance cars.' },
+  { key:'mara', label:'Nairobi → Masai Mara', from:{lat:-1.2921,lng:36.8219}, to:{lat:-1.4931,lng:35.1439}, km:285, duration_minutes:360, clearance_mm:180, drive:'awd', range_km:260, surface:'Murram followed by black-cotton-soil tracks', surface_mix:{paved:55,gravel:25,unsealed:20}, wet_penalty:3, fuel_multiplier:1.24, note:'Black cotton soil can become impassable to two-wheel drive after heavy rain.' },
+  { key:'tsavo', label:'Nairobi → Tsavo', from:{lat:-1.2921,lng:36.8219}, to:{lat:-3.0000,lng:38.6000}, km:330, duration_minutes:390, clearance_mm:180, drive:'awd', range_km:280, surface:'Laterite, rock shelves and sandy river beds', surface_mix:{paved:62,gravel:24,unsealed:14}, wet_penalty:2, fuel_multiplier:1.20, note:'Tyre condition and a second spare matter on remote park tracks.' },
+  { key:'mtkenya', label:'Nairobi → Nanyuki / Mount Kenya', from:{lat:-1.2921,lng:36.8219}, to:{lat:0.0064,lng:37.0722}, km:200, duration_minutes:255, clearance_mm:160, drive:'awd', range_km:180, surface:'Paved road to town then steep forest tracks', surface_mix:{paved:82,gravel:12,unsealed:6}, wet_penalty:2, fuel_multiplier:1.14, note:'The final gate approach is usually the demanding section.' },
+  { key:'samburu', label:'Nairobi → Samburu', from:{lat:-1.2921,lng:36.8219}, to:{lat:0.6000,lng:37.5000}, km:350, duration_minutes:420, clearance_mm:195, drive:'4wd', range_km:320, surface:'Rough gravel with long remote sections', surface_mix:{paved:58,gravel:28,unsealed:14}, wet_penalty:3, fuel_multiplier:1.23, note:'Travel in daylight and fill at every reliable fuel stop.' },
+  { key:'turkana', label:'Nairobi → Turkana / Marsabit', from:{lat:-1.2921,lng:36.8219}, to:{lat:3.5000,lng:36.0000}, km:780, duration_minutes:900, clearance_mm:205, drive:'4wd_low', range_km:420, surface:'Lava, sand and severe corrugation', surface_mix:{paved:35,gravel:35,unsealed:30}, wet_penalty:3, fuel_multiplier:1.34, note:'Expedition preparation, low range and recovery equipment are essential.' }
 ];
 
-const DRIVE_VALUES = ['2wd', 'awd', '4wd', '4wd_low'];
-
-/* ── cache ─────────────────────────────────────────────────────────
-   A route's terrain does not change between two guests asking about
-   it an hour apart. Keyed on rounded coordinates + season month, so
-   "Nanyuki" in March and "Nanyuki" in August cache separately — the
-   wet-season penalty genuinely differs. ── */
-const CACHE_MAX = 500;
 const cache = new Map();
+const CACHE_MAX = 500;
+const AI_BUDGET_MS = 7000;
 
-function cacheKey(lat, lng, month) {
-  /* ~1.1km grid at the equator. Tight enough that two guests typing
-     the same town land on the same cell, loose enough that the cache
-     is not one entry per unique click. */
-  return `${lat.toFixed(2)},${lng.toFixed(2)},m${month}`;
-}
-function cacheGet(key) {
-  const hit = cache.get(key);
-  if (!hit) return null;
-  if (Date.now() > hit.expires) { cache.delete(key); return null; }
-  return hit.value;
-}
-function cacheSet(key, value, ttlMs) {
-  if (cache.size >= CACHE_MAX) cache.delete(cache.keys().next().value);
-  cache.set(key, { value, expires: Date.now() + ttlMs });
-}
-
-/* ── great-circle fallback ────────────────────────────────────────── */
 function haversineKm(a, b) {
-  const R = 6371;
-  const dLat = (b.lat - a.lat) * Math.PI / 180;
-  const dLng = (b.lng - a.lng) * Math.PI / 180;
-  const s = Math.sin(dLat / 2) ** 2
-    + Math.cos(a.lat * Math.PI / 180) * Math.cos(b.lat * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1 - s));
+  const R = 6371, rad = value => value * Math.PI / 180;
+  const dLat = rad(b.lat - a.lat), dLng = rad(b.lng - a.lng);
+  const value = Math.sin(dLat / 2) ** 2 + Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(value), Math.sqrt(1 - value));
+}
+
+function validPoint(point) {
+  return point && Number.isFinite(point.lat) && Number.isFinite(point.lng)
+    && point.lat >= -90 && point.lat <= 90 && point.lng >= -180 && point.lng <= 180;
 }
 
 function nearestKnown(lat, lng) {
-  let best = null, bestKm = Infinity;
-  for (const r of KNOWN_ROUTES) {
-    const d = haversineKm({ lat, lng }, { lat: r.lat, lng: r.lng });
-    if (d < bestKm) { bestKm = d; best = r; }
+  let route = null, distanceKm = Infinity;
+  for (const candidate of KNOWN_ROUTES) {
+    const distance = haversineKm({ lat, lng }, candidate.to);
+    if (distance < distanceKm) { distanceKm = distance; route = candidate; }
   }
-  return { route: best, distanceKm: Math.round(bestKm) };
+  return { route, distanceKm:Math.round(distanceKm) };
 }
 
-function fallbackProfile(lat, lng, label) {
-  const { route, distanceKm } = nearestKnown(lat, lng);
+function matchKnownRoute(from, to) {
+  if (!validPoint(from) || !validPoint(to)) return null;
+  const direct = haversineKm(from, to);
+  if (direct < 35 && haversineKm(from, KNOWN_ROUTES[0].from) < 70) return KNOWN_ROUTES[0];
+  let best = null, score = Infinity;
+  for (const route of KNOWN_ROUTES.slice(1)) {
+    const normal = haversineKm(from, route.from) + haversineKm(to, route.to);
+    const reverse = haversineKm(from, route.to) + haversineKm(to, route.from);
+    const distance = Math.min(normal, reverse);
+    if (distance < score) { score = distance; best = route; }
+  }
+  return score <= 85 ? best : null;
+}
+
+function keywordsFor(label) {
+  const text = String(label || '').toLowerCase();
+  const expedition = /desert|dune|sand sea|expedition|off[- ]?road|lava|remote|bush|track/.test(text);
+  const park = /park|reserve|conservancy|safari|game|forest|falls|delta|crater/.test(text);
+  const mountain = /mount|mountain|highland|pass|escarpment|canyon|gorge|volcano/.test(text);
+  const island = /island|ferry|archipelago/.test(text);
+  const urban = /airport|station|terminal|city centre|city center|downtown|hotel|mall/.test(text);
+  return { expedition, park, mountain, island, urban };
+}
+
+function climateWet(month, countryCode, lat) {
+  const code = String(countryCode || '').toUpperCase();
+  const south = ['AO','BW','LS','MW','MZ','NA','SZ','ZA','ZM','ZW','MG','MU'].includes(code) || lat < -12;
+  const north = ['DZ','EG','LY','MA','SD','TN'].includes(code);
+  const west = ['BJ','BF','CV','CI','GM','GH','GN','GW','LR','ML','MR','NE','NG','SN','SL','TG'].includes(code);
+  if (north) return month >= 11 || month <= 3 ? 1 : 0;
+  if (south) return month >= 11 || month <= 3 ? 2 : 0;
+  if (west) return month >= 5 && month <= 10 ? 2 : 0;
+  if (month >= 3 && month <= 5) return 3;
+  return month >= 10 && month <= 12 ? 2 : 0;
+}
+
+function surfaceProfile(flags, directKm) {
+  if (flags.expedition) return { clearance:205, drive:'4wd_low', mix:{paved:30,gravel:30,unsealed:40}, wet:3, factor:1.34, speed:38 };
+  if (flags.park) return { clearance:185, drive:'4wd', mix:{paved:48,gravel:28,unsealed:24}, wet:3, factor:1.24, speed:44 };
+  if (flags.mountain) return { clearance:175, drive:'awd', mix:{paved:62,gravel:23,unsealed:15}, wet:2, factor:1.20, speed:42 };
+  if (flags.island) return { clearance:145, drive:'2wd', mix:{paved:82,gravel:13,unsealed:5}, wet:1, factor:1.14, speed:40 };
+  if (flags.urban || directKm < 25) return { clearance:125, drive:'2wd', mix:{paved:96,gravel:3,unsealed:1}, wet:1, factor:1.10, speed:30 };
+  return { clearance:150, drive:'2wd', mix:{paved:78,gravel:15,unsealed:7}, wet:2, factor:1.14, speed:55 };
+}
+
+function estimateProfile({ from, to, fromLabel, toLabel, fromCountry, toCountry, month }) {
+  const directKm = Math.max(1, haversineKm(from, to));
+  const flags = keywordsFor(`${toLabel || ''} ${fromLabel || ''}`);
+  const terrain = surfaceProfile(flags, directKm);
+  const roadFactor = directKm < 25 ? 1.30 : directKm < 100 ? 1.24 : directKm < 350 ? 1.18 : 1.13;
+  const km = Math.max(3, Math.round(directKm * roadFactor));
+  const crossBorder = fromCountry && toCountry && String(fromCountry).toUpperCase() !== String(toCountry).toUpperCase();
+  const duration = Math.round(km / terrain.speed * 60 + (crossBorder ? 120 : 0));
+  const seasonWet = climateWet(month, toCountry, to.lat);
+  const possibleGap = Math.max(80, Math.min(420, Math.round(km * (flags.expedition ? .55 : flags.park ? .40 : .28))));
+  const hazards = [];
+  if (crossBorder) hazards.push('Cross-border permission, vehicle documents and destination-country insurance must be approved in writing.');
+  if (flags.park) hazards.push('Park-gate rules and recent access-road conditions can change; confirm them with the operator or lodge.');
+  if (flags.expedition) hazards.push('Carry recovery equipment, water, offline navigation and a locally confirmed fuel plan.');
+  if (!hazards.length) hazards.push('Night driving and recent weather can materially change travel time; confirm locally before departure.');
   return {
-    key: `derived_${route.key}`,
-    label: label || route.label,
-    km: route.km,
-    clearance_mm: route.clearance_mm,
-    drive: route.drive,
-    range_km: route.range_km,
-    surface: route.surface,
-    wet_penalty: route.wet_penalty,
-    note: `Reasoning was unavailable, so this is graded against ${route.label}, the closest of our surveyed corridors (${distanceKm}km away). Treat clearance and drivetrain needs as an estimate.`,
-    confidence: 'low',
-    basis: 'nearest_known_corridor',
-    sources: [route.label],
+    key:`estimated_${Math.abs(Math.round(from.lat * 100))}_${Math.abs(Math.round(from.lng * 100))}_${Math.abs(Math.round(to.lat * 100))}_${Math.abs(Math.round(to.lng * 100))}`,
+    label:`${fromLabel || 'Pickup'} → ${toLabel || 'Destination'}`.slice(0, 120),
+    km, direct_km:Math.round(directKm), duration_minutes:duration,
+    clearance_mm:terrain.clearance, drive:terrain.drive, range_km:possibleGap,
+    surface:'Road mix is not live-verified; the estimate allows for paved road plus possible gravel or unsealed approaches.',
+    surface_mix:terrain.mix, wet_penalty:terrain.wet, season_wet:seasonWet,
+    fuel_multiplier:terrain.factor, note:'This is a conservative geometry-and-terrain estimate, not live navigation. The operator must confirm the exact road, permits and current conditions.',
+    hazards, border_crossings:crossBorder ? [`${String(fromCountry).toUpperCase()} → ${String(toCountry).toUpperCase()}`] : [],
+    recommendations:['Confirm the exact itinerary with the operator before payment.','Download offline maps and plan to arrive before dark.'],
+    confidence:'low', basis:'geometry_estimate', distance_basis:'great_circle_adjusted', duration_basis:'estimated_average_speed',
+    sources:['great-circle geometry','Cabana conservative terrain rules'],
+    from_country_code:String(fromCountry || '').toUpperCase(), to_country_code:String(toCountry || '').toUpperCase(),
+    from_lat:from.lat, from_lng:from.lng, to_lat:to.lat, to_lng:to.lng
   };
 }
 
-/* ── prompt construction ─────────────────────────────────────────── */
-function seasonMonth(dateStr) {
-  const d = dateStr ? new Date(dateStr) : new Date();
-  return Number.isFinite(d.getTime()) ? d.getMonth() + 1 : new Date().getMonth() + 1;
+/* Legacy single-destination callers remain safe. A nearby reference is
+   allowed only inside a 60km envelope; the rest never inherits Kenya. */
+function fallbackProfile(lat, lng, label) {
+  const near = nearestKnown(lat, lng);
+  if (near.distanceKm <= 60) {
+    return {
+      ...near.route, key:`reference_${near.route.key}`, label:label || near.route.label,
+      confidence:'low', basis:'nearby_reference_corridor', distance_basis:'reference_corridor',
+      note:`Live reasoning was unavailable. This uses the nearby ${near.route.label} reference (${near.distanceKm}km away), so confirm the exact approach locally.`,
+      sources:[near.route.label], hazards:['Confirm the final approach and current weather with the operator.']
+    };
+  }
+  const to = { lat:Number(lat), lng:Number(lng) };
+  const from = { lat:Number(lat) + 0.35, lng:Number(lng) };
+  return estimateProfile({ from, to, fromLabel:'Nearest pickup area', toLabel:label, month:new Date().getMonth() + 1 });
+}
+
+function seasonMonth(value) {
+  const date = value ? new Date(value) : new Date();
+  return Number.isFinite(date.getTime()) ? date.getMonth() + 1 : new Date().getMonth() + 1;
 }
 
 function systemPrompt() {
-  return `You are the terrain-grading engine for Cabana Car Hire, an East and
-Southern African vehicle rental marketplace. A guest has typed a real-world
-destination. You must estimate the DRIVING DEMANDS of the road from a
-sensible starting point (the nearest city with a Cabana depot) to that
-destination — not describe the destination as a tourist attraction.
+  return `You are Cabana Drive Africa's conservative route-intelligence engine. Evaluate the exact road journey between the supplied pickup and destination anywhere in Africa. This is vehicle-suitability guidance, not tourism copy and not live navigation.
 
-Ground every answer in genuinely knowable facts about the region: is this
-route mostly paved highway, or does it cross unsealed rural roads, mountain
-tracks, desert, or a national park where roads are seasonal murram? Is there
-a known river crossing, ferry, or border post? What is the general elevation
-gain? Is the area known for a particular hazard — black cotton soil, deep
-sand, washboard corrugation, steep switchbacks, flooding?
+Use general geographic and road-infrastructure knowledge only. Never claim live traffic, live weather, a road survey, guaranteed fuel availability, or exact border opening status. Prefer a more capable vehicle when uncertain. Mention ferries, borders, park access, deep sand, black-cotton soil, corrugation, flood risk, mountain tracks, and long fuel gaps only when reasonably relevant.
 
-You are reasoning from general geographic and infrastructure knowledge, not
-live road-condition data. Where you are genuinely unsure, say so honestly in
-"confidence" and keep the numbers conservative (favour MORE clearance and
-BETTER drivetrain, never less, when uncertain) — a vehicle graded as needing
-more than it truly does merely costs a guest a pricier hire; a vehicle
-graded as needing less than it truly does can strand or injure someone.
-
-Respond with EXACTLY this JSON shape and nothing else:
+Return JSON only:
 {
-  "label": string,                          // short name for this route
-  "km": number,                             // approximate one-way distance in km from the nearest major city/depot
-  "clearance_mm": number,                   // minimum ground clearance a vehicle needs, 100-260
+  "label": string,
+  "distance_km": number,
+  "duration_minutes": number,
+  "clearance_mm": number,
   "drive": "2wd" | "awd" | "4wd" | "4wd_low",
-  "range_km": number,                       // longest stretch between reliable fuel, in km
-  "surface": string,                        // one clause, plain words, e.g. "Tarmac to town, then rutted forest track"
-  "wet_penalty": number,                    // 0-3, how much worse this route gets in heavy rain
-  "note": string,                           // one sentence a traveller can act on — the single most important thing to know
-  "confidence": "high" | "medium" | "low",  // how sure you are, honestly
-  "sources": string[]                       // 1-4 short phrases naming what kind of general knowledge this leans on, e.g. "known national park road conditions", "standard highway infrastructure for this country"
+  "range_km": number,
+  "surface": string,
+  "surface_mix": { "paved": number, "gravel": number, "unsealed": number },
+  "wet_penalty": 0 | 1 | 2 | 3,
+  "season_wet": 0 | 1 | 2 | 3,
+  "fuel_multiplier": number,
+  "note": string,
+  "hazards": string[],
+  "border_crossings": string[],
+  "recommendations": string[],
+  "confidence": "high" | "medium" | "low",
+  "sources": string[]
 }`;
 }
 
-function userPrompt({ label, lat, lng, toLat, toLng, month }) {
-  const monthName = new Date(2000, month - 1, 1).toLocaleString('en', { month: 'long' });
-  const dest = toLat != null
-    ? `Destination coordinates: ${toLat}, ${toLng} (start point: ${lat}, ${lng})`
-    : `Destination: "${label}" at approximately ${lat}, ${lng}`;
-  return `${dest}
-Month of travel: ${monthName}
+function userPrompt(context) {
+  const month = new Date(2000, context.month - 1, 1).toLocaleString('en', { month:'long' });
+  return `Pickup: ${context.fromLabel || 'unspecified'} (${context.from.lat}, ${context.from.lng}), country ${context.fromCountry || 'unknown'}
+Destination: ${context.toLabel || 'unspecified'} (${context.to.lat}, ${context.to.lng}), country ${context.toCountry || 'unknown'}
+Straight-line distance: ${Math.round(haversineKm(context.from, context.to))}km
+Travel month: ${month}
 
-Reference examples of how Cabana already grades routes in this region, so
-your numbers land in a comparable range and comparable units:
-${KNOWN_ROUTES.slice(0, 4).map(r =>
-    `- ${r.label}: ${r.km}km, needs ${r.clearance_mm}mm clearance, ${r.drive} drive, ${r.range_km}km fuel range, "${r.surface}"`
-  ).join('\n')}
-
-Grade the route to the stated destination now.`;
+Estimate the likely driven distance, time, road-surface mix and minimum safe vehicle capability. Be concise, actionable and explicit about uncertainty.`;
 }
 
-/* ── validation. The model's JSON is untrusted input. ─────────────── */
-function coerceProfile(raw, label) {
+function boundedStrings(value, maxItems, maxLength) {
+  return Array.isArray(value) ? value.map(item => String(item || '').trim().slice(0, maxLength)).filter(Boolean).slice(0, maxItems) : [];
+}
+
+function surfaceMix(value) {
+  const raw = value && typeof value === 'object' ? value : {};
+  const parts = ['paved','gravel','unsealed'].map(key => Math.max(0, Math.min(100, Number(raw[key]) || 0)));
+  const sum = parts.reduce((a, b) => a + b, 0);
+  if (!sum) return { paved:70, gravel:20, unsealed:10 };
+  const paved = Math.round(parts[0] / sum * 100);
+  const gravel = Math.min(100 - paved, Math.round(parts[1] / sum * 100));
+  return { paved, gravel, unsealed:100 - paved - gravel };
+}
+
+function coerceProfile(raw, label, context) {
   if (!raw || typeof raw !== 'object') throw new Error('empty_response');
-
-  const clearance = Number(raw.clearance_mm);
-  const km = Number(raw.km);
-  const range = Number(raw.range_km);
-  const wet = Number(raw.wet_penalty);
+  const km = Number(raw.distance_km == null ? raw.km : raw.distance_km);
+  const duration = Number(raw.duration_minutes || Math.round(km / 50 * 60));
+  const clearance = Number(raw.clearance_mm), range = Number(raw.range_km), wet = Number(raw.wet_penalty);
+  const seasonWet = raw.season_wet == null ? wet : Number(raw.season_wet);
   const drive = DRIVE_VALUES.includes(raw.drive) ? raw.drive : null;
-
+  const fuelMultiplier = Number(raw.fuel_multiplier == null ? 1.15 : raw.fuel_multiplier);
   if (!Number.isFinite(clearance) || clearance < 80 || clearance > 400) throw new Error('clearance_out_of_range');
   if (!drive) throw new Error('invalid_drive');
-  if (!Number.isFinite(km) || km <= 0 || km > 3000) throw new Error('km_out_of_range');
-  if (!Number.isFinite(range) || range <= 0 || range > 1000) throw new Error('range_out_of_range');
-  if (!Number.isFinite(wet) || wet < 0 || wet > 3) throw new Error('wet_penalty_out_of_range');
-
-  const confidence = ['high', 'medium', 'low'].includes(raw.confidence) ? raw.confidence : 'medium';
-  const surface = String(raw.surface || '').slice(0, 200) || 'Surface not specified.';
-  const note = String(raw.note || '').slice(0, 400) || 'No further detail from the reasoning pass.';
-  const sources = Array.isArray(raw.sources) ? raw.sources.map(s => String(s).slice(0, 80)).slice(0, 4) : [];
-
+  if (!Number.isFinite(km) || km <= 0 || km > 6000) throw new Error('km_out_of_range');
+  if (!Number.isFinite(duration) || duration <= 0 || duration > 10000) throw new Error('duration_out_of_range');
+  if (!Number.isFinite(range) || range <= 0 || range > 1200) throw new Error('range_out_of_range');
+  if (!Number.isFinite(wet) || wet < 0 || wet > 3 || !Number.isFinite(seasonWet) || seasonWet < 0 || seasonWet > 3) throw new Error('wet_penalty_out_of_range');
+  if (!Number.isFinite(fuelMultiplier) || fuelMultiplier < 1 || fuelMultiplier > 1.8) throw new Error('fuel_multiplier_out_of_range');
+  if (context && context.from && context.to) {
+    const direct = haversineKm(context.from, context.to);
+    if (km < direct * .92 || km > Math.max(120, direct * 4)) throw new Error('distance_implausible');
+  }
+  const confidence = ['high','medium','low'].includes(raw.confidence) ? raw.confidence : 'medium';
   return {
-    key: 'derived_' + cacheKey(0, 0, 0).slice(0, 0) /* placeholder, replaced by caller */,
-    label: String(raw.label || label || 'Your route').slice(0, 80),
-    km: Math.round(km),
-    clearance_mm: Math.round(clearance),
-    drive,
-    range_km: Math.round(range),
-    surface,
-    wet_penalty: Math.round(wet),
-    note,
-    confidence,
-    basis: 'ai_reasoning',
-    sources: sources.length ? sources : ['general regional road knowledge'],
+    key:'derived_pending', label:String(raw.label || label || 'Your route').slice(0, 120),
+    km:Math.round(km), direct_km:context && context.from && context.to ? Math.round(haversineKm(context.from, context.to)) : null,
+    duration_minutes:Math.round(duration), clearance_mm:Math.round(clearance), drive, range_km:Math.round(range),
+    surface:String(raw.surface || 'Road surface not specified.').slice(0, 240), surface_mix:surfaceMix(raw.surface_mix),
+    wet_penalty:Math.round(wet), season_wet:Math.round(seasonWet), fuel_multiplier:Number(fuelMultiplier.toFixed(2)),
+    note:String(raw.note || 'Confirm current conditions with the operator.').slice(0, 500),
+    hazards:boundedStrings(raw.hazards, 5, 220), border_crossings:boundedStrings(raw.border_crossings, 4, 120),
+    recommendations:boundedStrings(raw.recommendations, 5, 220), confidence, basis:'ai_reasoning',
+    distance_basis:'ai_estimate', duration_basis:'ai_estimate', sources:boundedStrings(raw.sources, 4, 100),
+    from_country_code:context && String(context.fromCountry || '').toUpperCase(),
+    to_country_code:context && String(context.toCountry || '').toUpperCase(),
+    from_lat:context && context.from.lat, from_lng:context && context.from.lng,
+    to_lat:context && context.to.lat, to_lng:context && context.to.lng
   };
 }
 
-function num(v) {
-  const n = Number(v);
-  return Number.isFinite(n) ? n : null;
+function parsePair(value) {
+  if (!value) return null;
+  const parts = String(value).split(',').map(Number);
+  const point = { lat:parts[0], lng:parts[1] };
+  return validPoint(point) ? point : null;
+}
+
+function pointFromQuery(q, prefix) {
+  const pair = parsePair(q[prefix]);
+  if (pair) return pair;
+  const cap = prefix.charAt(0).toUpperCase() + prefix.slice(1);
+  const point = { lat:Number(q[prefix + 'Lat'] ?? q[cap + 'Lat']), lng:Number(q[prefix + 'Lng'] ?? q[cap + 'Lng']) };
+  return validPoint(point) ? point : null;
+}
+
+function cacheKey(context) {
+  const point = p => `${p.lat.toFixed(2)},${p.lng.toFixed(2)}`;
+  return `${point(context.from)}>${point(context.to)}|m${context.month}`;
+}
+function cacheGet(key) {
+  const item = cache.get(key);
+  if (!item) return null;
+  if (Date.now() > item.expires) { cache.delete(key); return null; }
+  return item.value;
+}
+function cacheSet(key, value, ttl) {
+  if (cache.size >= CACHE_MAX) cache.delete(cache.keys().next().value);
+  cache.set(key, { value, expires:Date.now() + ttl });
+}
+
+async function enrichWithinBudget(context) {
+  let timer;
+  try {
+    return await Promise.race([
+      generateStructuredJson(systemPrompt(), userPrompt(context)),
+      new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('route_enrichment_timeout')), AI_BUDGET_MS); })
+    ]);
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 export default async function terrainHandler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   if (req.method === 'OPTIONS') return res.status(204).end();
-  if (req.method !== 'GET') return res.status(405).json({ error: 'method_not_allowed' });
-
+  if (req.method !== 'GET') return res.status(405).json({ error:'method_not_allowed' });
   const q = req.query || {};
-  const lat = num(q.lat);
-  const lng = num(q.lng);
-  const label = (q.label ? String(q.label) : '').slice(0, 200) || null;
+  let from = pointFromQuery(q, 'from'), to = pointFromQuery(q, 'to');
+  const legacy = validPoint({ lat:Number(q.lat), lng:Number(q.lng) }) ? { lat:Number(q.lat), lng:Number(q.lng) } : null;
+  if (!to && legacy) to = legacy;
   const month = seasonMonth(q.date);
+  const fromLabel = String(q.fromLabel || '').slice(0, 200) || null;
+  const toLabel = String(q.toLabel || q.label || '').slice(0, 200) || null;
+  const fromCountry = String(q.fromCountry || '').slice(0, 2).toUpperCase();
+  const toCountry = String(q.toCountry || '').slice(0, 2).toUpperCase();
 
-  if (lat == null || lng == null || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
-    return res.status(400).json({ error: 'lat and lng are required and must be valid coordinates' });
+  if (!to) return res.status(400).json({ error:'A valid destination coordinate is required.' });
+  if (!from) {
+    const profile = fallbackProfile(to.lat, to.lng, toLabel);
+    res.setHeader('Cache-Control', 'public, max-age=300, s-maxage=3600, stale-while-revalidate=86400');
+    return res.status(200).json({ ...profile, cache:'miss', legacy:true });
   }
 
-  const key = cacheKey(lat, lng, month);
-  const cached = cacheGet(key);
+  const context = { from, to, fromLabel, toLabel, fromCountry, toCountry, month };
+  const key = cacheKey(context), cached = cacheGet(key);
   if (cached) {
     res.setHeader('Cache-Control', 'public, max-age=300, s-maxage=604800, stale-while-revalidate=2592000');
-    return res.status(200).json({ ...cached, cache: 'hit' });
+    return res.status(200).json({ ...cached, cache:'hit' });
   }
 
+  const reference = matchKnownRoute(from, to);
   let profile;
-  try {
-    const raw = await generateStructuredJson(
-      systemPrompt(),
-      userPrompt({ label, lat, lng, toLat: null, toLng: null, month })
-    );
-    profile = coerceProfile(raw, label);
-    profile.key = 'derived_' + Math.abs(Math.round(lat * 1000)) + '_' + Math.abs(Math.round(lng * 1000));
-  } catch (err) {
-    console.warn('[carhire-terrain] reasoning failed, falling back:', err.message);
-    profile = fallbackProfile(lat, lng, label);
+  if (reference) {
+    profile = { ...reference, confidence:'high', basis:'cabana_reference', distance_basis:'corridor_reference', duration_basis:'corridor_reference',
+      sources:['Cabana corridor reference'], hazards:[reference.note], recommendations:['Confirm recent weather and the final approach with the operator.'],
+      border_crossings:[], from_country_code:fromCountry, to_country_code:toCountry,
+      from_lat:from.lat, from_lng:from.lng, to_lat:to.lat, to_lng:to.lng };
+  } else {
+    try {
+      const raw = await enrichWithinBudget(context);
+      profile = coerceProfile(raw, `${fromLabel || 'Pickup'} → ${toLabel || 'Destination'}`, context);
+      profile.key = `derived_${Math.abs(Math.round(from.lat * 100))}_${Math.abs(Math.round(to.lat * 100))}`;
+    } catch (error) {
+      console.warn('[carhire-terrain] enrichment unavailable:', error && error.message);
+      profile = estimateProfile(context);
+    }
   }
 
-  const ttlMs = profile.basis === 'ai_reasoning' ? 7 * 24 * 3600 * 1000 : 60 * 60 * 1000;
-  cacheSet(key, profile, ttlMs);
-
-  const sMax = Math.floor(ttlMs / 1000);
-  res.setHeader('Cache-Control', `public, max-age=300, s-maxage=${sMax}, stale-while-revalidate=2592000`);
-  return res.status(200).json({ ...profile, cache: 'miss' });
+  const ttl = profile.basis === 'ai_reasoning' || profile.basis === 'cabana_reference' ? 7 * 86400000 : 3600000;
+  cacheSet(key, profile, ttl);
+  res.setHeader('Cache-Control', `public, max-age=300, s-maxage=${Math.floor(ttl / 1000)}, stale-while-revalidate=2592000`);
+  return res.status(200).json({ ...profile, cache:'miss' });
 }
 
-export const __test = { coerceProfile, nearestKnown, fallbackProfile, haversineKm, KNOWN_ROUTES };
+export const __test = { coerceProfile, nearestKnown, matchKnownRoute, fallbackProfile, estimateProfile, haversineKm, KNOWN_ROUTES, surfaceMix };

@@ -1,280 +1,246 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-5NQGLLEE02"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-5NQGLLEE02');
-</script>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="description" content="Find verified car hire across all 54 African countries. Choose an exact pickup and destination, compare route-fit vehicles, fuel economy and transparent local pricing.">
+  <meta name="keywords" content="car hire Africa, car rental Africa, self drive Africa, 4x4 hire Africa, safari vehicle hire, car with driver Africa">
+  <meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large">
+  <meta name="author" content="Cabana">
+  <meta name="theme-color" content="#07110f">
+  <link rel="canonical" href="https://cabana.africa/carhire">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="/cabana-apple-touch-icon.png">
+  <meta property="og:site_name" content="Cabana">
+  <meta property="og:title" content="Cabana Drive Africa — the right car for the road">
+  <meta property="og:description" content="Africa-wide car hire with exact pickup, route intelligence, honest vehicle fit and fuel figures in every useful unit.">
+  <meta property="og:url" content="https://cabana.africa/carhire">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://cabana.africa/og-carhire.jpg">
+  <meta property="og:image:alt" content="Cabana Drive Africa route-intelligent car hire">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Cabana Drive Africa">
+  <meta name="twitter:description" content="Choose the road first. Then choose the car.">
+  <meta name="twitter:image" content="https://cabana.africa/og-carhire.jpg">
+  <title>Car Hire Across Africa — Route-fit Vehicles | Cabana Drive</title>
 
-<!-- ══ SEO ══ -->
-<meta name="description" content="Plan self-drive or chauffeur car hire in Nairobi and across Kenya. Compare airport pickup, city cars and safari-ready 4x4s from verified operators."/>
-<meta name="keywords" content="car hire Kenya, car rental Nairobi, self drive Kenya, 4x4 hire Masai Mara, safari vehicle hire, chauffeur hire Nairobi, Land Cruiser hire Kenya, JKIA car hire"/>
-<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1"/>
-<link rel="canonical" href="https://cabana.africa/carhire"/>
-
-
-<meta name="author" content="Cabana"/>
-<meta name="geo.region" content="KE"/>
-<meta name="geo.placename" content="Kenya"/>
-<meta name="theme-color" content="#FAFAFC"/>
-<meta name="mobile-web-app-capable" content="yes"/>
-<meta name="apple-mobile-web-app-capable" content="yes"/>
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-<link rel="manifest" href="/manifest.json"/>
-<link rel="icon" href="/favicon.ico" sizes="any"/>
-<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png"/>
-<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png"/>
-<link rel="apple-touch-icon" href="/cabana-apple-touch-icon.png"/>
-<meta name="apple-mobile-web-app-title" content="Cabana"/>
-
-<!-- Open Graph -->
-<meta property="og:site_name" content="Cabana"/>
-<meta property="og:title" content="Car Hire Nairobi &amp; Kenya: Self-Drive or Driver | Cabana"/>
-<meta property="og:description" content="Plan self-drive or chauffeur car hire in Nairobi and across Kenya, including airport pickup, city cars and safari-ready 4x4s."/>
-<meta property="og:url" content="https://cabana.africa/carhire"/>
-<meta property="og:type" content="website"/>
-<meta property="og:image" content="https://cabana.africa/og-carhire.jpg"/>
-<meta property="og:image:width" content="1200"/>
-<meta property="og:image:height" content="630"/>
-<meta property="og:image:alt" content="Cabana Car Hire — route-graded vehicles across Kenya"/>
-<meta property="og:locale" content="en_KE"/>
-
-<!-- Twitter Card -->
-<meta name="twitter:card" content="summary_large_image"/>
-<meta name="twitter:title" content="Car Hire Nairobi &amp; Kenya: Self-Drive or Driver | Cabana"/>
-<meta name="twitter:description" content="Plan self-drive or chauffeur car hire in Nairobi and across Kenya, including airport pickup and safari-ready 4x4s."/>
-<meta name="twitter:image" content="https://cabana.africa/og-carhire.jpg"/>
-<meta name="twitter:image:alt" content="Cabana Car Hire — route-graded vehicles across Kenya"/>
-
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link rel="dns-prefetch" href="//fonts.googleapis.com"/>
-<link rel="dns-prefetch" href="//fonts.gstatic.com"/>
-
-<title>Car Hire Nairobi &amp; Kenya: Self-Drive or Driver | Cabana</title>
-
-<!-- Brand chrome, then the design system, then this page's instrument face.
-     Order matters: cabana-ds.css uses !important on type, so the car hire
-     sheet must load after it to win where the two disagree. -->
-<link rel="stylesheet" href="/brand.css"/>
-<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&family=Barlow+Condensed:wght@400;500;600;700&display=swap"/>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&family=Barlow+Condensed:wght@400;500;600;700&display=swap" media="print" onload="this.media='all';this.onload=null"/>
-<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&family=Barlow+Condensed:wght@400;500;600;700&display=swap"/></noscript>
-<link rel="stylesheet" href="/cabana-ds.css"/>
-<link rel="stylesheet" href="/cabana-carhire.css?v=2"/>
-
-<style>
-  /* Page-local reset only. All colour now lives in cabana-carhire.css
-     so the light and dark themes can both own the page. */
-  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-  html{min-height:100%;-webkit-text-size-adjust:100%;}
-  body.ch-body{min-height:100%;font-family:var(--font-body,'Inter',system-ui,sans-serif);}
-  img{max-width:100%;}
-  summary::-webkit-details-marker{display:none;}
-</style>
-<!-- CABANA-SEO-GRAPH -->
-<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":["Organization","TravelAgency","OnlineBusiness"],"@id":"https://cabana.africa/#organization","name":"Cabana","alternateName":["Cabana Africa","Cabana Travel","Cabana App","cabana.africa","Apatmento","Apatmento by Cabana"],"legalName":"Cabana","url":"https://cabana.africa/","logo":{"@type":"ImageObject","@id":"https://cabana.africa/#logo","url":"https://cabana.africa/cabana-icon-512.png","contentUrl":"https://cabana.africa/cabana-icon-512.png","width":512,"height":512,"caption":"Cabana"},"image":{"@id":"https://cabana.africa/#logo"},"description":"Cabana is Africa's zero-commission travel platform. Book short-stay apartments, safaris, flights, events, car hire and rides across all 54 African countries, direct from the host or operator. Hosts keep 100% of what they charge and guests pay no booking fee.","slogan":"Zero commission. Africa's own travel platform.","foundingDate":"2025","foundingLocation":{"@type":"Place","name":"Nairobi, Kenya"},"brand":{"@id":"https://cabana.africa/#brand"},"knowsAbout":["Travel in Africa","Safari booking","Short-stay apartments","Zero-commission booking","M-Pesa payments","African tourism","Vacation rentals","Airport transfers","Car hire","Event ticketing"],"areaServed":[{"@type":"Continent","name":"Africa"},{"@type":"Place","name":"Worldwide"}],"currenciesAccepted":"KES, NGN, GHS, ZAR, TZS, UGX, RWF, USD, EUR, GBP","paymentAccepted":"M-Pesa, MTN MoMo, Airtel Money, Visa, Mastercard, Bank transfer","email":"connect@cabana.africa","contactPoint":[{"@type":"ContactPoint","email":"connect@cabana.africa","contactType":"customer support","url":"https://cabana.africa/help.html","availableLanguage":["English","Swahili","French","Arabic","Portuguese"],"areaServed":"Africa"},{"@type":"ContactPoint","email":"partnership@cabana.africa","contactType":"sales","name":"Host & operator onboarding","availableLanguage":["English","Swahili","French"],"areaServed":"Africa"}],"sameAs":["https://twitter.com/apatmento","https://x.com/apatmento"]},{"@type":"Brand","@id":"https://cabana.africa/#brand","name":"Cabana","logo":"https://cabana.africa/cabana-icon-512.png","slogan":"Zero commission. Always."},{"@type":"WebSite","@id":"https://cabana.africa/#website","url":"https://cabana.africa/","name":"Cabana","alternateName":"Cabana Africa","description":"Africa's zero-commission travel platform.","publisher":{"@id":"https://cabana.africa/#organization"},"inLanguage":"en","potentialAction":[{"@type":"SearchAction","target":{"@type":"EntryPoint","urlTemplate":"https://cabana.africa/apartments?q={search_term_string}"},"query-input":"required name=search_term_string"}]},{"@type":"CollectionPage","@id":"https://cabana.africa/carhire#webpage","url":"https://cabana.africa/carhire","name":"Car Hire Nairobi & Kenya: Self-Drive or Driver | Cabana","description":"Plan self-drive or chauffeur car hire in Nairobi and across Kenya. Compare airport pickup, city cars and safari-ready 4x4s from verified operators.","isPartOf":{"@id":"https://cabana.africa/#website"},"about":{"@id":"https://cabana.africa/#organization"},"publisher":{"@id":"https://cabana.africa/#organization"},"inLanguage":"en","dateModified":"2026-08-13","breadcrumb":{"@id":"https://cabana.africa/carhire#breadcrumb"},"primaryImageOfPage":{"@type":"ImageObject","url":"https://cabana.africa/og-carhire.jpg"},"speakable":{"@type":"SpeakableSpecification","cssSelector":[".hero h1",".hero .sub",".sec p"]}},{"@type":"BreadcrumbList","@id":"https://cabana.africa/carhire#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://cabana.africa/"},{"@type":"ListItem","position":2,"name":"Car Hire"}]},{"@type":"Product","@id":"https://cabana.africa/carhire#product","name":"Cabana Car Hire","description":"Self-drive and chauffeur-driven car hire from local operators.","url":"https://cabana.africa/carhire","category":"Car Hire","brand":{"@id":"https://cabana.africa/#brand"}},{"@type":"Service","@id":"https://cabana.africa/carhire#service","name":"Cabana Car Hire","description":"Self-drive and chauffeur-driven car hire from local operators.","serviceType":"Car Hire","provider":{"@id":"https://cabana.africa/#organization"},"areaServed":{"@type":"Continent","name":"Africa"},"audience":{"@type":"Audience","audienceType":"Travellers to Africa"}},{"@type":"ItemList","@id":"https://cabana.africa/carhire#itemlist","name":"Car Hire by country","numberOfItems":24,"itemListElement":[{"@type":"ListItem","position":1,"name":"Kenya","url":"https://cabana.africa/kenya-travel"},{"@type":"ListItem","position":2,"name":"Tanzania","url":"https://cabana.africa/tanzania-travel"},{"@type":"ListItem","position":3,"name":"Uganda","url":"https://cabana.africa/uganda-travel"},{"@type":"ListItem","position":4,"name":"Rwanda","url":"https://cabana.africa/rwanda-travel"},{"@type":"ListItem","position":5,"name":"Ethiopia","url":"https://cabana.africa/ethiopia-travel"},{"@type":"ListItem","position":6,"name":"Seychelles","url":"https://cabana.africa/seychelles-travel"},{"@type":"ListItem","position":7,"name":"Mauritius","url":"https://cabana.africa/mauritius-travel"},{"@type":"ListItem","position":8,"name":"Madagascar","url":"https://cabana.africa/madagascar-travel"},{"@type":"ListItem","position":9,"name":"Nigeria","url":"https://cabana.africa/nigeria-travel"},{"@type":"ListItem","position":10,"name":"Ghana","url":"https://cabana.africa/ghana-travel"},{"@type":"ListItem","position":11,"name":"Senegal","url":"https://cabana.africa/senegal-travel"},{"@type":"ListItem","position":12,"name":"Côte d'Ivoire","url":"https://cabana.africa/cote-divoire-travel"},{"@type":"ListItem","position":13,"name":"Benin","url":"https://cabana.africa/benin-travel"},{"@type":"ListItem","position":14,"name":"Sierra Leone","url":"https://cabana.africa/sierra-leone-travel"},{"@type":"ListItem","position":15,"name":"Gambia","url":"https://cabana.africa/gambia-travel"},{"@type":"ListItem","position":16,"name":"Cape Verde","url":"https://cabana.africa/cape-verde-travel"},{"@type":"ListItem","position":17,"name":"South Africa","url":"https://cabana.africa/south-africa-travel"},{"@type":"ListItem","position":18,"name":"Namibia","url":"https://cabana.africa/namibia-travel"},{"@type":"ListItem","position":19,"name":"Botswana","url":"https://cabana.africa/botswana-travel"},{"@type":"ListItem","position":20,"name":"Zimbabwe","url":"https://cabana.africa/zimbabwe-travel"},{"@type":"ListItem","position":21,"name":"Zambia","url":"https://cabana.africa/zambia-travel"},{"@type":"ListItem","position":22,"name":"Mozambique","url":"https://cabana.africa/mozambique-travel"},{"@type":"ListItem","position":23,"name":"Malawi","url":"https://cabana.africa/malawi-travel"},{"@type":"ListItem","position":24,"name":"Angola","url":"https://cabana.africa/angola-travel"}]},{"@type":"FAQPage","@id":"https://cabana.africa/carhire#faq","mainEntity":[{"@type":"Question","name":"Should I choose self-drive or a car with a driver?","acceptedAnswer":{"@type":"Answer","text":"Choose self-drive for flexibility when you are comfortable with local traffic and your route is permitted. Choose a driver when you want airport meet-and-greet, several city stops or less responsibility for navigation and parking. Compare the complete written quote for both."}},{"@type":"Question","name":"Can I collect a hire car at JKIA airport?","acceptedAnswer":{"@type":"Answer","text":"Some operators offer JKIA collection or a meet-and-greet transfer. Check the exact terminal meeting point, flight-delay policy, operating hours and any airport delivery charge before confirming."}},{"@type":"Question","name":"Do I need a 4x4 for a Kenya safari?","acceptedAnswer":{"@type":"Answer","text":"It depends on the park, access road, season and weather. Ask the operator to approve your exact itinerary in writing. High-clearance four-wheel drive is the safer choice where roads are rough, muddy or remote."}},{"@type":"Question","name":"How do deposits, insurance and fuel work?","acceptedAnswer":{"@type":"Answer","text":"Policies vary by operator and vehicle. Your quote should state the refundable deposit, insurance excess, exclusions, mileage allowance and fuel rule. Photograph the vehicle and fuel gauge at collection and return."}},{"@type":"Question","name":"Can I drive a Kenya hire car across a border?","acceptedAnswer":{"@type":"Answer","text":"Only when the operator gives written permission and supplies the required vehicle and insurance documents. Never assume a standard rental may enter Tanzania, Uganda or another country."}}]}]}</script>
-<!-- /CABANA-SEO-GRAPH -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap">
+  <link rel="stylesheet" href="/brand.css">
+  <link rel="stylesheet" href="/cabana-carhire.css?v=4">
+  <script type="application/ld+json">
+  {
+    "@context":"https://schema.org",
+    "@type":"Service",
+    "name":"Cabana Drive Africa",
+    "url":"https://cabana.africa/carhire",
+    "description":"Self-drive and chauffeur car hire with route-fit guidance from verified local operators across Africa.",
+    "provider":{"@type":"Organization","name":"Cabana","url":"https://cabana.africa"},
+    "areaServed":{"@type":"Continent","name":"Africa"},
+    "serviceType":"Car hire and vehicle route suitability"
+  }
+  </script>
 </head>
-<body class="ch-body">
+<body class="ch-body" data-theme="dark">
+  <div class="ch-atmosphere" aria-hidden="true"><i></i><i></i><i></i></div>
+  <div class="ch-app">
+    <header class="ch-top">
+      <a class="ch-back" href="/" aria-label="Back to Cabana">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+      </a>
+      <a class="ch-brand" href="/carhire" aria-label="Cabana Drive Africa home">
+        <img src="/cabana-emblem.png" width="28" height="28" alt="" fetchpriority="high">
+        <span><b>CABANA</b><em>DRIVE / AFRICA</em></span>
+      </a>
+      <div class="ch-top-status"><span></span>54-country network</div>
+      <a class="ch-top-cta" href="/list-your-fleet">List your fleet <span>↗</span></a>
+    </header>
 
-<div class="ch-wrap">
+    <main>
+      <section class="ch-hero" aria-labelledby="ch-title">
+        <div class="ch-shell">
+          <div class="ch-hero-copy">
+            <div class="ch-overline"><span>ROUTE INTELLIGENCE / 01</span><i></i><span>AFRICA-WIDE</span></div>
+            <h1 id="ch-title">Choose the road.<br><span>Then choose the car.</span></h1>
+            <p>Search every African country from an exact pickup point. Cabana reads the journey, ranks verified local vehicles and translates fuel use into the units you actually use.</p>
+            <div class="ch-proof" aria-label="Service highlights">
+              <div><b>54</b><span>African countries</span></div>
+              <div><b>5</b><span>fuel-economy units</span></div>
+              <div><b>0%</b><span>Cabana commission</span></div>
+            </div>
+          </div>
 
-  <header class="ch-top">
-    <a class="ch-back" href="/" aria-label="Back to Cabana">
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-        stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-    </a>
-    <a class="ch-brand" href="/">
-      <img src="/cabana-emblem.png" alt="" width="24" height="24" fetchpriority="high" decoding="async"/>
-      <span>Cabana</span>
-    </a>
-    <a class="ch-top-cta" href="/list-your-fleet">List your fleet</a>
-  </header>
+          <div class="ch-command">
+            <div class="ch-command-head">
+              <div><span class="ch-kicker">Build your drive</span><h2>Where does the road take you?</h2></div>
+              <div class="ch-command-live"><i></i>Location aware</div>
+            </div>
 
-  <main>
-  <!-- ══ HERO + SEARCH ═══════════════════════════════════════════ -->
-  <section class="ch-hero">
-    <div class="ch-shell">
-      <span class="ch-eyebrow">Car hire · Kenya</span>
-      <h1 class="ch-h1">Car hire in Nairobi and across Kenya.</h1>
+            <div class="ch-stepbar" aria-hidden="true">
+              <span class="on"><b>01</b> Country</span><span><b>02</b> Pickup</span><span><b>03</b> Route</span><span><b>04</b> Vehicle</span>
+            </div>
 
-      <form class="ch-search" id="ch-form">
-        <div class="ch-f ch-f-city">
-          <label for="ch-city">Collecting in</label>
-          <select id="ch-city" required></select>
-        </div>
-        <div class="ch-f">
-          <label for="ch-from">Collect</label>
-          <input type="date" id="ch-from" required>
-        </div>
-        <div class="ch-f">
-          <label for="ch-to">Return</label>
-          <input type="date" id="ch-to" required>
-        </div>
-        <button type="submit" class="ch-go" id="ch-go" disabled>Find cars</button>
-      </form>
+            <div class="ch-workspace">
+              <form class="ch-planner" id="ch-form" novalidate>
+                <div class="ch-country-row">
+                  <label class="ch-field ch-field-country" for="ch-country">
+                    <span class="ch-label">Pickup country <b>All 54 covered</b></span>
+                    <span class="ch-control ch-select-control">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
+                      <select id="ch-country" required><option value="">Select an African country</option></select>
+                    </span>
+                  </label>
+                  <button class="ch-locate" id="ch-locate" type="button">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/></svg>
+                    <span>Detect me</span>
+                  </button>
+                </div>
 
-      <div class="ch-meta" id="ch-meta"></div>
+                <div class="ch-route-fields">
+                  <label class="ch-field" for="ch-pickup">
+                    <span class="ch-label">Pickup city or exact point</span>
+                    <span class="ch-control">
+                      <span class="ch-pin ch-pin-a">A</span>
+                      <input id="ch-pickup" type="text" placeholder="Choose a country first" disabled autocomplete="off" required>
+                    </span>
+                  </label>
+                  <div class="ch-city-picks" id="ch-city-picks" aria-label="Suggested pickup cities"></div>
 
-      <!-- Optional. Closed until the guest asks for it. -->
-      <details class="ch-refine" id="ch-refine">
-        <summary class="ch-refine-t" style="list-style:none">
-          Check a vehicle against your exact route
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-            stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-        </summary>
-        <div class="ch-refine-body">
-          <div id="ch-dest-wrap"></div>
-          <div id="ch-demands" style="margin-top:14px"></div>
-        </div>
-      </details>
-    </div>
-  </section>
+                  <div class="ch-route-join" aria-hidden="true"><span></span><i></i><span></span></div>
 
-  <!-- ══ RESULTS ═════════════════════════════════════════════════ -->
-  <section class="ch-results" id="ch-results" hidden>
-    <div class="ch-shell">
-      <div class="ch-rail-hold" style="margin-bottom:18px">
-        <div class="ch-rail" id="ch-classes" role="group" aria-label="Filter by vehicle type"></div>
-      </div>
+                  <label class="ch-field" for="ch-destination">
+                    <span class="ch-label">Destination <b>Optional for local hire</b></span>
+                    <span class="ch-control">
+                      <span class="ch-pin ch-pin-b">B</span>
+                      <input id="ch-destination" type="text" placeholder="Town, park gate, hotel or address" disabled autocomplete="off">
+                    </span>
+                  </label>
+                  <label class="ch-cross"><input id="ch-crossborder" type="checkbox"><span></span>Destination is in another African country</label>
+                </div>
 
-      <div class="ch-bar" id="ch-bar" hidden>
-        <div class="ch-count" id="ch-count"></div>
-        <label class="ch-sr" for="ch-sort">Sort vehicles</label>
-        <select class="ch-sort" id="ch-sort">
-          <option value="price">Lowest total first</option>
-          <option value="price_desc">Highest total first</option>
-          <option value="seats">Most seats</option>
-          <option value="fit" hidden>Best fit for the road</option>
-        </select>
-      </div>
+                <div class="ch-date-grid">
+                  <label class="ch-field" for="ch-from"><span class="ch-label">Collect</span><span class="ch-control"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg><input type="date" id="ch-from" required></span></label>
+                  <label class="ch-field" for="ch-to"><span class="ch-label">Return</span><span class="ch-control"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg><input type="date" id="ch-to" required></span></label>
+                </div>
 
-      <div class="ch-grid" id="ch-grid"></div>
-    </div>
-  </section>
+                <fieldset class="ch-drive-mode">
+                  <legend>How would you like to travel?</legend>
+                  <button type="button" data-mode="self" aria-pressed="true"><span>Self-drive</span><small>You take the wheel</small></button>
+                  <button type="button" data-mode="driver" aria-pressed="false"><span>With a driver</span><small>Local professional</small></button>
+                </fieldset>
 
-  <!-- ══ NAIROBI CAR HIRE GUIDE ══════════════════════════════════ -->
-  <section class="ch-guide" aria-labelledby="ch-guide-title">
-    <div class="ch-shell">
-      <span class="ch-eyebrow">Before you book</span>
-      <h2 id="ch-guide-title">Choose the right Nairobi car hire for the road ahead.</h2>
-      <p class="ch-guide-lede">A compact city car, an airport pickup with a driver and a safari-ready 4x4 solve different trips. Compare the whole quote, not only the daily rate: collection, insurance, deposit, mileage and fuel policy can change the final amount.</p>
+                <button class="ch-go" id="ch-go" type="submit" disabled>
+                  <span>Analyse route & find cars</span>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                </button>
+                <div class="ch-meta" id="ch-meta" role="status" aria-live="polite">Choose a country, pickup point and dates to begin.</div>
+              </form>
 
-      <div class="ch-guide-grid">
-        <article><h3>Self-drive in Nairobi</h3><p>Useful when your schedule changes often. Confirm the accepted driving licence, insurance excess, daily mileage and where the vehicle may travel before paying.</p></article>
-        <article><h3>Car hire with a driver</h3><p>A strong fit for airport arrivals, business days and unfamiliar routes. Ask whether waiting time, late hours, meals or overnight travel are included in the quote.</p></article>
-        <article><h3>Safari and upcountry routes</h3><p>Road and weather conditions matter more than the badge on the bonnet. Tell the operator your parks and travel dates so they can confirm clearance, tyres, recovery equipment and permission for that route.</p></article>
-      </div>
-
-      <div class="ch-faq" aria-labelledby="ch-faq-title">
-        <h2 id="ch-faq-title">Nairobi car hire questions</h2>
-        <details class="ch-faq-item"><summary>Should I choose self-drive or a car with a driver?</summary><p>Choose self-drive for flexibility when you are comfortable with local traffic and your route is permitted. Choose a driver when you want airport meet-and-greet, several city stops or less responsibility for navigation and parking. Compare the complete written quote for both.</p></details>
-        <details class="ch-faq-item"><summary>Can I collect a hire car at JKIA airport?</summary><p>Some operators offer JKIA collection or a meet-and-greet transfer. Check the exact terminal meeting point, flight-delay policy, operating hours and any airport delivery charge before confirming.</p></details>
-        <details class="ch-faq-item"><summary>Do I need a 4x4 for a Kenya safari?</summary><p>It depends on the park, access road, season and weather. Ask the operator to approve your exact itinerary in writing. High-clearance four-wheel drive is the safer choice where roads are rough, muddy or remote.</p></details>
-        <details class="ch-faq-item"><summary>How do deposits, insurance and fuel work?</summary><p>Policies vary by operator and vehicle. Your quote should state the refundable deposit, insurance excess, exclusions, mileage allowance and fuel rule. Photograph the vehicle and fuel gauge at collection and return.</p></details>
-        <details class="ch-faq-item"><summary>Can I drive a Kenya hire car across a border?</summary><p>Only when the operator gives written permission and supplies the required vehicle and insurance documents. Never assume a standard rental may enter Tanzania, Uganda or another country.</p></details>
-      </div>
-    </div>
-  </section>
-
-  <!-- ══ OPERATORS ═══════════════════════════════════════════════ -->
-  <section style="padding:0 0 90px">
-    <div class="ch-shell">
-      <div class="ch-listing">
-        <div>
-          <span class="ch-eyebrow">For car hire companies</span>
-          <h2>List your fleet and keep every shilling.</h2>
-          <p>
-            Cabana takes no commission on a hire. You set your rates, your deposit and your
-            terms, and the guest pays you directly. We handle the listing, the enquiry and
-            the calendar.
-          </p>
-          <div class="ch-state-acts" style="justify-content:flex-start">
-            <a class="ch-btn ch-btn-primary" href="/list-your-fleet">List your fleet</a>
-            <a class="ch-btn ch-btn-ghost" href="/partner-listings">Manage listings</a>
+              <aside class="ch-route-lab" id="ch-route-lab" aria-live="polite">
+                <div class="ch-lab-head"><span>ROUTE LAB</span><em>Waiting for A → B</em></div>
+                <div class="ch-route-canvas" aria-hidden="true">
+                  <div class="ch-contours"></div>
+                  <span class="ch-map-pin a">A</span><span class="ch-map-pin b">B</span>
+                  <svg viewBox="0 0 420 180" preserveAspectRatio="none"><path class="route-shadow" d="M62 130 C118 26 220 166 358 54"/><path class="route-pulse" d="M62 130 C118 26 220 166 358 54"/></svg>
+                </div>
+                <div class="ch-lab-empty">
+                  <span class="ch-scan"></span>
+                  <h3>Your road, decoded.</h3>
+                  <p>Add a destination and Cabana will estimate distance, drive time, surfaces, weather sensitivity, clearance, fuel gaps and border needs.</p>
+                </div>
+                <div class="ch-lab-foot"><span><i></i>Vehicle-fit engine</span><span>Not live navigation</span></div>
+              </aside>
+            </div>
           </div>
         </div>
-        <div class="ch-facts">
-          <div class="ch-fact">
-            <div class="ch-fact-n">0%</div>
-            <div class="ch-fact-t"><b>Commission</b>The rate you set is the rate you are paid.</div>
+      </section>
+
+      <section class="ch-results" id="ch-results" hidden aria-labelledby="ch-results-title">
+        <div class="ch-shell">
+          <div class="ch-results-head">
+            <div><span class="ch-kicker">Verified local supply</span><h2 id="ch-results-title">Vehicles for your pickup area</h2><p id="ch-results-sub"></p></div>
+            <div class="ch-bar" id="ch-bar" hidden><div class="ch-count" id="ch-count"></div><label class="ch-sr" for="ch-sort">Sort vehicles</label><select class="ch-sort" id="ch-sort"><option value="fit">Best route fit</option><option value="price">Lowest total</option><option value="price_desc">Highest total</option><option value="efficiency">Best fuel economy</option><option value="seats">Most seats</option></select></div>
           </div>
-          <div class="ch-fact">
-            <div class="ch-fact-n">1</div>
-            <div class="ch-fact-t"><b>Verification</b>We check your registration, insurance and licence once, then you are live.</div>
-          </div>
-          <div class="ch-fact">
-            <div class="ch-fact-n">24h</div>
-            <div class="ch-fact-t"><b>To go live</b>Add a vehicle with its specs and rates, and it appears in search.</div>
+          <div class="ch-rail-hold"><div class="ch-rail" id="ch-classes" role="group" aria-label="Filter by vehicle type"></div></div>
+          <div class="ch-grid" id="ch-grid"></div>
+        </div>
+      </section>
+
+      <section class="ch-standard" aria-labelledby="ch-standard-title">
+        <div class="ch-shell">
+          <div class="ch-standard-intro"><span class="ch-kicker">The Cabana Road Standard</span><h2 id="ch-standard-title">Useful before beautiful.<br>Beautiful because it is useful.</h2><p>Africa is not one driving environment. A city transfer, a highland pass, a desert crossing and a wet-season park road should never produce the same recommendation.</p></div>
+          <div class="ch-standard-grid">
+            <article><span>01</span><h3>Exact points</h3><p>Country first, then any geocoded city, airport, landmark or address—never a ten-city ceiling.</p></article>
+            <article><span>02</span><h3>Engineering fit</h3><p>Ground clearance, drivetrain, surface mix and usable fuel range are checked against the journey.</p></article>
+            <article><span>03</span><h3>Comparable fuel</h3><p>See km/L, L/100km, L/km, US mpg and UK mpg, plus estimated litres for the road.</p></article>
+            <article><span>04</span><h3>Honest confidence</h3><p>Reference, model estimate and geometry fallback are visibly different. Current local conditions still need confirmation.</p></article>
           </div>
         </div>
-      </div>
-    </div>
-  </section>
-  </main>
-</div>
+      </section>
 
-<!-- ══ THEME ═══════════════════════════════════════════════════ -->
-<button type="button" class="ch-theme" id="ch-theme" aria-label="Switch theme"></button>
+      <section class="ch-guide" aria-labelledby="ch-guide-title">
+        <div class="ch-shell ch-guide-layout">
+          <div><span class="ch-kicker">Africa driving desk</span><h2 id="ch-guide-title">The questions that prevent expensive surprises.</h2><p>Before payment, ask the operator to confirm the exact itinerary, insurance excess, restricted roads, border approval, mileage allowance, roadside support and every handover charge in writing.</p></div>
+          <div class="ch-faq">
+            <details><summary>Do I always need a 4×4 outside a major city?<span>+</span></summary><p>No. Many inter-city corridors are paved and suit an efficient two-wheel-drive car. A 4×4 becomes important when the final approach, season, sand, mud, gradient or park rules demand it. Cabana grades the full route, not the destination name alone.</p></details>
+            <details><summary>Can I take a hire car across an African border?<span>+</span></summary><p>Only with written operator approval and the correct ownership, customs and insurance documents for every country. Border availability and opening hours must be checked close to travel.</p></details>
+            <details><summary>Are the route figures live navigation?<span>+</span></summary><p>No. Cabana provides conservative planning estimates and clearly labels their source and confidence. Traffic, roadworks, weather, ferries and border queues can change the real journey.</p></details>
+            <details><summary>Why show both US and UK mpg?<span>+</span></summary><p>They use different gallon sizes, so the figures are not interchangeable. Cabana labels both and also shows metric units to make vehicle comparisons unambiguous.</p></details>
+          </div>
+        </div>
+      </section>
 
-<!-- ══ SHEET ═══════════════════════════════════════════════════ -->
-<div class="ch-scrim" id="ch-scrim"></div>
-<div class="ch-sheet" id="ch-sheet" role="dialog" aria-modal="true" aria-labelledby="ch-sheet-title">
-  <div class="ch-sheet-grab"></div>
-  <div class="ch-sheet-head">
-    <h3 id="ch-sheet-title">Vehicle</h3>
-    <button type="button" class="ch-x" aria-label="Close">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-        stroke-width="2.4" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-    </button>
+      <section class="ch-operator">
+        <div class="ch-shell">
+          <div class="ch-operator-card">
+            <div><span class="ch-kicker">For African fleet owners</span><h2>Put real vehicles on the real roads you serve.</h2><p>List from any African country, price in your market's currency, define your operating radius and add the engineering specs travellers need. Cabana takes no commission.</p><div class="ch-operator-actions"><a class="ch-btn-primary" href="/list-your-fleet">List your fleet <span>↗</span></a><a class="ch-btn-quiet" href="/partner-listings">Manage listings</a></div></div>
+            <div class="ch-operator-stats"><div><b>54</b><span>countries accepted</span></div><div><b>0%</b><span>commission</span></div><div><b>1×</b><span>verified identity</span></div></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="ch-footer"><span>© Cabana Africa</span><span>Route intelligence for better decisions—not a substitute for local road or safety advice.</span><a href="/help.html">Support</a></footer>
   </div>
-  <div class="ch-sheet-body" id="ch-sheet-body"></div>
-  <div class="ch-sheet-foot" id="ch-sheet-foot"></div>
-</div>
 
-<div class="ch-toast" id="ch-toast" role="status" aria-live="polite"></div>
+  <button type="button" class="ch-theme" id="ch-theme" aria-label="Switch theme"></button>
+  <div class="ch-scrim" id="ch-scrim"></div>
+  <section class="ch-sheet" id="ch-sheet" role="dialog" aria-modal="true" aria-labelledby="ch-sheet-title" aria-hidden="true">
+    <div class="ch-sheet-grab"></div>
+    <header class="ch-sheet-head"><div><span>VEHICLE BRIEF</span><h3 id="ch-sheet-title">Vehicle</h3></div><button type="button" class="ch-x" aria-label="Close vehicle details"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></header>
+    <div class="ch-sheet-body" id="ch-sheet-body"></div>
+    <div class="ch-sheet-foot" id="ch-sheet-foot"></div>
+  </section>
+  <div class="ch-toast" id="ch-toast" role="status" aria-live="polite"></div>
 
-<script src="/vendor-supabase-2.112.3.js"></script>
-<script src="/apa-session.js"></script>
-<script>
-  /* One client per tab. Multiple clients on the same storage key race
-     each other and silently drop the session. */
-  window.__chSb = null;
-  try {
-    const { createClient } = supabase;
-    window.__chSb = createClient(
-      'https://gfwgbgdvxtocwhilrtdw.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw'
-    );
-  } catch (e) { /* the launch catalogue renders without it */ }
-</script>
-<script src="/apa-geo.js" defer></script>
-<script src="/cabana-carhire-core.js?v=3"></script>
-<script src="/cabana-carhire-ui.js?v=3"></script>
-
-<script src="/analytics.js" defer></script>
-<script src="/telemetry.js" defer></script>
-<script src="/pwa.js" defer></script>
-<script src="/referral.js" defer></script>
-<script src="/apa-referral-capture.js" defer></script>
-<script src="/cabana-credit.js" defer></script>
-<script src="/apa-signal.js" defer></script>
-<script src="/apa-contact.js" defer></script>
-
-<!-- ══ STRUCTURED DATA ══ -->
-
-
-
-<!-- CABANA-LINKMESH --><style>.cbm{max-width:1100px;margin:56px auto 0;padding:0 24px 8px;}.cbm h2{font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(10,10,20,.4);padding-bottom:12px;border-bottom:1px solid rgba(10,10,20,.09);margin-bottom:16px;font-family:inherit;}.cbm-l{display:flex;flex-wrap:wrap;gap:7px;}.cbm-l a{font-size:12.5px;font-weight:600;text-decoration:none;color:rgba(10,10,20,.66);border:1px solid rgba(10,10,20,.11);border-radius:999px;padding:6px 12px;transition:.18s;}.cbm-l a:hover{color:#0A0A14;border-color:#0A0A14;}.cbm-more{display:inline-block;margin-top:14px;font-size:13px;font-weight:700;color:#0A0A14;text-decoration:none;border-bottom:2px solid #92720A;padding-bottom:1px;}</style><nav class="cbm" aria-label="Car hire by city"><h2>Car hire by city</h2><div class="cbm-l"><a href="/nairobi-car-hire">Car hire Nairobi</a><a href="/mombasa-car-hire">Car hire Mombasa</a><a href="/diani-car-hire">Car hire Diani</a><a href="/nakuru-car-hire">Car hire Nakuru</a><a href="/kisumu-car-hire">Car hire Kisumu</a><a href="/naivasha-car-hire">Car hire Naivasha</a><a href="/nanyuki-car-hire">Car hire Nanyuki</a><a href="/malindi-car-hire">Car hire Malindi</a><a href="/watamu-car-hire">Car hire Watamu</a><a href="/lamu-car-hire">Car hire Lamu</a><a href="/lagos-car-hire">Car hire Lagos</a><a href="/abuja-car-hire">Car hire Abuja</a><a href="/port-harcourt-car-hire">Car hire Port Harcourt</a><a href="/ibadan-car-hire">Car hire Ibadan</a><a href="/accra-car-hire">Car hire Accra</a><a href="/kumasi-car-hire">Car hire Kumasi</a><a href="/cape-coast-car-hire">Car hire Cape Coast</a><a href="/cape-town-car-hire">Car hire Cape Town</a><a href="/johannesburg-car-hire">Car hire Johannesburg</a><a href="/durban-car-hire">Car hire Durban</a><a href="/dar-es-salaam-car-hire">Car hire Dar es Salaam</a><a href="/zanzibar-city-car-hire">Car hire Zanzibar City</a><a href="/arusha-car-hire">Car hire Arusha</a><a href="/kampala-car-hire">Car hire Kampala</a><a href="/entebbe-car-hire">Car hire Entebbe</a><a href="/kigali-car-hire">Car hire Kigali</a></div><a class="cbm-more" href="/destinations">All 54 destinations →</a></nav><!-- /CABANA-LINKMESH -->
-<script src="/cabana-call.js" defer></script>
-<script src="/apa-location.js" defer></script><script src="/cabana-sos.js" defer></script><script src="/cabana-support.js" defer></script>
-<script src="/cabana-lifecycle.js" defer></script>
+  <script src="/vendor-supabase-2.112.3.js"></script>
+  <script src="/apa-session.js"></script>
+  <script>
+    window.__chSb = null;
+    try {
+      window.__chSb = supabase.createClient(
+        'https://gfwgbgdvxtocwhilrtdw.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw'
+      );
+    } catch (_) {}
+  </script>
+  <script src="/apa-geo.js" defer></script>
+  <script src="/cabana-carhire-core.js?v=4" defer></script>
+  <script src="/cabana-carhire-ui.js?v=4" defer></script>
+  <script src="/analytics.js" defer></script>
+  <script src="/telemetry.js" defer></script>
+  <script src="/pwa.js" defer></script>
+  <script src="/referral.js" defer></script>
+  <script src="/apa-referral-capture.js" defer></script>
+  <script src="/cabana-credit.js" defer></script>
+  <script src="/apa-signal.js" defer></script>
+  <script src="/apa-contact.js" defer></script>
+  <script src="/cabana-call.js" defer></script>
+  <script src="/apa-location.js" defer></script>
+  <script src="/cabana-sos.js" defer></script>
+  <script src="/cabana-support.js" defer></script>
+  <script src="/cabana-lifecycle.js" defer></script>
 </body>
 </html>
