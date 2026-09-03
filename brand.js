@@ -344,6 +344,23 @@ function choreograph(){
     n.style.transitionDelay = ((i % 6) * 55) + 'ms';
     io.observe(n);
   });
+  /* ── Service tile stagger: observe each tile individually so the
+     nth-child animation-delay rules in CSS fire per card, not per
+     section. A single grid observer would add .in to the grid wrapper
+     and all tiles would snap in simultaneously. ── */
+  var tiles = qsa('.svc-tile');
+  if (tiles.length) {
+    var tileIO = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if (!en.isIntersecting) return;
+        en.target.classList.add('in');
+        tileIO.unobserve(en.target);
+      });
+    }, { rootMargin:'0px 0px -5% 0px', threshold:.08 });
+    tiles.forEach(function(t){
+      if (!t.classList.contains('in')) tileIO.observe(t);
+    });
+  }
   /* Meridian underline on section titles */
   qsa('.section-title').forEach(function(t){
     t.classList.add('apa-underline');
@@ -532,6 +549,11 @@ function boot(){
   defer(function(){
     safe(injectIcons);
     safe(choreograph);
+    /* Ensure tiles are visible even when prefers-reduced-motion skips
+       the observer — opacity:0 on the base rule would hide them forever */
+    if (REDUCE || !('IntersectionObserver' in window)) {
+      qsa('.svc-tile').forEach(function(t){ t.classList.add('in'); });
+    }
     safe(feel);
     safe(bindFaqs);
     safe(function(){
