@@ -349,6 +349,59 @@ ${preheader(preview || '')}
 ══════════════════════════════════════════════════════════════════════ */
 export const TEMPLATES = {
 
+  /* ── Internal · SOS alert ───────────────────────────────────────────
+     Goes to the safety rota, not to a guest. Written to be read on a
+     phone, at speed, half-awake: what happened, where, and one button.
+     No branding flourish above the fold, because the first line has to
+     be the emergency, not a logo. ─────────────────────────────────── */
+  sosAlert({ category, lifeSafety, who, email, phone, locationLine, locationQuality,
+             mapUrl, placeLabel, note, originPage, deskUrl, raisedAt, alertId }) {
+    const urgent = !!lifeSafety;
+    const stamp = raisedAt ? new Date(raisedAt).toISOString().replace('T', ' ').slice(0, 19) + ' UTC' : '—';
+    /* A coarse fix must never be presented as a pin on a street. */
+    const locWarn = (locationQuality === 'coarse' || locationQuality === 'very coarse')
+      ? p('This is a tower or network fix, not GPS. Treat the coordinates as an area, and confirm the location in the thread before dispatching anyone.', { small: true })
+      : (locationQuality === 'none'
+          ? p('The device gave us no location at all. Ask in the thread first — do not guess.', { small: true })
+          : '');
+    return {
+      audience: 'guest', category: 'transactional',
+      subject: `${urgent ? '🆘 SOS' : '⚠️ Urgent'} · ${category} · ${who}`,
+      preview: `${category} raised ${stamp}. ${locationQuality === 'none' ? 'No location.' : locationLine}`,
+      html: shell({
+        title: 'SOS raised', preview: `${category} — ${who}`,
+        body: header({
+          eyebrow: urgent ? 'Life safety · act now' : 'Urgent support',
+          title: `SOS · ${category}`,
+          subtitle: `${who} raised this at ${stamp}.`,
+          gradient: 'linear-gradient(135deg,#FF3B5C,#FF6A3C)',
+          emoji: '🆘',
+        })
+        + card(rows([
+            ['Type', category],
+            ['Raised', stamp],
+            ['Person', who || '—'],
+            email ? ['Email', email] : null,
+            phone ? ['Phone', phone] : null,
+            ['Location', locationLine || '—', true],
+            placeLabel ? ['Nearest place', placeLabel] : null,
+            originPage ? ['Was on', originPage] : null,
+            alertId ? ['Alert ID', alertId] : null,
+          ])
+          + locWarn
+          + (note ? p(`<strong>What they said:</strong> ${esc(note)}`) : '')
+          + button(deskUrl, 'Open the thread and reply', {
+              gradient: 'linear-gradient(135deg,#FF3B5C,#FF6A3C)', solid: B.rose })
+          + (mapUrl ? ghostButton(mapUrl, 'Show the location on a map') : ''))
+        + card(h2('If this is a life-threatening emergency')
+            + p('Cabana is not an emergency service. If there is an immediate risk to life, the caller should be on 999 or 112 — say so in the thread first, then help with everything else.'),
+            { delay: 2, quiet: true }),
+        audience: 'guest',
+        reason: 'You received this because you are on the Cabana safety rota.',
+      }),
+    };
+  },
+
   /* ── Guest · welcome ────────────────────────────────────────────── */
   welcome({ name, email }) {
     const who = firstName(name, email);

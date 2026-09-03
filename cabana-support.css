@@ -281,6 +281,11 @@
 }
 .cbn-sup-ico:hover { background: rgba(255, 255, 255, .26); transform: translateY(-1px); }
 .cbn-sup-ico:active { transform: scale(.94); }
+
+/* SOS reads as an emergency control, not another grey icon. Sitting in
+   the support header is what makes it reachable from every page. */
+.cbn-sup-ico.cbn-sup-sos { background: rgba(255, 23, 68, .22); color: #fff; }
+.cbn-sup-ico.cbn-sup-sos:hover { background: rgba(255, 23, 68, .38); }
 .cbn-sup-ico:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 .cbn-sup-ico svg { width: 17px; height: 17px; display: block; }
 .cbn-sup-ico[data-live="1"] { background: var(--sup-rose); border-color: transparent; animation: cbnCallPulse 1.5s ease-in-out infinite; }

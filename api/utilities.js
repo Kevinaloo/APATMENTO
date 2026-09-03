@@ -1,7 +1,7 @@
 /* ════════════════════════════════════════════════════════════════
    APATMENTO  ·  Utilities  /api/utilities.js
    Routes: ?action=close-bookings | welcome-email | indexnow
-           | reconcile-payments | geocode | atlas
+           | reconcile-payments | geocode | atlas | sos-alert
    Consolidates small utility handlers into 1 function
 ════════════════════════════════════════════════════════════════ */
 export const config = { maxDuration: 15 };
@@ -41,6 +41,7 @@ export const config = { maxDuration: 15 };
 
 import geocodeHandler from './lib/_geocode.js';
 import atlasHandler from './lib/_atlas.js';
+import sosHandler from './lib/_sos.js';
 import { reconcilePayments } from './lib/_reconcile-payments.js';
 import { settlementOf, endDayOf, todayNumber, PART_PAYMENT_TTL_HOURS,
          validateInstalment, depositRequired }
@@ -762,6 +763,13 @@ export default async function handler(req, res) {
     return atlasHandler(req, res);
   }
 
+  /* SOS. Highest-priority path in this file: someone pressed the
+     emergency button. Handled before any of the housekeeping actions
+     below and never cached. */
+  if (action === 'sos-alert') {
+    return sosHandler(req, res);
+  }
+
   if (action === 'close-bookings') {
     return handleCloseBookings(req, res);
   }
@@ -791,7 +799,8 @@ export default async function handler(req, res) {
   }
 
   return res.status(400).json({
-    error: 'Unknown action. Available: subscribe, geocode, atlas, close-bookings, welcome-email, '
-         + 'indexnow, reconcile-payments, paypal-create-order, paypal-capture, paypal-webhook',
+    error: 'Unknown action. Available: subscribe, geocode, atlas, sos-alert, close-bookings, '
+         + 'welcome-email, indexnow, reconcile-payments, paypal-create-order, paypal-capture, '
+         + 'paypal-webhook',
   });
 }

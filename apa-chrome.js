@@ -342,8 +342,14 @@
   var _sosLocation = null;
 
   function openSOS() {
+    /* One SOS implementation. cabana-sos.js is the canonical flow and is
+       loaded site-wide; the copy below stays only as a fallback for any
+       page that has the chrome but not the SOS module. */
+    if (global.CabanaSOS && CabanaSOS.open) { CabanaSOS.open(); return; }
     _sosCategory = null;
     _sosLocation = null;
+    _sosRaised = false;
+    _sosThreadId = null;
     renderSOSStep1();
   }
 
@@ -386,23 +392,139 @@
       + '<div style="text-align:center;margin-top:12px;"><a style="font:500 12px/1 system-ui;color:#8a8a99;cursor:pointer;" onclick="window.ApaChrome._sosSkipLocation()">Show all options without location →</a></div>';
   }
 
+  /* ── Raising the alarm ────────────────────────────────────────────
+     Pressing SOS now files a record and pages the safety desk by email,
+     admin push and an urgent support thread. Previously it rendered a
+     list of phone numbers and told nobody at Cabana anything at all.
+
+     Fired at most once per press. Location is attached when we have it,
+     but a missing fix never blocks the alert — a paged desk with no
+     coordinates can still ask; an unsent alert cannot.                */
+  var _sosRaised = false;
+  var _sosThreadId = null;
+
+  function sosIdentity() {
+    var st = null;
+    try { st = global.ApaSession && ApaSession.get ? ApaSession.get() : null; } catch (e) {}
+    var u = (st && st.user) || null;
+    var gk = null;
+    try {
+      if (global.CabanaSupport && CabanaSupport.guestKey) gk = CabanaSupport.guestKey();
+    } catch (e) {}
+    return {
+      user_id: u && u.id ? u.id : null,
+      guest_key: gk,
+      email: (u && (u.email || (u.user_metadata && u.user_metadata.email))) || null,
+      display_name: (u && (u.name || (u.user_metadata && (u.user_metadata.full_name || u.user_metadata.name)))) || null,
+      phone: (u && (u.phone || (u.user_metadata && u.user_metadata.phone))) || null,
+    };
+  }
+
+  function raiseSOS(fix) {
+    if (_sosRaised) return Promise.resolve(null);
+    _sosRaised = true;
+
+    var id = sosIdentity();
+    /* An anonymous browser still gets an alert through. Without some
+       key the server rejects it, so mint a throwaway one. */
+    if (!id.user_id && !id.guest_key) {
+      var k = null;
+      try { k = localStorage.getItem('cabana_sos_key'); } catch (e) {}
+      if (!k) {
+        k = 'sos-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+        try { localStorage.setItem('cabana_sos_key', k); } catch (e) {}
+      }
+      id.guest_key = k;
+    }
+
+    var payload = {
+      category: _sosCategory || 'support',
+      user_id: id.user_id,
+      guest_key: id.guest_key,
+      display_name: id.display_name,
+      email: id.email,
+      phone: id.phone,
+      origin_page: location.pathname + location.search,
+      locale: (navigator.language || '').slice(0, 20),
+      location: fix ? {
+        latitude: fix.latitude,
+        longitude: fix.longitude,
+        accuracy: fix.accuracy,
+        altitude: fix.altitude,
+        heading: fix.heading,
+        speed: fix.speed,
+        fixed_at: fix.fixed_at,
+        source: fix.source || 'gps',
+      } : { source: 'none' },
+    };
+
+    /* keepalive so the alert still goes out if the page is closing. */
+    return fetch('/api/sos-alert', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      keepalive: true,
+    })
+      .then(function (r) { return r.json().catch(function () { return {}; }); })
+      .then(function (out) {
+        if (out && out.thread_id) _sosThreadId = out.thread_id;
+        return out;
+      })
+      .catch(function () {
+        /* Let the guest retry rather than silently swallowing it. */
+        _sosRaised = false;
+        return null;
+      });
+  }
+
+  /* Attach the place name once, in the background. Not worth delaying
+     the alert for, very much worth having in the thread. */
+  function sosAttachLabel(fix) {
+    if (!fix || !global.ApaLocation || !ApaLocation.label) return;
+    ApaLocation.label(fix).then(function (name) {
+      if (name) {
+        var el = $('apa-sos-place');
+        if (el) el.textContent = 'Near ' + name;
+      }
+    }, function () {});
+  }
+
   function sosGetLocation() {
     var btn = $('apa-sos-sheet') && $('apa-sos-sheet').querySelector('.apa-sos-call-btn');
     if (btn) { btn.textContent = '⏳ Getting your location…'; btn.disabled = true; }
 
-    if (!navigator.geolocation) {
-      sosShowContacts(null);
+    /* One shared, high-accuracy location layer. The old call here passed
+       no enableHighAccuracy and a 30s maximumAge, so it frequently
+       answered with a stale network fix kilometres from the guest. */
+    if (global.ApaLocation && ApaLocation.ensure) {
+      ApaLocation.ensure({ reason: 'sos', timeout: 9000, maxAge: 15000 })
+        .then(function (fix) {
+          _sosLocation = fix;
+          raiseSOS(fix);
+          sosShowContacts(fix);
+          sosAttachLabel(fix);
+        }, function () {
+          raiseSOS(null);
+          sosShowContacts(null);
+        });
       return;
     }
+
+    if (!navigator.geolocation) { raiseSOS(null); sosShowContacts(null); return; }
     navigator.geolocation.getCurrentPosition(
-      function(pos) {
-        _sosLocation = pos.coords;
-        sosShowContacts(pos.coords);
+      function (pos) {
+        var c = pos.coords;
+        var fix = {
+          latitude: c.latitude, longitude: c.longitude, accuracy: c.accuracy,
+          altitude: c.altitude, heading: c.heading, speed: c.speed,
+          fixed_at: new Date(pos.timestamp || Date.now()).toISOString(), source: 'gps',
+        };
+        _sosLocation = fix;
+        raiseSOS(fix);
+        sosShowContacts(fix);
       },
-      function() {
-        sosShowContacts(null);
-      },
-      { timeout: 8000, maximumAge: 30000 }
+      function () { raiseSOS(null); sosShowContacts(null); },
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 9000 }
     );
   }
 
@@ -412,13 +534,30 @@
     var el = $('apa-sos-sheet');
     if (!el) return;
 
+    /* Say how good the fix is. A 3km accuracy radius is a city, not a
+       street, and presenting it as "location found" is how someone gets
+       sent to the wrong place. */
+    var acc = coords && coords.accuracy != null ? Math.round(coords.accuracy) : null;
+    var accTxt = acc == null ? ''
+      : (acc <= 50 ? ' · precise to ' + acc + 'm'
+        : acc <= 500 ? ' · within ' + acc + 'm'
+        : acc <= 5000 ? ' · approximate, ±' + acc + 'm'
+        : ' · city-level only, ±' + Math.round(acc / 1000) + 'km');
+
     var locMsg = coords
       ? '<div class="apa-sos-loc" style="background:rgba(16,185,129,.08);border-color:rgba(16,185,129,.25);color:#059669;">'
         + '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
-        + '<span>Location found. Showing nearest services</span></div>'
+        + '<span>Location shared with our safety desk' + accTxt
+        + '<br><span id="apa-sos-place" style="opacity:.8"></span></span></div>'
       : '<div class="apa-sos-loc" style="background:rgba(245,158,11,.08);border-color:rgba(245,158,11,.25);color:#D97706;">'
         + '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
-        + '<span>Location unavailable. Showing general Nairobi resources</span></div>';
+        + '<span>No location. Tell the desk where you are in the chat below.</span></div>';
+
+    /* The alert has been filed and the desk paged. Say so plainly — a
+       person in trouble should not have to wonder whether it worked. */
+    var paged = '<div class="apa-sos-loc" style="background:rgba(67,97,255,.08);border-color:rgba(67,97,255,.25);color:#2A3FC4;">'
+      + '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 5-2.2 6.4-2.2 6.4h16.4S18 13 18 8Z"/><path d="M10.4 19a2 2 0 0 0 3.2 0"/></svg>'
+      + '<span>Cabana&rsquo;s safety team has been alerted and is being notified now.</span></div>';
 
     var rows = contacts.map(function(c, i) {
       /* A public emergency number is dialled, because it rings. A Cabana
@@ -445,9 +584,24 @@
       '<button class="apa-sos-back" onclick="window.ApaChrome._sosBack()">'
       + '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>'
       + ' Back</button>'
-      + locMsg + rows
+      + paged + locMsg + rows
+      + '<button class="apa-sos-call-btn" style="margin-top:12px;background:#4361FF" '
+      + 'onclick="window.ApaChrome._sosOpenThread()">💬 Talk to the safety desk now</button>'
       + '<p style="font:400 11px/1.5 system-ui;color:#c0c0c8;margin:14px 0 0;text-align:center;">'
       + 'Always call 999 or 112 first if life is at risk.</p>';
+  }
+
+  /* Drop the guest straight into the urgent thread the alert opened, so
+     they are talking to a human rather than reading a list. */
+  function sosOpenThread() {
+    try {
+      if (global.CabanaSupport && CabanaSupport.open) {
+        CabanaSupport.open(_sosThreadId ? { threadId: _sosThreadId } : undefined);
+        close('apa-sos-sheet');
+        return;
+      }
+    } catch (e) {}
+    location.href = '/help.html' + (_sosThreadId ? '?thread=' + encodeURIComponent(_sosThreadId) : '');
   }
 
   /* ═══ SHEETS (notifications) ════════════════════════════════════ */
@@ -580,7 +734,8 @@
     _sosSelectCat: sosSelectCat,
     _sosBack: openSOS,
     _sosGetLocation: sosGetLocation,
-    _sosSkipLocation: function() { sosShowContacts(null); }
+    _sosSkipLocation: function() { raiseSOS(null); sosShowContacts(null); },
+    _sosOpenThread: sosOpenThread
   };
 
   /* Back-compat */

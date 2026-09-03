@@ -55,6 +55,13 @@ const SAMPLE = {
   recipientName: 'Njeri Kamau', listingTitle: 'Riverside Studio', fromName: 'Joseph Kamau',
   claimUrl: '/dashboard.html?claim=abc', expiresAt: '2026-09-04',
   status: 'accepted', perspective: 'recipient', otherName: 'Joseph Kamau',
+  /* SOS — internal safety alert */
+  lifeSafety: true, who: 'Amina Otieno',
+  locationLine: '-1.286389, 36.817223 (±18m, GPS-grade)', locationQuality: 'precise',
+  mapUrl: 'https://www.google.com/maps?q=-1.286389,36.817223',
+  placeLabel: 'Westlands, Nairobi', note: 'Car broke down, area feels unsafe.',
+  originPage: '/rides.html', deskUrl: '/support-console.html?thread=abc',
+  raisedAt: '2026-09-03T21:14:00Z', alertId: 'a-1',
   /* Flight desk templates */
   ref: 'FD-1001', route: 'NBO → LHR', dates: '1–3 Sep', pax: '2 adults', cabin: 'Economy',
   trackUrl: '/flights.html?ref=FD-1001', dueBy: '2 Sep 17:00',
@@ -142,6 +149,11 @@ test('guest mail leaves connect@, partner mail leaves partnership@', () => {
     /* Flight desk — added with the Flight Desk feature; five templates, two audiences */
     flightRequested: 'guest', flightQuoted: 'guest', flightTicketed: 'guest',
     flightDeskAlert: 'partner', flightChosen: 'partner',
+    /* SOS pages the safety rota, which reads connect@ — the same inbox
+       the guest would be writing to. Filing it under 'guest' keeps the
+       thread and the alert on one address rather than splitting an
+       emergency across two inboxes. */
+    sosAlert: 'guest',
   };
   for (const [key, out] of rendered) {
     assert.equal(out.audience, expected[key], `${key} is filed under the wrong audience`);

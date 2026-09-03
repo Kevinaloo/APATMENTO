@@ -188,6 +188,7 @@
     micOff:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 2l20 20M9 9v2a3 3 0 0 0 4.6 2.5M15 10V5a3 3 0 0 0-5.7-1.3M5 10a7 7 0 0 0 10.7 6M19 10a7 7 0 0 1-.6 2.8M12 19v3"/></svg>',
     end:   '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 9c-1.9 0-3.7.3-5.4.9v3.6c0 .5-.3.9-.7 1.1-1.2.6-2.3 1.4-3.3 2.3-.2.2-.5.3-.8.3s-.6-.1-.8-.3l-1.6-1.6a1 1 0 0 1 0-1.5C2.9 10.7 7.2 9 12 9s9.1 1.7 12.6 4.8a1 1 0 0 1 0 1.5L23 16.9c-.2.2-.5.3-.8.3s-.6-.1-.8-.3c-1-.9-2.1-1.7-3.3-2.3a1.2 1.2 0 0 1-.7-1.1V9.9C15.7 9.3 13.9 9 12 9z"/></svg>',
     person:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+    sos:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7.5 3.2v5.4c0 4.6-3.1 8.8-7.5 10.1-4.4-1.3-7.5-5.5-7.5-10.1V6.2L12 3Z"/><path d="M12 8.6v4"/><path d="M12 15.8h.01"/></svg>',
   };
 
   function esc(s) {
@@ -452,6 +453,7 @@
       +         '<div class="cbn-sup-status"><span class="cbn-sup-dot" id="cbn-sup-dot" data-tone="live"></span><span id="cbn-sup-statustext">APA is here, right now</span></div>'
       +       '</div>'
       +       '<div class="cbn-sup-acts">'
+      +         '<button class="cbn-sup-ico cbn-sup-sos" id="cbn-sup-sos" type="button" data-cbn-sos aria-label="Emergency help" title="Emergency">' + SVG.sos + '</button>'
       +         '<button class="cbn-sup-ico" id="cbn-sup-call" type="button" aria-label="Call the Cabana team in-app" title="Call us in the app">' + SVG.phone + '</button>'
       +         '<button class="cbn-sup-ico" id="cbn-sup-close" type="button" aria-label="Close support">' + SVG.close + '</button>'
       +       '</div>'
