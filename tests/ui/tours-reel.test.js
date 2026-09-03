@@ -157,9 +157,22 @@ const state = page => page.evaluate(() => {
     const four = [1, 2, 3, 4].map(i =>
       tour(i, { showcase: true, showcase_rank: 40 - i * 10, videos: [CLIP] }));
     const { page, ctx } = await visit(browser, four);
-    const before = await page.evaluate(() =>
-      [...document.querySelectorAll('#ct-reel video')].filter(v => v.src).length);
-    check('nothing downloads while the reel is off screen', before === 0, 'loaded ' + before);
+
+    /* The invariant is "nothing loads that is not on screen", not
+       "nothing loads at all". The original assertion depended on the
+       reel starting below the fold, which stopped being true the day
+       someone shortened the hero copy above it — a legitimate content
+       change that should not fail a test about network behaviour.
+       Assert the actual rule instead, so it holds wherever the reel
+       happens to sit. */
+    const before = await page.evaluate(() => {
+      const v = [...document.querySelectorAll('#ct-reel video')];
+      const on = e => { const b = e.getBoundingClientRect();
+        return b.right > 0 && b.left < innerWidth && b.bottom > 0 && b.top < innerHeight; };
+      return { hiddenLoaded: v.filter(e => e.src && !on(e)).length, total: v.length };
+    });
+    check('nothing off screen ever downloads', before.hiddenLoaded === 0,
+      before.hiddenLoaded + ' of ' + before.total + ' loaded while hidden');
 
     await page.evaluate(() =>
       document.getElementById('ct-reel').scrollIntoView({ block: 'center' }));

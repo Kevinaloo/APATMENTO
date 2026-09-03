@@ -1,0 +1,579 @@
+/* ═══════════════════════════════════════════════════════════════════
+   CABANA · THE DROP
+   ───────────────────────────────────────────────────────────────────
+   The arrival animation for /events.
+
+   It is a track. Intro, build, one bar of nothing, drop. The bar of
+   nothing is the entire idea: a drop only lands because of the
+   silence in front of it, and that is the one thing every other
+   loading animation on the internet has no reason to know.
+
+   Four decisions worth stating.
+
+   · Everything is locked to one tempo. --beat is 480ms, which is 125
+     BPM, and every duration and delay below is a multiple of it via
+     calc(). Nothing is hand-tuned to "look about right", so the whole
+     screen moves like one instrument instead of six things that
+     happen to be animating nearby.
+
+   · No strobe. A real club strobe runs far past three flashes per
+     second, which is the WCAG threshold for photosensitive seizure
+     risk, and a full-screen white flicker is exactly the pattern that
+     causes harm. So the beat is carried by soft blooms at 2.08Hz —
+     comfortably under the limit and, as it turns out, better looking —
+     and there is precisely one hard flash in the sequence, on the
+     drop. Impact comes from colour, scale and the crowd, not from
+     flicker.
+
+   · The crowd is a horizon, not a set of people. Heads and raised
+     arms read instantly at silhouette scale; anything more detailed
+     would be the same trap as trying to draw a photoreal leaf in
+     vector. It is backlit for the same reason.
+
+   · Filters sit on static wrappers, never on anything that animates.
+     That mistake cost the tours canopy eighteen times its frame rate,
+     and the structure here is built so it cannot happen.
+
+   Scoped under .eg- so it cannot touch the page it opens onto.
+   ═══════════════════════════════════════════════════════════════════ */
+
+#event-gate{
+  /* ── one tempo, and everything hangs off it ── */
+  --beat:480ms;                    /* 125 BPM */
+  --bar:calc(var(--beat) * 4);
+
+  /* ── the room ── */
+  --eg-void:#05040A;
+  --eg-deep:#0B0918;
+  --eg-haze:#150F2E;
+
+  /* ── the rig. The events palette, used as light. ── */
+  --eg-violet:#8B5CFF;
+  --eg-cyan:#22D3EE;
+  --eg-pink:#FF2E93;
+  --eg-lime:#C6FF4D;
+  --eg-gold:#FFD84D;
+
+  --eg-ease:cubic-bezier(.7,0,.2,1);
+  --eg-soft:cubic-bezier(.22,1,.36,1);
+  --eg-punch:cubic-bezier(.2,1.6,.35,1);
+
+  position:fixed;
+  inset:0;
+  z-index:2147483000;
+  overflow:hidden;
+  background:var(--eg-void);
+  contain:strict;
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
+
+html.eg-lock,
+html.eg-lock body{ overflow:hidden !important; }
+
+.eg-stage{ position:absolute; inset:0; overflow:hidden; }
+
+/* ═══ 1 · THE ROOM ══════════════════════════════════════════════════
+   Before any light exists there has to be somewhere for it to be.  */
+
+.eg-air{
+  position:absolute; inset:-8%;
+  background:
+    radial-gradient(90% 55% at 50% 100%, rgba(139,92,255,.16), transparent 68%),
+    radial-gradient(60% 40% at 50% 0%,  rgba(34,211,238,.08), transparent 70%),
+    linear-gradient(180deg, #0B0918 0%, #07060F 52%, #05040A 100%);
+}
+
+/* Haze is what makes a beam a beam. Without something in the air, a
+   light in a dark room is an invisible line between a lamp and a
+   floor. */
+.eg-fog{
+  position:absolute; left:-20%; right:-20%; top:0; height:78%;
+  background:radial-gradient(60% 70% at 50% 22%, rgba(139,92,255,.2), transparent 72%);
+  opacity:0;
+}
+
+/* ═══ 2 · THE RIG ═══════════════════════════════════════════════════
+   Six moving heads on a truss above the frame. Each is a wedge with
+   its pivot at the top, so rotating it sweeps the room the way a real
+   fixture does, rather than sliding a shape sideways.               */
+
+.eg-rig{ position:absolute; inset:0; }
+
+/* Two elements, and the split is load-bearing rather than tidy.
+
+   .eg-beam  rotates  · the sweep
+   .eg-beam-c filters · static, so its texture is rasterised once
+
+   The first pass put blur(16px), clip-path and mix-blend-mode on the
+   same element that rotates, which re-filtered six full-height cones
+   every frame and measured 20fps on the build and 17 on the drop.
+   Exactly the mistake the tours canopy already paid for. */
+.eg-beam{
+  position:absolute;
+  top:-14%;
+  left:var(--x,50%);
+  width:var(--w,60px);
+  height:118%;
+  margin-left:calc(var(--w,60px) / -2);
+  transform-origin:50% 0;
+  transform:rotate(var(--a,0deg));
+  opacity:0;
+  will-change:transform,opacity;
+}
+.eg-beam-c{
+  position:absolute; inset:0;
+  background:linear-gradient(180deg,
+    color-mix(in srgb, var(--c,#8B5CFF) 82%, white) 0%,
+    color-mix(in srgb, var(--c,#8B5CFF) 46%, transparent) 14%,
+    color-mix(in srgb, var(--c,#8B5CFF) 14%, transparent) 42%,
+    transparent 72%);
+  /* Eight per cent of the width at the lens, all of it at the floor.
+     A beam that does not spread reads as a painted stripe. */
+  clip-path:polygon(46% 0, 54% 0, 100% 100%, 0 100%);
+  filter:blur(16px);
+}
+
+/* The fixture itself: a small hot core where the beam leaves the lens. */
+.eg-lens{
+  position:absolute;
+  top:-2%;
+  left:var(--x,50%);
+  width:26px; height:26px;
+  margin-left:-13px;
+  border-radius:50%;
+  background:radial-gradient(circle, #fff 0%, var(--c,#8B5CFF) 42%, transparent 72%);
+  filter:blur(5px);
+  opacity:0;
+  will-change:opacity;
+}
+
+/* ═══ 3 · THE FLOOR ═════════════════════════════════════════════════ */
+
+/* One line of light across the room. It is the first thing that
+   exists and the thing the beat is measured against. */
+.eg-floor{
+  position:absolute;
+  left:8%; right:8%;
+  top:62%;
+  height:1px;
+  background:linear-gradient(90deg, transparent, rgba(198,255,77,.65), rgba(139,92,255,.65), transparent);
+  opacity:0;
+  transform:scaleX(.2);
+  transform-origin:50% 50%;
+  will-change:transform,opacity;
+}
+
+/* The kick. A soft bloom on the beat rather than a flash — see the
+   note at the top about why nothing here flickers. */
+.eg-kick{
+  position:absolute;
+  left:50%; top:62%;
+  width:min(120vw,760px); aspect-ratio:2.4;
+  transform:translate(-50%,-50%) scale(.3);
+  border-radius:50%;
+  background:radial-gradient(ellipse,
+    rgba(198,255,77,.32) 0%,
+    rgba(139,92,255,.18) 38%,
+    transparent 72%);
+  opacity:0;
+  will-change:transform,opacity;
+}
+
+/* ═══ 4 · THE CROWD ═════════════════════════════════════════════════
+   Elements, not one stretched SVG.
+
+   The first pass drew the crowd as a single path with
+   preserveAspectRatio="none", which squeezed a 1000x210 viewBox into
+   a 390x439 box and turned every head into a spike. A crowd is a
+   repeating arrangement of upright things, which is exactly what the
+   box model is for — the same reason the stays facade is divs. Now
+   nothing distorts at any viewport.
+
+   Two planes so the room has depth; the back one is smaller, dimmer
+   and moves half a beat behind.                                    */
+
+.eg-crowd{
+  position:absolute;
+  left:-2%; right:-2%; bottom:0;
+  height:46%;
+  will-change:transform;
+}
+.eg-crowd-back{
+  bottom:5%;
+  height:34%;
+  opacity:.5;
+}
+
+/* One body. Shoulders that round into a neck, and a head. */
+.eg-p{
+  position:absolute;
+  bottom:0;
+  left:var(--x,50%);
+  width:var(--w,26px);
+  height:var(--h,70px);
+  margin-left:calc(var(--w,26px) / -2);
+  background:#04030A;
+  border-radius:44% 44% 0 0 / 26% 26% 0 0;
+}
+.eg-p::before{
+  content:'';
+  position:absolute;
+  left:50%; top:calc(var(--hd,20px) * -0.78);
+  width:var(--hd,20px); height:var(--hd,20px);
+  margin-left:calc(var(--hd,20px) / -2);
+  border-radius:50%;
+  background:inherit;
+}
+.eg-crowd-back .eg-p{ background:#0B0920; }
+
+/* An arm. Pivots at the shoulder, so raising it is one rotation. */
+.eg-a{
+  position:absolute;
+  bottom:var(--from,58px);
+  left:var(--x,50%);
+  width:var(--aw,7px);
+  height:var(--ah,52px);
+  margin-left:calc(var(--aw,7px) / -2);
+  background:#04030A;
+  border-radius:var(--aw,7px);
+  transform-origin:50% 100%;
+  transform:rotate(var(--r,0deg));
+}
+.eg-a::after{
+  content:'';
+  position:absolute;
+  left:50%; top:calc(var(--aw,7px) * -1.1);
+  width:calc(var(--aw,7px) * 1.7); height:calc(var(--aw,7px) * 1.7);
+  margin-left:calc(var(--aw,7px) * -0.85);
+  border-radius:50%;
+  background:inherit;
+}
+.eg-crowd-back .eg-a{ background:#0B0920; }
+
+/* The bob. Small, because a crowd that moves a lot reads as a wave
+   rather than as people standing on a floor. */
+.eg-crowd.eg-bob{
+  animation:eg-bob var(--beat) var(--eg-soft) infinite alternate;
+}
+.eg-crowd-back.eg-bob{ animation-delay:calc(var(--beat) / 2); }
+@keyframes eg-bob{
+  from{ transform:translate3d(0,0,0); }
+  to  { transform:translate3d(0,-1.4%,0); }
+}
+
+/* Arms that only exist once the drop lands. */
+.eg-hands{
+  position:absolute; inset:0;
+  opacity:0;
+  transform:translateY(24%);
+  transition:opacity calc(var(--beat) / 3) var(--eg-punch),
+             transform calc(var(--beat) / 2) var(--eg-punch);
+}
+
+/* ═══ 5 · THE DROP ══════════════════════════════════════════════════ */
+
+/* The single hard flash. One, not many. */
+.eg-flash{
+  position:absolute; inset:0;
+  background:radial-gradient(80% 60% at 50% 55%, #fff 0%, rgba(255,255,255,.7) 34%, transparent 76%);
+  opacity:0;
+  pointer-events:none;
+  will-change:opacity;
+}
+
+/* Colour arriving all at once, in the order the sweep runs on the
+   page underneath. */
+.eg-wash{
+  position:absolute; inset:0;
+  background:linear-gradient(112deg,
+    rgba(139,92,255,.34) 0%,
+    rgba(34,211,238,.26) 26%,
+    rgba(198,255,77,.2) 50%,
+    rgba(255,216,77,.24) 74%,
+    rgba(255,46,147,.34) 100%);
+  /* Nothing below the floor line: the crowd is the thing the drop is
+     revealing, so the wash must not sit on top of it. */
+  -webkit-mask-image:linear-gradient(180deg,#000 0%,#000 52%,transparent 76%);
+  mask-image:linear-gradient(180deg,#000 0%,#000 52%,transparent 76%);
+  opacity:0;
+  pointer-events:none;
+  will-change:opacity;
+}
+
+.eg-confetti{ position:absolute; inset:0; overflow:hidden; pointer-events:none; }
+.eg-bit{
+  position:absolute;
+  top:var(--y,40%); left:var(--x,50%);
+  width:var(--s,8px); height:calc(var(--s,8px) * .42);
+  background:var(--c,#C6FF4D);
+  border-radius:1px;
+  opacity:0;
+  will-change:transform,opacity;
+}
+
+/* ═══ 6 · THE WORD ══════════════════════════════════════════════════
+   Nothing is said during the build. Silence is the point of the
+   build, and a headline sitting there through it would give the
+   ending away.                                                     */
+
+.eg-word{
+  position:absolute;
+  left:0; right:0; top:34%;
+  transform:translateY(-50%);
+  text-align:center;
+  padding:0 26px;
+  z-index:6;
+  pointer-events:none;
+}
+.eg-line{
+  font-family:'Geist','Inter',system-ui,sans-serif;
+  font-weight:600;
+  font-size:clamp(40px,13vw,88px);
+  line-height:.94;
+  letter-spacing:-.045em;
+  color:#fff;
+  opacity:0;
+  transform:scale(1.5);
+  filter:blur(14px);
+  will-change:transform,opacity,filter;
+}
+.eg-line b{
+  font-weight:600;
+  background:linear-gradient(96deg,var(--eg-violet),var(--eg-cyan),var(--eg-lime),var(--eg-gold),var(--eg-pink));
+  -webkit-background-clip:text; background-clip:text;
+  color:transparent;
+}
+.eg-sub{
+  margin-top:16px;
+  font-family:'Geist','Inter',system-ui,sans-serif;
+  font-size:12.5px; font-weight:500;
+  letter-spacing:.16em; text-transform:uppercase;
+  color:rgba(244,242,255,.5);
+  opacity:0;
+  transform:translateY(10px);
+}
+
+/* ═══ 7 · SKIP ══════════════════════════════════════════════════════ */
+
+.eg-skip{
+  position:absolute;
+  top:max(18px,env(safe-area-inset-top,0px));
+  right:16px;
+  z-index:9;
+  display:inline-flex; align-items:center; gap:7px;
+  padding:9px 15px;
+  border-radius:100px;
+  border:1px solid rgba(244,242,255,.24);
+  background:rgba(5,4,10,.5);
+  color:rgba(244,242,255,.84);
+  font-family:'Geist','Inter',system-ui,sans-serif;
+  font-size:12.5px; font-weight:500;
+  cursor:pointer;
+  opacity:0;
+  transition:opacity .4s ease, border-color .2s ease, color .2s ease;
+}
+.eg-skip:hover,
+.eg-skip:focus-visible{ border-color:var(--eg-lime); color:#fff; }
+.eg-skip:focus-visible{ outline:2px solid var(--eg-lime); outline-offset:3px; }
+.eg-skip svg{ width:12px; height:12px; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   THE TRACK
+   Four phases on the root. Every number below is beats, not
+   milliseconds, so the tempo can be changed in one place and the
+   whole screen still agrees with itself.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── intro · two beats. One line, one kick, nothing else. ────────── */
+#event-gate.eg-in .eg-floor{
+  animation:eg-floor-in calc(var(--beat) * 1.5) var(--eg-soft) forwards;
+}
+@keyframes eg-floor-in{ to{ opacity:1; transform:scaleX(1); } }
+
+#event-gate.eg-in .eg-fog{
+  animation:eg-fade calc(var(--beat) * 3) var(--eg-soft) forwards;
+}
+@keyframes eg-fade{ to{ opacity:1; } }
+
+#event-gate.eg-in .eg-kick{
+  animation:eg-kick var(--beat) var(--eg-ease) infinite;
+}
+@keyframes eg-kick{
+  0%  { opacity:0;   transform:translate(-50%,-50%) scale(.3); }
+  8%  { opacity:.95; transform:translate(-50%,-50%) scale(.72); }
+  100%{ opacity:0;   transform:translate(-50%,-50%) scale(1.25); }
+}
+
+#event-gate.eg-in .eg-skip{ opacity:1; }
+
+/* ── build · four beats. The rig wakes, the room tightens. ───────── */
+#event-gate.eg-build .eg-beam{
+  animation:
+    eg-beam-in calc(var(--beat) * 2) var(--eg-soft) var(--in,0ms) forwards,
+    eg-sweep calc(var(--beat) * 4) ease-in-out calc(var(--in,0ms) + var(--beat)) infinite alternate;
+}
+@keyframes eg-beam-in{
+  to{ opacity:var(--o,.8); }
+}
+@keyframes eg-sweep{
+  from{ transform:rotate(calc(var(--a,0deg) - var(--sw,10deg))); }
+  to  { transform:rotate(calc(var(--a,0deg) + var(--sw,10deg))); }
+}
+#event-gate.eg-build .eg-lens{
+  animation:eg-fade calc(var(--beat) * 1.5) var(--eg-soft) var(--in,0ms) forwards;
+}
+
+/* The kick doubles: two per beat through the build, which is 4.1Hz of
+   a soft bloom — not a flash, and not a luminance change anywhere near
+   the threshold that matters. */
+#event-gate.eg-build .eg-kick{
+  animation-duration:calc(var(--beat) / 2);
+}
+
+#event-gate.eg-build .eg-crowd{ animation-duration:calc(var(--beat) / 2); }
+
+/* ── hold · one beat of nothing. The whole point. ────────────────── */
+#event-gate.eg-hold .eg-beam,
+#event-gate.eg-hold .eg-lens,
+#event-gate.eg-hold .eg-kick,
+#event-gate.eg-hold .eg-fog{
+  animation:none;
+  opacity:0;
+  transition:opacity calc(var(--beat) / 3) ease;
+}
+#event-gate.eg-hold .eg-floor{
+  opacity:.25;
+  transition:opacity calc(var(--beat) / 3) ease;
+}
+#event-gate.eg-hold .eg-crowd{ animation:none; }
+
+/* ── drop ───────────────────────────────────────────────────────── */
+#event-gate.eg-drop .eg-flash{
+  animation:eg-flash calc(var(--beat) * 1.5) var(--eg-ease) forwards;
+}
+@keyframes eg-flash{
+  0%  { opacity:0; }
+  6%  { opacity:1; }
+  100%{ opacity:0; }
+}
+
+#event-gate.eg-drop .eg-wash{
+  animation:eg-wash calc(var(--beat) * 6) var(--eg-soft) forwards;
+}
+@keyframes eg-wash{
+  0%  { opacity:0; }
+  10% { opacity:1; }
+  100%{ opacity:.5; }
+}
+
+/* The rig comes back wide and moving, not where it was. */
+#event-gate.eg-drop .eg-beam{
+  animation:
+    eg-beam-drop calc(var(--beat) / 2) var(--eg-punch) forwards,
+    eg-sweep-fast calc(var(--beat) * 2) ease-in-out calc(var(--beat) / 2) infinite alternate;
+}
+@keyframes eg-beam-drop{
+  from{ opacity:0; transform:rotate(var(--a,0deg)); }
+  to  { opacity:1; transform:rotate(var(--a2,0deg)); }
+}
+@keyframes eg-sweep-fast{
+  from{ transform:rotate(calc(var(--a2,0deg) - var(--sw2,22deg))); }
+  to  { transform:rotate(calc(var(--a2,0deg) + var(--sw2,22deg))); }
+}
+#event-gate.eg-drop .eg-lens{ opacity:1; }
+
+/* Hands go up and stay up. */
+#event-gate.eg-drop .eg-crowd{
+  animation:eg-jump calc(var(--beat) / 2) var(--eg-punch) infinite alternate;
+}
+@keyframes eg-jump{
+  from{ transform:translate3d(0,0,0); }
+  to  { transform:translate3d(0,-3.4%,0); }
+}
+#event-gate.eg-drop .eg-hands{ opacity:1; transform:translateY(0); }
+
+#event-gate.eg-drop .eg-kick{
+  animation:eg-kick var(--beat) var(--eg-ease) infinite;
+  animation-delay:calc(var(--beat) / 2);
+}
+
+#event-gate.eg-drop .eg-bit{
+  animation:eg-bit var(--fall,2s) var(--eg-soft) var(--bd,0ms) forwards;
+}
+@keyframes eg-bit{
+  0%  { opacity:0; transform:translate3d(0,0,0) rotate(0deg) scale(.4); }
+  8%  { opacity:1; }
+  100%{ opacity:0; transform:translate3d(var(--dx,0px),var(--dy,60vh),0) rotate(var(--r,540deg)) scale(1); }
+}
+
+#event-gate.eg-drop .eg-line{
+  animation:eg-line calc(var(--beat) * 1.2) var(--eg-punch) forwards;
+}
+@keyframes eg-line{
+  0%  { opacity:0; transform:scale(1.5); filter:blur(14px); }
+  100%{ opacity:1; transform:scale(1);   filter:blur(0); }
+}
+#event-gate.eg-drop .eg-sub{
+  animation:eg-sub var(--beat) var(--eg-soft) calc(var(--beat) / 2) forwards;
+}
+@keyframes eg-sub{ to{ opacity:1; transform:translateY(0); } }
+
+#event-gate.eg-drop .eg-skip{ opacity:0; }
+
+/* ── out · the room keeps going and the camera leaves through it ── */
+#event-gate.eg-out .eg-stage{
+  animation:eg-out calc(var(--beat) * 2) var(--eg-ease) forwards;
+}
+@keyframes eg-out{
+  0%  { transform:scale(1);    opacity:1; }
+  100%{ transform:scale(1.35); opacity:0; }
+}
+#event-gate.eg-out{ pointer-events:none; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   ABBREVIATED · after the first arrival in a session
+   No build, because a build is tension and tension does not survive
+   repetition. Straight to the drop.
+   ═══════════════════════════════════════════════════════════════════ */
+#event-gate.eg-brief .eg-word,
+#event-gate.eg-brief .eg-skip{ display:none; }
+#event-gate.eg-brief .eg-confetti{ display:none; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   REDUCED MOTION
+   The room, lit, holding still. No sweep, no bob, no confetti, and
+   above all no flash — this is the setting a photosensitive guest is
+   most likely to have switched on, and it is the one that must be
+   completely still.
+   ═══════════════════════════════════════════════════════════════════ */
+@media (prefers-reduced-motion:reduce){
+  #event-gate .eg-beam{ opacity:.7; transform:rotate(var(--a,0deg)) scaleY(1); animation:none !important; }
+  #event-gate .eg-lens,
+  #event-gate .eg-fog { opacity:1; animation:none !important; }
+  #event-gate .eg-floor{ opacity:1; transform:scaleX(1); animation:none !important; }
+  #event-gate .eg-kick { display:none; }
+  #event-gate .eg-flash{ display:none; }
+  #event-gate .eg-confetti{ display:none; }
+  #event-gate .eg-crowd{ animation:none !important; transform:none !important; }
+  #event-gate .eg-hands{ opacity:1; transform:none; transition:none; }
+  #event-gate .eg-wash { opacity:.7; animation:none !important; }
+  #event-gate .eg-line { opacity:1; transform:none; filter:none; animation:none !important; }
+  #event-gate .eg-sub  { opacity:1; transform:none; animation:none !important; }
+  #event-gate.eg-out .eg-stage{ animation:none !important; transform:none; }
+  #event-gate.eg-out{ animation:eg-gone .4s ease forwards; }
+  @keyframes eg-gone{ to{ opacity:0; } }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   VIEWPORT
+   Authored portrait first. On a wide screen the rig spreads rather
+   than stretching, and the crowd horizon sits lower.
+   ═══════════════════════════════════════════════════════════════════ */
+@media (min-width:820px){
+  .eg-word { top:32%; }
+  .eg-crowd{ height:36%; }
+  .eg-crowd-back{ height:28%; }
+  .eg-floor{ top:58%; }
+  .eg-kick { top:58%; }
+}

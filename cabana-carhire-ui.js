@@ -28,27 +28,11 @@
   };
   const startDate = () => S.start ? new Date(S.start + 'T12:00:00Z') : new Date();
 
-  function setTheme(theme) {
-    document.body.dataset.theme = theme;
-    const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.content = theme === 'dark' ? '#07110f' : '#f1f0e9';
-    const button = $('ch-theme');
-    if (button) {
-      button.setAttribute('aria-label', theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme');
-      button.innerHTML = theme === 'dark'
-        ? '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4"/></svg>'
-        : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.5A8.5 8.5 0 1 1 9.5 3.5a6.8 6.8 0 0 0 11 11Z"/></svg>';
-    }
-    try { localStorage.setItem('cabana-drive-theme', theme); } catch (_) {}
-  }
-
-  function initTheme() {
-    let theme;
-    try { theme = localStorage.getItem('cabana-drive-theme'); } catch (_) {}
-    if (!theme) theme = window.matchMedia && window.matchMedia('(prefers-color-scheme:light)').matches ? 'light' : 'dark';
-    setTheme(theme);
-    $('ch-theme').addEventListener('click', () => setTheme(document.body.dataset.theme === 'dark' ? 'light' : 'dark'));
-  }
+  /* The light theme was removed: lime on off-white is about 1.4:1, so
+     the headline and every figure on the page all but disappeared. The
+     stored preference is deliberately not read either — an old
+     localStorage value must not be able to resurrect a theme the
+     stylesheet no longer defines. */
 
   function buildCountries() {
     const regions = ['North','West','Central','East','Southern'];
@@ -489,7 +473,7 @@
   }
 
   function init() {
-    initTheme(); buildCountries(); buildDates(); buildMode(); buildFilters(); renderRouteLab(); syncPlanner();
+    buildCountries(); buildDates(); buildMode(); buildFilters(); renderRouteLab(); syncPlanner();
     $('ch-locate').addEventListener('click', locateMe);
     $('ch-crossborder').addEventListener('change', event => {
       S.crossBorder = event.target.checked;

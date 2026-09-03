@@ -2595,16 +2595,9 @@ const SCENES = {
   /* stays: retired. The facade on apartments.html is the transition
      now; see cabana-stay-gate.js. Left out rather than left in so
      nobody wires it back up by accident. */
-  events: `
-    <div class="scn-beam scn-beam-1"></div>
-    <div class="scn-beam scn-beam-2"></div>
-    <div class="scn-conf" style="left:14%;background:#FCD34D;animation-delay:.1s;"></div>
-    <div class="scn-conf" style="left:26%;background:#2DD4BF;animation-delay:.25s;"></div>
-    <div class="scn-conf" style="left:38%;background:#fff;animation-delay:.05s;"></div>
-    <div class="scn-conf" style="left:52%;background:#FCD34D;animation-delay:.35s;"></div>
-    <div class="scn-conf" style="left:64%;background:#FF6B2C;animation-delay:.15s;"></div>
-    <div class="scn-conf" style="left:76%;background:#fff;animation-delay:.3s;"></div>
-    <div class="scn-conf" style="left:88%;background:#2DD4BF;animation-delay:.2s;"></div>`,
+  /* events: retired. The room on events.html is the transition now;
+     see cabana-event-gate.js. Left out rather than left in so nobody
+     wires it back up by accident. */
   rides: `
     <div class="scn-road"></div>
     <div class="scn-dash" style="left:5%;"></div>
@@ -2689,6 +2682,13 @@ function navigateToService(key, deepLink){
      weaker one won, because apartments.html suppressed its own whenever
      ?back=1 was present. */
   if (key === 'stays') { safeGo(); return; }
+
+  /* Events owns its arrival too. The scene here was two beams and a
+     row of falling confetti; events.html now opens on a room that
+     builds, holds for a beat and drops. Playing both meant two
+     transitions for one navigation, and the weaker one won, because
+     events.html suppressed its own whenever ?back=1 was present. */
+  if (key === 'events') { safeGo(); return; }
 
   try {
     const overlay = document.getElementById('svc-transition');

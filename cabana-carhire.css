@@ -10,13 +10,13 @@
   --ch-data:'Space Mono',ui-monospace,monospace;
 }
 
-body[data-theme="light"] {
-  color-scheme: light;
-  --ch-bg:#f1f0e9; --ch-bg-2:#f8f7f1; --ch-panel:#fffef9; --ch-panel-2:#f2f2ea;
-  --ch-ink:#0b1714; --ch-ink-2:#41534c; --ch-ink-3:#728079;
-  --ch-line:rgba(9,31,24,.11); --ch-line-2:rgba(9,31,24,.2);
-  --ch-shadow:0 34px 90px rgba(31,47,40,.13);
-}
+/* This surface is lime and violet on near-black. There used to be a
+   light theme here — a set of overrides on the same tokens — and it
+   washed the page out: #d6ff4b on #f1f0e9 is roughly 1.4:1, so the
+   hero headline, the fuel figures and the step numbers all but
+   vanished. That is not a theme, it is the same design with its
+   contrast removed, so it is gone rather than patched, along with the
+   toggle that reached it. One lighting condition, built for. */
 
 *,*::before,*::after{box-sizing:border-box}
 html{min-height:100%;scroll-behavior:smooth;-webkit-text-size-adjust:100%}
@@ -41,7 +41,7 @@ a{color:inherit}
 
 /* Header */
 .ch-top{position:relative;z-index:100;display:grid;grid-template-columns:auto auto 1fr auto;align-items:center;gap:16px;width:min(1390px,calc(100% - 36px));height:82px;margin:auto;border-bottom:1px solid var(--ch-line)}
-.ch-back,.ch-theme,.ch-x{display:grid;place-items:center;border:1px solid var(--ch-line);background:var(--ch-panel);color:var(--ch-ink);cursor:pointer;transition:transform .2s,border-color .2s,background .2s}
+.ch-back,.ch-x{display:grid;place-items:center;border:1px solid var(--ch-line);background:var(--ch-panel);color:var(--ch-ink);cursor:pointer;transition:transform .2s,border-color .2s,background .2s}
 .ch-back{width:44px;height:44px;border-radius:15px;text-decoration:none}
 .ch-back svg,.ch-x svg,.ch-go svg,.ch-locate svg,.ch-control>svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .ch-back:hover,.ch-x:hover{transform:translateY(-2px);border-color:var(--ch-line-2)}
@@ -91,7 +91,6 @@ a{color:inherit}
 .ch-label{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 2px 8px;color:var(--ch-ink-2);font-family:var(--ch-data);font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
 .ch-label b{color:var(--ch-ink-3);font-size:8px;font-weight:400;letter-spacing:.05em}
 .ch-control{position:relative;display:flex;align-items:center;min-height:58px;border:1px solid var(--ch-line);border-radius:17px;background:rgba(0,0,0,.13);transition:border-color .2s,background .2s,box-shadow .2s}
-body[data-theme="light"] .ch-control{background:rgba(255,255,255,.68)}
 .ch-control:focus-within{border-color:var(--ch-lime);box-shadow:0 0 0 4px rgba(214,255,75,.08);background:var(--ch-panel)}
 .ch-control>svg{flex:0 0 auto;margin-left:17px;color:var(--ch-ink-3)}
 .ch-control input,.ch-control select{width:100%;height:56px;min-width:0;padding:0 16px;border:0;outline:0;background:transparent;color:var(--ch-ink);font-size:15px;font-weight:600}
@@ -123,7 +122,6 @@ body[data-theme="light"] .ch-control{background:rgba(255,255,255,.68)}
 .ch-cross input:checked+span::after{left:16px;background:#fff}
 .ch-date-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:20px}
 .ch-date-grid .ch-control input{color-scheme:dark}
-body[data-theme="light"] .ch-date-grid .ch-control input{color-scheme:light}
 .ch-drive-mode{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:20px 0 0;padding:0;border:0}
 .ch-drive-mode legend{width:100%;margin:0 0 8px;color:var(--ch-ink-2);font-family:var(--ch-data);font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
 .ch-drive-mode button{display:grid;gap:2px;padding:13px 15px;border:1px solid var(--ch-line);border-radius:15px;background:transparent;color:var(--ch-ink-2);text-align:left;cursor:pointer;transition:.2s}
@@ -198,7 +196,6 @@ body[data-theme="light"] .ch-date-grid .ch-control input{color-scheme:light}
 .ch-operator-line{margin:4px 0 0;color:var(--ch-ink-3);font-size:10px}.ch-operator-line b{color:var(--ch-ink-2);font-weight:600}
 .ch-specs{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:16px}.ch-spec{padding:8px 9px;border:1px solid var(--ch-line);border-radius:10px;color:var(--ch-ink-2);font-size:9px}.ch-spec b{display:block;margin-top:2px;color:var(--ch-ink);font-family:var(--ch-data);font-size:10px}
 .ch-fuel-strip{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px;padding:10px 11px;border-radius:11px;background:var(--ch-panel-2);color:var(--ch-ink-3);font-size:8px}.ch-fuel-strip b{color:var(--ch-lime);font-family:var(--ch-data);font-size:9px}
-body[data-theme="light"] .ch-fuel-strip b{color:#526b00}
 .ch-price-row{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-top:auto;padding-top:17px}.ch-price{font-family:var(--ch-data);font-size:15px;font-weight:700}.ch-price small{display:block;margin-top:3px;color:var(--ch-ink-3);font-family:var(--ch-body);font-size:8px;font-weight:400}.ch-total{text-align:right;color:var(--ch-ink-3);font-size:8px}.ch-total b{display:block;margin-top:3px;color:var(--ch-ink);font-family:var(--ch-data);font-size:11px}
 .ch-skel{height:390px;border:1px solid var(--ch-line);border-radius:24px;background:var(--ch-panel);overflow:hidden}.ch-skel::after{content:"";display:block;width:45%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.05),transparent);animation:ch-shimmer 1.2s infinite}
 .ch-state{grid-column:1/-1;padding:54px 28px;border:1px dashed var(--ch-line-2);border-radius:26px;background:var(--ch-panel);text-align:center}.ch-state-icon{display:grid;place-items:center;width:52px;height:52px;margin:0 auto 16px;border-radius:17px;background:var(--ch-panel-2);color:var(--ch-lime)}.ch-state-icon svg{width:25px;height:25px;fill:none;stroke:currentColor;stroke-width:1.6}.ch-state h3{margin:0;font-family:var(--ch-display);font-size:23px}.ch-state p{max-width:600px;margin:9px auto 0;color:var(--ch-ink-3);font-size:13px;line-height:1.65}.ch-state-acts{display:flex;justify-content:center;gap:9px;margin-top:20px}.ch-btn-quiet{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 18px;border:1px solid var(--ch-line-2);border-radius:14px;color:var(--ch-ink);font-size:12px;font-weight:700;text-decoration:none;background:transparent}
@@ -215,11 +212,8 @@ body[data-theme="light"] .ch-fuel-strip b{color:#526b00}
 .ch-footer{display:grid;grid-template-columns:auto 1fr auto;gap:25px;align-items:center;width:min(1390px,calc(100% - 36px));margin:auto;padding:25px 0 34px;border-top:1px solid var(--ch-line);color:var(--ch-ink-3);font-size:9px}.ch-footer span:nth-child(2){text-align:center}.ch-footer a{text-decoration:none;color:var(--ch-ink-2)}
 
 /* Vehicle sheet */
-.ch-theme{position:fixed;z-index:250;right:22px;bottom:22px;width:45px;height:45px;border-radius:50%;box-shadow:0 13px 35px rgba(0,0,0,.2)}
-.ch-theme svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8}
 .ch-scrim{position:fixed;z-index:400;inset:0;background:rgba(0,0,0,.68);backdrop-filter:blur(8px);opacity:0;pointer-events:none;transition:opacity .3s}.ch-scrim.on{opacity:1;pointer-events:auto}
 .ch-sheet{position:fixed;z-index:410;top:0;right:0;display:flex;width:min(620px,100%);height:100dvh;flex-direction:column;border-left:1px solid var(--ch-line-2);background:var(--ch-bg-2);box-shadow:-30px 0 100px rgba(0,0,0,.34);transform:translateX(105%);transition:transform .42s cubic-bezier(.2,.72,.2,1)}.ch-sheet.on{transform:translateX(0)}
-.ch-sheet-grab{display:none}.ch-sheet-head{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:22px 24px;border-bottom:1px solid var(--ch-line)}.ch-sheet-head span{color:var(--ch-violet);font-family:var(--ch-data);font-size:8px;letter-spacing:.14em}.ch-sheet-head h3{margin:5px 0 0;font-family:var(--ch-display);font-size:23px;letter-spacing:-.035em}.ch-x{width:40px;height:40px;border-radius:13px}.ch-sheet-body{flex:1;overflow-y:auto;padding:24px}.ch-sheet-foot{display:flex;gap:9px;padding:15px 24px calc(15px + env(safe-area-inset-bottom));border-top:1px solid var(--ch-line);background:rgba(7,17,15,.86);backdrop-filter:blur(18px)}body[data-theme="light"] .ch-sheet-foot{background:rgba(248,247,241,.88)}
 .ch-brief-hero{position:relative;height:190px;margin-bottom:20px;border:1px solid var(--ch-line);border-radius:22px;background:linear-gradient(145deg,rgba(141,115,255,.14),rgba(214,255,75,.05));overflow:hidden}.ch-brief-hero .veh-sil{position:absolute;left:10%;bottom:24px;width:80%;color:var(--ch-ink)}.ch-brief-hero img{width:100%;height:100%;object-fit:cover}.ch-note{padding:14px 15px;border:1px solid var(--ch-line);border-radius:15px;font-size:11px;line-height:1.55}.ch-note b{display:block;margin-bottom:4px;font-family:var(--ch-display);font-size:13px}.ch-note.ok{border-color:rgba(108,229,164,.28);background:rgba(108,229,164,.06)}.ch-note.warn{border-color:rgba(255,199,92,.28);background:rgba(255,199,92,.06)}.ch-note.stop{border-color:rgba(255,122,120,.28);background:rgba(255,122,120,.06)}
 .ch-lab{display:block;margin:25px 1px 9px;color:var(--ch-ink-3);font-family:var(--ch-data);font-size:8px;font-weight:700;letter-spacing:.14em;text-transform:uppercase}.ch-data-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.ch-data-grid div{padding:12px;border:1px solid var(--ch-line);border-radius:13px;background:var(--ch-panel)}.ch-data-grid span{display:block;color:var(--ch-ink-3);font-size:8px}.ch-data-grid b{display:block;margin-top:4px;font-family:var(--ch-data);font-size:11px}.ch-data-grid.five{grid-template-columns:repeat(5,1fr)}
 .ch-trip-fuel{padding:16px;border:1px solid rgba(214,255,75,.17);border-radius:16px;background:rgba(214,255,75,.04)}.ch-trip-fuel-head{display:flex;justify-content:space-between;gap:20px}.ch-trip-fuel h4{margin:0;font-family:var(--ch-display);font-size:15px}.ch-trip-fuel-head>span{color:var(--ch-lime);font-family:var(--ch-data);font-size:10px}.ch-trip-fuel p{margin:7px 0 0;color:var(--ch-ink-3);font-size:10px}.ch-trip-fuel-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:13px}.ch-trip-fuel-grid div{padding:10px;border-radius:10px;background:var(--ch-panel)}.ch-trip-fuel-grid b{display:block;font-family:var(--ch-data);font-size:11px}.ch-trip-fuel-grid span{color:var(--ch-ink-3);font-size:8px}
