@@ -2604,13 +2604,9 @@ const SCENES = {
   /* food: retired. The fire on food.html is the transition now; see
      cabana-food-gate.js. Left out rather than left in so nobody wires
      it back up by accident. */
-  shopping: `
-    <div class="scn-bag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" fill="rgba(255,255,255,.14)"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></div>
-    <div class="scn-spark" style="top:26%;left:36%;animation-delay:.45s;"></div>
-    <div class="scn-spark" style="top:22%;left:60%;animation-delay:.6s;"></div>
-    <div class="scn-spark" style="top:48%;left:32%;animation-delay:.75s;"></div>
-    <div class="scn-spark" style="top:44%;left:66%;animation-delay:.55s;"></div>
-    <div class="scn-spark" style="top:32%;left:50%;animation-delay:.85s;"></div>`,
+  /* shopping: retired. The loom on shopping.html is the transition
+     now; see cabana-shop-gate.js. Left out rather than left in so
+     nobody wires it back up by accident. */
   carhire: `
     <div class="scn-arc scn-arc-1" style="width:80px;height:80px;left:calc(50% + 60px);top:30%;transform:rotate(45deg);"></div>
     <div class="scn-arc scn-arc-2" style="width:110px;height:110px;left:calc(50% + 52px);top:26%;transform:rotate(45deg);"></div>
@@ -2690,6 +2686,12 @@ function navigateToService(key, deepLink){
      does; rides.html now opens on the dispatch itself — the request
      crossing a city and waking drivers as it goes. */
   if (key === 'rides') { safeGo(); return; }
+
+  /* Shopping owns its arrival too, and it is the last of them. The
+     scene here was a bag with sparks; shopping.html now opens on a
+     loom weaving a cloth. Every service on this dashboard now hands
+     straight over to a page that covers its own load. */
+  if (key === 'shopping') { safeGo(); return; }
 
   try {
     const overlay = document.getElementById('svc-transition');
