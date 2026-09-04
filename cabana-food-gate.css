@@ -1,0 +1,436 @@
+/* ═══════════════════════════════════════════════════════════════════
+   CABANA · THE FIRE
+   ───────────────────────────────────────────────────────────────────
+   The arrival animation for /food.
+
+   A bed of charcoal in the dark. One coal catches, the heat crosses
+   the bed, and you rise through it.
+
+   Five decisions worth stating.
+
+   · It is coals, not a flame, and certainly not a scooter. This page
+     is already about fire — the hero says something is on the fire
+     near you, the tokens are ember and brass and ash, and the
+     background elements are called .coal. The arrival should be the
+     page's own metaphor arriving early, not a delivery cliché bolted
+     to the front of it.
+
+   · The moment is anticipation, not eating. A fire coming up to heat
+     is the minute before food, which is the minute a guest opening
+     this page is actually in.
+
+   · Coals are irregular soft blobs. That is what border-radius and
+     radial gradients are for. The tours canopy learned this the hard
+     way trying to draw organic shapes as vector paths; here the
+     medium matches the subject from the start.
+
+   · This one speaks in serif. The other three arrivals use Geist
+     because their pages do; food sets its display type in Zodiak, so
+     this does too. Four arrivals, one system, each in its page's own
+     voice.
+
+   · Nothing animates inside a filtered subtree, and nothing scales a
+     bed of sixty glowing elements. Both mistakes have already been
+     paid for once, on the tours canopy and the stays facade.
+
+   Scoped under .fg- so it cannot touch the page it opens onto.
+   ═══════════════════════════════════════════════════════════════════ */
+
+#food-gate{
+  /* ── the fire, in eight values ── */
+  --fg-void:#0D0704;        /* the page's own ink            */
+  --fg-dark:#150D07;
+  --fg-ash:#2A1A10;         /* a coal that has not caught    */
+  --fg-ash-2:#3B2617;
+  --fg-ember:#DE5219;       /* the page's own ember          */
+  --fg-ember-lit:#F06A2E;
+  --fg-hot:#FFB35C;         /* the core of a coal at heat    */
+  --fg-white:#FFE9C4;       /* where it is hottest of all    */
+  --fg-brass:#C99A4E;
+  --fg-bone:#F4EADC;
+
+  --fg-ease:cubic-bezier(.7,0,.2,1);
+  --fg-soft:cubic-bezier(.22,1,.36,1);
+
+  position:fixed;
+  inset:0;
+  z-index:2147483000;
+  overflow:hidden;
+  background:var(--fg-void);
+  contain:strict;
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
+
+html.fg-lock,
+html.fg-lock body{ overflow:hidden !important; }
+
+.fg-stage{ position:absolute; inset:0; overflow:hidden; }
+
+/* ═══ 1 · THE ROOM ══════════════════════════════════════════════════
+   Almost nothing. A fire lights its own room, so the room cannot be
+   lit before the fire is.                                          */
+
+.fg-air{
+  position:absolute; inset:-6%;
+  background:
+    radial-gradient(72% 44% at 50% 88%, rgba(222,82,25,.13), transparent 70%),
+    linear-gradient(180deg, #0A0503 0%, #0D0704 46%, #140904 100%);
+}
+
+/* The glow the bed throws back up into the room. This is what stops
+   the coals looking like objects on a black rectangle. */
+.fg-room{
+  position:absolute; left:-14%; right:-14%; bottom:0; height:76%;
+  background:radial-gradient(66% 82% at 50% 100%,
+    rgba(240,106,46,.3) 0%, rgba(222,82,25,.12) 40%, rgba(222,82,25,.04) 60%, transparent 80%);
+  opacity:0;
+  will-change:opacity;
+}
+
+/* ═══ 2 · THE BED ═══════════════════════════════════════════════════
+   Coals sit in a shallow bed seen from slightly above, so the ones
+   toward the back are smaller and dimmer. That gradient of size is
+   the only perspective cue in the scene and it does all the work.  */
+
+.fg-bed{
+  position:absolute;
+  left:-6%; right:-6%; bottom:-4%;
+  height:62%;
+  will-change:transform;
+}
+
+.fg-c{
+  position:absolute;
+  left:var(--x,50%); bottom:var(--y,20%);
+  width:var(--w,40px); height:var(--h,26px);
+  margin-left:calc(var(--w,40px) / -2);
+  /* Four different corner radii on both axes. A coal is a lump; an
+     ellipse is a pebble. */
+  border-radius:var(--r,48% 52% 42% 58% / 58% 44% 56% 42%);
+  background:linear-gradient(168deg, var(--fg-ash-2), var(--fg-ash) 62%, #1B100A);
+  transform:rotate(var(--rot,0deg));
+}
+
+/* The surface coming up to heat. Sits inside the coal's own shape, so
+   the light is bounded by the lump rather than sitting behind it. */
+.fg-c::after{
+  content:'';
+  position:absolute; inset:0;
+  border-radius:inherit;
+  background:
+    radial-gradient(64% 58% at 42% 38%,
+      var(--core,#FFE9C4) 0%,
+      var(--mid,#FFB35C) 26%,
+      var(--fg-ember-lit) 52%,
+      var(--fg-ember) 74%,
+      transparent 94%);
+  opacity:0;
+}
+
+/* The bloom it throws. A separate radial rather than a box-shadow:
+   sixty shadowed elements is a raster cost, sixty gradients is not. */
+.fg-c::before{
+  content:'';
+  position:absolute;
+  left:50%; top:50%;
+  width:calc(var(--w,40px) * 2);
+  height:calc(var(--w,40px) * 2);
+  margin-left:calc(var(--w,40px) * -1);
+  margin-top:calc(var(--w,40px) * -1);
+  border-radius:50%;
+  background:radial-gradient(circle,
+    rgba(240,106,46,.5) 0%, rgba(222,82,25,.2) 34%, transparent 68%);
+  opacity:0;
+  pointer-events:none;
+}
+/* The coolest coals in the bed never come all the way up. */
+.fg-c.is-cool::after{ filter:saturate(.82) brightness(.6); }
+.fg-c.is-cool::before{ opacity:0; }
+
+/* Ash. Some coals grey over at the edges once they have been hot for
+   a while, which is the detail that says this is charcoal and not a
+   set of orange lights. */
+.fg-ash{
+  position:absolute; inset:0;
+  border-radius:inherit;
+  background:radial-gradient(58% 54% at 56% 62%,
+    rgba(196,186,176,.62) 0%, rgba(150,138,128,.34) 42%, transparent 78%);
+  opacity:0;
+  mix-blend-mode:normal;
+}
+
+/* ═══ 3 · WHAT RISES ════════════════════════════════════════════════ */
+
+/* Heat, not smoke. A column of warm air that distorts nothing and
+   costs nothing, drifting up off the bed. */
+.fg-heat{
+  position:absolute;
+  left:var(--x,50%); bottom:var(--b,26%);
+  width:var(--w,120px); height:var(--h,190px);
+  margin-left:calc(var(--w,120px) / -2);
+  background:radial-gradient(closest-side ellipse at 50% 88%,
+    rgba(240,106,46,.20) 0%,
+    rgba(222,82,25,.09) 38%,
+    rgba(222,82,25,.03) 62%,
+    transparent 84%);
+  opacity:0;
+  will-change:transform,opacity;
+}
+
+/* Sparks lift, wander, and go out. They never reach the top of frame,
+   because the ones that do are embers and embers set things on fire. */
+.fg-spark{
+  position:absolute;
+  left:var(--x,50%); bottom:var(--b,24%);
+  width:var(--s,3px); height:var(--s,3px);
+  border-radius:50%;
+  background:radial-gradient(circle, var(--fg-white) 0%, var(--fg-ember-lit) 52%, transparent 78%);
+  opacity:0;
+  will-change:transform,opacity;
+}
+
+/* ═══ 4 · THE WORD ══════════════════════════════════════════════════
+   In the page's own serif, because the page is set in a serif.     */
+
+.fg-word{
+  position:absolute;
+  left:0; right:0; top:33%;
+  transform:translateY(-50%);
+  text-align:center;
+  padding:0 28px;
+  z-index:6;
+  pointer-events:none;
+}
+.fg-line{
+  font-family:'Zodiak','Hoefler Text',Georgia,'Times New Roman',serif;
+  font-weight:400;
+  font-size:clamp(38px,11.5vw,76px);
+  line-height:1.02;
+  letter-spacing:-.018em;
+  color:var(--fg-bone);
+  opacity:0;
+  transform:translateY(16px);
+  text-shadow:0 4px 40px rgba(13,7,4,.85), 0 0 90px rgba(222,82,25,.3);
+}
+.fg-line em{
+  font-style:italic;
+  color:var(--fg-hot);
+}
+.fg-sub{
+  margin-top:15px;
+  font-family:'Geist Mono','SFMono-Regular',ui-monospace,Menlo,Consolas,monospace;
+  font-size:10.5px; font-weight:500;
+  letter-spacing:.26em; text-transform:uppercase;
+  color:rgba(201,154,78,.72);
+  opacity:0;
+  transform:translateY(9px);
+}
+
+/* ═══ 5 · SKIP ══════════════════════════════════════════════════════ */
+
+.fg-skip{
+  position:absolute;
+  top:max(18px,env(safe-area-inset-top,0px));
+  right:16px;
+  z-index:9;
+  display:inline-flex; align-items:center; gap:7px;
+  padding:9px 15px;
+  border-radius:100px;
+  border:1px solid rgba(201,154,78,.3);
+  background:rgba(13,7,4,.55);
+  color:rgba(244,234,220,.84);
+  font-family:'Switzer','Helvetica Neue',Helvetica,Arial,sans-serif;
+  font-size:12.5px; font-weight:500;
+  cursor:pointer;
+  opacity:0;
+  transition:opacity .4s ease, border-color .2s ease, color .2s ease;
+}
+.fg-skip:hover,
+.fg-skip:focus-visible{ border-color:var(--fg-ember-lit); color:#fff; }
+.fg-skip:focus-visible{ outline:2px solid var(--fg-ember-lit); outline-offset:3px; }
+.fg-skip svg{ width:12px; height:12px; }
+
+/* ═══ 6 · THE HEAT ══════════════════════════════════════════════════ */
+
+.fg-flood{
+  position:absolute; inset:0; z-index:7;
+  background:radial-gradient(86% 62% at 50% 82%,
+    rgba(255,233,196,.94) 0%,
+    rgba(255,179,92,.6) 26%,
+    rgba(222,82,25,.24) 54%,
+    transparent 76%);
+  opacity:0;
+  transform:scale(.36);
+  pointer-events:none;
+  will-change:transform,opacity;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   THE SEQUENCE
+
+   catch → spread → breathe → rise. Each coal carries its own --d,
+   which is its distance from the coal that caught first, so the heat
+   crosses the bed instead of the bed simply turning on.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── the bed is there before anything happens to it ── */
+#food-gate.fg-cold .fg-c{
+  animation:fg-cold .9s var(--fg-soft) forwards;
+}
+@keyframes fg-cold{ from{ opacity:0; } to{ opacity:1; } }
+
+/* ── catch, and spread ────────────────────────────────────────────
+   The glow comes up fast and then settles back a little, the way a
+   coal flares as it takes and then sits at working heat. */
+#food-gate.fg-lit .fg-c::after{
+  animation:fg-take 2.6s var(--fg-soft) var(--d,0ms) forwards;
+}
+@keyframes fg-take{
+  0%  { opacity:0; }
+  22% { opacity:var(--peak,1); }
+  46% { opacity:calc(var(--peak,1) * .78); }
+  100%{ opacity:var(--rest,.88); }
+}
+#food-gate.fg-lit .fg-c::before{
+  animation:fg-bloom 2.6s var(--fg-soft) var(--d,0ms) forwards;
+}
+@keyframes fg-bloom{
+  0%  { opacity:0; }
+  24% { opacity:1; }
+  100%{ opacity:.78; }
+}
+#food-gate.fg-lit .fg-room{
+  animation:fg-in 2.4s .4s var(--fg-soft) forwards;
+}
+@keyframes fg-in{ to{ opacity:1; } }
+
+#food-gate.fg-lit .fg-skip{ opacity:1; }
+
+/* ── breathe ──────────────────────────────────────────────────────
+   A fire draws air. Coals brighten and dim slightly out of phase
+   with each other, slowly — around 0.6Hz, nowhere near a flicker,
+   and a small enough swing that it reads as heat rather than as
+   something switching. */
+#food-gate.fg-breathe .fg-c::after{
+  animation:fg-breathe var(--bd,3.2s) ease-in-out var(--bo,0ms) infinite alternate;
+}
+@keyframes fg-breathe{
+  from{ opacity:calc(var(--rest,.88) * .78); }
+  to  { opacity:var(--rest,.88); }
+}
+#food-gate.fg-breathe .fg-c::before{
+  animation:fg-breathe-b var(--bd,3.2s) ease-in-out var(--bo,0ms) infinite alternate;
+}
+@keyframes fg-breathe-b{
+  from{ opacity:.58; }
+  to  { opacity:.92; }
+}
+
+/* Ash arrives late and only on some of the bed. */
+#food-gate.fg-breathe .fg-ash{
+  animation:fg-ash-in 2.8s var(--fg-soft) var(--ad,0ms) forwards;
+}
+@keyframes fg-ash-in{ to{ opacity:var(--ao,.5); } }
+
+#food-gate.fg-breathe .fg-heat{
+  animation:fg-rise var(--hd,5s) ease-in-out var(--ho,0ms) infinite;
+}
+@keyframes fg-rise{
+  0%  { opacity:0;   transform:translate3d(0,0,0) scaleX(1); }
+  26% { opacity:1; }
+  100%{ opacity:0;   transform:translate3d(var(--dx,10px),-72%,0) scaleX(1.5); }
+}
+
+#food-gate.fg-breathe .fg-spark{
+  animation:fg-spark var(--sd,2.4s) ease-out var(--so,0ms) infinite;
+}
+@keyframes fg-spark{
+  0%  { opacity:0;   transform:translate3d(0,0,0) scale(.5); }
+  12% { opacity:1; }
+  74% { opacity:.9; }
+  100%{ opacity:0;   transform:translate3d(var(--dx,20px),var(--dy,-190px),0) scale(.3); }
+}
+
+/* ── the word ── */
+#food-gate.fg-say .fg-line{ animation:fg-up .95s var(--fg-soft) forwards; }
+#food-gate.fg-say .fg-sub { animation:fg-up .8s .22s var(--fg-soft) forwards; }
+@keyframes fg-up{ to{ opacity:1; transform:translateY(0); } }
+
+/* ── rise ─────────────────────────────────────────────────────────
+   The camera lifts through the heat. The bed moves down and slightly
+   toward us; the scale is deliberately small because sixty glowing
+   elements scaling hard is a raster cost with nothing to show for it,
+   and the flood carries the last half-second anyway. */
+#food-gate.fg-go .fg-bed{
+  animation:fg-lift 1.6s var(--fg-ease) forwards;
+}
+@keyframes fg-lift{
+  0%  { transform:translate3d(0,0,0) scale(1); }
+  100%{ transform:translate3d(0,26%,0) scale(1.24); }
+}
+#food-gate.fg-go .fg-word{
+  animation:fg-word-out .55s var(--fg-soft) forwards;
+}
+@keyframes fg-word-out{
+  0%  { opacity:1; transform:translateY(-50%) scale(1); filter:blur(0); }
+  100%{ opacity:0; transform:translateY(-50%) scale(1.08); filter:blur(6px); }
+}
+#food-gate.fg-go .fg-flood{
+  animation:fg-flood 1.3s .25s cubic-bezier(.38,.02,.4,1) forwards;
+}
+@keyframes fg-flood{
+  0%  { opacity:0;  transform:scale(.36); }
+  32% { opacity:.4; }
+  66% { opacity:.78; }
+  100%{ opacity:1;  transform:scale(2.2); }
+}
+#food-gate.fg-go .fg-skip{ opacity:0; }
+
+#food-gate.fg-gone{ animation:fg-out .5s ease forwards; pointer-events:none; }
+@keyframes fg-out{ to{ opacity:0; } }
+
+/* ═══════════════════════════════════════════════════════════════════
+   ABBREVIATED · after the first arrival in a session
+   The bed is already hot. No catch, no spread — a fire that has to be
+   lit from cold every single time is a fire nobody is tending.
+   ═══════════════════════════════════════════════════════════════════ */
+#food-gate.fg-brief .fg-word,
+#food-gate.fg-brief .fg-skip{ display:none; }
+#food-gate.fg-brief .fg-c::after{ animation-duration:.4s; animation-delay:0ms; }
+#food-gate.fg-brief .fg-c::before{ animation-duration:.4s; animation-delay:0ms; }
+#food-gate.fg-brief .fg-room{ animation-duration:.4s; animation-delay:0ms; }
+#food-gate.fg-brief.fg-go .fg-bed{ animation-duration:.8s; }
+#food-gate.fg-brief.fg-go .fg-flood{ animation-duration:.7s; animation-delay:.1s; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   REDUCED MOTION
+   The same bed at the same heat, holding still. Nothing catches,
+   nothing breathes, nothing rises.
+   ═══════════════════════════════════════════════════════════════════ */
+@media (prefers-reduced-motion:reduce){
+  #food-gate .fg-c        { opacity:1; animation:none !important; }
+  #food-gate .fg-c::after { opacity:.88; animation:none !important; }
+  #food-gate .fg-c::before{ opacity:.78; animation:none !important; }
+  #food-gate .fg-ash      { opacity:.5;  animation:none !important; }
+  #food-gate .fg-room     { opacity:1;   animation:none !important; }
+  #food-gate .fg-heat,
+  #food-gate .fg-spark    { display:none; }
+  #food-gate .fg-line,
+  #food-gate .fg-sub      { opacity:1; transform:none; animation:none !important; }
+  #food-gate.fg-go .fg-bed,
+  #food-gate.fg-go .fg-word,
+  #food-gate.fg-go .fg-flood{ animation:none !important; transform:none; }
+  #food-gate.fg-go{ animation:fg-out .45s ease forwards; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   VIEWPORT
+   Authored portrait first. On a wide screen the bed gets shallower
+   rather than the coals getting bigger.
+   ═══════════════════════════════════════════════════════════════════ */
+@media (min-width:820px){
+  .fg-bed  { height:54%; }
+  .fg-word { top:30%; }
+  .fg-line { font-size:clamp(52px,5.4vw,86px); }
+}

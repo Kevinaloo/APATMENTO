@@ -57,6 +57,14 @@
 <link rel="preload" as="style" href="https://api.fontshare.com/v2/css?f[]=zodiak@1,2&f[]=switzer@1&display=swap"/>
 <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=zodiak@1,2&f[]=switzer@1&display=swap"/>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&display=swap"/>
+<link rel="stylesheet" href="/cabana-food-gate.css"/>
+<style>
+/* Critical paint. The gate stylesheet may still be in flight; this
+   guarantees the first frame is a dark room rather than a white
+   flash in front of an animation about a fire in the dark. */
+#food-gate{position:fixed;inset:0;z-index:2147483000;background:#0D0704;}
+html.fg-lock,html.fg-lock body{overflow:hidden!important;}
+</style>
 <!-- CABANA-SEO-GRAPH -->
 
 <style>
@@ -724,6 +732,38 @@ h1.big em{font-style:italic;font-weight:500;color:var(--ember-lit);letter-spacin
 </style>
 </head>
 <body>
+
+<!-- ENTRY. The bed fills this in; see cabana-food-gate.js. Painted
+     here rather than created by script so the dark frame exists
+     before any JS has run. -->
+<div id="food-gate"></div>
+<script>document.documentElement.classList.add('fg-lock');</script>
+<script src="/cabana-food-gate.js"></script>
+<script>
+/* Its own <script>, immediately after the markup it owns and BEFORE
+   vendor-supabase.js further down. Deferring it would mean the first
+   frame waited on a Supabase bundle to finish downloading; measured
+   on the other four arrivals that pushed the start from ~2s out to
+   5-6s and the sequence then played in a rush. A splash exists to
+   cover load time, so it cannot be gated behind load time. */
+(function () {
+  function strip() {
+    var n = document.getElementById('food-gate');
+    if (n && n.parentNode) n.parentNode.removeChild(n);
+    document.documentElement.classList.remove('fg-lock');
+  }
+  window.dismissEnterTx = strip;
+  function go() {
+    if (!window.CabanaFoodGate) { strip(); return; }
+    window.CabanaFoodGate.play({ node: document.getElementById('food-gate') });
+  }
+  go();
+  /* Last line of defence: a guest staring at a dark rectangle is the
+     worst outcome this file can produce. */
+  setTimeout(function () { if (document.getElementById('food-gate')) strip(); }, 9500);
+  window.addEventListener('pageshow', function (e) { if (e.persisted) strip(); });
+})();
+</script>
 
 <div class="room" aria-hidden="true"><div class="coal coal-1"></div><div class="coal coal-2"></div></div>
 
