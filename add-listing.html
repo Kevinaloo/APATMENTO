@@ -76,6 +76,107 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
 .step-sub{font-size:14px;color:var(--ink-soft);line-height:1.7;max-width:540px;}
 .svc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:28px;}
 @media(max-width:640px){.svc-grid{grid-template-columns:1fr 1fr;}}
+
+/* ── Go to my listings — hero button ─────────────────────────── */
+.my-listings-hero{
+  display:flex;align-items:center;gap:14px;
+  padding:16px 20px;
+  border-radius:18px;
+  background:linear-gradient(135deg,rgba(45,212,191,.07),rgba(67,97,255,.07));
+  border:1.5px solid rgba(67,97,255,.16);
+  text-decoration:none;
+  color:var(--ink-2);
+  margin-bottom:28px;
+  position:relative;
+  overflow:hidden;
+  transition:all .3s cubic-bezier(.22,1,.36,1);
+  cursor:pointer;
+}
+.my-listings-hero::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(45,212,191,.13),rgba(67,97,255,.13));
+  opacity:0;transition:opacity .25s;
+}
+.my-listings-hero:hover::before{opacity:1;}
+.my-listings-hero:hover{border-color:rgba(67,97,255,.35);transform:translateY(-1px);box-shadow:0 8px 32px rgba(67,97,255,.13),0 2px 8px rgba(12,13,26,.05);}
+.mlh-icon{
+  width:46px;height:46px;flex:none;border-radius:13px;
+  background:var(--grad);
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;box-shadow:0 4px 14px rgba(67,97,255,.28);
+  position:relative;z-index:1;
+}
+.mlh-icon svg{width:20px;height:20px;}
+.mlh-body{flex:1;min-width:0;position:relative;z-index:1;}
+.mlh-label{font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--electric);text-transform:uppercase;margin-bottom:2px;}
+.mlh-title{font-family:var(--font-head);font-size:15px;font-weight:800;color:var(--ink-2);line-height:1.3;}
+.mlh-sub{font-size:12px;color:var(--ink-soft);margin-top:1px;}
+.mlh-arrow{
+  width:34px;height:34px;flex:none;border-radius:10px;
+  border:1.5px solid rgba(67,97,255,.2);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--electric);position:relative;z-index:1;
+  transition:all .25s;
+}
+.my-listings-hero:hover .mlh-arrow{background:var(--electric);border-color:var(--electric);color:#fff;transform:translateX(2px);}
+.mlh-arrow svg{width:15px;height:15px;}
+
+/* ── Manager / Viewer ownership extras ───────────────────────── */
+.own-role-section{margin-top:24px;padding-top:22px;border-top:1px solid var(--line);}
+.own-role-title{font-family:var(--font-head);font-size:13px;font-weight:800;color:var(--ink-soft);letter-spacing:.06em;text-transform:uppercase;margin-bottom:14px;}
+.own-role-cards{display:grid;gap:10px;}
+.own-role-card{
+  display:flex;align-items:flex-start;gap:13px;
+  padding:14px 16px;border-radius:14px;
+  background:var(--surface);border:1.5px solid var(--line);
+  cursor:pointer;transition:all .22s cubic-bezier(.22,1,.36,1);text-align:left;width:100%;
+  font-family:inherit;
+}
+.own-role-card:hover{border-color:rgba(67,97,255,.25);background:rgba(67,97,255,.03);}
+.own-role-card.sel{border-color:var(--electric);background:rgba(67,97,255,.05);box-shadow:0 0 0 3px rgba(67,97,255,.08);}
+.own-role-ico{
+  width:36px;height:36px;flex:none;border-radius:10px;
+  background:var(--grad-soft);border:1px solid rgba(45,212,191,.18);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--mint-dark);transition:all .22s;
+}
+.own-role-card.sel .own-role-ico{background:var(--grad);border-color:transparent;color:#fff;}
+.own-role-ico svg{width:16px;height:16px;}
+.own-role-t{font-family:var(--font-head);font-size:13.5px;font-weight:800;color:var(--ink-2);line-height:1.3;margin-bottom:2px;}
+.own-role-d{font-size:12px;color:var(--ink-soft);line-height:1.55;}
+.own-role-badge{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:10.5px;font-weight:700;letter-spacing:.05em;
+  padding:3px 8px;border-radius:100px;margin-top:5px;
+}
+.badge-manager{background:rgba(67,97,255,.1);color:var(--electric);}
+.badge-viewer{background:rgba(16,185,129,.1);color:#059669;}
+
+/* Payout routing section */
+.payout-section{margin-top:22px;padding:20px;border-radius:16px;background:linear-gradient(135deg,rgba(45,212,191,.06),rgba(67,97,255,.06));border:1.5px solid rgba(67,97,255,.14);}
+.payout-section-title{font-family:var(--font-head);font-size:13px;font-weight:800;color:var(--ink-2);margin-bottom:4px;display:flex;align-items:center;gap:8px;}
+.payout-section-title svg{width:15px;height:15px;color:var(--electric);}
+.payout-section-sub{font-size:12px;color:var(--ink-soft);line-height:1.55;margin-bottom:14px;}
+.payout-opts{display:grid;gap:9px;}
+.payout-opt{
+  display:flex;align-items:flex-start;gap:11px;padding:13px 14px;
+  border-radius:12px;background:var(--surface);border:1.5px solid var(--line);
+  cursor:pointer;transition:all .22s;text-align:left;width:100%;font-family:inherit;
+}
+.payout-opt:hover{border-color:rgba(67,97,255,.25);}
+.payout-opt.sel{border-color:var(--electric);background:rgba(67,97,255,.04);box-shadow:0 0 0 3px rgba(67,97,255,.07);}
+.payout-opt-dot{
+  width:18px;height:18px;flex:none;border-radius:50%;
+  border:2px solid var(--line-2);margin-top:1px;transition:all .22s;
+  display:flex;align-items:center;justify-content:center;
+}
+.payout-opt.sel .payout-opt-dot{border-color:var(--electric);background:var(--electric);}
+.payout-opt.sel .payout-opt-dot::after{content:'';width:6px;height:6px;border-radius:50%;background:#fff;}
+.payout-opt-t{font-family:var(--font-head);font-size:13px;font-weight:800;color:var(--ink-2);margin-bottom:2px;}
+.payout-opt-d{font-size:11.5px;color:var(--ink-soft);line-height:1.5;}
+.payout-consolidated-to{margin-top:12px;display:none;}
+.payout-consolidated-to.show{display:block;}
+.payout-consolidated-to .fhint{margin-top:5px;}
 .svc-card{padding:20px 13px;border-radius:17px;border:2px solid var(--line);background:var(--surface);cursor:pointer;text-align:center;transition:all .28s cubic-bezier(.22,1,.36,1);position:relative;}
 .svc-card:hover{border-color:rgba(67,97,255,0.3);transform:translateY(-2px);box-shadow:var(--shadow-md);}
 .svc-card.sel{border-color:var(--electric);box-shadow:0 0 0 4px rgba(67,97,255,0.08),var(--shadow-md);}
@@ -591,6 +692,22 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
         <h1 class="step-title">Add a <em>service</em></h1>
         <p class="step-sub">Choose the type of service you want to list. Each has its own tailored form built specifically for it.</p>
       </div>
+
+      <!-- ── Go to my listings — world-class hero button ── -->
+      <a href="partner-listings.html" class="my-listings-hero" id="go-listings-btn">
+        <span class="mlh-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        </span>
+        <span class="mlh-body">
+          <span class="mlh-label">Your listings</span>
+          <span class="mlh-title">Go to my listings</span>
+          <span class="mlh-sub">Manage, edit and track your active services</span>
+        </span>
+        <span class="mlh-arrow">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </span>
+      </a>
+
       <div class="svc-grid">
         <div class="svc-card" data-svc="stays" onclick="selSvc(this)">
           <div class="svc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5V21H3z"/><path d="M9 21V12h6v9"/></svg></div>
@@ -875,11 +992,12 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
           later from your listings board.</p>
       </div>
 
+      <!-- Ownership shape: sole / partnership / on_behalf -->
       <div class="own-choices" id="own-choices"></div>
 
-      <!-- Partnership -->
+      <!-- ── Partnership panel ── -->
       <div class="own-panel" id="own-partnership" hidden>
-        <div class="fsec-title">The other partners</div>
+        <div class="fsec-title">The other co-owners</div>
         <p class="fhint" style="margin:-6px 0 14px">
           You are already in this partnership as the operator, so add everyone
           <strong>else</strong>. A partner without a Cabana account is still a partner —
@@ -894,17 +1012,74 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
         <div id="own-rows"></div>
         <button type="button" class="own-add" onclick="ownAddRow()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-          Add another partner
+          Add another co-owner
         </button>
 
         <div class="own-total" id="own-total"></div>
+
+        <!-- ── Payout routing (partnership only) ── -->
+        <div class="payout-section" id="payout-section">
+          <div class="payout-section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            Where do the payouts go?
+          </div>
+          <p class="payout-section-sub">Choose once — you can always update it from your listings board.</p>
+          <div class="payout-opts">
+            <button type="button" class="payout-opt sel" data-routing="consolidated" onclick="ownPayoutRouting('consolidated')">
+              <span class="payout-opt-dot"></span>
+              <span>
+                <span class="payout-opt-t">Pay one account</span>
+                <span class="payout-opt-d">Every payout goes to one nominated account — the operator by default, or a partner you choose. You split it offline however you've agreed.</span>
+              </span>
+            </button>
+            <button type="button" class="payout-opt" data-routing="split" onclick="ownPayoutRouting('split')">
+              <span class="payout-opt-dot"></span>
+              <span>
+                <span class="payout-opt-t">Split to each partner automatically</span>
+                <span class="payout-opt-d">The platform credits each partner's wallet the moment a booking settles, in proportion to their equity share. No money passes through anyone else's hands.</span>
+              </span>
+            </button>
+          </div>
+          <!-- Who gets the consolidated payout? Only shown when routing = consolidated -->
+          <div class="payout-consolidated-to" id="payout-to-wrap">
+            <label class="flbl" style="margin-top:14px;display:block;">Who should receive the consolidated payout? <span class="opt">(optional — defaults to you)</span></label>
+            <select class="fsel" id="payout-to-select" onchange="F.ownPayoutToName=this.options[this.selectedIndex].text;F.ownPayoutToId=this.value;">
+              <option value="">Me (the operator)</option>
+            </select>
+            <div class="fhint">Only an active partner with a confirmed equity share can be nominated.</div>
+          </div>
+        </div>
+
+        <!-- ── Add a manager or viewer (optional extra seats) ── -->
+        <div class="own-role-section">
+          <div class="own-role-title">Add a manager or viewer <span class="opt" style="font-size:11px;font-weight:500;text-transform:none;letter-spacing:0;">(optional)</span></div>
+          <p class="fhint" style="margin:-4px 0 14px">Not a co-owner. A manager runs the listing operationally; a viewer can only see it. Neither holds any equity.</p>
+          <div class="own-role-cards" id="own-extra-seats"></div>
+          <button type="button" class="own-add" onclick="ownAddExtraSeat()" style="margin-top:11px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            Add a manager or viewer
+          </button>
+        </div>
       </div>
 
-      <!-- On behalf of someone -->
+      <!-- ── Sole operator: optional add manager/viewer ── -->
+      <div class="own-panel" id="own-sole-extras" hidden>
+        <div class="own-role-section" style="margin-top:0;padding-top:0;border-top:none;">
+          <div class="own-role-title">Add a manager or viewer <span class="opt" style="font-size:11px;font-weight:500;text-transform:none;letter-spacing:0;">(optional)</span></div>
+          <p class="fhint" style="margin:-4px 0 14px">Even as a sole operator you can give someone else access to run this listing for you — without making them a co-owner.</p>
+          <div class="own-role-cards" id="own-sole-extra-seats"></div>
+          <button type="button" class="own-add" onclick="ownAddSoleExtraSeat()" style="margin-top:11px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            Add a manager or viewer
+          </button>
+        </div>
+      </div>
+
+      <!-- ── On behalf of someone ── -->
       <div class="own-panel" id="own-behalf" hidden>
         <div class="fsec-title">Whose listing is this?</div>
         <p class="fhint" style="margin:-6px 0 14px">
-          They will be sent a claim. Until they accept it you can manage the listing
+          They will be sent a claim link. Until they accept it you can manage the listing
           for them; the moment they accept, it becomes theirs and leaves your account.
         </p>
         <div class="row2">
@@ -1276,7 +1451,9 @@ const F={svc:null,type:null,title:'',country:'Kenya',city:'',area:'',street:'',l
   roomTiers:[],spaceMode:'entire',sharingContext:'',
   /* Ownership. `own` is deliberately null until the host chooses: a
      default of 'sole' is a default that quietly assigns a building. */
-  own:null,ownTouched:false,ownSplit:'equal',ownPartners:[],ownHolderName:'',ownHolderContact:'',ownNote:''};
+  own:null,ownTouched:false,ownSplit:'equal',ownPartners:[],ownHolderName:'',ownHolderContact:'',ownNote:'',
+  ownPayoutRouting:'consolidated',ownPayoutToId:null,ownPayoutToName:'',
+  ownExtraSeats:[],ownSoleExtraSeats:[]};
 
 function buildNav(){document.getElementById('snav').innerHTML=LABS.map((l,i)=>`<div class="sni${i===cur?' active':i<cur?' done':''}" id="sni-${i}"><div class="sni-n">${i<cur?'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>':i+1}</div><span class="sni-l">${l}</span></div>`).join('');}
 function upNav(){LABS.forEach((_,i)=>{const el=document.getElementById('sni-'+i);if(!el)return;el.className='sni'+(i===cur?' active':i<cur?' done':'');const n=el.querySelector('.sni-n');n.innerHTML=i<cur?'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>':String(i+1);});}
@@ -2057,7 +2234,11 @@ function valid(n){
    the arithmetic; this file only draws it. */
 function ownSpec(){
   return {type:F.own,split:F.ownSplit,partners:F.ownPartners,
-          holder_name:F.ownHolderName,holder_contact:F.ownHolderContact,note:F.ownNote};
+          holder_name:F.ownHolderName,holder_contact:F.ownHolderContact,note:F.ownNote,
+          payout_routing:F.ownPayoutRouting||'consolidated',
+          payout_to_id:F.ownPayoutToId||null,
+          extra_seats:F.ownExtraSeats||[],
+          sole_extra_seats:F.ownSoleExtraSeats||[]};
 }
 
 function bldOwn(){
@@ -2095,6 +2276,13 @@ function bldOwn(){
     +   '<span><span class="own-t">'+t.label+'</span><span class="own-d">'+t.blurb+'</span></span>'
     + '</button>').join('');
   if(!F.ownPartners.length)F.ownPartners=[{name:'',contact:'',equity_pct:''}];
+  /* Restore saved payout routing selection on page re-visit */
+  const savedRouting=F.ownPayoutRouting||'consolidated';
+  document.querySelectorAll('.payout-opt').forEach(o=>{
+    o.classList.toggle('sel',o.dataset.routing===savedRouting);
+  });
+  const toWrap=document.getElementById('payout-to-wrap');
+  if(toWrap)toWrap.classList.toggle('show',savedRouting==='consolidated');
   ownPanels();ownRows();
 }
 
@@ -2107,10 +2295,94 @@ function ownPick(key){
 }
 
 function ownPanels(){
-  const p=document.getElementById('own-partnership'),b=document.getElementById('own-behalf');
+  const p=document.getElementById('own-partnership');
+  const b=document.getElementById('own-behalf');
+  const se=document.getElementById('own-sole-extras');
   if(p)p.hidden=F.own!=='partnership';
   if(b)b.hidden=F.own!=='on_behalf';
-  if(F.own==='partnership')ownTotal();
+  if(se)se.hidden=F.own!=='sole';
+  if(F.own==='partnership'){ownTotal();ownUpdatePayoutSelect();}
+}
+
+/* ── Payout routing (partnership) ── */
+function ownPayoutRouting(mode){
+  F.ownPayoutRouting=mode;
+  document.querySelectorAll('.payout-opt').forEach(o=>{
+    o.classList.toggle('sel',o.dataset.routing===mode);
+  });
+  const toWrap=document.getElementById('payout-to-wrap');
+  if(toWrap)toWrap.classList.toggle('show',mode==='consolidated');
+}
+
+function ownUpdatePayoutSelect(){
+  /* Populate the "who receives consolidated payout" dropdown with the current
+     named partners so the operator can nominate one of them. */
+  const sel=document.getElementById('payout-to-select');
+  if(!sel)return;
+  const named=F.ownPartners.filter(p=>p.name&&ApaOwnership&&ApaOwnership.looksLikeEmail(p.contact));
+  let opts='<option value="">Me (the operator)</option>';
+  named.forEach(p=>{opts+='<option value="">'+esc(p.name)+'</option>';});
+  sel.innerHTML=opts;
+}
+
+/* ── Extra seats (manager / viewer) for partnership ── */
+if(!window.F){} // guard; F is defined later in page init
+
+function ownRenderExtraSeats(containerId,seats,addFn,delFn){
+  const box=document.getElementById(containerId);if(!box)return;
+  if(!seats||!seats.length){box.innerHTML='';return;}
+  box.innerHTML=seats.map((s,i)=>
+    '<div class="own-role-card" style="cursor:default;margin-bottom:0;">'
+    + '<span class="own-role-ico">'
+    +   (s.role==='manager'
+        ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>'
+        : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>')
+    + '</span>'
+    + '<span style="flex:1;min-width:0;">'
+    +   '<span class="own-role-t">'+esc(s.name||'New seat')+'</span>'
+    +   '<span class="own-role-d">'+esc(s.contact||'Email not set')+'</span>'
+    +   '<span class="own-role-badge '+(s.role==='manager'?'badge-manager':'badge-viewer')+'">'+esc(s.role==='manager'?'Manager':'Viewer')+'</span>'
+    + '</span>'
+    + '<button type="button" class="own-del" onclick="'+delFn+'('+i+')" aria-label="Remove this seat">'
+    +   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>'
+    + '</button>'
+    + '</div>').join('');
+}
+
+function ownAddExtraSeat(){
+  /* Simple inline prompt — a modal would be overkill for a form already mid-flow */
+  const name=prompt('Name of the manager or viewer?');
+  if(!name||!name.trim())return;
+  const contact=prompt('Their email address?');
+  if(!contact||!contact.trim())return;
+  if(!window.ApaOwnership||!ApaOwnership.looksLikeEmail(contact)){
+    alert('Enter a valid email address.');return;
+  }
+  const roleRaw=prompt('Role?\nType  manager  or  viewer','manager');
+  const role=(roleRaw||'').trim().toLowerCase();
+  if(role!=='manager'&&role!=='viewer'){alert('Role must be "manager" or "viewer".');return;}
+  F.ownExtraSeats=F.ownExtraSeats||[];
+  F.ownExtraSeats.push({name:name.trim(),contact:contact.trim().toLowerCase(),role});
+  ownRenderExtraSeats('own-extra-seats',F.ownExtraSeats,'ownAddExtraSeat','ownDelExtraSeat');
+}
+function ownDelExtraSeat(i){
+  if(F.ownExtraSeats){F.ownExtraSeats.splice(i,1);ownRenderExtraSeats('own-extra-seats',F.ownExtraSeats,'ownAddExtraSeat','ownDelExtraSeat');}
+}
+function ownAddSoleExtraSeat(){
+  const name=prompt('Name of the manager or viewer?');
+  if(!name||!name.trim())return;
+  const contact=prompt('Their email address?');
+  if(!contact||!contact.trim())return;
+  if(!window.ApaOwnership||!ApaOwnership.looksLikeEmail(contact)){alert('Enter a valid email address.');return;}
+  const roleRaw=prompt('Role?\nType  manager  or  viewer','manager');
+  const role=(roleRaw||'').trim().toLowerCase();
+  if(role!=='manager'&&role!=='viewer'){alert('Role must be "manager" or "viewer".');return;}
+  F.ownSoleExtraSeats=F.ownSoleExtraSeats||[];
+  F.ownSoleExtraSeats.push({name:name.trim(),contact:contact.trim().toLowerCase(),role});
+  ownRenderExtraSeats('own-sole-extra-seats',F.ownSoleExtraSeats,'ownAddSoleExtraSeat','ownDelSoleExtraSeat');
+}
+function ownDelSoleExtraSeat(i){
+  if(F.ownSoleExtraSeats){F.ownSoleExtraSeats.splice(i,1);ownRenderExtraSeats('own-sole-extra-seats',F.ownSoleExtraSeats,'ownAddSoleExtraSeat','ownDelSoleExtraSeat');}
 }
 
 function ownSplit(mode){
