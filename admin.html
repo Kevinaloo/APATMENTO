@@ -372,6 +372,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/><link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="/cabana-ds.css"/>
+<link rel="stylesheet" href="/cabana-rides-admin.css?v=2"/>
 
   <link rel="canonical" href="https://cabana.africa/admin"/>
 </head>
@@ -1021,25 +1022,11 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
         </table></div>
       </section>
 
-      <!-- ─── TRANSPORT REQUESTS (Rides + Car Hire) ─── -->
+      <!-- ─── CABANA MOVE CONTROL ROOM ─── -->
       <section class="sec" id="s-transport">
-        <div class="hd">
-          <div><h1>Transport <em>requests</em></h1><p>Ride bookings and car hire enquiries submitted via the site.</p></div>
-          <div class="hd-act">
-            <button class="btn btn-g btn-sm" onclick="exportTransport()">Export CSV</button>
-          </div>
+        <div id="rides-admin-root" class="ram-shell">
+          <div class="ram-loading"><span></span><div><b>Opening Cabana Move</b><p>Loading requests, markets, modes and approved prices.</p></div></div>
         </div>
-        <div class="tabs" style="margin-top:16px">
-          <button class="tab on" onclick="trFilter('all',this)">All</button>
-          <button class="tab" onclick="trFilter('ride',this)">Rides</button>
-          <button class="tab" onclick="trFilter('carhire',this)">Car hire</button>
-          <button class="tab" onclick="trFilter('pending',this)">Pending</button>
-          <button class="tab" onclick="trFilter('confirmed',this)">Confirmed</button>
-        </div>
-        <div class="tw" style="margin-top:12px"><table>
-          <thead><tr><th>Ref</th><th>Type</th><th>Customer</th><th>Journey</th><th>Date</th><th class="num">Fare</th><th>Status</th><th>Actions</th></tr></thead>
-          <tbody id="tr-rows"></tbody>
-        </table></div>
       </section>
 
       <!-- ─── ADS ─── -->
@@ -3286,6 +3273,7 @@ function trFilter(f, el){
   renderTransport();
 }
 function renderTransport(){
+  if($('rides-admin-root')){ if(window.RidesAdmin) window.RidesAdmin.load(); return; }
   if(!SNAP) return;
   const all = SNAP.transportRequests || [];
   const list = all.filter(r => {
@@ -6525,6 +6513,7 @@ async function cabanaLoadInterest() {
 <script src="/apa-geo.js" defer></script>
 <script src="/apa-contact.js" defer></script>
 <script src="/cabana-media-upload.js"></script>
+<script src="/cabana-rides-admin.js?v=2"></script>
 <script src="/cabana-tours-admin.js"></script>
 <script src="/cabana-events-admin.js"></script>
 <script src="/fd-atlas.js"></script>

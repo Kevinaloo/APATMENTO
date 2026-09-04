@@ -741,7 +741,7 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
         </div>
         <div class="svc-card" data-svc="rides" onclick="selSvc(this)">
           <div class="svc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s-8-5-8-11a8 8 0 0 1 16 0c0 6-8 11-8 11z"/><circle cx="12" cy="11" r="3"/></svg></div>
-          <div class="svc-name">Rides</div><div class="svc-desc">Ride-hailing, boda boda, scheduled transport</div>
+          <div class="svc-name">Rides</div><div class="svc-desc">Road, water, micromobility, trail and air transport</div>
           <div class="svc-tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
         </div>
         <div class="svc-card" data-svc="shopping" onclick="selSvc(this)">
@@ -922,6 +922,7 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
           <div class="field"><label class="flbl" id="s5mnl">Minimum nights</label><input class="finput" id="f-mn" type="number" value="1" min="1"/><select class="fsel" id="f-mnr" style="display:none;"><option value="7">1 week</option><option value="14">2 weeks</option><option value="30">1 month</option><option value="60">2 months</option><option value="90" selected>3 months</option><option value="180">6 months</option><option value="365">1 year</option></select><div class="fhint" id="s5mnh" style="display:none;">A week is the shortest let allowed here. Anything shorter is a nightly booking, which belongs under Stays.</div></div>
         </div>
         <div class="ibox mint" id="s5-comm"><div class="ibox-lbl">Zero commission</div><div class="ibox-txt">You keep <strong>100% of your listed rate</strong>. Cabana charges guests a small fixed platform fee, never a percentage of your earnings.</div></div>
+        <div class="ibox mint" id="s5-rides-note" style="display:none;"><div class="ibox-lbl">Public prices are approved separately</div><div class="ibox-txt">Your operator listing describes what you offer and where. <strong>No price is published from this form.</strong> Cabana adds an exact market, route and unit price only after it is approved in the Move control room.</div></div>
         <div class="ibox mint" id="s5-foodnote" style="display:none;"><div class="ibox-lbl">This is not your menu</div><div class="ibox-txt">One rough number so a diner can see roughly what a plate costs before they open you. <strong>Your real prices are the ones on your dishes</strong>, and you type those into the menu builder in a minute. Leave this empty if you would rather it waited for the menu.</div></div>
       </div>
       <div class="step-nav">
@@ -1395,15 +1396,28 @@ const SVCS={
     feats:['Air conditioning','GPS navigation','WiFi hotspot','4WD','Keyless entry','Bluetooth audio','USB charging','Leather seats','Sunroof','Pet friendly','Baby seat','Accessible','Camping setup','Roof rack','Full-size spare','Full tank on pickup'],
     rv:f=>[['Vehicle',[f.make,f.model,f.yr].filter(Boolean).join(' ')||'Not specified'],['Seats',f.guests+' seats'],['Fuel',f.fuel||'Not specified'],['Transmission',f.trans||'Not specified'],['Features',f.feats.length?f.feats.join(', '):'None selected']]
   },
-  rides:{lbl:'Rides',pp:'Starting fare',ph:'400',extra:false,sf:false,tog:false,s6t:'Hours you drive',
-    s1t:'What type of ride service?',s1s:'Choose the transport category.',
-    s3t:'Service details',s3s:'Help riders know what to expect.',s3e:'Ride specifics',
-    dl:'About your service',dp:'Describe your service area, vehicle, reliability, and why riders should choose you.',
-    il:'Service start time',ol:'Service end time',rl:'Booking requirements',
-    types:[{n:'Ride hailing',i:'<path d="M5 13h14l-1.5-5a2 2 0 0 0-2-1.5h-7a2 2 0 0 0-2 1.5z"/><path d="M4 13h16v4H4z"/><circle cx="7.5" cy="17.5" r="1.5"/><circle cx="16.5" cy="17.5" r="1.5"/>'},{n:'Boda boda',i:'<circle cx="5" cy="17" r="3"/><circle cx="19" cy="17" r="3"/><path d="M14 17H8M10 5h4l3 7H7l1.5-4H10V5z"/>'},{n:'Tuk tuk',i:'<circle cx="5" cy="17" r="2"/><circle cx="16" cy="17" r="2"/><path d="M3 17V9l5-4h7l4 5v7"/>'},{n:'Shuttle',i:'<rect x="1" y="7" width="22" height="12" rx="2"/><path d="M1 11h22M7 19v2M17 19v2"/>'},{n:'Corporate transfer',i:'<path d="M5 13h14l-2-6H7z"/><path d="M3 13h18v4H3z"/><circle cx="7" cy="17" r="1.5"/><circle cx="17" cy="17" r="1.5"/>'},{n:'Long-distance',i:'<path d="M12 22s-8-5-8-11a8 8 0 0 1 16 0c0 6-8 11-8 11z"/><circle cx="12" cy="11" r="3"/>'}],
-    df:`<div class="fsec"><div class="fsec-title">Ride specifics</div><div class="row2"><div class="field"><label class="flbl">Service area</label><input class="finput" id="f-areas" placeholder="e.g. Nairobi CBD, Karen, Westlands..."/></div><div class="field"><label class="flbl">Passenger capacity</label><select class="fsel" id="f-guests"><option>1</option><option>2</option><option>3</option><option>4</option><option>6</option><option>8</option><option>14+</option></select></div></div><div class="row2"><div class="field"><label class="flbl">Vehicle make or model <span class="opt">(optional)</span></label><input class="finput" id="f-veh" placeholder="e.g. Toyota Probox, Honda CB"/></div><div class="field"><label class="flbl">Advance booking</label><select class="fsel" id="f-adv"><option>No, call anytime</option><option>30 min ahead</option><option>1 hour ahead</option><option>Same day</option><option>Day before</option></select></div></div></div>`,
-    feats:['Air conditioning','WiFi hotspot','USB charging','Baby seat','Pet friendly','Luggage space','Night service','24/7 available','M-Pesa accepted','Fixed route','On demand','Ride tracking','Female drivers available','Cashless payment'],
-    rv:f=>[['Service area',f.areas||'Not specified'],['Capacity',f.guests+' passenger(s)'],['Vehicle',f.veh||'Not specified'],['Advance booking',f.adv||'Not specified'],['Features',f.feats.length?f.feats.join(', '):'None selected']]
+  rides:{lbl:'Rides',pp:'Approved in Cabana Move',ph:'',priceAdmin:true,extra:false,sf:false,tog:false,s6t:'Operating hours',
+    s1t:'How do you move people?',s1s:'Choose the closest mode. Cabana supports road, water, micromobility, trail and specialist air movement.',
+    s3t:'Movement service details',s3s:'Give Cabana the facts needed to match the right route and traveller.',s3e:'Movement specifics',
+    dl:'About your movement service',dp:'Describe the countries, cities, routes or waterways you serve, the equipment you operate, capacity, accessibility, safety standards and booking lead time.',
+    il:'Service start time',ol:'Service end time',rl:'Safety, boarding and booking requirements',
+    types:[
+      {n:'Car and taxi',i:'<path d="M4 15.5 5.8 10c.4-1.3 1.5-2.1 2.8-2.1h6.8c1.3 0 2.4.8 2.8 2.1l1.8 5.5"/><path d="M3 15.5h18v3H3zM7 18.5v2M17 18.5v2"/>'},
+      {n:'Electric car',i:'<path d="M4 16 6 9h12l2 7M3 16h18v3H3z"/><path d="m13 3-3 5h3l-2 5 5-7h-3z"/>'},
+      {n:'Shuttle and minibus',i:'<rect x="3" y="4" width="18" height="15" rx="2"/><path d="M3 9h18M8 4v5M14 4v5M7 19v2M17 19v2"/>'},
+      {n:'Tuk-tuk',i:'<path d="M4 17V9l5-5h6l4 6v7M4 10h15M9 4v13"/><circle cx="6" cy="18" r="2"/><circle cx="17" cy="18" r="2"/>'},
+      {n:'Motorcycle and boda',i:'<circle cx="5" cy="17" r="3"/><circle cx="19" cy="17" r="3"/><path d="M8 17h6l3-7h-6l-2 4M13 6h3"/>'},
+      {n:'Bicycle',i:'<circle cx="5" cy="17" r="3.5"/><circle cx="19" cy="17" r="3.5"/><path d="m5 17 4-8 4 8 3-8M9 9h7M15 6h3"/>'},
+      {n:'E-bike',i:'<circle cx="5" cy="17" r="3.5"/><circle cx="19" cy="17" r="3.5"/><path d="m5 17 4-8 4 8 3-8M9 9h7m3-6-2 4h2l-1 3 4-5h-2l1-2z"/>'},
+      {n:'Accessible transport',i:'<circle cx="10" cy="4.5" r="2"/><path d="M9 8v5h5l3 5M9 10H6M9 13a5 5 0 1 0 5 5"/>'},
+      {n:'Boat and dhow',i:'<path d="M3 14h18l-3 5H7l-4-5zM7 14V8h9l3 6M11 8V4l5 4"/><path d="M4 22c2-1 3-1 5 0s3 1 5 0 3-1 5 0"/>'},
+      {n:'Horse and trail',i:'<path d="M7 21v-7l3-4-1-5 5 2 3-2 2 5-3 4v7M7 15h9M10 21v-4M16 21v-4"/>'},
+      {n:'Helicopter and air',i:'<path d="M3 12h13c3 0 5 2 5 5H9c-3 0-5-2-6-5zM12 12V6M6 6h12M15 17l2 3M12 20h8"/>'},
+      {n:'Coach and bus',i:'<rect x="2" y="6" width="20" height="13" rx="2"/><path d="M2 11h20M7 6v5M15 6v5M6 19v2M18 19v2"/>'}
+    ],
+    df:`<div class="fsec"><div class="fsec-title">Movement specifics</div><div class="row2"><div class="field"><label class="flbl">Countries, cities or routes served</label><input class="finput" id="f-areas" placeholder="e.g. Kenya coast, Kigali, Lagos Island, Lake Victoria"/></div><div class="field"><label class="flbl">Traveller capacity</label><select class="fsel" id="f-guests"><option>1</option><option>2</option><option>3</option><option>4</option><option>6</option><option>8</option><option>14</option><option>30+</option></select></div></div><div class="row2"><div class="field"><label class="flbl">Vehicle, vessel, cycle or animal detail <span class="opt">(optional)</span></label><input class="finput" id="f-veh" placeholder="e.g. electric saloon, 8-seat dhow, trail horses"/></div><div class="field"><label class="flbl">Minimum booking notice</label><select class="fsel" id="f-adv"><option>On demand, subject to confirmation</option><option>30 minutes</option><option>1 hour</option><option>Same day</option><option>1 day</option><option>2 or more days</option></select></div></div></div>`,
+    feats:['Air conditioning','WiFi hotspot','USB charging','Child seat','Pet friendly','Luggage space','Wheelchair access','Low-sensory option','Night service','24/7 requests','Fixed route','On demand','Live tracking','Female operators available','Cashless payment','Helmets provided','Life jackets provided','Safety briefing','Guide included','Bike delivery and collection'],
+    rv:f=>[['Operating area',f.areas||'Not specified'],['Capacity',f.guests+' traveller(s)'],['Equipment',f.veh||'Not specified'],['Booking notice',f.adv||'Not specified'],['Public price','Added only after Cabana admin approval'],['Features',f.feats.length?f.feats.join(', '):'None selected']]
   },
   shopping:{lbl:'Shopping',pp:'Price per unit',ph:'1200',extra:false,sf:false,tog:false,s6t:'Processing and dispatch',
     s1t:'What type of product?',s1s:'Select the product category.',
@@ -1501,33 +1515,42 @@ function bldStep(n){
   if(n===5){document.getElementById('s5rl').innerHTML=S.pp+(S.food?' <span class="opt">(optional)</span>':'');document.getElementById('s5-extra').style.display=S.extra?'':'none';document.getElementById('s5-stays').style.display=S.sf?'':'none';
     const s5f=document.getElementById('s5-food');if(s5f)s5f.style.display=S.food?'':'none';
     const s5fn=document.getElementById('s5-foodnote');if(s5fn)s5fn.style.display=S.food?'':'none';
-    const s5c=document.getElementById('s5-comm');if(s5c)s5c.style.display=S.food?'none':'';
+    const s5c=document.getElementById('s5-comm');if(s5c)s5c.style.display=(S.food||S.priceAdmin)?'none':'';
+    const s5rn=document.getElementById('s5-rides-note');if(s5rn)s5rn.style.display=S.priceAdmin?'':'none';
     const s5s=document.getElementById('s5su');
     if(s5s)s5s.textContent=S.food
       ? 'Your number, so a diner can send you their order. Then one rough price, so they know what to expect.'
-      : 'Set your rate. You keep 100%. Cabana adds a small fixed fee on top for guests.';
+      : S.priceAdmin
+        ? 'Add the operator contact used for matching. Public price cards are created only after exact amounts and terms are approved in Cabana Move admin.'
+        : 'Set your rate. You keep 100%. Cabana adds a small fixed fee on top for guests.';
     const s5cb=document.querySelector('#step-5 .cbox-txt');
     if(s5cb)s5cb.textContent=S.food
       ? 'Diners send their order straight to this number, itemised and totalled, and pay you for the food. Nothing goes through us, so nothing is taken out.'
-      : 'Your WhatsApp, phone and email stay private until a guest completes payment. After payment, guests receive your contact to coordinate directly.';
+      : S.priceAdmin
+        ? 'Cabana uses these details to confirm routes, availability and exact quotes. They are not displayed as public booking contact details.'
+        : 'Your WhatsApp, phone and email stay private until a guest completes payment. After payment, guests receive your contact to coordinate directly.';
     const s5cl=document.querySelector('#step-5 .cbox-lbl');
-    if(s5cl)s5cl.lastChild.nodeValue=S.food?'Diners order on this number':'Contact details released after payment';
+    if(s5cl)s5cl.lastChild.nodeValue=S.food?'Diners order on this number':S.priceAdmin?'Private operator contact':'Contact details released after payment';
     /* Stays: price is set via tiers on Step 3, not manually here.
        Hide the rate field and replace with a summary callout. */
     const priceRow=document.getElementById('f-price')?.closest('.field');
     const priceRowParent=document.getElementById('f-price')?.closest('.row2');
-    const staysTierNote=document.getElementById('s5-stays-tier-note');
-    if(F.svc==='stays'){
+    let staysTierNote=document.getElementById('s5-stays-tier-note');
+    if(F.svc==='stays'||S.priceAdmin){
       if(priceRowParent)priceRowParent.style.display='none';
       if(!staysTierNote){
         const note=document.createElement('div');
         note.id='s5-stays-tier-note';
         note.className='ibox mint';
         note.style.marginBottom='13px';
-        note.innerHTML='<div class="ibox-lbl">Prices set in Step 3</div><div class="ibox-txt">Your nightly rates are defined by your pricing tiers — you set them in the Details step. The lowest tier price is your starting-from rate on search.</div>';
         const staysSection=document.getElementById('s5-stays');
         if(staysSection)staysSection.insertAdjacentElement('beforebegin',note);
+        staysTierNote=note;
       }
+      staysTierNote.innerHTML=F.svc==='stays'
+        ? '<div class="ibox-lbl">Prices set in Step 3</div><div class="ibox-txt">Your nightly rates are defined by your pricing tiers. You set them in the Details step, and the lowest tier price is the starting rate on search.</div>'
+        : '<div class="ibox-lbl">No unapproved ride price</div><div class="ibox-txt">This operator form cannot publish a fare. Exact prices are attached to a market, mode, unit and terms in Cabana Move admin.</div>';
+      if(S.priceAdmin){const pIn=document.getElementById('f-price');if(pIn)pIn.value='';F.price='';}
     } else {
       if(priceRowParent)priceRowParent.style.display='';
       const n=document.getElementById('s5-stays-tier-note');if(n)n.remove();
@@ -2213,7 +2236,7 @@ function valid(n){
   if(n===3&&F.svc==='roommates'&&!document.getElementById('f-avail').value){al('Set the date the room is free from. Flatmates search by move-in date.');return false;}
   if(n===5){if(!document.getElementById('f-wa').value.trim()){al('Add your WhatsApp number. Guests need this after payment.');return false;}
     /* For stays, price is auto-set from tiers; only non-stays, non-food need manual price */
-    if(!document.getElementById('f-price').value&&F.svc!=='food'&&F.svc!=='stays'){al(F.svc==='roommates'?'Set the monthly rent.':'Set a price.');return false;}}
+    if(!document.getElementById('f-price').value&&F.svc!=='food'&&F.svc!=='stays'&&F.svc!=='rides'){al(F.svc==='roommates'?'Set the monthly rent.':'Set a price.');return false;}}
   if(n===7){
     collectOwn();
     if(!F.own){al('Say who owns this listing. It is the one thing we cannot guess for you.');return false;}
@@ -2451,7 +2474,9 @@ function bldRv(){collect(6);const S=SVCS[F.svc];
   document.getElementById('rv-title').textContent=F.title||'Not set';
   document.getElementById('rv-loc').textContent=[F.area,F.city,F.country].filter(Boolean).join(', ')||'Not set';
   document.getElementById('rv-price').textContent=
-    S?.food
+    S?.priceAdmin
+      ? 'Published only after Cabana admin approval'
+      : S?.food
       ? (F.price?'About '+F.cur+' '+Number(F.price).toLocaleString()+' a plate, real prices on your menu':'Set on each dish, in your menu')
       : F.price?F.cur+' '+Number(F.price).toLocaleString()+(S?.pf==='month'?' per month'+(F.dep?', deposit '+F.cur+' '+Number(F.dep).toLocaleString():''):' / '+(S?.pp||'unit').toLowerCase()):'Not set';
   document.getElementById('rv-contact').textContent=F.wa||'Not set';
@@ -2678,7 +2703,7 @@ async function publish(){
 }
 
 function loadEdit(l){
-  const sm={'Apartment':'stays','House':'stays','Studio':'stays','Penthouse':'stays','Villa':'stays','Cottage':'stays','Serviced unit':'stays','Guesthouse':'stays','Lodge':'stays','Hostel':'stays','Airbnb unit':'stays','Beach house':'stays','room':'roommates','apartment':'stays','tour':'tours','event':'events','carhire':'carhire','ride':'rides','shopping':'shopping','Private room':'roommates','Shared room':'roommates','En-suite':'roommates','En-suite room':'roommates','Master bedroom':'roommates','Studio unit':'stays','Bedsitter':'stays','1-bed flat':'stays','Entire flat':'stays','Safari':'tours','Day trip':'tours','City tour':'tours','Cultural':'tours','Adventure':'tours','Hiking':'tours','Water sports':'tours','Photography':'tours','Night safari':'tours','Multi-day':'tours','Bird watching':'tours','Custom tour':'tours','Concert':'events','Festival':'events','Sports event':'events','Comedy show':'events','Conference':'events','Wedding':'events','Exhibition':'events','Theatre':'events','Networking':'events','Party':'events','Food festival':'events','Art showcase':'events','Restaurant':'food','Cafe':'food','Bar and grill':'food','Fast food':'food','Catering':'food','Food truck':'food','Bakery':'food','Rooftop bar':'food','Buffet':'food','Fine dining':'food','Pop-up':'food','Cloud kitchen':'food','Self-drive':'carhire','Chauffeur':'carhire','4x4 safari':'carhire','Minibus':'carhire','Luxury sedan':'carhire','Airport transfer':'carhire','Bus hire':'carhire','Motorcycle':'carhire','Tuk tuk':'carhire','Van or MPV':'carhire','Boda boda':'carhire','Coach':'carhire','Ride hailing':'rides','Shuttle':'rides','Corporate transfer':'rides','Long-distance':'rides','Handcraft':'shopping','Clothing':'shopping','Jewellery':'shopping','Art':'shopping','Electronics':'shopping','Food products':'shopping','Home decor':'shopping','Souvenirs':'shopping','Furniture':'shopping','Beauty':'shopping','Books':'shopping','Sport and outdoor':'shopping'};
+  const sm={'Apartment':'stays','House':'stays','Studio':'stays','Penthouse':'stays','Villa':'stays','Cottage':'stays','Serviced unit':'stays','Guesthouse':'stays','Lodge':'stays','Hostel':'stays','Airbnb unit':'stays','Beach house':'stays','room':'roommates','apartment':'stays','tour':'tours','event':'events','carhire':'carhire','ride':'rides','shopping':'shopping','Private room':'roommates','Shared room':'roommates','En-suite':'roommates','En-suite room':'roommates','Master bedroom':'roommates','Studio unit':'stays','Bedsitter':'stays','1-bed flat':'stays','Entire flat':'stays','Safari':'tours','Day trip':'tours','City tour':'tours','Cultural':'tours','Adventure':'tours','Hiking':'tours','Water sports':'tours','Photography':'tours','Night safari':'tours','Multi-day':'tours','Bird watching':'tours','Custom tour':'tours','Concert':'events','Festival':'events','Sports event':'events','Comedy show':'events','Conference':'events','Wedding':'events','Exhibition':'events','Theatre':'events','Networking':'events','Party':'events','Food festival':'events','Art showcase':'events','Restaurant':'food','Cafe':'food','Bar and grill':'food','Fast food':'food','Catering':'food','Food truck':'food','Bakery':'food','Rooftop bar':'food','Buffet':'food','Fine dining':'food','Pop-up':'food','Cloud kitchen':'food','Self-drive':'carhire','Chauffeur':'carhire','4x4 safari':'carhire','Minibus':'carhire','Luxury sedan':'carhire','Airport transfer':'carhire','Bus hire':'carhire','Motorcycle':'carhire','Tuk tuk':'carhire','Van or MPV':'carhire','Boda boda':'carhire','Coach':'carhire','Ride hailing':'rides','Shuttle':'rides','Corporate transfer':'rides','Long-distance':'rides','Car and taxi':'rides','Electric car':'rides','Shuttle and minibus':'rides','Tuk-tuk':'rides','Motorcycle and boda':'rides','Bicycle':'rides','E-bike':'rides','Accessible transport':'rides','Boat and dhow':'rides','Horse and trail':'rides','Helicopter and air':'rides','Coach and bus':'rides','Handcraft':'shopping','Clothing':'shopping','Jewellery':'shopping','Art':'shopping','Electronics':'shopping','Food products':'shopping','Home decor':'shopping','Souvenirs':'shopping','Furniture':'shopping','Beauty':'shopping','Books':'shopping','Sport and outdoor':'shopping'};
   F.svc=l.service||sm[l.type]||sm[l.property_type]||sm[l.listing_type]||'stays';const rawListingType=l.listing_type||l.property_type||l.type||'';F.type=F.svc==='stays'?canonicalStayType(rawListingType):rawListingType;F.title=l.title||'';F.country=l.country||'Kenya';F.city=l.city||'';F.area=l.area||'';F.street=l.street||'';F.lat=l.latitude||null;F.lng=l.longitude||null;F.plusCode=(l.extras&&l.extras.plus)||null;F.precision=(l.extras&&l.extras.pinq)||null;F.precisionMetres=(l.extras&&l.extras.pinm)||null;F.desc=l.description||'';F.feats=l.amenities||[];F.photos=l.photos||[];F.cur=l.currency||'KES';F.price=(l.service==='roommates'||l.type==='room')?(l.price_month?String(l.price_month):(l.price_night?String(l.price_night):'')):(l.price_night?String(l.price_night):'');F.pw=l.price_week?String(l.price_week):'';F.pm=l.price_month?String(l.price_month):'';F.dep=l.deposit?String(l.deposit):'';F.mn=String(((l.service==='roommates'||l.type==='room')?(l.min_nights||((l.extras&&l.extras.minmonths)*30)||90):(l.min_nights||1)));F.guests=l.max_guests||'2';F.seats=(l.service==='food'||l.type==='food')?(l.max_guests?String(l.max_guests):''):'';F.mates=(l.extras&&l.extras.mates)||l.max_guests||'2';F.bath=(l.extras&&l.extras.bath)||'shared';F.suits=(l.extras&&l.extras.suits)||'anyone';F.avail=(l.extras&&l.extras.avail)||'';F.bills=(l.extras&&l.extras.bills)||'included';F.furn=(l.extras&&l.extras.furn)||'Fully furnished';F.beds=l.beds||'1';F.baths=l.baths||'1';F.floor=l.floor||'';F.sqm=l.sqm||'';F.wa=l.contact_whatsapp||'';F.ph=l.contact_phone||'';F.em=l.contact_email||'';F.ci=l.checkin_time||'14:00';F.co=l.checkout_time||'11:00';F.inst=l.instant_book!==false;F.ch=l.children!==false;F.pets=!!l.pets;F.smk=!!l.smoking;F.rules=l.house_rules||'';
   if(l.extras){const e=l.extras;Object.assign(F,{dur:e.dur||'',meet:e.meet||'',lang:e.lang||'',edate:e.edate||'',venue:e.venue||'',age:e.age||'',cuisine:e.cuisine||'',deliv:e.deliv||'',lead:e.lead||'',make:e.make||'',model:e.model||'',yr:e.yr||'',fuel:e.fuel||'',trans:e.trans||'',areas:e.areas||'',veh:e.veh||'',adv:e.adv||'',stock:e.stock||'',cond:e.cond||'',brand:e.brand||'',da:e.da||'',avail:e.avail||'',bills:e.bills||'',furn:e.furn||'',
     roomTiers:Array.isArray(e.room_tiers)&&e.room_tiers.length?e.room_tiers:[],
