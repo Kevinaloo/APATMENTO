@@ -1,0 +1,447 @@
+/* ═══════════════════════════════════════════════════════════════════
+   CABANA · THE DISPATCH
+   ───────────────────────────────────────────────────────────────────
+   The arrival animation for /rides.
+
+   A street network seen from directly above. Drivers idling on it.
+   You tap, and the request goes out — a wave crossing the city, waking
+   each driver as it reaches them. The circle widens twice. One driver
+   locks it, and a route draws itself along the actual streets.
+
+   Six decisions worth stating.
+
+   · It is the dispatch, not a car. Every ride-hailing loader on earth
+     is a vehicle sliding across a screen. The thing that is actually
+     interesting about this product is written on the page itself:
+     what happens in the ninety seconds after you tap request. The
+     request reaches every driver at once, the radius opens from four
+     kilometres to eight to twelve, and the first to accept keeps it.
+     That is a far better animation than a car, and it is true.
+
+   · The colours are not decorative and this file does not make them
+     decorative. rides.html states it twice in its own comments:
+     signal green means live, kerb yellow means the price is fixed.
+     So green is only ever a driver or a live route, yellow only ever
+     appears on the fare, and ember is only ever you.
+
+   · Drivers sit on roads, not on a background. The network is
+     generated first and drivers are placed along its segments, so
+     every dot is somewhere a car could actually be. It is the single
+     detail that separates this from a starfield.
+
+   · The network comes online outward from where you are standing.
+     Each road is split at the point nearest you and drawn in both
+     directions from there, so the city assembles around the request
+     rather than fading in.
+
+   · The wave is distance, exactly like the coals on the food gate.
+     Every driver's delay is its distance from you divided by a speed.
+     Heat crossing a bed and a dispatch crossing a city are the same
+     one line of maths.
+
+   · Nothing animates inside a filtered subtree, nothing scales a
+     field of glowing elements, and no per-element bloom is wider than
+     it has to be. Three lessons, three previous gates.
+
+   Scoped under .rg- so it cannot touch the page it opens onto.
+   ═══════════════════════════════════════════════════════════════════ */
+
+#ride-gate{
+  /* ── Cabana Move's own tokens ── */
+  --rg-bg:#071319;
+  --rg-bg-2:#0b1b22;
+  --rg-panel:#10252d;
+  --rg-ink:#f5f1e8;
+  --rg-muted:#9eb0b4;
+  --rg-dim:#6f878d;
+  --rg-line:rgba(221,239,236,.14);
+
+  /* ── one colour per way of moving ── */
+  --rg-road:#ff715b;        /* coral · road                */
+  --rg-water:#63efdc;       /* aqua  · water               */
+  --rg-trail:#ffc565;       /* amber · trail               */
+  --rg-air:#8abfff;         /* blue  · shuttle and transfer */
+
+  --rg-ease:cubic-bezier(.7,0,.2,1);
+  --rg-soft:cubic-bezier(.22,1,.36,1);
+  --rg-snap:cubic-bezier(.16,1.3,.3,1);
+
+  position:fixed;
+  inset:0;
+  z-index:2147483000;
+  overflow:hidden;
+  background:var(--rg-bg);
+  contain:strict;
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
+
+html.rg-lock,
+html.rg-lock body{ overflow:hidden !important; }
+
+.rg-stage{ position:absolute; inset:0; overflow:hidden; }
+
+.rg-air{
+  position:absolute; inset:-8%;
+  background:
+    radial-gradient(58% 44% at var(--vx,50%) var(--vy,54%), rgba(255,113,91,.1), transparent 70%),
+    radial-gradient(70% 50% at 76% 24%, rgba(99,239,220,.05), transparent 72%),
+    linear-gradient(180deg, #050F14 0%, #071319 50%, #0a1c22 100%);
+}
+
+/* ═══ 1 · THE MAP ═══════════════════════════════════════════════════
+   A square larger than the viewport, centred, so the city runs off
+   every edge. The SVG and the driver dots share this square and the
+   same coordinate space, which is what lets a div sit exactly on a
+   road drawn in SVG.                                                */
+
+.rg-map{
+  position:absolute;
+  /* Anchored by the request, not by its own middle. --oxf/--oyf are
+     the origin's position within the map as a fraction, so wherever
+     the generator puts it, it lands at --vx/--vy in the viewport. */
+  left:calc(var(--vx,50%) - var(--map,1100px) * var(--oxf,.5));
+  top:calc(var(--vy,58%) - var(--map,1100px) * var(--oyf,.5));
+  width:var(--map,1100px);
+  height:var(--map,1100px);
+  will-change:transform;
+  transform-origin:calc(var(--oxf,.5) * 100%) calc(var(--oyf,.5) * 100%);
+}
+.rg-net{
+  position:absolute; inset:0;
+  width:100%; height:100%;
+  display:block;
+  overflow:visible;
+}
+
+/* ── roads ────────────────────────────────────────────────────────
+   Drawn from the point nearest you, outward. stroke-dashoffset is a
+   paint property rather than a composited one, so this runs once, at
+   the start, and never again. */
+.rg-road{
+  fill:none;
+  stroke:rgba(221,239,236,.075);
+  stroke-linecap:round;
+  stroke-dasharray:var(--len,600);
+  stroke-dashoffset:var(--len,600);
+}
+.rg-road.is-major{ stroke:rgba(221,239,236,.13); }
+
+/* ── the alert ────────────────────────────────────────────────────
+   A thin line from a woken driver back toward the request. These are
+   what make the dispatch look like a network rather than a set of
+   lights coming on. */
+.rg-leg{
+  fill:none;
+  stroke:var(--c,#ff715b);
+  stroke-width:var(--sw,2.6);
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  opacity:0;
+  stroke-dasharray:var(--len,400);
+  stroke-dashoffset:var(--len,400);
+}
+
+/* ── the route ────────────────────────────────────────────────────
+   One driver, along real streets. Green because it is live. */
+/* Every other way across the continent, drawn all at once at the end.
+   Thin, because there are a lot of them and they are the chorus. */
+.rg-web{
+  fill:none;
+  stroke:var(--c,#63efdc);
+  stroke-width:1.2;
+  stroke-linecap:round;
+  opacity:0;
+  stroke-dasharray:var(--len,600);
+  stroke-dashoffset:var(--len,600);
+}
+
+/* ═══ 2 · WHO IS OUT THERE ══════════════════════════════════════════ */
+
+.rg-dot{
+  position:absolute;
+  left:var(--x,50%); top:var(--y,50%);
+  width:5px; height:5px;
+  margin:-2.5px 0 0 -2.5px;
+  border-radius:50%;
+  background:var(--rg-dim);
+  opacity:0;
+}
+/* The bloom only exists once a driver is awake, and it is deliberately
+   small: a field of wide blooms is the overdraw that cost the food
+   gate a third of its frame budget. */
+.rg-dot::after{
+  content:'';
+  position:absolute; inset:-6px;
+  border-radius:50%;
+  background:radial-gradient(circle, rgba(99,239,220,.5) 0%, transparent 70%);
+  opacity:0;
+}
+
+/* The one that takes it. */
+.rg-dot.is-stop{ z-index:4; background:var(--rg-ink); }
+.rg-dot.is-stop::after{
+  inset:-11px;
+  background:radial-gradient(circle, rgba(245,241,232,.6) 0%, transparent 72%);
+}
+
+/* ── you ──────────────────────────────────────────────────────────
+   Ember, and ember appears nowhere else in this file. */
+.rg-origin{
+  position:absolute;
+  left:var(--ox,50%); top:var(--oy,50%);
+  width:13px; height:13px;
+  margin:-6.5px 0 0 -6.5px;
+  border-radius:50%;
+  background:var(--rg-road);
+  box-shadow:0 0 0 3px rgba(255,113,91,.18), 0 0 22px 5px rgba(255,113,91,.45);
+  opacity:0;
+  transform:scale(.3);
+  z-index:5;
+}
+
+/* ── the circle widening ──────────────────────────────────────────
+   Four kilometres, then eight, then twelve. The page says so. */
+.rg-ring{ display:none; }
+
+/* ═══ 3 · THE INSTRUMENT ════════════════════════════════════════════
+   A readout in the corner, in mono, on asphalt. It labels what is
+   happening rather than inventing telemetry: four, eight and twelve
+   kilometres are the radii this product actually uses.             */
+
+.rg-readout{
+  position:absolute;
+  left:0; right:0; bottom:12%;
+  text-align:center;
+  z-index:6;
+  font-family:'IBM Plex Mono','Geist Mono',ui-monospace,Menlo,Consolas,monospace;
+  font-size:10.5px;
+  letter-spacing:.24em;
+  text-transform:uppercase;
+  color:var(--rg-dim);
+  opacity:0;
+}
+.rg-readout b{
+  color:var(--rg-water);
+  font-weight:600;
+  margin-left:8px;
+}
+/* The fare is the only thing on this screen allowed to be kerb
+   yellow, because kerb yellow means the price is fixed. */
+/* The readout names the mode the journey is using right now. */
+.rg-readout b{ transition:color .3s ease; }
+
+/* ═══ 4 · THE WORD ══════════════════════════════════════════════════ */
+
+.rg-word{
+  position:absolute;
+  left:0; right:0; top:26%;
+  transform:translateY(-50%);
+  text-align:center;
+  padding:0 28px;
+  z-index:6;
+  pointer-events:none;
+}
+.rg-line{
+  font-family:'Bricolage Grotesque','Geist',system-ui,sans-serif;
+  font-weight:700;
+  font-size:clamp(36px,10.5vw,68px);
+  line-height:1.04;
+  letter-spacing:-.035em;
+  color:var(--rg-ink);
+  opacity:0;
+  transform:translateY(14px);
+  text-shadow:0 4px 40px rgba(8,10,17,.9);
+}
+.rg-line span{ display:block; color:var(--rg-muted); font-weight:500; }
+.rg-sub{
+  margin-top:14px;
+  font-family:'IBM Plex Mono','Geist Mono',ui-monospace,Menlo,Consolas,monospace;
+  font-size:10px; font-weight:500;
+  letter-spacing:.26em; text-transform:uppercase;
+  color:rgba(237,238,245,.3);
+  opacity:0;
+  transform:translateY(8px);
+}
+
+/* ═══ 5 · SKIP ══════════════════════════════════════════════════════ */
+
+.rg-skip{
+  position:absolute;
+  top:max(18px,env(safe-area-inset-top,0px));
+  right:16px;
+  z-index:9;
+  display:inline-flex; align-items:center; gap:7px;
+  padding:9px 15px;
+  border-radius:100px;
+  border:1px solid rgba(237,238,245,.2);
+  background:rgba(11,13,20,.6);
+  color:var(--rg-muted);
+  font-family:'Instrument Sans','Geist',system-ui,sans-serif;
+  font-size:12.5px; font-weight:500;
+  cursor:pointer;
+  opacity:0;
+  transition:opacity .4s ease, border-color .2s ease, color .2s ease;
+}
+.rg-skip:hover,
+.rg-skip:focus-visible{ border-color:var(--rg-water); color:#fff; }
+.rg-skip:focus-visible{ outline:2px solid var(--rg-water); outline-offset:3px; }
+.rg-skip svg{ width:12px; height:12px; }
+
+.rg-flood{
+  position:absolute; inset:0; z-index:7;
+  background:radial-gradient(72% 54% at var(--vx,50%) var(--vy,58%),
+    rgba(245,241,232,.95) 0%,
+    rgba(99,239,220,.3) 30%,
+    rgba(16,37,45,.2) 60%,
+    transparent 78%);
+  opacity:0;
+  transform:scale(.3);
+  pointer-events:none;
+  will-change:transform,opacity;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   THE SEQUENCE
+   online → idle → tap → wave → widen → lock → route → go
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── the ground ── */
+#ride-gate.rg-online .rg-road{
+  animation:rg-draw 1.1s var(--rg-soft) var(--rd,0ms) forwards;
+}
+@keyframes rg-draw{ to{ stroke-dashoffset:0; } }
+
+#ride-gate.rg-online .rg-dot{
+  animation:rg-dot-in .7s var(--rg-soft) var(--dd,0ms) forwards;
+}
+@keyframes rg-dot-in{ to{ opacity:.42; } }
+
+#ride-gate.rg-online .rg-skip{ opacity:1; }
+
+/* ── where you start ── */
+#ride-gate.rg-tap .rg-origin{ animation:rg-pin .7s var(--rg-snap) forwards; }
+@keyframes rg-pin{
+  0%  { opacity:0; transform:scale(.3); }
+  60% { opacity:1; transform:scale(1.3); }
+  100%{ opacity:1; transform:scale(1); }
+}
+#ride-gate.rg-tap .rg-readout{ animation:rg-fade .5s .2s ease forwards; }
+@keyframes rg-fade{ to{ opacity:1; } }
+
+/* ── the journey ───────────────────────────────────────────────────
+   Legs draw one after another, each in its own mode's colour. The
+   route is not one line that happens to be coloured: it changes what
+   it is as the ground changes, which is the entire product. */
+#ride-gate.rg-move .rg-leg{
+  animation:rg-leg-draw var(--ld,900ms) var(--rg-soft) var(--lo,0ms) forwards;
+}
+@keyframes rg-leg-draw{
+  0%  { opacity:0; stroke-dashoffset:var(--len,400); }
+  8%  { opacity:1; }
+  100%{ opacity:1; stroke-dashoffset:0; }
+}
+/* Each stop lights as the journey reaches it. */
+#ride-gate.rg-move .rg-dot.is-stop{
+  animation:rg-stop .55s var(--rg-snap) var(--so,0ms) forwards;
+}
+@keyframes rg-stop{
+  0%  { opacity:.42; transform:scale(1); }
+  55% { opacity:1;   transform:scale(2.1); }
+  100%{ opacity:1;   transform:scale(1.3); }
+}
+#ride-gate.rg-move .rg-dot.is-stop::after{
+  animation:rg-fade .5s var(--rg-soft) var(--so,0ms) forwards;
+}
+
+/* ── every other way ───────────────────────────────────────────────
+   One journey becomes the continent. This is the beat the whole
+   sequence exists for: not "here is your route" but "here is every
+   way across Africa", which is what the page above it says. */
+#ride-gate.rg-web-on .rg-web{
+  animation:rg-web-draw var(--wl,1400ms) var(--rg-soft) var(--wo,0ms) forwards;
+}
+@keyframes rg-web-draw{
+  0%  { opacity:0;   stroke-dashoffset:var(--len,600); }
+  14% { opacity:.55; }
+  100%{ opacity:.4;  stroke-dashoffset:0; }
+}
+#ride-gate.rg-web-on .rg-dot:not(.is-stop){
+  animation:rg-dot-up .8s var(--rg-soft) var(--dd,0ms) forwards;
+}
+@keyframes rg-dot-up{ to{ opacity:.7; } }
+
+/* ── the word ── */
+#ride-gate.rg-say .rg-line{ animation:rg-up .9s var(--rg-soft) forwards; }
+#ride-gate.rg-say .rg-sub { animation:rg-up .8s .2s var(--rg-soft) forwards; }
+@keyframes rg-up{ to{ opacity:1; transform:translateY(0); } }
+
+/* ── go ── */
+#ride-gate.rg-go .rg-map{ animation:rg-close 1.5s var(--rg-ease) forwards; }
+@keyframes rg-close{
+  0%  { transform:translate3d(0,0,0) scale(1); }
+  100%{ transform:translate3d(var(--tx,0px),var(--ty,0px),0) scale(1.5); }
+}
+#ride-gate.rg-go .rg-word,
+#ride-gate.rg-go .rg-readout{ animation:rg-word-out .5s var(--rg-soft) forwards; }
+@keyframes rg-word-out{
+  0%  { opacity:1; filter:blur(0); }
+  100%{ opacity:0; filter:blur(6px); }
+}
+#ride-gate.rg-go .rg-flood{
+  animation:rg-flood 1.25s .3s cubic-bezier(.38,.02,.4,1) forwards;
+}
+@keyframes rg-flood{
+  0%  { opacity:0;  transform:scale(.3); }
+  34% { opacity:.42; }
+  70% { opacity:.8; }
+  100%{ opacity:1;  transform:scale(2.3); }
+}
+#ride-gate.rg-go .rg-skip{ opacity:0; }
+
+#ride-gate.rg-gone{ animation:rg-out .5s ease forwards; pointer-events:none; }
+@keyframes rg-out{ to{ opacity:0; } }
+
+/* ═══════════════════════════════════════════════════════════════════
+   ABBREVIATED · after the first arrival in a session
+   ═══════════════════════════════════════════════════════════════════ */
+#ride-gate.rg-brief .rg-word,
+#ride-gate.rg-brief .rg-readout,
+#ride-gate.rg-brief .rg-skip{ display:none; }
+#ride-gate.rg-brief .rg-road{ animation-duration:.35s; animation-delay:0ms; }
+#ride-gate.rg-brief .rg-dot{ animation-delay:0ms; }
+#ride-gate.rg-brief .rg-leg{ animation-duration:.4s; }
+#ride-gate.rg-brief .rg-web{ animation-duration:.5s; }
+#ride-gate.rg-brief.rg-go .rg-map{ animation-duration:.8s; }
+#ride-gate.rg-brief.rg-go .rg-flood{ animation-duration:.7s; animation-delay:.1s; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   REDUCED MOTION
+   The finished map, held: the ground drawn, the journey complete,
+   every other way already on the page. Nothing travels.
+   ═══════════════════════════════════════════════════════════════════ */
+@media (prefers-reduced-motion:reduce){
+  #ride-gate .rg-road { stroke-dashoffset:0; animation:none !important; }
+  #ride-gate .rg-dot  { opacity:.5; animation:none !important; }
+  #ride-gate .rg-dot.is-stop{ opacity:1; transform:scale(1.3); }
+  #ride-gate .rg-dot.is-stop::after{ opacity:1; }
+  #ride-gate .rg-leg  { opacity:1; stroke-dashoffset:0; animation:none !important; }
+  #ride-gate .rg-web  { opacity:.4; stroke-dashoffset:0; animation:none !important; }
+  #ride-gate .rg-origin{ opacity:1; transform:scale(1); animation:none !important; }
+  #ride-gate .rg-line,
+  #ride-gate .rg-sub,
+  #ride-gate .rg-readout{ opacity:1; transform:none; animation:none !important; }
+  #ride-gate.rg-go .rg-map,
+  #ride-gate.rg-go .rg-word,
+  #ride-gate.rg-go .rg-flood{ animation:none !important; transform:none; }
+  #ride-gate.rg-go{ animation:rg-out .45s ease forwards; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   VIEWPORT
+   ═══════════════════════════════════════════════════════════════════ */
+@media (min-width:820px){
+  .rg-word    { top:24%; }
+  .rg-line    { font-size:clamp(46px,4.6vw,72px); }
+  .rg-readout { bottom:14%; }
+}
