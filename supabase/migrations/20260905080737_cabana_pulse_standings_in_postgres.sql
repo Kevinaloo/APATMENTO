@@ -6,15 +6,14 @@
 -- the podium keeps working whatever version of the function is deployed and
 -- there is exactly one definition of each rule.
 --
--- This file carries the final, corrected definitions. Two things were wrong
--- on the way here and both are fixed below rather than left in the history:
---
---   1. The shelving UPDATE originally referenced its own target through a
---      LATERAL join, which Postgres rejects. It reads from a derived set
---      keyed on the primary key instead.
---   2. Shelving is an UPDATE on the very table the trigger watches, so the
---      recompute called itself until the stack gave out. Only the outermost
---      statement recomputes now.
+-- This file is the settled form. Two earlier revisions were applied and
+-- corrected on the way here and are folded in:
+--   20260905080645  the first cut. Its shelving UPDATE referenced the
+--                   update target through LATERAL, which Postgres rejects.
+--   20260905080716  the fix for that, which then exposed the recursion
+--                   guarded at the bottom of this file.
+-- Every definition below is CREATE OR REPLACE, so applying it over either
+-- of those lands in the same place.
 
 -- ── shelving ──────────────────────────────────────────────────────────────
 create or replace function public.music_shelf(p_title text, p_artist text)
@@ -100,8 +99,8 @@ declare
   v_period record;
 begin
   -- Shelve anything the writer left unclassified. Postgres will not let an
-  -- UPDATE target appear again in its own FROM via LATERAL, so this reads
-  -- from a derived set keyed on the primary key.
+  -- UPDATE target appear again in its own FROM via LATERAL, so this goes
+  -- through a derived set keyed on the primary key.
   update public.music_chart_tracks t
   set genre = s.genre, culture = s.culture
   from (
@@ -115,8 +114,7 @@ begin
 
   -- Standings. Board position matters most at the top but never decides
   -- alone; momentum outweighs lifetime reach; a catalogue earns a modest
-  -- premium so depth beats a fluke without a label channel with forty
-  -- uploads running away with the year.
+  -- premium over a single fluke.
   with scored as (
     select
       public.music_artist_key(artist) as artist_key,
@@ -252,6 +250,9 @@ comment on function public.music_refresh_standings(text) is
 revoke all on function public.music_refresh_standings(text) from public, anon, authenticated;
 
 -- ── fire it whenever the board changes ────────────────────────────────────
+-- The recompute shelves tracks, and shelving is an UPDATE on the very table
+-- this trigger watches, so without the depth guard it called itself until
+-- the stack gave out. Only the outermost statement recomputes.
 create or replace function public.music_tracks_after_write()
 returns trigger
 language plpgsql
@@ -259,8 +260,6 @@ security definer
 set search_path = ''
 as $$
 begin
-  -- The recompute shelves tracks, and shelving is an UPDATE on the very
-  -- table this trigger watches. Only the outermost statement recomputes.
   if pg_trigger_depth() > 1 then
     return null;
   end if;
@@ -268,6 +267,9 @@ begin
   return null;
 end;
 $$;
+
+comment on function public.music_tracks_after_write() is
+  'Recomputes standings once per outermost board write. Nested writes from the recompute itself are ignored.';
 
 drop trigger if exists music_tracks_standings_trg on public.music_chart_tracks;
 create trigger music_tracks_standings_trg
