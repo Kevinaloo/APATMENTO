@@ -1,6 +1,6 @@
 /* ════════════════════════════════════════════════════════════════
    APATMENTO  ·  Utilities  /api/utilities.js
-   Routes: ?action=close-bookings | welcome-email | indexnow
+   Routes: ?action=close-bookings | welcome-email | indexnow | music-search
            | reconcile-payments | geocode | atlas | sos-alert | carhire-terrain
    Consolidates small utility handlers into 1 function
 ════════════════════════════════════════════════════════════════ */
@@ -43,6 +43,7 @@ import geocodeHandler from './lib/_geocode.js';
 import atlasHandler from './lib/_atlas.js';
 import sosHandler from './lib/_sos.js';
 import terrainHandler from './lib/_carhire-terrain.js';
+import musicSearchHandler from './lib/_music-search.js';
 import { reconcilePayments } from './lib/_reconcile-payments.js';
 import { settlementOf, endDayOf, todayNumber, PART_PAYMENT_TTL_HOURS,
          validateInstalment, depositRequired }
@@ -773,6 +774,14 @@ export default async function handler(req, res) {
 
   /* Car hire terrain reasoning. Reads req.query directly (lat=, lng=,
      label=, date=), same convention as the geocoder above. */
+  /* Folded in rather than given its own file. Vercel's Hobby plan caps a
+     project at twelve serverless functions and this would have been the
+     thirteenth, so /api/music-search is a rewrite onto this action. The
+     path the browser calls is unchanged. */
+  if (action === 'music-search') {
+    return musicSearchHandler(req, res);
+  }
+
   if (action === 'carhire-terrain') {
     return terrainHandler(req, res);
   }
@@ -806,7 +815,7 @@ export default async function handler(req, res) {
   }
 
   return res.status(400).json({
-    error: 'Unknown action. Available: subscribe, geocode, atlas, sos-alert, carhire-terrain, '
+    error: 'Unknown action. Available: subscribe, geocode, atlas, sos-alert, carhire-terrain, music-search, '
          + 'close-bookings, welcome-email, indexnow, reconcile-payments, paypal-create-order, '
          + 'paypal-capture, paypal-webhook',
   });

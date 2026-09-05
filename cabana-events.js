@@ -39,10 +39,64 @@
     { key: 'comedy',    label: 'Comedy' },
     { key: 'sports',    label: 'Sports' },
     { key: 'art',       label: 'Arts' },
+    { key: 'kids',      label: 'Kids' },
+    { key: 'corporate', label: 'Business' },
+    { key: 'community', label: 'Community' },
     { key: 'food',      label: 'Food & drink' }
   ];
 
-  var state = { events: [], filter: 'all', q: '', sort: 'soonest', loaded: false, lastSec: -1,
+  /* ── who a night is for ────────────────────────────────────────────
+     The old page had one voice and it was a nightclub, so a parent
+     looking for a half-term show and a company booking a summit both
+     felt they had walked into the wrong room.
+
+     This is not a filter that hides things. It is a lens. Picking
+     Family re-tempers the board and floats family listings up; every
+     other event is still there underneath, and the chips still work.
+     Cohesion by control rather than by watering everything down.
+
+     An event declares its audience through its category and its tags.
+     Nothing needs re-entering: the mapping reads what organisers
+     already give us. */
+
+  var AUDS = [
+    { key: 'all',     label: 'Anyone',      icon: 'people' },
+    { key: 'night',   label: 'After dark',  icon: 'moon' },
+    { key: 'family',  label: 'Family',      icon: 'kite' },
+    { key: 'work',    label: 'Business',    icon: 'case' },
+    { key: 'culture', label: 'Culture',     icon: 'mask' }
+  ];
+
+  var AUD_BY_CAT = {
+    nightlife: 'night',
+    music:     'night',
+    festival:  'culture',
+    art:       'culture',
+    kids:      'family',
+    corporate: 'work',
+    community: 'family',
+    comedy:    'night',
+    sports:    'family',
+    food:      'family'
+  };
+
+  /* Tags and an age limit override the category, because an organiser
+     who writes "family day" on a music listing has told us more than
+     the dropdown did. */
+  function audienceOf(e) {
+    var hay = [e.title, e.tagline]
+      .concat(arr(e.tags)).join(' ').toLowerCase();
+
+    if (/\b(kid|kids|children|child|family|toddler|teen|school|matinee|holiday camp)\b/.test(hay)) return 'family';
+    if (/\b(conference|summit|expo|corporate|networking|seminar|workshop|keynote|awards|launch|career|b2b)\b/.test(hay)) return 'work';
+    if (/\b(rave|club|after ?party|dj|nightclub|all ?night|18\+|21\+)\b/.test(hay)) return 'night';
+    if (/\b(cultural|heritage|traditional|exhibition|gallery|theatre|poetry|film|festival)\b/.test(hay)) return 'culture';
+
+    if (Number(e.age_limit) >= 18) return 'night';
+    return AUD_BY_CAT[e.category || ''] || 'culture';
+  }
+
+  var state = { events: [], filter: 'all', aud: 'all', q: '', sort: 'soonest', loaded: false, lastSec: -1,
                locPlace: null, liveChannel: null, reloadTimer: null };
   var clockTimer = null;
 
@@ -255,9 +309,23 @@
 
   function sorted(list) {
     var l = list.slice();
+
+    /* Order within a group first, then group. Array.prototype.sort is
+       stable in every engine we support, so the chosen sort survives
+       inside each band rather than being thrown away by the second
+       pass. Doing it the other way round silently loses the lens. */
     if (state.sort === 'soonest')    l.sort(function (a, b) { return Date.parse(a.starts_at) - Date.parse(b.starts_at); });
     if (state.sort === 'price-asc')  l.sort(function (a, b) { return (a.price_from || 0) - (b.price_from || 0); });
     if (state.sort === 'price-desc') l.sort(function (a, b) { return (b.price_from || 0) - (a.price_from || 0); });
+
+    /* The lens floats its own crowd to the top without removing anyone
+       else. A parent who picked Family still sees the warehouse party,
+       just after the puppet show. */
+    if (state.aud !== 'all') {
+      l.sort(function (a, b) {
+        return (audienceOf(a) === state.aud ? 0 : 1) - (audienceOf(b) === state.aud ? 0 : 1);
+      });
+    }
     return l;
   }
 
@@ -298,6 +366,127 @@
   function unitHTML(k, label, isSec) {
     return '<div class="ev-unit' + (isSec ? ' sec' : '') + '" data-u="' + k + '">' +
            '<span class="ev-unit-v">--</span><span class="ev-unit-l">' + label + '</span></div>';
+  }
+
+
+  /* ── the audience switch ─────────────────────────────────────────── */
+
+  var AUD_ICON = {
+    people: '<path d="M16 20v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="3.4"/><path d="M22 20v-2a4 4 0 0 0-3-3.8"/><path d="M16 3.6a4 4 0 0 1 0 6.8"/>',
+    moon:   '<path d="M20.5 14.6A8.5 8.5 0 1 1 9.4 3.5a6.8 6.8 0 0 0 11.1 11.1Z"/>',
+    kite:   '<path d="M12 2 4.6 9.4 12 16.8l7.4-7.4Z"/><path d="M12 2v14.8"/><path d="M12 16.8 9.5 22"/>',
+    'case': '<rect x="2.5" y="7" width="19" height="13.5" rx="2.4"/><path d="M8.5 7V5.2A2.2 2.2 0 0 1 10.7 3h2.6a2.2 2.2 0 0 1 2.2 2.2V7"/><path d="M2.5 12.5h19"/>',
+    mask:   '<path d="M3.5 5.5h17v6.8a8.5 8.5 0 0 1-17 0Z"/><circle cx="9" cy="10" r="1.1" fill="currentColor" stroke="none"/><circle cx="15" cy="10" r="1.1" fill="currentColor" stroke="none"/><path d="M9.6 15.4a3.6 3.6 0 0 0 4.8 0"/>'
+  };
+
+  function renderAudience() {
+    var wrap = el('ev-aud');
+    if (!wrap) return;
+
+    var up = upcoming();
+    var counts = {};
+    up.forEach(function (e) {
+      var a = audienceOf(e);
+      counts[a] = (counts[a] || 0) + 1;
+    });
+
+    wrap.innerHTML = AUDS.map(function (a) {
+      /* A lens with nothing behind it is a dead end, so an empty crowd
+         is left off rather than offered and then apologised for. */
+      if (a.key !== 'all' && !counts[a.key]) return '';
+      var on = state.aud === a.key;
+      return '<button class="ev-aud-b" type="button" data-aud="' + a.key + '" aria-pressed="' + on + '">' +
+        '<em><svg viewBox="0 0 24 24" aria-hidden="true">' + AUD_ICON[a.icon] + '</svg></em>' +
+        a.label + '</button>';
+    }).join('');
+
+    Array.prototype.forEach.call(wrap.querySelectorAll('.ev-aud-b'), function (b) {
+      b.addEventListener('click', function () {
+        state.aud = b.getAttribute('data-aud');
+        applyTemper();
+        renderAudience();
+        renderGrid();
+      });
+    });
+  }
+
+  /* One token moves and the whole board follows: the bulb rail, the
+     card edges, the search focus ring and the beams all read --tint. */
+  function applyTemper() {
+    var host = document.querySelector('.ev');
+    if (!host) return;
+    host.classList.remove('aud-night', 'aud-family', 'aud-work', 'aud-culture');
+    if (state.aud !== 'all') host.classList.add('aud-' + state.aud);
+  }
+
+  /* ── the counters ────────────────────────────────────────────────── */
+
+  /* Four facts rather than a slogan. They are the reason the masthead
+     is worth the space it takes: a visitor learns whether tonight is
+     worth their time before scrolling once. */
+  function renderTally() {
+    var up = upcoming();
+    var now = Date.now();
+    var endOfDay = new Date(); endOfDay.setHours(23, 59, 59, 999);
+    var weekEnd = now + 7 * DAY;
+
+    var tonight = 0, week = 0, family = 0, free = 0;
+    up.forEach(function (e) {
+      var start = Date.parse(e.starts_at);
+      if (isNaN(start)) return;
+      if (start <= endOfDay.getTime()) tonight += 1;
+      if (start <= weekEnd) week += 1;
+      if (audienceOf(e) === 'family') family += 1;
+      if (Number(e.price_from) === 0) free += 1;
+    });
+
+    countUp('ev-t-tonight', tonight);
+    countUp('ev-t-week', week);
+    countUp('ev-t-family', family);
+    countUp('ev-t-free', free);
+  }
+
+  /* Counting up is the one piece of non-user-triggered motion in the
+     masthead, and it earns its place by making a number legible as a
+     number rather than as a label. Zero stays still: there is nothing
+     to count to and animating it would be theatre. */
+  function countUp(id, target) {
+    var node = el(id);
+    if (!node) return;
+    node.classList.toggle('on', target > 0);
+
+    if (!target || (window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches)) {
+      node.textContent = String(target);
+      return;
+    }
+    if (Number(node.getAttribute('data-at')) === target) return;
+    node.setAttribute('data-at', target);
+
+    var from = 0, started = 0, span = Math.min(900, 260 + target * 40);
+    function frame(ts) {
+      if (!started) started = ts;
+      var p = Math.min(1, (ts - started) / span);
+      var eased = 1 - Math.pow(1 - p, 3);
+      node.textContent = String(Math.round(from + (target - from) * eased));
+      if (p < 1) requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }
+
+  /* The masthead says where it is looking, once we know. */
+  function renderWhere() {
+    var node = el('ev-where');
+    if (!node) return;
+    var label = null;
+    if (state.locPlace && state.locPlace.name) label = state.locPlace.name;
+    else {
+      var cities = {};
+      upcoming().forEach(function (e) { if (e.city) cities[e.city] = (cities[e.city] || 0) + 1; });
+      var best = Object.keys(cities).sort(function (a, b) { return cities[b] - cities[a]; })[0];
+      if (best) label = best;
+    }
+    var span = node.querySelector('span');
+    if (span) span.textContent = label ? 'In and around ' + label : 'Across Africa';
   }
 
   /* ── ticker ──────────────────────────────────────────────────────── */
@@ -365,7 +554,8 @@
       media += '<video class="ev-card-clip" src="' + esc(clip) + '" muted loop playsinline preload="none" aria-hidden="true"></video>';
     }
 
-    return '<button class="ev-card" type="button" data-id="' + esc(e.id) + '" data-heat="' + t.heat + '">' +
+    return '<button class="ev-card" type="button" data-id="' + esc(e.id) + '" data-heat="' + t.heat +
+      '" data-aud="' + audienceOf(e) + '">' +
       '<div class="ev-card-media">' + media +
         '<span class="ev-badge" data-kind="' + (house ? 'cabana' : 'partner') + '">' +
           (house ? ICON.star + 'Cabana' : esc(e.organiser_name || 'Independent')) + '</span>' +
@@ -389,16 +579,17 @@
   }
 
   function blankHTML() {
-    if (state.q || state.filter !== 'all') {
+    if (state.q || state.filter !== 'all' || state.aud !== 'all') {
       return '<div class="ev-blank"><div class="ev-blank-mark">' + ICON.ticket + '</div>' +
-        '<h3>Nothing on that night</h3>' +
-        '<p>No events match. Clear the filters to see everything coming up.</p>' +
-        '<div class="ev-blank-acts"><button class="ev-btn ev-btn-ghost" type="button" id="ev-clear">Clear filters</button></div></div>';
+        '<h3>Nothing matches that yet</h3>' +
+        '<p>Widen it and the rest of the board comes back.</p>' +
+        '<div class="ev-blank-acts"><button class="ev-btn ev-btn-ghost" type="button" id="ev-clear">Show everything</button></div></div>';
     }
     return '<div class="ev-blank"><div class="ev-blank-mark">' + ICON.ticket + '</div>' +
       '<h3>The calendar is empty. Somebody has to go first.</h3>' +
-      '<p>Cabana Events is open for listings. Organisers keep the ticket price — ' +
-      'Cabana takes no cut of the face value. List a night and it goes live once we have checked it.</p>' +
+      '<p>The board is open, whether you are throwing a warehouse party, a school ' +
+      'concert or a conference. You set the price and keep all of it. Cabana takes ' +
+      'no cut of the face value. List it once and it goes live after we have checked it.</p>' +
       '<div class="ev-blank-acts">' +
         '<a class="ev-btn ev-btn-primary" href="/list-your-event">' + ICON.plus + 'List an event</a>' +
         '<a href="/help.html" data-cbn-support class="ev-btn ev-btn-ghost"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.7-.8L3 21l1.9-5.1A8.4 8.4 0 0 1 4 11.5 8.4 8.4 0 0 1 12.5 3 8.4 8.4 0 0 1 21 11.5z"/></svg> Talk to us first</a>' +
@@ -429,9 +620,10 @@
       g.innerHTML = blankHTML();
       var c = el('ev-clear');
       if (c) c.addEventListener('click', function () {
-        state.q = ''; state.filter = 'all';
+        state.q = ''; state.filter = 'all'; state.aud = 'all';
         var s = el('ev-q'); if (s) s.value = '';
-        renderChips(); renderGrid();
+        applyTemper();
+        renderChips(); renderAudience(); renderGrid();
       });
       return;
     }
@@ -583,7 +775,11 @@
 
   /* ── wiring ──────────────────────────────────────────────────────── */
 
-  function renderAll() { renderHero(); renderTicker(); renderChips(); renderGrid(); }
+  function renderAll() {
+    renderHero(); renderTicker(); renderChips();
+    renderAudience(); renderTally(); renderWhere();
+    renderGrid();
+  }
 
   function start() {
     var q = el('ev-q');

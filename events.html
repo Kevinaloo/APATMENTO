@@ -12,7 +12,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <!-- ══ SEO ══ -->
-  <meta name="description" content="Concerts, festivals, comedy, sport and culture across Africa and beyond, from Nairobi and Lagos to Accra, Cape Town and Kigali."/>
+  <meta name="description" content="Concerts, festivals, comedy, kids’ shows, conferences and community days across Africa, from Nairobi and Lagos to Accra, Cape Town and Kigali. Tickets at face value."/>
   <meta name="keywords" content="events Africa, concerts Africa, festival tickets Africa, face value tickets, live events 2026, events Nairobi, events Lagos, events Accra, events Cape Town, events Kigali, events Dar es Salaam, comedy shows, sports tickets, afrobeats concerts, M-Pesa tickets, MTN MoMo tickets"/>
   <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1"/>
   <link rel="canonical" href="https://cabana.africa/events"/>
@@ -61,7 +61,7 @@
 <!-- Session core: one Supabase client per tab. Multiple clients on the
      same storage key race each other and silently drop the session. -->
 <link rel="stylesheet" href="/cabana-events.css"/>
-<link rel="stylesheet" href="/cabana-pulse.css"/>
+<link rel="stylesheet" href="/cabana-room.css"/>
 <link rel="stylesheet" href="/cabana-event-gate.css"/>
 <style>
 /* Critical paint. The gate stylesheet may still be in flight; this
@@ -291,9 +291,9 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--glass);c
     }
   </script>
 <link rel="stylesheet" href="/brand.css"/>
-<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"/>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" media="print" onload="this.media='all';this.onload=null"/>
-<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"/></noscript>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=Instrument+Sans:ital,wght@0,400..700;1,400..600&display=swap"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=Instrument+Sans:ital,wght@0,400..700;1,400..600&display=swap" media="print" onload="this.media='all';this.onload=null"/>
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=Instrument+Sans:ital,wght@0,400..700;1,400..600&display=swap"/></noscript>
 <link rel="stylesheet" href="/cabana-ds.css"/>
 <!-- CABANA-SEO-GRAPH -->
 <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":["Organization","TravelAgency","OnlineBusiness"],"@id":"https://cabana.africa/#organization","name":"Cabana","alternateName":["Cabana Africa","Cabana Travel","Cabana App","cabana.africa","Apatmento","Apatmento by Cabana"],"legalName":"Cabana","url":"https://cabana.africa/","logo":{"@type":"ImageObject","@id":"https://cabana.africa/#logo","url":"https://cabana.africa/cabana-icon-512.png","contentUrl":"https://cabana.africa/cabana-icon-512.png","width":512,"height":512,"caption":"Cabana"},"image":{"@id":"https://cabana.africa/#logo"},"description":"Cabana is Africa's zero-commission travel platform. Book short-stay apartments, safaris, flights, events, car hire and rides across all 54 African countries, direct from the host or operator. Hosts keep 100% of what they charge and guests pay no booking fee.","slogan":"Zero commission. Africa's own travel platform.","foundingDate":"2025","foundingLocation":{"@type":"Place","name":"Nairobi, Kenya"},"brand":{"@id":"https://cabana.africa/#brand"},"knowsAbout":["Travel in Africa","Safari booking","Short-stay apartments","Zero-commission booking","M-Pesa payments","African tourism","Vacation rentals","Airport transfers","Car hire","Event ticketing"],"areaServed":[{"@type":"Continent","name":"Africa"},{"@type":"Place","name":"Worldwide"}],"currenciesAccepted":"KES, NGN, GHS, ZAR, TZS, UGX, RWF, USD, EUR, GBP","paymentAccepted":"M-Pesa, MTN MoMo, Airtel Money, Visa, Mastercard, Bank transfer","email":"connect@cabana.africa","contactPoint":[{"@type":"ContactPoint","email":"connect@cabana.africa","contactType":"customer support","url":"https://cabana.africa/help.html","availableLanguage":["English","Swahili","French","Arabic","Portuguese"],"areaServed":"Africa"},{"@type":"ContactPoint","email":"partnership@cabana.africa","contactType":"sales","name":"Host & operator onboarding","availableLanguage":["English","Swahili","French"],"areaServed":"Africa"}],"sameAs":["https://twitter.com/apatmento","https://x.com/apatmento"]},{"@type":"Brand","@id":"https://cabana.africa/#brand","name":"Cabana","logo":"https://cabana.africa/cabana-icon-512.png","slogan":"Zero commission. Always."},{"@type":"WebSite","@id":"https://cabana.africa/#website","url":"https://cabana.africa/","name":"Cabana","alternateName":"Cabana Africa","description":"Africa's zero-commission travel platform.","publisher":{"@id":"https://cabana.africa/#organization"},"inLanguage":"en","potentialAction":[{"@type":"SearchAction","target":{"@type":"EntryPoint","urlTemplate":"https://cabana.africa/apartments?q={search_term_string}"},"query-input":"required name=search_term_string"}]},{"@type":"CollectionPage","@id":"https://cabana.africa/events#webpage","url":"https://cabana.africa/events","name":"Events & Tickets Across Africa | Face Value | Cabana","description":"Concerts, festivals, comedy, sport and culture across Africa and beyond, from Nairobi and Lagos to Accra, Cape Town and Kigali.","isPartOf":{"@id":"https://cabana.africa/#website"},"about":{"@id":"https://cabana.africa/#organization"},"publisher":{"@id":"https://cabana.africa/#organization"},"inLanguage":"en","dateModified":"2026-08-13","breadcrumb":{"@id":"https://cabana.africa/events#breadcrumb"},"primaryImageOfPage":{"@type":"ImageObject","url":"https://cabana.africa/og-events.jpg"},"speakable":{"@type":"SpeakableSpecification","cssSelector":[".hero h1",".hero .sub",".sec p"]}},{"@type":"BreadcrumbList","@id":"https://cabana.africa/events#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://cabana.africa/"},{"@type":"ListItem","position":2,"name":"Events & Tickets"}]},{"@type":"Product","@id":"https://cabana.africa/events#product","name":"Cabana Events & Tickets","description":"Concerts, festivals, sport and cultural events with tickets at the organiser's price.","url":"https://cabana.africa/events","category":"Events & Tickets","brand":{"@id":"https://cabana.africa/#brand"}},{"@type":"Service","@id":"https://cabana.africa/events#service","name":"Cabana Events & Tickets","description":"Concerts, festivals, sport and cultural events with tickets at the organiser's price.","serviceType":"Events & Tickets","provider":{"@id":"https://cabana.africa/#organization"},"areaServed":{"@type":"Continent","name":"Africa"},"audience":{"@type":"Audience","audienceType":"Travellers to Africa"}},{"@type":"ItemList","@id":"https://cabana.africa/events#itemlist","name":"Events & Tickets by country","numberOfItems":24,"itemListElement":[{"@type":"ListItem","position":1,"name":"Kenya","url":"https://cabana.africa/kenya-travel"},{"@type":"ListItem","position":2,"name":"Tanzania","url":"https://cabana.africa/tanzania-travel"},{"@type":"ListItem","position":3,"name":"Uganda","url":"https://cabana.africa/uganda-travel"},{"@type":"ListItem","position":4,"name":"Rwanda","url":"https://cabana.africa/rwanda-travel"},{"@type":"ListItem","position":5,"name":"Ethiopia","url":"https://cabana.africa/ethiopia-travel"},{"@type":"ListItem","position":6,"name":"Seychelles","url":"https://cabana.africa/seychelles-travel"},{"@type":"ListItem","position":7,"name":"Mauritius","url":"https://cabana.africa/mauritius-travel"},{"@type":"ListItem","position":8,"name":"Madagascar","url":"https://cabana.africa/madagascar-travel"},{"@type":"ListItem","position":9,"name":"Nigeria","url":"https://cabana.africa/nigeria-travel"},{"@type":"ListItem","position":10,"name":"Ghana","url":"https://cabana.africa/ghana-travel"},{"@type":"ListItem","position":11,"name":"Senegal","url":"https://cabana.africa/senegal-travel"},{"@type":"ListItem","position":12,"name":"Côte d'Ivoire","url":"https://cabana.africa/cote-divoire-travel"},{"@type":"ListItem","position":13,"name":"Benin","url":"https://cabana.africa/benin-travel"},{"@type":"ListItem","position":14,"name":"Sierra Leone","url":"https://cabana.africa/sierra-leone-travel"},{"@type":"ListItem","position":15,"name":"Gambia","url":"https://cabana.africa/gambia-travel"},{"@type":"ListItem","position":16,"name":"Cape Verde","url":"https://cabana.africa/cape-verde-travel"},{"@type":"ListItem","position":17,"name":"South Africa","url":"https://cabana.africa/south-africa-travel"},{"@type":"ListItem","position":18,"name":"Namibia","url":"https://cabana.africa/namibia-travel"},{"@type":"ListItem","position":19,"name":"Botswana","url":"https://cabana.africa/botswana-travel"},{"@type":"ListItem","position":20,"name":"Zimbabwe","url":"https://cabana.africa/zimbabwe-travel"},{"@type":"ListItem","position":21,"name":"Zambia","url":"https://cabana.africa/zambia-travel"},{"@type":"ListItem","position":22,"name":"Mozambique","url":"https://cabana.africa/mozambique-travel"},{"@type":"ListItem","position":23,"name":"Malawi","url":"https://cabana.africa/malawi-travel"},{"@type":"ListItem","position":24,"name":"Angola","url":"https://cabana.africa/angola-travel"}]},{"@type":"FAQPage","@id":"https://cabana.africa/events#faq","mainEntity":[{"@type":"Question","name":"How do I buy event tickets?","acceptedAnswer":{"@type":"Answer","text":"Tap any event to see the details, pick a ticket tier and pay by M-Pesa, MTN MoMo, Airtel Money or card. You get a code to show at the door, at the organiser’s own price with no booking levy from us."}},{"@type":"Question","name":"What events are happening this weekend?","acceptedAnswer":{"@type":"Answer","text":"The list above refreshes as organisers publish new dates. Sort by soonest first to see everything happening in the next few days."}},{"@type":"Question","name":"Are the ticket prices the final price?","acceptedAnswer":{"@type":"Answer","text":"Yes. The price shown is the organiser's own price. We add nothing on top."}}]}]}</script>
@@ -371,34 +371,45 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--glass);c
   </div>
 
   <header class="ev-head">
-    <span class="ev-eyebrow"><i></i>Events &amp; Tickets</span>
-    <h1 class="ev-title">Doors open tonight. <em>Somewhere near you.</em></h1>
-    <p class="ev-lede">Concerts, festivals, club nights and comedy, city by city, as organisers
-      release them. You pay the face value on the ticket. Cabana adds nothing to it.</p>
+    <div class="ev-plate">
+      <div class="ev-bulbs top" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+
+      <p class="ev-where" id="ev-where">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+        <span>Across Africa</span>
+      </p>
+
+      <h1 class="ev-title">Every night this city has, on one board.</h1>
+      <p class="ev-lede">Concerts and club nights sit here beside school shows, conferences and
+        family days, because a venue only ever has one board. Organisers set the price and keep
+        all of it.</p>
+
+      <div class="ev-tally" id="ev-tally">
+        <div><b id="ev-t-tonight">0</b><span>on tonight</span></div>
+        <div><b id="ev-t-week">0</b><span>this week</span></div>
+        <div><b id="ev-t-family">0</b><span>for families</span></div>
+        <div><b id="ev-t-free">0</b><span>free to enter</span></div>
+      </div>
+
+      <div class="ev-bulbs btm" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    </div>
   </header>
+
+  <!-- Cabana Pulse, reduced to a doorway. The room itself is a full page
+       with its own address, built in cabana-room.js -->
+  <div class="ev-pulse" id="ev-pulse"></div>
+
+  <!-- The cohesion control. Nothing is hidden by it; the board re-tempers. -->
+  <div class="ev-aud">
+    <p class="ev-aud-h">Who is coming with you?</p>
+    <div class="ev-aud-row" id="ev-aud" role="group" aria-label="Choose who the night is for"></div>
+  </div>
 
   <!-- Scrolling bill of what is coming. Pauses on hover. -->
   <div class="ev-ticker" id="ev-ticker" aria-hidden="true"></div>
 
   <!-- The next night, with the clock running. Built in cabana-events.js -->
   <section class="ev-next" id="ev-next" aria-label="Next event"></section>
-
-  <!-- Cabana Pulse turns the chart into a useful part of going out: the
-       soundtrack is live, but video and audio only start after a tap. -->
-  <section class="cbp" id="cabana-pulse" aria-labelledby="cbp-title">
-    <div class="cbp-head">
-      <div>
-        <div class="cbp-kicker"><i></i>Cabana Pulse <span>Live · Kenya</span></div>
-        <h2 id="cbp-title">Hear the night <em>before you live it.</em></h2>
-        <p>What Kenya is playing on YouTube right now. Tap a track to listen, then find the night where it belongs.</p>
-      </div>
-      <div class="cbp-fresh" id="cbp-fresh" aria-live="polite">Connecting to the chart…</div>
-    </div>
-    <div class="cbp-filters" id="cbp-filters" role="group" aria-label="Filter the live music chart"></div>
-    <div class="cbp-feature" id="cbp-feature"></div>
-    <div class="cbp-trackrail" id="cbp-trackrail" aria-live="polite"></div>
-    <div class="cbp-source" id="cbp-source">YouTube music · Region KE <span>Cabana adds context, not invented numbers.</span></div>
-  </section>
 
   <div class="ev-rail">
     <div class="ev-search">
@@ -424,17 +435,17 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--glass);c
   <section class="ev-invite">
     <div class="ev-invite-in">
       <div>
-        <h2>Throwing something? Put it on the bill.</h2>
-        <p>Cabana Events is a marketplace for organisers, promoters and venues, wherever the
-          night happens. List it once. You keep the whole door.</p>
+        <h2>Putting something on? Hang it on the board.</h2>
+        <p>Promoters, venues, schools, companies and community groups all list here on the
+          same terms. Set your price, keep every shilling of it, and we handle the door.</p>
         <a class="ev-btn ev-btn-primary" href="/list-your-event">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
           List an event
         </a>
       </div>
       <ul class="ev-invite-pts">
-        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg><span>No cut of your face value</span></li>
-        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg><span>Set your own tiers, prices and capacity</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg><span>We take no cut of your face value</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg><span>Set your own tiers, prices, capacity and age limits</span></li>
         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg><span>Guests pay by M-Pesa, codes checked at the door</span></li>
         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg><span>Every listing checked before it goes live</span></li>
       </ul>
@@ -451,7 +462,7 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--glass);c
 <script src="/apa-geo.js" defer></script>
 <script src="/cabana-pay.js" defer></script>
 <script src="/cabana-event-book.js" defer></script>
-<script src="/cabana-pulse.js" defer></script>
+<script src="/cabana-room.js" defer></script>
 <script src="/cabana-events.js" defer></script>
 
 

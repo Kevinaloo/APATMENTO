@@ -310,6 +310,10 @@
   },
   "rewrites": [
     {
+      "source": "/api/music-search",
+      "destination": "/api/utilities?action=music-search"
+    },
+    {
       "source": "/calendar/:token([A-Za-z0-9_-]+).ics",
       "destination": "/api/calendar-sync?action=feed&token=:token"
     },

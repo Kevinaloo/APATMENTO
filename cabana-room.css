@@ -1,0 +1,783 @@
+/* ═══════════════════════════════════════════════════════════════════
+   CABANA PULSE · THE ROOM
+
+   The board outside the venue tells you what is on. This is the room
+   where the chart is compiled, and it is a different kind of place: a
+   broadcast studio after hours, lit by the record currently at number
+   one playing silently on the wall behind everything.
+
+   It opens over the events page and takes the whole screen, with its
+   own address, its own back button and its own scroll. It is a page,
+   not a modal, even though it never navigates away.
+
+   THE POINT OF THE PODIUM
+   Artists will come here to see where they stand, which means the
+   podium has to be worth standing on. Three plinths, three brass cups,
+   a nameplate on each, and a stage that assembles itself when you
+   arrive rather than simply being there. Rank is earned across a whole
+   catalogue, not off a single hit, so the plate can be believed.
+
+   Brass is the only warm colour and it is reserved for standing. The
+   room is otherwise near-monochrome so a trophy always reads.
+   ═══════════════════════════════════════════════════════════════════ */
+
+.cbr{
+  --void:#0A0812;
+  --deep:#100C1B;
+  --raise:#181226;
+  --raise-2:#211932;
+  --rule:rgba(244,240,252,.08);
+  --rule-2:rgba(244,240,252,.16);
+
+  --chalk:#F4F0FC;
+  --chalk-2:#ADA5C4;
+  --chalk-3:#736C8C;
+
+  --brass:#E7B64A;
+  --brass-lit:#FFD97A;
+  --brass-deep:#9C7318;
+
+  --silver:#C9CBD8;
+  --bronze:#C98A5E;
+
+  --jade:#4FD8A8;
+  --flare:#FF3B6B;
+  --violet:#9B7CFF;
+
+  --ease:cubic-bezier(.22,1,.36,1);
+  --spring:cubic-bezier(.34,1.36,.42,1);
+
+  position:fixed;
+  inset:0;
+  z-index:1400;
+  background:var(--void);
+  color:var(--chalk);
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  font-family:'Instrument Sans',ui-sans-serif,system-ui,sans-serif;
+  opacity:0;
+  visibility:hidden;
+  transform:scale(.985);
+  transition:opacity .42s var(--ease), transform .42s var(--ease), visibility .42s;
+}
+.cbr.on{ opacity:1; visibility:visible; transform:none; }
+.cbr *,.cbr *::before,.cbr *::after{ box-sizing:border-box; }
+.cbr :focus-visible{ outline:2px solid var(--brass); outline-offset:3px; border-radius:6px; }
+html.cbr-lock, html.cbr-lock body{ overflow:hidden !important; }
+
+.cbr-wrap{ width:min(1180px,100%); margin:0 auto; padding:0 clamp(16px,4.4vw,32px); }
+
+/* ═══ 1 · THE STAGE ═════════════════════════════════════════════════
+   The record at number one plays behind the masthead, muted, as the
+   room's light source. It is decoration with a job: it is the actual
+   thing the chart is about, so it is never a stock loop. */
+
+.cbr-stage{
+  position:relative;
+  min-height:min(72vh,620px);
+  display:flex; flex-direction:column;
+  overflow:hidden;
+  border-bottom:1px solid var(--rule);
+}
+.cbr-screen{
+  position:absolute; inset:0;
+  z-index:0;
+  overflow:hidden;
+  background:var(--deep);
+}
+.cbr-screen iframe,
+.cbr-screen img{
+  position:absolute;
+  top:50%; left:50%;
+  width:178vh;               /* 16:9 cover, driven off height */
+  min-width:100%;
+  height:56.25vw;
+  min-height:100%;
+  transform:translate(-50%,-50%) scale(1.12);
+  border:0;
+  pointer-events:none;
+  object-fit:cover;
+  filter:saturate(.86);
+}
+.cbr-screen::after{
+  content:'';
+  position:absolute; inset:0;
+  background:
+    linear-gradient(180deg, rgba(10,8,18,.62) 0%, rgba(10,8,18,.34) 34%, rgba(10,8,18,.94) 86%, var(--void) 100%),
+    radial-gradient(80% 60% at 50% 40%, transparent, rgba(10,8,18,.7));
+}
+/* Scanline plate. Two pixels, repeated, at four percent. It reads as a
+   screen rather than a video file without costing a repaint. */
+.cbr-screen::before{
+  content:'';
+  position:absolute; inset:0;
+  z-index:2;
+  background:repeating-linear-gradient(180deg, rgba(0,0,0,.22) 0 1px, transparent 1px 3px);
+  opacity:.34;
+  mix-blend-mode:multiply;
+}
+
+.cbr-top{
+  position:sticky; top:0;
+  z-index:6;
+  display:flex; align-items:center; justify-content:space-between;
+  gap:14px;
+  padding:14px clamp(16px,4.4vw,32px);
+  background:linear-gradient(180deg, rgba(10,8,18,.86), transparent);
+  backdrop-filter:blur(3px);
+}
+.cbr-mark{
+  display:flex; align-items:center; gap:10px;
+  font-family:'Bricolage Grotesque',sans-serif;
+  font-weight:700; font-size:15px;
+  letter-spacing:-.01em;
+}
+.cbr-mark i{
+  width:7px; height:7px; border-radius:50%;
+  background:var(--jade);
+  box-shadow:0 0 10px rgba(79,216,168,.7);
+  animation:cbr-beat 2.2s ease-in-out infinite;
+}
+@keyframes cbr-beat{ 0%,100%{ opacity:.4; } 50%{ opacity:1; } }
+.cbr-mark span{ color:var(--chalk-3); font-weight:500; font-size:12.5px; }
+
+.cbr-shut{
+  display:inline-flex; align-items:center; gap:8px;
+  padding:9px 15px 9px 12px;
+  border-radius:100px;
+  border:1px solid var(--rule-2);
+  background:rgba(16,12,27,.72);
+  backdrop-filter:blur(12px);
+  color:var(--chalk-2);
+  font:inherit; font-size:13px; font-weight:500;
+  cursor:pointer;
+  transition:color .25s var(--ease), border-color .25s var(--ease);
+}
+.cbr-shut:hover{ color:var(--chalk); border-color:var(--chalk-3); }
+.cbr-shut svg{ width:15px; height:15px; }
+
+.cbr-hero{
+  position:relative; z-index:5;
+  margin-top:auto;
+  width:min(1180px,100%);
+  margin-inline:auto;
+  padding:0 clamp(16px,4.4vw,32px) clamp(28px,5vw,52px);
+}
+.cbr-hero-kick{
+  display:inline-flex; align-items:center; gap:9px;
+  padding:6px 14px;
+  border-radius:100px;
+  border:1px solid rgba(231,182,74,.32);
+  background:rgba(231,182,74,.11);
+  color:var(--brass);
+  font-size:11px; font-weight:700;
+  letter-spacing:.08em; text-transform:uppercase;
+  margin-bottom:15px;
+}
+.cbr-hero h1{
+  font-family:'Bricolage Grotesque',sans-serif;
+  font-weight:700;
+  font-size:clamp(30px,6.4vw,64px);
+  line-height:.98;
+  letter-spacing:-.038em;
+  font-variation-settings:'wdth' 94;
+  max-width:16ch;
+  margin-bottom:12px;
+  text-wrap:balance;
+}
+.cbr-hero-by{
+  font-size:clamp(14px,2vw,17px);
+  color:var(--chalk-2);
+  margin-bottom:22px;
+}
+.cbr-hero-acts{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+.cbr-stat{
+  display:inline-flex; align-items:center; gap:7px;
+  padding:8px 14px;
+  border-radius:100px;
+  border:1px solid var(--rule-2);
+  background:rgba(16,12,27,.6);
+  backdrop-filter:blur(10px);
+  font-size:12.5px;
+  color:var(--chalk-2);
+}
+.cbr-stat b{
+  color:var(--chalk);
+  font-weight:600;
+  font-variant-numeric:tabular-nums;
+}
+.cbr-stat.up{ color:var(--jade); border-color:rgba(79,216,168,.3); }
+.cbr-stat.up b{ color:var(--jade); }
+
+/* ═══ 2 · SECTIONS ══════════════════════════════════════════════════ */
+
+.cbr-sec{ padding:clamp(38px,6vw,72px) 0 0; }
+.cbr-sec-h{
+  display:flex; align-items:flex-end; justify-content:space-between;
+  gap:16px; flex-wrap:wrap;
+  margin-bottom:clamp(20px,3vw,30px);
+}
+.cbr-sec-h h2{
+  font-family:'Bricolage Grotesque',sans-serif;
+  font-weight:700;
+  font-size:clamp(21px,3.4vw,33px);
+  line-height:1.06;
+  letter-spacing:-.03em;
+  text-wrap:balance;
+}
+.cbr-sec-h p{
+  font-size:13.5px;
+  color:var(--chalk-3);
+  margin-top:7px;
+  max-width:52ch;
+}
+
+/* ═══ 3 · THE PODIUM ════════════════════════════════════════════════
+   Three plinths, unequal heights, assembled on arrival: third rises,
+   then second, then first, then the cups land and the lights come up.
+   The order matters. A podium revealed all at once is a diagram; a
+   podium built in sequence is a result. */
+
+.cbr-podium{
+  position:relative;
+  display:grid;
+  grid-template-columns:1fr 1.16fr 1fr;
+  align-items:end;
+  gap:clamp(8px,1.6vw,18px);
+  padding:clamp(40px,7vw,80px) 0 0;
+  min-height:340px;
+}
+/* The floor the plinths stand on. */
+.cbr-podium::after{
+  content:'';
+  position:absolute; left:0; right:0; bottom:0;
+  height:1px;
+  background:linear-gradient(90deg, transparent, var(--rule-2) 15%, var(--rule-2) 85%, transparent);
+}
+
+.cbr-plinth{
+  position:relative;
+  display:flex; flex-direction:column; align-items:center;
+  cursor:pointer;
+  background:none; border:0; padding:0;
+  color:inherit; font:inherit;
+  transform:translateY(26px);
+  opacity:0;
+}
+.cbr-podium.lit .cbr-plinth{
+  animation:cbr-rise .78s var(--spring) forwards;
+}
+.cbr-podium.lit .cbr-plinth[data-place="3"]{ animation-delay:.05s; }
+.cbr-podium.lit .cbr-plinth[data-place="2"]{ animation-delay:.24s; }
+.cbr-podium.lit .cbr-plinth[data-place="1"]{ animation-delay:.46s; }
+@keyframes cbr-rise{ to{ transform:none; opacity:1; } }
+
+/* A cone of light per plinth, brought up after the block lands. */
+.cbr-beam{
+  position:absolute;
+  left:50%; bottom:100%;
+  width:190%; height:300px;
+  transform:translateX(-50%);
+  background:linear-gradient(180deg, transparent, color-mix(in srgb, var(--metal) 22%, transparent));
+  clip-path:polygon(41% 0, 59% 0, 100% 100%, 0 100%);
+  opacity:0;
+  pointer-events:none;
+  filter:blur(11px);
+}
+.cbr-podium.lit .cbr-beam{ animation:cbr-lamp 1s var(--ease) forwards; }
+.cbr-plinth[data-place="3"] .cbr-beam{ animation-delay:.5s; }
+.cbr-plinth[data-place="2"] .cbr-beam{ animation-delay:.68s; }
+.cbr-plinth[data-place="1"] .cbr-beam{ animation-delay:.86s; }
+@keyframes cbr-lamp{ to{ opacity:.6; } }
+
+.cbr-plinth[data-place="1"]{ --metal:var(--brass); --metal-lit:var(--brass-lit); }
+.cbr-plinth[data-place="2"]{ --metal:var(--silver); --metal-lit:#E8EAF2; }
+.cbr-plinth[data-place="3"]{ --metal:var(--bronze); --metal-lit:#E0A87C; }
+
+/* The cup. Drawn rather than iconographed: a bowl, a stem, a base and
+   two handles, so it reads as an object with weight. */
+.cbr-cup{
+  position:relative;
+  width:clamp(44px,7vw,68px);
+  margin-bottom:14px;
+  filter:drop-shadow(0 6px 18px color-mix(in srgb, var(--metal) 40%, transparent));
+  transform:translateY(-14px) scale(.82);
+  opacity:0;
+}
+.cbr-podium.lit .cbr-cup{ animation:cbr-land .7s var(--spring) forwards; }
+.cbr-plinth[data-place="3"] .cbr-cup{ animation-delay:.42s; }
+.cbr-plinth[data-place="2"] .cbr-cup{ animation-delay:.6s; }
+.cbr-plinth[data-place="1"] .cbr-cup{ animation-delay:.8s; }
+@keyframes cbr-land{ to{ transform:none; opacity:1; } }
+.cbr-cup svg{ width:100%; height:auto; display:block; }
+
+/* A single highlight travelling across the metal, once the cup lands. */
+.cbr-cup::after{
+  content:'';
+  position:absolute; inset:0;
+  background:linear-gradient(112deg, transparent 36%, rgba(255,255,255,.5) 48%, transparent 60%);
+  mix-blend-mode:overlay;
+  opacity:0;
+  pointer-events:none;
+}
+.cbr-podium.lit .cbr-plinth[data-place="1"] .cbr-cup::after{
+  animation:cbr-shine 2.6s var(--ease) 1.3s infinite;
+}
+@keyframes cbr-shine{
+  0%{ opacity:0; transform:translateX(-60%); }
+  22%{ opacity:1; }
+  50%,100%{ opacity:0; transform:translateX(60%); }
+}
+
+.cbr-face{
+  width:clamp(52px,9vw,84px);
+  aspect-ratio:1;
+  border-radius:50%;
+  overflow:hidden;
+  border:2px solid color-mix(in srgb, var(--metal) 62%, transparent);
+  background:var(--raise-2);
+  margin-bottom:12px;
+  box-shadow:0 0 0 5px color-mix(in srgb, var(--metal) 10%, transparent);
+}
+.cbr-face img{ width:100%; height:100%; object-fit:cover; display:block; }
+
+.cbr-who{
+  font-family:'Bricolage Grotesque',sans-serif;
+  font-weight:700;
+  font-size:clamp(13px,1.9vw,17px);
+  line-height:1.16;
+  letter-spacing:-.02em;
+  text-align:center;
+  margin-bottom:5px;
+  max-width:15ch;
+  overflow-wrap:anywhere;
+}
+.cbr-what{
+  font-size:11.5px;
+  color:var(--chalk-3);
+  text-align:center;
+  margin-bottom:13px;
+}
+.cbr-what b{ color:color-mix(in srgb, var(--metal) 80%, var(--chalk)); font-weight:600; }
+
+/* The block itself, with the nameplate screwed to the front. */
+.cbr-block{
+  position:relative;
+  width:100%;
+  border-radius:12px 12px 0 0;
+  border:1px solid color-mix(in srgb, var(--metal) 26%, transparent);
+  border-bottom:0;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--metal) 15%, transparent), transparent 55%),
+    var(--raise);
+  display:flex; align-items:flex-start; justify-content:center;
+  padding-top:15px;
+  box-shadow:inset 0 1px 0 color-mix(in srgb, var(--metal) 32%, transparent);
+}
+.cbr-plinth[data-place="1"] .cbr-block{ height:clamp(108px,17vw,162px); }
+.cbr-plinth[data-place="2"] .cbr-block{ height:clamp(80px,13vw,124px); }
+.cbr-plinth[data-place="3"] .cbr-block{ height:clamp(62px,10vw,96px); }
+.cbr-place{
+  font-family:'Bricolage Grotesque',sans-serif;
+  font-weight:700;
+  font-size:clamp(28px,5.4vw,54px);
+  line-height:1;
+  letter-spacing:-.05em;
+  color:color-mix(in srgb, var(--metal) 74%, transparent);
+  font-variant-numeric:tabular-nums;
+}
+.cbr-plinth:hover .cbr-block{ border-color:color-mix(in srgb, var(--metal) 48%, transparent); }
+
+@media (max-width:600px){
+  .cbr-podium{ gap:6px; min-height:290px; padding-top:34px; }
+  .cbr-what{ display:none; }
+}
+
+/* ═══ 4 · RANKS FOUR TO TEN ═════════════════════════════════════════
+   Numbered here because this genuinely is a ranking, which is the only
+   reason a numeral belongs beside a name. */
+
+.cbr-rest{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(min(100%,268px),1fr));
+  gap:9px;
+  margin-top:clamp(24px,4vw,40px);
+}
+.cbr-row{
+  display:flex; align-items:center; gap:13px;
+  padding:11px 14px 11px 11px;
+  border-radius:14px;
+  border:1px solid var(--rule);
+  background:var(--raise);
+  cursor:pointer;
+  text-align:left;
+  font:inherit; color:inherit;
+  transition:border-color .25s var(--ease), background .25s var(--ease), transform .25s var(--spring);
+}
+.cbr-row:hover{ border-color:var(--rule-2); background:var(--raise-2); transform:translateX(3px); }
+.cbr-rank{
+  flex:none;
+  width:26px;
+  font-family:'Bricolage Grotesque',sans-serif;
+  font-weight:700; font-size:16px;
+  letter-spacing:-.03em;
+  color:var(--chalk-3);
+  font-variant-numeric:tabular-nums;
+  text-align:center;
+}
+.cbr-thumb{
+  width:40px; height:40px; flex:none;
+  border-radius:11px;
+  overflow:hidden;
+  background:var(--raise-2);
+}
+.cbr-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+.cbr-row-txt{ flex:1; min-width:0; }
+.cbr-row-n{
+  font-size:14px; font-weight:600;
+  color:var(--chalk);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.cbr-row-s{
+  font-size:12px;
+  color:var(--chalk-3);
+  margin-top:2px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.cbr-move{
+  flex:none;
+  display:inline-flex; align-items:center; gap:3px;
+  font-size:11.5px; font-weight:600;
+  font-variant-numeric:tabular-nums;
+  color:var(--chalk-3);
+}
+.cbr-move.up{ color:var(--jade); }
+.cbr-move.down{ color:var(--flare); }
+.cbr-move.new{ color:var(--brass); }
+.cbr-move svg{ width:11px; height:11px; }
+
+/* ═══ 5 · THE TITLES ════════════════════════════════════════════════ */
+
+.cbr-titles{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));
+  gap:12px;
+}
+.cbr-title{
+  position:relative;
+  display:flex; align-items:center; gap:14px;
+  padding:17px;
+  border-radius:19px;
+  border:1px solid var(--rule-2);
+  background:
+    radial-gradient(70% 120% at 100% 0%, color-mix(in srgb, var(--metal) 13%, transparent), transparent 62%),
+    var(--raise);
+  overflow:hidden;
+}
+.cbr-title[data-period="week"]{ --metal:var(--jade); }
+.cbr-title[data-period="month"]{ --metal:var(--violet); }
+.cbr-title[data-period="year"]{ --metal:var(--brass); }
+.cbr-title-face{
+  width:56px; height:56px; flex:none;
+  border-radius:15px;
+  overflow:hidden;
+  border:1px solid color-mix(in srgb, var(--metal) 40%, transparent);
+  background:var(--raise-2);
+}
+.cbr-title-face img{ width:100%; height:100%; object-fit:cover; display:block; }
+.cbr-title-txt{ min-width:0; flex:1; }
+.cbr-title-k{
+  font-size:10.5px; font-weight:700;
+  letter-spacing:.09em; text-transform:uppercase;
+  color:color-mix(in srgb, var(--metal) 82%, var(--chalk));
+  margin-bottom:5px;
+}
+.cbr-title-n{
+  font-family:'Bricolage Grotesque',sans-serif;
+  font-weight:700; font-size:16.5px;
+  letter-spacing:-.024em;
+  line-height:1.16;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.cbr-title-s{ font-size:12px; color:var(--chalk-3); margin-top:4px; }
+.cbr-title-wait{
+  font-size:13px; color:var(--chalk-3);
+  line-height:1.5;
+}
+
+/* ═══ 6 · SEARCH AND SHELVES ════════════════════════════════════════ */
+
+.cbr-find{
+  display:flex; align-items:center; gap:11px;
+  height:56px;
+  padding:0 8px 0 18px;
+  border-radius:17px;
+  border:1px solid var(--rule-2);
+  background:var(--raise);
+  transition:border-color .3s var(--ease);
+}
+.cbr-find:focus-within{ border-color:rgba(231,182,74,.5); }
+.cbr-find > svg{ width:18px; height:18px; color:var(--chalk-3); flex:none; }
+.cbr-find input{
+  flex:1; min-width:0;
+  background:none; border:0; outline:0;
+  color:var(--chalk); font:inherit; font-size:15px;
+}
+.cbr-find input::placeholder{ color:var(--chalk-3); }
+.cbr-find button{
+  flex:none;
+  height:40px; padding:0 18px;
+  border-radius:12px; border:0;
+  background:var(--brass);
+  color:#1C1406;
+  font:inherit; font-size:13.5px; font-weight:600;
+  cursor:pointer;
+  transition:background .25s var(--ease);
+}
+.cbr-find button:hover{ background:var(--brass-lit); }
+.cbr-find button[disabled]{ opacity:.5; cursor:progress; }
+
+.cbr-shelves{
+  display:flex; gap:7px;
+  overflow-x:auto;
+  scrollbar-width:none;
+  margin-top:14px;
+  padding-bottom:2px;
+}
+.cbr-shelves::-webkit-scrollbar{ display:none; }
+.cbr-shelf{
+  flex:none;
+  padding:8px 15px;
+  border-radius:100px;
+  border:1px solid var(--rule);
+  background:transparent;
+  color:var(--chalk-3);
+  font:inherit; font-size:13px;
+  cursor:pointer;
+  white-space:nowrap;
+  transition:color .22s var(--ease), border-color .22s var(--ease), background .22s var(--ease);
+}
+.cbr-shelf:hover{ color:var(--chalk-2); border-color:var(--rule-2); }
+.cbr-shelf[aria-pressed="true"]{
+  background:var(--chalk);
+  border-color:var(--chalk);
+  color:var(--void);
+  font-weight:600;
+}
+/* Tribal is a shelf about language, not sound, so it carries its own
+   mark rather than sitting anonymously among the genres. */
+.cbr-shelf[data-shelf="tribal"]{ border-color:rgba(231,182,74,.34); color:var(--brass); }
+.cbr-shelf[data-shelf="tribal"][aria-pressed="true"]{
+  background:var(--brass); border-color:var(--brass); color:#1C1406;
+}
+
+.cbr-note{
+  margin-top:14px;
+  padding:13px 16px;
+  border-radius:13px;
+  border:1px solid var(--rule);
+  background:var(--raise);
+  font-size:13.5px;
+  color:var(--chalk-2);
+  line-height:1.55;
+}
+.cbr-note:empty{ display:none; }
+
+/* ═══ 7 · THE BOARD ═════════════════════════════════════════════════ */
+
+.cbr-board{ display:grid; gap:7px; margin-top:6px; }
+.cbr-track{
+  display:flex; align-items:center; gap:13px;
+  padding:9px 14px 9px 10px;
+  border-radius:15px;
+  border:1px solid transparent;
+  background:var(--raise);
+  cursor:pointer;
+  text-align:left;
+  font:inherit; color:inherit;
+  transition:border-color .22s var(--ease), background .22s var(--ease);
+}
+.cbr-track:hover{ background:var(--raise-2); border-color:var(--rule); }
+.cbr-track.playing{
+  border-color:rgba(231,182,74,.45);
+  background:linear-gradient(90deg, rgba(231,182,74,.11), var(--raise-2));
+}
+.cbr-track-art{
+  position:relative;
+  width:52px; height:52px; flex:none;
+  border-radius:12px; overflow:hidden;
+  background:var(--raise-2);
+}
+.cbr-track-art img{ width:100%; height:100%; object-fit:cover; display:block; }
+.cbr-track-art .cbr-play{
+  position:absolute; inset:0;
+  display:grid; place-items:center;
+  background:rgba(10,8,18,.58);
+  opacity:0;
+  transition:opacity .22s var(--ease);
+}
+.cbr-track:hover .cbr-play{ opacity:1; }
+.cbr-play svg{ width:20px; height:20px; color:var(--chalk); }
+.cbr-track-txt{ flex:1; min-width:0; }
+.cbr-track-t{
+  font-size:14px; font-weight:600;
+  color:var(--chalk);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.cbr-track-a{
+  font-size:12.5px; color:var(--chalk-3);
+  margin-top:3px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.cbr-track-r{
+  flex:none;
+  width:30px; text-align:center;
+  font-family:'Bricolage Grotesque',sans-serif;
+  font-weight:700; font-size:15px;
+  letter-spacing:-.03em;
+  color:var(--chalk-3);
+  font-variant-numeric:tabular-nums;
+}
+.cbr-track.playing .cbr-track-r{ color:var(--brass); }
+.cbr-track-m{
+  flex:none;
+  display:flex; align-items:center; gap:11px;
+  font-size:12px;
+  color:var(--chalk-3);
+  font-variant-numeric:tabular-nums;
+}
+.cbr-tag{
+  padding:4px 9px;
+  border-radius:100px;
+  border:1px solid var(--rule);
+  font-size:10.5px; font-weight:600;
+  color:var(--chalk-3);
+  text-transform:capitalize;
+}
+.cbr-tag.tribal{ color:var(--brass); border-color:rgba(231,182,74,.3); }
+@media (max-width:640px){
+  .cbr-track-m span.hide-s{ display:none; }
+  .cbr-tag{ display:none; }
+}
+
+.cbr-empty{
+  padding:34px 20px;
+  text-align:center;
+  border:1px dashed var(--rule-2);
+  border-radius:18px;
+  color:var(--chalk-3);
+  font-size:14px;
+  line-height:1.6;
+}
+
+.cbr-foot{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:14px; flex-wrap:wrap;
+  margin:clamp(30px,5vw,52px) 0 0;
+  padding:18px 0 calc(120px + env(safe-area-inset-bottom));
+  border-top:1px solid var(--rule);
+  font-size:12px;
+  color:var(--chalk-3);
+}
+
+/* ═══ 8 · THE PLAYER ════════════════════════════════════════════════
+   Nothing plays until someone asks. Once it does, the bar stays with
+   them down the whole room. */
+
+.cbr-player{
+  position:fixed;
+  left:0; right:0; bottom:0;
+  z-index:1420;
+  padding:10px clamp(12px,3vw,20px) calc(10px + env(safe-area-inset-bottom));
+  background:rgba(16,12,27,.9);
+  backdrop-filter:blur(22px) saturate(160%);
+  border-top:1px solid var(--rule-2);
+  transform:translateY(115%);
+  transition:transform .46s var(--spring);
+}
+.cbr-player.on{ transform:none; }
+.cbr-player-in{
+  width:min(1180px,100%);
+  margin:0 auto;
+  display:flex; align-items:center; gap:13px;
+}
+.cbr-player-art{
+  position:relative;
+  width:54px; height:54px; flex:none;
+  border-radius:13px; overflow:hidden;
+  background:var(--raise-2);
+}
+.cbr-player-art iframe{
+  position:absolute;
+  top:50%; left:50%;
+  width:190%; height:190%;
+  transform:translate(-50%,-50%);
+  border:0;
+}
+.cbr-player-txt{ flex:1; min-width:0; }
+.cbr-player-t{
+  font-size:14px; font-weight:600;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.cbr-player-a{
+  font-size:12.5px; color:var(--chalk-3);
+  margin-top:2px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.cbr-player-acts{ display:flex; align-items:center; gap:7px; flex:none; }
+.cbr-ctl{
+  width:40px; height:40px;
+  display:grid; place-items:center;
+  border-radius:12px;
+  border:1px solid var(--rule-2);
+  background:transparent;
+  color:var(--chalk-2);
+  cursor:pointer;
+  transition:color .22s var(--ease), border-color .22s var(--ease), background .22s var(--ease);
+}
+.cbr-ctl:hover{ color:var(--chalk); border-color:var(--chalk-3); }
+.cbr-ctl svg{ width:16px; height:16px; }
+.cbr-ctl.wide{ width:auto; padding:0 15px; gap:7px; font:inherit; font-size:13px; font-weight:600; }
+.cbr-ctl.lead{ background:var(--brass); border-color:var(--brass); color:#1C1406; }
+.cbr-ctl.lead:hover{ background:var(--brass-lit); color:#1C1406; }
+@media (max-width:620px){
+  .cbr-ctl.wide span{ display:none; }
+  .cbr-ctl.wide{ width:40px; padding:0; }
+}
+
+/* ═══ 9 · LOADING ═══════════════════════════════════════════════════ */
+
+.cbr-load{
+  display:grid; gap:7px;
+}
+.cbr-load i{
+  display:block;
+  height:70px;
+  border-radius:15px;
+  background:var(--raise);
+  background-image:linear-gradient(90deg, transparent, rgba(244,240,252,.05), transparent);
+  background-size:200% 100%;
+  animation:cbr-shim 1.5s linear infinite;
+}
+.cbr-load i:nth-child(2){ animation-delay:-.2s; }
+.cbr-load i:nth-child(3){ animation-delay:-.4s; }
+.cbr-load i:nth-child(4){ animation-delay:-.6s; }
+@keyframes cbr-shim{ from{ background-position:200% 0; } to{ background-position:-200% 0; } }
+
+/* ═══ 10 · MOTION AND CONTRAST ══════════════════════════════════════ */
+
+@media (prefers-reduced-motion:reduce){
+  .cbr,.cbr *,.cbr *::before,.cbr *::after{
+    animation-duration:.01ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.01ms !important;
+  }
+  .cbr-plinth,.cbr-cup{ opacity:1 !important; transform:none !important; }
+  .cbr-beam{ opacity:.4 !important; }
+  /* The wall video is ambient motion nobody asked for. Hold a still. */
+  .cbr-screen iframe{ display:none; }
+}
+
+@media (prefers-contrast:more){
+  .cbr{ --rule:rgba(244,240,252,.26); --rule-2:rgba(244,240,252,.42); --chalk-3:#948CAC; }
+}
