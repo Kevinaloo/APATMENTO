@@ -6,13 +6,14 @@ Object.assign(process.env, { SUPABASE_SERVICE_ROLE_KEY: 'service-test-key' });
 process.env.SUPABASE_ANON_KEY = 'anon-test-key';
 
 const [{ default: callback }, { default: stkPush }, { default: pushSend },
-  { default: scrape }, { default: email }, { default: calendarSync }] = await Promise.all([
+  { default: scrape }, { default: email }, { default: calendarSync }, { default: enhanceListing }] = await Promise.all([
   import('../api/stk-callback.js'),
   import('../api/stk-push.js'),
   import('../api/push-send.js'),
   import('../api/scrape.js'),
   import('../api/email.js'),
   import('../api/calendar-sync.js'),
+  import('../api/enhance-listing.js'),
 ]);
 
 function response() {
@@ -125,6 +126,13 @@ test('calendar import requires a signed-in listing owner', async () => {
     },
   }), res);
   assert.equal(res.statusCode, 401);
+});
+
+test('AI listing copy cannot consume provider credits anonymously', async () => {
+  const res = response();
+  await enhanceListing(request({ body: { mode: 'description', listing: { title: 'Test stay' } } }), res);
+  assert.equal(res.statusCode, 401);
+  assert.equal(res.payload.error, 'authentication_required');
 });
 
 test('untrusted origins do not receive permissive CORS', async () => {

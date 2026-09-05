@@ -212,6 +212,12 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
 .finput:focus,.fsel:focus,.ftarea:focus{border-color:var(--electric);box-shadow:0 0 0 3px rgba(67,97,255,0.09);}
 .finput::placeholder,.ftarea::placeholder{color:var(--ink-faint);}
 .ftarea{resize:vertical;min-height:108px;line-height:1.65;}
+.desc-tools{display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap;}
+.ai-write-btn{display:inline-flex;align-items:center;gap:8px;border:1.5px solid rgba(67,97,255,.22);background:linear-gradient(135deg,rgba(45,212,191,.09),rgba(67,97,255,.09));color:var(--electric);border-radius:10px;padding:9px 13px;font:700 12px/1 var(--font-body);cursor:pointer;transition:all .2s;}
+.ai-write-btn:hover{border-color:var(--electric);transform:translateY(-1px);}
+.ai-write-btn:disabled{opacity:.58;cursor:wait;transform:none;}
+.ai-write-btn svg{width:15px;height:15px;}
+.ai-write-state{font-size:11px;color:var(--ink-soft);}
 .fsel{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none' stroke='%239698B0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m1 1 5 5 5-5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:34px;}
 .fhint{font-size:11px;color:var(--ink-faint);margin-top:4px;line-height:1.5;}
 .fctr{text-align:right;font-size:11px;color:var(--ink-faint);margin-top:3px;}
@@ -233,12 +239,33 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
 .ul-sub{font-size:12px;color:var(--ink-faint);}
 .photo-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:6px;}
 @media(max-width:480px){.photo-grid{grid-template-columns:1fr 1fr;}}
-.photo-item{position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden;background:var(--surface-2);}
-.photo-item img{width:100%;height:100%;object-fit:cover;display:block;}
+.photo-item{position:relative;aspect-ratio:1;border-radius:12px;overflow:hidden;background:var(--surface-2);border:1px solid var(--line);cursor:grab;}
+.photo-item.dragging{opacity:.45;cursor:grabbing;}
+.photo-item img{width:100%;height:100%;object-fit:contain;display:block;background:#E9ECF3;}
+.photo-item img.fit-cover{object-fit:cover;}
 .ph-cover{position:absolute;top:6px;left:6px;font-size:10px;font-weight:700;padding:2px 7px;border-radius:100px;background:var(--grad);color:#fff;}
 .ph-set{position:absolute;top:6px;left:6px;font-size:10px;font-weight:600;padding:2px 7px;border-radius:100px;background:rgba(12,13,26,0.52);color:#fff;cursor:pointer;}
 .ph-rm{position:absolute;top:6px;right:6px;width:21px;height:21px;border-radius:50%;background:rgba(12,13,26,0.55);border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;}
 .ph-rm svg{width:10px;height:10px;}
+.ph-actions{position:absolute;left:6px;right:6px;bottom:6px;display:flex;align-items:center;gap:4px;}
+.ph-act{height:24px;min-width:24px;padding:0 7px;border:0;border-radius:7px;background:rgba(12,13,26,.7);color:#fff;font:700 10px/1 var(--font-body);cursor:pointer;backdrop-filter:blur(8px);}
+.ph-adjust{margin-left:auto;}
+.photo-help{font-size:11px;line-height:1.55;color:var(--ink-faint);margin-top:7px;}
+.photo-position-editor{position:fixed;inset:0;z-index:500;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(8,10,22,.66);backdrop-filter:blur(10px);}
+.photo-position-editor.open{display:flex;}
+.ppe-card{width:min(520px,100%);background:#fff;border-radius:20px;padding:18px;box-shadow:0 26px 80px rgba(8,10,22,.32);}
+.ppe-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:13px;}
+.ppe-title{font-family:var(--font-head);font-size:17px;font-weight:800;}
+.ppe-close{border:0;background:var(--surface-2);width:32px;height:32px;border-radius:9px;cursor:pointer;font-size:18px;}
+.ppe-preview{aspect-ratio:16/10;border-radius:14px;overflow:hidden;background:#E9ECF3;margin-bottom:15px;}
+.ppe-preview img{width:100%;height:100%;object-fit:contain;display:block;}
+.ppe-preview img.fit-cover{object-fit:cover;}
+.ppe-modes{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
+.ppe-mode{padding:10px;border:1.5px solid var(--line-2);border-radius:10px;background:#fff;font:700 12px/1 var(--font-body);cursor:pointer;}
+.ppe-mode.sel{border-color:var(--electric);color:var(--electric);background:rgba(67,97,255,.05);}
+.ppe-range{display:grid;grid-template-columns:105px 1fr;gap:10px;align-items:center;margin:10px 0;font-size:12px;font-weight:700;color:var(--ink-soft);}
+.ppe-range input{width:100%;accent-color:var(--electric);}
+.ppe-done{width:100%;margin-top:10px;border:0;border-radius:11px;background:var(--grad);color:#fff;padding:12px;font:800 13px/1 var(--font-body);cursor:pointer;}
 .ibox{padding:13px 15px;border-radius:12px;border:1px solid var(--line);background:var(--surface-2);margin-bottom:13px;}
 .ibox.mint{background:rgba(45,212,191,0.06);border-color:rgba(45,212,191,0.2);}
 .ibox-lbl{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mint-dark);margin-bottom:4px;}
@@ -863,7 +890,7 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
       <div id="s3-dyn"></div>
       <div class="fsec">
         <div class="fsec-title" id="s3desc-t">Description</div>
-        <div class="field"><label class="flbl" id="s3desc-l">Write a description</label><textarea class="ftarea" id="f-desc" maxlength="900" oninput="document.getElementById('f-dc').textContent=this.value.length" placeholder="Describe what makes this special..."></textarea><div class="fctr"><span id="f-dc">0</span> / 900</div></div>
+        <div class="field"><label class="flbl" id="s3desc-l">Write a description</label><div class="desc-tools"><button class="ai-write-btn" id="ai-desc-btn" type="button" onclick="generateDescription()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 1.4 4.1L17.5 8.5l-4.1 1.4L12 14l-1.4-4.1-4.1-1.4 4.1-1.4L12 3Z"/><path d="m19 14 .8 2.2L22 17l-2.2.8L19 20l-.8-2.2L16 17l2.2-.8L19 14Z"/></svg><span>Write with APA</span></button><span class="ai-write-state" id="ai-desc-state" aria-live="polite">Uses the details you have already added. You stay in control.</span></div><textarea class="ftarea" id="f-desc" maxlength="900" oninput="document.getElementById('f-dc').textContent=this.value.length" placeholder="Describe what makes this special..."></textarea><div class="fctr"><span id="f-dc">0</span> / 900</div></div>
       </div>
       <div class="step-nav">
         <button class="btn-back" onclick="go(2)">Back</button>
@@ -946,6 +973,7 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
         </div>
         <input type="file" id="photo-input" accept="image/*" multiple style="display:none;" onchange="handlePh(this.files)"/>
         <div class="photo-grid" id="photo-grid"></div>
+        <div class="photo-help">Drag photos to change their order. The first photo is the cover. Use Adjust to show the full image or choose the exact crop.</div>
       </div>
       <div id="s6-settings">
         <div class="fsec">
@@ -1138,6 +1166,16 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
       </div>
     </div>
   </main>
+</div>
+<div class="photo-position-editor" id="photo-position-editor" role="dialog" aria-modal="true" aria-labelledby="ppe-title">
+  <div class="ppe-card">
+    <div class="ppe-head"><div class="ppe-title" id="ppe-title">Adjust photo placement</div><button class="ppe-close" type="button" onclick="closePhotoPosition()" aria-label="Close">×</button></div>
+    <div class="ppe-preview"><img id="ppe-image" alt="Photo placement preview"/></div>
+    <div class="ppe-modes"><button class="ppe-mode" id="ppe-contain" type="button" onclick="setPhotoFit('contain')">Show full photo</button><button class="ppe-mode" id="ppe-cover" type="button" onclick="setPhotoFit('cover')">Fill the frame</button></div>
+    <label class="ppe-range"><span>Left / right</span><input id="ppe-x" type="range" min="0" max="100" value="50" oninput="previewPhotoPosition()"/></label>
+    <label class="ppe-range"><span>Up / down</span><input id="ppe-y" type="range" min="0" max="100" value="50" oninput="previewPhotoPosition()"/></label>
+    <button class="ppe-done" type="button" onclick="closePhotoPosition()">Done</button>
+  </div>
 </div>
 <div class="success-ov" id="success-ov">
   <div class="success-in">
@@ -1460,7 +1498,7 @@ function canonicalStayType(value){
 
 let cur=0,cov=0;
 const LABS=['Service','Type','Location','Details','Features','Pricing','Photos','Ownership','Review'];
-const F={svc:null,type:null,title:'',country:'Kenya',city:'',area:'',street:'',lat:null,lng:null,desc:'',feats:[],photos:[],photoFiles:[],cur:'KES',price:'',pw:'',pm:'',dep:'',mn:'1',wa:'',ph:'',em:'',ci:'14:00',co:'11:00',inst:true,ch:true,pets:false,smk:false,rules:'',beds:'1',baths:'1',guests:'2',floor:'',sqm:'',avail:'',bills:'',furn:'',mates:'2',bath:'shared',suits:'anyone',dur:'',meet:'',lang:'',edate:'',venue:'',age:'',cuisine:'',sig:'',eat:'all',seats:'',deliv:'',lead:'',minorder:'',delfee:'',delmins:'',make:'',model:'',yr:'',fuel:'',trans:'',areas:'',veh:'',adv:'',stock:'',cond:'',brand:'',da:'',
+const F={svc:null,type:null,title:'',country:'Kenya',city:'',area:'',street:'',lat:null,lng:null,desc:'',feats:[],photos:[],photoFiles:[],photoPositions:[],cur:'KES',price:'',pw:'',pm:'',dep:'',mn:'1',wa:'',ph:'',em:'',ci:'14:00',co:'11:00',inst:true,ch:true,pets:false,smk:false,rules:'',beds:'1',baths:'1',guests:'2',floor:'',sqm:'',avail:'',bills:'',furn:'',mates:'2',bath:'shared',suits:'anyone',dur:'',meet:'',lang:'',edate:'',venue:'',age:'',cuisine:'',sig:'',eat:'all',seats:'',deliv:'',lead:'',minorder:'',delfee:'',delmins:'',make:'',model:'',yr:'',fuel:'',trans:'',areas:'',veh:'',adv:'',stock:'',cond:'',brand:'',da:'',
   /* Stays — room tiers & space mode */
   roomTiers:[],spaceMode:'entire',sharingContext:'',
   /* Ownership. `own` is deliberately null until the host chooses: a
@@ -1570,7 +1608,7 @@ function bldStep(n){
     const depl=document.getElementById('s5depl');if(depl)depl.innerHTML=(S.dl2||'Security deposit')+(F.svc==='roommates'?'':' <span class="opt">(optional)</span>');
     const deph=document.getElementById('s5deph');if(deph)deph.style.display=F.svc==='roommates'?'':'none';
     restPr();}
-  if(n===6){const s6t=document.getElementById('s6ti');if(s6t)s6t.textContent=S.s6t||'Check-in and check-out';document.getElementById('s6il').textContent=S.il||'Start time';document.getElementById('s6ol').textContent=S.ol||'End time';document.getElementById('s6rl').textContent=S.rl||'Additional rules';const tg=document.getElementById('tog-group');if(tg)tg.style.display=S.tog?'':'none';}
+  if(n===6){const s6t=document.getElementById('s6ti');if(s6t)s6t.textContent=S.s6t||'Check-in and check-out';document.getElementById('s6il').textContent=S.il||'Start time';document.getElementById('s6ol').textContent=S.ol||'End time';document.getElementById('s6rl').textContent=S.rl||'Additional rules';const tg=document.getElementById('tog-group');if(tg)tg.style.display=S.tog?'':'none';renderPG();}
   if(n===7)bldOwn();
   if(n===2)restLoc();
   if(n===1&&F.type)document.getElementById('badge-t').textContent=F.type;
@@ -2148,12 +2186,35 @@ function dov(e){e.preventDefault();document.getElementById('ul-area').classList.
 function dlv(){document.getElementById('ul-area').classList.remove('drag');}
 function ddp(e){e.preventDefault();dlv();handlePh(e.dataTransfer.files);}
 function handlePh(files){const ok=Array.from(files).filter(f=>f.type.startsWith('image/')&&f.size<=10*1024*1024);if(files.length>ok.length)al('Some files skipped. Images only, max 10MB each.');ok.forEach(addPh);}
-function addPh(file){if(F.photoFiles.length>=10){al('Maximum 10 photos allowed.');return;}if(F.photoFiles.some(f=>f.name===file.name&&f.size===file.size)){al('"'+file.name+'" is already added.');return;}F.photoFiles.push(file);const r=new FileReader();r.onload=e=>{F.photos.push(e.target.result);cov=F.photoFiles.reduce((b,f,i)=>f.size>(F.photoFiles[b]?.size||0)?i:b,0);renderPG();};r.readAsDataURL(file);}
-function renderPG(){const g=document.getElementById('photo-grid');g.innerHTML='';const ord=[cov,...Array.from({length:F.photos.length},(_,i)=>i).filter(i=>i!==cov)];ord.forEach(oi=>{const d=document.createElement('div');d.className='photo-item';d.innerHTML='<img src="'+F.photos[oi]+'" alt="Photo" fetchpriority="high" decoding="async"/>'+(oi===cov?'<span class="ph-cover">Cover</span>':'<span class="ph-set" onclick="setCov('+oi+')">Set cover</span>')+'<button class="ph-rm" onclick="rmPh('+oi+')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>';g.appendChild(d);});document.getElementById('ul-sub').textContent=F.photos.length?F.photos.length+' photo(s) added':'JPG or PNG, up to 10 photos, max 10MB each';}
-function setCov(i){cov=i;renderPG();}
-function rmPh(i){F.photos.splice(i,1);F.photoFiles.splice(i,1);if(cov>=F.photos.length)cov=0;renderPG();}
+function normalPhotoPosition(value){return{fit:value&&value.fit==='cover'?'cover':'contain',x:Math.max(0,Math.min(100,Number(value&&value.x)||50)),y:Math.max(0,Math.min(100,Number(value&&value.y)||50))};}
+function addPh(file){if(F.photos.length>=10){al('Maximum 10 photos allowed.');return;}if(F.photoFiles.some(f=>f&&f.name===file.name&&f.size===file.size)){al('"'+file.name+'" is already added.');return;}const r=new FileReader();r.onload=e=>{F.photoFiles.push(file);F.photos.push(e.target.result);F.photoPositions.push(normalPhotoPosition());renderPG();};r.readAsDataURL(file);}
+function movePhoto(from,to){if(from===to||from<0||to<0||from>=F.photos.length||to>=F.photos.length)return;[F.photos,F.photoFiles,F.photoPositions].forEach(arr=>{const item=arr.splice(from,1)[0];arr.splice(to,0,item);});cov=0;renderPG();}
+let photoDragFrom=null;
+function renderPG(){const g=document.getElementById('photo-grid');g.innerHTML='';F.photos.forEach((src,i)=>{const p=normalPhotoPosition(F.photoPositions[i]);F.photoPositions[i]=p;const d=document.createElement('div');d.className='photo-item';d.draggable=true;d.dataset.photoIndex=i;d.innerHTML='<img class="'+(p.fit==='cover'?'fit-cover':'')+'" style="object-position:'+p.x+'% '+p.y+'%" src="'+src+'" alt="Photo '+(i+1)+'" fetchpriority="high" decoding="async"/>'+(i===0?'<span class="ph-cover">Cover</span>':'<span class="ph-set" onclick="setCov('+i+')">Set cover</span>')+'<button type="button" class="ph-rm" onclick="rmPh('+i+')" aria-label="Remove photo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button><div class="ph-actions"><button type="button" class="ph-act" onclick="movePhoto('+i+','+(i-1)+')" '+(i===0?'disabled':'')+' aria-label="Move photo left">←</button><button type="button" class="ph-act" onclick="movePhoto('+i+','+(i+1)+')" '+(i===F.photos.length-1?'disabled':'')+' aria-label="Move photo right">→</button><button type="button" class="ph-act ph-adjust" onclick="openPhotoPosition('+i+')">Adjust</button></div>';d.addEventListener('dragstart',()=>{photoDragFrom=i;d.classList.add('dragging');});d.addEventListener('dragend',()=>{photoDragFrom=null;d.classList.remove('dragging');});d.addEventListener('dragover',e=>e.preventDefault());d.addEventListener('drop',e=>{e.preventDefault();if(photoDragFrom!==null)movePhoto(photoDragFrom,i);});g.appendChild(d);});document.getElementById('ul-sub').textContent=F.photos.length?F.photos.length+' photo(s) added':'JPG or PNG, up to 10 photos, max 10MB each';}
+function setCov(i){movePhoto(i,0);}
+function rmPh(i){F.photos.splice(i,1);F.photoFiles.splice(i,1);F.photoPositions.splice(i,1);cov=0;renderPG();}
+let editingPhotoPosition=-1;
+function openPhotoPosition(i){editingPhotoPosition=i;const p=normalPhotoPosition(F.photoPositions[i]);document.getElementById('ppe-image').src=F.photos[i];document.getElementById('ppe-x').value=p.x;document.getElementById('ppe-y').value=p.y;document.getElementById('photo-position-editor').classList.add('open');setPhotoFit(p.fit);}
+function setPhotoFit(fit){if(editingPhotoPosition<0)return;F.photoPositions[editingPhotoPosition]=Object.assign(normalPhotoPosition(F.photoPositions[editingPhotoPosition]),{fit:fit==='cover'?'cover':'contain'});document.getElementById('ppe-contain').classList.toggle('sel',fit!=='cover');document.getElementById('ppe-cover').classList.toggle('sel',fit==='cover');previewPhotoPosition();}
+function previewPhotoPosition(){if(editingPhotoPosition<0)return;const p=F.photoPositions[editingPhotoPosition]=Object.assign(normalPhotoPosition(F.photoPositions[editingPhotoPosition]),{x:Number(document.getElementById('ppe-x').value),y:Number(document.getElementById('ppe-y').value)});const img=document.getElementById('ppe-image');img.classList.toggle('fit-cover',p.fit==='cover');img.style.objectPosition=p.x+'% '+p.y+'%';}
+function closePhotoPosition(){document.getElementById('photo-position-editor').classList.remove('open');editingPhotoPosition=-1;renderPG();}
 
 function gv(id){return(document.getElementById(id)?.value||'');}
+async function generateDescription(){
+  const btn=document.getElementById('ai-desc-btn');const state=document.getElementById('ai-desc-state');const field=document.getElementById('f-desc');
+  const title=(gv('f-title')||F.title||'').trim();
+  if(!title){al('Add the property name first so APA can write an accurate description.');return;}
+  btn.disabled=true;btn.querySelector('span').textContent='APA is writing';state.textContent='Using only the details you provided…';
+  try{
+    collect(2);
+    if(F.svc==='stays'){F.beds=gv('f-beds')||F.beds;F.baths=gv('f-baths')||F.baths;F.floor=gv('f-floor')||F.floor;F.sqm=gv('f-sqm')||F.sqm;}
+    const{data:{session}}=await sb.auth.getSession();if(!session)throw new Error('Please sign in again.');
+    const response=await fetch('/api/enhance-listing',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+session.access_token},body:JSON.stringify({mode:'description',listing:{title:F.title,type:F.type,service:F.svc,country:F.country,city:F.city,area:F.area,beds:F.beds,baths:F.baths,max_guests:F.guests,sqm:F.sqm,description:field.value.trim(),amenities:F.feats}})});
+    const result=await response.json();if(!response.ok||!result.enhanced?.description)throw new Error(result.error||'APA could not write this description.');
+    field.value=String(result.enhanced.description).slice(0,900);F.desc=field.value;document.getElementById('f-dc').textContent=field.value.length;field.focus();state.textContent='Draft added. Read it, personalise it, then continue.';
+  }catch(error){state.textContent=error.message||'APA could not write right now. Your details are safe.';}
+  finally{btn.disabled=false;btn.querySelector('span').textContent='Write with APA';}
+}
 function collect(n){
   if(n===2){F.title=gv('f-title').trim();F.country=gv('f-country');F.city=gv('f-city').trim();F.area=gv('f-area').trim();F.street=gv('f-street').trim();F.lat=parseFloat(gv('f-lat'))||null;F.lng=parseFloat(gv('f-lng'))||null;}
   if(n===3){F.desc=gv('f-desc').trim();
@@ -2545,8 +2606,8 @@ async function publish(){
   if(!window._eid&&DEDICATED_PIPELINES[F.svc]){dedicatedPipeline(F.svc);return;}
   collect(6);collectOwn();const btn=document.getElementById('pub-btn');btn.classList.add('loading');
   try{
-    const pu=[];const ord=(F.photoFiles.length?[cov,...Array.from({length:F.photoFiles.length},(_,i)=>i).filter(i=>i!==cov)]:[]).filter(i=>F.photoFiles[i]);
-    for(let i=0;i<ord.length;i++){const file=F.photoFiles[ord[i]];if(!CU?.id) throw new Error('Please sign in again before uploading photos.');
+    const finalPhotos=[];
+    for(let i=0;i<F.photos.length;i++){const file=F.photoFiles[i];if(!file){if(F.photos[i])finalPhotos.push(F.photos[i]);continue;}if(!CU?.id) throw new Error('Please sign in again before uploading photos.');
       /* Re-encode before upload. A modern phone camera produces 2–5 MB per
          frame; ten of those is a 30 MB gallery that nobody on mobile data
          will ever wait for. Downscaling to 1920px long edge and re-encoding
@@ -2556,8 +2617,8 @@ async function publish(){
          render — which previously showed up as a listing with blank photos. */
       const blob=await compressForUpload(file);
       const path=CU.id+'/'+Date.now()+'-'+i+'.jpg';
-      const{error}=await sb.storage.from('listings').upload(path,blob,{cacheControl:'31536000',contentType:'image/jpeg',upsert:false});if(error)throw error;const{data:{publicUrl}}=sb.storage.from('listings').getPublicUrl(path);pu.push(publicUrl);}
-    const _S=SVCS[F.svc]||{};const _monthly=_S.pf==='month';const _rate=parseFloat(F.price)||null;const SVC_TYPE_MAP={stays:"apartment",roommates:"room",tours:"tour",events:"event",food:"food",carhire:"carhire",rides:"ride",shopping:"shopping"};const svcType=SVC_TYPE_MAP[F.svc]||F.svc;const payload={partner_id:CU?.id,host_id:CU?.id,service:F.svc,type:svcType,listing_type:F.type,property_type:F.type,title:F.title,country:F.country,city:F.city,area:F.area,street:F.street||null,location:[F.area,F.city,F.country].filter(Boolean).join(', '),latitude:F.lat||null,longitude:F.lng||null,description:F.desc,amenities:F.feats,photos:pu.length?pu:F.photos,currency:F.cur,price_night:_monthly?null:_rate,price_week:_monthly?null:(parseFloat(F.pw)||null),price_month:_monthly?_rate:(parseFloat(F.pm)||null),deposit:parseFloat(F.dep)||null,min_nights:_monthly?Math.max(7,parseInt(F.mn)||90):(parseInt(F.mn)||1),max_guests:(F.svc==='food'?(F.seats||null):(F.guests||null)),beds:F.beds||null,baths:F.baths||null,bedrooms:parseInt(F.beds)||null,bathrooms:parseInt(F.baths)||null,floor:F.floor||null,sqm:F.sqm||null,checkin_time:F.ci,checkout_time:F.co,instant_book:F.inst,children:F.ch,pets:F.pets,smoking:F.smk,house_rules:F.rules||null,contact_whatsapp:F.wa||null,contact_phone:F.ph||F.wa||null,contact_email:F.em||null,status:'active',is_active:true,internal_score:50,cancel_policy:'flexible',extras:{plus:F.plusCode||null,pinq:F.precision||null,pinm:F.precisionMetres||null,dur:F.dur||null,meet:F.meet||null,lang:F.lang||null,edate:F.edate||null,venue:F.venue||null,age:F.age||null,cuisine:F.cuisine||null,deliv:F.deliv||null,lead:F.lead||null,make:F.make||null,model:F.model||null,yr:F.yr||null,fuel:F.fuel||null,trans:F.trans||null,areas:F.areas||null,veh:F.veh||null,adv:F.adv||null,stock:F.stock||null,cond:F.cond||null,brand:F.brand||null,da:F.da||null,avail:F.avail||null,bills:F.bills||null,furn:F.furn||null,mates:F.mates||null,bath:F.bath||null,suits:F.suits||null,notice:F.co||null,
+      const{error}=await sb.storage.from('listings').upload(path,blob,{cacheControl:'31536000',contentType:'image/jpeg',upsert:false});if(error)throw error;const{data:{publicUrl}}=sb.storage.from('listings').getPublicUrl(path);finalPhotos.push(publicUrl);}
+    const _S=SVCS[F.svc]||{};const _monthly=_S.pf==='month';const _rate=parseFloat(F.price)||null;const SVC_TYPE_MAP={stays:"apartment",roommates:"room",tours:"tour",events:"event",food:"food",carhire:"carhire",rides:"ride",shopping:"shopping"};const svcType=SVC_TYPE_MAP[F.svc]||F.svc;const payload={partner_id:CU?.id,host_id:CU?.id,service:F.svc,type:svcType,listing_type:F.type,property_type:F.type,title:F.title,country:F.country,city:F.city,area:F.area,street:F.street||null,location:[F.area,F.city,F.country].filter(Boolean).join(', '),latitude:F.lat||null,longitude:F.lng||null,description:F.desc,amenities:F.feats,photos:finalPhotos,currency:F.cur,price_night:_monthly?null:_rate,price_week:_monthly?null:(parseFloat(F.pw)||null),price_month:_monthly?_rate:(parseFloat(F.pm)||null),deposit:parseFloat(F.dep)||null,min_nights:_monthly?Math.max(7,parseInt(F.mn)||90):(parseInt(F.mn)||1),max_guests:(F.svc==='food'?(F.seats||null):(F.guests||null)),beds:F.beds||null,baths:F.baths||null,bedrooms:parseInt(F.beds)||null,bathrooms:parseInt(F.baths)||null,floor:F.floor||null,sqm:F.sqm||null,checkin_time:F.ci,checkout_time:F.co,instant_book:F.inst,children:F.ch,pets:F.pets,smoking:F.smk,house_rules:F.rules||null,contact_whatsapp:F.wa||null,contact_phone:F.ph||F.wa||null,contact_email:F.em||null,status:'active',is_active:true,internal_score:50,cancel_policy:'flexible',extras:{plus:F.plusCode||null,pinq:F.precision||null,pinm:F.precisionMetres||null,dur:F.dur||null,meet:F.meet||null,lang:F.lang||null,edate:F.edate||null,venue:F.venue||null,age:F.age||null,cuisine:F.cuisine||null,deliv:F.deliv||null,lead:F.lead||null,make:F.make||null,model:F.model||null,yr:F.yr||null,fuel:F.fuel||null,trans:F.trans||null,areas:F.areas||null,veh:F.veh||null,adv:F.adv||null,stock:F.stock||null,cond:F.cond||null,brand:F.brand||null,da:F.da||null,avail:F.avail||null,bills:F.bills||null,furn:F.furn||null,mates:F.mates||null,bath:F.bath||null,suits:F.suits||null,notice:F.co||null,photo_positions:F.photoPositions.map(normalPhotoPosition),
       /* Stays: room tiers + space arrangement */
       room_tiers:F.svc==='stays'?(F.roomTiers&&F.roomTiers.length?F.roomTiers:null):null,
       space_mode:F.svc==='stays'?(F.spaceMode||'entire'):null,
@@ -2620,7 +2681,7 @@ async function publish(){
         closes_at:F.co||null,
         order_whatsapp:F.wa||null,
         order_phone:F.ph||F.wa||null,
-        hero_photo:(pu.length?pu:F.photos)[0]||null
+        hero_photo:finalPhotos[0]||null
       };
       const{error:pErr}=await sb.from('restaurant_profiles').upsert(prof,{onConflict:'listing_id'});
       if(pErr)console.warn('[add-listing] restaurant profile',pErr.message);
@@ -2704,7 +2765,7 @@ async function publish(){
 
 function loadEdit(l){
   const sm={'Apartment':'stays','House':'stays','Studio':'stays','Penthouse':'stays','Villa':'stays','Cottage':'stays','Serviced unit':'stays','Guesthouse':'stays','Lodge':'stays','Hostel':'stays','Airbnb unit':'stays','Beach house':'stays','room':'roommates','apartment':'stays','tour':'tours','event':'events','carhire':'carhire','ride':'rides','shopping':'shopping','Private room':'roommates','Shared room':'roommates','En-suite':'roommates','En-suite room':'roommates','Master bedroom':'roommates','Studio unit':'stays','Bedsitter':'stays','1-bed flat':'stays','Entire flat':'stays','Safari':'tours','Day trip':'tours','City tour':'tours','Cultural':'tours','Adventure':'tours','Hiking':'tours','Water sports':'tours','Photography':'tours','Night safari':'tours','Multi-day':'tours','Bird watching':'tours','Custom tour':'tours','Concert':'events','Festival':'events','Sports event':'events','Comedy show':'events','Conference':'events','Wedding':'events','Exhibition':'events','Theatre':'events','Networking':'events','Party':'events','Food festival':'events','Art showcase':'events','Restaurant':'food','Cafe':'food','Bar and grill':'food','Fast food':'food','Catering':'food','Food truck':'food','Bakery':'food','Rooftop bar':'food','Buffet':'food','Fine dining':'food','Pop-up':'food','Cloud kitchen':'food','Self-drive':'carhire','Chauffeur':'carhire','4x4 safari':'carhire','Minibus':'carhire','Luxury sedan':'carhire','Airport transfer':'carhire','Bus hire':'carhire','Motorcycle':'carhire','Tuk tuk':'carhire','Van or MPV':'carhire','Boda boda':'carhire','Coach':'carhire','Ride hailing':'rides','Shuttle':'rides','Corporate transfer':'rides','Long-distance':'rides','Car and taxi':'rides','Electric car':'rides','Shuttle and minibus':'rides','Tuk-tuk':'rides','Motorcycle and boda':'rides','Bicycle':'rides','E-bike':'rides','Accessible transport':'rides','Boat and dhow':'rides','Horse and trail':'rides','Helicopter and air':'rides','Coach and bus':'rides','Handcraft':'shopping','Clothing':'shopping','Jewellery':'shopping','Art':'shopping','Electronics':'shopping','Food products':'shopping','Home decor':'shopping','Souvenirs':'shopping','Furniture':'shopping','Beauty':'shopping','Books':'shopping','Sport and outdoor':'shopping'};
-  F.svc=l.service||sm[l.type]||sm[l.property_type]||sm[l.listing_type]||'stays';const rawListingType=l.listing_type||l.property_type||l.type||'';F.type=F.svc==='stays'?canonicalStayType(rawListingType):rawListingType;F.title=l.title||'';F.country=l.country||'Kenya';F.city=l.city||'';F.area=l.area||'';F.street=l.street||'';F.lat=l.latitude||null;F.lng=l.longitude||null;F.plusCode=(l.extras&&l.extras.plus)||null;F.precision=(l.extras&&l.extras.pinq)||null;F.precisionMetres=(l.extras&&l.extras.pinm)||null;F.desc=l.description||'';F.feats=l.amenities||[];F.photos=l.photos||[];F.cur=l.currency||'KES';F.price=(l.service==='roommates'||l.type==='room')?(l.price_month?String(l.price_month):(l.price_night?String(l.price_night):'')):(l.price_night?String(l.price_night):'');F.pw=l.price_week?String(l.price_week):'';F.pm=l.price_month?String(l.price_month):'';F.dep=l.deposit?String(l.deposit):'';F.mn=String(((l.service==='roommates'||l.type==='room')?(l.min_nights||((l.extras&&l.extras.minmonths)*30)||90):(l.min_nights||1)));F.guests=l.max_guests||'2';F.seats=(l.service==='food'||l.type==='food')?(l.max_guests?String(l.max_guests):''):'';F.mates=(l.extras&&l.extras.mates)||l.max_guests||'2';F.bath=(l.extras&&l.extras.bath)||'shared';F.suits=(l.extras&&l.extras.suits)||'anyone';F.avail=(l.extras&&l.extras.avail)||'';F.bills=(l.extras&&l.extras.bills)||'included';F.furn=(l.extras&&l.extras.furn)||'Fully furnished';F.beds=l.beds||'1';F.baths=l.baths||'1';F.floor=l.floor||'';F.sqm=l.sqm||'';F.wa=l.contact_whatsapp||'';F.ph=l.contact_phone||'';F.em=l.contact_email||'';F.ci=l.checkin_time||'14:00';F.co=l.checkout_time||'11:00';F.inst=l.instant_book!==false;F.ch=l.children!==false;F.pets=!!l.pets;F.smk=!!l.smoking;F.rules=l.house_rules||'';
+  F.svc=l.service||sm[l.type]||sm[l.property_type]||sm[l.listing_type]||'stays';const rawListingType=l.listing_type||l.property_type||l.type||'';F.type=F.svc==='stays'?canonicalStayType(rawListingType):rawListingType;F.title=l.title||'';F.country=l.country||'Kenya';F.city=l.city||'';F.area=l.area||'';F.street=l.street||'';F.lat=l.latitude||null;F.lng=l.longitude||null;F.plusCode=(l.extras&&l.extras.plus)||null;F.precision=(l.extras&&l.extras.pinq)||null;F.precisionMetres=(l.extras&&l.extras.pinm)||null;F.desc=l.description||'';F.feats=l.amenities||[];F.photos=Array.isArray(l.photos)?l.photos.filter(Boolean):[];F.photoFiles=F.photos.map(()=>null);F.photoPositions=F.photos.map((_,i)=>normalPhotoPosition(l.extras&&Array.isArray(l.extras.photo_positions)?l.extras.photo_positions[i]:null));F.cur=l.currency||'KES';F.price=(l.service==='roommates'||l.type==='room')?(l.price_month?String(l.price_month):(l.price_night?String(l.price_night):'')):(l.price_night?String(l.price_night):'');F.pw=l.price_week?String(l.price_week):'';F.pm=l.price_month?String(l.price_month):'';F.dep=l.deposit?String(l.deposit):'';F.mn=String(((l.service==='roommates'||l.type==='room')?(l.min_nights||((l.extras&&l.extras.minmonths)*30)||90):(l.min_nights||1)));F.guests=l.max_guests||'2';F.seats=(l.service==='food'||l.type==='food')?(l.max_guests?String(l.max_guests):''):'';F.mates=(l.extras&&l.extras.mates)||l.max_guests||'2';F.bath=(l.extras&&l.extras.bath)||'shared';F.suits=(l.extras&&l.extras.suits)||'anyone';F.avail=(l.extras&&l.extras.avail)||'';F.bills=(l.extras&&l.extras.bills)||'included';F.furn=(l.extras&&l.extras.furn)||'Fully furnished';F.beds=l.beds||'1';F.baths=l.baths||'1';F.floor=l.floor||'';F.sqm=l.sqm||'';F.wa=l.contact_whatsapp||'';F.ph=l.contact_phone||'';F.em=l.contact_email||'';F.ci=l.checkin_time||'14:00';F.co=l.checkout_time||'11:00';F.inst=l.instant_book!==false;F.ch=l.children!==false;F.pets=!!l.pets;F.smk=!!l.smoking;F.rules=l.house_rules||'';
   if(l.extras){const e=l.extras;Object.assign(F,{dur:e.dur||'',meet:e.meet||'',lang:e.lang||'',edate:e.edate||'',venue:e.venue||'',age:e.age||'',cuisine:e.cuisine||'',deliv:e.deliv||'',lead:e.lead||'',make:e.make||'',model:e.model||'',yr:e.yr||'',fuel:e.fuel||'',trans:e.trans||'',areas:e.areas||'',veh:e.veh||'',adv:e.adv||'',stock:e.stock||'',cond:e.cond||'',brand:e.brand||'',da:e.da||'',avail:e.avail||'',bills:e.bills||'',furn:e.furn||'',
     roomTiers:Array.isArray(e.room_tiers)&&e.room_tiers.length?e.room_tiers:[],
     spaceMode:e.space_mode||'entire',sharingContext:e.sharing_context||'',});}

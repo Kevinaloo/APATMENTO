@@ -227,6 +227,7 @@
   }
   function setFavs(arr) {
     try { localStorage.setItem(FAV_KEY, JSON.stringify(arr)); } catch(e) {}
+    try { window.dispatchEvent(new CustomEvent('apa:favorites-changed', { detail: { count: arr.length } })); } catch(e) {}
   }
   function isFavorited(id) {
     return getFavs().some(function(f) { return f.id == id; });
@@ -263,8 +264,8 @@
       body = favs.map(function(f) {
         var link = f.url || 'apartments.html';
         return '<a class="apa-fav-item" href="' + link + '">'
-          + '<div class="apa-fav-thumb" style="background:linear-gradient(135deg,#B8A4F4,#7B2FF7);display:flex;align-items:center;justify-content:center;font-size:22px;">'
-          + (f.emoji || '🏠') + '</div>'
+          + '<div class="apa-fav-thumb" style="background:linear-gradient(135deg,#B8A4F4,#7B2FF7);display:flex;align-items:center;justify-content:center;font-size:22px;overflow:hidden;">'
+          + (f.photo ? '<img src="' + f.photo + '" alt="" style="width:100%;height:100%;object-fit:cover" onerror="this.remove()">' : (f.emoji || '🏠')) + '</div>'
           + '<div style="flex:1;min-width:0;">'
           + '<div class="apa-fav-name">' + (f.name || 'Saved place') + '</div>'
           + '<div class="apa-fav-meta">' + (f.location || '') + (f.type ? ' · ' + f.type : '') + '</div>'

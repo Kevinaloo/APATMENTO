@@ -226,9 +226,11 @@ body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webk
   position:relative;display:flex;align-items:center;justify-content:center;
 }
 .card-slide img{
-  width:100%;height:100%;object-fit:cover;object-position:center 35%;display:block;
+  width:100%;height:100%;object-fit:contain;object-position:center;display:block;
+  background:linear-gradient(145deg,#EEF0F5,#E5E8F0);
   opacity:0;transition:opacity .5s ease;
 }
+.card-slide img.fit-cover{object-fit:cover;}
 .card-slide img.ready{opacity:1;}
 .card-img-ico{width:40px;height:40px;color:rgba(255,255,255,.9);}
 
@@ -421,7 +423,8 @@ body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webk
 @media(min-width:760px){.dl-gallery{height:340px;border-radius:28px 28px 0 0;}}
 .dl-gallery-track{display:flex;height:100%;transition:transform .38s cubic-bezier(.22,1,.36,1);}
 .dl-gallery-slide{flex:0 0 100%;height:100%;object-fit:cover;display:flex;align-items:center;justify-content:center;}
-.dl-gallery-slide img{width:100%;height:100%;object-fit:cover;display:block;}
+.dl-gallery-slide img{width:100%;height:100%;object-fit:contain;display:block;background:linear-gradient(145deg,#EEF0F5,#E5E8F0);}
+.dl-gallery-slide img.fit-cover{object-fit:cover;}
 .dl-gallery-placeholder{width:64px;height:64px;color:rgba(255,255,255,.7);}
 /* nav arrows */
 .dl-gal-arr{position:absolute;top:50%;transform:translateY(-50%);width:38px;height:38px;border-radius:50%;background:rgba(252,252,253,.92);backdrop-filter:blur(8px);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink);z-index:4;transition:transform .2s,box-shadow .2s;box-shadow:0 2px 12px rgba(10,10,20,.12);}
@@ -762,7 +765,7 @@ body.map-open .split-map{display:block;}
   .card-img{background:#E8E6F0;}
   /* On single-column mobile, cap image height so photos don't feel zoomed/cropped */
   .card-media{aspect-ratio:16/9;max-height:220px;}
-  .card-media .card-slide img{object-position:center 25%;}
+  .card-media .card-slide img{object-position:center;}
   /* Tighten border-radius on narrow screens */
   .card-media{border-radius:14px;}
 }
@@ -3473,6 +3476,7 @@ async function loadNativeListings() {
       grad: 'linear-gradient(135deg,#B8A4F4,#7B2FF7)',
       source: 'native',
       photos: l.photos || [],
+      photoPositions: Array.isArray(l.extras?.photo_positions) ? l.extras.photo_positions : [],
       /* Coordinates ride along with the listing now. They were being
          fetched and thrown away, which is why every map on the site
          had to re-geocode a place name it already had the answer for. */
@@ -3497,6 +3501,7 @@ async function loadListings() {
   const native = await loadNativeListings();
   nativeCount = native.length;
   currentListings = [...native];
+  migrateLegacyStayWishlist();
 
   /* Decide once whether photos can be served resized, before anything
      paints, so no card has to swap its images mid-scroll. Capped so a
@@ -3666,10 +3671,10 @@ function renderCards(list) {
        ahead of wherever the guest has swiped to. Fourteen photos on a
        card must not cost fourteen downloads nobody asked for. */
     const slides = photos.length
-      ? photos.map((p, n) => n === 0
-          ? `<div class="card-slide"><img ${_imgAttrs(p, 640)} alt="${_esc(apt.name)}" ${i < 3 ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async"></div>`
-          : `<div class="card-slide" data-pending data-src="${_esc(p)}"></div>`
-        ).join('')
+      ? photos.map((p, n) => {const pos=apt.photoPositions?.[n]||{};const fit=pos.fit==='cover'?'cover':'contain';const x=Math.max(0,Math.min(100,Number(pos.x)||50));const y=Math.max(0,Math.min(100,Number(pos.y)||50));return n === 0
+          ? `<div class="card-slide"><img class="fit-${fit}" style="object-position:${x}% ${y}%" ${_imgAttrs(p, 640)} alt="${_esc(apt.name)}" ${i < 3 ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async"></div>`
+          : `<div class="card-slide" data-pending data-src="${_esc(p)}" data-fit="${fit}" data-x="${x}" data-y="${y}"></div>`;
+        }).join('')
       : `<div class="card-slide" style="background:${grad}">${HOUSE_SVG}</div>`;
 
     const rating = Number(apt.rating) > 0
@@ -3751,8 +3756,9 @@ function _hydrateSlides(media, from, count) {
     slide.removeAttribute('data-pending');
     const src = slide.getAttribute('data-src');
     if (!src) continue;
+    const fit=slide.dataset.fit==='cover'?'cover':'contain';const x=Number(slide.dataset.x)||50;const y=Number(slide.dataset.y)||50;
     slide.insertAdjacentHTML('beforeend',
-      `<img ${_imgAttrs(src, 640)} alt="" loading="lazy" decoding="async">`);
+      `<img class="fit-${fit}" style="object-position:${x}% ${y}%" ${_imgAttrs(src, 640)} alt="" loading="lazy" decoding="async">`);
     const fresh = slide.querySelector('img');
     if (fresh && fresh.complete && fresh.naturalWidth) fresh.classList.add('ready');
   }
@@ -3815,8 +3821,6 @@ function wireCards() {
     if (heart) {
       e.stopPropagation();
       toggleWishlist(heart.getAttribute('data-heart'), null);
-      const on = heart.classList.toggle('on');
-      heart.setAttribute('aria-pressed', String(on));
       return;
     }
 
@@ -4160,7 +4164,7 @@ function openDrawer(id) {
   _galPhotos = apt.photos?.length ? [...apt.photos] : [];
   _galIdx    = 0;
 
-  const galleryHTML = _buildGallery(_galPhotos, apt.grad);
+  const galleryHTML = _buildGallery(_galPhotos, apt.grad, apt.photoPositions);
 
   /* ── amenities ── */
   const AMEN_TICK = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>`;
@@ -4318,13 +4322,12 @@ function openDrawer(id) {
 }
 
 /* ── gallery builder ── */
-function _buildGallery(photos, grad) {
+function _buildGallery(photos, grad, positions) {
   const bg = grad || 'linear-gradient(135deg,#B8A4F4,#7B2FF7)';
   const slidesHTML = photos.length
-    ? photos.map((p,i) =>
-        `<div class="dl-gallery-slide" onclick="openLightbox(${i})" role="button" tabindex="0"
-           aria-label="Open photo ${i+1} full screen"><img src="${p}" alt="Photo ${i+1}" loading="${i===0?'eager':'lazy'}" decoding="async"/></div>`
-      ).join('')
+    ? photos.map((p,i) => {const pos=positions?.[i]||{};const fit=pos.fit==='cover'?'cover':'contain';const x=Math.max(0,Math.min(100,Number(pos.x)||50));const y=Math.max(0,Math.min(100,Number(pos.y)||50));return `<div class="dl-gallery-slide" onclick="openLightbox(${i})" role="button" tabindex="0"
+           aria-label="Open photo ${i+1} full screen"><img class="fit-${fit}" style="object-position:${x}% ${y}%" src="${p}" alt="Photo ${i+1}" loading="${i===0?'eager':'lazy'}" decoding="async"/></div>`;
+      }).join('')
     : `<div class="dl-gallery-slide" style="background:${bg}">
          <svg class="dl-gallery-placeholder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
            <path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/><path d="M9 20v-5a3 3 0 0 1 6 0v5"/>
@@ -4638,35 +4641,49 @@ function bookNow(id) {
    WISHLIST. LocalStorage-based save/unsave
 ════════════════════════════════════════════════ */
 function _getWishlist() {
-  try { return new Set(JSON.parse(localStorage.getItem('apa_wishlist') || '[]')); }
-  catch(e) { return new Set(); }
+  const ids=new Set();
+  try { if(window.ApaChrome?.getFavs)ApaChrome.getFavs().forEach(f=>ids.add(String(f.id))); } catch(e) {}
+  try { JSON.parse(localStorage.getItem('apa_wishlist') || '[]').forEach(id=>ids.add(String(id))); } catch(e) {}
+  return ids;
 }
 function _saveWishlist(set) {
   try { localStorage.setItem('apa_wishlist', JSON.stringify([...set])); } catch(e) {}
 }
+function migrateLegacyStayWishlist(){
+  if(!window.ApaChrome?.toggleFavorite)return;
+  let old=[];try{old=JSON.parse(localStorage.getItem('apa_wishlist')||'[]');}catch(e){}
+  old.forEach(id=>{const key=String(id);const apt=currentListings.find(item=>String(item.id)===key);if(!apt||ApaChrome.isFavorited(key))return;ApaChrome.toggleFavorite({id:key,name:apt.name,location:apt.location||apt.city||'',price:apt.price,type:'Stay',unit:'night',photo:(apt.photos||[])[0]||'',url:'/apartments?open='+encodeURIComponent(apt._dbId||apt.id)});});
+  try{localStorage.removeItem('apa_wishlist');}catch(e){}
+}
 function isWishlisted(id) { return _getWishlist().has(String(id)); }
 function toggleWishlist(id, btn) {
-  const wl = _getWishlist();
   const key = String(id);
-  if (wl.has(key)) {
-    wl.delete(key);
+  const apt=currentListings.find(item=>String(item.id)===key);
+  let added;
+  if(window.ApaChrome?.toggleFavorite&&apt){
+    added=ApaChrome.toggleFavorite({id:key,name:apt.name,location:apt.location||apt.city||'',price:apt.price,type:'Stay',unit:'night',photo:(apt.photos||[])[0]||'',url:'/apartments?open='+encodeURIComponent(apt._dbId||apt.id)});
+  }else{
+    const local=_getWishlist();added=!local.has(key);if(added)local.add(key);else local.delete(key);_saveWishlist(local);
+  }
+  /* Retire the stays-only key as each item is touched. It remains readable
+     above solely so nobody loses an older save during the cutover. */
+  try{const old=new Set(JSON.parse(localStorage.getItem('apa_wishlist')||'[]'));old.delete(key);localStorage.setItem('apa_wishlist',JSON.stringify([...old]));}catch(e){}
+  if (!added) {
     if (btn) {
       btn.classList.remove('wishlisted');
       btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
     }
     showToast('Removed from saved');
   } else {
-    wl.add(key);
     if (btn) {
       btn.classList.add('wishlisted');
       btn.innerHTML = '<svg viewBox="0 0 24 24" fill="#FF4D6D" stroke="#FF4D6D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
     }
     showToast('Saved to your list');
   }
-  _saveWishlist(wl);
   // Refresh card heart indicator
   const cardHeart = document.querySelector(`[data-card-id="${key}"] .card-heart`);
-  if (cardHeart) cardHeart.classList.toggle('on', wl.has(key));
+  if (cardHeart){cardHeart.classList.toggle('on', added);cardHeart.setAttribute('aria-pressed',String(added));}
 }
 
 /* ── Lightweight toast notification ── */
@@ -7214,7 +7231,3 @@ window.addEventListener('hashchange', () => {
 <script src="/cabana-footer-search.js" defer></script>
 </body>
 </html>
-
-
-
-
