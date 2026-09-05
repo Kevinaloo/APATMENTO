@@ -248,3 +248,13 @@ test('the board serves every crowd, not only the nightlife one', () => {
   assert.doesNotMatch(EVENT_ENGINE, /id="ev-hero-clock"/,
     'hero and sheet clocks must not share an invalid duplicate id');
 });
+
+test('the counters reach their number even if frame timestamps do not advance', () => {
+  const ENGINE = read('cabana-events.js');
+  assert.match(ENGINE, /Date\.now\(\) - started/,
+    'progress is measured against the wall clock, not the frame argument');
+  assert.doesNotMatch(ENGINE, /if \(!started\) started = ts;/,
+    'a frame timestamp that never advances would pin the count at zero forever');
+  assert.match(ENGINE, /else node\.textContent = String\(target\);/,
+    'the count lands exactly on its target rather than near it');
+});

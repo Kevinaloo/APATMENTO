@@ -462,13 +462,18 @@
     if (Number(node.getAttribute('data-at')) === target) return;
     node.setAttribute('data-at', target);
 
-    var from = 0, started = 0, span = Math.min(900, 260 + target * 40);
-    function frame(ts) {
-      if (!started) started = ts;
-      var p = Math.min(1, (ts - started) / span);
+    /* Progress is measured against the wall clock rather than the frame
+       timestamp. A frame argument that does not advance (a stalled tab, a
+       shimmed rAF) would otherwise pin the count at zero forever, which is
+       a worse failure than not animating at all. */
+    var started = Date.now();
+    var span = Math.min(900, 260 + target * 40);
+    function frame() {
+      var p = Math.min(1, (Date.now() - started) / span);
       var eased = 1 - Math.pow(1 - p, 3);
-      node.textContent = String(Math.round(from + (target - from) * eased));
+      node.textContent = String(Math.round(target * eased));
       if (p < 1) requestAnimationFrame(frame);
+      else node.textContent = String(target);
     }
     requestAnimationFrame(frame);
   }
