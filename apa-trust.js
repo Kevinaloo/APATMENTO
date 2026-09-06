@@ -66,7 +66,14 @@
   function hoursTo(dateStr, checkinTime) {
     if (!dateStr) return null;
     var time = checkinTime || '14:00';
-    var combined = dateStr.length <= 10 ? dateStr + 'T' + time + ':00' : dateStr;
+    /* Nairobi is UTC+3 year-round (no DST). Listing check-in times are
+       entered and shown as Nairobi wall-clock. Composing the string
+       without an explicit offset let the browser apply ITS OWN
+       timezone instead — a guest viewing this from London or Dubai
+       would see a different "hours to check-in" than one in Nairobi,
+       for the exact same booking. Pin the offset so every viewer, and
+       the server, compute the same instant. */
+    var combined = dateStr.length <= 10 ? dateStr + 'T' + time + ':00+03:00' : dateStr;
     return (new Date(combined).getTime() - Date.now()) / 3600000;
   }
   function phaseOf(h) {

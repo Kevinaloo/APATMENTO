@@ -20,10 +20,18 @@ const OFFER_TTL_HOURS = 6;
 
 const money = (n) => 'KES ' + Number(n || 0).toLocaleString();
 
-function hoursToCheckin(dateStr) {
+/* Nairobi is UTC+3 year-round (no DST). Listing check-in times are
+   entered and shown as Nairobi wall-clock, so the offset must be
+   pinned explicitly — this used to hardcode T14:00:00Z (UTC noon+2,
+   i.e. 17:00 Nairobi) and ignore the listing's actual checkin_time
+   entirely, keeping the Match gate open three hours longer than the
+   stated 24-hour policy and misjudging every listing with a check-in
+   time other than 14:00. */
+function hoursToCheckin(dateStr, checkinTime) {
   if (!dateStr) return null;
-  const t = new Date(`${dateStr}T14:00:00Z`).getTime();
-  return (t - Date.now()) / 3600000;
+  const time = checkinTime || '14:00';
+  const iso = dateStr.length <= 10 ? `${dateStr}T${time}:00+03:00` : dateStr;
+  return (new Date(iso).getTime() - Date.now()) / 3600000;
 }
 
 /* Ranked comparables. Prefer the database. It can see availability
@@ -51,7 +59,11 @@ async function candidates(booking, limit = 6) {
   );
 
   return pool
-    .filter(l => !busy.has(l.id))
+    // Never re-home a guest into the SAME host's other listing. That host
+    // just told us they can't honour this stay; routing the guest back to
+    // them lets them collect the rehoming commission by shuffling their
+    // own inventory, and defeats the point when the host is at fault.
+    .filter(l => !busy.has(l.id) && l.host_id !== booking.host_id)
     .map(l => {
       const price = 35 * Math.max(0, 1 - Math.abs(l.price_night - src.price_night) / (src.price_night || 1));
       const loc   = 25 * (l.city === src.city ? 1 : 0.35);
@@ -94,7 +106,7 @@ export default async function handler(req, res) {
       if (bk.status === 'checked_in') return res.status(409).json({ error: 'already_checked_in' });
 
       const listingMeta = await one('listings', `id=eq.${bk.apartment_id}&select=checkin_time`).catch(()=>null);
-      const h = hoursToCheckin(bk.checkin_date, listingMeta?.checkin_time);
+      const h = hoursToCheckin(bk.checkin_date, listingMeta?.checkin_time || null);
 
       // The gate. Recomputed here, on our clock, not theirs.
       if (h == null || h < 24) {
@@ -157,6 +169,17 @@ export default async function handler(req, res) {
       const bk = await one('apartment_bookings', `id=eq.${offer.booking_id}&select=*`);
       const listing = await one('listings', `id=eq.${listing_id}&select=*`);
       if (!listing || listing.status !== 'active') return res.status(409).json({ error: 'listing_unavailable' });
+
+      /* Candidates were ranked up to OFFER_TTL_HOURS ago. Someone else
+         may have booked this exact listing for these exact dates in
+         the meantime — re-check right before we commit, or two guests
+         land on the same bed. */
+      const clash = await select('apartment_bookings',
+        `apartment_id=eq.${listing_id}&cancelled_at=is.null` +
+        `&status=in.(paid_pending_checkin,deposit_paid,checked_in)` +
+        `&checkin_date=lt.${bk.checkout_date}&checkout_date=gt.${bk.checkin_date}` +
+        `&select=id&limit=1`);
+      if (clash.length) return res.status(409).json({ error: 'listing_no_longer_available' });
 
       // Guest never pays more than they agreed to. Price rises are ours to absorb;
       // price falls are theirs to keep.
@@ -291,4 +314,75 @@ export default async function handler(req, res) {
     console.error('[match-guest]', e);
     return res.status(500).json({ error: e.message });
   }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   EXPIRE STALE OFFERS  (called by the nightly sweeper)
+   ──────────────────────────────────────────────────────────────
+   A host makes an offer; the guest never opens the app again. Left
+   alone, the offer just sits at 'offered' forever — the original
+   booking is neither honoured nor refunded, and nobody is told
+   anything, right up until the guest arrives at a door their host
+   already said they could not open. Silence is not a decision this
+   system is allowed to make for a guest. Once the offer's TTL has
+   passed, an unanswered offer is treated exactly like a decline: the
+   guest is made whole, in full, without needing to ask.
+══════════════════════════════════════════════════════════════ */
+export async function expireStaleMatchOffers() {
+  const stale = await select('match_offers',
+    `status=eq.offered&expires_at=lt.${new Date().toISOString()}&select=*&limit=200`);
+
+  const results = [];
+  for (const offer of stale) {
+    try {
+      const bk = await one('apartment_bookings', `id=eq.${offer.booking_id}&select=*`);
+      if (!bk || bk.cancelled_at || bk.status === 'checked_in' || bk.status === 'rehomed') {
+        // Already resolved some other way (e.g. checked in, or matched via
+        // a later offer). Just close out this stale row.
+        await update('match_offers', `id=eq.${offer.id}`,
+          { status: 'expired', resolved_at: new Date().toISOString() });
+        results.push({ offer_id: offer.id, outcome: 'closed_no_op' });
+        continue;
+      }
+
+      const settle = await rpc('compute_settlement', { p_booking: bk.id, p_fault: 'host' })
+        .catch(() => ({ refund_amount: bk.grand_total }));
+
+      await update('apartment_bookings', `id=eq.${bk.id}`, {
+        status: 'cancelled',
+        cancelled_at: new Date().toISOString(),
+        cancel_reason: 'match_offer_unanswered',
+        refund_amount: settle.refund_amount,
+      });
+
+      await update('match_offers', `id=eq.${offer.id}`,
+        { status: 'expired', commission_paid: false, resolved_at: new Date().toISOString() });
+
+      await notify(bk.guest_id, 'refund_issued', 'Refunded in full',
+        `Your host couldn't host you and we didn't hear back from you in time to pick an ` +
+        `alternative, so ${money(settle.refund_amount)} is on its way back. Nothing withheld.`,
+        { booking_id: bk.id });
+
+      await notify(offer.origin_host_id, 'booking_update', 'Booking update',
+        'The guest did not respond to the alternative in time. They have been refunded in full.',
+        { offer_id: offer.id });
+
+      // A guest who was this close to check-in with an unresolved offer is
+      // an incident, not a routine expiry. Ops needs eyes on it now.
+      const h = Number(offer.hours_to_checkin);
+      if (Number.isFinite(h) && h < 30) {
+        await notify(null, 'ops_alert', 'Match offer expired unresolved near check-in',
+          `Offer ${offer.id} on booking ${bk.id} expired with the guest unresponsive and check-in ` +
+          `close by. Refunded automatically — confirm the guest is actually taken care of.`,
+          { offer_id: offer.id, booking_id: bk.id });
+      }
+
+      results.push({ offer_id: offer.id, outcome: 'auto_refunded', refund_amount: settle.refund_amount });
+    } catch (e) {
+      console.error('[expire-match-offers]', offer.id, e);
+      results.push({ offer_id: offer.id, outcome: 'error', error: e.message });
+    }
+  }
+
+  return { scanned: stale.length, results };
 }
