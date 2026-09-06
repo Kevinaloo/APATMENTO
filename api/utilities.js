@@ -52,6 +52,7 @@ import { requireUser } from './lib/_security.js';
 import { settleView }  from './lib/_poll-payment.js';
 import { createOrder, captureOrder, fetchOrder, kesToUsd }
   from './lib/_paypal.js';
+import { expireStaleMatchOffers } from './lib/_match-guest.js';
 
 const SWEEPABLE = {
   apartment_bookings: 'checkin_date',
@@ -643,6 +644,31 @@ async function handleReconcilePayments(req, res) {
 }
 
 /* ══════════════════════════════════════════════════════════════
+   EXPIRE MATCH OFFERS  ·  hourly, not nightly
+   ──────────────────────────────────────────────────────────────
+   A match offer's TTL is 6 hours (see api/lib/_match-guest.js). A
+   guest left on an unanswered offer is a guest with nowhere to sleep,
+   so this cannot wait for the once-a-day close-bookings sweep to get
+   around to it — it runs on its own, hourly, gated the same way.
+══════════════════════════════════════════════════════════════ */
+async function handleExpireMatchOffers(req, res) {
+  const isVercelCron = Boolean(req.headers['x-vercel-cron']);
+  const secret = req.headers['x-internal-secret'] || req.query?.secret || '';
+  if (!isVercelCron && (!process.env.INTERNAL_API_SECRET
+      || secret !== process.env.INTERNAL_API_SECRET)) {
+    return res.status(403).json({ error: 'forbidden' });
+  }
+
+  try {
+    const result = await expireStaleMatchOffers();
+    return res.status(200).json({ ok: true, ran_at: new Date().toISOString(), ...result });
+  } catch (err) {
+    console.error('[expire-match-offers]', err);
+    return res.status(500).json({ error: 'expire_failed', detail: String(err.message || err) });
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
    NEWSLETTER SIGNUP
    Public subscription endpoint for Cabana travel updates and deals
 ══════════════════════════════════════════════════════════════ */
@@ -800,6 +826,10 @@ export default async function handler(req, res) {
 
   if (action === 'reconcile-payments') {
     return handleReconcilePayments(req, res);
+  }
+
+  if (action === 'expire-match-offers') {
+    return handleExpireMatchOffers(req, res);
   }
 
   if (action === 'paypal-create-order') {

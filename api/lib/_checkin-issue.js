@@ -31,10 +31,16 @@ function haversineKm(a, b, c, d) {
   return Number((2 * R * Math.asin(Math.sqrt(s))).toFixed(2));
 }
 
+/* Nairobi is UTC+3 year-round (no DST). Listing check-in times are
+   entered and shown as Nairobi wall-clock, so the composed timestamp
+   must carry that offset explicitly — Vercel's serverless runtime is
+   UTC, and an unqualified "14:00" was silently read as 14:00 UTC
+   (17:00 Nairobi), keeping every 24-hour gate below open three hours
+   longer than the stated policy. */
 function hoursToCheckin(dateStr, checkinTime) {
   if (!dateStr) return null;
-  const time = (checkinTime || '14:00').replace(':', ':');
-  const iso = dateStr.length <= 10 ? `${dateStr}T${time}:00` : dateStr;
+  const time = checkinTime || '14:00';
+  const iso = dateStr.length <= 10 ? `${dateStr}T${time}:00+03:00` : dateStr;
   return (new Date(iso).getTime() - Date.now()) / 3600000;
 }
 
@@ -84,7 +90,10 @@ async function findRefuge(bk) {
     `&checkin_date=lt.${bk.checkout_date}&checkout_date=gt.${bk.checkin_date}&select=apartment_id`))
     .map(b => b.apartment_id));
 
-  const free = pool.filter(l => !busy.has(l.id));
+  // Never send a guest fleeing a problem back to the SAME host's other
+  // property. Whatever went wrong here (unsafe, fake listing, unreachable
+  // host, occupied) is a fact about the host, not just the unit.
+  const free = pool.filter(l => !busy.has(l.id) && l.host_id !== bk.host_id);
   if (!free.length) return null;
 
   // Nearest first, every kilometre is one we pay for and they endure.
