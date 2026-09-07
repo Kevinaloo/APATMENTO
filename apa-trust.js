@@ -289,7 +289,23 @@
   }
 
   /* ═══════════════════════════════════════════════════════════════
-     4 · MATCH GUEST. The host-facing rehoming flow
+     4 · REHOMING. One system, two doors
+     ───────────────────────────────────────────────────────────────
+     A guest has paid for a bed on a given night and something has gone
+     wrong with that bed. Rehoming is how they end up in another one
+     without losing money, the night, or an argument.
+
+       offer()   the HOST says they cannot host. Gated at 24 hours; the
+                 host keeps 30% of our fee if the guest takes one of the
+                 homes we find.
+       request() the GUEST asks to be moved. Same machinery, started
+                 from the other end, because the hosts who strand people
+                 are exactly the hosts who never press the first button.
+
+     Every number lives on the server (api/lib/_match-guest.js). This
+     file is a set of doorbells — it decides nothing about money, and
+     it can no longer write an offer row, which is the whole reason
+     the commission on one used to be worth forging.
      ═══════════════════════════════════════════════════════════════ */
   var Match = {
 
@@ -346,56 +362,78 @@
       }).sort(function (a,b) { return b.score - a.score; }).slice(0, limit);
     },
 
-    /* Host presses Match Guest. We check the window server-side too
-       a host with a doctored clock is still a host inside 24 hours. */
-    async offer(bookingId) {
-      var c = sb(); if (!c) throw new Error('offline');
+    /* Host presses "I can't host this booking".
+       ─────────────────────────────────────────────────────────────
+       This used to build the offer here, in the browser, and INSERT it
+       straight into match_offers. Two things were wrong with that, and
+       both were expensive:
 
-      var bk = (await c.from('apartment_bookings').select('*').eq('id', bookingId).single()).data;
-      if (!bk) throw new Error('booking_not_found');
+         · `service_fee` on that row decides the host's 30% commission,
+           and `candidates` decides which listings the platform will
+           absorb a price gap to. Both were written by the client. A
+           host could name their own commission and their own list.
+         · RLS cannot call match_allowed(), so the 24-hour gate — the
+           one law of this whole feature — was enforced only by the
+           browser that wanted to get past it.
 
-      var gate = await c.rpc('match_allowed', { p_booking: bookingId });
-      var g = (!gate.error && gate.data && gate.data[0]) ? gate.data[0]
-                                                         : await Match.eligibility(bk);
-      if (!g.allowed) {
-        await c.from('match_offers').insert({
-          booking_id: bookingId, origin_host_id: bk.host_id, origin_listing_id: bk.apartment_id,
-          guest_id: bk.guest_id, status: 'blocked', block_reason: g.reason,
-          hours_to_checkin: g.hours, candidates: []
-        });
-        return { blocked: true, reason: g.reason, hours: g.hours };
-      }
-
-      var cands = await Match.candidates(bookingId, 6);
-      if (!cands.length) return { blocked: true, reason: 'no_comparable_listing', hours: g.hours };
-
-      var fee        = Number(bk.service_fee || 0);
-      var commission = Math.round(fee * HOST_COMMISSION);
-
-      var ins = await c.from('match_offers').insert({
-        booking_id: bookingId,
-        origin_host_id: bk.host_id,
-        origin_listing_id: bk.apartment_id,
-        guest_id: bk.guest_id,
-        candidates: cands,
-        hours_to_checkin: g.hours,
-        service_fee: fee,
-        host_commission: commission,
-        status: 'offered'
-      }).select().single();
-      if (ins.error) throw ins.error;
-
-      await notify(bk.guest_id, 'match_offer',
-        'Your host has proposed an alternative',
-        'We found ' + cands.length + ' comparable ' + (cands.length===1?'stay':'stays') +
-        ' for the same dates. Review and choose, or take a full refund.',
-        { booking_id: bookingId, offer_id: ins.data.id });
-
-      return { blocked:false, offer: ins.data, candidates: cands, commission: commission };
+       The row is now written by the server, which reads every number
+       off the booking and the listing itself. The RLS policy that
+       allowed the old insert is gone, so this is not merely the
+       preferred path: it is the only one that works. */
+    async offer(bookingId, reason) {
+      var res = await post('/api/match-guest',
+        { action: 'offer', booking_id: bookingId, reason: reason || null });
+      var j = await res.json();
+      if (!res.ok && !j.blocked) throw new Error(j.error || 'match_offer_failed');
+      return j;
     },
 
-    /* Guest accepts one. Money moves: they pay or are refunded the
-       difference, we keep our fee, the original host earns 30% of it. */
+    /* ── The guest's own door ──────────────────────────────────────
+       "Find me another home". The same machinery, started from the
+       other end, because the hosts who strand people are exactly the
+       hosts who never press the button above.
+
+       The server decides everything that matters: whether this booking
+       can move at all, whose fault it is, and therefore what it costs.
+       `reason` is recorded and read by a person; it never sets terms.
+       See api/lib/_match-guest.js for the policy in full. */
+    async request(bookingId, reason) {
+      var res = await post('/api/match-guest',
+        { action: 'guest-request', booking_id: bookingId, reason: reason || null });
+      var j = await res.json();
+      if (!res.ok) { var e = new Error(j.error || 'rehome_request_failed'); e.detail = j; throw e; }
+      return j;
+    },
+
+    /* A host who already knows where the guest should go — their own
+       other property, a friend's, anyone's on the platform — shares it
+       directly rather than waiting on the sweep. Same 24-hour gate,
+       same server-side arithmetic; see api/lib/_match-guest.js for why
+       sharing your OWN listing here earns no commission while sharing
+       someone else's earns the same 10% as an automatic match. */
+    async offerDirect(bookingId, listingId, reason) {
+      var res = await post('/api/match-guest',
+        { action: 'offer-direct', booking_id: bookingId, listing_id: listingId, reason: reason || null });
+      var j = await res.json();
+      if (!res.ok && !j.blocked) throw new Error(j.error || 'direct_share_failed');
+      return j;
+    },
+
+    /* What the guest's screen asks before drawing the button, so nobody
+       is offered a door that will not open. */
+    async guestEligibility(bookingId) {
+      var res = await post('/api/match-guest',
+        { action: 'eligibility', booking_id: bookingId });
+      var j = await res.json();
+      if (!res.ok) throw new Error(j.error || 'eligibility_failed');
+      return j;
+    },
+
+    /* Guest accepts one. Money moves on the server, from the booking
+       and the listing — never from the offer row. A guest who is being
+       moved through no fault of their own pays exactly what they
+       already agreed, and the commission (30% of our fee) is paid only
+       when it was the host who opened the door. */
     async accept(offerId, listingId) {
       var res = await post('/api/match-guest', { action:'accept', offer_id: offerId, listing_id: listingId });
       var j = await res.json();
@@ -403,7 +441,12 @@
       return j;
     },
 
-    /* Guest says no. Full refund, always. They did not create this. */
+    /* Guest says no.
+       Through the host's door that means the stay is over either way,
+       so it is a full refund. Through the guest's own door it means
+       "I looked and I'll stay put" — the shortlist closes and their
+       booking is untouched. The server knows which; the response says
+       so in `booking_unchanged`, and the UI must not assume. */
     async decline(offerId) {
       var res = await post('/api/match-guest', { action:'decline', offer_id: offerId });
       var j = await res.json();
@@ -522,6 +565,17 @@
               '<button class="apa-issue-cam" type="button">Open camera</button>' +
               '<img class="apa-issue-thumb" hidden alt="Evidence"/>' +
             '</div>' +
+            /* Only shown once a host-fault, auto-redirect issue is
+               picked — the one case where we would otherwise move them
+               automatically. Unchecked by default: being moved is the
+               faster fix for most people. This never appears, and
+               never matters, for anything we would not have redirected
+               anyway. */
+            '<label class="apa-issue-refund-pref" hidden>' +
+              '<input type="checkbox" class="apa-issue-refund-cb"/>' +
+              '<span><b>I\'d rather have a refund than be moved.</b> If this turns out to be your ' +
+              'host\'s fault, refund me instead of finding me somewhere else to stay.</span>' +
+            '</label>' +
             '<div class="apa-issue-outcome" hidden></div>' +
           '</div>' +
           '<div class="apa-issue-foot">' +
@@ -540,19 +594,35 @@
       function refresh() {
         var needPhoto = picked && picked.requires_photo;
         $('.apa-issue-photo').hidden = !needPhoto;
+
+        /* The choice only makes sense where it would otherwise change
+           anything: a host-fault issue we would auto-redirect, and
+           only once we are past the point of a clean pre-24h refund
+           (that path refunds regardless, redirect or not). */
+        var showPref = picked && picked.fault === 'host' && picked.auto_redirect
+          && previewSettlement(booking, picked.fault).window !== 'pre_24h';
+        var prefEl = $('.apa-issue-refund-pref');
+        prefEl.hidden = !showPref;
+        if (!showPref) $('.apa-issue-refund-cb').checked = false;
+
         $('.apa-issue-go').disabled = !picked || (needPhoto && !shot);
 
         if (!picked) { $('.apa-issue-outcome').hidden = true; return; }
 
         var s = previewSettlement(booking, picked.fault);
         var lines = [];
+        var preferRefund = showPref && $('.apa-issue-refund-cb').checked;
 
         if (s.window === 'pre_24h') {
           lines.push(['Refund to you', money(s.refund_amount), 'good']);
           lines.push(['Cancelling more than 24 hours out. Nothing withheld.', '', 'note']);
         } else if (picked.fault === 'host') {
           lines.push(['Refund to you', money(s.refund_amount), 'good']);
-          if (picked.auto_redirect) lines.push(['We will arrange alternative accommodation for you immediately.', '', 'note']);
+          if (picked.auto_redirect && !preferRefund) {
+            lines.push(['We will arrange alternative accommodation for you immediately.', '', 'note']);
+          } else if (picked.auto_redirect && preferRefund) {
+            lines.push(['You asked for a refund instead — we won\'t book you anywhere else.', '', 'note']);
+          }
         } else if (picked.fault === 'guest') {
           lines.push(['Refund to you', money(s.refund_amount), '']);
           lines.push(['Retained by host', money(s.host_payout), 'warn']);
@@ -571,8 +641,8 @@
               : '<div class="apa-issue-note ' + l[2] + '">' + l[0] + '</div>';
           }).join('');
 
-        $('.apa-issue-go').textContent = picked.auto_redirect && s.window !== 'pre_24h'
-          ? 'Move me now' : 'Submit';
+        $('.apa-issue-go').textContent = !picked.auto_redirect || s.window === 'pre_24h' ? 'Submit'
+          : preferRefund ? 'Refund me' : 'Move me now';
       }
 
       function select(code) {
@@ -586,6 +656,8 @@
       sheet.querySelectorAll('.apa-issue-chip').forEach(function (b) {
         b.onclick = function () { select(b.dataset.code); };
       });
+
+      $('.apa-issue-refund-cb').onchange = refresh;
 
       // Live suggestion as they type. We show our reasoning, not a verdict.
       var ta = $('.apa-issue-text'), tmr = null;
@@ -624,7 +696,8 @@
         try {
           var r = await Issue.submit(booking, {
             code: picked.code, freeText: ta.value.trim(), shot: shot,
-            inferred: classify(ta.value, tax).slice(0, 3)
+            inferred: classify(ta.value, tax).slice(0, 3),
+            preferRefund: !$('.apa-issue-refund-pref').hidden && $('.apa-issue-refund-cb').checked
           });
           close();
           Issue._outcomeToast(r);
@@ -690,7 +763,12 @@
         window_phase: phaseOf(h),
         hours_to_checkin: h == null ? null : Number(h.toFixed(2)),
         fault: row.fault || 'unclear',
-        status: 'open'
+        status: 'open',
+        /* Stated now, before anyone knows whose fault this is. It
+           changes nothing about fault or about what a guest at fault
+           owes — it only tells the adjudicator not to auto-redirect
+           THIS guest if the host turns out to be the one who caused it. */
+        prefer_refund: !!payload.preferRefund
       }).select().single();
       if (ins.error) throw ins.error;
 
@@ -827,6 +905,12 @@
     '.apa-issue-cam{background:#0f1117;color:#fff;border:0;border-radius:11px;padding:11px 18px;',
       'font:600 13.5px system-ui;cursor:pointer}',
     '.apa-issue-thumb{display:block;width:100%;border-radius:11px;margin-top:12px}',
+    '.apa-issue-refund-pref{display:flex;gap:10px;align-items:flex-start;margin-top:16px;',
+      'padding:13px 14px;border-radius:14px;border:1.5px solid #e7e2f9;background:#faf8ff;',
+      'cursor:pointer}',
+    '.apa-issue-refund-pref input{margin-top:2px;flex:0 0 auto;width:17px;height:17px;accent-color:#6b3fd9}',
+    '.apa-issue-refund-pref span{font:400 12.5px/1.5 system-ui;color:#4a4c66}',
+    '.apa-issue-refund-pref b{color:#1c1830;font-weight:650}',
     '.apa-issue-outcome{margin:18px 0 4px;background:#f7f8fa;border-radius:15px;padding:15px 16px}',
     '.apa-issue-outcome-t{font:700 12px system-ui;letter-spacing:.04em;text-transform:uppercase;',
       'color:#8a909c;margin-bottom:11px}',

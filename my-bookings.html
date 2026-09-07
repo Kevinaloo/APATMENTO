@@ -167,6 +167,115 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--glass-2)
 .match-acts button{flex:1;padding:12px;border-radius:11px;font-family:var(--font-body);font-weight:650;font-size:13.5px;cursor:pointer;border:none;}
 .match-accept{background:#1f6feb;color:#fff;}.match-accept:disabled{background:#cfd8e2;color:#96a1ac;cursor:not-allowed;}
 .match-decline{background:#fff;border:1.5px solid #dde3ea !important;color:#57616b;}
+
+/* ── REHOME ──────────────────────────────────────────────────────────
+   The button a guest presses when the place they booked has fallen
+   through. It sits above "report a problem", not beside it, because
+   it is the thing most people actually want: not to complain, but to
+   have somewhere to sleep.
+
+   It is deliberately the most expensive-looking element on the card.
+   A guest reaching for it is having the worst moment we can give them,
+   and a thin grey outline at that moment reads as a company hoping you
+   will not press it. */
+.rehome-btn{position:relative;overflow:hidden;width:100%;margin-top:12px;padding:15px 18px;
+  border:none;border-radius:15px;cursor:pointer;display:flex;align-items:center;
+  justify-content:center;gap:10px;font-family:var(--font-body);font-weight:650;font-size:14.5px;
+  color:#fff;background:linear-gradient(122deg,#5B3FD9,#7B2FF7 46%,#2DD4BF 140%);
+  box-shadow:0 12px 30px rgba(123,47,247,.26),inset 0 1px 0 rgba(255,255,255,.28);
+  transition:transform .2s cubic-bezier(.16,1,.3,1),box-shadow .2s,filter .2s;}
+.rehome-btn::after{content:'';position:absolute;top:0;left:-60%;width:38%;height:100%;
+  transform:skewX(-18deg);pointer-events:none;
+  background:linear-gradient(100deg,transparent,rgba(255,255,255,.4),transparent);
+  animation:rhShine 4.6s ease-in-out 1.4s infinite;}
+@keyframes rhShine{0%{left:-60%;}52%,100%{left:140%;}}
+.rehome-btn:hover{transform:translateY(-1px);filter:brightness(1.05);
+  box-shadow:0 18px 40px rgba(123,47,247,.34),inset 0 1px 0 rgba(255,255,255,.28);}
+.rehome-btn:active{transform:translateY(0);filter:brightness(.97);}
+.rehome-btn:disabled{background:#cfd8e2;color:#8a94a0;box-shadow:none;cursor:progress;}
+.rehome-btn:disabled::after{display:none;}
+.rehome-btn svg{flex:none;width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2;
+  stroke-linecap:round;stroke-linejoin:round;}
+.rehome-sub{margin-top:7px;font-size:11.5px;line-height:1.5;color:var(--ink-faint);text-align:center;}
+
+/* The sheet. One question, four honest answers, and a way out. */
+.rh-veil{position:fixed;inset:0;z-index:2147481000;display:flex;align-items:flex-end;
+  justify-content:center;padding:0;opacity:0;transition:opacity .28s ease;
+  background:radial-gradient(120% 100% at 50% 40%,rgba(12,8,30,.5),rgba(6,5,16,.76));
+  -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);}
+.rh-veil.on{opacity:1;}
+.rh-sheet{width:100%;max-width:520px;background:var(--glass);border-radius:26px 26px 0 0;
+  padding:26px 24px calc(24px + env(safe-area-inset-bottom,0px));
+  box-shadow:0 -20px 70px rgba(10,10,20,.3);transform:translateY(30px);opacity:0;
+  transition:transform .42s cubic-bezier(.16,1,.3,1),opacity .3s ease;
+  max-height:92vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.rh-veil.on .rh-sheet{transform:none;opacity:1;}
+@media(min-width:560px){.rh-veil{align-items:center;padding:22px;}
+  .rh-sheet{border-radius:24px;box-shadow:0 40px 100px rgba(10,10,20,.34);}}
+.rh-grip{width:38px;height:4px;border-radius:99px;background:var(--line-2);margin:0 auto 18px;}
+.rh-t{font-family:var(--font-display);font-weight:600;font-size:21px;letter-spacing:-.02em;
+  margin-bottom:7px;}
+.rh-s{font-size:13.5px;line-height:1.6;color:var(--ink-soft);margin-bottom:18px;}
+.rh-reasons{display:grid;gap:9px;margin-bottom:16px;}
+.rh-r{display:flex;gap:12px;align-items:flex-start;padding:13px 14px;border-radius:14px;
+  border:1.5px solid var(--line-2);background:rgba(255,255,255,.6);cursor:pointer;
+  transition:border-color .18s,background .18s,transform .18s;text-align:left;width:100%;
+  font-family:var(--font-body);}
+.rh-r:hover{border-color:var(--lilac-deep);background:#fff;transform:translateX(2px);}
+.rh-r.on{border-color:var(--violet);background:linear-gradient(120deg,#faf7ff,#f4fffd);
+  box-shadow:0 6px 20px rgba(123,47,247,.1);}
+.rh-r-dot{flex:none;width:19px;height:19px;margin-top:1px;border-radius:50%;
+  border:2px solid var(--line-2);position:relative;transition:.18s;}
+.rh-r.on .rh-r-dot{border-color:var(--violet);}
+.rh-r.on .rh-r-dot::after{content:'';position:absolute;inset:3px;border-radius:50%;
+  background:var(--violet);}
+/* These are spans inside a <button>, so they need saying out loud: a
+   button's children are inline by default and the heading ran straight
+   into its own description on one line. */
+.rh-r-txt{flex:1;min-width:0;display:block;}
+.rh-r-h{display:block;font-weight:650;font-size:14px;line-height:1.35;color:var(--ink);
+  margin-bottom:3px;}
+.rh-r-p{display:block;font-size:12px;line-height:1.5;color:var(--ink-faint);}
+.rh-note{width:100%;padding:12px 13px;border-radius:13px;border:1.5px solid var(--line-2);
+  background:rgba(255,255,255,.6);font-family:var(--font-body);font-size:13.5px;color:var(--ink);
+  resize:vertical;min-height:66px;margin-bottom:14px;}
+.rh-note:focus{outline:none;border-color:var(--lilac-deep);background:#fff;}
+.rh-terms{padding:13px 14px;border-radius:13px;margin-bottom:16px;font-size:12.5px;line-height:1.6;
+  background:linear-gradient(120deg,rgba(184,164,244,.1),rgba(94,234,212,.08));
+  border:1px solid rgba(184,164,244,.28);color:var(--ink-soft);}
+.rh-terms b{color:var(--ink);font-weight:650;}
+.rh-acts{display:flex;gap:10px;}
+.rh-acts button{flex:1;padding:14px;border-radius:13px;font-family:var(--font-body);
+  font-weight:650;font-size:14px;cursor:pointer;border:none;transition:.18s;}
+.rh-go{color:#fff;background:linear-gradient(122deg,#5B3FD9,#7B2FF7 52%,#2DD4BF 150%);
+  box-shadow:0 10px 26px rgba(123,47,247,.26);}
+.rh-go:hover{filter:brightness(1.05);}
+.rh-go:disabled{background:#cfd8e2;color:#8a94a0;box-shadow:none;cursor:not-allowed;filter:none;}
+.rh-cancel{background:#fff;border:1.5px solid var(--line-2) !important;color:var(--ink-soft);}
+.rh-cancel:hover{border-color:var(--ink-faint) !important;color:var(--ink);}
+.rh-searching{display:flex;align-items:center;gap:12px;padding:16px 0;font-size:13.5px;
+  color:var(--ink-soft);}
+.rh-spin{flex:none;width:20px;height:20px;border-radius:50%;border:2.4px solid rgba(123,47,247,.18);
+  border-top-color:var(--violet);animation:spin .78s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* The shortlist, when it is the guest who asked. Same bones as the
+   host-initiated panel, warmer skin, and a price delta on every row —
+   because a guest who asked to move is comparing, not just accepting. */
+.match-card.is-guest{background:linear-gradient(180deg,#faf7ff,#f6fffd);border-color:#dcd0f7;}
+.match-card.is-guest .match-t{color:#3b2170;}
+.match-card.is-guest .match-opt.on{border-color:var(--violet);background:#faf7ff;}
+.match-card.is-guest .match-score{color:var(--violet);background:#f0e9ff;}
+.match-card.is-guest .match-accept{background:linear-gradient(122deg,#5B3FD9,#7B2FF7 60%,#2DD4BF 160%);}
+.match-delta{font-size:11px;font-weight:700;padding:3px 7px;border-radius:6px;white-space:nowrap;}
+.match-delta.down{color:#0d7a63;background:#e2fbf5;}
+.match-delta.same{color:#57616b;background:#eef1f4;}
+.match-delta.up{color:#8a5a00;background:#fff3dc;}
+/* Stacked, not strung out. Side by side these two chips ate half the row
+   and squeezed the listing's own name and address into three wrapped
+   lines — the guest is here to compare places, and the place has to be
+   the widest thing on the line. */
+.match-tags{display:flex;flex-direction:column;gap:5px;align-items:flex-end;flex:none;}
 .rev-prompt{margin-top:14px;padding:16px;border-radius:16px;background:#fafbfc;border:1.5px solid #e8eaee;}
 .rev-t{font-weight:700;font-size:14px;color:#0f1117;margin-bottom:4px;}
 .rev-s{font-size:12.5px;line-height:1.55;color:#767d88;margin-bottom:12px;}
@@ -593,6 +702,27 @@ function buildBookingCard(b, i) {
     body += buildCheckinPanel(b, lc);
   }
 
+  /* ── The two escape hatches, in the order a guest needs them ──────
+     "Find me another home" first, and loud, because it is what almost
+     everyone in trouble actually wants: not to open a dispute, but to
+     have somewhere to sleep tonight. The quieter link underneath is for
+     the cases where a move is not the answer — cancelling well ahead of
+     time, or an arrival problem that needs adjudicating.
+
+     Both are drawn only while there is something to escape: a live,
+     paid, apartment booking that has not already been rehomed. */
+  if (b._type === 'apartment' && !b.cancelled_at && !past && s.paid > 0
+      && b.status !== 'rehomed' && b.status !== 'checked_in'
+      && !PENDING_OFFERS[b.id]) {
+    body += '<button class="rehome-btn" id="rehome-btn-' + b.id + '" '
+      + 'onclick="openRehome(\'' + b.id + '\')">'
+      + '<svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/>'
+      +   '<path d="M5 9.5V20h5v-6h4v6h5V9.5"/><path d="M16.5 5.5h5m0 0-2-2m2 2-2 2"/></svg>'
+      + 'Find me another home</button>'
+      + '<div class="rehome-sub">Same dates. We sweep every listing that matches yours '
+      +   'and put the shortlist in front of you.</div>';
+  }
+
   /* The escape hatch, only while there is still something to escape. */
   if (b._type === 'apartment' && !b.cancelled_at && !past && s.paid > 0) {
     const h = (window.ApaTrust && ApaTrust.hoursTo) ? ApaTrust.hoursTo(b.checkin_date) : null;
@@ -836,11 +966,46 @@ async function loadTrustState(uid) {
    ═══════════════════════════════════════════════════════════════ */
 function buildMatchPanel(b, offer) {
   const cands = offer.candidates || [];
-  return '<div class="match-card" id="match-' + b.id + '">'
-    + '<div class="match-t">Your host can\'t host. We found ' + cands.length
-    +   ' alternative' + (cands.length === 1 ? '' : 's') + '</div>'
-    + '<div class="match-s">Same dates, same price to you. Ranked by how closely they match what '
-    +   'you booked. Choose one, or take a full refund. No penalty either way.</div>'
+  /* Who opened this door changes what the panel is allowed to say and
+     what "no thanks" does. A host-initiated offer means the stay is
+     over either way, so declining is a refund. A guest-initiated one is
+     a shortlist they asked to see, and declining changes nothing. */
+  const byGuest = (offer.initiated_by || 'host') === 'guest';
+  const expires = offer.expires_at ? new Date(offer.expires_at) : null;
+  const hoursLeft = expires ? Math.max(0, Math.round((expires - Date.now()) / 3600000)) : null;
+
+  const title = byGuest
+    ? 'We found ' + cands.length + ' ' + (cands.length === 1 ? 'home' : 'homes') + ' for your dates'
+    : 'Your host can\'t host. We found ' + cands.length
+      + ' alternative' + (cands.length === 1 ? '' : 's');
+
+  const sub = byGuest
+    ? 'Ranked against the one you booked — price, area, size and how each place has actually been '
+      + 'reviewed. Every host here has been told you\'re looking. Choose one, or keep the booking '
+      + 'you have; nothing changes until you decide.'
+    : 'Same dates, same price to you. Ranked by how closely they match what you booked. '
+      + 'Choose one, or take a full refund. No penalty either way.';
+
+  /* The price difference, on every row, stated as a number rather than
+     implied by two prices the guest has to subtract in their head. */
+  const delta = (c) => {
+    const d = Math.round(Number(c.price_delta || 0));
+    if (!d) return '<span class="match-delta same">Same price</span>';
+    /* A signed number, not a sentence. "KES 400 less/night" reads as
+       prose and wraps; "−KES 400 /night" is the same fact in a chip
+       that fits beside the listing rather than instead of it. */
+    return d < 0
+      ? '<span class="match-delta down">−' + CB.money(Math.abs(d)) + '/night</span>'
+      : '<span class="match-delta up">+' + CB.money(d) + '/night</span>';
+  };
+
+  return '<div class="match-card' + (byGuest ? ' is-guest' : '') + '" id="match-' + b.id + '">'
+    + '<div class="match-t">' + title + '</div>'
+    + '<div class="match-s">' + sub
+    +   (hoursLeft != null
+          ? ' <b>This shortlist holds for about ' + hoursLeft + ' more hour'
+            + (hoursLeft === 1 ? '' : 's') + '.</b>'
+          : '') + '</div>'
     + cands.map(c =>
         '<div class="match-opt" data-listing="' + esc(c.listing_id) + '" '
         + 'onclick="pickMatch(\'' + b.id + '\',\'' + esc(c.listing_id) + '\')">'
@@ -849,14 +1014,22 @@ function buildMatchPanel(b, offer) {
         + '<div class="match-info"><div class="match-name">' + esc(c.title || 'Listing') + '</div>'
         + '<div class="match-meta">' + esc(c.location || '')
         +   (c.distance_km != null ? ' · ' + c.distance_km + ' km away' : '')
-        +   ' · ' + esc(c.beds || '?') + ' bed' + (c.beds === 1 ? '' : 's')
+        +   ' · ' + esc(c.beds || '?') + ' bed' + (String(c.beds) === '1' ? '' : 's')
         +   ' · ' + CB.money(c.price_night) + '/night</div></div>'
-        + '<span class="match-score">' + Math.round(c.score || 0) + '%</span></div>').join('')
+        + '<span class="match-tags">' + delta(c)
+        +   '<span class="match-score">' + Math.round(c.score || 0) + '%</span></span></div>').join('')
     + '<div class="match-acts">'
-    +   '<button class="match-decline" onclick="declineMatch(\'' + offer.id + '\')">Refund me instead</button>'
+    +   '<button class="match-decline" onclick="declineMatch(\'' + offer.id + '\')">'
+    +     (byGuest ? 'Keep my booking' : 'Refund me instead') + '</button>'
     +   '<button class="match-accept" id="accept-' + b.id + '" disabled '
-    +     'onclick="acceptMatch(\'' + offer.id + '\',\'' + b.id + '\')">Accept</button>'
-    + '</div></div>';
+    +     'onclick="acceptMatch(\'' + offer.id + '\',\'' + b.id + '\')">'
+    +     (byGuest ? 'Move me here' : 'Accept') + '</button>'
+    + '</div>'
+    + (byGuest
+        ? '<div class="rehome-sub" style="margin-top:10px">You pay no more than you already have. '
+          + 'Anything cheaper comes back to you.</div>'
+        : '')
+    + '</div>';
 }
 
 let MATCH_PICK = {};
@@ -878,21 +1051,247 @@ async function acceptMatch(offerId, bookingId) {
     const r = await ApaTrust.match.accept(offerId, listingId);
     showToast(r.refund_due
       ? 'You\'re moved. ' + CB.money(r.refund_due) + ' is coming back to you.'
-      : 'You\'re moved. Same dates, same price.');
+      : 'You\'re moved. Same dates, same price.', 5500);
     await refresh();
   } catch (e) {
     if (btn) { btn.disabled = false; btn.textContent = 'Accept'; }
-    showToast(e.message === 'listing_unavailable'
-      ? 'That one just got booked. Pick another.' : 'Something went wrong. Try again.');
+    const said = {
+      listing_unavailable:        'That one just got booked. Pick another.',
+      listing_no_longer_available:'That one just got booked. Pick another.',
+      offer_expired:              'This shortlist has expired. Ask again and we\'ll sweep afresh.',
+      booking_already_resolved:   'This booking has already been settled. Refresh to see where you stand.',
+      costs_more_than_original:   'That home costs more than the one you booked. We can only move you '
+                                  + 'to somewhere at or below what you have already paid.',
+      same_host_not_allowed:      'That belongs to the same host. We won\'t send you back there.',
+    }[e.message];
+    showToast(said || 'Something went wrong. Nothing has changed — try again.', 5500);
   }
 }
 
 async function declineMatch(offerId) {
   try {
     const r = await ApaTrust.match.decline(offerId);
-    showToast('Refunded ' + CB.money(r.refund_amount) + ' in full.');
+    /* Two different "no thanks". The server tells us which one this
+       was, so the toast never announces a refund on a booking that is
+       still standing — or stay silent about one that has been cancelled. */
+    showToast(r.booking_unchanged
+      ? (r.message || 'Closed. Your original booking is exactly as it was.')
+      : 'Refunded ' + CB.money(r.refund_amount) + ' in full.', 5000);
     await refresh();
-  } catch (e) { showToast('Could not process the refund. We\'ve flagged it.'); }
+  } catch (e) { showToast('Could not close that. Nothing has changed — we\'ve flagged it.'); }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   REHOME · "Find me another home"
+   ───────────────────────────────────────────────────────────────
+   The guest's own door into the matching system. The host already
+   has one ("I can't host this booking", on their side) — but the
+   hosts who strand people are precisely the hosts who never press
+   it, so a guest who cannot rely on that has to be able to start
+   the same machinery themselves.
+
+   WHAT PRESSING IT ACTUALLY DOES
+     1. We ask the server whether this booking can be moved at all,
+        and on what terms. Nothing about that decision happens here.
+     2. We sweep every active listing for their dates, starting at
+        ±10% of what they paid a night and widening only if that
+        comes back empty, and rank by how closely each one matches
+        what they originally chose.
+     3. Every host on the shortlist is told a matched guest is
+        looking at their place, so the room is not given away while
+        the guest reads, and a message from them gets answered.
+     4. The guest picks one through the ordinary flow, or closes the
+        list and keeps the booking they have.
+
+   WHAT THE GUEST TYPES DOES NOT DECIDE THE MONEY
+     The reason box is recorded and read by a person. Fault comes
+     from the record — a host cancellation, a suspension, an
+     adjudicated check-in issue, a listing taken down — and only
+     fault sets the terms. A text field that changes a refund is a
+     text field that will be filled in to change a refund.
+
+   TERMS, SHOWN BEFORE THEY COMMIT
+     Not their fault    → same dates, SAME PRICE. A rise is ours; a
+                          fall comes back to them.
+     Their own choice   → only homes at or below what they already
+                          paid, and the difference comes back. Twice
+                          per booking, and not inside 24 hours of
+                          check-in, where an arrival problem is the
+                          right door and this one is not.
+   ═══════════════════════════════════════════════════════════════ */
+
+const REHOME_REASONS = [
+  { key: 'host_cancelled',   h: 'My host cancelled or can\'t host me',
+    p: 'They told me directly, or the booking was called off.' },
+  { key: 'host_unreachable', h: 'I can\'t reach my host',
+    p: 'No answer to calls or messages, and check-in is coming.' },
+  { key: 'place_problem',    h: 'Something is wrong with the place',
+    p: 'It isn\'t as listed, or it isn\'t usable.' },
+  { key: 'changed_plans',    h: 'I\'d rather stay somewhere else',
+    p: 'Nothing has gone wrong. I\'ve just changed my mind.' },
+];
+
+let REHOME_STATE = { bookingId: null, reason: null, veil: null };
+
+function rhClose() {
+  const v = REHOME_STATE.veil;
+  if (!v) return;
+  v.classList.remove('on');
+  document.body.style.overflow = '';
+  setTimeout(() => { if (v.parentNode) v.parentNode.removeChild(v); }, 300);
+  REHOME_STATE = { bookingId: null, reason: null, veil: null };
+}
+
+function rhPickReason(key) {
+  REHOME_STATE.reason = key;
+  document.querySelectorAll('#rh-reasons .rh-r').forEach(el => {
+    el.classList.toggle('on', el.dataset.key === key);
+  });
+  const go = document.getElementById('rh-go');
+  if (go) go.disabled = false;
+}
+
+/* The terms, in the guest's own words, before they press anything.
+   `blameless` comes from the server — the page never guesses it. */
+function rhTerms(blameless) {
+  return blameless
+    ? '<b>Same dates, same price.</b> If the new place costs more, that is ours to cover. '
+    + 'If it costs less, the difference comes back to you. There is no fee and no penalty, '
+    + 'and you can keep your booking if you don\'t like the shortlist.'
+    : '<b>We\'ll show you homes at or below what you\'ve already paid</b>, and refund you any '
+    + 'difference. You can do this twice on a booking, and not inside 24 hours of check-in — '
+    + 'if something has gone wrong at the door, use "There\'s an issue" instead and we\'ll '
+    + 'deal with it straight away.';
+}
+
+async function openRehome(bookingId) {
+  const b = allBookings.find(x => x.id === bookingId);
+  if (!b) return;
+
+  const btn = document.getElementById('rehome-btn-' + bookingId);
+  if (btn) { btn.disabled = true; btn.textContent = 'Checking…'; }
+
+  /* Ask first. A button that opens a sheet and then says "actually,
+     no" has wasted the one thing a stressed guest has least of. */
+  let elig = null;
+  try {
+    const res = await authFetch('/api/match-guest', { action: 'eligibility', booking_id: bookingId });
+    elig = await res.json().catch(() => null);
+  } catch (e) { /* fall through to the generic sheet */ }
+
+  if (btn) {
+    btn.disabled = false;
+    btn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/>'
+      + '<path d="M5 9.5V20h5v-6h4v6h5V9.5"/><path d="M16.5 5.5h5m0 0-2-2m2 2-2 2"/></svg>'
+      + 'Find me another home';
+  }
+
+  if (elig && elig.can_request === false) {
+    return showToast(RH_BLOCKED[elig.reason] || 'We can\'t move this booking right now. Talk to us and we\'ll sort it.', 6000);
+  }
+
+  const blameless = !!(elig && elig.blameless);
+
+  const veil = document.createElement('div');
+  veil.className = 'rh-veil';
+  veil.innerHTML =
+    '<div class="rh-sheet" role="dialog" aria-modal="true" aria-label="Find me another home">'
+    + '<div class="rh-grip"></div>'
+    + '<div class="rh-t">Let\'s find you somewhere else</div>'
+    + '<div class="rh-s">We\'ll sweep every home available for your dates and rank them against '
+    +   'the one you booked. Nothing changes until you choose one.</div>'
+    + '<div class="rh-reasons" id="rh-reasons">'
+    + REHOME_REASONS.map(r =>
+        '<button type="button" class="rh-r" data-key="' + r.key + '" '
+        + 'onclick="rhPickReason(\'' + r.key + '\')">'
+        + '<span class="rh-r-dot"></span>'
+        + '<span class="rh-r-txt"><span class="rh-r-h">' + esc(r.h) + '</span>'
+        + '<span class="rh-r-p">' + esc(r.p) + '</span></span></button>').join('')
+    + '</div>'
+    + '<textarea class="rh-note" id="rh-note" rows="3" maxlength="500" '
+    +   'placeholder="Anything we should know? A person reads this."></textarea>'
+    + '<div class="rh-terms">' + rhTerms(blameless) + '</div>'
+    + '<div class="rh-acts">'
+    +   '<button class="rh-cancel" onclick="rhClose()">Not now</button>'
+    +   '<button class="rh-go" id="rh-go" disabled onclick="rhSubmit()">Find me a home</button>'
+    + '</div></div>';
+
+  document.body.appendChild(veil);
+  document.body.style.overflow = 'hidden';
+  REHOME_STATE = { bookingId, reason: null, veil };
+
+  veil.addEventListener('click', e => { if (e.target === veil) rhClose(); });
+  document.addEventListener('keydown', function onEsc(e) {
+    if (e.key === 'Escape') { rhClose(); document.removeEventListener('keydown', onEsc); }
+  });
+
+  requestAnimationFrame(() => requestAnimationFrame(() => veil.classList.add('on')));
+}
+
+/* Why a booking cannot be moved, said in a way that tells the guest
+   what to do instead. "not_eligible" tells them nothing. */
+const RH_BLOCKED = {
+  cancelled:            'This booking is already cancelled. If money is still owed to you, it is on its way.',
+  already_rehomed:      'You have already been moved on this booking. Check your bookings list for the new one.',
+  already_checked_in:   'You are already checked in here. If something is wrong, use "There\'s an issue" and we\'ll act now.',
+  nothing_paid:         'There is no payment on this booking yet, so there is nothing to move. Book somewhere else freely.',
+  offer_already_open:   'You already have a shortlist open on this booking. Scroll up — it is on this page.',
+  request_limit_reached:'You have asked to move this booking twice already. Message us and a person will sort it properly.',
+  too_close_to_checkin: 'Check-in is under 24 hours away, so this is an arrival problem rather than a change of plan. Use "There\'s an issue" and we will deal with it now.',
+};
+
+async function rhSubmit() {
+  const { bookingId, reason } = REHOME_STATE;
+  if (!bookingId || !reason) return;
+
+  const note = (document.getElementById('rh-note')?.value || '').trim().slice(0, 500);
+  const sheet = REHOME_STATE.veil?.querySelector('.rh-sheet');
+  if (sheet) {
+    sheet.innerHTML =
+      '<div class="rh-grip"></div>'
+      + '<div class="rh-t">Sweeping every home for your dates</div>'
+      + '<div class="rh-s">Matching on price, area, size and how the place has actually been '
+      +   'reviewed. This takes a few seconds.</div>'
+      + '<div class="rh-searching"><span class="rh-spin"></span>'
+      +   '<span>Checking availability and telling the hosts you\'re looking…</span></div>';
+  }
+
+  try {
+    const res = await authFetch('/api/match-guest', {
+      action: 'guest-request', booking_id: bookingId,
+      reason: reason + (note ? ' · ' + note : ''),
+    });
+    const j = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      rhClose();
+      return showToast(RH_BLOCKED[j.error] || j.message
+        || 'That did not go through. Nothing has changed — try again in a moment.', 6000);
+    }
+
+    if (!j.found) {
+      rhClose();
+      return showToast(j.message
+        || 'Nothing comparable is free for your dates. Your booking is unchanged.', 7000);
+    }
+
+    rhClose();
+    showToast('Found ' + j.found + ' ' + (j.found === 1 ? 'home' : 'homes')
+      + (j.hosts_notified ? ' · ' + j.hosts_notified + ' host'
+          + (j.hosts_notified === 1 ? '' : 's') + ' notified' : '')
+      + '. Take a look below.', 5500);
+    await refresh();
+
+    /* Put it where they are looking. */
+    setTimeout(() => {
+      const el = document.getElementById('match-' + bookingId);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 420);
+  } catch (e) {
+    rhClose();
+    showToast('We could not reach the matching service. Your booking is untouched — try again.', 6000);
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════

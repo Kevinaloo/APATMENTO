@@ -3,7 +3,11 @@
    cabana-credit.js
 
    Every new account opens with 200 credits. One credit is one
-   shilling off the total, on everything except flights.
+   shilling off the total, on stays, tours, events, roommates and
+   car hire — the five services where we take a fee and so have a
+   margin to discount against. The server owns that list
+   (CREDIT_ELIGIBLE in api/rewards.js) and enforces it at redemption;
+   everything here is the copy for it.
 
    THE ARGUMENT THIS FILE MAKES
    ────────────────────────────
@@ -102,6 +106,8 @@
     var s = document.createElement('style');
     s.id = 'cabana-credit-css';
     s.textContent = [
+      '.cc-card,.cc-card *,.cc-held,.cc-held *{box-sizing:border-box;}',
+
       '.cc-card{position:relative;overflow:hidden;border-radius:24px;padding:1px;',
       '  background:linear-gradient(135deg,rgba(184,164,244,.55),rgba(45,212,191,.30) 42%,rgba(123,47,247,.55));',
       '  margin:0 0 20px;}',
@@ -237,8 +243,24 @@
     animateIn(mount, amount);
   }
 
+  /* Where the credits are good, said the same way everywhere. The
+     server owns the list (api/rewards.js, CREDIT_ELIGIBLE); this is
+     the copy for it, and the fallback if we are drawing before the
+     server has answered. */
+  var SCOPE_SENTENCE = 'Valid on stays, tours, events, roommates and car hire.';
+
+  function scopeSentence(list) {
+    if (!list || !list.length) return SCOPE_SENTENCE;
+    var names = list.map(function (k) {
+      return ({ stays: 'stays', tours: 'tours', events: 'events',
+                roommates: 'roommates', carhire: 'car hire' })[k] || k;
+    });
+    var last = names.pop();
+    return 'Valid on ' + (names.length ? names.join(', ') + ' and ' + last : last) + '.';
+  }
+
   /* ── the reveal, the first time they see it credited ─────────────── */
-  function renderReveal(mount, amount, balance) {
+  function renderReveal(mount, amount, balance, scope) {
     css();
     mount.innerHTML =
       '<div class="cc-card"><div class="cc-in"><div class="cc-body">'
@@ -249,11 +271,11 @@
       + '</div>'
       + '<div class="cc-worth cc-rise">Worth ' + money(amount) + ', already in your balance.</div>'
       + '<div class="cc-lede cc-rise">Welcome. <b>Now spend them.</b></div>'
-      + '<div class="cc-sub cc-rise">They come off the total at checkout, on anything you book: a room '
-      +   'in Kilimani, a morning in the Mara, a table on Friday. Nothing to enter, nothing to '
-      +   'remember. They are simply there.</div>'
+      + '<div class="cc-sub cc-rise">They come off the total at checkout: a room in Kilimani, a '
+      +   'morning in the Mara, a table on Friday, the car that gets you there. Nothing to enter, '
+      +   'nothing to remember. They are simply there.</div>'
       + '<a class="cc-cta cc-rise" href="apartments.html">Find somewhere to stay' + arrow() + '</a>'
-      + '<div class="cc-fine">Balance: ' + money(balance) + ' · Not valid on flights.</div>'
+      + '<div class="cc-fine">Balance: ' + money(balance) + ' · ' + esc(scopeSentence(scope)) + '</div>'
       + '</div></div></div>';
 
     animateIn(mount, amount);
@@ -267,7 +289,7 @@
       + '<span class="cc-held-n" data-cc-count="' + balance + '">0</span>'
       + '<span><span class="cc-held-t">credits in your account</span>'
       + '<span class="cc-held-s">' + money(balance)
-      +   ' off your next booking. Not valid on flights.</span></span>'
+      +   ' off your next booking. ' + SCOPE_SENTENCE + '</span></span>'
       + '</a>';
     animateIn(mount, balance, 700);
   }
@@ -318,6 +340,66 @@
 
   /* ── boot ───────────────────────────────────────────────────────── */
   var popScheduled = false;
+  var claimRan     = false;
+
+  /* Ask the server whether this account still has its one moment, and
+     spend it only if we are in a position to draw it.
+
+     The ordering matters. The server hands out `celebrate: true` from a
+     single atomic UPDATE, so the moment is spent by ASKING, not by
+     rendering. Everything below therefore checks that the screen is
+     free BEFORE the request goes out, waits briefly for a busy screen
+     to clear, and gives up without asking if it never does. A moment
+     spent on a background tab is a moment gone.
+
+     The localStorage key is a hint that saves a request on later page
+     loads. It is never the authority: if it is missing, wrong, or from
+     another device, the server simply answers false and we set it
+     again. Nothing about whether someone is congratulated depends on
+     what their browser remembers. */
+  function celebrateIfDue(token) {
+    var settled = false;
+    try { settled = localStorage.getItem(CELEB_SPENT_KEY) === '1'; } catch (e) {}
+    if (settled) return Promise.resolve(null);
+
+    var t0 = Date.now();
+
+    return new Promise(function (resolve) {
+      var attempt = function () {
+        if (!celebDrawable()) {
+          /* Something is over the screen — the intro, the referral
+             modal, a hidden tab. Wait for it, but not forever, and do
+             not ask until it is gone. */
+          if (Date.now() - t0 > 25000) return resolve(null);
+          return setTimeout(attempt, 900);
+        }
+
+        api('claim-welcome', { celebrate: true }, token).then(function (r) {
+          if (!r || !r.celebrate) {
+            /* Either they have already had it, or the grant has not
+               landed yet. Only remember "settled" when the server has
+               actually told us the account holds credits — otherwise a
+               brand-new account whose grant is a beat behind would
+               cache away its own celebration. */
+            if (r && (r.already || r.granted)) {
+              try { localStorage.setItem(CELEB_SPENT_KEY, '1'); } catch (e) {}
+            }
+            return resolve(r || null);
+          }
+
+          try { localStorage.setItem(CELEB_SPENT_KEY, '1'); } catch (e) {}
+          clearStats();
+
+          var amount  = Number(r.points) || CREDITS;
+          var balance = Number(r.balance) || amount;
+          celebShow(amount, balance, r.eligible_services);
+          resolve(r);
+        }, function () { resolve(null); });
+      };
+
+      attempt();
+    });
+  }
 
   async function init() {
     var mounts = [].slice.call(document.querySelectorAll('[data-cabana-credit]'));
@@ -331,29 +413,45 @@
       return;
     }
 
-    if (!mounts.length) return;
-
     var token = ses.access_token;
 
     /* Signed in. Claiming is idempotent server-side and enforced by a
        unique index, so calling it on every load is safe and means a
        failed call at signup self-heals on the next page view rather
-       than silently costing someone their credits. */
+       than silently costing someone their credits.
+
+       This now runs whether or not the page has somewhere to draw a
+       card. It used to sit behind `if (!mounts.length) return`, which
+       meant an account that landed on a page without a credit mount —
+       most of the site, and in particular wherever a Google sign-in
+       happens to return to — never claimed at all until they wandered
+       onto one that had it. The congratulations lives at window level,
+       not in a mount, and it should not depend on the furniture of
+       whichever page they happened to land on. */
+    if (!claimRan) {
+      claimRan = true;
+      celebrateIfDue(token);
+    }
+
+    if (!mounts.length) return;
+
     var claim = await api('claim-welcome', {}, token);
     if (claim && claim.granted) clearStats();
 
     var s       = await stats(token);
     var balance = Number(s && (s.credit_kes != null ? s.credit_kes : s.available_points)) || 0;
     var amount  = Number(claim && claim.points) || CREDITS;
+    var scope   = (claim && claim.eligible_services) || (s && s.eligible_services);
 
     var seen = false;
     try { seen = localStorage.getItem(SEEN_KEY) === '1'; } catch (e) {}
 
-    /* The reveal happens once: on the first load after the grant, or
-       for anyone arriving from signup who has not seen it yet. */
+    /* The inline reveal, for a page that has a card to put it in. The
+       overlay above is the moment; this is the same news sitting in
+       the page afterwards, where it can be re-read. */
     if (!seen && (claim.granted || claim.already) && balance > 0) {
       try { localStorage.setItem(SEEN_KEY, '1'); } catch (e) {}
-      mounts.forEach(function (m) { renderReveal(m, amount, balance); });
+      mounts.forEach(function (m) { renderReveal(m, amount, balance, scope); });
       return;
     }
 
@@ -459,6 +557,10 @@
     var s = document.createElement('style');
     s.id = 'cabana-credit-pop-css';
     s.textContent = [
+      /* Same reason as the celebration below: injected CSS must own its
+         own box model rather than borrow the host page's. */
+      '.ccp-wrap,.ccp-wrap *{box-sizing:border-box;}',
+
       '.ccp-wrap{position:fixed;inset:0;z-index:2147481500;display:flex;align-items:center;',
       '  justify-content:center;padding:22px;opacity:0;transition:opacity .34s ease;}',
       '.ccp-wrap.ccp-on{opacity:1;}',
@@ -704,6 +806,377 @@
     setTimeout(poll, POP_DELAY_MS);
   }
 
+
+  /* ══════════════════════════════════════════════════════════════
+     THE CONGRATULATIONS
+     ──────────────────────────────────────────────────────────────
+     One moment, once, for one reason: an account was just opened and
+     200 credits are already in it. Not a nudge, not an offer — a
+     receipt for something that has already happened.
+
+     WHY IT IS ALLOWED TO INTERRUPT
+     ──────────────────────────────
+     Everything else this file draws is quiet, transient, and easy to
+     ignore, because everything else is asking for something. This one
+     is not asking. It is the only screen on the whole site that exists
+     purely to hand someone good news, and it is the only one that will
+     ever be shown to a given person. So it holds the page, it waits to
+     be dismissed, and it takes its time with the number.
+
+     ONCE. ACTUALLY ONCE.
+     ────────────────────
+     The decision is not made here. `claim-welcome` returns
+     `celebrate: true` from exactly one call in the life of an account,
+     because the server flips a column in a single atomic UPDATE. That
+     means:
+
+       · a new phone, a cleared cache, a private window, a reinstall
+         — none of them bring it back
+       · two tabs racing produce one celebration
+       · Google and email signup land in the same place, because the
+         flag lives on the account, not on the flow
+
+     The old reveal used a localStorage key, so it re-fired on every
+     new device a long-standing user ever signed in on. A gift you are
+     congratulated for receiving four times stops reading as a gift and
+     starts reading as a bug.
+
+     We only ASK for the stamp when we can actually draw it — the tab
+     is visible, nothing else is over the screen, the DOM is ready.
+     Asking is what spends it, and spending someone's one moment on a
+     background tab they never looked at would be worse than not
+     having it.
+  ══════════════════════════════════════════════════════════════ */
+
+  var CELEB_SPENT_KEY = 'cabana_welcome_celebrated';   /* a hint, never the authority */
+  var celebLive = null;
+
+  function celebCss() {
+    if (document.getElementById('cabana-celebrate-css')) return;
+    var s = document.createElement('style');
+    s.id = 'cabana-celebrate-css';
+    s.textContent = [
+      /* ── box-sizing, declared rather than inherited ───────────────
+         This module injects itself into whatever page it lands on, and
+         it cannot assume that page ships a reset. Without this, `width:
+         100%` plus horizontal padding on the buttons is content-box
+         arithmetic: the CTA rendered 40px wider than the card it sits
+         in and hung off the right edge — on a page that HAD a reset it
+         looked fine, which is the worst way for a bug like this to
+         behave. Own the box model for our own subtree and stop
+         depending on the host's. */
+      '.cw-wrap,.cw-wrap *{box-sizing:border-box;}',
+
+      '.cw-wrap{position:fixed;inset:0;z-index:2147482600;display:flex;align-items:center;',
+      '  justify-content:center;padding:20px;opacity:0;transition:opacity .4s ease;}',
+      '.cw-wrap.cw-on{opacity:1;}',
+      '.cw-wrap.cw-out{opacity:0;transition:opacity .3s ease;}',
+      '.cw-bg{position:absolute;inset:0;',
+      '  background:radial-gradient(130% 110% at 50% 34%,rgba(16,10,42,.72),rgba(4,3,12,.93));',
+      '  -webkit-backdrop-filter:blur(10px) saturate(120%);backdrop-filter:blur(10px) saturate(120%);}',
+
+      /* ── the card ────────────────────────────────────────────────
+         Same material as the rest of the credit surfaces, lit harder.
+         A 1.5px gradient rim rather than a border, so the edge reads
+         as light on a surface instead of a line drawn round a box. */
+      '.cw-card{position:relative;width:100%;max-width:430px;border-radius:32px;padding:1.5px;',
+      '  overflow:hidden;opacity:0;transform:translateY(38px) scale(.9);',
+      '  background:linear-gradient(135deg,rgba(255,214,140,.85),rgba(184,164,244,.7) 34%,',
+      '    rgba(45,212,191,.55) 66%,rgba(123,47,247,.9));',
+      '  box-shadow:0 60px 130px rgba(0,0,0,.7),0 0 120px rgba(123,47,247,.3);',
+      '  transition:transform .78s cubic-bezier(.16,1.1,.3,1),opacity .5s ease;}',
+      '.cw-on .cw-card{opacity:1;transform:none;}',
+      '.cw-out .cw-card{opacity:0;transform:translateY(16px) scale(.97);',
+      '  transition:transform .3s ease-in,opacity .26s ease-in;}',
+      '.cw-card::before{content:"";position:absolute;inset:-45%;',
+      '  background:conic-gradient(from 0deg,transparent 0turn,rgba(255,255,255,.7) .05turn,',
+      '    transparent .14turn,transparent 1turn);animation:cwSheen 6s linear infinite;}',
+      '@keyframes cwSheen{to{transform:rotate(1turn);}}',
+
+      '.cw-in{position:relative;z-index:1;border-radius:30.5px;overflow:hidden;text-align:center;',
+      '  padding:40px 28px 26px;color:#fff;',
+      '  background:linear-gradient(162deg,#100D22 0%,#1A1440 44%,#0A2126 100%);}',
+      '.cw-in::after{content:"";position:absolute;inset:0;pointer-events:none;',
+      '  background:radial-gradient(110% 74% at 50% -12%,rgba(255,205,120,.28),transparent 58%),',
+      '  radial-gradient(120% 100% at 88% 8%,rgba(123,47,247,.4),transparent 60%),',
+      '  radial-gradient(96% 96% at 4% 106%,rgba(45,212,191,.24),transparent 60%);}',
+      '.cw-body{position:relative;z-index:2;}',
+
+      /* ── the burst ───────────────────────────────────────────────
+         Not confetti. Confetti is a party someone else is having.
+         These are struck once, from behind the number, and settle. */
+      '.cw-burst{position:absolute;left:50%;top:34%;width:1px;height:1px;z-index:1;pointer-events:none;}',
+      '.cw-p{position:absolute;left:0;top:0;border-radius:50%;opacity:0;',
+      '  animation:cwFly 1500ms cubic-bezier(.12,.72,.24,1) forwards;}',
+      '@keyframes cwFly{',
+      '  0%{opacity:0;transform:translate(0,0) scale(.3);}',
+      '  14%{opacity:1;}',
+      '  100%{opacity:0;transform:translate(var(--x),var(--y)) scale(var(--s,1));}}',
+
+      '.cw-seal{width:66px;height:66px;margin:0 auto 20px;border-radius:50%;display:flex;',
+      '  align-items:center;justify-content:center;position:relative;',
+      '  background:linear-gradient(140deg,rgba(255,214,140,.28),rgba(123,47,247,.3));',
+      '  border:1px solid rgba(255,225,170,.42);',
+      '  box-shadow:0 0 0 8px rgba(255,214,140,.05),0 18px 44px rgba(123,47,247,.34);',
+      '  animation:cwSeal 900ms cubic-bezier(.16,1.3,.3,1) both;}',
+      '@keyframes cwSeal{0%{opacity:0;transform:scale(.4) rotate(-24deg);}',
+      '  100%{opacity:1;transform:none;}}',
+      '.cw-seal svg{width:30px;height:30px;stroke:#FFE3AE;fill:none;stroke-width:1.7;',
+      '  stroke-linecap:round;stroke-linejoin:round;}',
+
+      '.cw-hi{font:600 12px/1 "Inter",system-ui,sans-serif;letter-spacing:.22em;text-transform:uppercase;',
+      '  color:#FFD9A0;margin-bottom:12px;}',
+      '.cw-h1{font-family:"Geist","Inter",sans-serif;font-weight:600;font-size:clamp(25px,6.4vw,31px);',
+      '  line-height:1.16;letter-spacing:-.022em;margin:0 0 6px;}',
+      '.cw-sub{font-size:14px;line-height:1.5;color:rgba(255,255,255,.6);margin:0 0 22px;}',
+
+      '.cw-fig{display:flex;align-items:baseline;justify-content:center;gap:11px;margin-bottom:4px;}',
+      '.cw-num{font-family:"Geist","Inter",sans-serif;font-weight:700;font-size:clamp(70px,19vw,104px);',
+      '  line-height:.88;letter-spacing:-.055em;font-variant-numeric:tabular-nums;',
+      '  background:linear-gradient(112deg,#fff 12%,#FFE0AC 40%,#C9B6FF 70%,#5EEAD4 98%);',
+      '  -webkit-background-clip:text;background-clip:text;color:transparent;',
+      '  filter:drop-shadow(0 6px 26px rgba(184,164,244,.4));}',
+      '.cw-unit{font-family:"Geist","Inter",sans-serif;font-size:19px;font-weight:500;font-style:italic;',
+      '  color:rgba(255,255,255,.76);}',
+      '.cw-worth{font-size:13px;color:rgba(255,255,255,.5);margin:0 0 22px;}',
+      '.cw-worth b{color:rgba(255,255,255,.82);font-weight:600;}',
+
+      /* ── where they are good ─────────────────────────────────────
+         The one piece of fine print that is not fine print. Saying it
+         plainly here is what stops it being a surprise at a checkout
+         later, and a surprise at a checkout is how a gift turns into
+         a complaint. */
+      '.cw-scope{border-radius:16px;padding:14px 15px;margin:0 0 22px;text-align:left;',
+      '  background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.09);}',
+      '.cw-scope-t{font:600 10.5px/1 "Inter",system-ui,sans-serif;letter-spacing:.15em;',
+      '  text-transform:uppercase;color:rgba(255,255,255,.44);margin-bottom:9px;}',
+      '.cw-chips{display:flex;flex-wrap:wrap;gap:6px;}',
+      '.cw-chip{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:100px;',
+      '  font:600 11.5px/1 "Inter",system-ui,sans-serif;color:#DCD2FF;',
+      '  background:linear-gradient(135deg,rgba(123,47,247,.24),rgba(45,212,191,.13));',
+      '  border:1px solid rgba(184,164,244,.26);',
+      '  opacity:0;transform:translateY(6px);animation:cwChip .44s ease forwards;}',
+      '@keyframes cwChip{to{opacity:1;transform:none;}}',
+      '.cw-chip svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2.2;',
+      '  stroke-linecap:round;stroke-linejoin:round;}',
+
+      '.cw-cta{position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;',
+      '  gap:9px;width:100%;padding:17px 20px;border-radius:16px;border:none;cursor:pointer;',
+      '  text-decoration:none;font:650 15.5px/1 "Inter",system-ui,sans-serif;color:#0B0A16;',
+      '  background:linear-gradient(120deg,#fff,#FFE6BD 40%,#DCD2FF 74%,#B7F5E9);',
+      '  box-shadow:0 16px 40px rgba(123,47,247,.4),inset 0 1px 0 rgba(255,255,255,.7);}',
+      '.cw-cta::after{content:"";position:absolute;top:0;left:-65%;width:40%;height:100%;',
+      '  transform:skewX(-18deg);pointer-events:none;',
+      '  background:linear-gradient(100deg,transparent,rgba(255,255,255,.85),transparent);',
+      '  animation:cwShine 3.1s ease-in-out 1.1s infinite;}',
+      '@keyframes cwShine{0%{left:-65%;}56%,100%{left:140%;}}',
+      '.cw-cta:hover{filter:brightness(1.04);}',
+      '.cw-cta:active{filter:brightness(.95);}',
+      '.cw-cta svg{position:relative;z-index:1;transition:transform .26s cubic-bezier(.16,1,.3,1);}',
+      '.cw-cta:hover svg{transform:translateX(3px);}',
+
+      '.cw-alt{display:block;width:100%;margin-top:11px;padding:13px;border-radius:14px;cursor:pointer;',
+      '  font:600 13.5px/1 "Inter",system-ui,sans-serif;color:rgba(255,255,255,.72);text-decoration:none;',
+      '  background:transparent;border:1px solid rgba(255,255,255,.14);',
+      '  transition:background .2s,color .2s,border-color .2s;}',
+      '.cw-alt:hover{background:rgba(255,255,255,.07);color:#fff;border-color:rgba(255,255,255,.24);}',
+
+      '.cw-x{position:absolute;top:14px;right:14px;z-index:3;width:34px;height:34px;border-radius:50%;',
+      '  display:flex;align-items:center;justify-content:center;cursor:pointer;',
+      '  border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);',
+      '  color:rgba(255,255,255,.55);font:400 18px/1 system-ui,sans-serif;',
+      '  transition:background .2s,color .2s;}',
+      '.cw-x:hover{background:rgba(255,255,255,.15);color:#fff;}',
+      '.cw-fine{margin-top:15px;font-size:11.5px;line-height:1.5;color:rgba(255,255,255,.36);}',
+
+      /* Focus, said in the card\'s own language. The container takes
+         focus on open and must never draw a ring for it; the controls
+         draw one only for a keyboard, and draw it in a colour that
+         belongs here rather than the browser\'s black default. */
+      '.cw-in:focus{outline:none;}',
+      '.cw-in:focus-visible{outline:none;}',
+      '.cw-cta:focus,.cw-alt:focus,.cw-x:focus{outline:none;}',
+      '.cw-cta:focus-visible,.cw-alt:focus-visible,.cw-x:focus-visible{',
+      '  outline:2px solid #B7F5E9;outline-offset:3px;}',
+
+      '@media(max-width:420px){.cw-in{padding:34px 21px 21px;}.cw-wrap{padding:14px;}',
+      '  .cw-seal{width:58px;height:58px;margin-bottom:16px;}}',
+      '@media(max-height:680px){.cw-in{padding:26px 24px 20px;}.cw-seal{display:none;}',
+      '  .cw-sub{margin-bottom:14px;}.cw-scope{margin-bottom:15px;padding:11px 13px;}}',
+      '@media(prefers-reduced-motion:reduce){',
+      '  .cw-card::before,.cw-cta::after,.cw-p,.cw-seal{animation:none;}',
+      '  .cw-chip{animation:none;opacity:1;transform:none;}',
+      '  .cw-card{transition:opacity .3s ease;transform:none;}',
+      '  .cw-on .cw-card,.cw-out .cw-card{transform:none;}}'
+    ].join('');
+    document.head.appendChild(s);
+  }
+
+  /* The five services, drawn from the server's own list so this can
+     never say something the checkout will contradict. */
+  var SCOPE_FALLBACK = ['stays', 'tours', 'events', 'roommates', 'carhire'];
+  var SCOPE_LABEL = {
+    stays: 'Stays', tours: 'Tours & safaris', events: 'Events',
+    roommates: 'Roommates', carhire: 'Car hire'
+  };
+  function scopeChips(list) {
+    var tick = '<svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>';
+    return (list && list.length ? list : SCOPE_FALLBACK)
+      .map(function (k, i) {
+        var label = SCOPE_LABEL[k] || (String(k).charAt(0).toUpperCase() + String(k).slice(1));
+        return '<span class="cw-chip" style="animation-delay:' + (620 + i * 70) + 'ms">'
+             + tick + esc(label) + '</span>';
+      }).join('');
+  }
+
+  function celebBurst(host) {
+    if (reduced) return;
+    var colours = ['#FFE0AC', '#C9B6FF', '#5EEAD4', '#FFFFFF', '#B8A4F4'];
+    var frag = document.createDocumentFragment();
+    for (var i = 0; i < 30; i++) {
+      var p = document.createElement('span');
+      p.className = 'cw-p';
+      var ang = (Math.PI * 2 * i) / 30 + (Math.random() - 0.5) * 0.35;
+      var dist = 90 + Math.random() * 170;
+      var sz = (Math.random() * 4.5 + 2.5).toFixed(1);
+      p.style.cssText =
+        'width:' + sz + 'px;height:' + sz + 'px;'
+        + 'background:' + colours[i % colours.length] + ';'
+        + '--x:' + (Math.cos(ang) * dist).toFixed(1) + 'px;'
+        + '--y:' + (Math.sin(ang) * dist * 0.82 + 40).toFixed(1) + 'px;'
+        + '--s:' + (Math.random() * 0.7 + 0.4).toFixed(2) + ';'
+        + 'animation-delay:' + (240 + Math.random() * 260).toFixed(0) + 'ms;';
+      frag.appendChild(p);
+    }
+    host.appendChild(frag);
+  }
+
+  /* Draw it. Returns false if the screen was not free — the caller has
+     already spent the server's one stamp by then, so this must not be
+     allowed to fail silently; see celebrateIfDue for the guard that
+     stops us asking at a moment we cannot draw. */
+  function celebShow(amount, balance, scope) {
+    if (celebLive) return false;
+    celebCss();
+
+    var wrap = document.createElement('div');
+    wrap.className = 'cw-wrap';
+    wrap.setAttribute('role', 'dialog');
+    wrap.setAttribute('aria-modal', 'true');
+    wrap.setAttribute('aria-label', 'Welcome. ' + amount + ' credits are in your account');
+
+    wrap.innerHTML =
+      '<div class="cw-bg" data-cw-close></div>'
+      + '<div class="cw-card"><div class="cw-in" tabindex="-1">'
+      +   '<button class="cw-x" type="button" aria-label="Close" data-cw-close>&times;</button>'
+      +   '<div class="cw-burst" data-cw-burst></div>'
+      +   '<div class="cw-body">'
+      +     '<div class="cw-seal">'
+      +       '<svg viewBox="0 0 24 24"><path d="M20 12v9H4v-9"/><path d="M2 7h20v5H2z"/>'
+      +       '<path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7Z"/>'
+      +       '<path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7Z"/></svg>'
+      +     '</div>'
+      +     '<div class="cw-hi">Welcome to Cabana</div>'
+      +     '<h2 class="cw-h1">Congratulations</h2>'
+      +     '<p class="cw-sub">Your account is open, and it did not open empty.</p>'
+      +     '<div class="cw-fig">'
+      +       '<span class="cw-num" data-cw-count>0</span>'
+      +       '<span class="cw-unit">credits</span>'
+      +     '</div>'
+      +     '<p class="cw-worth">Already yours. Worth <b>' + money(amount)
+      +       '</b> off what you book.</p>'
+      +     '<div class="cw-scope">'
+      +       '<div class="cw-scope-t">Spend them on</div>'
+      +       '<div class="cw-chips">' + scopeChips(scope) + '</div>'
+      +     '</div>'
+      +     '<a class="cw-cta" href="apartments.html" data-cw-go>'
+      +       'Start exploring' + arrow() + '</a>'
+      +     '<a class="cw-alt" href="rewards.html">See my credits</a>'
+      +     '<div class="cw-fine">They come off the total at checkout. Nothing to enter, '
+      +       'nothing to remember, no expiry.</div>'
+      +   '</div>'
+      + '</div></div>';
+
+    document.body.appendChild(wrap);
+    celebLive = wrap;
+    global.__cabanaOverlay = 'welcome';
+
+    /* Hold the page. This one is a moment, not a passing card, so the
+       body does not scroll underneath it. */
+    var scrollY = global.scrollY || 0;
+    var prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    var num = wrap.querySelector('[data-cw-count]');
+    var burstHost = wrap.querySelector('[data-cw-burst]');
+    var lastFocus = document.activeElement;
+
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        wrap.classList.add('cw-on');
+        celebBurst(burstHost);
+        /* The number takes its time. It is the whole point of the
+           screen and the only thing on it worth watching. */
+        countTo(num, amount, reduced ? 0 : 1500);
+        /* Focus the dialog itself, not the button. Focusing the CTA put
+           a browser focus ring round the loudest element on the card
+           before anyone had touched a key — it read as a rendering
+           fault. Moving focus to the container still hands the dialog
+           to a screen reader and still parks the tab sequence inside
+           it; the ring appears on the first Tab, which is when a
+           keyboard user actually wants to see one. */
+        var card = wrap.querySelector('.cw-in');
+        if (card) { try { card.focus({ preventScroll: true }); } catch (e) {} }
+      });
+    });
+
+    function close() {
+      if (!celebLive) return;
+      wrap.classList.remove('cw-on');
+      wrap.classList.add('cw-out');
+      document.removeEventListener('keydown', onKey, true);
+      document.body.style.overflow = prevOverflow;
+      try { global.scrollTo(0, scrollY); } catch (e) {}
+      setTimeout(function () {
+        if (wrap.parentNode) wrap.parentNode.removeChild(wrap);
+        if (celebLive === wrap) celebLive = null;
+        if (global.__cabanaOverlay === 'welcome') global.__cabanaOverlay = null;
+        try { lastFocus && lastFocus.focus && lastFocus.focus({ preventScroll: true }); } catch (e) {}
+      }, 320);
+    }
+
+    /* Keep the tab ring inside the card while it holds the page. */
+    function onKey(e) {
+      if (e.key === 'Escape' || e.key === 'Esc') { e.preventDefault(); close(); return; }
+      if (e.key !== 'Tab') return;
+      var f = wrap.querySelectorAll('a[href],button:not([disabled])');
+      if (!f.length) return;
+      var first = f[0], last = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+    document.addEventListener('keydown', onKey, true);
+
+    wrap.addEventListener('click', function (e) {
+      var t = e.target;
+      if (t && t.closest && t.closest('[data-cw-close]')) { e.preventDefault(); close(); }
+    });
+
+    return true;
+  }
+
+  /* Is now a moment we could actually draw one? */
+  function celebDrawable() {
+    if (celebLive) return false;
+    if (document.hidden) return false;
+    if (global.__cabanaOverlay) return false;
+    if (document.getElementById('apt-ref-popup')) return false;
+    if (document.getElementById('apa-splash-curtain')) return false;
+    var intro = document.getElementById('intro');
+    if (intro && intro.offsetParent !== null && !intro.classList.contains('lift')) return false;
+    return !!document.body;
+  }
+
   global.CabanaCredit = {
     init: init,
     refresh: function () { clearStats(); return init(); },
@@ -717,6 +1190,24 @@
         try { localStorage.removeItem(POP_KEY); sessionStorage.removeItem(POP_SES_KEY); } catch (e) {}
       }
     },
+    /* The congratulations. Exposed so it can be looked at while working
+       on it, and so a signup flow can hand the moment forward — never
+       so it can be shown to the same person twice. `show` draws the
+       card without asking the server and spends nothing; `arm` clears
+       only the local hint, which makes us ASK again — and the server
+       will still say no to an account that has already had it. */
+    welcome: {
+      show: function (n, scope) {
+        return celebShow(Number(n) || CREDITS, Number(n) || CREDITS, scope || null);
+      },
+      arm: function () {
+        try { localStorage.removeItem(CELEB_SPENT_KEY); } catch (e) {}
+        try { localStorage.removeItem(SEEN_KEY); } catch (e) {}
+        clearStats();
+      },
+      drawable: celebDrawable
+    },
+
     /* Used by checkout to price a booking. Never trusts this number
        for the actual deduction: the server re-checks the balance. */
     balance: function () {

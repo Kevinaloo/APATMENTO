@@ -116,9 +116,68 @@ const POINTS_PER_KES = 10 / 1000;
 const WELCOME_POINTS = Number(process.env.WELCOME_CREDIT_POINTS || 200);
 const WELCOME_FROM   = process.env.WELCOME_CREDIT_FROM || '2026-08-17';
 
-/* Flights are excluded everywhere credits are involved. Airline fares
-   are sold at cost with no margin to discount against. */
-const CREDIT_EXCLUDED = ['flights'];
+/* ══════════════════════════════════════════════════════════════
+   WHERE THE CREDITS ARE GOOD
+   ──────────────────────────────────────────────────────────────
+   Five services, named: stays, tours, events, roommates, car hire.
+
+   This is an ALLOWLIST, and the direction matters more than the
+   contents. It used to be a blacklist — ['flights'] — which meant
+   every service we have not launched yet, and every typo, and every
+   new booking surface someone builds next quarter, was silently
+   eligible by default. A promotion whose scope grows on its own is a
+   promotion nobody is controlling.
+
+   Now the default is no. A service that wants to accept credits has
+   to be written on this line, deliberately, by someone who has
+   thought about the margin on it.
+
+   Why these five and not the rest:
+     stays, roommates, tours, events, carhire → we take a fee, so
+       there is a margin to discount against, and the booking is
+       ours end to end.
+     flights  → sold at cost. There is nothing to discount.
+     food, shopping → third-party goods at cost or near it, often
+       settled directly with the vendor.
+     rides    → a driver's fare. Discounting it either shorts the
+       driver or costs us the whole fare, and neither is a promotion.
+
+   The names are the canonical service keys used across the platform
+   (see normaliseService in api/lib/_support.js). Aliases are folded
+   in before the check so 'car hire', 'apartment' and 'safari' cannot
+   sneak past it by spelling.
+══════════════════════════════════════════════════════════════ */
+const CREDIT_ELIGIBLE = ['stays', 'roommates', 'tours', 'events', 'carhire'];
+
+const SERVICE_ALIASES = {
+  stay: 'stays', stays: 'stays', apartment: 'stays', apartments: 'stays',
+  accommodation: 'stays', apt: 'stays',
+  room: 'roommates', rooms: 'roommates', roommate: 'roommates', roommates: 'roommates',
+  tour: 'tours', tours: 'tours', safari: 'tours', safaris: 'tours',
+  event: 'events', events: 'events', ticket: 'events', tickets: 'events',
+  'car hire': 'carhire', carhire: 'carhire', 'car-hire': 'carhire',
+  vehicle: 'carhire', vehicles: 'carhire', car: 'carhire',
+  ride: 'rides', rides: 'rides', taxi: 'rides',
+  food: 'food', restaurant: 'food', restaurants: 'food',
+  shop: 'shopping', shopping: 'shopping', product: 'shopping', products: 'shopping',
+  flight: 'flights', flights: 'flights',
+};
+
+function normaliseService(value) {
+  const raw = String(value || '').trim().toLowerCase()
+    .replace(/[_-]+/g, ' ').replace(/\s+/g, ' ')
+    .replace(/^(?:a|an|the)\s+/, '');
+  return SERVICE_ALIASES[raw] || raw.replace(/\s/g, '');
+}
+
+function creditsAllowedOn(serviceType) {
+  return CREDIT_ELIGIBLE.includes(normaliseService(serviceType));
+}
+
+/* For the copy, so the UI never has to hard-code the list and then
+   drift from it. */
+const CREDIT_ELIGIBLE_LABEL = 'stays, tours, events, roommates and car hire';
+
 const welcomeRef = uid => 'WELCOME-' + uid;
 
 /* ── DB helpers (service-role. Full trust) ── */
@@ -169,6 +228,29 @@ async function dbPatch(table, query, patch) {
   if (!r.ok) throw new Error(`patch ${table}: ${await r.text()}`);
   const rows = await r.json();
   return rows[0] || null;
+}
+
+/* Call a Postgres function with the service key. Returns null rather
+   than throwing when the function is not deployed yet, so a missing
+   migration degrades a feature instead of breaking a signup. */
+async function dbRpc(fn, args = {}) {
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
+      method: 'POST',
+      headers: {
+        apikey: SERVICE_KEY,
+        Authorization: `Bearer ${SERVICE_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(args),
+    });
+    if (!r.ok) { console.warn(`[rewards] rpc ${fn}:`, await r.text()); return null; }
+    const txt = await r.text();
+    return txt ? JSON.parse(txt) : null;
+  } catch (e) {
+    console.warn(`[rewards] rpc ${fn}:`, e.message);
+    return null;
+  }
 }
 
 /* Atomic points increment via Supabase RPC.
@@ -372,6 +454,23 @@ async function actionAward(body, req) {
         : rateFor(tier, ref.referral_type || 'user');
       const commission = parseFloat((platform_fee * rate).toFixed(2));
 
+      /* ── Held to check-in, on a stay ────────────────────────────────
+         A stay can be paid for and never happen: the guest arrives to
+         a property that does not exist, declines to be rehomed, and is
+         refunded in full. Under the old rule the referrer had already
+         been paid a commission on a stay that was reversed underneath
+         them the same afternoon — real money, out the door, on nothing.
+
+         So a STAYS commission is written as 'pending_checkin' — real
+         enough to show as pending, not real enough to withdraw or to
+         count in the confirmed total — and is only flipped to
+         'confirmed' by releaseOnCheckIn() the moment the guest actually
+         checks in (api/lib/_verify-checkin.js). If the booking is
+         cancelled first, voidOnNoShow() reverses it and it is never
+         paid. Every other service type has no check-in to hold
+         against — a tour or an event either happened or the booking
+         would not have settled — so they keep the old, immediate rule. */
+      const isStay      = service_type === 'stays';
       const availableAt = new Date(Date.now() + COMMISSION_HOLD_DAYS * 86400000);
 
       await dbInsert('referral_earnings', {
@@ -384,8 +483,8 @@ async function actionAward(body, req) {
         commission_kes:  commission,
         referrer_tier:   tier,
         referral_type:   ref.referral_type || 'user',
-        available_at:    availableAt.toISOString(),
-        status:          'confirmed',
+        available_at:    isStay ? null : availableAt.toISOString(),
+        status:          isStay ? 'pending_checkin' : 'confirmed',
         booking_ref,
       });
       console.log(`[rewards] commission KES ${commission} → ${ref.referrer_id} (${booking_ref})`);
@@ -414,12 +513,45 @@ async function actionClaimWelcome(body, user) {
     return rows[0]?.available_points || 0;
   };
 
+  /* ── The one-time congratulations ────────────────────────────────
+     `celebrate: true` comes back from exactly one call, ever, for a
+     given account. The decision is a single atomic UPDATE in Postgres
+     (claim_welcome_celebration) that stamps user_points, so:
+
+       · two tabs racing produce one celebration and one no-op
+       · a new phone, a cleared cache, a different browser, a
+         reinstall — none of them bring it back
+       · Google sign-up and email sign-up land in the same place,
+         because the flag is on the account, not on the flow
+
+     The old behaviour was a localStorage key, which meant the reveal
+     re-fired on every new device an existing user ever signed in on.
+     A gift you are congratulated for receiving three times stops
+     reading as a gift.
+
+     The stamp is only spent when the client asks for it —
+     `celebrate: true` in the body — so a background call that renders
+     nothing does not silently burn someone's one moment. */
+  const wantsCelebration = body?.celebrate === true;
+  const celebrateIfDue = async () => {
+    if (!wantsCelebration) return false;
+    const v = await dbRpc('claim_welcome_celebration', { p_user: userId });
+    /* PostgREST returns the scalar itself for a scalar function. */
+    return v === true || v === 'true';
+  };
+
   /* Already granted? Say so plainly, and hand back the balance so the
      UI can render without a second round trip. */
   const existing = await dbSelect('point_transactions',
     `booking_ref=eq.${encodeURIComponent(ref)}&type=eq.earn&limit=1`);
   if (existing.length) {
-    return { ok: true, already: true, points: WELCOME_POINTS, balance: await balanceOf() };
+    return {
+      ok: true, already: true, points: WELCOME_POINTS,
+      balance: await balanceOf(),
+      celebrate: await celebrateIfDue(),
+      eligible_services: CREDIT_ELIGIBLE,
+      eligible_label: CREDIT_ELIGIBLE_LABEL,
+    };
   }
 
   /* Eligibility is account age, taken from the auth record, never from
@@ -444,12 +576,24 @@ async function actionClaimWelcome(body, user) {
   } catch (e) {
     /* Lost the race against another tab. The other one granted it. */
     if (/duplicate|unique/i.test(e.message)) {
-      return { ok: true, already: true, points: WELCOME_POINTS, balance: await balanceOf() };
+      return {
+        ok: true, already: true, points: WELCOME_POINTS,
+        balance: await balanceOf(),
+        celebrate: await celebrateIfDue(),
+        eligible_services: CREDIT_ELIGIBLE,
+        eligible_label: CREDIT_ELIGIBLE_LABEL,
+      };
     }
     throw e;
   }
 
-  return { ok: true, granted: true, points: WELCOME_POINTS, balance: await balanceOf() };
+  return {
+    ok: true, granted: true, points: WELCOME_POINTS,
+    balance: await balanceOf(),
+    celebrate: await celebrateIfDue(),
+    eligible_services: CREDIT_ELIGIBLE,
+    eligible_label: CREDIT_ELIGIBLE_LABEL,
+  };
 }
 
 /* redeem-points
@@ -458,22 +602,70 @@ async function actionClaimWelcome(body, user) {
 async function actionRedeemPoints(body, user) {
   if (!user) return { error: 'Unauthorized', status: 401 };
   const userId = user.id;
-  const service_type = body.service_type || '';
-  if (CREDIT_EXCLUDED.includes(service_type)) {
-    return { error: 'Credits cannot be used on flights', status: 400 };
+  /* The allowlist, applied to a normalised name. An unknown or missing
+     service_type is refused rather than waved through: a booking surface
+     that forgets to say what it is does not get to spend credits by
+     omission. */
+  const service_type = normaliseService(body.service_type);
+  if (!creditsAllowedOn(service_type)) {
+    return {
+      error: `Credits are valid on ${CREDIT_ELIGIBLE_LABEL}.`,
+      status: 400,
+      eligible_services: CREDIT_ELIGIBLE,
+    };
   }
 
   const pointsToRedeem = Math.floor(Number(body.points_to_redeem));
   const booking_ref    = body.booking_ref || '';
   if (!pointsToRedeem || pointsToRedeem <= 0) return { error: 'Invalid points amount', status: 400 };
 
-  /* Idempotent per booking. Checkout can retry a failed insert, and a
-     guest can double-tap Pay; neither must spend the credit twice. The
-     earlier version deducted again on every call. */
+  /* ── Idempotent per booking, per person, and only once ────────────
+     Checkout can retry a failed insert and a guest can double-tap Pay;
+     neither must spend the credit twice. But "I have seen this
+     booking_ref before, so here is a free discount" is a different
+     sentence from "I have already deducted for it", and the earlier
+     version said the first while meaning the second. It matched on
+     booking_ref alone, and answered `ok: true` with a value_kes the
+     checkout then subtracted from the total — WITHOUT deducting
+     anything.
+
+     Two ways that paid out:
+
+       · Replay your own. Book with credits at ref R (200 deducted),
+         have the booking fall through, collect the credits back via
+         refund-credit — then book again reusing ref R. The old redeem
+         row is still there, so the call returns "already, worth 200",
+         the checkout takes 200 off, and the balance is untouched.
+         Repeat as often as you like.
+       · Replay someone else's. booking_ref is client-generated
+         (`APT-<listing>-<timestamp>`), so any ref that has ever been
+         redeemed against answers the same way to anybody.
+
+     The fix is to make the key what it always should have been — this
+     user, this booking, and not since reversed — and to refuse rather
+     than report success in every case that is not a genuine retry. */
   if (booking_ref) {
+    const ref = encodeURIComponent(booking_ref);
+
     const prior = await dbSelect('point_transactions',
-      `booking_ref=eq.${encodeURIComponent(booking_ref)}&type=eq.redeem&limit=1`);
+      `booking_ref=eq.${ref}&type=eq.redeem&limit=1`);
+
     if (prior.length) {
+      /* Somebody else's reference. Never answer this with a value. */
+      if (String(prior[0].user_id) !== String(userId)) {
+        return { error: 'That booking reference is already in use.', status: 409 };
+      }
+
+      /* Ours, but has it since been handed back? refund-credit writes
+         the reversal under REFUND-<ref>, so its presence means the
+         deduction no longer stands and this is a re-use, not a retry. */
+      const reversed = await dbSelect('point_transactions',
+        `booking_ref=eq.${encodeURIComponent('REFUND-' + booking_ref)}&user_id=eq.${userId}&limit=1`);
+      if (reversed.length) {
+        return { error: 'Those credits were already returned to you. Start a new booking.',
+                 status: 409 };
+      }
+
       const already = Math.abs(Number(prior[0].points || 0));
       const rows = await dbSelect('user_points', `user_id=eq.${userId}&select=available_points`);
       return { ok: true, already: true, value_kes: already,
@@ -524,7 +716,7 @@ async function actionRefundCredit(body, user) {
      distinct ref, so its presence is the idempotency key. */
   const reversalRef = 'REFUND-' + booking_ref;
   const prior = await dbSelect('point_transactions',
-    `booking_ref=eq.${encodeURIComponent(reversalRef)}&limit=1`);
+    `booking_ref=eq.${encodeURIComponent(reversalRef)}&user_id=eq.${userId}&limit=1`);
   if (prior.length) return { ok: true, already: true };
 
   const points = Math.abs(Number(spent[0].points || 0));
@@ -630,19 +822,27 @@ async function actionStats(body, user) {
   if (!user) return { error: 'Unauthorized', status: 401 };
   const userId = user.id;
 
-  const [earnings, withdrawals, points, referralCount] = await Promise.all([
+  const [earnings, pending, withdrawals, points, referralCount] = await Promise.all([
     dbSelect('referral_earnings', `referrer_id=eq.${userId}&status=eq.confirmed&select=commission_kes`),
+    /* Real money, not yet real: a stay someone booked through this
+       person, held until the guest checks in. Shown separately so
+       nobody reads "total earned" as bigger than it safely is, and so
+       a commission that later reverses was never presented as theirs
+       to begin with. */
+    dbSelect('referral_earnings', `referrer_id=eq.${userId}&status=eq.pending_checkin&select=commission_kes`),
     dbSelect('referral_withdrawals', `user_id=eq.${userId}&status=in.(pending,paid)&select=amount_kes`),
     dbSelect('user_points', `user_id=eq.${userId}&select=available_points,lifetime_points`),
     dbSelect('referrals', `referrer_id=eq.${userId}&select=id`),
   ]);
 
   const totalEarned    = earnings.reduce((s, e) => s + parseFloat(e.commission_kes || 0), 0);
+  const totalPending    = pending.reduce((s, e) => s + parseFloat(e.commission_kes || 0), 0);
   const totalWithdrawn = withdrawals.reduce((s, w) => s + parseFloat(w.amount_kes  || 0), 0);
 
   return {
     ok:              true,
     total_earned_kes: parseFloat(totalEarned.toFixed(2)),
+    pending_kes:      parseFloat(totalPending.toFixed(2)),
     withdrawn_kes:    parseFloat(totalWithdrawn.toFixed(2)),
     available_kes:    parseFloat((totalEarned - totalWithdrawn).toFixed(2)),
     available_points: points[0]?.available_points  || 0,
@@ -652,6 +852,10 @@ async function actionStats(body, user) {
        to hard-code the conversion. */
     credit_kes:       points[0]?.available_points  || 0,
     welcome_points:   WELCOME_POINTS,
+    /* Named here so no page has to hard-code where credits are good
+       and then drift from the server that enforces it. */
+    eligible_services: CREDIT_ELIGIBLE,
+    eligible_label:    CREDIT_ELIGIBLE_LABEL,
   };
 }
 

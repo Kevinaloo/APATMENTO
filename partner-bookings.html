@@ -233,6 +233,21 @@ td strong{color:var(--ink);font-weight:600;}
 .btn-match{background:#0f1117;color:#fff;border:none;border-radius:10px;padding:10px 15px;font-family:var(--font-body);font-weight:650;font-size:12.5px;cursor:pointer;white-space:nowrap;}
 .btn-match:disabled{background:#eceef1;color:#a3a8b2;cursor:not-allowed;}
 .match-why{font-size:11.5px;color:#a32a20;margin-top:6px;line-height:1.5;max-width:340px;}
+/* ── Direct share ──────────────────────────────────────────────────
+   The other door: a host who already knows where the guest should
+   go — no sweep, no waiting — points straight at one listing. */
+.stay-share-toggle{margin-top:8px;background:none;border:none;padding:0;font:600 12px var(--font-body);color:#6b3fd9;cursor:pointer;text-decoration:underline;text-underline-offset:2px;}
+.stay-share-box{margin-top:10px;padding:13px;border-radius:12px;border:1.5px solid #e7e2f9;background:#faf8ff;max-width:420px;}
+.stay-share-box input{width:100%;padding:9px 11px;border-radius:9px;border:1.5px solid var(--line-2);font:400 13px var(--font-body);box-sizing:border-box;}
+.stay-share-hint{font-size:11px;color:var(--ink-faint);margin-top:6px;line-height:1.5;}
+.stay-share-results{margin-top:9px;display:grid;gap:7px;}
+.stay-share-row{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:9px;background:#fff;border:1px solid var(--line);}
+.stay-share-row-info{flex:1;min-width:0;font-size:12.5px;}
+.stay-share-row-name{font-weight:650;color:var(--ink-2);}
+.stay-share-row-meta{color:var(--ink-faint);font-size:11px;margin-top:1px;}
+.stay-share-go{flex:none;background:#6b3fd9;color:#fff;border:none;border-radius:8px;padding:7px 11px;font:650 11.5px var(--font-body);cursor:pointer;white-space:nowrap;}
+.stay-share-go:disabled{background:#d8d2ec;cursor:not-allowed;}
+.stay-share-empty{font-size:12px;color:var(--ink-faint);padding:4px 2px;}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/><link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="/cabana-ds.css"/>
@@ -557,16 +572,98 @@ function renderStays() {
 
     const why = h >= 24 ? '' : `<div class="match-why">Check-in is very soon. Matching is no longer available. Please contact your guest directly. Our team can assist if needed.</div>`;
 
+    /* The other door: point straight at a listing already known to be
+       available, rather than waiting on the sweep. Same 24-hour gate. */
+    const share = h >= 24 ? `
+      <button class="stay-share-toggle" type="button" onclick="toggleDirectShare('${b.id}')">Share a specific listing instead</button>
+      <div class="stay-share-box" id="share-box-${b.id}" hidden>
+        <input type="text" placeholder="Search by listing name or area…" oninput="searchDirectShare('${b.id}', this.value)"/>
+        <div class="stay-share-hint">Your own other property, a friend's, anyone's on the platform. Sharing your own earns no fee — sharing someone else's earns 10% of our service fee once your guest has paid in full and checked in.</div>
+        <div class="stay-share-results" id="share-results-${b.id}"></div>
+      </div>` : '';
+
     return `<div class="stay-row" id="stay-${b.id}">
       <div class="stay-main">
         <div class="stay-name">${b.apartment_name || 'Stay'}</div>
         <div class="stay-meta">${b.guest_name || 'Guest'} · ${b.checkin_date} → ${b.checkout_date} · ${b.num_guests || 1} guest${(b.num_guests||1)>1?'s':''} · KES ${fmt(b.grand_total||0)}${b.payment_mode==='deposit' && !b.balance_paid ? ' · deposit only' : ''}</div>
         ${why}
+        ${share}
       </div>
       ${when}
       ${action}
     </div>`;
   }).join('');
+}
+
+/* ══════════════════════════════════════════════════════════════
+   DIRECT SHARE
+   A host who already knows where the guest should go shares it
+   without waiting on the automatic sweep. Search is a plain ILIKE
+   against active listings — no ranking needed for six results.
+   ══════════════════════════════════════════════════════════════ */
+function toggleDirectShare(bookingId) {
+  const box = document.getElementById(`share-box-${bookingId}`);
+  if (box) box.hidden = !box.hidden;
+}
+
+let _shareSearchTimer = null;
+function searchDirectShare(bookingId, q) {
+  clearTimeout(_shareSearchTimer);
+  const box = document.getElementById(`share-results-${bookingId}`);
+  if (!box) return;
+  const term = q.trim();
+  if (term.length < 2) { box.innerHTML = ''; return; }
+  box.innerHTML = '<div class="stay-share-empty">Searching…</div>';
+  _shareSearchTimer = setTimeout(async () => {
+    const { data, error } = await sb.from('listings')
+      .select('id,title,location,city,price_night,max_guests,status')
+      .eq('status', 'active')
+      .or(`title.ilike.%${term}%,city.ilike.%${term}%,location.ilike.%${term}%`)
+      .limit(6);
+    if (error || !data || !data.length) {
+      box.innerHTML = '<div class="stay-share-empty">Nothing matches. Try a different name or area.</div>';
+      return;
+    }
+    box.innerHTML = data.map(l => `
+      <div class="stay-share-row">
+        <div class="stay-share-row-info">
+          <div class="stay-share-row-name">${(l.title||'Listing').replace(/</g,'&lt;')}</div>
+          <div class="stay-share-row-meta">${(l.location||l.city||'').replace(/</g,'&lt;')} · KES ${fmt(l.price_night||0)}/night · ${l.max_guests||'?'} guests</div>
+        </div>
+        <button class="stay-share-go" onclick="shareDirect('${bookingId}','${l.id}', this)">Share</button>
+      </div>`).join('');
+  }, 320);
+}
+
+async function shareDirect(bookingId, listingId, btn) {
+  if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+  try {
+    const j = await ApaTrust.match.offerDirect(bookingId, listingId);
+    if (j.blocked) {
+      toast(j.reason === 'within_24h'
+        ? 'Matching is not available this close to check-in. Please contact your guest directly.'
+        : (j.message || 'Could not share that listing.'), false);
+      renderStays();
+      return;
+    }
+    const said = {
+      offer_already_open: 'Your guest already has a shortlist open on this booking.',
+      listing_unavailable: 'That listing is not available for those dates.',
+      listing_too_small: 'That listing does not fit your guest\'s party size.',
+      same_listing: 'That\'s the listing your guest already booked.',
+    }[j.error];
+    if (said) { toast(said, false); if (btn) { btn.disabled = false; btn.textContent = 'Share'; } return; }
+
+    toggleDirectShare(bookingId);
+    toast(j.same_host
+      ? 'Shared. Your guest can move in at no cost to you — no fee on your own listing.'
+      : `Shared. If they accept, you earn KES ${fmt(j.commission||0)} once they've paid in full and checked in.`);
+    const row = document.getElementById(`stay-${bookingId}`);
+    if (row) row.querySelector('.btn-match')?.setAttribute('disabled', 'true');
+  } catch (e) {
+    toast('Could not share that listing. Try again.', false);
+    if (btn) { btn.disabled = false; btn.textContent = 'Share'; }
+  }
 }
 
 async function matchGuest(bookingId) {
@@ -576,7 +673,7 @@ async function matchGuest(bookingId) {
 
   try {
     const res = await authFetch('/api/match-guest', { action: 'offer', booking_id: bookingId });
-    const j = await res.json();
+    const j = await res.json().catch(() => ({}));
 
     if (j.blocked) {
       btn.textContent = 'Match guest';
@@ -592,10 +689,32 @@ async function matchGuest(bookingId) {
       return;
     }
 
+    /* Anything else the server refused. Saying which refusal it was
+       matters: "an offer is already open" is a different instruction to
+       the host than "the network failed", and the old code turned every
+       one of them into "Network error. Try again." — advice that, for a
+       booking already carrying a live offer, is simply wrong. */
+    if (!res.ok || !Array.isArray(j.candidates)) {
+      btn.textContent = 'Match guest';
+      const said = {
+        offer_already_open:  'Your guest already has a shortlist open on this booking. Give them time to choose.',
+        already_cancelled:   'This booking is already cancelled.',
+        already_checked_in:  'Your guest has already checked in here.',
+        already_rehomed:     'This guest has already been moved.',
+        not_your_booking:    'That booking is not on your account.',
+        booking_not_found:   'We could not find that booking. Refresh and try again.',
+      }[j.error];
+      toast(said || 'Could not open a match. Nothing has changed.', false);
+      if (!said) btn.disabled = false;
+      return;
+    }
+
     const fee = Number(j.commission || 0);
+    const told = Number(j.hosts_notified || 0);
     row.querySelector('.stay-main').insertAdjacentHTML('beforeend',
-      `<div class="match-why" style="color:#0a6d4c;">Sent ${j.candidates.length} option${j.candidates.length===1?'':'s'} to your guest. ` +
-      `If they accept, you earn KES ${fmt(fee)}, 30% of our service fee, and take no card.</div>`);
+      `<div class="match-why" style="color:#0a6d4c;">Sent ${j.candidates.length} option${j.candidates.length===1?'':'s'} to your guest` +
+      `${told ? `, and told ${told} host${told===1?'':'s'} to hold those dates` : ''}. ` +
+      `If they accept, you'll earn KES ${fmt(fee)} — 10% of our service fee — once they've paid in full and checked in. No card either way.</div>`);
     btn.textContent = 'Offer sent';
     toast(`Offer sent. ${j.candidates.length} comparable stay${j.candidates.length===1?'':'s'} shared with your guest.`);
 

@@ -489,19 +489,33 @@ async function handleEarnings(req, res) {
     'referral_earnings?select=*&order=created_at.desc&limit=500') || [];
 
   const now = Date.now();
-  const live = rows.filter(r => r.status !== 'reversed');
+
+  /* A row on a STAY sits as 'pending_checkin' — real enough to show,
+     not real enough to count as earned — until the guest actually
+     checks in (api/lib/_verify-checkin.js releases it) or the booking
+     is cancelled first and it is void (api/lib/_referral-lifecycle.js).
+     `!r.available_at` used to mean "matured", and a pending row also
+     has a null available_at, so it was being counted as available to
+     withdraw the moment a stay was PAID for — before the guest had
+     even arrived. Treated as its own bucket now, the same distinction
+     actionStats() draws in api/rewards.js. */
+  const pending = rows.filter(r => r.status === 'pending_checkin');
+  const live    = rows.filter(r => r.status === 'confirmed');
   const matured = live.filter(r => !r.available_at || new Date(r.available_at) <= now);
   const held    = live.filter(r =>  r.available_at && new Date(r.available_at) >  now);
   const sum = list => Number(list.reduce((t, r) => t + Number(r.commission_kes || 0), 0).toFixed(2));
 
   return res.status(200).json({
     ok: true,
-    total:     sum(live),
-    available: sum(matured),
-    on_hold:   sum(held),
-    reversed:  sum(rows.filter(r => r.status === 'reversed')),
-    hold_note: 'Commission is released once the booking is past its cancellation window.',
-    entries:   rows,
+    total:      sum(live),
+    available:  sum(matured),
+    on_hold:    sum(held),
+    pending:    sum(pending),
+    reversed:   sum(rows.filter(r => r.status === 'reversed')),
+    hold_note:  'Commission is released once the booking is past its cancellation window.',
+    pending_note: 'A stay\'s commission is held until the guest actually checks in — a paid ' +
+                  'booking that is later refunded never becomes a confirmed earning.',
+    entries:    rows,
   });
 }
 

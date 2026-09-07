@@ -9,19 +9,71 @@
      <24h, guest at fault ......... host keeps half of one night
      <24h, host at fault .......... guest refunded in full
                                     guest re-homed immediately
+                                      UNLESS the guest said, when filing
+                                      the report, that they'd rather be
+                                      refunded than moved — see
+                                      `prefer_refund` below
                                     ride paid from platform float
+                                      IF the stay was paid in full,
+                                      and once per guest, for life
                                     host issued a yellow card
                                     3 yellows → red → under review
      unclear ...................... funds held, operator reviews within the hour
 
    The guest never waits on us. Redirection fires before the ledger
    settles; money is slower than a person with luggage.
+
+   `prefer_refund`, on the checkin_issues row, is set by the guest at
+   the moment they file the report — before anyone knows whose fault
+   this is. It changes NOTHING about fault or about what a guest who
+   turns out to be at fault owes; it only removes the automatic refuge
+   search from the one branch where the guest would otherwise be handed
+   a replacement booking. A guest whose listing does not exist, or is
+   unsafe, may not want another stranger's room offered as the fix —
+   they want their money and the freedom to look themselves.
+
+   THE RIDE, AND WHY IT IS BOUNDED
+   ───────────────────────────────
+   Being moved is not conditional on anything. A guest standing at a
+   door that will not open gets moved — deposit or no deposit, first
+   time or fifth. That has not changed and must not.
+
+   The RIDE between the two doors is a different promise, and a bounded
+   one: it is compensation on a completed transaction, offered to
+   guests who paid their stay in full, once each, for life.
+
+     · Paid in full, because a part-payment has not yet bought the
+       thing we would be compensating for, and because "report a
+       problem, collect a fare" against a 25% deposit is a taxi
+       service with a booking form attached.
+     · Once per guest, because a second one is not compensation, it is
+       a pattern — and a pattern is a conversation with a human, not
+       an automatic payment.
+
+   Both halves are enforced inside dispatch_rescue_ride() in Postgres,
+   under a unique index, so no caller can grant a second one by
+   accident. The checks below run first only so the guest is told the
+   truth instead of watching something fail silently.
 ══════════════════════════════════════════════════════════════ */
 
 import { select, one, insert, update, rpc, whoami, notify, cors } from './_db.js';
+import { voidOnNoShow, referralRootRef } from './_referral-lifecycle.js';
 
 const money = (n) => 'KES ' + Number(n || 0).toLocaleString();
 const RESCUE_BASE = 150, RESCUE_PER_KM = 60;
+
+/* What a booking has actually paid, by the same rule the check-in gate
+   and the rescue-ride eligibility check both use. amount_paid is
+   NOT NULL and backfilled; the status/deposit fallback is only for
+   rows that predate the column. Used whenever a replacement booking is
+   built here, so the money a guest already paid moves with them. */
+function amountPaidOf(bk) {
+  if (bk.amount_paid != null) return Number(bk.amount_paid || 0);
+  const owed = Number(bk.grand_total || 0);
+  if (['paid_pending_checkin', 'checked_in', 'completed'].includes(String(bk.status))) return owed;
+  return Number(bk.deposit_amount || 0)
+    + (bk.balance_paid ? owed - Number(bk.deposit_amount || 0) : 0);
+}
 
 function haversineKm(a, b, c, d) {
   if ([a, b, c, d].some(v => v == null)) return null;
@@ -47,6 +99,13 @@ function hoursToCheckin(dateStr, checkinTime) {
 /* Corroboration. A guest's word plus a photo taken 40km from the
    listing is not the same as one taken at the doorstep. We do not
    punish a host on a story alone. */
+/* `issue.geo_distance_m` used to arrive from the browser, and it moves
+   0.55 of a point of confidence — enough, on its own, to turn "unclear"
+   into "host at fault" and so into a full refund, a free move and a
+   card. A guest could simply claim to be standing on the doorstep. It is
+   now computed in a BEFORE trigger from the coordinates and the
+   listing's own position (see the migration), so the number this reads
+   is ours, and a claimed one is overwritten before it is ever stored. */
 function evidenceStrength(issue, taxRow) {
   let s = 0.4;
   if (issue.photo_live)                       s += 0.30;
@@ -101,6 +160,47 @@ async function findRefuge(bk) {
   free.sort((a, b) => (a.distance_km - b.distance_km) || (b.internal_score - a.internal_score));
   return { ...free[0], listing_id: free[0].id };
 }
+
+/* Ops alerts go to their own table. notifications.user_id is NOT NULL,
+   so every notify(null, 'ops_alert', …) that used to live in this file
+   was a silent no-op — the alerts meant to say "a guest may be stranded,
+   look now" reached nobody at all. */
+async function alertOps(kind, title, body, meta = {}, severity = 'warn') {
+  try { await insert('ops_alerts', { kind, severity, title, body, meta }, false); }
+  catch (e) { console.warn('[ops_alert]', kind, e.message); }
+}
+
+/* The two gates on the ride, asked politely before Postgres asks them
+   with a constraint. Both read the record, never the request. */
+const rideEligibility = {
+  async paidInFull(bk) {
+    /* Prefer the database's own definition so this can never drift from
+       the one the constraint uses. */
+    try {
+      const v = await rpc('booking_fully_paid', { p_booking: bk.id });
+      if (typeof v === 'boolean') return v;
+    } catch (e) { /* fall through to the local reading */ }
+
+    const owed = Number(bk.grand_total || 0);
+    if (owed <= 0) return false;
+    return amountPaidOf(bk) >= owed - 1;
+  },
+
+  async priorCoveredRide(guestId) {
+    if (!guestId) return false;
+    try {
+      const rows = await select('rescue_rides',
+        `guest_id=eq.${guestId}&covered_by=eq.platform_float&select=id&limit=1`);
+      return rows.length > 0;
+    } catch (e) {
+      /* If we cannot tell, do not hand out a ride we may already have
+         given. The database constraint would refuse it anyway, and the
+         guest is moved either way. */
+      console.warn('[issue] prior ride lookup:', e.message);
+      return true;
+    }
+  },
+};
 
 export default async function handler(req, res) {
   cors(res);
@@ -187,6 +287,8 @@ export default async function handler(req, res) {
         cancel_reason: `guest:${issue.issue_code}`,
         refund_amount: settle.refund_amount,
       });
+      await voidOnNoShow(bk, `guest_fault:${issue.issue_code}`);
+
       await update('checkin_issues', `id=eq.${issue_id}`, {
         fault, confidence, resolution: 'half_night_to_host', status: 'resolved',
         refund_amount: settle.refund_amount, host_payout: settle.host_payout,
@@ -208,6 +310,8 @@ export default async function handler(req, res) {
         status: 'cancelled', cancelled_at: new Date().toISOString(),
         cancel_reason: `${fault}:${issue.issue_code}`, refund_amount: settle.refund_amount,
       });
+      await voidOnNoShow(bk, `${fault}:${issue.issue_code}`);
+
       await update('checkin_issues', `id=eq.${issue_id}`, {
         fault, confidence, resolution: 'full_refund', status: 'resolved',
         refund_amount: settle.refund_amount, window_phase: phase,
@@ -222,10 +326,23 @@ export default async function handler(req, res) {
 
     /* ══ Host at fault, inside 24 hours ════════════════════════════
        This is the case the whole system exists for. The guest is
-       moved first. Everything else follows behind them.            */
+       moved first. Everything else follows behind them — UNLESS the
+       guest already told us, when they filed the report, that they
+       would rather have their money back than another Cabana booking
+       pushed at them. That preference is honoured only here, only once
+       the host is actually found at fault: it never changes who is at
+       fault or what a guest who IS at fault owes. A guest standing at
+       an address that does not exist, or one that is unsafe, may not
+       want to be handed a stranger's spare room as the answer — they
+       want to be able to go and look for their own. Skipping the
+       refuge search is the whole of the difference; everything after
+       it (the card, the ledger, the review) proceeds exactly as it
+       would for a "nothing comparable was free" refund. */
+    const preferRefund = issue.prefer_refund === true;
 
-    // 1 · Refuge. Book it before we do anything slower.
-    const refuge = await findRefuge(bk);
+    // 1 · Refuge. Book it before we do anything slower — unless they
+    //     asked us not to.
+    const refuge = preferRefund ? null : await findRefuge(bk);
     let replacement = null;
 
     if (refuge) {
@@ -240,7 +357,10 @@ export default async function handler(req, res) {
         nights: bk.nights,
         num_guests: bk.num_guests,
         guest_name: bk.guest_name,
+        guest_phone: bk.guest_phone,
         contact_phone: bk.contact_phone,
+        contact_email: bk.contact_email,
+        contact_whatsapp: bk.contact_whatsapp,
         stay_total: bk.stay_total,          // they pay what they agreed to pay
         service_fee: bk.service_fee,
         grand_total: bk.grand_total,
@@ -248,11 +368,23 @@ export default async function handler(req, res) {
         deposit_amount: bk.deposit_amount,
         balance_amount: bk.balance_amount,
         balance_paid: bk.balance_paid,
+        /* The money already collected moves with the guest. Left at its
+           NOT NULL DEFAULT 0, this replacement would read as unpaid —
+           the same "paid in full, moved, then locked out of their own
+           check-in code" bug the rehoming path (_match-guest.js
+           carryOver) was built to avoid, reappearing here because this
+           insert never went through that helper. */
+        amount_paid:   amountPaidOf(bk),
+        fully_paid_at: bk.fully_paid_at,
+        credit_applied: bk.credit_applied,
         payment_reference: `RESCUE-${bk.payment_reference}`,
         guest_code: bk.guest_code,
         host_code: 'HOST-' + Math.random().toString(36).slice(2, 8).toUpperCase(),
         status: bk.status,
         rehomed_from: bk.id,
+        // So a referral commission on this guest survives being moved —
+        // see api/lib/_referral-lifecycle.js.
+        referral_root_ref: referralRootRef(bk),
       });
 
       // Any price gap is ours. The guest did not cause this.
@@ -266,26 +398,70 @@ export default async function handler(req, res) {
       result.refuge = { listing_id: refuge.listing_id, title: refuge.title, booking_id: replacement.id };
     }
 
-    // 2 · The ride. Comes from platform float. We do not tell the host about ride logistics.
+    /* 2 · The ride. Comes from platform float. We do not tell the host
+       about ride logistics.
+
+       Two gates, and they are gates on the RIDE, never on the move.
+       The guest has already been re-homed above; nothing below can
+       leave them standing where they are.
+
+         · paid in full — compensation on a completed transaction
+         · once per guest, for life — the second is a pattern, and a
+           pattern goes to a person
+
+       Postgres enforces both again inside dispatch_rescue_ride(), under
+       a unique index. These checks exist so we can tell the guest the
+       truth in the same breath as we move them, rather than promising a
+       car that a constraint is about to refuse. */
     if (refuge) {
       const km = refuge.distance_km ?? haversineKm(issue.geo_lat, issue.geo_lng, refuge.lat, refuge.lng) ?? 5;
       const fare = Math.round(RESCUE_BASE + RESCUE_PER_KM * km);
-      try {
-        const ride = await rpc('dispatch_rescue_ride', {
-          p_issue: issue_id, p_booking: booking_id, p_guest: bk.guest_id,
-          p_from: bk.location || 'Original listing',
-          p_from_lat: issue.geo_lat, p_from_lng: issue.geo_lng,
-          p_to: refuge.location || refuge.title,
-          p_to_lat: refuge.lat, p_to_lng: refuge.lng,
-          p_distance_km: km, p_fare: fare, p_charge_host: false,
-        });
-        result.rescue_ride = ride;
-      } catch (e) {
-        console.warn('[issue] rescue ride:', e.message);
-        // A dry float must never strand a guest. Flag it loudly, move them anyway.
-        result.rescue_ride = { covered: false, fare, status: 'manual_dispatch' };
-        await notify(null, 'ops_alert', 'Rescue ride not auto-covered',
-          `Issue ${issue_id}: float could not cover ${money(fare)}. Dispatch manually.`, { issue_id });
+
+      const paidInFull = await rideEligibility.paidInFull(bk);
+      const priorRide  = await rideEligibility.priorCoveredRide(bk.guest_id);
+
+      if (!paidInFull || priorRide) {
+        const reason = !paidInFull ? 'not_paid_in_full' : 'already_used_lifetime_ride';
+        result.rescue_ride = { covered: false, eligible: false, reason, fare, status: 'not_offered' };
+        await alertOps('rescue_ride_not_offered',
+          'Guest moved, ride not covered',
+          reason === 'not_paid_in_full'
+            ? `Issue ${issue_id}: the guest had not paid this stay in full, so the covered ride is ` +
+              `outside the offer. They have been moved regardless. Fare would have been ${money(fare)} ` +
+              `— decide by hand whether to carry them.`
+            : `Issue ${issue_id}: this guest has already used their one covered rescue ride. They have ` +
+              `been moved regardless. Fare would have been ${money(fare)} — decide by hand.`,
+          { issue_id, booking_id, guest_id: bk.guest_id, fare, reason });
+      } else {
+        try {
+          const ride = await rpc('dispatch_rescue_ride', {
+            p_issue: issue_id, p_booking: booking_id, p_guest: bk.guest_id,
+            p_from: bk.location || 'Original listing',
+            p_from_lat: issue.geo_lat, p_from_lng: issue.geo_lng,
+            p_to: refuge.location || refuge.title,
+            p_to_lat: refuge.lat, p_to_lng: refuge.lng,
+            p_distance_km: km, p_fare: fare, p_charge_host: false,
+          });
+          result.rescue_ride = ride;
+          /* The RPC has the last word. If its own gates refused, say so
+             here too rather than reporting a car that is not coming. */
+          if (ride && ride.eligible === false) {
+            await alertOps('rescue_ride_declined_by_db',
+              'Ride refused at the database gate',
+              `Issue ${issue_id}: dispatch_rescue_ride refused with "${ride.reason}". The guest is ` +
+              `moved; the ride is not booked.`,
+              { issue_id, booking_id, guest_id: bk.guest_id, reason: ride.reason });
+          }
+        } catch (e) {
+          console.warn('[issue] rescue ride:', e.message);
+          // A dry float must never strand a guest. Flag it loudly, move them anyway.
+          result.rescue_ride = { covered: false, eligible: true, fare, status: 'manual_dispatch' };
+          await alertOps('rescue_ride_dispatch_failed',
+            'Rescue ride not auto-covered',
+            `Issue ${issue_id}: the ride could not be booked automatically (${e.message}). ` +
+            `The guest is eligible and has been moved. Dispatch ${money(fare)} manually, now.`,
+            { issue_id, booking_id, guest_id: bk.guest_id, fare }, 'critical');
+        }
       }
     }
 
@@ -304,11 +480,20 @@ export default async function handler(req, res) {
     await update('apartment_bookings', `id=eq.${booking_id}`, {
       status: replacement ? 'rehomed' : 'cancelled',
       cancelled_at: new Date().toISOString(),
-      cancel_reason: `host:${issue.issue_code}`,
+      cancel_reason: preferRefund ? `host:${issue.issue_code}:guest_preferred_refund`
+                                  : `host:${issue.issue_code}`,
       refund_amount: settle.refund_amount,
       host_penalty: settle.host_penalty,
       rehomed_to: replacement?.id || null,
     });
+
+    /* No replacement means the stay is over, full stop — whether that
+       is because nothing comparable existed or because the guest asked
+       us not to look. Either way nobody is completing this stay, so any
+       referral commission riding on it never becomes real. */
+    if (!replacement) {
+      await voidOnNoShow(bk, preferRefund ? 'guest_preferred_refund' : 'no_comparable_listing');
+    }
 
     await update('checkin_issues', `id=eq.${issue_id}`, {
       fault, confidence,
@@ -325,11 +510,26 @@ export default async function handler(req, res) {
     await rpc('recompute_internal_score', { p_listing: issue.listing_id }).catch(() => {});
 
     // 5 · Tell everyone.
+    /* Say exactly what is true about the car. A guest who is told "your
+       ride is booked" and then waits for one that was never dispatched
+       has been failed twice. */
+    const rideLine = !replacement ? ''
+      : result.rescue_ride && result.rescue_ride.eligible !== false && result.rescue_ride.covered
+        ? ' Your ride there is booked and paid for by us.'
+        : result.rescue_ride && result.rescue_ride.eligible === false
+          ? ' Getting there is on you this time, and we are sorry — the covered ride goes to guests ' +
+            'who have paid a stay in full, once each. Talk to us if that is hard.'
+          : ' A person is arranging your ride now and will message you.';
+
     await notify(bk.guest_id, 'redirected',
       replacement ? 'You\'re being moved' : 'Refunded in full',
       replacement
-        ? `We've found you alternative accommodation at ${refuge.title} for the same dates. Our team will be in contact.`
-        : `${money(settle.refund_amount)} is being processed back to you. We're sorry for the inconvenience.`,
+        ? `We've found you alternative accommodation at ${refuge.title} for the same dates.` +
+          rideLine + ' Our team will be in contact.'
+        : preferRefund
+          ? `${money(settle.refund_amount)} is being processed back to you, as you asked. ` +
+            `Nothing withheld, and you're free to book somewhere else whenever you're ready.`
+          : `${money(settle.refund_amount)} is being processed back to you. We're sorry for the inconvenience.`,
       { booking_id: replacement?.id || booking_id });
 
     // Host notification: neutral, no card language, no ride mention.

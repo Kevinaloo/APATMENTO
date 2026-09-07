@@ -12,6 +12,7 @@
 
 import { one, select, update, whoami, notify, cors } from './_db.js';
 import { canReleaseCode, settlementOf, stayPhase } from './_payment-rules.js';
+import { releaseOnCheckIn } from './_referral-lifecycle.js';
 
 const money = (n) => 'KES ' + Number(n || 0).toLocaleString();
 const ALLOWED = ['apartment_bookings', 'tour_bookings', 'event_tickets'];
@@ -132,6 +133,23 @@ export default async function handler(req, res) {
       patch.balance_paid   = true;
     }
     const updated = await update(table, `payment_reference=eq.${reference}`, patch);
+
+    /* ── The stay just happened. Whatever commission was waiting on it
+       becomes real ─────────────────────────────────────────────────
+       Two kinds share this one moment: the rehoming host's finder's fee
+       (keyed to THIS booking's own reference, since it is compensation
+       on this specific replacement) and the ordinary referral
+       commission for whoever brought this guest to Cabana (keyed to
+       referral_root_ref, which follows a guest through any number of
+       rehomes). Both were written as 'pending_checkin' — real enough to
+       show, not real enough to withdraw — and only this call, only on
+       apartment_bookings, flips them to 'confirmed'. A tour or an event
+       ticket has no check-in step and never carried a pending row to
+       begin with, so this is a no-op for them. */
+    if (table === 'apartment_bookings') {
+      await releaseOnCheckIn(updated || bk).catch(e =>
+        console.warn('[verify-checkin] commission release:', e.message));
+    }
 
     await notify(bk.host_id, 'checked_in', 'Guest has checked in',
       `${bk.guest_name || 'Your guest'} is in. Payout of ${money((bk.stay_total || 0))} is released.`,

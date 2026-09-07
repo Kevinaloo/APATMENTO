@@ -1269,8 +1269,13 @@ async function doSignup() {
         body: JSON.stringify({ action: 'claim-welcome' })
       }).catch(()=>{});
     }
-    /* Let the reveal fire on the dashboard for this brand-new account. */
+    /* Let the congratulations fire on the dashboard for this brand-new
+       account. Clearing these is only clearing a local HINT — the
+       server decides whether anyone is congratulated, once per account
+       and never again, so this cannot conjure a second celebration for
+       someone who has already had theirs. */
     localStorage.removeItem('cabana_credit_revealed');
+    localStorage.removeItem('cabana_welcome_celebrated');
     sessionStorage.removeItem('cabana_credit_stats');
   } catch(e){}
 
@@ -1295,6 +1300,37 @@ async function goDashboard(user) {
     user = session?.user;
   }
   if (!user) return;
+
+  /* ── The 200 welcome credits ──────────────────────────────────────
+     Claimed here because this is the one funnel BOTH doors go through:
+     email signup calls it with the new user, and oauthReturn() calls it
+     after Google hands the session back. Putting the claim in only one
+     of them is how a Google signup ends up with an empty account until
+     they happen to open a page that carries a credit card on it.
+
+     Idempotent server-side, enforced by a unique index, and
+     deliberately not awaited — nobody should watch a spinner for a
+     gift, and cabana-credit.js calls it again on the destination page,
+     so a failure here self-heals rather than costing anyone anything.
+
+     Clearing the celebration hint asks the destination page to CHECK
+     with the server, not to celebrate. The server answers "yes" exactly
+     once in the life of an account, so an existing user signing in on a
+     new phone gets one extra request and no popup — which is the whole
+     point of moving that decision off the device. */
+  try {
+    const { data: ses } = await sb.auth.getSession().catch(() => ({ data: {} }));
+    const token = ses?.session?.access_token;
+    if (token) {
+      fetch('/api/rewards', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify({ action: 'claim-welcome' })
+      }).catch(() => {});
+    }
+    localStorage.removeItem('cabana_welcome_celebrated');
+    sessionStorage.removeItem('cabana_credit_stats');
+  } catch (e) {}
   /* Upsert the profile row, but never let it hold the redirect hostage.
      This is a courtesy write: the row is recreated on next load anyway,
      and apa-session.js renders the header from JWT metadata without it.
