@@ -44,11 +44,12 @@ import atlasHandler from './lib/_atlas.js';
 import sosHandler from './lib/_sos.js';
 import terrainHandler from './lib/_carhire-terrain.js';
 import musicSearchHandler from './lib/_music-search.js';
+import scrapeHandler from './scrape.js';
 import { reconcilePayments } from './lib/_reconcile-payments.js';
 import { settlementOf, endDayOf, todayNumber, PART_PAYMENT_TTL_HOURS,
          validateInstalment, depositRequired }
   from './lib/_payment-rules.js';
-import { requireUser } from './lib/_security.js';
+import { requireUser, isCronAuthorized, hasInternalSecret } from './lib/_security.js';
 import { settleView }  from './lib/_poll-payment.js';
 import { createOrder, captureOrder, fetchOrder, kesToUsd }
   from './lib/_paypal.js';
@@ -60,6 +61,12 @@ const SWEEPABLE = {
   event_tickets:      null,          /* no date column; skipped */
 };
 
+function maintenanceAuthorized(req) {
+  return Boolean(req.headers['x-vercel-cron'])
+    || isCronAuthorized(req)
+    || hasInternalSecret(req);
+}
+
 async function handleCloseBookings(req, res) {
   const supabaseUrl = process.env.SUPABASE_URL;
   const serviceKey  = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -69,10 +76,7 @@ async function handleCloseBookings(req, res) {
 
   /* Vercel signs its own cron calls. Anything else needs the secret,
      so this cannot be used to mass-mutate bookings from outside. */
-  const isVercelCron = Boolean(req.headers['x-vercel-cron']);
-  const secret = req.headers['x-internal-secret'] || req.query?.secret || '';
-  if (!isVercelCron && (!process.env.INTERNAL_API_SECRET
-      || secret !== process.env.INTERNAL_API_SECRET)) {
+  if (!maintenanceAuthorized(req)) {
     return res.status(403).json({ error: 'forbidden' });
   }
 
@@ -625,10 +629,7 @@ async function handleReconcilePayments(req, res) {
 
   /* Same gate as close-bookings: Vercel signs its own cron calls,
      anything else needs the secret. This moves money state. */
-  const isVercelCron = Boolean(req.headers['x-vercel-cron']);
-  const secret = req.headers['x-internal-secret'] || req.query?.secret || '';
-  if (!isVercelCron && (!process.env.INTERNAL_API_SECRET
-      || secret !== process.env.INTERNAL_API_SECRET)) {
+  if (!maintenanceAuthorized(req)) {
     return res.status(403).json({ error: 'forbidden' });
   }
 
@@ -652,10 +653,7 @@ async function handleReconcilePayments(req, res) {
    around to it — it runs on its own, hourly, gated the same way.
 ══════════════════════════════════════════════════════════════ */
 async function handleExpireMatchOffers(req, res) {
-  const isVercelCron = Boolean(req.headers['x-vercel-cron']);
-  const secret = req.headers['x-internal-secret'] || req.query?.secret || '';
-  if (!isVercelCron && (!process.env.INTERNAL_API_SECRET
-      || secret !== process.env.INTERNAL_API_SECRET)) {
+  if (!maintenanceAuthorized(req)) {
     return res.status(403).json({ error: 'forbidden' });
   }
 
@@ -808,6 +806,10 @@ export default async function handler(req, res) {
     return musicSearchHandler(req, res);
   }
 
+  if (action === 'scrape') {
+    return scrapeHandler(req, res);
+  }
+
   if (action === 'carhire-terrain') {
     return terrainHandler(req, res);
   }
@@ -846,7 +848,7 @@ export default async function handler(req, res) {
 
   return res.status(400).json({
     error: 'Unknown action. Available: subscribe, geocode, atlas, sos-alert, carhire-terrain, music-search, '
-         + 'close-bookings, welcome-email, indexnow, reconcile-payments, paypal-create-order, '
+         + 'scrape, close-bookings, welcome-email, indexnow, reconcile-payments, expire-match-offers, paypal-create-order, '
          + 'paypal-capture, paypal-webhook',
   });
 }

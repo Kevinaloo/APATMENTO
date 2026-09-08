@@ -271,10 +271,6 @@
     {
       "path": "/api/utilities?action=reconcile-payments",
       "schedule": "0 5 * * *"
-    },
-    {
-      "path": "/api/utilities?action=expire-match-offers",
-      "schedule": "0 * * * *"
     }
   ],
   "functions": {
@@ -316,6 +312,10 @@
     {
       "source": "/api/music-search",
       "destination": "/api/utilities?action=music-search"
+    },
+    {
+      "source": "/api/scrape",
+      "destination": "/api/utilities?action=scrape"
     },
     {
       "source": "/calendar/:token([A-Za-z0-9_-]+).ics",
