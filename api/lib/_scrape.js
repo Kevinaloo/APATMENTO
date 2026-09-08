@@ -1,5 +1,5 @@
 /* ════════════════════════════════════════════════════════════════
-   APATMENTO  ·  Unified Scraper  /api/scrape.js
+   APATMENTO  ·  Unified Scraper  (lib module — called from api/utilities.js)
    Routes: ?service=events | tours | food | shopping | all
    Consolidates 4 scrapers into 1 Vercel function (Hobby plan: max 12)
    
@@ -12,7 +12,7 @@
 ════════════════════════════════════════════════════════════════ */
 export const config = { maxDuration: 60 };
 
-import { hasInternalSecret, isCronAuthorized, setCors } from './lib/_security.js';
+import { hasInternalSecret, isCronAuthorized, setCors } from './_security.js';
 
 /* ══════════════════════════════════════
    EVENTS SCRAPER
