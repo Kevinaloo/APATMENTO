@@ -230,7 +230,6 @@ body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webk
   background:linear-gradient(145deg,#EEF0F5,#E5E8F0);
   opacity:0;transition:opacity .5s ease;
 }
-.card-slide img.fit-contain{object-fit:contain;}
 .card-slide img.ready{opacity:1;}
 .card-img-ico{width:40px;height:40px;color:rgba(255,255,255,.9);}
 
@@ -3672,9 +3671,9 @@ function renderCards(list) {
        ahead of wherever the guest has swiped to. Fourteen photos on a
        card must not cost fourteen downloads nobody asked for. */
     const slides = photos.length
-      ? photos.map((p, n) => {const pos=apt.photoPositions?.[n]||{};const fit=pos.fit==='contain'?'contain':'cover';const rawX=Number(pos.x);const rawY=Number(pos.y);const x=Math.max(0,Math.min(100,Number.isFinite(rawX)?rawX:50));const y=Math.max(0,Math.min(100,Number.isFinite(rawY)?rawY:30));return n === 0
-          ? `<div class="card-slide"><img class="fit-${fit}" style="object-position:${x}% ${y}%" ${_imgAttrs(p, 640)} alt="${_esc(apt.name)}" ${i < 3 ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async"></div>`
-          : `<div class="card-slide" data-pending data-src="${_esc(p)}" data-fit="${fit}" data-x="${x}" data-y="${y}"></div>`;
+      ? photos.map((p, n) => {const pos=apt.photoPositions?.[n]||{};const placed=pos.fit==='cover';const rawX=Number(pos.x);const rawY=Number(pos.y);const x=Math.max(0,Math.min(100,placed&&Number.isFinite(rawX)?rawX:50));const y=Math.max(0,Math.min(100,placed&&Number.isFinite(rawY)?rawY:30));return n === 0
+          ? `<div class="card-slide"><img style="object-position:${x}% ${y}%" ${_imgAttrs(p, 640)} alt="${_esc(apt.name)}" ${i < 3 ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async"></div>`
+          : `<div class="card-slide" data-pending data-src="${_esc(p)}" data-x="${x}" data-y="${y}"></div>`;
         }).join('')
       : `<div class="card-slide" style="background:${grad}">${HOUSE_SVG}</div>`;
 
@@ -3757,9 +3756,9 @@ function _hydrateSlides(media, from, count) {
     slide.removeAttribute('data-pending');
     const src = slide.getAttribute('data-src');
     if (!src) continue;
-    const fit=slide.dataset.fit==='contain'?'contain':'cover';const rawX=Number(slide.dataset.x);const rawY=Number(slide.dataset.y);const x=Number.isFinite(rawX)?rawX:50;const y=Number.isFinite(rawY)?rawY:30;
+    const rawX=Number(slide.dataset.x);const rawY=Number(slide.dataset.y);const x=Number.isFinite(rawX)?rawX:50;const y=Number.isFinite(rawY)?rawY:30;
     slide.insertAdjacentHTML('beforeend',
-      `<img class="fit-${fit}" style="object-position:${x}% ${y}%" ${_imgAttrs(src, 640)} alt="" loading="lazy" decoding="async">`);
+      `<img style="object-position:${x}% ${y}%" ${_imgAttrs(src, 640)} alt="" loading="lazy" decoding="async">`);
     const fresh = slide.querySelector('img');
     if (fresh && fresh.complete && fresh.naturalWidth) fresh.classList.add('ready');
   }
