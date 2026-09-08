@@ -2589,6 +2589,7 @@ body.gs-open .gs-sheet{opacity:1;visibility:visible;pointer-events:auto;transfor
 #stay-gate{position:fixed;inset:0;z-index:2147483000;background:#05040C;}
 html.sg-lock,html.sg-lock body{overflow:hidden!important;}
 </style>
+<link rel="stylesheet" href="/cabana-offers.css">
 </head><body>
 <script>if(new URLSearchParams(location.search).get('back')==='1')document.documentElement.classList.add('via-dash');</script>
 
@@ -3337,8 +3338,8 @@ function smartSort(list, mode) {
       // Native listings still surface above same-price-band samples
       if (a.source === 'native' && b.source !== 'native') return -1;
       if (b.source === 'native' && a.source !== 'native') return  1;
-      const pd = mode === 'price-asc' ? a.price - b.price : b.price - a.price;
-      if (Math.abs(a.price - b.price) <= Math.min(a.price, b.price) * BAND)
+      const pd = mode === 'price-asc' ? staySortPrice(a) - staySortPrice(b) : staySortPrice(b) - staySortPrice(a);
+      if (Math.abs(staySortPrice(a) - staySortPrice(b)) <= Math.min(staySortPrice(a), staySortPrice(b)) * BAND)
         return b._score - a._score;
       return pd;
     });
@@ -3616,6 +3617,38 @@ function renderSkeletons(n) {
     </div>`).join('');
 }
 
+let _stayQuotes = {}, _stayQuotesKey = '', _stayQuotesAt = 0, _staySearchRevision = 0;
+function staySearchQuote(apt){
+  const q=_stayQuotes[apt._dbId||apt.id];
+  return q&&q.checkin===_searchState.dateIn&&q.checkout===_searchState.dateOut&&q.guests===((_searchState.adults||1)+(_searchState.children||0))?q:null;
+}
+function staySortPrice(apt){const q=staySearchQuote(apt);return q?q.grand_total/q.nights:apt.price;}
+function stayCardPrice(apt){
+  const q=staySearchQuote(apt);
+  if(q)return `<span class="val">KES ${Number(q.grand_total).toLocaleString()}</span> <span class="per">total · ${q.nights} night${q.nights===1?'':'s'}</span><span class="cb-offer-note">Includes Cabana fee${q.offer?' · '+_esc(q.offer.title):''}${q.offer?.verified?' · Save KES '+Number(q.offer.total_saving).toLocaleString():''}</span>`;
+  if(_searchState.dateIn&&_searchState.dateOut)return '<span class="per">Check dates for a confirmed price</span>';
+  return `<span class="val">KES ${Number(apt.price).toLocaleString()}</span> <span class="per">/ night</span><span class="cb-offer-note">Choose dates for offers and total including Cabana fee</span>`;
+}
+async function loadStaySearchQuotes(){
+  const s=_searchState;
+  if(!s.dateIn||!s.dateOut){_stayQuotes={};_stayQuotesKey='';return;}
+  const ids=currentListings.map(a=>a._dbId||a.id).filter(id=>/^[0-9a-f-]{36}$/i.test(id));
+  const guests=(s.adults||1)+(s.children||0),ci=s.dateIn,co=s.dateOut;
+  const key=JSON.stringify([ids,ci,co,guests]);
+  if(key===_stayQuotesKey&&Date.now()-_stayQuotesAt<30000)return;
+  _stayQuotes={};
+  try{
+    const batches=[];
+    for(let i=0;i<ids.length;i+=100)batches.push(ids.slice(i,i+100));
+    const results=await Promise.all(batches.map(async p_listing_ids=>{
+      const r=await sb.rpc('cabana_stay_quotes',{p_listing_ids,p_checkin:ci,p_checkout:co,p_guests:guests});
+      if(r.error)throw r.error;return r.data||{};
+    }));
+    if(ci!==s.dateIn||co!==s.dateOut||guests!==((s.adults||1)+(s.children||0)))return;
+    _stayQuotes=Object.assign({},...results);_stayQuotesKey=key;_stayQuotesAt=Date.now();
+  }catch(e){console.warn('[stay-quotes]',e.message);}
+}
+
 function renderCards(list) {
   document.getElementById('result-num').textContent = list.length;
   const grid = document.getElementById('grid');
@@ -3706,9 +3739,7 @@ function renderCards(list) {
         <h3 class="card-name"><a class="card-link" href="${href}" aria-label="${_esc(label)}">${_esc(apt.name)}</a></h3>
         <div class="card-meta">${bedsLabel}<i>·</i>${apt.baths} bath<i>·</i>${apt.maxGuests} guest${apt.maxGuests !== 1 ? 's' : ''}</div>
         <div class="card-price">
-          <span class="val">KES ${Number(apt.price).toLocaleString()}</span>
-          <span class="per">night</span>
-          <span class="free">No fees</span>
+          ${stayCardPrice(apt)}
         </div>
       </div>
     </article>`;
@@ -4272,8 +4303,7 @@ function openDrawer(id) {
     <!-- Sticky CTA -->
     <div class="dl-cta">
       <div class="dl-cta-price">
-        <div class="dl-cta-val">KES ${Number(apt.price).toLocaleString()}<span style="font-size:14px;font-weight:400;color:var(--ink-faint);"> / night</span></div>
-        ${(()=>{const ci=_searchState.dateIn,co=_searchState.dateOut;if(ci&&co){const n=Math.round((new Date(co)-new Date(ci))/86400000);if(n>0)return `<div class="dl-cta-note" style="color:var(--ink-soft);">KES ${Number(apt.price*n).toLocaleString()} total · ${n} night${n!==1?'s':''}</div>`;}return '<div class="dl-cta-note">No added fees. What you see is what you pay.</div>';})()} 
+        <div class="dl-cta-val">${stayCardPrice(apt)}</div>
       </div>
       <div style="display:flex;gap:8px;align-items:center;">
         <button class="dl-wishlist-btn" title="Save to wishlist" onclick="toggleWishlist('${apt.id}',this)">
@@ -4630,7 +4660,9 @@ function bookNow(id) {
   const apt = currentListings.find(a => a.id === id);
   if (!apt) return;
   const dbId = apt._dbId || apt.id;
-  const params = new URLSearchParams({ id: dbId, name: apt.name, location: apt.location, price: apt.price, maxGuests: apt.maxGuests });
+  const params = new URLSearchParams({ id: dbId, name: apt.name, location: apt.location, maxGuests: apt.maxGuests, guests:(_searchState.adults||1)+(_searchState.children||0) });
+  if(_searchState.dateIn)params.set('checkin',_searchState.dateIn);
+  if(_searchState.dateOut)params.set('checkout',_searchState.dateOut);
   /* Hand the coordinates over rather than making the payment page
      geocode a place name we already resolved. */
   if (isFinite(apt.lat) && isFinite(apt.lng)) { params.set('lat', apt.lat); params.set('lng', apt.lng); }
@@ -5945,7 +5977,10 @@ function applyFilterModal() {
 }
 
 /* ── Core filter + sort engine ── */
-function applyAndRender() {
+async function applyAndRender() {
+  const revision=++_staySearchRevision;
+  await loadStaySearchQuotes();
+  if(revision!==_staySearchRevision)return;
   let list = [...currentListings];
   const s = _searchState;
 
@@ -6008,8 +6043,8 @@ function applyAndRender() {
   }
 
   // Price filter
-  if (s.minPrice > 0) list = list.filter(a => a.price >= s.minPrice);
-  if (s.maxPrice < 999999) list = list.filter(a => a.price <= s.maxPrice);
+  if (s.minPrice > 0) list = list.filter(a => staySortPrice(a) >= s.minPrice);
+  if (s.maxPrice < 999999) list = list.filter(a => staySortPrice(a) <= s.maxPrice);
 
   // Bedrooms
   if (s.studioOnly) {
@@ -6038,7 +6073,7 @@ function applyAndRender() {
 
   // Smart modes
   if (s.smartMode === 'affordable') {
-    list = [...list].sort((a, b) => a.price - b.price);
+    list = [...list].sort((a, b) => staySortPrice(a) - staySortPrice(b));
     updateResultLabel('affordable');
   } else if (s.smartMode === 'bestvalue') {
     // Best value = score combining: rating, reviews, proximity (if we have coords), price efficiency, capacity per price
@@ -6071,7 +6106,7 @@ function applyAndRender() {
 
 function _bestValueScore(apt, s) {
   const totalGuests = (s.adults || 1) + (s.children || 0);
-  const pricePerGuest = apt.price / Math.max(apt.maxGuests || 1, totalGuests);
+  const pricePerGuest = staySortPrice(apt) / Math.max(apt.maxGuests || 1, totalGuests);
   const ratingWeight = (apt.rating || 3.5) * 15;
   const reviewWeight = Math.log10((apt.reviews || 1) + 1) * 8;
   const capacityFit = apt.maxGuests >= totalGuests ? 10 : -20; // penalty for too-small
@@ -7238,3 +7273,4 @@ window.addEventListener('hashchange', () => {
 <script src="/cabana-footer-search.js" defer></script>
 </body>
 </html>
+

@@ -261,6 +261,12 @@ body{display:flex;flex-direction:column;}
 .empty-title{font-family:var(--fh);font-size:20px;font-weight:800;color:var(--ink2);margin-bottom:7px;}
 .empty-sub{font-size:13px;color:var(--soft);line-height:1.65;max-width:320px;margin:0 auto 20px;}
 
+async function openStayOffers(listingId){
+  const root=document.getElementById('partner-offers');
+  if(!window.CabanaOffers){toast('Offers are loading. Please try again.',false);return;}
+  await CabanaOffers.mount({client:sb,root,listingId});
+  root.scrollIntoView({block:'start',behavior:'auto'});
+}
 /* TOAST */
 .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(16px);z-index:9999;padding:11px 22px;border-radius:100px;background:var(--ink2);color:#fff;font-size:13px;font-weight:600;box-shadow:0 8px 28px rgba(10,11,24,0.22);opacity:0;transition:all .32s;pointer-events:none;white-space:nowrap;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
@@ -339,6 +345,8 @@ body{display:flex;flex-direction:column;}
 </style>
 
   <link rel="canonical" href="https://cabana.africa/partner-listings"/>
+<link rel="stylesheet" href="/cabana-offers.css">
+<script src="/cabana-offers.js" defer></script>
 </head>
 <body data-apa-role="partner">
 <div class="amb"><div class="ab ab1"></div><div class="ab ab2"></div></div>
@@ -432,6 +440,7 @@ body{display:flex;flex-direction:column;}
     Settings
   </a>
 
+  <button class="sbl" type="button" onclick="openStayOffers()" style="border:0;background:transparent;text-align:left">Offers &amp; campaigns</button>
   <div class="sb-refer">
     <div class="sb-refer-title">Invite a host.<br/><strong>Earn 5% for life.</strong></div>
     <div class="sb-refer-sub">Every booking your referred host takes earns you 5% of our service fee, for 365 days from the day they join. No cap on how many you invite.</div>
@@ -463,6 +472,9 @@ body{display:flex;flex-direction:column;}
       Add listing
     </button>
   </div>
+  <div style="margin-bottom:18px"><button class="btn btn-ghost btn-sm" type="button" onclick="openStayOffers()">Offers &amp; campaigns</button></div>
+  <section id="partner-offers" hidden aria-label="Stay offers"></section>
+
 
   <!-- Listings THIS partner has sent out that are still waiting to be
        claimed. Renders nothing (and takes no space) when nothing is
@@ -1063,6 +1075,7 @@ function renderListings(list){
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="12" height="12"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2M7 2v20M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/></svg>
             Menu
           </a>`:''}
+          ${(l.service||'stays')==='stays'?`<button class="btn btn-ghost btn-sm" type="button" onclick="openStayOffers('${l.id}')">Offers</button>`:''}
           <a href="add-listing.html?from=dashboard&edit=${l.id}" class="btn btn-ghost btn-sm">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="12" height="12"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             Edit
@@ -1214,3 +1227,4 @@ document.addEventListener('DOMContentLoaded',loadListings);
 <script src="/cabana-lifecycle.js" defer></script>
 </body>
 </html>
+

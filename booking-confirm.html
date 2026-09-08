@@ -286,6 +286,7 @@ body{overflow-x:hidden;}
         <span>Cabana credits <span style="font-size:11px;color:var(--ink-faint);">(applied)</span></span>
         <span class="v" id="sum-credit">−KES 0</span>
       </div>
+      <div id="sum-offer" class="sum-note" role="status" hidden></div>
       <div class="sum-divider"></div>
       <div class="sum-total-row"><span class="sum-total-label">Total</span><span class="sum-total-val" id="sum-total">KES 0</span></div>
       <div class="sum-note" id="sum-note">100% of the stay price goes directly to the host. Our fee is fixed. Never a percentage.</div>
@@ -411,7 +412,7 @@ const apt = {
   id:       params.get('id')       || '0',
   name:     params.get('name')     || 'Selected Apartment',
   location: params.get('location') || 'Nairobi, Kenya',
-  price:    parseFloat(params.get('price')) || 4200,
+  price:    0, // authoritative quote supplies the price; URL prices are never trusted
   icon:     params.get('icon')     || '🏢',
   maxGuests: parseInt(params.get('maxGuests')) || 6,
   lat:      parseFloat(params.get('lat')),
@@ -422,10 +423,12 @@ document.getElementById('sum-apt-name').textContent = apt.name;
 document.getElementById('sum-apt-loc').textContent  = apt.location;
 document.getElementById('sum-apt-thumb').textContent = apt.icon;
 
-let guestCount = 2;
+let guestCount = Math.max(1, Math.min(apt.maxGuests, parseInt(params.get('guests')) || 1));
+document.getElementById('guest-count').textContent = guestCount;
 function changeGuests(delta) {
   guestCount = Math.max(1, Math.min(apt.maxGuests, guestCount + delta));
   document.getElementById('guest-count').textContent = guestCount;
+  updateSummary();
 }
 
 /* ══ FEE CALCULATION. Tiered for apartments ══ */
@@ -449,11 +452,7 @@ function changeGuests(delta) {
 let CREDIT_AVAILABLE = 0;   /* what the server says they hold */
 let CREDIT_APPLIED   = 0;   /* what this booking will actually use */
 
-function grossTotal() {
-  const nights = getNights();
-  const subtotal = nights * apt.price;
-  return subtotal + calculateFee(subtotal);
-}
+function grossTotal() { return STAY_QUOTE ? Number(STAY_QUOTE.grand_total) : 0; }
 
 /* Never spend more than the guest holds, more than the booking is
    worth, or so much that no real payment remains. */
@@ -509,10 +508,65 @@ function getNights() {
   return diff > 0 ? diff : 1;
 }
 
-function updateSummary() {
-  const nights = getNights();
-  const subtotal = nights * apt.price;
-  const fee = calculateFee(subtotal);
+let STAY_QUOTE = null;
+let STAY_QUOTE_KEY = '';
+let STAY_QUOTE_PENDING = null;
+let STAY_QUOTE_SEQUENCE = 0;
+let STAY_QUOTE_AT = 0;
+let CHECKING_PAYMENT_QUOTE = false;
+function stayQuoteKey(){
+  return [apt.id,document.getElementById('checkin-date').value,document.getElementById('checkout-date').value,guestCount].join('|');
+}
+async function refreshStayQuote(force=false){
+  const key=stayQuoteKey();
+  if(!force && STAY_QUOTE && STAY_QUOTE_KEY===key && Date.now()-STAY_QUOTE_AT<30000)return STAY_QUOTE;
+  if(!force && STAY_QUOTE_PENDING?.key===key)return STAY_QUOTE_PENDING.promise;
+  const seq=++STAY_QUOTE_SEQUENCE;
+  const promise=(async()=>{
+    try{
+      if(!sb)throw Error('Could not connect. Refresh and try again.');
+      const {data,error}=await sb.rpc('cabana_stay_quote',{p_listing_id:apt.id,
+        p_checkin:document.getElementById('checkin-date').value,p_checkout:document.getElementById('checkout-date').value,p_guests:guestCount});
+      if(error||!data)throw Error(error?.message||'Could not verify this price.');
+      if(seq!==STAY_QUOTE_SEQUENCE||key!==stayQuoteKey())return null;
+      STAY_QUOTE=data;STAY_QUOTE_KEY=key;STAY_QUOTE_AT=Date.now();
+      apt.price=Number(data.nightly);apt.maxGuests=data.max_guests;apt.name=data.title;
+      document.getElementById('sum-apt-name').textContent=data.title;
+      renderStayQuote();return data;
+    }catch(e){
+      if(seq===STAY_QUOTE_SEQUENCE){STAY_QUOTE=null;document.getElementById('sum-note').textContent=e.message;
+        document.getElementById('sum-total').textContent='Price unavailable';document.getElementById('pay-btn').disabled=true;}
+      return null;
+    }finally{if(seq===STAY_QUOTE_SEQUENCE)STAY_QUOTE_PENDING=null;}
+  })();
+  STAY_QUOTE_PENDING={key,promise};return promise;
+}
+async function confirmStayQuote(){
+  if(CHECKING_PAYMENT_QUOTE)return false;
+  CHECKING_PAYMENT_QUOTE=true;
+  const old=STAY_QUOTE?.fingerprint;
+  try{
+    const q=await refreshStayQuote(true);
+    if(!q){showToast('We could not confirm this price. Please review your dates and try again.');return false;}
+    if(!old||q.fingerprint!==old){showToast('Your price has been updated. Review the total and press pay again.');return false;}
+    return true;
+  }finally{CHECKING_PAYMENT_QUOTE=false;}
+}
+function updateSummary(){
+  if(STAY_QUOTE && STAY_QUOTE_KEY===stayQuoteKey() && Date.now()-STAY_QUOTE_AT<30000){renderStayQuote();return;}
+  STAY_QUOTE=null;
+  document.getElementById('sum-total').textContent='Checking price…';
+  document.getElementById('sum-subtotal').textContent='…';
+  document.getElementById('sum-fee').textContent='…';
+  document.getElementById('sum-offer').hidden=true;
+  document.getElementById('pay-btn').disabled=true;
+  refreshStayQuote();
+}
+function renderStayQuote() {
+  if(!STAY_QUOTE)return;
+  const nights = STAY_QUOTE.nights;
+  const subtotal = Number(STAY_QUOTE.stay_total);
+  const fee = Number(STAY_QUOTE.service_fee);
   const total = subtotal + fee;
 
   /* Credits recomputed on every summary refresh: the applicable
@@ -535,6 +589,10 @@ function updateSummary() {
   document.getElementById('sum-total').textContent = `KES ${due.toLocaleString()}`;
   document.getElementById('sum-note').textContent =
     `100% of the stay price (KES ${subtotal.toLocaleString()}) goes directly to the host. Our fee is fixed. Never a percentage.`;
+  const offer=STAY_QUOTE.offer,offerEl=document.getElementById('sum-offer');
+  offerEl.hidden=!offer;
+  if(offer){offerEl.textContent=offer.title+' applied automatically.'+(offer.verified?' You save KES '+Number(offer.total_saving).toLocaleString()+' against the protected 30-day reference, including fees.':' Your offer price is included above.');}
+  document.getElementById('pay-btn').disabled=false;
   refreshPayModeAmounts();
 }
 
@@ -571,6 +629,8 @@ document.getElementById('checkout-date').addEventListener('change', () => {
    throw a TDZ ReferenceError and leave the whole summary blank. */
 let PAY_MODE = 'full';
 
+if(/^\d{4}-\d{2}-\d{2}$/.test(params.get('checkin')||''))document.getElementById('checkin-date').value=params.get('checkin');
+if(/^\d{4}-\d{2}-\d{2}$/.test(params.get('checkout')||''))document.getElementById('checkout-date').value=params.get('checkout');
 updateSummary();
 
 /* ══ START PAYMENT ══ */
@@ -740,6 +800,9 @@ function showRetryPanel(msg) {
 }
 
 async function startPayment() {
+  if(!await confirmStayQuote())return;
+  const bookingQuote=STAY_QUOTE;
+  const requestedPayment=payAmount();
   const name  = document.getElementById('guest-name').value.trim();
   const phone = document.getElementById('guest-phone').value.trim();
   const checkin  = document.getElementById('checkin-date').value;
@@ -748,10 +811,10 @@ async function startPayment() {
   if (!name)  { showToast('Please enter your full name'); return; }
   if (!phone) { showToast('Please enter your M-Pesa phone number'); return; }
 
-  const nights = getNights();
-  const subtotal = nights * apt.price;
-  const fee = calculateFee(subtotal);
-  const gross = subtotal + fee;
+  const nights = bookingQuote.nights;
+  const subtotal = Number(bookingQuote.stay_total);
+  const fee = Number(bookingQuote.service_fee);
+  const gross = Number(bookingQuote.grand_total);
 
   const payBtn = document.getElementById('pay-btn');
   payBtn.disabled = true;
@@ -829,7 +892,7 @@ async function startPayment() {
        in the shortfall panel, so what they see is what gets charged.
        Previously this always sent the 25% deposit regardless of what
        was in the custom field. */
-    const depositAmt = payAmount();
+    const depositAmt = requestedPayment;
     const balanceAmt = Math.max(0, total - depositAmt);
 
     /* `contact_phone` used to be set twice in this object literal:
@@ -840,6 +903,7 @@ async function startPayment() {
        asking again. The host's details keep the contact_* names that
        every reader already expects; the guest's number gets its own. */
     const row = {
+      quote_fingerprint: bookingQuote.fingerprint,
       guest_id:          CURRENT_USER?.id || null,
       host_id:           apt.host_id || null,
       payment_mode:      isDeposit ? 'deposit' : 'full',
@@ -857,7 +921,7 @@ async function startPayment() {
       checkin_date:      checkin,
       checkout_date:     checkout,
       nights:            nights,
-      num_guests:        guestCount,
+      num_guests:        bookingQuote.guests,
       guest_name:        name,
       guest_phone:       phone,
       stay_total:        subtotal,
@@ -1134,6 +1198,9 @@ function _loadPaypalSdk() {
 
 /* Build and insert the booking row for PayPal/Card payments. */
 async function _preparePaypalBooking() {
+  if(!await confirmStayQuote())return null;
+  const bookingQuote=STAY_QUOTE;
+  const requestedPayment=payAmount();
   var name     = document.getElementById('guest-name').value.trim();
   var checkin  = document.getElementById('checkin-date').value;
   var checkout = document.getElementById('checkout-date').value;
@@ -1141,10 +1208,10 @@ async function _preparePaypalBooking() {
   if (!checkin || !checkout) { showToast('Please select your dates'); return null; }
   if (!sb)                 { showToast('Please refresh the page and try again'); return null; }
 
-  var nights   = getNights();
-  var subtotal = nights * apt.price;
-  var fee      = calculateFee(subtotal);
-  var gross    = subtotal + fee;
+  var nights   = bookingQuote.nights;
+  var subtotal = Number(bookingQuote.stay_total);
+  var fee      = Number(bookingQuote.service_fee);
+  var gross    = Number(bookingQuote.grand_total);
 
   /* Always get a fresh session so we have the current user ID and a
      non-expired access token. If the session has silently expired, try
@@ -1183,12 +1250,13 @@ async function _preparePaypalBooking() {
 
   var total      = Math.max(0, gross - creditSpent);
   var isDeposit  = PAY_MODE === 'deposit';
-  var depositAmt = payAmount();
+  var depositAmt = requestedPayment;
   var balanceAmt = Math.max(0, total - depositAmt);
   var guestCode  = generateCode('GUEST');
   var hostCode   = generateCode('HOST');
 
   var row = {
+    quote_fingerprint: bookingQuote.fingerprint,
     guest_id: userId,   /* always from fresh session — never from the possibly-stale CURRENT_USER */
     host_id:  apt.host_id || null,
     payment_mode:     isDeposit ? 'deposit' : 'full',
@@ -1196,7 +1264,7 @@ async function _preparePaypalBooking() {
     balance_amount:   balanceAmt, balance_paid: false, amount_paid: 0,
     apartment_id:  apt.id, apartment_name: apt.name, location: apt.location,
     checkin_date:  checkin, checkout_date: checkout, nights: nights,
-    num_guests:    guestCount, guest_name: name, guest_phone: '',
+    num_guests:    bookingQuote.guests, guest_name: name, guest_phone: '',
     stay_total:    subtotal, service_fee: fee, grand_total: total,
     credit_applied: creditSpent, payment_reference: paymentReference,
     guest_code: guestCode, host_code: hostCode,
@@ -1400,3 +1468,4 @@ document.addEventListener('DOMContentLoaded', function(){
 <script src="/cabana-lifecycle.js" defer></script>
 </body>
 </html>
+
