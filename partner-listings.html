@@ -261,12 +261,6 @@ body{display:flex;flex-direction:column;}
 .empty-title{font-family:var(--fh);font-size:20px;font-weight:800;color:var(--ink2);margin-bottom:7px;}
 .empty-sub{font-size:13px;color:var(--soft);line-height:1.65;max-width:320px;margin:0 auto 20px;}
 
-async function openStayOffers(listingId){
-  const root=document.getElementById('partner-offers');
-  if(!window.CabanaOffers){toast('Offers are loading. Please try again.',false);return;}
-  await CabanaOffers.mount({client:sb,root,listingId});
-  root.scrollIntoView({block:'start',behavior:'auto'});
-}
 /* TOAST */
 .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(16px);z-index:9999;padding:11px 22px;border-radius:100px;background:var(--ink2);color:#fff;font-size:13px;font-weight:600;box-shadow:0 8px 28px rgba(10,11,24,0.22);opacity:0;transition:all .32s;pointer-events:none;white-space:nowrap;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
@@ -683,6 +677,13 @@ async function openStayOffers(listingId){
 <div class="toast" id="toast"></div>
 
 <script>
+async function openStayOffers(listingId){
+  const root=document.getElementById('partner-offers');
+  if(!window.CabanaOffers){toast('Offers are loading. Please try again.',false);return;}
+  await CabanaOffers.mount({client:sb,root,listingId});
+  root.scrollIntoView({block:'start',behavior:'auto'});
+}
+
 const SURL='https://gfwgbgdvxtocwhilrtdw.supabase.co';
 const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
 let sb=null;try{sb=supabase.createClient(SURL,SKEY);}catch(e){}
