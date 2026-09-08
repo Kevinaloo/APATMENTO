@@ -226,11 +226,11 @@ body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webk
   position:relative;display:flex;align-items:center;justify-content:center;
 }
 .card-slide img{
-  width:100%;height:100%;object-fit:contain;object-position:center;display:block;
+  width:100%;height:100%;object-fit:cover;object-position:center 30%;display:block;
   background:linear-gradient(145deg,#EEF0F5,#E5E8F0);
   opacity:0;transition:opacity .5s ease;
 }
-.card-slide img.fit-cover{object-fit:cover;}
+.card-slide img.fit-contain{object-fit:contain;}
 .card-slide img.ready{opacity:1;}
 .card-img-ico{width:40px;height:40px;color:rgba(255,255,255,.9);}
 
@@ -3278,6 +3278,7 @@ html.sg-lock,html.sg-lock body{overflow:hidden!important;}
      out of <head> so everything above renders without waiting on it. -->
 <script src="/vendor-supabase-2.112.3.js"></script>
 <script src="/apa-session.js"></script>
+<script src="/apa-chrome.js"></script>
 <script src="/apa-admin-guard.js"></script>
 <script>
 // Real listings only. Loaded from Supabase (demo array removed)
@@ -3671,7 +3672,7 @@ function renderCards(list) {
        ahead of wherever the guest has swiped to. Fourteen photos on a
        card must not cost fourteen downloads nobody asked for. */
     const slides = photos.length
-      ? photos.map((p, n) => {const pos=apt.photoPositions?.[n]||{};const fit=pos.fit==='cover'?'cover':'contain';const x=Math.max(0,Math.min(100,Number(pos.x)||50));const y=Math.max(0,Math.min(100,Number(pos.y)||50));return n === 0
+      ? photos.map((p, n) => {const pos=apt.photoPositions?.[n]||{};const fit=pos.fit==='contain'?'contain':'cover';const rawX=Number(pos.x);const rawY=Number(pos.y);const x=Math.max(0,Math.min(100,Number.isFinite(rawX)?rawX:50));const y=Math.max(0,Math.min(100,Number.isFinite(rawY)?rawY:30));return n === 0
           ? `<div class="card-slide"><img class="fit-${fit}" style="object-position:${x}% ${y}%" ${_imgAttrs(p, 640)} alt="${_esc(apt.name)}" ${i < 3 ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async"></div>`
           : `<div class="card-slide" data-pending data-src="${_esc(p)}" data-fit="${fit}" data-x="${x}" data-y="${y}"></div>`;
         }).join('')
@@ -3756,7 +3757,7 @@ function _hydrateSlides(media, from, count) {
     slide.removeAttribute('data-pending');
     const src = slide.getAttribute('data-src');
     if (!src) continue;
-    const fit=slide.dataset.fit==='cover'?'cover':'contain';const x=Number(slide.dataset.x)||50;const y=Number(slide.dataset.y)||50;
+    const fit=slide.dataset.fit==='contain'?'contain':'cover';const rawX=Number(slide.dataset.x);const rawY=Number(slide.dataset.y);const x=Number.isFinite(rawX)?rawX:50;const y=Number.isFinite(rawY)?rawY:30;
     slide.insertAdjacentHTML('beforeend',
       `<img class="fit-${fit}" style="object-position:${x}% ${y}%" ${_imgAttrs(src, 640)} alt="" loading="lazy" decoding="async">`);
     const fresh = slide.querySelector('img');
@@ -4325,7 +4326,7 @@ function openDrawer(id) {
 function _buildGallery(photos, grad, positions) {
   const bg = grad || 'linear-gradient(135deg,#B8A4F4,#7B2FF7)';
   const slidesHTML = photos.length
-    ? photos.map((p,i) => {const pos=positions?.[i]||{};const fit=pos.fit==='cover'?'cover':'contain';const x=Math.max(0,Math.min(100,Number(pos.x)||50));const y=Math.max(0,Math.min(100,Number(pos.y)||50));return `<div class="dl-gallery-slide" onclick="openLightbox(${i})" role="button" tabindex="0"
+    ? photos.map((p,i) => {const pos=positions?.[i]||{};const fit=pos.fit==='contain'?'contain':'cover';const rawX=Number(pos.x);const rawY=Number(pos.y);const x=Math.max(0,Math.min(100,Number.isFinite(rawX)?rawX:50));const y=Math.max(0,Math.min(100,Number.isFinite(rawY)?rawY:30));return `<div class="dl-gallery-slide" onclick="openLightbox(${i})" role="button" tabindex="0"
            aria-label="Open photo ${i+1} full screen"><img class="fit-${fit}" style="object-position:${x}% ${y}%" src="${p}" alt="Photo ${i+1}" loading="${i===0?'eager':'lazy'}" decoding="async"/></div>`;
       }).join('')
     : `<div class="dl-gallery-slide" style="background:${bg}">
@@ -4642,32 +4643,39 @@ function bookNow(id) {
 ════════════════════════════════════════════════ */
 function _getWishlist() {
   const ids=new Set();
-  try { if(window.ApaChrome?.getFavs)ApaChrome.getFavs().forEach(f=>ids.add(String(f.id))); } catch(e) {}
+  try { JSON.parse(localStorage.getItem('apa_favorites') || '[]').forEach(f=>{if(f&&f.id!==undefined)ids.add(String(f.id));}); } catch(e) {}
   try { JSON.parse(localStorage.getItem('apa_wishlist') || '[]').forEach(id=>ids.add(String(id))); } catch(e) {}
   return ids;
 }
-function _saveWishlist(set) {
-  try { localStorage.setItem('apa_wishlist', JSON.stringify([...set])); } catch(e) {}
+function _getSharedFavorites(){
+  try{const value=JSON.parse(localStorage.getItem('apa_favorites')||'[]');return Array.isArray(value)?value:[];}catch(e){return[];}
+}
+function _setSharedFavorites(favorites){
+  try{localStorage.setItem('apa_favorites',JSON.stringify(favorites));}catch(e){}
+  try{window.dispatchEvent(new CustomEvent('apa:favorites-changed',{detail:{count:favorites.length}}));}catch(e){}
+  try{window.ApaChrome?.updateFavBadge?.();}catch(e){}
+}
+function _favoriteRecord(apt){
+  return{id:String(apt.id),name:apt.name,location:apt.location||apt.city||'',price:apt.price,type:'Stay',unit:'night',photo:(apt.photos||[])[0]||'',url:'/apartments?open='+encodeURIComponent(apt._dbId||apt.id)};
 }
 function migrateLegacyStayWishlist(){
-  if(!window.ApaChrome?.toggleFavorite)return;
   let old=[];try{old=JSON.parse(localStorage.getItem('apa_wishlist')||'[]');}catch(e){}
-  old.forEach(id=>{const key=String(id);const apt=currentListings.find(item=>String(item.id)===key);if(!apt||ApaChrome.isFavorited(key))return;ApaChrome.toggleFavorite({id:key,name:apt.name,location:apt.location||apt.city||'',price:apt.price,type:'Stay',unit:'night',photo:(apt.photos||[])[0]||'',url:'/apartments?open='+encodeURIComponent(apt._dbId||apt.id)});});
+  const favorites=_getSharedFavorites();
+  old.forEach(id=>{const key=String(id);const apt=currentListings.find(item=>String(item.id)===key);if(!apt||favorites.some(f=>String(f.id)===key))return;favorites.push(_favoriteRecord(apt));});
+  _setSharedFavorites(favorites);
   try{localStorage.removeItem('apa_wishlist');}catch(e){}
 }
 function isWishlisted(id) { return _getWishlist().has(String(id)); }
 function toggleWishlist(id, btn) {
   const key = String(id);
   const apt=currentListings.find(item=>String(item.id)===key);
-  let added;
-  if(window.ApaChrome?.toggleFavorite&&apt){
-    added=ApaChrome.toggleFavorite({id:key,name:apt.name,location:apt.location||apt.city||'',price:apt.price,type:'Stay',unit:'night',photo:(apt.photos||[])[0]||'',url:'/apartments?open='+encodeURIComponent(apt._dbId||apt.id)});
-  }else{
-    const local=_getWishlist();added=!local.has(key);if(added)local.add(key);else local.delete(key);_saveWishlist(local);
-  }
-  /* Retire the stays-only key as each item is touched. It remains readable
-     above solely so nobody loses an older save during the cutover. */
-  try{const old=new Set(JSON.parse(localStorage.getItem('apa_wishlist')||'[]'));old.delete(key);localStorage.setItem('apa_wishlist',JSON.stringify([...old]));}catch(e){}
+  if(!apt)return;
+  const favorites=_getSharedFavorites();
+  const index=favorites.findIndex(f=>String(f.id)===key);
+  const added=index===-1;
+  if(added)favorites.push(_favoriteRecord(apt));else favorites.splice(index,1);
+  _setSharedFavorites(favorites);
+  try{const old=new Set(JSON.parse(localStorage.getItem('apa_wishlist')||'[]'));old.delete(key);if(old.size)localStorage.setItem('apa_wishlist',JSON.stringify([...old]));else localStorage.removeItem('apa_wishlist');}catch(e){}
   if (!added) {
     if (btn) {
       btn.classList.remove('wishlisted');

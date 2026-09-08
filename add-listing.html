@@ -2186,7 +2186,7 @@ function dov(e){e.preventDefault();document.getElementById('ul-area').classList.
 function dlv(){document.getElementById('ul-area').classList.remove('drag');}
 function ddp(e){e.preventDefault();dlv();handlePh(e.dataTransfer.files);}
 function handlePh(files){const ok=Array.from(files).filter(f=>f.type.startsWith('image/')&&f.size<=10*1024*1024);if(files.length>ok.length)al('Some files skipped. Images only, max 10MB each.');ok.forEach(addPh);}
-function normalPhotoPosition(value){return{fit:value&&value.fit==='cover'?'cover':'contain',x:Math.max(0,Math.min(100,Number(value&&value.x)||50)),y:Math.max(0,Math.min(100,Number(value&&value.y)||50))};}
+function normalPhotoPosition(value){const rawX=Number(value&&value.x),rawY=Number(value&&value.y);return{fit:value&&value.fit==='contain'?'contain':'cover',x:Math.max(0,Math.min(100,Number.isFinite(rawX)?rawX:50)),y:Math.max(0,Math.min(100,Number.isFinite(rawY)?rawY:30))};}
 function addPh(file){if(F.photos.length>=10){al('Maximum 10 photos allowed.');return;}if(F.photoFiles.some(f=>f&&f.name===file.name&&f.size===file.size)){al('"'+file.name+'" is already added.');return;}const r=new FileReader();r.onload=e=>{F.photoFiles.push(file);F.photos.push(e.target.result);F.photoPositions.push(normalPhotoPosition());renderPG();};r.readAsDataURL(file);}
 function movePhoto(from,to){if(from===to||from<0||to<0||from>=F.photos.length||to>=F.photos.length)return;[F.photos,F.photoFiles,F.photoPositions].forEach(arr=>{const item=arr.splice(from,1)[0];arr.splice(to,0,item);});cov=0;renderPG();}
 let photoDragFrom=null;
