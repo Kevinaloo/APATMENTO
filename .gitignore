@@ -1,6 +1,11 @@
 node_modules/
 *.bak
 
+# Local secrets — never commit real credentials.
+.env
+.env.local
+.env.*.local
+
 # Python bytecode from the SEO build. These were tracked and mutate on
 # every run, so the CI "verify the build is committed" gate could never
 # pass on a clean tree.
