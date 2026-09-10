@@ -58,13 +58,18 @@ async function boot(session, label, file) {
       w.fetch = (u) => {
         const url = String(u);
         const row =
-          /scraped_events/.test(url)      ? [{ title:'Nairobi Fest', venue:'KICC', city:'Nairobi', start_date:'2026-08-01', image_url:'e.jpg', price_from:1500 }] :
-          /scraped_tours/.test(url)       ? [{ title:'Masai Mara', location:'Narok', duration:'3 days', image_url:'t.jpg', price_from:40000 }] :
-          /scraped_restaurants/.test(url) ? [{ name:'Talisman', cuisine:'Fusion', area:'Karen', image_url:'f.jpg', delivery_mins:35 }] :
-          /scraped_shopping/.test(url)    ? [{ name:'Kikoy', category:'Textiles', seller:'Soko', image_url:'s.jpg', price:1200 }] :
-          /scraped_carhire/.test(url)     ? [{ name:'Prado', vehicle_type:'SUV', seats:7, image_url:'c.jpg', price_self:12000 }] :
-          /type=eq\.share/.test(url)      ? [{ id:'r1', title:'Room in Kilimani', area:'Kilimani', price_night:25000, photos:['r.jpg'] }] :
-          /listings/.test(url)            ? [{ id:'l1', title:'Luxore', area:'Syokimau', price_night:3000, photos:['p.jpg'], beds:1, max_guests:2 }] :
+          /scraped_events|events_public/.test(url)      ? [{ id:'e1', title:'Nairobi Fest', venue:'KICC', city:'Nairobi', starts_at: new Date(Date.now() + 86400000).toISOString(), start_date:'2026-08-01', image_url:'e.jpg', cover_url:'e.jpg', price_from:1500 }] :
+          /scraped_tours|tours_public/.test(url)       ? [{ id:'t1', title:'Masai Mara', destination:'Narok', location:'Narok', duration_label:'3 days', duration:'3 days', image_url:'t.jpg', cover_url:'t.jpg', price_kes:40000, price_from:40000 }] :
+          /menu_items/.test(url)                       ? [{ id:'m1', name:'Talisman', photo:'f.jpg', price:1200, listing_id:'l1', listings:{ title:'Talisman', is_active:true } }] :
+          /scraped_restaurants/.test(url)              ? [{ name:'Talisman', cuisine:'Fusion', area:'Karen', image_url:'f.jpg', delivery_mins:35 }] :
+          /scraped_shopping/.test(url)                 ? [{ id:'s1', name:'Kikoy', category:'Textiles', seller:'Soko', image_url:'s.jpg', price:1200 }] :
+          /car_fleet/.test(url)                        ? [{ id:'c1', make:'Toyota', model:'Prado', seats:7, photos:['c.jpg'], day_rate:1200000, operator_id:'op1' }] :
+          /car_operators/.test(url)                    ? [{ id:'op1', name:'Apex', city:'Nairobi', verified:true }] :
+          /scraped_carhire/.test(url)                  ? [{ name:'Prado', vehicle_type:'SUV', seats:7, image_url:'c.jpg', price_self:12000 }] :
+          /type=eq\.shopping/.test(url)                ? [] :
+          /service=eq\.food/.test(url)                 ? [] :
+          /type=eq\.share|or=\(type\.eq\.room/.test(url) ? [{ id:'r1', title:'Room in Kilimani', area:'Kilimani', price_night:25000, photos:['r.jpg'], status:'active' }] :
+          /listings/.test(url)                         ? [{ id:'l1', title:'Luxore', area:'Syokimau', price_night:3000, photos:['p.jpg'], beds:1, max_guests:2, service:'stays' }] :
           [];
         return Promise.resolve({ ok:true, json: () => Promise.resolve(row) });
       };

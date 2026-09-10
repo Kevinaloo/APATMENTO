@@ -187,21 +187,52 @@ async function networkFirstWithTimeout(event, request) {
 
 // ── PUSH NOTIFICATIONS ──
 self.addEventListener('push', e => {
-  let d = { title:'Cabana', body:'You have a notification', icon:'/cabana-icon-192.png', tag:'cabana' };
-  try { if (e.data) d = { ...d, ...e.data.json() }; } catch {}
-  e.waitUntil(self.registration.showNotification(d.title, {
-    body: d.body, icon: d.icon, badge: d.icon, tag: d.tag,
-    data: { url: d.url || '/' }, vibrate: [200,100,200],
-  }));
+  let d = {
+    title: 'Cabana',
+    body: 'You have a new update',
+    icon: '/cabana-icon-192.png',
+    tag: 'cbn-' + Date.now(),
+    url: '/dashboard.html'
+  };
+  try {
+    if (e.data) {
+      var parsed = e.data.json();
+      d = Object.assign(d, parsed);
+    }
+  } catch (err) {}
+
+  e.waitUntil(
+    self.registration.showNotification(d.title, {
+      body: d.body,
+      icon: d.icon || '/cabana-icon-192.png',
+      badge: '/cabana-icon-192.png',
+      tag: d.tag || ('cbn-' + Date.now()),
+      renotify: true,
+      data: { url: d.url || '/dashboard.html' },
+      vibrate: [200, 100, 200]
+    })
+  );
 });
 
 self.addEventListener('notificationclick', e => {
   e.notification.close();
-  const url = e.notification.data?.url || '/';
-  e.waitUntil(clients.matchAll({ type:'window' }).then(cs => {
-    const w = cs.find(c => 'focus' in c);
-    return w ? w.focus().then(c => c.navigate(url)) : clients.openWindow(url);
-  }));
+  const targetUrl = (e.notification.data && e.notification.data.url) || '/dashboard.html';
+
+  e.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(cs => {
+      for (let i = 0; i < cs.length; i++) {
+        const c = cs[i];
+        if (c.url && c.url.includes(self.location.origin) && 'focus' in c) {
+          return c.focus().then(() => {
+            if ('navigate' in c && targetUrl && !c.url.endsWith(targetUrl)) {
+              return c.navigate(targetUrl);
+            }
+          });
+        }
+      }
+      if (clients.openWindow) return clients.openWindow(targetUrl);
+    })
+  );
 });
 
 self.addEventListener('sync', e => {

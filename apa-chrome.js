@@ -639,6 +639,8 @@
   });
 
   function openNotifications() {
+    /* Delegate to CabanaPulse intelligence center if loaded */
+    if (global.CabanaPulse) { global.CabanaPulse.open('notifs'); return; }
     /* Delegate to CabanaChat messenger if loaded, otherwise fall back */
     if (global.CabanaChat) { global.CabanaChat.openInbox(); return; }
     if (global.ApatmentoChat) { global.ApatmentoChat.openInbox(); return; }

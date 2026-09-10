@@ -231,40 +231,6 @@
       }
     },
     {
-      /* car_fleet + car_operators, exactly what carhire.html loads.
-         Rates are stored in minor units (KES cents); the page divides by
-         100 before it shows anything and so must the rail, or a 9,500/day
-         Rav4 reads as 950,000. */
-      key: 'carhire',
-      title: 'Car hire',
-      dest: 'carhire',
-      fetch: function () {
-        return Promise.all([
-          get('car_fleet?select=*&status=eq.active&limit=60'),
-          get('car_operators?select=id,name,city&verified=is.true')
-        ]).then(function (res) {
-          var ops = {};
-          (res[1] || []).forEach(function (o) { ops[o.id] = o; });
-          return (res[0] || []).map(function (v) {
-            v.__op = ops[v.operator_id] || null;
-            return v;
-          }).sort(by('day_rate', 'asc')).slice(0, 12);
-        });
-      },
-      map: function (c) {
-        var name = [c.make, c.model].filter(Boolean).join(' ');
-        var rate = Number(c.day_rate) > 0 ? Number(c.day_rate) / 100 : 0;
-        return {
-          img: firstPhoto(c.photos),
-          title: name || 'Vehicle',
-          sub: [c.__op && c.__op.city, c.seats ? c.seats + ' seats' : '', c.transmission]
-                 .filter(Boolean).join(' · '),
-          price: rate ? money(rate) + '/day' : '',
-          q: c.id ? 'open=' + encodeURIComponent(c.id) : ''
-        };
-      }
-    },
-    {
       /* shopping.html merges a curated seller catalogue with anything
          partners listed themselves, and prefixes the two id spaces so
          they cannot collide. The rail reproduces both the merge and the
@@ -309,6 +275,40 @@
           sub: p.seller,
           price: p.price > 0 ? money(p.price) : 'Price on request',
           q: 'open=' + encodeURIComponent(p.pid)
+        };
+      }
+    },
+    {
+      /* car_fleet + car_operators, exactly what carhire.html loads.
+         Rates are stored in minor units (KES cents); the page divides by
+         100 before it shows anything and so must the rail, or a 9,500/day
+         Rav4 reads as 950,000. */
+      key: 'carhire',
+      title: 'Car hire',
+      dest: 'carhire',
+      fetch: function () {
+        return Promise.all([
+          get('car_fleet?select=*&status=eq.active&limit=60'),
+          get('car_operators?select=id,name,city&verified=is.true')
+        ]).then(function (res) {
+          var ops = {};
+          (res[1] || []).forEach(function (o) { ops[o.id] = o; });
+          return (res[0] || []).map(function (v) {
+            v.__op = ops[v.operator_id] || null;
+            return v;
+          }).sort(by('day_rate', 'asc')).slice(0, 12);
+        });
+      },
+      map: function (c) {
+        var name = [c.make, c.model].filter(Boolean).join(' ');
+        var rate = Number(c.day_rate) > 0 ? Number(c.day_rate) / 100 : 0;
+        return {
+          img: firstPhoto(c.photos),
+          title: name || 'Vehicle',
+          sub: [c.__op && c.__op.city, c.seats ? c.seats + ' seats' : '', c.transmission]
+                 .filter(Boolean).join(' · '),
+          price: rate ? money(rate) + '/day' : '',
+          q: c.id ? 'open=' + encodeURIComponent(c.id) : ''
         };
       }
     },

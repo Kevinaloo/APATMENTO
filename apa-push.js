@@ -119,7 +119,11 @@
     el.querySelector('.apa-toast-x').addEventListener('click', function (e) {
       e.stopPropagation(); close();
     });
-    if (n.url) el.addEventListener('click', function () { location.href = n.url; });
+    el.addEventListener('click', function () {
+      close();
+      if (n.url) location.href = n.url;
+      else if (global.CabanaPulse) global.CabanaPulse.open('notifs');
+    });
 
     setTimeout(close, 7000);
   }
@@ -145,7 +149,10 @@
     btn.innerHTML =
       '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
       ICONS.general + '</svg><span class="apa-bell-badge"></span>';
-    btn.addEventListener('click', function () { location.href = '/dashboard.html#notifications'; });
+    btn.addEventListener('click', function () {
+      if (global.CabanaPulse) global.CabanaPulse.open('notifs');
+      else location.href = '/dashboard.html#notifications';
+    });
     host.insertBefore(btn, host.firstChild);
     setUnread(_unread);
   }
@@ -203,9 +210,21 @@
         filter: 'user_id=eq.' + userId,
       }, function (payload) {
         var n = payload.new;
-        // If the page is hidden the service worker's push handler will
-        // show the OS notification. Showing a toast too would double up.
-        if (document.visibilityState === 'visible') toast(n);
+        if (document.visibilityState === 'visible') {
+          toast(n);
+          if (global.CabanaPulse) {
+            global.CabanaPulse.state.notifications.unshift({
+              id: n.id || ('rt-' + Date.now()),
+              kind: n.kind || 'system',
+              title: n.title || 'Notification',
+              text: n.body || '',
+              time: 'Just now',
+              read: false,
+              link: n.url,
+            });
+            if (global.CabanaPulse.playChime) global.CabanaPulse.playChime();
+          }
+        }
         setUnread(_unread + 1);
       })
       .subscribe();
@@ -282,12 +301,11 @@
     g.id = 'apa-gate';
     g.innerHTML =
       '<div class="apa-gate-card">' +
-      '<button class="apa-gate-x" id="apa-gate-x" aria-label="Close">&times;</button>' +
       '<div class="apa-gate-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">' + ICONS.general + '</svg></div>' +
       '<div class="apa-gate-h"></div>' +
       '<div class="apa-gate-p"></div>' +
       (denied ? '' : '<button class="apa-gate-btn" id="apa-gate-btn">Turn on notifications</button>') +
-      '<button class="apa-gate-btn2" id="apa-gate-later">' + (denied ? 'Got it' : 'Maybe later') + '</button>' +
+      (denied ? '<button class="apa-gate-btn2" onclick="location.reload()">Reload page</button>' : '') +
       '<div class="apa-gate-note"></div>' +
       '</div>';
 
@@ -295,25 +313,15 @@
       ? 'Notifications are blocked' : 'Stay in the loop';
 
     g.querySelector('.apa-gate-p').textContent = denied
-      ? 'Turn on notifications to hear about bookings, payments and messages the moment they happen. You can still use Cabanato without them.'
-      : 'Apatmento can send you booking confirmations, payment receipts and host messages the moment they happen.';
+      ? 'Turn on notifications to hear about bookings, payments and messages. Your browser is currently blocking notifications for Cabana.'
+      : 'Apatmento requires notifications to securely deliver booking confirmations, payment receipts and host messages the moment they happen.';
 
     g.querySelector('.apa-gate-note').textContent = denied
-      ? 'To enable later: tap the lock icon in your address bar \u2192 Site settings \u2192 Notifications \u2192 Allow, then reload.'
-      : 'You can change this anytime in your browser settings.';
+      ? 'To enable: tap the lock icon in your address bar \u2192 Site settings \u2192 Notifications \u2192 Allow, then reload.'
+      : 'Required to securely use Cabana. Please select "Allow on every visit" to prevent this prompt from reappearing.';
 
     document.body.appendChild(g);
     requestAnimationFrame(function () { g.classList.add('show'); });
-
-    // Dismiss paths. The gate must NEVER trap the user.
-    var xBtn = g.querySelector('#apa-gate-x');
-    if (xBtn) xBtn.addEventListener('click', function () { dismissGate(g); });
-    var later = g.querySelector('#apa-gate-later');
-    if (later) later.addEventListener('click', function () { dismissGate(g); });
-    g.addEventListener('click', function (e) { if (e.target === g) dismissGate(g); });
-    document.addEventListener('keydown', function onEsc(e) {
-      if (e.key === 'Escape') { dismissGate(g); document.removeEventListener('keydown', onEsc); }
-    });
 
     var btn = g.querySelector('#apa-gate-btn');
     if (btn) btn.addEventListener('click', async function () {
@@ -337,13 +345,9 @@
     if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
     var p = Notification.permission;
     if (p === 'granted') return;
-    // If the user already dismissed the gate this session, don't nag.
-    try { if (sessionStorage.getItem('apa_gate_dismissed') === '1') return; } catch (e) {}
-    // 'denied' means the browser has locked us out. Showing a blocking
-    // modal there just traps the user, so we skip the auto-prompt entirely
-    // and only invite when the browser can still grant (default state).
-    if (p === 'denied') return;
-    showGate(false);
+    // We enforce this as a strict requirement platform-wide.
+    // If denied, we still show the gate which now instructs them to reload after enabling.
+    showGate(p === 'denied');
   }
 
   // Pages that count as "inside the app". Marketing and auth pages are

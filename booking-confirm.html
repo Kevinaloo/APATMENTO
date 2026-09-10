@@ -161,9 +161,7 @@ body{overflow-x:hidden;}
   background:var(--glass-2);border:1px solid var(--line);border-radius:14px;padding:13px 14px;}
 
 /* Payment gateway tabs */
-/* GATEWAY_TABS_HIDDEN: PayPal & Card tabs hidden 2025-01 — restore by changing grid-template-columns back to repeat(3,1fr) and removing display:none on #pgt-paypal,#pgt-card */
-.pgt-tabs{display:grid;grid-template-columns:1fr;gap:8px;margin:20px 0 14px;}
-#pgt-paypal,#pgt-card{display:none !important;} /* HIDDEN_GATEWAYS: remove these two lines to restore PayPal & Card tabs */
+.pgt-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:20px 0 14px;}
 .pgt-tab{padding:11px 6px 10px;border:1.5px solid var(--line-2);border-radius:14px;
   background:#fff;cursor:pointer;font-size:12.5px;font-weight:700;color:var(--ink-faint);
   text-align:center;transition:all .18s ease;font-family:var(--font-body);line-height:1.3;}
@@ -222,8 +220,7 @@ body{overflow-x:hidden;}
 <div class="page">
   <span class="page-eyebrow">Almost there</span>
   <h1 class="page-title">Confirm your <em>booking</em></h1>
-  <p class="page-sub">Review your stay and pay with M-Pesa. Your money is protected until check-in.</p>
-  <!-- HIDDEN_GATEWAYS_SUBTITLE: original text: "Review your stay and pay with M-Pesa, PayPal, or card. Your money is protected until check-in." -->
+  <p class="page-sub">Review your stay and pay with M-Pesa, PayPal, or card. Your money is protected until check-in.</p>
 
   <div class="layout">
     <!-- LEFT: FORM -->
@@ -336,20 +333,17 @@ body{overflow-x:hidden;}
         </button>
       </div>
 
-      <!-- HIDDEN_GATEWAYS: PayPal & Card preserved below. To restore: remove the outer wrapper div and its style, and delete the HIDDEN_GATEWAYS comments. -->
-      <div id="hidden-gateways-wrap" style="display:none !important;visibility:hidden;pointer-events:none;position:absolute;z-index:-9999;" aria-hidden="true">
-        <!-- PayPal -->
-        <div id="pay-section-paypal">
-          <p class="pgt-note">You'll be redirected to PayPal to complete payment. Charges in USD — KES shown is an estimate at today's rate.</p>
-          <div id="paypal-button-container"></div>
-        </div>
-        <!-- Card via PayPal -->
-        <div id="pay-section-card">
-          <p class="pgt-note">Pay with Visa, Mastercard, or Amex. Processed securely via PayPal. Charges in USD — KES shown is an estimate.</p>
-          <div id="card-button-container" class="pp-card-wrap"></div>
-        </div>
+      <!-- PayPal -->
+      <div id="pay-section-paypal" style="display:none">
+        <p class="pgt-note">You'll be redirected to PayPal to complete payment. Charges in USD — KES shown is an estimate at today's rate.</p>
+        <div id="paypal-button-container"></div>
       </div>
-      <!-- END HIDDEN_GATEWAYS -->
+
+      <!-- Card via PayPal -->
+      <div id="pay-section-card" style="display:none">
+        <p class="pgt-note">Pay with Visa, Mastercard, or Amex. Processed securely via PayPal. Charges in USD — KES shown is an estimate.</p>
+        <div id="card-button-container" class="pp-card-wrap"></div>
+      </div>
 
       <div class="pay-secure">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>

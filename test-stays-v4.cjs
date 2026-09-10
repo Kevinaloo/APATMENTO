@@ -22,7 +22,7 @@ const L = [
 
 const chain = () => {
   const o = {};
-  ['select', 'eq', 'order', 'limit', 'gte', 'ilike', 'in', 'neq'].forEach(k => o[k] = () => o);
+  ['select', 'eq', 'order', 'limit', 'gte', 'ilike', 'in', 'neq', 'is'].forEach(k => o[k] = () => o);
   o.then = r => Promise.resolve({ data: L, error: null }).then(r);
   return o;
 };

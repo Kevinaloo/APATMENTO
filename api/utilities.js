@@ -44,7 +44,8 @@ import atlasHandler from './lib/_atlas.js';
 import sosHandler from './lib/_sos.js';
 import terrainHandler from './lib/_carhire-terrain.js';
 import musicSearchHandler from './lib/_music-search.js';
-import scrapeHandler from './lib/_scrape.js';
+import weatherHandler from './lib/_weather.js';
+import scrapeHandler from './scrape.js';
 import { reconcilePayments } from './lib/_reconcile-payments.js';
 import { settlementOf, endDayOf, todayNumber, PART_PAYMENT_TTL_HOURS,
          validateInstalment, depositRequired }
@@ -814,6 +815,10 @@ export default async function handler(req, res) {
     return terrainHandler(req, res);
   }
 
+  if (action === 'weather') {
+    return weatherHandler(req, res);
+  }
+
   if (action === 'close-bookings') {
     return handleCloseBookings(req, res);
   }
@@ -847,7 +852,7 @@ export default async function handler(req, res) {
   }
 
   return res.status(400).json({
-    error: 'Unknown action. Available: subscribe, geocode, atlas, sos-alert, carhire-terrain, music-search, '
+    error: 'Unknown action. Available: subscribe, geocode, atlas, sos-alert, carhire-terrain, weather, music-search, '
          + 'scrape, close-bookings, welcome-email, indexnow, reconcile-payments, expire-match-offers, paypal-create-order, '
          + 'paypal-capture, paypal-webhook',
   });

@@ -33,6 +33,11 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { JSDOM } from 'jsdom';
 
+// Ensure the fallback path (no AI keys configured, this repo's default state) is exercised
+for (const key of ['GEMINI_API_KEY', 'OPENAI_API_KEY', 'GROQ_API_KEY', 'AI_GATEWAY_API_KEY']) {
+  delete process.env[key];
+}
+
 const ROOT = new URL('..', import.meta.url).pathname;
 const read = (f) => readFileSync(join(ROOT, f), 'utf8');
 const CORE_SRC = read('cabana-carhire-core.js');

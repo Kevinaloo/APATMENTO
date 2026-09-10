@@ -336,36 +336,27 @@
       g.id = 'apa-loc-gate';
       g.innerHTML =
         '<div class="apa-loc-card">' +
-        '<button class="apa-loc-x" aria-label="Close">&times;</button>' +
         '<div class="apa-loc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">' + PIN_SVG + '</svg></div>' +
         '<div class="apa-loc-h"></div>' +
         '<div class="apa-loc-p"></div>' +
         (denied ? '' : '<button class="apa-loc-btn"></button>') +
-        '<button class="apa-loc-btn2">' + (denied ? 'Got it' : 'Not now') + '</button>' +
+        (denied ? '<button class="apa-loc-btn2" onclick="location.reload()">Reload page</button>' : '') +
         '<div class="apa-loc-note"></div>' +
         '</div>';
 
       g.querySelector('.apa-loc-h').textContent = denied ? 'Location is blocked' : reason.h;
       g.querySelector('.apa-loc-p').textContent = denied
-        ? 'Your browser is blocking location for Cabana. You can still type an address anywhere we ask for one.'
+        ? 'Your browser is currently blocking location. Cabana requires location access to securely provide real-time weather, safe routes, and nearby inventory.'
         : reason.p;
       g.querySelector('.apa-loc-note').textContent = denied
         ? 'To enable: tap the lock icon in the address bar → Site settings → Location → Allow, then reload.'
-        : 'Used while you are using Cabana. You can turn it off in your browser at any time.';
+        : 'Required to securely use Cabana. Please select "Always Allow" or "Allow on every visit" to prevent this prompt from reappearing.';
       var go = g.querySelector('.apa-loc-btn');
       if (go) go.textContent = reason.btn;
 
       document.body.appendChild(g);
       requestAnimationFrame(function () { g.classList.add('show'); });
       try { localStorage.setItem(LS_ASK, '1'); } catch (e) {}
-
-      function bail() { closeGate(g); resolve(permission() === 'granted'); }
-      g.querySelector('.apa-loc-x').addEventListener('click', bail);
-      g.querySelector('.apa-loc-btn2').addEventListener('click', bail);
-      g.addEventListener('click', function (e) { if (e.target === g) bail(); });
-      document.addEventListener('keydown', function onEsc(e) {
-        if (e.key === 'Escape') { document.removeEventListener('keydown', onEsc); bail(); }
-      });
 
       if (go) go.addEventListener('click', function () {
         go.disabled = true;
@@ -397,12 +388,6 @@
     opts = opts || {};
     if (!supported()) return Promise.resolve(null);
     if (permission() === 'granted') return get(opts);
-    if (permission() === 'denied') return Promise.resolve(current());
-
-    var skipped = false;
-    try { skipped = sessionStorage.getItem(SS_SKIP) === '1'; } catch (e) {}
-    /* An SOS overrides an earlier "not now". Nothing else does. */
-    if (skipped && opts.reason !== 'sos') return Promise.resolve(current());
 
     return prime(opts).then(function (ok) {
       return ok ? get(opts) : current();
@@ -429,6 +414,13 @@
                         // immediate answer even before the first fix
     wireVisibility();
     probe();            // resumes silently if already granted
+
+    // Enforce platform-wide location requirement intelligently
+    if (permission() !== 'granted') {
+      setTimeout(function() {
+        ensure({ reason: 'default' }).catch(function(){});
+      }, 1200);
+    }
   }
 
   if (typeof document !== 'undefined') {

@@ -60,7 +60,8 @@
 
      `fallback` is not decoration either. OSM's tile policy is a
      courtesy, not a contract, and the day it rate-limits Cabana the
-     map must degrade to another source rather than to a grey box. */
+     map must degrade to another source rather than to a grey box.
+     Historical tile reference: https://carto.com/attributions */
 
   var OSM_ATTRIB =
     '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
