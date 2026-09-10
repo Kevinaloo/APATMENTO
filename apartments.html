@@ -3627,7 +3627,7 @@ function staySearchQuote(apt){
 function staySortPrice(apt){const q=staySearchQuote(apt);return q?q.grand_total/q.nights:apt.price;}
 function stayCardPrice(apt){
   const q=staySearchQuote(apt);
-  if(q)return `<span class="val">KES ${Number(q.grand_total).toLocaleString()}</span> <span class="per">total · ${q.nights} night${q.nights===1?'':'s'}</span><span class="cb-offer-note">Includes Cabana fee${q.offer?' · '+_esc(q.offer.title):''}${q.offer?.verified?' · Save KES '+Number(q.offer.total_saving).toLocaleString():''}</span>`;
+  if(q)return `<span class="val">KES ${Number(q.grand_total).toLocaleString()}</span> <span class="per">total · ${q.nights} night${q.nights===1?'':'s'}</span><span class="cb-offer-note ${q.offer?'cb-offer-applied':''}">${q.offer?'Offer applied · '+_esc(q.offer.title)+' · ':''}Includes Cabana fee${q.offer?.verified?' · Save KES '+Number(q.offer.total_saving).toLocaleString():''}</span>`;
   if(_searchState.dateIn&&_searchState.dateOut)return '<span class="per">Check dates for a confirmed price</span>';
   return `<span class="val">KES ${Number(apt.price).toLocaleString()}</span> <span class="per">/ night</span><span class="cb-offer-note">Choose dates for offers and total including Cabana fee</span>`;
 }
@@ -7276,4 +7276,3 @@ window.addEventListener('hashchange', () => {
 <script src="/cabana-footer-search.js" defer></script>
 </body>
 </html>
-

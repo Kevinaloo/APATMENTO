@@ -466,7 +466,7 @@ body{display:flex;flex-direction:column;}
       Add listing
     </button>
   </div>
-  <div style="margin-bottom:18px"><button class="btn btn-ghost btn-sm" type="button" onclick="openStayOffers()">Offers &amp; campaigns</button></div>
+  <div class="cb-offers-entry"><span class="cb-offers-entry-mark" aria-hidden="true">%</span><div><strong>Make room for your next booking.</strong><span>Create an offer or join a Cabana campaign. Your stay, your choice.</span></div><button class="btn btn-ghost btn-sm" type="button" onclick="openStayOffers()">Explore offers <span aria-hidden="true">↗</span></button></div>
   <section id="partner-offers" hidden aria-label="Stay offers"></section>
 
 
@@ -1228,4 +1228,3 @@ document.addEventListener('DOMContentLoaded',loadListings);
 <script src="/cabana-lifecycle.js" defer></script>
 </body>
 </html>
-
