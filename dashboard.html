@@ -622,40 +622,6 @@ body{overflow-x:hidden;}
   .tb-avatar{width:32px!important;height:32px!important;font-size:12px!important;border-radius:10px!important;}
 }
 
-/* ══ PARTNER SWITCH BTN ══ */
-
-@media(max-width:540px){
-
-}
-
-/* ══ PARTNER SWITCH CARD (Good morning section) ══ */
-.partner-switch-card{
-  display:flex;
-  align-items:center;justify-content:space-between;
-  padding:16px 20px;border-radius:20px;
-  background:linear-gradient(135deg,rgba(67,97,255,.08),rgba(123,47,247,.06));
-  border:1.5px solid rgba(67,97,255,.18);
-  cursor:pointer;margin-bottom:22px;
-  transition:transform .2s ease,box-shadow .2s ease;
-  position:relative;overflow:hidden;
-  width:100%;box-sizing:border-box;
-}
-.partner-switch-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(67,97,255,.1),rgba(123,47,247,.08));opacity:0;transition:opacity .3s;pointer-events:none;}
-.partner-switch-card:hover::before{opacity:1;}
-.partner-switch-card:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(67,97,255,.15);border-color:rgba(67,97,255,.35);}
-.psc-left{display:flex;align-items:center;gap:14px;position:relative;z-index:1;}
-.psc-icon{width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,#4361FF,#7B2FF7);display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0;box-shadow:0 4px 14px rgba(67,97,255,.3);}
-.psc-label{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#4361FF;margin-bottom:3px;}
-.psc-title{font-weight:700;font-size:15px;color:var(--ink);line-height:1;margin-bottom:2px;}
-.psc-sub{font-size:12px;color:var(--ink-faint);}
-.psc-arrow{color:#4361FF;opacity:.5;transition:all .3s;position:relative;z-index:1;flex-shrink:0;}
-.partner-switch-card:hover .psc-arrow{opacity:1;transform:translateX(4px);}
-@media(max-width:600px){
-  .partner-switch-card{padding:12px 14px;border-radius:16px;}
-  .psc-icon{width:38px;height:38px;border-radius:11px;}
-  .psc-sub{display:none;}
-}
-
 /* ══ PARTNER ONBOARDING GRID ══ */
 .ob-ico{width:26px;height:26px;}
 .svc-onboard:hover{border-color:var(--mint-deep) !important;transform:translateY(-3px) !important;box-shadow:0 8px 24px rgba(10,10,20,.08) !important;}
@@ -1974,21 +1940,6 @@ img,video,svg{max-width:100%;}
         </div>
       </div>
 
-      <!-- ── PARTNER SWITCH CARD ── -->
-      <div class="apa-psc partner-switch-card" data-apa="role" role="button" tabindex="0">
-        <div class="apa-psc-l">
-          <div class="apa-psc-i">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/><path d="M9 20v-5a3 3 0 0 1 6 0v5"/></svg>
-          </div>
-          <div class="apa-psc-tx">
-            <span class="apa-psc-k" id="apa-psc-k">Partner mode</span>
-            <span class="apa-psc-t" id="apa-psc-t">Become a partner</span>
-            <span class="apa-psc-s" id="apa-psc-s">List your space and start earning</span>
-          </div>
-        </div>
-        <svg class="apa-psc-a" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
-      </div>
-
       <!-- ── GET MATCHED GHOST TAB. Visible only when guest has active match request ── -->
       <div id="dash-gm-tab" style="display:none;margin-bottom:14px;">
         <div class="dash-gm-pill" id="dash-gm-pill" onclick="toggleDashGmPanel()">
@@ -2975,8 +2926,7 @@ async function saveRole(role){
   try{ await sb.from('profiles').upsert({ id:CURRENT_USER.id, last_role:role, updated_at:new Date().toISOString() }); }catch(e){}
 }
 
-/* switchRole + updateModeUI now live in apa-chrome.js. Driven by
-   ApaSession, so the header can never desync from the session. */
+/* Role selection lives in the side drawer through apa-roles.js. */
 
 function signOut(){ if(window.ApaSession) ApaSession.signOut(); else window.location.href='auth.html'; }
 

@@ -86,44 +86,6 @@
     + 'color:#7B2FF7;font:700 11px/1 var(--font-body,system-ui);letter-spacing:.04em;}'
     + '@media(max-width:760px){.apa-admin span{display:none;}.apa-admin{padding:7px;}}'
 
-    /* ═══ PARTNER SWITCH ═══ */
-    + '.apa-psc{display:flex!important;align-items:center;justify-content:space-between;gap:14px;'
-    + 'width:100%;box-sizing:border-box;padding:16px 20px;margin:0 0 22px;'
-    + 'border-radius:20px;cursor:pointer;position:relative;overflow:hidden;'
-    + 'background:linear-gradient(135deg,rgba(67,97,255,.08),rgba(123,47,247,.06));'
-    + 'border:1.5px solid rgba(67,97,255,.18);'
-    + 'transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease;'
-    + '-webkit-tap-highlight-color:transparent;text-align:left;font-family:inherit;}'
-    + '.apa-psc:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(67,97,255,.15);'
-    + 'border-color:rgba(67,97,255,.35);}'
-    + '.apa-psc:focus-visible{outline:2px solid #4361FF;outline-offset:2px;}'
-    + '.apa-psc-l{display:flex;align-items:center;gap:14px;min-width:0;}'
-    + '.apa-psc-i{width:44px;height:44px;flex-shrink:0;border-radius:14px;display:flex;'
-    + 'align-items:center;justify-content:center;color:#fff;'
-    + 'background:linear-gradient(135deg,#4361FF,#7B2FF7);'
-    + 'box-shadow:0 4px 14px rgba(67,97,255,.3);transition:transform .3s;}'
-    + '.apa-psc:hover .apa-psc-i{transform:rotate(-8deg) scale(1.05);}'
-    + '.apa-psc-tx{min-width:0;display:block;}'
-    + '.apa-psc-k,.apa-psc-t,.apa-psc-s{display:block;}'
-    + '.apa-psc-k{font:700 10px/1 var(--font-body,system-ui);letter-spacing:.07em;'
-    + 'text-transform:uppercase;color:#4361FF;margin-bottom:4px;}'
-    + '.apa-psc-t{font:700 15px/1.2 var(--font-body,system-ui);color:var(--ink,#0A0A14);'
-    + 'margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}'
-    + '.apa-psc-s{font:400 12px/1.3 var(--font-body,system-ui);color:var(--ink-faint,#8a8a99);'
-    + 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}'
-    + '.apa-psc-a{flex-shrink:0;color:#4361FF;opacity:.5;transition:transform .3s,opacity .3s;}'
-    + '.apa-psc:hover .apa-psc-a{opacity:1;transform:translateX(4px);}'
-    + '[data-role="partner"] .apa-psc{'
-    + 'background:linear-gradient(135deg,rgba(45,212,191,.1),rgba(67,97,255,.06));'
-    + 'border-color:rgba(45,212,191,.28);}'
-    + '[data-role="partner"] .apa-psc-k{color:#0D9488;}'
-    + '[data-role="partner"] .apa-psc-i{background:linear-gradient(135deg,#2DD4BF,#0D9488);'
-    + 'box-shadow:0 4px 14px rgba(13,148,136,.3);}'
-    + '[data-role="partner"] .apa-psc-a{color:#0D9488;}'
-    + '@media(max-width:600px){.apa-psc{padding:13px 15px;border-radius:16px;gap:10px;}'
-    + '.apa-psc-i{width:38px;height:38px;border-radius:11px;}'
-    + '.apa-psc-s{display:none;}}'
-
     /* --- modals / sheets --- */
     + '.apa-sheet{position:fixed;inset:0;z-index:9999;display:none;'
     + 'align-items:center;justify-content:center;padding:18px;'
@@ -194,7 +156,7 @@
     + '@supports not (overflow:clip){html,body{overflow-x:hidden;}}'
     + 'img,video,svg,canvas,iframe{max-width:100%;}'
     + 'pre,code{overflow-x:auto;max-width:100%;}'
-    + '.apa-welcome,.apa-psc-t,.apa-psc-s,.apa-sos-n{overflow-wrap:anywhere;}'
+    + '.apa-welcome,.apa-sos-n{overflow-wrap:anywhere;}'
     + '.apa-sheet{padding-bottom:env(safe-area-inset-bottom,0);}'
     ;
 
@@ -656,22 +618,6 @@
     }, 250);
   }
 
-  /* ═══ ROLE ═══════════════════════════════════════════════════════ */
-  function switchRole() {
-    var st = global.ApaSession ? global.ApaSession.get() : { status: 'guest' };
-    if (st.status !== 'user') {
-      global.location.href = 'auth.html?next=partner';
-      return;
-    }
-    // Use URL param as ground truth, not localStorage
-    var urlRole = '';
-    try { urlRole = new URLSearchParams(global.location.search).get('role') || ''; } catch(e) {}
-    var currentlyPartner = urlRole === 'partner';
-    var next = currentlyPartner ? 'guest' : 'partner';
-    try { localStorage.setItem('apa-last-role', next); } catch(e) {}
-    global.location.href = 'dashboard.html?role=' + next + '&back=1';
-  }
-
   /* ═══ RENDER ═════════════════════════════════════════════════════ */
   function render(st) {
     st = st || { status: 'guest', role: 'guest' };
@@ -691,14 +637,6 @@
       txt($('apa-welcome'), isUser ? 'Welcome, ' + st.name : '');
       txt($('apa-avatar'), isUser ? st.initial : '?');
 
-      var k = $('apa-psc-k'), t = $('apa-psc-t'), s = $('apa-psc-s');
-      if (!isUser) {
-        txt(k, 'Partner mode'); txt(t, 'Become a partner'); txt(s, 'List your space and start earning');
-      } else if (isPartner) {
-        txt(k, 'Traveller mode'); txt(t, 'Switch to Traveller'); txt(s, 'Browse Spaces, flights and more');
-      } else {
-        txt(k, 'Partner mode'); txt(t, 'Switch to Partner'); txt(s, 'Manage listings, bookings & earnings');
-      }
       updateFavBadge();
     }, 'render');
   }
@@ -716,7 +654,6 @@
         if (act === 'sos')   { e.preventDefault(); openSOS(); }
         else if (act === 'notif')  { e.preventDefault(); openNotifications(); }
         else if (act === 'fav')    { e.preventDefault(); openFavorites(); }
-        else if (act === 'role')   { e.preventDefault(); switchRole(); }
         else if (act === 'signout'){ e.preventDefault(); global.ApaSession.signOut(); }
       });
     }
@@ -731,7 +668,7 @@
 
   global.ApaChrome = {
     render, openSOS, openNotifications, openFavorites,
-    switchRole, closeSheet: close, SVG,
+    closeSheet: close, SVG,
     toggleFavorite, isFavorited, getFavs, removeFavorite, updateFavBadge,
     /* internal SOS steps. Exposed for inline onclick */
     _sosSelectCat: sosSelectCat,
@@ -744,6 +681,4 @@
   /* Back-compat */
   global.openSOS = openSOS;
   global.openNotifications = openNotifications;
-  global.switchRole = switchRole;
-
 })(window);

@@ -110,8 +110,8 @@ function check(w, name, cond, detail) {
   pass &= check(w, 'welcome text set', /Welcome, Kevin/.test(w.document.getElementById('apa-welcome').textContent), '');
   pass &= check(w, 'SOS button exists', !!w.document.querySelector('[data-apa="sos"]'), '');
   pass &= check(w, 'notif button exists', !!w.document.querySelector('[data-apa="notif"]'), '');
-  pass &= check(w, 'partner card exists', !!w.document.querySelector('[data-apa="role"]'), '');
-  pass &= check(w, 'partner card label', w.document.getElementById('apa-psc-t').textContent === 'Switch to Partner', w.document.getElementById('apa-psc-t').textContent);
+  pass &= check(w, 'partner switch stays out of dashboard content', !w.document.querySelector('[data-apa="role"]'), '');
+  pass &= check(w, 'role controls live in the side menu', !!w.document.querySelector('[data-apa-roles="menu"]'), '');
   pass &= check(w, 'loader dismissed', w.document.getElementById('loader').classList.contains('done'), '');
   pass &= check(w, 'guest screen active', w.document.getElementById('screen-guest').classList.contains('active'), '');
   pass &= check(w, 'stay-grid is rail track', w.document.getElementById('stay-grid').hasAttribute('data-rail-track'), '');
@@ -133,7 +133,7 @@ function check(w, name, cond, detail) {
   w.supabase.__client.auth._fire('SIGNED_OUT', null);
   await new Promise(r => setTimeout(r, 150));
   pass &= check(w, 'html[data-auth=guest]', root.getAttribute('data-auth') === 'guest', root.getAttribute('data-auth'));
-  pass &= check(w, 'partner card → Become a partner', w.document.getElementById('apa-psc-t').textContent === 'Become a partner', w.document.getElementById('apa-psc-t').textContent);
+  pass &= check(w, 'partner switch remains absent', !w.document.querySelector('[data-apa="role"]'), '');
 
   // ── GUEST cold boot ───────────────────────────────────────
   console.log('\n── GUEST cold boot ──');
@@ -142,7 +142,7 @@ function check(w, name, cond, detail) {
   pass &= check(g.w, 'no uncaught errors', g.errors.length === 0, g.errors.join(' | '));
   pass &= check(g.w, 'html[data-auth=guest]', groot.getAttribute('data-auth') === 'guest', groot.getAttribute('data-auth'));
   pass &= check(g.w, 'loader dismissed', g.w.document.getElementById('loader').classList.contains('done'), '');
-  pass &= check(g.w, 'partner card visible', !!g.w.document.querySelector('[data-apa="role"]'), '');
+  pass &= check(g.w, 'partner switch remains in the side menu only', !g.w.document.querySelector('[data-apa="role"]'), '');
 
   // ── category rails ──
   console.log('\n── category rails ──');
@@ -155,7 +155,8 @@ function check(w, name, cond, detail) {
   pass &= check(w, 'product cards present', w.document.querySelectorAll('#cat-rails .pc').length === 6, w.document.querySelectorAll('#cat-rails .pc').length);
   pass &= check(w, 'product image rendered', !!w.document.querySelector('#cat-rails .pc-img img'), '');
   pass &= check(w, 'each rail is a carousel', w.document.querySelectorAll('#cat-rails [data-rail-track]').length === 6, '');
-  pass &= check(w, 'service tiles autoplay', w.document.querySelector('[data-rail="compact"]').getAttribute('data-autoplay') === '4200', '');
+  pass &= check(w, 'all service tiles stay visible in the grid', w.document.querySelectorAll('.svc-icon-grid .svc-icon-tile').length === 8, '');
+  pass &= check(w, 'service grid never becomes an autoplay rail', !w.document.querySelector('.svc-icon-grid[data-rail], .svc-icon-grid [data-rail]'), '');
 
   // ── index.html: previously referenced `supabase` without loading it,
   //    so the landing page ALWAYS looked signed-out.

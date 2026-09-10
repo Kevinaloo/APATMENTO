@@ -42,3 +42,11 @@ test('Jets Nest walkthrough source, viewer, test and room photos remain present'
   ]) assert.ok(existsSync(file(path)), path);
   assert.match(read('apartments.html'), /cabana-property-tour\.js/);
 });
+
+test('partner role controls stay in the side drawer, never in dashboard content', () => {
+  const dashboard = read('dashboard.html');
+  const chrome = read('apa-chrome.js');
+  assert.match(dashboard, /data-apa-roles="menu"/);
+  assert.doesNotMatch(dashboard, /partner-switch-card|data-apa="role"|apa-psc/);
+  assert.doesNotMatch(chrome, /apa-psc|function switchRole|global\.switchRole/);
+});

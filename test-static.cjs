@@ -74,15 +74,15 @@ for (const p of pages) {
 }
 if (!fails.some(f => f.includes('session') || f.includes('supabase'))) ok('all supabase pages load session core, in order');
 
-/* ── 5. No page defines a rival switchRole/openSOS ─────────────── */
+/* ── 5. No page defines rival shared chrome functions ──────────── */
 console.log('\n[5] No duplicate chrome definitions');
 for (const p of pages) {
   const h = fs.readFileSync(p, 'utf8');
-  for (const fn of ['function switchRole', 'function openSOS', 'function updateModeUI']) {
+  for (const fn of ['function openSOS', 'function updateModeUI']) {
     if (h.includes(fn)) fail(p, `redefines ${fn} (apa-chrome.js owns it)`);
   }
 }
-if (!fails.some(f => f.includes('redefines'))) ok('chrome functions defined once, in apa-chrome.js');
+if (!fails.some(f => f.includes('redefines'))) ok('shared chrome functions are defined once');
 
 /* ── 5b. No control points at an element that doesn't exist ────────
    The global search button called openSearch(), which did
