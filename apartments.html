@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<link rel="stylesheet" href="/cabana-property-tour.css"/>
+<script defer src="/cabana-property-tour.js"></script>
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-5NQGLLEE02"></script>
 <script>
@@ -4195,7 +4197,7 @@ function openDrawer(id) {
   _galPhotos = apt.photos?.length ? [...apt.photos] : [];
   _galIdx    = 0;
 
-  const galleryHTML = _buildGallery(_galPhotos, apt.grad, apt.photoPositions);
+  const galleryHTML = _buildGallery(_galPhotos, apt.grad, apt.photoPositions) + (window.CabanaPropertyTour?.section(apt) || '');
 
   /* ── amenities ── */
   const AMEN_TICK = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>`;
@@ -4645,6 +4647,7 @@ function messageHost(id) {
 }
 
 function closeDrawer() {
+  window.CabanaPropertyTour?.close();
   /* The lightbox is stacked above the drawer, so closing the drawer
      underneath it would leave a full-screen gallery floating over
      nothing. It goes first. */
