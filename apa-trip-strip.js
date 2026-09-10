@@ -121,6 +121,9 @@
       '  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
       '.apa-trip-meta{font-size:12px;color:rgba(255,255,255,.66);margin-top:3px;',
       '  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
+      '.apa-trip-wx{font-size:11.5px;color:#5EEAD4;margin-top:6px;line-height:1.4;display:none;white-space:normal;}',
+      '.apa-trip-wx.show{display:block;animation:apaTripWxAppear .5s ease;}',
+      '@keyframes apaTripWxAppear{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}',
       '.apa-trip-go{flex-shrink:0;width:32px;height:32px;border-radius:50%;',
       '  background:rgba(255,255,255,.11);border:1px solid rgba(255,255,255,.18);',
       '  display:flex;align-items:center;justify-content:center;color:#fff;',
@@ -224,6 +227,7 @@
       + '    <div class="apa-trip-kick"><span class="apa-trip-dot"></span>' + kick + '</div>'
       + '    <div class="apa-trip-name">' + esc(CB.title(b)) + '</div>'
       + '    <div class="apa-trip-meta">' + esc(meta) + '</div>'
+      + '    <div id="apa-trip-weather-' + b.id + '" class="apa-trip-wx"></div>'
       + '  </div>'
       + '  <div class="apa-trip-go">'
       + '    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"'
@@ -253,6 +257,26 @@
     });
 
     mount.insertBefore(el, mount.firstChild);
+
+    if (b._city && b._in >= 0 && b._in <= 4) {
+      fetch('/api/utilities?action=weather&city=' + encodeURIComponent(b._city))
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+           if (data && data.daily && data.daily[b._in]) {
+              var w = data.daily[b._in];
+              var wxDiv = document.getElementById('apa-trip-weather-' + b.id);
+              if (wxDiv) {
+                 var dayStr = (b._in === 0) ? 'Today' : 'Check-in';
+                 var text = '<strong>' + (w.icon || '') + ' ' + dayStr + ' in ' + b._city + '</strong>: ' + w.maxTemp + '&deg;C, ' + w.rainProb + '% rain.';
+                 if (b._in === 0 && data.maneuver) {
+                    text += '<br><span style="color:rgba(255,255,255,0.7);font-weight:400;margin-top:2px;display:inline-block;">' + data.maneuver + '</span>';
+                 }
+                 wxDiv.innerHTML = text;
+                 wxDiv.classList.add('show');
+              }
+           }
+        }).catch(function(){});
+    }
   }
 
   /* ── boot ──────────────────────────────────────────────────────── */
@@ -280,7 +304,17 @@
       if (res.error) { console.warn('[trip-strip]', res.error.message); return; }
 
       var b = pick(res.data || []);
-      if (b) render(b, mount);
+      if (b) {
+        if (b.apartment_id) {
+          try {
+            var aptRes = await sb.from('apartments').select('city, title').eq('id', b.apartment_id).single();
+            if (aptRes && aptRes.data && aptRes.data.city) {
+              b._city = aptRes.data.city;
+            }
+          } catch(e) {}
+        }
+        render(b, mount);
+      }
     } catch (e) {
       console.warn('[trip-strip]', e.message);
     }
