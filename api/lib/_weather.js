@@ -9,6 +9,7 @@
 
 const CACHE = new Map();
 const CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes cache
+const MAX_CACHE_ENTRIES = 100;
 
 // Default coordinates for key African travel hubs
 export const HUBS = {
@@ -51,6 +52,18 @@ export function interpretWmo(code, isDay = 1) {
   return { label: 'Fair Weather', icon: '🌤️', condition: 'fair' };
 }
 
+export function currentHourIndex(hourly, currentTime = Date.now() / 1000) {
+  const times = Array.isArray(hourly?.time) ? hourly.time : [];
+  if (!times.length) return 0;
+  const target = Number(currentTime) || Date.now() / 1000;
+  const index = times.findIndex(value => Number(value) >= target);
+  return index === -1 ? times.length - 1 : index;
+}
+
+function localHour(unixSeconds, utcOffsetSeconds = 0) {
+  return new Date((Number(unixSeconds) + Number(utcOffsetSeconds || 0)) * 1000).getUTCHours();
+}
+
 // Compute terrain and vehicle maneuverability rating
 export function computeManeuverability(weatherData, cityKey = 'nairobi') {
   const current = weatherData.current || {};
@@ -61,9 +74,10 @@ export function computeManeuverability(weatherData, cityKey = 'nairobi') {
   const hourly = weatherData.hourly || { precipitation: [], precipitation_probability: [] };
 
   // Next 8 hours precipitation analysis
-  const next8Precip = (hourly.precipitation || []).slice(0, 8);
+  const nowIdx = currentHourIndex(hourly, current.time);
+  const next8Precip = (hourly.precipitation || []).slice(nowIdx, nowIdx + 8);
   const maxNextPrecip = Math.max(0, ...next8Precip);
-  const maxRainProb = Math.max(0, ...(hourly.precipitation_probability || []).slice(0, 8));
+  const maxRainProb = Math.max(0, ...(hourly.precipitation_probability || []).slice(nowIdx, nowIdx + 8));
 
   let score = 'OPTIMAL';
   let badgeColor = '#10B981'; // Green
@@ -89,7 +103,7 @@ export function computeManeuverability(weatherData, cityKey = 'nairobi') {
   const locNote = getLocationSpecificNote(cityKey, score, wmo);
 
   // Best travel window calculation
-  const bestWindow = calculateBestTravelWindow(hourly);
+  const bestWindow = calculateBestTravelWindow(hourly, current.time, weatherData.utc_offset_seconds);
 
   return {
     score,
@@ -124,19 +138,20 @@ function getLocationSpecificNote(cityKey, score, wmo) {
   return 'Standard highway driving conditions. Daylight travel recommended.';
 }
 
-function calculateBestTravelWindow(hourly) {
+function calculateBestTravelWindow(hourly, currentTime, utcOffsetSeconds = 0) {
   if (!hourly || !hourly.time || !hourly.precipitation_probability) {
     return '08:00 – 16:00 (Favorable throughout the day)';
   }
 
-  const times = hourly.time.slice(0, 14);
-  const probs = hourly.precipitation_probability.slice(0, 14);
+  const start = currentHourIndex(hourly, currentTime);
+  const times = hourly.time.slice(start, start + 14);
+  const probs = hourly.precipitation_probability.slice(start, start + 14);
   let bestStart = null;
   let bestEnd = null;
 
   for (let i = 0; i < times.length; i++) {
     const prob = probs[i] || 0;
-    const hour = new Date(times[i]).getHours();
+    const hour = localHour(times[i], utcOffsetSeconds);
     if (prob < 35 && (hour >= 7 && hour <= 19)) {
       if (bestStart === null) bestStart = hour;
       bestEnd = hour + 1;
@@ -156,21 +171,27 @@ export default async function weatherHandler(req, res) {
     const query = req.query || {};
     let lat = parseFloat(query.lat);
     let lng = parseFloat(query.lng);
-    let city = String(query.city || '').trim();
+    let city = String(query.city || '').trim().slice(0, 120);
+    let country = '';
+
+    const cityLower = city.toLowerCase();
+    const namedHub = Object.entries(HUBS).find(([k, h]) =>
+      cityLower && (k.includes(cityLower) || h.name.toLowerCase().includes(cityLower))
+    );
+    if (namedHub) country = namedHub[1].country;
 
     // Default to Nairobi if no coords supplied
-    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
-      const hubMatch = Object.entries(HUBS).find(([k, h]) =>
-        city && (k.includes(city.toLowerCase()) || h.name.toLowerCase().includes(city.toLowerCase()))
-      );
-      if (hubMatch) {
-        lat = hubMatch[1].lat;
-        lng = hubMatch[1].lng;
-        city = hubMatch[1].name;
+    if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) {
+      if (namedHub) {
+        lat = namedHub[1].lat;
+        lng = namedHub[1].lng;
+        city = namedHub[1].name;
+        country = namedHub[1].country;
       } else {
         lat = HUBS.nairobi.lat;
         lng = HUBS.nairobi.lng;
         city = HUBS.nairobi.name;
+        country = HUBS.nairobi.country;
       }
     }
 
@@ -186,7 +207,7 @@ export default async function weatherHandler(req, res) {
       + `&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m,wind_gusts_10m`
       + `&hourly=temperature_2m,precipitation_probability,precipitation,weather_code`
       + `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,uv_index_max`
-      + `&timezone=auto`;
+      + `&timezone=auto&timeformat=unixtime`;
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 4500);
@@ -194,46 +215,24 @@ export default async function weatherHandler(req, res) {
     let rawData = null;
     try {
       const resp = await fetch(openMeteoUrl, { signal: controller.signal });
-      clearTimeout(timeout);
       if (resp.ok) {
         rawData = await resp.json();
       }
     } catch (e) {
-      clearTimeout(timeout);
       console.warn('[weather] Open-Meteo fetch failed or timed out:', e.message);
+    } finally {
+      clearTimeout(timeout);
     }
 
-    // If external fetch failed, provide high-accuracy fallback data based on Nairobi/equatorial climate
+    // Road guidance must be based on live data. Never invent favorable
+    // conditions when the upstream forecast is unavailable.
     if (!rawData || !rawData.current) {
-      const hour = new Date().getHours();
-      const isDay = hour >= 6 && hour < 18 ? 1 : 0;
-      rawData = {
-        current: {
-          temperature_2m: 23.5,
-          apparent_temperature: 24.1,
-          relative_humidity_2m: 60,
-          is_day: isDay,
-          precipitation: 0.0,
-          weather_code: 1,
-          wind_speed_10m: 11.2,
-          wind_gusts_10m: 16.5,
-        },
-        hourly: {
-          time: Array.from({ length: 24 }, (_, i) => new Date(Date.now() + i * 3600000).toISOString()),
-          temperature_2m: [21, 20, 19, 18, 19, 21, 23, 25, 26, 26, 25, 24, 23, 22, 21, 20, 20, 19, 19, 18, 18, 17, 18, 19],
-          precipitation_probability: [10, 10, 5, 5, 5, 10, 15, 20, 25, 30, 20, 15, 10, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5],
-          precipitation: Array(24).fill(0),
-          weather_code: Array(24).fill(1),
-        },
-        daily: {
-          weather_code: [1, 2, 1, 0, 2],
-          temperature_2m_max: [26, 25, 26, 27, 26],
-          temperature_2m_min: [17, 16, 17, 18, 17],
-          precipitation_sum: [0.2, 1.4, 0.0, 0.0, 0.8],
-          precipitation_probability_max: [25, 45, 15, 10, 30],
-          uv_index_max: [8.5, 7.8, 8.9, 9.1, 8.2],
-        },
-      };
+      res.setHeader('Cache-Control', 'no-store');
+      return res.status(503).json({
+        ok: false,
+        live: false,
+        error: 'weather_temporarily_unavailable',
+      });
     }
 
     const curr = rawData.current;
@@ -242,15 +241,15 @@ export default async function weatherHandler(req, res) {
 
     // Format hourly 12-hour forecast
     const hourlyItems = [];
-    const nowIdx = 0;
+    const nowIdx = currentHourIndex(rawData.hourly, curr.time);
     for (let i = nowIdx; i < Math.min(nowIdx + 12, (rawData.hourly?.time || []).length); i++) {
       const t = rawData.hourly.time[i];
-      const dateObj = new Date(t);
-      const hourStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+      const hour = localHour(t, rawData.utc_offset_seconds);
+      const hourStr = String(hour).padStart(2, '0') + ':00';
       const tempVal = Math.round(rawData.hourly.temperature_2m[i]);
       const rainProb = rawData.hourly.precipitation_probability[i] || 0;
       const codeVal = rawData.hourly.weather_code[i] || 0;
-      const interp = interpretWmo(codeVal, dateObj.getHours() >= 6 && dateObj.getHours() < 18 ? 1 : 0);
+      const interp = interpretWmo(codeVal, hour >= 6 && hour < 18 ? 1 : 0);
       hourlyItems.push({
         time: hourStr,
         temp: tempVal,
@@ -262,8 +261,10 @@ export default async function weatherHandler(req, res) {
 
     const payload = {
       ok: true,
+      live: true,
+      source: 'open-meteo',
       city: city || 'Nairobi',
-      country: 'Kenya',
+      country,
       coordinates: { lat, lng },
       current: {
         temp: Math.round(curr.temperature_2m),
@@ -279,7 +280,8 @@ export default async function weatherHandler(req, res) {
       maneuver,
       hourly: hourlyItems,
       daily: (rawData.daily?.time || [1, 2, 3, 4, 5]).map((_, i) => ({
-        day: i === 0 ? 'Today' : new Date(Date.now() + i * 86400000).toLocaleDateString([], { weekday: 'short' }),
+        day: i === 0 ? 'Today' : new Date((Number(rawData.daily.time?.[i]) + Number(rawData.utc_offset_seconds || 0)) * 1000)
+          .toLocaleDateString('en', { weekday: 'short', timeZone: 'UTC' }),
         maxTemp: Math.round(rawData.daily.temperature_2m_max[i] || 25),
         minTemp: Math.round(rawData.daily.temperature_2m_min[i] || 16),
         rainProb: Math.round(rawData.daily.precipitation_probability_max[i] || 20),
@@ -288,6 +290,7 @@ export default async function weatherHandler(req, res) {
       updatedAt: new Date().toISOString(),
     };
 
+    if (CACHE.size >= MAX_CACHE_ENTRIES) CACHE.delete(CACHE.keys().next().value);
     CACHE.set(cacheKey, { timestamp: Date.now(), data: payload });
     res.setHeader('Cache-Control', 'public, max-age=600, s-maxage=900');
     return res.status(200).json(payload);

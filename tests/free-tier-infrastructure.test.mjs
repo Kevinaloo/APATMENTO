@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 
 const read = file => readFileSync(new URL('../' + file, import.meta.url), 'utf8');
 const vercel = JSON.parse(read('vercel.json'));
@@ -16,12 +16,13 @@ test('Vercel stays below the 12-function Hobby ceiling', () => {
 });
 
 test('scraping keeps its public route while sharing utilities capacity', () => {
-  assert.ok(ignored.has('api/scrape.js'));
+  assert.equal(existsSync(new URL('../api/scrape.js', import.meta.url)), false);
+  assert.equal(ignored.has('api/scrape.js'), false);
   assert.deepEqual(
     vercel.rewrites.find(route => route.source === '/api/scrape'),
     { source: '/api/scrape', destination: '/api/utilities?action=scrape' }
   );
-  assert.match(utilities, /import scrapeHandler from '\.\/scrape\.js'/);
+  assert.match(utilities, /import scrapeHandler from '\.\/lib\/_scrape\.js'/);
   assert.match(utilities, /action === 'scrape'/);
 });
 

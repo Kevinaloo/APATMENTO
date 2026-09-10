@@ -45,7 +45,7 @@ import sosHandler from './lib/_sos.js';
 import terrainHandler from './lib/_carhire-terrain.js';
 import musicSearchHandler from './lib/_music-search.js';
 import weatherHandler from './lib/_weather.js';
-import scrapeHandler from './scrape.js';
+import scrapeHandler from './lib/_scrape.js';
 import { reconcilePayments } from './lib/_reconcile-payments.js';
 import { settlementOf, endDayOf, todayNumber, PART_PAYMENT_TTL_HOURS,
          validateInstalment, depositRequired }

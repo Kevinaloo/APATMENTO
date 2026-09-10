@@ -91,6 +91,21 @@
     ];
   }
 
+  function escapeHtml(value) {
+    return String(value == null ? '' : value).replace(/[&<>"']/g, function (ch) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch];
+    });
+  }
+
+  function safeInternalLink(value) {
+    if (!value) return '';
+    try {
+      var url = new URL(String(value), global.location.origin);
+      if (url.origin !== global.location.origin) return '';
+      return url.pathname + url.search + url.hash;
+    } catch (e) { return ''; }
+  }
+
   function saveNotifs() {
     try {
       localStorage.setItem(NOTIF_STORAGE_KEY, JSON.stringify(state.notifications));
@@ -131,11 +146,14 @@
     var targetCity = city || state.city;
     var targetCoords = coords || state.coords;
 
-    // Check memory / session cache
+    // Check memory / session cache. Keep an expired entry only as a clearly
+    // labelled fallback; never replace a failed live lookup with invented data.
+    var staleWeather = null;
     try {
       var cached = sessionStorage.getItem(WEATHER_CACHE_KEY + '_' + targetCity);
       if (cached) {
         var parsed = JSON.parse(cached);
+        staleWeather = parsed.data || null;
         if (Date.now() - parsed.timestamp < 12 * 60 * 1000) {
           state.weather = parsed.data;
           state.loadingWeather = false;
@@ -157,69 +175,25 @@
       console.warn('[pulse] weather proxy failed, falling back to direct Open-Meteo:', err);
     }
 
-    // Direct client fallback to Open-Meteo if server proxy is unavailable
     if (!data || !data.current) {
-      try {
-        var directUrl = 'https://api.open-meteo.com/v1/forecast?latitude=' + targetCoords.lat
-          + '&longitude=' + targetCoords.lng
-          + '&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m'
-          + '&hourly=temperature_2m,precipitation_probability,weather_code'
-          + '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max'
-          + '&timezone=auto';
-        var directRes = await fetch(directUrl);
-        if (directRes.ok) {
-          var raw = await directRes.json();
-          var curr = raw.current || {};
-          data = {
-            ok: true,
-            city: targetCity,
-            current: {
-              temp: Math.round(curr.temperature_2m || 24),
-              feelsLike: Math.round(curr.apparent_temperature || curr.temperature_2m || 24),
-              humidity: Math.round(curr.relative_humidity_2m || 60),
-              windKmH: Math.round(curr.wind_speed_10m || 10),
-              label: curr.weather_code === 0 ? 'Clear Sky' : (curr.weather_code < 4 ? 'Partly Cloudy' : 'Showers'),
-              icon: curr.weather_code === 0 ? '☀️' : (curr.weather_code < 4 ? '⛅' : '🌧️'),
-            },
-            maneuver: {
-              score: curr.weather_code >= 61 ? 'MODERATE' : 'OPTIMAL',
-              badgeColor: curr.weather_code >= 61 ? '#F59E0B' : '#10B981',
-              summary: curr.weather_code >= 61 ? 'Slick roads · Drive cautiously' : 'Optimal driving conditions',
-              vehicleGuidance: 'Safe for all vehicles (2WD & sedans)',
-              roadAdvisory: 'Corridors operating with normal flow.',
-              locNote: 'Expressway and bypasses clear.',
-              bestWindow: '08:00 – 16:30 (Favorable travel window)',
-              maxRainProb: 15,
-            },
-            hourly: (raw.hourly?.time || []).slice(0, 10).map(function (t, i) {
-              return {
-                time: new Date(t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }),
-                temp: Math.round(raw.hourly.temperature_2m[i] || 22),
-                rainProb: Math.round(raw.hourly.precipitation_probability[i] || 10),
-                icon: '🌤️',
-              };
-            }),
-          };
-        }
-      } catch (e2) {
-        console.warn('[pulse] direct weather fetch failed:', e2);
-      }
-    }
-
-    if (!data || !data.current) {
-      // Deterministic graceful fallback
-      data = {
+      data = staleWeather ? Object.assign({}, staleWeather, {
+        live: false,
+        stale: true,
+      }) : {
+        ok: false,
+        live: false,
+        unavailable: true,
         city: targetCity,
-        current: { temp: 24, feelsLike: 25, humidity: 55, windKmH: 12, label: 'Clear Skies', icon: '☀️' },
+        current: { temp: '—', feelsLike: '—', humidity: '—', windKmH: '—', label: 'Weather unavailable', icon: '—' },
         maneuver: {
-          score: 'OPTIMAL',
-          badgeColor: '#10B981',
-          summary: 'Optimal driving conditions',
-          vehicleGuidance: 'Safe for all vehicles (2WD, hatchbacks & sedans)',
-          roadAdvisory: 'Tarmac corridors dry with normal visibility.',
-          locNote: 'Main transport corridors flowing well.',
-          bestWindow: '08:00 – 17:00 (Favorable throughout day)',
-          maxRainProb: 10,
+          score: 'UNAVAILABLE',
+          badgeColor: '#8B8EAC',
+          summary: 'Check local conditions before travel',
+          vehicleGuidance: 'Live vehicle guidance is temporarily unavailable',
+          roadAdvisory: 'Use an official local forecast before setting out.',
+          locNote: '',
+          bestWindow: 'Unavailable',
+          maxRainProb: '—',
         },
         hourly: [],
       };
@@ -253,7 +227,7 @@
     var dotEl  = document.getElementById('cpb-radar-dot');
 
     if (!w || !w.current) {
-      if (tempEl) tempEl.textContent = '24°C';
+      if (tempEl) tempEl.textContent = '—°C';
       if (cityEl) cityEl.textContent = state.city;
       if (iconEl) iconEl.textContent = '🌤️';
       if (condEl) condEl.textContent = 'Checking road conditions…';
@@ -266,7 +240,9 @@
     if (tempEl) tempEl.textContent = curr.temp + '°C';
     if (cityEl) cityEl.textContent = w.city || state.city;
     if (iconEl) iconEl.textContent = curr.icon || '🌤️';
-    if (condEl) condEl.textContent = (curr.label || 'Clear') + ' · ' + (m.summary || 'All roads safe');
+    if (condEl) condEl.textContent = w.stale
+      ? (curr.label || 'Weather') + ' · Cached update'
+      : (curr.label || 'Weather') + ' · ' + (m.summary || 'Conditions unavailable');
 
     if (dotEl) {
       dotEl.style.backgroundColor = m.badgeColor || '#10B981';
@@ -1015,10 +991,10 @@
       hourContainer.innerHTML = w.hourly.map(function (h) {
         return `
           <div class="cp-hour-item">
-            <span class="cp-hour-time">${h.time}</span>
-            <span class="cp-hour-icon">${h.icon}</span>
-            <span class="cp-hour-temp">${h.temp}°</span>
-            <span class="cp-hour-rain">${h.rainProb}%</span>
+            <span class="cp-hour-time">${escapeHtml(h.time)}</span>
+            <span class="cp-hour-icon">${escapeHtml(h.icon)}</span>
+            <span class="cp-hour-temp">${escapeHtml(h.temp)}°</span>
+            <span class="cp-hour-rain">${escapeHtml(h.rainProb)}%</span>
           </div>
         `;
       }).join('');
@@ -1046,27 +1022,61 @@
       return;
     }
 
-    list.innerHTML = state.notifications.map(function (n) {
+    list.textContent = '';
+    state.notifications.forEach(function (n) {
       var ico = '🔔';
       if (n.kind === 'weather') ico = '⛅';
       else if (n.kind === 'booking') ico = '🏠';
       else if (n.kind === 'payment') ico = '💳';
 
-      return `
-        <div class="cp-notif-card ${n.read ? '' : 'unread'}" onclick="CabanaPulse.handleNotifClick('${n.id}')">
-          <div class="cp-notif-ico ${n.kind || 'system'}">${ico}</div>
-          <div class="cp-notif-content">
-            <div class="cp-notif-title">${n.title}</div>
-            <div class="cp-notif-text">${n.text}</div>
-            <div class="cp-notif-meta">
-              <span>${n.time}</span>
-              ${!n.read ? '<span class="cp-unread-dot"></span>' : ''}
-              ${n.actionLabel ? '<span style="color:#4361FF;font-weight:600;">' + n.actionLabel + ' →</span>' : ''}
-            </div>
-          </div>
-        </div>
-      `;
-    }).join('');
+      var kind = /^(weather|booking|payment|system)$/.test(n.kind) ? n.kind : 'system';
+      var card = document.createElement('div');
+      card.className = 'cp-notif-card' + (n.read ? '' : ' unread');
+      card.setAttribute('role', 'button');
+      card.tabIndex = 0;
+
+      var icon = document.createElement('div');
+      icon.className = 'cp-notif-ico ' + kind;
+      icon.textContent = ico;
+
+      var content = document.createElement('div');
+      content.className = 'cp-notif-content';
+      var title = document.createElement('div');
+      title.className = 'cp-notif-title';
+      title.textContent = n.title || 'Cabana';
+      var body = document.createElement('div');
+      body.className = 'cp-notif-text';
+      body.textContent = n.text || '';
+      var meta = document.createElement('div');
+      meta.className = 'cp-notif-meta';
+      var time = document.createElement('span');
+      time.textContent = n.time || '';
+      meta.appendChild(time);
+      if (!n.read) {
+        var unread = document.createElement('span');
+        unread.className = 'cp-unread-dot';
+        meta.appendChild(unread);
+      }
+      if (n.actionLabel) {
+        var action = document.createElement('span');
+        action.style.cssText = 'color:#4361FF;font-weight:600;';
+        action.textContent = n.actionLabel + ' →';
+        meta.appendChild(action);
+      }
+      content.appendChild(title);
+      content.appendChild(body);
+      content.appendChild(meta);
+      card.appendChild(icon);
+      card.appendChild(content);
+      card.addEventListener('click', function () { handleNotifClick(n.id); });
+      card.addEventListener('keydown', function (event) {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          handleNotifClick(n.id);
+        }
+      });
+      list.appendChild(card);
+    });
   }
 
   /* ── DRAWER OPEN / CLOSE / TABS ── */
@@ -1166,8 +1176,11 @@
     if (n.tab) {
       switchTab(n.tab);
     } else if (n.link) {
-      closeDrawer();
-      window.location.href = n.link;
+      var destination = safeInternalLink(n.link);
+      if (destination) {
+        closeDrawer();
+        window.location.href = destination;
+      }
     }
   }
 
@@ -1232,26 +1245,9 @@
     recomputeUnread();
     bindNotificationButtons();
 
-    // Check if ApaLocation is available to ensure location access
-    // This makes location a "must-have" intelligently across the platform
-    if (global.ApaLocation) {
-       // Intelligently ask for location right away to power weather and nearby features.
-       // The 'ensure' method gracefully handles the UI gate without spamming native prompts.
-       global.ApaLocation.ensure({ reason: 'nearby' }).then(function(fix) {
-          if (fix) {
-             global.ApaLocation.label(fix).then(function(cityName) {
-                state.city = cityName || 'My Location';
-                state.coords = { lat: fix.latitude, lng: fix.longitude };
-                fetchWeather(state.city, state.coords);
-             });
-          } else {
-             // Fallback to default if denied or dismissed
-             fetchWeather(DEFAULT_CITY, DEFAULT_COORDS);
-          }
-       });
-    } else {
-       fetchWeather(DEFAULT_CITY, DEFAULT_COORDS);
-    }
+    // Weather works without requesting precise location. Users can opt in
+    // from the drawer's "My Location" control when it is useful to them.
+    fetchWeather(DEFAULT_CITY, DEFAULT_COORDS);
   }
 
   if (document.readyState === 'loading') {
