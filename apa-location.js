@@ -2,8 +2,8 @@
    CABANA · LOCATION
    ───────────────────────────────────────────────────────────────────
    One location layer for the whole platform, modelled on apa-push.js:
-   ask once, properly, with our own explanation first — then hold the
-   grant and stop asking.
+   explain why location helps, ask on a real user gesture, then share
+   the approved fix with every location-aware surface.
 
    The problem this replaces
    ────────────────────────
@@ -39,6 +39,7 @@
      ApaLocation.ensure(opts)         → Promise<fix|null> gate + fix
      ApaLocation.start() / .stop()    continuous tracking
      ApaLocation.permission()         → 'granted'|'denied'|'prompt'|'unsupported'
+     ApaLocation.ready()              → Promise<permission state>
      ApaLocation.on(fn) / .off(fn)    subscribe to fixes
      ApaLocation.label(fix)           → Promise<string|null> via ApaGeo
 
@@ -66,6 +67,8 @@
   var _listeners = [];
   var _pending = [];       // resolvers waiting on the first good fix
   var _starting = false;
+  var _probePromise = null;
+  var _gatePromise = null;
 
   /* ── storage, defensively ────────────────────────────────────────── */
   function lsGet(k) {
@@ -101,24 +104,51 @@
     return Date.now() - new Date(fix.fixed_at).getTime();
   }
 
-  /* A new fix replaces the old one when it is newer, or when it is
-     meaningfully more accurate. Without the second test a precise GPS
-     lock gets overwritten by the next sloppy network sample. */
+  function metresBetween(a, b) {
+    if (!a || !b) return Infinity;
+    var p = Math.PI / 180;
+    var dLat = (Number(b.latitude) - Number(a.latitude)) * p;
+    var dLng = (Number(b.longitude) - Number(a.longitude)) * p;
+    var lat1 = Number(a.latitude) * p;
+    var lat2 = Number(b.latitude) * p;
+    var h = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    h = Math.max(0, Math.min(1, h));
+    return 12742000 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
+  }
+
+  /* A live device fix must always supersede a cached one. Previously a
+     precise-but-old Nairobi fix could beat a newer Mombasa fix solely
+     because its reported accuracy number was smaller. Large, genuine
+     movement also wins even while a previous fix is still "fresh". */
   function better(next, prev) {
     if (!prev) return true;
+    if (prev.source === 'cache' && next.source !== 'cache') return true;
     if (age(prev) > STALE_MS) return true;
+    if (new Date(next.fixed_at).getTime() > new Date(prev.fixed_at).getTime() &&
+        metresBetween(next, prev) > Math.max(1000, Number(next.accuracy) || 0, Number(prev.accuracy) || 0)) {
+      return true;
+    }
     if (next.accuracy == null) return false;
     if (prev.accuracy == null) return true;
     return next.accuracy <= prev.accuracy;
   }
 
   function adopt(fix) {
-    if (!better(fix, _fix)) return;
+    if (!better(fix, _fix)) {
+      /* A caller explicitly waiting for a new reading should still get
+         that reading even when the retained global fix is more precise. */
+      _pending.slice().forEach(function (r) { try { r(fix); } catch (e) {} });
+      return;
+    }
     _fix = fix;
     lsSet(LS_FIX, fix);
     var waiting = _pending.splice(0, _pending.length);
     waiting.forEach(function (r) { try { r(fix); } catch (e) {} });
     _listeners.slice().forEach(function (fn) { try { fn(fix); } catch (e) {} });
+    if (typeof document !== 'undefined' && typeof global.CustomEvent === 'function') {
+      try { document.dispatchEvent(new CustomEvent('cabana:location', { detail: fix })); } catch (e) {}
+    }
   }
 
   /* ── permission ──────────────────────────────────────────────────── */
@@ -132,10 +162,12 @@
      the only way to resume a previous grant silently. Safari lacks it
      for geolocation, so this is an enhancement, never a dependency. */
   function probe() {
+    if (_probePromise) return _probePromise;
     if (!supported() || !navigator.permissions || !navigator.permissions.query) {
-      return Promise.resolve(permission());
+      _probePromise = Promise.resolve(permission());
+      return _probePromise;
     }
-    return navigator.permissions.query({ name: 'geolocation' }).then(function (st) {
+    _probePromise = navigator.permissions.query({ name: 'geolocation' }).then(function (st) {
       global.__apaLocPerm = st.state;
       if (st.state === 'granted') start();
       /* If the user flips the switch in browser settings, react without
@@ -147,11 +179,16 @@
       };
       return st.state;
     }, function () { return permission(); });
+    return _probePromise;
+  }
+
+  function ready() {
+    return probe().then(function () { return permission(); });
   }
 
   /* ── continuous tracking ─────────────────────────────────────────── */
   function start() {
-    if (!supported() || _watchId != null || _starting) return;
+    if (!supported() || permission() !== 'granted' || _watchId != null || _starting) return;
     _starting = true;
     try {
       _watchId = navigator.geolocation.watchPosition(
@@ -170,7 +207,7 @@
              keeps trying; we simply have no fix yet. */
         },
         /* The three options that were missing everywhere before. */
-        { enableHighAccuracy: true, highAccuracy: true, maximumAge: 0, timeout: 20000 }
+        { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 }
       );
     } catch (e) { _starting = false; }
   }
@@ -207,24 +244,33 @@
 
   /* get() resolves with the best fix available within `timeout`.
      `maxAge` decides whether a cached fix is good enough to return
-     without waiting; `minAccuracy` lets a caller insist on GPS-grade. */
+     without waiting; `minAccuracy` lets a caller insist on GPS-grade;
+     `requireLive` prevents a persisted fix from being treated as the
+     user's current position after travel. */
   function get(opts) {
     opts = opts || {};
     var maxAge = opts.maxAge != null ? opts.maxAge : STALE_MS;
     var timeout = opts.timeout != null ? opts.timeout : 12000;
     var minAccuracy = opts.minAccuracy || null;
+    var requireLive = opts.requireLive === true;
 
     if (!supported()) return Promise.resolve(null);
 
-    var have = current();
-    var goodEnough = have
-      && age(have) <= maxAge
-      && (!minAccuracy || (have.accuracy != null && have.accuracy <= minAccuracy));
-    if (goodEnough) return Promise.resolve(have);
+    return ready().then(function (state) {
+      var have = current();
+      var goodEnough = have
+        && age(have) <= maxAge
+        && (!requireLive || have.source !== 'cache')
+        && (!minAccuracy || (have.accuracy != null && have.accuracy <= minAccuracy));
+      if (goodEnough) return have;
 
-    if (permission() !== 'denied') start();
+      /* Never trigger the browser permission prompt from a background
+         bootstrap. Browsers require a user gesture and users deserve a
+         clear explanation first. prime()/ensure() own that flow. */
+      if (state !== 'granted') return have;
+      start();
 
-    return new Promise(function (resolve) {
+      return new Promise(function (resolve) {
       var done = false;
       function finish(v) {
         if (done) return;
@@ -245,14 +291,18 @@
         navigator.geolocation.getCurrentPosition(
           function (pos) { adopt(shape(pos, 'gps')); },
           function () {},
-          { enableHighAccuracy: true, highAccuracy: true, maximumAge: Math.min(maxAge, 30000), timeout: timeout }
+          { enableHighAccuracy: true, maximumAge: Math.min(maxAge, 30000), timeout: timeout }
         );
       } catch (e) {}
 
       /* Never hang a caller. Fall back to whatever we have, even if it
          is stale — an approximate location beats none, as long as the
          accuracy travels with it so the caller can judge. */
-      setTimeout(function () { finish(current()); }, timeout);
+      setTimeout(function () {
+        var fallback = current();
+        finish(requireLive && fallback && fallback.source === 'cache' ? null : fallback);
+      }, timeout);
+      });
     });
   }
 
@@ -309,9 +359,11 @@
     },
   };
 
-  function closeGate(g) {
+  function closeGate(g, dismissed) {
     if (!g) return;
-    try { sessionStorage.setItem(SS_SKIP, '1'); } catch (e) {}
+    if (dismissed) {
+      try { sessionStorage.setItem(SS_SKIP, '1'); } catch (e) {}
+    }
     g.classList.remove('show');
     setTimeout(function () { if (g && g.parentNode) g.remove(); }, 400);
   }
@@ -324,39 +376,56 @@
     var reason = REASONS[opts.reason] || REASONS['default'];
 
     if (!supported()) return Promise.resolve(false);
-    if (permission() === 'granted') { start(); return Promise.resolve(true); }
+    if (opts.auto) {
+      try { if (sessionStorage.getItem(SS_SKIP)) return Promise.resolve(false); } catch (e) {}
+    }
+    if (_gatePromise) return _gatePromise;
 
-    return new Promise(function (resolve) {
+    _gatePromise = ready().then(function (state) {
+      if (state === 'granted') { start(); return true; }
+      return new Promise(function (resolve) {
       gateCSS();
       if (document.getElementById('apa-loc-gate')) return resolve(false);
 
-      var denied = permission() === 'denied';
+      var denied = state === 'denied';
       var g = document.createElement('div');
       g.className = 'apa-loc';
       g.id = 'apa-loc-gate';
       g.innerHTML =
         '<div class="apa-loc-card">' +
+        '<button class="apa-loc-x" type="button" aria-label="Close">×</button>' +
         '<div class="apa-loc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">' + PIN_SVG + '</svg></div>' +
         '<div class="apa-loc-h"></div>' +
         '<div class="apa-loc-p"></div>' +
         (denied ? '' : '<button class="apa-loc-btn"></button>') +
-        (denied ? '<button class="apa-loc-btn2" onclick="location.reload()">Reload page</button>' : '') +
+        (denied ? '<button class="apa-loc-btn2" data-action="reload">Reload page</button>' : '<button class="apa-loc-btn2" data-action="dismiss">Not now</button>') +
         '<div class="apa-loc-note"></div>' +
         '</div>';
 
       g.querySelector('.apa-loc-h').textContent = denied ? 'Location is blocked' : reason.h;
       g.querySelector('.apa-loc-p').textContent = denied
-        ? 'Your browser is currently blocking location. Cabana requires location access to securely provide real-time weather, safe routes, and nearby inventory.'
+        ? 'Your browser is currently blocking location. You can still use Cabana, but live weather, safe routes and nearby results cannot use your exact position.'
         : reason.p;
       g.querySelector('.apa-loc-note').textContent = denied
         ? 'To enable: tap the lock icon in the address bar → Site settings → Location → Allow, then reload.'
-        : 'Required to securely use Cabana. Please select "Always Allow" or "Allow on every visit" to prevent this prompt from reappearing.';
+        : 'Your choice is optional. If you allow it, Cabana reuses one precise fix across location-aware services.';
       var go = g.querySelector('.apa-loc-btn');
       if (go) go.textContent = reason.btn;
 
       document.body.appendChild(g);
       requestAnimationFrame(function () { g.classList.add('show'); });
       try { localStorage.setItem(LS_ASK, '1'); } catch (e) {}
+
+      function dismiss() {
+        closeGate(g, true);
+        resolve(false);
+      }
+      g.querySelector('.apa-loc-x').addEventListener('click', dismiss);
+      var secondary = g.querySelector('.apa-loc-btn2');
+      if (secondary) secondary.addEventListener('click', function () {
+        if (secondary.getAttribute('data-action') === 'reload') global.location.reload();
+        else dismiss();
+      });
 
       if (go) go.addEventListener('click', function () {
         go.disabled = true;
@@ -366,20 +435,30 @@
             global.__apaLocPerm = 'granted';
             adopt(shape(pos, 'gps'));
             start();
-            closeGate(g);
+            closeGate(g, false);
             resolve(true);
           },
           function (err) {
             if (err && err.code === 1) global.__apaLocPerm = 'denied';
-            g.remove();
-            /* Re-render as the blocked variant rather than leaving a
-               dead button behind. */
-            prime(opts).then(resolve, function () { resolve(false); });
+            g.querySelector('.apa-loc-h').textContent = err && err.code === 1 ? 'Location is blocked' : 'Location is unavailable';
+            g.querySelector('.apa-loc-p').textContent = err && err.code === 1
+              ? 'Allow location in your browser settings, then reload this page.'
+              : 'We could not get a reliable position. Check that location is enabled on your device and try again.';
+            go.disabled = false;
+            go.textContent = 'Try again';
           },
-          { enableHighAccuracy: true, highAccuracy: true, maximumAge: 0, timeout: 20000 }
+          { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 }
         );
       });
+      });
+    }).then(function (result) {
+      _gatePromise = null;
+      return result;
+    }, function () {
+      _gatePromise = null;
+      return false;
     });
+    return _gatePromise;
   }
 
   /* ensure(): the one most callers want. Gate if we must, then return
@@ -404,6 +483,28 @@
     );
   }
 
+  /* Reverse-geocoded context is deliberately advisory. Consumers may
+     use countryCode to suggest currency or language, but must not
+     overwrite an explicit user preference. */
+  function context(fix) {
+    fix = fix || current();
+    if (!fix || !global.ApaGeo || !ApaGeo.reverse) return Promise.resolve(null);
+    return ApaGeo.reverse(fix.latitude, fix.longitude).then(function (place) {
+      if (!place) return { fix: fix, label: null, country: null, countryCode: null };
+      var detail = {
+        fix: fix,
+        place: place,
+        label: place.label || place.name || null,
+        country: place.country || null,
+        countryCode: place.countryCode || null,
+      };
+      if (typeof document !== 'undefined' && typeof global.CustomEvent === 'function') {
+        try { document.dispatchEvent(new CustomEvent('cabana:location-context', { detail: detail })); } catch (e) {}
+      }
+      return detail;
+    }, function () { return null; });
+  }
+
   function on(fn)  { if (typeof fn === 'function') _listeners.push(fn); }
   function off(fn) { var i = _listeners.indexOf(fn); if (i > -1) _listeners.splice(i, 1); }
 
@@ -413,14 +514,7 @@
     current();          // hydrate from localStorage so callers get an
                         // immediate answer even before the first fix
     wireVisibility();
-    probe();            // resumes silently if already granted
-
-    // Enforce platform-wide location requirement intelligently
-    if (permission() !== 'granted') {
-      setTimeout(function() {
-        ensure({ reason: 'default' }).catch(function(){});
-      }, 1200);
-    }
+    ready();            // resumes silently if already granted
   }
 
   if (typeof document !== 'undefined') {
@@ -438,9 +532,11 @@
     stop: stop,
     permission: permission,
     probe: probe,
+    ready: ready,
     on: on,
     off: off,
     label: label,
+    context: context,
     supported: supported,
     STALE_MS: STALE_MS,
   };

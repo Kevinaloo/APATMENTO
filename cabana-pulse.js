@@ -12,7 +12,7 @@
 
   var WEATHER_CACHE_KEY = 'cbn_weather_v1';
   var NOTIF_STORAGE_KEY = 'cbn_notifs_v1';
-  var DEFAULT_CITY = 'Nairobi';
+  var DEFAULT_CITY = 'Nairobi (default)';
   var DEFAULT_COORDS = { lat: -1.2921, lng: 36.8219 };
 
   var POPULAR_HUBS = [
@@ -36,6 +36,7 @@
     unreadCount: 0,
     pushGranted: ('Notification' in window) && Notification.permission === 'granted',
   };
+  var lastLocationWeatherKey = '';
 
   /* ── AUDIO SYNTHESIZER (Polite Chime for Alerts) ── */
   function playAlertChime() {
@@ -72,7 +73,7 @@
         id: 'w-brief-' + new Date().toISOString().slice(0, 10),
         kind: 'weather',
         title: 'Daily Maneuver Intelligence',
-        text: 'Nairobi & surrounding highway corridors: Dry conditions favorable for 2WD vehicles. Morning travel window optimal.',
+        text: 'Your local forecast and route conditions will appear here when live weather is available.',
         time: 'Today, 07:00 AM',
         read: false,
         actionLabel: 'View Radar',
@@ -1118,27 +1119,9 @@
     if (btn) { btn.disabled = true; btn.innerHTML = 'Locating...'; }
 
     if (global.ApaLocation) {
-      var act = global.ApaLocation.permission() === 'denied' 
-        ? global.ApaLocation.prime({ reason: 'nearby' }) 
-        : global.ApaLocation.ensure({ reason: 'nearby' });
-        
-      act.then(function(fix) {
+      global.ApaLocation.ensure({ reason: 'nearby', timeout: 20000, maxAge: 5000, requireLive: true }).then(function(fix) {
         if (btn) { btn.disabled = false; btn.innerHTML = '📍 My Location'; }
-        
-        // Ensure returns the fix directly, but prime returns a boolean (whether granted or not)
-        // If prime was used, we need to call current() to get the fix
-        if (typeof fix === 'boolean') {
-           if (!fix) return; // Still denied or dismissed
-           fix = global.ApaLocation.current();
-        }
-        
-        if (fix) {
-          global.ApaLocation.label(fix).then(function(cityName) {
-            state.city = cityName || 'My Location';
-            state.coords = { lat: fix.latitude, lng: fix.longitude };
-            fetchWeather(state.city, state.coords);
-          });
-        }
+        if (fix) useLocationForWeather(fix, true);
       });
       return;
     }
@@ -1158,6 +1141,25 @@
       if (btn) { btn.disabled = false; btn.innerHTML = '📍 My Location'; }
       console.warn('[pulse] geolocation error:', err.message);
     }, { enableHighAccuracy: true, timeout: 8000 });
+  }
+
+  function useLocationForWeather(fix, force) {
+    if (!fix || !isFinite(fix.latitude) || !isFinite(fix.longitude)) return Promise.resolve(null);
+    var key = Number(fix.latitude).toFixed(3) + ',' + Number(fix.longitude).toFixed(3);
+    if (!force && key === lastLocationWeatherKey) return Promise.resolve(null);
+    lastLocationWeatherKey = key;
+
+    var contextPromise = global.ApaLocation && global.ApaLocation.context
+      ? global.ApaLocation.context(fix)
+      : (global.ApaLocation && global.ApaLocation.label
+          ? global.ApaLocation.label(fix).then(function (label) { return { label: label }; })
+          : Promise.resolve(null));
+
+    return contextPromise.then(function (context) {
+      state.city = context && context.label || 'My Location';
+      state.coords = { lat: fix.latitude, lng: fix.longitude };
+      return fetchWeather(state.city, state.coords);
+    });
   }
 
   function markAllAsRead() {
@@ -1245,21 +1247,32 @@
     recomputeUnread();
     bindNotificationButtons();
 
-    // Weather works without requesting precise location. Users can opt in
-    // from the drawer's "My Location" control when it is useful to them.
+    // Subscribe before requesting a fix so a later, more accurate GPS
+    // sample refreshes the dashboard automatically. A cached city never
+    // gets to pin the user there for the rest of the session.
     if (global.ApaLocation) {
-      global.ApaLocation.get({ timeout: 15000, highAccuracy: true }).then(function(fix) {
-        if (fix) {
-          global.ApaLocation.label(fix).then(function(cityName) {
-            state.city = cityName || 'My Location';
-            state.coords = { lat: fix.latitude, lng: fix.longitude };
-            fetchWeather(state.city, state.coords);
+      global.ApaLocation.on(function (fix) { useLocationForWeather(fix, false); });
+      global.ApaLocation.ready().then(function (permission) {
+        if (permission === 'granted') {
+          return global.ApaLocation.get({ timeout: 20000, maxAge: 5000, requireLive: true }).then(function (fix) {
+            return fix ? useLocationForWeather(fix, false) : fetchWeather(DEFAULT_CITY, DEFAULT_COORDS);
           });
-        } else {
-          fetchWeather(DEFAULT_CITY, DEFAULT_COORDS);
         }
-      }).catch(function() {
-        fetchWeather(DEFAULT_CITY, DEFAULT_COORDS);
+
+        var cached = global.ApaLocation.current();
+        if (cached && cached.age_ms <= global.ApaLocation.STALE_MS) useLocationForWeather(cached, false);
+        else fetchWeather(DEFAULT_CITY, DEFAULT_COORDS);
+
+        if (permission === 'prompt') {
+          setTimeout(function () {
+            global.ApaLocation.prime({ reason: 'nearby', auto: true }).then(function (allowed) {
+              if (allowed) global.ApaLocation.get({ timeout: 20000, maxAge: 5000, requireLive: true }).then(function (fix) {
+                if (fix) useLocationForWeather(fix, true);
+              });
+            });
+          }, 900);
+        }
+        return null;
       });
     } else {
       if ('geolocation' in navigator) {
@@ -1272,7 +1285,7 @@
         }, function (err) {
           console.warn('[pulse] geolocation error:', err.message);
           fetchWeather(DEFAULT_CITY, DEFAULT_COORDS);
-        }, { enableHighAccuracy: true, highAccuracy: true, timeout: 8000 });
+        }, { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 });
       } else {
         fetchWeather(DEFAULT_CITY, DEFAULT_COORDS);
       }

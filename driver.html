@@ -300,7 +300,7 @@ function toast(m,ms){var t=$('toast');t.textContent=m;t.classList.add('on');
 function view(id){ ['v-load','v-auth','v-none','v-pending','v-live'].forEach(function(v){
   $(v).classList.toggle('on', v===id); }); }
 
-var D = { driver:null, online:false, watch:null, ping:null, pos:null,
+var D = { driver:null, online:false, watch:null, locationListener:null, ping:null, pos:null,
           offers:{}, active:null, chan:null, poll:null };
 
 /* ── boot ─────────────────────────────────────────────────────────── */
@@ -379,26 +379,41 @@ $('toggle').addEventListener('click', function(){
 function goOnline(){
   if(!navigator.geolocation){ toast('This phone cannot share a location, so trips cannot reach you.'); return; }
   $('st-s').textContent = 'Getting your position.';
-  navigator.geolocation.getCurrentPosition(function(p){
-    D.pos = p.coords;
+  function onlineWith(fix){
+    D.pos = fix;
     D.online = true;
     paintStatus();
     ping();
     D.ping = setInterval(ping, PING_MS);
-    D.watch = navigator.geolocation.watchPosition(function(q){ D.pos = q.coords; },
-      function(){}, { enableHighAccuracy:true, maximumAge:15000, timeout:20000 });
+    if(window.ApaLocation && ApaLocation.on){
+      D.locationListener = function(next){ D.pos = next; };
+      ApaLocation.on(D.locationListener);
+    } else {
+      D.watch = navigator.geolocation.watchPosition(function(q){ D.pos = q.coords; },
+        function(){}, { enableHighAccuracy:true, maximumAge:15000, timeout:20000 });
+    }
     loadOpenWork();
     toast('You are online. Trips near you will appear here.');
-  }, function(){
+  }
+  function locationFailed(){
     $('st-s').textContent = 'Location permission is off. Turn it on to receive trips.';
     toast('Cabana needs your location to send you trips nearby.');
-  }, { enableHighAccuracy:true, timeout:12000 });
+  }
+  if(window.ApaLocation && ApaLocation.ensure){
+    ApaLocation.ensure({ reason:'ride', timeout:20000, maxAge:5000, requireLive:true }).then(function(fix){
+      if(fix) onlineWith(fix); else locationFailed();
+    }, locationFailed);
+  } else {
+    navigator.geolocation.getCurrentPosition(function(p){ onlineWith(p.coords); }, locationFailed,
+      { enableHighAccuracy:true, maximumAge:0, timeout:12000 });
+  }
 }
 
 function goOffline(){
   D.online = false;
   clearInterval(D.ping); D.ping = null;
   if(D.watch != null){ navigator.geolocation.clearWatch(D.watch); D.watch = null; }
+  if(D.locationListener && window.ApaLocation){ ApaLocation.off(D.locationListener); D.locationListener = null; }
   if(sb && D.pos){
     sb.rpc('cab_ping', { p_lat:D.pos.latitude, p_lng:D.pos.longitude,
       p_online:false, p_available:false }).catch(function(){});

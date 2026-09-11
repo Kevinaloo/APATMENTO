@@ -2010,14 +2010,12 @@ window.addEventListener('popstate', function(){
 function useMyLocation(){
   if(!navigator.geolocation) return toast('This device will not share a location.');
   toast('Finding you.');
-  navigator.geolocation.getCurrentPosition(function(pos){
-    if(window.ApaGeo && ApaGeo.reverse){
-      ApaGeo.reverse(pos.coords.latitude, pos.coords.longitude).then(function(p){
-        if(p){ $('f-city').value = p.short || p.label || ''; S.place = p; toUrl(false); render();
-               toast('Showing rooms near ' + ($('f-city').value || 'you')); }
-      }, function(){ toast('We could not name that spot.'); });
-    }
-  }, function(){ toast('Location permission was declined.'); }, {timeout:9000, maximumAge:120000});
+  if(window.ApaGeo && ApaGeo.locate){
+    ApaGeo.locate({ reason:'nearby', timeout:12000, maximumAge:15000 }).then(function(p){
+      if(p){ $('f-city').value = p.short || p.label || ''; S.place = p; toUrl(false); render();
+             toast('Showing rooms near ' + ($('f-city').value || 'you')); }
+    }, function(){ toast('Location permission was declined.'); });
+  }
 }
 
 /* auth-aware listing CTA */

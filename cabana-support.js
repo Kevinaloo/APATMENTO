@@ -1248,13 +1248,23 @@
       return;
     }
     systemLine('Asking your browser for the location…');
-    global.navigator.geolocation.getCurrentPosition(function (pos) {
+    function submitFix(fix) {
       submit('That is the spot.', {
-        location: { lat: pos.coords.latitude, lng: pos.coords.longitude },
+        location: { lat: fix.latitude, lng: fix.longitude },
       });
-    }, function () {
+    }
+    function declined() {
       systemLine('Location was declined — no problem. Tell me the area and street and I will use that.');
-    }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 });
+    }
+    if (global.ApaLocation && ApaLocation.ensure) {
+      ApaLocation.ensure({ reason: 'default', timeout: 12000, maxAge: 15000, requireLive: true }).then(function (fix) {
+        if (fix) submitFix(fix); else declined();
+      }, declined);
+    } else {
+      global.navigator.geolocation.getCurrentPosition(function (pos) {
+        submitFix({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
+      }, declined, { enableHighAccuracy: true, timeout: 12000, maximumAge: 15000 });
+    }
   }
 
   /* A line from the console itself, not from APA and not from the

@@ -872,6 +872,26 @@
 
   function locate(o) {
     o = o || {};
+    if (window.ApaLocation) {
+      return window.ApaLocation.ensure({
+        reason: o.reason || 'nearby',
+        timeout: o.timeout || 15000,
+        maxAge: o.maximumAge != null ? o.maximumAge : 0,
+        minAccuracy: o.minAccuracy || null,
+        requireLive: o.requireLive !== false
+      }).then(function (fix) {
+        if (!fix) throw new Error('Location permission was declined — type the place instead');
+        var lat = fix.latitude, lng = fix.longitude;
+        return reverse(lat, lng).then(function (p) {
+          var out = p || place({ name: 'Current location', lat: lat, lng: lng, kind: 'poi', source: 'device' });
+          out.lat = lat; out.lng = lng;
+          out.accuracy = fix.accuracy || null;
+          out.source = 'device';
+          setBias(out);
+          return out;
+        });
+      });
+    }
     return new Promise(function (res, rej) {
       if (!navigator.geolocation) return rej(new Error('This device cannot share a location'));
       navigator.geolocation.getCurrentPosition(function (pos) {

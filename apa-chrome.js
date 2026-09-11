@@ -460,7 +460,7 @@
        no enableHighAccuracy and a 30s maximumAge, so it frequently
        answered with a stale network fix kilometres from the guest. */
     if (global.ApaLocation && ApaLocation.ensure) {
-      ApaLocation.ensure({ reason: 'sos', timeout: 9000, maxAge: 15000 })
+      ApaLocation.ensure({ reason: 'sos', timeout: 9000, maxAge: 15000, requireLive: true })
         .then(function (fix) {
           _sosLocation = fix;
           raiseSOS(fix);

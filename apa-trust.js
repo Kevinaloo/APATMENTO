@@ -216,7 +216,12 @@
           }, 'image/jpeg', 0.86);
         };
 
-        if (navigator.geolocation) {
+        if (window.ApaLocation && ApaLocation.ensure) {
+          ApaLocation.ensure({ reason: 'default', timeout: 4000, maxAge: 15000, requireLive: true }).then(
+            function (fix) { if (fix) { geo.lat = fix.latitude; geo.lng = fix.longitude; } done(); },
+            done
+          );
+        } else if (navigator.geolocation) {
           navigator.geolocation.getCurrentPosition(
             function (p) { geo.lat = p.coords.latitude; geo.lng = p.coords.longitude; done(); },
             done, { timeout: 4000, enableHighAccuracy: true }

@@ -263,7 +263,7 @@
       if (fix) resolveCountry(fix);
     }
     if (global.ApaLocation && ApaLocation.ensure) {
-      ApaLocation.ensure({ reason: 'sos', timeout: 9000, maxAge: 15000 }).then(done, function () { done(null); });
+      ApaLocation.ensure({ reason: 'sos', timeout: 9000, maxAge: 15000, requireLive: true }).then(done, function () { done(null); });
       return;
     }
     if (!navigator.geolocation) return done(null);

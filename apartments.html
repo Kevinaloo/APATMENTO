@@ -5885,15 +5885,25 @@ function focusSpecialSearch() {
 /* ── Geolocation for "Near me" ── */
 function _requestLocation() {
   if (!navigator.geolocation) { alert('Location not supported on this browser.'); return; }
-  navigator.geolocation.getCurrentPosition(pos => {
-    _searchState.userLat = pos.coords.latitude;
-    _searchState.userLng = pos.coords.longitude;
+  const applyFix = fix => {
+    _searchState.userLat = fix.latitude;
+    _searchState.userLng = fix.longitude;
     applyAndRender();
-  }, () => {
+  };
+  const fallback = () => {
     // Permission denied. Fall back to general recommended sort
     _searchState.smartMode = 'recommended';
     applyAndRender();
-  });
+  };
+  if (window.ApaLocation && ApaLocation.ensure) {
+    ApaLocation.ensure({ reason: 'nearby', timeout: 12000, maxAge: 15000, requireLive: true })
+      .then(fix => fix ? applyFix(fix) : fallback(), fallback);
+  } else {
+    navigator.geolocation.getCurrentPosition(pos => applyFix({
+      latitude: pos.coords.latitude,
+      longitude: pos.coords.longitude
+    }), fallback, { enableHighAccuracy: true, timeout: 12000, maximumAge: 15000 });
+  }
 }
 
 /* ── Filter modal ── */

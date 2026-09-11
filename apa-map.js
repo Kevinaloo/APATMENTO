@@ -886,19 +886,29 @@
     return stackBtn(el, ICO.locate, 'Show my location', function (btn) {
       if (!navigator.geolocation) return;
       btn.classList.add('busy');
-      navigator.geolocation.getCurrentPosition(function (pos) {
+      function show(fix) {
         btn.classList.remove('busy');
         btn.classList.add('on');
-        var c = [pos.coords.latitude, pos.coords.longitude];
+        var c = [fix.latitude, fix.longitude];
         if (mark) map.removeLayer(mark);
         mark = L.circleMarker(c, {
           radius: 7, color: '#fff', weight: 3,
           fillColor: '#4361FF', fillOpacity: 1
         }).addTo(map);
         map.flyTo(c, Math.max(map.getZoom(), 14), { duration: 1.1 });
-      }, function () {
+      }
+      function failed() {
         btn.classList.remove('busy');
-      }, { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 });
+      }
+      if (window.ApaLocation && ApaLocation.ensure) {
+        ApaLocation.ensure({ reason: 'nearby', timeout: 12000, maxAge: 15000, requireLive: true }).then(function (fix) {
+          if (fix) show(fix); else failed();
+        }, failed);
+      } else {
+        navigator.geolocation.getCurrentPosition(function (pos) {
+          show({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
+        }, failed, { enableHighAccuracy: true, timeout: 8000, maximumAge: 15000 });
+      }
     });
   }
 
