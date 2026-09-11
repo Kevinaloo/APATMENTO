@@ -3723,6 +3723,7 @@ function renderCards(list) {
         data-card-id="${apt.id}" data-photos="${photos.length}">
       <div class="card-media${many ? ' has-many' : ''}">
         <div class="card-rail">${slides}</div>
+        ${window.CabanaPropertyTour?.badge(apt) || ''}
         ${apt.hot ? `<span class="card-tag card-tag-hot">${SVG_FLAME} In demand</span>` : ''}
         <button type="button" class="card-heart${isWishlisted(apt.id) ? ' on' : ''}" data-heart="${apt.id}"
           aria-label="Save this stay" aria-pressed="${isWishlisted(apt.id)}">${SVG_HEART}</button>
