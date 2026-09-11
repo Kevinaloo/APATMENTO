@@ -1157,7 +1157,7 @@
     }, function (err) {
       if (btn) { btn.disabled = false; btn.innerHTML = '📍 My Location'; }
       console.warn('[pulse] geolocation error:', err.message);
-    }, { timeout: 8000 });
+    }, { enableHighAccuracy: true, timeout: 8000 });
   }
 
   function markAllAsRead() {
@@ -1247,7 +1247,36 @@
 
     // Weather works without requesting precise location. Users can opt in
     // from the drawer's "My Location" control when it is useful to them.
-    fetchWeather(DEFAULT_CITY, DEFAULT_COORDS);
+    if (global.ApaLocation) {
+      global.ApaLocation.get({ timeout: 15000, highAccuracy: true }).then(function(fix) {
+        if (fix) {
+          global.ApaLocation.label(fix).then(function(cityName) {
+            state.city = cityName || 'My Location';
+            state.coords = { lat: fix.latitude, lng: fix.longitude };
+            fetchWeather(state.city, state.coords);
+          });
+        } else {
+          fetchWeather(DEFAULT_CITY, DEFAULT_COORDS);
+        }
+      }).catch(function() {
+        fetchWeather(DEFAULT_CITY, DEFAULT_COORDS);
+      });
+    } else {
+      if ('geolocation' in navigator) {
+        navigator.geolocation.getCurrentPosition(function (pos) {
+          var lat = pos.coords.latitude;
+          var lng = pos.coords.longitude;
+          state.city = 'My Location';
+          state.coords = { lat: lat, lng: lng };
+          fetchWeather('My Location', state.coords);
+        }, function (err) {
+          console.warn('[pulse] geolocation error:', err.message);
+          fetchWeather(DEFAULT_CITY, DEFAULT_COORDS);
+        }, { enableHighAccuracy: true, highAccuracy: true, timeout: 8000 });
+      } else {
+        fetchWeather(DEFAULT_CITY, DEFAULT_COORDS);
+      }
+    }
   }
 
   if (document.readyState === 'loading') {

@@ -170,7 +170,7 @@
              keeps trying; we simply have no fix yet. */
         },
         /* The three options that were missing everywhere before. */
-        { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 }
+        { enableHighAccuracy: true, highAccuracy: true, maximumAge: 0, timeout: 20000 }
       );
     } catch (e) { _starting = false; }
   }
@@ -245,7 +245,7 @@
         navigator.geolocation.getCurrentPosition(
           function (pos) { adopt(shape(pos, 'gps')); },
           function () {},
-          { enableHighAccuracy: true, maximumAge: Math.min(maxAge, 30000), timeout: timeout }
+          { enableHighAccuracy: true, highAccuracy: true, maximumAge: Math.min(maxAge, 30000), timeout: timeout }
         );
       } catch (e) {}
 
@@ -376,7 +376,7 @@
                dead button behind. */
             prime(opts).then(resolve, function () { resolve(false); });
           },
-          { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 }
+          { enableHighAccuracy: true, highAccuracy: true, maximumAge: 0, timeout: 20000 }
         );
       });
     });

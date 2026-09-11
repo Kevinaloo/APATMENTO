@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   const JETS_NEST = '65ef1d11-a4e3-4250-bbac-f826c0cd10d2';
-  const TOUR_URL = '/tours/jets-nest';
+  const TOUR_URL = '/tours/jets-nest/index.html';
   let dialog, returnFocus, previousOverflow;
   function close() {
     if (!dialog) return;
