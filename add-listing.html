@@ -684,6 +684,7 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
 </style>
 
   <link rel="canonical" href="https://cabana.africa/add-listing"/>
+<link rel="stylesheet" href="/cabana-listing-cards.css"/>
 </head>
 <body>
 <div class="ambient"><div class="amb-blob amb-1"></div><div class="amb-blob amb-2"></div></div>
@@ -1211,7 +1212,7 @@ function dedicatedPipeline(service){
   const q=new URLSearchParams();
   if(QP.get('from'))q.set('from',QP.get('from'));
   if(QP.get('lead'))q.set('lead',QP.get('lead'));
-  location.replace(target+(q.toString()?'?'+q.toString():''));
+  location.assign(target+(q.toString()?'?'+q.toString():''));
   return true;
 }
 
@@ -2288,7 +2289,7 @@ function valid(n){
     const badTier=F.roomTiers.find(t=>t.price&&parseFloat(t.price)>0&&(!t.maxGuests||parseInt(t.maxGuests)<1));
     if(badTier){al('Set a guest limit for each priced tier.');return false;}
   }
-  if(n===4&&F.svc==='roommates'&&!F.photos.length){al('Add at least one photo of the room. Rooms without photos are almost never enquired about.');return false;}
+  if(n===6&&F.svc==='roommates'&&!F.photos.length){al('Add at least one photo of the room. Rooms without photos are almost never enquired about.');return false;}
   if(n===3&&F.svc==='roommates'&&!document.getElementById('f-avail').value){al('Set the date the room is free from. Flatmates search by move-in date.');return false;}
   if(n===5){if(!document.getElementById('f-wa').value.trim()){al('Add your WhatsApp number. Guests need this after payment.');return false;}
     /* For stays, price is auto-set from tiers; only non-stays, non-food need manual price */
@@ -2897,5 +2898,7 @@ buildNav();
 <script src="/cabana-call.js" defer></script>
 <script src="/apa-location.js" defer></script><script src="/cabana-sos.js" defer></script><script src="/cabana-support.js" defer></script>
 <script src="/cabana-lifecycle.js" defer></script>
+<script src="/cabana-listing-cards.js" defer></script>
+<script src="/cabana-listing-journeys.js" defer></script>
 </body>
 </html>
