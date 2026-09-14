@@ -801,7 +801,7 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
       </div>
       <div class="fsec">
         <div class="fsec-title">Listing title</div>
-        <div class="field"><label class="flbl" id="s2tl">Title</label><input class="finput" id="f-title" placeholder="e.g. Skyline Loft with City Views" maxlength="80"/><div class="fhint">Be descriptive and specific. Strong titles improve search visibility.</div></div>
+        <div class="field"><label for="f-title" class="flbl" id="s2tl">Title</label><input class="finput" id="f-title" placeholder="e.g. Skyline Loft with City Views" maxlength="80"/><div class="fhint">Be descriptive and specific. Strong titles improve search visibility.</div></div>
       </div>
       <div class="fsec">
         <div class="fsec-title" style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
@@ -827,7 +827,7 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
           
           <div class="loc-search-box">
             <div style="position:relative;flex:1;">
-              <input class="finput" id="f-smart-loc" placeholder="Type property address, landmark, estate or building name..." autocomplete="off" style="padding-left:38px;padding-right:90px;font-size:13.5px;"/>
+              <input class="finput" id="f-smart-loc" placeholder="Type property address, landmark, estate or building name..." autocomplete="off" style="padding-left:38px;padding-right:90px;font-size:13.5px;" aria-label="Type property address, landmark, estate or building name" />
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--ink-faint);pointer-events:none;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
               <button type="button" onclick="doSmartGeo()" class="btn-loc-search">Find</button>
             </div>
@@ -847,12 +847,12 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
         </div>
 
         <div class="row2">
-          <div class="field"><label class="flbl">Country</label><select class="fsel" id="f-country" data-value="Kenya"><option>Kenya</option></select></div>
-          <div class="field"><label class="flbl">City</label><input class="finput" id="f-city" placeholder="Nairobi"/></div>
+          <div class="field"><label for="f-country" class="flbl">Country</label><select class="fsel" id="f-country" data-value="Kenya"><option>Kenya</option></select></div>
+          <div class="field"><label for="f-city" class="flbl">City</label><input class="finput" id="f-city" placeholder="Nairobi"/></div>
         </div>
         <div class="row2">
-          <div class="field"><label class="flbl">Area or neighbourhood</label><input class="finput" id="f-area" placeholder="Westlands"/></div>
-          <div class="field"><label class="flbl">Street <span class="opt">(optional)</span></label><input class="finput" id="f-street" placeholder="Waiyaki Way"/></div>
+          <div class="field"><label for="f-area" class="flbl">Area or neighbourhood</label><input class="finput" id="f-area" placeholder="Westlands"/></div>
+          <div class="field"><label for="f-street" class="flbl">Street <span class="opt">(optional)</span></label><input class="finput" id="f-street" placeholder="Waiyaki Way"/></div>
         </div>
         <div class="field">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
@@ -860,7 +860,7 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
             <span style="font-size:11.5px;color:var(--ink-soft);font-weight:600;">High-Res Hybrid Imagery</span>
           </div>
           <div class="pin-help">Our high-resolution satellite imagery lets you see exact compounds and rooftops. <strong>Drag the pin onto your entrance or gate</strong>.</div>
-          <div style="position:relative;"><input class="finput" id="f-addr" placeholder="Search address, building or landmark..." autocomplete="off" style="padding-right:92px;"/><button type="button" onclick="doGeo()" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:var(--grad);border:none;border-radius:8px;padding:6px 12px;cursor:pointer;color:#fff;font-size:12px;font-weight:700;font-family:var(--font-body);">Search</button></div>
+          <div style="position:relative;"><input class="finput" id="f-addr" placeholder="Search address, building or landmark..." autocomplete="off" style="padding-right:92px;" aria-label="Pin exact location on Satellite (drag pin onto your gate)" /><button type="button" onclick="doGeo()" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:var(--grad);border:none;border-radius:8px;padding:6px 12px;cursor:pointer;color:#fff;font-size:12px;font-weight:700;font-family:var(--font-body);">Search</button></div>
           <div id="pin-map"></div>
           <div class="pin-bar">
             <button type="button" class="pin-btn" onclick="useMyLoc(this)">
@@ -887,7 +887,7 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
       <div id="s3-dyn"></div>
       <div class="fsec">
         <div class="fsec-title" id="s3desc-t">Description</div>
-        <div class="field"><label class="flbl" id="s3desc-l">Write a description</label><div class="desc-tools"><button class="ai-write-btn" id="ai-desc-btn" type="button" onclick="generateDescription()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 1.4 4.1L17.5 8.5l-4.1 1.4L12 14l-1.4-4.1-4.1-1.4 4.1-1.4L12 3Z"/><path d="m19 14 .8 2.2L22 17l-2.2.8L19 20l-.8-2.2L16 17l2.2-.8L19 14Z"/></svg><span>Write with APA</span></button><span class="ai-write-state" id="ai-desc-state" aria-live="polite">Uses the details you have already added. You stay in control.</span></div><textarea class="ftarea" id="f-desc" maxlength="900" oninput="document.getElementById('f-dc').textContent=this.value.length" placeholder="Describe what makes this special..."></textarea><div class="fctr"><span id="f-dc">0</span> / 900</div></div>
+        <div class="field"><label class="flbl" id="s3desc-l">Write a description</label><div class="desc-tools"><button class="ai-write-btn" id="ai-desc-btn" type="button" onclick="generateDescription()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 1.4 4.1L17.5 8.5l-4.1 1.4L12 14l-1.4-4.1-4.1-1.4 4.1-1.4L12 3Z"/><path d="m19 14 .8 2.2L22 17l-2.2.8L19 20l-.8-2.2L16 17l2.2-.8L19 14Z"/></svg><span>Write with APA</span></button><span class="ai-write-state" id="ai-desc-state" aria-live="polite">Uses the details you have already added. You stay in control.</span></div><textarea class="ftarea" id="f-desc" maxlength="900" oninput="document.getElementById('f-dc').textContent=this.value.length" placeholder="Describe what makes this special..." aria-label="Write a description" ></textarea><div class="fctr"><span id="f-dc">0</span> / 900</div></div>
       </div>
       <div class="step-nav">
         <button class="btn-back" onclick="go(2)">Back</button>
@@ -921,29 +921,29 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
       <div class="fsec">
         <div class="fsec-title">Contact</div>
         <div class="row2">
-          <div class="field"><label class="flbl">WhatsApp number</label><input class="finput" id="f-wa" type="tel" placeholder="+254 7XX XXX XXX"/><div class="fhint">Primary contact after payment</div></div>
-          <div class="field"><label class="flbl">Phone <span class="opt">(optional)</span></label><input class="finput" id="f-ph" type="tel" placeholder="+254 7XX XXX XXX"/></div>
+          <div class="field"><label for="f-wa" class="flbl">WhatsApp number</label><input class="finput" id="f-wa" type="tel" placeholder="+254 7XX XXX XXX"/><div class="fhint">Primary contact after payment</div></div>
+          <div class="field"><label for="f-ph" class="flbl">Phone <span class="opt">(optional)</span></label><input class="finput" id="f-ph" type="tel" placeholder="+254 7XX XXX XXX"/></div>
         </div>
-        <div class="field"><label class="flbl">Email <span class="opt">(optional but recommended)</span></label><input class="finput" id="f-em" type="email" placeholder="you@example.com"/><div class="fhint">Sent to guests in booking confirmation</div></div>
+        <div class="field"><label for="f-em" class="flbl">Email <span class="opt">(optional but recommended)</span></label><input class="finput" id="f-em" type="email" placeholder="you@example.com"/><div class="fhint">Sent to guests in booking confirmation</div></div>
       </div>
       <div class="fsec">
         <div class="fsec-title">Pricing</div>
         <div class="row2">
-          <div class="field"><label class="flbl">Currency</label><select class="fsel" id="f-cur"><option>KES</option><option>USD</option></select></div>
-          <div class="field"><label class="flbl" id="s5rl">Rate</label><input class="finput" id="f-price" type="number" placeholder="4500"/></div>
+          <div class="field"><label for="f-cur" class="flbl">Currency</label><select class="fsel" id="f-cur"><option>KES</option><option>USD</option></select></div>
+          <div class="field"><label for="f-price" class="flbl" id="s5rl">Rate</label><input class="finput" id="f-price" type="number" placeholder="4500"/></div>
         </div>
         <div class="row2" id="s5-extra" style="display:none;">
-          <div class="field"><label class="flbl">Per week <span class="opt">(optional)</span></label><input class="finput" id="f-pw" type="number" placeholder="28000"/></div>
-          <div class="field"><label class="flbl">Per month <span class="opt">(optional)</span></label><input class="finput" id="f-pm" type="number" placeholder="95000"/></div>
+          <div class="field"><label for="f-pw" class="flbl">Per week <span class="opt">(optional)</span></label><input class="finput" id="f-pw" type="number" placeholder="28000"/></div>
+          <div class="field"><label for="f-pm" class="flbl">Per month <span class="opt">(optional)</span></label><input class="finput" id="f-pm" type="number" placeholder="95000"/></div>
         </div>
         <div class="row3" id="s5-food" style="display:none;">
-          <div class="field"><label class="flbl">Minimum delivery order <span class="opt">(optional)</span></label><input class="finput" id="f-minorder" type="number" min="0" placeholder="400"/><div class="fhint">Leave empty if you have no minimum.</div></div>
-          <div class="field"><label class="flbl">Delivery fee <span class="opt">(optional)</span></label><input class="finput" id="f-delfee" type="number" min="0" placeholder="150"/><div class="fhint">Type 0 if you deliver free.</div></div>
-          <div class="field"><label class="flbl">Minutes to the door <span class="opt">(optional)</span></label><input class="finput" id="f-delmins" type="number" min="0" placeholder="35"/><div class="fhint">Once it is cooked. Diners sort by this.</div></div>
+          <div class="field"><label for="f-minorder" class="flbl">Minimum delivery order <span class="opt">(optional)</span></label><input class="finput" id="f-minorder" type="number" min="0" placeholder="400"/><div class="fhint">Leave empty if you have no minimum.</div></div>
+          <div class="field"><label for="f-delfee" class="flbl">Delivery fee <span class="opt">(optional)</span></label><input class="finput" id="f-delfee" type="number" min="0" placeholder="150"/><div class="fhint">Type 0 if you deliver free.</div></div>
+          <div class="field"><label for="f-delmins" class="flbl">Minutes to the door <span class="opt">(optional)</span></label><input class="finput" id="f-delmins" type="number" min="0" placeholder="35"/><div class="fhint">Once it is cooked. Diners sort by this.</div></div>
         </div>
         <div class="row2" id="s5-stays" style="display:none;">
-          <div class="field"><label class="flbl" id="s5depl">Security deposit <span class="opt">(optional)</span></label><input class="finput" id="f-dep" type="number" placeholder="5000"/><div class="fhint" id="s5deph" style="display:none;">Flatmates budget for rent plus deposit together. Listings that state it get far more enquiries.</div></div>
-          <div class="field"><label class="flbl" id="s5mnl">Minimum nights</label><input class="finput" id="f-mn" type="number" value="1" min="1"/><select class="fsel" id="f-mnr" style="display:none;"><option value="7">1 week</option><option value="14">2 weeks</option><option value="30">1 month</option><option value="60">2 months</option><option value="90" selected>3 months</option><option value="180">6 months</option><option value="365">1 year</option></select><div class="fhint" id="s5mnh" style="display:none;">A week is the shortest let allowed here. Anything shorter is a nightly booking, which belongs under Stays.</div></div>
+          <div class="field"><label for="f-dep" class="flbl" id="s5depl">Security deposit <span class="opt">(optional)</span></label><input class="finput" id="f-dep" type="number" placeholder="5000"/><div class="fhint" id="s5deph" style="display:none;">Flatmates budget for rent plus deposit together. Listings that state it get far more enquiries.</div></div>
+          <div class="field"><label for="f-mn" class="flbl" id="s5mnl">Minimum nights</label><input class="finput" id="f-mn" type="number" value="1" min="1"/><select class="fsel" id="f-mnr" style="display:none;" aria-label="Minimum nights" ><option value="7">1 week</option><option value="14">2 weeks</option><option value="30">1 month</option><option value="60">2 months</option><option value="90" selected>3 months</option><option value="180">6 months</option><option value="365">1 year</option></select><div class="fhint" id="s5mnh" style="display:none;">A week is the shortest let allowed here. Anything shorter is a nightly booking, which belongs under Stays.</div></div>
         </div>
         <div class="ibox mint" id="s5-comm"><div class="ibox-lbl">Zero commission</div><div class="ibox-txt">You keep <strong>100% of your listed rate</strong>. Cabana charges guests a small fixed platform fee, never a percentage of your earnings.</div></div>
         <div class="ibox mint" id="s5-rides-note" style="display:none;"><div class="ibox-lbl">Public prices are approved separately</div><div class="ibox-txt">Your operator listing describes what you offer and where. <strong>No price is published from this form.</strong> Cabana adds an exact market, route and unit price only after it is approved in the Move control room.</div></div>
@@ -968,7 +968,7 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
           <div class="ul-title">Drag photos here or click to browse</div>
           <div class="ul-sub" id="ul-sub">JPG or PNG, up to 10 photos, max 10MB each</div>
         </div>
-        <input type="file" id="photo-input" accept="image/*" multiple style="display:none;" onchange="handlePh(this.files)"/>
+        <input type="file" id="photo-input" accept="image/*" multiple style="display:none;" onchange="handlePh(this.files)" aria-label="photo input" />
         <div class="photo-grid" id="photo-grid"></div>
         <div class="photo-help">Drag photos to change their order. The first photo is the cover. Use Adjust to show the full image or choose the exact crop.</div>
       </div>
@@ -985,13 +985,13 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
         <div class="fsec">
           <div class="fsec-title" id="s6ti">Check-in and check-out</div>
           <div class="row2">
-            <div class="field"><label class="flbl" id="s6il">Check-in time</label><input class="finput" id="f-in" type="time" value="14:00"/></div>
-            <div class="field"><label class="flbl" id="s6ol">Check-out time</label><input class="finput" id="f-out" type="time" value="11:00"/></div>
+            <div class="field"><label for="f-in" class="flbl" id="s6il">Check-in time</label><input class="finput" id="f-in" type="time" value="14:00"/></div>
+            <div class="field"><label for="f-out" class="flbl" id="s6ol">Check-out time</label><input class="finput" id="f-out" type="time" value="11:00"/></div>
           </div>
         </div>
         <div class="fsec">
           <div class="fsec-title" id="s6rl">Additional rules</div>
-          <div class="field"><textarea class="ftarea" id="f-rules" style="min-height:76px;" placeholder="Any specific rules or requirements for guests..."></textarea></div>
+          <div class="field"><textarea class="ftarea" id="f-rules" style="min-height:76px;" placeholder="Any specific rules or requirements for guests..." aria-label="Any specific rules or requirements for guests" ></textarea></div>
         </div>
       </div>
       <div class="step-nav">
@@ -1068,7 +1068,7 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
           </div>
           <!-- Who gets the consolidated payout? Only shown when routing = consolidated -->
           <div class="payout-consolidated-to" id="payout-to-wrap">
-            <label class="flbl" style="margin-top:14px;display:block;">Who should receive the consolidated payout? <span class="opt">(optional — defaults to you)</span></label>
+            <label for="payout-to-select" class="flbl" style="margin-top:14px;display:block;">Who should receive the consolidated payout? <span class="opt">(optional — defaults to you)</span></label>
             <select class="fsel" id="payout-to-select" onchange="F.ownPayoutToName=this.options[this.selectedIndex].text;F.ownPayoutToId=this.value;">
               <option value="">Me (the operator)</option>
             </select>
@@ -1109,10 +1109,10 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
           for them; the moment they accept, it becomes theirs and leaves your account.
         </p>
         <div class="row2">
-          <div class="field"><label class="flbl">Their full name</label><input class="finput" id="own-hn" placeholder="e.g. Mama Zawadi Juma" maxlength="120"/></div>
-          <div class="field"><label class="flbl">Their email address</label><input class="finput" id="own-hc" type="email" inputmode="email" autocomplete="email" placeholder="owner@example.com" maxlength="160"/><div class="fhint">They claim the listing by signing in with this exact email address.</div></div>
+          <div class="field"><label for="own-hn" class="flbl">Their full name</label><input class="finput" id="own-hn" placeholder="e.g. Mama Zawadi Juma" maxlength="120"/></div>
+          <div class="field"><label for="own-hc" class="flbl">Their email address</label><input class="finput" id="own-hc" type="email" inputmode="email" autocomplete="email" placeholder="owner@example.com" maxlength="160"/><div class="fhint">They claim the listing by signing in with this exact email address.</div></div>
         </div>
-        <div class="field"><label class="flbl">A note for them <span class="opt">(optional)</span></label><input class="finput" id="own-note" placeholder="Set this up for you at the property on Tuesday." maxlength="200"/></div>
+        <div class="field"><label for="own-note" class="flbl">A note for them <span class="opt">(optional)</span></label><input class="finput" id="own-note" placeholder="Set this up for you at the property on Tuesday." maxlength="200"/></div>
         <div class="own-warn">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
           <span>Once they claim it, this listing is no longer yours. You will not be able

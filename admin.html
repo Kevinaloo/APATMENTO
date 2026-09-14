@@ -388,11 +388,11 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
     <div class="gate-s">Restricted. Authorised operators only.</div>
     <div class="fld">
       <label class="fld-l">Email</label>
-      <input class="inp" id="g-email" type="email" autocomplete="username" placeholder="you@apatmento.com"/>
+      <input class="inp" id="g-email" type="email" autocomplete="username" placeholder="you@apatmento.com" aria-label="you@apatmento.com" />
     </div>
     <div class="fld">
       <label class="fld-l">Password</label>
-      <input class="inp" id="g-pass" type="password" autocomplete="current-password" placeholder="••••••••••"/>
+      <input class="inp" id="g-pass" type="password" autocomplete="current-password" placeholder="••••••••••" aria-label="••••••••••" />
     </div>
     <button class="btn btn-p btn-full" id="g-btn" style="margin-top:8px">Authenticate</button>
     <div class="gate-err" id="g-err"></div>
@@ -764,7 +764,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
         </div>
         <div class="tw"><table>
           <thead><tr>
-            <th style="width:36px"><input type="checkbox" onclick="selectAll(this,'mod')" style="accent-color:var(--violet)"/></th>
+            <th style="width:36px"><input type="checkbox" onclick="selectAll(this,'mod')" style="accent-color:var(--violet)" aria-label="Select all moderation rows"/></th>
             <th>Listing</th><th>Partner</th><th class="num">Price</th><th>Submitted</th><th>Status</th><th class="num">Actions</th>
           </tr></thead>
           <tbody id="mod-rows"></tbody>
@@ -832,7 +832,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
             <button onclick="filterInv('no-convert',this)">No convert</button>
             <button onclick="filterInv('deleted',this)" style="color:var(--bad)">Deleted</button>
           </div>
-          <input id="inv-search" class="inp" placeholder="Search everything…" oninput="invSearch(this.value)" style="width:220px;max-width:100%"/>
+          <input id="inv-search" class="inp" placeholder="Search everything…" oninput="invSearch(this.value)" style="width:220px;max-width:100%" aria-label="Search everything" />
           <div style="flex:1"></div>
           <div id="inv-bulk" style="display:none;gap:6px;align-items:center">
             <span class="t-sub" id="inv-bulk-n"></span>
@@ -844,7 +844,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
         </div>
 
         <div class="tw" style="margin-top:14px"><table>
-          <thead><tr><th style="width:36px"><input type="checkbox" onclick="selectAll(this,'inv')" style="accent-color:var(--violet)"/></th>
+          <thead><tr><th style="width:36px"><input type="checkbox" onclick="selectAll(this,'inv')" style="accent-color:var(--violet)" aria-label="Select all invitation rows"/></th>
           <th>Item</th><th>Service</th><th>Source</th><th class="num">Price</th><th class="num">Views</th><th class="num">Bookings</th><th class="num">Age</th><th>Health</th><th>Status</th><th class="num">Actions</th></tr></thead>
           <tbody id="inv-rows"></tbody>
         </table></div>
@@ -873,7 +873,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
             <button class="gm-svc-tab" data-svc="room" onclick="gmFilterSvc('room',this)">🛏️ Roommates</button>
             <button class="gm-svc-tab" data-svc="ride" onclick="gmFilterSvc('ride',this)">🛺 Rides</button>
           </div>
-          <input id="gm-search" class="inp" placeholder="Search listings…" oninput="gmSearch(this.value)" style="width:200px;max-width:100%"/>
+          <input id="gm-search" class="inp" placeholder="Search listings…" oninput="gmSearch(this.value)" style="width:200px;max-width:100%" aria-label="Search listings" />
         </div>
 
         <div class="tw"><table>
@@ -973,7 +973,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
             <button class="imp-role-tab" data-role="flagged" onclick="impFilterRole('flagged',this)">🚩 Flagged</button>
           </div>
           <div style="display:flex;gap:6px">
-            <input id="imp-search" class="inp" placeholder="Search name, email, phone…" oninput="impSearchFilter(this.value)" style="width:220px;max-width:100%"/>
+            <input id="imp-search" class="inp" placeholder="Search name, email, phone…" oninput="impSearchFilter(this.value)" style="width:220px;max-width:100%" aria-label="Search name, email, phone" />
             <button class="btn btn-p btn-sm" onclick="impSearchFilter($('imp-search').value)">Go</button>
           </div>
         </div>
@@ -1195,15 +1195,15 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 
             <div class="fld">
               <label class="fld-l">Media file (video or image)</label>
-              <input type="file" id="sp-file" accept="video/mp4,video/webm,image/jpeg,image/png,image/webp,image/gif" class="inp" onchange="spPickFile(this)"/>
+              <input type="file" id="sp-file" accept="video/mp4,video/webm,image/jpeg,image/png,image/webp,image/gif" class="inp" onchange="spPickFile(this)" aria-label="sp file" />
               <div class="card-s" style="margin-top:7px;margin-bottom:0">MP4 / WebM video, or JPG / PNG / WebP / GIF image. Keep videos short and lightweight for a smooth load.</div>
             </div>
 
             <div class="fld" id="sp-dur-wrap">
               <label class="fld-l">Video duration</label>
               <div style="display:flex;gap:9px">
-                <input type="number" id="sp-dur-val" class="inp" min="1" value="15" style="flex:1" oninput="spSyncPreview()"/>
-                <select id="sp-dur-unit" class="inp" style="flex:1.2" onchange="spSyncPreview()">
+                <input type="number" id="sp-dur-val" class="inp" min="1" value="15" style="flex:1" oninput="spSyncPreview()" aria-label="sp dur val" />
+                <select id="sp-dur-unit" class="inp" style="flex:1.2" onchange="spSyncPreview()" aria-label="sp dur unit" >
                   <option value="1000">Seconds</option>
                   <option value="60000">Minutes</option>
                 </select>
@@ -1213,7 +1213,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 
             <div class="fld">
               <label class="fld-l">How often each visitor sees it</label>
-              <select id="sp-freq" class="inp">
+              <select id="sp-freq" class="inp" aria-label="sp freq" >
                 <option value="once">Once per device (recommended)</option>
                 <option value="daily">Once every 24 hours</option>
                 <option value="always">Every single visit</option>
@@ -1222,7 +1222,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 
             <div class="fld">
               <label class="fld-l">Campaign name</label>
-              <input type="text" id="sp-campaign" class="inp" placeholder="e.g. worldcup-2026" maxlength="60"/>
+              <input type="text" id="sp-campaign" class="inp" placeholder="e.g. worldcup-2026" maxlength="60" aria-label="e.g. worldcup-2026" />
               <div class="card-s" style="margin-top:7px;margin-bottom:0">Change this whenever you want returning visitors to see a new splash again.</div>
             </div>
 
@@ -1364,15 +1364,15 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
           <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;align-items:flex-end">
             <div style="flex:1;min-width:200px">
               <label style="font-size:11px;color:#9499AD;font-weight:600;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Title</label>
-              <input id="push-test-title" class="inp" value="👋 Test from Admin" placeholder="Notification title" style="width:100%"/>
+              <input id="push-test-title" class="inp" value="👋 Test from Admin" placeholder="Notification title" style="width:100%" aria-label="Notification title" />
             </div>
             <div style="flex:2;min-width:240px">
               <label style="font-size:11px;color:#9499AD;font-weight:600;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Body</label>
-              <input id="push-test-body" class="inp" value="Push delivery is working correctly on Cabana." placeholder="Notification body text" style="width:100%"/>
+              <input id="push-test-body" class="inp" value="Push delivery is working correctly on Cabana." placeholder="Notification body text" style="width:100%" aria-label="Notification body text" />
             </div>
             <div style="min-width:140px">
               <label style="font-size:11px;color:#9499AD;font-weight:600;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Link (optional)</label>
-              <input id="push-test-url" class="inp" value="/" placeholder="e.g. /dashboard.html" style="width:100%"/>
+              <input id="push-test-url" class="inp" value="/" placeholder="e.g. /dashboard.html" style="width:100%" aria-label="e.g. /dashboard.html" />
             </div>
             <button class="btn btn-p" onclick="pushSendTest()" style="white-space:nowrap;padding:10px 20px">Send test →</button>
           </div>
@@ -1389,11 +1389,11 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
             <div style="display:flex;gap:10px;flex-wrap:wrap">
               <div style="flex:1;min-width:200px">
                 <label style="font-size:11px;color:#9499AD;font-weight:600;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Title *</label>
-                <input id="push-bc-title" class="inp" placeholder="e.g. New listings in Westlands!" style="width:100%"/>
+                <input id="push-bc-title" class="inp" placeholder="e.g. New listings in Westlands!" style="width:100%" aria-label="e.g. New listings in Westlands!" />
               </div>
               <div style="flex:1;min-width:200px">
                 <label style="font-size:11px;color:#9499AD;font-weight:600;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Category</label>
-                <select id="push-bc-kind" class="inp" style="width:100%">
+                <select id="push-bc-kind" class="inp" style="width:100%" aria-label="push bc kind" >
                   <option value="general">📣 General</option>
                   <option value="booking">🏠 Booking</option>
                   <option value="payment">💳 Payment</option>
@@ -1403,12 +1403,12 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
             </div>
             <div>
               <label style="font-size:11px;color:#9499AD;font-weight:600;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Body *</label>
-              <textarea id="push-bc-body" class="inp" rows="2" placeholder="The notification message seen by all users…" style="width:100%;resize:vertical"></textarea>
+              <textarea id="push-bc-body" class="inp" rows="2" placeholder="The notification message seen by all users…" style="width:100%;resize:vertical" aria-label="The notification message seen by all users" ></textarea>
             </div>
             <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
               <div style="flex:1;min-width:200px">
                 <label style="font-size:11px;color:#9499AD;font-weight:600;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Deep link (optional)</label>
-                <input id="push-bc-url" class="inp" placeholder="/apartments.html" style="width:100%"/>
+                <input id="push-bc-url" class="inp" placeholder="/apartments.html" style="width:100%" aria-label="/apartments.html" />
               </div>
               <button class="btn btn-p" onclick="pushBroadcast()" style="padding:10px 22px">Broadcast to all →</button>
             </div>
@@ -1425,19 +1425,19 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
           <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;align-items:flex-end">
             <div style="min-width:240px;flex:1">
               <label style="font-size:11px;color:#9499AD;font-weight:600;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">User ID or email *</label>
-              <input id="push-u-target" class="inp" placeholder="user UUID or email@example.com" style="width:100%"/>
+              <input id="push-u-target" class="inp" placeholder="user UUID or email@example.com" style="width:100%" aria-label="user UUID or email@example.com" />
             </div>
             <div style="min-width:180px;flex:1">
               <label style="font-size:11px;color:#9499AD;font-weight:600;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Title *</label>
-              <input id="push-u-title" class="inp" placeholder="Notification title" style="width:100%"/>
+              <input id="push-u-title" class="inp" placeholder="Notification title" style="width:100%" aria-label="Notification title" />
             </div>
             <div style="min-width:220px;flex:2">
               <label style="font-size:11px;color:#9499AD;font-weight:600;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Body *</label>
-              <input id="push-u-body" class="inp" placeholder="Message body" style="width:100%"/>
+              <input id="push-u-body" class="inp" placeholder="Message body" style="width:100%" aria-label="Message body" />
             </div>
             <div style="min-width:140px">
               <label style="font-size:11px;color:#9499AD;font-weight:600;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Link</label>
-              <input id="push-u-url" class="inp" placeholder="/dashboard.html" style="width:100%"/>
+              <input id="push-u-url" class="inp" placeholder="/dashboard.html" style="width:100%" aria-label="/dashboard.html" />
             </div>
             <button class="btn btn-ok" onclick="pushSendUser()" style="padding:10px 18px">Send →</button>
           </div>
@@ -1458,11 +1458,11 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
               <div style="display:flex;gap:10px;flex-wrap:wrap">
                 <div style="flex:2;min-width:200px">
                   <label style="font-size:11px;color:#9499AD;font-weight:600;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Campaign title *</label>
-                  <input id="sc-title" class="inp" placeholder="e.g. Weekend deals reminder" style="width:100%"/>
+                  <input id="sc-title" class="inp" placeholder="e.g. Weekend deals reminder" style="width:100%" aria-label="e.g. Weekend deals reminder" />
                 </div>
                 <div style="flex:1;min-width:140px">
                   <label style="font-size:11px;color:#9499AD;font-weight:600;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Category</label>
-                  <select id="sc-kind" class="inp" style="width:100%">
+                  <select id="sc-kind" class="inp" style="width:100%" aria-label="sc kind" >
                     <option value="general">📣 General</option>
                     <option value="booking">🏠 Booking</option>
                     <option value="promo">🎉 Promotion</option>
@@ -1471,20 +1471,20 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
               </div>
               <div>
                 <label style="font-size:11px;color:#9499AD;font-weight:600;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Body *</label>
-                <textarea id="sc-body" class="inp" rows="2" placeholder="Notification message…" style="width:100%;resize:vertical"></textarea>
+                <textarea id="sc-body" class="inp" rows="2" placeholder="Notification message…" style="width:100%;resize:vertical" aria-label="Notification message" ></textarea>
               </div>
               <div style="display:flex;gap:10px;flex-wrap:wrap">
                 <div style="flex:1;min-width:160px">
                   <label style="font-size:11px;color:#9499AD;font-weight:600;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Deep link</label>
-                  <input id="sc-url" class="inp" placeholder="/apartments.html" style="width:100%"/>
+                  <input id="sc-url" class="inp" placeholder="/apartments.html" style="width:100%" aria-label="/apartments.html" />
                 </div>
                 <div style="flex:1;min-width:160px">
                   <label style="font-size:11px;color:#9499AD;font-weight:600;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Send at (Nairobi time) *</label>
-                  <input id="sc-send-at" class="inp" type="datetime-local" style="width:100%"/>
+                  <input id="sc-send-at" class="inp" type="datetime-local" style="width:100%" aria-label="sc send at" />
                 </div>
                 <div style="flex:1;min-width:140px">
                   <label style="font-size:11px;color:#9499AD;font-weight:600;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Repeat</label>
-                  <select id="sc-repeat" class="inp" style="width:100%">
+                  <select id="sc-repeat" class="inp" style="width:100%" aria-label="sc repeat" >
                     <option value="none">One-time only</option>
                     <option value="daily">Daily</option>
                     <option value="weekly">Weekly</option>
@@ -1493,7 +1493,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
                 </div>
                 <div style="flex:1;min-width:140px">
                   <label style="font-size:11px;color:#9499AD;font-weight:600;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Audience</label>
-                  <select id="sc-audience" class="inp" style="width:100%">
+                  <select id="sc-audience" class="inp" style="width:100%" aria-label="sc audience" >
                     <option value="all">All subscribers</option>
                     <option value="guests">Guests only</option>
                     <option value="partners">Partners only</option>
@@ -1540,20 +1540,20 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
     <div class="mdl-s">They are emailed an invitation and can enter as soon as they sign in with this address and confirm it. Nothing else gates them.</div>
 
     <div class="fld"><label class="fld-l">Email address</label>
-      <input class="inp" id="amb-i-email" type="email" placeholder="name@example.com" autocomplete="off"/></div>
+      <input class="inp" id="amb-i-email" type="email" placeholder="name@example.com" autocomplete="off" aria-label="name@example.com" /></div>
 
     <div class="row2">
       <div class="fld"><label class="fld-l">Full name</label>
-        <input class="inp" id="amb-i-name" placeholder="Amara Otieno"/></div>
+        <input class="inp" id="amb-i-name" placeholder="Amara Otieno" aria-label="Amara Otieno" /></div>
       <div class="fld"><label class="fld-l">Region</label>
-        <input class="inp" id="amb-i-region" placeholder="Nairobi"/></div>
+        <input class="inp" id="amb-i-region" placeholder="Nairobi" aria-label="Nairobi" /></div>
     </div>
 
     <div class="row2">
       <div class="fld"><label class="fld-l">Monthly target</label>
-        <input class="inp" id="amb-i-target" type="number" min="0" max="1000" value="10"/></div>
+        <input class="inp" id="amb-i-target" type="number" min="0" max="1000" value="10" aria-label="amb i target" /></div>
       <div class="fld"><label class="fld-l">Note</label>
-        <input class="inp" id="amb-i-note" placeholder="Covers Westlands, referred by Kevin"/></div>
+        <input class="inp" id="amb-i-note" placeholder="Covers Westlands, referred by Kevin" aria-label="Covers Westlands, referred by Kevin" /></div>
     </div>
 
     <div class="mdl-f">
@@ -1577,9 +1577,9 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
     <!-- CREATIVE -->
     <div id="ct-creative">
       <div class="row2">
-        <div class="fld"><label class="fld-l">Advertiser</label><input class="inp" id="c-adv" placeholder="Jambojet"/></div>
+        <div class="fld"><label class="fld-l">Advertiser</label><input class="inp" id="c-adv" placeholder="Jambojet" aria-label="Jambojet" /></div>
         <div class="fld"><label class="fld-l">Primary format</label>
-          <select class="inp" id="c-fmt" onchange="renderSlotPicker()">
+          <select class="inp" id="c-fmt" onchange="renderSlotPicker()" aria-label="c fmt" >
             <option value="window">Window hero</option>
             <option value="video">Video hero</option>
             <option value="carousel">Carousel banner</option>
@@ -1590,11 +1590,11 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
           </select>
         </div>
       </div>
-      <div class="fld"><label class="fld-l">Headline</label><input class="inp" id="c-head" placeholder="Fly Nairobi to Mombasa from KES 4,900"/></div>
-      <div class="fld"><label class="fld-l">Sub-text</label><input class="inp" id="c-sub" placeholder="Daily departures. No change fees."/></div>
+      <div class="fld"><label class="fld-l">Headline</label><input class="inp" id="c-head" placeholder="Fly Nairobi to Mombasa from KES 4,900" aria-label="Fly Nairobi to Mombasa from KES 4,900" /></div>
+      <div class="fld"><label class="fld-l">Sub-text</label><input class="inp" id="c-sub" placeholder="Daily departures. No change fees." aria-label="Daily departures. No change fees" /></div>
       <div class="row2">
-        <div class="fld"><label class="fld-l">CTA label</label><input class="inp" id="c-cta" placeholder="Book now"/></div>
-        <div class="fld"><label class="fld-l">CTA URL</label><input class="inp" id="c-url" placeholder="https://…"/></div>
+        <div class="fld"><label class="fld-l">CTA label</label><input class="inp" id="c-cta" placeholder="Book now" aria-label="Book now" /></div>
+        <div class="fld"><label class="fld-l">CTA URL</label><input class="inp" id="c-url" placeholder="https://…" aria-label="https://" /></div>
       </div>
       <!-- Media upload section -->
       <div class="fld" style="border:1.5px dashed var(--line-2);border-radius:12px;padding:16px;background:var(--bg-2)">
@@ -1616,15 +1616,15 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
         </div>
         <div style="margin-top:12px">
           <label class="fld-l" style="font-size:12px;margin-bottom:5px;display:block;color:var(--ink-3)">OR paste URL directly</label>
-          <input class="inp" id="c-media" placeholder="https://…/storage/v1/object/public/ads/…" style="font-size:13px"/>
+          <input class="inp" id="c-media" placeholder="https://…/storage/v1/object/public/ads/…" style="font-size:13px" aria-label="https://…/storage/v1/object/public/ads/" />
         </div>
         <div id="c-media-thumb" style="margin-top:10px;display:none"></div>
       </div>
       <div class="row2">
-        <div class="fld"><label class="fld-l">Poster URL (video only)</label><input class="inp" id="c-poster" placeholder="https://…"/></div>
-        <div class="fld"><label class="fld-l">Price display</label><input class="inp" id="c-price" placeholder="From KES 4,900"/></div>
+        <div class="fld"><label class="fld-l">Poster URL (video only)</label><input class="inp" id="c-poster" placeholder="https://…" aria-label="https://" /></div>
+        <div class="fld"><label class="fld-l">Price display</label><input class="inp" id="c-price" placeholder="From KES 4,900" aria-label="From KES 4,900" /></div>
       </div>
-      <div class="fld"><label class="fld-l">Theme gradient</label><input class="inp" id="c-theme" placeholder="linear-gradient(135deg,#2DD4BF,#4361FF)"/></div>
+      <div class="fld"><label class="fld-l">Theme gradient</label><input class="inp" id="c-theme" placeholder="linear-gradient(135deg,#2DD4BF,#4361FF)" aria-label="linear-gradient(135deg,#2DD4BF,#4361FF)" /></div>
 
       <div class="preview" style="margin-top:16px">
         <div class="preview-hd">Live preview</div>
@@ -1652,18 +1652,18 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
     <!-- FLIGHT -->
     <div id="ct-flight" style="display:none">
       <div class="row2">
-        <div class="fld"><label class="fld-l">Start date</label><input class="inp" id="c-start" type="date"/></div>
-        <div class="fld"><label class="fld-l">End date</label><input class="inp" id="c-end" type="date"/></div>
+        <div class="fld"><label class="fld-l">Start date</label><input class="inp" id="c-start" type="date" aria-label="c start" /></div>
+        <div class="fld"><label class="fld-l">End date</label><input class="inp" id="c-end" type="date" aria-label="c end" /></div>
       </div>
       <div class="row2">
-        <div class="fld"><label class="fld-l">Budget (KES)</label><input class="inp" id="c-budget" type="number" placeholder="250000"/></div>
-        <div class="fld"><label class="fld-l">Priority (higher shows first)</label><input class="inp" id="c-prio" type="number" value="5" min="1" max="10"/></div>
+        <div class="fld"><label class="fld-l">Budget (KES)</label><input class="inp" id="c-budget" type="number" placeholder="250000" aria-label="250000" /></div>
+        <div class="fld"><label class="fld-l">Priority (higher shows first)</label><input class="inp" id="c-prio" type="number" value="5" min="1" max="10" aria-label="c prio" /></div>
       </div>
       <div class="fld"><label class="fld-l">Target segments (optional, leave empty for run-of-site)</label>
-        <select class="inp" id="c-segs" multiple size="6"></select>
+        <select class="inp" id="c-segs" multiple size="6" aria-label="c segs" ></select>
       </div>
       <div class="fld"><label class="fld-l">Status</label>
-        <select class="inp" id="c-status"><option value="live">Live</option><option value="paused">Paused</option><option value="draft">Draft</option></select>
+        <select class="inp" id="c-status" aria-label="c status" ><option value="live">Live</option><option value="paused">Paused</option><option value="draft">Draft</option></select>
       </div>
       <div class="note warn">Suppressed segments (bouncers and frustrated sessions) are excluded automatically. You never pay to reach someone who is leaving.</div>
     </div>
@@ -1690,19 +1690,19 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
     <!-- CREATIVE -->
     <div id="sht-creative">
       <div class="row2">
-        <div class="fld"><label class="fld-l">Advertiser</label><input class="inp" id="sh-adv" placeholder="Colgate"/></div>
-        <div class="fld"><label class="fld-l">Internal title</label><input class="inp" id="sh-name" placeholder="Toothpaste: shopping shadow"/></div>
+        <div class="fld"><label class="fld-l">Advertiser</label><input class="inp" id="sh-adv" placeholder="Colgate" aria-label="Colgate" /></div>
+        <div class="fld"><label class="fld-l">Internal title</label><input class="inp" id="sh-name" placeholder="Toothpaste: shopping shadow" aria-label="Toothpaste: shopping shadow" /></div>
       </div>
-      <div class="fld"><label class="fld-l">Headline</label><input class="inp" id="sh-head" placeholder="Fresh every morning"/></div>
-      <div class="fld"><label class="fld-l">Sub-text</label><input class="inp" id="sh-sub" placeholder="Colgate Total: now 20% off on Cabana Shopping."/></div>
+      <div class="fld"><label class="fld-l">Headline</label><input class="inp" id="sh-head" placeholder="Fresh every morning" aria-label="Fresh every morning" /></div>
+      <div class="fld"><label class="fld-l">Sub-text</label><input class="inp" id="sh-sub" placeholder="Colgate Total: now 20% off on Cabana Shopping." aria-label="Colgate Total: now 20% off on Cabana Shopping" /></div>
       <div class="row2">
-        <div class="fld"><label class="fld-l">CTA label</label><input class="inp" id="sh-cta" placeholder="Shop now"/></div>
-        <div class="fld"><label class="fld-l">Click destination (URL)</label><input class="inp" id="sh-url" placeholder="/shopping.html?product=…"/></div>
+        <div class="fld"><label class="fld-l">CTA label</label><input class="inp" id="sh-cta" placeholder="Shop now" aria-label="Shop now" /></div>
+        <div class="fld"><label class="fld-l">Click destination (URL)</label><input class="inp" id="sh-url" placeholder="/shopping.html?product=…" aria-label="/shopping.html?product=" /></div>
       </div>
       <div class="fld" style="border:1.5px dashed var(--line-2);border-radius:12px;padding:16px;background:var(--bg-2)">
         <label class="fld-l" style="margin-bottom:10px;display:block">Media file <span style="color:var(--ink-3);font-weight:400">(jpg · webp · png · mp4)</span></label>
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-          <select class="inp" id="sh-mtype" style="max-width:130px"><option value="image">Image</option><option value="video">Video (mp4)</option></select>
+          <select class="inp" id="sh-mtype" style="max-width:130px" aria-label="sh mtype" ><option value="image">Image</option><option value="video">Video (mp4)</option></select>
           <label class="btn btn-g btn-sm" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
             Choose file
@@ -1713,14 +1713,14 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
         </div>
         <div style="margin-top:10px">
           <label class="fld-l" style="font-size:12px;color:var(--ink-3);margin-bottom:5px;display:block">OR paste URL</label>
-          <input class="inp" id="sh-media" placeholder="https://…/ads/toothpaste.jpg" style="font-size:13px"/>
+          <input class="inp" id="sh-media" placeholder="https://…/ads/toothpaste.jpg" style="font-size:13px" aria-label="https://…/ads/toothpaste.jpg" />
         </div>
       </div>
       <div class="row2">
-        <div class="fld"><label class="fld-l">Poster URL (video only)</label><input class="inp" id="sh-poster" placeholder="https://…"/></div>
-        <div class="fld"><label class="fld-l">Accent colour</label><input class="inp" id="sh-accent" placeholder="#0EA5E9"/></div>
+        <div class="fld"><label class="fld-l">Poster URL (video only)</label><input class="inp" id="sh-poster" placeholder="https://…" aria-label="https://" /></div>
+        <div class="fld"><label class="fld-l">Accent colour</label><input class="inp" id="sh-accent" placeholder="#0EA5E9" aria-label="#0EA5E9" /></div>
       </div>
-      <div class="fld"><label class="fld-l">Theme gradient</label><input class="inp" id="sh-theme" placeholder="linear-gradient(135deg,#0EA5E9,#2563EB)"/></div>
+      <div class="fld"><label class="fld-l">Theme gradient</label><input class="inp" id="sh-theme" placeholder="linear-gradient(135deg,#0EA5E9,#2563EB)" aria-label="linear-gradient(135deg,#0EA5E9,#2563EB)" /></div>
 
       <div class="preview" style="margin-top:16px">
         <div class="preview-hd">Live preview: as it will surface</div>
@@ -1734,7 +1734,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
         The engine reads live intent (0–100) from real behaviour. Show a creative only inside the band where it genuinely helps. Stay silent when a guest is very hot and converting so you never distract a sale.
       </div>
       <div class="fld"><label class="fld-l">Surfaces (where it may appear)</label>
-        <select class="inp" id="sh-surfaces" multiple size="6">
+        <select class="inp" id="sh-surfaces" multiple size="6" aria-label="sh surfaces" >
           <option value="all">All services</option>
           <option value="apartments">Stays / Apartments</option>
           <option value="shopping">Shopping</option>
@@ -1749,19 +1749,19 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
         </select>
       </div>
       <div class="row2">
-        <div class="fld"><label class="fld-l">Min intent (0–100)</label><input class="inp" id="sh-imin" type="number" value="10" min="0" max="100"/></div>
-        <div class="fld"><label class="fld-l">Max intent (stay quiet above)</label><input class="inp" id="sh-imax" type="number" value="85" min="0" max="100"/></div>
+        <div class="fld"><label class="fld-l">Min intent (0–100)</label><input class="inp" id="sh-imin" type="number" value="10" min="0" max="100" aria-label="sh imin" /></div>
+        <div class="fld"><label class="fld-l">Max intent (stay quiet above)</label><input class="inp" id="sh-imax" type="number" value="85" min="0" max="100" aria-label="sh imax" /></div>
       </div>
       <div class="row2">
-        <div class="fld"><label class="fld-l">Min seconds on page</label><input class="inp" id="sh-dwell" type="number" value="6" min="0"/></div>
-        <div class="fld"><label class="fld-l">Min scroll depth (%)</label><input class="inp" id="sh-scroll" type="number" value="0" min="0" max="100"/></div>
+        <div class="fld"><label class="fld-l">Min seconds on page</label><input class="inp" id="sh-dwell" type="number" value="6" min="0" aria-label="sh dwell" /></div>
+        <div class="fld"><label class="fld-l">Min scroll depth (%)</label><input class="inp" id="sh-scroll" type="number" value="0" min="0" max="100" aria-label="sh scroll" /></div>
       </div>
       <div class="row2">
         <div class="fld"><label class="fld-l">Device</label>
-          <select class="inp" id="sh-device"><option value="all">All devices</option><option value="mobile">Mobile only</option><option value="desktop">Desktop only</option><option value="tablet">Tablet only</option></select>
+          <select class="inp" id="sh-device" aria-label="sh device" ><option value="all">All devices</option><option value="mobile">Mobile only</option><option value="desktop">Desktop only</option><option value="tablet">Tablet only</option></select>
         </div>
         <div class="fld"><label class="fld-l">Reading modes</label>
-          <select class="inp" id="sh-modes" multiple size="4">
+          <select class="inp" id="sh-modes" multiple size="4" aria-label="sh modes" >
             <option value="skim" selected>Skim</option>
             <option value="scan" selected>Scan</option>
             <option value="browse" selected>Browse</option>
@@ -1770,12 +1770,12 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
         </div>
       </div>
       <div class="fld"><label class="fld-l">Context keywords (comma-separated, matched against search / category)</label>
-        <input class="inp" id="sh-kw" placeholder="toothpaste, colgate, health, personal care"/>
+        <input class="inp" id="sh-kw" placeholder="toothpaste, colgate, health, personal care" aria-label="toothpaste, colgate, health, personal care" />
       </div>
       <div class="note">Leave keywords empty to match the whole surface. With keywords, the ad only appears when the guest's search or category context is relevant. The toothpaste ad finds the shopper, not everyone.</div>
 
       <div class="fld" style="margin-top:18px"><label class="fld-l">📍 Area targeting: Nairobi neighbourhoods (leave empty = city-wide / Kenya-wide)</label>
-        <select class="inp" id="sh-areas" multiple size="8">
+        <select class="inp" id="sh-areas" multiple size="8" aria-label="sh areas" >
           <option value="all">All areas (no geo restriction)</option>
           <optgroup label="West / North West">
             <option value="Westlands">Westlands</option>
@@ -1829,7 +1829,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
           </label>
         </div>
         <div class="fld"><label class="fld-l">APA message template <span style="font-weight:400;color:var(--ink-3)">(how APA mentions it. Keep it natural, 1 sentence, no hard sell)</span></label>
-          <input class="inp" id="sh-apa-msg" placeholder="e.g. KFC Westlands has a 30% off bucket deal if you want food sorted after your check-in 🍗"/>
+          <input class="inp" id="sh-apa-msg" placeholder="e.g. KFC Westlands has a 30% off bucket deal if you want food sorted after your check-in 🍗" aria-label="e.g. KFC Westlands has a 30% off bucket deal if you want food sorted after your check-in 🍗" />
         </div>
         <div class="note">APA will weave this into the conversation when: the guest is in a matching area, the surface matches, and it fits naturally (after navigation, after booking help, etc). It never interrupts or forces it. The guest should feel like APA just remembered something useful.</div>
       </div>
@@ -1838,7 +1838,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
     <!-- DELIVERY -->
     <div id="sht-delivery" style="display:none">
       <div class="fld"><label class="fld-l">Entry position</label>
-        <select class="inp" id="sh-pos">
+        <select class="inp" id="sh-pos" aria-label="sh pos" >
           <option value="auto">Auto: smartest, least intrusive per device</option>
           <option value="rise">Rise behind the focused card (desktop signature)</option>
           <option value="side">Slide in from the side</option>
@@ -1847,21 +1847,21 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
         </select>
       </div>
       <div class="row2">
-        <div class="fld"><label class="fld-l">Times per session (max)</label><input class="inp" id="sh-cap" type="number" value="1" min="1" max="5"/></div>
-        <div class="fld"><label class="fld-l">Cooldown between any shadow ads (s)</label><input class="inp" id="sh-cd" type="number" value="90" min="10"/></div>
+        <div class="fld"><label class="fld-l">Times per session (max)</label><input class="inp" id="sh-cap" type="number" value="1" min="1" max="5" aria-label="sh cap" /></div>
+        <div class="fld"><label class="fld-l">Cooldown between any shadow ads (s)</label><input class="inp" id="sh-cd" type="number" value="90" min="10" aria-label="sh cd" /></div>
       </div>
       <div class="row2">
-        <div class="fld"><label class="fld-l">How long it stays (s)</label><input class="inp" id="sh-show" type="number" value="7" min="4" max="20"/></div>
-        <div class="fld"><label class="fld-l">Priority (higher wins ties)</label><input class="inp" id="sh-prio" type="number" value="5" min="1" max="10"/></div>
+        <div class="fld"><label class="fld-l">How long it stays (s)</label><input class="inp" id="sh-show" type="number" value="7" min="4" max="20" aria-label="sh show" /></div>
+        <div class="fld"><label class="fld-l">Priority (higher wins ties)</label><input class="inp" id="sh-prio" type="number" value="5" min="1" max="10" aria-label="sh prio" /></div>
       </div>
       <div class="row2">
-        <div class="fld"><label class="fld-l">Start date</label><input class="inp" id="sh-start" type="date"/></div>
-        <div class="fld"><label class="fld-l">End date</label><input class="inp" id="sh-end" type="date"/></div>
+        <div class="fld"><label class="fld-l">Start date</label><input class="inp" id="sh-start" type="date" aria-label="sh start" /></div>
+        <div class="fld"><label class="fld-l">End date</label><input class="inp" id="sh-end" type="date" aria-label="sh end" /></div>
       </div>
       <div class="row2">
-        <div class="fld"><label class="fld-l">Budget (KES, optional)</label><input class="inp" id="sh-budget" type="number" placeholder="120000"/></div>
+        <div class="fld"><label class="fld-l">Budget (KES, optional)</label><input class="inp" id="sh-budget" type="number" placeholder="120000" aria-label="120000" /></div>
         <div class="fld"><label class="fld-l">Status</label>
-          <select class="inp" id="sh-status"><option value="live">Live</option><option value="paused">Paused</option><option value="draft">Draft</option></select>
+          <select class="inp" id="sh-status" aria-label="sh status" ><option value="live">Live</option><option value="paused">Paused</option><option value="draft">Draft</option></select>
         </div>
       </div>
       <div class="note warn">Anti-annoyance is built in: one dismissal silences shadow ads for that visitor's whole session, and we never surface while a guest is bouncing or mid-checkout.</div>
@@ -1882,7 +1882,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
     <div class="mdl-s" id="cf-body">Are you sure?</div>
     <div class="fld" id="cf-reason-wrap" style="display:none">
       <label class="fld-l">Reason (required, written to the audit log)</label>
-      <textarea class="inp" id="cf-reason" placeholder="Explain why. This is permanent."></textarea>
+      <textarea class="inp" id="cf-reason" placeholder="Explain why. This is permanent." aria-label="Explain why. This is permanent" ></textarea>
     </div>
     <div class="mdl-f">
       <button class="btn btn-g" onclick="closeConfirm()">Cancel</button>
@@ -1904,7 +1904,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 
     <div class="fld" style="margin-top:12px">
       <label class="fld-l">New owner — search by email or name</label>
-      <input class="inp" id="ot-search" type="text" placeholder="Type to search partners…" oninput="otSearch(this.value)" autocomplete="off"/>
+      <input class="inp" id="ot-search" type="text" placeholder="Type to search partners…" oninput="otSearch(this.value)" autocomplete="off" aria-label="Type to search partners" />
       <div id="ot-results" style="margin-top:6px;display:none;background:var(--panel-2);border:1px solid var(--panel-3);border-radius:10px;max-height:220px;overflow-y:auto"></div>
     </div>
 
@@ -1916,7 +1916,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 
     <div class="fld" style="margin-top:12px">
       <label class="fld-l">Reason (written to audit log)</label>
-      <textarea class="inp" id="ot-reason" rows="2" placeholder="e.g. Partner account migration, business sale, duplicate account merge…" style="resize:vertical"></textarea>
+      <textarea class="inp" id="ot-reason" rows="2" placeholder="e.g. Partner account migration, business sale, duplicate account merge…" style="resize:vertical" aria-label="e.g. Partner account migration, business sale, duplicate account merge" ></textarea>
     </div>
 
     <div id="ot-warn" style="display:none;margin-top:10px;padding:10px 14px;background:rgba(255,80,60,.09);border-radius:10px;border:1px solid rgba(255,80,60,.3);font-size:13px;color:var(--red,#f55)">

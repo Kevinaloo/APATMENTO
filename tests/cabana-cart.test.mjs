@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 /* ══════════════════════════════════════════════════════════════════════
    THE ORDER
    tests/cabana-cart.test.mjs
@@ -20,7 +21,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { JSDOM } from 'jsdom';
 
-const ROOT = new URL('..', import.meta.url).pathname;
+const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const read = (f) => readFileSync(join(ROOT, f), 'utf8');
 const CART_SRC = read('cabana-cart.js');
 

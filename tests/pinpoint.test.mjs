@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 /* ══════════════════════════════════════════════════════════════════════
    THE PRECISION LOCATION PICKER
    tests/pinpoint.test.mjs
@@ -23,7 +24,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { JSDOM } from 'jsdom';
 
-const ROOT = new URL('..', import.meta.url).pathname;
+const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const read = (f) => readFileSync(join(ROOT, f), 'utf8');
 
 const PINPOINT = read('cabana-pinpoint.js');

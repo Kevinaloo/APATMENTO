@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 /* ══════════════════════════════════════════════════════════════════════
    CAR HIRE · terrain reasoning and the route object contract
    tests/carhire-terrain.test.mjs
@@ -38,7 +39,7 @@ for (const key of ['GEMINI_API_KEY', 'OPENAI_API_KEY', 'GROQ_API_KEY', 'AI_GATEW
   delete process.env[key];
 }
 
-const ROOT = new URL('..', import.meta.url).pathname;
+const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const read = (f) => readFileSync(join(ROOT, f), 'utf8');
 const CORE_SRC = read('cabana-carhire-core.js');
 

@@ -336,11 +336,11 @@ body{font-family:var(--font-b);background:#07050F;color:#fff;-webkit-font-smooth
       <div class="withdraw-form">
         <div class="form-group">
           <label class="form-label">Amount (KES)</label>
-          <input class="form-input" id="w-amount" type="number" placeholder="Min KES 50" min="50"/>
+          <input class="form-input" id="w-amount" type="number" placeholder="Min KES 50" min="50" aria-label="Min KES 50" />
         </div>
         <div class="form-group">
           <label class="form-label">M-Pesa number</label>
-          <input class="form-input" id="w-mpesa" type="tel" placeholder="07XX XXX XXX"/>
+          <input class="form-input" id="w-mpesa" type="tel" placeholder="07XX XXX XXX" aria-label="07XX XXX XXX" />
         </div>
         <div class="withdraw-note">Withdrawals are processed within 1–2 business days via M-Pesa. Minimum withdrawal is KES 50.</div>
         <button class="withdraw-btn" onclick="requestWithdraw()">Request withdrawal →</button>

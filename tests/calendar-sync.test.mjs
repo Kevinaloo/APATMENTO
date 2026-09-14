@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 /* ══════════════════════════════════════════════════════════════════════
    Channel calendar · tests
    ──────────────────────────────────────────────────────────────────────
@@ -22,7 +23,7 @@ import {
 } from '../api/lib/_calendar-platforms.js';
 import { isBlockedAddress } from '../api/lib/_calendar-fetch.js';
 
-const ROOT = new URL('..', import.meta.url).pathname;
+const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const read = f => readFileSync(join(ROOT, f), 'utf8');
 const ics = (...lines) => ['BEGIN:VCALENDAR', 'VERSION:2.0', ...lines, 'END:VCALENDAR'].join('\r\n');
 const TODAY = '2026-03-01';
@@ -363,7 +364,8 @@ test('the public feed URL is routable in production and locally', () => {
   assert.ok(sources.includes('/api/ical'));
   assert.ok(sources.includes('/api/calendar-cron'));
   assert.match(SERVER, /\/calendar\\\/\(\[A-Za-z0-9_-\]\+\)/, 'server.js must mirror the feed route');
-  assert.match(SERVER, /calendar-cron/);
+  assert.match(SERVER, /vercelConfig\.rewrites/, 'local server must derive its routes from vercel.json');
+  assert.match(SERVER, /destination\.searchParams/, 'local rewrites must retain destination query parameters');
 });
 
 test('the feed and the cron are answered before any auth check', () => {

@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -11,7 +12,7 @@ import { JSDOM } from 'jsdom';
    a second: a podium is a claim about people, so it must rank from the
    standings it was given rather than from whatever arrived first. */
 
-const ROOT = new URL('..', import.meta.url).pathname;
+const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const read = (file) => readFileSync(join(ROOT, file), 'utf8');
 
 const SCRIPT = read('cabana-room.js');

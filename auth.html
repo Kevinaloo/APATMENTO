@@ -476,12 +476,12 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
         <!-- LOGIN -->
         <div id="login-section">
           <div class="field">
-            <label class="field-label">Email address</label>
+            <label for="login-email" class="field-label">Email address</label>
             <input class="field-input" id="login-email" type="email" placeholder="you@example.com" autocomplete="email"/>
             <div class="field-err" id="login-email-err"></div>
           </div>
           <div class="field">
-            <label class="field-label">Password</label>
+            <label for="login-password" class="field-label">Password</label>
             <div class="field-input-wrap">
               <input class="field-input" id="login-password" type="password" placeholder="Enter your password" autocomplete="current-password"/>
               <button class="pw-toggle" onclick="togglePw('login-password',this)" type="button">👁</button>
@@ -511,22 +511,22 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
 
           <div class="field-row">
             <div class="field">
-              <label class="field-label">First name</label>
+              <label for="signup-first" class="field-label">First name</label>
               <input class="field-input" id="signup-first" type="text" placeholder="Amara"/>
               <div class="field-err" id="signup-first-err"></div>
             </div>
             <div class="field">
-              <label class="field-label">Last name</label>
+              <label for="signup-last" class="field-label">Last name</label>
               <input class="field-input" id="signup-last" type="text" placeholder="Otieno"/>
             </div>
           </div>
           <div class="field">
-            <label class="field-label">Email address</label>
+            <label for="signup-email" class="field-label">Email address</label>
             <input class="field-input" id="signup-email" type="email" placeholder="you@example.com"/>
             <div class="field-err" id="signup-email-err"></div>
           </div>
           <div class="field">
-            <label class="field-label">Password</label>
+            <label for="signup-password" class="field-label">Password</label>
             <div class="field-input-wrap">
               <input class="field-input" id="signup-password" type="password" placeholder="At least 8 characters" oninput="checkStrength(this.value)"/>
               <button class="pw-toggle" onclick="togglePw('signup-password',this)" type="button">👁</button>
@@ -536,7 +536,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
             <div class="field-err" id="signup-pw-err"></div>
           </div>
           <div class="field">
-            <label class="field-label">Confirm password</label>
+            <label for="signup-password2" class="field-label">Confirm password</label>
             <div class="field-input-wrap">
               <input class="field-input" id="signup-password2" type="password" placeholder="Re-enter your password" autocomplete="new-password" oninput="checkMatch()"/>
               <button class="pw-toggle" onclick="togglePw('signup-password2',this)" type="button">👁</button>
@@ -623,11 +623,11 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
             <!-- ── INFLUENCER LOGIN ── -->
             <div id="inf-login">
               <div class="field">
-                <label class="field-label">Email address</label>
+                <label for="inf-login-email" class="field-label">Email address</label>
                 <input class="field-input" id="inf-login-email" type="email" placeholder="you@example.com" autocomplete="email"/>
               </div>
               <div class="field">
-                <label class="field-label">Password</label>
+                <label for="inf-login-pw" class="field-label">Password</label>
                 <input class="field-input" id="inf-login-pw" type="password" placeholder="Your password" autocomplete="current-password"/>
               </div>
               <button class="submit-btn" id="inf-login-btn" onclick="infLogin(event)" style="background:linear-gradient(135deg,#FF6B2C,#7B2FF7);">Sign in to creator portal</button>
@@ -644,11 +644,11 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
               </div>
 
               <div class="field">
-                <label class="field-label">Full name</label>
+                <label for="inf-name" class="field-label">Full name</label>
                 <input class="field-input" id="inf-name" type="text" placeholder="Amara Otieno"/>
               </div>
               <div class="field">
-                <label class="field-label">Email address</label>
+                <label for="inf-email" class="field-label">Email address</label>
                 <input class="field-input" id="inf-email" type="email" placeholder="you@example.com" autocomplete="email"/>
               </div>
 
@@ -664,22 +664,22 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
 
               <div class="field-row">
                 <div class="field">
-                  <label class="field-label">Your handle / channel</label>
+                  <label for="inf-handle" class="field-label">Your handle / channel</label>
                   <input class="field-input" id="inf-handle" type="text" placeholder="@yourhandle"/>
                 </div>
                 <div class="field">
-                  <label class="field-label">Followers (approx.)</label>
+                  <label for="inf-followers" class="field-label">Followers (approx.)</label>
                   <input class="field-input" id="inf-followers" type="number" min="0" placeholder="12000"/>
                 </div>
               </div>
 
               <div class="field">
-                <label class="field-label">WhatsApp number</label>
+                <label for="inf-phone" class="field-label">WhatsApp number</label>
                 <input class="field-input" id="inf-phone" type="tel" placeholder="+254 7XX XXX XXX"/>
               </div>
 
               <div class="field">
-                <label class="field-label">Create a password</label>
+                <label for="inf-pw" class="field-label">Create a password</label>
                 <input class="field-input" id="inf-pw" type="password" placeholder="At least 8 characters"/>
               </div>
 
@@ -703,11 +703,11 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
             <!-- ── AGENT LOGIN ── -->
             <div id="p-login">
               <div class="field">
-                <label class="field-label">Email address</label>
+                <label for="p-login-email" class="field-label">Email address</label>
                 <input class="field-input" id="p-login-email" type="email" placeholder="you@example.com" autocomplete="email"/>
               </div>
               <div class="field">
-                <label class="field-label">Password</label>
+                <label for="p-login-pw" class="field-label">Password</label>
                 <input class="field-input" id="p-login-pw" type="password" placeholder="Your password" autocomplete="current-password"/>
               </div>
               <button class="submit-btn" id="p-login-btn" onclick="progLogin(event)">Sign in to portal</button>
@@ -725,12 +725,12 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
               </div>
 
               <div class="field">
-                <label class="field-label">Full name</label>
+                <label for="p-name" class="field-label">Full name</label>
                 <input class="field-input" id="p-name" type="text" placeholder="Amara Otieno"/>
               </div>
 
               <div class="field">
-                <label class="field-label">Email address</label>
+                <label for="p-email" class="field-label">Email address</label>
                 <input class="field-input" id="p-email" type="email" placeholder="you@example.com" autocomplete="email"/>
               </div>
 
@@ -745,7 +745,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
               </div>
 
               <div class="field">
-                <label class="field-label" id="p-contact-label">WhatsApp number</label>
+                <label for="p-contact" class="field-label" id="p-contact-label">WhatsApp number</label>
                 <input class="field-input" id="p-contact" type="text" placeholder="+254 7XX XXX XXX"/>
               </div>
 
@@ -761,11 +761,11 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
               <div id="inf-fields" style="display:none;">
                 <div class="field-row">
                   <div class="field">
-                    <label class="field-label">Social handle</label>
+                    <label for="p-handle" class="field-label">Social handle</label>
                     <input class="field-input" id="p-handle" type="text" placeholder="@yourhandle"/>
                   </div>
                   <div class="field">
-                    <label class="field-label">Platform</label>
+                    <label for="p-platform" class="field-label">Platform</label>
                     <select class="field-input" id="p-platform">
                       <option value="Instagram">Instagram</option>
                       <option value="TikTok">TikTok</option>
@@ -777,13 +777,13 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
                   </div>
                 </div>
                 <div class="field">
-                  <label class="field-label">Approx. audience size <span style="color:var(--ink-faint);font-weight:400;">(optional)</span></label>
+                  <label for="p-audience" class="field-label">Approx. audience size <span style="color:var(--ink-faint);font-weight:400;">(optional)</span></label>
                   <input class="field-input" id="p-audience" type="number" min="0" placeholder="12000"/>
                 </div>
               </div>
 
               <div class="field">
-                <label class="field-label">Create a password</label>
+                <label for="p-pw" class="field-label">Create a password</label>
                 <input class="field-input" id="p-pw" type="password" placeholder="At least 8 characters"/>
               </div>
 
@@ -803,7 +803,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
         <div class="alert alert-error" id="reset-alert-error"></div>
         <div class="alert alert-success" id="reset-alert-success"></div>
         <div class="field" style="text-align:left;">
-          <input class="field-input" id="reset-email" type="email" placeholder="you@example.com"/>
+          <input class="field-input" id="reset-email" type="email" placeholder="you@example.com" aria-label="you@example.com" />
         </div>
         <button class="submit-btn" id="reset-btn" onclick="handleReset(event)" style="margin-bottom:14px;">Send reset link</button>
         <button class="link-btn" onclick="showLogin()">← Back to sign in</button>
@@ -830,7 +830,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
         <div class="alert alert-success" id="newpw-alert-success"></div>
 
         <div class="field" style="text-align:left;">
-          <label class="field-label">New password</label>
+          <label for="newpw" class="field-label">New password</label>
           <div class="field-input-wrap">
             <input class="field-input" id="newpw" type="password" placeholder="At least 8 characters" autocomplete="new-password" oninput="checkNewStrength(this.value)"/>
             <button class="pw-toggle" onclick="togglePw('newpw',this)" type="button">👁</button>
@@ -840,7 +840,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
         </div>
 
         <div class="field" style="text-align:left;">
-          <label class="field-label">Confirm new password</label>
+          <label for="newpw2" class="field-label">Confirm new password</label>
           <div class="field-input-wrap">
             <input class="field-input" id="newpw2" type="password" placeholder="Re-enter your new password" autocomplete="new-password" oninput="checkNewMatch()"/>
             <button class="pw-toggle" onclick="togglePw('newpw2',this)" type="button">👁</button>

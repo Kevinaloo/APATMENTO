@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 /* ══════════════════════════════════════════════════════════════════════
    THE WORLD MAP
    tests/world-map.test.mjs
@@ -23,7 +24,7 @@ import { join } from 'node:path';
 import { JSDOM } from 'jsdom';
 import { __test as atlasTest } from '../api/lib/_atlas.js';
 
-const ROOT = new URL('..', import.meta.url).pathname;
+const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const read = (f) => readFileSync(join(ROOT, f), 'utf8');
 
 const ATLAS = JSON.parse(read('cabana-world-atlas.json'));

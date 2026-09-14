@@ -12,3 +12,8 @@ node_modules/
 __pycache__/
 *.py[cod]
 artifacts/listing-ui/
+
+# Local production-audit evidence (may include schema and account metadata).
+artifacts/audit*
+.vercel/
+supabase/.temp/

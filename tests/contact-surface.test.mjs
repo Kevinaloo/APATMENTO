@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 /* ══════════════════════════════════════════════════════════════════════
    Cabana · the contact surface
    tests/contact-surface.test.mjs
@@ -14,12 +15,12 @@ import assert from 'node:assert/strict';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
-const ROOT = new URL('..', import.meta.url).pathname;
+const ROOT = fileURLToPath(new URL('..', import.meta.url));
 
 /* Directories with nothing user-facing in them. seo/ IS walked: it
    generates the footers on hundreds of pages, so a number left in a
    template there is a number that comes back on the next build. */
-const SKIP_DIRS = new Set(['node_modules', '.git', 'tests', '.github', '.well-known']);
+const SKIP_DIRS = new Set(['node_modules', '.git', 'tests', 'artifacts', '.github', '.well-known']);
 
 function walk(dir, out = []) {
   for (const name of readdirSync(dir)) {
@@ -32,7 +33,7 @@ function walk(dir, out = []) {
 }
 
 const FILES = walk(ROOT);
-const rel = (f) => f.slice(ROOT.length);
+const rel = (f) => f.slice(ROOT.length).replace(/\\/g, '/');
 
 /* This file necessarily contains the strings it is looking for. */
 const SELF = /tests\//;

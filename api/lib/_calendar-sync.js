@@ -32,17 +32,27 @@ import { parseICalendar, buildICalendar, contentFingerprint, LIMITS } from './_i
 
 async function rpc(fn, args = {}) {
   const { url } = supabase();
-  const res = await fetch(`${url}/rest/v1/rpc/${fn}`, {
-    method: 'POST',
-    headers: serviceHeaders(),
-    body: JSON.stringify(args),
-  });
-  const text = await res.text();
-  if (!res.ok) {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const res = await fetch(`${url}/rest/v1/rpc/${fn}`, {
+      method: 'POST',
+      headers: serviceHeaders(),
+      body: JSON.stringify(args),
+    });
+    const text = await res.text();
+    if (res.ok) return text ? JSON.parse(text) : null;
+
+    /* This RPC only reads the due-work queue. Supabase occasionally
+       returns a transient gateway response before PostgREST runs it, so
+       one bounded retry is safe. Mutating RPCs are never retried because
+       an ambiguous response could otherwise repeat a write. */
+    if (fn === 'cabana_calendar_due_feeds' && attempt === 0 &&
+        [502, 503, 504].includes(res.status)) {
+      await new Promise(resolve => setTimeout(resolve, 200));
+      continue;
+    }
     throw Object.assign(new Error(`rpc ${fn}: ${text.slice(0, 300)}`),
                         { status: res.status === 403 ? 403 : 500, rpc: fn });
   }
-  return text ? JSON.parse(text) : null;
 }
 
 export { rpc };

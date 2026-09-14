@@ -446,7 +446,7 @@ td strong{color:var(--ink);font-weight:600;}
 </div>
 
 <div class="cs-bar">
-  <select class="cs-select" id="cs-listing" onchange="selectListing(this.value)"></select>
+  <select class="cs-select" id="cs-listing" onchange="selectListing(this.value)" aria-label="cs listing" ></select>
   <button class="btn btn-ghost btn-sm" onclick="syncAll()" id="cs-sync-all">Sync all now</button>
   <span id="cs-sync-state" style="font:500 11.5px var(--font-b);color:var(--ink-faint);"></span>
 </div>
@@ -463,7 +463,7 @@ td strong{color:var(--ink);font-weight:600;}
       </div>
     </div>
     <div class="cs-url">
-      <input id="cs-feed-url" readonly onclick="this.select()" value="Loading…"/>
+      <input id="cs-feed-url" readonly onclick="this.select()" value="Loading…" aria-label="cs feed url" />
       <button class="btn btn-sm" onclick="copyFeed()" id="cs-copy">Copy</button>
     </div>
     <!-- Proof the other side is really reading us. Nobody else shows a
@@ -531,7 +531,7 @@ td strong{color:var(--ink);font-weight:600;}
     <div style="margin-top:16px;">
       <label style="font:700 11px var(--font-b);color:var(--ink-soft);letter-spacing:.05em;text-transform:uppercase;">Calendar link (.ics)</label>
       <div class="cs-url" style="margin-top:7px;">
-        <input id="cs-new-url" placeholder="https://…" style="font-family:var(--font-b);" oninput="document.getElementById('cs-test-out').innerHTML=''"/>
+        <input id="cs-new-url" placeholder="https://…" style="font-family:var(--font-b);" oninput="document.getElementById('cs-test-out').innerHTML=''" aria-label="https://" />
         <button class="btn btn-ghost btn-sm" onclick="testFeed()" id="cs-test-btn">Test</button>
       </div>
       <div id="cs-test-out"></div>

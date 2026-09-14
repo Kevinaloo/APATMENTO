@@ -334,18 +334,18 @@ td strong{color:var(--ink);font-weight:600;}
 <div class="card">
   <div class="card-hd"><div class="card-title">Business profile</div></div>
   <div class="row-2">
-    <div class="field"><label class="field-label">Business / Host name</label><input class="field-input" id="s-name" placeholder="e.g. Nairobi Luxury Stays"/></div>
-    <div class="field"><label class="field-label">Contact number</label><input class="field-input" id="s-phone" type="tel" placeholder="0700 000 000"/></div>
+    <div class="field"><label for="s-name" class="field-label">Business / Host name</label><input class="field-input" id="s-name" placeholder="e.g. Nairobi Luxury Stays"/></div>
+    <div class="field"><label for="s-phone" class="field-label">Contact number</label><input class="field-input" id="s-phone" type="tel" placeholder="0700 000 000"/></div>
   </div>
-  <div class="field"><label class="field-label">Bio / About your services</label><textarea class="field-textarea" id="s-bio" placeholder="Tell guests what makes your place special…"></textarea></div>
+  <div class="field"><label for="s-bio" class="field-label">Bio / About your services</label><textarea class="field-textarea" id="s-bio" placeholder="Tell guests what makes your place special…"></textarea></div>
   <div class="row-2">
-    <div class="field"><label class="field-label">City</label>
+    <div class="field"><label for="s-city" class="field-label">City</label>
       <!-- Six Kenyan cities and "Other" was the whole world to a partner
            based anywhere else. Any place now, through the shared layer. -->
       <input class="field-input" id="s-city" type="text" placeholder="Where you are based"
              data-apa-geo data-geo-limit="6"/>
     </div>
-    <div class="field"><label class="field-label">M-Pesa payout number</label><input class="field-input" id="s-mpesa" type="tel" placeholder="0700 000 000"/><div class="field-hint">Earnings are sent here automatically</div></div>
+    <div class="field"><label for="s-mpesa" class="field-label">M-Pesa payout number</label><input class="field-input" id="s-mpesa" type="tel" placeholder="0700 000 000"/><div class="field-hint">Earnings are sent here automatically</div></div>
   </div>
   <button class="btn btn-primary" onclick="saveSettings()">Save changes</button>
 </div>

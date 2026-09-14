@@ -34,8 +34,9 @@ import { readdirSync, readFileSync, existsSync, statSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
+import vm from 'node:vm';
 
-const SKIP_DIRS = new Set(['node_modules', '.git', '.vercel', 'tests', 'seo']);
+const SKIP_DIRS = new Set(['node_modules', '.git', '.vercel', 'tests', 'seo', 'artifacts']);
 
 /* Bundled third-party code. We did not write it and cannot fix it; a
    failure here is noise, and noise trains people to ignore the build. */
@@ -54,7 +55,7 @@ function walk(dir, out = []) {
   return out;
 }
 
-const allJs = walk('.').map(f => f.replace(/^\.[\\/]/, '')).sort();
+const allJs = walk('.').map(f => f.replace(/^\.[\\/]/, '').replace(/\\/g, '/')).sort();
 const ourJs = allJs.filter(f => !VENDOR.test(f));
 
 /* ══ GATE 1 · SYNTAX ══════════════════════════════════════════════════ */
@@ -62,6 +63,19 @@ for (const file of ourJs) {
   const r = spawnSync(process.execPath, ['--check', file], { encoding: 'utf8' });
   if (r.status !== 0) {
     fail('syntax', file, (r.stderr || r.stdout || '').trim().split('\n')[0]);
+  }
+}
+
+// Most application logic lives in HTML. Parse it without executing scripts.
+let inlineScriptsChecked = 0;
+for (const file of readdirSync('.').filter(f => f.endsWith('.html'))) {
+  const html = readFileSync(file, 'utf8');
+  for (const match of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script\s*>/gi)) {
+    const type = match[1].match(/\btype\s*=\s*["']([^"']+)["']/i)?.[1];
+    if (/\bsrc\s*=/i.test(match[1]) || (type && !['text/javascript', 'application/javascript'].includes(type)) || !match[2].trim()) continue;
+    inlineScriptsChecked++;
+    try { new vm.Script(match[2], { filename: file }); }
+    catch (error) { fail('syntax', file, `inline script: ${error.message}`); }
   }
 }
 
@@ -195,7 +209,7 @@ if (failures.length) {
 }
 
 console.log(
-  `Preflight OK — ${ourJs.length} modules parsed, imports resolved, ` +
+  `Preflight OK — ${ourJs.length} modules and ${inlineScriptsChecked} inline scripts parsed, imports resolved, ` +
   `${apiEntrypoints.length} API entrypoints loaded (${deployedCount}/${FUNCTION_LIMIT} deployed), ` +
   `${routesChecked} client API routes reachable.`
 );

@@ -320,18 +320,18 @@ body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webk
             <p class="lazy-form-sub">Drop your details below. We'll reach out, grab the details and get you live. You do nothing except answer our messages. Honestly, pretty manageable.</p>
             <div class="lf-field">
               <label class="lf-label">Your name <span class="lf-req">*</span></label>
-              <input class="lf-inp" id="lazy-name" type="text" placeholder="e.g. Wanjiru, David, whoever you are"/>
+              <input class="lf-inp" id="lazy-name" type="text" placeholder="e.g. Wanjiru, David, whoever you are" aria-label="Your name *" />
             </div>
             <div class="lf-field">
               <label class="lf-label">WhatsApp number <span class="lf-req">*</span></label>
               <div class="lf-phone-wrap">
                 <span class="lf-flag">🇰🇪 +254</span>
-                <input class="lf-inp lf-phone" id="lazy-phone" type="tel" placeholder="7XX XXX XXX"/>
+                <input class="lf-inp lf-phone" id="lazy-phone" type="tel" placeholder="7XX XXX XXX" aria-label="WhatsApp number *" />
               </div>
             </div>
             <div class="lf-field">
               <label class="lf-label">What are you listing?</label>
-              <select class="lf-inp lf-sel" id="lazy-type">
+              <select class="lf-inp lf-sel" id="lazy-type" aria-label="What are you listing?" >
                 <option value="">Pick one (or guess, we won't judge)</option>
                 <option value="apartment">Apartment / Stay</option>
                 <option value="tour">Tour / Safari</option>
@@ -344,7 +344,7 @@ body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webk
             </div>
             <div class="lf-field">
               <label class="lf-label">Anything else we should know?</label>
-              <textarea class="lf-inp lf-ta" id="lazy-notes" placeholder="e.g. '2-bedroom in Kilimani, already on Airbnb' or 'I have no idea what I'm doing but I have a safari vehicle'" rows="3"></textarea>
+              <textarea class="lf-inp lf-ta" id="lazy-notes" placeholder="e.g. '2-bedroom in Kilimani, already on Airbnb' or 'I have no idea what I'm doing but I have a safari vehicle'" rows="3" aria-label="Anything else we should know?" ></textarea>
             </div>
             <button class="lf-btn" onclick="submitLazyRequest()">
               <span id="lazy-btn-text">📨 Yes please, sort me out</span>

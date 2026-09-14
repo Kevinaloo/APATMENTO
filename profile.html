@@ -117,21 +117,21 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--bg);colo
     <div class="row-2">
       <div class="field">
         <div class="field-label">First Name</div>
-        <input class="field-input" id="first-name" type="text" placeholder="Your first name"/>
+        <input class="field-input" id="first-name" type="text" placeholder="Your first name" aria-label="First Name" />
       </div>
       <div class="field">
         <div class="field-label">Last Name</div>
-        <input class="field-input" id="last-name" type="text" placeholder="Your last name"/>
+        <input class="field-input" id="last-name" type="text" placeholder="Your last name" aria-label="Last Name" />
       </div>
     </div>
     <div class="field">
       <div class="field-label">Email Address</div>
-      <input class="field-input" id="email" type="email" disabled/>
+      <input class="field-input" id="email" type="email" disabled aria-label="Email Address" />
       <div class="field-hint">Email cannot be changed. Contact support to update.</div>
     </div>
     <div class="field">
       <div class="field-label">Phone Number</div>
-      <input class="field-input" id="phone" type="tel" placeholder="07XX XXX XXX"/>
+      <input class="field-input" id="phone" type="tel" placeholder="07XX XXX XXX" aria-label="Phone Number" />
     </div>
     <button class="btn btn-primary" onclick="saveProfile()">Save Changes</button>
   </div>
@@ -141,11 +141,11 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--bg);colo
     <div class="card-title">Change Password</div>
     <div class="field">
       <div class="field-label">New Password</div>
-      <input class="field-input" id="new-pwd" type="password" placeholder="Minimum 8 characters"/>
+      <input class="field-input" id="new-pwd" type="password" placeholder="Minimum 8 characters" aria-label="New Password" />
     </div>
     <div class="field">
       <div class="field-label">Confirm Password</div>
-      <input class="field-input" id="confirm-pwd" type="password" placeholder="Repeat new password"/>
+      <input class="field-input" id="confirm-pwd" type="password" placeholder="Repeat new password" aria-label="Confirm Password" />
     </div>
     <button class="btn btn-ghost" onclick="changePassword()">Update Password</button>
   </div>

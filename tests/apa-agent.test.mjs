@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 /* ══════════════════════════════════════════════════════════════════════
    APA AGENT
    tests/apa-agent.test.mjs
@@ -19,7 +20,7 @@ import { join } from 'node:path';
 import { normaliseListingService } from '../api/lib/_apa-agent.js';
 import { __test as supportTest } from '../api/lib/_support.js';
 
-const ROOT = new URL('..', import.meta.url).pathname;
+const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const read = (f) => readFileSync(join(ROOT, f), 'utf8');
 
 const AGENT  = read('api/lib/_apa-agent.js');
@@ -240,7 +241,7 @@ test('APA does not listen to herself', () => {
 
 test('the guest can always cut her off', () => {
   assert.match(CLIENT, /function bargeIn\(\)/);
-  assert.match(CLIENT, /bargeIn\(\);\n\s*\}\);/, 'typing must interrupt speech');
+  assert.match(CLIENT, /bargeIn\(\);\r?\n\s*\}\);/, 'typing must interrupt speech');
   assert.match(CLIENT.slice(CLIENT.indexOf('function submit(')), /bargeIn\(\)/,
     'sending must interrupt speech');
 });

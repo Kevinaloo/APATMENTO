@@ -395,7 +395,7 @@ td strong{color:var(--ink);font-weight:600;}
 <div class="card">
   <div class="card-hd">
     <div class="card-title">Transaction history</div>
-    <select id="earn-period" onchange="loadEarnings()" class="field-select" style="width:auto;padding:7px 11px;font-size:12px;">
+    <select id="earn-period" onchange="loadEarnings()" class="field-select" style="width:auto;padding:7px 11px;font-size:12px;" aria-label="earn period" >
       <option value="30">Last 30 days</option>
       <option value="90" selected>Last 90 days</option>
       <option value="365">All time</option>
@@ -422,11 +422,11 @@ td strong{color:var(--ink);font-weight:600;}
   <div class="row-2">
     <div class="field">
       <label class="field-label">M-Pesa number</label>
-      <input class="field-input" id="mpesa-num" type="tel" placeholder="0700 000 000"/>
+      <input class="field-input" id="mpesa-num" type="tel" placeholder="0700 000 000" aria-label="M-Pesa number" />
     </div>
     <div class="field">
       <label class="field-label">Amount (KES)</label>
-      <input class="field-input" id="mpesa-amt" type="number" placeholder="Min KES 100" min="100"/>
+      <input class="field-input" id="mpesa-amt" type="number" placeholder="Min KES 100" min="100" aria-label="Amount (KES)" />
     </div>
   </div>
   <button class="btn btn-primary" onclick="requestPayout()">

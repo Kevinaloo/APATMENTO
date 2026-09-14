@@ -7,6 +7,16 @@
 const URL = process.env.SUPABASE_URL;
 const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
+function allowLocalFallback() {
+  if (URL && KEY) return false;
+  if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
+    throw Object.assign(new Error('Server database configuration is missing'), {
+      code: 'env_missing', status: 503,
+    });
+  }
+  return true;
+}
+
 const _inMemoryStore = {
   support_threads: [],
   support_messages: [],
@@ -56,7 +66,7 @@ function headers(extra = {}) {
 }
 
 export async function select(table, query = '') {
-  if (!URL || !KEY) {
+  if (allowLocalFallback()) {
     const rows = _inMemoryStore[table] || [];
     const filters = parseQueryFilter(query);
     let matched = rows.filter(r => matchesFilters(r, filters));
@@ -78,7 +88,7 @@ export async function one(table, query) {
 }
 
 export async function insert(table, row, returning = true) {
-  if (!URL || !KEY) {
+  if (allowLocalFallback()) {
     if (!_inMemoryStore[table]) _inMemoryStore[table] = [];
     const newRow = {
       id: row.id || `rec_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
@@ -100,7 +110,7 @@ export async function insert(table, row, returning = true) {
 }
 
 export async function update(table, query, patch) {
-  if (!URL || !KEY) {
+  if (allowLocalFallback()) {
     const rows = _inMemoryStore[table] || [];
     const filters = parseQueryFilter(query);
     let updated = null;
@@ -122,7 +132,7 @@ export async function update(table, query, patch) {
 }
 
 export async function rpc(fn, args = {}) {
-  if (!URL || !KEY) return null;
+  if (allowLocalFallback()) return null;
   const r = await fetch(`${URL}/rest/v1/rpc/${fn}`, {
     method: 'POST', headers: headers(), body: JSON.stringify(args),
   });

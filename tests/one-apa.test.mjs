@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 /* ══════════════════════════════════════════════════════════════════════
    ONE APA
    tests/one-apa.test.mjs
@@ -19,7 +20,7 @@ const {
   systemPrompt, timeContext, selectApaTools,
 } = __test;
 
-const ROOT = new URL('..', import.meta.url).pathname;
+const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const read = (f) => readFileSync(join(ROOT, f), 'utf8');
 const pages = () => readdirSync(ROOT).filter(f => f.endsWith('.html'));
 

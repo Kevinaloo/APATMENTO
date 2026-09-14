@@ -382,7 +382,7 @@ td strong{color:var(--ink);font-weight:600;}
   <div class="card-hd">
     <div class="card-title">All reservations</div>
     <div style="display:flex;gap:8px;">
-      <select id="b-filter" onchange="loadBookings()" class="field-select" style="width:auto;padding:7px 11px;font-size:12px;">
+      <select id="b-filter" onchange="loadBookings()" class="field-select" style="width:auto;padding:7px 11px;font-size:12px;" aria-label="b filter" >
         <option value="all">All statuses</option>
         <option value="confirmed">Confirmed</option>
         <option value="completed">Completed</option>

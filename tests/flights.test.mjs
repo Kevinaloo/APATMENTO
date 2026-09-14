@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 /* ═══════════════════════════════════════════════════════════════════════
    CABANA · FLIGHT DESK — page tests
    tests/flights.test.mjs
@@ -19,7 +20,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { JSDOM } from 'jsdom';
 
-const ROOT = new URL('..', import.meta.url).pathname;
+const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const read = (f) => readFileSync(ROOT + f, 'utf8');
 
 /* ── a Supabase stand-in ───────────────────────────────────────────── */

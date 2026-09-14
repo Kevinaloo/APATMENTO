@@ -1,13 +1,14 @@
 import express from 'express';
 import { fileURLToPath } from 'node:url';
-import { dirname, join, extname } from 'node:path';
-import { existsSync, statSync } from 'node:fs';
+import { dirname, join, extname, resolve } from 'node:path';
+import { existsSync, statSync, readFileSync } from 'node:fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const app = express();
-const PORT = 3000;
+const PORT = Number(process.env.PORT || 3000);
+app.disable('x-powered-by');
 
 // Body parsers
 app.use(express.json({ limit: '10mb' }));
@@ -15,30 +16,31 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(express.raw({ type: 'application/octet-stream', limit: '10mb' }));
 
 // Vercel rewrites map
-const REWRITES = [
-  { match: /^\/api\/match-guest\/?$/, target: 'trust', query: { action: 'match-guest' } },
-  { match: /^\/api\/checkin-issue\/?$/, target: 'trust', query: { action: 'checkin-issue' } },
-  { match: /^\/api\/deposit-balance\/?$/, target: 'trust', query: { action: 'deposit-balance' } },
-  { match: /^\/api\/verify-checkin\/?$/, target: 'trust', query: { action: 'verify-checkin' } },
-  { match: /^\/api\/check-payment-status\/?$/, target: 'trust', query: { action: 'check-payment-status' } },
-  { match: /^\/api\/ask-apa\/?$/, target: 'trust', query: { action: 'ask-apa' } },
-  { match: /^\/api\/support\/?$/, target: 'trust', query: { action: 'support' } },
-  { match: /^\/api\/call\/?$/, target: 'trust', query: { action: 'call' } },
-  { match: /^\/api\/geocode\/?$/, target: 'utilities', query: { action: 'geocode' } },
-  { match: /^\/api\/carhire-terrain\/?$/, target: 'utilities', query: { action: 'carhire-terrain' } },
-  { match: /^\/api\/atlas\/?$/, target: 'utilities', query: { action: 'atlas' } },
-  { match: /^\/api\/indexnow\/?$/, target: 'utilities', query: { action: 'indexnow' } },
-  { match: /^\/api\/push-cron\/?$/, target: 'push-send', query: { action: 'cron' } },
-  { match: /^\/api\/send-receipt\/?$/, target: 'email', query: { action: 'booking' } },
-  { match: /^\/api\/poll-payment\/?$/, target: 'stk-push', query: { action: 'poll' } },
-  { match: /^\/api\/reconcile-payments\/?$/, target: 'utilities', query: { action: 'reconcile-payments' } },
-  { match: /^\/api\/paypal-create-order\/?$/, target: 'utilities', query: { action: 'paypal-create-order' } },
-  { match: /^\/api\/paypal-capture\/?$/, target: 'utilities', query: { action: 'paypal-capture' } },
-  { match: /^\/api\/paypal-webhook\/?$/, target: 'utilities', query: { action: 'paypal-webhook' } },
-  { match: /^\/api\/subscribe\/?$/, target: 'utilities', query: { action: 'subscribe' } },
-  { match: /^\/api\/ical\/?$/, target: 'calendar-sync', query: { action: 'feed' } },
-  { match: /^\/api\/calendar-cron\/?$/, target: 'calendar-sync', query: { action: 'cron' } }
-];
+const vercelConfig = JSON.parse(readFileSync(join(__dirname, 'vercel.json'), 'utf8'));
+const REWRITES = vercelConfig.rewrites
+  .filter(r => /^\/api\/[a-z0-9-]+$/.test(r.source))
+  .map(r => {
+    const destination = new URL(r.destination, 'http://cabana.local');
+    return { source: r.source, target: destination.pathname.slice('/api/'.length),
+      query: Object.fromEntries(destination.searchParams) };
+  });
+
+// Only application assets are public. Never serve source tooling, SQL or secrets.
+app.use((req, res, next) => {
+  let path;
+  try { path = decodeURIComponent(req.path); }
+  catch { return res.status(400).send('Invalid path'); }
+  const segments = path.split('/').filter(Boolean);
+  const privateRoots = new Set(['artifacts', 'tests', 'tools', 'scripts', 'seo',
+    'supabase', 'supabase-migrations', 'node_modules']);
+  if (segments.some(part => part.startsWith('.') && part !== '.well-known')
+      || privateRoots.has(segments[0]) || path === '/server.js'
+      || /\.(?:sql|md|toml|ya?ml|lock|bak)$/i.test(path)
+      || /^\/(?:package(?:-lock)?|vercel)\.json$/i.test(path)) {
+    return res.status(404).send('Not Found');
+  }
+  next();
+});
 
 // Helper to handle API requests
 async function handleApi(apiName, req, res) {
@@ -64,7 +66,7 @@ app.use('/api', async (req, res, next) => {
   
   // Check rewrites first
   for (const r of REWRITES) {
-    if (r.match.test(urlPath)) {
+    if (urlPath.replace(/\/$/, '') === r.source) {
       /* Express 5 exposes req.query as a getter. Rewrite the request URL so
          handlers receive the same destination query Vercel provides. Route
          parameters win over caller input; /api/subscribe?action=paypal-
@@ -80,7 +82,7 @@ app.use('/api', async (req, res, next) => {
 
   // Direct route match: e.g. /api/agents or /api/stk-push
   const segments = req.path.split('/').filter(Boolean);
-  if (segments.length > 0) {
+  if (segments.length === 1) {
     const apiName = segments[0];
     const filePath = join(__dirname, 'api', `${apiName}.js`);
     if (existsSync(filePath)) {
@@ -134,16 +136,14 @@ app.use(express.static(__dirname, {
   index: 'index.html'
 }));
 
-// Fallback to index.html for SPA/root routes
+// Cabana uses real pages. Unknown URLs must not masquerade as the homepage.
 app.use((req, res) => {
-  const indexPath = join(__dirname, 'index.html');
-  if (existsSync(indexPath)) {
-    res.sendFile(indexPath);
-  } else {
-    res.status(404).send('Not Found');
-  }
+  res.status(404).sendFile(join(__dirname, '404.html'));
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Cabana development server running on http://0.0.0.0:${PORT}`);
-});
+export default app;
+if (process.argv[1] && __filename === resolve(process.argv[1])) {
+  app.listen(PORT, '127.0.0.1', () => {
+    console.log(`Cabana development server running on http://127.0.0.1:${PORT}`);
+  });
+}
