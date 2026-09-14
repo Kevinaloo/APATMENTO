@@ -73,6 +73,9 @@ import {
   ingestClientData, agentGrounding, adoptTasks, recall, remember,
 } from './_apa-agent.js';
 import { callAi } from './_ai-gateway.js';
+import { HOST_TOOL, hostTool, applyHostProposal } from './_host-copilot.js';
+import { recordHostEvent } from './_host-insights.js';
+import { rpcAsUser } from '../calendar-sync.js';
 
 const MAX_TOOL_ROUNDS = 2;
 const HISTORY_TURNS   = 14;
@@ -630,6 +633,7 @@ NEVER navigate on: greetings, banter, feelings, questions about how things work,
 [[resolved]] when the thing is genuinely done.
 
 ══════ DOING IT FOR THEM ══════
+HOST COPILOT — for an existing property, use host_copilot rather than start_listing. Find the property first and ask which one when ambiguous. For “improve my listing”, review it, explain the highest-value supported improvements, and propose verified edits in one card. Only rank photos when the tool returns a successful visual assessment. Visual scores are judgments; engagement effects remain hypotheses. For views without bookings use performance, which returns measured impressions, views, checkout starts, paid bookings and availability; don't invent causes or historical data. Earnings distinguishes verified check-in entitlement, guest payments, refunds and bank receipts: preserve its period, currency and accounting basis. Promotions show protected pricing and can publish directly after the host applies the review card; ask for discount, floor and dates. Confirm the year and inclusive nights for ambiguous blocks. Financial and policy changes require the host's selected settings. Issuing a card has not changed anything: report success only after an apply result.
 You do not hand people forms. When someone wants to book or to list, you run it yourself, conversationally, and they only ever answer questions.
 
 BOOKING — the moment they say they want something, call start_booking. Then set_booking_detail as each detail arrives. You need: which listing, check-in, check-out, how many people, and the M-Pesa number that will pay. Ask for one or two at a time, like a person would, not as a checklist.
@@ -936,6 +940,7 @@ const TOOL_SCHEMA = [
   },
 ];
 
+TOOL_SCHEMA.push(HOST_TOOL);
 const TOOL_BY_NAME = new Map(TOOL_SCHEMA.map(tool => [tool.function.name, tool]));
 const BOOKING_TOOLS = ['start_booking', 'set_booking_detail', 'review_booking', 'confirm_booking'];
 const LISTING_TOOLS = ['start_listing', 'set_listing_detail', 'request_upload', 'publish_listing'];
@@ -952,6 +957,7 @@ function selectApaTools({ mode, text, history, agent }) {
   ].join(' ').toLowerCase();
   const work = String(agent || '');
   const names = new Set();
+  if (/\b(host|my listing|improve|cover photo|block|promotion|christmas|earnings|make this month|views|no bookings|recommendations)\b/i.test(recent)) names.add('host_copilot');
 
   const bookingInFlight = /A BOOKING in progress/i.test(work);
   const listingInFlight = /A LISTING in progress/i.test(work);
@@ -976,6 +982,7 @@ function selectApaTools({ mode, text, history, agent }) {
 
 async function runTool(name, args, caller) {
   try {
+    if (name === 'host_copilot') return await hostTool(caller, args);
     if (name === 'lookup_booking') {
       if (caller.kind !== 'user') {
         return { error: 'not_signed_in', message: 'The caller is not signed in, so no booking can be looked up. Ask them to sign in.' };
@@ -1403,7 +1410,8 @@ async function answer({ thread, caller, text, page, history }) {
   let data = await callApaModel(messages, modelOptions);
   noteModel(data);
 
-  for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
+  const toolRounds = selectedTools.some(tool => tool.function.name === 'host_copilot') ? 4 : MAX_TOOL_ROUNDS;
+  for (let round = 0; round < toolRounds; round++) {
     const msg = data?.choices?.[0]?.message;
     const calls = msg?.tool_calls;
     if (!calls?.length) break;
@@ -1434,13 +1442,13 @@ async function answer({ thread, caller, text, page, history }) {
         role: 'tool',
         tool_call_id: call.id,
         name: call.function?.name,
-        content: JSON.stringify(result).slice(0, 3000),
+        content: JSON.stringify(result).slice(0, call.function?.name === 'host_copilot' ? 14000 : 3000),
       });
     }
 
     data = await callApaModel(messages, {
       ...modelOptions,
-      tools: round + 1 < MAX_TOOL_ROUNDS ? selectedTools : null,
+      tools: round + 1 < toolRounds ? selectedTools : null,
     });
     noteModel(data);
   }
@@ -1550,13 +1558,30 @@ export default async function handler(req, res) {
 
   const caller = await resolveCaller(req, body);
   if (!caller) return res.status(400).json({ error: 'identify_yourself', hint: 'Send guestKey or an Authorization bearer token.' });
+  caller.hostRpc = (name, args) => rpcAsUser(req, name, args);
 
   const identity = caller.userId || caller.guestKey;
-  const limits = { send: 20, poll: 240, bootstrap: 60, escalate: 6, csat: 6, close: 10, history: 20, adopt: 6 };
+  const limits = { send: 20, poll: 240, bootstrap: 60, escalate: 6, csat: 6, close: 10, history: 20, adopt: 6, 'host.event': 120 };
   if (!consumeRateLimit(req, res, `support:${op}`, limits[op] ?? 30, 60_000, identity)) return;
+  if (op === 'host.event' && !consumeRateLimit(req, res, 'host-event-ip', 240, 60_000, requestIp(req))) return;
 
   try {
     switch (op) {
+      case 'host.event': return res.status(200).json(await recordHostEvent(caller, body));
+      case 'host.report': {
+        const result = await hostTool(caller, { operation: body.operation === 'list' ? 'list' : body.operation === 'earnings' ? 'earnings' : 'performance', listing_id: body.listing_id, month: body.month });
+        return res.status(result?.error ? 400 : 200).json(result);
+      }
+      case 'host.apply': {
+        try {
+          const result = await applyHostProposal(caller, body.token,
+            args => rpcAsUser(req, 'cabana_calendar_manual_block', args),
+            (offer, reference) => rpcAsUser(req, 'cabana_host_save_offer', { p_offer: offer, p_reference: reference }));
+          return res.status(200).json(result);
+        } catch (error) {
+          return res.status(400).json({ error: error.message });
+        }
+      }
 
       /* ── bootstrap ────────────────────────────────────────────────
          Everything the panel needs to paint itself, in one round trip. */

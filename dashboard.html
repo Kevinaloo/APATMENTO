@@ -3364,6 +3364,7 @@ async function renderServicePicker(listings){
     </div>
     <div class="content" style="max-width:760px;">
       <div class="greeting"><h1 class="greeting-title">Your <em>services</em></h1><p class="greeting-sub">${active.length} active service${active.length!==1?'s':''}. Select one to manage.</p></div>
+      ${hostCopilotHTML()}
       <div style="display:flex;flex-direction:column;gap:14px;">
         ${active.map(([t,arr])=>{const s=PARTNER_SERVICES[t];return `
           <div class="prop-card" style="display:flex;align-items:center;gap:18px;padding:20px 22px;" onclick="goToService('${t}')">
@@ -3417,6 +3418,7 @@ async function renderSingleDashboard(listing){
     </div>
     <div class="content">
       <div class="greeting"><span class="greeting-eyebrow">${s.ico.replace('class="svc-ico"','').replace('width="30" height="30"','width="14" height="14"')} ${s.name} · 0% commission</span><h1 class="greeting-title">Welcome back, <em>${USER.firstName}</em></h1><p class="greeting-sub">You keep 100% of every booking. Cabana charges only a small fixed fee.</p></div>
+      ${hostCopilotHTML()}
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;margin-bottom:36px;">
         ${statCard('KES '+earned.toLocaleString(),'Total earned',count+' bookings')}
         ${statCard(listingCount,'Listings',(listings.filter(l=>l.status!=='inactive').length)+' active')}
@@ -3432,6 +3434,25 @@ async function renderSingleDashboard(listing){
     </div>` + addSheetHTML();
 }
 
+function hostCopilotHTML(){
+  const prompts=['Improve my listing','Change my cover photo','Block December 17–20','How much did I make this month?','Why am I getting views but no bookings?','Create a Christmas promotion'];
+  return `<section style="padding:clamp(20px,4vw,36px);margin:0 0 28px;border:1px solid #ddd6fe;border-radius:24px;background:linear-gradient(120deg,#f5f3ff,#ecfdf5);color:#241443;">
+    <p style="font-size:12px;font-weight:700;letter-spacing:.1em;">APA · YOUR HOST COPILOT</p>
+    <h2 style="font-size:clamp(24px,4vw,36px);margin:12px 0;">A better stay starts with a conversation.</h2>
+    <p style="line-height:1.6;max-width:620px;">Review your listing, sharpen the details and manage your calendar with APA. See the proposed changes, then apply them.</p>
+    <form onsubmit="event.preventDefault();askHostCopilot(this.elements.request.value)" style="display:flex;flex-wrap:wrap;gap:10px;margin:22px 0;">
+      <input name="request" aria-label="Ask your host copilot" placeholder="What would you like to improve?" required maxlength="2000" style="flex:1 1 220px;min-width:0;padding:14px;border:1px solid #c4b5fd;border-radius:12px;font:inherit;">
+      <button type="submit" style="padding:14px 22px;border:0;border-radius:12px;background:#6d28d9;color:white;font:inherit;cursor:pointer;">Ask APA →</button>
+    </form>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;">${prompts.map((p,i)=>`<button type="button" onclick="askHostCopilot(this.textContent)" style="padding:10px 14px;border:1px solid #ddd6fe;border-radius:100px;background:${i?'white':'#ede9fe'};color:#4c1d95;font:inherit;font-size:13px;cursor:pointer;">${p}</button>`).join('')}</div>
+    <p role="status" class="host-copilot-status" style="font-size:12px;"></p>
+  </section>`;
+}
+function askHostCopilot(text){
+  if(!text.trim())return;
+  if(window.CabanaSupport) CabanaSupport.open('As a host: '+text.trim());
+  else document.querySelectorAll('.host-copilot-status').forEach(el=>{el.textContent='APA is still loading. Please try again in a moment.';});
+}
 function statCard(val,label,sub){return `<div class="prop-card" style="padding:22px;cursor:default;"><div style="font-family:var(--font-data);font-weight:600;font-size:28px;margin-bottom:4px;">${val}</div><div style="font-size:13px;color:var(--ink-soft);">${label}</div><div style="font-size:11px;color:var(--mint-deep);margin-top:6px;font-weight:600;">${sub}</div></div>`;}
 function actionBtn(label,href,path){return `<a href="${href}" style="display:flex;align-items:center;gap:11px;padding:16px;border-radius:16px;background:rgba(255,255,255,.6);border:1px solid var(--line);text-decoration:none;color:var(--ink);font-weight:600;font-size:14px;transition:all .3s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='var(--shadow-glass)'" onmouseout="this.style.transform='';this.style.boxShadow=''"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--lilac-deep)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="${path}"/></svg>${label}</a>`;}
 function goToService(type){

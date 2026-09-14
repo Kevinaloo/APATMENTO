@@ -49,7 +49,6 @@
    ══════════════════════════════════════════════════════════════════════ */
 
 import { select, one, insert, update as dbUpdate, rpc } from './_db.js';
-import { serviceFee } from './_fees.js';
 import { DEPOSIT_PCT, depositRequired, MIN_TXN } from './_payment-rules.js';
 import { money } from './_brand.js';
 
@@ -229,7 +228,7 @@ export function memoryText(facts) {
    listing row every time. Nothing else in this file may compute a price.
 ══════════════════════════════════════════════════════════════════════ */
 
-async function priceStay(listing, checkin, checkout, guests) {
+export async function priceStay(listing, checkin, checkout, guests, quoteRpc = rpc) {
   const nights = daysBetween(checkin, checkout);
   if (nights < 1) return { error: 'checkout_before_checkin' };
 
@@ -246,18 +245,27 @@ async function priceStay(listing, checkin, checkout, guests) {
     return { error: 'too_many_guests', max_guests: maxGuests };
   }
 
-  const stayTotal = Math.round(perNight * nights);
-  const service   = String(listing.service || listing.type || 'stays').toLowerCase();
-  const fee       = serviceFee(service === 'roommates' ? 'roommates' : 'stays', stayTotal);
-  const grand     = stayTotal + fee;
+  // Use exactly the same protected quote as search and checkout. Never fall
+  // back to the base rate when a seasonal offer or the pricing service fails.
+  let quote;
+  try { quote = await quoteRpc('cabana_stay_quote', { p_listing_id: listing.id, p_checkin: checkin, p_checkout: checkout, p_guests: guests }); }
+  catch { return { error: 'quote_unavailable' }; }
+  if (!quote || quote.error || quote.listing_id !== listing.id || quote.checkin !== checkin || quote.checkout !== checkout ||
+      Number(quote.guests) !== guests || !quote.fingerprint ||
+      ![quote.stay_total, quote.service_fee, quote.grand_total, quote.nightly].every(n => Number.isFinite(Number(n))) ||
+      Number(quote.stay_total) <= 0 || Number(quote.service_fee) < 0 ||
+      Math.abs(Number(quote.grand_total) - Number(quote.stay_total) - Number(quote.service_fee)) > 0.01) return { error: 'quote_unavailable' };
+  const stayTotal = Number(quote.stay_total), fee = Number(quote.service_fee), grand = Number(quote.grand_total);
 
   return {
-    nights, per_night: perNight,
+    nights, per_night: Number(quote.nightly),
     stay_total: stayTotal,
     service_fee: fee,
     grand_total: grand,
     deposit_required: depositRequired(grand),
     deposit_pct: Math.round(DEPOSIT_PCT * 100),
+    quote_fingerprint: quote.fingerprint,
+    offer: quote.offer || null,
   };
 }
 
@@ -265,7 +273,7 @@ async function priceStay(listing, checkin, checkout, guests) {
    moves after they said yes, the agreement no longer matches and the
    confirmation is refused rather than applied to different numbers. */
 function quoteKey(q) {
-  return [q.listing_id, q.checkin, q.checkout, q.guests, q.grand_total].join('|');
+  return [q.listing_id, q.checkin, q.checkout, q.guests, q.grand_total, q.quote_fingerprint].join('|');
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -467,7 +475,7 @@ export async function bookingConfirm(caller, { agreed }) {
 
   const freshKey = quoteKey({
     listing_id: listing.id, checkin: slots.checkin, checkout: slots.checkout,
-    guests: slots.guests, grand_total: fresh.grand_total,
+    guests: slots.guests, grand_total: fresh.grand_total, quote_fingerprint: fresh.quote_fingerprint,
   });
   if (freshKey !== slots.quote_key) {
     await saveSlots(task, { ...slots, quote: null, quote_key: null }, { step: 'collecting' });
@@ -506,6 +514,7 @@ export async function bookingConfirm(caller, { agreed }) {
     contact_phone: slots.phone,
     contact_email: caller.email || null,
     stay_total: fresh.stay_total,
+    quote_fingerprint: fresh.quote_fingerprint,
     service_fee: fresh.service_fee,
     grand_total: fresh.grand_total,
     deposit_required: fresh.deposit_required,

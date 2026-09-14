@@ -4190,6 +4190,7 @@ let _galTouchX = null; // touch-start X for swipe
 function openDrawer(id) {
   const apt = currentListings.find(a => a.id === id);
   if (!apt) return;
+  window.CabanaHostMetrics?.track(String(apt._dbId || apt.id), 'view');
 
   const isNative  = apt.source === 'native';
   const bedsLabel = apt.beds === 0 ? 'Studio' : `${apt.beds} Bed${apt.beds!==1?'s':''}`;
@@ -4670,6 +4671,7 @@ function bookNow(id) {
   /* Hand the coordinates over rather than making the payment page
      geocode a place name we already resolved. */
   if (isFinite(apt.lat) && isFinite(apt.lng)) { params.set('lat', apt.lat); params.set('lng', apt.lng); }
+  window.CabanaHostMetrics?.track(String(dbId), 'checkout');
   window.location.href = `booking-confirm.html?${params.toString()}`;
 }
 
@@ -6209,6 +6211,7 @@ loadListings().then(() => {
 </script>
 <div data-showcase="window"></div>
 <script src="/analytics.js" defer></script>
+<script src="/cabana-host-metrics.js" defer></script>
 <script src="/chat.js" defer></script>
 <script src="/apa-geo.js" defer></script>
 <script src="/apa-map.js" defer></script>

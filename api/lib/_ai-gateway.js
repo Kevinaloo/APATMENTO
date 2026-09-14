@@ -139,6 +139,13 @@ async function fetchJson(url, init, timeoutMs) {
   }
 }
 
+function imageParts(content) {
+  if (!Array.isArray(content)) return [];
+  return content.filter(part => part?.type === 'image_url' &&
+    typeof part.image_url?.url === 'string' && part.image_url.url.length <= 5600000 &&
+    /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+=*$/.test(part.image_url.url)).slice(0, 12);
+}
+
 function messageText(content) {
   if (typeof content === 'string') return content;
   if (!Array.isArray(content)) return content == null ? '' : String(content);
@@ -274,7 +281,12 @@ function convertMessagesToOpenAi(messages) {
 
     if (message?.role === 'user' || message?.role === 'assistant') {
       const text = messageText(message.content);
-      if (text) input.push({ role: message.role, content: text });
+      const images = message.role === 'user' ? imageParts(message.content) : [];
+      if (images.length) input.push({ role: 'user', content: [
+        { type: 'input_text', text },
+        ...images.map(part => ({ type: 'input_image', image_url: part.image_url.url, detail: 'low' })),
+      ] });
+      else if (text) input.push({ role: message.role, content: text });
       if (message.role === 'assistant' && Array.isArray(message.tool_calls)) {
         for (const call of message.tool_calls) {
           input.push({
@@ -495,7 +507,12 @@ function convertMessagesToGemini(messages) {
     if (message.role === 'system') {
       systemInstruction += `${systemInstruction ? '\n\n' : ''}${messageText(message.content)}`;
     } else if (message.role === 'user') {
-      contents.push({ role: 'user', parts: [{ text: messageText(message.content) }] });
+      contents.push({ role: 'user', parts: [{ text: messageText(message.content) },
+        ...imageParts(message.content).map(part => {
+          const match = part.image_url.url.match(/^data:(image\/(?:jpeg|png|webp));base64,(.+)$/);
+          return { inlineData: { mimeType: match[1], data: match[2] } };
+        }),
+      ] });
     } else if (message.role === 'assistant') {
       if (message._geminiContent) {
         contents.push(message._geminiContent);
@@ -658,7 +675,10 @@ export async function callAi(messages, options = {}) {
   const startedAt = Date.now();
   const attempts = [];
   const order = providerOrder(options.providerOrder);
-  const available = order.filter(providerIsConfigured);
+  // The configured Groq text models cannot inspect images. Never silently
+  // discard pictures and present a text-only answer as a visual assessment.
+  const vision = (messages || []).some(message => imageParts(message.content).length);
+  const available = order.filter(provider => providerIsConfigured(provider) && (!vision || provider !== 'groq'));
   if (!available.length) throw new Error('ai_gateway_unconfigured');
 
   const callers = { gateway: callVercelGateway, openai: callOpenAi, gemini: callGemini, groq: callGroq };

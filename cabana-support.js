@@ -1130,9 +1130,69 @@
   ══════════════════════════════════════════════════════════════════ */
   function runAction(action) {
     if (!action || typeof action !== 'object') return;
+    if (action.type === 'host_proposal') return hostProposal(action);
     if (action.type === 'payment_prompt')  return payViaMpesa(action);
     if (action.type === 'collect_photos')  return collectPhotos(action);
     if (action.type === 'collect_location') return collectLocation(action);
+  }
+
+  function hostProposal(action) {
+    var card = doc.createElement('section');
+    card.style.cssText = 'margin:12px;padding:16px;border:1px solid #c4b5fd;border-radius:16px;background:#f5f3ff;color:#241443';
+    card.setAttribute('aria-label', 'Review host recommendations');
+    var heading = doc.createElement('strong');
+    heading.textContent = action.title || 'Your listing';
+    card.appendChild(heading);
+    if (action.photos) {
+      var comparison = doc.createElement('div');
+      comparison.style.cssText = 'display:flex;gap:12px;flex-wrap:wrap';
+      ['before', 'after'].forEach(function (key) {
+        try {
+          var url = new URL(action.photos[key]);
+          if (url.protocol !== 'https:') return;
+          var figure = doc.createElement('figure');
+          figure.style.cssText = 'margin:8px 0;flex:1;min-width:110px';
+          var img = doc.createElement('img');
+          img.src = url.href;
+          img.alt = key === 'before' ? 'Current cover photo' : 'Proposed cover photo';
+          img.style.cssText = 'width:100%;height:120px;object-fit:cover;border-radius:10px';
+          var caption = doc.createElement('figcaption');
+          caption.textContent = img.alt;
+          figure.appendChild(img); figure.appendChild(caption); comparison.appendChild(figure);
+        } catch (_) {}
+      });
+      card.appendChild(comparison);
+    }
+    (action.summary || []).forEach(function (line) {
+      var p = doc.createElement('p');
+      p.style.whiteSpace = 'pre-wrap';
+      p.textContent = line;
+      card.appendChild(p);
+    });
+    var status = doc.createElement('p');
+    status.setAttribute('role', 'status');
+    var button = doc.createElement('button');
+    button.type = 'button';
+    button.textContent = 'Apply recommendations';
+    button.style.cssText = 'padding:10px 16px;border:0;border-radius:10px;background:#6d28d9;color:white;cursor:pointer;font:inherit';
+    button.onclick = async function () {
+      button.disabled = true;
+      status.textContent = 'Applying…';
+      try {
+        var result = await api('host.apply', { token: action.token });
+        if (!result.ok) throw new Error(result.error || 'Could not apply recommendations.');
+        status.textContent = result.message;
+        button.textContent = 'Applied';
+        appendLocal({ role: 'system', body: result.message, at: new Date().toISOString(), meta: {} });
+      } catch (error) {
+        status.textContent = error.message || 'Could not apply. Ask APA for a fresh review.';
+        button.disabled = false;
+      }
+    };
+    card.appendChild(button);
+    card.appendChild(status);
+    el.body.appendChild(card);
+    card.scrollIntoView({ block: 'nearest' });
   }
 
   function payViaMpesa(a) {

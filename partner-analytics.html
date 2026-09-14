@@ -370,27 +370,27 @@ td strong{color:var(--ink);font-weight:600;}
 <div class="stat-row">
   <div class="stat-card">
     <span class="stat-icon">📈</span>
-    <div class="stat-label">Occupancy rate</div>
+    <div class="stat-label">Open nights</div>
     <div class="stat-val" id="stat-occ">-</div>
-    <div class="stat-meta" id="stat-occ-meta">Last 30 days</div>
+    <div class="stat-meta" id="stat-occ-meta">Next 30 nights</div>
   </div>
   <div class="stat-card">
     <span class="stat-icon">💰</span>
-    <div class="stat-label">Revenue</div>
+    <div class="stat-label">Host entitlement</div>
     <div class="stat-val" id="stat-rev">-</div>
-    <div class="stat-meta up" id="stat-rev-meta">Last 30 days</div>
+    <div class="stat-meta" id="stat-rev-meta">Verified stays this month</div>
   </div>
   <div class="stat-card">
     <span class="stat-icon">🌙</span>
-    <div class="stat-label">Avg stay</div>
+    <div class="stat-label">Paid bookings</div>
     <div class="stat-val" id="stat-stay">-</div>
-    <div class="stat-meta">Nights per booking</div>
+    <div class="stat-meta">Fully paid this month</div>
   </div>
   <div class="stat-card">
     <span class="stat-icon">🎯</span>
     <div class="stat-label">Conversion</div>
     <div class="stat-val" id="stat-conv">-</div>
-    <div class="stat-meta">Views → bookings</div>
+    <div class="stat-meta">Measured views → paid bookings</div>
   </div>
 </div>
 
@@ -398,7 +398,7 @@ td strong{color:var(--ink);font-weight:600;}
 <div class="kpi-grid">
   <div class="kpi">
     <div class="kpi-icon kpi-icon-teal">👁️</div>
-    <div><div class="kpi-val" id="kpi-views">-</div><div class="kpi-lbl">Total listing views</div></div>
+    <div><div class="kpi-val" id="kpi-views">-</div><div class="kpi-lbl">Measured impressions</div></div>
   </div>
   <div class="kpi">
     <div class="kpi-icon kpi-icon-blue">⭐</div>
@@ -406,11 +406,11 @@ td strong{color:var(--ink);font-weight:600;}
   </div>
   <div class="kpi">
     <div class="kpi-icon kpi-icon-gold">👥</div>
-    <div><div class="kpi-val" id="kpi-guests">-</div><div class="kpi-lbl">Total guests hosted</div></div>
+    <div><div class="kpi-val" id="kpi-guests">-</div><div class="kpi-lbl">Checkout starts</div></div>
   </div>
   <div class="kpi">
     <div class="kpi-icon kpi-icon-ember">🔄</div>
-    <div><div class="kpi-val" id="kpi-repeat">-</div><div class="kpi-lbl">Repeat guests</div></div>
+    <div><div class="kpi-val" id="kpi-repeat">-</div><div class="kpi-lbl">Verified check-ins</div></div>
   </div>
 </div>
 
@@ -419,12 +419,10 @@ td strong{color:var(--ink);font-weight:600;}
   <div class="card-hd">
     <div>
       <div class="card-title">Revenue by listing</div>
-      <div class="card-sub">Last 90 days, sorted by earnings</div>
+      <div class="card-sub" id="rev-period-label">Calendar month, sorted by entitlement</div>
     </div>
     <select id="rev-period" onchange="loadAnalytics()" class="field-select" style="width:auto;padding:8px 12px;font-size:12px;" aria-label="rev period" >
-      <option value="30">Last 30 days</option>
-      <option value="90" selected>Last 90 days</option>
-      <option value="365">Last 12 months</option>
+      <option value="">Loading months…</option>
     </select>
   </div>
   <div id="rev-chart" class="chart-bars"></div>
@@ -433,7 +431,7 @@ td strong{color:var(--ink);font-weight:600;}
 <!-- Bookings trend + Top metrics -->
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
   <div class="card">
-    <div class="card-hd"><div class="card-title">Booking sources</div></div>
+    <div class="card-hd"><div><div class="card-title">Booking funnel</div><div class="card-sub">First-party events for the selected month</div></div></div>
     <div id="source-chart" class="chart-bars"></div>
   </div>
   <div class="card">
@@ -497,6 +495,22 @@ function signOut(){
 }
 function fmt(n){return Number(n||0).toLocaleString();}
 function fmtKes(n){return 'KES '+fmt(n);}
+function esc(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+function initialiseMonths(){
+  const select=document.getElementById('rev-period');
+  if(!select)return;
+  const now=new Date();
+  select.innerHTML='';
+  for(let offset=0;offset<12;offset++){
+    const month=new Date(Date.UTC(now.getUTCFullYear(),now.getUTCMonth()-offset,1));
+    const value=month.toISOString().slice(0,7);
+    const option=document.createElement('option');
+    option.value=value;
+    option.textContent=month.toLocaleDateString('en-KE',{month:'long',year:'numeric',timeZone:'UTC'});
+    select.appendChild(option);
+  }
+}
 
 
 async function loadAnalytics() {
@@ -507,76 +521,76 @@ async function loadAnalytics() {
     const uid = session.user.id;
     document.getElementById('tb-avatar').textContent = (session.user.user_metadata?.first_name||'P')[0].toUpperCase();
 
-    const { data: listings } = await sb.from('listings')
-      .select('id,title,price_night,booking_count,avg_rating,review_count,days_listed')
+    const { data: listings, error: listingsError } = await sb.from('listings')
+      .select('id,title,price_night,avg_rating,review_count')
       .eq('partner_id', uid).eq('status','active');
+    if(listingsError)throw listingsError;
+    const month=document.getElementById('rev-period')?.value || new Date().toISOString().slice(0,7);
+    const label=document.getElementById('rev-period')?.selectedOptions?.[0]?.textContent || month;
+    document.getElementById('rev-period-label').textContent=`${label}, sorted by entitlement`;
+    const reportRows=await Promise.all((listings||[]).map(async listing=>{
+      const {data,error}=await sb.rpc('cabana_host_report',{p_listing:listing.id,p_month:`${month}-01`});
+      return error||!data?null:{listing,report:data};
+    }));
+    const rows=reportRows.filter(Boolean);
+    const sum=(path)=>rows.reduce((total,row)=>total+Number(path(row.report)||0),0);
+    const impressions=sum(r=>r.performance?.impressions);
+    const views=sum(r=>r.performance?.views);
+    const checkouts=sum(r=>r.performance?.checkout_starts);
+    const paidBookings=sum(r=>r.performance?.paid_bookings);
+    const openNights=sum(r=>r.performance?.open_nights_next_30);
+    const entitlement=sum(r=>r.earnings?.net_entitlement);
+    const verifiedCheckins=sum(r=>r.earnings?.verified_checkins);
+    const conversion=views>0?(paidBookings/views*100):null;
+    const ratings=(listings||[]).map(l=>Number(l.avg_rating)).filter(n=>n>0);
 
-    const period = parseInt(document.getElementById('rev-period')?.value || 90);
-    const since = new Date(Date.now() - period*86400000).toISOString();
-    const { data: bookings } = await sb.from('bookings')
-      .select('listing_id,total_amount,check_in,check_out,guests,created_at')
-      .eq('partner_id', uid).gte('created_at', since);
-
-    const totalRev = (bookings||[]).reduce((s,b)=>s+parseFloat(b.total_amount||0),0);
-    const totalNights = (bookings||[]).reduce((s,b)=>{
-      const ci=new Date(b.check_in), co=new Date(b.check_out);
-      return s+Math.max(1,Math.round((co-ci)/86400000));
-    },0);
-    const avgStay = bookings?.length ? (totalNights/bookings.length).toFixed(1) : 0;
-    const totalGuests = (bookings||[]).reduce((s,b)=>s+(b.guests||1),0);
-
-    // Occupancy: booked nights / (listings * period days)
-    const capacity = (listings?.length||1) * period;
-    const occ = capacity > 0 ? Math.min(99, Math.round((totalNights/capacity)*100)) : 0;
-    const conv = listings?.length ? ((bookings?.length||0)/listings.length).toFixed(1) : 0;
-
-    document.getElementById('stat-occ').textContent = occ + '%';
-    document.getElementById('stat-rev').textContent = totalRev >= 1000 ? 'KES '+fmt(Math.round(totalRev)) : ', ';
-    document.getElementById('stat-stay').textContent = avgStay > 0 ? avgStay + ' nights' : ', ';
-    document.getElementById('stat-conv').textContent = conv;
-    document.getElementById('kpi-views').textContent = fmt((listings||[]).reduce((s,l)=>s+(l.booking_count||0)*12,0));
-    document.getElementById('kpi-rating').textContent = listings?.length ? (listings.reduce((s,l)=>s+(l.avg_rating||0),0)/listings.length).toFixed(1)+'★' : ', ';
-    document.getElementById('kpi-guests').textContent = fmt(totalGuests);
-    document.getElementById('kpi-repeat').textContent = Math.max(0,Math.round((bookings?.length||0)*0.18)) + '';
+    document.getElementById('stat-occ').textContent = listings?.length ? `${fmt(openNights)} / ${fmt(listings.length*30)}` : '—';
+    document.getElementById('stat-rev').textContent = fmtKes(Math.round(entitlement));
+    document.getElementById('stat-stay').textContent = fmt(paidBookings);
+    document.getElementById('stat-conv').textContent = conversion===null?'—':`${conversion.toFixed(1)}%`;
+    document.getElementById('kpi-views').textContent = fmt(impressions);
+    document.getElementById('kpi-rating').textContent = ratings.length ? `${(ratings.reduce((a,b)=>a+b,0)/ratings.length).toFixed(1)}★` : '—';
+    document.getElementById('kpi-guests').textContent = fmt(checkouts);
+    document.getElementById('kpi-repeat').textContent = fmt(verifiedCheckins);
 
     // Revenue by listing bar chart
-    const revByListing = {};
-    (bookings||[]).forEach(b=>{revByListing[b.listing_id]=(revByListing[b.listing_id]||0)+parseFloat(b.total_amount||0);});
+    const revByListing=Object.fromEntries(rows.map(({listing,report})=>[listing.id,Number(report.earnings?.net_entitlement||0)]));
     const maxRev = Math.max(...Object.values(revByListing),1);
-    const sortedListings = (listings||[]).sort((a,b)=>(revByListing[b.id]||0)-(revByListing[a.id]||0));
+    const sortedListings = [...(listings||[])].sort((a,b)=>(revByListing[b.id]||0)-(revByListing[a.id]||0));
 
     document.getElementById('rev-chart').innerHTML = sortedListings.length
       ? sortedListings.slice(0,6).map(l=>{
           const rev=revByListing[l.id]||0;
           const pct=Math.max(4,Math.round((rev/maxRev)*100));
           return `<div class="chart-row">
-            <div class="chart-lbl">${l.title?.split(' ').slice(0,3).join(' ')||'Listing'}</div>
+            <div class="chart-lbl">${esc(l.title?.split(' ').slice(0,3).join(' ')||'Listing')}</div>
             <div class="chart-track"><div class="chart-fill" style="width:${pct}%">KES ${fmt(Math.round(rev))}</div></div>
           </div>`;
         }).join('')
       : '<div class="empty"><div class="empty-icon">📊</div><div class="empty-title">No data yet</div><div class="empty-sub">Revenue will appear here once you receive bookings.</div></div>';
 
-    // Source chart (simulated from booking count)
-    const srcData = [['Direct search',65],['Referral',20],['Shared link',10],['Featured',5]];
-    document.getElementById('source-chart').innerHTML = srcData.map(([name,pct])=>
-      `<div class="chart-row"><div class="chart-lbl">${name}</div><div class="chart-track"><div class="chart-fill" style="width:${pct}%">${pct}%</div></div></div>`
-    ).join('');
+    const funnel=[['Impressions',impressions],['Listing views',views],['Checkout starts',checkouts],['Paid bookings',paidBookings]];
+    const funnelMax=Math.max(impressions,views,checkouts,paidBookings,1);
+    document.getElementById('source-chart').innerHTML = rows.length ? funnel.map(([name,count])=>{
+      const pct=count?Math.max(4,Math.round(count/funnelMax*100)):0;
+      return `<div class="chart-row"><div class="chart-lbl">${name}</div><div class="chart-track"><div class="chart-fill" style="width:${pct}%">${fmt(count)}</div></div></div>`;
+    }).join('') : '<div class="empty"><div class="empty-icon">📡</div><div class="empty-title">No measured data yet</div><div class="empty-sub">The funnel fills as guests see and use your listings.</div></div>';
 
     // Best performing
     const best = sortedListings[0];
     document.getElementById('best-listing').innerHTML = best
-      ? `<div style="font:700 15px/1.3 var(--font-d);color:var(--ink);">${best.title||'Your top listing'}</div>
-         <div style="margin-top:6px;font-size:12px;color:var(--ink-faint);">KES ${fmt(best.price_night)}/night · ⭐ ${best.avg_rating||', '} · ${best.booking_count||0} bookings</div>
+      ? `<div style="font:700 15px/1.3 var(--font-d);color:var(--ink);">${esc(best.title||'Your top listing')}</div>
+         <div style="margin-top:6px;font-size:12px;color:var(--ink-faint);">${fmtKes(Math.round(revByListing[best.id]||0))} entitlement · ⭐ ${Number(best.avg_rating||0)>0?Number(best.avg_rating).toFixed(1):'—'}</div>
          <div style="margin-top:10px;display:flex;gap:8px;">
            <span class="badge badge-green">Top earner</span>
            ${(best.avg_rating||0)>=4.5?'<span class="badge badge-blue">High rated</span>':''}
          </div>`
       : '<div class="empty"><div class="empty-icon">🏠</div><div class="empty-title">No listings yet</div><div class="empty-sub">Add your first listing to see analytics.</div><a href="add-listing.html" class="btn btn-primary btn-sm" style="margin-top:12px;">Add listing</a></div>';
 
-  }catch(e){console.warn('Analytics error',e);}
+  }catch(e){console.warn('Analytics error',e);toast('Could not load verified analytics.',false);}
 }
 
-document.addEventListener('DOMContentLoaded', loadAnalytics);
+document.addEventListener('DOMContentLoaded',()=>{initialiseMonths();loadAnalytics();});
 </script>
 <script src="/cabana-rebrand.js" defer></script>
 

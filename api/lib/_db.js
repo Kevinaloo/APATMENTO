@@ -33,7 +33,8 @@ function parseQueryFilter(query = '') {
   const parts = query.split('&').filter(Boolean);
   for (const part of parts) {
     if (part.startsWith('select=') || part.startsWith('order=') || part.startsWith('limit=')) continue;
-    const [key, rawVal] = part.split('=');
+    const [key, encodedVal] = part.split('=');
+    const rawVal = encodedVal == null ? encodedVal : decodeURIComponent(encodedVal);
     if (!key || !rawVal) continue;
     if (rawVal.startsWith('eq.')) filters.push({ key, op: 'eq', val: rawVal.slice(3) });
     else if (rawVal.startsWith('neq.')) filters.push({ key, op: 'neq', val: rawVal.slice(4) });

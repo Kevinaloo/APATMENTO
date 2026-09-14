@@ -44,7 +44,7 @@ import { connectionGuide, detectPlatform, normaliseFeedUrl, getPlatform } from '
    every ownership check in every calendar function into a no-op. So user
    actions ride the user's own JWT with the ANON key, exactly as _env.js
    describes, and the database decides. */
-async function rpcAsUser(req, fn, args) {
+export async function rpcAsUser(req, fn, args) {
   const { url, anonKey } = supabase();
   const key = anonKey || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   const token = String(req.headers?.authorization || '').replace(/^Bearer\s+/i, '');
