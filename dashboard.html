@@ -3231,9 +3231,14 @@ async function initPartnerFlow(){
     return;
   }
   try{
-    const { data:listings } = await sb.from('listings')
-      .select('id,title,name,status,listing_type,type,service,price_night,price_month,created_at')
-      .eq('partner_id', CURRENT_USER.id);
+    /* Keep this query resilient to schema drift. Selecting an optional column
+       makes PostgREST reject the entire request, which previously rendered an
+       established host as if they had no services. */
+    const { data:listings, error:listingsError } = await sb.from('listings')
+      .select('*')
+      .eq('partner_id', CURRENT_USER.id)
+      .is('deleted_at', null);
+    if(listingsError) throw listingsError;
     // Map any sub-type (e.g. "Apartment", "Studio", "Safari") back to a service category key
     const _subToCategory = {
       apartment:'apartment',studio:'apartment',penthouse:'apartment',villa:'apartment',

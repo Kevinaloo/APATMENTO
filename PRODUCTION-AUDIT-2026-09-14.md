@@ -54,6 +54,25 @@ was submitted because doing so would create false production activity.
 - API database helpers silently fell back to process memory when production
   credentials were missing, which could report success for data that vanished
   after the request. Production now fails closed with HTTP 503.
+- Internal scheduler, broadcast, expiry, import and trigger functions were
+  executable through the public API. Their grants now match their callers:
+  service-role only for internal work, authenticated only for the one
+  client-facing match function, and no anonymous access to admin flight-desk
+  functions. Anonymous executable security-definer findings fell from 35 to
+  25 and authenticated findings from 85 to 78; the remaining functions are
+  deliberate token, availability, referral or signed-in transactional RPCs.
+- Shared advertising, brand and interstitial buckets allowed any signed-in
+  account to modify production assets. Writes are now admin/operator only.
+  Partner uploads are readable and writable only inside the user's own folder,
+  with admin/operator access for support.
+- The partner dashboard selected optional listing columns. PostgREST rejected
+  the whole query after schema drift, so an established host was shown as
+  having no services. It now uses the same resilient listing query as the
+  listing manager and reports query failures rather than presenting a false
+  empty state.
+- Partner pages advertised three conflicting referral terms. They now match
+  the existing rewards rate card: 5% of Cabana's service fee for referred
+  hosts and 10% for referred travellers, each for 365 days.
 
 ### Medium
 
@@ -86,21 +105,18 @@ was submitted because doing so would create false production activity.
 - Local HTTP checks: main routes 200; unknown routes, source, SQL and diagnostic
   tools 404.
 - Supabase advisor: security-definer-view errors reduced from two to zero.
+- Authenticated production journeys: admin console, host listing management,
+  host bookings and ambassador dashboard loaded with the expected account
+  boundaries. The supplied traveller-account password was rejected, so its
+  signed-in journey remains unverified; public guest journeys were tested.
 
 ## Remaining prioritized work
 
 ### High
 
-- Supabase leaked-password protection is disabled. Enable it in Auth settings;
-  this is a project-level control rather than a repository migration.
-- Supabase still reports 35 anonymous and 85 authenticated executable
-  security-definer functions. Several are deliberate capability-token or
-  transactional RPCs, while others are internal helpers. Audit and revoke them
-  function by function with caller tests; bulk revocation could break bookings,
-  flights, referrals or check-in recovery.
-- Some shared media buckets still let any authenticated account manage brand,
-  advertising or interstitial assets. Move those policies to a dedicated
-  admin/operator predicate after confirming every upload caller.
+- Supabase leaked-password protection remains disabled because the dashboard
+  makes it available only on Pro while this project is on Free. Enable it when
+  upgrading the project; no billing change was made during this audit.
 
 ### Medium
 
@@ -119,11 +135,9 @@ was submitted because doing so would create false production activity.
 
 ### Operational limits of this audit
 
-- Authenticated browser sessions were unavailable because only account
-  identifiers were supplied. Database authorization was tested with those
-  identities, and role route/component behavior is covered by the automated
-  suite, but a future release check should also sign in interactively as each
-  role.
+- Admin, host and ambassador browser sessions were verified. The traveller
+  account requires Google sign-in or a different password before its private
+  booking/profile journey can be checked interactively.
 - Payment, booking, payout, listing publication, driver application and partner
   application submissions were stopped before the irreversible write or
   payment step to avoid fabricating production records or prices.
