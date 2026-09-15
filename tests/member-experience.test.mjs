@@ -89,7 +89,7 @@ test('dashboard notification card stays out of the layout when the feed is empty
   try{
     await new Promise(r=>setTimeout(r,950));
     const card=t.w.document.getElementById('cbn-ring-card');
-    assert.ok(card);assert.equal(card.style.display,'none');assert.equal(card.hidden,true);
+    assert.equal(card,null);
   }finally{t.dom.window.close()}
 });
 

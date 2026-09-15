@@ -2050,7 +2050,6 @@ img,video,svg{max-width:100%;}
       </div>
 
       <!-- ── CABANA NOTIFICATIONS RING ── -->
-      <div id="cbn-ring-slot" style="margin-bottom:4px;"></div>
 
       <!-- ── CABANA MATCH ENTRY CARD ── -->
       <!-- Upcoming trip strip. Empty until a confirmed booking exists, so the layout is unchanged for everyone else. -->
@@ -3261,31 +3260,90 @@ async function initPartnerFlow(){
       const rawType = (l.listing_type||'').toLowerCase();
       const cat = _subToCategory[rawType] || 'apartment';
       const _room=(l.service==='roommates'||l.type==='room');
-      return {...l, listing_type: cat, is_active:l.status!=='inactive', price_per_night:(_room?(l.price_month||0):(l.price_night||0)), price_unit:_room?'month':'night'};
+      return {...l, listing_type: cat,
+        is_active:l.is_active===true && l.status==='active',
+        price_per_night:(_room?(l.price_month||0):(l.price_night||0)), price_unit:_room?'month':'night'};
     });
     partnerLoadFailed = false;
   }catch(e){ partnerServices=[]; partnerLoadFailed = true; console.warn('[partner] listings load failed:', e && e.message); }
 
   document.getElementById('p-state-loading').style.display='none';
 
-  // No listings yet. Send them to the listings screen to create one.
-  // GUARD: never redirect when the user arrived here *from* that screen
-  // (?back=1) or when the listings query failed, that produced an
-  // inescapable ping-pong between dashboard and partner-listings.
-  var _cameBack = false;
-  try { _cameBack = new URLSearchParams(location.search).get('back') === '1'; } catch(e){}
-  if(!partnerServices.length && !_cameBack){
-    window.__addServiceIntent = false;
-    window.location.replace('partner-listings.html');
-    return;
-  }
-  if(!partnerServices.length){
-    // Stay put and render the onboarding / empty state in place.
-    renderPartnerEmpty(partnerLoadFailed);
-    return;
-  }
-  else if(partnerServices.length===1) renderSingleDashboard(partnerServices[0]);
-  else renderServicePicker(partnerServices);
+  await renderPartnerOverview(partnerServices, partnerLoadFailed);
+}
+
+
+async function renderPartnerOverview(listings, failed){
+  const c = document.getElementById('p-state-dashboard');
+  if(!c) return;
+  document.getElementById('p-state-picker').style.display='none';
+  c.style.display='block';
+  listings = listings || [];
+
+  const groups = {};
+  listings.forEach(l=>{ const t=l.listing_type||'apartment'; (groups[t]=groups[t]||[]).push(l); });
+  const services = Object.entries(groups).filter(([t,a])=>a.length && PARTNER_SERVICES[t]);
+  const activeCount = listings.filter(l=>l.is_active === true && l.status === 'active').length;
+  let earned=0, bookings=0;
+  try{
+    const results = await Promise.all(['apartment_bookings','tour_bookings','event_tickets'].map(table=>
+      sb.from(table).select('grand_total,service_fee').eq('status','paid_pending_checkin')));
+    const paid = results.flatMap(r=>r.data||[]);
+    bookings=paid.length;
+    earned=paid.reduce((sum,row)=>sum+Number(row.grand_total||0)-Number(row.service_fee||0),0);
+  }catch(e){}
+
+  const intro = listings.length
+    ? `<span class="greeting-eyebrow">Partner workspace · 0% commission</span><h1 class="greeting-title">Welcome back, <em>${USER.firstName}</em></h1><p class="greeting-sub">Manage every Cabana service from one clear place.</p>`
+    : `<span class="greeting-eyebrow">Partner workspace · Start here</span><h1 class="greeting-title">Welcome, <em>${USER.firstName}</em></h1><p class="greeting-sub">Add your first service, then manage listings, bookings and earnings here.</p>`;
+
+  c.innerHTML = `
+    <div class="topbar">
+      <div class="tb-left"><button class="tb-icon-btn" onclick="openDrawer()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button><img src="cabana-emblem.png" class="tb-icon-sm" alt="" loading="lazy" decoding="async"/><span class="tb-cab-anim" data-text="CABANA">CABANA</span></div>
+      <div class="tb-right partner-nav"><a class="partner-nav-btn partner-nav-traveller" href="#" onclick="switchToGuest();return false;"><span class="partner-nav-wide">← Traveller dashboard</span><span class="partner-nav-compact">← Traveller</span></a><button class="partner-nav-btn partner-nav-role" onclick="ApaRoles&&ApaRoles.open()"><span class="partner-nav-wide">Switch role</span><span class="partner-nav-compact">Roles</span></button><div class="tb-avatar">${(USER.firstName||'P')[0].toUpperCase()}</div></div>
+    </div>
+    <div class="content" style="max-width:1120px;">
+      <div class="greeting">${intro}</div>
+      ${failed ? `<div style="margin-bottom:20px;padding:14px 16px;border-radius:14px;background:#fff7ed;color:#9a3412;">We could not refresh your services. <button onclick="initPartnerFlow()" style="border:0;background:none;color:inherit;font-weight:800;cursor:pointer;">Try again</button></div>` : ''}
+
+      <div class="section-head"><h2 class="section-title">What would you like to do?</h2></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:30px;">
+        ${actionBtn('My listings','partner-listings.html?back=1','M3 10.5 12 4l9 6.5M5 9.5V20h14V9.5')}
+        ${actionBtn(listings.length?'Add listing':'Add first listing','add-listing.html?from=partner','M12 5v14M5 12h14')}
+        ${actionBtn('Bookings','partner-bookings.html?back=1','M8 2v4M16 2v4M3 10h18')}
+        ${actionBtn('Calendar','partner-calendar.html?back=1','M8 2v4M16 2v4M3 10h18')}
+        ${actionBtn('Earnings','partner-earnings.html?back=1','M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6')}
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:32px;" class="partner-summary-grid">
+        ${statCard(listings.length,'Listings',activeCount+' live')}
+        ${statCard(bookings,'Bookings','Confirmed stays and services')}
+        ${statCard('KES '+earned.toLocaleString(),'Total earned','You keep 100%')}
+      </div>
+
+      <div class="section-head"><h2 class="section-title">Your services</h2><a href="partner-listings.html?back=1" class="section-link">View all →</a></div>
+      ${services.length ? `<div style="display:grid;gap:12px;margin-bottom:34px;">${services.map(([t,arr])=>{const s=PARTNER_SERVICES[t];const live=arr.filter(x=>x.is_active===true&&x.status==='active').length;return `<button class="prop-card" type="button" onclick="goToService('${t}')" style="display:flex;align-items:center;gap:16px;padding:18px 20px;text-align:left;width:100%;border:1px solid var(--line);"><span style="width:48px;height:48px;border-radius:14px;background:${s.grad};display:flex;align-items:center;justify-content:center;color:#fff;flex:none;">${s.ico}</span><span style="flex:1;"><strong style="display:block;font-size:16px;">${s.name}</strong><span style="font-size:12px;color:var(--ink-faint);">${arr.length} listing${arr.length!==1?'s':''} · ${live} live</span></span><span class="prop-go">→</span></button>`;}).join('')}</div>` : `<div class="prop-card" style="padding:24px;margin-bottom:34px;"><strong style="display:block;font-size:17px;margin-bottom:6px;">Your first listing starts here</strong><span style="display:block;color:var(--ink-soft);margin-bottom:16px;">Choose what you offer and Cabana will guide you through the details.</span><a class="hero-cta" href="add-listing.html?from=partner" style="display:inline-flex;padding:11px 18px;font-size:13px;text-decoration:none;">Add first listing →</a></div>`}
+
+      <details style="margin-bottom:36px;" class="partner-apa-details">
+        <summary style="list-style:none;cursor:pointer;padding:18px 20px;border:1px solid #ddd6fe;border-radius:18px;background:linear-gradient(120deg,#f5f3ff,#ecfdf5);display:flex;align-items:center;justify-content:space-between;gap:16px;"><span><strong style="display:block;color:#4c1d95;">Ask APA, your host copilot</strong><small style="color:var(--ink-soft);">Improve a listing, check performance or plan availability.</small></span><span style="color:#6d28d9;font-weight:800;">Open →</span></summary>
+        <div style="margin-top:12px;">${hostCopilotHTML()}</div>
+      </details>
+    </div>
+    <style>
+      .partner-nav-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:11px;font-family:var(--font-body);font-weight:700;font-size:12px;text-decoration:none;white-space:nowrap;cursor:pointer}
+      .partner-nav-traveller{border:1.5px solid rgba(45,212,191,.3);background:rgba(45,212,191,.08);color:#0D9488}
+      .partner-nav-role{border:1.5px solid rgba(124,58,237,.3);background:rgba(124,58,237,.07);color:#6D28D9}
+      .partner-nav-compact{display:none}
+      @media(max-width:620px){
+        #p-state-dashboard .topbar{padding-left:14px;padding-right:14px}
+        #p-state-dashboard .tb-cab-anim{font-size:18px}
+        #p-state-dashboard .partner-nav{gap:6px}
+        #p-state-dashboard .partner-nav-btn{padding:8px 10px}
+        #p-state-dashboard .partner-nav-wide{display:none}
+        #p-state-dashboard .partner-nav-compact{display:inline}
+        #p-state-dashboard .partner-nav .tb-avatar{display:none}
+      }
+    </style>`;
 }
 
 
@@ -3498,7 +3556,7 @@ function hideAddSheet(){
 <script src="/apa-rail.js" defer></script>
 <script src="/apa-categories.js" defer></script>
 <script src="/analytics.js" defer></script>
-<script src="/chat.js" defer></script>
+<script src="/chat.js?v=34" defer></script>
 <script src="/telemetry.js" defer></script>
 <script src="/pwa.js" defer></script>
 <script src="/apa-push.js" defer></script>
@@ -4073,7 +4131,7 @@ async function dashGmCloseRequest() {
 <script src="/cabana-booking-state.js" defer></script>
 <script src="/apa-trip-strip.js" defer></script>
 <script src="/cabana-call.js" defer></script>
-<script src="/cabana-sos.js" defer></script><script src="/cabana-support.js" defer></script>
+<script src="/cabana-sos.js" defer></script><script src="/cabana-support.js?v=34" defer></script>
 <script src="/cabana-lifecycle.js" defer></script>
 </body>
 </html>

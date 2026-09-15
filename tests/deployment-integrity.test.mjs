@@ -50,3 +50,20 @@ test('partner role controls stay in the side drawer, never in dashboard content'
   assert.doesNotMatch(dashboard, /partner-switch-card|data-apa="role"|apa-psc/);
   assert.doesNotMatch(chrome, /apa-psc|function switchRole|global\.switchRole/);
 });
+
+test('partner landing is one consistent workspace with core actions before APA', () => {
+  const dashboard = read('dashboard.html');
+  assert.match(dashboard, /await renderPartnerOverview\(partnerServices, partnerLoadFailed\)/);
+  assert.doesNotMatch(dashboard, /partnerServices\.length===1/);
+  const overview = dashboard.slice(dashboard.indexOf('async function renderPartnerOverview'), dashboard.indexOf('async function renderServicePicker'));
+  assert.ok(overview.indexOf('What would you like to do?') < overview.indexOf('partner-apa-details'));
+  for (const label of ['My listings','Add first listing','Bookings','Calendar','Earnings']) assert.match(overview, new RegExp(label));
+});
+
+test('dashboard notifications live behind the bell and messaging assets are versioned', () => {
+  const dashboard = read('dashboard.html');
+  assert.doesNotMatch(dashboard, /id="cbn-ring-slot"/);
+  assert.match(dashboard, /chat\.js\?v=34/);
+  assert.match(read('apartments.html'), /chat\.js\?v=34/);
+  assert.match(read('sw.js'), /cabana-v34/);
+});

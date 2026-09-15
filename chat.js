@@ -1996,9 +1996,6 @@ const CabanaNotif = (() => {
     if (!user) return;
     _uid = user.id;
 
-    // Build ring card if slot exists on dashboard
-    buildRingCard('#cbn-ring-slot');
-
     // Load notifications
     await loadNotifs();
     renderRingCard();

@@ -18,8 +18,10 @@ test('a signed-in chat sender can notify only the recipient derived from the con
     SUPABASE_ANON_KEY: 'anon-key',
     VAPID_PUBLIC_KEY: Buffer.alloc(65).toString('base64url'),
     VAPID_PRIVATE_KEY: Buffer.alloc(32).toString('base64url'),
+    CRON_SECRET: 'scheduler-secret',
   });
   const writes = [];
+  let durableExists = false;
   const priorFetch = globalThis.fetch;
   globalThis.fetch = async (url, options = {}) => {
     const target = String(url);
@@ -30,7 +32,8 @@ test('a signed-in chat sender can notify only the recipient derived from the con
     if (target.includes('/chat_conversations?')) return new Response(JSON.stringify([{
       id: conversation, host_id: host, guest_id: sender, listing_title: 'Garden studio',
     }]), { status: 200 });
-    if (target.includes('/notifications?')) return new Response('[]', { status: 200 });
+    if (target.includes('/notifications?')) return new Response(JSON.stringify(durableExists
+      ? [{id:'notice-1',meta:{message_id:message,conversation_id:conversation}}] : []), { status: 200 });
     if (target.endsWith('/rest/v1/notifications')) {
       writes.push(JSON.parse(options.body));
       return new Response(JSON.stringify(writes), { status: 201 });
@@ -49,6 +52,12 @@ test('a signed-in chat sender can notify only the recipient derived from the con
     assert.equal(writes[0].kind, 'message');
     assert.equal(writes[0].meta.message_id, message);
     assert.equal(writes[0].body, 'Is this available?');
+
+    durableExists = true;
+    const databaseRes = response();
+    await handler({ method:'POST', headers:{authorization:'Bearer scheduler-secret'}, query:{action:'database-message'},
+      body:{action:'database-message',message_id:message} }, databaseRes);
+    assert.equal(databaseRes.statusCode, 200);
+    assert.equal(writes.length, 1, 'the database-created notification is reused rather than duplicated');
   } finally { globalThis.fetch = priorFetch; }
 });
-

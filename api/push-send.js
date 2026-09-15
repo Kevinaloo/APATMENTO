@@ -316,7 +316,8 @@ export default async function handler(req, res) {
   const chatCaller = !internal && action === 'chat-message'
     ? await authenticatedUser(req)
     : null;
-  const authorized = internal || !!chatCaller;
+  const databaseMessage = action === 'database-message' && isCronAuthorized(req);
+  const authorized = internal || !!chatCaller || databaseMessage;
   if (!authorized) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
@@ -340,25 +341,36 @@ export default async function handler(req, res) {
 
     /* A browser may request delivery only for a message it just authored.
        The server derives the recipient and copy from trusted rows. */
-    if (action === 'chat-message') {
-      if (!consumeRateLimit(req, res, 'chat-message-push', 40, 60_000, chatCaller.id)) return;
+    if (action === 'chat-message' || action === 'database-message') {
+      if (chatCaller && !consumeRateLimit(req, res, 'chat-message-push', 40, 60_000, chatCaller.id)) return;
       const messageId = String(b.message_id || '');
       if (!/^[0-9a-f-]{36}$/i.test(messageId)) return res.status(400).json({ error: 'message_id_required' });
 
-      const messages = await supa(`chat_messages?id=eq.${messageId}&sender_id=eq.${chatCaller.id}&select=id,conversation_id,sender_id,content&limit=1`);
+      const senderFilter = chatCaller ? `&sender_id=eq.${chatCaller.id}` : '';
+      const messages = await supa(`chat_messages?id=eq.${messageId}${senderFilter}&select=id,conversation_id,sender_id,content&limit=1`);
       const message = messages?.[0];
       if (!message) return res.status(404).json({ error: 'message_not_found' });
       const conversations = await supa(`chat_conversations?id=eq.${message.conversation_id}&select=id,host_id,guest_id,listing_title&limit=1`);
       const conversation = conversations?.[0];
-      if (!conversation || ![conversation.host_id, conversation.guest_id].includes(chatCaller.id)) {
+      if (!conversation || ![conversation.host_id, conversation.guest_id].includes(message.sender_id)
+          || (chatCaller && message.sender_id !== chatCaller.id)) {
         return res.status(403).json({ error: 'conversation_forbidden' });
       }
-      const recipient = chatCaller.id === conversation.host_id ? conversation.guest_id : conversation.host_id;
-      if (!recipient || recipient === chatCaller.id) return res.status(400).json({ error: 'recipient_unavailable' });
+      const recipient = message.sender_id === conversation.host_id ? conversation.guest_id : conversation.host_id;
+      if (!recipient || recipient === message.sender_id) return res.status(400).json({ error: 'recipient_unavailable' });
 
       const marker = encodeURIComponent(JSON.stringify({ message_id: message.id }));
-      const existing = await supa(`notifications?user_id=eq.${recipient}&meta=cs.${marker}&select=id&limit=1`).catch(() => []);
-      if (existing?.length) return res.status(200).json({ sent: 0, persisted: true, duplicate: true });
+      const existing = await supa(`notifications?user_id=eq.${recipient}&meta=cs.${marker}&select=id,meta&limit=1`).catch(() => []);
+      if (existing?.[0]?.meta?.delivery_attempted_at) {
+        return res.status(200).json({ sent: 0, persisted: true, duplicate: true });
+      }
+      const deliveryMeta = { message_id: message.id, conversation_id: conversation.id,
+        delivery_attempted_at: new Date().toISOString() };
+      if (existing?.[0]) {
+        await supa(`notifications?id=eq.${existing[0].id}`, {
+          method: 'PATCH', body: JSON.stringify({ meta: { ...(existing[0].meta || {}), ...deliveryMeta } }),
+        });
+      }
 
       const preview = String(message.content || '').replace(/\s+/g, ' ').trim().slice(0, 140);
       b = {
@@ -367,8 +379,8 @@ export default async function handler(req, res) {
         body: preview || 'Open Cabana to read the message.',
         url: '/dashboard.html?inbox=1',
         kind: 'message',
-        persist: true,
-        meta: { message_id: message.id, conversation_id: conversation.id },
+        persist: !existing?.[0],
+        meta: deliveryMeta,
       };
     }
 
