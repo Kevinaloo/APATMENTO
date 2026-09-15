@@ -344,6 +344,7 @@ textarea.inp{padding-right:15px;font-weight:400;font-size:13.5px;resize:vertical
 <script src="/vendor-supabase-2.112.3.js"></script>
 <script src="/apa-session.js"></script>
 <script src="/apa-roles.js" defer></script>
+<script src="/cabana-people.js" defer></script>
 <script src="/apa-referral-capture.js" defer></script>
 <script>
 'use strict';
@@ -485,7 +486,7 @@ function pendingCard(r) {
       <div class="av">${E(initials(r.agent_name))}</div>
       <div class="req-id">
         <div class="req-name">
-          <span class="rn">${E(r.agent_name)}</span>
+          <button type="button" class="rn" data-cabana-person="${E(r.agent_id)}" style="border:0;background:none;padding:0;text-align:left">${E(r.agent_name)}</button>
           ${stateBadge(r)}${extraBadges(r)}
         </div>
         <div class="req-meta">${contactLine(r)} · asked ${ago(r.requested_at)}</div>
@@ -615,7 +616,7 @@ function activeRow(r) {
     <div class="av" style="width:42px;height:42px;font-size:16px;border-radius:13px;">${E(initials(r.agent_name))}</div>
     <div class="row-id">
       <div class="req-name">
-        <span class="rn" style="font-size:15px;">${E(r.agent_name)}</span>
+        <button type="button" class="rn" data-cabana-person="${E(r.agent_id)}" style="font-size:15px;border:0;background:none;padding:0;text-align:left">${E(r.agent_name)}</button>
         ${paused ? '<span class="badge b-paused">Paused</span>' : ''}
         ${r.kyc_status === 'verified' ? '<span class="badge b-verified"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>Verified</span>' : ''}
       </div>

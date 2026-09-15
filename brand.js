@@ -548,6 +548,13 @@ function boot(){
   var defer = window.requestAnimationFrame || function(fn){ setTimeout(fn, 16); };
   defer(function(){
     safe(injectIcons);
+    safe(function () {
+      ['/cabana-property-tour.js', '/cabana-people.js'].forEach(function (src) {
+        if (document.querySelector('script[src="' + src + '"]')) return;
+        var script = document.createElement('script'); script.src = src; script.defer = true;
+        document.body.appendChild(script);
+      });
+    });
     safe(choreograph);
     /* Ensure tiles are visible even when prefers-reduced-motion skips
        the observer — opacity:0 on the base rule would hide them forever */

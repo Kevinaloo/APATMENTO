@@ -150,6 +150,18 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--bg);colo
     <button class="btn btn-ghost" onclick="changePassword()">Update Password</button>
   </div>
 
+  <div class="card" id="public-profile">
+    <div class="card-title">Your public profile</div>
+    <p class="field-hint">Choose what other members see when they open your profile. Your email, phone, payments, bookings and identity documents stay private.</p>
+    <div id="public-role-badges" style="display:flex;gap:6px;flex-wrap:wrap;margin:12px 0"></div>
+    <div class="field"><label class="field-label" for="public-name">Public display name</label><input class="field-input" id="public-name" maxlength="60" placeholder="How you want to be known"></div>
+    <div class="field"><label class="field-label" for="public-bio">A little about you</label><textarea class="field-input" id="public-bio" maxlength="240" rows="3" placeholder="Travel interests or how you help Cabana members"></textarea><p class="field-hint">Up to 240 characters. Leave contact details and private information out.</p></div>
+    <label class="field-hint"><input type="checkbox" id="public-published"> Show this display name and introduction on my public profile</label>
+    <p class="field-hint">Without an introduction, hosts and representatives show only a basic member card. Roles are assigned from your Cabana memberships.</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px"><button class="btn btn-primary" type="button" id="public-save" onclick="savePublicProfile()">Save public profile</button><button class="btn btn-ghost" type="button" onclick="CabanaPeople.open(CURRENT_USER.id)">Preview</button></div>
+    <p id="public-profile-status" class="field-hint" role="status"></p>
+  </div>
+
   <!-- NOTIFICATIONS -->
   <div class="card">
     <div class="card-title">Notifications</div>
@@ -195,6 +207,7 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--bg);colo
      out of <head> so everything above renders without waiting on it. -->
 <script src="/vendor-supabase-2.112.3.js"></script>
 <script src="/apa-session.js"></script>
+<script src="/cabana-people.js"></script>
 <script src="/apa-referral-capture.js" defer></script>
 <script src="/apa-admin-guard.js"></script>
 <script>
@@ -209,7 +222,26 @@ let CURRENT_USER = null;
   if (!session) { window.location.href = 'auth.html'; return; }
   CURRENT_USER = session.user;
   await loadProfile();
+  await loadPublicProfile();
 })();
+
+async function loadPublicProfile() {
+  try {
+    const {profile} = await CabanaPeople.request(CURRENT_USER.id);
+    document.getElementById('public-name').value = profile.display_name;
+    document.getElementById('public-bio').value = profile.bio;
+    document.getElementById('public-published').checked = profile.published;
+    document.getElementById('public-role-badges').innerHTML = CabanaPeople.badges(profile.roles);
+  } catch (_) { document.getElementById('public-profile-status').textContent = 'Public profile could not load. Please refresh to try again.'; }
+}
+async function savePublicProfile() {
+  const button = document.getElementById('public-save'); button.disabled = true;
+  try {
+    await CabanaPeople.request(null, {display_name:document.getElementById('public-name').value, bio:document.getElementById('public-bio').value, published:document.getElementById('public-published').checked});
+    document.getElementById('public-profile-status').textContent = 'Public profile saved.';
+  } catch (e) { document.getElementById('public-profile-status').textContent = e.message; }
+  finally { button.disabled = false; }
+}
 
 async function loadProfile() {
   const meta = CURRENT_USER.user_metadata || {};

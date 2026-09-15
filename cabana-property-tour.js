@@ -1,6 +1,7 @@
 /* Lightweight tour registry: scene assets load only after the guest opens a tour. */
 (function () {
   'use strict';
+  if (window.CabanaPropertyTour) return;
   const JETS_NEST = '65ef1d11-a4e3-4250-bbac-f826c0cd10d2';
   const TOURS = Object.freeze({
     [JETS_NEST]: { name: 'The Jets Nest', url: '/tours/jets-nest/index.html', rooms: 'Living room, kitchen, bedroom & bathroom' },
@@ -39,4 +40,33 @@
       return '<section class="cabana-tour-entry" aria-label="Explore this apartment in 3D"><div class="cabana-tour-emblem" aria-hidden="true">'+cube+'</div><div class="cabana-tour-copy"><span class="cabana-tour-kicker">A NEW WAY TO EXPLORE</span><strong>See yourself here.</strong><span>'+tour.rooms+'. Walk through '+tour.name+' before you arrive.</span></div><button type="button" onclick="CabanaPropertyTour.open(\''+id+'\')">Explore in 3D <span aria-hidden="true">↗</span></button></section>';
     },open,close
   };
+  // Shared by dashboard shelves, saved stays and any later listing cards.
+  if (!document.querySelector('link[href="/cabana-property-tour.css"]')) {
+    const link = document.createElement('link'); link.rel = 'stylesheet'; link.href = '/cabana-property-tour.css'; document.head.appendChild(link);
+  }
+  function annotate(root) {
+    root.querySelectorAll('[data-listing-id],a[href*="apartments"]').forEach(card => {
+      let id = card.dataset.listingId;
+      if (!id && card.href) {
+        const params = new URL(card.href, location.href).searchParams;
+        id = params.get('open') || params.get('listing') || params.get('id');
+      }
+      if (!TOURS[id] || card.querySelector('.cabana-3d-badge')) return;
+      const photo = card.querySelector('.prop-thumb,.ac-thumb,.fav-img,.card-img,[data-listing-photo]') || card.querySelector('img')?.parentElement;
+      if (!photo) return;
+      photo.style.position = 'relative';
+      photo.insertAdjacentHTML('beforeend', badge({id}));
+      const added = photo.querySelector('.cabana-3d-badge');
+      // Existing category and price labels keep their lower edge.
+      added.style.top = '10px'; added.style.bottom = 'auto';
+    });
+  }
+  let queued = false;
+  const scan = () => {
+    if (queued || !window.document) return; queued = true;
+    setTimeout(() => { queued = false; if (window.document) annotate(document); }, 0);
+  };
+  window.CabanaPropertyTour.scan = scan;
+  scan();
+  new MutationObserver(scan).observe(document.documentElement, {childList:true,subtree:true});
 })();

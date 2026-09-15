@@ -38,6 +38,7 @@
 ════════════════════════════════════════════════════════════════════════ */
 
 export const config = { maxDuration: 30 };
+import { people } from './lib/_people.js';
 
 const SUPA_URL    = process.env.SUPABASE_URL;
 const ANON_KEY    = process.env.SUPABASE_ANON_KEY;
@@ -342,6 +343,22 @@ async function handleSignup(req, res) {
 
   if (!ok(b.full_name))     return res.status(400).json({ error: 'Your name, please.' });
   if (!ok(b.contact_value)) return res.status(400).json({ error: 'Add a number we can reach you on.' });
+  if (b.is_creator && !ok(b.social_handle)) return res.status(400).json({error:'Add the social handle or channel you post from.'});
+
+  // One membership and one ledger, including when an existing agent becomes a creator.
+  const [existing] = await db(`agents?id=eq.${s.user.id}&select=*`);
+  if (existing) {
+    if (b.is_creator) {
+      if (existing.suspended) return res.status(403).json({error:'Your membership is suspended. Contact Cabana support.'});
+      const [updated] = await db(`agents?id=eq.${s.user.id}`, {method:'PATCH', prefer:'return=representation', body:{
+        is_creator:true, social_handle:b.social_handle.trim().slice(0,100),
+        social_platform:String(b.social_platform || '').slice(0,40),
+        audience_size:Math.max(0, Math.min(2147483647, parseInt(b.audience_size,10) || 0))
+      }});
+      return res.status(200).json({ok:true, agent:updated});
+    }
+    return res.status(200).json({ok:true, agent:existing});
+  }
 
   const agent = await rpcAsUser(s.token, 'agent_signup', {
     p_full_name:       b.full_name.trim(),
@@ -369,10 +386,11 @@ async function handleMe(req, res) {
   const [agent] = await db(`agents?id=eq.${s.user.id}&select=*`);
   if (!agent) return res.status(404).json({ error: 'No agent account.', code: 'NOT_AGENT' });
 
-  const [portfolio, referrals, docs] = await Promise.all([
+  const [portfolio, referrals, docs, storedTotals] = await Promise.all([
     db(`v_agent_portfolio?agent_id=eq.${s.user.id}&select=*&order=responded_at.desc.nullslast`),
     db(`agent_referrals?agent_id=eq.${s.user.id}&select=*&order=clicked_at.desc&limit=60`),
     db(`agent_documents?agent_id=eq.${s.user.id}&select=id,doc_type,uploaded_at`),
+    db('rpc/cabana_agent_totals', {method:'POST', body:{p_agent:s.user.id}}).catch(() => null),
   ]);
 
   const deadline = new Date(agent.kyc_deadline);
@@ -383,7 +401,15 @@ async function handleMe(req, res) {
     agent.kyc_status === 'submitted'             ? 'active'    :
     Date.now() <= deadline.getTime()             ? 'active'    : 'restricted';
 
-  const converted = referrals.filter((r) => r.status === 'converted');
+  // During a staggered deploy the additive totals function may arrive after
+  // the API. Keep the dashboard usable with its bounded feed until then.
+  const totals = storedTotals || {
+    approved: portfolio.filter((r) => r.status === 'approved').length,
+    pending: portfolio.filter((r) => r.status === 'pending').length,
+    live_leads: referrals.filter((r) => r.status === 'clicked').length,
+    bookings: referrals.filter((r) => r.status === 'converted').length,
+    earned: referrals.filter((r) => r.status === 'converted').reduce((sum, r) => sum + Number(r.commission || 0), 0),
+  };
 
   return res.status(200).json({
     ok: true,
@@ -391,13 +417,7 @@ async function handleMe(req, res) {
     documents: docs,
     portfolio,
     referrals,
-    totals: {
-      approved:  portfolio.filter((p) => p.status === 'approved').length,
-      pending:   portfolio.filter((p) => p.status === 'pending').length,
-      live_leads: referrals.filter((r) => r.status === 'clicked').length,
-      bookings:  converted.length,
-      earned:    converted.reduce((a, r) => a + Number(r.commission || 0), 0),
-    },
+    totals,
   });
 }
 
@@ -756,6 +776,7 @@ export default async function handler(req, res) {
 
   const a = req.query.action;
   try {
+    if (a === 'public-profile') return await people(req, res, {db, session});
     if (a === 'signup'       && req.method === 'POST') return await handleSignup(req, res);
     if (a === 'me'           && req.method === 'GET')  return await handleMe(req, res);
     if (a === 'upload-id'    && req.method === 'POST') return await handleUploadId(req, res);

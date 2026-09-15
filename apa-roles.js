@@ -109,7 +109,7 @@
     {
       key: 'influencer',
       label: 'Influencer',
-      tagline: 'Post your links, earn on every booking they bring for 30 days.',
+      tagline: 'Promote host-approved listings to your audience using tracked links and agreed commission.',
       href: 'agent-dashboard.html?mode=influencer',
       join: 'auth.html?panel=influencer',
       switchVerb: 'Switch to Influencer',
@@ -120,7 +120,7 @@
     {
       key: 'ambassador',
       label: 'Ambassador',
-      tagline: 'Your field pipeline, claims and commission.',
+      tagline: 'Help new hosts and travellers join Cabana. Manage your invited field-work pipeline.',
       href: 'ambassador-dashboard.html',
       join: null,                       // invitation only. Never advertised.
       switchVerb: 'Switch to Ambassador',
@@ -189,7 +189,7 @@
          unfiltered `limit(1)` would hand a host somebody else's row and
          tell them they are an agent. RLS scoped this read to "rows you may
          see", which is not the same question as "are you one". */
-      safe(function () {
+      try {
         var auth = c.auth && c.auth.getUser ? c.auth.getUser() : Promise.resolve(null);
         auth.then(function (u) {
           var uid = u && u.data && u.data.user && u.data.user.id;
@@ -201,19 +201,19 @@
               finish();
             }, function () { finish(); });
         }, function () { finish(); });
-      }, 'agents') || finish();
+      } catch (e) { warn('agents', e); finish(); }
 
       /* The same authority the ambassador dashboard enforces on arrival, so
          a stale reveal here buys nothing — the page still refuses. Failure
          is silent, and a missing entry is a far better outcome than a
          broken one. */
-      safe(function () {
+      try {
         if (!c.rpc) { finish(); return; }
         c.rpc('ambassador_gate').then(function (r) {
           if (r && r.data && r.data.ok) out.ambassador = true;
           finish();
         }, function () { finish(); });
-      }, 'gate') || finish();
+      } catch (e) { warn('gate', e); finish(); }
 
       /* Never hang a menu on a slow network. */
       setTimeout(function () { resolve(out); }, 4000);

@@ -234,6 +234,7 @@ textarea.inp{resize:vertical;min-height:62px;line-height:1.6;font-size:13.5px;}
     <button class="tab active" data-t="listings" onclick="go('listings')">My listings <span class="tab-c" id="c-listings">0</span></button>
     <button class="tab" data-t="discover" onclick="go('discover')">Find listings</button>
     <button class="tab" data-t="earnings" onclick="go('earnings')">Earnings</button>
+    <button class="tab" id="creator-tab" data-t="creator" onclick="go('creator')" hidden>Creator studio</button>
   </div>
 
   <div id="pane"></div>
@@ -284,6 +285,8 @@ textarea.inp{resize:vertical;min-height:62px;line-height:1.6;font-size:13.5px;}
 <script src="/vendor-supabase-2.112.3.js"></script>
 <script src="/apa-session.js"></script>
 <script src="/apa-roles.js" defer></script>
+<script src="/cabana-people.js" defer></script>
+<script src="/cabana-property-tour.js" defer></script>
 <script src="/apa-referral-capture.js" defer></script>
 <script>
 'use strict';
@@ -320,6 +323,7 @@ ApaSession.ready(async (s) => {
 
   const t = new URLSearchParams(location.search).get('tab');
   if (['listings','discover','earnings'].includes(t)) TAB = t;
+  else if (ME.agent.is_creator && (INFLUENCER_MODE || t === 'creator')) TAB = 'creator';
   if (t === 'verify') setTimeout(openV, 400);
 
   paint();
@@ -342,6 +346,8 @@ function paint() {
 
   document.getElementById('av').textContent = initials(a.full_name);
   document.getElementById('name').textContent = a.full_name;
+  document.getElementById('name').innerHTML = '<button type="button" data-cabana-person="'+E(a.id)+'" style="border:0;background:none;padding:0;font:inherit;color:inherit">'+E(a.full_name)+'</button>';
+  document.getElementById('creator-tab').hidden = !a.is_creator;
 
   let meta = '<span>Agent code <b style="color:var(--violet);font-family:ui-monospace,monospace;">' + E(a.referral_code) + '</b></span>';
   if (a.kyc_status === 'verified') meta += '<span class="badge b-verified"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>Verified</span>';
@@ -359,9 +365,9 @@ function paint() {
     const h = document.getElementById('mode-note');
     if (h) {
       h.hidden = false;
-      h.innerHTML = 'You are in <b>influencer</b> view. Same portal, same links, '
-        + 'same earnings &mdash; post your listing links anywhere and any booking '
-        + 'within 30 days of a click is yours.';
+      h.innerHTML = '<b>Influencer workspace.</b> Choose a host-approved listing, prepare a post and share its tracked link. '
+        + 'Eligible bookings within 30 days of a click use the commission agreed with that host. '
+        + 'Your agent calendar, partnerships and earnings remain in the tabs below.';
     }
   }
 
@@ -432,9 +438,33 @@ function go(t) {
 
 function render() {
   const p = document.getElementById('pane');
+  if (TAB === 'creator' && ME.agent.is_creator) return renderCreator(p);
   if (TAB === 'listings') return renderListings(p);
   if (TAB === 'discover') return renderDiscover(p);
   return renderEarnings(p);
+}
+
+function renderCreator(pane) {
+  const listings = ME.portfolio.filter(p => p.status === 'approved' && p.listing_status === 'active');
+  if (ME.agent.state !== 'active') {
+    pane.innerHTML = '<div class="empty"><div class="empty-t">Sharing is paused</div><div class="empty-d">Resolve the membership notice above before promoting listings. Your existing earnings remain in Earnings.</div></div>';
+    return;
+  }
+  pane.innerHTML = '<div class="mode-note"><b>Your audience, your voice.</b> Share approved listings and describe them honestly. Disclose that you may earn commission. Live availability and the booking price are always confirmed on Cabana.</div>'
+    + (listings.length ? listings.map(p => {
+      const url = ApaAgent.link(ME.agent.referral_code,p.listing_id);
+      const caption = p.title + ' · ' + (p.city || p.location || '') + '\nExplore photos, current prices and availability on Cabana: ' + url + '\nI may earn a commission when you book through my link.';
+      return '<article class="card" data-listing-id="'+E(p.listing_id)+'"><div class="c-t">'+E(p.title)+'</div>'
+        + '<p class="c-p">'+Number(p.live_leads || 0)+' browsing · '+Number(p.bookings || 0)+' booked · '+MONEY(p.earned)+' earned</p>'
+        + '<textarea class="field-input" rows="5" style="width:100%;box-sizing:border-box;font:inherit;padding:12px;border:1px solid var(--line-2);border-radius:12px" aria-label="Post draft for '+E(p.title)+'">'+E(caption)+'</textarea>'
+        + '<div class="acts"><button type="button" class="btn btn-primary" onclick="copyCreatorPost(this)">Copy post</button>'
+        + '<button type="button" class="copy" data-url="'+E(url)+'" onclick="copyLink(this)">Copy link</button>'
+        + '<a class="btn-ghost" href="'+E(url)+'">Preview listing</a></div></article>';
+    }).join('') : '<div class="empty"><div class="empty-t">Build your first collaboration</div><p>Ask a host to promote a listing. Approved, active listings will appear here.</p><button class="btn btn-primary" onclick="go(\'discover\')">Find listings</button></div>');
+}
+async function copyCreatorPost(button) {
+  try { await navigator.clipboard.writeText(button.closest('article').querySelector('textarea').value); toast('Post copied.'); }
+  catch (_) { toast('Select the post text and copy it.', true); }
 }
 
 function photo(p) {

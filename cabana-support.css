@@ -90,6 +90,12 @@
 }
 @media (max-width: 720px) { #cbn-sup-launcher { right: 14px; bottom: calc(78px + env(safe-area-inset-bottom, 0px)); } }
 
+/* Keep the assistant launcher clear of the host/guest message composer. */
+body:has(#cbm-panel-wrap.open, #cbm-inbox.open) :is(#cbn-sup-launcher, #cbn-apa-welcome) {
+  visibility: hidden;
+  pointer-events: none;
+}
+
 /* The word only shows on a wide viewport, and only until it has been
    used once. After that the mark is enough. */
 .cbn-sup-hint {

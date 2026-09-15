@@ -2025,11 +2025,13 @@ async function agentSignup(e) {
   const email     = document.getElementById('p-email').value.trim();
   const contact   = document.getElementById('p-contact').value.trim();
   const pw        = document.getElementById('p-pw').value;
+  const current = (await sb.auth.getSession()).data?.session;
+  const alreadySignedIn = current?.user?.email?.toLowerCase() === email.toLowerCase();
 
   if (!full_name)                                     return pErr('Please tell us your name.');
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))     return pErr('That email does not look right.');
   if (!contact)                                       return pErr('Add a number hosts can reach you on.');
-  if (pw.length < 8)                                  return pErr('Password must be at least 8 characters.');
+  if (!alreadySignedIn && pw.length < 8)              return pErr('Password must be at least 8 characters.');
   if (pIsCreator && !document.getElementById('p-handle').value.trim())
     return pErr('Add the social handle you post from.');
 
@@ -2037,7 +2039,9 @@ async function agentSignup(e) {
 
   /* 1 · the auth account */
   let uid = null;
-  const { data, error } = await sb.auth.signUp({
+  const { data, error } = alreadySignedIn
+    ? {data:{user:current.user, session:current}, error:null}
+    : await sb.auth.signUp({
     email, password: pw, options: { data: { full_name } },
   });
 
@@ -2110,9 +2114,9 @@ async function progLogin(e) {
     .maybeSingle();
 
   if (!agent) {
-    await sb.auth.signOut();
     pBusy('p-login-btn', false);
-    return pErr("That's a traveller account, not an agent one. Use the main sign-in above, or become an agent.");
+    document.getElementById('p-email').value = email;
+    return pErr('You are signed in. Use the join form with this email to create your agent membership.');
   }
 
   location.href = 'agent-dashboard.html';
@@ -2179,13 +2183,17 @@ async function infLogin(e) {
   infBusy('inf-login-btn', true);
   const { data, error } = await sb.auth.signInWithPassword({ email, password: pw });
   if (error) { infBusy('inf-login-btn', false); return infErr('Wrong email or password.'); }
-  // Check they have a creator flag
-  const { data: profile } = await sb.from('profiles').select('is_creator').eq('id', data.user.id).maybeSingle();
-  if (!profile?.is_creator) {
-    // Mark them as creator and continue - be welcoming
-    await sb.from('profiles').upsert({ id: data.user.id, is_creator: true }, { onConflict:'id' });
+  try {
+    const me = await ApaAgent.me(true);
+    if (!me.agent.is_creator) {
+      infBusy('inf-login-btn', false);
+      return infErr('You are signed in. Use Join as creator to add your audience details to your existing membership.');
+    }
+    location.href = 'agent-dashboard.html?mode=influencer';
+  } catch (error) {
+    infBusy('inf-login-btn', false);
+    infErr(error.code === 'NOT_AGENT' ? 'You are signed in. Use Join as creator to set up your creator membership.' : error.message);
   }
-  location.href = 'dashboard.html?uid=' + data.user.id + '&mode=creator';
 }
 
 async function infSignup(e) {
@@ -2196,18 +2204,19 @@ async function infSignup(e) {
   const followers = document.getElementById('inf-followers').value;
   const phone     = document.getElementById('inf-phone').value.trim();
   const pw        = document.getElementById('inf-pw').value;
+  const current = (await sb.auth.getSession()).data?.session;
+  const alreadySignedIn = current?.user?.email?.toLowerCase() === email.toLowerCase();
 
   if (!full_name)                                  return infErr('Please enter your name.');
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))  return infErr('Enter a valid email address.');
   if (!handle)                                     return infErr('Add your social handle or channel name.');
-  if (pw.length < 8)                               return infErr('Password must be at least 8 characters.');
+  if (!alreadySignedIn && pw.length < 8)           return infErr('Password must be at least 8 characters.');
 
   infBusy('inf-apply-btn', true);
 
-  const { data, error } = await sb.auth.signUp({
-    email, password: pw,
-    options: { data: { full_name, is_creator: true } }
-  });
+  const { data, error } = alreadySignedIn
+    ? {data:{user:current.user, session:current}, error:null}
+    : await sb.auth.signUp({email, password:pw, options:{data:{full_name, is_creator:true}}});
 
   if (error) {
     infBusy('inf-apply-btn', false);
@@ -2215,28 +2224,16 @@ async function infSignup(e) {
     return infErr(error.message || 'Could not create your account.');
   }
 
-  // Upsert profile with creator flag
-  try {
-    const uid = data.user?.id || data.session?.user?.id;
-    if (uid) {
-      await sb.from('profiles').upsert({
-        id: uid, email, first_name: full_name.split(' ')[0],
-        last_name: full_name.split(' ').slice(1).join(' '),
-        is_creator: true,
-        social_platform: infPlatform,
-        social_handle: handle,
-        audience_size: followers ? parseInt(followers) : null,
-        contact_phone: phone || null,
-      }, { onConflict:'id' });
-    }
-  } catch(_) {}
-
   infBusy('inf-apply-btn', false);
 
   if (data.session) {
-    await goDashboard(data.user);
+    try {
+      await ApaAgent.signup({full_name, contact_method:phone ? 'call':'email', contact_value:phone || email,
+        phone:phone || null, is_creator:true, social_platform:infPlatform, social_handle:handle, audience_size:followers});
+      location.href = 'agent-dashboard.html?mode=influencer';
+    } catch (e) { return infErr(e.message || 'Your account is ready. Try completing creator setup again.'); }
   } else {
-    document.getElementById('inf-ok').textContent = '🎉 Creator account created! Check your email to confirm, then sign in.';
+    document.getElementById('inf-ok').textContent = 'Account created. Confirm your email, sign in here, then use Join as creator to finish your membership.';
     document.getElementById('inf-ok').classList.add('show');
   }
 }
@@ -2293,9 +2290,6 @@ function checkMatch() {
 <script src="/cabana-lifecycle.js" defer></script>
 </body>
 </html>
-
-
-
 
 
 

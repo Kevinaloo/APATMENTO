@@ -13,9 +13,10 @@ an admin.
 
 ## The rate card
 
-Commission is a share of **Cabana's service fee**, not of the booking. The fee
-is 10% of booking value, so an ambassador on a traveller earns 15% of that 10%
-— 1.5% of the booking. Say that plainly wherever it is displayed.
+Commission is a share of **Cabana's service fee**, not of the booking. For a
+stay, that fee is currently KES 300 below KES 5,000 and KES 800 at or above
+KES 5,000. Tours and events currently have no Cabana fee, so there is no
+commission to share. Say that plainly wherever it is displayed.
 
 | | traveller | host / service provider |
 |---|---|---|
@@ -27,7 +28,7 @@ users were previously on 20% / 10%; halving them is what makes the ambassador
 tier worth being picked for.
 
 Worked example: a traveller an ambassador brought books a KES 10,000 stay.
-Cabana's fee is KES 1,000. The ambassador earns KES 150. Every booking that
+Cabana's fee is KES 800. The ambassador earns KES 120. Every eligible booking that
 person makes, for a year.
 
 ### Where the numbers live
@@ -38,7 +39,7 @@ Four copies, because each is needed at a different moment:
 |---|---|
 | `schema-ambassadors.sql` → `public.referral_rate()` | **the authority** |
 | `api/rewards.js` → `RATE_CARD` | stamps the rate onto the referral |
-| `api/ambassadors.js` → `RATE_CARD` | echoed to the dashboard for display |
+| `api/lib/_ambassadors.js` → `RATE_CARD` | echoed to the dashboard for display |
 | `ambassadors.html`, `ambassador-dashboard.html` | shown to a human |
 
 `tests/rate-card.test.mjs` fails if any of them drift. **Change a rate in the
@@ -147,8 +148,8 @@ Everything already used by `/api/rewards.js`, plus two optional tunables:
 | `COMMISSION_HOLD_DAYS` | `14` | Days before commission is withdrawable |
 | `REFERRAL_ATTRIBUTION_HOURS` | `48` | How long after signup a ref code still attributes |
 
-`RESEND_API_KEY` is what sends invitations. Without it, invites are created
-silently and you have to tell people yourself.
+`RESEND_API_KEY` is what sends invitations. Without it, the allowlist entry is
+still created and the admin response explicitly says the email was not sent.
 
 ### 3 · Files
 

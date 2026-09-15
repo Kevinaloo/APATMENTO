@@ -51,6 +51,7 @@ var TYPE_LABEL = { host: 'Host', service_provider: 'Service provider', traveller
 function paintHeader(me) {
   $('av').textContent   = A.fmt.initials(me.full_name);
   $('name').textContent = me.full_name || 'Ambassador';
+  $('name').innerHTML = '<button type="button" data-cabana-person="'+esc(me.id)+'" style="border:0;background:none;padding:0;font:inherit;color:inherit">'+esc(me.full_name || 'Ambassador')+'</button>';
 
   var bits = ['<span class="badge b-tier">Ambassador</span>'];
   if (me.region) bits.push(esc(me.region));
@@ -59,9 +60,9 @@ function paintHeader(me) {
 }
 
 /* ── Earnings ─────────────────────────────────────────────────────────── */
-function paintEarnings(me, entries) {
+function paintEarnings(me, entries, totals) {
   var now = Date.now();
-  var live = (entries || []).filter(function (e) { return e.status !== 'reversed'; });
+  var live = (entries || []).filter(function (e) { return e.status === 'confirmed'; });
   var avail = 0, hold = 0;
   live.forEach(function (e) {
     var v = Number(e.commission_kes || 0);
@@ -70,9 +71,10 @@ function paintEarnings(me, entries) {
 
   var fmt = function (v) { return kes(v); };
   UI.countUp($('earn-total'), Number(me.earned_total || 0), { format: fmt, duration: 1300 });
-  UI.countUp($('earn-avail'), avail, { format: fmt });
-  UI.countUp($('earn-hold'),  hold,  { format: fmt });
-  UI.countUp($('earn-count'), live.length);
+  UI.countUp($('earn-avail'), Number(totals?.available ?? me.earned_available ?? avail), { format: fmt });
+  UI.countUp($('earn-hold'), Number(totals?.on_hold ?? me.earned_pending ?? hold), { format: fmt });
+  UI.countUp($('earn-count'), Number(totals?.bookings ?? live.length));
+  if ($('earn-checkin')) $('earn-checkin').textContent = kes(totals?.pending ?? me.earned_pending_checkin ?? 0);
 }
 
 /* ── Funnel ───────────────────────────────────────────────────────────── */
@@ -119,8 +121,12 @@ function paintRing(me) {
 function paintLeads() {
   var host = $('leads');
   var rows = STATE.filter === 'all'
-    ? STATE.leads
+    ? STATE.leads.slice()
     : STATE.leads.filter(function (l) { return l.status === STATE.filter; });
+  rows.sort(function (a,b) {
+    const deadline = l => l.status === 'claimed' ? new Date(l.claim_expires_at).getTime() || Infinity : Infinity;
+    return deadline(a) - deadline(b) || new Date(b.created_at) - new Date(a.created_at);
+  });
 
   if (!rows.length) {
     host.innerHTML = STATE.leads.length ? emptyFiltered() : emptyPipeline();
@@ -160,7 +166,8 @@ function paintLeads() {
 
        Only for a lead that is actually still in play. Offering to build a
        listing for a rejected lead is offering to waste an afternoon. */
-    var canList = l.status === 'claimed' || l.status === 'signed_up';
+    var canList = l.lead_type !== 'traveller' && (l.status === 'signed_up' ||
+      (l.status === 'claimed' && new Date(l.claim_expires_at).getTime() > Date.now()));
     var act = canList
       ? '<button class="btn btn-ghost btn-sm lead-act" type="button" ' +
           'data-onboard="' + esc(l.id) + '" ' +
@@ -533,7 +540,7 @@ A.api.me().then(function (r) {
   paintHeader(STATE.me);
   paintBuilt();
   paintFeeLadder(r.rates);
-  paintEarnings(STATE.me, STATE.earnings);
+  paintEarnings(STATE.me, STATE.earnings, r.totals);
   paintFunnel(STATE.leads);
   paintRing(STATE.me);
   paintLeads();

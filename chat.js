@@ -10,7 +10,7 @@
    • Bell badge wired to dashboard + stays topbar
    ════════════════════════════════════════════════════════════════════════════ */
 
-const CabanaChat = (() => {
+const CabanaChat = window.CabanaChat = (() => {
   'use strict';
 
   /* ── Constants ─────────────────────────────────────────────────────────── */
@@ -30,8 +30,13 @@ const CabanaChat = (() => {
   let _pollTimer = null;
   let _ibView    = 'list'; // 'list' | 'thread'
   let _allConvs  = [];
+  let _refreshTimer = null;
+  let _refreshing = false;
+  let _previousOverflow = '';
+  let _openVersion = 0;
+  const _sending = new Set();
 
-  const sb = () => window.sb || null;
+  const sb = () => window.ApaSession?.client?.() || window.sb || null;
 
   /* ════════════════════════════════════════════════════════════════════════
      FORTRESS SCRUBBER
@@ -148,7 +153,6 @@ const CabanaChat = (() => {
      AUTH
   ════════════════════════════════════════════════════════════════════════ */
   async function resolveUser() {
-    if (window.CURRENT_USER) return window.CURRENT_USER;
     if (window.ApaSession) {
       return new Promise(res => {
         ApaSession.ready(st => {
@@ -156,7 +160,7 @@ const CabanaChat = (() => {
             window.CURRENT_USER = st.user;
             if (!window.sb && ApaSession.client) window.sb = ApaSession.client();
           }
-          res(window.CURRENT_USER || null);
+          res(st?.user || null);
         });
       });
     }
@@ -231,6 +235,7 @@ const CabanaChat = (() => {
   padding:16px;pointer-events:none;
 }
 #cbm-panel-wrap.open{pointer-events:all;}
+body:has(#cbm-panel-wrap.open, #cbm-inbox.open) :is(.sc-sticky, .sc-window) { visibility:hidden; pointer-events:none; }
 #cbm-panel{
   width:400px;max-width:calc(100vw - 20px);
   height:min(660px,93vh);
@@ -658,7 +663,7 @@ const CabanaChat = (() => {
     w.innerHTML = `
       <div id="cbm-panel" role="dialog" aria-label="Chat with host" aria-modal="true">
         <div class="cbm-head">
-          <div class="cbm-head-ava" id="cbm-head-ava">🏠</div>
+          <button type="button" class="cbm-head-ava" id="cbm-head-ava" aria-label="View member profile">🏠</button>
           <div class="cbm-head-info">
             <div class="cbm-head-name" id="cbm-head-name">Chat with Host</div>
             <div class="cbm-head-sub" id="cbm-head-sub">Secure in-app messaging</div>
@@ -723,7 +728,7 @@ const CabanaChat = (() => {
           <button class="cbm-thr-back" onclick="CabanaChat._thrBack()" aria-label="Back">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
           </button>
-          <div class="cbm-thr-ava" id="cbm-thr-ava">🏠</div>
+          <button type="button" class="cbm-thr-ava" id="cbm-thr-ava" aria-label="View member profile">🏠</button>
           <div class="cbm-thr-info">
             <div class="cbm-thr-name" id="cbm-thr-name">Conversation</div>
             <div class="cbm-thr-sub" id="cbm-thr-sub">Secure messaging</div>
@@ -869,17 +874,29 @@ const CabanaChat = (() => {
   ════════════════════════════════════════════════════════════════════════ */
   async function loadMsgs(convId) {
     const s = sb(); if (!s) return [];
-    const { data } = await s.from('chat_messages')
-      .select('*').eq('conversation_id', convId)
-      .order('created_at', { ascending:true }).limit(MSG_LIMIT);
-    return data || [];
+    const { data, error } = await s.from('chat_messages')
+      .select('id,conversation_id,sender_id,content,was_scrubbed,is_system,created_at').eq('conversation_id', convId)
+      .order('created_at', { ascending:false }).limit(MSG_LIMIT);
+    if (error) throw error;
+    return (data || []).reverse();
   }
 
   async function getOrCreate({ listingId, listingType, listingTitle, hostId }) {
     const s = sb(); if (!s) return null;
-    const { data: ex } = await s.from('chat_conversations')
+    const { data: ex, error: readError } = await s.from('chat_conversations')
       .select('*').eq('listing_id', listingId).eq('guest_id', _uid).maybeSingle();
+    if (readError) throw readError;
     if (ex) return ex;
+
+    // Several listing entry points know the listing, but not its owner yet.
+    if (!hostId) {
+      const { data: listing, error } = await s.from('listings')
+        .select('partner_id').eq('id', listingId).maybeSingle();
+      if (error) throw error;
+      hostId = listing?.partner_id;
+    }
+    if (!hostId) throw new Error('This listing does not have a host available to message yet.');
+    if (hostId === _uid) throw new Error("You can't message your own listing.");
 
     const { data: c, error } = await s.from('chat_conversations').insert({
       listing_id:    listingId,
@@ -888,19 +905,13 @@ const CabanaChat = (() => {
       host_id:       hostId,
       guest_id:      _uid,
     }).select().maybeSingle();
-    if (error || !c) return null;
-
-    // Opening message from guest
-    const opener = `Hi! I'm interested in "${listingTitle}". Is it available and could you share more details?`;
-    await s.from('chat_messages').insert({
-      conversation_id: c.id, sender_id: _uid,
-      content: opener, is_system: false,
-    });
-    await s.from('chat_conversations').update({
-      last_message: opener.slice(0, 60),
-      last_message_at: new Date().toISOString(),
-      last_sender_id: _uid, host_unread: 1,
-    }).eq('id', c.id);
+    if (error?.code === '23505') {
+      const retry = await s.from('chat_conversations').select('*')
+        .eq('listing_id', listingId).eq('guest_id', _uid).maybeSingle();
+      if (retry.error) throw retry.error;
+      return retry.data;
+    }
+    if (error) throw error;
     return c;
   }
 
@@ -914,7 +925,8 @@ const CabanaChat = (() => {
   async function doSend(convId, raw, btnId, inputId, msgsId) {
     const s = sb(); if (!s || !convId || !raw.trim()) return;
     // Block sending if conversation is locked
-    if (_conv && _conv.status === 'locked') {
+    if (_sending.has(convId)) return;
+    if (_conv && ['locked','blocked','archived'].includes(_conv.status)) {
       const el = document.getElementById(msgsId);
       if (el) {
         el.insertAdjacentHTML('beforeend',
@@ -941,31 +953,37 @@ const CabanaChat = (() => {
 
     const btn = document.getElementById(btnId);
     const inp = document.getElementById(inputId);
+    _sending.add(convId);
     if (btn) btn.disabled = true;
-    if (inp) { inp.value = ''; inp.style.height = ''; }
 
     try {
-      await s.from('chat_messages').insert({
+      const { data: sent, error } = await s.from('chat_messages').insert({
         conversation_id: convId, sender_id: _uid,
         content: clean,
-        content_raw: scrubbed ? raw : null,
         was_scrubbed: scrubbed,
-      });
-      const { data: cv } = await s.from('chat_conversations')
-        .select('host_id,host_unread,guest_unread').eq('id', convId).maybeSingle();
-      if (cv) {
-        const other = _uid === cv.host_id ? 'guest_unread' : 'host_unread';
+      }).select('created_at').maybeSingle();
+      if (error) throw error;
+      // Existing installations do not yet have the atomic summary trigger.
+      // If it already ran, last_sender_id/last_message_at prove that and this
+      // fallback does nothing, so a staged database rollout cannot double-count.
+      const { data: summary } = await s.from('chat_conversations')
+        .select('host_id,host_unread,guest_unread,last_sender_id,last_message_at')
+        .eq('id', convId).maybeSingle();
+      const triggerRan = summary?.last_sender_id === _uid && sent?.created_at
+        && new Date(summary.last_message_at).getTime() >= new Date(sent.created_at).getTime();
+      if (summary && !triggerRan) {
+        const other = _uid === summary.host_id ? 'guest_unread' : 'host_unread';
         await s.from('chat_conversations').update({
-          last_message:    clean.length > 60 ? clean.slice(0,60)+'…' : clean,
-          last_message_at: new Date().toISOString(),
-          last_sender_id:  _uid,
-          [other]:         (cv[other]||0) + 1,
+          last_message: clean.slice(0, 60), last_message_at: sent?.created_at || new Date().toISOString(),
+          last_sender_id: _uid, [other]: (summary[other] || 0) + 1,
         }).eq('id', convId);
       }
+      if (inp && inp.value === raw) { inp.value = ''; inp.style.height = ''; }
       if (scrubbed) toast('Some contact info was removed from your message.');
     } catch (e) {
-      toast('Failed to send. Please try again.');
+      toast('Message not sent. Your draft is saved here; please try again.');
     } finally {
+      _sending.delete(convId);
       if (btn) btn.disabled = false;
     }
   }
@@ -975,6 +993,38 @@ const CabanaChat = (() => {
   ════════════════════════════════════════════════════════════════════════ */
   function clearSub(sub) {
     try { if (sub) sub.unsubscribe(); } catch(_) {} return null;
+  }
+
+  function resetComposer(prefix) {
+    const inp = document.getElementById(prefix + '-input');
+    const btn = document.getElementById(prefix + '-send');
+    if (inp) { inp.disabled = false; inp.value = ''; inp.placeholder = 'Write a message…'; }
+    if (btn) btn.disabled = false;
+    const bar = inp?.closest('.cbm-bar');
+    if (bar) bar.style.display = '';
+  }
+
+  async function refreshActive() {
+    const id = _conv?.id;
+    if (!id || _refreshing || document.hidden) return;
+    _refreshing = true;
+    try {
+      const messages = await loadMsgs(id);
+      if (_conv?.id !== id) return;
+      const target = document.getElementById(_ibView === 'thread' ? 'cbm-thr-msgs' : 'cbm-panel-msgs');
+      const atBottom = !target || target.scrollHeight - target.scrollTop - target.clientHeight < 80;
+      const scroll = target?.scrollTop;
+      renderMsgs(messages, target);
+      if (target && !atBottom) target.scrollTop = scroll;
+      await markRead(_conv);
+      updateBell();
+    } catch (_) { /* Keep the current transcript while offline; retry on the next tick. */ }
+    finally { _refreshing = false; }
+  }
+
+  function startRefresh() {
+    clearInterval(_refreshTimer);
+    _refreshTimer = setInterval(refreshActive, 8000);
   }
 
   function subPanel(convId) {
@@ -1103,9 +1153,15 @@ const CabanaChat = (() => {
     if (!user) { location.href = 'auth.html?next=' + encodeURIComponent(location.href); return; }
     if (user.id === hostId) { toast("You can't message your own listing."); return; }
     _uid = user.id;
+    if (document.getElementById('cbm-inbox')?.classList.contains('open')) closeInbox();
+    if (document.getElementById('cbm-panel-wrap')?.classList.contains('open')) close();
+    const version = ++_openVersion;
+    _ibView = 'list';
 
     injectCSS();
     buildPanel();
+    resetComposer('cbm-panel');
+    _conv = null;
 
     const ico = TYPE_ICONS[listingType] || '💬';
     document.getElementById('cbm-head-ava').textContent = ico;
@@ -1117,6 +1173,7 @@ const CabanaChat = (() => {
     const msgsEl = document.getElementById('cbm-panel-msgs');
     msgsEl.innerHTML = `<div class="cbm-empty"><div class="cbm-empty-ico">⏳</div><div class="cbm-empty-ttl">Loading…</div></div>`;
     document.getElementById('cbm-panel-wrap').classList.add('open');
+    _previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
 
     const s = sb();
@@ -1126,19 +1183,29 @@ const CabanaChat = (() => {
     }
     _panSub = clearSub(_panSub);
 
-    const cv = await getOrCreate({ listingId, listingType, listingTitle, hostId });
+    let cv;
+    try { cv = await getOrCreate({ listingId, listingType, listingTitle, hostId }); }
+    catch (error) {
+      if (version !== _openVersion) return;
+      msgsEl.innerHTML = '<div class="cbm-empty"><div class="cbm-empty-ttl">Could not start conversation</div><div class="cbm-empty-sub">' + esc(error.message || 'Please try again.') + '</div></div>';
+      return;
+    }
+    if (version !== _openVersion) return;
     if (!cv) {
       msgsEl.innerHTML = `<div class="cbm-empty"><div class="cbm-empty-ico">⚠️</div><div class="cbm-empty-ttl">Could not start conversation</div><div class="cbm-empty-sub">Please try again.</div></div>`;
       return;
     }
     _conv = cv;
+    document.getElementById('cbm-head-ava').dataset.cabanaPerson = cv.host_id;
     await markRead(cv);
-    renderMsgs(await loadMsgs(cv.id), msgsEl);
+    try { renderMsgs(await loadMsgs(cv.id), msgsEl); }
+    catch (_) { msgsEl.textContent = 'Messages could not load. Reconnecting…'; }
     subPanel(cv.id);
+    startRefresh();
     updateBell();
 
     // Apply lock UI if conversation is locked
-    if (cv.status === 'locked') {
+    if (['locked','blocked','archived'].includes(cv.status)) {
       const inputBar = document.querySelector('#cbm-panel .cbm-bar');
       if (window.CabanaNotif) CabanaNotif.applyConvLock(cv, msgsEl, inputBar);
       const pBtn = document.getElementById('cbm-panel-send');
@@ -1157,13 +1224,15 @@ const CabanaChat = (() => {
     const txt = inp?.value || '';
     if (!txt.trim() || !_conv) return;
     await doSend(_conv.id, txt, 'cbm-panel-send', 'cbm-panel-input', 'cbm-panel-msgs');
-    renderMsgs(await loadMsgs(_conv.id), document.getElementById('cbm-panel-msgs'));
+    await refreshActive();
   }
 
   function close() {
+    ++_openVersion;
     document.getElementById('cbm-panel-wrap')?.classList.remove('open');
-    document.body.style.overflow = '';
+    document.body.style.overflow = _previousOverflow;
     _panSub = clearSub(_panSub);
+    clearInterval(_refreshTimer);
     _conv = null;
   }
 
@@ -1174,12 +1243,14 @@ const CabanaChat = (() => {
     const user = await resolveUser();
     if (!user) { location.href = 'auth.html?next=' + encodeURIComponent(location.href); return; }
     _uid = user.id;
+    if (document.getElementById('cbm-panel-wrap')?.classList.contains('open')) close();
 
     injectCSS();
     buildInbox();
 
     document.getElementById('cbm-thread').classList.remove('open');
     _ibView = 'list';
+    if (!document.getElementById('cbm-inbox').classList.contains('open')) _previousOverflow = document.body.style.overflow;
     document.getElementById('cbm-inbox').classList.add('open');
     document.body.style.overflow = 'hidden';
 
@@ -1203,11 +1274,18 @@ const CabanaChat = (() => {
 
   async function loadList() {
     const s = sb(); if (!s) return;
-    const { data } = await s.from('chat_conversations')
+    const { data, error } = await s.from('chat_conversations')
       .select('*')
       .or(`host_id.eq.${_uid},guest_id.eq.${_uid}`)
       .order('last_message_at', { ascending:false, nullsFirst:false })
       .limit(200);
+    if (error) {
+      const list = document.getElementById('cbm-ib-list');
+      if (list) list.innerHTML = '<div class="cbm-empty">Messages could not load. <button type="button" onclick="CabanaChat.openInbox()">Try again</button></div>';
+      const subtitle = document.getElementById('cbm-ib-sub');
+      if (subtitle) subtitle.textContent = 'Connection interrupted';
+      return;
+    }
     _allConvs = data || [];
     renderList(_allConvs);
   }
@@ -1273,6 +1351,8 @@ const CabanaChat = (() => {
     const { data: cv } = await s.from('chat_conversations').select('*').eq('id', convId).maybeSingle();
     if (!cv) return;
     _conv = cv;
+    resetComposer('cbm-thr');
+    document.getElementById('cbm-thr-ava').dataset.cabanaPerson = cv.host_id === _uid ? cv.guest_id : cv.host_id;
 
     const ico = TYPE_ICONS[cv.listing_type] || '💬';
     document.getElementById('cbm-thr-ava').textContent  = ico;
@@ -1286,14 +1366,16 @@ const CabanaChat = (() => {
     document.getElementById('cbm-thread').classList.add('open');
     _ibView = 'thread';
 
-    renderMsgs(await loadMsgs(convId), msgsEl);
+    try { renderMsgs(await loadMsgs(convId), msgsEl); }
+    catch (_) { msgsEl.textContent = 'Messages could not load. Reconnecting…'; }
     await markRead(cv);
     subThread(convId);
+    startRefresh();
     updateBell();
     loadList(); // background refresh
 
     // Apply lock UI if conversation is locked
-    if (cv.status === 'locked') {
+    if (['locked','blocked','archived'].includes(cv.status)) {
       const inputBar = document.querySelector('#cbm-thread .cbm-bar');
       if (window.CabanaNotif) CabanaNotif.applyConvLock(cv, msgsEl, inputBar);
       // Disable send button and textarea
@@ -1324,10 +1406,11 @@ const CabanaChat = (() => {
     const txt = inp?.value || '';
     if (!txt.trim() || !_conv) return;
     await doSend(_conv.id, txt, 'cbm-thr-send', 'cbm-thr-input', 'cbm-thr-msgs');
-    renderMsgs(await loadMsgs(_conv.id), document.getElementById('cbm-thr-msgs'));
+    await refreshActive();
   }
 
   function _thrBack() {
+    clearInterval(_refreshTimer);
     _thrSub = clearSub(_thrSub);
     _conv = null;
     document.getElementById('cbm-thread').classList.remove('open');
@@ -1338,8 +1421,10 @@ const CabanaChat = (() => {
   function _goStays() { closeInbox(); location.href = 'apartments.html'; }
 
   function closeInbox() {
+    ++_openVersion;
+    clearInterval(_refreshTimer);
     document.getElementById('cbm-inbox')?.classList.remove('open');
-    document.body.style.overflow = '';
+    document.body.style.overflow = _previousOverflow;
     _thrSub = clearSub(_thrSub);
     _conv = null;
     _ibView = 'list';
@@ -1378,6 +1463,8 @@ const CabanaChat = (() => {
      INIT
   ════════════════════════════════════════════════════════════════════════ */
   function _init() {
+    window.addEventListener('online', refreshActive);
+    document.addEventListener('visibilitychange', refreshActive);
     injectFont();
     injectCSS();
     _compat();

@@ -299,10 +299,11 @@ async function handleEnrol(req, res) {
 async function handleMe(req, res) {
   const s = await requireAmbassador(req);
 
-  const [meRows, leads, earnings] = await Promise.all([
+  const [meRows, leads, earnings, totals] = await Promise.all([
     dbAsUser(s.token, 'v_ambassador_me?select=*'),
     dbAsUser(s.token, 'ambassador_leads?select=*&order=created_at.desc&limit=200'),
     dbAsUser(s.token, 'referral_earnings?select=commission_kes,service_type,status,available_at,created_at,referral_type&order=created_at.desc&limit=100'),
+    rpcAsUser(s.token, 'cabana_ambassador_totals', {}).catch(() => null),
   ]);
 
   const me = meRows?.[0] || null;
@@ -314,6 +315,7 @@ async function handleMe(req, res) {
     me,
     leads: leads || [],
     earnings: earnings || [],
+    totals,
     link: `${SITE}/?ref=${encodeURIComponent(me.referral_code)}`,
     rates: RATE_CARD,
   });
@@ -487,6 +489,7 @@ async function handleEarnings(req, res) {
   const s = await requireAmbassador(req);
   const rows = await dbAsUser(s.token,
     'referral_earnings?select=*&order=created_at.desc&limit=500') || [];
+  const totals = await rpcAsUser(s.token, 'cabana_ambassador_totals', {}).catch(() => null);
 
   const now = Date.now();
 
@@ -512,6 +515,7 @@ async function handleEarnings(req, res) {
     on_hold:    sum(held),
     pending:    sum(pending),
     reversed:   sum(rows.filter(r => r.status === 'reversed')),
+    ...(totals || {}),
     hold_note:  'Commission is released once the booking is past its cancellation window.',
     pending_note: 'A stay\'s commission is held until the guest actually checks in — a paid ' +
                   'booking that is later refunded never becomes a confirmed earning.',

@@ -3,6 +3,7 @@
 <head>
 <link rel="stylesheet" href="/cabana-property-tour.css"/>
 <script defer src="/cabana-property-tour.js"></script>
+<script defer src="/cabana-gallery.js"></script>
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-5NQGLLEE02"></script>
 <script>
@@ -4186,10 +4187,13 @@ document.addEventListener('mouseout', e => {
 let _galPhotos = [];   // current modal photo array
 let _galIdx   = 0;    // current slide index
 let _galTouchX = null; // touch-start X for swipe
+let _galleryListingId = null;
 
 function openDrawer(id) {
   const apt = currentListings.find(a => a.id === id);
   if (!apt) return;
+  window.CabanaGallery?.stop();
+  _galleryListingId = id;
   window.CabanaHostMetrics?.track(String(apt._dbId || apt.id), 'view');
 
   const isNative  = apt.source === 'native';
@@ -4261,9 +4265,9 @@ function openDrawer(id) {
 
       <!-- Host card -->
       <div class="dl-host">
-        <div class="dl-host-ava">${apt.hostInit || 'H'}</div>
+        <button type="button" class="dl-host-ava" data-cabana-person="${_esc(apt.hostId || '')}" aria-label="View host profile">${_esc(apt.hostInit || 'H')}</button>
         <div class="dl-host-info">
-          <div class="dl-host-name">Hosted by ${apt.host || 'Cabana Partner'}</div>
+          <button type="button" class="dl-host-name" data-cabana-person="${_esc(apt.hostId || '')}">Hosted by ${_esc(apt.host || 'Cabana Partner')}</button>
           <div class="dl-host-tag">${isNative ? 'Cabana partner' : 'Partner host'}</div>
         </div>
         <div class="dl-host-100">Keeps 100%</div>
@@ -4340,7 +4344,7 @@ function openDrawer(id) {
   /* if no real photos yet, try fetching one */
   if (!_galPhotos.length) {
     getPhoto(apt.query || 'apartment interior Kenya', apt.id).then(url => {
-      if (!url) return;
+      if (!url || _galleryListingId !== id) return;
       _galPhotos = [url];
       _galIdx = 0;
       const track = document.getElementById('dl-gal-track');
@@ -4353,6 +4357,7 @@ function openDrawer(id) {
 
   /* swipe support */
   _attachGallerySwipe();
+  window.CabanaGallery?.start(document.querySelector('.dl-gallery'), _galPhotos.length, () => galStep(1));
 }
 
 /* ── gallery builder ── */
@@ -4604,10 +4609,7 @@ function _updateGalleryUI() {
   if (next) next.classList.toggle('hidden', _galIdx === _galPhotos.length - 1);
 }
 
-/* ── touch/swipe on gallery ──
-   The strip inside the drawer used to advance itself every 3.8s, the
-   same reflex the cards had. Both are gone: photographs move when the
-   guest moves them, by swipe, arrow or dot, and not otherwise. */
+/* Manual navigation and the pausable detail slideshow share the same index. */
 function _attachGallerySwipe() {
   const gal = document.querySelector('.dl-gallery');
   if (!gal) return;
@@ -4649,6 +4651,8 @@ function messageHost(id) {
 }
 
 function closeDrawer() {
+  window.CabanaGallery?.stop();
+  _galleryListingId = null;
   window.CabanaPropertyTour?.close();
   /* The lightbox is stacked above the drawer, so closing the drawer
      underneath it would leave a full-screen gallery floating over
@@ -6170,7 +6174,11 @@ function toggleHeart(e, el) { e.stopPropagation(); el.classList.toggle('on'); }
 function sortListings() { applyAndRender(); }
 
 /* ── GO ── */
-loadListings().then(() => {
+loadListings().then(async () => {
+  // Cached data can resolve before deferred gallery/tour helpers execute.
+  if (document.readyState === 'loading') {
+    await new Promise(resolve => document.addEventListener('DOMContentLoaded', resolve, { once: true }));
+  }
   // Deep-link: apartments.html?open=LISTING_ID  (sent from dashboard cards)
   const openId = new URLSearchParams(location.search).get('open');
   if (!openId) return;

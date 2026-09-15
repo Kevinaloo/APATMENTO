@@ -45,6 +45,7 @@
   var LS_KEY     = 'cbn.support.key';      // the anonymous identity
   var LS_CACHE   = 'cbn.support.cache';    // last transcript, for instant paint
   var LS_USED    = 'cbn.support.used';     // has this person opened it before
+  var LS_WELCOME = 'cbn.support.welcomed'; // separate from the page-loading splash
   var SS_OPEN    = 'cbn.support.open';     // was it open when we navigated
   var SS_PENDING = 'cbn.support.pending';  // a line to show on arrival
 
@@ -687,6 +688,7 @@
   function openPanel(focus) {
     if (open) return;
     open = true;
+    dismissWelcome();
     ls(LS_USED, '1');
     ss(SS_OPEN, '1');
     el.root.classList.add('cbn-sup--open', 'cbn-sup--used');
@@ -1569,6 +1571,7 @@
     delegate();
     bindCall();
     watchAuth();
+    scheduleWelcome();
 
     /* ── Continuity. Three ways in, all of them resuming rather than
        starting: the panel was open when we navigated, a link asked for a
@@ -1602,6 +1605,40 @@
         });
       }, 900);
     }
+  }
+
+  function dismissWelcome() {
+    const welcome = doc.getElementById('cbn-apa-welcome');
+    if (welcome) welcome.remove();
+    ls(LS_WELCOME, '1');
+  }
+
+  function scheduleWelcome() {
+    if (ls(LS_WELCOME) || ls(LS_USED) || cacheRead()) return;
+    const path = global.location.pathname;
+    if (/\/(auth|admin|booking-confirm|checkout|partner-|agent-dashboard|ambassador-dashboard|add-listing|profile)/.test(path)) return;
+    let attempts = 0;
+    function show() {
+      if (ls(LS_WELCOME) || ls(LS_USED) || open) return;
+      // Let arrival animations and anything the visitor opened finish first.
+      if (doc.hidden || doc.querySelector('dialog[open],.drawer.open,.gate-active,.cabana-gate-active,html.sg-lock,#cbp-splash,#apa-gate.show') || doc.body.style.overflow === 'hidden') {
+        if (++attempts < 30) setTimeout(show, 2000);
+        return;
+      }
+      if (doc.getElementById('cbn-apa-welcome')) return;
+      const card = doc.createElement('aside');
+      card.id = 'cbn-apa-welcome'; card.setAttribute('aria-label', 'Welcome from APA');
+      card.style.cssText = 'position:fixed;right:20px;bottom:150px;z-index:2147481999;width:min(320px,calc(100vw - 40px));box-sizing:border-box;background:var(--sup-paper,#fff);color:var(--sup-ink,#202033);border:1px solid #aa91de66;border-radius:22px;padding:20px;box-shadow:0 12px 40px #29204b26;font:14px/1.5 system-ui';
+      card.innerHTML = '<button type="button" data-apa-dismiss aria-label="Dismiss APA welcome" style="float:right;border:0;background:none;color:inherit;font-size:23px;cursor:pointer">×</button>'
+        + '<img src="/cabana-avatar.png" alt="APA" width="58" height="58" style="border-radius:50%;object-fit:cover;display:block;margin-bottom:10px">'
+        + '<strong style="font-size:18px">Karibu! I’m APA.</strong><p style="margin:8px 0 14px">Your Cabana companion. I can help you find a stay, plan a trip, or get a hand with a booking.</p>'
+        + '<button type="button" data-apa-hello style="border:0;border-radius:12px;padding:10px 15px;background:#7440cc;color:#fff;font:600 14px system-ui;cursor:pointer">Meet APA</button>';
+      card.querySelector('[data-apa-dismiss]').addEventListener('click', dismissWelcome);
+      card.querySelector('[data-apa-hello]').addEventListener('click', () => openPanel());
+      el.root.appendChild(card);
+      ls(LS_WELCOME, '1');
+    }
+    setTimeout(show, 2400);
   }
 
   /* ══════════════════════════════════════════════════════════════════
