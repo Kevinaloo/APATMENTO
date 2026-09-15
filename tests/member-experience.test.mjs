@@ -7,10 +7,10 @@ const read = file => readFileSync(new URL('../'+file,import.meta.url),'utf8');
 const guest='11111111-1111-4111-8111-111111111111', host='22222222-2222-4222-8222-222222222222';
 const listing='65ef1d11-a4e3-4250-bbac-f826c0cd10d2';
 
-function chatSetup() {
-  const dom=new JSDOM('<body></body>',{url:'https://cabana.africa/apartments',runScripts:'outside-only',pretendToBeVisual:true});
+function chatSetup({notifications=[],body='<body></body>'}={}) {
+  const dom=new JSDOM(body,{url:'https://cabana.africa/apartments',runScripts:'outside-only',pretendToBeVisual:true});
   const w=dom.window, calls=[];
-  const tables={listings:[{id:listing,partner_id:host}],chat_messages:[],chat_conversations:[]};
+  const tables={listings:[{id:listing,partner_id:host}],chat_messages:[],chat_conversations:[],notifications};
   let fail=false;
   function query(table) {
     let filters=[], insert, update, single=false, ascending=true, maximum=200;
@@ -82,6 +82,15 @@ test('reduced motion starts with an explicit play choice',()=>{
   w.matchMedia=()=>({matches:true});w.eval(read('cabana-gallery.js'));
   w.CabanaGallery.start(w.document.getElementById('gallery'),2,()=>{});
   assert.equal(w.document.querySelector('button').getAttribute('aria-pressed'),'false');d.window.close();
+});
+
+test('dashboard notification card stays out of the layout when the feed is empty',async()=>{
+  const t=chatSetup({body:'<body><div id="cbn-ring-slot"></div></body>'});
+  try{
+    await new Promise(r=>setTimeout(r,950));
+    const card=t.w.document.getElementById('cbn-ring-card');
+    assert.ok(card);assert.equal(card.style.display,'none');assert.equal(card.hidden,true);
+  }finally{t.dom.window.close()}
 });
 
 function response(){return {code:200,setHeader(){},status(n){this.code=n;return this},json(data){this.data=data;return this}}}

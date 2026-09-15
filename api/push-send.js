@@ -21,7 +21,7 @@
    ═══════════════════════════════════════════════════════════════════ */
 
 import crypto from 'node:crypto';
-import { hasInternalSecret, isCronAuthorized, setCors } from './lib/_security.js';
+import { authenticatedUser, consumeRateLimit, hasInternalSecret, isCronAuthorized, setCors } from './lib/_security.js';
 import { sendTemplateAsync } from './lib/_mail.js';
 
 const VAPID_PUBLIC  = process.env.VAPID_PUBLIC_KEY;
@@ -151,7 +151,7 @@ async function sendOne(sub, payloadObj) {
    listing" nudge is not; a booking, a payment, a support reply or an
    incoming call is. Consent and deduplication are handled inside
    sendTemplate, so this only has to decide relevance. */
-const EMAIL_WORTHY = new Set(['booking', 'payment', 'support', 'call', 'security', 'payout', 'urgent']);
+const EMAIL_WORTHY = new Set(['booking', 'payment', 'support', 'message', 'call', 'security', 'payout', 'urgent']);
 
 async function mirrorToEmail({ user_id, title, body, url, kind, email, force }) {
   if (!force && !EMAIL_WORTHY.has(kind)) return false;
@@ -254,18 +254,69 @@ async function handleCron(req, res) {
   return res.status(200).json({ fired: fired.length, campaigns: fired });
 }
 
+/* Shared by this route and other server functions. Calling the delivery
+   code directly avoids sending a server-to-server request back through
+   the public domain, where deployment protection can reject it. */
+export async function deliverNotification(b) {
+  const { user_id, endpoint, title, body, url, kind = 'general', persist = true, meta } = b;
+  if (!title || (!user_id && !endpoint)) throw new Error('title and recipient required');
+  if (!VAPID_PUBLIC || !VAPID_PRIVATE || !SERVICE_KEY) throw new Error('Push not configured');
+
+  let subs = endpoint
+    ? await supa(`push_subscriptions?endpoint=eq.${encodeURIComponent(endpoint)}&select=*`)
+    : await supa(`push_subscriptions?user_id=eq.${user_id}&select=*`);
+  subs = subs || [];
+
+  if (persist && user_id) {
+    await supa('notifications', {
+      method: 'POST',
+      body: JSON.stringify({ user_id, title, body, url, kind, meta: meta || {} }),
+    }).catch(e => console.warn('[push] persist failed:', e.message));
+  }
+
+  if (!subs.length) {
+    const mailed = await mirrorToEmail({ user_id, title, body, url, kind, email: b.email, force: b.email_always });
+    return { sent: 0, persisted: !!(persist && user_id), emailed: mailed };
+  }
+
+  const payload = { title, body, url, kind, icon: '/logo-mark.png',
+    tag: kind === 'message' && meta?.conversation_id ? `message-${meta.conversation_id}` : kind };
+  const results = await Promise.all(subs.map(s => sendOne(s, payload).catch(e => ({
+    endpoint: s.endpoint, error: e.message,
+  }))));
+  const delivered = results.filter(r => r.ok).length;
+  const mailed = (delivered === 0 || b.email_always)
+    ? await mirrorToEmail({ user_id, title, body, url, kind, email: b.email, force: b.email_always })
+    : false;
+  return {
+    sent: delivered,
+    pruned: results.filter(r => r.pruned).length,
+    total: results.length,
+    persisted: !!(persist && user_id),
+    emailed: mailed,
+    results,
+  };
+}
+
 /* ── handler ─────────────────────────────────────────────────────── */
 export default async function handler(req, res) {
   setCors(req, res, 'POST, OPTIONS');
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
 
-  const action = req.query?.action || (req.body && req.body.action);
+  let requestBody;
+  try { requestBody = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {}); }
+  catch { return res.status(400).json({ error: 'invalid_json' }); }
+  const action = req.query?.action || requestBody.action;
   // Authenticate before reporting configuration state. Otherwise an
   // anonymous caller can probe secrets and, when the shared secret is
   // missing, the old condition silently opened a bulk-notification API.
-  const authorized = hasInternalSecret(req, 'PUSH_ADMIN_SECRET')
+  const internal = hasInternalSecret(req, 'PUSH_ADMIN_SECRET')
     || (action === 'cron' && isCronAuthorized(req));
+  const chatCaller = !internal && action === 'chat-message'
+    ? await authenticatedUser(req)
+    : null;
+  const authorized = internal || !!chatCaller;
   if (!authorized) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
@@ -285,62 +336,50 @@ export default async function handler(req, res) {
   if (action === 'cron') return handleCron(req, res);
 
   try {
-    const b = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
-    const { user_id, endpoint, title, body, url, kind = 'general', persist = true } = b;
+    let b = requestBody;
+
+    /* A browser may request delivery only for a message it just authored.
+       The server derives the recipient and copy from trusted rows. */
+    if (action === 'chat-message') {
+      if (!consumeRateLimit(req, res, 'chat-message-push', 40, 60_000, chatCaller.id)) return;
+      const messageId = String(b.message_id || '');
+      if (!/^[0-9a-f-]{36}$/i.test(messageId)) return res.status(400).json({ error: 'message_id_required' });
+
+      const messages = await supa(`chat_messages?id=eq.${messageId}&sender_id=eq.${chatCaller.id}&select=id,conversation_id,sender_id,content&limit=1`);
+      const message = messages?.[0];
+      if (!message) return res.status(404).json({ error: 'message_not_found' });
+      const conversations = await supa(`chat_conversations?id=eq.${message.conversation_id}&select=id,host_id,guest_id,listing_title&limit=1`);
+      const conversation = conversations?.[0];
+      if (!conversation || ![conversation.host_id, conversation.guest_id].includes(chatCaller.id)) {
+        return res.status(403).json({ error: 'conversation_forbidden' });
+      }
+      const recipient = chatCaller.id === conversation.host_id ? conversation.guest_id : conversation.host_id;
+      if (!recipient || recipient === chatCaller.id) return res.status(400).json({ error: 'recipient_unavailable' });
+
+      const marker = encodeURIComponent(JSON.stringify({ message_id: message.id }));
+      const existing = await supa(`notifications?user_id=eq.${recipient}&meta=cs.${marker}&select=id&limit=1`).catch(() => []);
+      if (existing?.length) return res.status(200).json({ sent: 0, persisted: true, duplicate: true });
+
+      const preview = String(message.content || '').replace(/\s+/g, ' ').trim().slice(0, 140);
+      b = {
+        user_id: recipient,
+        title: `New message${conversation.listing_title ? ` about ${String(conversation.listing_title).slice(0, 80)}` : ''}`,
+        body: preview || 'Open Cabana to read the message.',
+        url: '/dashboard.html?inbox=1',
+        kind: 'message',
+        persist: true,
+        meta: { message_id: message.id, conversation_id: conversation.id },
+      };
+    }
+
+    const { user_id, endpoint, title, body, url, kind = 'general', persist = true, meta } = b;
 
     if (!title) return res.status(400).json({ error: 'title required' });
     if (!user_id && !endpoint) {
       return res.status(400).json({ error: 'user_id or endpoint required' });
     }
 
-    // Resolve target subscriptions.
-    let subs;
-    if (endpoint) {
-      subs = await supa(`push_subscriptions?endpoint=eq.${encodeURIComponent(endpoint)}&select=*`);
-    } else {
-      subs = await supa(`push_subscriptions?user_id=eq.${user_id}&select=*`);
-    }
-    subs = subs || [];
-
-    // Persist to the realtime feed first. An in-tab user sees it even
-    // if every push endpoint is dead, and it survives a missed push.
-    if (persist && user_id) {
-      await supa('notifications', {
-        method: 'POST',
-        body: JSON.stringify({ user_id, title, body, url, kind }),
-      }).catch(e => console.warn('[push] persist failed:', e.message));
-    }
-
-    if (!subs.length) {
-      const mailed = await mirrorToEmail({ user_id, title, body, url, kind, email: b.email, force: b.email_always });
-      return res.status(200).json({ sent: 0, persisted: !!(persist && user_id), emailed: mailed });
-    }
-
-    const payload = { title, body, url, kind, icon: '/logo-mark.png', tag: kind };
-    const results = await Promise.all(
-      subs.map(s => sendOne(s, payload).catch(e => ({
-        endpoint: s.endpoint, error: e.message,
-      })))
-    );
-
-    /* Push is best-effort by design: a revoked endpoint, a phone that has
-       not woken since Tuesday, a browser that never granted permission.
-       When nothing landed, the notification still has to reach the person,
-       so it goes out as email. That is what makes a notification a
-       notification rather than a hope. */
-    const delivered = results.filter(r => r.ok).length;
-    const mailed = (delivered === 0 || b.email_always)
-      ? await mirrorToEmail({ user_id, title, body, url, kind, email: b.email, force: b.email_always })
-      : false;
-
-    return res.status(200).json({
-      sent: delivered,
-      pruned: results.filter(r => r.pruned).length,
-      total: results.length,
-      persisted: !!(persist && user_id),
-      emailed: mailed,
-      results,
-    });
+    return res.status(200).json(await deliverNotification(b));
   } catch (err) {
     console.error('[push-send]', err);
     return res.status(500).json({ error: err.message });

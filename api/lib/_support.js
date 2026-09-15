@@ -1497,6 +1497,23 @@ async function findOrCreateThread(caller, { page, subject }) {
   return { thread, created: true };
 }
 
+async function findOrCreateHostThread(caller, subject) {
+  const open = await select('support_threads',
+    `user_id=eq.${caller.userId}&origin_page=eq.host-copilot&status=eq.apa&select=*&order=last_message_at.desc&limit=1`)
+    .catch(() => []);
+  if (open?.[0]) return { thread: open[0], created: false };
+  const thread = await insert('support_threads', {
+    user_id: caller.userId,
+    display_name: caller.name || null,
+    email: caller.email || null,
+    subject: clamp(subject, 160) || 'Host copilot',
+    origin_page: 'host-copilot',
+    category: 'host',
+    status: 'apa',
+  });
+  return { thread, created: true };
+}
+
 /* When an anonymous visitor signs in, the conversation they were already
    having is theirs. Adopting it is what stops "start over, but logged in
    this time" — the single most common way support systems lose people. */
@@ -1619,8 +1636,11 @@ export default async function handler(req, res) {
         const text = scrub(body.text);
         if (!text) return res.status(400).json({ error: 'empty_message' });
 
-        let thread = body.threadId ? await ownedThread(caller, body.threadId) : null;
-        if (!thread) ({ thread } = await findOrCreateThread(caller, { page: body.page, subject: text }));
+        const hostContext = body.context === 'host_copilot' && caller.kind === 'user';
+        let thread = hostContext ? null : (body.threadId ? await ownedThread(caller, body.threadId) : null);
+        if (!thread) ({ thread } = hostContext
+          ? await findOrCreateHostThread(caller, text)
+          : await findOrCreateThread(caller, { page: body.page, subject: text }));
         if (!thread) return res.status(500).json({ error: 'thread_unavailable' });
 
         /* Keep the header useful: a thread's subject is the first thing
@@ -1635,7 +1655,7 @@ export default async function handler(req, res) {
         await insert('support_messages', {
           thread_id: thread.id, sender_role: 'user', sender_id: caller.userId || null,
           sender_name: caller.name || null, body: text,
-          meta: { page: clamp(body.page, 60) || null, sentiment },
+          meta: { page: hostContext ? 'host-copilot' : (clamp(body.page, 60) || null), sentiment },
         }, false);
 
         dbUpdate('support_threads', `id=eq.${thread.id}`, {
@@ -1711,6 +1731,19 @@ export default async function handler(req, res) {
             page: clamp(body.page, 60), history,
           });
         } catch (e) {
+          if (hostContext) {
+            const owned = await hostTool(caller, { operation: 'list' }).catch(() => ({ listings: [] }));
+            const names = (owned.listings || []).map(row => clamp(row.title, 80)).filter(Boolean);
+            const reply = names.length
+              ? `I found ${names.length} listing${names.length === 1 ? '' : 's'} in your host account. ${names.length === 1 ? `I can review ${names[0]} once my analysis service reconnects.` : 'Choose the one you want me to review: ' + names.join(', ') + '.'}`
+              : 'I could not find a listing in this host account. Open My listings to confirm its ownership or add one.';
+            await insert('support_messages', {
+              thread_id: thread.id, sender_role: 'apa', sender_name: 'APA', body: reply,
+              intent: 'host', meta: { fallback: true, host_copilot: true },
+            }, false);
+            return res.status(200).json({ ok: true, threadId: thread.id, reply,
+              chips: names.length > 1 ? names.slice(0, 3) : [], escalated: false, degraded: true, status: 'apa' });
+          }
           /* The model is unreachable. This is exactly the moment the
              support system must NOT be down. Queue it, page the desk,
              and say the true thing in one sentence. */

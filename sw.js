@@ -209,7 +209,8 @@ self.addEventListener('push', e => {
       tag: d.tag || ('cbn-' + Date.now()),
       renotify: true,
       data: { url: d.url || '/dashboard.html' },
-      vibrate: [200, 100, 200]
+      vibrate: d.kind === 'message' ? [120, 70, 120, 70, 240] : [200, 100, 200],
+      silent: false
     })
   );
 });

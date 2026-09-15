@@ -922,6 +922,18 @@ body:has(#cbm-panel-wrap.open, #cbm-inbox.open) :is(.sc-sticky, .sc-window) { vi
     await s.from('chat_conversations').update({ [field]: 0 }).eq('id', conv.id);
   }
 
+  async function notifyMessage(messageId) {
+    if (!messageId || !window.ApaSession?.token) return;
+    const token = await window.ApaSession.token();
+    if (!token) return;
+    const response = await fetch('/api/push-send?action=chat-message', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ action: 'chat-message', message_id: messageId }),
+    });
+    if (!response.ok) throw new Error('notification_delivery_failed');
+  }
+
   async function doSend(convId, raw, btnId, inputId, msgsId) {
     const s = sb(); if (!s || !convId || !raw.trim()) return;
     // Block sending if conversation is locked
@@ -961,7 +973,7 @@ body:has(#cbm-panel-wrap.open, #cbm-inbox.open) :is(.sc-sticky, .sc-window) { vi
         conversation_id: convId, sender_id: _uid,
         content: clean,
         was_scrubbed: scrubbed,
-      }).select('created_at').maybeSingle();
+      }).select('id,created_at').maybeSingle();
       if (error) throw error;
       // Existing installations do not yet have the atomic summary trigger.
       // If it already ran, last_sender_id/last_message_at prove that and this
@@ -978,6 +990,7 @@ body:has(#cbm-panel-wrap.open, #cbm-inbox.open) :is(.sc-sticky, .sc-window) { vi
           last_sender_id: _uid, [other]: (summary[other] || 0) + 1,
         }).eq('id', convId);
       }
+      await notifyMessage(sent?.id).catch(e => console.warn('[chat:notify]', e.message));
       if (inp && inp.value === raw) { inp.value = ''; inp.style.height = ''; }
       if (scrubbed) toast('Some contact info was removed from your message.');
     } catch (e) {
@@ -1142,6 +1155,12 @@ body:has(#cbm-panel-wrap.open, #cbm-inbox.open) :is(.sc-sticky, .sc-window) { vi
       subGlobal();
       clearInterval(_pollTimer);
       _pollTimer = setInterval(updateBell, POLL_MS);
+      try {
+        if (new URLSearchParams(location.search).get('inbox') === '1') {
+          history.replaceState(null, '', location.pathname + location.hash);
+          openInbox();
+        }
+      } catch (_) {}
     });
   }
 
@@ -1437,11 +1456,10 @@ body:has(#cbm-panel-wrap.open, #cbm-inbox.open) :is(.sc-sticky, .sc-window) { vi
   }
 
   /* ════════════════════════════════════════════════════════════════════════
-     HOOK APA-CHROME BELL → opens inbox
+     EXPOSE MESSAGING TO APA CHROME
   ════════════════════════════════════════════════════════════════════════ */
   function _hookChrome() {
     if (window.ApaChrome) {
-      window.ApaChrome.openNotifications = openInbox;
       window.ApaChrome.openInbox = openInbox;
     }
   }
@@ -1801,8 +1819,28 @@ const CabanaNotif = (() => {
     t.innerHTML = `<span style="margin-right:7px">${ico}</span><strong>${escHtml(n.title)}</strong>${n.body ? '<br><span style="font-weight:400;font-size:12px">' + escHtml(n.body) + '</span>' : ''}`;
     clearTimeout(t._timer);
     t._timer = setTimeout(() => t.classList.remove('show'), 5000);
+    if (n.kind === 'message') playMessageChime();
     // Click opens relevant destination
     t.onclick = () => { t.classList.remove('show'); if (n.url) location.href = n.url; };
+  }
+
+  function playMessageChime() {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx(), now = ctx.currentTime;
+      [[0, 659.25], [.13, 783.99], [.28, 987.77]].forEach(([delay, frequency]) => {
+        const osc = ctx.createOscillator(), gain = ctx.createGain();
+        osc.type = 'sine'; osc.frequency.value = frequency;
+        gain.gain.setValueAtTime(.0001, now + delay);
+        gain.gain.exponentialRampToValueAtTime(.12, now + delay + .015);
+        gain.gain.exponentialRampToValueAtTime(.0001, now + delay + .16);
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.start(now + delay); osc.stop(now + delay + .18);
+      });
+      setTimeout(() => ctx.close().catch(() => {}), 700);
+      navigator.vibrate?.([80, 50, 160]);
+    } catch (_) { /* browser sound remains best-effort */ }
   }
 
   function escHtml(str) {
@@ -1825,9 +1863,13 @@ const CabanaNotif = (() => {
     if (!feed) return;
 
     if (!_feed.length) {
-      feed.innerHTML = '<div class="cbn-feed-empty">You\'re all caught up 🎉</div>';
+      card.hidden = true;
+      card.style.display = 'none';
       return;
     }
+
+    card.hidden = false;
+    card.style.display = '';
 
     feed.innerHTML = _feed.slice(0, 15).map(n => {
       const ico = KIND_ICO[n.kind] || '🔔';

@@ -17,8 +17,7 @@
    a successful payment or booking. Errors are logged, never thrown.
    ═══════════════════════════════════════════════════════════════════ */
 
-const BASE = process.env.PUBLIC_BASE_URL || 'https://cabana.africa';
-const SECRET = process.env.PUSH_ADMIN_SECRET || '';
+import { deliverNotification } from '../push-send.js';
 
 export async function notify({ user_id, endpoint, title, body, url, kind = 'general', persist = true }) {
   if (!title || (!user_id && !endpoint)) {
@@ -27,18 +26,8 @@ export async function notify({ user_id, endpoint, title, body, url, kind = 'gene
   }
 
   try {
-    const res = await fetch(`${BASE}/api/push-send`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-admin-secret': SECRET,
-      },
-      body: JSON.stringify({ user_id, endpoint, title, body, url, kind, persist }),
-    });
-
-    const out = await res.json().catch(() => ({}));
-    if (!res.ok) console.warn('[notify]', res.status, out);
-    return { ok: res.ok, ...out };
+    const out = await deliverNotification({ user_id, endpoint, title, body, url, kind, persist });
+    return { ok: true, ...out };
   } catch (err) {
     // Never let a notification failure break the calling flow.
     console.warn('[notify] transport error:', err.message);

@@ -59,6 +59,7 @@
   var el = {};
   var open = false;
   var booted = false;
+  var bootPromise = null;
   var thread = null;
   var messages = [];
   var suggestions = [];
@@ -71,6 +72,7 @@
   var navTimer = null;
   var outbox = [];       // messages the network refused; retried on the next send
   var callActive = false;
+  var nextContext = null;
 
   /* ══════════════════════════════════════════════════════════════════
      STORAGE. Every access is guarded: Safari private mode throws on
@@ -811,7 +813,7 @@
      BOOT & CONTINUITY
   ══════════════════════════════════════════════════════════════════ */
   function boot() {
-    if (booted) return Promise.resolve();
+    if (booted) return bootPromise || Promise.resolve();
     booted = true;
 
     /* Paint from cache first. The panel is never empty while the network
@@ -824,7 +826,7 @@
       paint(false);
     }
 
-    return api('bootstrap', { page: pageKey(), adoptGuestKey: guestKey() })
+    bootPromise = api('bootstrap', { page: pageKey(), adoptGuestKey: guestKey() })
       .then(function (d) {
         signedIn = !!(d.caller && d.caller.signedIn);
         callerName = d.caller && d.caller.name;
@@ -871,6 +873,7 @@
         setStatus('Reconnecting…', 'queue');
         setTimeout(function () { booted = false; if (open) boot(); }, 6000);
       });
+    return bootPromise;
   }
 
   /* A line APA left for us on the page she sent us to. */
@@ -930,11 +933,13 @@
       text: queued.length ? queued.concat([text]).join('\n\n') : text,
       threadId: thread && thread.id,
       page: pageKey(),
+      context: nextContext || undefined,
       /* Photos and coordinates the page gathered. Validated server-side
          before it reaches a row — the browser proposes, the server
          decides, same as everywhere else. */
       clientData: clientData || undefined,
     };
+    nextContext = null;
 
     api('send', payload)
       .then(function (d) {
@@ -942,7 +947,10 @@
         sending = false;
         el.send.disabled = !el.input.value.trim();
 
-        if (d.threadId) thread = Object.assign(thread || {}, { id: d.threadId, status: d.status || 'apa' });
+        if (d.threadId) {
+          thread = Object.assign(thread || {}, { id: d.threadId, status: d.status || 'apa' });
+          reflectStatus();
+        }
 
         if (d.handedOver) {
           reflectStatus();
@@ -1649,6 +1657,15 @@
     open: function (prefill) {
       openPanel();
       if (prefill) setTimeout(function () { submit(prefill); }, 400);
+    },
+    host: function (prefill) {
+      openPanel();
+      boot().finally(function () {
+        thread = null; messages = []; lastAt = null;
+        ls(LS_CACHE, null); paint(false);
+        nextContext = 'host_copilot';
+        if (prefill) submit(prefill);
+      });
     },
     close: closePanel,
     ask: function (text) { openPanel(false); submit(text); },

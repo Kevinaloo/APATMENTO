@@ -2704,6 +2704,7 @@ function paintGuestContent(){
 function onSession(st){
   CURRENT_USER = st.user;
   CURRENT_ROLE = st.role;
+  USER.firstName = st.name || 'friend';
 
   /* Greeting. Independent of everything else. */
   _try(function(){
@@ -3450,7 +3451,10 @@ function hostCopilotHTML(){
 }
 function askHostCopilot(text){
   if(!text.trim())return;
-  if(window.CabanaSupport) CabanaSupport.open('As a host: '+text.trim());
+  if(window.CabanaSupport){
+    if(CabanaSupport.host) CabanaSupport.host(text.trim());
+    else CabanaSupport.open('As a host: '+text.trim());
+  }
   else document.querySelectorAll('.host-copilot-status').forEach(el=>{el.textContent='APA is still loading. Please try again in a moment.';});
 }
 function statCard(val,label,sub){return `<div class="prop-card" style="padding:22px;cursor:default;"><div style="font-family:var(--font-data);font-weight:600;font-size:28px;margin-bottom:4px;">${val}</div><div style="font-size:13px;color:var(--ink-soft);">${label}</div><div style="font-size:11px;color:var(--mint-deep);margin-top:6px;font-weight:600;">${sub}</div></div>`;}
