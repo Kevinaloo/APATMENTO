@@ -20,6 +20,7 @@ const AI_ENV = [
 ];
 
 function useAiEnv(t, values) {
+  __test.resetCooldowns();
   const before = Object.fromEntries(AI_ENV.map(name => [name, process.env[name]]));
   for (const name of AI_ENV) delete process.env[name];
   for (const [name, value] of Object.entries(values || {})) process.env[name] = value;
@@ -157,6 +158,58 @@ test('an unauthorized Gateway is skipped without delaying Groq', async (t) => {
   const result = await callAi([{ role: 'user', content: 'Hello' }]);
   assert.deepEqual(urls, ['https://api.groq.com/openai/v1/chat/completions']);
   assert.equal(result.provider, 'groq');
+});
+
+test('an explicit Gateway disable overrides a leftover API key', async (t) => {
+  useAiEnv(t, {
+    AI_GATEWAY_ENABLED: 'false',
+    AI_GATEWAY_API_KEY: 'leftover-gateway-key',
+    GROQ_API_KEY: 'groq-test-key',
+  });
+  const urls = [];
+  useFetch(t, async url => {
+    urls.push(url);
+    return jsonResponse({
+      model: 'openai/gpt-oss-120b',
+      choices: [{ message: { role: 'assistant', content: 'Direct free provider.' } }],
+    });
+  });
+  const result = await callAi([{ role: 'user', content: 'Hello' }]);
+  assert.equal(result.provider, 'groq');
+  assert.deepEqual(urls, ['https://api.groq.com/openai/v1/chat/completions']);
+});
+
+test('rate-limited providers cool down while healthy fallbacks continue', async (t) => {
+  useAiEnv(t, {
+    AI_PROVIDER_ORDER: 'gateway,groq',
+    AI_GATEWAY_ENABLED: 'true',
+    AI_GATEWAY_API_KEY: 'gateway-test-key',
+    GROQ_API_KEY: 'groq-test-key',
+  });
+  const urls = [];
+  useFetch(t, async url => {
+    urls.push(url);
+    if (url.includes('ai-gateway.vercel.sh')) {
+      return new Response('{}', { status: 429, headers: { 'Retry-After': '60' } });
+    }
+    return jsonResponse({
+      model: 'openai/gpt-oss-120b',
+      choices: [{ message: { role: 'assistant', content: 'Fallback stayed online.' } }],
+    });
+  });
+
+  const first = await callAi([{ role: 'user', content: 'One' }]);
+  const second = await callAi([{ role: 'user', content: 'Two' }]);
+  assert.equal(first.provider, 'groq');
+  assert.equal(second.provider, 'groq');
+  assert.equal(urls.filter(url => url.includes('ai-gateway.vercel.sh')).length, 1);
+  assert.deepEqual(second.gateway.attempts.map(item => [item.provider, item.status, item.code]), [
+    ['gateway', 'skipped', 'provider_cooldown'],
+    ['groq', 'ok', undefined],
+  ]);
+
+  process.env.AI_GATEWAY_API_KEY = 'rotated-gateway-key';
+  assert.equal(__test.cooldownRemaining('gateway'), 0);
 });
 
 function initHeader(init, name) {

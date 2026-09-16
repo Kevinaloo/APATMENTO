@@ -4,7 +4,7 @@
            | reconcile-payments | geocode | atlas | sos-alert | carhire-terrain
    Consolidates small utility handlers into 1 function
 ════════════════════════════════════════════════════════════════ */
-export const config = { maxDuration: 15 };
+export const config = { maxDuration: 60 };
 
 /* ══════════════════════════════════════════════════════════════
    CLOSE BOOKINGS  ·  the sweeper
@@ -63,8 +63,7 @@ const SWEEPABLE = {
 };
 
 function maintenanceAuthorized(req) {
-  return Boolean(req.headers['x-vercel-cron'])
-    || isCronAuthorized(req)
+  return isCronAuthorized(req)
     || hasInternalSecret(req);
 }
 
@@ -75,8 +74,8 @@ async function handleCloseBookings(req, res) {
     return res.status(500).json({ error: 'supabase_not_configured' });
   }
 
-  /* Vercel signs its own cron calls. Anything else needs the secret,
-     so this cannot be used to mass-mutate bookings from outside. */
+  /* Vercel cron sends CRON_SECRET as a bearer token. Internal jobs may use
+     their separate secret; caller-controlled marker headers grant nothing. */
   if (!maintenanceAuthorized(req)) {
     return res.status(403).json({ error: 'forbidden' });
   }
@@ -628,8 +627,7 @@ async function handleReconcilePayments(req, res) {
     return res.status(500).json({ error: 'supabase_not_configured' });
   }
 
-  /* Same gate as close-bookings: Vercel signs its own cron calls,
-     anything else needs the secret. This moves money state. */
+  /* Same bearer/internal-secret gate as close-bookings. This moves money state. */
   if (!maintenanceAuthorized(req)) {
     return res.status(403).json({ error: 'forbidden' });
   }
@@ -660,10 +658,10 @@ async function handleExpireMatchOffers(req, res) {
 
   try {
     const result = await expireStaleMatchOffers();
-    return res.status(200).json({ ok: true, ran_at: new Date().toISOString(), ...result });
+    return res.status(result.failed ? 503 : 200).json({ ran_at: new Date().toISOString(), ...result });
   } catch (err) {
-    console.error('[expire-match-offers]', err);
-    return res.status(500).json({ error: 'expire_failed', detail: String(err.message || err) });
+    console.error('[expire-match-offers]', { code: err.code || 'expire_failed', status: err.upstreamStatus });
+    return res.status(err.transient ? 503 : 500).json({ error: 'expire_failed' });
   }
 }
 

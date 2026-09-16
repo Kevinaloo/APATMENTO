@@ -1122,12 +1122,17 @@ export default async function handler(req, res) {
    they could not stay; the guest looked and did not choose. It
    closes quietly and their booking stands.
 ══════════════════════════════════════════════════════════════ */
-export async function expireStaleMatchOffers() {
+export async function expireStaleMatchOffers({ limit = 25, budgetMs = 35000 } = {}) {
+  const started = Date.now();
+  const batchSize = Math.max(1, Math.min(25, Math.floor(Number(limit) || 25)));
   const stale = await select('match_offers',
-    `status=eq.offered&expires_at=lt.${new Date().toISOString()}&select=*&limit=200`);
+    `status=eq.offered&expires_at=lt.${new Date().toISOString()}&select=*&order=expires_at.asc,id.asc&limit=${batchSize}`);
 
   const results = [];
   for (const offer of stale) {
+    // Leave enough runway to finish an admitted offer; unstarted work stays
+    // offered for the next protected scheduler run. Never replay money writes.
+    if (Date.now() - started >= budgetMs) break;
     try {
       if ((offer.initiated_by || 'host') === 'guest') {
         await update('match_offers', `id=eq.${offer.id}`,
@@ -1189,5 +1194,8 @@ export async function expireStaleMatchOffers() {
     }
   }
 
-  return { scanned: stale.length, results };
+  const failed = results.filter(result => result.outcome === 'error').length;
+  return { ok: failed === 0, scanned: stale.length, processed: results.length,
+    remaining: stale.length - results.length, hasMore: stale.length === batchSize,
+    failed, results };
 }

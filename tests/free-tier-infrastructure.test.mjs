@@ -6,6 +6,7 @@ const read = file => readFileSync(new URL('../' + file, import.meta.url), 'utf8'
 const vercel = JSON.parse(read('vercel.json'));
 const ignored = new Set(read('.vercelignore').split(/\r?\n/).filter(Boolean));
 const utilities = read('api/utilities.js');
+const matchGuest = read('api/lib/_match-guest.js');
 const scheduler = read('supabase/migrations/20260908190000_free_tier_match_offer_scheduler.sql');
 
 test('Vercel stays below the 12-function Hobby ceiling', () => {
@@ -33,4 +34,6 @@ test('hourly expiry uses protected Supabase scheduling, not Vercel Hobby cron', 
   assert.match(scheduler, /'7 \* \* \* \*'/);
   assert.match(scheduler, /'Authorization', 'Bearer ' \|\| v_secret/);
   assert.match(utilities, /isCronAuthorized\(req\)/);
+  assert.doesNotMatch(utilities, /Boolean\(req\.headers\['x-vercel-cron'\]\)/);
+  assert.match(matchGuest, /const batchSize = Math\.max\(1, Math\.min\(25,/);
 });

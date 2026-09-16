@@ -183,11 +183,10 @@ test('the server spends the moment only when the client asks to draw it', () => 
     'a background claim must not burn the one celebration');
   assert.match(fn, /claim_welcome_celebration/, 'the decision comes from the database');
 
-  /* All three exits of claim-welcome must carry the flag, or whether you
-     are congratulated depends on which branch your signup happened to
-     take — granted, already-granted, or lost-the-insert-race. */
+  /* Granted and already-granted now share one atomic RPC and one success
+     return. Both still use the existing database-owned celebration stamp. */
   const exits = fn.match(/celebrate: await celebrateIfDue\(\)/g) || [];
-  assert.equal(exits.length, 3,
+  assert.equal(exits.length, 1,
     'every return path from claim-welcome must answer the celebration question');
 });
 

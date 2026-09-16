@@ -21,6 +21,7 @@
 
 import { ambassadorHandler } from './lib/_ambassadors.js';
 import { feeBasis } from './lib/_fees.js';
+import { upstreamRequest, optionalJson } from './lib/_upstream.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SERVICE_KEY  = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -178,18 +179,14 @@ function creditsAllowedOn(serviceType) {
    drift from it. */
 const CREDIT_ELIGIBLE_LABEL = 'stays, tours, events, roommates and car hire';
 
-const welcomeRef = uid => 'WELCOME-' + uid;
-
 /* ── DB helpers (service-role. Full trust) ── */
 async function dbSelect(table, query = '') {
-  const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${query}`, {
+  return upstreamRequest(`${SUPABASE_URL}/rest/v1/${table}?${query}`, {
     headers: {
       apikey: SERVICE_KEY,
       Authorization: `Bearer ${SERVICE_KEY}`,
     },
-  });
-  if (!r.ok) throw new Error(`select ${table}: ${await r.text()}`);
-  return r.json();
+  }, { readOnly: true });
 }
 
 async function dbInsert(table, row, { upsert = false, onConflict = '' } = {}) {
@@ -199,7 +196,7 @@ async function dbInsert(table, row, { upsert = false, onConflict = '' } = {}) {
   const url = upsert && onConflict
     ? `${SUPABASE_URL}/rest/v1/${table}?on_conflict=${onConflict}`
     : `${SUPABASE_URL}/rest/v1/${table}`;
-  const r = await fetch(url, {
+  return upstreamRequest(url, {
     method: 'POST',
     headers: {
       apikey: SERVICE_KEY,
@@ -208,34 +205,14 @@ async function dbInsert(table, row, { upsert = false, onConflict = '' } = {}) {
       Prefer: prefer,
     },
     body: JSON.stringify(row),
-  });
-  if (!r.ok) throw new Error(`insert ${table}: ${await r.text()}`);
-  const txt = await r.text();
-  return txt ? JSON.parse(txt) : null;
+  }, { timeoutMs: 8000, decode: optionalJson });
 }
 
-async function dbPatch(table, query, patch) {
-  const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${query}`, {
-    method: 'PATCH',
-    headers: {
-      apikey: SERVICE_KEY,
-      Authorization: `Bearer ${SERVICE_KEY}`,
-      'Content-Type': 'application/json',
-      Prefer: 'return=representation',
-    },
-    body: JSON.stringify(patch),
-  });
-  if (!r.ok) throw new Error(`patch ${table}: ${await r.text()}`);
-  const rows = await r.json();
-  return rows[0] || null;
-}
-
-/* Call a Postgres function with the service key. Returns null rather
-   than throwing when the function is not deployed yet, so a missing
-   migration degrades a feature instead of breaking a signup. */
+/* Call a Postgres function with the service key. Only the optional
+   celebration stamp may degrade when its migration is absent. */
 async function dbRpc(fn, args = {}) {
   try {
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
+    return await upstreamRequest(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
       method: 'POST',
       headers: {
         apikey: SERVICE_KEY,
@@ -243,42 +220,19 @@ async function dbRpc(fn, args = {}) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(args),
-    });
-    if (!r.ok) { console.warn(`[rewards] rpc ${fn}:`, await r.text()); return null; }
-    const txt = await r.text();
-    return txt ? JSON.parse(txt) : null;
+    }, { timeoutMs: 8000, decode: optionalJson });
   } catch (e) {
-    console.warn(`[rewards] rpc ${fn}:`, e.message);
-    return null;
+    // Only the optional presentation stamp may degrade for a missing RPC.
+    // A timeout is NOT proof that a financial write failed to commit.
+    if (fn === 'claim_welcome_celebration' && e.code === 'PGRST202') return null;
+    throw e;
   }
 }
 
-/* Atomic points increment via Supabase RPC.
-   Falls back to read-then-write if the RPC doesn't exist yet
-   the SQL migration creates it.  */
+/* Atomic points increment. Fail closed if the deployed RPC is unavailable;
+   a read-then-write fallback can lose updates or duplicate a committed grant. */
 async function atomicAddPoints(userId, delta, lifetime = false) {
-  const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/add_user_points`, {
-    method: 'POST',
-    headers: {
-      apikey: SERVICE_KEY,
-      Authorization: `Bearer ${SERVICE_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ p_user_id: userId, p_delta: delta, p_add_lifetime: lifetime }),
-  });
-  if (r.ok) return;
-  /* Fallback: non-atomic but at least server-side */
-  console.warn('[rewards] RPC add_user_points not available, falling back');
-  const rows = await dbSelect('user_points', `user_id=eq.${userId}&select=available_points,lifetime_points`);
-  const av = (rows[0]?.available_points || 0) + delta;
-  const lt = (rows[0]?.lifetime_points  || 0) + (lifetime ? delta : 0);
-  if (rows.length) {
-    await dbPatch('user_points', `user_id=eq.${userId}`, {
-      available_points: av, lifetime_points: lt, updated_at: new Date().toISOString(),
-    });
-  } else {
-    await dbInsert('user_points', { user_id: userId, available_points: av, lifetime_points: lt });
-  }
+  return dbRpc('add_user_points', { p_user_id: userId, p_delta: delta, p_add_lifetime: lifetime });
 }
 
 /* ── Who is calling? Validate bearer token via Supabase auth/v1/user ── */
@@ -286,11 +240,14 @@ async function authedUser(req) {
   const auth = req.headers.authorization || req.headers.Authorization || '';
   const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
   if (!token) return null;
-  const r = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
-    headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${token}` },
-  });
-  if (!r.ok) return null;
-  return r.json();
+  try {
+    return await upstreamRequest(`${SUPABASE_URL}/auth/v1/user`, {
+      headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${token}` },
+    }, { readOnly: true });
+  } catch (error) {
+    if ([401, 403].includes(error.upstreamStatus)) return null;
+    throw error;
+  }
 }
 
 /* ── CORS ── */
@@ -498,20 +455,11 @@ async function actionAward(body, req) {
 
 /* claim-welcome
    Auth: user's own bearer token. Idempotent, and idempotent at the
-   DB level rather than only in this function: point_transactions has
-   a unique index on (booking_ref, type) for type='earn', so two calls
-   racing each other produce one grant and one duplicate-key error, not
-   two grants. The client may therefore call this on every page load
-   without co-ordination.                                              */
+   DB level: the ledger entry AND balance increment commit together.
+   The client may call this on every page load without co-ordination. */
 async function actionClaimWelcome(body, user) {
   if (!user) return { error: 'Unauthorized', status: 401 };
   const userId = user.id;
-  const ref    = welcomeRef(userId);
-
-  const balanceOf = async () => {
-    const rows = await dbSelect('user_points', `user_id=eq.${userId}&select=available_points`);
-    return rows[0]?.available_points || 0;
-  };
 
   /* ── The one-time congratulations ────────────────────────────────
      `celebrate: true` comes back from exactly one call, ever, for a
@@ -540,56 +488,15 @@ async function actionClaimWelcome(body, user) {
     return v === true || v === 'true';
   };
 
-  /* Already granted? Say so plainly, and hand back the balance so the
-     UI can render without a second round trip. */
-  const existing = await dbSelect('point_transactions',
-    `booking_ref=eq.${encodeURIComponent(ref)}&type=eq.earn&limit=1`);
-  if (existing.length) {
-    return {
-      ok: true, already: true, points: WELCOME_POINTS,
-      balance: await balanceOf(),
-      celebrate: await celebrateIfDue(),
-      eligible_services: CREDIT_ELIGIBLE,
-      eligible_label: CREDIT_ELIGIBLE_LABEL,
-    };
-  }
-
-  /* Eligibility is account age, taken from the auth record, never from
-     anything the caller sends. */
-  const createdAt = user.created_at || user.createdAt;
-  if (createdAt && new Date(createdAt) < new Date(WELCOME_FROM)) {
-    return { ok: false, eligible: false, reason: 'account_predates_offer',
-             balance: await balanceOf() };
-  }
-
-  try {
-    await atomicAddPoints(userId, WELCOME_POINTS, true);
-    await dbInsert('point_transactions', {
-      user_id:      userId,
-      type:         'earn',
-      points:       WELCOME_POINTS,
-      amount_kes:   WELCOME_POINTS,
-      service_type: 'welcome',
-      booking_ref:  ref,
-      description:  `Welcome credit · ${WELCOME_POINTS} credits`,
-    });
-  } catch (e) {
-    /* Lost the race against another tab. The other one granted it. */
-    if (/duplicate|unique/i.test(e.message)) {
-      return {
-        ok: true, already: true, points: WELCOME_POINTS,
-        balance: await balanceOf(),
-        celebrate: await celebrateIfDue(),
-        eligible_services: CREDIT_ELIGIBLE,
-        eligible_label: CREDIT_ELIGIBLE_LABEL,
-      };
-    }
-    throw e;
-  }
-
+  // Identity comes from the verified bearer token; eligibility is checked
+  // against auth.users inside the transaction. No client-supplied amounts.
+  const grant = await dbRpc('cabana_claim_welcome_credit', {
+    p_user: userId, p_points: WELCOME_POINTS, p_from: WELCOME_FROM,
+  });
+  if (!grant || typeof grant.ok !== 'boolean') throw new Error('invalid_welcome_result');
+  if (!grant.ok) return { ...grant, status: grant.reason === 'profile_missing' ? 409 : 200 };
   return {
-    ok: true, granted: true, points: WELCOME_POINTS,
-    balance: await balanceOf(),
+    ...grant,
     celebrate: await celebrateIfDue(),
     eligible_services: CREDIT_ELIGIBLE,
     eligible_label: CREDIT_ELIGIBLE_LABEL,
@@ -896,6 +803,7 @@ export default async function handler(req, res) {
     const body   = req.body || {};
     const action = body.action;
     if (!action) return res.status(400).json({ error: 'action required' });
+    if (!SUPABASE_URL || !SERVICE_KEY) return res.status(503).json({ error: 'rewards_temporarily_unavailable' });
 
     /* award doesn't need a user token. It's internal-secret-gated */
     const user = action === 'award' ? null : await authedUser(req);
@@ -918,7 +826,12 @@ export default async function handler(req, res) {
     return res.status(status).json(payload);
 
   } catch (err) {
-    console.error('[rewards] handler error:', err);
-    return res.status(500).json({ error: err.message });
+    console.error('[rewards] handler error:', { code: err.code || 'rewards_failed', status: err.upstreamStatus });
+    if (err.transient || err.code === 'PGRST202') {
+      res.setHeader('Cache-Control', 'no-store');
+      return res.status(503).json({ error: 'rewards_temporarily_unavailable' });
+    }
+    if (err.code === '23503') return res.status(409).json({ error: 'account_profile_incomplete' });
+    return res.status(500).json({ error: 'rewards_failed' });
   }
 }
