@@ -12,6 +12,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&display=swap"/>
 <link rel="stylesheet" href="/apa-ambassador.css"/>
+<link rel="stylesheet" href="/cabana-spotlight.css"/>
 
 <script>(function(){try{var t=localStorage.getItem('apa-amb-theme');if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t);}catch(e){}document.documentElement.classList.remove('no-js');})();</script>
 
@@ -182,6 +183,7 @@ main{padding:clamp(22px,4vh,38px) 0 clamp(72px,12vh,120px);}
   <main class="wrap">
     <h1 style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0">Cabana ambassador dashboard</h1>
 
+    <section id="partner-spotlight" aria-label="Your ambassador recognition"></section>
     <!-- ══ EARNINGS ══ -->
     <section class="card card-crest reveal">
       <div class="earn">
@@ -277,7 +279,7 @@ main{padding:clamp(22px,4vh,38px) 0 clamp(72px,12vh,120px);}
           <button role="tab" aria-selected="true"  data-filter="all">All</button>
           <button role="tab" aria-selected="false" data-filter="claimed">Claimed</button>
           <button role="tab" aria-selected="false" data-filter="signed_up">Signed up</button>
-          <button role="tab" aria-selected="false" data-filter="listed">Listed</button>
+          <button role="tab" aria-selected="false" data-filter="listed">Owner accepted</button>
           <button role="tab" aria-selected="false" data-filter="earning">Earning</button>
         </div>
         <div id="leads"></div>
@@ -293,9 +295,9 @@ main{padding:clamp(22px,4vh,38px) 0 clamp(72px,12vh,120px);}
     <section class="sec" id="built-sec" hidden>
       <div class="sec-head">
         <div>
-          <h2 class="h1">Listings you have built</h2>
-          <p class="body">Set up on someone else's behalf. Each one goes live on their
-            account the moment they accept it — until then nothing is public.</p>
+          <h2 class="h1">Introductions you moved forward</h2>
+          <p class="body">People who accepted a listing you prepared, plus invitations still
+            waiting for an owner. Their acceptance stays visible after the listing moves into their account.</p>
         </div>
       </div>
       <div class="card"><div id="built"></div></div>
@@ -514,6 +516,7 @@ main{padding:clamp(22px,4vh,38px) 0 clamp(72px,12vh,120px);}
 <script src="/apa-roles.js" defer></script>
 <script src="/cabana-people.js" defer></script>
 <script src="/apa-ambassador.js"></script>
+<script src="/cabana-spotlight.js"></script>
 <script src="/ambassador-dashboard.js"></script>
 <script src="/cabana-call.js" defer></script>
 <script src="/apa-location.js" defer></script><script src="/cabana-sos.js" defer></script><script src="/cabana-support.js" defer></script>

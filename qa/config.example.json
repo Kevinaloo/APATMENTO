@@ -1,0 +1,15 @@
+{
+  "stagingOrigins": ["https://YOUR-ISOLATED-STAGING.vercel.app"],
+  "stagingSupabaseOrigin": "https://YOUR-STAGING-PROJECT.supabase.co",
+  "sandboxPayments": false,
+  "syntheticAccountsOnly": false,
+  "inboxOrigins": [],
+  "variables": {},
+  "accounts": {
+    "owner": { "emailEnv": "QA_OWNER_EMAIL", "passwordEnv": "QA_OWNER_PASSWORD" },
+    "outsider": { "emailEnv": "QA_OUTSIDER_EMAIL", "passwordEnv": "QA_OUTSIDER_PASSWORD" }
+  },
+  "notApplicable": {},
+  "rls": [],
+  "journeys": {}
+}

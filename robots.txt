@@ -3,6 +3,13 @@
 #  Africa's Zero-Commission Travel Super-App · 54 African Countries
 # ══════════════════════════════════════════════════════════════════════
 
+# ── PWABuilder packaging worker ───────────────────────────────────────
+# PWABuilder downloads the manifest and icons from its packaging service.
+# Keep this explicit so a crawler policy or upstream bot filter does not
+# mistake the Android packaging request for an abusive scrape.
+User-agent: PWABuilderHttpAgent
+Allow: /
+
 # ── General Crawlers ──────────────────────────────────────────────────
 User-agent: *
 Allow: /

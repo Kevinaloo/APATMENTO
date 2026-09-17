@@ -374,6 +374,7 @@
   function prime(opts) {
     opts = opts || {};
     var reason = REASONS[opts.reason] || REASONS['default'];
+    var required = opts.required === true;
 
     if (!supported()) return Promise.resolve(false);
     if (opts.auto) {
@@ -388,27 +389,34 @@
       if (document.getElementById('apa-loc-gate')) return resolve(false);
 
       var denied = state === 'denied';
+      var installedApp = !!(global.matchMedia && global.matchMedia('(display-mode: standalone)').matches)
+        || !!(global.navigator && global.navigator.standalone === true)
+        || (document.referrer || '').indexOf('android-app://africa.cabana.app') === 0;
       var g = document.createElement('div');
       g.className = 'apa-loc';
       g.id = 'apa-loc-gate';
       g.innerHTML =
         '<div class="apa-loc-card">' +
-        '<button class="apa-loc-x" type="button" aria-label="Close">×</button>' +
+        (required ? '' : '<button class="apa-loc-x" type="button" aria-label="Close">×</button>') +
         '<div class="apa-loc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">' + PIN_SVG + '</svg></div>' +
         '<div class="apa-loc-h"></div>' +
         '<div class="apa-loc-p"></div>' +
         (denied ? '' : '<button class="apa-loc-btn"></button>') +
-        (denied ? '<button class="apa-loc-btn2" data-action="reload">Reload page</button>' : '<button class="apa-loc-btn2" data-action="dismiss">Not now</button>') +
+        (denied ? '<button class="apa-loc-btn2" data-action="reload">Reload page</button>' : (required ? '' : '<button class="apa-loc-btn2" data-action="dismiss">Not now</button>')) +
         '<div class="apa-loc-note"></div>' +
         '</div>';
 
       g.querySelector('.apa-loc-h').textContent = denied ? 'Location is blocked' : reason.h;
       g.querySelector('.apa-loc-p').textContent = denied
-        ? 'Your browser is currently blocking location. You can still use Cabana, but live weather, safe routes and nearby results cannot use your exact position.'
+        ? (installedApp
+          ? 'Android is currently blocking location for Cabana. Location is required for pick-up points, nearby results and SOS.'
+          : 'Your browser is currently blocking location. You can still use Cabana, but live weather, safe routes and nearby results cannot use your exact position.')
         : reason.p;
       g.querySelector('.apa-loc-note').textContent = denied
-        ? 'To enable: tap the lock icon in the address bar → Site settings → Location → Allow, then reload.'
-        : 'Your choice is optional. If you allow it, Cabana reuses one precise fix across location-aware services.';
+        ? (installedApp
+          ? 'To enable: open Android Settings → Apps → Cabana → Permissions → Location → Allow, then reload Cabana.'
+          : 'To enable: tap the lock icon in the address bar → Site settings → Location → Allow, then reload.')
+        : (required ? 'Location access is required for the Cabana app. Android will ask once, and you can change it later in Cabana app settings.' : 'Your choice is optional. If you allow it, Cabana reuses one precise fix across location-aware services.');
       var go = g.querySelector('.apa-loc-btn');
       if (go) go.textContent = reason.btn;
 
@@ -420,7 +428,8 @@
         closeGate(g, true);
         resolve(false);
       }
-      g.querySelector('.apa-loc-x').addEventListener('click', dismiss);
+      var close = g.querySelector('.apa-loc-x');
+      if (close) close.addEventListener('click', dismiss);
       var secondary = g.querySelector('.apa-loc-btn2');
       if (secondary) secondary.addEventListener('click', function () {
         if (secondary.getAttribute('data-action') === 'reload') global.location.reload();

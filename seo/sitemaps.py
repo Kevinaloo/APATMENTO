@@ -38,7 +38,8 @@ CORE = {"index": 1.0, "apartments": 0.95, "tours": 0.95, "flights": 0.9, "events
         "carhire": 0.9, "rides": 0.9, "food": 0.85, "shopping": 0.85, "roommates": 0.85,
         "destinations": 0.95, "world": 0.95, "become-partner": 0.9, "become-agent": 0.85,
         "become-driver": 0.85, "cabana": 0.9, "rewards": 0.7, "guides": 0.8,
-        "press": 0.6, "terms": 0.3, "privacy": 0.3, "cookies": 0.3}
+        "press": 0.6, "terms": 0.3, "privacy": 0.3, "cookies": 0.3,
+        "influencers": 0.9, "agents": 0.9, "ambassadors": 0.9}
 
 
 def url_for(stem):

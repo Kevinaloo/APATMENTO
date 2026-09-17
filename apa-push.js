@@ -296,6 +296,10 @@
     gateCSS();
     if (document.getElementById('apa-gate')) return;
 
+    var installedApp = !!(global.matchMedia && global.matchMedia('(display-mode: standalone)').matches)
+      || !!(global.navigator && global.navigator.standalone === true)
+      || (document.referrer || '').indexOf('android-app://africa.cabana.app') === 0;
+
     var g = document.createElement('div');
     g.className = 'apa-gate';
     g.id = 'apa-gate';
@@ -313,11 +317,15 @@
       ? 'Notifications are blocked' : 'Stay in the loop';
 
     g.querySelector('.apa-gate-p').textContent = denied
-      ? 'Turn on notifications to hear about bookings, payments and messages. Your browser is currently blocking notifications for Cabana.'
-      : 'Apatmento requires notifications to securely deliver booking confirmations, payment receipts and host messages the moment they happen.';
+      ? (installedApp
+        ? 'Turn on notifications to hear about bookings, payments and messages. Android is currently blocking notifications for Cabana.'
+        : 'Turn on notifications to hear about bookings, payments and messages. Your browser is currently blocking notifications for Cabana.')
+      : 'Cabana requires notifications to securely deliver booking confirmations, payment receipts and host messages the moment they happen.';
 
     g.querySelector('.apa-gate-note').textContent = denied
-      ? 'To enable: tap the lock icon in your address bar \u2192 Site settings \u2192 Notifications \u2192 Allow, then reload.'
+      ? (installedApp
+        ? 'To enable: open Android Settings \u2192 Apps \u2192 Cabana \u2192 Notifications \u2192 Allow, then reload Cabana.'
+        : 'To enable: tap the lock icon in your address bar \u2192 Site settings \u2192 Notifications \u2192 Allow, then reload.')
       : 'Required to securely use Cabana. Please select "Allow on every visit" to prevent this prompt from reappearing.';
 
     document.body.appendChild(g);

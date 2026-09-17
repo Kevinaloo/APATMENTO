@@ -1,0 +1,17 @@
+.cabana-spotlight{position:relative;isolation:isolate;overflow:hidden;margin:22px 0 28px;padding:clamp(24px,5vw,48px);border:1px solid #b59a6055;border-radius:24px;background:radial-gradient(ellipse at 100% 0,#67503477,transparent 58%),linear-gradient(130deg,#181523,#292135);color:#fff8e9;box-shadow:0 18px 48px #18152318}
+.cabana-spotlight::after{content:'✦';position:absolute;right:4%;top:-55px;font-size:280px;line-height:1;color:#e6c4820c;z-index:-1;pointer-events:none}
+.cabana-spotlight .spot-kicker{font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#e7c990}
+.cabana-spotlight h2{font-family:var(--font-d,Georgia,serif);font-size:clamp(28px,4vw,46px);line-height:1.08;letter-spacing:-.035em;margin:14px 0;max-width:650px}
+.cabana-spotlight p{max-width:64ch;line-height:1.65;color:#ded5e8;font-size:14px;margin:12px 0}
+.spot-proof{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin:24px 0}
+.spot-count{font-size:36px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.1}
+.spot-label{display:block;color:#e7c990;font-size:12px;margin-top:5px}
+.spot-badge{border:1px solid #e7c99066;border-radius:100px;padding:9px 15px;color:#f0dcb4;font-size:12px}
+.spot-progress{display:block;width:min(100%,420px);height:6px;accent-color:#e7c990;margin:12px 0}
+.spot-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}
+.spot-actions button,.spot-actions a{display:inline-flex;align-items:center;justify-content:center;padding:12px 18px;min-height:44px;border:1px solid #e7c99066;border-radius:10px;background:transparent;color:#fff8e9;font:600 13px var(--font-b,Arial,sans-serif);text-decoration:none;cursor:pointer}
+.spot-actions button:first-child{background:#efdbb5;color:#211b29;border-color:#efdbb5}
+.spot-actions :focus-visible{outline:3px solid #fff;outline-offset:4px}
+.spot-status{min-height:1.6em;font-size:12px!important;margin-bottom:0!important}
+.spot-copy{width:100%;box-sizing:border-box;min-height:110px;margin-top:14px;padding:12px;border-radius:10px;background:#fff8e9;color:#211b29;font:14px Arial,sans-serif}
+@media(max-width:480px){.spot-actions>*{flex:1 1 100%}.cabana-spotlight{border-radius:18px}.spot-proof{gap:12px}}

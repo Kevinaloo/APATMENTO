@@ -19,7 +19,7 @@ if (!A) return;
 var esc = A.fmt.esc, kes = A.fmt.kes, ago = A.fmt.ago, UI = A.ui;
 var $ = function (id) { return document.getElementById(id); };
 
-var STATE = { me: null, leads: [], earnings: [], filter: 'all' };
+var STATE = { me: null, leads: [], earnings: [], transfers: [], filter: 'all' };
 
 /* ── Theme ────────────────────────────────────────────────────────────── */
 var SUN  = '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M6.3 17.7l-1.4 1.4M19.1 4.9l-1.4 1.4"/>';
@@ -39,7 +39,7 @@ paintTheme();
 var STATUS = {
   claimed:   { label: 'Claimed',   colour: 'var(--electric)',  badge: 'b-mute' },
   signed_up: { label: 'Signed up', colour: 'var(--violet)',    badge: 'b-tier' },
-  listed:    { label: 'Listed',    colour: 'var(--gold)',      badge: 'b-warn' },
+  listed:    { label: 'Owner accepted', colour: 'var(--gold)', badge: 'b-warn' },
   earning:   { label: 'Earning',   colour: 'var(--mint-deep)', badge: 'b-ok'   },
   expired:   { label: 'Lapsed',    colour: 'var(--ink-faint)', badge: 'b-mute' },
   rejected:  { label: 'Rejected',  colour: 'var(--err)',       badge: 'b-err'  },
@@ -139,6 +139,10 @@ function paintLeads() {
     var s = STATUS[l.status] || STATUS.claimed;
     var meta = [];
     meta.push(TYPE_LABEL[l.lead_type] || 'Host');
+    if (l.attribution_source === 'referral_link') meta.push('Registered through your link');
+    if (l.attribution_source === 'claim_and_link') meta.push('Claim + referral link');
+    if (l.onboarding_stage === 'listing_claimed') meta.push('Owner accepted a listing you prepared');
+    if (l.onboarding_stage === 'awaiting_owner') meta.push('Waiting for owner acceptance');
     if (l.city) meta.push(esc(l.city));
     if (l.category) meta.push(esc(l.category));
     meta.push(ago(l.created_at));
@@ -166,7 +170,7 @@ function paintLeads() {
 
        Only for a lead that is actually still in play. Offering to build a
        listing for a rejected lead is offering to waste an afternoon. */
-    var canList = l.lead_type !== 'traveller' && (l.status === 'signed_up' ||
+    var canList = l.attribution_source !== 'referral_link' && l.lead_type !== 'traveller' && (l.status === 'signed_up' ||
       (l.status === 'claimed' && new Date(l.claim_expires_at).getTime() > Date.now()));
     var act = canList
       ? '<button class="btn btn-ghost btn-sm lead-act" type="button" ' +
@@ -387,6 +391,27 @@ function paintBuilt() {
 }
 
 function paintBuiltInner(host, sec) {
+  /* Accepted transfers remain visible through the ambassador API after the
+     listing moves into the owner's account. Reading `listings` alone used to
+     make the ambassador's work disappear at the exact moment it succeeded. */
+  var transfers = STATE.transfers || [];
+  if (transfers.length) {
+    sec.removeAttribute('hidden');
+    sec.classList.add('reveal', 'in');
+    host.innerHTML = '<div class="leads-list">' + transfers.map(function (t) {
+      var accepted = t.status === 'accepted';
+      return '<div class="lead"><span class="lead-dot" style="background:' +
+        (accepted ? 'var(--mint-deep)' : 'var(--gold)') + '"></span>' +
+        '<div class="lead-main"><div class="lead-name">' + esc(t.to_name || 'Listing owner') + '</div>' +
+        '<div class="lead-meta">' + (accepted ? 'Accepted a listing you prepared' : 'Listing awaiting owner acceptance') +
+          (t.listing_id ? ' · listing ' + esc(String(t.listing_id).slice(0, 8)) : '') +
+          (t.accepted_at ? ' · ' + ago(t.accepted_at) : '') + '</div></div>' +
+        '<span class="badge ' + (accepted ? 'b-ok' : 'b-warn') + '">' +
+          (accepted ? 'Accepted' : 'Awaiting owner') + '</span></div>';
+    }).join('') + '</div>';
+    return;
+  }
+
   var sb = window.ApaSession && window.ApaSession.client && window.ApaSession.client();
   if (!sb || !sb.from) return;
 
@@ -536,8 +561,14 @@ A.api.me().then(function (r) {
   STATE.me       = r.me;
   STATE.leads    = r.leads || [];
   STATE.earnings = r.earnings || [];
+  STATE.transfers = r.listing_transfers || [];
 
   paintHeader(STATE.me);
+  if (window.CabanaSpotlight) window.CabanaSpotlight.mount($('partner-spotlight'), {
+    name: STATE.me.full_name, role: 'Ambassador', count: STATE.me.leads_converted,
+    unit: 'people onboarded', link: r.link, code: STATE.me.referral_code,
+    detail: 'Your claimed leads and recorded referral registrations, counted together. A registration is recognition; commission follows eligible bookings.',
+  });
   paintBuilt();
   paintFeeLadder(r.rates);
   paintEarnings(STATE.me, STATE.earnings, r.totals);

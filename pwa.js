@@ -520,6 +520,36 @@ async function initOpenInApp() {
   showOpenAppBar({ autoHide: !installed });
 }
 
+/* ── REQUIRED APP PERMISSIONS ──────────────────────────────────────
+   A verified Trusted Web Activity is the installed Cabana app. Keep the
+   browser site usable without a surprise OS prompt, but make the app ask
+   for the two permissions it needs on first launch. The native permission
+   dialogs still have to be started by a user gesture; the branded gates
+   provide that gesture and explain why each permission is needed. */
+function runningCabanaApp() {
+  return runningStandalone()
+    || (document.referrer || '').indexOf('android-app://africa.cabana.app') === 0;
+}
+
+function initRequiredAppPermissions() {
+  if (!runningCabanaApp() || window.__cabanaRequiredPermissionsStarted) return;
+  window.__cabanaRequiredPermissionsStarted = true;
+
+  var tries = 0;
+  var wait = setInterval(function () {
+    var loc = window.ApaLocation;
+    var push = window.ApaPush;
+    if (loc && push && typeof loc.prime === 'function' && typeof push.requireNotifications === 'function') {
+      clearInterval(wait);
+      Promise.resolve(loc.prime({ reason: 'default', required: true }))
+        .then(function () { return push.requireNotifications(); })
+        .catch(function () {});
+    } else if (++tries > 100) {
+      clearInterval(wait);
+    }
+  }, 50);
+}
+
 /* ── INIT ── */
 function init() {
   pwaInjectCSS();
@@ -527,10 +557,7 @@ function init() {
   initInstallPrompt();
   initOfflineBanner();
   initOpenInApp();
-
-  // Notification permission is no longer nagged on a timer. It is
-  // required once the user is actually inside the app. See
-  // apa-push.js requireNotifications(), invoked from the dashboard.
+  initRequiredAppPermissions();
 }
 
 if (document.readyState === 'loading') {

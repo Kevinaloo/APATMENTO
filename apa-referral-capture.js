@@ -41,6 +41,7 @@ var SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
 var PENDING = 'apt_ref_pending';
 var SESSION = 'apt_ref';
 var DONE    = 'apt_ref_done';
+var inFlight = Object.create(null);
 
 function safe(fn, label) {
   try { return fn(); }
@@ -71,10 +72,10 @@ function pending() {
   return v;
 }
 
-function clear() {
+function clear(code) {
   safe(function () {
-    localStorage.removeItem(PENDING);
-    sessionStorage.removeItem(SESSION);
+    if (localStorage.getItem(PENDING) === code) localStorage.removeItem(PENDING);
+    if (sessionStorage.getItem(SESSION) === code) sessionStorage.removeItem(SESSION);
   }, 'clear');
 }
 
@@ -97,9 +98,16 @@ function attribute(state) {
 
   /* Already attributed in this browser. The server is idempotent anyway, but
      there is no reason to send the request on every page load for a year. */
+  var userId = state && (state.user && state.user.id || state.session && state.session.user && state.session.user.id);
+  // A shared field device can register many different people with one code.
+  // Ignore the old code-only marker; the server safely handles repeat calls.
+  var doneKey = userId ? DONE + ':' + userId : null;
+  var requestKey = (userId || 'session') + ':' + code;
   var done = null;
-  safe(function () { done = localStorage.getItem(DONE); }, 'done');
-  if (done === code) { clear(); return; }
+  safe(function () { done = doneKey && localStorage.getItem(doneKey); }, 'done');
+  if (done === code) { clear(code); return; }
+  if (inFlight[requestKey]) return;
+  inFlight[requestKey] = true;
 
   var token = null;
   safe(function () {
@@ -125,21 +133,23 @@ function attribute(state) {
         code: code,
         referral_type: referralType(state),
       }),
-    }).then(function (r) { return r.json().catch(function () { return {}; }); })
-      .then(function (j) {
+    }).then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return { response: r, body: j }; }); })
+      .then(function (result) {
+        var j = result.body, r = result.response;
         /* Clear on any settled answer, success or refusal. A code the server
            has rejected — self-referral, unknown code, account too old — will
            be rejected identically forever, and retrying it on every page load
            for the life of the browser profile helps nobody. */
-        if (j && (j.ok || j.error)) {
-          safe(function () { localStorage.setItem(DONE, code); }, 'mark');
-          clear();
+        if (j && ((r.ok && j.ok) || ([400, 404].indexOf(r.status) !== -1 && j.error))) {
+          safe(function () { if (doneKey) localStorage.setItem(doneKey, code); }, 'mark');
+          clear(code);
           if (j.ok && !j.skipped && global.console) {
             console.info('[ref] attributed', code, j.tier ? '· ' + j.tier : '');
           }
         }
       });
-  }).catch(function () { /* offline. The code stays pending for next time. */ });
+  }).catch(function () { /* offline. The code stays pending for next time. */ })
+    .finally(function () { delete inFlight[requestKey]; });
 }
 
 /* ── Getting hold of a session ────────────────────────────────────────────

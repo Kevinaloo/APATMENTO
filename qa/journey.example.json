@@ -1,0 +1,16 @@
+{
+  "shared.login": {
+    "steps": [
+      { "action": "goto", "path": "/auth" },
+      { "action": "fill", "selector": "#login-email", "value": "${QA_GUEST_EMAIL}" },
+      { "action": "fill", "selector": "#login-password", "value": "${QA_GUEST_PASSWORD}" },
+      { "action": "click-response", "selector": "#login-btn", "path": "/auth/v1/token", "method": "POST", "status": 200 },
+      { "action": "expect-url", "path": "/dashboard" },
+      { "action": "reload" },
+      { "action": "expect-visible", "selector": "[data-when='user']" }
+    ],
+    "cleanup": [
+      { "action": "goto", "path": "/auth" }
+    ]
+  }
+}

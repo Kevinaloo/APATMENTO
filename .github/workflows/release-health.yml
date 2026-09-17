@@ -1,0 +1,135 @@
+name: Cabana release health
+
+on:
+  deployment_status:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: Exact Vercel deployment URL to inspect
+        required: true
+        type: string
+      sha:
+        description: Full commit SHA deployed at that URL
+        required: true
+        type: string
+      mode:
+        description: Public production checks or isolated staging journeys
+        type: choice
+        options: [production, staging]
+        default: production
+
+permissions:
+  contents: read
+
+# Keep evidence for every deployment; a later release does not cancel its audit.
+concurrency:
+  group: cabana-health-${{ github.event.deployment.id || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  health:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      contains(fromJSON('["success","failure","error"]'), github.event.deployment_status.state)
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    environment: cabana-qa
+    env:
+      QA_RUN_ID: gh-${{ github.run_id }}-${{ github.run_attempt }}
+      QA_SHA: ${{ inputs.sha || github.event.deployment.sha }}
+      QA_BASE_URL: ${{ inputs.url || github.event.deployment_status.environment_url }}
+      QA_DEPLOYMENT_STATE: ${{ github.event.deployment_status.state }}
+      QA_MODE: ${{ inputs.mode || (github.event.deployment.environment == 'Preview' && 'staging') || 'production' }}
+    steps:
+      # Bootstrap/reporting code comes from the trusted default branch. Never run
+      # a fork's npm scripts with QA credentials just because it was deployed.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+      - name: Preserve trusted failure reporter for older deployment commits
+        run: |
+          mkdir -p "$RUNNER_TEMP/cabana-qa-bootstrap"
+          cp scripts/qa/*.mjs "$RUNNER_TEMP/cabana-qa-bootstrap/"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Verify deployment source and project before releasing credentials
+        id: trust
+        uses: actions/github-script@v7
+        env:
+          QA_VERCEL_TOKEN: ${{ secrets.QA_VERCEL_TOKEN }}
+          QA_VERCEL_PROJECT_ID: ${{ vars.QA_VERCEL_PROJECT_ID }}
+          QA_VERCEL_TEAM_ID: ${{ vars.QA_VERCEL_TEAM_ID }}
+        with:
+          script: |
+            const sha = process.env.QA_SHA;
+            if (!/^[a-f0-9]{40}$/.test(sha || '')) throw new Error('A full deployment SHA is required');
+            const comparison = await github.rest.repos.compareCommitsWithBasehead({
+              ...context.repo, basehead: `${context.payload.repository.default_branch}...${sha}`
+            });
+            if (!['identical', 'behind'].includes(comparison.data.status)) {
+              throw new Error('Untrusted preview commit: credentialed QA only executes commits already on the default branch');
+            }
+            const target = new URL(process.env.QA_BASE_URL);
+            if (target.protocol !== 'https:' || target.username || target.password || target.pathname !== '/' || target.search || target.hash) throw new Error('Invalid deployment origin');
+            if (!process.env.QA_VERCEL_TOKEN || !process.env.QA_VERCEL_PROJECT_ID) throw new Error('Configure the cabana-qa Vercel token and project ID');
+            const api = new URL(`https://api.vercel.com/v13/deployments/${encodeURIComponent(target.hostname)}`);
+            if (process.env.QA_VERCEL_TEAM_ID) api.searchParams.set('teamId', process.env.QA_VERCEL_TEAM_ID);
+            const response = await fetch(api, { headers: { Authorization: `Bearer ${process.env.QA_VERCEL_TOKEN}` }, signal: AbortSignal.timeout(20000), redirect: 'error' });
+            if (!response.ok) throw new Error(`Deployment lookup returned ${response.status}`);
+            const deployment = await response.json();
+            if (deployment.projectId !== process.env.QA_VERCEL_PROJECT_ID || deployment.meta?.githubCommitSha !== sha) throw new Error('Deployment project or commit mismatch');
+            if (deployment.readyState !== 'READY') throw new Error(`Deployment state: ${deployment.readyState}`);
+            core.setOutput('verified', 'true');
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.QA_SHA }}
+          persist-credentials: false
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Write private QA fixture configuration
+        env:
+          QA_CONFIG_JSON: ${{ secrets.QA_CONFIG_JSON }}
+        run: |
+          node --input-type=module -e "import fs from 'node:fs'; fs.mkdirSync('qa',{recursive:true}); fs.writeFileSync('qa/config.local.json', JSON.stringify(JSON.parse(process.env.QA_CONFIG_JSON || '{}')));"
+      - name: Run release QA
+        id: qa
+        env:
+          QA_CONFIG_PATH: qa/config.local.json
+          QA_ALLOW_MUTATIONS: ${{ vars.QA_ALLOW_MUTATIONS }}
+          QA_STAGING_BASE_URL: ${{ vars.QA_STAGING_BASE_URL }}
+          QA_STAGING_VERCEL_PROJECT_ID: ${{ vars.QA_STAGING_VERCEL_PROJECT_ID }}
+          QA_STAGING_SUPABASE_PROJECT_REF: ${{ vars.QA_STAGING_SUPABASE_PROJECT_REF }}
+          QA_VERCEL_TOKEN: ${{ secrets.QA_VERCEL_TOKEN }}
+          QA_VERCEL_PROJECT_ID: ${{ vars.QA_VERCEL_PROJECT_ID }}
+          QA_VERCEL_TEAM_ID: ${{ vars.QA_VERCEL_TEAM_ID }}
+          QA_VERCEL_BYPASS_SECRET: ${{ secrets.QA_VERCEL_BYPASS_SECRET }}
+          QA_SUPABASE_ACCESS_TOKEN: ${{ secrets.QA_SUPABASE_ACCESS_TOKEN }}
+          QA_SUPABASE_PROJECT_REF: ${{ vars.QA_SUPABASE_PROJECT_REF }}
+          QA_SUPABASE_ANON_KEY: ${{ secrets.QA_SUPABASE_ANON_KEY }}
+          QA_GUEST_EMAIL: ${{ secrets.QA_GUEST_EMAIL }}
+          QA_GUEST_PASSWORD: ${{ secrets.QA_GUEST_PASSWORD }}
+          QA_OWNER_JWT: ${{ secrets.QA_OWNER_JWT }}
+          QA_OUTSIDER_JWT: ${{ secrets.QA_OUTSIDER_JWT }}
+          QA_OWNER_EMAIL: ${{ secrets.QA_OWNER_EMAIL }}
+          QA_OWNER_PASSWORD: ${{ secrets.QA_OWNER_PASSWORD }}
+          QA_OUTSIDER_EMAIL: ${{ secrets.QA_OUTSIDER_EMAIL }}
+          QA_OUTSIDER_PASSWORD: ${{ secrets.QA_OUTSIDER_PASSWORD }}
+          QA_INBOX_TOKEN: ${{ secrets.QA_INBOX_TOKEN }}
+        run: npm run qa
+      - name: Report setup failures
+        if: always() && steps.qa.outcome != 'success'
+        run: |
+          if [ ! -f "artifacts/release-health/$QA_RUN_ID/release-health.json" ]; then
+            node "$RUNNER_TEMP/cabana-qa-bootstrap/run.mjs" --report-only
+          fi
+      - name: Retain release evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cabana-release-health-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/release-health/
+          retention-days: 14
+          if-no-files-found: error

@@ -42,6 +42,7 @@
 ════════════════════════════════════════════════════════════════════════ */
 
 import { setCors, requestIp, consumeRateLimit } from './_security.js';
+import { recognition, readAll } from './_ambassador-recognition.js';
 
 export const config = { maxDuration: 30 };
 
@@ -299,21 +300,24 @@ async function handleEnrol(req, res) {
 async function handleMe(req, res) {
   const s = await requireAmbassador(req);
 
-  const [meRows, leads, earnings, totals] = await Promise.all([
+  const [meRows, progress, earnings, totals] = await Promise.all([
     dbAsUser(s.token, 'v_ambassador_me?select=*'),
-    dbAsUser(s.token, 'ambassador_leads?select=*&order=created_at.desc&limit=200'),
+    loadRecognition(s),
     dbAsUser(s.token, 'referral_earnings?select=commission_kes,service_type,status,available_at,created_at,referral_type&order=created_at.desc&limit=100'),
     rpcAsUser(s.token, 'cabana_ambassador_totals', {}).catch(() => null),
   ]);
 
   const me = meRows?.[0] || null;
   if (!me) return res.status(200).json({ ok: true, enrolled: false, gate: s.verdict });
+  const { leads, ...credit } = progress.credit;
 
   return res.status(200).json({
     ok: true,
     enrolled: true,
-    me,
-    leads: leads || [],
+    me: { ...me, leads_open: leads.filter(l => l.status === 'claimed').length, leads_converted: credit.onboarded, converted_this_month: credit.this_month },
+    leads,
+    recognition: credit,
+    listing_transfers: progress.transfers,
     earnings: earnings || [],
     totals,
     link: `${SITE}/?ref=${encodeURIComponent(me.referral_code)}`,
@@ -343,8 +347,28 @@ async function dbAsUser(token, path) {
       Authorization: `Bearer ${token}`,
     },
   });
-  if (!r.ok) return null;
-  try { return await r.json(); } catch { return null; }
+  if (!r.ok) throw Object.assign(new Error('Could not load your records. Please try again.'), { status: r.status >= 500 ? 503 : r.status });
+  return await r.json();
+}
+
+/* The sender's transfer record survives the handover even when listing RLS
+   correctly removes their access to the owner's listing. Scope by the
+   authenticated sender as well as RLS; an incoming transfer is not their work.
+   Joining these records repairs historical visibility without rewriting
+   referrals, claim reservations, ownership, or anyone's commission. */
+async function loadRecognition(s) {
+  const own = path => dbAsUser(s.token, path);
+  const uid = encodeURIComponent(s.user.id);
+  const [leads, referrals, transfers] = await Promise.all([
+    readAll(own, `ambassador_leads?ambassador_id=eq.${uid}&select=*&order=created_at.desc,id.asc`),
+    readAll(own, `referrals?referrer_id=eq.${uid}&select=referred_id,referral_type,created_at&order=created_at.desc,id.asc`),
+    readAll(own, `listing_transfers?from_user=eq.${uid}&kind=eq.on_behalf&select=id,listing_id,from_user,to_user,to_name,to_contact,to_contact_norm,kind,status,accepted_at,created_at,expires_at&order=created_at.desc,id.asc`),
+  ]);
+  const now = new Date();
+  return {
+    credit: recognition(leads, referrals, now, transfers),
+    transfers: transfers.map(t => ({ ...t, status: t.status === 'pending' && Date.parse(t.expires_at) <= now.getTime() ? 'expired' : t.status })),
+  };
 }
 
 /* claim-lead · stake a prospect before onboarding them.
@@ -373,16 +397,16 @@ async function handleClaimLead(req, res) {
 
   if (!out?.ok) {
     const messages = {
-      already_on_platform: 'This person is already on Cabana, so there is nothing to onboard. Ambassador credit is for people who are genuinely new to the platform.',
-      already_claimed:     'Another ambassador has already claimed this contact. Claims are first come, first served, and they lapse after 45 days if nothing comes of them.',
-      already_yours:       'You have already claimed this contact. It is in your pipeline.',
-      rate_limited:        out.detail || 'You have hit the claim limit. It resets hourly.',
+      already_on_platform: 'This person already has a Cabana account. You can still help them prepare a listing, but a new-person referral cannot be reserved for an existing member.',
+      already_claimed:     'Another ambassador has already saved this contact. Their referral reservation lasts up to 45 days while the person joins.',
+      already_yours:       'You have already saved this contact. Find them in your network.',
+      rate_limited:        'You can save up to 8 new contacts per hour and 25 per day. Please try again after the limit resets.',
       incomplete:          'Please give both a name and a contact.',
       bad_contact:         'That contact does not look right. Use a full phone number or a valid email address.',
       bad_contact_kind:    'Choose whether this is a phone number or an email address.',
       not_authorised:      gateMessage(out),
     };
-    return res.status(400).json({ ...out, message: messages[out.reason] || 'Could not claim that lead.' });
+    return res.status(400).json({ ...out, message: messages[out.reason] || 'Could not save that contact.' });
   }
 
   return res.status(200).json(out);
@@ -393,9 +417,9 @@ async function handleClaimLead(req, res) {
    ask for someone else's. */
 async function handleLeads(req, res) {
   const s = await requireAmbassador(req);
-  const rows = await dbAsUser(s.token,
-    'ambassador_leads?select=*&order=created_at.desc&limit=300');
-  return res.status(200).json({ ok: true, leads: rows || [] });
+  const progress = await loadRecognition(s);
+  const { leads, ...credit } = progress.credit;
+  return res.status(200).json({ ok: true, leads, recognition: credit, listing_transfers: progress.transfers });
 }
 
 /* draft-listing · build a listing on a partner's behalf.
@@ -463,14 +487,8 @@ async function handleDraftListing(req, res) {
     method: 'POST', body: draft, prefer: 'return=representation',
   });
 
-  /* A claimed lead that now has a listing has moved along the funnel. Say so
-     once, here, rather than recomputing the funnel from listings later. */
-  if (lead.status === 'claimed' || lead.status === 'signed_up') {
-    await db(`ambassador_leads?id=eq.${encodeURIComponent(lead.id)}`, {
-      method: 'PATCH',
-      body: { status: 'listed', first_listing_id: row.id, updated_at: new Date().toISOString() },
-    });
-  }
+  // An awaiting_host draft is preparation, not an accepted or live listing.
+  // In particular its draft id must not become a lead's first_listing_id.
 
   await logEvent(req, {
     ambassador_id: s.user.id, actor_id: s.user.id,
@@ -535,13 +553,16 @@ async function handleEarnings(req, res) {
 async function handleLeaderboard(req, res) {
   await requireAmbassador(req);
 
-  const rows = await db('ambassadors?select=id,full_name,region,status&status=eq.active&limit=300');
-  const stats = await db(
-    'ambassador_leads?select=ambassador_id,status&status=in.(signed_up,listed,earning)&limit=5000');
+  const [rows, stats, referrals, transfers] = await Promise.all([
+    readAll(db, 'ambassadors?select=id,full_name,region,status&status=eq.active&order=id.asc'),
+    readAll(db, 'ambassador_leads?select=id,ambassador_id,status,contact_key,converted_user_id,converted_at&order=id.asc'),
+    readAll(db, 'referrals?select=referrer_id,referred_id,created_at&order=id.asc'),
+    readAll(db, 'listing_transfers?kind=eq.on_behalf&status=eq.accepted&select=id,listing_id,from_user,to_user,to_contact_norm,kind,status,accepted_at,created_at&order=id.asc'),
+  ]);
 
   const counts = new Map();
-  for (const l of stats || []) {
-    counts.set(l.ambassador_id, (counts.get(l.ambassador_id) || 0) + 1);
+  for (const a of rows) {
+    counts.set(a.id, recognition(stats.filter(l => l.ambassador_id === a.id), referrals.filter(r => r.referrer_id === a.id), new Date(), transfers.filter(t => t.from_user === a.id)).onboarded);
   }
 
   const board = (rows || [])

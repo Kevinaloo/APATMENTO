@@ -7,6 +7,8 @@
 <title>Agent Portal · Cabana</title>
 <meta name="description" content="Cabana agent portal. Manage referrals, listings and earnings on Kenya&#x27;s zero-commission travel platform."/>
 <script src="/apa-agent.js"></script>
+<link rel="stylesheet" href="/cabana-spotlight.css"/>
+<script src="/cabana-spotlight.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
@@ -220,6 +222,7 @@ textarea.inp{resize:vertical;min-height:62px;line-height:1.6;font-size:13.5px;}
   </div>
 
   <div class="mode-note" id="mode-note" hidden></div>
+  <section id="partner-spotlight" aria-label="Your partner recognition"></section>
 
   <div class="clock" id="clock"></div>
 
@@ -343,6 +346,11 @@ const INFLUENCER_MODE = new URLSearchParams(location.search).get('mode') === 'in
 
 function paint() {
   const a = ME.agent, t = ME.totals;
+  if (window.CabanaSpotlight) window.CabanaSpotlight.mount(document.getElementById('partner-spotlight'), {
+    name: a.full_name, role: a.is_creator ? 'Influencer' : 'Agent', count: t.bookings,
+    unit: 'bookings driven', code: a.referral_code,
+    detail: a.is_creator ? 'Your audience opens doors. Build host-approved collaborations in Creator studio, share your work, and follow the bookings credited to you below.' : 'Every partnership starts with trust. Your recorded bookings and host-approved listings tell your story below.',
+  });
 
   document.getElementById('av').textContent = initials(a.full_name);
   document.getElementById('name').textContent = a.full_name;
