@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import weatherHandler, { computeManeuverability, currentHourIndex } from '../api/lib/_weather.js';
+import weatherHandler, { computeManeuverability, currentHourIndex, __test } from '../api/lib/_weather.js';
 
 function response() {
   return {
@@ -28,6 +28,7 @@ test('hourly forecasts begin at the current forecast hour', () => {
 });
 
 test('weather handler returns live, time-aligned Open-Meteo data', async () => {
+  __test.clearCache();
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async () => ({
     ok: true,
@@ -66,6 +67,7 @@ test('weather handler returns live, time-aligned Open-Meteo data', async () => {
 });
 
 test('weather handler fails honestly when live data is unavailable', async () => {
+  __test.clearCache();
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async () => { throw new Error('offline'); };
   try {
@@ -83,3 +85,77 @@ test('weather handler fails honestly when live data is unavailable', async () =>
   }
 });
 
+test('a short upstream outage serves recent measurements without stale travel advice', async () => {
+  __test.clearCache();
+  const originalFetch = globalThis.fetch;
+  const originalNow = Date.now;
+  let now = 1_000_000;
+  Date.now = () => now;
+  const live = {
+    current: {
+      time: 7200, temperature_2m: 23, apparent_temperature: 24,
+      relative_humidity_2m: 60, is_day: 1, precipitation: 0,
+      weather_code: 1, wind_speed_10m: 8,
+    },
+    hourly: {
+      time: [7200], temperature_2m: [23], precipitation_probability: [10],
+      precipitation: [0], weather_code: [1],
+    },
+    daily: {
+      time: [0], weather_code: [1], temperature_2m_max: [26],
+      temperature_2m_min: [16], precipitation_probability_max: [20],
+    },
+  };
+  globalThis.fetch = async () => new Response(JSON.stringify(live));
+  try {
+    const first = response();
+    await weatherHandler({ query: { city: 'Nairobi', lat: '-1.2921', lng: '36.8219' } }, first);
+    now += 16 * 60 * 1000;
+    globalThis.fetch = async () => { throw new Error('offline'); };
+    const fallback = response();
+    await weatherHandler({ query: { city: 'Nairobi', lat: '-1.2921', lng: '36.8219' } }, fallback);
+    assert.equal(fallback.statusCode, 200);
+    assert.equal(fallback.payload.live, false);
+    assert.equal(fallback.payload.stale, true);
+    assert.equal(fallback.payload.current.temp, 23);
+    assert.deepEqual(fallback.payload.hourly, []);
+    assert.deepEqual(fallback.payload.daily, []);
+    assert.equal(fallback.payload.maneuver.score, 'UNAVAILABLE');
+  } finally {
+    Date.now = originalNow;
+    globalThis.fetch = originalFetch;
+    __test.clearCache();
+  }
+});
+
+test('partial forecasts omit incomplete rows instead of inventing zero temperatures', async () => {
+  __test.clearCache();
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => new Response(JSON.stringify({
+    current: {
+      time: 7200, temperature_2m: 23, apparent_temperature: 24,
+      relative_humidity_2m: 60, is_day: 1, precipitation: 0,
+      weather_code: 1, wind_speed_10m: 8,
+    },
+    hourly: {
+      time: [7200, 10800], temperature_2m: [23], precipitation_probability: [10, 20],
+      precipitation: [0, 0], weather_code: [1, 2],
+    },
+    daily: {
+      time: [0, 86400], weather_code: [1, 2], temperature_2m_max: [26],
+      temperature_2m_min: [16, 17], precipitation_probability_max: [20, 30],
+    },
+  }));
+  try {
+    const res = response();
+    await weatherHandler({ query: { city: 'Nairobi', lat: '-1.2921', lng: '36.8219' } }, res);
+    assert.equal(res.statusCode, 200);
+    assert.equal(res.payload.hourly.length, 1);
+    assert.equal(res.payload.daily.length, 1);
+    assert.equal(res.payload.hourly[0].temp, 23);
+    assert.equal(res.payload.daily[0].maxTemp, 26);
+  } finally {
+    globalThis.fetch = originalFetch;
+    __test.clearCache();
+  }
+});

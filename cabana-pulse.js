@@ -154,8 +154,9 @@
       var cached = sessionStorage.getItem(WEATHER_CACHE_KEY + '_' + targetCity);
       if (cached) {
         var parsed = JSON.parse(cached);
-        staleWeather = parsed.data || null;
-        if (Date.now() - parsed.timestamp < 12 * 60 * 1000) {
+        var observedAt = Date.parse(parsed.data?.updatedAt || '') || parsed.timestamp;
+        staleWeather = Date.now() - observedAt < 60 * 60 * 1000 ? parsed.data : null;
+        if (parsed.data?.live !== false && !parsed.data?.stale && Date.now() - observedAt < 12 * 60 * 1000) {
           state.weather = parsed.data;
           state.loadingWeather = false;
           renderBar();
@@ -173,7 +174,7 @@
       var res = await fetch(url);
       if (res.ok) data = await res.json();
     } catch (err) {
-      console.warn('[pulse] weather proxy failed, falling back to direct Open-Meteo:', err);
+      console.warn('[pulse] weather proxy unavailable; checking last-known data');
     }
 
     if (!data || !data.current) {
@@ -200,11 +201,23 @@
       };
     }
 
+    if (data.stale) {
+      data = Object.assign({}, data, {
+        hourly: [], daily: [],
+        maneuver: {
+          score: 'UNAVAILABLE', badgeColor: '#8B8EAC',
+          summary: 'Cached weather — check current conditions',
+          vehicleGuidance: 'Live vehicle guidance is temporarily unavailable',
+          roadAdvisory: 'Use an official local forecast before setting out.',
+          bestWindow: 'Unavailable', maxRainProb: '—', locNote: '',
+        },
+      });
+    }
     state.weather = data;
     state.loadingWeather = false;
 
     try {
-      sessionStorage.setItem(WEATHER_CACHE_KEY + '_' + targetCity, JSON.stringify({
+      if (data.live !== false && !data.stale) sessionStorage.setItem(WEATHER_CACHE_KEY + '_' + targetCity, JSON.stringify({
         timestamp: Date.now(),
         data: data,
       }));
@@ -958,13 +971,14 @@
     var heroEl = document.getElementById('cp-weather-hero');
 
     if (cityEl) cityEl.textContent = w.city || state.city;
-    if (condEl) condEl.textContent = w.current.label || 'Clear Sky';
+    if (condEl) condEl.textContent = (w.current.label || 'Weather unavailable') +
+      (w.stale ? ' · Cached, not live' : '');
     if (iconEl) iconEl.textContent = w.current.icon || '🌤️';
     if (tempEl) tempEl.textContent = w.current.temp + '°';
     if (feelsEl) feelsEl.textContent = 'Feels like ' + w.current.feelsLike + '°C';
     if (humEl) humEl.textContent = w.current.humidity + '%';
     if (windEl) windEl.textContent = w.current.windKmH + ' km/h';
-    if (rainEl) rainEl.textContent = (w.maneuver?.maxRainProb || 10) + '%';
+    if (rainEl) rainEl.textContent = (w.maneuver?.maxRainProb ?? '—') + '%';
 
     if (heroEl) {
       heroEl.classList.remove('night', 'rain');
@@ -988,7 +1002,7 @@
 
     // Render hourly items
     var hourContainer = document.getElementById('cp-hourly-scroll');
-    if (hourContainer && Array.isArray(w.hourly) && w.hourly.length) {
+    if (hourContainer && Array.isArray(w.hourly)) {
       hourContainer.innerHTML = w.hourly.map(function (h) {
         return `
           <div class="cp-hour-item">

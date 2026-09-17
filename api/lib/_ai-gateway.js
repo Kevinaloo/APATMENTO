@@ -7,6 +7,7 @@
  * write, so changing models never changes authorization or payment rules.
  */
 import { createHash } from 'node:crypto';
+import { retryAfterMs } from './_upstream.js';
 import { GoogleGenAI, Type } from '@google/genai';
 import { getVercelOidcToken } from '@vercel/oidc';
 
@@ -46,6 +47,29 @@ const MAX_TOOL_ARGUMENT_BYTES = 12_000;
 let _geminiClient = null;
 let _geminiKey = null;
 
+// Warm-instance circuit breakers: no new paid service or shared cache. A
+// credential/model change resets its breaker; no key is stored in diagnostics.
+const providerCooldowns = new Map();
+function providerIdentity(provider) {
+  const prefix = { gateway: 'AI_GATEWAY', groq: 'GROQ', gemini: 'GEMINI', openai: 'OPENAI' }[provider];
+  return createHash('sha256').update(`${process.env[`${prefix}_API_KEY`] || 'oidc'}:${process.env[`${prefix}_MODEL`] || ''}`).digest('hex');
+}
+function cooldownRemaining(provider) {
+  const state = providerCooldowns.get(provider);
+  if (!state || state.identity !== providerIdentity(provider) || state.until <= Date.now()) {
+    providerCooldowns.delete(provider);
+    return 0;
+  }
+  return state.until - Date.now();
+}
+function noteProviderFailure(provider, status, retryAfter) {
+  if (![401, 402, 403, 429].includes(Number(status))) return;
+  const delay = retryAfterMs(retryAfter) ?? (Number(status) === 429 ? 60000 : 300000);
+  providerCooldowns.set(provider, {
+    identity: providerIdentity(provider), until: Date.now() + Math.min(86400000, Math.max(1000, delay)),
+  });
+}
+
 function clampNumber(value, fallback, min, max) {
   const n = Number(value);
   return Number.isFinite(n) ? Math.max(min, Math.min(max, Math.round(n))) : fallback;
@@ -78,6 +102,8 @@ function getGemini() {
 
 function providerIsConfigured(provider) {
   if (provider === 'gateway') {
+    // An explicit disable wins even when an old API key remains configured.
+    if (String(process.env.AI_GATEWAY_ENABLED || '').trim().toLowerCase() === 'false') return false;
     if (process.env.AI_GATEWAY_API_KEY) return true;
     if (String(process.env.AI_GATEWAY_ENABLED || '').toLowerCase() !== 'true') return false;
     return Boolean(
@@ -127,6 +153,8 @@ async function fetchJson(url, init, timeoutMs) {
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const response = await fetch(url, { ...init, signal: controller.signal });
+    const provider = url === GROQ_API ? 'groq' : url === OPENAI_API ? 'openai' : 'gateway';
+    noteProviderFailure(provider, response.status, response.headers?.get?.('retry-after'));
     const raw = await response.text();
     let data = null;
     try { data = raw ? JSON.parse(raw) : null; } catch { /* status is enough */ }
@@ -587,6 +615,7 @@ async function callGemini(messages, options = {}) {
     } catch (error) {
       lastError = `gemini_${model.id}_${error.message}`;
       const status = Number(error?.status || error?.code);
+      noteProviderFailure('gemini', status);
       if ([401, 402, 403, 429].includes(status)) break;
       console.warn('[ai-gateway:gemini]', model.id, error.message);
     }
@@ -684,6 +713,11 @@ export async function callAi(messages, options = {}) {
   const callers = { gateway: callVercelGateway, openai: callOpenAi, gemini: callGemini, groq: callGroq };
   for (const provider of available) {
     const attemptStarted = Date.now();
+    const retryInMs = cooldownRemaining(provider);
+    if (retryInMs) {
+      attempts.push({ provider, status: 'skipped', code: 'provider_cooldown', retryInMs, latencyMs: 0 });
+      continue;
+    }
     try {
       const data = await callers[provider](messages, options);
       attempts.push({
@@ -746,6 +780,9 @@ async function structuredWithGemini(systemInstruction, userPrompt) {
       return parseStructuredJson(response?.text);
     } catch (error) {
       lastError = `gemini_structured_${model.id}_${error.message}`;
+      const status = Number(error?.status || error?.code);
+      noteProviderFailure('gemini', status);
+      if ([401, 402, 403, 429].includes(status)) break;
     }
   }
   throw new Error(lastError);
@@ -793,6 +830,7 @@ export async function generateStructuredJson(systemInstruction, userPrompt) {
   for (const provider of order) {
     if (!providerIsConfigured(provider)) continue;
     attempted = true;
+    if (cooldownRemaining(provider)) continue;
     try {
       return await callers[provider](systemInstruction, userPrompt);
     } catch (error) {
@@ -803,6 +841,9 @@ export async function generateStructuredJson(systemInstruction, userPrompt) {
 }
 
 export const __test = {
+  resetCooldowns: () => providerCooldowns.clear(),
+  cooldownRemaining,
+  noteProviderFailure,
   providerOrder,
   privacySafeIdentifier,
   normalizeSchema,

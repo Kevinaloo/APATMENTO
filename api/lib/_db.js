@@ -4,6 +4,8 @@
    storage fallback when Supabase credentials are not supplied.
 ══════════════════════════════════════════════════════════════ */
 
+import { upstreamRequest } from './_upstream.js';
+
 const URL = process.env.SUPABASE_URL;
 const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -78,9 +80,7 @@ export async function select(table, query = '') {
     if (limitMatch) matched = matched.slice(0, parseInt(limitMatch[1], 10));
     return matched;
   }
-  const r = await fetch(`${URL}/rest/v1/${table}?${query}`, { headers: headers() });
-  if (!r.ok) throw new Error(`select ${table}: ${await r.text()}`);
-  return r.json();
+  return upstreamRequest(`${URL}/rest/v1/${table}?${query}`, { headers: headers() }, { readOnly: true });
 }
 
 export async function one(table, query) {

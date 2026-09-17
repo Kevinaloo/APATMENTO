@@ -7,9 +7,46 @@
    Uses Open-Meteo (zero API keys needed, high-resolution ECMWF/GFS).
    ═══════════════════════════════════════════════════════════════════ */
 
+import { upstreamRequest } from './_upstream.js';
+
 const CACHE = new Map();
+const INFLIGHT = new Map();
 const CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes cache
+const STALE_TTL_MS = 60 * 60 * 1000;
 const MAX_CACHE_ENTRIES = 100;
+
+function hasCompleteCurrent(data) {
+  const current = data?.current;
+  return current && [
+    current.time,
+    current.temperature_2m,
+    current.apparent_temperature,
+    current.relative_humidity_2m,
+    current.is_day,
+    current.precipitation,
+    current.weather_code,
+    current.wind_speed_10m,
+  ].every(value => Number.isFinite(Number(value)));
+}
+
+function fetchForecast(key, url) {
+  if (INFLIGHT.has(key)) return INFLIGHT.get(key);
+  const request = upstreamRequest(url, {}, {
+    readOnly: true, timeoutMs: 3000,
+    decode: async response => {
+      const data = await response.json();
+      if (!hasCompleteCurrent(data)) throw new Error('incomplete_forecast');
+      return data;
+    },
+  });
+  if (INFLIGHT.size < MAX_CACHE_ENTRIES) {
+    INFLIGHT.set(key, request);
+    request.finally(() => INFLIGHT.delete(key)).catch(() => {});
+  }
+  return request;
+}
+
+export const __test = { clearCache: () => { CACHE.clear(); INFLIGHT.clear(); } };
 
 // Default coordinates for key African travel hubs
 export const HUBS = {
@@ -67,10 +104,8 @@ function localHour(unixSeconds, utcOffsetSeconds = 0) {
 // Compute terrain and vehicle maneuverability rating
 export function computeManeuverability(weatherData, cityKey = 'nairobi') {
   const current = weatherData.current || {};
-  const temp = current.temperature_2m || 24;
-  const precip = current.precipitation || 0;
-  const wind = current.wind_speed_10m || 10;
-  const wmo = current.weather_code || 0;
+  const precip = Number.isFinite(Number(current.precipitation)) ? Number(current.precipitation) : 0;
+  const wmo = Number.isFinite(Number(current.weather_code)) ? Number(current.weather_code) : 0;
   const hourly = weatherData.hourly || { precipitation: [], precipitation_probability: [] };
 
   // Next 8 hours precipitation analysis
@@ -139,8 +174,9 @@ function getLocationSpecificNote(cityKey, score, wmo) {
 }
 
 function calculateBestTravelWindow(hourly, currentTime, utcOffsetSeconds = 0) {
-  if (!hourly || !hourly.time || !hourly.precipitation_probability) {
-    return '08:00 – 16:00 (Favorable throughout the day)';
+  if (!Array.isArray(hourly?.time) || !Array.isArray(hourly?.precipitation_probability)
+      || !hourly.time.length || !hourly.precipitation_probability.length) {
+    return 'Unavailable';
   }
 
   const start = currentHourIndex(hourly, currentTime);
@@ -195,7 +231,7 @@ export default async function weatherHandler(req, res) {
       }
     }
 
-    const cacheKey = `${lat.toFixed(2)},${lng.toFixed(2)}`;
+    const cacheKey = `${lat.toFixed(2)},${lng.toFixed(2)}:${city.toLowerCase()}`;
     const cached = CACHE.get(cacheKey);
     if (cached && (Date.now() - cached.timestamp < CACHE_TTL_MS)) {
       res.setHeader('Cache-Control', 'public, max-age=600, s-maxage=900');
@@ -209,25 +245,31 @@ export default async function weatherHandler(req, res) {
       + `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,uv_index_max`
       + `&timezone=auto&timeformat=unixtime`;
 
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 4500);
-
     let rawData = null;
     try {
-      const resp = await fetch(openMeteoUrl, { signal: controller.signal });
-      if (resp.ok) {
-        rawData = await resp.json();
-      }
+      rawData = await fetchForecast(cacheKey, openMeteoUrl);
     } catch (e) {
-      console.warn('[weather] Open-Meteo fetch failed or timed out:', e.message);
-    } finally {
-      clearTimeout(timeout);
+      console.warn('[weather] Open-Meteo unavailable:', e.code || 'invalid_forecast');
     }
 
     // Road guidance must be based on live data. Never invent favorable
     // conditions when the upstream forecast is unavailable.
     if (!rawData || !rawData.current) {
       res.setHeader('Cache-Control', 'no-store');
+      if (cached && Date.now() - cached.timestamp < STALE_TTL_MS) {
+        // Keep last-known measurements, not stale route recommendations or
+        // day/hour labels that would now point at the wrong forecast period.
+        return res.status(200).json({
+          ...cached.data, live: false, stale: true, hourly: [], daily: [],
+          maneuver: {
+            score: 'UNAVAILABLE', badgeColor: '#8B8EAC',
+            summary: 'Cached weather — check current conditions',
+            vehicleGuidance: 'Live vehicle guidance is temporarily unavailable',
+            roadAdvisory: 'Use an official local forecast before setting out.',
+            bestWindow: 'Unavailable', maxRainProb: '—', locNote: '',
+          },
+        });
+      }
       return res.status(503).json({
         ok: false,
         live: false,
@@ -246,9 +288,13 @@ export default async function weatherHandler(req, res) {
       const t = rawData.hourly.time[i];
       const hour = localHour(t, rawData.utc_offset_seconds);
       const hourStr = String(hour).padStart(2, '0') + ':00';
-      const tempVal = Math.round(rawData.hourly.temperature_2m[i]);
-      const rainProb = rawData.hourly.precipitation_probability[i] || 0;
-      const codeVal = rawData.hourly.weather_code[i] || 0;
+      const temp = Number(rawData.hourly.temperature_2m?.[i]);
+      const rain = Number(rawData.hourly.precipitation_probability?.[i]);
+      const code = Number(rawData.hourly.weather_code?.[i]);
+      if (![temp, rain, code].every(Number.isFinite)) continue;
+      const tempVal = Math.round(temp);
+      const rainProb = Math.max(0, Math.min(100, Math.round(rain)));
+      const codeVal = code;
       const interp = interpretWmo(codeVal, hour >= 6 && hour < 18 ? 1 : 0);
       hourlyItems.push({
         time: hourStr,
@@ -279,14 +325,22 @@ export default async function weatherHandler(req, res) {
       },
       maneuver,
       hourly: hourlyItems,
-      daily: (rawData.daily?.time || [1, 2, 3, 4, 5]).map((_, i) => ({
-        day: i === 0 ? 'Today' : new Date((Number(rawData.daily.time?.[i]) + Number(rawData.utc_offset_seconds || 0)) * 1000)
-          .toLocaleDateString('en', { weekday: 'short', timeZone: 'UTC' }),
-        maxTemp: Math.round(rawData.daily.temperature_2m_max[i] || 25),
-        minTemp: Math.round(rawData.daily.temperature_2m_min[i] || 16),
-        rainProb: Math.round(rawData.daily.precipitation_probability_max[i] || 20),
-        icon: interpretWmo(rawData.daily.weather_code[i] || 1, 1).icon,
-      })),
+      daily: (rawData.daily?.time || []).flatMap((value, i) => {
+        const time = Number(value);
+        const maxTemp = Number(rawData.daily.temperature_2m_max?.[i]);
+        const minTemp = Number(rawData.daily.temperature_2m_min?.[i]);
+        const rainProb = Number(rawData.daily.precipitation_probability_max?.[i]);
+        const weatherCode = Number(rawData.daily.weather_code?.[i]);
+        if (![time, maxTemp, minTemp, rainProb, weatherCode].every(Number.isFinite)) return [];
+        return [{
+          day: i === 0 ? 'Today' : new Date((time + Number(rawData.utc_offset_seconds || 0)) * 1000)
+            .toLocaleDateString('en', { weekday: 'short', timeZone: 'UTC' }),
+          maxTemp: Math.round(maxTemp),
+          minTemp: Math.round(minTemp),
+          rainProb: Math.max(0, Math.min(100, Math.round(rainProb))),
+          icon: interpretWmo(weatherCode, 1).icon,
+        }];
+      }),
       updatedAt: new Date().toISOString(),
     };
 
@@ -295,7 +349,7 @@ export default async function weatherHandler(req, res) {
     res.setHeader('Cache-Control', 'public, max-age=600, s-maxage=900');
     return res.status(200).json(payload);
   } catch (err) {
-    console.error('[weather] handler fatal:', err);
-    return res.status(500).json({ ok: false, error: err.message });
+    console.error('[weather] handler fatal:', { code: err.code || 'weather_failed' });
+    return res.status(500).json({ ok: false, error: 'weather_failed' });
   }
 }

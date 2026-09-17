@@ -262,7 +262,7 @@
       fetch('/api/utilities?action=weather&city=' + encodeURIComponent(b._city))
         .then(function(res) { return res.json(); })
         .then(function(data) {
-           if (data && data.daily && data.daily[b._in]) {
+           if (data && data.live !== false && !data.stale && data.daily && data.daily[b._in]) {
               var w = data.daily[b._in];
               var wxDiv = document.getElementById('apa-trip-weather-' + b.id);
               if (wxDiv) {

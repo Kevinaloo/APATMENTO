@@ -126,16 +126,25 @@ async function runCron(req, res) {
   if (!isCronAuthorized(req) && !hasInternalSecret(req)) {
     return res.status(401).json({ error: 'unauthorized' });
   }
-  const q = query(req);
-  const out = await syncDueFeeds({
-    limit: Math.min(200, parseInt(q.limit, 10) || 60),
-    trigger: 'cron',
-    budgetMs: 50_000,
-  });
-  /* Housekeeping rides the same wake-up rather than needing its own cron
-     slot, of which Hobby has very few. */
-  if (out.remaining === 0) await rpc('cabana_calendar_prune', { p_days: 30 }).catch(() => {});
-  return res.status(200).json(out);
+  try {
+    const q = query(req);
+    const out = await syncDueFeeds({
+      limit: Math.min(200, parseInt(q.limit, 10) || 60),
+      trigger: 'cron',
+      budgetMs: 50_000,
+    });
+    /* Housekeeping rides the same wake-up rather than needing its own cron
+       slot, of which Hobby has very few. */
+    if (out.remaining === 0) await rpc('cabana_calendar_prune', { p_days: 30 }).catch(() => {});
+    return res.status(200).json(out);
+  } catch (error) {
+    const status = error.transient ? 503 : (error.status || 500);
+    console.error('[calendar cron]', { code: error.code || 'calendar_cron_failed', rpc: error.rpc });
+    res.setHeader('Cache-Control', 'no-store');
+    return res.status(status).json({
+      error: status === 503 ? 'calendar_temporarily_unavailable' : 'calendar_cron_failed',
+    });
+  }
 }
 
 /* ══ HOST ACTIONS ════════════════════════════════════════════════════ */
