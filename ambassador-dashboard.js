@@ -367,95 +367,48 @@ function wireClaim() {
   });
 }
 
-/* ── Listings this ambassador has built for other people ─────────────────
-   Read straight from `listings` rather than through /api/ambassadors,
-   because the answer is "rows RLS already lets you see": a listing you
-   built is yours until the person you built it for accepts it, and the
-   moment they do, it stops being yours and correctly disappears from here.
-
-   Failure is silent and the section stays hidden. Nobody's earnings depend
-   on seeing this, and an error box where a list should be is worse than
-   nothing. */
-function paintBuilt() {
+/* Transfer history survives ownership changes; drafts and handovers belong together. */
+async function paintBuilt() {
   var host = $('built'), sec = $('built-sec');
   if (!host || !sec) return;
-
-  /* Wrapped whole. This runs inside the boot chain, and the boot chain's
-     catch() replaces the entire page with a refusal screen — so a throw
-     from a decorative section would blank a working dashboard. It has done
-     exactly that once already, which is why the try is here and not a
-     tidier guard. */
-  try { paintBuiltInner(host, sec); } catch (e) {
-    if (window.console) console.warn('[built]', e && e.message);
-  }
-}
-
-function paintBuiltInner(host, sec) {
-  /* Accepted transfers remain visible through the ambassador API after the
-     listing moves into the owner's account. Reading `listings` alone used to
-     make the ambassador's work disappear at the exact moment it succeeded. */
-  var transfers = STATE.transfers || [];
-  if (transfers.length) {
-    sec.removeAttribute('hidden');
-    sec.classList.add('reveal', 'in');
-    host.innerHTML = '<div class="leads-list">' + transfers.map(function (t) {
-      var accepted = t.status === 'accepted';
-      return '<div class="lead"><span class="lead-dot" style="background:' +
-        (accepted ? 'var(--mint-deep)' : 'var(--gold)') + '"></span>' +
-        '<div class="lead-main"><div class="lead-name">' + esc(t.to_name || 'Listing owner') + '</div>' +
-        '<div class="lead-meta">' + (accepted ? 'Accepted a listing you prepared' : 'Listing awaiting owner acceptance') +
-          (t.listing_id ? ' · listing ' + esc(String(t.listing_id).slice(0, 8)) : '') +
-          (t.accepted_at ? ' · ' + ago(t.accepted_at) : '') + '</div></div>' +
-        '<span class="badge ' + (accepted ? 'b-ok' : 'b-warn') + '">' +
-          (accepted ? 'Accepted' : 'Awaiting owner') + '</span></div>';
-    }).join('') + '</div>';
-    return;
-  }
-
-  var sb = window.ApaSession && window.ApaSession.client && window.ApaSession.client();
-  if (!sb || !sb.from) return;
-
-  var q = sb.from('listings')
-    .select('id,title,city,service,is_active,status,held_for_name,held_for_contact,ownership_type,created_at')
-    .eq('ownership_type', 'on_behalf')
-    .order('created_at', { ascending: false })
-    .limit(40);
-  if (!q || !q.then) return;
-
-  q.then(function (r) {
-      var rows = (r && r.data) || [];
-      if (!rows.length) return;
-
-      /* `reveal in` rather than `reveal`: the section was hidden while the
-         IntersectionObserver ran, so it will never be observed. Adding
-         both classes gives it the settled state directly — a reveal that
-         never fires leaves a section permanently invisible, and the page
-         still "works", which is exactly the bug the UI suite watches for. */
-      sec.removeAttribute('hidden');
-      sec.classList.add('reveal', 'in');
-      host.innerHTML = '<div class="leads-list">' + rows.map(function (l) {
-        var waiting = l.is_active === false;
-        var where = [l.city, l.service].filter(Boolean).join(' · ');
-        return '<div class="lead">' +
-          '<span class="lead-dot" style="background:' +
-            (waiting ? 'var(--ember)' : 'var(--mint-deep)') + '"></span>' +
-          '<div class="lead-main">' +
-            '<div class="lead-name">' + esc(l.title || 'Untitled listing') + '</div>' +
-            '<div class="lead-meta">' +
-              'For ' + esc(l.held_for_name || 'someone') +
-              (where ? ' · ' + esc(where) : '') + ' · ' + ago(l.created_at) +
-            '</div>' +
-            (waiting
-              ? '<div class="small" style="color:var(--ember);font-weight:600;margin-top:4px">' +
-                'Waiting for them to sign in with ' + esc(l.held_for_contact || 'their contact') +
-                ' and accept it</div>'
-              : '') +
-          '</div>' +
-          '<span class="badge ' + (waiting ? 'b-mute' : 'b-ok') + '">' +
-            (waiting ? 'Not yet claimed' : 'Live') + '</span>' +
-        '</div>';
-      }).join('') + '</div>';
-    }, function () { /* silent: see the note above */ });
+  sec.removeAttribute('hidden'); sec.classList.add('reveal', 'in');
+  host.textContent = 'Loading your listing history…';
+  var transfers = STATE.transfers || [], listings = [], unavailable = false;
+  try {
+    var sb = window.ApaSession && window.ApaSession.client();
+    if (!sb || !STATE.me || !STATE.me.id) throw new Error('No session');
+    var result = await sb.from('listings')
+      .select('id,title,city,service,held_for_name,created_at')
+      .eq('partner_id', STATE.me.id).eq('ownership_type', 'on_behalf')
+      .order('created_at', { ascending: false });
+    if (result.error) throw result.error;
+    listings = result.data || [];
+  } catch (e) { unavailable = true; }
+  var rows = new Map();
+  listings.forEach(function (l) { rows.set(l.id, { listing: l }); });
+  transfers.forEach(function (t) {
+    if (!t.listing_id) return;
+    var row = rows.get(t.listing_id) || {};
+    // An accepted handover wins over obsolete invitations for the same listing.
+    if (!row.transfer || (t.status === 'accepted' && row.transfer.status !== 'accepted') ||
+        (t.status === row.transfer.status && Date.parse(t.created_at) > Date.parse(row.transfer.created_at))) row.transfer = t;
+    rows.set(t.listing_id, row);
+  });
+  var accepted = 0, awaiting = 0;
+  var cards = Array.from(rows.entries()).map(function (entry) {
+    var id = entry[0], l = entry[1].listing || {}, t = entry[1].transfer || {};
+    var status = t.status || 'pending';
+    if (status === 'pending' && t.expires_at && Date.parse(t.expires_at) <= Date.now()) status = 'expired';
+    if (status === 'accepted') accepted++;
+    if (status === 'pending') awaiting++;
+    var label = { accepted: 'Owner accepted', pending: 'Awaiting owner', expired: 'Invitation expired', cancelled: 'Invitation cancelled', declined: 'Owner declined' }[status] || 'Invitation closed';
+    var owner = t.to_name || l.held_for_name || 'Listing owner';
+    return '<div class="lead"><span class="lead-dot" style="background:' + (status === 'accepted' ? 'var(--mint-deep)' : 'var(--gold)') + '"></span><div class="lead-main"><div class="lead-name">' + esc(l.title || 'Listing prepared for ' + owner) + '</div><div class="lead-meta">' + esc(owner) + ' · ' + esc([l.city,l.service].filter(Boolean).join(' · ') || 'Listing ' + String(id).slice(0,8)) + (t.accepted_at ? ' · Accepted ' + ago(t.accepted_at) : '') + '</div></div><span class="badge ' + (status === 'accepted' ? 'b-ok' : 'b-mute') + '">' + label + '</span></div>';
+  });
+  host.innerHTML = '<p class="small" style="margin-bottom:16px">' + accepted + ' owner accepted · ' + awaiting + ' awaiting owner · ' + rows.size + ' listings recorded</p>' +
+    (cards.length ? '<div class="leads-list">' + cards.join('') + '</div>' : '<p class="small">Your prepared listings and accepted handovers will appear here.</p>') +
+    (unavailable ? '<p role="status" class="small">Draft listings could not be refreshed. Accepted handover history is shown above. <button type="button" class="btn" id="retry-built">Try again</button></p>' : '');
+  var retry = $('retry-built'); if (retry) retry.addEventListener('click', paintBuilt);
 }
 
 /* ── The fee ladder ───────────────────────────────────────────────────────

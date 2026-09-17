@@ -4,6 +4,7 @@
     if (!host) return;
     host.replaceChildren();
     host.className = 'cabana-spotlight';
+    host.setAttribute('data-programme', data.role.toLowerCase());
     var count = Math.max(0, Math.floor(Number(data.count) || 0));
     var levels = [1, 5, 10, 25, 50, 100, 250, 500, 1000];
     var next = levels.find(function (n) { return n > count; }) || (Math.floor(count / 1000) + 1) * 1000;
@@ -29,6 +30,8 @@
     el('p', '', (next - count).toLocaleString() + ' more to your ' + next.toLocaleString() + ' milestone.');
     el('p', '', data.detail);
     var actions = el('div', 'spot-actions');
+    var explore = el('a', '', 'Explore your programme ↗', actions);
+    explore.href = { Influencer: '/influencers.html', Agent: '/agents.html', Ambassador: '/ambassadors.html' }[data.role] || '/';
     var share = el('button', '', 'Share my impact', actions); share.type = 'button';
     var review = el('a', '', 'Report missing credit', actions);
     review.href = 'mailto:connect@cabana.africa?subject=' + encodeURIComponent(data.role + ' attribution review') + '&body=' + encodeURIComponent('Name: ' + (data.name || '') + '\nRole: ' + data.role + '\nMy code: ' + (data.code || '') + '\n\nPlease review missing credit.\nRegistration or booking reference:\nDate:\nHow I introduced or helped this person:\n');
