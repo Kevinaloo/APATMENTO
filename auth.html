@@ -2,6 +2,17 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
+<script>
+/* Older cached role menus linked newcomers straight to the creator login.
+   Keep explicit login/join actions here, but let an unqualified legacy link
+   show the public creator experience first. */
+(function () {
+  var q = new URLSearchParams(location.search);
+  if ((q.get('panel') === 'influencer' || q.get('panel') === 'creator') && !q.get('intent')) {
+    location.replace('/influencers');
+  }
+})();
+</script>
 <link rel="icon" href="/favicon.ico" sizes="any"/>
 <link rel="apple-touch-icon" href="/cabana-apple-touch-icon.png"/>
 <meta name="apple-mobile-web-app-title" content="Cabana"/>
@@ -41,7 +52,7 @@
 </script>
 <!-- Needed by the install gate: captures beforeinstallprompt and
      exposes CabanaPWA.install(). -->
-<script src="/pwa.js" defer></script>
+<script src="/pwa.js?v=35-programmes" defer></script>
 <script src="/apa-agent.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -377,7 +388,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
         });
       });
       // Force the new SW to activate immediately
-      navigator.serviceWorker.register('/sw.js').then(reg => {
+      navigator.serviceWorker.register('/sw.js?v=35-programmes', { updateViaCache: 'none' }).then(reg => {
         reg.onupdatefound = () => {
           const w = reg.installing;
           if (w) w.onstatechange = () => {
@@ -2290,6 +2301,5 @@ function checkMatch() {
 <script src="/cabana-lifecycle.js" defer></script>
 </body>
 </html>
-
 
 

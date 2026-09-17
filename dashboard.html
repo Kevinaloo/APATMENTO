@@ -1801,7 +1801,7 @@ img,video,svg{max-width:100%;}
         });
       });
       // Force the new SW to activate immediately
-      navigator.serviceWorker.register('/sw.js').then(reg => {
+      navigator.serviceWorker.register('/sw.js?v=35-programmes', { updateViaCache: 'none' }).then(reg => {
         reg.onupdatefound = () => {
           const w = reg.installing;
           if (w) w.onstatechange = () => {
@@ -3558,7 +3558,7 @@ function hideAddSheet(){
 <script src="/analytics.js" defer></script>
 <script src="/chat.js?v=34" defer></script>
 <script src="/telemetry.js" defer></script>
-<script src="/pwa.js" defer></script>
+<script src="/pwa.js?v=35-programmes" defer></script>
 <script src="/apa-push.js" defer></script>
 <script src="/apa-geo.js" defer></script>
 <script src="/apa-location.js" defer></script>
@@ -3566,7 +3566,7 @@ function hideAddSheet(){
 <script src="/referral.js" defer></script>
 <script src="/apa-referral-capture.js" defer></script>
 <script src="/apa-ownership.js" defer></script>
-<script src="/apa-roles.js" defer></script>
+<script src="/apa-roles.js?v=20260917-2" defer></script>
 <script src="/cabana-credit.js" defer></script>
 <script src="/showcase.js" defer></script>
 

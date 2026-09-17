@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import vm from 'node:vm';
 import { JSDOM } from 'jsdom';
 const source=readFileSync(new URL('../ambassador-dashboard.js',import.meta.url),'utf8');
@@ -36,4 +36,29 @@ test('role discovery points newcomers to public pages, while members retain dash
  assert.equal(roles.roleFor('agent').join,'agents.html');
  assert.equal(roles.roleFor('influencer').href,'agent-dashboard.html?mode=influencer');
  dom.window.close();
+});
+
+test('legacy partner entry routes reach the public experiences',()=>{
+ const config=JSON.parse(readFileSync(new URL('../vercel.json',import.meta.url),'utf8'));
+ assert.ok(config.redirects.some(route=>route.source==='/become-agent'&&route.destination==='/agents'&&route.permanent===true));
+ const auth=readFileSync(new URL('../auth.html',import.meta.url),'utf8');
+ const creators=readFileSync(new URL('../influencers.html',import.meta.url),'utf8');
+ assert.match(auth,/location\.replace\('\/influencers'\)/);
+ assert.match(creators,/panel=influencer&amp;intent=login/);
+});
+
+test('partner assets are versioned so existing browsers receive the redesign',()=>{
+ const root=new URL('../',import.meta.url);
+ const html=readdirSync(root).filter(file=>file.endsWith('.html')).map(file=>readFileSync(new URL(file,root),'utf8')).join('\n');
+ for(const asset of ['pwa','apa-roles']) assert.doesNotMatch(html,new RegExp(`src="/${asset}\\.js"`));
+ for(const asset of ['ambassador-dashboard','cabana-spotlight','cabana-programmes','ambassadors-page']) {
+  assert.doesNotMatch(html,new RegExp(`src="/${asset}\\.js"`));
+ }
+ for(const asset of ['cabana-spotlight','cabana-programmes','ambassador-experience']) {
+  assert.doesNotMatch(html,new RegExp(`href="/${asset}\\.css"`));
+ }
+ const pwa=readFileSync(new URL('../pwa.js',import.meta.url),'utf8');
+ const worker=readFileSync(new URL('../sw.js',import.meta.url),'utf8');
+ assert.match(pwa,/register\('\/sw\.js\?v=35-programmes',[\s\S]*updateViaCache: 'none'/);
+ assert.match(worker,/cabana-v35-programmes/);
 });

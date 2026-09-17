@@ -752,7 +752,7 @@ body.intro-lock{animation:apaUnlockScroll 0s linear 3.6s forwards;}
       // Register SW. skipWaiting() in sw.js + clients.claim() handles
       // activation automatically, no manual reload needed or wanted.
       // A forced reload here was causing a double page-load on every deploy.
-      navigator.serviceWorker.register('/sw.js');
+      navigator.serviceWorker.register('/sw.js?v=35-programmes', { updateViaCache: 'none' });
     }
   </script>
 
@@ -1953,7 +1953,7 @@ document.querySelectorAll('.svc-tile').forEach((t,i)=>{t.style.transitionDelay=(
 <script src="/apa-chrome.js" defer></script>
 <script src="/apa-rail.js" defer></script>
 <script src="/telemetry.js" defer></script>
-<script src="/pwa.js" defer></script>
+<script src="/pwa.js?v=35-programmes" defer></script>
 <script src="/referral.js" defer></script>
 <script src="/apa-referral-capture.js" defer></script>
 <script src="/cabana-credit.js" defer></script>

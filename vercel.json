@@ -4,6 +4,11 @@
   "trailingSlash": false,
   "redirects": [
     {
+      "source": "/become-agent",
+      "destination": "/agents",
+      "permanent": true
+    },
+    {
       "source": "/(.*)",
       "has": [
         {
@@ -71,6 +76,24 @@
     }
   ],
   "headers": [
+    {
+      "source": "/:asset(sw|pwa|apa-roles|ambassador-dashboard|cabana-spotlight|cabana-programmes|ambassadors-page).js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/:asset(cabana-spotlight|cabana-programmes|ambassador-experience).css",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    },
     {
       "source": "/tours/:path*",
       "headers": [

@@ -1,12 +1,12 @@
 /* ════════════════════════════════════════════════════════════════
-   CABANA SERVICE WORKER v3
+   CABANA SERVICE WORKER v4
    Strategy: Network-first for ALL own assets (HTML, JS, CSS).
    Cache-first only for external fonts and images.
    This ensures every deploy is seen immediately by all users.
    No more stale JS/CSS causing inconsistent behaviour.
 ════════════════════════════════════════════════════════════════ */
 
-const VERSION = 'cabana-v34';
+const VERSION = 'cabana-v35-programmes';
 const CACHE = `${VERSION}`;
 
 /* How long we will wait on the network before falling back to a cached

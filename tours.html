@@ -302,7 +302,7 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--glass);c
         });
       });
       // Force the new SW to activate immediately
-      navigator.serviceWorker.register('/sw.js').then(reg => {
+      navigator.serviceWorker.register('/sw.js?v=35-programmes', { updateViaCache: 'none' }).then(reg => {
         reg.onupdatefound = () => {
           const w = reg.installing;
           if (w) w.onstatechange = () => {
@@ -579,7 +579,7 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--glass);c
 
 </script>
 <script src="/telemetry.js" defer></script>
-<script src="/pwa.js" defer></script>
+<script src="/pwa.js?v=35-programmes" defer></script>
 <script src="/referral.js" defer></script>
 <script src="/apa-referral-capture.js" defer></script>
 <script src="/cabana-credit.js" defer></script>

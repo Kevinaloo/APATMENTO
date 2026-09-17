@@ -76,7 +76,14 @@ let swRegistration = null;
 async function registerSW() {
   if (!('serviceWorker' in navigator)) return;
   try {
-    swRegistration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+    swRegistration = await navigator.serviceWorker.register('/sw.js?v=35-programmes', {
+      scope: '/',
+      updateViaCache: 'none',
+    });
+    // Ask immediately rather than waiting for the browser's periodic check.
+    // This matters for visitors whose previous worker cached unversioned role
+    // and dashboard scripts.
+    await swRegistration.update();
     console.log('[PWA] Service Worker registered');
 
     // Listen for updates
