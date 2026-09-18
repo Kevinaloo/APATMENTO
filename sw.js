@@ -6,7 +6,7 @@
    No more stale JS/CSS causing inconsistent behaviour.
 ════════════════════════════════════════════════════════════════ */
 
-const VERSION = 'cabana-v36-location-flight';
+const VERSION = 'cabana-v37-no-transition-loop';
 const CACHE = `${VERSION}`;
 
 /* How long we will wait on the network before falling back to a cached

@@ -2555,29 +2555,6 @@ body.gs-open .gs-sheet{opacity:1;visibility:visible;pointer-events:auto;transfor
 .gm-panel-dismiss-btn:hover{border-color:rgba(255,75,110,.4);color:#FF4D6D;}
 </style>
 
-<!-- ═══ SW force-update: kills stale service workers immediately ═══ -->
-  <script>
-    if ('serviceWorker' in navigator) {
-      // Unregister all old SWs, then register fresh
-      navigator.serviceWorker.getRegistrations().then(regs => {
-        regs.forEach(r => {
-          if (r.active && !r.active.scriptURL.includes('sw.js')) r.unregister();
-        });
-      });
-      // Force the new SW to activate immediately
-      navigator.serviceWorker.register('/sw.js?v=35-programmes', { updateViaCache: 'none' }).then(reg => {
-        reg.onupdatefound = () => {
-          const w = reg.installing;
-          if (w) w.onstatechange = () => {
-            if (w.state === 'installed' && navigator.serviceWorker.controller) {
-              // New version available. Reload silently
-              window.location.reload();
-            }
-          };
-        };
-      });
-    }
-  </script>
 <link rel="stylesheet" href="/brand.css"/>
 <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"/>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" media="print" onload="this.media='all';this.onload=null"/>
@@ -2608,37 +2585,30 @@ html.sg-lock,html.sg-lock body{overflow:hidden!important;}
 <div id="stay-gate"></div>
 <script>document.documentElement.classList.add('sg-lock');</script>
 
-<script src="/cabana-stay-gate.js"></script>
 <script>
-/* Its own <script>, immediately after the markup it owns and BEFORE
-   vendor-supabase.js further down. That ordering matters: it used to
-   run deferred, which meant its execution — and so the whole
-   animation's first frame — waited for everything ahead of it in the
-   document to finish parsing. Measured under a throttled mobile
-   profile, DOMContentLoaded didn't fire until ~4.5s in, so the guest
-   stared at a static dark screen for most of that, then whatever was
-   left of the sequence played in a rush. A splash exists to cover
-   load time; one gated behind load time cannot do that job.
-
-   A curtain that fails to lift is an unusable site on the platform's
-   flagship page, so its removal must never depend on 3,000 lines of
-   unrelated page code having run without throwing. */
+/* Arm the escape hatch BEFORE requesting the gate engine. If the
+   parser-blocking asset stalls, code written after its script tag has
+   not run yet and cannot rescue the page. */
 (function () {
   function strip() {
+    window.__cabanaStayGateExpired = true;
     var n = document.getElementById('stay-gate');
     if (n && n.parentNode) n.parentNode.removeChild(n);
     document.documentElement.classList.remove('sg-lock');
   }
   window.dismissEnterTx = strip;   /* older code still calls this by name */
-  function go() {
-    if (!window.CabanaStayGate) { strip(); return; }
-    window.CabanaStayGate.play({ node: document.getElementById('stay-gate') });
-  }
-  go();
-  /* Last line of defence: purely a failure-mode safety net now, not a
-     clock racing page load — the sequence starts at first parse. */
   setTimeout(function () { if (document.getElementById('stay-gate')) strip(); }, 9500);
   window.addEventListener('pageshow', function (e) { if (e.persisted) strip(); });
+})();
+</script>
+<script src="/cabana-stay-gate.js?v=37-no-loop"></script>
+<script>
+/* Start at first parse rather than waiting for DOMContentLoaded. The
+   pre-armed guard above remains independent of this asset. */
+(function () {
+  if (window.__cabanaStayGateExpired) return;
+  if (!window.CabanaStayGate) { window.dismissEnterTx(); return; }
+  window.CabanaStayGate.play({ node: document.getElementById('stay-gate') });
 })();
 </script>
 
@@ -6254,7 +6224,7 @@ loadListings().then(async () => {
 <script src="/apa-geo.js" defer></script>
 <script src="/apa-map.js" defer></script>
 <script src="/telemetry.js" defer></script>
-<script src="/pwa.js?v=36-location-flight" defer></script>
+<script src="/pwa.js?v=37-no-transition-loop" defer></script>
 <script src="/apa-push.js" defer></script>
 <script src="/referral.js" defer></script>
 <script src="/apa-referral-capture.js" defer></script>
