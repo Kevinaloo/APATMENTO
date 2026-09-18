@@ -65,5 +65,5 @@ test('dashboard notifications live behind the bell and messaging assets are vers
   assert.doesNotMatch(dashboard, /id="cbn-ring-slot"/);
   assert.match(dashboard, /chat\.js\?v=34/);
   assert.match(read('apartments.html'), /chat\.js\?v=34/);
-  assert.match(read('sw.js'), /cabana-v35-programmes/);
+  assert.match(read('sw.js'), /cabana-v36-location-flight/);
 });

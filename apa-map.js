@@ -28,8 +28,8 @@
 
   if (window.ApaMap) return;
 
-  var LEAFLET_CSS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-  var LEAFLET_JS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+  var LEAFLET_CSS = '/assets/location-flight/leaflet-1.9.4.css';
+  var LEAFLET_JS = '/assets/location-flight/vendor-leaflet-1.9.4.min.js';
 
   /* ── Basemaps ──────────────────────────────────────────────────────
 
@@ -315,10 +315,11 @@
     var frac = 0.45 + (d % 10000) / 10000 * 0.45;
     var metres = radius * frac;
 
-    var dLat = (metres * Math.cos(angle)) / 111320;
-    var dLng = (metres * Math.sin(angle)) / (111320 * Math.cos(lat * Math.PI / 180) || 1);
-
-    return [lat + dLat, lng + dLng];
+    // Spherical destination stays valid at the poles and the antimeridian.
+    var p = lat * Math.PI / 180, l = lng * Math.PI / 180, arc = metres / 6371000;
+    var outLat = Math.asin(Math.sin(p) * Math.cos(arc) + Math.cos(p) * Math.sin(arc) * Math.cos(angle));
+    var outLng = l + Math.atan2(Math.sin(angle) * Math.sin(arc) * Math.cos(p), Math.cos(arc) - Math.sin(p) * Math.sin(outLat));
+    return [outLat * 180 / Math.PI, ((outLng * 180 / Math.PI + 540) % 360) - 180];
   }
 
   /* ── Geocoding ────────────────────────────────────────────────── */
@@ -1025,7 +1026,8 @@
      and invalidating on the first real size fixes it once and for
      all, which is why every builder below calls this. */
   function watchSize(map, el) {
-    setTimeout(function () { map.invalidateSize(); }, 60);
+    var sizing = setTimeout(function () { if (el.isConnected) map.invalidateSize(); }, 60);
+    map.on('unload', function () { clearTimeout(sizing); if (map._apaRO) map._apaRO.disconnect(); });
     if (typeof ResizeObserver === 'undefined') return;
     var seen = 0;
     var ro = new ResizeObserver(function () {
@@ -1038,6 +1040,32 @@
 
   /* ── 1. Approximate map ───────────────────────────────────────── */
 
+  function coordinate(value, limit) {
+    if (typeof value !== 'number' && typeof value !== 'string') return null;
+    if (typeof value === 'string' && !value.trim()) return null;
+    var number = Number(value);
+    return Number.isFinite(number) && Math.abs(number) <= limit ? number : null;
+  }
+
+  // Shared by the listing map and its flight: one geocode, one stable circle.
+  function approxLocation(o) {
+    o = o || {};
+    var lat = coordinate(o.lat, 90), lng = coordinate(o.lng, 180);
+    var radius = Number(o.radius) > 0 && Number.isFinite(Number(o.radius)) ? Number(o.radius) : 500;
+    var start = lat !== null && lng !== null ? Promise.resolve([lat, lng]) :
+      geocode(o.query || o.location || '', { limit: 1, country: o.country }).then(function (rows) {
+        var first = rows[0];
+        if (!first) return null;
+        var a = coordinate(first.lat, 90), b = coordinate(first.lng, 180);
+        return a !== null && b !== null ? [a, b] : null;
+      });
+    return start.then(function (pt) {
+      if (!pt) return null;
+      var seed = o.seed || o.id || (pt[0].toFixed(4) + ',' + pt[1].toFixed(4));
+      return { center: blur(pt[0], pt[1], seed, radius), radius: radius };
+    }).catch(function () { return null; });
+  }
+
   /* What a guest sees before they have paid: the neighbourhood, the
      roads, the walk to the beach — and a circle. Never the door. */
   function approx(target, o) {
@@ -1045,24 +1073,11 @@
     var el = resolve(target);
     if (!el) return Promise.resolve(null);
 
-    var radius = o.radius || 500;
-
     return load().then(function (L) {
-      var lat = o.lat, lng = o.lng;
-
-      /* No stored coordinates? Fall back to geocoding the area text.
-         A listing that never got pinned still deserves a map. */
-      var start = (isFinite(lat) && isFinite(lng))
-        ? Promise.resolve([lat, lng])
-        : geocode(o.query || o.location || '', { limit: 1 }).then(function (r) {
-            return r.length ? [r[0].lat, r[0].lng] : null;
-          });
-
-      return start.then(function (pt) {
-        if (!pt) { fail(el, 'Map unavailable for this area'); return null; }
-
-        var seed = o.seed || o.id || (pt[0].toFixed(4) + ',' + pt[1].toFixed(4));
-        var c = blur(pt[0], pt[1], seed, radius);
+      return (o.areaPromise || approxLocation(o)).then(function (area) {
+        if (!el.isConnected) return null;
+        if (!area) { fail(el, 'Map unavailable for this area'); return null; }
+        var c = area.center, radius = area.radius;
 
         var parts = prep(el, o.height || '240px');
         var map = L.map(parts.host, {
@@ -1629,6 +1644,7 @@
     paintBase: paintBase,
     flyTo: flyToPoint,
     approx: approx,
+    approxLocation: approxLocation,
     exact: exact,
     picker: picker,
     results: results,

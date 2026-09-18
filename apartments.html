@@ -4,6 +4,9 @@
 <link rel="stylesheet" href="/cabana-property-tour.css"/>
 <script defer src="/cabana-property-tour.js"></script>
 <script defer src="/cabana-gallery.js"></script>
+<link rel="stylesheet" href="/cabana-location-flight.css"/>
+<script defer src="/cabana-location-globe.js"></script>
+<script defer src="/cabana-location-flight.js"></script>
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-5NQGLLEE02"></script>
 <script>
@@ -3460,8 +3463,8 @@ async function loadNativeListings() {
       id: `n_${l.id}`,
       _dbId: l.id,
       name: l.title || 'Untitled',
-      location: l.location || 'Nairobi',
-      city: l.city || 'Nairobi',
+      location: l.location || l.city || l.country || 'Location to be confirmed',
+      city: l.city || '',
       neighbourhood: l.area || l.location || '',
       type: l.property_type || l.type || 'Apartment',
       beds: parseInt(l.beds) || parseInt(l.bedrooms) || 1,
@@ -3503,6 +3506,10 @@ async function loadListings() {
 
   // Fetch real listings from Supabase only
   const native = await loadNativeListings();
+  // Cards must not become clickable before their deferred detail helpers exist.
+  if (document.readyState === 'loading') {
+    await new Promise(resolve => document.addEventListener('DOMContentLoaded', resolve, { once: true }));
+  }
   nativeCount = native.length;
   currentListings = [...native];
   migrateLegacyStayWishlist();
@@ -3740,7 +3747,7 @@ function renderCards(list) {
           <span class="card-loc">${SVG_PIN}${_esc(apt.location || apt.city || '')}</span>
           ${rating}
         </div>
-        <h3 class="card-name"><a class="card-link" href="${href}" aria-label="${_esc(label)}">${_esc(apt.name)}</a></h3>
+        <h3 class="card-name"><a class="card-link" data-listing-preview href="${href}" aria-label="${_esc(label)}">${_esc(apt.name)}</a></h3>
         <div class="card-meta">${bedsLabel}<i>·</i>${apt.baths} bath<i>·</i>${apt.maxGuests} guest${apt.maxGuests !== 1 ? 's' : ''}</div>
         <div class="card-price">
           ${stayCardPrice(apt)}
@@ -4188,10 +4195,16 @@ let _galPhotos = [];   // current modal photo array
 let _galIdx   = 0;    // current slide index
 let _galTouchX = null; // touch-start X for swipe
 let _galleryListingId = null;
+let _drawerAreaMap = null;
+let _drawerGeneration = 0;
 
 function openDrawer(id) {
   const apt = currentListings.find(a => a.id === id);
   if (!apt) return;
+  window.CabanaLocationFlight?.close();
+  _drawerAreaMap?.map.remove();
+  _drawerAreaMap = null;
+  const generation = ++_drawerGeneration;
   window.CabanaGallery?.stop();
   _galleryListingId = id;
   window.CabanaHostMetrics?.track(String(apt._dbId || apt.id), 'view');
@@ -4330,14 +4343,27 @@ function openDrawer(id) {
   /* Draw the area map. Built after the drawer is on screen so Leaflet
      measures a container that has a real width — inside a closed
      drawer it measures zero and renders a grey sliver. */
-  if (window.ApaMap) {
-    ApaMap.approx('dl-map', {
+  const publicLocation = apt.location === 'Location to be confirmed' ? '' : apt.location;
+  const areaOptions = {
       lat: apt.lat, lng: apt.lng,
       id: apt._dbId || apt.id,
-      location: apt.location,
-      query: [apt.neighbourhood || apt.area, apt.city, apt.country].filter(Boolean).join(', ') || apt.location,
+      country: apt.country,
+      location: publicLocation,
+      query: [apt.neighbourhood || apt.area, apt.city, apt.country].filter(Boolean).join(', ') || publicLocation,
       radius: 500,
       note: 'Approximate area'
+    };
+    const areaPromise = window.ApaMap?.approxLocation?.(areaOptions) || Promise.resolve(null);
+    // Synchronous dialog opening: do not wait for geocoding, tiles or photos.
+    window.CabanaLocationFlight?.open({
+      name: apt.name, city: apt.city, country: apt.country,
+      area: apt.neighbourhood || apt.area || apt.city,
+      areaPromise, returnFocus: document.querySelector('#drawer .dl-gallery-close') || document.querySelector('#drawer button')
+    });
+  if (window.ApaMap) {
+    ApaMap.approx('dl-map', { ...areaOptions, areaPromise }).then(handle => {
+      if (generation !== _drawerGeneration) { handle?.map.remove(); return; }
+      _drawerAreaMap = handle;
     });
   }
 
@@ -4651,6 +4677,10 @@ function messageHost(id) {
 }
 
 function closeDrawer() {
+  window.CabanaLocationFlight?.close();
+  ++_drawerGeneration;
+  _drawerAreaMap?.map.remove();
+  _drawerAreaMap = null;
   window.CabanaGallery?.stop();
   _galleryListingId = null;
   window.CabanaPropertyTour?.close();
@@ -6224,7 +6254,7 @@ loadListings().then(async () => {
 <script src="/apa-geo.js" defer></script>
 <script src="/apa-map.js" defer></script>
 <script src="/telemetry.js" defer></script>
-<script src="/pwa.js?v=35-programmes" defer></script>
+<script src="/pwa.js?v=36-location-flight" defer></script>
 <script src="/apa-push.js" defer></script>
 <script src="/referral.js" defer></script>
 <script src="/apa-referral-capture.js" defer></script>

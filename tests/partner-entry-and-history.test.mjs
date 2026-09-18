@@ -59,6 +59,6 @@ test('partner assets are versioned so existing browsers receive the redesign',()
  }
  const pwa=readFileSync(new URL('../pwa.js',import.meta.url),'utf8');
  const worker=readFileSync(new URL('../sw.js',import.meta.url),'utf8');
- assert.match(pwa,/register\('\/sw\.js\?v=35-programmes',[\s\S]*updateViaCache: 'none'/);
- assert.match(worker,/cabana-v35-programmes/);
+ assert.match(pwa,/register\('\/sw\.js\?v=36-location-flight',[\s\S]*updateViaCache: 'none'/);
+ assert.match(worker,/cabana-v36-location-flight/);
 });

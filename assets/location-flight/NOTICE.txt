@@ -1,0 +1,28 @@
+Cabana listing location preview
+
+World outlines: world-atlas 2.0.2 countries-110m.json, derived from Natural
+Earth 1:110m vector data. Natural Earth data is public domain; outlines are
+generalized for a globe view and are not parcel or address boundaries.
+https://github.com/topojson/world-atlas
+https://www.naturalearthdata.com/about/terms-of-use/
+
+Projection: d3-geo 3.1.1 with d3-array 3.2.4.
+Topology decoding: topojson-client 3.1.0.
+All bundled software licenses are included alongside these files.
+
+Leaflet 1.9.4 (the existing Cabana map engine) is also hosted locally to
+avoid a script-CDN dependency during the flight. Its BSD-2-Clause license
+is included as leaflet-LICENSE.txt.
+
+Pinned distribution sources:
+https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json
+https://cdn.jsdelivr.net/npm/d3-array@3.2.4/dist/d3-array.min.js
+https://cdn.jsdelivr.net/npm/d3-geo@3.1.1/dist/d3-geo.min.js
+https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js
+https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js
+https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css
+
+The neighbourhood map uses Cabana's shared ApaMap basemap and displays its
+OpenStreetMap/Esri attribution. Its circle is the same 500-metre approximate
+area as the listing's existing map. The animation does not request an exact
+address or a separate, more precise point.

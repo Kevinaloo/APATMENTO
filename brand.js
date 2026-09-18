@@ -281,6 +281,9 @@ function veilGo(fn){
 }
 function isInternalNav(a){
   if (!a || !a.href) return false;
+  // Listing cards open their detail + location preview in place. A capture-
+  // phase veil must not schedule a navigation before the card handles its click.
+  if (a.hasAttribute('data-listing-preview')) return false;
   if (a.target && a.target !== '_self') return false;
   if (a.hasAttribute('download')) return false;
   var href = a.getAttribute('href') || '';
