@@ -1789,31 +1789,6 @@ img,video,svg{max-width:100%;}
 
 
 </style>
-
-
-  <!-- ═══ SW force-update: kills stale service workers immediately ═══ -->
-  <script>
-    if ('serviceWorker' in navigator) {
-      // Unregister all old SWs, then register fresh
-      navigator.serviceWorker.getRegistrations().then(regs => {
-        regs.forEach(r => {
-          if (r.active && !r.active.scriptURL.includes('sw.js')) r.unregister();
-        });
-      });
-      // Force the new SW to activate immediately
-      navigator.serviceWorker.register('/sw.js?v=35-programmes', { updateViaCache: 'none' }).then(reg => {
-        reg.onupdatefound = () => {
-          const w = reg.installing;
-          if (w) w.onstatechange = () => {
-            if (w.state === 'installed' && navigator.serviceWorker.controller) {
-              // New version available. Reload silently
-              window.location.reload();
-            }
-          };
-        };
-      });
-    }
-  </script>
 <link rel="stylesheet" href="/brand.css"/>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="/cabana-ds.css"/>
@@ -3558,7 +3533,7 @@ function hideAddSheet(){
 <script src="/analytics.js" defer></script>
 <script src="/chat.js?v=34" defer></script>
 <script src="/telemetry.js" defer></script>
-<script src="/pwa.js?v=35-programmes" defer></script>
+<script src="/pwa.js?v=38-location-flight-30s" defer></script>
 <script src="/apa-push.js" defer></script>
 <script src="/apa-geo.js" defer></script>
 <script src="/apa-location.js" defer></script>

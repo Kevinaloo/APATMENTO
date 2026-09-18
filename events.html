@@ -266,30 +266,6 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--glass);c
   .svc-list-cta svg{width:13px;height:13px;flex-shrink:0;opacity:.9;}
   @media(max-width:400px){.svc-list-cta{padding:7px 12px;font-size:12px;}}
 </style>
-
-  <!-- ═══ SW force-update: kills stale service workers immediately ═══ -->
-  <script>
-    if ('serviceWorker' in navigator) {
-      // Unregister all old SWs, then register fresh
-      navigator.serviceWorker.getRegistrations().then(regs => {
-        regs.forEach(r => {
-          if (r.active && !r.active.scriptURL.includes('sw.js')) r.unregister();
-        });
-      });
-      // Force the new SW to activate immediately
-      navigator.serviceWorker.register('/sw.js?v=35-programmes', { updateViaCache: 'none' }).then(reg => {
-        reg.onupdatefound = () => {
-          const w = reg.installing;
-          if (w) w.onstatechange = () => {
-            if (w.state === 'installed' && navigator.serviceWorker.controller) {
-              // New version available. Reload silently
-              window.location.reload();
-            }
-          };
-        };
-      });
-    }
-  </script>
 <link rel="stylesheet" href="/brand.css"/>
 <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=Instrument+Sans:ital,wght@0,400..700;1,400..600&display=swap"/>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=Instrument+Sans:ital,wght@0,400..700;1,400..600&display=swap" media="print" onload="this.media='all';this.onload=null"/>
@@ -512,7 +488,7 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--glass);c
 <div data-showcase="window"></div>
 <script src="/analytics.js" defer></script>
 <script src="/telemetry.js" defer></script>
-<script src="/pwa.js?v=35-programmes" defer></script>
+<script src="/pwa.js?v=38-location-flight-30s" defer></script>
 <script src="/referral.js" defer></script>
 <script src="/apa-referral-capture.js" defer></script>
 <script src="/cabana-credit.js" defer></script>
