@@ -42,11 +42,12 @@ test('opens synchronously on click even when every location resource is still pe
   const s=setup({area:new Promise(()=>{}),globePromise:new Promise(()=>{})});
   s.w.CabanaLocationFlight.open(s.opts);
   assert.equal(s.dialog().open,true);assert.match(s.dialog().textContent,/Exact location available after booking/);
+  assert.equal(s.dialog().querySelector('.clf-count').textContent,'30s');
   assert.equal(s.w.document.body.style.overflow,'hidden');s.finish();
 });
-test('hard deadline closes at 10 seconds even when geocoding and maps never answer',async()=>{
+test('hard deadline closes at 30 seconds even when geocoding and maps never answer',async()=>{
   const s=setup({area:new Promise(()=>{})});s.w.CabanaLocationFlight.open(s.opts);
-  await s.tick(9999);assert.ok(s.dialog());await s.tick(1);assert.equal(s.dialog(),null);assert.equal(s.frames.size,0);s.finish();
+  await s.tick(29999);assert.ok(s.dialog());await s.tick(1);assert.equal(s.dialog(),null);assert.equal(s.frames.size,0);s.finish();
 });
 test('click dismiss, Escape and native cancel release resources and restore listing focus',async()=>{
   for(const kind of ['click','escape','cancel']){
@@ -71,7 +72,7 @@ test('a globe that arrives after dismissal is destroyed and never reopens the pr
 });
 test('listing data is text, not HTML or raw coordinates',async()=>{
   const s=setup();s.w.CabanaLocationFlight.open({...s.opts,name:'<img src=x onerror=alert(1)>',area:'<svg onload=alert(1)>',latitude:12.345678,longitude:98.765432});
-  await flush();await s.tick(8000);assert.equal(s.dialog().querySelector('h2 img'),null);assert.match(s.dialog().querySelector('h2').textContent,/<img/);
+  await flush();await s.tick(24000);assert.equal(s.dialog().querySelector('h2 img'),null);assert.match(s.dialog().querySelector('h2').textContent,/<img/);
   assert.doesNotMatch(s.dialog().textContent,/12\.345678|98\.765432/);assert.deepEqual([...s.maps[0].options.center],[-1.26,36.8]);s.finish();
 });
 test('reduced motion shows the final area without a flying camera or rotating globe',async()=>{
@@ -81,18 +82,18 @@ test('reduced motion shows the final area without a flying camera or rotating gl
 });
 test('all five geographic stages occur before automatic dismissal',async()=>{
   const s=setup();s.w.CabanaLocationFlight.open(s.opts);await flush();const stages=[];
-  for(const delta of [16,1800,1700,1700,1700]){await s.tick(delta);stages.push(s.dialog().dataset.stage);}
+  for(const delta of [16,5400,5400,5400,5400]){await s.tick(delta);stages.push(s.dialog().dataset.stage);}
   assert.deepEqual(stages,['0','1','2','3','4']);assert.equal(s.maps[0].views.at(-1).zoom,14);s.finish();
 });
 test('missing or invalid areas do not animate to an invented point',async()=>{
   for(const center of [null,[null,0],[NaN,0],[91,30],[0,181]]){
-    const s=setup({area:Promise.resolve(center?{center,radius:500}:null)});s.w.CabanaLocationFlight.open(s.opts);await flush();await s.tick(7000);
+    const s=setup({area:Promise.resolve(center?{center,radius:500}:null)});s.w.CabanaLocationFlight.open(s.opts);await flush();await s.tick(27000);
     assert.equal(s.maps.length,0);assert.match(s.dialog().textContent,/not available/);await s.tick(3000);assert.equal(s.dialog(),null);s.finish();
   }
 });
 test('map failure still allows dismissal and automatic continuation',async()=>{
   const s=setup({loadPromise:Promise.reject(new Error('offline'))});s.w.CabanaLocationFlight.open(s.opts);await flush();
-  assert.match(s.dialog().textContent,/temporarily unavailable/);await s.tick(10000);assert.equal(s.dialog(),null);s.finish();
+  assert.match(s.dialog().textContent,/temporarily unavailable/);await s.tick(30000);assert.equal(s.dialog(),null);s.finish();
 });
 test('page navigation tears down a running preview',async()=>{
   const s=setup();s.w.CabanaLocationFlight.open(s.opts);await flush();s.w.dispatchEvent(new s.w.Event('pagehide'));

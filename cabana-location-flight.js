@@ -1,9 +1,10 @@
-/* A ten-second journey to the SAME public area used by the listing map.
+/* A thirty-second journey to the SAME public area used by the listing map.
    Only an already-approximated point crosses this module's boundary. */
 (function () {
   'use strict';
   if (window.CabanaLocationFlight) return;
-  const DURATION = 10000;
+  const DURATION = 30000;
+  const STAGE_AT = [0, 5400, 10800, 16200, 21600];
   let active = null, atlasPromise;
   const clamp = n => Math.max(0, Math.min(1, n));
   const ease = n => { n = clamp(n); return n * n * (3 - 2 * n); };
@@ -38,7 +39,7 @@
     dialog.className = 'cabana-location-flight';
     dialog.setAttribute('aria-labelledby', 'cabana-flight-title');
     dialog.setAttribute('aria-describedby', 'cabana-flight-privacy');
-    dialog.innerHTML = '<header class="clf-header"><div class="clf-brand">cabana<span>A little closer to your stay</span></div><div class="clf-actions"><span class="clf-count" aria-hidden="true">10s</span><button type="button" data-flight-close aria-label="Close location preview">Skip <span aria-hidden="true">×</span></button></div></header>' +
+    dialog.innerHTML = '<header class="clf-header"><div class="clf-brand">cabana<span>A little closer to your stay</span></div><div class="clf-actions"><span class="clf-count" aria-hidden="true">' + (DURATION / 1000) + 's</span><button type="button" data-flight-close aria-label="Close location preview">Skip <span aria-hidden="true">×</span></button></div></header>' +
       '<div class="clf-scene"><div class="clf-stars" aria-hidden="true"></div><canvas class="clf-globe" aria-hidden="true"></canvas><div class="clf-map" aria-label="Map of the approximate listing area"></div><div class="clf-shade" aria-hidden="true"></div>' +
       '<div class="clf-heading"><p class="clf-eyebrow">FROM THE WORLD TO YOUR STAY</p><h2 id="cabana-flight-title"></h2><p class="clf-destination"></p></div>' +
       '<div class="clf-position"><span class="clf-stage-number" aria-hidden="true">01 / 05</span><div><span class="clf-stage-label">The journey begins</span><strong class="clf-stage-name">Our world</strong></div></div>' +
@@ -140,7 +141,7 @@
       if (elapsed >= DURATION) { close(); return; }
       const reduced = !!s.motion?.matches;
       dialog.classList.toggle('clf-reduced', reduced);
-      const stage = !s.center ? 0 : reduced ? 4 : elapsed < 1800 ? 0 : elapsed < 3500 ? 1 : elapsed < 5200 ? 2 : elapsed < 6900 ? 3 : 4;
+      const stage = !s.center ? 0 : reduced ? 4 : elapsed < STAGE_AT[1] ? 0 : elapsed < STAGE_AT[2] ? 1 : elapsed < STAGE_AT[3] ? 2 : elapsed < STAGE_AT[4] ? 3 : 4;
       const labels = ['Our world', s.continent || 'Your continent', s.country || 'Your country', s.city || 'Your city / town', s.area || s.city || 'Your stay’s neighbourhood'];
       const captions = ['The journey begins', 'A little closer', 'Across the country', 'Explore the surroundings', 'You’re in the right area'];
       if (s.stage !== stage || find('.clf-stage-name').textContent !== labels[stage]) {
@@ -157,25 +158,25 @@
       const remaining = Math.ceil((DURATION - elapsed) / 1000) + 's';
       if (find('.clf-count').textContent !== remaining) find('.clf-count').textContent = remaining;
       find('.clf-timer i').style.transform = 'scaleX(' + clamp(1 - elapsed / DURATION) + ')';
-      if (s.globe && (reduced || elapsed < 4600 || !s.tilesReady)) {
-        const turn = ease(elapsed / 2500), zoom = ease((elapsed - 2200) / 1900);
+      if (s.globe && (reduced || elapsed < 13800 || !s.tilesReady)) {
+        const turn = ease(elapsed / 7500), zoom = ease((elapsed - 6600) / 5700);
         const lat = s.center ? s.center[0] : 14, lng = s.center ? s.center[1] : 24;
         try {
           s.globe.draw({ lat: reduced ? lat : 14 + (lat - 14) * turn,
             lng: reduced ? lng : lng - 145 * (1 - turn), scale: reduced ? 1 : 1 + 3.2 * zoom });
         } catch (_) { s.globe.destroy(); s.globe = null; }
       }
+      const mapVisible = !!s.map && !s.mapFailed && s.tilesReady && (reduced || elapsed >= STAGE_AT[2]);
+      dialog.classList.toggle('clf-map-visible', mapVisible);
+      find('.clf-area-label').hidden = !mapVisible || stage !== 4;
       if (s.map && !s.mapFailed && s.center && s.mapStage !== stage) {
         s.mapStage = stage;
         const zoom = [3, 3, 6, 10.5, 14][stage];
-        if (reduced || elapsed > 8500) s.map.setView(s.center, 14, { animate: false });
-        else s.map.flyTo(s.center, zoom, { duration: stage === 4 ? 1.25 : 1.35, easeLinearity: .25 });
+        if (reduced || elapsed > 25500) s.map.setView(s.center, 14, { animate: false });
+        else s.map.flyTo(s.center, zoom, { duration: stage === 4 ? 3.4 : 3, easeLinearity: .25 });
       }
-      const mapVisible = !!s.map && !s.mapFailed && s.tilesReady && (reduced || elapsed >= 3500);
-      dialog.classList.toggle('clf-map-visible', mapVisible);
-      find('.clf-area-label').hidden = !mapVisible || stage !== 4;
       const loading = 'Loading the area map… You can continue to the listing at any time.';
-      if (elapsed > 6500 && !s.tilesReady && s.center && !s.mapFailed && status.textContent !== loading) status.textContent = loading;
+      if (elapsed > 19500 && !s.tilesReady && s.center && !s.mapFailed && status.textContent !== loading) status.textContent = loading;
       else if (mapVisible && status.textContent) status.textContent = '';
       s.frame = requestAnimationFrame(frame);
     }

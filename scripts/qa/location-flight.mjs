@@ -11,6 +11,7 @@ const origin=`http://127.0.0.1:${server.address().port}`,out=resolve('artifacts/
 await mkdir(out,{recursive:true});
 const browser=await chromium.launch({channel:'chrome',headless:true});
 const results=[];
+const tilePng=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M/wHwAF/gL+X8WzhwAAAABJRU5ErkJggg==','base64');
 const listings=[
   {id:'qa-westlands',title:'A quiet corner in Westlands',city:'Nairobi',country:'Kenya',area:'Westlands',location:'Westlands, Nairobi',latitude:-1.267,longitude:36.806},
   {id:'qa-diani',title:'A stay by the Indian Ocean',city:'Diani',country:'Kenya',area:'Diani Beach',location:'Diani, Kenya',latitude:-4.28,longitude:39.58},
@@ -27,6 +28,7 @@ async function visit({width=1440,height=1000,reduced=false,blocked=false,query='
     if(url.origin===origin&&url.pathname.startsWith('/api/'))return route.fulfill({contentType:'application/json',body:JSON.stringify({ok:true,data:[],results:[],offers:[]})});
     if(/googletagmanager|google-analytics|facebook|clarity/.test(url.hostname))return route.abort();
     if(blocked&&(/leaflet|tile.openstreetmap|arcgisonline/.test(req.url())||url.pathname.includes('/assets/location-flight/')))return route.abort();
+    if(/tile\.openstreetmap\.org|server\.arcgisonline\.com/.test(url.hostname))return route.fulfill({status:200,contentType:'image/png',body:tilePng});
     // Unrelated analytics/fonts must not add network timing to this UI test.
     if(url.origin!==origin&&!/tile\.openstreetmap\.org|server\.arcgisonline\.com/.test(url.hostname))return route.fulfill({contentType:req.resourceType()==='stylesheet'?'text/css':'text/plain',body:''});
     return route.continue();
@@ -57,7 +59,7 @@ async function layout(page){
 }
 async function check(name,fn){if(process.env.FLIGHT_QA_FILTER&&!name.includes(process.env.FLIGHT_QA_FILTER))return;try{await fn();results.push({name,pass:true});console.log('PASS '+name);}catch(e){results.push({name,pass:false,error:e.stack});console.log('FAIL '+name+': '+e.message);}}
 try{
-  await check('desktop: real card click, globe, all zoom stages, exact map agreement and 10-second timeout',async()=>{
+  await check('desktop: real card click, globe, all zoom stages, exact map agreement and 30-second timeout',async()=>{
     const {ctx,page,errors}=await visit();
     try{
       await page.evaluate(async()=>{
@@ -80,12 +82,12 @@ try{
       await clickListing(page);await layout(page);
       await page.clock.runFor(400);
       await page.screenshot({path:out+'/desktop-globe.png',animations:'disabled'});
-      await page.clock.fastForward(1500);await page.clock.runFor(32);
-      await page.clock.fastForward(1700);await page.clock.runFor(32);
+      await page.clock.fastForward(5000);await page.clock.runFor(32);
+      await page.clock.fastForward(5400);await page.clock.runFor(32);
       await page.screenshot({path:out+'/desktop-country.png',animations:'disabled'});
-      await page.clock.fastForward(1700);await page.clock.runFor(32);
-      await page.clock.fastForward(1700);await page.clock.runFor(32);
-      await page.clock.fastForward(1400);await page.clock.runFor(32);
+      await page.clock.fastForward(5400);await page.clock.runFor(32);
+      await page.clock.fastForward(5400);await page.clock.runFor(32);
+      await page.clock.fastForward(4000);await page.clock.runFor(32);
       const mapState=await page.evaluate(()=>window.__qaFinal);
       assert.ok(mapState,'Final map camera never arrived');
       assert.ok(mapState.visible,'Live tiles never became visible');
@@ -95,10 +97,10 @@ try{
       assert.equal(mapState.flightArea.radius,500);
       assert.equal(mapState.zoom,14);
       await page.screenshot({path:out+'/desktop-area.png',animations:'disabled'});
-      await page.clock.fastForward(3000);
+      await page.clock.fastForward(5000);
       await page.waitForFunction(()=>!document.querySelector('.cabana-location-flight'));
       const timing=await page.evaluate(()=>({stages:window.__qaStages,duration:window.__qaClosed}));
-      assert.deepEqual(timing.stages,['0','1','2','3','4']);assert.ok(timing.duration>=10000,JSON.stringify(timing));
+      assert.deepEqual(timing.stages,['0','1','2','3','4']);assert.ok(timing.duration>=30000,JSON.stringify(timing));
       assert.ok(await page.locator('#drawer .dl-book-btn').isVisible());
       assert.deepEqual(errors,[]);results.push({name:'measured flight',pass:true,...timing,mapState});
     }finally{await ctx.close();}
@@ -123,15 +125,15 @@ try{
       await page.locator('[aria-label="Close location preview"]').dispatchEvent('click');assert.equal(await page.locator('.cabana-location-flight').count(),0);assert.deepEqual(errors,[]);
     }finally{await ctx.close();}
   });
-  await check('blocked globe/Leaflet/tiles: opens immediately, still exits after ten seconds',async()=>{
+  await check('blocked globe/Leaflet/tiles: opens immediately, still exits after thirty seconds',async()=>{
     const {ctx,page}=await visit({blocked:true});
-    try{await clickListing(page);await layout(page);await page.clock.fastForward(10000);assert.equal(await page.locator('.cabana-location-flight').count(),0);assert.ok(await page.locator('#drawer .dl-book-btn').isVisible());}finally{await ctx.close();}
+    try{await clickListing(page);await layout(page);await page.clock.fastForward(30000);assert.equal(await page.locator('.cabana-location-flight').count(),0);assert.ok(await page.locator('#drawer .dl-book-btn').isVisible());}finally{await ctx.close();}
   });
   await check('listing deep link from other pages opens the same immediate overlay',async()=>{
     const {ctx,page}=await visit({query:'?open=qa-london'});
     try{await page.locator('.cabana-location-flight[open]').waitFor();assert.equal(await page.locator('#cabana-flight-title').textContent(),'A weekend in London');await page.locator('.clf-continue').dispatchEvent('click');}finally{await ctx.close();}
   });
-  await check('real wall clock: a user click opens synchronously and dismisses at ten seconds',async()=>{
+  await check('real wall clock: a user click opens synchronously and dismisses at thirty seconds',async()=>{
     const {ctx,page}=await visit({realTime:true});
     try{
       const result=await page.evaluate(async()=>{
@@ -140,10 +142,10 @@ try{
         observer.observe(document.body,{childList:true});
         document.querySelector('[data-card-id="n_qa-westlands"] .card-link').click();
         const immediate=!!document.querySelector('.cabana-location-flight[open]');
-        await new Promise(resolve=>setTimeout(resolve,11000));observer.disconnect();
+        await new Promise(resolve=>setTimeout(resolve,31000));observer.disconnect();
         return {immediate,finished,drawer:document.querySelector('#drawer').classList.contains('open')};
       });
-      assert.ok(result.immediate&&result.drawer);assert.ok(result.finished>=9950&&result.finished<11000,JSON.stringify(result));
+      assert.ok(result.immediate&&result.drawer);assert.ok(result.finished>=29950&&result.finished<31000,JSON.stringify(result));
       results.push({name:'wall-clock measurement',pass:true,...result});
     }finally{await ctx.close();}
   });
