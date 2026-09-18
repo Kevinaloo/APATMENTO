@@ -1622,6 +1622,8 @@
   }
 
   function scheduleWelcome() {
+    // Programme visitors have a dedicated introduction; keep help available on demand.
+    if (doc.body.hasAttribute('data-programme')) return;
     if (ls(LS_WELCOME) || ls(LS_USED) || cacheRead()) return;
     const path = global.location.pathname;
     if (/\/(auth|admin|booking-confirm|checkout|partner-|agent-dashboard|ambassador-dashboard|add-listing|profile)/.test(path)) return;

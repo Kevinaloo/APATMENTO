@@ -1,11 +1,25 @@
 (function () {
   'use strict';
   const root = document.documentElement;
+  if (!document.querySelector('.pg-motion-dock')) {
+    const control = document.createElement('button');
+    control.type = 'button';
+    control.className = 'pg-motion-dock';
+    control.setAttribute('data-motion-toggle', '');
+    control.textContent = 'Pause motion';
+    document.body.appendChild(control);
+  }
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
   let paused = reduced.matches;
   try { paused = paused || sessionStorage.getItem('cabana-programme-motion') === 'paused'; } catch (_) {}
   function motion() {
     root.classList.toggle('pg-no-motion', paused);
+    if (paused || reduced.matches) {
+      document.querySelectorAll('[data-tilt]').forEach(card => { card.style.transform = ''; });
+      document.getAnimations().forEach(animation => {
+        if (animation.effect && animation.effect.target && animation.effect.target.closest('.programme-page')) animation.cancel();
+      });
+    }
     document.querySelectorAll('[data-motion-toggle]').forEach(button => {
       button.setAttribute('aria-pressed', String(paused));
       button.textContent = paused ? 'Enable motion' : 'Pause motion';
@@ -29,11 +43,23 @@
     const target = document.getElementById(link.hash.slice(1));
     if (!target) return;
     event.preventDefault();
-    target.scrollIntoView({ behavior: paused ? 'auto' : 'smooth', block: 'start' });
+    target.scrollIntoView({ behavior: paused || reduced.matches ? 'auto' : 'smooth', block: 'start' });
     history.replaceState(null, '', link.hash);
     if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1');
     target.focus({ preventScroll: true });
   }));
+  if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    document.querySelectorAll('[data-tilt]').forEach(card => {
+      card.addEventListener('pointermove', event => {
+        if (paused || reduced.matches) return;
+        const bounds = card.getBoundingClientRect();
+        const x = (event.clientX - bounds.left) / bounds.width - .5;
+        const y = (event.clientY - bounds.top) / bounds.height - .5;
+        card.style.transform = `perspective(1000px) rotateX(${-y * 4}deg) rotateY(${x * 4}deg)`;
+      });
+      card.addEventListener('pointerleave', () => { card.style.transform = ''; });
+    });
+  }
   const studio = document.querySelector('[data-creator-demo]');
   if (studio) {
     const settings = {
@@ -47,7 +73,13 @@
       studio.querySelector('[data-demo-title]').textContent = content.title;
       const photo = studio.querySelector('[data-demo-image]');
       photo.src = '/assets/programmes/' + content.image; photo.alt = content.alt;
+      const tag = studio.querySelector('[data-demo-tag]');
+      if (tag) tag.textContent = 'THE ' + setting.toUpperCase() + ' / YOUR EDIT';
       studio.querySelector('[data-demo-caption]').textContent = content[mood] + '\n\nI may earn commission when you book through my link.';
+      const post = studio.querySelector('.cr-post');
+      if (post && !paused && !reduced.matches && post.animate) {
+        post.animate([{ opacity: .5, transform: 'translateY(8px)' }, { opacity: 1, transform: 'translateY(0)' }], { duration: 300, easing: 'ease-out' });
+      }
       studio.querySelector('[data-copy-status]').textContent = '';
       studio.querySelectorAll('[data-setting]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.setting === setting)));
       studio.querySelectorAll('[data-mood]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.mood === mood)));
