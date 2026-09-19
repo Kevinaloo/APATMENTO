@@ -164,7 +164,7 @@
     too_many_items: 'That is a lot of dishes for one ticket. Split it into two orders.',
     item_missing: 'A dish in your order is no longer on the menu. Remove it and send again.',
     item_sold_out: 'A dish in your order has just sold out. Remove it and send again.',
-    below_minimum: 'This order is under the kitchen’s minimum for delivery.',
+    below_minimum: "This order is under the kitchen's minimum for delivery.",
     order_not_found: 'We could not find that order. Check the link you opened.',
     too_late_to_cancel: 'The kitchen already answered, so it cannot be cancelled here. Call them instead.',
     no_rider_yet: 'No rider has been sent yet.',
@@ -174,16 +174,16 @@
     sign_in_required: 'Sign in to run your kitchen.',
     already_answered: 'This order was already answered.',
     reason_required: 'Tell the diner why, so they can decide what to do next.',
-    wrong_step: ‘That step does not apply to this order any more. Refreshing.’,
-    not_delivery: ‘Only delivery orders go out with a rider.’,
-    rider_required: ‘Add the rider’s name.’,
-    not_dine_in: ‘Only eat-in orders are marked as served.’,
-    use_served: ‘Mark eat-in orders as served.’,
-    not_your_kitchen: ‘This kitchen is not on your account.’,
-    unknown_action: ‘That action is not available.’,
-    not_awaiting_payment: ‘This order is no longer waiting for payment confirmation.’,
-    action_invalid: ‘That action is not recognised.’,
-    offline: ‘You appear to be offline. Check your connection and try again.’
+    wrong_step: 'That step does not apply to this order any more. Refreshing.',
+    not_delivery: 'Only delivery orders go out with a rider.',
+    rider_required: "Add the rider's name.",
+    not_dine_in: 'Only eat-in orders are marked as served.',
+    use_served: 'Mark eat-in orders as served.',
+    not_your_kitchen: 'This kitchen is not on your account.',
+    unknown_action: 'That action is not available.',
+    not_awaiting_payment: 'This order is no longer waiting for payment confirmation.',
+    action_invalid: 'That action is not recognised.',
+    offline: 'You appear to be offline. Check your connection and try again.'
   };
   api.explain = function (e) {
     var c = (e && (e.code || e.message)) || '';
