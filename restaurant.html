@@ -437,9 +437,9 @@ h1{font-family:var(--fd);font-weight:600;font-variation-settings:'SOFT' 50,'WONK
 
    What the order is not is a payment. Cabana never sits between
    the diner and the counter, never marks a price up and never
-   takes a cut, so nothing here charges anybody: the checkout's job
-   is to hand each kitchen a complete ticket the diner sends
-   themselves.
+   takes a cut, so nothing here charges anybody. The checkout sends
+   each kitchen an order request on Cabana; the kitchen accepts or
+   declines it with a reason, and the diner pays on handover.
    ═══════════════════════════════════════════════════════════════ */
 'use strict';
 
@@ -758,11 +758,13 @@ function render(){
         return '<span class="dy'+(days.indexOf(d)>-1?' on':'')+'">'+d.charAt(0).toUpperCase()+d.slice(1,3)+'</span>'; }).join('')+'</div></div>';
   }
   var wa=P.order_whatsapp||R.contact_whatsapp, ph=P.order_phone||R.contact_phone;
-  if(wa||ph){
-    html+='<div class="ic"><div class="ic-l">Ordering</div><div class="ic-v">'
-      +(wa?'<a href="https://wa.me/'+esc(String(wa).replace(/\D/g,''))+'" target="_blank" rel="noopener">WhatsApp the kitchen</a><br/>':'')
-      +(ph?'<a href="tel:'+esc(ph)+'">'+esc(ph)+'</a>':'')+'</div></div>';
-  }
+  html+='<div class="ic"><div class="ic-l">How ordering works</div><div class="ic-v">'
+    +'Add dishes and send the order on Cabana. The kitchen accepts it with a time or tells you why not, you follow it live, '
+    +'and at the door you and the rider swap four-digit codes.'
+    +(ph||wa?'<br/><span style="opacity:.7">Questions: </span>'
+      +(ph?'<a href="tel:'+esc(ph)+'">'+esc(ph)+'</a>':'')
+      +(wa?(ph?' &middot; ':'')+'<a href="https://wa.me/'+esc(String(wa).replace(/\D/g,''))+'" target="_blank" rel="noopener">WhatsApp</a>':''):'')
+    +'</div></div>';
   html+='<div class="ic"><div class="ic-l">What you pay</div><div class="ic-v">The prices on this page are the kitchen\'s own. Cabana adds nothing and takes nothing.</div></div>';
   html+='</div></section>';
 
@@ -1114,59 +1116,41 @@ function openOrder(){
   }).join('');
 
   var under = P.min_order && t.v < Number(P.min_order);
-  var wa=P.order_whatsapp||R.contact_whatsapp, ph=P.order_phone||R.contact_phone;
+  var ph=P.order_phone||R.contact_phone;
   var open=cooking();
   var all=CART.totals(), other=all.count-t.n;
+  var paused=P.accepts_orders===false||(P.orders_paused_until&&new Date(P.orders_paused_until)>new Date());
+  var arrow='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.6 12h14.8M13 5.6 19.4 12 13 18.4"/></svg>';
 
+  /* One way to order, and it is Cabana: the kitchen answers on its
+     own screen, the diner watches it happen, and the handover closes
+     with a code. The phone stays here for questions, not for orders. */
   openSheet('<div class="ord">'
     +'<h3>Your order</h3>'
-    +'<p class="sub">From '+esc(R.title)+'. Send it to the kitchen and they will confirm the price and the time with you.</p>'
+    +'<p class="sub">From '+esc(R.title)+'. Send it on Cabana and '+esc(R.title)+' accepts it with a time, or tells you why not &mdash; usually within minutes.</p>'
     +rows
     +'<div class="tot"><span class="tot-l">Food total</span><span class="tot-v">'+money(t.v)+'</span></div>'
     +(P.delivery_fee>0?'<div class="tot" style="padding-top:0"><span class="tot-l">Delivery, if you want it brought</span><span class="tot-l">'+money(P.delivery_fee)+'</span></div>':'')
     +'<div class="note">'
-    +(open===false?'This kitchen is closed right now, so nobody may reply until it opens. '
+    +(paused?'<b>'+esc(R.title)+' has paused new orders for now.</b> Your basket is kept; try again shortly. '
+      :open===false?'This kitchen is closed right now. You can schedule the order for when it opens at the checkout. '
       :open===true?'The kitchen is cooking right now. ':'')
-    +(under?'Their minimum order is '+money(P.min_order)+', so add '+money(Number(P.min_order)-t.v)+' more before you send this. ':'')
-    +'You pay the kitchen directly. Cabana takes no commission and adds nothing to these prices.</div>'
-    /* ordering from more than one kitchen is normal, and the way
-       through it is a checkout that knows about all of them */
+    +(under?'Delivery starts from '+money(P.min_order)+', so add '+money(Number(P.min_order)-t.v)+' more for delivery, or collect it. ':'')
+    +'You pay the kitchen when the food is in your hands. Cabana takes no commission and adds nothing.</div>'
     +(other>0
       ?'<div class="note" style="background:rgba(255,90,31,.08);border-color:var(--edge-2)">'
        +'You also have <b>'+other+(other===1?' item':' items')+'</b> from '
        +(all.kitchens-1)+(all.kitchens-1===1?' other kitchen':' other kitchens')
-       +'. The checkout keeps them separate and gives each kitchen its own ticket.</div>'
+       +'. They are sent together at the checkout, and each kitchen answers its own.</div>'
       :'')
     +'<div class="ord-acts">'
-    +(other>0
-      ?'<a class="oa" style="background:var(--heat);color:#1A0A03" href="/checkout?from='+encodeURIComponent(ID)+'">'
-       +'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.6 7.8h14.8l-1.2 12.2a1.2 1.2 0 0 1-1.2 1H7a1.2 1.2 0 0 1-1.2-1Z"/><path d="M8.8 7.8V6a3.2 3.2 0 0 1 6.4 0v1.8"/></svg>'
-       +'Go to checkout · all '+all.count+' items</a>'
-      :'')
-    +(wa?'<a class="oa oa-wa" href="'+waLink(wa,t)+'" target="_blank" rel="noopener" onclick="setTimeout(closeSheet,300)">'
-      +'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.1-1.8-.9-2-1-.3-.1-.5-.1-.7.1-.2.3-.8 1-.9 1.2-.2.2-.4.2-.6.1-.3-.2-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.5.1-.6l.5-.5c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5s-.7-1.6-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.2.2 2.1 3.2 5.1 4.5.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.8-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.1-.3-.2-.6-.3M12 21.8h-.1c-1.8 0-3.5-.5-5-1.4l-.4-.2-3.7 1 1-3.6-.2-.4A9.9 9.9 0 0 1 2.2 12C2.2 6.6 6.6 2.1 12 2.1c2.6 0 5.1 1 7 2.9a9.8 9.8 0 0 1 2.9 7c0 5.5-4.4 9.9-9.9 9.9m8.4-18.3A11.8 11.8 0 0 0 12 0C5.5 0 .2 5.3.2 11.9c0 2.1.5 4.1 1.6 5.9L0 24l6.3-1.7c1.8 1 3.7 1.4 5.7 1.4 6.6 0 11.9-5.3 11.9-11.9 0-3.2-1.2-6.2-3.5-8.4z"/></svg>'
-      +'Send this to the kitchen on WhatsApp</a>':'')
-    +(ph?'<a class="oa oa-call" href="tel:'+esc(ph)+'">'
-      +'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1A19.5 19.5 0 0 1 4.7 12 19.8 19.8 0 0 1 1.6 3.4 2 2 0 0 1 3.6 1.2h3a2 2 0 0 1 2 1.7 12.8 12.8 0 0 0 .7 2.8 2 2 0 0 1-.5 2.1L7.9 8.4a16 16 0 0 0 7.7 7.7l1.7-.9a2 2 0 0 1 2.1.5 12.8 12.8 0 0 0 2.8.7 2 2 0 0 1 1.8 2"/></svg>'
-      +'Call '+esc(ph)+'</a>':'')
-    +(!wa&&!ph?'<div class="note">This kitchen has not left a number yet. Try again shortly.</div>':'')
-    +(other>0?'':'<a class="oa oa-call" href="/checkout?from='+encodeURIComponent(ID)+'">'
-      +'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.6 12h14.8M13 5.6 19.4 12 13 18.4"/></svg>'
-      +'Checkout with your details</a>')
+    +'<a class="oa" style="background:var(--heat);color:#1A0A03" href="/checkout?from='+encodeURIComponent(ID)+'">'+arrow
+    +(other>0?'Checkout &middot; all '+all.count+' items':'Checkout &amp; send to '+esc(R.title))+'</a>'
     +'<button class="oa oa-call" onclick="closeSheet()">Keep looking at the menu</button>'
+    +(ph?'<a class="oa oa-call" style="opacity:.8" href="tel:'+esc(ph)+'">Questions first? Call '+esc(ph)+'</a>':'')
     +'</div></div>');
 }
 function nudge(id,d){ setQty(id,(ORDER[id]||0)+d); if(totals().n) openOrder(); else closeSheet(); }
-
-/* The ticket is built by the basket, so the message this kitchen
-   gets is word for word the one the checkout would send it. */
-function waLink(num,t){
-  var link=CART.waLink(ID,{url:location.origin+'/restaurant?id='+ID});
-  if(link) return link;
-  /* the basket has no number for this kitchen but the page does */
-  return 'https://wa.me/'+String(num).replace(/\D/g,'')+'?text='
-    +encodeURIComponent(CART.ticket(ID,{url:location.origin+'/restaurant?id='+ID}));
-}
 
 function zoom(url){
   openSheet('<div class="sh-p" style="aspect-ratio:auto"><img src="'+esc(url)+'" alt="" style="max-height:80vh" loading="lazy" decoding="async"/>'

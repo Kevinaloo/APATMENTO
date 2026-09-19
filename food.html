@@ -727,6 +727,57 @@ h1.big em{font-style:italic;font-weight:500;color:var(--ember-lit);letter-spacin
 .kit-lite{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));
   gap:clamp(18px,2.2vw,30px) clamp(16px,2vw,26px);}
 
+
+/* ═══════════════ HOW ORDERING WORKS ═══════════════
+   Four steps, said once, near the top, so nobody has to guess what
+   happens after they tap "add". ═══════════════════════════════ */
+.how{padding-bottom:clamp(18px,2.4vw,30px);}
+.how-in{display:grid;grid-template-columns:auto 1fr;gap:clamp(16px,2.4vw,34px);align-items:center;
+  border:1px solid var(--rule);border-radius:var(--r2);padding:clamp(14px,1.8vw,20px) clamp(16px,2.2vw,26px);
+  background:linear-gradient(100deg,rgba(222,82,25,.07),rgba(244,234,220,.015) 40%);}
+.how-h{font-family:var(--fd);font-weight:500;font-size:clamp(17px,1.6vw,20px);letter-spacing:-.025em;line-height:1.2;max-width:12ch;}
+.how-h small{display:block;font-family:var(--fm);font-size:9.5px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:var(--brass);margin-bottom:6px;}
+.how ol{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(10px,1.6vw,22px);list-style:none;margin:0;padding:0;}
+.how li{display:flex;gap:11px;align-items:flex-start;min-width:0;}
+.how li i{flex-shrink:0;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-style:normal;
+  font-family:var(--fm);font-size:11px;font-weight:600;color:var(--ember-lit);border:1px solid rgba(222,82,25,.4);background:rgba(222,82,25,.08);}
+.how li b{display:block;font-size:13.5px;font-weight:600;color:var(--bone);line-height:1.3;}
+.how li span{display:block;font-size:12px;line-height:1.45;color:var(--bone-48);margin-top:3px;}
+@media(max-width:900px){.how-in{grid-template-columns:1fr;}.how-h{max-width:none;}.how ol{grid-template-columns:1fr 1fr;row-gap:14px;}}
+
+/* ═══════════════ THE LIVE ORDER DOCK ═══════════════
+   An order in flight follows the diner around the food page, one
+   line long, one tap from the full picture. ════════════════════ */
+.dock{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));z-index:8900;transform:translateX(-50%) translateY(140%);
+  display:flex;align-items:center;gap:12px;padding:9px 10px 9px 9px;border-radius:100px;text-decoration:none;color:var(--bone);
+  background:rgba(22,13,7,.92);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border:1px solid rgba(222,82,25,.45);box-shadow:0 20px 60px rgba(0,0,0,.6),0 0 0 4px rgba(222,82,25,.08);
+  transition:transform .5s var(--ease);max-width:min(94vw,520px);}
+.dock.up{transform:translateX(-50%) translateY(0);}
+.dock img,.dock .dph{width:38px;height:38px;border-radius:50%;object-fit:cover;flex-shrink:0;background:var(--ink-3);}
+.dock-b{min-width:0;flex:1;}
+.dock-b b{display:block;font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.dock-b small{display:flex;align-items:center;gap:7px;font-family:var(--fm);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ember-lit);margin-top:2px;}
+.dock-b small i{width:7px;height:7px;border-radius:50%;background:currentColor;animation:dockbeat 1.5s ease-in-out infinite;}
+@keyframes dockbeat{0%,100%{box-shadow:0 0 0 0 rgba(240,106,46,.55);}70%{box-shadow:0 0 0 7px rgba(240,106,46,0);}}
+.dock-go{flex-shrink:0;padding:10px 14px;border-radius:100px;background:var(--ember);color:#170A03;font-family:var(--fm);font-size:9.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;}
+.dock.good{border-color:rgba(127,162,105,.5);} .dock.good .dock-b small{color:var(--bay);} .dock.good .dock-go{background:var(--bay);color:#0E1A08;}
+body.has-dock .cbnc-toast{bottom:92px;}
+.dock-b small span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
+@media(max-width:640px){.dock{left:12px;right:84px;max-width:none;transform:translateY(160%);}
+  .dock.up{transform:none;}}
+
+/* ═══════════════ ORDER AGAIN ═══════════════ */
+.again{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),1fr));gap:12px;}
+.ag{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--rule-2);border-radius:var(--r2);
+  background:rgba(244,234,220,.022);cursor:pointer;text-align:left;color:inherit;transition:.25s;font-family:inherit;}
+.ag:hover{border-color:var(--rule-brass);transform:translateY(-3px);}
+.ag img,.ag .aph{width:52px;height:52px;border-radius:10px;object-fit:cover;flex-shrink:0;background:var(--ink-3);}
+.ag-b{flex:1;min-width:0;}
+.ag-b b{display:block;font-family:var(--fd);font-weight:500;font-size:16px;letter-spacing:-.02em;}
+.ag-b small{display:block;font-size:12px;color:var(--bone-48);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ag-go{font-family:var(--fm);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ember-lit);flex-shrink:0;}
+
 /* The shared site footer is built for a light page. Warm it up. */
 .site-footer{background:#080503!important;border-top:1px solid var(--rule)!important;}
 </style>
@@ -844,6 +895,20 @@ h1.big em{font-style:italic;font-weight:500;color:var(--ember-lit);letter-spacin
   </div>
 </section>
 
+
+<!-- ═══════ HOW ORDERING WORKS ═══════ -->
+<section class="how shell" aria-labelledby="howH">
+  <div class="how-in">
+    <h2 class="how-h" id="howH"><small>On Cabana</small>How ordering works</h2>
+    <ol>
+      <li><i>1</i><div><b>Send your order</b><span>From one kitchen or several, in one go.</span></div></li>
+      <li><i>2</i><div><b>The kitchen answers</b><span>Yes with a ready time, or no with a reason.</span></div></li>
+      <li><i>3</i><div><b>Watch it live</b><span>Cooking, ready, on the way. Nothing to chase.</span></div></li>
+      <li><i>4</i><div><b>Swap codes, pay</b><span>Check the rider&rsquo;s code, give yours, pay the kitchen.</span></div></li>
+    </ol>
+  </div>
+</section>
+
 <!-- ═══════ THE HOUR ═══════
      The page opens on whatever meal the clock is in, and says so.
      Every other meal is one tap away and nothing is ever removed
@@ -859,6 +924,18 @@ h1.big em{font-style:italic;font-weight:500;color:var(--ember-lit);letter-spacin
 
 <!-- ═══════ THE SHEET ═══════ -->
 <main class="sheet shell">
+
+
+  <section id="againSec" hidden>
+    <div class="band">
+      <div class="band-l">
+        <div class="band-k mono">00 <i>/</i> From your orders</div>
+        <h2>Order it <em>again</em></h2>
+        <p class="band-s">The plates you finished last time, one tap from the checkout.</p>
+      </div>
+    </div>
+    <div class="again" id="againRail"></div>
+  </section>
 
   <section id="dealSec" hidden>
     <div class="band">
@@ -954,12 +1031,14 @@ h1.big em{font-style:italic;font-weight:500;color:var(--ember-lit);letter-spacin
     </div>
   </div>
 </section>
+<a class="dock" id="dock" href="/order" aria-live="polite" hidden></a>
 <div class="toast" id="toast"></div>
 
 <script src="/vendor-supabase-2.112.3.js"></script>
 <script src="/apa-session.js"></script>
 <script src="/cabana-cart.js"></script>
 <script src="/cabana-cart-ui.js"></script>
+<script src="/cabana-orders.js"></script>
 <script>
 /* ═══════════════════════════════════════════════════════════════
    CABANA · FOOD
@@ -1894,7 +1973,76 @@ var CART=window.CabanaCart;
 CART.onChange(function(){ repaintAdds(); });
 
 tick(); setInterval(tick,20000);
+/* ═══════════════════════════════════════════════════════════════
+   YOUR ORDERS, ON THIS PAGE
+   An order that is on its way follows the diner around the food:
+   one line at the foot of the screen, one tap from the live page.
+   And what they finished last time sits at the top, ready to send
+   again, because the second order is the easiest one to place.
+   ═══════════════════════════════════════════════════════════════ */
+var MINE=[], DOCK_T=null;
+function mine(){
+  if(!window.CabanaOrders) return;
+  var any=CabanaOrders.local().length || (window.ApaSession&&ApaSession.get&&ApaSession.get().status==='user');
+  if(!any) return;
+  CabanaOrders.mine().then(function(list){
+    MINE=list||[];
+    paintDock(); paintAgain();
+    clearTimeout(DOCK_T);
+    if(MINE.some(function(o){return CabanaOrders.isLive(o.status);})) DOCK_T=setTimeout(mine,document.hidden?45000:15000);
+  }).catch(function(){});
+}
+function paintDock(){
+  var el=document.getElementById('dock'); if(!el) return;
+  var live=MINE.filter(function(o){return CabanaOrders.isLive(o.status);});
+  if(!live.length){ el.classList.remove('up'); document.body.classList.remove('has-dock'); setTimeout(function(){el.hidden=true;},500); return; }
+  var o=live[0], tok=CabanaOrders.tokenFor(o.ref);
+  var more=live.length>1?' +'+(live.length-1)+' more':'';
+  el.href=live.length>1&&o.basket&&live.every(function(x){return x.basket===o.basket;})
+    ? '/order?basket='+encodeURIComponent(o.basket)
+    : '/order?ref='+encodeURIComponent(o.ref)+(tok?'&t='+encodeURIComponent(tok):'');
+  var eta=o.status==='accepted'&&o.eta_ready_at?' · ready '+CabanaOrders.clock(o.eta_ready_at):'';
+  el.className='dock'+(o.status==='ready'||o.status==='on_the_way'?' good':'');
+  el.innerHTML=(o.kitchen.photo?'<img src="'+esc(o.kitchen.photo)+'" alt=""/>':'<span class="dph"></span>')
+    +'<span class="dock-b"><b>'+esc(o.kitchen.name)+esc(more)+'</b><small><i></i><span>'+esc(CabanaOrders.say(o.status,o.mode)+eta)+'</span></small></span>'
+    +'<span class="dock-go">Track</span>';
+  el.hidden=false; document.body.classList.add('has-dock');
+  requestAnimationFrame(function(){ el.classList.add('up'); });
+}
+function paintAgain(){
+  var sec=document.getElementById('againSec'), rail=document.getElementById('againRail'); if(!sec||!rail) return;
+  var seen={}, done=MINE.filter(function(o){
+    if(o.status!=='completed'||seen[o.listing_id]) return false;
+    return (seen[o.listing_id]=true);
+  }).slice(0,4);
+  if(!done.length){ sec.hidden=true; return; }
+  rail.innerHTML=done.map(function(o,i){
+    return '<button class="ag" type="button" data-again="'+i+'">'
+      +(o.kitchen.photo?'<img src="'+esc(o.kitchen.photo)+'" alt="" loading="lazy"/>':'<span class="aph"></span>')
+      +'<span class="ag-b"><b>'+esc(o.kitchen.name)+'</b><small>'+esc(o.items.map(function(x){return x.qty+'× '+x.name;}).join(', '))+'</small></span>'
+      +'<span class="ag-go">Again</span></button>';
+  }).join('');
+  sec.hidden=false;
+  rail.querySelectorAll('[data-again]').forEach(function(b){
+    b.onclick=function(){
+      var o=done[+b.dataset.again];
+      var k=K.filter(function(x){return String(x.id)===String(o.listing_id);})[0];
+      var desc=k?{id:k.id,name:k.title,photo:k.p.hero_photo||(k.photos&&k.photos[0])||'',where:[k.area,k.city].filter(Boolean).join(', '),
+        delivery_fee:k.p.delivery_fee,min_order:k.p.min_order,delivery_mins:k.p.delivery_mins,prep_mins:k.p.prep_mins,
+        serves_delivery:k.p.serves_delivery,serves_pickup:k.p.serves_pickup,serves_dine_in:k.p.serves_dine_in,
+        opens_at:k.p.opens_at,closes_at:k.p.closes_at,open_days:k.p.open_days}
+        :{id:o.listing_id,name:o.kitchen.name,photo:o.kitchen.photo,where:[o.kitchen.area,o.kitchen.city].filter(Boolean).join(', ')};
+      window.CabanaCart.clearKitchen(o.listing_id);
+      o.items.forEach(function(it){ window.CabanaCart.add(desc,{id:it.id,name:it.name,price:it.unit,photo:it.photo},it.qty); });
+      window.CabanaCart.setMode(o.listing_id,o.mode);
+      location.href='/checkout?from='+encodeURIComponent(o.listing_id);
+    };
+  });
+}
+document.addEventListener('visibilitychange',function(){ if(!document.hidden) mine(); });
+
 boot();
+mine();
 var _slot=slot().key, _meal=mealNow();
 setInterval(function(){
   if(!K.length) return;
@@ -1932,22 +2080,24 @@ setInterval(function(){
       <p>This page knows what time it is. In the morning it puts breakfast first, at midday lunch, in the evening whatever is coming off the grill. That is all it does: it changes the order things appear in, never what is on the page. Nyama choma is still here at seven in the morning and mandazi are still here at midnight, a little further down, and one tap on another service brings them straight back to the top. Nothing is ever withheld until a permitted hour.</p>
 
       <h3>Ordering</h3>
-      <p>Tap a dish to open the kitchen that cooks it and read the whole menu. Add what you want to your order as you go. When you are done, the checkout collects your name, your number and where to bring it, then hands each kitchen a complete ticket you send them on WhatsApp or read out by phone. The kitchen confirms what it costs and how long it takes. Most take M-Pesa, many take cash or card at the counter. Delivery, collection and eating in are marked separately so you know which ones a kitchen actually does.</p>
+      <p>Tap a dish to open the kitchen that cooks it, add what you want, and send the order from the checkout. It goes straight to the kitchen on Cabana, not to a chat. The kitchen accepts it with a time, or declines it and tells you why, usually within minutes, and you watch every step live: accepted, cooking, ready, on the way. If a kitchen does not answer in time the request lapses on its own and nothing is owed. At the door you and the rider swap four-digit codes, so you know the bag really came from the kitchen and the kitchen knows it reached you. You pay the kitchen by M-Pesa or cash when the food is in your hands.</p>
 
       <h3>Ordering from more than one kitchen</h3>
-      <p>Your order can hold food from as many kitchens as you like. Nobody should have to choose between the biryani from one counter and the cake from another, so the checkout keeps them apart: each kitchen gets its own ticket, its own total and its own delivery arrangement, because each one is a separate kitchen cooking separate food. Your order is kept on your device for twelve hours, so you can leave, look elsewhere and come back to it.</p>
+      <p>Your order can hold food from as many kitchens as you like. Nobody should have to choose between the biryani from one counter and the cake from another. At the checkout everything is sent in one go, each kitchen answers its own part, and you follow all of them on one screen. Your basket is kept on your device for twelve hours, so you can leave, look elsewhere and come back to it.</p>
 
       <h3>Running a kitchen</h3>
       <p>Putting a restaurant up takes about four minutes and costs nothing. After that the menu lives in your partner hub: add a dish, set a price, photograph the plate, mark it as a favourite, put an offer on it for the weekend and take the offer off on Monday. You keep every shilling a diner pays you.</p>
 
       <h3>Questions people ask</h3>
-      <details class="qa"><summary>How do I order food on Cabana?</summary><p>Tap any dish to open the kitchen's menu, add what you want to your order, then go to the checkout. The checkout writes each kitchen a complete ticket with your name, number and address on it, which you send them on WhatsApp or read out by phone. The kitchen confirms the price and the time, and you pay them directly for the food.</p></details>
-      <details class="qa"><summary>Can I order from more than one restaurant at once?</summary><p>Yes. Your order can hold food from as many kitchens as you like. At the checkout each kitchen gets its own ticket with its own total, because each one cooks, prices and delivers its own food. You send them one at a time and pay each kitchen for what they cooked.</p></details>
+      <details class="qa"><summary>How do I order food on Cabana?</summary><p>Add dishes from any kitchen's menu, then send the order from the checkout. The kitchen gets it on Cabana and accepts it with a ready time or declines it with a reason. You follow it live, and at the door you and the rider swap four-digit codes to finish. You pay the kitchen directly when the food reaches you.</p></details>
+      <details class="qa"><summary>Can I order from more than one restaurant at once?</summary><p>Yes. Your basket can hold food from as many kitchens as you like. One tap sends each kitchen its own order, each one answers for itself, and you track them all together.</p></details>
+      <details class="qa"><summary>What happens if a kitchen says no?</summary><p>You see the reason straight away and nothing is charged. If some dishes are finished for the day you can resend the rest in one tap, switch to collecting it yourself, or send the same order to another kitchen.</p></details>
+      <details class="qa"><summary>What are the codes at the door for?</summary><p>Every delivery carries two four-digit codes. The rider tells you theirs and you check it in the app, which proves the bag came from your kitchen. Then you read them yours, which completes the order. Nobody can collect or deliver your food by mistake.</p></details>
       <details class="qa"><summary>Does the page hide food that does not suit the time of day?</summary><p>No. The page puts breakfast first in the morning and dinner first in the evening, but that only changes the order dishes appear in. Everything the kitchens are cooking stays on the page at every hour, and tapping another meal at the top brings it straight to the front.</p></details>
       <details class="qa"><summary>Are the menu prices real?</summary><p>Yes. Every dish and price on a restaurant page was typed in by that restaurant. Cabana adds no markup and takes no commission from what the kitchen charges.</p></details>
       <details class="qa"><summary>Which restaurants are listed?</summary><p>Only restaurants that have signed up and published their own menu. There are no sample or placeholder restaurants here, so if a kitchen appears it is a real kitchen you can order from.</p></details>
       <details class="qa"><summary>How does a restaurant get listed?</summary><p>Publish the restaurant from the Cabana partner hub, then add dishes with prices and photos from your phone. Mark a dish as new, as a favourite or as an offer and it moves to the front of this page. It is free and there is no commission.</p></details>
-      <details class="qa"><summary>Can I pay with M-Pesa?</summary><p>Yes. Restaurants on Cabana take M-Pesa, and many take cash or card at the counter as well.</p></details>
+      <details class="qa"><summary>Can I pay with M-Pesa?</summary><p>Yes. Once a kitchen accepts your order its M-Pesa till appears on the order, and you pay when the food is in your hands. Many kitchens also take cash. Cabana takes no commission and never holds your money.</p></details>
 
       <div class="links"><a href="/shopping">Shopping</a><a href="/tours">Tours</a><a href="/rides">Rides</a><a href="/apartments">Stays</a><a href="/events">Events</a><a href="/destinations">Destinations</a><a href="/what-is-cabana">What is Cabana?</a><a href="/zero-commission-travel-africa">Zero commission explained</a><a href="/rewards">Rewards</a><a href="/nairobi-travel-guide">Nairobi guide</a></div>
     </div>

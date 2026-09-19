@@ -382,12 +382,16 @@ test('this kitchen’s ticket never carries another kitchen’s food', async () 
   assert.match(ticket, /Food total: KES 750/);
 });
 
-test('the WhatsApp link on the review sheet carries this kitchen’s ticket', async () => {
+test('the review sheet sends the order through the Cabana checkout, not a chat', async () => {
   const w = await openPage();
   byName(w, 'Nyama Choma').querySelector('.it-add').click();
-  const link = w.waLink('+254700000002', { v: 750 });
-  assert.match(link, /wa\.me\/254700000002/);
-  assert.match(decodeURIComponent(link), /Nyama Choma/);
+  w.openOrder();
+  const html = w.document.body.innerHTML;
+  const go = w.document.querySelector('a.oa[href^="/checkout?from="]');
+  assert.ok(go, 'a checkout link is the primary action');
+  assert.match(go.textContent, /Checkout/);
+  assert.doesNotMatch(html, /Send this to the kitchen on WhatsApp/);
+  assert.equal(typeof w.waLink, 'undefined', 'the WhatsApp ticket builder is gone');
 });
 
 /* ══════════════════════════════════════════════════════════════════════

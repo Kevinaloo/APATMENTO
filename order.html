@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5NQGLLEE02"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-5NQGLLEE02');
+</script>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Follow your Cabana food order live: accepted, cooking, on the way, and handed over with a code."/>
+<meta name="robots" content="noindex, nofollow"/>
+<meta name="theme-color" content="#0D0704"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<link rel="manifest" href="/manifest.json"/>
+<link rel="icon" href="/favicon.ico" sizes="any"/>
+<link rel="apple-touch-icon" href="/cabana-apple-touch-icon.png"/>
+<title>Your order | Cabana</title>
+<link rel="preconnect" href="https://api.fontshare.com"/>
+<link rel="preconnect" href="https://cdn.fontshare.com" crossorigin/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=zodiak@1,2&f[]=switzer@1&display=swap"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&display=swap"/>
+<link rel="stylesheet" href="/cabana-food-order.css"/>
+<style>
+body{padding-bottom:60px;}
+.wrap{max-width:1080px;}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding:18px 0 4px;scrollbar-width:none;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{flex-shrink:0;display:flex;align-items:center;gap:10px;padding:9px 13px 9px 9px;border-radius:12px;cursor:pointer;
+  border:1px solid var(--rule-2);background:transparent;color:var(--bone-72);text-align:left;transition:.2s;}
+.tab img,.tab .ph{width:30px;height:30px;border-radius:8px;object-fit:cover;background:var(--ink-3);flex-shrink:0;}
+.tab b{display:block;font-size:13px;font-weight:600;color:var(--bone);max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tab small{font-family:var(--fm);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--bone-48);}
+.tab.on{border-color:rgba(222,82,25,.55);background:rgba(222,82,25,.09);}
+
+.grid{display:grid;grid-template-columns:1fr;gap:clamp(16px,2.4vw,26px);padding:clamp(18px,3vw,34px) 0 60px;align-items:start;}
+@media(min-width:940px){.grid{grid-template-columns:minmax(0,1fr) minmax(320px,.62fr);}.side{position:sticky;top:78px;}}
+
+/* the hero: one sentence, one ring, one next step */
+.hero{position:relative;border:1px solid var(--rule-2);border-radius:var(--r3);overflow:hidden;
+  background:radial-gradient(120% 90% at 0% 0%,rgba(222,82,25,.14),transparent 60%),linear-gradient(180deg,rgba(244,234,220,.045),rgba(244,234,220,.012));}
+.hero.good{background:radial-gradient(120% 90% at 0% 0%,rgba(127,162,105,.16),transparent 60%),linear-gradient(180deg,rgba(244,234,220,.045),rgba(244,234,220,.012));}
+.hero.dim{background:linear-gradient(180deg,rgba(244,234,220,.035),rgba(244,234,220,.01));}
+.hero.blue{background:radial-gradient(120% 90% at 0% 0%,rgba(127,181,217,.15),transparent 60%),linear-gradient(180deg,rgba(244,234,220,.045),rgba(244,234,220,.012));}
+.hero-in{display:flex;gap:clamp(18px,3vw,30px);align-items:center;padding:clamp(20px,3.4vw,34px);}
+@media(max-width:560px){.hero-in{flex-direction:column;align-items:flex-start;}}
+.ring{position:relative;width:118px;height:118px;flex-shrink:0;}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg);}
+.ring .bg{stroke:rgba(244,234,220,.08);}
+.ring .fg{stroke:var(--ember-lit);transition:stroke-dashoffset 1s linear;}
+.hero.good .ring .fg{stroke:var(--bay);} .hero.blue .ring .fg{stroke:#7FB5D9;}
+.hero.dim .ring .fg{stroke:var(--bone-30);}
+.ring-c{position:absolute;inset:0;display:grid;place-items:center;text-align:center;}
+.ring-c b{display:block;font-family:var(--fd);font-weight:500;font-size:30px;letter-spacing:-.03em;line-height:1;}
+.ring-c small{display:block;font-family:var(--fm);font-size:8.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--bone-48);margin-top:5px;}
+.ring-c svg{width:40px;height:40px;transform:none;}
+.hero-say{flex:1;min-width:0;}
+.hero-k{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
+.hero-k .ref{font-family:var(--fm);font-size:11px;letter-spacing:.14em;color:var(--bone-48);}
+.hero h1{font-family:var(--fd);font-weight:400;font-size:clamp(26px,3.8vw,40px);line-height:1.06;letter-spacing:-.036em;text-wrap:balance;}
+.hero h1 em{font-style:italic;color:var(--ember-lit);font-weight:500;}
+.hero.good h1 em{color:var(--bay-lit);}
+.hero p.l{margin-top:10px;font-size:14.5px;line-height:1.65;color:var(--bone-72);max-width:54ch;}
+.hero p.l b{color:var(--bone);}
+.hero-acts{display:flex;gap:9px;flex-wrap:wrap;margin-top:16px;}
+
+/* the rail of steps */
+.rail{display:flex;padding:0 clamp(20px,3.4vw,34px) clamp(20px,3vw,28px);gap:0;}
+.rail li{list-style:none;flex:1;position:relative;padding-top:18px;min-width:0;}
+.rail li::before{content:'';position:absolute;top:5px;left:0;right:0;height:2px;background:rgba(244,234,220,.1);}
+.rail li:first-child::before{left:6px;}
+.rail li:last-child::before{right:auto;width:6px;}
+.rail li i{position:absolute;top:0;left:0;width:12px;height:12px;border-radius:50%;background:var(--ink);border:2px solid rgba(244,234,220,.2);}
+.rail li b{display:block;font-size:12px;font-weight:600;color:var(--bone-48);padding-right:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.rail li small{display:block;font-family:var(--fm);font-size:10px;color:var(--bone-30);margin-top:3px;}
+.rail li.done::before{background:var(--ember);}
+.rail li.done i{background:var(--ember);border-color:var(--ember);}
+.rail li.done b{color:var(--bone);}
+.rail li.now i{border-color:var(--ember-lit);background:var(--ink);box-shadow:0 0 0 5px rgba(222,82,25,.2);animation:beat2 1.6s ease-in-out infinite;}
+.rail li.now b{color:var(--ember-lit);}
+@keyframes beat2{0%,100%{box-shadow:0 0 0 3px rgba(222,82,25,.25);}50%{box-shadow:0 0 0 8px rgba(222,82,25,.05);}}
+.hero.good .rail li.done::before,.hero.good .rail li.done i{background:var(--bay);border-color:var(--bay);}
+@media(max-width:560px){.rail li b{font-size:10px;white-space:normal;line-height:1.2;overflow:visible;}.rail li small{font-size:9px;}}
+
+/* handoff */
+.hand{margin-top:clamp(16px,2.4vw,24px);}
+.hand .card-body{display:grid;gap:18px;}
+.hand-step{display:grid;gap:12px;}
+.hand-step h4{font-family:var(--fd);font-weight:500;font-size:18px;letter-spacing:-.02em;display:flex;gap:10px;align-items:center;}
+.hand-step h4 .n{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;flex-shrink:0;font-family:var(--fm);font-size:11px;
+  border:1px solid var(--rule-brass);color:var(--brass);}
+.hand-step h4 .n.ok{background:var(--bay);border-color:var(--bay);color:#0E1A08;}
+.hand-step p{font-size:13.5px;color:var(--bone-48);line-height:1.6;}
+.hand-step + .hand-step{padding-top:18px;border-top:1px solid var(--rule);}
+.verified{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:11px;background:rgba(127,162,105,.1);
+  border:1px solid rgba(127,162,105,.35);color:var(--bay-lit);font-size:14px;font-weight:600;}
+.verified svg{width:18px;height:18px;}
+.blur{filter:blur(9px);user-select:none;}
+.hand-go{justify-self:center;}
+
+.pay .row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-top:1px solid var(--rule);}
+.pay .row:first-child{border-top:none;padding-top:0;}
+.pay .row span{font-size:13px;color:var(--bone-48);}
+.pay .row b{font-family:var(--fm);font-size:16px;letter-spacing:.06em;color:var(--bone);}
+.copy{border:1px solid var(--rule-2);background:transparent;color:var(--bone-72);border-radius:8px;padding:7px 10px;cursor:pointer;
+  font-family:var(--fm);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;}
+.copy:hover{border-color:var(--rule-brass);color:var(--brass-lit);}
+
+.kit{display:flex;align-items:center;gap:13px;}
+.kit img,.kit .ph{width:54px;height:54px;border-radius:12px;object-fit:cover;background:var(--ink-3);flex-shrink:0;display:grid;place-items:center;color:var(--bone-16);}
+.kit .ph svg{width:24px;height:24px;}
+.kit b{display:block;font-family:var(--fd);font-weight:500;font-size:19px;letter-spacing:-.025em;}
+.kit small{font-size:12.5px;color:var(--bone-48);}
+.acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px;}
+.acts .btn{padding:12px 10px;}
+
+.facts{display:grid;gap:0;}
+.facts div{display:flex;justify-content:space-between;gap:14px;padding:10px 0;border-top:1px solid var(--rule);font-size:13px;}
+.facts div:first-child{border-top:none;}
+.facts span{color:var(--bone-48);} .facts b{font-weight:500;text-align:right;color:var(--bone);}
+
+.log{margin-top:4px;}
+.log li{list-style:none;display:flex;gap:12px;padding:8px 0;font-size:12.5px;color:var(--bone-72);}
+.log li time{font-family:var(--fm);font-size:11px;color:var(--bone-30);width:44px;flex-shrink:0;}
+details.more summary{cursor:pointer;list-style:none;font-family:var(--fm);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--bone-48);padding:14px 18px;}
+details.more summary::-webkit-details-marker{display:none;}
+details.more[open] summary{border-bottom:1px solid var(--rule);}
+
+.stars{display:flex;gap:6px;}
+.stars button{width:46px;height:46px;border-radius:12px;border:1px solid var(--rule-2);background:transparent;color:var(--bone-30);cursor:pointer;display:grid;place-items:center;transition:.2s;}
+.stars button svg{width:22px;height:22px;}
+.stars button.on{color:#F2C14E;border-color:rgba(242,193,78,.5);background:rgba(242,193,78,.08);}
+
+.list{display:grid;gap:12px;padding:26px 0 60px;}
+.oc{display:flex;align-items:center;gap:14px;padding:14px;border:1px solid var(--rule-2);border-radius:var(--r2);text-decoration:none;color:inherit;
+  background:rgba(244,234,220,.02);transition:.2s;}
+.oc:hover{border-color:var(--rule-brass);transform:translateY(-2px);}
+.oc img,.oc .ph{width:56px;height:56px;border-radius:12px;object-fit:cover;background:var(--ink-3);flex-shrink:0;display:grid;place-items:center;color:var(--bone-16);}
+.oc .ph svg{width:24px;height:24px;}
+.oc .b{flex:1;min-width:0;}
+.oc b{display:block;font-family:var(--fd);font-weight:500;font-size:18px;letter-spacing:-.02em;}
+.oc small{display:block;font-size:12.5px;color:var(--bone-48);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.oc .r{text-align:right;flex-shrink:0;}
+.oc .r .m{font-family:var(--fm);font-size:13px;margin-top:7px;color:var(--bone-72);}
+.page-h{font-family:var(--fd);font-weight:400;font-size:clamp(30px,4.4vw,48px);letter-spacing:-.036em;margin-top:clamp(24px,4vw,44px);}
+.page-s{color:var(--bone-48);margin-top:8px;font-size:14.5px;}
+
+.ping{display:flex;align-items:center;gap:12px;padding:12px 14px;margin-top:14px;border-radius:12px;border:1px dashed var(--rule-brass);font-size:13px;color:var(--bone-72);}
+.ping svg{width:18px;height:18px;color:var(--brass);flex-shrink:0;}
+.ping button{margin-left:auto;}
+.confetti{position:fixed;inset:0;pointer-events:none;z-index:999;}
+</style>
+</head>
+<body>
+<div class="room" aria-hidden="true"><div class="coal coal-1"></div><div class="coal coal-2"></div></div>
+
+<header class="top">
+  <div class="top-l">
+    <a href="/food" class="top-back" aria-label="Back to the food">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M19.4 12H4.6M11 5.6 4.6 12 11 18.4"/></svg>
+    </a>
+    <img src="/cabana-emblem.png" class="top-em" alt="" decoding="async" onerror="this.style.display='none'"/>
+    <span class="top-t" id="topT">Your order</span>
+  </div>
+  <div class="top-r">
+    <span class="chip" id="liveChip" hidden><span class="stt requested" style="padding:0;border:none"><i></i></span><span class="hide-s">Live</span></span>
+    <button class="top-back" type="button" id="shareBtn" aria-label="Share this order" hidden>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5.5" r="2.6"/><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="18.5" r="2.6"/><path d="m8.3 10.8 7.4-4.1M8.3 13.2l7.4 4.1"/></svg>
+    </button>
+  </div>
+</header>
+
+<main class="shell wrap" id="app">
+  <div class="boot"><div class="boot-r"></div><div class="boot-t">Finding your order</div></div>
+</main>
+
+<div class="scrim" id="scrim"></div>
+<aside class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetH"></aside>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="/vendor-supabase-2.112.3.js"></script>
+<script src="/apa-session.js"></script>
+<script src="/cabana-cart.js"></script>
+<script src="/cabana-orders.js"></script>
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   CABANA · YOUR ORDER, LIVE
+   One sentence at the top says where the order is and what happens
+   next. Everything below it exists to make that next thing easy:
+   the time it should be ready, the till to pay, the code to swap at
+   the door, the number to call. When a kitchen says no, the page
+   says why and offers the fastest way to still eat tonight.
+   ═══════════════════════════════════════════════════════════════ */
+'use strict';
+var Orders=window.CabanaOrders, Cart=window.CabanaCart;
+var Q=new URLSearchParams(location.search);
+var REF=(Q.get('ref')||'').toUpperCase(), TOKEN=Q.get('t')||'', BASKET=Q.get('basket')||'', FRESH=Q.get('new')==='1';
+if(REF&&TOKEN) Orders.remember(REF,TOKEN);
+if(REF&&!TOKEN) TOKEN=Orders.tokenFor(REF)||'';
+
+var ORDERS={};       /* ref → order */
+var CUR=REF;         /* the one being shown */
+var TABS=[];         /* refs in this basket */
+var LAST={};         /* ref → last status seen, to notice changes */
+var TIMER=null, TICK=null;
+
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function attr(s){return esc(s).replace(/\n/g,' ');}
+function money(n,c){return Orders.money(n,c);}
+function clock(iso){return Orders.clock(iso);}
+function toast(m,bad){var t=document.getElementById('toast');t.textContent=m;t.className='toast up'+(bad?' bad':'');
+  clearTimeout(t._x);t._x=setTimeout(function(){t.className='toast'+(bad?' bad':'');},4200);}
+
+var M={
+  cloche:'<path d="M3.8 15.6a8.2 8.2 0 0 1 16.4 0Z"/><path d="M1.8 18.6h20.4"/><path d="M12 7.4V5.8"/><circle cx="12" cy="4.5" r="1.3"/>',
+  check:'<path d="m5 12.6 4.4 4.4L19 7.4"/>',
+  x:'<path d="M18 6 6 18M6 6l12 12"/>',
+  phone:'<path d="M21.6 16.8v2.9a2 2 0 0 1-2.2 2 19.6 19.6 0 0 1-8.5-3A19.3 19.3 0 0 1 5 12.6a19.6 19.6 0 0 1-3-8.6 2 2 0 0 1 2-2.2h2.9a2 2 0 0 1 2 1.7 12.6 12.6 0 0 0 .7 2.8 2 2 0 0 1-.5 2.1L8 9.5a15.8 15.8 0 0 0 6.4 6.4l1.1-1.1a2 2 0 0 1 2.1-.5 12.6 12.6 0 0 0 2.8.7 2 2 0 0 1 1.7 2Z"/>',
+  wa:'<path d="M12 2.2a9.7 9.7 0 0 0-8.3 14.7L2.4 21.8l5-1.3A9.7 9.7 0 1 0 12 2.2Z"/>',
+  map:'<path d="M9 4.4 3.4 6.6v13l5.6-2.2 6 2.2 5.6-2.2v-13l-5.6 2.2Z"/><path d="M9 4.4v13M15 6.6v13"/>',
+  scooter:'<circle cx="5.6" cy="17.4" r="2.8"/><circle cx="18.4" cy="17.4" r="2.8"/><path d="M8.4 17.4h7.2M15.6 17.4 13 6.6h-2.6M13.4 9.4h4.2l1.6 5.4"/>',
+  bell:'<path d="M6 16.6V11a6 6 0 0 1 12 0v5.6l1.6 2H4.4Z"/><path d="M10 20.4a2 2 0 0 0 4 0"/>',
+  star:'<path d="m12 3.2 2.7 5.6 6.1.8-4.4 4.3 1 6.1L12 17.1 6.6 20l1-6.1-4.4-4.3 6.1-.8Z"/>',
+  key:'<circle cx="8" cy="15" r="4.4"/><path d="m11.2 11.8 8.6-8.6M16.4 6.6l2.4 2.4M14 9l2 2"/>',
+  info:'<circle cx="12" cy="12" r="8.6"/><path d="M12 11.2v5M12 8.1h.01"/>',
+  east:'<path d="M4.6 12h14.8M13 5.6 19.4 12 13 18.4"/>',
+  redo:'<path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4.6V11h-6.4"/>',
+  door:'<path d="M5.4 21V3.6h10.4V21M3 21h18"/><circle cx="12.6" cy="12.4" r=".9"/>',
+  hand:'<path d="M7.4 11.2V5.4a1.6 1.6 0 0 1 3.2 0v5M10.6 10.4V4.2a1.6 1.6 0 0 1 3.2 0v6.2M13.8 10.8V6.4a1.6 1.6 0 0 1 3.2 0v8.2c0 3.4-2.4 6-6 6-3.2 0-4.6-1.6-6.2-4.4l-1.4-2.6a1.6 1.6 0 0 1 2.6-1.8l1.4 1.8"/>',
+  chair:'<path d="M6.4 3.6h11.2v8.8H6.4Z"/><path d="M4.6 12.4h14.8M7 12.4v7.8M17 12.4v7.8"/>'
+};
+function mk(k,w){ if(!M[k]) return ''; return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="'+(w||1.5)+'" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+M[k]+'</svg>'; }
+function ph(){ return '<span class="ph">'+mk('cloche',1.2)+'</span>'; }
+function tel(n){ return 'tel:'+String(n||'').replace(/[^\d+]/g,''); }
+function wa(n,text){ return 'https://wa.me/'+String(n||'').replace(/\D/g,'')+(text?'?text='+encodeURIComponent(text):''); }
+
+/* ═══════ LOAD ═══════ */
+function boot(){
+  if(REF){ TABS=[REF]; return load(REF).then(start); }
+  if(BASKET){
+    return Orders.mine().then(function(list){
+      TABS=list.filter(function(o){return o.basket===BASKET;}).map(function(o){return o.ref;}).reverse();
+      if(!TABS.length){ return showList(list); }
+      CUR=TABS[0];
+      return Promise.all(TABS.map(load)).then(start);
+    });
+  }
+  return Orders.mine().then(showList);
+}
+function load(ref){
+  return Orders.track(ref,Orders.tokenFor(ref)||(ref===REF?TOKEN:null)).then(function(o){
+    var before=ORDERS[ref];
+    /* how far this phone's clock is from the server's, measured once per read */
+    var sk=Date.now()-new Date(o.now).getTime(); o._skew=isFinite(sk)&&Math.abs(sk)<864e5?sk:0;
+    ORDERS[ref]=o;
+    if(before) notice(before,o);
+    return o;
+  });
+}
+function start(){
+  if(!ORDERS[CUR]) CUR=TABS.filter(function(r){return ORDERS[r];})[0];
+  render();
+  if(FRESH){ FRESH=false; setTimeout(function(){ toast('Sent. '+(ORDERS[CUR]&&ORDERS[CUR].kitchen.name||'The kitchen')+' is reading it now.'); },300); }
+  schedule();
+  if(TICK) clearInterval(TICK);
+  TICK=setInterval(paintClocks,1000);
+}
+function schedule(){
+  clearTimeout(TIMER);
+  var live=TABS.some(function(r){ return ORDERS[r]&&Orders.isLive(ORDERS[r].status); });
+  if(!live) return;
+  var wait=document.hidden?20000:5000;
+  TIMER=setTimeout(function(){
+    Promise.all(TABS.map(function(r){ return load(r).catch(function(){}); })).then(function(){ render(true); schedule(); });
+  },wait);
+}
+document.addEventListener('visibilitychange',function(){ if(!document.hidden&&TABS.length){ Promise.all(TABS.map(load)).then(function(){render(true);schedule();}).catch(function(){}); } });
+
+/* when something moves, say so out loud */
+function notice(a,b){
+  var changed=a.status!==b.status||(!a.arrived_at&&b.arrived_at)||(a.eta_ready_at!==b.eta_ready_at&&b.status==='accepted');
+  if(!changed) return;
+  var line=headline(b).plain;
+  toast(line);
+  chime();
+  try{ if(navigator.vibrate) navigator.vibrate([90,60,90]); }catch(e){}
+  try{
+    if(document.hidden&&'Notification' in window&&Notification.permission==='granted'){
+      new Notification(line,{body:b.kitchen.name+' · '+b.ref,icon:'/cabana-icon-192.png',tag:'order-'+b.ref});
+    }
+  }catch(e){}
+  if(b.status==='completed') confetti();
+}
+var AC=null;
+function chime(){
+  try{
+    AC=AC||new (window.AudioContext||window.webkitAudioContext)();
+    [660,880].forEach(function(f,i){
+      var o=AC.createOscillator(), g=AC.createGain();
+      o.type='sine'; o.frequency.value=f; o.connect(g); g.connect(AC.destination);
+      var t=AC.currentTime+i*.16; g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.12,t+.02); g.gain.exponentialRampToValueAtTime(.001,t+.35);
+      o.start(t); o.stop(t+.4);
+    });
+  }catch(e){}
+}
+
+/* ═══════ WORDS FOR NOW ═══════ */
+function headline(o){
+  var k=esc(o.kitchen.name||'The kitchen'), m=o.mode, s=o.status;
+  var h,l,tone='',plain;
+  if(s==='requested'){
+    h='Waiting for <em>'+k+'</em> to accept.';
+    l='Your order is on their screen. They answer with a time, or tell you why they can&rsquo;t. <b>Nothing is charged</b> if they don&rsquo;t answer in time.';
+    plain='Waiting for '+o.kitchen.name;
+    if(o.scheduled_for) l='You asked for it '+esc(when(o.scheduled_for))+'. '+l;
+  } else if(s==='accepted'){
+    h='Accepted. <em>Cooking now.</em>';
+    l=k+' said yes'+(o.eta_ready_at?' and expects it ready around <b>'+clock(o.eta_ready_at)+'</b>':'')+'. '
+      +(m==='delivery'?'A rider takes it from the kitchen when it is packed.':m==='pickup'?'We&rsquo;ll tell you the moment it is ready to collect.':'It comes to your table when it is plated.');
+    plain=o.kitchen.name+' accepted your order';
+  } else if(s==='ready'){
+    if(m==='pickup'){ h='Ready. <em>Come and collect.</em>'; l='Show your collection code at the counter at '+k+'. They enter it and hand you the bag.'; tone='good'; plain='Ready to collect'; }
+    else if(m==='dine_in'){ h='Plated. <em>Coming to your table.</em>'; l='Enjoy it. Pay '+k+' when you are done.'; tone='good'; plain='Coming to your table'; }
+    else { h='Packed. <em>Rider next.</em>'; l=k+' is handing it to a rider now.'; plain='Your food is packed'; }
+  } else if(s==='on_the_way'){
+    tone='blue';
+    if(o.arrived_at){ h='Your rider is <em>at the door</em>.'; l='Check their code below first, then give them yours.'; plain='Your rider is outside'; }
+    else { h='<em>'+esc(o.rider_name||'Your rider')+'</em> is on the way.'; l='When they arrive, ask for their code and check it here. Then read them yours.'; plain='Your order is on the way'; }
+  } else if(s==='completed'){
+    tone='good';
+    h=m==='pickup'?'Collected. <em>Enjoy it.</em>':m==='dine_in'?'Served. <em>Enjoy it.</em>':'Delivered. <em>Enjoy it.</em>';
+    l='Order '+esc(o.ref)+' is complete'+(o.completed_at?' at '+clock(o.completed_at):'')+'. Tell '+k+' how it was &mdash; it helps them and the next diner.';
+    plain='Enjoy your meal';
+  } else if(s==='declined'){
+    tone='dim';
+    h=k+' <em>couldn&rsquo;t take it</em> this time.';
+    l=esc(o.decline_reason||Orders.DECLINE[o.decline_code]||'They did not say why.')+'. Nothing is charged. You can have food on its way again in one tap.';
+    plain=o.kitchen.name+' could not take your order';
+  } else if(s==='expired'){
+    tone='dim';
+    h='No answer from <em>'+k+'</em>.';
+    l='They didn&rsquo;t reply in time, so the request lapsed on its own. <b>Nothing is charged.</b> Send it again or try another kitchen.';
+    plain='The kitchen did not answer in time';
+  } else {
+    tone='dim';
+    h=o.cancelled_by==='kitchen'?k+' <em>cancelled</em> the order.':'You cancelled <em>this order</em>.';
+    l=o.cancel_reason?esc(o.cancel_reason)+'.':'Nothing is charged.';
+    plain='Order cancelled';
+  }
+  return {h:h,l:l,tone:tone,plain:plain};
+}
+function when(iso){
+  var d=new Date(iso), now=new Date(), tom=new Date(); tom.setDate(tom.getDate()+1);
+  var t=clock(iso);
+  if(d.toDateString()===now.toDateString()) return 'for '+t+' today';
+  if(d.toDateString()===tom.toDateString()) return 'for '+t+' tomorrow';
+  return 'for '+d.toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short'})+' at '+t;
+}
+function steps(o){
+  var m=o.mode, s=o.status;
+  var list=[['Sent',o.requested_at],['Accepted',o.accepted_at]];
+  if(m==='delivery') list.push(['Packed',o.ready_at],['On the way',o.dispatched_at],['Delivered',o.completed_at]);
+  else if(m==='pickup') list.push(['Ready',o.ready_at],['Collected',o.completed_at]);
+  else list.push(['Served',o.completed_at]);
+  var order=['requested','accepted','ready','on_the_way','completed'];
+  var idx=order.indexOf(s);
+  var reached=list.map(function(x){return !!x[1];});
+  if(['declined','expired','cancelled'].indexOf(s)>-1){
+    return [['Sent',o.requested_at,'done'],[s==='declined'?'Declined':s==='expired'?'Lapsed':'Cancelled',o.declined_at||o.cancelled_at||o.expires_at,'done']];
+  }
+  var nowAt=reached.lastIndexOf(true)+1;
+  return list.map(function(x,i){ return [x[0],x[1], reached[i]?'done':(i===nowAt&&idx<4?'now':'')]; });
+}
+
+/* ═══════ DRAW ═══════ */
+var RATE=0;
+function render(soft){
+  var o=ORDERS[CUR]; if(!o) return;
+  if(o._skew==null){ var sk=Date.now()-new Date(o.now).getTime(); o._skew=isFinite(sk)&&Math.abs(sk)<864e5?sk:0; }
+  var focus=document.activeElement&&document.activeElement.id;
+  if(soft&&focus&&/^(rc|rv)/.test(focus)){ paintHeroOnly(o); return; }
+  document.title=Orders.say(o.status,o.mode)+' · '+o.kitchen.name+' | Cabana';
+  document.getElementById('topT').textContent='Order '+o.ref;
+  document.getElementById('shareBtn').hidden=false;
+  var live=Orders.isLive(o.status);
+  document.getElementById('liveChip').hidden=!live;
+
+  var hl=headline(o);
+  var h='';
+  if(TABS.length>1){
+    h+='<nav class="tabs" aria-label="Your orders in this basket">'+TABS.map(function(r){
+      var x=ORDERS[r]; if(!x) return '';
+      return '<button class="tab'+(r===CUR?' on':'')+'" type="button" data-tab="'+attr(r)+'">'
+        +(x.kitchen.photo?'<img src="'+attr(x.kitchen.photo)+'" alt=""/>':ph())
+        +'<span><b>'+esc(x.kitchen.name)+'</b><small>'+esc(Orders.say(x.status,x.mode))+'</small></span></button>';
+    }).join('')+'</nav>';
+  }
+  h+='<div class="grid"><div class="main">';
+
+  h+='<section class="hero '+hl.tone+'" id="hero" aria-live="polite">'+heroInner(o,hl)+'</section>';
+
+  h+=handoff(o);
+  h+=recovery(o);
+  h+=rating(o);
+
+  /* what was ordered */
+  h+='<section class="card" style="margin-top:20px"><div class="card-head"><h3>What you ordered</h3>'
+    +'<span class="hint">'+o.item_count+(o.item_count===1?' item':' items')+'</span></div>'
+    +'<div class="lines">'+o.items.map(function(i){
+      var off=(o.decline_items||[]).indexOf(i.id)>-1;
+      return '<div class="ln'+(off?' gone':'')+'">'+(i.photo?'<img class="ln-ph" src="'+attr(i.photo)+'" alt="" loading="lazy"/>':'<span class="ln-ph ph">'+mk('cloche',1.2)+'</span>')
+        +'<span class="ln-q">'+i.qty+'&times;</span><div class="ln-b"><div class="ln-n">'+esc(i.name)+'</div>'
+        +'<div class="ln-u">'+(off?'Finished for today':esc(money(i.unit,o.currency))+' each')+'</div></div>'
+        +'<div class="ln-p">'+esc(money(i.line,o.currency))+'</div></div>';
+    }).join('')+'</div>'
+    +'<div class="card-body" style="padding-top:6px">'
+    +'<div class="sum"><span>Food</span><b>'+esc(money(o.subtotal,o.currency))+'</b></div>'
+    +(o.mode==='delivery'?'<div class="sum"><span>Delivery</span><b'+(Number(o.delivery_fee)?'':' class="free"')+'>'+(Number(o.delivery_fee)?esc(money(o.delivery_fee,o.currency)):'Free')+'</b></div>':'')
+    +'<div class="sum"><span>Cabana fee</span><b class="free">'+esc(o.currency)+' 0</b></div>'
+    +(['declined','expired','cancelled'].indexOf(o.status)>-1
+      ?'<div class="sum big"><span>Nothing charged</span><b style="text-decoration:line-through;opacity:.5">'+esc(money(o.total,o.currency))+'</b></div>'
+      :'<div class="sum big"><span>'+(o.status==='completed'?'Paid to ':'You pay ')+esc(o.kitchen.name)+'</span><b>'+esc(money(o.total,o.currency))+'</b></div>')
+    +(o.note?'<div class="flag" style="margin-top:12px">'+mk('info',1.6)+'<span><b>Your note:</b> '+esc(o.note)+'</span></div>':'')
+    +'</div></section>';
+
+  /* the log */
+  h+='<section class="card" style="margin-top:20px"><details class="more"><summary>Order log &middot; '+o.events.length+' entries</summary>'
+    +'<div class="card-body"><ul class="log">'+o.events.map(function(e){
+      return '<li><time>'+clock(e.at)+'</time><span>'+esc(logLine(e,o))+'</span></li>';
+    }).join('')+'</ul></div></details></section>';
+
+  h+='</div><aside class="side">';
+  h+=payCard(o);
+  h+=kitchenCard(o);
+  h+=factsCard(o);
+  h+='</aside></div>';
+
+  document.getElementById('app').innerHTML=h;
+  wire(o);
+  paintClocks();
+}
+function heroInner(o,hl){
+  return '<div class="hero-in"><div class="ring" id="ring">'+ringSvg()+'<div class="ring-c" id="ringC"></div></div>'
+    +'<div class="hero-say"><div class="hero-k"><span class="stt '+o.status+'"><i></i>'+esc(Orders.say(o.status,o.mode))+'</span>'
+    +'<span class="ref">'+esc(o.ref)+'</span></div>'
+    +'<h1>'+hl.h+'</h1><p class="l">'+hl.l+'</p>'
+    +heroActs(o)+'</div></div>'
+    +'<ol class="rail">'+steps(o).map(function(s){
+      return '<li class="'+s[2]+'"><i></i><b>'+esc(s[0])+'</b><small>'+(s[1]?clock(s[1]):'&nbsp;')+'</small></li>';
+    }).join('')+'</ol>';
+}
+function paintHeroOnly(o){
+  var el=document.getElementById('hero'); if(!el) return render();
+  var hl=headline(o);
+  el.className='hero '+hl.tone; el.innerHTML=heroInner(o,hl); wireHero(o); paintClocks();
+}
+function ringSvg(){
+  return '<svg viewBox="0 0 120 120"><circle class="bg" cx="60" cy="60" r="52" fill="none" stroke-width="7"/>'
+    +'<circle class="fg" id="ringFg" cx="60" cy="60" r="52" fill="none" stroke-width="7" stroke-linecap="round" stroke-dasharray="326.7" stroke-dashoffset="326.7"/></svg>';
+}
+function heroActs(o){
+  var a='';
+  if(o.status==='requested'){
+    a+='<button class="btn btn-line" type="button" id="cancelBtn">Cancel request</button>';
+  }
+  if(Orders.isLive(o.status)&&'Notification' in window&&Notification.permission==='default'){
+    a+='<button class="btn btn-ghost" type="button" id="pingBtn">'+mk('bell',1.6)+'Alert me</button>';
+  }
+  if(o.status==='on_the_way'&&o.rider_phone) a+='<a class="btn btn-line" href="'+attr(tel(o.rider_phone))+'">'+mk('phone',1.6)+'Call '+esc(o.rider_name||'rider')+'</a>';
+  return a?'<div class="hero-acts">'+a+'</div>':'';
+}
+
+/* the ring and the numbers inside it move every second */
+function paintClocks(){
+  var o=ORDERS[CUR]; if(!o) return;
+  var fg=document.getElementById('ringFg'), c=document.getElementById('ringC'); if(!fg||!c) return;
+  var now=Date.now()-(o._skew||0); /* the server's clock, not the phone's */
+  var C=326.7, frac=0, big='', small='';
+  if(o.status==='requested'){
+    var a=new Date(o.requested_at).getTime(), b=new Date(o.expires_at).getTime();
+    var left=Math.max(0,b-now); frac=1-left/Math.max(1,b-a);
+    big=fmt(left); small='to answer';
+  } else if(o.status==='accepted'&&o.eta_ready_at){
+    var a2=new Date(o.accepted_at).getTime(), b2=new Date(o.eta_ready_at).getTime();
+    var left2=b2-now; frac=Math.min(1,(now-a2)/Math.max(1,b2-a2));
+    big=left2>0?Math.ceil(left2/60000)+'<span style="font-size:15px"> min</span>':'Any<span style="font-size:15px"> min</span>'; small=left2>0?'until ready':'now';
+  } else if(o.status==='ready'){ frac=1; c.innerHTML=mk(o.mode==='pickup'?'hand':o.mode==='dine_in'?'chair':'cloche',1.3); fg.style.strokeDashoffset=0; return; }
+  else if(o.status==='on_the_way'){ frac=o.arrived_at?1:.82; c.innerHTML=mk(o.arrived_at?'door':'scooter',1.3); fg.style.strokeDashoffset=C*(1-frac); return; }
+  else if(o.status==='completed'){ fg.style.strokeDashoffset=0; c.innerHTML=mk('check',2); return; }
+  else { fg.style.strokeDashoffset=C; c.innerHTML=mk('x',1.6); return; }
+  fg.style.strokeDashoffset=C*(1-Math.max(0,Math.min(1,frac)));
+  c.innerHTML='<div><b>'+big+'</b><small>'+small+'</small></div>';
+  if(o.status==='requested'&&new Date(o.expires_at).getTime()<=now&&!o._reloading){
+    o._reloading=true; load(o.ref).then(function(){render();schedule();});
+  }
+}
+function fmt(ms){ var s=Math.ceil(ms/1000), m=Math.floor(s/60); s%=60; return m+':'+String(s).padStart(2,'0'); }
+
+/* ═══════ THE DOOR ═══════ */
+function codeTiles(code,hide){ return '<div class="code'+(hide?' blur':'')+'" aria-label="Code '+(hide?'hidden':String(code).split('').join(' '))+'">'+String(code).split('').map(function(d){return '<span>'+esc(d)+'</span>';}).join('')+'</div>'; }
+function codeInput(prefix){
+  return '<div class="code-in">'+[0,1,2,3].map(function(i){
+    return '<input type="text" inputmode="numeric" maxlength="1" autocomplete="one-time-code" id="'+prefix+i+'" aria-label="Digit '+(i+1)+'"/>';
+  }).join('')+'</div>';
+}
+function handoff(o){
+  if(o.mode==='pickup'&&['accepted','ready'].indexOf(o.status)>-1){
+    return '<section class="card hand"><div class="card-head">'+mk('key',1.5).replace('<svg','<svg style="width:18px;height:18px;color:var(--brass)"')+'<h3>Your collection code</h3></div>'
+      +'<div class="card-body"><div class="hand-step">'+codeTiles(o.handoff_code)
+      +'<p style="text-align:center">Show this at the counter. The kitchen enters it to hand over <b>your</b> bag, so nobody else can collect it.</p></div></div></section>';
+  }
+  if(o.mode!=='delivery') return '';
+  if(o.status==='accepted'||o.status==='ready'){
+    return '<section class="card hand"><div class="card-head"><h3>At the door</h3><span class="hint">Two codes, ten seconds</span></div>'
+      +'<div class="card-body"><p style="font-size:13.5px;color:var(--bone-48);line-height:1.65">When your food arrives you and the rider swap codes: <b style="color:var(--bone)">they show you theirs</b>, you check it here so you know the bag came from '
+      +esc(o.kitchen.name)+', then <b style="color:var(--bone)">you read them yours</b> to close the order. Your code appears here once the rider leaves.</p></div></section>';
+  }
+  if(o.status!=='on_the_way') return '';
+  var ok=o.rider_verified;
+  var h='<section class="card hand" id="hand"><div class="card-head"><h3>At the door</h3><span class="hint">'+(ok?'Rider checked':'Check first')+'</span></div><div class="card-body">';
+  h+='<div class="hand-step"><h4><span class="n'+(ok?' ok':'')+'">'+(ok?'&#10003;':'1')+'</span>Ask '+esc(o.rider_name||'the rider')+' for their code</h4>';
+  if(ok) h+='<div class="verified">'+mk('check',2.2)+'Genuine rider from '+esc(o.kitchen.name)+'</div>';
+  else h+='<p>Every rider carries a four digit code from the kitchen. Type it here &mdash; if it matches, the bag is really yours.</p>'+codeInput('rc')
+    +'<button class="btn btn-go hand-go" type="button" id="rcGo">Check the rider&rsquo;s code</button>';
+  h+='</div>';
+  h+='<div class="hand-step"><h4><span class="n">2</span>Read them your code</h4>'
+    +'<p>'+(ok?'Now give the rider this code. They enter it and the order is complete.':'Only give this out once the rider&rsquo;s code checks out.')+'</p>'
+    +codeTiles(o.handoff_code,!ok&&!SHOWCODE)
+    +(!ok&&!SHOWCODE?'<button class="btn btn-ghost hand-go" type="button" id="showCode">Show my code anyway</button>':'')
+    +'</div>';
+  h+='</div></section>';
+  return h;
+}
+var SHOWCODE=false;
+
+/* ═══════ WHEN IT DID NOT WORK ═══════ */
+function recovery(o){
+  if(['declined','expired','cancelled'].indexOf(o.status)<0) return '';
+  var off=o.decline_items||[];
+  var keep=o.items.filter(function(i){return off.indexOf(i.id)<0;});
+  var h='<section class="card" style="margin-top:20px"><div class="card-head"><h3>Still hungry?</h3><span class="hint">Nothing was charged</span></div><div class="card-body" style="display:grid;gap:10px">';
+  if(o.decline_code==='unavailable'&&keep.length&&keep.length<o.items.length){
+    h+='<button class="btn btn-fire btn-wide" type="button" data-resend="keep">'+mk('redo',1.8)+'Resend without the finished dishes</button>';
+  } else if(o.status==='expired'||(o.status==='declined'&&o.decline_code==='busy')){
+    h+='<button class="btn btn-fire btn-wide" type="button" data-resend="all">'+mk('redo',1.8)+'Send it to '+esc(o.kitchen.name)+' again</button>';
+  }
+  if(o.decline_code==='too_far'||o.decline_code==='below_minimum'){
+    h+='<button class="btn btn-line btn-wide" type="button" data-resend="pickup">Collect it myself instead</button>';
+  }
+  h+='<a class="btn btn-line btn-wide" href="/food">Find another kitchen near you '+mk('east',1.8)+'</a>';
+  if(o.kitchen.phone) h+='<a class="btn btn-ghost btn-wide" href="'+attr(tel(o.kitchen.phone))+'">'+mk('phone',1.6)+'Call '+esc(o.kitchen.name)+'</a>';
+  h+='</div></section>';
+  return h;
+}
+function resend(o,how){
+  var off=o.decline_items||[];
+  var items=o.items.filter(function(i){ return how!=='keep'||off.indexOf(i.id)<0; });
+  var k={id:o.kitchen.id,name:o.kitchen.name,photo:o.kitchen.photo,area:o.kitchen.area,city:o.kitchen.city,
+    whatsapp:o.kitchen.whatsapp,phone:o.kitchen.phone};
+  Cart.clearKitchen(o.kitchen.id);
+  items.forEach(function(i){ Cart.add(k,{id:i.id,name:i.name,price:i.unit,photo:i.photo},i.qty); });
+  Cart.setMode(o.kitchen.id,how==='pickup'?'pickup':o.mode);
+  if(o.note) Cart.setNote(o.kitchen.id,o.note);
+  location.href='/checkout?from='+encodeURIComponent(o.kitchen.id);
+}
+
+/* ═══════ AFTERWARDS ═══════ */
+function rating(o){
+  if(o.status!=='completed') return '';
+  if(o.rating){
+    return '<section class="card" style="margin-top:20px"><div class="card-body" style="display:flex;align-items:center;gap:14px;justify-content:space-between;flex-wrap:wrap">'
+      +'<div><div class="lbl" style="margin:0 0 6px">Your rating</div><div class="stars">'+[1,2,3,4,5].map(function(n){return '<button type="button" class="'+(n<=o.rating?'on':'')+'" disabled aria-label="'+n+' stars">'+mk('star',1.4)+'</button>';}).join('')+'</div></div>'
+      +'<button class="btn btn-fire" type="button" data-again="1">'+mk('redo',1.8)+'Order this again</button></div></section>';
+  }
+  return '<section class="card" style="margin-top:20px" id="rateCard"><div class="card-head"><h3>How was it?</h3><span class="hint">Takes five seconds</span></div>'
+    +'<div class="card-body" style="display:grid;gap:14px"><div class="stars" role="radiogroup" aria-label="Rating">'+[1,2,3,4,5].map(function(n){
+      return '<button type="button" data-star="'+n+'" class="'+(n<=RATE?'on':'')+'" role="radio" aria-checked="'+(n===RATE)+'" aria-label="'+n+' star'+(n>1?'s':'')+'">'+mk('star',1.4)+'</button>';
+    }).join('')+'</div>'
+    +'<textarea id="rvText" rows="2" placeholder="What should '+attr(o.kitchen.name)+' keep doing? (optional)"></textarea>'
+    +'<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-fire" type="button" id="rateGo"'+(RATE?'':' disabled')+'>Send rating</button>'
+    +'<button class="btn btn-line" type="button" data-again="1">'+mk('redo',1.8)+'Order this again</button></div></div></section>';
+}
+
+/* ═══════ THE SIDE ═══════ */
+function payCard(o){
+  if(['declined','expired','cancelled'].indexOf(o.status)>-1) return '';
+  var k=o.kitchen, done=o.status==='completed';
+  var h='<section class="card pay"><div class="card-head"><h3>'+(done?'Paid on handover':'Paying '+esc(k.name))+'</h3><span class="hint">'+(o.pay_method==='cash'?'Cash':'M-Pesa')+'</span></div><div class="card-body">';
+  h+='<div class="row"><span>Amount</span><b>'+esc(money(o.total,o.currency))+'</b></div>';
+  if(o.pay_method!=='cash'){
+    if(o.status==='requested'){
+      h+='<div class="row"><span>Till number</span><span>Shown once they accept</span></div>';
+    } else if(k.mpesa_till){
+      h+='<div class="row"><span>Buy Goods till</span><span style="display:flex;gap:8px;align-items:center"><b>'+esc(k.mpesa_till)+'</b><button class="copy" type="button" data-copy="'+attr(k.mpesa_till)+'">Copy</button></span></div>';
+    } else if(k.mpesa_paybill){
+      h+='<div class="row"><span>Paybill</span><span style="display:flex;gap:8px;align-items:center"><b>'+esc(k.mpesa_paybill)+'</b><button class="copy" type="button" data-copy="'+attr(k.mpesa_paybill)+'">Copy</button></span></div>'
+        +'<div class="row"><span>Account</span><b>'+esc(k.mpesa_account||o.ref)+'</b></div>';
+    } else {
+      h+='<div class="row"><span>M-Pesa</span><span>The kitchen gives you their number on handover</span></div>';
+    }
+  }
+  h+='<p class="help">'+(done?'Cabana took nothing from this order.':'Pay only when the food is in your hands. Cabana takes nothing from this order &mdash; every shilling goes to '+esc(k.name)+'.')+'</p>';
+  h+='</div></section>';
+  return h;
+}
+function kitchenCard(o){
+  var k=o.kitchen;
+  var h='<section class="card"><div class="card-body"><div class="kit">'+(k.photo?'<img src="'+attr(k.photo)+'" alt=""/>':ph())
+    +'<div><b>'+esc(k.name)+'</b><small>'+esc([k.area,k.city].filter(Boolean).join(', '))+'</small></div></div><div class="acts">';
+  if(k.phone) h+='<a class="btn btn-line" href="'+attr(tel(k.phone))+'">'+mk('phone',1.6)+'Call</a>';
+  if(k.whatsapp) h+='<a class="btn btn-line" href="'+attr(wa(k.whatsapp,'Hello '+k.name+', about my Cabana order '+o.ref+': '))+'" target="_blank" rel="noopener">'+mk('wa',1.6)+'Message</a>';
+  if(o.mode!=='delivery'&&k.lat&&k.lng) h+='<a class="btn btn-line" style="grid-column:1/-1" href="https://www.google.com/maps/dir/?api=1&destination='+k.lat+','+k.lng+'" target="_blank" rel="noopener">'+mk('map',1.6)+'Directions to the kitchen</a>';
+  h+='<a class="btn btn-ghost" style="grid-column:1/-1" href="/restaurant?id='+encodeURIComponent(k.id)+'">See the menu</a>';
+  h+='</div>';
+  if(Orders.isLive(o.status)&&window.ApaSession&&ApaSession.get&&ApaSession.get().status!=='user'){
+    h+='<div class="ping">'+mk('bell',1.6)+'<span>Sign in to get the next order&rsquo;s updates on your phone, even with Cabana closed.</span></div>';
+  }
+  h+='</div></section>';
+  return h;
+}
+function factsCard(o){
+  var how=o.mode==='delivery'?'Delivery':o.mode==='pickup'?'Collect':'Eat in';
+  var h='<section class="card"><div class="card-body facts">'
+    +'<div><span>How</span><b>'+how+'</b></div>';
+  if(o.mode==='delivery'&&o.address) h+='<div><span>To</span><b>'+esc(o.address)+(o.address_note?'<br><small style="color:var(--bone-48)">'+esc(o.address_note)+'</small>':'')+'</b></div>';
+  if(o.table_label) h+='<div><span>Table</span><b>'+esc(o.table_label)+'</b></div>';
+  if(o.scheduled_for) h+='<div><span>Wanted</span><b>'+esc(when(o.scheduled_for).replace(/^for /,''))+'</b></div>';
+  h+='<div><span>Name</span><b>'+esc(o.diner_name)+'</b></div>'
+    +'<div><span>Sent</span><b>'+clock(o.requested_at)+' &middot; '+new Date(o.requested_at).toLocaleDateString(undefined,{day:'numeric',month:'short'})+'</b></div>'
+    +'<div><span>Reference</span><b style="font-family:var(--fm)">'+esc(o.ref)+'</b></div>'
+    +'</div></section>';
+  return h;
+}
+function logLine(e,o){
+  var who=e.actor==='kitchen'?o.kitchen.name:e.actor==='rider'?(o.rider_name||'Rider'):e.actor==='guest'?'You':'Cabana';
+  switch(e.kind){
+    case 'requested': return 'You sent the order';
+    case 'accepted': return o.kitchen.name+' accepted'+(e.note?' · '+e.note:'');
+    case 'declined': return o.kitchen.name+' declined'+(e.note?' · '+(Orders.DECLINE[e.note]||e.note):'');
+    case 'delayed': return o.kitchen.name+' needs '+(e.note||'a little longer');
+    case 'ready': return 'Ready';
+    case 'on_the_way': return 'Out with '+(e.note||'a rider');
+    case 'arrived': return 'Rider arrived';
+    case 'rider_verified': return 'You checked the rider’s code';
+    case 'rider_code_wrong': return 'A rider code did not match';
+    case 'handoff_code_wrong': return 'A handover code did not match';
+    case 'completed': return e.note||'Complete';
+    case 'cancelled': return who+' cancelled'+(e.note?' · '+e.note:'');
+    case 'expired': return 'No answer in time · lapsed';
+    case 'rated': return 'You rated it '+(e.note||'');
+    default: return e.kind;
+  }
+}
+
+/* ═══════ WIRE ═══════ */
+function wireHero(o){
+  var c=document.getElementById('cancelBtn'); if(c) c.onclick=function(){ askCancel(o); };
+  var p=document.getElementById('pingBtn'); if(p) p.onclick=function(){
+    Notification.requestPermission().then(function(r){ if(r==='granted') toast('We will alert you on this device while this page is open.'); p.remove(); });
+  };
+}
+function wire(o){
+  wireHero(o);
+  document.querySelectorAll('[data-tab]').forEach(function(b){ b.onclick=function(){ CUR=b.dataset.tab; RATE=0; SHOWCODE=false; render(); window.scrollTo({top:0,behavior:'smooth'}); }; });
+  document.querySelectorAll('[data-copy]').forEach(function(b){ b.onclick=function(){
+    (navigator.clipboard?navigator.clipboard.writeText(b.dataset.copy):Promise.reject()).then(function(){toast('Copied '+b.dataset.copy);},function(){toast(b.dataset.copy);}); }; });
+  document.querySelectorAll('[data-resend]').forEach(function(b){ b.onclick=function(){ resend(o,b.dataset.resend); }; });
+  document.querySelectorAll('[data-again]').forEach(function(b){ b.onclick=function(){ resend(o,'all'); }; });
+  document.querySelectorAll('[data-star]').forEach(function(b){ b.onclick=function(){
+    RATE=+b.dataset.star;
+    document.querySelectorAll('[data-star]').forEach(function(x){ x.classList.toggle('on',+x.dataset.star<=RATE); x.setAttribute('aria-checked',String(+x.dataset.star===RATE)); });
+    document.getElementById('rateGo').disabled=false; }; });
+  var rg=document.getElementById('rateGo');
+  if(rg) rg.onclick=function(){
+    busy(rg,true);
+    Orders.rate(o.ref,Orders.tokenFor(o.ref),RATE,document.getElementById('rvText').value).then(function(n){
+      ORDERS[o.ref]=n; render(); toast('Thank you. '+o.kitchen.name+' will see it.');
+    }).catch(function(e){ busy(rg,false); toast(Orders.explain(e),true); });
+  };
+  var sc=document.getElementById('showCode'); if(sc) sc.onclick=function(){ SHOWCODE=true; render(); };
+  wireCode('rc',function(code){ verify(o,code); });
+  var go=document.getElementById('rcGo');
+  if(go) go.onclick=function(){ var v=readCode('rc'); if(v.length===4) verify(o,v); else toast('Enter all four digits from the rider.',true); };
+}
+function readCode(p){ return [0,1,2,3].map(function(i){ var el=document.getElementById(p+i); return el?el.value:''; }).join('').replace(/\D/g,''); }
+function wireCode(p,done){
+  [0,1,2,3].forEach(function(i){
+    var el=document.getElementById(p+i); if(!el) return;
+    el.addEventListener('input',function(){
+      var v=el.value.replace(/\D/g,'');
+      if(v.length>1){ /* a pasted code */
+        v.split('').slice(0,4).forEach(function(d,j){ var t=document.getElementById(p+j); if(t) t.value=d; });
+        var last=document.getElementById(p+Math.min(3,v.length-1)); if(last) last.focus();
+      } else { el.value=v; if(v&&i<3) document.getElementById(p+(i+1)).focus(); }
+      var all=readCode(p); if(all.length===4) done(all);
+    });
+    el.addEventListener('keydown',function(e){ if(e.key==='Backspace'&&!el.value&&i>0){ var prev=document.getElementById(p+(i-1)); prev.value=''; prev.focus(); } });
+  });
+}
+function verify(o,code){
+  var go=document.getElementById('rcGo'); if(go) busy(go,true);
+  Orders.verifyRider(o.ref,Orders.tokenFor(o.ref),code).then(function(n){
+    ORDERS[o.ref]=n;
+    if(n.error==='code_wrong'){
+      render();
+      toast('That code does not match. '+(n.attempts_left?n.attempts_left+' tries left. ':'')+'Do not hand over your code.',true);
+      try{ navigator.vibrate&&navigator.vibrate([200,80,200]); }catch(e){}
+      return;
+    }
+    render(); chime(); toast('Genuine rider. Now read them your code.');
+  }).catch(function(e){ if(go) busy(go,false); toast(Orders.explain(e),true); });
+}
+function busy(b,on){ if(!b) return; b.disabled=on; if(on){ b._h=b.innerHTML; b.innerHTML='<span class="spin"></span>'; } else if(b._h) b.innerHTML=b._h; }
+
+function askCancel(o){
+  var reasons=['Ordered by mistake','Taking too long','Changed my mind','Ordering somewhere else'];
+  var pick='';
+  sheet('<h3 id="sheetH">Cancel this request?</h3><p class="sub">'+esc(o.kitchen.name)+' has not answered yet, so you can cancel for free.</p>'
+    +'<div class="pills" id="cr">'+reasons.map(function(r){return '<button type="button" data-r="'+attr(r)+'">'+esc(r)+'</button>';}).join('')+'</div>'
+    +'<div class="sheet-acts"><button class="btn btn-line" type="button" data-close>Keep it</button><button class="btn btn-bad" type="button" id="crGo">Cancel request</button></div>');
+  document.querySelectorAll('#cr button').forEach(function(b){ b.onclick=function(){ pick=b.dataset.r; document.querySelectorAll('#cr button').forEach(function(x){x.classList.toggle('on',x===b);}); }; });
+  document.getElementById('crGo').onclick=function(){
+    var g=this; busy(g,true);
+    Orders.cancel(o.ref,Orders.tokenFor(o.ref),pick).then(function(n){ ORDERS[o.ref]=n; closeSheet(); render(); toast('Cancelled. Nothing is charged.'); })
+      .catch(function(e){ busy(g,false); closeSheet(); toast(Orders.explain(e),true); load(o.ref).then(function(){render();schedule();}); });
+  };
+}
+function sheet(html){
+  var s=document.getElementById('sheet'), sc=document.getElementById('scrim');
+  s.innerHTML=html; s.classList.add('on'); sc.classList.add('on');
+  s.querySelectorAll('[data-close]').forEach(function(b){ b.onclick=closeSheet; });
+  sc.onclick=closeSheet;
+  setTimeout(function(){ var f=s.querySelector('button'); if(f) f.focus(); },60);
+}
+function closeSheet(){ document.getElementById('sheet').classList.remove('on'); document.getElementById('scrim').classList.remove('on'); }
+document.addEventListener('keydown',function(e){ if(e.key==='Escape') closeSheet(); });
+
+document.getElementById('shareBtn').onclick=function(){
+  var o=ORDERS[CUR]; if(!o) return;
+  var url=Orders.link(o.ref,Orders.tokenFor(o.ref));
+  var data={title:'My Cabana order',text:'Follow my order from '+o.kitchen.name+' live:',url:url};
+  if(navigator.share) navigator.share(data).catch(function(){});
+  else if(navigator.clipboard) navigator.clipboard.writeText(url).then(function(){ toast('Tracking link copied. Anyone with it can follow this order.'); });
+};
+
+/* ═══════ NO ORDER IN THE LINK: THE LIST ═══════ */
+function showList(list){
+  list=list||[];
+  var live=list.filter(function(o){return Orders.isLive(o.status);}), past=list.filter(function(o){return !Orders.isLive(o.status);});
+  var h='<h1 class="page-h">Your orders</h1><p class="page-s">'+(list.length?'Everything you have ordered on this device'+(window.ApaSession&&ApaSession.get&&ApaSession.get().status==='user'?' and account':'')+'.':'Nothing yet.')+'</p>';
+  if(!list.length){
+    h+='<div class="void" style="margin-top:26px"><div class="void-i">'+mk('cloche',.9)+'</div><h2>No orders yet</h2><p>When you send an order it appears here, live, until it is in your hands.</p><a class="btn btn-fire" href="/food">Find something to eat '+mk('east',1.8)+'</a></div>';
+  }
+  var card=function(o){
+    return '<a class="oc" href="/order?ref='+encodeURIComponent(o.ref)+'">'+(o.kitchen.photo?'<img src="'+attr(o.kitchen.photo)+'" alt=""/>':ph())
+      +'<div class="b"><b>'+esc(o.kitchen.name)+'</b><small>'+o.items.map(function(i){return i.qty+'× '+i.name;}).join(', ')+'</small></div>'
+      +'<div class="r"><span class="stt '+o.status+'"><i></i>'+esc(Orders.say(o.status,o.mode))+'</span><div class="m">'+esc(money(o.total,o.currency))+'</div></div></a>';
+  };
+  if(live.length) h+='<div class="list" style="padding-bottom:0"><div class="lbl">Live now</div>'+live.map(card).join('')+'</div>';
+  if(past.length) h+='<div class="list"><div class="lbl">Earlier</div>'+past.map(card).join('')+'</div>';
+  document.getElementById('app').innerHTML=h;
+  document.getElementById('topT').textContent='Your orders';
+  if(live.length){ clearTimeout(TIMER); TIMER=setTimeout(function(){ Orders.mine().then(showList).catch(function(){}); },15000); }
+}
+
+function fail(e){
+  document.getElementById('app').innerHTML='<div class="void" style="margin-top:30px"><div class="void-i">'+mk('info',.9)+'</div><h2>We couldn&rsquo;t open that order</h2><p>'+esc(Orders.explain(e))+'</p>'
+    +'<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap"><a class="btn btn-fire" href="/order">See your orders</a><a class="btn btn-line" href="/food">Back to the food</a></div></div>';
+}
+
+/* a little celebration, once, when it lands */
+function confetti(){
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  var c=document.createElement('canvas'); c.className='confetti'; document.body.appendChild(c);
+  var x=c.getContext('2d'), W=c.width=innerWidth, H=c.height=innerHeight, P=[];
+  var cols=['#DE5219','#E0B96F','#7FA269','#F4EADC','#F06A2E'];
+  for(var i=0;i<120;i++) P.push({x:W/2,y:H*.35,vx:(Math.random()-.5)*14,vy:-Math.random()*12-4,s:Math.random()*6+3,c:cols[i%5],r:Math.random()*6});
+  var t=0;(function f(){ x.clearRect(0,0,W,H); P.forEach(function(p){ p.vy+=.35; p.x+=p.vx; p.y+=p.vy; p.r+=.1; x.save(); x.translate(p.x,p.y); x.rotate(p.r); x.fillStyle=p.c; x.fillRect(-p.s/2,-p.s/2,p.s,p.s*.6); x.restore(); });
+    if(++t<120) requestAnimationFrame(f); else c.remove(); })();
+}
+
+boot().catch(fail);
+</script>
+<script src="/analytics.js" defer></script>
+<script src="/telemetry.js" defer></script>
+<script src="/pwa.js?v=35-programmes" defer></script>
+<script src="/cabana-call.js" defer></script>
+<script src="/apa-location.js" defer></script><script src="/cabana-sos.js" defer></script><script src="/cabana-support.js" defer></script>
+<script src="/cabana-lifecycle.js" defer></script>
+</body>
+</html>

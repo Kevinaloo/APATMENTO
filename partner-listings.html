@@ -1075,7 +1075,8 @@ function renderListings(list){
           ${(l.service==='food'||l.type==='food')?`<a href="partner-menu.html?id=${l.id}" class="btn btn-primary btn-sm" title="Add dishes, prices and offers">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="12" height="12"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2M7 2v20M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/></svg>
             Menu
-          </a>`:''}
+          </a>
+          <a href="partner-orders.html?id=${l.id}" class="btn btn-ghost btn-sm" title="Accept, cook and hand over orders">Orders</a>`:''}
           ${(l.service||'stays')==='stays'?`<button class="btn btn-ghost btn-sm" type="button" onclick="openStayOffers('${l.id}')">Offers</button>`:''}
           <a href="add-listing.html?from=dashboard&edit=${l.id}" class="btn btn-ghost btn-sm">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="12" height="12"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>

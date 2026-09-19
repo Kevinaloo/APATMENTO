@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow"/>
+<meta name="theme-color" content="#0D0704"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<link rel="manifest" href="/manifest.json"/>
+<link rel="icon" href="/favicon.ico" sizes="any"/>
+<link rel="apple-touch-icon" href="/cabana-apple-touch-icon.png"/>
+<title>Orders | Cabana Kitchen</title>
+<script src="/vendor-supabase-2.112.3.js"></script>
+<script src="/apa-session.js"></script>
+<link rel="preconnect" href="https://api.fontshare.com"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=zodiak@1,2&f[]=switzer@1&display=swap"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&display=swap"/>
+<link rel="stylesheet" href="/cabana-food-order.css"/>
+<style>
+body{padding-bottom:40px;}
+.shell{max-width:1480px;}
+.kbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:16px 0 4px;}
+.kbar h1{font-family:var(--fd);font-weight:400;font-size:clamp(26px,3.2vw,36px);letter-spacing:-.035em;flex:1;min-width:200px;}
+.kbar h1 small{display:block;font-family:var(--fm);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--brass);margin-bottom:6px;}
+.kpick{max-width:260px;}
+.svcs{display:inline-flex;align-items:center;gap:9px;padding:10px 14px;border-radius:100px;cursor:pointer;border:1px solid rgba(127,162,105,.4);
+  background:rgba(127,162,105,.1);color:var(--bay-lit);font-weight:600;font-size:13px;}
+.svcs i{width:9px;height:9px;border-radius:50%;background:currentColor;box-shadow:0 0 0 4px rgba(127,162,105,.18);}
+.svcs.paused{border-color:var(--rule-brass);background:rgba(201,154,78,.1);color:var(--brass-lit);}
+.svcs.off{border-color:rgba(210,85,79,.4);background:rgba(210,85,79,.08);color:#E68782;}
+.icon-btn{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;border:1px solid var(--rule-2);background:transparent;color:var(--bone-72);cursor:pointer;}
+.icon-btn:hover{border-color:var(--rule-brass);color:var(--brass-lit);}
+.icon-btn svg{width:17px;height:17px;}
+.icon-btn.on{color:var(--ember-lit);border-color:rgba(222,82,25,.45);}
+
+.stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin:14px 0 6px;}
+.stat{padding:13px 14px;border:1px solid var(--rule);border-radius:var(--r2);background:rgba(244,234,220,.02);}
+.stat b{display:block;font-family:var(--fd);font-weight:500;font-size:24px;letter-spacing:-.03em;}
+.stat span{font-family:var(--fm);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--bone-48);}
+@media(max-width:820px){.stats{grid-template-columns:repeat(3,minmax(0,1fr));}.stats .stat:nth-child(n+4){display:none;}}
+
+.lanes-tabs{display:none;gap:6px;margin:14px 0 4px;overflow-x:auto;}
+.lanes-tabs button{flex:1 0 auto;padding:10px 12px;border-radius:11px;border:1px solid var(--rule-2);background:transparent;color:var(--bone-72);font-weight:600;font-size:13px;cursor:pointer;white-space:nowrap;}
+.lanes-tabs button b{display:inline-grid;place-items:center;min-width:20px;height:20px;border-radius:100px;margin-left:6px;background:rgba(244,234,220,.1);font-size:11px;padding:0 5px;}
+.lanes-tabs button.on{background:var(--bone);color:#170A03;border-color:var(--bone);}
+.lanes-tabs button.hot b{background:var(--ember);color:#170A03;}
+.lanes{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-top:14px;align-items:start;}
+.lane{min-width:0;}
+.lane-h{display:flex;align-items:center;gap:8px;padding:0 4px 10px;font-family:var(--fm);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--bone-48);}
+.lane-h b{min-width:22px;height:22px;border-radius:100px;display:inline-grid;place-items:center;background:rgba(244,234,220,.08);color:var(--bone);font-size:11px;letter-spacing:0;padding:0 6px;}
+.lane-h.hot b{background:var(--ember);color:#170A03;}
+.lane-list{display:grid;gap:12px;}
+.lane-empty{padding:26px 14px;border:1px dashed var(--rule);border-radius:var(--r2);text-align:center;font-size:12.5px;color:var(--bone-30);}
+@media(max-width:1100px){.lanes{grid-template-columns:repeat(2,minmax(0,1fr));}}
+@media(max-width:760px){.lanes-tabs{display:flex;}.lanes{grid-template-columns:1fr;}.lane{display:none;}.lane.on{display:block;}.lane-h{display:none;}}
+
+.oc{border:1px solid var(--rule-2);border-radius:var(--r2);background:linear-gradient(180deg,rgba(244,234,220,.04),rgba(244,234,220,.012));overflow:hidden;
+  transition:border-color .3s,box-shadow .3s;}
+.oc.new{border-color:rgba(222,82,25,.6);box-shadow:0 0 0 1px rgba(222,82,25,.3),0 18px 50px rgba(222,82,25,.12);animation:glow 1.8s ease-in-out infinite;}
+@keyframes glow{0%,100%{box-shadow:0 0 0 1px rgba(222,82,25,.3),0 18px 50px rgba(222,82,25,.1);}50%{box-shadow:0 0 0 3px rgba(222,82,25,.45),0 18px 50px rgba(222,82,25,.2);}}
+.oc.focus{outline:2px solid var(--brass);outline-offset:2px;}
+.oc-h{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--rule);}
+.oc-h .ref{font-family:var(--fm);font-weight:600;font-size:13px;letter-spacing:.06em;}
+.oc-h .age{margin-left:auto;font-family:var(--fm);font-size:11px;color:var(--bone-48);}
+.oc-h .age.urgent{color:var(--ember-lit);font-weight:600;}
+.mode{font-family:var(--fm);font-size:9px;letter-spacing:.14em;text-transform:uppercase;padding:4px 8px;border-radius:100px;border:1px solid var(--rule-2);color:var(--bone-72);}
+.mode.delivery{color:#7FB5D9;border-color:rgba(127,181,217,.4);} .mode.pickup{color:var(--brass-lit);border-color:var(--rule-brass);} .mode.dine_in{color:var(--bay-lit);border-color:rgba(127,162,105,.4);}
+.sched{font-family:var(--fm);font-size:9px;letter-spacing:.12em;text-transform:uppercase;padding:4px 8px;border-radius:100px;background:rgba(201,154,78,.14);color:var(--brass-lit);}
+.oc-b{padding:12px 14px;display:grid;gap:10px;}
+.who{display:flex;align-items:center;gap:10px;}
+.who b{font-size:15px;font-weight:600;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.who a{font-family:var(--fm);font-size:11px;color:var(--brass-lit);text-decoration:none;}
+.items{display:grid;gap:5px;}
+.items div{display:flex;gap:10px;font-size:14px;line-height:1.35;}
+.items div q{quotes:none;display:block;font-size:12px;color:var(--brass-lit);margin-top:2px;}
+.items .q{font-family:var(--fm);font-weight:600;color:var(--ember-lit);min-width:28px;}
+.note{padding:9px 11px;border-radius:9px;background:rgba(201,154,78,.1);border:1px solid var(--rule-brass);font-size:13px;color:var(--brass-lit);line-height:1.5;}
+.addr{font-size:12.5px;color:var(--bone-72);line-height:1.5;display:flex;gap:8px;}
+.addr svg{width:14px;height:14px;flex-shrink:0;margin-top:2px;color:var(--bone-48);}
+.addr a{color:#7FB5D9;}
+.tot{display:flex;justify-content:space-between;align-items:baseline;padding-top:8px;border-top:1px solid var(--rule);font-size:12.5px;color:var(--bone-48);}
+.tot b{font-family:var(--fd);font-size:20px;font-weight:600;color:var(--bone);letter-spacing:-.02em;}
+.oc-a{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 14px 14px;}
+.oc-a .btn{padding:13px 10px;font-size:10px;}
+.oc-a .full{grid-column:1/-1;}
+.rider{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:rgba(127,181,217,.08);border:1px solid rgba(127,181,217,.3);font-size:13px;}
+.rider .rc{margin-left:auto;font-family:var(--fm);font-weight:600;font-size:18px;letter-spacing:.2em;color:var(--bone);}
+.rider small{display:block;font-size:11px;color:var(--bone-48);}
+.more{margin-left:auto;}
+.oc.done{opacity:.72;}
+.oc.done .oc-b{gap:6px;}
+.oc.done .items div{font-size:12.5px;}
+
+.gate{position:fixed;inset:0;z-index:950;display:grid;place-items:center;padding:24px;background:rgba(8,4,2,.9);backdrop-filter:blur(10px);}
+.gate-in{max-width:440px;text-align:center;}
+.gate h2{font-family:var(--fd);font-weight:400;font-size:34px;letter-spacing:-.035em;margin:18px 0 10px;}
+.gate p{color:var(--bone-48);font-size:14.5px;line-height:1.65;margin-bottom:22px;}
+.chips{display:flex;gap:8px;flex-wrap:wrap;}
+.chips button{padding:12px 15px;border-radius:12px;border:1px solid var(--rule-2);background:transparent;color:var(--bone);font-weight:600;cursor:pointer;font-size:14px;}
+.chips button.on{background:var(--ember);border-color:var(--ember);color:#170A03;}
+.chk{display:flex;align-items:center;gap:10px;padding:11px 12px;border:1px solid var(--rule);border-radius:10px;cursor:pointer;font-size:14px;font-family:var(--fb);letter-spacing:0;text-transform:none;color:var(--bone);margin:0;}
+.chk input{width:18px;height:18px;accent-color:var(--ember);}
+.grid2{display:grid;gap:12px;}
+@media print{
+  body *{visibility:hidden!important;}
+  .printing,.printing *{visibility:visible!important;color:#000!important;background:#fff!important;border-color:#000!important;box-shadow:none!important;}
+  .printing{position:absolute;left:0;top:0;width:80mm;}
+  .printing .oc-a{display:none!important;}
+}
+</style>
+</head>
+<body>
+<div class="room" aria-hidden="true"><div class="coal coal-1"></div><div class="coal coal-2"></div></div>
+
+<header class="top">
+  <div class="top-l">
+    <a href="partner-listings.html" class="top-back" aria-label="Back to my listings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M19.4 12H4.6M11 5.6 4.6 12 11 18.4"/></svg>
+    </a>
+    <img src="/cabana-emblem.png" class="top-em" alt="" onerror="this.style.display='none'"/>
+    <span class="top-t">Cabana <span style="color:var(--brass)">Kitchen</span></span>
+  </div>
+  <div class="top-r">
+    <a class="btn btn-line" id="menuLink" href="partner-menu.html" style="padding:10px 14px">Menu</a>
+  </div>
+</header>
+
+<main class="shell" id="app">
+  <div class="boot"><div class="boot-r"></div><div class="boot-t">Opening the pass</div></div>
+</main>
+
+<div class="scrim" id="scrim"></div>
+<aside class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetH"></aside>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="/cabana-orders.js"></script>
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   CABANA · KITCHEN ORDERS
+   The pass, on a phone propped against the till. Four lanes, in the
+   order food moves: New, Cooking, Ready and out, Done. A new order
+   rings until someone answers it, because an order nobody hears is
+   an order that lapses and a diner who goes elsewhere.
+
+   Every button here is one of four decisions a kitchen makes all
+   night: yes (with a time), no (with a reason), it's ready, and here
+   is who is carrying it. Each takes one tap and at most one choice.
+   ═══════════════════════════════════════════════════════════════ */
+'use strict';
+var Orders=window.CabanaOrders, SB=Orders.client();
+var Q=new URLSearchParams(location.search);
+var KID=Q.get('id')||'', FOCUS=(Q.get('order')||'').toUpperCase();
+var B=null, ME=null, LANE='new', SOUND=true, UNLOCKED=false, TIMER=null, TICK=null, SEEN={}, BUSY=false;
+try{ SOUND=localStorage.getItem('cabana-kitchen-sound')!=='0'; }catch(e){}
+
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function attr(s){return esc(s).replace(/\n/g,' ');}
+function money(n,c){return Orders.money(n,c);}
+function clock(i){return Orders.clock(i);}
+function toast(m,bad){var t=document.getElementById('toast');t.textContent=m;t.className='toast up'+(bad?' bad':'');clearTimeout(t._x);t._x=setTimeout(function(){t.className='toast'+(bad?' bad':'');},4000);}
+var M={
+  bell:'<path d="M6 16.6V11a6 6 0 0 1 12 0v5.6l1.6 2H4.4Z"/><path d="M10 20.4a2 2 0 0 0 4 0"/>',
+  mute:'<path d="M6 16.6V11a6 6 0 0 1 9.5-4.9M18 11v5.6l1.6 2H6"/><path d="M3 3l18 18"/>',
+  cog:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/>',
+  pin:'<path d="M19.4 10.2c0 5.6-7.4 11.2-7.4 11.2S4.6 15.8 4.6 10.2a7.4 7.4 0 0 1 14.8 0Z"/><circle cx="12" cy="10" r="2.6"/>',
+  printer:'<path d="M6.4 9V3.6h11.2V9"/><rect x="3.6" y="9" width="16.8" height="7.6" rx="1.6"/><path d="M6.4 14.4h11.2v6H6.4Z"/>',
+  wa:'<path d="M12 2.2a9.7 9.7 0 0 0-8.3 14.7L2.4 21.8l5-1.3A9.7 9.7 0 1 0 12 2.2Z"/>',
+  link:'<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
+  cloche:'<path d="M3.8 15.6a8.2 8.2 0 0 1 16.4 0Z"/><path d="M1.8 18.6h20.4"/><path d="M12 7.4V5.8"/><circle cx="12" cy="4.5" r="1.3"/>'
+};
+function mk(k,w){ if(!M[k]) return ''; return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="'+(w||1.6)+'" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+M[k]+'</svg>'; }
+
+/* ═══════ SIGN IN, THEN LOAD ═══════ */
+function boot(){
+  if(!SB){ return fail('We could not reach Cabana. Check your connection and reload.'); }
+  SB.auth.getSession().then(function(r){
+    var s=r&&r.data&&r.data.session;
+    if(!s){ location.href='auth.html?next='+encodeURIComponent(location.pathname+location.search); return; }
+    ME=s.user; load(true); listen();
+  });
+}
+function load(first){
+  return Orders.rpc('food_kitchen_board',{p_listing:KID||null}).then(function(b){
+    var fresh=[];
+    (b.orders||[]).forEach(function(o){
+      if(o.status==='requested'&&!SEEN[o.id]&&!first) fresh.push(o);
+      SEEN[o.id]=true;
+    });
+    B=b;
+    if(!KID&&b.kitchens.length===1) KID=b.kitchens[0].id;
+    if(first){ render(); gate(); if(FOCUS) focusOrder(); }
+    else if(!BUSY&&!sheetOpen()) render();
+    else paintStats();
+    if(fresh.length) alertNew(fresh);
+    ring();
+  }).catch(function(e){ if(first) fail(Orders.explain(e)); })
+  .then(function(){ clearTimeout(TIMER); TIMER=setTimeout(function(){load(false);},document.hidden?15000:6000); });
+}
+/* the notification row lands the instant an order is placed; use it as the doorbell */
+function listen(){
+  try{
+    SB.channel('kitchen-'+ME.id).on('postgres_changes',{event:'INSERT',schema:'public',table:'notifications',filter:'user_id=eq.'+ME.id},
+      function(p){ if(p&&p.new&&p.new.kind==='order'){ clearTimeout(TIMER); load(false); } }).subscribe();
+  }catch(e){}
+}
+document.addEventListener('visibilitychange',function(){ if(!document.hidden&&B){ clearTimeout(TIMER); load(false); } });
+
+/* ═══════ THE BELL ═══════ */
+var AC=null, RING=null;
+function unlock(){ try{ AC=AC||new (window.AudioContext||window.webkitAudioContext)(); AC.resume(); UNLOCKED=true; }catch(e){} }
+function tone(){
+  if(!AC||!SOUND) return;
+  [784,988,1175].forEach(function(f,i){
+    var o=AC.createOscillator(), g=AC.createGain(); o.type='triangle'; o.frequency.value=f; o.connect(g); g.connect(AC.destination);
+    var t=AC.currentTime+i*.14; g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.2,t+.02); g.gain.exponentialRampToValueAtTime(.001,t+.5);
+    o.start(t); o.stop(t+.55);
+  });
+}
+function waiting(){ return (B&&B.orders||[]).filter(function(o){return o.status==='requested';}); }
+function ring(){
+  var n=waiting().length;
+  document.title=(n?'('+n+') New order · ':'')+'Orders | Cabana Kitchen';
+  if(n&&SOUND){ if(!RING){ tone(); RING=setInterval(function(){ if(waiting().length) tone(); else { clearInterval(RING); RING=null; } },4000); } }
+  else if(RING){ clearInterval(RING); RING=null; }
+}
+function alertNew(list){
+  try{ navigator.vibrate&&navigator.vibrate([300,120,300]); }catch(e){}
+  try{
+    if('Notification' in window&&Notification.permission==='granted'&&document.hidden){
+      list.forEach(function(o){ new Notification('New order '+o.ref+' · '+money(o.total,o.currency),{body:o.item_count+' items · '+o.diner_name,tag:'order-'+o.ref,requireInteraction:true}); });
+    }
+  }catch(e){}
+  toast(list.length===1?'New order from '+list[0].diner_name:list.length+' new orders');
+  LANE='new';
+}
+function gate(){
+  if(UNLOCKED) return;
+  var g=document.createElement('div'); g.className='gate';
+  g.innerHTML='<div class="gate-in"><div style="width:74px;height:74px;margin:0 auto;color:var(--ember-lit)">'+mk('bell',1.2)+'</div>'
+    +'<h2>Start service</h2><p>Keep this screen open at the counter. New orders ring here until someone answers them, and diners see your answer instantly.</p>'
+    +'<button class="btn btn-fire btn-lg btn-wide" type="button">Open the pass</button></div>';
+  document.body.appendChild(g);
+  g.querySelector('button').onclick=function(){
+    unlock(); g.remove();
+    try{ if('Notification' in window&&Notification.permission==='default') Notification.requestPermission(); }catch(e){}
+    ring();
+  };
+}
+
+/* ═══════ DRAW ═══════ */
+function kitchen(){ return (B.kitchens||[]).filter(function(k){return k.id===KID;})[0]||B.kitchens[0]; }
+function lanes(){
+  var all=(B.orders||[]).filter(function(o){ return !KID||o.kitchen.id===KID; });
+  var by=function(s){ return all.filter(function(o){return s.indexOf(o.status)>-1;}); };
+  var done=by(['completed','declined','expired','cancelled']).filter(function(o){ return Date.now()-new Date(o.requested_at).getTime()<24*3600e3; });
+  return {
+    new:by(['requested']).sort(function(a,b){return new Date(a.expires_at)-new Date(b.expires_at);}),
+    cooking:by(['accepted']).sort(function(a,b){return new Date(a.eta_ready_at||0)-new Date(b.eta_ready_at||0);}),
+    out:by(['ready','on_the_way']),
+    done:done
+  };
+}
+function render(){
+  if(!B) return;
+  var app=document.getElementById('app');
+  if(!B.kitchens.length){
+    app.innerHTML='<div class="void" style="margin-top:30px"><div class="void-i">'+mk('cloche',.9)+'</div><h2>No restaurant on this account</h2>'
+      +'<p>Put your restaurant up and add a menu. Orders appear here the moment diners send them.</p>'
+      +'<a class="btn btn-fire" href="add-listing.html?svc=food&from=dashboard">Put my restaurant up</a></div>';
+    return;
+  }
+  var k=kitchen(); KID=k.id;
+  document.getElementById('menuLink').href='partner-menu.html?id='+encodeURIComponent(k.id);
+  var L=lanes();
+  var st=svcState(k);
+  var h='<div class="kbar"><h1><small>Orders</small>'+esc(k.name)+'</h1>';
+  if(B.kitchens.length>1){
+    h+='<select class="kpick" id="kpick" aria-label="Kitchen">'+B.kitchens.map(function(x){return '<option value="'+attr(x.id)+'"'+(x.id===k.id?' selected':'')+'>'+esc(x.name)+'</option>';}).join('')+'</select>';
+  }
+  h+='<button class="svcs '+st.cls+'" type="button" id="svcBtn"><i></i>'+esc(st.label)+'</button>'
+    +'<button class="icon-btn'+(SOUND?' on':'')+'" type="button" id="soundBtn" aria-label="'+(SOUND?'Mute':'Unmute')+' the bell">'+mk(SOUND?'bell':'mute')+'</button>'
+    +'<button class="icon-btn" type="button" id="setBtn" aria-label="Order settings">'+mk('cog')+'</button></div>';
+  if(!k.is_active) h+='<div class="flag cold" style="margin-top:10px">'+mk('pin')+'<span>This restaurant is not live on Cabana yet, so diners cannot order. Finish the listing and add a menu to go live.</span></div>';
+  if(!k.mpesa_till&&!k.mpesa_paybill) h+='<div class="flag" style="margin-top:10px">'+mk('cog')+'<span>Add your M-Pesa till so diners see exactly where to pay. <button class="btn btn-ghost" style="padding:0 0 0 6px;font-size:10px" type="button" data-open-set>Add it</button></span></div>';
+  h+='<div class="stats" id="stats">'+statsHtml()+'</div>';
+  var tabs=[['new','New',L.new.length],['cooking','Cooking',L.cooking.length],['out','Ready &amp; out',L.out.length],['done','Done',L.done.length]];
+  h+='<div class="lanes-tabs" role="tablist">'+tabs.map(function(t){
+    return '<button type="button" role="tab" data-lane="'+t[0]+'" class="'+(LANE===t[0]?'on':'')+(t[0]==='new'&&t[2]?' hot':'')+'">'+t[1]+'<b>'+t[2]+'</b></button>';
+  }).join('')+'</div>';
+  h+='<div class="lanes">'+tabs.map(function(t){
+    var list=L[t[0]];
+    return '<section class="lane'+(LANE===t[0]?' on':'')+'" aria-label="'+t[1]+'"><div class="lane-h'+(t[0]==='new'&&t[2]?' hot':'')+'">'+t[1]+'<b>'+t[2]+'</b></div>'
+      +'<div class="lane-list">'+(list.length?list.map(card).join(''):'<div class="lane-empty">'+emptySay(t[0])+'</div>')+'</div></section>';
+  }).join('')+'</div>';
+  app.innerHTML=h;
+  wire();
+  tickAges();
+}
+function emptySay(l){ return l==='new'?'Nothing waiting. New orders ring and land here.':l==='cooking'?'Accepted orders cook here.':l==='out'?'Ready and out-for-delivery orders wait here.':'Finished orders from today.'; }
+function svcState(k){
+  if(k.accepts_orders===false) return {cls:'off',label:'Orders off'};
+  if(k.orders_paused_until&&new Date(k.orders_paused_until)>new Date()) return {cls:'paused',label:'Paused till '+clock(k.orders_paused_until)};
+  return {cls:'',label:'Taking orders'};
+}
+function statsHtml(){
+  var s=B.stats||{}, cur=(kitchen()||{}).currency||'KES';
+  var ans=s.avg_answer_secs?(s.avg_answer_secs<90?Math.round(s.avg_answer_secs)+'s':Math.round(s.avg_answer_secs/60)+'m'):'—';
+  return '<div class="stat"><b>'+(s.today_orders||0)+'</b><span>Orders today</span></div>'
+    +'<div class="stat"><b>'+esc(money(s.today_revenue||0,'KES').replace('KES ',''))+'</b><span>KES earned today</span></div>'
+    +'<div class="stat"><b>'+(s.today_completed||0)+'</b><span>Completed</span></div>'
+    +'<div class="stat"><b>'+ans+'</b><span>Avg answer</span></div>'
+    +'<div class="stat"><b>'+(s.rating?Number(s.rating).toFixed(1)+'<span style="font-size:14px;color:#F2C14E"> ★</span>':'—')+'</b><span>'+(s.ratings||0)+' ratings</span></div>';
+}
+function paintStats(){ var el=document.getElementById('stats'); if(el) el.innerHTML=statsHtml(); }
+
+function card(o){
+  var live=Orders.isLive(o.status), newO=o.status==='requested';
+  var h='<article class="oc'+(newO?' new':'')+(live?'':' done')+(o.ref===FOCUS?' focus':'')+'" id="o-'+attr(o.ref)+'" data-id="'+attr(o.id)+'">';
+  h+='<div class="oc-h"><span class="ref">'+esc(o.ref)+'</span><span class="mode '+o.mode+'">'+(o.mode==='delivery'?'Delivery':o.mode==='pickup'?'Collect':'Eat in')+'</span>'
+    +(o.scheduled_for?'<span class="sched">For '+clock(o.scheduled_for)+'</span>':'')
+    +'<span class="age" data-age="'+attr(o.status==='requested'?o.expires_at:o.status==='accepted'?(o.eta_ready_at||''):o.requested_at)+'" data-kind="'+(o.status==='requested'?'exp':o.status==='accepted'?'eta':'ago')+'"></span></div>';
+  h+='<div class="oc-b"><div class="who"><b>'+esc(o.diner_name)+'</b>'
+    +(o.diner_phone&&live?'<a href="tel:'+attr(String(o.diner_phone).replace(/[^\d+]/g,''))+'">Call</a>':'')+'</div>';
+  h+='<div class="items">'+o.items.map(function(i){
+    var off=(o.decline_items||[]).indexOf(i.id)>-1;
+    return '<div'+(off?' style="text-decoration:line-through;opacity:.5"':'')+'><span class="q">'+i.qty+'&times;</span><span>'+esc(i.name)+(i.note?'<q>'+esc(i.note)+'</q>':'')+'</span></div>';
+  }).join('')+'</div>';
+  if(o.note) h+='<div class="note">'+esc(o.note)+'</div>';
+  if(o.mode==='delivery'&&o.address&&live){
+    var map=o.lat&&o.lng?'https://www.google.com/maps/dir/?api=1&destination='+o.lat+','+o.lng:'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(o.address);
+    h+='<div class="addr">'+mk('pin')+'<span>'+esc(o.address)+(o.address_note?' &middot; '+esc(o.address_note):'')+' &middot; <a href="'+attr(map)+'" target="_blank" rel="noopener">Map</a></span></div>';
+  }
+  if(o.table_label) h+='<div class="addr">'+mk('pin')+'<span>'+esc(o.table_label)+'</span></div>';
+  if(o.status==='on_the_way'){
+    h+='<div class="rider"><div>'+esc(o.rider_name||'Rider')+(o.arrived_at?' &middot; at the door':'')+'<small>Rider&rsquo;s code for the diner</small></div><span class="rc">'+esc(o.rider_code||'')+'</span></div>';
+  }
+  if(!live){
+    h+='<div class="tot"><span>'+esc(Orders.say(o.status,o.mode))+(o.decline_reason?' &middot; '+esc(o.decline_reason):'')+(o.rating?' &middot; '+o.rating+'★':'')+'</span><b>'+esc(money(o.total,o.currency))+'</b></div></div>';
+    return h+'</article>';
+  }
+  h+='<div class="tot"><span>'+o.item_count+' item'+(o.item_count===1?'':'s')+' &middot; '+(o.pay_method==='cash'?'Cash':'M-Pesa')+' on handover</span><b>'+esc(money(o.total,o.currency))+'</b></div></div>';
+  h+='<div class="oc-a">'+actions(o)+'</div></article>';
+  return h;
+}
+function actions(o){
+  var id=attr(o.id);
+  if(o.status==='requested') return '<button class="btn btn-go" type="button" data-act="accept" data-o="'+id+'">Accept</button>'
+    +'<button class="btn btn-bad" type="button" data-act="decline" data-o="'+id+'">Decline</button>';
+  if(o.status==='accepted'){
+    var a='';
+    if(o.mode==='dine_in') a+='<button class="btn btn-fire full" type="button" data-act="served" data-o="'+id+'">Served at the table</button>';
+    else if(o.mode==='delivery') a+='<button class="btn btn-fire" type="button" data-act="ready" data-o="'+id+'">Packed</button><button class="btn btn-go" type="button" data-act="dispatch" data-o="'+id+'">Send rider</button>';
+    else a+='<button class="btn btn-fire full" type="button" data-act="ready" data-o="'+id+'">Ready to collect</button>';
+    a+='<button class="btn btn-line" type="button" data-act="delay" data-o="'+id+'">+10 min</button>'
+      +'<button class="btn btn-ghost" type="button" data-act="menu" data-o="'+id+'">More</button>';
+    return a;
+  }
+  if(o.status==='ready'){
+    if(o.mode==='delivery') return '<button class="btn btn-go full" type="button" data-act="dispatch" data-o="'+id+'">Send with a rider</button>'
+      +'<button class="btn btn-ghost full" type="button" data-act="menu" data-o="'+id+'">More</button>';
+    if(o.mode==='dine_in') return '<button class="btn btn-fire full" type="button" data-act="served" data-o="'+id+'">Served at the table</button>';
+    return '<button class="btn btn-go full" type="button" data-act="collect" data-o="'+id+'">Enter collection code</button>'
+      +'<button class="btn btn-ghost full" type="button" data-act="menu" data-o="'+id+'">More</button>';
+  }
+  if(o.status==='on_the_way') return '<button class="btn btn-wa" type="button" data-act="share" data-o="'+id+'">'+mk('wa')+'Send to rider</button>'
+    +'<button class="btn btn-line" type="button" data-act="collect" data-o="'+id+'">Diner&rsquo;s code</button>'
+    +(o.arrived_at?'':'<button class="btn btn-ghost" type="button" data-act="arrived" data-o="'+id+'">Rider arrived</button>')
+    +'<button class="btn btn-ghost" type="button" data-act="menu" data-o="'+id+'">More</button>';
+  return '';
+}
+function find(id){ return (B.orders||[]).filter(function(o){return o.id===id;})[0]; }
+
+/* live clocks on every card */
+function tickAges(){
+  document.querySelectorAll('[data-age]').forEach(function(el){
+    var iso=el.dataset.age; if(!iso){ el.textContent=''; return; }
+    var t=new Date(iso).getTime(), now=Date.now(), k=el.dataset.kind;
+    if(k==='exp'){ var s=Math.max(0,Math.round((t-now)/1000)); el.textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0')+' to answer'; el.classList.toggle('urgent',s<180); }
+    else if(k==='eta'){ var m=Math.round((t-now)/60000); el.textContent=m>=0?'ready in '+m+' min':Math.abs(m)+' min late'; el.classList.toggle('urgent',m<0); }
+    else { var a=Math.round((now-t)/60000); el.textContent=a<1?'just now':a<60?a+' min ago':clock(iso); el.classList.remove('urgent'); }
+  });
+}
+
+/* ═══════ WIRE ═══════ */
+function wire(){
+  var kp=document.getElementById('kpick'); if(kp) kp.onchange=function(){ KID=kp.value; history.replaceState(null,'','?id='+encodeURIComponent(KID)); render(); };
+  document.getElementById('soundBtn').onclick=function(){ SOUND=!SOUND; try{localStorage.setItem('cabana-kitchen-sound',SOUND?'1':'0');}catch(e){} unlock(); render(); ring(); };
+  document.getElementById('svcBtn').onclick=serviceSheet;
+  document.getElementById('setBtn').onclick=settingsSheet;
+  document.querySelectorAll('[data-open-set]').forEach(function(b){ b.onclick=settingsSheet; });
+  document.querySelectorAll('[data-lane]').forEach(function(b){ b.onclick=function(){ LANE=b.dataset.lane; render(); }; });
+  document.querySelectorAll('[data-act]').forEach(function(b){ b.onclick=function(){ unlock(); act(b.dataset.act,find(b.dataset.o),b); }; });
+}
+function act(a,o,btn){
+  if(!o) return;
+  if(a==='accept') return acceptSheet(o);
+  if(a==='decline') return declineSheet(o);
+  if(a==='dispatch') return dispatchSheet(o);
+  if(a==='collect') return codeSheet(o);
+  if(a==='share') return shareRider(o);
+  if(a==='menu') return moreSheet(o);
+  if(a==='delay') return update(o,'eta',{mins:10},btn,'Diner told: 10 more minutes.');
+  if(a==='ready') return update(o,'ready',{},btn,o.mode==='pickup'?'Diner told it is ready to collect.':'Marked packed.');
+  if(a==='served') return update(o,'served',{},btn,'Served. Order complete.');
+  if(a==='arrived') return update(o,'arrived',{},btn,'Diner told the rider is outside.');
+}
+function busy(b,on){ if(!b) return; b.disabled=on; if(on){ b._h=b.innerHTML; b.innerHTML='<span class="spin"></span>'; } else if(b._h) b.innerHTML=b._h; }
+function swap(n){ for(var i=0;i<B.orders.length;i++){ if(B.orders[i].id===n.id){ B.orders[i]=n; return; } } B.orders.unshift(n); }
+function update(o,action,p,btn,ok){
+  BUSY=true; busy(btn,true);
+  return Orders.rpc('food_kitchen_update',{p_order:o.id,p_action:action,p:p||{}}).then(function(n){
+    BUSY=false;
+    if(n.error==='code_wrong'){ swap(n); busy(btn,false); toast('That code does not match. '+n.attempts_left+' tries left.',true); return n; }
+    swap(n); closeSheet(); render(); ring(); if(ok) toast(ok);
+    load(false);
+    return n;
+  }).catch(function(e){ BUSY=false; busy(btn,false); toast(Orders.explain(e),true); load(false); });
+}
+
+/* ═══════ THE FOUR DECISIONS ═══════ */
+function acceptSheet(o){
+  var k=kitchen(), base=k.prep_mins||20;
+  if(o.mode==='delivery'&&k.delivery_mins) base=Math.max(base,10);
+  var opts=[10,15,20,30,45,60], pick=opts.reduce(function(a,b){return Math.abs(b-base)<Math.abs(a-base)?b:a;});
+  sheet('<h3 id="sheetH">Accept '+esc(o.ref)+'</h3><p class="sub">How long until it is '+(o.mode==='delivery'?'packed for the rider':o.mode==='pickup'?'ready to collect':'on the table')+'? The diner sees this time.'
+    +(o.scheduled_for?' They want it for <b style="color:var(--bone)">'+clock(o.scheduled_for)+'</b>.':'')+'</p>'
+    +'<div class="chips" id="etaC">'+opts.map(function(m){return '<button type="button" data-m="'+m+'" class="'+(m===pick?'on':'')+'">'+m+' min</button>';}).join('')+'</div>'
+    +'<div class="sheet-acts"><button class="btn btn-line" type="button" data-close>Back</button><button class="btn btn-go" type="button" id="accGo">Accept &middot; '+pick+' min</button></div>');
+  document.querySelectorAll('#etaC button').forEach(function(b){ b.onclick=function(){ pick=+b.dataset.m; document.querySelectorAll('#etaC button').forEach(function(x){x.classList.toggle('on',x===b);}); document.getElementById('accGo').innerHTML='Accept &middot; '+pick+' min'; }; });
+  document.getElementById('accGo').onclick=function(){
+    var g=this; busy(g,true); BUSY=true;
+    Orders.rpc('food_kitchen_respond',{p_order:o.id,p_accept:true,p_eta:pick}).then(function(n){
+      BUSY=false; swap(n); closeSheet(); LANE='cooking'; render(); ring(); toast('Accepted. '+o.diner_name+' has been told '+clock(n.eta_ready_at)+'.');
+    }).catch(function(e){ BUSY=false; busy(g,false); closeSheet(); toast(Orders.explain(e),true); load(false); });
+  };
+}
+function declineSheet(o){
+  var R=[['unavailable','Dishes finished'],['busy','Too busy'],['closed','Closed now'],['too_far','Too far to deliver'],['below_minimum','Under minimum'],['other','Other']];
+  var code='', items=[];
+  sheet('<h3 id="sheetH">Decline '+esc(o.ref)+'</h3><p class="sub">Tell '+esc(o.diner_name)+' why. They get a one-tap way to fix it or order elsewhere.</p>'
+    +'<div class="chips" id="decC">'+R.filter(function(r){ return (r[0]!=='too_far'&&r[0]!=='below_minimum')||o.mode==='delivery'; }).map(function(r){return '<button type="button" data-c="'+r[0]+'">'+r[1]+'</button>';}).join('')+'</div>'
+    +'<div id="decItems" class="grid2" style="margin-top:14px" hidden><div class="lbl" style="margin:0">Which dishes are finished?</div>'
+    +o.items.map(function(i){return '<label class="chk"><input type="checkbox" value="'+attr(i.id)+'"/>'+esc(i.name)+'</label>';}).join('')
+    +'<p class="help">These are marked sold out on your menu until midnight, so nobody else orders them.</p></div>'
+    +'<div style="margin-top:14px"><textarea id="decWhy" rows="2" placeholder="Add a word for the diner (optional)"></textarea></div>'
+    +'<div class="sheet-acts"><button class="btn btn-line" type="button" data-close>Back</button><button class="btn btn-bad" type="button" id="decGo" disabled>Decline</button></div>');
+  document.querySelectorAll('#decC button').forEach(function(b){ b.onclick=function(){
+    code=b.dataset.c; document.querySelectorAll('#decC button').forEach(function(x){x.classList.toggle('on',x===b);});
+    document.getElementById('decItems').hidden=code!=='unavailable';
+    document.getElementById('decWhy').placeholder=code==='other'?'Tell the diner why (required)':'Add a word for the diner (optional)';
+    document.getElementById('decGo').disabled=false;
+  }; });
+  document.getElementById('decGo').onclick=function(){
+    var g=this, why=document.getElementById('decWhy').value.trim();
+    items=[].slice.call(document.querySelectorAll('#decItems input:checked')).map(function(x){return x.value;});
+    if(code==='unavailable'&&!items.length){ toast('Tick the dishes that are finished.',true); return; }
+    if(code==='other'&&why.length<3){ toast('Tell the diner why.',true); return; }
+    busy(g,true); BUSY=true;
+    Orders.rpc('food_kitchen_respond',{p_order:o.id,p_accept:false,p_code:code,p_reason:why||null,p_items:code==='unavailable'?items:null}).then(function(n){
+      BUSY=false; swap(n); closeSheet(); render(); ring(); toast('Declined. '+o.diner_name+' has been told why.');
+    }).catch(function(e){ BUSY=false; busy(g,false); toast(Orders.explain(e),true); });
+  };
+}
+function riders(){ try{ return JSON.parse(localStorage.getItem('cabana-kitchen-riders')||'[]'); }catch(e){ return []; } }
+function dispatchSheet(o){
+  var list=riders();
+  sheet('<h3 id="sheetH">Send '+esc(o.ref)+' with a rider</h3><p class="sub">The rider gets a link with the address, a map and their code. The diner sees who is coming.</p>'
+    +(list.length?'<div class="chips" id="rdC" style="margin-bottom:14px">'+list.map(function(r,i){return '<button type="button" data-i="'+i+'">'+esc(r.name)+'</button>';}).join('')+'</div>':'')
+    +'<div class="grid2"><div><label for="rdN">Rider&rsquo;s name <span class="req">*</span></label><input type="text" id="rdN" placeholder="e.g. Otieno"/></div>'
+    +'<div><label for="rdP">Rider&rsquo;s phone</label><input type="tel" id="rdP" placeholder="07xx xxx xxx"/><p class="help">Shown to the diner so they can reach the rider.</p></div></div>'
+    +'<div class="sheet-acts"><button class="btn btn-line" type="button" data-close>Back</button><button class="btn btn-go" type="button" id="rdGo">Send out</button></div>');
+  document.querySelectorAll('#rdC button').forEach(function(b){ b.onclick=function(){ var r=list[+b.dataset.i]; document.getElementById('rdN').value=r.name; document.getElementById('rdP').value=r.phone||''; }; });
+  document.getElementById('rdGo').onclick=function(){
+    var n=document.getElementById('rdN').value.trim(), p=document.getElementById('rdP').value.trim();
+    if(n.length<2){ toast('Add the rider’s name.',true); return; }
+    var keep=riders().filter(function(r){return r.name.toLowerCase()!==n.toLowerCase();}); keep.unshift({name:n,phone:p});
+    try{ localStorage.setItem('cabana-kitchen-riders',JSON.stringify(keep.slice(0,8))); }catch(e){}
+    update(o,'dispatch',{rider_name:n,rider_phone:p},this,null).then(function(x){ if(x&&!x.error){ LANE='out'; render(); shareRider(x); } });
+  };
+}
+function riderLink(o){ return location.origin+'/rider?ref='+encodeURIComponent(o.ref)+'&k='+encodeURIComponent(o.rider_token||''); }
+function shareRider(o){
+  var link=riderLink(o);
+  var map=o.lat&&o.lng?'https://www.google.com/maps/dir/?api=1&destination='+o.lat+','+o.lng:'';
+  var msg='Delivery '+o.ref+' for '+o.diner_name+'\n'+(o.address||'')+(o.address_note?' ('+o.address_note+')':'')+'\n'
+    +(map?'Map: '+map+'\n':'')+'Collect '+money(o.total,o.currency)+' ('+(o.pay_method==='cash'?'cash':'M-Pesa')+')\n'
+    +'Your code for the customer: '+o.rider_code+'\nOpen: '+link;
+  sheet('<h3 id="sheetH">Hand it to '+esc(o.rider_name||'the rider')+'</h3><p class="sub">Send the rider this link. It has the address, a map, the diner&rsquo;s number and the code. At the door the diner checks the rider&rsquo;s code, then gives theirs to finish.</p>'
+    +'<div class="rider" style="margin-bottom:16px"><div>Rider&rsquo;s code<small>The diner will ask for this</small></div><span class="rc">'+esc(o.rider_code||'')+'</span></div>'
+    +'<div class="grid2">'
+    +(o.rider_phone?'<a class="btn btn-wa btn-wide" target="_blank" rel="noopener" href="https://wa.me/'+attr(String(o.rider_phone).replace(/\D/g,'').replace(/^0/,'254'))+'?text='+attr(encodeURIComponent(msg))+'">'+mk('wa')+'Send on WhatsApp</a>'
+      :'<a class="btn btn-wa btn-wide" target="_blank" rel="noopener" href="https://wa.me/?text='+attr(encodeURIComponent(msg))+'">'+mk('wa')+'Send on WhatsApp</a>')
+    +'<button class="btn btn-line btn-wide" type="button" id="cpL">'+mk('link')+'Copy the rider link</button></div>'
+    +'<div class="sheet-acts"><button class="btn btn-ghost" type="button" data-close>Done</button></div>');
+  document.getElementById('cpL').onclick=function(){ (navigator.clipboard?navigator.clipboard.writeText(link):Promise.reject()).then(function(){toast('Rider link copied.');},function(){toast(link);}); };
+}
+function codeSheet(o){
+  sheet('<h3 id="sheetH">'+(o.mode==='pickup'?'Hand over '+esc(o.ref):'Finish '+esc(o.ref))+'</h3><p class="sub">Ask '+esc(o.diner_name)+' for the four digit code on their order. It proves the food is going to the right person.</p>'
+    +'<div class="code-in">'+[0,1,2,3].map(function(i){return '<input type="text" inputmode="numeric" maxlength="1" id="hc'+i+'" aria-label="Digit '+(i+1)+'"/>';}).join('')+'</div>'
+    +'<div class="sheet-acts"><button class="btn btn-line" type="button" data-close>Back</button><button class="btn btn-go" type="button" id="hcGo">Complete order</button></div>');
+  var read=function(){ return [0,1,2,3].map(function(i){return document.getElementById('hc'+i).value;}).join('').replace(/\D/g,''); };
+  var go=function(){ var c=read(); if(c.length!==4){ toast('Enter all four digits.',true); return; }
+    update(o,'complete',{code:c},document.getElementById('hcGo'),'Handed over. Order complete.').then(function(n){ if(n&&n.error){ [0,1,2,3].forEach(function(i){document.getElementById('hc'+i).value='';}); document.getElementById('hc0').focus(); } }); };
+  [0,1,2,3].forEach(function(i){ var el=document.getElementById('hc'+i);
+    el.oninput=function(){ var v=el.value.replace(/\D/g,''); if(v.length>1){ v.split('').slice(0,4).forEach(function(d,j){document.getElementById('hc'+j).value=d;}); } else { el.value=v; if(v&&i<3) document.getElementById('hc'+(i+1)).focus(); } if(read().length===4) go(); };
+    el.onkeydown=function(e){ if(e.key==='Backspace'&&!el.value&&i>0){ var p=document.getElementById('hc'+(i-1)); p.value=''; p.focus(); } };
+  });
+  document.getElementById('hcGo').onclick=go;
+  setTimeout(function(){document.getElementById('hc0').focus();},120);
+}
+function moreSheet(o){
+  sheet('<h3 id="sheetH">'+esc(o.ref)+'</h3><p class="sub">'+esc(o.diner_name)+' &middot; '+esc(money(o.total,o.currency))+'</p><div class="grid2">'
+    +'<button class="btn btn-line btn-wide" type="button" id="prt">'+mk('printer')+'Print kitchen ticket</button>'
+    +(o.diner_phone?'<a class="btn btn-line btn-wide" href="tel:'+attr(String(o.diner_phone).replace(/[^\d+]/g,''))+'">Call '+esc(o.diner_name)+'</a>':'')
+    +(o.status==='on_the_way'?'<button class="btn btn-line btn-wide" type="button" id="shr">'+mk('link')+'Rider link again</button>':'')
+    +'<button class="btn btn-bad btn-wide" type="button" id="cxl">Cancel this order</button></div>'
+    +'<div class="sheet-acts"><button class="btn btn-ghost" type="button" data-close>Close</button></div>');
+  document.getElementById('prt').onclick=function(){ closeSheet(); printTicket(o); };
+  var s=document.getElementById('shr'); if(s) s.onclick=function(){ shareRider(o); };
+  document.getElementById('cxl').onclick=function(){ cancelSheet(o); };
+}
+function cancelSheet(o){
+  sheet('<h3 id="sheetH">Cancel '+esc(o.ref)+'?</h3><p class="sub">You already accepted this. '+esc(o.diner_name)+' is told immediately. Say why.</p>'
+    +'<div class="chips" id="cxC">'+['Ran out of an ingredient','Kitchen emergency','Rider unavailable','Could not reach the diner'].map(function(r){return '<button type="button">'+esc(r)+'</button>';}).join('')+'</div>'
+    +'<div style="margin-top:12px"><textarea id="cxWhy" rows="2" placeholder="Reason for the diner"></textarea></div>'
+    +'<div class="sheet-acts"><button class="btn btn-line" type="button" data-close>Keep the order</button><button class="btn btn-bad" type="button" id="cxGo">Cancel order</button></div>');
+  document.querySelectorAll('#cxC button').forEach(function(b){ b.onclick=function(){ document.getElementById('cxWhy').value=b.textContent; document.querySelectorAll('#cxC button').forEach(function(x){x.classList.toggle('on',x===b);}); }; });
+  document.getElementById('cxGo').onclick=function(){ var w=document.getElementById('cxWhy').value.trim(); if(w.length<3){ toast('Give the diner a reason.',true); return; } update(o,'cancel',{reason:w},this,'Cancelled. The diner has been told.'); };
+}
+function printTicket(o){
+  var el=document.getElementById('o-'+o.ref); if(!el){ toast('Open the order to print it.'); return; }
+  el.classList.add('printing'); window.print(); setTimeout(function(){ el.classList.remove('printing'); },500);
+}
+
+/* ═══════ SERVICE AND SETTINGS ═══════ */
+function serviceSheet(){
+  var k=kitchen();
+  sheet('<h3 id="sheetH">Taking orders?</h3><p class="sub">Pausing stops new orders for a while without hiding your menu. Diners see when you are back.</p>'
+    +'<div class="grid2"><button class="btn btn-go btn-wide" type="button" data-sv="on">Taking orders</button>'
+    +'<div class="chips">'+[15,30,60,120].map(function(m){return '<button type="button" data-pause="'+m+'">Pause '+(m<60?m+' min':m/60+' hr')+'</button>';}).join('')+'</div>'
+    +'<button class="btn btn-bad btn-wide" type="button" data-sv="off">Turn online orders off</button></div>'
+    +'<div class="sheet-acts"><button class="btn btn-ghost" type="button" data-close>Close</button></div>');
+  var save=function(p,msg){ Orders.rpc('food_kitchen_settings',{p_listing:k.id,p:p}).then(function(){ closeSheet(); toast(msg); load(false); }).catch(function(e){ toast(Orders.explain(e),true); }); };
+  document.querySelector('[data-sv="on"]').onclick=function(){ save({accepts_orders:true,pause_mins:0},'Taking orders.'); };
+  document.querySelector('[data-sv="off"]').onclick=function(){ save({accepts_orders:false,pause_mins:0},'Online orders are off.'); };
+  document.querySelectorAll('[data-pause]').forEach(function(b){ b.onclick=function(){ save({accepts_orders:true,pause_mins:+b.dataset.pause},'Paused for '+b.textContent.replace('Pause ','')+'.'); }; });
+}
+function settingsSheet(){
+  var k=kitchen();
+  sheet('<h3 id="sheetH">Getting paid</h3><p class="sub">Diners see this once you accept, so they pay you directly. Cabana never touches the money.</p>'
+    +'<div class="grid2"><div><label for="sT">M-Pesa Buy Goods till</label><input type="text" id="sT" inputmode="numeric" value="'+attr(k.mpesa_till||'')+'" placeholder="e.g. 5123456"/></div>'
+    +'<div class="fields"><div><label for="sP">Or paybill</label><input type="text" id="sP" inputmode="numeric" value="'+attr(k.mpesa_paybill||'')+'"/></div>'
+    +'<div><label for="sA">Account</label><input type="text" id="sA" value="'+attr(k.mpesa_account||'')+'" placeholder="Leave blank to use the order ref"/></div></div>'
+    +'<label class="chk"><input type="checkbox" id="sC"'+(k.accepts_cash!==false?' checked':'')+'/>Accept cash on handover</label>'
+    +'<div><label for="sR">Minutes to answer a new order</label><select id="sR">'+[5,8,10,12,15,20,30].map(function(m){return '<option'+(m===k.respond_mins?' selected':'')+'>'+m+'</option>';}).join('')+'</select>'
+    +'<p class="help">After this, an unanswered order lapses and the diner is told nothing was charged.</p></div></div>'
+    +'<div class="sheet-acts"><button class="btn btn-line" type="button" data-close>Cancel</button><button class="btn btn-fire" type="button" id="sGo">Save</button></div>');
+  document.getElementById('sGo').onclick=function(){
+    var g=this; busy(g,true);
+    Orders.rpc('food_kitchen_settings',{p_listing:k.id,p:{mpesa_till:document.getElementById('sT').value,mpesa_paybill:document.getElementById('sP').value,
+      mpesa_account:document.getElementById('sA').value,accepts_cash:document.getElementById('sC').checked,respond_mins:document.getElementById('sR').value}})
+      .then(function(){ closeSheet(); toast('Saved.'); load(false); }).catch(function(e){ busy(g,false); toast(Orders.explain(e),true); });
+  };
+}
+
+/* ═══════ SHEETS ═══════ */
+function sheet(html){
+  var s=document.getElementById('sheet'), sc=document.getElementById('scrim');
+  s.innerHTML=html; s.classList.add('on'); sc.classList.add('on');
+  s.querySelectorAll('[data-close]').forEach(function(b){ b.onclick=closeSheet; });
+  sc.onclick=closeSheet;
+}
+function sheetOpen(){ return document.getElementById('sheet').classList.contains('on'); }
+function closeSheet(){ document.getElementById('sheet').classList.remove('on'); document.getElementById('scrim').classList.remove('on'); }
+document.addEventListener('keydown',function(e){ if(e.key==='Escape') closeSheet(); });
+function focusOrder(){
+  var o=(B.orders||[]).filter(function(x){return x.ref===FOCUS;})[0]; if(!o) return;
+  LANE=o.status==='requested'?'new':o.status==='accepted'?'cooking':Orders.isLive(o.status)?'out':'done'; render();
+  setTimeout(function(){ var el=document.getElementById('o-'+FOCUS); if(el) el.scrollIntoView({behavior:'smooth',block:'center'}); },200);
+}
+function fail(msg){
+  document.getElementById('app').innerHTML='<div class="void" style="margin-top:30px"><h2>We couldn&rsquo;t open your orders</h2><p>'+esc(msg)+'</p><button class="btn btn-fire" onclick="location.reload()">Try again</button></div>';
+}
+
+setInterval(tickAges,1000);
+boot();
+</script>
+<script src="/analytics.js" defer></script>
+<script src="/cabana-call.js" defer></script>
+<script src="/apa-location.js" defer></script><script src="/cabana-sos.js" defer></script><script src="/cabana-support.js" defer></script>
+<script src="/cabana-lifecycle.js" defer></script>
+</body>
+</html>

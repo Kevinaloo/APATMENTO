@@ -3,16 +3,19 @@ import { fileURLToPath } from 'node:url';
    CHECKOUT
    tests/checkout.test.mjs
 
-   This is the last page before somebody spends money, and the money is
-   not spent here — it is spent at the counter, against a ticket this
-   page wrote. So the tests are about the ticket being right and the
-   arithmetic being honest: the total a diner reads here is the total a
-   kitchen will ask them for, no fee has crept in, and one kitchen's
-   ticket never contains another kitchen's food.
+   The checkout turns a basket into order requests a kitchen answers on
+   Cabana. Money is not taken here: the diner pays the kitchen on
+   handover. So the tests are about three things.
 
-   The other half is refusing to send a ticket a kitchen cannot act on.
-   An order with no name, no number, or no address to deliver to is not
-   an order; it is a message that wastes a cook's time.
+     1. The arithmetic is honest. The total a diner reads is the total
+        the kitchen will ask for, no fee creeps in, and one kitchen's
+        order never contains another kitchen's food.
+     2. Nothing a kitchen cannot act on is sent: no name, no reachable
+        number, no address for a delivery, or a delivery under the
+        kitchen's minimum.
+     3. What is sent is the order, not the prices. The browser names
+        dishes and quantities; the server prices every line from the
+        kitchen's own menu.
    ══════════════════════════════════════════════════════════════════════ */
 import test, { afterEach } from 'node:test';
 import assert from 'node:assert/strict';
@@ -25,44 +28,36 @@ const read = (f) => readFileSync(join(ROOT, f), 'utf8');
 
 const PAGE = read('checkout.html');
 const CART = read('cabana-cart.js');
+const ORDERS = read('cabana-orders.js');
 
 const OPEN = [];
 afterEach(() => { while (OPEN.length) OPEN.pop().close(); });
 
-/* a basket as it would arrive from the food page */
 function basket(kitchens) {
   return JSON.stringify({ v: 1, t: Date.now(), kitchens });
 }
 const NIGHT = {
-  id: 'k-night', name: 'Choma Yard', currency: 'KES',
-  wa: '+254700000002', ph: '+254700000002', where: 'Kilimani, Nairobi',
+  id: 'k-night', name: 'Choma Yard', currency: 'KES', where: 'Kilimani, Nairobi',
   delivery_fee: 250, min_order: 700,
   serves_delivery: true, serves_pickup: true, serves_dine_in: true,
   opens_at: '12:00', closes_at: '23:00', t: Date.now(),
   items: { 'i-choma': { id: 'i-choma', name: 'Nyama Choma', price: 900, promo_price: 750, qty: 2 } }
 };
 const CAFE = {
-  id: 'k-cafe', name: 'Kahawa Corner', currency: 'KES',
-  wa: '+254700000001', where: 'Westlands, Nairobi',
+  id: 'k-cafe', name: 'Kahawa Corner', currency: 'KES', where: 'Westlands, Nairobi',
   delivery_fee: 150, serves_delivery: true, serves_pickup: true, serves_dine_in: false,
   t: Date.now() + 1,
   items: { 'i-chai': { id: 'i-chai', name: 'Chai ya Maziwa', price: 50, qty: 3 } }
 };
 
-async function openPage({ cart = null, diner = null, hour = 19 } = {}) {
+async function openPage({ cart = null, diner = null, hour = 19, place = null } = {}) {
   const inline = [...PAGE.matchAll(
     /<script(?![^>]*\bsrc=)(?![^>]*application\/ld\+json)[^>]*>([\s\S]*?)<\/script>/gi
   )].map((m) => m[1]).filter((s) => s.includes('CABANA · CHECKOUT'))[0];
   assert.ok(inline, 'found the page script');
 
-  const html = PAGE.replace(
-    /<script(?![^>]*application\/ld\+json)[^>]*>[\s\S]*?<\/script>/gi, ''
-  );
-
-  const dom = new JSDOM(html, {
-    url: 'https://cabana.africa/checkout',
-    runScripts: 'dangerously', pretendToBeVisual: true
-  });
+  const html = PAGE.replace(/<script(?![^>]*application\/ld\+json)[^>]*>[\s\S]*?<\/script>/gi, '');
+  const dom = new JSDOM(html, { url: 'https://cabana.africa/checkout', runScripts: 'dangerously', pretendToBeVisual: true });
   OPEN.push(dom.window);
   const { window } = dom;
 
@@ -76,7 +71,6 @@ async function openPage({ cart = null, diner = null, hour = 19 } = {}) {
     static now() { return base.getTime(); }
   }
   window.Date = Fixed;
-
   window.gtag = () => {};
   window.Element.prototype.scrollIntoView = function () {};
 
@@ -86,19 +80,28 @@ async function openPage({ cart = null, diner = null, hour = 19 } = {}) {
     window.document.body.appendChild(s);
   };
   run(CART);
+  run(ORDERS);
+  window.__placed = [];
+  window.CabanaOrders.place = (payload) => {
+    window.__placed.push(payload);
+    return place ? place(payload) : Promise.resolve({ ref: 'CF-TEST' + window.__placed.length, token: 't' + window.__placed.length, total: 1, currency: 'KES' });
+  };
   run(inline);
-
   await new Promise((r) => setTimeout(r, 0));
   return window;
 }
 
 const text = (w) => w.document.getElementById('app').textContent;
 const tickets = (w) => [...w.document.querySelectorAll('.tick')];
+const settle = () => new Promise((r) => setTimeout(r, 30));
+function fill(w, { name = 'Achieng', phone = '0712 345 678', address = 'Kilimani, Argwings Kodhek Rd, House 12' } = {}) {
+  const set = (id, v) => { const el = w.document.getElementById(id); if (el) { el.value = v; el.dispatchEvent(new w.Event('input')); } };
+  set('dName', name); set('dPhone', phone); set('dAddr', address);
+}
 
 /* ══════════════════════════════════════════════════════════════════════
    NOTHING TO CHECK OUT
    ══════════════════════════════════════════════════════════════════════ */
-
 test('an empty order says so and points back at the food', async () => {
   const w = await openPage();
   assert.match(text(w), /Your order is empty/);
@@ -107,33 +110,37 @@ test('an empty order says so and points back at the food', async () => {
 });
 
 /* ══════════════════════════════════════════════════════════════════════
-   ONE TICKET PER KITCHEN
+   ONE REQUEST PER KITCHEN
    ══════════════════════════════════════════════════════════════════════ */
-
-test('each kitchen gets its own ticket', async () => {
+test('each kitchen gets its own order', async () => {
   const w = await openPage({ cart: basket({ 'k-night': NIGHT, 'k-cafe': CAFE }) });
   assert.equal(tickets(w).length, 2);
-  assert.match(text(w), /Choma Yard/);
-  assert.match(text(w), /Kahawa Corner/);
-  assert.match(text(w), /2 kitchens\. 2 tickets\./);
+  assert.match(text(w), /One basket\. 2 kitchens\./);
+  assert.match(w.document.getElementById('sendBtn').textContent, /Send 2 order requests/);
 });
 
-test('a ticket contains only its own kitchen’s food', async () => {
+test('an order contains only its own kitchen’s food', async () => {
   const w = await openPage({ cart: basket({ 'k-night': NIGHT, 'k-cafe': CAFE }) });
   const night = w.document.getElementById('k-k-night');
   assert.match(night.textContent, /Nyama Choma/);
   assert.doesNotMatch(night.textContent, /Chai ya Maziwa/);
 });
 
-test('a single kitchen is described as one ticket, not two', async () => {
+test('a single kitchen is named in the heading and on the button', async () => {
   const w = await openPage({ cart: basket({ 'k-night': NIGHT }) });
-  assert.match(text(w), /One kitchen\. One ticket\./);
+  assert.match(text(w), /Send it to Choma Yard\./);
+  assert.match(w.document.getElementById('sendBtn').textContent, /Send order to Choma Yard/);
+});
+
+test('the page explains the four steps before anything is sent', async () => {
+  const w = await openPage({ cart: basket({ 'k-night': NIGHT }) });
+  const steps = [...w.document.querySelectorAll('.journey li b')].map((b) => b.textContent);
+  assert.deepEqual(steps, ['You send', 'Kitchen answers', 'Cooked & ready', 'Codes swapped']);
 });
 
 /* ══════════════════════════════════════════════════════════════════════
    THE ARITHMETIC
    ══════════════════════════════════════════════════════════════════════ */
-
 test('a kitchen total is its food plus only its own delivery fee', async () => {
   const w = await openPage({ cart: basket({ 'k-night': NIGHT }) });
   const g = w.CabanaCart.group('k-night');
@@ -145,159 +152,154 @@ test('a kitchen total is its food plus only its own delivery fee', async () => {
 
 test('the grand total is every kitchen added up', async () => {
   const w = await openPage({ cart: basket({ 'k-night': NIGHT, 'k-cafe': CAFE }) });
-  const t = w.CabanaCart.totals();
-  assert.equal(t.subtotal, 1650, '1500 choma + 150 chai');
-  assert.equal(t.fees, 400, '250 + 150');
-  assert.equal(t.total, 2050);
-  assert.match(w.document.getElementById('barV').textContent, /KES 2,050/);
+  assert.match(w.document.querySelector('.led.grand').textContent, /KES 2,050/, '1750 + 300');
 });
 
 test('the page states plainly that Cabana takes nothing', async () => {
   const w = await openPage({ cart: basket({ 'k-night': NIGHT }) });
-  const t = text(w);
-  assert.match(t, /Cabana.s cut/i);
-  assert.match(t, /Taken by Cabana/);
-  assert.match(t, /KES 0/, 'and the figure against it is zero');
+  assert.match(text(w), /Cabana fee/);
+  assert.match(w.document.querySelector('.led.keep').textContent, /KES 0/);
+  assert.match(text(w), /nothing is charged here/i);
 });
 
 test('switching to collection drops the delivery fee from the total', async () => {
   const w = await openPage({ cart: basket({ 'k-night': NIGHT }) });
-  assert.equal(w.CabanaCart.group('k-night').total, 1750);
-  w.document.querySelector('.mode[data-mode="pickup"]').click();
-  assert.equal(w.CabanaCart.group('k-night').total, 1500, 'nobody is delivering, so nobody charges for it');
+  w.document.querySelector('#k-k-night [data-mode="pickup"]').click();
+  await settle();
+  assert.equal(w.CabanaCart.group('k-night').total, 1500);
+  assert.match(w.document.querySelector('#k-k-night .sum.big').textContent, /KES 1,500/);
 });
 
 test('a way a kitchen does not offer is shown but cannot be chosen', async () => {
   const w = await openPage({ cart: basket({ 'k-cafe': CAFE }) });
-  const dine = w.document.querySelector('#k-k-cafe .mode[data-mode="dine_in"]');
-  assert.equal(dine.disabled, true, 'the diner learns what is possible instead of wondering');
+  const eatIn = w.document.querySelector('#k-k-cafe [data-mode="dine_in"]');
+  assert.ok(eatIn);
+  assert.equal(eatIn.disabled, true);
 });
 
 test('a stepper changes the quantity and the total together', async () => {
   const w = await openPage({ cart: basket({ 'k-night': NIGHT }) });
   w.document.querySelector('#k-k-night [data-b="1"]').click();
+  await settle();
   assert.equal(w.CabanaCart.qty('k-night', 'i-choma'), 3);
-  assert.equal(w.CabanaCart.group('k-night').subtotal, 2250);
+  assert.match(w.document.querySelector('#k-k-night .sum.big').textContent, /KES 2,500/);
 });
 
-test('taking the last dish to zero empties that kitchen’s ticket', async () => {
+test('taking the last dish to zero removes that kitchen', async () => {
   const w = await openPage({ cart: basket({ 'k-night': NIGHT, 'k-cafe': CAFE }) });
-  w.document.querySelector('#k-k-night [data-b="-1"]').click();
-  w.document.querySelector('#k-k-night [data-b="-1"]').click();
-  assert.equal(w.CabanaCart.group('k-night'), null);
-  assert.equal(tickets(w).length, 1, 'the other kitchen stands');
+  const minus = w.document.querySelector('#k-k-cafe [data-b="-1"]');
+  minus.click(); await settle();
+  w.document.querySelector('#k-k-cafe [data-b="-1"]').click(); await settle();
+  w.document.querySelector('#k-k-cafe [data-b="-1"]').click(); await settle();
+  assert.equal(w.document.getElementById('k-k-cafe'), null);
+  assert.equal(tickets(w).length, 1);
 });
 
 /* ══════════════════════════════════════════════════════════════════════
-   A TICKET A KITCHEN CAN ACT ON
+   NOTHING A KITCHEN CANNOT ACT ON
    ══════════════════════════════════════════════════════════════════════ */
-
 test('an order with no name and no number is not sent', async () => {
   const w = await openPage({ cart: basket({ 'k-night': NIGHT }) });
-  assert.equal(w.detailsOk(), false);
-  assert.equal(w.document.getElementById('dName').classList.contains('bad'), true);
+  w.document.getElementById('sendBtn').click(); await settle();
+  assert.equal(w.__placed.length, 0);
+  assert.ok(w.document.getElementById('dName').classList.contains('bad'));
 });
 
 test('a delivery with no address is not sent', async () => {
-  const w = await openPage({ cart: basket({ 'k-night': NIGHT }),
-    diner: { name: 'Wanjiru', phone: '0722000111', address: '' } });
-  assert.equal(w.detailsOk(), false, 'a rider cannot find a blank');
-  assert.equal(w.document.getElementById('dAddr').classList.contains('bad'), true);
+  const w = await openPage({ cart: basket({ 'k-night': NIGHT }) });
+  fill(w, { address: '' });
+  w.document.getElementById('sendBtn').click(); await settle();
+  assert.equal(w.__placed.length, 0);
+  assert.ok(w.document.getElementById('dAddr').classList.contains('bad'));
 });
 
 test('a collection order needs no address at all', async () => {
-  const pickup = { ...NIGHT, mode: 'pickup' };
-  const w = await openPage({ cart: basket({ 'k-night': pickup }),
-    diner: { name: 'Wanjiru', phone: '0722000111', address: '' } });
-  assert.equal(w.document.getElementById('dAddr'), null, 'the field is not even asked for');
-  assert.equal(w.detailsOk(), true);
-});
-
-test('a plausible set of details lets the ticket go', async () => {
-  const w = await openPage({ cart: basket({ 'k-night': NIGHT }),
-    diner: { name: 'Wanjiru', phone: '0722000111', address: 'Rose Ave, gate 4' } });
-  assert.equal(w.detailsOk(), true);
+  const cart = basket({ 'k-night': Object.assign({}, NIGHT, { mode: 'pickup' }) });
+  const w = await openPage({ cart });
+  assert.equal(w.document.getElementById('dAddr'), null);
+  fill(w);
+  w.document.getElementById('sendBtn').click(); await settle();
+  assert.equal(w.__placed.length, 1);
+  assert.equal(w.__placed[0].mode, 'pickup');
+  assert.equal(w.__placed[0].address, null);
 });
 
 test('a phone number too short to dial is refused', async () => {
-  const w = await openPage({ cart: basket({ 'k-night': NIGHT }),
-    diner: { name: 'Wanjiru', phone: '072', address: 'Rose Ave' } });
-  assert.equal(w.detailsOk(), false);
-  assert.equal(w.document.getElementById('dPhone').classList.contains('bad'), true);
+  const w = await openPage({ cart: basket({ 'k-night': NIGHT }) });
+  fill(w, { phone: '0712' });
+  w.document.getElementById('sendBtn').click(); await settle();
+  assert.equal(w.__placed.length, 0);
+  assert.ok(w.document.getElementById('dPhone').classList.contains('bad'));
 });
 
-test('the details are remembered so they are typed once, not once per kitchen', async () => {
-  const w = await openPage({ cart: basket({ 'k-night': NIGHT, 'k-cafe': CAFE }),
-    diner: { name: 'Wanjiru', phone: '0722000111', address: 'Rose Ave' } });
-  assert.equal(w.document.getElementById('dName').value, 'Wanjiru');
-  assert.equal(tickets(w).length, 2, 'two kitchens');
-  assert.equal(w.document.querySelectorAll('#dName').length, 1, 'one set of details');
-});
-
-/* ══════════════════════════════════════════════════════════════════════
-   WHAT THE KITCHEN RECEIVES
-   ══════════════════════════════════════════════════════════════════════ */
-
-test('the ticket carries the order, the total, and who to hand it to', async () => {
-  const w = await openPage({ cart: basket({ 'k-night': NIGHT }),
-    diner: { name: 'Wanjiru', phone: '0722000111', address: 'Rose Ave, gate 4' } });
-  const t = w.CabanaCart.ticket('k-night');
-  assert.match(t, /2 x Nyama Choma/);
-  assert.match(t, /Food total: KES 1,500/);
-  assert.match(t, /Delivery: KES 250/);
-  assert.match(t, /Total: KES 1,750/);
-  assert.match(t, /Name: Wanjiru/);
-  assert.match(t, /Address: Rose Ave, gate 4/);
-});
-
-test('each kitchen’s send button points at that kitchen’s own number', async () => {
-  const w = await openPage({ cart: basket({ 'k-night': NIGHT, 'k-cafe': CAFE }) });
-  const links = [...w.document.querySelectorAll('a[href^="https://wa.me"]')]
-    .map((a) => a.getAttribute('href'));
-  assert.ok(links.some((h) => h.includes('254700000002')), 'the grill');
-  assert.ok(links.some((h) => h.includes('254700000001')), 'the cafe');
-});
-
-test('a kitchen with no number is offered a copyable ticket instead of a dead end', async () => {
-  const silent = { ...NIGHT, wa: '', ph: '' };
-  const w = await openPage({ cart: basket({ 'k-night': silent }) });
-  assert.ok(w.document.querySelector('[data-copy="k-night"]'));
-  assert.match(text(w), /has not left a number yet/);
-});
-
-/* ══════════════════════════════════════════════════════════════════════
-   HONEST WARNINGS, NEVER BLOCKERS
-   ══════════════════════════════════════════════════════════════════════ */
-
-test('an order under a kitchen’s minimum is flagged and still sendable', async () => {
-  const small = { ...NIGHT, items: { 'i-ugali': { id: 'i-ugali', name: 'Ugali', price: 100, qty: 1 } } };
+test('a delivery under the kitchen’s minimum is flagged and held back', async () => {
+  const small = Object.assign({}, NIGHT, { items: { 'i-choma': { id: 'i-choma', name: 'Nyama Choma', price: 900, promo_price: 600, qty: 1 } } });
   const w = await openPage({ cart: basket({ 'k-night': small }) });
-  assert.match(text(w), /minimum order of KES 700/);
-  assert.match(text(w), /send it anyway and ask/, 'the kitchen decides, not the software');
-  assert.ok(w.document.querySelector('a[href^="https://wa.me"]'), 'the button is still there');
+  assert.match(w.document.getElementById('k-k-night').textContent, /delivers from KES 700/);
+  fill(w);
+  w.document.getElementById('sendBtn').click(); await settle();
+  assert.equal(w.__placed.length, 0);
 });
 
-test('a closed kitchen is named as closed and the order still stands', async () => {
+test('a closed kitchen is named as closed and offers to schedule for opening', async () => {
   const w = await openPage({ cart: basket({ 'k-night': NIGHT }), hour: 4 });
-  assert.match(text(w), /closed right now/i);
-  assert.match(text(w), /Send it anyway/);
-  assert.ok(w.document.querySelector('a[href^="https://wa.me"]'));
+  const t = w.document.getElementById('k-k-night').textContent;
+  assert.match(t, /Closed now/);
+  assert.ok(w.document.querySelector('#k-k-night [data-schedule]'), 'a one-tap schedule for opening time');
 });
 
 test('a kitchen that is open says so', async () => {
   const w = await openPage({ cart: basket({ 'k-night': NIGHT }), hour: 19 });
-  assert.match(text(w), /Cooking now/);
+  assert.match(w.document.getElementById('k-k-night').textContent, /Open now/);
 });
 
 /* ══════════════════════════════════════════════════════════════════════
-   NOTES
+   WHAT IS SENT
    ══════════════════════════════════════════════════════════════════════ */
+test('sending names dishes and quantities, never prices, and shares one basket', async () => {
+  const w = await openPage({ cart: basket({ 'k-night': NIGHT, 'k-cafe': CAFE }) });
+  fill(w);
+  w.document.getElementById('sendBtn').click();
+  await new Promise((r) => setTimeout(r, 80));
+  assert.equal(w.__placed.length, 2);
+  const [a, b] = w.__placed;
+  assert.equal(a.listing_id, 'k-night');
+  assert.equal(JSON.stringify(a.items), JSON.stringify([{ id: 'i-choma', qty: 2 }]));
+  assert.equal(b.listing_id, 'k-cafe');
+  assert.equal(JSON.stringify(b.items), JSON.stringify([{ id: 'i-chai', qty: 3 }]));
+  assert.ok(a.basket && a.basket === b.basket, 'one basket id ties them together');
+  assert.equal(a.name, 'Achieng');
+  assert.equal(a.phone, '0712 345 678');
+  assert.equal(a.pay_method, 'mpesa');
+  assert.ok(!JSON.stringify(a).includes('750'), 'no price travels with the order');
+});
+
+test('a sent kitchen leaves the basket; a refused one stays with the reason', async () => {
+  const w = await openPage({
+    cart: basket({ 'k-night': NIGHT, 'k-cafe': CAFE }),
+    place: (p) => p.listing_id === 'k-cafe'
+      ? Promise.reject(Object.assign(new Error('kitchen_paused'), { code: 'kitchen_paused', detail: '20:30' }))
+      : Promise.resolve({ ref: 'CF-AAAAAA', token: 'x', total: 1750, currency: 'KES' })
+  });
+  fill(w);
+  w.document.getElementById('sendBtn').click();
+  await new Promise((r) => setTimeout(r, 1200));
+  assert.equal(w.CabanaCart.group('k-night'), null, 'the sent kitchen is cleared');
+  assert.ok(w.CabanaCart.group('k-cafe'), 'the refused kitchen is kept');
+  assert.match(w.document.getElementById('k-k-cafe').textContent, /Not sent\..*paused new orders until 20:30/);
+});
+
+test('the details are remembered so they are typed once, not once per kitchen', async () => {
+  const w = await openPage({ cart: basket({ 'k-night': NIGHT }), diner: { name: 'Achieng', phone: '0712345678', address: 'Kilimani' } });
+  assert.equal(w.document.getElementById('dName').value, 'Achieng');
+  assert.equal(w.document.getElementById('dPhone').value, '0712345678');
+  assert.equal(w.document.getElementById('dAddr').value, 'Kilimani');
+});
 
 test('a note to one kitchen is kept against that kitchen only', async () => {
   const w = await openPage({ cart: basket({ 'k-night': NIGHT, 'k-cafe': CAFE }) });
-  w.CabanaCart.setNote('k-night', 'No chilli please');
-  assert.equal(w.CabanaCart.note('k-night'), 'No chilli please');
+  const ta = w.document.querySelector('[data-note="k-night"]');
+  ta.value = 'No chilli'; ta.dispatchEvent(new w.Event('blur'));
+  assert.equal(w.CabanaCart.note('k-night'), 'No chilli');
   assert.equal(w.CabanaCart.note('k-cafe'), '');
-  assert.match(w.CabanaCart.ticket('k-night'), /Note: No chilli please/);
-  assert.doesNotMatch(w.CabanaCart.ticket('k-cafe'), /No chilli/);
 });

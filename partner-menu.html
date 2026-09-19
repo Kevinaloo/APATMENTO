@@ -295,6 +295,10 @@ body{display:flex;flex-direction:column;}
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2M7 2v20M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/></svg>
     My Menu
   </a>
+  <a class="sbl" href="partner-orders.html" id="ordersLinkSb">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16.6V11a6 6 0 0 1 12 0v5.6l1.6 2H4.4Z"/><path d="M10 20.4a2 2 0 0 0 4 0"/></svg>
+    Orders
+  </a>
   <a class="sbl" href="partner-bookings.html">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg>
     Bookings
@@ -337,6 +341,10 @@ body{display:flex;flex-direction:column;}
   <a class="mn-item active" href="#">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2M7 2v20M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/></svg>
     Menu
+  </a>
+  <a class="mn-item" href="partner-orders.html" id="ordersLinkMn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16.6V11a6 6 0 0 1 12 0v5.6l1.6 2H4.4Z"/><path d="M10 20.4a2 2 0 0 0 4 0"/></svg>
+    Orders
   </a>
   <a class="mn-item" href="partner-bookings.html">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg>
@@ -456,6 +464,7 @@ function fail(msg){
 /* ═══════ PAINT ═══════ */
 function paint(){
   document.getElementById('previewBtn').href='restaurant.html?id='+encodeURIComponent(ID)+'&from=dash';
+  ['ordersLinkSb','ordersLinkMn'].forEach(function(x){ var a=document.getElementById(x); if(a) a.href='partner-orders.html?id='+encodeURIComponent(ID); });
   document.getElementById('tbPill').textContent=R.title||'Menu builder';
 
   var live=ITEMS.filter(function(i){return i.is_available!==false;});

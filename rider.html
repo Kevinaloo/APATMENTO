@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow"/>
+<meta name="theme-color" content="#0D0704"/>
+<link rel="icon" href="/favicon.ico" sizes="any"/>
+<title>Delivery | Cabana</title>
+<link rel="preconnect" href="https://api.fontshare.com"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=zodiak@1,2&f[]=switzer@1&display=swap"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&display=swap"/>
+<link rel="stylesheet" href="/cabana-food-order.css"/>
+<style>
+.wrap{max-width:560px;padding-top:22px;padding-bottom:50px;display:grid;gap:14px;}
+.big{font-family:var(--fd);font-weight:400;font-size:clamp(28px,7vw,38px);letter-spacing:-.035em;line-height:1.08;}
+.big em{font-style:italic;color:var(--ember-lit);}
+.k{font-family:var(--fm);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--brass);}
+.where{font-size:17px;line-height:1.5;}
+.where small{display:block;color:var(--brass-lit);font-size:14px;margin-top:6px;}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.money{display:flex;justify-content:space-between;align-items:baseline;}
+.money b{font-family:var(--fd);font-size:28px;font-weight:600;letter-spacing:-.03em;}
+.items div{display:flex;gap:10px;padding:5px 0;font-size:14.5px;}
+.items .q{font-family:var(--fm);color:var(--ember-lit);min-width:28px;}
+.rstep{display:grid;gap:12px;}
+.num{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;border:1px solid var(--rule-brass);color:var(--brass);font-family:var(--fm);font-size:11px;margin-right:8px;}
+.done-i{width:86px;height:86px;border-radius:50%;margin:10px auto;display:grid;place-items:center;background:rgba(127,162,105,.14);color:var(--bay-lit);}
+.done-i svg{width:44px;height:44px;}
+</style>
+</head>
+<body>
+<div class="room" aria-hidden="true"><div class="coal coal-1"></div></div>
+<header class="top">
+  <div class="top-l"><img src="/cabana-emblem.png" class="top-em" alt="" onerror="this.style.display='none'"/><span class="top-t">Cabana <span style="color:var(--brass)">Delivery</span></span></div>
+  <div class="top-r"><span class="chip" id="refChip">&nbsp;</span></div>
+</header>
+<main class="shell wrap" id="app"><div class="boot"><div class="boot-r"></div><div class="boot-t">Opening the delivery</div></div></main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="/vendor-supabase-2.112.3.js"></script>
+<script src="/cabana-orders.js"></script>
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   CABANA · THE RIDER'S LINK
+   No account, no app to install. The kitchen sends this link to
+   whoever carries the bag. It shows where to go, who to ask for,
+   what to collect, the rider's own code, and one box for the
+   diner's code, which is what closes the order.
+   ═══════════════════════════════════════════════════════════════ */
+'use strict';
+var Orders=window.CabanaOrders, Q=new URLSearchParams(location.search);
+var REF=(Q.get('ref')||'').toUpperCase(), KEY=Q.get('k')||'', O=null, T=null;
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function attr(s){return esc(s).replace(/\n/g,' ');}
+function toast(m,bad){var t=document.getElementById('toast');t.textContent=m;t.className='toast up'+(bad?' bad':'');clearTimeout(t._x);t._x=setTimeout(function(){t.className='toast';},4000);}
+var CHECK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.6 4.4 4.4L19 7.4"/></svg>';
+
+function load(){
+  return Orders.rpc('food_rider_view',{p_ref:REF,p_token:KEY}).then(function(o){ O=o; render(); })
+    .catch(function(e){ document.getElementById('app').innerHTML='<div class="void"><h2>This delivery link is not valid</h2><p>'+esc(Orders.explain(e))+' Ask the kitchen to send it again.</p></div>'; });
+}
+function render(){
+  var o=O, k=o.kitchen;
+  document.getElementById('refChip').textContent=o.ref;
+  if(o.status==='completed'){
+    document.getElementById('app').innerHTML='<div class="card"><div class="card-body" style="text-align:center"><div class="done-i">'+CHECK+'</div>'
+      +'<h1 class="big">Delivered. <em>Thank you.</em></h1><p style="color:var(--bone-48);margin-top:10px">'+esc(o.ref)+' is complete'+(o.completed_at?' at '+Orders.clock(o.completed_at):'')+'. You can close this page.</p></div></div>';
+    clearInterval(T); return;
+  }
+  if(o.status!=='on_the_way'){
+    document.getElementById('app').innerHTML='<div class="void"><h2>'+esc(Orders.say(o.status,o.mode))+'</h2><p>This delivery is no longer active. Check with '+esc(k.name)+'.</p></div>';
+    clearInterval(T); return;
+  }
+  var map=o.lat&&o.lng?'https://www.google.com/maps/dir/?api=1&destination='+o.lat+','+o.lng:'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(o.address||'');
+  var h='';
+  h+='<div><div class="k">From '+esc(k.name)+'</div><h1 class="big" style="margin-top:8px">Take it to <em>'+esc(o.diner_name)+'</em>.</h1></div>';
+  h+='<section class="card"><div class="card-body"><div class="where">'+esc(o.address||'')+(o.address_note?'<small>'+esc(o.address_note)+'</small>':'')+'</div>'
+    +'<div class="two" style="margin-top:14px"><a class="btn btn-fire" href="'+attr(map)+'" target="_blank" rel="noopener">Open the map</a>'
+    +'<a class="btn btn-line" href="tel:'+attr(String(o.diner_phone||'').replace(/[^\d+]/g,''))+'">Call '+esc(o.diner_name.split(' ')[0])+'</a></div></div></section>';
+  h+='<section class="card"><div class="card-body"><div class="money"><span class="lbl" style="margin:0">'+(o.pay_method==='cash'?'Collect in cash':'Diner pays by M-Pesa')+'</span><b>'+esc(Orders.money(o.total,o.currency))+'</b></div>'
+    +'<div class="items" style="margin-top:10px">'+o.items.map(function(i){return '<div><span class="q">'+i.qty+'&times;</span>'+esc(i.name)+'</div>';}).join('')+'</div></div></section>';
+  h+='<section class="card"><div class="card-head"><h3>At the door</h3></div><div class="card-body" style="display:grid;gap:22px">';
+  h+='<div class="rstep"><div><span class="num">1</span><b>Tell them your code</b></div><p class="help" style="margin:0">They check it in their app to know you really came from '+esc(k.name)+'.</p>'
+    +'<div class="code">'+String(o.rider_code||'').split('').map(function(d){return '<span>'+esc(d)+'</span>';}).join('')+'</div>'
+    +(o.rider_verified?'<div class="flag good">'+CHECK.replace('<svg','<svg style="width:14px;height:14px"')+'<span>The diner has checked your code.</span></div>':'')+'</div>';
+  h+='<div class="rstep"><div><span class="num">2</span><b>Enter their code to finish</b></div><p class="help" style="margin:0">Ask for the four digits on their order. This completes the delivery.</p>'
+    +'<div class="code-in">'+[0,1,2,3].map(function(i){return '<input type="text" inputmode="numeric" maxlength="1" id="c'+i+'" aria-label="Digit '+(i+1)+'"/>';}).join('')+'</div>'
+    +'<button class="btn btn-go btn-lg btn-wide" type="button" id="go">Complete delivery</button></div>';
+  h+='</div></section>';
+  if(!o.arrived_at) h+='<button class="btn btn-line btn-wide" type="button" id="here">I&rsquo;m outside &mdash; tell the diner</button>';
+  if(k.phone) h+='<a class="btn btn-ghost btn-wide" href="tel:'+attr(String(k.phone).replace(/[^\d+]/g,''))+'">Call '+esc(k.name)+'</a>';
+  document.getElementById('app').innerHTML=h;
+  wire();
+}
+function read(){ return [0,1,2,3].map(function(i){return document.getElementById('c'+i).value;}).join('').replace(/\D/g,''); }
+function wire(){
+  var here=document.getElementById('here');
+  if(here) here.onclick=function(){ here.disabled=true; Orders.rpc('food_rider_update',{p_ref:REF,p_token:KEY,p_action:'arrived'}).then(function(o){ O=o; render(); toast('The diner has been told you are outside.'); }).catch(function(e){ here.disabled=false; toast(Orders.explain(e),true); }); };
+  [0,1,2,3].forEach(function(i){ var el=document.getElementById('c'+i); if(!el) return;
+    el.oninput=function(){ var v=el.value.replace(/\D/g,''); if(v.length>1) v.split('').slice(0,4).forEach(function(d,j){document.getElementById('c'+j).value=d;}); else { el.value=v; if(v&&i<3) document.getElementById('c'+(i+1)).focus(); } if(read().length===4) finish(); };
+    el.onkeydown=function(e){ if(e.key==='Backspace'&&!el.value&&i>0){ var p=document.getElementById('c'+(i-1)); p.value=''; p.focus(); } };
+  });
+  var go=document.getElementById('go'); if(go) go.onclick=finish;
+}
+var SENDING=false;
+function finish(){
+  var c=read(); if(c.length!==4){ toast('Enter all four digits.',true); return; }
+  if(SENDING) return; SENDING=true;
+  var go=document.getElementById('go'); go.disabled=true; go.innerHTML='<span class="spin"></span>';
+  Orders.rpc('food_rider_update',{p_ref:REF,p_token:KEY,p_action:'complete',p_code:c}).then(function(o){
+    SENDING=false;
+    if(o.error==='code_wrong'){ O=o; render(); toast('That code does not match. Check it with the diner. '+o.attempts_left+' tries left.',true); try{navigator.vibrate&&navigator.vibrate([200,80,200]);}catch(e){} return; }
+    O=o; render();
+  }).catch(function(e){ SENDING=false; go.disabled=false; go.textContent='Complete delivery'; toast(Orders.explain(e),true); });
+}
+if(!REF||!KEY){ document.getElementById('app').innerHTML='<div class="void"><h2>Open the link the kitchen sent you</h2><p>This page needs the full delivery link.</p></div>'; }
+else { load(); T=setInterval(function(){ var f=document.activeElement&&/^c\d$/.test(document.activeElement.id); if(!f&&!SENDING) Orders.rpc('food_rider_view',{p_ref:REF,p_token:KEY}).then(function(o){ var ch=!O||O.status!==o.status||O.rider_verified!==o.rider_verified; O=o; if(ch) render(); }).catch(function(){}); },8000); }
+</script>
+<script src="/cabana-support.js" defer></script>
+</body>
+</html>

@@ -151,7 +151,7 @@ async function sendOne(sub, payloadObj) {
    listing" nudge is not; a booking, a payment, a support reply or an
    incoming call is. Consent and deduplication are handled inside
    sendTemplate, so this only has to decide relevance. */
-const EMAIL_WORTHY = new Set(['booking', 'payment', 'support', 'message', 'call', 'security', 'payout', 'urgent']);
+const EMAIL_WORTHY = new Set(['booking', 'payment', 'support', 'message', 'call', 'security', 'payout', 'urgent', 'order']);
 
 async function mirrorToEmail({ user_id, title, body, url, kind, email, force }) {
   if (!force && !EMAIL_WORTHY.has(kind)) return false;
@@ -177,10 +177,11 @@ async function mirrorToEmail({ user_id, title, body, url, kind, email, force }) 
     data: {
       name: firstName,
       email: to, title, body, url,
-      label: kind === 'call' ? 'Open the call' : kind === 'support' ? 'Open the conversation' : 'Open Cabana',
+      label: kind === 'call' ? 'Open the call' : kind === 'support' ? 'Open the conversation'
+           : kind === 'order' ? 'Open the order' : 'Open Cabana',
       emoji: kind === 'booking' ? '🗓️' : kind === 'payment' ? '💳'
            : kind === 'support' ? '💬' : kind === 'call' ? '📞'
-           : kind === 'payout' ? '💸' : '🔔',
+           : kind === 'payout' ? '💸' : kind === 'order' ? '🍽️' : '🔔',
     },
   });
   return !!(res && res.ok && !res.skipped);
@@ -279,8 +280,11 @@ export async function deliverNotification(b) {
     return { sent: 0, persisted: !!(persist && user_id), emailed: mailed };
   }
 
-  const payload = { title, body, url, kind, icon: '/logo-mark.png',
-    tag: kind === 'message' && meta?.conversation_id ? `message-${meta.conversation_id}` : kind };
+  /* One tag per conversation or per food order, so a newer update
+     replaces the older banner instead of stacking five of them. */
+  const payload = { title, body, url, kind: kind === 'order-update' ? 'order' : kind, icon: '/logo-mark.png',
+    tag: kind === 'message' && meta?.conversation_id ? `message-${meta.conversation_id}`
+       : meta?.order_ref ? `order-${meta.order_ref}` : kind };
   const results = await Promise.all(subs.map(s => sendOne(s, payload).catch(e => ({
     endpoint: s.endpoint, error: e.message,
   }))));
@@ -316,7 +320,8 @@ export default async function handler(req, res) {
   const chatCaller = !internal && action === 'chat-message'
     ? await authenticatedUser(req)
     : null;
-  const databaseMessage = action === 'database-message' && isCronAuthorized(req);
+  const databaseMessage = (action === 'database-message' || action === 'database-notification')
+    && isCronAuthorized(req);
   const authorized = internal || !!chatCaller || databaseMessage;
   if (!authorized) {
     return res.status(401).json({ error: 'Unauthorized' });
@@ -381,6 +386,30 @@ export default async function handler(req, res) {
         kind: 'message',
         persist: !existing?.[0],
         meta: deliveryMeta,
+      };
+    }
+
+    /* The database already wrote the in-app row (food orders do this in
+       the same transaction as the status change). Deliver that exact
+       row out of the tab, once. */
+    if (action === 'database-notification') {
+      const notificationId = String(b.notification_id || '');
+      if (!/^[0-9a-f-]{36}$/i.test(notificationId)) return res.status(400).json({ error: 'notification_id_required' });
+      const rows = await supa(`notifications?id=eq.${notificationId}&select=id,user_id,title,body,url,kind,meta&limit=1`);
+      const note = rows?.[0];
+      if (!note) return res.status(404).json({ error: 'notification_not_found' });
+      if (note.meta?.delivery_attempted_at) return res.status(200).json({ sent: 0, persisted: true, duplicate: true });
+      const deliveryMeta = { ...(note.meta || {}), delivery_attempted_at: new Date().toISOString() };
+      await supa(`notifications?id=eq.${note.id}`, { method: 'PATCH', body: JSON.stringify({ meta: deliveryMeta }) });
+      /* Only the moments a person must act on are worth an email when
+         push is unavailable: a new order for a kitchen, and a yes, a
+         no, or a lapse for a diner. Progress updates stay in-app. */
+      const important = note.kind !== 'order'
+        || ['requested', 'accepted', 'declined', 'expired', 'cancelled'].includes(note.meta?.status);
+      b = {
+        user_id: note.user_id, title: note.title, body: note.body, url: note.url,
+        kind: note.kind === 'order' && !important ? 'order-update' : note.kind,
+        persist: false, meta: deliveryMeta,
       };
     }
 
