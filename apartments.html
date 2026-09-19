@@ -3729,9 +3729,11 @@ function renderCards(list) {
   wireCards();
   _observeCards();
 
-  // Animate in
+  // Animate in. Capped so a big result set doesn't drag the entrance out
+  // for seconds — beyond the first handful of cards, everything else
+  // settles in together instead of trickling in one by one.
   requestAnimationFrame(() => {
-    document.querySelectorAll('.card').forEach((c, i) => setTimeout(() => c.classList.add('in'), i * 40));
+    document.querySelectorAll('.card').forEach((c, i) => setTimeout(() => c.classList.add('in'), Math.min(i, 8) * 40));
   });
 
   // Load photos lazily

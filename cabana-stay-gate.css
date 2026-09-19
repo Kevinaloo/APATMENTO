@@ -353,14 +353,14 @@ html.sg-lock body{ overflow:hidden !important; }
   transform-origin:var(--hx,52%) var(--hy,46%);
   will-change:transform;
 }
-#stay-gate.sg-go .sg-city{ animation:sg-push 1.7s var(--sg-ease) forwards; }
+#stay-gate.sg-go .sg-city{ animation:sg-push 1s var(--sg-ease) forwards; }
 @keyframes sg-push{
   0%  { transform:scale(1); }
   100%{ transform:scale(4.2); }
 }
 /* The planes behind travel less, which is the parallax. */
-#stay-gate.sg-go .sg-far  { animation:sg-push-far 1.7s var(--sg-ease) forwards; }
-#stay-gate.sg-go .sg-near { animation:sg-push-near 1.35s var(--sg-ease) forwards; }
+#stay-gate.sg-go .sg-far  { animation:sg-push-far 1s var(--sg-ease) forwards; }
+#stay-gate.sg-go .sg-near { animation:sg-push-near .8s var(--sg-ease) forwards; }
 @keyframes sg-push-far { to{ transform:scale(1.7); } }
 @keyframes sg-push-near{ to{ transform:scale(3) translateY(14%); opacity:0; } }
 
@@ -379,7 +379,7 @@ html.sg-lock body{ overflow:hidden !important; }
   pointer-events:none;
   will-change:opacity;
 }
-#stay-gate.sg-go .sg-focus{ animation:sg-focus 1.05s var(--sg-ease-soft) forwards; }
+#stay-gate.sg-go .sg-focus{ animation:sg-focus .65s var(--sg-ease-soft) forwards; }
 @keyframes sg-focus{ 0%{opacity:0;} 70%{opacity:1;} 100%{opacity:1;} }
 
 /* The window becomes the room becomes the screen. */
@@ -395,7 +395,7 @@ html.sg-lock body{ overflow:hidden !important; }
   pointer-events:none;
   will-change:transform,opacity;
 }
-#stay-gate.sg-go .sg-flood{ animation:sg-flood 1.35s .25s cubic-bezier(.38,.02,.4,1) forwards; }
+#stay-gate.sg-go .sg-flood{ animation:sg-flood .85s .15s cubic-bezier(.38,.02,.4,1) forwards; }
 @keyframes sg-flood{
   0%  { opacity:0;   transform:scale(.3); }
   30% { opacity:.34; }
@@ -505,11 +505,11 @@ html.sg-lock body{ overflow:hidden !important; }
    ═══════════════════════════════════════════════════════════════════ */
 #stay-gate.sg-brief .sg-word,
 #stay-gate.sg-brief .sg-skip{ display:none; }
-#stay-gate.sg-brief .sg-win-l{ animation-duration:.3s; }
-#stay-gate.sg-brief.sg-go .sg-city{ animation-duration:.85s; }
+#stay-gate.sg-brief .sg-win-l{ animation-duration:.2s; }
+#stay-gate.sg-brief.sg-go .sg-city{ animation-duration:.55s; }
 #stay-gate.sg-brief.sg-go .sg-far,
-#stay-gate.sg-brief.sg-go .sg-near{ animation-duration:.85s; }
-#stay-gate.sg-brief.sg-go .sg-flood{ animation-duration:.7s; animation-delay:.15s; }
+#stay-gate.sg-brief.sg-go .sg-near{ animation-duration:.55s; }
+#stay-gate.sg-brief.sg-go .sg-flood{ animation-duration:.45s; animation-delay:.1s; }
 
 /* ═══════════════════════════════════════════════════════════════════
    REDUCED MOTION

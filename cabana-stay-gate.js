@@ -618,10 +618,16 @@
        DOMContentLoaded — see the note beside this script's tag in
        apartments.html. Held a beat longer here too, in step with
        flights and tours: three arrivals, one pace. */
+    /* Trimmed from the original { lit:40, say:1050, go:3450, done:5900 }
+       (a 6.4s hold on the very first load of a session) and the brief
+       { lit:0, say:-1, go:420, done:1500 } (~2s on every repeat visit).
+       Those read as a stall rather than a flourish, so the same beats
+       — light, name the place, go, done — now land in well under half
+       the time. */
     var T = brief
-      ? { lit: 0,  say: -1,  go: 420,  done: 1500 }
-      : { lit: 40, say: 1050, go: 3450, done: 5900 };
-    if (reduce) T = { lit: 0, say: 0, go: 620, done: 1150 };
+      ? { lit: 0,  say: -1,  go: 120,  done: 700 }
+      : { lit: 30, say: 420, go: 950,  done: 1900 };
+    if (reduce) T = { lit: 0, say: 0, go: 260, done: 500 };
 
     at(T.lit, function () { node.classList.add('sg-lit'); });
 
