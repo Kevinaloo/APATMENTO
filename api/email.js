@@ -29,7 +29,7 @@ export const config = { maxDuration: 15 };
 
 import { hasInternalSecret, requireUser, setCors, consumeRateLimit } from './lib/_security.js';
 import { sendTemplate, TEMPLATES } from './lib/_mail.js';
-import { one } from './lib/_db.js';
+import { one, update } from './lib/_db.js';
 
 const AT_API_KEY  = process.env.AT_API_KEY;
 const AT_USERNAME = process.env.AT_USERNAME || 'Cabana';
@@ -250,6 +250,62 @@ export default async function handler(req, res) {
       });
       if (!result.ok) return res.status(502).json({ ok: false, error: result.error });
       return res.status(200).json({ ok: true, emailed: true, skipped: result.skipped || false });
+    }
+
+    /* ── Cabana 3D Tour request ────────────────────────────────────
+       The browser has already saved the request row under its own RLS
+       (so a failed send never loses a lead) and passes only its id.
+       Everything in both emails is re-read here, and the request must
+       belong to the caller. The team address is server config, never a
+       field the browser can supply. */
+    if (action === 'tour3d-request') {
+      if (!caller?.email) return res.status(403).json({ error: 'verified_email_required' });
+      const id = String(body.requestId || '');
+      if (!UUID.test(id)) return res.status(400).json({ error: 'invalid_request' });
+
+      const request = await one('tour3d_requests',
+        `id=eq.${encodeURIComponent(id)}&select=id,listing_id,host_id,contact_name,contact_email,contact_phone,contact_pref,best_time,notes,status,emailed_at`);
+      if (!request || request.host_id !== caller.id) {
+        return res.status(404).json({ error: 'request_not_found' });
+      }
+      const row = await one('listings',
+        `id=eq.${encodeURIComponent(request.listing_id)}&select=id,title,area,city,country,property_type,bedrooms,price_night,currency,status,is_active`);
+      if (!row) return res.status(404).json({ error: 'listing_not_found' });
+
+      const listing = {
+        id: row.id, title: row.title, area: row.area, city: row.city, country: row.country,
+        type: row.property_type, bedrooms: row.bedrooms, price: row.price_night,
+        currency: row.currency, live: row.status === 'active' && row.is_active === true,
+        url: `/apartments?open=${encodeURIComponent(row.id)}`,
+      };
+      const reqData = {
+        id: request.id, contactName: request.contact_name, contactEmail: request.contact_email,
+        contactPhone: request.contact_phone, contactPref: request.contact_pref,
+        bestTime: request.best_time, notes: request.notes,
+      };
+      const host = { email: caller.email, name: displayName(caller) };
+      const team = String(process.env.TOUR3D_TEAM_EMAIL || process.env.CABANA_TEAM_EMAIL || 'apatmento@gmail.com')
+        .split(',').map(s => s.trim()).filter(Boolean).slice(0, 5);
+
+      const results = await Promise.all([
+        ...team.map(to => sendTemplate({
+          template: 'tour3dRequestTeam', to,
+          data: { request: reqData, listing, host },
+          dedupeKey: `tour3d-team:${request.id}:${to.toLowerCase()}`, userId: caller.id,
+        })),
+        sendTemplate({
+          template: 'tour3dRequestHost', to: caller.email,
+          data: { request: reqData, listing, host },
+          dedupeKey: `tour3d-host:${request.id}`, userId: caller.id,
+        }),
+      ]);
+      const teamOk = results.slice(0, team.length).some(r => r.ok);
+      if (teamOk && !request.emailed_at) {
+        await update('tour3d_requests', `id=eq.${encodeURIComponent(request.id)}`,
+          { emailed_at: new Date().toISOString() }).catch(() => {});
+      }
+      if (!teamOk) return res.status(502).json({ ok: false, error: results.find(r => !r.ok)?.error || 'send_failed' });
+      return res.status(200).json({ ok: true, emailed: true });
     }
 
     /* ── Ownership claim ───────────────────────────────────────────

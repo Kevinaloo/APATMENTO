@@ -53,7 +53,7 @@ export default async function handler(req, res) {
   if (!reference || !code)      return res.status(400).json({ error: 'missing_fields' });
 
   try {
-    const bk = await one(table, `payment_reference=eq.${reference}&select=*`);
+    const bk = await one(table, `payment_reference=eq.${encodeURIComponent(String(reference))}&select=*`);
     if (!bk) return res.status(404).json({ error: 'booking_not_found' });
 
     if (bk.guest_id !== user.id && bk.host_id !== user.id) {
@@ -132,7 +132,7 @@ export default async function handler(req, res) {
       patch.balance_amount = 0;
       patch.balance_paid   = true;
     }
-    const updated = await update(table, `payment_reference=eq.${reference}`, patch);
+    const updated = await update(table, `payment_reference=eq.${encodeURIComponent(String(reference))}`, patch);
 
     /* ── The stay just happened. Whatever commission was waiting on it
        becomes real ─────────────────────────────────────────────────

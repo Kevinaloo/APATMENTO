@@ -62,6 +62,9 @@
       }else if(n>1 && n<7 && !panel.dataset.ccFocus){
         const nodes=children(panel,'.step-header,.step-nav');
         C.focusForm(panel,group(panel,nodes),panel.querySelector('.step-nav'));
+      }else if(n>1 && n<7){
+        // The service may have changed since this panel was carded.
+        panel._ccForm?.refresh();
       }
       const title=panel.querySelector('h1');if(title){title.tabIndex=-1;title.focus({preventScroll:true});}
     }

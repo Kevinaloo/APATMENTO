@@ -139,6 +139,10 @@ td strong{color:var(--ink);font-weight:600;}
 .badge-amber{background:rgba(245,177,46,.1);color:#D97706;border:1px solid rgba(245,177,46,.25);}.badge-amber::before{background:#D97706;}
 .badge-red{background:rgba(255,77,109,.08);color:var(--err);border:1px solid rgba(255,77,109,.2);}.badge-red::before{background:var(--err);}
 .badge-blue{background:rgba(67,97,255,.08);color:var(--electric);border:1px solid rgba(67,97,255,.2);}.badge-blue::before{background:var(--electric);}
+.bk-guest{font-size:11.5px;color:var(--ink-faint);margin-top:3px;font-weight:500;}.bk-guest a{color:inherit;}
+.bk-code{margin-top:6px;font-size:11px;color:var(--ink-soft);}.bk-code b{font-family:var(--font-data);letter-spacing:.06em;color:var(--ink);}
+.bk-ci{display:flex;gap:6px;align-items:center;}.bk-ci input{width:130px;padding:7px 9px;font-size:12px;text-transform:uppercase;}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
 .badge-grey{background:var(--glass-3);color:var(--ink-faint);border:1px solid var(--line-2);}.badge-grey::before{background:var(--ink-faint);}
 
 /* ── BUTTONS ── */
@@ -364,7 +368,7 @@ td strong{color:var(--ink);font-weight:600;}
 </div>
 <div class="stat-row">
   <div class="stat-card"><span class="stat-icon">📋</span><div class="stat-label">Total bookings</div><div class="stat-val" id="b-total">-</div><div class="stat-meta">All time</div></div>
-  <div class="stat-card"><span class="stat-icon">✅</span><div class="stat-label">Confirmed</div><div class="stat-val" id="b-conf">-</div><div class="stat-meta up">Active reservations</div></div>
+  <div class="stat-card"><span class="stat-icon">✅</span><div class="stat-label">Upcoming</div><div class="stat-val" id="b-conf">-</div><div class="stat-meta up">Paid and on the way</div></div>
   <div class="stat-card"><span class="stat-icon">🕐</span><div class="stat-label">Check-ins today</div><div class="stat-val" id="b-today">-</div><div class="stat-meta">Guests arriving</div></div>
   <div class="stat-card"><span class="stat-icon">⭐</span><div class="stat-label">Avg rating</div><div class="stat-val" id="b-rating">-</div><div class="stat-meta">Guest satisfaction</div></div>
 </div>
@@ -383,17 +387,17 @@ td strong{color:var(--ink);font-weight:600;}
     <div class="card-title">All reservations</div>
     <div style="display:flex;gap:8px;">
       <select id="b-filter" onchange="loadBookings()" class="field-select" style="width:auto;padding:7px 11px;font-size:12px;" aria-label="b filter" >
-        <option value="all">All statuses</option>
-        <option value="confirmed">Confirmed</option>
-        <option value="completed">Completed</option>
+        <option value="all">All bookings</option>
+        <option value="upcoming">Upcoming</option>
+        <option value="in_stay">Checked in</option>
+        <option value="past">Past</option>
         <option value="cancelled">Cancelled</option>
-        <option value="pending">Pending</option>
       </select>
     </div>
   </div>
   <div class="tbl-wrap">
     <table>
-      <thead><tr><th>Booking ref</th><th>Listing</th><th>Check-in</th><th>Check-out</th><th>Guests</th><th>Amount</th><th>Status</th><th></th></tr></thead>
+      <thead><tr><th>Booking ref</th><th>Listing</th><th>Check-in</th><th>Check-out</th><th>Guests</th><th>Payout</th><th>Status</th><th></th></tr></thead>
       <tbody id="book-tbody"><tr><td colspan="8" style="text-align:center;padding:28px;color:var(--ink-faint);">Loading…</td></tr></tbody>
     </table>
   </div>
@@ -452,58 +456,128 @@ function signOut(){
 function fmt(n){return Number(n||0).toLocaleString();}
 function fmtKes(n){return 'KES '+fmt(n);}
 
+/* ══ HOST BOOKINGS ═══════════════════════════════════════════════════
+   One source: host_stay_bookings(), a security-definer read of the
+   stays on listings this account hosts. This page used to query a table
+   called `bookings` that does not exist, so every host saw no bookings,
+   no guests and no check-in code, and could not confirm an arrival.
+
+   The guest's own check-in code is never sent here. The host asks the
+   guest for it at the door and enters it below; that confirmation is
+   what releases the payout (api/lib/_verify-checkin.js). */
+let HOST_ALL = [];
+const PAID_UPCOMING = ['paid_pending_checkin','deposit_paid','confirmed_balance_due'];
+function hesc(v){return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function todayISO(){const d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10);}
+function stayPhase(bk){
+  if(bk.cancelled_at||bk.status==='cancelled')return 'cancelled';
+  if(bk.status==='rehomed')return 'rehomed';
+  if(bk.status==='checked_in'||bk.checked_in_at){return bk.checkout_date<todayISO()?'past':'in_stay';}
+  if(bk.status==='completed')return 'past';
+  if(bk.checkout_date<todayISO())return 'past';
+  return 'upcoming';
+}
+function statusBadge(bk){
+  const ph=stayPhase(bk);
+  if(ph==='cancelled')return ['badge-red','Cancelled'];
+  if(ph==='rehomed')return ['badge-grey','Moved to another stay'];
+  if(ph==='in_stay')return ['badge-green','Checked in'];
+  if(ph==='past')return bk.checked_in_at||bk.status==='checked_in'||bk.status==='completed'?['badge-green','Completed']:['badge-grey','Ended'];
+  const paid=Number(bk.amount_paid||0),total=Number(bk.grand_total||0);
+  if(total>0&&paid>=total)return ['badge-blue','Paid in full'];
+  return ['badge-amber','Deposit paid · balance due'];
+}
+function shortDate(d){return d?new Date(d+'T00:00:00').toLocaleDateString('en-KE',{day:'numeric',month:'short'}):'—';}
+
 async function loadBookings() {
   if(!sb) return;
+  const tbody = document.getElementById('book-tbody');
   try {
     const { data: { session } } = await sb.auth.getSession();
     if(!session) return;
     document.getElementById('tb-avatar').textContent = (session.user.user_metadata?.first_name||'P')[0].toUpperCase();
     const uid = session.user.id;
+
+    const [{ data, error }, { data: rated }] = await Promise.all([
+      sb.rpc('host_stay_bookings', { p_limit: 300 }),
+      sb.from('listings').select('avg_rating,review_count').eq('partner_id', uid).gt('review_count', 0),
+    ]);
+    if(error) throw error;
+    HOST_ALL = data || [];
+
+    const today = todayISO();
+    const live = HOST_ALL.filter(x=>stayPhase(x)!=='cancelled'&&stayPhase(x)!=='rehomed');
+    document.getElementById('b-total').textContent = fmt(live.length);
+    document.getElementById('b-conf').textContent = fmt(HOST_ALL.filter(x=>stayPhase(x)==='upcoming').length);
+    document.getElementById('b-today').textContent = fmt(HOST_ALL.filter(x=>x.checkin_date===today&&stayPhase(x)==='upcoming').length);
+    const r = (rated||[]).filter(x=>Number(x.review_count)>0);
+    const n = r.reduce((s,x)=>s+Number(x.review_count),0);
+    document.getElementById('b-rating').textContent = n ? (r.reduce((s,x)=>s+Number(x.avg_rating)*Number(x.review_count),0)/n).toFixed(1)+'★' : 'New';
+
     const filter = document.getElementById('b-filter').value;
-
-    let q = sb.from('bookings')
-      .select('id,listing_id,total_amount,check_in,check_out,guests,status,created_at,listings(title,avg_rating)')
-      .eq('partner_id', uid).order('created_at',{ascending:false}).limit(80);
-    if(filter !== 'all') q = q.eq('status', filter);
-    const { data: bookings } = await q;
-
-    const today = new Date().toISOString().split('T')[0];
-    const b = bookings || [];
-    document.getElementById('b-total').textContent = fmt(b.length);
-    document.getElementById('b-conf').textContent = fmt(b.filter(x=>x.status==='confirmed').length);
-    document.getElementById('b-today').textContent = fmt(b.filter(x=>x.check_in===today).length);
-    const ratSum = b.reduce((s,x)=>s+(x.listings?.avg_rating||0),0);
-    document.getElementById('b-rating').textContent = b.length ? (ratSum/b.length).toFixed(1)+'★' : ', ';
-
-    const tbody = document.getElementById('book-tbody');
-    if(!b.length) {
-      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--ink-faint);">No bookings in this filter.</td></tr>';
-      return;
+    const rows = filter==='all' ? HOST_ALL : HOST_ALL.filter(x=>stayPhase(x)===filter);
+    const tomorrow = new Date(new Date(today+'T12:00:00').getTime()+864e5).toISOString().slice(0,10);
+    if(!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--ink-faint);">'
+        + (HOST_ALL.length ? 'No bookings in this filter.' : 'No paid bookings yet. They appear here the moment a guest pays their deposit.')
+        + '</td></tr>';
+    } else {
+      tbody.innerHTML = rows.map(bk => {
+        const [badge,label] = statusBadge(bk);
+        const ph = stayPhase(bk);
+        const ref = hesc(String(bk.payment_reference||bk.id||'').slice(-8).toUpperCase());
+        /* Check-in opens the day before arrival and closes at checkout. */
+        const canCheckIn = ph==='upcoming' && bk.checkin_date <= tomorrow;
+        const code = bk.host_code && ph==='upcoming'
+          ? `<div class="bk-code" title="Tell your guest this code when they arrive">Your code <b>${hesc(bk.host_code)}</b></div>` : '';
+        const action = canCheckIn
+          ? `<button class="btn btn-sm btn-primary" type="button" onclick="startCheckIn('${hesc(bk.id)}', this)">Confirm check-in</button>`
+          : '';
+        return `<tr id="bk-${hesc(bk.id)}">
+          <td><strong style="font-family:var(--font-data);font-size:12px;">#${ref}</strong></td>
+          <td><strong>${hesc(bk.listing_title||'Listing')}</strong><div class="bk-guest">${hesc(bk.guest_name||'Guest')}${bk.guest_phone?' · <a href="tel:'+hesc(String(bk.guest_phone).replace(/[^+\d]/g,''))+'">'+hesc(bk.guest_phone)+'</a>':''}</div></td>
+          <td>${shortDate(bk.checkin_date)}</td>
+          <td>${shortDate(bk.checkout_date)}</td>
+          <td>${bk.num_guests||1} guest${(bk.num_guests||1)>1?'s':''}</td>
+          <td><strong>KES ${fmt(Math.round(parseFloat(bk.stay_total||0)))}</strong><div class="bk-guest">your payout</div></td>
+          <td><span class="badge ${badge}">${label}</span>${code}</td>
+          <td class="bk-act">${action}</td>
+        </tr>`;
+      }).join('');
     }
-    tbody.innerHTML = b.map(bk => {
-      const badge = bk.status==='completed'?'badge-green':bk.status==='confirmed'?'badge-blue':bk.status==='cancelled'?'badge-red':'badge-grey';
-      const nights = Math.max(1,Math.round((new Date(bk.check_out)-new Date(bk.check_in))/86400000));
-      const ref = ('#'+(bk.id||'').slice(-6).toUpperCase());
-      return `<tr>
-        <td><strong style="font-family:var(--font-data);font-size:12px;">${ref}</strong></td>
-        <td><strong>${bk.listings?.title||'Listing'}</strong></td>
-        <td>${new Date(bk.check_in+'T00:00:00').toLocaleDateString('en-KE',{day:'numeric',month:'short'})}</td>
-        <td>${new Date(bk.check_out+'T00:00:00').toLocaleDateString('en-KE',{day:'numeric',month:'short'})}</td>
-        <td>${bk.guests||1} guest${(bk.guests||1)>1?'s':''}</td>
-        <td><strong>KES ${fmt(parseFloat(bk.total_amount||0))}</strong></td>
-        <td><span class="badge ${badge}">${bk.status}</span></td>
-        <td>${bk.status==='confirmed'?`<button class="btn btn-sm btn-ghost" onclick="markComplete('${bk.id}')">Mark done</button>`:''}
-        </td>
-      </tr>`;
-    }).join('');
-  } catch(e) { console.warn(e); }
+    loadStays();
+  } catch(e) {
+    console.warn('[host bookings]', e);
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--err);">We could not load your bookings. Refresh to try again.</td></tr>';
+  }
 }
 
-async function markComplete(id) {
-  if(!sb) return;
-  const { error } = await sb.from('bookings').update({status:'completed'}).eq('id',id);
-  if(!error) { toast('Booking marked complete ✓'); loadBookings(); }
-  else toast('Failed to update', false);
+/* The guest shows their GUEST-XXXXXX code at the door; the host enters
+   it here. The server re-checks the payment ledger before releasing. */
+function startCheckIn(id, btn){
+  const cell = btn.closest('td');
+  cell.innerHTML = `<form class="bk-ci" onsubmit="submitCheckIn(event,'${hesc(id)}')">
+    <label class="sr-only" for="ci-${hesc(id)}">Guest's check-in code</label>
+    <input id="ci-${hesc(id)}" class="field-select" placeholder="GUEST-XXXXXX" autocomplete="off" autocapitalize="characters" required maxlength="20"/>
+    <button class="btn btn-sm btn-primary" type="submit">Confirm</button></form>`;
+  cell.querySelector('input').focus();
+}
+async function submitCheckIn(ev, id){
+  ev.preventDefault();
+  const bk = HOST_ALL.find(x=>x.id===id); if(!bk) return;
+  const form = ev.target, input = form.querySelector('input'), btn = form.querySelector('button');
+  btn.disabled = true; btn.textContent = 'Checking…';
+  try{
+    const res = await authFetch('/api/verify-checkin', { table:'apartment_bookings', reference: bk.payment_reference, role:'host', code: input.value.trim() });
+    const j = await res.json().catch(()=>({}));
+    if(res.ok && j.ok){ toast(j.already ? 'Already checked in' : 'Checked in. Your payout is released.'); loadBookings(); return; }
+    const why = j.error==='code_mismatch' ? 'That code does not match this booking. Ask the guest to open My Bookings.'
+      : j.error==='balance_due' ? (j.message || 'The guest still has a balance to pay before check-in.')
+      : j.error==='stay_ended' ? 'This stay has already ended.'
+      : (j.message || 'Could not confirm check-in. Try again.');
+    toast(why, false);
+  }catch(e){ toast('Network problem. Try again.', false); }
+  btn.disabled = false; btn.textContent = 'Confirm';
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -530,19 +604,13 @@ async function authFetch(url, body) {
 let HOST_STAYS = [];
 
 async function loadStays() {
-  if (!sb || !window.ApaTrust) return;
-  const { data: { session } } = await sb.auth.getSession();
-  if (!session) return;
-
-  const today = new Date().toISOString().slice(0, 10);
-  const { data } = await sb.from('apartment_bookings').select('*')
-    .eq('host_id', session.user.id)
-    .in('status', ['paid_pending_checkin', 'deposit_paid'])
-    .is('cancelled_at', null)
-    .gte('checkin_date', today)
-    .order('checkin_date', { ascending: true }).limit(30);
-
-  HOST_STAYS = data || [];
+  if (!window.ApaTrust) return;
+  const today = todayISO();
+  HOST_STAYS = HOST_ALL
+    .filter(b => PAID_UPCOMING.includes(b.status) && !b.cancelled_at && b.checkin_date >= today)
+    .sort((a, b) => a.checkin_date.localeCompare(b.checkin_date))
+    .slice(0, 30)
+    .map(b => Object.assign({}, b, { apartment_name: b.listing_title }));
   renderStays();
 }
 
@@ -584,8 +652,8 @@ function renderStays() {
 
     return `<div class="stay-row" id="stay-${b.id}">
       <div class="stay-main">
-        <div class="stay-name">${b.apartment_name || 'Stay'}</div>
-        <div class="stay-meta">${b.guest_name || 'Guest'} · ${b.checkin_date} → ${b.checkout_date} · ${b.num_guests || 1} guest${(b.num_guests||1)>1?'s':''} · KES ${fmt(b.grand_total||0)}${b.payment_mode==='deposit' && !b.balance_paid ? ' · deposit only' : ''}</div>
+        <div class="stay-name">${hesc(b.apartment_name || 'Stay')}</div>
+        <div class="stay-meta">${hesc(b.guest_name || 'Guest')} · ${b.checkin_date} → ${b.checkout_date} · ${b.num_guests || 1} guest${(b.num_guests||1)>1?'s':''} · KES ${fmt(b.grand_total||0)}${b.payment_mode==='deposit' && !b.balance_paid ? ' · deposit only' : ''}</div>
         ${why}
         ${share}
       </div>
@@ -611,7 +679,8 @@ function searchDirectShare(bookingId, q) {
   clearTimeout(_shareSearchTimer);
   const box = document.getElementById(`share-results-${bookingId}`);
   if (!box) return;
-  const term = q.trim();
+  /* Commas, dots and brackets are PostgREST filter syntax inside .or(). */
+  const term = q.trim().replace(/[,.()*%\\]/g, ' ').replace(/\s+/g, ' ').trim();
   if (term.length < 2) { box.innerHTML = ''; return; }
   box.innerHTML = '<div class="stay-share-empty">Searching…</div>';
   _shareSearchTimer = setTimeout(async () => {
@@ -725,7 +794,6 @@ async function matchGuest(bookingId) {
 }
 
 document.addEventListener('DOMContentLoaded', loadBookings);
-document.addEventListener('DOMContentLoaded', loadStays);
 </script>
 <script src="/cabana-rebrand.js" defer></script>
 

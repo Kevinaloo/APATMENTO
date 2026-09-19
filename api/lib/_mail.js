@@ -797,8 +797,9 @@ export const TEMPLATES = {
               booking?.checkIn  ? ['Check in',  prettyDate(booking.checkIn)]  : null,
               booking?.checkOut ? ['Check out', prettyDate(booking.checkOut)] : null,
             ])
+          + p('Your HOST code is on the booking in your dashboard. At the door, give the guest your code and ask for theirs, then tap Confirm check-in. That releases your payout.', { small: true })
           + p('Message the guest from your dashboard to confirm arrival details. Keep it in the thread — it is the record if anything is ever queried.', { small: true })
-          + button('/dashboard.html', 'Open the booking', { gradient: B.gradDusk, solid: B.violet })),
+          + button('/partner-bookings.html', 'Open the booking', { gradient: B.gradDusk, solid: B.violet })),
         audience: 'partner',
       }),
     };
@@ -984,6 +985,74 @@ export const TEMPLATES = {
           + button(consoleUrl || `/support-console.html?thread=${encodeURIComponent(threadId || '')}`, 'Open in the console',
                    { gradient: B.gradDusk, solid: B.violet })),
         audience: 'partner',
+      }),
+    };
+  },
+
+  /* ── Desk · a host wants the Cabana 3D Tour ─────────────────────────
+     Internal. Everything the team needs to call the host back is on the
+     first screen: who, how to reach them, and which property. */
+  tour3dRequestTeam({ request, listing, host }) {
+    const title = listing?.title || 'A new stay';
+    const where = [listing?.area, listing?.city, listing?.country].filter(Boolean).join(', ');
+    const pref = { text: 'Text message', call: 'Phone call', email: 'Email' }[request?.contactPref] || 'Phone call';
+    const rate = listing?.price ? `${listing.currency || 'KES'} ${Number(listing.price).toLocaleString('en-KE')} / night` : '';
+    return {
+      audience: 'partner', category: 'transactional',
+      subject: `3D Tour request · ${title}${listing?.city ? ' · ' + listing.city : ''}`,
+      preview: `${host?.name || host?.email || 'A host'} wants the Cabana 3D Tour. Contact by ${pref.toLowerCase()}.`,
+      html: shell({
+        title: '3D Tour request', preview: 'A host has asked for the Cabana 3D Tour.',
+        body: header({ eyebrow: 'Premium upgrade · new lead', title: 'A host wants the 3D Tour',
+          subtitle: `${title}${where ? ' · ' + where : ''}`, gradient: B.gradDusk, emoji: '🧊' })
+        + card(h2('Who to contact') + rows([
+            ['Name', request?.contactName || host?.name || '—'],
+            ['Phone', request?.contactPhone || '—', true],
+            ['Email', request?.contactEmail || host?.email || '—'],
+            ['Prefers', pref],
+            request?.bestTime ? ['Best time', request.bestTime] : null,
+            ['Account email', host?.email || '—'],
+          ])
+          + (request?.notes ? '<div style="height:14px"></div>' + quote(request.notes, 'Their note') : ''))
+        + card(h2('The property') + rows([
+            ['Listing', title],
+            where ? ['Location', where] : null,
+            listing?.type ? ['Type', listing.type] : null,
+            listing?.bedrooms != null ? ['Bedrooms', String(listing.bedrooms)] : null,
+            rate ? ['Rate', rate] : null,
+            ['Listing status', listing?.live ? 'Live' : 'Not public yet'],
+            ['Request', String(request?.id || '').slice(0, 8)],
+          ])
+          + button(listing?.url || '/apartments.html', 'View the listing', { gradient: B.gradDusk, solid: B.violet }),
+          { delay: 2 }),
+        audience: 'partner',
+        reason: 'Internal Cabana notification: a host ticked the Cabana 3D Tour upgrade.',
+      }),
+    };
+  },
+
+  /* ── Partner · we got your 3D Tour request ───────────────────────── */
+  tour3dRequestHost({ host, listing, request }) {
+    const who = firstName(host?.name, host?.email);
+    const title = listing?.title || 'your listing';
+    const pref = { text: 'by text message', call: 'by phone', email: 'by email' }[request?.contactPref] || 'by phone';
+    return {
+      audience: 'partner', category: 'transactional',
+      subject: `Your Cabana 3D Tour request · ${title}`,
+      preview: `We will contact you ${pref} to arrange the capture. Nothing is charged until you agree a quote.`,
+      html: shell({
+        title: 'Cabana 3D Tour', preview: 'Request received.',
+        body: header({ eyebrow: 'Cabana 3D Tour', title: `Request received, ${who}`,
+          subtitle: `${title} is on the list for a 3D walkthrough.`, gradient: B.gradDusk, emoji: '🧊' })
+        + card(h2('What happens next') + features([
+            ['📞', 'We reach out', `A member of the Cabana team will contact you ${pref}${request?.contactPhone ? ' on ' + request.contactPhone : ''} to confirm the details and share the price.`],
+            ['📐', 'We capture the space', 'A short visit to photograph and measure each room. Your listing stays live the whole time.'],
+            ['✨', 'Your tour goes live', 'Guests can walk through in 3D, and your stay is featured at the top of Stays with the 3D TOUR badge.'],
+          ])
+          + p('Nothing has been charged. The 3D Tour is a paid upgrade and you only pay once you have agreed the quote.', { small: true })
+          + button('/partner-listings.html', 'Open my listings', { gradient: B.gradDusk, solid: B.violet })),
+        audience: 'partner',
+        reason: 'You received this because you requested the Cabana 3D Tour for a listing.',
       }),
     };
   },

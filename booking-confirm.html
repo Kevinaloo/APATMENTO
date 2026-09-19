@@ -947,16 +947,21 @@ async function startPayment() {
     /* schema-bookings-lifecycle.sql adds credit_applied and
        guest_phone. Until it is run, drop them and insert anyway: a
        pending migration must not stop anyone booking. */
-    let { error } = await sb.from('apartment_bookings').insert(row);
+    /* The database issues the real check-in codes: the booking trigger
+       replaces whatever the browser sends. Read back the one it stored.
+       Showing the browser's own random code meant the guest saved a code
+       that could never match at the door, so check-in failed and the
+       host's payout never released. */
+    let { data: saved, error } = await sb.from('apartment_bookings').insert(row).select('guest_code').single();
     if (error && /column .*(credit_applied|guest_phone|amount_paid)/i.test(error.message || '')) {
       console.warn('[booking] schema-bookings-lifecycle.sql not applied yet:', error.message);
       delete row.credit_applied; delete row.guest_phone; delete row.amount_paid;
-      ({ error } = await sb.from('apartment_bookings').insert(row));
+      ({ data: saved, error } = await sb.from('apartment_bookings').insert(row).select('guest_code').single());
     }
 
-    // Store codes and partner contact in session storage to show after payment
-    sessionStorage.setItem('pending_guest_code', guestCode);
-    sessionStorage.setItem('pending_host_code', hostCode);
+    // Store the code and partner contact in session storage to show after payment
+    sessionStorage.setItem('pending_guest_code', (saved && saved.guest_code) || '');
+    sessionStorage.removeItem('pending_host_code');
     sessionStorage.setItem('pending_apt_name', apt.name);
     sessionStorage.setItem('pending_host_whatsapp', apt.contact_whatsapp || apt.whatsapp || '');
     sessionStorage.setItem('pending_host_phone', apt.contact_phone || apt.phone || '');
@@ -1022,8 +1027,7 @@ async function startPayment() {
                    deposit receipt that claims "paid in full" is how a
                    guest arrives without a check-in code. */
                 amountPaid: (d && d.amount_paid != null) ? d.amount_paid : total,
-                guestCode:sessionStorage.getItem('pending_guest_code')||'',
-                hostCode:sessionStorage.getItem('pending_host_code')||'' },
+                guestCode:sessionStorage.getItem('pending_guest_code')||'' },
               listing:{ name:apt.name, location:apt.location, pricePerNight:apt.price, type:'Stay' },
               user:{ email:CURRENT_USER?.email||'', phone:phone||'', name:name||'' } }),
           });
@@ -1068,8 +1072,7 @@ async function startPayment() {
 
 
 function showCheckinCodes() {
-  const guestCode    = sessionStorage.getItem('pending_guest_code')    || ', ';
-  const hostCode     = sessionStorage.getItem('pending_host_code')     || ', ';
+  const guestCode    = sessionStorage.getItem('pending_guest_code')    || 'In My Bookings';
   const aptName      = sessionStorage.getItem('pending_apt_name')      || 'your stay';
   const hostWhatsApp = sessionStorage.getItem('pending_host_whatsapp') || '';
   const hostPhone    = sessionStorage.getItem('pending_host_phone')    || '';
@@ -1281,10 +1284,10 @@ async function _preparePaypalBooking() {
     status: 'pending_payment',
   };
 
-  var insRes = await sb.from('apartment_bookings').insert(row);
+  var insRes = await sb.from('apartment_bookings').insert(row).select('guest_code').single();
   if (insRes.error && /column .*(credit_applied|guest_phone|amount_paid)/i.test(insRes.error.message || '')) {
     delete row.credit_applied; delete row.guest_phone; delete row.amount_paid;
-    insRes = await sb.from('apartment_bookings').insert(row);
+    insRes = await sb.from('apartment_bookings').insert(row).select('guest_code').single();
   }
   if (insRes.error) {
     if (creditSpent > 0) {
@@ -1296,8 +1299,9 @@ async function _preparePaypalBooking() {
     throw insRes.error;
   }
 
-  sessionStorage.setItem('pending_guest_code', guestCode);
-  sessionStorage.setItem('pending_host_code',  hostCode);
+  /* The trigger's code, not the one generated in this browser. */
+  sessionStorage.setItem('pending_guest_code', (insRes.data && insRes.data.guest_code) || '');
+  sessionStorage.removeItem('pending_host_code');
   sessionStorage.setItem('pending_apt_name',   apt.name);
   sessionStorage.setItem('pending_host_whatsapp', apt.contact_whatsapp || apt.whatsapp || '');
   sessionStorage.setItem('pending_host_phone',    apt.contact_phone    || apt.phone    || '');
@@ -1336,8 +1340,7 @@ async function _onPaypalApprove(data, booking) {
             checkOut:booking.checkout, nights:booking.nights, subtotal:booking.subtotal,
             fee:booking.fee, total:booking.total,
             amountPaid: (result.amount_paid != null) ? result.amount_paid : booking.total,
-            guestCode:sessionStorage.getItem('pending_guest_code')||'',
-            hostCode: sessionStorage.getItem('pending_host_code')||'' },
+            guestCode:sessionStorage.getItem('pending_guest_code')||'' },
           listing:{ name:apt.name, location:apt.location, pricePerNight:apt.price, type:'Stay' },
           user:{ email:(CURRENT_USER&&CURRENT_USER.email)||'', phone:'', name:booking.name } }),
       }).catch(function(){});

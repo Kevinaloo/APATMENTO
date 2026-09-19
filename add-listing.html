@@ -673,6 +673,7 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
 .sring svg{width:40px;height:40px;color:#fff;}
 .stitle{font-family:var(--font-head);font-size:26px;font-weight:800;letter-spacing:-.03em;color:var(--ink-2);margin-bottom:8px;}
 .ssub{font-size:14px;color:var(--ink-soft);line-height:1.7;margin-bottom:22px;}
+.s-t3d-note{margin-top:-12px;padding:11px 14px;border-radius:12px;background:linear-gradient(120deg,#2a2940,#323050);color:#f3e2bd;font-size:13px;font-weight:600;}
 .sprice{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:15px;margin-bottom:22px;}
 .sp-l{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:3px;}
 .sp-v{font-family:var(--font-head);font-size:25px;font-weight:800;color:var(--ink-2);}
@@ -972,6 +973,9 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
         <div class="photo-grid" id="photo-grid"></div>
         <div class="photo-help">Drag photos to change their order. The first photo is the cover. Use Adjust to show the full image or choose the exact crop.</div>
       </div>
+      <!-- Cabana 3D Tour: the paid upgrade, offered for stays only.
+           Mounted by cabana-3d-upgrade.js; nothing is charged here. -->
+      <div id="s6-tour3d" hidden></div>
       <div id="s6-settings">
         <div class="fsec">
           <div class="fsec-title">Settings</div>
@@ -1153,6 +1157,10 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
         <div class="rv-head"><span class="rv-ht">Photos</span><button class="rv-edit" onclick="go(6)">Edit</button></div>
         <div class="rv-photos" id="rv-photos"></div>
       </div>
+      <div class="rv-block" id="rv-t3d-block" style="display:none;">
+        <div class="rv-head"><span class="rv-ht">Premium upgrade</span><button class="rv-edit" onclick="go(6)">Edit</button></div>
+        <div id="rv-t3d"></div>
+      </div>
       <div class="rv-block">
         <div class="rv-head"><span class="rv-ht">Ownership</span><button class="rv-edit" onclick="go(7)">Edit</button></div>
         <div id="rv-own"></div>
@@ -1193,6 +1201,7 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
 <script src="/apa-session.js"></script>
 <script src="/apa-referral-capture.js" defer></script>
 <script src="/apa-ownership.js"></script>
+<script src="/cabana-3d-upgrade.js"></script>
 <script>
 const SBU='https://gfwgbgdvxtocwhilrtdw.supabase.co';
 const SBK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
@@ -1502,7 +1511,9 @@ const F={svc:null,type:null,title:'',country:'Kenya',city:'',area:'',street:'',l
      default of 'sole' is a default that quietly assigns a building. */
   own:null,ownTouched:false,ownSplit:'equal',ownPartners:[],ownHolderName:'',ownHolderContact:'',ownNote:'',
   ownPayoutRouting:'consolidated',ownPayoutToId:null,ownPayoutToName:'',
-  ownExtraSeats:[],ownSoleExtraSeats:[]};
+  ownExtraSeats:[],ownSoleExtraSeats:[],
+  /* Cabana 3D Tour upgrade (stays). tour3dStatus mirrors listings.tour_3d_status. */
+  tour3d:{wanted:false},tour3dStatus:'none'};
 
 function buildNav(){document.getElementById('snav').innerHTML=LABS.map((l,i)=>`<div class="sni${i===cur?' active':i<cur?' done':''}" id="sni-${i}"><div class="sni-n">${i<cur?'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>':i+1}</div><span class="sni-l">${l}</span></div>`).join('');}
 function upNav(){LABS.forEach((_,i)=>{const el=document.getElementById('sni-'+i);if(!el)return;el.className='sni'+(i===cur?' active':i<cur?' done':'');const n=el.querySelector('.sni-n');n.innerHTML=i<cur?'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>':String(i+1);});}
@@ -1605,7 +1616,7 @@ function bldStep(n){
     const depl=document.getElementById('s5depl');if(depl)depl.innerHTML=(S.dl2||'Security deposit')+(F.svc==='roommates'?'':' <span class="opt">(optional)</span>');
     const deph=document.getElementById('s5deph');if(deph)deph.style.display=F.svc==='roommates'?'':'none';
     restPr();}
-  if(n===6){const s6t=document.getElementById('s6ti');if(s6t)s6t.textContent=S.s6t||'Check-in and check-out';document.getElementById('s6il').textContent=S.il||'Start time';document.getElementById('s6ol').textContent=S.ol||'End time';document.getElementById('s6rl').textContent=S.rl||'Additional rules';const tg=document.getElementById('tog-group');if(tg)tg.style.display=S.tog?'':'none';renderPG();}
+  if(n===6){const s6t=document.getElementById('s6ti');if(s6t)s6t.textContent=S.s6t||'Check-in and check-out';document.getElementById('s6il').textContent=S.il||'Start time';document.getElementById('s6ol').textContent=S.ol||'End time';document.getElementById('s6rl').textContent=S.rl||'Additional rules';const tg=document.getElementById('tog-group');if(tg)tg.style.display=S.tog?'':'none';renderPG();mountTour3d();}
   if(n===7)bldOwn();
   if(n===2)restLoc();
   if(n===1&&F.type)document.getElementById('badge-t').textContent=F.type;
@@ -2229,7 +2240,7 @@ function collect(n){
     if(F.svc==='shopping'){F.stock=gv('f-stock');F.cond=gv('f-cond');F.brand=gv('f-brand');F.da=gv('f-da');}
   }
   if(n===5){F.cur=gv('f-cur');F.price=gv('f-price');F.minorder=gv('f-minorder');F.delfee=gv('f-delfee');F.delmins=gv('f-delmins');F.pw=gv('f-pw');F.pm=gv('f-pm');F.dep=gv('f-dep');F.mn=(F.svc==='roommates'?gv('f-mnr'):gv('f-mn'))||(F.svc==='roommates'?'90':'1');F.wa=gv('f-wa').trim();F.ph=gv('f-ph').trim();F.em=gv('f-em').trim();}
-  if(n===6){F.ci=gv('f-in')||'14:00';F.co=gv('f-out')||'11:00';F.inst=document.getElementById('tog-inst')?.classList.contains('on')??true;F.ch=document.getElementById('tog-ch')?.classList.contains('on')??true;F.pets=document.getElementById('tog-pets')?.classList.contains('on')??false;F.smk=document.getElementById('tog-smk')?.classList.contains('on')??false;F.rules=gv('f-rules').trim();}
+  if(n===6){F.ci=gv('f-in')||'14:00';F.co=gv('f-out')||'11:00';F.inst=document.getElementById('tog-inst')?.classList.contains('on')??true;F.ch=document.getElementById('tog-ch')?.classList.contains('on')??true;F.pets=document.getElementById('tog-pets')?.classList.contains('on')??false;F.smk=document.getElementById('tog-smk')?.classList.contains('on')??false;F.rules=gv('f-rules').trim();if(F.svc==='stays'&&window._t3d)F.tour3d=window._t3d.value();}
 }
 function restDet(){const sv=(id,v)=>{const el=document.getElementById(id);if(el&&v)el.value=v;};
   if(F.svc==='stays'){
@@ -2289,6 +2300,7 @@ function valid(n){
     const badTier=F.roomTiers.find(t=>t.price&&parseFloat(t.price)>0&&(!t.maxGuests||parseInt(t.maxGuests)<1));
     if(badTier){al('Set a guest limit for each priced tier.');return false;}
   }
+  if(n===6&&F.svc==='stays'&&window._t3d){const t3dProblem=window._t3d.validate();if(t3dProblem){al(t3dProblem);return false;}}
   if(n===6&&F.svc==='roommates'&&!F.photos.length){al('Add at least one photo of the room. Rooms without photos are almost never enquired about.');return false;}
   if(n===3&&F.svc==='roommates'&&!document.getElementById('f-avail').value){al('Set the date the room is free from. Flatmates search by move-in date.');return false;}
   if(n===5){if(!document.getElementById('f-wa').value.trim()){al('Add your WhatsApp number. Guests need this after payment.');return false;}
@@ -2555,9 +2567,46 @@ function bldRv(){collect(6);const S=SVCS[F.svc];
     }
     ow.innerHTML=rows;
   }
+  const t3b=document.getElementById('rv-t3d-block'),t3=document.getElementById('rv-t3d');
+  if(t3b&&t3){
+    const st=F.tour3dStatus&&F.tour3dStatus!=='none'?F.tour3dStatus:null;
+    const want=F.svc==='stays'&&(st||(F.tour3d&&F.tour3d.wanted));
+    t3b.style.display=want?'':'none';
+    if(want){
+      const how={call:'a call',text:'a text message',email:'email'}[F.tour3d&&F.tour3d.pref]||'a call';
+      const on=F.tour3d&&(F.tour3d.pref==='email'?F.tour3d.email:F.tour3d.phone);
+      t3.innerHTML=st
+        ? '<div class="rv-row"><span class="rv-k">Cabana 3D Tour</span><span class="rv-v">'+esc({requested:'Requested',scheduled:'Capture scheduled',live:'Live and featured'}[st]||st)+'</span></div>'
+        : '<div class="rv-row"><span class="rv-k">Cabana 3D Tour</span><span class="rv-v">Requested on publish</span></div>'
+          +'<div class="rv-row"><span class="rv-k">We will reach you by</span><span class="rv-v">'+esc(how)+(on?' · '+esc(on):'')+'</span></div>'
+          +'<div class="rv-row"><span class="rv-k">Charged now</span><span class="rv-v">Nothing. Paid upgrade, priced on our call</span></div>';
+    }
+  }
   const pb=document.getElementById('rv-phblock');
   if(F.photos.length){pb.style.display='';const ord=[cov,...Array.from({length:F.photos.length},(_,i)=>i).filter(i=>i!==cov)];document.getElementById('rv-photos').innerHTML=ord.slice(0,5).map(i=>'<img src="'+F.photos[i]+'" alt="Photo" loading="lazy" decoding="async"/>').join('');}
   else pb.style.display='none';
+}
+
+/* ══ CABANA 3D TOUR ═════════════════════════════════════════════════
+   Offered on the Photos step, because that is the moment a host is
+   thinking about how their place looks online. Stays only. A listing
+   that already has a request (or a live tour) shows its status instead
+   of a second checkbox. */
+function mountTour3d(tries){
+  const el=document.getElementById('s6-tour3d');if(!el)return;
+  if(F.svc!=='stays'){el.hidden=true;el.innerHTML='';window._t3d=null;return;}
+  if(!window.Cabana3DUpgrade){if((tries||0)<20)setTimeout(()=>mountTour3d((tries||0)+1),150);return;}
+  el.hidden=false;
+  if(F.tour3dStatus&&F.tour3dStatus!=='none'){el.innerHTML=Cabana3DUpgrade.statusHtml(F.tour3dStatus);window._t3d=null;return;}
+  const meta=(CU&&CU.user_metadata)||{};
+  const prefill={
+    name:(F.tour3d&&F.tour3d.name)||meta.full_name||[meta.first_name,meta.last_name].filter(Boolean).join(' ')||'',
+    phone:(F.tour3d&&F.tour3d.phone)||F.wa||F.ph||'',
+    email:(F.tour3d&&F.tour3d.email)||F.em||(CU&&CU.email)||''
+  };
+  if(window._t3d&&el.contains(window._t3d.root)){window._t3d.prefill(prefill);return;}
+  window._t3d=Cabana3DUpgrade.mount(el,{prefill,checked:!!(F.tour3d&&F.tour3d.wanted),noun:(F.type||'stay').toLowerCase()});
+  if(F.tour3d&&F.tour3d.wanted)window._t3d.set(Object.assign({},prefill,F.tour3d));
 }
 
 /* The first sentence of the description doubles as the line under the
@@ -2714,6 +2763,15 @@ async function publish(){
       await CabanaLifecycle.listingSubmitted('listing',listingId);
     }
 
+    /* The 3D Tour lead. Saved under the host's own RLS, then emailed to
+       the Cabana team by the server. It never blocks the listing: the
+       listing is already saved, and a failed request is said out loud. */
+    let t3dResult=null;
+    if(F.svc==='stays'&&listingId&&F.tour3d&&F.tour3d.wanted&&(!F.tour3dStatus||F.tour3dStatus==='none')&&window.Cabana3DUpgrade){
+      t3dResult=await Cabana3DUpgrade.submit(sb,listingId,F.tour3d,window._eid?'edit_listing':'add_listing');
+      if(t3dResult.ok)F.tour3dStatus='requested';
+    }
+
     btn.classList.remove('loading');
     document.getElementById('success-ov').classList.add('show');
     document.getElementById('ssub').textContent=
@@ -2743,6 +2801,17 @@ async function publish(){
       }
     } else {
       spv.textContent=F.cur+' '+Number(F.price||0).toLocaleString();
+    }
+    {
+      const t3n=document.getElementById('s-t3d-note');if(t3n)t3n.remove();
+      if(t3dResult){
+        const note=document.createElement('p');
+        note.id='s-t3d-note';note.className='ssub s-t3d-note';
+        note.textContent=t3dResult.ok
+          ? 'Cabana 3D Tour requested. Our team will contact you with the price and a time to visit. Nothing has been charged.'
+          : 'Your listing is saved, but we could not record the 3D Tour request. You can request it again from your listings board.';
+        document.getElementById('ssub').insertAdjacentElement('afterend',note);
+      }
     }
     if(F.own==='on_behalf'&&claimResult&&claimResult.claim_url){
       const sa=document.querySelector('.sacts');
@@ -2792,6 +2861,7 @@ function loadEdit(l){
     });
   }
 
+  F.tour3dStatus=l.tour_3d_status||'none';F.tour3d={wanted:false};
   document.getElementById('ctx').textContent='Edit listing';
 
   /* Load the ownership this listing already has. Without this, opening an

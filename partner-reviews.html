@@ -409,6 +409,13 @@ function signOut(){
 function fmt(n){return Number(n||0).toLocaleString();}
 function fmtKes(n){return 'KES '+fmt(n);}
 
+/* Reviews on Cabana are private and two-way (ApaTrust.review): both
+   sides write blind and see each other's once both are in, or 14 days
+   after checkout. This page used to read a `reviews` table by columns it
+   does not have (partner_id, comment), so the query always failed and
+   every host saw "No reviews yet". It now reads what guests actually
+   wrote about this host, once revealed. */
+function hesc(v){return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 async function loadReviews() {
   if(!sb) return;
   try {
@@ -416,34 +423,44 @@ async function loadReviews() {
     if(!session) return;
     document.getElementById('tb-avatar').textContent = (session.user.user_metadata?.first_name||'P')[0].toUpperCase();
     const uid = session.user.id;
-    const { data: reviews } = await sb.from('reviews')
-      .select('id,rating,comment,created_at,guest_name,listing_id,listings(title)')
-      .eq('partner_id', uid).order('created_at',{ascending:false}).limit(50);
+    const { data: reviews, error } = await sb.from('private_reviews')
+      .select('id,rating,cleanliness,accuracy,communication,value_rating,body,created_at,listing_id,visible_at')
+      .eq('subject_id', uid).eq('direction','guest_to_host').not('visible_at','is',null)
+      .order('created_at',{ascending:false}).limit(50);
+    if(error) throw error;
     const rv = reviews || [];
-    const avg = rv.length ? (rv.reduce((s,r)=>s+r.rating,0)/rv.length).toFixed(1) : ', ';
+    const ids = [...new Set(rv.map(r=>r.listing_id).filter(Boolean))];
+    const titles = {};
+    if(ids.length){
+      const { data: ls } = await sb.from('listings').select('id,title').in('id', ids);
+      (ls||[]).forEach(l=>{ titles[l.id]=l.title; });
+    }
+    const avg = rv.length ? (rv.reduce((s,r)=>s+r.rating,0)/rv.length).toFixed(1) : null;
     const five = rv.filter(r=>r.rating===5).length;
-    document.getElementById('r-avg').textContent = rv.length ? avg+'★' : ', ';
+    document.getElementById('r-avg').textContent = avg ? avg+'★' : 'New';
     document.getElementById('r-total').textContent = fmt(rv.length);
     document.getElementById('r-five').textContent = fmt(five);
     if(!rv.length) return;
+    const sub = (k,v) => v ? `<span style="font:600 11px var(--font-b);color:var(--ink-faint);margin-right:10px;">${k} ${v}/5</span>` : '';
     document.getElementById('reviews-list').innerHTML = rv.map(r => {
       const stars = '★'.repeat(r.rating) + '☆'.repeat(5-r.rating);
       return `<div style="padding:16px 0;border-bottom:1px solid var(--line);">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-          <div style="display:flex;align-items:center;gap:10px;">
-            <div style="width:36px;height:36px;border-radius:50%;background:var(--theme-grad);display:flex;align-items:center;justify-content:center;font:700 14px var(--font-d);color:#fff;">${(r.guest_name||'G')[0].toUpperCase()}</div>
-            <div><div style="font:700 13px var(--font-b);color:var(--ink);">${r.guest_name||'Guest'}</div>
-            <div style="font:400 11px var(--font-b);color:var(--ink-faint);">${r.listings?.title||'Your listing'}</div></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:12px;">
+          <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+            <div style="width:36px;height:36px;border-radius:50%;background:var(--theme-grad);display:flex;align-items:center;justify-content:center;font:700 14px var(--font-d);color:#fff;flex-shrink:0;">G</div>
+            <div style="min-width:0;"><div style="font:700 13px var(--font-b);color:var(--ink);">A verified guest</div>
+            <div style="font:400 11px var(--font-b);color:var(--ink-faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${hesc(titles[r.listing_id]||'Your listing')}</div></div>
           </div>
-          <div style="text-align:right;">
-            <div style="color:#F5B12E;font-size:14px;letter-spacing:1px;">${stars}</div>
+          <div style="text-align:right;flex-shrink:0;">
+            <div style="color:#F5B12E;font-size:14px;letter-spacing:1px;" aria-label="${r.rating} out of 5">${stars}</div>
             <div style="font:400 11px var(--font-b);color:var(--ink-faint);">${new Date(r.created_at).toLocaleDateString('en-KE',{day:'numeric',month:'short',year:'numeric'})}</div>
           </div>
         </div>
-        ${r.comment?`<div style="font:400 13px/1.7 var(--font-b);color:var(--ink-soft);background:var(--glass-2);padding:12px 15px;border-radius:12px;border-left:3px solid var(--theme);">"${r.comment}"</div>`:''}
+        <div style="margin:0 0 8px;">${sub('Clean',r.cleanliness)}${sub('Accuracy',r.accuracy)}${sub('Communication',r.communication)}${sub('Value',r.value_rating)}</div>
+        ${r.body?`<div style="font:400 13px/1.7 var(--font-b);color:var(--ink-soft);background:var(--glass-2);padding:12px 15px;border-radius:12px;border-left:3px solid var(--theme);white-space:pre-line;">${hesc(r.body)}</div>`:''}
       </div>`;
     }).join('');
-  } catch(e) { console.warn(e); }
+  } catch(e) { console.warn('[reviews]', e); }
 }
 document.addEventListener('DOMContentLoaded', loadReviews);
 </script>

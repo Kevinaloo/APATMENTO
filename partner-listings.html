@@ -1060,12 +1060,12 @@ function renderListings(list){
     const loc=[l.area,l.city].filter(Boolean).join(', ')||l.location||'Kenya';
     return`<div class="listing-card">
       ${photo
-        ?`<div class="lc-thumb"><img src="${photo}" alt="${l.title||''}" onerror="this.parentElement.innerHTML='${svc[0]}'" fetchpriority="high" decoding="async"/></div>`
+        ?`<div class="lc-thumb"><img src="${esc(photo)}" alt="${esc(l.title||'')}" onerror="this.parentElement.textContent=this.dataset.f" data-f="${esc(svc[0])}" fetchpriority="high" decoding="async"/></div>`
         :`<div class="lc-thumb">${svc[0]}</div>`
       }
       <div class="lc-info">
-        <div class="lc-name">${l.title||'Untitled listing'}</div>
-        <div class="lc-meta">${svc} &middot; ${loc} &middot; ${l.booking_count||0} booking${l.booking_count!==1?'s':''}</div>
+        <div class="lc-name">${esc(l.title||'Untitled listing')}</div>
+        <div class="lc-meta">${esc(svc)} &middot; ${esc(loc)} &middot; ${l.booking_count||0} booking${l.booking_count!==1?'s':''}</div>
         ${ownBadge(l)}
         <div class="lc-price">${priceLine(l)}</div>
       </div>
@@ -1078,6 +1078,7 @@ function renderListings(list){
           </a>
           <a href="partner-orders.html?id=${l.id}" class="btn btn-ghost btn-sm" title="Accept, cook and hand over orders">Orders</a>`:''}
           ${(l.service||'stays')==='stays'?`<button class="btn btn-ghost btn-sm" type="button" onclick="openStayOffers('${l.id}')">Offers</button>`:''}
+          ${(l.service||'stays')==='stays'?tour3dAction(l):''}
           <a href="add-listing.html?from=dashboard&edit=${l.id}" class="btn btn-ghost btn-sm">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="12" height="12"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             Edit
@@ -1093,6 +1094,29 @@ function renderListings(list){
       </div>
     </div>`;
   }).join('');
+}
+
+/* ══ CABANA 3D TOUR ══════════════════════════════════════════════════
+   The paid upgrade for a stay that is already listed. The button shows
+   where the request stands; a live tour is the badge and the featured
+   placement on Stays, switched on by the Cabana team after capture. */
+function tour3dAction(l){
+  const st=l.tour_3d_status||'none';
+  const cube='<svg viewBox="0 0 28 28" fill="none" width="13" height="13" aria-hidden="true"><path d="m14 3 10 5.7v10.6L14 25 4 19.3V8.7L14 3Z" stroke="currentColor" stroke-width="2"/><path d="m4 8.7 10 5.8 10-5.8M14 14.5V25" stroke="currentColor" stroke-width="1.8"/></svg>';
+  if(st==='live')return '<span class="badge b-green" title="Your 3D Tour is live and your stay is featured">'+cube+' 3D live · Featured</span>';
+  if(st==='requested'||st==='scheduled')return '<span class="badge b-amber" title="The Cabana team will contact you">'+cube+' 3D '+(st==='scheduled'?'scheduled':'requested')+'</span>';
+  return '<button class="btn btn-ghost btn-sm" type="button" onclick="openTour3d(\''+l.id+'\')" title="Cabana 3D Tour: featured placement and a walkthrough">'+cube+' Add 3D Tour</button>';
+}
+async function openTour3d(id){
+  const l=allListings.find(x=>String(x.id)===String(id));
+  if(!l||!window.Cabana3DUpgrade||!sb)return;
+  const{data:{session}}=await sb.auth.getSession();
+  const u=session&&session.user,m=(u&&u.user_metadata)||{};
+  Cabana3DUpgrade.openSheet({
+    sb,listing:{id:l.id,title:l.title},
+    prefill:{name:m.full_name||[m.first_name,m.last_name].filter(Boolean).join(' '),phone:l.contact_whatsapp||l.contact_phone||'',email:l.contact_email||(u&&u.email)||''},
+    onDone:()=>{l.tour_3d_status='requested';renderListings(activeFilter==='all'?allListings:allListings.filter(x=>(x.service||x.type||'').toLowerCase()===activeFilter||(x.type||'').toLowerCase().includes(activeFilter)));}
+  });
 }
 
 async function toggleStatus(id,status,isActive){
@@ -1227,5 +1251,6 @@ document.addEventListener('DOMContentLoaded',loadListings);
 <script src="/cabana-call.js" defer></script>
 <script src="/apa-location.js" defer></script><script src="/cabana-sos.js" defer></script><script src="/cabana-support.js" defer></script>
 <script src="/cabana-lifecycle.js" defer></script>
+<script src="/cabana-3d-upgrade.js" defer></script>
 </body>
 </html>

@@ -403,7 +403,7 @@ td strong{color:var(--ink);font-weight:600;}
   </div>
   <div class="tbl-wrap">
     <table>
-      <thead><tr><th>Date</th><th>Listing</th><th>Guest</th><th>Nights</th><th>Amount</th><th>Status</th></tr></thead>
+      <thead><tr><th>Check-in</th><th>Listing</th><th>Guest</th><th>Nights</th><th>Your payout</th><th>Status</th></tr></thead>
       <tbody id="earn-tbody">
         <tr><td colspan="6" style="text-align:center;padding:28px;color:var(--ink-faint);">Loading…</td></tr>
       </tbody>
@@ -416,7 +416,7 @@ td strong{color:var(--ink);font-weight:600;}
   <div class="card-hd">
     <div>
       <div class="card-title">Request payout</div>
-      <div class="card-sub">Direct to M-Pesa · Processed within 24 hours</div>
+      <div class="card-sub">Sent to the Cabana partner desk · you will get a reply in Support</div>
     </div>
   </div>
   <div class="row-2">
@@ -431,7 +431,7 @@ td strong{color:var(--ink);font-weight:600;}
   </div>
   <button class="btn btn-primary" onclick="requestPayout()">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-    Send to M-Pesa
+    Request payout
   </button>
 </div>
 
@@ -489,66 +489,93 @@ function signOut(){
 function fmt(n){return Number(n||0).toLocaleString();}
 function fmtKes(n){return 'KES '+fmt(n);}
 
+/* Earnings come from host_stay_bookings(), the same read the bookings
+   page uses. This page used to query a `bookings` table that does not
+   exist, so every host saw KES 0. A host keeps the full stay total; the
+   service fee is the guest's, and is not shown as theirs.
+
+   Earned   = stays the guest has checked into (the payout is released
+              at check-in, api/lib/_verify-checkin.js).
+   Pending  = paid stays still waiting for check-in. */
+function hesc(v){return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 async function loadEarnings() {
   if(!sb) return;
+  const tbody = document.getElementById('earn-tbody');
   try {
     const { data: { session } } = await sb.auth.getSession();
     if(!session) return;
-    const uid = session.user.id;
     document.getElementById('tb-avatar').textContent = (session.user.user_metadata?.first_name||'P')[0].toUpperCase();
     const period = parseInt(document.getElementById('earn-period')?.value || 90);
-    const since = new Date(Date.now() - period*86400000).toISOString();
-    const now = new Date(); const m1 = new Date(now.getFullYear(),now.getMonth(),1).toISOString();
-    const lm = new Date(now.getFullYear(),now.getMonth()-1,1).toISOString();
+    const since = new Date(Date.now() - period*86400000).toISOString().slice(0,10);
+    const now = new Date();
+    const ymd = d => new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10);
+    const m1 = ymd(new Date(now.getFullYear(),now.getMonth(),1));
+    const lm = ymd(new Date(now.getFullYear(),now.getMonth()-1,1));
 
-    const { data: bookings } = await sb.from('bookings')
-      .select('id,listing_id,total_amount,check_in,check_out,guests,status,created_at,listings(title)')
-      .eq('partner_id', uid).gte('created_at', since).order('created_at', { ascending: false });
+    const { data, error } = await sb.rpc('host_stay_bookings', { p_limit: 500 });
+    if(error) throw error;
+    const rows = (data||[]).filter(b => !b.cancelled_at && b.status !== 'cancelled' && b.status !== 'rehomed');
+    const payout = b => Number(b.stay_total||0);
+    const earned = b => !!b.checked_in_at || b.status==='checked_in' || b.status==='completed';
+    /* Earned money is dated by when the guest arrived. */
+    const when = b => (b.checked_in_at ? String(b.checked_in_at).slice(0,10) : b.checkin_date);
 
-    const { data: allTime } = await sb.from('bookings')
-      .select('total_amount,created_at,status').eq('partner_id', uid);
-
-    const total = (allTime||[]).filter(b=>b.status!=='cancelled').reduce((s,b)=>s+parseFloat(b.total_amount||0),0);
-    const thisMonth = (allTime||[]).filter(b=>b.created_at>=m1&&b.status!=='cancelled').reduce((s,b)=>s+parseFloat(b.total_amount||0),0);
-    const lastMonth = (allTime||[]).filter(b=>b.created_at>=lm&&b.created_at<m1&&b.status!=='cancelled').reduce((s,b)=>s+parseFloat(b.total_amount||0),0);
-    const pending = (allTime||[]).filter(b=>b.status==='confirmed').reduce((s,b)=>s+parseFloat(b.total_amount||0),0);
+    const total     = rows.filter(earned).reduce((s,b)=>s+payout(b),0);
+    const thisMonth = rows.filter(b=>earned(b)&&when(b)>=m1).reduce((s,b)=>s+payout(b),0);
+    const lastMonth = rows.filter(b=>earned(b)&&when(b)>=lm&&when(b)<m1).reduce((s,b)=>s+payout(b),0);
+    const pending   = rows.filter(b=>!earned(b)).reduce((s,b)=>s+payout(b),0);
 
     document.getElementById('e-total').textContent = fmtKes(Math.round(total));
     document.getElementById('e-month').textContent = fmtKes(Math.round(thisMonth));
     document.getElementById('e-pending').textContent = fmtKes(Math.round(pending));
-    document.getElementById('e-referral').textContent = 'KES 0';
+    document.getElementById('e-referral').textContent = 'See Rewards';
     const meta = document.getElementById('e-month-meta');
     if(lastMonth>0) {
       const chg = Math.round(((thisMonth-lastMonth)/lastMonth)*100);
       meta.textContent = (chg>=0?'+':'')+chg+'% vs last month';
       meta.className = 'stat-meta '+(chg>=0?'up':'down');
-    }
+    } else { meta.textContent = 'Released at check-in'; meta.className = 'stat-meta'; }
 
-    const tbody = document.getElementById('earn-tbody');
-    if(!(bookings||[]).length) {
-      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--ink-faint);">No transactions yet in this period.</td></tr>';
+    const inPeriod = (data||[]).filter(b => (b.checkin_date||'') >= since || String(b.created_at||'').slice(0,10) >= since);
+    if(!inPeriod.length) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--ink-faint);">No paid stays in this period yet.</td></tr>';
       return;
     }
-    tbody.innerHTML = (bookings||[]).map(b => {
-      const nights = Math.max(1,Math.round((new Date(b.check_out)-new Date(b.check_in))/86400000));
-      const badge = b.status==='completed'?'badge-green':b.status==='confirmed'?'badge-blue':b.status==='cancelled'?'badge-red':'badge-grey';
+    tbody.innerHTML = inPeriod.map(b => {
+      const cancelled = b.cancelled_at || b.status==='cancelled' || b.status==='rehomed';
+      const [badge,label] = cancelled ? ['badge-red', b.status==='rehomed'?'Moved':'Cancelled']
+        : earned(b) ? ['badge-green','Released']
+        : ['badge-blue','Pending check-in'];
       return `<tr>
-        <td>${new Date(b.created_at).toLocaleDateString('en-KE',{day:'numeric',month:'short'})}</td>
-        <td><strong>${b.listings?.title||'Listing'}</strong></td>
-        <td style="color:var(--ink-faint);">Guest</td>
-        <td>${nights}n</td>
-        <td><strong>KES ${fmt(parseFloat(b.total_amount||0))}</strong></td>
-        <td><span class="badge ${badge}">${b.status||'pending'}</span></td>
+        <td>${new Date((b.checkin_date||'')+'T00:00:00').toLocaleDateString('en-KE',{day:'numeric',month:'short'})}</td>
+        <td><strong>${hesc(b.listing_title||'Listing')}</strong></td>
+        <td style="color:var(--ink-soft);">${hesc(b.guest_name||'Guest')}</td>
+        <td>${b.nights||1}n</td>
+        <td><strong>KES ${fmt(Math.round(payout(b)))}</strong></td>
+        <td><span class="badge ${badge}">${label}</span></td>
       </tr>`;
     }).join('');
-  } catch(e) { console.warn('Earnings error', e); }
+  } catch(e) {
+    console.warn('Earnings error', e);
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--err);">We could not load your earnings. Refresh to try again.</td></tr>';
+  }
 }
 
+/* There is no self-serve payout rail yet. This used to say "Payout
+   request submitted" and send nothing anywhere. It now hands the request
+   to the partner desk, with the details, so a person actually sees it. */
 async function requestPayout() {
   const num = document.getElementById('mpesa-num').value.trim();
   const amt = parseFloat(document.getElementById('mpesa-amt').value);
   if(!num || !amt || amt < 100) { toast('Enter a valid M-Pesa number and amount (min KES 100)', false); return; }
-  toast('Payout request submitted. You will receive it within 24 hours ✓');
+  const text = 'Payout request: KES '+Math.round(amt).toLocaleString()+' to M-Pesa '+num+'.';
+  if(window.CabanaSupport && CabanaSupport.human){
+    CabanaSupport.ask(text);
+    setTimeout(()=>{ try{ CabanaSupport.human(); }catch(e){} }, 900);
+    toast('Sent to the partner desk. You will get a reply in Support.');
+  } else {
+    location.href = 'mailto:partnership@cabana.africa?subject='+encodeURIComponent('Payout request')+'&body='+encodeURIComponent(text);
+  }
 }
 
 document.addEventListener('DOMContentLoaded', loadEarnings);

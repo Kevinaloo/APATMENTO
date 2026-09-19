@@ -303,6 +303,8 @@ body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webk
   box-shadow:0 2px 8px rgba(10,10,20,.14);
 }
 .card-tag-hot{color:var(--ember);}
+.card-tag-featured{color:#fff5de;background:linear-gradient(125deg,#20213e,#413263 55%,#253b63);border:1px solid #dfc69399;}
+.card-tag-featured svg{color:#f5d99e;}
 .card-tag svg{width:10px;height:10px;}
 
 .card-heart{
@@ -587,6 +589,8 @@ body.lb-open #agent-ref{display:none!important;}
 /* description */
 .dl-section-title{font-family:var(--font-display);font-weight:500;font-size:17px;color:var(--ink);margin-bottom:12px;}
 .dl-desc{font-size:14px;line-height:1.75;color:var(--ink-soft);white-space:pre-line;}
+.dl-rules{margin-top:12px;padding:12px 14px;border-radius:14px;background:var(--glass-2,rgba(12,13,26,.04));font-size:13px;line-height:1.6;color:var(--ink-soft);white-space:pre-line;}
+.dl-rules b{display:block;color:var(--ink);font-weight:700;margin-bottom:2px;}
 .dl-desc-toggle{background:none;border:none;color:var(--theme);font-size:13px;font-weight:600;cursor:pointer;padding:8px 0 0;display:block;}
 
 /* amenities */
@@ -3302,8 +3306,9 @@ function calcScore(item) {
   const recencyScore  = bookings > 0 ? Math.max(0, 20 - (daysListed / 30)) : 0;
   const momentumScore = Math.min(10, bookings * 1.5);
   const base = ratingScore + reviewScore + recencyScore + momentumScore;
-  // Native listings get a significant boost. They appear first
-  return isNative ? base + 200 : base;
+  // Native listings get a significant boost. They appear first.
+  // Featured (a live Cabana 3D Tour, or an admin feature) sits above them.
+  return (isNative ? base + 200 : base) + (item.featured ? 1000 : 0);
 }
 
 function smartSort(list, mode) {
@@ -3391,11 +3396,19 @@ async function loadNativeListings() {
        column is absent, which previously turned a schema drift into a
        silent "0 stays available". `*` is immune to that. Ordering and
        service filtering are done client-side below for the same reason. */
+    /* Filter to stays and rank BEFORE the limit. The old query took any
+       60 active rows in storage order and filtered afterwards, so once
+       food, rooms and shops outnumbered stays, real stays silently fell
+       off the page. featured and internal_score are server-owned (hosts
+       cannot write them), so ordering by them here is safe. */
     const { data, error } = await sb.from('listings')
       .select('*')
       .eq('is_active', true)
       .is('deleted_at', null)
-      .limit(60);
+      .or('service.eq.stays,service.is.null')
+      .order('featured', { ascending: false })
+      .order('internal_score', { ascending: false })
+      .limit(200);
 
     if (error) {
       console.error('[listings] QUERY FAILED, ', error.message, error);
@@ -3424,9 +3437,14 @@ async function loadNativeListings() {
       return !t || STAY_TYPES.some(k => t.includes(k));
     };
 
-    const stays = data.filter(isStay)
-      .sort((a, b) => (Number(b.internal_score) || 0) - (Number(a.internal_score) || 0))
-      .slice(0, 50);
+    /* A listing Cabana rejected, paused or removed can still carry
+       is_active from before the decision. Only an active status is
+       bookable (stay_quote refuses anything else), so only that shows. */
+    const isLive = l => !l.status || l.status === 'active';
+    const stays = data.filter(l => isStay(l) && isLive(l))
+      .sort((a, b) => (b.featured === true) - (a.featured === true)
+        || (Number(b.internal_score) || 0) - (Number(a.internal_score) || 0))
+      .slice(0, 120);
 
     console.log('[listings] Loaded', data.length, 'rows →', stays.length, 'stays');
     return stays.map(l => ({
@@ -3460,6 +3478,20 @@ async function loadNativeListings() {
       lat: l.latitude != null ? parseFloat(l.latitude) : null,
       lng: l.longitude != null ? parseFloat(l.longitude) : null,
       country: l.country || '',
+      /* Paid placement and the 3D walkthrough. Both are set only by the
+         Cabana team (listings_protect_system_fields). */
+      featured: l.featured === true,
+      tour3dStatus: l.tour_3d_status || 'none',
+      tour3dUrl: l.tour_3d_status === 'live' ? (l.tour_3d_url || null) : null,
+      /* What the host actually said, for "Good to know". This used to be
+         hard-coded to 2 PM / 11 AM / no smoking for every stay. */
+      checkinTime: l.checkin_time || '',
+      checkoutTime: l.checkout_time || '',
+      pets: l.pets, smoking: l.smoking, children: l.children,
+      houseRules: l.house_rules || '',
+      instantBook: l.instant_book !== false,
+      spaceMode: l.extras?.space_mode || 'entire',
+      sharingContext: l.extras?.sharing_context || '',
     }));
   } catch(e) { console.warn('[listings] Exception:', e.message); return []; }
 }
@@ -3697,12 +3729,13 @@ function renderCards(list) {
     const href  = `/apartments?open=${encodeURIComponent(apt._dbId || apt.id)}`;
     const label = `${apt.name}, ${apt.location || apt.city || ''}, KES ${Number(apt.price).toLocaleString()} a night`;
 
-    return `<article class="card${isNative ? ' is-native' : ''}" style="transition-delay:${Math.min(i, 8) * 45}ms"
+    return `<article class="card${isNative ? ' is-native' : ''}${apt.featured ? ' is-featured' : ''}" style="transition-delay:${Math.min(i, 8) * 45}ms"
         data-card-id="${apt.id}" data-photos="${photos.length}">
       <div class="card-media${many ? ' has-many' : ''}">
         <div class="card-rail">${slides}</div>
         ${window.CabanaPropertyTour?.badge(apt) || ''}
-        ${apt.hot ? `<span class="card-tag card-tag-hot">${SVG_FLAME} In demand</span>` : ''}
+        ${apt.featured ? `<span class="card-tag card-tag-featured"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2.8 2.8 5.7 6.3.9-4.6 4.4 1.1 6.2L12 17.1 6.4 20l1.1-6.2L2.9 9.4l6.3-.9L12 2.8Z"/></svg>Featured</span>`
+          : apt.hot ? `<span class="card-tag card-tag-hot">${SVG_FLAME} In demand</span>` : ''}
         <button type="button" class="card-heart${isWishlisted(apt.id) ? ' on' : ''}" data-heart="${apt.id}"
           aria-label="Save this stay" aria-pressed="${isWishlisted(apt.id)}">${SVG_HEART}</button>
         ${many ? `
@@ -4202,18 +4235,37 @@ function openDrawer(id) {
   /* ── description with show-more if long ── */
   const descFull  = apt.desc || '';
   const descShort = descFull.length > 280 ? descFull.slice(0,280).trimEnd() + '…' : descFull;
+  /* Host-written text is text. It used to be dropped into innerHTML raw,
+     so a description containing markup ran in every guest's browser; and
+     an apostrophe in a long description broke the Show more button. */
   const descHTML  = descFull.length > 280
-    ? `<div class="dl-desc" id="dl-desc-text">${descShort}</div>
-       <button class="dl-desc-toggle" onclick="toggleDesc('${apt.id}','${encodeURIComponent(descFull)}')">Show more ↓</button>`
-    : `<div class="dl-desc">${descFull}</div>`;
+    ? `<div class="dl-desc" id="dl-desc-text">${_esc(descShort)}</div>
+       <button class="dl-desc-toggle" type="button" onclick="toggleDesc('${_esc(apt.id)}')">Show more ↓</button>`
+    : `<div class="dl-desc">${_esc(descFull)}</div>`;
 
   /* ── house rules / what to know ── */
+  const _fmtTime = t => {
+    const m = /^(\d{1,2}):(\d{2})/.exec(String(t || ''));
+    if (!m) return '';
+    const h = +m[1], mm = m[2];
+    return `${((h + 11) % 12) + 1}:${mm} ${h < 12 ? 'AM' : 'PM'}`;
+  };
+  const _yesNo = (v, yes, no, unknown) => v === true ? yes : v === false ? no : unknown;
   const knowItems = [
-    { ico:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5.2l3.2 2"/></svg>`, label:'Check in',  val:'From 2:00 PM'  },
-    { ico:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h8M14 3v18M14 3l5 2v14l-5 2"/><circle cx="11.4" cy="12" r=".9" fill="currentColor" stroke="none"/></svg>`, label:'Check out', val:'By 11:00 AM'   },
-    { ico:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13.5h13.5M3 13.5v3h13.5v-3M18 13.5H21v3h-3zM16.5 13.5V16.5M17 10c0-1.6-1-2-1-3.2 0-1 .6-1.8 1.4-2.3M20 10c0-2-1.4-2.6-1.4-4"/><path d="m3 3 18 18"/></svg>`, label:'Smoking',   val:'Not allowed'   },
-    { ico:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="7.5" r="2"/><circle cx="16" cy="7.5" r="2"/><circle cx="4.5" cy="13" r="1.8"/><circle cx="19.5" cy="13" r="1.8"/><path d="M12 12c2.6 0 4.6 2.2 4.6 4.6 0 1.9-1.3 3-3.1 3h-3c-1.8 0-3.1-1.1-3.1-3C7.4 14.2 9.4 12 12 12z"/></svg>`, label:'Pets',      val:'Ask the host'  },
+    { ico:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5.2l3.2 2"/></svg>`, label:'Check in',  val:'From ' + (_fmtTime(apt.checkinTime) || '2:00 PM')  },
+    { ico:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h8M14 3v18M14 3l5 2v14l-5 2"/><circle cx="11.4" cy="12" r=".9" fill="currentColor" stroke="none"/></svg>`, label:'Check out', val:'By ' + (_fmtTime(apt.checkoutTime) || '11:00 AM')   },
+    { ico:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13.5h13.5M3 13.5v3h13.5v-3M18 13.5H21v3h-3zM16.5 13.5V16.5M17 10c0-1.6-1-2-1-3.2 0-1 .6-1.8 1.4-2.3M20 10c0-2-1.4-2.6-1.4-4"/><path d="m3 3 18 18"/></svg>`, label:'Smoking',   val:_yesNo(apt.smoking, 'Allowed', 'Not allowed', 'Not allowed')   },
+    { ico:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="7.5" r="2"/><circle cx="16" cy="7.5" r="2"/><circle cx="4.5" cy="13" r="1.8"/><circle cx="19.5" cy="13" r="1.8"/><path d="M12 12c2.6 0 4.6 2.2 4.6 4.6 0 1.9-1.3 3-3.1 3h-3c-1.8 0-3.1-1.1-3.1-3C7.4 14.2 9.4 12 12 12z"/></svg>`, label:'Pets',      val:_yesNo(apt.pets, 'Allowed', 'Not allowed', 'Ask the host')  },
   ];
+  const sharedLabel = { host_present:'The host lives here and will be present',
+    other_guests:'Other guests may be staying at the same time',
+    host_and_guests:'The host and other guests may be present',
+    caretaker:'A caretaker or manager is on site' }[apt.sharingContext] || '';
+  const spaceNote = apt.spaceMode && apt.spaceMode !== 'entire'
+    ? `<div class="dl-rules"><b>${apt.spaceMode === 'shared_room' ? 'Shared room' : 'Private room'}</b>${_esc(sharedLabel)}</div>` : '';
+  const rulesHTML = (apt.houseRules ? `<div class="dl-rules"><b>House rules</b><div>${_esc(apt.houseRules)}</div></div>` : '')
+    + (apt.children === false ? `<div class="dl-rules"><b>Not suitable for children</b></div>` : '')
+    + spaceNote;
   const knowHTML = knowItems.map(k =>
     `<div class="dl-know-item">
       <div class="dl-know-ico">${k.ico}</div>
@@ -4232,9 +4284,9 @@ function openDrawer(id) {
 
       <div class="dl-loc">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-        ${apt.location}
+        ${_esc(apt.location)}
       </div>
-      <div class="dl-title">${apt.name}</div>
+      <div class="dl-title">${_esc(apt.name)}</div>
 
       <!-- Quick stats pills -->
       <div class="dl-stats">
@@ -4243,7 +4295,7 @@ function openDrawer(id) {
         <div class="dl-stat"><span class="dl-stat-ico">${DL_ICO.guests}</span>Up to ${apt.maxGuests} guest${apt.maxGuests!==1?'s':''}</div>
         ${apt.sqm  ? `<div class="dl-stat"><span class="dl-stat-ico">${DL_ICO.area}</span>${apt.sqm} m&sup2;</div>` : ''}
         ${apt.floor ? `<div class="dl-stat"><span class="dl-stat-ico">${DL_ICO.floor}</span>Floor ${apt.floor}</div>` : ''}
-        ${apt.type  ? `<div class="dl-stat"><span class="dl-stat-ico">${DL_ICO.home}</span>${apt.type}</div>` : ''}
+        ${apt.type  ? `<div class="dl-stat"><span class="dl-stat-ico">${DL_ICO.home}</span>${_esc(apt.type)}</div>` : ''}
       </div>
 
       <div class="dl-divider"></div>
@@ -4277,6 +4329,7 @@ function openDrawer(id) {
       <!-- House rules / what to know -->
       <div class="dl-section-title">Good to know</div>
       <div class="dl-know">${knowHTML}</div>
+      ${rulesHTML}
 
       <div class="dl-divider"></div>
 
@@ -4284,7 +4337,7 @@ function openDrawer(id) {
            until the payment page — a guest deciding between four flats
            needs to know which one is near the office. -->
       <div class="dl-section-title">Where you'll be</div>
-      <div class="dl-map-loc">${apt.neighbourhood || apt.location}</div>
+      <div class="dl-map-loc">${_esc(apt.neighbourhood || apt.location)}</div>
       <div class="dl-map" id="dl-map"></div>
       <div class="dl-map-legal">
         Cabana shows the general area while you browse. The exact address and
@@ -4347,7 +4400,7 @@ function openDrawer(id) {
       _galIdx = 0;
       const track = document.getElementById('dl-gal-track');
       if (track) {
-        track.innerHTML = `<div class="dl-gallery-slide"><img src="${url}" alt="${apt.name}" loading="lazy" decoding="async"/></div>`;
+        track.innerHTML = `<div class="dl-gallery-slide"><img src="${_esc(url)}" alt="${_esc(apt.name)}" loading="lazy" decoding="async"/></div>`;
         _updateGalleryUI();
       }
     });
@@ -4621,12 +4674,12 @@ function _attachGallerySwipe() {
 }
 
 /* ── description expand ── */
-function toggleDesc(id, encodedFull) {
+function toggleDesc(id) {
   const el  = document.getElementById('dl-desc-text');
   const btn = el?.nextElementSibling;
   if (!el) return;
-  const full = decodeURIComponent(encodedFull);
-  el.textContent = full;
+  const apt = currentListings.find(a => String(a.id) === String(id));
+  el.textContent = apt?.desc || el.textContent;
   if (btn) btn.remove();
 }
 

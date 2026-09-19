@@ -598,7 +598,9 @@
       return audit('listing.approve', { type: 'listing', id: id })
         .then(function () {
           return write('listings', function (t) {
-            return t.update({ status: 'live', approved_at: new Date().toISOString() }).eq('id', id);
+            /* 'active' is the only status stays search and stay_quote accept;
+               'live' left an approved listing visible but unbookable. */
+            return t.update({ status: 'active', is_active: true, approved_at: new Date().toISOString() }).eq('id', id);
           });
         });
     },
@@ -607,7 +609,7 @@
       return audit('listing.reject', { type: 'listing', id: id }, { reason: reason })
         .then(function () {
           return write('listings', function (t) {
-            return t.update({ status: 'rejected', rejection_reason: reason || 'Policy violation' }).eq('id', id);
+            return t.update({ status: 'rejected', is_active: false, rejection_reason: reason || 'Policy violation' }).eq('id', id);
           });
         });
     },
@@ -618,7 +620,7 @@
         .then(function () {
           if (hard) return write('listings', function (t) { return t.delete().eq('id', id); });
           return write('listings', function (t) {
-            return t.update({ status: 'deleted', deleted_at: new Date().toISOString() }).eq('id', id);
+            return t.update({ status: 'deleted', is_active: false, deleted_at: new Date().toISOString() }).eq('id', id);
           });
         });
     },
@@ -626,7 +628,7 @@
     unpublishListing: function (id) {
       return audit('listing.unpublish', { type: 'listing', id: id })
         .then(function () {
-          return write('listings', function (t) { return t.update({ status: 'paused' }).eq('id', id); });
+          return write('listings', function (t) { return t.update({ status: 'paused', is_active: false }).eq('id', id); });
         });
     },
 
@@ -662,7 +664,7 @@
         .then(function (r) {
           if (!r.ok) return r;
           return write('listings', function (t) {
-            return t.update({ status: 'paused' }).eq('partner_id', id);
+            return t.update({ status: 'suspended', is_active: false }).eq('partner_id', id).in('status', ['active', 'live', 'paused', 'inactive']);
           }).then(function () { return r; });
         });
     },
@@ -676,6 +678,14 @@
               suspended_until: null, suspension_reason: null, banned: false
             }).eq('id', id);
           });
+        })
+        .then(function (r) {
+          if (!r.ok) return r;
+          /* Listings the suspension switched off come back with the host.
+             A host cannot lift 'suspended' themselves. */
+          return write('listings', function (t) {
+            return t.update({ status: 'active', is_active: true }).eq('partner_id', id).eq('status', 'suspended');
+          }).then(function () { return r; });
         });
     },
 
@@ -696,7 +706,7 @@
         .then(function (r) {
           if (!r.ok) return r;
           return write('listings', function (t) {
-            return t.update({ status: 'removed' }).eq('partner_id', id);
+            return t.update({ status: 'removed', is_active: false }).eq('partner_id', id);
           }).then(function () { return r; });
         });
     },

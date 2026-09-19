@@ -59,6 +59,10 @@ test('partner assets are versioned so existing browsers receive the redesign',()
  }
  const pwa=readFileSync(new URL('../pwa.js',import.meta.url),'utf8');
  const worker=readFileSync(new URL('../sw.js',import.meta.url),'utf8');
- assert.match(pwa,/register\('\/sw\.js\?v=36-location-flight',[\s\S]*updateViaCache: 'none'/);
- assert.match(worker,/cabana-v36-location-flight/);
+ /* The page registration and the worker's cache name must name the same
+    release, whatever it is called. Pinning one literal here meant every
+    version bump broke this test without anything being wrong. */
+ const registered=pwa.match(/register\('\/sw\.js\?v=([\w.-]+)',[\s\S]*?updateViaCache: 'none'/);
+ assert.ok(registered,'sw.js is registered with a version and updateViaCache none');
+ assert.match(worker,new RegExp(`const VERSION = 'cabana-v${registered[1].replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}'`));
 });

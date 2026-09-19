@@ -10,7 +10,7 @@
 
 import { deriveStatus, depositRequired } from './lib/_payment-rules.js';
 import { constantTimeEqual, setCors } from './lib/_security.js';
-import { sendBookingReceipt } from './lib/_mail.js';
+import { sendBookingReceipt, sendTemplate } from './lib/_mail.js';
 
 function siteOrigin(req) {
   const host = req.headers['x-forwarded-host'] || req.headers.host;
@@ -414,6 +414,15 @@ async function creditInstalment({ supabaseUrl, serviceKey, reference, isSuccess,
       }),
     });
 
+  /* 3b. The host hears about it the moment the dates are theirs to keep:
+     when this instalment carried the booking across the deposit. The
+     dedupe key makes a retried callback a no-op. */
+  const wasConfirmed = Number(booking.amount_paid || 0) >= deposit;
+  if (ledger.booking_table === 'apartment_bookings' && amountPaid >= deposit && !wasConfirmed) {
+    notifyHostOfBooking({ supabaseUrl, serviceKey, booking, amountPaid, origin })
+      .catch(e => console.warn('[host-mail] non-fatal:', e.message));
+  }
+
   // 4. Tell the guest exactly where they stand.
   if (booking.guest_id) {
     const shortfall = Math.max(0, deposit - amountPaid);
@@ -474,4 +483,46 @@ async function creditInstalment({ supabaseUrl, serviceKey, reference, isSuccess,
   }
 
   return { success: true, amountPaid, status, confirmed: amountPaid >= deposit, fullyPaid: nowFull };
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Host notification for a confirmed stay: an email (the durable
+   record) and a push. The host's address is read from Auth with the
+   service key; nothing here comes from the payment payload.
+   ══════════════════════════════════════════════════════════════ */
+async function notifyHostOfBooking({ supabaseUrl, serviceKey, booking, amountPaid, origin }) {
+  const H = { apikey: serviceKey, Authorization: 'Bearer ' + serviceKey };
+  const listingId = booking.listing_id || booking.apartment_id;
+  const lr = await fetch(`${supabaseUrl}/rest/v1/listings?id=eq.${encodeURIComponent(listingId)}&select=title,partner_id,host_id&limit=1`, { headers: H });
+  const listing = lr.ok ? (await lr.json())[0] : null;
+  const hostId = booking.host_id || listing?.host_id || listing?.partner_id;
+  if (!hostId) return;
+  const ur = await fetch(`${supabaseUrl}/auth/v1/admin/users/${encodeURIComponent(hostId)}`, { headers: H });
+  const user = ur.ok ? await ur.json() : null;
+  const email = user?.email;
+  const name = user?.user_metadata?.full_name || user?.user_metadata?.first_name || '';
+  if (email) {
+    await sendTemplate({
+      template: 'partnerBooking', to: email, userId: hostId,
+      dedupeKey: `host-booking:${booking.payment_reference}`,
+      data: {
+        host: { email, name },
+        listing: { name: listing?.title || booking.listing_name || booking.apartment_name },
+        booking: {
+          reference: booking.payment_reference, guestName: booking.guest_name,
+          checkIn: booking.checkin_date, checkOut: booking.checkout_date,
+          hostPayout: Number(booking.stay_total || 0),
+          paidSoFar: amountPaid, total: Number(booking.grand_total || 0),
+        },
+      },
+    });
+  }
+  fetch(`${origin}/api/push-send`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-admin-secret': process.env.PUSH_ADMIN_SECRET || '' },
+    body: JSON.stringify({ user_id: hostId, persist: true, kind: 'booking',
+      title: 'New booking confirmed 🏠',
+      body: `${booking.guest_name || 'A guest'} booked ${listing?.title || 'your stay'}, ${booking.checkin_date} to ${booking.checkout_date}.`,
+      url: '/partner-bookings.html' }),
+  }).catch(() => {});
 }

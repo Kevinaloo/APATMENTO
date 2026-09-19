@@ -99,32 +99,40 @@
   function focusForm(root, units, actions) {
     if (!root || units.length < 2 || root.dataset.ccFocus) return;
     root.dataset.ccFocus = 'true'; let at = 0, overview = false;
+    /* A unit whose every child is hidden is not a card. Sections a service
+       does not use (the stays-only 3D Tour offer, say) must not show up as
+       an empty "Card 2 of 3". Worked out on every render, because the
+       same panel serves every service. */
+    const shown = () => units.filter(u => Array.from(u.children).some(c => !c.hidden && c.style.display !== 'none'));
     const top = make('div','cc-form-top'), progress=make('span'), toggle=button('See full form','cc-text',()=>{overview=!overview;render();});
     top.append(progress,toggle); root.prepend(top);
     const nav=make('div','cc-form-nav');
-    const back=button('← Back','cc-undo',()=>{if(overview){overview=false;at=units.length-1;}else if(at>0)at--;render(true);});
+    const back=button('← Back','cc-undo',()=>{if(overview){overview=false;at=shown().length-1;}else if(at>0)at--;render(true);});
     const next=button('Proceed →','cc-proceed',()=>{
-      const invalid = Array.from(units[at].querySelectorAll('input,select,textarea')).find(el=>!el.disabled && !el.checkValidity());
+      const live = shown();
+      const invalid = Array.from((live[at]||units[0]).querySelectorAll('input,select,textarea')).find(el=>!el.disabled && !el.checkValidity());
       if(invalid){invalid.reportValidity();invalid.focus();return;}
-      if(at < units.length-1) at++; else overview=true;
+      if(at < live.length-1) at++; else overview=true;
       render(true);
     }); nav.append(back,next); root.append(nav);
     function render(focus) {
-      units.forEach((u,i)=>u.classList.toggle('cc-concealed',!overview && i!==at));
+      const live = shown().length ? shown() : units;
+      if (at > live.length-1) at = live.length-1;
+      units.forEach(u=>u.classList.toggle('cc-concealed',!overview && u!==live[at]));
       actions?.classList.toggle('cc-concealed',!overview);
       root.classList.add('cc-form'); root.classList.toggle('cc-overview',overview);
-      progress.textContent=overview?'Review your details':`Card ${at+1} of ${units.length}`;
+      progress.textContent=overview?'Review your details':`Card ${at+1} of ${live.length}`;
       toggle.textContent=overview?'One card at a time':'See full form';
-      back.disabled=!overview&&at===0; next.hidden=overview; next.textContent=at===units.length-1?'Review details →':'Proceed →';
-      if(focus){const target=overview?top:units[at]; target.tabIndex=-1; target.focus({preventScroll:true}); target.scrollIntoView({behavior:reduced()?'auto':'smooth',block:'nearest'});animate(target,[{opacity:.4,transform:'translateY(12px)'},{opacity:1,transform:'none'}]);}
+      back.disabled=!overview&&at===0; next.hidden=overview; next.textContent=at===live.length-1?'Review details →':'Proceed →';
+      if(focus){const target=overview?top:live[at]; target.tabIndex=-1; target.focus({preventScroll:true}); target.scrollIntoView({behavior:reduced()?'auto':'smooth',block:'nearest'});animate(target,[{opacity:.4,transform:'translateY(12px)'},{opacity:1,transform:'none'}]);}
       // Leaflet observes container resizing after a card becomes visible.
       window.dispatchEvent(new Event('resize'));
       root.dispatchEvent(new CustomEvent('cc:form-view',{bubbles:true}));
     }
     const form=root.matches('form')?root:root.closest('form');
     form?.addEventListener('submit', e=>{if(!overview && !root.closest('.panel:not(.on)')){e.preventDefault();e.stopImmediatePropagation();next.click();}},true);
-    root.addEventListener('invalid', e=>{const n=units.findIndex(u=>u.contains(e.target));if(n>=0){at=n;overview=false;render();}},true);
-    render(); return {review:()=>{overview=true;render();}};
+    root.addEventListener('invalid', e=>{const n=shown().findIndex(u=>u.contains(e.target));if(n>=0){at=n;overview=false;render();}},true);
+    render(); const api={review:()=>{overview=true;render();},refresh:()=>render()}; root._ccForm=api; return api;
   }
 
   function selectChoices(id) {

@@ -146,6 +146,8 @@ test('guest mail leaves connect@, partner mail leaves partnership@', () => {
     partnerUpdate: 'partner', listingClaim: 'partner', listingTransferSent: 'partner',
     listingTransferDecision: 'partner', partnerListingSubmitted: 'partner',
     agentEscalation: 'partner',
+    /* Cabana 3D Tour upgrade: the desk alert and the host's receipt */
+    tour3dRequestTeam: 'partner', tour3dRequestHost: 'partner',
     /* Flight desk — added with the Flight Desk feature; five templates, two audiences */
     flightRequested: 'guest', flightQuoted: 'guest', flightTicketed: 'guest',
     flightDeskAlert: 'partner', flightChosen: 'partner',
