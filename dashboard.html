@@ -2697,10 +2697,19 @@ function onSession(st){
   }, 'greeting');
 
   /* Screen routing.
-     Priority: 1) URL ?role= param   2) localStorage apa-last-role   3) DB last_role
-     apa-session.js already resolves this priority chain into st.role — trust it.
-     Using st.role means: switching to partner (which sets localStorage) persists
-     across page loads, and the ?role=partner URL param also works correctly.     */
+     apa-session.js resolves role with priority: URL param → localStorage → DB.
+     We trust st.role for signed-in users. For signed-out users who explicitly
+     clicked "Switch to Partner" (URL has ?role=partner), we send them to sign in
+     first so they can come back as a partner.                                    */
+  var urlRoleParam = '';
+  try { urlRoleParam = new URLSearchParams(location.search).get('role') || ''; } catch(e) {}
+
+  // Not signed in but explicitly asked for partner view → go sign in first
+  if(st.status !== 'user' && urlRoleParam === 'partner'){
+    window.location.replace('auth.html?role=partner&next=' + encodeURIComponent('dashboard.html?role=partner'));
+    return;
+  }
+
   var role = (st.status === 'user' && st.role === 'partner') ? 'partner' : 'guest';
   _try(function(){ showScreen(role); }, 'screen');
 
