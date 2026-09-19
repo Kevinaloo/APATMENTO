@@ -259,7 +259,8 @@ function lanes(){
   var done=by(['completed','declined','expired','cancelled']).filter(function(o){ return Date.now()-new Date(o.requested_at).getTime()<24*3600e3; });
   return {
     new:by(['requested']).sort(function(a,b){return new Date(a.expires_at)-new Date(b.expires_at);}),
-    cooking:by(['accepted']).sort(function(a,b){return new Date(a.eta_ready_at||0)-new Date(b.eta_ready_at||0);}),
+    /* awaiting_payment orders sit in cooking — kitchen is waiting for the diner to confirm */
+    cooking:by(['awaiting_payment','accepted']).sort(function(a,b){return new Date(a.eta_ready_at||0)-new Date(b.eta_ready_at||0);}),
     out:by(['ready','on_the_way']),
     done:done
   };
@@ -332,7 +333,9 @@ function card(o){
   if(o.note) h+='<div class="note">'+esc(o.note)+'</div>';
   if(o.mode==='delivery'&&o.address&&live){
     var map=o.lat&&o.lng?'https://www.google.com/maps/dir/?api=1&destination='+o.lat+','+o.lng:'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(o.address);
-    h+='<div class="addr">'+mk('pin')+'<span>'+esc(o.address)+(o.address_note?' &middot; '+esc(o.address_note):'')+' &middot; <a href="'+attr(map)+'" target="_blank" rel="noopener">Map</a></span></div>';
+    /* Highlight address prominently on new and awaiting_payment orders so kitchen can set delivery fee */
+    var addrStyle=newO||o.status==='awaiting_payment'?' style="background:rgba(127,181,217,.08);border:1px solid rgba(127,181,217,.25);border-radius:8px;padding:8px 10px;margin-top:2px"':'';
+    h+='<div class="addr"'+addrStyle+'>'+mk('pin')+'<span>'+(newO?'<b style="color:#7FB5D9">Deliver to: </b>':'')+esc(o.address)+(o.address_note?' &middot; '+esc(o.address_note):'')+' &middot; <a href="'+attr(map)+'" target="_blank" rel="noopener">Map</a></span></div>';
   }
   if(o.table_label) h+='<div class="addr">'+mk('pin')+'<span>'+esc(o.table_label)+'</span></div>';
   if(o.status==='on_the_way'){
@@ -342,7 +345,10 @@ function card(o){
     h+='<div class="tot"><span>'+esc(Orders.say(o.status,o.mode))+(o.decline_reason?' &middot; '+esc(o.decline_reason):'')+(o.rating?' &middot; '+o.rating+'★':'')+'</span><b>'+esc(money(o.total,o.currency))+'</b></div></div>';
     return h+'</article>';
   }
-  h+='<div class="tot"><span>'+o.item_count+' item'+(o.item_count===1?'':'s')+' &middot; '+(o.pay_method==='cash'?'Cash':'M-Pesa')+' on handover</span><b>'+esc(money(o.total,o.currency))+'</b></div></div>';
+  var totLabel=o.status==='awaiting_payment'
+    ?'<span style="color:#7FB5D9">Awaiting diner payment confirmation</span>'
+    :'<span>'+o.item_count+' item'+(o.item_count===1?'':'s')+' &middot; '+(o.pay_method==='cash'?'Cash':'M-Pesa')+' on handover</span>';
+  h+='<div class="tot">'+totLabel+'<b>'+esc(money(o.total,o.currency))+'</b></div></div>';
   h+='<div class="oc-a">'+actions(o)+'</div></article>';
   return h;
 }
@@ -350,6 +356,8 @@ function actions(o){
   var id=attr(o.id);
   if(o.status==='requested') return '<button class="btn btn-go" type="button" data-act="accept" data-o="'+id+'">Accept</button>'
     +'<button class="btn btn-bad" type="button" data-act="decline" data-o="'+id+'">Decline</button>';
+  if(o.status==='awaiting_payment') return '<div class="full" style="padding:10px 0 4px;font-size:12.5px;color:#7FB5D9;text-align:center">Waiting for '+esc(o.diner_name)+' to confirm payment of '+esc(money(o.total,o.currency))+'. Cooking begins once they confirm.</div>'
+    +'<button class="btn btn-line full" type="button" data-act="cancel_payment" data-o="'+id+'">Cancel this order</button>';
   if(o.status==='accepted'){
     var a='';
     if(o.mode==='dine_in') a+='<button class="btn btn-fire full" type="button" data-act="served" data-o="'+id+'">Served at the table</button>';
@@ -399,6 +407,7 @@ function act(a,o,btn){
   if(!o) return;
   if(a==='accept') return acceptSheet(o);
   if(a==='decline') return declineSheet(o);
+  if(a==='cancel_payment') return cancelSheet(o);
   if(a==='dispatch') return dispatchSheet(o);
   if(a==='collect') return codeSheet(o);
   if(a==='share') return shareRider(o);
@@ -426,15 +435,45 @@ function acceptSheet(o){
   var k=kitchen(), base=k.prep_mins||20;
   if(o.mode==='delivery'&&k.delivery_mins) base=Math.max(base,10);
   var opts=[10,15,20,30,45,60], pick=opts.reduce(function(a,b){return Math.abs(b-base)<Math.abs(a-base)?b:a;});
-  sheet('<h3 id="sheetH">Accept '+esc(o.ref)+'</h3><p class="sub">How long until it is '+(o.mode==='delivery'?'packed for the rider':o.mode==='pickup'?'ready to collect':'on the table')+'? The diner sees this time.'
-    +(o.scheduled_for?' They want it for <b style="color:var(--bone)">'+clock(o.scheduled_for)+'</b>.':'')+'</p>'
+  var isDelivery=o.mode==='delivery';
+  /* For delivery, show address prominently and ask for delivery fee */
+  var addrHtml='';
+  if(isDelivery&&o.address){
+    var map=o.lat&&o.lng?'https://www.google.com/maps/dir/?api=1&destination='+o.lat+','+o.lng:'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(o.address);
+    addrHtml='<div style="padding:10px 12px;border-radius:8px;background:rgba(127,181,217,.1);border:1px solid rgba(127,181,217,.3);margin-bottom:14px;font-size:13.5px;line-height:1.55">'
+      +'<div style="font-family:var(--fm);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#7FB5D9;margin-bottom:5px">Deliver to</div>'
+      +'<b style="color:var(--bone)">'+esc(o.address)+'</b>'+(o.address_note?'<br><span style="color:var(--bone-48)">'+esc(o.address_note)+'</span>':'')
+      +' &ensp;<a href="'+attr(map)+'" target="_blank" rel="noopener" style="color:#7FB5D9;font-size:11px;font-family:var(--fm)">Open map</a></div>';
+  }
+  var feeHtml=isDelivery
+    ?'<div style="margin-top:14px"><label for="dlvFee">Delivery fee (KES)<br><small style="color:var(--bone-48);font-weight:400">Set based on '+esc(o.diner_name)+'\'s address. Diner confirms before cooking starts.</small></label>'
+      +'<input type="number" id="dlvFee" inputmode="decimal" min="0" step="1" placeholder="0 for free" style="margin-top:8px"/>'
+      +'<p class="help">Enter 0 if delivery is free. The diner sees: food '+esc(money(o.subtotal||o.total,o.currency))+' + your fee = total to pay.</p></div>'
+    :'';
+  sheet('<h3 id="sheetH">Accept '+esc(o.ref)+'</h3>'
+    +(isDelivery?'<p class="sub">Check the address and set a delivery fee. The diner confirms the total before cooking starts.</p>':'<p class="sub">How long until it is '+(o.mode==='pickup'?'ready to collect':'on the table')+'? The diner sees this time.'+(o.scheduled_for?' They want it for <b style="color:var(--bone)">'+clock(o.scheduled_for)+'</b>.':'')+'</p>')
+    +addrHtml
+    +(isDelivery?'<p class="sub" style="margin-bottom:8px">How long to pack? The diner sees this.</p>':'')
     +'<div class="chips" id="etaC">'+opts.map(function(m){return '<button type="button" data-m="'+m+'" class="'+(m===pick?'on':'')+'">'+m+' min</button>';}).join('')+'</div>'
-    +'<div class="sheet-acts"><button class="btn btn-line" type="button" data-close>Back</button><button class="btn btn-go" type="button" id="accGo">Accept &middot; '+pick+' min</button></div>');
-  document.querySelectorAll('#etaC button').forEach(function(b){ b.onclick=function(){ pick=+b.dataset.m; document.querySelectorAll('#etaC button').forEach(function(x){x.classList.toggle('on',x===b);}); document.getElementById('accGo').innerHTML='Accept &middot; '+pick+' min'; }; });
+    +feeHtml
+    +'<div class="sheet-acts"><button class="btn btn-line" type="button" data-close>Back</button><button class="btn btn-go" type="button" id="accGo">'+(isDelivery?'Accept &amp; quote fee':'Accept &middot; '+pick+' min')+'</button></div>');
+  document.querySelectorAll('#etaC button').forEach(function(b){ b.onclick=function(){ pick=+b.dataset.m; document.querySelectorAll('#etaC button').forEach(function(x){x.classList.toggle('on',x===b);}); if(!isDelivery) document.getElementById('accGo').innerHTML='Accept &middot; '+pick+' min'; }; });
   document.getElementById('accGo').onclick=function(){
-    var g=this; busy(g,true); BUSY=true;
-    Orders.rpc('food_kitchen_respond',{p_order:o.id,p_accept:true,p_eta:pick}).then(function(n){
-      BUSY=false; swap(n); closeSheet(); LANE='cooking'; render(); ring(); toast('Accepted. '+o.diner_name+' has been told '+clock(n.eta_ready_at)+'.');
+    var g=this;
+    var fee=0;
+    if(isDelivery){
+      var fv=document.getElementById('dlvFee').value.trim();
+      fee=fv===''?0:Math.round(Number(fv)||0);
+      if(isNaN(fee)||fee<0){ toast('Enter a delivery fee, or 0 for free.',true); return; }
+    }
+    busy(g,true); BUSY=true;
+    Orders.rpc('food_kitchen_respond',{p_order:o.id,p_accept:true,p_eta:pick,p_delivery_fee:isDelivery?fee:null}).then(function(n){
+      BUSY=false; swap(n); closeSheet(); LANE='cooking'; render(); ring();
+      if(n.status==='awaiting_payment'){
+        toast(o.diner_name+' is confirming the total ('+money(n.total,n.currency)+'). Cooking begins once they confirm.');
+      } else {
+        toast('Accepted. '+o.diner_name+' has been told '+clock(n.eta_ready_at)+'.');
+      }
     }).catch(function(e){ BUSY=false; busy(g,false); closeSheet(); toast(Orders.explain(e),true); load(false); });
   };
 }

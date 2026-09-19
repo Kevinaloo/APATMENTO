@@ -319,6 +319,17 @@ function headline(o){
     l='Your order is on their screen. They answer with a time, or tell you why they can&rsquo;t. <b>Nothing is charged</b> if they don&rsquo;t answer in time.';
     plain='Waiting for '+o.kitchen.name;
     if(o.scheduled_for) l='You asked for it '+esc(when(o.scheduled_for))+'. '+l;
+  } else if(s==='awaiting_payment'){
+    tone='good';
+    var fee=Number(o.kitchen_delivery_fee||o.delivery_fee||0);
+    var sub=Number(o.subtotal||0);
+    var tot=Number(o.total||0);
+    h=k+' accepted. <em>Confirm your total to begin cooking.</em>';
+    l='<b>Food: '+esc(money(sub,o.currency))+'</b>';
+    if(fee>0) l+=' + Delivery: <b>'+esc(money(fee,o.currency))+'</b> = Total to pay '+k+': <b>'+esc(money(tot,o.currency))+'</b>.';
+    else l+=' — delivery is free. Total to pay '+k+': <b>'+esc(money(tot,o.currency))+'</b>.';
+    l+=' Confirm to start cooking, or switch to collecting it yourself.';
+    plain=k+' accepted — confirm payment to begin';
   } else if(s==='accepted'){
     h='Accepted. <em>Cooking now.</em>';
     l=k+' said yes'+(o.eta_ready_at?' and expects it ready around <b>'+clock(o.eta_ready_at)+'</b>':'')+'. '
@@ -364,18 +375,23 @@ function when(iso){
 }
 function steps(o){
   var m=o.mode, s=o.status;
-  var list=[['Sent',o.requested_at],['Accepted',o.accepted_at]];
+  /* For delivery orders awaiting payment, show a 'Confirm' step between Sent and Cooking */
+  var list=[['Sent',o.requested_at]];
+  if(s==='awaiting_payment'||o.payment_confirmed_at){
+    list.push(['Confirm',o.payment_confirmed_at||null]);
+  }
+  list.push(['Cooking',o.accepted_at]);
   if(m==='delivery') list.push(['Packed',o.ready_at],['On the way',o.dispatched_at],['Delivered',o.completed_at]);
   else if(m==='pickup') list.push(['Ready',o.ready_at],['Collected',o.completed_at]);
   else list.push(['Served',o.completed_at]);
-  var order=['requested','accepted','ready','on_the_way','completed'];
+  var order=['requested','awaiting_payment','accepted','ready','on_the_way','completed'];
   var idx=order.indexOf(s);
   var reached=list.map(function(x){return !!x[1];});
   if(['declined','expired','cancelled'].indexOf(s)>-1){
     return [['Sent',o.requested_at,'done'],[s==='declined'?'Declined':s==='expired'?'Lapsed':'Cancelled',o.declined_at||o.cancelled_at||o.expires_at,'done']];
   }
   var nowAt=reached.lastIndexOf(true)+1;
-  return list.map(function(x,i){ return [x[0],x[1], reached[i]?'done':(i===nowAt&&idx<4?'now':'')]; });
+  return list.map(function(x,i){ return [x[0],x[1], reached[i]?'done':(i===nowAt&&idx<5?'now':'')]; });
 }
 
 /* ═══════ DRAW ═══════ */
@@ -421,10 +437,12 @@ function render(soft){
     }).join('')+'</div>'
     +'<div class="card-body" style="padding-top:6px">'
     +'<div class="sum"><span>Food</span><b>'+esc(money(o.subtotal,o.currency))+'</b></div>'
-    +(o.mode==='delivery'?'<div class="sum"><span>Delivery</span><b'+(Number(o.delivery_fee)?'':' class="free"')+'>'+(Number(o.delivery_fee)?esc(money(o.delivery_fee,o.currency)):'Free')+'</b></div>':'')
+    +(o.mode==='delivery'?'<div class="sum"><span>Delivery</span><b'+(Number(o.delivery_fee||o.kitchen_delivery_fee)?'':' class="free"')+'>'+(Number(o.delivery_fee||o.kitchen_delivery_fee)?esc(money(o.delivery_fee||o.kitchen_delivery_fee,o.currency)):'Free')+'</b></div>':'')
     +'<div class="sum"><span>Cabana fee</span><b class="free">'+esc(o.currency)+' 0</b></div>'
     +(['declined','expired','cancelled'].indexOf(o.status)>-1
       ?'<div class="sum big"><span>Nothing charged</span><b style="text-decoration:line-through;opacity:.5">'+esc(money(o.total,o.currency))+'</b></div>'
+      :o.status==='awaiting_payment'
+      ?'<div class="sum big"><span>Confirm to pay '+esc(o.kitchen.name)+'</span><b>'+esc(money(o.total,o.currency))+'</b></div>'
       :'<div class="sum big"><span>'+(o.status==='completed'?'Paid to ':'You pay ')+esc(o.kitchen.name)+'</span><b>'+esc(money(o.total,o.currency))+'</b></div>')
     +(o.note?'<div class="flag" style="margin-top:12px">'+mk('info',1.6)+'<span><b>Your note:</b> '+esc(o.note)+'</span></div>':'')
     +'</div></section>';
@@ -469,6 +487,13 @@ function heroActs(o){
   if(o.status==='requested'){
     a+='<button class="btn btn-line" type="button" id="cancelBtn">Cancel request</button>';
   }
+  if(o.status==='awaiting_payment'){
+    var tot=esc(money(o.total,o.currency));
+    a+='<button class="btn btn-fire" type="button" id="confirmPayBtn">Confirm &amp; pay '+tot+'</button>';
+    if(o.kitchen&&o.kitchen.serves_pickup){
+      a+='<button class="btn btn-line" type="button" id="switchPickupBtn">Switch to collection instead</button>';
+    }
+  }
   if(Orders.isLive(o.status)&&'Notification' in window&&Notification.permission==='default'){
     a+='<button class="btn btn-ghost" type="button" id="pingBtn">'+mk('bell',1.6)+'Alert me</button>';
   }
@@ -482,6 +507,9 @@ function paintClocks(){
   var fg=document.getElementById('ringFg'), c=document.getElementById('ringC'); if(!fg||!c) return;
   var now=Date.now()-(o._skew||0); /* the server's clock, not the phone's */
   var C=326.7, frac=0, big='', small='';
+  if(o.status==='awaiting_payment'){
+    frac=0.5; c.innerHTML=mk('check',1.6); fg.style.strokeDashoffset=C*(1-frac); return;
+  }
   if(o.status==='requested'){
     var a=new Date(o.requested_at).getTime(), b=new Date(o.expires_at).getTime();
     var left=Math.max(0,b-now); frac=1-left/Math.max(1,b-a);
@@ -591,7 +619,24 @@ function rating(o){
 function payCard(o){
   if(['declined','expired','cancelled'].indexOf(o.status)>-1) return '';
   var k=o.kitchen, done=o.status==='completed';
-  var h='<section class="card pay"><div class="card-head"><h3>'+(done?'Paid on handover':'Paying '+esc(k.name))+'</h3><span class="hint">'+(o.pay_method==='cash'?'Cash':'M-Pesa')+'</span></div><div class="card-body">';
+  var awaitingPay=o.status==='awaiting_payment';
+
+  var titleStr=done?'Paid to '+esc(k.name):awaitingPay?'Confirm your total':'Paying '+esc(k.name);
+  var h='<section class="card pay"><div class="card-head"><h3>'+titleStr+'</h3><span class="hint">'+(o.pay_method==='cash'?'Cash':'M-Pesa')+'</span></div><div class="card-body">';
+
+  if(awaitingPay){
+    /* Show the breakdown so the customer can verify before confirming */
+    var fee=Number(o.kitchen_delivery_fee||o.delivery_fee||0);
+    h+='<div class="row"><span>Food</span><b>'+esc(money(o.subtotal,o.currency))+'</b></div>';
+    if(o.mode==='delivery'){
+      h+='<div class="row"><span>Delivery fee</span><b>'+(fee>0?esc(money(fee,o.currency)):'Free')+'</b></div>';
+    }
+    h+='<div class="row" style="border-top:1px solid var(--rule);padding-top:10px;margin-top:4px"><span style="font-weight:600">Total to pay '+esc(k.name)+'</span><b style="font-size:20px">'+esc(money(o.total,o.currency))+'</b></div>';
+    h+='<p class="help">'+esc(k.name)+' set this delivery fee based on your address. Confirm to start cooking, or switch to collection.</p>';
+    h+='</div></section>';
+    return h;
+  }
+
   h+='<div class="row"><span>Amount</span><b>'+esc(money(o.total,o.currency))+'</b></div>';
   if(o.pay_method!=='cash'){
     if(o.status==='requested'){
@@ -605,7 +650,7 @@ function payCard(o){
       h+='<div class="row"><span>M-Pesa</span><span>The kitchen gives you their number on handover</span></div>';
     }
   }
-  h+='<p class="help">'+(done?'Cabana took nothing from this order.':'Pay only when the food is in your hands. Cabana takes nothing from this order &mdash; every shilling goes to '+esc(k.name)+'.')+'</p>';
+  h+='<p class="help">'+(done?'Cabana took nothing from this order.':'Pay '+esc(k.name)+' directly when your food arrives. Cabana takes nothing &mdash; every shilling goes straight to them.')+'</p>';
   h+='</div></section>';
   return h;
 }
@@ -641,6 +686,9 @@ function logLine(e,o){
   var who=e.actor==='kitchen'?o.kitchen.name:e.actor==='rider'?(o.rider_name||'Rider'):e.actor==='guest'?'You':'Cabana';
   switch(e.kind){
     case 'requested': return 'You sent the order';
+    case 'awaiting_payment': return o.kitchen.name+' accepted and set a delivery fee'+(e.note?' · '+e.note:'');
+    case 'payment_confirmed': return 'You confirmed payment · cooking begins';
+    case 'switched_pickup': return 'You switched to collection · cooking begins';
     case 'accepted': return o.kitchen.name+' accepted'+(e.note?' · '+e.note:'');
     case 'declined': return o.kitchen.name+' declined'+(e.note?' · '+(Orders.DECLINE[e.note]||e.note):'');
     case 'delayed': return o.kitchen.name+' needs '+(e.note||'a little longer');
@@ -664,6 +712,10 @@ function wireHero(o){
   var p=document.getElementById('pingBtn'); if(p) p.onclick=function(){
     Notification.requestPermission().then(function(r){ if(r==='granted') toast('We will alert you on this device while this page is open.'); p.remove(); });
   };
+  var cp=document.getElementById('confirmPayBtn');
+  if(cp) cp.onclick=function(){ confirmPay(o,'confirm'); };
+  var sp=document.getElementById('switchPickupBtn');
+  if(sp) sp.onclick=function(){ askSwitchPickup(o); };
 }
 function wire(o){
   wireHero(o);
@@ -717,6 +769,31 @@ function verify(o,code){
   }).catch(function(e){ if(go) busy(go,false); toast(Orders.explain(e),true); });
 }
 function busy(b,on){ if(!b) return; b.disabled=on; if(on){ b._h=b.innerHTML; b.innerHTML='<span class="spin"></span>'; } else if(b._h) b.innerHTML=b._h; }
+
+function confirmPay(o, action){
+  var btn=document.getElementById(action==='confirm'?'confirmPayBtn':'switchPickupBtn');
+  if(btn) busy(btn,true);
+  Orders.confirmPayment(o.ref,Orders.tokenFor(o.ref),action).then(function(n){
+    ORDERS[o.ref]=n; render(); schedule();
+    if(action==='confirm') toast(o.kitchen.name+' is cooking. Pay them '+money(n.total,n.currency)+' on arrival.');
+    else toast('Switched to collection. '+o.kitchen.name+' is cooking your order.');
+    chime();
+  }).catch(function(e){
+    if(btn) busy(btn,false);
+    toast(Orders.explain(e),true);
+    load(o.ref).then(function(){ render(); schedule(); });
+  });
+}
+
+function askSwitchPickup(o){
+  sheet('<h3 id="sheetH">Switch to collection?</h3>'
+    +'<p class="sub">You collect from '+esc(o.kitchen.name)+' instead of getting it delivered. The delivery fee is dropped — you pay <b>'+esc(money(o.subtotal,o.currency))+'</b> to the kitchen.</p>'
+    +'<div class="sheet-acts"><button class="btn btn-line" type="button" data-close>Keep delivery</button>'
+    +'<button class="btn btn-fire" type="button" id="swGo">Switch to collection</button></div>');
+  document.getElementById('swGo').onclick=function(){
+    closeSheet(); confirmPay(o,'switch_pickup');
+  };
+}
 
 function askCancel(o){
   var reasons=['Ordered by mistake','Taking too long','Changed my mind','Ordering somewhere else'];

@@ -114,12 +114,20 @@
   /* ═══════════════════════════════════════════════════════════════
      WORDS
      ═══════════════════════════════════════════════════════════════ */
-  api.LIVE = ['requested', 'accepted', 'ready', 'on_the_way'];
+  api.confirmPayment = function (ref, token, action) {
+    return rpc('food_order_confirm_payment', {
+      p_ref: ref, p_token: token || api.tokenFor(ref),
+      p_action: action || 'confirm'
+    });
+  };
+
+  api.LIVE = ['requested', 'awaiting_payment', 'accepted', 'ready', 'on_the_way'];
   api.isLive = function (s) { return api.LIVE.indexOf(s) > -1; };
 
   api.say = function (status, mode) {
     switch (status) {
       case 'requested': return 'Waiting for the kitchen';
+      case 'awaiting_payment': return 'Kitchen accepted — confirm your total';
       case 'accepted': return 'Accepted · cooking';
       case 'ready': return mode === 'pickup' ? 'Ready to collect' : mode === 'dine_in' ? 'Coming to your table' : 'Packed · rider next';
       case 'on_the_way': return 'On the way';
@@ -166,14 +174,16 @@
     sign_in_required: 'Sign in to run your kitchen.',
     already_answered: 'This order was already answered.',
     reason_required: 'Tell the diner why, so they can decide what to do next.',
-    wrong_step: 'That step does not apply to this order any more. Refreshing.',
-    not_delivery: 'Only delivery orders go out with a rider.',
-    rider_required: 'Add the rider’s name.',
-    not_dine_in: 'Only eat-in orders are marked as served.',
-    use_served: 'Mark eat-in orders as served.',
-    not_your_kitchen: 'This kitchen is not on your account.',
-    unknown_action: 'That action is not available.',
-    offline: 'You appear to be offline. Check your connection and try again.'
+    wrong_step: ‘That step does not apply to this order any more. Refreshing.’,
+    not_delivery: ‘Only delivery orders go out with a rider.’,
+    rider_required: ‘Add the rider’s name.’,
+    not_dine_in: ‘Only eat-in orders are marked as served.’,
+    use_served: ‘Mark eat-in orders as served.’,
+    not_your_kitchen: ‘This kitchen is not on your account.’,
+    unknown_action: ‘That action is not available.’,
+    not_awaiting_payment: ‘This order is no longer waiting for payment confirmation.’,
+    action_invalid: ‘That action is not recognised.’,
+    offline: ‘You appear to be offline. Check your connection and try again.’
   };
   api.explain = function (e) {
     var c = (e && (e.code || e.message)) || '';
