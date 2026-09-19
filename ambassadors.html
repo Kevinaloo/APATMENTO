@@ -1,118 +1,291 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-  <meta name="theme-color" content="#ffc53d"/>
-  <meta name="robots" content="index, follow, max-image-preview:large"/>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#07160f">
+  <meta name="robots" content="index, follow, max-image-preview:large">
   <title>Cabana Ambassadors — The local effect.</title>
-  <meta name="description" content="Know the people. Open the doors. Become the local connection bringing remarkable hosts and operators to Cabana. An invitation-only ambassador programme."/>
-  <link rel="canonical" href="https://cabana.africa/ambassadors"/>
-  <meta property="og:title" content="Cabana Ambassadors — The local effect."/>
-  <meta property="og:description" content="Good people. Great places. It starts with your introduction."/>
-  <meta property="og:image" content="https://cabana.africa/assets/programmes/ambassador-editorial.png"/>
-  <meta property="og:url" content="https://cabana.africa/ambassadors"/>
-  <link rel="preload" href="/assets/fonts/ibm-plex-sans-0.woff2" as="font" type="font/woff2" crossorigin/>
-  <link rel="preload" href="/assets/fonts/bricolage-grotesque-0.woff2" as="font" type="font/woff2" crossorigin/>
-  <link rel="stylesheet" href="/programme-fonts.css?v=20260917-3"/>
-  <link rel="stylesheet" href="/apa-ambassador.css"/>
-  <link rel="stylesheet" href="/cabana-programmes.css?v=20260917-3"/>
-  <link rel="stylesheet" href="/ambassador-experience.css?v=20260917-3"/>
+  <meta name="description" content="Know the people. Open the doors. Become the local connection bringing remarkable hosts and operators to Cabana. An invitation-only ambassador programme.">
+  <link rel="canonical" href="https://cabana.africa/ambassadors">
+  <meta property="og:title" content="Cabana Ambassadors — The local effect.">
+  <meta property="og:description" content="Good people. Great places. It starts with your introduction.">
+  <meta property="og:image" content="https://cabana.africa/assets/programmes/ambassador-share.jpg">
+  <meta property="og:url" content="https://cabana.africa/ambassadors">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="/favicon.ico">
+  <link rel="preload" href="/assets/fonts/ibm-plex-sans-0.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/assets/fonts/fraunces-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" as="image" href="/assets/programmes/ambassador-editorial-800.webp" imagesrcset="/assets/programmes/ambassador-editorial-540.webp 540w, /assets/programmes/ambassador-editorial-800.webp 800w" imagesizes="(max-width:980px) 88vw, 38vw" fetchpriority="high">
+  <link rel="stylesheet" href="/apa-ambassador.css">
+  <link rel="stylesheet" href="/programme-fonts.css?v=20260919-1">
+  <link rel="stylesheet" href="/cabana-programmes.css?v=20260919-1">
+  <link rel="stylesheet" href="/ambassador-experience.css?v=20260919-1">
+  <script>document.documentElement.classList.add('pg-enhanced');</script>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Cabana Ambassadors — The local effect.","description":"The invitation-only Cabana ambassador programme: introduce hosts, prepare listings and earn commission on eligible bookings.","url":"https://cabana.africa/ambassadors","isPartOf":{"@type":"WebSite","name":"Cabana","url":"https://cabana.africa/"}}</script>
+
 </head>
 <body class="programme-page" data-programme="ambassador">
   <a class="pg-skip" href="#main">Skip to content</a>
+  <div class="pg-progress" aria-hidden="true"></div>
+  <div class="pg-grain" aria-hidden="true"></div>
+
   <header class="pg-nav">
-    <a class="pg-brand" href="/" aria-label="Cabana home">cabana<span aria-hidden="true">↗</span></a>
-    <nav class="pg-nav-links" aria-label="Programmes">
+    <a class="pg-brand" href="/" aria-label="Cabana home">cabana<span aria-hidden="true">.</span><small>The local<br>effect</small></a>
+    <nav class="pg-nav-links" aria-label="Cabana programmes">
       <a href="/influencers.html">Creators</a><a href="/agents.html">Agents</a><a href="/ambassadors.html" aria-current="page">Ambassadors</a>
     </nav>
     <a class="pg-nav-cta" href="#access">Your invitation <span aria-hidden="true">↗</span></a>
   </header>
+
   <main id="main">
-    <section class="amb-hero pg-shell" aria-labelledby="hero-heading">
-      <div class="amb-edition"><p><span class="amb-signal" aria-hidden="true"></span> CABANA AMBASSADORS</p><span>LOCAL KNOWLEDGE. BIG POSSIBILITIES.</span></div>
-      <div class="amb-hero-grid">
+
+    <!-- ══ HERO ═══════════════════════════════════════════════════════════ -->
+    <section class="amb-hero" aria-labelledby="hero-heading">
+      <div class="amb-hero-bed" aria-hidden="true">
+        <div class="pg-ambient-still"></div>
+        <video class="pg-ambient" data-ambient muted loop playsinline preload="none" aria-hidden="true" tabindex="-1">
+          <source data-src="/assets/programmes/ambassador-ambient.webm" type="video/webm">
+          <source data-src="/assets/programmes/ambassador-ambient.mp4" type="video/mp4">
+        </video>
+        <canvas class="amb-ripples" data-amb-ripples width="1600" height="1000"></canvas>
+      </div>
+
+      <div class="pg-shell amb-hero-shell">
         <div class="amb-hero-copy">
-          <h1 id="hero-heading" class="pg-reveal">The local<br/><span>effect<span class="amb-title-dot">.</span></span></h1>
-          <p class="amb-hero-lede pg-reveal">You know a place.<br/>You know its people.<br/><strong>We should know them, too.</strong></p>
-          <div class="pg-actions pg-reveal"><a class="pg-button" href="#the-work">Find your part <span aria-hidden="true">↘</span></a><a class="pg-button-ghost" href="#access">I’m invited <span aria-hidden="true">↗</span></a></div>
-          <p class="amb-invitation-note">A programme for the people who open doors.</p>
+          <p class="pg-eyebrow pg-reveal"><span class="pg-dot"></span> Cabana ambassadors · by invitation</p>
+          <h1 id="hero-heading" class="amb-title">
+            <span class="pg-reveal">The local</span>
+            <span class="amb-title-row"><span class="amb-title-em pg-reveal">effect</span><em aria-hidden="true">.</em></span>
+          </h1>
+          <p class="amb-lede pg-reveal">You know a place. You know its people.<br><strong>We should know them, too.</strong></p>
+          <div class="pg-actions pg-reveal">
+            <a class="pg-button" href="#effect" data-magnetic="0.18">See the effect <span aria-hidden="true">↓</span></a>
+            <a class="pg-button-ghost" href="#access">I'm invited <span aria-hidden="true">↗</span></a>
+          </div>
+          <p class="pg-note amb-invitation-note">A programme for the people who open doors.</p>
         </div>
-        <div class="amb-connections" aria-label="One introduction connects people, places and possibilities">
-          <svg class="amb-connection-lines" viewBox="0 0 620 600" fill="none" aria-hidden="true"><path class="amb-route" d="M54 153C126 20 473 36 548 140S601 478 455 510 90 523 47 409 49 215 54 153Z"/><path class="amb-route amb-route-two" d="M41 428C-5 292 468 451 570 231S168 23 133 123"/><circle cx="54" cy="153" r="9"/><circle cx="455" cy="510" r="9"/><circle cx="570" cy="231" r="9"/></svg>
-          <span class="amb-map-label amb-map-label-one">A conversation</span>
-          <figure class="amb-postage">
-            <div class="amb-photo-window"><img src="/assets/programmes/ambassador-editorial.png" alt="Two women sharing a conversation in a sunlit courtyard" width="1024" height="1536" fetchpriority="high"/></div>
-            <figcaption><span>GOOD PEOPLE.<br/>GREAT PLACES.</span><span class="amb-postage-arrow" aria-hidden="true">↗</span></figcaption>
+
+        <div class="amb-hero-art pg-reveal" data-reveal="scale">
+          <figure class="amb-portal" data-tilt="5">
+            <img src="/assets/programmes/ambassador-editorial-800.webp"
+                 srcset="/assets/programmes/ambassador-editorial-540.webp 540w, /assets/programmes/ambassador-editorial-800.webp 800w"
+                 sizes="(max-width:980px) 88vw, 38vw"
+                 alt="Two women walking and talking through a sunlit courtyard"
+                 width="1086" height="1448" fetchpriority="high" decoding="async">
+            <figcaption><span>Good people.</span><strong>Great places.</strong></figcaption>
           </figure>
-          <span class="amb-map-label amb-map-label-two">A door opens</span>
-          <div class="amb-local-seal" aria-hidden="true"><svg viewBox="0 0 150 150"><defs><path id="amb-seal-ring" d="M75,75 m-55,0 a55,55 0 1,1 110,0 a55,55 0 1,1 -110,0"/></defs><circle cx="75" cy="75" r="74"/><text><textPath href="#amb-seal-ring">IT STARTS WITH YOU • IT STARTS WITH YOU • </textPath></text></svg><span>↗</span></div>
-          <div class="amb-field-note"><span>FIELD NOTE / 01</span><p>The best connection<br/>is a human one.</p><svg viewBox="0 0 132 24" aria-hidden="true"><path d="M3 15C35 4 91 3 128 11M19 21C51 12 99 13 115 17" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></div>
+          <div class="amb-seal" aria-hidden="true">
+            <svg viewBox="0 0 160 160" class="amb-seal-ring">
+              <defs><path id="amb-seal-path" d="M80,80 m-58,0 a58,58 0 1,1 116,0 a58,58 0 1,1 -116,0"/></defs>
+              <text><textPath href="#amb-seal-path">IT STARTS WITH YOU · IT STARTS WITH YOU · </textPath></text>
+            </svg>
+            <span class="amb-seal-core">↗</span>
+          </div>
+          <span class="amb-note-card" aria-hidden="true"><b>Field note 01</b>The best connection<br>is a human one.</span>
         </div>
       </div>
-      <div class="amb-hero-bottom"><span>AFRICA, THROUGH THE PEOPLE WHO KNOW IT.</span><a href="#the-work">THE FIELD GUIDE <span aria-hidden="true">↓</span></a></div>
     </section>
-    <div class="amb-ticker" aria-label="Local knowledge. Real introductions. New possibilities."><div class="amb-ticker-track"><span>Local knowledge <i>✳</i> Real introductions <i>✳</i> New possibilities <i>✳</i></span><span aria-hidden="true">Local knowledge <i>✳</i> Real introductions <i>✳</i> New possibilities <i>✳</i></span></div></div>
-    <section class="amb-work pg-shell" id="the-work" aria-labelledby="work-heading">
-      <div class="amb-work-heading pg-reveal"><p class="pg-kicker">01 / YOUR PART IN IT</p><h2 id="work-heading">Turn “I know<br/>someone” into<br/><span>something.</span></h2><p>Bring remarkable hosts and operators to Cabana. Help them get started. Stay connected to what happens next.</p></div>
-      <div class="amb-work-cards">
-        <article class="amb-work-card pg-reveal"><span class="amb-card-num">01 / CONNECT</span><span class="amb-card-symbol" aria-hidden="true">↗</span><h3>Make the<br/>introduction.</h3><p>That host. That hidden gem. Start with the people you believe in.</p></article>
-        <article class="amb-work-card pg-reveal"><span class="amb-card-num">02 / BUILD</span><span class="amb-card-symbol amb-star" aria-hidden="true">✳</span><h3>Get a good<br/>place ready.</h3><p>Prepare a listing with its owner. They accept it and take the keys.</p></article>
-        <article class="amb-work-card pg-reveal"><span class="amb-card-num">03 / GROW</span><span class="amb-card-symbol" aria-hidden="true">↗</span><h3>See your<br/>impact unfold.</h3><p>Track every handover and commission from eligible bookings.</p></article>
+
+    <div class="pg-marquee amb-marquee" aria-label="Local knowledge. Real introductions. New possibilities.">
+      <div class="pg-marquee-track">
+        <span>Local knowledge <i>✳</i> Real introductions <i>✳</i> New possibilities <i>✳</i> Doors that only you can open <i>✳</i></span>
       </div>
-    </section>
-    <section class="amb-journey-section" id="recognition" aria-labelledby="journey-heading">
+    </div>
+
+    <!-- ══ THE RIPPLE MAP ═════════════════════════════════════════════════ -->
+    <section class="amb-effect-section" id="effect" aria-labelledby="effect-title">
       <div class="pg-shell">
-        <div class="amb-journey-heading pg-reveal"><div><p class="pg-kicker">02 / FOLLOW THE CONNECTION</p><h2 id="journey-heading">One hello.<br/><span>A whole new chapter.</span></h2></div><p>Try the four steps.<br/>See how an introduction grows.</p></div>
-        <div class="amb-journey pg-reveal">
-          <div class="amb-journey-nav" role="group" aria-label="Explore the sample onboarding journey">
-            <button type="button" class="amb-stage" data-amb-stage="0" aria-pressed="true" aria-controls="amb-journey-detail"><span>01</span><strong>Make the connection</strong><span aria-hidden="true">↗</span></button>
-            <button type="button" class="amb-stage" data-amb-stage="1" aria-pressed="false" aria-controls="amb-journey-detail"><span>02</span><strong>Prepare the listing</strong><span aria-hidden="true">↗</span></button>
-            <button type="button" class="amb-stage" data-amb-stage="2" aria-pressed="false" aria-controls="amb-journey-detail"><span>03</span><strong>Hand over the keys</strong><span aria-hidden="true">↗</span></button>
-            <button type="button" class="amb-stage" data-amb-stage="3" aria-pressed="false" aria-controls="amb-journey-detail"><span>04</span><strong>Welcome the bookings</strong><span aria-hidden="true">↗</span></button>
-            <p class="amb-sample-note">An illustrative journey.<br/>No live bookings or earnings.</p>
+        <div class="amb-section-head pg-reveal">
+          <div>
+            <p class="pg-kicker">01 / What one introduction does</p>
+            <h2 id="effect-title">Drop a name.<br><span>Watch it travel.</span></h2>
           </div>
-          <div class="amb-journey-card" id="amb-journey-detail" data-active-stage="0" aria-live="polite" aria-atomic="true">
-            <div class="amb-example-top"><span>YOUR FIELD GUIDE</span><span id="amb-example-number">01 / 04</span></div>
-            <div class="amb-journey-mark" id="amb-example-mark" aria-hidden="true">↗</div>
-            <p class="amb-example-label" id="amb-example-label">The first hello</p>
-            <h3 id="amb-example-title">A connection,<br/>recorded.</h3>
-            <p id="amb-example-copy">Reserve your introduction in the dashboard. You have 45 days to help them take the next step.</p>
-            <div class="amb-example-status"><span class="amb-signal" aria-hidden="true"></span><span id="amb-example-status">Reserved · No earnings yet</span></div>
-            <div class="amb-journey-progress" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
-          </div>
+          <p class="pg-lede">One host you vouch for becomes a listing. A listing becomes stays. Stays become the reason the next host says yes. Try it — pick a city and make the introduction.</p>
         </div>
-        <p class="amb-footnote">Owner acceptance recognises your work. Commission begins with qualifying booking activity.</p>
+
+        <figure class="amb-effect pg-reveal" data-reveal="scale" data-amb-effect>
+          <div class="amb-effect-stage">
+            <canvas data-effect-canvas width="1280" height="820" role="img"
+                    aria-label="A stylised map of Africa. Each introduction sends a ripple out from a city, an arc reaches a new listing, and stays appear around it."></canvas>
+            <div class="amb-effect-hud" aria-hidden="true">
+              <span>Cabana · the local effect</span>
+              <span class="amb-effect-city" data-effect-city>Nairobi</span>
+            </div>
+          </div>
+
+          <div class="amb-effect-panel">
+            <button class="pg-button amb-effect-go" type="button" data-effect-go>
+              Make an introduction <span aria-hidden="true">✳</span>
+            </button>
+            <dl class="amb-tally" aria-live="polite">
+              <div><dt>Introductions</dt><dd class="pg-tabular" data-tally-intros>0</dd></div>
+              <div><dt>Listings prepared</dt><dd class="pg-tabular" data-tally-listings>0</dd></div>
+              <div><dt>Stays that followed</dt><dd class="pg-tabular" data-tally-stays>0</dd></div>
+            </dl>
+            <p class="pg-note">An illustration of how a referral spreads, not a record of anything. Real introductions, listings and bookings live in your dashboard once you are invited.</p>
+          </div>
+          <figcaption class="pg-visually-hidden">An interactive illustration of how one ambassador introduction spreads across the continent.</figcaption>
+        </figure>
       </div>
     </section>
-    <section class="amb-terms pg-shell" id="programme-details" aria-labelledby="terms-heading">
-      <div class="amb-terms-intro pg-reveal"><p class="pg-kicker">03 / THE SMALL PRINT, HUMAN SIZED</p><h2 id="terms-heading">Good questions.<br/><span>Straight answers.</span></h2><p>Clear from the first hello.</p><span class="amb-terms-asterisk" aria-hidden="true">✳</span></div>
-      <div class="amb-faq">
-        <details class="pg-reveal"><summary>How do I join?</summary><p>The programme is invitation-only. Have a connection to make? <a href="mailto:connect@cabana.africa?subject=Ambassador%20programme">Talk to the Cabana team</a>. An enquiry doesn’t automatically grant access.</p></details>
-        <details class="pg-reveal"><summary>What earns commission?</summary><p>Eligible attributed bookings earn a share of Cabana’s service fee, where a fee applies. Commission is not based on the full booking price. The figures are set out in your dashboard after you are invited.</p></details>
-        <details class="pg-reveal"><summary>45 days or 365 days?</summary><p>Two different clocks. A new introduction is reserved for <strong>45 days</strong>, first come, first served. The referral period for eligible booking commission lasts <strong>365 days</strong>.</p></details>
-        <details class="pg-reveal"><summary>Who owns the listing?</summary><p>The owner does. A listing you prepare stays unpublished until they sign in and accept it. Your dashboard records the handover; registration and owner acceptance are separate milestones.</p></details>
-        <details class="pg-reveal"><summary>When can I withdraw?</summary><p>Your rewards page separates potential earnings awaiting check-in, confirmed earnings on hold and funds ready to withdraw. It also shows your available withdrawal options and requirements.</p></details>
+
+    <!-- ══ THE FIELD GUIDE ════════════════════════════════════════════════ -->
+    <section class="amb-guide-section" id="field-guide" aria-labelledby="guide-title">
+      <div class="pg-shell">
+        <div class="amb-section-head pg-reveal">
+          <div>
+            <p class="pg-kicker">02 / The field guide</p>
+            <h2 id="guide-title">One hello.<br><span>A whole new chapter.</span></h2>
+          </div>
+          <p class="pg-lede">Four stages, start to finish. Turn the pages and see what is recorded at each one — and what is not.</p>
+        </div>
+
+        <div class="amb-guide pg-reveal">
+          <div class="amb-guide-nav" role="group" aria-label="Explore the sample onboarding journey">
+            <button type="button" class="amb-stage" data-amb-stage="0" aria-pressed="true" aria-controls="amb-journey-detail">
+              <span>01</span><strong>Make the connection</strong><i aria-hidden="true">↗</i>
+            </button>
+            <button type="button" class="amb-stage" data-amb-stage="1" aria-pressed="false" aria-controls="amb-journey-detail">
+              <span>02</span><strong>Prepare the listing</strong><i aria-hidden="true">↗</i>
+            </button>
+            <button type="button" class="amb-stage" data-amb-stage="2" aria-pressed="false" aria-controls="amb-journey-detail">
+              <span>03</span><strong>Hand over the keys</strong><i aria-hidden="true">↗</i>
+            </button>
+            <button type="button" class="amb-stage" data-amb-stage="3" aria-pressed="false" aria-controls="amb-journey-detail">
+              <span>04</span><strong>Welcome the bookings</strong><i aria-hidden="true">↗</i>
+            </button>
+            <p class="pg-note amb-sample-note">An illustrative journey. No live bookings or earnings.</p>
+          </div>
+
+          <article class="amb-journey-card" id="amb-journey-detail" data-active-stage="0" aria-live="polite" aria-atomic="true">
+            <header class="amb-journey-top">
+              <span>Your field guide</span>
+              <span class="pg-tabular" id="amb-example-number">01 / 04</span>
+            </header>
+            <div class="amb-journey-stamp" id="amb-example-mark" aria-hidden="true">↗</div>
+            <p class="amb-example-label" id="amb-example-label">The first hello</p>
+            <h3 id="amb-example-title">A connection,<br>recorded.</h3>
+            <p id="amb-example-copy">Reserve your introduction in the dashboard. You have 45 days to help them take the next step.</p>
+            <p class="amb-journey-status"><span class="pg-dot"></span><span id="amb-example-status">Reserved · No earnings yet</span></p>
+            <div class="amb-journey-progress" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+          </article>
+        </div>
+        <p class="pg-note amb-guide-foot">Owner acceptance recognises your work. Commission begins with qualifying booking activity.</p>
       </div>
     </section>
+
+    <!-- ══ THE TWO CLOCKS ═════════════════════════════════════════════════ -->
+    <section class="amb-clocks-section" id="clocks" aria-labelledby="clocks-title">
+      <div class="pg-shell amb-clocks-grid">
+        <div class="pg-reveal" data-reveal="left">
+          <p class="pg-kicker">03 / Two clocks, often confused</p>
+          <h2 id="clocks-title">45 days<br><span>and 365 days.</span></h2>
+          <p class="pg-lede">They measure different things, and mixing them up is the single most common misunderstanding in the programme. So here they are, side by side.</p>
+          <a class="pg-link" href="#programme-details">Read the full answer <span aria-hidden="true">↓</span></a>
+        </div>
+        <div class="amb-clocks pg-reveal" data-reveal="right" data-amb-clocks>
+          <figure class="amb-clock">
+            <canvas data-clock="45" width="360" height="360" aria-hidden="true"></canvas>
+            <figcaption>
+              <strong>45 days</strong>
+              <span>Your introduction is reserved to you, first come first served, while the host decides.</span>
+            </figcaption>
+          </figure>
+          <figure class="amb-clock">
+            <canvas data-clock="365" width="360" height="360" aria-hidden="true"></canvas>
+            <figcaption>
+              <strong>365 days</strong>
+              <span>The referral period during which eligible booking activity can earn commission.</span>
+            </figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ FAQ ════════════════════════════════════════════════════════════ -->
+    <section class="amb-terms-section" id="programme-details" aria-labelledby="terms-heading">
+      <div class="pg-shell amb-terms">
+        <div class="amb-terms-intro pg-reveal">
+          <p class="pg-kicker">04 / The small print, human sized</p>
+          <h2 id="terms-heading">Good questions.<br><span>Straight answers.</span></h2>
+          <p class="pg-lede">Clear from the first hello.</p>
+        </div>
+        <div class="pg-faq-list">
+          <details>
+            <summary>How do I join?</summary>
+            <div><p>The programme is invitation-only. Have a connection to make? <a href="mailto:connect@cabana.africa?subject=Ambassador%20programme">Talk to the Cabana team</a>. An enquiry doesn't automatically grant access.</p></div>
+          </details>
+          <details>
+            <summary>What earns commission?</summary>
+            <div><p>Eligible attributed bookings earn a share of Cabana's service fee, where a fee applies. Commission is not based on the full booking price. The figures are set out in your dashboard after you are invited.</p></div>
+          </details>
+          <details>
+            <summary>45 days or 365 days?</summary>
+            <div><p>Two different clocks. A new introduction is reserved for <strong>45 days</strong>, first come, first served. The referral period for eligible booking commission lasts <strong>365 days</strong>.</p></div>
+          </details>
+          <details>
+            <summary>Who owns the listing?</summary>
+            <div><p>The owner does. A listing you prepare stays unpublished until they sign in and accept it. Your dashboard records the handover; registration and owner acceptance are separate milestones.</p></div>
+          </details>
+          <details>
+            <summary>When can I withdraw?</summary>
+            <div><p>Your rewards page separates potential earnings awaiting check-in, confirmed earnings on hold and funds ready to withdraw. It also shows your available withdrawal options and requirements.</p></div>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ THE INVITATION ═════════════════════════════════════════════════ -->
     <section class="amb-access-section" id="access" aria-labelledby="access-heading">
-      <div class="amb-access pg-shell">
-        <div class="amb-access-intro pg-reveal"><p class="pg-kicker">YOUR NEXT INTRODUCTION</p><h2 id="access-heading">You’re the<br/><span>way in.</span><svg viewBox="0 0 280 25" aria-hidden="true"><path d="M4 19C80 1 207 3 273 10M49 24C130 10 216 13 255 17" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg></h2><p>Already invited? Your workspace is waiting.<br/>Use the email on your invitation.</p><a class="pg-button-ghost" href="mailto:connect@cabana.africa?subject=Ambassador%20programme">Let’s talk about joining <span aria-hidden="true">↗</span></a></div>
-        <div class="amb-invitation-card"><div class="amb-envelope-line"><span>CABANA / PERSONAL INVITATION</span><span aria-hidden="true">✳</span></div><div class="card panel" id="panel" aria-live="polite"><div class="panel-icon pi-lock" aria-hidden="true">↗</div><h2 class="h2">Your invitation opens the door.</h2><p class="body" style="margin:12px 0 20px">Sign in with the email address on your Cabana invitation.</p><a class="btn btn-primary btn-block" href="/auth.html?next=ambassadors.html%23access">Sign in to your workspace</a><noscript><p class="small" style="margin-top:14px">Enable JavaScript to check your invitation and activate your ambassador account.</p></noscript></div></div>
-        <div id="admin-wrap" class="amb-admin" hidden><h3>You are signed in as an admin</h3><p>Manage invitations and ambassadors in Revenue → Ambassadors.</p><a class="pg-button-ghost" href="/admin">Open the console ↗</a></div>
+      <div class="pg-shell amb-access">
+        <div class="amb-access-intro pg-reveal">
+          <p class="pg-kicker">Your next introduction</p>
+          <h2 id="access-heading">You're the<br><span>way in.</span></h2>
+          <p class="pg-lede">Already invited? Your workspace is waiting. Use the email address on your invitation — access is tied to that exact address.</p>
+          <a class="pg-button-ghost" href="mailto:connect@cabana.africa?subject=Ambassador%20programme">Let's talk about joining <span aria-hidden="true">↗</span></a>
+        </div>
+
+        <div class="amb-invitation-card pg-reveal" data-reveal="scale">
+          <div class="amb-envelope-line"><span>Cabana · personal invitation</span><span aria-hidden="true">✳</span></div>
+          <div class="card panel" id="panel" aria-live="polite">
+            <div class="panel-icon pi-lock" aria-hidden="true">↗</div>
+            <h2 class="h2">Your invitation opens the door.</h2>
+            <p class="body" style="margin:12px 0 20px">Sign in with the email address on your Cabana invitation.</p>
+            <a class="btn btn-primary btn-block" href="/auth.html?next=ambassadors.html%23access">Sign in to your workspace</a>
+            <noscript><p class="small" style="margin-top:14px">Enable JavaScript to check your invitation and activate your ambassador account.</p></noscript>
+          </div>
+          <span class="amb-wax" aria-hidden="true">C</span>
+        </div>
+
+        <div id="admin-wrap" class="amb-admin" hidden>
+          <h3>You are signed in as an admin</h3>
+          <p>Manage invitations and ambassadors in Revenue → Ambassadors.</p>
+          <a class="pg-button-ghost" href="/admin">Open the console ↗</a>
+        </div>
       </div>
     </section>
   </main>
-  <footer class="pg-footer pg-shell"><a class="pg-brand" href="/">cabana<span aria-hidden="true">↗</span></a><p>Africa is full of possibility.<br/>You know where to find it.</p><nav aria-label="Footer"><a href="/influencers.html">For creators</a><a href="/agents.html">For agents</a><a href="/help">Help &amp; support</a><button type="button" data-motion-toggle>Pause motion</button></nav><small>© Cabana · Made for connection.</small></footer>
+
+  <footer class="pg-footer pg-shell">
+    <div><a class="pg-brand" href="/">cabana<span aria-hidden="true">.</span></a><span>Africa is full of possibility. You know where to find it.</span></div>
+    <div>
+      <a href="/influencers.html">For creators</a>
+      <a href="/agents.html">For agents</a>
+      <a href="/help.html">Help &amp; support</a>
+      <button class="pg-motion-toggle" data-motion-toggle type="button" aria-pressed="false"><span data-motion-label>Pause motion</span></button>
+    </div>
+  </footer>
+
   <div class="toasts" role="status" aria-live="polite"></div>
-  <script src="/cabana-programmes.js?v=20260917-3" defer></script>
-  <script src="/ambassador-field-guide.js?v=20260917-3" defer></script>
+
+  <script src="/cabana-programmes.js?v=20260919-1" defer></script>
+  <script src="/ambassador-experience.js?v=20260919-1" defer></script>
   <script src="/vendor-supabase-2.112.3.js"></script>
   <script src="/apa-session.js"></script>
   <script src="/apa-referral-capture.js" defer></script>
   <script src="/apa-ambassador.js"></script>
-  <script src="/ambassadors-page.js?v=20260917-2"></script>
-  <script src="/cabana-support.js?v=20260917-3" defer></script>
+  <script src="/ambassadors-page.js?v=20260919-1"></script>
+  <script src="/cabana-support.js?v=20260919-1" defer></script>
 </body>
 </html>

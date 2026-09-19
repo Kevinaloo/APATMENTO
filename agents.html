@@ -1,68 +1,321 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>Cabana for Agents — The connection business.</title>
   <meta name="description" content="Your connections. Your travel business. Build a host-approved portfolio, check live availability and earn on the commission you agree with each host.">
-  <meta name="theme-color" content="#f5f2e8"><link rel="canonical" href="https://cabana.africa/agents"><link rel="icon" href="/favicon.ico">
-  <link rel="preload" href="/assets/fonts/ibm-plex-sans-0.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="/assets/fonts/archivo-0.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="/programme-fonts.css?v=20260917-3">
-  <link rel="stylesheet" href="/cabana-programmes.css?v=20260917-3"><link rel="stylesheet" href="/agent-network.css?v=20260917-3">
-  <script src="/cabana-programmes.js?v=20260917-3" defer></script><script src="/agent-network.js?v=20260917-3" defer></script>
+  <meta name="theme-color" content="#04060f">
+  <link rel="canonical" href="https://cabana.africa/agents">
+  <meta property="og:title" content="Cabana for Agents — The connection business.">
+  <meta property="og:description" content="Local knowledge, professional tools, and a commission you agree host by host.">
+  <meta property="og:image" content="https://cabana.africa/assets/programmes/agent-share.jpg">
+  <meta property="og:url" content="https://cabana.africa/agents">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="/favicon.ico">
+  <link rel="preload" href="/assets/fonts/ibm-plex-sans-0.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/assets/fonts/archivo-0.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/assets/fonts/jetbrains-mono-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" as="image" href="/assets/programmes/agent-editorial-800.webp" imagesrcset="/assets/programmes/agent-editorial-540.webp 540w, /assets/programmes/agent-editorial-800.webp 800w" imagesizes="(max-width:980px) 88vw, 34vw" fetchpriority="high">
+  <link rel="stylesheet" href="/programme-fonts.css?v=20260919-1">
+  <link rel="stylesheet" href="/cabana-programmes.css?v=20260919-1">
+  <link rel="stylesheet" href="/agent-network.css?v=20260919-1">
+  <script>document.documentElement.classList.add('pg-enhanced');</script>
+  <script src="/cabana-programmes.js?v=20260919-1" defer></script>
+  <script src="/agent-network.js?v=20260919-1" defer></script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Cabana for Agents — The connection business.","description":"The Cabana agent network: host partnerships, live availability, personal listing links and commission agreed with each host.","url":"https://cabana.africa/agents","isPartOf":{"@type":"WebSite","name":"Cabana","url":"https://cabana.africa/"}}</script>
+
 </head>
 <body class="programme-page agent-network" data-programme="agent">
   <a class="pg-skip" href="#main">Skip to content</a>
-  <header class="pg-nav"><a class="pg-brand" href="/" aria-label="Cabana home">cabana<span aria-hidden="true">.</span><small>The agent<br>network</small></a><nav class="pg-nav-links" aria-label="Cabana programmes"><a href="/influencers.html">For creators</a><a href="/agents.html" aria-current="page">For agents</a><a href="/ambassadors.html">For ambassadors</a></nav><a class="pg-nav-cta" href="/auth.html?panel=agent">Agent sign in <span aria-hidden="true">↗</span></a></header>
+  <div class="pg-progress" aria-hidden="true"></div>
+  <div class="pg-grain" aria-hidden="true"></div>
+
+  <header class="pg-nav">
+    <a class="pg-brand" href="/" aria-label="Cabana home">cabana<span aria-hidden="true">.</span><small>The agent<br>network</small></a>
+    <nav class="pg-nav-links" aria-label="Cabana programmes">
+      <a href="/influencers.html">Creators</a><a href="/agents.html" aria-current="page">Agents</a><a href="/ambassadors.html">Ambassadors</a>
+    </nav>
+    <a class="pg-nav-cta" href="/auth.html?panel=agent">Agent sign in <span aria-hidden="true">↗</span></a>
+  </header>
+
   <main id="main">
-    <section class="ag-hero pg-shell" aria-labelledby="agent-title">
-      <div class="ag-hero-copy">
-        <p class="ag-eyebrow"><span class="ag-signal" aria-hidden="true"></span> Independent spirit. Connected business.</p>
-        <h1 id="agent-title"><span>The</span>connection<br><span class="ag-title-bottom">business<span class="ag-period">.</span></span></h1>
-        <p class="ag-intro">Great trips start with someone who knows.<br>Be that someone. Build your travel business on Cabana.</p>
-        <div class="ag-actions"><a class="pg-button" href="/auth.html?panel=agent&amp;intent=join">Build your portfolio <span aria-hidden="true">↗</span></a><a class="ag-text-link" href="#portfolio">Run the numbers <span aria-hidden="true">↓</span></a></div>
-        <p class="ag-small-note">Free to join. Partnerships approved by each host.</p>
+
+    <!-- ══ HERO ═══════════════════════════════════════════════════════════ -->
+    <section class="ag-hero" aria-labelledby="agent-title">
+      <div class="ag-hero-bed" aria-hidden="true">
+        <div class="pg-ambient-still"></div>
+        <video class="pg-ambient" data-ambient muted loop playsinline preload="none" aria-hidden="true" tabindex="-1">
+          <source data-src="/assets/programmes/agent-ambient.webm" type="video/webm">
+          <source data-src="/assets/programmes/agent-ambient.mp4" type="video/mp4">
+        </video>
+        <canvas class="ag-net" data-agent-network width="1600" height="900"></canvas>
+        <div class="ag-grid"></div>
       </div>
-      <div class="ag-desk" aria-label="The agent journey: connect with hosts, build your portfolio, introduce your clients">
-        <div class="ag-desk-top"><span>CABANA / AGENT DESK</span><span class="ag-desk-index">CONNECTIONS, IN MOTION <i aria-hidden="true"></i></span></div>
-        <div class="ag-file-tab" aria-hidden="true">YOUR NEXT CHAPTER</div>
-        <div class="ag-folio">
-          <div class="ag-folio-heading"><span>Good places.<br>Better connections.</span><span class="ag-north" aria-hidden="true">↗</span></div>
-          <div class="ag-route-board" aria-hidden="true">
-            <svg class="ag-route" viewBox="0 0 470 255" fill="none"><path class="ag-route-base" d="M65 67C140 67 109 179 220 155S320 24 408 87M220 155C261 230 336 220 385 201"/><path class="ag-route-dash" d="M65 67C140 67 109 179 220 155S320 24 408 87M220 155C261 230 336 220 385 201"/><circle cx="65" cy="67" r="6"/><circle cx="408" cy="87" r="6"/><circle cx="385" cy="201" r="6"/></svg>
-            <div class="ag-route-label ag-route-host"><span>01</span> THE HOST</div><div class="ag-route-label ag-route-guest"><span>03</span> YOUR CLIENT</div><div class="ag-route-label ag-route-next">THE NEXT TRIP ↗</div>
-            <div class="ag-you"><span>02 / THE CONNECTION</span><strong>YOU.</strong><i></i></div>
+
+      <div class="pg-shell ag-hero-shell">
+        <div class="ag-hero-copy">
+          <p class="ag-status pg-reveal"><span class="pg-dot"></span> <b data-agent-status>Desk open</b> <em>independent spirit, connected business</em></p>
+          <h1 id="agent-title" class="ag-title">
+            <span class="ag-title-small pg-reveal">The</span>
+            <span class="ag-title-big pg-reveal" data-split>connection</span>
+            <span class="ag-title-row"><span class="ag-title-big ag-title-glow pg-reveal" data-split>business</span><em aria-hidden="true">.</em></span>
+          </h1>
+          <p class="ag-lede pg-reveal">Great trips start with someone who knows. Be that someone — with host partnerships, live availability and commission you agree up front.</p>
+          <div class="pg-actions pg-reveal">
+            <a class="pg-button" href="/auth.html?panel=agent&amp;intent=join" data-magnetic="0.18">Build your portfolio <span aria-hidden="true">↗</span></a>
+            <a class="pg-button-ghost" href="#desk">Open the deal desk <span aria-hidden="true">↓</span></a>
           </div>
-          <div class="ag-folio-bottom"><span>Local knowledge.<br>Professional tools.</span><div class="ag-mini-bars" aria-hidden="true"></div><span>AGENT<br>EDITION</span></div>
+          <p class="pg-note ag-note">Free to join. Every listing partnership is approved by its host.</p>
         </div>
-        <div class="ag-ticket ag-ticket-person"><img src="/assets/programmes/agent-editorial.png" alt="Travel professional at a sunlit lodge" width="1024" height="1536" fetchpriority="high"><div><span>YOUR CALLING CARD</span><strong>A name<br>they trust.</strong><span>KNOW THE PLACE.<br>MAKE THE INTRODUCTION.</span></div><i aria-hidden="true">↗</i></div>
-        <div class="ag-ticket ag-ticket-terms"><span>THE WORKING AGREEMENT</span><strong>Your network.<br>Your terms.</strong><div><span>HOST <b>↔</b> AGENT</span><span>AGREED TOGETHER</span></div></div>
-        <span class="ag-desk-caption">A personal business. A connected workspace.</span>
+
+        <div class="ag-hero-card pg-reveal" data-reveal="scale">
+          <article class="ag-credential" data-tilt="7">
+            <header class="ag-credential-top">
+              <span>Cabana · agent credential</span>
+              <span class="ag-chip" aria-hidden="true"></span>
+            </header>
+            <div class="ag-credential-photo">
+              <img src="/assets/programmes/agent-editorial-800.webp"
+                   srcset="/assets/programmes/agent-editorial-540.webp 540w, /assets/programmes/agent-editorial-800.webp 800w"
+                   sizes="(max-width:980px) 88vw, 34vw"
+                   alt="A travel agent walking through a sunlit courtyard between arches"
+                   width="1086" height="1448" fetchpriority="high" decoding="async">
+              <span class="ag-scan" aria-hidden="true"></span>
+            </div>
+            <div class="ag-credential-body">
+              <p class="ag-credential-name">A name they trust.</p>
+              <dl class="ag-credential-rows">
+                <div><dt>Status</dt><dd class="ag-ok">Verified</dd></div>
+                <div><dt>Portfolio</dt><dd>Host-approved</dd></div>
+                <div><dt>Terms</dt><dd>Host ↔ agent</dd></div>
+              </dl>
+            </div>
+            <span class="ag-credential-foil" aria-hidden="true"></span>
+            <span class="ag-credential-code" aria-hidden="true">//  KNOW THE PLACE. MAKE THE INTRODUCTION.</span>
+          </article>
+        </div>
       </div>
     </section>
-    <div class="ag-ticker" aria-label="Host partnerships. Live availability. Personal listing links. Tracked bookings."><div class="ag-ticker-track" aria-hidden="true"><span>HOST PARTNERSHIPS <b>↗</b> LIVE AVAILABILITY <b>↗</b> PERSONAL LISTING LINKS <b>↗</b> TRACKED BOOKINGS <b>↗</b></span><span>HOST PARTNERSHIPS <b>↗</b> LIVE AVAILABILITY <b>↗</b> PERSONAL LISTING LINKS <b>↗</b> TRACKED BOOKINGS <b>↗</b></span></div></div>
-    <section class="ag-workflow pg-shell pg-reveal" aria-labelledby="workflow-title">
-      <div class="ag-section-label"><span>01 / THE WAY YOU WORK</span><span>RELATIONSHIPS FIRST.</span></div>
-      <div class="ag-workflow-grid"><div class="ag-workflow-intro"><h2 id="workflow-title">You bring<br>the know-how.<br><span>We bring<br>the workspace.</span></h2><a class="ag-text-link" href="/auth.html?panel=agent&amp;intent=join">Make your first connection <span aria-hidden="true">↗</span></a></div>
-      <div class="ag-workflow-rows"><article class="ag-workflow-row"><span class="ag-step-number">01</span><div><h3>Make it official.</h3><p>Join for free and verify your identity. Then find the places you want to represent.</p></div><span class="ag-step-symbol" aria-hidden="true">↗</span></article><article class="ag-workflow-row"><span class="ag-step-number">02</span><div><h3>Get on the same page.</h3><p>Connect with the host. Agree your commission. Add approved listings to your portfolio.</p></div><span class="ag-step-symbol" aria-hidden="true">↔</span></article><article class="ag-workflow-row"><span class="ag-step-number">03</span><div><h3>Put your name to it.</h3><p>Check live availability, share your personal links and follow attributed bookings in one place.</p></div><span class="ag-step-symbol" aria-hidden="true">↗</span></article></div></div>
-    </section>
-    <section class="ag-calculator-section" id="portfolio" aria-labelledby="portfolio-title"><div class="pg-shell pg-reveal">
-      <div class="ag-section-label"><span>02 / LET’S TALK BUSINESS</span><span>MOVE THE SLIDERS. SEE THE POSSIBILITIES.</span></div>
-      <div class="ag-calculator-heading"><h2 id="portfolio-title">Good connections.<br><span>Clear numbers.</span></h2><p>Your commission starts with an agreement.<br>Try a percentage example below.</p></div>
-      <div class="ag-calculator" data-agent-demo>
-        <div class="ag-controls"><div class="ag-example-head"><span class="ag-label">BUILD AN EXAMPLE</span><span class="ag-calculator-arrow" aria-hidden="true">↘</span></div>
-          <div class="ag-presets" aria-label="Booking value examples"><button type="button" data-agent-preset="20000" aria-pressed="true">KES 20k</button><button type="button" data-agent-preset="50000" aria-pressed="false">KES 50k</button><button type="button" data-agent-preset="80000" aria-pressed="false">KES 80k</button></div>
-          <label class="ag-range-label" for="demo-value">Booking value <strong data-booking-label>KES 20,000</strong></label><input class="ag-range" id="demo-value" type="range" min="5000" max="100000" step="1000" value="20000"><div class="ag-range-limits" aria-hidden="true"><span>KES 5,000</span><span>KES 100,000</span></div>
-          <label class="ag-range-label" for="demo-rate">Agreed commission <strong data-rate-label>8%</strong></label><input class="ag-range" id="demo-rate" type="range" min="1" max="20" step="1" value="8"><div class="ag-range-limits" aria-hidden="true"><span>1%</span><span>20%</span></div>
-          <p class="ag-calculator-note">Illustration only. You and the host agree the actual rate or fixed amount. The host pays you directly.</p>
-        </div>
-        <div class="ag-receipt"><div class="ag-receipt-heading"><span>CABANA / COMMISSION NOTE</span><span aria-hidden="true">↗</span></div><div class="ag-receipt-total"><span>YOUR EXAMPLE COMMISSION</span><output for="demo-value demo-rate" data-commission aria-live="polite">KES 1,600</output><span>ONE ELIGIBLE BOOKING</span></div><dl class="ag-ledger"><div><dt>Booking value</dt><dd data-ledger-value>KES 20,000</dd></div><div><dt>Agreed rate</dt><dd data-ledger-rate>8%</dd></div><div><dt>Settlement</dt><dd>Host → you</dd></div></dl><div class="ag-receipt-bottom"><span class="ag-barcode" aria-hidden="true"></span><span>AN EXAMPLE.<br>YOUR AGREEMENT IS YOURS.</span></div><p>This preview creates no agreement and guarantees no income. Attribution rules apply.</p></div>
+
+    <div class="pg-marquee ag-marquee" aria-label="Host partnerships. Live availability. Personal listing links. Tracked bookings.">
+      <div class="pg-marquee-track">
+        <span>Host partnerships <i>◆</i> Live availability <i>◆</i> Personal listing links <i>◆</i> Tracked bookings <i>◆</i> Agreed commission <i>◆</i></span>
       </div>
-    </div></section>
-    <section class="ag-last-section pg-shell pg-reveal" aria-labelledby="terms-title"><div class="ag-section-label"><span>03 / BEFORE THE INTRODUCTION</span><span>GOOD BUSINESS STARTS HERE.</span></div>
-      <div class="ag-faq"><div><h2 id="terms-title">A few details.<br><span>Then, you’re off.</span></h2><p>The essentials, without the small-print feeling.</p></div><div class="ag-faq-items"><details><summary>What does it cost to join?<span aria-hidden="true">+</span></summary><p>Agent membership is free. Complete identity verification and follow the status and deadlines in your workspace. Each host separately approves your listing partnership; verification does not guarantee approval.</p></details><details><summary>Who sets and pays my commission?<span aria-hidden="true">+</span></summary><p>You propose a percentage or fixed amount; the host approves the final terms. Cabana records qualifying bookings and agreed commission. The host settles with you directly.</p></details><details><summary>How are bookings credited to me?<span aria-hidden="true">+</span></summary><p>Your personal listing links connect eligible bookings to you within a 30-day click window. Your membership and listing partnership must be eligible. See credited bookings in your dashboard.</p></details><details><summary>Can I be a creator as well?<span aria-hidden="true">+</span></summary><p>Yes. Add your audience details to the same agent membership, then switch between agent tools and Creator studio in your workspace. <a href="/influencers.html">Explore the creator experience ↗</a></p></details></div></div>
-      <div class="ag-finale"><div><p class="ag-label">YOUR NEXT MOVE</p><h2>Well connected?<br><span>Make it your business.</span></h2></div><a class="ag-finale-link" href="/auth.html?panel=agent&amp;intent=join"><span>Join the<br>agent network</span><b aria-hidden="true">↗</b></a></div>
+    </div>
+
+    <!-- ══ THE PIPELINE ═══════════════════════════════════════════════════ -->
+    <section class="ag-flow-section" id="how" aria-labelledby="flow-title">
+      <div class="pg-shell">
+        <div class="ag-section-head pg-reveal">
+          <div>
+            <p class="pg-kicker">01 / The way you work</p>
+            <h2 id="flow-title">You bring the know-how.<br><span>We bring the desk.</span></h2>
+          </div>
+          <p class="pg-lede">Three moves from signing up to sending your first client somewhere you would happily go yourself.</p>
+        </div>
+
+        <ol class="ag-flow" data-stagger="120">
+          <li class="ag-flow-step pg-reveal">
+            <span class="ag-flow-index">01</span>
+            <div class="ag-flow-body">
+              <h3>Make it official</h3>
+              <p>Join for free and complete identity verification. Then go looking for the places you actually want to represent.</p>
+            </div>
+            <span class="ag-flow-mark" aria-hidden="true">↗</span>
+          </li>
+          <li class="ag-flow-step pg-reveal">
+            <span class="ag-flow-index">02</span>
+            <div class="ag-flow-body">
+              <h3>Agree the terms</h3>
+              <p>Connect with the host, propose your commission, and add the listings they approve to your portfolio.</p>
+            </div>
+            <span class="ag-flow-mark" aria-hidden="true">↔</span>
+          </li>
+          <li class="ag-flow-step pg-reveal">
+            <span class="ag-flow-index">03</span>
+            <div class="ag-flow-body">
+              <h3>Put your name to it</h3>
+              <p>Check live availability, send your personal link, and watch attributed bookings land in one place.</p>
+            </div>
+            <span class="ag-flow-mark" aria-hidden="true">↗</span>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- ══ THE DEAL DESK ══════════════════════════════════════════════════ -->
+    <section class="ag-desk-section" id="desk" aria-labelledby="desk-title">
+      <div class="pg-shell">
+        <div class="ag-section-head pg-reveal">
+          <div>
+            <p class="pg-kicker"><span class="pg-dot"></span> 02 / The deal desk</p>
+            <h2 id="desk-title">Move the sliders.<br><span>Watch a book of business appear.</span></h2>
+          </div>
+          <p class="pg-lede">A working model of the thing you are building. Set a booking value, the commission you would agree, and how busy a month looks — the desk does the rest.</p>
+        </div>
+
+        <div class="ag-desk pg-reveal" data-agent-demo>
+
+          <!-- CONTROLS -->
+          <div class="ag-panel ag-controls">
+            <header class="ag-panel-head"><span>Inputs</span><span class="ag-panel-dot" aria-hidden="true"></span></header>
+
+            <div class="ag-presets" role="group" aria-label="Booking value examples">
+              <button type="button" data-agent-preset="20000" aria-pressed="true">KES 20k</button>
+              <button type="button" data-agent-preset="50000" aria-pressed="false">KES 50k</button>
+              <button type="button" data-agent-preset="80000" aria-pressed="false">KES 80k</button>
+            </div>
+
+            <label class="ag-range-label" for="demo-value">Booking value <strong class="pg-tabular" data-booking-label>KES 20,000</strong></label>
+            <input class="pg-range" id="demo-value" type="range" min="5000" max="100000" step="1000" value="20000">
+            <div class="ag-range-limits" aria-hidden="true"><span>KES 5,000</span><span>KES 100,000</span></div>
+
+            <label class="ag-range-label" for="demo-rate">Agreed commission <strong class="pg-tabular" data-rate-label>8%</strong></label>
+            <input class="pg-range" id="demo-rate" type="range" min="1" max="20" step="1" value="8">
+            <div class="ag-range-limits" aria-hidden="true"><span>1%</span><span>20%</span></div>
+
+            <label class="ag-range-label" for="demo-volume">Bookings a month <strong class="pg-tabular" data-volume-label>6</strong></label>
+            <input class="pg-range" id="demo-volume" type="range" min="1" max="40" step="1" value="6">
+            <div class="ag-range-limits" aria-hidden="true"><span>1</span><span>40</span></div>
+
+            <p class="pg-note">Illustration only. You and the host agree the actual rate or fixed amount, and the host pays you directly.</p>
+          </div>
+
+          <!-- THE BOARD -->
+          <div class="ag-panel ag-board">
+            <header class="ag-panel-head">
+              <span>Projection</span>
+              <span class="ag-live"><i aria-hidden="true"></i>recalculating</span>
+            </header>
+
+            <div class="ag-board-figures">
+              <div class="ag-figure">
+                <span>Per eligible booking</span>
+                <output class="pg-tabular" for="demo-value demo-rate" data-commission aria-live="polite">KES 1,600</output>
+              </div>
+              <div class="ag-figure ag-figure-lead">
+                <span>A month at this pace</span>
+                <output class="pg-tabular" data-monthly>KES 9,600</output>
+              </div>
+              <div class="ag-figure">
+                <span>Twelve months</span>
+                <output class="pg-tabular" data-annual>KES 115,200</output>
+              </div>
+            </div>
+
+            <figure class="ag-chart">
+              <canvas data-agent-chart width="1200" height="420" role="img" aria-labelledby="chart-caption"></canvas>
+              <figcaption id="chart-caption" class="pg-note">An illustrative twelve-month curve for the numbers above. It assumes every month looks the same, which no year ever does.</figcaption>
+            </figure>
+
+            <div class="ag-band">
+              <span class="ag-band-label">At this size, a book of business looks like</span>
+              <strong data-agent-band>a steady side income</strong>
+              <div class="ag-band-rail" aria-hidden="true"><span data-agent-band-fill></span></div>
+              <p class="pg-note">A description of the numbers you just chose — not a level, rank or status inside the programme.</p>
+            </div>
+          </div>
+
+          <!-- THE NOTE -->
+          <div class="ag-panel ag-note-panel">
+            <header class="ag-panel-head"><span>Commission note</span><span aria-hidden="true">↗</span></header>
+            <dl class="ag-ledger">
+              <div><dt>Booking value</dt><dd class="pg-tabular" data-ledger-value>KES 20,000</dd></div>
+              <div><dt>Agreed rate</dt><dd class="pg-tabular" data-ledger-rate>8%</dd></div>
+              <div><dt>Bookings a month</dt><dd class="pg-tabular" data-ledger-volume>6</dd></div>
+              <div><dt>Settlement</dt><dd>Host → you</dd></div>
+            </dl>
+            <span class="ag-barcode" aria-hidden="true"></span>
+            <p class="pg-note">This preview creates no agreement and guarantees no income. Attribution and eligibility rules apply.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ LIVE AVAILABILITY ══════════════════════════════════════════════ -->
+    <section class="ag-live-section" id="availability" aria-labelledby="availability-title">
+      <div class="pg-shell ag-live-grid">
+        <div class="pg-reveal" data-reveal="left">
+          <p class="pg-kicker">03 / No more "let me check"</p>
+          <h2 id="availability-title">Availability,<br><span>while they are still on the phone.</span></h2>
+          <p class="pg-lede">Every listing in your portfolio shows the host's live calendar. You stop guessing, stop waiting on a reply, and answer the only question a client really asks.</p>
+          <ul class="ag-ticks" data-stagger="90">
+            <li class="pg-reveal">Live nights, straight from the host's calendar</li>
+            <li class="pg-reveal">Your personal link on every listing you represent</li>
+            <li class="pg-reveal">Attributed bookings inside a 30-day click window</li>
+          </ul>
+          <a class="pg-link" href="/auth.html?panel=agent&amp;intent=join">Start your portfolio <span aria-hidden="true">↗</span></a>
+        </div>
+        <figure class="ag-calendar pg-reveal" data-reveal="right" data-agent-calendar>
+          <figcaption class="ag-calendar-head"><span>Kilimani · two bedroom</span><span class="ag-live"><i aria-hidden="true"></i>live</span></figcaption>
+          <div class="ag-calendar-days" aria-hidden="true"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+          <div class="ag-calendar-grid" data-calendar-grid role="img" aria-label="An illustrative month of availability: most nights open, a handful already booked"></div>
+          <div class="ag-calendar-key" aria-hidden="true">
+            <span><i class="is-open"></i>Open</span>
+            <span><i class="is-held"></i>On hold</span>
+            <span><i class="is-booked"></i>Booked</span>
+          </div>
+        </figure>
+      </div>
+    </section>
+
+    <!-- ══ FAQ ════════════════════════════════════════════════════════════ -->
+    <section class="ag-faq-section" id="terms" aria-labelledby="terms-title">
+      <div class="pg-shell ag-faq">
+        <div class="ag-faq-intro pg-reveal">
+          <p class="pg-kicker">04 / Before the introduction</p>
+          <h2 id="terms-title">A few details.<br><span>Then you're off.</span></h2>
+          <p class="pg-lede">The essentials, without the small-print feeling.</p>
+        </div>
+        <div class="pg-faq-list">
+          <details>
+            <summary>What does it cost to join?</summary>
+            <div><p>Agent membership is free. Complete identity verification and follow the status and deadlines in your workspace. Each host separately approves your listing partnership; verification does not guarantee approval.</p></div>
+          </details>
+          <details>
+            <summary>Who sets and pays my commission?</summary>
+            <div><p>You propose a percentage or fixed amount; the host approves the final terms. Cabana records qualifying bookings and agreed commission. The host settles with you directly.</p></div>
+          </details>
+          <details>
+            <summary>How are bookings credited to me?</summary>
+            <div><p>Your personal listing links connect eligible bookings to you within a 30-day click window. Your membership and listing partnership must be eligible. See credited bookings in your dashboard.</p></div>
+          </details>
+          <details>
+            <summary>Can I be a creator as well?</summary>
+            <div><p>Yes. Add your audience details to the same agent membership, then switch between agent tools and Creator studio in your workspace. <a href="/influencers.html">Explore the creator experience ↗</a></p></div>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ FINALE ═════════════════════════════════════════════════════════ -->
+    <section class="ag-finale" aria-labelledby="finale-title">
+      <div class="ag-finale-bed" aria-hidden="true"><div class="ag-grid ag-grid-2"></div></div>
+      <div class="pg-shell ag-finale-inner">
+        <p class="pg-kicker pg-reveal">Your next move</p>
+        <h2 id="finale-title" class="pg-reveal">Well connected?<br><span>Make it your business.</span></h2>
+        <a class="pg-button ag-finale-cta pg-reveal" href="/auth.html?panel=agent&amp;intent=join" data-magnetic="0.2">Join the agent network <span aria-hidden="true">↗</span></a>
+        <p class="pg-note pg-reveal">Free to join · verification required · every partnership approved by its host</p>
+      </div>
     </section>
   </main>
-  <footer class="pg-footer pg-shell"><div><a class="pg-brand" href="/">cabana.</a><span>Good places. Better connections.</span></div><div><a href="/terms.html">Terms</a><a href="/privacy.html">Privacy</a><a href="/help.html">Let’s talk</a><button class="pg-motion-toggle" data-motion-toggle type="button" aria-pressed="false">Pause motion</button></div></footer>
-  <script src="/apa-referral-capture.js" defer></script><script src="/cabana-support.js?v=20260917-3" defer></script><script src="/cabana-call.js" defer></script><script src="/cabana-lifecycle.js" defer></script>
+
+  <footer class="pg-footer pg-shell">
+    <div><a class="pg-brand" href="/">cabana<span aria-hidden="true">.</span></a><span>Good places. Better connections.</span></div>
+    <div>
+      <a href="/influencers.html">For creators</a>
+      <a href="/ambassadors.html">For ambassadors</a>
+      <a href="/terms.html">Terms</a>
+      <a href="/privacy.html">Privacy</a>
+      <a href="/help.html">Let's talk ↗</a>
+      <button class="pg-motion-toggle" data-motion-toggle type="button" aria-pressed="false"><span data-motion-label>Pause motion</span></button>
+    </div>
+  </footer>
+
+  <script src="/apa-referral-capture.js" defer></script>
+  <script src="/cabana-support.js?v=20260919-1" defer></script>
+  <script src="/cabana-call.js" defer></script>
+  <script src="/cabana-lifecycle.js" defer></script>
 </body>
 </html>

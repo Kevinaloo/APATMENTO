@@ -1,15 +1,731 @@
-/* Shared essentials; each programme owns its visual identity. */
-.programme-page{--pg-bg:#fff9ef;--pg-surface:#f1eadc;--pg-text:#24211f;--pg-muted:#5e5953;--pg-accent:#ff592c;--pg-line:#24211f30;--pg-display:Arial,sans-serif;--pg-body:Arial,sans-serif;margin:0;background:var(--pg-bg);color:var(--pg-text);font:16px/1.6 var(--pg-body);-webkit-font-smoothing:antialiased}
-.programme-page *{box-sizing:border-box}.programme-page a{color:inherit}.programme-page button,.programme-page input,.programme-page select{font:inherit}.programme-page button{cursor:pointer}.programme-page :focus-visible{outline:3px solid currentColor;outline-offset:5px}.programme-page img{display:block;max-width:100%}.programme-page h1,.programme-page h2,.programme-page h3,.programme-page p{margin:0}.programme-page h1,.programme-page h2,.programme-page h3{font-family:var(--pg-display);font-weight:600}.programme-page section[id]{scroll-margin-top:32px}
-.pg-skip{position:fixed;left:18px;top:-100px;z-index:1000;background:var(--pg-text);color:var(--pg-bg)!important;padding:12px 22px}.pg-skip:focus{top:12px}.pg-shell{width:min(1320px,calc(100% - 96px));margin-inline:auto}
-.pg-nav{position:relative;z-index:30;display:flex;align-items:center;justify-content:space-between;gap:26px;min-height:94px;border-bottom:1px solid var(--pg-line);margin:0 48px}.pg-brand{font:800 34px/1 var(--pg-body);letter-spacing:-2px;text-decoration:none;display:inline-flex;align-items:center;gap:3px}.pg-brand small{font:500 10px/1.3 var(--pg-body);letter-spacing:1.4px;text-transform:uppercase;border-left:1px solid var(--pg-line);padding-left:14px;margin-left:14px}.pg-nav-links{display:flex;align-items:center;gap:28px;font-size:13px}.pg-nav-links a{text-decoration:none;position:relative;padding:10px 0}.pg-nav-links a::after{content:'';position:absolute;bottom:2px;left:0;width:100%;height:2px;background:currentColor;transform:scaleX(0);transform-origin:left;transition:transform .25s}.pg-nav-links a:hover::after,.pg-nav-links a[aria-current=page]::after{transform:scaleX(1)}.pg-nav-cta{text-decoration:none;font-size:13px;padding:11px 17px;white-space:nowrap;border:1px solid currentColor;border-radius:3px;transition:box-shadow .25s,transform .25s}.pg-nav-cta:hover{box-shadow:3px 3px 0 currentColor;transform:translate(-2px,-2px)}.pg-nav-cta span{margin-left:20px}
-.pg-eyebrow,.pg-kicker{display:flex;align-items:center;gap:12px;font-size:11px;font-weight:600;letter-spacing:1.8px;text-transform:uppercase}.pg-actions{display:flex;align-items:center;flex-wrap:wrap;gap:24px;margin-top:28px}.pg-button{display:inline-flex;align-items:center;justify-content:center;gap:30px;min-height:54px;border:1px solid var(--pg-text);padding:14px 23px;border-radius:3px;background:var(--pg-text);color:var(--pg-bg)!important;font-size:14px;font-weight:600;text-decoration:none;transition:transform .25s,box-shadow .25s}.pg-button:hover{transform:translate(-3px,-3px);box-shadow:5px 5px 0 var(--pg-accent)}.pg-button span{display:inline-block;transition:transform .25s}.pg-button:hover span{transform:translate(2px,-2px)}.pg-button-ghost{display:inline-flex;align-items:center;justify-content:center;gap:15px;text-decoration:none;font-size:14px;min-height:48px;border-bottom:1px solid currentColor;padding:8px 0}.pg-button-ghost:hover span{transform:translateY(3px)}.pg-hero-note{font-size:12px;color:var(--pg-muted);margin-top:20px!important}
-.pg-section{padding-block:94px}.pg-section-head{display:flex;align-items:flex-end;justify-content:space-between;gap:40px;margin-bottom:40px}.pg-section h2{font-size:clamp(34px,4vw,58px);line-height:1.07;letter-spacing:-.04em}.pg-section-head>p{max-width:320px;color:var(--pg-muted);font-size:15px}.pg-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}.pg-feature{padding:28px 0;border-top:1px solid var(--pg-line)}.pg-feature h3{font-size:23px;line-height:1.2;margin-block:20px 12px}.pg-feature p{font-size:15px;color:var(--pg-muted)}.pg-num{font-size:12px}.pg-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:32px}.pg-step{border-top:1px solid var(--pg-line);padding-top:24px}.pg-step>span{font-size:12px;letter-spacing:1px}.pg-step h3{font-size:22px;margin-block:15px 10px}.pg-step p{font-size:15px;color:var(--pg-muted)}
-.pg-studio{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--pg-line)}.pg-studio-controls,.pg-studio-output{padding:36px}.pg-studio-output{display:flex;align-items:center;justify-content:center}.pg-demo-label{display:block;font-size:10px;letter-spacing:1px;text-transform:uppercase;margin-bottom:24px}.pg-studio h3{font-size:26px;margin-bottom:22px}.pg-field-label{display:block;font-size:13px;margin-bottom:12px}.pg-choice-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:26px}.pg-choice{background:transparent;color:inherit;border:1px solid var(--pg-line);padding:10px 17px;font-size:13px!important;transition:background .2s,transform .2s}.pg-choice:hover{transform:translateY(-2px)}.pg-choice[aria-pressed=true]{background:var(--pg-text);color:var(--pg-bg)}.pg-studio-note{font-size:12px!important;line-height:1.6;margin-top:20px!important;color:var(--pg-muted)}.pg-inline-status{font-size:12px;min-height:24px;margin-top:8px!important}.pg-range{width:100%;accent-color:var(--pg-accent);margin:8px 0 18px;min-height:28px}.pg-post{width:100%;max-width:400px}.pg-number-output{font-size:clamp(38px,4vw,62px);font-family:var(--pg-display);letter-spacing:-.04em}.pg-preview-ledger{width:100%;border-collapse:collapse;text-align:left}.pg-preview-ledger td{padding:16px 0;font-size:14px;border-bottom:1px solid var(--pg-line)}.pg-preview-ledger td:last-child{text-align:right}.pg-preview-ledger small{display:block;font-size:11px;color:var(--pg-muted)}
-.pg-faq{display:grid;grid-template-columns:1fr 1.15fr;gap:70px}.pg-faq details{border-bottom:1px solid var(--pg-line);padding:22px 0}.pg-faq details:first-child{border-top:1px solid var(--pg-line)}.pg-faq summary{cursor:pointer;list-style:none;padding-right:32px;position:relative;font-size:16px;font-weight:500}.pg-faq summary::-webkit-details-marker{display:none}.pg-faq summary::after{content:'+';position:absolute;right:3px;font-size:22px;top:-5px;transition:transform .2s}.pg-faq details[open] summary::after{transform:rotate(45deg)}.pg-faq details p{padding:15px 24px 0 0;font-size:14px;color:var(--pg-muted);line-height:1.75}.pg-faq-intro{font-size:15px;color:var(--pg-muted);max-width:310px;margin-top:20px!important}.pg-finale{display:flex;align-items:center;justify-content:space-between;gap:32px;padding:54px;margin-bottom:70px}.pg-finale h2{font-size:clamp(36px,5vw,68px);line-height:1;letter-spacing:-.04em}.pg-finale p{margin-top:15px}.pg-footer{display:flex;align-items:center;justify-content:space-between;gap:26px;padding:30px 0;border-top:1px solid var(--pg-line);font-size:12px}.pg-footer>div,.pg-footer nav{display:flex;align-items:center;gap:20px;flex-wrap:wrap}.pg-footer a{text-decoration:none}.pg-footer a:hover{text-decoration:underline}.pg-motion-toggle,[data-motion-toggle]{border:1px solid currentColor;background:transparent;color:inherit;padding:7px 12px;font-size:11px!important;min-height:36px}
-.pg-enhanced .pg-reveal{opacity:0;transform:translateY(28px);transition:opacity .7s ease,transform .9s cubic-bezier(.2,.7,.2,1)}.pg-enhanced .pg-reveal.is-visible{opacity:1;transform:none}.pg-motion-dock{position:fixed;bottom:20px;left:20px;z-index:40;background:var(--pg-bg)!important;color:var(--pg-text)!important;border-radius:30px;box-shadow:0 2px 15px #0001;display:flex;align-items:center;gap:7px}.pg-motion-dock::before{content:'Ⅱ';font-size:11px}.pg-motion-dock[aria-pressed=true]::before{content:'▷'}
-@keyframes pg-arrive{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}@keyframes pg-float{0%,100%{translate:0 0}50%{translate:0 -12px}}@keyframes pg-spin{to{rotate:360deg}}@keyframes pg-marquee{to{transform:translateX(-50%)}}
-.pg-no-motion *,.pg-no-motion *::before,.pg-no-motion *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}.pg-no-motion .pg-reveal{opacity:1!important;transform:none!important}
-@media(prefers-reduced-motion:reduce){.programme-page *,.programme-page *::before,.programme-page *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}.pg-enhanced .pg-reveal{opacity:1!important;transform:none!important}}
-@media(max-width:1050px){.pg-shell{width:calc(100% - 64px)}.pg-nav{margin-inline:32px}.pg-brand small{display:none}.pg-nav-links{gap:20px}.pg-faq{gap:40px}}
-@media(max-width:760px){.pg-shell{width:calc(100% - 40px)}.pg-nav{margin-inline:20px;min-height:82px;padding-block:18px 13px;flex-wrap:wrap;gap:10px}.pg-brand{font-size:30px}.pg-nav-links{order:3;width:100%;justify-content:space-between;font-size:12px;gap:10px}.pg-nav-cta{font-size:11px;padding:8px 12px}.pg-nav-cta span{margin-left:10px}.pg-section{padding-block:62px}.pg-section-head{display:block}.pg-section-head>p{margin-top:20px}.pg-section h2{font-size:38px}.pg-grid,.pg-steps,.pg-studio,.pg-faq{grid-template-columns:1fr}.pg-studio-controls,.pg-studio-output{padding:26px 22px}.pg-faq{gap:28px}.pg-finale{padding:32px 24px;align-items:flex-start;flex-direction:column}.pg-footer{flex-wrap:wrap;align-items:flex-start;gap:20px;padding-bottom:75px}.pg-motion-dock{bottom:12px;left:12px}.pg-actions{gap:18px}.pg-button{gap:24px}}
+/* ═══════════════════════════════════════════════════════════════════════════
+   CABANA · PROGRAMME SYSTEM
+   The shared floor under three very different rooms.
+   ───────────────────────────────────────────────────────────────────────────
+   Creators, Agents and Ambassadors are deliberately not variations on one
+   template. Each owns its palette, its display face, its whole atmosphere.
+   What lives here is only what all three genuinely share: the reset, the
+   navigation, the button, the reveal choreography, the motion contract.
+
+   Every token is redefined per programme on [data-programme], so a page can
+   change its entire mood without touching a single component rule.
+
+   MOTION CONTRACT (load-bearing — the QA harness asserts it)
+     · .pg-no-motion         set by the runtime when motion is paused
+     · prefers-reduced-motion is honoured in CSS, never only in JS, so the
+       operating-system preference cannot be overridden by the page control
+     · .pg-reveal → .is-visible is the only reveal mechanism
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ══ 1 · TOKENS ══════════════════════════════════════════════════════════ */
+.programme-page {
+  /* Neutral defaults. Each programme overrides these wholesale. */
+  --pg-bg: #07060b;
+  --pg-bg-2: #0d0b14;
+  --pg-surface: rgba(255, 255, 255, .045);
+  --pg-surface-2: rgba(255, 255, 255, .08);
+  --pg-text: #f6f4fb;
+  --pg-muted: rgba(246, 244, 251, .62);
+  --pg-faint: rgba(246, 244, 251, .38);
+  --pg-accent: #ff2e93;
+  --pg-accent-2: #7c4dff;
+  --pg-accent-3: #ffc53d;
+  --pg-line: rgba(255, 255, 255, .13);
+  --pg-line-strong: rgba(255, 255, 255, .26);
+  --pg-on-accent: #0a0710;
+
+  --pg-display: 'Archivo', system-ui, sans-serif;
+  --pg-body: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+  --pg-mono: 'JetBrains Mono Variable', ui-monospace, 'SFMono-Regular', monospace;
+  --pg-condensed: 'Barlow Condensed', 'Archivo', system-ui, sans-serif;
+
+  /* One rhythm for the whole system. */
+  --pg-gutter: clamp(18px, 5vw, 64px);
+  --pg-max: 1360px;
+  --pg-radius: 4px;
+  --pg-radius-lg: 22px;
+  --pg-section: clamp(72px, 11vw, 168px);
+
+  --pg-ease: cubic-bezier(.22, 1, .36, 1);
+  --pg-ease-spring: cubic-bezier(.34, 1.36, .44, 1);
+  --pg-ease-glide: cubic-bezier(.4, 0, .2, 1);
+
+  /* Fractal noise, generated by the browser rather than downloaded. */
+  --pg-grain-url: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='190' height='190'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='190' height='190' filter='url(%23n)' opacity='.9'/%3E%3C/svg%3E");
+
+  margin: 0;
+  background: var(--pg-bg);
+  color: var(--pg-text);
+  font: 400 16px/1.62 var(--pg-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  /* clip, not hidden: a decorative element that overhangs must never create a
+     scrollbar, but position:sticky inside must keep working. */
+  overflow-x: clip;
+}
+
+/* The element reset is wrapped in :where() so it carries no specificity at
+   all. A reset written as `.programme-page button { padding: 0 }` outranks
+   every component class that styles a button, and then quietly eats the
+   padding off every control on the page. This cannot. */
+.programme-page * { box-sizing: border-box; }
+.programme-page *::selection { background: var(--pg-accent); color: var(--pg-on-accent); }
+:where(.programme-page) a { color: inherit; }
+:where(.programme-page) button,
+:where(.programme-page) input,
+:where(.programme-page) select,
+:where(.programme-page) textarea { font: inherit; color: inherit; }
+:where(.programme-page) button { cursor: pointer; background: none; border: 0; padding: 0; }
+:where(.programme-page) img,
+:where(.programme-page) svg,
+:where(.programme-page) video,
+:where(.programme-page) canvas { display: block; max-width: 100%; }
+:where(.programme-page) img { height: auto; }
+.programme-page h1, .programme-page h2, .programme-page h3,
+.programme-page h4, .programme-page p, .programme-page figure,
+.programme-page dl, .programme-page dd { margin: 0; }
+.programme-page h1, .programme-page h2, .programme-page h3, .programme-page h4 {
+  font-family: var(--pg-display);
+  font-weight: 800;
+  line-height: .92;
+  letter-spacing: -.03em;
+  text-wrap: balance;
+}
+:where(.programme-page) ul,
+:where(.programme-page) ol { margin: 0; padding: 0; list-style: none; }
+.programme-page section[id] { scroll-margin-top: 92px; }
+.programme-page :focus-visible {
+  outline: 2px solid var(--pg-accent-3);
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+html:has(.programme-page) { scroll-behavior: smooth; }
+
+/* ══ 2 · LAYOUT PRIMITIVES ═══════════════════════════════════════════════ */
+.pg-shell {
+  width: min(var(--pg-max), 100% - var(--pg-gutter) * 2);
+  margin-inline: auto;
+}
+.pg-section { padding-block: var(--pg-section); }
+
+.pg-skip {
+  position: fixed;
+  left: 16px;
+  top: -120px;
+  z-index: 1200;
+  background: var(--pg-accent);
+  color: var(--pg-on-accent) !important;
+  padding: 13px 22px;
+  border-radius: var(--pg-radius);
+  font-weight: 700;
+  text-decoration: none;
+  transition: top .2s var(--pg-ease);
+}
+.pg-skip:focus { top: 14px; }
+
+/* ══ 3 · NAVIGATION ══════════════════════════════════════════════════════
+   Sticky, glassy, and honest about which programme you are standing in:
+   the pill slides to the current page rather than a static underline. */
+.pg-nav {
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(12px, 3vw, 30px);
+  min-height: 74px;
+  padding-inline: var(--pg-gutter);
+  background: color-mix(in srgb, var(--pg-bg) 72%, transparent);
+  backdrop-filter: blur(18px) saturate(1.5);
+  -webkit-backdrop-filter: blur(18px) saturate(1.5);
+  border-bottom: 1px solid transparent;
+  transition: border-color .35s var(--pg-ease), background .35s var(--pg-ease);
+}
+.pg-nav.is-stuck {
+  border-bottom-color: var(--pg-line);
+  background: color-mix(in srgb, var(--pg-bg) 90%, transparent);
+}
+.pg-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font: 800 clamp(22px, 2.4vw, 29px)/1 var(--pg-body);
+  letter-spacing: -.055em;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.pg-brand span { color: var(--pg-accent); }
+.pg-brand small {
+  font: 600 9px/1.25 var(--pg-body);
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--pg-muted);
+  border-left: 1px solid var(--pg-line);
+  padding-left: 11px;
+  margin-left: 11px;
+  letter-spacing: .14em;
+}
+.pg-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--pg-line);
+  border-radius: 100px;
+  background: var(--pg-surface);
+}
+.pg-nav-links a {
+  position: relative;
+  display: inline-block;
+  padding: 8px 16px;
+  border-radius: 100px;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: .01em;
+  text-decoration: none;
+  color: var(--pg-muted);
+  transition: color .3s var(--pg-ease);
+  white-space: nowrap;
+}
+.pg-nav-links a:hover { color: var(--pg-text); }
+.pg-nav-links a[aria-current='page'] {
+  color: var(--pg-on-accent);
+  background: var(--pg-accent);
+}
+.pg-nav-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 18px;
+  border: 1px solid var(--pg-line-strong);
+  border-radius: 100px;
+  font-size: 12.5px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: border-color .3s var(--pg-ease), background .3s var(--pg-ease),
+              color .3s var(--pg-ease), transform .3s var(--pg-ease-spring);
+}
+.pg-nav-cta:hover {
+  border-color: var(--pg-accent);
+  background: var(--pg-accent);
+  color: var(--pg-on-accent);
+  transform: translateY(-2px);
+}
+@media (max-width: 860px) {
+  .pg-nav { min-height: 64px; gap: 10px; }
+  .pg-brand small { display: none; }
+  .pg-nav-links a { padding: 7px 11px; font-size: 11.5px; }
+}
+@media (max-width: 620px) {
+  .pg-nav { flex-wrap: wrap; padding-block: 10px; row-gap: 10px; }
+  .pg-nav-links { order: 3; width: 100%; justify-content: space-between; }
+  .pg-nav-links a { flex: 1; text-align: center; }
+}
+
+/* ══ 4 · TYPE HELPERS ════════════════════════════════════════════════════ */
+.pg-eyebrow,
+.pg-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font: 600 10.5px/1 var(--pg-body);
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--pg-muted);
+}
+.pg-kicker::before {
+  content: '';
+  width: 26px;
+  height: 1px;
+  background: var(--pg-accent);
+}
+.pg-lede {
+  font-size: clamp(16px, 1.5vw, 19px);
+  line-height: 1.6;
+  color: var(--pg-muted);
+  max-width: 48ch;
+}
+.pg-note {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--pg-faint);
+  max-width: 60ch;
+}
+.pg-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--pg-accent);
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--pg-accent) 70%, transparent);
+  animation: pg-pulse 2.4s var(--pg-ease-glide) infinite;
+}
+@keyframes pg-pulse {
+  0%   { box-shadow: 0 0 0 0 color-mix(in srgb, var(--pg-accent) 62%, transparent); }
+  70%  { box-shadow: 0 0 0 11px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+
+/* ══ 5 · BUTTONS ═════════════════════════════════════════════════════════
+   One shape, two weights. The sheen is a pseudo-element so it costs a single
+   composited layer and never touches layout. */
+.pg-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 30px;
+}
+.pg-button,
+.pg-button-ghost {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  min-height: 52px;
+  padding: 14px 26px;
+  border-radius: 100px;
+  font: 600 14px/1 var(--pg-body);
+  letter-spacing: .005em;
+  text-decoration: none;
+  overflow: hidden;
+  isolation: isolate;
+  transition: transform .4s var(--pg-ease-spring), box-shadow .4s var(--pg-ease),
+              border-color .3s var(--pg-ease), background .3s var(--pg-ease),
+              color .3s var(--pg-ease);
+  will-change: transform;
+}
+.pg-button {
+  background: var(--pg-accent);
+  color: var(--pg-on-accent) !important;
+  border: 1px solid transparent;
+  box-shadow: 0 8px 30px -10px color-mix(in srgb, var(--pg-accent) 80%, transparent);
+}
+.pg-button::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(110deg, transparent 22%,
+              color-mix(in srgb, #fff 62%, transparent) 46%, transparent 68%);
+  transform: translateX(-120%);
+  transition: transform .75s var(--pg-ease);
+}
+.pg-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 18px 44px -14px color-mix(in srgb, var(--pg-accent) 96%, transparent);
+}
+.pg-button:hover::after { transform: translateX(120%); }
+.pg-button-ghost {
+  background: var(--pg-surface);
+  border: 1px solid var(--pg-line-strong);
+  color: var(--pg-text);
+}
+.pg-button-ghost:hover {
+  transform: translateY(-3px);
+  border-color: var(--pg-accent);
+  background: color-mix(in srgb, var(--pg-accent) 12%, transparent);
+}
+.pg-button span,
+.pg-button-ghost span { transition: transform .4s var(--pg-ease-spring); }
+.pg-button:hover span,
+.pg-button-ghost:hover span { transform: translate(3px, -3px); }
+
+/* A text link that behaves like a hinge. */
+.pg-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 3px;
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+  background-image: linear-gradient(var(--pg-accent), var(--pg-accent));
+  background-size: 0% 1.5px;
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  transition: background-size .45s var(--pg-ease), color .3s var(--pg-ease);
+}
+.pg-link:hover { background-size: 100% 1.5px; color: var(--pg-accent); }
+.pg-link span { transition: transform .4s var(--pg-ease-spring); }
+.pg-link:hover span { transform: translate(4px, -4px); }
+
+/* ══ 6 · REVEAL CHOREOGRAPHY ═════════════════════════════════════════════
+   One class, several intents. Stagger comes from --pg-delay so a container
+   can cascade its children without a line of JavaScript per child. */
+.pg-reveal {
+  opacity: 0;
+  transform: translate3d(0, 26px, 0);
+  transition: opacity .85s var(--pg-ease) var(--pg-delay, 0ms),
+              transform .95s var(--pg-ease) var(--pg-delay, 0ms);
+}
+.pg-reveal[data-reveal='left']  { transform: translate3d(-34px, 0, 0); }
+.pg-reveal[data-reveal='right'] { transform: translate3d(34px, 0, 0); }
+.pg-reveal[data-reveal='scale'] { transform: scale(.94); }
+/* Only the curtain variant is allowed a clip-path. Putting one on every
+   revealed element — even the harmless-looking inset(0) end state — silently
+   crops anything a section deliberately hangs outside its own box: a seal on
+   the corner of a card, a stamp over the edge of a photograph. */
+.pg-reveal[data-reveal='clip'] {
+  transform: none;
+  opacity: 1;
+  clip-path: inset(0 0 100% 0);
+  transition: clip-path 1s var(--pg-ease) var(--pg-delay, 0ms);
+}
+.pg-reveal.is-visible { opacity: 1; transform: none; }
+.pg-reveal[data-reveal='clip'].is-visible { clip-path: inset(0 0 0 0); }
+/* Reveals must never hide content from a browser without IntersectionObserver
+   or with JavaScript switched off. The runtime opts in by setting .pg-enhanced. */
+html:not(.pg-enhanced) .pg-reveal { opacity: 1; transform: none; clip-path: none; }
+
+/* Per-character display reveal, built by the runtime. */
+.pg-split { display: inline; }
+.pg-split .pg-word { display: inline-block; white-space: nowrap; }
+.pg-split .pg-char {
+  display: inline-block;
+  transform: translate3d(0, 1.05em, 0) rotate(5deg);
+  opacity: 0;
+  transition: transform .9s var(--pg-ease) var(--pg-char-delay, 0ms),
+              opacity .6s var(--pg-ease) var(--pg-char-delay, 0ms);
+}
+.pg-split .pg-char-space { width: .32em; }
+.is-visible .pg-split .pg-char,
+.pg-split.is-visible .pg-char { transform: none; opacity: 1; }
+html:not(.pg-enhanced) .pg-split .pg-char { transform: none; opacity: 1; }
+
+/* ══ 7 · MARQUEE ═════════════════════════════════════════════════════════ */
+.pg-marquee {
+  position: relative;
+  display: flex;
+  overflow: hidden;
+  border-block: 1px solid var(--pg-line);
+  padding-block: 14px;
+  mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+}
+.pg-marquee-track {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 2.2rem;
+  padding-right: 2.2rem;
+  white-space: nowrap;
+  animation: pg-marquee var(--pg-marquee-speed, 34s) linear infinite;
+}
+.pg-marquee[data-direction='reverse'] .pg-marquee-track { animation-direction: reverse; }
+.pg-marquee-track > * {
+  display: inline-flex;
+  align-items: center;
+  gap: 2.2rem;
+  font: 600 clamp(13px, 1.5vw, 17px)/1 var(--pg-condensed);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--pg-muted);
+}
+.pg-marquee i { color: var(--pg-accent); font-style: normal; }
+@keyframes pg-marquee { to { transform: translateX(-50%); } }
+
+/* ══ 8 · SURFACE TEXTURE ═════════════════════════════════════════════════
+   Grain is what keeps a large flat gradient from looking like a screenshot
+   of a gradient. It is inert to pointer and invisible to assistive tech. */
+.pg-grain {
+  position: fixed;
+  inset: -50%;
+  z-index: 1;
+  pointer-events: none;
+  opacity: var(--pg-grain-opacity, .055);
+  background-image: var(--pg-grain-url);
+  background-size: 190px 190px;
+  animation: pg-grain 780ms steps(5) infinite;
+  mix-blend-mode: var(--pg-grain-blend, overlay);
+}
+@keyframes pg-grain {
+  0%   { transform: translate(0, 0); }
+  20%  { transform: translate(-7%, 4%); }
+  40%  { transform: translate(5%, -6%); }
+  60%  { transform: translate(-4%, -3%); }
+  80%  { transform: translate(6%, 5%); }
+  100% { transform: translate(0, 0); }
+}
+
+/* The ambient loop. Poster first, motion second: the still is painted by CSS
+   so the hero is complete before a single video byte arrives, and the loop
+   cross-fades in on top of it once it is decoded. */
+.pg-ambient {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 1.4s var(--pg-ease-glide);
+  pointer-events: none;
+}
+.pg-ambient.is-live { opacity: var(--pg-ambient-opacity, 1); }
+.pg-ambient-still {
+  position: absolute;
+  inset: 0;
+  background: var(--pg-ambient-still) center/cover no-repeat;
+  pointer-events: none;
+}
+
+/* Reading progress. Fixed, one pixel of feedback, no layout cost. */
+.pg-progress {
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 2px;
+  z-index: 70;
+  transform-origin: 0 50%;
+  transform: scaleX(0);
+  background: linear-gradient(90deg, var(--pg-accent), var(--pg-accent-2), var(--pg-accent-3));
+  pointer-events: none;
+}
+
+/* ══ 9 · FAQ ═════════════════════════════════════════════════════════════ */
+.pg-faq-list { display: grid; gap: 0; border-top: 1px solid var(--pg-line); }
+.pg-faq-list details {
+  border-bottom: 1px solid var(--pg-line);
+  transition: background .4s var(--pg-ease);
+}
+.pg-faq-list details[open] { background: var(--pg-surface); }
+.pg-faq-list summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: clamp(18px, 2.2vw, 26px) clamp(4px, 1.4vw, 20px);
+  cursor: pointer;
+  list-style: none;
+  font-family: var(--pg-display);
+  font-weight: 700;
+  font-size: clamp(17px, 2vw, 23px);
+  letter-spacing: -.02em;
+  line-height: 1.22;
+  transition: color .3s var(--pg-ease);
+}
+.pg-faq-list summary::-webkit-details-marker { display: none; }
+.pg-faq-list summary:hover { color: var(--pg-accent); }
+.pg-faq-list summary::after {
+  content: '';
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--pg-line-strong);
+  border-radius: 50%;
+  background:
+    linear-gradient(currentColor, currentColor) center/11px 1.5px no-repeat,
+    linear-gradient(currentColor, currentColor) center/1.5px 11px no-repeat;
+  transition: transform .45s var(--pg-ease-spring), border-color .3s var(--pg-ease);
+}
+.pg-faq-list details[open] summary::after {
+  transform: rotate(135deg);
+  border-color: var(--pg-accent);
+}
+.pg-faq-list details > div {
+  padding: 0 clamp(4px, 1.4vw, 20px) clamp(20px, 2.4vw, 28px);
+  max-width: 68ch;
+  color: var(--pg-muted);
+  font-size: 15px;
+  line-height: 1.68;
+}
+.pg-faq-list details[open] > div { animation: pg-fade-up .55s var(--pg-ease) both; }
+.pg-faq-list a { color: var(--pg-accent); font-weight: 600; }
+@keyframes pg-fade-up {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ══ 10 · FOOTER ═════════════════════════════════════════════════════════ */
+.pg-footer {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 20px 32px;
+  padding-block: 36px 44px;
+  border-top: 1px solid var(--pg-line);
+  font-size: 13px;
+  color: var(--pg-muted);
+}
+.pg-footer nav,
+.pg-footer > div:last-child { display: flex; align-items: center; flex-wrap: wrap; gap: 20px; }
+.pg-footer a { text-decoration: none; transition: color .3s var(--pg-ease); }
+.pg-footer a:hover { color: var(--pg-accent); }
+.pg-footer .pg-brand { font-size: 24px; }
+
+/* ══ 11 · MOTION CONTROL ═════════════════════════════════════════════════ */
+.pg-motion-toggle,
+.pg-motion-dock {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 15px;
+  border: 1px solid var(--pg-line-strong);
+  border-radius: 100px;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  color: var(--pg-muted);
+  background: var(--pg-surface);
+  transition: color .3s var(--pg-ease), border-color .3s var(--pg-ease);
+}
+.pg-motion-toggle:hover,
+.pg-motion-dock:hover { color: var(--pg-text); border-color: var(--pg-accent); }
+.pg-motion-toggle::before,
+.pg-motion-dock::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--pg-accent);
+}
+/* Bottom-left: the support launcher owns the bottom-right corner on every
+   Cabana page, and two floating controls fighting for one corner is a bug. */
+.pg-motion-dock {
+  position: fixed;
+  left: 16px;
+  bottom: 16px;
+  z-index: 80;
+  background: color-mix(in srgb, var(--pg-bg) 86%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+/* One control is enough on a small screen; the footer keeps the accessible one. */
+@media (max-width: 760px) { .pg-motion-dock { display: none; } }
+
+/* ══ 12 · THE PAUSE ══════════════════════════════════════════════════════
+   Both halves of the contract. The class is the page control; the media
+   query is the operating system, and the operating system always wins —
+   which is why it is last. */
+.pg-no-motion *,
+.pg-no-motion *::before,
+.pg-no-motion *::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+.pg-no-motion .pg-reveal,
+.pg-no-motion .pg-split .pg-char {
+  opacity: 1 !important;
+  transform: none !important;
+  clip-path: none !important;
+}
+.pg-no-motion .pg-grain { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  html:has(.programme-page) { scroll-behavior: auto; }
+  .programme-page *,
+  .programme-page *::before,
+  .programme-page *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+  .programme-page .pg-reveal,
+  .programme-page .pg-split .pg-char {
+    opacity: 1 !important;
+    transform: none !important;
+    clip-path: none !important;
+  }
+  .programme-page .pg-grain { display: none; }
+}
+
+/* ══ 13 · SHARED SMALL PARTS ═════════════════════════════════════════════ */
+.pg-visually-hidden {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  margin: -1px; padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.pg-inline-status {
+  min-height: 18px;
+  margin-top: 10px;
+  font-size: 12.5px;
+  color: var(--pg-accent-3);
+}
+.pg-field-label {
+  display: block;
+  margin-bottom: 10px;
+  font: 600 10.5px/1 var(--pg-body);
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--pg-faint);
+}
+.pg-choice-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 22px; }
+.pg-choice {
+  padding: 10px 16px;
+  border: 1px solid var(--pg-line);
+  border-radius: 100px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--pg-muted);
+  background: transparent;
+  transition: color .28s var(--pg-ease), border-color .28s var(--pg-ease),
+              background .28s var(--pg-ease), transform .3s var(--pg-ease-spring);
+}
+.pg-choice:hover { color: var(--pg-text); border-color: var(--pg-line-strong); transform: translateY(-2px); }
+.pg-choice[aria-pressed='true'] {
+  color: var(--pg-on-accent);
+  background: var(--pg-accent);
+  border-color: var(--pg-accent);
+}
+
+/* Native range input, restyled once for all three programmes. */
+.pg-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 34px;
+  background: transparent;
+  cursor: pointer;
+}
+.pg-range::-webkit-slider-runnable-track {
+  height: 3px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--pg-accent) var(--pg-fill, 40%),
+              var(--pg-line) var(--pg-fill, 40%));
+}
+.pg-range::-moz-range-track {
+  height: 3px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--pg-accent) var(--pg-fill, 40%),
+              var(--pg-line) var(--pg-fill, 40%));
+}
+.pg-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  margin-top: -9.5px;
+  border-radius: 50%;
+  background: var(--pg-text);
+  border: 5px solid var(--pg-accent);
+  box-shadow: 0 4px 16px -4px color-mix(in srgb, var(--pg-accent) 90%, transparent);
+  transition: transform .25s var(--pg-ease-spring);
+}
+.pg-range::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--pg-text);
+  border: 5px solid var(--pg-accent);
+  box-shadow: 0 4px 16px -4px color-mix(in srgb, var(--pg-accent) 90%, transparent);
+}
+.pg-range:hover::-webkit-slider-thumb { transform: scale(1.14); }
+.pg-range:active::-webkit-slider-thumb { transform: scale(.94); }
+
+/* Fixed-width numerals wherever a value animates, so nothing jitters. */
+.pg-tabular { font-variant-numeric: tabular-nums; font-feature-settings: 'tnum' 1; }
+
+@media print {
+  .pg-motion-dock, .pg-progress, .pg-grain, .pg-marquee { display: none !important; }
+}

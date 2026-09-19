@@ -19,7 +19,13 @@ const pages = [
 const results = [];
 const routeChecks = new Map();
 await mkdir(output, { recursive: true });
-const browser = await chromium.launch({ channel: 'chrome', headless: true });
+// Chrome by default; PROGRAMME_QA_BROWSER points at an existing Chromium on
+// machines (CI images, containers) where the channel is not installed.
+const browser = await chromium.launch({
+  executablePath: process.env.PROGRAMME_QA_BROWSER || undefined,
+  channel: process.env.PROGRAMME_QA_BROWSER ? undefined : 'chrome',
+  headless: true,
+});
 
 function record(label, passed, details = {}) {
   results.push({ label, passed, ...details });
