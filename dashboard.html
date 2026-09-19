@@ -2698,13 +2698,10 @@ function onSession(st){
 
   /* Screen routing.
      Priority: 1) URL ?role= param   2) localStorage apa-last-role   3) DB last_role
-     Safety net: if role=guest but user has listings, quietly promote to partner. */
-  // Only go to partner screen if URL explicitly says ?role=partner.
-  // Never auto-route based on localStorage or listings check, that hijacks
-  // the user dashboard on every app open. Partner mode is an explicit choice.
-  var urlRoleParam = '';
-  try { urlRoleParam = new URLSearchParams(location.search).get('role') || ''; } catch(e) {}
-  var role = (st.status === 'user' && urlRoleParam === 'partner') ? 'partner' : 'guest';
+     apa-session.js already resolves this priority chain into st.role — trust it.
+     Using st.role means: switching to partner (which sets localStorage) persists
+     across page loads, and the ?role=partner URL param also works correctly.     */
+  var role = (st.status === 'user' && st.role === 'partner') ? 'partner' : 'guest';
   _try(function(){ showScreen(role); }, 'screen');
 
   if(role === 'partner'){
