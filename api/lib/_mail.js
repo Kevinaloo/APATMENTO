@@ -39,11 +39,23 @@
    refreshes checkout twice all produce exactly one email.
    ══════════════════════════════════════════════════════════════════════ */
 
+import { Resend } from 'resend';
 import { BRAND, LOGO, MAIL, SITE, CONTACT, TAGLINE, PROMISE, money, prettyDate } from './_brand.js';
 
-const RESEND_KEY = process.env.RESEND_API_KEY;
-const SUPA_URL   = process.env.SUPABASE_URL;
+const RESEND_KEY  = process.env.RESEND_API_KEY;
+const SUPA_URL    = process.env.SUPABASE_URL;
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+/* Returns a Resend client keyed to whatever RESEND_API_KEY is set to at
+   call time. The SDK is lazy so the module loads cleanly in CI and dev
+   environments where the key is absent. A new key (e.g. set by a test)
+   gets its own client; the common case of a stable key reuses one. */
+const _resendClients = new Map();
+function resend() {
+  const key = process.env.RESEND_API_KEY || RESEND_KEY || '';
+  if (!_resendClients.has(key)) _resendClients.set(key, new Resend(key));
+  return _resendClients.get(key);
+}
 
 const B = BRAND;
 
@@ -1374,8 +1386,7 @@ export async function sendTemplate({ template, to, data = {}, dedupeKey = null, 
     }
   }
 
-  const resendKey = process.env.RESEND_API_KEY || RESEND_KEY;
-  if (!resendKey) {
+  if (!process.env.RESEND_API_KEY && !RESEND_KEY) {
     if (dedupeKey) await restPatch(`email_log?dedupe_key=eq.${encodeURIComponent(dedupeKey)}`, {
       status: 'failed', error: 'RESEND_API_KEY not set', meta: { category },
     });
@@ -1383,32 +1394,37 @@ export async function sendTemplate({ template, to, data = {}, dedupeKey = null, 
   }
 
   try {
-    const r = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${resendKey}`,
-        'Content-Type': 'application/json',
-        ...(dedupeKey ? { 'Idempotency-Key': String(dedupeKey).slice(0, 256) } : {}),
-      },
-      body: JSON.stringify({
-        from, to: [addr], subject: built.subject, html,
-        reply_to: replyTo, ...(headers ? { headers } : {}),
-      }),
-    });
-    const out = await r.json().catch(() => ({}));
-    if (!r.ok) {
-      console.error('[mail] resend', r.status, JSON.stringify(out).slice(0, 300));
+    const payload = {
+      from, to: [addr], subject: built.subject, html,
+      replyTo,
+      ...(headers ? { headers } : {}),
+      tags: [
+        { name: 'template', value: template },
+        { name: 'category', value: category },
+        { name: 'audience', value: audience },
+      ],
+    };
+
+    /* The Resend SDK takes idempotencyKey as a send *option* (second arg),
+       not as part of the email payload — it becomes the Idempotency-Key header. */
+    const sendOptions = dedupeKey ? { idempotencyKey: String(dedupeKey).slice(0, 256) } : {};
+
+    const { data: out, error: resendErr } = await resend().emails.send(payload, sendOptions);
+
+    if (resendErr) {
+      const msg = String(resendErr.message || resendErr.name || 'resend_error').slice(0, 300);
+      console.error('[mail] resend error', msg);
       if (dedupeKey) {
         await restPatch(`email_log?dedupe_key=eq.${encodeURIComponent(dedupeKey)}`, {
-          status: 'failed', error: String(out?.message || r.status).slice(0, 300), meta: { category },
+          status: 'failed', error: msg, meta: { category },
         });
       } else {
         await restPost('email_log', {
           user_id: userId, recipient: addr, template, sender: from, subject: built.subject,
-          status: 'failed', error: String(out?.message || r.status).slice(0, 300), meta: { category },
+          status: 'failed', error: msg, meta: { category },
         });
       }
-      return { ok: false, error: out?.message || `resend_${r.status}` };
+      return { ok: false, error: msg };
     }
 
     if (dedupeKey) {

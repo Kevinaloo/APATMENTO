@@ -20,6 +20,12 @@ test('sendBookingReceipt aborts safely if recipient email cannot be resolved', a
   assert.equal(res.error, 'missing_user_email');
 });
 
+/* Helper: a fetch response mock the Resend SDK accepts.
+   The SDK calls response.headers.entries() on every response, so a plain
+   object without headers throws inside the SDK and surfaces as a network
+   error instead of the send result. */
+const mockHeaders = () => ({ entries: () => [][Symbol.iterator]() });
+
 test('sendBookingReceipt formats payload and attempts Resend dispatch', async () => {
   const originalFetch = globalThis.fetch;
   const calls = [];
@@ -30,10 +36,11 @@ test('sendBookingReceipt formats payload and attempts Resend dispatch', async ()
       return {
         ok: true,
         status: 200,
+        headers: mockHeaders(),
         json: async () => ({ id: 'resend_msg_test_123' }),
       };
     }
-    return { ok: false, status: 404, json: async () => ({}) };
+    return { ok: false, status: 404, headers: mockHeaders(), json: async () => ({}) };
   };
 
   const originalKey = process.env.RESEND_API_KEY;
@@ -69,7 +76,10 @@ test('sendBookingReceipt formats payload and attempts Resend dispatch', async ()
     assert.match(body.html, /Sunset Penthouse/);
     assert.match(body.html, /KES\s?5,000/);
     assert.match(body.html, /APT-20260901-XYZ/);
-    assert.equal(resendCall.opts.headers['Idempotency-Key'], 'receipt:APT-20260901-XYZ:5000');
+    /* The Resend SDK sets Idempotency-Key as a Headers object, not a plain dict. */
+    const idempKey = resendCall.opts.headers?.get?.('Idempotency-Key')
+      ?? resendCall.opts.headers?.['Idempotency-Key'];
+    assert.equal(idempKey, 'receipt:APT-20260901-XYZ:5000');
   } finally {
     globalThis.fetch = originalFetch;
     process.env.RESEND_API_KEY = originalKey;
@@ -86,6 +96,7 @@ test('sendBookingReceipt falls back to profiles table lookup when user email is 
       return {
         ok: true,
         status: 200,
+        headers: mockHeaders(),
         json: async () => ([{ email: 'registered_guest@example.com', first_name: 'Wanjiru', last_name: 'Kariuki' }]),
       };
     }
@@ -93,10 +104,11 @@ test('sendBookingReceipt falls back to profiles table lookup when user email is 
       return {
         ok: true,
         status: 200,
+        headers: mockHeaders(),
         json: async () => ({ id: 'resend_msg_profile_456' }),
       };
     }
-    return { ok: false, status: 404, json: async () => ({}) };
+    return { ok: false, status: 404, headers: mockHeaders(), json: async () => ({}) };
   };
 
   const originalKey = process.env.RESEND_API_KEY;
