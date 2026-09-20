@@ -204,16 +204,12 @@
       return;
     }
     el.qlist.innerHTML = convs.map(function (c) {
-      var locked = c.status === 'locked';
-      var pills = [
-        '<span class="pill" data-k="' + esc(c.status) + '">' + esc(c.status) + '</span>',
-        '<span class="pill" data-k="cat">' + esc(c.listing_type || 'apt') + '</span>',
-      ];
-      if (locked && c.locked_reason) pills.push('<span class="pill" data-k="low">' + esc(c.locked_reason) + '</span>');
-      if (c.contact_released) pills.push('<span class="pill" data-k="resolved">contact shared</span>');
+      var pills = ['<span class="pill" data-k="cat">' + esc(c.listing_type || 'stay') + '</span>'];
+      if (c.flagged_at) pills.push('<span class="pill" data-k="urgent">flagged</span>');
+      if (c.blocked_by) pills.push('<span class="pill" data-k="low">blocked</span>');
+      if (c.checkin) pills.push('<span class="pill" data-k="normal">' + esc(c.checkin) + ' → ' + esc(c.checkout) + '</span>');
       return '<div class="q" data-cid="' + esc(c.id) + '">'
         + '<div class="q-h"><span class="q-n">' + esc(c.guest_name) + ' → ' + esc(c.host_name) + '</span>'
-        + (c.host_unread || c.guest_unread ? '<span class="q-unread">' + esc((c.host_unread || 0) + (c.guest_unread || 0)) + '</span>' : '')
         + '<span class="q-t">' + esc(ago(c.last_message_at)) + '</span></div>'
         + '<div class="q-p">' + esc(c.listing_title || c.listing_id) + '</div>'
         + '<div class="q-p" style="color:var(--soft);font-size:11px">' + esc(c.last_message || '') + '</div>'
@@ -225,7 +221,9 @@
   function openPlatformChat(id) {
     if (!id) return;
     doc.body.setAttribute('data-view', 'thread');
-    support('agent.chat_thread', { convId: id })
+    state.active = null;
+    schedule('thread', function () {}, 1e9);
+    return support('agent.chat_thread', { convId: id })
       .then(function (d) {
         state.activePlatformChat = d;
         paintPlatformThread(d);
@@ -235,6 +233,8 @@
       });
   }
 
+  var KIND_LABEL = { withheld: 'Withheld by the guard', notice: 'Private notice', 'case': 'Case opened', booking: 'Booking', offer: 'Special offer', suggestion: 'Suggested stays' };
+
   function paintPlatformThread(d) {
     if (!d || !d.conv) return;
     var conv  = d.conv;
@@ -243,51 +243,53 @@
 
     el.name.textContent = guest.name + ' ↔ ' + host.name;
 
-    var bits = [
-      '<span class="pill" data-k="' + esc(conv.status) + '">' + esc(conv.status) + '</span>',
-      '<span class="pill" data-k="cat">' + esc(conv.listing_type || 'apartment') + '</span>',
-    ];
-    if (conv.contact_released) bits.push('<span class="pill" data-k="resolved">contact released</span>');
-    if (conv.locked_reason) bits.push('<span>' + esc(conv.locked_reason) + '</span>');
+    var bits = ['<span class="pill" data-k="cat">' + esc(conv.listing_type || 'stay') + '</span>'];
+    if (conv.flagged_at) bits.push('<span class="pill" data-k="urgent">flagged: ' + esc(conv.flag_reason || 'review') + '</span>');
+    if (conv.blocked_by) bits.push('<span class="pill" data-k="low">blocked by ' + (conv.blocked_by === conv.guest_id ? 'guest' : 'host') + '</span>');
     el.meta.innerHTML = bits.join('');
 
     el.body.innerHTML = (d.messages || []).map(function (m) {
-      var label = m.sender === 'system' ? null
+      var label = m.sender === 'agent' ? 'Cabana Support'
+                : m.sender === 'system' ? null
                 : m.sender === 'guest'  ? guest.name
                 : host.name;
-      return '<div class="m" data-r="' + esc(m.sender) + '"><div>'
-        + (label ? '<div class="m-f">' + esc(label) + '</div>' : '')
+      var tag = KIND_LABEL[m.kind] ? '<div class="m-f" style="color:var(--mint)">' + esc(KIND_LABEL[m.kind])
+        + (m.private_to ? ' · only the ' + esc(m.private_to) + ' sees this' : '')
+        + (m.flags && m.flags.length ? ' · ' + esc(m.flags.join(', ')) : '') + '</div>' : '';
+      return '<div class="m" data-r="' + esc(m.sender === 'agent' ? 'agent' : m.sender) + '"><div>'
+        + (label ? '<div class="m-f">' + esc(label) + '</div>' : '') + tag
         + '<div class="m-b">' + esc(m.body) + '</div>'
-        + (m.sender !== 'system' ? '<div class="m-t">' + esc(clockOf(m.at)) + '</div>' : '')
+        + (m.original ? '<div class="m-b" style="margin-top:4px;opacity:.75;border-left:2px solid #ff6b6b;padding-left:8px">Original: ' + esc(m.original) + '</div>' : '')
+        + '<div class="m-t">' + esc(clockOf(m.at)) + '</div>'
         + '</div></div>';
     }).join('');
     el.body.scrollTop = el.body.scrollHeight;
 
-    /* Context panel */
-    var ctxHtml = '<div style="padding:16px 14px;font:400 12px/1.7 Inter,sans-serif;color:var(--soft)">';
-    ctxHtml += '<div style="font-weight:700;color:var(--ink);margin-bottom:10px">Conversation</div>';
-    ctxHtml += row('Listing', esc(conv.listing_title || conv.listing_id));
-    ctxHtml += row('Type', esc(conv.listing_type || '—'));
-    ctxHtml += row('Status', esc(conv.status));
-    ctxHtml += row('Contact released', conv.contact_released ? 'Yes' : 'No');
-    if (conv.locked_reason) ctxHtml += row('Locked reason', esc(conv.locked_reason));
-    ctxHtml += '<div style="margin-top:14px;font-weight:700;color:var(--ink)">Guest</div>';
-    ctxHtml += row('Name',  esc(guest.name));
-    ctxHtml += row('Email', esc(guest.email || '—'));
-    ctxHtml += row('Phone', esc(guest.phone || '—'));
-    ctxHtml += '<div style="margin-top:14px;font-weight:700;color:var(--ink)">Host / Provider</div>';
-    ctxHtml += row('Name',  esc(host.name));
-    ctxHtml += row('Email', esc(host.email || '—'));
-    ctxHtml += row('Phone', esc(host.phone || '—'));
-    ctxHtml += '<div style="margin-top:14px;padding:10px;background:rgba(255,255,255,.04);border-radius:8px;font-size:11px;color:var(--soft)">Read-only view. Intervening in platform chats is done through the admin panel.</div>';
-    ctxHtml += '</div>';
+    var v = d.violations || { guest: 0, host: 0 };
+    var ctxHtml = '<h4>Conversation</h4><div class="cx">'
+      + row('Listing', conv.listing_title || conv.listing_id)
+      + (conv.checkin ? row('Trip', conv.checkin + ' → ' + conv.checkout + ' · ' + (conv.guests || 1) + ' guests') : '')
+      + row('Started', ago(conv.created_at) + ' ago')
+      + '</div>';
+    ctxHtml += '<h4>Guest</h4><div class="cx">' + row('Name', guest.name) + row('Email', guest.email || '—')
+      + row('Phone', guest.phone || '—') + row('Withheld (30d)', String(v.guest || 0)) + '</div>';
+    ctxHtml += '<h4>Host</h4><div class="cx">' + row('Name', host.name) + row('Email', host.email || '—')
+      + row('Phone', host.phone || '—') + row('Withheld (30d)', String(v.host || 0)) + '</div>';
+    if (d.offers && d.offers.length) {
+      ctxHtml += '<h4>Offers</h4>' + d.offers.map(function (o) {
+        return '<div class="cx">' + row(o.status, money(o.nightly) + '/night') + row('List price', money(o.list_nightly))
+          + row('Dates', o.checkin + ' → ' + o.checkout) + '</div>';
+      }).join('');
+    }
+    ctxHtml += '<div class="cx"><div class="cx-r" style="line-height:1.6">Replies here appear in the members\' chat as <b>Cabana Support</b>, and both of them are notified.</div></div>';
     el.ctx.innerHTML = ctxHtml;
 
-    /* Disable reply — platform chats are observation-only */
-    el.reply.disabled = true;
-    el.reply.placeholder = 'Platform chats are read-only. Use Admin to intervene.';
-    doc.getElementById('send').disabled = true;
+    el.reply.disabled = false;
+    el.reply.placeholder = 'Reply in this chat as Cabana Support (both see it)…';
+    el.send.disabled = !el.reply.value.trim();
+    el.claim.disabled = true;
     el.resolve.disabled = true;
+    el.callBtn.disabled = true;
   }
 
   /* ══════════════════════════════════════════════════════════════════
@@ -295,6 +297,7 @@
   ══════════════════════════════════════════════════════════════════ */
   function openThread(id) {
     if (!id) return;
+    state.activePlatformChat = null;
     doc.body.setAttribute('data-view', 'thread');
     return support('agent.thread', { threadId: id })
       .then(function (d) {
@@ -376,6 +379,13 @@
       + (thread.escalation_reason ? '<div style="margin-top:9px;font:400 12px/1.6 Inter,sans-serif;color:var(--soft)">' + esc(thread.escalation_reason) + '</div>' : '')
       + '</div>';
 
+    var linked = thread.meta && thread.meta.chat_conversation_id;
+    if (linked) {
+      html += '<h4>Linked chat</h4><div class="cx"><div class="cx-r" style="margin-bottom:8px">Raised from a guest↔host conversation'
+        + (thread.meta.reporter_role ? ' by the ' + esc(thread.meta.reporter_role) : '') + '.</div>'
+        + '<button class="ib" type="button" id="open-linked-chat" style="width:100%">Open the conversation</button></div>';
+    }
+
     html += '<h4>Set</h4>'
       + '<select class="sel" id="sel-priority">'
       + ['low', 'normal', 'high', 'urgent'].map(function (p) {
@@ -423,6 +433,9 @@
 
     el.ctx.innerHTML = html;
 
+    var lk = doc.getElementById('open-linked-chat');
+    if (lk) lk.addEventListener('click', function () { openPlatformChat(linked); });
+
     var sel = doc.getElementById('sel-priority');
     if (sel) sel.addEventListener('change', function () {
       support('agent.update', { threadId: thread.id, priority: sel.value }).then(loadQueue).catch(function () {});
@@ -438,6 +451,14 @@
   ══════════════════════════════════════════════════════════════════ */
   function sendReply() {
     var text = (el.reply.value || '').trim();
+    if (text && !state.active && state.activePlatformChat && state.activePlatformChat.conv) {
+      var cid = state.activePlatformChat.conv.id;
+      el.reply.value = ''; el.send.disabled = true;
+      support('agent.chat_post', { convId: cid, text: text })
+        .then(function () { return openPlatformChat(cid); })
+        .catch(function () { el.reply.value = text; el.send.disabled = false; });
+      return;
+    }
     if (!text || !state.active) return;
     el.reply.value = '';
     el.reply.style.height = 'auto';

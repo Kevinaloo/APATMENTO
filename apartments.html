@@ -4693,11 +4693,16 @@ function messageHost(id) {
   const apt = currentListings.find(a => a.id === id);
   if (!apt) return;
   if (!window.CabanaChat) return;
+  /* The dates and party size the guest already chose travel with the
+     question, so the host sees them at the top of the conversation. */
   CabanaChat.open({
     listingId: apt._dbId || apt.id,
     listingType: 'apartment',
     listingTitle: apt.name,
     hostId: apt.hostId || undefined,
+    checkin: _searchState.dateIn || null,
+    checkout: _searchState.dateOut || null,
+    guests: (_searchState.adults || 1) + (_searchState.children || 0),
   });
 }
 
@@ -6275,7 +6280,7 @@ loadListings().then(async () => {
 <div data-showcase="window"></div>
 <script src="/analytics.js" defer></script>
 <script src="/cabana-host-metrics.js" defer></script>
-<script src="/chat.js?v=34" defer></script>
+<script src="/chat.js?v=40" defer></script>
 <script src="/apa-geo.js" defer></script>
 <script src="/apa-map.js" defer></script>
 <script src="/telemetry.js" defer></script>
@@ -6591,20 +6596,9 @@ async function guestEngageResponse(response_id, request_id, host_id, listing_id,
 
   const sb = window.sb || window.ApaSession?.client();
 
-  // Create chat conversation
-  const { data: conv, error: convErr } = await sb
-    .from('chat_conversations')
-    .upsert({
-      listing_id,
-      listing_type: 'apartment',
-      listing_title,
-      host_id,
-      guest_id: user.id,
-      status: 'open'
-    }, { onConflict: 'listing_id,guest_id' })
-    .select('id')
-    .single();
-
+  // Create (or reopen) the conversation through the server, which takes the
+  // host and title from the listing itself rather than from this page.
+  const { data: conv, error: convErr } = await sb.rpc('cabana_chat_start', { p_listing: listing_id });
   if (convErr) return { success: false, error: convErr.message };
 
   // Update response status to engaged
@@ -6621,8 +6615,7 @@ async function guestEngageResponse(response_id, request_id, host_id, listing_id,
   await sb.from('chat_messages').insert({
     conversation_id: conv.id,
     sender_id: user.id,
-    content: 'Hello, I found your place through Get Matched with Cabana and I am interested in booking. Could we go through the details?',
-    is_system: false
+    content: 'Hello, I found your place through Get Matched with Cabana and I am interested in booking. Could we go through the details?'
   });
 
   return { success: true, conversation_id: conv.id };

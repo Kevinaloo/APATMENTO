@@ -352,9 +352,13 @@ export default async function handler(req, res) {
       if (!/^[0-9a-f-]{36}$/i.test(messageId)) return res.status(400).json({ error: 'message_id_required' });
 
       const senderFilter = chatCaller ? `&sender_id=eq.${chatCaller.id}` : '';
-      const messages = await supa(`chat_messages?id=eq.${messageId}${senderFilter}&select=id,conversation_id,sender_id,content&limit=1`);
+      const messages = await supa(`chat_messages?id=eq.${messageId}${senderFilter}&select=id,conversation_id,sender_id,content,kind,visible_to&limit=1`);
       const message = messages?.[0];
       if (!message) return res.status(404).json({ error: 'message_not_found' });
+      /* Withheld lines, private notices and system lines never leave the app. */
+      if (message.visible_to || !['text', 'offer', 'suggestion', undefined, null].includes(message.kind)) {
+        return res.status(200).json({ sent: 0, skipped: 'not_deliverable' });
+      }
       const conversations = await supa(`chat_conversations?id=eq.${message.conversation_id}&select=id,host_id,guest_id,listing_title&limit=1`);
       const conversation = conversations?.[0];
       if (!conversation || ![conversation.host_id, conversation.guest_id].includes(message.sender_id)
@@ -382,7 +386,7 @@ export default async function handler(req, res) {
         user_id: recipient,
         title: `New message${conversation.listing_title ? ` about ${String(conversation.listing_title).slice(0, 80)}` : ''}`,
         body: preview || 'Open Cabana to read the message.',
-        url: '/dashboard.html?inbox=1',
+        url: `/dashboard.html?inbox=1&c=${conversation.id}`,
         kind: 'message',
         persist: !existing?.[0],
         meta: deliveryMeta,

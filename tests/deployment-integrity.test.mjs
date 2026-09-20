@@ -63,7 +63,8 @@ test('partner landing is one consistent workspace with core actions before APA',
 test('dashboard notifications live behind the bell and messaging assets are versioned', () => {
   const dashboard = read('dashboard.html');
   assert.doesNotMatch(dashboard, /id="cbn-ring-slot"/);
-  assert.match(dashboard, /chat\.js\?v=34/);
-  assert.match(read('apartments.html'), /chat\.js\?v=34/);
+  assert.match(dashboard, /chat\.js\?v=40/);
+  assert.match(read('apartments.html'), /chat\.js\?v=40/);
+  for (const page of ['partner-bookings.html', 'my-bookings.html', 'roommates.html']) assert.match(read(page), /chat\.js\?v=40/);
   assert.match(read('sw.js'), /cabana-v38-location-flight-30s/);
 });

@@ -1578,7 +1578,7 @@ export default async function handler(req, res) {
   caller.hostRpc = (name, args) => rpcAsUser(req, name, args);
 
   const identity = caller.userId || caller.guestKey;
-  const limits = { send: 20, poll: 240, bootstrap: 60, escalate: 6, csat: 6, close: 10, history: 20, adopt: 6, 'host.event': 120 };
+  const limits = { 'chat.escalate': 4, send: 20, poll: 240, bootstrap: 60, escalate: 6, csat: 6, close: 10, history: 20, adopt: 6, 'host.event': 120 };
   if (!consumeRateLimit(req, res, `support:${op}`, limits[op] ?? 30, 60_000, identity)) return;
   if (op === 'host.event' && !consumeRateLimit(req, res, 'host-event-ip', 240, 60_000, requestIp(req))) return;
 
@@ -1598,6 +1598,78 @@ export default async function handler(req, res) {
         } catch (error) {
           return res.status(400).json({ error: error.message });
         }
+      }
+
+      /* ── chat.escalate: "Get help from Cabana" inside a guest↔host chat ──
+         Two intents, one door:
+           help    — "Cabana, please step in." Both people are told the
+                     team is looking, so nobody feels talked about.
+           report  — scam, harassment, safety, a listing that is not what
+                     it claims, payment trouble. Only the reporter is told;
+                     telling the other person invites retaliation.
+         Either way the desk gets a queued thread that links straight to the
+         transcript, including anything the guard withheld. */
+      case 'chat.escalate': {
+        if (caller.kind !== 'user') return res.status(401).json({ error: 'sign_in_required' });
+        const convId = String(body.conversationId || '');
+        if (!uuidish(convId)) return res.status(400).json({ error: 'bad_conversation' });
+        const conv = await one('chat_conversations', `id=eq.${convId}&select=id,host_id,guest_id,listing_id,listing_title`).catch(() => null);
+        if (!conv || ![conv.host_id, conv.guest_id].includes(caller.userId)) return res.status(404).json({ error: 'conversation_not_found' });
+
+        const REASONS = {
+          help:         { label: 'Asked Cabana to step in',              priority: 'normal', category: 'booking_change', report: false },
+          off_platform: { label: 'Asked to pay or talk outside Cabana',   priority: 'high',   category: 'safety',  report: true },
+          scam:         { label: 'Suspected scam or fake listing',        priority: 'high',   category: 'safety',  report: true },
+          harassment:   { label: 'Harassment or inappropriate messages',  priority: 'high',   category: 'safety',  report: true },
+          safety:       { label: 'Safety concern',                        priority: 'urgent', category: 'safety',  report: true },
+          payment:      { label: 'Payment or refund problem',             priority: 'high',   category: 'billing', report: false },
+          listing:      { label: 'Listing is not as described',           priority: 'normal', category: 'checkin', report: false },
+        };
+        const reasonKey = REASONS[body.reason] ? body.reason : 'help';
+        const reason = REASONS[reasonKey];
+        const role = caller.userId === conv.host_id ? 'host' : 'guest';
+        const note = scrub(clamp(body.note, 1200)) || '';
+
+        /* One open case per conversation. A second report adds to it. */
+        const existing = await select('support_threads',
+          `user_id=eq.${caller.userId}&status=in.(apa,queued,assigned,waiting)&meta->>chat_conversation_id=eq.${convId}&select=*&limit=1`).catch(() => []);
+        let thread = existing?.[0] || null;
+        if (!thread) {
+          thread = await insert('support_threads', {
+            user_id: caller.userId, display_name: caller.name || null, email: caller.email || null,
+            subject: clamp(`${reason.label} · ${conv.listing_title || 'chat'}`, 160),
+            origin_page: 'chat', category: reason.category, status: 'queued',
+            meta: { chat_conversation_id: convId, listing_id: conv.listing_id, reporter_role: role, reason: reasonKey },
+          });
+        }
+        const recent = await select('chat_messages',
+          `conversation_id=eq.${convId}&select=sender_id,content,content_raw,kind,created_at&order=created_at.desc&limit=10`).catch(() => []);
+        const transcript = (recent || []).reverse().map(m =>
+          `${m.sender_id === conv.guest_id ? 'guest' : 'host'}${m.kind === 'withheld' ? ' (withheld)' : ''}: ${clamp(m.content_raw || m.content, 200)}`).join('\n');
+
+        await insert('support_messages', {
+          thread_id: thread.id, sender_role: 'user', sender_id: caller.userId, sender_name: caller.name || null,
+          body: `${reason.label} (${role}) in the chat about "${conv.listing_title || 'a listing'}".${note ? `\n\n${note}` : ''}`,
+          meta: { page: 'chat', chat_conversation_id: convId, reason: reasonKey },
+        }, false);
+        await escalate(thread, {
+          reason: `${reason.label}${note ? `: ${clamp(note, 200)}` : ''}`,
+          priority: reason.priority, category: reason.category, caller,
+          lastMessage: note || reason.label, transcript,
+        });
+
+        const ref = String(thread.id).slice(0, 8).toUpperCase();
+        await rpc('cabana_chat_service_post', reason.report ? {
+          p_conversation: convId, p_sender: caller.userId, p_kind: 'case',
+          p_content: `Thanks for telling us. Our Trust team is reviewing this conversation (case ${ref}). You'll hear from us in your Cabana support chat. If you ever feel unsafe, leave and call local emergency services first.`,
+          p_payload: { thread_id: thread.id, reason: reasonKey, ref }, p_visible_to: caller.userId,
+        } : {
+          p_conversation: convId, p_sender: caller.userId, p_kind: 'system',
+          p_content: `The Cabana team has been asked to help with this conversation (case ${ref}). A specialist can read it and may reply here.`,
+          p_payload: { thread_id: thread.id, reason: reasonKey, ref, event: 'escalated' }, p_visible_to: null,
+        }).catch(e => console.warn('[support:chat.escalate:post]', e.message));
+
+        return res.status(200).json({ ok: true, threadId: thread.id, ref, private: reason.report });
       }
 
       /* ── bootstrap ────────────────────────────────────────────────
@@ -1930,7 +2002,7 @@ async function agentOps(req, res, body, op) {
         let context = null;
         if (thread.user_id) {
           const [bookings, profile] = await Promise.all([
-            select('apartment_bookings', `guest_id=eq.${thread.user_id}&select=reference,status,check_in,check_out,total,amount_paid,listing_title&order=created_at.desc&limit=5`).catch(() => []),
+            select('apartment_bookings', `guest_id=eq.${thread.user_id}&select=reference:payment_reference,status,check_in:checkin_date,check_out:checkout_date,total:grand_total,amount_paid,listing_title:listing_name&order=created_at.desc&limit=5`).catch(() => []),
             one('profiles', `id=eq.${thread.user_id}&select=first_name,last_name,email,phone,last_role,verified,created_at`).catch(() => null),
           ]);
           context = { bookings: bookings || [], profile };
@@ -2045,12 +2117,15 @@ async function agentOps(req, res, body, op) {
       case 'agent.chat_queue': {
         const chatFilter = String(body.filter || 'all');
         const chatQ = [
-          'select=id,listing_id,listing_title,listing_type,host_id,guest_id,status,last_message,last_message_at,host_unread,guest_unread,created_at,contact_released,locked_reason',
-          'order=last_message_at.desc',
+          /* Only columns that exist. This used to ask for two columns from a
+             never-applied schema, PostgREST refused the whole query, and the
+             desk's "Platform chats" tab was silently empty. */
+          'select=id,listing_id,listing_title,listing_type,host_id,guest_id,status,last_message,last_message_at,host_unread,guest_unread,created_at,flagged_at,flag_reason,blocked_by,checkin,checkout',
+          'order=flagged_at.desc.nullslast,last_message_at.desc.nullslast',
           'limit=80',
         ];
-        if (chatFilter === 'locked') chatQ.push('status=eq.locked');
-        else if (chatFilter === 'open')   chatQ.push('status=eq.open');
+        if (chatFilter === 'flagged') chatQ.push('flagged_at=not.is.null');
+        else if (chatFilter === 'blocked') chatQ.push('blocked_by=not.is.null');
 
         const [convs, guestProfiles, hostProfiles] = await Promise.all([
           select('chat_conversations', chatQ.join('&')).catch(() => []),
@@ -2086,7 +2161,7 @@ async function agentOps(req, res, body, op) {
 
         const [conv, messages] = await Promise.all([
           one('chat_conversations', `id=eq.${convId}&select=*`).catch(() => null),
-          select('chat_messages', `conversation_id=eq.${convId}&select=id,sender_id,content,is_system,created_at&order=created_at.asc&limit=400`).catch(() => []),
+          select('chat_messages', `conversation_id=eq.${convId}&select=id,sender_id,content,content_raw,kind,payload,visible_to,flags,is_system,created_at&order=created_at.asc&limit=600`).catch(() => []),
         ]);
         if (!conv) return res.status(404).json({ error: 'conv_not_found' });
 
@@ -2105,11 +2180,45 @@ async function agentOps(req, res, body, op) {
           host:  { id: conv.host_id,  name: [host.first_name,  host.last_name].filter(Boolean).join(' ')  || host.email  || '—', email: host.email,  phone: host.phone  },
           messages: (messages || []).map(m => ({
             id: m.id,
-            sender: m.is_system ? 'system' : (m.sender_id === conv.guest_id ? 'guest' : 'host'),
+            sender: m.payload?.by === 'cabana' ? 'agent'
+              : (m.is_system || ['system', 'booking', 'notice', 'case'].includes(m.kind)) ? 'system'
+              : (m.sender_id === conv.guest_id ? 'guest' : 'host'),
+            kind: m.kind || 'text',
             body: m.content,
+            /* Agents see what was withheld and why; members never do. */
+            original: m.kind === 'withheld' ? m.content_raw : null,
+            flags: m.flags || [],
+            private_to: m.visible_to ? (m.visible_to === conv.guest_id ? 'guest' : 'host') : null,
             at: m.created_at,
           })),
+          violations: await select('chat_violations',
+            `user_id=in.(${[conv.guest_id, conv.host_id].map(i => `"${i}"`).join(',')})&created_at=gte.${encodeURIComponent(new Date(Date.now() - 30 * 864e5).toISOString())}&select=user_id,categories,created_at&order=created_at.desc&limit=50`)
+            .then(rows => ({
+              guest: rows.filter(r => r.user_id === conv.guest_id).length,
+              host: rows.filter(r => r.user_id === conv.host_id).length,
+            })).catch(() => ({ guest: 0, host: 0 })),
+          offers: await select('chat_offers', `conversation_id=eq.${convId}&select=id,status,nightly,list_nightly,checkin,checkout,guests,expires_at,booking_id,created_at&order=created_at.desc&limit=10`).catch(() => []),
         });
+      }
+
+      /* ── The Cabana team speaking inside a guest↔host chat ─────────
+         Both people see it, marked as Cabana Support. Used after an
+         escalation, or when the desk spots trouble in a flagged chat. */
+      case 'agent.chat_post': {
+        const convId = String(body.convId || '');
+        const text = clamp(body.text, 2000).trim();
+        if (!uuidish(convId) || !text) return res.status(400).json({ error: 'bad_request' });
+        const conv = await one('chat_conversations', `id=eq.${convId}&select=id,guest_id,host_id`).catch(() => null);
+        if (!conv) return res.status(404).json({ error: 'conv_not_found' });
+        const id = await rpc('cabana_chat_service_post', {
+          p_conversation: convId, p_sender: conv.guest_id, p_kind: 'system', p_content: text,
+          p_payload: { by: 'cabana', agent: agentName, agent_id: user.id }, p_visible_to: null,
+        });
+        await Promise.allSettled([conv.guest_id, conv.host_id].map(uid => notify({
+          user_id: uid, title: 'Cabana Support in your chat', body: clamp(text, 140),
+          url: `/dashboard.html?inbox=1&c=${convId}`, kind: 'message',
+        })));
+        return res.status(200).json({ ok: true, id });
       }
 
       default:

@@ -32,38 +32,71 @@ function chatSetup({notifications=[],body='<body></body>'}={}) {
       }).then(resolve,reject)}
     };return q;
   }
-  const channel={on(){return this},subscribe(){return this},unsubscribe(){}};
-  const client={from:query,channel:()=>Object.create(channel),auth:{getSession:async()=>({data:{session:{user:{id:guest}}}})}};
+  const channel={on(){return this},subscribe(){return this},unsubscribe(){},send(){}};
+  /* The v6 messenger talks to a handful of RPCs; these stand-ins apply the
+     same ownership rules the database does, so the tests stay honest. */
+  const rpcs={
+    cabana_chat_start({p_listing}){
+      const l=tables.listings.find(x=>x.id===p_listing);if(!l)throw new Error('This listing does not have a host available to message yet.');
+      let c=tables.chat_conversations.find(x=>x.listing_id===p_listing&&x.guest_id===guest);
+      if(!c){c={id:'conv-'+tables.chat_conversations.length,listing_id:p_listing,host_id:l.partner_id,guest_id:guest,status:'active'};tables.chat_conversations.push(c)}
+      return c;
+    },
+    cabana_chat_thread({p_conversation}){
+      const c=tables.chat_conversations.find(x=>x.id===p_conversation);if(!c)throw new Error('Conversation not found');
+      const blocked=c.status==='blocked'||!!c.blocked_by;
+      return {conversation:c,role:c.host_id===guest?'host':'guest',counterpart:{id:host,name:'Host H.'},
+        listing:{id:c.listing_id,title:'Test stay',price:1500,live:true},booking:null,offers:[],contact_allowed:false,response:null,blocked,blocked_by_me:false};
+    },
+    cabana_chat_inbox(){return tables.chat_conversations.map(c=>({id:c.id,listing_title:'Test stay',role:'guest',counterpart:{name:'Host H.'},unread:0}))},
+    cabana_chat_mark_read(){return null},
+  };
+  const client={from:query,channel:()=>Object.create(channel),removeChannel(){},
+    rpc:async(name,args)=>{calls.push({rpc:name,args});try{return {data:rpcs[name]?.(args)??null,error:null}}catch(e){return {data:null,error:{message:e.message}}}},
+    auth:{getSession:async()=>({data:{session:{user:{id:guest}}}})}};
   w.ApaSession={client:()=>client,ready:fn=>fn({user:{id:guest}})};
   w.eval(read('chat.js'));
   return {dom,w,tables,calls,fail(value){fail=value}};
 }
+const settle=()=>new Promise(r=>setTimeout(r,30));
 test('message-host global opens a real composer and resolves the listing owner',async()=>{
   const t=chatSetup();try{
     assert.equal(typeof t.w.CabanaChat.open,'function');
-    await t.w.CabanaChat.open({listingId:listing,listingTitle:'Test stay',listingType:'apartment'});
-    assert.equal(t.tables.chat_conversations[0].host_id,host);
-    assert.equal(t.tables.chat_messages.length,0,'opening the panel does not send on the guest’s behalf');
-    assert.ok(t.w.document.getElementById('cbm-panel-wrap').classList.contains('open'));
+    await t.w.CabanaChat.open({listingId:listing,listingTitle:'Test stay',listingType:'apartment'});await settle();
+    assert.equal(t.tables.chat_conversations[0].host_id,host,'the host comes from the listing, never from the page');
+    assert.ok(t.calls.some(c=>c.rpc==='cabana_chat_start'),'conversations start through the server');
+    assert.equal(t.tables.chat_messages.length,0,'opening the conversation does not send on the guest’s behalf');
+    assert.ok(t.w.document.getElementById('cbx').classList.contains('open'));
+    assert.ok(t.w.document.getElementById('cbx-ta'),'composer is ready');
   }finally{await new Promise(setImmediate);t.dom.window.close()}
 });
-test('failed sends preserve the draft, successful sends clear it and duplicate clicks send once',async()=>{
+test('failed sends are kept with a retry, successful sends clear the draft and duplicate clicks send once',async()=>{
   const t=chatSetup();try{
-    await t.w.CabanaChat.open({listingId:listing,listingTitle:'Test stay',hostId:host});
-    const inp=t.w.document.getElementById('cbm-panel-input');inp.value='Is the kitchen available?';
-    t.fail(true);await t.w.CabanaChat._pSend();assert.equal(inp.value,'Is the kitchen available?');assert.equal(t.tables.chat_messages.length,0);
-    t.fail(false);await Promise.all([t.w.CabanaChat._pSend(),t.w.CabanaChat._pSend()]);
-    assert.equal(t.tables.chat_messages.length,1);assert.equal(inp.value,'');
-    assert.ok(t.calls.filter(c=>c.table==='chat_messages'&&c.fields).every(c=>c.fields!=='*'&&!c.fields.includes('content_raw')));
+    await t.w.CabanaChat.open({listingId:listing,listingTitle:'Test stay',hostId:host});await settle();
+    const d=t.w.document;
+    d.getElementById('cbx-ta').value='Is the kitchen available?';
+    t.fail(true);await t.w.CabanaChat._pSend();await settle();
+    assert.equal(t.tables.chat_messages.length,0);
+    assert.ok(d.querySelector('#cbx .m.failed'),'the failed message stays on screen');
+    assert.ok(d.querySelector('#cbx [data-act="retry"]'),'with a way to retry it');
+    t.fail(false);
+    d.getElementById('cbx-ta').value='Is parking included?';
+    await Promise.all([t.w.CabanaChat._pSend(),t.w.CabanaChat._pSend()]);await settle();
+    assert.equal(t.tables.chat_messages.length,1,'two clicks, one message');
+    assert.equal(d.getElementById('cbx-ta').value,'');
+    assert.ok(t.tables.chat_messages[0].client_id,'every send carries an idempotency key');
+    assert.ok(t.calls.filter(c=>c.table==='chat_messages'&&c.fields).every(c=>c.fields!=='*'&&!c.fields.includes('content_raw')),'withheld originals are never requested');
   }finally{await new Promise(setImmediate);t.dom.window.close()}
 });
 test('opening an active conversation after a blocked conversation restores its controls',async()=>{
   const t=chatSetup();try{
+    t.tables.listings.push({id:'old',partner_id:host});
     t.tables.chat_conversations.push({id:'blocked',listing_id:'old',guest_id:guest,host_id:host,status:'blocked'});
-    await t.w.CabanaChat.open({listingId:'old',hostId:host});
-    assert.equal(t.w.document.getElementById('cbm-panel-input').disabled,true);
-    t.w.CabanaChat.close();await t.w.CabanaChat.open({listingId:listing,hostId:host});
-    assert.equal(t.w.document.getElementById('cbm-panel-input').disabled,false);
+    await t.w.CabanaChat.open({listingId:'old',hostId:host});await settle();
+    assert.equal(t.w.document.getElementById('cbx-ta'),null,'a closed conversation has no composer');
+    assert.match(t.w.document.getElementById('cbx-foot').textContent,/closed/i);
+    t.w.CabanaChat.close();await t.w.CabanaChat.open({listingId:listing,hostId:host});await settle();
+    assert.ok(t.w.document.getElementById('cbx-ta'),'the composer is back');
   }finally{await new Promise(setImmediate);t.dom.window.close()}
 });
 test('gallery advances, pauses for the lightbox and stops on close',()=>{

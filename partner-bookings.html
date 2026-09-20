@@ -541,7 +541,7 @@ async function loadBookings() {
           <td>${bk.num_guests||1} guest${(bk.num_guests||1)>1?'s':''}</td>
           <td><strong>KES ${fmt(Math.round(parseFloat(bk.stay_total||0)))}</strong><div class="bk-guest">your payout</div></td>
           <td><span class="badge ${badge}">${label}</span>${code}</td>
-          <td class="bk-act">${action}</td>
+          <td class="bk-act"><div style="display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap">${action}<button class="btn btn-sm" type="button" data-cbx-open data-cbx-booking="${hesc(bk.id)}" title="Message your guest in Cabana">Message</button></div></td>
         </tr>`;
       }).join('');
     }
@@ -808,4 +808,5 @@ function switchToGuest(){
 <script src="/cabana-call.js" defer></script>
 <script src="/apa-location.js" defer></script><script src="/cabana-sos.js" defer></script><script src="/cabana-support.js" defer></script>
 <script src="/cabana-lifecycle.js" defer></script>
+<script src="/chat.js?v=40" defer></script>
 </body></html>

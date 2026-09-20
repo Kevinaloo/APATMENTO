@@ -695,6 +695,12 @@ function buildBookingCard(b, i) {
   }
 
   body += buildPartnerContact(b);
+  if (b._type === 'apartment' && !b.cancelled_at && lc.key !== 'failed') {
+    body += '<button type="button" data-cbx-open data-cbx-booking="' + esc(b.id) + '" '
+      + 'style="display:inline-flex;align-items:center;gap:7px;margin:10px 0 4px;padding:9px 16px;border-radius:100px;border:1px solid rgba(67,97,255,.25);background:rgba(67,97,255,.06);color:#4361FF;font:600 13px/1 inherit;cursor:pointer">'
+      + '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'
+      + (past ? 'Message host' : 'Message your host in Cabana') + '</button>';
+  }
 
   if (b._type === 'apartment' && PENDING_OFFERS[b.id]) {
     body += buildMatchPanel(b, PENDING_OFFERS[b.id]);
@@ -1442,6 +1448,7 @@ bindTabs();
 <script src="/cabana-call.js" defer></script>
 <script src="/apa-location.js" defer></script><script src="/cabana-sos.js" defer></script><script src="/cabana-support.js" defer></script>
 <script src="/cabana-lifecycle.js" defer></script>
+<script src="/chat.js?v=40" defer></script>
 </body>
 </html>
   <div style="display:flex;align-items:center;gap:8px;"><button class="apa-ico" id="apa-fav-btn" data-apa="fav" type="button" aria-label="Saved places" title="Saved places" style="display:none;" data-when="user">
