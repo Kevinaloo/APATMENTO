@@ -74,7 +74,7 @@ const CabanaChat = window.CabanaChat = (() => {
   function loadGuard() {
     if (window.CabanaChatGuard || document.getElementById('cbx-guard-js')) return;
     const s = document.createElement('script');
-    s.id = 'cbx-guard-js'; s.src = '/cabana-chat-guard.js?v=6'; s.defer = true;
+    s.id = 'cbx-guard-js'; s.src = '/cabana-chat-guard.js?v=7'; s.defer = true;
     document.head.appendChild(s);
   }
 
@@ -747,7 +747,13 @@ const CabanaChat = window.CabanaChat = (() => {
       } else if (kind === 'system') {
         html += `<div class="sys">${esc(m.content)}</div>`;
       } else if (kind === 'notice') {
-        html += `<div class="note${m.payload?.tone === 'serious' ? ' serious' : ''}">${IC.shield}<span>${esc(m.content)}</span></div>`;
+        // Every block names the way forward. A host told only "no" tries again
+        // somewhere we cannot see; a host shown "send a private offer" closes
+        // the deal here.
+        const act = m.payload?.action;
+        const cta = act === 'offer' ? `<button class="btn sm soft" data-act="offer" style="margin-top:8px">${IC.tag}&nbsp;Send a private offer</button>`
+                  : act === 'book'  ? `<button class="btn sm" data-act="book" style="margin-top:8px">Book on Cabana</button>` : '';
+        html += `<div class="note${m.payload?.tone === 'serious' ? ' serious' : ''}">${IC.shield}<span>${esc(m.content)}${cta}</span></div>`;
       } else if (kind === 'case') {
         html += `<div class="note case">${IC.flag}<span>${esc(m.content)} <em style="opacity:.7">Only you can see this.</em></span></div>`;
       } else if (kind === 'booking') {
@@ -863,11 +869,20 @@ const CabanaChat = window.CabanaChat = (() => {
   function grow(ta) { if (!ta) return; ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight, 140) + 'px'; }
 
   /* ── Pre-send guard ────────────────────────────────────────────────────── */
+  /* Words naming this stay, so the browser warns about the same redirect the
+     database would withhold. Being warned about one thing and blocked for
+     another is worse than either. */
+  function anchorsFor(a) {
+    const G = window.CabanaChatGuard, l = a?.meta?.listing || {}, c = a?.meta?.conversation || {};
+    if (!G || !G.anchorTokens) return [];
+    return G.anchorTokens([l.title || c.listing_title, l.area, l.city, a?.meta?.counterpart?.name]);
+  }
+
   function guardCheck(text) {
     const G = window.CabanaChatGuard, a = S.active;
     if (!G || !a) return null;
     const allowed = !!a.meta.contact_allowed;
-    const r = G.check(text, { contactAllowed: allowed });
+    const r = G.check(text, { contactAllowed: allowed, anchors: anchorsFor(a) });
     if (!r.ok) return r.reason;
     const since = Date.now() - 30 * 6e4;
     const recent = a.order.map(id => a.msgs.get(id))
@@ -1105,7 +1120,7 @@ const CabanaChat = window.CabanaChat = (() => {
     else if (p >= l.price) err = `Offer a price below your listed ${money(l.price)}.`;
     else if (p && p < Math.ceil(l.price * 0.2)) err = `That is more than 80% off — the lowest you can offer is ${money(Math.ceil(l.price * 0.2))}.`;
     const note = g('of-note').value;
-    const why = note.trim() && window.CabanaChatGuard ? CabanaChatGuard.check(note, { contactAllowed: S.active.meta.contact_allowed }).reason : null;
+    const why = note.trim() && window.CabanaChatGuard ? CabanaChatGuard.check(note, { contactAllowed: S.active.meta.contact_allowed, anchors: anchorsFor(S.active) }).reason : null;
     if (why) err = why;
     g('of-err').textContent = err;
     g('of-go').disabled = !!err || !n || !p;

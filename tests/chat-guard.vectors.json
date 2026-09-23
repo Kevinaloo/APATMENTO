@@ -57,8 +57,47 @@
     { "text": "Can I get a discount for 7 nights?", "hard": [] },
     { "text": "Instant booking is on, see you then!", "hard": [] },
     { "text": "Check cabana.africa/help for the policy", "hard": [] },
-    { "text": "Rooms 3 and 4 are free", "hard": [] }
+    { "text": "Rooms 3 and 4 are free", "hard": [] },
+
+    { "_": "v7 — sending someone elsewhere to book", "text": "you can find us on airbnb, much cheaper there", "hard": ["rival"] },
+    { "text": "we are also listed on booking.com", "hard": ["rival"] },
+    { "text": "just google us and you will see our place", "hard": ["rival"] },
+    { "text": "search for me online", "hard": ["rival"] },
+
+    { "_": "v7 — @place is not a handle. Five of eight live listing titles use it.", "text": "Shikaz Homes 2 Bedroom @JKIA Syokimau", "hard": [] },
+    { "text": "the one @JKIA is closer to the airport", "hard": [] },
+    { "text": "find me @kevin_254", "hard": ["social"] },
+    { "text": "my instagram is @kevinaloo", "hard": ["social"] }
   ],
+  "_anchored": "v7 redirects. A redirect carries no identifier — it is a directive plus something to walk up to, so both halves are required and the anchors name THIS stay. Without anchors, 'ask for jets nest' is an ordinary sentence.",
+  "anchored": {
+    "anchors": ["The Jets Nest", "Obama estate", "Nairobi"],
+    "cases": [
+      { "_": "the two messages that got through in production", "text": "come to obama office", "hard": ["meetup"] },
+      { "text": "Ask for jets nest", "hard": ["meetup"] },
+      { "text": "just come to the gate and ask for John", "hard": ["meetup"] },
+      { "text": "we are located opposite the shell petrol station, walk in anytime", "hard": ["meetup"] },
+      { "text": "njoo ofisi yetu uulize jets nest", "hard": ["meetup"] },
+      { "text": "pitia hapa kesho", "hard": ["meetup"] },
+      { "text": "swing by the reception and tell them you are my guest", "hard": ["meetup"] },
+      { "text": "meet me at the gate, no need to book here", "hard": ["meetup"] },
+      { "text": "come to the jets nest tomorrow morning", "hard": ["meetup"] },
+
+      { "_": "ordinary conversation must survive, or hosts stop using chat", "text": "how far is it from the mall?", "hard": [] },
+      { "text": "we are a 5 minute walk from the beach", "hard": [] },
+      { "text": "the apartment is near Obama estate", "hard": [] },
+      { "text": "Is parking available at the gate?", "hard": [] },
+      { "text": "The Jets Nest has a lovely balcony and fast wifi", "hard": [] },
+      { "text": "I will meet you at the airport if your flight lands late", "hard": [] },
+      { "text": "Please ask for extra towels at reception during your stay", "hard": [] },
+      { "text": "We have a 24 hour guard at the entrance for your safety", "hard": [] },
+
+      { "_": "asking about your own visit is a question, not an instruction", "text": "Can I come to the apartment to view it first?", "hard": [], "soft": ["meetup"] },
+      { "text": "naweza kuja kuangalia hapa kabla?", "hard": [], "soft": ["meetup"] },
+
+      { "_": "after a booking is paid, arrival directions are the whole point", "text": "come to the gate and ask for jets nest", "hard": [], "contactAllowed": true }
+    ]
+  },
   "sequences": [
     { "messages": ["0716", "206", "494"], "spans": true },
     { "messages": ["zero seven", "one six", "two zero six", "four nine four"], "spans": true },

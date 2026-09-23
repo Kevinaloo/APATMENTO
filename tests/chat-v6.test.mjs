@@ -34,8 +34,12 @@ test('every chat migration defines what the messenger calls', () => {
 });
 
 test('hosts reach their messages from every Partner Hub page', () => {
+  // Pinned to dashboard.html rather than a literal, so bumping the cache-buster
+  // is one edit and a page left behind is still caught.
+  const version = read('dashboard.html').match(/chat\.js\?v=(\d+)/)?.[1];
+  assert.ok(version, 'dashboard.html must load chat.js with a version');
   for (const f of readdirSync(new URL('../', import.meta.url)).filter(f => /^partner-.*\.html$/.test(f)))
-    assert.match(read(f), /chat\.js\?v=40/, f);
+    assert.match(read(f), new RegExp(`chat\\.js\\?v=${version}\\b`), `${f} is on an older chat.js than dashboard.html`);
   assert.match(read('partner-bookings.html'), /data-cbx-booking=/);
   assert.match(read('my-bookings.html'), /data-cbx-booking=/);
 });

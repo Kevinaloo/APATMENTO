@@ -111,7 +111,8 @@
     ['social', /\b(?:whats?\s*app?|what'?s\s*app|wh?att?s+\s*app?|wass?app?|wasap|watsap+|wtsp|w\/app|whatsap+|watsapp|wapp)\b/],
     ['social', /\b(?:telegram|tele\s+gram|instagram|insta|facebook|snapchat|tiktok|tik\s+tok|viber|wechat|imo\s+app|signal\s+app|linkedin|twitter|discord|skype|messenger)\b/],
     ['social', /\b(?:ig|fb|snap|tg|x)\s*[:@]\s*[a-z0-9_.]{3,}/],
-    ['social', /(?:^|[\s(])@[a-z0-9_.]{3,30}\b/],
+    // A bare @word is decided in check(): here it usually means "at a place"
+    // ("2 Bedroom @JKIA"), not a handle.
     ['payment', /\b(?:till|paybill|pay\s*bill|buy\s*goods|lipa\s*na\s*m-?pesa|account\s*(?:no|number|#))\b[^a-z]{0,6}(?:no\.?|number|#|is|:)?[^a-z]{0,4}\d{4,}/],
     ['payment', /\b(?:till|paybill|pay\s*bill|buy\s*goods)\s*(?:no\.?|number|#)/],
     ['off_platform', /\b(?:pay|send|tuma)\s+(?:me\s+|the\s+|money\s+|pesa\s+)*(?:directly|direct|cash|outside|off\s+(?:the\s+)?(?:app|platform|cabana|site)|via\s+m-?pesa|through\s+m-?pesa|on\s+m-?pesa|to\s+my\s+m-?pesa|kwa\s+m-?pesa)\b/],
@@ -120,7 +121,62 @@
     ['off_platform', /\b(?:outside|off)\s+(?:of\s+)?(?:the\s+)?(?:app|platform|cabana)\b/],
     ['off_platform', /\bcash\s+(?:on|at|upon)\s+(?:arrival|check-?in)\b/],
     ['off_platform', /\b(?:cheaper|less|discount)\s+(?:if\s+(?:you|we)\s+)?(?:pay\s+|book\s+|deal\s+)?(?:directly|outside|off\s+the\s+app|in\s+cash)\b/],
+    // Sending the other person somewhere else to transact.
+    ['rival', /\b(?:book|pay|find|list|listed|cheaper|same|also|available|check)\b[^.!?]{0,40}\b(?:airbnb|air\s?bnb|booking\.?com|agoda|vrbo|expedia|tripadvisor)\b/],
+    ['rival', /\b(?:airbnb|air\s?bnb|booking\.?com|agoda|vrbo|expedia|tripadvisor)\b[^.!?]{0,40}\b(?:cheaper|instead|directly|book|pay|there)\b/],
+    // "google us" is unambiguous; "find me" needs somewhere to be found,
+    // or it eats "can you find me a taxi?".
+    ['rival', /\bgoogle\s+(?:for\s+)?(?:us|me|my|our)\b/],
+    ['rival', /\b(?:search|find|look)\s+(?:for\s+)?(?:us|me|my|our)\s+(?:up\s+)?(?:on|online|at)\b/],
   ];
+
+  /* ── Redirects ──────────────────────────────────────────────────────────
+     A redirect carries no identifier. "come to obama office" and "Ask for
+     jets nest" are, together, a complete booking instruction: where to walk
+     and what to say at the door. So this reads mood rather than shape — a
+     directive, plus something to walk up to. Both halves are required, which
+     is what keeps ordinary questions ("Is parking available at the gate?")
+     out of it. A guard that eats real questions is worse than none, because
+     hosts stop using chat and go where we cannot see them. */
+  const VISIT = [
+    /\b(?:come|head|drive)\s+(?:on\s+)?(?:over\s+|down\s+|round\s+|straight\s+)?(?:to|by|through)\b/,
+    /\b(?:pass|swing|drop|stop)\s+(?:by|in|through|around)\b/,
+    /\bwalk[\s-]*in\b/, /\bshow\s+up\b/,
+    /\b(?:visit|find|meet|see)\s+(?:me|us)\b/,
+    /\bcome\s+(?:see|view|collect|pick|and\s+see)\b/,
+    /\b(?:njoo|kuja|fika|pitia|tukutane|nipate)\b/,
+  ];
+  const ASKFOR = [
+    /\bask\s+(?:for|of)\b/, /\btell\s+(?:them|him|her|the)\b/,
+    /\bsay\s+(?:you'?re|you\s+are|that\s+you)\b/,
+    /\b(?:uliza|ulizia|mwambie|niulize)\b/,
+  ];
+  // Words that turn a bare @word back into a handle.
+  const AT_CONTEXT = /\b(?:follow|dm|add\s+me|my\s+handle|handle\s+is|username|profile|account\s+is|subscribe)\b/;
+  const PLACE = /\b(?:office|gate|reception|premises|compound|caretaker|watchman|askari|mlinzi|lango|ofisi|entrance|lobby|front\s+desk|junction|stage|opposite|behind|next\s+to|hapa|hapo|kwetu|kwangu|nyumbani|apartment|flat|unit)\b/;
+  // Asking about one's own visit is a question, not an instruction.
+  const SELF_Q = [/\b(?:can|could|may|might)\s+(?:i|we)\b/, /\b(?:is|would)\s+it\s+(?:ok|okay|fine|possible)\b/, /\bnaweza\b/];
+
+  /* Words that name THIS stay, so "ask for jets nest" is a bypass in the Jets
+     Nest conversation and an ordinary sentence anywhere else. Generic words
+     never become anchors — an anchor has to be worth saying out loud at a gate. */
+  const ANCHOR_STOP = new Set(('the and for with near from into your yours this that they them ' +
+    'room rooms beds bedroom bedrooms bath baths bathroom studio suite suites ' +
+    'apartment apartments house houses home homes villa villas flat flats ' +
+    'place places stay stays cabana guest guests host hosts property properties ' +
+    'luxury modern cosy cozy spacious furnished serviced executive deluxe private ' +
+    'estate estates court courts gardens heights towers plaza centre center ' +
+    'view views beach city town road street avenue drive lane close park').split(' '));
+
+  function anchorTokens(parts) {
+    const seen = new Set();
+    for (const p of (parts || [])) {
+      for (const w of String(p || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').split(/\s+/)) {
+        if (w.length >= 4 && !/^\d+$/.test(w) && !ANCHOR_STOP.has(w)) seen.add(w);
+      }
+    }
+    return [...seen];
+  }
 
   const SOFT = [
     ['contact_request', /\b(?:call|text|sms|ring|dm|inbox|ping|beep|flash)\s+me\b|\b(?:my|your)\s+(?:number|digits|contacts?|phone\s+number)\b|\bnambari\s+(?:yangu|yako)\b|\bnamba\s+(?:yangu|yako)\b|\bnipigie\b|\bnipe\s+namba\b/],
@@ -134,12 +190,15 @@
     social: 'Social handles and messaging apps can’t be shared here.',
     payment: 'Payment details (tills, paybills, accounts) can’t be shared. Pay only through Cabana.',
     off_platform: 'Arranging payment or bookings outside Cabana isn’t allowed. It also removes your protection.',
+    meetup: 'Arranging to meet or be paid in person before a booking is paid isn’t allowed — neither of you is covered. Send a private offer instead.',
+    rival: 'Pointing somewhere else to book isn’t allowed here.',
   };
 
   /**
    * @param {string} text           the message
    * @param {object} [opts]
    * @param {boolean} [opts.contactAllowed]  a paid booking exists: phone numbers are allowed
+   * @param {string[]} [opts.anchors]        words naming this stay (see anchorTokens)
    * @returns {{hard:string[], soft:string[], phone:string|null, reason:string|null, ok:boolean}}
    */
   function check(text, opts = {}) {
@@ -150,6 +209,30 @@
     if (phone && !opts.contactAllowed) hard.add('phone');
     for (const [tag, re] of RULES) if (re.test(norm)) hard.add(tag);
     for (const [tag, re] of SOFT) if (re.test(norm)) soft.add(tag);
+
+    // A bare @word is a handle when it carries handle punctuation, when a
+    // platform is named beside it, or when someone is asked to follow it.
+    // Otherwise it is a place, which is how this market writes an address:
+    // "Shikaz Homes 2 Bedroom @JKIA Syokimau".
+    const at = norm.match(/(?:^|[\s(])@([a-z0-9_.]{3,30})\b/);
+    if (at) {
+      if (/[0-9_.]/.test(at[1]) || hard.has('social') || AT_CONTEXT.test(norm)) hard.add('social');
+      else soft.add('handle');
+    }
+
+    if (!opts.contactAllowed) {
+      const anchors = opts.anchors || [];
+      const visit  = VISIT.some(re => re.test(norm));
+      const askfor = ASKFOR.some(re => re.test(norm));
+      const place  = PLACE.test(norm);
+      const anchor = anchors.some(a => a && new RegExp('\\b' + a + '\\b').test(norm));
+      if ((visit && (place || anchor)) || (askfor && anchor)) {
+        if (SELF_Q.some(re => re.test(norm))) soft.add('meetup'); else hard.add('meetup');
+      } else if (askfor && place) {
+        soft.add('meetup'); // "ask for the caretaker" — recorded, never withheld
+      }
+    }
+
     const list = [...hard];
     return { ok: !list.length, hard: list, soft: [...soft], phone, reason: list.length ? REASONS[list[0]] : null };
   }
@@ -181,6 +264,6 @@
     return false;
   }
 
-  const api = { check, spansMessages, normalise, numericView, fragmentDigits, REASONS, version: 6 };
+  const api = { check, spansMessages, anchorTokens, normalise, numericView, fragmentDigits, REASONS, version: 7 };
   root.CabanaChatGuard = api;
 })(typeof window !== 'undefined' ? window : globalThis);

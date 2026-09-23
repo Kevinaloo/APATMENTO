@@ -1,4 +1,4 @@
-# Cabana Messenger v6
+# Cabana Messenger v7
 
 *How guests and hosts talk on Cabana, what keeps that conversation on
 Cabana, and what each side can do from inside it. If the code and this
@@ -18,33 +18,71 @@ both sides the tools that make leaving Cabana pointless: private offers,
 "try these instead" suggestions, rehoming, and a direct line to the Cabana
 team.
 
+## What v7 added, in one paragraph
+
+v6 matched *identifiers*. A host then sent `come to obama office` and
+`Ask for jets nest`, and every rule passed both: there is no identifier in
+either line. Together they are a complete booking instruction — the estate to
+walk to, and the name to say at the door. v7 adds a layer that reads
+**instructions** rather than shapes: a directive to come, plus a place or a
+word naming this stay. Both halves are required, which is what keeps it quiet;
+the naming words are read per message from the listing and the host, so
+"ask for jets nest" is a bypass in the Jets Nest conversation and an ordinary
+sentence anywhere else.
+
 ## The guard
 
 | | |
 |---|---|
 | Readable spec (runs in the browser, warns before send) | `cabana-chat-guard.js` |
-| Authoritative copy (runs on every insert) | `cabana_private.chat_guard` — `supabase/migrations/20260920120000_chat_v6_guard.sql` |
+| Authoritative copy (runs on every insert) | `cabana_private.chat_guard` — `20260920120000_chat_v6_guard.sql`, extended by `20260923010000_chat_v7_redirect_guard.sql` |
 | Shared test vectors | `tests/chat-guard.vectors.json` |
-| Browser test | `node --test tests/chat-guard.test.mjs` |
-| Postgres test | `node scripts/chat-guard-sql.mjs` → run the printed query; any row is a disagreement |
+| Browser test | `node --test tests/chat-guard.test.mjs tests/chat-v7.test.mjs` |
+| Parity test | `node scripts/chat-guard-sql.mjs` → run the printed query. It embeds what the **browser** decided and asks Postgres whether it agrees; any row is a disagreement. 90 vectors, currently none. |
+
+Parity is the property worth protecting. A person warned about one thing and
+blocked for another stops trusting both copies, so the script no longer
+restates expected answers — it runs the browser guard and makes Postgres
+match it.
 
 **What it catches:** phone numbers in any shape (spaced, dotted, joined with
 "then"/"and"/"na"/"kisha", written in English or Kiswahili number words,
 `o7l6`-style letter swaps, full-width digits, zero-width characters, split
 across up to six messages); emails (including `at … dot …`); outside links;
 WhatsApp/Telegram/Instagram and other handles; tills, paybills and account
-numbers; and "pay me directly", "avoid the fees", "cash on arrival".
+numbers; "pay me directly", "avoid the fees", "cash on arrival";
+**redirects** — "come to the office and ask for <this stay>", in English or
+Kiswahili (`njoo`, `pitia`, `uliza`, `hapa`); and **rivals** — "cheaper on
+Airbnb", "google us".
 
 **What it leaves alone:** dates, date ranges, times and prices — but only
 when they stand on their own. A "date" glued to more digits is exactly how a
 number would otherwise slip through, so it is not protected.
 
+Also left alone, deliberately, and each one cost a rule rewrite:
+
+| Message | Why it must pass |
+|---|---|
+| `Is parking available at the gate?` | A place with no directive is a question. |
+| `We are a 5 minute walk from the beach` | Describing a location is not sending someone to it. |
+| `Please ask for extra towels at reception` | "Ask for" is a bypass only when what you ask for is *this stay*. Asking for a towel is the service working. |
+| `Can you find me a taxi from the airport?` | The first draft of the rival rule withheld this. Being *found* needs somewhere to be found. |
+| `Shikaz Homes 2 Bedroom @JKIA Syokimau` | `@Place` is how this market writes an address. v6 read it as a handle and would have withheld five of the eight live listing titles. |
+| `Can I come to the apartment to view it first?` | Asking about your own visit is a question, not an instruction — it is recorded, never withheld. |
+
+A guard that eats ordinary questions is worse than no guard: hosts stop using
+chat and go somewhere we cannot see at all.
+
 **What happens:** the browser warns before the message is sent. If it is
 sent anyway (or posted directly), the database stores the original in
 `content_raw` (never readable by members), delivers *"Message withheld"* to
 both sides, records a `chat_violations` row, and shows the sender a private
-explanation. At three in 30 days the conversation is flagged for the Trust
-team and an `ops_alerts` row is raised; at five in 24 hours sending pauses.
+explanation **with the honest alternative as a button** — *Send a private
+offer* for a host, *Book on Cabana* for a guest. A host told only "no" tries
+again somewhere we cannot see; a host shown a way to close the deal here
+usually takes it. At three in 30 days the conversation is flagged for the
+Trust team and an `ops_alerts` row is raised; at five in 24 hours sending
+pauses.
 
 **After payment:** once a booking between the two is paid, a phone number is
 allowed (people need to meet at a door). Payment detours never are.
@@ -52,6 +90,12 @@ allowed (people need to meet at a door). Payment detours never are.
 Seeded on 20 Sep 2026 against all production messages: it caught the three
 leaked numbers and none of the fifteen ordinary messages. Those three are
 now withheld (`20260920123000_chat_v6_withhold_leaked_history.sql`).
+
+Re-run on 23 Sep 2026 with the redirect layer: it caught `come to obama
+office` and `Ask for jets nest` and **nothing else** — no false positive in
+any delivered message, and none in any listing description, house rule,
+street, profile name or review. Those two are now withheld
+(`20260923010000_chat_v7_redirect_guard.sql`).
 
 ## What each side can do
 
@@ -108,6 +152,9 @@ about.
 | The desk's "Platform chats" tab was always empty (it selected two columns that never existed) | Query fixed; flagged chats sort first |
 | The desk's booking context for a user was always empty (wrong column names) | Aliased to the real columns |
 | Cabana Match started conversations with a client upsert the policies had already blocked | Uses `cabana_chat_start` |
+| A redirect carried no identifier, so every v6 rule passed it | The redirect layer above |
+| `@JKIA` (an address) was read as a social handle | A bare `@word` is soft; `@with_digits`, or one after "follow", stays hard |
+| A block named no alternative, so the next attempt happened off-platform | The notice carries *Send a private offer* / *Book on Cabana* |
 
 ## A trap worth remembering
 
@@ -120,7 +167,7 @@ worker (`chat_guard_row`) that re-checks `auth.uid()`.
 
 ## Tests
 
-- `node --test tests/*.test.mjs` — includes `chat-guard`, `chat-v6` and the
-  rewritten messenger tests in `member-experience`.
+- `node --test tests/*.test.mjs` — includes `chat-guard`, `chat-v6`, `chat-v7`
+  and the rewritten messenger tests in `member-experience`.
 - `tests/chat-v6.sql` — end to end in Postgres with real identities, inside a
   transaction that always rolls back (it ends by raising `ALL_PASSED`).
