@@ -174,8 +174,18 @@
     return email;
   }
 
+  /* Operators added from the console's Team page are remembered by the
+     console on this device once the database has confirmed them. This is
+     a convenience redirect only; every privileged read re-checks the
+     roster server-side. */
+  function rememberedOperator() {
+    try { return String(JSON.parse(localStorage.getItem('cx-operator')) || '').toLowerCase(); } catch (e) { return ''; }
+  }
+
   function isAdminEmail(e) {
-    return !!e && ADMINS.indexOf(String(e).toLowerCase().trim()) > -1;
+    if (!e) return false;
+    e = String(e).toLowerCase().trim();
+    return ADMINS.indexOf(e) > -1 || e === rememberedOperator();
   }
 
   function takeover() {

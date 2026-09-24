@@ -14,11 +14,15 @@ test('dashboard initializes the chat API that CabanaChat actually exposes', () =
 
 test('admin transport snapshot uses the live ride_requests schema', () => {
   const core = read('apa-admin-core.js');
-  const admin = read('admin.html');
+  const consoleSources = ['admin.html', 'admin-console.js', 'admin-views-ops.js', 'admin-views-more.js'].map(read).join('\n');
+  const ledger = read('supabase/migrations/20260925090000_admin_console_v2.sql');
   assert.match(core, /rows\('ride_requests'/);
   assert.doesNotMatch(core, /rows\('transport_requests'/);
-  assert.match(admin, /AD\.write\('ride_requests'/);
-  assert.doesNotMatch(admin, /AD\.write\('transport_requests'/);
+  /* Rides are cancelled through the unified booking ledger, which reads
+     and writes the live ride_requests table. */
+  assert.match(ledger, /from public\.ride_requests/);
+  assert.match(ledger, /update public\.ride_requests set status = 'cancelled'/);
+  assert.doesNotMatch(consoleSources, /transport_requests/);
 });
 
 test('local Express 5 rewrites do not assign to the read-only query getter', () => {

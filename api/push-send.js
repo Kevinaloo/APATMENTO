@@ -18,10 +18,17 @@
 
    Auth: requires x-admin-secret header matching PUSH_ADMIN_SECRET, OR
    a valid Supabase service role. Never expose this to the browser.
+
+   Operator console (no shared secret in the browser):
+     POST ?action=admin-send       { to: email|user_id, title, body, url, kind }
+     POST ?action=admin-broadcast  { audience: all|hosts|guests, title, body,
+                                     url, kind, dry_run }
+   Both require a signed-in Supabase session whose email is on the
+   admin roster, and both write to the tamper-proof audit log.
    ═══════════════════════════════════════════════════════════════════ */
 
 import crypto from 'node:crypto';
-import { authenticatedUser, consumeRateLimit, hasInternalSecret, isCronAuthorized, setCors } from './lib/_security.js';
+import { authenticatedUser, consumeRateLimit, hasInternalSecret, isAdminUser, isCronAuthorized, setCors } from './lib/_security.js';
 import { sendTemplateAsync } from './lib/_mail.js';
 
 const VAPID_PUBLIC  = process.env.VAPID_PUBLIC_KEY;
@@ -30,7 +37,6 @@ const VAPID_SUBJECT = process.env.VAPID_SUBJECT || 'mailto:apatmento@gmail.com';
 
 const SUPA_URL      = process.env.SUPABASE_URL;
 const SERVICE_KEY   = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const ADMIN_SECRET  = process.env.PUSH_ADMIN_SECRET;
 
 /* ── base64url helpers ───────────────────────────────────────────── */
 const b64u = buf => Buffer.from(buf).toString('base64url');
@@ -223,33 +229,24 @@ async function handleCron(req, res) {
   const due = campaigns.filter(isDue);
   if (!due.length) return res.status(200).json({ fired: 0, checked: campaigns.length });
 
-  const SELF = process.env.PUSH_SEND_URL || 'https://cabana.africa/api/push-send';
+  /* Delivered in-process. The old fan-out posted back to this route once
+     per user through the public domain, which needed a shared secret in
+     the environment and failed silently whenever it was missing. */
   const fired = [];
   for (const camp of due) {
     try {
-      const subs = await supa('push_subscriptions?select=user_id') || [];
-      let userIds = [...new Set(subs.map(s => s.user_id).filter(Boolean))];
-      if (camp.audience === 'partners') {
-        const partners = await supa('listings?select=user_id') || [];
-        const pids = new Set(partners.map(p => p.user_id));
-        userIds = userIds.filter(id => pids.has(id));
-      }
-      let sent = 0;
-      const BATCH = 20;
-      for (let i = 0; i < userIds.length; i += BATCH) {
-        await Promise.allSettled(userIds.slice(i, i+BATCH).map(uid =>
-          fetch(SELF, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'x-admin-secret': ADMIN_SECRET },
-            body: JSON.stringify({ user_id: uid, title: camp.title, body: camp.body,
-              url: camp.url || '/', kind: camp.kind || 'general', persist: true }),
-          }).then(r => r.json()).then(d => { if (d.sent > 0) sent++; })
-        ));
-      }
+      const audience = camp.audience === 'partners' ? 'hosts' : (camp.audience || 'all');
+      const out = await broadcast({
+        audience,
+        copy: cleanCopy({ title: camp.title, body: camp.body, url: camp.url || '/', kind: camp.kind || 'general' }),
+        persist: true,
+        meta: { campaign_id: camp.id },
+      });
       const upd = { last_sent_at: new Date().toISOString() };
       if (camp.repeat === 'none') upd.active = false;
       await supa(`push_campaigns?id=eq.${camp.id}`, { method: 'PATCH', body: JSON.stringify(upd) });
-      fired.push({ id: camp.id, title: camp.title, sent });
+      await auditLog({ email: 'scheduler' }, 'push.campaign', 'push_campaign', camp.id, { title: camp.title, ...out });
+      fired.push({ id: camp.id, title: camp.title, delivered: out.delivered, members: out.members });
     } catch (e) { console.error('[push-cron]', camp.id, e.message); }
   }
   return res.status(200).json({ fired: fired.length, campaigns: fired });
@@ -302,6 +299,126 @@ export async function deliverNotification(b) {
   };
 }
 
+/* ── operator console helpers ─────────────────────────────────────── */
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/* Everyone who publishes something on Cabana: stays, tours, events. */
+async function hostIds() {
+  const [listings, tours, events, profiles] = await Promise.all([
+    supa('listings?select=partner_id&deleted_at=is.null&partner_id=not.is.null').catch(() => []),
+    supa('tours?select=owner_id&owner_id=not.is.null').catch(() => []),
+    supa('events?select=owner_id&owner_id=not.is.null').catch(() => []),
+    supa('profiles?select=id&or=(last_role.eq.host,last_role.eq.partner,host_status.eq.active)').catch(() => []),
+  ]);
+  return new Set([
+    ...(listings || []).map(r => r.partner_id),
+    ...(tours || []).map(r => r.owner_id),
+    ...(events || []).map(r => r.owner_id),
+    ...(profiles || []).map(r => r.id),
+  ].filter(Boolean));
+}
+
+function cleanCopy(b) {
+  const title = String(b.title || '').replace(/\s+/g, ' ').trim().slice(0, 120);
+  const body = String(b.body || '').trim().slice(0, 400);
+  let url = String(b.url || '/').trim();
+  /* Only on-site paths or our own origin — a push must never deep-link
+     somewhere an operator mistyped or a compromised session chose. */
+  if (!(url.startsWith('/') && !url.startsWith('//')) && !/^https:\/\/(www\.)?cabana\.africa(\/|$)/i.test(url)) url = '/';
+  const kind = /^[a-z_-]{2,24}$/.test(String(b.kind || '')) ? String(b.kind) : 'general';
+  return { title, body, url, kind };
+}
+
+async function auditLog(actor, action, targetType, targetId, meta) {
+  await supa('admin_audit_log', {
+    method: 'POST',
+    headers: { Prefer: 'return=minimal' },
+    body: JSON.stringify({
+      action, target_type: targetType, target_id: targetId ? String(targetId).slice(0, 120) : null,
+      actor_email: String(actor?.email || 'unknown').toLowerCase(), meta: meta || {},
+    }),
+  }).catch(e => console.warn('[push] audit failed:', e.message));
+}
+
+async function handleAdmin(action, b, admin, req, res) {
+  const copy = cleanCopy(b);
+  if (!copy.title) return res.status(400).json({ error: 'title_required' });
+
+  if (action === 'admin-send') {
+    if (!consumeRateLimit(req, res, 'admin-push-send', 60, 60_000, admin.id)) return;
+    const to = String(b.to || b.user_id || '').trim();
+    let userId = UUID.test(to) ? to : null;
+    let email = null;
+    if (!userId) {
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) return res.status(400).json({ error: 'recipient_required' });
+      const rows = await supa(`profiles?email=ilike.${encodeURIComponent(to.toLowerCase())}&select=id,email&limit=1`);
+      userId = rows?.[0]?.id || null;
+      email = to.toLowerCase();
+      if (!userId) return res.status(404).json({ error: 'member_not_found' });
+    }
+    const result = await deliverNotification({ ...copy, user_id: userId, persist: b.persist !== false,
+      email_always: !!b.email_always, email: email || undefined, meta: { from_console: true } });
+    await auditLog(admin, 'push.send', 'profile', userId, { title: copy.title, url: copy.url, kind: copy.kind,
+      sent: result.sent, emailed: result.emailed });
+    const { results, ...summary } = result;
+    return res.status(200).json({ ok: true, user_id: userId, ...summary });
+  }
+
+  /* admin-broadcast */
+  const audience = ['all', 'hosts', 'guests'].includes(b.audience) ? b.audience : 'all';
+  if (b.dry_run) {
+    const { reach } = await audienceTargets(audience);
+    return res.status(200).json({ ok: true, dry_run: true, ...reach });
+  }
+  if (!consumeRateLimit(req, res, 'admin-push-broadcast', 4, 10 * 60_000, admin.id)) return;
+  const out = await broadcast({ audience, copy, persist: b.persist !== false });
+  await auditLog(admin, 'push.broadcast', 'push', audience, { title: copy.title, url: copy.url, kind: copy.kind, ...out });
+  return res.status(200).json({ ok: true, ...out });
+}
+
+async function audienceTargets(audience) {
+  const [profiles, subs] = await Promise.all([
+    supa('profiles?select=id&banned=not.is.true'),
+    supa('push_subscriptions?select=user_id,endpoint,p256dh,auth'),
+  ]);
+  let ids = (profiles || []).map(p => p.id);
+  if (audience === 'hosts' || audience === 'guests') {
+    const hosts = await hostIds();
+    ids = ids.filter(id => audience === 'hosts' ? hosts.has(id) : !hosts.has(id));
+  }
+  const wanted = new Set(ids);
+  const targets = (subs || []).filter(s => wanted.has(s.user_id));
+  return {
+    ids, targets,
+    reach: { audience, members: ids.length, devices: targets.length, subscribers: new Set(targets.map(s => s.user_id)).size },
+  };
+}
+
+/* One message to a whole audience: an in-app row for every member, and a
+   push to every device they have registered. Dead endpoints are pruned. */
+async function broadcast({ audience, copy, persist = true, meta = {} }) {
+  const { ids, targets, reach } = await audienceTargets(audience);
+  let persisted = 0;
+  if (persist && ids.length) {
+    for (let i = 0; i < ids.length; i += 500) {
+      const chunk = ids.slice(i, i + 500).map(user_id => ({ user_id, ...copy, meta: { broadcast: true, audience, ...meta } }));
+      await supa('notifications', { method: 'POST', headers: { Prefer: 'return=minimal' }, body: JSON.stringify(chunk) })
+        .then(() => { persisted += chunk.length; })
+        .catch(e => console.warn('[push] broadcast persist failed:', e.message));
+    }
+  }
+  const payload = { ...copy, icon: '/logo-mark.png', tag: `broadcast-${Date.now()}` };
+  let delivered = 0, pruned = 0, failed = 0;
+  for (let i = 0; i < targets.length; i += 25) {
+    const out = await Promise.allSettled(targets.slice(i, i + 25).map(s => sendOne(s, payload)));
+    for (const r of out) {
+      if (r.status !== 'fulfilled') { failed++; continue; }
+      if (r.value.ok) delivered++; else if (r.value.pruned) pruned++; else failed++;
+    }
+  }
+  return { ...reach, delivered, pruned, failed, persisted };
+}
+
 /* ── handler ─────────────────────────────────────────────────────── */
 export default async function handler(req, res) {
   setCors(req, res, 'POST, OPTIONS');
@@ -322,7 +439,14 @@ export default async function handler(req, res) {
     : null;
   const databaseMessage = (action === 'database-message' || action === 'database-notification')
     && isCronAuthorized(req);
-  const authorized = internal || !!chatCaller || databaseMessage;
+  const adminAction = action === 'admin-send' || action === 'admin-broadcast';
+  let admin = null;
+  if (adminAction) {
+    const user = await authenticatedUser(req);
+    admin = user && (await isAdminUser(user)) ? user : null;
+    if (!admin) return res.status(user ? 403 : 401).json({ error: user ? 'admin_required' : 'authentication_required' });
+  }
+  const authorized = internal || !!chatCaller || databaseMessage || !!admin;
   if (!authorized) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
@@ -340,6 +464,13 @@ export default async function handler(req, res) {
 
   // action=cron → fire scheduled campaigns
   if (action === 'cron') return handleCron(req, res);
+  if (admin) {
+    try { return await handleAdmin(action, requestBody, admin, req, res); }
+    catch (err) {
+      console.error('[push-send:admin]', err);
+      return res.status(500).json({ error: 'delivery_failed' });
+    }
+  }
 
   try {
     let b = requestBody;

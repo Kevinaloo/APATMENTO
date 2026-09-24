@@ -140,3 +140,31 @@ test('untrusted origins do not receive permissive CORS', async () => {
   await stkPush(request({ method: 'OPTIONS', headers: { origin: 'https://evil.example' } }), res);
   assert.equal(res.headers['access-control-allow-origin'], undefined);
 });
+
+test('console push actions require a signed-in operator, not a shared secret', async () => {
+  for (const action of ['admin-send', 'admin-broadcast']) {
+    const res = response();
+    await pushSend(request({ query: { action }, body: { title: 'Hello', to: 'someone@example.com', audience: 'all' } }), res);
+    assert.equal(res.statusCode, 401);
+    assert.equal(res.payload.error, 'authentication_required');
+  }
+});
+
+test('console push actions refuse signed-in members who are not on the roster', async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (url) => {
+    const u = String(url);
+    if (u.includes('/auth/v1/user')) return new Response(JSON.stringify({ id: 'u1', email: 'guest@example.com' }), { status: 200 });
+    if (u.includes('/rest/v1/admin_users')) return new Response('[]', { status: 200 });
+    throw new Error('unexpected fetch ' + u);
+  };
+  try {
+    const res = response();
+    await pushSend(request({ query: { action: 'admin-broadcast' }, headers: { authorization: 'Bearer member-token' },
+      body: { title: 'Hello', audience: 'all' } }), res);
+    assert.equal(res.statusCode, 403);
+    assert.equal(res.payload.error, 'admin_required');
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
