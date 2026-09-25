@@ -277,14 +277,63 @@
     if (/Failed to fetch|NetworkError|network/i.test(m)) return 'Network hiccup — check the connection and try again.';
     return m.replace(/^(ERROR:\s*)/, '');
   }
-  function rpc(fn, args) {
-    if (!sb) return Promise.reject(new Error('Not connected'));
-    return sb.rpc(fn, args || {}).then(function (r) {
+  /* The data layer. Stress testing against the live database showed the
+     console could take the database down on its own: rapid navigation
+     fired every view's reads in parallel and queued them behind each
+     other until they hit the statement timeout. So reads now:
+       · share one in-flight request per (function, arguments)
+       · are served from a short cache (any write clears it)
+       · run at most MAX_LIVE at a time, newest view first
+       · retry once on a timeout or a dropped connection
+     Writes are never cached, deduplicated or retried. */
+  var WRITE_RX = /(_action|_set|_remove|_log|_send|_save|_upsert|_delete)$/;
+  var READ_TTL = 12000, MAX_LIVE = 4, live = 0, waiting = [], inflight = {}, cache = {};
+  function clean(v) {
+    if (typeof v === 'string') return v.replace(/\u0000/g, '');
+    if (Array.isArray(v)) return v.map(clean);
+    if (v && typeof v === 'object' && !(v instanceof Date)) { var o = {}; Object.keys(v).forEach(function (k) { o[k] = clean(v[k]); }); return o; }
+    return v;
+  }
+  function slot(run) {
+    return new Promise(function (resolve, reject) {
+      function start() { live++; run().then(resolve, reject).then(done, done); }
+      function done() { live--; var nx = waiting.pop(); if (nx) nx(); }
+      if (live < MAX_LIVE) start(); else waiting.push(start);
+    });
+  }
+  function transient(err) { return /statement timeout|Failed to fetch|NetworkError|network|timed out|503|502|504|ECONNRESET/i.test((err && (err.message || err.code)) || ''); }
+  function callRpc(fn, args) {
+    return sb.rpc(fn, args).then(function (r) {
       if (r.error) { var e = new Error(friendly(r.error)); e.raw = r.error; throw e; }
       return r.data;
     });
   }
-  function q(table) { return sb.from(table); }
+  function freshen() { cache = {}; }
+  function rpc(fn, args, opts) {
+    if (!sb) return Promise.reject(new Error('Not connected'));
+    args = clean(args || {}); opts = opts || {};
+    if (WRITE_RX.test(fn)) return callRpc(fn, args).then(function (d) { freshen(); return d; });
+    var key = fn + ':' + JSON.stringify(args), hit = cache[key];
+    if (!opts.fresh && hit && Date.now() - hit.at < (opts.ttl || READ_TTL)) return Promise.resolve(hit.data);
+    if (inflight[key]) return inflight[key];
+    var p = slot(function () {
+      return callRpc(fn, args).catch(function (e) {
+        if (!transient(e)) throw e;
+        return new Promise(function (r) { setTimeout(r, 500 + Math.random() * 700); }).then(function () { return callRpc(fn, args); });
+      });
+    }).then(function (d) { cache[key] = { at: Date.now(), data: d }; delete inflight[key]; return d; },
+            function (e) { delete inflight[key]; throw e; });
+    inflight[key] = p;
+    return p;
+  }
+  function q(table) {
+    var b = sb.from(table);
+    ['insert', 'update', 'upsert', 'delete'].forEach(function (m) {
+      var orig = b[m]; if (typeof orig !== 'function') return;
+      b[m] = function () { freshen(); return orig.apply(b, arguments); };
+    });
+    return b;
+  }
   function rows(p) { return Promise.resolve(p).then(function (r) { if (r.error) throw new Error(friendly(r.error)); return r.data || []; }); }
   function token() { return sb.auth.getSession().then(function (r) { return (r && r.data && r.data.session && r.data.session.access_token) || ''; }); }
   function api(path, opts) {
@@ -826,8 +875,15 @@
       try { current.def.update(current.ctx); } catch (e) { console.error(e); }
       return;
     }
+    /* A click renders at once. A burst (key-repeat through the palette,
+       back-button mashing, a script) is coalesced: only the view the
+       operator lands on loads, so the ones flashed past cost nothing. */
+    var now = Date.now(), burst = now - lastNavAt < 220;
+    lastNavAt = now; clearTimeout(navTimer);
+    if (burst) { markNav(r.name); navTimer = setTimeout(function () { lastNavAt = 0; route(); }, 160); return; }
     render(r);
   }
+  var lastNavAt = 0, navTimer = null;
   function render(r) {
     if (current && current.def && current.def.leave) try { current.def.leave(current.ctx); } catch (e) {}
     drawer.close(false); closeMenus();
@@ -858,7 +914,7 @@
         if (push) global.location.hash = h; else replaceHash(h);
       },
       setArgs: function (args, qo) { ctx.args = args; if (qo) ctx.q = qo; current.args = args; replaceHash(buildHash(ctx.name, args, ctx.q)); },
-      refresh: function () { render({ name: ctx.name, args: ctx.args, q: ctx.q }); },
+      refresh: function () { freshen(); render({ name: ctx.name, args: ctx.args, q: ctx.q }); },
       crumb: function (t) { setCrumb((nav && nav.group) || '', t); }
     };
     current = { name: r.name, args: r.args, q: r.q, gen: my, def: def, ctx: ctx };
@@ -872,11 +928,59 @@
   function setCrumb(g, t) { set($('#crumbs'), html`<span class="crumb-g">${g}</span>${g ? html`<span class="crumb-g">${icon('chevR')}</span>` : ''}<b>${t}</b>`); }
   function refreshView() {
     if (!current) return;
+    freshen();
     if (current.ctx) current.ctx.refresh(); else loadDesk(current.name, true);
     pulseNow(true);
   }
+  /* Desk modules load on first visit, not on every sign-in: together they
+     are ~300 KB of script the operator may never open in a session. They
+     are prefetched once the console is idle, so the first click is warm. */
+  var DESK_JS = {
+    flights: ['/fd-atlas.js', '/cabana-flights-admin.js'],
+    tours: ['/cabana-tours-admin.js'],
+    events: ['/cabana-events-admin.js'],
+    move: ['/cabana-rides-admin.js?v=2'],
+    offers: ['/cabana-offers.js']
+  };
+  var scriptP = {};
+  function loadScript(src) {
+    if (!scriptP[src]) scriptP[src] = new Promise(function (resolve, reject) {
+      var el = doc.createElement('script'); el.src = src; el.async = false;
+      el.onload = resolve;
+      el.onerror = function () { delete scriptP[src]; el.remove(); reject(new Error('This desk could not be downloaded. Check the connection and try again.')); };
+      doc.head.appendChild(el);
+    });
+    return scriptP[src];
+  }
+  function needDesk(name) {
+    return (DESK_JS[name] || []).reduce(function (p, src) { return p.then(function () { return loadScript(src); }); }, Promise.resolve());
+  }
+  function prefetchDesks() {
+    var idle = global.requestIdleCallback || function (fn) { return setTimeout(fn, 1200); };
+    idle(function () { Object.keys(DESK_JS).forEach(function (k) { needDesk(k).catch(function () {}); }); });
+  }
   var deskLoaded = {};
+  function deskTarget(name) {
+    var sec = $('#' + ((NAV_BY[name] && NAV_BY[name].desk) || ''));
+    return sec && (sec.querySelector('#admin-offers, #rides-admin-root') || sec);
+  }
   function loadDesk(name, force) {
+    var target = deskTarget(name), my = gen;
+    var ready = (DESK_JS[name] || []).every(function (src) { return scriptP[src] && scriptP[src].done; });
+    if (!ready && target && !target.children.length) { set(target, skeleton()); target.dataset.skel = '1'; }
+    needDesk(name).then(function () {
+      (DESK_JS[name] || []).forEach(function (src) { scriptP[src].done = true; });
+      if (my !== gen) return;               // the operator moved on
+      if (target && target.dataset.skel) { delete target.dataset.skel; target.innerHTML = ''; }
+      runDesk(name, force);
+    }, function (e) {
+      if (my !== gen || !target) return;
+      delete target.dataset.skel;
+      set(target, html`<div class="card">${errorBox(e, true)}</div>`);
+      wireRetry(target, function () { target.innerHTML = ''; loadDesk(name, true); });
+    });
+  }
+  function runDesk(name, force) {
     try {
       if (name === 'tours' && global.toursLoad) global.toursLoad();
       if (name === 'events' && global.eventsLoad) global.eventsLoad();
@@ -892,7 +996,7 @@
   /* ── 14 · PULSE ──────────────────────────────────────────────────── */
   var pulseTimer = null, pulseTick = 0, lastPulseAt = 0, prevPulse = null;
   function pulseNow(withInbox) {
-    return rpc('admin_pulse').then(function (p) {
+    return rpc('admin_pulse', null, { fresh: true }).then(function (p) {
       var before = prevPulse; prevPulse = p; CX.pulse = p || {}; lastPulseAt = Date.now();
       if (before) {
         if (p.latest_booking && before.latest_booking && p.latest_booking > before.latest_booking)
@@ -903,7 +1007,7 @@
       }
       liveState('on');
       var need = withInbox || pulseTick % 3 === 0;
-      return need ? rpc('admin_inbox').then(function (ib) { CX.inbox = ib; CX.counts = (ib && ib.counts) || CX.counts; }) : null;
+      return need ? rpc('admin_inbox', null, { fresh: true }).then(function (ib) { CX.inbox = ib; CX.counts = (ib && ib.counts) || CX.counts; }) : null;
     }).then(function () { paintBadges(); }).catch(function (e) {
       liveState(/roster/.test(friendly(e)) ? 'off' : 'stale');
     });
@@ -1001,7 +1105,7 @@
   function onKey(e) {
     if (!CX.booted) return;
     if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) { e.preventDefault(); palette(); return; }
-    if (e.key === 'Escape') { if (pal) { pal.close(); return; } if ($('.menu')) { closeMenus(); return; } if ($('.modal-wrap.on')) return; if (drawer.isOpen()) { drawer.close(true); return; } if ($('.preview')) { $('.preview').remove(); return; } $('#app').classList.remove('nav-open'); return; }
+    if (e.key === 'Escape') { if (pal) { pal.close(); return; } if ($('.menu')) { closeMenus(); return; } if ($('.modal-wrap.on')) return; var fdm = $('#fdx-modal'); if (fdm && fdm.children.length && global.FDAdmin) { global.FDAdmin.close(); return; } if (drawer.isOpen()) { drawer.close(true); return; } if ($('.preview')) { $('.preview').remove(); return; } $('#app').classList.remove('nav-open'); return; }
     if (typing(e) || e.metaKey || e.ctrlKey || e.altKey || $('.modal-wrap.on') || pal) return;
     if (gPending && Date.now() - gPending < 1200) {
       gPending = 0;
@@ -1155,6 +1259,7 @@
     route();
     startPulse();
     hideBoot();
+    setTimeout(prefetchDesks, 2500);
     sb.auth.onAuthStateChange(function (ev) { if (ev === 'SIGNED_OUT') global.location.reload(); });
   }
   function signOut() {
@@ -1179,7 +1284,7 @@
     $: $, $$: $$, esc: esc, html: html, raw: raw, set: set, icon: icon, safeUrl: safeUrl, uid: uid, debounce: debounce, store: store,
     n: n, num: num, compact: compact, money: money, moneyC: moneyC, pct: pct, ratio: ratio, fdate: fdate, fshort: fshort, fdt: fdt, ago: ago, dur: dur, bytes: bytes,
     human: human, titleCase: titleCase, initials: initials, avatar: avatar, delta: delta, svc: svc, SERVICES: SERVICES, STAGE: STAGE, stagePill: stagePill, pill: pill, TONE: TONE,
-    rpc: rpc, q: q, rows: rows, api: api, log: log, token: token, friendly: friendly, client: function () { return sb; },
+    rpc: rpc, freshen: freshen, q: q, rows: rows, api: api, log: log, token: token, friendly: friendly, client: function () { return sb; },
     toast: toast, modal: modal, form: form, confirm: confirm, drawer: drawer, fieldHTML: fieldHTML, readForm: readForm, wireChips: wireChips,
     empty: empty, errorBox: errorBox, wireRetry: wireRetry, skeleton: skeleton, tabs: tabs, seg: seg, kv: kv, busy: busy, copy: copy, csv: csv, countUp: countUp, menu: menu,
     sparkline: sparkline, lineChart: lineChart, hbars: hbars, funnel: funnel, ring: ring,

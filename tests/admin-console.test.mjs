@@ -140,3 +140,60 @@ test('scheduled push campaigns have a scheduler', () => {
   assert.match(migrations, /cron\.schedule\('cabana-push-campaigns'/);
   assert.match(read('api/push-send.js'), /async function handleCron[\s\S]*broadcast\(/);
 });
+
+/* ── Stress-test regressions (live run, 25 Sep 2026) ──────────────── */
+
+test('reads are shared, cached and cleared by any write; null bytes never reach the database', async () => {
+  const dom = new JSDOM('<!doctype html><body><div id="toasts"></div></body>', { url: 'https://cabana.africa/admin', runScripts: 'outside-only' });
+  const w = dom.window;
+  w.matchMedia = () => ({ matches: false, addEventListener() {} });
+  const calls = [];
+  const builder = () => ({ update() { return Promise.resolve({ data: [], error: null }); } });
+  w.__APA_SB__ = {
+    rpc(fn, args) { calls.push([fn, args]); return new Promise(r => setTimeout(() => r({ data: { fn, n: calls.length }, error: null }), 5)); },
+    from: builder,
+    auth: { getSession: () => Promise.resolve({ data: { session: null } }), onAuthStateChange() {} }
+  };
+  w.eval(core);
+  await new Promise(r => setTimeout(r, 20));
+  const [a, b] = await Promise.all([w.CX.rpc('admin_overview', { p_days: 30 }), w.CX.rpc('admin_overview', { p_days: 30 })]);
+  assert.equal(calls.length, 1, 'two identical reads in flight share one request');
+  assert.deepEqual(a, b);
+  await w.CX.rpc('admin_overview', { p_days: 30 });
+  assert.equal(calls.length, 1, 'a repeat read inside the cache window is served locally');
+  await w.CX.rpc('admin_booking_action', { p_action: 'note' });
+  assert.equal(calls.length, 2, 'writes always go to the database');
+  await w.CX.rpc('admin_overview', { p_days: 30 });
+  assert.equal(calls.length, 3, 'a write clears cached reads');
+  await w.CX.rpc('admin_search', { p_q: 'ke\u0000x' });
+  assert.equal(calls.at(-1)[1].p_q, 'kex');
+  w.CX.q('listings').update({});
+  await w.CX.rpc('admin_overview', { p_days: 30 });
+  assert.equal(calls.length, 5, 'a direct table write also clears cached reads');
+  w.close();
+});
+
+test('desk modules load on first visit, not on every sign-in', () => {
+  for (const f of ['fd-atlas.js', 'cabana-flights-admin.js', 'cabana-tours-admin.js', 'cabana-events-admin.js', 'cabana-rides-admin.js', 'cabana-offers.js']) {
+    assert.doesNotMatch(shell, new RegExp(`src="/${f.replace('.', '\\.')}`), `${f} should be lazy`);
+    assert.match(core, new RegExp(`'/${f.replace('.', '\\.')}`), `${f} must be in the desk loader`);
+  }
+  assert.match(core, /function needDesk/);
+  assert.match(core, /prefetchDesks/);
+});
+
+test('Cabana Match admin policies do not read auth.users', () => {
+  const fix = read('supabase/migrations/20260925150000_console_stress_fixes.sql');
+  for (const t of ['cabana_match_requests', 'cabana_match_responses', 'cabana_interest', 'cabana_host_opt_ins'])
+    assert.match(fix, new RegExp(`on public\\.${t}\\s+for \\w+ to authenticated using \\(public\\.is_admin\\(\\)\\)`));
+  assert.doesNotMatch(fix.replace(/--.*$/gm, ''), /from auth\.users/);
+});
+
+test('overview and finance plan the bookings union once', () => {
+  const fix = read('supabase/migrations/20260925150000_console_stress_fixes.sql');
+  const body = name => fix.slice(fix.indexOf(`function public.${name}(`), fix.indexOf('$$;', fix.indexOf(`function public.${name}(`)));
+  for (const fn of ['admin_overview', 'admin_finance']) {
+    assert.equal((body(fn).match(/cabana_admin\.bookings/g) || []).length, 1, `${fn} must reference the union once`);
+    assert.match(body(fn), /bk as materialized/);
+  }
+});

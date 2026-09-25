@@ -60,10 +60,22 @@
   function load() {
     var c = client();
     if (!c) { render(); return; }
+    var hostEl = document.getElementById('s-tours');
+    if (hostEl && !hostEl.dataset.ready) {
+      hostEl.innerHTML = '<div class="hd"><div><div class="skel" style="height:26px;width:180px"></div>' +
+        '<div class="skel" style="height:14px;width:360px;margin-top:10px"></div></div></div>' +
+        '<div class="card"><div class="skel" style="height:64px"></div></div>'.repeat(3);
+    }
 
     c.from('tours').select('*').order('created_at', { ascending: false })
       .then(function (r) {
+        if (r && r.error && hostEl && !hostEl.dataset.ready) {
+          hostEl.innerHTML = '<div class="card"><div class="empty"><div class="empty-t">Could not load this desk</div>' +
+            '<div class="empty-s">' + String(r.error.message || '').replace(/[&<>"']/g, '') + '</div></div></div>';
+          return;
+        }
         state.tours = (r && r.data) || [];
+        if (hostEl) hostEl.dataset.ready = '1';
         render();
       }, function () { render(); });
 

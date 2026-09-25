@@ -786,8 +786,23 @@ details.more[open]>summary::before{transform:rotate(45deg)}
   .toast{width:100%}
   .fn-row{grid-template-columns:96px 1fr 50px}
   .hbar{grid-template-columns:minmax(64px,100px) 1fr auto}
-  .tbl th:first-child,.tbl td:first-child{padding-left:14px}
-  .tbl th:last-child,.tbl td:last-child{padding-right:14px}
+  /* Tables become stacked records on a phone: the first cell is the
+     headline, everything else wraps beneath it, actions sit last. */
+  .tbl-wrap{overflow:visible}
+  .tbl,.tbl tbody{display:block}
+  .tbl thead{display:none}
+  .tbl tbody tr{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;padding:14px;border-bottom:1px solid var(--line)}
+  .tbl tbody tr:last-child{border-bottom:0}
+  .tbl td,.tbl.compact td{display:block;padding:0!important;border:0;min-width:0;max-width:100%;overflow-wrap:anywhere}
+  .tbl td:first-child{flex:1 1 100%}
+  .tbl td:empty{display:none}
+  .tbl td.num{margin-left:auto;text-align:right}
+  .tbl td:has(.t-act){flex:1 1 100%}
+  .tbl .t-act{justify-content:flex-start}
+  .tbl td[colspan]{flex:1 1 100%}
+  .hello>div:first-child,.page-hd>div:first-child{flex:1 1 100%;min-width:0}
+  .page-act{max-width:100%}
+  .seg{max-width:100%;overflow-x:auto;scrollbar-width:none}
   .kpi-v{font-size:23px}
   .kpi .spark{width:70px}
   .filters .search{min-width:0;flex:1 1 100%}

@@ -316,7 +316,7 @@
             <div class="stat-row">
               <div class="mini"><div class="mini-l">Total</div><div class="mini-v">${money(total, cur)}</div></div>
               <div class="mini"><div class="mini-l">Paid</div><div class="mini-v ${paid >= total && total ? 'ok-t' : ''}">${money(paid, cur)}</div></div>
-              <div class="mini"><div class="mini-l">Cabana fee</div><div class="mini-v">${money(b.fee, cur)}</div></div>
+              <div class="mini"><div class="mini-l">${b.stage === 'lost' ? 'Fee · not earned' : 'Cabana fee'}</div><div class="mini-v ${b.stage === 'lost' ? 'muted' : ''}">${money(b.fee, cur)}</div></div>
               <div class="mini"><div class="mini-l">${owed ? 'Refund owed' : 'Credit used'}</div><div class="mini-v ${owed ? 'bad-t' : ''}">${money(owed || b.credit, cur)}</div></div></div>
             <div class="meter mt-s ${paid >= total && total ? 'ok' : ''}" title="${num(CX.ratio(paid, total))}% paid"><i style="width:${Math.min(100, CX.ratio(paid, total)).toFixed(1)}%"></i></div>
             ${owed ? html`<div class="callout warn mt">${icon('coins')}<div class="grow"><div class="strong">${money(owed, cur)} is owed back to the guest</div><div class="muted" style="font-size:12.5px;margin-top:3px">${human(rw.refund_reason || 'Refund due')}. Send it by M-Pesa, then record it here — or convert it to Cabana credit.</div>
@@ -328,7 +328,7 @@
               ['Status', human(b.status)], ['Location', b.city || rw.location || '—'],
               rw.payment_mode ? ['Payment plan', human(rw.payment_mode)] : null,
               rw.deposit_required ? ['Deposit required', money(rw.deposit_required, cur)] : null,
-              rw.balance_amount != null ? ['Balance', money(rw.balance_amount, cur) + (rw.balance_paid ? ' · paid' : '')] : null,
+              rw.balance_amount != null && b.stage !== 'lost' ? ['Balance', money(rw.balance_amount, cur) + (rw.balance_paid ? ' · paid' : '')] : null,
               rw.guest_code ? ['Guest code', html`<span class="mono">${rw.guest_code}</span>`] : null,
               rw.host_code ? ['Host code', html`<span class="mono">${rw.host_code}</span>`] : null,
               b.checked_in_at ? ['Checked in', fdt(b.checked_in_at)] : null,

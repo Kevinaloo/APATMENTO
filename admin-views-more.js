@@ -74,7 +74,10 @@
           list = s.checkin || [];
           set(body, list.length ? html`<div class="card flush"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Issue</th><th>Stay</th><th class="hide-s">People</th><th>Status</th><th></th></tr></thead><tbody>${list.map(function (c) { return html`
             <tr><td style="max-width:340px"><div class="t-main">${human(c.code)}</div><div class="t-sub" style="white-space:normal">${c.text || '—'}</div>
-              <div class="t-sub">${c.phase ? human(c.phase) + ' · ' : ''}${c.hours != null ? num(c.hours) + 'h to check-in · ' : ''}${c.distance != null ? num(c.distance) + ' m from the door · ' : ''}${c.prefer_refund ? 'wants a refund' : ''}</div>
+              <div class="t-sub">${[c.phase ? human(c.phase) : '',
+                c.hours != null ? (Number(c.hours) < 0 ? num(Math.abs(c.hours)) + 'h after check-in' : num(c.hours) + 'h before check-in') : '',
+                c.distance != null ? num(c.distance) + ' m from the door' : '',
+                c.prefer_refund ? 'wants a refund' : ''].filter(Boolean).join(' · ')}</div>
               ${c.photo ? html`<a href="${CX.safeUrl(c.photo)}" target="_blank" rel="noopener" class="t-sub">${icon('image')} Photo evidence</a>` : ''}</td>
             <td>${c.listing_id ? html`<button class="link-btn" data-listing="${c.listing_id}">${c.listing || 'Listing'}</button>` : '—'}${c.booking_id ? html`<div><button class="link-btn t-sub" data-booking="stay:${c.booking_id}">Open booking</button></div>` : ''}<div class="t-sub">${ago(c.at)}</div></td>
             <td class="hide-s">${c.guest_id ? html`<button class="link-btn" data-person="${c.guest_id}">${c.guest || 'Guest'}</button>` : '—'}<div class="t-sub">host: ${c.host_id ? html`<button class="link-btn" data-person="${c.host_id}">${c.host || 'Host'}</button>` : '—'}</div></td>

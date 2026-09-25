@@ -124,7 +124,8 @@
 
   function load() {
     var c = client();
-    if (!c) { render(); return; }
+    render();                       // header and skeleton straight away
+    if (!c) return;
 
     c.rpc('fd_desk_stats').then(function (r) {
       state.stats = (r && r.data && r.data.ok) ? r.data : null;
@@ -146,7 +147,12 @@
     }
 
     q.then(function (r) {
-      if (r.error) { toast('Could not load the desk: ' + r.error.message); return; }
+      if (r.error) {
+        var list = $('fdx-list');
+        if (list && !state.loaded) list.innerHTML = '<div class="card"><div class="empty"><div class="empty-t">Could not load the desk</div>' +
+          '<div class="empty-s">' + esc(r.error.message) + '</div><button class="btn btn-g btn-sm" style="margin-top:12px" onclick="FDAdmin.reload()">Try again</button></div></div>';
+        toast('Could not load the desk: ' + r.error.message); return;
+      }
       state.rows = r.data || [];
       state.loaded = true;
       render();
@@ -212,7 +218,7 @@
           '<button class="btn btn-g btn-sm" onclick="FDAdmin.settings()">Desk settings</button>' +
           '<button class="btn btn-p btn-sm" onclick="FDAdmin.reload()">Refresh</button>' +
         '</div></div>' +
-        '<div class="grid g4" id="fdx-stats" style="margin-bottom:16px"></div>' +
+        '<div class="grid g5" id="fdx-stats" style="margin-bottom:16px"></div>' +
         '<div class="tabs" id="fdx-tabs"></div>' +
         '<div id="fdx-list"></div>' +
         '<div id="fdx-modal"></div>';
@@ -1008,7 +1014,9 @@
      RPC that returns counts, paused while the tab is hidden. */
   function pollBadge() {
     var c = client();
-    if (!c || document.hidden) return;
+    /* Only once an operator is signed in: before that the call goes out
+       as anon and is refused, which is noise in the console. */
+    if (!c || document.hidden || !(window.CX && window.CX.booted)) return;
     c.rpc('fd_desk_stats').then(function (r) {
       if (r && r.data && r.data.ok) { state.stats = r.data; badge(); }
     });
