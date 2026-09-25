@@ -357,232 +357,24 @@
     }
   });
 
-  /* ════════════════════════════════════════════════════════════════
-     ADVERTISING
-     ════════════════════════════════════════════════════════════════ */
-  var AUD = null, AUD_AT = 0;
-  function audience(force) {
-    if (!global.ApaAudience) return Promise.reject(new Error('The audience module did not load.'));
-    if (AUD && !force && Date.now() - AUD_AT < 5 * 60000) return Promise.resolve(AUD);
-    return global.ApaAudience.build(30).then(function (a) { AUD = a; AUD_AT = Date.now(); return a; });
-  }
-  var FORMATS = [['window', 'Window hero'], ['video', 'Video hero'], ['carousel', 'Carousel banner'], ['split', 'Split banner'], ['native', 'Native card'], ['sticky', 'Sticky corner']];
-  function adStats(a) {
-    var by = {};
-    (a && a.events || []).forEach(function (e) { if (e.event !== 'ad_viewable' && e.event !== 'ad_click') return; var id = e.props && e.props.campaign_id; if (!id) return; var k = by[id] = by[id] || { v: 0, c: 0 }; if (e.event === 'ad_viewable') k.v++; else k.c++; });
-    return by;
-  }
-  function uploadAd(file, prefix) {
-    var shrink = /^image\//.test(file.type) && global.CabanaUploader && global.CabanaUploader.shrink ? global.CabanaUploader.shrink(file) : Promise.resolve(file);
-    return shrink.then(function (blob) {
-      var ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '');
-      var key = prefix + '-' + Date.now() + '-' + CX.uid() + '.' + ext;
-      return CX.client().storage.from('ads-media').upload(key, blob, { upsert: false, contentType: blob.type || file.type, cacheControl: '31536000' }).then(function (r) {
-        if (r.error) throw r.error; return CX.client().storage.from('ads-media').getPublicUrl(key).data.publicUrl;
-      });
-    });
-  }
-  function creativePreview(o) {
-    var media = CX.safeUrl(o.media_url);
-    return html`<div class="creative" style="background:${raw(CX.esc(o.theme_gradient || 'linear-gradient(135deg,#7A3BFF,#4C7DFF)'))}">${media && /\.(jpe?g|png|webp|avif|gif)(\?|$)/i.test(media) ? html`<img src="${media}" alt=""/>` : media && /\.(mp4|webm|mov)(\?|$)/i.test(media) ? html`<video src="${media}" muted autoplay loop playsinline></video>` : ''}<div class="shade"></div>
-      <div class="c-in"><div style="font:600 10px var(--f-d);letter-spacing:.14em;text-transform:uppercase;opacity:.8">${o.advertiser || 'Advertiser'} · Sponsored</div><div style="font:620 20px/1.2 var(--f-d);margin:6px 0 4px;letter-spacing:-.02em">${o.headline || 'Your headline'}</div>
-      <div style="font-size:12.5px;opacity:.85">${o.sub_text || ''}</div><div class="row mt-s">${o.cta_text ? html`<span style="background:#fff;color:#0A0A14;padding:7px 14px;border-radius:99px;font:650 12px var(--f-b)">${o.cta_text}</span>` : ''}${o.price_display ? html`<b>${o.price_display}</b>` : ''}</div></div></div>`;
-  }
-  function campaignEditor(c, a, done) {
-    c = c || {}; var isNew = !c.id;
-    var slots = {}; (Array.isArray(c.page_targets) ? c.page_targets : []).forEach(function (p) { slots[p] = 1; });
-    var surfaces = (global.ApaAudience && global.ApaAudience.SURFACES) || [];
-    if ((c.page_targets || []).indexOf('all') > -1) surfaces.forEach(function (s) { slots[s.page] = 1; });
-    var fields = [
-      { name: 'advertiser', label: 'Advertiser', required: true, value: c.advertiser }, { name: 'format', label: 'Format', type: 'select', value: c.format || 'window', options: FORMATS, required: true },
-      { name: 'headline', label: 'Headline', value: c.headline, full: true }, { name: 'sub_text', label: 'Supporting line', value: c.sub_text || c.sub, full: true },
-      { name: 'cta_text', label: 'Button text', value: c.cta_text, placeholder: 'Book now' }, { name: 'cta_url', label: 'Button link', value: c.cta_url, type: 'url' },
-      { name: 'media_url', label: 'Image or video', value: c.media_url, type: 'url', full: true, help: html`Paste a URL or <button type="button" class="link-btn" data-upmedia>upload a file</button> (images are compressed automatically).<input type="file" accept="image/*,video/mp4,video/webm" hidden data-upfile/>` },
-      { name: 'poster_url', label: 'Video poster', value: c.poster_url, type: 'url' }, { name: 'price_display', label: 'Price tag', value: c.price_display, placeholder: 'From KES 4,500' },
-      { name: 'theme_gradient', label: 'Background', value: c.theme_gradient, placeholder: 'linear-gradient(135deg,#7A3BFF,#4C7DFF)', full: true },
-      { name: 'status', label: 'Status', type: 'select', value: c.status || 'live', options: [['live', 'Live'], ['paused', 'Paused'], ['draft', 'Draft']] }, { name: 'priority', label: 'Priority (1–10)', type: 'number', min: 1, max: 10, value: c.priority || 5 },
-      { name: 'budget', label: 'Budget (KES)', type: 'number', min: 0, value: c.budget }, { name: 'start_date', label: 'Starts', type: 'date', value: c.start_date }, { name: 'end_date', label: 'Ends', type: 'date', value: c.end_date },
-      { name: 'segs', label: 'Audience segments', type: 'chips', full: true, options: ((a && a.segments) || []).filter(function (s) { return !s.suppress; }).map(function (s) { return s.name; }), value: ((a && a.segments) || []).filter(function (s) { return (c.target_segments || []).indexOf(s.id) > -1; }).map(function (s) { return s.name; }) }
-    ];
-    return CX.modal({ title: isNew ? 'New campaign' : 'Edit campaign', sub: 'Only surfaces that really carry this format can be selected — an ad aimed at a slot that does not exist never runs.', icon: 'megaphone', wide: 'x',
-      body: html`<div class="split" style="gap:22px"><form class="form-grid" onsubmit="return false" data-cf>${fields.map(CX.fieldHTML)}<div class="fld full"><label class="fld-l">Surfaces <span class="opt"><button type="button" class="link-btn" data-all>All</button> · <button type="button" class="link-btn" data-none>None</button></span></label><div class="slot-grid" data-slots></div></div></form>
-        <div><div class="dr-sec-t">Preview</div><div data-pv></div><div class="dr-sec-t mt">Projected delivery</div><div data-proj class="muted" style="font-size:12.5px"></div></div></div>`,
-      actions: [{ label: 'Cancel', kind: 'btn-q' }, { label: isNew ? 'Create campaign' : 'Save', kind: 'btn-p', onClick: function (wrap) {
-        var f = CX.readForm(wrap, fields); if (!f) return false;
-        var picked = Object.keys(slots); if (!picked.length) { toast('Pick at least one surface', 'warn'); return false; }
-        var all = surfaces.map(function (s) { return s.page; });
-        var row = { advertiser: f.advertiser, format: f.format, headline: f.headline, sub_text: f.sub_text, cta_text: f.cta_text, cta_url: f.cta_url, media_url: f.media_url, poster_url: f.poster_url,
-          price_display: f.price_display, theme_gradient: f.theme_gradient, status: f.status, active: f.status === 'live', priority: n(f.priority) || 5, budget: n(f.budget) || null,
-          start_date: f.start_date || null, end_date: f.end_date || null, page_targets: picked.length === all.length ? ['all'] : picked,
-          target_segments: ((a && a.segments) || []).filter(function (s) { return (f.segs || []).indexOf(s.name) > -1; }).map(function (s) { return s.id; }), updated_at: new Date().toISOString() };
-        var qy = isNew ? CX.q('ad_campaigns').insert(Object.assign({ campaign_id: 'camp_' + Date.now().toString(36) + '_' + CX.uid().slice(0, 5), created_at: new Date().toISOString() }, row)).select('id') : CX.q('ad_campaigns').update(row).eq('id', c.id).select('id');
-        return CX.rows(qy).then(function (r) { CX.log(isNew ? 'campaign.create' : 'campaign.update', 'campaign', (r[0] || {}).id || c.id, { advertiser: row.advertiser, targets: row.page_targets }); toast('Campaign saved', 'ok'); if (done) done(); });
-      } }],
-      onOpen: function (wrap) {
-        CX.wireChips(wrap);
-        var fm = $('[name="format"]', wrap);
-        function paintSlots() {
-          var fmt = fm.value, inv = (a && a.inventory) || [], by = {}; inv.forEach(function (i) { by[i.page + ':' + i.slot] = i; });
-          set($('[data-slots]', wrap), html`${surfaces.map(function (s) { var ok = fmt === 'sticky' || fmt === 'native' || s.slots.indexOf(fmt) > -1; if (!ok) delete slots[s.page]; var m = by[s.page + ':' + fmt]; return html`
-            <div class="slot ${ok ? '' : 'dead'} ${slots[s.page] ? 'on' : ''}" data-page="${s.page}" title="${ok ? '' : 'No ' + fmt + ' slot on this page'}"><div class="slot-p">${s.label}</div><div class="slot-f">${ok ? (m ? 'KES ' + num(m.cpm) + ' CPM · ' + m.intentBand : fmt) : 'unavailable'}</div></div>`; })}`);
-          $$('[data-page]', wrap).forEach(function (el) { if (!el.classList.contains('dead')) el.onclick = function () { var p = el.getAttribute('data-page'); if (slots[p]) delete slots[p]; else slots[p] = 1; el.classList.toggle('on'); proj(); }; });
-          proj();
-        }
-        function proj() {
-          var fmt = fm.value, inv = ((a && a.inventory) || []).filter(function (i) { return slots[i.page] && i.slot === fmt; });
-          var imp = inv.reduce(function (s, i) { return s + i.monthlyImpressions; }, 0), val = inv.reduce(function (s, i) { return s + i.monthlyValue; }, 0), budget = n($('[name="budget"]', wrap).value);
-          set($('[data-proj]', wrap), Object.keys(slots).length ? CX.kv([['Surfaces', num(Object.keys(slots).length)], ['Impressions / month', num(imp)], ['Blended CPM', imp ? 'KES ' + num(val / imp * 1000) : '—'], ['Monthly value', money(val)], budget && val ? ['Budget lasts', num(budget / (val / 30)) + ' days'] : null]) : 'Pick surfaces to see delivery.');
-        }
-        function pv() { var f = {}; $$('[name]', wrap).forEach(function (el) { f[el.name] = el.value; }); set($('[data-pv]', wrap), creativePreview(f)); }
-        fm.addEventListener('change', paintSlots); $$('input,select,textarea', wrap).forEach(function (el) { el.addEventListener('input', CX.debounce(pv, 150)); });
-        $('[name="budget"]', wrap).addEventListener('input', proj);
-        $('[data-all]', wrap).onclick = function () { surfaces.forEach(function (s) { slots[s.page] = 1; }); paintSlots(); };
-        $('[data-none]', wrap).onclick = function () { slots = {}; paintSlots(); };
-        var up = $('[data-upfile]', wrap); $('[data-upmedia]', wrap).onclick = function () { up.click(); };
-        up.onchange = function () { var file = up.files[0]; if (!file) return; toast('Uploading ' + file.name + '…', 'info'); uploadAd(file, 'campaign').then(function (url) { $('[name="media_url"]', wrap).value = url; pv(); toast('Media uploaded', 'ok'); }, function (e) { toast('Upload failed: ' + CX.friendly(e), 'bad'); }); };
-        paintSlots(); pv();
-      } });
-  }
-  var SH_SURF = [['all', 'All services'], ['index', 'Home'], ['apartments', 'Stays'], ['tours', 'Tours'], ['events', 'Events'], ['food', 'Food'], ['shopping', 'Shopping'], ['rides', 'Rides'], ['carhire', 'Car hire'], ['flights', 'Flights'], ['roommates', 'Roommates']];
-  var SH_AREAS = ['Westlands', 'Parklands', 'Kilimani', 'Lavington', 'Kileleshwa', 'Hurlingham', 'Upper Hill', 'CBD', 'Karen', 'Langata', 'Runda', 'Gigiri', 'Muthaiga', 'Ruaka', 'Kasarani', 'Thika Road', 'Mombasa', 'Diani', 'Naivasha', 'Nakuru', 'Kisumu'];
-  function shadowEditor(a0, done) {
-    var a = a0 || {}, isNew = !a.id;
-    var surfLabels = SH_SURF.map(function (s) { return s[1]; });
-    var fields = [
-      { name: 'advertiser', label: 'Advertiser', required: true, value: a.advertiser }, { name: 'title', label: 'Internal name', value: a.title },
-      { name: 'headline', label: 'Headline', value: a.headline, full: true }, { name: 'sub_text', label: 'Supporting line', value: a.sub_text, full: true },
-      { name: 'cta_text', label: 'Button text', value: a.cta_text || 'View' }, { name: 'cta_url', label: 'Button link', type: 'url', value: a.cta_url },
-      { name: 'media_type', label: 'Media', type: 'select', value: a.media_type || 'image', options: [['image', 'Image'], ['video', 'Video']] },
-      { name: 'media_url', label: 'Media URL', type: 'url', value: a.media_url, help: html`<button type="button" class="link-btn" data-upmedia>Upload a file</button><input type="file" accept="image/*,video/mp4,video/webm" hidden data-upfile/>` },
-      { name: 'theme_gradient', label: 'Background', value: a.theme_gradient || 'linear-gradient(135deg,#7C3AFF,#4F6DFF)' }, { name: 'accent', label: 'Accent colour', value: a.accent || '#7C3AFF' },
-      { name: 'surfaces', label: 'Where it can appear', type: 'chips', full: true, options: surfLabels, value: (a.surfaces || ['all']).map(function (k) { var m = SH_SURF.filter(function (s) { return s[0] === k; })[0]; return m ? m[1] : k; }) },
-      { name: 'position', label: 'Entrance', type: 'select', value: a.position || 'auto', options: [['auto', 'Auto — least intrusive per device'], ['rise', 'Rise behind the focused card'], ['side', 'Slide in from the side'], ['bottom', 'Slide up from the bottom'], ['top', 'Descend from the top']] },
-      { name: 'device', label: 'Devices', type: 'select', value: a.device || 'all', options: [['all', 'All devices'], ['mobile', 'Mobile only'], ['desktop', 'Desktop only'], ['tablet', 'Tablet only']] },
-      { name: 'intent_min', label: 'Min intent (0–100)', type: 'number', min: 0, max: 100, value: a.intent_min != null ? a.intent_min : 10 }, { name: 'intent_max', label: 'Max intent', type: 'number', min: 0, max: 100, value: a.intent_max != null ? a.intent_max : 85 },
-      { name: 'min_dwell_s', label: 'Min dwell (s)', type: 'number', min: 0, value: a.min_dwell_s != null ? a.min_dwell_s : 6 }, { name: 'min_scroll_pct', label: 'Min scroll (%)', type: 'number', min: 0, max: 100, value: a.min_scroll_pct || 0 },
-      { name: 'reading_modes', label: 'Reading modes', type: 'chips', options: ['skim', 'scan', 'browse', 'read'], value: a.reading_modes || ['skim', 'scan', 'browse', 'read'], full: true },
-      { name: 'areas', label: 'Areas', type: 'chips', full: true, options: ['All areas'].concat(SH_AREAS), value: (a.areas || ['all']).map(function (x) { return x === 'all' ? 'All areas' : x; }) },
-      { name: 'keywords', label: 'Keywords', value: (a.keywords || []).join(', '), full: true, placeholder: 'comma, separated' },
-      { name: 'max_per_session', label: 'Max per session', type: 'number', min: 1, value: a.max_per_session || 1 }, { name: 'cooldown_s', label: 'Cooldown (s)', type: 'number', min: 0, value: a.cooldown_s || 90 },
-      { name: 'dwell_show_s', label: 'Shown for (s)', type: 'number', min: 1, value: a.dwell_show_s || 7 }, { name: 'priority', label: 'Priority', type: 'number', min: 1, max: 10, value: a.priority || 5 },
-      { name: 'status', label: 'Status', type: 'select', value: a.status || 'live', options: [['live', 'Live'], ['paused', 'Paused'], ['draft', 'Draft']] }, { name: 'budget', label: 'Budget (KES)', type: 'number', value: a.budget },
-      { name: 'start_date', label: 'Starts', type: 'date', value: a.start_date }, { name: 'end_date', label: 'Ends', type: 'date', value: a.end_date },
-      { name: 'apa_enabled', type: 'switch', label: 'Let the Cabana assistant mention it', value: !!a.apa_enabled, full: true }, { name: 'apa_message', label: 'Assistant line', type: 'textarea', rows: 2, value: a.apa_message }
-    ];
-    return CX.modal({ title: isNew ? 'New shadow ad' : 'Edit shadow ad', sub: 'Behavioural creatives that appear behind content only when attention and intent are right.', icon: 'layers', wide: 'x',
-      body: html`<div class="split" style="gap:22px"><form class="form-grid" onsubmit="return false">${fields.map(CX.fieldHTML)}</form><div><div class="dr-sec-t">Preview</div><div data-pv></div></div></div>`,
-      actions: [{ label: 'Cancel', kind: 'btn-q' }, { label: isNew ? 'Create' : 'Save', kind: 'btn-p', onClick: function (wrap) {
-        var f = CX.readForm(wrap, fields); if (!f) return false;
-        var surf = (f.surfaces || []).map(function (l) { return (SH_SURF.filter(function (s) { return s[1] === l; })[0] || [l])[0]; });
-        var areas = (f.areas || []).map(function (x) { return x === 'All areas' ? 'all' : x; });
-        var row = Object.assign({}, f, { title: f.title || f.advertiser, active: f.status === 'live', surfaces: surf.length ? surf : ['all'], areas: areas.length && areas.indexOf('all') < 0 ? areas : ['all'],
-          keywords: String(f.keywords || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean), reading_modes: (f.reading_modes || []).length ? f.reading_modes : ['skim', 'scan', 'browse', 'read'],
-          intent_min: n(f.intent_min), intent_max: f.intent_max === '' ? 100 : n(f.intent_max), min_dwell_s: n(f.min_dwell_s), min_scroll_pct: n(f.min_scroll_pct), max_per_session: n(f.max_per_session) || 1,
-          cooldown_s: n(f.cooldown_s) || 90, dwell_show_s: n(f.dwell_show_s) || 7, priority: n(f.priority) || 5, budget: n(f.budget) || null, start_date: f.start_date || null, end_date: f.end_date || null,
-          apa_message: f.apa_message || null, updated_at: new Date().toISOString() });
-        var qy = isNew ? CX.q('shadow_ads').insert(Object.assign({ created_at: new Date().toISOString() }, row)).select('id') : CX.q('shadow_ads').update(row).eq('id', a.id).select('id');
-        return CX.rows(qy).then(function (r) { CX.log(isNew ? 'shadow.create' : 'shadow.update', 'shadow_ad', (r[0] || {}).id || a.id, { advertiser: row.advertiser, surfaces: row.surfaces }); toast('Shadow ad saved', 'ok'); if (done) done(); });
-      } }],
-      onOpen: function (wrap) {
-        CX.wireChips(wrap);
-        function pv() { var f = {}; $$('[name]', wrap).forEach(function (el) { f[el.name] = el.value; }); set($('[data-pv]', wrap), html`<div style="max-width:320px">${creativePreview(f)}</div>`); }
-        $$('input,select,textarea', wrap).forEach(function (el) { el.addEventListener('input', CX.debounce(pv, 150)); });
-        var up = $('[data-upfile]', wrap); $('[data-upmedia]', wrap).onclick = function () { up.click(); };
-        up.onchange = function () { var file = up.files[0]; if (!file) return; toast('Uploading…', 'info'); uploadAd(file, 'shadow').then(function (url) { $('[name="media_url"]', wrap).value = url; $('[name="media_type"]', wrap).value = /^video/.test(file.type) ? 'video' : 'image'; pv(); toast('Media uploaded', 'ok'); }, function (e) { toast('Upload failed: ' + CX.friendly(e), 'bad'); }); };
-        pv();
-      } });
-  }
-  CX.view('ads', {
-    title: 'Advertising',
-    render: function (v) {
-      var tab = v.q.tab || 'campaigns';
-      set(v.el, html`${pageHd('Growth', 'Advertising', 'Sell Cabana’s real inventory, priced from measured attention and intent.')}${CX.skeleton('list')}`);
-      var need = tab === 'rate' || tab === 'visitors';
-      return Promise.all([
-        tab === 'campaigns' ? CX.rows(CX.q('ad_campaigns').select('*').order('created_at', { ascending: false }).limit(200)) : tab === 'shadow' ? CX.rows(CX.q('shadow_ads').select('*').order('created_at', { ascending: false }).limit(200)) : Promise.resolve([]),
-        need ? audience() : audience().catch(function () { return null; })
-      ]).then(function (r) {
-        if (!v.alive()) return;
-        var list = r[0] || [], a = r[1], st = adStats(a);
-        var head = pageHd('Growth', 'Advertising', 'Sell Cabana’s real inventory, priced from measured attention and intent.',
-          tab === 'campaigns' ? html`<button class="btn btn-p" data-newc>${icon('plus')}New campaign</button>` : tab === 'shadow' ? html`<button class="btn btn-p" data-news>${icon('plus')}New shadow ad</button>` : tab === 'rate' ? html`<button class="btn btn-g" data-exp>${icon('download')}Rate card CSV</button>` : '');
-        var tb = tabBar(v, [['campaigns', 'Campaigns'], ['shadow', 'Shadow ads'], ['rate', 'Rate card'], ['visitors', 'Visitors']], tab);
-        if (tab === 'campaigns') {
-          var views = list.reduce(function (s, c) { return s + ((st[c.id] || {}).v || 0); }, 0), clicks = list.reduce(function (s, c) { return s + ((st[c.id] || {}).c || 0); }, 0);
-          set(v.el, html`${head}${tb}<div class="grid g4 mb"><div class="mini"><div class="mini-l">Live campaigns</div><div class="mini-v">${num(list.filter(function (c) { return (c.status || 'live') === 'live'; }).length)}</div><div class="mini-s">${num(list.length)} total</div></div>
-              <div class="mini"><div class="mini-l">Viewable impressions · 30d</div><div class="mini-v">${num(views)}</div></div><div class="mini"><div class="mini-l">Clicks</div><div class="mini-v">${num(clicks)}</div><div class="mini-s">${CX.pct(CX.ratio(clicks, views))} CTR</div></div>
-              <div class="mini"><div class="mini-l">Inventory value</div><div class="mini-v">${a ? moneyC(a.monthlyInventoryValue) : '—'}</div><div class="mini-s">per month at current intent</div></div></div>
-            ${list.length ? html`<div class="grid auto">${list.map(function (c) { var s0 = c.status || (c.active === false ? 'paused' : 'live'), m = st[c.id] || { v: 0, c: 0 }; return html`
-              <div class="card flush"><div style="padding:14px">${creativePreview(c)}</div><div style="padding:0 18px 16px"><div class="row between"><b style="color:var(--ink-1)">${c.advertiser || 'Untitled'}</b>${CX.pill(s0)}</div>
-                <div class="muted mt-s" style="font-size:12px">${human(c.format)} · ${(c.page_targets || ['all']).join(', ')}</div>
-                <div class="grid g3 mt-s" style="gap:6px"><div class="mini" style="padding:8px 10px"><div class="mini-l">Views</div><div class="mini-v" style="font-size:15px">${num(m.v)}</div></div><div class="mini" style="padding:8px 10px"><div class="mini-l">Clicks</div><div class="mini-v" style="font-size:15px">${num(m.c)}</div></div><div class="mini" style="padding:8px 10px"><div class="mini-l">CTR</div><div class="mini-v" style="font-size:15px">${CX.pct(CX.ratio(m.c, m.v))}</div></div></div>
-                <div class="btn-row mt"><button class="btn btn-sm btn-g" data-ec="${c.id}">${icon('edit')}Edit</button><button class="btn btn-sm btn-g" data-tc="${c.id}" data-st="${s0}">${s0 === 'live' ? 'Pause' : 'Go live'}</button><button class="btn btn-sm btn-q btn-icon" data-dc="${c.id}" title="Delete">${icon('trash')}</button></div></div></div>`; })}</div>`
-              : html`<div class="card">${CX.empty('No campaigns yet', 'Create one and choose the surfaces it runs on.', 'megaphone')}</div>`}`);
-        } else if (tab === 'shadow') {
-          var imp = list.reduce(function (s, x) { return s + n(x.impressions); }, 0), clk = list.reduce(function (s, x) { return s + n(x.clicks); }, 0), dis = list.reduce(function (s, x) { return s + n(x.dismissals); }, 0);
-          set(v.el, html`${head}${tb}<div class="grid g4 mb"><div class="mini"><div class="mini-l">Live shadow ads</div><div class="mini-v">${num(list.filter(function (x) { return x.status === 'live' && x.active; }).length)}</div></div>
-              <div class="mini"><div class="mini-l">Impressions</div><div class="mini-v">${num(imp)}</div></div><div class="mini"><div class="mini-l">Click-through</div><div class="mini-v">${CX.pct(CX.ratio(clk, imp))}</div><div class="mini-s">${num(clk)} clicks</div></div>
-              <div class="mini"><div class="mini-l">Dismiss rate</div><div class="mini-v">${CX.pct(CX.ratio(dis, imp))}</div><div class="mini-s">lower is better</div></div></div>
-            <div class="card flush">${list.length ? html`<table class="tbl"><thead><tr><th>Creative</th><th class="hide-s">Targeting</th><th class="num">Views</th><th class="num">CTR</th><th>Status</th><th></th></tr></thead><tbody>${list.map(function (x) { return html`
-              <tr><td><div class="cell"><span class="t-thumb" style="background:${raw(CX.esc(x.theme_gradient || 'var(--panel-3)'))}">${x.media_url && x.media_type !== 'video' ? html`<img src="${CX.safeUrl(x.media_url)}" alt="" style="width:100%;height:100%;object-fit:cover"/>` : ''}</span><div><div class="t-main">${x.advertiser}</div><div class="t-sub">${x.headline || x.title || ''}</div></div></div></td>
-              <td class="hide-s t-sub">${(x.surfaces || ['all']).join(', ')} · intent ${num(x.intent_min)}–${num(x.intent_max)} · ${human(x.position || 'auto')}</td><td class="num">${num(x.impressions)}</td><td class="num">${CX.pct(CX.ratio(x.clicks, x.impressions))}</td><td>${CX.pill(x.status || 'draft')}</td>
-              <td><div class="t-act"><button class="btn btn-sm btn-g" data-es="${x.id}">Edit</button><button class="btn btn-sm btn-g" data-ts="${x.id}" data-st="${x.status}">${x.status === 'live' ? 'Pause' : 'Go live'}</button><button class="btn btn-sm btn-q btn-icon" data-ds="${x.id}" title="Delete">${icon('trash')}</button></div></td></tr>`; })}</tbody></table>`
-              : CX.empty('No shadow ads yet', '', 'layers')}</div>`);
-        } else if (tab === 'rate') {
-          var inv = (a && a.inventory) || [];
-          set(v.el, html`${head}${tb}<div class="grid g4 mb"><div class="mini"><div class="mini-l">Sellable surfaces</div><div class="mini-v">${num(inv.length)}</div></div><div class="mini"><div class="mini-l">Hot-intent slots</div><div class="mini-v">${num(inv.filter(function (i) { return i.intentBand === 'hot'; }).length)}</div></div>
-              <div class="mini"><div class="mini-l">Impressions / month</div><div class="mini-v">${compact(inv.reduce(function (s, i) { return s + i.monthlyImpressions; }, 0))}</div></div><div class="mini"><div class="mini-l">Rate card value</div><div class="mini-v">${moneyC(a && a.monthlyInventoryValue)}</div></div></div>
-            <div class="card flush">${inv.length ? html`<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Surface</th><th>Slot</th><th class="num">Pageviews</th><th class="num">Viewable</th><th class="num">CTR</th><th>Intent</th><th class="num">CPM</th><th class="num">Monthly value</th></tr></thead><tbody>${inv.map(function (i) { return html`
-              <tr><td class="t-main">${i.pageLabel}</td><td><div class="t-main">${i.slotLabel}</div><div class="t-sub">${i.desc}</div></td><td class="num">${num(i.pageviews)}</td><td class="num">${num(i.viewable)}<div class="t-sub">${i.viewRate}%</div></td><td class="num">${i.ctr}%</td>
-              <td>${CX.pill(i.intentBand, i.intentBand === 'hot' ? 'p-hot' : i.intentBand === 'warm' ? 'p-warn' : 'p-info')}</td><td class="num">KES ${num(i.cpm)}</td><td class="num"><b>${money(i.monthlyValue)}</b></td></tr>`; })}</tbody></table></div>` : CX.empty('No inventory measured yet', 'It fills in as visitors browse.', 'chart')}</div>`);
-        } else {
-          var byV = {};
-          ((a && a.sessions) || []).forEach(function (s) { var id = s.visitor_id || 'unknown'; var o = byV[id] = byV[id] || { id: id, sessions: 0, intent: 0, mode: '', device: s.device || '', seen: 0, clicks: 0, last: null };
-            o.sessions++; o.intent = Math.max(o.intent, n(s.intent_score)); if (s.reading_mode) o.mode = s.reading_mode; o.seen += n(s.ads_viewable); o.clicks += n(s.ads_clicked); var t = s.captured_at || s.created_at; if (t && (!o.last || t > o.last)) o.last = t; });
-          var vis = Object.keys(byV).map(function (k) { return byV[k]; }).sort(function (x, y) { return y.intent - x.intent; });
-          set(v.el, html`${head}${tb}<div class="grid g4 mb"><div class="mini"><div class="mini-l">Known visitors · 30d</div><div class="mini-v">${num(vis.length)}</div></div><div class="mini"><div class="mini-l">Hot intent (72+)</div><div class="mini-v">${num(vis.filter(function (x) { return x.intent >= 72; }).length)}</div></div>
-              <div class="mini"><div class="mini-l">Average intent</div><div class="mini-v">${num(vis.length ? vis.reduce(function (s, x) { return s + x.intent; }, 0) / vis.length : 0)}</div></div><div class="mini"><div class="mini-l">Reached by ads</div><div class="mini-v">${num(vis.filter(function (x) { return x.seen; }).length)}</div></div></div>
-            <div class="card flush">${vis.length ? html`<div class="tbl-wrap"><table class="tbl compact"><thead><tr><th>Visitor</th><th>Device</th><th class="num">Sessions</th><th class="num">Intent</th><th>Mode</th><th class="num">Ads seen</th><th class="num">Last seen</th></tr></thead><tbody>${vis.slice(0, 200).map(function (x) { return html`
-              <tr><td class="mono t-sub">${String(x.id).slice(0, 14)}</td><td>${human(x.device || '—')}</td><td class="num">${num(x.sessions)}</td><td class="num">${CX.pill(String(x.intent), x.intent >= 72 ? 'p-hot' : x.intent >= 45 ? 'p-info' : 'p-mute', false)}</td><td>${human(x.mode || '—')}</td><td class="num">${num(x.seen)}</td><td class="num t-sub">${x.last ? ago(x.last) : '—'}</td></tr>`; })}</tbody></table></div>` : CX.empty('No visitor sessions recorded yet', '', 'users')}</div>`);
-        }
-        wireTabs(v, 'campaigns');
-        var reload = function () { v.refresh(); };
-        on(v.el, '[data-newc]', 'click', function () { campaignEditor(null, a, reload); });
-        on(v.el, '[data-ec]', 'click', function (el) { campaignEditor(list.filter(function (c) { return String(c.id) === el.getAttribute('data-ec'); })[0], a, reload); });
-        on(v.el, '[data-tc]', 'click', function (el) { var next = el.getAttribute('data-st') === 'live' ? 'paused' : 'live'; CX.busy(el, function () { return CX.rows(CX.q('ad_campaigns').update({ status: next, active: next === 'live' }).eq('id', el.getAttribute('data-tc')).select('id')).then(function () { CX.log('campaign.' + next, 'campaign', el.getAttribute('data-tc')); toast('Campaign ' + next, 'ok'); reload(); }); }); });
-        on(v.el, '[data-dc]', 'click', function (el) { confirm({ title: 'Delete this campaign?', tone: 'danger', confirm: 'Delete', icon: 'trash', body: 'It comes off every surface immediately.', onConfirm: function () { return CX.rows(CX.q('ad_campaigns').delete().eq('id', el.getAttribute('data-dc')).select('id')).then(function () { CX.log('campaign.delete', 'campaign', el.getAttribute('data-dc')); toast('Deleted', 'ok'); reload(); }); } }); });
-        on(v.el, '[data-news]', 'click', function () { shadowEditor(null, reload); });
-        on(v.el, '[data-es]', 'click', function (el) { shadowEditor(list.filter(function (c) { return String(c.id) === el.getAttribute('data-es'); })[0], reload); });
-        on(v.el, '[data-ts]', 'click', function (el) { var next = el.getAttribute('data-st') === 'live' ? 'paused' : 'live'; CX.busy(el, function () { return CX.rows(CX.q('shadow_ads').update({ status: next, active: next === 'live' }).eq('id', el.getAttribute('data-ts')).select('id')).then(function () { CX.log('shadow.' + next, 'shadow_ad', el.getAttribute('data-ts')); toast('Shadow ad ' + next, 'ok'); reload(); }); }); });
-        on(v.el, '[data-ds]', 'click', function (el) { confirm({ title: 'Delete this shadow ad?', tone: 'danger', confirm: 'Delete', icon: 'trash', onConfirm: function () { return CX.rows(CX.q('shadow_ads').delete().eq('id', el.getAttribute('data-ds')).select('id')).then(function () { CX.log('shadow.delete', 'shadow_ad', el.getAttribute('data-ds')); toast('Deleted', 'ok'); reload(); }); } }); });
-        on(v.el, '[data-exp]', 'click', function () { CX.csv((a && a.inventory) || [], null, 'cabana-rate-card.csv'); });
-      });
-    }
-  });
+  /* Advertising lives in admin-views-ads.js (the Advertising room). */
 
   /* ════════════════════════════════════════════════════════════════
      MESSAGING (push · scheduled · splash · email)
      ════════════════════════════════════════════════════════════════ */
-  var SPLASH = 'interstitial', SPLASH_CFG = 'splash.json';
-  function splashUrl(key) { return CX.client().storage.from(SPLASH).getPublicUrl(key).data.publicUrl; }
-  function splashConfig() { return fetch(splashUrl(SPLASH_CFG) + '?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }); }
-  function saveSplash(cfg) {
-    var blob = new Blob([JSON.stringify(cfg, null, 2)], { type: 'application/json' });
-    return CX.client().storage.from(SPLASH).upload(SPLASH_CFG, blob, { upsert: true, contentType: 'application/json', cacheControl: '0' }).then(function (r) { if (r.error) throw r.error; });
-  }
   var KINDS_PUSH = [['general', 'General'], ['promo', 'Promotion'], ['booking', 'Booking'], ['payment', 'Payment'], ['support', 'Support'], ['urgent', 'Urgent']];
   CX.view('comms', {
     title: 'Messaging',
     render: function (v) {
       var tab = v.q.tab || 'push';
-      set(v.el, html`${pageHd('Growth', 'Messaging', 'Push notifications, scheduled campaigns, the homepage splash and every email Cabana sends.')}${CX.skeleton('kpis')}`);
+      set(v.el, html`${pageHd('Growth', 'Messaging', 'Push notifications, scheduled campaigns and every email Cabana sends.')}${CX.skeleton('kpis')}`);
       var head = function (t, f) { var qy = CX.q(t).select('id', { count: 'exact', head: true }); return (f ? f(qy) : qy).then(function (r) { return r.count || 0; }); };
       return Promise.all([head('push_subscriptions'), head('notifications', function (q) { return q.gte('created_at', new Date(Date.now() - 864e5).toISOString()); }), head('push_campaigns', function (q) { return q.eq('active', true); })]).then(function (cn) {
         if (!v.alive()) return;
-        set(v.el, html`${pageHd('Growth', 'Messaging', 'Push notifications, scheduled campaigns, the homepage splash and every email Cabana sends.')}
+        set(v.el, html`${pageHd('Growth', 'Messaging', 'Push notifications, scheduled campaigns and every email Cabana sends.')}
           <div class="grid g3 mb"><div class="mini"><div class="mini-l">Push devices</div><div class="mini-v">${num(cn[0])}</div><div class="mini-s">Browsers and phones that accepted notifications</div></div>
             <div class="mini"><div class="mini-l">Notifications · 24h</div><div class="mini-v">${num(cn[1])}</div><div class="mini-s">In-app feed items created</div></div><div class="mini"><div class="mini-l">Scheduled campaigns</div><div class="mini-v">${num(cn[2])}</div><div class="mini-s">Active and waiting to fire</div></div></div>
-          ${tabBar(v, [['push', 'Send'], ['scheduled', 'Scheduled', cn[2]], ['splash', 'Homepage splash'], ['email', 'Email log'], ['log', 'Sent notifications']], tab)}<div data-mbody></div>`);
+          ${tabBar(v, [['push', 'Send'], ['scheduled', 'Scheduled', cn[2]], ['splash', 'Welcome poster'], ['email', 'Email log'], ['log', 'Sent notifications']], tab)}<div data-mbody></div>`);
         wireTabs(v, 'push');
         var body = $('[data-mbody]', v.el);
         if (tab === 'push') return pushTab(v, body);
@@ -655,62 +447,14 @@
     });
   }
   function splashTab(v, body) {
-    set(body, CX.skeleton('kpis'));
-    var pending = null;
-    return splashConfig().then(function (cfg) {
-      if (!v.alive()) return;
-      var live = cfg && cfg.active;
-      function human2(ms) { ms = n(ms); return ms >= 60000 && ms % 60000 === 0 ? ms / 60000 + ' min' : Math.round(ms / 1000) + 's'; }
-      set(body, html`<div class="split"><div class="card pad-l"><div class="card-hd"><div><div class="card-t">Homepage splash</div><div class="card-s">A full-screen video or image the moment someone opens cabana.africa.</div></div>${live ? html`<span class="pill dot p-ok">Live</span>` : html`<span class="pill p-mute">Off</span>`}</div>
-          ${live ? html`<div class="note ok mb">Playing a <b>${cfg.type}</b> for <b>${cfg.type === 'image' ? '3s' : human2(cfg.durationMs)}</b>, shown <b>${({ once: 'once per device', daily: 'once a day', always: 'every visit' })[cfg.frequency] || cfg.frequency}</b> · campaign <b>${cfg.campaign || '—'}</b> · updated ${ago(cfg.updatedAt)}.</div>` : html`<div class="note mb">The homepage loads normally. Upload media and publish to switch it on.</div>`}
-          <div class="form-grid">
-            <div class="fld full"><label class="fld-l">Media</label><label class="ph-drop" style="aspect-ratio:auto;padding:22px" data-drop>${icon('upload')}<b data-fname>${live ? 'Replace the current media' : 'Choose a video or image'}</b><br/><span class="muted">MP4/WebM under ~30 MB plays smoothly on phones</span><input type="file" accept="video/mp4,video/webm,image/*" hidden data-file/></label></div>
-            ${CX.fieldHTML({ name: 'campaign', label: 'Campaign name', value: live ? cfg.campaign : '', placeholder: 'december-getaways' })}
-            ${CX.fieldHTML({ name: 'frequency', label: 'Show', type: 'select', value: live ? cfg.frequency : 'once', options: [['once', 'Once per device'], ['daily', 'Once a day'], ['always', 'Every visit']] })}
-            ${CX.fieldHTML({ name: 'seconds', label: 'Video plays for (seconds)', type: 'number', min: 1, max: 600, value: live && cfg.type === 'video' ? Math.round(n(cfg.durationMs) / 1000) : 15, help: 'Images always show for 3 seconds.' })}
-          </div>
-          <div class="btn-row mt"><button class="btn btn-p btn-lg" data-pub>${icon('play')}${live ? 'Update splash' : 'Publish splash'}</button>${live ? html`<button class="btn btn-d" data-off>${icon('pause')}Turn off</button>` : ''}<button class="btn btn-g" data-test>${icon('eye')}Test it here</button></div></div>
-        <div class="card"><div class="card-t mb">Preview</div><div class="splash-pv" data-pv>${live ? (cfg.type === 'video' ? html`<video src="${CX.safeUrl(cfg.url)}" muted autoplay loop playsinline></video>` : html`<img src="${CX.safeUrl(cfg.url)}" alt=""/>`) : html`<span class="muted">No media</span>`}</div></div></div>`);
-      var fileIn = $('[data-file]', body), drop = $('[data-drop]', body);
-      function pick(file) {
-        if (!file) return; var kind = /^video\//.test(file.type) ? 'video' : /^image\//.test(file.type) ? 'image' : null;
-        if (!kind) { toast('Choose a video or an image', 'warn'); return; }
-        if (pending && pending.url) URL.revokeObjectURL(pending.url);
-        pending = { file: file, kind: kind, url: URL.createObjectURL(file) };
-        set($('[data-fname]', body), file.name + ' · ' + CX.bytes(file.size));
-        set($('[data-pv]', body), kind === 'video' ? html`<video src="${pending.url}" muted autoplay loop playsinline></video>` : html`<img src="${pending.url}" alt=""/>`);
-        if (kind === 'video' && file.size > 60 * 1048576) toast('That video is ' + CX.bytes(file.size) + '. Under ~30 MB loads much faster on phones.', 'warn', { ms: 8000 });
-      }
-      fileIn.onchange = function () { pick(fileIn.files[0]); };
-      drop.ondragover = function (e) { e.preventDefault(); drop.classList.add('over'); }; drop.ondragleave = function () { drop.classList.remove('over'); };
-      drop.ondrop = function (e) { e.preventDefault(); drop.classList.remove('over'); pick(e.dataTransfer.files[0]); };
-      $('[data-pub]', body).onclick = function () {
-        var b = this;
-        if (!pending && !live) { toast('Choose media first', 'warn'); return; }
-        var camp = ($('[name="campaign"]', body).value.trim() || 'campaign-' + Date.now()).toLowerCase().replace(/[^a-z0-9_-]/g, '-');
-        var freq = $('[name="frequency"]', body).value, secs = Math.max(1, n($('[name="seconds"]', body).value) || 15);
-        CX.busy(b, function () {
-          var media = pending ? CX.client().storage.from(SPLASH).upload('media/' + camp + '-' + Date.now() + '.' + ((pending.file.name.split('.').pop() || 'mp4').toLowerCase().replace(/[^a-z0-9]/g, '')), pending.file, { upsert: true, contentType: pending.file.type, cacheControl: '31536000' })
-            .then(function (r) { if (r.error) throw r.error; return { type: pending.kind, url: splashUrl(r.data.path) }; }) : Promise.resolve({ type: cfg.type, url: cfg.url });
-          return media.then(function (m) { return saveSplash({ active: true, type: m.type, url: m.url, durationMs: m.type === 'video' ? secs * 1000 : 3000, frequency: freq, campaign: camp, updatedAt: Date.now() }); })
-            .then(function () { CX.log('splash.publish', 'splash', camp, { frequency: freq }); toast('Splash is live', 'ok'); v.refresh(); });
-        });
-      };
-      var off = $('[data-off]', body); if (off) off.onclick = function () { confirm({ title: 'Turn the splash off?', tone: 'warn', confirm: 'Turn off', body: 'The homepage loads normally for everyone.', onConfirm: function () { return saveSplash({ active: false, updatedAt: Date.now() }).then(function () { CX.log('splash.disable', 'splash', cfg.campaign || null); toast('Splash turned off', 'ok'); v.refresh(); }); } }); };
-      $('[data-test]', body).onclick = function () {
-        var url = pending ? pending.url : live ? cfg.url : null, type = pending ? pending.kind : live ? cfg.type : null;
-        if (!url) { toast('Nothing to test yet', 'warn'); return; }
-        var ms = type === 'image' ? 3000 : Math.max(1000, (n($('[name="seconds"]', body).value) || 15) * 1000);
-        var cover = document.createElement('div'); cover.style.cssText = 'position:fixed;inset:0;z-index:2147483600;background:#07080C;cursor:pointer';
-        set(cover, html`${type === 'video' ? html`<video src="${CX.safeUrl(url)}" muted autoplay playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"></video>` : html`<img src="${CX.safeUrl(url)}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"/>`}
-          <div style="position:absolute;left:0;bottom:0;height:3px;width:0;background:var(--grad)" data-bar></div><div style="position:absolute;left:50%;bottom:22px;transform:translateX(-50%);font:600 11px var(--f-d);letter-spacing:.18em;color:rgba(255,255,255,.6);text-transform:uppercase">Cabana · preview · tap to close</div>`);
-        document.body.appendChild(cover);
-        var bar = $('[data-bar]', cover), t0 = Date.now(), done = false;
-        function close() { if (done) return; done = true; cover.style.transition = 'opacity .4s'; cover.style.opacity = '0'; setTimeout(function () { cover.remove(); }, 420); }
-        cover.onclick = close;
-        (function tick() { var p = Math.min(100, (Date.now() - t0) / ms * 100); bar.style.width = p + '%'; if (p < 100 && !done) requestAnimationFrame(tick); else close(); })();
-      };
-    });
+    /* The full-screen welcome moved into Advertising as the Welcome poster:
+       a campaign like any other, scheduled, measured and shown on the
+       dashboard the moment a member lands. */
+    set(body, html`<div class="callout info">${icon('image')}<div class="grow"><div class="strong">The welcome poster now lives in Advertising</div>
+      <div class="muted" style="font-size:12.5px">It is scheduled, previewed and measured like any campaign, and greets members full screen as their dashboard opens.</div>
+      <button class="btn btn-p btn-sm mt-s" data-goposter>${icon('image')}Open Welcome poster</button></div></div>`);
+    $('[data-goposter]', body).onclick = function () { CX.go('ads?tab=poster'); };
+    return Promise.resolve();
   }
   function emailTab(v, body) {
     set(body, CX.skeleton('list'));

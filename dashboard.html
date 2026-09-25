@@ -182,10 +182,15 @@
     50%     { box-shadow:0 0 0 8px rgba(255,255,255,.04); }
   }
 </style>
+<!-- Welcome poster: decides before first paint whether an advertiser's
+     poster greets this arrival. When none is live it stands aside and the
+     Cabana splash below runs exactly as before. -->
+<script src="/apa-interstitial.js?v=4"></script>
 <script>
 (function(){
   try {
     if (location.search.indexOf('back=1') !== -1) return;
+    if (window.__cbpPosterClaim) return;   /* a live welcome poster owns this moment */
 
     /* Per-login fingerprint. Shows once per user per day */
     var uid = 'anon';
@@ -389,7 +394,7 @@
   <link rel="dns-prefetch" href="//api.unsplash.com"/>
   <title>Dashboard: Cabana</title>
 <script src="/vendor-supabase-2.112.3.js"></script>
-<!-- apa-interstitial.js retired. Replaced by Cabana cinematic splash -->
+<!-- Welcome poster (apa-interstitial.js) loads in the head, before the splash. -->
 <!-- Session core: the single source of truth for auth. Must load
      immediately after the Supabase lib and before any consumer. -->
 <script src="/apa-session.js"></script>
@@ -3116,14 +3121,22 @@ async function loadDashboardHero() {
 
     let pool = DEFAULTS;
 
-    // Load via REST (no new Supabase client needed)
-    const r = await fetch(
-      SUPA_URL+'/rest/v1/ad_campaigns?active=eq.true&format=eq.video&order=priority.desc',
-      {headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}}
-    );
+    // One read shared with the ad engine: dates, targeting and the
+    // console's rules (kill switch, switched-off slots) are applied by the
+    // database, so the hero can never run something the console has stopped.
+    const r = await fetch(SUPA_URL+'/rest/v1/rpc/ads_bundle', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY},
+      body: JSON.stringify({ p_page: 'dashboard' })
+    });
     if(r.ok){
-      const ads = await r.json();
-      if(ads?.length) pool = ads;
+      const b = await r.json();
+      try { localStorage.setItem('cads:v4:dashboard', JSON.stringify({ at: Date.now(), data: b })); } catch(_) {}
+      const st = (b && b.settings) || {};
+      const off = st.enabled === false || (st.disabled_slots || []).indexOf('dashboard.hero') !== -1;
+      const ads = off ? [] : ((b && b.campaigns) || []).filter(c =>
+        c.format === 'video' && (!c.slots || !c.slots.length || c.slots.indexOf('dashboard.hero') !== -1));
+      if(ads.length) pool = ads.map(c => Object.assign({}, c, { sub: c.sub_text || c.sub || '' }));
     }
 
     const vid   = document.getElementById('hero-video');
@@ -3165,14 +3178,19 @@ async function loadDashboardHero() {
       const cta     = document.getElementById('hero-cta');
       const tag     = document.getElementById('hero-ad-tag');
       if(eyebrow) eyebrow.textContent=''+(ad.advertiser||'Cabana');
-      if(title)   title.innerHTML=ad.headline||'Travel in <em>style.</em>';
+      if(title){ if(ad.campaign_id?.startsWith('brand')) title.innerHTML=ad.headline; else title.textContent=ad.headline||ad.advertiser||''; }
       if(sub)     sub.textContent=ad.sub||'';
       if(tag)     tag.style.display=ad.campaign_id?.startsWith('brand')?'none':'block';
       if(cta){
         const svg=cta.querySelector('svg');
         cta.textContent=ad.cta_text||'Explore';
         if(svg)cta.appendChild(svg);
-        cta.onclick=()=>{if(ad.cta_url&&ad.cta_url!=='#')window.location.href=ad.cta_url;};
+        cta.onclick=()=>{
+          if(!ad.campaign_id?.startsWith('brand')){
+            fetch(SUPA_URL+'/rest/v1/rpc/increment_ad_click',{method:'POST',keepalive:true,headers:{'Content-Type':'application/json','apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY},body:JSON.stringify({p_campaign_id:ad.campaign_id})}).catch(()=>{});
+          }
+          if(ad.cta_url&&ad.cta_url!=='#')window.location.href=ad.cta_url;
+        };
       }
       updateDots();
       if(!ad.campaign_id?.startsWith('brand')){
@@ -3553,7 +3571,8 @@ function hideAddSheet(){
 <script src="/apa-ownership.js" defer></script>
 <script src="/apa-roles.js?v=20260917-2" defer></script>
 <script src="/cabana-credit.js" defer></script>
-<script src="/showcase.js" defer></script>
+<script src="/apa-ad-registry.js?v=2026.09.26" defer></script>
+<script src="/showcase.js?v=4" defer></script>
 
 <!-- Admin surface removed: apa-admin-guard.js redirects operators to the console. -->
 <script src="/brand.js" defer></script>

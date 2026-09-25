@@ -1931,7 +1931,6 @@ document.querySelectorAll('.svc-tile').forEach((t,i)=>{t.style.transitionDelay=(
      SDK. apa-session.js polls for window.supabase, so load order stays safe.
      Deferred scripts still execute in document order. -->
 <script src="/vendor-supabase-2.112.3.js" defer></script>
-<script src="/apa-interstitial.js" defer></script>
 <script src="/apa-session.js" defer></script>
 <script src="/apa-admin-guard.js" defer></script>
 <script src="/apa-chrome.js" defer></script>
@@ -1941,7 +1940,8 @@ document.querySelectorAll('.svc-tile').forEach((t,i)=>{t.style.transitionDelay=(
 <script src="/referral.js" defer></script>
 <script src="/apa-referral-capture.js" defer></script>
 <script src="/cabana-credit.js" defer></script>
-<script src="/showcase.js" defer></script>
+<script src="/apa-ad-registry.js?v=2026.09.26" defer></script>
+<script src="/showcase.js?v=4" defer></script>
 
 <script>
 /* ── Auth-aware landing page (rewritten) ────────────────────────────
@@ -2012,7 +2012,6 @@ document.querySelectorAll('.svc-tile').forEach((t,i)=>{t.style.transitionDelay=(
 <script src="/brand.js" defer></script>
 <script src="/cabana-rebrand.js" defer></script>
   <script src="/apa-signal.js" defer></script>
-  <script src="/apa-shadow.js" defer></script>
   <script src="/apa-push.js" defer></script>
 
 <style>

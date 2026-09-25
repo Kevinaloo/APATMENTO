@@ -46,6 +46,24 @@
     { page: 'dashboard',   label: 'Dashboard',         slots: ['window'] }
   ];
 
+  /* The live placement registry is the source of truth when it is loaded
+     (it is, in the console): every page and every slot the site really
+     mounts, priced by the format it presents. The list above is only a
+     fallback for pages that load this module without the registry. */
+  function surfacesNow() {
+    var R = global.CabanaAdRegistry;
+    if (!R || !R.SURFACES) return SURFACES;
+    return R.SURFACES.map(function (s) {
+      var slots = [];
+      s.slots.forEach(function (sl) {
+        if (sl.kind === 'takeover' || sl.kind === 'managed') return;
+        var f = sl.kind === 'infeed' ? 'native' : sl.kind === 'overlay' ? 'sticky' : sl.formats[0];
+        if (slots.indexOf(f) === -1) slots.push(f);
+      });
+      return { page: s.page, label: s.label, slots: slots };
+    }).filter(function (s) { return s.slots.length; });
+  }
+
   /* Format economics. Base CPM in KES, plus the multiplier that a
      high-intent audience commands. These are the levers a sales lead
      actually pulls. */
@@ -217,7 +235,7 @@
       }
 
       var inventory = [];
-      SURFACES.forEach(function (surf) {
+      surfacesNow().forEach(function (surf) {
         var pv = byPage[surf.page] || 0;
         var ai = avgIntentFor(surf.page);
         var band = bandFor(ai);

@@ -1,0 +1,102 @@
+/* ═══════════════════════════════════════════════════════════════════
+   Operations console · Advertising room
+   Components used only by admin-views-ads.js. Tokens come from
+   admin-console.css so both themes work without extra rules.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* thumbnails */
+.ads-thumb{position:relative;flex:none;width:52px;height:40px;border-radius:9px;overflow:hidden;display:inline-block;border:1px solid var(--line-2)}
+.ads-thumb img,.ads-thumb video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.ads-thumb i{position:absolute;right:3px;bottom:3px;width:16px;height:16px;border-radius:50%;background:rgba(0,0,0,.55);display:grid;place-items:center;color:#fff}
+.ads-thumb i .ic{width:9px;height:9px}
+
+/* master switch bar */
+.ads-switchbar{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 16px;margin-bottom:14px;border-radius:14px;border:1px solid var(--line-2);background:linear-gradient(135deg,var(--brand-soft),transparent 70%),var(--panel)}
+.ads-switchbar.off{background:linear-gradient(135deg,var(--warn-soft),transparent 70%),var(--panel)}
+.ads-orb{width:10px;height:10px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 5px var(--ok-soft);flex:none;animation:adsPulse 2.4s ease-in-out infinite}
+.ads-switchbar.off .ads-orb{background:var(--warn);box-shadow:0 0 0 5px var(--warn-soft);animation:none}
+@keyframes adsPulse{50%{box-shadow:0 0 0 9px transparent}}
+
+.ads-att{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
+.ads-att:first-child{border-top:0;padding-top:0}
+
+/* placements */
+.ads-surfaces{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,520px),1fr));gap:14px}
+.ads-slot{border:1px solid var(--line-2);border-radius:12px;padding:11px 13px;background:var(--panel-2)}
+.ads-slot.warn{border-color:color-mix(in srgb,var(--warn) 45%,transparent)}
+.ads-slot.bad{border-color:color-mix(in srgb,var(--bad) 55%,transparent);background:linear-gradient(135deg,var(--bad-soft),transparent 60%),var(--panel-2)}
+.ads-slot-hd{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--ink-1)}
+.ads-slot-hd .mono{font-size:11px}
+.ads-slot-b{display:flex;align-items:flex-start;gap:12px;margin-top:8px}
+.ads-slot-n{display:flex;gap:12px;flex:none}
+.ads-slot-n span{display:flex;flex-direction:column;align-items:flex-end;font-size:10.5px;color:var(--ink-4);text-transform:uppercase;letter-spacing:.06em}
+.ads-slot-n b{font:630 14px/1.2 var(--f-d);color:var(--ink-1);letter-spacing:-.02em;text-transform:none;font-variant-numeric:tabular-nums}
+@media(max-width:640px){.ads-slot-b{flex-wrap:wrap}.ads-slot-n{width:100%;justify-content:flex-start}.ads-slot-n span{align-items:flex-start}}
+
+/* editor */
+.ads-ed{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:24px;align-items:start}
+.ads-ed-r{position:sticky;top:0}
+@media(max-width:980px){.ads-ed{grid-template-columns:1fr}.ads-ed-r{position:static}}
+
+.ads-drop{position:relative;border:1.5px dashed var(--line-3);border-radius:14px;min-height:150px;display:grid;place-items:center;text-align:center;cursor:pointer;overflow:hidden;transition:border-color .15s,background .15s;background:var(--panel-2);outline:none}
+.ads-drop:hover,.ads-drop.over,.ads-drop:focus-visible{border-color:var(--brand);background:var(--brand-soft)}
+.ads-drop.has{border-style:solid;border-color:var(--line-2);min-height:210px}
+.ads-drop-m{position:absolute;inset:0;background:#000}
+.ads-drop-m img,.ads-drop-m video{width:100%;height:100%;object-fit:contain}
+.ads-drop-c{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;padding:18px;color:var(--ink-3);font-size:12.5px}
+.ads-drop-c b{color:var(--ink-1);font-size:13.5px}
+.ads-drop-c .ic{width:22px;height:22px;color:var(--brand-ink)}
+.ads-drop.has .ads-drop-c{position:absolute;left:10px;right:10px;bottom:10px;padding:8px 10px;flex-direction:row;justify-content:space-between;border-radius:10px;background:rgba(8,9,14,.72);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#e9eaf0}
+.ads-drop-k{font-size:12px}
+.ads-drop-a{display:flex;gap:6px}
+.ads-drop.busy{cursor:progress}
+.ads-url{margin-top:8px}
+.ads-url .inp{font-size:12.5px}
+
+.ads-fmts{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.ads-fmt{display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;padding:11px 12px;border-radius:12px;border:1px solid var(--line-2);background:var(--panel-2);color:var(--ink-2);cursor:pointer;transition:border-color .15s,background .15s;font:inherit}
+.ads-fmt:hover{border-color:var(--line-3)}
+.ads-fmt.on{border-color:var(--brand-line);background:var(--brand-soft);color:var(--ink-1)}
+.ads-fmt span{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;background:var(--panel-3);color:var(--brand-ink)}
+.ads-fmt span .ic{width:14px;height:14px}
+.ads-fmt b{font:620 13px/1.2 var(--f-d);color:var(--ink-1)}
+.ads-fmt small{font-size:11.5px;line-height:1.35;color:var(--ink-4)}
+
+.ads-pv-frame{margin-top:10px;border-radius:16px;padding:16px;background:#F4F4F8;border:1px solid var(--line-2);min-height:160px;transition:max-width .3s ease;max-width:100%}
+.ads-pv-frame.m{max-width:360px;margin-left:auto;margin-right:auto}
+.ads-pv-frame .cads-lbl{margin-bottom:8px}
+.ads-ck{display:flex;align-items:flex-start;gap:8px;font-size:12.5px;color:var(--ink-2)}
+.ads-ck .ic{width:15px;height:15px;flex:none;margin-top:1px}
+.ads-ck.ok .ic{color:var(--ok)}
+.ads-ck.no .ic{color:var(--warn)}
+
+/* poster mock */
+.ads-poster-pv{display:flex;justify-content:center}
+.ads-phone{width:230px;border-radius:30px;padding:8px;background:#0b0b10;box-shadow:0 20px 50px rgba(0,0,0,.35)}
+.ads-phone-s{position:relative;aspect-ratio:9/19;border-radius:23px;overflow:hidden;color:#fff}
+.ads-phone-s img,.ads-phone-s video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.ads-phone-s::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.45),transparent 25%,transparent 55%,rgba(0,0,0,.8))}
+.ads-phone-l,.ads-phone-k{position:absolute;top:12px;z-index:2;font:650 8.5px/1 var(--f-d);letter-spacing:.1em;text-transform:uppercase;padding:4px 7px;border-radius:99px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.2)}
+.ads-phone-l{left:10px}.ads-phone-k{right:10px}
+.ads-phone-b{position:absolute;left:12px;right:12px;bottom:16px;z-index:2;display:flex;flex-direction:column;gap:4px}
+.ads-phone-b b{font:560 17px/1.1 var(--f-d)}
+.ads-phone-b small{font-size:10.5px;opacity:.85}
+.ads-phone-b em{font-style:normal;align-self:flex-start;margin-top:4px;padding:6px 10px;border-radius:99px;background:#fff;color:#0A0A14;font:700 10.5px/1 var(--f-d)}
+
+/* secret ad mock */
+.ads-secret-pv{padding:22px;border-radius:16px;background:repeating-linear-gradient(135deg,var(--panel-2) 0 12px,var(--panel-3) 12px 24px);display:flex;justify-content:flex-end}
+.ads-sa{position:relative;width:320px;max-width:100%;border-radius:18px;overflow:hidden;color:#fff;box-shadow:0 18px 50px rgba(0,0,0,.35)}
+.ads-sa-glass{display:flex;gap:12px;padding:12px;background:rgba(18,16,40,.9)}
+.ads-sa-t{position:relative;flex:none;width:86px;min-height:92px;border-radius:12px;overflow:hidden;background:var(--bg)}
+.ads-sa-t img,.ads-sa-t video,.ads-sa-m img,.ads-sa-m video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.ads-sa-photo{min-height:180px;background:var(--bg)}
+.ads-sa-m{position:absolute;inset:0}
+.ads-sa-photo::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 20%,rgba(6,6,16,.85))}
+.ads-sa-photo .ads-sa-b{position:absolute;left:0;right:0;bottom:0;z-index:2;padding:14px}
+.ads-sa-minimal{background:#fff;color:#0A0A14;padding:14px}
+.ads-sa-b{display:flex;flex-direction:column;gap:3px;min-width:0}
+.ads-sa-k{font:650 9.5px/1.2 var(--f-d);letter-spacing:.12em;text-transform:uppercase;opacity:.7}
+.ads-sa-b b{font:600 14px/1.25 var(--f-d)}
+.ads-sa-b small{font-size:12px;opacity:.82}
+.ads-sa-c{align-self:flex-start;margin-top:6px;padding:6px 12px;border-radius:99px;background:#fff;color:#0A0A14;font:700 11px/1 var(--f-d)}
+.ads-sa-minimal .ads-sa-c{background:#0A0A14;color:#fff}
