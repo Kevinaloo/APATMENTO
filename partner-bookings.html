@@ -541,16 +541,29 @@ async function loadBookings() {
           <td>${bk.num_guests||1} guest${(bk.num_guests||1)>1?'s':''}</td>
           <td><strong>KES ${fmt(Math.round(parseFloat(bk.stay_total||0)))}</strong><div class="bk-guest">your payout</div></td>
           <td><span class="badge ${badge}">${label}</span>${code}</td>
-          <td class="bk-act"><div style="display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap">${action}<button class="btn btn-sm" type="button" data-cbx-open data-cbx-booking="${hesc(bk.id)}" title="Message your guest in Cabana">Message</button></div></td>
+          <td class="bk-act"><div style="display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap">${action}<button class="btn btn-sm" type="button" data-cbx-open data-cbx-booking="${hesc(bk.id)}" title="Message your guest in Cabana">Message</button>${bk.listing_id&&bk.checkin_date?`<a class="btn btn-sm btn-ghost" href="partner-calendar.html?listing=${encodeURIComponent(bk.listing_id)}&date=${hesc(bk.checkin_date)}" title="See this stay on your calendar">Calendar</a>`:''}</div></td>
         </tr>`;
       }).join('');
     }
     loadStays();
+    focusFromHash();
   } catch(e) {
     console.warn('[host bookings]', e);
     tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--err);">We could not load your bookings. Refresh to try again.</td></tr>';
   }
 }
+
+/* Arriving from the calendar (partner-bookings.html#bk-<id>): bring that
+   booking into view and flash it, so the host lands on the right row. */
+function focusFromHash(){
+  const m=/^#bk-(.+)$/.exec(location.hash||''); if(!m)return;
+  const row=document.getElementById('bk-'+decodeURIComponent(m[1]));
+  if(!row){const f=document.getElementById('b-filter');if(f&&f.value!=='all'){f.value='all';loadBookings();}return;}
+  row.scrollIntoView({behavior:'smooth',block:'center'});
+  row.style.transition='background .6s';row.style.background='rgba(109,40,255,.1)';
+  setTimeout(()=>{row.style.background='';},2600);
+}
+window.addEventListener('hashchange',focusFromHash);
 
 /* The guest shows their GUEST-XXXXXX code at the door; the host enters
    it here. The server re-checks the payment ledger before releasing. */

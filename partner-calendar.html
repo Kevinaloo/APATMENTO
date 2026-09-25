@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Cabana Partner: Channel Calendar</title>
+<title>Cabana Partner: Calendar</title>
 <script src="/vendor-supabase-2.112.3.js"></script>
 <script src="/apa-session.js"></script>
 <script src="/apa-roles.js?v=20260917-2" defer></script>
@@ -324,234 +324,243 @@ td strong{color:var(--ink);font-weight:600;}
   </div>
 </nav>
 
-<main class="main">
+<main class="main pc-main">
+<link rel="stylesheet" href="/cabana-calendar.css?v=1"/>
 <style>
-  /* ── Channel calendar. Scoped to this page, tokens from brand.css ── */
-  .cs-bar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:18px;}
-  .cs-select{appearance:none;background:var(--glass);border:1.5px solid var(--line-2);border-radius:12px;
-    padding:10px 34px 10px 14px;font:600 13px var(--font-b);color:var(--ink);cursor:pointer;min-width:240px;
-    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238B8EAC' stroke-width='3'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
-    background-repeat:no-repeat;background-position:right 12px center;}
+  /* ── Host calendar page. The calendar itself is cabana-calendar.css;
+        this is only the frame around it and the channel-sync tools. ── */
+  .shell{z-index:auto;}                       /* lets the phone sheet sit above the bottom nav */
+  .pc-main{max-width:1480px;overflow-x:clip;}
+  /* The shared partner top bar is wider than a phone; trim it here so the
+     page never zooms out on a 360–390px screen. */
+  @media(max-width:600px){.topbar{padding:0 12px;}.tb-add-btn,#apa-fav-btn,.tb-hub-label{display:none !important;}.tb-right{gap:6px;}.tb-switch-btn{padding:8px 10px;}.mn-item{min-width:0;}}   /* clip, not hidden: hidden would break the sticky inspector */
+  .pc-hd{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:20px;}
+  .pc-hd .page-title{margin-bottom:6px;}
+  .pc-hd-acts{display:flex;gap:8px;flex-wrap:wrap;}
+  .pc-pill{display:inline-flex;align-items:center;gap:8px;height:42px;padding:0 15px;border-radius:13px;border:1.5px solid var(--line-2);
+    background:rgba(255,255,255,.82);font:700 12.5px var(--font-b);color:var(--ink-2);cursor:pointer;transition:all .2s;text-decoration:none;white-space:nowrap;}
+  .pc-pill:hover{border-color:var(--violet);color:var(--violet);transform:translateY(-1px);}
+  .pc-pill svg{width:16px;height:16px;flex:none;}
+  .pc-pill .pc-badge{min-width:20px;height:20px;border-radius:99px;padding:0 6px;display:inline-grid;place-items:center;font-size:11px;font-weight:800;color:#fff;background:#E11D48;}
+  .pc-pill .pc-ok{width:8px;height:8px;border-radius:50%;background:#0F9F7F;box-shadow:0 0 0 3px rgba(15,159,127,.18);}
+  .pc-pill .pc-warn{width:8px;height:8px;border-radius:50%;background:#F5B12E;box-shadow:0 0 0 3px rgba(245,177,46,.2);}
+  @media(max-width:600px){.pc-hd-acts{width:100%;}.pc-pill{flex:1;justify-content:center;padding:0 10px;}.pc-pill span.pc-lbl-long{display:none;}}
+
+  /* Double bookings. Loud on purpose: two people are booked into one bed.
+     Red AND striped, so it survives greyscale and colour blindness. */
+  .pc-clash{display:flex;gap:14px;align-items:center;padding:14px 16px;border-radius:18px;margin-bottom:16px;color:#fff;
+    background-color:#E11D48;background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.12) 0 10px,transparent 10px 20px);
+    box-shadow:0 18px 40px -20px rgba(225,29,72,.8);}
+  .pc-clash>svg{width:26px;height:26px;flex:none;}
+  @media(max-width:600px){.pc-clash{flex-wrap:wrap;}.pc-clash button{width:100%;margin-left:0;}}
+  .pc-clash b{display:block;font:700 15px var(--font-d);letter-spacing:.02em;}
+  .pc-clash small{display:block;font-size:12.5px;opacity:.9;margin-top:2px;line-height:1.45;}
+  .pc-clash button{margin-left:auto;flex:none;height:40px;padding:0 16px;border-radius:12px;border:0;background:#fff;color:#9F1239;font:800 12.5px var(--font-b);cursor:pointer;}
+  .cc-day.is-clash{outline:2px solid rgba(225,29,72,.45);outline-offset:-2px;}
+
+  .pc-empty{background:rgba(255,255,255,.8);border:1px solid var(--line);border-radius:24px;padding:48px 24px;text-align:center;}
+  .pc-empty .pc-ic{width:64px;height:64px;border-radius:20px;margin:0 auto 16px;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,#6D28FF,#4F6DFF);box-shadow:0 16px 34px -14px #6D28FF;}
+  .pc-empty .pc-ic svg{width:30px;height:30px;}
+  .pc-empty h2{font:600 22px var(--font-d);margin-bottom:8px;color:var(--ink-2);}
+  .pc-empty p{font-size:14px;color:var(--ink-soft);max-width:420px;margin:0 auto 20px;line-height:1.6;}
+
+  .pc-skel{height:560px;border-radius:22px;background:linear-gradient(90deg,#F1F1F8 25%,#FAFAFE 45%,#F1F1F8 65%);background-size:300% 100%;animation:pcSh 1.3s linear infinite;}
+  @keyframes pcSh{from{background-position:100% 0}to{background-position:-200% 0}}
+
+  /* Channel sync section */
+  .pc-sec-hd{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin:34px 0 14px;flex-wrap:wrap;}
+  .pc-sec-hd h2{font:600 21px var(--font-d);letter-spacing:-.02em;color:var(--ink-2);}
+  .pc-sec-hd p{font-size:13px;color:var(--ink-soft);margin-top:4px;}
   .cs-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;}
   @media(max-width:1080px){.cs-grid{grid-template-columns:1fr;}}
+  .pc-card{background:rgba(255,255,255,.86);border:1px solid var(--line);border-radius:22px;padding:22px;box-shadow:0 1px 2px rgba(8,8,15,.03);}
+  .pc-card-hd{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px;}
+  .pc-card-t{font:600 16px var(--font-d);color:var(--ink-2);}
+  .pc-card-s{font-size:12.5px;color:var(--ink-faint);margin-top:3px;line-height:1.5;}
+  .pc-btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:40px;padding:0 15px;border-radius:12px;border:0;font:700 12.5px var(--font-b);cursor:pointer;transition:all .18s;white-space:nowrap;text-decoration:none;}
+  .pc-btn svg{width:15px;height:15px;}
+  .pc-btn.pri{background:linear-gradient(120deg,#6D28FF,#4F6DFF);color:#fff;box-shadow:0 10px 22px -12px #6D28FF;}
+  .pc-btn.pri:hover{transform:translateY(-1px);}
+  .pc-btn.gh{background:#fff;color:var(--ink-2);box-shadow:inset 0 0 0 1.5px var(--line-2);}
+  .pc-btn.gh:hover{box-shadow:inset 0 0 0 1.5px var(--violet);color:var(--violet);}
+  .pc-btn.bad{background:rgba(225,29,72,.08);color:#9F1239;}
+  .pc-btn:disabled{opacity:.5;cursor:default;transform:none;}
 
-  /* Feed URL. The single most-copied string on this page. */
-  .cs-url{display:flex;gap:8px;align-items:stretch;margin-top:10px;}
-  .cs-url input{flex:1;min-width:0;font:500 12px var(--font-data);color:var(--ink-2);
-    background:var(--glass-2);border:1.5px solid var(--line-2);border-radius:11px;padding:11px 13px;}
+  .cs-url{display:flex;gap:8px;align-items:stretch;margin-top:4px;}
+  .cs-url input{flex:1;min-width:0;font:500 12px var(--font-data);color:var(--ink-2);background:var(--glass-2);border:1.5px solid var(--line-2);border-radius:12px;padding:11px 13px;}
   .cs-url input:focus{outline:none;border-color:var(--violet);}
-
-  /* Health. Colour AND word AND shape, so it survives colour blindness
-     and a greyscale screenshot in a support thread. */
-  .cs-health{display:inline-flex;align-items:center;gap:6px;font:700 10px var(--font-b);
-    letter-spacing:.05em;text-transform:uppercase;padding:4px 9px;border-radius:99px;white-space:nowrap;}
+  .cs-health{display:inline-flex;align-items:center;gap:6px;font:700 10px var(--font-b);letter-spacing:.05em;text-transform:uppercase;padding:4px 9px;border-radius:99px;white-space:nowrap;}
   .cs-health::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;}
   .h-healthy{color:#0E7C5A;background:rgba(20,184,166,.13);}
   .h-pending{color:#7C5CF0;background:rgba(124,92,240,.13);}
-  .h-stale  {color:#B07A00;background:rgba(245,177,46,.16);}
+  .h-stale{color:#B07A00;background:rgba(245,177,46,.16);}
   .h-failing{color:#C2410C;background:rgba(255,106,60,.14);}
-  .h-dead   {color:#B91C1C;background:rgba(255,77,109,.14);}
-  .h-paused {color:#5B5E7E;background:rgba(139,142,172,.16);}
-
+  .h-dead{color:#B91C1C;background:rgba(255,77,109,.14);}
+  .h-paused{color:#5B5E7E;background:rgba(139,142,172,.16);}
   .cs-feed{display:flex;gap:12px;align-items:flex-start;padding:14px 0;border-bottom:1px solid var(--line);}
   .cs-feed:last-child{border-bottom:0;}
-  .cs-dot{width:34px;height:34px;border-radius:10px;flex-shrink:0;display:grid;place-items:center;
-    font:800 12px var(--font-b);color:#fff;}
+  .cs-dot{width:38px;height:38px;border-radius:12px;flex-shrink:0;display:grid;place-items:center;font:800 12px var(--font-b);color:#fff;}
   .cs-feed-meta{flex:1;min-width:0;}
-  .cs-feed-name{font:700 13px var(--font-b);color:var(--ink);display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
-  .cs-feed-sub{font:400 11px var(--font-b);color:var(--ink-faint);margin-top:3px;
-    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .cs-feed-err{font:500 11px var(--font-b);color:#C2410C;margin-top:5px;line-height:1.45;}
-  .cs-feed-acts{display:flex;gap:6px;flex-shrink:0;}
+  .cs-feed-name{font:700 13.5px var(--font-b);color:var(--ink);display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .cs-feed-sub{font:500 11.5px var(--font-b);color:var(--ink-faint);margin-top:3px;}
+  .cs-feed-err{font:500 11.5px var(--font-b);color:#C2410C;margin-top:5px;line-height:1.45;}
+  .cs-feed-acts{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;}
+  .cs-feed-acts .pc-btn{min-height:34px;font-size:12px;padding:0 12px;border-radius:10px;}
+  .cs-stat{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px;}
+  .cs-stat div{font:600 11px var(--font-b);color:var(--ink-faint);background:var(--glass-2);border-radius:13px;padding:11px 12px;}
+  .cs-stat b{display:block;font:700 17px var(--font-data);color:var(--ink);margin-bottom:2px;}
+  .cs-note{font:500 12px/1.55 var(--font-b);color:var(--ink-soft);background:var(--glass-2);border-radius:12px;padding:11px 13px;margin-top:12px;}
+  .cs-note.good{background:rgba(20,184,166,.1);color:#0E7C5A;}
+  .cs-acts{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;}
+  .cs-empty{text-align:center;padding:26px 12px;}
+  .cs-empty b{display:block;font:600 16px var(--font-d);color:var(--ink-2);margin-bottom:6px;}
+  .cs-empty p{font-size:12.5px;color:var(--ink-soft);line-height:1.55;max-width:320px;margin:0 auto 14px;}
 
-  /* Platform picker */
-  .cs-plats{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:8px;margin:14px 0;}
-  .cs-plat{display:flex;align-items:center;gap:8px;padding:10px 11px;border-radius:12px;cursor:pointer;
-    border:1.5px solid var(--line-2);background:var(--glass);text-align:left;transition:all .16s var(--ease-out);}
-  .cs-plat:hover{border-color:var(--lilac);transform:translateY(-1px);}
-  .cs-plat[aria-pressed="true"]{border-color:var(--violet);background:rgba(109,40,255,.06);
-    box-shadow:0 0 0 3px rgba(109,40,255,.1);}
-  .cs-plat-dot{width:9px;height:9px;border-radius:3px;flex-shrink:0;}
-  .cs-plat-name{font:600 12px var(--font-b);color:var(--ink-2);line-height:1.25;}
-  .cs-cat{font:700 10px var(--font-b);letter-spacing:.08em;text-transform:uppercase;
-    color:var(--ink-faint);margin:16px 0 2px;}
-
-  /* Steps */
-  .cs-steps{counter-reset:s;margin:12px 0 0;padding:0;list-style:none;}
-  .cs-steps li{counter-increment:s;position:relative;padding:0 0 11px 30px;
-    font:400 12.5px/1.55 var(--font-b);color:var(--ink-soft);}
-  .cs-steps li::before{content:counter(s);position:absolute;left:0;top:0;width:20px;height:20px;
-    border-radius:50%;background:rgba(109,40,255,.1);color:var(--violet);
-    font:700 10px var(--font-b);display:grid;place-items:center;}
-
-  /* Conflicts. Loud on purpose: two people are booked into one bed. */
-  .cs-conflict{display:flex;gap:12px;align-items:flex-start;padding:13px 14px;border-radius:13px;
-    background:rgba(255,77,109,.07);border:1.5px solid rgba(255,77,109,.22);margin-bottom:9px;}
-  .cs-conflict-i{width:28px;height:28px;border-radius:8px;background:#FF4D6D;color:#fff;
-    display:grid;place-items:center;flex-shrink:0;font:800 14px var(--font-b);}
-
-  /* Month grid */
-  .cs-cal{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
-  .cs-dh{text-align:center;font:700 10px var(--font-b);color:var(--ink-faint);letter-spacing:.06em;padding:7px 0;}
-  .cs-day{aspect-ratio:1;max-height:82px;min-height:46px;border-radius:10px;display:flex;flex-direction:column;align-items:center;
-    justify-content:center;gap:3px;font:600 12.5px var(--font-b);color:var(--ink-soft);position:relative;
-    background:var(--glass-2);border:1.5px solid transparent;transition:all .14s;cursor:pointer;}
-  .cs-day:hover:not(.is-empty){border-color:var(--lilac);}
-  .cs-day.is-empty{background:transparent;cursor:default;}
-  .cs-day.is-past{opacity:.4;cursor:default;}
-  .cs-day.is-today{border-color:var(--violet);color:var(--violet);font-weight:800;}
-  .cs-day.is-sel{background:rgba(109,40,255,.14);border-color:var(--violet);}
-  .cs-day.is-busy{color:#fff;}
-  /* Both a Cabana booking AND another platform on the same night. Striped
-     as well as red, so it is unmistakable in a greyscale screenshot and
-     to a colour-blind host. */
-  .cs-day.is-clash{color:#fff;background:#FF4D6D !important;
-    background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.22) 0 5px,transparent 5px 10px) !important;
-    border-color:#B91C1C !important;box-shadow:0 0 0 2px rgba(255,77,109,.28);}
-  .cs-marks{display:flex;gap:2px;height:4px;}
-  .cs-mark{width:4px;height:4px;border-radius:50%;}
-  .cs-legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:14px;padding-top:13px;border-top:1px solid var(--line);}
-  .cs-leg{display:flex;align-items:center;gap:6px;font:500 11px var(--font-b);color:var(--ink-soft);}
-  .cs-leg i{width:11px;height:11px;border-radius:3px;display:block;}
-
-  .cs-set{display:flex;justify-content:space-between;align-items:center;gap:14px;
-    padding:12px 0;border-bottom:1px solid var(--line);}
+  .cs-set{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 0;border-bottom:1px solid var(--line);}
   .cs-set:last-child{border-bottom:0;}
-  .cs-set-l{font:600 12.5px var(--font-b);color:var(--ink);}
-  .cs-set-d{font:400 11px/1.5 var(--font-b);color:var(--ink-faint);margin-top:2px;max-width:46ch;}
-  .cs-sw{width:42px;height:24px;border-radius:99px;background:var(--line-2);border:0;cursor:pointer;
-    position:relative;flex-shrink:0;transition:background .18s;}
-  .cs-sw::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;
-    background:#fff;transition:transform .18s var(--ease-spring);box-shadow:0 1px 4px rgba(0,0,0,.2);}
-  .cs-sw[aria-checked="true"]{background:var(--violet);}
-  .cs-sw[aria-checked="true"]::after{transform:translateX(18px);}
+  .cs-set-l{font:700 13px var(--font-b);color:var(--ink);}
+  .cs-set-d{font:500 11.5px/1.5 var(--font-b);color:var(--ink-faint);margin-top:3px;max-width:56ch;}
+  .cs-sw{width:48px;height:28px;border-radius:99px;background:#D8D9E6;border:0;cursor:pointer;position:relative;flex-shrink:0;transition:background .2s;}
+  .cs-sw::after{content:'';position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:transform .28s cubic-bezier(.34,1.4,.44,1);box-shadow:0 2px 6px rgba(0,0,0,.2);}
+  .cs-sw[aria-checked="true"]{background:linear-gradient(120deg,#6D28FF,#4F6DFF);}
+  .cs-sw[aria-checked="true"]::after{transform:translateX(20px);}
+  .cs-sw:disabled{opacity:.5;}
+  .cs-select{appearance:none;-webkit-appearance:none;background:#fff;border:1.5px solid var(--line-2);border-radius:12px;padding:10px 34px 10px 13px;font:600 13px var(--font-b);color:var(--ink);cursor:pointer;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238B8EAC' stroke-width='3'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;}
 
-  .cs-stat{display:flex;gap:20px;flex-wrap:wrap;margin-top:4px;}
-  .cs-stat div{font:400 11px var(--font-b);color:var(--ink-faint);}
-  .cs-stat b{display:block;font:700 17px var(--font-data);color:var(--ink);margin-bottom:1px;}
-
-  .cs-sheet{position:fixed;inset:0;z-index:900;background:rgba(8,8,15,.5);backdrop-filter:blur(6px);
-    display:none;align-items:center;justify-content:center;padding:18px;}
-  .cs-sheet.open{display:flex;}
-  .cs-sheet-in{background:var(--glass);border-radius:var(--radius-lg);max-width:640px;width:100%;
-    max-height:88vh;overflow-y:auto;padding:26px;box-shadow:var(--shadow-lift);}
-  .cs-note{font:400 11.5px/1.55 var(--font-b);color:var(--ink-faint);
-    background:var(--glass-2);border-radius:10px;padding:10px 12px;margin-top:10px;}
+  /* Sheets for connect + guide */
+  .cs-sheet{position:fixed;inset:0;z-index:990;background:rgba(8,8,15,.5);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:18px;}
+  .cs-sheet.open{display:flex;animation:pcIn .25s ease;}
+  @keyframes pcIn{from{opacity:0}to{opacity:1}}
+  .cs-sheet-in{background:var(--glass);border-radius:26px;max-width:660px;width:100%;max-height:88vh;overflow-y:auto;padding:26px;box-shadow:var(--shadow-lift);}
+  @media(max-width:600px){.cs-sheet{align-items:flex-end;padding:0;}.cs-sheet-in{border-radius:26px 26px 0 0;max-height:92vh;padding:22px 18px calc(22px + env(safe-area-inset-bottom,0px));}}
+  .cs-plats{display:grid;grid-template-columns:repeat(auto-fill,minmax(136px,1fr));gap:8px;margin:12px 0;}
+  .cs-plat{display:flex;align-items:center;gap:8px;padding:11px 12px;border-radius:13px;cursor:pointer;border:1.5px solid var(--line-2);background:#fff;text-align:left;transition:all .16s;font:inherit;}
+  .cs-plat:hover{border-color:var(--lilac);transform:translateY(-1px);}
+  .cs-plat[aria-pressed="true"]{border-color:var(--violet);background:rgba(109,40,255,.06);box-shadow:0 0 0 3px rgba(109,40,255,.1);}
+  .cs-plat-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0;}
+  .cs-plat-name{font:650 12px var(--font-b);color:var(--ink-2);line-height:1.25;}
+  .cs-cat{font:800 10px var(--font-b);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);margin:16px 0 2px;}
+  .cs-steps{counter-reset:s;margin:12px 0 0;padding:0;list-style:none;}
+  .cs-steps li{counter-increment:s;position:relative;padding:0 0 11px 30px;font:500 12.5px/1.55 var(--font-b);color:var(--ink-soft);}
+  .cs-steps li::before{content:counter(s);position:absolute;left:0;top:0;width:20px;height:20px;border-radius:50%;background:rgba(109,40,255,.1);color:var(--violet);font:800 10px var(--font-b);display:grid;place-items:center;}
 </style>
 
-<div class="page-hd">
-  <span class="page-eyebrow">Partner Hub</span>
-  <h1 class="page-title">Channel <em>calendar</em></h1>
-  <p class="page-sub">Sync availability both ways with Airbnb, Booking.com, Vrbo and 30 more. One calendar, every platform, no double bookings.</p>
-</div>
-
-<div class="cs-bar">
-  <select class="cs-select" id="cs-listing" onchange="selectListing(this.value)" aria-label="cs listing" ></select>
-  <button class="btn btn-ghost btn-sm" onclick="syncAll()" id="cs-sync-all">Sync all now</button>
-  <span id="cs-sync-state" style="font:500 11.5px var(--font-b);color:var(--ink-faint);"></span>
-</div>
-
-<div id="cs-conflicts"></div>
-
-<div class="cs-grid">
-  <!-- ══ OUT · the URL other platforms read ══ -->
-  <div class="card">
-    <div class="card-hd">
-      <div>
-        <div class="card-title">Your Cabana calendar link</div>
-        <div class="card-sub">Paste this into Airbnb, Booking.com or anywhere else so they block your Cabana bookings.</div>
-      </div>
-    </div>
-    <div class="cs-url">
-      <input id="cs-feed-url" readonly onclick="this.select()" value="Loading…" aria-label="cs feed url" />
-      <button class="btn btn-sm" onclick="copyFeed()" id="cs-copy">Copy</button>
-    </div>
-    <!-- Proof the other side is really reading us. Nobody else shows a
-         host this, and it is the difference between "I pasted it and
-         hope" and "Airbnb read it 14 minutes ago". -->
-    <div class="cs-stat" id="cs-export-stats"></div>
-    <div class="cs-note" id="cs-export-note"></div>
-    <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">
-      <button class="btn btn-ghost btn-sm" onclick="openGuide()">Where do I paste it?</button>
-      <button class="btn btn-ghost btn-sm" onclick="rotateToken()">Reset link</button>
-    </div>
+<div class="pc-hd">
+  <div>
+    <span class="page-eyebrow">Partner Hub · Calendar</span>
+    <h1 class="page-title">Your <em>calendar</em></h1>
+    <p class="page-sub">Every booking, block and note across your stays. Select dates to block or open them, tap a stay to see the guest, and keep Airbnb, Booking.com and the rest in step.</p>
   </div>
-
-  <!-- ══ IN · the calendars we read ══ -->
-  <div class="card">
-    <div class="card-hd">
-      <div>
-        <div class="card-title">Connected calendars</div>
-        <div class="card-sub">Feeds we read, so nights sold elsewhere close here automatically.</div>
-      </div>
-      <button class="btn btn-sm" onclick="openConnect()">Connect</button>
-    </div>
-    <div id="cs-feeds"></div>
+  <div class="pc-hd-acts">
+    <button class="pc-pill" type="button" onclick="scrollToSync()" id="pc-sync-pill" title="Channel sync">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5M3 21v-5h5"/></svg>
+      <span>Channels</span><span id="pc-sync-dot"></span>
+    </button>
+    <button class="pc-pill" type="button" onclick="openPhoneSubscribe()" title="See your Cabana bookings in your phone's calendar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/></svg>
+      <span>Add to phone<span class="pc-lbl-long"> calendar</span></span>
+    </button>
   </div>
 </div>
 
-<div class="card" style="margin-top:16px;">
-  <div class="card-hd">
+<div id="pc-clash"></div>
+<div id="pc-cal"><div class="pc-skel" aria-label="Loading your calendar"></div></div>
+
+<!-- ══ CHANNEL SYNC ══ -->
+<div id="pc-sync">
+  <div class="pc-sec-hd">
     <div>
-      <div class="card-title">Availability</div>
-      <div class="card-sub" id="cs-month"></div>
+      <h2>Channel sync</h2>
+      <p id="pc-sync-for">Keep every platform in step, both ways.</p>
     </div>
     <div style="display:flex;gap:8px;align-items:center;">
-      <button class="btn btn-ghost btn-sm btn-icon" onclick="shiftMonth(-1)" aria-label="Previous month">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-      </button>
-      <button class="btn btn-ghost btn-sm btn-icon" onclick="shiftMonth(1)" aria-label="Next month">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
-      </button>
+      <span id="cs-sync-state" style="font:600 12px var(--font-b);color:var(--ink-faint);"></span>
+      <button class="pc-btn gh" type="button" onclick="syncAll()" id="cs-sync-all">Sync all now</button>
     </div>
   </div>
-  <div class="cs-cal" id="cs-cal"></div>
-  <div class="cs-legend" id="cs-legend"></div>
-  <div id="cs-block-bar" style="display:none;margin-top:14px;padding-top:13px;border-top:1px solid var(--line);
-       align-items:center;gap:10px;flex-wrap:wrap;">
-    <span style="font:600 12.5px var(--font-b);color:var(--ink);" id="cs-block-label"></span>
-    <button class="btn btn-sm" onclick="blockSelected('manual')">Block these nights</button>
-    <button class="btn btn-ghost btn-sm" onclick="blockSelected('maintenance')">Mark maintenance</button>
-    <button class="btn btn-ghost btn-sm" onclick="clearSelection()">Cancel</button>
-  </div>
-</div>
 
-<div class="card" style="margin-top:16px;">
-  <div class="card-hd"><div><div class="card-title">Sync settings</div>
-    <div class="card-sub">How Cabana behaves toward every connected platform.</div></div></div>
-  <div id="cs-settings"></div>
+  <div class="cs-grid">
+    <div class="pc-card">
+      <div class="pc-card-hd"><div>
+        <div class="pc-card-t">Your Cabana calendar link</div>
+        <div class="pc-card-s">Paste this into Airbnb, Booking.com or anywhere else so they block your Cabana bookings.</div>
+      </div></div>
+      <div class="cs-url">
+        <input id="cs-feed-url" readonly onclick="this.select()" value="Loading…" aria-label="Your Cabana calendar link"/>
+        <button class="pc-btn pri" type="button" onclick="copyFeed()" id="cs-copy">Copy</button>
+      </div>
+      <!-- Proof the other side is really reading us: the difference between
+           "I pasted it and hope" and "Airbnb read it 14 minutes ago". -->
+      <div class="cs-stat" id="cs-export-stats"></div>
+      <div class="cs-note" id="cs-export-note"></div>
+      <div class="cs-acts">
+        <button class="pc-btn gh" type="button" onclick="openGuide()">Where do I paste it?</button>
+        <button class="pc-btn gh" type="button" onclick="rotateToken()">Reset link</button>
+      </div>
+    </div>
+
+    <div class="pc-card">
+      <div class="pc-card-hd">
+        <div>
+          <div class="pc-card-t">Connected calendars</div>
+          <div class="pc-card-s">Feeds we read, so nights sold elsewhere close here automatically.</div>
+        </div>
+        <button class="pc-btn pri" type="button" onclick="openConnect()">+ Connect</button>
+      </div>
+      <div id="cs-feeds"></div>
+    </div>
+  </div>
+
+  <div class="pc-card" style="margin-top:16px;">
+    <div class="pc-card-hd"><div><div class="pc-card-t">Sync settings</div>
+      <div class="pc-card-s">How this listing behaves toward every connected platform.</div></div></div>
+    <div id="cs-settings"></div>
+  </div>
 </div>
 
 <!-- ══ Connect sheet ══ -->
-<div class="cs-sheet" id="cs-connect" onclick="if(event.target===this)closeSheet('cs-connect')">
+<div class="cs-sheet" id="cs-connect" onclick="if(event.target===this)closeSheet('cs-connect')" role="dialog" aria-modal="true" aria-label="Connect a calendar">
   <div class="cs-sheet-in">
-    <div class="card-title" style="margin-bottom:4px;">Connect a calendar</div>
-    <div class="card-sub">Pick where the calendar comes from, then paste the link that platform gives you.</div>
+    <div class="pc-card-t" style="font-size:19px;">Connect a calendar</div>
+    <div class="pc-card-s">Pick where the calendar comes from, then paste the link that platform gives you.</div>
     <div id="cs-plat-list"></div>
     <div style="margin-top:16px;">
-      <label style="font:700 11px var(--font-b);color:var(--ink-soft);letter-spacing:.05em;text-transform:uppercase;">Calendar link (.ics)</label>
+      <label for="cs-new-url" style="font:800 11px var(--font-b);color:var(--ink-soft);letter-spacing:.06em;text-transform:uppercase;">Calendar link (.ics)</label>
       <div class="cs-url" style="margin-top:7px;">
-        <input id="cs-new-url" placeholder="https://…" style="font-family:var(--font-b);" oninput="document.getElementById('cs-test-out').innerHTML=''" aria-label="https://" />
-        <button class="btn btn-ghost btn-sm" onclick="testFeed()" id="cs-test-btn">Test</button>
+        <input id="cs-new-url" placeholder="https://…" style="font-family:var(--font-b);" oninput="document.getElementById('cs-test-out').innerHTML=''"/>
+        <button class="pc-btn gh" type="button" onclick="testFeed()" id="cs-test-btn">Test</button>
       </div>
       <div id="cs-test-out"></div>
       <div id="cs-plat-help"></div>
     </div>
     <div style="display:flex;gap:8px;margin-top:20px;justify-content:flex-end;">
-      <button class="btn btn-ghost btn-sm" onclick="closeSheet('cs-connect')">Cancel</button>
-      <button class="btn btn-sm" onclick="saveFeed()" id="cs-save-btn">Connect calendar</button>
+      <button class="pc-btn gh" type="button" onclick="closeSheet('cs-connect')">Cancel</button>
+      <button class="pc-btn pri" type="button" onclick="saveFeed()" id="cs-save-btn">Connect calendar</button>
     </div>
   </div>
 </div>
 
 <!-- ══ Guide sheet ══ -->
-<div class="cs-sheet" id="cs-guide" onclick="if(event.target===this)closeSheet('cs-guide')">
+<div class="cs-sheet" id="cs-guide" onclick="if(event.target===this)closeSheet('cs-guide')" role="dialog" aria-modal="true" aria-label="Where to paste your Cabana link">
   <div class="cs-sheet-in">
-    <div class="card-title" style="margin-bottom:4px;">Where to paste your Cabana link</div>
-    <div class="card-sub">Step by step, for every platform we know about.</div>
+    <div class="pc-card-t" style="font-size:19px;">Where to paste your Cabana link</div>
+    <div class="pc-card-s">Step by step, for every platform we know about.</div>
     <div id="cs-guide-body" style="margin-top:16px;"></div>
     <div style="display:flex;justify-content:flex-end;margin-top:20px;">
-      <button class="btn btn-sm" onclick="closeSheet('cs-guide')">Done</button>
+      <button class="pc-btn pri" type="button" onclick="closeSheet('cs-guide')">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ Phone calendar sheet ══ -->
+<div class="cs-sheet" id="cs-phone" onclick="if(event.target===this)closeSheet('cs-phone')" role="dialog" aria-modal="true" aria-label="Add to your phone calendar">
+  <div class="cs-sheet-in">
+    <div class="pc-card-t" style="font-size:19px;">See Cabana in your phone’s calendar</div>
+    <div class="pc-card-s">Subscribe once and every Cabana booking and block for this listing appears in Apple Calendar, Google Calendar or Outlook, and updates by itself.</div>
+    <div id="cs-phone-body" style="margin-top:14px;"></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:20px;">
+      <button class="pc-btn pri" type="button" onclick="closeSheet('cs-phone')">Done</button>
     </div>
   </div>
 </div>
@@ -586,42 +595,39 @@ td strong{color:var(--ink);font-weight:600;}
 </nav>
 
 <div class="toast" id="toast"></div>
+<script src="/cabana-calendar.js?v=1"></script>
 <script>
 /* ══════════════════════════════════════════════════════════════════════
-   Channel calendar. Every read is ONE call to /api/calendar-sync with
-   action=overview, which returns settings, feeds, ranges, conflicts and
-   sync history together. The page this replaces made a direct Supabase
-   query against a `bookings` table that does not exist in this project —
-   so it rendered an empty calendar for every host, every time, and
-   silently swallowed the error.
+   HOST CALENDAR
+   The calendar surface is cabana-calendar.js. This file turns a host's
+   data into events and decides what each action means:
+
+     READ   /api/calendar-sync  overview  (one round trip per listing:
+            bookings held, channel blocks, host blocks, conflicts, feeds,
+            settings) plus host_stay_bookings for guest names and payouts.
+     WRITE  /api/calendar-sync  range.set (open / block / maintenance,
+            carved exactly, undoable), conflict.resolve, feed.*, settings.
+     NOTES  calendar_agenda through the engine's store, reminders pushed
+            to the phone by the database scheduler.
+
+   Every call carries the host's own JWT and every write runs as that
+   user, so Postgres (not this file) decides what they may change.
 ══════════════════════════════════════════════════════════════════════ */
 const SUPA_URL='https://gfwgbgdvxtocwhilrtdw.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
 
 let sb=null;
-try{const{createClient}=supabase;sb=createClient(SUPA_URL,SUPA_KEY);}catch(e){console.warn('Supabase unavailable');}
+try{sb=(window.ApaSession&&ApaSession.client&&ApaSession.client())||supabase.createClient(SUPA_URL,SUPA_KEY);}catch(e){console.warn('Supabase unavailable');}
 
-let STATE={listingId:null,listings:[],data:null,platform:'auto',guide:[],
-           cursor:new Date(),selStart:null,selEnd:null};
+const U=CabanaCal.util;
+const esc=U.esc;
+const STATE={listings:[],ov:{},bookings:[],byRef:{},cal:null,store:null,guide:[],platform:'auto',syncBusy:false};
 
-let _toast=null;
-function toast(msg,ok=true){
-  _toast=_toast||document.getElementById('toast');
-  if(!_toast)return;
-  _toast.textContent=msg;
-  _toast.style.background=ok?'#0A0A14':'#FF4D6D';
-  _toast.classList.add('show');
-  clearTimeout(_toast._t);
-  _toast._t=setTimeout(()=>_toast.classList.remove('show'),3800);
-}
+function toast(msg,ok=true,opt){CabanaCal.toast(msg,Object.assign({bad:!ok},opt||{}));}
 function signOut(){
   if(window.ApaSession)ApaSession.signOut();
   else if(sb)sb.auth.signOut().then(()=>location.href='index.html');
 }
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const iso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-const TODAY=iso(new Date());
-
 function ago(ts){
   if(!ts)return 'never';
   const s=Math.floor((Date.now()-new Date(ts).getTime())/1000);
@@ -631,13 +637,11 @@ function ago(ts){
   if(s<172800)return `${Math.round(s/3600)}h ago`;
   return `${Math.round(s/86400)}d ago`;
 }
-const pretty=d=>d?new Date(d+'T00:00:00').toLocaleDateString('en-KE',{day:'numeric',month:'short'}):'';
+const money=n=>'KES '+Math.round(Number(n)||0).toLocaleString('en-KE');
 
-/* Every call carries the host's own JWT. The server executes each write
-   as that user, so the database — not this file — decides ownership. */
 async function api(action,payload={}){
   const {data:{session}}=await sb.auth.getSession();
-  if(!session){location.href='index.html';throw new Error('signed out');}
+  if(!session){location.href='auth.html?next='+encodeURIComponent(location.pathname+location.search);throw new Error('signed out');}
   const r=await fetch('/api/calendar-sync',{
     method:'POST',
     headers:{'Content-Type':'application/json',Authorization:`Bearer ${session.access_token}`},
@@ -649,89 +653,363 @@ async function api(action,payload={}){
   return out;
 }
 
-/* ── boot ── */
+/* ── one listing, one read ─────────────────────────────────────────── */
+async function loadOverview(id){
+  const data=await api('overview',{listingId:id,from:U.add(U.today(),-120),to:U.add(U.today(),540)});
+  STATE.ov[id]=data;
+  if(data.guide&&data.guide.length)STATE.guide=data.guide;
+  return data;
+}
+
+/* ── turning ranges into calendar events ───────────────────────────── */
+function platformInfo(data,key){
+  const f=(data.feeds||[]).find(x=>x.platform===key);
+  const name=f?.platform_name||(key?key.replace(/[-_]/g,' ').replace(/\b\w/g,c=>c.toUpperCase()):'Other platform');
+  return {name,colour:f?.platform_colour||'#4F6DFF'};
+}
+function buildEvents(listingId){
+  const data=STATE.ov[listingId]; if(!data)return [];
+  const tdy=U.today(), out=[];
+  (data.ranges||[]).forEach((r,i)=>{
+    if(r.kind==='echo')return;
+    const base={resource:listingId,start:r.start,end:r.end,ref:r.ref,block_id:r.block_id,source:r.source,kind:r.kind,platform:r.platform};
+    if(r.source==='cabana'){
+      const bk=STATE.byRef[r.ref]||STATE.bookings.find(b=>b.listing_id===listingId&&b.checkin_date===r.start&&b.checkout_date===r.end);
+      const type=r.end<=tdy?'done':(r.start<=tdy?'active':'booking');
+      const n=U.diff(r.start,r.end);
+      out.push({...base,id:'bk-'+(r.ref||i),type,title:bk?.guest_name||'Cabana guest',short:n+'n',booking:bk||null,
+        detail:[n+' night'+(n>1?'s':''),bk?.num_guests?bk.num_guests+' guest'+(bk.num_guests>1?'s':''):'',bk?.stay_total?money(bk.stay_total):''].filter(Boolean).join(' · ')});
+    }else if(r.source==='host'){
+      out.push({...base,id:'hb-'+(r.block_id||i),type:r.kind==='maintenance'?'maintenance':'block',title:r.kind==='maintenance'?'Maintenance':'Blocked',editable:true});
+    }else{
+      const p=platformInfo(data,r.platform);
+      out.push({...base,id:'ch-'+(r.ref||i)+'-'+r.start,type:'channel',color:p.colour,platformName:p.name,
+        title:r.kind==='reservation'?p.name+' guest':'Closed on '+p.name,avatar:p.name.slice(0,2)});
+    }
+  });
+  (data.conflicts||[]).forEach(c=>{
+    out.push({resource:listingId,id:'cf-'+c.id,type:'clash',start:c.start,end:c.end,title:'DOUBLE BOOKED',short:c.platform||'',conflict:c,ref:c.booking_ref});
+  });
+  return out;
+}
+function allEvents(){return STATE.listings.flatMap(l=>buildEvents(l.id));}
+function pushData(){if(STATE.cal)STATE.cal.setData({events:allEvents()});renderClash();renderSyncPill();}
+
+/* ── what each piece of the calendar lets a host do ─────────────────── */
+function runsOf(days){
+  const runs=[];
+  days.slice().sort().forEach(d=>{
+    const last=runs[runs.length-1];
+    if(last&&U.add(last.last,1)===d)last.last=d; else runs.push({start:d,last:d});
+  });
+  return runs.map(r=>({start:r.start,end:U.add(r.last,1)}));
+}
+function snapshot(listingId,from,to){
+  /* The host blocks inside a window, so "undo" can put them back exactly. */
+  return buildEvents(listingId).filter(e=>(e.type==='block'||e.type==='maintenance')&&e.start<to&&e.end>from)
+    .map(e=>({start:e.start<from?from:e.start,end:e.end>to?to:e.end,state:e.type==='maintenance'?'maintenance':'manual'}));
+}
+async function setRanges(listingId,ranges,state,opts={}){
+  if(!ranges.length){toast('Nothing to change there.',false);return;}
+  const from=ranges.reduce((a,r)=>r.start<a?r.start:a,ranges[0].start);
+  const to=ranges.reduce((a,r)=>r.end>a?r.end:a,ranges[0].end);
+  const before=opts.noUndo?null:snapshot(listingId,from,to);
+  const r=await api('range.set',{listingId,ranges,state,note:opts.note||null});
+  await loadOverview(listingId);
+  pushData();
+  if(!opts.keepSel)STATE.cal.clearSelection();
+  const skipped=(r.skipped||[]).filter(s=>s.reason==='booked');
+  const n=state==='open'?r.nights_opened:r.nights_closed;
+  const word=state==='open'?'opened':state==='maintenance'?'set to maintenance':'blocked';
+  let msg=n?`${n} night${n===1?'':'s'} ${word}`:(state==='open'?'Those nights were already open':'Nothing changed');
+  if(skipped.length)msg+=` · ${skipped.length} range${skipped.length>1?'s':''} kept for booking ${skipped[0].booking_ref}`;
+  if(before&&n){
+    toast(msg,true,{action:async()=>{
+      try{
+        await api('range.set',{listingId,ranges:[{start:from,end:to}],state:'open'});
+        const again={manual:before.filter(b=>b.state==='manual'),maintenance:before.filter(b=>b.state==='maintenance')};
+        for(const k of ['manual','maintenance'])if(again[k].length)await api('range.set',{listingId,ranges:again[k].map(({start,end})=>({start,end})),state:k});
+        await loadOverview(listingId);pushData();toast('Undone');
+      }catch(e){toast(e.message,false);}
+    }});
+  }else toast(msg,!skipped.length||!!n);
+}
+
+function rangeActions(c){
+  const listingId=c.resource, acts=[];
+  const cabanaDays=new Set(), channelDays=new Set();
+  c.events.forEach(e=>{
+    for(let d=e.start;d<e.end;d=U.add(d,1)){
+      if(['booking','active','done','clash'].includes(e.type))cabanaDays.add(d);
+      if(e.type==='channel')channelDays.add(d);
+    }
+  });
+  const sellable=c.days.filter(d=>!cabanaDays.has(d));
+  const blockable=sellable.filter(d=>!c.hostDays.includes(d)||true);
+  const openable=c.hostDays;
+  const allBlocked=openable.length&&openable.length===sellable.length;
+
+  const openAct={key:'open',label:`Open ${openable.length} night${openable.length===1?'':'s'}`,short:'Open',icon:'unlock',tone:'good',
+    run:()=>setRanges(listingId,runsOf(openable),'open')};
+  const blockAct={key:'block',label:sellable.length===c.count?`Block ${c.count===1?'this night':c.count+' nights'}`:`Block ${sellable.length} open night${sellable.length===1?'':'s'}`,
+    short:'Block',icon:'lock',run:()=>setRanges(listingId,runsOf(blockable),'manual')};
+  const maintAct={key:'maint',label:'Maintenance',icon:'tool',tone:'warn',run:()=>setRanges(listingId,runsOf(blockable),'maintenance')};
+
+  if(allBlocked){acts.push(openAct);acts.push(Object.assign(maintAct,{label:'Mark as maintenance'}));}
+  else{
+    if(sellable.length)acts.push(Object.assign(blockAct,{tone:'primary'}));
+    if(openable.length)acts.push(openAct);
+    if(sellable.length)acts.push(maintAct);
+  }
+  if(c.count>=5&&sellable.length){
+    const we=sellable.filter(d=>{const w=U.parse(d).getDay();return w===5||w===6;});
+    if(we.length&&we.length<sellable.length)acts.push({key:'weekends',secondary:true,label:`Block weekends only (${we.length})`,icon:'moon',
+      run:()=>setRanges(listingId,runsOf(we),'manual')});
+    const wd=sellable.filter(d=>{const w=U.parse(d).getDay();return w!==5&&w!==6;});
+    if(wd.length&&wd.length<sellable.length)acts.push({key:'weekdays',secondary:true,label:`Weekdays only (${wd.length})`,icon:'lock',
+      run:()=>setRanges(listingId,runsOf(wd),'manual')});
+  }
+  if(cabanaDays.size)acts.push({secondary:true,label:'Open booking',icon:'link',
+    hint:`${cabanaDays.size} night${cabanaDays.size===1?' holds':'s hold'} a paid Cabana booking. Those stay closed; to free them, cancel the booking from Bookings so the guest is told and refunded.`,
+    href:bookingHref(c.bookings.find(e=>e.booking)?.booking)});
+  if(channelDays.size&&!cabanaDays.size){
+    const p=c.events.find(e=>e.type==='channel');
+    acts.push({secondary:true,label:'Manage channels',icon:'sync',run:()=>scrollToSync(),
+      hint:`${channelDays.size} night${channelDays.size===1?' is':'s are'} closed by ${p?.platformName||'another platform'}. Change ${channelDays.size===1?'it':'them'} there and Cabana follows within the hour.`});
+  }
+  return acts;
+}
+function bookingHref(bk){return bk?`partner-bookings.html#bk-${encodeURIComponent(bk.id)}`:'partner-bookings.html';}
+function messageGuest(bk){
+  const b=document.createElement('button');
+  b.type='button';b.hidden=true;b.setAttribute('data-cbx-open','');b.setAttribute('data-cbx-booking',bk.id);
+  document.body.appendChild(b);b.click();setTimeout(()=>b.remove(),500);
+}
+
+function eventView(e,cal){
+  const l=STATE.listings.find(x=>x.id===e.resource)||{};
+  const data=STATE.ov[e.resource]||{};
+  const listing=data.listing||{};
+  const remind=(title,preset)=>cal.openEditor({kind:'reminder',on_date:U.add(e.start,-1)<U.today()?U.today():U.add(e.start,-1),title,booking_ref:e.ref,subject_id:e.resource,subject_label:l.title,preset:preset||'eve'},'event');
+
+  if(['booking','active','done'].includes(e.type)){
+    const bk=e.booking, n=U.diff(e.start,e.end);
+    const rows=[
+      ['Guest',esc(bk?.guest_name||'Cabana guest'),true],
+      bk?.guest_phone?['Phone',`<a href="tel:${esc(String(bk.guest_phone).replace(/[^+\d]/g,''))}">${esc(bk.guest_phone)}</a>`,true]:null,
+      ['Check-in',U.fDay(e.start)+(listing.checkin_time?' · from '+String(listing.checkin_time).slice(0,5):'')],
+      ['Check-out',U.fDay(e.end)+(listing.checkout_time?' · by '+String(listing.checkout_time).slice(0,5):'')],
+      ['Stay',`${n} night${n>1?'s':''}${bk?.num_guests?' · '+bk.num_guests+' guest'+(bk.num_guests>1?'s':''):''}`],
+      bk?.stay_total?['Your payout',money(bk.stay_total)]:null,
+      bk?['Payment',Number(bk.amount_paid)>=Number(bk.grand_total)&&Number(bk.grand_total)>0?'Paid in full':'Deposit paid · balance due']:null,
+      bk?.host_code&&e.type!=='done'?['Your door code',`<b style="font-family:var(--font-data);letter-spacing:.12em">${esc(bk.host_code)}</b>`,true]:null,
+      ['Reference',(e.ref||'—').toString().slice(-10).toUpperCase()],
+    ].filter(Boolean);
+    const acts=[{label:'Open booking',icon:'link',href:bookingHref(bk)}];
+    if(bk)acts.push({label:'Message guest',icon:'chat',run:()=>messageGuest(bk)});
+    if(e.type==='booking')acts.push({label:'Remind me before arrival',icon:'bell',run:()=>remind('Get ready for '+(bk?.guest_name||'your guest'),'eve')});
+    if(e.type!=='done')acts.push({label:'Turnover task',icon:'task',run:()=>cal.openEditor({kind:'task',on_date:e.end<U.today()?U.today():e.end,at_time:listing.checkout_time?String(listing.checkout_time).slice(0,5):'11:00',title:'Turnover clean after '+(bk?.guest_name||'guest'),booking_ref:e.ref,subject_id:e.resource,subject_label:l.title,preset:'morning'},'event')});
+    return {eyebrow:e.type==='active'?'In-house now':e.type==='done'?'Completed stay':'Cabana booking',title:bk?.guest_name||'Cabana guest',rows,actions:acts,
+      note:e.type==='active'?'Your guest is staying tonight.':(U.rel(e.start)?U.rel(e.start)+' · arrival':null),noteTone:e.type==='active'?'good':'info'};
+  }
+  if(e.type==='block'||e.type==='maintenance'){
+    const m=e.type==='maintenance', n=U.diff(e.start,e.end);
+    const start=e.start<U.today()?U.today():e.start;
+    return {eyebrow:m?'Maintenance':'Blocked by you',title:m?'Closed for maintenance':'Closed to guests',
+      rows:[['From',U.fDay(e.start)],['Until',U.fDay(e.end)+' (reopens)'],['Nights',String(n)]],
+      note:'Guests cannot book these nights on Cabana, and every connected platform sees them as taken.',
+      actions:[
+        {label:`Open ${n>1?'all '+U.diff(start,e.end)+' nights':'this night'}`,icon:'unlock',tone:'good',run:()=>setRanges(e.resource,[{start,end:e.end}],'open')},
+        {label:m?'Switch to blocked':'Mark as maintenance',icon:m?'lock':'tool',run:()=>setRanges(e.resource,[{start,end:e.end}],m?'manual':'maintenance',{noUndo:true})},
+        {label:'Pick nights to open',icon:'edit',run:()=>{cal.select(start,U.add(e.end,-1),e.resource);toast('Adjust the range, then tap Open.');}},
+      ]};
+  }
+  if(e.type==='channel'){
+    const feeds=(data.feeds||[]).filter(f=>f.platform===e.platform);
+    const f=feeds[0];
+    return {eyebrow:e.platformName,title:e.kind==='reservation'?'Booked on '+e.platformName:'Closed on '+e.platformName,
+      rows:[['Platform',e.platformName],['Type',e.kind==='reservation'?'Reservation':'Blocked dates'],f?['Last checked',ago(f.last_synced_at)]:null,f?['Feed health',f.health]:null].filter(Boolean),
+      note:`This came from ${esc(e.platformName)}. Cabana mirrors it and keeps these nights closed. Change or cancel it on ${esc(e.platformName)}; the next sync follows.`,
+      actions:[f?{label:'Sync now',icon:'sync',run:()=>syncFeed(f.id)}:null,{label:'Manage channels',icon:'link',run:()=>scrollToSync()}].filter(Boolean)};
+  }
+  if(e.type==='clash'){
+    const c=e.conflict||{};
+    const bkEv=buildEvents(e.resource).find(x=>x.ref===c.booking_ref&&x.booking);
+    return {eyebrow:'DOUBLE BOOKED',title:`Booked twice: Cabana and ${c.platform||'another platform'}`,
+      rows:[['Nights',`${U.fShort(e.start)} → ${U.fShort(e.end)}`],['Cabana booking',(c.booking_ref||'—').slice(-10).toUpperCase()],['Also sold on',c.platform||'another platform'],['Spotted',ago(c.detected_at)]],
+      note:'Two guests are booked into the same nights. Cabana will not choose for you: move one guest (or cancel on the other platform), then mark this resolved.',noteTone:'bad',
+      actions:[{label:'Open booking',icon:'link',href:bookingHref(bkEv?.booking)},
+        bkEv?.booking?{label:'Message guest',icon:'chat',run:()=>messageGuest(bkEv.booking)}:null,
+        {label:'Mark resolved',icon:'check',tone:'good',run:()=>resolveConflict(c.id)}].filter(Boolean)};
+  }
+  return {};
+}
+
+function briefing(cal){
+  const id=cal.resource, data=STATE.ov[id]||{};
+  const conf=STATE.listings.reduce((n,l)=>n+((STATE.ov[l.id]?.conflicts||[]).length),0);
+  const feeds=data.feeds||[];
+  const bad=feeds.filter(f=>['failing','dead','stale'].includes(f.health));
+  let h='';
+  if(conf)h+=`<div class="cc-note-box bad" style="margin-top:14px"><b>${conf} double booking${conf>1?'s':''}.</b> Tap the red bars on the calendar to sort ${conf>1?'them':'it'} out.</div>`;
+  h+=`<div class="cc-sec"><div class="cc-sec-t">Channel sync<button type="button" onclick="scrollToSync()">Manage</button></div>`+
+     (feeds.length
+       ? `<div class="cc-list">${feeds.slice(0,4).map(f=>`<button type="button" class="cc-li" onclick="scrollToSync()"><span class="cc-ag-ic" style="background:${esc(f.platform_colour||'#8B8EAC')}">${esc((f.platform_name||'?').slice(0,2).toUpperCase())}</span><span class="cc-li-tx"><b>${esc(f.label||f.platform_name)}</b><small>${esc((HEALTH[f.health]||HEALTH.pending)[0])} · checked ${esc(ago(f.last_synced_at))}</small></span></button>`).join('')}</div>`
+       : `<div class="cc-empty-s">No other platforms connected. <a href="#pc-sync" onclick="scrollToSync();return false" style="color:var(--cc-accent);font-weight:700">Connect Airbnb or Booking.com</a> so nights sold there close here automatically.</div>`)+
+     (bad.length?`<div class="cc-note-box" style="margin-top:8px">${bad.length} feed${bad.length>1?'s need':' needs'} attention.</div>`:'')+`</div>`;
+  return h;
+}
+
+/* ── boot ──────────────────────────────────────────────────────────── */
 async function boot(){
   if(!sb)return;
   const {data:{session}}=await sb.auth.getSession();
-  if(!session){location.href='index.html';return;}
+  if(!session){location.href='auth.html?next='+encodeURIComponent(location.pathname+location.search);return;}
   const av=document.getElementById('tb-avatar');
   if(av)av.textContent=(session.user.user_metadata?.first_name||session.user.email||'P')[0].toUpperCase();
 
   try{
-    const {listings}=await api('listings');
+    const [{listings},bk]=await Promise.all([
+      api('listings'),
+      sb.rpc('host_stay_bookings',{p_limit:500}).then(r=>r.data||[],()=>[]),
+    ]);
     STATE.listings=listings||[];
-  }catch(e){toast(e.message,false);return;}
-
-  const sel=document.getElementById('cs-listing');
-  if(!STATE.listings.length){
-    sel.innerHTML='<option>No stay listings yet</option>';
-    document.getElementById('cs-feeds').innerHTML=
-      '<div class="empty"><div class="empty-icon">🏠</div><div class="empty-title">No stay listings yet</div>'+
-      '<div class="empty-sub">Add a stay listing and its calendar appears here.</div></div>';
+    STATE.bookings=bk||[];
+    STATE.byRef={};STATE.bookings.forEach(b=>{if(b.payment_reference)STATE.byRef[b.payment_reference]=b;});
+  }catch(e){
+    document.getElementById('pc-cal').innerHTML=`<div class="pc-empty"><h2>We could not open your calendar</h2><p>${esc(e.message)}</p><button class="pc-btn pri" onclick="location.reload()">Try again</button></div>`;
     return;
   }
-  sel.innerHTML=STATE.listings.map(l=>{
-    const flags=[l.conflicts?`⚠ ${l.conflicts}`:'',l.feeds?`${l.feeds} synced`:''].filter(Boolean).join(' · ');
-    return `<option value="${esc(l.id)}">${esc(l.title)}${flags?' — '+esc(flags):''}</option>`;
-  }).join('');
 
-  const wanted=new URLSearchParams(location.search).get('listing');
-  const pick=STATE.listings.find(l=>l.id===wanted)||STATE.listings[0];
-  sel.value=pick.id;
-  selectListing(pick.id);
-}
-
-async function selectListing(id){
-  STATE.listingId=id;
-  clearSelection();
-  document.getElementById('cs-feeds').innerHTML='<div class="cs-feed-sub">Loading…</div>';
-  try{
-    STATE.data=await api('overview',{listingId:id});
-    STATE.guide=STATE.data.guide||[];
-    renderAll();
-  }catch(e){
-    toast(e.message,false);
-    document.getElementById('cs-feeds').innerHTML=`<div class="cs-feed-err">${esc(e.message)}</div>`;
+  if(!STATE.listings.length){
+    document.getElementById('pc-cal').innerHTML=
+      `<div class="pc-empty"><div class="pc-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M3 10h18M8 2v4M16 2v4"/></svg></div>
+       <h2>Your calendar starts with a stay</h2><p>Add a stay listing and its calendar appears here: bookings, blocks, channel sync and reminders in one place.</p>
+       <a class="pc-btn pri" href="add-listing.html">Add a stay listing</a></div>`;
+    document.getElementById('pc-sync').hidden=true;
+    return;
   }
+
+  const q=new URLSearchParams(location.search);
+  const wanted=q.get('listing');
+  const pick=(STATE.listings.find(l=>l.id===wanted)||STATE.listings[0]).id;
+  const date=/^\d{4}-\d{2}-\d{2}$/.test(q.get('date')||'')?q.get('date'):null;
+
+  try{await loadOverview(pick);}catch(e){toast(e.message,false);}
+
+  STATE.store=CabanaCal.agendaStore({client:sb,scope:'stay',subjectId:pick,subjectLabel:(STATE.listings.find(l=>l.id===pick)||{}).title});
+  const el=document.getElementById('pc-cal');
+  el.innerHTML='';
+  STATE.cal=CabanaCal.mount(el,{
+    mode:'nightly',unit:'night',units:'nights',resourceNoun:'listing',
+    views:STATE.listings.length>1?['month','timeline','agenda','year']:['month','agenda','year'],
+    view:['month','timeline','agenda','year'].includes(q.get('view'))?q.get('view'):'month',
+    date:date||U.today(),
+    resources:resources(),resource:pick,
+    legend:['booking','active','channel','block','maintenance','clash'],
+    agenda:STATE.store,
+    rangeActions, eventView, briefing,
+    onResource:id=>selectListing(id),
+  });
+  pushData();
+  renderSync();
+  if(date)STATE.cal.select(date,date,pick);
+
+  /* The rest of the portfolio loads behind the first listing, so the
+     timeline and the conflict count are complete without a spinner. */
+  const rest=STATE.listings.filter(l=>l.id!==pick);
+  for(let i=0;i<rest.length;i+=4){
+    await Promise.all(rest.slice(i,i+4).map(l=>loadOverview(l.id).catch(()=>null)));
+    pushData();
+  }
+  STATE.cal.setResources(resources());
 }
+function resources(){
+  return STATE.listings.map(l=>({id:l.id,title:l.title||'Untitled listing',
+    sub:[l.city,l.feeds?l.feeds+' synced':''].filter(Boolean).join(' · ')||null,
+    flag:l.conflicts?'⚠ '+l.conflicts+' double booked':(l.failing?'sync failing':'')}));
+}
+async function selectListing(id){
+  const l=STATE.listings.find(x=>x.id===id)||{};
+  STATE.store&&STATE.store.setSubject(id,l.title,'stay');
+  history.replaceState(null,'',`?listing=${encodeURIComponent(id)}`);
+  if(!STATE.ov[id]){try{await loadOverview(id);pushData();}catch(e){toast(e.message,false);}}
+  renderSync();
+  STATE.cal.reloadItems();
+}
+/* Refresh when a host comes back to the tab: a booking may have landed. */
+let lastFocus=Date.now();
+document.addEventListener('visibilitychange',async()=>{
+  if(document.hidden||!STATE.cal||Date.now()-lastFocus<60000)return;
+  lastFocus=Date.now();
+  try{await loadOverview(STATE.cal.resource);pushData();renderSync();}catch(e){}
+});
 
-function renderAll(){renderExport();renderFeeds();renderConflicts();renderCalendar();renderSettings();}
+/* ── conflict banner + header pill ─────────────────────────────────── */
+function renderClash(){
+  const box=document.getElementById('pc-clash');
+  const all=STATE.listings.flatMap(l=>(STATE.ov[l.id]?.conflicts||[]).map(c=>({...c,listing:l})));
+  if(!all.length){box.innerHTML='';return;}
+  const c=all[0];
+  box.innerHTML=`<div class="pc-clash" role="alert">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+    <div><b>DOUBLE BOOKED · ${all.length} ${all.length===1?'clash':'clashes'}</b><small>${esc(c.listing.title)}: ${U.fShort(c.start)} → ${U.fShort(c.end)} is booked on Cabana and on ${esc(c.platform||'another platform')}. One guest has to be moved.</small></div>
+    <button type="button" onclick="showClash('${esc(c.listing.id)}','${esc(c.id)}','${esc(c.start)}')">Sort it out</button></div>`;
+}
+function showClash(listingId,id,start){
+  STATE.cal.goto(start,listingId);
+  if(STATE.cal.view!=='month')STATE.cal.setView('month');
+  STATE.cal.focusEvent('cf-'+id);
+  document.getElementById('pc-cal').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function renderSyncPill(){
+  const dot=document.getElementById('pc-sync-dot'); if(!dot)return;
+  const feeds=STATE.listings.flatMap(l=>STATE.ov[l.id]?.feeds||[]);
+  const bad=feeds.filter(f=>['failing','dead'].includes(f.health)).length;
+  const conf=STATE.listings.reduce((n,l)=>n+((STATE.ov[l.id]?.conflicts||[]).length),0);
+  dot.outerHTML=conf?`<span id="pc-sync-dot" class="pc-badge">${conf}</span>`
+    :bad?`<span id="pc-sync-dot" class="pc-warn" title="${bad} feed(s) failing"></span>`
+    :feeds.length?`<span id="pc-sync-dot" class="pc-ok" title="All feeds healthy"></span>`:`<span id="pc-sync-dot"></span>`;
+}
+function scrollToSync(){document.getElementById('pc-sync').scrollIntoView({behavior:'smooth',block:'start'});}
 
-/* ── the outbound link ── */
+/* ══ CHANNEL SYNC (for the listing in view) ══════════════════════════ */
+const HEALTH={healthy:['Healthy','h-healthy'],pending:['First sync','h-pending'],
+  stale:['Stale','h-stale'],failing:['Failing','h-failing'],dead:['Stopped','h-dead'],paused:['Paused','h-paused']};
+function cur(){return STATE.ov[STATE.cal?.resource]||null;}
+function renderSync(){
+  const d=cur(); if(!d)return;
+  const l=STATE.listings.find(x=>x.id===STATE.cal.resource)||{};
+  document.getElementById('pc-sync-for').textContent=`${l.title||'This listing'} · keep every platform in step, both ways.`;
+  renderExport();renderFeeds();renderSettings();
+}
 function renderExport(){
-  const s=STATE.data?.settings||{};
+  const s=cur()?.settings||{};
   document.getElementById('cs-feed-url').value=s.feed_url||'—';
-  const stats=document.getElementById('cs-export-stats');
-  stats.innerHTML=[
+  document.getElementById('cs-export-stats').innerHTML=[
     `<div><b>${s.export_fetch_count||0}</b>reads by platforms</div>`,
     `<div><b>${s.export_last_fetched_at?ago(s.export_last_fetched_at):'—'}</b>last read</div>`,
     `<div><b>${s.export_enabled?'Live':'Off'}</b>status</div>`,
   ].join('');
-
-  /* A host who has pasted the link somewhere and sees zero reads has a
-     problem they cannot otherwise diagnose. Say so plainly. */
+  /* A host who pasted the link and sees zero reads has a problem they
+     cannot otherwise diagnose. Say so plainly. */
   const note=document.getElementById('cs-export-note');
+  note.className='cs-note';
   if(!s.export_enabled){
     note.textContent='Publishing is off, so no platform can read this calendar. Turn it on in sync settings below.';
   }else if(!s.export_fetch_count){
-    note.textContent='No platform has read this link yet. That is normal until you paste it into one — most then check every 1–4 hours.';
+    note.textContent='No platform has read this link yet. That is normal until you paste it into one. Most then check every 1–4 hours.';
   }else{
     const who=s.export_last_agent?String(s.export_last_agent).split('/')[0].slice(0,40):'A platform';
+    note.className='cs-note good';
     note.textContent=`${who} last read this calendar ${ago(s.export_last_fetched_at)}. Reads confirm the other side is really receiving your dates.`;
   }
 }
-
-/* ── inbound feeds ── */
-const HEALTH={healthy:['Healthy','h-healthy'],pending:['First sync','h-pending'],
-  stale:['Stale','h-stale'],failing:['Failing','h-failing'],dead:['Stopped','h-dead'],paused:['Paused','h-paused']};
-
 function renderFeeds(){
-  const feeds=STATE.data?.feeds||[];
+  const feeds=cur()?.feeds||[];
   const box=document.getElementById('cs-feeds');
   if(!feeds.length){
-    box.innerHTML='<div class="empty"><div class="empty-icon">🔗</div>'+
-      '<div class="empty-title">No calendars connected</div>'+
-      '<div class="empty-sub">Connect Airbnb, Booking.com or any other calendar so their bookings block your Cabana dates automatically.</div></div>';
+    box.innerHTML='<div class="cs-empty"><b>No calendars connected</b><p>Connect Airbnb, Booking.com or any other calendar so their bookings block your Cabana dates automatically.</p><button class="pc-btn pri" type="button" onclick="openConnect()">Connect a calendar</button></div>';
     return;
   }
   box.innerHTML=feeds.map(f=>{
@@ -740,176 +1018,53 @@ function renderFeeds(){
     return `<div class="cs-feed">
       <div class="cs-dot" style="background:${esc(f.platform_colour||'#8B8EAC')}">${esc(initial)}</div>
       <div class="cs-feed-meta">
-        <div class="cs-feed-name">${esc(f.label||f.platform_name||'Calendar')}
-          <span class="cs-health ${cls}">${label}</span></div>
-        <div class="cs-feed-sub">${f.blocks??0} dates held · checked ${ago(f.last_synced_at)} · every ${f.interval} min</div>
+        <div class="cs-feed-name">${esc(f.label||f.platform_name||'Calendar')}<span class="cs-health ${cls}">${label}</span></div>
+        <div class="cs-feed-sub">${f.blocks??0} date range${f.blocks===1?'':'s'} held · checked ${ago(f.last_synced_at)} · every ${f.interval} min</div>
         ${f.error?`<div class="cs-feed-err">${esc(f.error)}</div>`:''}
-      </div>
-      <div class="cs-feed-acts">
-        <button class="btn btn-ghost btn-sm" onclick="syncFeed('${esc(f.id)}')" title="Sync now">Sync</button>
-        <button class="btn btn-ghost btn-sm" onclick="toggleFeed('${esc(f.id)}',${!f.is_active})">${f.is_active?'Pause':'Resume'}</button>
-        <button class="btn btn-ghost btn-sm" onclick="removeFeed('${esc(f.id)}','${esc(f.label||f.platform_name)}')">Remove</button>
+        <div class="cs-feed-acts">
+          <button class="pc-btn gh" type="button" onclick="syncFeed('${esc(f.id)}')">Sync now</button>
+          <button class="pc-btn gh" type="button" onclick="toggleFeed('${esc(f.id)}',${!f.is_active})">${f.is_active?'Pause':'Resume'}</button>
+          <button class="pc-btn bad" type="button" onclick="removeFeed('${esc(f.id)}','${esc(f.label||f.platform_name)}')">Disconnect</button>
+        </div>
       </div>
     </div>`;
   }).join('');
 }
-
-/* ── conflicts ── */
-function renderConflicts(){
-  const list=STATE.data?.conflicts||[];
-  const box=document.getElementById('cs-conflicts');
-  if(!list.length){box.innerHTML='';return;}
-  box.innerHTML=`<div class="card" style="margin-bottom:16px;border-color:rgba(255,77,109,.3);">
-    <div class="card-hd"><div>
-      <div class="card-title" style="color:#B91C1C;">${list.length} double booking${list.length===1?'':'s'}</div>
-      <div class="card-sub">These nights are booked on Cabana <em>and</em> on another platform. Cabana will not choose for you — one of the two guests has to be moved.</div>
-    </div></div>
-    ${list.map(c=>`<div class="cs-conflict">
-      <div class="cs-conflict-i">!</div>
-      <div style="flex:1;min-width:0;">
-        <div style="font:700 12.5px var(--font-b);color:var(--ink);">${pretty(c.start)} → ${pretty(c.end)}</div>
-        <div style="font:400 11.5px/1.5 var(--font-b);color:var(--ink-soft);margin-top:2px;">
-          Cabana booking ${esc(c.booking_ref||'—')} overlaps a reservation on ${esc(c.platform||'another platform')}.
-        </div>
-      </div>
-      <button class="btn btn-ghost btn-sm" onclick="resolveConflict('${esc(c.id)}')">Resolved</button>
-    </div>`).join('')}
-  </div>`;
-}
-
-/* ── the merged month ── */
-const SOURCE_COLOUR={cabana:'#6D28FF',host:'#F5B12E',channel:'#4F6DFF'};
-
-function busyMap(){
-  const map=new Map();
-  for(const r of (STATE.data?.ranges||[])){
-    if(r.kind==='echo')continue;
-    for(let d=new Date(r.start+'T00:00:00'),end=new Date(r.end+'T00:00:00');d<end;d.setDate(d.getDate()+1)){
-      const k=iso(d);
-      if(!map.has(k))map.set(k,[]);
-      map.get(k).push(r);
-    }
-  }
-  return map;
-}
-
-function renderCalendar(){
-  const busy=busyMap();
-  const y=STATE.cursor.getFullYear(),m=STATE.cursor.getMonth();
-  document.getElementById('cs-month').textContent=
-    new Date(y,m).toLocaleString('en-KE',{month:'long',year:'numeric'});
-
-  const first=new Date(y,m,1).getDay(),last=new Date(y,m+1,0).getDate();
-  let html=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=>`<div class="cs-dh">${d}</div>`).join('');
-  for(let i=0;i<first;i++)html+='<div class="cs-day is-empty"></div>';
-
-  for(let d=1;d<=last;d++){
-    const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const on=busy.get(ds)||[];
-    const past=ds<TODAY;
-    const inSel=STATE.selStart&&ds>=STATE.selStart&&ds<=(STATE.selEnd||STATE.selStart);
-    /* Booked with us and booked elsewhere on the same night. */
-    const clash=on.some(r=>r.source==='cabana')
-             && on.some(r=>r.source==='channel'&&r.kind==='reservation');
-    const cls=['cs-day',past?'is-past':'',ds===TODAY?'is-today':'',inSel?'is-sel':'',
-               on.length?'is-busy':'',clash?'is-clash':''].filter(Boolean).join(' ');
-    const bg=on.length&&!clash?`background:${SOURCE_COLOUR[on[0].source]||'#4F6DFF'};border-color:transparent;`:'';
-    const marks=[...new Set(on.map(r=>r.source))].slice(0,3)
-      .map(s=>`<span class="cs-mark" style="background:${on.length?'rgba(255,255,255,.85)':SOURCE_COLOUR[s]}"></span>`).join('');
-    const title=clash?`DOUBLE BOOKED — ${on.map(r=>`${r.label} (${r.platform})`).join(' vs ')}`
-              :on.length?on.map(r=>`${r.label} (${r.platform})`).join(' · '):'Available';
-    html+=`<div class="${cls}" style="${bg}" title="${esc(ds)} — ${esc(title)}"
-       ${past?'':`onclick="pickDay('${ds}')"`}>${d}<div class="cs-marks">${marks}</div></div>`;
-  }
-  document.getElementById('cs-cal').innerHTML=html;
-
-  const used=new Set((STATE.data?.ranges||[]).filter(r=>r.kind!=='echo').map(r=>r.source));
-  document.getElementById('cs-legend').innerHTML=[
-    ['cabana','Cabana booking'],['channel','Other platform'],['host','Blocked by you']]
-    .map(([k,l])=>`<div class="cs-leg"><i style="background:${SOURCE_COLOUR[k]}"></i>${l}</div>`)
-    .join('')+
-    `<div class="cs-leg"><i style="background:#FF4D6D"></i>Double booked</div>`+
-    `<div class="cs-leg"><i style="background:var(--glass-2);border:1.5px solid var(--line-2)"></i>Available</div>`+
-    (used.size?'':'<div class="cs-leg" style="color:var(--ink-faint)">Nothing booked in this range yet</div>');
-}
-
-function shiftMonth(n){STATE.cursor.setMonth(STATE.cursor.getMonth()+n);renderCalendar();}
-
-/* Click once for a start, again for an end. Two clicks to hold a week. */
-function pickDay(ds){
-  if(!STATE.selStart||STATE.selEnd||ds<STATE.selStart){STATE.selStart=ds;STATE.selEnd=null;}
-  else STATE.selEnd=ds;
-  const bar=document.getElementById('cs-block-bar');
-  bar.style.display='flex';
-  document.getElementById('cs-block-label').textContent=
-    STATE.selEnd?`${pretty(STATE.selStart)} → ${pretty(STATE.selEnd)}`
-                :`${pretty(STATE.selStart)} — click another day for a range`;
-  renderCalendar();
-}
-function clearSelection(){
-  STATE.selStart=STATE.selEnd=null;
-  const bar=document.getElementById('cs-block-bar');
-  if(bar)bar.style.display='none';
-  if(STATE.data)renderCalendar();
-}
-
-async function blockSelected(kind){
-  if(!STATE.selStart)return;
-  /* Checkout day is free, so a block through the 5th ends on the 6th. */
-  const end=new Date((STATE.selEnd||STATE.selStart)+'T00:00:00');
-  end.setDate(end.getDate()+1);
-  try{
-    const r=await api('block.add',{listingId:STATE.listingId,start:STATE.selStart,end:iso(end),kind});
-    if(r.ok===false&&r.error==='booked'){
-      toast(`Those nights already hold booking ${r.booking_ref}. Cancel it properly instead.`,false);
-      return;
-    }
-    toast(kind==='maintenance'?'Marked as maintenance':'Nights blocked');
-    clearSelection();
-    await selectListing(STATE.listingId);
-  }catch(e){toast(e.message,false);}
-}
-
-/* ── settings ── */
 function sw(key,label,desc,on){
   return `<div class="cs-set"><div><div class="cs-set-l">${label}</div><div class="cs-set-d">${desc}</div></div>
-    <button class="cs-sw" role="switch" aria-checked="${!!on}" aria-label="${label}"
-      onclick="setSetting('${key}',${!on})"></button></div>`;
+    <button type="button" class="cs-sw" role="switch" aria-checked="${!!on}" aria-label="${label}" onclick="setSetting('${key}',${!on},this)"></button></div>`;
 }
 function renderSettings(){
-  const s=STATE.data?.settings||{};
+  const s=cur()?.settings||{};
   document.getElementById('cs-settings').innerHTML=
-    sw('export_enabled','Publish my calendar',
-       'Lets other platforms read your Cabana bookings. Turning this off stops every connected platform from seeing them.',s.export_enabled)+
-    sw('block_on_import','Imported dates block bookings',
-       'Nights held on a connected platform stop being sellable on Cabana. Leave this on unless you are deliberately overbooking.',s.block_on_import)+
-    sw('alert_on_conflict','Alert me about double bookings',
-       'Notifies you the moment an imported reservation lands on top of a Cabana booking.',s.alert_on_conflict)+
-    sw('show_guest_names','Share guest names',
-       'Off by default. Other platforms only need to know a night is taken, not who is in it.',s.show_guest_names)+
+    sw('export_enabled','Publish my calendar','Lets other platforms read your Cabana bookings. Turning this off stops every connected platform from seeing them.',s.export_enabled)+
+    sw('block_on_import','Imported dates block bookings','Nights held on a connected platform stop being sellable on Cabana. Leave this on unless you are deliberately overbooking.',s.block_on_import)+
+    sw('alert_on_conflict','Alert me about double bookings','Notifies you the moment an imported reservation lands on top of a Cabana booking.',s.alert_on_conflict)+
+    sw('show_guest_names','Share guest names','Off by default. Other platforms only need to know a night is taken, not who is in it.',s.show_guest_names)+
     `<div class="cs-set"><div><div class="cs-set-l">Turnover buffer</div>
       <div class="cs-set-d">Extra nights held either side of every booking for cleaning. Applies here and on every connected platform.</div></div>
-      <select class="cs-select" style="min-width:130px" onchange="setSetting('turnover_days',Number(this.value))">
+      <select class="cs-select" aria-label="Turnover buffer" onchange="setSetting('turnover_days',Number(this.value))">
         ${[0,1,2,3].map(n=>`<option value="${n}" ${s.turnover_days===n?'selected':''}>${n===0?'None':n+' night'+(n>1?'s':'')}</option>`).join('')}
       </select></div>`+
     `<div class="cs-set"><div><div class="cs-set-l">What we publish</div>
-      <div class="cs-set-d">Imported dates are never re-published, whichever you pick — sending a platform its own bookings back creates a loop neither side can untangle.</div></div>
-      <select class="cs-select" style="min-width:190px" onchange="setSetting('export_scope',this.value)">
+      <div class="cs-set-d">Imported dates are never re-published, whichever you pick. Sending a platform its own bookings back creates a loop neither side can untangle.</div></div>
+      <select class="cs-select" aria-label="What we publish" onchange="setSetting('export_scope',this.value)">
         <option value="all" ${s.export_scope==='all'?'selected':''}>Bookings and my blocks</option>
         <option value="bookings" ${s.export_scope==='bookings'?'selected':''}>Bookings only</option>
       </select></div>`;
 }
-async function setSetting(key,value){
+async function setSetting(key,value,btn){
+  const id=STATE.cal.resource;
+  if(btn){btn.disabled=true;btn.setAttribute('aria-checked',String(value));}
   try{
-    const r=await api('settings.update',{listingId:STATE.listingId,patch:{[key]:value}});
-    STATE.data.settings={...STATE.data.settings,...r.settings};
-    renderExport();renderSettings();
-    if(key==='block_on_import'||key==='turnover_days')await selectListing(STATE.listingId);
+    const r=await api('settings.update',{listingId:id,patch:{[key]:value}});
+    STATE.ov[id].settings={...STATE.ov[id].settings,...r.settings};
+    if(key==='block_on_import'||key==='turnover_days'){await loadOverview(id);pushData();}
+    renderSync();
     toast('Saved');
-  }catch(e){toast(e.message,false);}
+  }catch(e){toast(e.message,false);renderSettings();}
 }
-
-/* ── feed actions ── */
+async function refreshCurrent(){await loadOverview(STATE.cal.resource);pushData();renderSync();}
 async function syncFeed(id){
   toast('Syncing…');
   try{
@@ -917,74 +1072,87 @@ async function syncFeed(id){
     toast(r.outcome==='unchanged'?'Already up to date'
         :r.ok?`Synced · ${r.created||0} new, ${r.dropped||0} released`
         :(r.error||'Sync failed'),r.ok!==false);
-    await selectListing(STATE.listingId);
+    await refreshCurrent();
   }catch(e){toast(e.message,false);}
 }
 async function toggleFeed(id,active){
   try{await api('feed.update',{feedId:id,patch:{is_active:active,sync_now:active}});
-    toast(active?'Resumed':'Paused');await selectListing(STATE.listingId);}
+    toast(active?'Resumed':'Paused');await refreshCurrent();}
   catch(e){toast(e.message,false);}
 }
 async function removeFeed(id,name){
   if(!confirm(`Disconnect ${name}?\n\nDates it was holding will open up again on Cabana.`))return;
-  try{await api('feed.remove',{feedId:id});toast('Disconnected');await selectListing(STATE.listingId);}
+  try{await api('feed.remove',{feedId:id});toast('Disconnected');await refreshCurrent();}
   catch(e){toast(e.message,false);}
 }
 async function syncAll(){
-  const feeds=(STATE.data?.feeds||[]).filter(f=>f.is_active);
+  const feeds=(cur()?.feeds||[]).filter(f=>f.is_active);
   if(!feeds.length){toast('No calendars connected yet',false);return;}
-  const st=document.getElementById('cs-sync-state');
-  document.getElementById('cs-sync-all').disabled=true;
+  const st=document.getElementById('cs-sync-state'), btn=document.getElementById('cs-sync-all');
+  btn.disabled=true;
   let done=0;
   for(const f of feeds){
     st.textContent=`Syncing ${++done} of ${feeds.length}…`;
     await api('feed.sync',{feedId:f.id}).catch(()=>{});
   }
-  st.textContent='';
-  document.getElementById('cs-sync-all').disabled=false;
+  st.textContent='';btn.disabled=false;
   toast(`Synced ${feeds.length} calendar${feeds.length===1?'':'s'}`);
-  await selectListing(STATE.listingId);
+  await refreshCurrent();
 }
 async function resolveConflict(id){
   try{await api('conflict.resolve',{conflictId:id,resolution:'handled_by_host'});
-    toast('Marked resolved');await selectListing(STATE.listingId);}
+    toast('Marked resolved');await refreshCurrent();}
   catch(e){toast(e.message,false);}
 }
-
-/* ── export link ── */
+function copyText(text,btn){
+  const done=()=>{if(btn){const t=btn.textContent;btn.textContent='Copied';setTimeout(()=>btn.textContent=t,1800);}};
+  if(navigator.clipboard)return navigator.clipboard.writeText(text).then(done,()=>{fallbackCopy(text);done();});
+  fallbackCopy(text);done();
+}
+function fallbackCopy(text){const t=document.createElement('textarea');t.value=text;document.body.appendChild(t);t.select();try{document.execCommand('copy');}catch(e){}t.remove();}
 function copyFeed(){
-  const el=document.getElementById('cs-feed-url');
-  el.select();
-  const done=()=>{const b=document.getElementById('cs-copy');b.textContent='Copied';
-    setTimeout(()=>b.textContent='Copy',1800);toast('Link copied — now paste it into the other platform');};
-  if(navigator.clipboard)navigator.clipboard.writeText(el.value).then(done,()=>{document.execCommand('copy');done();});
-  else{document.execCommand('copy');done();}
+  copyText(document.getElementById('cs-feed-url').value,document.getElementById('cs-copy'));
+  toast('Link copied. Now paste it into the other platform.');
 }
 async function rotateToken(){
   if(!confirm('Reset this link?\n\nThe old link stops working immediately, and every platform you pasted it into will need the new one.'))return;
   try{
-    const r=await api('token.rotate',{listingId:STATE.listingId});
-    STATE.data.settings.feed_url=r.feed_url;
-    STATE.data.settings.export_fetch_count=0;
-    STATE.data.settings.export_last_fetched_at=null;
+    const r=await api('token.rotate',{listingId:STATE.cal.resource});
+    Object.assign(cur().settings,{feed_url:r.feed_url,export_fetch_count:0,export_last_fetched_at:null});
     renderExport();
     toast('New link ready. Update it everywhere you pasted the old one.');
   }catch(e){toast(e.message,false);}
 }
 
-/* ── connect flow ── */
+/* ── sheets ── */
 function openSheet(id){document.getElementById(id).classList.add('open');}
 function closeSheet(id){document.getElementById(id).classList.remove('open');}
+
+function openPhoneSubscribe(){
+  const url=cur()?.settings?.feed_url||'';
+  const l=STATE.listings.find(x=>x.id===STATE.cal?.resource)||{};
+  const body=document.getElementById('cs-phone-body');
+  if(!url||url==='—'){body.innerHTML='<div class="cs-note">Your calendar link is still loading. Try again in a moment.</div>';openSheet('cs-phone');return;}
+  const webcal=url.replace(/^https?:\/\//,'webcal://');
+  const g='https://calendar.google.com/calendar/r?cid='+encodeURIComponent(webcal);
+  body.innerHTML=`<div class="cs-note" style="margin-top:0">For <b>${esc(l.title||'this listing')}</b>. Each listing has its own link.</div>
+    <div style="display:grid;gap:8px;margin-top:14px;">
+      <a class="pc-btn pri" href="${esc(webcal)}">Open in Apple Calendar or Outlook</a>
+      <a class="pc-btn gh" href="${esc(g)}" target="_blank" rel="noopener">Add to Google Calendar</a>
+      <button class="pc-btn gh" type="button" onclick="copyText('${esc(url)}',this)">Copy the link</button>
+    </div>
+    <div class="cs-note">Phone calendars refresh subscriptions on their own schedule, usually every few hours. Reminders you set here are pushed to your phone straight away.</div>`;
+  openSheet('cs-phone');
+}
 
 function openConnect(){
   STATE.platform='auto';
   document.getElementById('cs-new-url').value='';
   document.getElementById('cs-test-out').innerHTML='';
-  renderPlatformPicker();
-  renderPlatformHelp();
+  renderPlatformPicker();renderPlatformHelp();
   openSheet('cs-connect');
+  setTimeout(()=>document.getElementById('cs-new-url').focus(),60);
 }
-
 const CATS=[['ota','Booking sites'],['pms','Channel managers and PMS'],['personal','Personal calendars'],['other','Anything else']];
 function renderPlatformPicker(){
   const g=STATE.guide.filter(p=>p.canImport);
@@ -996,24 +1164,22 @@ function renderPlatformPicker(){
     if(!rows.length)continue;
     html+=`<div class="cs-cat">${label}</div><div class="cs-plats">`+
       rows.map(p=>`<button type="button" class="cs-plat" aria-pressed="${STATE.platform===p.key}"
-        onclick="pickPlatform('${p.key}')"><span class="cs-plat-dot" style="background:${esc(p.colour)}"></span>
+        onclick="pickPlatform('${esc(p.key)}')"><span class="cs-plat-dot" style="background:${esc(p.colour)}"></span>
         <span class="cs-plat-name">${esc(p.name)}</span></button>`).join('')+`</div>`;
   }
   document.getElementById('cs-plat-list').innerHTML=html;
 }
 function pickPlatform(key){STATE.platform=key;renderPlatformPicker();renderPlatformHelp();}
-
 function renderPlatformHelp(){
   const box=document.getElementById('cs-plat-help');
   const p=STATE.guide.find(x=>x.key===STATE.platform);
   if(!p){box.innerHTML='<div class="cs-note">Pick a platform above for step-by-step instructions, or just paste the link and we will work out where it came from.</div>';return;}
   box.innerHTML=`<div class="cs-cat" style="margin-top:18px;">Finding the link in ${esc(p.name)}</div>
-    <ol class="cs-steps">${p.importSteps.map(s=>`<li>${esc(s)}</li>`).join('')}</ol>
+    <ol class="cs-steps">${(p.importSteps||[]).map(s=>`<li>${esc(s)}</li>`).join('')}</ol>
     ${p.urlHint?`<div class="cs-note">It should look like <code>${esc(p.urlHint)}</code></div>`:''}
     ${p.note?`<div class="cs-note">${esc(p.note)}</div>`:''}`;
 }
-
-/* Test before save. A host finds out the link is wrong while the other
+/* Test before save: a host finds out the link is wrong while the other
    tab is still open, not three hours later when nothing has synced. */
 async function testFeed(){
   const url=document.getElementById('cs-new-url').value.trim();
@@ -1026,45 +1192,38 @@ async function testFeed(){
     const r=await api('feed.test',{url});
     if(!r.ok){out.innerHTML=`<div class="cs-feed-err">${esc(r.error)}</div>`;return;}
     if(STATE.platform==='auto'&&r.detected){STATE.platform=r.platform;renderPlatformPicker();renderPlatformHelp();}
-    out.innerHTML=`<div class="cs-note" style="background:rgba(20,184,166,.1);color:#0E7C5A;">
-      <b>Works.</b> ${esc(r.platformName)} · ${r.events} date range${r.events===1?'':'s'}
+    out.innerHTML=`<div class="cs-note good"><b>Works.</b> ${esc(r.platformName)} · ${r.events} date range${r.events===1?'':'s'}
       (${r.reservations} booking${r.reservations===1?'':'s'}, ${r.blocks} block${r.blocks===1?'':'s'})
-      ${r.firstDate?`· ${pretty(r.firstDate)} to ${pretty(r.lastDate)}`:'· nothing booked yet'}
-      ${r.echoes?`<br>${r.echoes} of these are your own Cabana bookings coming back. They will not be counted twice.`:''}
-      </div>`;
+      ${r.firstDate?`· ${U.fShort(r.firstDate)} to ${U.fShort(r.lastDate)}`:'· nothing booked yet'}
+      ${r.echoes?`<br>${r.echoes} of these are your own Cabana bookings coming back. They will not be counted twice.`:''}</div>`;
   }catch(e){out.innerHTML=`<div class="cs-feed-err">${esc(e.message)}</div>`;}
   finally{btn.disabled=false;btn.textContent='Test';}
 }
-
 async function saveFeed(){
   const url=document.getElementById('cs-new-url').value.trim();
   if(!url){toast('Paste a calendar link first',false);return;}
   const btn=document.getElementById('cs-save-btn');
   btn.disabled=true;btn.textContent='Connecting…';
   try{
-    const r=await api('feed.add',{listingId:STATE.listingId,url,platform:STATE.platform});
+    const r=await api('feed.add',{listingId:STATE.cal.resource,url,platform:STATE.platform});
     const f=r.first_sync;
-    toast(f&&f.ok!==false
-      ? `${r.platform_name} connected · ${f.created||0} dates imported`
-      : `${r.platform_name} connected`);
+    toast(f&&f.ok!==false?`${r.platform_name} connected · ${f.created||0} dates imported`:`${r.platform_name} connected`);
     closeSheet('cs-connect');
-    await selectListing(STATE.listingId);
+    await refreshCurrent();
   }catch(e){toast(e.message,false);}
   finally{btn.disabled=false;btn.textContent='Connect calendar';}
 }
-
-/* ── the paste-it-there guide ── */
 function openGuide(){
-  const url=STATE.data?.settings?.feed_url||'';
+  const url=cur()?.settings?.feed_url||'';
   document.getElementById('cs-guide-body').innerHTML=
-    `<div class="cs-url" style="margin-bottom:6px;"><input readonly value="${esc(url)}" onclick="this.select()"/>
-      <button class="btn btn-sm" onclick="copyFeed()">Copy</button></div>`+
+    `<div class="cs-url" style="margin-bottom:6px;"><input readonly value="${esc(url)}" onclick="this.select()" aria-label="Your Cabana calendar link"/>
+      <button class="pc-btn pri" type="button" onclick="copyFeed()">Copy</button></div>`+
     CATS.map(([cat,label])=>{
-      const rows=STATE.guide.filter(p=>p.category===cat&&p.canExport&&p.exportSteps.length);
+      const rows=STATE.guide.filter(p=>p.category===cat&&p.canExport&&(p.exportSteps||[]).length);
       if(!rows.length)return '';
       return `<div class="cs-cat">${label}</div>`+rows.map(p=>
-        `<details style="margin-bottom:6px;border:1.5px solid var(--line-2);border-radius:12px;padding:11px 13px;">
-          <summary style="cursor:pointer;font:600 12.5px var(--font-b);color:var(--ink);display:flex;align-items:center;gap:8px;">
+        `<details style="margin-bottom:6px;border:1.5px solid var(--line-2);border-radius:13px;padding:11px 13px;background:#fff;">
+          <summary style="cursor:pointer;font:650 13px var(--font-b);color:var(--ink);display:flex;align-items:center;gap:8px;">
             <span class="cs-plat-dot" style="background:${esc(p.colour)}"></span>${esc(p.name)}</summary>
           <ol class="cs-steps">${p.exportSteps.map(s=>`<li>${esc(s)}</li>`).join('')}</ol>
         </details>`).join('');
@@ -1072,7 +1231,7 @@ function openGuide(){
   openSheet('cs-guide');
 }
 
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSheet('cs-connect');closeSheet('cs-guide');}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){['cs-connect','cs-guide','cs-phone'].forEach(closeSheet);}});
 document.addEventListener('DOMContentLoaded',boot);
 </script>
 

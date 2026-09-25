@@ -7,6 +7,8 @@
 <title>Agent Portal · Cabana</title>
 <meta name="description" content="Cabana agent portal. Manage referrals, listings and earnings on Kenya&#x27;s zero-commission travel platform."/>
 <script src="/apa-agent.js"></script>
+<link rel="stylesheet" href="/cabana-calendar.css?v=1"/>
+<script src="/cabana-calendar.js?v=1"></script>
 <link rel="stylesheet" href="/cabana-spotlight.css?v=20260917-2"/>
 <script src="/cabana-spotlight.js?v=20260917-2"></script>
 <style>
@@ -201,6 +203,13 @@ textarea.inp{resize:vertical;min-height:62px;line-height:1.6;font-size:13.5px;}
 <link rel="stylesheet" href="/cabana-ds.css"/>
 
   <link rel="canonical" href="https://cabana.africa/agent-dashboard"/>
+<style>
+.cal-check{margin-top:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:11px 13px;border-radius:13px;background:var(--glass-2);font-size:12.5px;color:var(--ink-soft);line-height:1.45;}
+.cal-check b{color:var(--ink-2);}
+.cal-check.ok{background:rgba(20,184,166,.1);color:#0E7C5A;}
+.cal-check.no{background:rgba(255,77,109,.08);color:#B91C1C;}
+.cal-check .copy{margin-left:auto;}
+</style>
 </head>
 <body data-apa-role="agent">
 
@@ -541,20 +550,9 @@ function renderListings(pane) {
         '</div>') +
 
     '<div class="cal-wrap">' +
-      '<div class="cal-h">' +
-        '<div class="cal-t"><span class="live"></span> Live availability</div>' +
-        '<div class="cal-nav">' +
-          '<button onclick="shift(\'' + E(p.listing_id) + '\',-1)" aria-label="Previous month">‹</button>' +
-          '<span class="cal-mon" id="mon-' + p.partnership_id + '">-</span>' +
-          '<button onclick="shift(\'' + E(p.listing_id) + '\',1)" aria-label="Next month">›</button>' +
-        '</div>' +
-      '</div>' +
+      '<div class="cal-h"><div class="cal-t"><span class="live"></span> Live availability</div></div>' +
       '<div id="cal-' + p.partnership_id + '"><div class="cal-load">Loading the calendar…</div></div>' +
-      '<div class="legend">' +
-        '<span class="lg"><i style="background:rgba(20,184,166,.4);"></i> Free</span>' +
-        '<span class="lg"><i style="background:rgba(245,177,46,.55);"></i> Held (unpaid)</span>' +
-        '<span class="lg"><i style="background:rgba(255,77,109,.45);"></i> Booked</span>' +
-      '</div>' +
+      '<div class="cal-check" id="chk-' + p.partnership_id + '">Tap the first night, then the last night, to see if a guest can have them.</div>' +
     '</div></article>';
   }).join('');
 
@@ -564,50 +562,52 @@ function renderListings(pane) {
     .forEach(function (p) { loadCal(p.listing_id, p.partnership_id); });
 }
 
+/* Each card gets a read-only Cabana calendar. Picking a range answers the
+   only question an agent has: can my guest have these nights? */
 async function loadCal(listingId, pid) {
+  const el = document.getElementById('cal-' + pid);
   try {
     const map = await ApaAgent.calendarFor(listingId);
-    CAL[listingId] = { map: map, cursor: new Date(), pid: pid };
-    drawCal(listingId);
+    const keys = Array.from(map.keys()).sort(), events = [];
+    keys.forEach(function (d) {
+      const st = map.get(d), last = events[events.length - 1];
+      const next = CabanaCal.util.add(d, 1);
+      if (last && last.end === d && last._st === st) last.end = next;
+      else events.push({ id: listingId + d, start: d, end: next, _st: st, type: st === 'held' ? 'hold' : 'booking', title: st === 'held' ? 'Held' : 'Booked', avatar: '' });
+    });
+    if (!el || !window.CabanaCal) return;
+    el.innerHTML = '';
+    CAL[listingId] = CabanaCal.mount(el, {
+      compact: true, mode: 'nightly', unit: 'night', units: 'nights',
+      legend: [{ type: 'booking', label: 'Booked' }, { type: 'hold', label: 'Held (unpaid)' }],
+      onSelect: function (c) { availabilityCheck(pid, c, listingId); }
+    });
+    CAL[listingId].setData({ events: events });
   } catch (e) {
-    const el = document.getElementById('cal-' + pid);
     if (el) el.innerHTML = '<div class="cal-load">Could not load availability.</div>';
   }
 }
 
-function shift(listingId, n) {
-  const c = CAL[listingId];
-  if (!c) return;
-  c.cursor.setMonth(c.cursor.getMonth() + n);
-  drawCal(listingId);
-}
-
-function drawCal(listingId) {
-  const c = CAL[listingId];
-  const host = document.getElementById('cal-' + c.pid);
-  const mon  = document.getElementById('mon-' + c.pid);
-  if (!host) return;
-
-  const cur = c.cursor;
-  const y = cur.getFullYear(), m = cur.getMonth();
-  mon.textContent = cur.toLocaleDateString('en-KE', { month: 'long', year: 'numeric' });
-
-  const first = new Date(y, m, 1);
-  const days  = new Date(y, m + 1, 0).getDate();
-  const lead  = (first.getDay() + 6) % 7;           // Monday-first
-  const today = ApaAgent.iso(new Date());
-
-  let h = ['M','T','W','T','F','S','S'].map(function (d) { return '<div class="cal-dow">' + d + '</div>'; }).join('');
-  for (let i = 0; i < lead; i++) h += '<div class="cal-d pad"></div>';
-
-  for (let d = 1; d <= days; d++) {
-    const key  = ApaAgent.iso(new Date(y, m, d));
-    const st   = c.map.get(key) || '';
-    const past = key < today;
-    const cls  = ['cal-d', past ? 'past' : st, key === today ? 'today' : ''].filter(Boolean).join(' ');
-    h += '<div class="' + cls + '" title="' + key + (st ? ' · ' + st : '') + '">' + d + '</div>';
+function availabilityCheck(pid, c, listingId) {
+  const box = document.getElementById('chk-' + pid);
+  if (!box) return;
+  if (!c) { box.className = 'cal-check'; box.textContent = 'Tap the first night, then the last night, to see if a guest can have them.'; return; }
+  const U = CabanaCal.util;
+  const nights = c.count, span = U.fShort(c.start) + ' → ' + U.fShort(c.end);
+  if (!c.busy.length) {
+    const p = ME.portfolio.find(function (x) { return x.listing_id === listingId; }) || {};
+    const url = ApaAgent.link(ME.agent.referral_code, listingId);
+    const msg = (p.title || 'The stay') + ' is free ' + span + ' (' + nights + ' night' + (nights > 1 ? 's' : '') + '). Book it here: ' + url;
+    box.className = 'cal-check ok';
+    box.innerHTML = '<span><b>' + span + ' is free.</b> ' + nights + ' night' + (nights > 1 ? 's' : '') + ', ready to offer.</span>' +
+      '<button class="copy" type="button">Copy message</button>';
+    box.querySelector('button').onclick = function () {
+      navigator.clipboard.writeText(msg).then(function () { toast('Message copied. Paste it to your guest.'); }, function () { toast('Could not copy. Select the text instead.', true); });
+    };
+  } else {
+    box.className = 'cal-check no';
+    box.innerHTML = '<span><b>Not available.</b> ' + c.busy.length + ' of ' + nights + ' night' + (nights > 1 ? 's are' : ' is') + ' already taken between ' + span + '. Try other dates.</span>';
   }
-  host.innerHTML = '<div class="cal">' + h + '</div>';
 }
 
 function copyLink(btn) {

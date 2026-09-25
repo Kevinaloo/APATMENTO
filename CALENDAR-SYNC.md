@@ -275,3 +275,23 @@ Things the major platforms do not give hosts:
 | `api/calendar-sync.js` | Public feed, host actions, cron |
 | `partner-calendar.html` | Host UI |
 | `tests/calendar-sync.test.mjs` | 47 tests |
+
+---
+
+## Calendar studio (September 2026)
+
+Every calendar in Cabana now renders through one engine, `cabana-calendar.js` + `cabana-calendar.css`.
+
+| Surface | File | What it does |
+|---|---|---|
+| Host calendar | `partner-calendar.html` | Month (bookings as check-in→check-out bars), Timeline (all listings), Agenda, Year. Drag or tap-tap to select; block, open or mark maintenance; tap any stay for guest, payout, door code, message, reminders. Channel sync, settings and "add to phone calendar" below. |
+| Fleet calendar | `partner-fleet.html` → Calendar tab | Every car as a row, hires as bars, blackouts hatched. Block/free days per car. `?tab=calendar&date=YYYY-MM-DD` deep-links. |
+| Agent availability | `agent-dashboard.html` | Compact read-only month per listing; pick nights and get "free / not available" plus a ready-to-send message. |
+
+**Database** (`supabase/migrations/20260926100000_calendar_studio.sql`, applied):
+
+- `cabana_calendar_set_ranges(listing, ranges, 'open'|'manual'|'maintenance', note)` carves host blocks exactly, merges neighbours, never touches paid (`listing_holds`) or channel-owned nights. API action `range.set`.
+- `car_operator_calendar(from, to)` and `car_operator_blackout_set(vehicle, start, end, 'open'|'blocked')` for fleets.
+- `calendar_agenda` (owner-only RLS): notes, tasks, reminders. `calendar_agenda_tick()` runs every minute from pg_cron, writes the in-app notification and hands it to `/api/push-send?action=database-notification` for the phone.
+
+Shortcuts: ← → month, T today, M/L/A/Y views, B block, O open, N note, Esc clear, ? help.

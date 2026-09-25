@@ -149,7 +149,16 @@ textarea.in { min-height: 84px; resize: vertical; }
 .skel { height: 120px; border-radius: 24px; background: linear-gradient(90deg, #e7f3f2 25%, #f5fbfb 45%, #e7f3f2 65%); background-size: 300% 100%; animation: sh 1.3s linear infinite; margin-top: 12px; }
 @keyframes sh { from { background-position: 100% 0; } to { background-position: -200% 0; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+/* ── Fleet calendar: the shared Cabana calendar, dressed in Drive colours ── */
+#fleet-cal.cc { --cc-accent: #12a7c9; --cc-accent-2: #3d7bff; --cc-accent-soft: rgba(18, 198, 232, .1);
+  --cc-grad: linear-gradient(110deg, #12c6e8, #3d7bff); --cc-font: var(--body); --cc-display: var(--display); --cc-mono: var(--body);
+  --cc-ink: #0b1f2a; --cc-ink-2: #33505e; --cc-fab-bottom: 18px; --cc-dock-bottom: 14px; --cc-faint: #6b8290; --cc-sunk: #eef8f8; --cc-sunk-2: #e2f1f2; --cc-res-w: 230px; }
+#fleet-cal .cc-h2, #fleet-cal .cc-title, #fleet-cal .cc-hero b { font-stretch: 112%; }
+@media (max-width: 640px) { #fleet-cal.cc { --cc-res-w: 128px; } }
+.cal-intro { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin: 18px 0 12px; flex-wrap: wrap; }
+.cal-intro small { color: var(--mute); font-weight: 650; font-size: 13px; }
 </style>
+<link rel="stylesheet" href="/cabana-calendar.css?v=1">
 </head>
 <body>
 <header class="top"><div class="top-in">
@@ -190,6 +199,7 @@ textarea.in { min-height: 84px; resize: vertical; }
 
     <nav class="tabs" role="tablist">
       <button class="tab" role="tab" data-tab="today" aria-selected="true">Today <em id="t-today" hidden></em></button>
+      <button class="tab" role="tab" data-tab="calendar">Calendar</button>
       <button class="tab" role="tab" data-tab="asks">Car requests <em id="t-asks" hidden></em></button>
       <button class="tab" role="tab" data-tab="fleet">Fleet</button>
       <button class="tab" role="tab" data-tab="history">History</button>
@@ -197,6 +207,10 @@ textarea.in { min-height: 84px; resize: vertical; }
     </nav>
 
     <section class="pane on" id="p-today"></section>
+    <section class="pane" id="p-calendar">
+      <div class="cal-intro"><div><h2 style="font-size:19px">Fleet calendar</h2><small>Every car, every hire, every blocked day. Drag across days to block or free a car.</small></div></div>
+      <div id="fleet-cal"><div class="skel" style="height:420px"></div></div>
+    </section>
     <section class="pane" id="p-asks"></section>
     <section class="pane" id="p-fleet"></section>
     <section class="pane" id="p-history"></section>
@@ -213,6 +227,7 @@ textarea.in { min-height: 84px; resize: vertical; }
 
 <script src="/vendor-supabase-2.112.3.js"></script>
 <script src="/apa-session.js"></script>
+<script src="/cabana-calendar.js?v=1"></script>
 <script>
 (function () {
   'use strict';
@@ -267,7 +282,7 @@ textarea.in { min-height: 84px; resize: vertical; }
   function rpc(name, args) { return sb.rpc(name, args || {}).then(function (r) { if (r.error) throw r.error; return r.data; }); }
 
   var B = { op: {}, fleet: [], requested: [], upcoming: [], active: [], recent: [], requests: [], stats: {} };
-  var tab = 'today', q = new URLSearchParams(location.search), focusRef = (q.get('booking') || '').toUpperCase(), focusReq = (q.get('request') || '').toUpperCase();
+  var q = new URLSearchParams(location.search), tab = ['today', 'calendar', 'asks', 'fleet', 'history', 'settings'].indexOf(q.get('tab')) >= 0 ? q.get('tab') : 'today', focusRef = (q.get('booking') || '').toUpperCase(), focusReq = (q.get('request') || '').toUpperCase();
 
   function show(id) { ['v-load', 'v-auth', 'v-none', 'v-live'].forEach(function (v) { $(v).hidden = v !== id; }); }
 
@@ -286,10 +301,12 @@ textarea.in { min-height: 84px; resize: vertical; }
       B.op = b.operator || {};
       show('v-live');
       paint();
+      if (first && tab !== 'today') select();
       if (first) {
         if (focusReq) { tab = 'asks'; select(); var rq = B.requests.filter(function (x) { return x.ref === focusReq; })[0]; if (rq) offerSheet(rq); else toast('That request has closed or been matched.'); }
         else if (focusRef) setTimeout(function () { var el = document.querySelector('[data-ref="' + focusRef + '"]'); if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.classList.add('flash'); } }, 300);
       }
+      if (FC.cal && tab === 'calendar' && !FC.loading) fcLoad().then(fcPush, function () {});
       clearTimeout(pollT); pollT = setTimeout(load, B.requested.length ? 15000 : 45000);
     }, function (e) {
       if ((e && e.message) === 'not_an_operator') { show('v-none'); return; }
@@ -472,13 +489,20 @@ textarea.in { min-height: 84px; resize: vertical; }
     if (d.addcar != null) { carSheet(null); return; }
     if (d.edit) { carSheet(B.fleet.filter(function (v) { return v.id === d.edit; })[0]); return; }
     if (d.vstatus) { act(t, rpc('car_operator_vehicle_save', { p: { id: d.vstatus, status: d.to } }), d.to === 'active' ? 'Live again.' : 'Paused. Renters no longer see it.').catch(function () {}); return; }
-    if (d.block) { blockSheet(B.fleet.filter(function (v) { return v.id === d.block; })[0]); return; }
+    if (d.block) {
+      /* Block dates opens the fleet calendar on that car; the simple sheet
+         stays as the fallback if the calendar script could not load. */
+      if (window.CabanaCal) { tab = 'calendar'; select(); fleetCalendar(d.block); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+      else blockSheet(B.fleet.filter(function (v) { return v.id === d.block; })[0]);
+      return;
+    }
     if (t.id === 's-save') { saveSettings(t); return; }
   });
 
   function select() {
     document.querySelectorAll('.tab').forEach(function (b) { b.setAttribute('aria-selected', b.dataset.tab === tab ? 'true' : 'false'); });
     document.querySelectorAll('.pane').forEach(function (p) { p.classList.toggle('on', p.id === 'p-' + tab); });
+    if (tab === 'calendar') fleetCalendar();
   }
 
   function saveSettings(btn) {
@@ -572,6 +596,145 @@ textarea.in { min-height: 84px; resize: vertical; }
       rpc('car_operator_vehicle_save', { p: p }).then(function (r) { buzz(); closeSheet(); toast(r && r.status === 'review' ? 'Sent to the Cabana desk for a quick check.' : 'Saved.'); load(); },
         function (e) { busy(btn, false); er.hidden = false; er.textContent = friendly(e); });
     };
+  }
+
+  /* ══ FLEET CALENDAR ════════════════════════════════════════════════
+     Every car as a row, every hire as a bar, every blocked day hatched.
+     Reads car_operator_calendar in one call; writes through
+     car_operator_blackout_set, which carves the operator's own blackouts
+     exactly and refuses any day a renter has booked. */
+  var FC = { cal: null, data: null, from: null, to: null, loading: null };
+  function vTitle(v) { return [v.make, v.model].filter(Boolean).join(' ') || 'Car'; }
+  function fcLoad() {
+    var U = CabanaCal.util;
+    FC.from = U.add(U.today(), -60); FC.to = U.add(U.today(), 400);
+    FC.loading = rpc('car_operator_calendar', { p_from: FC.from, p_to: FC.to }).then(function (d) {
+      FC.data = d || { fleet: [], bookings: [], blackouts: [] };
+      FC.loading = null;
+      return FC.data;
+    }, function (e) { FC.loading = null; throw e; });
+    return FC.loading;
+  }
+  function fcEvents() {
+    var U = CabanaCal.util, d = FC.data || {}, out = [];
+    var TYPE = { requested: 'request', confirmed: 'booking', active: 'active', completed: 'done', no_show: 'done' };
+    (d.bookings || []).forEach(function (b) {
+      var vid = b.vehicle_id || (b.vehicle && b.vehicle.id);
+      if (!vid || !b.starts_on || !b.ends_on) return;
+      out.push({ id: 'cb-' + b.ref, resource: vid, start: b.starts_on, end: U.add(b.ends_on, 1), type: TYPE[b.status] || 'booking',
+        title: b.customer_name || 'Renter', short: (b.days || U.diff(b.starts_on, U.add(b.ends_on, 1))) + 'd', ref: b.ref, hire: b,
+        detail: [b.days ? b.days + ' day' + (b.days > 1 ? 's' : '') : '', b.total ? money(b.total, b.currency) : '', b.status === 'requested' ? 'waiting on you' : ''].filter(Boolean).join(' · ') });
+    });
+    (d.blackouts || []).forEach(function (x, i) {
+      if (x.booking_id || x.reason !== 'operator') return;
+      out.push({ id: 'bo-' + x.vehicle_id + '-' + x.starts_on + '-' + i, resource: x.vehicle_id, start: x.starts_on, end: U.add(x.ends_on, 1), type: 'block', title: 'Blocked', editable: true });
+    });
+    return out;
+  }
+  function fcResources() {
+    return ((FC.data && FC.data.fleet) || B.fleet || []).map(function (v) {
+      return { id: v.id, title: vTitle(v), photo: v.photo || (Array.isArray(v.photos) && v.photos[0]) || null,
+        sub: [v.plate, v.status === 'active' ? money(v.day_rate) + '/day' : v.status === 'review' ? 'in review' : v.status].filter(Boolean).join(' · ') };
+    });
+  }
+  function fcPush() { if (FC.cal) { FC.cal.setResources(fcResources()); FC.cal.setData({ events: fcEvents() }); } }
+  function fcRuns(days) {
+    var U = CabanaCal.util, runs = [];
+    days.slice().sort().forEach(function (d) { var l = runs[runs.length - 1]; if (l && U.add(l.last, 1) === d) l.last = d; else runs.push({ start: d, last: d }); });
+    return runs;
+  }
+  function fcSet(vehicle, runs, state, undoRuns) {
+    var p = Promise.resolve(), refused = null, n = 0;
+    runs.forEach(function (r) {
+      p = p.then(function () {
+        return rpc('car_operator_blackout_set', { p_vehicle: vehicle, p_start: r.start, p_end: r.last, p_state: state }).then(function (res) {
+          if (res && res.ok === false && res.error === 'booked') refused = res.booking_ref; else n += CabanaCal.util.diff(r.start, r.last) + 1;
+        });
+      });
+    });
+    return p.then(fcLoad).then(function () {
+      fcPush(); FC.cal.clearSelection(); buzz();
+      var msg = n ? n + ' day' + (n === 1 ? '' : 's') + (state === 'open' ? ' freed' : ' blocked') : 'Nothing changed';
+      if (refused) msg += ' · kept ' + refused + ' (already booked)';
+      CabanaCal.toast(msg, { bad: !!refused && !n, action: n && undoRuns !== false ? function () { fcSet(vehicle, runs, state === 'open' ? 'blocked' : 'open', false); } : null });
+    }, function (e) { CabanaCal.toast(friendly(e), { bad: true }); fcLoad().then(fcPush, function () {}); });
+  }
+  function fcActions(c) {
+    var busyDays = {}, acts = [];
+    c.events.forEach(function (e) {
+      if (e.type === 'block') return;
+      for (var d = e.start; d < e.end; d = CabanaCal.util.add(d, 1)) busyDays[d] = e;
+    });
+    var free = c.days.filter(function (d) { return !busyDays[d] && c.hostDays.indexOf(d) < 0; });
+    var blockable = c.days.filter(function (d) { return !busyDays[d]; });
+    var n = Object.keys(busyDays).length;
+    if (c.hostDays.length) acts.push({ key: 'open', label: 'Free ' + c.hostDays.length + ' day' + (c.hostDays.length === 1 ? '' : 's'), short: 'Free', icon: 'unlock', tone: free.length ? 'good' : 'primary', run: function () { return fcSet(c.resource, fcRuns(c.hostDays), 'open'); } });
+    if (free.length) acts.unshift({ key: 'block', label: 'Block ' + (blockable.length === c.count ? (c.count === 1 ? 'this day' : c.count + ' days') : free.length + ' free day' + (free.length === 1 ? '' : 's')), short: 'Block', icon: 'lock', tone: 'primary', run: function () { return fcSet(c.resource, fcRuns(blockable), 'blocked'); } });
+    if (n) acts.push({ secondary: true, label: 'See the hire', icon: 'link', run: function () { var e = c.bookings[0]; if (e) FC.cal.focusEvent(e.id); },
+      hint: n + ' day' + (n === 1 ? ' is' : 's are') + ' booked by a renter and stay' + (n === 1 ? 's' : '') + ' closed. Decline, cancel or mark a no-show from Today to free ' + (n === 1 ? 'it' : 'them') + '.' });
+    return acts;
+  }
+  function fcView(e, cal) {
+    var U = CabanaCal.util, b = e.hire;
+    if (e.type === 'block') {
+      var start = e.start < U.today() ? U.today() : e.start, last = U.add(e.end, -1);
+      return { eyebrow: 'Blocked by you', title: 'Not offered to renters', rows: [['From', U.fDay(e.start)], ['Until', U.fDay(last)], ['Days', String(U.diff(e.start, e.end))]],
+        note: 'Service, a private hire or a trip of your own: renters never see these days.',
+        actions: [{ label: 'Free these days', icon: 'unlock', tone: 'good', run: function () { return fcSet(e.resource, [{ start: start, last: last }], 'open'); } },
+                  { label: 'Pick days to free', icon: 'edit', run: function () { cal.select(start, last, e.resource); } }] };
+    }
+    if (!b) return {};
+    var st = { requested: 'Waiting on your answer', confirmed: 'Confirmed', active: 'Out on the road', completed: 'Completed', no_show: 'No-show' }[b.status] || b.status;
+    var phone = b.phone ? String(b.phone).replace(/[^+\d]/g, '') : '';
+    var rows = [['Renter', esc(b.customer_name || 'Renter'), true],
+      phone ? ['Phone', '<a href="tel:' + esc(phone) + '">' + esc(b.phone) + '</a>', true] : null,
+      ['Pick-up', dt(b.pickup_at) + (b.delivery_label ? ' · ' + b.delivery_label : '')],
+      ['Return', dt(b.return_at)],
+      ['Total', money(b.total, b.currency)],
+      b.deposit ? ['Deposit', money(b.deposit, b.currency)] : null,
+      ['Status', st],
+      b.with_chauffeur ? ['Driver', 'With chauffeur'] : null,
+      ['Reference', b.ref]].filter(Boolean);
+    var acts = [{ label: b.status === 'requested' ? 'Answer this request' : 'Open in Today', icon: 'link', run: function () {
+      tab = 'today'; select(); setTimeout(function () { var el = document.querySelector('[data-ref="' + b.ref + '"]'); if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.classList.add('flash'); } }, 250);
+    } }];
+    if (phone) acts.push({ label: 'Call renter', icon: 'phone', href: 'tel:' + phone });
+    if (b.status === 'confirmed' || b.status === 'requested') acts.push({ label: 'Remind me', icon: 'bell', run: function () {
+      var d0 = U.add(e.start, -1) < U.today() ? U.today() : U.add(e.start, -1);
+      cal.openEditor({ kind: 'reminder', on_date: d0, title: 'Prepare ' + vTitle(b.vehicle || {}) + ' for ' + (b.customer_name || 'renter'), booking_ref: b.ref, subject_id: e.resource, subject_label: vTitle(b.vehicle || {}), preset: 'eve' }, 'event');
+    } });
+    return { eyebrow: st, title: b.customer_name || 'Renter', rows: rows, actions: acts,
+      note: b.status === 'requested' ? 'This renter is waiting. Answer before ' + dt(b.expires_at) + ' or the request lapses.' : null, noteTone: 'info' };
+  }
+  function fleetCalendar(focusVehicle) {
+    if (!window.CabanaCal) { $('fleet-cal').innerHTML = '<div class="card empty"><b>The calendar could not load</b>Refresh the page to try again.</div>'; return; }
+    if (FC.cal) {
+      if (focusVehicle) { FC.cal.setResource(focusVehicle); FC.cal.setView('month'); }
+      if (!FC.loading) fcLoad().then(fcPush, function () {});
+      return;
+    }
+    if (!(B.fleet || []).length) { $('fleet-cal').innerHTML = '<div class="card empty"><b>Add a car to see its calendar</b>Every hire, request and blocked day appears here, car by car.</div>'; return; }
+    var qd = /^\d{4}-\d{2}-\d{2}$/.test(q.get('date') || '') ? q.get('date') : null;
+    fcLoad().then(function () {
+      var el = $('fleet-cal'); el.innerHTML = '';
+      var res = fcResources();
+      var store = CabanaCal.agendaStore({ client: sb, scope: 'vehicle', subjectId: null, subjectLabel: null });
+      FC.cal = CabanaCal.mount(el, {
+        mode: 'daily', unit: 'day', units: 'days', resourceNoun: 'car',
+        views: res.length > 1 ? ['timeline', 'month', 'agenda', 'year'] : ['month', 'agenda', 'year'],
+        view: focusVehicle ? 'month' : (res.length > 1 ? 'timeline' : 'month'),
+        date: qd || CabanaCal.util.today(),
+        resources: res, resource: focusVehicle || (res[0] && res[0].id),
+        legend: [{ type: 'booking', label: 'Confirmed' }, { type: 'request', label: 'Waiting on you' }, { type: 'active', label: 'On the road' }, { type: 'done', label: 'Completed' }, { type: 'block', label: 'Blocked' }],
+        agenda: store, rangeActions: fcActions, eventView: fcView,
+        onResource: function (id) { var v = res.filter(function (r) { return r.id === id; })[0]; store.setSubject(id, v && v.title, 'vehicle'); }
+      });
+      store.setSubject(FC.cal.resource, (res[0] || {}).title, 'vehicle');
+      FC.cal.setData({ events: fcEvents() });
+      if (qd) FC.cal.select(qd, qd);
+    }, function (e) {
+      $('fleet-cal').innerHTML = '<div class="card empty"><b>We could not load the calendar</b>' + esc(friendly(e)) + '</div>';
+    });
   }
 
   function blockSheet(v) {

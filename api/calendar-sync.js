@@ -250,6 +250,23 @@ const ACTIONS = {
     });
   },
 
+  /* Exact edits: open, block or mark maintenance on any set of nights.
+     Existing host blocks are carved rather than stacked, so "open the
+     14th" inside a blocked week leaves the rest of that week closed. */
+  async 'range.set'(req, { listingId, ranges, state, note }) {
+    const list = (Array.isArray(ranges) ? ranges : [])
+      .filter(r => r && /^\d{4}-\d{2}-\d{2}$/.test(r.start) && /^\d{4}-\d{2}-\d{2}$/.test(r.end))
+      .slice(0, 120);
+    if (!list.length) throw Object.assign(new Error('Pick at least one night'), { status: 400 });
+    if (!['open', 'manual', 'maintenance'].includes(state)) {
+      throw Object.assign(new Error('Unknown calendar state'), { status: 400 });
+    }
+    return rpcAsUser(req, 'cabana_calendar_set_ranges', {
+      p_listing_id: listingId, p_ranges: list, p_state: state,
+      p_note: note ? String(note).slice(0, 500) : null,
+    });
+  },
+
   async 'block.remove'(req, { blockId }) {
     return rpcAsUser(req, 'cabana_calendar_unblock', { p_block_id: blockId });
   },
