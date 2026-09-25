@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0b1f2a">
+<title>Fleet console | Cabana Drive</title>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="manifest" href="/manifest.json">
+<link rel="preload" href="/assets/fonts/anybody-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/assets/fonts/hanken-grotesk-latin.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+@font-face { font-family: 'Anybody Variable'; src: url('/assets/fonts/anybody-latin.woff2') format('woff2'); font-weight: 100 900; font-stretch: 50% 150%; font-display: swap; }
+@font-face { font-family: 'Hanken Grotesk Variable'; src: url('/assets/fonts/hanken-grotesk-latin.woff2') format('woff2'); font-weight: 100 900; font-display: swap; }
+:root {
+  --ink: #0b1f2a; --ink-2: #33505e; --mute: #6b8290; --soft: #9fb2bc; --line: rgba(11, 31, 42, .09);
+  --bg: #f2fbfa; --paper: #fff; --aqua: #12c6e8; --mint: #2ef2d0; --blue: #3d7bff; --amber: #ffb020; --bad: #e5484d; --good: #0fae8c;
+  --grad: linear-gradient(110deg, #2ef2d0, #12c6e8 45%, #3d7bff);
+  --display: 'Anybody Variable', 'Anybody', ui-sans-serif, system-ui, sans-serif;
+  --body: 'Hanken Grotesk Variable', 'Hanken Grotesk', ui-sans-serif, system-ui, sans-serif;
+  --ease: cubic-bezier(.22, 1, .36, 1);
+  --shadow: 0 24px 60px -30px rgba(6, 58, 72, .35), 0 2px 6px rgba(6, 58, 72, .05);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--body); -webkit-font-smoothing: antialiased; }
+body::after { display: none !important; }
+/* The header carries Help; a floating orb would sit on top of the action buttons. */
+#cbn-sup-launcher, #cbn-apa-welcome { display: none !important; }
+h1, h2, h3 { font-family: var(--display) !important; font-stretch: 118%; letter-spacing: -.02em; margin: 0; line-height: 1.05; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; border: 0; background: none; padding: 0; }
+a { color: inherit; }
+[hidden] { display: none !important; }
+
+.top { position: sticky; top: 0; z-index: 30; background: rgba(242, 251, 250, .86); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-bottom: 1px solid var(--line); }
+.top-in { max-width: 1120px; margin: 0 auto; padding: 12px 16px; display: flex; align-items: center; gap: 12px; }
+.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+.brand i { width: 34px; height: 34px; border-radius: 11px; background: var(--grad); display: grid; place-items: center; box-shadow: 0 10px 24px -12px rgba(18, 150, 200, .8); }
+.brand i svg { width: 18px; height: 18px; stroke: #fff; }
+.brand b { font: 850 15px/1 var(--display); font-stretch: 140%; letter-spacing: .02em; text-transform: uppercase; }
+.brand small { display: block; font: 650 11.5px/1.2 var(--body); color: var(--mute); margin-top: 3px; letter-spacing: 0; text-transform: none; }
+.top .sp { flex: 1; }
+.pill { height: 36px; padding: 0 14px; border-radius: 99px; background: var(--paper); border: 1px solid var(--line); font-weight: 700; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
+
+.wrap { max-width: 1120px; margin: 0 auto; padding: 18px 16px 120px; }
+.hero { border-radius: 28px; padding: 22px; color: #e9fffb; background: radial-gradient(120% 140% at 100% 0%, #125a6a 0%, #0b2f3a 45%, #071c23 100%); position: relative; overflow: hidden; box-shadow: var(--shadow); }
+.hero::after { content: ''; position: absolute; right: -60px; top: -60px; width: 220px; height: 220px; border-radius: 50%; background: radial-gradient(closest-side, rgba(46, 242, 208, .35), transparent); }
+.hero .k { font: 800 11px/1 var(--body); letter-spacing: .2em; text-transform: uppercase; color: #9ff7ea; }
+.hero h1 { font-size: clamp(26px, 6vw, 40px); margin-top: 10px; color: #fff; }
+.hero p { margin: 8px 0 0; color: rgba(233, 255, 251, .75); font-size: 14.5px; max-width: 60ch; }
+.kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 18px; position: relative; z-index: 1; }
+.kpi { background: rgba(255, 255, 255, .07); border: 1px solid rgba(255, 255, 255, .1); border-radius: 18px; padding: 12px 14px; }
+.kpi b { display: block; overflow-wrap: anywhere; font: 850 clamp(16px, 4.4vw, 22px)/1.05 var(--display); font-stretch: 110%; color: #fff; font-variant-numeric: tabular-nums; }
+.kpi small { display: block; margin-top: 6px; font-size: 12px; color: rgba(233, 255, 251, .65); font-weight: 650; }
+@media (max-width: 640px) { .kpis { grid-template-columns: repeat(2, 1fr); } }
+
+.tabs { position: sticky; top: 61px; z-index: 20; display: flex; gap: 6px; margin: 16px -16px 0; padding: 10px 16px; overflow-x: auto; scrollbar-width: none; background: linear-gradient(var(--bg) 70%, rgba(242, 251, 250, 0)); }
+.tabs::-webkit-scrollbar { display: none; }
+.tab { flex: none; height: 40px; padding: 0 16px; border-radius: 99px; background: var(--paper); border: 1px solid var(--line); font-weight: 750; font-size: 14px; color: var(--ink-2); display: inline-flex; align-items: center; gap: 8px; transition: all .25s var(--ease); }
+.tab[aria-selected="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
+.tab em { font-style: normal; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 99px; background: var(--amber); color: var(--ink); font-size: 11.5px; font-weight: 850; display: inline-grid; place-items: center; }
+
+.pane { display: none; padding-top: 8px; animation: in .45s var(--ease); }
+.pane.on { display: block; }
+@keyframes in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.sec { margin: 18px 0 10px; display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.sec h2 { font-size: 19px; }
+.sec small { color: var(--mute); font-weight: 650; font-size: 13px; }
+.grid { display: grid; gap: 12px; }
+@media (min-width: 860px) { .grid.two { grid-template-columns: 1fr 1fr; } }
+
+.card { background: var(--paper); border: 1px solid var(--line); border-radius: 24px; padding: 16px; box-shadow: 0 1px 2px rgba(11, 31, 42, .04); }
+.card.hot { border-color: rgba(255, 176, 32, .6); box-shadow: 0 0 0 4px rgba(255, 176, 32, .12); }
+.card.flash { animation: flash 1.6s var(--ease) 2; }
+@keyframes flash { 50% { box-shadow: 0 0 0 6px rgba(18, 198, 232, .35); } }
+.row { display: flex; align-items: center; gap: 12px; }
+.row .grow { flex: 1; min-width: 0; }
+.eyebrow { font: 800 11px/1 var(--body); letter-spacing: .14em; text-transform: uppercase; color: var(--mute); }
+.title { font: 800 17px/1.2 var(--display); font-stretch: 110%; margin-top: 6px; }
+.meta { color: var(--mute); font-size: 13px; font-weight: 600; margin-top: 4px; }
+.money { font: 850 22px/1 var(--display); font-stretch: 105%; font-variant-numeric: tabular-nums; }
+.money small { font-size: 11px; font-family: var(--body); color: var(--mute); margin-right: 3px; font-weight: 800; }
+.tag { display: inline-flex; align-items: center; gap: 5px; height: 24px; padding: 0 9px; border-radius: 99px; font-size: 11.5px; font-weight: 800; background: var(--bg); color: var(--ink-2); }
+.tag.amber { background: rgba(255, 176, 32, .16); color: #8a5a00; }
+.tag.good { background: rgba(15, 174, 140, .12); color: #07715b; }
+.tag.bad { background: rgba(229, 72, 77, .12); color: #b3262b; }
+.tag.aqua { background: rgba(18, 198, 232, .12); color: #0a7c93; }
+.clock { font-variant-numeric: tabular-nums; }
+.facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 12px 0; }
+.fact { background: var(--bg); border-radius: 14px; padding: 10px 12px; }
+.fact small { display: block; font-size: 11px; font-weight: 800; color: var(--mute); text-transform: uppercase; letter-spacing: .08em; }
+.fact b { display: block; margin-top: 4px; font-size: 14px; font-weight: 750; overflow-wrap: anywhere; }
+.acts { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.btn { flex: 1; min-height: 48px; padding: 0 16px; border-radius: 16px; font-weight: 800; font-size: 14.5px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: transform .15s var(--ease), opacity .2s; text-decoration: none; white-space: nowrap; }
+.btn:active { transform: scale(.975); }
+.btn:disabled { opacity: .5; cursor: default; }
+.btn.go { background: var(--grad); color: #fff; box-shadow: 0 14px 28px -16px rgba(20, 110, 200, .8); }
+.btn.dark { background: var(--ink); color: #fff; }
+.btn.ghost { background: var(--bg); color: var(--ink); border: 1px solid var(--line); }
+.btn.no { background: rgba(229, 72, 77, .1); color: #b3262b; }
+.btn.sm { min-height: 38px; flex: none; font-size: 13px; border-radius: 12px; padding: 0 12px; }
+.empty { text-align: center; padding: 28px 16px; color: var(--mute); }
+.empty b { display: block; color: var(--ink); font: 800 16px/1.3 var(--display); font-stretch: 110%; margin-bottom: 6px; }
+
+.field { display: block; margin-top: 10px; }
+.field > span { display: block; font-size: 11.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--mute); margin-bottom: 6px; }
+.in { width: 100%; min-height: 48px; padding: 12px 14px; border-radius: 14px; border: 1.5px solid var(--line); background: var(--paper); outline: none; font-size: 15px; transition: border-color .2s, box-shadow .2s; }
+.in:focus { border-color: var(--aqua); box-shadow: 0 0 0 4px rgba(18, 198, 232, .14); }
+textarea.in { min-height: 84px; resize: vertical; }
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 10px; }
+.cols3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0 10px; }
+.sw { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); }
+.sw:first-of-type { border-top: 0; }
+.sw span { flex: 1; font-weight: 700; font-size: 14.5px; }
+.sw span small { display: block; font-weight: 600; font-size: 12.5px; color: var(--mute); }
+.sw input { appearance: none; -webkit-appearance: none; width: 50px; height: 30px; border-radius: 99px; background: #d7e3e8; position: relative; cursor: pointer; transition: background .25s; flex: none; }
+.sw input::after { content: ''; position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: #fff; box-shadow: 0 2px 6px rgba(0, 0, 0, .2); transition: transform .3s var(--ease); }
+.sw input:checked { background: var(--aqua); }
+.sw input:checked::after { transform: translateX(20px); }
+
+.code { display: flex; gap: 8px; margin-top: 10px; }
+.code input { width: 100%; min-height: 56px; text-align: center; font: 850 26px/1 var(--display); letter-spacing: .4em; border-radius: 16px; border: 1.5px solid var(--line); outline: none; }
+.code input:focus { border-color: var(--aqua); }
+.err { color: #b3262b; font-size: 13px; font-weight: 700; margin-top: 8px; }
+
+.veh { display: grid; grid-template-columns: 92px 1fr; gap: 12px; align-items: center; }
+.veh .art { height: 64px; border-radius: 16px; background: linear-gradient(135deg, #e6fbf8, #e3f1ff); display: grid; place-items: center; overflow: hidden; }
+.veh .art img { width: 100%; height: 100%; object-fit: cover; }
+.veh .art svg { width: 76px; }
+
+.sheet { position: fixed; inset: 0; z-index: 60; display: none; }
+.sheet.on { display: block; }
+.scrim { position: absolute; inset: 0; background: rgba(6, 22, 28, .45); opacity: 0; transition: opacity .3s; }
+.sheet.show .scrim { opacity: 1; }
+.panel { position: absolute; left: 0; right: 0; bottom: 0; max-height: 92vh; background: var(--bg); border-radius: 28px 28px 0 0; display: flex; flex-direction: column; transform: translateY(100%); transition: transform .45s var(--ease); }
+.sheet.show .panel { transform: none; }
+.panel-h { padding: 16px 18px 10px; display: flex; align-items: center; gap: 10px; }
+.panel-h h3 { flex: 1; font-size: 19px; }
+.panel-b { overflow-y: auto; padding: 0 18px 18px; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+.panel-f { padding: 12px 18px calc(12px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--line); background: var(--paper); display: flex; gap: 8px; }
+.x { width: 38px; height: 38px; border-radius: 50%; background: var(--paper); border: 1px solid var(--line); display: grid; place-items: center; font-size: 20px; }
+@media (min-width: 860px) {
+  .panel { left: auto; top: 12px; bottom: 12px; right: 12px; width: 520px; max-height: none; border-radius: 28px; transform: translateX(110%); }
+}
+.toast { position: fixed; left: 50%; bottom: calc(22px + env(safe-area-inset-bottom, 0px)); z-index: 90; transform: translate(-50%, 20px); opacity: 0; background: var(--ink); color: #fff; padding: 12px 18px; border-radius: 99px; font-weight: 700; font-size: 14px; transition: all .35s var(--ease); pointer-events: none; max-width: 90vw; text-align: center; }
+.toast.on { opacity: 1; transform: translate(-50%, 0); }
+.toast.bad { background: #b3262b; }
+.skel { height: 120px; border-radius: 24px; background: linear-gradient(90deg, #e7f3f2 25%, #f5fbfb 45%, #e7f3f2 65%); background-size: 300% 100%; animation: sh 1.3s linear infinite; margin-top: 12px; }
+@keyframes sh { from { background-position: 100% 0; } to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+</style>
+</head>
+<body>
+<header class="top"><div class="top-in">
+  <a class="brand" href="/carhire"><i><svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13h14l-1.5-5a2 2 0 0 0-2-1.5h-7a2 2 0 0 0-2 1.5z"/><path d="M4 13h16v4H4z"/></svg></i><span><b>Fleet console</b><small id="op-sub">Cabana Drive</small></span></a>
+  <span class="sp"></span>
+  <a class="pill" href="/help" data-cbn-support>Help</a>
+</div></header>
+
+<main class="wrap">
+  <div id="v-load"><div class="skel"></div><div class="skel"></div></div>
+
+  <section id="v-auth" hidden class="card" style="margin-top:20px;padding:24px">
+    <div class="eyebrow">Operators</div>
+    <h1 style="font-size:28px;margin-top:8px">Sign in to run your fleet</h1>
+    <p class="meta" style="font-size:15px;margin:10px 0 18px">Answer bookings, hand over keys with the renter’s code, offer cars to people asking for one, and set your own prices. Cabana takes nothing.</p>
+    <a class="btn go" href="/auth?next=/partner-fleet">Sign in</a>
+  </section>
+
+  <section id="v-none" hidden class="card" style="margin-top:20px;padding:24px">
+    <div class="eyebrow">No fleet on this account</div>
+    <h1 style="font-size:28px;margin-top:8px">List your fleet on Cabana Drive</h1>
+    <p class="meta" style="font-size:15px;margin:10px 0 18px">Apply once with your business details and first car. When the Cabana desk has verified you, renters across Africa can book you directly, and you keep 100% of every hire.</p>
+    <a class="btn go" href="/list-your-fleet">Apply to list your fleet</a>
+  </section>
+
+  <div id="v-live" hidden>
+    <section class="hero">
+      <div class="k" id="h-k">Cabana Drive · operator</div>
+      <h1 id="h-name">Your fleet</h1>
+      <p id="h-note">Renters pay you directly. Cabana adds no fee and takes no commission.</p>
+      <div class="kpis">
+        <div class="kpi"><b id="k-wait">0</b><small>Waiting on you</small></div>
+        <div class="kpi"><b id="k-up">0</b><small>Confirmed ahead</small></div>
+        <div class="kpi"><b id="k-val">—</b><small>Booked value</small></div>
+        <div class="kpi"><b id="k-earn">—</b><small>Earned on Cabana</small></div>
+      </div>
+    </section>
+
+    <nav class="tabs" role="tablist">
+      <button class="tab" role="tab" data-tab="today" aria-selected="true">Today <em id="t-today" hidden></em></button>
+      <button class="tab" role="tab" data-tab="asks">Car requests <em id="t-asks" hidden></em></button>
+      <button class="tab" role="tab" data-tab="fleet">Fleet</button>
+      <button class="tab" role="tab" data-tab="history">History</button>
+      <button class="tab" role="tab" data-tab="settings">Settings</button>
+    </nav>
+
+    <section class="pane on" id="p-today"></section>
+    <section class="pane" id="p-asks"></section>
+    <section class="pane" id="p-fleet"></section>
+    <section class="pane" id="p-history"></section>
+    <section class="pane" id="p-settings"></section>
+  </div>
+</main>
+
+<div class="sheet" id="sheet"><div class="scrim" data-close></div><div class="panel" role="dialog" aria-modal="true">
+  <div class="panel-h"><h3 id="sh-t"></h3><button class="x" data-close aria-label="Close">×</button></div>
+  <div class="panel-b" id="sh-b"></div>
+  <div class="panel-f" id="sh-f"></div>
+</div></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="/vendor-supabase-2.112.3.js"></script>
+<script src="/apa-session.js"></script>
+<script>
+(function () {
+  'use strict';
+  var SUPA_URL = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
+  var SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
+  var sb = null;
+  try { sb = (window.ApaSession && ApaSession.client && ApaSession.client()) || window.supabase.createClient(SUPA_URL, SUPA_KEY); } catch (e) {}
+
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  /* Car hire amounts are stored as minor units (×100) for every currency. */
+  function money(minor, cur) {
+    cur = String(cur || B.op.currency_code || 'KES').toUpperCase();
+    var v = Number(minor || 0) / 100;
+    try { return new Intl.NumberFormat('en', { style: 'currency', currency: cur, maximumFractionDigits: v % 1 ? 2 : 0 }).format(v); }
+    catch (e) { return cur + ' ' + Math.round(v).toLocaleString(); }
+  }
+  function moneyHTML(minor, cur) {
+    cur = String(cur || B.op.currency_code || 'KES').toUpperCase();
+    return '<small>' + esc(cur) + '</small>' + esc(Math.round(Number(minor || 0) / 100).toLocaleString('en'));
+  }
+  function major(v) { var n = Number(String(v == null ? '' : v).replace(/[^\d.]/g, '')); return isFinite(n) && n > 0 ? Math.round(n * 100) : null; }
+  function dt(iso) { if (!iso) return '—'; var d = new Date(iso); return d.toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); }
+  function ago(iso) {
+    var m = Math.round((new Date(iso).getTime() - Date.now()) / 60000);
+    if (m <= 0) return 'now';
+    if (m < 60) return m + ' min';
+    if (m < 1440) return Math.floor(m / 60) + ' h ' + (m % 60) + ' min';
+    return Math.round(m / 1440) + ' days';
+  }
+  function toast(msg, bad) { var t = $('toast'); t.textContent = msg; t.className = 'toast on' + (bad ? ' bad' : ''); clearTimeout(toast.t); toast.t = setTimeout(function () { t.className = 'toast'; }, 3400); }
+  function buzz() { try { navigator.vibrate && navigator.vibrate(18); } catch (e) {} }
+
+  var ERR = {
+    not_an_operator: 'This account has no fleet on Cabana yet.',
+    booking_not_found: 'That booking is no longer yours.',
+    already_answered: 'That booking has already been answered.',
+    vehicle_booked: 'That car is already booked for those dates.',
+    bad_step: 'That step is not available for this booking now.',
+    code_locked: 'Too many wrong codes. Call the renter or the Cabana desk.',
+    operator_not_verified: 'Your account is still being verified by the Cabana desk.',
+    request_closed: 'That request has closed.',
+    request_out_of_area: 'That request is outside your country.',
+    vehicle_unavailable: 'That car is not active.',
+    price_required: 'Add a daily rate.',
+    total_out_of_range: 'The total should sit between one day and three times the daily rate for the whole hire.',
+    vehicle_incomplete: 'Add the make, model and daily rate.',
+    vehicle_not_found: 'That car is no longer on your fleet.',
+    dates_invalid: 'Check the dates.'
+  };
+  function friendly(e) { var c = e && (e.message || e.code) || ''; return ERR[c] || 'Could not reach Cabana. Check your connection and try again.'; }
+  function rpc(name, args) { return sb.rpc(name, args || {}).then(function (r) { if (r.error) throw r.error; return r.data; }); }
+
+  var B = { op: {}, fleet: [], requested: [], upcoming: [], active: [], recent: [], requests: [], stats: {} };
+  var tab = 'today', q = new URLSearchParams(location.search), focusRef = (q.get('booking') || '').toUpperCase(), focusReq = (q.get('request') || '').toUpperCase();
+
+  function show(id) { ['v-load', 'v-auth', 'v-none', 'v-live'].forEach(function (v) { $(v).hidden = v !== id; }); }
+
+  try {
+    ApaSession.ready(function (st) {
+      if (!st || st.status !== 'user') { show('v-auth'); return; }
+      load(true);
+    });
+  } catch (e) { show('v-auth'); }
+
+  var pollT = null;
+  function load(first) {
+    if (!sb) { show('v-auth'); return; }
+    return rpc('car_operator_board').then(function (b) {
+      B = Object.assign({ op: {}, fleet: [], requested: [], upcoming: [], active: [], recent: [], requests: [], stats: {} }, b || {});
+      B.op = b.operator || {};
+      show('v-live');
+      paint();
+      if (first) {
+        if (focusReq) { tab = 'asks'; select(); var rq = B.requests.filter(function (x) { return x.ref === focusReq; })[0]; if (rq) offerSheet(rq); else toast('That request has closed or been matched.'); }
+        else if (focusRef) setTimeout(function () { var el = document.querySelector('[data-ref="' + focusRef + '"]'); if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.classList.add('flash'); } }, 300);
+      }
+      clearTimeout(pollT); pollT = setTimeout(load, B.requested.length ? 15000 : 45000);
+    }, function (e) {
+      if ((e && e.message) === 'not_an_operator') { show('v-none'); return; }
+      if (first) show('v-none');
+      toast(friendly(e), true);
+    });
+  }
+  document.addEventListener('visibilitychange', function () { if (!document.hidden && !$('v-live').hidden) load(); });
+
+  /* ── painting ─────────────────────────────────────────────────────── */
+  function paint() {
+    var o = B.op, s = B.stats || {};
+    $('op-sub').textContent = (o.name || 'Your fleet') + (o.city ? ' · ' + o.city : '');
+    $('h-name').textContent = o.name || 'Your fleet';
+    $('h-k').textContent = (o.verified ? 'Verified operator' : 'Awaiting verification') + ' · ' + (o.city || '') + (o.country_code ? ', ' + o.country_code : '');
+    $('h-note').textContent = o.verified
+      ? 'Renters pay you directly. Cabana adds no fee and takes no commission. Answer within ' + (o.respond_window_mins || 30) + ' minutes to keep your place at the top.'
+      : 'The Cabana desk is checking your documents. Add your cars now; they go live the moment you are verified.';
+    $('k-wait').textContent = B.requested.length;
+    $('k-up').textContent = B.upcoming.length + B.active.length;
+    $('k-val').textContent = money(s.upcoming_value || 0);
+    $('k-earn').textContent = money(s.earned || 0);
+    var t1 = $('t-today'), t2 = $('t-asks');
+    t1.hidden = !B.requested.length; t1.textContent = B.requested.length;
+    t2.hidden = !B.requests.length; t2.textContent = B.requests.length;
+    paintToday(); paintAsks(); paintFleet(); paintHistory(); paintSettings();
+  }
+
+  function vName(b) { var v = b.vehicle || {}; return [v.make, v.model].filter(Boolean).join(' ') || 'Vehicle'; }
+  function facts(b) {
+    return '<div class="facts">' +
+      '<div class="fact"><small>Collect</small><b>' + esc(dt(b.pickup_at)) + '</b></div>' +
+      '<div class="fact"><small>Return</small><b>' + esc(dt(b.return_at)) + '</b></div>' +
+      '<div class="fact"><small>Renter</small><b>' + esc(b.customer_name || '—') + (b.driver_age ? ' · ' + esc(b.driver_age) + ' yrs' : '') + '</b></div>' +
+      '<div class="fact"><small>Handover</small><b>' + (b.delivery ? 'Deliver to ' + esc(b.delivery_label || 'renter') : 'At your depot') + (b.with_chauffeur ? ' · with driver' : '') + '</b></div>' +
+    '</div>' + (b.notes ? '<p class="meta" style="background:var(--bg);border-radius:12px;padding:10px 12px;color:var(--ink-2)">“' + esc(b.notes) + '”</p>' : '');
+  }
+  function contact(b) {
+    if (!b.phone) return '';
+    var d = String(b.phone).replace(/[^\d+]/g, '');
+    return '<a class="btn ghost sm" href="tel:' + esc(d) + '">Call</a><a class="btn ghost sm" href="https://wa.me/' + esc(d.replace(/^\+/, '')) + '" target="_blank" rel="noopener">WhatsApp</a>';
+  }
+  function head(b, tag) {
+    return '<div class="row"><div class="grow"><div class="eyebrow">' + esc(b.ref) + ' · ' + tag + '</div><div class="title">' + esc(vName(b)) + '</div>' +
+      '<div class="meta">' + esc(b.days) + (b.days === 1 ? ' day' : ' days') + (b.pay_method ? ' · pays by ' + esc(b.pay_method) : '') + (b.paid_at ? ' · paid' : '') + '</div></div>' +
+      '<div class="money">' + moneyHTML(b.total, b.currency) + '</div></div>';
+  }
+
+  function paintToday() {
+    var h = '';
+    if (B.requested.length) {
+      h += '<div class="sec"><h2>Answer these</h2><small>Renters are waiting</small></div><div class="grid two">' + B.requested.map(function (b) {
+        return '<div class="card hot" data-ref="' + esc(b.ref) + '">' + head(b, '<span class="clock">closes in ' + esc(ago(b.expires_at)) + '</span>') + facts(b) +
+          '<div class="acts"><button class="btn no" data-decline="' + b.id + '">Decline</button><button class="btn go" data-accept="' + b.id + '">Confirm hire</button></div></div>';
+      }).join('') + '</div>';
+    }
+    var soon = B.upcoming.slice().sort(function (a, b) { return new Date(a.pickup_at) - new Date(b.pickup_at); });
+    h += '<div class="sec"><h2>Hand over the keys</h2><small>' + (soon.length ? soon.length + ' confirmed' : 'Nothing confirmed yet') + '</small></div>';
+    h += soon.length ? '<div class="grid two">' + soon.map(function (b) {
+      var late = new Date(b.pickup_at).getTime() < Date.now() - 2 * 3600e3;
+      return '<div class="card" data-ref="' + esc(b.ref) + '">' + head(b, 'collects in ' + esc(ago(b.pickup_at))) + facts(b) +
+        '<div class="field"><span>Renter’s handover code</span><div class="code"><input inputmode="numeric" maxlength="4" autocomplete="off" placeholder="••••" data-code="' + b.id + '"></div><div class="err" data-code-err="' + b.id + '" hidden></div></div>' +
+        '<div class="acts"><button class="btn dark" data-collect="' + b.id + '">Keys handed over</button></div>' +
+        '<div class="acts">' + contact(b) + (b.paid_at ? '' : '<button class="btn ghost sm" data-paid="' + b.id + '">Mark paid</button>') +
+          (late ? '<button class="btn ghost sm" data-noshow="' + b.id + '">No-show</button>' : '') + '<button class="btn ghost sm" data-cancelop="' + b.id + '">Cancel</button></div></div>';
+    }).join('') + '</div>' : '<div class="card empty"><b>No hand-overs coming up</b>Confirmed hires appear here with the renter’s details. The renter gives you a four-digit code at collection.</div>';
+    if (B.active.length) {
+      h += '<div class="sec"><h2>Out on the road</h2><small>' + B.active.length + ' car' + (B.active.length === 1 ? '' : 's') + '</small></div><div class="grid two">' + B.active.map(function (b) {
+        return '<div class="card" data-ref="' + esc(b.ref) + '">' + head(b, 'due back ' + esc(dt(b.return_at))) +
+          '<div class="acts">' + contact(b) + (b.paid_at ? '' : '<button class="btn ghost sm" data-paid="' + b.id + '">Mark paid</button>') + '</div>' +
+          '<label class="field"><span>Return note (optional)</span><input class="in" data-rnote="' + b.id + '" placeholder="Fuel full, no new marks"></label>' +
+          '<div class="acts"><button class="btn go" data-returned="' + b.id + '">Car is back</button></div></div>';
+      }).join('') + '</div>';
+    }
+    $('p-today').innerHTML = h;
+  }
+
+  function paintAsks() {
+    var o = B.op, list = B.requests;
+    var h = '<div class="sec"><h2>People asking for a car</h2><small>In your area, open now</small></div>';
+    if (!o.verified) h += '<div class="card empty"><b>Verification first</b>Once the Cabana desk verifies you, requests from renters near you appear here and you can answer with a priced car.</div>';
+    else if (!list.length) h += '<div class="card empty"><b>No open requests</b>When a renter can’t find the right car listed, they post a request. It lands here, and your offer goes straight to their phone.</div>';
+    else h += '<div class="grid two">' + list.map(function (r) {
+      var mine = (r.offers || []).filter(function (f) { return f.mine; })[0];
+      var others = (r.offers || []).length - (mine ? 1 : 0);
+      return '<div class="card" data-rq="' + esc(r.ref) + '"><div class="row"><div class="grow"><div class="eyebrow">' + esc(r.ref) + ' · closes in ' + esc(ago(r.expires_at)) + '</div>' +
+        '<div class="title">' + esc(r.customer_first_name || 'A renter') + ' wants ' + esc(r['class'] && r['class'] !== 'any' ? r['class'].replace(/_/g, ' ') : 'a car') + '</div>' +
+        '<div class="meta">' + esc(r.pickup_label || r.city || '') + '</div></div>' +
+        (r.budget_day ? '<div style="text-align:right"><div class="money">' + moneyHTML(r.budget_day, r.currency) + '</div><div class="meta">budget / day</div></div>' : '') + '</div>' +
+        '<div class="facts"><div class="fact"><small>From</small><b>' + esc(dt(r.pickup_at)) + '</b></div><div class="fact"><small>To</small><b>' + esc(dt(r.return_at)) + ' · ' + esc(r.days) + 'd</b></div>' +
+        '<div class="fact"><small>Needs</small><b>' + esc((r.seats_min || 1) + '+ seats' + (r.transmission && r.transmission !== 'any' ? ' · ' + r.transmission : '')) + '</b></div>' +
+        '<div class="fact"><small>Extras</small><b>' + esc([r.with_chauffeur ? 'with driver' : 'self-drive', r.delivery ? 'delivered' : 'collects'].join(' · ')) + '</b></div></div>' +
+        (r.trip_label ? '<span class="tag aqua">' + esc(r.trip_label) + '</span> ' : '') + (others ? '<span class="tag">' + others + ' other offer' + (others === 1 ? '' : 's') + '</span>' : '') +
+        (r.notes ? '<p class="meta" style="color:var(--ink-2)">“' + esc(r.notes) + '”</p>' : '') +
+        '<div class="acts"><button class="btn ' + (mine ? 'ghost' : 'go') + '" data-offer="' + esc(r.ref) + '">' + (mine ? 'Your offer: ' + esc(money(mine.total, mine.currency)) + ' · change' : 'Offer a car') + '</button></div></div>';
+    }).join('') + '</div>';
+    $('p-asks').innerHTML = h;
+  }
+
+  var CLASSES = [['economy', 'Economy'], ['compact', 'Saloon'], ['crossover', 'Crossover'], ['suv4x4', 'SUV / 4×4'], ['safari', 'Safari 4×4'], ['luxury', 'Executive'], ['van', 'Van / minibus'], ['pickup', 'Pickup']];
+  var BODIES = [['sedan', 'Sedan'], ['hatchback', 'Hatchback'], ['wagon', 'Wagon'], ['suv', 'SUV'], ['minivan', 'Minivan'], ['pickup', 'Pickup']];
+  var CAR_SVG = '<svg viewBox="0 0 120 50" fill="none"><path d="M8 36c0-5 3-8 8-9l12-2 10-10c2-2 4-3 7-3h32c4 0 7 2 9 4l9 9 12 2c4 1 6 4 6 8v2H8z" fill="url(#pf)"/><circle cx="32" cy="38" r="7" fill="#0b1f2a"/><circle cx="90" cy="38" r="7" fill="#0b1f2a"/><defs><linearGradient id="pf" x1="0" x2="1"><stop stop-color="#2ef2d0"/><stop offset="1" stop-color="#3d7bff"/></linearGradient></defs></svg>';
+  function statusTag(s) { return s === 'active' ? '<span class="tag good">Live</span>' : s === 'review' ? '<span class="tag amber">In review</span>' : s === 'paused' ? '<span class="tag">Paused</span>' : s === 'rejected' ? '<span class="tag bad">Not approved</span>' : '<span class="tag">' + esc(s) + '</span>'; }
+  function paintFleet() {
+    var h = '<div class="sec"><h2>Your cars</h2><button class="btn dark sm" data-addcar>+ Add a car</button></div>';
+    h += B.fleet.length ? '<div class="grid two">' + B.fleet.map(function (v) {
+      var ph = Array.isArray(v.photos) && v.photos[0];
+      return '<div class="card"><div class="veh"><div class="art">' + (ph ? '<img src="' + esc(ph) + '" alt="" loading="lazy">' : CAR_SVG) + '</div><div>' +
+        '<div class="row"><div class="grow"><div class="title" style="margin:0">' + esc([v.make, v.model].join(' ')) + '</div><div class="meta">' + esc([v.year, v.plate, v.transmission].filter(Boolean).join(' · ')) + '</div></div>' + statusTag(v.status) + '</div>' +
+        '<div class="meta" style="color:var(--ink);font-weight:800">' + esc(money(v.day_rate)) + ' / day' + (v.instant_book ? ' · <span class="tag amber">Instant</span>' : '') + '</div></div></div>' +
+        '<div class="acts"><button class="btn ghost sm" data-edit="' + v.id + '">Edit</button>' +
+          (v.status === 'active' ? '<button class="btn ghost sm" data-vstatus="' + v.id + '" data-to="paused">Pause</button>' : v.status === 'paused' ? '<button class="btn ghost sm" data-vstatus="' + v.id + '" data-to="active">Make live</button>' : '') +
+          '<button class="btn ghost sm" data-block="' + v.id + '">Block dates</button></div></div>';
+    }).join('') + '</div>' : '<div class="card empty"><b>Add your first car</b>Set your own daily rate, deposit and rules. The Cabana desk checks each new car before it goes live.</div>';
+    $('p-fleet').innerHTML = h;
+  }
+
+  function paintHistory() {
+    var list = B.recent;
+    var tagOf = { completed: 'good', cancelled: 'bad', declined: 'bad', expired: 'amber', no_show: 'amber' };
+    $('p-history').innerHTML = '<div class="sec"><h2>Recent hires</h2><small>' + (B.stats.completed || 0) + ' completed · ' + (B.stats.missed || 0) + ' missed</small></div>' +
+      (list.length ? '<div class="card">' + list.map(function (b, i) {
+        return '<div class="row" style="padding:12px 0;' + (i ? 'border-top:1px solid var(--line)' : '') + '"><div class="grow"><div style="font-weight:800">' + esc(vName(b)) + ' · ' + esc(b.customer_name || '') + '</div>' +
+          '<div class="meta">' + esc(b.ref) + ' · ' + esc(dt(b.pickup_at)) + (b.rating ? ' · ' + '★'.repeat(b.rating) : '') + '</div></div>' +
+          '<span class="tag ' + (tagOf[b.status] || '') + '">' + esc(String(b.status).replace('_', '-')) + '</span><div class="money" style="font-size:17px;min-width:96px;text-align:right">' + moneyHTML(b.total, b.currency) + '</div></div>';
+      }).join('') + '</div>' : '<div class="card empty"><b>Nothing yet</b>Finished, cancelled and missed hires are listed here.</div>');
+  }
+
+  function paintSettings() {
+    var o = B.op;
+    var cur = o.currency_code || 'KES';
+    $('p-settings').innerHTML = '<div class="grid two"><div class="card"><div class="sec" style="margin-top:0"><h2>How renters pay you</h2></div>' +
+      '<div class="cols"><label class="field"><span>M-Pesa till</span><input class="in" id="s-till" inputmode="numeric" value="' + esc(o.mpesa_till || '') + '"></label>' +
+      '<label class="field"><span>Paybill</span><input class="in" id="s-paybill" inputmode="numeric" value="' + esc(o.mpesa_paybill || '') + '"></label></div>' +
+      '<label class="field"><span>Paybill account</span><input class="in" id="s-acct" value="' + esc(o.mpesa_account || '') + '"></label>' +
+      '<div class="sw"><span>Cash at collection</span><input type="checkbox" id="s-cash"' + (o.accepts_cash ? ' checked' : '') + '></div>' +
+      '<div class="sw"><span>Card at collection</span><input type="checkbox" id="s-card"' + (o.accepts_card ? ' checked' : '') + '></div>' +
+      '<label class="field"><span>Collection address</span><input class="in" id="s-addr" value="' + esc(o.pickup_address || '') + '" placeholder="Depot, street, landmark"></label>' +
+      '<div class="cols"><label class="field"><span>Phone</span><input class="in" id="s-phone" value="' + esc(o.phone || '') + '"></label><label class="field"><span>WhatsApp</span><input class="in" id="s-wa" value="' + esc(o.whatsapp || '') + '"></label></div>' +
+      '</div><div class="card"><div class="sec" style="margin-top:0"><h2>How you take bookings</h2></div>' +
+      '<div class="sw"><span>Instant confirm<small>Every free car books straight away, no waiting on you</small></span><input type="checkbox" id="s-instant"' + (o.instant_confirm ? ' checked' : '') + '></div>' +
+      '<label class="field"><span>Answer within (minutes)</span><input class="in" id="s-window" type="number" min="10" max="1440" value="' + esc(o.respond_window_mins || 30) + '"></label>' +
+      '<div class="sw"><span>Deliver cars to renters</span><input type="checkbox" id="s-deliv"' + (o.delivers ? ' checked' : '') + '></div>' +
+      '<div class="cols"><label class="field"><span>Delivery fee (' + esc(cur) + ')</span><input class="in" id="s-dfee" inputmode="decimal" value="' + esc(o.delivery_fee_minor ? o.delivery_fee_minor / 100 : '') + '"></label>' +
+      '<label class="field"><span>Per km (' + esc(cur) + ')</span><input class="in" id="s-dkm" inputmode="decimal" value="' + esc(o.delivery_per_km_minor ? o.delivery_per_km_minor / 100 : '') + '"></label></div>' +
+      '<label class="field"><span>About your fleet</span><textarea class="in" id="s-about" maxlength="600">' + esc(o.about || '') + '</textarea></label>' +
+      '<div class="sw"><span>Pause new bookings<small>' + (o.paused_until && new Date(o.paused_until) > new Date() ? 'Paused until ' + esc(dt(o.paused_until)) : 'Renters can book you now') + '</small></span><input type="checkbox" id="s-pause"' + (o.paused_until && new Date(o.paused_until) > new Date() ? ' checked' : '') + '></div>' +
+      '</div></div><div class="acts" style="max-width:420px;margin-left:auto"><button class="btn go" id="s-save">Save settings</button></div>';
+  }
+
+  /* ── actions ──────────────────────────────────────────────────────── */
+  function busy(btn, on, label) { if (!btn) return; btn.disabled = on; if (on) { btn.dataset.l = btn.textContent; btn.textContent = label || 'Saving…'; } else if (btn.dataset.l) btn.textContent = btn.dataset.l; }
+  function act(btn, p, ok) {
+    busy(btn, true);
+    return p.then(function (r) { buzz(); if (ok) toast(typeof ok === 'function' ? ok(r) : ok); load(); return r; }, function (e) { busy(btn, false); toast(friendly(e), true); throw e; });
+  }
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest('button,[data-close]'); if (!t) return;
+    var d = t.dataset;
+    if (d.close != null) { closeSheet(); return; }
+    if (d.tab) { tab = d.tab; select(); return; }
+    if (d.accept) { act(t, rpc('car_operator_respond', { p_booking: d.accept, p_accept: true, p_reason: null }), 'Confirmed. The renter has your details and their handover code.'); return; }
+    if (d.decline) { var why = prompt('Why decline? The renter sees this.', 'The car is not available for those dates.'); if (why == null) return; act(t, rpc('car_operator_respond', { p_booking: d.decline, p_accept: false, p_reason: why }), 'Declined. The renter can pick another car.').catch(function () {}); return; }
+    if (d.collect) {
+      var inp = document.querySelector('[data-code="' + d.collect + '"]'), er = document.querySelector('[data-code-err="' + d.collect + '"]');
+      var code = (inp && inp.value || '').replace(/\D/g, '');
+      if (code.length !== 4) { er.hidden = false; er.textContent = 'Ask the renter for their four-digit code.'; inp && inp.focus(); return; }
+      busy(t, true, 'Checking…');
+      rpc('car_operator_booking_update', { p_booking: d.collect, p_action: 'collected', p: { code: code } }).then(function (r) {
+        if (r && r.error === 'code_wrong') { busy(t, false); er.hidden = false; er.textContent = 'That code does not match. ' + r.attempts_left + ' tries left.'; return; }
+        buzz(); toast('Keys handed over. Drive safe to them.'); load();
+      }, function (err) { busy(t, false); toast(friendly(err), true); });
+      return;
+    }
+    if (d.returned) { var n = document.querySelector('[data-rnote="' + d.returned + '"]'); act(t, rpc('car_operator_booking_update', { p_booking: d.returned, p_action: 'returned', p: { note: n ? n.value : '' } }), 'Hire complete. The renter is asked to rate it.').catch(function () {}); return; }
+    if (d.paid) { act(t, rpc('car_operator_booking_update', { p_booking: d.paid, p_action: 'paid', p: {} }), 'Marked as paid.').catch(function () {}); return; }
+    if (d.noshow) { if (!confirm('Mark this renter as a no-show? The car becomes free again.')) return; act(t, rpc('car_operator_booking_update', { p_booking: d.noshow, p_action: 'no_show', p: {} }), 'Marked as a no-show.').catch(function () {}); return; }
+    if (d.cancelop) { var r2 = prompt('Cancel this confirmed hire? Tell the renter why.', ''); if (r2 == null) return; act(t, rpc('car_operator_booking_update', { p_booking: d.cancelop, p_action: 'cancel', p: { reason: r2 } }), 'Cancelled. The renter has been told.').catch(function () {}); return; }
+    if (d.offer) { var rq = B.requests.filter(function (x) { return x.ref === d.offer; })[0]; if (rq) offerSheet(rq); return; }
+    if (d.addcar != null) { carSheet(null); return; }
+    if (d.edit) { carSheet(B.fleet.filter(function (v) { return v.id === d.edit; })[0]); return; }
+    if (d.vstatus) { act(t, rpc('car_operator_vehicle_save', { p: { id: d.vstatus, status: d.to } }), d.to === 'active' ? 'Live again.' : 'Paused. Renters no longer see it.').catch(function () {}); return; }
+    if (d.block) { blockSheet(B.fleet.filter(function (v) { return v.id === d.block; })[0]); return; }
+    if (t.id === 's-save') { saveSettings(t); return; }
+  });
+
+  function select() {
+    document.querySelectorAll('.tab').forEach(function (b) { b.setAttribute('aria-selected', b.dataset.tab === tab ? 'true' : 'false'); });
+    document.querySelectorAll('.pane').forEach(function (p) { p.classList.toggle('on', p.id === 'p-' + tab); });
+  }
+
+  function saveSettings(btn) {
+    var v = function (id) { return $(id).value; }, c = function (id) { return $(id).checked; };
+    var p = { mpesa_till: v('s-till'), mpesa_paybill: v('s-paybill'), mpesa_account: v('s-acct'), accepts_cash: c('s-cash'), accepts_card: c('s-card'),
+      pickup_address: v('s-addr'), phone: v('s-phone'), whatsapp: v('s-wa'), instant_confirm: c('s-instant'), respond_window_mins: Number(v('s-window')) || 30,
+      delivers: c('s-deliv'), delivery_fee_minor: major(v('s-dfee')) || 0, delivery_per_km_minor: major(v('s-dkm')) || 0, about: v('s-about'),
+      paused_until: c('s-pause') ? (B.op.paused_until && new Date(B.op.paused_until) > new Date() ? B.op.paused_until : new Date(Date.now() + 30 * 864e5).toISOString()) : '' };
+    act(btn, rpc('car_operator_settings', { p: p }), 'Settings saved.').catch(function () {});
+  }
+
+  /* ── sheets ───────────────────────────────────────────────────────── */
+  function openSheet(title, body, foot) {
+    $('sh-t').textContent = title; $('sh-b').innerHTML = body; $('sh-f').innerHTML = foot || '';
+    var s = $('sheet'); s.classList.add('on'); requestAnimationFrame(function () { requestAnimationFrame(function () { s.classList.add('show'); }); });
+    document.body.style.overflow = 'hidden';
+  }
+  function closeSheet() {
+    var s = $('sheet'); s.classList.remove('show'); document.body.style.overflow = '';
+    setTimeout(function () { s.classList.remove('on'); }, 420);
+  }
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && $('sheet').classList.contains('on')) closeSheet(); });
+
+  function offerSheet(r) {
+    var free = B.fleet.filter(function (v) { return v.status === 'active'; });
+    var cur = B.op.currency_code || r.currency || 'KES';
+    openSheet('Offer a car to ' + (r.customer_first_name || 'the renter'),
+      '<p class="meta" style="margin-top:0">' + esc(r.days) + ' days · ' + esc(dt(r.pickup_at)) + ' → ' + esc(dt(r.return_at)) + (r.budget_day ? ' · budget ' + esc(money(r.budget_day, r.currency)) + '/day' : '') + '</p>' +
+      '<label class="field"><span>Car</span><select class="in" id="o-veh">' + free.map(function (v) { return '<option value="' + v.id + '" data-rate="' + v.day_rate + '" data-dep="' + (v.deposit || 0) + '">' + esc(v.make + ' ' + v.model + ' · ' + money(v.day_rate) + '/day') + '</option>'; }).join('') +
+        '<option value="">Another car (describe it)</option></select></label>' +
+      '<label class="field" id="o-label-f" hidden><span>Describe the car</span><input class="in" id="o-label" placeholder="Toyota Prado TX, 7 seats, 2019"></label>' +
+      '<div class="cols"><label class="field"><span>Daily rate (' + esc(cur) + ')</span><input class="in" id="o-rate" inputmode="decimal"></label><label class="field"><span>Deposit (' + esc(cur) + ')</span><input class="in" id="o-dep" inputmode="decimal"></label></div>' +
+      '<label class="field"><span>Total for the hire (' + esc(cur) + ')</span><input class="in" id="o-total" inputmode="decimal"></label>' +
+      '<label class="field"><span>A line to the renter</span><input class="in" id="o-note" maxlength="240" placeholder="Fresh service, free delivery in Westlands"></label><div class="err" id="o-err" hidden></div>',
+      '<button class="btn ghost" data-close>Cancel</button><button class="btn go" id="o-send">Send offer</button>');
+    function sync() {
+      var sel = $('o-veh'), opt = sel.options[sel.selectedIndex];
+      $('o-label-f').hidden = !!sel.value;
+      if (sel.value) { $('o-rate').value = Number(opt.dataset.rate) / 100; $('o-dep').value = Number(opt.dataset.dep) / 100; }
+      $('o-total').value = $('o-rate').value ? Math.round(Number($('o-rate').value) * r.days) : '';
+    }
+    $('o-veh').onchange = sync; $('o-rate').oninput = function () { $('o-total').value = $('o-rate').value ? Math.round(Number($('o-rate').value) * r.days) : ''; };
+    sync();
+    $('o-send').onclick = function () {
+      var sel = $('o-veh'), er = $('o-err');
+      var p = { vehicle_id: sel.value || null, vehicle_label: sel.value ? null : $('o-label').value, day_rate_minor: major($('o-rate').value), total_minor: major($('o-total').value), deposit_minor: major($('o-dep').value) || 0, note: $('o-note').value };
+      if (!p.day_rate_minor) { er.hidden = false; er.textContent = 'Add a daily rate.'; return; }
+      if (!sel.value && String(p.vehicle_label || '').trim().length < 3) { er.hidden = false; er.textContent = 'Describe the car you are offering.'; return; }
+      busy(this, true, 'Sending…');
+      var btn = this;
+      rpc('car_operator_request_offer', { p_request: r.id, p: p }).then(function () { buzz(); closeSheet(); toast('Offer sent. It is on the renter’s phone now.'); load(); },
+        function (e) { busy(btn, false); er.hidden = false; er.textContent = friendly(e); });
+    };
+  }
+
+  function opt(list, val) { return list.map(function (o) { return '<option value="' + o[0] + '"' + (o[0] === val ? ' selected' : '') + '>' + o[1] + '</option>'; }).join(''); }
+  function carSheet(v) {
+    v = v || {};
+    var cur = B.op.currency_code || 'KES', m = function (x) { return x ? x / 100 : ''; };
+    openSheet(v.id ? 'Edit ' + v.make + ' ' + v.model : 'Add a car',
+      (v.id && (v.status === 'review') ? '<p class="tag amber" style="margin:0 0 6px">The Cabana desk is reviewing this car</p>' : '') +
+      '<div class="cols"><label class="field"><span>Make</span><input class="in" id="c-make" value="' + esc(v.make || '') + '" placeholder="Toyota"></label><label class="field"><span>Model</span><input class="in" id="c-model" value="' + esc(v.model || '') + '" placeholder="Land Cruiser Prado"></label></div>' +
+      '<div class="cols3"><label class="field"><span>Year</span><input class="in" id="c-year" inputmode="numeric" value="' + esc(v.year || '') + '"></label><label class="field"><span>Plate</span><input class="in" id="c-plate" value="' + esc(v.plate || '') + '"></label><label class="field"><span>Colour</span><input class="in" id="c-colour" value="' + esc(v.colour || '') + '"></label></div>' +
+      '<div class="cols"><label class="field"><span>Class</span><select class="in" id="c-class">' + opt(CLASSES, v['class'] || 'economy') + '</select></label><label class="field"><span>Body</span><select class="in" id="c-body">' + opt(BODIES, v.body || 'sedan') + '</select></label></div>' +
+      '<div class="cols3"><label class="field"><span>Seats</span><input class="in" id="c-seats" inputmode="numeric" value="' + esc(v.seats || 5) + '"></label><label class="field"><span>Gearbox</span><select class="in" id="c-trans">' + opt([['automatic', 'Automatic'], ['manual', 'Manual']], v.transmission || 'automatic') + '</select></label><label class="field"><span>Drive</span><select class="in" id="c-drive">' + opt([['2wd', '2WD'], ['fwd', 'FWD'], ['awd', 'AWD'], ['4wd', '4WD']], v.drive || '2wd') + '</select></label></div>' +
+      '<div class="cols"><label class="field"><span>Fuel</span><select class="in" id="c-fuel">' + opt([['petrol', 'Petrol'], ['diesel', 'Diesel'], ['hybrid', 'Hybrid'], ['electric', 'Electric']], v.fuel || 'petrol') + '</select></label><label class="field"><span>Ground clearance (mm)</span><input class="in" id="c-clear" inputmode="numeric" value="' + esc(v.ground_clearance_mm || '') + '"></label></div>' +
+      '<div class="sec"><h2 style="font-size:16px">Your prices</h2><small>' + esc(cur) + ' · you keep all of it</small></div>' +
+      '<div class="cols"><label class="field"><span>Daily rate</span><input class="in" id="c-rate" inputmode="decimal" value="' + esc(m(v.day_rate)) + '"></label><label class="field"><span>Deposit</span><input class="in" id="c-dep" inputmode="decimal" value="' + esc(m(v.deposit)) + '"></label></div>' +
+      '<div class="cols"><label class="field"><span>Driver / day, city</span><input class="in" id="c-chm" inputmode="decimal" value="' + esc(m(v.chauffeur_uplift_metro)) + '"></label><label class="field"><span>Driver / day, upcountry</span><input class="in" id="c-chu" inputmode="decimal" value="' + esc(m(v.chauffeur_uplift_upcountry)) + '"></label></div>' +
+      '<div class="cols"><label class="field"><span>Weekly discount %</span><input class="in" id="c-wk" inputmode="numeric" value="' + esc(v.weekly_discount_pct || '') + '"></label><label class="field"><span>Monthly discount %</span><input class="in" id="c-mo" inputmode="numeric" value="' + esc(v.monthly_discount_pct || '') + '"></label></div>' +
+      '<div class="sec"><h2 style="font-size:16px">Rules</h2></div>' +
+      '<div class="cols3"><label class="field"><span>Min days</span><input class="in" id="c-mind" inputmode="numeric" value="' + esc(v.min_hire_days || 1) + '"></label><label class="field"><span>Min age</span><input class="in" id="c-age" inputmode="numeric" value="' + esc(v.min_driver_age || 23) + '"></label><label class="field"><span>Licence yrs</span><input class="in" id="c-lic" inputmode="numeric" value="' + esc(v.min_licence_years == null ? 2 : v.min_licence_years) + '"></label></div>' +
+      '<div class="cols"><label class="field"><span>Km per day (blank = unlimited)</span><input class="in" id="c-km" inputmode="numeric" value="' + esc(v.mileage_cap_km || '') + '"></label><label class="field"><span>Fuel policy</span><select class="in" id="c-fp">' + opt([['full_to_full', 'Full to full'], ['same_to_same', 'Same to same'], ['prepaid', 'Prepaid']], v.fuel_policy || 'full_to_full') + '</select></label></div>' +
+      '<div class="sw"><span>Instant book<small>Confirmed the moment a renter books</small></span><input type="checkbox" id="c-inst"' + (v.instant_book ? ' checked' : '') + '></div>' +
+      '<div class="sw"><span>Can be delivered</span><input type="checkbox" id="c-del"' + (v.delivery_ok !== false ? ' checked' : '') + '></div>' +
+      '<div class="sw"><span>Cross-border allowed</span><input type="checkbox" id="c-cross"' + (v.cross_border_ok ? ' checked' : '') + '></div>' +
+      '<label class="field"><span>Photo links (one per line)</span><textarea class="in" id="c-photos" placeholder="https://…">' + esc((v.photos || []).join('\n')) + '</textarea></label>' +
+      '<label class="field"><span>Description</span><textarea class="in" id="c-desc" maxlength="600">' + esc(v.description || '') + '</textarea></label><div class="err" id="c-err" hidden></div>',
+      '<button class="btn ghost" data-close>Cancel</button><button class="btn go" id="c-save">' + (v.id ? 'Save changes' : 'Send for review') + '</button>');
+    $('c-save').onclick = function () {
+      var g = function (id) { return $(id).value.trim(); }, n = function (id) { var x = parseInt(g(id), 10); return isFinite(x) ? x : null; };
+      var p = { id: v.id || null, make: g('c-make'), model: g('c-model'), year: n('c-year'), plate: g('c-plate'), colour: g('c-colour'), 'class': g('c-class'), body: g('c-body'),
+        seats: n('c-seats'), transmission: g('c-trans'), drive: g('c-drive'), fuel: g('c-fuel'), ground_clearance_mm: n('c-clear'),
+        day_rate: major(g('c-rate')), deposit: major(g('c-dep')) || 0, chauffeur_uplift_metro: major(g('c-chm')) || 0, chauffeur_uplift_upcountry: major(g('c-chu')) || 0,
+        weekly_discount_pct: n('c-wk') || 0, monthly_discount_pct: n('c-mo') || 0, min_hire_days: n('c-mind') || 1, min_driver_age: n('c-age') || 23, min_licence_years: n('c-lic') == null ? 2 : n('c-lic'),
+        mileage_cap_km: g('c-km') ? n('c-km') : '', fuel_policy: g('c-fp'), instant_book: $('c-inst').checked, delivery_ok: $('c-del').checked, cross_border_ok: $('c-cross').checked,
+        photos: g('c-photos').split(/\s+/).filter(function (u) { return /^https:\/\//.test(u); }).slice(0, 12), description: g('c-desc') };
+      var er = $('c-err');
+      if (!p.make || !p.model || !p.day_rate) { er.hidden = false; er.textContent = 'Add the make, model and daily rate.'; return; }
+      var btn = this; busy(btn, true);
+      rpc('car_operator_vehicle_save', { p: p }).then(function (r) { buzz(); closeSheet(); toast(r && r.status === 'review' ? 'Sent to the Cabana desk for a quick check.' : 'Saved.'); load(); },
+        function (e) { busy(btn, false); er.hidden = false; er.textContent = friendly(e); });
+    };
+  }
+
+  function blockSheet(v) {
+    if (!v) return;
+    var today = new Date().toISOString().slice(0, 10);
+    openSheet('Block dates · ' + v.make + ' ' + v.model,
+      '<p class="meta" style="margin-top:0">Service, a private hire, or a trip of your own: blocked dates are never offered to renters.</p>' +
+      '<div class="cols"><label class="field"><span>From</span><input class="in" type="date" id="b-s" min="' + today + '" value="' + today + '"></label><label class="field"><span>To</span><input class="in" type="date" id="b-e" min="' + today + '" value="' + today + '"></label></div>' +
+      '<div id="b-list" style="margin-top:12px"></div>',
+      '<button class="btn ghost" data-close>Done</button><button class="btn dark" id="b-add">Block these dates</button>');
+    function list(rows) {
+      $('b-list').innerHTML = (rows || []).length ? rows.map(function (r) {
+        return '<div class="row" style="padding:10px 0;border-top:1px solid var(--line)"><div class="grow" style="font-weight:750">' + esc(r.starts_on) + ' → ' + esc(r.ends_on) + '</div>' +
+          '<span class="tag' + (r.reason === 'operator' ? '' : ' aqua') + '">' + esc(r.reason === 'operator' ? 'blocked' : 'booked') + '</span>' +
+          (r.reason === 'operator' ? '<button class="btn ghost sm" data-unblock="' + esc(r.starts_on + '|' + r.ends_on) + '">Remove</button>' : '') + '</div>';
+      }).join('') : '<p class="meta">No blocked dates ahead.</p>';
+    }
+    function call(s, e, remove) { return rpc('car_operator_blackout', { p_vehicle: v.id, p_start: s, p_end: e, p_remove: !!remove }).then(list, function (err) { toast(friendly(err), true); }); }
+    call('1900-01-01', '1900-01-01', true);   /* a no-op removal returns the current list */
+    $('b-add').onclick = function () { var s = $('b-s').value, e = $('b-e').value; if (!s || !e || e < s) { toast('Check the dates.', true); return; } call(s, e).then(function () { toast('Blocked.'); }); };
+    $('b-list').onclick = function (ev) { var b = ev.target.closest('[data-unblock]'); if (!b) return; var p = b.dataset.unblock.split('|'); call(p[0], p[1], true); };
+  }
+})();
+</script>
+<script src="/chat.js?v=41" defer></script>
+<script src="/cabana-support.js" defer></script>
+</body>
+</html>

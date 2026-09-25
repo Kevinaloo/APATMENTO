@@ -3,243 +3,210 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="description" content="Find verified car hire across Africa. Choose pickup and destination, compare vehicles for your route, fuel economy and transparent local pricing.">
-  <meta name="keywords" content="car hire Africa, car rental Africa, self drive Africa, 4x4 hire Africa, safari vehicle hire, car with driver Africa">
+  <meta name="description" content="Hire a car anywhere in Africa, self-drive or with a driver. Verified local operators set the price and keep 100%, you pay them directly, and every car is checked against the road you are driving.">
+  <meta name="keywords" content="car hire Africa, car rental Nairobi, self drive Kenya, 4x4 hire, safari car hire, car with driver, zero commission car rental, Cabana Drive">
   <meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large">
   <meta name="author" content="Cabana">
-  <meta name="theme-color" content="#07110f">
+  <meta name="theme-color" content="#e9fbf8">
   <link rel="canonical" href="https://cabana.africa/carhire">
   <link rel="manifest" href="/manifest.json">
   <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/cabana-apple-touch-icon.png">
   <meta property="og:site_name" content="Cabana">
-  <meta property="og:title" content="Cabana Drive Africa — the right car for the road">
-  <meta property="og:description" content="Africa-wide car hire with exact pickup, route intelligence, honest vehicle fit and fuel figures in every useful unit.">
+  <meta property="og:title" content="Cabana Drive · Keys in hand, anywhere in Africa">
+  <meta property="og:description" content="Self-drive or chauffeured car hire from verified local operators. Zero commission, a handover code, and a car checked for your road.">
   <meta property="og:url" content="https://cabana.africa/carhire">
   <meta property="og:type" content="website">
   <meta property="og:image" content="https://cabana.africa/og-carhire.jpg">
-  <meta property="og:image:alt" content="Cabana Drive Africa route-intelligent car hire">
+  <meta property="og:image:alt" content="Cabana Drive car hire">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Cabana Drive Africa">
-  <meta name="twitter:description" content="Choose the road first. Then choose the car.">
+  <meta name="twitter:title" content="Cabana Drive · Keys in hand">
+  <meta name="twitter:description" content="Car hire across Africa. Operators keep 100%. You pay them directly.">
   <meta name="twitter:image" content="https://cabana.africa/og-carhire.jpg">
-  <title>Car Hire Across Africa — Route-fit Vehicles | Cabana Drive</title>
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap">
-  <link rel="stylesheet" href="/brand.css">
-  <link rel="stylesheet" href="/cabana-carhire.css?v=4">
+  <title>Car Hire Across Africa · Self-drive or With a Driver | Cabana Drive</title>
+  <link rel="preload" href="/assets/fonts/anybody-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/assets/fonts/hanken-grotesk-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preconnect" href="https://gfwgbgdvxtocwhilrtdw.supabase.co" crossorigin>
+  <link rel="stylesheet" href="/cabana-carhire.css?v=6">
+  <link rel="stylesheet" href="/cabana-drive-gate.css?v=1">
+  <style>
+  #drive-gate{position:fixed;inset:0;z-index:2147483000;background:#062a33;}
+  html.dg-lock,html.dg-lock body{overflow:hidden!important;}
+  </style>
   <script type="application/ld+json">
   {
     "@context":"https://schema.org",
-    "@type":"Service",
-    "name":"Cabana Drive Africa",
+    "@type":"AutoRental",
+    "name":"Cabana Drive",
     "url":"https://cabana.africa/carhire",
-    "description":"Self-drive and chauffeur car hire with route-fit guidance from verified local operators across Africa.",
-    "provider":{"@type":"Organization","name":"Cabana","url":"https://cabana.africa"},
-    "areaServed":{"@type":"Continent","name":"Africa"},
-    "serviceType":"Car hire and vehicle route suitability"
+    "description":"Self-drive and chauffeured car hire across Africa from verified local operators. Operators set their own prices and keep them in full; renters pay operators directly.",
+    "image":"https://cabana.africa/og-carhire.jpg",
+    "parentOrganization":{"@type":"Organization","name":"Cabana","url":"https://cabana.africa"},
+    "areaServed":{"@type":"Continent","name":"Africa"}
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context":"https://schema.org",
+    "@type":"FAQPage",
+    "mainEntity":[
+      {"@type":"Question","name":"Does Cabana charge a booking fee for car hire?","acceptedAnswer":{"@type":"Answer","text":"No. The operator sets the rate and keeps all of it. You pay the operator directly by M-Pesa, cash or card, and Cabana adds nothing."}},
+      {"@type":"Question","name":"What is the handover code?","acceptedAnswer":{"@type":"Answer","text":"When your hire is confirmed you receive a four-digit code. The operator enters it when handing over the keys, which proves the car went to the person who booked it."}},
+      {"@type":"Question","name":"Can I hire a car with a driver?","acceptedAnswer":{"@type":"Answer","text":"Yes. Choose With driver and the operator adds their daily driver rate, which is shown in the quote before you book."}},
+      {"@type":"Question","name":"What if no car is listed where I need one?","acceptedAnswer":{"@type":"Answer","text":"Post a car request with your dates and the kind of car you need. Verified operators nearby, and the Cabana desk, answer with priced offers you can accept in one tap."}}
+    ]
   }
   </script>
 </head>
-<body class="ch-body">
-  <div class="ch-atmosphere" aria-hidden="true"><i></i><i></i><i></i></div>
-  <div class="ch-app">
-    <header class="ch-top">
-      <a class="ch-back" href="/" aria-label="Back to Cabana">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
-      </a>
-      <a class="ch-brand" href="/carhire" aria-label="Cabana Drive Africa home">
-        <img src="/cabana-emblem.png" width="28" height="28" alt="" fetchpriority="high">
-        <span><b>CABANA</b><em>DRIVE / AFRICA</em></span>
-      </a>
-      <div class="ch-top-status"><span></span>54-country network</div>
-      <a class="ch-top-cta" href="/list-your-fleet">List your fleet <span>↗</span></a>
-    </header>
+<body class="dv">
 
-    <main>
-      <section class="ch-hero" aria-labelledby="ch-title">
-        <div class="ch-shell">
-          <div class="ch-hero-copy">
-            <div class="ch-overline"><span>ROUTE INTELLIGENCE / 01</span><i></i><span>AFRICA-WIDE</span></div>
-            <h1 id="ch-title">Choose the road.<br><span>Then choose the car.</span></h1>
-            <p>Search every African country from an exact pickup point. Cabana reads the journey, ranks verified local vehicles and translates fuel use into the units you actually use.</p>
-            <div class="ch-proof" aria-label="Service highlights">
-              <div><b>54</b><span>African countries</span></div>
-              <div><b>5</b><span>fuel-economy units</span></div>
-              <div><b>0%</b><span>Cabana commission</span></div>
-            </div>
-          </div>
+<div id="drive-gate"></div>
+<script>document.documentElement.classList.add('dg-lock');</script>
+<script src="/cabana-drive-gate.js?v=1"></script>
+<script>
+(function () {
+  function strip() {
+    var n = document.getElementById('drive-gate');
+    if (n && n.parentNode) n.parentNode.removeChild(n);
+    document.documentElement.classList.remove('dg-lock');
+  }
+  window.dismissEnterTx = strip;
+  if (/[?&](open|booking|request)=/.test(location.search) || !window.CabanaDriveGate) { strip(); return; }
+  window.CabanaDriveGate.play({ node: document.getElementById('drive-gate') });
+  setTimeout(function () { if (document.getElementById('drive-gate')) strip(); }, 9500);
+  window.addEventListener('pageshow', function (e) { if (e.persisted) strip(); });
+})();
+</script>
 
-          <div class="ch-command">
-            <div class="ch-command-head">
-              <div><span class="ch-kicker">Build your drive</span><h2>Where does the road take you?</h2></div>
-              <div class="ch-command-live"><i></i>Location aware</div>
-            </div>
+<header class="dv-top" id="dv-top">
+  <a class="dv-round" id="dv-back" href="/dashboard" aria-label="Back to Cabana"><svg class="dv-i" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></a>
+  <a class="dv-brand" href="/carhire" aria-label="Cabana Drive">
+    <span class="dv-brand-mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="2.2" fill="#fff"/><path d="M3.8 10.5c5.4 1.2 11 1.2 16.4 0M12 14.2V20.4"/></svg></span>
+    <b>Cabana <span>Drive</span></b>
+  </a>
+  <a class="dv-top-cta" href="/list-your-fleet"><svg class="dv-i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>List your fleet</a>
+  <button class="dv-round" id="dv-hires-btn" type="button" aria-label="Your hires">
+    <svg class="dv-i" viewBox="0 0 24 24"><path d="M15 7a4 4 0 1 1-3.9 5H4v3h3v2h3v-2h1.1A4 4 0 0 1 15 7Z"/><circle cx="16" cy="11" r="1"/></svg>
+    <span class="dv-badge" id="dv-hires-badge" hidden>0</span>
+  </button>
+</header>
 
-            <div class="ch-stepbar" aria-hidden="true">
-              <span class="on"><b>01</b> Country</span><span><b>02</b> Pickup</span><span><b>03</b> Route</span><span><b>04</b> Vehicle</span>
-            </div>
+<main id="dv-main">
+  <section class="dv-hero" aria-labelledby="dv-title">
+    <div class="dv-cones" aria-hidden="true"><i></i><i></i><i></i></div>
+    <div class="dv-wrap dv-hero-copy">
+      <span class="dv-kicker"><i></i><span id="dv-kicker-text">Verified operators · 0% commission</span></span>
+      <h1 class="dv-h1" id="dv-title">Keys in hand, <span class="dv-grad-text">anywhere</span> in Africa.</h1>
+      <p class="dv-lede">Self-drive or with a driver. Operators set the price and keep all of it; you pay them directly and collect with a code only you hold.</p>
+    </div>
+    <div class="dv-stage" aria-hidden="true">
+      <div class="dv-floor"></div>
+      <div class="dv-hero-car" id="dv-hero-car"></div>
+      <div class="dv-sweep"></div>
+    </div>
 
-            <div class="ch-workspace">
-              <form class="ch-planner" id="ch-form" novalidate>
-                <div class="ch-country-row">
-                  <label class="ch-field ch-field-country" for="ch-country">
-                    <span class="ch-label">Pickup country <b>All 54 covered</b></span>
-                    <span class="ch-control ch-select-control">
-                      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
-                      <select id="ch-country" required><option value="">Select an African country</option></select>
-                    </span>
-                  </label>
-                  <button class="ch-locate" id="ch-locate" type="button">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/></svg>
-                    <span>Detect me</span>
-                  </button>
-                </div>
-
-                <div class="ch-route-fields">
-                  <label class="ch-field" for="ch-pickup">
-                    <span class="ch-label">Pickup city or exact point</span>
-                    <span class="ch-control">
-                      <span class="ch-pin ch-pin-a">A</span>
-                      <input id="ch-pickup" type="text" placeholder="Choose a country first" disabled autocomplete="off" required>
-                    </span>
-                  </label>
-                  <div class="ch-city-picks" id="ch-city-picks" aria-label="Suggested pickup cities"></div>
-
-                  <div class="ch-route-join" aria-hidden="true"><span></span><i></i><span></span></div>
-
-                  <label class="ch-field" for="ch-destination">
-                    <span class="ch-label">Destination <b>Optional for local hire</b></span>
-                    <span class="ch-control">
-                      <span class="ch-pin ch-pin-b">B</span>
-                      <input id="ch-destination" type="text" placeholder="Town, park gate, hotel or address" disabled autocomplete="off">
-                    </span>
-                  </label>
-                  <label class="ch-cross"><input id="ch-crossborder" type="checkbox"><span></span>Destination is in another African country</label>
-                </div>
-
-                <div class="ch-date-grid">
-                  <label class="ch-field" for="ch-from"><span class="ch-label">Collect</span><span class="ch-control"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg><input type="date" id="ch-from" required></span></label>
-                  <label class="ch-field" for="ch-to"><span class="ch-label">Return</span><span class="ch-control"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg><input type="date" id="ch-to" required></span></label>
-                </div>
-
-                <fieldset class="ch-drive-mode">
-                  <legend>How would you like to travel?</legend>
-                  <button type="button" data-mode="self" aria-pressed="true"><span>Self-drive</span><small>You take the wheel</small></button>
-                  <button type="button" data-mode="driver" aria-pressed="false"><span>With a driver</span><small>Local professional</small></button>
-                </fieldset>
-
-                <button class="ch-go" id="ch-go" type="submit" disabled>
-                  <span>Analyse route & find cars</span>
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-                </button>
-                <div class="ch-meta" id="ch-meta" role="status" aria-live="polite">Choose a country, pickup point and dates to begin.</div>
-              </form>
-
-              <aside class="ch-route-lab" id="ch-route-lab" aria-live="polite">
-                <div class="ch-lab-head"><span>ROUTE LAB</span><em>Waiting for A → B</em></div>
-                <div class="ch-route-canvas" aria-hidden="true">
-                  <div class="ch-contours"></div>
-                  <span class="ch-map-pin a">A</span><span class="ch-map-pin b">B</span>
-                  <svg viewBox="0 0 420 180" preserveAspectRatio="none"><path class="route-shadow" d="M62 130 C118 26 220 166 358 54"/><path class="route-pulse" d="M62 130 C118 26 220 166 358 54"/></svg>
-                </div>
-                <div class="ch-lab-empty">
-                  <span class="ch-scan"></span>
-                  <h3>Your road, decoded.</h3>
-                  <p>Add a destination and Cabana will estimate distance, drive time, surfaces, weather sensitivity, clearance, fuel gaps and border needs.</p>
-                </div>
-                <div class="ch-lab-foot"><span><i></i>Vehicle-fit engine</span><span>Not live navigation</span></div>
-              </aside>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="ch-results" id="ch-results" hidden aria-labelledby="ch-results-title">
-        <div class="ch-shell">
-          <div class="ch-results-head">
-            <div><span class="ch-kicker">Verified local supply</span><h2 id="ch-results-title">Vehicles for your pickup area</h2><p id="ch-results-sub"></p></div>
-            <div class="ch-bar" id="ch-bar" hidden><div class="ch-count" id="ch-count"></div><label class="ch-sr" for="ch-sort">Sort vehicles</label><select class="ch-sort" id="ch-sort"><option value="fit">Best route fit</option><option value="price">Lowest total</option><option value="price_desc">Highest total</option><option value="efficiency">Best fuel economy</option><option value="seats">Most seats</option></select></div>
-          </div>
-          <div class="ch-rail-hold"><div class="ch-rail" id="ch-classes" role="group" aria-label="Filter by vehicle type"></div></div>
-          <div class="ch-grid" id="ch-grid"></div>
-        </div>
-      </section>
-
-      <section class="ch-standard" aria-labelledby="ch-standard-title">
-        <div class="ch-shell">
-          <div class="ch-standard-intro"><span class="ch-kicker">The Cabana Road Standard</span><h2 id="ch-standard-title">Useful before beautiful.<br>Beautiful because it is useful.</h2><p>Africa is not one driving environment. A city transfer, a highland pass, a desert crossing and a wet-season park road should never produce the same recommendation.</p></div>
-          <div class="ch-standard-grid">
-            <article><span>01</span><h3>Exact points</h3><p>Country first, then any geocoded city, airport, landmark or address—never a ten-city ceiling.</p></article>
-            <article><span>02</span><h3>Engineering fit</h3><p>Ground clearance, drivetrain, surface mix and usable fuel range are checked against the journey.</p></article>
-            <article><span>03</span><h3>Comparable fuel</h3><p>See km/L, L/100km, L/km, US mpg and UK mpg, plus estimated litres for the road.</p></article>
-            <article><span>04</span><h3>Honest confidence</h3><p>Reference, model estimate and geometry fallback are visibly different. Current local conditions still need confirmation.</p></article>
-          </div>
-        </div>
-      </section>
-
-      <section class="ch-guide" aria-labelledby="ch-guide-title">
-        <div class="ch-shell ch-guide-layout">
-          <div><span class="ch-kicker">Africa driving desk</span><h2 id="ch-guide-title">The questions that prevent expensive surprises.</h2><p>Before payment, ask the operator to confirm the exact itinerary, insurance excess, restricted roads, border approval, mileage allowance, roadside support and every handover charge in writing.</p></div>
-          <div class="ch-faq">
-            <details><summary>Do I always need a 4×4 outside a major city?<span>+</span></summary><p>No. Many inter-city corridors are paved and suit an efficient two-wheel-drive car. A 4×4 becomes important when the final approach, season, sand, mud, gradient or park rules demand it. Cabana grades the full route, not the destination name alone.</p></details>
-            <details><summary>Can I take a hire car across an African border?<span>+</span></summary><p>Only with written operator approval and the correct ownership, customs and insurance documents for every country. Border availability and opening hours must be checked close to travel.</p></details>
-            <details><summary>Are the route figures live navigation?<span>+</span></summary><p>No. Cabana provides conservative planning estimates and clearly labels their source and confidence. Traffic, roadworks, weather, ferries and border queues can change the real journey.</p></details>
-            <details><summary>Why show both US and UK mpg?<span>+</span></summary><p>They use different gallon sizes, so the figures are not interchangeable. Cabana labels both and also shows metric units to make vehicle comparisons unambiguous.</p></details>
-          </div>
-        </div>
-      </section>
-
-      <section class="ch-operator">
-        <div class="ch-shell">
-          <div class="ch-operator-card">
-            <div><span class="ch-kicker">For African fleet owners</span><h2>Put real vehicles on the real roads you serve.</h2><p>List from any African country, price in your market's currency, define your operating radius and add the engineering specs travellers need. Cabana takes no commission.</p><div class="ch-operator-actions"><a class="ch-btn-primary" href="/list-your-fleet">List your fleet <span>↗</span></a><a class="ch-btn-quiet" href="/partner-listings">Manage listings</a></div></div>
-            <div class="ch-operator-stats"><div><b>54</b><span>countries accepted</span></div><div><b>0%</b><span>commission</span></div><div><b>1×</b><span>verified identity</span></div></div>
-          </div>
-        </div>
-      </section>
-    </main>
-
-    <footer class="ch-footer"><span>© Cabana Africa</span><span>Route intelligence for better decisions—not a substitute for local road or safety advice.</span><a href="/help">Support</a></footer>
-  </div>
-
-  <div class="ch-scrim" id="ch-scrim"></div>
-  <section class="ch-sheet" id="ch-sheet" role="dialog" aria-modal="true" aria-labelledby="ch-sheet-title" aria-hidden="true">
-    <div class="ch-sheet-grab"></div>
-    <header class="ch-sheet-head"><div><span>VEHICLE BRIEF</span><h3 id="ch-sheet-title">Vehicle</h3></div><button type="button" class="ch-x" aria-label="Close vehicle details"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></header>
-    <div class="ch-sheet-body" id="ch-sheet-body"></div>
-    <div class="ch-sheet-foot" id="ch-sheet-foot"></div>
+    <form class="dv-search" id="dv-search" autocomplete="off" onsubmit="return false">
+      <button class="dv-field is-empty" id="dv-where" type="button" aria-haspopup="dialog">
+        <svg class="dv-i" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5"/></svg>
+        <span class="dv-field-body"><small>Pick up</small><b id="dv-where-label">City, airport or address</b></span>
+      </button>
+      <button class="dv-field" id="dv-when" type="button" aria-haspopup="dialog">
+        <svg class="dv-i" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>
+        <span class="dv-field-body"><small id="dv-when-small">Dates</small><b id="dv-when-label">Pick your dates</b></span>
+      </button>
+      <div class="dv-seg" id="dv-driver" role="group" aria-label="Who drives">
+        <button type="button" aria-pressed="true" data-driver="self"><svg class="dv-i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="2"/><path d="M4 10.5c5.3 1.2 10.7 1.2 16 0M12 14v6.5"/></svg>Self-drive</button>
+        <button type="button" aria-pressed="false" data-driver="chauffeur"><svg class="dv-i" viewBox="0 0 24 24"><circle cx="12" cy="7.5" r="3.5"/><path d="M5 20.5a7 7 0 0 1 14 0"/></svg>With driver</button>
+        <i class="ink" aria-hidden="true"></i>
+      </div>
+      <button class="dv-go" id="dv-go" type="button" data-press><svg class="dv-i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>Show cars</button>
+    </form>
   </section>
-  <div class="ch-toast" id="ch-toast" role="status" aria-live="polite"></div>
 
-  <script src="/vendor-supabase-2.112.3.js"></script>
-  <script src="/apa-session.js"></script>
-  <script>
-    window.__chSb = null;
-    try {
-      window.__chSb = supabase.createClient(
-        'https://gfwgbgdvxtocwhilrtdw.supabase.co',
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw'
-      );
-    } catch (_) {}
-  </script>
-  <script src="/apa-geo.js" defer></script>
-  <script src="/cabana-carhire-core.js?v=4" defer></script>
-  <script src="/cabana-carhire-ui.js?v=4" defer></script>
-  <script src="/analytics.js" defer></script>
-  <script src="/telemetry.js" defer></script>
-  <script src="/pwa.js?v=35-programmes" defer></script>
-  <script src="/referral.js" defer></script>
-  <script src="/apa-referral-capture.js" defer></script>
-  <script src="/cabana-credit.js" defer></script>
-  <script src="/apa-signal.js" defer></script>
-  <script src="/apa-contact.js" defer></script>
-  <script src="/cabana-call.js" defer></script>
-  <script src="/apa-location.js" defer></script>
-  <script src="/cabana-sos.js" defer></script>
-  <script src="/cabana-support.js" defer></script>
-  <script src="/cabana-lifecycle.js" defer></script>
+  <div class="dv-wrap">
+    <section class="dv-sec" aria-labelledby="dv-trip-title">
+      <div class="dv-trip" id="dv-trip" data-reveal>
+        <div class="dv-eyebrow" style="color:#7ff5e1">Trip check</div>
+        <h2 class="dv-h3" id="dv-trip-title">Where will you drive?</h2>
+        <p>Tell us the road and every car is checked against it: clearance, drive, fuel range and the season. A saloon for the Mara in April is a bad day; we say so before you book.</p>
+        <div class="dv-trip-row">
+          <button class="dv-trip-field is-empty" id="dv-dest" type="button"><svg class="dv-i" viewBox="0 0 24 24"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg><span id="dv-dest-label">Destination, park or town</span></button>
+        </div>
+        <div class="dv-routes" id="dv-routes"></div>
+        <div id="dv-verdict"></div>
+      </div>
+    </section>
+
+    <section class="dv-sec" id="dv-results" aria-labelledby="dv-results-title">
+      <div class="dv-sec-head">
+        <div>
+          <div class="dv-eyebrow">The fleet</div>
+          <h2 class="dv-h2" id="dv-results-title">Cars near you</h2>
+          <p class="dv-sub" id="dv-results-sub">Live from verified operators.</p>
+        </div>
+        <div class="dv-sort"><label class="sr-only" for="dv-sort">Sort cars</label>
+          <select id="dv-sort"><option value="fit">Best fit</option><option value="price">Lowest price</option><option value="near">Nearest</option><option value="rating">Top rated</option></select>
+        </div>
+      </div>
+      <div class="dv-filters" id="dv-filters" role="group" aria-label="Filter cars"></div>
+      <div class="dv-grid" id="dv-grid" aria-live="polite"></div>
+    </section>
+
+    <section class="dv-sec" aria-labelledby="dv-how-title">
+      <div class="dv-eyebrow">How it works</div>
+      <h2 class="dv-h2" id="dv-how-title" style="margin-bottom:14px">Booked in a minute. Collected with a code.</h2>
+      <div class="dv-steps">
+        <div class="dv-step" data-reveal><b class="n">1</b><h3 class="dv-h3">Pick the car</h3><p>See the full price from the operator's own rates before you commit: days, their weekly discount, a driver, delivery, extras. Cabana's line is always zero.</p></div>
+        <div class="dv-step" data-reveal><b class="n">2</b><h3 class="dv-h3">The operator confirms</h3><p>Instant-book cars confirm straight away; others answer inside their response window. You get their number, pickup point and how to pay.</p></div>
+        <div class="dv-step" data-reveal><b class="n">3</b><h3 class="dv-h3">Keys against your code</h3><p>At collection the operator enters your four-digit handover code. It proves the car went to you, and starts the hire.</p></div>
+      </div>
+      <div class="dv-zero" data-reveal><strong>0<small>%</small></strong><p><b>Operators keep every shilling.</b>You pay them directly by M-Pesa, cash or card. Cabana never holds your money and never adds a fee.</p></div>
+    </section>
+
+    <section class="dv-sec dv-faq" aria-labelledby="dv-faq-title">
+      <h2 class="dv-h2" id="dv-faq-title" style="margin-bottom:14px">Good to know</h2>
+      <details><summary>Does Cabana charge a booking fee?</summary><p>No. The operator sets the rate and keeps it in full. You pay them directly and Cabana adds nothing on top.</p></details>
+      <details><summary>What about the deposit?</summary><p>The refundable deposit is the operator's and is shown in every quote. They take it at collection and return it when the car comes back as agreed.</p></details>
+      <details><summary>Can I drive across a border?</summary><p>Only in cars the operator has cleared for it, with their written permission and the right insurance. Cars that allow it say so, and the trip check flags every crossing.</p></details>
+      <details><summary>No car where I need one?</summary><p>Post a car request. Verified operators nearby, and the Cabana desk, answer with priced offers. Accept one and it becomes a confirmed hire with the same handover code.</p></details>
+    </section>
+
+    <section class="dv-cta" aria-labelledby="dv-cta-title" data-reveal>
+      <h2 class="dv-h2" id="dv-cta-title">Own cars? Keep 100%.</h2>
+      <p>List your fleet free. Set your rates, answer requests, collect with a code. No commission, ever.</p>
+      <a href="/list-your-fleet">List your fleet <svg class="dv-i" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+    </section>
+    <p class="dv-foot">Need a ride instead? <a href="/rides">Cabana Move</a> · Operators: <a href="/partner-fleet">your fleet desk</a></p>
+  </div>
+</main>
+
+<div class="dv-sheet" id="ch-sheet" hidden role="dialog" aria-modal="true" aria-labelledby="ch-sheet-title"></div>
+<div class="dv-sheet" id="dv-request" hidden role="dialog" aria-modal="true" aria-labelledby="dv-request-title"></div>
+<div class="dv-sheet" id="dv-track" hidden role="dialog" aria-modal="true" aria-labelledby="dv-track-title"></div>
+<div class="dv-sheet" id="dv-hires" hidden role="dialog" aria-modal="true" aria-labelledby="dv-hires-title"></div>
+<div class="dv-modal" id="dv-place" hidden role="dialog" aria-modal="true" aria-labelledby="dv-place-title"></div>
+<div class="dv-modal" id="dv-dates" hidden role="dialog" aria-modal="true" aria-labelledby="dv-dates-title"></div>
+<div class="dv-toast" id="dv-toast" role="status" aria-live="polite"></div>
+
+<script src="/vendor-supabase-2.112.3.js"></script>
+<script src="/apa-session.js"></script>
+<script src="/apa-geo.js"></script>
+<script src="/cabana-motion.js?v=1"></script>
+<script src="/cabana-carhire-core.js?v=5"></script>
+<script src="/cabana-carhire-ui.js?v=6"></script>
+<script src="/analytics.js" defer></script>
+<script src="/telemetry.js" defer></script>
+<script src="/pwa.js?v=38-location-flight-30s" defer></script>
+<script src="/referral.js" defer></script>
+<script src="/apa-referral-capture.js" defer></script>
+<script src="/cabana-credit.js" defer></script>
+<script src="/apa-signal.js" defer></script>
+<script src="/apa-contact.js" defer></script>
+<script src="/cabana-call.js" defer></script>
+<script src="/apa-location.js" defer></script>
+<script src="/cabana-sos.js" defer></script>
+<script src="/cabana-support.js" defer></script>
+<script src="/cabana-lifecycle.js" defer></script>
 </body>
 </html>

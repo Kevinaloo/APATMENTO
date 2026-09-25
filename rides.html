@@ -2,12 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="description" content="Request transport across Africa, from cars and tuk-tuks to boats and air transfers. See prices published by local operators or approved by Cabana.">
-  <meta name="keywords" content="rides Africa, taxi Africa, boda boda, tuk tuk, shuttle, boat transfer, e-bike, bicycle hire, horse transport, accessible transport Africa">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
+  <meta name="description" content="Rides across Africa where you name the fare. Drivers answer with offers, you pick one, and you pay your driver directly. Cabana takes 0% commission. Trip PIN, live share and SOS on every ride.">
+  <meta name="keywords" content="rides Africa, name your fare, taxi Nairobi, airport transfer JKIA, boda boda, tuk tuk, chauffeur hire, zero commission rides, Cabana Move">
   <meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large,max-video-preview:-1">
   <meta name="author" content="Cabana">
-  <meta name="theme-color" content="#071319">
+  <meta name="theme-color" content="#ff9a3c">
   <link rel="canonical" href="https://cabana.africa/rides">
   <link rel="manifest" href="/manifest.json">
   <link rel="icon" href="/favicon.ico" sizes="any">
@@ -15,60 +15,66 @@
   <link rel="apple-touch-icon" href="/cabana-apple-touch-icon.png">
 
   <meta property="og:site_name" content="Cabana">
-  <meta property="og:title" content="Cabana Move Africa | Every way across the continent">
-  <meta property="og:description" content="Choose a country, exact route and transport mode. Request verified local options without invented prices.">
+  <meta property="og:title" content="Cabana Move · Name your fare. Ride anywhere in Africa.">
+  <meta property="og:description" content="Set your price, get offers from nearby drivers, pay them directly. Zero commission, trip PIN and live trip sharing.">
   <meta property="og:url" content="https://cabana.africa/rides">
   <meta property="og:type" content="website">
   <meta property="og:image" content="https://cabana.africa/og-rides.jpg">
-  <meta property="og:image:alt" content="Cabana Move Africa transport network">
+  <meta property="og:image:alt" content="Cabana Move rides">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Cabana Move Africa">
-  <meta name="twitter:description" content="Road, water, micromobility, animal and air transport requests across Africa.">
+  <meta name="twitter:title" content="Cabana Move · Name your fare">
+  <meta name="twitter:description" content="Rides, airport transfers and drivers by the hour across Africa. Drivers keep 100%.">
   <meta name="twitter:image" content="https://cabana.africa/og-rides.jpg">
 
-  <title>Rides and Transport Across Africa | Cabana Move</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=Instrument+Sans:wdth,wght@75..100,400;75..100,500;75..100,600;75..100,700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
-  <link rel="stylesheet" href="/brand.css">
-  <link rel="stylesheet" href="/cabana-rides.css?v=2">
-  <link rel="stylesheet" href="/cabana-ride-gate.css">
+  <title>Cabana Move · Name your fare, ride anywhere in Africa</title>
+  <link rel="preload" href="/assets/fonts/unbounded-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/assets/fonts/plus-jakarta-sans-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preconnect" href="https://gfwgbgdvxtocwhilrtdw.supabase.co" crossorigin>
+  <link rel="preconnect" href="https://tile.openstreetmap.org" crossorigin>
+  <link rel="stylesheet" href="/assets/location-flight/leaflet-1.9.4.css">
+  <link rel="stylesheet" href="/cabana-rides.css?v=3">
+  <link rel="stylesheet" href="/cabana-ride-gate.css?v=3">
   <style>
-  /* Critical paint. The gate stylesheet may still be in flight; this
-     guarantees the first frame is the Move background rather than a
-     white flash in front of it. */
-  #ride-gate{position:fixed;inset:0;z-index:2147483000;background:#071319;}
+  /* First frame is the gate's sky, never a white flash. */
+  #ride-gate{position:fixed;inset:0;z-index:2147483000;background:#ffb35c;}
   html.rg-lock,html.rg-lock body{overflow:hidden!important;}
   </style>
 
   <script type="application/ld+json">
   {
     "@context":"https://schema.org",
-    "@type":"Service",
-    "name":"Cabana Move Africa",
+    "@type":"TaxiService",
+    "name":"Cabana Move",
     "url":"https://cabana.africa/rides",
-    "description":"A multimodal transport request and operator discovery service covering all 54 African countries.",
-    "serviceType":"Road, water, micromobility, animal and air transport matching",
-    "provider":{"@type":"Organization","name":"Cabana","url":"https://cabana.africa"},
+    "description":"Ride-hailing across Africa where riders name the fare, nearby drivers send offers, and riders pay drivers directly. Cabana charges no commission.",
+    "provider":{"@type":"Organization","name":"Cabana","url":"https://cabana.africa","logo":"https://cabana.africa/cabana-emblem.png"},
     "areaServed":{"@type":"Continent","name":"Africa"},
-    "availableChannel":{"@type":"ServiceChannel","serviceUrl":"https://cabana.africa/rides"}
+    "availableChannel":{"@type":"ServiceChannel","serviceUrl":"https://cabana.africa/rides"},
+    "offers":{"@type":"Offer","description":"No commission. The rider and driver agree the fare; the driver keeps all of it."}
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context":"https://schema.org",
+    "@type":"FAQPage",
+    "mainEntity":[
+      {"@type":"Question","name":"How does naming my own fare work?","acceptedAnswer":{"@type":"Answer","text":"Cabana suggests a fair range from local rates. You set your fare, nearby drivers accept it or send a counter-offer, and you choose the driver you want. Nothing is agreed until you tap accept."}},
+      {"@type":"Question","name":"Does Cabana take a commission from drivers?","acceptedAnswer":{"@type":"Answer","text":"No. You pay your driver directly in cash, by M-Pesa or by card, and the driver keeps the whole fare."}},
+      {"@type":"Question","name":"How do I know I am in the right car?","acceptedAnswer":{"@type":"Answer","text":"Every trip has a four-digit PIN. Your driver must enter it to start the trip, so the trip only begins once you are in the right car."}},
+      {"@type":"Question","name":"Can someone follow my trip?","acceptedAnswer":{"@type":"Answer","text":"Yes. Share a live link and family or friends can see where you are until the trip ends, without an account."}}
+    ]
   }
   </script>
 </head>
-<body class="rd-body">
+<body class="mv">
 
-<!-- ENTRY. The journey fills this in; see cabana-ride-gate.js. Painted
-     here rather than created by script so the ground exists before any
-     JS has run. -->
 <div id="ride-gate"></div>
 <script>document.documentElement.classList.add('rg-lock');</script>
-<script src="/cabana-ride-gate.js"></script>
+<script src="/cabana-ride-gate.js?v=3"></script>
 <script>
-/* Its own <script>, immediately after the markup it owns and BEFORE
-   vendor-supabase.js further down. Deferring it would mean the first
-   frame waited on a Supabase bundle to finish downloading; measured on
-   the other five arrivals, that pushed the start from ~2s out to 5-6s
-   and the sequence then played in a rush. */
+/* The gate plays before anything heavy loads. A trip link, a shared
+   ride or a return visit inside the same session skips straight in:
+   someone checking where their driver is does not want an intro. */
 (function () {
   function strip() {
     var n = document.getElementById('ride-gate');
@@ -76,256 +82,203 @@
     document.documentElement.classList.remove('rg-lock');
   }
   window.dismissEnterTx = strip;
-  function go() {
-    if (!window.CabanaRideGate) { strip(); return; }
-    window.CabanaRideGate.play({ node: document.getElementById('ride-gate') });
-  }
-  go();
-  /* Last line of defence: a guest staring at a dark rectangle is the
-     worst outcome this file can produce. */
+  var q = location.search;
+  if (/[?&](trip|share)=/.test(q) || !window.CabanaRideGate) { strip(); return; }
+  window.CabanaRideGate.play({ node: document.getElementById('ride-gate') });
   setTimeout(function () { if (document.getElementById('ride-gate')) strip(); }, 9500);
   window.addEventListener('pageshow', function (e) { if (e.persisted) strip(); });
 })();
 </script>
-  <div class="rd-atmosphere" aria-hidden="true"><i></i><i></i><i></i></div>
 
-  <header class="rd-topbar">
-    <a class="rd-back" href="/" aria-label="Back to Cabana">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+<div class="mv-app" id="mv-app">
+  <div class="mv-map" id="mv-map" role="application" aria-label="Map of your trip"></div>
+  <div class="mv-sun" aria-hidden="true"></div>
+
+  <div class="mv-pinmode" id="mv-pinmode" hidden aria-hidden="true">
+    <svg viewBox="0 0 46 58"><defs><linearGradient id="mv-pin-g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffc23d"/><stop offset=".5" stop-color="#ff7a1a"/><stop offset="1" stop-color="#ff3d8b"/></linearGradient></defs><path d="M23 2C11.4 2 2 11.2 2 22.6 2 37.5 19.2 53.4 21.2 55.2a2.6 2.6 0 0 0 3.6 0C26.8 53.4 44 37.5 44 22.6 44 11.2 34.6 2 23 2Z" fill="url(#mv-pin-g)"/><circle cx="23" cy="22" r="8.5" fill="#fff"/></svg>
+  </div>
+
+  <header class="mv-top">
+    <a class="mv-round" id="mv-back" href="/dashboard" aria-label="Back to Cabana">
+      <svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg>
     </a>
-    <a class="rd-brand" href="/rides" aria-label="Cabana Move Africa home">
-      <img src="/cabana-emblem.png" width="31" height="31" alt="" fetchpriority="high">
-      <span><b>CABANA</b><em>MOVE / AFRICA</em></span>
+    <a class="mv-brand" href="/rides" aria-label="Cabana Move">
+      <span class="mv-brand-mark"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 15.5a8 8 0 0 1 16 0" fill="#fff"/><path d="M2.5 15.5h19" stroke="#fff" stroke-width="2" stroke-linecap="round"/><path d="M11 18.5h2M9.5 21h5" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".85"/></svg></span>
+      <b>Cabana <span>Move</span></b><i class="mv-live-dot" aria-hidden="true"></i>
     </a>
-    <div class="rd-top-state"><span></span><b>54 countries</b><small>one movement desk</small></div>
-    <a class="rd-provider" href="/add-listing?service=rides">Add a ride service <span>↗</span></a>
+    <span class="mv-spacer"></span>
+    <button class="mv-round" id="mv-trips-btn" type="button" aria-label="Your trips">
+      <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v4h4"/><path d="M12 7v5l3 2"/></svg>
+      <span class="mv-badge" id="mv-trips-badge" hidden>0</span>
+    </button>
   </header>
 
-  <main>
-    <section class="rd-hero" aria-labelledby="rd-title">
-      <div class="rd-visual" aria-hidden="true">
-        <img src="/cabana-rides-network.webp" alt="" width="1942" height="809" fetchpriority="high">
-        <div class="rd-visual-shade"></div>
-        <div class="rd-route-trace"><i></i><i></i><i></i></div>
-      </div>
+  <div class="mv-fabs" id="mv-fabs">
+    <button class="mv-round" id="mv-locate" type="button" aria-label="Use my location">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="7.5"/></svg>
+    </button>
+  </div>
 
-      <div class="rd-shell rd-hero-grid">
-        <div class="rd-hero-copy">
-          <div class="rd-overline"><span>MOVEMENT DESK / 01</span><i></i><span id="rd-market-label">KENYA FIRST, AFRICA OPEN</span></div>
-          <h1 id="rd-title">Every way<br>across <span>Africa.</span></h1>
-          <p>Choose the route and the way you want to move. Cabana checks real operators and published price cards. If a price has not been approved, we do not invent one.</p>
-          <div class="rd-truth-row" aria-label="Cabana Move commitments">
-            <div><b>54</b><span>African countries selectable</span></div>
-            <div><b id="rd-mode-count">12</b><span>movement modes</span></div>
-            <div><b>0</b><span>guessed fares</span></div>
+  <section class="mv-sheet" id="mv-sheet" aria-label="Plan your ride">
+    <div class="mv-grip" id="mv-grip" aria-label="Resize the trip panel"><i></i></div>
+    <div class="mv-scroll" id="mv-scroll">
+
+      <!-- PLAN · where and when -->
+      <div class="mv-stage is-on" id="st-plan" data-stage="plan">
+        <div class="mv-hello">
+          <span id="mv-greet">Good day</span>
+          <button class="mv-chip mv-when-chip" id="mv-when-btn" type="button" aria-haspopup="dialog">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+            <b id="mv-when-label">Now</b>
+          </button>
+        </div>
+        <h1 class="mv-h1" id="rd-title"><span class="sr-only">Cabana Move: rides, airport transfers and drivers by the hour across Africa. </span><span id="mv-h1-text">Where to?</span></h1>
+
+        <div class="mv-svc" role="tablist" aria-label="Kind of trip" id="mv-svc">
+          <button type="button" role="tab" aria-selected="true" data-svc="ride">
+            <svg viewBox="0 0 24 24"><path d="M5 17h14M6 17l1.4-5.2A2 2 0 0 1 9.3 10h5.4a2 2 0 0 1 1.9 1.8L18 17"/><circle cx="8" cy="17.5" r="1.6"/><circle cx="16" cy="17.5" r="1.6"/></svg>Ride</button>
+          <button type="button" role="tab" aria-selected="false" data-svc="transfer">
+            <svg viewBox="0 0 24 24"><path d="M2.5 13.5 21 6.5l-2.2 7.2-7.4 1.6-3.6 4.2-.7-4-4.6-2Z"/></svg>Airport</button>
+          <button type="button" role="tab" aria-selected="false" data-svc="chauffeur">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 6.5V12l3.5 2"/></svg>Hourly</button>
+          <i class="mv-svc-ink" id="mv-svc-ink" aria-hidden="true"></i>
+        </div>
+
+        <div class="mv-route" id="mv-route">
+          <button class="mv-field is-empty" id="mv-from" type="button" data-field="pickup">
+            <span class="mv-dot a" aria-hidden="true"></span>
+            <span class="mv-field-body"><small>Pickup</small><b id="mv-from-label">Set pickup point</b></span>
+          </button>
+          <button class="mv-field is-empty" id="mv-to" type="button" data-field="dropoff">
+            <span class="mv-dot b" aria-hidden="true"></span>
+            <span class="mv-field-body"><small id="mv-to-small">Destination</small><b id="mv-to-label">Where to?</b></span>
+          </button>
+          <div class="mv-hours" id="mv-hours" hidden>
+            <div><span>Driver for <b id="mv-hours-val">3</b> hours</span><small>The car waits wherever you stop.</small></div>
+            <div class="mv-stepper">
+              <button type="button" id="mv-hours-dn" aria-label="Fewer hours"><svg viewBox="0 0 24 24"><path d="M6 12h12"/></svg></button>
+              <output id="mv-hours-out" aria-live="polite">3h</output>
+              <button type="button" id="mv-hours-up" aria-label="More hours"><svg viewBox="0 0 24 24"><path d="M12 6v12M6 12h12"/></svg></button>
+            </div>
+          </div>
+          <button class="mv-swap" id="mv-swap" type="button" aria-label="Swap pickup and destination">
+            <svg viewBox="0 0 24 24"><path d="M8 4v14M4.5 7.5 8 4l3.5 3.5M16 20V6M19.5 16.5 16 20l-3.5-3.5"/></svg>
+          </button>
+        </div>
+
+        <div class="mv-quick mv-row-scroll" id="mv-quick" aria-label="Quick destinations"></div>
+
+        <div class="mv-why" data-reveal>
+          <div class="mv-why-card is-hero" data-reveal>
+            <i><svg viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></i>
+            <div><b>Drivers keep every shilling</b><span>You pay your driver directly. Cabana takes no commission, ever.</span></div>
+            <span class="mv-zero">0<small>%</small></span>
+          </div>
+          <div class="mv-why-card" data-reveal>
+            <i><svg viewBox="0 0 24 24"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8Z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg></i>
+            <b>You name the fare</b><span>Start from a fair range, then take the offer you like.</span>
+          </div>
+          <div class="mv-why-card" data-reveal>
+            <i><svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></i>
+            <b>Trip PIN</b><span>The trip starts only when your driver enters your PIN.</span>
+          </div>
+          <div class="mv-why-card" data-reveal>
+            <i><svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg></i>
+            <b>Live share</b><span>Family can follow the trip on a link, no app needed.</span>
+          </div>
+          <div class="mv-why-card" data-reveal>
+            <i><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="M12 8v4M12 16h.01"/></svg></i>
+            <b>SOS on every trip</b><span>One tap reaches the Cabana safety desk and local help.</span>
           </div>
         </div>
 
-        <section class="rd-console" aria-labelledby="rd-console-title">
-          <header class="rd-console-head">
-            <div><span>BUILD A MOVEMENT REQUEST</span><h2 id="rd-console-title">Where are you going?</h2></div>
-            <span class="rd-console-signal"><i></i>Location aware</span>
-          </header>
-
-          <div class="rd-step-line" aria-hidden="true">
-            <span class="on"><b>01</b> Place</span><span><b>02</b> Mode</span><span><b>03</b> Time</span><span><b>04</b> Confirm</span>
-          </div>
-
-          <form id="rd-request-form" novalidate>
-            <div class="rd-country-row">
-              <label class="rd-field" for="rd-country">
-                <span class="rd-label">Pickup country <b>All 54 available</b></span>
-                <span class="rd-control rd-country-control">
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
-                  <select id="rd-country" required><option value="">Select an African country</option></select>
-                </span>
-              </label>
-              <button class="rd-detect" id="rd-detect" type="button" aria-label="Detect my pickup location">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/></svg>
-                <span>Detect me</span>
-              </button>
-            </div>
-
-            <div class="rd-city-picks" id="rd-city-picks" aria-label="Suggested pickup cities"></div>
-
-            <div class="rd-route-box">
-              <label class="rd-route-field" for="rd-pickup">
-                <span class="rd-route-pin pickup">A</span>
-                <span><b>Pick up</b><input id="rd-pickup" type="text" autocomplete="off" placeholder="Choose a pickup country first" disabled required></span>
-              </label>
-              <button type="button" class="rd-swap" id="rd-swap" aria-label="Swap pickup and destination">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h11l-3-3M17 17H6l3 3"/></svg>
-              </button>
-              <label class="rd-route-field" for="rd-destination">
-                <span class="rd-route-pin destination">B</span>
-                <span><b>Destination</b><input id="rd-destination" type="text" autocomplete="off" placeholder="City, jetty, trail, landmark or address" disabled required></span>
-              </label>
-            </div>
-            <p class="rd-route-note">The destination may be in another African country. Cabana keeps the route exactly as entered.</p>
-
-            <fieldset class="rd-mode-field">
-              <legend>How do you want to move?</legend>
-              <div class="rd-mode-picks" id="rd-mode-picks" role="group" aria-label="Transport mode"></div>
-            </fieldset>
-
-            <div class="rd-time-row">
-              <div class="rd-when" role="group" aria-label="Pickup timing">
-                <button type="button" data-when="now" aria-pressed="true">Now</button>
-                <button type="button" data-when="later" aria-pressed="false">Schedule</button>
-              </div>
-              <label class="rd-field rd-people" for="rd-passengers"><span class="rd-label">Travellers</span><span class="rd-control"><input id="rd-passengers" type="number" inputmode="numeric" min="1" max="60" value="1"></span></label>
-            </div>
-
-            <div class="rd-schedule" id="rd-schedule" hidden>
-              <label class="rd-field" for="rd-date"><span class="rd-label">Pickup date</span><span class="rd-control"><input id="rd-date" type="date"></span></label>
-              <label class="rd-field" for="rd-time"><span class="rd-label">Pickup time</span><span class="rd-control"><input id="rd-time" type="time"></span></label>
-            </div>
-
-            <details class="rd-needs">
-              <summary>Trip needs <span>Add luggage, accessibility or family details</span></summary>
-              <div class="rd-needs-grid">
-                <label><input type="checkbox" value="luggage"><span>Luggage space</span></label>
-                <label><input type="checkbox" value="wheelchair"><span>Wheelchair access</span></label>
-                <label><input type="checkbox" value="child-seat"><span>Child seat</span></label>
-                <label><input type="checkbox" value="pet"><span>Travelling with a pet</span></label>
-                <label><input type="checkbox" value="bike-carry"><span>Carry a bicycle</span></label>
-                <label><input type="checkbox" value="quiet"><span>Low-sensory ride</span></label>
-              </div>
-            </details>
-
-            <div class="rd-price-truth" id="rd-price-truth" aria-live="polite">
-              <span class="rd-price-lock">PRICE</span>
-              <div><b>No fare calculated</b><p>Choose your route. Only an admin-published rate or a confirmed operator quote can appear here.</p></div>
-            </div>
-
-            <button class="rd-submit" id="rd-submit" type="submit" disabled>
-              <span>Request this movement</span>
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-            </button>
-            <p class="rd-form-status" id="rd-form-status" role="status" aria-live="polite">Choose a country, pickup, destination and mode.</p>
-          </form>
-        </section>
-      </div>
-    </section>
-
-    <section class="rd-mode-belt" aria-labelledby="rd-belt-title">
-      <div class="rd-shell rd-belt-head"><div><span>MOVEMENT LIBRARY</span><h2 id="rd-belt-title">Road is only the beginning.</h2></div><p>Tap any mode to use it in your request. The ribbon pauses when you hover, focus or reduce motion.</p></div>
-      <div class="rd-marquee" id="rd-marquee"><div class="rd-marquee-track" id="rd-marquee-track"></div></div>
-    </section>
-
-    <section class="rd-inventory" id="rd-inventory" aria-labelledby="rd-inventory-title">
-      <div class="rd-shell">
-        <div class="rd-section-head">
-          <div><span>REAL SUPPLY ONLY</span><h2 id="rd-inventory-title">Operators for your route</h2><p id="rd-inventory-sub">Choose a pickup country and mode to inspect published services.</p></div>
-          <div class="rd-network-chip" id="rd-network-chip"><i></i><span>Checking the network</span></div>
+        <div class="mv-sec-title"><h2 class="mv-h3">Questions riders ask</h2></div>
+        <div class="mv-faq">
+          <details><summary>How does naming my own fare work?</summary><p>Cabana suggests a fair range from local rates for your route and the hour you leave. You set your fare. Nearby drivers accept it or counter, and you choose who takes you. Nothing is agreed until you accept.</p></details>
+          <details><summary>How do I pay?</summary><p>Directly to your driver, in cash, by M-Pesa or by card where the driver takes it. Cabana never holds your fare and never adds a fee on top.</p></details>
+          <details><summary>What if no driver answers?</summary><p>After two minutes the Cabana desk steps in and finds a partner driver for you. You can also raise your fare or schedule the trip for later.</p></details>
+          <details><summary>Can I book a driver for the day?</summary><p>Yes. Choose Hourly, set the hours and your first pickup. The car stays with you for meetings, errands or a day out.</p></details>
         </div>
-        <div class="rd-listing-grid" id="rd-listing-grid"></div>
-      </div>
-    </section>
 
-    <section class="rd-pricing" id="rd-pricing" hidden aria-labelledby="rd-pricing-title">
-      <div class="rd-shell">
-        <div class="rd-section-head">
-          <div><span>ADMIN-PUBLISHED PRICING</span><h2 id="rd-pricing-title">Exact price cards</h2><p>These are the only public prices on Cabana Move. Every card has a named market, mode and charging unit.</p></div>
-          <div class="rd-price-seal"><b>NO</b><span>calculated estimates</span></div>
-        </div>
-        <div class="rd-price-grid" id="rd-price-grid"></div>
+        <a class="mv-drive-cta" href="/become-driver">
+          <div><b>Drive with Cabana</b><span>Set your own prices. Keep 100% of every fare.</span></div>
+          <svg class="mv-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+        <p class="mv-foot-note">Need a car without a driver? <a href="/carhire">Hire one on Cabana Drive</a></p>
       </div>
-    </section>
 
-    <section class="rd-control-room" aria-labelledby="rd-control-title">
-      <div class="rd-shell rd-control-grid">
-        <div class="rd-control-copy"><span>THE CABANA MOVEMENT STANDARD</span><h2 id="rd-control-title">The route decides what matters.</h2><p>A crossing, a city commute, a boda ride and a horse trail should never be squeezed into one generic taxi form. Cabana changes the questions, safety checks and confirmation path with the mode.</p></div>
-        <div class="rd-standard-grid">
-          <article><b>01</b><h3>Price integrity</h3><p>No client-side fare formula. A number appears only after an operator or Cabana admin publishes it.</p></article>
-          <article><b>02</b><h3>Continental location</h3><p>Country first, then a city, airport, jetty, hotel, landmark or exact address anywhere in Africa.</p></article>
-          <article><b>03</b><h3>Mode-aware matching</h3><p>Passenger count and trip needs travel with the request, so the wrong vehicle or operator is filtered out.</p></article>
-          <article><b>04</b><h3>Truthful availability</h3><p>An empty market stays empty. Cabana asks operators to respond instead of displaying imaginary cars or wait times.</p></article>
-        </div>
-      </div>
-    </section>
-
-    <section class="rd-network" aria-labelledby="rd-network-title">
-      <div class="rd-shell rd-network-card">
-        <div class="rd-network-copy"><span>CONTINENT STATUS</span><h2 id="rd-network-title">Open everywhere. Activated market by market.</h2><p>Every African country can receive a movement request today. Live dispatch and public price cards only switch on when Cabana has verified the supply and approved the market settings.</p></div>
-        <div class="rd-network-stats" aria-label="Live network statistics">
-          <div><b id="rd-stat-markets">0</b><span>configured markets</span></div>
-          <div><b id="rd-stat-live">0</b><span>live dispatch markets</span></div>
-          <div><b id="rd-stat-services">0</b><span>published operators</span></div>
-        </div>
-        <div class="rd-regions" aria-label="African regions"><span>North</span><span>West</span><span>Central</span><span>East</span><span>Southern</span></div>
-      </div>
-    </section>
-
-    <section class="rd-partner" aria-labelledby="rd-partner-title">
-      <div class="rd-shell rd-partner-card">
-        <div><span>FOR MOVEMENT OPERATORS</span><h2 id="rd-partner-title">Bring the mode your market actually uses.</h2><p>List cars, taxis, tuk-tuks, motorcycles, shuttles, bicycles, e-bikes, accessible vehicles, boats, horses or specialist transfers. You set the operating area, availability and exact prices.</p></div>
-        <div class="rd-partner-actions"><a href="/add-listing?service=rides">Add your service <b>↗</b></a><a href="/partner-listings">Manage listings</a></div>
-      </div>
-    </section>
-
-    <section class="rd-faq" aria-labelledby="rd-faq-title">
-      <div class="rd-shell rd-faq-grid">
-        <div><span>STRAIGHT ANSWERS</span><h2 id="rd-faq-title">Before you request.</h2></div>
-        <div>
-          <details><summary>Does Cabana estimate ride prices?<span>+</span></summary><p>No. The page does not calculate a fare from distance, time, traffic or demand. It displays only exact price cards published by an authorised admin, or an operator quote confirmed after your request.</p></details>
-          <details><summary>Can I request a ride outside Kenya?<span>+</span></summary><p>Yes. All 54 African countries are selectable. Kenya is the first operational focus, while other markets move through operator matching, onboarding and live activation.</p></details>
-          <details><summary>Can a request include boats, bicycles or horses?<span>+</span></summary><p>Yes. The mode catalogue includes road vehicles, micromobility, water transport, animal travel, accessible options and specialist air movement. Admin can activate, pause or add modes.</p></details>
-          <details><summary>Does sending a request commit me to a booking?<span>+</span></summary><p>No. A request asks Cabana and relevant operators to confirm availability and price. You choose whether to proceed after those details are clear.</p></details>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <footer class="rd-footer"><span>© Cabana Africa</span><span>Movement across road, water, trail and air.</span><a href="/help">Support</a></footer>
-
-  <div class="rd-scrim" id="rd-scrim"></div>
-  <section class="rd-sheet" id="rd-sheet" role="dialog" aria-modal="true" aria-labelledby="rd-sheet-title" aria-hidden="true">
-    <div class="rd-sheet-grab"></div>
-    <header><div><span>FINAL DETAILS</span><h2 id="rd-sheet-title">Send the movement request</h2></div><button type="button" id="rd-sheet-close" aria-label="Close request form"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></header>
-    <div class="rd-sheet-body">
-      <div class="rd-brief" id="rd-brief"></div>
-      <div class="rd-contact-grid">
-        <label class="rd-field" for="rd-name"><span class="rd-label">Your name</span><span class="rd-control"><input id="rd-name" autocomplete="name" placeholder="Name the operator should use"></span></label>
-        <label class="rd-field" for="rd-phone"><span class="rd-label">Phone or WhatsApp</span><span class="rd-control"><input id="rd-phone" type="tel" autocomplete="tel" placeholder="Include your country code"></span></label>
-        <label class="rd-field rd-wide" for="rd-email"><span class="rd-label">Email <b>Optional</b></span><span class="rd-control"><input id="rd-email" type="email" autocomplete="email" placeholder="you@example.com"></span></label>
-        <label class="rd-field rd-wide" for="rd-notes"><span class="rd-label">Anything the operator should know? <b>Optional</b></span><span class="rd-control"><textarea id="rd-notes" rows="3" placeholder="Flight number, luggage size, exact access needs or meeting instructions"></textarea></span></label>
-      </div>
-      <p class="rd-sheet-error" id="rd-sheet-error" role="alert"></p>
+      <div class="mv-stage" id="st-choose" data-stage="choose"></div>
+      <div class="mv-stage" id="st-offer" data-stage="offer"></div>
+      <div class="mv-stage" id="st-live" data-stage="live"></div>
     </div>
-    <footer><p>Sending this request is free and does not confirm a booking or payment.</p><button type="button" id="rd-send">Send request <span>→</span></button></footer>
   </section>
 
-  <div class="rd-success" id="rd-success" role="dialog" aria-modal="true" aria-labelledby="rd-success-title" aria-hidden="true">
-    <div><span class="rd-success-mark">✓</span><span>REQUEST RECEIVED</span><h2 id="rd-success-title">The movement desk has it.</h2><p id="rd-success-copy"></p><b id="rd-success-ref"></b><button type="button" id="rd-success-close">Done</button></div>
-  </div>
-  <div class="rd-toast" id="rd-toast" role="status" aria-live="polite"></div>
+  <div class="mv-dock" id="mv-dock" hidden></div>
+</div>
 
-  <script src="/vendor-supabase-2.112.3.js"></script>
-  <script src="/apa-session.js"></script>
-  <script>
-    window.__rdSb = null;
-    try {
-      window.__rdSb = (window.ApaSession && ApaSession.client && ApaSession.client()) || supabase.createClient(
-        'https://gfwgbgdvxtocwhilrtdw.supabase.co',
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw'
-      );
-    } catch (_) {}
-  </script>
-  <script src="/apa-geo.js"></script>
-  <script src="/cabana-rides.js?v=2"></script>
-  <script src="/analytics.js" defer></script>
-  <script src="/telemetry.js" defer></script>
-  <script src="/pwa.js?v=35-programmes" defer></script>
-  <script src="/referral.js" defer></script>
-  <script src="/apa-referral-capture.js" defer></script>
-  <script src="/cabana-credit.js" defer></script>
-  <script src="/apa-signal.js" defer></script>
-  <script src="/apa-contact.js" defer></script>
-  <script src="/cabana-call.js" defer></script>
-  <script src="/apa-location.js" defer></script>
-  <script src="/cabana-sos.js" defer></script>
-  <script src="/cabana-support.js" defer></script>
-  <script src="/cabana-lifecycle.js" defer></script>
+<!-- place search -->
+<div class="mv-overlay" id="mv-search" hidden role="dialog" aria-modal="true" aria-labelledby="mv-search-title">
+  <div class="mv-ov-head">
+    <button class="mv-back" id="mv-search-close" type="button" aria-label="Close search"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></button>
+    <div class="mv-search-box">
+      <span class="mv-dot a" id="mv-search-dot" aria-hidden="true"></span>
+      <label class="sr-only" id="mv-search-title" for="mv-search-input">Search for a place</label>
+      <input id="mv-search-input" type="search" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Search a place, estate or landmark">
+      <button id="mv-search-clear" type="button" aria-label="Clear"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </div>
+  </div>
+  <div class="mv-ov-body"><ul class="mv-results" id="mv-results" role="listbox" aria-label="Places"></ul></div>
+</div>
+
+<!-- schedule -->
+<div class="mv-modal" id="mv-when" hidden role="dialog" aria-modal="true" aria-labelledby="mv-when-title">
+  <div class="mv-modal-card">
+    <h2 class="mv-h2" id="mv-when-title">When do you want to go?</h2>
+    <p>Book up to 60 days ahead. Drivers answer scheduled rides before the day.</p>
+    <div class="mv-days" id="mv-days"></div>
+    <div class="mv-label" style="margin-top:6px"><span>Pickup time</span><small id="mv-when-tz"></small></div>
+    <div class="mv-times" id="mv-times"></div>
+    <div class="mv-row" style="margin-top:16px">
+      <button class="mv-btn is-ghost is-sm" id="mv-when-now" type="button">Leave now</button>
+      <button class="mv-btn is-sm" id="mv-when-set" type="button">Set time</button>
+    </div>
+  </div>
+</div>
+
+<!-- trips -->
+<div class="mv-overlay" id="mv-trips" hidden role="dialog" aria-modal="true" aria-labelledby="mv-trips-title">
+  <div class="mv-ov-head">
+    <button class="mv-back" id="mv-trips-close" type="button" aria-label="Close trips"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></button>
+    <h2 class="mv-h2" id="mv-trips-title">Your trips</h2>
+    <button class="mv-help" id="mv-help" type="button"><svg class="mv-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.9A8 8 0 1 1 21 12Z"/></svg>Help</button>
+  </div>
+  <div class="mv-ov-body" id="mv-trips-body"></div>
+</div>
+
+<div class="mv-modal" id="mv-modal" hidden role="dialog" aria-modal="true"></div>
+<div class="mv-toast" id="mv-toast" role="status" aria-live="polite"></div>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="mv-ring-grad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffc23d"/><stop offset=".5" stop-color="#ff7a1a"/><stop offset="1" stop-color="#ff3d8b"/></linearGradient></defs></svg>
+
+<noscript><p style="padding:20px;font-family:sans-serif">Cabana Move needs JavaScript to show the map and send your ride to drivers.</p></noscript>
+
+<script src="/vendor-supabase-2.112.3.js"></script>
+<script src="/apa-session.js"></script>
+<script src="/apa-geo.js"></script>
+<script src="/assets/location-flight/vendor-leaflet-1.9.4.min.js"></script>
+<script src="/cabana-motion.js?v=1"></script>
+<script src="/cabana-rides.js?v=3"></script>
+<script src="/analytics.js" defer></script>
+<script src="/telemetry.js" defer></script>
+<script src="/pwa.js?v=38-location-flight-30s" defer></script>
+<script src="/referral.js" defer></script>
+<script src="/apa-referral-capture.js" defer></script>
+<script src="/cabana-credit.js" defer></script>
+<script src="/apa-signal.js" defer></script>
+<script src="/apa-contact.js" defer></script>
+<script src="/cabana-call.js" defer></script>
+<script src="/apa-location.js" defer></script>
+<script src="/cabana-sos.js" defer></script>
+<script src="/cabana-support.js" defer></script>
+<script src="/cabana-lifecycle.js" defer></script>
 </body>
 </html>

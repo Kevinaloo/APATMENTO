@@ -116,3 +116,7 @@
 @media (prefers-reduced-motion:reduce) {
   #s-transport .ram-drawer, #s-transport .ram-scrim { transition:none; }
 }
+
+/* rows the desk should look at first */
+.ram-table tr.ram-hot td{background:rgba(255,176,32,.08);}
+.ram-table tr.ram-hot td:first-child{box-shadow:inset 3px 0 0 #f59e0b;}

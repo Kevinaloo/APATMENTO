@@ -939,7 +939,7 @@
     flights: ['/fd-atlas.js', '/cabana-flights-admin.js'],
     tours: ['/cabana-tours-admin.js'],
     events: ['/cabana-events-admin.js'],
-    move: ['/cabana-rides-admin.js?v=2'],
+    move: ['/cabana-rides-admin.js?v=3'],
     offers: ['/cabana-offers.js']
   };
   var scriptP = {};

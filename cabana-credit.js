@@ -519,6 +519,8 @@
   /* Anything already covering the screen, ours or otherwise. */
   function screenBusy() {
     if (global.__cabanaOverlay) return true;
+    /* Mid-task on Move or Drive: an arrival gate, an open sheet, or a trip underway. */
+    if (document.querySelector('html.dg-lock,html.rg-lock,body.dv-locked,.mv-app[data-stage]:not([data-stage="plan"])')) return true;
     if (document.getElementById('apt-ref-popup')) return true;
     var intro = document.getElementById('intro');
     if (intro && intro.offsetParent !== null && !intro.classList.contains('lift')) return true;

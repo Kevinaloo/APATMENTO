@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ──────────────────────────────────────────────────────────────────────────
-# Rides gate UI test runner.
+# Move and Drive arrival UI test runner.
 #
 # Same shape as the dashboard rails runner: shared stub server on a free
 # port, browser suite against it, teardown on exit. Playwright goes into a
@@ -33,7 +33,7 @@ SERVER=$!
 trap 'kill $SERVER 2>/dev/null || true' EXIT
 
 for _ in $(seq 1 40); do
-  curl -sf "http://localhost:$PORT/rides.html" >/dev/null 2>&1 && break
+  curl -sf "http://localhost:$PORT/carhire.html" >/dev/null 2>&1 && break
   sleep 0.25
 done
 

@@ -1,4 +1,4 @@
-/* Cabana Move admin control room: markets, modes, exact price cards and requests. */
+/* Cabana Move desk: the rides marketplace, car hire, fare guides, markets, modes and drivers. */
 (function (global) {
   'use strict';
 
@@ -8,7 +8,7 @@
   const COUNTRY = Object.fromEntries(COUNTRIES.map(c => [c.code,c]));
   const STATUS_LABEL = {quote_pending:'Quote pending',quoted:'Quoted',confirmed:'Confirmed',searching:'Searching',assigned:'Assigned',arriving:'Arriving',in_progress:'In progress',completed:'Completed',cancelled:'Cancelled',expired:'Expired',unfulfilled:'Unfulfilled',scheduled:'Scheduled'};
   const UNIT_LABEL = {trip:'trip',hour:'hour',day:'day',seat:'seat',crossing:'crossing'};
-  const state = {loaded:false,loading:false,tab:'requests',requestFilter:'pending',search:'',requests:[],markets:[],marketModes:[],modes:[],prices:[],drivers:[],vehicles:[],errors:[]};
+  const state = {loaded:false,loading:false,tab:'requests',requestFilter:'pending',search:'',requests:[],markets:[],marketModes:[],modes:[],prices:[],drivers:[],vehicles:[],guides:[],car:null,errors:[]};
   let root = null;
 
   const esc = value => String(value == null ? '' : value).replace(/[&<>"']/g,ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
@@ -59,29 +59,35 @@
     if(state.loaded && !force){ render(); return; }
     state.loading=true; state.errors=[];
     root.innerHTML='<div class="ram-loading"><span></span><div><b>Opening Cabana Move</b><p>Loading requests, markets, modes and approved prices.</p></div></div>';
-    const [requests,markets,marketModes,modes,prices,drivers,vehicles]=await Promise.all([
+    const carBoard=global.sb.rpc('car_desk_board').then(r=>r.error?null:r.data,()=>null);
+    const [requests,markets,marketModes,modes,prices,drivers,vehicles,guides,car]=await Promise.all([
       query('ride_requests','*',q=>q.order('created_at',{ascending:false}).limit(500)),
       query('ride_markets','*',q=>q.order('country_name').order('city')),
       query('ride_market_modes','*'),
       query('ride_modes','*',q=>q.order('sort')),
       query('ride_price_cards','*',q=>q.order('sort').order('created_at',{ascending:false})),
       query('drivers','*',q=>q.order('created_at',{ascending:false}).limit(300)),
-      query('driver_vehicles','*',q=>q.limit(500))
+      query('driver_vehicles','*',q=>q.limit(500)),
+      query('ride_fare_guides','*',q=>q.order('country_code').order('mode_key').order('class')),
+      carBoard
     ]);
-    Object.assign(state,{requests,markets,marketModes,modes,prices,drivers,vehicles,loaded:true,loading:false});
+    Object.assign(state,{requests,markets,marketModes,modes,prices,drivers,vehicles,guides,car,loaded:true,loading:false});
     render();
   }
 
+  const OPEN=['searching','quote_pending','scheduled'], LIVE=['assigned','arriving','in_progress'], CLOSED=['cancelled','expired','unfulfilled'];
   function header() {
-    const pending=state.requests.filter(r=>['quote_pending','searching','scheduled'].includes(r.status)).length;
-    const live=state.markets.filter(m=>m.active&&m.status==='live').length;
-    const published=state.prices.filter(p=>p.active&&p.published).length;
-    const enabled=state.modes.filter(m=>m.active&&m.requestable).length;
-    return `<div class="ram-head"><div><span class="ram-kicker">CABANA MOVE / CONTROL ROOM</span><h1>Move Africa without invented numbers.</h1><p>Requests, market activation, movement modes and every public price are controlled here. Publishing a price is an explicit approval action.</p></div><div class="ram-head-actions"><button class="ram-action" data-action="export">Export requests</button><button class="ram-action primary" data-action="context-add">${state.tab==='markets'?'Add market':state.tab==='prices'?'Add exact price':'Open Rides page'}</button></div></div>
-    <div class="ram-summary"><div class="ram-stat attention"><span>Needs a quote</span><b>${pending}</b><em>no automatic fares</em></div><div class="ram-stat"><span>Live markets</span><b>${live}</b><em>of ${state.markets.length} configured</em></div><div class="ram-stat truth"><span>Published prices</span><b>${published}</b><em>exact approved records</em></div><div class="ram-stat"><span>Requestable modes</span><b>${enabled}</b><em>of ${state.modes.length} configured</em></div></div>`;
+    const open=state.requests.filter(r=>OPEN.includes(r.status));
+    const desk=open.filter(r=>r.desk_at).length;
+    const live=state.requests.filter(r=>LIVE.includes(r.status)).length;
+    const car=state.car||{};
+    const carWait=(car.requests||[]).length+(car.bookings||[]).filter(b=>b.status==='requested').length;
+    const review=(car.vehicles||[]).filter(v=>v.status==='review').length+(car.operators||[]).filter(o=>!o.verified).length;
+    return `<div class="ram-head"><div><span class="ram-kicker">CABANA MOVE · DESK</span><h1>Riders name the fare. The desk makes sure someone answers.</h1><p>Rides and car hire run as open marketplaces with zero commission. Drivers and operators answer first; anything still waiting reaches this desk, where you can offer a car yourself.</p></div><div class="ram-head-actions"><button class="ram-action" data-action="export">Export rides</button><button class="ram-action primary" data-action="context-add">${state.tab==='markets'?'Add market':state.tab==='prices'?'Add exact price':state.tab==='guides'?'Add fare guide':'Open Rides page'}</button></div></div>
+    <div class="ram-summary"><div class="ram-stat attention"><span>Rides searching</span><b>${open.length}</b><em>${desk} escalated to the desk</em></div><div class="ram-stat"><span>Rides underway</span><b>${live}</b><em>assigned, arriving or on the road</em></div><div class="ram-stat attention"><span>Car hire waiting</span><b>${carWait}</b><em>requests and unanswered bookings</em></div><div class="ram-stat truth"><span>To verify</span><b>${review}</b><em>operators and cars in review</em></div></div>`;
   }
   function tabs() {
-    return `<div class="ram-tabs">${[['requests','Requests'],['markets','Markets'],['modes','Movement modes'],['prices','Price cards'],['drivers','Drivers and operators']].map(tab=>`<button class="ram-tab ${state.tab===tab[0]?'on':''}" data-tab="${tab[0]}">${tab[1]}</button>`).join('')}</div>`;
+    return `<div class="ram-tabs">${[['requests','Rides desk'],['carhire','Car hire desk'],['guides','Fare guides'],['markets','Markets'],['modes','Movement modes'],['prices','Price cards'],['drivers','Drivers']].map(tab=>`<button class="ram-tab ${state.tab===tab[0]?'on':''}" data-tab="${tab[0]}">${tab[1]}</button>`).join('')}</div>`;
   }
   function render() {
     if(!root) return;
@@ -94,24 +100,114 @@
     if(state.tab==='modes') return modesPanel();
     if(state.tab==='prices') return pricesPanel();
     if(state.tab==='drivers') return driversPanel();
+    if(state.tab==='guides') return guidesPanel();
+    if(state.tab==='carhire') return carPanel();
     return requestsPanel();
   }
 
   function requestsPanel() {
-    const filters=[['all','All'],['pending','Needs quote'],['quoted','Quoted'],['confirmed','Confirmed'],['cancelled','Closed']];
+    const filters=[['pending','Searching'],['quoted','Underway'],['confirmed','Completed'],['cancelled','Closed'],['all','All']];
     const term=norm(state.search);
     const rows=state.requests.filter(r=>{
-      const statusMatch=state.requestFilter==='all'||(state.requestFilter==='pending'&&['quote_pending','searching','scheduled'].includes(r.status))||(state.requestFilter==='quoted'&&r.status==='quoted')||(state.requestFilter==='confirmed'&&['confirmed','assigned','arriving','in_progress','completed'].includes(r.status))||(state.requestFilter==='cancelled'&&['cancelled','expired','unfulfilled'].includes(r.status));
+      const statusMatch=state.requestFilter==='all'||(state.requestFilter==='pending'&&OPEN.includes(r.status))||(state.requestFilter==='quoted'&&LIVE.includes(r.status))||(state.requestFilter==='confirmed'&&r.status==='completed')||(state.requestFilter==='cancelled'&&CLOSED.includes(r.status));
       const hay=norm([r.ref,r.rider_name,r.rider_phone,r.country_code,r.city,r.pickup_label,r.dropoff_label,r.mode_key,r.class].join(' '));
       return statusMatch&&(!term||hay.includes(term));
     });
-    return `<div class="ram-toolbar"><div class="ram-filter">${filters.map(f=>`<button class="${state.requestFilter===f[0]?'on':''}" data-filter="${f[0]}">${f[1]}</button>`).join('')}</div><input class="ram-search" id="ram-search" value="${esc(state.search)}" placeholder="Search ref, rider, route or country"></div>${rows.length?`<div class="ram-table-wrap"><table class="ram-table"><thead><tr><th>Request</th><th>Rider</th><th>Movement</th><th>Route</th><th>Exact price</th><th>Status</th><th>Actions</th></tr></thead><tbody>${rows.map(requestRow).join('')}</tbody></table></div>`:`<div class="ram-empty"><b>No requests in this view</b><p>New movement requests will land here with an awaiting quote state unless the rider selected an applicable published price card.</p></div>`}`;
+    return `<div class="ram-toolbar"><div class="ram-filter">${filters.map(f=>`<button class="${state.requestFilter===f[0]?'on':''}" data-filter="${f[0]}">${f[1]}</button>`).join('')}</div><input class="ram-search" id="ram-search" value="${esc(state.search)}" placeholder="Search ref, rider, route or country"></div>${rows.length?`<div class="ram-table-wrap"><table class="ram-table"><thead><tr><th>Request</th><th>Rider</th><th>Movement</th><th>Route</th><th>Fare</th><th>Status</th><th>Actions</th></tr></thead><tbody>${rows.map(requestRow).join('')}</tbody></table></div>`:`<div class="ram-empty"><b>No requests in this view</b><p>Rides appear here the moment a rider asks. Anything nobody answers is flagged for the desk.</p></div>`}`;
   }
   function requestRow(r) {
     const mode=state.modes.find(m=>m.key===(r.mode_key||r.class));
     const phone=String(r.rider_phone||'').replace(/\D/g,'');
-    const whatsapp=phone?`<a href="https://wa.me/${phone}?text=${encodeURIComponent(`Hello ${r.rider_name||''}, Cabana Move is reviewing request ${r.ref||r.id}.`)}" target="_blank" rel="noopener">WhatsApp</a>`:'';
-    return `<tr><td><div class="ram-main ram-mono">${esc(r.ref||String(r.id).slice(0,10))}</div><div class="ram-sub">${ago(r.created_at)}</div></td><td><div class="ram-main">${esc(r.rider_name||'Rider')}</div><div class="ram-sub">${esc(r.rider_phone||'No phone')}</div></td><td><div class="ram-main">${esc(mode?.label||r.mode_key||r.class||'Movement')}</div><div class="ram-sub">${esc(COUNTRY[r.country_code]?.name||r.country_code||'Country not recorded')} · ${esc(r.passengers||1)} traveller${Number(r.passengers)===1?'':'s'}</div></td><td class="ram-route"><div><i>A</i>${esc(r.pickup_label||'Not set')}</div><div class="ram-sub"><i>B</i>${esc(r.dropoff_label||'Not set')}</div><div class="ram-sub">${r.scheduled_for?new Date(r.scheduled_for).toLocaleString():'On demand'}</div></td><td><div class="ram-main">${esc(priceForRequest(r))}</div><div class="ram-sub">${r.pricing_status==='published_price'?'Published card':r.pricing_status==='manual_quote'?'Manual admin quote':r.pricing_status==='confirmed'?'Price confirmed':'No approved amount'}</div></td><td>${pill(r.status)}</td><td><div class="ram-row-actions"><button data-action="quote" data-id="${r.id}">${r.approved_quote_minor!=null?'Edit price':'Set price'}</button>${whatsapp}${!['cancelled','completed','expired'].includes(r.status)?`<button data-action="cancel-request" data-id="${r.id}">Cancel</button>`:''}</div></td></tr>`;
+    const whatsapp=phone?`<a href="https://wa.me/${phone}?text=${encodeURIComponent(`Hello ${r.rider_name||''}, this is the Cabana desk about your ride ${r.ref||''}.`)}" target="_blank" rel="noopener">WhatsApp</a>`:'';
+    const fare=r.agreed_minor!=null?money(r.agreed_minor,r.currency):r.rider_offer_minor!=null?money(r.rider_offer_minor,r.currency):r.fare_hint_minor!=null?money(r.fare_hint_minor,r.currency):'No fare named';
+    const fareSub=r.agreed_minor!=null?'Agreed':r.pricing_status==='published_price'?'Fixed price card':r.rider_offer_minor!=null?'Rider’s offer'+(r.auto_accept?' · auto-accept':''):'Guide';
+    const acts=[];
+    if(r.status==='searching') acts.push(`<button data-action="desk-offer" data-id="${r.id}">Desk offer</button>`);
+    if(r.status==='assigned') acts.push(`<button data-action="desk-step" data-step="arrived" data-id="${r.id}">Arrived</button>`);
+    if(['assigned','arriving'].includes(r.status)) acts.push(`<button data-action="desk-step" data-step="start" data-id="${r.id}">Start</button>`);
+    if(LIVE.includes(r.status)) acts.push(`<button data-action="desk-step" data-step="complete" data-id="${r.id}">Complete</button>`);
+    if(['unfulfilled','expired'].includes(r.status)) acts.push(`<button data-action="desk-step" data-step="reopen" data-id="${r.id}">Reopen</button>`);
+    if(['searching','assigned','arriving','quote_pending','quoted','scheduled'].includes(r.status)) acts.push(`<button data-action="desk-step" data-step="cancel" data-id="${r.id}">Cancel</button>`);
+    return `<tr${r.desk_at&&r.status==='searching'?' class="ram-hot"':''}><td><div class="ram-main ram-mono">${esc(r.ref||String(r.id).slice(0,10))}</div><div class="ram-sub">${ago(r.created_at)}${r.desk_at&&r.status==='searching'?' · <b style="color:#b45309">desk</b>':''}</div></td><td><div class="ram-main">${esc(r.rider_name||'Rider')}</div><div class="ram-sub">${esc(r.rider_phone||'No phone')}</div></td><td><div class="ram-main">${esc(mode?.label||r.mode_key||r.class||'Movement')}${r.class&&r.mode_key==='car'?' · '+esc(r.class):''}</div><div class="ram-sub">${esc(COUNTRY[r.country_code]?.name||r.country_code||'')} · ${esc(r.passengers||1)} pax · ${esc(r.pay_method||'')}</div></td><td class="ram-route"><div><i>A</i>${esc(r.pickup_label||'Not set')}</div><div class="ram-sub"><i>B</i>${esc(r.dropoff_label||(r.hours?r.hours+' hours':'Not set'))}</div><div class="ram-sub">${r.scheduled_for?new Date(r.scheduled_for).toLocaleString():'Now'}${r.distance_km?' · '+esc(Number(r.distance_km).toFixed(1))+' km':''}</div></td><td><div class="ram-main">${esc(fare)}</div><div class="ram-sub">${esc(fareSub)}</div></td><td>${pill(r.status)}</td><td><div class="ram-row-actions">${acts.join('')}${whatsapp}</div></td></tr>`;
+  }
+
+  /* ── the desk steps in ─────────────────────────────────────────── */
+  async function rpcOrThrow(name,args){ const {data,error}=await global.sb.rpc(name,args); if(error) throw new Error(error.details?`${error.message}: ${error.details}`:error.message); return data; }
+  function openDeskOffer(id) {
+    const r=byId(state.requests,id); if(!r) return;
+    const fixed=r.pricing_status==='published_price';
+    const suggest=r.rider_offer_minor!=null?fromMinor(r.rider_offer_minor,r.currency):r.fare_hint_minor!=null?fromMinor(r.fare_hint_minor,r.currency):'';
+    const body=`<div class="ram-form"><div class="ram-form-note"><b>${esc(r.pickup_label)} → ${esc(r.dropoff_label||'')}</b><br>${esc(r.rider_name||'Rider')} named ${esc(r.rider_offer_minor!=null?money(r.rider_offer_minor,r.currency):'no fare')}. Your offer lands on their phone next to any driver offers; they choose.</div>${field(`Fare (${r.currency||''})`,'ram-o-price',suggest,'number',false,fixed?'Fixed price card: the rider pays the published amount.':'Match the rider or counter it.')}${field('ETA to pickup (min)','ram-o-eta',15,'number')}${field('Driver name','ram-o-name','')}${field('Driver phone','ram-o-phone','','tel')}${field('Vehicle','ram-o-veh','',undefined,false,'e.g. Toyota Noah')}${field('Colour','ram-o-col','')}${field('Plate','ram-o-plate','')}${textareaField('Line to the rider','ram-o-note','',true)}${formError()}</div>`;
+    drawer(`Desk offer · ${r.ref||''}`,'RIDES DESK',body,'Send offer',aside=>saveWith(aside.querySelector('#ram-save'),async()=>{
+      const price=Number(value(aside,'ram-o-price'));
+      if(!fixed&&!(price>0)) throw new Error('Enter the fare.');
+      await rpcOrThrow('ride_desk_offer',{p_request:id,p:{price_minor:fixed?null:toMinor(price,r.currency),eta_min:Number(value(aside,'ram-o-eta'))||15,driver_name:value(aside,'ram-o-name'),driver_phone:value(aside,'ram-o-phone'),vehicle_label:value(aside,'ram-o-veh'),vehicle_colour:value(aside,'ram-o-col'),plate:value(aside,'ram-o-plate'),note:value(aside,'ram-o-note')}});
+    }));
+  }
+  async function deskStep(id,step) {
+    let note=null;
+    if(step==='cancel'){ note=global.prompt('Cancel this ride? Tell the rider why.',''); if(note==null) return; }
+    try { await rpcOrThrow('ride_desk_progress',{p_request:id,p_action:step,p_note:note}); await load(true); notify('Ride updated','ok'); }
+    catch(e){ notify(e.message,'bad'); }
+  }
+
+  /* ── fare guides: what the rides page suggests ─────────────────── */
+  function guidesPanel() {
+    const rows=state.guides;
+    const note='<div class="ram-form-note" style="margin-bottom:14px">A guide is a suggestion, not a price. Riders see a fair range built from it and name their own fare; drivers accept or counter. Base, per km, per minute and minimum are in the local currency.</div>';
+    if(!rows.length) return note+'<div class="ram-empty"><b>No fare guides</b><p>Without a guide, riders name a fare with no suggestion. Add one per country (optionally per city) and mode.</p></div>';
+    return note+`<div class="ram-table-wrap"><table class="ram-table"><thead><tr><th>Scope</th><th>Mode</th><th>Base</th><th>Per km</th><th>Per min</th><th>Minimum</th><th>Airport</th><th>Night</th><th>Status</th><th></th></tr></thead><tbody>${rows.map(g=>`<tr><td><div class="ram-main">${esc(COUNTRY[g.country_code]?.name||g.country_code)}</div><div class="ram-sub">${esc(g.city||'Whole country')}</div></td><td><div class="ram-main">${esc(state.modes.find(m=>m.key===g.mode_key)?.label||g.mode_key)}</div><div class="ram-sub">${esc(g.class||'any class')}</div></td><td>${esc(money(g.base_minor,g.currency))}</td><td>${esc(money(g.per_km_minor,g.currency))}</td><td>${esc(money(g.per_min_minor,g.currency))}</td><td>${esc(money(g.min_minor,g.currency))}</td><td>${esc(money(g.airport_minor,g.currency))}</td><td>${g.night_pct}%</td><td>${pill(g.active?'live':'paused',g.active?'Active':'Off')}</td><td><div class="ram-row-actions"><button data-action="edit-guide" data-id="${g.id}">Edit</button></div></td></tr>`).join('')}</tbody></table></div>`;
+  }
+  function openGuide(id) {
+    const g=byId(state.guides,id)||{country_code:'KE',currency:'KES',mode_key:'car',class:'economy',spread_pct:12,round_minor:1000,night_pct:0,active:true};
+    const cur=g.currency||COUNTRY[g.country_code]?.currency||'KES', m=v=>v==null?'':fromMinor(v,cur);
+    const body=`<div class="ram-form">${selectField('Country','ram-g-country',countryOptions(g.country_code))}${field('City (blank = whole country)','ram-g-city',g.city||'')}${selectField('Mode','ram-g-mode',modeOptions(g.mode_key))}${field('Class (car only: economy, comfort, executive, van…)','ram-g-class',g.class||'')}${field('Currency','ram-g-cur',cur)}${field('Base','ram-g-base',m(g.base_minor),'number')}${field('Per km','ram-g-km',m(g.per_km_minor),'number')}${field('Per minute','ram-g-min',m(g.per_min_minor),'number')}${field('Minimum fare','ram-g-floor',m(g.min_minor),'number')}${field('Airport supplement','ram-g-air',m(g.airport_minor),'number')}${field('Per hour (chauffeur)','ram-g-hour',m(g.per_hour_minor),'number')}${field('Night uplift %','ram-g-night',g.night_pct,'number')}${field('Range spread %','ram-g-spread',g.spread_pct,'number')}${field('Round to','ram-g-round',m(g.round_minor),'number')}<div class="ram-field wide"><label class="ram-check"><input type="checkbox" id="ram-g-active" ${g.active?'checked':''}><span>Active</span></label></div>${formError()}</div>`;
+    drawer(id?'Edit fare guide':'New fare guide','FARE GUIDE',body,'Save guide',aside=>saveWith(aside.querySelector('#ram-save'),async()=>{
+      const c=value(aside,'ram-g-cur').toUpperCase(); if(!/^[A-Z]{3}$/.test(c)) throw new Error('Currency must be a three-letter code.');
+      const mn=idv=>{const x=Number(value(aside,idv));return Number.isFinite(x)&&x>=0?toMinor(x,c):0;};
+      const payload={country_code:value(aside,'ram-g-country'),city:value(aside,'ram-g-city')||null,mode_key:value(aside,'ram-g-mode'),class:value(aside,'ram-g-class')||null,currency:c,base_minor:mn('ram-g-base'),per_km_minor:mn('ram-g-km'),per_min_minor:mn('ram-g-min'),min_minor:mn('ram-g-floor'),airport_minor:mn('ram-g-air'),per_hour_minor:mn('ram-g-hour')||null,night_pct:Math.max(0,Math.min(100,Number(value(aside,'ram-g-night'))||0)),spread_pct:Math.max(0,Math.min(60,Number(value(aside,'ram-g-spread'))||12)),round_minor:mn('ram-g-round')||toMinor(10,c),active:checked(aside,'ram-g-active')};
+      const res=id?await global.sb.from('ride_fare_guides').update(payload).eq('id',id):await global.sb.from('ride_fare_guides').insert(payload); if(res.error) throw res.error;
+    }));
+  }
+
+  /* ── car hire desk ─────────────────────────────────────────────── */
+  const carMoney=(minor,cur)=>{ const v=Number(minor||0)/100; try{return new Intl.NumberFormat('en',{style:'currency',currency:cur||'KES',currencyDisplay:'code',maximumFractionDigits:0}).format(v).replace(/ /g,' ');}catch(_){return `${cur||''} ${Math.round(v).toLocaleString('en')}`;} };
+  function carPanel() {
+    const c=state.car;
+    if(!c) return '<div class="ram-error"><b>Car hire desk unavailable.</b><br>The desk board could not be loaded. Check that you are signed in as an admin.</div>';
+    const ops=c.operators||[], veh=c.vehicles||[], reqs=c.requests||[], bks=c.bookings||[];
+    const review=veh.filter(v=>v.status==='review');
+    const when=d=>d?new Date(d).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'';
+    const sec=(t,sub)=>`<h3 style="margin:22px 0 10px;font-size:17px">${esc(t)} <span class="ram-sub" style="font-weight:500">${esc(sub||'')}</span></h3>`;
+    let h=sec('Open car requests',`${reqs.length} open · renters waiting for offers`);
+    h+=reqs.length?`<div class="ram-table-wrap"><table class="ram-table"><thead><tr><th>Request</th><th>Where / when</th><th>Wants</th><th>Offers</th><th></th></tr></thead><tbody>${reqs.map(q=>`<tr${q.desk?' class="ram-hot"':''}><td><div class="ram-main ram-mono">${esc(q.ref)}</div><div class="ram-sub">${esc(q.customer_first_name||'')} · ${esc(q.phone||'')}</div></td><td><div class="ram-main">${esc(q.pickup_label||q.city||'')}</div><div class="ram-sub">${esc(when(q.pickup_at))} → ${esc(when(q.return_at))} · ${esc(q.days)}d</div></td><td><div class="ram-main">${esc(q.class||'any')} · ${esc(q.seats_min||1)}+ seats</div><div class="ram-sub">${q.with_chauffeur?'with driver':'self-drive'}${q.delivery?' · delivered':''}${q.budget_day?' · budget '+esc(carMoney(q.budget_day,q.currency))+'/day':''}</div></td><td>${(q.offers||[]).length}</td><td><div class="ram-row-actions"><button data-action="car-offer" data-id="${q.id}">Desk offer</button></div></td></tr>`).join('')}</tbody></table></div>`:'<div class="ram-empty"><b>No open requests</b><p>When a renter cannot find a listed car, their request lands here and with operators nearby.</p></div>';
+    const act=bks.filter(b=>['requested','confirmed','active'].includes(b.status));
+    h+=sec('Bookings in motion',`${act.length} requested, confirmed or out`);
+    h+=act.length?`<div class="ram-table-wrap"><table class="ram-table"><thead><tr><th>Booking</th><th>Car / operator</th><th>Dates</th><th>Total</th><th>Status</th><th></th></tr></thead><tbody>${act.map(b=>{
+      const a=[]; if(b.status==='requested') a.push(['confirm','Confirm']); if(b.status==='confirmed') a.push(['collected','Collected']); if(b.status==='active') a.push(['returned','Returned']); if(!b.paid_at&&b.status!=='requested') a.push(['paid','Paid']); if(['requested','confirmed'].includes(b.status)) a.push(['cancel','Cancel']);
+      return `<tr><td><div class="ram-main ram-mono">${esc(b.ref)}</div><div class="ram-sub">${esc(b.customer_name||'')} · ${esc(b.phone||'')} · code ${esc(b.handover_code||'')}</div></td><td><div class="ram-main">${esc([b.vehicle?.make,b.vehicle?.model].filter(Boolean).join(' '))}</div><div class="ram-sub">${esc(b.operator?.name||'')}${b.operator?.phone?' · '+esc(b.operator.phone):''}</div></td><td><div class="ram-sub">${esc(when(b.pickup_at))} → ${esc(when(b.return_at))}</div></td><td>${esc(carMoney(b.total,b.currency))}</td><td>${pill(b.status==='requested'?'searching':b.status==='active'?'assigned':b.status,b.status)}</td><td><div class="ram-row-actions">${a.map(x=>`<button data-action="car-book" data-step="${x[0]}" data-id="${b.id}">${x[1]}</button>`).join('')}</div></td></tr>`; }).join('')}</tbody></table></div>`:'<div class="ram-empty"><b>Nothing in motion</b><p>Requested, confirmed and active hires appear here.</p></div>';
+    h+=sec('Cars in review',`${review.length} waiting`);
+    h+=review.length?`<div class="ram-cards">${review.map(v=>`<article class="ram-card"><div class="ram-card-top"><span class="ram-card-index">${esc(v.operator_name||'')}${v.operator_verified?'':' · unverified operator'}</span>${pill('pending','In review')}</div><h3>${esc(v.make)} ${esc(v.model)} ${esc(v.year||'')}</h3><p>${esc([v.plate,v.class,v.transmission,v.seats+' seats'].filter(Boolean).join(' · '))} · ${esc(carMoney(v.day_rate,'KES').replace('KES ',''))}/day</p>${Array.isArray(v.photos)&&v.photos.length?`<div class="ram-card-meta">${v.photos.slice(0,3).map(u=>`<a class="ram-pill" href="${esc(u)}" target="_blank" rel="noopener">photo</a>`).join('')}</div>`:''}<div class="ram-card-actions"><button data-action="car-veh" data-step="active" data-id="${v.id}">Approve</button><button data-action="car-veh" data-step="rejected" data-id="${v.id}">Reject</button></div></article>`).join('')}</div>`:'<div class="ram-empty"><b>No cars waiting</b><p>New and edited cars come here before they go live.</p></div>';
+    h+=sec('Operators',`${ops.length} total`);
+    h+=ops.length?`<div class="ram-table-wrap"><table class="ram-table"><thead><tr><th>Operator</th><th>Place</th><th>Fleet</th><th>Record</th><th>Status</th><th></th></tr></thead><tbody>${ops.map(o=>`<tr><td><div class="ram-main">${esc(o.name)}</div><div class="ram-sub">${esc(o.phone||'')} ${o.email?'· '+esc(o.email):''}</div></td><td>${esc(o.city||'')}, ${esc(o.country_code||'')}</td><td>${esc(o.vehicles)} cars${o.in_review?' · '+esc(o.in_review)+' in review':''}</td><td><div class="ram-sub">${esc(o.completed_hires||0)} hires · ★ ${esc(o.rating||'—')} · answers in ${esc(o.response_mins||'—')} min</div></td><td>${pill(o.verified?'live':'pending',o.verified?'Verified':'Unverified')}</td><td><div class="ram-row-actions"><button data-action="car-op" data-step="${o.verified?'0':'1'}" data-id="${o.id}">${o.verified?'Unverify':'Verify'}</button></div></td></tr>`).join('')}</tbody></table></div>`:'<div class="ram-empty"><b>No operators yet</b><p>Operators apply at /list-your-fleet.</p></div>';
+    return h;
+  }
+  function openCarOffer(id) {
+    const q=(state.car?.requests||[]).find(x=>x.id===id); if(!q) return;
+    const body=`<div class="ram-form"><div class="ram-form-note"><b>${esc(q.pickup_label||q.city||'')}</b> · ${esc(q.days)} days · ${esc(q.class||'any class')}<br>Offer a car you have sourced. The renter accepts in one tap and gets a handover code; share it with the operator you arranged.</div>${field('Operator / supplier','ram-c-op','')}${field('Operator phone','ram-c-phone','','tel')}${field('Vehicle','ram-c-veh','',undefined,false,'e.g. Toyota Prado TX 2019')}${field('Seats','ram-c-seats',q.seats_min||5,'number')}${field(`Daily rate (${q.currency})`,'ram-c-rate','','number')}${field(`Total (${q.currency})`,'ram-c-total','','number',false,'Blank = daily rate × days')}${field(`Deposit (${q.currency})`,'ram-c-dep','','number')}${textareaField('Line to the renter','ram-c-note','',true)}${formError()}</div>`;
+    drawer(`Car offer · ${q.ref}`,'CAR HIRE DESK',body,'Send offer',aside=>saveWith(aside.querySelector('#ram-save'),async()=>{
+      const n=idv=>{const x=Number(value(aside,idv));return Number.isFinite(x)&&x>0?Math.round(x*100):null;};
+      if(!n('ram-c-rate')) throw new Error('Enter the daily rate.');
+      await rpcOrThrow('car_desk_request_offer',{p_request:id,p:{operator_name:value(aside,'ram-c-op'),operator_phone:value(aside,'ram-c-phone'),vehicle_label:value(aside,'ram-c-veh'),seats:Number(value(aside,'ram-c-seats'))||null,class:q.class&&q.class!=='any'?q.class:null,day_rate_minor:n('ram-c-rate'),total_minor:n('ram-c-total'),deposit_minor:n('ram-c-dep')||0,note:value(aside,'ram-c-note')}});
+    }));
+  }
+  async function carAction(kind,id,step) {
+    try {
+      if(kind==='book'){ let note=null; if(step==='cancel'){ note=global.prompt('Cancel this hire? Tell the renter why.',''); if(note==null) return; } await rpcOrThrow('car_desk_booking_update',{p_booking:id,p_action:step,p_note:note}); }
+      else if(kind==='veh') await rpcOrThrow('car_desk_vehicle_status',{p_vehicle:id,p_status:step});
+      else if(kind==='op') await rpcOrThrow('car_desk_operator_verify',{p_operator:id,p_verified:step==='1'});
+      await load(true); notify('Car hire desk updated','ok');
+    } catch(e){ notify(e.message,'bad'); }
   }
 
   function marketsPanel() {
@@ -152,12 +248,19 @@
     bindPanelOnly();
     root.querySelector('[data-action="export"]')?.addEventListener('click',exportRequests);
     root.querySelector('[data-action="context-add"]')?.addEventListener('click',()=>{
-      if(state.tab==='markets') openMarket(); else if(state.tab==='prices') openPrice(); else global.open('/rides','_blank','noopener');
+      if(state.tab==='markets') openMarket(); else if(state.tab==='prices') openPrice(); else if(state.tab==='guides') openGuide(); else global.open(state.tab==='carhire'?'/carhire':'/rides','_blank','noopener');
     });
     root.querySelector('#ram-scrim')?.addEventListener('click',closeDrawer);
   }
   function bindPanelOnly() {
     root.querySelectorAll('[data-action="quote"]').forEach(b=>b.addEventListener('click',()=>openQuote(b.dataset.id)));
+    root.querySelectorAll('[data-action="desk-offer"]').forEach(b=>b.addEventListener('click',()=>openDeskOffer(b.dataset.id)));
+    root.querySelectorAll('[data-action="desk-step"]').forEach(b=>b.addEventListener('click',()=>deskStep(b.dataset.id,b.dataset.step)));
+    root.querySelectorAll('[data-action="edit-guide"]').forEach(b=>b.addEventListener('click',()=>openGuide(b.dataset.id)));
+    root.querySelectorAll('[data-action="car-offer"]').forEach(b=>b.addEventListener('click',()=>openCarOffer(b.dataset.id)));
+    root.querySelectorAll('[data-action="car-book"]').forEach(b=>b.addEventListener('click',()=>carAction('book',b.dataset.id,b.dataset.step)));
+    root.querySelectorAll('[data-action="car-veh"]').forEach(b=>b.addEventListener('click',()=>carAction('veh',b.dataset.id,b.dataset.step)));
+    root.querySelectorAll('[data-action="car-op"]').forEach(b=>b.addEventListener('click',()=>carAction('op',b.dataset.id,b.dataset.step)));
     root.querySelectorAll('[data-action="cancel-request"]').forEach(b=>b.addEventListener('click',()=>cancelRequest(b.dataset.id)));
     root.querySelectorAll('[data-action="edit-market"]').forEach(b=>b.addEventListener('click',()=>openMarket(b.dataset.id)));
     root.querySelectorAll('[data-action="toggle-market"]').forEach(b=>b.addEventListener('click',()=>toggleMarket(b.dataset.id)));
@@ -266,7 +369,7 @@
 
   async function cancelRequest(id) { if(!global.confirm('Cancel this movement request?'))return;const {error}=await global.sb.from('ride_requests').update({status:'cancelled',cancelled_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq('id',id);if(error)return notify(error.message,'bad');await load(true);notify('Movement request cancelled','ok'); }
   function exportRequests() {
-    const cols=['ref','created_at','rider_name','rider_phone','rider_email','country_code','city','mode_key','pickup_label','dropoff_label','scheduled_for','passengers','pricing_status','approved_quote_minor','approved_quote_currency','status'];
+    const cols=['ref','created_at','rider_name','rider_phone','country_code','city','mode_key','class','pickup_label','dropoff_label','scheduled_for','passengers','currency','rider_offer_minor','agreed_minor','pay_method','status'];
     const quote=value=>`"${String(value==null?'':Array.isArray(value)?value.join('|'):value).replace(/"/g,'""')}"`;
     const csv=[cols.join(','),...state.requests.map(row=>cols.map(key=>quote(row[key])).join(','))].join('\n');
     const link=document.createElement('a');link.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));link.download=`cabana-move-requests-${new Date().toISOString().slice(0,10)}.csv`;link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1000);

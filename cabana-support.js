@@ -1631,7 +1631,7 @@
     function show() {
       if (ls(LS_WELCOME) || ls(LS_USED) || open) return;
       // Let arrival animations and anything the visitor opened finish first.
-      if (doc.hidden || doc.querySelector('dialog[open],.drawer.open,.gate-active,.cabana-gate-active,html.sg-lock,#cbp-splash,#apa-gate.show') || doc.body.style.overflow === 'hidden') {
+      if (doc.hidden || doc.querySelector('dialog[open],.drawer.open,.gate-active,.cabana-gate-active,html.sg-lock,html.dg-lock,html.rg-lock,#cbp-splash,#apa-gate.show') || doc.body.style.overflow === 'hidden') {
         if (++attempts < 30) setTimeout(show, 2000);
         return;
       }

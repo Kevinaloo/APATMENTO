@@ -2,6 +2,7 @@
    APATMENTO  ·  Utilities  /api/utilities.js
    Routes: ?action=close-bookings | welcome-email | indexnow | music-search
            | reconcile-payments | geocode | atlas | sos-alert | carhire-terrain
+           | route
    Consolidates small utility handlers into 1 function
 ════════════════════════════════════════════════════════════════ */
 export const config = { maxDuration: 60 };
@@ -43,6 +44,7 @@ import geocodeHandler from './lib/_geocode.js';
 import atlasHandler from './lib/_atlas.js';
 import sosHandler from './lib/_sos.js';
 import terrainHandler from './lib/_carhire-terrain.js';
+import routeHandler from './lib/_route.js';
 import musicSearchHandler from './lib/_music-search.js';
 import weatherHandler from './lib/_weather.js';
 import scrapeHandler from './lib/_scrape.js';
@@ -813,6 +815,13 @@ export default async function handler(req, res) {
     return terrainHandler(req, res);
   }
 
+  /* Road distance and time between two pins, for ride fares, driver
+     ETAs and the car hire trip check. /api/route rewrites here for the
+     same twelve-function reason as music-search. */
+  if (action === 'route') {
+    return routeHandler(req, res);
+  }
+
   if (action === 'weather') {
     return weatherHandler(req, res);
   }
@@ -850,7 +859,7 @@ export default async function handler(req, res) {
   }
 
   return res.status(400).json({
-    error: 'Unknown action. Available: subscribe, geocode, atlas, sos-alert, carhire-terrain, weather, music-search, '
+    error: 'Unknown action. Available: subscribe, geocode, atlas, sos-alert, carhire-terrain, route, weather, music-search, '
          + 'scrape, close-bookings, welcome-email, indexnow, reconcile-payments, expire-match-offers, paypal-create-order, '
          + 'paypal-capture, paypal-webhook',
   });

@@ -1,332 +1,124 @@
 /* ═══════════════════════════════════════════════════════════════════
-   CABANA · EVERY WAY ACROSS
+   CABANA MOVE · the arrival
    ───────────────────────────────────────────────────────────────────
-   The arrival animation for /rides — Cabana Move.
+   Golden hour. The sun sits on a city skyline, a road runs to it, and
+   a car's tail-lights pull away from you toward the light: the moment
+   every ride on this page is for. The pickup pin drops under the car,
+   the destination pin lands on the horizon, the sun flares, and the
+   flare is the page's own cream, so the gate does not end, it becomes
+   the app.
 
-   A journey draws itself across the continent and changes what it is
-   as the ground changes: road, then water, then trail, then a
-   transfer. It arrives. Then every other way across Africa draws at
-   once behind it.
-
-   Five decisions worth stating.
-
-   · The route changes mode mid-journey, and that is the product. The
-     page is explicit: a crossing, a city commute, a boda ride and a
-     horse trail should never be squeezed into one generic taxi form.
-     An animation of cars converging on a pin would have been exactly
-     the generic taxi form the page rejects.
-
-   · One colour per way of moving, from the page's own tokens. Coral
-     is road, aqua is water, amber is trail, blue is a shuttle or
-     transfer. A leg is not a coloured line — it is a different kind
-     of movement that happens to have a colour.
-
-   · The signature is the shape, not a dash pattern. Water legs
-     genuinely undulate, trails wander, road legs run nearly straight
-     and transfers are dead straight. Dash patterns were the obvious
-     way to say "different mode" and they would have fought the
-     stroke-dashoffset that draws each leg on.
-
-   · The last beat is the whole point. One journey becoming a
-     continent of journeys is the difference between "here is your
-     route" and "every way across Africa", which is what the headline
-     directly above this animation says.
-
-   · Nothing animates inside a filtered subtree and nothing scales a
-     field of glowing elements. Five previous gates, five lessons.
+   Contract (shared with every Cabana gate):
+     · CabanaRideGate.play({ node })  → Promise, resolves as it clears
+     · a tap, a key or hiding the tab skips it
+     · brief on a repeat visit in the same session, instant-ish under
+       prefers-reduced-motion, and a hard ceiling so it always clears
+     · nothing here is needed for the page to work: if this file never
+       loads, rides.html strips the placeholder itself
    ═══════════════════════════════════════════════════════════════════ */
 (function (global) {
   'use strict';
-
   var doc = global.document;
-  if (!doc) return;
-  if (global.CabanaRideGate) return;
+  if (!doc || global.CabanaRideGate) return;
 
   var ID = 'ride-gate';
-  var SS_KEY = 'cbn-ride-gate-seen';
-  var V = 1000;                      /* the map's own coordinate space */
+  var SS_KEY = 'cbn-ride-gate-seen-v3';
 
-  function rnd(a, b) { return a + Math.random() * (b - a); }
-  function r1(n) { return Math.round(n * 10) / 10; }
+  /* A skyline that reads as an African city at dusk without being any
+     one city: towers, a dome, a mast, low blocks, two acacias. */
+  var SKY_FAR = 'M0 612V586h14v-8h10v8h12v-22h16v22h8v-14h18v14h10v-30h6v-10h4v10h6v30h14v-18h20v18h12v-26h22v26h8v-12h14v12h10v-40h4v-8h6v8h4v40h16v-20h18v20h12v-16h20v16h8v-28h18v28h10v-10h16v10h12v-24h14v24h28V612Z';
+  var SKY_NEAR = 'M0 612v-10h20v-18h22v18h10v-34a14 14 0 0 1 28 0v34h12v-22h26v22h14v-48h8v-12h6v12h8v48h10v-16h24v16h10v-26h30v26h12v-40h4l6-16 6 16h4v40h14v-20h26v20h12v-30h20v30h14v-12h26v12h18V612Z';
+  var ACACIA = 'M-18 0c6-7 24-10 36-4 6-6 22-5 28 1-8 4-22 6-30 3-4 2-10 3-14 1-8 3-16 2-20-1ZM1 0v16h2V0Z';
 
-  function esc(s) {
-    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
-    });
-  }
-
-  /* ═══ THE GROUND ═════════════════════════════════════════════════
-     Not a map of Africa. Drawing a recognisable coastline badly would
-     be worse than not drawing one, so the ground is an abstract field
-     of faint connectors — enough to read as terrain with places on
-     it, and honest about being a diagram.                          */
-
-  function ground() {
-    var out = '', i;
-    for (i = 0; i < 26; i++) {
-      var x1 = rnd(-60, V + 60), y1 = rnd(-60, V + 60);
-      var x2 = x1 + rnd(-380, 380), y2 = y1 + rnd(-380, 380);
-      var len = Math.round(Math.hypot(x2 - x1, y2 - y1)) + 2;
-      out += '<path class="rg-road" d="M' + r1(x1) + ' ' + r1(y1) +
-             'L' + r1(x2) + ' ' + r1(y2) + '" stroke-width="' +
-             (Math.random() < 0.22 ? 2.4 : 1.2) + '" style="--len:' + len +
-             ';--rd:' + Math.round(rnd(0, 700)) + 'ms"/>';
-    }
-    return out;
-  }
-
-  /* The slice of the map that is actually on screen.
-
-     The map is a square wider than the viewport and anchored on the
-     origin, so only a band around the origin is ever visible — about
-     39% of its width on a phone. Markets are placed inside that band
-     rather than across the whole square, or the journey spends most
-     of its length off-frame. */
-  function window_() {
-    var vw = 390, vh = 844;
-    try { vw = global.innerWidth || vw; vh = global.innerHeight || vh; } catch (e) {}
-    var M = Math.max(vw, vh) * 1.18;
-    var visW = Math.min(1, vw / M), visH = Math.min(1, vh / M);
-    var pad = 0.1;
-    return {
-      w: visW * (1 - pad), h: visH * (1 - pad),
-      ax: 0.5, ay: 0.56          /* where the origin sits in frame */
-    };
-  }
-
-  /* Markets. Scattered, but never so close they read as one blob. */
-  function markets(n, win) {
-    var x0 = (0.5 - win.w * win.ax) * V, x1 = (0.5 + win.w * (1 - win.ax)) * V;
-    var y0 = (0.5 - win.h * win.ay) * V, y1 = (0.5 + win.h * (1 - win.ay)) * V;
-    var out = [], tries = 0;
-    while (out.length < n && tries++ < n * 40) {
-      var p = { x: rnd(x0, x1), y: rnd(y0, y1) };
-      var ok = true;
-      for (var i = 0; i < out.length; i++) {
-        if (Math.hypot(out[i].x - p.x, out[i].y - p.y) < 46) { ok = false; break; }
-      }
-      if (ok) out.push(p);
-    }
-    return out;
-  }
-
-  /* ═══ THE WAYS OF MOVING ══════════════════════════════════════════
-     Colour and stroke from the page's tokens; the shape is what
-     actually distinguishes them.                                   */
-
-  var MODES = [
-    { key: 'Road',     c: '#ff715b', w: 2.8, wobble: 14,  steps: 5 },
-    { key: 'Water',    c: '#63efdc', w: 2.4, wobble: 52,  steps: 9 },
-    { key: 'Trail',    c: '#ffc565', w: 2.0, wobble: 34,  steps: 8 },
-    { key: 'Shuttle',  c: '#8abfff', w: 2.6, wobble: 3,   steps: 3 }
-  ];
-
-  /* A leg between two points, bent according to how that mode moves.
-     Water undulates across the line, a trail wanders, road bends a
-     little around what is in the way, a shuttle does not bend. */
-  function leg(from, to, mode) {
-    var dx = to.x - from.x, dy = to.y - from.y;
-    var dist = Math.hypot(dx, dy) || 1;
-    var nx = -dy / dist, ny = dx / dist;          /* perpendicular */
-    var d = 'M' + r1(from.x) + ' ' + r1(from.y);
-    var len = 0, px = from.x, py = from.y;
-
-    for (var i = 1; i <= mode.steps; i++) {
-      var t = i / mode.steps;
-      /* Water alternates side to side; everything else drifts. */
-      var swing = mode.key === 'Water'
-        ? Math.sin(t * Math.PI * 2.4) * mode.wobble
-        : Math.sin(t * Math.PI) * rnd(-mode.wobble, mode.wobble);
-      var x = from.x + dx * t + nx * swing;
-      var y = from.y + dy * t + ny * swing;
-      d += 'L' + r1(x) + ' ' + r1(y);
-      len += Math.hypot(x - px, y - py);
-      px = x; py = y;
-    }
-    return { d: d, len: Math.round(len) + 4 };
-  }
-
-  /* ═══ BUILD ═══════════════════════════════════════════════════════ */
-
-  function build(opts) {
-    var pct = function (v) { return r1((v / V) * 100) + '%'; };
-    var win = window_();
-    var places = markets(26, win);
-
-    /* The journey: four or five stops picked so each leg is a real
-       distance rather than a hop between neighbours. */
-    var stops = [];
-    var pool = places.slice();
-    /* Start from the market nearest the middle of the map. The frame
-       is anchored on the origin and the visible window is measured
-       from the map's centre, so those two have to be the same point. */
-    var ci = 0, cbest = Infinity;
-    for (var c0 = 0; c0 < pool.length; c0++) {
-      var cd = Math.hypot(pool[c0].x - V / 2, pool[c0].y - V / 2);
-      if (cd < cbest) { cbest = cd; ci = c0; }
-    }
-    stops.push(pool.splice(ci, 1)[0]);
-    var legCount = 4;
-    /* A leg has to cross a real part of the frame, and how much that
-       is depends on how much frame there is. */
-    var minLeg = Math.min(win.w, win.h) * V * 0.38;
-    for (var s2 = 0; s2 < legCount; s2++) {
-      var last = stops[stops.length - 1], bestI = 0, best = -1;
-      for (var i = 0; i < pool.length; i++) {
-        var dd = Math.hypot(pool[i].x - last.x, pool[i].y - last.y);
-        /* Far, but not the far corner every time. */
-        var score = dd * rnd(0.6, 1.4);
-        if (score > best && dd > minLeg) { best = score; bestI = i; }
-      }
-      stops.push(pool.splice(bestI, 1)[0]);
-    }
-
-    /* Modes along the way. Road first, because most journeys start on
-       one, then whatever the ground turns into. */
-    var order = [MODES[0]].concat(
-      [MODES[1], MODES[2], MODES[3]].sort(function () { return Math.random() - 0.5; }));
-
-    var legs = '', cursor = 0, timeline = [];
-    for (var k = 0; k < stops.length - 1; k++) {
-      var m = order[k % order.length];
-      var g = leg(stops[k], stops[k + 1], m);
-      var dur = Math.round(620 + g.len * 0.55);
-      legs += '<path class="rg-leg" d="' + g.d + '" style="--c:' + m.c +
-        ';--sw:' + m.w + ';--len:' + g.len +
-        ';--ld:' + dur + 'ms;--lo:' + cursor + 'ms"/>';
-      timeline.push({ at: cursor, mode: m.key, colour: m.c });
-      cursor += dur + 90;
-    }
-
-    /* Every other way across, drawn at the end. Thin, many, and in
-       every mode's colour, because that is the claim being made. */
-    var web = '';
-    for (var w = 0; w < 34; w++) {
-      var A = places[Math.floor(Math.random() * places.length)];
-      var B = places[Math.floor(Math.random() * places.length)];
-      if (A === B) continue;
-      if (Math.hypot(A.x - B.x, A.y - B.y) < minLeg * 0.6) continue;
-      var wm = MODES[Math.floor(Math.random() * MODES.length)];
-      var wg = leg(A, B, wm);
-      web += '<path class="rg-web" d="' + wg.d + '" style="--c:' + wm.c +
-        ';--len:' + wg.len + ';--wl:' + Math.round(900 + wg.len * 0.5) +
-        'ms;--wo:' + Math.round(rnd(0, 900)) + 'ms"/>';
-    }
-
-    /* Dots: every market, with the journey's own stops marked. */
-    var dots = '';
-    places.forEach(function (p2) {
-      var idx = stops.indexOf(p2);
-      var isStop = idx > 0;      /* the first stop is the origin pin */
-      var so = 0;
-      if (isStop && timeline[idx - 1]) so = timeline[idx - 1].at + 500;
-      dots += '<i class="rg-dot' + (isStop ? ' is-stop' : '') + '" style="' +
-        '--x:' + pct(p2.x) + ';--y:' + pct(p2.y) + ';' +
-        '--dd:' + Math.round(rnd(0, 620)) + 'ms;--so:' + so + 'ms"></i>';
-    });
-
-    var o = stops[0];
-    var last2 = stops[stops.length - 1];
-    var tx = r1((50 - (last2.x / V) * 100) * 0.5);
-    var ty = r1((50 - (last2.y / V) * 100) * 0.5);
-
-    var g2 = doc.createElement('div');
-    g2.id = ID;
-    g2.setAttribute('role', 'presentation');
-    g2.setAttribute('aria-hidden', 'true');
-    g2.style.setProperty('--ox', pct(o.x));
-    g2.style.setProperty('--oy', pct(o.y));
-    /* Four decimals, not one: r1() is for percentages like 43.2, and
-       rounding a 0-1 fraction the same way moves the whole map. */
-    g2.style.setProperty('--oxf', (o.x / V).toFixed(4));
-    g2.style.setProperty('--oyf', (o.y / V).toFixed(4));
-    g2.style.setProperty('--vx', (win.ax * 100) + '%');
-    g2.style.setProperty('--vy', (win.ay * 100) + '%');
-    g2.style.setProperty('--tx', tx + '%');
-    g2.style.setProperty('--ty', ty + '%');
-
-    g2.innerHTML =
-      '<div class="rg-stage">' +
-        '<div class="rg-air"></div>' +
-        '<div class="rg-map">' +
-          '<svg class="rg-net" viewBox="0 0 ' + V + ' ' + V + '" ' +
-            'preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false">' +
-            '<g>' + ground() + '</g>' +
-            '<g>' + web + '</g>' +
-            '<g>' + legs + '</g>' +
-          '</svg>' +
-          dots +
-          '<i class="rg-origin"></i>' +
+  function build() {
+    var n = doc.createElement('div');
+    n.id = ID;
+    n.setAttribute('role', 'presentation');
+    n.innerHTML =
+      '<div class="rg2-stage" aria-hidden="true">' +
+        '<svg class="rg2-scene" viewBox="0 0 1200 844" preserveAspectRatio="xMidYMid slice">' +
+          '<defs>' +
+            '<linearGradient id="rg2-sky" x1="0" y1="0" x2="0" y2="1">' +
+              '<stop offset="0" stop-color="#ff7e3a"/><stop offset=".38" stop-color="#ffa24a"/><stop offset=".62" stop-color="#ffc977"/><stop offset=".73" stop-color="#ffe3b0"/></linearGradient>' +
+            '<radialGradient id="rg2-sun" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fffbe8"/><stop offset=".45" stop-color="#ffe9a8"/><stop offset=".75" stop-color="#ffc861" stop-opacity=".85"/><stop offset="1" stop-color="#ffb347" stop-opacity="0"/></radialGradient>' +
+            '<linearGradient id="rg2-ground" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a1b4d"/><stop offset="1" stop-color="#1c0a20"/></linearGradient>' +
+            '<linearGradient id="rg2-road" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffb35c" stop-opacity=".55"/><stop offset=".18" stop-color="#2b1236"/><stop offset="1" stop-color="#150717"/></linearGradient>' +
+            '<linearGradient id="rg2-trail" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ff3d8b" stop-opacity="0"/><stop offset=".4" stop-color="#ff5a5f"/><stop offset="1" stop-color="#ffd166"/></linearGradient>' +
+            '<clipPath id="rg2-above"><rect x="-200" y="-10" width="1600" height="622"/></clipPath>' +
+            '<path id="rg2-far-p" d="' + SKY_FAR + '"/><path id="rg2-near-p" d="' + SKY_NEAR + '"/><path id="rg2-tree-p" d="' + ACACIA + '"/>' +
+          '</defs>' +
+          '<rect class="rg2-sky" x="-200" y="-10" width="1600" height="880" fill="url(#rg2-sky)"/>' +
+          '<g clip-path="url(#rg2-above)"><circle class="rg2-sun" cx="600" cy="604" r="118" fill="url(#rg2-sun)"/></g>' +
+          '<g class="rg2-clouds" fill="#fff1dd">' +
+            '<ellipse cx="160" cy="210" rx="120" ry="12" opacity=".45"/><ellipse cx="475" cy="300" rx="64" ry="9" opacity=".55"/>' +
+            '<ellipse cx="705" cy="360" rx="80" ry="8" opacity=".45"/><ellipse cx="625" cy="250" rx="46" ry="6" opacity=".4"/>' +
+            '<ellipse cx="525" cy="420" rx="70" ry="7" opacity=".35"/><ellipse cx="1010" cy="280" rx="140" ry="12" opacity=".4"/></g>' +
+          '<g class="rg2-birds" fill="none" stroke="#6a2a52" stroke-width="1.6" stroke-linecap="round">' +
+            '<path d="M665 452q4-4 8 0q4-4 8 0"/><path d="M687 440q3-3 6 0q3-3 6 0"/><path d="M651 466q3-3 6 0q3-3 6 0"/></g>' +
+          /* the skyline, mirrored either side of the centre so a wide
+             screen sees a city rather than a repeated strip */
+          '<g class="rg2-far" fill="#b4466a" opacity=".55">' +
+            '<use href="#rg2-far-p" transform="translate(405 0)"/><use href="#rg2-far-p" transform="translate(405 0) scale(-1 1)"/>' +
+            '<use href="#rg2-far-p" transform="translate(1185 0) scale(-1 1)"/><path d="M0 612V592h15V612ZM1185 612V588h15V612Z"/></g>' +
+          '<g class="rg2-near" fill="#6b2358">' +
+            '<use href="#rg2-near-p" transform="translate(405 0)"/><use href="#rg2-near-p" transform="translate(395 4) scale(-1 1)"/>' +
+            '<use href="#rg2-near-p" transform="translate(1195 4) scale(-1 1)"/><path d="M0 612V596h10V612ZM1195 612V598h5V612Z"/></g>' +
+          '<g class="rg2-trees" fill="#4a1b4d">' +
+            '<use href="#rg2-tree-p" transform="translate(445 598) scale(1.1)"/><use href="#rg2-tree-p" transform="translate(751 600)"/>' +
+            '<use href="#rg2-tree-p" transform="translate(150 600) scale(1.3)"/><use href="#rg2-tree-p" transform="translate(1040 598) scale(1.2)"/></g>' +
+          '<rect x="-200" y="612" width="1600" height="260" fill="url(#rg2-ground)"/>' +
+          '<path class="rg2-road" d="M523 844 598.2 612h3.6L677 844Z" fill="url(#rg2-road)"/>' +
+          '<path class="rg2-edge" d="M523 844 598.2 612M677 844 601.8 612" stroke="#ff9a3c" stroke-width="1.4" opacity=".7" fill="none"/>' +
+          '<path class="rg2-dash" d="M600 844V613" stroke="#ffd166" stroke-width="3" stroke-dasharray="22 18" fill="none"/>' +
+          '<path class="rg2-trail" d="M600 792V616" stroke="url(#rg2-trail)" stroke-width="5" stroke-linecap="round" fill="none" pathLength="100" stroke-dasharray="100" stroke-dashoffset="100"/>' +
+          '<g class="rg2-lamps" fill="#ffd98a">' +
+            '<circle cx="569" cy="700" r="2.2"/><circle cx="631" cy="700" r="2.2"/><circle cx="548" cy="766" r="3"/><circle cx="652" cy="766" r="3"/>' +
+            '<circle cx="583" cy="660" r="1.5"/><circle cx="617" cy="660" r="1.5"/></g>' +
+          '<g class="rg2-car">' +
+            '<rect x="576" y="770" width="48" height="26" rx="9" fill="#231029"/>' +
+            '<rect x="581" y="760" width="38" height="16" rx="7" fill="#3b2140"/>' +
+            '<rect x="579" y="780" width="11" height="5" rx="2.5" fill="#ff3d57"/><rect x="610" y="780" width="11" height="5" rx="2.5" fill="#ff3d57"/>' +
+            '<ellipse cx="584.5" cy="782.5" rx="14" ry="6" fill="#ff3d57" opacity=".35"/><ellipse cx="615.5" cy="782.5" rx="14" ry="6" fill="#ff3d57" opacity=".35"/>' +
+            '<rect x="590" y="788" width="20" height="4" rx="1" fill="#ffd83b"/></g>' +
+          '<g class="rg2-pin rg2-pin-a"><circle cx="600" cy="812" r="9" fill="#12b98f" stroke="#fff" stroke-width="3.5"/><circle class="rg2-ping" cx="600" cy="812" r="9" fill="none" stroke="#12b98f" stroke-width="2"/></g>' +
+          '<g class="rg2-pin rg2-pin-b"><path d="M600 606c-7-7.6-11-13.4-11-18.2a11 11 0 0 1 22 0c0 4.8-4 10.6-11 18.2Z" fill="#231029" stroke="#fff" stroke-width="2.4"/><circle cx="600" cy="587.6" r="3.6" fill="#ffd166"/></g>' +
+        '</svg>' +
+        '<div class="rg2-word">' +
+          '<div class="rg2-mark"><span></span></div>' +
+          '<h2 class="rg2-title">Cabana <b>Move</b></h2>' +
+          '<p class="rg2-tag">Name your fare. <span>Ride anywhere.</span></p>' +
         '</div>' +
-        '<div class="rg-word">' +
-          '<div class="rg-line">' + esc(opts.title || 'Every way') +
-            '<span>' + esc(opts.tail || 'across Africa.') + '</span></div>' +
-          '<div class="rg-sub">' + esc(opts.sub || 'Cabana Move') + '</div>' +
-        '</div>' +
-        '<div class="rg-readout" id="rg-readout">Mode <b>Road</b></div>' +
-        '<div class="rg-flood"></div>' +
+        '<div class="rg2-flare"></div>' +
       '</div>' +
-      '<button class="rg-skip" type="button" aria-label="Skip the intro">Skip' +
-        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" ' +
-        'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-        '<path d="m9 6 6 6-6 6"/></svg>' +
-      '</button>';
-
-    g2.__timeline = timeline;
-    g2.__journeyMs = cursor;
-    return g2;
+      '<button class="rg2-skip" type="button" aria-label="Skip the intro">Skip' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>';
+    return n;
   }
-
-  /* ═══ THE RUN ═════════════════════════════════════════════════════ */
 
   var live = null;
 
   function play(opts) {
     opts = opts || {};
     if (live) return live.promise;
-
     var reduce = false;
-    try {
-      reduce = global.matchMedia && global.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    } catch (e) {}
-
+    try { reduce = global.matchMedia && global.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
     var seen = false;
     try { seen = global.sessionStorage.getItem(SS_KEY) === '1'; } catch (e) {}
     var brief = opts.brief != null ? !!opts.brief : seen;
     if (opts.force) brief = false;
 
     var node = opts.node || doc.getElementById(ID);
-    if (!node) {
-      node = build(opts);
-      (doc.body || doc.documentElement).appendChild(node);
-    } else if (!node.querySelector('.rg-stage')) {
-      /* A placeholder the page painted before this script arrived.
-         Fill it rather than stacking a second gate on top of it. */
-      var built = build(opts);
-      node.innerHTML = built.innerHTML;
-      ['--ox', '--oy', '--oxf', '--oyf', '--vx', '--vy', '--tx', '--ty'].forEach(function (v) {
-        node.style.setProperty(v, built.style.getPropertyValue(v));
-      });
-      node.__timeline = built.__timeline;
-      node.__journeyMs = built.__journeyMs;
-    }
-    if (brief) node.classList.add('rg-brief');
-
-    /* The map is a square larger than the viewport so the city runs
-       off every edge. Set here rather than in CSS because the driver
-       dots and the SVG have to agree on it exactly. */
-    try {
-      node.style.setProperty('--map',
-        Math.round(Math.max(global.innerWidth, global.innerHeight) * 1.18) + 'px');
-    } catch (e) {}
-
+    if (!node) { node = build(); (doc.body || doc.documentElement).appendChild(node); }
+    else if (!node.querySelector('.rg2-stage')) { node.innerHTML = build().innerHTML; }
+    node.classList.add('rg2');
+    if (brief) node.classList.add('rg2-brief');
+    if (reduce) node.classList.add('rg2-still');
     try { doc.documentElement.classList.add('rg-lock'); } catch (e) {}
 
     var timers = [], settled = false, resolveFn;
     var promise = new Promise(function (res) { resolveFn = res; });
     function at(ms, fn) { timers.push(global.setTimeout(fn, ms)); }
-    function clearAll() { for (var i = 0; i < timers.length; i++) global.clearTimeout(timers[i]); timers = []; }
-
+    function clearAll() { timers.forEach(function (t) { global.clearTimeout(t); }); timers = []; }
     function teardown() {
       clearAll();
       try { doc.documentElement.classList.remove('rg-lock'); } catch (e) {}
@@ -341,69 +133,32 @@
       try { global.sessionStorage.setItem(SS_KEY, '1'); } catch (e) {}
       if (typeof opts.onDone === 'function') { try { opts.onDone(); } catch (e) {} }
       resolveFn();
-      node.classList.add('rg-gone');
-      global.setTimeout(teardown, 520);
+      node.classList.add('rg2-gone');
+      global.setTimeout(teardown, 460);
     }
-    /* Skipping still locks a driver and closes on them. Cutting to the
-       page would make the dispatch feel abandoned rather than served. */
+    /* A skip still ends on the flare: cutting straight to the page would
+       feel like the lights went out, not like arriving. */
     function skip() {
       if (settled) return;
       clearAll();
-      node.classList.add('rg-brief', 'rg-move', 'rg-web-on', 'rg-go');
-      at(reduce ? 220 : 620, finish);
+      node.classList.add('rg2-on', 'rg2-drive', 'rg2-arrive', 'rg2-go');
+      at(reduce ? 160 : 520, finish);
     }
-    function onKey(e) {
-      if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') { e.preventDefault(); skip(); }
-    }
+    function onKey(e) { if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') { e.preventDefault(); skip(); } }
     function onHide() { if (doc.hidden) skip(); }
-
     node.addEventListener('click', skip);
     doc.addEventListener('keydown', onKey, true);
     doc.addEventListener('visibilitychange', onHide);
 
-    var read = node.querySelector('#rg-readout');
-    function say(mode, colour) {
-      if (!read) return;
-      read.innerHTML = 'Mode <b style="color:' + colour + '">' + esc(mode) + '</b>';
-    }
+    var T = brief ? { on: 0, drive: 60, arrive: 380, go: 900, done: 1400 }
+      : { on: 30, drive: 700, arrive: 1900, go: 2650, done: 3150 };
+    if (reduce) T = { on: 0, drive: 0, arrive: 0, go: 650, done: 1050 };
 
-    var journey = node.__journeyMs || 3200;
-    var line = node.__timeline || [];
-
-    /* ground → start → journey → every other way → word → go.
-       The journey's own length decides the pace, so a long route is
-       not cut off and a short one does not leave the screen idling. */
-    var T = brief
-      ? { online: 0, tap: 0,   move: 120, web: 400,  say: -1, go: 900, done: 2000 }
-      : { online: 0, tap: 800, move: 1250 };
-    if (!brief) {
-      T.web = T.move + journey - 260;
-      T.say = T.web + 420;
-      T.go = T.web + 1500;
-      T.done = T.go + 1400;
-    }
-    if (reduce) T = { online: 0, tap: 0, move: 0, web: 0, say: 0, go: 700, done: 1250 };
-
-    at(T.online, function () { node.classList.add('rg-online'); });
-    at(T.tap, function () { node.classList.add('rg-tap'); });
-    at(T.move, function () { node.classList.add('rg-move'); });
-    at(T.web, function () { node.classList.add('rg-web-on'); });
-
-    /* The readout names the mode the journey is on right now, taken
-       from the legs themselves rather than a second hard-coded list
-       that could drift out of step with them. */
-    if (!brief && !reduce) {
-      line.forEach(function (leg2) {
-        at(T.move + leg2.at + 60, function () { say(leg2.mode, leg2.colour); });
-      });
-      at(T.web + 200, function () { say('Every mode', '#f5f1e8'); });
-    }
-
-    if (T.say >= 0) at(T.say, function () { node.classList.add('rg-say'); });
-    at(T.go, function () { node.classList.add('rg-go'); });
+    at(T.on, function () { node.classList.add('rg2-on'); });
+    at(T.drive, function () { node.classList.add('rg2-drive'); });
+    at(T.arrive, function () { node.classList.add('rg2-arrive'); });
+    at(T.go, function () { node.classList.add('rg2-go'); });
     at(T.done, finish);
-    /* Hard ceiling. Nothing above is allowed to be the only thing
-       standing between a guest and the page. */
     at(T.done + 3000, finish);
 
     live = { promise: promise, skip: skip, finish: finish };
@@ -413,15 +168,12 @@
   global.CabanaRideGate = {
     play: play,
     skip: function () { if (live) live.skip(); },
-    curtain: function (o) {
-      o = o || {};
+    curtain: function () {
       if (doc.getElementById(ID)) return;
-      var n = build(o);
-      n.style.setProperty('--map',
-        Math.round(Math.max(global.innerWidth, global.innerHeight) * 1.18) + 'px');
+      var n = build();
+      n.classList.add('rg2', 'rg2-on');
       (doc.body || doc.documentElement).appendChild(n);
       try { doc.documentElement.classList.add('rg-lock'); } catch (e) {}
     }
   };
-
 })(typeof window !== 'undefined' ? window : this);

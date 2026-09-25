@@ -14,7 +14,6 @@
 <link rel="apple-touch-icon" href="/cabana-apple-touch-icon.png"/>
 <title>Driver console | Cabana</title>
 
-<script src="/cabana-fare.js"></script>
 
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -167,6 +166,24 @@ h1,h2,h3{font-family:var(--font-display);letter-spacing:-.03em;font-weight:620;l
   border:1px solid var(--line);opacity:0;pointer-events:none;transition:all .3s;max-width:90vw;text-align:center;}
 .toast.on{opacity:1;transform:translateX(-50%);}
 
+
+/* fare negotiation */
+.chips{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px;}
+.chip{border:1px solid var(--line);background:var(--asphalt-3);color:var(--paper-2);border-radius:100px;padding:8px 12px;font-size:12.5px;font-weight:650;cursor:pointer;}
+.chip.on{background:rgba(0,214,143,.16);border-color:rgba(0,214,143,.5);color:var(--signal);}
+.fare-row{display:flex;align-items:center;gap:10px;background:var(--asphalt-3);border-radius:14px;padding:8px;margin-bottom:12px;}
+.fr-b{width:46px;height:46px;border-radius:12px;border:0;background:var(--asphalt-2);color:var(--paper);font-size:22px;cursor:pointer;}
+.fr-v{flex:1;text-align:center;}
+.fr-v b{display:block;font-family:var(--font-display);font-size:22px;letter-spacing:-.03em;font-variant-numeric:tabular-nums;}
+.fr-v small{font-size:11.5px;color:var(--paper-3);}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin:-4px 0 12px;}
+.tag{font-size:11px;font-weight:650;background:rgba(245,194,76,.12);color:var(--kerb);padding:4px 8px;border-radius:6px;text-transform:capitalize;}
+.sent-note{font-size:12.5px;color:var(--paper-3);text-align:center;margin-top:10px;}
+.offer::before{animation:none;background:linear-gradient(90deg,#ffc23d,#ff7a1a,#ff3d8b);}
+.pin-in{font-family:var(--font-display)!important;font-size:28px!important;letter-spacing:.5em;text-align:center;}
+
+#cbn-sup-launcher,#cbn-apa-welcome{display:none!important;}
+.tb-help{font-size:12px;color:var(--paper-2);border:1px solid var(--line);padding:7px 13px;border-radius:100px;text-decoration:none;margin-left:auto;margin-right:8px;}
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;
     transition-duration:.001ms!important;}
@@ -190,7 +207,7 @@ h1,h2,h3{font-family:var(--font-display);letter-spacing:-.03em;font-weight:620;l
       <img src="/cabana-emblem.png" class="tb-emblem" alt="" onerror="this.style.display='none'" fetchpriority="high" decoding="async"/>
       <div class="tb-t">Driver console<span id="tb-sub">Cabana Nairobi</span></div>
     </div>
-    <button class="tb-out" id="signout" style="display:none;">Sign out</button>
+    <a class="tb-help" href="/help" data-cbn-support>Help</a><button class="tb-out" id="signout" style="display:none;">Sign out</button>
   </div>
 </header>
 
@@ -284,7 +301,6 @@ h1,h2,h3{font-family:var(--font-display);letter-spacing:-.03em;font-weight:620;l
 <script>
 (function(){
 'use strict';
-var F = window.CabFare;
 var SUPA_URL='https://gfwgbgdvxtocwhilrtdw.supabase.co';
 var SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
 var PING_MS = 25000;   /* two of these inside the 90 second liveness window,
@@ -369,7 +385,7 @@ function openConsole(){
   loadStats();
   loadOpenWork();
   subscribeOffers();
-  D.poll = setInterval(function(){ if(D.online) loadOpenWork(); }, 12000);
+  D.poll = setInterval(function(){ if(D.online || D.active) loadOpenWork(); }, 8000);
 }
 
 $('toggle').addEventListener('click', function(){
@@ -445,209 +461,217 @@ function paintStatus(){
     : 'Go online to start receiving trips near you.';
 }
 
-/* ── offers ───────────────────────────────────────────────────────── */
+/* ── the board ────────────────────────────────────────────────────
+   One call returns everything the console shows: rides you are invited
+   to, the trip you are on, booked trips later today, and today's
+   takings. Riders name a fare; you take it or counter it. Cabana takes
+   no commission, so what the rider pays is what you keep. */
+var ZERO_DEC = {UGX:1,RWF:1,XOF:1,XAF:1,KMF:1,BIF:1,GNF:1,DJF:1,MGA:1,CVE:1};
+function factor(cur){ return ZERO_DEC[String(cur||'').toUpperCase()] ? 1 : 100; }
+function money(minor, cur){
+  cur = String(cur||'KES').toUpperCase();
+  var v = Number(minor||0)/factor(cur);
+  try { return new Intl.NumberFormat('en', {style:'currency', currency:cur, maximumFractionDigits: v % 1 ? 2 : 0}).format(v); }
+  catch(e){ return cur+' '+Math.round(v).toLocaleString(); }
+}
+function step(minor, cur){
+  var v = Number(minor||0)/factor(cur), s = v < 500 ? 10 : v < 2000 ? 50 : v < 10000 ? 100 : v < 50000 ? 500 : 1000;
+  return s*factor(cur);
+}
+var ERR = {
+  driver_not_approved:'Your account is not approved for trips yet.',
+  ride_not_open:'That ride has been taken or cancelled.',
+  ride_not_for_you:'That ride needs a different vehicle class.',
+  offer_closed:'Your offer on that ride has closed.',
+  finish_current_trip:'Finish your current trip first.',
+  price_required:'Choose a fare first.',
+  price_out_of_range:'That fare is too far from what the rider named.',
+  pin_locked:'Too many wrong PINs. Call the rider or the Cabana desk.',
+  bad_step:'That step is not available now. Refreshing.',
+  ride_not_found:'That trip is no longer yours.'
+};
+function friendly(e){ var m = e && (e.message||e.code) || ''; return ERR[m] || 'Could not reach Cabana. Check your signal and try again.'; }
+function rpc(name, args){
+  return sb.rpc(name, args||{}).then(function(r){ if(r.error) throw r.error; return r.data; });
+}
+
 function subscribeOffers(){
   if(!sb || !D.driver) return;
   try{
     D.chan = sb.channel('driver:'+D.driver.id)
       .on('postgres_changes',
         { event:'INSERT', schema:'public', table:'ride_offers', filter:'driver_id=eq.'+D.driver.id },
-        function(){ loadOpenWork(); })
+        function(){ loadOpenWork(); buzz(); })
       .subscribe();
   }catch(e){}
 }
+function buzz(){ try{ navigator.vibrate && navigator.vibrate([60,40,60]); }catch(e){} }
 
+var loading = false;
 function loadOpenWork(){
-  if(!sb || !D.driver) return;
+  if(!sb || loading) return;
+  loading = true;
+  rpc('ride_driver_board').then(function(b){
+    loading = false;
+    D.board = b || {};
+    D.active = b && b.active || null;
+    paintStatus();
+    paintOffers((b && b.invitations) || []);
+    paintActive();
+    paintToday();
+  }, function(){ loading = false; });
+}
+function loadStats(){ loadOpenWork(); }
 
-  /* anything already assigned to me and not finished */
-  sb.from('ride_requests').select('*')
-    .eq('driver_id', D.driver.id)
-    .in('status', ['assigned','arriving','in_progress'])
-    .order('assigned_at', { ascending:false }).limit(1)
-    .then(function(r){
-      var row = r && r.data && r.data[0];
-      D.active = row || null;
-      paintActive();
-      paintStatus();
-    }).catch(function(){});
-
-  if(D.active) { $('offers').innerHTML=''; return; }
-
-  sb.from('ride_offers').select('request_id,distance_km,eta_min,sent_at')
-    .eq('driver_id', D.driver.id).eq('status','sent')
-    .gt('sent_at', new Date(Date.now()-120000).toISOString())
-    .order('sent_at',{ascending:false}).limit(3)
-    .then(function(r){
-      var offers = (r && r.data) || [];
-      if(!offers.length){ paintOffers([]); return; }
-      var ids = offers.map(function(o){ return o.request_id; });
-      sb.from('ride_requests').select('*').in('id', ids)
-        .in('status',['searching','scheduled'])
-        .then(function(rr){
-          var reqs = (rr && rr.data) || [];
-          var byId = {}; reqs.forEach(function(x){ byId[x.id]=x; });
-          paintOffers(offers.filter(function(o){ return byId[o.request_id]; })
-                            .map(function(o){ o.req = byId[o.request_id]; return o; }));
-        }).catch(function(){ paintOffers([]); });
-    }).catch(function(){ paintOffers([]); });
+function place(p){ return esc(String(p && p.label || '').split(',').slice(0,2).join(',')); }
+function whenOf(r){
+  if(!r.scheduled_for) return 'Now';
+  var d = new Date(r.scheduled_for);
+  return d.toLocaleString('en-KE',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+}
+function legs(r){
+  return '<div class="offer-legs">'+
+    '<div class="leg"><span class="pin a"></span><div><div class="n">'+place(r.pickup)+'</div>'+
+      '<div class="d">'+(r.pickup_km!=null?esc(Number(r.pickup_km).toFixed(1))+' km from you · ':'')+esc(whenOf(r))+'</div></div></div>'+
+    (r.dropoff && r.dropoff.label ? '<div class="leg"><span class="pin b"></span><div><div class="n">'+place(r.dropoff)+'</div>'+
+      '<div class="d">'+(r.distance_km?esc(Number(r.distance_km).toFixed(1))+' km':'')+(r.duration_min?' · about '+Math.round(r.duration_min)+' min':'')+'</div></div></div>'
+      : (r.hours ? '<div class="leg"><span class="pin b"></span><div><div class="n">Chauffeur, '+esc(r.hours)+' hours</div><div class="d">Rider directs the day</div></div></div>' : ''))+
+  '</div>';
 }
 
+var draft = {};   /* request_id → the fare you are about to send */
 function paintOffers(list){
-  var box = $('offers');
+  var el = $('offers');
   if(!list.length){
-    box.innerHTML = D.online && !D.active
-      ? '<div class="card"><div class="empty">'+
-        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>'+
-        '<div class="t">Waiting for a trip</div>'+
-        '<p>Nothing near you yet. Sit somewhere with demand and keep this screen open.</p></div></div>'
-      : '';
+    el.innerHTML = D.online && !D.active ? '<div class="card empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>'+
+      '<div class="t">Waiting for rides</div><p>Requests within reach appear here with the rider’s own fare. Take it or name yours.</p></div>' : '';
     return;
   }
-  box.innerHTML = list.map(function(o){
-    var r = o.req;
-    var payout = r.driver_payout || Math.round(r.quote_total * (100-F.RULES.platformFeePct)/100);
-    var pickupKm = o.distance_km != null ? Number(o.distance_km).toFixed(1)+' km away' : 'nearby';
-    return '<div class="offer" data-req="'+esc(r.id)+'">'+
+  el.innerHTML = list.map(function(r){
+    var cur = r.currency || 'KES', ask = r.rider_offer || r.fare_hint || 0;
+    if(draft[r.request_id] == null) draft[r.request_id] = r.my_price || ask;
+    var mine = draft[r.request_id], sent = r.offer_status === 'offered';
+    var st = step(ask||mine, cur);
+    var chips = r.fixed_price ? '' : '<div class="chips">'+[0, 1, 2, 4].map(function(k){
+        var v = ask + k*st; return '<button type="button" class="chip'+(v===mine?' on':'')+'" data-fare="'+r.request_id+'" data-v="'+v+'">'+(k? '+'+esc(money(k*st,cur)) : 'Their fare')+'</button>';
+      }).join('')+'</div>';
+    var needs = (r.needs||[]).map(function(n){ return '<span class="tag">'+esc(String(n).replace(/_/g,' '))+'</span>'; }).join('');
+    return '<div class="offer" data-req="'+r.request_id+'">'+
       '<div class="offer-top"><div>'+
-        '<span class="offer-cls">'+esc((F.TARIFFS[r.class]||{label:r.class}).label)+
-        (r.service==='transfer'?' transfer':'')+'</span>'+
-        '<div class="offer-meta">'+esc(pickupKm)+' &nbsp;·&nbsp; trip '+
-        (r.distance_km!=null?Number(r.distance_km).toFixed(1)+' km':'')+
-        (r.duration_min?' &nbsp;·&nbsp; about '+r.duration_min+' min':'')+
-        (r.passengers>1?' &nbsp;·&nbsp; '+r.passengers+' passengers':'')+'</div>'+
-      '</div>'+
-      '<div class="offer-fare">'+F.money(payout)+'<small>you receive</small></div></div>'+
-
-      '<div class="offer-legs">'+
-        '<div class="leg"><span class="pin a"></span><div><div class="n">'+esc(r.pickup_label)+'</div>'+
-          '<div class="d">Pick up</div></div></div>'+
-        '<div class="leg"><span class="pin b"></span><div><div class="n">'+esc(r.dropoff_label||'Set by the rider')+'</div>'+
-          '<div class="d">Drop off</div></div></div>'+
-      '</div>'+
-
-      (r.flight_no ? '<div class="offer-note">Flight '+esc(r.flight_no)+'. Watch the arrival time before you set off.</div>' : '')+
-      (r.notes ? '<div class="offer-note">'+esc(r.notes)+'</div>' : '')+
-
+        '<span class="offer-cls">'+esc((r.mode_key && r.mode_key!=='car' ? r.mode_key : r['class']||'ride').replace(/_/g,' '))+(r.service && r.service!=='ride'?' · '+esc(r.service):'')+'</span>'+
+        '<div class="offer-meta">'+esc(r.rider||'Rider')+' · '+(r.passengers||1)+' pax'+(r.luggage?' · '+r.luggage+' bags':'')+' · pays by '+esc(r.pay_method||'cash')+(r.flight_no?' · flight '+esc(r.flight_no):'')+'</div>'+
+      '</div><div class="offer-fare">'+esc(money(ask,cur))+'<small>'+(r.fixed_price?'fixed fare':'rider’s fare')+'</small></div></div>'+
+      legs(r)+
+      (needs?'<div class="tags">'+needs+'</div>':'')+
+      (r.notes?'<div class="offer-note">'+esc(r.notes)+'</div>':'')+
+      chips+
+      (r.fixed_price ? '' : '<div class="fare-row"><button type="button" class="fr-b" data-nudge="'+r.request_id+'" data-d="-1" aria-label="Lower">−</button>'+
+        '<div class="fr-v"><b>'+esc(money(mine,cur))+'</b><small>'+(mine===ask?'matches their fare':'your counter')+'</small></div>'+
+        '<button type="button" class="fr-b" data-nudge="'+r.request_id+'" data-d="1" aria-label="Raise">+</button></div>')+
       '<div class="btn-row">'+
-        '<button class="btn btn-ghost" data-act="decline">Pass</button>'+
-        '<button class="btn btn-go" data-act="accept">Accept</button>'+
-      '</div></div>';
+        '<button class="btn btn-ghost" data-pass="'+r.request_id+'" style="flex:.5">Pass</button>'+
+        '<button class="btn btn-go" data-send="'+r.request_id+'">'+(sent?'Update offer · ':(mine===ask?'Accept · ':'Offer · '))+esc(money(mine,cur))+'</button>'+
+      '</div>'+
+      (sent?'<p class="sent-note">Offer sent. The rider is choosing'+(r.offer_expires_at?' · closes '+new Date(r.offer_expires_at).toLocaleTimeString('en-KE',{hour:'2-digit',minute:'2-digit'}):'')+'.</p>':'')+
+    '</div>';
   }).join('');
-
-  Array.prototype.forEach.call(box.querySelectorAll('[data-act]'), function(b){
-    b.addEventListener('click', function(){
-      var id = b.closest('.offer').dataset.req;
-      if(b.dataset.act === 'accept') accept(id, b); else decline(id);
-    });
-  });
 }
 
-function accept(id, btn){
-  if(!sb) return;
-  btn.disabled = true; btn.textContent = 'Accepting';
-  sb.rpc('cab_accept', { p_request:id }).then(function(r){
-    if(r && r.data === true){ toast('Trip is yours. Head to the pick-up.'); loadOpenWork(); }
-    else { toast('Another driver took it first.'); loadOpenWork(); }
-  }).catch(function(){
-    btn.disabled = false; btn.textContent = 'Accept';
-    toast('Could not accept. Check your connection and try again.');
-  });
-}
-function decline(id){
-  if(!sb) return;
-  sb.rpc('cab_decline', { p_request:id }).then(function(){ loadOpenWork(); }).catch(function(){});
-}
+$('offers').addEventListener('click', function(e){
+  var t = e.target.closest('button'); if(!t) return;
+  var list = (D.board && D.board.invitations) || [];
+  function find(id){ for(var i=0;i<list.length;i++) if(list[i].request_id===id) return list[i]; return null; }
+  if(t.dataset.fare){ draft[t.dataset.fare] = Number(t.dataset.v); paintOffers(list); return; }
+  if(t.dataset.nudge){
+    var r = find(t.dataset.nudge); if(!r) return;
+    var ask = r.rider_offer || r.fare_hint || 0, st = step(ask, r.currency);
+    var v = (draft[r.request_id]||ask) + Number(t.dataset.d)*st;
+    draft[r.request_id] = Math.max(Math.round(ask*0.6), Math.min(ask*3, v));
+    paintOffers(list); return;
+  }
+  if(t.dataset.pass){
+    t.disabled = true;
+    rpc('ride_driver_pass', { p_request:t.dataset.pass }).then(loadOpenWork, loadOpenWork);
+    return;
+  }
+  if(t.dataset.send){
+    var r2 = find(t.dataset.send); if(!r2) return;
+    t.disabled = true; t.textContent = 'Sending…';
+    rpc('ride_driver_offer', { p_request:r2.request_id, p_price:draft[r2.request_id] || r2.rider_offer || r2.fare_hint,
+      p_eta: r2.pickup_km!=null ? Math.max(2, Math.ceil(r2.pickup_km/22*60)) : null, p_note:null })
+      .then(function(res){
+        buzz();
+        toast(res && res.status==='assigned' ? 'The ride is yours. Head to the pickup.' : 'Offer sent. You will know the moment they choose.');
+        loadOpenWork();
+      }, function(err){ toast(friendly(err)); loadOpenWork(); });
+  }
+});
+/* accept() and decline() kept for anything still calling them */
+function accept(id){ draft[id] = null; }
+function decline(id){ rpc('ride_driver_pass', { p_request:id }).then(loadOpenWork, loadOpenWork); }
 
-/* ── active trip ──────────────────────────────────────────────────── */
+/* ── the trip you are on ──────────────────────────────────────────── */
 function paintActive(){
-  var box = $('active');
-  if(!D.active){ box.innerHTML=''; return; }
-  var r = D.active;
-  var payout = r.driver_payout || Math.round(r.quote_total * (100-F.RULES.platformFeePct)/100);
-  var next = { assigned:['arriving','I am at the pick-up'],
-               arriving:['in_progress','Start the trip'],
-               in_progress:['completed','Complete and collect '+F.money(r.quote_total)] }[r.status];
-  var mapQ = encodeURIComponent(r.status==='in_progress'
-    ? (r.dropoff_label||'') : (r.pickup_label||''));
-  var initial = String(r.rider_name||'R').trim().charAt(0).toUpperCase();
-
-  box.innerHTML = '<div class="card">'+
-    '<div class="trip-hero"><span class="lab">Current trip</span>'+
-      '<div class="v">'+F.money(payout)+'</div>'+
-      '<div class="s">You receive this. Rider pays '+F.money(r.quote_total)+
-      (r.fixed_route_id ? ', fixed price' : '')+'.</div></div>'+
-
-    '<div class="rider"><div class="av">'+esc(initial)+'</div>'+
-      '<div style="flex:1;min-width:0;"><div class="n">'+esc(r.rider_name)+'</div>'+
-      '<div class="p">'+esc(r.rider_phone)+(r.passengers>1?' · '+r.passengers+' passengers':'')+'</div></div>'+
-      '<a class="call" href="tel:'+esc(r.rider_phone)+'" aria-label="Call the rider">'+
-      '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4 2 2 0 0 1 3.6 1.21h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.37a16 16 0 0 0 7.72 7.72l1.72-.86a2 2 0 0 1 2.11.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 24 18.18v2.74"/></svg></a></div>'+
-
-    '<div class="offer-legs" style="margin-bottom:16px;">'+
-      '<div class="leg"><span class="pin a"></span><div><div class="n">'+esc(r.pickup_label)+'</div><div class="d">Pick up</div></div></div>'+
-      '<div class="leg"><span class="pin b"></span><div><div class="n">'+esc(r.dropoff_label||'Rider will direct you')+'</div><div class="d">Drop off</div></div></div>'+
-    '</div>'+
-
-    (r.notes ? '<div class="offer-note">'+esc(r.notes)+'</div>' : '')+
-    (r.flight_no ? '<div class="offer-note">Flight '+esc(r.flight_no)+'</div>' : '')+
-
-    '<a class="btn btn-ghost" style="margin-bottom:9px;" target="_blank" rel="noopener" '+
-      'href="https://www.google.com/maps/dir/?api=1&destination='+mapQ+'">Open in maps</a>'+
-    (next ? '<button class="btn btn-primary" id="trip-next">'+esc(next[1])+'</button>' : '')+
-    '<button class="btn btn-danger" id="trip-cancel" style="margin-top:9px;">Cancel this trip</button>'+
-  '</div>';
-
-  if(next) $('trip-next').addEventListener('click', function(){ setStatus(r.id, next[0]); });
-  $('trip-cancel').addEventListener('click', function(){
-    if(confirm('Cancel this trip? The rider is told straight away and repeated cancellations affect your standing.'))
-      setStatus(r.id, 'cancelled');
-  });
+  var el = $('active'), r = D.active;
+  var up = (D.board && D.board.upcoming) || [];
+  var upHTML = up.length ? '<div class="card"><span class="lab">Booked for later</span><div style="margin-top:10px">'+up.map(function(u){
+      return '<div class="row"><div class="rl"><div class="rn">'+place(u.pickup)+' → '+place(u.dropoff)+'</div><div class="rd">'+esc(whenOf(u))+' · '+esc(u.rider_name||'')+'</div></div><div class="rv">'+esc(money(u.agreed,u.currency))+'</div></div>';
+    }).join('')+'</div></div>' : '';
+  if(!r){ el.innerHTML = upHTML; return; }
+  var cur = r.currency || 'KES', first = String(r.rider_name||'Rider').split(' ')[0];
+  var nav = function(p){ return p && p.lat!=null ? 'https://www.google.com/maps/dir/?api=1&destination='+p.lat+','+p.lng : null; };
+  var head = r.status==='assigned' ? 'Head to the pickup' : r.status==='arriving' ? 'At the pickup' : 'On the way';
+  var body = '';
+  if(r.status==='assigned'){
+    body = '<a class="btn btn-ghost" href="'+esc(nav(r.pickup)||'#')+'" target="_blank" rel="noopener">Navigate to pickup</a><div style="height:9px"></div>'+
+      '<button class="btn btn-primary" data-step="arrived">I have arrived</button>';
+  } else if(r.status==='arriving'){
+    body = '<div class="field"><label for="pin">Rider’s 4-digit PIN</label><input id="pin" inputmode="numeric" maxlength="4" autocomplete="one-time-code" placeholder="••••" class="pin-in"></div>'+
+      '<div class="err" id="pin-err"></div><button class="btn btn-go" data-step="start">Start trip</button>';
+  } else {
+    body = (nav(r.dropoff)?'<a class="btn btn-ghost" href="'+esc(nav(r.dropoff))+'" target="_blank" rel="noopener">Navigate to drop-off</a><div style="height:9px"></div>':'')+
+      '<button class="btn btn-go" data-step="complete">Complete · collect '+esc(money(r.agreed,cur))+'</button>';
+  }
+  el.innerHTML = '<div class="card trip">'+
+    '<div class="trip-hero"><span class="lab">'+esc(r.ref)+' · '+head+'</span><div class="v num">'+esc(money(r.agreed,cur))+'</div>'+
+      '<div class="s">Agreed fare · '+esc(r.pay_method||'cash')+' to you · Cabana takes 0%</div></div>'+
+    '<div class="rider"><div class="av">'+esc(first.charAt(0))+'</div><div style="flex:1;min-width:0"><div class="n">'+esc(first)+'</div>'+
+      '<div class="p">'+(r.passengers||1)+' pax'+(r.flight_no?' · flight '+esc(r.flight_no):'')+(r.needs&&r.needs.length?' · '+esc(r.needs.join(', ').replace(/_/g,' ')):'')+'</div></div>'+
+      (r.rider_phone?'<a class="call" href="tel:'+esc(r.rider_phone)+'" aria-label="Call rider"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg></a>':'')+
+    '</div>'+ legs(r)+ (r.notes?'<div class="offer-note">'+esc(r.notes)+'</div>':'')+ body +
+    (r.status!=='in_progress'?'<button class="btn btn-danger" data-step="cancel" style="margin-top:9px">I can’t make this trip</button>':'')+
+    '<button class="btn btn-ghost" id="sos-btn" style="margin-top:9px">Safety · SOS</button>'+
+  '</div>'+upHTML;
 }
+$('active').addEventListener('click', function(e){
+  var t = e.target.closest('button'); if(!t || !D.active) return;
+  if(t.id==='sos-btn'){ if(window.CabanaSOS && CabanaSOS.open) CabanaSOS.open(); else location.href='/help'; return; }
+  var a = t.dataset.step; if(!a) return;
+  var args = { p_request:D.active.id, p_action:a, p_pin:null, p_reason:null };
+  if(a==='start'){ var v = ($('pin')||{}).value||''; if(!/^\d{4}$/.test(v)){ showPinErr('Ask the rider for their 4-digit PIN.'); return; } args.p_pin = v; }
+  if(a==='cancel'){ if(!confirm('Hand this trip back? The rider goes straight back to searching.')) return; args.p_reason = 'driver_unavailable'; }
+  t.disabled = true;
+  rpc('ride_driver_progress', args).then(function(r){
+    if(r && r.error==='pin_wrong'){ t.disabled = false; showPinErr('Wrong PIN. '+r.attempts_left+' tries left.'); return; }
+    buzz();
+    toast(a==='arrived'?'The rider knows you are here.':a==='start'?'Trip started. Drive safe.':a==='complete'?'Trip complete. Well driven.':'Trip handed back.');
+    loadOpenWork(); ping();
+  }, function(err){ t.disabled = false; toast(friendly(err)); loadOpenWork(); });
+});
+function showPinErr(m){ var e = $('pin-err'); if(e){ e.textContent = m; e.style.display='block'; } }
 
-function setStatus(id, status){
-  if(!sb) return;
-  sb.rpc('cab_set_status', { p_request:id, p_status:status }).then(function(){
-    if(status === 'completed'){ toast('Trip complete. Collect the fare.'); loadStats(); }
-    if(status === 'cancelled') toast('Trip cancelled.');
-    D.active = null;
-    loadOpenWork();
-    if(D.online) ping();
-  }).catch(function(){ toast('Could not update the trip. Check your connection.'); });
-}
-
-/* ── stats ────────────────────────────────────────────────────────── */
-function loadStats(){
-  if(!sb || !D.driver) return;
-  $('s-rating').textContent = Number(D.driver.rating||5).toFixed(1);
-  var since = new Date(); since.setHours(0,0,0,0);
-  sb.from('ride_requests').select('quote_total,driver_payout,status,completed_at,pickup_label,dropoff_label')
-    .eq('driver_id', D.driver.id).gte('created_at', since.toISOString())
-    .then(function(r){
-      var rows = (r && r.data) || [];
-      var done = rows.filter(function(x){ return x.status==='completed'; });
-      var earn = done.reduce(function(s,x){
-        return s + (x.driver_payout || Math.round((x.quote_total||0)*(100-F.RULES.platformFeePct)/100)); }, 0);
-      $('s-earn').textContent = F.money(earn);
-      $('s-trips').textContent = done.length;
-    }).catch(function(){});
-
-  sb.from('ride_requests').select('quote_total,driver_payout,status,completed_at,pickup_label,dropoff_label')
-    .eq('driver_id', D.driver.id).eq('status','completed')
-    .order('completed_at',{ascending:false}).limit(6)
-    .then(function(r){
-      var rows = (r && r.data) || [];
-      $('recent').innerHTML = rows.length ? rows.map(function(x){
-        var pay = x.driver_payout || Math.round((x.quote_total||0)*(100-F.RULES.platformFeePct)/100);
-        var when = x.completed_at ? new Date(x.completed_at).toLocaleString('en-KE',
-          {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
-        return '<div class="row"><div class="rl">'+
-          '<div class="rn">'+esc(String(x.pickup_label||'').split(',')[0])+' to '+
-          esc(String(x.dropoff_label||'').split(',')[0])+'</div>'+
-          '<div class="rd">'+esc(when)+'</div></div>'+
-          '<div class="rv">'+F.money(pay)+'</div></div>';
-      }).join('') : '<div class="empty" style="padding:20px 0;"><p>No completed trips yet. Your first one shows up here.</p></div>';
-    }).catch(function(){});
+/* ── today ────────────────────────────────────────────────────────── */
+function paintToday(){
+  var b = D.board || {}, t = b.today || {}, d = b.driver || {};
+  $('s-earn').textContent = money(t.earned||0, t.currency);
+  $('s-trips').textContent = t.trips || 0;
+  $('s-rating').textContent = d.rating ? Number(d.rating).toFixed(2) : '5.0';
+  var rows = b.recent || [];
+  $('recent').innerHTML = rows.length ? rows.map(function(x){
+    var when = x.completed_at ? new Date(x.completed_at).toLocaleString('en-KE',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
+    return '<div class="row"><div class="rl"><div class="rn">'+esc(String(x.pickup||'').split(',')[0])+' to '+esc(String(x.dropoff||'').split(',')[0])+'</div>'+
+      '<div class="rd">'+esc(when)+(x.rating?' · '+x.rating+'★':'')+'</div></div><div class="rv">'+esc(money(x.agreed,x.currency))+'</div></div>';
+  }).join('') : '<div class="empty" style="padding:20px 0;"><p>No completed trips yet. Your first one shows up here.</p></div>';
 }
 
 /* keep the shift alive when the phone sleeps and wakes */
