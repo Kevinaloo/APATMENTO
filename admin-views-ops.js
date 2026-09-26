@@ -68,9 +68,10 @@
     leads: { label: 'Listing leads', icon: 'phone', to: 'leads', g: 'people' },
     tour3d: { label: '3D tour requests', icon: 'cube', to: 'listings?state=all', g: 'listings' },
     conflicts: { label: 'Calendar conflicts', icon: 'calendar', to: 'listings?state=live', g: 'listings' },
+    immersive_requests: { label: 'Immersive pass requests', icon: 'vr', to: 'immersive?tab=access', g: 'people' },
     ops: { label: 'Ops alerts', icon: 'activity', to: 'health', g: 'ops', hot: true }
   };
-  var QORDER = ['sos', 'refunds', 'checkin', 'support', 'withdrawals', 'disputes', 'listings', 'profiles', 'kyc', 'tours', 'operators', 'events', 'uploads', 'host_review', 'flights', 'rides', 'leads', 'tour3d', 'conflicts', 'ops'];
+  var QORDER = ['sos', 'refunds', 'checkin', 'support', 'withdrawals', 'disputes', 'listings', 'profiles', 'kyc', 'tours', 'operators', 'events', 'uploads', 'host_review', 'flights', 'rides', 'leads', 'tour3d', 'conflicts', 'immersive_requests', 'ops'];
   function queueTiles(counts, filter, cap) {
     var list = QORDER.filter(function (k) { return n(counts[k]) > 0 && (!filter || filter === 'all' || QUEUES[k].g === filter); });
     if (!list.length) return null;

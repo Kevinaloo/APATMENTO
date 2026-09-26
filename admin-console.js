@@ -147,6 +147,9 @@
     sort: '<path d="m21 16-4 4-4-4M17 20V4M3 8l4-4 4 4M7 4v16"/>',
     lock: '<rect x="3" y="11" width="18" height="11" rx="2.5"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
     note: '<path d="M15.5 3H5a2 2 0 0 0-2 2v14c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2V8.5L15.5 3Z"/><path d="M15 3v6h6"/>',
+    vr: '<path d="M3 9.2A2.7 2.7 0 0 1 5.7 6.5h12.6A2.7 2.7 0 0 1 21 9.2v5.1a2.7 2.7 0 0 1-2.7 2.7h-3.1a2 2 0 0 1-1.7-.9l-.8-1.2a.9.9 0 0 0-1.5 0l-.8 1.2a2 2 0 0 1-1.7.9H5.7A2.7 2.7 0 0 1 3 14.3z"/><circle cx="8" cy="11.8" r="1.6"/><circle cx="16" cy="11.8" r="1.6"/>',
+    crosshair: '<circle cx="12" cy="12" r="9"/><path d="M12 3v4M12 17v4M3 12h4M17 12h4"/>',
+    music: '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',
     google: '<path d="M21.35 11.1H12v2.9h5.35c-.23 1.4-1.66 4.1-5.35 4.1a6.1 6.1 0 1 1 0-12.2c1.9 0 3.2.8 3.9 1.5l2.66-2.56A9.3 9.3 0 0 0 12 2.3a9.7 9.7 0 1 0 0 19.4c5.6 0 9.3-3.94 9.3-9.48 0-.64-.07-1.12-.15-1.62z" fill="currentColor" stroke="none"/>'
   };
   function icon(name, cls) {
@@ -789,6 +792,7 @@
       { id: 'food', label: 'Food orders', icon: 'utensils', tone: 'info', badge: function () { return n(CX.pulse.food_live); } },
       { id: 'flights', label: 'Flight desk', icon: 'plane', tone: 'warn', desk: 's-flights', badge: function () { return c('flights'); } },
       { id: 'tours', label: 'Tours', icon: 'map', tone: 'warn', desk: 's-tours', badge: function () { return c('tours') + c('operators'); } },
+      { id: 'immersive', label: 'Immersive', icon: 'vr', tone: 'info', badge: function () { return c('immersive_requests'); } },
       { id: 'events', label: 'Events', icon: 'ticket', tone: 'warn', desk: 's-events', badge: function () { return c('events'); } },
       { id: 'move', label: 'Cabana Move', icon: 'car', tone: 'warn', desk: 's-transport', badge: function () { return c('rides'); } },
       { id: 'offers', label: 'Offers', icon: 'tag', desk: 's-offers' },
@@ -820,7 +824,7 @@
     ] }
   ];
   var NAV_BY = {}; NAV.forEach(function (g) { g.items.forEach(function (i) { i.group = g.g; NAV_BY[i.id] = i; }); });
-  var INBOX_KEYS = ['profiles', 'kyc', 'tours', 'events', 'operators', 'checkin', 'support', 'refunds', 'listings', 'withdrawals', 'disputes', 'uploads', 'sos', 'ops', 'tour3d', 'conflicts', 'leads', 'flights', 'rides', 'host_review'];
+  var INBOX_KEYS = ['profiles', 'kyc', 'tours', 'events', 'operators', 'checkin', 'support', 'refunds', 'listings', 'withdrawals', 'disputes', 'uploads', 'sos', 'ops', 'tour3d', 'conflicts', 'leads', 'flights', 'rides', 'host_review', 'immersive_requests'];
   function inboxTotal() { return INBOX_KEYS.reduce(function (s, k) { return s + c(k); }, 0); }
 
   function renderNav() {

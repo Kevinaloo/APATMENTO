@@ -737,6 +737,8 @@
 
   window.CabanaTours = {
     reload: load,
+    /* Cabana Immersive hands a guest back here from inside a world. */
+    open: openSheet,
     get: function () { return state.tours.slice(); },
     reel: function () { return reelList().slice(); }
   };
