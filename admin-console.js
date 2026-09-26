@@ -796,6 +796,7 @@
     ] },
     { g: 'People', items: [
       { id: 'people', label: 'Members', icon: 'users', keys: 'g p', tone: 'warn', badge: function () { return c('host_review'); } },
+      { id: 'profiles', label: 'Profiles & ticks', icon: 'shieldCheck', tone: 'warn', badge: function () { return c('profiles'); } },
       { id: 'agents', label: 'Agents', icon: 'idcard', tone: 'warn', badge: function () { return c('kyc'); } },
       { id: 'ambassadors', label: 'Ambassadors', icon: 'award' },
       { id: 'leads', label: 'Listing leads', icon: 'phone', tone: 'info', badge: function () { return c('leads'); } }
@@ -819,7 +820,7 @@
     ] }
   ];
   var NAV_BY = {}; NAV.forEach(function (g) { g.items.forEach(function (i) { i.group = g.g; NAV_BY[i.id] = i; }); });
-  var INBOX_KEYS = ['kyc', 'tours', 'events', 'operators', 'checkin', 'support', 'refunds', 'listings', 'withdrawals', 'disputes', 'uploads', 'sos', 'ops', 'tour3d', 'conflicts', 'leads', 'flights', 'rides', 'host_review'];
+  var INBOX_KEYS = ['profiles', 'kyc', 'tours', 'events', 'operators', 'checkin', 'support', 'refunds', 'listings', 'withdrawals', 'disputes', 'uploads', 'sos', 'ops', 'tour3d', 'conflicts', 'leads', 'flights', 'rides', 'host_review'];
   function inboxTotal() { return INBOX_KEYS.reduce(function (s, k) { return s + c(k); }, 0); }
 
   function renderNav() {

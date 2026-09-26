@@ -539,6 +539,18 @@
     {
       "source": "/api/subscribe",
       "destination": "/api/utilities?action=subscribe"
+    },
+    {
+      "source": "/api/people",
+      "destination": "/api/agents?action=people"
+    },
+    {
+      "source": "/api/didit-webhook",
+      "destination": "/api/agents?action=didit-webhook"
+    },
+    {
+      "source": "/u/:handle([A-Za-z0-9._]{3,24})",
+      "destination": "/person.html?handle=:handle"
     }
   ],
   "buildCommand": "node scripts/check-syntax.mjs",

@@ -27,6 +27,8 @@
      track         public  → record a click on an agent link
      attribute     service → attach a booking to a referral  [internal]
      kyc-review    admin   → verify or reject an identity document
+     people        mixed   → profiles, follows, ticks, photos (lib/_profiles.js)
+     didit-webhook Didit   → identity check finished (re-verified server-side)
 
    Security posture:
      · Every route resolves the caller's real Supabase session. No trust
@@ -39,6 +41,7 @@
 
 export const config = { maxDuration: 30 };
 import { people } from './lib/_people.js';
+import { profiles } from './lib/_profiles.js';
 
 const SUPA_URL    = process.env.SUPABASE_URL;
 const ANON_KEY    = process.env.SUPABASE_ANON_KEY;
@@ -777,6 +780,14 @@ export default async function handler(req, res) {
   const a = req.query.action;
   try {
     if (a === 'public-profile') return await people(req, res, {db, session});
+    if (a === 'people' || a === 'didit-webhook') return await profiles(req, res, {
+      db, session,
+      notifyAdmins: (subject, text) => Promise.all(ADMINS.map(to => mail({ to, subject, html: shell({
+        emoji: '🏅', title: 'Profile verification', sub: subject,
+        body: `<p style="color:#4A4C66;font-size:14px;">${text.replace(/[<>&]/g, '')}</p>`,
+        cta: 'Review', ctaUrl: `${SITE}/admin.html#/profiles`,
+      }) }))),
+    });
     if (a === 'signup'       && req.method === 'POST') return await handleSignup(req, res);
     if (a === 'me'           && req.method === 'GET')  return await handleMe(req, res);
     if (a === 'upload-id'    && req.method === 'POST') return await handleUploadId(req, res);

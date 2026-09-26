@@ -57,6 +57,7 @@
     disputes: { label: 'Open disputes', icon: 'flag', to: 'safety?tab=disputes', g: 'trust' },
     listings: { label: 'Listings to review', icon: 'building', to: 'listings?state=review', g: 'listings' },
     kyc: { label: 'Agent ID checks', icon: 'idcard', to: 'agents', g: 'people' },
+    profiles: { label: 'Profiles & ticks', icon: 'shieldCheck', to: 'profiles', g: 'people' },
     tours: { label: 'Tours to publish', icon: 'map', to: 'tours', g: 'listings' },
     operators: { label: 'Tour operators', icon: 'map', to: 'tours', g: 'people' },
     events: { label: 'Events to publish', icon: 'ticket', to: 'events', g: 'listings' },
@@ -69,7 +70,7 @@
     conflicts: { label: 'Calendar conflicts', icon: 'calendar', to: 'listings?state=live', g: 'listings' },
     ops: { label: 'Ops alerts', icon: 'activity', to: 'health', g: 'ops', hot: true }
   };
-  var QORDER = ['sos', 'refunds', 'checkin', 'support', 'withdrawals', 'disputes', 'listings', 'kyc', 'tours', 'operators', 'events', 'uploads', 'host_review', 'flights', 'rides', 'leads', 'tour3d', 'conflicts', 'ops'];
+  var QORDER = ['sos', 'refunds', 'checkin', 'support', 'withdrawals', 'disputes', 'listings', 'profiles', 'kyc', 'tours', 'operators', 'events', 'uploads', 'host_review', 'flights', 'rides', 'leads', 'tour3d', 'conflicts', 'ops'];
   function queueTiles(counts, filter, cap) {
     var list = QORDER.filter(function (k) { return n(counts[k]) > 0 && (!filter || filter === 'all' || QUEUES[k].g === filter); });
     if (!list.length) return null;

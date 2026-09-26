@@ -76,7 +76,7 @@ let swRegistration = null;
 async function registerSW() {
   if (!('serviceWorker' in navigator)) return;
   try {
-    swRegistration = await navigator.serviceWorker.register('/sw.js?v=38-location-flight-30s', {
+    swRegistration = await navigator.serviceWorker.register('/sw.js?v=39-people-profiles', {
       scope: '/',
       updateViaCache: 'none',
     });

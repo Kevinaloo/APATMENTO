@@ -6,329 +6,781 @@
 <link rel="apple-touch-icon" href="/cabana-apple-touch-icon.png"/>
 <meta name="apple-mobile-web-app-title" content="Cabana"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>APATMENTO: My Profile</title>
-<meta name="description" content="Manage your Cabana profile, saved places, bookings and preferences. Kenya&#x27;s zero-commission travel and lifestyle super-app."/>
-<!-- Session core: one Supabase client per tab. Multiple clients on the
-     same storage key race each other and silently drop the session. -->
-<script src="/pwa.js?v=35-programmes" defer></script>
+<title>My Profile · Cabana</title>
+<meta name="description" content="Your Cabana profile: your look, your verification ticks, who follows you and what the world sees."/>
+<script src="/pwa.js?v=39-people-profiles" defer></script>
 <script src="/apa-push.js" defer></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
   --bg:#F7F6F2;--white:#FFFFFF;--ink:#0F1117;--ink3:#5A5E70;--ink4:#9499AD;
   --border:rgba(15,17,23,0.08);--border-md:rgba(15,17,23,0.14);
-  --shadow-md:0 8px 32px rgba(15,17,23,.10);
-  --gold:#C8970A;--gold2:#E8A800;
+  --violet:#6D28FF;--violet2:#7C3AED;--reef:#14B8A6;--gold:#D98E0B;
   --emerald:#0D9467;--emerald2:#059652;
-  --em-bg:rgba(13,148,103,.07);--em-bd:rgba(13,148,103,.18);
 }
 html,body{min-height:100%;font-family:var(--font-body);background:var(--bg);color:var(--ink);}
-.top-nav{position:sticky;top:0;z-index:100;height:60px;background:var(--white);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;}
-.nav-logo{font-family:var(--font-display);font-size:15px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;background:linear-gradient(90deg,var(--gold),var(--gold2));-webkit-background-clip:text;background-clip:text;color:transparent;text-decoration:none;}
-.nav-back{font-size:12px;color:var(--ink3);text-decoration:none;padding:7px 14px;border-radius:8px;border:1px solid var(--border);}
-.nav-back:hover{background:var(--bg);}
-.page{max-width:640px;margin:0 auto;padding:32px 20px 60px;}
+.top-nav{position:sticky;top:0;z-index:100;height:60px;background:rgba(255,255,255,.86);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 20px;}
+.nav-logo{font-family:var(--font-display);font-size:15px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;background:linear-gradient(90deg,var(--violet),var(--reef));-webkit-background-clip:text;background-clip:text;color:transparent;text-decoration:none;}
+.nav-back{font-size:12px;color:var(--ink3);text-decoration:none;padding:7px 14px;border-radius:999px;border:1px solid var(--border);}
+.page{max-width:720px;margin:0 auto;padding:22px 16px 120px}
 
-.profile-hero{background:linear-gradient(135deg,#0a1628,#1a3a5a);border-radius:20px;padding:32px 24px;margin-bottom:24px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;}
-.profile-avatar{width:72px;height:72px;border-radius:18px;background:linear-gradient(135deg,var(--emerald),var(--emerald2));display:flex;align-items:center;justify-content:center;font-family:var(--font-data);font-size:28px;font-weight:700;color:white;flex-shrink:0;}
-.profile-name{font-family:var(--font-display);font-size:22px;font-weight:700;color:white;margin-bottom:4px;}
-.profile-email{font-size:13px;color:rgba(255,255,255,.45);}
-.profile-member{font-size:11px;font-weight:600;color:var(--gold2);margin-top:8px;background:rgba(232,168,0,.1);border:1px solid rgba(232,168,0,.2);padding:4px 12px;border-radius:100px;display:inline-flex;}
+/* hero */
+.hero{position:relative;border-radius:28px;overflow:hidden;background:var(--white);box-shadow:0 18px 50px rgba(32,18,46,.08);margin-bottom:18px}
+.hero-cover{height:120px;transition:background .5s}
+.hero-body{padding:0 22px 16px;display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-top:-52px;position:relative}
+.hero-ava{position:relative}
+.hero-ava .cpa{box-shadow:0 0 0 4px #fff,0 12px 30px rgba(32,18,46,.18)}
+.hero-ava .ava-edit{position:absolute;right:-2px;bottom:4px;width:34px;height:34px;border-radius:50%;border:3px solid #fff;background:var(--ink);color:#fff;display:grid;place-items:center;cursor:pointer}
+.hero-id{flex:1;min-width:200px;padding-top:62px}
+@media(max-width:520px){.hero-id{padding-top:0}}
+.hero-name{display:flex;align-items:center;gap:6px;font:700 23px/1.2 var(--font-display);letter-spacing:-.02em}
+.hero-handle{font-size:13px;color:var(--ink3);margin-top:2px}
+.hero-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:6px 12px;font-size:12px;font-weight:600;background:var(--bg);color:var(--ink3);text-decoration:none;border:0;cursor:pointer;font-family:inherit}
+.pill.live{background:rgba(20,184,166,.12);color:#0F766E}
+.pill.off{background:rgba(15,17,23,.06)}
+.hero-stats{display:flex;gap:20px;padding:0 22px 20px}
+.hero-stats b{display:block;font:700 17px var(--font-display)}
+.hero-stats span{font-size:12px;color:var(--ink4)}
 
-.card{background:var(--white);border-radius:18px;border:1px solid var(--border);padding:24px;margin-bottom:18px;}
-.card-title{font-family:var(--font-data);font-size:14px;font-weight:700;color:var(--ink);margin-bottom:18px;letter-spacing:.02em;}
-.row-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
-@media(max-width:480px){.row-2{grid-template-columns:1fr;}}
-.field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
-.field:last-child{margin-bottom:0;}
-.field-label{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);}
-.field-input{padding:12px 14px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg);font-family:var(--font-body);font-size:14px;color:var(--ink);outline:none;transition:border-color .2s;}
-.field-input:focus{border-color:var(--emerald);background:var(--white);}
-.field-input:disabled{opacity:.5;cursor:not-allowed;}
-.field-hint{font-size:11px;color:var(--ink4);}
-.btn{padding:12px 22px;border-radius:10px;border:none;cursor:pointer;font-family:var(--font-data);font-size:13px;font-weight:700;transition:filter .2s,transform .2s;}
-.btn:hover{filter:brightness(1.08);transform:translateY(-1px);}
-.btn-primary{background:linear-gradient(135deg,var(--emerald),var(--emerald2));color:white;}
-.btn-ghost{background:var(--bg);color:var(--ink3);border:1px solid var(--border);}
-.btn-danger{background:rgba(239,68,68,.08);color:#DC2626;border:1px solid rgba(239,68,68,.15);}
-.divider{height:1px;background:var(--border);margin:16px 0;}
-.pref-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);}
-.pref-row:last-child{border-bottom:none;padding-bottom:0;}
-.pref-info strong{font-size:13px;font-weight:600;color:var(--ink);display:block;margin-bottom:2px;}
-.pref-info span{font-size:11px;color:var(--ink4);}
-.toggle{width:44px;height:24px;border-radius:12px;border:none;cursor:pointer;position:relative;transition:background .3s;flex-shrink:0;}
-.toggle.on{background:var(--emerald);}
-.toggle.off{background:#D1D5DB;}
-.toggle::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:white;transition:transform .3s;box-shadow:0 1px 4px rgba(0,0,0,.2);}
-.toggle.on::after{transform:translateX(20px);}
-.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:0;}
-.stat-box{background:var(--bg);border-radius:12px;padding:14px;text-align:center;}
-.stat-box-val{font-family:var(--font-data);font-size:20px;font-weight:700;color:var(--ink);}
-.stat-box-lbl{font-size:11px;color:var(--ink4);margin-top:3px;}
-.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:white;padding:12px 20px;border-radius:12px;font-size:13px;font-weight:500;box-shadow:0 20px 60px rgba(15,17,23,.14);z-index:999;opacity:0;pointer-events:none;transition:opacity .3s;white-space:nowrap;}
-.toast.show{opacity:1;}
+/* cards */
+.card{background:var(--white);border-radius:22px;border:1px solid var(--border);padding:22px;margin-bottom:16px;scroll-margin-top:76px}
+.card-title{font:700 16px var(--font-display);margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.card-sub{font-size:13px;color:var(--ink3);margin-bottom:16px;line-height:1.5}
+.row-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:520px){.row-2{grid-template-columns:1fr}}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.field-label{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)}
+.field-input{width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg);font:14px var(--font-body);color:var(--ink);outline:none;transition:border-color .2s,background .2s}
+.field-input:focus{border-color:var(--violet2);background:var(--white)}
+.field-input:disabled{opacity:.55;cursor:not-allowed}
+.field-input.bad{border-color:#DC2626}
+.field-hint{font-size:11.5px;color:var(--ink4);line-height:1.5}
+.handle-wrap{position:relative}.handle-wrap span{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--ink4);font-size:14px}
+.handle-wrap input{padding-left:30px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 20px;border-radius:12px;border:none;cursor:pointer;font:700 13px var(--font-display);transition:filter .2s,transform .2s;text-decoration:none}
+.btn:hover{filter:brightness(1.06);transform:translateY(-1px)}
+.btn:disabled{opacity:.55;cursor:not-allowed;transform:none}
+.btn-primary{background:var(--ink);color:#fff}
+.btn-violet{background:linear-gradient(135deg,#8B5CF6,#6D28FF);color:#fff}
+.btn-gold{background:linear-gradient(135deg,#F5B12E,#D98E0B);color:#fff}
+.btn-ghost{background:var(--bg);color:var(--ink);border:1px solid var(--border)}
+.btn-danger{background:rgba(239,68,68,.08);color:#DC2626;border:1px solid rgba(239,68,68,.15)}
+
+/* segmented */
+.seg{display:inline-flex;background:var(--bg);border-radius:14px;padding:4px;gap:4px;margin-bottom:16px;flex-wrap:wrap}
+.seg button{border:0;background:transparent;padding:9px 16px;border-radius:10px;font:600 13px var(--font-body);color:var(--ink3);cursor:pointer}
+.seg button[aria-pressed=true],.seg button[aria-selected=true]{background:var(--white);color:var(--ink);box-shadow:0 2px 8px rgba(15,17,23,.08)}
+
+/* look studio */
+.look{display:grid;grid-template-columns:200px 1fr;gap:22px}
+@media(max-width:620px){.look{grid-template-columns:1fr}}
+.stage{position:sticky;top:76px;align-self:start;text-align:center}
+.stage-ava{width:180px;height:180px;margin:0 auto;border-radius:44px;overflow:hidden;box-shadow:0 16px 40px rgba(32,18,46,.16)}
+.stage-ava .cpa{width:100%!important;height:100%!important;border-radius:0}
+.stage-name{margin-top:10px;font-weight:700}
+.stage-trait{font-size:12px;color:var(--ink3)}
+.stage-btns{display:flex;gap:8px;justify-content:center;margin-top:12px;flex-wrap:wrap}
+#motion{display:grid;grid-template-columns:repeat(3,1fr);width:100%}
+#motion button{padding:8px 4px}
+@media(max-width:620px){.stage{position:static}.stage-ava{width:150px;height:150px}}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:10px}
+.opt{border:2px solid transparent;border-radius:20px;background:var(--bg);padding:4px;cursor:pointer;text-align:center;font:500 11px var(--font-body);color:var(--ink3);transition:transform .15s,border-color .15s}
+.opt:hover{transform:translateY(-2px)}
+.opt[aria-pressed=true]{border-color:var(--violet2);color:var(--ink)}
+.opt .mini{display:block;aspect-ratio:1;border-radius:16px;overflow:hidden}
+.opt .mini svg{width:100%;height:100%}
+.opt small{display:block;padding:4px 2px 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.edit-row{margin-bottom:16px}
+.edit-row h4{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin-bottom:8px}
+.sw{display:flex;flex-wrap:wrap;gap:8px}
+.sw button{width:34px;height:34px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 1px var(--border-md);cursor:pointer}
+.sw button[aria-pressed=true]{box-shadow:0 0 0 2px var(--violet2)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1.5px solid var(--border);background:var(--white);border-radius:999px;padding:7px 13px;font:500 13px var(--font-body);color:var(--ink);cursor:pointer}
+.chip[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.minis{display:grid;grid-template-columns:repeat(auto-fill,minmax(58px,1fr));gap:8px}
+.minis .opt small{font-size:10px}
+
+/* photo */
+.photo-box{display:flex;gap:16px;align-items:center;flex-wrap:wrap;background:var(--bg);border-radius:18px;padding:16px}
+.photo-box .ph{width:96px;height:96px;border-radius:50%;overflow:hidden;background:#E9E6F2;flex-shrink:0;display:grid;place-items:center;color:var(--ink4)}
+.photo-box .ph img{width:100%;height:100%;object-fit:cover}
+.lock{display:flex;gap:14px;align-items:flex-start;background:linear-gradient(135deg,rgba(124,58,237,.07),rgba(20,184,166,.07));border-radius:18px;padding:16px}
+.lock svg{flex-shrink:0}
+.progress{height:6px;border-radius:3px;background:var(--border);overflow:hidden;margin-top:10px}
+.progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,#6D28FF,#14B8A6);transition:width .3s}
+
+/* verification */
+.tier{display:flex;gap:14px;padding:16px;border-radius:18px;border:1px solid var(--border);margin-bottom:12px;align-items:flex-start}
+.tier.done{border-color:transparent}
+.tier.t-person.done{background:rgba(124,58,237,.06)}
+.tier.t-organization.done{background:rgba(245,177,46,.1)}
+.tier.t-provider.done{background:linear-gradient(135deg,rgba(79,109,255,.07),rgba(20,184,166,.1))}
+.tier-ico{width:44px;height:44px;display:grid;place-items:center;flex-shrink:0;border-radius:14px;background:var(--bg)}
+.tier h3{font:700 15px var(--font-display);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.tier p{font-size:13px;color:var(--ink3);margin-top:4px;line-height:1.55}
+.tier .state{font:600 11px var(--font-body);letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:var(--bg);color:var(--ink3)}
+.tier .state.ok{background:rgba(13,148,103,.12);color:var(--emerald)}
+.tier .state.wait{background:rgba(245,177,46,.16);color:#92400E}
+.tier .state.no{background:rgba(220,38,38,.1);color:#B91C1C}
+.tier .acts{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
+.org-form{margin-top:14px;border-top:1px dashed var(--border-md);padding-top:14px}
+.privacy-note{display:flex;gap:10px;align-items:flex-start;font-size:12px;color:var(--ink3);background:var(--bg);border-radius:14px;padding:12px 14px;margin-top:8px;line-height:1.5}
+
+/* toggles */
+.pref-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:13px 0;border-bottom:1px solid var(--border)}
+.pref-row:last-child{border-bottom:none;padding-bottom:0}
+.pref-info strong{font-size:13.5px;font-weight:600;color:var(--ink);display:block;margin-bottom:2px}
+.pref-info span{font-size:12px;color:var(--ink4)}
+.toggle{width:46px;height:26px;border-radius:13px;border:none;cursor:pointer;position:relative;transition:background .3s;flex-shrink:0;background:#D1D5DB}
+.toggle[aria-checked=true]{background:var(--reef)}
+.toggle::after{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:white;transition:transform .3s;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.toggle[aria-checked=true]::after{transform:translateX(20px)}
+.toggle.legacy.on{background:var(--emerald)}.toggle.legacy.on::after{transform:translateX(20px)}
+
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.stat-box{background:var(--bg);border-radius:14px;padding:14px;text-align:center}
+.stat-box-val{font:700 20px var(--font-data)}
+.stat-box-lbl{font-size:11px;color:var(--ink4);margin-top:3px}
+
+/* save bar */
+.savebar{position:fixed;left:50%;bottom:18px;transform:translate(-50%,140%);z-index:200;display:flex;align-items:center;gap:14px;background:var(--ink);color:#fff;padding:10px 10px 10px 20px;border-radius:18px;box-shadow:0 20px 60px rgba(15,17,23,.3);transition:transform .35s cubic-bezier(.22,1,.36,1);width:min(520px,calc(100vw - 24px))}
+.savebar.show{transform:translate(-50%,0)}
+.savebar span{flex:1;font-size:13px}
+.savebar .btn{background:#fff;color:var(--ink);padding:10px 18px}
+.savebar .btn-ghost{background:transparent;color:#fff;border-color:rgba(255,255,255,.2)}
+.toast{position:fixed;top:76px;left:50%;transform:translate(-50%,-10px);background:var(--ink);color:white;padding:12px 20px;border-radius:12px;font-size:13px;font-weight:500;box-shadow:0 20px 60px rgba(15,17,23,.14);z-index:999;opacity:0;pointer-events:none;transition:.3s;max-width:calc(100vw - 32px)}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.skel{background:linear-gradient(90deg,#EEE,#F6F6F6,#EEE);background-size:200% 100%;animation:sk 1.2s infinite;border-radius:10px}
+@keyframes sk{to{background-position:-200% 0}}
+[hidden]{display:none!important}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 <link rel="stylesheet" href="/brand.css"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/><link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="/cabana-ds.css"/>
-
-  <link rel="canonical" href="https://cabana.africa/profile"/>
-
-  <meta name="robots" content="noindex, nofollow"/>
+<link rel="canonical" href="https://cabana.africa/profile"/>
+<meta name="robots" content="noindex, nofollow"/>
 </head>
 <body>
 <nav class="top-nav">
   <a href="dashboard.html?role=guest&back=1" class="nav-back">← Dashboard</a>
   <a href="dashboard.html?role=guest&back=1" class="nav-logo">Cabana</a>
-  <div style="width:60px;"></div>
-
-  <div style="display:flex;align-items:center;gap:8px;margin-left:auto;"><button class="apa-ico" id="apa-fav-btn" data-apa="fav" type="button" aria-label="Saved places" title="Saved places" style="display:none;" data-when="user">
-              <svg class="apa-fav-heart" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-              <span class="apa-fav-badge"></span>
-            </button></div>
+  <div style="display:flex;align-items:center;gap:8px;"><button class="apa-ico" id="apa-fav-btn" data-apa="fav" type="button" aria-label="Saved places" title="Saved places" style="display:none;" data-when="user">
+    <svg class="apa-fav-heart" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+    <span class="apa-fav-badge"></span></button></div>
 </nav>
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status"></div>
 
 <div class="page">
 
-  <!-- HERO -->
-  <div class="profile-hero">
-    <div class="profile-avatar" id="prof-avatar">?</div>
-    <div>
-      <div class="profile-name" id="prof-name">Loading…</div>
-      <div class="profile-email" id="prof-email"></div>
-      <div class="profile-member" id="prof-member">Cabana Member</div>
-    </div>
-  </div>
-
-  <!-- STATS -->
-  <div class="card">
-    <div class="card-title">Your Activity</div>
-    <div class="stat-row">
-      <div class="stat-box"><div class="stat-box-val" id="stat-bookings">-</div><div class="stat-box-lbl">Bookings</div></div>
-      <div class="stat-box"><div class="stat-box-val" id="stat-spent">-</div><div class="stat-box-lbl">Total Spent</div></div>
-      <div class="stat-box"><div class="stat-box-val" id="stat-countries">1</div><div class="stat-box-lbl">Countries</div></div>
-    </div>
-  </div>
-
-  <!-- PERSONAL INFO -->
-  <div class="card">
-    <div class="card-title">Personal Information</div>
-    <div class="row-2">
-      <div class="field">
-        <div class="field-label">First Name</div>
-        <input class="field-input" id="first-name" type="text" placeholder="Your first name" aria-label="First Name" />
-      </div>
-      <div class="field">
-        <div class="field-label">Last Name</div>
-        <input class="field-input" id="last-name" type="text" placeholder="Your last name" aria-label="Last Name" />
+  <!-- HERO: what the world sees -->
+  <section class="hero" aria-label="Your profile preview">
+    <div class="hero-cover" id="hero-cover" style="background:linear-gradient(135deg,#7C4DFF,#4EE0C8)"></div>
+    <div class="hero-body">
+      <div class="hero-ava"><div id="hero-ava"><span class="cpa skel" style="width:104px;height:104px"></span></div>
+        <button class="ava-edit" type="button" aria-label="Change your look" onclick="document.getElementById('look').scrollIntoView({behavior:'smooth'})"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button></div>
+      <div class="hero-id">
+        <div class="hero-name"><span id="hero-name">Loading…</span><span id="hero-tick"></span></div>
+        <div class="hero-handle" id="hero-handle"></div>
+        <div class="hero-meta">
+          <span class="pill off" id="hero-vis">Private</span>
+          <a class="pill" id="hero-view" href="#" target="_blank" rel="noopener" hidden>View public profile ↗</a>
+          <button class="pill" id="hero-share" type="button" hidden>Copy link</button>
+        </div>
       </div>
     </div>
-    <div class="field">
-      <div class="field-label">Email Address</div>
-      <input class="field-input" id="email" type="email" disabled aria-label="Email Address" />
-      <div class="field-hint">Email cannot be changed. Contact support to update.</div>
-    </div>
-    <div class="field">
-      <div class="field-label">Phone Number</div>
-      <input class="field-input" id="phone" type="tel" placeholder="07XX XXX XXX" aria-label="Phone Number" />
-    </div>
-    <button class="btn btn-primary" onclick="saveProfile()">Save Changes</button>
-  </div>
+    <div class="hero-stats" id="hero-stats"></div>
+  </section>
 
-  <!-- CHANGE PASSWORD -->
-  <div class="card">
-    <div class="card-title">Change Password</div>
-    <div class="field">
-      <div class="field-label">New Password</div>
-      <input class="field-input" id="new-pwd" type="password" placeholder="Minimum 8 characters" aria-label="New Password" />
-    </div>
-    <div class="field">
-      <div class="field-label">Confirm Password</div>
-      <input class="field-input" id="confirm-pwd" type="password" placeholder="Repeat new password" aria-label="Confirm Password" />
-    </div>
-    <button class="btn btn-ghost" onclick="changePassword()">Update Password</button>
-  </div>
-
-  <div class="card" id="public-profile">
+  <!-- 1 · WHO YOU ARE -->
+  <section class="card" id="public-profile">
     <div class="card-title">Your public profile</div>
-    <p class="field-hint">Choose what other members see when they open your profile. Your email, phone, payments, bookings and identity documents stay private.</p>
-    <div id="public-role-badges" style="display:flex;gap:6px;flex-wrap:wrap;margin:12px 0"></div>
-    <div class="field"><label class="field-label" for="public-name">Public display name</label><input class="field-input" id="public-name" maxlength="60" placeholder="How you want to be known"></div>
-    <div class="field"><label class="field-label" for="public-bio">A little about you</label><textarea class="field-input" id="public-bio" maxlength="240" rows="3" placeholder="Travel interests or how you help Cabana members"></textarea><p class="field-hint">Up to 240 characters. Leave contact details and private information out.</p></div>
-    <label class="field-hint"><input type="checkbox" id="public-published"> Show this display name and introduction on my public profile</label>
-    <p class="field-hint">Without an introduction, hosts and representatives show only a basic member card. Roles are assigned from your Cabana memberships.</p>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px"><button class="btn btn-primary" type="button" id="public-save" onclick="savePublicProfile()">Save public profile</button><button class="btn btn-ghost" type="button" onclick="CabanaPeople.open(CURRENT_USER.id)">Preview</button></div>
-    <p id="public-profile-status" class="field-hint" role="status"></p>
-  </div>
+    <p class="card-sub">This is what members see when they tap your name on a listing, in messages or in search. Your email, phone, payments, bookings and ID documents always stay private.</p>
 
-  <!-- NOTIFICATIONS -->
-  <div class="card">
+    <div class="seg" role="group" aria-label="Account type">
+      <button type="button" data-type="individual" aria-pressed="true">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="vertical-align:-2px"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4.5-6 8-6s7 2 8 6"/></svg> Individual</button>
+      <button type="button" data-type="organization" aria-pressed="false">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="vertical-align:-2px"><path d="M4 21V7l8-4 8 4v14M2 21h20M9 21v-5h6v5"/></svg> Company or organisation</button>
+    </div>
+
+    <div class="row-2">
+      <div class="field"><label class="field-label" for="f-name" id="l-name">Display name</label><input class="field-input" id="f-name" maxlength="60" autocomplete="nickname" placeholder="How you want to be known"></div>
+      <div class="field"><label class="field-label" for="f-handle">Profile link</label><div class="handle-wrap"><span>@</span><input class="field-input" id="f-handle" maxlength="24" autocapitalize="off" spellcheck="false" placeholder="yourname"></div><span class="field-hint" id="h-handle">cabana.africa/u/…</span></div>
+    </div>
+    <div class="field"><label class="field-label" for="f-headline" id="l-headline">Headline</label><input class="field-input" id="f-headline" maxlength="80" placeholder="Slow traveller · coffee first · always packing light"></div>
+    <div class="field"><label class="field-label" for="f-bio" id="l-bio">About</label><textarea class="field-input" id="f-bio" maxlength="240" rows="3" placeholder="What you love about travel, or how you help guests"></textarea><span class="field-hint"><span id="c-bio">0</span>/240 · Keep phone numbers, emails and links out. Members reach you through Cabana messages.</span></div>
+
+    <div id="org-fields" hidden>
+      <div class="row-2">
+        <div class="field"><label class="field-label" for="f-orgkind">Type of organisation</label><select class="field-input" id="f-orgkind"></select></div>
+        <div class="field"><label class="field-label" for="f-website">Website</label><input class="field-input" id="f-website" inputmode="url" placeholder="https://example.com"><span class="field-hint">Shown once your organisation is verified.</span></div>
+      </div>
+    </div>
+
+    <div class="row-2">
+      <div class="field"><label class="field-label" for="f-city">City</label><input class="field-input" id="f-city" maxlength="60" placeholder="Nairobi"></div>
+      <div class="field"><label class="field-label" for="f-country">Country</label><select class="field-input" id="f-country"></select></div>
+    </div>
+    <div class="pref-row" style="padding-top:0"><div class="pref-info"><strong>Show my city on my profile</strong><span>Only the city and country you type. Never your address or live location.</span></div><button class="toggle" type="button" role="switch" aria-checked="false" data-pref="show_location" aria-label="Show my city"></button></div>
+
+    <div class="edit-row" style="margin-top:16px"><h4>Languages you speak <small style="text-transform:none;letter-spacing:0;font-weight:500">(up to 6)</small></h4><div class="chips" id="f-langs"></div></div>
+    <div class="edit-row"><h4 id="l-interests">Travel style <small style="text-transform:none;letter-spacing:0;font-weight:500">(up to 8)</small></h4><div class="chips" id="f-interests"></div></div>
+    <div class="edit-row"><h4>Profile colours</h4><div class="sw" id="f-theme"></div></div>
+  </section>
+
+  <!-- 2 · YOUR LOOK -->
+  <section class="card" id="look">
+    <div class="card-title">Your look</div>
+    <p class="card-sub">Pick a Cabana character, make it yours, and it comes alive on your profile. Verified members can also use their own photo.</p>
+    <div class="look">
+      <div class="stage">
+        <div class="stage-ava" id="stage-ava"></div>
+        <div class="stage-name" id="stage-name"></div>
+        <div class="stage-trait" id="stage-trait"></div>
+        <div class="stage-btns">
+          <button class="btn btn-ghost" type="button" id="surprise" style="padding:9px 14px">🎲 Surprise me</button>
+        </div>
+        <div class="seg" role="group" aria-label="Motion" style="margin-top:12px" id="motion"></div>
+      </div>
+      <div>
+        <div class="seg" role="tablist" id="look-tabs">
+          <button role="tab" type="button" data-tab="catalogue" aria-selected="true">Catalogue</button>
+          <button role="tab" type="button" data-tab="customise" aria-selected="false">Customise</button>
+          <button role="tab" type="button" data-tab="photo" aria-selected="false">Your photo</button>
+        </div>
+        <div id="tab-catalogue"></div>
+        <div id="tab-customise" hidden></div>
+        <div id="tab-photo" hidden></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 · VERIFICATION -->
+  <section class="card" id="verification">
+    <div class="card-title">Verification</div>
+    <p class="card-sub">Ticks tell members who they are dealing with. They are issued by Cabana only, and nobody can buy one.</p>
+    <div id="tiers"><div class="skel" style="height:90px"></div></div>
+  </section>
+
+  <!-- 4 · PRIVACY -->
+  <section class="card" id="privacy">
+    <div class="card-title">Who can see what</div>
+    <div class="pref-row"><div class="pref-info"><strong>Publish my profile</strong><span>Anyone on Cabana can view your profile and follow you. Off: only people you message see your first name and look.</span></div><button class="toggle" type="button" role="switch" aria-checked="false" data-pref="published" aria-label="Publish my profile"></button></div>
+    <div class="pref-row"><div class="pref-info"><strong>Allow people to follow me</strong><span>Followers get to see what you list and share first.</span></div><button class="toggle" type="button" role="switch" aria-checked="true" data-pref="allow_follow" aria-label="Allow followers"></button></div>
+    <div class="pref-row"><div class="pref-info"><strong>Show follower counts and lists</strong><span>Off hides who follows you and who you follow.</span></div><button class="toggle" type="button" role="switch" aria-checked="true" data-pref="show_followers" aria-label="Show followers"></button></div>
+    <div class="pref-row"><div class="pref-info"><strong>Show my listings on my profile</strong><span>Your live stays and services, as cards.</span></div><button class="toggle" type="button" role="switch" aria-checked="true" data-pref="show_listings" aria-label="Show my listings"></button></div>
+    <div class="privacy-note"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0F766E" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span>Hosts, agents and organisations always show a basic card (name, look and tick) on their listings so guests know who they are booking with. Search engines are asked not to index member profiles.</span></div>
+  </section>
+
+  <!-- ACTIVITY -->
+  <section class="card">
+    <div class="card-title">Your activity</div>
+    <div class="stat-row" style="margin-top:12px">
+      <div class="stat-box"><div class="stat-box-val" id="stat-bookings">-</div><div class="stat-box-lbl">Bookings</div></div>
+      <div class="stat-box"><div class="stat-box-val" id="stat-spent">-</div><div class="stat-box-lbl">Total spent</div></div>
+      <div class="stat-box"><div class="stat-box-val" id="stat-since">-</div><div class="stat-box-lbl">Member since</div></div>
+    </div>
+  </section>
+
+  <!-- PRIVATE ACCOUNT DETAILS -->
+  <section class="card">
+    <div class="card-title">Private account details</div>
+    <p class="card-sub">Used for bookings, receipts and payouts. Never shown on your profile.</p>
+    <div class="row-2">
+      <div class="field"><div class="field-label">First name</div><input class="field-input" id="first-name" type="text" placeholder="Your first name" aria-label="First Name" /></div>
+      <div class="field"><div class="field-label">Last name</div><input class="field-input" id="last-name" type="text" placeholder="Your last name" aria-label="Last Name" /></div>
+    </div>
+    <div class="field"><div class="field-label">Email address</div><input class="field-input" id="email" type="email" disabled aria-label="Email Address" /><div class="field-hint">Email cannot be changed. Contact support to update.</div></div>
+    <div class="field"><div class="field-label">Phone number</div><input class="field-input" id="phone" type="tel" placeholder="07XX XXX XXX" aria-label="Phone Number" /></div>
+    <button class="btn btn-primary" onclick="saveProfile()">Save private details</button>
+  </section>
+
+  <section class="card">
+    <div class="card-title">Change password</div>
+    <div class="field" style="margin-top:12px"><div class="field-label">New password</div><input class="field-input" id="new-pwd" type="password" autocomplete="new-password" placeholder="Minimum 8 characters" aria-label="New Password" /></div>
+    <div class="field"><div class="field-label">Confirm password</div><input class="field-input" id="confirm-pwd" type="password" autocomplete="new-password" placeholder="Repeat new password" aria-label="Confirm Password" /></div>
+    <button class="btn btn-ghost" onclick="changePassword()">Update password</button>
+  </section>
+
+  <section class="card">
     <div class="card-title">Notifications</div>
-    <div class="pref-row">
-      <div class="pref-info"><strong>Booking confirmations</strong><span>Get notified when a booking is confirmed</span></div>
-      <button class="toggle on" id="notif-bookings" onclick="togglePref(this)"></button>
-    </div>
-    <div class="pref-row">
-      <div class="pref-info"><strong>Check-in reminders</strong><span>Reminder the day before your check-in</span></div>
-      <button class="toggle on" id="notif-checkin" onclick="togglePref(this)"></button>
-    </div>
-    <div class="pref-row">
-      <div class="pref-info"><strong>Promotions & offers</strong><span>Special deals and new services</span></div>
-      <button class="toggle off" id="notif-promos" onclick="togglePref(this)"></button>
-    </div>
-  </div>
+    <div class="pref-row"><div class="pref-info"><strong>Booking confirmations</strong><span>Get notified when a booking is confirmed</span></div><button class="toggle legacy on" id="notif-bookings" onclick="togglePref(this)" aria-label="Booking confirmations"></button></div>
+    <div class="pref-row"><div class="pref-info"><strong>Check-in reminders</strong><span>Reminder the day before your check-in</span></div><button class="toggle legacy on" id="notif-checkin" onclick="togglePref(this)" aria-label="Check-in reminders"></button></div>
+    <div class="pref-row"><div class="pref-info"><strong>Promotions & offers</strong><span>Special deals and new services</span></div><button class="toggle legacy off" id="notif-promos" onclick="togglePref(this)" aria-label="Promotions"></button></div>
+  </section>
 
-  <!-- QUICK LINKS -->
-  <div class="card">
+  <section class="card">
     <div class="card-title">Account</div>
-    <div class="pref-row" style="cursor:pointer;" onclick="window.location.href='my-bookings.html?back=1'">
-      <div class="pref-info"><strong>My Bookings</strong><span>View all your reservations and tickets</span></div>
-      <span style="color:var(--ink4);font-size:18px;">›</span>
-    </div>
-    <div class="pref-row" style="cursor:pointer;" onclick="window.location.href='terms.html'">
-      <div class="pref-info"><strong>Terms of Service</strong><span>Our terms and conditions</span></div>
-      <span style="color:var(--ink4);font-size:18px;">›</span>
-    </div>
-    <div class="pref-row" style="cursor:pointer;" onclick="window.location.href='privacy.html'">
-      <div class="pref-info"><strong>Privacy Policy</strong><span>How we handle your data</span></div>
-      <span style="color:var(--ink4);font-size:18px;">›</span>
-    </div>
-    <div class="pref-row" style="cursor:pointer;" onclick="signOut()">
-      <div class="pref-info" style="color:#DC2626;"><strong style="color:#DC2626;">Sign Out</strong><span>Log out of your account</span></div>
-      <span style="color:#DC2626;font-size:18px;">›</span>
-    </div>
-  </div>
-
+    <div class="pref-row" style="cursor:pointer;" onclick="window.location.href='my-bookings.html?back=1'"><div class="pref-info"><strong>My bookings</strong><span>View all your reservations and tickets</span></div><span style="color:var(--ink4);font-size:18px;">›</span></div>
+    <div class="pref-row" style="cursor:pointer;" onclick="window.location.href='terms.html'"><div class="pref-info"><strong>Terms of service</strong><span>Our terms and conditions</span></div><span style="color:var(--ink4);font-size:18px;">›</span></div>
+    <div class="pref-row" style="cursor:pointer;" onclick="window.location.href='privacy.html'"><div class="pref-info"><strong>Privacy policy</strong><span>How we handle your data</span></div><span style="color:var(--ink4);font-size:18px;">›</span></div>
+    <div class="pref-row" style="cursor:pointer;" onclick="window.location.href='delete-account.html'"><div class="pref-info"><strong>Delete my account</strong><span>Remove your profile, photos and personal data</span></div><span style="color:var(--ink4);font-size:18px;">›</span></div>
+    <div class="pref-row" style="cursor:pointer;" onclick="signOut()"><div class="pref-info"><strong style="color:#DC2626;">Sign out</strong><span>Log out of your account</span></div><span style="color:#DC2626;font-size:18px;">›</span></div>
+  </section>
 </div>
 
-<!-- Supabase bootstrap. Kept synchronous because the inline script
-     immediately below calls createClient() during parse, but moved
-     out of <head> so everything above renders without waiting on it. -->
+<div class="savebar" id="savebar" role="region" aria-label="Unsaved changes">
+  <span id="savebar-msg">You have unsaved changes</span>
+  <button class="btn btn-ghost" type="button" id="discard">Discard</button>
+  <button class="btn" type="button" id="save">Save profile</button>
+</div>
+
 <script src="/vendor-supabase-2.112.3.js"></script>
 <script src="/apa-session.js"></script>
-<script src="/cabana-people.js"></script>
+<script src="/cabana-avatars.js?v=1"></script>
+<script src="/cabana-people.js?v=2"></script>
 <script src="/apa-referral-capture.js" defer></script>
 <script src="/apa-admin-guard.js"></script>
 <script>
 const SUPABASE_URL      = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
-const { createClient } = supabase;
-const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const sb = (window.ApaSession && ApaSession.client && ApaSession.client()) || supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let CURRENT_USER = null;
 
+const AV = window.CabanaAvatars, PP = window.CabanaPeople;
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const COUNTRIES = ['KE','TZ','UG','RW','BI','ET','SO','SS','SD','ER','DJ','NG','GH','SN','CI','BJ','TG','BF','ML','NE','GN','SL','LR','GM','GW','CV','MR','CM','TD','CF','CG','CD','GA','GQ','ST','AO','ZA','NA','BW','ZW','ZM','MW','MZ','LS','SZ','MG','MU','SC','KM','EG','MA','DZ','TN','LY',
+  'GB','US','CA','DE','FR','NL','IT','ES','SE','NO','CH','IE','BE','PT','AE','SA','QA','IN','CN','JP','AU','BR'];
+
+const S = { profile: null, saved: null, draft: null, tab: 'catalogue', catSection: null, busy: false };
+
+/* ═══ boot ═══ */
 (async () => {
   const { data: { session } } = await sb.auth.getSession();
-  if (!session) { window.location.href = 'auth.html'; return; }
+  if (!session) { window.location.href = 'auth.html?next=' + encodeURIComponent('/profile' + location.hash); return; }
   CURRENT_USER = session.user;
-  await loadProfile();
-  await loadPublicProfile();
+  buildStatic();
+  await Promise.all([loadStudio(), loadProfile()]);
+  if (new URLSearchParams(location.search).get('verify') === 'return') pollVerification();
+  if (location.hash) setTimeout(() => document.querySelector(location.hash)?.scrollIntoView({ behavior: 'smooth' }), 300);
 })();
 
-async function loadPublicProfile() {
-  try {
-    const {profile} = await CabanaPeople.request(CURRENT_USER.id);
-    document.getElementById('public-name').value = profile.display_name;
-    document.getElementById('public-bio').value = profile.bio;
-    document.getElementById('public-published').checked = profile.published;
-    document.getElementById('public-role-badges').innerHTML = CabanaPeople.badges(profile.roles);
-  } catch (_) { document.getElementById('public-profile-status').textContent = 'Public profile could not load. Please refresh to try again.'; }
+function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 3600); }
+function clone(o) { return JSON.parse(JSON.stringify(o)); }
+
+function buildStatic() {
+  const dn = typeof Intl !== 'undefined' && Intl.DisplayNames ? new Intl.DisplayNames(['en'], { type: 'region' }) : null;
+  $('f-country').innerHTML = '<option value="">Choose…</option>' + COUNTRIES.map(c => `<option value="${c}">${esc(dn ? dn.of(c) : c)}</option>`).sort((a, b) => a.localeCompare(b)).join('');
+  $('f-orgkind').innerHTML = '<option value="">Choose…</option>' + Object.entries(PP.ORG_KIND).map(([k, v]) => `<option value="${k}">${esc(v)}</option>`).join('');
+  $('f-langs').innerHTML = Object.entries(PP.LANG).map(([k, v]) => `<button type="button" class="chip" data-lang="${k}" aria-pressed="false">${esc(v)}</button>`).join('');
+  $('f-interests').innerHTML = Object.entries(PP.INTERESTS).map(([k, v]) => `<button type="button" class="chip" data-int="${k}" aria-pressed="false">${esc(v)}</button>`).join('');
+  $('f-theme').innerHTML = AV.BACKDROPS.map(b => `<button type="button" data-theme="${b.id}" aria-pressed="false" title="${esc(b.name)}" aria-label="${esc(b.name)}" style="background:linear-gradient(135deg,${b.a},${b.b})"></button>`).join('');
+  $('motion').innerHTML = AV.OPTIONS.motion.map(m => `<button type="button" data-mo="${m.v}" aria-pressed="false">${m.name}</button>`).join('');
+
+  const bind = (id, key, ev) => $(id).addEventListener(ev || 'input', e => { S.draft[key] = e.target.value; if (id === 'f-bio') $('c-bio').textContent = e.target.value.length; changed(); });
+  bind('f-name', 'display_name'); bind('f-headline', 'headline'); bind('f-bio', 'bio'); bind('f-city', 'city');
+  bind('f-website', 'org_website'); bind('f-country', 'country_code', 'change'); bind('f-orgkind', 'org_kind', 'change');
+  $('f-handle').addEventListener('input', e => { const v = e.target.value.toLowerCase().replace(/[^a-z0-9._]/g, ''); e.target.value = v; S.draft.handle = v; changed(); });
+  document.querySelectorAll('[data-type]').forEach(b => b.addEventListener('click', () => {
+    if (S.draft.account_type === b.dataset.type) return;
+    S.draft.account_type = b.dataset.type;
+    if (b.dataset.type === 'organization' && (!S.draft.avatar || S.draft.avatar.k !== 'e')) S.draft.avatar = AV.defaultFor(CURRENT_USER.id, 'organization');
+    if (b.dataset.type === 'individual' && S.draft.avatar && S.draft.avatar.k === 'e') S.draft.avatar = AV.defaultFor(CURRENT_USER.id, 'individual');
+    S.catSection = null; changed(true);
+  }));
+  $('f-langs').addEventListener('click', e => { const b = e.target.closest('[data-lang]'); if (!b) return; toggleIn('languages', b.dataset.lang, 6); });
+  $('f-interests').addEventListener('click', e => { const b = e.target.closest('[data-int]'); if (!b) return; toggleIn('interests', b.dataset.int, 8); });
+  $('f-theme').addEventListener('click', e => { const b = e.target.closest('[data-theme]'); if (!b) return; S.draft.theme = b.dataset.theme; changed(); });
+  $('motion').addEventListener('click', e => { const b = e.target.closest('[data-mo]'); if (!b) return; S.draft.avatar = Object.assign({}, currentSpec(), { mo: Number(b.dataset.mo) }); changed(true); });
+  document.querySelectorAll('[data-pref]').forEach(b => b.addEventListener('click', () => { S.draft[b.dataset.pref] = b.getAttribute('aria-checked') !== 'true'; changed(); }));
+  $('look-tabs').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (!b) return; S.tab = b.dataset.tab; renderLook(); });
+  $('surprise').addEventListener('click', () => {
+    const kinds = S.draft.account_type === 'organization' ? ['e'] : ['p', 'p', 'a'];
+    S.draft.avatar = AV.surprise(kinds[Math.floor(Math.random() * kinds.length)]);
+    S.draft.avatar.mo = currentSpec().mo ?? 1;
+    changed(true);
+  });
+  $('discard').addEventListener('click', () => { S.draft = clone(S.saved); fill(); changed(true); });
+  $('save').addEventListener('click', saveStudio);
+  window.addEventListener('beforeunload', e => { if (isDirty()) { e.preventDefault(); e.returnValue = ''; } });
 }
-async function savePublicProfile() {
-  const button = document.getElementById('public-save'); button.disabled = true;
-  try {
-    await CabanaPeople.request(null, {display_name:document.getElementById('public-name').value, bio:document.getElementById('public-bio').value, published:document.getElementById('public-published').checked});
-    document.getElementById('public-profile-status').textContent = 'Public profile saved.';
-  } catch (e) { document.getElementById('public-profile-status').textContent = e.message; }
-  finally { button.disabled = false; }
+function toggleIn(key, v, max) {
+  const list = S.draft[key] = (S.draft[key] || []).slice(), i = list.indexOf(v);
+  if (i >= 0) list.splice(i, 1); else if (list.length < max) list.push(v); else return toast(`Choose up to ${max}.`);
+  changed();
 }
 
+/* ═══ load ═══ */
+async function loadStudio() {
+  try {
+    S.profile = await PP.profile(CURRENT_USER.id);
+    S.saved = clone(S.profile.settings);
+    if (!S.saved.avatar) S.saved.avatar = AV.defaultFor(CURRENT_USER.id, S.saved.account_type);
+    S.draft = clone(S.saved);
+    fill(); renderAll();
+  } catch (e) {
+    $('hero-name').textContent = 'Your profile could not load';
+    $('tiers').innerHTML = `<p class="field-hint">${esc(e.message)} Please refresh to try again.</p>`;
+  }
+}
+function isDirty() { return S.saved && JSON.stringify(S.saved) !== JSON.stringify(S.draft); }
+function changed(rerenderLook) {
+  $('savebar').classList.toggle('show', isDirty());
+  renderAll(rerenderLook);
+}
+function fill() {
+  const d = S.draft;
+  $('f-name').value = d.display_name || ''; $('f-handle').value = d.handle || ''; $('f-headline').value = d.headline || '';
+  $('f-bio').value = d.bio || ''; $('c-bio').textContent = (d.bio || '').length; $('f-city').value = d.city || '';
+  $('f-country').value = d.country_code || ''; $('f-orgkind').value = d.org_kind || ''; $('f-website').value = d.org_website || '';
+}
+function currentSpec() { return AV.validate(S.draft.avatar) || AV.defaultFor(CURRENT_USER.id, S.draft.account_type); }
+function previewCard() {
+  const d = S.draft, p = S.profile;
+  const photoOn = p.settings.photo_url && p.settings.photo_status === 'approved';
+  return { id: CURRENT_USER.id, name: d.display_name || 'Your name', type: d.account_type, avatar: currentSpec(), photo: photoOn ? p.settings.photo_url : null, badge: p.badge };
+}
+
+/* ═══ render ═══ */
+function renderAll(rerenderLook) {
+  if (!S.draft) return;
+  const d = S.draft, p = S.profile, org = d.account_type === 'organization';
+  // account type + labels
+  document.querySelectorAll('[data-type]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.type === d.account_type)));
+  $('org-fields').hidden = !org;
+  $('l-name').textContent = org ? 'Organisation name' : 'Display name';
+  $('f-name').placeholder = org ? 'Registered or trading name' : 'How you want to be known';
+  $('l-headline').textContent = org ? 'What you do' : 'Headline';
+  $('f-headline').placeholder = org ? 'Boutique beach villas on the Kenyan coast' : 'Slow traveller · coffee first · always packing light';
+  $('l-bio').textContent = org ? 'About the organisation' : 'About';
+  $('l-interests').firstChild.textContent = org ? 'What you offer ' : 'Travel style ';
+  document.querySelectorAll('[data-lang]').forEach(b => b.setAttribute('aria-pressed', String((d.languages || []).includes(b.dataset.lang))));
+  document.querySelectorAll('[data-int]').forEach(b => b.setAttribute('aria-pressed', String((d.interests || []).includes(b.dataset.int))));
+  document.querySelectorAll('[data-theme]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.theme === d.theme)));
+  document.querySelectorAll('[data-pref]').forEach(b => b.setAttribute('aria-checked', String(!!d[b.dataset.pref])));
+  $('h-handle').textContent = 'cabana.africa/u/' + (d.handle || '…');
+  // hero
+  const bd = AV.BACKDROPS.find(b => b.id === d.theme) || AV.BACKDROPS[0];
+  $('hero-cover').style.background = `linear-gradient(135deg,${bd.a},${bd.b})`;
+  $('hero-ava').innerHTML = PP.avatarHTML(previewCard(), 104);
+  $('hero-name').textContent = d.display_name || 'Your name';
+  $('hero-tick').innerHTML = p.badge ? PP.tick(p.badge, { size: 22 }) : '';
+  $('hero-handle').textContent = d.handle ? '@' + d.handle : '';
+  const vis = $('hero-vis');
+  vis.textContent = S.saved.published ? 'Public profile' : 'Private profile';
+  vis.className = 'pill ' + (S.saved.published ? 'live' : 'off');
+  const view = $('hero-view'), share = $('hero-share');
+  view.hidden = share.hidden = !S.saved.handle;
+  if (S.saved.handle) {
+    view.href = '/u/' + S.saved.handle;
+    share.onclick = async () => { try { await navigator.clipboard.writeText(location.origin + '/u/' + S.saved.handle); toast('Profile link copied'); } catch (_) { toast('cabana.africa/u/' + S.saved.handle); } };
+  }
+  const st = p.stats || {};
+  $('hero-stats').innerHTML = [[st.followers, 'Followers'], [st.following, 'Following'], [st.listings, 'Listings']].filter(x => x[0] != null && (x[1] !== 'Listings' || x[0] > 0))
+    .map(([n, l]) => `<div><b>${Number(n).toLocaleString('en-GB')}</b><span>${l}</span></div>`).join('');
+  // stage
+  const spec = currentSpec(), desc = AV.describe(spec);
+  $('stage-ava').innerHTML = AV.render(spec, { size: 180, name: d.display_name, seed: CURRENT_USER.id });
+  $('stage-name').textContent = desc ? desc.name : spec.k === 'e' ? 'Your emblem' : 'Your character';
+  $('stage-trait').textContent = desc ? desc.trait : 'One of a kind';
+  document.querySelectorAll('[data-mo]').forEach(b => b.setAttribute('aria-pressed', String(Number(b.dataset.mo) === (spec.mo ?? 1))));
+  if (rerenderLook !== false) renderLook();
+  renderTiers();
+}
+
+function mini(spec, label, pressed, attrs) {
+  return `<button type="button" class="opt" ${attrs} aria-pressed="${pressed}" aria-label="${esc(label)}"><span class="mini">${AV.render(Object.assign({}, spec, { mo: 0 }), { size: 72, name: S.draft.display_name, seed: CURRENT_USER.id, motion: 0 })}</span><small>${esc(label)}</small></button>`;
+}
+function renderLook() {
+  document.querySelectorAll('#look-tabs [data-tab]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === S.tab)));
+  ['catalogue', 'customise', 'photo'].forEach(t => $('tab-' + t).hidden = t !== S.tab);
+  const spec = currentSpec(), org = S.draft.account_type === 'organization';
+  if (S.tab === 'catalogue') {
+    const C = AV.catalogue();
+    const sections = org ? [['emblems', 'Emblems', C.emblems]] : [['people', 'People', C.people], ['spirits', 'Animal spirits', C.spirits]];
+    S.catSection = sections.some(s => s[0] === S.catSection) ? S.catSection : sections[0][0];
+    const cur = sections.find(s => s[0] === S.catSection);
+    $('tab-catalogue').innerHTML = (sections.length > 1 ? `<div class="chips" style="margin-bottom:12px">${sections.map(s => `<button type="button" class="chip" data-sec="${s[0]}" aria-pressed="${s[0] === S.catSection}">${s[1]}</button>`).join('')}</div>` : '') +
+      `<div class="grid">${cur[2].map(item => mini(item.spec, item.name, spec.n === item.id, `data-pick="${item.id}" title="${esc(item.trait)}"`)).join('')}</div>` +
+      `<p class="field-hint" style="margin-top:12px">Every character is a starting point. Tap Customise to change anything.</p>`;
+    $('tab-catalogue').querySelectorAll('[data-sec]').forEach(b => b.addEventListener('click', () => { S.catSection = b.dataset.sec; renderLook(); }));
+    $('tab-catalogue').querySelectorAll('[data-pick]').forEach(b => b.addEventListener('click', () => {
+      const item = [...C.people, ...C.spirits, ...C.emblems].find(x => x.id === b.dataset.pick);
+      S.draft.avatar = Object.assign(clone(item.spec), { mo: spec.mo ?? 1 }); changed(true);
+    }));
+  } else if (S.tab === 'customise') {
+    renderCustomise(spec);
+  } else renderPhoto();
+}
+function renderCustomise(spec) {
+  const O = AV.OPTIONS, box = $('tab-customise');
+  const set = (k, v) => { const n = Object.assign({}, currentSpec(), { [k]: v }); delete n.n; S.draft.avatar = n; changed(true); };
+  const swatches = (k, list, colorOf) => `<div class="sw">${list.map(o => `<button type="button" data-k="${k}" data-v="${o.v}" aria-pressed="${spec[k] === o.v}" aria-label="${esc(o.name || 'Colour ' + (o.v + 1))}" title="${esc(o.name || '')}" style="background:${colorOf(o)}"></button>`).join('')}</div>`;
+  const chips = (k, list) => `<div class="chips">${list.map(o => `<button type="button" class="chip" data-k="${k}" data-v="${o.v}" aria-pressed="${spec[k] === o.v}">${esc(o.name)}</button>`).join('')}</div>`;
+  const minis = (k, list) => `<div class="minis">${list.map(o => mini(Object.assign({}, spec, { [k]: o.v }), o.name, spec[k] === o.v, `data-k="${k}" data-v="${o.v}"`)).join('')}</div>`;
+  const row = (t, html) => `<div class="edit-row"><h4>${t}</h4>${html}</div>`;
+  const kindRow = S.draft.account_type === 'organization' ? '' :
+    `<div class="seg" role="group" aria-label="Character type">${[['p', 'Person'], ['a', 'Animal spirit']].map(([k, n]) => `<button type="button" data-kind="${k}" aria-pressed="${spec.k === k}">${n}</button>`).join('')}</div>`;
+  const back = swatches('b', O.backdrop, o => `linear-gradient(135deg,${o.a},${o.b})`);
+  let html = kindRow;
+  if (spec.k === 'p') {
+    const fabricUsed = [3, 6, 11, 12, 13].includes(spec.h) || [4, 8].includes(spec.x);
+    html += row('Skin tone', swatches('s', O.skin, o => o.color)) + row('Hair & headwear', minis('h', O.hair)) +
+      row('Hair colour', swatches('hc', O.hairColor, o => o.color)) +
+      (fabricUsed ? row('Fabric colour', swatches('fc', O.fabric, o => o.color)) : '') +
+      row('Eyes', chips('e', O.eyes)) + row('Smile', chips('m', O.mouth)) + row('Facial hair', chips('f', O.facial)) +
+      row('Accessory', minis('x', O.accessory)) + row('Outfit', chips('w', O.outfit)) + row('Outfit colour', swatches('o', O.outfitColor, o => o.color)) + row('Backdrop', back);
+  } else if (spec.k === 'a') {
+    html += row('Animal', minis('a', O.animal)) + row('Colour mood', chips('t', O.tint)) + row('Accessory', chips('x', O.animalAccessory)) + row('Backdrop', back);
+  } else {
+    html += row('Symbol', minis('g', O.glyph)) + row('Shape', minis('sh', O.shape)) + row('Colours', swatches('c', O.palette, o => `linear-gradient(135deg,${o.a},${o.b})`)) + row('Pattern', chips('pt', O.pattern));
+  }
+  box.innerHTML = html;
+  box.querySelectorAll('[data-k]').forEach(b => b.addEventListener('click', () => set(b.dataset.k, Number(b.dataset.v))));
+  box.querySelectorAll('[data-kind]').forEach(b => b.addEventListener('click', () => {
+    if (spec.k === b.dataset.kind) return;
+    S.draft.avatar = b.dataset.kind === 'p' ? clone(AV.catalogue().people[0].spec) : AV.defaultFor(CURRENT_USER.id, 'individual');
+    delete S.draft.avatar.n; changed(true);
+  }));
+}
+
+/* ═══ photo ═══ */
+function renderPhoto() {
+  const p = S.profile, s = p.settings, v = p.verification, org = S.draft.account_type === 'organization', box = $('tab-photo');
+  if (!v.can_upload_photo) {
+    box.innerHTML = `<div class="lock"><svg width="40" height="40" viewBox="0 0 24 24">${org ? '' : ''}<rect x="4" y="10" width="16" height="11" rx="3" fill="#7C3AED" opacity=".15"/><path d="M8 10V7a4 4 0 0 1 8 0v3" fill="none" stroke="#7C3AED" stroke-width="2"/><circle cx="12" cy="15.5" r="1.6" fill="#7C3AED"/></svg>
+      <div><strong>${org ? 'Logo and photo uploads unlock with your gold tick' : 'Photo uploads unlock when you verify your ID'}</strong>
+      <p class="field-hint" style="margin-top:4px;font-size:12.5px">Real photos come with accountability. Once Cabana knows who is behind an account, you can upload straight from your gallery. Until then your Cabana character represents you, and it is just as expressive.</p>
+      <div style="margin-top:12px"><a class="btn ${org ? 'btn-gold' : 'btn-violet'}" href="#verification">${org ? 'Verify your organisation' : 'Verify my identity'}</a></div></div></div>`;
+    return;
+  }
+  const has = s.photo_url, showing = has && s.photo_status === 'approved';
+  box.innerHTML = `<div class="photo-box"><div class="ph">${has ? `<img src="${esc(s.photo_url)}" alt="Your current photo">` : '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="12" cy="12" r="3.4"/></svg>'}</div>
+    <div style="flex:1;min-width:200px"><strong>${has ? (showing ? 'Your photo is live' : 'Your photo is hidden') : org ? 'Add your logo or a photo' : 'Add a photo of you'}</strong>
+    <p class="field-hint" style="margin-top:4px;font-size:12.5px">${s.photo_pending ? 'Your latest photo is waiting for a quick review by our team.' : 'JPEG, PNG or WebP. We crop it square, shrink it and strip location data before it leaves your phone. Every photo is checked against our community standards.'}</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+      <label class="btn btn-primary" ${s.photo_locked ? 'aria-disabled="true" style="opacity:.5;pointer-events:none"' : ''}>${has ? 'Choose another' : 'Choose from gallery'}<input type="file" id="photo-in" accept="image/*" hidden></label>
+      ${has ? `<button type="button" class="btn btn-ghost" id="photo-toggle">${showing ? 'Use my character instead' : 'Show my photo'}</button><button type="button" class="btn btn-danger" id="photo-del">Delete photo</button>` : ''}
+    </div><div class="progress" id="photo-prog" hidden><i></i></div>
+    ${s.photo_locked ? '<p class="field-hint" style="margin-top:8px;color:#B91C1C">Photo uploads are paused on your account after several photos were declined.</p>' : ''}</div></div>`;
+  $('photo-in')?.addEventListener('change', e => e.target.files[0] && uploadPhoto(e.target.files[0]));
+  $('photo-toggle')?.addEventListener('click', () => photoState({ show: !showing }));
+  $('photo-del')?.addEventListener('click', () => { if (confirm('Delete your photo? Your Cabana character will be shown instead.')) photoState({ action: 'delete' }); });
+}
+async function squareImage(file) {
+  let bmp;
+  try { bmp = await createImageBitmap(file); }
+  catch (_) {
+    bmp = await new Promise((res, rej) => { const img = new Image(); img.onload = () => res(img); img.onerror = () => rej(new Error('That image could not be opened. Try a JPEG or PNG.')); img.src = URL.createObjectURL(file); });
+  }
+  const w = bmp.width, h = bmp.height, side = Math.min(w, h), out = Math.min(720, side);
+  if (side < 200) throw new Error('That photo is too small. Choose one at least 200 pixels wide.');
+  const c = document.createElement('canvas'); c.width = c.height = out;
+  const ctx = c.getContext('2d'); ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(bmp, (w - side) / 2, (h - side) * 0.38, side, side, 0, 0, out, out); // bias up: faces sit high
+  const blob = await new Promise(r => c.toBlob(r, 'image/webp', 0.86));
+  if (blob && blob.type === 'image/webp') return blob;
+  return new Promise(r => c.toBlob(r, 'image/jpeg', 0.86));
+}
+async function uploadPhoto(file) {
+  const prog = $('photo-prog'), bar = prog.firstElementChild;
+  prog.hidden = false; bar.style.width = '15%';
+  try {
+    if (file.size > 25 * 1024 * 1024) throw new Error('That file is too large.');
+    const blob = await squareImage(file); bar.style.width = '40%';
+    const ext = blob.type === 'image/webp' ? 'webp' : 'jpg';
+    const path = `${CURRENT_USER.id}/${crypto.randomUUID()}.${ext}`;
+    const up = await sb.storage.from('profile-pending').upload(path, blob, { contentType: blob.type, upsert: false });
+    if (up.error) throw new Error('Upload failed. Check your connection and try again.');
+    bar.style.width = '70%';
+    const r = await PP.api('photo', null, { path });
+    bar.style.width = '100%';
+    if (r.status === 'approved') { toast('Looking good. Your photo is live.'); S.profile.settings.photo_url = r.photo; S.profile.settings.photo_status = 'approved'; }
+    else { toast(r.message || 'A moderator will review your photo shortly.'); S.profile.settings.photo_pending = true; }
+    PP.forget(CURRENT_USER.id); renderAll();
+  } catch (e) {
+    toast(e.message); if (e.data?.code === 'locked') S.profile.settings.photo_locked = true; renderPhoto();
+  } finally { setTimeout(() => { prog.hidden = true; bar.style.width = '0'; }, 600); }
+}
+async function photoState(body) {
+  try {
+    const r = await PP.api('photo-state', null, body);
+    if (body.action === 'delete') { S.profile.settings.photo_url = null; S.profile.settings.photo_status = 'none'; toast('Photo deleted'); }
+    else { S.profile.settings.photo_status = body.show ? 'approved' : 'removed'; toast(body.show ? 'Your photo is showing' : 'Your character is showing'); }
+    PP.forget(CURRENT_USER.id); renderAll();
+  } catch (e) { toast(e.message); }
+}
+
+/* ═══ verification ═══ */
+function renderTiers() {
+  const p = S.profile, v = p.verification, idv = v.identity, org = S.draft.account_type === 'organization' || S.saved.account_type === 'organization';
+  const ov = v.organization, T = PP.TICKS;
+  const stateTag = (cls, txt) => `<span class="state ${cls}">${txt}</span>`;
+  const fmt = d => d ? new Date(d).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }) : '';
+  let html = '';
+  // purple
+  const ok = idv.state === 'approved';
+  const idState = ok ? stateTag('ok', 'Verified') : idv.state === 'in_progress' ? stateTag('wait', 'In progress') : idv.state === 'review' ? stateTag('wait', 'Being reviewed') : idv.state === 'declined' ? stateTag('no', 'Not verified') : stateTag('', 'Not started');
+  html += `<div class="tier t-person ${ok ? 'done' : ''}"><div class="tier-ico">${PP.tick('person', { size: 28 })}</div><div style="flex:1">
+    <h3>${T.person.label} ${idState}</h3>
+    <p>${ok ? `Verified${idv.verified_as ? ' as <strong>' + esc(idv.verified_as) + '</strong>' : ''}${idv.since ? ' since ' + fmt(idv.since + '-01') : ''}. Only you see the name on your ID.` :
+      'A two-minute check with your national ID, passport or driving licence and a live selfie, run by our partner Didit. Cabana never stores your document or selfie, only the result.'}</p>
+    ${idv.last_decline && !ok ? `<p style="color:#B91C1C">${idv.last_decline === 'age' ? 'Cabana verification is for adults aged 18 and over.' : idv.last_decline === 'document_expired' ? 'That document has expired. Try again with a valid one.' : 'The last check did not go through. Use good light and a clear, unexpired document.'}</p>` : ''}
+    ${ok ? '' : `<div class="acts">${idv.available ? `<button class="btn btn-violet" type="button" id="verify-go">${idv.session ? 'Continue my check' : idv.state === 'declined' ? 'Try again' : 'Verify my identity'}</button>` : '<span class="field-hint">Identity checks are being switched on. Check back soon.</span>'}${idv.state === 'in_progress' ? '<button class="btn btn-ghost" type="button" id="verify-refresh">I have finished</button>' : ''}</div>`}
+    <p style="font-size:12px;margin-top:8px">Unlocks: purple tick · photo uploads · more trust from hosts and guests.</p></div></div>`;
+  // gold
+  if (org) {
+    const oState = !ov ? stateTag('', 'Not started') : ov.status === 'approved' ? stateTag('ok', 'Verified') : ov.status === 'submitted' ? stateTag('wait', 'Under review') : ov.status === 'rejected' ? stateTag('no', 'Not approved') : ov.status === 'revoked' ? stateTag('no', 'Removed') : stateTag('', 'Withdrawn');
+    const canApply = ok && (!ov || ['rejected', 'withdrawn', 'revoked'].includes(ov.status));
+    html += `<div class="tier t-organization ${ov?.status === 'approved' ? 'done' : ''}"><div class="tier-ico">${PP.tick('organization', { size: 28 })}</div><div style="flex:1">
+      <h3>${T.organization.label} ${oState}</h3>
+      <p>${ov?.status === 'approved' ? `<strong>${esc(ov.legal_name)}</strong> is verified. Your organisation name is protected: nobody else on Cabana can use it.` :
+        ov?.status === 'submitted' ? `We are checking the registration for <strong>${esc(ov.legal_name)}</strong>. This usually takes one to two working days.` :
+        'For companies, hotels, tour operators, agencies and non-profits. We check your registration certificate or business permit. The person running the account must have a purple tick first.'}</p>
+      ${ov?.note ? `<p style="color:#B91C1C">${esc(ov.note)}</p>` : ''}
+      ${!ok && (!ov || ov.status !== 'approved') ? '<p style="font-size:12px;margin-top:8px"><strong>Step 1:</strong> verify your own identity above.</p>' : ''}
+      <div class="acts">${canApply ? '<button class="btn btn-gold" type="button" id="org-open">Apply for gold</button>' : ''}${ov?.status === 'submitted' ? '<button class="btn btn-ghost" type="button" id="org-withdraw">Withdraw request</button>' : ''}</div>
+      <div id="org-form-slot"></div></div></div>`;
+  }
+  // reef
+  const prov = p.badge === 'provider';
+  html += `<div class="tier t-provider ${prov ? 'done' : ''}"><div class="tier-ico">${PP.tick('provider', { size: 28 })}</div><div style="flex:1">
+    <h3>${T.provider.label} ${prov ? stateTag('ok', 'Active') : stateTag('', 'Earned automatically')}</h3>
+    <p>Cabana’s own mark, used nowhere else. It appears on its own when a verified ${org ? 'organisation' : 'person'} offers services on Cabana: a live stay or room, an approved tour or event, a verified fleet, Cabana Move driving, or host-approved agent work. Pause everything and it quietly steps back to your ${org ? 'gold' : 'purple'} tick.</p>
+    ${prov ? '' : `<div class="acts"><a class="btn btn-ghost" href="/add-listing.html">List a stay</a><a class="btn btn-ghost" href="/list-your-tour.html">Offer a tour</a><a class="btn btn-ghost" href="/list-your-event.html">Host an event</a><a class="btn btn-ghost" href="/list-your-fleet.html">Hire out cars</a></div>`}</div></div>`;
+  html += `<div class="privacy-note"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg><span>Members only ever see your tick, never your documents, ID number, date of birth or legal name. Ticks cannot be bought, and pasting check symbols into your name is blocked.</span></div>`;
+  $('tiers').innerHTML = html;
+  $('verify-go')?.addEventListener('click', startVerification);
+  $('verify-refresh')?.addEventListener('click', () => pollVerification(true));
+  $('org-open')?.addEventListener('click', openOrgForm);
+  $('org-withdraw')?.addEventListener('click', async () => { if (!confirm('Withdraw your gold verification request?')) return; try { await PP.api('org-withdraw', null, {}); await loadStudio(); } catch (e) { toast(e.message); } });
+}
+async function startVerification() {
+  const b = $('verify-go'); b.disabled = true; b.textContent = 'Opening secure check…';
+  try {
+    const r = await PP.api('verify-start', null, {});
+    if (r.state === 'approved') { toast('You are already verified'); return loadStudio(); }
+    location.href = r.url;
+  } catch (e) { toast(e.message); b.disabled = false; b.textContent = 'Verify my identity'; }
+}
+async function pollVerification(manual) {
+  const tiers = $('tiers');
+  document.getElementById('verification').scrollIntoView({ behavior: 'smooth' });
+  if (!manual) tiers.insertAdjacentHTML('afterbegin', '<p class="field-hint" id="poll-note" style="margin-bottom:10px">Checking your result…</p>');
+  for (let i = 0; i < (manual ? 3 : 20); i++) {
+    try {
+      const r = await PP.api('verify-status');
+      if (r.state === 'approved') { toast('You are verified. Your purple tick is live.'); history.replaceState(null, '', '/profile#verification'); PP.forget(CURRENT_USER.id); return loadStudio(); }
+      if (['declined', 'expired', 'review'].includes(r.state)) { history.replaceState(null, '', '/profile#verification'); return loadStudio(); }
+    } catch (_) { /* keep waiting */ }
+    await new Promise(r => setTimeout(r, 3000));
+  }
+  $('poll-note')?.remove();
+  toast(manual ? 'Still processing. We will notify you when it is done.' : 'Your check is still processing. We will notify you when it is done.');
+  loadStudio();
+}
+function openOrgForm() {
+  const slot = $('org-form-slot'), d = S.draft;
+  slot.innerHTML = `<form class="org-form" id="org-form" novalidate>
+    <div class="field"><label class="field-label" for="o-legal">Registered name</label><input class="field-input" id="o-legal" maxlength="120" required value="${esc(d.display_name || '')}"><span class="field-hint">Exactly as on your certificate.</span></div>
+    <div class="row-2">
+      <div class="field"><label class="field-label" for="o-reg">Registration or permit number</label><input class="field-input" id="o-reg" maxlength="60" required></div>
+      <div class="field"><label class="field-label" for="o-country">Country of registration</label><select class="field-input" id="o-country" required>${$('f-country').innerHTML}</select></div>
+    </div>
+    <div class="row-2">
+      <div class="field"><label class="field-label" for="o-kind">Type</label><select class="field-input" id="o-kind" required>${$('f-orgkind').innerHTML}</select></div>
+      <div class="field"><label class="field-label" for="o-web">Website (optional)</label><input class="field-input" id="o-web" inputmode="url" value="${esc(d.org_website || '')}" placeholder="https://"></div>
+    </div>
+    <div class="field"><label class="field-label" for="o-doc">Certificate of incorporation, business permit or registration</label><input class="field-input" id="o-doc" type="file" accept="application/pdf,image/*" required><span class="field-hint">PDF or photo, up to 8 MB. Stored privately and seen only by Cabana’s verification team.</span></div>
+    <div class="progress" id="org-prog" hidden><i></i></div>
+    <div class="acts"><button class="btn btn-gold" type="submit">Submit for review</button><button class="btn btn-ghost" type="button" id="org-cancel">Cancel</button></div></form>`;
+  $('o-country').value = d.country_code || 'KE'; $('o-kind').value = d.org_kind || '';
+  $('org-cancel').addEventListener('click', () => slot.innerHTML = '');
+  $('org-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const btn = e.target.querySelector('[type=submit]'), file = $('o-doc').files[0], prog = $('org-prog'), bar = prog.firstElementChild;
+    if (!file) return toast('Attach your registration document.');
+    if (file.size > 8 * 1024 * 1024) return toast('That file is larger than 8 MB.');
+    const ext = file.type === 'application/pdf' ? 'pdf' : file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg';
+    btn.disabled = true; prog.hidden = false; bar.style.width = '25%';
+    try {
+      const path = `${CURRENT_USER.id}/${crypto.randomUUID()}.${ext}`;
+      const up = await sb.storage.from('org-documents').upload(path, file, { contentType: file.type || 'application/octet-stream' });
+      if (up.error) throw new Error('Upload failed. Try again.');
+      bar.style.width = '75%';
+      await PP.api('org-submit', null, { legal_name: $('o-legal').value, registration_number: $('o-reg').value, country_code: $('o-country').value, org_kind: $('o-kind').value, website: $('o-web').value, document_path: path });
+      bar.style.width = '100%'; toast('Submitted. We will review it within two working days.');
+      await loadStudio();
+    } catch (err) { toast(err.message); btn.disabled = false; prog.hidden = true; }
+  });
+}
+
+/* ═══ save ═══ */
+async function saveStudio() {
+  if (S.busy) return;
+  S.busy = true; const b = $('save'); b.disabled = true; b.textContent = 'Saving…';
+  document.querySelectorAll('.field-input.bad').forEach(x => x.classList.remove('bad'));
+  const d = S.draft, body = {};
+  ['display_name', 'handle', 'headline', 'bio', 'account_type', 'city', 'country_code', 'languages', 'interests', 'theme', 'avatar', 'published', 'show_location', 'show_followers', 'allow_follow', 'show_listings', 'org_kind', 'org_website']
+    .forEach(k => { if (JSON.stringify(d[k]) !== JSON.stringify(S.saved[k])) body[k] = d[k]; });
+  if (d.account_type === 'individual') { delete body.org_kind; delete body.org_website; }
+  try {
+    const r = await PP.api('save', null, body);
+    toast(d.published && !S.saved.published ? 'Saved. Your profile is now public.' : 'Profile saved');
+    PP.forget(CURRENT_USER.id);
+    S.saved = clone(d); S.saved.handle = r.handle || d.handle; S.draft.handle = S.saved.handle;
+    await loadStudio();
+  } catch (e) {
+    toast(e.message);
+    const map = { display_name: 'f-name', handle: 'f-handle', headline: 'f-headline', bio: 'f-bio', city: 'f-city', org_website: 'f-website', org_kind: 'f-orgkind', country_code: 'f-country' };
+    const el = map[e.data?.field] && $(map[e.data.field]);
+    if (el) { el.classList.add('bad'); el.focus(); }
+  } finally { S.busy = false; b.disabled = false; b.textContent = 'Save profile'; $('savebar').classList.toggle('show', isDirty()); }
+}
+
+/* ═══ private account (unchanged behaviour) ═══ */
 async function loadProfile() {
   const meta = CURRENT_USER.user_metadata || {};
   const { data: profile } = await sb.from('profiles').select('*').eq('id', CURRENT_USER.id).single();
-
   const firstName = profile?.first_name || meta.first_name || meta.name?.split(' ')[0] || '';
   const lastName  = profile?.last_name  || meta.last_name  || meta.name?.split(' ').slice(1).join(' ') || '';
-  const fullName  = [firstName, lastName].filter(Boolean).join(' ') || 'Guest';
-  const initial   = fullName[0].toUpperCase();
-
-  document.getElementById('prof-avatar').textContent = initial;
-  document.getElementById('prof-name').textContent   = fullName;
-  document.getElementById('prof-email').textContent  = CURRENT_USER.email || '';
   document.getElementById('first-name').value = firstName;
   document.getElementById('last-name').value  = lastName;
   document.getElementById('email').value      = CURRENT_USER.email || '';
   document.getElementById('phone').value      = profile?.phone || meta.phone || '';
-
-  const joinDate = new Date(CURRENT_USER.created_at);
-  document.getElementById('prof-member').textContent =
-    `Member since ${joinDate.toLocaleDateString('en-GB',{month:'long',year:'numeric'})}`;
-
-  // Load booking stats
+  document.getElementById('stat-since').textContent = new Date(CURRENT_USER.created_at).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
   const [aptRes, tourRes, evRes] = await Promise.all([
-    sb.from('apartment_bookings').select('grand_total').eq('guest_id', CURRENT_USER.id).in('status',['paid_pending_checkin','checked_in']),
-    sb.from('tour_bookings').select('grand_total').eq('guest_id', CURRENT_USER.id).in('status',['paid_pending_checkin','checked_in']),
-    sb.from('event_tickets').select('grand_total').eq('guest_id', CURRENT_USER.id).in('status',['paid_pending_checkin','checked_in']),
+    sb.from('apartment_bookings').select('grand_total').eq('guest_id', CURRENT_USER.id).in('status', ['paid_pending_checkin', 'checked_in']),
+    sb.from('tour_bookings').select('grand_total').eq('guest_id', CURRENT_USER.id).in('status', ['paid_pending_checkin', 'checked_in']),
+    sb.from('event_tickets').select('grand_total').eq('guest_id', CURRENT_USER.id).in('status', ['paid_pending_checkin', 'checked_in']),
   ]);
-  const all = [...(aptRes.data||[]),...(tourRes.data||[]),...(evRes.data||[])];
-  const total = all.reduce((s,b) => s + Number(b.grand_total||0), 0);
+  const all = [...(aptRes.data || []), ...(tourRes.data || []), ...(evRes.data || [])];
+  const total = all.reduce((s, b) => s + Number(b.grand_total || 0), 0);
   document.getElementById('stat-bookings').textContent = all.length;
-  document.getElementById('stat-spent').textContent = total >= 1000
-    ? 'KES ' + (total/1000).toFixed(1) + 'k'
-    : 'KES ' + total.toLocaleString();
+  document.getElementById('stat-spent').textContent = total >= 1000 ? 'KES ' + (total / 1000).toFixed(1) + 'k' : 'KES ' + total.toLocaleString();
 }
-
 async function saveProfile() {
   const firstName = document.getElementById('first-name').value.trim();
   const lastName  = document.getElementById('last-name').value.trim();
   const phone     = document.getElementById('phone').value.trim();
-
   const [authRes, profRes] = await Promise.all([
     sb.auth.updateUser({ data: { first_name: firstName, last_name: lastName } }),
     sb.from('profiles').upsert({ id: CURRENT_USER.id, first_name: firstName, last_name: lastName, phone, updated_at: new Date().toISOString() }),
   ]);
-
-  if (authRes.error || profRes.error) {
-    showToast('Error: ' + (authRes.error?.message || profRes.error?.message)); return;
-  }
-  showToast('✅ Profile updated');
-  document.getElementById('prof-name').textContent = [firstName, lastName].filter(Boolean).join(' ') || 'Guest';
-  document.getElementById('prof-avatar').textContent = (firstName||'G')[0].toUpperCase();
+  if (authRes.error || profRes.error) { toast('Error: ' + (authRes.error?.message || profRes.error?.message)); return; }
+  toast('Private details updated');
 }
-
 async function changePassword() {
-  const pwd  = document.getElementById('new-pwd').value;
-  const cpwd = document.getElementById('confirm-pwd').value;
-  if (!pwd) { showToast('Please enter a new password'); return; }
-  if (pwd !== cpwd) { showToast('Passwords do not match'); return; }
-  if (pwd.length < 8) { showToast('Password must be at least 8 characters'); return; }
+  const pwd = document.getElementById('new-pwd').value, cpwd = document.getElementById('confirm-pwd').value;
+  if (!pwd) { toast('Please enter a new password'); return; }
+  if (pwd !== cpwd) { toast('Passwords do not match'); return; }
+  if (pwd.length < 8) { toast('Password must be at least 8 characters'); return; }
   const { error } = await sb.auth.updateUser({ password: pwd });
-  if (error) { showToast('Error: ' + error.message); return; }
-  showToast('✅ Password updated');
-  document.getElementById('new-pwd').value = '';
-  document.getElementById('confirm-pwd').value = '';
+  if (error) { toast('Error: ' + error.message); return; }
+  toast('Password updated');
+  document.getElementById('new-pwd').value = ''; document.getElementById('confirm-pwd').value = '';
 }
-
-function togglePref(btn) {
-  btn.classList.toggle('on');
-  btn.classList.toggle('off');
-  showToast('Preference saved');
-}
-
-async function signOut() {
-  await sb.auth.signOut();
-  window.location.href = 'auth.html';
-}
-
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3500);
-}
+function togglePref(btn) { btn.classList.toggle('on'); btn.classList.toggle('off'); toast('Preference saved'); }
+async function signOut() { await sb.auth.signOut(); window.location.href = 'auth.html'; }
+function showToast(msg) { toast(msg); }
 </script>
 <script src="/brand.js" defer></script>
 <script src="/cabana-rebrand.js" defer></script>
-  <script src="/apa-signal.js" defer></script>
+<script src="/apa-signal.js" defer></script>
 <script src="/apa-contact.js" defer></script>
 <script src="/cabana-call.js" defer></script>
 <script src="/apa-location.js" defer></script><script src="/cabana-sos.js" defer></script><script src="/cabana-support.js" defer></script>

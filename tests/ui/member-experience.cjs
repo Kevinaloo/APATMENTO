@@ -29,7 +29,7 @@ const mock=`(()=>{
   await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+server.address().port;
   let browser,page;
   try{
-    browser=await chromium.launch({headless:true,channel:'chrome'});
+    browser=await chromium.launch(process.env.CABANA_BROWSER_PATH?{headless:true,executablePath:process.env.CABANA_BROWSER_PATH}:{headless:true,channel:process.env.CABANA_BROWSER_CHANNEL||'chrome'});
     const context=await browser.newContext({viewport:{width:1280,height:900},permissions:['notifications']});
     // Service-worker registration/push is outside this isolated UI fixture.
     await context.addInitScript(()=>Object.defineProperty(navigator,'serviceWorker',{value:{register:async()=>({}),getRegistrations:async()=>[],ready:new Promise(()=>{}),addEventListener(){}}}));
@@ -41,6 +41,8 @@ const mock=`(()=>{
       if(u.pathname.startsWith('/rest/v1/'))return route.fulfill({json:u.pathname.endsWith('/listings')?[listing]:[]});
       if(u.pathname.startsWith('/api/')){
         if(u.pathname==='/api/agents'&&u.searchParams.get('action')==='public-profile')return route.fulfill({json:{profile:{id:host,display_name:'Mina',bio:'Enjoys travel along the coast.',roles:['traveller','host'],member_since:'2026',can_edit:false}}});
+        if(u.pathname==='/api/people'&&u.searchParams.get('op')==='profile')return route.fulfill({json:{profile:{id:host,name:'Mina',level:'full',handle:'mina',type:'individual',avatar:null,photo:null,badge:'provider',verified_as:'individual',headline:'',bio:'Enjoys travel along the coast.',roles:['traveller','host'],member_since:'2026-01',operators:[],languages:[],interests:[],theme:'ocean',can_follow:true,stats:{followers:3,following:1,listings:1,reviews:0,rating:null},viewer:{signed_in:true,self:false,following:false},listings:[]}}});
+        if(u.pathname==='/api/people'&&u.searchParams.get('op')==='cards')return route.fulfill({json:{cards:Object.fromEntries(u.searchParams.get('ids').split(',').map(i=>[i,{id:i,name:'Mina',level:'full',type:'individual',avatar:null,photo:null,badge:i===host?'provider':null,can_follow:i===host}]))}});
         return route.fulfill({json:{ok:true,items:[],messages:[],suggestions:[],thread:null}});
       }
       if(u.origin!==base)return route.abort();

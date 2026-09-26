@@ -101,6 +101,11 @@ app.get(/^\/calendar\/([A-Za-z0-9_-]+)\.ics$/, (req, res) => {
   return handleApi('calendar-sync', req, res);
 });
 
+/* Public profile links. Mirrors the vercel.json rewrite /u/:handle. */
+app.get(/^\/u\/([A-Za-z0-9._]{3,24})$/, (req, res) => {
+  res.sendFile(join(__dirname, 'person.html'));
+});
+
 // Clean URLs and Static files
 app.use((req, res, next) => {
   if (req.method !== 'GET' && req.method !== 'HEAD') {

@@ -399,6 +399,9 @@ a{color:inherit;}
 .dhost-n{font-weight:700;font-size:15px;display:flex;align-items:center;gap:6px;}
 .dhost-n svg{width:15px;height:15px;color:var(--blue);}
 .dhost-m{font-size:12.5px;color:var(--ink-3);}
+.dhost-av{border:0;padding:0;overflow:hidden;cursor:pointer}.dhost-av>span{display:flex;width:100%;height:100%;align-items:center;justify-content:center}
+.dhost-link{border:0;background:none;padding:0;font:inherit;color:inherit;cursor:pointer;text-align:left}
+.av{overflow:hidden}.av .cpa,.dhost-av .cpa{display:block}
 .safety{padding:15px 17px;border-radius:var(--r);background:rgba(61,90,254,.05);border:1px solid rgba(61,90,254,.16);}
 .safety-t{font-size:13px;font-weight:800;color:#2A3FC4;display:flex;align-items:center;gap:7px;margin-bottom:8px;}
 .safety-t svg{width:15px;height:15px;}
@@ -1349,8 +1352,9 @@ function hostRow(r){
   var name = h ? h.name : 'Cabana host';
   var initial = (name.trim()[0] || 'C').toUpperCase();
   var meta = h && h.since ? 'Hosting since ' + h.since : (r.createdAt ? 'Listed ' + fmtDate(r.createdAt) : 'On Cabana');
-  return '<div class="c-host"><div class="av">'+esc(initial)+'</div><div style="min-width:0">'
-    + '<div class="c-host-n">'+esc(name)+(h&&h.verified?svg('shield',13):'')+'</div>'
+  var hid = esc(r.hostId || '');
+  return '<div class="c-host"><div class="av" data-cp-avatar="'+hid+'" data-cp-size="30">'+esc(initial)+'</div><div style="min-width:0">'
+    + '<div class="c-host-n">'+esc(name)+'<span data-cp-tick="'+hid+'" data-cp-size="14"></span></div>'
     + '<div class="c-host-m">'+esc(meta)+'</div></div></div>';
 }
 function cardHtml(r){
@@ -1690,11 +1694,11 @@ function openRoom(id, push){
     + (r.rules ? '<div class="sec"><div class="sec-h">House rules</div><p class="dtext">'+esc(r.rules)+'</p></div>' : '')
 
     + '<div class="sec"><div class="sec-h">Listed by</div><div class="dhost">'
-    + '<div class="dhost-av">'+esc((hostName.trim()[0]||'C').toUpperCase())+'</div><div>'
-    + '<div class="dhost-n">'+esc(hostName)+(h&&h.verified?svg('shield',15):'')+'</div>'
+    + '<button type="button" class="dhost-av" data-cabana-person="'+esc(r.hostId||'')+'" aria-label="View host profile"><span data-cp-avatar="'+esc(r.hostId||'')+'" data-cp-size="50">'+esc((hostName.trim()[0]||'C').toUpperCase())+'</span></button><div style="flex:1;min-width:0">'
+    + '<div class="dhost-n"><button type="button" class="dhost-link" data-cabana-person="'+esc(r.hostId||'')+'">'+esc(hostName)+'</button><span data-cp-tick="'+esc(r.hostId||'')+'" data-cp-size="17"></span></div>'
     + '<div class="dhost-m">'+esc(h && h.verified ? 'Identity verified by Cabana' : 'Identity check pending')
     + (r.createdAt ? ' · Listed ' + esc(fmtDate(r.createdAt)) : '') + '</div>'
-    + '</div></div></div>'
+    + '</div><button type="button" data-cp-follow="'+esc(r.hostId||'')+'" hidden></button></div></div>'
 
     + '<div class="sec"><div class="safety"><div class="safety-t">'+svg('shield',15)+'Before any money moves</div><ul>'
     + '<li>See the room in person, or on a live video call where the host walks the whole flat.</li>'
@@ -2069,7 +2073,7 @@ window.showToast = toast;
 <script src="/chat.js?v=41" defer></script>
 <script src="/analytics.js" defer></script>
 <script src="/telemetry.js" defer></script>
-<script src="/pwa.js?v=38-location-flight-30s" defer></script>
+<script src="/pwa.js?v=39-people-profiles" defer></script>
 <script src="/referral.js" defer></script>
 <script src="/apa-referral-capture.js" defer></script>
 <script src="/apa-ad-registry.js?v=2026.09.26" defer></script>

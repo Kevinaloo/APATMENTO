@@ -1245,7 +1245,7 @@
       }
       var ready = global.ApaPush ? Promise.resolve() : new Promise(function (res) {
         var ensureSW = ('serviceWorker' in navigator)
-          ? navigator.serviceWorker.getRegistration().then(function (r) { return r || navigator.serviceWorker.register('/sw.js?v=38-location-flight-30s', { scope: '/' }); }).catch(function () {})
+          ? navigator.serviceWorker.getRegistration().then(function (r) { return r || navigator.serviceWorker.register('/sw.js?v=39-people-profiles', { scope: '/' }); }).catch(function () {})
           : Promise.resolve();
         ensureSW.then(function () {
           var s = document.createElement('script'); s.src = '/apa-push.js'; s.onload = res; s.onerror = res; document.head.appendChild(s);

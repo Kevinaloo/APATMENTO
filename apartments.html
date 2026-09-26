@@ -580,7 +580,11 @@ body.lb-open #agent-ref{display:none!important;}
 .dl-host-info{flex:1;min-width:0;}
 .dl-host-name{font-size:15px;font-weight:600;color:var(--ink);}
 .dl-host-tag{font-size:12px;color:var(--ink-faint);margin-top:2px;}
-.dl-host-100{font-size:11px;font-weight:700;color:var(--mint-deep);background:rgba(45,212,191,.1);padding:5px 11px;border-radius:100px;white-space:nowrap;flex-shrink:0;}
+.dl-host-100{font-size:11px;font-weight:700;color:var(--mint-deep);white-space:nowrap;}
+.dl-host-line{display:flex;align-items:center;gap:2px;min-width:0}
+.dl-host-ava{overflow:hidden;padding:0}.dl-host-face{display:flex;width:100%;height:100%;align-items:center;justify-content:center}
+.dl-host-face.cp-live{background:none}
+.dl-host-follow.cp-follow{padding:8px 14px;font-size:12.5px;flex-shrink:0}
 /* message host button */
 .dl-msg-btn{width:100%;margin-top:12px;padding:13px 16px;border-radius:13px;border:1.5px solid var(--theme);background:transparent;color:var(--theme);font-family:var(--font-body);font-weight:600;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .25s;}
 .dl-msg-btn:hover{background:rgba(139,111,232,.06);border-color:var(--violet);}
@@ -4302,12 +4306,12 @@ function openDrawer(id) {
 
       <!-- Host card -->
       <div class="dl-host">
-        <button type="button" class="dl-host-ava" data-cabana-person="${_esc(apt.hostId || '')}" aria-label="View host profile">${_esc(apt.hostInit || 'H')}</button>
+        <button type="button" class="dl-host-ava" data-cabana-person="${_esc(apt.hostId || '')}" aria-label="View host profile"><span class="dl-host-face" data-cp-avatar="${_esc(apt.hostId || '')}" data-cp-size="50">${_esc(apt.hostInit || 'H')}</span></button>
         <div class="dl-host-info">
-          <button type="button" class="dl-host-name" data-cabana-person="${_esc(apt.hostId || '')}">Hosted by ${_esc(apt.host || 'Cabana Partner')}</button>
-          <div class="dl-host-tag">${isNative ? 'Cabana partner' : 'Partner host'}</div>
+          <div class="dl-host-line"><button type="button" class="dl-host-name" data-cabana-person="${_esc(apt.hostId || '')}">Hosted by ${_esc(apt.host || 'Cabana Partner')}</button><span data-cp-tick="${_esc(apt.hostId || '')}" data-cp-size="17"></span></div>
+          <div class="dl-host-tag">${isNative ? 'Cabana partner' : 'Partner host'} · <span class="dl-host-100">Keeps 100%</span></div>
         </div>
-        <div class="dl-host-100">Keeps 100%</div>
+        <button type="button" class="dl-host-follow" data-cp-follow="${_esc(apt.hostId || '')}" hidden></button>
       </div>
       <button class="dl-msg-btn" onclick="messageHost('${apt.id}')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
@@ -6283,7 +6287,7 @@ loadListings().then(async () => {
 <script src="/apa-geo.js" defer></script>
 <script src="/apa-map.js" defer></script>
 <script src="/telemetry.js" defer></script>
-<script src="/pwa.js?v=38-location-flight-30s" defer></script>
+<script src="/pwa.js?v=39-people-profiles" defer></script>
 <script src="/apa-push.js" defer></script>
 <script src="/referral.js" defer></script>
 <script src="/apa-referral-capture.js" defer></script>

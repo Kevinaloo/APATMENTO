@@ -66,5 +66,5 @@ test('dashboard notifications live behind the bell and messaging assets are vers
   assert.match(dashboard, /chat\.js\?v=41/);
   assert.match(read('apartments.html'), /chat\.js\?v=41/);
   for (const page of ['partner-bookings.html', 'my-bookings.html', 'roommates.html']) assert.match(read(page), /chat\.js\?v=41/);
-  assert.match(read('sw.js'), /cabana-v38-location-flight-30s/);
+  assert.match(read('sw.js'), /cabana-v39-people-profiles/);
 });

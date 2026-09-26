@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>Profile · Cabana</title>
+<meta name="description" content="A member, host or organisation on Cabana, Africa’s zero-commission travel platform."/>
+<!-- Profiles are personal. Search engines are asked not to index them. -->
+<meta name="robots" content="noindex, nofollow"/>
+<meta name="theme-color" content="#F7F6F2"/>
+<link rel="icon" href="/favicon.ico" sizes="any"/>
+<link rel="apple-touch-icon" href="/cabana-apple-touch-icon.png"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box}
+:root{--bg:#F7F6F2;--card:#fff;--ink:#15131F;--ink2:#5C566E;--line:rgba(21,19,31,.08)}
+@media (prefers-color-scheme:dark){:root{--bg:#121019;--card:#1E1A28;--ink:#EEE8F5;--ink2:#B7ACBF;--line:rgba(255,255,255,.08)}}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 Inter,system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+.top{position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:space-between;gap:12px;height:60px;padding:0 max(16px,env(safe-area-inset-left));background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.top a{color:var(--ink);text-decoration:none}
+.logo{font:700 15px Geist,Inter,sans-serif;letter-spacing:.22em;text-transform:uppercase;background:linear-gradient(90deg,#6D28FF,#14B8A6);-webkit-background-clip:text;background-clip:text;color:transparent!important}
+.back{font-size:13px;padding:8px 14px;border-radius:999px;border:1px solid var(--line)}
+.share{border:0;background:var(--ink);color:var(--bg);font:600 13px Inter,sans-serif;padding:9px 16px;border-radius:999px;cursor:pointer}
+main{max-width:720px;margin:0 auto;padding:20px 16px 80px}
+.sheet{background:var(--card);border-radius:28px;overflow:hidden;box-shadow:0 20px 60px rgba(32,18,46,.08)}
+.sheet .cbp-content{padding:0 26px 28px}
+.sheet .cbp-cover{height:170px;margin:0 -26px}
+.sheet .cbp-head{margin-top:-64px}
+.sheet .cbp-name{font-size:28px}
+@media (min-width:640px){.sheet .cbp-ls{grid-template-columns:repeat(3,1fr)}}
+.tabs{display:flex;gap:6px;margin:22px 0 10px;border-top:1px solid var(--line);padding-top:18px}
+.tabs button{border:0;background:transparent;color:var(--ink2);font:600 13px Inter,sans-serif;padding:8px 14px;border-radius:999px;cursor:pointer}
+.tabs button[aria-selected=true]{background:var(--bg);color:var(--ink)}
+.people{display:grid;gap:4px}
+.pp{display:flex;align-items:center;gap:12px;padding:10px 6px;border-radius:14px;cursor:pointer;border:0;background:none;color:inherit;text-align:left;width:100%;font:inherit}
+.pp:hover{background:var(--bg)}
+.pp b{display:flex;align-items:center;gap:4px;font-weight:600}
+.pp small{color:var(--ink2)}
+.empty{color:var(--ink2);text-align:center;padding:26px 0}
+.state{text-align:center;padding:90px 20px;color:var(--ink2)}
+.state h1{font:700 22px Geist,Inter,sans-serif;color:var(--ink);margin:14px 0 6px}
+.state a{color:#6D28FF}
+.legend{margin:18px 4px 0;color:var(--ink2);font-size:12.5px;display:flex;flex-wrap:wrap;gap:14px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+</style>
+</head>
+<body>
+<header class="top">
+  <a class="back" href="/" id="back">← Back</a>
+  <a class="logo" href="/">Cabana</a>
+  <button class="share" id="share" type="button" hidden>Share</button>
+</header>
+<main>
+  <div id="root"><div class="sheet"><div class="cbp-content"><div class="cbp-skel"><span></span><i></i><i></i></div></div></div></div>
+  <div class="legend" id="legend" hidden></div>
+</main>
+
+<script src="/vendor-supabase-2.112.3.js"></script>
+<script src="/apa-session.js"></script>
+<script src="/cabana-avatars.js?v=1"></script>
+<script src="/cabana-people.js?v=2"></script>
+<script>
+(function () {
+  const P = window.CabanaPeople, root = document.getElementById('root');
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const qs = new URLSearchParams(location.search);
+  const fromPath = (location.pathname.match(/^\/u\/([A-Za-z0-9._]{3,24})$/) || [])[1];
+  const key = fromPath || qs.get('handle') || qs.get('id');
+  if (history.length > 1) document.getElementById('back').addEventListener('click', e => { e.preventDefault(); history.back(); });
+
+  function fail(msg) {
+    root.innerHTML = `<div class="state">${P.avatarHTML({ id: 'x', type: 'individual', name: 'Cabana' }, 84)}<h1>${esc(msg)}</h1><p>The member may have made their profile private, or the link may be wrong.</p><p><a href="/">Explore Cabana</a></p></div>`;
+  }
+  if (!key) return fail('Profile not found');
+
+  async function list(p, which, box) {
+    box.innerHTML = '<p class="empty">Loading…</p>';
+    try {
+      const d = await P.api('follows', { id: p.id, list: which });
+      if (!d.people.length) { box.innerHTML = `<p class="empty">${which === 'followers' ? 'No followers yet.' : 'Not following anyone yet.'}</p>`; return; }
+      box.innerHTML = '<div class="people">' + d.people.map(c => `<button class="pp" data-cabana-person="${esc(c.id)}">${P.avatarHTML(c, 44)}<span><b>${esc(c.name)}${c.badge ? P.tick(c.badge, { size: 15 }) : ''}</b>${c.handle ? `<small>@${esc(c.handle)}</small>` : ''}</span></button>`).join('') + '</div>';
+      window.CabanaAvatars?.observeAll(box);
+    } catch (e) { box.innerHTML = `<p class="empty">${esc(e.message)}</p>`; }
+  }
+
+  P.profile(key).then(p => {
+    const where = p.badge ? ` · ${P.TICKS[p.badge].label}` : '';
+    document.title = `${p.name}${p.handle ? ' (@' + p.handle + ')' : ''} · Cabana`;
+    root.innerHTML = `<article class="sheet"><div class="cbp-content">${P.profileHTML(p, false)}</div></article>`;
+    const body = root.querySelector('.cbp-content');
+    P.wireSheet(body, p);
+    if (p.stats.followers != null && p.level !== 'peer') {
+      body.insertAdjacentHTML('beforeend', `<div class="tabs" role="tablist"><button role="tab" aria-selected="true" data-l="followers">Followers</button><button role="tab" aria-selected="false" data-l="following">Following</button></div><div id="plist"></div>`);
+      const box = body.querySelector('#plist');
+      body.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => {
+        body.querySelectorAll('.tabs button').forEach(x => x.setAttribute('aria-selected', String(x === b)));
+        list(p, b.dataset.l, box);
+      }));
+      list(p, 'followers', box);
+    }
+    const share = document.getElementById('share');
+    if (p.handle) {
+      share.hidden = false;
+      const url = `${location.origin}/u/${p.handle}`;
+      if (!fromPath) history.replaceState(null, '', '/u/' + p.handle);
+      share.addEventListener('click', async () => {
+        try { if (navigator.share) await navigator.share({ title: p.name + ' on Cabana', text: (p.headline || p.name) + where, url }); else { await navigator.clipboard.writeText(url); P.toast('Profile link copied'); } } catch (_) {}
+      });
+    }
+    const lg = document.getElementById('legend');
+    lg.innerHTML = Object.entries(P.TICKS).map(([k, t]) => `<span>${P.tick(k, { size: 15 })}${esc(t.label)}</span>`).join('');
+    lg.hidden = false;
+  }).catch(e => fail(e.status === 404 ? 'This profile is not available' : e.message));
+})();
+</script>
+<script src="/cabana-support.js" defer></script>
+<script src="/cabana-lifecycle.js" defer></script>
+</body>
+</html>

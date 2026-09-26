@@ -198,7 +198,7 @@ const CabanaChat = window.CabanaChat = (() => {
 #cbx .row[aria-current="true"]{background:#EEF1FF}
 #cbx .ava{position:relative;width:52px;height:52px;flex-shrink:0}
 #cbx .ava img,#cbx .ava .ph{width:52px;height:52px;border-radius:16px;object-fit:cover;background:linear-gradient(135deg,#C4B0FA,#7B2FF7);display:flex;align-items:center;justify-content:center;color:#fff;font:700 18px var(--f)}
-#cbx .ava .who{position:absolute;right:-4px;bottom:-4px;width:24px;height:24px;border-radius:50%;background:var(--grad);border:2px solid #fff;color:#fff;font:700 10px/20px var(--f);text-align:center}
+#cbx .ava .who{position:absolute;right:-4px;bottom:-4px;width:24px;height:24px;border-radius:50%;background:var(--grad);border:2px solid #fff;color:#fff;font:700 10px/20px var(--f);text-align:center;overflow:hidden}#cbx .ava .who .cpa{width:20px!important;height:20px!important}#cbx .t-ava{overflow:hidden;padding:0}#cbx .t-ava>span{display:flex;width:100%;height:100%;align-items:center;justify-content:center}
 #cbx .r-body{flex:1;min-width:0}
 #cbx .r-top{display:flex;align-items:baseline;gap:8px}
 #cbx .r-name{flex:1;min-width:0;font:700 14.5px/1.3 var(--f);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:4px}
@@ -511,9 +511,9 @@ const CabanaChat = window.CabanaChat = (() => {
       else if (c.role === 'host' && c.checkin) tag = `<span class="tagpill">${esc(range(c.checkin, c.checkout))}</span>`;
       const prev = (c.last_from_me ? 'You: ' : '') + (c.last_message || 'Say hello');
       return `<button class="row${c.unread ? ' unread' : ''}" data-act="open" data-id="${esc(c.id)}" aria-current="${S.active?.id === c.id}">
-        <span class="ava">${c.photo ? `<img src="${esc(c.photo)}" alt="" loading="lazy" onerror="this.outerHTML='<span class=ph>🏠</span>'">` : '<span class="ph">🏠</span>'}<span class="who">${initial(who)}</span></span>
+        <span class="ava">${c.photo ? `<img src="${esc(c.photo)}" alt="" loading="lazy" onerror="this.outerHTML='<span class=ph>🏠</span>'">` : '<span class="ph">🏠</span>'}<span class="who"${c.counterpart?.id ? ` data-cp-avatar="${esc(c.counterpart.id)}" data-cp-size="24"` : ''}>${initial(who)}</span></span>
         <span class="r-body">
-          <span class="r-top"><span class="r-name">${esc(who)}${c.counterpart?.verified ? IC.verified : ''}</span><span class="r-time">${esc(ago(c.last_message_at))}</span></span>
+          <span class="r-top"><span class="r-name">${esc(who)}${c.counterpart?.id ? `<span data-cp-tick="${esc(c.counterpart.id)}" data-cp-size="14"></span>` : (c.counterpart?.verified ? IC.verified : '')}</span><span class="r-time">${esc(ago(c.last_message_at))}</span></span>
           <span class="r-sub">${c.role === 'host' ? 'Guest · ' : ''}${esc(c.listing_title || 'Stay')}</span>
           <span class="r-prev"><span class="pv">${esc(prev)}</span>${tag}${c.unread ? `<span class="badge">${c.unread > 99 ? '99+' : c.unread}</span>` : ''}</span>
         </span>
@@ -675,8 +675,8 @@ const CabanaChat = window.CabanaChat = (() => {
       : `Host · ${esc(responseLabel(meta.response) || l.title || '')}`;
     $('#cbx-head').innerHTML = `
       <button class="ib t-back" data-act="back" aria-label="Back to conversations">${IC.back}</button>
-      <button class="t-ava" data-cabana-person="${esc(cp.id)}" aria-label="View ${esc(cp.name)}'s profile">${initial(cp.name)}</button>
-      <div class="t-who"><div class="t-name">${esc(cp.name || 'Member')}${cp.verified ? IC.verified : ''}</div><div class="t-sub" id="cbx-sub">${sub}</div></div>
+      <button class="t-ava" data-cabana-person="${esc(cp.id)}" aria-label="View ${esc(cp.name)}'s profile"><span data-cp-avatar="${esc(cp.id)}" data-cp-size="40">${initial(cp.name)}</span></button>
+      <div class="t-who"><div class="t-name">${esc(cp.name || 'Member')}${cp.id ? `<span data-cp-tick="${esc(cp.id)}" data-cp-size="15"></span>` : (cp.verified ? IC.verified : '')}</div><div class="t-sub" id="cbx-sub">${sub}</div></div>
       <button class="ib" data-act="details" aria-label="Details">${IC.info}</button>
       <button class="ib" data-act="menu" aria-label="More options">${IC.more}</button>
       <button class="ib" data-act="close" aria-label="Close messages">${IC.close}</button>`;
