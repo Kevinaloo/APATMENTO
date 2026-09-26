@@ -15,7 +15,7 @@ import { JSDOM } from 'jsdom';
 const read = f => readFileSync(new URL(`../${f}`, import.meta.url), 'utf8');
 const shell = read('admin.html');
 const core = read('admin-console.js');
-const views = read('admin-views-ops.js') + '\n' + read('admin-views-more.js') + '\n' + read('admin-views-ads.js') + '\n' + read('admin-views-people.js');
+const views = read('admin-views-ops.js') + '\n' + read('admin-views-more.js') + '\n' + read('admin-views-ads.js') + '\n' + read('admin-views-people.js') + '\n' + read('admin-views-immersive.js');
 const migrations = readdirSync(new URL('../supabase/migrations/', import.meta.url))
   .filter(f => f.endsWith('.sql')).map(f => read('supabase/migrations/' + f)).join('\n');
 
