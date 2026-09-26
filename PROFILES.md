@@ -64,3 +64,34 @@ Other safeguards:
   - `cabana-avatars.js`, `cabana-people.js`. Use `data-cp-avatar`, `data-cp-tick`, `data-cp-follow` and `data-cabana-person` on any page.
   - `profile.html` (studio), `person.html` (public page), `admin-views-people.js` (console)
 - **Tests:** `tests/people-profiles.test.mjs`, `tests/ui/people-profiles.cjs`
+
+## One identity
+
+Verify once, and it counts everywhere:
+- **Agents:** a Didit approval marks agent KYC verified. Agents who join after verifying inherit it.
+- **Room viewings:** "Request a viewing" uses `CabanaIdentity.ensure('roommate')`. Verified members go straight to the chat with a suggested request.
+- **Drivers:** the application shows that the identity carries over. Admins see whether the typed national ID matches the verified document (compared by keyed hash).
+- **Partner pages:** a one-line nudge sits under the page title. It hides for 14 days when dismissed, and always shows on Settings.
+- After verifying, `/profile?next=/path` sends the member back where they started.
+
+The tick needs something live. Provider (Reef) requires one of: an active listing, a published tour, a published upcoming event, an active fleet vehicle, an approved driver, or an agent partnership on a live listing. An approved operator shell no longer counts.
+
+### Duplicate and returning accounts
+
+- **Fingerprints:** `identity_fingerprints` stores HMAC-SHA256 hashes, keyed with `IDENTITY_PEPPER`, of the document, ID number, name plus date of birth, and verifying device. Nothing is reversible.
+- **Links:** `identity_links` connects accounts through those fingerprints, Didit's own duplicate matches (`vendor_data` is our user ID), shared phone numbers and email aliases.
+- **Policy** (`api/lib/_identity.js#assess`):
+
+| Evidence | Member sees | Operators |
+| --- | --- | --- |
+| Same document or face as a banned or suspended account (or on the denylist) | "We're double-checking a few details" | Critical alert, Linked accounts queue |
+| Same document as another active verified account | "Already verified on another account (u••••d@gmail.com)", with a move request | Link to review |
+| Same face on a different document | Review | Link |
+| Shared device, phone or email alias | Nothing | Info or review link only |
+
+- **Denylist:** `identity_denylist` keeps a banned member's fingerprints and SHA-256 phone and email hashes even after the account is deleted.
+- **Operator controls:**
+  - **Allow both:** re-runs any identity check the link was holding back.
+  - **Same person, noted:** records it with no effect on the member.
+  - **Not related:** dismisses the link.
+- The Identity panel in every member drawer shows the verification source, Didit warnings, agent and driver status, and linked accounts.

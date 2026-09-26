@@ -347,6 +347,8 @@ const COUNTRIES = ['KE','TZ','UG','RW','BI','ET','SO','SS','SD','ER','DJ','NG','
   'GB','US','CA','DE','FR','NL','IT','ES','SE','NO','CH','IE','BE','PT','AE','SA','QA','IN','CN','JP','AU','BR'];
 
 const S = { profile: null, saved: null, draft: null, tab: 'catalogue', catSection: null, busy: false };
+// Where to send someone back after verifying (same-site paths only).
+const NEXT = (n => /^\/(?!\/)[\w\-./?=&%#]{0,200}$/.test(n || '') ? n : null)(new URLSearchParams(location.search).get('next'));
 
 /* ═══ boot ═══ */
 (async () => {
@@ -614,14 +616,17 @@ function renderTiers() {
   let html = '';
   // purple
   const ok = idv.state === 'approved';
-  const idState = ok ? stateTag('ok', 'Verified') : idv.state === 'in_progress' ? stateTag('wait', 'In progress') : idv.state === 'review' ? stateTag('wait', 'Being reviewed') : idv.state === 'declined' ? stateTag('no', 'Not verified') : stateTag('', 'Not started');
+  const idState = ok ? stateTag('ok', 'Verified') : idv.last_decline === 'duplicate_identity' ? stateTag('wait', 'Verified on another account') : idv.under_review || idv.state === 'review' ? stateTag('wait', 'Being reviewed') : idv.state === 'in_progress' ? stateTag('wait', 'In progress') : idv.state === 'declined' ? stateTag('no', 'Not verified') : stateTag('', 'Not started');
   html += `<div class="tier t-person ${ok ? 'done' : ''}"><div class="tier-ico">${PP.tick('person', { size: 28 })}</div><div style="flex:1">
     <h3>${T.person.label} ${idState}</h3>
     <p>${ok ? `Verified${idv.verified_as ? ' as <strong>' + esc(idv.verified_as) + '</strong>' : ''}${idv.since ? ' since ' + fmt(idv.since + '-01') : ''}. Only you see the name on your ID.` :
       'A two-minute check with your national ID, passport or driving licence and a live selfie, run by our partner Didit. Cabana never stores your document or selfie, only the result.'}</p>
-    ${idv.last_decline && !ok ? `<p style="color:#B91C1C">${idv.last_decline === 'age' ? 'Cabana verification is for adults aged 18 and over.' : idv.last_decline === 'document_expired' ? 'That document has expired. Try again with a valid one.' : 'The last check did not go through. Use good light and a clear, unexpired document.'}</p>` : ''}
-    ${ok ? '' : `<div class="acts">${idv.available ? `<button class="btn btn-violet" type="button" id="verify-go">${idv.session ? 'Continue my check' : idv.state === 'declined' ? 'Try again' : 'Verify my identity'}</button>` : '<span class="field-hint">Identity checks are being switched on. Check back soon.</span>'}${idv.state === 'in_progress' ? '<button class="btn btn-ghost" type="button" id="verify-refresh">I have finished</button>' : ''}</div>`}
-    <p style="font-size:12px;margin-top:8px">Unlocks: purple tick · photo uploads · more trust from hosts and guests.</p></div></div>`;
+    ${idv.under_review && !ok ? '<p style="color:#92400E">We are double-checking a few details. This usually takes less than a day, and you can keep using Cabana normally in the meantime.</p>' : ''}
+    ${idv.last_decline === 'duplicate_identity' && !ok ? `<p style="color:#5B21B6">This ID is already verified on another Cabana account${idv.duplicate_hint ? ' (<strong>' + esc(idv.duplicate_hint) + '</strong>)' : ''}. One person, one verified account keeps Cabana safe for everyone. Sign in to that account, or ask us to move your verification here.</p><div class="acts"><button class="btn btn-ghost" type="button" id="verify-move">Move my verification here</button></div>` : ''}
+    ${idv.last_decline && idv.last_decline !== 'duplicate_identity' && !ok ? `<p style="color:#B91C1C">${idv.last_decline === 'age' ? 'Cabana verification is for adults aged 18 and over.' : idv.last_decline === 'document_expired' ? 'That document has expired. Try again with a valid one.' : 'The last check did not go through. Use good light and a clear, unexpired document.'}</p>` : ''}
+    ${ok || idv.under_review || idv.last_decline === 'duplicate_identity' ? '' : `<div class="acts">${idv.available ? `<button class="btn btn-violet" type="button" id="verify-go">${idv.session ? 'Continue my check' : idv.state === 'declined' ? 'Try again' : 'Verify my identity'}</button>` : '<span class="field-hint">Identity checks are being switched on. Check back soon.</span>'}${idv.state === 'in_progress' ? '<button class="btn btn-ghost" type="button" id="verify-refresh">I have finished</button>' : ''}</div>`}
+    ${ok && NEXT ? `<div class="acts"><a class="btn btn-violet" href="${esc(NEXT)}">You are verified · continue where you were →</a></div>` : ''}
+    <p style="font-size:12px;margin-top:8px">${ok ? 'Already counted everywhere on Cabana: agent network, room bookings, driver onboarding, payouts and photo uploads. You never repeat this check.' : 'Unlocks: purple tick · photo uploads · agent work · room bookings · faster driver and payout reviews. Verify once, it counts everywhere.'}</p></div></div>`;
   // gold
   if (org) {
     const oState = !ov ? stateTag('', 'Not started') : ov.status === 'approved' ? stateTag('ok', 'Verified') : ov.status === 'submitted' ? stateTag('wait', 'Under review') : ov.status === 'rejected' ? stateTag('no', 'Not approved') : ov.status === 'revoked' ? stateTag('no', 'Removed') : stateTag('', 'Withdrawn');
@@ -645,6 +650,7 @@ function renderTiers() {
   html += `<div class="privacy-note"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg><span>Members only ever see your tick, never your documents, ID number, date of birth or legal name. Ticks cannot be bought, and pasting check symbols into your name is blocked.</span></div>`;
   $('tiers').innerHTML = html;
   $('verify-go')?.addEventListener('click', startVerification);
+  $('verify-move')?.addEventListener('click', async e => { e.target.disabled = true; try { await PP.api('identity-move', null, {}); toast('Request sent. We will confirm by email within a day.'); e.target.textContent = 'Request sent'; } catch (err) { toast(err.message); e.target.disabled = false; } });
   $('verify-refresh')?.addEventListener('click', () => pollVerification(true));
   $('org-open')?.addEventListener('click', openOrgForm);
   $('org-withdraw')?.addEventListener('click', async () => { if (!confirm('Withdraw your gold verification request?')) return; try { await PP.api('org-withdraw', null, {}); await loadStudio(); } catch (e) { toast(e.message); } });
@@ -652,7 +658,8 @@ function renderTiers() {
 async function startVerification() {
   const b = $('verify-go'); b.disabled = true; b.textContent = 'Opening secure check…';
   try {
-    const r = await PP.api('verify-start', null, {});
+    const r = await PP.api('verify-start', null, { next: NEXT, context: new URLSearchParams(location.search).get('for') || 'profile' });
+    if (r.state === 'review') { toast('Your check is being reviewed. We will let you know soon.'); return loadStudio(); }
     if (r.state === 'approved') { toast('You are already verified'); return loadStudio(); }
     location.href = r.url;
   } catch (e) { toast(e.message); b.disabled = false; b.textContent = 'Verify my identity'; }
@@ -664,7 +671,7 @@ async function pollVerification(manual) {
   for (let i = 0; i < (manual ? 3 : 20); i++) {
     try {
       const r = await PP.api('verify-status');
-      if (r.state === 'approved') { toast('You are verified. Your purple tick is live.'); history.replaceState(null, '', '/profile#verification'); PP.forget(CURRENT_USER.id); return loadStudio(); }
+      if (r.state === 'approved') { toast('You are verified. Your purple tick is live.'); PP.forget(CURRENT_USER.id); if (NEXT) { setTimeout(() => { location.href = NEXT; }, 1400); return; } history.replaceState(null, '', '/profile#verification'); return loadStudio(); }
       if (['declined', 'expired', 'review'].includes(r.state)) { history.replaceState(null, '', '/profile#verification'); return loadStudio(); }
     } catch (_) { /* keep waiting */ }
     await new Promise(r => setTimeout(r, 3000));

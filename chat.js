@@ -537,6 +537,8 @@ const CabanaChat = window.CabanaChat = (() => {
       if (seq !== S.openSeq) return;
       loadInbox();
       await openConversation(conv.id);
+      // A suggested first message (e.g. a viewing request); never sent automatically.
+      if (opts.draft && seq === S.openSeq) { const ta = $('#cbx-ta'); if (ta && !ta.value) { ta.value = String(opts.draft).slice(0, 600); ta.dispatchEvent(new Event('input', { bubbles: true })); ta.focus(); } }
     } catch (e) {
       if (seq !== S.openSeq) return;
       threadError(friendly(e));

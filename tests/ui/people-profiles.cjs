@@ -29,7 +29,7 @@ const db={
   me:{display_name:'Amani O.',handle:'amani.o',headline:'',bio:'',account_type:'individual',org_kind:null,org_website:null,city:'',country_code:null,show_location:false,languages:[],interests:[],theme:'equator',avatar:null,published:false,show_followers:true,allow_follow:true,show_listings:true,photo_url:null,photo_status:'none',photo_pending:false,photo_locked:false},
 };
 const base={roles:['traveller'],member_since:'2026-01',operators:[],languages:[],interests:[],listings:[],identity_since:null,org_since:null};
-function profileOf(id){
+let profileOf=function(id){
   if(id===me||id==='amani.o'){const s=db.me;return {...base,id:me,name:s.display_name,level:'self',handle:s.handle,type:s.account_type,avatar:s.avatar,photo:null,badge:null,verified_as:null,headline:s.headline,bio:s.bio,theme:s.theme,can_follow:false,
     stats:{followers:2,following:5,listings:0,reviews:0,rating:null},viewer:{signed_in:true,self:true,following:false},settings:{...s},
     verification:{identity:{state:'not_started',available:true,session:null,last_decline:null},organization:null,can_upload_photo:false,provider:false}};}
@@ -39,12 +39,14 @@ function profileOf(id){
     listings:[{id:listingId,title:'The Jets Nest',place:'Kilimani, Nairobi',photo:'/tours/jets-nest/photos/1.jpg',price:4500,currency:'KES',rating:4.9,reviews:12,url:'/apartments?open='+listingId}]};
   if(id===org)return {...base,id:org,name:'Mara Trails Ltd',level:'full',handle:'maratrails',type:'organization',avatar:{v:1,k:'e',sh:3,pt:1,c:2,g:4,mo:1},badge:'organization',verified_as:'organization',org_kind:'tour_operator',headline:'Small-group safaris',bio:'',theme:'savanna',can_follow:true,org_since:'2026-09',stats:{followers:120,following:0,listings:0,reviews:0,rating:null},viewer:{signed_in:true,self:false,following:false}};
   return null;
-}
+};
 function card(id){const p=profileOf(id);return p&&{id:p.id,name:p.name,level:p.level,handle:p.handle,type:p.type,avatar:p.avatar,photo:p.photo,badge:p.badge,verified_as:p.verified_as,headline:p.headline,can_follow:p.can_follow};}
 function people(u,body){
   const op=u.searchParams.get('op');
   if(op==='profile'){const p=profileOf(u.searchParams.get('id')||u.searchParams.get('handle'));return p?{json:{profile:p}}:{status:404,json:{error:'This profile is not available.'}};}
   if(op==='cards')return {json:{cards:Object.fromEntries(u.searchParams.get('ids').split(',').map(i=>[i,card(i)]))}};
+  if(op==='identity')return {json:{identity:{verified:false,state:'not_started',pending:null,declined:db.dup?'duplicate_identity':null,duplicate_hint:db.dup?'u••••••••d@gmail.com':null},facts:[],roles:{},needs:{context:u.searchParams.get('for'),required:false,satisfied:false,why:'Guests see a purple tick on your listings.'}}};
+  if(op==='verify-start')return {json:{state:'in_progress',url:origin+'/profile.html?didit=1'}};
   if(op==='follows')return {json:{people:[card(org),card(me)].filter(Boolean),next:null}};
   if(op==='save'){db.saves.push(body);if(/✓|✔/.test(body.display_name||''))return {status:400,json:{error:'Badges are added by Cabana after verification.',field:'display_name'}};Object.assign(db.me,body);return {json:{ok:true,handle:db.me.handle}};}
   if(op==='follow'){body.on?db.follows.add(body.id):db.follows.delete(body.id);return {json:{following:body.on,followers:41+(db.follows.has(body.id)?1:0)}};}
@@ -116,7 +118,7 @@ function people(u,body){
     await page.waitForSelector('.cbp-name');
     assert.match(await page.locator('.cbp-name').innerText(),/Jets Nest Homes/);
     assert.equal(await page.locator('.cbp-name .cpt-provider').count(),1,'reef tick next to a verified provider');
-    assert.doesNotMatch(await page.locator('body').innerText(),/qa@example|phone|passport/i);
+    assert.doesNotMatch(await page.locator('.sheet').innerText(),/qa@example|phone|passport/i);
     await page.screenshot({path:resolve(out,'public-profile.png'),fullPage:true});
     await page.locator('.cbp-actions .cp-follow').click();
     await page.waitForFunction(()=>document.querySelector('.cbp-actions .cp-follow').getAttribute('aria-pressed')==='true');
@@ -137,7 +139,25 @@ function people(u,body){
     await page.screenshot({path:resolve(out,'profile-sheet.png')});
     await page.getByRole('button',{name:'Close profile',exact:true}).click();
 
-    /* 4 · mobile */
+    /* 4 · partner nudge: one quiet line under the title, dismissible */
+    await page.goto(origin+'/partner-listings.html');
+    await page.waitForSelector('#cid-nudge',{timeout:15000});
+    assert.equal(await page.locator('.pg-hd-left #cid-nudge').count(),1,'nudge sits inside the page header, not over content');
+    assert.match(await page.locator('#cid-nudge').innerText(),/purple tick/);
+    await page.locator('.pg-hd').screenshot({path:resolve(out,'partner-nudge.png')});
+    await page.locator('#cid-nudge .cid-n-x').click();
+    await page.waitForSelector('#cid-nudge',{state:'detached'});
+    await page.reload();await page.waitForTimeout(2500);
+    assert.equal(await page.locator('#cid-nudge').count(),0,'stays hidden after dismissal');
+    /* 5 · duplicate identity is explained kindly */
+    db.dup=true;
+    const P0=profileOf;profileOf=id=>{const p=P0(id);if(p&&p.level==='self'){p.verification.identity.state='declined';p.verification.identity.last_decline='duplicate_identity';p.verification.identity.duplicate_hint='u••••••••d@gmail.com';}return p;};
+    await page.goto(origin+'/profile.html');await page.waitForSelector('#verify-move');
+    assert.match(await page.locator('#tiers').innerText(),/already verified on another Cabana account/);
+    await page.locator('.tier.t-person').screenshot({path:resolve(out,'duplicate-identity.png')});
+    profileOf=P0;db.dup=false;
+
+    /* 6 · mobile */
     await page.setViewportSize({width:390,height:844});
     await page.goto(origin+'/profile.html');await page.waitForSelector('#tab-catalogue .opt');
     await page.screenshot({path:resolve(out,'studio-mobile.png')});

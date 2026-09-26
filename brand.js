@@ -552,7 +552,7 @@ function boot(){
   defer(function(){
     safe(injectIcons);
     safe(function () {
-      ['/cabana-property-tour.js', '/cabana-people.js'].forEach(function (src) {
+      ['/cabana-property-tour.js', '/cabana-people.js', '/cabana-identity.js'].forEach(function (src) {
         if (document.querySelector('script[src="' + src + '"]')) return;
         var script = document.createElement('script'); script.src = src; script.defer = true;
         document.body.appendChild(script);

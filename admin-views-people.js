@@ -34,11 +34,12 @@
       return api('op=admin-queue&kind=' + kind).then(function (j) {
         if (!v.alive()) return;
         var items = j.items || [];
-        var bar = CX.tabs([['photos', 'Photos', tab === 'photos' ? items.length : null, true], ['orgs', 'Gold checks', tab === 'orgs' && !v.q.status ? items.length : null, true], ['reports', 'Reports', tab === 'reports' ? items.length : null, true], ['verified', 'Verified people']], tab);
+        var bar = CX.tabs([['photos', 'Photos', tab === 'photos' ? items.length : null, true], ['orgs', 'Gold checks', tab === 'orgs' && !v.q.status ? items.length : null, true], ['reports', 'Reports', tab === 'reports' ? items.length : null, true], ['links', 'Linked accounts', tab === 'links' ? items.length : null, true], ['verified', 'Verified people']], tab);
         var body;
         if (tab === 'photos') body = photos(items);
         else if (tab === 'orgs') body = orgs(items, v.q.status || 'submitted');
         else if (tab === 'reports') body = reports(items);
+        else if (tab === 'links') body = linksView(items);
         else body = verified(items);
         set(v.el, html`${pageHd('People', 'Profiles & ticks', LEDE)}${bar}${body}`);
         on(v.el, '[data-tab]', 'click', function (el) { var t = el.getAttribute('data-tab'); v.setQ({ tab: t === 'photos' ? null : t, status: null }); v.refresh(); });
@@ -93,6 +94,27 @@
         <div style="margin-top:10px">${g.reports.map(function (r) { return html`<div class="t-sub" style="white-space:normal;margin-top:4px"><strong>${human(r.reason)}</strong> · ${ago(r.at)}${r.detail ? ' · “' + r.detail + '”' : ''}</div>`; })}</div></div>`;
     })}</div>`;
   }
+  var REASON = { same_document: 'Same ID document', same_id_number: 'Same ID number', same_name_dob: 'Same name and birth date', same_face: 'Same face (Didit)', same_device: 'Same device', same_phone: 'Same phone number', same_email_alias: 'Email alias', same_payout: 'Same payout number' };
+  function person(pp) {
+    pp = pp || {};
+    return html`<div class="cell">${face(pp, 36)}<div><div class="t-main">${pp.name || 'Member'} ${tick(pp.badge)} ${pp.restricted ? html`<span class="pill p-bad">Restricted</span>` : ''}</div><div class="t-sub">${pp.email || ''}${pp.joined ? ' · joined ' + fdate(pp.joined) : ''}${pp.identity_verified ? ' · ID verified' : ''}</div></div></div>`;
+  }
+  function linksView(items) {
+    if (!items.length) return html`<div class="card">${CX.empty('No linked accounts to review', 'When the same person appears behind two accounts, it shows up here. Shared phones and devices alone never do.', 'users', true)}</div>`;
+    return html`<div style="display:grid;gap:12px">${items.map(function (g) {
+      return html`<div class="card"><div style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:10px">
+          <div>${g.severity === 'critical' ? html`<span class="pill p-bad">${icon('alert')}Possible return of a restricted member</span>` : g.status === 'move_requested' ? html`<span class="pill p-info">Member asked to move their verification</span>` : html`<span class="pill p-warn">Same person, two accounts?</span>`}
+            <span class="t-sub" style="margin-left:6px">${g.reasons.map(function (r) { return REASON[r] || human(r); }).join(' · ')} · ${ago(g.detected_at)}</span></div>
+          <div class="t-act">
+            <button class="btn btn-sm btn-ok" data-lk="${g.id}" data-d="allow" title="Both accounts may keep a verified identity">Allow both</button>
+            <button class="btn btn-sm btn-g" data-lk="${g.id}" data-d="same_person" title="Record that this is one person; nothing changes for them">Same person, noted</button>
+            <button class="btn btn-sm btn-q" data-lk="${g.id}" data-d="dismiss" title="Not the same person">Not related</button></div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <button class="link-btn" data-open="${g.a.id}" style="text-align:left">${person(g.a)}</button>
+          <button class="link-btn" data-open="${g.b.id}" style="text-align:left">${person(g.b)}</button></div>
+        <div class="t-sub" style="margin-top:10px;white-space:normal">Allow both re-runs any identity check this link was holding back. To act on an account (ban, suspend), open it from Members.</div></div>`;
+    })}</div>`;
+  }
   function verified(items) {
     if (!items.length) return html`<div class="card">${CX.empty('Nobody verified yet', 'Members who pass the Didit identity check appear here.', 'shieldCheck', false)}</div>`;
     return html`<div class="card flush"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Member</th><th>Document</th><th>Verified</th></tr></thead><tbody>${items.map(function (r) {
@@ -100,7 +122,37 @@
     })}</tbody></table></div></div>`;
   }
 
+  /* ── identity panel inside a member's drawer ─────────────────────── */
+  var SOURCE = { didit: 'Didit ID + live selfie', agent_document: 'Agent document reviewed by Cabana', cabana_operator: 'Verified by a Cabana operator', legacy: 'Earlier ID check' };
+  CX.identityPanel = function (root, id) {
+    if (!root) return;
+    var box = document.createElement('div'); box.className = 'dr-sec'; box.innerHTML = '<div class="dr-sec-t">Identity</div><div class="muted" style="font-size:12.5px">Loading…</div>';
+    root.insertBefore(box, root.firstChild ? root.firstChild.nextSibling : null);
+    api('op=admin-identity&id=' + encodeURIComponent(id)).then(function (x) {
+      var i = x.identity || {}, r = x.roles || {};
+      set(box, html`<div class="dr-sec-t">Identity ${tick(x.badge)}</div>
+        ${x.links && x.links.some(function (l) { return l.severity === 'critical' && l.status === 'open'; }) ? html`<div class="callout bad mb">${icon('alert')}<div><div class="strong">Linked to a restricted account</div><div class="muted" style="font-size:12.5px">Strong identity match with an account that is banned or suspended. Review below.</div></div></div>` : ''}
+        ${CX.kv([
+          ['Status', i.verified ? html`<span class="pill p-ok">${icon('check')}Verified</span>` : i.pending === 'review' ? html`<span class="pill p-warn">Held for review</span>` : i.declined ? html`<span class="pill p-bad">${human(i.declined)}</span>` : html`<span class="pill p-mute">${human(i.state || 'not started')}</span>`],
+          ['How', i.source ? SOURCE[i.source] || human(i.source) : '—'],
+          ['Since', i.since ? fdate(i.since) : '—'],
+          ['Document', i.document_type ? human(i.document_type) + ' · ' + (i.document_country || '') : '—'],
+          ['Didit warnings', x.session && x.session.warnings && x.session.warnings.length ? x.session.warnings.map(human).join(', ') : '—'],
+          ['Agent KYC', r.agent ? human(r.agent.kyc_status) + (r.agent.satisfied_by_identity ? ' · via identity' : '') : '—'],
+          ['Driver', r.driver ? human(r.driver.status) + (r.driver.id_number_matches_verified_id === true ? ' · ID number matches verified ID ✓' : r.driver.id_number_matches_verified_id === false ? ' · ID number does NOT match' : '') : '—'],
+          ['Fingerprints', Object.keys(x.fingerprints || {}).length ? Object.keys(x.fingerprints).map(function (k) { return human(k); }).join(', ') : 'None yet']])}
+        ${(x.links || []).length ? html`<div class="dr-sec-t" style="margin-top:12px">Linked accounts</div>${x.links.map(function (l) {
+          return html`<div class="kv"><span><button class="link-btn" data-open-person="${l.other}">${l.person.name}</button> ${l.restricted ? html`<span class="pill p-bad">Restricted</span>` : ''}${l.identity_verified ? html` <span class="pill p-ok">ID verified</span>` : ''}
+            <div class="t-sub">${l.email || ''} · ${l.reasons.map(function (r) { var k = r.split(':')[0]; return REASON[k] || human(k); }).join(', ')}</div></span>
+            <span>${l.status === 'open' || l.status === 'move_requested' ? html`<button class="btn btn-sm btn-ok" data-plk="${l.link_id}" data-d="allow">Allow</button> <button class="btn btn-sm btn-g" data-plk="${l.link_id}" data-d="dismiss">Not related</button>` : CX.pill(l.status)}</span></div>`;
+        })}` : ''}`);
+      box.querySelectorAll('[data-plk]').forEach(function (b) { b.addEventListener('click', function () { CX.busy(b, function () { return linkDecide(b.getAttribute('data-plk'), b.getAttribute('data-d')).then(function () { toast('Saved', 'ok'); CX.identityPanel(root, id); box.remove(); }); }); }); });
+      box.querySelectorAll('[data-open-person]').forEach(function (b) { b.addEventListener('click', function () { location.hash = '#/people/' + b.getAttribute('data-open-person'); }); });
+    }).catch(function (e) { set(box, html`<div class="dr-sec-t">Identity</div><div class="muted" style="font-size:12.5px">${e.message}</div>`); });
+  };
+
   function decide(body) { return api('op=admin-decide', body); }
+  function linkDecide(id, d) { return api('op=admin-link', { id: id, decision: d }); }
   function wire(v) {
     on(v.el, '[data-ph]', 'click', function (el) {
       var id = el.getAttribute('data-ph'), d = el.getAttribute('data-d');
@@ -108,6 +160,10 @@
       confirm({ title: 'Reject this photo?', tone: 'danger', confirm: 'Reject', icon: 'x', body: 'The file is deleted and its fingerprint blocked. The member is told it does not meet community standards.',
         reason: { label: 'Note to the member (optional)', required: false, placeholder: 'Please choose a photo without text or phone numbers.' },
         onConfirm: function (f) { return decide({ kind: 'photo', id: id, decision: 'reject', note: f.reason }).then(function () { toast('Rejected', 'ok'); CX.pulseNow(true); v.refresh(); }); } });
+    });
+    on(v.el, '[data-lk]', 'click', function (el) {
+      var id = el.getAttribute('data-lk'), d = el.getAttribute('data-d');
+      CX.busy(el, function () { return linkDecide(id, d).then(function (r) { toast({ allow: 'Allowed' + (r.rechecked ? ' · identity re-checked' : ''), same_person: 'Noted as the same person', dismiss: 'Marked as not related' }[d], 'ok'); CX.pulseNow(true); v.refresh(); }); });
     });
     on(v.el, '[data-doc]', 'click', function (el) {
       CX.busy(el, function () { return api('op=admin-file&kind=org&id=' + el.getAttribute('data-doc')).then(function (r) { global.open(r.url, '_blank', 'noopener'); }); });

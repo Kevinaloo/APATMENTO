@@ -41,6 +41,7 @@ import { publicText, hasContact } from './_people.js';
 import { cleanAvatar } from './_avatar-spec.js';
 import { moderatePhoto } from './_moderation.js';
 import * as Didit from './_didit.js';
+import * as Identity from './_identity.js';
 
 const SITE = 'https://cabana.africa';
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -258,22 +259,34 @@ export async function profiles(req, res, deps) {
   }
 
   /* ── identity sync ─────────────────────────────────────────────── */
-  async function syncSession(row) {
+  async function syncSession(row, { force = false } = {}) {
     const decision = await didit.decision(row.didit_session_id);
     const s = Didit.summariseDecision(decision, { now: now() });
     if (s.vendorData && s.vendorData !== row.user_id) {
       console.warn('[people] didit vendor_data mismatch', row.id);
       return row.state;
     }
+    // One person, one verified identity. Didit's own duplicate matches and
+    // our keyed fingerprints decide whether an approval stands as-is.
+    let outcome = { action: 'approve' };
+    if (s.state === 'approved' || s.state === 'review') {
+      try { outcome = await Identity.assess({ db, rpc, userId: row.user_id, sessionRowId: row.id, decision, key: Identity.pepper(env) }); }
+      catch (e) { console.warn('[people] identity assess failed', e.message); }
+    }
+    let state = s.state, declineReason = s.declineReason;
+    if (s.state === 'approved' && outcome.action === 'review') { state = 'review'; declineReason = 'identity_review'; }
+    if (s.state === 'approved' && outcome.action === 'duplicate') { state = 'declined'; declineReason = 'duplicate_identity'; }
+    if (!force && row.state === state && row.decline_reason === declineReason && Didit.TERMINAL.has(state)) return state;
     const at = now().toISOString();
     await db(`verification_sessions?id=eq.${row.id}`, {
       method: 'PATCH', body: {
-        state: s.state, decision: s.stored, decline_reason: s.declineReason, document_country: s.documentCountry,
-        updated_at: at, ...(Didit.TERMINAL.has(s.state) || s.state === 'review' ? { completed_at: at } : {}),
+        state, decision: { ...s.stored, cabana: { outcome: outcome.action, hint: outcome.hint || null } },
+        decline_reason: declineReason, document_country: s.documentCountry,
+        updated_at: at, ...(Didit.TERMINAL.has(state) || state === 'review' ? { completed_at: at } : {}),
       },
     });
     const [status] = await db(`verification_status?user_id=eq.${row.user_id}&select=identity_state,identity_at`);
-    if (s.state === 'approved') {
+    if (state === 'approved') {
       await db('verification_status?on_conflict=user_id', {
         method: 'POST', prefer: 'resolution=merge-duplicates',
         body: {
@@ -285,19 +298,98 @@ export async function profiles(req, res, deps) {
       });
       await db(`profiles?id=eq.${row.user_id}`, { method: 'PATCH', body: { id_verification_status: 'approved' } }).catch(() => {});
       if (status?.identity_state !== 'approved') {
-        await notify(row.user_id, 'You are verified', 'Your purple checkmark is now live on your Cabana profile, listings and messages.', '/profile#verification', 'profile', { event: 'identity_approved' });
+        await notify(row.user_id, 'You are verified', 'Your purple checkmark is now live on your Cabana profile, listings and messages. Everywhere on Cabana that needs an ID check now knows it is you.', '/profile#verification', 'profile', { event: 'identity_approved' });
       }
     } else if (status?.identity_state !== 'approved') {
       await db('verification_status?on_conflict=user_id', {
         method: 'POST', prefer: 'resolution=merge-duplicates',
-        body: { user_id: row.user_id, identity_state: s.state, last_session_id: row.id, document_country: s.documentCountry, document_type: s.documentType },
+        body: { user_id: row.user_id, identity_state: state, last_session_id: row.id, document_country: s.documentCountry, document_type: s.documentType },
       });
-      if (s.state === 'declined') {
-        await notify(row.user_id, 'We could not verify your ID', s.declineReason === 'age' ? 'Cabana verification is for adults aged 18 and over.' : 'You can try again with a clear photo of a valid, unexpired document.', '/profile#verification', 'profile', { event: 'identity_declined' });
+      if (state === 'declined' && declineReason === 'duplicate_identity') {
+        await notify(row.user_id, 'This ID is already verified on Cabana', `It belongs to another account${outcome.hint ? ' (' + outcome.hint + ')' : ''}. Sign in there, or ask us to move your verification to this account.`, '/profile#verification', 'profile', { event: 'identity_duplicate' });
+      } else if (state === 'declined') {
+        await notify(row.user_id, 'We could not verify your ID', declineReason === 'age' ? 'Cabana verification is for adults aged 18 and over.' : 'You can try again with a clear photo of a valid, unexpired document.', '/profile#verification', 'profile', { event: 'identity_declined' });
+      } else if (state === 'review' && declineReason === 'identity_review') {
+        await db('ops_alerts', { method: 'POST', body: { kind: 'identity', severity: outcome.critical ? 'critical' : 'warn',
+          title: outcome.critical ? 'Possible return of a restricted member' : 'Identity check needs a look',
+          body: 'A new identity check matches another account. Review it in Profiles & ticks → Linked accounts.', meta: { user_id: row.user_id } } }).catch(() => {});
       }
     }
-    return s.state;
+    return state;
   }
+
+  function safeNext(v) {
+    const n = String(v || '');
+    return /^\/(?!\/)[\w\-./?=&%#]{0,200}$/.test(n) && !/[<>"'\\]/.test(n) ? n : null;
+  }
+  const ISO3 = { KE: 'KEN', TZ: 'TZA', UG: 'UGA', RW: 'RWA', NG: 'NGA', GH: 'GHA', ZA: 'ZAF', ET: 'ETH', BI: 'BDI', SS: 'SSD' };
+  async function identitySummary(uid, { admin }) {
+    const [raw, [vs], [latest], [agent], [driver], [orgv], [prof]] = await Promise.all([
+      rawCards([uid]),
+      db(`verification_status?user_id=eq.${uid}&select=identity_state,identity_at,identity_expires,display_name,document_country,document_type`),
+      db(`verification_sessions?user_id=eq.${uid}&select=id,state,decline_reason,decision,created_at,context&order=created_at.desc&limit=1`),
+      db(`agents?id=eq.${uid}&select=kyc_status,kyc_verified_at,suspended`).catch(() => []),
+      db(`drivers?user_id=eq.${uid}&select=status,national_id,country_code,applied_at`).catch(() => []),
+      db(`organization_verifications?user_id=eq.${uid}&select=status,legal_name&order=created_at.desc&limit=1`),
+      db(`profiles?id=eq.${uid}&select=verified,verified_at,phone_verified,id_verification_status,email,banned,suspended_until,host_status`),
+    ]);
+    const c = raw.get(uid) || {};
+    const didit = vs?.identity_state === 'approved';
+    const source = didit ? 'didit' : agent?.kyc_status === 'verified' ? 'agent_document' : prof?.verified ? 'cabana_operator' : ['approved', 'verified'].includes(prof?.id_verification_status) ? 'legacy' : null;
+    const state = c.identity_verified ? 'approved' : (vs?.identity_state || 'not_started');
+    let idMatch = null;
+    if (driver?.national_id) {
+      try {
+        const key = Identity.pepper(env), country = vs?.document_country || ISO3[String(driver.country_code || 'KE').toUpperCase()] || 'KEN';
+        const h = Identity.fp(key, `id_number|${country}|${Identity.normNumber(driver.national_id)}`);
+        const hit = await db(`identity_fingerprints?kind=eq.id_number&hash=eq.${h}&select=user_id&limit=5`);
+        const prints = await db(`identity_fingerprints?user_id=eq.${uid}&kind=eq.id_number&select=hash&limit=1`);
+        idMatch = prints.length ? hit.some(r => r.user_id === uid) : null;
+        if (hit.some(r => r.user_id !== uid)) idMatch = false;
+      } catch { idMatch = null; }
+    }
+    const out = {
+      identity: { verified: !!c.identity_verified, state, source, since: didit ? vs.identity_at : prof?.verified_at || agent?.kyc_verified_at || null,
+        document_country: vs?.document_country || null, document_type: vs?.document_type || null, verified_as: didit ? vs.display_name : null,
+        pending: latest?.state === 'review' ? 'review' : latest?.state === 'in_progress' ? 'in_progress' : null,
+        declined: latest?.state === 'declined' ? latest.decline_reason || 'declined' : null,
+        duplicate_hint: latest?.decline_reason === 'duplicate_identity' ? latest.decision?.cabana?.hint || null : null },
+      badge: c.badge || null,
+      facts: [
+        { key: 'identity', label: 'Government ID + live selfie', ok: !!c.identity_verified },
+        { key: 'email', label: 'Email address', ok: true },
+        { key: 'phone', label: 'Phone number', ok: !!prof?.phone_verified },
+        ...(orgv ? [{ key: 'organisation', label: 'Organisation registration', ok: orgv.status === 'approved' }] : []),
+      ],
+      roles: {
+        agent: agent ? { kyc_status: agent.kyc_status, satisfied_by_identity: !!c.identity_verified && agent.kyc_status === 'verified' } : null,
+        driver: driver ? { status: driver.status, id_number_matches_verified_id: idMatch } : null,
+        organisation: orgv ? { status: orgv.status } : null,
+      },
+    };
+    if (admin) {
+      const links = await db(`identity_links?or=(user_a.eq.${uid},user_b.eq.${uid})&select=*&order=detected_at.desc&limit=60`);
+      const others = [...new Set(links.map(l => (l.user_a === uid ? l.user_b : l.user_a)))];
+      const [oc, op] = await Promise.all([rawCards(others), others.length ? db(`profiles?id=in.(${others.join(',')})&select=id,email,banned,suspended_until,host_status,created_at`) : []]);
+      const pm = new Map(op.map(p => [p.id, p]));
+      const byOther = new Map();
+      links.forEach(l => { const o = l.user_a === uid ? l.user_b : l.user_a; const g = byOther.get(o) || { link_id: l.id, other: o, reasons: [], severity: 'info', status: l.status, detected_at: l.detected_at, note: l.note };
+        g.reasons.push(`${l.reason}:${l.strength}`); if (l.severity === 'critical' || (l.severity === 'review' && g.severity === 'info')) g.severity = l.severity; byOther.set(o, g); });
+      out.links = [...byOther.values()].map(g => { const oc1 = oc.get(g.other), p = pm.get(g.other) || {};
+        return { ...g, person: oc1 ? toCard(oc1, 'full') : { id: g.other, name: 'Deleted account' }, email: Identity.maskEmail(p.email),
+          restricted: !!(p.banned || (p.suspended_until && new Date(p.suspended_until) > now()) || ['suspended', 'banned'].includes(p.host_status)), identity_verified: !!oc1?.identity_verified }; });
+      out.fingerprints = (await db(`identity_fingerprints?user_id=eq.${uid}&select=kind`)).reduce((a, r) => (a[r.kind] = (a[r.kind] || 0) + 1, a), {});
+      out.restricted = !!(prof?.banned || (prof?.suspended_until && new Date(prof.suspended_until) > now()) || ['suspended', 'banned'].includes(prof?.host_status));
+      out.session = latest ? { state: latest.state, decline_reason: latest.decline_reason, warnings: latest.decision?.warnings || [], outcome: latest.decision?.cabana?.outcome || null, at: latest.created_at, context: latest.context } : null;
+      // Backfill: approved before the identity graph existed.
+      if (didit && !Object.keys(out.fingerprints).length && latest && didit_ok()) {
+        try { const d = await didit.decision((await db(`verification_sessions?id=eq.${latest.id}&select=didit_session_id`))[0].didit_session_id);
+          await Identity.assess({ db, rpc, userId: uid, sessionRowId: latest.id, decision: d, key: Identity.pepper(env) }); out.backfilled = true; } catch { /* next view */ }
+      }
+    }
+    return out;
+  }
+  function didit_ok() { return didit.configured(); }
 
   /* ── photo publishing ──────────────────────────────────────────── */
   async function publishPhoto(userId, bytes, sha, mime) {
@@ -389,7 +481,7 @@ export async function profiles(req, res, deps) {
       if (level === 'self') {
         const [[vs], [session], [orgv], [pending], photosToday] = await Promise.all([
           db(`verification_status?user_id=eq.${id}&select=identity_state,identity_at,identity_expires,display_name,document_country,document_type`),
-          db(`verification_sessions?user_id=eq.${id}&select=state,verification_url,expires_at,created_at,decline_reason&order=created_at.desc&limit=1`),
+          db(`verification_sessions?user_id=eq.${id}&select=state,verification_url,expires_at,created_at,decline_reason,decision&order=created_at.desc&limit=1`),
           db(`organization_verifications?user_id=eq.${id}&select=status,legal_name,org_kind,country_code,website,review_note,created_at,reviewed_at&order=created_at.desc&limit=1`),
           db(`profile_photo_reviews?user_id=eq.${id}&status=eq.pending_review&select=created_at&order=created_at.desc&limit=1`),
           db(`profile_photo_reviews?user_id=eq.${id}&status=eq.rejected&created_at=gt.${new Date(now().getTime() - 30 * 864e5).toISOString()}&select=id`),
@@ -414,6 +506,8 @@ export async function profiles(req, res, deps) {
             source: row.identity_verified && !vs ? 'cabana_review' : 'didit',
             session: session && session.state === 'in_progress' && new Date(session.expires_at) > now() ? { url: session.verification_url, started: session.created_at } : null,
             last_decline: session?.state === 'declined' ? session.decline_reason || 'declined' : null,
+            duplicate_hint: session?.decline_reason === 'duplicate_identity' ? session.decision?.cabana?.hint || null : null,
+            under_review: session?.state === 'review',
             available: didit.configured(),
           },
           organization: orgv ? { status: orgv.status, legal_name: orgv.legal_name, org_kind: orgv.org_kind, country_code: orgv.country_code, note: orgv.status === 'rejected' ? orgv.review_note || null : null, submitted: orgv.created_at, reviewed: orgv.reviewed_at } : null,
@@ -650,13 +744,71 @@ export async function profiles(req, res, deps) {
       if (open?.verification_url) return res.status(200).json({ state: 'in_progress', url: open.verification_url });
       const recent = await db(`verification_sessions?user_id=eq.${uid}&created_at=gt.${new Date(now().getTime() - 864e5).toISOString()}&select=id`);
       if (recent.length >= 3) return res.status(429).json({ error: 'You have started several checks today. Please try again tomorrow.' });
-      const { sessionId, url, workflowId } = await didit.create({ userId: uid, callback: `${env.PUBLIC_BASE_URL || SITE}/profile?verify=return#verification` });
+      const b = bodyOf(req), next = safeNext(b.next), context = Identity.CONTEXTS[b.context] ? b.context : 'profile';
+      const [latest] = await db(`verification_sessions?user_id=eq.${uid}&select=state,decline_reason&order=created_at.desc&limit=1`);
+      if (latest?.state === 'review') return res.status(200).json({ state: 'review' });
+      const { sessionId, url, workflowId } = await didit.create({ userId: uid, callback: `${SITE}/profile?verify=return${next ? '&next=' + encodeURIComponent(next) : ''}#verification` });
       const [created] = await db('verification_sessions', {
         method: 'POST', prefer: 'return=representation',
-        body: { user_id: uid, didit_session_id: sessionId, workflow_id: workflowId, kind: 'identity', context: 'profile', state: 'in_progress', verification_url: url, expires_at: new Date(now().getTime() + 7 * 864e5).toISOString() },
+        body: { user_id: uid, didit_session_id: sessionId, workflow_id: workflowId, kind: 'identity', context, state: 'in_progress', verification_url: url, expires_at: new Date(now().getTime() + 7 * 864e5).toISOString() },
       });
       await db('verification_status?on_conflict=user_id', { method: 'POST', prefer: 'resolution=merge-duplicates', body: { user_id: uid, identity_state: 'in_progress', last_session_id: created?.id || null } });
       return res.status(200).json({ state: 'in_progress', url });
+    }
+
+    /* ════════════════════════════════════════════════════════════
+       ONE IDENTITY
+       ════════════════════════════════════════════════════════════ */
+    case 'identity': {
+      res.setHeader('Cache-Control', 'private, no-store');
+      const s = await caller(true);
+      const sum = await identitySummary(s.user.id, { admin: false });
+      const ctx = Identity.CONTEXTS[req.query.for];
+      if (ctx) sum.needs = { context: req.query.for, label: ctx.label, why: ctx.why, required: ctx.required, satisfied: sum.identity.verified,
+        action: sum.identity.verified ? null : { label: 'Verify my identity', url: `/profile?next=${encodeURIComponent(safeNext(req.query.next) || '/profile')}#verification` } };
+      return res.status(200).json(sum);
+    }
+
+    case 'identity-move': {
+      if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed.' });
+      const s = await caller(true), uid = s.user.id;
+      const [latest] = await db(`verification_sessions?user_id=eq.${uid}&decline_reason=eq.duplicate_identity&select=id&order=created_at.desc&limit=1`);
+      if (!latest) return res.status(400).json({ error: 'There is no verification to move.' });
+      const links = await db(`identity_links?or=(user_a.eq.${uid},user_b.eq.${uid})&reason=in.(same_document,same_id_number)&status=eq.open&select=id`);
+      if (links.length) await db(`identity_links?id=in.(${links.map(l => l.id).join(',')})`, { method: 'PATCH', body: { status: 'move_requested', severity: 'review', note: 'Member asked to move their verification to this account' } });
+      if (deps.notifyAdmins) await deps.notifyAdmins('Verification move requested', 'A member asked to move their verified identity to a newer account. Review it in Profiles & ticks → Linked accounts.').catch(() => {});
+      return res.status(200).json({ ok: true });
+    }
+
+    case 'admin-identity': {
+      const s = await caller(true);
+      if (!(await isAdmin(s))) return res.status(403).json({ error: 'Forbidden' });
+      res.setHeader('Cache-Control', 'private, no-store');
+      const id = String(req.query.id || '');
+      if (!UUID.test(id)) return res.status(400).json({ error: 'Choose a member.' });
+      return res.status(200).json(await identitySummary(id, { admin: true }));
+    }
+
+    case 'admin-link': {
+      if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed.' });
+      const s = await caller(true);
+      if (!(await isAdmin(s))) return res.status(403).json({ error: 'Forbidden' });
+      const b = bodyOf(req), id = String(b.id || ''), at = now().toISOString();
+      if (!UUID.test(id)) return res.status(400).json({ error: 'Choose a link.' });
+      const [link] = await db(`identity_links?id=eq.${id}&select=*`);
+      if (!link) return res.status(404).json({ error: 'Not found.' });
+      const status = { allow: 'allowed', same_person: 'same_person', dismiss: 'dismissed' }[b.decision];
+      if (!status) return res.status(400).json({ error: 'Unknown decision.' });
+      // One decision covers every signal between the same two accounts.
+      await db(`identity_links?user_a=eq.${link.user_a}&user_b=eq.${link.user_b}`, { method: 'PATCH', body: { status, reviewed_by: s.user.id, reviewed_at: at, note: clean(b.note, 300) || link.note } });
+      // Allowing re-runs any identity check this link was holding back.
+      let rechecked = 0;
+      if (status !== 'same_person' || b.move) {
+        const held = await db(`verification_sessions?user_id=in.(${link.user_a},${link.user_b})&decline_reason=in.(identity_review,duplicate_identity)&select=*&order=created_at.desc&limit=4`);
+        for (const row of held) { try { await syncSession(row, { force: true }); rechecked++; } catch (e) { console.warn('[people] recheck failed', e.message); } }
+      }
+      await db('admin_audit_log', { method: 'POST', body: { action: `identity.link_${b.decision}`, target_type: 'profile', target_id: link.user_a, meta: { other: link.user_b, reason: link.reason } } }).catch(() => {});
+      return res.status(200).json({ ok: true, rechecked });
     }
 
     case 'webhook': {
@@ -735,6 +887,17 @@ export async function profiles(req, res, deps) {
         const ids = [...groups.keys()];
         const raw = await rawCards(ids);
         return res.status(200).json({ items: ids.map(i => { const r = raw.get(i); return { ...groups.get(i), person: r ? toCard(r, 'full') : { id: i, name: 'Member' } }; }) });
+      }
+      if (kind === 'links') {
+        const rows = await db(`identity_links?status=in.(open,move_requested)&severity=neq.info&select=*&order=detected_at.desc&limit=100`);
+        const ids = [...new Set(rows.flatMap(r => [r.user_a, r.user_b]))];
+        const [cards, profs] = await Promise.all([rawCards(ids), ids.length ? db(`profiles?id=in.(${ids.join(',')})&select=id,email,banned,suspended_until,host_status,created_at`) : []]);
+        const pm = new Map(profs.map(p => [p.id, p]));
+        const person = u => { const c = cards.get(u), p = pm.get(u) || {}; return { ...(c ? toCard(c, 'full') : { id: u, name: 'Member' }), email: Identity.maskEmail(p.email), restricted: !!(p.banned || (p.suspended_until && new Date(p.suspended_until) > now()) || ['suspended', 'banned'].includes(p.host_status)), joined: p.created_at, identity_verified: !!c?.identity_verified }; };
+        const groups = new Map();
+        rows.forEach(r => { const k = r.user_a + r.user_b; const g = groups.get(k) || { id: r.id, a: person(r.user_a), b: person(r.user_b), reasons: [], severity: 'info', status: r.status, detected_at: r.detected_at, note: r.note };
+          g.reasons.push(r.reason); if (r.severity === 'critical' || (r.severity === 'review' && g.severity === 'info')) g.severity = r.severity; if (r.status === 'move_requested') g.status = r.status; groups.set(k, g); });
+        return res.status(200).json({ items: [...groups.values()] });
       }
       if (kind === 'verified') {
         const rows = await db('verification_status?identity_state=eq.approved&select=user_id,identity_at,document_country,document_type&order=identity_at.desc&limit=100');

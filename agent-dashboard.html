@@ -441,10 +441,12 @@ function clock() {
       (rejected && a.kyc_reject_reason ? 'We could not verify your last upload: <b>' + E(a.kyc_reject_reason) + '</b><br/>' : '') +
       copy[2] +
     '</div>' +
-    '<div class="clock-a"><button class="btn btn-primary btn-sm" onclick="openV()">' +
-      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>' +
-      (rejected ? 'Upload again' : 'Upload my ID') +
-    '</button></div></div>';
+    '<div class="clock-a" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-primary btn-sm" onclick="verifyInstant(this)">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>' +
+      'Verify instantly · 2 min</button>' +
+      '<button class="btn btn-ghost btn-sm" onclick="openV()">' + (rejected ? 'Upload a document again' : 'Upload a document instead') + '</button></div>' +
+      '<div class="clock-d" style="margin-top:8px;font-size:12px;opacity:.8">Already verified your Cabana account? It counts here automatically. Your ID check covers agent work, hosting, rooms and payouts.</div>' +
+    '</div>';
 }
 
 function go(t) {
@@ -770,6 +772,16 @@ function renderEarnings(pane) {
 
 /* ══ VERIFY ════════════════════════════════════════════════════════════ */
 function openV()  { document.getElementById('v-veil').classList.add('on'); }
+/* Verify once: the same Didit check that gives members their purple tick
+   also satisfies agent KYC (the server marks the agent verified on approval). */
+async function verifyInstant(btn) {
+  if (!window.CabanaIdentity) { location.href = '/profile?for=agent&next=' + encodeURIComponent('/agent-dashboard.html') + '#verification'; return; }
+  btn.disabled = true; const label = btn.innerHTML; btn.textContent = 'Opening secure check…';
+  try {
+    const r = await CabanaIdentity.start('agent', '/agent-dashboard.html');
+    if (r === 'approved' || r === 'review') location.reload();
+  } catch (e) { alert(e.message || 'Please try again.'); btn.disabled = false; btn.innerHTML = label; }
+}
 function closeV() { document.getElementById('v-veil').classList.remove('on'); }
 function pickDoc(el) {
   document.querySelectorAll('#v-opts .opt').forEach(function (o) { o.classList.remove('on'); });
@@ -824,5 +836,6 @@ document.addEventListener('keydown', function (e) { if (e.key === 'Escape') clos
 <script src="/cabana-call.js" defer></script>
 <script src="/apa-location.js" defer></script><script src="/cabana-sos.js" defer></script><script src="/cabana-support.js" defer></script>
 <script src="/cabana-lifecycle.js" defer></script>
+<script src="/cabana-identity.js" defer></script>
 </body>
 </html>

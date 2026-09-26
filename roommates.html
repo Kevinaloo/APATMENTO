@@ -415,6 +415,12 @@ a{color:inherit;}
   display:flex;align-items:center;justify-content:center;gap:8px;transition:.24s;box-shadow:0 10px 26px -12px rgba(11,10,22,.9);}
 .d-cta-main:hover{background:linear-gradient(120deg,#FF3D77,#7B2FF7);transform:translateY(-2px);}
 .d-cta-main svg{width:17px;height:17px;}
+.d-cta-view{padding:15px 16px;border-radius:16px;border:1.5px solid rgba(124,58,237,.3);background:#fff;color:#5B21B6;font-weight:700;font-size:14px;
+  display:flex;align-items:center;justify-content:center;gap:7px;transition:.24s;white-space:nowrap;cursor:pointer}
+.d-cta-view:hover{background:rgba(124,58,237,.06);transform:translateY(-2px)}
+.d-cta-view svg{width:16px;height:16px}
+.d-cta-note{margin:18px 24px 0;font-size:12px;color:var(--ink-3);line-height:1.5}
+@media(max-width:420px){.d-cta-view{padding:15px 12px;font-size:13px}}
 .d-cta-alt{width:54px;border-radius:16px;border:1.5px solid var(--line-2);background:#fff;display:flex;align-items:center;
   justify-content:center;color:var(--ink-2);transition:.24s;flex-shrink:0;}
 .d-cta-alt:hover{border-color:var(--violet);color:var(--violet);}
@@ -1713,8 +1719,10 @@ function openRoom(id, push){
        leaves no record to protect a deposit and no booking to protect
        either side. The host's number is released once a viewing is
        confirmed here. */
+    + '<p class="d-cta-note">Messaging is open to everyone. Viewings are arranged with verified guests, so both sides know who is coming. You verify once and it counts for every room.</p>'
     + '<div class="d-cta">'
     + '<button type="button" class="d-cta-main" data-msg="'+attr(r.id)+'">'+svg('msg',17)+'Message the host</button>'
+    + '<button type="button" class="d-cta-view" data-view="'+attr(r.id)+'">'+svg('shield',16)+'Request a viewing</button>'
     + '</div>';
 
   $('ov').classList.add('on');
@@ -1788,6 +1796,21 @@ function openChat(r){
   if(!window.CabanaChat) return toast('Chat is still loading. Try again in a second.');
   CabanaChat.open({listingId:r.id, listingType:'roommate', listingTitle:r.title, hostId:r.hostId});
   track('contact_host', {item_id:r.id, item_category:'roommate'});
+}
+/* Viewings go to verified guests. Verify once: an already-verified
+   member goes straight to the chat with a suggested request. */
+async function requestViewing(id){
+  var r = ROOMS.filter(function(x){ return String(x.id) === String(id); })[0];
+  if(!r) return;
+  if(window.CabanaIdentity){
+    var ok = false;
+    try{ ok = await CabanaIdentity.ensure('roommate', { title: 'Verify once to book viewings' }); }catch(e){ toast(e.message || 'Please try again.'); return; }
+    if(!ok) return;
+  }
+  if(!window.CabanaChat) return toast('Chat is still loading. Try again in a second.');
+  CabanaChat.open({listingId:r.id, listingType:'roommate', listingTitle:r.title, hostId:r.hostId,
+    draft:'Hi, I would like to view the room. I am verified on Cabana. When suits you this week?'});
+  track('request_viewing', {item_id:r.id, item_category:'roommate'});
 }
 /* Shown at the booking step, not before messaging. */
 function verifySheet(r){
@@ -1905,6 +1928,9 @@ document.addEventListener('click', function(e){
   var msg = hit('[data-msg]');
   if(msg){ e.preventDefault(); messageHost(msg.getAttribute('data-msg')); return; }
 
+  var view = hit('[data-view]');
+  if(view){ e.preventDefault(); requestViewing(view.getAttribute('data-view')); return; }
+
   var open = hit('[data-open]');
   if(open){ e.preventDefault(); closeCompare(); openRoom(open.getAttribute('data-open')); return; }
 
@@ -1949,7 +1975,7 @@ document.addEventListener('click', function(e){
   var go = hit('[data-go]');
   if(go){
     var g = go.getAttribute('data-go');
-    if(g === 'verify'){ closeSheet(); location.href = 'partner-listings.html?verify=tenant'; }
+    if(g === 'verify'){ closeSheet(); if(window.CabanaIdentity) CabanaIdentity.ensure('roommate'); else location.href = '/profile?for=roommate&next=' + encodeURIComponent(location.pathname + location.search) + '#verification'; }
     else if(g === 'save-alert') saveAlert();
     else if(g === 'clear-alerts'){ lset(ALERT_KEY, []); closeSheet(); toast('Alerts deleted.'); }
     return;

@@ -229,3 +229,89 @@ test('routes, rewrites and migrations are in place', () => {
   assert.match(read('supabase/migrations/20260926120000_people_profiles_v2.sql'), /revoke insert, update, delete on public\.id_verifications/);
   for (const f of ['apartments.html', 'roommates.html', 'chat.js']) assert.match(read(f), /data-cp-tick/, f);
 });
+
+/* ── one identity ────────────────────────────────────────────────── */
+import * as Identity from '../api/lib/_identity.js';
+const KEY = 'test-pepper-0123456789abcdef';
+const USER_A = '55555555-5555-4555-8555-555555555555', USER_B = '66666666-6666-4666-8666-666666666666';
+const decisionFor = (over = {}) => ({
+  vendor_data: USER_A,
+  id_verifications: [{ status: 'Approved', document_type: 'Identity Card', issuing_state: 'KEN', document_number: '246260188', personal_number: '37682320',
+    first_name: 'Kevin', last_name: 'Aloo Okoth', date_of_birth: '2000-06-07', matches: [], ...over.idv }],
+  liveness_checks: [{ status: 'Approved', matches: over.faceMatches || [] }],
+  ip_analyses: [{ device_fingerprint: 'iIsAadPczu0wddZZ8bkWoQ' }],
+});
+
+test('identity fingerprints are stable across formatting and reveal nothing', () => {
+  const a = Identity.fingerprints(decisionFor(), KEY);
+  const b = Identity.fingerprints(decisionFor({ idv: { document_number: '0246 260 188', first_name: 'KEVIN', last_name: 'Okoth  Aloo' } }), KEY);
+  assert.deepEqual(a.filter(f => f.kind !== 'device').map(f => f.hash).sort(), b.filter(f => f.kind !== 'device').map(f => f.hash).sort());
+  assert.deepEqual([...new Set(a.map(f => f.kind))].sort(), ['device', 'document', 'id_number', 'name_dob']);
+  const text = JSON.stringify(a);
+  assert.doesNotMatch(text, /246260188|37682320|Kevin|2000-06-07/);
+  assert.notEqual(Identity.fingerprints(decisionFor(), 'another-pepper-9876543210')[0].hash, a[0].hash, 'hashes depend on the server pepper');
+});
+
+test('Didit duplicate matches map back to Cabana accounts only', () => {
+  const d = decisionFor({ idv: { matches: [{ vendor_data: USER_B }, { vendor_data: 'getting-started' }, { vendor_data: USER_A }] }, faceMatches: [{ vendor_data: USER_B, similarity_percentage: 81 }] });
+  assert.deepEqual(Identity.diditMatches(d, USER_A).map(m => m.reason).sort(), ['same_document', 'same_face']);
+  assert.equal(Identity.maskEmail('unplannedworld@gmail.com'), 'u••••••••d@gmail.com');
+});
+
+function identityDb({ other = {}, verified = true, cleared = false, denied = false, sharedPrint = true } = {}) {
+  const calls = [];
+  const db = async (path, opts = {}) => {
+    calls.push({ path, opts });
+    if (path.startsWith('identity_fingerprints?on_conflict')) return [];
+    if (path.startsWith('identity_fingerprints?kind=eq.document')) return sharedPrint ? [{ user_id: USER_B }] : [];
+    if (path.startsWith('identity_fingerprints?kind=')) return [];
+    if (path.startsWith('identity_denylist')) return denied ? [{ kind: 'document', source_user: USER_B }] : [];
+    if (path.startsWith('profiles?id=in.')) return [{ id: USER_B, email: 'first.account@gmail.com', banned: false, ...other }];
+    if (path.startsWith('verification_status?user_id=in.')) return verified ? [{ user_id: USER_B }] : [];
+    if (path.startsWith('identity_links?or=')) return cleared ? [{ user_a: USER_A, user_b: USER_B }] : [];
+    return [];
+  };
+  const links = [];
+  const rpc = async (fn, args) => { if (fn === 'cabana_link_accounts') links.push(args); return null; };
+  return { db, rpc, calls, links };
+}
+const assessWith = (h, decision = decisionFor()) => Identity.assess({ db: h.db, rpc: h.rpc, userId: USER_A, sessionRowId: null, decision, key: KEY });
+
+test('one person, one verified account: a second account with the same ID is gently declined', async () => {
+  const h = identityDb();
+  const r = await assessWith(h);
+  assert.equal(r.action, 'duplicate');
+  assert.equal(r.hint, 'f••••••••t@gmail.com');
+  assert.ok(h.links.some(l => l.p_reason === 'same_document' && l.p_strength === 'strong'));
+});
+test('the same document behind a banned account is held for review, not approved', async () => {
+  const r = await assessWith(identityDb({ other: { banned: true } }));
+  assert.equal(r.action, 'review'); assert.equal(r.critical, true);
+});
+test('a ban outlives a deleted account through the denylist', async () => {
+  const r = await assessWith(identityDb({ sharedPrint: false, denied: true }));
+  assert.equal(r.action, 'review');
+});
+test('operators can allow two accounts; shared devices alone never affect members', async () => {
+  assert.equal((await assessWith(identityDb({ cleared: true }))).action, 'approve');
+  const device = identityDb({ sharedPrint: false });
+  device.db = (orig => async (path, opts) => path.startsWith('identity_fingerprints?kind=eq.device') ? [{ user_id: USER_B }] : orig(path, opts))(device.db);
+  const r = await assessWith(device);
+  assert.equal(r.action, 'approve');
+  assert.ok(device.links.every(l => l.p_severity === 'info'));
+  assert.equal((await assessWith(identityDb({ verified: false }))).action, 'approve', 'an unverified older account does not block anyone');
+});
+
+test('verify-once is wired into every place that needs an identity', () => {
+  assert.match(read('brand.js'), /\/cabana-identity\.js/);
+  assert.match(read('roommates.html'), /CabanaIdentity\.ensure\('roommate'/);
+  assert.doesNotMatch(read('roommates.html'), /partner-listings\.html\?verify=tenant/);
+  assert.match(read('agent-dashboard.html'), /CabanaIdentity\.start\('agent'/);
+  assert.match(read('become-driver.html'), /CabanaIdentity\.status\('driver'\)/);
+  assert.match(read('cabana-identity.js'), /\^\\\/partner-/);
+  const sql = read('supabase/migrations/20260926150000_identity_graph.sql');
+  assert.match(sql, /t\.status = 'published'/, 'an approved operator with nothing live is not a provider');
+  assert.match(sql, /identity_satisfies_agent/);
+  assert.match(read('supabase/migrations/20260926151000_identity_denylist.sql'), /on delete set null/);
+  assert.ok(Object.keys(Identity.CONTEXTS).includes('roommate'));
+});

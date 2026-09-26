@@ -457,6 +457,7 @@ select.fi{appearance:none;background-image:url("data:image/svg+xml;charset=UTF-8
 
         <!-- step 1 -->
         <div class="fs-step on" id="s1">
+<div id="drv-id" class="drv-id" hidden></div>
           <label class="fl" for="a-name">Full name, as on your licence</label>
           <input class="fi" id="a-name" type="text" autocomplete="name" placeholder="Peter Mwangi Kariuki"/>
           <div class="f2">
@@ -946,5 +947,32 @@ try{ ApaSession.ready(function(st){
 <script src="/cabana-lifecycle.js" defer></script>
 <script src="/cabana-listing-cards.js" defer></script>
 <script src="/cabana-listing-journeys.js" defer></script>
+<script>
+/* Verify once: a Cabana identity check already covers the driver ID check.
+   The ID number typed below is matched against the verified document on
+   the server (by keyed hash), so no ID photos are needed. */
+(function(){
+  function paint(){
+    if(!window.CabanaIdentity) return setTimeout(paint, 400);
+    CabanaIdentity.status('driver').then(function(s){
+      var el=document.getElementById('drv-id'); if(!el) return;
+      if(s.identity.verified){
+        el.className='drv-id ok';
+        el.innerHTML='<b>Your identity is already verified with Cabana.</b> No ID photos needed. We match the ID number you enter below to your verified document automatically.';
+      } else if(s.identity.pending==='review'){
+        el.className='drv-id';
+        el.innerHTML='Your Cabana ID check is being reviewed. You can apply now; we will link it when it clears.';
+      } else {
+        el.className='drv-id';
+        el.innerHTML='<b>Tip:</b> verify your identity once with Cabana to speed up your review. <button type="button" id="drv-verify">Verify · 2 min</button>';
+        var b=document.getElementById('drv-verify'); if(b) b.onclick=function(){ b.disabled=true; b.textContent='Opening…'; CabanaIdentity.start('driver','/become-driver.html').catch(function(e){ alert(e.message); b.disabled=false; b.textContent='Verify · 2 min'; }); };
+      }
+      el.hidden=false;
+    }).catch(function(){ /* signed out: the form explains sign-in separately */ });
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', paint); else paint();
+})();
+</script>
+<style>.drv-id{margin:0 0 14px;padding:11px 13px;border-radius:12px;font-size:13px;line-height:1.5;background:rgba(124,58,237,.07);color:#3B2D5E;border:1px solid rgba(124,58,237,.14)}.drv-id.ok{background:rgba(13,148,103,.08);border-color:rgba(13,148,103,.2);color:#075E43}.drv-id button{margin-left:6px;border:0;border-radius:8px;padding:5px 10px;background:#6D28FF;color:#fff;font:600 12px inherit;cursor:pointer}</style>
 </body>
 </html>
