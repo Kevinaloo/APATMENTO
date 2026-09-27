@@ -793,11 +793,20 @@
       { id: 'flights', label: 'Flight desk', icon: 'plane', tone: 'warn', desk: 's-flights', badge: function () { return c('flights'); } },
       { id: 'tours', label: 'Tours', icon: 'map', tone: 'warn', desk: 's-tours', badge: function () { return c('tours') + c('operators'); } },
       { id: 'immersive', label: 'Immersive', icon: 'vr', tone: 'info', badge: function () { return c('immersive_requests'); } },
-      { id: 'events', label: 'Events', icon: 'ticket', tone: 'warn', desk: 's-events', badge: function () { return c('events'); } },
-      { id: 'live', label: 'Cabana Live', icon: 'play', tone: 'info' },
       { id: 'move', label: 'Cabana Move', icon: 'car', tone: 'warn', desk: 's-transport', badge: function () { return c('rides'); } },
       { id: 'offers', label: 'Offers', icon: 'tag', desk: 's-offers' },
       { id: 'match', label: 'Cabana Match', icon: 'sparkles' }
+    ] },
+    /* Everything on /events, one part per page. */
+    { g: 'Cabana Live', items: [
+      { id: 'live', label: 'Overview', icon: 'grid', tone: 'info' },
+      { id: 'live-billboard', label: 'Hero billboard', icon: 'image' },
+      { id: 'events', label: 'Events', icon: 'ticket', tone: 'warn', desk: 's-events', badge: function () { return c('events'); } },
+      { id: 'live-shows', label: 'Live shows', icon: 'video' },
+      { id: 'live-movies', label: 'Movies', icon: 'play' },
+      { id: 'live-series', label: 'Series', icon: 'layers' },
+      { id: 'live-music', label: 'Music', icon: 'music' },
+      { id: 'live-premium', label: 'Premium', icon: 'star' }
     ] },
     { g: 'People', items: [
       { id: 'people', label: 'Members', icon: 'users', keys: 'g p', tone: 'warn', badge: function () { return c('host_review'); } },

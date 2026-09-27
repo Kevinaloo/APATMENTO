@@ -31,7 +31,6 @@
   var SLUG_RX = /^[a-z0-9][a-z0-9-]{0,78}[a-z0-9]$/;
   var YT_RX = /^[A-Za-z0-9_-]{11}$/;
 
-  var TABS = [['titles', 'Titles'], ['billboard', 'Billboard'], ['music', 'Music'], ['premium', 'Premium']];
   var KINDS = [['movie', 'Movie'], ['show', 'Series'], ['live', 'Live show'], ['special', 'Special']];
   var PLACES = [['home', 'Home'], ['events', 'Events'], ['live', 'Live'], ['movies', 'Movies'], ['shows', 'Shows'], ['music', 'Music']];
   var SOURCES = [['upload', 'Upload a file (private)'], ['hls', 'HLS stream (.m3u8)'], ['mp4', 'MP4 link'], ['youtube', 'YouTube video'], ['embed', 'Partner player (embed URL)']];
@@ -132,57 +131,242 @@
   function slides() { return CX.rows(CX.q('live_billboard').select('*').order('sort_order', { ascending: false }).order('created_at', { ascending: false })); }
   function events() { return CX.rows(CX.q('events').select('id,title,starts_at,status,cover_url').order('starts_at', { ascending: false }).limit(200)); }
 
-  /* ── the view ────────────────────────────────────────────────────── */
+  /* ── the sections ────────────────────────────────────────────────
+     Cabana Live has its own group in the console, one page per part of
+     /events, so each can be run on its own: the overview (what visitors
+     see and the home page layout), the billboard, events (the existing
+     desk), live shows, movies, series, music and premium. */
 
-  CX.view('live', {
-    title: 'Cabana Live',
-    render: function (v) {
-      var tab = v.q.tab || 'titles';
-      set(v.el, html`${pageHd('Operations', 'Cabana Live', 'Events, live shows, movies, series and music on /events.')}${CX.skeleton('cards')}`);
-      return rpc('admin_live_overview', null, { fresh: true }).then(function (ov) {
-        if (!v.alive()) return;
-        ov = ov || {};
-        var c = ov.counts || {};
-        set(v.el, html`${pageHd('Operations', 'Cabana Live', html`The streaming and events platform on <a href="/events" target="_blank" rel="noopener">/events</a>. ${n(c.live_now) ? html`<b class="lvx-live">${num(c.live_now)} live now</b>` : ''}`,
-            html`<button class="btn btn-g" data-see>${icon('eye')}See it live</button>${tab === 'titles' ? html`<button class="btn btn-p" data-new-title>${icon('plus')}New title</button>` : tab === 'billboard' ? html`<button class="btn btn-p" data-new-slide>${icon('plus')}New slide</button>` : ''}`)}
-          <div class="grid g4 lvx-kpis">
-            <div class="mini"><div class="mini-l">Published titles</div><div class="mini-v">${num(c.published)}</div><div class="mini-s">${num(c.draft)} draft · ${num(c.movie)} films · ${num(c.show)} series · ${num(c.live)} live</div></div>
-            <div class="mini"><div class="mini-l">Plays · 30 days</div><div class="mini-v">${num(ov.plays_30)}</div><div class="mini-s">${num(ov.viewers_30)} signed-in viewers · ${Math.round(n(ov.seconds_30) / 3600)} h watched</div></div>
-            <div class="mini"><div class="mini-l">Premium</div><div class="mini-v">${num(ov.passes_active)}</div><div class="mini-s">active passes · ${num(ov.trials_claimed)} free months claimed</div></div>
-            <div class="mini"><div class="mini-l">Music chart</div><div class="mini-v">${num(ov.chart_tracks)}</div><div class="mini-s">${ov.music && ov.music.last_refreshed_at ? 'refreshed ' + ago(ov.music.last_refreshed_at) : 'waiting for a refresh'} · ${num(c.sources)} channels</div></div>
-          </div>
-          ${CX.tabs(TABS.map(function (t) { return [t[0], t[1], t[0] === 'titles' ? n(c.published) + n(c.draft) : t[0] === 'billboard' ? c.billboard : t[0] === 'music' ? c.playlists : null]; }), tab)}
-          <div data-body></div>`);
-        on(v.el, '[data-tab]', 'click', function (el) { var t = el.getAttribute('data-tab'); v.setQ({ tab: t === 'titles' ? null : t }); v.refresh(); });
-        on(v.el, '[data-see]', 'click', function () { see('/events'); });
-        on(v.el, '[data-new-title]', 'click', function () { newTitle(v); });
-        on(v.el, '[data-new-slide]', 'click', function () { slideEditor(null, v); });
-        var body = $('[data-body]', v.el);
-        if (tab === 'billboard') return renderBillboard(body, v);
-        if (tab === 'music') return renderMusic(body, v, ov);
-        if (tab === 'premium') return renderPremium(body, v, ov);
-        return renderTitles(body, v, ov);
-      });
-    },
-    leave: function () { if (CX.drawer.isOpen()) CX.drawer.close(false); }
-  });
+  var SECTIONS = [
+    { id: 'live', label: 'Overview', icon: 'grid' },
+    { id: 'live-billboard', label: 'Hero billboard', icon: 'image' },
+    { id: 'events', label: 'Events', icon: 'ticket' },
+    { id: 'live-shows', label: 'Live shows', icon: 'video' },
+    { id: 'live-movies', label: 'Movies', icon: 'play' },
+    { id: 'live-series', label: 'Series', icon: 'layers' },
+    { id: 'live-music', label: 'Music', icon: 'music' },
+    { id: 'live-premium', label: 'Premium', icon: 'star' }
+  ];
+  var TITLE_KINDS = { 'live-shows': ['live', 'special'], 'live-movies': ['movie'], 'live-series': ['show'] };
+  var OLD_TABS = { billboard: 'live-billboard', music: 'live-music', premium: 'live-premium', titles: 'live-movies' };
+
+  /* The home page's sections, in the page's own default order (the page
+     keeps the same list as L.HOME_ORDER; a test holds the two together). */
+  var HOME_SECTIONS = [
+    ['live', 'Live now and coming up', 'Live shows and specials that are on or about to start'],
+    ['events', 'Events', 'Categories and the next nights out, or the empty-stage card'],
+    ['mylist', 'My List', 'What the visitor saved, when they have saved something'],
+    ['premium', 'Premium band', 'The gold “one month free” offer'],
+    ['top10', 'Top 10 in Kenya', 'The first ten records on the chart'],
+    ['new', 'New on Cabana', 'Titles published in the last few weeks'],
+    ['movies', 'Movies', 'Published films'],
+    ['series', 'Series', 'Published series'],
+    ['specials', 'Concerts and specials', 'Specials and live-show replays'],
+    ['soon', 'Coming soon', 'Titles with a future release date, or the “Coming to Cabana Live” cards'],
+    ['plan', 'Plan ahead', 'Events more than a week away, when the week is busy'],
+    ['playlists', 'Playlists', 'Your curated playlists'],
+    ['releases', 'Fresh releases', 'New videos from the channels the chart follows'],
+    ['artists', 'Artists on the rise', 'The artist standings'],
+    ['invite', 'List your event', 'The invitation to organisers at the bottom']
+  ];
+
+  function studioNav(active) {
+    return html`<nav class="lvx-studio" aria-label="Cabana Live sections">${SECTIONS.map(function (s) {
+      return html`<a class="lvx-studio-a ${s.id === active ? 'on' : ''}" href="#/${s.id}">${icon(s.icon)}${s.label}</a>`;
+    })}</nav>`;
+  }
+
+  CX.liveStudioNav = function (active) { return String(studioNav(active)); };
+
+  function header(key, title, sub, actions) {
+    return html`${pageHd('Cabana Live', title, sub, html`<button class="btn btn-g" data-see>${icon('eye')}See it live</button>${actions || ''}`)}${studioNav(key)}`;
+  }
+
+  function studio(key, def) {
+    return {
+      title: def.title,
+      render: function (v) {
+        if (key === 'live' && v.q.tab && OLD_TABS[v.q.tab]) { global.location.replace('#/' + OLD_TABS[v.q.tab]); return; }
+        set(v.el, html`${header(key, def.title, def.sub)}${CX.skeleton('cards')}`);
+        return rpc('admin_live_overview', null, { fresh: true }).then(function (ov) {
+          if (!v.alive()) return;
+          ov = ov || {};
+          set(v.el, html`${header(key, def.title, typeof def.sub === 'function' ? def.sub(ov) : def.sub, def.actions ? def.actions(ov) : '')}<div data-body></div>`);
+          on(v.el, '[data-see]', 'click', function () { see(def.path || '/events'); });
+          if (def.wire) def.wire(v, ov);
+          return def.body($('[data-body]', v.el), v, ov);
+        });
+      },
+      leave: function () { if (CX.drawer.isOpen()) CX.drawer.close(false); }
+    };
+  }
+
+  CX.view('live', studio('live', {
+    title: 'Overview',
+    sub: function (ov) { var c = ov.counts || {}; return html`Everything on <a href="/events" target="_blank" rel="noopener">/events</a>, one part per page. ${n(c.live_now) ? html`<b class="lvx-live">${num(c.live_now)} live now</b>` : ''}`; },
+    body: renderOverview
+  }));
+  CX.view('live-billboard', studio('live-billboard', {
+    title: 'Hero billboard', sub: 'The big card at the top of every tab: posters, images, video or YouTube, one slide or a slideshow.',
+    actions: function () { return html`<button class="btn btn-p" data-new-slide>${icon('plus')}New slide</button>`; },
+    wire: function (v) { on(v.el, '[data-new-slide]', 'click', function () { slideEditor(null, v); }); },
+    body: function (body, v) { return renderBillboard(body, v); }
+  }));
+  function titleStudio(key, title, sub, path, newLabel) {
+    return studio(key, {
+      title: title, sub: sub, path: path,
+      actions: function () { return html`<button class="btn btn-p" data-new-title>${icon('plus')}${newLabel}</button>`; },
+      wire: function (v) { on(v.el, '[data-new-title]', 'click', function () { newTitle(v, TITLE_KINDS[key]); }); },
+      body: function (body, v, ov) { return renderTitles(body, v, ov, TITLE_KINDS[key], newLabel); }
+    });
+  }
+  CX.view('live-shows', titleStudio('live-shows', 'Live shows', 'Concerts, comedy and big nights streamed as they happen, with replays. Set the start time and the stream.', '/events/live', 'New live show'));
+  CX.view('live-movies', titleStudio('live-movies', 'Movies', 'Films on Cabana: the art, the trailer, who may watch, and the file or stream that plays.', '/events/movies', 'New movie'));
+  CX.view('live-series', titleStudio('live-series', 'Series', 'Series with seasons and episodes. Each episode has its own video and can be free or premium.', '/events/shows', 'New series'));
+  CX.view('live-music', studio('live-music', {
+    title: 'Music', sub: 'The Kenya chart from YouTube, the channels it follows, and your playlists.', path: '/events/music',
+    body: function (body, v, ov) { return renderMusic(body, v, ov); }
+  }));
+  CX.view('live-premium', studio('live-premium', {
+    title: 'Premium', sub: 'The free month, the price for later, and who has access.',
+    body: function (body, v, ov) { return renderPremium(body, v, ov); }
+  }));
 
   /* ════════════════════════════════════════════════════════════════
-     TITLES
+     OVERVIEW
      ════════════════════════════════════════════════════════════════ */
 
-  function renderTitles(body, v, ov) {
-    var kind = v.q.kind || 'all';
+  function renderOverview(body, v, ov) {
+    var c = ov.counts || {};
     set(body, CX.skeleton('cards'));
-    return titles().then(function (list) {
+    return Promise.all([
+      CX.rows(CX.q('events').select('id,status,starts_at,featured').limit(2000)),
+      CX.rows(CX.q('live_titles').select('id,kind,status,live_starts_at,live_ends_at,release_at')),
+      CX.rows(CX.q('live_billboard').select('id,status,starts_at,ends_at,placements')),
+      CX.rows(CX.q('live_settings').select('home_sections').eq('id', 1))
+    ]).then(function (r) {
       if (!v.alive()) return;
+      var evs = r[0], tl = r[1], bb = r[2], home = (r[3][0] && r[3][0].home_sections) || {};
+      var now = Date.now();
+      var up = evs.filter(function (e) { return e.status === 'published' && Date.parse(e.starts_at) > now - 6 * 3600e3; });
+      var pending = evs.filter(function (e) { return e.status === 'pending'; });
+      function kindCount(k) { return tl.filter(function (t) { return k.indexOf(t.kind) !== -1 && t.status === 'published'; }).length; }
+      function kindDraft(k) { return tl.filter(function (t) { return k.indexOf(t.kind) !== -1 && t.status === 'draft'; }).length; }
+      var showing = bb.filter(function (s) { return slideState(s)[0] === 'showing'; });
+      var liveNow = tl.filter(function (t) { return t.kind === 'live' && t.status === 'published' && t.live_starts_at && Date.parse(t.live_starts_at) <= now && (!t.live_ends_at || Date.parse(t.live_ends_at) > now); });
+      var m = ov.music || {};
+      var cards = [
+        ['live-billboard', 'Hero billboard', 'image', showing.length ? num(showing.length) + ' slide' + (showing.length === 1 ? '' : 's') + ' showing' : 'Building itself', showing.length ? 'Your slides lead each tab they are placed on' : 'From live shows, featured titles and events, the number one record, events and the free month', 'New slide', 'slide'],
+        ['events', 'Events', 'ticket', num(up.length) + ' coming up', (pending.length ? num(pending.length) + ' waiting for approval · ' : '') + 'Organisers submit, you approve or publish your own', 'New event', 'event'],
+        ['live-shows', 'Live shows', 'video', num(kindCount(['live', 'special'])) + ' published', (liveNow.length ? num(liveNow.length) + ' live now · ' : '') + num(kindDraft(['live', 'special'])) + ' draft', 'New live show', 'live'],
+        ['live-movies', 'Movies', 'play', num(kindCount(['movie'])) + ' published', num(kindDraft(['movie'])) + ' draft', 'New movie', 'movie'],
+        ['live-series', 'Series', 'layers', num(kindCount(['show'])) + ' published', num(kindDraft(['show'])) + ' draft', 'New series', 'show'],
+        ['live-music', 'Music', 'music', num(ov.chart_tracks) + ' on the chart', (m.last_refreshed_at ? 'Refreshed ' + ago(m.last_refreshed_at) : 'Waiting for a refresh') + ' · ' + num(c.sources) + ' channels · ' + num(c.playlists) + ' playlists', 'Refresh now', 'refresh'],
+        ['live-premium', 'Premium', 'star', num(ov.passes_active) + ' active passes', num(ov.trials_claimed) + ' free months claimed', 'Give Premium', 'grant']
+      ];
+      set(body, html`
+        <div class="grid g4 lvx-kpis">
+          <div class="mini"><div class="mini-l">Upcoming events</div><div class="mini-v">${num(up.length)}</div><div class="mini-s">${num(pending.length)} waiting for approval</div></div>
+          <div class="mini"><div class="mini-l">Plays · 30 days</div><div class="mini-v">${num(ov.plays_30)}</div><div class="mini-s">${num(ov.viewers_30)} signed-in viewers · ${Math.round(n(ov.seconds_30) / 3600)} h watched</div></div>
+          <div class="mini"><div class="mini-l">Premium</div><div class="mini-v">${num(ov.passes_active)}</div><div class="mini-s">active passes · ${num(ov.trials_claimed)} free months claimed</div></div>
+          <div class="mini"><div class="mini-l">Music chart</div><div class="mini-v">${num(ov.chart_tracks)}</div><div class="mini-s">${m.last_refreshed_at ? 'refreshed ' + ago(m.last_refreshed_at) : 'waiting for a refresh'} · ${num(c.sources)} channels</div></div>
+        </div>
+        <div class="lvx-parts mb">${cards.map(function (x) {
+          return html`<div class="lvx-part">
+            <a class="lvx-part-hd" href="#/${x[0]}"><span class="lvx-part-ic">${icon(x[2])}</span><span class="grow"><b>${x[1]}</b><span>${x[3]}</span></span>${icon('chevR')}</a>
+            <div class="lvx-part-s">${x[4]}</div>
+            <div class="lvx-part-f"><a class="btn btn-sm btn-g" href="#/${x[0]}">Manage</a><button class="btn btn-sm btn-p" data-quick="${x[6]}">${icon(x[6] === 'refresh' ? 'refresh' : x[6] === 'grant' ? 'star' : 'plus')}${x[5]}</button></div>
+          </div>`;
+        })}</div>
+        ${homeLayoutCard(home)}`);
+      on(body, '[data-quick]', 'click', function (el) {
+        var q = el.getAttribute('data-quick');
+        if (q === 'slide') return slideEditor(null, v);
+        if (q === 'event') {
+          global.location.hash = '#/events';
+          var tries = 0;
+          (function open() { var b = document.getElementById('ev-adm-new'); if (b) b.click(); else if (++tries < 20) setTimeout(open, 150); })();
+          return;
+        }
+        if (q === 'live') return newTitle(v, ['live', 'special']);
+        if (q === 'movie') return newTitle(v, ['movie']);
+        if (q === 'show') return newTitle(v, ['show']);
+        if (q === 'grant') { global.location.hash = '#/live-premium'; return; }
+        if (q === 'refresh') return CX.busy(el, function () { return refreshChart(); }).catch(noop);
+      });
+      wireHomeLayout(body, home);
+    });
+  }
+
+  function refreshChart() {
+    return rpc('admin_music_refresh').then(function () { return fetch(FN + '?action=chart&_=' + Date.now()).catch(noop); })
+      .then(function () { toast('Chart refreshed', 'ok'); });
+  }
+
+  /* The home page layout: show or hide each section, move it up or down. */
+  function homeLayoutCard(home) {
+    var order = orderOf(home), hidden = (home.hidden || []).map(String);
+    return html`<div class="card" data-home-card><div class="card-hd"><div><div class="card-t">Home page layout</div><div class="card-s">The sections under the billboard on /events, top to bottom. Hide a section or move it. Sections with nothing to show stay out of the way on their own.</div></div>
+        <div class="row gap-s"><button class="btn btn-g btn-sm" data-home-reset>${icon('undo')}Default order</button><button class="btn btn-p btn-sm" data-home-save>${icon('check')}Save layout</button></div></div>
+      <ol class="lvx-home" data-home-list>${order.map(function (k) {
+        var d = HOME_SECTIONS.filter(function (x) { return x[0] === k; })[0];
+        var off = hidden.indexOf(k) !== -1;
+        return html`<li class="lvx-home-i ${off ? 'off' : ''}" data-key="${k}">
+          <span class="lvx-home-n"></span>
+          <span class="grow"><b>${d[1]}</b><small>${d[2]}</small></span>
+          <label class="lvx-home-sw"><input type="checkbox" ${off ? '' : raw('checked')} data-home-show/><span>${off ? 'Hidden' : 'Shown'}</span></label>
+          <button class="icon-btn" type="button" data-home-up aria-label="Move up">${icon('chevR')}</button>
+          <button class="icon-btn" type="button" data-home-down aria-label="Move down">${icon('chevR')}</button>
+        </li>`;
+      })}</ol></div>`;
+  }
+  function orderOf(home) {
+    var all = HOME_SECTIONS.map(function (x) { return x[0]; });
+    var o = (home.order || []).map(String).filter(function (k, i, a) { return all.indexOf(k) !== -1 && a.indexOf(k) === i; });
+    all.forEach(function (k) { if (o.indexOf(k) === -1) o.splice(Math.min(all.indexOf(k), o.length), 0, k); });
+    return o;
+  }
+  function wireHomeLayout(body, home) {
+    var list = $('[data-home-list]', body); if (!list) return;
+    on(body, '[data-home-show]', 'change', function (el) {
+      var li = el.closest('li'); li.classList.toggle('off', !el.checked); set($('span', el.parentNode), el.checked ? 'Shown' : 'Hidden');
+    });
+    on(body, '[data-home-up]', 'click', function (el) { var li = el.closest('li'); if (li.previousElementSibling) list.insertBefore(li, li.previousElementSibling); });
+    on(body, '[data-home-down]', 'click', function (el) { var li = el.closest('li'); if (li.nextElementSibling) list.insertBefore(li.nextElementSibling, li); });
+    on(body, '[data-home-reset]', 'click', function () {
+      var items = $$('li', list);
+      HOME_SECTIONS.forEach(function (x) { var li = items.filter(function (i) { return i.getAttribute('data-key') === x[0]; })[0]; if (li) list.appendChild(li); });
+      toast('Default order restored. Save to publish it.', 'info', { ms: 2400 });
+    });
+    on(body, '[data-home-save]', 'click', function (el) {
+      var items = $$('li', list);
+      var val = { order: items.map(function (i) { return i.getAttribute('data-key'); }), hidden: items.filter(function (i) { return !$('[data-home-show]', i).checked; }).map(function (i) { return i.getAttribute('data-key'); }) };
+      CX.busy(el, function () {
+        return CX.q('live_settings').update({ home_sections: val }).eq('id', 1).then(must).then(function () {
+          CX.log('live_home_layout', 'live_settings', '1', val); toast('Layout saved · live on /events', 'ok');
+        });
+      }).catch(noop);
+    });
+  }
+
+  /* ════════════════════════════════════════════════════════════════
+     TITLES · live shows, movies, series
+     ════════════════════════════════════════════════════════════════ */
+
+  function renderTitles(body, v, ov, kinds, newLabel) {
+    var kind = v.q.kind && kinds.indexOf(v.q.kind) !== -1 ? v.q.kind : 'all';
+    set(body, CX.skeleton('cards'));
+    return titles().then(function (all) {
+      if (!v.alive()) return;
+      var list = all.filter(function (t) { return kinds.indexOf(t.kind) !== -1; });
       var by = ov.by_title || {};
       var shown = list.filter(function (t) { return kind === 'all' || t.kind === kind; });
+      var what = kinds[0] === 'movie' ? 'films' : kinds[0] === 'show' ? 'series' : 'live shows';
       set(body, html`
-        <div class="filters mb">${CX.seg([['all', 'Everything']].concat(KINDS), kind, 'data-kind')}</div>
-        ${!list.length ? html`<div class="callout info mb">${icon('info')}<div class="grow"><div class="strong">Nothing on Cabana Live yet</div><div class="muted" style="font-size:12.5px">Add a film, a series or a live show. Until then /events leads with events, the music chart and the free month.</div></div></div>` : ''}
+        ${kinds.length > 1 ? html`<div class="filters mb">${CX.seg([['all', 'Everything']].concat(KINDS.filter(function (k) { return kinds.indexOf(k[0]) !== -1; })), kind, 'data-kind')}</div>` : ''}
+        ${!list.length ? html`<div class="callout info mb">${icon('info')}<div class="grow"><div class="strong">No ${what} yet</div><div class="muted" style="font-size:12.5px">Create one as a draft, add the art, the trailer and what plays, then publish. Until then its tab on /events shows the “coming to Cabana Live” cards and the free month.</div></div></div>` : ''}
         <div class="lvx-grid">
-          <button class="lvx-new" type="button" data-new-title>${icon('plus')}<b>New title</b><span>A film, a series, a live show or a special</span></button>
+          <button class="lvx-new" type="button" data-new-title>${icon('plus')}<b>${newLabel}</b><span>Starts as a draft. Nothing shows until you publish.</span></button>
           ${shown.map(function (t) {
             var s = by[t.id] || {};
             var st = t.status === 'published' ? 'ok' : t.status === 'draft' ? 'warn' : '';
@@ -205,7 +389,7 @@
           })}
         </div>`);
       on(body, '[data-kind]', 'click', function (el) { v.setQ({ kind: el.getAttribute('data-kind') === 'all' ? null : el.getAttribute('data-kind') }); v.refresh(); });
-      on(body, '[data-new-title]', 'click', function () { newTitle(v); });
+      on(body, '[data-new-title]', 'click', function () { newTitle(v, kinds); });
       on(body, '[data-edit]', 'click', function (el) { var t = list.filter(function (x) { return x.id === el.getAttribute('data-edit'); })[0]; if (t) titleEditor(t, v); });
       on(body, '[data-status]', 'click', function (el) {
         CX.busy(el, function () {
@@ -227,19 +411,22 @@
     });
   }
 
-  function newTitle(v) {
+  function newTitle(v, kinds) {
+    kinds = kinds || KINDS.map(function (k) { return k[0]; });
+    var opts = KINDS.filter(function (k) { return kinds.indexOf(k[0]) !== -1; });
+    var noun = kinds[0] === 'movie' ? 'movie' : kinds[0] === 'show' ? 'series' : kinds.length === 1 ? 'title' : 'live show';
     form({
-      title: 'New title', sub: 'It starts as a draft. Nothing shows on /events until you publish.', icon: 'plus',
-      fields: [
-        { name: 'kind', label: 'What is it', type: 'select', options: KINDS, value: 'movie', required: true, full: true },
-        { name: 'title', label: 'Title', required: true, full: true, autofocus: true, placeholder: 'e.g. Nairobi Nights' }
-      ],
+      title: 'New ' + noun, sub: 'It starts as a draft. Nothing shows on /events until you publish.', icon: 'plus',
+      fields: (opts.length > 1 ? [{ name: 'kind', label: 'What is it', type: 'select', options: opts, value: opts[0][0], required: true, full: true }] : []).concat([
+        { name: 'title', label: 'Title', required: true, full: true, autofocus: true, placeholder: kinds[0] === 'live' ? 'e.g. Sauti Sol: Homecoming Live' : kinds[0] === 'show' ? 'e.g. Nairobi Nights' : 'e.g. The Wedding Party' }
+      ]),
       submit: 'Create and open', submitIcon: 'arrowL',
       onSubmit: function (val) {
+        var kind = val.kind || opts[0][0];
         var slug = slugify(val.title) || 'title-' + Date.now().toString(36);
-        return CX.q('live_titles').insert({ kind: val.kind, title: val.title, slug: slug, status: 'draft', access: 'premium' }).select().single()
+        return CX.q('live_titles').insert({ kind: kind, title: val.title, slug: slug, status: 'draft', access: 'premium' }).select().single()
           .then(function (r) {
-            if (r.error && /slug/i.test(r.error.message || '')) return CX.q('live_titles').insert({ kind: val.kind, title: val.title, slug: slug + '-' + Date.now().toString(36).slice(-4), status: 'draft', access: 'premium' }).select().single();
+            if (r.error && /slug/i.test(r.error.message || '')) return CX.q('live_titles').insert({ kind: kind, title: val.title, slug: slug + '-' + Date.now().toString(36).slice(-4), status: 'draft', access: 'premium' }).select().single();
             return r;
           }).then(must).then(function (row) {
             CX.log('live_title_create', 'live_title', row.id, { title: row.title });

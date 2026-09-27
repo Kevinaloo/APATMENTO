@@ -197,7 +197,14 @@
     ext: '<path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
     user: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
     trend: '<path d="m3 17 6-6 4 4 8-8"/><path d="M15 7h6v6"/>',
-    globe: '<circle cx="12" cy="12" r="9.5"/><path d="M2.5 12h19M12 2.5a14.5 14.5 0 0 1 0 19M12 2.5a14.5 14.5 0 0 0 0 19"/>'
+    globe: '<circle cx="12" cy="12" r="9.5"/><path d="M2.5 12h19M12 2.5a14.5 14.5 0 0 1 0 19M12 2.5a14.5 14.5 0 0 0 0 19"/>',
+    mic: '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"/>',
+    ball: '<circle cx="12" cy="12" r="8.5"/><path d="m12 7.4 3.4 2.5-1.3 4H9.9l-1.3-4zM12 3.5v3.9M20.3 10.2l-4.9-.3M16.9 19.1l-2.8-5.2M7.1 19.1l2.8-5.2M3.7 10.2l4.9-.3"/>',
+    palette: '<path d="M12 3.5a8.5 8.5 0 1 0 0 17c1.3 0 2-.9 2-1.9 0-1.3-1-1.6-1-2.8 0-1 .8-1.8 1.8-1.8H17a3.5 3.5 0 0 0 3.5-3.5c0-4-3.8-7-8.5-7Z"/><circle cx="7.8" cy="11" r="1.1" fill="currentColor" stroke="none"/><circle cx="10.5" cy="7.4" r="1.1" fill="currentColor" stroke="none"/><circle cx="15" cy="7.8" r="1.1" fill="currentColor" stroke="none"/>',
+    balloon: '<path d="M12 3.5c3 0 5.5 2.6 5.5 5.9 0 3.5-2.8 6.6-5.5 6.6s-5.5-3.1-5.5-6.6c0-3.3 2.5-5.9 5.5-5.9Z"/><path d="m11 16-.6 1.4h3.2L13 16M12 17.5c0 2-1.5 2.2-1.5 4"/>',
+    briefcase: '<rect x="3.5" y="7" width="17" height="12.5" rx="2.5"/><path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7M3.5 12.5h17"/>',
+    people: '<circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19.5c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="16.8" cy="9.2" r="2.6"/><path d="M15.6 14.6c2.3-.3 4.3 1.2 4.9 4.4"/>',
+    food: '<path d="M7 3.5v7.5M4.5 3.5v5a2.5 2.5 0 0 0 5 0v-5M7 11v9.5M16.5 20.5v-17c-2.2 1.2-3.5 3.7-3.5 6.8v3.7h3.5"/>'
   };
   L.ic = function (name, sw) {
     return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="' + (sw || 2) +
@@ -518,7 +525,7 @@
         L.store.set(LOCAL_SAVES, L.saves.all());
       }
       L.emit('saves');
-      L.toast(on ? (opts && opts.remind ? 'We will remind you. Saved to My List.' : 'Added to My List') : 'Removed from My List');
+      L.toast(on ? (opts && opts.remind ? 'We will remind you. Saved to My List, under the heart at the top.' : 'Saved to My List. Find it under the heart at the top.') : 'Removed from My List');
       return on;
     }
   };
@@ -721,15 +728,37 @@
     }
   };
 
+  /* Listened for on window in the capture phase, so Cabana Live's own links
+     are handled before any site-wide script can turn them into a reload.
+     A button inside a link (save, play) still gets its own click. */
   function onClick(e) {
     if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     var a = e.target.closest && e.target.closest('a[href]');
     if (!a || a.target === '_blank' || a.hasAttribute('download') || a.getAttribute('rel') === 'external') return;
+    var inner = e.target.closest('button,[data-act],input,select,textarea');
+    if (inner && inner !== a && a.contains(inner)) return;
+    var raw = a.getAttribute('href');
+    /* The page has <base href="/">, so an in-page #anchor is resolved here
+       rather than by the browser (which would leave for the homepage). */
+    if (raw.charAt(0) === '#') {
+      e.preventDefault();
+      var target = raw.length > 1 && doc.getElementById(raw.slice(1));
+      if (target) {
+        if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1');
+        target.focus({ preventScroll: true });
+        target.scrollIntoView({ behavior: reduced() ? 'auto' : 'smooth', block: 'start' });
+      }
+      return;
+    }
     var u;
-    try { u = new URL(a.getAttribute('href'), location.href); } catch (x) { return; }
+    try { u = new URL(raw, location.href); } catch (x) { return; }
     if (u.origin !== location.origin || !isOurs(u.pathname)) return;
-    if (u.pathname === location.pathname && u.search === location.search && u.hash) return;
     e.preventDefault();
+    if (u.pathname === location.pathname && u.search === location.search) {
+      if (u.hash) { var h = doc.getElementById(u.hash.slice(1)); if (h) h.scrollIntoView({ behavior: 'smooth' }); }
+      else global.scrollTo({ top: 0, behavior: reduced() ? 'auto' : 'smooth' });
+      return;
+    }
     L.go(u.pathname + u.search + u.hash);
   }
 
@@ -741,7 +770,7 @@
     else if (location.pathname === '/events.html') history.replaceState({ lv: 1 }, '', L.BASE + location.search);
 
     try { history.scrollRestoration = 'manual'; } catch (e) {}
-    doc.addEventListener('click', onClick);
+    global.addEventListener('click', onClick, true);
     global.addEventListener('popstate', function () {
       /* A closing overlay steps back through its own history entry; that
          pop is not a navigation. A back gesture with an overlay open

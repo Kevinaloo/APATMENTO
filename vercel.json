@@ -550,11 +550,11 @@
     },
     {
       "source": "/events/:path+",
-      "destination": "/events.html"
+      "destination": "/events"
     },
     {
       "source": "/u/:handle([A-Za-z0-9._]{3,24})",
-      "destination": "/person.html?handle=:handle"
+      "destination": "/person?handle=:handle"
     }
   ],
   "buildCommand": "node scripts/check-syntax.mjs",

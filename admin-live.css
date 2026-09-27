@@ -112,3 +112,45 @@
 .lvx-track img, .lvx-pick-row img { width: 64px; height: 36px; object-fit: cover; border-radius: 6px; flex: none; }
 .lvx-track-n { font: 700 12px var(--f-m); color: var(--ink-4); min-width: 22px; text-align: right; }
 .lvx-track .icon-btn[data-mv] .ic { transform: rotate(-90deg); }
+
+/* ── the studio: one bar across every Cabana Live page ── */
+.lvx-studio { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin: -4px 0 18px; padding: 4px; border-radius: 14px; background: var(--panel); border: 1px solid var(--line); }
+.lvx-studio::-webkit-scrollbar { display: none; }
+.lvx-studio-a { display: inline-flex; align-items: center; gap: 7px; flex: none; height: 36px; padding: 0 13px; border-radius: 10px; font-size: 13px; font-weight: 600; color: var(--ink-3); text-decoration: none; transition: background .2s, color .2s; }
+.lvx-studio-a .ic { width: 16px; height: 16px; }
+.lvx-studio-a:hover { color: var(--ink-1); background: var(--panel-3, rgba(127, 127, 127, .08)); }
+.lvx-studio-a.on { color: var(--ink-1); background: var(--brand-soft); box-shadow: inset 0 0 0 1px var(--brand-line); }
+#s-events > .lvx-studio { margin-top: 0; }
+
+/* ── overview: every part of /events at a glance ── */
+.lvx-parts { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.lvx-part { display: flex; flex-direction: column; border-radius: 16px; background: var(--panel); border: 1px solid var(--line); overflow: hidden; transition: border-color .2s, box-shadow .25s; }
+.lvx-part:hover { border-color: var(--line-3); box-shadow: var(--sh-2); }
+.lvx-part-hd { display: flex; align-items: center; gap: 12px; padding: 14px 14px 6px; color: inherit; text-decoration: none; }
+.lvx-part-hd > .ic { width: 16px; height: 16px; color: var(--ink-4); }
+.lvx-part-hd b { display: block; font: 640 15px var(--f-d); letter-spacing: -.02em; color: var(--ink-1); }
+.lvx-part-hd .grow > span { display: block; font: 600 12.5px var(--f-m); color: var(--ink-2); margin-top: 2px; }
+.lvx-part-ic { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; flex: none; color: #fff; background: linear-gradient(135deg, #FF2E93, #7A3BFF); }
+.lvx-part:nth-child(2) .lvx-part-ic { background: linear-gradient(135deg, #FFB23F, #FF5E3A); }
+.lvx-part:nth-child(3) .lvx-part-ic { background: linear-gradient(135deg, #FF3355, #FF8A3D); }
+.lvx-part:nth-child(4) .lvx-part-ic { background: linear-gradient(135deg, #F6C451, #C98F24); }
+.lvx-part:nth-child(5) .lvx-part-ic { background: linear-gradient(135deg, #33E1FF, #3D7BFF); }
+.lvx-part:nth-child(6) .lvx-part-ic { background: linear-gradient(135deg, #22E08A, #0FA3B1); }
+.lvx-part:nth-child(7) .lvx-part-ic { background: linear-gradient(135deg, #FFE7A1, #F6C451); color: #2A1C00; }
+.lvx-part-ic .ic { width: 20px; height: 20px; }
+.lvx-part-s { padding: 0 14px 12px 66px; font-size: 12px; color: var(--ink-4); flex: 1; }
+.lvx-part-f { display: flex; gap: 6px; padding: 10px 12px; border-top: 1px solid var(--line); justify-content: flex-end; }
+
+/* ── home page layout editor ── */
+.lvx-home { list-style: none; margin: 0; padding: 0 20px 18px; counter-reset: lvxh; display: grid; gap: 6px; }
+.lvx-home-i { counter-increment: lvxh; display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); transition: opacity .2s, background .2s; }
+.lvx-home-i.off { opacity: .55; background: transparent; border-style: dashed; }
+.lvx-home-n::before { content: counter(lvxh); display: grid; place-items: center; width: 26px; height: 26px; border-radius: 8px; font: 700 12px var(--f-m); color: var(--ink-3); background: var(--panel-3, rgba(127, 127, 127, .1)); }
+.lvx-home-i .grow { min-width: 0; }
+.lvx-home-i b { display: block; font-size: 14px; }
+.lvx-home-i small { display: block; font-size: 12px; color: var(--ink-4); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lvx-home-sw { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 600; color: var(--ink-3); cursor: pointer; flex: none; min-width: 78px; }
+.lvx-home-sw input { width: 16px; height: 16px; accent-color: var(--brand, #7A3BFF); }
+.lvx-home-i [data-home-up] .ic { transform: rotate(-90deg); }
+.lvx-home-i [data-home-down] .ic { transform: rotate(90deg); }
+.lvx-home-i:first-child [data-home-up], .lvx-home-i:last-child [data-home-down] { opacity: .3; pointer-events: none; }

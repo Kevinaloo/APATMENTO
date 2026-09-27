@@ -45,7 +45,7 @@ test('every console script and stylesheet the shell loads exists', () => {
 
 test('every navigation entry resolves to a view, a desk or an external desk', () => {
   const w = bootConsole();
-  const registered = new Set([...views.matchAll(/CX\.view\('([a-z]+)'/g)].map(m => m[1]));
+  const registered = new Set([...views.matchAll(/CX\.view\('([a-z-]+)'/g)].map(m => m[1]));
   for (const group of w.CX.NAV) {
     for (const item of group.items) {
       const ok = registered.has(item.id) || item.desk || item.href;
