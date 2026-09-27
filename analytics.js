@@ -27,6 +27,8 @@ function getDeviceType(){
   return w < 768 ? 'mobile' : w < 1200 ? 'tablet' : 'desktop';
 }
 function getPage(){
+  // Cabana Live draws /events/music, /events/e/<id> and the rest in one page.
+  if(/^\/events\//.test(location.pathname)) return 'events';
   return location.pathname.split('/').pop().replace('.html','') || 'index';
 }
 
@@ -91,6 +93,11 @@ document.addEventListener('visibilitychange', ()=>{ if(document.hidden) flush();
 
 // Page view
 track('page_view', { title: document.title, path: location.pathname });
+// …and each view an app page draws without a reload (Cabana Live).
+window.addEventListener('cabana:navigate', e => {
+  if(!e.detail || e.detail.initial) return;
+  track('page_view', { title: document.title, path: location.pathname, tab: e.detail.tab });
+});
 
 // Service clicks (on dashboard)
 document.addEventListener('click', e => {

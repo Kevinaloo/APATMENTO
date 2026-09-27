@@ -745,23 +745,33 @@
   }
   function mountFeed(sl) {
     var sels = (SURF.feed && SURF.feed.grid) || [];
-    var grid = null, waited = 0, pos = [], built = {};
+    var spa = !!(SURF.feed && SURF.feed.spa);
+    var grid = null, waited = 0, pos = [], built = {}, mo = null;
+    var label = (SURF.feed && SURF.feed.label) || 'results';
     function find() { for (var i = 0; i < sels.length; i++) { var g = D.querySelector(sels[i]); if (g) return g; } return null; }
-    report(sl, 'deferred', { detail: 'Waiting for ' + ((SURF.feed && SURF.feed.label) || 'results') + ' to load.' });
+    report(sl, 'deferred', { detail: 'Waiting for ' + label + ' to load.' });
     (function poll() {
       grid = find();
       if (grid) return start();
       waited += 700;
-      if (waited > 20000) { report(sl, 'missing', { detail: 'The results list (' + sels.join(', ') + ') is not on the page. The page layout changed.' }); return; }
+      if (waited > 20000) {
+        // A page that draws its own views (Cabana Live) shows the grid on
+        // one tab only: not seeing it yet is normal, and the next route
+        // change looks again.
+        if (spa) { report(sl, 'deferred', { detail: 'Shows when ' + label + ' are on screen.' }); return; }
+        report(sl, 'missing', { detail: 'The results list (' + sels.join(', ') + ') is not on the page. The page layout changed.' }); return;
+      }
       setTimeout(poll, 700);
     })();
+    if (spa) W.addEventListener('cabana:navigate', function () { setTimeout(function () { if (!grid || !grid.isConnected) { grid = find(); if (grid) start(); } }, 350); });
     function start() {
-      var mo = new MutationObserver(rafThrottle(function () { setTimeout(layout, 350); }));
+      if (!mo) mo = new MutationObserver(rafThrottle(function () { setTimeout(layout, 350); }));
+      mo.disconnect();
       mo.observe(grid, { childList: true });
       layout();
     }
     function layout() {
-      if (!grid.isConnected) { grid = find(); if (!grid) return; }
+      if (!grid.isConnected) { grid = find(); if (!grid) return; mo.disconnect(); mo.observe(grid, { childList: true }); }
       var items = [].slice.call(grid.children).filter(isItem);
       var cfg = S.infeed || {}, first = Math.max(3, cfg.first || 6), every = Math.max(6, cfg.every || 12), max = Math.max(0, Math.min(4, cfg.max == null ? 2 : cfg.max));
       if (!max) { report(sl, 'off', { detail: 'In-results ads are switched off in the rules.' }); return; }

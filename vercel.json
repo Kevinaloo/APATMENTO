@@ -549,6 +549,10 @@
       "destination": "/api/agents?action=didit-webhook"
     },
     {
+      "source": "/events/:path+",
+      "destination": "/events.html"
+    },
+    {
       "source": "/u/:handle([A-Za-z0-9._]{3,24})",
       "destination": "/person.html?handle=:handle"
     }
