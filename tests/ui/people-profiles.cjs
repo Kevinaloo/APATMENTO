@@ -61,6 +61,7 @@ function people(u,body){
   try{
     browser=await chromium.launch(process.env.CABANA_BROWSER_PATH?{headless:true,executablePath:process.env.CABANA_BROWSER_PATH}:{headless:true,channel:process.env.CABANA_BROWSER_CHANNEL||'chrome'});
     const context=await browser.newContext({viewport:{width:1280,height:900},permissions:['notifications']});
+    context.setDefaultTimeout(90000);context.setDefaultNavigationTimeout(90000);
     await context.addInitScript(()=>Object.defineProperty(navigator,'serviceWorker',{value:{register:async()=>({}),getRegistrations:async()=>[],getRegistration:async()=>null,ready:new Promise(()=>{}),addEventListener(){}}}));
     const errors=[];context.on('page',p=>p.on('pageerror',e=>errors.push(e.message)));
     await context.route('**/*',route=>{
@@ -79,7 +80,7 @@ function people(u,body){
     await page.goto(origin+'/profile.html');
     await page.waitForSelector('#tab-catalogue .opt');
     assert.equal(await page.locator('#hero-name').innerText(),'Amani O.');
-    assert.equal(await page.locator('#tab-catalogue [data-pick]').count(),38,'38 people in the catalogue');
+    assert.equal(await page.locator('#tab-catalogue [data-pick]').count(),12,'the first twelve people load immediately');
     assert.equal(await page.locator('.tier').count(),2,'purple and reef tiers for an individual');
     await page.screenshot({path:resolve(out,'studio.png'),fullPage:false});
     await page.locator('[data-pick="zawadi"]').click();

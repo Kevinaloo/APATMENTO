@@ -16,12 +16,14 @@ The provider tick outranks the other two and falls back to purple or gold as soo
 
 `cabana-avatars.js` draws every character as SVG from a spec of about 120 bytes stored in `member_public_profiles.avatar`.
 
-- **Catalogue:** 38 named people, 12 animal spirits (Simba, Tembo, Twiga…) and 8 organisation emblems.
+- **Catalogue:** 48 named people, 20 animal spirits (including a fennec, red panda, otter, penguin, bushbaby, African wild dog, peacock and dolphin) and 8 organisation emblems. Existing saved character indices are unchanged.
 - **Customisation:**
   - People: skin, hair and headwear (including locs, braids, Bantu knots, headwrap, hijab and kofia), hair and fabric colours, eyes, smile, facial hair, accessories, outfit and backdrop.
   - Animal spirits: colour mood and accessories.
   - Emblems: shape, pattern, palette and symbol.
-- **Motion:** Still, Calm or Lively. Breathing, blinking and a gentle sway, each avatar on its own phase. Below 40px only the blink survives. Motion pauses off-screen and in background tabs, and `prefers-reduced-motion` turns it off.
+- **Motion:** Still, Calm or Lively, with independent animation phases. Lively characters perform expressive gestures with animated details; small dashboard and message icons keep moving too. Hover, focus or tap brings a reaction; the studio also offers Say hi, Dance and Send love. Motion pauses off-screen and in background tabs, and `prefers-reduced-motion` turns it off. Removed avatars are released from the observer.
+- **Studio:** Search by character name or personality, customise with a live preview, and see the result at dashboard, message and profile sizes. Motion choices survive Surprise me and character-type changes. Keyboard users can navigate the tabs with arrow keys; focus stays on a choice after selecting it.
+- **Everywhere:** Signed-in dashboard, partner dashboard and homepage icons use the saved avatar and link to `/profile`. The shared member-card renderer supplies listing, message, follow-list and public-profile avatars. Successful saves invalidate the member cache and notify other tabs; sign-out clears the account-scoped cache. Failed saves keep the draft.
 - **Defaults:** members who never choose get a deterministic animal spirit (organisations get an emblem). Cabana never guesses anyone's skin tone or gender.
 
 ## Photos
@@ -61,9 +63,9 @@ Other safeguards:
 - **Database:** `supabase/migrations/20260926120000_people_profiles_v2.sql`, `…121000_people_provider_badge.sql` (both applied)
 - **API:** `api/lib/_profiles.js`, `_didit.js`, `_moderation.js`, `_avatar-spec.js`, routed through `/api/people`
 - **Client:**
-  - `cabana-avatars.js`, `cabana-people.js`. Use `data-cp-avatar`, `data-cp-tick`, `data-cp-follow` and `data-cabana-person` on any page.
+  - `cabana-avatars.js`, `cabana-people.js`. Use `data-cp-avatar`, `data-cp-tick`, `data-cp-follow` and `data-cabana-person` on any page; `data-cp-self` renders the signed-in member. Call `CabanaPeople.changed(id)` only after a successful profile mutation.
   - `profile.html` (studio), `person.html` (public page), `admin-views-people.js` (console)
-- **Tests:** `tests/people-profiles.test.mjs`, `tests/ui/people-profiles.cjs`
+- **Tests:** `tests/people-profiles.test.mjs`, `tests/avatar-experience.test.mjs`, `tests/ui/people-profiles.cjs`, `tests/ui/avatar-experience.cjs`. The browser tests use isolated API fixtures and Chrome; they do not edit live member accounts.
 
 ## One identity
 

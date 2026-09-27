@@ -3,14 +3,14 @@
    hair style or animal cannot reach the database unvalidated. */
 export const AVATAR_RANGES = Object.freeze({
   p: Object.freeze({ s: 10, h: 16, hc: 9, fc: 9, e: 5, m: 6, f: 4, x: 9, w: 4, o: 10, b: 12, mo: 3 }),
-  a: Object.freeze({ a: 12, t: 4, x: 6, b: 12, mo: 3 }),
+  a: Object.freeze({ a: 20, t: 4, x: 6, b: 12, mo: 3 }),
   e: Object.freeze({ sh: 6, pt: 6, c: 8, g: 13, mo: 3 }),
 });
 
 export function cleanAvatar(spec) {
   if (!spec || typeof spec !== 'object' || Array.isArray(spec)) return null;
   const R = AVATAR_RANGES[spec.k];
-  if (!R) return null;
+  if (!Object.prototype.hasOwnProperty.call(AVATAR_RANGES, spec.k)) return null;
   const out = { v: 1, k: spec.k };
   for (const key of Object.keys(R)) {
     const n = Number(spec[key]);

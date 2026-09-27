@@ -54,14 +54,23 @@
   let uid = 0;
 
   /* ── avatar engine, loaded on demand ─────────────────────────────── */
-  let avatarsReady = window.CabanaAvatars ? Promise.resolve() : null;
+  let avatarsReady = null;
   function needAvatars() {
-    if (window.CabanaAvatars) return Promise.resolve();
+    if (window.CabanaAvatars) return Promise.resolve(true);
     if (avatarsReady) return avatarsReady;
     avatarsReady = new Promise(resolve => {
       const s = document.createElement('script');
-      s.src = '/cabana-avatars.js?v=1'; s.async = true;
-      s.onload = resolve; s.onerror = resolve;
+      let done = false;
+      const finish = () => {
+        if (done) return; done = true; clearTimeout(timeout);
+        const ready = !!window.CabanaAvatars;
+        if (!ready) { avatarsReady = null; s.remove(); }
+        resolve(ready);
+        if (ready) hydratePending(document);
+      };
+      const timeout = setTimeout(finish, 10000);
+      s.src = '/cabana-avatars.js?v=2-living'; s.async = true;
+      s.onload = finish; s.onerror = finish;
       document.head.appendChild(s);
     });
     return avatarsReady;
@@ -77,9 +86,9 @@
     } catch (_) { /* signed out */ }
     return headers;
   }
-  async function api(op, params, body) {
+  async function api(op, params, body, options) {
     const q = new URLSearchParams(Object.assign({ op }, params || {}));
-    const r = await fetch('/api/people?' + q, { method: body ? 'POST' : 'GET', headers: await authHeaders(), ...(body ? { body: JSON.stringify(body) } : {}) });
+    const r = await fetch('/api/people?' + q, { method: body ? 'POST' : 'GET', headers: await authHeaders(), ...(body ? { body: JSON.stringify(body) } : {}), ...(options?.signal ? { signal: options.signal } : {}) });
     const data = await r.json().catch(() => ({}));
     if (!r.ok) throw Object.assign(new Error(data.error || 'Something went wrong. Please try again.'), { status: r.status, data });
     return data;
@@ -93,16 +102,28 @@
   }
 
   /* ── batched card cache ──────────────────────────────────────────── */
-  const cache = new Map(); // id → {card, at}
+  const cache = new Map(); // scoped to the current session; never persisted
+  const revisions = new Map();
+  let sessionEpoch = 0;
   let queue = new Map(), timer = null;
   function flush() {
     const batch = queue; queue = new Map(); timer = null;
     const ids = [...batch.keys()];
+    const epoch = sessionEpoch;
+    const versions = new Map(ids.map(id => [id, revisions.get(id) || 0]));
     for (let i = 0; i < ids.length; i += 60) {
       const chunk = ids.slice(i, i + 60);
-      api('cards', { ids: chunk.join(',') }).then(d => {
-        chunk.forEach(id => { const c = d.cards?.[id] || null; cache.set(id, { card: c, at: Date.now() }); batch.get(id).forEach(f => f.resolve(c)); });
-      }).catch(() => chunk.forEach(id => batch.get(id).forEach(f => f.resolve(null))));
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10000);
+      api('cards', { ids: chunk.join(',') }, null, { signal: controller.signal }).then(d => {
+        chunk.forEach(id => {
+          // A response from before a sign-out or save must never repaint a face.
+          const current = epoch === sessionEpoch && versions.get(id) === (revisions.get(id) || 0);
+          const c = current ? d.cards?.[id] || null : null;
+          if (current) cache.set(id, { card: c, at: Date.now() });
+          batch.get(id).forEach(f => f.resolve(c));
+        });
+      }).catch(() => chunk.forEach(id => batch.get(id).forEach(f => f.resolve(null)))).finally(() => clearTimeout(timeout));
     }
   }
   function card(id) {
@@ -120,7 +141,7 @@
     const out = await Promise.all(list.map(card));
     return Object.fromEntries(list.map((id, i) => [id, out[i]]));
   }
-  function forget(id) { cache.delete(id); }
+  function forget(id) { cache.delete(id); revisions.set(id, (revisions.get(id) || 0) + 1); }
 
   /* ── ticks ───────────────────────────────────────────────────────── */
   function seal(n, r1, r2) { // scalloped rosette path
@@ -161,12 +182,15 @@
 
   /* ── avatars ─────────────────────────────────────────────────────── */
   function avatarHTML(c, size) {
-    size = size || 44;
+    size = Math.max(16, Math.min(512, Number(size) || 44));
     if (!c) return `<span class="cpa cpa-empty" style="width:${size}px;height:${size}px"></span>`;
     const org = c.type === 'organization';
     const shape = org ? 'cpa-org' : '';
     if (c.photo) return `<span class="cpa ${shape}" style="width:${size}px;height:${size}px"><img src="${esc(c.photo)}" alt="" loading="lazy" decoding="async" width="${size}" height="${size}"></span>`;
-    if (!window.CabanaAvatars) return `<span class="cpa ${shape} cpa-wait" style="width:${size}px;height:${size}px" data-cp-pending="${esc(c.id)}"></span>`;
+    if (!window.CabanaAvatars) {
+      needAvatars();
+      return `<span class="cpa ${shape} cpa-wait" style="width:${size}px;height:${size}px" data-cp-pending="${esc(c.id)}" data-cp-spec="${esc(JSON.stringify(c.avatar || null))}" data-cp-name="${esc(c.name || '')}" data-cp-type="${org ? 'organization' : 'individual'}" data-cp-size="${size}"></span>`;
+    }
     const spec = c.avatar || window.CabanaAvatars.defaultFor(c.id, c.type);
     return `<span class="cpa ${shape}" style="width:${size}px;height:${size}px">${window.CabanaAvatars.render(spec, { size, name: c.name, seed: c.id, label: c.name + ' avatar' })}</span>`;
   }
@@ -175,17 +199,48 @@
   }
 
   /* ── hydration ───────────────────────────────────────────────────── */
+  const CARD_NODES = '[data-cp-avatar],[data-cp-tick],[data-cp-follow]';
+  function matching(root, selector) {
+    if (!root?.querySelectorAll) return [];
+    return [...(root.matches?.(selector) ? [root] : []), ...root.querySelectorAll(selector)];
+  }
+  function hydratePending(root) {
+    if (!window.CabanaAvatars) return;
+    const pending = matching(root, '[data-cp-pending]');
+    pending.forEach(n => {
+      let spec = null;
+      try { spec = JSON.parse(n.dataset.cpSpec || 'null'); } catch (_) {}
+      n.outerHTML = avatarHTML({ id: n.dataset.cpPending, name: n.dataset.cpName, type: n.dataset.cpType, avatar: spec }, n.dataset.cpSize);
+    });
+    if (pending.length) window.CabanaAvatars.observeAll(root);
+  }
+  function resetNode(n) {
+    n.__cp = null; n.__cpRetries = 0;
+    if (n.__cpFallback !== undefined) n.innerHTML = n.__cpFallback;
+    n.classList.remove('cp-live');
+  }
+  let retryTimer = null;
+  function retryHydration() {
+    if (retryTimer) return;
+    retryTimer = setTimeout(() => { retryTimer = null; hydrate(document); }, 1500);
+  }
   async function hydrate(root) {
     root = root || document;
-    const nodes = [...root.querySelectorAll('[data-cp-avatar],[data-cp-tick],[data-cp-follow]')].filter(n => !n.__cp);
+    hydrateSelf(root);
+    hydratePending(root);
+    const nodes = matching(root, CARD_NODES).filter(n => !n.__cp && (n.__cpRetries || 0) < 3);
     if (!nodes.length) return;
-    nodes.forEach(n => { n.__cp = true; });
+    const token = {};
+    const epoch = sessionEpoch;
+    nodes.forEach(n => { n.__cp = token; if (n.__cpFallback === undefined) n.__cpFallback = n.innerHTML; });
     const ids = nodes.map(n => n.dataset.cpAvatar || n.dataset.cpTick || n.dataset.cpFollow).filter(i => UUID.test(i));
     if (!ids.length) return;
-    const [map] = await Promise.all([cards(ids), needAvatars()]);
+    const [map, ready] = await Promise.all([cards(ids), needAvatars()]);
     nodes.forEach(n => {
+      if (!n.isConnected || n.__cp !== token || epoch !== sessionEpoch) return;
+      const c = map[n.dataset.cpAvatar || n.dataset.cpTick || n.dataset.cpFollow];
+      if (!c || !ready) { n.__cp = null; n.__cpRetries = (n.__cpRetries || 0) + 1; retryHydration(); }
       if (n.dataset.cpAvatar) {
-        const c = map[n.dataset.cpAvatar];
         if (c) { n.innerHTML = avatarHTML(c, Number(n.dataset.cpSize) || n.clientWidth || 44); n.classList.add('cp-live'); window.CabanaAvatars?.observeAll(n); }
       }
       if (n.dataset.cpTick) {
@@ -203,12 +258,97 @@
   function watch() {
     if (mo || !('MutationObserver' in window)) return;
     let pending = false;
-    mo = new MutationObserver(() => {
+    mo = new MutationObserver(records => {
+      records.forEach(r => {
+        if (r.type !== 'attributes') return;
+        if (r.attributeName === 'data-cp-self') { clearSelf(r.target); r.target.__cpSelfRetries = 0; }
+        else resetNode(r.target);
+      });
       if (pending) return; pending = true;
       requestAnimationFrame(() => { pending = false; hydrate(document); });
     });
-    mo.observe(document.body, { childList: true, subtree: true });
+    mo.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-cp-avatar', 'data-cp-tick', 'data-cp-follow', 'data-cp-self'] });
   }
+
+  /* ── your profile icon, shared by every signed-in navigation ─────── */
+  let selfState = { status: 'guest', user: null, initial: '?' };
+  let selfBound = false;
+  function selfId() { return selfState.status === 'user' ? selfState.user?.id || '' : ''; }
+  function clearSelf(n) {
+    n.__cpSelf = null; n.classList.remove('cp-live');
+    delete n.dataset.cpSelfUser;
+    n.textContent = selfId() ? selfState.initial || '?' : '?';
+  }
+  async function hydrateSelf(root) {
+    const id = selfId();
+    const nodes = matching(root, '[data-cp-self]').filter(n => !n.__cpSelf && (n.__cpSelfRetries || 0) < 3);
+    if (!nodes.length) return;
+    if (!id) { nodes.forEach(n => { if (n.textContent !== '?' || n.children.length) clearSelf(n); }); return; }
+    const token = {}, epoch = sessionEpoch;
+    nodes.forEach(n => { n.__cpSelf = token; n.textContent = selfState.initial || '?'; });
+    const [c, ready] = await Promise.all([card(id), needAvatars()]);
+    nodes.forEach(n => {
+      if (!n.isConnected || n.__cpSelf !== token || id !== selfId() || epoch !== sessionEpoch) return;
+      if (!ready || !c) {
+        n.__cpSelf = null; n.__cpSelfRetries = (n.__cpSelfRetries || 0) + 1;
+        retryHydration();
+      }
+      if (!ready) return;
+      // Members without a saved public profile still get a deterministic spirit.
+      n.innerHTML = avatarHTML(c || { id, name: selfState.name || 'Your', type: 'individual' }, n.clientWidth || 38);
+      n.classList.add('cp-live'); n.dataset.cpSelfUser = id;
+      window.CabanaAvatars.observeAll(n);
+    });
+  }
+  function onSession(st) {
+    const previous = selfId();
+    selfState = st || { status: 'guest', user: null, initial: '?' };
+    if (previous !== selfId()) {
+      if (previous) close();
+      sessionEpoch++; cache.clear(); revisions.clear(); followState.clear();
+      if (timer) { clearTimeout(timer); timer = null; }
+      queue.forEach(waiters => waiters.forEach(f => f.resolve(null))); queue.clear();
+      matching(document, CARD_NODES).forEach(resetNode);
+      matching(document, '[data-cp-self]').forEach(n => { clearSelf(n); n.__cpSelfRetries = 0; });
+    }
+    hydrate(document);
+  }
+  function bindSession() {
+    if (selfBound || !window.ApaSession) return selfBound;
+    selfBound = true;
+    onSession(window.ApaSession.get());
+    window.ApaSession.subscribe(onSession);
+    return true;
+  }
+  function refreshPerson(id) {
+    if (!UUID.test(String(id || ''))) return;
+    forget(id);
+    matching(document, CARD_NODES).forEach(n => {
+      if ([n.dataset.cpAvatar, n.dataset.cpTick, n.dataset.cpFollow].includes(id)) resetNode(n);
+    });
+    if (selfId() === id) matching(document, '[data-cp-self]').forEach(n => { n.__cpSelf = null; n.__cpSelfRetries = 0; });
+    hydrate(document);
+  }
+  // Publish invalidation only; avatar specs and personal details stay out of storage.
+  function changed(id) {
+    if (!UUID.test(String(id || ''))) return;
+    document.dispatchEvent(new CustomEvent('cabana:profile-updated', { detail: { id } }));
+    try { localStorage.setItem('cabana:profile-updated', JSON.stringify({ id, at: Date.now(), nonce: Math.random() })); } catch (_) {}
+  }
+  document.addEventListener('cabana:profile-updated', e => refreshPerson(e.detail?.id));
+  window.addEventListener('storage', e => {
+    if (e.key !== 'cabana:profile-updated' || !e.newValue) return;
+    try { refreshPerson(JSON.parse(e.newValue).id); } catch (_) {}
+  });
+  function recover() {
+    bindSession();
+    matching(document, CARD_NODES).forEach(n => { if (!n.__cp) n.__cpRetries = 0; });
+    matching(document, '[data-cp-self]').forEach(n => { if (!n.__cpSelf) n.__cpSelfRetries = 0; });
+    hydrate(document);
+  }
+  window.addEventListener('online', recover);
+  window.addEventListener('pageshow', recover);
+  window.addEventListener('focus', recover);
 
   /* ── follow ──────────────────────────────────────────────────────── */
   const followState = new Map();
@@ -229,6 +369,7 @@
   async function signedIn() { const h = await authHeaders(); return !!h.Authorization; }
   function goSignIn() { location.href = '/auth.html?next=' + encodeURIComponent(location.pathname + location.search + location.hash); }
   function wireFollow(btn, c) {
+    btn.__cpPerson = c.id;
     btn.hidden = false;
     btn.classList.add('cp-follow');
     btn.type = 'button';
@@ -239,7 +380,7 @@
       if (!(await signedIn())) return goSignIn();
       const on = btn.getAttribute('aria-pressed') !== 'true';
       paintFollow(btn, on); btn.disabled = true;
-      try { await follow(c.id, on); } catch (err) { paintFollow(btn, !on); toast(err.message); } finally { btn.disabled = false; }
+      try { await follow(btn.__cpPerson, on); } catch (err) { paintFollow(btn, !on); toast(err.message); } finally { btn.disabled = false; }
     });
   }
 
@@ -376,7 +517,12 @@
 .cpa{display:inline-block;border-radius:50%;overflow:hidden;flex-shrink:0;background:linear-gradient(135deg,#ede7fb,#e0f7f3);position:relative;isolation:isolate}
 .cpa.cpa-org{border-radius:28%}
 .cpa img{width:100%;height:100%;object-fit:cover;display:block}
+[data-cp-self]{padding:0;text-decoration:none;overflow:hidden;isolation:isolate;flex-shrink:0}
+[data-cp-self]>.cpa{display:block;width:100%!important;height:100%!important;border-radius:inherit}
+[data-cp-self]>.cpa>.cav{display:block;width:100%;height:100%}
+[data-cp-self]:focus-visible{outline:3px solid #14B8A6;outline-offset:4px}
 .cpa-wait{animation:cpa-pulse 1.4s ease-in-out infinite}
+@media(prefers-reduced-motion:reduce){.cpa-wait,.cbp-skel *{animation:none!important}}
 @keyframes cpa-pulse{50%{opacity:.55}}
 .cp-follow{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:0;border-radius:999px;padding:8px 16px;font:600 13px/1 Inter,system-ui,sans-serif;cursor:pointer;background:#15131F;color:#fff;transition:background .2s,color .2s,transform .15s}
 .cp-follow:hover{transform:translateY(-1px)}
@@ -455,7 +601,13 @@ button.dl-host-name{border:0;background:none;padding:0;text-align:left}
     e.preventDefault(); e.stopPropagation(); open(id);
   });
 
-  window.CabanaPeople = { open, close, request, badges, api, card, cards, forget, tick, avatarHTML, hydrate, follow, profile, profileHTML, wireSheet, needAvatars, toast, TICKS, LANG, INTERESTS, ORG_KIND, ROLES };
-  const boot = () => { hydrate(document); watch(); };
+  window.CabanaPeople = { open, close, request, badges, api, card, cards, forget, changed, tick, avatarHTML, hydrate, follow, profile, profileHTML, wireSheet, needAvatars, toast, TICKS, LANG, INTERESTS, ORG_KIND, ROLES };
+  const boot = () => {
+    bindSession(); hydrate(document); watch();
+    if (!selfBound) {
+      let attempts = 0;
+      const poll = setInterval(() => { if (bindSession() || ++attempts >= 120) clearInterval(poll); }, 250);
+    }
+  };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();

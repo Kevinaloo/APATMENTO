@@ -635,7 +635,12 @@
 
     safe(function () {
       txt($('apa-welcome'), isUser ? 'Welcome, ' + st.name : '');
-      txt($('apa-avatar'), isUser ? st.initial : '?');
+      // CabanaPeople owns the living profile icon once its session is ready.
+      // Repeated role/name emissions must not replace the SVG with an initial.
+      var avatar = $('apa-avatar');
+      if (avatar && (!isUser || !avatar.hasAttribute('data-cp-self') || !global.CabanaPeople)) {
+        txt(avatar, isUser ? st.initial : '?');
+      }
 
       updateFavBadge();
     }, 'render');

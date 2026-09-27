@@ -79,7 +79,7 @@ let swRegistration = null;
 async function registerSW() {
   if (!('serviceWorker' in navigator)) return;
   try {
-    swRegistration = await navigator.serviceWorker.register('/sw.js?v=39-people-profiles', {
+    swRegistration = await navigator.serviceWorker.register('/sw.js?v=40-living-avatars', {
       scope: '/',
       updateViaCache: 'none',
     });

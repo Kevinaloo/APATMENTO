@@ -8,7 +8,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>My Profile · Cabana</title>
 <meta name="description" content="Your Cabana profile: your look, your verification ticks, who follows you and what the world sees."/>
-<script src="/pwa.js?v=39-people-profiles" defer></script>
+<script src="/pwa.js?v=40-living-avatars" defer></script>
 <script src="/apa-push.js" defer></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -101,6 +101,43 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--bg);colo
 .chip[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
 .minis{display:grid;grid-template-columns:repeat(auto-fill,minmax(58px,1fr));gap:8px}
 .minis .opt small{font-size:10px}
+
+/* photo */
+.studio-kicker{display:flex;align-items:center;gap:7px;font-size:10px;font-weight:750;letter-spacing:.16em;text-transform:uppercase;color:#685180;margin-bottom:9px}
+.studio-kicker i{width:6px;height:6px;border-radius:50%;background:#12a88a;box-shadow:0 0 0 4px #12a88a12}
+#look{background:linear-gradient(150deg,#fff 35%,#faf7ff);border-color:#e7def2;padding:26px}
+#look>.card-title{font-size:25px;letter-spacing:-.04em}
+#look>.card-sub{max-width:510px;line-height:1.65;margin-top:7px;margin-bottom:24px}
+.look{grid-template-columns:216px minmax(0,1fr);gap:24px}
+.stage{padding:18px 12px;border-radius:24px;background:linear-gradient(155deg,#eee9fc,#f7f3ed 58%,#e4f3ed);border:1px solid #fff;box-shadow:inset 0 0 0 1px #ffffff80}
+.stage-spotlight{padding:12px 0 18px;position:relative}
+.stage-spotlight:after{content:'';display:block;position:absolute;bottom:3px;left:25%;right:25%;height:9px;border-radius:50%;background:#6b4c9a20;filter:blur(4px)}
+.stage-ava{width:180px;height:180px;border-radius:44px;box-shadow:0 18px 32px #49386424;position:relative;z-index:1}
+.stage-name{font:750 20px var(--font-display);letter-spacing:-.025em;margin-top:7px}
+.stage-trait{line-height:1.5;margin-top:4px;min-height:36px}
+.stage-actions{display:flex;gap:5px;margin:14px 0 0;justify-content:center}
+.stage-actions button{border:1px solid #fff;background:#ffffffb3;border-radius:12px;font:600 11px var(--font-body);padding:9px 10px;color:#49365f;cursor:pointer}
+.stage-actions button:disabled{opacity:.45;cursor:default}
+.stage-actions svg{display:block;width:20px;height:20px;margin:0 auto 5px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.stage-note{font-size:10px;line-height:1.55;color:#75677e;margin:8px 0}
+.stage-btns .btn{background:transparent;border-color:#c2b8d0;color:#49365f;width:100%}
+#motion{margin-bottom:0;background:#ffffff85;font-size:12px}
+.studio-previews{display:flex;align-items:center;justify-content:center;gap:20px;border-top:1px solid #ffffffb3;margin-top:15px;padding-top:14px}
+.studio-previews>div{display:flex;align-items:center;flex-direction:column;gap:7px;font-size:9px;font-weight:600;color:#75677e}
+.studio-previews .cpa{box-shadow:0 2px 8px #49386414}
+.studio-search{margin-bottom:13px;position:relative}
+.studio-search input{font-size:12px;padding:10px 12px;background:#fff;border-color:#e7e0ee}
+.studio-count{font-size:11px;color:var(--ink3);margin-bottom:12px}
+.studio-empty{padding:26px 14px;border:1px dashed #d9cdea;border-radius:16px;text-align:center;font-size:13px;color:var(--ink3);line-height:1.6}
+#look .grid{grid-template-columns:repeat(auto-fill,minmax(74px,1fr));gap:9px}
+#look .opt{background:#f1eef6;border-radius:18px;padding:4px;color:#625970;position:relative}
+#look .opt[aria-pressed=true]{background:#e8dffc;box-shadow:0 4px 12px #7044ac16}
+#look .opt[aria-pressed=true]:after{content:'✓';position:absolute;top:6px;right:6px;display:grid;place-items:center;width:17px;height:17px;border-radius:50%;background:#6d28ff;color:white;font-size:10px;border:2px solid #fff}
+#look .opt small{font-size:11px;font-weight:600;padding-bottom:4px}
+#look :is(button,input):focus-visible{outline:3px solid #8b5cf6;outline-offset:3px}
+#look-tabs{display:flex;flex-wrap:nowrap;gap:1px;width:100%;margin-bottom:14px}
+#look-tabs button{flex:1;padding:9px 8px;font-size:12px;white-space:nowrap}
+@media(max-width:620px){#look{padding:20px 16px}.look{grid-template-columns:minmax(0,1fr);gap:22px}.stage{position:static;max-width:100%;padding:16px 20px}.stage-ava{width:180px;height:180px}.stage-trait{min-height:0}.stage-actions{margin-top:10px}.stage-btns{margin:10px auto 0;max-width:260px}#motion{max-width:260px;margin:12px auto 0}.studio-previews{gap:32px}.stage-note{max-width:260px;margin:8px auto}}
 
 /* photo */
 .photo-box{display:flex;gap:16px;align-items:center;flex-wrap:wrap;background:var(--bg);border-radius:18px;padding:16px}
@@ -233,27 +270,40 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--bg);colo
 
   <!-- 2 · YOUR LOOK -->
   <section class="card" id="look">
-    <div class="card-title">Your look</div>
-    <p class="card-sub">Pick a Cabana character, make it yours, and it comes alive on your profile. Verified members can also use their own photo.</p>
+    <div class="studio-kicker"><i aria-hidden="true"></i> Made to be you</div>
+    <h2 class="card-title">Your character studio</h2>
+    <p class="card-sub">A little character. A lot of personality. Find your favourite, style it your way, and bring it along on every Cabana adventure.</p>
     <div class="look">
       <div class="stage">
-        <div class="stage-ava" id="stage-ava"></div>
+        <div class="stage-spotlight"><div class="stage-ava" id="stage-ava"></div></div>
         <div class="stage-name" id="stage-name"></div>
         <div class="stage-trait" id="stage-trait"></div>
+        <div class="stage-actions" role="group" aria-label="Play with your character">
+          <button type="button" data-react="wave"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 12V5a1.5 1.5 0 0 1 3 0v6-8a1.5 1.5 0 0 1 3 0v8-6a1.5 1.5 0 0 1 3 0v7-3a1.5 1.5 0 0 1 3 0v6a7 7 0 0 1-12 5l-5-6a1.5 1.5 0 0 1 2-2l3 3"/></svg>Say hi</button>
+          <button type="button" data-react="dance"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l11-2v13M9 8l11-2"/><ellipse cx="6" cy="18" rx="3" ry="2.5"/><ellipse cx="17" cy="16" rx="3" ry="2.5"/></svg>Dance</button>
+          <button type="button" data-react="love"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.8a5.5 5.5 0 0 0-7.8 0L12 6l-1-1.2a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.4a5.5 5.5 0 0 0 0-7.8Z"/></svg>Send love</button>
+        </div>
         <div class="stage-btns">
-          <button class="btn btn-ghost" type="button" id="surprise" style="padding:9px 14px">🎲 Surprise me</button>
+          <button class="btn btn-ghost" type="button" id="surprise" style="padding:9px 14px">↻ Surprise me</button>
         </div>
         <div class="seg" role="group" aria-label="Motion" style="margin-top:12px" id="motion"></div>
+        <p class="stage-note" id="motion-note">Your personality, everywhere you go.</p>
+        <div class="studio-previews" aria-label="Your character around Cabana">
+          <div><span id="preview-nav"></span><span>Dashboard</span></div>
+          <div><span id="preview-chat"></span><span>Messages</span></div>
+          <div><span id="preview-card"></span><span>Profile</span></div>
+        </div>
       </div>
       <div>
-        <div class="seg" role="tablist" id="look-tabs">
-          <button role="tab" type="button" data-tab="catalogue" aria-selected="true">Catalogue</button>
-          <button role="tab" type="button" data-tab="customise" aria-selected="false">Customise</button>
-          <button role="tab" type="button" data-tab="photo" aria-selected="false">Your photo</button>
+        <div class="seg" role="tablist" aria-label="Character studio" id="look-tabs">
+          <button id="look-tab-catalogue" role="tab" type="button" data-tab="catalogue" aria-controls="tab-catalogue" aria-selected="true">Catalogue</button>
+          <button id="look-tab-customise" role="tab" type="button" data-tab="customise" aria-controls="tab-customise" aria-selected="false" tabindex="-1">Customise</button>
+          <button id="look-tab-photo" role="tab" type="button" data-tab="photo" aria-controls="tab-photo" aria-selected="false" tabindex="-1">Your photo</button>
         </div>
-        <div id="tab-catalogue"></div>
-        <div id="tab-customise" hidden></div>
-        <div id="tab-photo" hidden></div>
+        <div class="studio-search" id="character-search-wrap"><label class="field-label" for="character-search" style="display:block;margin-bottom:6px">Find your character</label><input class="field-input" type="search" id="character-search" placeholder="Try Simba, explorer, dreamer…" autocomplete="off"></div>
+        <div id="tab-catalogue" role="tabpanel" aria-labelledby="look-tab-catalogue"></div>
+        <div id="tab-customise" role="tabpanel" aria-labelledby="look-tab-customise" hidden></div>
+        <div id="tab-photo" role="tabpanel" aria-labelledby="look-tab-photo" hidden></div>
       </div>
     </div>
   </section>
@@ -330,8 +380,8 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--bg);colo
 
 <script src="/vendor-supabase-2.112.3.js"></script>
 <script src="/apa-session.js"></script>
-<script src="/cabana-avatars.js?v=1"></script>
-<script src="/cabana-people.js?v=2"></script>
+<script src="/cabana-avatars.js?v=2-living"></script>
+<script src="/cabana-people.js?v=3-living"></script>
 <script src="/apa-referral-capture.js" defer></script>
 <script src="/apa-admin-guard.js"></script>
 <script>
@@ -346,7 +396,7 @@ const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&a
 const COUNTRIES = ['KE','TZ','UG','RW','BI','ET','SO','SS','SD','ER','DJ','NG','GH','SN','CI','BJ','TG','BF','ML','NE','GN','SL','LR','GM','GW','CV','MR','CM','TD','CF','CG','CD','GA','GQ','ST','AO','ZA','NA','BW','ZW','ZM','MW','MZ','LS','SZ','MG','MU','SC','KM','EG','MA','DZ','TN','LY',
   'GB','US','CA','DE','FR','NL','IT','ES','SE','NO','CH','IE','BE','PT','AE','SA','QA','IN','CN','JP','AU','BR'];
 
-const S = { profile: null, saved: null, draft: null, tab: 'catalogue', catSection: null, busy: false };
+const S = { profile: null, saved: null, draft: null, tab: 'catalogue', catSection: null, catalogueLimit: 12, search: '', busy: false };
 // Where to send someone back after verifying (same-site paths only).
 const NEXT = (n => /^\/(?!\/)[\w\-./?=&%#]{0,200}$/.test(n || '') ? n : null)(new URLSearchParams(location.search).get('next'));
 
@@ -382,7 +432,7 @@ function buildStatic() {
     S.draft.account_type = b.dataset.type;
     if (b.dataset.type === 'organization' && (!S.draft.avatar || S.draft.avatar.k !== 'e')) S.draft.avatar = AV.defaultFor(CURRENT_USER.id, 'organization');
     if (b.dataset.type === 'individual' && S.draft.avatar && S.draft.avatar.k === 'e') S.draft.avatar = AV.defaultFor(CURRENT_USER.id, 'individual');
-    S.catSection = null; changed(true);
+    S.catSection = null; S.catalogueLimit = 12; S.search = ''; $('character-search').value = ''; changed(true);
   }));
   $('f-langs').addEventListener('click', e => { const b = e.target.closest('[data-lang]'); if (!b) return; toggleIn('languages', b.dataset.lang, 6); });
   $('f-interests').addEventListener('click', e => { const b = e.target.closest('[data-int]'); if (!b) return; toggleIn('interests', b.dataset.int, 8); });
@@ -390,14 +440,30 @@ function buildStatic() {
   $('motion').addEventListener('click', e => { const b = e.target.closest('[data-mo]'); if (!b) return; S.draft.avatar = Object.assign({}, currentSpec(), { mo: Number(b.dataset.mo) }); changed(true); });
   document.querySelectorAll('[data-pref]').forEach(b => b.addEventListener('click', () => { S.draft[b.dataset.pref] = b.getAttribute('aria-checked') !== 'true'; changed(); }));
   $('look-tabs').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (!b) return; S.tab = b.dataset.tab; renderLook(); });
+  $('look-tabs').addEventListener('keydown', e => {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
+    const tabs = [...$('look-tabs').querySelectorAll('[data-tab]')], i = tabs.indexOf(document.activeElement);
+    if (i < 0) return;
+    e.preventDefault();
+    const next = e.key === 'Home' ? 0 : e.key === 'End' ? tabs.length - 1 : (i + (e.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+    tabs[next].click(); tabs[next].focus();
+  });
+  $('character-search').addEventListener('input', e => { S.search = e.target.value.trim().toLowerCase(); S.catalogueLimit = 12; renderLook(); });
+  document.querySelectorAll('[data-react]').forEach(b => b.addEventListener('click', () => {
+    AV.react?.($('stage-ava'), b.dataset.react);
+    ['preview-nav', 'preview-chat', 'preview-card'].forEach(id => AV.react?.($(id), b.dataset.react));
+  }));
   $('surprise').addEventListener('click', () => {
     const kinds = S.draft.account_type === 'organization' ? ['e'] : ['p', 'p', 'a'];
+    const motion = currentSpec().mo;
     S.draft.avatar = AV.surprise(kinds[Math.floor(Math.random() * kinds.length)]);
-    S.draft.avatar.mo = currentSpec().mo ?? 1;
+    S.draft.avatar.mo = motion;
     changed(true);
+    AV.react?.($('stage-ava'), 'hop');
   });
   $('discard').addEventListener('click', () => { S.draft = clone(S.saved); fill(); changed(true); });
   $('save').addEventListener('click', saveStudio);
+  window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', () => { if (S.draft) renderAll(false); });
   window.addEventListener('beforeunload', e => { if (isDirty()) { e.preventDefault(); e.returnValue = ''; } });
 }
 function toggleIn(key, v, max) {
@@ -407,14 +473,21 @@ function toggleIn(key, v, max) {
 }
 
 /* ═══ load ═══ */
-async function loadStudio() {
+async function loadStudio(preserveDraft = false) {
   try {
-    S.profile = await PP.profile(CURRENT_USER.id);
+    const profile = await PP.profile(CURRENT_USER.id);
+    // Edits made while a save/refetch is in flight still belong to the member.
+    const pending = {};
+    if (preserveDraft && S.saved && S.draft) Object.keys(S.draft).forEach(k => {
+      if (JSON.stringify(S.draft[k]) !== JSON.stringify(S.saved[k])) pending[k] = clone(S.draft[k]);
+    });
+    S.profile = profile;
     S.saved = clone(S.profile.settings);
     if (!S.saved.avatar) S.saved.avatar = AV.defaultFor(CURRENT_USER.id, S.saved.account_type);
-    S.draft = clone(S.saved);
+    S.draft = Object.assign(clone(S.saved), pending);
     fill(); renderAll();
   } catch (e) {
+    if (preserveDraft) { renderAll(); return; }
     $('hero-name').textContent = 'Your profile could not load';
     $('tiers').innerHTML = `<p class="field-hint">${esc(e.message)} Please refresh to try again.</p>`;
   }
@@ -422,7 +495,7 @@ async function loadStudio() {
 function isDirty() { return S.saved && JSON.stringify(S.saved) !== JSON.stringify(S.draft); }
 function changed(rerenderLook) {
   $('savebar').classList.toggle('show', isDirty());
-  renderAll(rerenderLook);
+  renderAll(rerenderLook === true);
 }
 function fill() {
   const d = S.draft;
@@ -476,30 +549,52 @@ function renderAll(rerenderLook) {
     .map(([n, l]) => `<div><b>${Number(n).toLocaleString('en-GB')}</b><span>${l}</span></div>`).join('');
   // stage
   const spec = currentSpec(), desc = AV.describe(spec);
-  $('stage-ava').innerHTML = AV.render(spec, { size: 180, name: d.display_name, seed: CURRENT_USER.id });
+  // Keep the animation phase while editing text fields or unrelated settings.
+  const stageKey = JSON.stringify([spec, d.display_name]);
+  if ($('stage-ava').dataset.renderKey !== stageKey) {
+    AV.mount($('stage-ava'), spec, { size: 180, name: d.display_name, seed: CURRENT_USER.id });
+    $('stage-ava').dataset.renderKey = stageKey;
+  }
+  const cardPreview = previewCard(), previewKey = JSON.stringify(cardPreview);
+  [['preview-nav', 36], ['preview-chat', 28], ['preview-card', 44]].forEach(([id, size]) => {
+    if ($(id).dataset.renderKey === previewKey) return;
+    $(id).innerHTML = PP.avatarHTML(cardPreview, size);
+    $(id).dataset.renderKey = previewKey;
+  });
   $('stage-name').textContent = desc ? desc.name : spec.k === 'e' ? 'Your emblem' : 'Your character';
   $('stage-trait').textContent = desc ? desc.trait : 'One of a kind';
   document.querySelectorAll('[data-mo]').forEach(b => b.setAttribute('aria-pressed', String(Number(b.dataset.mo) === (spec.mo ?? 1))));
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  $('motion-note').textContent = reduced ? 'Motion is off to match your device settings.' : spec.mo === 0 ? 'A still portrait. Choose Calm or Lively to play.' : spec.mo === 1 ? 'Gentle movement. Tap a gesture to play.' : 'Full of life. Tap a gesture to play.';
+  document.querySelectorAll('[data-react]').forEach(b => { b.disabled = reduced || spec.mo === 0; });
   if (rerenderLook !== false) renderLook();
   renderTiers();
 }
 
 function mini(spec, label, pressed, attrs) {
-  return `<button type="button" class="opt" ${attrs} aria-pressed="${pressed}" aria-label="${esc(label)}"><span class="mini">${AV.render(Object.assign({}, spec, { mo: 0 }), { size: 72, name: S.draft.display_name, seed: CURRENT_USER.id, motion: 0 })}</span><small>${esc(label)}</small></button>`;
+  return `<button type="button" class="opt" ${attrs} aria-pressed="${pressed}" aria-label="${esc(label)}"><span class="mini">${AV.render(Object.assign({}, spec, { mo: currentSpec().mo }), { size: 72, name: S.draft.display_name, seed: label })}</span><small>${esc(label)}</small></button>`;
 }
 function renderLook() {
-  document.querySelectorAll('#look-tabs [data-tab]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === S.tab)));
+  const active = document.activeElement;
+  const focusData = active?.closest('#tab-catalogue, #tab-customise') ? { ...active.dataset } : null;
+  document.querySelectorAll('#look-tabs [data-tab]').forEach(b => { const selected = b.dataset.tab === S.tab; b.setAttribute('aria-selected', String(selected)); b.tabIndex = selected ? 0 : -1; });
   ['catalogue', 'customise', 'photo'].forEach(t => $('tab-' + t).hidden = t !== S.tab);
+  $('character-search-wrap').hidden = S.tab !== 'catalogue';
   const spec = currentSpec(), org = S.draft.account_type === 'organization';
   if (S.tab === 'catalogue') {
     const C = AV.catalogue();
     const sections = org ? [['emblems', 'Emblems', C.emblems]] : [['people', 'People', C.people], ['spirits', 'Animal spirits', C.spirits]];
     S.catSection = sections.some(s => s[0] === S.catSection) ? S.catSection : sections[0][0];
     const cur = sections.find(s => s[0] === S.catSection);
+    const items = cur[2].filter(item => !S.search || (item.name + ' ' + item.trait).toLowerCase().includes(S.search));
+    const shown = items.slice(0, S.catalogueLimit);
     $('tab-catalogue').innerHTML = (sections.length > 1 ? `<div class="chips" style="margin-bottom:12px">${sections.map(s => `<button type="button" class="chip" data-sec="${s[0]}" aria-pressed="${s[0] === S.catSection}">${s[1]}</button>`).join('')}</div>` : '') +
-      `<div class="grid">${cur[2].map(item => mini(item.spec, item.name, spec.n === item.id, `data-pick="${item.id}" title="${esc(item.trait)}"`)).join('')}</div>` +
-      `<p class="field-hint" style="margin-top:12px">Every character is a starting point. Tap Customise to change anything.</p>`;
-    $('tab-catalogue').querySelectorAll('[data-sec]').forEach(b => b.addEventListener('click', () => { S.catSection = b.dataset.sec; renderLook(); }));
+      `<p class="studio-count" role="status">Showing ${shown.length} of ${items.length} ${cur[1].toLowerCase()}${S.search ? ' found' : ' to make your own'}</p>` +
+      (items.length ? `<div class="grid">${shown.map(item => mini(item.spec, item.name, spec.n === item.id, `data-pick="${item.id}" title="${esc(item.trait)}"`)).join('')}</div>` : '<p class="studio-empty">No characters found. Try another name or explore another collection.</p>') +
+      (shown.length < items.length ? `<button type="button" class="btn btn-ghost" id="more-characters" style="width:100%;margin-top:12px">Show more characters (${items.length - shown.length} left)</button>` : '') +
+      `<p class="field-hint" style="margin-top:14px">Found your favourite? Make it your own in Customise, then save your profile.</p>`;
+    $('tab-catalogue').querySelectorAll('[data-sec]').forEach(b => b.addEventListener('click', () => { S.catSection = b.dataset.sec; S.catalogueLimit = 12; renderLook(); }));
+    $('more-characters')?.addEventListener('click', () => { const next = items[S.catalogueLimit]?.id; S.catalogueLimit += 12; renderLook(); if (next) [...$('tab-catalogue').querySelectorAll('[data-pick]')].find(b => b.dataset.pick === next)?.focus({ preventScroll: true }); });
     $('tab-catalogue').querySelectorAll('[data-pick]').forEach(b => b.addEventListener('click', () => {
       const item = [...C.people, ...C.spirits, ...C.emblems].find(x => x.id === b.dataset.pick);
       S.draft.avatar = Object.assign(clone(item.spec), { mo: spec.mo ?? 1 }); changed(true);
@@ -507,6 +602,10 @@ function renderLook() {
   } else if (S.tab === 'customise') {
     renderCustomise(spec);
   } else renderPhoto();
+  if (focusData && !active.isConnected) {
+    [...$('tab-' + S.tab).querySelectorAll('button')].find(b => Object.keys(focusData).length && Object.entries(focusData).every(([k, v]) => b.dataset[k] === v))?.focus({ preventScroll: true });
+  }
+  AV.observeAll($('look'));
 }
 function renderCustomise(spec) {
   const O = AV.OPTIONS, box = $('tab-customise');
@@ -536,6 +635,7 @@ function renderCustomise(spec) {
   box.querySelectorAll('[data-kind]').forEach(b => b.addEventListener('click', () => {
     if (spec.k === b.dataset.kind) return;
     S.draft.avatar = b.dataset.kind === 'p' ? clone(AV.catalogue().people[0].spec) : AV.defaultFor(CURRENT_USER.id, 'individual');
+    S.draft.avatar.mo = spec.mo;
     delete S.draft.avatar.n; changed(true);
   }));
 }
@@ -718,25 +818,28 @@ function openOrgForm() {
 
 /* ═══ save ═══ */
 async function saveStudio() {
-  if (S.busy) return;
+  if (S.busy || !S.draft || !S.saved) return;
   S.busy = true; const b = $('save'); b.disabled = true; b.textContent = 'Saving…';
+  $('discard').disabled = true;
   document.querySelectorAll('.field-input.bad').forEach(x => x.classList.remove('bad'));
-  const d = S.draft, body = {};
+  const d = clone(S.draft), body = {};
   ['display_name', 'handle', 'headline', 'bio', 'account_type', 'city', 'country_code', 'languages', 'interests', 'theme', 'avatar', 'published', 'show_location', 'show_followers', 'allow_follow', 'show_listings', 'org_kind', 'org_website']
     .forEach(k => { if (JSON.stringify(d[k]) !== JSON.stringify(S.saved[k])) body[k] = d[k]; });
   if (d.account_type === 'individual') { delete body.org_kind; delete body.org_website; }
   try {
     const r = await PP.api('save', null, body);
     toast(d.published && !S.saved.published ? 'Saved. Your profile is now public.' : 'Profile saved');
-    PP.forget(CURRENT_USER.id);
-    S.saved = clone(d); S.saved.handle = r.handle || d.handle; S.draft.handle = S.saved.handle;
-    await loadStudio();
+    PP.changed(CURRENT_USER.id);
+    S.saved = clone(d); S.saved.handle = r.handle || d.handle;
+    if (S.draft.handle === d.handle) S.draft.handle = S.saved.handle;
+    S.profile.settings = clone(S.saved);
+    await loadStudio(true);
   } catch (e) {
     toast(e.message);
     const map = { display_name: 'f-name', handle: 'f-handle', headline: 'f-headline', bio: 'f-bio', city: 'f-city', org_website: 'f-website', org_kind: 'f-orgkind', country_code: 'f-country' };
     const el = map[e.data?.field] && $(map[e.data.field]);
     if (el) { el.classList.add('bad'); el.focus(); }
-  } finally { S.busy = false; b.disabled = false; b.textContent = 'Save profile'; $('savebar').classList.toggle('show', isDirty()); }
+  } finally { S.busy = false; b.disabled = false; $('discard').disabled = false; b.textContent = 'Save profile'; $('savebar').classList.toggle('show', isDirty()); }
 }
 
 /* ═══ private account (unchanged behaviour) ═══ */

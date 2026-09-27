@@ -834,7 +834,7 @@ body.intro-lock{animation:apaUnlockScroll 0s linear 3.6s forwards;}
     </div>
     <div id="nav-user" style="display:none;align-items:center;gap:10px;">
       <span id="nav-welcome" style="font-size:14px;font-weight:500;color:var(--ink-soft);"></span>
-      <div id="nav-avatar" style="width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--violet),var(--electric));display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:600;font-size:15px;color:#fff;cursor:pointer;" onclick="window.location.href='dashboard.html'">?</div>
+      <a id="nav-avatar" data-cp-self href="/profile" aria-label="Your profile" title="Your profile" style="width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--violet),var(--electric));display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:600;font-size:15px;color:#fff;cursor:pointer;">?</a>
     </div>
   </div>
   <div class="nav-progress-bar" id="nav-progress-bar" aria-hidden="true"></div>
@@ -1934,10 +1934,11 @@ document.querySelectorAll('.svc-tile').forEach((t,i)=>{t.style.transitionDelay=(
 <script src="/vendor-supabase-2.112.3.js" defer></script>
 <script src="/apa-session.js" defer></script>
 <script src="/apa-admin-guard.js" defer></script>
-<script src="/apa-chrome.js" defer></script>
+<script src="/apa-chrome.js?v=2-living" defer></script>
+<script src="/cabana-people.js?v=2-living" defer></script>
 <script src="/apa-rail.js" defer></script>
 <script src="/telemetry.js" defer></script>
-<script src="/pwa.js?v=39-people-profiles" defer></script>
+<script src="/pwa.js?v=40-living-avatars" defer></script>
 <script src="/referral.js" defer></script>
 <script src="/apa-referral-capture.js" defer></script>
 <script src="/cabana-credit.js" defer></script>
@@ -1978,7 +1979,7 @@ document.querySelectorAll('.svc-tile').forEach((t,i)=>{t.style.transitionDelay=(
     });
     t(function(){
       var a = document.getElementById('nav-avatar');
-      if(a) a.textContent = st.initial;
+      if(a && !window.CabanaPeople) a.textContent = st.initial;
     });
     t(function(){
       var b = document.getElementById('hero-portal-btn');

@@ -210,7 +210,7 @@ test('the database shelves records with the same patterns as the chart function'
   // pattern added to the function alone would be silently undone.
   const shelf = read('supabase/migrations/20260927092000_music_shelf_knows_artists.sql');
   for (const list of ['CULTURES', 'GENRES', 'ARTIST_CULTURES', 'ARTIST_GENRES']) {
-    const body = EDGE.match(new RegExp(`const ${list}: Array<\\[string, RegExp\\]> = \\[\\n([\\s\\S]*?)\\n\\];`))[1];
+    const body = EDGE.match(new RegExp(`const ${list}: Array<\\[string, RegExp\\]> = \\[\\r?\\n([\\s\\S]*?)\\r?\\n\\];`))[1];
     for (const [, label, rx] of body.matchAll(/\["([^"]+)", \/\\b\((.*)\)\\b\/\]/g)) {
       const pg = `'\\m(${rx.replace(/'/g, "''")})\\M'`;
       assert.ok(shelf.includes(pg), `${list} ${label} is missing from music_shelf()`);

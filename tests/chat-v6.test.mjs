@@ -30,7 +30,7 @@ test('every chat migration defines what the messenger calls', () => {
   assert.match(sql, /revoke insert, update, delete, truncate, references, trigger on public\.notifications from authenticated/);
   // A SECURITY DEFINER trigger cannot see the caller's role; the gates must be invokers.
   for (const gate of ['chat_before_insert', 'chat_conv_before_insert', 'profile_guard'])
-    assert.match(read('supabase/migrations/20260920122000_chat_v6_invoker_gates.sql'), new RegExp(`${gate}\\(\\)\\nreturns trigger language plpgsql security invoker`), gate);
+    assert.match(read('supabase/migrations/20260920122000_chat_v6_invoker_gates.sql'), new RegExp(`${gate}\\(\\)\\r?\\nreturns trigger language plpgsql security invoker`), gate);
 });
 
 test('hosts reach their messages from every Partner Hub page', () => {

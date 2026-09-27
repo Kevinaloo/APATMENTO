@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   CABANA · LIVING AVATARS  v1
+   CABANA · LIVING AVATARS  v2 · The character collection
    ───────────────────────────────────────────────────────────────────
    Every Cabana member gets a character that is theirs: a person, an
    animal spirit, or (for organisations) an emblem. Characters are
@@ -7,11 +7,11 @@
    the database and nothing on a CDN, renders crisp at 20px or 400px,
    and can never contain a photo someone did not choose.
 
-   Motion rules, because a list of 40 hosts must not become a zoo:
-     · Idle only. Breathing is <1px, blinks are 120ms, sway is 1.4°.
-     · Every instance gets its own phase, so faces never blink in sync.
-     · Below 40px only the blink survives; off-screen and background
-       tabs pause entirely; prefers-reduced-motion stops everything.
+   Motion is part of a character's personality: curious head tilts,
+   soft breathing, little dances, waving hands and twitching ears.
+   Every instance has its own phase, including the tiny profile icon.
+   Off-screen and background tabs pause; reduced motion and Still are
+   respected. One shared observer and delegated events serve the page.
 
    Defaults matter: a member who has not chosen gets an animal spirit
    (or an emblem for organisations), never a generated human face. We
@@ -81,7 +81,7 @@
   /* Server-side validation mirrors these ranges (api/lib/_avatar-spec.js). */
   const RANGES = {
     p: { s: 10, h: 16, hc: 9, fc: 9, e: 5, m: 6, f: 4, x: 9, w: 4, o: 10, b: 12, mo: 3 },
-    a: { a: 12, t: 4, x: 6, b: 12, mo: 3 },
+    a: { a: 20, t: 4, x: 6, b: 12, mo: 3 },
     e: { sh: 6, pt: 6, c: 8, g: 13, mo: 3 }
   };
 
@@ -121,6 +121,23 @@
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const f1 = n => Math.round(n * 10) / 10;
 
+  // Soft directional light gives every colour real volume without filters,
+  // images, network requests, or a canvas redraw on each animation frame.
+  function sculpt(markup, P) {
+    const colors = new Map();
+    const painted = markup.replace(/fill="(#[0-9a-f]{6})"/gi, (all, color) => {
+      if (/^#(?:ffffff|1b1412)$/i.test(color)) return all;
+      if (!colors.has(color)) colors.set(color, P + 'lit' + colors.size);
+      return `fill="url(#${colors.get(color)})"`;
+    });
+    const defs = Array.from(colors, ([c, id]) => `<radialGradient id="${id}" cx="32%" cy="22%" r="86%"><stop stop-color="${shade(c, .23)}"/><stop offset=".48" stop-color="${c}"/><stop offset="1" stop-color="${shade(c, -.22)}"/></radialGradient>`).join('');
+    return `<defs>${defs}</defs>${painted}`;
+  }
+  const joint = (cls, x, y, svg) => `<g class="${cls}" style="transform-origin:${x}px ${y}px">${svg}</g>`;
+  function delight(P) {
+    return `<g class="cav-delight" aria-hidden="true"><path class="cav-spark cav-spark-a" d="M23 31l1.8 4.6L30 37l-5.2 1.8L23 44l-1.8-5.2L16 37l5.2-1.4z" fill="#FFF2AF"/><path class="cav-spark cav-spark-b" d="M96 52l1.2 3.2L101 57l-3.8 1.2L96 62l-1.2-3.8L91 57l3.8-1.8z" fill="#FFFFFF"/><path class="cav-heart" d="M94 30c-7-7-14 3 0 11c14-8 7-18 0-11z" fill="#FF7298"/><circle class="cav-spark cav-spark-c" cx="28" cy="76" r="2" fill="#B1FFEE"/></g>`;
+  }
+
   /* ════════════════════════════════════════════════════════════════
      BACKDROPS
      ════════════════════════════════════════════════════════════════ */
@@ -158,7 +175,7 @@
 
   function eyes(e, y, lx, rx, skinDark) {
     const hi = (x) => `<circle cx="${x + 0.9}" cy="${y - 0.9}" r=".8" fill="#fff" opacity=".9"/>`;
-    const dot = x => `<ellipse cx="${x}" cy="${y}" rx="2.5" ry="2.8" fill="${EYE}"/>${hi(x)}`;
+    const dot = x => `<ellipse cx="${x}" cy="${y + .2}" rx="3.6" ry="4" fill="#FFF9EF"/><ellipse cx="${x + .3}" cy="${y}" rx="2.7" ry="3.1" fill="#71482F"/><ellipse cx="${x + .5}" cy="${y}" rx="1.9" ry="2.5" fill="${EYE}"/>${hi(x)}<circle cx="${x - .7}" cy="${y + 1.1}" r=".4" fill="#fff"/>`;
     const arc = x => `<path d="M${x - 3.6} ${y + 1}Q${x} ${y - 3.2} ${x + 3.6} ${y + 1}" fill="none" stroke="${EYE}" stroke-width="1.9" stroke-linecap="round"/>`;
     switch (e) {
       case 1: return { open: false, s: arc(lx) + arc(rx) };
@@ -317,10 +334,11 @@
       `<ellipse cx="51.6" cy="45.6" rx="8" ry="4.4" fill="#fff" opacity=".07"/>` +
       `<circle cx="46.2" cy="66" r="3.8" fill="#FF6E6E" opacity=".2"/><circle cx="73.8" cy="66" r="3.8" fill="#FF6E6E" opacity=".2"/>` +
       fh +
-      `<g class="cav-eyes${ey.open ? '' : ' cav-noblink'}" style="transform-origin:60px 58px">${ey.s}</g>` +
-      `<path d="M46.6 50.6Q51 48 55.4 50M64.6 50Q69 48 73.4 50.6" fill="none" stroke="${brow}" stroke-width="1.9" stroke-linecap="round"/>` +
+      `<path d="M42 55C41 43 48 36 57 35" fill="none" stroke="${shade(skin, .45)}" stroke-width="1.1" stroke-linecap="round" opacity=".35"/>` +
+      `<g class="cav-eyes${ey.open ? '' : ' cav-noblink'}" style="transform-origin:60px 58px"><g class="cav-gaze">${ey.s}</g></g>` +
+      `<path class="cav-brows" d="M46.6 50.6Q51 48 55.4 50M64.6 50Q69 48 73.4 50.6" fill="none" stroke="${brow}" stroke-width="1.9" stroke-linecap="round"/>` +
       `<path d="M58.2 64.6Q60 66.2 61.8 64.6" fill="none" stroke="${skinDeep}" stroke-width="1.5" stroke-linecap="round"/>` +
-      mouth(sp.m, 71, lip) +
+      `<g class="cav-mouth">${mouth(sp.m, 71, lip)}</g>` +
       hair.front + (x === 7 ? '' : accessory(x, hair.noEars, P, fab)) + `</g>`;
     // The beaded collar sits on the chest, so it belongs to the torso layer.
     return `<g class="cav-body">` +
@@ -328,7 +346,8 @@
       `<path d="M51 73.6H69V88C63 93.4 57 93.4 51 88Z" fill="${skinDark}"/>` +
       outfit(sp.w, oc, skinDark, P) +
       (hair.drape || '') + (x === 7 ? accessory(7, false, P, fab) : '') +
-      head + `</g>`;
+      `<path d="M24 110Q30 99 40 96M80 101l7 4" fill="none" stroke="${shade(oc, .45)}" stroke-width="1.4" stroke-linecap="round" opacity=".55"/>` +
+      head + joint('cav-hand', 88, 102, `<path d="M84 110L83 91Q81 86 82 79L79 71Q78 68 80 67Q82 66 84 71L86 76L85 64Q85 61 87 61Q90 61 90 65L91 73L93 63Q94 60 96 62Q98 63 97 66L96 75L100 68Q102 66 104 68Q105 70 103 73L99 82Q101 86 98 91L95 111Z" fill="${skin}"/><path d="M87 81Q93 79 96 84M87 88l5 1" fill="none" stroke="${skinDark}" stroke-width="1.2" stroke-linecap="round"/><path d="M82 103L97 102L99 116L82 118Z" fill="${oc}"/><path d="M83 104l12-.8" stroke="${shade(oc, .45)}" stroke-width="1.2"/>`) + `</g>`;
   }
 
   /* ════════════════════════════════════════════════════════════════
@@ -346,13 +365,21 @@
     { id: 'kiboko', name: 'Kiboko', trait: 'Chills by the water', what: 'Hippo' },
     { id: 'faru', name: 'Faru', trait: 'Steady and strong', what: 'Rhino' },
     { id: 'kinyonga', name: 'Kinyonga', trait: 'At home anywhere', what: 'Chameleon' },
-    { id: 'mbega', name: 'Mbega', trait: 'Treetop explorer', what: 'Colobus monkey' }
+    { id: 'mbega', name: 'Mbega', trait: 'Treetop explorer', what: 'Colobus monkey' },
+    { id: 'fenna', name: 'Fenna', trait: 'Little ears, big adventures', what: 'Fennec fox' },
+    { id: 'maple', name: 'Maple', trait: 'Cosy troublemaker', what: 'Red panda' },
+    { id: 'kito', name: 'Kito', trait: 'Finds joy in the little things', what: 'Otter' },
+    { id: 'pico', name: 'Pico', trait: 'Dressed for every adventure', what: 'Penguin' },
+    { id: 'lumi', name: 'Lumi', trait: 'Wide-eyed night explorer', what: 'Bushbaby' },
+    { id: 'zuri', name: 'Zuri', trait: 'Better with the whole pack', what: 'African wild dog' },
+    { id: 'taj', name: 'Taj', trait: 'A little extra, always', what: 'Peacock' },
+    { id: 'tide', name: 'Tide', trait: 'Good vibes come in waves', what: 'Dolphin' }
   ];
   OPTIONS.animal = ANIMALS.map((a, i) => ({ v: i, name: a.name, trait: a.trait, what: a.what }));
 
   function dotEyes(lx, rx, y, r, fill, glint) {
     const one = x => `<circle cx="${x}" cy="${y}" r="${r}" fill="${fill || EYE}"/>` + (glint === false ? '' : `<circle cx="${f1(x + r * .35)}" cy="${f1(y - r * .35)}" r="${f1(r * .32)}" fill="#fff" opacity=".9"/>`);
-    return `<g class="cav-eyes" style="transform-origin:60px ${y}px">${one(lx)}${rx != null ? one(rx) : ''}</g>`;
+    return `<g class="cav-eyes" style="transform-origin:60px ${y}px"><g class="cav-gaze">${one(lx)}${rx != null ? one(rx) : ''}</g></g>`;
   }
   function critterAccessory(x, P, geo) {
     const g = geo || { ey: 55, lx: 52, rx: 68, top: 34, neck: 92 };
@@ -382,7 +409,7 @@
         const mane = T('#C8702A'), face = T('#F2B45C'), muz = '#FBE8CB';
         body = `<path d="M22 121C24 101 40 91 60 91S96 101 98 121Z" fill="${T('#E9A84E')}"/>`;
         head = `<circle cx="60" cy="56" r="27" fill="${mane}"/>${ringCircles(60, 56, 26, 14, 9.6, mane)}${ringCircles(60, 56, 23, 7, 2, shade(mane, .25))}` +
-          `<circle cx="42" cy="37" r="7" fill="${face}"/><circle cx="78" cy="37" r="7" fill="${face}"/><circle cx="42" cy="37" r="3.4" fill="${shade(face, -.2)}"/><circle cx="78" cy="37" r="3.4" fill="${shade(face, -.2)}"/>` +
+          joint('cav-ear-l', 44, 42, `<circle cx="42" cy="37" r="7" fill="${face}"/><circle cx="42" cy="37" r="3.4" fill="${shade(face, -.2)}"/>`) + joint('cav-ear-r', 76, 42, `<circle cx="78" cy="37" r="7" fill="${face}"/><circle cx="78" cy="37" r="3.4" fill="${shade(face, -.2)}"/>`) +
           `<circle cx="60" cy="58" r="21" fill="${face}"/>` + dotEyes(52, 68, 54, 2.7) + blush(47, 63) + blush(73, 63) +
           `<ellipse cx="54.2" cy="67.6" rx="7" ry="5.4" fill="${muz}"/><ellipse cx="65.8" cy="67.6" rx="7" ry="5.4" fill="${muz}"/><ellipse cx="60" cy="73.6" rx="4.6" ry="2.8" fill="${muz}"/>` +
           `<path d="M55 61.8Q60 60 65 61.8Q62.6 66.2 60 66.8Q57.4 66.2 55 61.8Z" fill="#5A2E1E"/><path d="M60 66.8V69.4M60 69.4Q57 72 54.6 70M60 69.4Q63 72 65.4 70" fill="none" stroke="#5A2E1E" stroke-width="1.4" stroke-linecap="round"/>` +
@@ -393,11 +420,10 @@
       case 1: { // elephant
         const g = T('#9AA3AE'), gd = shade(g, -.14), ear = '#EDB7C0';
         body = `<path d="M22 121C24 101 40 92 60 92S96 101 98 121Z" fill="${gd}"/>`;
-        head = `<path d="M44 42C22 32 11 52 17 70C22 84 37 83 44 70Z" fill="${g}"/><path d="M76 42C98 32 109 52 103 70C98 84 83 83 76 70Z" fill="${g}"/>` +
-          `<path d="M41 47C27 42 21 55 25 67C28 76 37 75 41 67Z" fill="${ear}" opacity=".8"/><path d="M79 47C93 42 99 55 95 67C92 76 83 75 79 67Z" fill="${ear}" opacity=".8"/>` +
+        head = joint('cav-ear-l', 43, 51, `<path d="M44 42C22 32 11 52 17 70C22 84 37 83 44 70Z" fill="${g}"/><path d="M41 47C27 42 21 55 25 67C28 76 37 75 41 67Z" fill="${ear}" opacity=".8"/>`) +
+          joint('cav-ear-r', 77, 51, `<path d="M76 42C98 32 109 52 103 70C98 84 83 83 76 70Z" fill="${g}"/><path d="M79 47C93 42 99 55 95 67C92 76 83 75 79 67Z" fill="${ear}" opacity=".8"/>`) +
           `<ellipse cx="60" cy="53" rx="21" ry="22" fill="${g}"/>` +
-          `<path d="M53.6 62C53 78 50.6 92 57 101C60.4 105.6 66.4 102.6 64.2 97.6C60.6 90 64.6 79 66.4 62Z" fill="${g}"/>` +
-          `<path d="M55 78h9M54.6 84h8.4M55.6 90h7.4" stroke="${gd}" stroke-width="1.2" stroke-linecap="round"/>` +
+          joint('cav-trunk', 60, 62, `<path d="M53.6 62C53 78 50.6 92 57 101C60.4 105.6 66.4 102.6 64.2 97.6C60.6 90 64.6 79 66.4 62Z" fill="${g}"/><path d="M55 78h9M54.6 84h8.4M55.6 90h7.4" stroke="${gd}" stroke-width="1.2" stroke-linecap="round"/>`) +
           `<path d="M49.6 69C46.4 75.4 47.4 80 50.6 80C51.6 76 52.4 73 53.6 70Z" fill="#FFF8EC"/><path d="M70.4 69C73.6 75.4 72.6 80 69.4 80C68.4 76 67.6 73 66.4 70Z" fill="#FFF8EC"/>` +
           dotEyes(51, 69, 51, 2.6) + blush(46, 60) + blush(74, 60) +
           `<path d="M46.8 45.4Q51 43 55 45M65 45Q69 43 73.2 45.4" fill="none" stroke="${gd}" stroke-width="1.5" stroke-linecap="round"/>`;
@@ -409,7 +435,7 @@
         const spots = (pts) => pts.map(p => `<path d="M${p[0]} ${p[1] - 3}q${p[2]} -1 ${p[2] + 1} ${p[2] * .6}q-1 ${p[2] * .8} -${p[2] + .6} ${p[2] * .5}q-${p[2] * .6} -1 -1 -${p[2] * 1.1}z" fill="${spot}"/>`).join('');
         body = `<path d="M47 121L51 74H69L73 121Z" fill="${coat}"/>` + spots([[53, 88, 4], [63, 84, 3.6], [57, 100, 4.4], [66, 106, 4], [52, 114, 3.6], [64, 96, 3]]);
         head = `<path d="M53 33L51 22M67 33L69 22" stroke="${horn}" stroke-width="3.4" stroke-linecap="round"/><circle cx="51" cy="21.4" r="3.2" fill="${shade(horn, -.2)}"/><circle cx="69" cy="21.4" r="3.2" fill="${shade(horn, -.2)}"/>` +
-          `<ellipse cx="41.6" cy="41" rx="8.4" ry="3.6" transform="rotate(-24 41.6 41)" fill="${coat}"/><ellipse cx="78.4" cy="41" rx="8.4" ry="3.6" transform="rotate(24 78.4 41)" fill="${coat}"/><ellipse cx="42.4" cy="41" rx="5" ry="1.8" transform="rotate(-24 42.4 41)" fill="#F7C8B7"/><ellipse cx="77.6" cy="41" rx="5" ry="1.8" transform="rotate(24 77.6 41)" fill="#F7C8B7"/>` +
+          joint('cav-ear-l', 49, 44, `<ellipse cx="41.6" cy="41" rx="8.4" ry="3.6" transform="rotate(-24 41.6 41)" fill="${coat}"/><ellipse cx="42.4" cy="41" rx="5" ry="1.8" transform="rotate(-24 42.4 41)" fill="#F7C8B7"/>`) + joint('cav-ear-r', 71, 44, `<ellipse cx="78.4" cy="41" rx="8.4" ry="3.6" transform="rotate(24 78.4 41)" fill="${coat}"/><ellipse cx="77.6" cy="41" rx="5" ry="1.8" transform="rotate(24 77.6 41)" fill="#F7C8B7"/>`) +
           `<ellipse cx="60" cy="52" rx="16.4" ry="20" fill="${coat}"/>` + spots([[52, 38, 3], [68, 40, 2.6], [60, 34, 2.2]]) +
           `<ellipse cx="60" cy="66" rx="12.6" ry="9.6" fill="${muz}"/><ellipse cx="55.6" cy="64.6" rx="1.4" ry="2" fill="${shade(spot, -.2)}"/><ellipse cx="64.4" cy="64.6" rx="1.4" ry="2" fill="${shade(spot, -.2)}"/><path d="M55 70.4Q60 73.6 65 70.4" fill="none" stroke="${shade(spot, -.2)}" stroke-width="1.5" stroke-linecap="round"/>` +
           `<g class="cav-eyes" style="transform-origin:60px 50px"><circle cx="53" cy="50" r="2.6" fill="${EYE}"/><circle cx="67" cy="50" r="2.6" fill="${EYE}"/><circle cx="53.9" cy="49.1" r=".8" fill="#fff"/><circle cx="67.9" cy="49.1" r=".8" fill="#fff"/><path d="M49.6 48.2l-1.6-1.2M50.6 47l-.8-1.6M70.4 48.2l1.6-1.2M69.4 47l.8-1.6" stroke="${EYE}" stroke-width="1" stroke-linecap="round"/></g>` + blush(49, 58) + blush(71, 58);
@@ -421,7 +447,7 @@
         body = `<defs><clipPath id="${P}zb"><path d="M24 121C26 101 42 92 60 92S94 101 96 121Z"/></clipPath><clipPath id="${P}zh"><ellipse cx="60" cy="54" rx="17" ry="22"/></clipPath></defs>` +
           `<path d="M24 121C26 101 42 92 60 92S94 101 96 121Z" fill="${w}"/><g clip-path="url(#${P}zb)" fill="${k}">${[0, 1, 2, 3, 4, 5].map(i => `<path d="M${14 + i * 16} 92q6 14 -2 30h6q8-16 2-30z"/>`).join('')}</g>`;
         head = `<path d="M60 26L54 38H66Z" fill="${k}"/><path d="M52 34L60 22L68 34L64 44H56Z" fill="${k}"/><path d="M56 30l4-6 4 6" fill="none" stroke="${w}" stroke-width="1.4"/>` +
-          `<ellipse cx="44.6" cy="36" rx="4" ry="8.4" transform="rotate(-28 44.6 36)" fill="${w}" stroke="${k}" stroke-width="1.4"/><ellipse cx="75.4" cy="36" rx="4" ry="8.4" transform="rotate(28 75.4 36)" fill="${w}" stroke="${k}" stroke-width="1.4"/>` +
+          joint('cav-ear-l', 47, 43, `<ellipse cx="44.6" cy="36" rx="4" ry="8.4" transform="rotate(-28 44.6 36)" fill="${w}" stroke="${k}" stroke-width="1.4"/>`) + joint('cav-ear-r', 73, 43, `<ellipse cx="75.4" cy="36" rx="4" ry="8.4" transform="rotate(28 75.4 36)" fill="${w}" stroke="${k}" stroke-width="1.4"/>`) +
           `<ellipse cx="60" cy="54" rx="17" ry="22" fill="${w}"/><g clip-path="url(#${P}zh)" fill="${k}"><path d="M40 38q20 8 40 0v4q-20 8-40 0z"/><path d="M40 46q8 2 11 1q-3 3-11 3z"/><path d="M80 46q-8 2-11 1q3 3 11 3z"/><path d="M40 57q7 1 9 -1q-2 4-9 5z"/><path d="M80 57q-7 1-9-1q2 4 9 5z"/><path d="M54 30q6 4 12 0v3q-6 4-12 0z"/></g>` +
           `<ellipse cx="60" cy="69" rx="12.4" ry="9" fill="${muz}"/><ellipse cx="55.4" cy="67.4" rx="1.8" ry="2.2" fill="#15151B"/><ellipse cx="64.6" cy="67.4" rx="1.8" ry="2.2" fill="#15151B"/><path d="M55.6 73Q60 75.6 64.4 73" fill="none" stroke="#9A9AA6" stroke-width="1.3" stroke-linecap="round"/>` +
           dotEyes(52.6, 67.4, 52, 2.5) + blush(48, 60) + blush(72, 60);
@@ -465,7 +491,7 @@
         const b = T('#8B5E3C'), bd = shade(b, -.18), disc = '#F3E3C6', belly = T('#D9B98D');
         body = `<ellipse cx="60" cy="96" rx="34" ry="30" fill="${b}"/><ellipse cx="60" cy="104" rx="20" ry="18" fill="${belly}"/>` +
           [[52, 98], [60, 96], [68, 98], [56, 106], [64, 106], [60, 113]].map(p => `<path d="M${p[0] - 3} ${p[1]}q3 3 6 0" fill="none" stroke="${bd}" stroke-width="1.4" stroke-linecap="round"/>`).join('') +
-          `<ellipse cx="28" cy="100" rx="9" ry="20" transform="rotate(12 28 100)" fill="${bd}"/><ellipse cx="92" cy="100" rx="9" ry="20" transform="rotate(-12 92 100)" fill="${bd}"/>`;
+          joint('cav-flipper-l', 30, 82, `<ellipse cx="28" cy="100" rx="9" ry="20" transform="rotate(12 28 100)" fill="${bd}"/>`) + joint('cav-flipper-r', 90, 82, `<ellipse cx="92" cy="100" rx="9" ry="20" transform="rotate(-12 92 100)" fill="${bd}"/>`);
         head = `<path d="M34 42L38 24L50 36Z" fill="${bd}"/><path d="M86 42L82 24L70 36Z" fill="${bd}"/><ellipse cx="60" cy="58" rx="28" ry="25" fill="${b}"/>` +
           `<circle cx="48.6" cy="58" r="12" fill="${disc}"/><circle cx="71.4" cy="58" r="12" fill="${disc}"/>` +
           `<g class="cav-eyes" style="transform-origin:60px 58px"><circle cx="48.6" cy="58" r="7.4" fill="#F5B12E"/><circle cx="71.4" cy="58" r="7.4" fill="#F5B12E"/><circle cx="48.6" cy="58" r="4.2" fill="${EYE}"/><circle cx="71.4" cy="58" r="4.2" fill="${EYE}"/><circle cx="50" cy="56.4" r="1.3" fill="#fff"/><circle cx="72.8" cy="56.4" r="1.3" fill="#fff"/></g>` +
@@ -498,7 +524,7 @@
       case 10: { // chameleon
         const g = T('#48BB78'), gd = shade(g, -.2), stripe = shade(g, .3);
         body = `<g class="cav-chroma"><path d="M30 121C32 104 44 94 62 94S96 104 98 121Z" fill="${g}"/><path d="M40 106h40M44 114h36" stroke="${stripe}" stroke-width="2.4" stroke-linecap="round" opacity=".6"/>` +
-          `<path d="M96 116C108 112 110 98 101 94C94 91 90 98 95 101C99 103 101 99 99 97" fill="none" stroke="${gd}" stroke-width="5" stroke-linecap="round"/></g>`;
+          joint('cav-tail', 95, 116, `<path d="M96 116C108 112 110 98 101 94C94 91 90 98 95 101C99 103 101 99 99 97" fill="none" stroke="${gd}" stroke-width="5" stroke-linecap="round"/>`) + `</g>`;
         head = `<g class="cav-chroma"><path d="M30 68C30 48 44 32 66 30C74 29.4 80 34 84 40C92 46 94 58 92 66C90 78 78 84 62 84C44 84 30 80 30 68Z" fill="${g}"/>` +
           `<path d="M60 30.6C68 22 80 24 84 40C77 36 70 34 60 30.6Z" fill="${gd}"/><path d="M36 60Q52 58 62 64" fill="none" stroke="${stripe}" stroke-width="2" stroke-linecap="round" opacity=".6"/>` +
           `<circle cx="71" cy="55" r="10.4" fill="${shade(g, .08)}"/><circle cx="71" cy="55" r="7" fill="none" stroke="${gd}" stroke-width="1.4"/><circle cx="71" cy="55" r="3.8" fill="none" stroke="${gd}" stroke-width="1.2"/></g>` +
@@ -507,18 +533,85 @@
         geo = { ey: 55, lx: 72.6, rx: null, top: 32, neck: 94, flx: 58, fly: 34, hl: 44, hr: 90 };
         break;
       }
-      default: { // colobus
+      case 11: { // colobus
         const fur = T('#1F1F26'), white = '#F4F3EF', face = T('#A89C96');
-        body = `<path d="M20 121C22 100 40 90 60 90S98 100 100 121Z" fill="${fur}"/><path d="M26 121C28 104 36 96 44 94C40 104 40 112 42 121ZM94 121C92 104 84 96 76 94C80 104 80 112 78 121Z" fill="${white}"/>`;
+        body = joint('cav-tail', 89, 109, `<path d="M88 115Q111 101 107 80Q104 68 97 72" fill="none" stroke="${white}" stroke-width="7" stroke-linecap="round"/>`) + `<path d="M20 121C22 100 40 90 60 90S98 100 100 121Z" fill="${fur}"/><path d="M26 121C28 104 36 96 44 94C40 104 40 112 42 121ZM94 121C92 104 84 96 76 94C80 104 80 112 78 121Z" fill="${white}"/>`;
         head = `<ellipse cx="60" cy="58" rx="28" ry="30" fill="${white}"/>${ringCircles(60, 60, 27, 16, 5.6, white)}` +
           `<path d="M36 50C36 34 46 26 60 26S84 34 84 50C78 44 70 42 60 42S42 44 36 50Z" fill="${fur}"/>` +
           `<ellipse cx="60" cy="60" rx="15.6" ry="17.4" fill="${face}"/>` + dotEyes(54, 66, 56, 2.6) +
           `<path d="M50.6 52Q54 50 57.4 51.6M62.6 51.6Q66 50 69.4 52" fill="none" stroke="${shade(face, -.4)}" stroke-width="1.6" stroke-linecap="round"/>` +
           `<ellipse cx="60" cy="64" rx="2.6" ry="1.8" fill="${shade(face, -.4)}"/><path d="M55 69.6Q60 73.4 65 69.6" fill="none" stroke="${shade(face, -.45)}" stroke-width="1.6" stroke-linecap="round"/>` + blush(50, 64) + blush(70, 64);
         geo = { ey: 56, lx: 54, rx: 66, top: 28, neck: 90, flx: 78, fly: 34, hl: 32, hr: 88 };
+        break;
+      }
+      case 12: { // fennec: silk-lined ears and a sweeping cream-tipped tail
+        const coat = T('#E9AF73'), cream = T('#FFF0D2'), pink = T('#E8A5A1');
+        body = joint('cav-tail', 81, 102, `<path d="M78 114C107 117 112 94 100 80C105 100 85 89 80 99Z" fill="${coat}"/><path d="M100 80C108 87 110 98 105 105Q95 101 95 95Q103 94 100 80Z" fill="${cream}"/>`) + `<path d="M29 122Q31 87 60 88Q89 87 91 122Z" fill="${coat}"/><path d="M48 91Q60 84 72 91L77 121H43Z" fill="${cream}"/>`;
+        head = joint('cav-ear-l', 45, 47, `<path d="M40 53C26 43 23 23 28 14Q45 19 51 43Z" fill="${coat}"/><path d="M39 44Q28 32 30 20Q41 24 45 42Z" fill="${pink}"/><path d="M34 27l4 11" stroke="${cream}" stroke-width="2" stroke-linecap="round"/>`) + joint('cav-ear-r', 75, 47, `<path d="M80 53C94 43 97 23 92 14Q75 19 69 43Z" fill="${coat}"/><path d="M81 44Q92 32 90 20Q79 24 75 42Z" fill="${pink}"/>`) +
+          `<path d="M34 50Q37 34 60 35Q83 34 86 50L91 65L82 64Q77 82 60 83Q43 82 38 64L29 65Z" fill="${coat}"/><path d="M37 57Q49 59 60 70Q71 59 83 57Q83 77 60 83Q37 77 37 57Z" fill="${cream}"/><path d="M48 45l8-2M65 43l8 2" stroke="${cream}" stroke-width="3.3" stroke-linecap="round"/>` + dotEyes(49, 71, 54, 3.6) + blush(43, 62) + blush(77, 62) + `<path d="M55 67Q60 64 65 67Q64 72 60 73Q56 72 55 67Z" fill="#4B302C"/><path d="M60 73v2m-6 0q6 5 12 0" fill="none" stroke="#6C4336" stroke-width="1.5" stroke-linecap="round"/>`;
+        geo = { ey: 54, lx: 49, rx: 71, top: 33, neck: 91, hl: 33, hr: 87 };
+        break;
+      }
+      case 13: { // red panda: eye masks, little mittens and a striped tail
+        const red = T('#CA6540'), cream = T('#FFF0D9'), dark = T('#503F3E');
+        body = joint('cav-tail', 84, 103, `<path d="M78 115Q115 118 109 86Q105 69 96 73Q88 78 96 91Q101 104 78 103Z" fill="${red}"/><path d="M94 82l14-5M96 94l15-2M91 105l12 9" stroke="${cream}" stroke-width="6"/>`) + `<path d="M28 122Q30 84 60 84Q90 84 92 122Z" fill="${dark}"/><path d="M39 88Q60 95 81 88L76 108Q60 113 44 108Z" fill="${red}"/>`;
+        head = joint('cav-ear-l', 42, 42, `<path d="M31 46Q24 18 44 24L52 40Z" fill="${cream}"/><path d="M36 39Q30 25 42 30L47 40Z" fill="${dark}"/>`) + joint('cav-ear-r', 78, 42, `<path d="M89 46Q96 18 76 24L68 40Z" fill="${cream}"/><path d="M84 39Q90 25 78 30L73 40Z" fill="${dark}"/>`) +
+          `<path d="M32 46Q40 31 60 33Q80 31 88 46L94 65L87 64L90 71L81 70Q75 84 60 85Q45 84 39 70L30 71L33 64L26 65Z" fill="${red}"/><path d="M32 56Q48 57 55 71L60 68L65 71Q72 57 88 56Q88 79 60 85Q32 79 32 56Z" fill="${cream}"/><path d="M42 49l9-2M69 47l9 2" stroke="${cream}" stroke-width="4" stroke-linecap="round"/><path d="M47 60l4 10M73 60l-4 10" stroke="${dark}" stroke-width="5" stroke-linecap="round"/>` + dotEyes(48, 72, 55, 3.3) + `<ellipse cx="60" cy="68" rx="5" ry="3.7" fill="${dark}"/><path d="M60 71v3m-6 0q6 5 12 0" fill="none" stroke="${dark}" stroke-width="1.4" stroke-linecap="round"/>` + blush(40, 64) + blush(80, 64);
+        body += joint('cav-paw', 85, 105, `<path d="M84 116Q92 101 89 92Q83 88 80 94L76 113Z" fill="${dark}"/><path d="M83 95l2 5M87 94l1 5" stroke="${cream}" stroke-width="1" opacity=".5"/>`);
+        geo = { ey: 55, lx: 48, rx: 72, top: 33, neck: 89, hl: 31, hr: 89 };
+        break;
+      }
+      case 14: { // otter: soft whiskers and a treasured sea-glass shell
+        const fur = T('#95735B'), light = T('#E8CBA5'), dark = T('#5A4134');
+        body = `<path d="M27 122Q27 83 60 83Q93 83 93 122Z" fill="${fur}"/><ellipse cx="60" cy="109" rx="22" ry="23" fill="${light}"/>` + joint('cav-treasure', 60, 106, `<path d="M46 111Q39 98 48 95Q51 86 58 92Q63 85 68 94Q78 92 77 102L70 112Z" fill="${T('#70D7C7')}"/><path d="M59 111l-8-14m10 14l1-17m1 17l8-13" stroke="#E4FFF3" stroke-width="1.3" stroke-linecap="round"/><path d="M30 103Q44 102 48 113M90 103Q76 102 72 113" fill="none" stroke="${fur}" stroke-width="12" stroke-linecap="round"/>`);
+        head = joint('cav-ear-l', 36, 46, `<circle cx="35" cy="44" r="9" fill="${fur}"/><circle cx="35" cy="44" r="4.8" fill="${dark}"/>`) + joint('cav-ear-r', 84, 46, `<circle cx="85" cy="44" r="9" fill="${fur}"/><circle cx="85" cy="44" r="4.8" fill="${dark}"/>`) +
+          `<ellipse cx="60" cy="58" rx="29" ry="27" fill="${fur}"/><path d="M39 61Q47 52 60 62Q73 52 81 61Q85 80 60 83Q35 80 39 61Z" fill="${light}"/><path d="M49 40q7-4 13-2" fill="none" stroke="${light}" stroke-width="2" opacity=".55" stroke-linecap="round"/>` + dotEyes(47, 73, 55, 3.3) +
+          `<ellipse cx="60" cy="64" rx="5.6" ry="4" fill="${dark}"/><ellipse cx="58.4" cy="62.7" rx="1.7" ry=".9" fill="#fff" opacity=".65"/><path d="M60 68v3m-7 1q7 6 14 0M44 67l-12-1m12 5l-11 2m43-6l12-1m-12 5l11 2" fill="none" stroke="${dark}" stroke-width="1.3" stroke-linecap="round"/>` + blush(41, 62) + blush(79, 62);
+        geo = { ey: 55, lx: 47, rx: 73, top: 32, neck: 88, hl: 30, hr: 90 };
+        break;
+      }
+      case 15: { // penguin: a tiny tuxedo, bright beak and dancing flippers
+        const ink = T('#28384D'), snow = T('#FFF4DF'), gold = T('#FFBD4C');
+        body = joint('cav-flipper-l', 40, 90, `<path d="M38 87Q18 88 18 112Q29 111 44 96Z" fill="${ink}"/>`) + joint('cav-flipper-r', 80, 90, `<path d="M82 87Q102 88 102 112Q91 111 76 96Z" fill="${ink}"/>`) + `<ellipse cx="60" cy="105" rx="29" ry="31" fill="${ink}"/><ellipse cx="60" cy="108" rx="20" ry="26" fill="${snow}"/><path d="M39 118q8-5 16 0v4H37Zm26 0q8-5 16 0l2 4H65Z" fill="${gold}"/>`;
+        head = `<path d="M32 59Q31 29 60 28Q89 29 88 59Q88 85 60 87Q32 85 32 59Z" fill="${ink}"/><path d="M60 49Q47 29 38 47Q30 75 60 83Q90 75 82 47Q73 29 60 49Z" fill="${snow}"/><path d="M51 31Q57 24 65 28l-3-6q11 2 12 10" fill="${ink}"/>` + dotEyes(47, 73, 57, 3.7) + blush(42, 66) + blush(78, 66) + `<path d="M51 67Q60 61 69 67Q65 75 60 76Q55 75 51 67Z" fill="${gold}"/><path d="M53 68Q60 70 67 68" fill="none" stroke="#CD792C" stroke-width="1.2"/>`;
+        geo = { ey: 57, lx: 47, rx: 73, top: 29, neck: 88, hl: 31, hr: 89 };
+        break;
+      }
+      case 16: { // bushbaby: luminous eyes, huge ears and a curled tail
+        const fur = T('#AF92B3'), light = T('#F4D9D6'), dark = T('#705775');
+        body = joint('cav-tail', 82, 103, `<path d="M77 116Q108 116 105 93Q102 80 93 87" fill="none" stroke="${fur}" stroke-width="12" stroke-linecap="round"/>`) + `<path d="M32 123Q31 85 60 85Q89 85 88 123Z" fill="${fur}"/><ellipse cx="60" cy="108" rx="17" ry="24" fill="${light}"/>`;
+        head = joint('cav-ear-l', 38, 51, `<ellipse cx="30" cy="42" rx="15" ry="21" fill="${fur}"/><ellipse cx="29" cy="42" rx="10" ry="15" fill="${light}"/><path d="M25 34q8 4 7 13" fill="none" stroke="${dark}" stroke-width="1.4" opacity=".5"/>`) + joint('cav-ear-r', 82, 51, `<ellipse cx="90" cy="42" rx="15" ry="21" fill="${fur}"/><ellipse cx="91" cy="42" rx="10" ry="15" fill="${light}"/>`) +
+          `<ellipse cx="60" cy="59" rx="28" ry="26" fill="${fur}"/><path d="M52 36l8-10 8 10" fill="${fur}"/><ellipse cx="47" cy="57" rx="13" ry="15" fill="${light}"/><ellipse cx="73" cy="57" rx="13" ry="15" fill="${light}"/><ellipse cx="60" cy="74" rx="12" ry="8" fill="${light}"/><g class="cav-eyes" style="transform-origin:60px 57px"><g class="cav-gaze">${[47, 73].map(x => `<circle cx="${x}" cy="57" r="9.4" fill="#9E622C"/><circle cx="${x}" cy="57" r="7.1" fill="${EYE}"/><circle cx="${x - 2.4}" cy="53.8" r="2.6" fill="#fff"/><circle cx="${x + 2.8}" cy="60.6" r="1" fill="#F8D694"/>`).join('')}</g></g><path d="M56 70q4-3 8 0q0 4-4 4q-4 0-4-4Z" fill="${dark}"/><path d="M56 78q4 3 8 0" fill="none" stroke="${dark}" stroke-width="1.3" stroke-linecap="round"/>` + blush(36, 70) + blush(84, 70);
+        geo = { ey: 57, lx: 47, rx: 73, top: 31, neck: 90, hl: 28, hr: 92 };
+        break;
+      }
+      case 17: { // painted dog: every patch belongs to this character
+        const gold = T('#D39A54'), dark = T('#3C3337'), cream = T('#FFEDD0');
+        body = joint('cav-tail', 85, 106, `<path d="M82 115Q108 108 100 87" fill="none" stroke="${dark}" stroke-width="9" stroke-linecap="round"/><path d="M102 98l-2-11" stroke="${cream}" stroke-width="9" stroke-linecap="round"/>`) + `<path d="M27 123Q29 85 60 86Q91 85 93 123Z" fill="${gold}"/><path d="M35 98Q45 87 51 91L60 123H34Z" fill="${dark}"/><path d="M58 86L74 90L72 109L60 121L54 104Z" fill="${cream}"/>`;
+        head = joint('cav-ear-l', 41, 45, `<ellipse cx="33" cy="32" rx="13" ry="18" transform="rotate(-20 33 32)" fill="${dark}"/><ellipse cx="33" cy="32" rx="8" ry="12" transform="rotate(-20 33 32)" fill="#B5797C"/>`) + joint('cav-ear-r', 79, 45, `<ellipse cx="87" cy="32" rx="13" ry="18" transform="rotate(20 87 32)" fill="${gold}"/><ellipse cx="87" cy="32" rx="8" ry="12" transform="rotate(20 87 32)" fill="${dark}"/>`) +
+          `<path d="M32 49Q39 33 60 35Q81 33 88 49L84 71Q77 83 60 85Q43 83 36 71Z" fill="${gold}"/><path d="M33 48Q42 37 55 40L56 66L39 72Z" fill="${dark}"/><path d="M59 36L68 38L65 62L60 68L56 58Z" fill="${cream}"/><ellipse cx="60" cy="72" rx="16" ry="12" fill="${cream}"/>` + dotEyes(47, 73, 54, 3.2) + `<ellipse cx="60" cy="67" rx="6" ry="4.5" fill="${dark}"/><path d="M53 74Q60 86 67 74Z" fill="${dark}"/><path class="cav-tongue" d="M57 78v6q3 5 6 0v-6Z" fill="#ED91A0"/><path d="M60 80v3" stroke="#C5677E" stroke-width=".8"/>`;
+        geo = { ey: 54, lx: 47, rx: 73, top: 34, neck: 91, hl: 32, hr: 88 };
+        break;
+      }
+      case 18: { // peacock: a jewelled, gently fanning train
+        const blue = T('#3286C1'), dark = T('#2851A0'), green = T('#239D85');
+        const fan = [-57, -38, -19, 0, 19, 38, 57].map((a, i) => `<g transform="rotate(${a} 60 105)"><path d="M60 108Q31 73 46 42Q60 25 74 42Q89 73 60 108Z" fill="${i % 2 ? green : shade(green, -.12)}" stroke="${shade(green, .3)}" stroke-width=".7"/><ellipse cx="60" cy="53" rx="9" ry="12" fill="#E8BD5E"/><ellipse cx="60" cy="52" rx="6.6" ry="8.4" fill="${blue}"/><ellipse cx="60" cy="51" rx="3.6" ry="5.6" fill="${dark}"/><circle cx="58.8" cy="49" r="1.3" fill="#BFFBE1"/><path d="M60 67v33" stroke="${shade(green, .45)}" stroke-width=".8" opacity=".5"/></g>`).join('');
+        body = joint('cav-fan', 60, 108, fan) + `<path d="M35 123Q34 87 53 81L55 69H68L70 82Q86 91 87 123Z" fill="${blue}"/><path d="M39 99Q54 95 52 118M81 99Q66 95 68 118" fill="none" stroke="${dark}" stroke-width="4" stroke-linecap="round"/>`;
+        head = `<path d="M56 37L51 25M61 35V20M66 37L71 25" stroke="${dark}" stroke-width="2" stroke-linecap="round"/><circle cx="51" cy="24" r="3.6" fill="${green}"/><circle cx="61" cy="20" r="3.8" fill="${blue}"/><circle cx="71" cy="24" r="3.6" fill="${green}"/><ellipse cx="61" cy="56" rx="19" ry="22" fill="${blue}"/><path d="M43 51Q49 45 55 51M66 51Q72 45 78 51" fill="none" stroke="#DAF8EE" stroke-width="4" stroke-linecap="round"/>` + dotEyes(51, 71, 54, 3) + `<path d="M55 65L61 72L67 65Q61 61 55 65Z" fill="#F3C260"/><path d="M48 69Q52 75 57 76" fill="none" stroke="#75CAE7" stroke-width="1.5" stroke-linecap="round"/>`;
+        geo = { ey: 54, lx: 51, rx: 71, top: 34, neck: 86, hl: 40, hr: 82 };
+        break;
+      }
+      case 19: { // dolphin: a curved smile and buoyant ocean fins
+        const blue = T('#62BED7'), light = T('#D5F3ED'), deep = T('#428EB8');
+        body = joint('cav-flipper-l', 43, 96, `<path d="M48 88Q21 90 20 110Q38 109 51 99Z" fill="${deep}"/>`) + joint('cav-flipper-r', 82, 97, `<path d="M77 87Q99 88 105 106Q91 110 78 100Z" fill="${deep}"/>`) + `<path d="M30 123Q37 107 42 88Q47 75 65 77Q84 83 87 105L97 123Z" fill="${blue}"/><path d="M48 92Q53 86 65 89Q76 101 77 123H39Z" fill="${light}"/>`;
+        head = `<path d="M41 41Q44 26 52 23Q48 36 59 35Q78 32 89 47Q95 56 91 62Q110 61 105 70Q101 78 81 77Q65 91 46 79Q29 69 32 55Q33 45 41 41Z" fill="${blue}"/><path d="M43 68Q62 80 80 67Q91 65 103 67Q106 76 82 77Q62 92 43 76Z" fill="${light}"/><path d="M41 47Q46 39 58 40" fill="none" stroke="#D0F6F6" stroke-width="2.2" stroke-linecap="round" opacity=".75"/>` + dotEyes(72, null, 54, 4) + `<path d="M67 68Q81 75 96 70" fill="none" stroke="${deep}" stroke-width="1.7" stroke-linecap="round"/><path d="M67 47q5-3 9 0" fill="none" stroke="${deep}" stroke-width="1.5" stroke-linecap="round"/>` + blush(63, 63);
+        geo = { ey: 54, lx: 72, rx: null, top: 34, neck: 91, flx: 47, fly: 39, hl: 34, hr: 90 };
+        break;
       }
     }
-    return `<g class="cav-body">${body}<g class="cav-head">${head}${critterAccessory(sp.x, P, geo)}</g></g>`;
+    // A separate reaction rig keeps an animal's idle motion and playful
+    // gestures independent, so a wave never causes a snapping head reset.
+    return `<g class="cav-body">${body}<g class="cav-head"><g class="cav-face">${head}${critterAccessory(sp.x, P, geo)}</g></g></g>`;
   }
 
   /* ════════════════════════════════════════════════════════════════
@@ -594,10 +687,10 @@
       `<linearGradient id="${P}es" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".42"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>` +
       `<clipPath id="${P}ec"><path d="${shape}"/></clipPath></defs>` +
       `<rect width="120" height="120" fill="url(#${P}eb)"/>` +
-      `<g class="cav-body"><path d="${shape}" fill="${shade(base, -.3)}" opacity=".18" transform="translate(0 3)"/><path d="${shape}" fill="url(#${P}eg)"/>` +
+      `<g class="cav-performance"><g class="cav-body"><path d="${shape}" fill="${shade(base, -.3)}" opacity=".18" transform="translate(0 3)"/><path d="${shape}" fill="url(#${P}eg)"/>` +
       `<g clip-path="url(#${P}ec)"><g class="cav-drift">${pat}</g><rect class="cav-sheen" x="-60" y="0" width="40" height="120" fill="url(#${P}es)" transform="skewX(-18)"/></g>` +
       `<path d="${shape}" fill="none" stroke="${accent}" stroke-width="1.6" opacity=".55" transform="translate(60 60) scale(.9) translate(-60 -60)"/>` +
-      glyph + `</g>`;
+      glyph + `</g></g>`;
   }
 
   /* ════════════════════════════════════════════════════════════════
@@ -642,9 +735,19 @@
     P_('mei', 'Mei', 'Safari sketchbook', 8, 9, 0, 0, 2, 0, 5, 0, 3, 3),
     P_('priya', 'Priya', 'Coastal foodie', 7, 8, 1, 2, 0, 0, 3, 2, 5, 2),
     P_('hekima', 'Mzee Hekima', 'Wise traveller', 2, 0, 5, 4, 2, 2, 1, 1, 9, 3),
-    P_('furaha', 'Bibi Furaha', 'Joyful grandma', 4, 10, 5, 1, 0, 0, 1, 2, 5, 1)
+    P_('furaha', 'Bibi Furaha', 'Joyful grandma', 4, 10, 5, 1, 0, 0, 1, 2, 5, 1),
+    P_('sol', 'Sol', 'Chasing the golden hour', 5, 14, 3, 3, 1, 0, 6, 0, 3, 1, 2),
+    P_('indigo', 'Indigo', 'Finds a beat everywhere', 2, 5, 7, 0, 4, 0, 4, 3, 6, 4, 2),
+    P_('tala', 'Tala', 'Always takes the scenic route', 4, 6, 0, 2, 1, 0, 5, 1, 8, 8, 2),
+    P_('rio', 'Rio', 'Saltwater and sunshine', 6, 4, 3, 3, 1, 1, 2, 0, 2, 2, 2),
+    P_('clem', 'Clem', 'A pocket full of good stories', 8, 9, 3, 0, 0, 0, 1, 3, 4, 10, 2),
+    P_('ada', 'Ada', 'Makes ordinary days colourful', 0, 7, 0, 2, 1, 0, 7, 2, 5, 11, 2),
+    P_('malik', 'Malik', 'Your next favourite DJ', 1, 15, 0, 3, 4, 1, 4, 3, 0, 7, 2),
+    P_('yara', 'Yara', 'The moonlight muse', 5, 12, 0, 2, 0, 0, 0, 1, 0, 4, 2, 3),
+    P_('elio', 'Elio', 'Curiosity with a camera', 7, 2, 2, 0, 1, 1, 1, 1, 9, 9, 2),
+    P_('alma', 'Alma', 'A warm welcome, anywhere', 3, 11, 0, 1, 5, 0, 3, 2, 2, 6, 2, 2)
   ];
-  const SPIRITS = ANIMALS.map((a, i) => ({ id: a.id, name: a.name, trait: a.trait, what: a.what, spec: { v: 1, k: 'a', a: i, t: 0, x: 0, b: [3, 0, 3, 1, 9, 5, 2, 4, 6, 8, 10, 10][i], mo: 1, n: a.id } }));
+  const SPIRITS = ANIMALS.map((a, i) => ({ id: a.id, name: a.name, trait: a.trait, what: a.what, spec: { v: 1, k: 'a', a: i, t: 0, x: 0, b: [3, 0, 3, 1, 9, 5, 2, 4, 6, 8, 10, 10, 9, 10, 6, 8, 4, 3, 0, 2][i], mo: 2, n: a.id } }));
   const EMBLEMS = [
     ['kente', 'Kente', 3, 1, 3, 0], ['coast', 'Coastline', 0, 4, 1, 5], ['savanna', 'Savanna', 2, 5, 2, 6], ['summit', 'Summit', 1, 0, 5, 4],
     ['hibiscus', 'Hibiscus', 5, 2, 4, 0], ['forest', 'Canopy', 3, 3, 6, 7], ['clay', 'Clay & sand', 4, 3, 7, 0], ['jacaranda', 'Jacaranda', 0, 2, 0, 0]
@@ -654,7 +757,7 @@
      VALIDATION, DEFAULTS, RENDER
      ════════════════════════════════════════════════════════════════ */
   function validate(spec) {
-    if (!spec || typeof spec !== 'object' || !RANGES[spec.k]) return null;
+    if (!spec || typeof spec !== 'object' || Array.isArray(spec) || !Object.prototype.hasOwnProperty.call(RANGES, spec.k)) return null;
     const R = RANGES[spec.k], out = { v: 1, k: spec.k };
     for (const key of Object.keys(R)) {
       const n = Number(spec[key]);
@@ -667,9 +770,10 @@
 
   function surprise(kind, seed) {
     const r = rng(seed == null ? Math.random() * 1e9 : seed);
-    const R = RANGES[kind] || RANGES.a, out = { v: 1, k: kind in RANGES ? kind : 'a' };
+    const k = Object.prototype.hasOwnProperty.call(RANGES, kind) ? kind : 'a';
+    const R = RANGES[k], out = { v: 1, k };
     for (const key of Object.keys(R)) out[key] = pick(r, R[key]);
-    out.mo = 1;
+    out.mo = 2;
     if (out.k === 'p') {
       if (out.f && [8, 9, 11, 12].includes(out.h) && r() < .8) out.f = 0;
       if (out.x === 8 && r() < .7) out.x = 0;
@@ -680,9 +784,11 @@
 
   function defaultFor(id, accountType) {
     const r = rng('cabana:' + (id || 'guest'));
-    if (accountType === 'organization') return { v: 1, k: 'e', sh: pick(r, 6), pt: pick(r, 6), c: pick(r, 8), g: 0, mo: 1 };
-    const a = pick(r, ANIMALS.length);
-    return { v: 1, k: 'a', a, t: 0, x: 0, b: SPIRITS[a].spec.b, mo: 1 };
+    if (accountType === 'organization') return { v: 1, k: 'e', sh: pick(r, 6), pt: pick(r, 6), c: pick(r, 8), g: 0, mo: 2 };
+    // Keep established deterministic starter identities when the collection
+    // grows; new characters are available in the studio and Surprise me.
+    const a = pick(r, 12);
+    return { v: 1, k: 'a', a, t: 0, x: 0, b: SPIRITS[a].spec.b, mo: 2 };
   }
 
   function describe(spec) {
@@ -699,76 +805,224 @@
     const sp = validate(spec) || defaultFor(opts.seed || opts.name || 'guest', opts.accountType);
     const P = 'cav' + (++seq).toString(36) + Math.floor(Math.random() * 1e4).toString(36);
     const r = rng((opts.seed || '') + ':' + JSON.stringify(sp));
+    const phase = rng(P + ':' + JSON.stringify(sp));
     const size = Number(opts.size) || 64;
-    const motion = opts.motion != null ? opts.motion : sp.mo;
+    const requestedMotion = Number(opts.motion);
+    const motion = opts.motion != null && Number.isInteger(requestedMotion) && requestedMotion >= 0 && requestedMotion <= 2 ? requestedMotion : sp.mo;
     const small = size < 40;
-    const body = sp.k === 'p' ? backdrop(sp.b, P, r) + person(sp, P, r)
-      : sp.k === 'a' ? backdrop(sp.b, P, r) + animal(sp, P, r)
-        : emblem(sp, P, r, opts.name);
+    const body = sp.k === 'e' ? `${emblem(sp, P, r, opts.name)}${delight(P)}`
+      : backdrop(sp.b, P, r) + `<ellipse class="cav-ground" cx="60" cy="114" rx="36" ry="5" fill="#1C2545" opacity=".12"/>` +
+        `<g class="cav-performance">${sculpt(sp.k === 'p' ? person(sp, P, r) : animal(sp, P, r), P)}</g>${delight(P)}`;
     const d = describe(sp);
     const label = opts.label || (d ? `${d.name} avatar` : 'Avatar');
-    const style = `--cav-d:${f1(-r() * 9)}s;--cav-bl:${f1(4.8 + r() * 2.6)}s;--cav-br:${f1(5.6 + r() * 1.8)}s`;
-    const vb = sp.k === 'e' ? (size <= 48 ? '9 9 102 102' : '0 0 120 120') : size <= 48 ? '18 14 84 84' : '5 3 110 110';
-    return `<svg class="cav cav-m${motion}${small ? ' cav-sm' : ''}" viewBox="${vb}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${esc(label)}" style="${style}" focusable="false">${body}</svg>`;
+    const style = `--cav-d:${f1(-phase() * 17)}s;--cav-bl:${f1(3.6 + phase() * 3)}s;--cav-br:${f1(3.8 + phase() * 2)}s;--cav-idle:${f1(7.8 + phase() * 4)}s;--cav-play:${f1(10 + phase() * 8)}s`;
+    const vb = sp.k === 'e' ? (size <= 48 ? '9 9 102 102' : '0 0 120 120') : sp.k === 'p' && size <= 48 ? '16 12 88 94' : '0 0 120 120';
+    return `<svg class="cav cav-m${motion} cav-${sp.k}${small ? ' cav-sm' : ''}" data-cav-character="${sp.k === 'a' ? ANIMALS[sp.a].id : sp.n || sp.k}" viewBox="${vb}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${esc(label)}" style="${style}" focusable="false">${body}</svg>`;
   }
 
   /* ── motion management ────────────────────────────────────────────── */
   const CSS = `
-.cav{display:block;width:100%;height:100%;overflow:hidden}
+.cav{display:block;width:100%;height:100%;overflow:hidden;--cav-bob:2.4px;--cav-tilt:3.2deg;--cav-hop:6px}
 .cav *{transform-box:view-box}
-.cav .cav-body{transform-origin:60px 120px}
-.cav .cav-head{transform-origin:60px 92px}
-.cav-m1 .cav-body,.cav-m2 .cav-body{animation:cav-breathe var(--cav-br) ease-in-out var(--cav-d) infinite}
+.cav .cav-body,.cav .cav-performance{transform-origin:60px 112px}
+.cav .cav-head,.cav .cav-face{transform-origin:60px 78px}
+.cav .cav-mouth{transform-origin:60px 72px}
+.cav .cav-hand{opacity:0;transform:translateY(30px) rotate(14deg)}
+.cav .cav-spark,.cav .cav-heart{opacity:0;transform-origin:60px 65px}
+.cav .cav-delight{pointer-events:none}
+.cav-m1 .cav-body{animation:cav-breathe var(--cav-br) ease-in-out var(--cav-d) infinite}
+.cav-m1 .cav-head{animation:cav-calm var(--cav-idle) ease-in-out var(--cav-d) infinite}
+.cav-m2 .cav-body{animation:cav-bounce var(--cav-br) ease-in-out var(--cav-d) infinite}
 .cav-m1 .cav-eyes,.cav-m2 .cav-eyes{animation:cav-blink var(--cav-bl) linear var(--cav-d) infinite}
-.cav-m2 .cav-head{animation:cav-sway 9.5s ease-in-out var(--cav-d) infinite}
-.cav-m2 .cav-drift{animation:cav-drift 16s ease-in-out var(--cav-d) infinite}
+.cav-m2 .cav-head{animation:cav-curious var(--cav-idle) ease-in-out var(--cav-d) infinite}
+.cav-m2 .cav-gaze{animation:cav-look var(--cav-idle) ease-in-out var(--cav-d) infinite}
+.cav-m2 .cav-brows{animation:cav-brows var(--cav-play) ease-in-out var(--cav-d) infinite}
+.cav-m2 .cav-mouth{animation:cav-smile var(--cav-play) ease-in-out var(--cav-d) infinite}
+.cav-m2 .cav-hand{animation:cav-hello var(--cav-play) ease-in-out var(--cav-d) infinite}
+.cav-m2 .cav-paw{animation:cav-paw var(--cav-play) ease-in-out var(--cav-d) infinite}
+.cav-m2 .cav-ear-l{animation:cav-ear var(--cav-idle) ease-in-out var(--cav-d) infinite}
+.cav-m2 .cav-ear-r{animation:cav-ear var(--cav-idle) ease-in-out var(--cav-d) infinite reverse}
+.cav-m2 .cav-tail{animation:cav-tail 3.8s ease-in-out var(--cav-d) infinite}
+.cav-m2 .cav-trunk{animation:cav-trunk 5.4s ease-in-out var(--cav-d) infinite}
+.cav-m2 .cav-fan{animation:cav-fan 6.6s ease-in-out var(--cav-d) infinite}
+.cav-m2 .cav-treasure{animation:cav-treasure 5s ease-in-out var(--cav-d) infinite}
+.cav-m2 .cav-flipper-l{animation:cav-flipper 4.2s ease-in-out var(--cav-d) infinite}
+.cav-m2 .cav-flipper-r{animation:cav-flipper 4.2s ease-in-out var(--cav-d) infinite reverse}
+.cav-m2 .cav-tongue{animation:cav-tongue 3s ease-in-out var(--cav-d) infinite}
+.cav-m1 .cav-drift,.cav-m2 .cav-drift{animation:cav-drift 16s ease-in-out var(--cav-d) infinite}
 .cav-m1 .cav-tw,.cav-m2 .cav-tw{animation:cav-tw 4.2s ease-in-out infinite}
 .cav-m1 .cav-glint,.cav-m2 .cav-glint{animation:cav-glint 7.5s ease-in-out var(--cav-d) infinite}
 .cav-m1 .cav-sheen,.cav-m2 .cav-sheen{animation:cav-sheen 9s ease-in-out var(--cav-d) infinite}
 .cav-m1 .cav-chroma,.cav-m2 .cav-chroma{animation:cav-chroma 22s ease-in-out var(--cav-d) infinite}
+.cav-e.cav-m2 .cav-body{animation:cav-badge 7s ease-in-out var(--cav-d) infinite}
+.cav[data-cav-character="bundi"].cav-m2 .cav-head{animation:cav-owl 10s ease-in-out var(--cav-d) infinite}
+.cav[data-cav-character="kasa"].cav-m2 .cav-body,.cav[data-cav-character="tide"].cav-m2 .cav-body{animation:cav-swim 5.4s ease-in-out var(--cav-d) infinite}
+.cav[data-cav-character="mbega"].cav-m2 .cav-body,.cav[data-cav-character="lumi"].cav-m2 .cav-body{animation:cav-scamper var(--cav-idle) ease-in-out var(--cav-d) infinite}
+.cav-sm{--cav-bob:1.7px;--cav-tilt:2.6deg;--cav-hop:4px}
+.cav[data-cav-reaction="wave"] .cav-performance{animation:cav-react-wave 1.8s ease-in-out both}
+.cav[data-cav-reaction="dance"] .cav-performance{animation:cav-react-dance 2s ease-in-out both}
+.cav[data-cav-reaction="hop"] .cav-performance{animation:cav-react-hop 1.6s ease-in-out both}
+.cav[data-cav-reaction="love"] .cav-performance{animation:cav-react-love 1.8s ease-in-out both}
+.cav[data-cav-reaction="wave"] .cav-hand{animation:cav-hand-hi 1.8s ease-in-out both}
+.cav[data-cav-reaction="wave"] .cav-paw{animation:cav-hand-hi 1.8s ease-in-out both}
+.cav[data-cav-reaction="wave"] .cav-ear-l,.cav[data-cav-reaction="wave"] .cav-flipper-r{animation:cav-ear-hi 1.8s ease-in-out both}
+.cav[data-cav-reaction="dance"] .cav-tail{animation:cav-tail .35s ease-in-out 6}
+.cav[data-cav-reaction] .cav-spark{animation:cav-spark 1.7s ease-out both}
+.cav[data-cav-reaction] .cav-spark-b{animation-delay:.18s}
+.cav[data-cav-reaction] .cav-spark-c{animation-delay:.3s}
+.cav[data-cav-reaction="love"] .cav-heart{animation:cav-heart 1.8s ease-out both}
 .cav-noblink{animation:none!important}
-.cav-sm .cav-body,.cav-sm .cav-head,.cav-sm .cav-drift,.cav-sm .cav-tw,.cav-sm .cav-glint,.cav-sm .cav-chroma{animation:none!important}
 .cav-paused *,.cav-paused,html.cav-hidden .cav *{animation-play-state:paused!important}
-@keyframes cav-breathe{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-.7px) scale(1.011)}}
-@keyframes cav-blink{0%,92.6%,100%{transform:scaleY(1)}94.2%{transform:scaleY(.08)}95.8%{transform:scaleY(1)}}
-@keyframes cav-sway{0%,100%{transform:rotate(-1.4deg)}50%{transform:rotate(1.4deg)}}
+.cav-m0 *{animation:none!important}
+@keyframes cav-breathe{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-.8px) scale(1.014)}}
+@keyframes cav-calm{0%,100%{transform:rotate(-.8deg)}50%{transform:rotate(.8deg)}}
+@keyframes cav-bounce{0%,100%{transform:translateY(0) scale(1)}40%{transform:translateY(calc(-1 * var(--cav-bob))) scale(1.018,.992)}68%{transform:translateY(.7px) scale(.995,1.006)}}
+@keyframes cav-blink{0%,88%,100%{transform:scaleY(1)}90%{transform:scaleY(.08)}92%,96%{transform:scaleY(1)}97%{transform:scaleY(.12)}98.5%{transform:scaleY(1)}}
+@keyframes cav-curious{0%,100%{transform:rotate(calc(-1 * var(--cav-tilt)))}25%,38%{transform:rotate(var(--cav-tilt)) translateY(-.6px)}53%,62%{transform:rotate(0deg)}76%,86%{transform:rotate(calc(-1.2 * var(--cav-tilt))) translateY(-1px)}}
+@keyframes cav-look{0%,45%,65%,100%{transform:translateX(0)}20%,35%{transform:translateX(1px)}78%,88%{transform:translateX(-1px)}}
+@keyframes cav-brows{0%,65%,100%{transform:translateY(0)}73%,80%{transform:translateY(-1.5px)}}
+@keyframes cav-smile{0%,66%,100%{transform:scale(1)}73%,83%{transform:scale(1.12,1.12)}}
+@keyframes cav-hello{0%,64%,92%,100%{opacity:0;transform:translateY(30px) rotate(14deg)}69%,86%{opacity:1;transform:translateY(0) rotate(-6deg)}73%,81%{opacity:1;transform:translateY(0) rotate(9deg)}77%,85%{opacity:1;transform:translateY(0) rotate(-12deg)}}
+@keyframes cav-paw{0%,64%,95%,100%{transform:rotate(0)}70%,83%{transform:rotate(-22deg)}76%,89%{transform:rotate(12deg)}}
+@keyframes cav-ear{0%,35%,60%,100%{transform:rotate(0)}41%,51%{transform:rotate(-9deg)}46%,56%{transform:rotate(5deg)}}
+@keyframes cav-tail{0%,100%{transform:rotate(-7deg)}50%{transform:rotate(9deg)}}
+@keyframes cav-trunk{0%,100%{transform:rotate(-7deg)}50%{transform:rotate(11deg) scaleY(.96)}}
+@keyframes cav-fan{0%,100%{transform:scaleX(.94) rotate(-1deg)}50%{transform:scaleX(1.025) rotate(1deg)}}
+@keyframes cav-treasure{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-2px) rotate(2deg)}}
+@keyframes cav-flipper{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(15deg)}}
+@keyframes cav-tongue{0%,100%{transform:translateY(0)}50%{transform:translateY(1.2px)}}
+@keyframes cav-badge{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-2px) rotate(2deg)}}
+@keyframes cav-owl{0%,100%{transform:rotate(-4deg)}20%,34%{transform:rotate(8deg)}48%,60%{transform:rotate(0deg)}76%,88%{transform:rotate(-8deg)}}
+@keyframes cav-swim{0%,100%{transform:translate(-1px,1px) rotate(-2deg)}50%{transform:translate(1.5px,-2.5px) rotate(2deg)}}
+@keyframes cav-scamper{0%,48%,100%{transform:translateY(0) rotate(0)}57%{transform:scale(1.025,.98)}64%{transform:translateY(-4px) rotate(-3deg)}72%{transform:translateY(0)}81%{transform:translateY(-3px) rotate(3deg)}90%{transform:translateY(0)}}
 @keyframes cav-drift{0%,100%{transform:translate(0,0)}50%{transform:translate(2px,-1.5px)}}
 @keyframes cav-tw{0%,100%{opacity:1}50%{opacity:.25}}
 @keyframes cav-glint{0%,70%{transform:translateX(0);opacity:0}78%{opacity:.5}92%,100%{transform:translateX(34px);opacity:0}}
 @keyframes cav-sheen{0%,62%{transform:skewX(-18deg) translateX(0)}100%{transform:skewX(-18deg) translateX(220px)}}
-@keyframes cav-chroma{0%,100%{filter:hue-rotate(0deg)}50%{filter:hue-rotate(70deg)}}
-@media (prefers-reduced-motion:reduce){.cav *{animation:none!important}}`;
+@keyframes cav-chroma{0%,100%{filter:hue-rotate(0deg)}50%{filter:hue-rotate(45deg)}}
+@keyframes cav-react-wave{0%,100%{transform:rotate(0)}20%{transform:translateY(-2px) rotate(-4deg)}45%{transform:rotate(4deg)}70%{transform:rotate(-2deg)}}
+@keyframes cav-react-dance{0%,100%{transform:translateX(0) rotate(0)}15%,55%{transform:translate(-3px,-2px) rotate(-7deg)}35%,75%{transform:translate(3px,-2px) rotate(7deg)}90%{transform:translateY(-3px)}}
+@keyframes cav-react-hop{0%,100%{transform:translateY(0) scale(1)}15%,57%{transform:scale(1.06,.95)}32%,73%{transform:translateY(calc(-1 * var(--cav-hop))) scale(.97,1.03)}45%,85%{transform:translateY(0) scale(1.03,.98)}}
+@keyframes cav-react-love{0%,100%{transform:rotate(0) scale(1)}30%,65%{transform:rotate(-5deg) scale(1.035)}48%{transform:rotate(3deg) scale(1.035)}}
+@keyframes cav-hand-hi{0%,100%{opacity:0;transform:translateY(30px) rotate(14deg)}18%,77%{opacity:1;transform:translateY(0) rotate(-10deg)}32%,60%{opacity:1;transform:translateY(0) rotate(12deg)}46%,72%{opacity:1;transform:translateY(0) rotate(-15deg)}}
+@keyframes cav-ear-hi{0%,100%{transform:rotate(0)}22%,62%{transform:rotate(-16deg)}42%,82%{transform:rotate(9deg)}}
+@keyframes cav-spark{0%{opacity:0;transform:scale(.6)}25%,58%{opacity:.9;transform:scale(1)}100%{opacity:0;transform:translateY(-8px) scale(.8)}}
+@keyframes cav-heart{0%{opacity:0;transform:translateY(8px) scale(.4)}25%,50%{opacity:1;transform:scale(1)}100%{opacity:0;transform:translateY(-12px) scale(1.15)}}
+@media (prefers-reduced-motion:reduce){.cav *{animation:none!important}.cav .cav-hand,.cav .cav-heart,.cav .cav-spark{opacity:0!important}}`;
 
-  let io = null, styled = false;
+  let io = null, mutationObserver = null, styled = false;
+  const instances = new WeakMap();
+  const reactions = new Set(['wave', 'dance', 'love', 'hop']);
+  function avatarsIn(root, fn) {
+    if (!root || !root.querySelectorAll) return;
+    if (root.matches && root.matches('svg.cav')) fn(root);
+    root.querySelectorAll('svg.cav').forEach(fn);
+  }
+  function release(svg) {
+    const state = instances.get(svg);
+    if (!state) return;
+    if (io) io.unobserve(svg);
+    if (state.timer) global.clearTimeout(state.timer);
+    svg.removeAttribute('data-cav-reaction');
+    instances.delete(svg);
+  }
+  function hydrate(svg) {
+    if (instances.has(svg)) return;
+    instances.set(svg, { timer: null });
+    if (io) {
+      svg.classList.add('cav-paused');
+      io.observe(svg);
+    }
+  }
+  function findAvatar(el) {
+    if (!el || !el.querySelector) return null;
+    if (el.matches && el.matches('svg.cav')) return el;
+    return (el.closest && el.closest('svg.cav')) || el.querySelector('svg.cav');
+  }
+  function eventAvatar(target) {
+    const owner = target && target.closest && target.closest('svg.cav,a,button,[role="button"],[data-cav-interactive]');
+    return findAvatar(owner);
+  }
+  function react(el, action) {
+    const svg = findAvatar(el);
+    action = action || 'wave';
+    if (!svg || !reactions.has(action) || svg.classList.contains('cav-m0') || svg.classList.contains('cav-paused') ||
+      (typeof document !== 'undefined' && document.hidden) ||
+      (global.matchMedia && global.matchMedia('(prefers-reduced-motion: reduce)').matches)) return false;
+    hydrate(svg);
+    const state = instances.get(svg);
+    if (svg.hasAttribute('data-cav-reaction')) return false;
+    svg.setAttribute('data-cav-reaction', action);
+    // A bounded fallback also cleans up in environments without animationend.
+    state.timer = global.setTimeout(() => {
+      svg.removeAttribute('data-cav-reaction');
+      state.timer = null;
+    }, 2300);
+    return true;
+  }
   function ensureStyles() {
     if (styled || typeof document === 'undefined') return;
     styled = true;
-    const s = document.createElement('style');
-    s.id = 'cabana-avatars-css';
-    s.textContent = CSS;
-    (document.head || document.documentElement).appendChild(s);
-    document.addEventListener('visibilitychange', () => document.documentElement.classList.toggle('cav-hidden', document.hidden));
-    if ('IntersectionObserver' in global) {
-      io = new IntersectionObserver(entries => entries.forEach(e => e.target.classList.toggle('cav-paused', !e.isIntersecting)), { rootMargin: '120px' });
+    if (!document.getElementById('cabana-avatars-css')) {
+      const s = document.createElement('style');
+      s.id = 'cabana-avatars-css';
+      s.textContent = CSS;
+      (document.head || document.documentElement).appendChild(s);
     }
+    const visibility = () => document.documentElement.classList.toggle('cav-hidden', document.hidden);
+    document.addEventListener('visibilitychange', visibility);
+    visibility();
+    if ('IntersectionObserver' in global) {
+      io = new global.IntersectionObserver(entries => entries.forEach(e => {
+        if (instances.has(e.target)) e.target.classList.toggle('cav-paused', !e.isIntersecting);
+      }), { rootMargin: '0px' });
+    }
+    if ('MutationObserver' in global) {
+      mutationObserver = new global.MutationObserver(records => {
+        const changed = new Set();
+        records.forEach(record => {
+          record.addedNodes.forEach(n => avatarsIn(n, svg => changed.add(svg)));
+          record.removedNodes.forEach(n => avatarsIn(n, svg => changed.add(svg)));
+        });
+        changed.forEach(svg => svg.isConnected ? hydrate(svg) : release(svg));
+      });
+      mutationObserver.observe(document.documentElement, { childList: true, subtree: true });
+    }
+    // Images keep their existing semantic role. Reactions are a bonus on
+    // pointer or keyboard focus; links and buttons retain normal activation.
+    document.addEventListener('pointerover', event => {
+      const svg = eventAvatar(event.target);
+      if (svg && (!event.relatedTarget || !svg.contains(event.relatedTarget))) react(svg, 'wave');
+    }, { passive: true });
+    document.addEventListener('pointerdown', event => {
+      if (event.pointerType !== 'mouse') react(eventAvatar(event.target), 'love');
+    }, { passive: true });
+    document.addEventListener('focusin', event => react(eventAvatar(event.target), 'wave'));
+    avatarsIn(document, hydrate);
+  }
+  function unmount(el) {
+    if (!el) return;
+    avatarsIn(el, release);
+    if (el.matches && el.matches('svg.cav')) el.remove();
+    else el.innerHTML = '';
   }
   function mount(el, spec, opts) {
     if (!el) return null;
     ensureStyles();
+    avatarsIn(el, release);
     const size = (opts && opts.size) || el.clientWidth || 64;
     el.innerHTML = render(spec, Object.assign({}, opts, { size }));
     const svg = el.firstElementChild;
-    if (io && svg) io.observe(svg);
+    if (svg) hydrate(svg);
     return svg;
   }
   function observeAll(root) {
     ensureStyles();
-    if (!io) return;
-    (root || document).querySelectorAll('svg.cav').forEach(s => io.observe(s));
+    if (typeof document !== 'undefined') avatarsIn(root || document, hydrate);
   }
 
   const api = {
-    version: 1, render, mount, observeAll, validate, surprise, defaultFor, describe, initials,
+    version: 2, render, mount, observeAll, unmount, react, validate, surprise, defaultFor, describe, initials,
     catalogue: () => ({ people: PERSONAS.slice(), spirits: SPIRITS.slice(), emblems: EMBLEMS.slice() }),
     OPTIONS, RANGES, BACKDROPS, css: CSS, ensureStyles
   };

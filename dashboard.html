@@ -701,6 +701,25 @@ img,video,svg{max-width:100%;}
 .tb-icon-btn:hover{transform:translateY(-2px);box-shadow:var(--shadow-glass);border-color:var(--lilac);color:var(--lilac-deep);}
 .tb-avatar{width:42px;height:42px;border-radius:14px;background:linear-gradient(135deg,var(--violet),var(--electric));display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:600;font-size:16px;color:#fff;cursor:pointer;box-shadow:0 4px 16px rgba(123,47,247,.3);transition:transform .25s;}
 .tb-avatar:hover{transform:translateY(-2px) scale(1.04);}
+.partner-nav-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:11px;font-family:var(--font-body);font-weight:700;font-size:12px;text-decoration:none;white-space:nowrap;cursor:pointer}
+.partner-nav-traveller{border:1.5px solid rgba(45,212,191,.3);background:rgba(45,212,191,.08);color:#0D9488}
+.partner-nav-role{border:1.5px solid rgba(124,58,237,.3);background:rgba(124,58,237,.07);color:#6D28D9}
+.partner-nav-compact{display:none}
+@media(max-width:620px){
+  #p-state-dashboard .topbar{padding-left:12px;padding-right:12px;gap:8px}
+  #p-state-dashboard .tb-left{gap:8px;min-width:0}
+  #p-state-dashboard .tb-icon-sm{display:none}
+  #p-state-dashboard .tb-cab-anim{font-size:18px}
+  #p-state-dashboard .partner-nav{gap:6px;flex-shrink:0}
+  #p-state-dashboard .partner-nav-btn{padding:8px 8px}
+  #p-state-dashboard .partner-nav-wide{display:none}
+  #p-state-dashboard .partner-nav-compact{display:inline}
+  #p-state-dashboard .partner-nav .tb-avatar{display:flex;width:32px;height:32px}
+}
+@media(max-width:350px){
+  #p-state-dashboard .tb-cab-anim{font-size:15px;letter-spacing:0}
+  #p-state-dashboard .partner-nav-btn{padding:8px 6px;font-size:11px}
+}
 .sos-btn{padding:9px 16px;border-radius:100px;background:linear-gradient(135deg,#FF3B5C,#E11D48);color:#fff;border:none;font-family:var(--font-body);font-weight:600;font-size:12px;letter-spacing:.04em;cursor:pointer;display:flex;align-items:center;gap:6px;box-shadow:0 4px 16px rgba(225,29,72,.3);animation:sosPulse 2.6s ease-in-out infinite;}
 @keyframes sosPulse{0%,100%{box-shadow:0 4px 16px rgba(225,29,72,.3);}50%{box-shadow:0 4px 28px rgba(225,29,72,.6);}}
 /* ── SOS hardcoded. Renders immediately, not dependent on deferred apa-chrome.js ── */
@@ -1875,8 +1894,7 @@ img,video,svg{max-width:100%;}
             <span class="apa-ico-dot"></span>
           </button>
 
-          <button class="apa-avatar" id="apa-avatar" type="button" aria-label="Your profile"
-                  onclick="window.location.href='profile.html'">?</button>
+          <a class="apa-avatar" id="apa-avatar" data-cp-self href="/profile" aria-label="Your profile" title="Your profile">?</a>
         </div>
 
       </div>
@@ -3301,7 +3319,7 @@ async function renderPartnerOverview(listings, failed){
   c.innerHTML = `
     <div class="topbar">
       <div class="tb-left"><button class="tb-icon-btn" onclick="openDrawer()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button><img src="cabana-emblem.png" class="tb-icon-sm" alt="" loading="lazy" decoding="async"/><span class="tb-cab-anim" data-text="CABANA">CABANA</span></div>
-      <div class="tb-right partner-nav"><a class="partner-nav-btn partner-nav-traveller" href="#" onclick="switchToGuest();return false;"><span class="partner-nav-wide">← Traveller dashboard</span><span class="partner-nav-compact">← Traveller</span></a><button class="partner-nav-btn partner-nav-role" onclick="ApaRoles&&ApaRoles.open()"><span class="partner-nav-wide">Switch role</span><span class="partner-nav-compact">Roles</span></button><div class="tb-avatar">${(USER.firstName||'P')[0].toUpperCase()}</div></div>
+      <div class="tb-right partner-nav"><a class="partner-nav-btn partner-nav-traveller" href="#" onclick="switchToGuest();return false;"><span class="partner-nav-wide">← Traveller dashboard</span><span class="partner-nav-compact">← Traveller</span></a><button class="partner-nav-btn partner-nav-role" onclick="ApaRoles&&ApaRoles.open()"><span class="partner-nav-wide">Switch role</span><span class="partner-nav-compact">Roles</span></button><a class="tb-avatar" data-cp-self href="/profile" aria-label="Your profile" title="Your profile">?</a></div>
     </div>
     <div class="content" style="max-width:1120px;">
       <div class="greeting">${intro}</div>
@@ -3329,22 +3347,7 @@ async function renderPartnerOverview(listings, failed){
         <summary style="list-style:none;cursor:pointer;padding:18px 20px;border:1px solid #ddd6fe;border-radius:18px;background:linear-gradient(120deg,#f5f3ff,#ecfdf5);display:flex;align-items:center;justify-content:space-between;gap:16px;"><span><strong style="display:block;color:#4c1d95;">Ask APA, your host copilot</strong><small style="color:var(--ink-soft);">Improve a listing, check performance or plan availability.</small></span><span style="color:#6d28d9;font-weight:800;">Open →</span></summary>
         <div style="margin-top:12px;">${hostCopilotHTML()}</div>
       </details>
-    </div>
-    <style>
-      .partner-nav-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:11px;font-family:var(--font-body);font-weight:700;font-size:12px;text-decoration:none;white-space:nowrap;cursor:pointer}
-      .partner-nav-traveller{border:1.5px solid rgba(45,212,191,.3);background:rgba(45,212,191,.08);color:#0D9488}
-      .partner-nav-role{border:1.5px solid rgba(124,58,237,.3);background:rgba(124,58,237,.07);color:#6D28D9}
-      .partner-nav-compact{display:none}
-      @media(max-width:620px){
-        #p-state-dashboard .topbar{padding-left:14px;padding-right:14px}
-        #p-state-dashboard .tb-cab-anim{font-size:18px}
-        #p-state-dashboard .partner-nav{gap:6px}
-        #p-state-dashboard .partner-nav-btn{padding:8px 10px}
-        #p-state-dashboard .partner-nav-wide{display:none}
-        #p-state-dashboard .partner-nav-compact{display:inline}
-        #p-state-dashboard .partner-nav .tb-avatar{display:none}
-      }
-    </style>`;
+    </div>`;
 }
 
 
@@ -3466,14 +3469,14 @@ async function renderSingleDashboard(listing){
   c.innerHTML = `
     <div class="topbar">
       <div class="tb-left"><button class="tb-icon-btn" onclick="openDrawer()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button><img src="cabana-emblem.png" class="tb-icon-sm" alt="" loading="lazy" decoding="async"/><span class="tb-cab-anim" data-text="CABANA">CABANA</span></div>
-      <div class="tb-right">
-        <a href="#" onclick="switchToGuest();return false;" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:11px;border:1.5px solid rgba(45,212,191,.3);background:rgba(45,212,191,.08);color:#0D9488;font-family:var(--font-body);font-weight:700;font-size:12px;text-decoration:none;transition:all .22s;white-space:nowrap;" title="Switch to Traveller view">
-          ← Traveller dashboard
+      <div class="tb-right partner-nav">
+        <a class="partner-nav-btn partner-nav-traveller" href="#" onclick="switchToGuest();return false;" title="Switch to Traveller view">
+          <span class="partner-nav-wide">← Traveller dashboard</span><span class="partner-nav-compact">← Traveller</span>
         </a>
-        <button onclick="ApaRoles&&ApaRoles.open()" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:11px;border:1.5px solid rgba(124,58,237,.3);background:rgba(124,58,237,.07);color:#6D28D9;font-family:var(--font-body);font-weight:700;font-size:12px;cursor:pointer;transition:all .22s;white-space:nowrap;" title="Switch how you use Cabana">
-          Switch role
+        <button class="partner-nav-btn partner-nav-role" onclick="ApaRoles&&ApaRoles.open()" title="Switch how you use Cabana">
+          <span class="partner-nav-wide">Switch role</span><span class="partner-nav-compact">Roles</span>
         </button>
-        <div class="tb-avatar">${(USER.firstName||'P')[0].toUpperCase()}</div>
+        <a class="tb-avatar" data-cp-self href="/profile" aria-label="Your profile" title="Your profile">?</a>
       </div>
     </div>
     <div class="content">
@@ -3553,13 +3556,14 @@ function hideAddSheet(){
 
 <div data-showcase="window"></div>
 <!-- Session core must resolve before any consumer script runs. -->
-<script src="/apa-chrome.js" defer></script>
+<script src="/apa-chrome.js?v=2-living" defer></script>
+<script src="/cabana-people.js?v=2-living" defer></script>
 <script src="/apa-rail.js" defer></script>
 <script src="/apa-categories.js" defer></script>
 <script src="/analytics.js" defer></script>
 <script src="/chat.js?v=41" defer></script>
 <script src="/telemetry.js" defer></script>
-<script src="/pwa.js?v=39-people-profiles" defer></script>
+<script src="/pwa.js?v=40-living-avatars" defer></script>
 <script src="/apa-push.js" defer></script>
 <script src="/apa-geo.js" defer></script>
 <script src="/apa-location.js" defer></script>

@@ -28,7 +28,7 @@ test('the browser and server agree on every avatar option range', () => {
 test('every catalogue character is valid and renders as self-contained SVG', () => {
   const AV = loadAvatars(), C = AV.catalogue();
   const all = [...C.people, ...C.spirits, ...C.emblems];
-  assert.ok(C.people.length >= 30 && C.spirits.length === 12 && C.emblems.length >= 8);
+  assert.ok(C.people.length >= 48 && C.spirits.length >= 20 && C.emblems.length >= 8);
   assert.equal(new Set(all.map(p => p.id)).size, all.length, 'unique ids');
   for (const p of all) {
     assert.deepEqual(cleanAvatar(p.spec), JSON.parse(JSON.stringify(AV.validate(p.spec))), p.id);
