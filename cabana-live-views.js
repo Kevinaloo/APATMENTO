@@ -22,11 +22,15 @@
 
   /* ── building billboard slides ──────────────────────────────────── */
 
+  /* Each drawing gets its own gradient ids: a gradient defined inside a
+     hidden billboard slide does not paint for a copy elsewhere. */
+  var artSeq = 0;
   function premiumArt() {
+    var g = 'lvg' + (++artSeq);
     return '<div style="position:absolute;inset:0;background:radial-gradient(60% 80% at 78% 40%,rgba(246,196,81,.35),transparent 60%),radial-gradient(50% 70% at 60% 90%,rgba(255,46,147,.28),transparent 60%),radial-gradient(40% 60% at 90% 10%,rgba(139,92,255,.35),transparent 60%),#0b0810"></div>' +
-      '<svg viewBox="0 0 600 600" style="position:absolute;right:-4%;top:50%;width:min(70vh,640px);transform:translateY(-50%);opacity:.9" aria-hidden="true"><defs><linearGradient id="lvg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFF3C8"/><stop offset=".4" stop-color="#F6C451"/><stop offset=".7" stop-color="#B97F17"/><stop offset="1" stop-color="#FFE7A1"/></linearGradient></defs>' +
-      '<circle cx="300" cy="300" r="250" fill="none" stroke="url(#lvg)" stroke-width="1.5" opacity=".35"/><circle cx="300" cy="300" r="200" fill="none" stroke="url(#lvg)" stroke-width="1" opacity=".25"/>' +
-      '<path d="m150 250 70 60 80-110 80 110 70-60-35 170H185z" fill="url(#lvg)" opacity=".95"/><rect x="185" y="440" width="230" height="22" rx="6" fill="url(#lvg)"/></svg>';
+      '<svg viewBox="0 0 600 600" style="position:absolute;right:-4%;top:50%;width:min(70vh,640px);transform:translateY(-50%);opacity:.9" aria-hidden="true"><defs><linearGradient id="' + g + '" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFF3C8"/><stop offset=".4" stop-color="#F6C451"/><stop offset=".7" stop-color="#B97F17"/><stop offset="1" stop-color="#FFE7A1"/></linearGradient></defs>' +
+      '<circle cx="300" cy="300" r="250" fill="none" stroke="url(#' + g + ')" stroke-width="1.5" opacity=".35"/><circle cx="300" cy="300" r="200" fill="none" stroke="url(#' + g + ')" stroke-width="1" opacity=".25"/>' +
+      '<path d="m150 250 70 60 80-110 80 110 70-60-35 170H185z" fill="url(#' + g + ')" opacity=".95"/><rect x="185" y="440" width="230" height="22" rx="6" fill="url(#' + g + ')"/></svg>';
   }
 
   function slideFromEvent(e, kicker) {
@@ -126,6 +130,28 @@
     };
   }
 
+  function eventsSlide() {
+    return {
+      key: 'events', label: 'Events', title: 'Your next night out',
+      chips: [UI.chip('lv-chip-soon', 'Events', 'ticket'), UI.chip('lv-chip-date', 'Tickets at face value')],
+      meta: [{ icon: 'music', html: 'Concerts' }, { icon: 'spark', html: 'Festivals' }, { icon: 'mic', html: 'Comedy' }, { icon: 'balloon', html: 'Family days' }],
+      sub: 'Concerts, festivals, comedy and family days across Africa, at the organiser’s own price. Pay by M-Pesa or card and show your code at the door.',
+      media: { kind: 'art', html: eventsArt() },
+      accent: '#FF2E93',
+      acts: [
+        { label: 'See what’s on', icon: 'ticket', cls: '', href: L.href.tab('events') },
+        { label: 'List your event', icon: 'plus', cls: 'lv-btn-glass', href: '/list-your-event' }
+      ],
+      avail: 'Organisers keep every shilling of the ticket price'
+    };
+  }
+
+  function eventsArt() {
+    return '<div style="position:absolute;inset:0;background:radial-gradient(55% 75% at 75% 35%,rgba(255,46,147,.42),transparent 62%),radial-gradient(45% 65% at 92% 85%,rgba(51,225,255,.28),transparent 60%),radial-gradient(40% 60% at 58% 8%,rgba(139,92,255,.4),transparent 60%),#0a0710"></div>' +
+      '<div class="lv-evs-beams" aria-hidden="true"><i></i><i></i><i></i></div>' +
+      '<div style="position:absolute;right:4%;top:50%;width:min(60vh,540px);transform:translateY(-50%)">' + ticketArt() + '</div>';
+  }
+
   function slideFromAdmin(b) {
     var base = null;
     if (b.kind === 'event' && b.ref) { var e = L.findEvent(b.ref); if (e) base = slideFromEvent(e, b.kicker); }
@@ -187,6 +213,7 @@
       featTitles.slice(0, 2).forEach(function (t) { add(slideFromTitle(t)); });
       (featEvents.length ? featEvents : evs.filter(function (e) { return e.cover_url; })).slice(0, 2).forEach(function (e) { add(slideFromEvent(e, 'Featured night')); });
       if (D.chart.tracks[0]) add(slideFromTrack(D.chart.tracks[0]));
+      if (!evs.length) add(eventsSlide());
       add(premiumSlide());
       if (out.length < 3 && D.chart.tracks[1]) add(slideFromTrack(D.chart.tracks[1], 'Trending in Kenya'));
       if (out.length < 3 && D.chart.releases[0]) add(slideFromTrack(D.chart.releases[0], 'Fresh release'));
@@ -240,64 +267,131 @@
   }
   function keysOf(s) { return s.map(function (x) { return x.key; }).join('|'); }
 
+  /* The home page is a list of sections the console can reorder and hide
+     (live_settings.home_sections, handed over by live_state). Any section
+     the setting does not mention keeps its place from this default. */
+  var HOME_ORDER = ['live', 'events', 'mylist', 'premium', 'top10', 'new', 'movies', 'series', 'specials', 'soon', 'plan', 'playlists', 'releases', 'artists', 'invite'];
+  L.HOME_ORDER = HOME_ORDER;
+  function homeLayout() {
+    var h = (D.state && D.state.home) || {};
+    var hidden = u.arr(h.hidden).map(String);
+    var order = u.arr(h.order).map(String).filter(function (k, i, a) { return HOME_ORDER.indexOf(k) !== -1 && a.indexOf(k) === i; });
+    HOME_ORDER.forEach(function (k) { if (order.indexOf(k) === -1) order.splice(Math.min(HOME_ORDER.indexOf(k), order.length), 0, k); });
+    return order.filter(function (k) { return hidden.indexOf(k) === -1; });
+  }
+
   function paintHomeRows(ctx) {
     var host = u.qs('[data-rows]', ctx.el);
     if (!host) return;
     var titles = D.titles, evs = L.upcomingEvents(), tracks = D.chart.tracks;
-    var html = '';
-
-    var liveRow = titles.filter(function (t) { var s = L.titleState(t); return (t.kind === 'live' || t.kind === 'special') && (s === 'live' || s === 'upcoming'); })
-      .sort(function (a, b) { return (L.titleState(a) === 'live' ? 0 : 1) - (L.titleState(b) === 'live' ? 0 : 1) || Date.parse(a.live_starts_at) - Date.parse(b.live_starts_at); });
-    html += UI.row({ title: 'Live now and coming up ' + (liveRow.some(function (t) { return L.titleState(t) === 'live'; }) ? UI.chip('lv-chip-live', 'Live') : ''), items: liveRow, render: UI.card.wideTitle, col: 'clamp(280px, 30vw, 420px)', all: L.href.tab('live') });
-
-    var mine = myListItems().slice(0, 16);
-    if (mine.length) html += UI.row({ title: 'My List', items: mine, render: renderSaved, col: '230px', all: L.BASE + '/my-list' });
-
-    html += UI.premium();
-
-    html += UI.row({ title: 'Top 10 in Kenya today', sub: 'The music chart, live from YouTube', items: tracks.slice(0, 10), render: function (t, i) { return UI.card.top10(t, i, 'chart'); }, railCls: 'lv-top10-rail', col: 'clamp(210px, 19vw, 280px)', all: L.href.tab('music') });
-
     var week = evs.filter(function (e) { return Date.parse(e.starts_at) - Date.now() < 7 * L.DAY; });
-    if (week.length >= 3) html += UI.row({ title: 'Tonight and this week', items: week.slice(0, 16), render: UI.card.event, col: 'clamp(200px, 17vw, 250px)', all: L.href.tab('events') });
-    else if (evs.length) html += UI.row({ title: 'Coming up near you', items: evs.slice(0, 16), render: UI.card.event, col: 'clamp(200px, 17vw, 250px)', all: L.href.tab('events') });
-
-    var fresh = titles.filter(function (t) { return L.isNew(t) && L.titleState(t) !== 'soon'; });
-    html += UI.row({ title: 'New on Cabana', items: fresh.slice(0, 18), render: UI.card.poster, col: 'clamp(150px, 13vw, 200px)' });
-
-    var movies = titles.filter(function (t) { return t.kind === 'movie' && L.titleState(t) !== 'soon'; });
-    html += UI.row({ title: 'Movies', items: movies.slice(0, 18), render: UI.card.poster, col: 'clamp(150px, 13vw, 200px)', all: L.href.tab('movies') });
-    var shows = titles.filter(function (t) { return t.kind === 'show' && L.titleState(t) !== 'soon'; });
-    html += UI.row({ title: 'Series to binge', items: shows.slice(0, 18), render: UI.card.poster, col: 'clamp(150px, 13vw, 200px)', all: L.href.tab('shows') });
-    var specials = titles.filter(function (t) { return (t.kind === 'special' || (t.kind === 'live' && L.titleState(t) === 'replay')); });
-    html += UI.row({ title: 'Concerts and specials', items: specials.slice(0, 16), render: UI.card.wideTitle, col: 'clamp(280px, 26vw, 380px)', all: L.href.tab('live') });
-
-    if (D.playlists.length) html += UI.row({ title: 'Playlists for every mood', items: D.playlists.slice(0, 16), render: UI.card.playlist, col: 'clamp(160px, 14vw, 210px)', all: L.href.tab('music') });
-
-    var rel = D.chart.releases.slice().sort(function (a, b) { return Date.parse(b.published) - Date.parse(a.published); });
-    html += UI.row({ title: 'Fresh releases', sub: 'New videos from the artists Kenya is playing', items: rel.slice(0, 16), render: function (t) { return UI.card.track(t, { queue: 'releases', tag: u.ago(t.published) }); }, col: 'clamp(260px, 24vw, 340px)', all: L.href.tab('music') });
-
-    if (D.chart.artists.length >= 4) html += UI.row({ title: 'Artists on the rise', items: D.chart.artists.slice(0, 14), render: UI.card.artist, col: 'clamp(120px, 10vw, 150px)', all: L.href.tab('music') + '#standings' });
-
-    var soon = titles.filter(function (t) { return L.titleState(t) === 'soon'; });
-    html += UI.row({ title: 'Coming soon', items: soon.slice(0, 16), render: UI.card.wideTitle, col: 'clamp(280px, 26vw, 380px)' });
-
-    if (!titles.length) html += UI.soonGrid();
-
     var later = evs.filter(function (e) { return Date.parse(e.starts_at) - Date.now() >= 7 * L.DAY; });
-    if (week.length >= 3 && later.length) html += UI.row({ title: 'Plan ahead', items: later.slice(0, 16), render: UI.card.event, col: 'clamp(200px, 17vw, 250px)', all: L.href.tab('events') });
 
-    html += UI.invite();
-    host.innerHTML = html;
+    var S = {
+      live: function () {
+        var liveRow = titles.filter(function (t) { var s = L.titleState(t); return (t.kind === 'live' || t.kind === 'special') && (s === 'live' || s === 'upcoming'); })
+          .sort(function (a, b) { return (L.titleState(a) === 'live' ? 0 : 1) - (L.titleState(b) === 'live' ? 0 : 1) || Date.parse(a.live_starts_at) - Date.parse(b.live_starts_at); });
+        return UI.row({ title: 'Live now and coming up ' + (liveRow.some(function (t) { return L.titleState(t) === 'live'; }) ? UI.chip('lv-chip-live', 'Live') : ''), items: liveRow, render: UI.card.wideTitle, col: 'clamp(280px, 30vw, 420px)', all: L.href.tab('live') });
+      },
+      /* Tickets are what most people arrive for, and the section stands up
+         even before anything is listed. */
+      events: function () { return eventsBlock(evs, week); },
+      mylist: function () {
+        var mine = myListItems().slice(0, 16);
+        return UI.row({ title: 'My List', sub: 'Everything you saved with the heart', items: mine, render: renderSaved, col: '230px', all: L.BASE + '/my-list' });
+      },
+      premium: function () { return UI.premium(); },
+      top10: function () { return UI.row({ title: 'Top 10 in Kenya today', sub: 'The music chart, live from YouTube', items: tracks.slice(0, 10), render: function (t, i) { return UI.card.top10(t, i, 'chart'); }, railCls: 'lv-top10-rail', col: 'clamp(210px, 19vw, 280px)', all: L.href.tab('music') }); },
+      'new': function () { return UI.row({ title: 'New on Cabana', items: titles.filter(function (t) { return L.isNew(t) && L.titleState(t) !== 'soon'; }).slice(0, 18), render: UI.card.poster, col: 'clamp(150px, 13vw, 200px)' }); },
+      movies: function () { return UI.row({ title: 'Movies', items: titles.filter(function (t) { return t.kind === 'movie' && L.titleState(t) !== 'soon'; }).slice(0, 18), render: UI.card.poster, col: 'clamp(150px, 13vw, 200px)', all: L.href.tab('movies') }); },
+      series: function () { return UI.row({ title: 'Series to binge', items: titles.filter(function (t) { return t.kind === 'show' && L.titleState(t) !== 'soon'; }).slice(0, 18), render: UI.card.poster, col: 'clamp(150px, 13vw, 200px)', all: L.href.tab('shows') }); },
+      specials: function () { return UI.row({ title: 'Concerts and specials', items: titles.filter(function (t) { return (t.kind === 'special' || (t.kind === 'live' && L.titleState(t) === 'replay')); }).slice(0, 16), render: UI.card.wideTitle, col: 'clamp(280px, 26vw, 380px)', all: L.href.tab('live') }); },
+      soon: function () {
+        return UI.row({ title: 'Coming soon', items: titles.filter(function (t) { return L.titleState(t) === 'soon'; }).slice(0, 16), render: UI.card.wideTitle, col: 'clamp(280px, 26vw, 380px)' }) +
+          (titles.length ? '' : UI.soonGrid());
+      },
+      plan: function () { return week.length >= 3 && later.length ? UI.row({ title: 'Plan ahead', items: later.slice(0, 16), render: UI.card.event, col: 'clamp(200px, 17vw, 250px)', all: L.href.tab('events') }) : ''; },
+      playlists: function () { return UI.row({ title: 'Playlists for every mood', items: D.playlists.slice(0, 16), render: UI.card.playlist, col: 'clamp(160px, 14vw, 210px)', all: L.href.tab('music') }); },
+      releases: function () {
+        var rel = D.chart.releases.slice().sort(function (a, b) { return Date.parse(b.published) - Date.parse(a.published); });
+        return UI.row({ title: 'Fresh releases', sub: 'New videos from the artists Kenya is playing', items: rel.slice(0, 16), render: function (t) { return UI.card.track(t, { queue: 'releases', tag: u.ago(t.published) }); }, col: 'clamp(260px, 24vw, 340px)', all: L.href.tab('music') });
+      },
+      artists: function () { return D.chart.artists.length >= 4 ? UI.row({ title: 'Artists on the rise', items: D.chart.artists.slice(0, 14), render: UI.card.artist, col: 'clamp(120px, 10vw, 150px)', all: L.href.tab('music') + '#standings' }) : ''; },
+      invite: function () { return UI.invite(); }
+    };
+
+    host.innerHTML = homeLayout().map(function (k) {
+      try { return S[k](); } catch (e) { if (global.console) console.error('[live:home:' + k + ']', e); return ''; }
+    }).join('');
     UI.wireRails(host);
+  }
+
+  /* The events zone on the home page: a way in by kind of night, then the
+     nights themselves. Before anything is listed it says so plainly and
+     offers the one useful thing, listing an event. */
+  function eventsBlock(evs, week) {
+    var counts = {};
+    evs.forEach(function (e) { var c = e.category || 'music'; counts[c] = (counts[c] || 0) + 1; });
+    var cats = CATS.filter(function (c) { return c.key !== 'all' && (!evs.length || counts[c.key]); });
+    var cities = {};
+    evs.forEach(function (e) { if (e.city) cities[e.city] = 1; });
+    var sub = evs.length
+      ? evs.length + ' coming up' + (Object.keys(cities).length ? ' in ' + Object.keys(cities).slice(0, 3).map(esc).join(', ') + (Object.keys(cities).length > 3 ? ' and more' : '') : '') + ' · the organiser’s price, nothing added'
+      : 'Concerts, festivals, comedy, sport and family days across Africa, at the organiser’s own price';
+    var html = '<section class="lv-evx" aria-labelledby="lv-evx-h">' +
+      '<div class="lv-row-h"><div><div class="lv-evx-k">' + ic('ticket', 2.2) + 'What’s on</div>' +
+        '<h2 class="lv-row-t" id="lv-evx-h">Events</h2><p class="lv-row-s">' + sub + '</p></div>' +
+        '<a class="lv-row-all" href="' + L.href.tab('events') + '">All events' + ic('chevR', 2.4) + '</a></div>' +
+      '<div class="lv-evcats" role="list" style="--cols:' + (cats.length <= 6 ? cats.length : Math.ceil(cats.length / 2)) + '">' + cats.map(function (c) {
+        return '<a class="lv-evcat" role="listitem" href="' + L.href.tab('events') + '?cat=' + c.key + '" style="--ca:' + c.a + ';--cb:' + c.b + '">' +
+          '<span class="lv-evcat-ic">' + ic(c.icon, 2) + '</span><b>' + esc(c.label) + '</b>' +
+          (counts[c.key] ? '<small>' + counts[c.key] + ' event' + (counts[c.key] === 1 ? '' : 's') + '</small>' : '') + '</a>';
+      }).join('') + '</div>';
+    if (evs.length) {
+      var lead = week.length >= 3 ? week : evs;
+      html += '<h3 class="lv-evx-sub">' + (week.length >= 3 ? 'Tonight and this week' : 'Coming up') + '</h3>' +
+        '<div class="lv-rail lv-evx-rail" style="--col:clamp(200px, 17vw, 250px)">' + lead.slice(0, 16).map(UI.card.event).join('') + '</div>';
+    } else {
+      html += '<div class="lv-evx-empty">' +
+        '<div class="lv-evx-art" aria-hidden="true">' + ticketArt() + '</div>' +
+        '<div class="lv-evx-copy">' + UI.chip('lv-chip-soon', 'Tickets opening soon') +
+          '<h3>The stage is being set</h3>' +
+          '<p>Nothing is on sale yet. Organisers are listing concerts, festivals, comedy nights, school shows and conferences now, each at their own price with nothing added. Pay by M-Pesa or card and show your code at the door.</p>' +
+          '<div class="lv-evx-acts"><a class="lv-btn lv-btn-accent" href="/list-your-event" rel="external">' + ic('plus', 2.6) + 'List your event, free</a>' +
+          '<a class="lv-btn lv-btn-ghost" href="' + L.href.tab('music') + '">' + ic('music') + 'Play the chart meanwhile</a></div>' +
+        '</div></div>';
+    }
+    return html + '</section>';
+  }
+
+  function ticketArt() {
+    var g = 'lvtk' + (++artSeq);
+    return '<svg viewBox="0 0 320 220" role="presentation"><defs>' +
+      '<linearGradient id="' + g + 'a" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF2E93"/><stop offset=".55" stop-color="#8B5CFF"/><stop offset="1" stop-color="#33E1FF"/></linearGradient>' +
+      '<linearGradient id="' + g + 'b" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#FFE7A1"/><stop offset="1" stop-color="#F6C451"/></linearGradient></defs>' +
+      '<g transform="rotate(-8 160 110)"><path d="M40 50h240a10 10 0 0 1 10 10v26a18 18 0 0 0 0 36v26a10 10 0 0 1-10 10H40a10 10 0 0 1-10-10v-26a18 18 0 0 0 0-36V60a10 10 0 0 1 10-10Z" fill="url(#' + g + 'a)"/>' +
+      '<path d="M214 58v104" stroke="#fff" stroke-opacity=".55" stroke-width="2" stroke-dasharray="4 6"/>' +
+      '<text x="52" y="92" fill="#fff" font-family="Anybody, sans-serif" font-weight="900" font-size="30" letter-spacing="-1">ADMIT ONE</text>' +
+      '<text x="52" y="118" fill="#fff" fill-opacity=".85" font-family="Plus Jakarta Sans, sans-serif" font-weight="700" font-size="12" letter-spacing="2">CABANA LIVE</text>' +
+      '<rect x="52" y="130" width="112" height="20" rx="5" fill="#fff" fill-opacity=".2"/>' +
+      '<text x="60" y="144" fill="#fff" font-family="Plus Jakarta Sans, sans-serif" font-weight="800" font-size="10" letter-spacing="1.6">FACE VALUE</text>' +
+      '<circle cx="252" cy="110" r="22" fill="url(#' + g + 'b)"/><path d="m244 110 6 6 11-12" fill="none" stroke="#2A1C00" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></g></svg>';
   }
 
   /* ── events ─────────────────────────────────────────────────────── */
 
   var CATS = [
-    { key: 'all', label: 'Everything' }, { key: 'music', label: 'Music' }, { key: 'festival', label: 'Festivals' },
-    { key: 'nightlife', label: 'Nightlife' }, { key: 'comedy', label: 'Comedy' }, { key: 'sports', label: 'Sports' },
-    { key: 'art', label: 'Arts' }, { key: 'kids', label: 'Kids' }, { key: 'corporate', label: 'Business' },
-    { key: 'community', label: 'Community' }, { key: 'food', label: 'Food & drink' }
+    { key: 'all', label: 'Everything' },
+    { key: 'music', label: 'Music', icon: 'music', a: '#FF2E93', b: '#8B5CFF' },
+    { key: 'festival', label: 'Festivals', icon: 'spark', a: '#FFB23F', b: '#FF5E3A' },
+    { key: 'nightlife', label: 'Nightlife', icon: 'party', a: '#7A3BFF', b: '#33E1FF' },
+    { key: 'comedy', label: 'Comedy', icon: 'mic', a: '#FFD23F', b: '#FF7A3D' },
+    { key: 'sports', label: 'Sports', icon: 'ball', a: '#22E08A', b: '#0FA3B1' },
+    { key: 'art', label: 'Arts', icon: 'palette', a: '#FF5E7E', b: '#B23BFF' },
+    { key: 'kids', label: 'Kids', icon: 'balloon', a: '#33E1FF', b: '#3D7BFF' },
+    { key: 'corporate', label: 'Business', icon: 'briefcase', a: '#9AA7FF', b: '#4B5BD6' },
+    { key: 'community', label: 'Community', icon: 'people', a: '#FF9F43', b: '#EE5A24' },
+    { key: 'food', label: 'Food & drink', icon: 'food', a: '#FF6B6B', b: '#FFB23F' }
   ];
   var WHEN = [['all', 'Any time'], ['tonight', 'Tonight'], ['weekend', 'This weekend'], ['week', 'This week'], ['month', 'This month']];
   var AUDS = [['all', 'Anyone'], ['night', 'After dark'], ['family', 'Family'], ['work', 'Business'], ['culture', 'Culture']];
@@ -365,7 +459,7 @@
         '<select class="lv-select" data-city aria-label="City"><option value="">All cities</option>' + Object.keys(cities).sort().map(function (c) { return '<option value="' + esc(c) + '"' + (f.city === c ? ' selected' : '') + '>' + esc(c) + ' (' + cities[c] + ')</option>'; }).join('') + '</select>' +
         '<select class="lv-select" data-sort aria-label="Sort"><option value="soonest">Soonest first</option><option value="price-asc"' + (f.sort === 'price-asc' ? ' selected' : '') + '>Cheapest first</option><option value="price-desc"' + (f.sort === 'price-desc' ? ' selected' : '') + '>Most premium</option></select>' +
         '<div class="lv-pills" role="group" aria-label="When">' + WHEN.map(function (w) { return '<button class="lv-pill" type="button" data-when="' + w[0] + '" aria-pressed="' + (f.when === w[0]) + '">' + w[1] + '</button>'; }).join('') + '</div>' +
-        '<div class="lv-pills" role="group" aria-label="Category">' + CATS.filter(function (c) { return c.key === 'all' || counts[c.key]; }).map(function (c) {
+        '<div class="lv-pills" role="group" aria-label="Category">' + CATS.filter(function (c) { return c.key === 'all' || counts[c.key] || c.key === f.cat; }).map(function (c) {
           return '<button class="lv-pill" type="button" data-cat="' + c.key + '" aria-pressed="' + (f.cat === c.key) + '">' + c.label + ' <span class="n">' + (counts[c.key] || 0) + '</span></button>';
         }).join('') + '</div>' +
         '<div class="lv-pills" role="group" aria-label="Who is coming with you">' + AUDS.map(function (a) { return '<button class="lv-pill" type="button" data-aud="' + a[0] + '" aria-pressed="' + (f.aud === a[0]) + '">' + a[1] + '</button>'; }).join('') + '</div>' +
@@ -405,7 +499,7 @@
       var l = list();
       c.innerHTML = '<b>' + l.length + '</b> event' + (l.length === 1 ? '' : 's') + ' coming up';
       if (!l.length) {
-        var filtered = f.q || f.cat !== 'all' || f.when !== 'all' || f.city;
+        var filtered = L.upcomingEvents().length && (f.q || f.cat !== 'all' || f.when !== 'all' || f.city);
         g.innerHTML = '<div style="grid-column:1/-1">' + (filtered
           ? UI.empty('search', 'Nothing matches that yet', 'Widen the search and the rest of the board comes back.', '<button class="lv-btn lv-btn-ghost" type="button" data-clear>Show everything</button>')
           : UI.empty('ticket', 'The stage is being set', 'No events are on sale right now. Organisers list here every week, from warehouse parties to school concerts. Check back soon, or be the first to put something on.',
@@ -706,7 +800,7 @@
     function paint() {
       var items = myListItems();
       var titles = items.filter(function (x) { return x.kind === 'title'; }), evs = items.filter(function (x) { return x.kind === 'event'; }), trs = items.filter(function (x) { return x.kind === 'track'; });
-      ctx.el.innerHTML = '<header class="lv-head"><div class="lv-head-k">Saved for later</div><h1>My List</h1><p>' + (L.signedIn() ? 'Saved to your Cabana account, on every device.' : 'Saved on this device. <a href="' + esc(L.signInUrl()) + '" rel="external" style="color:#fff;font-weight:700">Sign in</a> to keep it everywhere.') + '</p></header>' +
+      ctx.el.innerHTML = '<header class="lv-head"><div class="lv-head-k">Saved for later</div><h1>My List</h1><p>Films and shows to watch, events to be reminded about, and songs to come back to. Anything you save with the heart, plus or bell lands here. ' + (L.signedIn() ? 'It is kept on your Cabana account, on every device.' : 'It is kept on this device for now. <a href="' + esc(L.signInUrl()) + '" rel="external" style="color:#fff;font-weight:700">Sign in</a> to keep it everywhere.') + '</p></header>' +
         (!items.length ? UI.empty('heart', 'Nothing saved yet', 'Tap the plus on any film, the bell on any event, or the heart on a record, and it waits for you here.', '<a class="lv-btn lv-btn-accent" href="' + L.BASE + '">Browse Cabana Live</a>') : '') +
         UI.row({ title: 'Films and shows', items: titles, render: renderSaved, col: 'clamp(150px, 13vw, 200px)' }) +
         UI.row({ title: 'Events and reminders', items: evs, render: renderSaved, col: 'clamp(200px, 17vw, 250px)' }) +

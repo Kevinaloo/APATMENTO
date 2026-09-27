@@ -221,6 +221,9 @@
     });
 
     host.innerHTML =
+      /* Events sit in the console's Cabana Live group; the same section
+         bar as the rest of the studio keeps them one click from the others. */
+      (window.CX && window.CX.liveStudioNav ? window.CX.liveStudioNav('events') : '') +
       '<div class="hd"><div><div class="card-t">Events</div>' +
         '<div class="card-s">Everything on cabana.africa/events. Organisers submit; you decide what goes live.</div></div>' +
         '<div class="hd-act"><button class="btn btn-p" id="ev-adm-new">+ New Cabana event</button></div>' +
@@ -331,6 +334,8 @@
     var host = $('ev-adm-form');
     if (!host) return;
 
+    /* A Cabana night is presented by Cabana unless someone else is chosen. */
+    var inHouse = (state.organisers.filter(function (o) { return o.status === 'approved' && o.kind === 'cabana'; })[0] || {}).id || '';
     var opOpts = [['', '— choose —']].concat(state.organisers
       .filter(function (o) { return o.status === 'approved'; })
       .map(function (o) { return [o.id, o.name + (o.kind === 'cabana' ? ' (in-house)' : '')]; }));
@@ -343,7 +348,7 @@
         '<form id="ev-adm-f">' +
           '<div class="g2">' +
             field('Title', 'title', t && t.title, { ph: 'Blankets & Wine October Edition' }) +
-            field('Organiser', 'organiser_id', t && t.organiser_id, { select: opOpts }) +
+            field('Organiser', 'organiser_id', t ? t.organiser_id : inHouse, { select: opOpts }) +
           '</div>' +
           field('Tagline', 'tagline', t && t.tagline, { ph: 'One line under the name' }) +
           field('Description', 'description', t && t.description, { textarea: true, rows: 5 }) +
@@ -357,7 +362,8 @@
             field('City', 'city', (t && t.city) || 'Nairobi') +
             field('Category', 'category', t && t.category, {
               select: [['music','Music'],['festival','Festival'],['nightlife','Nightlife'],
-                       ['comedy','Comedy'],['sports','Sports'],['art','Arts'],['food','Food & drink']] }) +
+                       ['comedy','Comedy'],['sports','Sports'],['art','Arts'],['kids','Kids & family'],
+                       ['corporate','Business'],['community','Community'],['food','Food & drink']] }) +
           '</div>' +
           field('Address', 'address', t && t.address) +
           '<div class="g4">' +

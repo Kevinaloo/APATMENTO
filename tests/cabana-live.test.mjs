@@ -180,7 +180,11 @@ test('the chart is server-written and the key never reaches the browser', () => 
 test('every address under /events is served by the app', () => {
   const rw = VERCEL.rewrites.find((r) => r.source === '/events/:path+');
   assert.ok(rw, 'deep links need a rewrite');
-  assert.equal(rw.destination, '/events.html');
+  // With cleanUrls on, Vercel does not resolve a rewrite to "/events.html":
+  // the address fell back to index.html and looped on /events/dashboard.
+  assert.equal(rw.destination, '/events', 'the rewrite points at the clean path');
+  for (const r of VERCEL.rewrites) assert.doesNotMatch(r.destination, /^\/[a-z-]+\.html(\?|$)/, `${r.source} rewrites to an .html file, which cleanUrls will not serve`);
+  assert.match(read('index.html'), /location\.replace\('\/dashboard\.html'\)/, 'a stray path that lands on index.html must not loop');
   assert.match(read('server.js'), /app\.get\(\/\^\\\/events\\\/\.\+\$\//, 'the dev server mirrors it');
 });
 
@@ -213,4 +217,76 @@ test('the database shelves records with the same patterns as the chart function'
     }
   }
   assert.match(shelf, /regexp_replace\(lower\([^;]*'vevo\\M', ' vevo'/, 'RemaVEVO is Rema in both places');
+});
+
+
+test('a site script that turns links into reloads never gets Cabana Live’s links', async () => {
+  const { w } = boot('/events');
+  await settle(120);
+  // brand.js, injected by pwa.js on every page, listens on document in the
+  // capture phase and reloads on any internal link it sees unclaimed.
+  let veiled = 0;
+  w.document.addEventListener('click', (e) => { if (e.defaultPrevented) return; if (e.target.closest('a[href^="/"]')) { e.preventDefault(); veiled++; } }, true);
+  w.document.querySelector('.lv-tab[href="/events/music"]').click();
+  await settle(40);
+  assert.equal(w.location.pathname, '/events/music', 'the tab changed the view in place');
+  assert.equal(veiled, 0, 'the reload veil never saw the click');
+  w.document.querySelector('.lv-logo').click();
+  await settle(40);
+  assert.equal(w.location.pathname, '/events');
+  assert.equal(veiled, 0);
+});
+
+test('the page opts out of the site-wide light theme and link veil', () => {
+  assert.match(EVENTS, /<html lang="en" data-brand="own">/);
+  assert.match(EVENTS, /<base href="\/"\/>/, 'relative links in site scripts resolve from the root on /events/music/…');
+  assert.ok(EVENTS.indexOf("window.__APA_BRAND__ = 'cabana-live'") < EVENTS.indexOf('/pwa.js'), 'brand.js is told to stay off before pwa.js runs');
+  const pwa = read('pwa.js');
+  assert.match(pwa, /getAttribute\('data-brand'\) === 'own'/);
+  assert.match(pwa, /if \(!__ownBrand && !document\.querySelector\('link\[href="\/brand\.css"\]'\)\)/);
+  assert.match(SRC['cabana-live-core.js'], /global\.addEventListener\('click', onClick, true\)/, 'the router claims its links before any document listener');
+});
+
+test('events lead the home page, even before anything is listed', async () => {
+  const { w } = boot('/events');
+  await settle(120);
+  const d = w.document;
+  const rows = d.querySelector('[data-rows]');
+  assert.ok(rows.firstElementChild.classList.contains('lv-evx'), 'the events zone is the first thing under the billboard');
+  assert.equal(d.querySelectorAll('.lv-evcat').length, 10, 'every kind of night has a way in');
+  assert.match(d.querySelector('.lv-evx-empty').textContent, /The stage is being set/);
+  assert.ok(d.querySelector('.lv-evx-empty a[href="/list-your-event"]'), 'the empty state offers the one useful thing');
+  assert.ok([...d.querySelectorAll('.lv-bb-dot')].some((b) => /Events/.test(b.textContent)), 'the billboard has an events slide');
+  const tiles = [...d.querySelectorAll('.lv-evcat')].map((a) => a.getAttribute('href'));
+  assert.ok(tiles.includes('/events/whats-on?cat=kids'));
+});
+
+test('the console arranges the home page and the page follows', async () => {
+  const { w } = boot('/events', { rpcs: { live_state: { signed_in: false, premium: false, trial_enabled: true, trial_days: 30, home: { order: ['top10', 'events'], hidden: ['premium', 'invite'] } } } });
+  await settle(120);
+  const d = w.document;
+  const rows = [...d.querySelector('[data-rows]').children];
+  const top10 = rows.findIndex((n) => /Top 10/.test(n.textContent));
+  const events = rows.findIndex((n) => n.classList.contains('lv-evx'));
+  assert.ok(top10 !== -1 && events !== -1 && top10 < events, 'the chosen order is kept');
+  assert.equal(d.querySelector('[data-rows] .lv-prem'), null, 'a hidden section is not drawn');
+  assert.equal(d.querySelector('[data-rows] .lv-invite'), null);
+});
+
+test('the console lists the same home sections the page draws', () => {
+  const page = SRC['cabana-live-views.js'].match(/var HOME_ORDER = \[([^\]]+)\]/)[1].match(/'([a-z0-9]+)'/g).map((x) => x.slice(1, -1));
+  const block = read('admin-views-live.js').match(/var HOME_SECTIONS = \[([\s\S]*?)\n  \];/)[1];
+  const admin = [...block.matchAll(/^\s+\['([a-z0-9]+)', /gm)].map((m) => m[1]);
+  assert.deepEqual(admin, page);
+  const sql = read('supabase/migrations/20260927110000_live_home_sections.sql');
+  assert.match(sql, /'home', coalesce\(st\.home_sections, '\{\}'::jsonb\)/, 'live_state hands the layout to the page');
+});
+
+test('the heart says what it is and stays on a phone', async () => {
+  const { w } = boot('/events');
+  await settle(80);
+  const heart = w.document.querySelector('#lv-mylist');
+  assert.equal(heart.getAttribute('data-tip'), 'My List');
+  assert.match(heart.getAttribute('aria-label'), /My List/);
+  assert.ok(!heart.classList.contains('hide-s'), 'not hidden on small screens');
 });

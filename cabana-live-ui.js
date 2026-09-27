@@ -48,8 +48,8 @@
         '<span class="lv-tabs-ink" aria-hidden="true"></span>' +
       '</nav>' +
       '<div class="lv-top-r">' +
-        '<a class="lv-ico" href="' + L.BASE + '/search" aria-label="Search Cabana Live">' + ic('search') + '</a>' +
-        '<a class="lv-ico hide-s" href="' + L.BASE + '/my-list" aria-label="My List" id="lv-mylist">' + ic('heart') + '<span class="lv-badge-n" hidden></span></a>' +
+        '<a class="lv-ico" href="' + L.BASE + '/search" aria-label="Search Cabana Live" data-tip="Search">' + ic('search') + '</a>' +
+        '<a class="lv-ico" href="' + L.BASE + '/my-list" aria-label="My List: everything you saved" data-tip="My List" id="lv-mylist">' + ic('heart') + '<span class="lv-badge-n" hidden></span></a>' +
         '<button class="lv-prem-chip" type="button" id="lv-prem-chip" data-act="premium">' + ic('crown') + '<span>1 month free</span></button>' +
         '<span id="lv-acct"></span>' +
       '</div>';
@@ -97,10 +97,16 @@
     dot.hidden = !any;
   }
 
+  var savedCount = null;
   function paintSaves() {
-    var n = L.saves.all().length, b = u.qs('#lv-mylist .lv-badge-n');
+    var n = L.saves.all().length, b = u.qs('#lv-mylist .lv-badge-n'), h = u.qs('#lv-mylist');
     if (!b) return;
     b.hidden = !n; b.textContent = n > 99 ? '99+' : String(n);
+    /* The heart answers a save, so it is clear where saved things went. */
+    if (savedCount !== null && n > savedCount && h) {
+      h.classList.remove('is-pop'); void h.offsetWidth; h.classList.add('is-pop');
+    }
+    savedCount = n;
   }
 
   function paintAccount() {
