@@ -735,7 +735,8 @@ body.intro-lock{animation:apaUnlockScroll 0s linear 3.6s forwards;}
 
       // Everyone. Signed in or not. Goes straight to the dashboard.
       // The dashboard handles its own auth state and shows the right UI.
-      location.replace('dashboard.html');
+      // Absolute: a stray path that falls back to this page must not loop.
+      location.replace('/dashboard.html');
     }catch(e){ /* never block the page on a parse error */ }
   })();
   </script>

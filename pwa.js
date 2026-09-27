@@ -14,13 +14,16 @@
 
 /* ── EQUATOR LIGHT bootstrap. Ensures the brand system on every page ── */
 try {
-  if (!document.querySelector('link[href="/brand.css"]')) {
+  /* A page that draws its own brand (Cabana Live) opts out with
+     <html data-brand="own">: no light theme, no link veil. */
+  var __ownBrand = document.documentElement.getAttribute('data-brand') === 'own';
+  if (!__ownBrand && !document.querySelector('link[href="/brand.css"]')) {
     var __brandCss = document.createElement('link');
     __brandCss.rel = 'stylesheet';
     __brandCss.href = '/brand.css';
     (document.head || document.documentElement).appendChild(__brandCss);
   }
-  if (!window.__APA_BRAND__ && !document.querySelector('script[src="/brand.js"]')) {
+  if (!__ownBrand && !window.__APA_BRAND__ && !document.querySelector('script[src="/brand.js"]')) {
     var __brandJs = document.createElement('script');
     __brandJs.src = '/brand.js';
     __brandJs.defer = true;

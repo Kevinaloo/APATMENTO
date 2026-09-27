@@ -721,15 +721,37 @@
     }
   };
 
+  /* Listened for on window in the capture phase, so Cabana Live's own links
+     are handled before any site-wide script can turn them into a reload.
+     A button inside a link (save, play) still gets its own click. */
   function onClick(e) {
     if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     var a = e.target.closest && e.target.closest('a[href]');
     if (!a || a.target === '_blank' || a.hasAttribute('download') || a.getAttribute('rel') === 'external') return;
+    var inner = e.target.closest('button,[data-act],input,select,textarea');
+    if (inner && inner !== a && a.contains(inner)) return;
+    var raw = a.getAttribute('href');
+    /* The page has <base href="/">, so an in-page #anchor is resolved here
+       rather than by the browser (which would leave for the homepage). */
+    if (raw.charAt(0) === '#') {
+      e.preventDefault();
+      var target = raw.length > 1 && doc.getElementById(raw.slice(1));
+      if (target) {
+        if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1');
+        target.focus({ preventScroll: true });
+        target.scrollIntoView({ behavior: reduced() ? 'auto' : 'smooth', block: 'start' });
+      }
+      return;
+    }
     var u;
-    try { u = new URL(a.getAttribute('href'), location.href); } catch (x) { return; }
+    try { u = new URL(raw, location.href); } catch (x) { return; }
     if (u.origin !== location.origin || !isOurs(u.pathname)) return;
-    if (u.pathname === location.pathname && u.search === location.search && u.hash) return;
     e.preventDefault();
+    if (u.pathname === location.pathname && u.search === location.search) {
+      if (u.hash) { var h = doc.getElementById(u.hash.slice(1)); if (h) h.scrollIntoView({ behavior: 'smooth' }); }
+      else global.scrollTo({ top: 0, behavior: reduced() ? 'auto' : 'smooth' });
+      return;
+    }
     L.go(u.pathname + u.search + u.hash);
   }
 
@@ -741,7 +763,7 @@
     else if (location.pathname === '/events.html') history.replaceState({ lv: 1 }, '', L.BASE + location.search);
 
     try { history.scrollRestoration = 'manual'; } catch (e) {}
-    doc.addEventListener('click', onClick);
+    global.addEventListener('click', onClick, true);
     global.addEventListener('popstate', function () {
       /* A closing overlay steps back through its own history entry; that
          pop is not a navigation. A back gesture with an overlay open
