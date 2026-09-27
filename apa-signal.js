@@ -29,7 +29,8 @@
   var SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
 
   var doc = global.document;
-  var PAGE = (global.location.pathname.split('/').pop() || 'index').replace('.html', '') || 'index';
+  var PAGE = /^\/events\//.test(global.location.pathname) ? 'events'
+    : (global.location.pathname.split('/').pop() || 'index').replace('.html', '') || 'index';
 
   function safe(fn, l) { try { return fn(); } catch (e) { if (global.console && global.console.debug) console.debug('[signal:' + l + ']', e && e.message); } }
 

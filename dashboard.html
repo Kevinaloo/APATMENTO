@@ -2403,9 +2403,9 @@ const SCENES = {
   /* stays: retired. The facade on apartments.html is the transition
      now; see cabana-stay-gate.js. Left out rather than left in so
      nobody wires it back up by accident. */
-  /* events: retired. The room on events.html is the transition now;
-     see cabana-event-gate.js. Left out rather than left in so nobody
-     wires it back up by accident. */
+  /* events: retired. Cabana Live on events.html opens on its own brand
+     sting and billboard; see cabana-live-ui.js. Left out rather than
+     left in so nobody wires it back up by accident. */
   /* rides: retired. The dispatch on rides.html is the transition
      now; see cabana-ride-gate.js. Left out rather than left in so
      nobody wires it back up by accident. */
@@ -2477,11 +2477,9 @@ function navigateToService(key, deepLink){
      ?back=1 was present. */
   if (key === 'stays') { safeGo(); return; }
 
-  /* Events owns its arrival too. The scene here was two beams and a
-     row of falling confetti; events.html now opens on a room that
-     builds, holds for a beat and drops. Playing both meant two
-     transitions for one navigation, and the weaker one won, because
-     events.html suppressed its own whenever ?back=1 was present. */
+  /* Events owns its arrival too. Cabana Live opens on its own brand
+     sting and billboard, so a transition here would be two for one
+     navigation. */
   if (key === 'events') { safeGo(); return; }
 
   /* Food owns its arrival too. The scene here was a plate with three

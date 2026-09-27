@@ -12,6 +12,17 @@ import { corsHeaders as sdkCorsHeaders } from "npm:@supabase/supabase-js@2.112.3
                      Cached hard, because search costs 100 quota units a call
                      against a 10,000 unit day.
      action=artist   one artist's shelf, for the podium detail panel
+     action=resolve  a YouTube link or id, turned into what it points at
+                     (a video, a channel, a playlist). The console uses it
+                     to follow a channel or add a track to a playlist.
+
+   The board has two feeds. With YOUTUBE_API_KEY set, YouTube's own Kenya
+   music chart (mostPopular) leads. Beside it, and with no key at all, the
+   room follows artists' channels and playlists through YouTube's public
+   RSS feeds (music_sources). Those feeds carry view and like counts, so
+   new releases are ranked by how fast they are moving, and a short chart
+   is filled from them rather than left with gaps. Artists who chart are
+   followed automatically, so the release shelf grows on its own.
 
    Ranking artists is deliberately not "whoever holds rank 1". Three records
    in the middle of the board beat one hit at the top, and a record that is
@@ -22,10 +33,25 @@ import { corsHeaders as sdkCorsHeaders } from "npm:@supabase/supabase-js@2.112.3
 const DATABASE_URL = Deno.env.get("SUPABASE_DB_URL") || "";
 const YOUTUBE_API_KEY = Deno.env.get("YOUTUBE_API_KEY") || "";
 const CACHE_MS = 30 * 60 * 1000;
-const LOCK_MS = 75 * 1000;
+const LOCK_MS = 150 * 1000;
 const MARKET = "KE";
 const SEARCH_TTL_HOURS = 12;
 const LEGACY_CHART_URL = "https://uinxdkpnxwyrecnxjhdm.supabase.co/functions/v1/youtube-sync?type=trending&region=KE";
+const FEED_URL = "https://www.youtube.com/feeds/videos.xml";
+const MAX_SOURCES_PER_REFRESH = 80;
+const FEED_CONCURRENCY = 8;
+const AUTO_FOLLOW_PER_REFRESH = 8;
+const CHART_FLOOR = 30;
+const CHART_SIZE = 50;
+/* youtube.com in the EU answers a bare request with a cookie-consent
+   interstitial. These two cookies are the documented "reject all" state,
+   which is enough to be shown the page itself. Feeds and oEmbed never
+   need them. */
+const PAGE_HEADERS = {
+  "Accept-Language": "en",
+  Cookie: "SOCS=CAI; CONSENT=YES+1",
+  "User-Agent": "Mozilla/5.0 (compatible; CabanaPulse/1.0; +https://cabana.africa)",
+};
 
 const database = DATABASE_URL ? postgres(DATABASE_URL, {
   prepare: false,
@@ -113,6 +139,27 @@ const GENRES: Array<[string, RegExp]> = [
   ["afrobeat", /\b(afrobeat|afrobeats|afropop|afro\s?fusion|naija)\b/],
 ];
 
+/* Titles rarely say what a record sounds like, but the artist usually
+   does. Checked after the title patterns, so a gospel title by a pop
+   artist is still shelved as gospel. */
+const ARTIST_CULTURES: Array<[string, RegExp]> = [
+  ["Kikuyu", /\b(samidoh|muigai wa njoroge|muigai kigutha|kamande wa kioi|ben githae|joseph kamaru|jose gatutura|karangu muraya|john de'?mathew|ruth wamuyu|mike rua|salim junior)\b/],
+  ["Kamba", /\b(alex kasau|katombi|kativui|maxwell mwalimu|kithungo|ken wa maria|kalapata)\b/],
+  ["Luo", /\b(prince indah|emma jalamo|musa jakadala|odongo swagg|osogo winyo|dola kabarry|elisha toto)\b/],
+  ["Kalenjin", /\b(emmy kosgei|kipchumba|kenene|msupa s)\b/],
+];
+
+const ARTIST_GENRES: Array<[string, RegExp]> = [
+  ["gospel", /\b(mercy masika|guardian angel|israel mbonyi|rose muhando|christina shusho|victor muthenya|size 8|daddy owen|kambua|gloria muliro|eunice njeri|paul clement|goodluck gozbert|zabron singers)\b/],
+  ["afrobeat", /\b(rema|asake|burna ?boy|wizkid|davido|fireboy|omah lay|joeboy|ayra starr|tems|kizz daniel|olamide|tiwa savage|ckay|victony|shallipopi|seyi vibez|bnxn|ruger|mayorkun|adekunle gold|zinoleesky|young jonn|khaid|odumodublvck|rexxie|lojay)\b/],
+  ["amapiano", /\b(tyla|kabza|maphorisa|uncle waffles|focalistic|young stunna|tman xpress|mellow ?(&|and) ?sleazy|kelvin momo|daliwonga|scorpion kings|nkosazana|sir trill|major league)\b/],
+  ["bongo", /\b(diamond platnumz|harmonize|zuchu|rayvanny|mbosso|alikiba|marioo|jux|nandy|lava lava|konde boy|kusah|jay melody|phina)\b/],
+  ["drill", /\b(buruklyn boyz|dyana cods|lil maina|kushman|mad cleet|hype beast)\b/],
+  ["hiphop", /\b(khaligraph|octopizzo|nyashinski|wakadinali|sewersydaa|scar mkadinali|kaa la moto|juliani|king kaka|kristoff|breeder lw)\b/],
+  ["gengetone", /\b(mejja|ethic entertainment|sailors|ochungulo|exray|trio mio|zzero sufuri|toxic lyrikali|virusi mbaya|matata|ssaru|femi one)\b/],
+  ["afropop", /\b(sauti sol|bien|nviiri|otile brown|nadia mukami|arrow ?bwoy|jovial|sofiya nzau|savara|bensoul|bahati|willy paul|nikita kering|charisma|xenia manasseh|kaskazini)\b/],
+];
+
 function formatFor(haystack: string) {
   if (/\b(live|concert|performance|session|unplugged)\b/.test(haystack)) return "live";
   if (/\b(dj|deejay|mix|mixtape|nonstop|mashup|set)\b/.test(haystack)) return "dj_mix";
@@ -121,14 +168,25 @@ function formatFor(haystack: string) {
 }
 
 function shelveFor(title: string, channel: string) {
-  const haystack = `${title} ${channel}`.toLowerCase();
+  /* "RemaVEVO" is Rema: split the label suffix off so names match. */
+  const haystack = `${title} ${channel}`.toLowerCase().replace(/vevo\b/g, " vevo");
   let culture: string | null = null;
   for (const [name, pattern] of CULTURES) {
     if (pattern.test(haystack)) { culture = name; break; }
   }
+  if (!culture) {
+    for (const [name, pattern] of ARTIST_CULTURES) {
+      if (pattern.test(haystack)) { culture = name; break; }
+    }
+  }
   let genre = culture ? "tribal" : "other";
   if (!culture) {
     for (const [name, pattern] of GENRES) {
+      if (pattern.test(haystack)) { genre = name; break; }
+    }
+  }
+  if (genre === "other") {
+    for (const [name, pattern] of ARTIST_GENRES) {
       if (pattern.test(haystack)) { genre = name; break; }
     }
   }
@@ -189,6 +247,23 @@ function publicArtist(row: Record<string, any>) {
   };
 }
 
+function publicRelease(row: Record<string, any>) {
+  return {
+    videoId: row.video_id,
+    title: row.title,
+    artist: row.artist,
+    thumb: row.thumbnail_url,
+    published: row.published_at,
+    views: number(row.views),
+    likes: number(row.likes),
+    viewsDelta: number(row.views_delta),
+    velocity: Number(row.velocity || 0),
+    genre: row.genre || "other",
+    culture: row.culture || null,
+    format: row.format || "track",
+  };
+}
+
 function publicAward(row: Record<string, any>) {
   return {
     period: row.period,
@@ -207,7 +282,7 @@ function publicAward(row: Record<string, any>) {
 
 async function cachedChart() {
   if (!database) throw new Error("database_unavailable");
-  const [tracks, metadata, artists, awards] = await Promise.all([
+  const [tracks, metadata, artists, awards, releases] = await Promise.all([
     database`select * from public.music_chart_public where market = ${MARKET} order by rank`,
     database`select * from public.music_chart_meta where market = ${MARKET} limit 1`,
     database`select * from public.music_artists_public where market = ${MARKET} order by rank limit 20`,
@@ -217,17 +292,25 @@ async function cachedChart() {
       where market = ${MARKET}
       order by period, period_start desc
     `,
+    database`
+      select * from public.music_releases_public
+      order by published_at desc limit 40
+    `,
   ]);
+  const meta = metadata[0] ? { ...metadata[0] } : null;
+  if (meta) delete meta.refresh_token;
   return {
     tracks: tracks.map(publicTrack),
-    meta: metadata[0] || null,
+    meta,
     artists: artists.map(publicArtist),
     awards: awards.map(publicAward),
+    releases: releases.map(publicRelease),
   };
 }
 
 function isFresh(meta: Record<string, any> | null, count: number) {
   if (!meta?.last_refreshed_at || !count) return false;
+  if (meta.force_refresh) return false;
   return Date.now() - Date.parse(meta.last_refreshed_at) < CACHE_MS;
 }
 
@@ -311,6 +394,333 @@ async function upstreamChart() {
     return { videos: await youtubeMostPopular(), source: "youtube_most_popular" };
   }
   return { videos: await legacyMusicCache(), source: "legacy_music_chart" };
+}
+
+/* ── the feeds ─────────────────────────────────────────────────────────────
+   A channel's or playlist's public RSS feed lists its latest uploads with
+   view and like counts. No key, no quota. Parsed with patterns rather than
+   a DOM because the edge runtime has no XML parser and the format is fixed
+   by YouTube, not by the channel. */
+
+type FeedItem = {
+  videoId: string;
+  channelId: string | null;
+  title: string;
+  artist: string;
+  published: string | null;
+  thumb: string | null;
+  views: number;
+  likes: number;
+};
+
+function decodeXml(value: string) {
+  return value
+    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
+    .replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&#39;/g, "'")
+    .replace(/&lt;/g, "<").replace(/&gt;/g, ">")
+    .replace(/&#(\d+);/g, (_m, code) => String.fromCharCode(Number(code)))
+    .replace(/&amp;/g, "&")
+    .trim();
+}
+
+function tag(block: string, pattern: RegExp) {
+  const match = pattern.exec(block);
+  return match ? decodeXml(match[1]) : "";
+}
+
+/* Uploads that are plainly not a record: Shorts, interviews, trailers,
+   reaction videos. The chart is for music. */
+const NOT_A_RECORD = /(#shorts?\b|\b(interview|podcast|behind the scenes|bts|trailer|teaser|reaction|vlog|unboxing|press conference|announcement)\b)/i;
+
+function parseFeed(xml: string): FeedItem[] {
+  const out: FeedItem[] = [];
+  const entries = xml.split("<entry>").slice(1);
+  for (const raw of entries) {
+    const block = raw.split("</entry>")[0];
+    const videoId = tag(block, /<yt:videoId>([^<]+)<\/yt:videoId>/);
+    if (!/^[A-Za-z0-9_-]{11}$/.test(videoId)) continue;
+    const title = tag(block, /<title>([\s\S]*?)<\/title>/);
+    if (!title || NOT_A_RECORD.test(title)) continue;
+    out.push({
+      videoId,
+      channelId: tag(block, /<yt:channelId>([^<]+)<\/yt:channelId>/) || null,
+      title,
+      artist: tag(block, /<author>\s*<name>([\s\S]*?)<\/name>/) || "Unknown artist",
+      published: tag(block, /<published>([^<]+)<\/published>/) || null,
+      thumb: `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
+      views: number(tag(block, /<media:statistics views="(\d+)"/)),
+      likes: number(tag(block, /<media:starRating count="(\d+)"/)),
+    });
+  }
+  return out;
+}
+
+async function fetchFeed(kind: string, externalId: string) {
+  const param = kind === "playlist" ? "playlist_id" : "channel_id";
+  const response = await fetch(`${FEED_URL}?${param}=${encodeURIComponent(externalId)}`, {
+    signal: AbortSignal.timeout(9_000),
+  });
+  if (!response.ok) throw new Error(`feed ${response.status}`);
+  const xml = await response.text();
+  const head = xml.split("<entry>")[0];
+  return { title: tag(head, /<title>([\s\S]*?)<\/title>/), items: parseFeed(xml) };
+}
+
+async function inBatches<T, R>(list: T[], size: number, work: (item: T) => Promise<R>) {
+  const results: Array<PromiseSettledResult<R>> = [];
+  for (let i = 0; i < list.length; i += size) {
+    results.push(...await Promise.allSettled(list.slice(i, i + size).map(work)));
+  }
+  return results;
+}
+
+/* Every followed source, read once per refresh. Velocity is plays per hour
+   since the last read; on first sight it falls back to lifetime plays over
+   age, so a new follow is ranked immediately instead of waiting a cycle. */
+async function syncSources(refreshedAt: string) {
+  if (!database) return [];
+  const sources = await database`
+    select id, kind, external_id, market from public.music_sources
+    where active order by auto asc, last_synced_at asc nulls first
+    limit ${MAX_SOURCES_PER_REFRESH}
+  `;
+  if (!sources.length) return [];
+
+  const fetched = await inBatches(sources, FEED_CONCURRENCY, async (source: any) => {
+    try {
+      const feed = await fetchFeed(source.kind, source.external_id);
+      await database`
+        update public.music_sources
+        set last_synced_at = ${refreshedAt}, last_error = null, items_count = ${feed.items.length},
+            label = coalesce(label, ${feed.title || null})
+        where id = ${source.id}
+      `;
+      return { source, items: feed.items };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      await database`
+        update public.music_sources set last_synced_at = ${refreshedAt}, last_error = ${message.slice(0, 300)}
+        where id = ${source.id}
+      `;
+      throw error;
+    }
+  });
+
+  const seen = new Map<string, any>();
+  for (const result of fetched) {
+    if (result.status !== "fulfilled") continue;
+    for (const item of result.value.items) {
+      if (!seen.has(item.videoId)) seen.set(item.videoId, { ...item, source: result.value.source });
+    }
+  }
+  const items = [...seen.values()];
+  if (!items.length) return [];
+
+  const ids = items.map((item) => item.videoId);
+  const previous = await database`
+    select video_id, views, refreshed_at from public.music_releases where video_id in ${database(ids)}
+  `;
+  const before = new Map(previous.map((row: any) => [row.video_id, row]));
+
+  const rows = items.map((item) => {
+    const old: any = before.get(item.videoId);
+    const hours = old ? Math.max(0.25, (Date.parse(refreshedAt) - new Date(old.refreshed_at).getTime()) / 3_600_000) : 0;
+    const ageHours = Math.max(1, (Date.parse(refreshedAt) - Date.parse(item.published || refreshedAt)) / 3_600_000);
+    const delta = old ? Math.max(0, item.views - number(old.views)) : 0;
+    const velocity = old && delta > 0 ? delta / hours : item.views / ageHours;
+    const shelf = shelveFor(item.title, item.artist);
+    return {
+      video_id: item.videoId,
+      source_id: item.source.id,
+      channel_id: item.channelId,
+      market: item.source.market || MARKET,
+      title: item.title.slice(0, 300),
+      artist: item.artist.slice(0, 160),
+      thumbnail_url: item.thumb,
+      published_at: item.published,
+      views: item.views,
+      likes: item.likes,
+      views_delta: delta,
+      velocity: Number(velocity.toFixed(3)),
+      genre: shelf.genre,
+      culture: shelf.culture,
+      format: shelf.format,
+      active: true,
+      refreshed_at: refreshedAt,
+    };
+  });
+
+  await database`
+    insert into public.music_releases ${database(rows,
+      "video_id", "source_id", "channel_id", "market", "title", "artist", "thumbnail_url",
+      "published_at", "views", "likes", "views_delta", "velocity", "genre", "culture",
+      "format", "active", "refreshed_at")}
+    on conflict (video_id) do update set
+      source_id = excluded.source_id,
+      channel_id = excluded.channel_id,
+      title = excluded.title,
+      artist = excluded.artist,
+      thumbnail_url = excluded.thumbnail_url,
+      published_at = excluded.published_at,
+      views = excluded.views,
+      likes = excluded.likes,
+      views_delta = excluded.views_delta,
+      velocity = excluded.velocity,
+      genre = excluded.genre,
+      culture = excluded.culture,
+      format = excluded.format,
+      active = true,
+      refreshed_at = excluded.refreshed_at
+  `;
+  await database`delete from public.music_releases where published_at < now() - interval '400 days'`;
+
+  return await database`
+    select * from public.music_releases
+    where active and market = ${MARKET} and published_at > now() - interval '60 days'
+    order by velocity desc limit ${CHART_SIZE}
+  `;
+}
+
+/* A feed row dressed as a YouTube API video, so a short chart can be
+   filled through the exact same mapping as the real one. */
+function releaseAsVideo(row: Record<string, any>) {
+  return {
+    id: row.video_id,
+    snippet: {
+      title: row.title,
+      channelTitle: row.artist,
+      channelId: row.channel_id,
+      publishedAt: row.published_at instanceof Date ? row.published_at.toISOString() : row.published_at,
+      thumbnails: { high: { url: row.thumbnail_url } },
+    },
+    statistics: { viewCount: row.views, likeCount: row.likes, commentCount: 0 },
+    contentDetails: {},
+  };
+}
+
+/* ── following who charts ──────────────────────────────────────────────────
+   The API gives a charting video's channel id directly. Without it, the
+   video's oEmbed names the channel page, and the page names the id. */
+
+const CHANNEL_ID = /^UC[A-Za-z0-9_-]{22}$/;
+
+async function oembed(videoId: string) {
+  const response = await fetch(
+    `https://www.youtube.com/oembed?format=json&url=${encodeURIComponent("https://www.youtube.com/watch?v=" + videoId)}`,
+    { signal: AbortSignal.timeout(8_000) },
+  );
+  if (!response.ok) throw new Error(`oembed ${response.status}`);
+  return await response.json();
+}
+
+async function channelIdFromPage(url: string) {
+  const response = await fetch(url, { headers: PAGE_HEADERS, signal: AbortSignal.timeout(9_000) });
+  if (!response.ok) throw new Error(`page ${response.status}`);
+  const html = await response.text();
+  const match = /<link rel="canonical" href="https:\/\/www\.youtube\.com\/channel\/(UC[A-Za-z0-9_-]{22})"/.exec(html)
+    || /"externalId":"(UC[A-Za-z0-9_-]{22})"/.exec(html)
+    || /"channelId":"(UC[A-Za-z0-9_-]{22})"/.exec(html);
+  return match ? match[1] : null;
+}
+
+async function channelIdForVideo(videoId: string) {
+  if (YOUTUBE_API_KEY) {
+    const endpoint = new URL("https://www.googleapis.com/youtube/v3/videos");
+    endpoint.search = new URLSearchParams({ part: "snippet", id: videoId, key: YOUTUBE_API_KEY }).toString();
+    const response = await fetch(endpoint, { signal: AbortSignal.timeout(8_000) });
+    const payload = await response.json();
+    const id = payload?.items?.[0]?.snippet?.channelId;
+    if (id && CHANNEL_ID.test(id)) return id;
+  }
+  const info = await oembed(videoId);
+  if (!info?.author_url) return null;
+  return await channelIdFromPage(String(info.author_url));
+}
+
+async function autoFollow(rows: Array<Record<string, any>>, known: Map<string, string>) {
+  if (!database) return;
+  const followed = new Set(
+    (await database`select external_id from public.music_sources`).map((row: any) => row.external_id),
+  );
+  const candidates: Array<{ videoId: string; artist: string; channelId: string | null }> = [];
+  const artists = new Set<string>();
+  for (const row of rows.slice(0, 40)) {
+    const key = artistKeyFor(row.artist);
+    if (!key || artists.has(key)) continue;
+    artists.add(key);
+    const channelId = known.get(row.video_id) || null;
+    if (channelId && followed.has(channelId)) continue;
+    candidates.push({ videoId: row.video_id, artist: row.artist, channelId });
+  }
+
+  let resolved = 0;
+  for (const candidate of candidates) {
+    if (resolved >= AUTO_FOLLOW_PER_REFRESH) break;
+    try {
+      const channelId = candidate.channelId || await channelIdForVideo(candidate.videoId);
+      resolved += candidate.channelId ? 0 : 1;
+      if (!channelId || !CHANNEL_ID.test(channelId) || followed.has(channelId)) continue;
+      followed.add(channelId);
+      await database`
+        insert into public.music_sources (kind, external_id, label, market, auto)
+        values ('channel', ${channelId}, ${candidate.artist.slice(0, 120)}, ${MARKET}, true)
+        on conflict (external_id) do nothing
+      `;
+    } catch (error) {
+      console.warn("[youtube-sync] follow failed", candidate.artist, error instanceof Error ? error.message : error);
+    }
+  }
+}
+
+/* ── resolve ───────────────────────────────────────────────────────────────
+   Paste anything: a watch link, youtu.be, a Shorts link, a channel link,
+   an @handle, a playlist link, or a bare id. */
+
+async function resolveThing(input: string) {
+  const text = input.trim();
+  let url: URL | null = null;
+  try { url = new URL(/^https?:\/\//i.test(text) ? text : `https://www.youtube.com/${text.replace(/^\/+/, "")}`); } catch (_e) { url = null; }
+
+  const list = url?.searchParams.get("list");
+  if (list && /^[A-Za-z0-9_-]{10,80}$/.test(list) && !url?.searchParams.get("v")) {
+    const feed = await fetchFeed("playlist", list);
+    return { kind: "playlist", id: list, title: feed.title || "Playlist", items: feed.items.length,
+             thumb: feed.items[0]?.thumb || null };
+  }
+
+  const videoId = /^[A-Za-z0-9_-]{11}$/.test(text) ? text
+    : url?.searchParams.get("v")
+      || (/youtu\.be$/i.test(url?.hostname || "") ? url?.pathname.slice(1, 12) : null)
+      || /\/(?:shorts|embed|live)\/([A-Za-z0-9_-]{11})/.exec(url?.pathname || "")?.[1]
+      || null;
+  if (videoId && /^[A-Za-z0-9_-]{11}$/.test(videoId)) {
+    const info = await oembed(videoId);
+    const title = String(info?.title || "Untitled");
+    const artist = String(info?.author_name || "Unknown artist");
+    const shelf = shelveFor(title, artist);
+    return { kind: "video", id: videoId, title, artist, channelUrl: info?.author_url || null,
+             thumb: `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`, genre: shelf.genre, culture: shelf.culture };
+  }
+
+  const channel = /\/channel\/(UC[A-Za-z0-9_-]{22})/.exec(url?.pathname || "")?.[1]
+    || (CHANNEL_ID.test(text) ? text : null);
+  const id = channel || (url ? await channelIdFromPage(`https://www.youtube.com${url.pathname}`) : null);
+  if (id) {
+    const feed = await fetchFeed("channel", id);
+    return { kind: "channel", id, title: feed.title || "Channel", items: feed.items.length,
+             thumb: feed.items[0]?.thumb || null };
+  }
+  throw new Error("not_found");
+}
+
+async function handleResolve(req: Request, input: string) {
+  if (!input || input.length > 300) return json(req, 400, { error: "input_required" });
+  try {
+    return json(req, 200, await resolveThing(input), "public, max-age=600, stale-while-revalidate=3600");
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return json(req, message === "not_found" ? 404 : 502, { error: message === "not_found" ? "not_found" : "resolve_failed" });
+  }
 }
 
 /* ── standings ─────────────────────────────────────────────────────────────
@@ -447,16 +857,37 @@ async function refreshChart(token: string) {
       throw new Error("Cabana Pulse server configuration is incomplete");
     }
 
-    const [previous, previousArtists, upstream] = await Promise.all([
+    const refreshedAt = new Date().toISOString();
+    const [previous, previousArtists, upstream, releases] = await Promise.all([
       database`select video_id, rank, views, first_seen_at from public.music_chart_tracks where market = ${MARKET}`,
       database`select artist_key, rank from public.music_chart_artists where market = ${MARKET}`,
-      upstreamChart(),
+      /* One failing feed must not silence the other. */
+      upstreamChart().catch((error) => {
+        console.error("[youtube-sync] upstream chart failed", error instanceof Error ? error.message : error);
+        return { videos: [], source: "unavailable" };
+      }),
+      syncSources(refreshedAt).catch((error) => {
+        console.error("[youtube-sync] feed sync failed", error instanceof Error ? error.message : error);
+        return [];
+      }),
     ]);
-    const { videos, source } = upstream;
+    let { videos, source } = upstream;
+
+    /* A short board is filled from what is moving fastest on the followed
+       channels, rather than being published with gaps. */
+    if (videos.length < CHART_FLOOR && releases.length) {
+      const have = new Set(videos.map((video: any) => video.id));
+      const extra = releases.filter((row: any) => !have.has(row.video_id)).map(releaseAsVideo);
+      videos = [...videos, ...extra].slice(0, CHART_SIZE);
+      source = source === "unavailable" ? "youtube_feeds" : `${source}+feeds`;
+    }
+    const channelOf = new Map<string, string>();
+    for (const video of videos) {
+      if (video?.snippet?.channelId) channelOf.set(video.id, video.snippet.channelId);
+    }
 
     const before = new Map((previous || []).map((row) => [row.video_id, row]));
     const beforeArtists = new Map((previousArtists || []).map((row) => [row.artist_key, row.rank]));
-    const refreshedAt = new Date().toISOString();
 
     const rows = videos.map((video: any, index: number) => {
       const old: any = before.get(video.id);
@@ -618,9 +1049,15 @@ async function refreshChart(token: string) {
             refresh_token = null,
             tracks_count = ${rows.length},
             last_error = null,
+            force_refresh = false,
             updated_at = ${refreshedAt}
         where market = ${MARKET} and refresh_token = ${token}
       `;
+    });
+
+    /* After the board is safe. Following is best-effort by design. */
+    await autoFollow(rows, channelOf).catch((error) => {
+      console.warn("[youtube-sync] auto-follow failed", error instanceof Error ? error.message : error);
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -800,6 +1237,9 @@ Deno.serve(async (req: Request) => {
     }
     if (action === "artist") {
       return await handleArtist(req, String(url.searchParams.get("key") || ""));
+    }
+    if (action === "resolve") {
+      return await handleResolve(req, String(url.searchParams.get("q") || ""));
     }
     if (action !== "chart") {
       return json(req, 404, { error: "unsupported_action" });

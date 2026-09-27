@@ -1218,4 +1218,7 @@
   }
 
   CX.immersive = { open: function (w) { openStudio(w, null); } };
+  /* The resumable uploader is shared: the Cabana Live studio sends its
+     films and trailers through the same code. */
+  CX.uploads = { tus: tus, putSmall: putSmall, analyze: analyze, mimeOf: mimeOf, mb: mb };
 })(window);

@@ -1,0 +1,114 @@
+/* ═══════════════════════════════════════════════════════════════════
+   CONSOLE · CABANA LIVE STUDIO
+   Built on the console's own tokens, so it follows light and dark.
+   Chips reuse the Immersive studio's (.imx-chip) so the two read alike.
+   ═══════════════════════════════════════════════════════════════════ */
+
+.lvx-kpis { margin-bottom: 16px; }
+.lvx-live { color: #FF3355; }
+.lvx-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+.lvx-card, .lvx-slide {
+  position: relative; display: flex; flex-direction: column;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 18px; overflow: hidden;
+  transition: transform .25s var(--ease), border-color .2s, box-shadow .25s;
+}
+.lvx-card:hover, .lvx-slide:hover { transform: translateY(-2px); border-color: var(--line-3); box-shadow: var(--sh-2); }
+.lvx-card-img, .lvx-slide-img { position: relative; aspect-ratio: 16 / 9; background: linear-gradient(135deg, #140F22, #2A1438); overflow: hidden; cursor: pointer; }
+.lvx-card-img img, .lvx-slide-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.lvx-card-img .ph, .lvx-slide-img .ph { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: rgba(255, 255, 255, .35); }
+.lvx-card-img .ph .ic, .lvx-slide-img .ph .ic { width: 36px; height: 36px; }
+.lvx-tags { position: absolute; top: 10px; left: 10px; right: 10px; display: flex; gap: 6px; flex-wrap: wrap; }
+.imx-chip.lvx-gold { background: linear-gradient(135deg, #FFE7A1, #F6C451 50%, #C98F24); color: #2A1C00; border-color: transparent; }
+.imx-chip.lvx-red { background: #FF3355; border-color: transparent; }
+.imx-chip.info { background: rgba(76, 125, 255, .85); border-color: transparent; }
+.lvx-card-b { padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; flex: 1; }
+.lvx-card-t { font: 620 15px/1.25 var(--f-d); letter-spacing: -.02em; color: var(--ink-1); }
+.lvx-card-s { font-size: 12px; color: var(--ink-4); }
+.lvx-card-stats { display: flex; gap: 14px; margin-top: 6px; font: 500 11.5px var(--f-m); color: var(--ink-3); }
+.lvx-card-f { display: flex; gap: 6px; padding: 10px 12px; border-top: 1px solid var(--line); align-items: center; }
+.lvx-card-f .grow { flex: 1; }
+.lvx-card-f .icon-btn[data-up] .ic { transform: rotate(-90deg); }
+.lvx-new {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; text-align: center;
+  min-height: 230px; border-radius: 18px; border: 1.5px dashed var(--line-3); color: var(--ink-3);
+  background: transparent; cursor: pointer; font: inherit; padding: 20px; transition: border-color .2s, color .2s, background .2s;
+}
+.lvx-new:hover { border-color: var(--brand-line); color: var(--ink-1); background: var(--brand-soft); }
+.lvx-new .ic { width: 30px; height: 30px; }
+.lvx-new b { font: 620 15px var(--f-d); color: var(--ink-1); }
+.lvx-new span { font-size: 12.5px; }
+
+/* Billboard cards show the copy over the art, like the slide itself. */
+.lvx-slides { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
+.lvx-slide-img::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(5, 4, 9, .85), transparent 70%), linear-gradient(0deg, rgba(5, 4, 9, .6), transparent 50%); }
+.lvx-slide-copy { position: absolute; z-index: 1; left: 14px; right: 30%; bottom: 12px; color: #fff; }
+.lvx-slide-copy b { display: block; font: 800 18px/1 var(--f-d); letter-spacing: -.02em; text-transform: uppercase; }
+.lvx-kick { display: inline-block; margin-bottom: 6px; padding: 3px 7px; border-radius: 5px; font: 700 9.5px var(--f-m); letter-spacing: .1em; text-transform: uppercase; background: rgba(255, 255, 255, .92); color: #0b0912; }
+.lvx-slide-img .lvx-tags { z-index: 2; }
+
+/* ── editor sections ── */
+.lvx-ed { display: grid; gap: 6px; }
+.lvx-sec { padding: 4px 0 18px; border-bottom: 1px solid var(--line); margin-bottom: 12px; }
+.lvx-sec:last-child { border-bottom: 0; }
+.lvx-sec h3 { font: 640 15px var(--f-d); letter-spacing: -.02em; color: var(--ink-1); margin: 0 0 10px; }
+.lvx-sec p.muted { font-size: 12.5px; margin: -4px 0 12px; }
+
+/* A URL field with its preview and an upload button. */
+.lvx-media-row { display: flex; align-items: center; gap: 8px; }
+.lvx-media-row .inp { flex: 1; min-width: 0; }
+.lvx-media-prev { width: 52px; height: 52px; flex: none; border-radius: 10px; overflow: hidden; display: grid; place-items: center; background: var(--panel-3, rgba(127, 127, 127, .1)); color: var(--ink-4); border: 1px solid var(--line); }
+.lvx-media-prev.r169 { width: 80px; height: 45px; }
+.lvx-media-prev.r23 { width: 40px; height: 60px; }
+.lvx-media-prev.r916 { width: 34px; height: 60px; }
+.lvx-media-prev.r11 { width: 52px; height: 52px; }
+.lvx-media-prev img, .lvx-media-prev video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.lvx-media-prev .ic { width: 18px; height: 18px; }
+.lvx-up { cursor: pointer; flex: none; }
+.lvx-media.busy .lvx-up { opacity: .5; pointer-events: none; }
+.lvx-prog { position: relative; height: 22px; margin-top: 8px; border-radius: 8px; overflow: hidden; background: var(--panel-3, rgba(127, 127, 127, .12)); }
+.lvx-prog i { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: linear-gradient(90deg, #7A3BFF, #FF2E93); transition: width .3s; }
+.lvx-prog span { position: relative; z-index: 1; display: block; padding: 0 10px; font: 600 11px/22px var(--f-m); color: #fff; mix-blend-mode: difference; }
+.lvx-src { padding: 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel-2, transparent); }
+.lvx-src-up { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 10px; font-size: 12px; }
+.lvx-src-up label { cursor: pointer; }
+
+.lvx-eps { display: grid; gap: 6px; }
+.lvx-ep { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); cursor: pointer; text-align: left; font: inherit; color: inherit; }
+.lvx-ep:hover { border-color: var(--line-3); }
+.lvx-ep-n { font: 700 12px var(--f-m); color: var(--ink-3); min-width: 70px; }
+.lvx-ep .grow { flex: 1; min-width: 0; }
+.lvx-ep b { display: block; font-size: 14px; }
+.lvx-ep small { display: block; font-size: 12px; color: var(--ink-4); }
+.lvx-ep .ic { width: 16px; height: 16px; color: var(--ink-4); }
+
+/* Slide editor: a live preview above the form. */
+.lvx-slide-ed { display: grid; gap: 16px; }
+.lvx-prev { --acc: #8B5CFF; position: relative; aspect-ratio: 16 / 7; border-radius: 16px; overflow: hidden; background: #0b0912; color: #fff; }
+.lvx-prev-media { position: absolute; inset: 0; }
+.lvx-prev-media img, .lvx-prev-media video { width: 100%; height: 100%; object-fit: cover; }
+.lvx-prev::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(7, 6, 11, .92), rgba(7, 6, 11, .4) 55%, transparent), radial-gradient(60% 80% at 15% 100%, var(--acc), transparent 70%); opacity: .95; pointer-events: none; }
+.lvx-prev-copy { position: absolute; z-index: 1; left: 22px; bottom: 18px; right: 40%; }
+.lvx-prev-copy b { display: block; font: 900 clamp(20px, 3vw, 34px)/.95 var(--f-d); letter-spacing: -.02em; text-transform: uppercase; }
+.lvx-prev-copy p { margin: 8px 0 0; font-size: 12px; color: rgba(255, 255, 255, .75); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.lvx-prev-copy .lvx-kick:empty { display: none; }
+.lvx-prev-btns { display: flex; gap: 6px; margin-top: 10px; }
+.lvx-prev-btns span { padding: 6px 12px; border-radius: 8px; font-size: 11.5px; font-weight: 700; }
+.lvx-prev-btns .a { background: #fff; color: #0b0912; }
+.lvx-prev-btns .b { background: rgba(255, 255, 255, .18); }
+
+/* Playlists and tracks. */
+.lvx-pls { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px; padding: 0 20px 18px; }
+.lvx-pl { display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: 14px; border: 1px solid var(--line); background: var(--panel); cursor: pointer; text-align: left; font: inherit; color: inherit; }
+.lvx-pl:hover { border-color: var(--line-3); }
+.lvx-pl-art { width: 48px; height: 48px; flex: none; border-radius: 10px; overflow: hidden; display: grid; place-items: center; color: #fff; background: linear-gradient(135deg, var(--pl), #0b0912); }
+.lvx-pl-art img { width: 100%; height: 100%; object-fit: cover; }
+.lvx-pl .grow, .lvx-track .grow, .lvx-pick-row .grow { flex: 1; min-width: 0; }
+.lvx-pl b, .lvx-track b, .lvx-pick-row b { display: block; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lvx-pl small, .lvx-track small, .lvx-pick-row small { display: block; font-size: 12px; color: var(--ink-4); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lvx-tracks, .lvx-pick { display: grid; gap: 4px; }
+.lvx-pick { max-height: 60vh; overflow: auto; }
+.lvx-track, .lvx-pick-row { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); }
+.lvx-pick-row { cursor: pointer; }
+.lvx-track img, .lvx-pick-row img { width: 64px; height: 36px; object-fit: cover; border-radius: 6px; flex: none; }
+.lvx-track-n { font: 700 12px var(--f-m); color: var(--ink-4); min-width: 22px; text-align: right; }
+.lvx-track .icon-btn[data-mv] .ic { transform: rotate(-90deg); }

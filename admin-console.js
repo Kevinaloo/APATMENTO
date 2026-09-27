@@ -794,6 +794,7 @@
       { id: 'tours', label: 'Tours', icon: 'map', tone: 'warn', desk: 's-tours', badge: function () { return c('tours') + c('operators'); } },
       { id: 'immersive', label: 'Immersive', icon: 'vr', tone: 'info', badge: function () { return c('immersive_requests'); } },
       { id: 'events', label: 'Events', icon: 'ticket', tone: 'warn', desk: 's-events', badge: function () { return c('events'); } },
+      { id: 'live', label: 'Cabana Live', icon: 'play', tone: 'info' },
       { id: 'move', label: 'Cabana Move', icon: 'car', tone: 'warn', desk: 's-transport', badge: function () { return c('rides'); } },
       { id: 'offers', label: 'Offers', icon: 'tag', desk: 's-offers' },
       { id: 'match', label: 'Cabana Match', icon: 'sparkles' }

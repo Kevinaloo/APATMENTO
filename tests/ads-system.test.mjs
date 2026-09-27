@@ -39,7 +39,14 @@ test('every placement finds its anchor in the page (a redesign that drops one fa
         const hit = sl.anchor.some(sel => doc.querySelector(sel));
         assert.ok(hit, `${sl.id}: none of its anchors (${sl.anchor.join(', ')}) exist in ${htmlFor(s.page)}`);
       }
-      if (sl.kind === 'infeed') {
+      if (sl.kind === 'infeed' && s.feed && s.feed.spa) {
+        // An app page draws its grid itself: one of the scripts the page
+        // loads must still render an element the selector matches.
+        const scripts = [...doc.querySelectorAll('script[src^="/"]')].map(n => n.getAttribute('src').split('?')[0].slice(1)).filter(f => existsSync(new URL(`../${f}`, import.meta.url)));
+        const ids = s.feed.grid.filter(sel => /^#[\w-]+$/.test(sel)).map(sel => `id="${sel.slice(1)}"`);
+        assert.ok(ids.length, `${sl.id}: an app-drawn grid needs an #id selector`);
+        assert.ok(scripts.some(f => ids.some(id => read(f).includes(id))), `${sl.id}: no script on ${htmlFor(s.page)} draws ${s.feed.grid}`);
+      } else if (sl.kind === 'infeed') {
         assert.ok((s.feed && s.feed.grid || []).some(sel => doc.querySelector(sel)), `${sl.id}: results grid ${s.feed && s.feed.grid} missing`);
       }
       if (sl.kind === 'managed' && sl.probe) assert.ok(doc.querySelector(sl.probe), `${sl.id}: ${sl.probe} missing`);

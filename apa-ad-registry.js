@@ -118,8 +118,11 @@
         { id: 'tours.sticky', label: 'Corner card', kind: 'overlay', formats: ['sticky'] }
       ], shadow: true },
 
+    // The results grid is drawn by Cabana Live on its Events tab only,
+    // so the engine waits for it across tab changes (spa) instead of
+    // calling the page broken when a visitor is on Music or Movies.
     { page: 'events', label: 'Events', service: true,
-      feed: { grid: ['#ev-grid'], label: 'event cards' },
+      feed: { grid: ['#ev-grid'], label: 'event cards', spa: true },
       slots: [
         { id: 'events.feed', label: 'In results', kind: 'infeed', formats: ['native', 'carousel'] },
         { id: 'events.end', label: 'After events', kind: 'section', formats: ['window', 'video', 'split', 'carousel'],
@@ -208,6 +211,9 @@
 
   function pageFromPath(pathname) {
     var p = String(pathname || '/').split('?')[0].split('#')[0].replace(/\/+$/, '');
+    // Cabana Live is one page with its own addresses (/events/music,
+    // /events/e/<id>): every one of them is the events surface.
+    if (/^\/events\//i.test(p)) return 'events';
     p = p.split('/').pop() || 'index';
     p = p.replace(/\.html?$/i, '').toLowerCase();
     return p || 'index';
