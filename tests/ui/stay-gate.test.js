@@ -13,14 +13,14 @@
      PLACE     The name is never wrong. It is taken from what the page
                actually knows — landing pages hand off as
                /apartments?q=Kilimani — and anything unrecognised falls
-               back to "Tonight, somewhere in Africa" rather than being
+               back to "<hour>, somewhere in Africa" rather than being
                guessed at. The rendered string always comes from the
                map, never from the query string, so a hostile value
                cannot reach the DOM.
 
-     GEOMETRY  The camera goes through the hero window, not through the
-               middle of the screen and approximately near it. --hx/--hy
-               must land on the element carrying .sg-hero.
+     GEOMETRY  The camera goes through the door, not through the middle
+               of the screen and approximately near it. --hx/--hy must
+               land on the doorway that holds the .sg-hero leaf.
 
      DEGRADE   Reduced motion lights the block and holds it still: no
                scaling, no travel, no flicker, and the page still arrives.
@@ -111,13 +111,15 @@ const settled = page => page.evaluate(() => ({
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
   const page = await ctx.newPage();
 
+  const HOUR = /^(This morning|This afternoon|This evening|Tonight)/;
+  const norm = t => t == null ? t : t.replace(HOUR, 'Tonight');
   async function lineFor(query) {
     await page.goto(`${BASE}/apartments.html${query}`, { waitUntil: 'load' });
     await page.waitForTimeout(500);
     return page.evaluate(() => {
       const el = document.querySelector('#stay-gate .sg-place');
       return el ? el.textContent.replace(/\s+/g, ' ').trim() : null;
-    });
+    }).then(norm);
   }
 
   check('a known neighbourhood is named',
@@ -161,6 +163,9 @@ const settled = page => page.evaluate(() => ({
 {
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
   const page = await ctx.newPage();
+  /* Every load here is a first visit: a repeat visit in the same session
+     plays the short version, which never shows the word at all. */
+  await page.addInitScript(() => { try { sessionStorage.removeItem('cbn-stay-gate-seen'); } catch (e) {} });
 
   async function withGeo(mock, query = '') {
     let hit = 0;
@@ -175,8 +180,9 @@ const settled = page => page.evaluate(() => ({
     });
     await page.goto(`${BASE}/apartments.html${query}`, { waitUntil: 'load' });
     await page.waitForTimeout(1700);   // past T.say (1050ms) with margin
-    const line = await page.evaluate(() =>
-      document.querySelector('#stay-gate .sg-place')?.textContent.replace(/\s+/g, ' ').trim());
+    const line = (await page.evaluate(() =>
+      document.querySelector('#stay-gate .sg-place')?.textContent.replace(/\s+/g, ' ').trim()) || '')
+      .replace(/^(This morning|This afternoon|This evening|Tonight)/, 'Tonight');
     await page.unrouteAll?.({ behavior: 'ignoreErrors' }).catch(() => {});
     return { line, hit };
   }
@@ -221,23 +227,23 @@ const settled = page => page.evaluate(() => ({
     const gate = document.getElementById('stay-gate');
     const hero = gate.querySelector('.sg-hero');
     if (!hero) return null;
-    const r = hero.getBoundingClientRect();
+    const r = gate.querySelector('.sg-frame').getBoundingClientRect();
     const hx = parseFloat(gate.style.getPropertyValue('--hx'));
     const hy = parseFloat(gate.style.getPropertyValue('--hy'));
     const out = {
       heroes: gate.querySelectorAll('.sg-hero').length,
       dx: Math.abs((hx / 100) * innerWidth - (r.x + r.width / 2)),
-      dy: Math.abs((hy / 100) * innerHeight - (r.y + r.height / 2)),
-      heroLit: !!hero.querySelector('.sg-win-l')
+      dy: Math.abs((hy / 100) * innerHeight - (r.y + r.height * 0.55)),
+      heroLit: !!hero.querySelector('.sg-knob')
     };
     gate.remove();
     document.documentElement.classList.remove('sg-lock');
     return out;
   });
-  check('exactly one hero window', g && g.heroes === 1, g && String(g.heroes));
+  check('exactly one door', g && g.heroes === 1, g && String(g.heroes));
   check('camera origin lands on it (x)', g && g.dx < 6, g && g.dx.toFixed(1) + 'px off');
   check('camera origin lands on it (y)', g && g.dy < 6, g && g.dy.toFixed(1) + 'px off');
-  check('the hero window is lit', !!(g && g.heroLit));
+  check('the door is drawn whole', !!(g && g.heroLit));
   await ctx.close();
 }
 

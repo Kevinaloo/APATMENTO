@@ -14,7 +14,7 @@ test('apartments has one service-worker owner and never silently reloads on upda
 
 test('the stay-gate escape hatch is armed before its blocking asset request', () => {
   const guard = apartments.indexOf('window.__cabanaStayGateExpired = true');
-  const asset = apartments.indexOf('cabana-stay-gate.js?v=37-no-loop');
+  const asset = apartments.indexOf('cabana-stay-gate.js?v=42-karibu');
   const start = apartments.indexOf('CabanaStayGate.play', asset);
   assert.ok(guard >= 0 && asset > guard && start > asset);
   assert.match(apartments.slice(guard, asset), /setTimeout[\s\S]*9500/);

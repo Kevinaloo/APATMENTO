@@ -682,7 +682,6 @@ async function uploadPhoto(file) {
   const prog = $('photo-prog'), bar = prog.firstElementChild;
   prog.hidden = false; bar.style.width = '15%';
   try {
-    if (file.size > 25 * 1024 * 1024) throw new Error('That file is too large.');
     const blob = await squareImage(file); bar.style.width = '40%';
     const ext = blob.type === 'image/webp' ? 'webp' : 'jpg';
     const path = `${CURRENT_USER.id}/${crypto.randomUUID()}.${ext}`;

@@ -967,9 +967,9 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
         <div class="upload-area" id="ul-area" onclick="document.getElementById('photo-input').click()" ondragover="dov(event)" ondragleave="dlv()" ondrop="ddp(event)">
           <div class="ul-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg></div>
           <div class="ul-title">Drag photos here or click to browse</div>
-          <div class="ul-sub" id="ul-sub">JPG or PNG, up to 10 photos, max 10MB each</div>
+          <div class="ul-sub" id="ul-sub">JPG, PNG, WebP or iPhone HEIC. Add as many as you like</div>
         </div>
-        <input type="file" id="photo-input" accept="image/*" multiple style="display:none;" onchange="handlePh(this.files)" aria-label="photo input" />
+        <input type="file" id="photo-input" accept="image/*,.heic,.heif" multiple style="display:none;" onchange="handlePh(this.files)" aria-label="photo input" />
         <div class="photo-grid" id="photo-grid"></div>
         <div class="photo-help">Drag photos to change their order. The first photo is the cover. Use Adjust to show the full image or choose the exact crop.</div>
       </div>
@@ -2193,14 +2193,45 @@ document.addEventListener('change',function(e){
 function dov(e){e.preventDefault();document.getElementById('ul-area').classList.add('drag');}
 function dlv(){document.getElementById('ul-area').classList.remove('drag');}
 function ddp(e){e.preventDefault();dlv();handlePh(e.dataTransfer.files);}
-function handlePh(files){const ok=Array.from(files).filter(f=>f.type.startsWith('image/')&&f.size<=10*1024*1024);if(files.length>ok.length)al('Some files skipped. Images only, max 10MB each.');ok.forEach(addPh);}
+function handlePh(files){const list=Array.from(files||[]);const ok=list.filter(IMG_OK);if(list.length>ok.length)al('Some files were skipped because they are not photos.');addPhotos(ok);}
+/* No size ceiling and no count ceiling. Every photo is re-encoded on
+   this device before upload (see compressForUpload), so a 40 MB original
+   leaves the phone as a few hundred KB, and a host with thirty rooms can
+   show thirty rooms. iPhone HEIC files that this browser cannot draw are
+   converted to JPEG here first, so they can never land as a blank tile. */
+function IMG_OK(f){return !!(f&&((f.type||'').startsWith('image/')||/\.(heic|heif|jpe?g|png|webp|avif|gif)$/i.test(f.name||'')));}
+let _heicLib=null;
+function loadHeic(){return _heicLib||(_heicLib=new Promise((res,rej)=>{const sc=document.createElement('script');sc.src='https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js';sc.async=true;sc.onload=()=>window.heic2any?res(window.heic2any):rej(new Error('HEIC converter unavailable'));sc.onerror=()=>{_heicLib=null;rej(new Error('HEIC converter unavailable'));};document.head.appendChild(sc);}));}
+async function drawable(file){try{const b=await createImageBitmap(file);b.close?.();return true;}catch(e){return false;}}
+async function normaliseImage(file){
+  const heic=/image\/hei[cf]/i.test(file.type||'')||/\.hei[cf]$/i.test(file.name||'');
+  if(!heic||await drawable(file))return file;
+  const conv=await loadHeic();
+  const out=await conv({blob:file,toType:'image/jpeg',quality:.9});
+  const blob=Array.isArray(out)?out[0]:out;
+  return new File([blob],(file.name||'photo').replace(/\.hei[cf]$/i,'')+'.jpg',{type:'image/jpeg'});
+}
+async function addPhotos(files){
+  const sub=document.getElementById('ul-sub');
+  for(let i=0;i<files.length;i++){
+    if(sub&&files.length>1)sub.textContent='Adding '+(i+1)+' of '+files.length+'…';
+    await addPh(files[i]);
+  }
+  renderPG();
+}
 function normalPhotoPosition(value){const rawX=Number(value&&value.x),rawY=Number(value&&value.y);return{fit:'cover',x:Math.max(0,Math.min(100,Number.isFinite(rawX)?rawX:50)),y:Math.max(0,Math.min(100,Number.isFinite(rawY)?rawY:30))};}
-function addPh(file){if(F.photos.length>=10){al('Maximum 10 photos allowed.');return;}if(F.photoFiles.some(f=>f&&f.name===file.name&&f.size===file.size)){al('"'+file.name+'" is already added.');return;}const r=new FileReader();r.onload=e=>{F.photoFiles.push(file);F.photos.push(e.target.result);F.photoPositions.push(normalPhotoPosition());renderPG();};r.readAsDataURL(file);}
+async function addPh(file){if(F.photoFiles.some(f=>f&&(f._src===file||f.name===file.name&&f.size===file.size))){al('"'+file.name+'" is already added.');return;}
+  let ready=file;
+  try{ready=await normaliseImage(file);}catch(e){al('"'+file.name+'" could not be read on this device. Try exporting it as JPEG.');return;}
+  try{ready._src=file;}catch(e){}
+  /* An object URL, not a data URL: thirty 12-megapixel photos as base64
+     strings is enough memory to crash a phone's browser. */
+  F.photoFiles.push(ready);F.photos.push(URL.createObjectURL(ready));F.photoPositions.push(normalPhotoPosition());renderPG();}
 function movePhoto(from,to){if(from===to||from<0||to<0||from>=F.photos.length||to>=F.photos.length)return;[F.photos,F.photoFiles,F.photoPositions].forEach(arr=>{const item=arr.splice(from,1)[0];arr.splice(to,0,item);});cov=0;renderPG();}
 let photoDragFrom=null;
-function renderPG(){const g=document.getElementById('photo-grid');g.innerHTML='';F.photos.forEach((src,i)=>{const p=normalPhotoPosition(F.photoPositions[i]);F.photoPositions[i]=p;const d=document.createElement('div');d.className='photo-item';d.draggable=true;d.dataset.photoIndex=i;d.innerHTML='<img style="object-position:'+p.x+'% '+p.y+'%" src="'+src+'" alt="Photo '+(i+1)+'" fetchpriority="high" decoding="async"/>'+(i===0?'<span class="ph-cover">Cover</span>':'<span class="ph-set" onclick="setCov('+i+')">Set cover</span>')+'<button type="button" class="ph-rm" onclick="rmPh('+i+')" aria-label="Remove photo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button><div class="ph-actions"><button type="button" class="ph-act" onclick="movePhoto('+i+','+(i-1)+')" '+(i===0?'disabled':'')+' aria-label="Move photo left">←</button><button type="button" class="ph-act" onclick="movePhoto('+i+','+(i+1)+')" '+(i===F.photos.length-1?'disabled':'')+' aria-label="Move photo right">→</button><button type="button" class="ph-act ph-adjust" onclick="openPhotoPosition('+i+')">Adjust</button></div>';d.addEventListener('dragstart',()=>{photoDragFrom=i;d.classList.add('dragging');});d.addEventListener('dragend',()=>{photoDragFrom=null;d.classList.remove('dragging');});d.addEventListener('dragover',e=>e.preventDefault());d.addEventListener('drop',e=>{e.preventDefault();if(photoDragFrom!==null)movePhoto(photoDragFrom,i);});g.appendChild(d);});document.getElementById('ul-sub').textContent=F.photos.length?F.photos.length+' photo(s) added':'JPG or PNG, up to 10 photos, max 10MB each';}
+function renderPG(){const g=document.getElementById('photo-grid');g.innerHTML='';F.photos.forEach((src,i)=>{const p=normalPhotoPosition(F.photoPositions[i]);F.photoPositions[i]=p;const d=document.createElement('div');d.className='photo-item';d.draggable=true;d.dataset.photoIndex=i;d.innerHTML='<img style="object-position:'+p.x+'% '+p.y+'%" src="'+src+'" alt="Photo '+(i+1)+'" fetchpriority="high" decoding="async"/>'+(i===0?'<span class="ph-cover">Cover</span>':'<span class="ph-set" onclick="setCov('+i+')">Set cover</span>')+'<button type="button" class="ph-rm" onclick="rmPh('+i+')" aria-label="Remove photo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button><div class="ph-actions"><button type="button" class="ph-act" onclick="movePhoto('+i+','+(i-1)+')" '+(i===0?'disabled':'')+' aria-label="Move photo left">←</button><button type="button" class="ph-act" onclick="movePhoto('+i+','+(i+1)+')" '+(i===F.photos.length-1?'disabled':'')+' aria-label="Move photo right">→</button><button type="button" class="ph-act ph-adjust" onclick="openPhotoPosition('+i+')">Adjust</button></div>';d.addEventListener('dragstart',()=>{photoDragFrom=i;d.classList.add('dragging');});d.addEventListener('dragend',()=>{photoDragFrom=null;d.classList.remove('dragging');});d.addEventListener('dragover',e=>e.preventDefault());d.addEventListener('drop',e=>{e.preventDefault();if(photoDragFrom!==null)movePhoto(photoDragFrom,i);});g.appendChild(d);});document.getElementById('ul-sub').textContent=F.photos.length?F.photos.length+' photo(s) added':'JPG, PNG, WebP or iPhone HEIC. Add as many as you like';}
 function setCov(i){movePhoto(i,0);}
-function rmPh(i){F.photos.splice(i,1);F.photoFiles.splice(i,1);F.photoPositions.splice(i,1);cov=0;renderPG();}
+function rmPh(i){if(/^blob:/.test(F.photos[i]||''))try{URL.revokeObjectURL(F.photos[i]);}catch(e){}F.photos.splice(i,1);F.photoFiles.splice(i,1);F.photoPositions.splice(i,1);cov=0;renderPG();}
 let editingPhotoPosition=-1;
 function openPhotoPosition(i){editingPhotoPosition=i;const p=normalPhotoPosition(F.photoPositions[i]);F.photoPositions[i]=p;document.getElementById('ppe-image').src=F.photos[i];document.getElementById('ppe-x').value=p.x;document.getElementById('ppe-y').value=p.y;document.getElementById('photo-position-editor').classList.add('open');previewPhotoPosition();}
 function previewPhotoPosition(){if(editingPhotoPosition<0)return;const p=F.photoPositions[editingPhotoPosition]=Object.assign(normalPhotoPosition(F.photoPositions[editingPhotoPosition]),{x:Number(document.getElementById('ppe-x').value),y:Number(document.getElementById('ppe-y').value)});const img=document.getElementById('ppe-image');img.style.objectPosition=p.x+'% '+p.y+'%';}
@@ -2651,18 +2682,27 @@ async function publish(){
   if(!window._eid&&DEDICATED_PIPELINES[F.svc]){dedicatedPipeline(F.svc);return;}
   collect(6);collectOwn();const btn=document.getElementById('pub-btn');btn.classList.add('loading');
   try{
-    const finalPhotos=[];
-    for(let i=0;i<F.photos.length;i++){const file=F.photoFiles[i];if(!file){if(F.photos[i])finalPhotos.push(F.photos[i]);continue;}if(!CU?.id) throw new Error('Please sign in again before uploading photos.');
-      /* Re-encode before upload. A modern phone camera produces 2–5 MB per
-         frame; ten of those is a 30 MB gallery that nobody on mobile data
-         will ever wait for. Downscaling to 1920px long edge and re-encoding
-         as JPEG lands the same photo at roughly 200–400 KB with no visible
-         loss at the sizes we actually display. Always .jpg on the way out,
-         so an iPhone HEIC upload cannot land a file browsers refuse to
-         render — which previously showed up as a listing with blank photos. */
-      const blob=await compressForUpload(file);
-      const path=CU.id+'/'+Date.now()+'-'+i+'.jpg';
-      const{error}=await sb.storage.from('listings').upload(path,blob,{cacheControl:'31536000',contentType:'image/jpeg',upsert:false});if(error)throw error;const{data:{publicUrl}}=sb.storage.from('listings').getPublicUrl(path);finalPhotos.push(publicUrl);}
+    /* Three uploads at a time, each retried, in the order the host set.
+       One flaky request no longer fails a twenty-photo listing. */
+    const finalPhotos=new Array(F.photos.length);
+    const jobs=[];
+    for(let i=0;i<F.photos.length;i++){const file=F.photoFiles[i];if(!file){finalPhotos[i]=F.photos[i]||null;continue;}jobs.push(i);}
+    if(jobs.length&&!CU?.id) throw new Error('Please sign in again before uploading photos.');
+    let doneN=0;const label=btn.querySelector('.btn-label')||null;
+    const tell=()=>{const t='Uploading photos '+doneN+' of '+jobs.length;if(label)label.textContent=t;else btn.setAttribute('data-progress',t);};
+    const upOne=async i=>{
+      const blob=await compressForUpload(F.photoFiles[i]);
+      const path=CU.id+'/'+Date.now()+'-'+i+'-'+Math.random().toString(36).slice(2,7)+'.jpg';
+      let lastErr=null;
+      for(let attempt=0;attempt<3;attempt++){
+        const{error}=await sb.storage.from('listings').upload(path,blob,{cacheControl:'31536000',contentType:'image/jpeg',upsert:attempt>0});
+        if(!error){finalPhotos[i]=sb.storage.from('listings').getPublicUrl(path).data.publicUrl;doneN++;tell();return;}
+        lastErr=error;await new Promise(r=>setTimeout(r,700*(attempt+1)));
+      }
+      throw new Error('Photo '+(i+1)+' did not upload: '+(lastErr&&lastErr.message||'network error'));
+    };
+    if(jobs.length){tell();let next=0;await Promise.all(Array.from({length:Math.min(3,jobs.length)},async()=>{while(next<jobs.length){const i=jobs[next++];await upOne(i);}}));}
+    for(let k=finalPhotos.length-1;k>=0;k--)if(!finalPhotos[k])finalPhotos.splice(k,1);
     const _S=SVCS[F.svc]||{};const _monthly=_S.pf==='month';const _rate=parseFloat(F.price)||null;const SVC_TYPE_MAP={stays:"apartment",roommates:"room",tours:"tour",events:"event",food:"food",carhire:"carhire",rides:"ride",shopping:"shopping"};const svcType=SVC_TYPE_MAP[F.svc]||F.svc;const payload={partner_id:CU?.id,host_id:CU?.id,service:F.svc,type:svcType,listing_type:F.type,property_type:F.type,title:F.title,country:F.country,city:F.city,area:F.area,street:F.street||null,location:[F.area,F.city,F.country].filter(Boolean).join(', '),latitude:F.lat||null,longitude:F.lng||null,description:F.desc,amenities:F.feats,photos:finalPhotos,currency:F.cur,price_night:_monthly?null:_rate,price_week:_monthly?null:(parseFloat(F.pw)||null),price_month:_monthly?_rate:(parseFloat(F.pm)||null),deposit:parseFloat(F.dep)||null,min_nights:_monthly?Math.max(7,parseInt(F.mn)||90):(parseInt(F.mn)||1),max_guests:(F.svc==='food'?(F.seats||null):(F.guests||null)),beds:F.beds||null,baths:F.baths||null,bedrooms:parseInt(F.beds)||null,bathrooms:parseInt(F.baths)||null,floor:F.floor||null,sqm:F.sqm||null,checkin_time:F.ci,checkout_time:F.co,instant_book:F.inst,children:F.ch,pets:F.pets,smoking:F.smk,house_rules:F.rules||null,contact_whatsapp:F.wa||null,contact_phone:F.ph||F.wa||null,contact_email:F.em||null,status:'active',is_active:true,internal_score:50,cancel_policy:'flexible',extras:{plus:F.plusCode||null,pinq:F.precision||null,pinm:F.precisionMetres||null,dur:F.dur||null,meet:F.meet||null,lang:F.lang||null,edate:F.edate||null,venue:F.venue||null,age:F.age||null,cuisine:F.cuisine||null,deliv:F.deliv||null,lead:F.lead||null,make:F.make||null,model:F.model||null,yr:F.yr||null,fuel:F.fuel||null,trans:F.trans||null,areas:F.areas||null,veh:F.veh||null,adv:F.adv||null,stock:F.stock||null,cond:F.cond||null,brand:F.brand||null,da:F.da||null,avail:F.avail||null,bills:F.bills||null,furn:F.furn||null,mates:F.mates||null,bath:F.bath||null,suits:F.suits||null,notice:F.co||null,photo_positions:F.photoPositions.map(normalPhotoPosition),
       /* Stays: room tiers + space arrangement */
       room_tiers:F.svc==='stays'?(F.roomTiers&&F.roomTiers.length?F.roomTiers:null):null,

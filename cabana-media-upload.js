@@ -25,7 +25,8 @@
 
   var MAX_EDGE     = 1920;          // px on the long side
   var JPEG_Q       = 0.82;
-  var MAX_PHOTOS   = 10;
+  /* No photo count and no photo size ceiling: every photo is shrunk on
+     the device before it leaves, so the number is the host's call. */
   var MAX_VIDEOS   = 2;
   var MAX_VIDEO_MB = 50;
 
@@ -170,7 +171,6 @@
     var sb = opts.client;
     var folder = opts.folder || 'draft';
     var bucket = opts.bucket || DEFAULT_BUCKET;
-    var maxPhotos = opts.maxPhotos || MAX_PHOTOS;
     var maxVideos = opts.maxVideos || MAX_VIDEOS;
     var onChange = opts.onChange || function () {};
 
@@ -185,8 +185,8 @@
           '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v13"/></svg>' +
         '</div>' +
         '<div class="cmu-t">Add photos and video</div>' +
-        '<div class="cmu-s">Straight from your phone. Up to ' + maxPhotos + ' photos and ' +
-          maxVideos + ' short clips.<br/>Photos are shrunk on your device first, so this uses very little data.</div>' +
+        '<div class="cmu-s">Straight from your phone. As many photos as you like' +
+          (maxVideos ? ', and up to ' + maxVideos + ' short clips' : '') + '.</div>' +
         '<div class="cmu-btns">' +
           '<button class="cmu-b" type="button" data-pick="camera">' +
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>' +
@@ -202,7 +202,7 @@
       '<div class="cmu-grid" id="cmu-grid"></div>' +
       '<div class="cmu-note" id="cmu-note"></div>' +
       '<input class="cmu-hide" type="file" id="cmu-f-camera" accept="image/*" capture="environment"/>' +
-      '<input class="cmu-hide" type="file" id="cmu-f-photo" accept="image/*" multiple/>' +
+      '<input class="cmu-hide" type="file" id="cmu-f-photo" accept="image/*,.heic,.heif" multiple/>' +
       '<input class="cmu-hide" type="file" id="cmu-f-video" accept="video/*" multiple/>';
 
     var grid = host.querySelector('#cmu-grid');
@@ -221,7 +221,7 @@
                         .map(function (i) { return i.url; });
       var videos = items.filter(function (i) { return i.kind === 'video' && i.url; })
                         .map(function (i) { return i.url; });
-      note.textContent = c.p + ' of ' + maxPhotos + ' photos' +
+      note.textContent = c.p + (c.p === 1 ? ' photo' : ' photos') +
         (maxVideos ? ' · ' + c.v + ' of ' + maxVideos + ' clips' : '') +
         (photos.length ? ' · the first photo is used as the cover' : '');
       onChange({ photos: photos, videos: videos, cover: photos[0] || null,
@@ -281,12 +281,11 @@
 
     function queue(file) {
       var isVid = VID_RE.test(file.type) || /^video\//.test(file.type);
-      var isImg = IMG_RE.test(file.type) || /^image\//.test(file.type);
+      var isImg = IMG_RE.test(file.type) || /^image\//.test(file.type) || /\.(heic|heif|jpe?g|png|webp)$/i.test(file.name || '');
       var c = counts();
 
       if (!isVid && !isImg) { reject(file.name, 'Not a photo or video'); return; }
       if (isVid && c.v >= maxVideos) { reject(file.name, 'Clip limit reached'); return; }
-      if (!isVid && c.p >= maxPhotos) { reject(file.name, 'Photo limit reached'); return; }
       if (isVid && file.size > MAX_VIDEO_MB * 1048576) {
         reject(file.name, 'Clip is ' + mb(file.size) + '. Max ' + MAX_VIDEO_MB + ' MB.');
         return;

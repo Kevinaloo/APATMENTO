@@ -776,8 +776,8 @@ body.map-open .split-map{display:block;}
   .card{opacity:1!important;transform:none!important;animation:none!important;}
   .card.in{opacity:1!important;transform:none!important;}
   .card-img{background:#E8E6F0;}
-  /* On single-column mobile, cap image height so photos don't feel zoomed/cropped */
-  .card-media{aspect-ratio:16/9;max-height:220px;}
+  /* One column: a 3:2 frame shows the whole room, like the dashboard. */
+  .card-media{aspect-ratio:3/2;max-height:none;}
   .card-media .card-slide img{object-position:center;}
   /* Tighten border-radius on narrow screens */
   .card-media{border-radius:14px;}
@@ -1635,7 +1635,9 @@ body.sc-sheet #agent-ref{opacity:0!important;pointer-events:none!important;trans
   border-radius:16px;overflow:hidden;text-align:left;cursor:pointer;
   background:rgba(255,255,255,.86);border:1px solid var(--line);
   box-shadow:0 1px 2px rgba(10,10,20,.04),0 8px 22px rgba(10,10,20,.055);
-  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+  /* No backdrop blur: two dozen moving blurred tiles was the ribbon's
+     jank on phones. A near-opaque card reads the same. */
+  background:rgba(255,255,255,.96);
   transition:transform .3s var(--ease),box-shadow .3s var(--ease),border-color .3s;
   font-family:var(--font-body);
 }
@@ -1895,12 +1897,14 @@ body.sc-sheet #agent-ref{opacity:0!important;pointer-events:none!important;trans
 <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":["Organization","TravelAgency","OnlineBusiness"],"@id":"https://cabana.africa/#organization","name":"Cabana","alternateName":["Cabana Africa","Cabana Travel","Cabana App","cabana.africa","Apatmento","Apatmento by Cabana"],"legalName":"Cabana","url":"https://cabana.africa/","logo":{"@type":"ImageObject","@id":"https://cabana.africa/#logo","url":"https://cabana.africa/cabana-icon-512.png","contentUrl":"https://cabana.africa/cabana-icon-512.png","width":512,"height":512,"caption":"Cabana"},"image":{"@id":"https://cabana.africa/#logo"},"description":"Cabana is Africa's zero-commission travel platform. Book short-stay apartments, safaris, flights, events, car hire and rides across all 54 African countries, direct from the host or operator. Hosts keep 100% of what they charge and guests pay no booking fee.","slogan":"Zero commission. Africa's own travel platform.","foundingDate":"2025","foundingLocation":{"@type":"Place","name":"Nairobi, Kenya"},"brand":{"@id":"https://cabana.africa/#brand"},"knowsAbout":["Travel in Africa","Safari booking","Short-stay apartments","Zero-commission booking","M-Pesa payments","African tourism","Vacation rentals","Airport transfers","Car hire","Event ticketing"],"areaServed":[{"@type":"Continent","name":"Africa"},{"@type":"Place","name":"Worldwide"}],"currenciesAccepted":"KES, NGN, GHS, ZAR, TZS, UGX, RWF, USD, EUR, GBP","paymentAccepted":"M-Pesa, MTN MoMo, Airtel Money, Visa, Mastercard, Bank transfer","email":"connect@cabana.africa","contactPoint":[{"@type":"ContactPoint","email":"connect@cabana.africa","contactType":"customer support","url":"https://cabana.africa/help.html","availableLanguage":["English","Swahili","French","Arabic","Portuguese"],"areaServed":"Africa"},{"@type":"ContactPoint","email":"partnership@cabana.africa","contactType":"sales","name":"Host & operator onboarding","availableLanguage":["English","Swahili","French"],"areaServed":"Africa"}],"sameAs":["https://twitter.com/apatmento","https://x.com/apatmento"]},{"@type":"Brand","@id":"https://cabana.africa/#brand","name":"Cabana","logo":"https://cabana.africa/cabana-icon-512.png","slogan":"Zero commission. Always."},{"@type":"WebSite","@id":"https://cabana.africa/#website","url":"https://cabana.africa/","name":"Cabana","alternateName":"Cabana Africa","description":"Africa's zero-commission travel platform.","publisher":{"@id":"https://cabana.africa/#organization"},"inLanguage":"en","potentialAction":[{"@type":"SearchAction","target":{"@type":"EntryPoint","urlTemplate":"https://cabana.africa/apartments?q={search_term_string}"},"query-input":"required name=search_term_string"}]},{"@type":"CollectionPage","@id":"https://cabana.africa/apartments#webpage","url":"https://cabana.africa/apartments","name":"Airbnb Nairobi Alternative & Short-Stay Apartments | Cabana","description":"Find verified short-stay and serviced apartments in Nairobi, including Kilimani, Westlands and near JKIA. Book direct with hosts and pay by M-Pesa.","isPartOf":{"@id":"https://cabana.africa/#website"},"about":{"@id":"https://cabana.africa/#organization"},"publisher":{"@id":"https://cabana.africa/#organization"},"inLanguage":"en","dateModified":"2026-08-13","breadcrumb":{"@id":"https://cabana.africa/apartments#breadcrumb"},"primaryImageOfPage":{"@type":"ImageObject","url":"https://cabana.africa/og-stays.jpg"},"speakable":{"@type":"SpeakableSpecification","cssSelector":[".hero h1",".hero .sub",".sec p"]}},{"@type":"BreadcrumbList","@id":"https://cabana.africa/apartments#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://cabana.africa/"},{"@type":"ListItem","position":2,"name":"Stays & Apartments"}]},{"@type":"Product","@id":"https://cabana.africa/apartments#product","name":"Cabana Stays & Apartments","description":"Short-stay apartments, serviced flats, villas and guesthouses across Africa.","url":"https://cabana.africa/apartments","category":"Stays & Apartments","brand":{"@id":"https://cabana.africa/#brand"},"offers":{"@type":"AggregateOffer","priceCurrency":"USD","lowPrice":"13.48","highPrice":"23.1","offerCount":"4","availability":"https://schema.org/InStock","seller":{"@id":"https://cabana.africa/#organization"}}},{"@type":"Service","@id":"https://cabana.africa/apartments#service","name":"Cabana Stays & Apartments","description":"Short-stay apartments, serviced flats, villas and guesthouses across Africa.","serviceType":"Stays & Apartments","provider":{"@id":"https://cabana.africa/#organization"},"areaServed":{"@type":"Continent","name":"Africa"},"audience":{"@type":"Audience","audienceType":"Travellers to Africa"},"offers":{"@type":"AggregateOffer","priceCurrency":"USD","lowPrice":"13.48","highPrice":"23.1","offerCount":"4","availability":"https://schema.org/InStock","seller":{"@id":"https://cabana.africa/#organization"}}},{"@type":"ItemList","@id":"https://cabana.africa/apartments#itemlist","name":"Stays & Apartments by country","numberOfItems":24,"itemListElement":[{"@type":"ListItem","position":1,"name":"Kenya","url":"https://cabana.africa/kenya-travel"},{"@type":"ListItem","position":2,"name":"Tanzania","url":"https://cabana.africa/tanzania-travel"},{"@type":"ListItem","position":3,"name":"Uganda","url":"https://cabana.africa/uganda-travel"},{"@type":"ListItem","position":4,"name":"Rwanda","url":"https://cabana.africa/rwanda-travel"},{"@type":"ListItem","position":5,"name":"Ethiopia","url":"https://cabana.africa/ethiopia-travel"},{"@type":"ListItem","position":6,"name":"Seychelles","url":"https://cabana.africa/seychelles-travel"},{"@type":"ListItem","position":7,"name":"Mauritius","url":"https://cabana.africa/mauritius-travel"},{"@type":"ListItem","position":8,"name":"Madagascar","url":"https://cabana.africa/madagascar-travel"},{"@type":"ListItem","position":9,"name":"Nigeria","url":"https://cabana.africa/nigeria-travel"},{"@type":"ListItem","position":10,"name":"Ghana","url":"https://cabana.africa/ghana-travel"},{"@type":"ListItem","position":11,"name":"Senegal","url":"https://cabana.africa/senegal-travel"},{"@type":"ListItem","position":12,"name":"Côte d'Ivoire","url":"https://cabana.africa/cote-divoire-travel"},{"@type":"ListItem","position":13,"name":"Benin","url":"https://cabana.africa/benin-travel"},{"@type":"ListItem","position":14,"name":"Sierra Leone","url":"https://cabana.africa/sierra-leone-travel"},{"@type":"ListItem","position":15,"name":"Gambia","url":"https://cabana.africa/gambia-travel"},{"@type":"ListItem","position":16,"name":"Cape Verde","url":"https://cabana.africa/cape-verde-travel"},{"@type":"ListItem","position":17,"name":"South Africa","url":"https://cabana.africa/south-africa-travel"},{"@type":"ListItem","position":18,"name":"Namibia","url":"https://cabana.africa/namibia-travel"},{"@type":"ListItem","position":19,"name":"Botswana","url":"https://cabana.africa/botswana-travel"},{"@type":"ListItem","position":20,"name":"Zimbabwe","url":"https://cabana.africa/zimbabwe-travel"},{"@type":"ListItem","position":21,"name":"Zambia","url":"https://cabana.africa/zambia-travel"},{"@type":"ListItem","position":22,"name":"Mozambique","url":"https://cabana.africa/mozambique-travel"},{"@type":"ListItem","position":23,"name":"Malawi","url":"https://cabana.africa/malawi-travel"},{"@type":"ListItem","position":24,"name":"Angola","url":"https://cabana.africa/angola-travel"}]}]}</script>
 <!-- /CABANA-SEO-GRAPH -->
 <link rel="stylesheet" href="/cabana-footer-search.css"/>
-<link rel="stylesheet" href="/cabana-stay-gate.css"/>
+<link rel="preload" href="/fonts/cabana-display-soft.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/cabana-stay-gate.css?v=42-karibu"/>
 <style>
 /* Critical paint. The gate stylesheet may still be in flight; this
    guarantees the first frame is night rather than a white flash
    followed by an animation about night. */
-#stay-gate{position:fixed;inset:0;z-index:2147483000;background:#05040C;}
+#stay-gate{position:fixed;inset:0;z-index:2147483000;background:#0B0824;}
+html.sg-dawn #stay-gate{background:#F08BA0;}html.sg-day #stay-gate{background:#7CC0F5;}html.sg-dusk #stay-gate{background:#E0568A;}
 html.sg-lock,html.sg-lock body{overflow:hidden!important;}
 </style>
 <link rel="stylesheet" href="/cabana-offers.css">
@@ -1915,7 +1919,7 @@ html.sg-lock,html.sg-lock body{overflow:hidden!important;}
      Painted here rather than created by script so the dark frame
      exists before any JS has run. -->
 <div id="stay-gate"></div>
-<script>document.documentElement.classList.add('sg-lock');</script>
+<script>(function(h){var d=document.documentElement;d.classList.add('sg-lock','sg-'+(h>=5&&h<9?'dawn':h>=9&&h<16?'day':h>=16&&h<19?'dusk':'night'));})(new Date().getHours());</script>
 
 <script>
 /* Arm the escape hatch BEFORE requesting the gate engine. If the
@@ -1933,7 +1937,7 @@ html.sg-lock,html.sg-lock body{overflow:hidden!important;}
   window.addEventListener('pageshow', function (e) { if (e.persisted) strip(); });
 })();
 </script>
-<script src="/cabana-stay-gate.js?v=37-no-loop"></script>
+<script src="/cabana-stay-gate.js?v=42-karibu"></script>
 <script>
 /* Start at first parse rather than waiting for DOMContentLoaded. The
    pre-armed guard above remains independent of this asset. */
@@ -2737,9 +2741,20 @@ const _SB_RENDER = '/storage/v1/render/image/public/';
 let   _imgCdn    = false;
 let   _imgProbe  = null;
 
+/* Width alone with resize=contain: a proportional downscale, the whole
+   photo, just smaller. With resize=cover and no height the renderer kept
+   the original height and cut a narrow strip out of the middle, which is
+   why every card on this page looked zoomed in. The card's own
+   object-fit then frames the full photo exactly as the dashboard does. */
 function _cdnUrl(src, w) {
   if (!_imgCdn || typeof src !== 'string' || src.indexOf(_SB_OBJECT) === -1) return src;
-  return src.replace(_SB_OBJECT, _SB_RENDER) + `?width=${w}&quality=72&resize=cover`;
+  return src.replace(_SB_OBJECT, _SB_RENDER) + `?width=${w}&quality=74&resize=contain`;
+}
+/* A fixed-size thumbnail, cropped by the renderer to the exact box. */
+function _cdnThumb(src, w, h) {
+  if (typeof src !== 'string' || src.indexOf(_SB_OBJECT) === -1) return src;
+  const d = Math.min(2, window.devicePixelRatio || 1);
+  return src.replace(_SB_OBJECT, _SB_RENDER) + `?width=${Math.round(w * d)}&height=${Math.round(h * d)}&resize=cover&quality=70`;
 }
 /* Two candidates per slot. A 3x phone and a 1x laptop should not be
    sent the same file. */
@@ -3130,7 +3145,7 @@ function invIsHotel(l){ return INV_HOTEL_RE.test(String(l.type || '')); }
 
 function invTile(l){
   const photo = (l.photos && l.photos.length)
-    ? `<img src="${_esc(l.photos[0])}" alt="" loading="lazy" decoding="async" onerror="this.remove()">`
+    ? `<img src="${_esc(_cdnThumb(l.photos[0], 130, 134))}" data-orig="${_esc(l.photos[0])}" alt="" loading="lazy" decoding="async" onerror="if(this.dataset.orig&&this.src!==this.dataset.orig){this.src=this.dataset.orig;this.dataset.orig='';}else this.remove()">`
     : HOUSE_SVG;
   const where = l.location || [l.neighbourhood, l.city].filter(Boolean).join(', ') || l.city || '';
   const beds = l.beds === 0 ? 'Studio' : `${l.beds} bed${l.beds !== 1 ? 's' : ''}`;

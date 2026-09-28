@@ -1,36 +1,31 @@
 /* ═══════════════════════════════════════════════════════════════════
-   CABANA · THE FACADE — engine
+   CABANA · KARIBU — engine for the way into Stays
    ───────────────────────────────────────────────────────────────────
-   Builds a block at night, wakes its windows, and goes through one.
+   A door at the guest's own hour. The lantern flickers on, the mat
+   says welcome in one of fifteen languages spoken where our hosts live,
+   the door swings open and the light inside carries the camera through
+   it into the page. A different door colour and greeting every visit,
+   a cat on some of them, a real place name when the page knows one.
 
    On the place name
    ─────────────────
-   Every load names a market Cabana actually lists in, and it is not
-   the same one twice in a row. This is the only part of any arrival
-   animation on this platform that a competitor could not copy by
-   looking at it, because copying it would mean having the inventory.
-   It is also the reason people will watch it more than once, which is
-   the whole difference between a loading screen and a brand.
-
-   The list is held here rather than fetched. A gate that waits on the
-   network to know what to say is a gate that sometimes says nothing,
-   and these neighbourhoods change about once a year.
-
-   On the cascade
-   ──────────────
-   Windows do not light at random. A random cascade reads as noise.
-   They light in loose diagonal sweeps with a couple of clusters, the
-   way a building fills up in the evening, and the one the camera goes
-   through lights last and alone after a deliberate half-second of
-   nothing. That pause is the only piece of timing here anyone will
-   consciously register.
+   Every candidate is checked against the map below, built from the
+   landing pages that exist. An unrecognised value never renders; the
+   line falls back to "…, somewhere in Africa". A guess never outranks
+   something the page was told.
 
    On never trapping anyone
    ────────────────────────
-   Six ways out: the sequence ending, window load, a tap, Escape, a
-   hard wall-clock ceiling, and the tab being hidden. Any one removes
-   the gate and unlocks scrolling. An arrival animation that can
-   strand a visitor is not a flourish, it is an outage.
+   Six ways out: the sequence ending, a tap, Escape, a hard wall-clock
+   ceiling, the tab being hidden, and the page's own pre-armed escape
+   hatch. Any one removes the gate and unlocks scrolling.
+
+   On speed
+   ────────
+   About twenty elements, every animation transform or opacity, one
+   layout read (where the door is) before anything moves. The old
+   facade built several hundred nodes and a blurred skyline; on a
+   mid-range phone that was the lag.
    ═══════════════════════════════════════════════════════════════════ */
 (function (global) {
   'use strict';
@@ -268,7 +263,6 @@
     });
   }
 
-  function rnd(a, b) { return a + Math.random() * (b - a); }
   function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
   function r1(n) { return Math.round(n * 10) / 10; }
 
@@ -278,254 +272,125 @@
     });
   }
 
-  /* Window light temperatures. Warm dominates because most rooms are
-     lit warm; the cold one is a television and is deliberately rare. */
-  var TONES = [
-    { a: '#FFB65C', b: '#FF9A3C', w: 30 },   /* lamp behind a curtain */
-    { a: '#FFE4B8', b: '#FFC176', w: 26 },   /* kitchen, big light on */
-    { a: '#FFCE8A', b: '#FFA94D', w: 20 },
-    { a: '#FFF0D4', b: '#FFD9A0', w: 12 },   /* bathroom, very white  */
-    { a: '#9FC2FF', b: '#6E93E8', w: 8, tv: true },
-    { a: '#C9B4FF', b: '#9B79F0', w: 4 }     /* someone's violet strip light */
+  /* ═══ THE HOUR ════════════════════════════════════════════════════
+     The scene is the guest's own time of day: a peach dawn, a blue
+     afternoon, a pink dusk, a night with stars and a lamp. The line
+     under it says the same thing in words. The page sets the class
+     before first paint (see apartments.html) so the frame is never the
+     wrong colour for a moment; this is the fallback. */
+  function hourOf(d) {
+    /* The page decided before first paint; say the same thing. */
+    var m = !d && /\bsg-(dawn|day|dusk|night)\b/.exec(doc.documentElement.className || '');
+    if (m) return m[1];
+    var h = (d || new Date()).getHours();
+    return h >= 5 && h < 9 ? 'dawn' : h >= 9 && h < 16 ? 'day' : h >= 16 && h < 19 ? 'dusk' : 'night';
+  }
+  var LEAD = { dawn: 'This morning', day: 'This afternoon', dusk: 'This evening', night: 'Tonight' };
+
+  /* ═══ WHAT MAKES IT NEW EACH TIME ═════════════════════════════════
+     Welcome, in a language spoken where Cabana hosts live. Never the
+     same one twice in a row. A door colour from the coast, the hills or
+     the old towns, and on some visits a cat who lives there. */
+  var WELCOME = ['Karibu', 'Akwaaba', 'Ẹ káàbọ̀', 'Sannu', 'Sawubona', 'Murakaza neza', 'Bienvenue', 'Marhaba',
+                 'Welkom', 'Tukutendereza', 'Mwaiseni', 'Dumela', 'Welcome', 'Kaabo', 'Nnoo'];
+  var DOORS = [
+    { a: '#1F6F78', b: '#164F56', c: '#2A8C96' },   /* Lamu teal */
+    { a: '#B4533A', b: '#7E3524', c: '#CC6A4E' },   /* terracotta */
+    { a: '#3D3A8C', b: '#28265F', c: '#5552B0' },   /* indigo */
+    { a: '#C98A12', b: '#8C5E06', c: '#E0A21A' },   /* saffron */
+    { a: '#2F6B4F', b: '#1E4A36', c: '#3E8663' },   /* forest */
+    { a: '#8E2F5A', b: '#5F1D3C', c: '#AE4474' }    /* hibiscus */
   ];
-  function tone() {
-    var total = 0, i;
-    for (i = 0; i < TONES.length; i++) total += TONES[i].w;
-    var r = Math.random() * total;
-    for (i = 0; i < TONES.length; i++) { r -= TONES[i].w; if (r <= 0) return TONES[i]; }
-    return TONES[0];
+  function pickFresh(list, key) {
+    var last = null;
+    try { last = global.localStorage.getItem(key); } catch (e) {}
+    var opts = list.filter(function (x) { return String(x.a || x) !== last; });
+    var v = pick(opts.length ? opts : list);
+    try { global.localStorage.setItem(key, String(v.a || v)); } catch (e) {}
+    return v;
   }
 
-  /* ═══ THE BLOCK ═══════════════════════════════════════════════════
-     Percentages throughout, so the hero window's position is known
-     without ever reading layout — which matters, because reading
-     layout mid-build is how a smooth animation acquires a stutter. */
-
-  function windows(opt) {
-    var cols = opt.cols, rows = opt.rows;
-    var padX = opt.padX, padY = opt.padY, gapX = opt.gapX, gapY = opt.gapY;
-    var w = (100 - padX * 2 - gapX * (cols - 1)) / cols;
-    var h = (100 - padY * 2 - gapY * (rows - 1)) / rows;
-
-    /* Diagonal sweep: a building fills from a corner, not uniformly.
-       Two clusters on top of that so it does not read as a wipe. */
-    var c1 = { c: Math.floor(rnd(0, cols)), r: Math.floor(rnd(0, rows)) };
-    var c2 = { c: Math.floor(rnd(0, cols)), r: Math.floor(rnd(0, rows)) };
-
-    var out = [], hero = null;
-    for (var r = 0; r < rows; r++) {
-      for (var c = 0; c < cols; c++) {
-        var x = padX + c * (w + gapX);
-        var y = padY + r * (h + gapY);
-        var isHero = opt.hero && c === opt.hero.c && r === opt.hero.r;
-
-        /* Dark windows are not failures. A block with every light on
-           is a block nobody lives in. */
-        var lit = isHero || Math.random() < (opt.litRate || 0.62);
-
-        var d = (c / cols) * 0.55 + (1 - r / rows) * 0.5;
-        var near1 = Math.abs(c - c1.c) + Math.abs(r - c1.r);
-        var near2 = Math.abs(c - c2.c) + Math.abs(r - c2.r);
-        var cluster = Math.min(near1, near2) < 2 ? -0.22 : 0;
-        var delay = opt.t0 + (d + cluster) * opt.span + rnd(0, 0.16);
-
-        var t = tone();
-        /* Doors sit on balcony rows and run to the slab, so they are
-           taller and narrower than the windows either side of them. */
-        var isDoor = isHero ? !!opt.doors
-                   : (opt.doors && r % 2 === 1 && Math.random() < 0.42);
-        var wh = isDoor ? h * 1.34 : h;
-        var wy = isDoor ? y - h * 0.34 : y;
-        var ww = isDoor ? w * 0.76 : w;
-        var wx = isDoor ? x + w * 0.12 : x;
-
-        var w2 = { x: r1(wx), y: r1(wy), w: r1(ww), h: r1(wh), lit: lit,
-                   on: Math.max(0, r1(delay)), t: t, hero: isHero, door: isDoor };
-        if (isHero) { w2.on = opt.t0 + opt.span + 0.55; hero = w2; }  /* last, alone */
-        out.push(w2);
-      }
+  function stars() {
+    var a = [], b = [];
+    for (var i = 0; i < 70; i++) {
+      var s = r1(Math.random() * 100) + 'vw ' + r1(Math.random() * 58) + 'vh 0 ' + (Math.random() < .15 ? '1px' : '0') + ' rgba(255,255,255,' + (0.4 + Math.random() * 0.6).toFixed(2) + ')';
+      (i % 2 ? a : b).push(s);
     }
-    return { list: out, hero: hero, w: w, h: h };
+    return '<i class="sg-stars" style="box-shadow:' + a.join(',') + '"></i><i class="sg-stars b" style="box-shadow:' + b.join(',') + '"></i>';
   }
 
-  function figure(win) {
-    /* Only a handful of windows get anyone in them. Past about one in
-       five it stops reading as life and starts reading as a pattern. */
-    var kind = pick(['person', 'plant', 'lamp', 'curtain', 'curtain']);
-    if (kind === 'curtain') {
-      return '<i class="sg-fig sg-fig-curtain l"></i><i class="sg-fig sg-fig-curtain r"></i>';
-    }
-    return '<i class="sg-fig sg-fig-' + kind + '" style="--fx:' + r1(rnd(18, 62)) + '%"></i>';
-  }
-
-  function winHTML(w, withFig) {
-    var s = 'left:' + w.x + '%;top:' + w.y + '%;width:' + w.w + '%;height:' + w.h + '%';
-    var lit = '';
-    if (w.lit) {
-      var vars = '--tone:' + w.t.a + ';--tone-2:' + w.t.b + ';--on:' + w.on + 's';
-      lit = '<i class="sg-win-l' + (w.t.tv ? ' is-tv' : '') + '" style="' + vars + '"></i>' +
-            '<i class="sg-win-s" style="' + vars + '"></i>' +
-            (withFig ? figure(w) : '');
-    }
-    return '<div class="sg-win' + (w.hero ? ' sg-hero' : '') + (w.door ? ' is-door' : '') +
-           '" style="' + s + '">' + lit + '</div>';
-  }
-
-  /* One building. Returns its markup plus, if it holds the hero
-     window, that window's centre in stage percentages. */
-  function block(o) {
-    var g = windows(o.grid);
-    var inner = '', figs = 0;
-    for (var i = 0; i < g.list.length; i++) {
-      var w = g.list[i];
-      var wantFig = w.lit && !w.hero && figs < (o.figures || 0) && Math.random() < 0.34;
-      if (wantFig) figs++;
-      inner += winHTML(w, wantFig);
-    }
-
-    /* Balconies on alternate rows, aligned to the window grid. */
-    var balc = '';
-    if (o.balconies) {
-      var rows = o.grid.rows, padY = o.grid.padY, gapY = o.grid.gapY;
-      var hh = (100 - padY * 2 - gapY * (rows - 1)) / rows;
-      for (var r = 1; r < rows; r += 2) {
-        var y = padY + r * (hh + gapY) - gapY * 0.4;
-        balc += '<i class="sg-balc" style="left:4%;right:4%;top:' + r1(y) + '%"></i>' +
-                '<i class="sg-rail" style="left:6%;right:6%;top:' + r1(y - 2.6) + '%"></i>';
-      }
-    }
-
-    /* Roof clutter, positioned along the parapet. */
-    var roof = '';
-    if (o.roof) {
-      roof += '<i class="sg-tank" style="left:11%;--tw:' + Math.round(rnd(22, 32)) + 'px;--th:' +
-              Math.round(rnd(14, 20)) + 'px"></i>';
-      if (Math.random() < 0.8) {
-        roof += '<i class="sg-tank" style="left:29%;--tw:' + Math.round(rnd(18, 26)) + 'px;--th:' +
-                Math.round(rnd(12, 17)) + 'px"></i>';
-      }
-      roof += '<i class="sg-dish" style="right:24%;--dw:' + Math.round(rnd(14, 20)) + 'px"></i>';
-      roof += '<i class="sg-mast" style="right:12%;--mh:' + Math.round(rnd(26, 44)) + 'px"></i>';
-    }
-
-    /* Laundry, on one balcony, on one building. Any more and it is a
-       theme rather than a detail. */
-    var wash = '';
-    if (o.laundry) {
-      var ly = rnd(40, 68);
-      wash += '<i class="sg-line" style="left:9%;right:9%;top:' + r1(ly) + '%"></i>';
-      for (var k = 0; k < 5; k++) {
-        wash += '<i class="sg-cloth" style="left:' + r1(14 + k * 14 + rnd(-2, 2)) + '%;top:' +
-          r1(ly) + '%;--cw:' + Math.round(rnd(6, 10)) + 'px;--ch:' + Math.round(rnd(9, 15)) +
-          'px;--cd:' + r1(rnd(3.2, 5.4)) + 's;--cdl:' + r1(rnd(0, 2)) + 's"></i>';
-      }
-    }
-
-    var style = 'left:' + o.x + '%;width:' + o.w + '%;height:' + o.h + '%';
-    var html = '<div class="sg-block" style="' + style + '">' +
-                 '<div class="sg-face">' + balc + inner + wash + '</div>' +
-                 roof +
-               '</div>';
-
-    var heroAt = null;
-    if (g.hero) {
-      heroAt = {
-        x: o.x + (o.w * (g.hero.x + g.hero.w / 2) / 100),
-        /* Blocks are bottom-anchored, so a window's y within the block
-           has to be mapped back into the stage before it means anything. */
-        y: (100 - o.h) + (o.h * (g.hero.y + g.hero.h / 2) / 100)
-      };
-    }
-    return { html: html, hero: heroAt };
-  }
-
-  function farSkyline() {
-    var out = '', x = -4;
-    while (x < 104) {
-      var w = rnd(7, 15), h = rnd(16, 40);
-      out += block({
-        x: r1(x), w: r1(w), h: r1(h),
-        grid: { cols: Math.max(2, Math.round(w / 4)), rows: Math.max(4, Math.round(h / 4.5)),
-                padX: 13, padY: 6, gapX: 10, gapY: 5, litRate: 0.34, t0: 0.1, span: 1.1 },
-        roof: Math.random() < 0.35
-      }).html;
-      x += w + rnd(0.5, 3);
-    }
-    return out;
-  }
+  var PLANT = '<svg class="sg-plant" viewBox="0 0 80 120" aria-hidden="true">' +
+    '<g class="lv">' +
+      '<path d="M40 70 C30 50 14 44 8 30 C22 30 36 42 40 62Z" fill="#2E7D5B"/>' +
+      '<path d="M40 70 C48 44 64 36 74 22 C66 42 54 52 42 68Z" fill="#3A9A6E"/>' +
+      '<path d="M40 72 C38 46 40 22 44 6 C50 28 48 50 42 72Z" fill="#2A6E50"/>' +
+      '<path d="M40 74 C28 64 16 66 6 58 C18 54 32 60 40 70Z" fill="#46A879"/>' +
+    '</g>' +
+    '<path d="M22 72 H58 L53 116 H27 Z" fill="#C8643B"/><path d="M20 70 H60 V78 H20Z" fill="#D9794E"/>' +
+    '</svg>';
+  var CAT = '<svg class="sg-cat" viewBox="0 0 60 70" aria-hidden="true">' +
+    '<path class="tail" d="M14 60 C2 58 0 44 8 40" stroke="#1E1A2B" stroke-width="5" fill="none" stroke-linecap="round"/>' +
+    '<ellipse cx="30" cy="52" rx="17" ry="16" fill="#1E1A2B"/>' +
+    '<circle cx="30" cy="28" r="12" fill="#1E1A2B"/>' +
+    '<path d="M19 22 L21 9 L28 18Z M41 22 L39 9 L32 18Z" fill="#1E1A2B"/>' +
+    '<g class="blink"><ellipse cx="25.5" cy="28" rx="2.2" ry="2.8" fill="#FFD66B"/><ellipse cx="34.5" cy="28" rx="2.2" ry="2.8" fill="#FFD66B"/></g>' +
+    '</svg>';
+  var BIRDS = '<svg class="sg-birds" viewBox="0 0 60 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">' +
+    '<path d="M2 8 Q6 3 10 8 Q14 3 18 8"/><path d="M26 14 Q29 10 32 14 Q35 10 38 14"/><path d="M44 5 Q47 1 50 5 Q53 1 56 5"/></svg>';
 
   /* Two grammars. Naming a place is a claim, so it is only made when
-     something — an explicit param, a landing page, or a confident geo
-     read — has told us the place. Otherwise the line says the one
-     thing that is true on every load and can never be contradicted,
-     and a facade full of lit windows is, if anything, a better
-     picture of "somewhere" than of anywhere in particular.
-
-     Its own function because it is rendered twice: once synchronously
-     at build time (so the gate never waits on anything), and again if
-     a geo lookup resolves to something more specific before the word
-     is due to reveal — see upgradeWord() below. */
-  function placeLine(place, fallback) {
-    var lead = place ? 'Tonight in ' : 'Tonight, somewhere in ';
-    var name = place || (fallback || 'Africa');
-    var words = String(name).split(' ').map(function (wd, i) {
-      return '<span style="--d:' + (0.18 + i * 0.09) + 's">' + esc(wd) + '</span>';
-    }).join(' ');
-    return lead + '<b>' + words + '</b>';
+     something (an explicit param, a landing page, or a confident geo
+     read) has told us the place. Otherwise the line says the one thing
+     that is true on every load. Rendered twice at most: once at build
+     time, and again if a geo lookup resolves before the reveal. */
+  function placeLine(place, fallback, hour) {
+    var lead = LEAD[hour || hourOf()] || 'Tonight';
+    var words = function (t, d0) {
+      return String(t).split(' ').map(function (wd, i) {
+        return '<span style="--d:' + r1(d0 + i * 0.07) + 's">' + esc(wd) + '</span>';
+      }).join(' ');
+    };
+    if (place) return words(lead + ' in', 0) + ' <b>' + words(place, 0.16) + '</b>';
+    return words(lead + ', somewhere in', 0) + ' <b>' + words(fallback || 'Africa', 0.24) + '</b>';
   }
 
   function build(opts) {
-    /* Resolution happens once, in the caller, not here — build() only
-       ever renders what it is told. See resolvePlace() and tryGeo(). */
     var place = opts.place || null;
-
-    /* The hero block. Off-centre, because a building centred in frame
-       is a diagram and a building slightly off it is a photograph. */
-    var heroGrid = {
-      cols: 4, rows: 8, padX: 8, padY: 4, gapX: 7, gapY: 3.4,
-      litRate: 0.6, t0: 0.35, span: 1.15,
-      hero: { c: 2, r: 3 }
-    };
-    var mid = block({ x: 24, w: 52, h: 70, grid: heroGrid, balconies: true,
-                      roof: true, laundry: true, figures: 5, doors: true });
-
-    var left = block({
-      x: -3, w: 27, h: 56,
-      grid: { cols: 3, rows: 5, padX: 9, padY: 7, gapX: 8, gapY: 7,
-              litRate: 0.5, t0: 0.2, span: 1.3 },
-      balconies: true, roof: true, figures: 2
-    });
-    var right = block({
-      x: 68, w: 30, h: 63,
-      grid: { cols: 3, rows: 5, padX: 9, padY: 6, gapX: 8, gapY: 6,
-              litRate: 0.52, t0: 0.25, span: 1.25 },
-      balconies: true, roof: true, laundry: true, figures: 2
-    });
-
-    var h = mid.hero || { x: 52, y: 46 };
-
-    var line = placeLine(place, opts.fallback);
+    var hour = opts.hour || hourOf();
+    var door = pickFresh(DOORS, 'cbn-karibu-door');
+    var hello = pickFresh(WELCOME, 'cbn-karibu-word');
+    var cat = Math.random() < 0.34 || hour === 'night' && Math.random() < 0.5;
 
     var g = doc.createElement('div');
     g.id = ID;
     g.setAttribute('role', 'presentation');
     g.setAttribute('aria-hidden', 'true');
-    g.style.setProperty('--hx', r1(h.x) + '%');
-    g.style.setProperty('--hy', r1(h.y) + '%');
+    g.setAttribute('data-hour', hour);
+    g.style.setProperty('--sg-door', door.a);
+    g.style.setProperty('--sg-door-2', door.b);
+    g.style.setProperty('--sg-door-3', door.c);
     g.innerHTML =
-      '<div class="sg-stage">' +
-        '<div class="sg-sky"></div>' +
-        '<div class="sg-plane sg-far"><div class="sg-blur">' + farSkyline() + '</div></div>' +
-        '<div class="sg-haze"></div>' +
-        '<div class="sg-city">' + left.html + right.html + mid.html + '</div>' +
-        '<div class="sg-scrim"></div>' +
-        '<div class="sg-word">' +
-          '<div class="sg-kicker">Cabana &middot; Stays</div>' +
-          '<div class="sg-place">' + line + '</div>' +
-          '<div class="sg-note">Booked direct. The host keeps all of it.</div>' +
+      '<div class="sg-sky"></div>' +
+      (hour === 'night' ? stars() : BIRDS) +
+      '<div class="sg-orb"></div>' +
+      '<div class="sg-cam">' +
+        '<div class="sg-scene">' +
+          '<div class="sg-floor"></div>' +
+          '<div class="sg-wall"></div>' +
+          '<div class="sg-glow"></div>' +
+          '<div class="sg-frame"><div class="sg-inside"></div><div class="sg-leaf sg-hero"><i class="sg-knob"></i></div></div>' +
+          '<div class="sg-lamp"></div>' +
+          '<div class="sg-spill"></div>' +
+          '<div class="sg-step"></div>' +
+          '<div class="sg-mat"><b>' + esc(hello) + '</b></div>' +
+          PLANT + (cat ? CAT : '') +
         '</div>' +
-        '<div class="sg-focus"></div>' +
-        '<div class="sg-flood"></div>' +
+      '</div>' +
+      '<div class="sg-flood"></div>' +
+      '<div class="sg-word">' +
+        '<div class="sg-kicker"><i></i>Cabana &middot; Stays</div>' +
+        '<div class="sg-place">' + placeLine(place, opts.fallback, hour) + '</div>' +
+        '<div class="sg-note">Booked direct. The host keeps all of it.</div>' +
       '</div>' +
       '<button class="sg-skip" type="button" aria-label="Skip the intro">Skip' +
         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" ' +
@@ -533,6 +398,26 @@
         '<path d="m9 6 6 6-6 6"/></svg>' +
       '</button>';
     return g;
+  }
+
+  /* The camera travels through the doorway, so its origin is the door,
+     measured once after layout (before anything moves). */
+  function aim(node) {
+    try {
+      var hero = node.querySelector('.sg-frame');
+      if (!hero) return;
+      var r = hero.getBoundingClientRect();
+      var vw = global.innerWidth || 1, vh = global.innerHeight || 1;
+      node.style.setProperty('--hx', r1(((r.left + r.width / 2) / vw) * 100) + '%');
+      node.style.setProperty('--hy', r1(((r.top + r.height * 0.55) / vh) * 100) + '%');
+    } catch (e) {}
+  }
+
+  function setHour(hour) {
+    try {
+      var cl = doc.documentElement.classList;
+      if (!/sg-(dawn|day|dusk|night)/.test(doc.documentElement.className)) cl.add('sg-' + hour);
+    } catch (e) {}
   }
 
   /* ═══ THE RUN ═════════════════════════════════════════════════════ */
@@ -557,19 +442,21 @@
        to know whether something explicit already answered before it
        decides whether a geo guess is even worth attempting. */
     var explicitPlace = resolvePlace(opts.place);
-    var buildOpts = { place: explicitPlace, fallback: opts.fallback };
+    var hour = hourOf();
+    setHour(hour);
+    var buildOpts = { place: explicitPlace, fallback: opts.fallback, hour: hour };
 
     var node = opts.node || doc.getElementById(ID);
     if (!node) {
       node = build(buildOpts);
       (doc.body || doc.documentElement).appendChild(node);
-    } else if (!node.querySelector('.sg-stage')) {
+    } else if (!node.querySelector('.sg-scene')) {
       /* A placeholder the page painted before this script arrived.
          Fill it rather than stacking a second gate on top of it. */
       var built = build(buildOpts);
       node.innerHTML = built.innerHTML;
-      node.style.setProperty('--hx', built.style.getPropertyValue('--hx'));
-      node.style.setProperty('--hy', built.style.getPropertyValue('--hy'));
+      ['--sg-door', '--sg-door-2', '--sg-door-3'].forEach(function (k) { node.style.setProperty(k, built.style.getPropertyValue(k)); });
+      node.setAttribute('data-hour', hour);
     }
     if (brief) node.classList.add('sg-brief');
 
@@ -602,8 +489,9 @@
     function skip() {
       if (settled) return;
       clearAll();
-      node.classList.add('sg-brief', 'sg-go');
-      at(reduce ? 260 : 620, finish);
+      aim(node);
+      node.classList.add('sg-run', 'sg-now', 'sg-open', 'sg-go');
+      at(reduce ? 300 : 880, finish);
     }
     function onKey(e) {
       if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') { e.preventDefault(); skip(); }
@@ -624,12 +512,22 @@
        Those read as a stall rather than a flourish, so the same beats
        — light, name the place, go, done — now land in well under half
        the time. */
+    /* First visit of the session: lamp, welcome, door, through. Every
+       visit after: the door is there and opens. Under two seconds and
+       under one, and the page underneath is already loading. */
     var T = brief
-      ? { lit: 0,  say: -1,  go: 120,  done: 700 }
-      : { lit: 30, say: 420, go: 950,  done: 1900 };
-    if (reduce) T = { lit: 0, say: 0, go: 260, done: 500 };
+      ? { lit: 0, say: -1,  open: 340, go: 500,  done: 1050 }
+      : { lit: 0, say: 380, open: 820, go: 1200, done: 2450 };
+    if (reduce) T = { lit: 0, say: 0, open: -1, go: 400, done: 700 };
 
-    at(T.lit, function () { node.classList.add('sg-lit'); });
+    /* The whole sequence is CSS, scheduled now (see sg-run in the
+       stylesheet), so it keeps time on the compositor while the page
+       boots underneath. The timers below only mirror its milestones as
+       classes and tidy up at the end. The doorway is measured first so
+       the camera knows where to go. */
+    aim(node);
+    node.classList.add('sg-run', 'sg-lit');
+    global.requestAnimationFrame(function () { aim(node); });
 
     /* The one guess this file makes, attempted only when nothing more
        certain answered and only when the word will actually be shown
@@ -643,14 +541,15 @@
       tryGeo(geoBudget).then(function (guess) {
         if (!guess || wordShown || settled) return;
         var el = node.querySelector('.sg-place');
-        if (el) el.innerHTML = placeLine(guess, opts.fallback);
+        if (el) el.innerHTML = placeLine(guess, opts.fallback, hour);
       });
       at(T.say, function () { wordShown = true; node.classList.add('sg-say'); });
     } else if (T.say >= 0) {
       at(T.say, function () { node.classList.add('sg-say'); });
     }
 
-    at(T.go, function () { node.classList.add('sg-go'); });
+    if (T.open >= 0) at(T.open, function () { aim(node); node.classList.add('sg-open'); });
+    at(T.go, function () { node.classList.add('sg-open', 'sg-go'); });
     at(T.done, finish);
     at(T.done + 3000, finish);   /* hard ceiling */
 
@@ -668,9 +567,12 @@
     curtain: function (o) {
       o = o || {};
       if (doc.getElementById(ID)) return;
-      var n = build({ place: resolvePlace(o.place), fallback: o.fallback });
+      var hr = hourOf();
+      setHour(hr);
+      var n = build({ place: resolvePlace(o.place), fallback: o.fallback, hour: hr });
       n.classList.add('sg-lit');
       (doc.body || doc.documentElement).appendChild(n);
+      aim(n);
       try { doc.documentElement.classList.add('sg-lock'); } catch (e) {}
     }
   };

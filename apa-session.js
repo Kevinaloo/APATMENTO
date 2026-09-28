@@ -461,4 +461,20 @@
     }, 50);
   }
 
+  /* ── alerts on every signed-in page ─────────────────────────────
+     Push upkeep, the realtime alert feed, Cabana Match takeovers and
+     the permissions gate all live in apa-push.js. Only some pages
+     included it, so a host browsing their calendar never heard a guest
+     waiting. Any page with a signed-in person now loads it. */
+  subscribe(function (st) {
+    if (!st || st.status !== 'user' || global.ApaPush) return;
+    safe(function () {
+      if (global.document.querySelector('script[src^="/apa-push.js"]')) return;
+      var s = global.document.createElement('script');
+      s.src = '/apa-push.js?v=2';
+      s.async = true;
+      (global.document.head || global.document.documentElement).appendChild(s);
+    }, 'push-loader');
+  });
+
 })(window);

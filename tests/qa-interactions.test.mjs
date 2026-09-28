@@ -72,12 +72,18 @@ test('photo reordering and cover selection preserve each file and crop, includin
     assert.equal(w.document.querySelectorAll('.ph-cover').length, 1);
   } finally { dom.window.close(); }
 });
-test('invalid photo types and oversized uploads are rejected without changing the gallery', () => {
+test('non-photos are rejected; a large photo is accepted (it is shrunk on the device)', async () => {
   const dom = photoPage();
   try {
     let warnings = 0; dom.window.al = () => warnings++;
-    dom.window.handlePh([{ type: 'application/pdf', size: 20, name: 'file.pdf' }, { type: 'image/jpeg', size: 11 * 1024 * 1024, name: 'large.jpg' }]);
-    assert.equal(warnings, 1); assert.equal(dom.window.F.photos.length, 3);
+    dom.window.URL.createObjectURL = () => 'blob:large';
+    dom.window.handlePh([{ type: 'application/pdf', size: 20, name: 'file.pdf' }, { type: 'image/jpeg', size: 40 * 1024 * 1024, name: 'large.jpg' }]);
+    assert.equal(warnings, 1);
+    await new Promise(r => setTimeout(r, 20));
+    assert.equal(dom.window.F.photos.length, 4);
+    assert.equal(dom.window.F.photos[3], 'blob:large');
+    dom.window.rmPh(3);
+    assert.equal(dom.window.F.photos.length, 3);
     dom.window.movePhoto(-1, 0); dom.window.movePhoto(0, 99);
     assert.equal(dom.window.F.photos[0], 'one.jpg');
   } finally { dom.window.close(); }

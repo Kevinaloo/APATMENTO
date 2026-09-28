@@ -905,7 +905,7 @@ function photoBox(){
     +'<div class="ph-bar" id="phBar" style="width:0"></div></div>';
   return '<div class="ph" onclick="pickPhoto()"><div class="ph-i">📷</div>'
     +'<div class="ph-t">Add a photo of this dish</div>'
-    +'<div class="ph-s">JPG or PNG, up to 10MB</div>'
+    +'<div class="ph-s">Any photo from your phone</div>'
     +'<div class="ph-bar" id="phBar" style="width:0"></div></div>';
 }
 function pickPhoto(){
@@ -916,7 +916,6 @@ function pickPhoto(){
 }
 function uploadPhoto(file){
   if(!/^image\//.test(file.type)){ toast('Images only',true); return; }
-  if(file.size>10*1024*1024){ toast('That photo is over 10MB',true); return; }
   var box=document.getElementById('phBox');
   box.innerHTML='<div class="ph"><div class="ph-i">⏳</div><div class="ph-t">Uploading</div>'
     +'<div class="ph-s" id="phPct">Shrinking the photo first</div><div class="ph-bar" id="phBar" style="width:8%"></div></div>';

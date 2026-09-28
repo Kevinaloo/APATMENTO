@@ -88,7 +88,6 @@
     media = window.CabanaUploader.mount(host, {
       client: sb,
       folder: 'draft-' + Date.now().toString(36),
-      maxPhotos: 10,
       maxVideos: 2,
       onChange: function (v) {
         var btn = $('t-submit');

@@ -571,7 +571,6 @@
       adminMedia = window.CabanaUploader.mount(mediaHost, {
         client: client(),
         folder: 'cabana-' + (t ? t.id : Date.now().toString(36)),
-        maxPhotos: 12,
         maxVideos: 3,
         onChange: function (v) {
           var btn = host.querySelector('button[type="submit"]');
