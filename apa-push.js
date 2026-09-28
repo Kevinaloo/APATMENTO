@@ -1,15 +1,23 @@
 /* ═══════════════════════════════════════════════════════════════════
-   APATMENTO · PUSH + REALTIME NOTIFICATIONS
+   APATMENTO · PUSH + REALTIME NOTIFICATIONS  v2
    Load after apa-session.js:  <script src="/apa-push.js" defer></script>
+   (apa-session.js also loads it on its own for any signed-in page.)
 
-   Two channels, one feed:
-     · Web Push      → notifications when the tab is closed
-     · Supabase Realtime → instant in-tab toasts, no polling
+   Three channels, one feed:
+     · Web Push           → the lock screen, when Cabana is closed
+     · Supabase Realtime  → instant in-page alerts, no polling
+     · The service worker → hands a push to the open tab instead of
+                            announcing it twice
 
-   Both read the same `notifications` table, so nothing is ever lost:
-   if push is blocked, the realtime feed still fires; if the tab is
-   closed, push still fires. Whichever arrives first wins, and the
-   bell badge reconciles on next load.
+   All three read the same `notifications` table, so nothing is lost:
+   if push is blocked the realtime feed still fires; if the tab is
+   closed push still fires; if the realtime socket dropped while a
+   laptop slept, the worker's message still arrives. Whichever lands
+   first wins, and every alert is shown once, keyed by its id.
+
+   Cabana Match alerts are routed to /cabana-match.js (loaded on
+   demand), which raises a full-screen takeover for a host and a live
+   offer for a guest.
    ═══════════════════════════════════════════════════════════════════ */
 (function (global) {
   'use strict';
@@ -20,7 +28,9 @@
 
   var _sub = null;      // PushSubscription
   var _channel = null;  // realtime channel
+  var _channelUid = null;
   var _unread = 0;
+  var _uid = null;
 
   function safe(fn, label) {
     try { return fn(); } catch (e) { console.warn('[push:' + (label || '?') + ']', e && e.message); }
@@ -40,6 +50,45 @@
       .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
   }
 
+  function client() {
+    try { return (global.ApaSession && global.ApaSession.client && global.ApaSession.client()) || null; }
+    catch (e) { return null; }
+  }
+
+  /* ── ONE ALERT, ONCE ─────────────────────────────────────────────
+     chat.js and this file both listen to the notification feed, and
+     the service worker can deliver the same alert again. Every in-page
+     toast checks in here first. */
+  var _shown = global.__cabanaShown = global.__cabanaShown || {};
+  function firstTime(id) {
+    if (!id) return true;
+    if (_shown[id]) return false;
+    _shown[id] = Date.now();
+    return true;
+  }
+
+  /* ── CABANA MATCH, ON DEMAND ─────────────────────────────────────── */
+  var _matchP = null;
+  function loadMatch() {
+    if (global.CabanaMatch) return Promise.resolve(global.CabanaMatch);
+    if (_matchP) return _matchP;
+    _matchP = new Promise(function (resolve) {
+      var done = function () { resolve(global.CabanaMatch || null); };
+      global.addEventListener('cabana:match-ready', done, { once: true });
+      var el = document.querySelector('script[src^="/cabana-match.js"]');
+      if (!el) {
+        el = document.createElement('script');
+        el.src = '/cabana-match.js?v=2';
+        el.async = true;
+        el.onerror = function () { _matchP = null; resolve(null); };
+        (document.head || document.documentElement).appendChild(el);
+      }
+      setTimeout(done, 9000);
+    });
+    return _matchP;
+  }
+  global.CabanaMatchLoad = global.CabanaMatchLoad || loadMatch;
+
   /* ── STYLES ──────────────────────────────────────────────────── */
   var CSS = `
 .apa-toast-wrap{position:fixed;top:84px;right:20px;z-index:99996;display:flex;flex-direction:column;gap:10px;pointer-events:none;}
@@ -49,8 +98,9 @@
 .apa-toast-ico svg{width:18px;height:18px;}
 .apa-toast[data-kind=booking] .apa-toast-ico{background:linear-gradient(135deg,#14B8A6,#4EE0C8);}
 .apa-toast[data-kind=payment] .apa-toast-ico{background:linear-gradient(135deg,#F5B12E,#D98E0B);}
+.apa-toast[data-kind=message] .apa-toast-ico{background:linear-gradient(135deg,#0D0A26,#3B2BA8);}
 .apa-toast-body{flex:1;min-width:0;}
-.apa-toast-title{font-family:'Geist','Inter',sans-serif;font-weight:500;font-size:14px;color:#08080F;margin-bottom:2px;line-height:1.3;}
+.apa-toast-title{font-family:'Geist','Inter',sans-serif;font-weight:600;font-size:14px;color:#08080F;margin-bottom:2px;line-height:1.3;}
 .apa-toast-text{font-size:12.5px;color:#474A66;line-height:1.45;}
 .apa-toast-x{width:26px;height:26px;border-radius:50%;border:none;background:rgba(8,8,15,.05);color:#8B8EAC;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .apa-toast-x:hover{background:rgba(8,8,15,.1);}
@@ -79,6 +129,7 @@
       w = document.createElement('div');
       w.className = 'apa-toast-wrap';
       w.id = 'apa-toast-wrap';
+      w.setAttribute('aria-live', 'polite');
       document.body.appendChild(w);
     }
     return w;
@@ -87,13 +138,16 @@
   var ICONS = {
     booking: '<path d="M20 6 9 17l-5-5"/>',
     payment: '<path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
+    message: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
     general: '<path d="M10.3 21a1.94 1.94 0 0 0 3.4 0M3.3 16.6c-.6.7-.1 1.8.8 1.8h15.8c.9 0 1.4-1.1.8-1.8C19.5 15 18 13.2 18 8A6 6 0 0 0 6 8c0 5.2-1.5 7-2.7 8.6"/>',
   };
 
   function toast(n) {
+    if (!n || !firstTime(n.id)) return;
     injectCSS();
     var el = document.createElement('div');
     el.className = 'apa-toast';
+    el.setAttribute('role', 'status');
     el.setAttribute('data-kind', n.kind || 'general');
     el.innerHTML =
       '<div class="apa-toast-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
@@ -121,20 +175,37 @@
     });
     el.addEventListener('click', function () {
       close();
-      if (n.url) location.href = n.url;
+      if (n.id) markRead(n.id);
+      if (n.url) {
+        var conv = (String(n.url).match(/[?&]c=([0-9a-f-]{36})/i) || [])[1];
+        if (conv && global.CabanaChat && global.CabanaChat.openConversation) { global.CabanaChat.openConversation(conv); return; }
+        location.href = n.url;
+      }
       else if (global.CabanaPulse) global.CabanaPulse.open('notifs');
     });
 
     setTimeout(close, 7000);
   }
 
+  function markRead(id) {
+    var sb = client();
+    if (!sb || !id) return;
+    sb.from('notifications').update({ read: true }).eq('id', id).then(function () {}, function () {});
+  }
+
   /* ── BELL BADGE ──────────────────────────────────────────────── */
   function setUnread(n) {
     _unread = Math.max(0, n);
     var b = document.querySelector('.apa-bell-badge');
-    if (!b) return;
-    b.textContent = _unread > 9 ? '9+' : String(_unread);
-    b.classList.toggle('on', _unread > 0);
+    if (b) {
+      b.textContent = _unread > 9 ? '9+' : String(_unread);
+      b.classList.toggle('on', _unread > 0);
+    }
+    /* The installed app's icon carries the same count. */
+    try {
+      if (_unread > 0 && navigator.setAppBadge) navigator.setAppBadge(_unread);
+      else if (!_unread && navigator.clearAppBadge) navigator.clearAppBadge();
+    } catch (e) {}
   }
 
   function mountBell() {
@@ -157,28 +228,49 @@
     setUnread(_unread);
   }
 
-  /* ── PUSH SUBSCRIPTION ───────────────────────────────────────── */
+  /* ── PUSH SUBSCRIPTION ───────────────────────────────────────────
+     Healthy means: permission granted, a subscription that was made
+     with today's key, and a row on the server that points at it. The
+     check runs on every signed-in page, so a subscription the browser
+     rotated or dropped is repaired the next time the person opens
+     Cabana rather than the next time someone tries to reach them. */
+  function sameKey(sub) {
+    try {
+      var k = sub && sub.options && sub.options.applicationServerKey;
+      if (!k) return true;                        // browser does not expose it; trust it
+      return b64(k) === VAPID_PUBLIC;
+    } catch (e) { return true; }
+  }
+
   async function subscribe(userId) {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) return null;
-    if (Notification.permission !== 'granted') return null;
+    if (!('Notification' in window) || Notification.permission !== 'granted') return null;
 
-    var reg = await navigator.serviceWorker.ready;
+    var reg = await Promise.race([
+      navigator.serviceWorker.ready,
+      new Promise(function (r) { setTimeout(function () { r(null); }, 10000); })
+    ]);
+    if (!reg || !reg.pushManager) return null;
     _sub = await reg.pushManager.getSubscription();
 
+    if (_sub && !sameKey(_sub)) {
+      try { await _sub.unsubscribe(); } catch (e) {}
+      _sub = null;
+    }
     if (!_sub) {
       _sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlB64ToU8(VAPID_PUBLIC),
       });
     }
-    await persist(_sub, userId);
+    await persist(_sub, userId || _uid);
     return _sub;
   }
 
   /* Store the subscription against the user. Endpoint is the unique
      key: re-subscribing the same browser must update, not duplicate. */
   async function persist(sub, userId) {
-    var sb = global.ApaSession && ApaSession.client && ApaSession.client();
+    var sb = client();
     if (!sb || !sub) return;
 
     var raw = sub.toJSON ? sub.toJSON() : {};
@@ -198,40 +290,56 @@
   }
 
   /* ── REALTIME FEED ───────────────────────────────────────────── */
-  function listen(userId) {
-    var sb = global.ApaSession && ApaSession.client && ApaSession.client();
-    if (!sb || !userId || _channel) return;
+  function onIncoming(n, via) {
+    if (!n) return;
+    if (n.kind === 'match') {
+      loadMatch().then(function (m) {
+        var handled = m && (via === 'push' ? m.onPush(n.__push || n) : m.onNotification(n));
+        if (!handled) toast(n);
+      });
+    } else if (document.visibilityState === 'visible') {
+      toast(n);
+      if (global.CabanaPulse) {
+        try {
+          global.CabanaPulse.state.notifications.unshift({
+            id: n.id || ('rt-' + Date.now()),
+            kind: n.kind || 'system',
+            title: n.title || 'Notification',
+            text: n.body || '',
+            time: 'Just now',
+            read: false,
+            link: n.url,
+          });
+          if (global.CabanaPulse.playChime) global.CabanaPulse.playChime();
+        } catch (e) {}
+      }
+    }
+    if (via !== 'push') setUnread(_unread + 1);
+  }
 
+  function listen(userId) {
+    var sb = client();
+    if (!sb || !userId) return;
+    if (_channel && _channelUid === userId) return;
+    if (_channel) { try { sb.removeChannel(_channel); } catch (e) {} _channel = null; }
+
+    _channelUid = userId;
     _channel = sb.channel('notif:' + userId)
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
         table: 'notifications',
         filter: 'user_id=eq.' + userId,
-      }, function (payload) {
-        var n = payload.new;
-        if (document.visibilityState === 'visible') {
-          toast(n);
-          if (global.CabanaPulse) {
-            global.CabanaPulse.state.notifications.unshift({
-              id: n.id || ('rt-' + Date.now()),
-              kind: n.kind || 'system',
-              title: n.title || 'Notification',
-              text: n.body || '',
-              time: 'Just now',
-              read: false,
-              link: n.url,
-            });
-            if (global.CabanaPulse.playChime) global.CabanaPulse.playChime();
-          }
-        }
-        setUnread(_unread + 1);
-      })
-      .subscribe();
+      }, function (payload) { onIncoming(payload.new, 'realtime'); })
+      .subscribe(function (status) {
+        /* A socket that dropped while the device slept comes back here.
+           Catch up on anything that landed in the gap. */
+        if (status === 'SUBSCRIBED') safe(function () { loadUnread(userId); }, 'resync');
+      });
   }
 
   async function loadUnread(userId) {
-    var sb = global.ApaSession && ApaSession.client && ApaSession.client();
+    var sb = client();
     if (!sb || !userId) return;
     var r = await sb.from('notifications')
       .select('id', { count: 'exact', head: true })
@@ -239,7 +347,45 @@
     if (!r.error) setUnread(r.count || 0);
   }
 
-  /* ── PERMISSION PROMPT (deferred, non-intrusive) ─────────────── */
+  /* ── THE WORKER HANDS US A PUSH WHEN THIS TAB IS IN FRONT ───────── */
+  if (navigator.serviceWorker && navigator.serviceWorker.addEventListener) {
+    navigator.serviceWorker.addEventListener('message', function (e) {
+      var m = e && e.data || {};
+      if (m.type === 'cabana:push' && m.payload) {
+        var d = m.payload;
+        var n = { id: d.nid || null, kind: d.kind || 'general', title: d.title, body: d.body, url: d.url, meta: {}, __push: d };
+        onIncoming(n, 'push');
+      }
+      if (m.type === 'cabana:open' && m.url && /[?&](req|match)=[0-9a-f-]{36}/i.test(m.url)) {
+        loadMatch().then(function (cm) { if (cm && cm.openUrl) cm.openUrl(m.url); });
+      }
+    });
+  }
+
+  /* ── CATCHING UP WHEN CABANA OPENS ─────────────────────────────────
+     A host who swiped a push away, or whose phone was on silent, opens
+     Cabana later. If a guest is still waiting, put them in front of the
+     host once, wherever they landed. The same for a guest's live
+     request: the pill follows them to any page. */
+  async function catchUp(userId) {
+    var sb = client();
+    if (!sb || !userId) return;
+    var live = null;
+    try { live = JSON.parse(localStorage.getItem('cm_live') || 'null'); } catch (e) {}
+    if (live && live.exp && new Date(live.exp).getTime() > Date.now() && !global.CabanaMatch) {
+      loadMatch().then(function (m) { if (m && m.restore) m.restore(); });
+    }
+    if (/partner-cabana/.test(location.pathname)) return;   // the inbox handles it there
+    var since = new Date(Date.now() - 25 * 60000).toISOString();
+    var r = await sb.from('notifications').select('id,meta,created_at')
+      .eq('user_id', userId).eq('kind', 'match').eq('read', false)
+      .gt('created_at', since).order('created_at', { ascending: false }).limit(5);
+    var rows = (r && r.data) || [];
+    var hostWaiting = rows.some(function (x) { return x.meta && x.meta.role === 'host' && !x.meta.engaged; });
+    if (hostWaiting) loadMatch().then(function (m) { if (m && m.hostCatchUp) m.hostCatchUp(); });
+  }
+
+  /* ── PERMISSION ──────────────────────────────────────────────── */
   async function ask(userId) {
     if (!('Notification' in window)) return false;
     if (Notification.permission === 'granted') { await subscribe(userId); return true; }
@@ -250,138 +396,51 @@
     return true;
   }
 
-  /* ── MANDATORY NOTIFICATION GATE ─────────────────────────────────
-     Once the user is inside the app, notifications are required. The
-     product is bookings and payments, and silent failures there are
-     worse than a permission prompt.
-
-     Browsers only surface the native permission dialog on a user
-     gesture, so we present our own modal and let their click drive it.
-     If they hard-deny, the OS locks us out permanently; at that point
-     nagging is pointless and we explain how to re-enable instead. */
-  function gateCSS() {
-    if (document.getElementById('apa-gate-css')) return;
-    var s = document.createElement('style');
-    s.id = 'apa-gate-css';
-    s.textContent = `
-.apa-gate{position:fixed;inset:0;z-index:99999;background:rgba(8,8,15,.72);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;transition:opacity .35s;}
-.apa-gate.show{opacity:1;}
-.apa-gate-card{background:#FCFCFE;border-radius:26px;padding:34px 30px;max-width:400px;width:100%;text-align:center;box-shadow:0 30px 80px rgba(8,8,15,.4);transform:translateY(16px) scale(.97);transition:transform .45s cubic-bezier(.22,1,.36,1);}
-.apa-gate.show .apa-gate-card{transform:none;}
-.apa-gate-ico{width:62px;height:62px;border-radius:19px;margin:0 auto 20px;display:flex;align-items:center;justify-content:center;color:#fff;background:linear-gradient(135deg,#6D28FF,#4F6DFF);box-shadow:0 12px 30px rgba(109,40,255,.34);}
-.apa-gate-ico svg{width:28px;height:28px;}
-.apa-gate-h{font-family:'Geist','Inter',sans-serif;font-size:23px;font-weight:500;color:#08080F;margin-bottom:10px;}
-.apa-gate-p{font-size:14px;color:#474A66;line-height:1.6;margin-bottom:24px;}
-.apa-gate-btn{width:100%;padding:15px;border-radius:100px;border:none;background:linear-gradient(135deg,#6D28FF,#4F6DFF);color:#fff;font-weight:600;font-size:15px;cursor:pointer;transition:transform .2s,box-shadow .2s;}
-.apa-gate-btn:hover{transform:translateY(-2px);box-shadow:0 14px 34px rgba(109,40,255,.34);}
-.apa-gate-btn:disabled{opacity:.6;cursor:default;transform:none;}
-.apa-gate-btn2{width:100%;padding:13px;margin-top:10px;border-radius:100px;border:1px solid #E4E4EE;background:#fff;color:#474A66;font-weight:600;font-size:14px;cursor:pointer;transition:background .2s;}
-.apa-gate-btn2:hover{background:#F4F4FA;}
-.apa-gate-note{margin-top:16px;font-size:12px;color:#8B8EAC;line-height:1.55;}
-.apa-gate-x{position:absolute;top:14px;right:14px;width:34px;height:34px;border-radius:50%;border:none;background:rgba(139,142,172,.12);color:#474A66;font-size:20px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s;}
-.apa-gate-x:hover{background:rgba(139,142,172,.22);}
-.apa-gate-card{position:relative;}
-`;
-    (document.head || document.documentElement).appendChild(s);
-  }
-
-  function dismissGate(g) {
-    if (!g) return;
-    try { sessionStorage.setItem('apa_gate_dismissed', '1'); } catch (e) {}
-    g.classList.remove('show');
-    setTimeout(function () { if (g && g.parentNode) g.remove(); }, 400);
-  }
-
-  function showGate(denied) {
-    gateCSS();
-    if (document.getElementById('apa-gate')) return;
-
-    var installedApp = !!(global.matchMedia && global.matchMedia('(display-mode: standalone)').matches)
-      || !!(global.navigator && global.navigator.standalone === true)
-      || (document.referrer || '').indexOf('android-app://africa.cabana.app') === 0;
-
-    var g = document.createElement('div');
-    g.className = 'apa-gate';
-    g.id = 'apa-gate';
-    g.innerHTML =
-      '<div class="apa-gate-card">' +
-      '<div class="apa-gate-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">' + ICONS.general + '</svg></div>' +
-      '<div class="apa-gate-h"></div>' +
-      '<div class="apa-gate-p"></div>' +
-      (denied ? '' : '<button class="apa-gate-btn" id="apa-gate-btn">Turn on notifications</button>') +
-      (denied ? '<button class="apa-gate-btn2" onclick="location.reload()">Reload page</button>' : '') +
-      '<div class="apa-gate-note"></div>' +
-      '</div>';
-
-    g.querySelector('.apa-gate-h').textContent = denied
-      ? 'Notifications are blocked' : 'Stay in the loop';
-
-    g.querySelector('.apa-gate-p').textContent = denied
-      ? (installedApp
-        ? 'Turn on notifications to hear about bookings, payments and messages. Android is currently blocking notifications for Cabana.'
-        : 'Turn on notifications to hear about bookings, payments and messages. Your browser is currently blocking notifications for Cabana.')
-      : 'Cabana requires notifications to securely deliver booking confirmations, payment receipts and host messages the moment they happen.';
-
-    g.querySelector('.apa-gate-note').textContent = denied
-      ? (installedApp
-        ? 'To enable: open Android Settings \u2192 Apps \u2192 Cabana \u2192 Notifications \u2192 Allow, then reload Cabana.'
-        : 'To enable: tap the lock icon in your address bar \u2192 Site settings \u2192 Notifications \u2192 Allow, then reload.')
-      : 'Required to securely use Cabana. Please select "Allow on every visit" to prevent this prompt from reappearing.';
-
-    document.body.appendChild(g);
-    requestAnimationFrame(function () { g.classList.add('show'); });
-
-    var btn = g.querySelector('#apa-gate-btn');
-    if (btn) btn.addEventListener('click', async function () {
-      btn.disabled = true; btn.textContent = 'Waiting for permission…';
-      var uid = (global.ApaSession && ApaSession.get && ApaSession.get().user || {}).id;
-      var ok = await ask(uid);
-      if (ok) {
-        dismissGate(g);
-        toast({ title: 'Notifications on', body: 'You\u2019re all set. We\u2019ll keep you posted.', kind: 'general' });
-      } else {
-        // Denied at the OS level. Swap to instructions rather than
-        // leaving a dead button, still fully dismissible.
-        g.remove();
-        showGate(true);
-      }
-    });
-  }
-
-  /* Call this from any in-app page once a user is signed in. */
+  /* The mandatory permission gate lives in cabana-permit.js, which
+     covers notifications and location together, every browser state,
+     installed app or tab. This stays as the entry point older pages
+     call. */
   function requireNotifications() {
-    if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
-    var p = Notification.permission;
-    if (p === 'granted') return;
-    // We enforce this as a strict requirement platform-wide.
-    // If denied, we still show the gate which now instructs them to reload after enabling.
-    showGate(p === 'denied');
+    return loadPermit().then(function (P) { if (P && P.check) P.check(); });
   }
-
-  // Pages that count as "inside the app". Marketing and auth pages are
-  // deliberately excluded. Gating a signed-out visitor is hostile.
-  // Declared before boot() so it is initialised when boot runs.
-  var IN_APP_PAGES = /(dashboard|my-bookings|profile|partner-|booking-confirm|apartments)/i;
+  var _permitP = null;
+  function loadPermit() {
+    if (global.CabanaPermit) return Promise.resolve(global.CabanaPermit);
+    if (_permitP) return _permitP;
+    _permitP = new Promise(function (resolve) {
+      var el = document.querySelector('script[src^="/cabana-permit.js"]');
+      if (!el) {
+        el = document.createElement('script');
+        el.src = '/cabana-permit.js?v=1';
+        el.async = true;
+        (document.head || document.documentElement).appendChild(el);
+      }
+      var t = setInterval(function () { if (global.CabanaPermit) { clearInterval(t); resolve(global.CabanaPermit); } }, 60);
+      setTimeout(function () { clearInterval(t); resolve(global.CabanaPermit || null); }, 10000);
+    });
+    return _permitP;
+  }
 
   /* ── BOOT ────────────────────────────────────────────────────── */
   function boot(st) {
     injectCSS();
-    if (st.status !== 'user') { _unread = 0; return; }
+    if (st.status !== 'user') { _unread = 0; _uid = null; return; }
     var uid = st.user && st.user.id;
     if (!uid) return;
+    var first = _uid !== uid;
+    _uid = uid;
 
     safe(function () { mountBell(); }, 'bell');
+    if (!first) return;
     safe(function () { loadUnread(uid); }, 'unread');
     safe(function () { listen(uid); }, 'realtime');
+    setTimeout(function () { safe(function () { catchUp(uid); }, 'catchup'); }, 900);
 
-    if (!('Notification' in window)) return;
-    if (Notification.permission === 'granted') {
-      safe(function () { subscribe(uid); }, 'subscribe');
-    } else if (IN_APP_PAGES.test(location.pathname)) {
-      // Inside the app proper. Notifications are mandatory here.
-      // Delay slightly so the page paints before we block it.
-      setTimeout(function () { safe(requireNotifications, 'gate'); }, 1200);
+    if (('Notification' in window) && Notification.permission === 'granted') {
+      safe(function () { subscribe(uid).catch(function (e) { console.warn('[push] subscribe:', e && e.message); }); }, 'subscribe');
     }
+    /* The permission gate decides for itself which pages it guards. */
+    setTimeout(function () { safe(function () { loadPermit(); }, 'permit'); }, 700);
   }
 
   function init() {
@@ -394,12 +453,20 @@
     }, 50);
   }
 
+  /* Opening Cabana clears the dot on the installed app's icon. */
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState !== 'visible' || !_uid) return;
+    safe(function () { loadUnread(_uid); }, 'unread-visible');
+  });
+
   global.ApaPush = {
     ask: ask,
     subscribe: subscribe,
     toast: toast,
     setUnread: setUnread,
     requireNotifications: requireNotifications,
+    loadMatch: loadMatch,
+    firstTime: firstTime,
     vapid: VAPID_PUBLIC,
   };
 })(window);

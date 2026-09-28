@@ -1522,8 +1522,29 @@ const CabanaNotif = (() => {
   /* ── KIND → icon map ────────────────────────────────────────────────── */
   const KIND_ICO = {
     booking: '📅', payment: '💰', message: '💬',
-    general: '🔔', alert: '⚠️', checkin: '🔑',
+    general: '🔔', alert: '⚠️', checkin: '🔑', match: '📡',
   };
+
+  /* Cabana Match draws its own alerts (a full-screen takeover for a
+     host, a live offer card for a guest). Hand those notifications to
+     it, loading it on demand, instead of showing a generic toast. */
+  function loadMatch() {
+    if (window.CabanaMatch) return Promise.resolve(window.CabanaMatch);
+    if (window.CabanaMatchLoad) return window.CabanaMatchLoad();
+    return new Promise((resolve) => {
+      let el = document.querySelector('script[src^="/cabana-match.js"]');
+      if (!el) { el = document.createElement('script'); el.src = '/cabana-match.js?v=2'; el.defer = true; document.head.appendChild(el); }
+      window.addEventListener('cabana:match-ready', () => resolve(window.CabanaMatch), { once: true });
+      setTimeout(() => resolve(window.CabanaMatch || null), 8000);
+    });
+  }
+  function routeMatch(n) {
+    return loadMatch().then(m => !!(m && m.onNotification && m.onNotification(n)), () => false);
+  }
+  function openMatchUrl(url) {
+    if (!/[?&](req|match)=[0-9a-f-]{36}/i.test(url || '')) return Promise.resolve(false);
+    return loadMatch().then(m => !!(m && m.openUrl && m.openUrl(url)), () => false);
+  }
 
   /* ── CSS ────────────────────────────────────────────────────────────── */
   function injectNotifCSS() {
@@ -1790,6 +1811,10 @@ const CabanaNotif = (() => {
         _feed.unshift(n);
         renderRingCard();
         syncBadges();
+        if (n && n.kind === 'match') {
+          routeMatch(n).then(handled => { if (!handled) showNotifToast(n); });
+          return;
+        }
         showNotifToast(n);
       })
       .subscribe();
@@ -1797,6 +1822,10 @@ const CabanaNotif = (() => {
 
   /* ── Toast for new incoming notification ─────────────────────────────── */
   function showNotifToast(n) {
+    if (n.kind === 'message') playMessageChime();
+    /* apa-push.js may already have shown this one. One alert, once. */
+    const shown = window.__cabanaShown = window.__cabanaShown || {};
+    if (n.id) { if (shown[n.id]) return; shown[n.id] = Date.now(); }
     const ico = KIND_ICO[n.kind] || '🔔';
     let t = document.getElementById('cbm-toast');
     if (!t) { t = Object.assign(document.createElement('div'), { id:'cbm-toast', className:'cbm-toast' }); document.body.appendChild(t); }
@@ -1804,9 +1833,12 @@ const CabanaNotif = (() => {
     t.innerHTML = `<span style="margin-right:7px">${ico}</span><strong>${escHtml(n.title)}</strong>${n.body ? '<br><span style="font-weight:400;font-size:12px">' + escHtml(n.body) + '</span>' : ''}`;
     clearTimeout(t._timer);
     t._timer = setTimeout(() => t.classList.remove('show'), 5000);
-    if (n.kind === 'message') playMessageChime();
     // Click opens relevant destination
-    t.onclick = () => { t.classList.remove('show'); if (n.url) location.href = n.url; };
+    t.onclick = () => {
+      t.classList.remove('show');
+      if (!n.url) return;
+      openMatchUrl(n.url).then(done => { if (!done) location.href = n.url; });
+    };
   }
 
   function playMessageChime() {
@@ -1907,6 +1939,7 @@ const CabanaNotif = (() => {
       if (url.includes('inbox')) {
         if (window.CabanaChat) { CabanaChat.openInbox(); return; }
       }
+      if (await openMatchUrl(url)) return;
       location.href = url;
     }
   }

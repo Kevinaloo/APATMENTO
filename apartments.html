@@ -1297,74 +1297,6 @@ body.sc-sheet #agent-ref{opacity:0!important;pointer-events:none!important;trans
 }
 .loc-no-result{padding:16px 10px;font-size:12.5px;color:var(--ink-faint);text-align:center;line-height:1.6;}
 
-/* Shared by the Get Matched sheet: the steps, the budget cards, the
-   optional note and the reassurance row. */
-/* Three steps, one line. The card that used to explain this took a
-   whole band of the page to say the same thing. */
-.sc-steps{
-  display:flex;flex-wrap:wrap;gap:10px 26px;list-style:none;
-  margin:0 0 14px;padding:0 0 13px;
-  border-bottom:1px solid rgba(123,47,247,.12);
-}
-.sc-step{display:flex;align-items:center;gap:10px;min-width:0;}
-.sc-step-n{
-  width:22px;height:22px;border-radius:8px;flex-shrink:0;
-  display:flex;align-items:center;justify-content:center;
-  font-family:var(--font-num);font-size:11px;font-weight:800;color:#fff;
-  background:linear-gradient(135deg,#7B2FF7,#4D96FF);
-  box-shadow:0 3px 10px rgba(123,47,247,.28);
-}
-.sc-step:nth-child(2) .sc-step-n{background:linear-gradient(135deg,#4D96FF,#2DD4BF);box-shadow:0 3px 10px rgba(77,150,255,.28);}
-.sc-step:nth-child(3) .sc-step-n{background:linear-gradient(135deg,#2DD4BF,#E0A100);box-shadow:0 3px 10px rgba(45,212,191,.28);}
-.sc-step-t{display:flex;flex-direction:column;gap:1px;min-width:0;}
-.sc-step-t b{font-family:var(--font-ui);font-size:12.5px;font-weight:700;color:var(--ink);letter-spacing:-.012em;}
-.sc-step-t span{font-size:11px;font-weight:500;color:var(--ink-faint);}
-
-.sc-note-toggle{
-  display:inline-flex;align-items:center;gap:7px;
-  margin-top:12px;padding:8px 13px;border-radius:100px;
-  border:1px dashed rgba(10,10,20,.16);background:transparent;cursor:pointer;
-  font-family:var(--font-ui);font-size:12px;font-weight:650;color:var(--ink-soft);
-  transition:all .22s var(--ease);
-}
-.sc-note-toggle svg{width:12px;height:12px;transition:transform .3s var(--ease);}
-.sc-note-toggle em{font-style:normal;font-weight:500;color:var(--ink-faint);}
-.sc-note-toggle:hover{border-color:rgba(123,47,247,.4);color:var(--violet);background:rgba(123,47,247,.04);}
-.sc-note-toggle[aria-expanded="true"]{border-style:solid;border-color:rgba(123,47,247,.3);color:var(--violet);}
-.sc-note-toggle[aria-expanded="true"] svg{transform:rotate(45deg);}
-.sc-note-wrap[hidden]{display:none;}
-.sc-field-label{
-  font-family:var(--font-ui);font-size:9.5px;font-weight:750;letter-spacing:.15em;text-transform:uppercase;
-  color:var(--ink-faint);margin-bottom:9px;
-}
-.sc-field-label em{font-style:normal;font-weight:600;letter-spacing:.02em;text-transform:none;font-size:11px;color:rgba(10,10,20,.3);}
-.sc-budget{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px;}
-.sc-budget-chip{
-  position:relative;flex:1 1 0;min-width:158px;text-align:left;cursor:pointer;
-  padding:11px 16px;border-radius:14px;
-  background:rgba(255,255,255,.85);border:1.5px solid rgba(10,10,20,.08);
-  transition:all .24s var(--ease);
-}
-.sc-budget-chip:hover{border-color:rgba(123,47,247,.35);transform:translateY(-1px);box-shadow:0 6px 18px rgba(123,47,247,.12);}
-.sc-budget-chip.selected{border-color:transparent;background:var(--ink);box-shadow:0 8px 24px rgba(10,10,20,.22);}
-.sc-bc-range{display:block;font-family:var(--font-ui);font-size:13px;font-weight:750;color:var(--ink);letter-spacing:-.01em;}
-.sc-bc-label{display:block;font-size:10.5px;font-weight:500;color:var(--ink-faint);margin-top:2px;}
-.sc-budget-chip.selected .sc-bc-range{color:#fff;}
-.sc-budget-chip.selected .sc-bc-label{color:rgba(255,255,255,.6);}
-.sc-budget-hint{font-size:11.5px;line-height:1.55;color:var(--ink-faint);min-height:17px;margin-bottom:2px;}
-.sc-note-wrap{position:relative;margin-top:11px;animation:panelIn .3s var(--ease);}
-.sc-note{
-  width:100%;resize:none;border-radius:14px;padding:12px 14px;
-  border:1.5px solid rgba(10,10,20,.08);background:rgba(255,255,255,.85);
-  font-family:var(--font-body);font-size:13px;line-height:1.55;color:var(--ink);
-  transition:border-color .22s,box-shadow .22s;
-}
-.sc-note:focus{outline:none;border-color:rgba(123,47,247,.4);box-shadow:0 0 0 3px rgba(123,47,247,.08);}
-.sc-note::placeholder{color:rgba(10,10,20,.3);}
-.sc-note-count{position:absolute;right:12px;bottom:9px;font-family:var(--font-num);font-size:10.5px;color:rgba(10,10,20,.26);font-variant-numeric:tabular-nums;}
-.sc-match-foot{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:13px;}
-.sc-match-fact{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:var(--ink-soft);}
-.sc-match-fact svg{width:13px;height:13px;color:var(--mint-deep);flex-shrink:0;}
 
 /* A one-line status under the capsule: what the button will do next,
    and in classic search, the one-line door back to the flagship. */
@@ -1863,170 +1795,6 @@ body.sc-sheet #agent-ref{opacity:0!important;pointer-events:none!important;trans
 .sf.sf-error .sf-label{color:#E11D48;}
 @keyframes sfNudge{0%,100%{transform:translateX(0);}20%{transform:translateX(-5px);}45%{transform:translateX(4px);}70%{transform:translateX(-2px);}}
 
-/* ════════════════════════════════════════════════════════════════
-   GET MATCHED SHEET
-   ────────────────────────────────────────────────────────────────
-   The explanation and the two extra inputs a broadcast needs used to
-   sit open on the page under the search bar. It made the board look
-   like a form. They live behind the button now: a centred sheet on a
-   desktop, a bottom sheet on a phone, and nothing at all until the
-   guest asks for it.
-   ════════════════════════════════════════════════════════════════ */
-.gs-scrim{
-  position:fixed;inset:0;z-index:2147482600;
-  background:rgba(10,8,24,.5);
-  -webkit-backdrop-filter:blur(6px) saturate(120%);backdrop-filter:blur(6px) saturate(120%);
-  opacity:0;visibility:hidden;transition:opacity .34s var(--ease),visibility .34s;
-}
-body.gs-open .gs-scrim{opacity:1;visibility:visible;}
-
-.gs-sheet{
-  position:fixed;z-index:2147482700;
-  left:50%;top:50%;transform:translate(-50%,-46%) scale(.97);
-  width:min(624px,calc(100vw - 40px));max-height:min(880px,calc(100vh - 56px));
-  display:flex;flex-direction:column;
-  background:linear-gradient(180deg,#FFFFFF 0%,#FCFCFE 100%);
-  border-radius:26px;
-  border:1px solid rgba(10,10,20,.07);
-  box-shadow:0 8px 24px rgba(10,10,20,.1),0 40px 110px rgba(20,10,60,.3);
-  opacity:0;visibility:hidden;pointer-events:none;
-  transition:opacity .34s var(--ease),transform .42s var(--ease-snap),visibility .34s;
-}
-body.gs-open .gs-sheet{opacity:1;visibility:visible;pointer-events:auto;transform:translate(-50%,-50%) scale(1);}
-
-/* The spectrum edge the flagship carries everywhere else. */
-.gs-sheet::before{
-  content:'';position:absolute;inset:0;border-radius:26px;padding:2px;pointer-events:none;
-  background:conic-gradient(from var(--sc-ring,0deg),#7B2FF7,#4D96FF,#2DD4BF,#E0A100,#FF6B2C,#7B2FF7);
-  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
-          mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
-  -webkit-mask-composite:xor;mask-composite:exclude;
-  opacity:.55;animation:scRingSpin 7s linear infinite;
-}
-@supports not (mask-composite:exclude){.gs-sheet::before{display:none;}}
-
-.gs-grab{display:none;}
-.gs-close{
-  position:absolute;top:16px;right:16px;z-index:2;
-  width:32px;height:32px;border-radius:50%;border:none;padding:0;
-  background:rgba(10,10,20,.05);color:var(--ink-soft);cursor:pointer;
-  display:flex;align-items:center;justify-content:center;transition:all .2s var(--ease);
-}
-.gs-close svg{width:14px;height:14px;}
-.gs-close:hover{background:rgba(10,10,20,.1);color:var(--ink);transform:rotate(90deg);}
-
-.gs-head{
-  display:flex;align-items:center;gap:13px;flex-shrink:0;
-  padding:24px 26px 18px;border-bottom:1px solid rgba(10,10,20,.06);
-}
-.gs-mark{
-  width:42px;height:42px;border-radius:14px;flex-shrink:0;
-  display:flex;align-items:center;justify-content:center;color:#fff;
-  background:linear-gradient(135deg,#7B2FF7,#4D96FF 55%,#2DD4BF);
-  box-shadow:0 6px 18px rgba(123,47,247,.32);
-}
-.gs-mark svg{width:20px;height:20px;}
-.gs-head-txt{display:flex;flex-direction:column;gap:3px;min-width:0;}
-.gs-title{
-  font-family:var(--font-display);font-size:19px;font-weight:700;letter-spacing:-.028em;
-  background:linear-gradient(96deg,#5B21D6,#7B2FF7 26%,#4D96FF 56%,#2DD4BF 88%);
-  background-size:200% auto;-webkit-background-clip:text;background-clip:text;color:transparent;
-  animation:scNameDrift 7s ease-in-out infinite alternate;
-}
-.gs-cred{
-  display:inline-flex;align-items:center;gap:6px;
-  font-family:var(--font-ui);font-size:11.5px;font-weight:600;color:var(--ink-faint);
-}
-.gs-cred-dot{
-  width:6px;height:6px;border-radius:50%;flex-shrink:0;
-  background:conic-gradient(from 210deg,#7B2FF7,#4D96FF,#2DD4BF,#E0A100,#FF6B2C,#7B2FF7);
-}
-
-.gs-body{
-  flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;
-  padding:18px 26px 22px;
-}
-
-/* What is about to go out, in the guest's own words, each part still
-   editable without losing the sheet's place. */
-.gs-recap{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:18px;}
-.gs-chip{
-  display:inline-flex;align-items:center;gap:7px;
-  padding:8px 13px;border-radius:100px;cursor:pointer;
-  background:rgba(10,10,20,.04);border:1px solid rgba(10,10,20,.06);
-  font-family:var(--font-ui);font-size:12.5px;font-weight:650;color:var(--ink);
-  transition:all .2s var(--ease);
-}
-.gs-chip svg{width:13px;height:13px;opacity:.5;flex-shrink:0;}
-.gs-chip:hover{border-color:rgba(123,47,247,.32);background:rgba(123,47,247,.05);color:var(--violet);}
-.gs-chip:hover svg{opacity:.9;}
-.gs-chip em{font-style:normal;font-weight:500;color:var(--ink-faint);}
-
-.gs-foot{
-  flex-shrink:0;padding:16px 26px calc(20px + env(safe-area-inset-bottom,0px));
-  border-top:1px solid rgba(10,10,20,.06);
-  background:rgba(252,252,254,.9);
-  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
-  border-radius:0 0 26px 26px;
-}
-.gs-send{
-  position:relative;overflow:hidden;width:100%;
-  display:flex;align-items:center;justify-content:center;gap:10px;
-  min-height:54px;padding:0 22px;border:none;border-radius:17px;cursor:pointer;color:#fff;
-  font-family:var(--font-ui);font-size:14.5px;font-weight:750;letter-spacing:-.01em;
-  background:linear-gradient(120deg,#5B21D6 0%,#7B2FF7 28%,#4D96FF 62%,#2DD4BF 100%);
-  background-size:190% 100%;
-  animation:scGoDrift 7s ease-in-out infinite alternate;
-  box-shadow:0 3px 10px rgba(91,33,214,.26),0 14px 36px rgba(77,150,255,.3);
-  transition:transform .28s var(--ease),box-shadow .28s var(--ease);
-}
-.gs-send svg{width:17px;height:17px;flex-shrink:0;}
-.gs-send:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(91,33,214,.3),0 20px 46px rgba(77,150,255,.4);}
-.gs-send:active{transform:translateY(0) scale(.99);}
-.gs-send:disabled{opacity:.6;cursor:default;transform:none;}
-.gs-foot-note{
-  display:block;margin-top:10px;text-align:center;
-  font-family:var(--font-ui);font-size:11px;font-weight:550;color:var(--ink-faint);
-}
-
-/* Inside the sheet the two lists get their own rhythm: a numbered
-   sequence reads down, and four budgets sit two by two. */
-.gs-body .sc-steps{
-  flex-direction:column;gap:13px;
-  margin:0 0 18px;padding:0 0 17px;
-}
-.gs-body .sc-budget-chip{flex:1 1 calc(50% - 5px);min-width:0;}
-.gs-body .sc-budget{gap:10px;}
-.gs-body .sc-budget-hint{margin-top:9px;margin-bottom:0;min-height:0;}
-.gs-body .sc-match-foot{
-  margin-top:18px;padding-top:16px;
-  border-top:1px solid rgba(10,10,20,.06);
-  gap:9px 18px;
-}
-.gs-body .sc-note-wrap{margin-top:12px;}
-
-/* On a phone it rises from the edge the thumb is already at. */
-@media(max-width:760px){
-  .gs-sheet{
-    left:0;right:0;top:auto;bottom:0;width:auto;
-    transform:translateY(24px);max-height:92vh;
-    border-radius:26px 26px 0 0;
-  }
-  body.gs-open .gs-sheet{transform:translateY(0);}
-  .gs-sheet::before{border-radius:26px 26px 0 0;}
-  .gs-grab{
-    display:block;position:absolute;top:9px;left:50%;transform:translateX(-50%);
-    width:38px;height:4px;border-radius:100px;background:rgba(10,10,20,.14);z-index:2;
-  }
-  .gs-head{padding:24px 20px 16px;}
-  .gs-body{padding:16px 20px 20px;}
-  .gs-foot{padding:14px 20px calc(18px + env(safe-area-inset-bottom,0px));border-radius:0;}
-  .gs-close{top:14px;right:14px;}
-  .gs-title{font-size:17px;}
-}
-@media (prefers-reduced-motion: reduce){
-  .gs-sheet::before,.gs-title,.gs-send{animation:none!important;}
-}
 
 /* ── Console on small screens ──────────────────────────────────────
    The capsule becomes a stacked card: Where takes a full row, the
@@ -2093,18 +1861,6 @@ body.gs-open .gs-sheet{opacity:1;visibility:visible;pointer-events:auto;transfor
   .loc-autocomplete-panel{min-width:0;max-width:none;max-height:60vh;}
   .sf-panel-guests{min-width:0;}
   .rooms-options{max-width:none;}
-  /* Two up, not four stacked: the min-width that balances the desktop
-     row would otherwise put every budget on its own line. */
-  .sc-budget-chip{flex:1 1 calc(50% - 4px);min-width:0;padding:10px 12px;}
-  .sc-bc-range{font-size:12.5px;}
-  .sc-bc-label{font-size:10px;}
-  .sc-steps{gap:9px 18px;margin-bottom:14px;padding-bottom:13px;}
-  .sc-step-n{width:20px;height:20px;border-radius:7px;font-size:10px;}
-  .sc-step-t b{font-size:12px;}
-  .sc-step-t span{font-size:10.5px;}
-  .sc-match-card{padding:15px 15px 16px;}
-  .sc-match-foot{gap:6px 14px;}
-  .sc-match-fact{font-size:11px;}
 }
 @media(max-width:400px){
   .sf-label{font-size:9px;letter-spacing:.12em;}
@@ -2128,439 +1884,6 @@ body.gs-open .gs-sheet{opacity:1;visibility:visible;pointer-events:auto;transfor
   .svc-list-cta svg{width:13px;height:13px;flex-shrink:0;opacity:.9;}
   @media(max-width:400px){.svc-list-cta{padding:7px 12px;font-size:12px;}}
 
-/* ════════════════════════════════════════════════════════
-   REQUEST SENT OVERLAY. Fullscreen celebration
-════════════════════════════════════════════════════════ */
-.gm-sent-overlay{
-  position:fixed;inset:0;z-index:2000;
-  display:flex;align-items:center;justify-content:center;
-  background:rgba(5,2,18,.92);
-  backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
-  opacity:0;visibility:hidden;
-  transition:opacity .4s cubic-bezier(.22,1,.36,1),visibility .4s;
-}
-.gm-sent-overlay.show{opacity:1;visibility:visible;}
-
-.gm-sent-card{
-  position:relative;
-  width:min(420px,calc(100vw - 32px));
-  background:linear-gradient(160deg,#0f0521 0%,#071128 100%);
-  border:1px solid rgba(255,255,255,.08);
-  border-radius:28px;padding:40px 32px 36px;
-  text-align:center;
-  overflow:hidden;
-  transform:scale(.9) translateY(20px);
-  transition:transform .5s cubic-bezier(.34,1.26,.64,1);
-}
-.gm-sent-overlay.show .gm-sent-card{transform:scale(1) translateY(0);}
-
-/* Ambient glow orbs behind card content */
-.gm-orb{
-  position:absolute;border-radius:50%;pointer-events:none;
-  filter:blur(60px);opacity:.5;
-}
-.gm-orb-1{width:300px;height:300px;top:-80px;left:-60px;background:radial-gradient(circle,rgba(123,47,247,.6),transparent 70%);}
-.gm-orb-2{width:250px;height:250px;bottom:-60px;right:-40px;background:radial-gradient(circle,rgba(77,150,255,.5),transparent 70%);}
-.gm-orb-3{width:200px;height:200px;top:40%;left:50%;transform:translate(-50%,-50%);background:radial-gradient(circle,rgba(107,203,119,.3),transparent 70%);}
-
-/* Burst animation ring */
-.gm-burst{
-  position:absolute;top:50%;left:50%;
-  transform:translate(-50%,-50%);
-  width:200px;height:200px;border-radius:50%;
-  border:2px solid rgba(107,203,119,.4);
-  animation:gmburst 2s ease-out infinite;
-  pointer-events:none;
-}
-.gm-burst-2{animation-delay:.6s;border-color:rgba(77,150,255,.3);}
-.gm-burst-3{animation-delay:1.2s;border-color:rgba(199,125,255,.25);}
-@keyframes gmburst{
-  0%{transform:translate(-50%,-50%) scale(0);opacity:1;}
-  100%{transform:translate(-50%,-50%) scale(3);opacity:0;}
-}
-
-.gm-sent-icon{
-  position:relative;z-index:1;
-  width:72px;height:72px;border-radius:22px;
-  margin:0 auto 24px;
-  background:linear-gradient(135deg,#1a0533,#0d1f3c);
-  border:1.5px solid rgba(107,203,119,.4);
-  display:flex;align-items:center;justify-content:center;
-  box-shadow:0 0 40px rgba(107,203,119,.3),0 0 80px rgba(107,203,119,.1);
-  animation:gm-icon-appear .6s .2s cubic-bezier(.34,1.4,.64,1) both;
-}
-@keyframes gm-icon-appear{from{transform:scale(0) rotate(-20deg);}to{transform:scale(1) rotate(0deg);}}
-.gm-sent-icon svg{width:32px;height:32px;}
-
-.gm-sent-eyebrow{
-  position:relative;z-index:1;
-  font-family:var(--font-ui);font-size:10px;font-weight:800;
-  letter-spacing:.18em;text-transform:uppercase;
-  color:#6BCB77;margin-bottom:12px;
-  opacity:0;animation:gm-fadeup .5s .35s forwards;
-}
-.gm-sent-title{
-  position:relative;z-index:1;
-  font-family:var(--font-ui);font-weight:800;
-  font-size:clamp(22px,5vw,28px);letter-spacing:-.025em;
-  color:#fff;line-height:1.15;margin-bottom:8px;
-  opacity:0;animation:gm-fadeup .5s .45s forwards;
-}
-.gm-sent-title em{
-  font-style:italic;
-  background:linear-gradient(90deg,#6BCB77,#4D96FF);
-  -webkit-background-clip:text;background-clip:text;color:transparent;
-}
-.gm-sent-sub{
-  position:relative;z-index:1;
-  font-family:var(--font-ui);font-size:14px;font-weight:400;
-  color:rgba(255,255,255,.6);line-height:1.65;margin-bottom:28px;
-  opacity:0;animation:gm-fadeup .5s .55s forwards;
-}
-.gm-sent-sub strong{color:rgba(255,255,255,.9);font-weight:600;}
-
-/* Bouncing dots row */
-.gm-dots-row{
-  position:relative;z-index:1;
-  display:flex;align-items:center;justify-content:center;gap:8px;
-  margin-bottom:28px;
-  opacity:0;animation:gm-fadeup .5s .65s forwards;
-}
-.gm-dot{
-  width:8px;height:8px;border-radius:50%;
-}
-.gm-dot-1{background:#FF6B6B;animation:gm-dot-bounce 1.4s .1s ease-in-out infinite;}
-.gm-dot-2{background:#FFD93D;animation:gm-dot-bounce 1.4s .25s ease-in-out infinite;}
-.gm-dot-3{background:#6BCB77;animation:gm-dot-bounce 1.4s .4s ease-in-out infinite;}
-.gm-dot-4{background:#4D96FF;animation:gm-dot-bounce 1.4s .55s ease-in-out infinite;}
-.gm-dot-5{background:#C77DFF;animation:gm-dot-bounce 1.4s .7s ease-in-out infinite;}
-@keyframes gm-dot-bounce{
-  0%,80%,100%{transform:scale(.7) translateY(0);opacity:.5;}
-  40%{transform:scale(1.3) translateY(-6px);opacity:1;}
-}
-
-.gm-sent-cta{
-  position:relative;z-index:1;
-  display:inline-flex;align-items:center;justify-content:center;gap:10px;
-  width:100%;padding:16px 24px;
-  border:none;border-radius:16px;cursor:pointer;
-  font-family:var(--font-ui);font-weight:800;font-size:15px;
-  color:#fff;letter-spacing:.01em;
-  background:linear-gradient(135deg,#7B2FF7,#4D96FF);
-  box-shadow:0 8px 32px rgba(123,47,247,.5);
-  transition:all .25s;
-  opacity:0;animation:gm-fadeup .5s .75s forwards;
-}
-.gm-sent-cta:hover{transform:translateY(-2px);box-shadow:0 14px 40px rgba(123,47,247,.65);}
-.gm-sent-cta svg{width:16px;height:16px;}
-.gm-sent-cta-note{
-  position:relative;z-index:1;
-  font-size:12px;color:rgba(255,255,255,.35);margin-top:12px;
-  opacity:0;animation:gm-fadeup .5s .85s forwards;
-}
-
-@keyframes gm-fadeup{
-  from{opacity:0;transform:translateY(8px);}
-  to{opacity:1;transform:translateY(0);}
-}
-
-/* ════════════════════════════════════════════════════════
-   GHOST LIVE REQUEST TAB. Stays page (below match card)
-════════════════════════════════════════════════════════ */
-#gm-live-tab{
-  display:none;
-  margin-top:10px;
-  animation:gm-tab-appear .5s cubic-bezier(.34,1.26,.64,1) both;
-}
-#gm-live-tab.visible{display:block;}
-@keyframes gm-tab-appear{
-  from{opacity:0;transform:translateY(-8px) scale(.98);}
-  to{opacity:1;transform:translateY(0) scale(1);}
-}
-
-/* The collapsible trigger pill */
-.gm-tab-pill{
-  display:flex;align-items:center;gap:10px;
-  padding:12px 18px;border-radius:16px;
-  background:linear-gradient(135deg,rgba(10,5,25,.95),rgba(5,15,40,.95));
-  border:1px solid rgba(107,203,119,.35);
-  cursor:pointer;
-  box-shadow:0 4px 24px rgba(107,203,119,.15),0 0 0 1px rgba(107,203,119,.1);
-  transition:all .25s;
-  position:relative;overflow:hidden;
-}
-.gm-tab-pill::before{
-  content:'';position:absolute;inset:0;
-  background:linear-gradient(90deg,transparent,rgba(107,203,119,.06),transparent);
-  background-size:200% 100%;
-  animation:gm-pill-sweep 3s ease-in-out infinite;
-}
-@keyframes gm-pill-sweep{
-  0%{background-position:200% center;}
-  100%{background-position:-200% center;}
-}
-.gm-tab-pill:hover{border-color:rgba(107,203,119,.6);box-shadow:0 6px 32px rgba(107,203,119,.25);}
-
-.gm-tab-live-dot{
-  width:9px;height:9px;border-radius:50%;flex-shrink:0;
-  background:#6BCB77;
-  box-shadow:0 0 8px rgba(107,203,119,.8);
-  animation:gm-live-glow 1.5s ease-in-out infinite;
-}
-@keyframes gm-live-glow{
-  0%,100%{box-shadow:0 0 4px rgba(107,203,119,.6);opacity:1;}
-  50%{box-shadow:0 0 14px rgba(107,203,119,1);opacity:.85;}
-}
-
-.gm-tab-text{flex:1;min-width:0;}
-.gm-tab-label{
-  font-family:var(--font-ui);font-weight:700;font-size:13px;
-  color:#fff;white-space:nowrap;
-}
-.gm-tab-sub{
-  font-family:var(--font-ui);font-size:11px;color:rgba(255,255,255,.45);margin-top:1px;
-}
-
-.gm-tab-timer{
-  font-family:var(--font-ui);font-weight:900;font-size:16px;
-  background:linear-gradient(90deg,#FFD93D,#FF9A5C);
-  -webkit-background-clip:text;background-clip:text;color:transparent;
-  letter-spacing:-.01em;flex-shrink:0;
-  font-variant-numeric:tabular-nums;
-}
-.gm-tab-timer.urgent{
-  background:linear-gradient(90deg,#FF4D6D,#FF9A5C);
-  -webkit-background-clip:text;background-clip:text;color:transparent;
-  animation:gm-timer-urgent .8s ease-in-out infinite;
-}
-@keyframes gm-timer-urgent{
-  0%,100%{opacity:1;}50%{opacity:.6;}
-}
-
-.gm-tab-chevron{
-  flex-shrink:0;color:rgba(255,255,255,.3);
-  transition:transform .3s;
-}
-.gm-tab-pill.open .gm-tab-chevron{transform:rotate(180deg);}
-
-/* ── Panel that expands below pill ── */
-.gm-panel{
-  display:none;
-  background:linear-gradient(160deg,#0a0519,#06101e);
-  border:1px solid rgba(255,255,255,.08);
-  border-radius:20px;margin-top:6px;
-  overflow:hidden;
-}
-.gm-panel.open{display:block;animation:gm-panel-in .35s cubic-bezier(.22,1,.36,1) both;}
-@keyframes gm-panel-in{
-  from{opacity:0;transform:translateY(-6px);}
-  to{opacity:1;transform:translateY(0);}
-}
-
-/* Panel header */
-.gm-panel-head{
-  padding:20px 22px 0;
-  display:flex;align-items:center;justify-content:space-between;
-}
-.gm-panel-title{
-  font-family:var(--font-ui);font-weight:800;font-size:15px;
-  color:#fff;letter-spacing:-.01em;
-}
-.gm-panel-close{
-  width:28px;height:28px;border-radius:8px;
-  border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);
-  display:flex;align-items:center;justify-content:center;
-  cursor:pointer;color:rgba(255,255,255,.4);transition:all .2s;
-}
-.gm-panel-close:hover{border-color:rgba(255,75,75,.4);color:#FF4D6D;}
-.gm-panel-close svg{width:14px;height:14px;}
-
-/* Request details strip */
-.gm-req-details{
-  display:flex;flex-wrap:wrap;gap:6px;
-  padding:12px 22px 0;
-}
-.gm-req-chip{
-  font-family:var(--font-ui);font-size:11px;font-weight:500;
-  color:rgba(255,255,255,.5);
-  background:rgba(255,255,255,.06);
-  border:1px solid rgba(255,255,255,.08);
-  padding:4px 10px;border-radius:100px;
-}
-
-/* ── Response list ── */
-.gm-responses-wrap{padding:14px 22px 0;}
-.gm-responses-label{
-  font-family:var(--font-ui);font-size:10px;font-weight:800;
-  letter-spacing:.12em;text-transform:uppercase;
-  color:rgba(255,255,255,.3);margin-bottom:10px;
-}
-
-/* Empty state */
-.gm-empty-state{
-  padding:28px 0;text-align:center;
-}
-.gm-empty-icon{
-  width:48px;height:48px;border-radius:14px;margin:0 auto 14px;
-  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);
-  display:flex;align-items:center;justify-content:center;
-}
-.gm-empty-icon svg{width:22px;height:22px;color:rgba(255,255,255,.2);}
-.gm-empty-text{
-  font-family:var(--font-ui);font-size:13px;color:rgba(255,255,255,.35);
-  line-height:1.6;
-}
-.gm-empty-text strong{color:rgba(255,255,255,.6);display:block;font-size:15px;font-weight:700;margin-bottom:4px;}
-
-/* Individual response card */
-.gm-response-card{
-  display:flex;align-items:center;gap:14px;
-  padding:14px;border-radius:14px;
-  background:rgba(255,255,255,.04);
-  border:1px solid rgba(255,255,255,.07);
-  margin-bottom:8px;cursor:pointer;
-  transition:all .2s;
-  position:relative;overflow:hidden;
-}
-.gm-response-card::after{
-  content:'';position:absolute;inset:0;border-radius:14px;
-  background:linear-gradient(135deg,rgba(107,203,119,.08),rgba(77,150,255,.06));
-  opacity:0;transition:opacity .2s;
-}
-.gm-response-card:hover{
-  border-color:rgba(107,203,119,.3);
-  transform:translateY(-1px);
-  box-shadow:0 8px 24px rgba(0,0,0,.3);
-}
-.gm-response-card:hover::after{opacity:1;}
-.gm-response-card.new-response{
-  animation:gm-card-flash .6s ease-in-out;
-}
-@keyframes gm-card-flash{
-  0%,100%{background:rgba(255,255,255,.04);}
-  50%{background:rgba(107,203,119,.12);}
-}
-
-.gm-resp-img{
-  width:50px;height:50px;border-radius:12px;flex-shrink:0;
-  object-fit:cover;background:rgba(255,255,255,.08);
-}
-.gm-resp-img-placeholder{
-  width:50px;height:50px;border-radius:12px;flex-shrink:0;
-  background:linear-gradient(135deg,rgba(123,47,247,.2),rgba(77,150,255,.15));
-  display:flex;align-items:center;justify-content:center;
-}
-.gm-resp-img-placeholder svg{width:22px;height:22px;color:rgba(255,255,255,.3);}
-
-.gm-resp-body{flex:1;min-width:0;}
-.gm-resp-name{
-  font-family:var(--font-ui);font-weight:700;font-size:13px;
-  color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-  margin-bottom:3px;
-}
-.gm-resp-host{font-size:11px;color:rgba(255,255,255,.4);margin-bottom:4px;}
-.gm-resp-price{
-  font-family:var(--font-ui);font-weight:800;font-size:13px;
-  color:#FFD93D;
-}
-.gm-resp-price span{font-size:10px;font-weight:500;color:rgba(255,255,255,.35);}
-
-.gm-resp-action{
-  flex-shrink:0;
-  font-family:var(--font-ui);font-size:11px;font-weight:700;
-  color:#fff;
-  background:linear-gradient(135deg,#7B2FF7,#4D96FF);
-  padding:8px 14px;border-radius:10px;border:none;
-  cursor:pointer;transition:all .2s;white-space:nowrap;
-}
-.gm-resp-action:hover{filter:brightness(1.15);transform:translateY(-1px);}
-
-/* Still waiting strip (shown even with accepts) */
-.gm-still-waiting{
-  margin:6px 0 2px;padding:10px 14px;
-  border-radius:10px;
-  background:rgba(255,255,255,.03);
-  border:1px dashed rgba(255,255,255,.07);
-  display:flex;align-items:center;gap:10px;
-}
-.gm-sw-text{
-  flex:1;font-family:var(--font-ui);font-size:11px;
-  color:rgba(255,255,255,.35);line-height:1.5;
-}
-.gm-sw-timer{
-  font-family:var(--font-ui);font-weight:900;font-size:15px;
-  background:linear-gradient(90deg,#FFD93D,#FF9A5C);
-  -webkit-background-clip:text;background-clip:text;color:transparent;
-  font-variant-numeric:tabular-nums;flex-shrink:0;
-}
-.gm-sw-timer.urgent{
-  background:linear-gradient(90deg,#FF4D6D,#FF9A5C);
-  -webkit-background-clip:text;background-clip:text;color:transparent;
-}
-
-/* ── Expired / no-response state ── */
-.gm-expired-state{
-  padding:32px 22px 28px;text-align:center;
-}
-.gm-expired-icon{
-  width:64px;height:64px;border-radius:18px;margin:0 auto 20px;
-  background:linear-gradient(135deg,rgba(255,75,110,.1),rgba(255,154,92,.08));
-  border:1px solid rgba(255,75,110,.2);
-  display:flex;align-items:center;justify-content:center;
-}
-.gm-expired-icon svg{width:30px;height:30px;color:#FF4D6D;}
-.gm-expired-title{
-  font-family:var(--font-ui);font-weight:800;font-size:18px;
-  color:#fff;letter-spacing:-.01em;margin-bottom:8px;
-}
-.gm-expired-sub{
-  font-family:var(--font-ui);font-size:13px;
-  color:rgba(255,255,255,.4);line-height:1.7;margin-bottom:20px;
-}
-.gm-expired-sub em{color:rgba(255,255,255,.65);font-style:normal;}
-.gm-fallback-btn{
-  display:inline-flex;align-items:center;gap:8px;
-  padding:13px 22px;border-radius:14px;border:none;
-  font-family:var(--font-ui);font-weight:700;font-size:14px;
-  color:#fff;cursor:pointer;
-  background:linear-gradient(135deg,#7B2FF7,#4D96FF);
-  box-shadow:0 6px 24px rgba(123,47,247,.4);
-  transition:all .25s;
-}
-.gm-fallback-btn:hover{transform:translateY(-2px);box-shadow:0 10px 32px rgba(123,47,247,.55);}
-.gm-fallback-btn svg{width:15px;height:15px;}
-
-/* Countdown big display in panel */
-.gm-panel-countdown{
-  padding:10px 22px 4px;
-  display:flex;align-items:center;gap:12px;
-}
-.gm-countdown-track{
-  flex:1;height:3px;border-radius:100px;
-  background:rgba(255,255,255,.08);overflow:hidden;
-}
-.gm-countdown-fill{
-  height:100%;border-radius:100px;
-  background:linear-gradient(90deg,#6BCB77,#4D96FF);
-  transition:width 1s linear;
-}
-.gm-countdown-fill.urgent{background:linear-gradient(90deg,#FF4D6D,#FF9A5C);}
-.gm-panel-countdown-label{
-  font-family:var(--font-ui);font-size:10px;font-weight:700;
-  color:rgba(255,255,255,.25);letter-spacing:.05em;white-space:nowrap;
-}
-
-.gm-panel-footer{
-  padding:16px 22px 22px;
-  display:flex;gap:8px;
-}
-.gm-panel-dismiss-btn{
-  flex:1;padding:11px;border-radius:12px;
-  border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);
-  font-family:var(--font-ui);font-size:12px;font-weight:600;
-  color:rgba(255,255,255,.4);cursor:pointer;transition:all .2s;
-}
-.gm-panel-dismiss-btn:hover{border-color:rgba(255,75,110,.4);color:#FF4D6D;}
 </style>
 
 <link rel="stylesheet" href="/brand.css"/>
@@ -2581,6 +1904,7 @@ body.gs-open .gs-sheet{opacity:1;visibility:visible;pointer-events:auto;transfor
 html.sg-lock,html.sg-lock body{overflow:hidden!important;}
 </style>
 <link rel="stylesheet" href="/cabana-offers.css">
+<link rel="stylesheet" href="/cabana-match.css?v=2" media="print" onload="this.media='all';this.onload=null">
 </head><body>
 <script>if(new URLSearchParams(location.search).get('back')==='1')document.documentElement.classList.add('via-dash');</script>
 
@@ -2923,167 +2247,8 @@ html.sg-lock,html.sg-lock body{overflow:hidden!important;}
   </div>
 </div>
 
-<!-- ── GET MATCHED SHEET ────────────────────────────────────────────
-     Everything the broadcast needs, and the whole explanation of what
-     a broadcast is, lives behind the button rather than on the board.
-     The stays page stays a stays page. -->
-<div class="gs-scrim" id="gs-scrim" onclick="closeMatchSheet()" aria-hidden="true"></div>
-<div class="gs-sheet" id="gs-sheet" role="dialog" aria-modal="true" aria-labelledby="gs-title" aria-hidden="true">
-  <span class="gs-grab" aria-hidden="true"></span>
-  <button type="button" class="gs-close" onclick="closeMatchSheet()" aria-label="Close">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-  </button>
-
-  <div class="gs-head">
-    <span class="gs-mark" aria-hidden="true">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.9 4.9a10 10 0 0 0 0 14.2M19.1 4.9a10 10 0 0 1 0 14.2M7.8 7.8a6 6 0 0 0 0 8.4M16.2 7.8a6 6 0 0 1 0 8.4"/><circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/></svg>
-    </span>
-    <span class="gs-head-txt">
-      <span class="gs-title" id="gs-title">Get Matched with Cabana</span>
-      <span class="gs-cred"><span class="gs-cred-dot"></span>World's first reverse marketplace for stays</span>
-    </span>
-  </div>
-
-  <div class="gs-body">
-    <div class="gs-recap" id="gs-recap"></div>
-
-    <ol class="sc-steps">
-      <li class="sc-step">
-        <span class="sc-step-n">1</span>
-        <span class="sc-step-t"><b>Your request goes out</b><span>To hosts in your destination</span></span>
-      </li>
-      <li class="sc-step">
-        <span class="sc-step-n">2</span>
-        <span class="sc-step-t"><b>Hosts with space respond</b><span>Only ones who can take you</span></span>
-      </li>
-      <li class="sc-step">
-        <span class="sc-step-n">3</span>
-        <span class="sc-step-t"><b>You pick who to talk to</b><span>Nothing committed until you do</span></span>
-      </li>
-    </ol>
-
-    <div class="sc-field-label">Nightly budget <em>KES per night</em></div>
-    <div class="sc-budget" id="sc-budget"></div>
-    <div class="sc-budget-hint" id="sc-budget-hint">Pick a range so only the right hosts see your request.</div>
-
-    <button type="button" class="sc-note-toggle" id="sc-note-toggle" onclick="scToggleNote()" aria-expanded="false" aria-controls="sc-note-wrap">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-      Add a note for hosts <em>optional</em>
-    </button>
-    <div class="sc-note-wrap" id="sc-note-wrap" hidden>
-      <textarea class="sc-note" id="sc-note" rows="3" maxlength="280" oninput="scNoteCount()"
-        placeholder="Anything that helps a host say yes. Late arrival, quiet street, a workspace, parking for one car." aria-label="Anything that helps a host say yes. Late arrival, quiet street, a workspace, parking for one car" ></textarea>
-      <span class="sc-note-count" id="sc-note-count">0/280</span>
-    </div>
-
-    <div class="sc-match-foot">
-      <span class="sc-match-fact">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-        Live for 20 minutes
-      </span>
-      <span class="sc-match-fact">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-        Real availability only
-      </span>
-      <span class="sc-match-fact">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-        Close it any time, no obligation
-      </span>
-    </div>
-  </div>
-
-  <div class="gs-foot">
-    <button type="button" class="gs-send" id="gs-send" onclick="launchMatchRequest()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.9 4.9a10 10 0 0 0 0 14.2M19.1 4.9a10 10 0 0 1 0 14.2M7.8 7.8a6 6 0 0 0 0 8.4M16.2 7.8a6 6 0 0 1 0 8.4"/><circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/></svg>
-      <span id="gs-send-label">Send my request to hosts</span>
-    </button>
-    <span class="gs-foot-note">Zero obligation. You choose who to reply to, or nobody at all.</span>
-  </div>
-</div>
-
-<!-- ── GET MATCHED GHOST TAB. Hidden until active request ── -->
-<div id="gm-live-tab">
-  <!-- Pill trigger -->
-  <div class="gm-tab-pill" id="gm-tab-pill" onclick="toggleGmPanel()">
-    <span class="gm-tab-live-dot"></span>
-    <span class="gm-tab-text">
-      <span class="gm-tab-label" id="gm-tab-label">You are matched &middot; hosts responding</span>
-      <span class="gm-tab-sub" id="gm-tab-sub">Tap to see who is ready for you</span>
-    </span>
-    <span class="gm-tab-timer" id="gm-tab-timer">20:00</span>
-    <svg class="gm-tab-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
-  </div>
-  <!-- Expanding panel -->
-  <div class="gm-panel" id="gm-panel">
-    <!-- Panel header -->
-    <div class="gm-panel-head">
-      <span class="gm-panel-title">Your match request</span>
-      <button class="gm-panel-close" onclick="closeGmTab()" title="Close request">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-      </button>
-    </div>
-    <!-- Request chip details -->
-    <div class="gm-req-details" id="gm-req-details"></div>
-    <!-- Countdown progress -->
-    <div class="gm-panel-countdown">
-      <div class="gm-countdown-track">
-        <div class="gm-countdown-fill" id="gm-countdown-fill" style="width:100%"></div>
-      </div>
-      <span class="gm-panel-countdown-label" id="gm-countdown-label">20:00 left</span>
-    </div>
-    <!-- Responses list -->
-    <div class="gm-responses-wrap">
-      <div class="gm-responses-label" id="gm-responses-label">Waiting for hosts…</div>
-      <div id="gm-responses-list"></div>
-    </div>
-    <!-- Footer -->
-    <div class="gm-panel-footer">
-      <button class="gm-panel-dismiss-btn" onclick="gmCloseRequest()">Close request</button>
-    </div>
-  </div>
-</div>
-
-<!-- ── REQUEST SENT OVERLAY ── -->
-<div class="gm-sent-overlay" id="gm-sent-overlay">
-  <div class="gm-sent-card">
-    <div class="gm-orb gm-orb-1"></div>
-    <div class="gm-orb gm-orb-2"></div>
-    <div class="gm-orb gm-orb-3"></div>
-    <div class="gm-burst"></div>
-    <div class="gm-burst gm-burst-2"></div>
-    <div class="gm-burst gm-burst-3"></div>
-    <div class="gm-sent-icon">
-      <svg viewBox="0 0 24 24" fill="none">
-        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="url(#gm-bolt-grad)" stroke="none"/>
-        <defs>
-          <linearGradient id="gm-bolt-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#6BCB77"/>
-            <stop offset="100%" stop-color="#4D96FF"/>
-          </linearGradient>
-        </defs>
-      </svg>
-    </div>
-    <div class="gm-sent-eyebrow">Request sent</div>
-    <div class="gm-sent-title">Hosts can't wait<br>to <em>meet you.</em></div>
-    <div class="gm-sent-sub">Your request is live. <strong>Opted-in hosts nearby are seeing it right now</strong> and the keenest ones will respond within your 20-minute window.</div>
-    <div class="gm-dots-row">
-      <span class="gm-dot gm-dot-1"></span>
-      <span class="gm-dot gm-dot-2"></span>
-      <span class="gm-dot gm-dot-3"></span>
-      <span class="gm-dot gm-dot-4"></span>
-      <span class="gm-dot gm-dot-5"></span>
-    </div>
-    <button class="gm-sent-cta" onclick="gmSentCtaClick()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
-      Watch your matches come in
-    </button>
-    <div class="gm-sent-cta-note">We'll keep this live for 20 minutes · close anytime</div>
-  </div>
-</div>
-
-<!-- The Cabana Match explainer modal was retired. Its content now
-     lives inside the search console, under the mode it belongs to,
-     so the page carries one Match surface instead of three. -->
+<!-- Cabana Match renders its own sheet, radar and live pill from
+     /cabana-match.js, so nothing for it lives in this page's markup. -->
 
 <!-- ── Floating Filter & Sort FAB ── -->
 <button class="fab-filter" id="fab-filter" onclick="openFilterModal()" aria-label="Filters and Sort">
@@ -3687,7 +2852,7 @@ function renderCards(list) {
       body  = 'Cabana launches with zero commission — hosts keep 100% of every booking. Be first to list your space and get early visibility with every guest who visits.';
       cta   = `<div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:22px">
         <a href="add-listing.html" class="empty-cta">List your space free</a>
-        <button type="button" class="empty-cta" style="background:rgba(123,47,247,.12);color:var(--violet);box-shadow:none;border:1.5px solid rgba(123,47,247,.25);" onclick="document.getElementById('gs-sheet')?.classList.add('open');document.body.classList.add('gs-open');">Get Matched</button>
+        <button type="button" class="empty-cta" style="background:rgba(123,47,247,.12);color:var(--violet);box-shadow:none;border:1.5px solid rgba(123,47,247,.25);" onclick="openCabanaMatch()">Get Matched</button>
       </div>`;
     } else if (_searchState.loc) {
       title = 'Nothing listed there yet';
@@ -4976,7 +4141,6 @@ function setSearchMode(mode) {
     ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.9 4.9a10 10 0 0 0 0 14.2M19.1 4.9a10 10 0 0 1 0 14.2M7.8 7.8a6 6 0 0 0 0 8.4M16.2 7.8a6 6 0 0 1 0 8.4"/><circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/></svg>'
     : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20.5 20.5-4.2-4.2"/></svg>';
 
-  if (isMatch) scRenderBudget();
   moveModeGlider();
   scStatus();
 }
@@ -5011,71 +4175,25 @@ document.fonts?.ready?.then?.(() => setTimeout(moveModeGlider, 30));
 
 /* ── Cabana Match budget ─────────────────────────────────────────── */
 const CM_BUDGET_META = [
-  { min:1000, max:2000, range:'1K to 2K',    label:'Clean and simple',
-    hint:'A tidy, no-frills space. Right when the room is somewhere to sleep, not somewhere to spend the day.' },
-  { min:2000, max:3500, range:'2K to 3.5K',  label:'Comfortable',
-    hint:'Well-kept places with the essentials that actually work. Where most guests on Cabana land.' },
-  { min:3500, max:5000, range:'3.5K to 5K',  label:'Well appointed',
-    hint:'Considered furnishing, more amenities, and neighbourhoods you would happily walk in at night.' },
-  { min:5000, max:0,    range:'5K and up',   label:'The best we hold',
-    hint:'Prime addresses, full amenity sets, finishes that hold up. The top of the current inventory.' },
+  { min:1000, max:2000, range:'1K to 2K' },
+  { min:2000, max:3500, range:'2K to 3.5K' },
+  { min:3500, max:5000, range:'3.5K to 5K' },
+  { min:5000, max:0,    range:'5K and up' },
 ];
 let _cmBudgetMin = 0, _cmBudgetMax = 0;
 
-function scRenderBudget() {
-  const host = document.getElementById('sc-budget');
-  if (!host || host.dataset.built) return;
-  host.dataset.built = '1';
-  host.innerHTML = CM_BUDGET_META.map((m, i) => `
-    <button type="button" class="sc-budget-chip" data-i="${i}" onclick="cmPickBudget(this)">
-      <span class="sc-bc-range">KES ${_esc(m.range)}</span>
-      <span class="sc-bc-label">${_esc(m.label)}</span>
-    </button>`).join('');
-}
-
-function cmPickBudget(el) {
-  const meta = CM_BUDGET_META[parseInt(el.dataset.i, 10)];
-  if (!meta) return;
-  const already = el.classList.contains('selected');
-  setBudget(already ? 0 : meta.min, already ? 0 : meta.max);
-}
-
 /* One price filter, two controls: the chips in the filter rail and the
-   budget cards under Cabana Match. Whichever you touch, both show it. */
+   budget row in the Match sheet. Whichever you touch, both show it. */
 function setBudget(min, max) {
   _cmBudgetMin = min || 0;
   _cmBudgetMax = max || 0;
   _searchState.minPrice = _cmBudgetMin;
   _searchState.maxPrice = _cmBudgetMax > 0 ? _cmBudgetMax : 999999;
-
-  const i = CM_BUDGET_META.findIndex(m => m.min === _cmBudgetMin && m.max === _cmBudgetMax);
-  document.querySelectorAll('.sc-budget-chip').forEach(c =>
-    c.classList.toggle('selected', i >= 0 && parseInt(c.dataset.i, 10) === i));
   document.querySelectorAll('.fchip-budget').forEach(c =>
     c.classList.toggle('active', _cmBudgetMin > 0 &&
       parseInt(c.dataset.min, 10) === _cmBudgetMin && parseInt(c.dataset.max, 10) === _cmBudgetMax));
-
-  const hint = document.getElementById('sc-budget-hint');
-  if (hint) hint.textContent = i >= 0 ? CM_BUDGET_META[i].hint
-                                      : 'Pick a range so only the right hosts see your request.';
   applyAndRender();
   scStatus();
-}
-
-function scToggleNote() {
-  const btn = document.getElementById('sc-note-toggle');
-  const wrap = document.getElementById('sc-note-wrap');
-  if (!btn || !wrap) return;
-  const open = btn.getAttribute('aria-expanded') === 'true';
-  btn.setAttribute('aria-expanded', String(!open));
-  wrap.hidden = open;
-  if (!open) setTimeout(() => document.getElementById('sc-note')?.focus(), 120);
-}
-
-function scNoteCount() {
-  const ta = document.getElementById('sc-note');
-  const out = document.getElementById('sc-note-count');
-  if (ta && out) out.textContent = ta.value.length + '/280';
 }
 
 /* ── The one-line status under the capsule ──────────────────────────
@@ -5097,10 +4215,10 @@ function scStatus() {
     if (!where) missing.push('where');
     if (!s.dateIn || !s.dateOut) missing.push('when');
     el.innerHTML = missing.length
-      ? SC_ICO_WAVE + '<span>Tell us <b>' + _esc(missing.join(' and ')) + '</b> and hosts start coming to you.</span>'
-      : SC_ICO_WAVE + '<span>Ready to go out to hosts in <b>' + _esc(where) + '</b> for ' + nights + ' night' + (nights === 1 ? '' : 's') +
-        (_cmBudgetMin ? ' at ' + _esc(CM_BUDGET_META.find(m => m.min === _cmBudgetMin)?.range || '') + ' a night' : '') +
-        '. They have 20 minutes to answer.</span>';
+      ? SC_ICO_WAVE + '<span>Add <b>' + _esc(missing.join(' and ')) + '</b>. Hosts come to you.</span>'
+      : SC_ICO_WAVE + '<span><b>' + _esc(where) + '</b> &middot; ' + nights + ' night' + (nights === 1 ? '' : 's') +
+        (_cmBudgetMin ? ' &middot; KES ' + _esc(CM_BUDGET_META.find(m => m.min === _cmBudgetMin)?.range || '') : '') +
+        ' &middot; hosts reply in minutes</span>';
     return;
   }
 
@@ -5906,7 +5024,6 @@ function toggleSavedFilter(el) {
 /* ── Budget quick-filter chips ── */
 function toggleBudgetFilter(el, min, max) {
   const wasActive = el.classList.contains('active');
-  scRenderBudget();
   setBudget(wasActive ? 0 : min, wasActive ? 0 : max);
 }
 
@@ -6031,9 +5148,6 @@ function resetFilters() {
   document.querySelectorAll('.fchip-budget').forEach(c => c.classList.remove('active'));
   document.querySelectorAll('.filter-bar .fchip:not(.fchip-budget)').forEach((c,i) => c.classList.toggle('active', i===0));
   _cmBudgetMin = 0; _cmBudgetMax = 0;
-  document.querySelectorAll('.sc-budget-chip').forEach(c => c.classList.remove('selected'));
-  const bh = document.getElementById('sc-budget-hint');
-  if (bh) bh.textContent = 'Pick a range so only the right hosts see your request.';
   updateFabFilterBadge(0);
   _savedFilterActive = false;
   document.getElementById('fc-saved')?.classList.remove('active');
@@ -6244,8 +5358,15 @@ loadListings().then(async () => {
     await new Promise(resolve => document.addEventListener('DOMContentLoaded', resolve, { once: true }));
   }
   // Deep-link: apartments.html?open=LISTING_ID  (sent from dashboard cards)
-  const openId = new URLSearchParams(location.search).get('open');
+  const qp = new URLSearchParams(location.search);
+  const openId = qp.get('open');
   if (!openId) return;
+  /* A listing opened from a Match offer arrives with the stay the host
+     priced; quote exactly that. */
+  if (/^\d{4}-\d{2}-\d{2}$/.test(qp.get('checkin') || '') && /^\d{4}-\d{2}-\d{2}$/.test(qp.get('checkout') || '')) {
+    cmApplyStay({ checkin: qp.get('checkin'), checkout: qp.get('checkout'), guests: parseInt(qp.get('guests'), 10) || 0 });
+    applyAndRender();
+  }
   // Try immediately, then retry while listings are still populating
   const tryOpen = (attempts) => {
     const apt = currentListings.find(a =>
@@ -6287,7 +5408,8 @@ loadListings().then(async () => {
 <script src="/apa-geo.js" defer></script>
 <script src="/apa-map.js" defer></script>
 <script src="/telemetry.js" defer></script>
-<script src="/pwa.js?v=40-living-avatars" defer></script>
+<script src="/cabana-match.js?v=2" defer></script>
+<script src="/pwa.js?v=41-match" defer></script>
 <script src="/apa-push.js" defer></script>
 <script src="/referral.js" defer></script>
 <script src="/apa-referral-capture.js" defer></script>
@@ -6470,260 +5592,32 @@ loadListings().then(async () => {
 </style>
 
 <script>
-/* ════════════════════════════════════════════════════════════
-   CABANA MATCH. Full System JS
-   Coming Soon UI + full backend plumbing ready for launch
-════════════════════════════════════════════════════════════ */
-
-/* ── Match surface ────────────────────────────────────────────────
-   There used to be three: a card that explained the idea, a modal
-   that explained it again, and a button in the search bar that
-   skipped both. They read their criteria from three slightly
-   different places, which is how a request could go out with a
-   budget the guest never picked. There is one surface now, the
-   console, and these two names survive only because older links and
-   the partner pages still call them. */
-function openCabanaMatch() {
-  setSearchMode('match');
-  document.getElementById('search-console')?.scrollIntoView({ behavior:'smooth', block:'center' });
-  setTimeout(openMatchSheet, 400);
-}
-function closeCabanaMatch() {
-  if (location.hash === '#cabana-match') history.replaceState(null, '', location.pathname + location.search);
-}
-
-document.addEventListener('DOMContentLoaded', function () {
-  if (location.hash === '#cabana-match') {
-    history.replaceState(null, '', location.pathname + location.search);
-    setSearchMode('match');
-  }
-});
-
-/* ── FULL SYSTEM: Submit a Cabana Match Request ── */
-async function submitCabanaMatchRequest(criteria) {
-  /*
-    criteria: {
-      location, checkin_date, checkout_date, guests, bedrooms, max_price, notes
-    }
-    Returns: { success, request_id, error }
-  */
-  const session = window.ApaSession ? await new Promise(r => ApaSession.ready(r)) : null;
-  const user = session?.user;
-  if (!user) return { success: false, error: 'not_logged_in' };
-
-  // Check for duplicate active request (same dates)
-  const sb = window.sb || window.ApaSession?.client();
-  if (!sb) return { success: false, error: 'no_db' };
-
-  const { data: existing } = await sb
-    .from('cabana_match_requests')
-    .select('id, expires_at')
-    .eq('guest_id', user.id)
-    .eq('status', 'live')
-    .gte('checkin_date', criteria.checkin_date)
-    .lte('checkout_date', criteria.checkout_date)
-    .gt('expires_at', new Date().toISOString())
-    .maybeSingle();
-
-  if (existing) {
-    return { success: false, error: 'duplicate', existing_id: existing.id };
-  }
-
-  const { data, error } = await sb
-    .from('cabana_match_requests')
-    .insert({
-      guest_id: user.id,
-      guest_name: user.user_metadata?.name || user.email?.split('@')[0] || 'Guest',
-      location: criteria.location,
-      checkin_date: criteria.checkin_date,
-      checkout_date: criteria.checkout_date,
-      guests: criteria.guests || 1,
-      bedrooms: criteria.bedrooms || null,
-      min_price: criteria.min_price || null,
-      max_price: criteria.max_price || null,
-      notes: criteria.notes || null,
-      status: 'live'
-    })
-    .select('id')
-    .single();
-
-  if (error) return { success: false, error: error.message };
-  return { success: true, request_id: data.id };
-}
-
-/* ── FULL SYSTEM: Close a guest's own request ── */
-async function closeCabanaMatchRequest(request_id) {
-  const sb = window.sb || window.ApaSession?.client();
-  if (!sb) return;
-  await sb
-    .from('cabana_match_requests')
-    .update({ status: 'closed', closed_at: new Date().toISOString() })
-    .eq('id', request_id);
-}
-
-/* ── FULL SYSTEM: Host accepts/responds to a request ── */
-async function hostRespondToRequest(request_id, listing) {
-  /*
-    listing: { id, title, image, price_per_night, host_name, host_avatar }
-  */
-  const session = window.ApaSession ? await new Promise(r => ApaSession.ready(r)) : null;
-  const user = session?.user;
-  if (!user) return { success: false, error: 'not_logged_in' };
-
-  const sb = window.sb || window.ApaSession?.client();
-  const { data, error } = await sb
-    .from('cabana_match_responses')
-    .insert({
-      request_id,
-      host_id: user.id,
-      listing_id: listing.id,
-      listing_title: listing.title,
-      listing_image: listing.image,
-      price_per_night: listing.price_per_night,
-      host_name: listing.host_name,
-      host_avatar: listing.host_avatar,
-      status: 'pending'
-    })
-    .select('id')
-    .single();
-
-  if (error) return { success: false, error: error.message };
-  return { success: true, response_id: data.id };
-}
-
-/* ── FULL SYSTEM: Guest engages with a host response ── */
-async function guestEngageResponse(response_id, request_id, host_id, listing_id, listing_title) {
-  const session = window.ApaSession ? await new Promise(r => ApaSession.ready(r)) : null;
-  const user = session?.user;
-  if (!user) return { success: false, error: 'not_logged_in' };
-
-  const sb = window.sb || window.ApaSession?.client();
-
-  // Create (or reopen) the conversation through the server, which takes the
-  // host and title from the listing itself rather than from this page.
-  const { data: conv, error: convErr } = await sb.rpc('cabana_chat_start', { p_listing: listing_id });
-  if (convErr) return { success: false, error: convErr.message };
-
-  // Update response status to engaged
-  await sb
-    .from('cabana_match_responses')
-    .update({
-      status: 'engaged',
-      engaged_at: new Date().toISOString(),
-      conversation_id: conv.id
-    })
-    .eq('id', response_id);
-
-  // Send opening system message
-  await sb.from('chat_messages').insert({
-    conversation_id: conv.id,
-    sender_id: user.id,
-    content: 'Hello, I found your place through Get Matched with Cabana and I am interested in booking. Could we go through the details?'
-  });
-
-  return { success: true, conversation_id: conv.id };
-}
-
-/* ── FULL SYSTEM: Auto-close request when booking completes ── */
-async function markCabanaMatchBooked(request_id, response_id, host_id) {
-  const sb = window.sb || window.ApaSession?.client();
-  if (!sb) return;
-  await Promise.all([
-    sb.from('cabana_match_requests').update({
-      status: 'booked',
-      booked_at: new Date().toISOString(),
-      booked_via_response_id: response_id,
-      referred_host_id: host_id,
-      referral_fee_pct: 5.00
-    }).eq('id', request_id),
-    sb.from('cabana_match_responses').update({ status: 'booked' }).eq('id', response_id)
-  ]);
-}
-
-/* ── Live guest request card (for dashboard + stays page) ── */
-function renderActiveCabanaRequestCard(request, responses) {
-  if (!request) return '';
-  const expiresAt = new Date(request.expires_at);
-  const now = new Date();
-  const secsLeft = Math.max(0, Math.floor((expiresAt - now) / 1000));
-  const mins = Math.floor(secsLeft / 60);
-  const secs = secsLeft % 60;
-  const timerStr = `${mins}:${secs.toString().padStart(2,'0')}`;
-  const responseCount = responses?.length || 0;
-
-  return `
-  <div class="cmr-card" id="cmr-card-${request.id}">
-    <div class="cmr-card-header">
-      <div class="cmr-card-title">
-        <span class="cmr-card-dot"></span>
-        You are matched &middot; hosts are responding
-      </div>
-      <div class="cmr-card-timer" id="cmr-timer-${request.id}">${timerStr}</div>
-    </div>
-    <div class="cmr-card-details">
-      <span class="cmr-detail">${_esc(request.location)}</span>
-      <span class="cmr-detail">${_esc(request.checkin_date)} to ${_esc(request.checkout_date)}</span>
-      <span class="cmr-detail">${request.guests} guest${request.guests > 1 ? 's' : ''}</span>
-    </div>
-    <div class="cmr-response-count">
-      ${responseCount > 0
-        ? `<strong>${responseCount}</strong> host${responseCount > 1 ? 's' : ''} responded<a onclick="viewCabanaResponses('${request.id}')">See who →</a>`
-        : `Waiting for hosts to respond…`
-      }
-    </div>
-    <button class="cmr-close-btn" onclick="closeCabanaMatchRequest('${request.id}').then(()=>document.getElementById('cmr-card-${request.id}').remove())">
-      Close request
-    </button>
-  </div>`;
-}
-
-/* ── Fab filter badge update (called from applyAndRender) ── */
-function updateFabFilterBadge(count) {
-  const chb = document.getElementById('ch-filters-badge');
-  if (chb) { chb.textContent = count; chb.hidden = !count; }
-  document.getElementById('ch-filters')?.classList.toggle('has-filters', !!count);
-  const badge = document.getElementById('fab-filter-badge');
-  if (!badge) return;
-  if (count > 0) { badge.textContent = count; badge.style.display = 'flex'; }
-  else { badge.style.display = 'none'; }
-}
-
 /* ════════════════════════════════════════════════════════════════
-   GET MATCHED. Complete system
-   State lives in gmState. Survives hash navigation within session.
-════════════════════════════════════════════════════════════════ */
-const gmState = {
-  requestId: null,
-  expiresAt: null,
-  timerInterval: null,
-  realtimeChan: null,
-  responses: [],
-  panelOpen: false,
-  totalSecs: 20 * 60,
-};
+   CABANA MATCH on the stays page
+   ────────────────────────────────────────────────────────────────
+   The whole experience lives in /cabana-match.js. This page only
+   tells it what the search console holds, and how to put a field,
+   a listing or the results in front of the guest.
+   ════════════════════════════════════════════════════════════════ */
 
-/* ── What the console currently holds ───────────────────────────── */
+/* What the console currently holds. */
 function gmGetCriteria() {
+  const s = _searchState;
   const loc = (document.getElementById('location-input')?.value || '').trim();
-  const checkin = document.getElementById('date-in')?.value || '';
-  const checkout = document.getElementById('date-out')?.value || '';
-  const guests = (_searchState.adults || 1) + (_searchState.children || 0);
-  const rooms = (document.getElementById('field-rooms')?.textContent || '').trim();
-  let bedrooms = null;
-  if (rooms && rooms !== 'Any') {
-    const m = rooms.match(/(\d+)/);
-    if (m) bedrooms = parseInt(m[1], 10);
-  }
-  const notes = (document.getElementById('sc-note')?.value || '').trim();
+  const guests = (s.adults || 1) + (s.children || 0);
+  const place = s.locPlace && isFinite(s.locPlace.lat) && isFinite(s.locPlace.lng) ? s.locPlace : null;
   return {
-    location: loc,
-    checkin_date: checkin,
-    checkout_date: checkout,
+    location: loc || (place ? (place.short || place.name) : ''),
+    label: place ? (place.short || place.label || place.name) : loc,
+    lat: place ? place.lat : null,
+    lng: place ? place.lng : null,
+    checkin: s.dateIn || document.getElementById('date-in')?.value || '',
+    checkout: s.dateOut || document.getElementById('date-out')?.value || '',
     guests: Math.max(1, guests),
-    bedrooms,
+    bedrooms: s.minBeds > 0 ? s.minBeds : null,
     min_price: _cmBudgetMin > 0 ? _cmBudgetMin : null,
     max_price: _cmBudgetMax > 0 ? _cmBudgetMax : null,
-    notes
+    source: 'stays'
   };
 }
 
@@ -6735,612 +5629,110 @@ function scFlagField(fieldId, panel) {
   void el.offsetWidth;
   el.classList.add('sf-error');
   setTimeout(() => el.classList.remove('sf-error'), 1400);
-  if (panel) openSF(panel);
-  else document.getElementById('location-input')?.focus();
+  document.getElementById('search-console')?.scrollIntoView({ behavior:'smooth', block:'center' });
+  if (panel) setTimeout(() => openSF(panel), 160);
+  else setTimeout(() => document.getElementById('location-input')?.focus(), 160);
 }
 
-function scGoBusy(on, text) {
-  [['sc-go','sc-go-label'], ['gs-send','gs-send-label']].forEach(([bid, lid]) => {
-    const btn = document.getElementById(bid), label = document.getElementById(lid);
-    if (!btn || !label) return;
-    btn.disabled = !!on;
-    if (on) { btn.dataset.prev = btn.dataset.prev || label.textContent; label.textContent = text || 'Working'; }
-    else if (btn.dataset.prev) { label.textContent = btn.dataset.prev; delete btn.dataset.prev; }
-  });
-}
-
-/* ── The Get Matched sheet ────────────────────────────────────────
-   Opens only once the two things a host needs are on the table. Asking
-   for a budget before we know where or when is a form, not a request. */
+/* The one launcher. Asks for the two things a host needs, then hands
+   over to the Match sheet. */
 function openMatchSheet() {
   const c = gmGetCriteria();
-  if (!c.location) { scFlagField('sf-where'); scStatus(); return; }
-  if (!c.checkin_date || !c.checkout_date) { scFlagField('sf-checkin', 'checkin'); scStatus(); return; }
+  if (!c.location && c.lat == null) { scFlagField('sf-where'); scStatus(); return; }
+  if (!c.checkin || !c.checkout) { scFlagField('sf-checkin', 'checkin'); scStatus(); return; }
+  if (!window.CabanaMatch) { showToast('One moment, Cabana Match is loading…'); return; }
+  CabanaMatch.compose(c);
+}
+function openCabanaMatch() {
+  setSearchMode('match');
+  const st = window.CabanaMatch?.state?.();
+  if (st && st.req && (st.live || st.offers.length)) { CabanaMatch.openLive(st.req.id); return; }
+  document.getElementById('search-console')?.scrollIntoView({ behavior:'smooth', block:'center' });
+  setTimeout(openMatchSheet, 420);
+}
+function closeCabanaMatch() { window.CabanaMatch?.close?.(); }
+/* Older names still called from links and the partner pages. */
+const launchMatchRequest = openMatchSheet, handleGetMatched = openMatchSheet, cmLaunchMatch = openMatchSheet;
 
-  scRenderBudget();
-  gsRenderRecap(c);
-  document.body.classList.add('gs-open');
-  document.getElementById('gs-sheet')?.setAttribute('aria-hidden', 'false');
-  document.getElementById('gs-scrim')?.setAttribute('aria-hidden', 'false');
-  _gsLastFocus = document.activeElement;
-  setTimeout(() => document.getElementById('gs-send')?.focus({ preventScroll:true }), 220);
+/* Put Match dates on the page so a listing opened from an offer is
+   quoted for exactly the stay the host priced. */
+function cmApplyStay(ctx) {
+  if (!ctx) return;
+  if (ctx.checkin) pickDate('in', ctx.checkin);
+  if (ctx.checkout) pickDate('out', ctx.checkout);
+  if (ctx.guests && ctx.guests !== (_searchState.adults || 1) + (_searchState.children || 0)) {
+    _searchState.adults = Math.max(1, ctx.guests - (_searchState.children || 0));
+    adjustGuests('adults', 0);          // re-renders the counter and the capsule field
+  }
+  syncFieldStates();
 }
 
-let _gsLastFocus = null;
-function closeMatchSheet() {
-  document.body.classList.remove('gs-open');
-  document.getElementById('gs-sheet')?.setAttribute('aria-hidden', 'true');
-  document.getElementById('gs-scrim')?.setAttribute('aria-hidden', 'true');
-  if (_gsLastFocus && document.contains(_gsLastFocus)) _gsLastFocus.focus({ preventScroll:true });
-  _gsLastFocus = null;
-}
-
-/* What is about to go out, each part a tap away from being changed. */
-function gsRenderRecap(c) {
-  const host = document.getElementById('gs-recap');
-  if (!host) return;
-  const pen = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17z"/></svg>';
-  const nights = calNights();
-  const guests = c.guests;
-  const rows = [
-    { txt: c.location, field: 'where' },
-    { txt: fmtDateShort(c.checkin_date) + ' to ' + fmtDateShort(c.checkout_date) +
-           ' <em>' + nights + (nights === 1 ? ' night' : ' nights') + '</em>', field: 'checkin', raw: true },
-    { txt: guests + (guests === 1 ? ' guest' : ' guests'), field: 'guests' },
-  ];
-  if (c.bedrooms) rows.push({ txt: c.bedrooms + (c.bedrooms === 1 ? ' bedroom' : ' bedrooms'), field: 'rooms' });
-  host.innerHTML = rows.map(r =>
-    `<button type="button" class="gs-chip" onclick="gsEdit('${r.field}')">${r.raw ? r.txt : _esc(r.txt)}${pen}</button>`
-  ).join('');
-}
-
-/* Change one thing without losing the request. */
-function gsEdit(field) {
-  closeMatchSheet();
-  setTimeout(() => {
-    document.getElementById('search-console')?.scrollIntoView({ behavior:'smooth', block:'center' });
-    if (field === 'where') document.getElementById('location-input')?.focus();
-    else openSF(field);
-  }, 260);
-}
-
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape' && document.body.classList.contains('gs-open')) closeMatchSheet();
-});
-
-/* Who is signed in, with a deadline. A hung session probe used to mean
-   a button that silently did nothing. */
-async function scResolveUser(ms = 2500) {
-  const viaSession = window.ApaSession
-    ? new Promise(r => { try { ApaSession.ready(st => r(st && st.user ? st.user : null)); } catch(e) { r(null); } })
-    : Promise.resolve(null);
-  const deadline = new Promise(r => setTimeout(() => r(undefined), ms));
-  const first = await Promise.race([viaSession, deadline]);
-  if (first !== undefined) return first;
-
-  /* The probe did not come back in time. Ask the client directly rather
-     than guessing. */
-  try {
-    const client = window.sb || window.ApaSession?.client?.();
-    const res = await Promise.race([
-      client.auth.getUser(),
-      new Promise(r => setTimeout(() => r(null), 2000))
-    ]);
-    return res?.data?.user || window.CURRENT_USER || null;
-  } catch(e) { return window.CURRENT_USER || null; }
-}
-
-/* ── The one launcher ───────────────────────────────────────────── */
-async function launchMatchRequest() {
-  const criteria = gmGetCriteria();
-
-  if (!criteria.location) { scFlagField('sf-where'); scStatus(); return; }
-  if (!criteria.checkin_date || !criteria.checkout_date) { scFlagField('sf-checkin', 'checkin'); scStatus(); return; }
-
-  const toAuth = () => {
-    /* Carry the request across the sign-in round trip. Retyping it on
-       the way back is how a guest decides not to bother. */
-    try { sessionStorage.setItem('gm_pending', JSON.stringify({ criteria, budget:[_cmBudgetMin, _cmBudgetMax] })); } catch(e) {}
-    window.location.href = 'auth.html?next=' + encodeURIComponent(location.pathname + '#get-matched');
-  };
-
-  scGoBusy(true, 'Checking');
-  const user = await scResolveUser();
-  if (!user) { scGoBusy(false); toAuth(); return; }
-
-  scGoBusy(true, 'Sending to hosts');
-  const result = await submitCabanaMatchRequest(criteria);
-  scGoBusy(false);
-  closeMatchSheet();
-
-  if (!result.success) {
-    if (result.error === 'not_logged_in') { toAuth(); return; }
-    if (result.error === 'duplicate') {
-      gmState.requestId = result.existing_id;
-      gmActivateTab(criteria);
-      gmShowPanel();
-      gmStartTimer();
-      gmSubscribeRealtime();
-      showToast('You already have a request live for these dates.');
-      return;
+function cmBoot() {
+  if (!window.CabanaMatch) return;
+  CabanaMatch.configure({
+    criteria: gmGetCriteria,
+    edit(field) {
+      setSearchMode('match');
+      document.getElementById('search-console')?.scrollIntoView({ behavior:'smooth', block:'center' });
+      setTimeout(() => {
+        if (field === 'where') document.getElementById('location-input')?.focus();
+        else openSF(field === 'dates' ? 'checkin' : field);
+      }, 320);
+    },
+    apply(c) {
+      if (!c) return;
+      setSearchMode('match');
+      if (c.location || c.label) {
+        const inp = document.getElementById('location-input');
+        const text = c.label || c.location;
+        if (inp) { inp.value = text; inp.classList.remove('ph'); }
+        _searchState.loc = String(c.location || text).toLowerCase();
+        if (c.lat != null && c.lng != null) {
+          _searchState.locPlace = { name: String(text).split(',')[0], short: text, label: text, lat: +c.lat, lng: +c.lng };
+        } else resolveLocText(text);
+      }
+      if (c.checkin) pickDate('in', c.checkin);
+      if (c.checkout) pickDate('out', c.checkout);
+      if (c.min_price || c.max_price) setBudget(c.min_price || 0, c.max_price || 0);
+      syncFieldStates(); updateHeroTitle(); applyAndRender(); scStatus();
+    },
+    budget(min, max) { setBudget(min, max); },
+    browse() {
+      setSearchMode('search');
+      document.querySelector('.content')?.scrollIntoView({ behavior:'smooth', block:'start' });
+    },
+    openListing(id, ctx) {
+      cmApplyStay(ctx);
+      const apt = currentListings.find(a => a._dbId === id || a.id === id || String(a._dbId) === String(id));
+      if (!apt) return false;
+      applyAndRender();
+      openDrawer(apt.id);
+      return true;
     }
-    showToast(result.error === 'no_db'
-      ? 'Could not reach Cabana just now. Try again in a moment.'
-      : 'That request did not go out. Try again in a moment.');
-    return;
-  }
-
-  gmState.requestId = result.request_id;
-  gmState.expiresAt = new Date(Date.now() + 20 * 60 * 1000).toISOString();
-  gmState.responses = [];
-  gmState.totalSecs = 20 * 60;
-
-  gmShowSentOverlay();
-  gmActivateTab(criteria);
-  gmStartTimer();
-  gmSubscribeRealtime();
-}
-
-/* Older entry points, kept pointed at the one launcher. */
-async function handleGetMatched() { return launchMatchRequest(); }
-async function cmLaunchMatch()    { return launchMatchRequest(); }
-
-/* Coming back from sign-in: put the request back the way it was and
-   let the guest press the button, rather than firing it behind them. */
-(function restorePendingMatch(){
-  let saved = null;
-  try { saved = JSON.parse(sessionStorage.getItem('gm_pending') || 'null'); } catch(e) {}
-  if (!saved || !saved.criteria) return;
-  sessionStorage.removeItem('gm_pending');
-
-  window.addEventListener('load', () => setTimeout(() => {
-    const c = saved.criteria;
-    setSearchMode('match');
-    if (c.location) {
-      const inp = document.getElementById('location-input');
-      if (inp) { inp.value = c.location; inp.classList.remove('ph'); }
-      _searchState.loc = c.location.toLowerCase();
-      resolveLocText(c.location);
-      updateHeroTitle();
-    }
-    if (c.checkin_date)  pickDate('in',  c.checkin_date);
-    if (c.checkout_date) pickDate('out', c.checkout_date);
-    if (c.notes) { const n = document.getElementById('sc-note'); if (n) { n.value = c.notes; scNoteCount(); } }
-    if (saved.budget && saved.budget[0]) {
-      scRenderBudget();
-      setBudget(saved.budget[0], saved.budget[1]);
-    }
-    syncFieldStates();
-    applyAndRender();
-    updateHeroTitle();
-    scStatus();
-    document.getElementById('search-console')?.scrollIntoView({ behavior:'smooth', block:'center' });
-    setTimeout(openMatchSheet, 700);
-  }, 400));
-})();
-
-/* ── Show the "Request Sent" celebration overlay ── */
-function gmShowSentOverlay() {
-  const overlay = document.getElementById('gm-sent-overlay');
-  if (!overlay) return;
-  overlay.classList.add('show');
-  // Auto-dismiss after 5s unless user interacts
-  gmState._sentTimeout = setTimeout(() => {
-    overlay.classList.remove('show');
-    gmShowPanel();
-  }, 5500);
-}
-
-function gmSentCtaClick() {
-  clearTimeout(gmState._sentTimeout);
-  const overlay = document.getElementById('gm-sent-overlay');
-  if (overlay) overlay.classList.remove('show');
-  gmShowPanel();
-  // Scroll ghost tab into view
-  setTimeout(() => {
-    document.getElementById('gm-live-tab')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  }, 300);
-}
-
-/* ── Activate the ghost tab (make it visible with data) ── */
-function gmActivateTab(criteria) {
-  const tab = document.getElementById('gm-live-tab');
-  if (tab) tab.classList.add('visible');
-
-  // Set request detail chips
-  const detailsEl = document.getElementById('gm-req-details');
-  if (detailsEl && criteria) {
-    const chips = [];
-    if (criteria.location) chips.push(criteria.location);
-    if (criteria.checkin_date) chips.push(fmtDateShort(criteria.checkin_date) +
-      (criteria.checkout_date ? ' to ' + fmtDateShort(criteria.checkout_date) : ''));
-    if (criteria.guests > 1) chips.push(criteria.guests + ' guests');
-    if (criteria.bedrooms) chips.push(criteria.bedrooms + (criteria.bedrooms === 1 ? ' bed' : ' beds'));
-    if (criteria.min_price) {
-      const meta = CM_BUDGET_META.find(m => m.min === criteria.min_price);
-      chips.push('KES ' + (meta ? meta.range : Number(criteria.min_price).toLocaleString() + ' and up'));
-    }
-    detailsEl.innerHTML = chips.map(c => `<span class="gm-req-chip">${_esc(c)}</span>`).join('');
-  }
-}
-
-/* ── Show/hide the expanding panel ── */
-function gmShowPanel() {
-  const panel = document.getElementById('gm-panel');
-  const pill = document.getElementById('gm-tab-pill');
-  if (!panel || !pill) return;
-  panel.classList.add('open');
-  pill.classList.add('open');
-  gmState.panelOpen = true;
-  gmRenderResponses();
-}
-
-function toggleGmPanel() {
-  const panel = document.getElementById('gm-panel');
-  if (!panel) return;
-  if (panel.classList.contains('open')) {
-    panel.classList.remove('open');
-    document.getElementById('gm-tab-pill')?.classList.remove('open');
-    gmState.panelOpen = false;
-  } else {
-    gmShowPanel();
-  }
-}
-
-/* ── 20-minute countdown ── */
-function gmStartTimer() {
-  clearInterval(gmState.timerInterval);
-  gmState.timerInterval = setInterval(gmTickTimer, 1000);
-  gmTickTimer();
-}
-
-function gmTickTimer() {
-  if (!gmState.expiresAt) return;
-  const secsLeft = Math.max(0, Math.floor((new Date(gmState.expiresAt) - Date.now()) / 1000));
-  const mins = Math.floor(secsLeft / 60);
-  const secs = secsLeft % 60;
-  const timeStr = `${mins}:${secs.toString().padStart(2, '0')}`;
-  const urgent = secsLeft < 120;
-
-  // Update pill timer
-  const pillTimer = document.getElementById('gm-tab-timer');
-  if (pillTimer) {
-    pillTimer.textContent = timeStr;
-    pillTimer.classList.toggle('urgent', urgent);
-  }
-
-  // Update panel countdown label
-  const countLabel = document.getElementById('gm-countdown-label');
-  if (countLabel) countLabel.textContent = timeStr + ' left';
-
-  // Update countdown bar
-  const fill = document.getElementById('gm-countdown-fill');
-  if (fill) {
-    const pct = (secsLeft / gmState.totalSecs) * 100;
-    fill.style.width = pct + '%';
-    fill.classList.toggle('urgent', urgent);
-  }
-
-  // Update "still waiting" timers inside panel
-  document.querySelectorAll('.gm-sw-timer').forEach(el => {
-    el.textContent = timeStr;
-    el.classList.toggle('urgent', urgent);
   });
-
-  if (secsLeft <= 0) {
-    clearInterval(gmState.timerInterval);
-    gmOnExpired();
-  }
+  CabanaMatch.restore();
 }
+if (window.CabanaMatch) cmBoot();
+else window.addEventListener('cabana:match-ready', cmBoot, { once: true });
 
-/* ── When timer expires ── */
-function gmOnExpired() {
-  const hasResponses = gmState.responses.length > 0;
-
-  // Update pill to show expired
-  const label = document.getElementById('gm-tab-label');
-  const sub = document.getElementById('gm-tab-sub');
-  const timer = document.getElementById('gm-tab-timer');
-  if (label) label.textContent = hasResponses ? 'Matches closed · Responses in' : 'Time\'s up · No bites';
-  if (sub) sub.textContent = hasResponses ? 'Tap to view who responded' : 'Tap for options';
-  if (timer) { timer.textContent = '0:00'; timer.classList.add('urgent'); }
-
-  // If panel is open, re-render
-  if (gmState.panelOpen) gmRenderExpiredState();
-
-  // Unsubscribe realtime
-  if (gmState.realtimeChan) {
-    try { gmState.realtimeChan.unsubscribe(); } catch(e) {}
-    gmState.realtimeChan = null;
-  }
-}
-
-/* ── Render the responses list inside the panel ── */
-function gmRenderResponses() {
-  const listEl = document.getElementById('gm-responses-list');
-  const labelEl = document.getElementById('gm-responses-label');
-  if (!listEl) return;
-
-  const responses = gmState.responses;
-  const secsLeft = gmState.expiresAt
-    ? Math.max(0, Math.floor((new Date(gmState.expiresAt) - Date.now()) / 1000)) : 0;
-  const expired = secsLeft <= 0;
-
-  if (expired && responses.length === 0) {
-    gmRenderExpiredState();
-    return;
-  }
-
-  if (responses.length === 0) {
-    if (labelEl) labelEl.textContent = 'Waiting for hosts…';
-    listEl.innerHTML = `
-      <div class="gm-empty-state">
-        <div class="gm-empty-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/>
-          </svg>
-        </div>
-        <div class="gm-empty-text">
-          <strong>Broadcasting to hosts…</strong>
-          Opted-in hosts in your area are seeing your request right now. The keenest will respond first.
-        </div>
-      </div>`;
-    return;
-  }
-
-  if (labelEl) labelEl.textContent = `${responses.length} host${responses.length > 1 ? 's' : ''} responded`;
-
-  const secsStr = `${Math.floor(secsLeft/60)}:${(secsLeft%60).toString().padStart(2,'0')}`;
-  const urgentClass = secsLeft < 120 ? ' urgent' : '';
-
-  const cards = responses.map(r => {
-    const img = r.listing_image
-      ? `<img class="gm-resp-img" src="${r.listing_image}" alt="${r.listing_title || 'Listing'}" onerror="this.style.display='none'" loading="lazy" decoding="async"/>`
-      : `<div class="gm-resp-img-placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg></div>`;
-    const price = r.price_per_night ? `KES ${Number(r.price_per_night).toLocaleString()}` : '';
-    return `
-      <div class="gm-response-card" id="gm-resp-${r.id}" onclick="gmOpenListing('${r.listing_id}', '${r.id}')">
-        ${img}
-        <div class="gm-resp-body">
-          <div class="gm-resp-name">${r.listing_title || 'Stay available'}</div>
-          <div class="gm-resp-host">${r.host_name || 'Host'} is ready for you</div>
-          ${price ? `<div class="gm-resp-price">${price} <span>/ night</span></div>` : ''}
-        </div>
-        <button class="gm-resp-action">View →</button>
-      </div>`;
-  }).join('');
-
-  const stillWaiting = expired ? '' : `
-    <div class="gm-still-waiting">
-      <div class="gm-sw-text">More hosts may still respond. Your window is open for another <span class="gm-sw-timer${urgentClass}">${secsStr}</span></div>
-    </div>`;
-
-  listEl.innerHTML = cards + stillWaiting;
-}
-
-/* ── Expired state render ── */
-function gmRenderExpiredState() {
-  const listEl = document.getElementById('gm-responses-list');
-  const labelEl = document.getElementById('gm-responses-label');
-  if (!listEl) return;
-
-  if (gmState.responses.length > 0) {
-    if (labelEl) labelEl.textContent = `${gmState.responses.length} response${gmState.responses.length > 1 ? 's' : ''} · Window closed`;
-    gmRenderResponses();
-    return;
-  }
-
-  if (labelEl) labelEl.textContent = '';
-  listEl.innerHTML = `
-    <div class="gm-expired-state">
-      <div class="gm-expired-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"/>
-          <path d="M12 8v4l2.5 2.5"/>
-        </svg>
-      </div>
-      <div class="gm-expired-title">No takers. Rude, honestly.</div>
-      <div class="gm-expired-sub">
-        We sent your request far and wide. Apparently our hosts were busy living their best lives tonight.
-        <em>The audacity.</em> Don't worry though, the traditional search is very much awake and at your service.
-      </div>
-      <button class="gm-fallback-btn" onclick="gmFallbackToSearch()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-        Browse all stays instead
-      </button>
-    </div>`;
-}
-
-/* ── Navigate to a host's listing when guest clicks a response ── */
-async function gmOpenListing(listingId, responseId) {
-  if (!listingId) return;
-  // Mark as engaged in DB (async, don't block navigation)
-  const session = window.ApaSession ? await new Promise(r => ApaSession.ready(r)) : null;
-  if (session?.user && responseId && gmState.requestId) {
-    const sb = window.sb || window.ApaSession?.client();
-    if (sb) {
-      sb.from('cabana_match_responses')
-        .update({ status: 'engaged', engaged_at: new Date().toISOString() })
-        .eq('id', responseId)
-        .then(() => {});
-    }
-  }
-  // Navigate to listing. Open drawer if possible, else navigate
-  if (typeof openDrawer === 'function') {
-    openDrawer(listingId);
-  } else {
-    window.location.href = `apartments.html?listing=${listingId}`;
-  }
-}
-
-/* ── Fallback to search ── */
-function gmFallbackToSearch() {
-  const tab = document.getElementById('gm-live-tab');
-  if (tab) tab.classList.remove('visible');
-  // Scroll to search bar
-  document.querySelector('.search-wrap')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-/* ── Close/cancel active request ── */
-async function gmCloseRequest() {
-  if (gmState.requestId) {
-    await closeCabanaMatchRequest(gmState.requestId);
-  }
-  clearInterval(gmState.timerInterval);
-  if (gmState.realtimeChan) {
-    try { gmState.realtimeChan.unsubscribe(); } catch(e) {}
-  }
-  gmState.requestId = null;
-  gmState.responses = [];
-  const tab = document.getElementById('gm-live-tab');
-  if (tab) tab.classList.remove('visible');
-  const panel = document.getElementById('gm-panel');
-  if (panel) panel.classList.remove('open');
-}
-
-function closeGmTab() {
-  const panel = document.getElementById('gm-panel');
-  if (panel) panel.classList.remove('open');
-  document.getElementById('gm-tab-pill')?.classList.remove('open');
-  gmState.panelOpen = false;
-}
-
-/* ── viewCabanaResponses — called from active-request card "See who →" ──
-   Opens the GM panel so the guest can see which hosts responded.        */
-function viewCabanaResponses(requestId) {
-  /* If we already have this request loaded in gmState, just open the
-     panel. Otherwise set the requestId and open — gmRenderResponses
-     will pull from the already-loaded gmState.responses array.          */
-  if (requestId && gmState.requestId !== requestId) {
-    gmState.requestId = requestId;
-  }
-  gmShowPanel();
-}
-
-/* ── Realtime subscription for new host responses ── */
-function gmSubscribeRealtime() {
-  const sb = window.sb || window.ApaSession?.client();
-  if (!sb || !gmState.requestId) return;
-  try {
-    gmState.realtimeChan = sb.channel('gm-responses-' + gmState.requestId)
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'cabana_match_responses',
-        filter: `request_id=eq.${gmState.requestId}`
-      }, (payload) => {
-        const r = payload.new;
-        if (r) {
-          gmState.responses.push(r);
-          // Update pill label
-          const label = document.getElementById('gm-tab-label');
-          const sub = document.getElementById('gm-tab-sub');
-          const count = gmState.responses.length;
-          if (label) label.textContent = `${count} host${count > 1 ? 's' : ''} responded`;
-          if (sub) sub.textContent = 'Tap to see who\'s ready for you';
-          // Flash new card if panel open
-          if (gmState.panelOpen) {
-            gmRenderResponses();
-            setTimeout(() => {
-              document.getElementById('gm-resp-' + r.id)?.classList.add('new-response');
-            }, 50);
-          }
-        }
-      })
-      .subscribe();
-  } catch(e) {}
-}
-
-/* ── On page load: restore active request from DB ── */
-(async function gmRestoreOnLoad() {
-  if (!window.ApaSession) return;
-  const session = await new Promise(r => ApaSession.ready(r));
-  if (!session?.user) return;
-  const sb = window.sb || window.ApaSession?.client();
-  if (!sb) return;
-
-  const { data: req } = await sb
-    .from('cabana_match_requests')
-    .select('*')
-    .eq('guest_id', session.user.id)
-    .eq('status', 'live')
-    .gt('expires_at', new Date().toISOString())
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (!req) return;
-
-  const { data: responses } = await sb
-    .from('cabana_match_responses')
-    .select('*')
-    .eq('request_id', req.id)
-    .order('created_at', { ascending: true });
-
-  gmState.requestId = req.id;
-  gmState.expiresAt = req.expires_at;
-  gmState.responses = responses || [];
-  gmState.totalSecs = 20 * 60;
-
-  // Build criteria from DB row
-  const criteria = {
-    location: req.location,
-    checkin_date: req.checkin_date,
-    checkout_date: req.checkout_date,
-    guests: req.guests,
-    bedrooms: req.bedrooms
-  };
-  gmActivateTab(criteria);
-  gmStartTimer();
-  gmSubscribeRealtime();
-
-  // If returning via hash #get-matched, open the panel
-  if (location.hash === '#get-matched') {
-    setTimeout(gmShowPanel, 200);
-  }
-})();
-
-/* ── Handle hash #get-matched (from dashboard) ── */
-window.addEventListener('hashchange', () => {
-  if (location.hash === '#get-matched' && gmState.requestId) {
-    gmShowPanel();
-    document.getElementById('gm-live-tab')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  }
+document.addEventListener('DOMContentLoaded', function () {
+  if (/^#(cabana-match|get-matched)/.test(location.hash)) setSearchMode('match');
 });
-</script>
+window.addEventListener('hashchange', () => {
+  if (/^#(cabana-match|get-matched)/.test(location.hash)) openCabanaMatch();
+});
 
-<style>
-/* ── Cabana Match Request Live Card ── */
-.cmr-card{
-  background:linear-gradient(135deg,rgba(123,47,247,.06),rgba(77,150,255,.04));
-  border:1.5px solid rgba(123,47,247,.2);
-  border-radius:18px;padding:16px 18px;margin-bottom:18px;
+/* ── Fab filter badge update (called from applyAndRender) ── */
+function updateFabFilterBadge(count) {
+  const chb = document.getElementById('ch-filters-badge');
+  if (chb) { chb.textContent = count; chb.hidden = !count; }
+  document.getElementById('ch-filters')?.classList.toggle('has-filters', !!count);
+  const badge = document.getElementById('fab-filter-badge');
+  if (!badge) return;
+  if (count > 0) { badge.textContent = count; badge.style.display = 'flex'; }
+  else { badge.style.display = 'none'; }
 }
-.cmr-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
-.cmr-card-title{display:flex;align-items:center;gap:8px;font-weight:700;font-size:13px;color:var(--violet);}
-.cmr-card-dot{
-  width:8px;height:8px;border-radius:50%;
-  background:#6BCB77;
-  box-shadow:0 0 0 0 rgba(107,203,119,.4);
-  animation:cmrDotPulse 1.5s ease-in-out infinite;
-}
-@keyframes cmrDotPulse{0%,100%{box-shadow:0 0 0 0 rgba(107,203,119,.4);}70%{box-shadow:0 0 0 7px rgba(107,203,119,0);}}
-.cmr-card-timer{
-  font-family:var(--font-num);font-weight:800;font-size:15px;
-  background:linear-gradient(90deg,#FF6B6B,#FFD93D);
-  -webkit-background-clip:text;background-clip:text;color:transparent;
-}
-.cmr-card-details{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
-.cmr-detail{font-size:12px;color:var(--ink-soft);background:rgba(255,255,255,.7);padding:4px 10px;border-radius:100px;border:1px solid var(--line);}
-.cmr-response-count{font-size:13px;color:var(--ink-soft);margin-bottom:12px;}
-.cmr-response-count a{color:var(--violet);font-weight:700;cursor:pointer;}
-.cmr-close-btn{
-  font-size:12px;font-weight:600;color:var(--ink-faint);
-  background:none;border:1.5px solid var(--line-2);
-  padding:6px 14px;border-radius:100px;cursor:pointer;transition:all .2s;
-}
-.cmr-close-btn:hover{border-color:var(--err);color:var(--err);}
-</style>
+</script>
 <script src="/cabana-booking-state.js" defer></script>
 <script src="/apa-trip-strip.js" defer></script>
 <script src="/cabana-call.js" defer></script>

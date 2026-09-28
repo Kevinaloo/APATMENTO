@@ -30,6 +30,7 @@
 import crypto from 'node:crypto';
 import { authenticatedUser, consumeRateLimit, hasInternalSecret, isAdminUser, isCronAuthorized, setCors } from './lib/_security.js';
 import { sendTemplateAsync } from './lib/_mail.js';
+import { sendSMS, smsConfigured, normalisePhone } from './lib/_sms.js';
 
 const VAPID_PUBLIC  = process.env.VAPID_PUBLIC_KEY;
 const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY;
@@ -122,33 +123,98 @@ function encryptPayload(plaintext, clientPubB64, authSecretB64) {
   return Buffer.concat([header, serverPub, body]);
 }
 
-/* ── deliver one notification to one endpoint ────────────────────── */
-async function sendOne(sub, payloadObj) {
+/* ── deliver one notification to one endpoint ────────────────────────
+   Urgency tells the push service whether it may batch the message for
+   battery life. A guest waiting on hosts, a new booking or a message is
+   "high": Android delivers it at once, even in Doze. TTL is how long the
+   push service keeps trying a phone that is off; a Cabana Match alert
+   is worthless after its twenty-minute window, so it dies with it. */
+async function sendOne(sub, payloadObj, opts = {}) {
   const payload = JSON.stringify(payloadObj);
-  const body = encryptPayload(payload, sub.p256dh, sub.auth);
+  const headers = {
+    'Content-Encoding': 'aes128gcm',
+    'Content-Type': 'application/octet-stream',
+    'TTL': String(Math.max(30, Math.min(opts.ttl || 86400, 2419200))),
+    'Urgency': opts.urgency || 'normal',
+  };
+  /* A Topic replaces an undelivered earlier push with the same topic, so a
+     phone that was offline gets the latest state, not a backlog. */
+  if (opts.topic && /^[A-Za-z0-9_-]{1,32}$/.test(opts.topic)) headers.Topic = opts.topic;
 
-  const res = await fetch(sub.endpoint, {
-    method: 'POST',
-    headers: {
-      'Authorization': vapidHeader(sub.endpoint),
-      'Content-Encoding': 'aes128gcm',
-      'Content-Type': 'application/octet-stream',
-      'TTL': '86400',
-      'Urgency': 'normal',
-    },
-    body,
-  });
+  let res = null;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      /* The body is re-encrypted per attempt: a record must never be
+         replayed with the same salt and key. */
+      const body = encryptPayload(payload, sub.p256dh, sub.auth);
+      res = await fetch(sub.endpoint, {
+        method: 'POST',
+        headers: { ...headers, Authorization: vapidHeader(sub.endpoint) },
+        body,
+      });
+      if (res.status !== 429 && res.status < 500) break;
+    } catch (e) {
+      if (attempt === 1) throw e;
+    }
+    await new Promise(r => setTimeout(r, 350));
+  }
 
   // 404/410 mean the subscription is dead. The browser revoked it.
   // Prune it so we stop paying for the round trip on every send.
-  if (res.status === 404 || res.status === 410) {
+  if (res && (res.status === 404 || res.status === 410)) {
     await supa(`push_subscriptions?endpoint=eq.${encodeURIComponent(sub.endpoint)}`, {
       method: 'DELETE',
     });
     return { endpoint: sub.endpoint, status: res.status, pruned: true };
   }
 
-  return { endpoint: sub.endpoint, status: res.status, ok: res.ok };
+  return { endpoint: sub.endpoint, status: res && res.status, ok: !!(res && res.ok) };
+}
+
+/* ── how each kind should arrive ─────────────────────────────────────
+   One place decides urgency, lifetime and the notification's behaviour
+   on the lock screen, so a host's guest request and a newsletter never
+   arrive with the same weight. */
+const URGENT_KINDS = new Set(['match', 'booking', 'payment', 'message', 'call', 'order', 'security', 'urgent', 'sos']);
+
+export function pushPlan({ kind = 'general', meta = {}, title, body, url }) {
+  const m = meta || {};
+  const urgent = URGENT_KINDS.has(kind) || m.urgent === true;
+  let ttl = 86400;
+  if (kind === 'match' && m.expires_at) {
+    const left = Math.floor((new Date(m.expires_at).getTime() - Date.now()) / 1000);
+    if (Number.isFinite(left)) ttl = Math.max(60, Math.min(left, 3600));
+  } else if (kind === 'call') ttl = 60;
+  else if (kind === 'message') ttl = 6 * 3600;
+
+  const payload = {
+    title, body, url,
+    kind: kind === 'order-update' ? 'order' : kind,
+    icon: '/cabana-icon-192.png',
+    badge: '/cabana-badge-96.png',
+    ts: Date.now(),
+    /* The notification row this push mirrors, so an open tab that also
+       heard it over realtime shows it once. */
+    nid: m.notification_id || null,
+    tag: kind === 'message' && m.conversation_id ? `message-${m.conversation_id}`
+       : m.order_ref ? `order-${m.order_ref}`
+       : m.match_request_id ? `match-${m.match_request_id}${m.response_id ? '-' + m.response_id : ''}`
+       : kind,
+  };
+  if (kind === 'match') {
+    payload.role = m.role || null;
+    payload.request_id = m.match_request_id || null;
+    payload.requireInteraction = m.role === 'host' && !m.engaged;
+    payload.renotify = true;
+    if (m.photo && /^https:\/\//.test(m.photo)) payload.image = m.photo;
+    payload.actions = m.role === 'host' && !m.engaged
+      ? [{ action: 'respond', title: 'Send an offer' }, { action: 'later', title: 'Later' }]
+      : [{ action: 'open', title: m.role === 'guest' ? 'See offer' : 'Open' }];
+  }
+  const topic = kind === 'match' && m.match_request_id
+    ? ('m' + String(m.match_request_id).replace(/-/g, '').slice(0, 24) + (m.role === 'host' ? 'h' : 'g'))
+    : null;
+  return { payload, urgency: urgent ? 'high' : 'normal', ttl, topic };
 }
 
 /* ── thin Supabase REST helper (service role) ────────────────────── */
@@ -157,7 +223,7 @@ async function sendOne(sub, payloadObj) {
    listing" nudge is not; a booking, a payment, a support reply or an
    incoming call is. Consent and deduplication are handled inside
    sendTemplate, so this only has to decide relevance. */
-const EMAIL_WORTHY = new Set(['booking', 'payment', 'support', 'message', 'call', 'security', 'payout', 'urgent', 'order']);
+const EMAIL_WORTHY = new Set(['booking', 'payment', 'support', 'message', 'call', 'security', 'payout', 'urgent', 'order', 'match']);
 
 async function mirrorToEmail({ user_id, title, body, url, kind, email, force }) {
   if (!force && !EMAIL_WORTHY.has(kind)) return false;
@@ -184,10 +250,10 @@ async function mirrorToEmail({ user_id, title, body, url, kind, email, force }) 
       name: firstName,
       email: to, title, body, url,
       label: kind === 'call' ? 'Open the call' : kind === 'support' ? 'Open the conversation'
-           : kind === 'order' ? 'Open the order' : 'Open Cabana',
+           : kind === 'order' ? 'Open the order' : kind === 'match' ? 'Open the request' : 'Open Cabana',
       emoji: kind === 'booking' ? '🗓️' : kind === 'payment' ? '💳'
            : kind === 'support' ? '💬' : kind === 'call' ? '📞'
-           : kind === 'payout' ? '💸' : kind === 'order' ? '🍽️' : '🔔',
+           : kind === 'payout' ? '💸' : kind === 'order' ? '🍽️' : kind === 'match' ? '📡' : '🔔',
     },
   });
   return !!(res && res.ok && !res.skipped);
@@ -272,31 +338,70 @@ export async function deliverNotification(b) {
     }).catch(e => console.warn('[push] persist failed:', e.message));
   }
 
-  if (!subs.length) {
-    const mailed = await mirrorToEmail({ user_id, title, body, url, kind, email: b.email, force: b.email_always });
-    return { sent: 0, persisted: !!(persist && user_id), emailed: mailed };
-  }
-
-  /* One tag per conversation or per food order, so a newer update
-     replaces the older banner instead of stacking five of them. */
-  const payload = { title, body, url, kind: kind === 'order-update' ? 'order' : kind, icon: '/logo-mark.png',
-    tag: kind === 'message' && meta?.conversation_id ? `message-${meta.conversation_id}`
-       : meta?.order_ref ? `order-${meta.order_ref}` : kind };
-  const results = await Promise.all(subs.map(s => sendOne(s, payload).catch(e => ({
-    endpoint: s.endpoint, error: e.message,
-  }))));
+  const plan = pushPlan({ kind, meta, title, body, url });
+  const results = subs.length
+    ? await Promise.all(subs.map(s => sendOne(s, plan.payload, plan).catch(e => ({
+        endpoint: s.endpoint, error: e.message,
+      }))))
+    : [];
   const delivered = results.filter(r => r.ok).length;
+
   const mailed = (delivered === 0 || b.email_always)
     ? await mirrorToEmail({ user_id, title, body, url, kind, email: b.email, force: b.email_always })
     : false;
+  const texted = await smsFallback({ user_id, title, body, url, kind, meta, delivered });
+
+  if (!subs.length) {
+    return { sent: 0, persisted: !!(persist && user_id), emailed: mailed, texted };
+  }
   return {
     sent: delivered,
     pruned: results.filter(r => r.pruned).length,
     total: results.length,
     persisted: !!(persist && user_id),
     emailed: mailed,
+    texted,
     results,
   };
+}
+
+/* ── SMS, for the alerts that cannot wait ────────────────────────────
+   Only an urgent Cabana Match alert to a host earns a text: when no push
+   reached a device, or when the host still has not opened the request
+   three minutes in (the reminder). One text per host per ten minutes,
+   never when the host has switched SMS off, and never for guests. */
+async function smsFallback({ user_id, title, body, url, kind, meta, delivered }) {
+  const m = meta || {};
+  if (!user_id || kind !== 'match' || m.role !== 'host' || !m.urgent || !smsConfigured()) return false;
+  if (delivered > 0 && !m.reminder) return false;
+  try {
+    const [prefs, profile, recent] = await Promise.all([
+      supa(`cabana_match_host_prefs?host_id=eq.${user_id}&select=sms`).catch(() => []),
+      supa(`profiles?id=eq.${user_id}&select=contact_phone,phone,mpesa_number,first_name`).catch(() => []),
+      supa(`notifications?user_id=eq.${user_id}&kind=eq.match&meta->>sms_at=gte.${encodeURIComponent(new Date(Date.now() - 10 * 60000).toISOString())}&select=id&limit=1`).catch(() => []),
+    ]);
+    if (prefs?.[0]?.sms === false) return false;
+    if (recent?.length) return false;
+    const p = profile?.[0] || {};
+    const phone = normalisePhone(p.contact_phone || p.phone || p.mpesa_number);
+    if (!phone) return false;
+    const link = 'https://cabana.africa' + (String(url || '').startsWith('/') ? url : '/partner-cabana.html');
+    const text = `Cabana: ${String(title || '').slice(0, 70)}. ${String(body || '').slice(0, 150)} ${link}`;
+    await sendSMS({ to: phone, message: text });
+    if (m.notification_id || m.match_request_id) {
+      const filter = m.notification_id
+        ? `id=eq.${m.notification_id}`
+        : `user_id=eq.${user_id}&kind=eq.match&meta->>match_request_id=eq.${m.match_request_id}`;
+      await supa(`notifications?${filter}`, {
+        method: 'PATCH', headers: { Prefer: 'return=minimal' },
+        body: JSON.stringify({ meta: { ...m, sms_at: new Date().toISOString() } }),
+      }).catch(() => {});
+    }
+    return true;
+  } catch (e) {
+    console.warn('[push] sms fallback failed:', e.message);
+    return false;
+  }
 }
 
 /* ── operator console helpers ─────────────────────────────────────── */
@@ -429,6 +534,37 @@ export default async function handler(req, res) {
   try { requestBody = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {}); }
   catch { return res.status(400).json({ error: 'invalid_json' }); }
   const action = req.query?.action || requestBody.action;
+
+  /* The service worker calls this when the browser rotates a push
+     subscription (pushsubscriptionchange). It has no user session, so the
+     old endpoint, an unguessable URL only that browser and our database
+     know, is the proof of ownership. Without this, a rotated subscription
+     silently stops receiving anything until the user reopens Cabana. */
+  if (action === 'resubscribe') {
+    if (!consumeRateLimit(req, res, 'push-resubscribe', 20, 60_000)) return;
+    const oldEndpoint = String(requestBody.old_endpoint || '');
+    const next = requestBody.subscription || {};
+    const keys = next.keys || {};
+    const valid = u => /^https:\/\/[^\s]{10,1024}$/.test(u);
+    if (!valid(oldEndpoint) || !valid(String(next.endpoint || '')) || !keys.p256dh || !keys.auth) {
+      return res.status(400).json({ error: 'invalid_subscription' });
+    }
+    if (!SERVICE_KEY) return res.status(500).json({ error: 'not_configured' });
+    try {
+      const rows = await supa(`push_subscriptions?endpoint=eq.${encodeURIComponent(oldEndpoint)}&select=id,user_id&limit=1`);
+      if (!rows?.[0]) return res.status(404).json({ error: 'unknown_subscription' });
+      await supa(`push_subscriptions?endpoint=eq.${encodeURIComponent(String(next.endpoint))}&id=neq.${rows[0].id}`, { method: 'DELETE' }).catch(() => {});
+      await supa(`push_subscriptions?id=eq.${rows[0].id}`, {
+        method: 'PATCH', headers: { Prefer: 'return=minimal' },
+        body: JSON.stringify({ endpoint: String(next.endpoint), p256dh: String(keys.p256dh), auth: String(keys.auth),
+          last_seen_at: new Date().toISOString() }),
+      });
+      return res.status(200).json({ ok: true });
+    } catch (e) {
+      console.error('[push-send:resubscribe]', e.message);
+      return res.status(500).json({ error: 'resubscribe_failed' });
+    }
+  }
   // Authenticate before reporting configuration state. Otherwise an
   // anonymous caller can probe secrets and, when the shared secret is
   // missing, the old condition silently opened a bulk-notification API.
@@ -536,6 +672,7 @@ export default async function handler(req, res) {
       if (note.meta?.delivery_attempted_at) return res.status(200).json({ sent: 0, persisted: true, duplicate: true });
       const deliveryMeta = { ...(note.meta || {}), delivery_attempted_at: new Date().toISOString() };
       await supa(`notifications?id=eq.${note.id}`, { method: 'PATCH', body: JSON.stringify({ meta: deliveryMeta }) });
+      deliveryMeta.notification_id = note.id;
       /* Only the moments a person must act on are worth an email when
          push is unavailable: a new order for a kitchen, and a yes, a
          no, or a lapse for a diner. Progress updates stay in-app. */

@@ -178,11 +178,13 @@
     title: 'Cabana Match',
     render: function (v) {
       var tab = v.q.tab || 'requests';
-      set(v.el, html`${pageHd('Operations', 'Cabana Match', 'Guests post what they need; opted-in hosts race to answer.')}${CX.skeleton('kpis')}`);
+      set(v.el, html`${pageHd('Operations', 'Cabana Match', 'Guests post what they need; nearby hosts answer with offers.')}${CX.skeleton('kpis')}`);
       var head = function (t, f) { var qy = CX.q(t).select('id', { count: 'exact', head: true }); return (f ? f(qy) : qy).then(function (r) { return r.count || 0; }); };
       return Promise.all([
-        head('cabana_host_opt_ins', function (q) { return q.eq('opted_in', true); }), head('cabana_match_requests', function (q) { return q.eq('status', 'live'); }),
-        head('cabana_match_responses'), head('cabana_interest'),
+        /* Every live stay is in Match unless its host paused it, so the
+           number worth watching is the paused ones and the hosts reached. */
+        head('cabana_match_deliveries'), head('cabana_match_requests', function (q) { return q.eq('status', 'live'); }),
+        head('cabana_match_responses'), head('cabana_host_opt_ins', function (q) { return q.eq('opted_in', false); }),
         tab === 'requests' ? CX.rows(CX.q('cabana_match_requests').select('*').order('created_at', { ascending: false }).limit(150)) :
         tab === 'hosts' ? CX.rows(CX.q('cabana_host_opt_ins').select('*').order('created_at', { ascending: false }).limit(300)) :
           CX.rows(CX.q('cabana_interest').select('id,user_id,email,role,created_at').order('created_at', { ascending: false }).limit(500))
@@ -192,10 +194,10 @@
         var after = tab === 'requests' && list.length ? CX.rows(CX.q('cabana_match_responses').select('request_id').in('request_id', list.map(function (x) { return x.id; }))) : Promise.resolve([]);
         return after.then(function (resp) {
           var rc = {}; resp.forEach(function (x) { rc[x.request_id] = (rc[x.request_id] || 0) + 1; });
-          set(v.el, html`${pageHd('Operations', 'Cabana Match', 'Guests post what they need; opted-in hosts race to answer with an offer.', html`<a class="btn btn-g" href="/cabana" target="_blank" rel="noopener">${icon('external')}Open Match</a>`)}
-            <div class="grid g4 mb"><div class="mini"><div class="mini-l">Hosts opted in</div><div class="mini-v">${num(r[0])}</div></div><div class="mini"><div class="mini-l">Live requests</div><div class="mini-v">${num(r[1])}</div></div>
-              <div class="mini"><div class="mini-l">Host responses</div><div class="mini-v">${num(r[2])}</div></div><div class="mini"><div class="mini-l">Waitlist sign-ups</div><div class="mini-v">${num(r[3])}</div></div></div>
-            ${tabBar(v, [['requests', 'Guest requests'], ['hosts', 'Opted-in hosts'], ['interest', 'Waitlist']], tab)}
+          set(v.el, html`${pageHd('Operations', 'Cabana Match', 'Guests post what they need; nearby hosts answer with offers.', html`<a class="btn btn-g" href="/apartments#cabana-match" target="_blank" rel="noopener">${icon('external')}Open Match</a>`)}
+            <div class="grid g4 mb"><div class="mini"><div class="mini-l">Host alerts sent</div><div class="mini-v">${num(r[0])}</div></div><div class="mini"><div class="mini-l">Live requests</div><div class="mini-v">${num(r[1])}</div></div>
+              <div class="mini"><div class="mini-l">Host offers</div><div class="mini-v">${num(r[2])}</div></div><div class="mini"><div class="mini-l">Stays paused</div><div class="mini-v">${num(r[3])}</div></div></div>
+            ${tabBar(v, [['requests', 'Guest requests'], ['hosts', 'Stay settings'], ['interest', 'Waitlist']], tab)}
             <div class="card flush">${!list.length ? CX.empty('Nothing here yet', tab === 'requests' ? 'Requests appear as guests use Cabana Match.' : '', 'sparkles')
               : tab === 'requests' ? html`<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Guest</th><th>Where & when</th><th class="num">Budget</th><th class="num">Offers</th><th>Status</th><th></th></tr></thead><tbody>${list.map(function (x) { var left = x.expires_at ? Math.max(0, (new Date(x.expires_at) - Date.now()) / 60000) : 0; return html`
                 <tr><td>${x.guest_id ? html`<button class="link-btn" data-person="${x.guest_id}">${x.guest_name || 'Guest'}</button>` : x.guest_name || 'Guest'}<div class="t-sub">${ago(x.created_at)}</div></td>
@@ -205,8 +207,8 @@
                 <td><div class="t-act">${x.status === 'live' ? html`<button class="btn btn-sm btn-q" data-expire="${x.id}">Close</button>` : ''}</div></td></tr>`; })}</tbody></table></div>`
               : tab === 'hosts' ? html`<table class="tbl"><thead><tr><th>Listing</th><th>Host</th><th>Since</th><th>Status</th><th></th></tr></thead><tbody>${list.map(function (x) { return html`
                 <tr><td>${x.listing_id ? html`<button class="link-btn" data-listing="${x.listing_id}">${x.listing_title || 'Listing'}</button>` : x.listing_title}<div class="t-sub">${human(x.listing_type || 'stay')}</div></td><td>${x.host_id ? html`<button class="link-btn" data-person="${x.host_id}">View host</button>` : '—'}</td>
-                <td class="t-sub">${ago(x.opted_in ? x.opted_in_at : x.opted_out_at)}</td><td>${x.opted_in ? html`<span class="pill dot p-ok">In</span>` : html`<span class="pill p-mute">Out</span>`}</td>
-                <td><div class="t-act">${x.opted_in ? html`<button class="btn btn-sm btn-q" data-opt="${x.id}" data-on="0">Remove</button>` : html`<button class="btn btn-sm btn-g" data-opt="${x.id}" data-on="1">Restore</button>`}</div></td></tr>`; })}</tbody></table>`
+                <td class="t-sub">${ago(x.opted_in ? x.opted_in_at : x.opted_out_at)}</td><td>${x.opted_in ? html`<span class="pill dot p-ok">In Match</span>` : html`<span class="pill p-mute">Paused</span>`}</td>
+                <td><div class="t-act">${x.opted_in ? html`<button class="btn btn-sm btn-q" data-opt="${x.id}" data-on="0">Pause</button>` : html`<button class="btn btn-sm btn-g" data-opt="${x.id}" data-on="1">Resume</button>`}</div></td></tr>`; })}</tbody></table>`
               : html`<table class="tbl"><thead><tr><th>Email</th><th>Role</th><th class="num">Joined</th></tr></thead><tbody>${list.map(function (x) { return html`<tr><td class="t-main">${x.email}</td><td><span class="tag">${x.role || 'guest'}</span></td><td class="num t-sub">${ago(x.created_at)}</td></tr>`; })}</tbody></table>`}</div>
             ${tab === 'interest' && list.length ? html`<div class="row mt"><button class="btn btn-g" data-exp>${icon('download')}Export waitlist</button></div>` : ''}`);
           wireTabs(v, 'requests'); wireOpeners(v.el);
@@ -215,7 +217,7 @@
             return CX.rows(CX.q('cabana_match_requests').update({ status: 'expired', closed_at: new Date().toISOString() }).eq('id', el.getAttribute('data-expire')).select('id')).then(function () { CX.log('match.expire', 'match_request', el.getAttribute('data-expire')); toast('Request closed', 'ok'); v.refresh(); }); } }); });
           on(v.el, '[data-opt]', 'click', function (el) { var onv = el.getAttribute('data-on') === '1';
             CX.busy(el, function () { return CX.rows(CX.q('cabana_host_opt_ins').update(onv ? { opted_in: true, opted_out_at: null, opted_in_at: new Date().toISOString() } : { opted_in: false, opted_out_at: new Date().toISOString() }).eq('id', el.getAttribute('data-opt')).select('id'))
-              .then(function () { CX.log(onv ? 'match.optin_restore' : 'match.optin_remove', 'match_optin', el.getAttribute('data-opt')); toast(onv ? 'Restored' : 'Removed from Match', 'ok'); v.refresh(); }); }); });
+              .then(function () { CX.log(onv ? 'match.optin_restore' : 'match.optin_remove', 'match_optin', el.getAttribute('data-opt')); toast(onv ? 'Back in Match' : 'Paused for Match', 'ok'); v.refresh(); }); }); });
         });
       });
     }

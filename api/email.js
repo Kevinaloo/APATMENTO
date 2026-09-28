@@ -30,10 +30,8 @@ export const config = { maxDuration: 15 };
 import { hasInternalSecret, requireUser, setCors, consumeRateLimit } from './lib/_security.js';
 import { sendTemplate, TEMPLATES } from './lib/_mail.js';
 import { one, update } from './lib/_db.js';
+import { sendSMS } from './lib/_sms.js';
 
-const AT_API_KEY  = process.env.AT_API_KEY;
-const AT_USERNAME = process.env.AT_USERNAME || 'Cabana';
-const AT_SMS_URL  = 'https://api.africastalking.com/version1/messaging';
 const SUPA_URL    = process.env.SUPABASE_URL;
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -95,21 +93,7 @@ async function authUser(id) {
   return r.ok ? r.json() : null;
 }
 
-/* ── SMS via Africa's Talking ───────────────────────────────────── */
-async function sendSMS({ to, message, from = 'CABANA' }) {
-  if (!AT_API_KEY) throw new Error('AT_API_KEY not set');
-  const phone = String(to).startsWith('+') ? to : `+254${String(to).replace(/^0/, '')}`;
-  const params = new URLSearchParams({ username: AT_USERNAME, to: phone, message, from });
-  const r = await fetch(AT_SMS_URL, {
-    method: 'POST',
-    headers: { apiKey: AT_API_KEY, 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
-    body: params.toString(),
-  });
-  const data = await r.json().catch(() => ({}));
-  const entry = data?.SMSMessageData?.Recipients?.[0];
-  if (!r.ok || entry?.status === 'InvalidPhoneNumber') throw new Error(entry?.status || `AT ${r.status}`);
-  return { id: entry?.messageId, status: entry?.status, cost: entry?.cost };
-}
+/* SMS lives in api/lib/_sms.js so every route sends through one helper. */
 
 /* ── action → template, and how each one is deduplicated ──────────
    A dedupe key is a promise that this exact email is sent once, ever.

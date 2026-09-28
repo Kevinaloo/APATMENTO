@@ -6,7 +6,7 @@
    No more stale JS/CSS causing inconsistent behaviour.
 ════════════════════════════════════════════════════════════════ */
 
-const VERSION = 'cabana-v40-living-avatars';
+const VERSION = 'cabana-v41-match';
 const CACHE = `${VERSION}`;
 
 /* How long we will wait on the network before falling back to a cached
@@ -186,55 +186,121 @@ async function networkFirstWithTimeout(event, request) {
 }
 
 // ── PUSH NOTIFICATIONS ──
-self.addEventListener('push', e => {
-  let d = {
-    title: 'Cabana',
-    body: 'You have a new update',
-    icon: '/cabana-icon-192.png',
-    tag: 'cbn-' + Date.now(),
-    url: '/dashboard.html'
-  };
-  try {
-    if (e.data) {
-      var parsed = e.data.json();
-      d = Object.assign(d, parsed);
-    }
-  } catch (err) {}
+/* Each kind arrives with its own weight. A host's guest request stays on
+   the lock screen until it is acted on, vibrates like a call, and offers
+   "Send an offer" straight from the banner. A newsletter does none of
+   that. When Cabana is already open and in front of the person, the
+   page shows its own alert instead, so nothing is announced twice. */
+const VIBRATE = {
+  match: [260, 120, 260, 120, 520],
+  call: [500, 200, 500, 200, 500],
+  message: [120, 70, 120, 70, 240],
+  booking: [200, 100, 200],
+  payment: [200, 100, 200],
+};
 
-  e.waitUntil(
-    self.registration.showNotification(d.title, {
-      body: d.body,
+function parsePush(e) {
+  let d = { title: 'Cabana', body: 'You have a new update', url: '/dashboard.html', kind: 'general' };
+  try { if (e.data) d = Object.assign(d, e.data.json()); }
+  catch (err) { try { if (e.data) d.body = e.data.text(); } catch (_) {} }
+  return d;
+}
+
+async function focusedClient() {
+  const all = await clients.matchAll({ type: 'window', includeUncontrolled: true });
+  return all.find(c => c.focused && c.visibilityState === 'visible') || null;
+}
+
+self.addEventListener('push', e => {
+  const d = parsePush(e);
+  e.waitUntil((async () => {
+    const live = await focusedClient();
+    if (live) {
+      live.postMessage({ type: 'cabana:push', payload: d });
+      /* A host alert is too important to trust to one channel: the page
+         raises its own takeover, and the banner still lands in case the
+         person is looking at a different app on a split screen. */
+      if (d.kind !== 'match' || d.role !== 'host') return;
+    }
+    const opts = {
+      body: d.body || '',
       icon: d.icon || '/cabana-icon-192.png',
-      badge: '/cabana-icon-192.png',
+      badge: d.badge || '/cabana-badge-96.png',
       tag: d.tag || ('cbn-' + Date.now()),
-      renotify: true,
-      data: { url: d.url || '/dashboard.html' },
-      vibrate: d.kind === 'message' ? [120, 70, 120, 70, 240] : [200, 100, 200],
-      silent: false
-    })
-  );
+      renotify: d.renotify !== false,
+      requireInteraction: !!d.requireInteraction,
+      timestamp: d.ts || Date.now(),
+      data: { url: d.url || '/dashboard.html', kind: d.kind || 'general', role: d.role || null, request_id: d.request_id || null },
+      vibrate: VIBRATE[d.kind] || [200, 100, 200],
+      silent: false,
+    };
+    if (Array.isArray(d.actions) && d.actions.length) opts.actions = d.actions.slice(0, 2);
+    if (d.image) opts.image = d.image;
+    await self.registration.showNotification(d.title || 'Cabana', opts);
+    /* The installed app shows an unread dot on its icon. */
+    try { if (self.navigator && self.navigator.setAppBadge) await self.navigator.setAppBadge(); } catch (_) {}
+  })());
 });
 
 self.addEventListener('notificationclick', e => {
   e.notification.close();
-  const targetUrl = (e.notification.data && e.notification.data.url) || '/dashboard.html';
+  if (e.action === 'later') return;
+  const data = e.notification.data || {};
+  let targetUrl = data.url || '/dashboard.html';
+  if (e.action === 'respond' && data.request_id) {
+    targetUrl = '/partner-cabana.html?req=' + encodeURIComponent(data.request_id) + '&act=respond';
+  }
+  const absolute = new URL(targetUrl, self.location.origin).href;
 
   e.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(cs => {
-      for (let i = 0; i < cs.length; i++) {
-        const c = cs[i];
-        if (c.url && c.url.includes(self.location.origin) && 'focus' in c) {
-          return c.focus().then(() => {
-            if ('navigate' in c && targetUrl && !c.url.endsWith(targetUrl)) {
-              return c.navigate(targetUrl);
-            }
-          });
-        }
+      const mine = cs.filter(c => c.url && c.url.indexOf(self.location.origin) === 0);
+      /* Prefer a tab that is already on the right page, then any Cabana tab. */
+      const exact = mine.find(c => c.url === absolute);
+      const any = exact || mine[0];
+      if (any && 'focus' in any) {
+        return any.focus().then(c => {
+          const client = c || any;
+          if (exact) return client.postMessage({ type: 'cabana:open', url: targetUrl, data });
+          if ('navigate' in client) return client.navigate(absolute);
+        });
       }
-      if (clients.openWindow) return clients.openWindow(targetUrl);
+      if (clients.openWindow) return clients.openWindow(absolute);
     })
   );
 });
+
+/* Browsers rotate push subscriptions (expiry, key rotation, a cleared
+   profile). Without this handler the old endpoint dies and the person
+   hears nothing until they next open Cabana. Re-subscribe here and tell
+   the server, proving ownership with the old endpoint. */
+self.addEventListener('pushsubscriptionchange', e => {
+  e.waitUntil((async () => {
+    try {
+      const old = e.oldSubscription;
+      const key = (old && old.options && old.options.applicationServerKey) || null;
+      const next = e.newSubscription || await self.registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: key || urlB64ToU8('BIteWNc_QXpcPP2rj0BDVOzFZYUs7mFpys-QdUwwFbtqGANd2l59OOplmMKjQ8X5i2F0SsDn3v4F9S-8XSMSXT8'),
+      });
+      if (!old || !next) return;
+      await fetch('/api/push-send?action=resubscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'resubscribe', old_endpoint: old.endpoint, subscription: next.toJSON() }),
+      });
+    } catch (err) {}
+  })());
+});
+
+function urlB64ToU8(b64) {
+  const pad = '='.repeat((4 - (b64.length % 4)) % 4);
+  const s = (b64 + pad).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(s);
+  const out = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+  return out;
+}
 
 self.addEventListener('sync', e => {
   if (e.tag === 'sync-bookings') e.waitUntil(Promise.resolve());
@@ -246,4 +312,7 @@ self.addEventListener('sync', e => {
 // back into the old worker.
 self.addEventListener('message', e => {
   if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
+  if (e.data && e.data.type === 'CLEAR_BADGE') {
+    try { if (self.navigator && self.navigator.clearAppBadge) self.navigator.clearAppBadge(); } catch (_) {}
+  }
 });
